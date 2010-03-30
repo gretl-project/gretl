@@ -19,6 +19,7 @@
 
 #include "libgretl.h" 
 #include "var.h"  
+#include "vartest.h" 
 #include "johansen.h"
 #include "varprint.h"
 #include "libset.h"
@@ -245,13 +246,13 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
 				  PRN *prn)
 {
-    gretl_matrix *rtmp, *ctmp;
+    gretl_matrix *rtmp = NULL, *ctmp = NULL;
+    gretl_matrix *C = var->C;
     int rows = var->neqns * effective_order(var);
     int block, blockmax;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
-    int vsrc;
-    int i, t, err = 0;
+    int i, t, vsrc, err = 0;
 
     if (prn == NULL) {
 	return 0;
@@ -262,15 +263,19 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	return 1;
     }  
 
-    rtmp = gretl_matrix_alloc(rows, var->neqns);
-    if (rtmp == NULL) {
-	return E_ALLOC;
-    }
+    if (var->ord != NULL) {
+	C = reorder_responses(var, &err);
+	if (err) {
+	    return err;
+	}
+    } 
 
+    rtmp = gretl_matrix_alloc(rows, var->neqns);
     ctmp = gretl_matrix_alloc(rows, var->neqns);
-    if (ctmp == NULL) {
-	gretl_matrix_free(rtmp);
-	return E_ALLOC;
+
+    if (rtmp == NULL || ctmp == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
     vsrc = var->ylist[shock + 1];
@@ -310,7 +315,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	    VAR_info_print_period(t + 1, prn);
 	    if (t == 0) {
 		/* calculate initial estimated responses */
-		err = gretl_matrix_copy_values(rtmp, var->C);
+		err = gretl_matrix_copy_values(rtmp, C);
 	    } else {
 		/* calculate further estimated responses */
 		err = gretl_matrix_multiply(var->A, rtmp, ctmp);
@@ -346,8 +351,14 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 	VAR_info_end_table(prn);
     }
 
+ bailout:
+
     if (rtmp != NULL) gretl_matrix_free(rtmp);
     if (ctmp != NULL) gretl_matrix_free(ctmp);
+
+    if (C != var->C) {
+	gretl_matrix_free(C);
+    }
 
     return err;
 }
@@ -394,13 +405,12 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 			      int periods, const DATAINFO *pdinfo, 
 			      PRN *prn)
 {
-    int i, t;
     int vtarg;
     gretl_matrix *vd = NULL;
     int block, blockmax;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
-    int err = 0;
+    int i, t, err = 0;
 
     if (prn == NULL) {
 	return 0;

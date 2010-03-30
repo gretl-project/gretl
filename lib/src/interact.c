@@ -4111,6 +4111,7 @@ static int append_data (const char *line, int *list,
 static void schedule_callback (ExecState *s)
 {
     if (s->callback != NULL) {
+	s->flags &= ~CALLBACK_ATEND;
 	s->flags |= CALLBACK_EXEC;
     }
 }
@@ -4120,6 +4121,11 @@ static int callback_scheduled (ExecState *s)
     return (s->flags & CALLBACK_EXEC) ? 1 : 0;
 }
 
+static int callback_deferred (ExecState *s)
+{
+    return (s->flags & CALLBACK_ATEND) ? 1 : 0;
+}
+
 #define GRAPH_COMMAND(c) (c == GNUPLOT || c == BXPLOT || c == SCATTERS)
 
 static void check_for_named_object_save (ExecState *s)
@@ -4127,7 +4133,13 @@ static void check_for_named_object_save (ExecState *s)
     if (*cmd_savename != '\0' && gretl_in_gui_mode()) {
 	int ci = s->cmd->ci;
 
-	if (MODEL_COMMAND(ci) || GRAPH_COMMAND(ci)) {
+	if (ci == MLE || ci == NLS || ci == GMM) {
+	    /* attach the callback to the corresponding 'end'
+	       statement */
+	    if (s->callback != NULL) {
+		s->flags |= CALLBACK_ATEND;
+	    }	    
+	} else if (MODEL_COMMAND(ci) || GRAPH_COMMAND(ci)) {
 	    schedule_callback(s);
 	}
     }
@@ -4971,6 +4983,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    clear_model(models[0]);
 	    *models[0] = nl_model(pZ, pdinfo, cmd->opt, prn);
 	    err = maybe_print_model(models[0], pdinfo, prn, s);
+	    if (callback_deferred(s)) {
+		schedule_callback(s);
+	    }
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
 	} else if (!strcmp(cmd->param, "foreign")) {
@@ -5097,7 +5112,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = 0;
     }
 
-    if (!err) {
+    if (err) {
+	/* scrub any deferred object-save callback */
+	s->flags &= ~CALLBACK_ATEND;
+    } else {
 	check_for_named_object_save(s);
     }
 

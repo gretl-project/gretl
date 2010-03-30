@@ -60,6 +60,7 @@ struct GRETL_VAR_ {
     gretl_matrix *C;     /* augmented Cholesky-decomposed error matrix */
     gretl_matrix *S;     /* cross-equation variance matrix */
     gretl_matrix *F;     /* optional forecast matrix */
+    gretl_matrix *ord;   /* optional Cholesky-ordering vector */
     MODEL **models;      /* pointers to individual equation estimates */
     double *Fvals;       /* hold results of F-tests */
     double *Ivals;       /* hold results of info criteria comparisons */
@@ -133,9 +134,7 @@ int default_VAR_horizon (const DATAINFO *pdinfo);
 gretl_matrix *
 gretl_VAR_get_impulse_response (GRETL_VAR *var, 
 				int targ, int shock,
-				const gretl_matrix *ord,
-				int periods,
-				double alpha,
+				int periods, double alpha,
 				const double **Z,
 				const DATAINFO *pdinfo);
 
@@ -155,6 +154,8 @@ const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i);
 
 int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo);
+
+int gretl_VAR_set_ordering (GRETL_VAR *var, gretl_matrix *ord);
 
 int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 		      const double **Z, const DATAINFO *pdinfo);

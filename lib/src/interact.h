@@ -56,7 +56,8 @@ typedef enum {
     INCLUDE_EXEC      = 1 << 2,
     FUNCTION_EXEC     = 1 << 3,
     DEBUG_EXEC        = 1 << 4,
-    CALLBACK_EXEC     = 1 << 5
+    CALLBACK_EXEC     = 1 << 5,
+    CALLBACK_ATEND    = 1 << 6
 } ExecFlags;
 
 #define HIDDEN_COMMAND(c) (c == FUNCERR || c == FUNCRET)

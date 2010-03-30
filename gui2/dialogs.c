@@ -3495,7 +3495,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_entry_set_activates_default(GTK_ENTRY(button), TRUE);
     gtk_widget_show(button);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
 
     g_signal_connect(G_OBJECT(button), "value-changed",
 		     G_CALLBACK(option_spin_set), spinvar);

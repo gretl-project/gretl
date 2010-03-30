@@ -2895,70 +2895,6 @@ static void system_data_callback (GtkAction *action, gpointer p)
     g_free(wtitle);
 }
 
-static int VAR_model_data_code (GtkAction *action)
-{
-    const gchar *s = gtk_action_get_name(action);
-
-    if (!strcmp(s, "VarIrf")) {
-	return VAR_IRF;
-    } else if (!strcmp(s, "VarDecomp")) {
-	return VAR_DECOMP;
-    } else {
-	return VAR_IRF;
-    }
-}
-
-static void VAR_model_data_callback (GtkAction *action, gpointer p)
-{
-    windata_t *vwin = (windata_t *) p;
-    GRETL_VAR *var = vwin->data;
-    gchar *title;
-    PRN *prn;
-    int code, h = 0;
-    int err;
-
-    if (var == NULL || bufopen(&prn)) return;
-
-    code = VAR_model_data_code(action);
-
-    h = default_VAR_horizon(datainfo);
-    title = g_strdup_printf("gretl: %s", 
-			    (code == VAR_IRF)? _("impulse responses") :
-			    _("variance decompositions"));
-    err = checks_dialog(title, NULL, NULL, 0, NULL, 0, NULL,
-			&h, _("forecast horizon (periods):"),
-			2, datainfo->n / 2, 0);
-    g_free(title);
-
-    if (err < 0) {
-	gretl_print_destroy(prn);
-	return;
-    } 
-
-    if (code == VAR_IRF) {
-	title = g_strdup(_("gretl: VAR impulse responses"));
-	err = gretl_VAR_print_all_impulse_responses(var, datainfo, h, prn);
-    } else if (code == VAR_DECOMP) {
-	title = g_strdup(_("gretl: VAR variance decompositions"));
-	err = gretl_VAR_print_all_fcast_decomps(var, datainfo, h, prn);
-    } else {
-	err = 1;
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	gretl_print_destroy(prn);
-    } else {
-	windata_t *viewer;
-
-	viewer = view_buffer_with_parent(vwin, prn, 80, 400, title, 
-					 code, NULL);
-	viewer->active_var = h;
-    }
-
-    g_free(title);
-}
-
 static void add_x12_output_menu_item (windata_t *vwin)
 {
     const gchar *mpath = "/menubar/Analysis";
@@ -3235,22 +3171,21 @@ static int ordvec_default (gretl_matrix *v)
     return 1;
 }
 
-static gretl_matrix *IRF_order_vector (GRETL_VAR *var,
-				       gretl_matrix *v)
+static gretl_matrix *cholesky_order_vector (GRETL_VAR *var)
 {
-    if (gretl_vector_get_length(v) != var->neqns) {
-	gretl_matrix_free(v);
-	v = NULL;
-	if (var->neqns > 1) {
-	    int i;
+    gretl_matrix *v = NULL;
 
-	    v = gretl_vector_alloc(var->neqns);
-	    if (v != NULL) {
-		for (i=0; i<var->neqns; i++) {
-		    v->val[i] = i;
-		}
-	    
+    if (var->ord != NULL) {
+	v = gretl_matrix_copy(var->ord);
+    } else if (var->neqns > 1) {
+	int i;
+
+	v = gretl_vector_alloc(var->neqns);
+	if (v != NULL) {
+	    for (i=0; i<var->neqns; i++) {
+		v->val[i] = i;
 	    }
+	    
 	}
     }
 
@@ -3263,14 +3198,14 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int horizon, bootstrap;
     gint shock, targ;
-    static gretl_matrix *ordvec = NULL;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
     const double **vZ = NULL;
+    gretl_matrix *ordvec = NULL;
     int resp, err;
 
     impulse_params_from_action(action, &targ, &shock);
-    ordvec = IRF_order_vector(var, ordvec);
+    ordvec = cholesky_order_vector(var);
 
     resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap, 
 				  &alpha, &gopt);
@@ -3278,7 +3213,6 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     if (resp < 0) {
 	/* canceled */
 	gretl_matrix_free(ordvec);
-	ordvec = NULL;
 	return;
     }
 
@@ -3286,13 +3220,17 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
 	vZ = (const double **) Z;
     }
 
-    if (ordvec != NULL && ordvec_default(ordvec)) {
-	gretl_matrix_free(ordvec);
-	ordvec = NULL;
+    if (ordvec != NULL) {
+	if (ordvec_default(ordvec)) {
+	    gretl_matrix_free(ordvec);
+	    gretl_VAR_set_ordering(var, NULL);
+	} else {
+	    gretl_VAR_set_ordering(var, ordvec);
+	}
     }
 
     err = gretl_VAR_plot_impulse_response(var, targ, shock, 
-					  ordvec, horizon, alpha, 
+					  horizon, alpha, 
 					  vZ, datainfo,
 					  gopt);
 
@@ -3309,12 +3247,12 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     const double **vZ = NULL;
     int horizon, bootstrap;
-    static gretl_matrix *ordvec = NULL;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
+    gretl_matrix *ordvec = NULL;
     int resp, err;
 
-    ordvec = IRF_order_vector(var, ordvec);
+    ordvec = cholesky_order_vector(var);
 
     resp = impulse_response_setup(var, ordvec, &horizon, 
 				  &bootstrap, &alpha, &gopt);
@@ -3322,7 +3260,6 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     if (resp < 0) {
 	/* canceled */
 	gretl_matrix_free(ordvec);
-	ordvec = NULL;
 	return;
     }
 
@@ -3330,12 +3267,16 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 	vZ = (const double **) Z;
     }   
 
-    if (ordvec != NULL && ordvec_default(ordvec)) {
-	gretl_matrix_free(ordvec);
-	ordvec = NULL;
+    if (ordvec != NULL) {
+	if (ordvec_default(ordvec)) {
+	    gretl_matrix_free(ordvec);
+	    gretl_VAR_set_ordering(var, NULL);
+	} else {
+	    gretl_VAR_set_ordering(var, ordvec);
+	}
     }    
 
-    err = gretl_VAR_plot_multiple_irf(var, ordvec, horizon, alpha, 
+    err = gretl_VAR_plot_multiple_irf(var, horizon, alpha, 
 				      vZ, datainfo, gopt);
 
     if (err) {
@@ -3343,6 +3284,94 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     } else {
 	register_graph(NULL);
     }
+}
+
+static int VAR_model_data_code (GtkAction *action)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    if (!strcmp(s, "VarIrf")) {
+	return VAR_IRF;
+    } else if (!strcmp(s, "VarDecomp")) {
+	return VAR_DECOMP;
+    } else {
+	return VAR_IRF;
+    }
+}
+
+static void VAR_model_data_callback (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = vwin->data;
+    gretl_matrix *ordvec;
+    GtkWidget *dlg;
+    gchar *title;
+    PRN *prn = NULL;
+    int code, h = 0;
+    int resp, err;
+
+    if (var == NULL) return;
+
+    code = VAR_model_data_code(action);
+    h = default_VAR_horizon(datainfo);
+    ordvec = cholesky_order_vector(var);
+
+    title = g_strdup_printf("gretl: %s", 
+			    (code == VAR_IRF)? _("impulse responses") :
+			    _("variance decompositions"));
+
+    dlg = build_checks_dialog(title, NULL, NULL, 0, 
+			      NULL, 0, NULL,
+			      &h, _("forecast horizon (periods):"),
+			      2, datainfo->n / 2, 0,
+			      &resp);
+
+    if (dlg == NULL) {
+	goto bailout;
+    }
+
+    if (ordvec != NULL) {
+	dialog_add_order_selector(dlg, var, ordvec);
+    }
+
+    gtk_widget_show_all(dlg);
+
+    if (resp < 0 || bufopen(&prn)) {
+	goto bailout;
+    } 
+
+    if (ordvec != NULL) {
+	if (ordvec_default(ordvec)) {
+	    gretl_matrix_free(ordvec);
+	    ordvec = NULL;
+	} 
+	gretl_VAR_set_ordering(var, ordvec);
+	ordvec = NULL;
+    }    
+
+    if (code == VAR_IRF) {
+	err = gretl_VAR_print_all_impulse_responses(var, datainfo, h, prn);
+    } else if (code == VAR_DECOMP) {
+	err = gretl_VAR_print_all_fcast_decomps(var, datainfo, h, prn);
+    } else {
+	err = 1;
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	windata_t *viewer;
+
+	viewer = view_buffer_with_parent(vwin, prn, 80, 400, title, 
+					 code, NULL);
+	viewer->active_var = h;
+    }
+
+ bailout:
+
+    g_free(title);
+    gretl_matrix_free(ordvec);
 }
 
 static void system_forecast_callback (GtkAction *action, gpointer p)

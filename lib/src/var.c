@@ -198,6 +198,7 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->C = NULL;
     var->S = NULL;
     var->F = NULL;
+    var->ord = NULL;
 
     var->models = NULL;
     var->Fvals = NULL;
@@ -809,6 +810,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     gretl_matrix_free(var->C);
     gretl_matrix_free(var->S);
     gretl_matrix_free(var->F);
+    gretl_matrix_free(var->ord);
 
     free(var->Fvals);
     free(var->Ivals);
@@ -1447,9 +1449,7 @@ int default_VAR_horizon (const DATAINFO *pdinfo)
     return h;
 }
 
-static gretl_matrix *reorder_responses (GRETL_VAR *var, 
-					const gretl_matrix *ord,
-					int *err)
+gretl_matrix *reorder_responses (GRETL_VAR *var, int *err)
 {
     gretl_matrix *S, *C;
     int i, j, r, c;
@@ -1466,9 +1466,9 @@ static gretl_matrix *reorder_responses (GRETL_VAR *var,
     }
 
     for (i=0; i<var->neqns; i++) {
-	r = ord->val[i];
+	r = var->ord->val[i];
 	for (j=0; j<var->neqns; j++) {
-	    c = ord->val[j];
+	    c = var->ord->val[j];
 	    x = gretl_matrix_get(var->S, r, c);
 	    gretl_matrix_set(S, i, j, x);
 	}
@@ -1477,9 +1477,9 @@ static gretl_matrix *reorder_responses (GRETL_VAR *var,
     gretl_matrix_cholesky_decomp(S);
 
     for (i=0; i<var->neqns; i++) {
-	r = ord->val[i];
+	r = var->ord->val[i];
 	for (j=0; j<var->neqns; j++) {
-	    c = ord->val[j];
+	    c = var->ord->val[j];
 	    x = gretl_matrix_get(S, i, j);
 	    gretl_matrix_set(C, r, c, x);
 	}
@@ -1490,15 +1490,14 @@ static gretl_matrix *reorder_responses (GRETL_VAR *var,
 
 static gretl_matrix *
 gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
-			       const gretl_matrix *ord, int periods) 
+			       int periods) 
 {
     int rows = var->neqns * effective_order(var);
     gretl_matrix *rtmp = NULL;
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
-    gretl_matrix *C = NULL;
+    gretl_matrix *C = var->C;
     double rt;
-    int reorder = 0;
     int t, err = 0;
 
     if (shock >= var->neqns) {
@@ -1516,15 +1515,12 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 	return NULL;
     }
 
-    if (ord != NULL) {
-	C = reorder_responses(var, ord, &err);
+    if (var->ord != NULL) {
+	C = reorder_responses(var, &err);
 	if (err) {
 	    return NULL;
 	}
-	reorder = 1;
-    } else {	
-	C = var->C;
-    }
+    } 
 
     resp = gretl_matrix_alloc(periods, 1);
     if (resp == NULL) {
@@ -1565,7 +1561,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     gretl_matrix_free(rtmp);
     gretl_matrix_free(ctmp);
 
-    if (reorder) {
+    if (C != var->C) {
 	gretl_matrix_free(C);
     }
 
@@ -1582,7 +1578,6 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
  * @var: pointer to VAR struct.
  * @targ: index of the target or response variable.
  * @shock: index of the source or shock variable.
- * @ord: vector holding order for Cholesky decomposition, or %NULL.
  * @periods: number of periods over which to compute the response.
  * @alpha: determines confidence level for bootstrap interval.
  * @Z: data array (or %NULL).
@@ -1611,9 +1606,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 gretl_matrix *
 gretl_VAR_get_impulse_response (GRETL_VAR *var, 
 				int targ, int shock, 
-				const gretl_matrix *ord,
-				int periods,
-				double alpha,
+				int periods, double alpha,
 				const double **Z,
 				const DATAINFO *pdinfo)
 {
@@ -1622,13 +1615,13 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
     gretl_matrix *ret = NULL;
     int i;
 
-    point = gretl_VAR_get_point_responses(var, targ, shock, ord, periods);
+    point = gretl_VAR_get_point_responses(var, targ, shock, periods);
 
     if (Z == NULL) {
 	/* no data matrix provided: just return point estimate */
 	ret = point;
     } else if (point != NULL) {
-	full = irf_bootstrap(var, targ, shock, ord, periods, 
+	full = irf_bootstrap(var, targ, shock, periods, 
 			     alpha, Z, pdinfo);
 	if (full != NULL) {
 	    double p;
@@ -1702,47 +1695,57 @@ gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
 
 gretl_matrix *
 gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
-			    int *errp)
+			    int *err)
 {
     int n = var->neqns;
     int k = n * effective_order(var);
-    gretl_matrix *idx = NULL, *vtmp = NULL;
-    gretl_matrix *cic = NULL, *vt = NULL;
+    gretl_matrix_block *B;
+    gretl_matrix *idx, *vtmp;
+    gretl_matrix *cic, *vt;
     gretl_matrix *vd = NULL;
-    int i, t, err = 0;
+    gretl_matrix *C = var->C;
+    int i, t;
 
-    *errp = 0;
+    *err = 0;
 
     if (targ >= n) {
 	fprintf(stderr, "Target variable out of bounds\n");
-	*errp = E_DATA;
+	*err = E_DATA;
 	return NULL;
     } 
 
     if (periods <= 0) {
 	fprintf(stderr, "Invalid number of periods\n");
-	*errp = E_DATA;
+	*err = E_DATA;
 	return NULL;
+    }
+
+    if (var->ord != NULL) {
+	C = reorder_responses(var, err);
+	if (*err) {
+	    return NULL;
+	}
+    }
+
+    B = gretl_matrix_block_new(&idx, n, n,
+			       &cic, k, k,
+			       &vt,  k, k,
+			       &vtmp, k, k,
+			       NULL);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
     }
 
     vd = gretl_zero_matrix_new(periods, n + 1);
-    idx = gretl_zero_matrix_new(n, n); 
-    cic = gretl_matrix_alloc(k, k);
-    vt = gretl_matrix_alloc(k, k);
-    vtmp = gretl_matrix_alloc(k, k);
-
-    if (vd == NULL || idx == NULL || cic == NULL || 
-	vt == NULL || vtmp == NULL) {
-	gretl_matrix_free(vd);
-	gretl_matrix_free(idx);
-	gretl_matrix_free(cic);
-	gretl_matrix_free(vt);
-	gretl_matrix_free(vtmp);
-	*errp = E_ALLOC;
-	return NULL;
+    if (vd == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
     }
 
-    for (i=0; i<n && !err; i++) {
+    gretl_matrix_zero(idx);
+
+    for (i=0; i<n && !*err; i++) {
 	double vti;
 
 	/* adjust index matrix */
@@ -1751,29 +1754,27 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 	}
 	gretl_matrix_set(idx, i, i, 1.0);
 
-	for (t=0; t<periods && !err; t++) {
-
+	for (t=0; t<periods && !*err; t++) {
 	    if (t == 0) {
 		/* calculate initial variances */
-		err = gretl_matrix_qform(var->C, GRETL_MOD_NONE,
-					 idx, cic, GRETL_MOD_NONE);
+		*err = gretl_matrix_qform(C, GRETL_MOD_NONE,
+					  idx, cic, GRETL_MOD_NONE);
 		gretl_matrix_copy_values(vt, cic);
 	    } else {
 		/* calculate further variances */
 		gretl_matrix_copy_values(vtmp, vt);
-		err = gretl_matrix_qform(var->A, GRETL_MOD_NONE,
-					 vtmp, vt, GRETL_MOD_NONE);
+		*err = gretl_matrix_qform(var->A, GRETL_MOD_NONE,
+					  vtmp, vt, GRETL_MOD_NONE);
 		gretl_matrix_add_to(vt, cic);
 	    }
-
-	    if (!err) {
+	    if (!*err) {
 		vti = gretl_matrix_get(vt, targ, targ);
 		gretl_matrix_set(vd, t, i, vti);
 	    }
 	}
     }
 
-    for (t=0; t<periods && !err; t++) {
+    for (t=0; t<periods && !*err; t++) {
 	double vi, vtot = 0.0;
 
 	for (i=0; i<n; i++) {
@@ -1789,13 +1790,15 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 	gretl_matrix_set(vd, t, var->neqns, sqrt(vtot));
     }
 
-    gretl_matrix_free(idx);
-    gretl_matrix_free(cic);
-    gretl_matrix_free(vt);
-    gretl_matrix_free(vtmp);
+ bailout:
 
-    if (err) {
-	*errp = err;
+    gretl_matrix_block_destroy(B);
+
+    if (C != var->C) {
+	gretl_matrix_free(C);
+    }
+
+    if (*err && vd != NULL) {
 	gretl_matrix_free(vd);
 	vd = NULL;
     }
@@ -3089,6 +3092,13 @@ int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
     return 0;
 }
 
+int gretl_VAR_set_ordering (GRETL_VAR *var, gretl_matrix *ord)
+{
+    gretl_matrix_free(var->ord);
+    var->ord = ord;
+    return 0;
+}
+
 int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 		      const double **Z, const DATAINFO *pdinfo)
 {
@@ -3131,11 +3141,11 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 	alpha < .01 || alpha > 0.5) {
 	err = E_INVARG;
     } else if (boot) {
-	err = gretl_VAR_plot_impulse_response(var, targ, shock, NULL,
+	err = gretl_VAR_plot_impulse_response(var, targ, shock, 
 					      h, alpha, Z, pdinfo,
 					      OPT_NONE);
     } else {
-	err = gretl_VAR_plot_impulse_response(var, targ, shock, NULL, 
+	err = gretl_VAR_plot_impulse_response(var, targ, shock,  
 					      h, 0, NULL, pdinfo,
 					      OPT_NONE);
     }
@@ -3870,6 +3880,8 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
 		    var->X = gretl_xml_get_matrix(cur, doc, err);
 		} else if (!strcmp(mname, "Y")) {
 		    var->Y = gretl_xml_get_matrix(cur, doc, err);
+		} else if (!strcmp(mname, "ord")) {
+		    var->ord = gretl_xml_get_matrix(cur, doc, err);
 		}
 		free(mname);
 	    }
@@ -4000,7 +4012,11 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 	/* could be fiddly to reconstruct, needed for IRF bootstrap */
 	gretl_xml_put_matrix(var->X, "X", fp);
 	gretl_xml_put_matrix(var->Y, "Y", fp);
-    }   
+    }  
+
+    if (var->ord != NULL) {
+	gretl_xml_put_matrix(var->ord, "ord", fp);
+    }
 
     if (var->ci == VECM) {
 	/* this is hard to reconstruct for VECMs */
