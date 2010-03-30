@@ -5,7 +5,7 @@
 open klein.gdt
 
 genr W = Wp + Wg
-genr A = t - 1931
+genr A = t + (1918 - 1931)
 genr K1 = K(-1)
 
 # set the model up as a system
