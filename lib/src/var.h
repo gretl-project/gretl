@@ -101,7 +101,8 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 			    int *errp);
 
 int 
-gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C);
+gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C,
+			   const gretl_matrix *ord);
 
 const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var, int *err);
 

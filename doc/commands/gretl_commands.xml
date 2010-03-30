@@ -4583,20 +4583,25 @@
     label="Impulse response bootstrap">
 
     <description>
-      <para>If you select the bootstrap confidence interval when plotting
-	impulse responses, gretl computes a 95 percent confidence interval for
-	the responses using the bootstrap method.  The residuals from the
-	original VAR (or VECM) are resampled with replacement; an artificial
-	dataset is constructed based on the original parameter estimates and the
+      <para>
+	If you select the bootstrap option when plotting impulse
+	responses, gretl computes a confidence interval for the responses
+	using the bootstrap method.  The residuals from the original VAR
+	(or VECM) are resampled with replacement; an artificial dataset is
+	constructed based on the original parameter estimates and the
 	resampled residuals; the system is re-estimated and the impulse
-	responses are re-evaluated.  This is repeated 999 times and the 0.025
-	and 0.975 quantiles for the responses are found and plotted along with
-	the point estimates.
+	responses are re-evaluated.  This is repeated 999 times and the
+	&alpha;/2 and 1 &minus; &alpha;/2 quantiles for the responses are
+	found and plotted along with the point estimates. This option is
+	not currently available for restricted VECMs.
       </para>
       <para>
-	The bootstrap option is not currently available for restricted VECMs.
+	This dialog also supports reordering of the variables for the
+	Cholesky decomposition of the cross-equation covariance matrix.
+	The default is given by the order in which the variables are
+	entered into the model specification, but the up and down arrows
+	can be used to promote or demote the selected variable.
       </para>
-
     </description>
 
   </command>

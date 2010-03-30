@@ -2270,7 +2270,7 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
 	gtk_box_pack_start(GTK_BOX(vbox), hbox1, FALSE, FALSE, 0);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
-	r2 = gtk_radio_button_new_with_label(NULL, _("error bars"));
+	r2 = gtk_radio_button_new_with_label(group, _("error bars"));
 	hbox2 = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox2), r2, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox2, FALSE, FALSE, 5);

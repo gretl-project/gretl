@@ -1684,7 +1684,7 @@ static int j_general_restrict (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
+	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C, NULL);
     }
 
     if (!err) {
@@ -1825,7 +1825,7 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
     }
 
     if (!err) {
-	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C);
+	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C, NULL);
     }
 
     if (!err) {

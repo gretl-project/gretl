@@ -4350,8 +4350,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 }
 
 int 
-gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
-			     double alpha,
+gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
+			     const gretl_matrix *ord,
+			     int periods, double alpha,
 			     const double **Z,
 			     const DATAINFO *pdinfo,
 			     gretlopt opt)
@@ -4371,8 +4372,8 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 
     gp_small_font_size = (n == 4)? 6 : 0;
 
-    resp = gretl_VAR_get_impulse_response(var, 1, 1, NULL, periods, alpha, 
-					  Z, pdinfo);
+    resp = gretl_VAR_get_impulse_response(var, 1, 1, ord, periods, 
+					  alpha, Z, pdinfo);
     if (resp == NULL) {
 	return E_ALLOC;
     }
@@ -4408,14 +4409,15 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	for (j=0; j<n; j++) {
 
 	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
-	    resp = gretl_VAR_get_impulse_response(var, i, j, NULL, periods, alpha, 
-						  Z, pdinfo);
+	    resp = gretl_VAR_get_impulse_response(var, i, j, ord, periods, 
+						  alpha, Z, pdinfo);
 	    if (resp == NULL) {
 		return E_ALLOC;
 	    }
 
 	    vshock = gretl_VAR_get_variable_number(var, j);
-	    sprintf(title, "%s -> %s", pdinfo->varname[vshock], pdinfo->varname[vtarg]);
+	    sprintf(title, "%s -> %s", pdinfo->varname[vshock], 
+		    pdinfo->varname[vtarg]);
 	    fprintf(fp, "set title '%s'\n", title);
 
 	    fputs("plot \\\n", fp);

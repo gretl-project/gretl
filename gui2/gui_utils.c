@@ -3014,6 +3014,32 @@ static void set_order_vec (GtkWidget *view)
     }
 }
 
+static void sensitize_up_down (GtkTreeSelection *selection,
+			       GtkWidget *view)
+{
+    gretl_matrix *v;
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    GtkTreePath *path;
+    GtkWidget *up, *down;
+    gboolean s;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(view));
+    v = g_object_get_data(G_OBJECT(view), "ordvec");
+    up = g_object_get_data(G_OBJECT(view), "up-button");
+    down = g_object_get_data(G_OBJECT(view), "down-button");
+
+    gtk_tree_model_get_iter_first(model, &iter);
+    s = gtk_tree_selection_iter_is_selected(selection, &iter);
+    gtk_widget_set_sensitive(up, !s);
+
+    path = gtk_tree_path_new_from_indices(gretl_vector_get_length(v) - 1,
+					  -1);
+    s = gtk_tree_selection_path_is_selected(selection, path);
+    gtk_widget_set_sensitive(down, !s);
+    gtk_tree_path_free(path);
+}
+
 static void shift_var_up (GtkButton *b, GtkWidget *view)
 {
     GtkTreeSelection *selection;
@@ -3028,6 +3054,7 @@ static void shift_var_up (GtkButton *b, GtkWidget *view)
 	gtk_tree_model_get_iter(model, &previter, path);
 	gtk_list_store_swap(GTK_LIST_STORE(model), &seliter, &previter);
 	set_order_vec(view);
+	sensitize_up_down(selection, view);
     }
     gtk_tree_path_free(path);
 }
@@ -3044,6 +3071,7 @@ static void shift_var_down (GtkButton *b, GtkWidget *view)
     if (gtk_tree_model_iter_next(model, &nextiter)) {
 	gtk_list_store_swap(GTK_LIST_STORE(model), &seliter, &nextiter);
 	set_order_vec(view);
+	sensitize_up_down(selection, view);
     }
 }
 
@@ -3117,6 +3145,12 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
 		     G_CALLBACK(shift_var_up), view);
     g_signal_connect(G_OBJECT(b2), "clicked",
 		     G_CALLBACK(shift_var_down), view);
+
+    gtk_widget_set_sensitive(b1, FALSE);
+    g_object_set_data(G_OBJECT(view), "up-button", b1);
+    g_object_set_data(G_OBJECT(view), "down-button", b2);
+    g_signal_connect(G_OBJECT(select), "changed",
+		     G_CALLBACK(sensitize_up_down), view);
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), scroller, FALSE, FALSE, 5);
@@ -3236,11 +3270,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     int resp, err;
 
     impulse_params_from_action(action, &targ, &shock);
-
-    if (0) {
-	/* not ready yet */
-	ordvec = IRF_order_vector(var, ordvec);
-    }
+    ordvec = IRF_order_vector(var, ordvec);
 
     resp = impulse_response_setup(var, ordvec, &horizon, &bootstrap, 
 				  &alpha, &gopt);
@@ -3279,24 +3309,34 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     const double **vZ = NULL;
     int horizon, bootstrap;
+    static gretl_matrix *ordvec = NULL;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
     int resp, err;
 
-    resp = impulse_response_setup(var, NULL, &horizon, &bootstrap, 
-				  &alpha, &gopt);
+    ordvec = IRF_order_vector(var, ordvec);
+
+    resp = impulse_response_setup(var, ordvec, &horizon, 
+				  &bootstrap, &alpha, &gopt);
 
     if (resp < 0) {
 	/* canceled */
+	gretl_matrix_free(ordvec);
+	ordvec = NULL;
 	return;
     }
 
     if (bootstrap) {
 	vZ = (const double **) Z;
+    }   
+
+    if (ordvec != NULL && ordvec_default(ordvec)) {
+	gretl_matrix_free(ordvec);
+	ordvec = NULL;
     }    
 
-    err = gretl_VAR_plot_multiple_irf(var, horizon, alpha, vZ, datainfo,
-				      gopt);
+    err = gretl_VAR_plot_multiple_irf(var, ordvec, horizon, alpha, 
+				      vZ, datainfo, gopt);
 
     if (err) {
 	gui_errmsg(err);

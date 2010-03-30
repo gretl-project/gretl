@@ -38,6 +38,7 @@ typedef struct irfboot_ irfboot;
 struct irfboot_ {
     int ncoeff;         /* number of coefficients per equation */
     int horizon;        /* horizon for impulse responses */
+    const gretl_matrix *ord; /* order vector for Cholesky decomp */
     gretl_matrix *rE;   /* matrix of resampled original residuals */
     gretl_matrix *Xt;   /* row t of X matrix */
     gretl_matrix *Yt;   /* yhat at t */
@@ -104,7 +105,9 @@ static int boot_allocate (irfboot *b, const GRETL_VAR *v)
     return 0;
 }
 
-static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
+static irfboot *irf_boot_new (const GRETL_VAR *var, 
+			      const gretl_matrix *ord,
+			      int periods)
 {
     irfboot *b;
     int err = 0;
@@ -127,6 +130,7 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
     b->Z = NULL;
     b->dinfo = NULL;
 
+    b->ord = ord;
     b->horizon = periods;
 
     if (var->jinfo != NULL) {
@@ -247,7 +251,7 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
 
 
     if (!err) {   
-	err = gretl_VAR_do_error_decomp(v->S, v->C);
+	err = gretl_VAR_do_error_decomp(v->S, v->C, b->ord);
     }
 
     if (!err) {
@@ -281,7 +285,7 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
 				  v->E, GRETL_MOD_NONE,
 				  v->S, GRETL_MOD_NONE);
 	gretl_matrix_divide_by_scalar(v->S, v->df); /* was v->T in denom. */
-	err = gretl_VAR_do_error_decomp(v->S, v->C);
+	err = gretl_VAR_do_error_decomp(v->S, v->C, b->ord);
     }
 
     if (!err) {
@@ -848,8 +852,9 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 /* public bootstrapping function, called from var.c */
 
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
-			     int targ, int shock, int periods,
-			     double alpha,
+			     int targ, int shock, 
+			     const gretl_matrix *ord, 
+			     int periods, double alpha,
 			     const double **Z, 
 			     const DATAINFO *pdinfo)
 {
@@ -885,7 +890,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	return NULL;
     }
 
-    boot = irf_boot_new(var, periods);
+    boot = irf_boot_new(var, ord, periods);
     if (boot == NULL) {
 	err = E_ALLOC;
 	goto bailout;

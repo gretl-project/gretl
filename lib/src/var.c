@@ -1298,12 +1298,14 @@ int set_VAR_model_stats (GRETL_VAR *var, int i)
 }
 
 int gretl_VAR_do_error_decomp (const gretl_matrix *S,
-			       gretl_matrix *C)
+			       gretl_matrix *C,
+			       const gretl_matrix *ord)
 {
     int g = gretl_matrix_rows(S);
     gretl_matrix *tmp = NULL;
     double x;
-    int i, j, err = 0;
+    int i, j, r, c;
+    int err = 0;
 
     /* copy cross-equation covariance matrix (note: the C matrix has
        more rows than S)
@@ -1311,6 +1313,17 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
     tmp = gretl_matrix_copy(S);
     if (tmp == NULL) {
 	err = E_ALLOC;
+    }
+
+    if (ord != NULL) {
+	for (i=0; i<g; i++) {
+	    r = ord->val[i];
+	    for (j=0; j<g; j++) {
+		c = ord->val[j];
+		x = gretl_matrix_get(S, r, c);
+		gretl_matrix_set(tmp, i, j, x);
+	    }
+	}
     }
 
     /* lower-triangularize and decompose */
@@ -1326,9 +1339,11 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
     /* write the decomposition (lower triangle) into the C matrix */
     if (!err) {
 	for (i=0; i<g; i++) {
+	    r = (ord != NULL)? ord->val[i] : i; 
 	    for (j=0; j<=i; j++) {
+		c = (ord != NULL)? ord->val[j] : j; 
 		x = gretl_matrix_get(tmp, i, j);
-		gretl_matrix_set(C, i, j, x);
+		gretl_matrix_set(C, r, c, x);
 	    }
 	}
     }
@@ -1432,7 +1447,8 @@ int default_VAR_horizon (const DATAINFO *pdinfo)
     return h;
 }
 
-static gretl_matrix *reorder_responses (GRETL_VAR *var, const gretl_matrix *ord,
+static gretl_matrix *reorder_responses (GRETL_VAR *var, 
+					const gretl_matrix *ord,
 					int *err)
 {
     gretl_matrix *S, *C;
@@ -1612,7 +1628,8 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 	/* no data matrix provided: just return point estimate */
 	ret = point;
     } else if (point != NULL) {
-	full = irf_bootstrap(var, targ, shock, periods, alpha, Z, pdinfo);
+	full = irf_bootstrap(var, targ, shock, ord, periods, 
+			     alpha, Z, pdinfo);
 	if (full != NULL) {
 	    double p;
 
@@ -2314,7 +2331,7 @@ GRETL_VAR *gretl_VAR (int order, int *list,
 	    }
 
 	    if (!*err) {
-		*err = gretl_VAR_do_error_decomp(var->S, var->C);
+		*err = gretl_VAR_do_error_decomp(var->S, var->C, NULL);
 	    }
 
 	    if (!*err) {
@@ -3889,7 +3906,7 @@ GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc,
     }
 
     if (!*err) {
-	*err = gretl_VAR_do_error_decomp(var->S, var->C);
+	*err = gretl_VAR_do_error_decomp(var->S, var->C, NULL);
     }
 
     /* FIXME vecm tests on beta/alpha */

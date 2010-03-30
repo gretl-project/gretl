@@ -224,8 +224,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 gretlopt opt);
 
 int 
-gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
-			     double alpha,
+gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
+			     const gretl_matrix *ord,
+			     int periods, double alpha,
 			     const double **Z,
 			     const DATAINFO *pdinfo,
 			     gretlopt opt);
