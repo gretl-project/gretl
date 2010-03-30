@@ -153,13 +153,20 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
     return b;
 }
 
-static void
-recalculate_impulse_responses (irfboot *b, const gretl_matrix *A, 
-			       const gretl_matrix *C,
+static int
+recalculate_impulse_responses (irfboot *b, GRETL_VAR *v,
 			       int targ, int shock, int iter)
 {
-    double rt;
-    int t;
+    gretl_matrix *C = v->C;
+    double x;
+    int t, err = 0;
+
+    if (v->ord != NULL) {
+	C = reorder_responses(v, &err);
+	if (err) {
+	    return err;
+	}
+    }
 
     for (t=0; t<b->horizon; t++) {
 	if (t == 0) {
@@ -167,13 +174,18 @@ recalculate_impulse_responses (irfboot *b, const gretl_matrix *A,
 	    gretl_matrix_copy_values(b->rtmp, C);
 	} else {
 	    /* calculate further estimated responses */
-	    gretl_matrix_multiply(A, b->rtmp, b->ctmp);
+	    gretl_matrix_multiply(v->A, b->rtmp, b->ctmp);
 	    gretl_matrix_copy_values(b->rtmp, b->ctmp);
 	}
-
-	rt = gretl_matrix_get(b->rtmp, targ, shock);
-	gretl_matrix_set(b->resp, t, iter, rt);
+	x = gretl_matrix_get(b->rtmp, targ, shock);
+	gretl_matrix_set(b->resp, t, iter, x);
     }
+
+    if (C != v->C) {
+	gretl_matrix_free(C);
+    }
+
+    return err;
 }
 
 static void maybe_resize_vecm_matrices (GRETL_VAR *v)
@@ -245,13 +257,12 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
     gretl_matrix_print(v->S, "var->S (Omega)");
 #endif
 
-
     if (!err) {   
 	err = gretl_VAR_do_error_decomp(v->S, v->C, v->ord);
     }
 
     if (!err) {
-	recalculate_impulse_responses(b, v->A, v->C, targ, shock, iter);
+	err = recalculate_impulse_responses(b, v, targ, shock, iter);
     }
 
     if (iter == BOOT_ITERS - 1 || VAR_FATAL(err, iter, scount)) {
@@ -285,7 +296,7 @@ static int re_estimate_VAR (irfboot *b, GRETL_VAR *v, int targ, int shock,
     }
 
     if (!err) {
-	recalculate_impulse_responses(b, v->A, v->C, targ, shock, iter);
+	err = recalculate_impulse_responses(b, v, targ, shock, iter);
     }
 
     return err;

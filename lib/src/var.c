@@ -1485,6 +1485,8 @@ gretl_matrix *reorder_responses (GRETL_VAR *var, int *err)
 	}
     }
 
+    gretl_matrix_free(S);
+
     return C;
 }
 
@@ -1497,7 +1499,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     gretl_matrix *ctmp = NULL;
     gretl_matrix *resp = NULL;
     gretl_matrix *C = var->C;
-    double rt;
+    double x;
     int t, err = 0;
 
     if (shock >= var->neqns) {
@@ -1523,37 +1525,25 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     } 
 
     resp = gretl_matrix_alloc(periods, 1);
-    if (resp == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
     rtmp = gretl_matrix_alloc(rows, var->neqns);
-    if (rtmp == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
     ctmp = gretl_matrix_alloc(rows, var->neqns);
-    if (ctmp == NULL) {
+
+    if (resp == NULL || rtmp == NULL || ctmp == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    for (t=0; t<periods && !err; t++) {
+    for (t=0; t<periods; t++) {
 	if (t == 0) {
 	    /* initial estimated responses */
-	    err = gretl_matrix_copy_values(rtmp, C);
+	    gretl_matrix_copy_values(rtmp, C);
 	} else {
 	    /* calculate further estimated responses */
-	    err = gretl_matrix_multiply(var->A, rtmp, ctmp);
+	    gretl_matrix_multiply(var->A, rtmp, ctmp);
 	    gretl_matrix_copy_values(rtmp, ctmp);
 	}
-
-	if (!err) {
-	    rt = gretl_matrix_get(rtmp, targ, shock);
-	    gretl_matrix_set(resp, t, 0, rt);
-	}
+	x = gretl_matrix_get(rtmp, targ, shock);
+	gretl_matrix_set(resp, t, 0, x);
     }
 
  bailout:
