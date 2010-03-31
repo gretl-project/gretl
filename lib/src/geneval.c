@@ -3772,6 +3772,25 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static void strstr_escape (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=0; i<n; i++) {
+	if (s[i] == '\\' && (i == 0 || s[i-1] != '\\')) {
+	    if (s[i+1] == 'n') {
+		s[i] = '\n';
+		shift_string_left(s + i + 1, 1);
+		i++;
+	    } else if (s[i+1] == 't') {
+		s[i] = '\t';
+		shift_string_left(s + i + 1, 1);
+		i++;
+	    }		
+	}
+    }
+}
+
 static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret;
@@ -3787,12 +3806,17 @@ static NODE *two_string_func (NODE *l, NODE *r, int f, parser *p)
 	}
 
 	if (f == F_STRSTR) {
-	    char *sret = strstr(sl, sr);
+	    char *sret, *tmp = gretl_strdup(sr);
 
-	    if (sret != NULL) {
-		ret->v.str = gretl_strdup(sret);
-	    } else {
-		ret->v.str = gretl_strdup("");
+	    if (tmp != NULL) {
+		strstr_escape(tmp);
+		sret = strstr(sl, tmp);
+		if (sret != NULL) {
+		    ret->v.str = gretl_strdup(sret);
+		} else {
+		    ret->v.str = gretl_strdup("");
+		}
+		free(tmp);
 	    }
 	} else if (f == B_HCAT) {
 	    int n1 = strlen(l->v.str);
