@@ -115,21 +115,19 @@ static void noalloc (void)
     exit(EXIT_FAILURE);
 }
 
-static int file_get_line (char *line, CMD *cmd)
+static int file_get_line (ExecState *s)
 {
-    char *got;
-    int len;
+    char *line = s->line;
+    int len = 0;
 
     clear(line, MAXLINE);
     
-    got = fgets(line, MAXLINE, fb);
-    if (got == NULL) {
-	/* no more input */
-	cmd->ci = QUIT;
-	return 0;
+    if (fgets(line, MAXLINE, fb) == NULL) {
+	/* no more input from current source */
+	gretl_exec_state_uncomment(s);
+    } else {
+	len = strlen(line);
     }
-
-    len = strlen(line);
 
     if (*line == '\0') {
 	strcpy(line, "quit");
@@ -145,7 +143,7 @@ static int file_get_line (char *line, CMD *cmd)
 	set_gretl_echo(0);
     }
 
-    if (gretl_echo_on() && cmd->ci == RUN && batch && *line == '(') {
+    if (gretl_echo_on() && s->cmd->ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;
     }
@@ -251,7 +249,7 @@ static int get_interactive_line (void *p)
 #else
     printf("%s", prompt);
     fflush(stdout);
-    file_get_line(s->line, s->cmd); /* note: "file" = stdin here */
+    file_get_line(s); /* note: "file" = stdin here */
 #endif
 
     return err;
@@ -263,7 +261,7 @@ static int cli_get_input_line (ExecState *s)
 
     if (runit || batch) {
 	/* reading from script file */
-	err = file_get_line(s->line, s->cmd);
+	err = file_get_line(s);
     } else {
 	/* interactive use */
 	err = get_interactive_line(s);
@@ -726,8 +724,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 /* exec_line: this is called to execute both interactive and script
    commands.  Note that most commands get passed on to the libgretl
    function gretl_cmd_exec(), but some commands that require special
-   action are dealt with here.  All estimation commands are passed on
-   to libgretl.
+   action are dealt with here.
 
    see also gui_exec_line() in gui2/library.c
 */
