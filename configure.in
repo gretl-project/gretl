@@ -763,7 +763,7 @@ Configuration:
   Use LaTeX for typesetting output:       ${have_latex}
   Gnu Multiple Precision support:         ${have_gmp}
   MPFR support:                           ${have_mpfr}
-  FFTW3 support:                          ${have_fftw3}
+  openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${have_gtk}
   Use GTK printing apparatus:             ${have_gtkprint}
   Use installed gtksourceview:            ${have_sourceview}

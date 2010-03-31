@@ -6,10 +6,9 @@ version 1.8.8, in progress
 - poisson regression: add overdispersion test and also
   --robust option to get a QML covariance matrix
 - New command modifier, "catch" to catch errors and
-  permit contination of script execution
+  permit continuation of script execution
 - Consolidate commands: the old "graph" and "plot"
   commands (ASCII graphics) are unified in "textplot"
-- New matrix function "selcols"
 - Enable full-text search of "online" help files
 - Enable help for specific "settable" variables, as in
   "help set lbfgs"
@@ -21,6 +20,8 @@ version 1.8.8, in progress
   confirming that the export worked
 - "foreign" code blocks: add support for GNU Octave
 - GUI: add export/import of variable labels
+- GUI: enable choice of ordering for Cholesky decomposition
+  for VAR impulse response plots
 - Filter functions movavg, bkfilt and hpfilt: offer
   greater control via additional optional arguments
 - Add new functions, digamma(), kdensity()

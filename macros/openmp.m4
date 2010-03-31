@@ -12,10 +12,11 @@ AC_DEFUN([AC_C_OPENMP],
 [
   AC_MSG_CHECKING([whether to use OpenMP])
   AC_ARG_ENABLE(openmp,
-    [AS_HELP_STRING([--disable-openmp], [do not use OpenMP])],
-    [],
-    [enable_openmp=yes])
+    [AS_HELP_STRING([--enable-openmp], [use OpenMP if available])],
+    [enable_openmp=yes]
+  )
   AC_MSG_RESULT([$enable_openmp])
+  ac_openmp_result=no
   OPENMP_CFLAGS=
   if test "$enable_openmp" = yes; then
     AC_MSG_CHECKING([for $CC option to support OpenMP])
