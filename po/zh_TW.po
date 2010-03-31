@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-03-29 01:41+0800\n"
+"PO-Revision-Date: 2010-04-01 01:28+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -501,29 +501,24 @@ msgstr " 消去 %-16s (p 值 %.3f)\n"
 #: lib/src/gretl_model.c:2939
 #: lib/src/modelprint.c:626
 #: gui2/library.c:2612
-#, fuzzy
 msgid "squares only"
-msgstr "加權最小平方法"
+msgstr "只含平方項"
 
 #: lib/src/compare.c:1633
 #: lib/src/gretl_model.c:2935
 #: gui2/library.c:2613
 msgid "cubes only"
-msgstr ""
+msgstr "只含三次方項"
 
 #: lib/src/compare.c:1636
 #: gui2/library.c:2611
-#, fuzzy
 msgid "squares and cubes"
-msgstr " %s 的實際值 及 預測值"
+msgstr "含平方項和三次方項"
 
 #: lib/src/compare.c:1708
 #: lib/src/gretl_model.c:2891
-#, fuzzy
 msgid "RESET test for specification"
-msgstr ""
-"\n"
-"DF 檢定 對變數 %s\n"
+msgstr "RESET 模型設定檢定"
 
 #: lib/src/compare.c:1716
 #: lib/src/compare.c:1942
@@ -13059,9 +13054,8 @@ msgid "gretl: CUSUMSQ test output"
 msgstr "gretl: CUSUMSQ 檢定結果"
 
 #: gui2/library.c:2614
-#, fuzzy
 msgid "all variants"
-msgstr "全選(_a)"
+msgstr "以上全部每一種形式都進行檢定"
 
 #: gui2/library.c:2625
 #: gui2/library.c:2675
