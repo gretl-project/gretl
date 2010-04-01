@@ -1753,6 +1753,7 @@ typedef struct user_kalman_ user_kalman;
 struct user_kalman_ {
     kalman *K;
     int fnlevel;
+    int public;
 };
 
 /* At present there can be at most one user_kalman at each
@@ -2161,7 +2162,8 @@ static int user_kalman_recheck_matrices (user_kalman *u)
 
 /* Try to find a user-defined Kalman filter at the current level of
    function execution.  Failing that, if @level is given as -1, we
-   also try looking at the parent level.
+   also try looking for a publicly available filter at parent 
+   levels of execution. 
 */
 
 static user_kalman *get_user_kalman (int level)
@@ -2182,11 +2184,15 @@ static user_kalman *get_user_kalman (int level)
     }
 
     if (go_up) {
-	level--;
-	for (i=0; i<n_uK; i++) {
-	    if (uK[i] != NULL && uK[i]->fnlevel == level) {
-		return uK[i];
-	    } 
+	int orig = level;
+
+	while (--level >= 0) {
+	    for (i=0; i<n_uK; i++) {
+		if (uK[i] != NULL && uK[i]->fnlevel == level &&
+		    (uK[i]->public || level == orig - 1)) {
+		    return uK[i];
+		} 
+	    }
 	}
     }
 
@@ -2249,7 +2255,7 @@ PRN *kalman_get_printer (const kalman *K)
     return (K != NULL)? K->prn : NULL;
 }
 
-static int add_user_kalman (void)
+static int add_user_kalman (gretlopt opt)
 {
     user_kalman *u = NULL;
     int i, n = -1;
@@ -2294,6 +2300,7 @@ static int add_user_kalman (void)
 	    } else {
 		/* finalize and place on stack */
 		u->fnlevel = gretl_function_depth();
+		u->public = (opt & OPT_P)? 1 : 0;
 		u->K->fnlevel = u->fnlevel;
 		uK[n] = u;
 	    }
@@ -2349,8 +2356,9 @@ static const char *kalman_matrix_name (int sym)
  * @Z: data array (may be %NULL).
  * @pdinfo: dataset information (may be %NULL).
  * @opt: may contain %OPT_D for diffuse initialization of the
- * Kalman filter; also may contain %OPT_C to specify that the
- * disturbances are correlated across the two equations.
+ * Kalman filter, %OPT_C to specify that the disturbances are 
+ * correlated across the two equations, %OPT_P to make the
+ * filter "public", i.e. available to functions.
  *
  * Parses @line and either (a) starts a filter definition or
  * (b) adds a matrix specification to the filter or (c)
@@ -2368,7 +2376,7 @@ int kalman_parse_line (const char *line, const double **Z,
 
     if (opt == OPT_NONE && !strncmp(line, "kalman", 6)) {
 	/* starting: allocate and return */
-	return add_user_kalman();
+	return add_user_kalman(opt);
     }
 
     u = get_user_kalman(gretl_function_depth());
