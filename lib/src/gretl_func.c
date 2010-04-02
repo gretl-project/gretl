@@ -30,6 +30,7 @@
 #include "gretl_string_table.h"
 #include "gretl_scalar.h"
 #include "flow_control.h"
+#include "kalman.h"
 
 #include <glib.h>
 
@@ -4595,7 +4596,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     }  
 
     /* below: delete variables local to the function, taking care not to
-       delete any 'local' vars that have been "promoted" to caller
+       delete any local vars that have been "promoted" to caller
        level via their inclusion in a returned list
     */
 
@@ -4647,6 +4648,9 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", d, err);
 #endif
     }    
+
+    /* if the function defined a Kalman filter, clean that up */
+    delete_kalman(NULL);
 
     pop_program_state();
 
