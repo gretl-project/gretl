@@ -3096,6 +3096,22 @@
       </description>
     </function>
 
+    <function name="monthlen" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">month</fnarg>
+	<fnarg type="scalar">year</fnarg>
+	<fnarg type="scalar">weeklen</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the number of days in the specified month in the specified
+	  year; <argname>weeklen</argname>, which must equal 5, 6 or 7, gives
+	  the number of days in the week that should be counted (a value of 6
+	  omits Sundays, and a value of 5 omits both Saturdays and Sundays).
+	</para>
+      </description>
+    </function>
+
     <function name="movavg" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">x</fnarg>

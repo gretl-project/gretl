@@ -5248,9 +5248,31 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    A = get_density_matrix(x, p->dinfo, bws,
 				   ctrl, &p->err);
 	}
-    }	
+    } else if (f == F_MONTHLEN) {
+	if (l->t != NUM) {
+	    node_type_error(f, 0, NUM, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 1, NUM, m, p);
+	} else if (r->t != NUM) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    int mo = l->v.xval;
+	    int yr = m->v.xval;
+	    int wk = r->v.xval;
 
-    if (f != F_STRNCMP && f != F_WEEKDAY) {
+	    if (yr < 0 || mo < 1 || mo > 12 ||
+		(wk != 5 && wk != 6 && wk != 7)) {
+		p->err = E_INVARG;
+	    } else {
+		ret = aux_scalar_node(p);
+		if (!p->err) {
+		    ret->v.xval = get_days_in_month(mo, yr, wk);
+		}
+	    }
+	}
+    }
+
+    if (f != F_STRNCMP && f != F_WEEKDAY && f != F_MONTHLEN) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -7344,6 +7366,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_REPLACE:
     case F_STRNCMP:
     case F_WEEKDAY:
+    case F_MONTHLEN:
     case F_KDENSITY:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {

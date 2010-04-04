@@ -2793,6 +2793,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		}
 	    } else if (cmd->ci == BREAK) {
 		loop->brk = 1;
+		break;
 	    } else if (cmd->ci == ENDLOOP) {
 		; /* implicit break */
 	    } else if (cmd->ci == FREQ) {
@@ -2886,10 +2887,14 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} 
 
 	if (!err) {
-	    err = gretl_if_state_check(indent0);
+	    if (loop->brk) {
+		gretl_if_state_reset(indent0);
+	    } else {
+		err = gretl_if_state_check(indent0);
+	    }
 	}
 
-	if (!err) {
+	if (!err && !loop->brk) {
 	    loop->iter += 1;
 	    if (indexed_loop(loop)) {
 		loop->idxval += 1;
@@ -2901,6 +2906,11 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 
     } /* end iterations of loop */
+
+    if (loop->brk) {
+	/* turn off break flag */
+	loop->brk = 0;
+    }
 
     if (err) {
 	if (!s->funcerr) {
