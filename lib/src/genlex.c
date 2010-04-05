@@ -342,6 +342,7 @@ struct str_table funcs[] = {
     { F_WEEKDAY,  "weekday" },
     { F_KDENSITY, "kdensity" },
     { F_MONTHLEN, "monthlen" },
+    { F_EPOCHDAY, "epochday" },
     { 0,          NULL }
 };
 

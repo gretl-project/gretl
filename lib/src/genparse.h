@@ -312,6 +312,7 @@ enum {
     F_BESSEL,
     F_WEEKDAY,
     F_MONTHLEN,
+    F_EPOCHDAY,
     F_MOVAVG,
     F_KDENSITY,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */

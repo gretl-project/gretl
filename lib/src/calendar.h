@@ -22,6 +22,8 @@
 
 #define FOUR_DIGIT_YEAR(y) ((y < 50)? y + 2000 : y + 1900)
 
+long epoch_day_from_ymd (int y, int m, int d);
+
 long get_epoch_day (const char *date);
 
 int get_day_of_week (const char *date);

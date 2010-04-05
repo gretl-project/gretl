@@ -5267,7 +5267,7 @@ int get_command_index (char *line, CMD *cmd)
     }
 
     if (!get_command_word(line, &cnext, cmd)) {
-	if (*line == '$') {
+	if (*line == '$' || *line == '@') {
 	    /* most plausible possibility? */
 	    strcpy(cmd->word, "genr");
 	    cmd->ci = GENR;

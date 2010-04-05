@@ -5270,9 +5270,34 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		}
 	    }
 	}
+    } else if (f == F_EPOCHDAY) {
+	if (l->t != NUM) {
+	    node_type_error(f, 0, NUM, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 1, NUM, m, p);
+	} else if (r->t != NUM) {
+	    node_type_error(f, 2, NUM, r, p);
+	} else {
+	    int y = l->v.xval;
+	    int mo = m->v.xval;
+	    int d = r->v.xval;
+
+	    if (y < 0 || mo < 1 || mo > 12 || d < 0 || d > 31) {
+		p->err = E_INVARG;
+	    } else {
+		ret = aux_scalar_node(p);
+		if (!p->err) {
+		    ret->v.xval = epoch_day_from_ymd(y, mo, d);
+		    if (ret->v.xval < 0) {
+			ret->v.xval = NADBL;
+		    }
+		}
+	    }
+	}
     }
 
-    if (f != F_STRNCMP && f != F_WEEKDAY && f != F_MONTHLEN) {
+    if (f != F_STRNCMP && f != F_WEEKDAY && 
+	f != F_MONTHLEN && f != F_EPOCHDAY) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -7367,6 +7392,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRNCMP:
     case F_WEEKDAY:
     case F_MONTHLEN:
+    case F_EPOCHDAY:
     case F_KDENSITY:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {

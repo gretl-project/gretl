@@ -1571,34 +1571,17 @@
       </description>
     </function>
 
-    <function name="eigensym" section="linalg" output="cvec">
+    <function name="epochday" section="data-utils" output="scalar">
       <fnargs>
-	<fnarg type="smatrix">A</fnarg>
-	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="scalar">year</fnarg>
+	<fnarg type="scalar">month</fnarg>
+	<fnarg type="scalar">day</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Computes the eigenvalues, and optionally the right eigenvectors, of
-	  the <by r="n" c="n"/> symmetric matrix <argname>A</argname>.
-	</para>
-	<para>
-	  If you want the eigenvectors, give as the second argument the name
-	  of an existing matrix preceded by <lit>&amp;</lit> (to indicate the
-	  <quote>address</quote> of the matrix in question).  In that case the
-	  specified matrix will be over-written with the auxiliary result. (It
-	  is not required that the existing matrix be of the right dimensions
-	  to receive the result.)
-	</para>
-	<para>
-	  If you don't want the eigenvectors, give the keyword <lit>null</lit>
-	  in place of the second argument.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="eigengen"/>
-	    <fncref targ="qrdecomp"/>
-	    <fncref targ="svd"/>
-	  </seelist>
+	  Returns the number of the day in the current epoch specified by
+	  year, month and day (which equals 1 for the first of January in
+	  the year 1 AD).
 	</para>
       </description>
     </function>
@@ -3104,10 +3087,11 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of days in the specified month in the specified
-	  year; <argname>weeklen</argname>, which must equal 5, 6 or 7, gives
-	  the number of days in the week that should be counted (a value of 6
-	  omits Sundays, and a value of 5 omits both Saturdays and Sundays).
+	  Returns the number of (relevant) days in the specified month in
+	  the specified year; <argname>weeklen</argname>, which must equal
+	  5, 6 or 7, gives the number of days in the week that should be
+	  counted (a value of 6 omits Sundays, and a value of 5 omits both
+	  Saturdays and Sundays).
 	</para>
       </description>
     </function>

@@ -80,6 +80,33 @@ static int day_in_year (int day, int month, int year)
 }
 
 /**
+ * epoch_day_from_ymd:
+ * @y: year.
+ * @m: month.
+ * @d: day of month.
+ * 
+ * Returns: the epoch day number, or -1 on failure.
+ */
+
+long epoch_day_from_ymd (int y, int m, int d)
+{
+    long temp;
+
+    if (y < 0 || m < 0 || d < 0) {
+	return -1;
+    }
+
+    if (y > 9999 || m > 12 || d > 31) {
+	return -1;
+    }
+
+    temp = (long)(y - 1) * 365 + leap_years_since_year_1(y - 1)
+	+ day_in_year(d, m, y);
+
+    return temp;
+}
+
+/**
  * get_epoch_day:
  * @date: string representation of calendar date, in form
  * YY[YY]/MM/DD.
@@ -99,6 +126,7 @@ long get_epoch_day (const char *date)
     if (year < 0 || month < 0 || day < 0) {
 	return -1;
     }
+
     if (year > 9999 || month > 12 || day > 31) {
 	return -1;
     }
