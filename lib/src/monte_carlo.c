@@ -337,7 +337,7 @@ int ok_in_loop (int c)
 	c == DATA ||
 	c == DELEET ||
 	c == EQNPRINT ||
-	c == FOREIGN ||
+	/* c == FOREIGN || */
 	c == FUNC ||
 	c == HURST ||
 	c == INCLUDE ||
@@ -1982,6 +1982,7 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 
     if (!ok_in_loop(s->cmd->ci)) {
 	gretl_errmsg_set(_("Sorry, this command is not available in loop mode"));
+	fprintf(stderr, "ci = %d (%s)\n", s->cmd->ci, s->line);
 	destroy_loop_stack();
 	return E_NOTIMP;
     }

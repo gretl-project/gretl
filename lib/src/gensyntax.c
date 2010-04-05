@@ -20,6 +20,7 @@
 /* parser module for 'genr' and related commands */
 
 #include "genparse.h"
+#include "gretl_string_table.h"
 
 #if GENDEBUG
 # define SDEBUG 1
@@ -628,6 +629,17 @@ static NODE *get_final_string_arg (parser *p, int eat_last)
 
     if (wrapped) {
 	unwrap_string_arg(p);
+    } else {
+	/* not quoted: give priority to string variables */
+	const char *s = get_string_by_name(p->idstr);
+
+	if (s != NULL) {
+	    free(p->idstr);
+	    p->idstr = gretl_strdup(s);
+	    if (p->idstr == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
     }
 
 #if SDEBUG
