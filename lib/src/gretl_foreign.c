@@ -545,8 +545,8 @@ static int write_data_for_R (const double **Z,
 	fputs("attach(gretldata)\n", fp);
     }
 
-    if (!err) {
-	/* let the user see that this worked */
+    if (!err && (opt & OPT_I)) {
+	/* let the (interactive) user see that this worked */
 	if (ts) {
 	    fputs("gretlmsg <- \"current data loaded as ts object \\\"gretldata\\\"\\n\"\n", fp);
 	} else {
