@@ -1975,45 +1975,88 @@ typedef struct spoint_t_ spoint_t;
 
 struct spoint_t_ {
     int obsnum;
-    double val;
+    int nvals;
+    double *vals;
 };
+
+static void free_spoints (spoint_t *sv, int n, int v)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	free(sv[i].vals);
+    }
+
+    free(sv);
+}
+
+static spoint_t *allocate_spoints (int n, int v)
+{
+    spoint_t *sv;
+    int i;
+
+    sv = malloc(n * sizeof *sv);
+
+    if (sv != NULL) {
+	for (i=0; i<n; i++) {
+	    sv[i].vals = NULL;
+	}
+	for (i=0; i<n; i++) {
+	    sv[i].vals = malloc(v * sizeof(double));
+	    if (sv[i].vals == NULL) {
+		free_spoints(sv, n, v);
+		sv = NULL;
+		break;
+	    }
+	}
+    }
+
+    return sv;
+}
 
 static int compare_vals_up (const void *a, const void *b)
 {
     const spoint_t *pa = (const spoint_t *) a;
     const spoint_t *pb = (const spoint_t *) b;
-     
-    return (pa->val > pb->val) - (pa->val < pb->val);
+    int i, ret = 0;
+
+    for (i=0; i<pa->nvals && !ret; i++) {
+	ret = (pa->vals[i] > pb->vals[i]) - (pa->vals[i] < pb->vals[i]);
+    }
+
+    return ret;
 }
 
 static int compare_vals_down (const void *a, const void *b)
 {
     const spoint_t *pa = (const spoint_t *) a;
     const spoint_t *pb = (const spoint_t *) b;
-     
-    return (pa->val < pb->val) - (pa->val > pb->val);
+    int i, ret = 0;
+
+    for (i=0; i<pa->nvals && !ret; i++) {
+	ret = (pa->vals[i] < pb->vals[i]) - (pa->vals[i] > pb->vals[i]);
+    }
+
+    return ret;
 }
 
-int dataset_sort_by (int v, double **Z, DATAINFO *pdinfo, gretlopt opt)
+int dataset_sort_by (const int *list, double **Z, DATAINFO *pdinfo, gretlopt opt)
 {
     spoint_t *sv = NULL;
     double *x = NULL;
     char **S = NULL;
-    int i, t;
+    int ns = list[1];
+    int i, t, v;
     int err = 0;
 
-    if (v < 1 || v >= pdinfo->v) {
-	return E_DATA;
-    }
-
-    sv = malloc(pdinfo->n * sizeof *sv);
+    sv = allocate_spoints(pdinfo->n, ns);
     if (sv == NULL) {
 	return E_ALLOC;
     }
 
     x = malloc(pdinfo->n * sizeof *x);
     if (x == NULL) {
-	free(sv);
+	free_spoints(sv, pdinfo->n, ns);
 	return E_ALLOC;
     }    
 
@@ -2027,7 +2070,11 @@ int dataset_sort_by (int v, double **Z, DATAINFO *pdinfo, gretlopt opt)
 
     for (t=0; t<pdinfo->n; t++) {
 	sv[t].obsnum = t;
-	sv[t].val = Z[v][t];
+	for (i=0; i<ns; i++) {
+	    v = list[i+1];
+	    sv[t].vals[i] = Z[v][t];
+	    sv[t].nvals = ns;
+	}
     }
 
     if (opt & OPT_D) {
@@ -2056,43 +2103,26 @@ int dataset_sort_by (int v, double **Z, DATAINFO *pdinfo, gretlopt opt)
 
  bailout:
 
-    free(sv);
+    free_spoints(sv, pdinfo->n, ns);
     free(x);
 
     return err;
 }
 
-static int dataset_sort (const char *s, double **Z, DATAINFO *pdinfo,
+static int dataset_sort (const int *list, double **Z, DATAINFO *pdinfo,
 			 gretlopt opt)
 {
-    char fmt[10];
-    char vname[VNAMELEN];
-    int v;
-
     if (dataset_is_time_series(pdinfo) ||
 	dataset_is_panel(pdinfo)) {
 	gretl_errmsg_set("You can only do this with undated data");
 	return E_DATA;
     }
 
-    s += strspn(s, " \t");
-
-    sprintf(fmt, "%%%ds", VNAMELEN - 1);
-
-    if (sscanf(s, fmt, vname) != 1) {
+    if (list == NULL || list[0] < 1) {
 	return E_DATA;
     }
 
-    v = series_index(pdinfo, vname);
-    if (v == pdinfo->v) {
-	return E_UNKVAR;
-    }
-
-    if (v < 1) {
-	return E_DATA;
-    }
-    
-    return dataset_sort_by(v, Z, pdinfo, opt);
+    return dataset_sort_by(list, Z, pdinfo, opt);
 }
 
 /**
@@ -3020,6 +3050,11 @@ int modify_dataset (int op, const int *list, const char *s,
 	return E_NODATA;
     }
 
+#if 0
+    fprintf(stderr, "modify_dataset: op=%d, s='%s'\n", op, s);
+    printlist(list, "list");
+#endif
+
     if (op == DS_CLEAR) {
 	/* must be handled by the calling program */
 	return E_NOTIMP;
@@ -3067,9 +3102,9 @@ int modify_dataset (int op, const int *list, const char *s,
     } else if (op == DS_TRANSPOSE) {
 	err = transpose_data(pZ, pdinfo);
     } else if (op == DS_SORTBY) {
-	err = dataset_sort(s, *pZ, pdinfo, OPT_NONE);
+	err = dataset_sort(list, *pZ, pdinfo, OPT_NONE);
     } else if (op == DS_DSORTBY) {
-	err = dataset_sort(s, *pZ, pdinfo, OPT_D);
+	err = dataset_sort(list, *pZ, pdinfo, OPT_D);
     } else if (op == DS_RESAMPLE) {
 	err = dataset_resample(k, 0, pZ, pdinfo);
 	if (!err) {

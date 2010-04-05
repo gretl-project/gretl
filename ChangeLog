@@ -14,6 +14,8 @@ version 1.8.8, in progress
   "help set lbfgs"
 - "mread": search the gretl working directory if the
   file is not found at first
+- "dataset sortby": allow the use of a list to specify 
+  multiple sort keys
 - ODBC import: enable extraction of multiple data series
   per SQL query
 - Export of data to R, interactively: add a message
@@ -24,7 +26,8 @@ version 1.8.8, in progress
   for VAR impulse response plots
 - Filter functions movavg, bkfilt and hpfilt: offer
   greater control via additional optional arguments
-- Add new functions, digamma(), kdensity()
+- Add new functions, digamma, kdensity, monthlen and
+  epochday (the latter two are calendrical) 
 - Add new built-in constant: "macheps" gets the
   machine precision
 - OS X package: add icons and associations for gretl data,

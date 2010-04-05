@@ -6702,7 +6702,9 @@ void gui_sort_data (void)
 	v = select_var_from_list_with_opt(list, _("Select sort key"),
 					  opts, DATASORT);
 	if (v > 0) {
-	    err = dataset_sort_by(v, Z, datainfo, opt);
+	    int list[] = { 1, v };
+
+	    err = dataset_sort_by(list, Z, datainfo, opt);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {

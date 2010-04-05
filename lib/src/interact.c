@@ -1713,7 +1713,7 @@ static int check_datamod_command (CMD *cmd, const char *s)
 
     if (cmd->aux == DS_NONE) {
 	cmd->err = E_PARSE;
-    } else {
+    } else if (cmd->aux != DS_SORTBY && cmd->aux != DS_DSORTBY) {
 	/* skip param word and space */
 	s += strcspn(s, " ");
 	s += strspn(s, " ");
@@ -1785,7 +1785,7 @@ static void cmd_param_grab_word (CMD *cmd, const char *s)
     }
 }
 
-static void param_grab_braced (CMD *cmd, const char *s, int *nf)
+static void param_grab_braced (CMD *cmd, const char *s)
 {
     if (*s == '{') {
 	const char *p = strchr(s, '}');
@@ -1812,7 +1812,7 @@ static void param_grab_braced (CMD *cmd, const char *s, int *nf)
    none is found.
 */
 
-static int capture_param (const char *s, CMD *cmd, int *nf)
+static int capture_param (const char *s, CMD *cmd)
 {
     /* if param has already been written by some special
        routine, don't overwrite it */
@@ -1839,7 +1839,7 @@ static int capture_param (const char *s, CMD *cmd, int *nf)
 	    /* grab the whole remainder of line */
 	    cmd_param_grab_string(cmd, s);
 	} else if (cmd->ci == QUANTREG) {
-	    param_grab_braced(cmd, s, nf);
+	    param_grab_braced(cmd, s);
 	} else {
 	    /* grab one 'word' */
 	    cmd_param_grab_word(cmd, s);
@@ -2371,7 +2371,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (NO_VARLIST(cmd->ci) || (cmd->ci == DELEET && (cmd->opt & OPT_D))) { 
 	cmd_set_nolist(cmd);
 	if (cmd->ci != GENR) {
-	    capture_param(line, cmd, NULL);
+	    capture_param(line, cmd);
 	}
 	return cmd->err;
     } 
@@ -2381,7 +2381,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == PRINT && strstr(line, "\"")) {
 	/* no list in string literal variant */
 	cmd_set_nolist(cmd);
-	capture_param(line, cmd, NULL);
+	capture_param(line, cmd);
 	return cmd->err;
     }
 
@@ -2414,9 +2414,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* dataset-modifying commands */
     if (cmd->ci == DATAMOD) {
-	capture_param(line, cmd, NULL);
-	cmd_set_nolist(cmd);
-	return cmd->err;
+	capture_param(line, cmd);
+	if (cmd->aux != DS_SORTBY && cmd->aux != DS_DSORTBY) {
+	    cmd_set_nolist(cmd);
+	    return cmd->err;
+	}
     }
 
     /** OK, now we're definitely doing a list-oriented command;
@@ -2506,13 +2508,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    /* 
-       "setmiss" takes a value to be interpreted as missing;
+    /* "setmiss" takes a value to be interpreted as missing;
        this are captured in cmd->param, as is the 'order' for
        a command that needs same
     */
     if (REQUIRES_ORDER(cmd->ci) || cmd->ci == SETMISS) {
-	capture_param(line, cmd, &nf);
+	capture_param(line, cmd);
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
@@ -2525,9 +2526,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	} 
     }
 
-    /* quantreg requires a tau specification */
     if (cmd->ci == QUANTREG) {
-	capture_param(line, cmd, &nf);
+	/* quantreg requires a tau specification */
+	capture_param(line, cmd);
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
@@ -2537,9 +2538,19 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    nf = count_free_fields(line);
 	    linelen = strlen(line);
 	} 
-    }    
+    } else if (cmd->ci == DATAMOD) {
+	/* at this point, must be doing a dataset sort, so we
+	   want a list of variables to sort by */
+	char *s = line + pos;
 
-    if (cmd->ci == VECM) { 
+	s += strspn(s, " ");
+	s += strcspn(s, " ");
+	strcpy(rem, s);
+	nf--;
+	pos = 0;
+	strcpy(line, rem);
+	linelen = strlen(line);
+    } else if (cmd->ci == VECM) { 
 	free(cmd->extra);
 	cmd->extra = gretl_word_strdup(line, NULL);
 	shift_string_left(line, strlen(cmd->extra));

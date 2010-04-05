@@ -1917,7 +1917,7 @@
       </para>
       <para>
 	<lit>clear</lit>: No parameter required.  Clears out the current
-	data, returning gretl to its intial <quote>empty</quote> state.
+	data, returning gretl to its initial <quote>empty</quote> state.
       </para>      
       <para>
 	<lit>compact</lit>: Must be followed by a positive integer
@@ -1950,14 +1950,18 @@
 	of the data table represent variables.
       </para>
       <para>
-	<lit>sortby</lit>: One variable name is required; this variable is
-	used as a sort key.  The observations on all variables in the
-	dataset are re-ordered by increasing value of the key variable.
-	This command is available only for undated data.
+	<lit>sortby</lit>: The name of a single series or list is required. If
+	one series is given, the observations on all variables in the dataset
+	are re-ordered by increasing value of the specified series. If a list
+	is given, the sort proceeds hierarchically: if the observations are
+	tied in sort order with respect to the first key variable then the
+	second key is used to break the tie, and so on until the tie is broken
+	or the keys are exhausted. Note that this command is available only
+	for undated data.
       </para>
       <para>
 	<lit>dsortby</lit>: Works as <lit>sortby</lit> except that
-	the re-ordering is by decreasing value of the key variable.
+	the re-ordering is by decreasing value of the key series.
       </para>
       <para>
 	<lit>resample</lit>: Constructs a new dataset by random
