@@ -3528,7 +3528,7 @@ static int ignore_line (ufunc *fun)
 
 #define NEEDS_IF(c) (c == ELSE || c == ELIF || c == ENDIF)
 
-/* Rather minimal check for syntatic validity of "compiled" function.
+/* Rather minimal check for syntactic validity of "compiled" function.
    FIXME: it would be good to check here for messed up block structure
    too (e.g. "system" without "end system").
 */
