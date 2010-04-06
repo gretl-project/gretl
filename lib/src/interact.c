@@ -5237,6 +5237,13 @@ static int is_endif (const char *s)
     return sscanf(s, "%3s %3s", s1, s2) == 2 && !strcmp(s2, "if");
 }
 
+static int is_endloop (const char *s)
+{
+    char s1[4], s2[5];
+
+    return sscanf(s, "%3s %4s", s1, s2) == 2 && !strcmp(s2, "loop");
+}
+
 /**
  * get_command_index:
  * @line: command line.
