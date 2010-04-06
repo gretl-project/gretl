@@ -5253,7 +5253,10 @@ static int is_endif (const char *s)
 
 int get_command_index (char *line, CMD *cmd)
 {
+#if 0
+    /* 2010-04-05: use cmd->context instead: is that a problem? */
     static int context;
+#endif
     char cnext = 0;
     int done = 0;
 
@@ -5297,22 +5300,20 @@ int get_command_index (char *line, CMD *cmd)
 #endif
 
     if (!strcmp(cmd->word, "end")) {
-	/* support old-style sloppiness for now */
 	if (is_endif(line)) {
 	    cmd->ci = ENDIF;
+	} else if (is_endloop(line)) {
+	    cmd->ci = ENDLOOP;
 	} else {
-	    context = 0;
+	    cmd->context = 0;
 	    cmd->ci = END;
 	}
 	done = 1;
-    } else if (context && strcmp(cmd->word, "equation")) {
+    } else if (cmd->context && strcmp(cmd->word, "equation")) {
 	/* "equation" occurs in the SYSTEM context, but it is
 	   a command in its own right, so we don't set cmd->ci
 	   to the context value */
-	cmd->ci = context;
-#if CMD_DEBUG
-	fprintf(stderr, " context (static) = %d, ci = %d\n", context, cmd->ci);
-#endif
+	cmd->ci = cmd->context;
 	done = 1;
     } else if (catch_command_alias(line, cmd)) {
 #if CMD_DEBUG
@@ -5344,11 +5345,7 @@ int get_command_index (char *line, CMD *cmd)
     if (cmd->ci == NLS || cmd->ci == MLE ||
 	cmd->ci == GMM || cmd->ci == FOREIGN ||
 	cmd->ci == KALMAN) {
-	context = cmd->ci;
-    }
-
-    if (!strcmp(line, "end loop")) {
-	cmd->ci = ENDLOOP;
+	cmd->context = cmd->ci;
     }
 
 #if CMD_DEBUG

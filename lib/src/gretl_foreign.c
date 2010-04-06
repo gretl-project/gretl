@@ -511,13 +511,11 @@ static int write_data_for_R (const double **Z,
 			     gretlopt opt,
 			     FILE *fp)
 {
-    gchar *Rdata, *Rline;
     int ts = dataset_is_time_series(pdinfo);
+    gchar *Rdata;
     int err;
 
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
-    Rline = g_strdup_printf("store \"%s\" -r", Rdata);
-    g_free(Rline);
 
     err = write_data(Rdata, NULL, Z, pdinfo, OPT_R, 0);
     if (err) {

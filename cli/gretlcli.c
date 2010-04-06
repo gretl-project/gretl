@@ -765,8 +765,8 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     /* tell libgretl if we're in batch mode */
     gretl_set_batch_mode(batch);
 
-    /* if we're stacking commands for a loop, parse "lightly" */
     if (gretl_compiling_loop()) {
+	/* if we're stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, cmd);
     } else {
 	err = parse_command_line(line, cmd, pZ, pdinfo);
