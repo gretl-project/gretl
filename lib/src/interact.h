@@ -84,6 +84,8 @@ gretlopt gretl_cmd_get_opt (const CMD *cmd);
 
 void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 
+int filter_comments (char *s, CMD *cmd);
+
 int parse_command_line (char *line, CMD *cmd, double ***pZ, 
 			DATAINFO *pdinfo); 
 

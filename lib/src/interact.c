@@ -111,7 +111,7 @@ static int strip_inline_comments (char *s)
 /* filter_comments: strip comments out of line; return non-zero if
    the whole line is a comment */
 
-static int filter_comments (char *s, CMD *cmd)
+int filter_comments (char *s, CMD *cmd)
 {
     char tmp[MAXLINE];
     char *p = s;
@@ -4371,7 +4371,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (can_continue(cmd->ci) && (cmd->opt & OPT_U)) {
 	/* backward compat for old OPT_U mechanism */
 	cmd->flags |= CMD_CATCH;
-	cmd->opt &= !OPT_U;
+	cmd->opt &= ~OPT_U;
     }
 
     if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
@@ -5316,10 +5316,7 @@ int get_command_index (char *line, CMD *cmd)
 	    cmd->ci = END;
 	}
 	done = 1;
-    } else if (cmd->context && strcmp(cmd->word, "equation")) {
-	/* "equation" occurs in the SYSTEM context, but it is
-	   a command in its own right, so we don't set cmd->ci
-	   to the context value */
+    } else if (cmd->context) {
 	cmd->ci = cmd->context;
 	done = 1;
     } else if (catch_command_alias(line, cmd)) {
