@@ -1,13 +1,11 @@
 topsrc = @top_srcdir@
 
-have_gtk = @have_gtk@
-
 VPATH = $(topsrc)/extra
 
 CFLAGS = -g -O2 -Wall `pkg-config --cflags gretl`
 LDFLAGS = `pkg-config --libs gretl`
 
-all: simple_client
+all: simple_client hsk_test
 
 clean:
 	rm -f ./simple_client core 

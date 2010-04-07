@@ -24,8 +24,35 @@
 
 #define OPTDEBUG 0
 
-/* model commands plus ADD and OMIT */
 #define vcv_opt_ok(c) (MODEL_COMMAND(c) || c == ADD || c == OMIT)
+
+#define quiet_opt_ok(c) (MODEL_COMMAND(c) ||	\
+			 c == ADD ||		\
+			 c == ADF ||		\
+			 c == ANOVA ||		\
+			 c == APPEND ||		\
+			 c == CHOW ||		\
+			 c == COINT2 ||		\
+			 c == CORRGM ||		\
+			 c == CUSUM ||		\
+			 c == DATA ||		\
+			 c == ESTIMATE ||	\
+			 c == FCAST ||		\
+			 c == FOREIGN ||	\
+			 c == FREQ ||		\
+			 c == KPSS ||		\
+			 c == MODTEST ||	\
+			 c == LOOP ||		\
+			 c == NORMTEST ||	\
+			 c == OLS ||		\
+			 c == OMIT ||		\
+			 c == OPEN ||		\
+			 c == RESET ||		\
+			 c == RESTRICT ||	\
+			 c == RMPLOT ||		\
+			 c == VAR ||		\
+			 c == VECM ||		\
+			 c == XCORRGM)
 
 struct gretl_option {
     int ci;              /* command index (gives context) */
@@ -52,7 +79,6 @@ struct flag_match {
 struct gretl_option gretl_opts[] = {
     { ADD,      OPT_B, "both", 0 },
     { ADD,      OPT_I, "silent", 0 },
-    { ADD,      OPT_Q, "quiet", 0 },
     { ADD,      OPT_T, "inst", 0 },
     { ADF,      OPT_N, "nc", 0 }, 
     { ADF,      OPT_C, "c", 0 }, 
@@ -60,17 +86,13 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_R, "ctt", 0 },     
     { ADF,      OPT_T, "ct", 0 }, 
     { ADF,      OPT_V, "verbose", 0 },
-    { ADF,      OPT_Q, "quiet", 0 },
     { ADF,      OPT_F, "difference", 0 },
     { ADF,      OPT_E, "test-down", 0 },
     { ADF,      OPT_G, "gls", 0 },
-    { ANOVA,    OPT_Q, "quiet", 0 },
     { AR1,      OPT_B, "no-corc", 0 },
     { AR1,      OPT_H, "hilu", 0 },
     { AR1,      OPT_P, "pwe", 0 },
-    { AR1,      OPT_Q, "quiet", 0},
     { APPEND,   OPT_T, "time-series", 0 },
-    { APPEND,   OPT_Q, "quiet", 0 },
     { ARBOND,   OPT_A, "asymptotic", 0 },
     { ARBOND,   OPT_D, "time-dummies", 0 },
     { ARBOND,   OPT_H, "orthdev", 0 },
@@ -80,7 +102,6 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_H, "hessian", 0 },
     { ARMA,     OPT_L, "lbfgs", 0 },
     { ARMA,     OPT_N, "nc", 0 },    
-    { ARMA,     OPT_Q, "quiet", 0 },
     { ARMA,     OPT_U, "continue", 0 },
     { ARMA,     OPT_V, "verbose", 0 },
     { ARMA,     OPT_X, "x-12-arima", 0 },
@@ -88,7 +109,6 @@ struct gretl_option gretl_opts[] = {
     { BXPLOT,   OPT_O, "notches", 0 },
     { BXPLOT,   OPT_U, "output", 2 },
     { CHOW,     OPT_D, "dummy", 0 },
-    { CHOW,     OPT_Q, "quiet", 0 },
     { COINT,    OPT_E, "test-down", 0 },
     { COINT,    OPT_N, "nc", 0 },
     { COINT,    OPT_R, "ctt", 0 },     
@@ -97,7 +117,6 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_A, "crt", 0 },
     { COINT2,   OPT_D, "seasonals", 0 },
     { COINT2,   OPT_N, "nc", 0 },
-    { COINT2,   OPT_Q, "quiet", 0 },
     { COINT2,   OPT_R, "rc", 0 },
     { COINT2,   OPT_T, "ct", 0 },
     { COINT2,   OPT_V, "verbose", 0 },
@@ -105,11 +124,8 @@ struct gretl_option gretl_opts[] = {
     { CORR,     OPT_S, "spearman", 0 },
     { CORR,     OPT_U, "uniform", 0 },
     { CORR,     OPT_V, "verbose", 0 },
-    { CORRGM,   OPT_Q, "quiet", 0 },
-    { CUSUM,    OPT_Q, "quiet", 0 },
     { CUSUM,    OPT_R, "squares", 0 },
     { DATA,     OPT_O, "odbc", 0 },
-    { DATA,     OPT_Q, "quiet", 0 },
     { DATAMOD,  OPT_P, "preserve", 0 },
     { DELEET,   OPT_D, "db", 0 },
     { DIFFTEST, OPT_G, "sign", 0 },
@@ -127,7 +143,6 @@ struct gretl_option gretl_opts[] = {
     { DURATION, OPT_G, "opg", 0 },
     { DURATION, OPT_R, "robust", 0 },
     { DURATION, OPT_V, "verbose", 0 },
-    { DURATION, OPT_Q, "quiet", 0 },
     { EQNPRINT, OPT_O, "complete", 0 },
     { EQNPRINT, OPT_T, "t-ratios", 0 },
     { TABPRINT, OPT_O, "complete", 0 },
@@ -135,21 +150,17 @@ struct gretl_option gretl_opts[] = {
     { ESTIMATE, OPT_I, "iterate", 0 },
     { ESTIMATE, OPT_M, "geomean", 0 },
     { ESTIMATE, OPT_N, "no-df-corr", 0 },
-    { ESTIMATE, OPT_Q, "quiet", 0 },
     { ESTIMATE, OPT_V, "verbose", 0 },
     { FCAST,    OPT_D, "dynamic", 0 },
     { FCAST,    OPT_N, "no-stats", 0 },
     { FCAST,    OPT_S, "static", 0 },
-    { FCAST,    OPT_Q, "quiet", 0 },
     { FCAST,    OPT_R, "rolling", 0 },
     { FCAST,    OPT_O, "out-of-sample", 0 },
     { FCAST,    OPT_I, "integrate", 0 },
     { FCAST,    OPT_U, "plot", 1 },
     { FOREIGN,  OPT_D, "send-data", 0 },
-    { FOREIGN,  OPT_Q, "quiet", 0 },
     { FOREIGN,  OPT_V, "verbose", 0 },
     { FREQ,     OPT_O, "gamma", 0 },
-    { FREQ,     OPT_Q, "quiet", 0 },
     { FREQ,     OPT_S, "silent", 0 },
     { FREQ,     OPT_Z, "normal", 0 },
     { FUNDEBUG, OPT_C, "continue", 0 },
@@ -164,7 +175,6 @@ struct gretl_option gretl_opts[] = {
     { GARCH,    OPT_Z, "stdresid", 0 },
     { GMM,      OPT_I, "iterate", 0 },
     { GMM,      OPT_L, "lbfgs", 0 },
-    { GMM,      OPT_Q, "quiet", 0 },
     { GMM,      OPT_T, "two-step", 0 },
     { GMM,      OPT_U, "continue", 0 },
     { GMM,      OPT_V, "verbose", 0 },
@@ -186,14 +196,11 @@ struct gretl_option gretl_opts[] = {
     { HECKIT,   OPT_T, "two-step", 0 },
     { HECKIT,   OPT_V, "verbose", 0 },
     { HELP,     OPT_F, "func", 0 },
-    { HSK,      OPT_Q, "quiet", 0 },
-    { INTREG,   OPT_Q, "quiet", 0 },
     { INTREG,   OPT_R, "robust", 0 },
     { INTREG,   OPT_V, "verbose", 0 },
     { IVREG,    OPT_G, "gmm", 0 },
     { IVREG,    OPT_I, "iterate", 0 },
     { IVREG,    OPT_L, "liml", 0 },
-    { IVREG,    OPT_Q, "quiet", 0 },
     { IVREG,    OPT_R, "robust", 0 },  
     { IVREG,    OPT_S, "save", 0 },
     { IVREG,    OPT_T, "two-step", 0 },
@@ -202,7 +209,6 @@ struct gretl_option gretl_opts[] = {
     { KALMAN,   OPT_D, "diffuse", 0 },
     { KPSS,     OPT_T, "trend", 0 },
     { KPSS,     OPT_V, "verbose", 0 },
-    { KPSS,     OPT_Q, "quiet", 0 },
     { KPSS,     OPT_F, "difference", 0 },
     { LEVERAGE, OPT_S, "save", 0 },
     { MODTEST,  OPT_A, "autocorr", 0 },
@@ -214,16 +220,13 @@ struct gretl_option gretl_opts[] = {
     { MODTEST,  OPT_S, "squares", 0 }, 
     { MODTEST,  OPT_P, "panel", 0 },
     { MODTEST,  OPT_R, "robust", 0 },
-    { MODTEST,  OPT_Q, "quiet", 0 },
     { MODTEST,  OPT_W, "white", 0 },
     { MODTEST,  OPT_X, "white-nocross", 0 },
     { LOGIT,    OPT_M, "multinomial", 0 },
     { LOGIT,    OPT_P, "p-values", 0 },
-    { LOGIT,    OPT_Q, "quiet", 0 },
     { LOGIT,    OPT_R, "robust", 0 },
     { LOGIT,    OPT_V, "verbose", 0 },
     { LOOP,     OPT_P, "progressive", 0 },
-    { LOOP,     OPT_Q, "quiet", 0 },
     { LOOP,     OPT_V, "verbose", 0 },
     { MAHAL,    OPT_S, "save", 0 },
     { MAHAL,    OPT_V, "vcv", 0 },
@@ -233,7 +236,6 @@ struct gretl_option gretl_opts[] = {
     { MLE,      OPT_G, "no-gradient-check", 0 },
     { MLE,      OPT_L, "lbfgs", 0 },
     { MLE,      OPT_N, "numerical", 0 },
-    { MLE,      OPT_Q, "quiet", 0 },
     { MLE,      OPT_R, "robust", 0 },
     { MLE,      OPT_U, "continue", 0 },
     { MLE,      OPT_V, "verbose", 0 },
@@ -242,7 +244,6 @@ struct gretl_option gretl_opts[] = {
     { MODPRINT, OPT_R, "rtf", 0 },
     { MODPRINT, OPT_T, "tex", 0 },
     { MPOLS,    OPT_O, "vcv", 0 },
-    { MPOLS,    OPT_Q, "quiet", 0 },
     { MPOLS,    OPT_S, "simple-print", 0 },
     { NEGBIN,   OPT_G, "opg", 0 },
     { NEGBIN,   OPT_M, "model1", 0 },
@@ -250,7 +251,6 @@ struct gretl_option gretl_opts[] = {
     { NEGBIN,   OPT_V, "verbose", 0 },
     { NLS,      OPT_N, "numerical", 0 },
     { NLS,      OPT_O, "vcv", 0 },
-    { NLS,      OPT_Q, "quiet", 0 },
     { NLS,      OPT_R, "robust", 0 },
     { NLS,      OPT_U, "continue", 0 },
     { NLS,      OPT_V, "verbose", 0 },
@@ -259,7 +259,6 @@ struct gretl_option gretl_opts[] = {
     { NORMTEST, OPT_W, "swilk", 0 },
     { NORMTEST, OPT_J, "jbera", 0 },
     { NORMTEST, OPT_L, "lillie", 0 },
-    { NORMTEST, OPT_Q, "quiet", 0 },
     { NULLDATA, OPT_P, "preserve", 0 },
     { OLS,      OPT_F, "print-final", 0 },
     { OLS,      OPT_J, "jackknife", 0 },
@@ -272,7 +271,6 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_A, "auto", 1 },
     { OMIT,     OPT_B, "both", 0 },
     { OMIT,     OPT_I, "silent", 0 },
-    { OMIT,     OPT_Q, "quiet", 0 },
     { OMIT,     OPT_T, "inst", 0 },
     { OMIT,     OPT_W, "wald", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
@@ -282,7 +280,6 @@ struct gretl_option gretl_opts[] = {
     { OPEN,     OPT_O, "odbc", 0 },
     { OPEN,     OPT_P, "preserve", 0 },
     { OPEN,     OPT_W, "www", 0 },
-    { OPEN,     OPT_Q, "quiet", 0 },
     { OUTFILE,  OPT_A, "append", 0 },
     { OUTFILE,  OPT_C, "close", 0 },
     { OUTFILE,  OPT_W, "write", 0 },
@@ -294,7 +291,6 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_M, "matrix-diff", 0 },
     { PANEL,    OPT_O, "vcv", 0 },
     { PANEL,    OPT_P, "pooled", 0 },
-    { PANEL,    OPT_Q, "quiet", 0 },
     { PANEL,    OPT_R, "robust", 0 },
     { PANEL,    OPT_S, "silent", 0 },
     { PANEL,    OPT_U, "random-effects", 0 },
@@ -313,28 +309,23 @@ struct gretl_option gretl_opts[] = {
     { PRINT,    OPT_O, "byobs", 0 },
     { PRINT,    OPT_N, "no-dates", 0 },
     { PROBIT,   OPT_P, "p-values", 0 },
-    { PROBIT,   OPT_Q, "quiet", 0 },
     { PROBIT,   OPT_R, "robust", 0 },
     { PROBIT,   OPT_V, "verbose", 0 },
     { QQPLOT,   OPT_R, "raw", 0 },
     { QQPLOT,   OPT_Z, "z-scores", 0 },      
     { QUANTREG, OPT_I, "intervals", 1 },
     { QUANTREG, OPT_N, "no-df-corr", 0 },
-    { QUANTREG, OPT_Q, "quiet", 0 },
     { QUANTREG, OPT_R, "robust", 0 },
     { QUIT,     OPT_X, "exit", 0 },
     { RESET,    OPT_C, "cubes-only", 0 },
-    { RESET,    OPT_Q, "quiet", 0 },
     { RESET,    OPT_R, "squares-only", 0 },
     { RESTRICT, OPT_B, "bootstrap", 0 },
     { RESTRICT, OPT_F, "full", 0 },
     { RESTRICT, OPT_J, "jitter", 0 },
-    { RESTRICT, OPT_Q, "quiet", 0 },
     { RESTRICT, OPT_V, "verbose", 0 },
     { RESTRICT, OPT_L, "lbfgs", 0 },
     { RESTRICT, OPT_N, "no-scaling", 0 },
     { RESTRICT, OPT_S, "silent", 0 },
-    { RMPLOT,   OPT_Q, "quiet", 0 },
     { RUNS,     OPT_D, "difference", 0 },
     { RUNS,     OPT_E, "equal", 0 },
     { SCATTERS, OPT_L, "with-lines", 0 },
@@ -381,7 +372,6 @@ struct gretl_option gretl_opts[] = {
     { VAR,      OPT_I, "impulse-responses", 0 },
     { VAR,      OPT_L, "lagselect", 0 },
     { VAR,      OPT_N, "nc", 0 },
-    { VAR,      OPT_Q, "quiet", 0 }, 
     { VAR,      OPT_R, "robust", 0 }, 
     { VAR,      OPT_T, "trend", 0 }, 
     { VAR,      OPT_S, "lags", 2 },
@@ -391,13 +381,10 @@ struct gretl_option gretl_opts[] = {
     { VECM,     OPT_F, "variance-decomp", 0 },
     { VECM,     OPT_I, "impulse-responses", 0 },
     { VECM,     OPT_N, "nc", 0 },
-    { VECM,     OPT_Q, "quiet", 0 },
     { VECM,     OPT_R, "rc", 0 },
     { VECM,     OPT_T, "ct", 0 },
     { VECM,     OPT_V, "verbose", 0 },
     { WLS,      OPT_R, "robust", 0 },    
-    { WLS,      OPT_Q, "quiet", 0 },
-    { XCORRGM,  OPT_Q, "quiet", 0 },
     { XTAB,     OPT_C, "column", 0 },
     { XTAB,     OPT_M, "matrix", 2 },
     { XTAB,     OPT_R, "row", 0 },
@@ -466,12 +453,14 @@ const char **get_opts_for_command (int ci, int *nopt)
     int i, j, n = 0;
     const char **ret = NULL;
 
-    if (vcv_opt_ok(ci) && ci != OLS) {
-	n++; /* vcv */
+    if (ci != OLS) {
+	/* widely applicable options which are "attached" to OLS */
+	n += vcv_opt_ok(ci);
+	n += quiet_opt_ok(ci);
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (gretl_opts[i].ci == ci) n++;
+	n += (gretl_opts[i].ci == ci);
     }
 
     if (n == 0) {
@@ -489,8 +478,13 @@ const char **get_opts_for_command (int ci, int *nopt)
 	}
     }
 
-    if (vcv_opt_ok(ci) && ci != OLS) {
-	ret[j++] = "vcv";
+    if (ci != OLS) {
+	if (vcv_opt_ok(ci)) {
+	    ret[j++] = "vcv";
+	}
+	if (quiet_opt_ok(ci)) {
+	    ret[j++] = "quiet";
+	}
     }
 
     *nopt = n;
@@ -561,6 +555,10 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
 	return 1;
     }
 
+    if (opt == OPT_Q && quiet_opt_ok(ci)) {
+	return 1;
+    }    
+
     for (i=0; gretl_opts[i].ci != 0; i++) {
 	if (ci == gretl_opts[i].ci && opt == gretl_opts[i].o) {
 	    return 1;
@@ -572,6 +570,28 @@ static int opt_is_valid (gretlopt opt, int ci, char c)
     } 
 
     return 0;
+}
+
+gretlopt valid_short_opt (int ci, char c)
+{
+    gretlopt opt = 0;
+    int i, ok;
+
+    for (i=0; flag_matches[i].c != '\0'; i++) {
+	if (c == flag_matches[i].c) {
+	    opt = flag_matches[i].o;
+	    break;
+	}
+    }
+
+    if (opt) {
+	ok = opt_is_valid(opt, ci, c);
+	if (!ok) {
+	    opt = 0;
+	}
+    }
+	
+    return opt;
 }
 
 /* See if at point @p (at which we've found '-') in string @s we
@@ -636,7 +656,7 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
     return ret;
 }
 
-static int valid_long_opt (int ci, const char *lopt)
+gretlopt valid_long_opt (int ci, const char *lopt)
 {
     int opt = OPT_NONE;
     int i;
@@ -647,6 +667,10 @@ static int valid_long_opt (int ci, const char *lopt)
 
     if (vcv_opt_ok(ci) && !strcmp(lopt, "vcv")) {
 	return OPT_O;
+    }
+
+    if (quiet_opt_ok(ci) && !strcmp(lopt, "quiet")) {
+	return OPT_Q;
     }
 
     /* start by looking for an exact match */
@@ -1188,6 +1212,11 @@ const char *print_flags (gretlopt oflags, int ci)
     if ((oflags & OPT_O) && vcv_opt_ok(ci)) {
 	pputs(flagprn, " --vcv");
 	oflags &= ~OPT_O; /* handled */
+    }
+
+    if ((oflags & OPT_Q) && quiet_opt_ok(ci)) {
+	pputs(flagprn, " --quiet");
+	oflags &= ~OPT_Q; /* handled */
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
