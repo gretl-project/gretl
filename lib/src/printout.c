@@ -233,7 +233,7 @@ int max_obs_label_length (const DATAINFO *pdinfo)
 	/* we have specific observation strings */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    get_obs_string(s, t, pdinfo);
-	    n = strlen(s);
+	    n = g_utf8_strlen(s, -1);
 	    if (n > nmax) {
 		nmax = n;
 	    }
@@ -1883,6 +1883,7 @@ static int print_by_obs (int *list, const double **Z,
 	varheading(blist, obslen, colwidth, pdinfo, 0, prn);
 	
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    int thislen = obslen;
 
 	    if (screenvar && Z[screenvar][t] == 0.0) {
 		/* screened out by boolean */
@@ -1893,11 +1894,14 @@ static int print_by_obs (int *list, const double **Z,
 		strcpy(obslabel, SORTED_MARKER(pdinfo, sortvar, t));
 	    } else if (opt & OPT_N) {
 		sprintf(obslabel, "%d", t + 1);
+	    } else if (pdinfo->markers && pdinfo->S != NULL) {
+		strcpy(obslabel, pdinfo->S[t]);
+		thislen = get_utf_width(obslabel, obslen);
 	    } else {
-		get_obs_string(obslabel, t, pdinfo);
+		ntodate(obslabel, t, pdinfo);
 	    }
 
-	    pprintf(prn, "%*s", obslen, obslabel);
+	    pprintf(prn, "%*s", thislen, obslabel);
 
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
 		x = Z[blist[i]][t];

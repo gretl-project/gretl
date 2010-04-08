@@ -1069,6 +1069,31 @@ int test_markers_for_dates (double ***pZ, DATAINFO *pdinfo,
     return pd;
 }
 
+static int utf8_ok (FILE *fp, int pos)
+{
+    long mark = ftell(fp);
+    int len = pos + 9;
+    char *test = malloc(len + 1);
+    int i, ret = 0;
+
+    fseek(fp, mark - pos - 1, SEEK_SET);
+
+    for (i=0; i<len; i++) {
+	test[i] = fgetc(fp);
+    }
+    test[i] = '\0';
+
+    if (g_utf8_validate(test, -1, NULL)) {
+	ret = 1;
+    } 
+
+    free(test);
+
+    fseek(fp, mark, SEEK_SET);
+
+    return ret;
+}
+
 /* The function below checks for the maximum line length in the given
    file.  It also checks for extraneous binary data (the file is 
    supposed to be plain text), and checks whether the 'delim'
@@ -1083,6 +1108,7 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 {
     int c, c1, cbak = 0, cc = 0;
     int comment = 0, maxlen = 0;
+    int lines = 0;
 
     csv_set_trailing_comma(cdata);
 
@@ -1109,13 +1135,15 @@ static int csv_max_line_length (FILE *fp, csvdata *cdata, PRN *prn)
 	    if (cbak != 0 && cbak != ',') {
 		csv_unset_trailing_comma(cdata);
 	    }
+	    lines++;
 	    continue;
 	}
 	cbak = c;
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
-	    !(c == CTRLZ)) {
-	    pprintf(prn, M_("Binary data (%d) encountered: this is not a valid "
-			   "text file\n"), c);
+	    !(c == CTRLZ) && !utf8_ok(fp, cc)) {
+	    pprintf(prn, M_("Binary data (%d) encountered (line %d:%d): "
+			    "this is not a valid text file\n"), 
+		    c, lines, cc);
 	    return -1;
 	}
 	if (cc == 0) {
@@ -1835,7 +1863,13 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		    S++;
 		}
 		strncat(c->dinfo->S[t], S, OBSLEN - 1);
+#if 0 /* not quite ready yet */
+		if (!g_utf8_validate(c->dinfo->S[t], -1, NULL)) {
+		    iso_to_ascii(c->dinfo->S[t]);
+		}
+#else
 		iso_to_ascii(c->dinfo->S[t]);
+#endif
 	    } else {
 		nv = (csv_skip_column(c))? k : k + 1;
 		err = process_csv_obs(c, nv, t, prn);
