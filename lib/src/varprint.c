@@ -982,10 +982,10 @@ static int max_Ftest_label_len (GRETL_VAR *var, const DATAINFO *pdinfo,
 	}
     }
 
-    sprintf(s, I_("All lags of %s"), "x");
+    sprintf(s, _("All lags of %s"), "x");
     len1 = g_utf8_strlen(s, -1) + maxnamelen - 1;
 
-    sprintf(s, I_("All vars, lag %d"), maxlag);
+    sprintf(s, _("All vars, lag %d"), maxlag);
     len2 = g_utf8_strlen(s, -1);
 
     len = (len1 > len2)? len1 : len2;
