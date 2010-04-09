@@ -3308,9 +3308,12 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     gchar *title;
     PRN *prn = NULL;
     int code, h = 0;
-    int resp, err;
+    int resp = 0;
+    int err;
 
-    if (var == NULL) return;
+    if (var == NULL) {
+	return;
+    }
 
     code = VAR_model_data_code(action);
     h = default_VAR_horizon(datainfo);
@@ -3334,9 +3337,15 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 	dialog_add_order_selector(dlg, var, ordvec);
     }
 
+    /* blocks till response is selected */
     gtk_widget_show_all(dlg);
 
-    if (resp < 0 || bufopen(&prn)) {
+    if (resp < 0) {
+	/* canceled */
+	goto bailout;
+    }
+
+    if (bufopen(&prn)) {
 	goto bailout;
     } 
 
@@ -3365,6 +3374,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 
 	viewer = view_buffer_with_parent(vwin, prn, 80, 400, title, 
 					 code, NULL);
+	/* for use when printing in other formats */
 	viewer->active_var = h;
     }
 
