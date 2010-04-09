@@ -1522,7 +1522,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     int (*show_progress) (long, long, int) = NULL;
     long sz = 0L;
     int i, t, v, nvars;
-    int in_c_locale = 0;
+    int have_markers, in_c_locale = 0;
     int uerr = 0;
     int err = 0;
 
@@ -1720,15 +1720,16 @@ int gretl_write_gdt (const char *fname, const int *list,
     alt_puts("</variables>\n", fp, fz);
 
     panelobs = query_print_panel_obs(pdinfo);
+    have_markers = dataset_has_markers(pdinfo);
 
     /* then listing of observations */
     alt_puts("<observations ", fp, fz);
     if (gz) {
 	gzprintf(fz, "count=\"%d\" labels=\"%s\"",
-		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
+		 tsamp, (have_markers)? "true" : "false");
     } else {
 	fprintf(fp, "count=\"%d\" labels=\"%s\"",
-		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
+		tsamp, (have_markers)? "true" : "false");
     }
     if (panelobs) {
 	alt_puts(" panel-info=\"true\"", fp, fz);
@@ -1737,7 +1738,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	alt_puts("<obs", fp, fz);
-	if (pdinfo->markers && pdinfo->S != NULL) {
+	if (have_markers) {
 	    uerr = gretl_xml_encode_to_buf(xmlbuf, pdinfo->S[t], sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {

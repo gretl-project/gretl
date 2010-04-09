@@ -1481,8 +1481,7 @@ void free_strings_array (char **strs, int nstrs)
 
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo)
 {
-    if (pdinfo->markers && pdinfo->S != NULL) { 
-	/* data marker strings present */
+    if (dataset_has_markers(pdinfo)) { 
 	strcpy(obs, pdinfo->S[t]);
     } else {
 	ntodate(obs, t, pdinfo);

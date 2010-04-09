@@ -1065,7 +1065,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
 	}	    
     }
     
-    if (pdinfo->markers && pdinfo->S != NULL) {
+    if (dataset_has_markers(pdinfo)) {
 	if (opt & OPT_D) {
 	    dataset_destroy_obs_markers(pdinfo);
 	} else {
@@ -1137,7 +1137,7 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
 	(*pZ)[i] = x;
     }
     
-    if (pdinfo->markers && pdinfo->S != NULL) {
+    if (dataset_has_markers(pdinfo)) {
 	if (reallocate_markers(pdinfo, newn)) {
 	    return E_ALLOC;
 	}
@@ -1188,7 +1188,7 @@ int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo)
 	    memmove(Z[i], Z[i] + head, mvsize);
 	}
 
-	if (pdinfo->markers && pdinfo->S != NULL) {
+	if (dataset_has_markers(pdinfo)) {
 	    for (i=0; i<head; i++) {
 		free(pdinfo->S[i]);
 	    }

@@ -1377,7 +1377,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
     /* copy observation markers, if relevant */
 
-    if (datainfo->markers && datainfo->S != NULL) {
+    if (dataset_has_markers(datainfo)) {
 	gchar *marker;
 
 	gtk_tree_model_get_iter_first(model, &iter);

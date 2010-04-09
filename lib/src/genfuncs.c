@@ -2020,7 +2020,7 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
 	test[n-1] = '\0';
     }
 
-    if (pdinfo->markers && pdinfo->S != NULL) {
+    if (dataset_has_markers(pdinfo)) {
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!strcmp(test, pdinfo->S[t])) {
 		return t + 1;

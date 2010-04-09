@@ -1894,7 +1894,7 @@ static int print_by_obs (int *list, const double **Z,
 		strcpy(obslabel, SORTED_MARKER(pdinfo, sortvar, t));
 	    } else if (opt & OPT_N) {
 		sprintf(obslabel, "%d", t + 1);
-	    } else if (pdinfo->markers && pdinfo->S != NULL) {
+	    } else if (dataset_has_markers(pdinfo)) {
 		strcpy(obslabel, pdinfo->S[t]);
 		thislen = get_utf_width(obslabel, obslen);
 	    } else {

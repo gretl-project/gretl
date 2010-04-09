@@ -198,6 +198,15 @@ typedef enum {
 #define dataset_is_panel(p) (p != NULL && p->structure == STACKED_TIME_SERIES)
 
 /**
+ * dataset_has_markers:
+ * @p: pointer to data information struct.
+ *
+ * Determine whether a data set has observation marker strings (1)
+ * or not (0).
+ */
+#define dataset_has_markers(p) (p != NULL && p->markers && p->S != NULL)
+
+/**
  * var_is_discrete:
  * @p: pointer to data information struct.
  * @i: index number of variable.

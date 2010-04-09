@@ -124,7 +124,7 @@ static PRN *single_series_view_print_formatted (windata_t *vwin,
     char dchar = datainfo->delim;
     double x;
     PRN *prn;
-    int i;
+    int i, t;
 
     if (bufopen(&prn)) {
 	return NULL;
@@ -133,8 +133,13 @@ static PRN *single_series_view_print_formatted (windata_t *vwin,
     pprintf(prn, "obs%c%s\n", dchar, datainfo->varname[sview->varnum]);
 
     for (i=0; i<sview->npoints; i++) {
-	get_obs_string(obslabel, sview->points[i].obsnum, datainfo);
+	t = sview->points[i].obsnum;
 	x = sview->points[i].val;
+	if (dataset_has_markers(datainfo)) {
+	    strcpy(obslabel, datainfo->S[t]);
+	} else {
+	    ntodate(obslabel, t, datainfo);
+	}
 	if (na(x)) {
 	    pprintf(prn, "%s%cNA\n", obslabel, dchar);
 	} else {
@@ -153,10 +158,10 @@ static void single_series_view_print (windata_t *vwin)
     series_view *sview = (series_view *) vwin->data;
     char num_format[32];
     char obslabel[OBSLEN];
-    int obslen = 0;
+    int thislen, obslen = 0;
     double x;
     PRN *prn;
-    int i, err = 0;
+    int i, t, err = 0;
 
     if (bufopen(&prn)) {
 	return;
@@ -184,21 +189,28 @@ static void single_series_view_print (windata_t *vwin)
     }
 
     if (sview->format == 'g') {
-	sprintf(num_format, "%%%ds %%#13.%dg\n", obslen, sview->digits);
+	sprintf(num_format, "%%*s %%#13.%dg\n", sview->digits);
     } else {
-	sprintf(num_format, "%%%ds %%13.%df\n", obslen, sview->digits);
+	sprintf(num_format, "%%*s %%13.%df\n", sview->digits);
     }
 	
     pprintf(prn, "\n%*s ", obslen, "");
     pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
 
     for (i=0; i<sview->npoints; i++) {
-	get_obs_string(obslabel, sview->points[i].obsnum, datainfo);
+	t = sview->points[i].obsnum;
 	x = sview->points[i].val;
-	if (na(x)) {
-	    pprintf(prn, "%*s\n", obslen, obslabel);
+	if (dataset_has_markers(datainfo)) {
+	    strcpy(obslabel, datainfo->S[t]);
+	    thislen = get_utf_width(obslabel, obslen);
 	} else {
-	    pprintf(prn, num_format, obslabel, x);
+	    ntodate(obslabel, t, datainfo);
+	    thislen = obslen;
+	}
+	if (na(x)) {
+	    pprintf(prn, "%*s\n", thislen, obslabel);
+	} else {
+	    pprintf(prn, num_format, thislen, obslabel, x);
 	} 
     }
 

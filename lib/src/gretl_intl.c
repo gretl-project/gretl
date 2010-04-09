@@ -1071,11 +1071,18 @@ int gretl_is_ascii (const char *buf)
     return 1;
 }
 
+/* We want to print @str in a field of @width (visible) characters,
+   but @str may contain multi-byte characters. In that case, determine 
+   the adjustment to @width that is needed to avoid underrun and
+   return the adjusted value.
+*/
+
 int get_utf_width (const char *str, int width)
 {
-    width += strlen(str) - g_utf8_strlen(str, -1);
+    /* the number of "invisible" bytes */
+    int invis = strlen(str) - g_utf8_strlen(str, -1);
 
-    return width;
+    return width + invis;
 }
 
 int get_translated_width (const char *str)

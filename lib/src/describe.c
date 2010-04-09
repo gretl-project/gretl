@@ -5146,6 +5146,7 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 	int k = gretl_vector_get_length(means);
 	char obs[OBSLEN];
 	int miss, savevar = 0;
+	int thislen, obslen;
 	double m, x, xbar;
 	int i, t, vi;
 
@@ -5161,13 +5162,13 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 	}
 	pputc(prn, '\n');
 
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	obslen = max_obs_label_length(pdinfo);
 
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    miss = 0;
 
 	    /* write vector of deviations from centroid for
 	       observation t */
-
 	    for (i=0; i<k; i++) {
 		vi = list[i+1];
 		xbar = gretl_vector_get(means, i);
@@ -5180,7 +5181,15 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 
 	    m = miss ? NADBL : gretl_scalar_qform(xdiff, S, &err);
 
-	    pprintf(prn, "%8s ", get_obs_string(obs, t, pdinfo));
+	    if (dataset_has_markers(pdinfo)) {
+		strcpy(obs, pdinfo->S[t]);
+		thislen = get_utf_width(obs, obslen);
+	    } else {
+		ntodate(obs, t, pdinfo);
+		thislen = obslen;
+	    }
+
+	    pprintf(prn, "%*s ", thislen, obs);
 
 	    if (err || miss) {
 		pprintf(prn, "NA\n");

@@ -46,7 +46,7 @@
 
 <!ELEMENT obs  ( #PCDATA )>
 <!ATTLIST obs
-   label     NMTOKEN #IMPLIED
+   label     CDATA #IMPLIED
    unit      NMTOKEN #IMPLIED
    period    NMTOKEN #IMPLIED
    id        NMTOKEN #IMPLIED

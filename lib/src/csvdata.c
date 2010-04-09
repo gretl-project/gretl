@@ -1816,6 +1816,29 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
     return err;
 }
 
+#define XML1_OK(u) ((u>=0x0020 && u<=0xD7FF) || \
+		    (u>=0xE000 && u<=0xFFFD))
+
+static int label_is_valid (gchar *s)
+{
+    if (!g_utf8_validate(s, -1, NULL)) {
+	return 0;
+    } else {
+	int i, n = g_utf8_strlen(s, -1);
+	gunichar u;
+
+	for (i=0; i<n; i++) {
+	    u = g_utf8_get_char(s);
+	    if (!XML1_OK(u)) {
+		return 0;
+	    }
+	    s = g_utf8_next_char(s);
+	}
+    }
+
+    return 1;
+}
+
 static int 
 real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
@@ -1863,13 +1886,9 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		    S++;
 		}
 		strncat(c->dinfo->S[t], S, OBSLEN - 1);
-#if 0 /* not quite ready yet */
-		if (!g_utf8_validate(c->dinfo->S[t], -1, NULL)) {
+		if (!label_is_valid((gchar *) c->dinfo->S[t])) {
 		    iso_to_ascii(c->dinfo->S[t]);
-		}
-#else
-		iso_to_ascii(c->dinfo->S[t]);
-#endif
+		} 
 	    } else {
 		nv = (csv_skip_column(c))? k : k + 1;
 		err = process_csv_obs(c, nv, t, prn);

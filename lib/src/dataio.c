@@ -674,7 +674,7 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 #if DATES_DEBUG
 	fprintf(stderr, "dateton: treating as calendar data\n");
 #endif
-	if (pdinfo->markers && pdinfo->S != NULL) {
+	if (dataset_has_markers(pdinfo)) {
 	    /* "hard-wired" calendar dates as strings */
 	    for (t=0; t<pdinfo->n; t++) {
 		if (!strcmp(date, pdinfo->S[t])) {
@@ -716,7 +716,7 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	    n = (t - pdinfo->sd0) / 10;
 	    handled = 1;
 	}	
-    } else if (pdinfo->markers && pdinfo->S != NULL) {
+    } else if (dataset_has_markers(pdinfo)) {
 	t = match_obs_marker(date, pdinfo);
 	if (t >= 0) {
 	    return t;
@@ -841,7 +841,7 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 
     if (calendar_data(pdinfo)) {
 	/* handles both daily and dated weekly data */
-	if (pdinfo->markers && pdinfo->S != NULL) {
+	if (dataset_has_markers(pdinfo)) {
 	    strcpy(datestr, pdinfo->S[t]);
 	} else {
 	    calendar_date_string(datestr, t, pdinfo);
@@ -1345,7 +1345,7 @@ int write_data (const char *fname, int *list,
     if (fmt == GRETL_FMT_TRAD) { 
 	/* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (pdinfo->markers && pdinfo->S != NULL) {
+	    if (dataset_has_markers(pdinfo)) {
 		fprintf(fp, "%s ", pdinfo->S[t]);
 	    }
 	    for (i=1; i<=l0; i++) {

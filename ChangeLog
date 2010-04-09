@@ -18,6 +18,7 @@ version 1.8.8, in progress
   multiple sort keys
 - ODBC import: enable extraction of multiple data series
   per SQL query
+- Observation labels: permit non-ASII UTF-8 characters
 - Export of data to R, interactively: add a message
   confirming that the export worked
 - "foreign" code blocks: add support for GNU Octave
