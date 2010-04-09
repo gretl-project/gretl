@@ -25,6 +25,8 @@
 #include "libset.h"
 #include "texprint.h"
 
+#include <glib.h>
+
 /**
  * gretl_VAR_print_sigma:
  * @var: pointer to gretl VAR structure.
@@ -965,6 +967,32 @@ static int Ivals_ok (const GRETL_VAR *var)
 	&& !na(var->Ivals[1]) && !na(var->Ivals[2]);
 }
 
+static int max_Ftest_label_len (GRETL_VAR *var, const DATAINFO *pdinfo,
+				char *s, int maxlag)
+{
+    int len, len1, len2;
+    int maxnamelen = 0;
+    int i, v;
+
+    for (i=0; i<var->neqns; i++) {
+	v = (var->models[i])->list[1];
+	len = strlen(pdinfo->varname[v]);
+	if (len > maxnamelen) {
+	    maxnamelen = len;
+	}
+    }
+
+    sprintf(s, I_("All lags of %s"), "x");
+    len1 = g_utf8_strlen(s, -1) + maxnamelen - 1;
+
+    sprintf(s, I_("All vars, lag %d"), maxlag);
+    len2 = g_utf8_strlen(s, -1);
+
+    len = (len1 > len2)? len1 : len2;
+
+    return (len > 25)? (len + 1) : 25;
+}
+
 /**
  * gretl_VAR_print:
  * @var: pointer to VAR struct.
@@ -984,13 +1012,14 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		     PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
-    char Vstr[72];
+    char label[72];
     int vecm = (var->ci == VECM);
     int dfd = var->models[0]->dfd;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
     int quiet = (opt & OPT_Q);
     int nlags, maxlag, nextlag;
+    int llen, fwidth = 0;
     int lldone = 0;
     double pv;
     int i, j, k, v;
@@ -1017,21 +1046,21 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 
     if (vecm) {
 	if (tex || rtf) {
-	    sprintf(Vstr, I_("VECM system, lag order %d"), var->order + 1);
+	    sprintf(label, I_("VECM system, lag order %d"), var->order + 1);
 	} else {
-	    sprintf(Vstr, _("VECM system, lag order %d"), var->order + 1);
+	    sprintf(label, _("VECM system, lag order %d"), var->order + 1);
 	}
     } else {
 	if (tex || rtf) {
-	    sprintf(Vstr, I_("VAR system, lag order %d"), var->order);
+	    sprintf(label, I_("VAR system, lag order %d"), var->order);
 	} else {
-	    sprintf(Vstr, _("VAR system, lag order %d"), var->order);
+	    sprintf(label, _("VAR system, lag order %d"), var->order);
 	}
     }
 
     if (tex) {
 	pputs(prn, "\\begin{center}");
-	pprintf(prn, "\n%s\\\\\n", Vstr);
+	pprintf(prn, "\n%s\\\\\n", label);
 	pprintf(prn, I_("%s estimates, observations %s--%s ($T=%d$)"),
 		(vecm)? I_("Maximum likelihood") : I_("OLS"), startdate, enddate, var->T);
 	if (vecm) {
@@ -1040,7 +1069,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	pputs(prn, "\n\\end{center}\n");
     } else if (rtf) {
 	gretl_print_toggle_doc_flag(prn);
-	pprintf(prn, "\n%s\\par\n", Vstr);
+	pprintf(prn, "\n%s\\par\n", label);
 	pprintf(prn, I_("%s estimates, observations %s-%s (T = %d)"),
 		(vecm)? I_("Maximum likelihood") : I_("OLS"), startdate, enddate, var->T);
 	if (vecm) {
@@ -1048,7 +1077,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	}	
 	pputs(prn, "\\par\n\n");
     } else {
-	pprintf(prn, "\n%s\n", Vstr);
+	pprintf(prn, "\n%s\n", label);
 	pprintf(prn, _("%s estimates, observations %s-%s (T = %d)"),
 		(vecm)? _("Maximum likelihood") : _("OLS"), startdate, enddate, var->T);
 	if (vecm) {
@@ -1133,20 +1162,30 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    pprintf(prn, "%s:\n\n", _("F-tests of zero restrictions"));
 	}
 
+	if (!tex) {
+	    fwidth = max_Ftest_label_len(var, pdinfo, label, maxlag);
+	}
+
 	for (j=0; j<var->neqns; j++) {
 	    pv = snedecor_cdf_comp(nlags, dfd, var->Fvals[k]);
 	    v = (var->models[j])->list[1];
 	    if (tex) {
-		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
-		pputs(prn, "& ");
+		pprintf(prn, I_("All lags of %s"), pdinfo->varname[v]);
+		pputs(prn, " & ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", nlags, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\\\\n", pv);
 	    } else if (rtf) {
-		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
+		sprintf(label, I_("All lags of %s"), pdinfo->varname[v]);
+		llen = strlen(label);
+		pputs(prn, label);
+		bufspace(fwidth - llen, prn);
 		pprintf(prn, "F(%d, %d) = %8.5g ", nlags, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\par\n", pv);
 	    } else {
-		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
+		sprintf(label, _("All lags of %s"), pdinfo->varname[v]);
+		llen = g_utf8_strlen(label, -1);
+		pputs(prn, label);
+		bufspace(fwidth - llen, prn);
 		sprintf(Fstr, "F(%d, %d)", nlags, dfd);
 		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
 	    }
@@ -1156,16 +1195,22 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	if (var->order > 1) {
 	    pv = snedecor_cdf_comp(var->neqns, dfd, var->Fvals[k]);
 	    if (tex) {
-		pprintf(prn, I_("All vars, lag %-13d "), maxlag);
-		pputs(prn, "& ");
+		pprintf(prn, I_("All vars, lag %d"), maxlag);
+		pputs(prn, " & ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\\\\n", pv);
 	    } else if (rtf) {
-		pprintf(prn, I_("All vars, lag %-13d "), maxlag);
+		sprintf(label, I_("All vars, lag %d"), maxlag);
+		llen = strlen(label);
+		pputs(prn, label);
+		bufspace(fwidth - llen, prn);
 		pprintf(prn, "F(%d, %d) = %8.5g ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "[%.4f]\\par\n", pv);
 	    } else {
-		pprintf(prn, _("All vars, lag %-13d "), maxlag);
+		sprintf(label, _("All vars, lag %d"), maxlag);
+		llen = g_utf8_strlen(label, -1);
+		pputs(prn, label);
+		bufspace(fwidth - llen, prn);
 		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
 		pprintf(prn, "%12s = %#8.5g [%.4f]\n", Fstr, var->Fvals[k], pv);
 	    } 

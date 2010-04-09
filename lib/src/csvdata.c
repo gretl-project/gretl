@@ -1819,6 +1819,11 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 #define XML1_OK(u) ((u>=0x0020 && u<=0xD7FF) || \
 		    (u>=0xE000 && u<=0xFFFD))
 
+/* check that observation label contains only 
+   valid UTF-8, and moreover that every character
+   is valid in XML 1.0
+*/
+
 static int label_is_valid (gchar *s)
 {
     if (!g_utf8_validate(s, -1, NULL)) {
