@@ -662,51 +662,6 @@ static gretlopt get_short_opts (char *line, int ci, int *err)
     return ret;
 }
 
-gretlopt valid_long_opt (int ci, const char *lopt)
-{
-    int opt = OPT_NONE;
-    int i;
-
-    if (*lopt == '\0') {
-	return 0;
-    }
-
-    if (vcv_opt_ok(ci) && !strcmp(lopt, "vcv")) {
-	return OPT_O;
-    }
-
-    if (quiet_opt_ok(ci) && !strcmp(lopt, "quiet")) {
-	return OPT_Q;
-    }
-
-    /* start by looking for an exact match */
-    for (i=0; gretl_opts[i].o != 0; i++) {
-	if (ci == gretl_opts[i].ci && 
-	    !strcmp(lopt, gretl_opts[i].longopt)) {
-	    opt = gretl_opts[i].o;
-	    break;
-	}
-    }
-
-    /* if this failed, try for an abbreviation or extension */
-    if (opt == OPT_NONE) {
-	int len, len1, len2;
-
-	len1 = strlen(lopt);
-	for (i=0; gretl_opts[i].o != 0; i++) {
-	    len2 = strlen(gretl_opts[i].longopt);
-	    len = (len2 > len1)? len1 : len2;
-	    if (ci == gretl_opts[i].ci && 
-		!strncmp(lopt, gretl_opts[i].longopt, len)) {
-		opt = gretl_opts[i].o;
-		break;
-	    }
-	} 
-    }   
-
-    return opt;
-}
-
 /* Apparatus for setting and retrieving parameters associated
    with command options, as in --opt=val.  
 */
@@ -763,12 +718,6 @@ static optparm *matching_optparm (int ci, gretlopt opt)
     return NULL;
 }
 
-enum {
-    NO_PARM = 0,
-    ACCEPTS_PARM,
-    NEEDS_PARM
-};
-
 /* for a given @ci, @opt pair, determine its status with regard
    to a parameter value (not allowed, allowed, or required)
 */
@@ -792,7 +741,7 @@ static int real_push_option_param (int ci, gretlopt opt, char *val,
     optparm *op;
     int n, err = 0;
 
-    if (!checked && option_parm_status(ci, opt) == NO_PARM)  {
+    if (!checked && option_parm_status(ci, opt) == OPT_NO_PARM)  {
 	return E_DATA;
     }
 
@@ -912,6 +861,55 @@ int set_optval_double (int ci, gretlopt opt, double x)
     return real_push_option_param(ci, opt, gretl_strdup(s), 1);
 }
 
+gretlopt valid_long_opt (int ci, const char *lopt, OptStatus *status)
+{
+    int opt = OPT_NONE;
+    int i;
+
+    *status = 0;
+
+    if (*lopt == '\0') {
+	return 0;
+    }
+
+    if (vcv_opt_ok(ci) && !strcmp(lopt, "vcv")) {
+	return OPT_O;
+    }
+
+    if (quiet_opt_ok(ci) && !strcmp(lopt, "quiet")) {
+	return OPT_Q;
+    }
+
+    /* start by looking for an exact match */
+    for (i=0; gretl_opts[i].o != 0; i++) {
+	if (ci == gretl_opts[i].ci && 
+	    !strcmp(lopt, gretl_opts[i].longopt)) {
+	    opt = gretl_opts[i].o;
+	    *status = gretl_opts[i].parminfo;
+	    break;
+	}
+    }
+
+    /* if this failed, try for an abbreviation or extension */
+    if (opt == OPT_NONE) {
+	int len, len1, len2;
+
+	len1 = strlen(lopt);
+	for (i=0; gretl_opts[i].o != 0; i++) {
+	    len2 = strlen(gretl_opts[i].longopt);
+	    len = (len2 > len1)? len1 : len2;
+	    if (ci == gretl_opts[i].ci && 
+		!strncmp(lopt, gretl_opts[i].longopt, len)) {
+		opt = gretl_opts[i].o;
+		*status = gretl_opts[i].parminfo;
+		break;
+	    }
+	} 
+    }  
+
+    return opt;
+}
+
 #define data_open_special(s) (!strcmp(s, "sheet") || \
                               !strcmp(s, "coloffset") || \
 			      !strcmp(s, "rowoffset"))
@@ -953,7 +951,7 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
     } 
 
     if (!err) {
-	if (status == NEEDS_PARM || status == ACCEPTS_PARM) {
+	if (status == OPT_NEEDS_PARM || status == OPT_ACCEPTS_PARM) {
 	    err = real_push_option_param(ci, opt, val, 1);
 	} else {
 	    err = E_DATA;
@@ -978,6 +976,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 {
     char *s = line;
     char longopt[32];
+    OptStatus status = 0;
     gretlopt match, ret = 0L;
 
     while ((s = strstr(s, "--")) != NULL) {
@@ -990,7 +989,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 
 	if (maybe_opt_start(line, s)) {
 	    sscanf(s + 2, "%31[^ =]", longopt);
-	    match = valid_long_opt(ci, longopt);
+	    match = valid_long_opt(ci, longopt, &status);
 	    if (match > 0) {
 		/* recognized an acceptable option flag */
 		ret |= match;
@@ -1007,18 +1006,15 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 	}
 
 	if (match > 0) {
-	    int status = option_parm_status(ci, match);
-
 	    gretl_delete(s, 0, 2 + strlen(longopt));
 	    if (*s == '=') {
 		/* got a param value: is it OK? */
-		if (status == 0) {
-		    /* this option does not accept a param */
+		if (status == OPT_NO_PARM) {
 		    *err = E_PARSE;
 		} else {
 		    *err = handle_optval(s, ci, match, status);
 		}
-	    } else if (status == NEEDS_PARM) {
+	    } else if (status == OPT_NEEDS_PARM) {
 		/* we need a param value but there's none */
 		gretl_errmsg_sprintf(_("The option '--%s' requires a parameter"), 
 				     longopt);

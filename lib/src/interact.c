@@ -1991,16 +1991,6 @@ static char *copy_remainder (const char *line, int pos)
     return rem;
 }
 
-static int process_cmd_extra (CMD *cmd, const double **Z,
-			      const DATAINFO *pdinfo)
-{
-    if (cmd->ci == VECM) {
-	cmd->aux = gretl_int_from_string(cmd->extra, &cmd->err);
-    }
-
-    return cmd->err;
-}
-
 #define semi_special(c) (c == ARBOND)
 
 static int handle_semicolon (int *k, int *ints_ok, int *poly, 
@@ -2557,9 +2547,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	nf--;
 	pos = 0;
 	linelen = strlen(line);
-	if (process_cmd_extra(cmd, (const double **) *pZ, pdinfo)) {
-	    goto cmd_exit;
-	}
     } 
 
     /* get a count of ';' separators in line */
@@ -4890,7 +4877,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == CHOW) {
 	    err = chow_test(line, models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == QLRTEST) {
-	    err = chow_test(line, models[0], pZ, pdinfo, cmd->opt | OPT_T, prn);
+	    err = chow_test(NULL, models[0], pZ, pdinfo, cmd->opt | OPT_T, prn);
 	} else if (cmd->ci == VIF) { 
 	    err = vif_test(models[0], pZ, pdinfo, prn);
 	} 
@@ -5014,8 +5001,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    s->var = gretl_VAR(cmd->order, cmd->list, Z, pdinfo, 
 			       cmd->opt, prn, &err);
 	} else {
-	    s->var = gretl_VECM(cmd->order, cmd->aux, cmd->list, Z, pdinfo, 
-				cmd->opt, prn, &err);
+	    int rank = gretl_int_from_string(cmd->extra, &err);
+
+	    if (!err) {
+		s->var = gretl_VECM(cmd->order, rank, cmd->list, Z, pdinfo, 
+				    cmd->opt, prn, &err);
+	    }
 	}
 	if (s->var != NULL) {
 	    schedule_callback(s);
