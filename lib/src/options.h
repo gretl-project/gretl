@@ -48,9 +48,11 @@ int option_prereq_missing (gretlopt opt, gretlopt test,
 
 int inapplicable_option_error (int ci, gretlopt opt);
 
+int push_option_param (int ci, gretlopt opt, char *val);
+
 double get_optval_double (int ci, gretlopt opt);
 
-void set_optval_double (int ci, gretlopt opt, double x);
+int set_optval_double (int ci, gretlopt opt, double x);
 
 const char *get_optval_string (int ci, gretlopt opt);
 

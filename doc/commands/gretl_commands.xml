@@ -350,7 +350,7 @@
 
     <usage>
       <arguments>
-        <argument>datafile</argument>
+        <argument>filename</argument>
       </arguments>
       <options>
 	<option>
@@ -425,7 +425,8 @@
 	Cochrane&ndash;Orcutt iterative procedure (see Section 9.5 of
 	Ramanathan, 2002). Iteration is terminated when successive error
 	sums of squares do not differ by more than 0.005 percent or
-	after 20 iterations.</para>
+	after 20 iterations.
+      </para>
 
       <para context="gui">
 	The <quote>list of AR lags</quote> specifies the structure of
@@ -1099,15 +1100,19 @@
     </usage>
     <description>
       <para>
-	This is not a command in its own right but can be used as a prefix to
-	most regular commands: the effect is to prevent termination of a
-	script if an error occurs in executing the command. If an error does
-	occur, this is registered in an internal error code which can be
-	accessed as <lit>$error</lit> (a zero value indicates success). The
-	value of <lit>$error</lit> should always be checked immediately after
-	using <lit>catch</lit>, and appropriate action taken if the command
-	failed.
+	This is not a command in its own right but can be used as a prefix
+	to most regular commands: the effect is to prevent termination of
+	a script if an error occurs in executing the command. If an error
+	does occur, this is registered in an internal error code which can
+	be accessed as <lit>$error</lit> (a zero value indicates success).
+	The value of <lit>$error</lit> should always be checked
+	immediately after using <lit>catch</lit>, and appropriate action
+	taken if the command failed.
       </para> 
+      <para>
+	The <lit>catch</lit> keyword cannot be used before <lit>if</lit>,
+	<lit>elif</lit> or <lit>endif</lit>.
+      </para>
     </description>
   </command>
 
@@ -1511,19 +1516,16 @@
 	    will be the average of the values for January, February
 	    and March of 1990.</para>
 	</li>
-
 	<li><para>Summing: The value written to the dataset will be
 	    the sum of the relevant higher-frequency values.  For
 	    example, the first-quarter value will be the sum of the
 	    January, February and March values.</para>
 	</li>
-
 	<li><para>End-of-period values: The value written to the
 	    dataset is the last relevant value from the
 	    higher-frequency data.  For example, the first quarter of
 	    1990 will get the March 1990 value.</para>
 	</li>
-
 	<li><para>Start-of-period values: The value written to the
 	    dataset is the first relevant value from the
 	    higher-frequency data.  For example, the first quarter of
@@ -1537,7 +1539,8 @@
 	(menu item <quote>Variable/Edit attributes</quote>) that
 	method is used rather than the default.  If the compaction
 	method is already set for all variables, the choice of a
-	default compaction method is not presented.</para>
+	default compaction method is not presented.
+      </para>
 
     </description>
   </command>
@@ -1646,8 +1649,8 @@
 
     <usage>
       <arguments>
-        <argument>variable</argument>
-        <argument optional="true">maxlag</argument>
+        <argument>series</argument>
+        <argument optional="true">order</argument>
       </arguments>
       <options>
 	<option>
@@ -1663,7 +1666,7 @@
     <description>
       <para>
 	Prints the values of the autocorrelation function for
-	<repl>variable</repl>, which may be specified by name or number.  The
+	<repl>series</repl>, which may be specified by name or number.  The
 	values are defined as 
 	<equation status="inline" 
 	  tex="$\hat{\rho}(u_t, u_{t-s})$" 
@@ -1673,7 +1676,6 @@
 	observation of the variable <math>u</math> and
 	<math>s</math> is the number of lags.
       </para>
-
       <para>
 	The partial autocorrelations (calculated using the
 	Durbin&ndash;Levinson algorithm) are also shown: these are net of the
@@ -1684,9 +1686,8 @@
 	to the number of lags used.  Unless the <lit>--quiet</lit> option is
 	given, a plot of the correlogram is printed.
       </para>
-
       <para>
-	If a <repl>maxlag</repl> value is specified the length of the
+	If a <repl>order</repl> value is specified the length of the
 	correlogram is limited to at most that number of lags, otherwise the
 	length is determined automatically, as a function of the frequency of
 	the data and the number of observations.
@@ -2030,26 +2031,22 @@
 
     <usage>
       <arguments>
-        <argument optional="true">varlist</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
 	<option>
 	  <flag>--db</flag>
-	  <effect>delete from opened database</effect>
+	  <effect>delete series from database</effect>
 	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	By default, removes the listed variables (given by name or
-	number) from the current dataset. <emphasis>Use with
-	caution</emphasis>: no confirmation is asked, and any variables
-	with higher ID numbers will be re-numbered.
-      </para>
-      <para>If no <repl>varlist</repl> is given with this command, it
-	deletes the last (highest numbered) variable from the
-	dataset.
+	Removes the listed variables (given by name or number) from the
+	current dataset. <emphasis>Use with caution</emphasis>: no
+	confirmation is asked, and any variables with higher ID numbers
+	will be re-numbered.
       </para>
       <para>
 	If the <lit>--db</lit> option is given, this command deletes the
@@ -2075,8 +2072,8 @@
 	evenly spaced reference points, over a suitable range in
 	relation to the range of the data, and attributing a density
 	to each reference point based on the actual observations in
-	the vicinity.</para>
-      
+	the vicinity.
+      </para>
       <para>The formula used to compute the estimated density at each
 	reference point, <math>x</math>, is
       <equation status="display"
@@ -2087,9 +2084,10 @@
 	points, <math>h</math> is a <quote>bandwidth</quote>
 	parameter, and <math>k</math>() is the kernel function.
 	The larger the value of the bandwidth parameter, the smoother
-	the estimated density.</para>
-
-      <para>You are given the choice of using a Gaussian kernel (the
+	the estimated density.
+      </para>
+      <para>
+	You are given the choice of using a Gaussian kernel (the
 	standard normal density) or the Epanechnikov kernel.  By
 	default, the bandwidth is that suggested as a rule of thumb by
 	Silverman (1986), namely
@@ -2104,8 +2102,8 @@
 	obtained by multiplying the Silverman value by the adjustment
 	factor.
       </para>
-
-      <para>For a good introductory discussion of kernel density
+      <para>
+	For a good introductory discussion of kernel density
 	estimation see Chapter 15 of Davidson and MacKinnon's
 	<book>Econometric Theory and Methods</book>.
       </para>
@@ -2151,15 +2149,15 @@
 	will be pre-selected as dependent when the model dialog is
 	next opened.  Short-cut: double-click on a variable on the
 	left to select it as the dependent variable and also set it as
-	the default.</para>
-
+	the default.
+      </para>
       <para>To select independent variables, highlight them on the
 	left and press the <quote>Add</quote> button (or click the
 	right mouse button).  You can highlight several contiguous
 	variables by dragging with the mouse.  You can highlight a
 	group of non-contiguous variables by clicking on them with the
-	<lit>Ctrl</lit> key pressed.</para>
-
+	<lit>Ctrl</lit> key pressed.
+      </para>
     </description>
 
   </command>
@@ -2448,47 +2446,37 @@
   </command>  
 
   <command name="elif" section="Programming" label="Flow control" context="cli">
-
     <description><para>See <cmdref targ="if"/>.</para>
     </description>
-
   </command>
 
   <command name="else" section="Programming" context="cli">
-
     <description><para>See <cmdref targ="if"/>.</para>
     </description>
-
   </command>
 
   <command name="end" section="Programming" 
     label="End block of commands" context="cli">
-
     <description>
       <para>
 	Ends a block of commands of some sort.  For example, <cmd>end
 	  system</cmd> terminates an equation <cmdref targ="system"/>.
       </para>
     </description>
-
   </command>
 
   <command name="endif" section="Programming" label="Flow control" context="cli">
-
     <description><para>See <cmdref targ="if"/>.</para>
     </description>
-
   </command>
 
   <command name="endloop" section="Programming" 
     label="End a command loop" context="cli">
-
     <description>
       <para>
 	Marks the end of a command loop.  See <cmdref targ="loop"/>.
       </para>
     </description>
-
   </command>
 
   <command name="eqnprint" section="Printing" 
@@ -2516,7 +2504,6 @@
 	number of models estimated to date in the current session.
 	See also <cmdref targ="tabprint"/>.
       </para>
-
       <para>
 	If the <lit>--complete</lit> flag is given, the &latex; file is
 	a complete document, ready for processing; otherwise it must
@@ -2651,39 +2638,37 @@
     label="Expand data">
 
     <description>
-
       <para>
-	If you wish to add to a dataset a series that is of lower frequency, it
-	is necessary to <quote>expand</quote> the new series.  For instance, a
-	quarterly series will have to be expanded to fit into a monthly dataset.
-	In addition, you may sometimes want to expand an entire dataset to a
-	higher frequency (perhaps, prior to adding a higher-frequency variable
-	to the dataset).
+	If you wish to add to a dataset a series that is of lower
+	frequency, it is necessary to <quote>expand</quote> the new
+	series.  For instance, a quarterly series will have to be expanded
+	to fit into a monthly dataset. In addition, you may sometimes want
+	to expand an entire dataset to a higher frequency (perhaps, prior
+	to adding a higher-frequency variable to the dataset).
       </para>
-
       <para>
-	Expansion of data should be considered an <quote>expert</quote> option:
-	you need to know what you are doing.  What gretl does is simply
-	replicate the values of the lower-frequency series as many times as
-	required.  For example, suppose we have a quarterly series with the
-	value 35.5 in 1990:1, the first quarter of 1990.  On expansion to
-	monthly, the value 35.5 will be assigned to the observations for
-	January, February and March of 1990.  The expanded variable is 
-	therefore useless for fine-grained time-series analysis, outside
-	of the special case where you know that the variable in question 
-	does in fact remain constant over the sub-periods.  
+	Expansion of data should be considered an <quote>expert</quote>
+	option: you need to know what you are doing.  What gretl does is
+	simply replicate the values of the lower-frequency series as many
+	times as required.  For example, suppose we have a quarterly
+	series with the value 35.5 in 1990:1, the first quarter of 1990.
+	On expansion to monthly, the value 35.5 will be assigned to the
+	observations for January, February and March of 1990.  The
+	expanded variable is therefore useless for fine-grained
+	time-series analysis, outside of the special case where you know
+	that the variable in question does in fact remain constant over
+	the sub-periods.  
       </para>
-
       <para>
-	Two related commands should be mentioned here.  First, when you are
-	combining series of differing original frequencies within one dataset,
-	you should consider the option of compacting the higher-frequency data
-	rather than expanding the lower-frequency series.  This option can be
-	found under gretl's Sample menu.  Second, if you choose to expand
-	a series, you may wish to consider smoothing the result.  Various
-	options are available using the <cmd>genr</cmd> command.
+	Two related commands should be mentioned here.  First, when you
+	are combining series of differing original frequencies within one
+	dataset, you should consider the option of compacting the
+	higher-frequency data rather than expanding the lower-frequency
+	series.  This option can be found under gretl's Sample menu.
+	Second, if you choose to expand a series, you may wish to consider
+	smoothing the result.  Various options are available using the
+	<cmd>genr</cmd> command.
       </para>
-
     </description>
   </command>
 
@@ -2691,15 +2676,17 @@
     label="Export data">
 
     <description>
-      <para>You may export data in Comma-Separated Values (CSV)
-	format: such data may be opened in spreadsheets and many other
-	application programs.</para>
-
-      <para>You may also export data in the native formats of GNU R or
-	GNU octave.  For further information on these programs (both
-	of which support advanced statistical analysis) please see
-	their respective websites, http://www.r-project.org/ and
-	http://www.octave.org/</para>
+      <para>
+	You may export data in Comma-Separated Values (CSV) format: such
+	data may be opened in spreadsheets and many other application
+	programs.
+      </para>
+      <para>
+	You may also export data in the native formats of GNU R or GNU
+	octave.  For further information on these programs (both of which
+	support advanced statistical analysis) please see their respective
+	websites, http://www.r-project.org/ and http://www.octave.org/
+      </para>
     </description>
   </command>
 
@@ -2707,20 +2694,21 @@
     label="Factorized plot">
 
     <description>
-      <para>This command requires the selection of three variables,
-	the last of which must be a dummy variable (values 1 or 0).
-	The Y variable is plotted against the X variable, with the
-	data points colored differently depending on the value of the
-	third.
+      <para>
+	This command requires the selection of three variables, the last
+	of which must be a dummy variable (values 1 or 0). The Y variable
+	is plotted against the X variable, with the data points colored
+	differently depending on the value of the third.
       </para>
-      <para>Example: You have data on wages and educational attainment
-	for a sample of people; you also have a dummy variable with
-	value 1 for men and 0 for women (as in Ramanathan's
-	<filename>data7-2</filename>).  A <quote>factorized
-	  plot</quote> of <lit>WAGE</lit> against <lit>EDUC</lit>
-	using the <lit>GENDER</lit> dummy as factor will show the data
-	points for men in one color and those for women in another
-	(with a legend to identify them).
+      <para>
+	Example: You have data on wages and educational attainment for a
+	sample of people; you also have a dummy variable with value 1 for
+	men and 0 for women (as in Ramanathan's
+	<filename>data7-2</filename>).  A <quote>factorized plot</quote>
+	of <lit>WAGE</lit> against <lit>EDUC</lit> using the
+	<lit>GENDER</lit> dummy as factor will show the data points for
+	men in one color and those for women in another (with a legend to
+	identify them).
       </para>
     </description>
 
@@ -2906,8 +2894,8 @@
 
     <description>
      <para>
-	This command opens a special mode in which commands to be executed by
-	another program are accepted.  You exit this mode with <lit>end
+	This command opens a special mode in which commands to be executed
+	by another program are accepted.  You exit this mode with <lit>end
 	  foreign</lit>; at this point the stacked commands are executed.
       </para>
       <para>
@@ -2929,7 +2917,7 @@
 
     <usage>
       <arguments>
-        <argument>var</argument>
+        <argument>series</argument>
       </arguments>
       <options>
         <option>
@@ -2954,7 +2942,7 @@
     <description context="cli">
       <para>
 	With no options given, displays the frequency distribution for
-	<repl>var</repl> (given by name or number).
+	<repl>series</repl> (given by name or number).
       </para>
       <para>
 	If the <lit>--normal</lit> option is given, the
@@ -4162,8 +4150,8 @@
 	errors that are robust in the presence of heteroskedasticity
 	(and, in the case of the HAC estimator, autocorrelation).
       </para>
-
-      <para>HC0 produces the original <quote>White's standard
+      <para>
+	HC0 produces the original <quote>White's standard
 	errors</quote>; HC1, HC2, HC3 and HC3a are subsequent
 	variations that are generally reckoned to produce superior
 	(more reliable) results.  For details of the estimators, see
@@ -4174,24 +4162,24 @@
 	jackknife, as described in MacKinnon and White (1985); HC3 is
 	a close approximation to the jackknife.  
       </para>
-
-      <para>If you use the HAC estimator for time-series data, you are
+      <para>
+	If you use the HAC estimator for time-series data, you are
 	able to fine-tune the lag-length using the <cmd>set</cmd>
 	command.  Please see the gretl manual or the script commands
-	help file for details.</para>
-
-      <para>When estimating a model via OLS using panel data, the default
+	help file for details.
+      </para>
+      <para>
+	When estimating a model via OLS using panel data, the default
 	robust estimator of the covariance matrix is that given by
 	Arellano.  The alternative is Beck and Katz's Panel Corrected
 	Standard Errors (PCSE).  The latter take into account
 	heteroskedastcity but not autocorrelation.  
       </para>
-
-      <para>Two robust estimators of the covariance matrix are
+      <para>
+	Two robust estimators of the covariance matrix are
 	offered for GARCH models: QML is the Quasi-Maximum Likelihood
 	Estimator, and BW is the Bollerslev-Wooldridge estimator.
       </para>
-
     </description>
 
   </command>
@@ -4233,8 +4221,8 @@
 	before the semicolon represents the outcome equation, and the
 	second list represents the selection equation.  The dependent
 	variable in the selection equation (<lit>ys</lit> in the
-	example above) must be a binary variable.  </para>
-
+	example above) must be a binary variable.
+      </para>
       <para>
 	By default, the parameters are estimated by maximum
 	likelihood. The covariance matrix of the parameters is
@@ -4244,7 +4232,6 @@
 	of the outcome equation is appropriately adjusted as per
 	Heckman (1979).
       </para>
-
       <para>
 	Please note that in ML estimation a numerical approximation of
 	the Hessian is used; this may lead to inaccuracies in the
@@ -4354,7 +4341,7 @@
 
     <usage>
       <arguments>
-        <argument>varname</argument>
+        <argument>series</argument>
       </arguments>
     </usage>
 
@@ -4364,7 +4351,6 @@
 	long memory) for a time-series variable having at least 128
 	observations.
       </para>
-
       <para>
 	The Hurst exponent is discussed by Mandelbrot.  In theoretical
 	terms it is the exponent, <math>H</math>, in the
@@ -4380,7 +4366,6 @@
 	<math>x</math> over the sample period (after subtraction
 	of the sample mean), divided by the sample standard deviation.
       </para>
-
       <para>
 	As a reference point, if <math>x</math> is white noise
 	(zero mean, zero persistence) then the range of its cumulated
@@ -4393,7 +4378,6 @@
 	exponent is bounded by 0 and 1, although in finite samples it
 	is possible to get an estimated exponent greater than 1.  
       </para>
-
       <para>
 	In gretl, the exponent is estimated using binary sub-sampling:
 	we start with the entire data range, then the two halves of
@@ -4403,7 +4387,6 @@
 	as the slope coefficient in a regression of the log of RS on
 	the log of sample size.
       </para>
-
     </description>
 
     <gui-access>
@@ -4460,7 +4443,7 @@
 
     <usage>
       <arguments>
-        <argument>inputfile</argument>
+        <argument>filename</argument>
       </arguments>
       <examples>
         <example>include myfile.inp</example>
@@ -4470,10 +4453,11 @@
 
     <description>
       <para>
-	Intended for use in a command script, primarily for including definitions of
-	functions.  Executes the commands in <repl>inputfile</repl> then returns
-	control to the main script. To include a packaged function, be
-	sure to include the filename extension.
+	Intended for use in a command script, primarily for including
+	definitions of functions.  Executes the commands in
+	<repl>filename</repl> then returns control to the main script. To
+	include a packaged function, be sure to include the filename
+	extension.
       </para>
       <para>
 	See also <cmdref targ="run"/>.
@@ -4836,7 +4820,6 @@
 	such as VARs and VECMs is handled separately, via a selection spinner in
 	the main model dialog box.)
       </para>
-
       <para>
 	The spinners on the left let you select a range of consecutive lags for
 	any given variable. To specify non-consecutive lags, click the check box
@@ -4844,21 +4827,18 @@
 	activates the entry box, into which you can type a list of lags,
 	separated by spaces.
       </para>
-
       <para>
 	The row marked <quote>default</quote> offers a quick way to set a common
 	lag specification for all the independent variables: values set in that
 	row are copied to all the others (apart from the dependent variable, if
 	present).  
       </para>
-
       <para>
 	The dependent variable is treated specially: the minimum lag must be
 	zero, which places the current value of the variable on the left-hand
 	side of the model.  Any higher lags appear with the independent
 	variables on the right-hand side of the model.
       </para>
-
       <para>
 	Values selected in this dialog are remembered for the duration of your
 	session with a given dataset.
@@ -4927,7 +4907,6 @@
 	leverage and influence see Davidson and MacKinnon (1993,
 	Chapter 2).
       </para>
-
       <para>
 	DFFITS values are also shown: these are <quote>studentized
 	  residuals</quote> (predicted residuals divided by their
@@ -4950,16 +4929,16 @@
 	added); the studentized residual is obtained by dividing the
 	predicted residual by its standard error.
       </para>
-
-      <para context="cli">If the <lit>--save</lit> flag is given with
-	this command, then the leverage, influence and DFFITS values
-	are added to the current data set.</para>
-
+      <para context="cli">
+	If the <lit>--save</lit> flag is given with this command, then the
+	leverage, influence and DFFITS values are added to the current
+	data set.
+      </para>
       <para context="gui">
 	The "+" icon at the top of the leverage test window brings up
 	a dialog box that allows you to save one or more of the test
-	variables to the current data set.</para>
-
+	variables to the current data set.
+      </para>
     </description>
 
     <gui-access>
@@ -5009,8 +4988,8 @@
       <para context="cli">
 	If you wish to set a different maximum, use the optional
 	<lit>ymax=</lit><repl>value</repl> syntax following the list of
-	regressors.  The supplied value must be greater than all of the observed
-	values of the dependent variable.
+	regressors.  The supplied value must be greater than all of the
+	observed values of the dependent variable.
       </para>
 
       <para context="gui">
@@ -5029,7 +5008,8 @@
 	either a fitted value or a residual from the OLS regression
 	using the transformed dependent variable.  The reported values
 	are therefore comparable with the original dependent
-	variable.</para>
+	variable.
+      </para>
 
       <para>
 	Note that if the dependent variable is binary, you should
@@ -5258,9 +5238,10 @@
 	where (<math>p</math> &minus; <math>q</math>) is a
 	<math>k</math>-vector. This reduces to Euclidean
 	distance if the covariance matrix is the identity
-	matrix.</para>
-
-      <para>The space for which distances are computed is defined by
+	matrix.
+      </para>
+      <para>
+	The space for which distances are computed is defined by
 	the selected variables.  For each observation in the current
 	sample range, the distance is computed between the observation
 	and the centroid of the selected variables.  This distance is
@@ -5269,22 +5250,21 @@
 	given observation <quote>belongs</quote> with a group of other
 	observations.
       </para>
-
-      <para context="cli">If the <lit>--vcv</lit> option is given, the
+      <para context="cli">
+	If the <lit>--vcv</lit> option is given, the
 	covariance matrix and its inverse are printed.  If the
 	<lit>--save</lit> option is given, the distances are saved to
 	the dataset under the name <lit>mdist</lit> (or
 	<lit>mdist1</lit>, <lit>mdist2</lit> and so on if there is
 	already a variable of that name).
       </para>
-
-      <para context="gui">If the number of variables selected is 4 or
+      <para context="gui">
+	If the number of variables selected is 4 or
 	less, the covariance matrix and its inverse are printed.
 	Clicking the "+" button at the top of the window displaying
 	the distances give you the option of adding the distances to
 	the dataset as a new variable.
       </para>
-
     </description>
 
     <gui-access>
@@ -5307,7 +5287,8 @@
 	observations in the current dataset. If these conditions are
 	met and the specified file is found, the case markers will be
 	added; they will be visible when you choose <quote>Display
-	  values</quote> under gretl's Data menu.</para>
+	  values</quote> under gretl's Data menu.
+      </para>
     </description>
   </command>
 
@@ -5348,7 +5329,8 @@
 	the assumption that the variances are equal for the two
 	variables (although this will make a difference to the test
 	statistic only if there are different numbers of non-missing
-	observations for the two variables.)</para>
+	observations for the two variables.)
+      </para>
     </description>
 
     <gui-access>
@@ -5361,19 +5343,21 @@
     label="Missing data values">
 
     <description>
-      <para>Set a numerical value that will be interpreted as
-	<quote>missing</quote> or <quote>not available</quote>, either
-	for a particular data series (under the Variable menu) or
-	globally for the entire data set (under the Sample
-	menu).</para> 
-
-      <para>Gretl has its own internal coding for missing values, but
+      <para>
+	Set a numerical value that will be interpreted as
+	<quote>missing</quote> or <quote>not available</quote>, either for
+	a particular data series (under the Variable menu) or globally for
+	the entire data set (under the Sample menu).
+      </para> 
+      <para>
+	Gretl has its own internal coding for missing values, but
 	sometimes imported data may employ a different code.  For
 	example, if a particular series is coded such that a value of
 	-1 indicates <quote>not applicable</quote>, you can select
 	<quote>Set missing value code</quote> under the Variable menu
 	and type in the value <quote>-1</quote> (without the quotes).
-	Gretl will then read the -1s as missing observations.</para>
+	Gretl will then read the -1s as missing observations.
+      </para>
     </description>
   </command>
 
@@ -5423,7 +5407,6 @@
     </usage>
 
     <description context="gui">
-
       <para>
 	Performs Maximum Likelihood (ML) estimation using the BFGS
 	(Broyden, Fletcher, Goldfarb, Shanno) algorithm. You must
@@ -5431,7 +5414,6 @@
 	also supply expressions for the derivatives of this function
 	with respect to each of the parameters if possible.
       </para>
-
       <para>
 	Simple example: Suppose we have a series <lit>X</lit> with values 0
 	or 1 and we wish to obtain the maximum likelihood estimate of the
@@ -5439,7 +5421,6 @@
 	we can guess in advance that the ML estimate of <lit>p</lit> will simply
 	equal the proportion of Xs equal to 1 in the sample.)
       </para>
-
       <para>
 	The parameter <lit>p</lit> must first be added to the dataset and
 	given an initial value.  This can be done using the genr command or via
@@ -5447,21 +5428,19 @@
 	the MLE specification window prior to the specification of the
 	log-likelihood function.
       </para>
-
-      <para>In the MLE window we type the following
-	lines:</para>
+      <para>
+	In the MLE window we type the following lines:
+      </para>
       <code>
 	loglik = X*log(p) + (1-X)*log(1-p)
 	deriv p = X/p - (1-X)/(1-p)
       </code>
-
       <para>
 	The first line specifies the log-likelihood function, and the
 	next line supplies the derivative of that function with
 	respect to the parameter p.  If no "deriv" lines are given, a
 	numerical approximation to the derivatives is computed.
       </para>
-
       <para>
 	If the parameter p was not previously declared we could
 	preface the above lines with something like the following:
@@ -5469,7 +5448,6 @@
       <code>
 	genr p = 0.5
       </code>
-
       <para>
 	By default, standard errors are based on the Outer Product of the
 	Gradient.  If the robust standard errors box is checked, a QML
@@ -5477,11 +5455,9 @@
 	the Hessian and the covariance matrix of the gradient).  The
 	Hessian is approximated numerically.
       </para>
-
     </description>
 
     <description context="cli">
-
       <para>
 	Performs Maximum Likelihood (ML) estimation using the BFGS
 	(Broyden, Fletcher, Goldfarb, Shanno) algorithm. The user must
@@ -5492,7 +5468,6 @@
 	with respect to each of the parameters; if analytical derivatives
 	are not supplied, a numerical approximation is computed.
       </para>
-
       <para>
 	Simple example: Suppose we have a series <lit>X</lit> with
 	values 0 or 1 and we wish to obtain the maximum likelihood
@@ -5501,20 +5476,19 @@
 	of <lit>p</lit> will simply equal the proportion of Xs equal to 1
 	in the sample.)
       </para>
-
       <para>
 	The parameter <lit>p</lit> must first be added to the dataset and
 	given an initial value.  This can be done using the genr
 	command.  For example, <lit>genr p = 0.5</lit>.
       </para>
-
-      <para>We then construct the MLE command block:</para>
+      <para>
+	We then construct the MLE command block:
+      </para>
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
 	  deriv p = X/p - (1-X)/(1-p)
 	end mle
       </code>
-
       <para>
 	The first line above specifies the log-likelihood function. It
 	starts with the keyword <lit>mle</lit>, then a dependent
@@ -5537,12 +5511,10 @@
       <para>
 	in which case numerical derivatives would be used.
       </para>
-
       <para>
 	Note that any option flags should be appended to the ending line
 	of the MLE block.
       </para>
-
       <para>
 	By default, estimated standard errors are based on the Outer
 	Product of the Gradient.  If the <lit>--hessian</lit> option is
@@ -5562,7 +5534,6 @@
 	this only if you are quite confident that the gradient you
 	have specified is right.
       </para>
-
     </description>
 
     <gui-access>
@@ -5603,18 +5574,15 @@
 	    menu, select <quote>Save to session as icon</quote> or
 	    <quote>Save as icon and close</quote>.</para>
 	</li>
-
 	<li><para>Repeat step 1 for the other models to be included in
 	    the table (up to a total of six models).</para>
 	</li>
-
 	<li><para>When you are done estimating the models, open the
 	    icon view of your gretl session (by selecting <quote>icon
 	      view</quote> under the Session menu in the main gretl
 	    window, or by clicking the <quote>session icon
 	      view</quote> icon on the gretl toolbar).</para>
 	</li>
-
 	<li><para>In session icon view, there is an icon labeled
 	    <quote>Model table</quote>. Decide which model you wish to
 	    appear in the left-most column of the model table and add
@@ -5623,20 +5591,17 @@
 	    and selecting <quote>Add to model table</quote> from the
 	    pop-up menu.</para>
 	</li>
-
 	<li><para>Repeat step 4 for the other models you wish to
 	    include in the table.  The second model selected will
 	    appear in the second column from the left, and so
 	    on.</para>
 	</li>
-
 	<li><para>When you are finished composing the model table,
 	    display it by double-clicking on its icon.  Under the Edit
 	    menu in the window which appears, you have the option of
 	    copying the table to the clipboard in various
 	    formats.</para>
 	</li>
-
 	<li><para>If the ordering of the models in the table is not
 	    what you wanted, right-click on the model table icon and
 	    select <quote>Clear table</quote>.  Then go back to step 4
@@ -5646,12 +5611,14 @@
     </description>
 
     <description context="cli">
-      <para>Manipulates the gretl <quote>model table</quote>. See 
+      <para>
+	Manipulates the gretl <quote>model table</quote>. See 
 	<guideref targ="modes"/> for details. The sub-commands have
 	the following effects: <cmd>add</cmd> adds the last model
 	estimated to the model table, if possible; <cmd>show</cmd>
 	displays the model table in a window; and <cmd>free</cmd>
-	clears the table.</para>
+	clears the table.
+      </para>
     </description>
 
     <gui-access>
@@ -5871,7 +5838,6 @@
       <code context="cli">
 	mpols y 0 x ; 2 3 4
       </code>
-
     </description>
 
     <gui-access>
@@ -5978,7 +5944,6 @@
     </usage>
 
     <description context="gui">
-
       <para>
 	Performs Nonlinear Least Squares (NLS) estimation using a
 	modified version of the Levenberg&ndash;Marquardt algorithm. You
@@ -5989,7 +5954,6 @@
 	the parameters to be estimated (separated by spaces or commas),
 	preceded by the keyword <lit>params</lit>.
       </para>
-
       <para>
 	Example: Suppose we have a data set with variables
 	<math>C</math> and <math>Y</math> (&eg;
@@ -5998,46 +5962,46 @@
 	<equation status="display"
 	  tex="\[C = \alpha + \beta Y^{\gamma}\]"
 	  ascii="C = alpha + beta * Y^gamma"
-	  graphic="greene_Cfunc"/></para>
-
-      <para>The parameters alpha, beta and gamma must
-	first be added to the dataset and given initial values.  This
-	can be done using the genr command or via menu choices.
-	Appropriate <quote>genr</quote> lines may be typed into the
-	NLS specification window prior to the function
-	specification.</para>
-
-      <para>In the NLS window we type the following
-	lines:</para>
+	  graphic="greene_Cfunc"/>
+      </para>
+      <para>
+	The parameters alpha, beta and gamma must first be added to the
+	dataset and given initial values.  This can be done using the genr
+	command or via menu choices. Appropriate <quote>genr</quote> lines
+	may be typed into the NLS specification window prior to the
+	function specification.
+      </para>
+      <para>
+	In the NLS window we type the following lines:
+      </para>
       <code>
 	C = alpha + beta * Y^gamma
 	deriv alpha = 1
 	deriv beta = Y^gamma
 	deriv gamma = beta * Y^gamma * log(Y)
       </code>
-
-      <para>The first line specifies the regression
-	function, and the next three lines supply the derivatives of
-	that function with respect to each of the parameters in turn.
-	If the "deriv" lines are not given, a numerical approximation
-	to the Jacobian is computed.</para>
-
-      <para>If the parameters alpha, beta and gamma were
-	not previously declared we could preface the above lines with
-	something like the following:</para>
+      <para>
+	The first line specifies the regression function, and the next
+	three lines supply the derivatives of that function with respect
+	to each of the parameters in turn. If the "deriv" lines are not
+	given, a numerical approximation to the Jacobian is computed.
+      </para>
+      <para>
+	If the parameters alpha, beta and gamma were not previously
+	declared we could preface the above lines with something like the
+	following:
+      </para>
       <code>
 	genr alpha = 1
 	genr beta = 1
 	genr gamma = 1
       </code>
-
       <para>For further details on NLS estimation please see 
-	<guideref targ="chap-nls"/>.</para>
-
+	<guideref targ="chap-nls"/>.
+      </para>
     </description>
 
     <description context="cli">
-
       <para>
 	Performs Nonlinear Least Squares (NLS) estimation using a modified
 	version of the Levenberg&ndash;Marquardt algorithm.  You must
@@ -6051,7 +6015,6 @@
 	<lit>params</lit>.  In the latter case a numerical approximation
 	to the Jacobian is computed.
       </para>
-
       <para>
 	It is easiest to show what is required by example.  The
 	following is a complete script to estimate the nonlinear
@@ -6075,7 +6038,6 @@
 	9    deriv g = b * Y^g * log(Y)
 	10  end nls --vcv
       </code>
-
       <para>
 	It is often convenient to initialize the parameters by
 	reference to a related linear model; that is accomplished here
@@ -6084,7 +6046,6 @@
 	estimated with OLS), although convergence of the NLS procedure
 	is not guaranteed for an arbitrary starting point.
       </para>
-
       <para>
 	The actual NLS commands occupy lines 6 to 10. On line 6 the
 	<cmd>nls</cmd> command is given: a dependent variable is
@@ -6107,11 +6068,10 @@
 	Line 10, <cmd>end nls</cmd>, completes the command and calls for
 	estimation. Any options should be appended to this line.
       </para>
-
-      <para>For further details on NLS estimation please see
+      <para>
+	For further details on NLS estimation please see
 	<guideref targ="chap-nls"/>.
       </para>
-
     </description>
 
     <gui-access>
@@ -6496,9 +6456,10 @@
       <para>
 	Gretl is able to access databases at Wake Forest University
 	(your computer must be connected to the internet for this to
-	work).</para>
-
-      <para>Under the <quote>File, Browse databases</quote> menu,
+	work).
+      </para>
+      <para>
+	Under the <quote>File, Browse databases</quote> menu,
 	select the item <quote>on database server</quote>. A window
 	should appear, showing a listing of the gretl databases
 	available at Wake Forest. (Depending on your location and the
@@ -6508,9 +6469,10 @@
 	entry: this shows whether you have the database installed
 	locally (on the hard drive of your computer) and if so,
 	whether or not it is up to date with the version on the
-	server.</para>
-
-      <para>If you have a given database installed locally, and it is
+	server.
+      </para>
+      <para>
+	If you have a given database installed locally, and it is
 	up to date, there is no advantage in accessing it via the
 	server.  But for a database that is not already installed and
 	up to date, you may wish to get a listing of the data series:
@@ -6521,17 +6483,18 @@
 	<quote>Series</quote> menu, or via the popup menu that appears
 	when you click the right mouse button on a given series.  You
 	can also search the listing for a variable of interest (the
-	<quote>Find</quote> menu item).</para>
-
-      <para>If you want faster access to the data, or wish to access
+	<quote>Find</quote> menu item).
+      </para>
+      <para>
+	If you want faster access to the data, or wish to access
 	the database offline, then select the line showing the
 	database you want, in the initial database window, and press
 	the <quote>Install</quote> button.  This will download the
 	database in compressed format, then uncompress it and install
 	it on your hard drive. Thereafter you should be able to find
 	it under the <quote>File, Browse databases, gretl
-	  native</quote> menu.</para>
-
+	  native</quote> menu.
+      </para>
     </description>
   </command>
 
@@ -6540,7 +6503,7 @@
 
     <usage>
       <arguments>
-        <argument>datafile</argument>
+        <argument>filename</argument>
       </arguments>
       <options>
 	<option>
@@ -6569,7 +6532,6 @@
 	detect the format of the data file (native, plain text, CSV, MS
 	Excel, Stata, SPSS, etc.).
       </para>
-
       <para>
 	The <lit>open</lit> command can also be used to open a database
 	(gretl, RATS 4.0 or PcGive) for reading.  In that case it should be
@@ -6579,7 +6541,6 @@
 	server &mdash; for instance the Federal Reserve interest rates
 	database in the third example above.
       </para>
-
       <para>
 	When opening a spreadsheet file (Gnumeric, Open Document or XLS), you
 	may give up to three additional parameters following the filename.
@@ -6598,7 +6559,6 @@
 	rows.  The default is an offset of 0 in both dimensions, that is, to
 	start reading at the top-left cell.
       </para>
-
       <para>
 	With plain text files, gretl generally expects to find the data
 	columns delimited in some standard manner.  But there is also a
@@ -6627,7 +6587,6 @@
 	and/or descriptions using the commands <cmdref targ="rename"/> and/or 
 	<cmdref targ="setinfo"/>.
       </para>
-
     </description>
 
     <gui-access>
@@ -6694,33 +6653,32 @@
     </usage>
 
     <description>
-      <para>Diverts output to <repl>filename</repl>, until further
+      <para>
+	Diverts output to <repl>filename</repl>, until further
 	notice.  Use the flag <lit>--append</lit> to append output to
 	an existing file or <lit>--write</lit> to start a new file
 	(or overwrite an existing one).  Only one file can be opened
-	in this way at any given time.</para>
-
-      <para>The <lit>--close</lit> flag is used to close an output
-	file that was previously opened as above.  Output will then
-	revert to the default stream.</para>
-
-      <para>In the first example command above, the file
-	<filename>regress.txt</filename> is opened for writing, and in
-	the second it is closed.  This would make sense as a sequence
-	only if some commands were issued before the
-	<lit>--close</lit>.  For example if an <cmd>ols</cmd> command
-	intervened, its output would go to
-	<filename>regress.txt</filename> rather than the
-	screen.
+	in this way at any given time.
       </para>
-
+      <para>
+	The <lit>--close</lit> flag is used to close an output
+	file that was previously opened as above.  Output will then
+	revert to the default stream.
+      </para>
+      <para>
+	In the first example command above, the file
+	<filename>regress.txt</filename> is opened for writing, and in the
+	second it is closed.  This would make sense as a sequence only if
+	some commands were issued before the <lit>--close</lit>.  For
+	example if an <cmd>ols</cmd> command intervened, its output would
+	go to <filename>regress.txt</filename> rather than the screen.
+      </para>
       <para>
 	In a variant on the above, if you give the keyword <lit>null</lit>
 	in place of a real filename along with the <lit>--write</lit>
 	option, the effect is to suppress all printed output until
 	the next <lit>outfile --close</lit>.
       </para>
-
     </description>
 
   </command>
@@ -6728,6 +6686,10 @@
   <command name="panel" section="Estimation" label="Panel models">
 
     <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
       <options>
 	<option>
 	  <flag>--vcv</flag>
@@ -6808,7 +6770,6 @@
 	For more details on panel estimation, please see <guideref
 	  targ="chap-panel"/>.
       </para>
-      
     </description>
 
     <gui-access>
@@ -6975,7 +6936,7 @@
 
     <usage>
       <arguments>
-        <argument>varname</argument>
+        <argument>series</argument>
         <argument optional="true">bandwidth</argument>
       </arguments>
       <options>
@@ -6993,7 +6954,7 @@
     <description>
       <para>
 	Computes and displays (and if not in batch mode, graphs) the
-	spectrum of the specified variable.  By default the sample
+	spectrum of the specified series.  By default the sample
 	periodogram is given; with the <lit>--bartlett</lit> flag a
 	Bartlett lag window is used in estimating the spectrum (see, for
 	example, Greene's <book>Econometric Analysis</book> for a
@@ -7144,7 +7105,6 @@
 	and/or to expose a greater number of digits than are
 	shown by <lit>print</lit>, see <cmdref targ="printf"/>.
       </para>
-
       <para>
 	If the <lit>--byobs</lit> flag is given and the data are
 	printed by observation, the default is to show the date (with
@@ -7153,14 +7113,12 @@
 	suppresses the printing of dates or markers; a simple
 	observation number is shown instead.
       </para>
-
       <para>
 	If the argument to <cmd>print</cmd> is a literal string (which
 	must start with a double-quote, <lit>"</lit>), the string is
 	printed as is.  See also <cmdref
 	  targ="printf"/>.
       </para>
-
       <para>
 	Note: a special <quote>hack</quote> is available with this
 	command, in conjunction with the <lit>--byobs</lit> flag, which
@@ -7177,7 +7135,6 @@
 	genr filt = missing(x)
 	print x ; filt --byobs
       </code>
-
     </description>
 
     <gui-access>
@@ -7224,7 +7181,6 @@
 	genr se_b = $stderr(2)
 	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
       </code>
-
       <para>
 	The next lines illustrate the use of the varname and date functions,
 	which respectively print the name of a variable, given its ID number,
@@ -7234,7 +7190,6 @@
 	printf "The name of variable %d is %s\n", i, varname(i)
 	printf "The date of observation %d is %s\n", j, date(j)
       </code>
-
       <para>
 	If a matrix argument is given in association with a numeric
 	format, the entire matrix is printed using the specified
@@ -7261,7 +7216,6 @@
 	scalar precision = 6
 	printf "x = %*.*f\n", width, precision, x
       </code>
- 
     </description>
 
   </command>
@@ -7638,7 +7592,8 @@
     </usage>
 
     <description>
-      <para>Changes the name of the variable with identification number
+      <para>
+	Changes the name of the variable with identification number
 	<repl>varnumber</repl> or current name <repl>varname</repl> to
 	<repl>newname</repl>.  The new name must be of 15 characters maximum,
 	must start with a letter, and must be composed of only letters, digits,
@@ -7963,7 +7918,7 @@
 
     <usage>
       <arguments>
-        <argument>varname</argument>
+        <argument>series</argument>
       </arguments>
       <options>
 	<option>
@@ -8020,13 +7975,13 @@
 
     <usage>
       <arguments>
-        <argument>inputfile</argument>
+        <argument>filename</argument>
       </arguments>
     </usage>
 
     <description>
       <para>
-	Execute the commands in <repl>inputfile</repl> then return
+	Execute the commands in <repl>filename</repl> then return
 	control to the interactive prompt.  This command is intended
 	for use with the command-line program gretlcli, or at the
 	<quote>gretl console</quote> in the GUI program.
@@ -8046,7 +8001,7 @@
 
     <usage>
       <arguments>
-        <argument>varname</argument>
+        <argument>series</argument>
       </arguments>
       <options>
 	<option>
@@ -8063,11 +8018,11 @@
     <description>
       <para>
 	Carries out the nonparametric <quote>runs</quote> test for
-	randomness of the specified variable, where runs are defined as
-	sequences of consecutive positive or negative values.  If you want
-	to test for randomness of deviations from the median, for a
-	variable named <lit>x1</lit> with a non-zero median, you can do
-	the following:
+	randomness of the specified <repl>series</repl>, where runs are
+	defined as sequences of consecutive positive or negative values.
+	If you want to test for randomness of deviations from the median,
+	for a variable named <lit>x1</lit> with a non-zero median, you can
+	do the following:
       </para>
       <code>
 	genr signx1 = x1 - median(x1)
@@ -8103,7 +8058,6 @@
 	The Sample menu offers several ways of selecting a sub-sample from the
 	current dataset.
       </para>
-
       <para>
 	If you choose <quote>Sample/Restrict based on criterion...</quote> you
 	need to supply a Boolean (logical) expression, of the same sort that
@@ -8117,27 +8071,23 @@
 	define the sample (observations with a value of 1 for the selected
 	dummy will be included, and others excluded).
       </para>
-
       <para>
 	The menu item <quote>Sample/Drop all obs with missing values</quote>
 	redefines the sample to exclude all observations for which values of
 	one or more variables are missing (leaving only complete cases).
       </para>  
-
       <para>
 	To select observations for which a particular variable has no missing
 	values, use <quote>Restrict based on criterion...</quote> and
 	supply the Boolean condition <quote>!missing(varname)</quote> (replace
 	<quote>varname</quote> with the name of the variable you want to use).
       </para>  
-
       <para>
 	If the observations are labeled, you can exclude particular
 	observations using, for example, <lit>obs!="France"</lit> as the
 	Boolean criterion.  The observation name must be enclosed in double
 	quotes.
       </para>
-
       <para>
 	One point should be noted about defining a sample based on a dummy
 	variable, a Boolean expression, or on the missing values criterion:
@@ -8146,11 +8096,11 @@
 	may reimpose structure with <quote>Sample/Set frequency,
 	  startobs...</quote>.
       </para>
-
-      <para>Please see <guideref targ="sampling"/> for further details.
+      <para>
+	Please see <guideref targ="sampling"/> for further details.
       </para>
-
     </description>
+
   </command>
 
   <command name="save-script" section="Utilities" 
@@ -8205,8 +8155,8 @@
     <usage>
       <arguments>
         <argument>yvar</argument>
-        <argument separated="true">xvarlist</argument>
-	<argument alternate="true">yvarlist ; xvar</argument>
+        <argument separated="true">xvars</argument>
+	<argument alternate="true">yvars ; xvar</argument>
       </arguments>
       <options>
 	<option>
@@ -8229,8 +8179,8 @@
     <description>
       <para context="cli">
 	Generates pairwise graphs of <repl>yvar</repl> against all the
-	variables in <repl>xvarlist</repl>, or of all the variables in
-	<repl>yvarlist</repl> against <repl>xvar</repl>.  The first
+	variables in <repl>xvars</repl>, or of all the variables in
+	<repl>yvars</repl> against <repl>xvar</repl>.  The first
 	example above puts variable 1 on the <math>y</math>-axis
 	and draws four graphs, the first having variable 2 on the
 	<math>x</math>-axis, the second variable 3 on the
@@ -8998,7 +8948,8 @@
 	To activate it, check the box titled <quote>Allow shell
 	commands</quote> under the File, Preferences menu in the GUI
 	program.  This also makes shell commands available in the
-	command-line program (and is the only way to do so).  </para>
+	command-line program (and is the only way to do so).
+      </para>
     </description>
 
   </command>
@@ -9364,7 +9315,6 @@
 	sscanf S, "%m", m
 	print m
       </code>
-
     </description>
 
   </command>
@@ -9374,7 +9324,7 @@
 
     <usage>
       <arguments>
-        <argument>datafile</argument>
+        <argument>filename</argument>
         <argument optional="true">varlist</argument>
       </arguments>
       <options>
@@ -9427,11 +9377,10 @@
 
     <description>
       <para>
-	Saves either the entire dataset or, if a <repl>varlist</repl>
-	is supplied, a specified subset of the series in the
-	current dataset, to the file given by
-	<repl>datafile</repl>.</para>
-
+	Saves either the entire dataset or, if a <repl>varlist</repl> is
+	supplied, a specified subset of the series in the current dataset,
+	to the file given by <repl>filename</repl>.
+      </para>
       <para>
 	By default the data are saved in <quote>native</quote> gretl
 	format, but the option flags permit saving in several
@@ -9442,8 +9391,8 @@
 	<program>PcGive</program> are designed for use with the
 	respective programs.  Gzip compression may be useful for large
 	datasets.  See <guideref targ="datafiles"/> for details on the
-	various formats.</para>
-
+	various formats.
+      </para>
       <para>
 	The option flags <lit>--omit-obs</lit> and <lit>--no-header</lit>
 	are applicable only when saving data in CSV format.  By default,
@@ -9454,7 +9403,6 @@
 	<lit>--no-header</lit> flag suppresses the usual printing of the
 	names of the variables at the top of the columns.
       </para>
-
       <para>
 	The option of saving in gretl database format is intended to help
 	with the construction of large sets of series, possibly having
@@ -9469,7 +9417,6 @@
 	variable names in common, the newly saved variable replaces the
 	variable of the same name in the original dataset.
       </para>
-	
     </description>
 
     <gui-access>
@@ -9834,7 +9781,8 @@
     </usage>
 
     <description>
-      <para>Estimates a Tobit model.  This model may be appropriate
+      <para>
+	Estimates a Tobit model.  This model may be appropriate
 	when the dependent variable is <quote>censored</quote>.  For
 	example, positive and zero values of purchases of durable
 	goods on the part of individual households are observed, and
@@ -9842,7 +9790,8 @@
 	thought of as outcomes of an underlying, unobserved
 	disposition to purchase that may be negative in some cases.
 	For details see Greene's <book>Econometric Analysis</book>,
-	Chapter 20.</para>
+	Chapter 20.
+      </para>
     </description>
 
     <gui-access>
@@ -9914,7 +9863,8 @@
 	endogenous variable); and <repl>instruments</repl> is the list of
 	instruments (exogenous and/or predetermined variables). If the
 	<repl>instruments</repl> list is not at least as long as
-	<repl>indepvars</repl>, the model is not identified.</para>
+	<repl>indepvars</repl>, the model is not identified.
+      </para>
 
       <para context="cli">
 	In the above example, the <lit>y</lit>s are endogenous and the
@@ -10016,8 +9966,8 @@
     <usage>
       <arguments>
         <argument>order</argument>
-        <argument>varlist</argument>
-	<argument separated="true" optional="true">exolist</argument>
+        <argument>ylist</argument>
+	<argument separated="true" optional="true">xlist</argument>
       </arguments>
       <options>
         <option>
@@ -10059,34 +10009,32 @@
     <description>
 
       <para context="gui">
-	This command requires specification of:</para>
-
+	This command requires specification of:
+      </para>
       <ilist context="gui">
 	<li><para context="gui">- the lag order, that is, the number of
 	    lags of each variable that should be included in the
 	    system;</para>
 	</li>
-
 	<li><para context="gui">- any exogenous variables (but note that a
 	    constant is included automatically unless you specify otherwise, a
 	    trend can be added using the trend checkbox, and seasonal dummy
 	    variables can be added using the seasonals checkbox); and
 	  </para>
 	</li>
-
 	<li><para context="gui">- a list of endogenous variables, lags
 	    of which will be included on the right-hand side of each
 	    equation (note: do not include lagged variables in this
 	    list -- they will be added automatically).</para>
 	</li>
       </ilist>
-
-      <para context="gui">A separate regression will be run for
-	variable in the system.  Output for each equation includes
-	F-tests for zero restrictions on all lags of each of the
-	variables and an F-test for the maximum lag, along with
-	(optionally) forecast variance decompositions and impulse
-	response functions.</para>
+      <para context="gui">
+	A separate regression will be run for each variable in the system.
+	Output for each equation includes F-tests for zero restrictions on
+	all lags of each of the variables and an F-test for the maximum
+	lag, along with (optionally) forecast variance decompositions and
+	impulse response functions.
+      </para>
 
       <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression (VAR).
@@ -10095,10 +10043,10 @@
 	below).  The order may be given numerically, or as the name of a
 	pre-existing scalar variable. Then follows the setup for the first
 	equation.  Don't include lags among the elements of
-	<repl>varlist</repl> &mdash; they will be added automatically.
+	<repl>ylist</repl> &mdash; they will be added automatically.
 	The semi-colon separates the stochastic variables, for which
 	<repl>order</repl> lags will be included, from any exogenous
-	variables in <repl>exolist</repl>.  Note that a constant is
+	variables in <repl>xlist</repl>.  Note that a constant is
 	included automatically unless you give the <lit>--nc</lit> flag, a
 	trend can be added with the <lit>--trend</lit> flag, and seasonal
 	dummy variables may be added using the <lit>--seasonals</lit>
@@ -10106,7 +10054,7 @@
       </para>
 
       <para context="cli">
-	A separate regression is run for each variable in <repl>varlist</repl>.
+	A separate regression is run for each variable in <repl>ylist</repl>.
 	Output for each equation includes <math>F</math>-tests for zero
 	restrictions on all lags of each of the variables, an
 	<math>F</math>-test for the significance of the maximum lag, and,
@@ -10150,7 +10098,6 @@
 	In this dialog box you specify a VAR as usual, but use the lag order
 	spin button to set the maximum number of lags to test.
       </para>
-
       <para>
 	Output will consist of a table showing the values of the Akaike (AIC),
 	Schwartz (BIC) and Hannan&ndash;Quinn (HQC) information criteria computed

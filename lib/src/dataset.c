@@ -3039,6 +3039,20 @@ int dataset_resample (int n, unsigned int seed,
     return err;
 }
 
+/* alternate forms:
+
+           op         list   s
+   dataset addobs            24
+   dataset compact           1
+   dataset compact           4 last
+   dataset expand            12
+   dataset transpose
+   dataset sortby     x1
+   dataset resample          500
+   dataset clear   
+
+*/
+
 int modify_dataset (int op, const int *list, const char *s, 
 		    double ***pZ, DATAINFO *pdinfo, 
 		    PRN *prn)

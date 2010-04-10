@@ -143,6 +143,9 @@ struct gretl_option gretl_opts[] = {
     { DURATION, OPT_G, "opg", 0 },
     { DURATION, OPT_R, "robust", 0 },
     { DURATION, OPT_V, "verbose", 0 },
+#if 0 /* not yet */
+    { EQNPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
+#endif
     { EQNPRINT, OPT_O, "complete", 0 },
     { EQNPRINT, OPT_T, "t-ratios", 0 },
     { TABPRINT, OPT_O, "complete", 0 },
@@ -366,6 +369,9 @@ struct gretl_option gretl_opts[] = {
     { SUMMARY,  OPT_S, "simple", 0 },
     { SYSTEM,   OPT_I, "iterate", 0 },
     { SYSTEM,   OPT_V, "verbose", 0 },
+#if 0
+    { TABPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
+#endif
     { TOBIT,    OPT_V, "verbose", 0 },
     { VAR,      OPT_D, "seasonals", 0 },
     { VAR,      OPT_F, "variance-decomp", 0 },
@@ -757,41 +763,9 @@ static optparm *matching_optparm (int ci, gretlopt opt)
     return NULL;
 }
 
-static int push_optparm (int ci, gretlopt opt, char *val)
-{
-    optparm *op;
-    int n = n_parms + 1;
-
-    op = matching_optparm(ci, opt);
-    if (op != NULL) {
-	/* got a match for the ci, opt pair already */
-	free(op->val);
-	op->val = val;
-	return 0;
-    }
-
-    op = realloc(optparms, n * sizeof *op);
-    if (op == NULL) {
-	return E_ALLOC;
-    }
- 
-    optparms = op;
-    op = &optparms[n-1];
-    op->ci = ci;
-    op->opt = opt;
-    op->val = val;
-    n_parms = n;
-
-#if OPTDEBUG 
-    fprintf(stderr, "push_optparm: val='%s', n_parms=%d\n",
-	    op->val, n_parms);
-#endif
-
-    return 0;
-}
-
 enum {
-    ACCEPTS_PARM = 1,
+    NO_PARM = 0,
+    ACCEPTS_PARM,
     NEEDS_PARM
 };
 
@@ -812,17 +786,62 @@ static int option_parm_status (int ci, gretlopt opt)
     return 0;
 }
 
-/* We got an "=val" parameter value in connection with a given option:
-   check this for validity.
-*/
-
-static int check_optval (int ci, gretlopt opt, int status, char *val)
+static int real_push_option_param (int ci, gretlopt opt, char *val,
+				   int checked)
 {
-    if (status == NEEDS_PARM || status == ACCEPTS_PARM) {
-	return push_optparm(ci, opt, val);
-    } else {
-	return 1;
+    optparm *op;
+    int n, err = 0;
+
+    if (!checked && option_parm_status(ci, opt) == NO_PARM)  {
+	return E_DATA;
     }
+
+    n = n_parms + 1;
+
+    op = matching_optparm(ci, opt);
+    if (op != NULL) {
+	/* got a match for the ci, opt pair already */
+	free(op->val);
+	op->val = val;
+	return 0;
+    }
+
+    op = realloc(optparms, n * sizeof *op);
+
+    if (op == NULL) {
+	err = E_ALLOC;
+    } else {
+	optparms = op;
+	op = &optparms[n-1];
+	op->ci = ci;
+	op->opt = opt;
+	op->val = val;
+	n_parms = n;
+    }
+
+#if OPTDEBUG 
+    fprintf(stderr, "push_option_param: val='%s', n_parms=%d, "
+	    "err = %d\n", op->val, n_parms, err);
+#endif
+
+    return 0;
+}
+
+/**
+ * push_option_param:
+ * @ci: gretl command index.
+ * @opt: gretl option flag.
+ * @val: parameter value as string.
+ *
+ * Pushes onto an internal stack a record of the @val
+ * to be associated with @opt for the current @ci.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int push_option_param (int ci, gretlopt opt, char *val)
+{
+    return real_push_option_param(ci, opt, val, 0);
 }
 
 /**
@@ -878,16 +897,19 @@ double get_optval_double (int ci, gretlopt opt)
  *
  * Sets a double-precision ancillary value to be associated
  * with option @opt for command @ci.
+ *
+ * Returns: 0 on success, non-zero on failure.
  */
 
-void set_optval_double (int ci, gretlopt opt, double x)
+int set_optval_double (int ci, gretlopt opt, double x)
 {
     char s[32];
 
     gretl_push_c_numeric_locale();
     sprintf(s, "%g", x);
     gretl_pop_c_numeric_locale();
-    push_optparm(ci, opt, gretl_strdup(s));
+
+    return real_push_option_param(ci, opt, gretl_strdup(s), 1);
 }
 
 #define data_open_special(s) (!strcmp(s, "sheet") || \
@@ -931,7 +953,11 @@ static int handle_optval (char *s, int ci, gretlopt opt, int status)
     } 
 
     if (!err) {
-	err = check_optval(ci, opt, status, val);
+	if (status == NEEDS_PARM || status == ACCEPTS_PARM) {
+	    err = real_push_option_param(ci, opt, val, 1);
+	} else {
+	    err = E_DATA;
+	}
     }
 
     if (err) {
