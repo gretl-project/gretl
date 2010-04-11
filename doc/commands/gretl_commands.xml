@@ -9112,8 +9112,8 @@
 
     <usage>
       <arguments>
-        <argument>x</argument>
-        <argument>y</argument>
+        <argument>var1</argument>
+        <argument>var2</argument>
       </arguments>
       <options>
         <option>
@@ -9126,23 +9126,21 @@
     <description>
       <para context="cli">
 	Prints Spearman's rank correlation coefficient for the two
-	variables <math>x</math> and <math>y</math>. The
+	variables <repl>x</repl> and <repl>y</repl>. The
 	variables do not have to be ranked manually in advance; the
 	function takes care of this.
       </para>
-
       <para context="gui">
 	Prints Spearman's rank correlation coefficient for a specified
 	pair of variables.  The variables do not have to be ranked
-	manually in advance; the function takes care of this.</para>
-
+	manually in advance; the function takes care of this.
+      </para>
       <para>
 	The automatic ranking is from largest to smallest (&ie; the
 	largest data value gets rank 1).  If you need to invert this
 	ranking, create a new variable which is the negative of the
 	original first.  For example:
       </para>
-
       <code>
 	genr altx = -x
 	spearman altx y
