@@ -9125,8 +9125,8 @@
 
     <description>
       <para context="cli">
-	Prints Spearman's rank correlation coefficient for the two
-	variables <repl>x</repl> and <repl>y</repl>. The
+	Prints Spearman's rank correlation coefficient for the
+	series <repl>var1</repl> and <repl>var2</repl>. The
 	variables do not have to be ranked manually in advance; the
 	function takes care of this.
       </para>
@@ -9139,7 +9139,7 @@
 	The automatic ranking is from largest to smallest (&ie; the
 	largest data value gets rank 1).  If you need to invert this
 	ranking, create a new variable which is the negative of the
-	original first.  For example:
+	original.  For example:
       </para>
       <code>
 	genr altx = -x
