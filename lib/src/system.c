@@ -1622,53 +1622,32 @@ int system_normality_test (const equation_system *sys, PRN *prn)
     return err;
 }
 
-static void
-add_system_var_info (equation_system *sys, int i, 
-		     DATAINFO *pdinfo, int v, int code)
+double *system_get_resid_series (equation_system *sys, int eqnum,
+				 DATAINFO *pdinfo, int *err)
 {
-    char *label = VARLABEL(pdinfo, v);
-    char vname[VNAMELEN];
-
-    if (code == SYS_UHAT) {
-	sprintf(vname, "uhat_s%02d", i);
-	sprintf(label, _("system residual, equation %d"), i);
-    } else if (code == SYS_YHAT) {
-	sprintf(vname, "yhat_s%02d", i);
-	sprintf(label, _("system fitted value, equation %d"), i);
-    }
-
-    make_varname_unique(vname, v, pdinfo);
-    strcpy(pdinfo->varname[v], vname);
-}
-
-int 
-system_add_resids_to_dataset (equation_system *sys, 
-			      int eqnum, double ***pZ, 
-			      DATAINFO *pdinfo)
-{
-    int v, t;
+    double *u = NULL;
+    int t;
 
     if (sys->E == NULL) {
-	return E_DATA;
+	*err = E_DATA;
+	return NULL;
     }
 
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	return E_ALLOC;
+    u = malloc(pdinfo->n * sizeof *u);
+    if (u == NULL) {
+	*err = E_ALLOC;
+	return NULL;
     }
-
-    v = pdinfo->v - 1;
 
     for (t=0; t<pdinfo->n; t++) {
 	if (t < sys->t1 || t > sys->t2) {
-	    (*pZ)[v][t] = NADBL;
+	    u[t] = NADBL;
 	} else {
-	    (*pZ)[v][t] = gretl_matrix_get(sys->E, t - sys->t1, eqnum);
+	    u[t] = gretl_matrix_get(sys->E, t - sys->t1, eqnum);
 	}
     }
 
-    add_system_var_info(sys, eqnum + 1, pdinfo, v, SYS_UHAT);
-
-    return 0;
+    return u;
 }
 
 static const char *system_get_full_string (const equation_system *sys,

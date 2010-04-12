@@ -1577,43 +1577,36 @@ int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name)
  * dataset_replace_series:
  * @Z: data array.
  * @pdinfo: dataset information.
- * @v0: ID number of the series to be replaced.
- * @v1: ID number of replacement series.
+ * @v: ID number of the series to be replaced.
+ * @x: replacement values.
+ * @descrip: replacement description.
  *
- * Replaces name, description and numerical content of
- * series @v0 with the corresponding content of @v1. This
- * should generally be followed by destruction of series @v1, 
- * but that is not handled by this function.
+ * Replaces the description and numerical content of
+ * series @v with the information provided. 
  * 
  * Returns: 0 on success, non-zero on error.
  */
 
-int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v0, int v1)
+int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v,
+			    const double *x, const char *descrip)
 {
     int t;
 
-    if (v0 == v1) {
-	/* no-op */
-	return 0;
-    }    
-
-    if (v0 < 0 || v0 >= pdinfo->v ||
-	v1 < 0 || v1 >= pdinfo->v) {
+    if (v < 0 || v >= pdinfo->v) {
 	/* out of bounds */
 	return E_DATA;
     }
 
-    if (object_is_const(pdinfo->varname[v0]) ||
-	series_is_parent(pdinfo, v0)) {
-	return overwrite_err(pdinfo->varname[v0]);
+    if (object_is_const(pdinfo->varname[v]) ||
+	series_is_parent(pdinfo, v)) {
+	return overwrite_err(pdinfo->varname[v]);
     }
 
-    gretl_varinfo_init(pdinfo->varinfo[v0]);
-    strcpy(pdinfo->varname[v0], pdinfo->varname[v1]);
-    strcpy(VARLABEL(pdinfo, v0), VARLABEL(pdinfo, v1));
+    gretl_varinfo_init(pdinfo->varinfo[v]);
+    strcpy(VARLABEL(pdinfo, v), descrip);
 
     for (t=0; t<pdinfo->n; t++) {
-	Z[v0][t] = Z[v1][t];
+	Z[v][t] = x[t];
     }
 
     set_dataset_is_changed();

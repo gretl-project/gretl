@@ -152,8 +152,8 @@ int gretl_VAR_get_t2 (const GRETL_VAR *var);
 
 const MODEL *gretl_VAR_get_model (const GRETL_VAR *var, int i);
 
-int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
-				     double ***pZ, DATAINFO *pdinfo);
+double *gretl_VAR_get_resid_series (GRETL_VAR *var, int eqnum,
+				    int *err);
 
 int gretl_VAR_set_ordering (GRETL_VAR *var, gretl_matrix *ord);
 

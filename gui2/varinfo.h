@@ -20,7 +20,9 @@
 #ifndef VARINFO_H
 #define VARINFO_H
 
-void varinfo_dialog (int varnum, int full);
+void varinfo_dialog (int varnum);
+
+void name_new_variable_dialog (char *vname, char *descrip, int *cancel);
 
 void maybe_reset_varinfo_dialog (void);
 

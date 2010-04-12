@@ -180,8 +180,8 @@ system_set_restriction_matrices (equation_system *sys,
 int 
 system_normality_test (const equation_system *sys, PRN *prn);
 
-int system_add_resids_to_dataset (equation_system *sys, int eqnum,
-				  double ***pZ, DATAINFO *pdinfo);
+double *system_get_resid_series (equation_system *sys, int eqnum,
+				 DATAINFO *pdinfo, int *err);
 
 double *
 equation_system_get_series (const equation_system *sys, 

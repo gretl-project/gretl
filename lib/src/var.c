@@ -3051,40 +3051,25 @@ const char *gretl_VAR_get_name (const GRETL_VAR *var)
     return var->name;
 }
 
-int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
-				     double ***pZ, DATAINFO *pdinfo)
+double *gretl_VAR_get_resid_series (GRETL_VAR *var, int eqnum,
+				    int *err)
 {
-    MODEL *pmod = var->models[eqnum];
-    char vname[VNAMELEN];
-    int i, t;
+    MODEL *pmod;
+    double *u = NULL;
 
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	return E_ALLOC;
+    if (var->models == NULL || eqnum < 0 || eqnum >= var->neqns) {
+	*err = E_BADSTAT;
+	return NULL;
     }
 
-    i = pdinfo->v - 1;
+    pmod = var->models[eqnum];
+    u = copyvec(pmod->uhat, pmod->full_n);
 
-    for (t=0; t<pdinfo->n; t++) {
-	if (t < pmod->t1 || t > pmod->t2) {
-	    (*pZ)[i][t] = NADBL;
-	} else {
-	    (*pZ)[i][t] = pmod->uhat[t];
-	}
+    if (u == NULL) {
+	*err = E_ALLOC;
     }
 
-    sprintf(vname, "uhat%d", eqnum + 1);
-    make_varname_unique(vname, i, pdinfo);
-    strcpy(pdinfo->varname[i], vname);
-
-    if (var->ci == VAR) {
-	sprintf(VARLABEL(pdinfo, i), _("residual from VAR system, equation %d"), 
-		eqnum + 1);
-    } else {
-	sprintf(VARLABEL(pdinfo, i), _("residual from VECM system, equation %d"), 
-		eqnum + 1);
-    }
-
-    return 0;
+    return u;
 }
 
 int gretl_VAR_set_ordering (GRETL_VAR *var, gretl_matrix *ord)

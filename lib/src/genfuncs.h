@@ -87,6 +87,9 @@ int plotvar_code (const DATAINFO *pdinfo);
 
 const double *gretl_plotx (const DATAINFO *pdinfo);
 
+double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
+			  char *vname, char *vlabel, int *err);
+
 int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo);
 

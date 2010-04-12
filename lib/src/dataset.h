@@ -346,7 +346,8 @@ int overwrite_err (const char *name);
 
 int series_is_parent (const DATAINFO *pdinfo, int v);
 
-int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v0, int v1);
+int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v,
+			    const double *x, const char *descrip);
 
 int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name);
 

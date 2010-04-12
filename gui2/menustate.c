@@ -334,7 +334,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Hurst exponent"))) 
 	do_hurst();
     else if (!strcmp(item, _("Edit attributes")))  
-	varinfo_dialog(v, 1);
+	varinfo_dialog(v);
     else if (!strcmp(item, _("Edit values")))  
 	show_spreadsheet(SHEET_EDIT_VARLIST);
     else if (!strcmp(item, _("Copy to clipboard"))) 

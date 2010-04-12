@@ -486,7 +486,9 @@ void add_mahalanobis_data (windata_t *vwin)
     const int *mlist;
     char *liststr;
     char vname[VNAMELEN];
-    int v, t;
+    char descrip[MAXLABEL];
+    int cancel = 0;
+    int err = 0;
 
     if (md == NULL) {
 	errbox(_("Error adding variables"));
@@ -500,35 +502,34 @@ void add_mahalanobis_data (windata_t *vwin)
 	return;
     }
 
-    if (dataset_add_series(1, &Z, datainfo)) {
-	nomem();
-	return;
-    }
-
-    v = datainfo->v - 1;
-
     strcpy(vname, "mdist");
-    make_varname_unique(vname, 0, datainfo);
-    strcpy(datainfo->varname[v], vname);
-    sprintf(VARLABEL(datainfo, v), _("Mahalanobis distances"));
+    sprintf(descrip, _("Mahalanobis distances"));
 
-    /* give the user a chance to choose a different name */
-    varinfo_dialog(v, 0);
+    name_new_variable_dialog(vname, descrip, &cancel);
 
-    if (*datainfo->varname[v] == '\0') {
-	/* the user canceled */
-	dataset_drop_last_variables(1, &Z, datainfo);
-	return;
+    if (!cancel) {
+	/* note: dx is const, have to copy */
+	err = dataset_add_series(1, &Z, datainfo);
+	if (err) {
+	    nomem();
+	}
     }
 
-    for (t=0; t<datainfo->n; t++) {
-	Z[v][t] = dx[t];
-    }
+    if (!cancel && !err) {
+	int t, v = datainfo->v - 1;
 
-    liststr = gretl_list_to_string(mlist);
-    gretl_command_sprintf("mahal %s --save", liststr);
-    free(liststr);
-    check_and_record_command();
+	strcpy(datainfo->varname[v], vname);
+	var_set_description(datainfo, v, descrip);
+
+	for (t=0; t<datainfo->n; t++) {
+	    Z[v][t] = dx[t];
+	}
+
+	liststr = gretl_list_to_string(mlist);
+	gretl_command_sprintf("mahal %s --save", liststr);
+	free(liststr);
+	check_and_record_command();
+    }
 }
 
 void add_pca_data (windata_t *vwin)
@@ -569,105 +570,90 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     double *x = NULL;
     char vname[VNAMELEN];
+    char descrip[MAXLABEL];
     int id = gretl_VECM_id(var);
-    int j, v, t, err = 0;
+    int j, cancel = 0;
+    int err = 0;
 
     EC_num_from_action(action, &j);
-
     x = gretl_VECM_get_EC(var, j, (const double **) Z, 
 			  datainfo, &err);
-
-    if (x == NULL) {
-	errbox(_("Error adding variables"));
+    if (err) {
+	gui_errmsg(err);
 	return;
     }
 
-    if (dataset_add_series(1, &Z, datainfo)) {
-	nomem();
+    j++;
+    sprintf(vname, "EC%d", j);
+    sprintf(descrip, "error correction term %d from VECM %d", j, id);
+
+    name_new_variable_dialog(vname, descrip, &cancel);
+
+    if (!cancel) {
+	err = dataset_add_allocated_series(x, &Z, datainfo);
+	if (err) {
+	    nomem();
+	}
+    }  
+
+    if (cancel || err) {
 	free(x);
-	return;
+    } else {
+	int v = datainfo->v - 1;
+
+	strcpy(datainfo->varname[v], vname);
+	var_set_description(datainfo, v, descrip);
+
+	populate_varlist();
+	mark_dataset_as_modified();
     }
-
-    v = datainfo->v - 1;
-
-    sprintf(vname, "EC%d", j + 1);
-    strcpy(datainfo->varname[v], vname);
-    make_varname_unique(datainfo->varname[v], v, datainfo);
-    sprintf(VARLABEL(datainfo, v), "error correction term %d from VECM %d", 
-	    j + 1, id);
-
-    /* give the user a chance to choose a different name */
-    varinfo_dialog(v, 0);
-
-    if (*datainfo->varname[v] == '\0') {
-	/* the user canceled */
-	dataset_drop_last_variables(1, &Z, datainfo);
-	free(x);
-	return;
-    }
-
-    for (t=0; t<datainfo->n; t++) {
-	Z[v][t] = x[t];
-    }
-
-    populate_varlist();
-    mark_dataset_as_modified();
-
-    free(x);
 }
 
-static void make_fcast_save_name (char *vname, const char *s)
+/* note: called from add_data_callback() */
+
+void add_fcast_data (windata_t *vwin)
 {
-    strcpy(vname, s); 
+    FITRESID *fr = (FITRESID *) vwin->data;
+    char vname[VNAMELEN];
+    char descrip[MAXLABEL];
+    int cancel = 0;
+    int err = 0;
+
+    strcpy(vname, fr->depvar); 
     gretl_trunc(vname, 5);
     if (strlen(vname) < 5) {
 	strcat(vname, "_hat");
     } else {
 	strcat(vname, "hat");
-    }
-    make_varname_unique(vname, 0, datainfo);
-}
+    }    
+    sprintf(descrip, _("forecast of %s"), fr->depvar);
 
-void add_fcast_data (windata_t *vwin)
-{
-    char stobs[OBSLEN], endobs[OBSLEN];
-    FITRESID *fr = (FITRESID *) vwin->data;
-    char vname[VNAMELEN];
-    int v, t;
+    name_new_variable_dialog(vname, descrip, &cancel);
 
-    if (dataset_add_series(1, &Z, datainfo)) {
-	nomem();
-	return;
+    if (!cancel) {
+	err = dataset_add_series(1, &Z, datainfo);
+	if (err) {
+	    nomem();
+	}
     }
 
-    v = datainfo->v - 1;
+    if (!cancel && !err) {
+	char stobs[OBSLEN], endobs[OBSLEN];
+	int t, v = datainfo->v - 1;
 
-    make_fcast_save_name(vname, fr->depvar);
-    strcpy(datainfo->varname[v], vname);
+	strcpy(datainfo->varname[v], vname);
+	var_set_description(datainfo, v, descrip);
 
-    sprintf(VARLABEL(datainfo, v), _("forecast of %s"), fr->depvar);
+	for (t=0; t<datainfo->n; t++) {
+	    Z[v][t] = fr->fitted[t];
+	}
 
-    /* give the user a chance to choose a different name */
-    varinfo_dialog(v, 0);
+	ntodate(stobs, fr->t1, datainfo);
+	ntodate(endobs, fr->t2, datainfo);
 
-    if (*datainfo->varname[v] == '\0') {
-	/* the user canceled */
-	dataset_drop_last_variables(1, &Z, datainfo);
-	return;
+	gretl_command_sprintf("fcast %s %s %s", stobs, endobs, datainfo->varname[v]);
+	model_command_init(fr->model_ID);
     }
-
-    for (t=0; t<datainfo->n; t++) {
-	Z[v][t] = fr->fitted[t];
-    }
-
-    ntodate(stobs, fr->t1, datainfo);
-    ntodate(endobs, fr->t2, datainfo);
-
-    gretl_command_sprintf("fcast %s %s %s", stobs, endobs, datainfo->varname[v]);
-    model_command_init(fr->model_ID);
-
-    /* nothing else need be done, since we're called by
-       add_data_callback() */
 }
 
 static const char *selected_varname (void)
@@ -5146,19 +5132,17 @@ void logs_etc_callback (GtkAction *action)
 
 int save_fit_resid (MODEL *pmod, int code)
 {
-    int v, err = 0;
+    char vname[VNAMELEN];
+    char descrip[MAXLABEL];
+    double *x = NULL;
+    int cancel = 0;
+    int err = 0;
 
     if (pmod->dataset != NULL) {
 	fprintf(stderr, "FIXME saving fit/resid from subsampled model\n");
 	err = E_DATA;
-#if 0
-	err = genr_fit_resid(pmod, 
-			     &pmod->dataset->Z, 
-			     pmod->dataset->dinfo, 
-			     code, 0);
-#endif
     } else {
-	err = genr_fit_resid(pmod, &Z, datainfo, code, 0);
+	x = get_fit_or_resid(pmod, datainfo, code, vname, descrip, &err);
     }
 
     if (err) {
@@ -5166,55 +5150,63 @@ int save_fit_resid (MODEL *pmod, int code)
 	return err;
     }
 
-    v = datainfo->v - 1;
+    name_new_variable_dialog(vname, descrip, &cancel);
 
-    /* give the user a chance to choose a different name */
-    varinfo_dialog(v, 0);
-
-    if (*datainfo->varname[v] == '\0') {
-	/* the user canceled */
-	dataset_drop_last_variables(1, &Z, datainfo);
-	return 0;
-    }	
-
-    populate_varlist();
-
-    if (code == M_UHAT) {
-	gretl_command_sprintf("genr %s = $uhat", datainfo->varname[v]);
-    } else if (code == M_YHAT) {
-	gretl_command_sprintf("genr %s = $yhat", datainfo->varname[v]);
-    } else if (code == M_UHAT2) {
-	gretl_command_sprintf("genr %s = $uhat*$uhat", datainfo->varname[v]);
-    } else if (code == M_H) {
-	gretl_command_sprintf("genr %s = $h", datainfo->varname[v]);
-    } else if (code == M_AHAT) {
-	gretl_command_sprintf("genr %s = $ahat", datainfo->varname[v]);
+    if (!cancel) {
+	err = dataset_add_allocated_series(x, &Z, datainfo);
+	if (err) {
+	    nomem();
+	}
     }
 
-    model_command_init(pmod->ID);
-    mark_dataset_as_modified();
+    if (cancel || err) {
+	free(x);
+    } else {
+	int v = datainfo->v - 1;
 
-    return 0;
+	strcpy(datainfo->varname[v], vname);
+	var_set_description(datainfo, v, descrip);
+
+	if (code == M_UHAT) {
+	    gretl_command_sprintf("series %s = $uhat", vname);
+	} else if (code == M_YHAT) {
+	    gretl_command_sprintf("series %s = $yhat", vname);
+	} else if (code == M_UHAT2) {
+	    gretl_command_sprintf("series %s = $uhat*$uhat", vname);
+	} else if (code == M_H) {
+	    gretl_command_sprintf("series %s = $h", vname);
+	} else if (code == M_AHAT) {
+	    gretl_command_sprintf("series %s = $ahat", vname);
+	}
+
+	populate_varlist();
+	model_command_init(pmod->ID);
+	mark_dataset_as_modified();
+    }
+
+    return err;
 }
 
 void add_system_resid (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
-    int eqnum, ci = vwin->role;
-    int err, vtmp, vsave;
+    double *uhat;
+    char vname[VNAMELEN];
+    char descrip[MAXLABEL];
+    int j, ci = vwin->role;
+    int cancel = 0;
+    int err = 0;
 
-    sscanf(gtk_action_get_name(action), "resid %d", &eqnum);
+    sscanf(gtk_action_get_name(action), "resid %d", &j);
 
     if (ci == VAR || ci == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 
-	err = gretl_VAR_add_resids_to_dataset(var, eqnum,
-					      &Z, datainfo);
+	uhat = gretl_VAR_get_resid_series(var, j, &err);
     } else {
 	equation_system *sys = vwin->data;
 
-	err = system_add_resids_to_dataset(sys, eqnum,
-					   &Z, datainfo);
+	uhat = system_get_resid_series(sys, j, datainfo, &err);
     }	
 
     if (err) {
@@ -5222,28 +5214,36 @@ void add_system_resid (GtkAction *action, gpointer p)
 	return;
     }
 
-    vtmp = datainfo->v - 1;
+    j++;
 
-    /* give the user a chance to choose a different name */
-    varinfo_dialog(vtmp, 0);
-
-    /* did the user cancel? */
-    if (*datainfo->varname[vtmp] == '\0') {
-	dataset_drop_last_variables(1, &Z, datainfo);
-	return;
-    }     
-
-    /* did the user choose to overwrite an existing series? */
-    vsave = series_index(datainfo, datainfo->varname[vtmp]);
-    if (vsave < vtmp) {
-	/* yes */
-	err = dataset_replace_series(Z, datainfo, vsave, vtmp);
-	dataset_drop_last_variables(1, &Z, datainfo);
+    if (ci == VAR || ci == VECM) {
+	sprintf(vname, "uhat%d", j);
+	sprintf(descrip, _("residual from VAR system, equation %d"), j);
+    } else if (ci == VECM) {
+	sprintf(vname, "uhat%d", j);
+	sprintf(descrip, _("residual from VECM system, equation %d"), j);
+    } else {
+	sprintf(vname, "uhat_s%02d", j);
+	sprintf(descrip, _("system residual, equation %d"), j);
     }
 
-    if (err) {
-	gui_errmsg(err);
+    name_new_variable_dialog(vname, descrip, &cancel);
+
+    if (!cancel) {
+	err = dataset_add_allocated_series(uhat, &Z, datainfo);
+	if (err) {
+	    nomem();
+	}
+    }
+
+    if (cancel || err) {
+	free(uhat);
     } else {
+	int v = datainfo->v - 1;
+
+	strcpy(datainfo->varname[v], vname);
+	var_set_description(datainfo, v, descrip);
+    
 	populate_varlist();
 	mark_dataset_as_modified();
     }

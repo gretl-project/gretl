@@ -1908,13 +1908,101 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 }
 
 /**
- * genr_fit_resid:
- * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
+ * get_fit_or_resid:
+ * @pmod: pointer to source model.
  * @pdinfo: information on the data set.
- * @code: GENR_RESID or GENR_FITTED or GENR_RESID2.
- * @undo: if non-zero, don't bother labeling the variables
+ * @code: M_UHAT, M_UHAT2, M_YHAT, M_AHAT or M_H.
+ * @vname: location to write series name (length #VNAMELEN)
+ * @vlabel: location to write series description (length should
+ * be #MAXLABEL).
+ * @err: location to receive error code.
  *
+ * Creates a full-length array holding the specified model
+ * data, and writes name and description into the @vname and
+ * @vlabel.
+ * 
+ * Returns: allocated array on success or %NULL on failure.
+ */
+
+double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
+			  char *vname, char *vlabel, int *err)
+{
+    const double *src = NULL;
+    double *ret = NULL;
+    int t;
+
+    if (code == M_H) {
+	src = gretl_model_get_data(pmod, "garch_h");
+    } else if (code == M_AHAT) {
+	src = gretl_model_get_data(pmod, "ahat");
+    } else if (code == M_UHAT || code == M_UHAT2) {
+	src = pmod->uhat;
+    } else if (code == M_YHAT) {
+	src = pmod->yhat;
+    }
+
+    if (src == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    ret = malloc(pdinfo->n * sizeof *ret);
+    if (ret == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t >= pmod->t1 && t <= pmod->t2) {
+	    if (code == M_UHAT2) {
+		ret[t] = na(src[t]) ? NADBL : (src[t] * src[t]);
+	    } else {
+		ret[t] = src[t];
+	    }
+	} else {
+	    ret[t] = NADBL;
+	}
+    }
+
+    if (code == M_UHAT) {
+	sprintf(vname, "uhat%d", pmod->ID);
+	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
+	    sprintf(vlabel, _("standardized residual from model %d"), pmod->ID);
+	} else {
+	    sprintf(vlabel, _("residual from model %d"), pmod->ID);
+	}
+    } else if (code == M_YHAT) {
+	sprintf(vname, "yhat%d", pmod->ID);
+	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
+    } else if (code == M_UHAT2) { 
+	/* squared residuals */
+	sprintf(vname, "usq%d", pmod->ID);
+	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
+	    sprintf(vlabel, _("squared standardized residual from model %d"), pmod->ID);
+	} else {
+	    sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
+	}
+    } else if (code == M_H) { 
+	/* garch variance */
+	sprintf(vname, "h%d", pmod->ID);
+	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
+    } else if (code == M_AHAT) { 
+	/* fixed-effects constants */
+	sprintf(vname, "ahat%d", pmod->ID);
+	sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
+    }	
+
+    return ret;
+}
+
+/**
+ * genr_fit_resid:
+ * @pmod: pointer to source model.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on the data set.
+ * @code: M_UHAT, M_UHAT2, M_YHAT, M_AHAT or M_H.
+ * @undo: if non-zero, don't bother labeling the series.
+ * 
  * Adds residuals or fitted values or squared residuals from a
  * given model to the data set.
  * 
@@ -1925,85 +2013,27 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo)
 {
     char vname[VNAMELEN], vlabel[MAXLABEL];
-    const double *x = NULL;
-    int i, t;
+    double *x;
+    int err = 0;
 
-    if (code == M_H) {
-	x = gretl_model_get_data(pmod, "garch_h");
-	if (x == NULL) return E_BADSTAT;
-    } else if (code == M_AHAT) {
-	x = gretl_model_get_data(pmod, "ahat");
-	if (x == NULL) return E_BADSTAT;
-    } else if (code == M_UHAT || code == M_UHAT2) {
-	if (pmod->uhat == NULL) return E_BADSTAT;
-    } else if (code == M_YHAT) {
-	if (pmod->yhat == NULL) return E_BADSTAT;
+    x = get_fit_or_resid(pmod, pdinfo, code, vname, vlabel, &err);
+
+    if (!err) {
+	err = dataset_add_allocated_series(x, pZ, pdinfo);
     }
 
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	return E_ALLOC;
+    if (err) {
+	free(x);
+    } else {
+	int v = pdinfo->v - 1;
+
+	strcpy(pdinfo->varname[v], vname);
+	if (!undo) {
+	    strcpy(VARLABEL(pdinfo, v), vlabel);
+	}
     }
 
-    i = pdinfo->v - 1;
-
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[i][t] = NADBL;
-    }
-
-    if (code == M_UHAT) {
-	sprintf(vname, "uhat%d", pmod->ID);
-	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	    sprintf(vlabel, _("standardized residual from model %d"), pmod->ID);
-	} else {
-	    sprintf(vlabel, _("residual from model %d"), pmod->ID);
-	}
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = pmod->uhat[t];
-	}
-    } else if (code == M_YHAT) {
-	sprintf(vname, "yhat%d", pmod->ID);
-	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = pmod->yhat[t];
-	}
-    } else if (code == M_UHAT2) { 
-	/* squared residuals */
-	sprintf(vname, "usq%d", pmod->ID);
-	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	    sprintf(vlabel, _("squared standardized residual from model %d"), pmod->ID);
-	} else {
-	    sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
-	}
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (na(pmod->uhat[t])) {
-		(*pZ)[i][t] = NADBL;
-	    } else {
-		(*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
-	    }
-	}
-    } else if (code == M_H) { 
-	/* garch variance */
-	sprintf(vname, "h%d", pmod->ID);
-	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = x[t];
-	}
-    } else if (code == M_AHAT) { 
-	/* fixed-effects constants */
-	sprintf(vname, "ahat%d", pmod->ID);
-	sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = x[t];
-	}
-    }	
-
-    strcpy(pdinfo->varname[i], vname);
-
-    if (!undo) {
-	strcpy(VARLABEL(pdinfo, i), vlabel);
-    }
-
-    return 0;
+    return err;
 }
 
 int get_observation_number (const char *s, const DATAINFO *pdinfo)

@@ -258,7 +258,7 @@ static void spreadsheet_edit (void)
 
 static void varinfo_callback (void)
 {
-    varinfo_dialog(mdata->active_var, 1);
+    varinfo_dialog(mdata->active_var);
 }
 
 static void options_dialog_callback (void)
@@ -829,7 +829,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	if (selcount == 1 && vnum != 0) {
 	    mdata->active_var = vnum;
 	    if (k == GDK_e || k == GDK_F2) {
-		varinfo_dialog(mdata->active_var, 1);
+		varinfo_dialog(mdata->active_var);
 	    } else if (k == GDK_t) {
 		do_graph_var(mdata->active_var);
 	    } else if (k == GDK_Return) {
