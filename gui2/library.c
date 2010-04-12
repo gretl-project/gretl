@@ -4125,7 +4125,7 @@ void do_variable_setmiss (GtkWidget *w, dialog_t *dlg)
     }
 }
 
-int do_rename_variable (int v, const char *newname, int full)
+int do_rename_variable (int v, const char *newname)
 {
     int err = 0;
 
@@ -4136,20 +4136,14 @@ int do_rename_variable (int v, const char *newname, int full)
 
     if (gretl_is_series(newname, datainfo)) {
 	errbox(_("A series named %s already exists"), newname);
-	return 1;
-    }
-
-    err = gui_validate_varname(newname, GRETL_TYPE_SERIES);
-    if (err) {
-	return err;
-    }
-
-    gretl_command_sprintf("rename %d %s", v, newname);
-
-    if (full) {
-	err = check_and_record_command();
+	err = E_DATA;
     } else {
-	err = check_lib_command();
+	err = gui_validate_varname(newname, GRETL_TYPE_SERIES);
+    }
+
+    if (!err) {
+	gretl_command_sprintf("rename %d %s", v, newname);
+	err = check_and_record_command();
     }
 
     if (!err) {

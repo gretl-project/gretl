@@ -248,7 +248,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 
     if (vset->changed[VSET_VARNAME]) {
 	newstr = entry_get_trimmed_text(vset->name_entry);
-	err = do_rename_variable(v, newstr, 1);
+	err = do_rename_variable(v, newstr);
 	g_free(newstr);
     }
 
