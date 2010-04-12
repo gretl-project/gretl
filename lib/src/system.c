@@ -1627,14 +1627,18 @@ add_system_var_info (equation_system *sys, int i,
 		     DATAINFO *pdinfo, int v, int code)
 {
     char *label = VARLABEL(pdinfo, v);
+    char vname[VNAMELEN];
 
     if (code == SYS_UHAT) {
-	sprintf(pdinfo->varname[v], "uhat_s%02d", i);
+	sprintf(vname, "uhat_s%02d", i);
 	sprintf(label, _("system residual, equation %d"), i);
     } else if (code == SYS_YHAT) {
-	sprintf(pdinfo->varname[v], "yhat_s%02d", i);
+	sprintf(vname, "yhat_s%02d", i);
 	sprintf(label, _("system fitted value, equation %d"), i);
     }
+
+    make_varname_unique(vname, v, pdinfo);
+    strcpy(pdinfo->varname[v], vname);
 }
 
 int 

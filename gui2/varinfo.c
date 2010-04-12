@@ -221,7 +221,7 @@ static int try_regenerate_var (int v, const char *s)
 
 static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 {
-    char *newstr = NULL;
+    gchar *newstr = NULL;
     int ival, v = vset->varnum;
     int err = 0;
 
@@ -276,7 +276,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	set_var_discrete(datainfo, v, ival);
     }   
 
-    if (!err && varinfo_full(vset)) {
+    if (!err) {
 	if (vset->changed[VSET_LABEL] ||
 	    vset->changed[VSET_DISPLAY]) {
 	    record_varlabel_change(v);
@@ -296,6 +296,44 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     }
 
     if (!err && w != vset->apply) {
+	gtk_widget_destroy(vset->dlg);
+    }
+}
+
+static void set_series_name_and_desc (GtkWidget *w, gui_varinfo *vset)
+{
+    gchar *s = NULL;
+    int v = vset->varnum;
+    int err = 0;
+
+    if (vset->changed[VSET_VARNAME]) {
+	s = entry_get_trimmed_text(vset->name_entry);
+	/* note: we could use gui_validate_varname in place of
+	   gui_validate_varname_strict below to permit overwriting of
+	   an existing series of the given name, but that may
+	   create complications -- better to have the user
+	   delete the original series first? 
+	*/
+	err = gui_validate_varname_strict(s, GRETL_TYPE_SERIES);
+	if (err) {
+	    gtk_editable_select_region(GTK_EDITABLE(vset->name_entry), 0, -1);
+	    gtk_widget_grab_focus(vset->name_entry);
+	} else {
+	    strcpy(datainfo->varname[v], s);
+	}
+	g_free(s);
+    }
+
+    if (!err && vset->changed[VSET_LABEL]) {
+	char *targ = VARLABEL(datainfo, v);
+
+	s = entry_get_trimmed_text(vset->label_entry);
+	*targ = '\0';
+	strncat(targ, s, MAXLABEL - 1);
+	g_free(s);
+    }
+
+    if (!err) {
 	gtk_widget_destroy(vset->dlg);
     }
 }
@@ -700,11 +738,14 @@ void varinfo_dialog (int varnum, int full)
     gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);  
+    gtk_widget_show(hbox); 
 
-    /* Of editing actions, editing the descriptive string is the most
-       likely?  On this assumption we'll focus that widget */
-    gtk_widget_grab_focus(vset->label_entry);
+    /* Try to focus the most likely field for editing */
+    if (full) {
+	gtk_widget_grab_focus(vset->label_entry);
+    } else {
+	gtk_widget_grab_focus(vset->name_entry);
+    }
 
     /* read/set display name? */
     if (full) {
@@ -812,8 +853,13 @@ void varinfo_dialog (int varnum, int full)
 
     /* "OK" button */
     tmp = ok_button(hbox);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(really_set_variable_info), vset);
+    if (full) {
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(really_set_variable_info), vset);
+    } else {
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(set_series_name_and_desc), vset);
+    }	
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
 
@@ -825,7 +871,6 @@ void varinfo_dialog (int varnum, int full)
     }
 
     gtk_widget_show_all(hbox);
-
     gtk_widget_show(vset->dlg);
 }
 

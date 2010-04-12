@@ -5201,7 +5201,7 @@ void add_system_resid (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     int eqnum, ci = vwin->role;
-    int err, v;
+    int err, vtmp, vsave;
 
     sscanf(gtk_action_get_name(action), "resid %d", &eqnum);
 
@@ -5222,19 +5222,31 @@ void add_system_resid (GtkAction *action, gpointer p)
 	return;
     }
 
-    v = datainfo->v - 1;
+    vtmp = datainfo->v - 1;
 
     /* give the user a chance to choose a different name */
-    varinfo_dialog(v, 0);
+    varinfo_dialog(vtmp, 0);
 
-    if (*datainfo->varname[v] == '\0') {
-	/* the user canceled */
+    /* did the user cancel? */
+    if (*datainfo->varname[vtmp] == '\0') {
 	dataset_drop_last_variables(1, &Z, datainfo);
 	return;
-    }    
+    }     
 
-    populate_varlist();
-    mark_dataset_as_modified();
+    /* did the user choose to overwrite an existing series? */
+    vsave = series_index(datainfo, datainfo->varname[vtmp]);
+    if (vsave < vtmp) {
+	/* yes */
+	err = dataset_replace_series(Z, datainfo, vsave, vtmp);
+	dataset_drop_last_variables(1, &Z, datainfo);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	populate_varlist();
+	mark_dataset_as_modified();
+    }
 }
 
 static void set_model_stat_name (GtkWidget *widget, dialog_t *dlg)

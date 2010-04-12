@@ -3055,9 +3055,12 @@ int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo)
 {
     MODEL *pmod = var->models[eqnum];
+    char vname[VNAMELEN];
     int i, t;
 
-    if (dataset_add_series(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_series(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
 
     i = pdinfo->v - 1;
 
@@ -3069,7 +3072,9 @@ int gretl_VAR_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 	}
     }
 
-    sprintf(pdinfo->varname[i], "uhat%d", eqnum + 1);
+    sprintf(vname, "uhat%d", eqnum + 1);
+    make_varname_unique(vname, i, pdinfo);
+    strcpy(pdinfo->varname[i], vname);
 
     if (var->ci == VAR) {
 	sprintf(VARLABEL(pdinfo, i), _("residual from VAR system, equation %d"), 

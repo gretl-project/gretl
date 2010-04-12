@@ -1718,7 +1718,7 @@ void set_tex_param_format (const char *s)
     int i, n = 0;
     int err = 0;
 
-    if (s == NULL) {
+    if (s == NULL || !strcmp(s, "default")) {
 	use_custom = 0;
 	return;
     }

@@ -4909,15 +4909,17 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, _("Couldn't format model\n"));
 	} else {
 	    char fname[FILENAME_MAX];
+	    gretlopt opt = cmd->opt;
 
 	    strcpy(fname, cmd->param);
 
 	    if (cmd->opt & OPT_R) {
 		err = rtfprint(models[0], pdinfo, fname, cmd->opt);
 	    } else {
-		err = texprint(models[0], pdinfo, fname, 
-			       (cmd->ci == EQNPRINT)? (cmd->opt | OPT_E) :
-			       cmd->opt);
+		if (cmd->ci == EQNPRINT) {
+		    opt |= OPT_E;
+		}		
+		err = texprint(models[0], pdinfo, fname, opt);
 	    }
 	    if (!err) {
 		pprintf(prn, _("Model printed to %s\n"), fname);
