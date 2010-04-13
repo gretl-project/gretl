@@ -313,13 +313,17 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     }
 }
 
+/* "OK" callback for setting name and description of a series
+   that is to be saved */
+
 static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
 {
     gchar *s = NULL;
     int err = 0;
 
     if (nset->changed[0]) {
-	/* take care in allowing overwrite of existing series */
+	/* series name: take care in allowing overwrite of existing 
+	   series */
 	int allow_overwrite = 1;
 	int v;
 
@@ -327,9 +331,12 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
 	v = series_index(datainfo, s);
 
 	if (v > 0 && v < datainfo->v) {
-	    if (v <= max_untouchable_series_ID()) {
+	    /* there's already a series of this name */
+	    if (series_is_parent(datainfo, v)) {
 		allow_overwrite = 0;
-	    }
+	    } else if (v <= max_untouchable_series_ID()) {
+		allow_overwrite = 0;
+	    } 
 	}
 
 	if (allow_overwrite) {
@@ -349,6 +356,7 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
     }
 
     if (!err && nset->changed[1]) {
+	/* description */
 	s = entry_get_trimmed_text(nset->label_entry);
 	*nset->descrip = '\0';
 	strncat(nset->descrip, s, MAXLABEL - 1);
