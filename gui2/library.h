@@ -307,6 +307,8 @@ int check_and_record_command (void);
 
 /* other */
 
+int max_untouchable_series_ID (void);
+
 int latex_compile (char *texshort);
 
 void add_mahalanobis_data (windata_t *vwin);

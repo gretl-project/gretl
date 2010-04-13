@@ -1588,10 +1588,9 @@ int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name)
  */
 
 int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v,
-			    const double *x, const char *descrip)
+			    double *x, const char *descrip,
+			    DataCopyFlag flag)
 {
-    int t;
-
     if (v < 0 || v >= pdinfo->v) {
 	/* out of bounds */
 	return E_DATA;
@@ -1605,8 +1604,15 @@ int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v,
     gretl_varinfo_init(pdinfo->varinfo[v]);
     strcpy(VARLABEL(pdinfo, v), descrip);
 
-    for (t=0; t<pdinfo->n; t++) {
-	Z[v][t] = x[t];
+    if (flag == DS_GRAB_VALUES) {
+	free(Z[v]);
+	Z[v] = x;
+    } else {
+	int t;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    Z[v][t] = x[t];
+	}
     }
 
     set_dataset_is_changed();

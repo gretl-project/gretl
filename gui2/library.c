@@ -479,6 +479,43 @@ static int gui_exact_fit_check (MODEL *pmod)
     return 0;
 }
 
+static int add_or_replace_series (double *x, const char *vname,
+				  const char *descrip,
+				  int flag)
+{
+    int v = series_index(datainfo, vname);
+    int err = 0;
+
+    if (v > 0 && v < datainfo->v) {
+	/* replacing */
+	err = dataset_replace_series(Z, datainfo, v, x,
+				     descrip, flag);
+    } else {
+	/* adding */
+	if (flag == DS_GRAB_VALUES) {
+	    err = dataset_add_allocated_series(x, &Z, datainfo);
+	} else {
+	    err = dataset_add_series(1, &Z, datainfo);
+	}
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    v = datainfo->v - 1;
+	    strcpy(datainfo->varname[v], vname);
+	    var_set_description(datainfo, v, descrip);
+	    if (flag == DS_COPY_VALUES) {
+		int t;
+
+		for (t=0; t<datainfo->n; t++) {
+		    Z[v][t] = x[t];
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
 void add_mahalanobis_data (windata_t *vwin)
 {
     MahalDist *md = (MahalDist *) vwin->data;
@@ -507,24 +544,14 @@ void add_mahalanobis_data (windata_t *vwin)
 
     name_new_variable_dialog(vname, descrip, &cancel);
 
-    if (!cancel) {
-	/* note: dx is const, have to copy */
-	err = dataset_add_series(1, &Z, datainfo);
-	if (err) {
-	    nomem();
-	}
+    if (cancel) {
+	return;
     }
 
-    if (!cancel && !err) {
-	int t, v = datainfo->v - 1;
+    err = add_or_replace_series((double *) dx, vname,
+				descrip, DS_COPY_VALUES);
 
-	strcpy(datainfo->varname[v], vname);
-	var_set_description(datainfo, v, descrip);
-
-	for (t=0; t<datainfo->n; t++) {
-	    Z[v][t] = dx[t];
-	}
-
+    if (!err) {
 	liststr = gretl_list_to_string(mlist);
 	gretl_command_sprintf("mahal %s --save", liststr);
 	free(liststr);
@@ -589,21 +616,16 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
 
     name_new_variable_dialog(vname, descrip, &cancel);
 
-    if (!cancel) {
-	err = dataset_add_allocated_series(x, &Z, datainfo);
-	if (err) {
-	    nomem();
-	}
-    }  
+    if (cancel) {
+	free(x);
+	return;
+    }
 
-    if (cancel || err) {
+    err = add_or_replace_series(x, vname, descrip, DS_GRAB_VALUES);
+
+    if (err) {
 	free(x);
     } else {
-	int v = datainfo->v - 1;
-
-	strcpy(datainfo->varname[v], vname);
-	var_set_description(datainfo, v, descrip);
-
 	populate_varlist();
 	mark_dataset_as_modified();
     }
@@ -630,28 +652,20 @@ void add_fcast_data (windata_t *vwin)
 
     name_new_variable_dialog(vname, descrip, &cancel);
 
-    if (!cancel) {
-	err = dataset_add_series(1, &Z, datainfo);
-	if (err) {
-	    nomem();
-	}
+    if (cancel) {
+	return;
     }
 
-    if (!cancel && !err) {
+    err = add_or_replace_series(fr->fitted, vname, descrip, 
+				DS_COPY_VALUES);
+
+    if (!err) {
 	char stobs[OBSLEN], endobs[OBSLEN];
-	int t, v = datainfo->v - 1;
-
-	strcpy(datainfo->varname[v], vname);
-	var_set_description(datainfo, v, descrip);
-
-	for (t=0; t<datainfo->n; t++) {
-	    Z[v][t] = fr->fitted[t];
-	}
 
 	ntodate(stobs, fr->t1, datainfo);
 	ntodate(endobs, fr->t2, datainfo);
 
-	gretl_command_sprintf("fcast %s %s %s", stobs, endobs, datainfo->varname[v]);
+	gretl_command_sprintf("fcast %s %s %s", stobs, endobs, vname);
 	model_command_init(fr->model_ID);
     }
 }
@@ -5146,21 +5160,16 @@ int save_fit_resid (MODEL *pmod, int code)
 
     name_new_variable_dialog(vname, descrip, &cancel);
 
-    if (!cancel) {
-	err = dataset_add_allocated_series(x, &Z, datainfo);
-	if (err) {
-	    nomem();
-	}
+    if (cancel) {
+	free(x);
+	return 0;
     }
 
-    if (cancel || err) {
+    err = add_or_replace_series(x, vname, descrip, DS_GRAB_VALUES);
+
+    if (err) {
 	free(x);
     } else {
-	int v = datainfo->v - 1;
-
-	strcpy(datainfo->varname[v], vname);
-	var_set_description(datainfo, v, descrip);
-
 	if (code == M_UHAT) {
 	    gretl_command_sprintf("series %s = $uhat", vname);
 	} else if (code == M_YHAT) {
@@ -5223,21 +5232,17 @@ void add_system_resid (GtkAction *action, gpointer p)
 
     name_new_variable_dialog(vname, descrip, &cancel);
 
-    if (!cancel) {
-	err = dataset_add_allocated_series(uhat, &Z, datainfo);
-	if (err) {
-	    nomem();
-	}
+    if (cancel) {
+	free(uhat);
+	return;
     }
 
-    if (cancel || err) {
+    err = add_or_replace_series(uhat, vname, descrip,
+				DS_GRAB_VALUES);
+
+    if (err) {
 	free(uhat);
     } else {
-	int v = datainfo->v - 1;
-
-	strcpy(datainfo->varname[v], vname);
-	var_set_description(datainfo, v, descrip);
-    
 	populate_varlist();
 	mark_dataset_as_modified();
     }
@@ -5686,15 +5691,13 @@ void display_fit_resid (GtkAction *action, gpointer p)
     }  
 }
 
-/* Before deleting specified variables, check that they are not
-   required by any saved models; also, don't delete variables 
-   whose deletion would result in the renumbering of variables
-   used in saved models.
+/* determine the series ID number such that it is OK
+   to delete or redefine series with higher IDs
 */
 
-static int maybe_prune_delete_list (int *list)
+int max_untouchable_series_ID (void)
 {
-    int vsave = 0, pruned = 0;
+    int vsave = 0;
     int i, vmax;
 
     /* check open model windows */
@@ -5714,6 +5717,21 @@ static int maybe_prune_delete_list (int *list)
     if (vmax > vsave) {
 	vsave = vmax;
     }    
+
+    return vsave;
+}
+
+/* Before deleting specified variables, check that they are not
+   required by any saved models; also, don't delete variables 
+   whose deletion would result in the renumbering of variables
+   used in saved models.
+*/
+
+static int maybe_prune_delete_list (int *list)
+{
+    int i, vsave, pruned = 0;
+
+    vsave = max_untouchable_series_ID();
     
     for (i=1; i<=list[0]; i++) {
 	if (list[i] <= vsave) {

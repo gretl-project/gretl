@@ -319,20 +319,32 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
     int err = 0;
 
     if (nset->changed[0]) {
+	/* take care in allowing overwrite of existing series */
+	int allow_overwrite = 1;
+	int v;
+
 	s = entry_get_trimmed_text(nset->name_entry);
-	/* note: we could use gui_validate_varname in place of
-	   gui_validate_varname_strict below to permit overwriting of
-	   an existing series of the given name, but that may
-	   create complications -- better to have the user
-	   delete the original series first? 
-	*/
-	err = gui_validate_varname_strict(s, GRETL_TYPE_SERIES);
+	v = series_index(datainfo, s);
+
+	if (v > 0 && v < datainfo->v) {
+	    if (v <= max_untouchable_series_ID()) {
+		allow_overwrite = 0;
+	    }
+	}
+
+	if (allow_overwrite) {
+	    err = gui_validate_varname(s, GRETL_TYPE_SERIES);
+	} else {
+	    err = gui_validate_varname_strict(s, GRETL_TYPE_SERIES);
+	}
+
 	if (err) {
 	    gtk_editable_select_region(GTK_EDITABLE(nset->name_entry), 0, -1);
 	    gtk_widget_grab_focus(nset->name_entry);
 	} else {
 	    strcpy(nset->vname, s);
 	}
+
 	g_free(s);
     }
 

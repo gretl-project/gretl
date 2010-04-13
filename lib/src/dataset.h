@@ -55,6 +55,11 @@ typedef enum {
     DS_CLEAR
 } DatasetOp;
 
+typedef enum {
+    DS_COPY_VALUES,
+    DS_GRAB_VALUES
+} DataCopyFlag;
+
 /**
  * dataset_is_cross_section:
  * @p: pointer to data information struct.
@@ -347,7 +352,8 @@ int overwrite_err (const char *name);
 int series_is_parent (const DATAINFO *pdinfo, int v);
 
 int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v,
-			    const double *x, const char *descrip);
+			    double *x, const char *descrip,
+			    DataCopyFlag flag);
 
 int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name);
 
