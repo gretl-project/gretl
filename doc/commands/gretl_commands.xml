@@ -10510,7 +10510,7 @@
       <arguments>
         <argument>var1</argument>
         <argument>var2</argument>
-        <argument optional="true">maxlag</argument>
+        <argument optional="true">order</argument>
       </arguments>
       <examples>
         <example>xcorrgm x y 12</example>
@@ -10526,7 +10526,7 @@
 	and lags of <repl>var2</repl>.
       </para>
       <para>
-	If a <repl>maxlag</repl> value is specified the length of the
+	If an <repl>order</repl> value is specified the length of the
 	cross-correlogram is limited to at most that number of leads and
 	lags, otherwise the length is determined automatically, as a
 	function of the frequency of the data and the number of

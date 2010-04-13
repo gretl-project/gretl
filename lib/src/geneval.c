@@ -9154,6 +9154,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    }
 	}
 	if (!p->err) {
+	    /* FIXME? */
 	    series_ensure_finite(Z[v], p->dinfo->n);
 	}
 	strcpy(p->dinfo->varname[v], p->lh.name);
