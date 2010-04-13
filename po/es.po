@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-04-09 12:47-0400\n"
-"PO-Revision-Date: 2010-04-09 13:09-0400\n"
+"PO-Revision-Date: 2010-04-13 19:06+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -778,12 +778,12 @@ msgstr "tratando de aplicar etiquetas de filas como fechas...\n"
 msgid "   definitely not a four-digit year\n"
 msgstr "   francamente, no es un año de cuatro dígitos\n"
 
-#: lib/src/csvdata.c:1144
-#, fuzzy, c-format
+#: lib/src/csvdata.c:1144, c-format
 msgid ""
 "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
 msgstr ""
-"Encontrados datos binarios (%d): este no es un fichero de texto válido\n"
+"Se han encontrado datos binarios (%d) (línea %d:%d): este no es un fichero "
+"de texto válido\n"
 
 #: lib/src/csvdata.c:1167 lib/src/dataio.c:2601
 msgid "Data file is empty\n"
@@ -11292,7 +11292,7 @@ msgstr "Ver los resultados de ARIMA-X-12"
 
 #: gui2/gui_utils.c:3032
 msgid "Cholesky ordering:"
-msgstr ""
+msgstr "Ordenación de Cholesky:"
 
 #: gui2/gui_utils.c:3106
 msgid "include bootstrap confidence interval"
@@ -12334,13 +12334,12 @@ msgstr ""
 "Error al ejecutar guión: parando\n"
 
 #: gui2/library.c:7546
-#, fuzzy
 msgid "Unterminated comment in script"
-msgstr "condición indeterminada para 'if'"
+msgstr "En el guión hay un comentario sin terminar"
 
 #: gui2/library.c:7928
 msgid "Script done\n"
-msgstr "Guión ejecutado\n"
+msgstr "Se ha ejecutado el guión\n"
 
 #: gui2/menustate.c:56
 #, c-format
@@ -15137,7 +15136,7 @@ msgstr "tendencia/ciclo"
 
 #: plugin/tramo-x12a.c:397
 msgid "adjusted"
-msgstr "corregido"
+msgstr "corregida"
 
 #: plugin/vif.c:107
 msgid "Properties of matrix X'X"
