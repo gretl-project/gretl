@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-04-14 01:18+0800\n"
+"PO-Revision-Date: 2010-04-15 01:36+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -16328,73 +16328,63 @@ msgstr "右尾機率"
 
 #: plugin/tramo_options.c:337
 msgid "Time-series model plus seasonal adjustment"
-msgstr ""
+msgstr "時間序列模型 + 季節調整 (seasonal adjustment)"
 
 #: plugin/tramo_options.c:338
-#, fuzzy
 msgid "Time-series model only"
-msgstr "/變數/時間序列圖(_T)"
+msgstr "只使用時間序列模型 (Time-series model only)"
 
 #: plugin/tramo_options.c:344
-#, fuzzy
 msgid "Standard automatic analysis"
-msgstr "假設母體標準差相同"
+msgstr "採用標準之自動分析 (Standard automatic analysis)"
 
 #: plugin/tramo_options.c:402
 msgid "Output"
-msgstr ""
+msgstr "分析結果"
 
 #: plugin/tramo_options.c:405
-#, fuzzy
 msgid "Output window:"
-msgstr "更新顯示"
+msgstr "顯示分析結果:"
 
 #: plugin/tramo_options.c:411
-#, fuzzy
 msgid "Full details"
-msgstr "顯示細節"
+msgstr "顯示全部細節"
 
 #: plugin/tramo_options.c:425
 msgid "Reduced output"
-msgstr ""
+msgstr "精簡結果 (Reduced output)"
 
 #: plugin/tramo_options.c:443
-#, fuzzy
 msgid "Save to data set:"
-msgstr "全部樣本數: %d observations\n"
+msgstr "儲存分析後之變數:"
 
 #: plugin/tramo_options.c:449
 #: plugin/tramo-x12a.c:198
-#, fuzzy
 msgid "Seasonally adjusted series"
-msgstr "時間序列圖(_T)"
+msgstr "季節調整後之變數"
 
 #: plugin/tramo_options.c:459
 #: plugin/tramo-x12a.c:205
-#, fuzzy
 msgid "Trend/cycle"
-msgstr "新增時間趨勢變數(_T)"
+msgstr "趨勢或循環因子之變數 (Trend/cycle)"
 
 #: plugin/tramo_options.c:466
 #: plugin/tramo-x12a.c:212
 msgid "Irregular"
-msgstr ""
+msgstr "不規則成份變數 (irregular)"
 
 #: plugin/tramo_options.c:479
 #: plugin/tramo-x12a.c:223
-#, fuzzy
 msgid "Generate graph"
-msgstr "變數繪圖(_G)"
+msgstr "變數繪圖"
 
 #: plugin/tramo_options.c:500
-#, fuzzy
 msgid "Log transformation"
-msgstr "指令紀錄(_C)"
+msgstr "對數轉換 (Log transformation)"
 
 #: plugin/tramo_options.c:513
-#, fuzzy
 msgid "No log transformation"
-msgstr "取對數再一階差分(_L)"
+msgstr "不進行對數轉換 (No Log transformation)"
 
 #: plugin/tramo_options.c:526
 #: plugin/tramo_options.c:672
@@ -16403,105 +16393,96 @@ msgid "Automatic"
 msgstr "自動"
 
 #: plugin/tramo_options.c:553
-#, fuzzy
 msgid "Mean correction"
-msgstr "樣本均數"
+msgstr "均數修正 (mean correction)"
 
 #: plugin/tramo_options.c:565
-#, fuzzy
 msgid "No mean correction"
-msgstr "全距-均數圖()R)"
+msgstr "不進行均數修正 (no mean correction)"
 
 #: plugin/tramo_options.c:594
 msgid "Outliers"
-msgstr ""
+msgstr "異常值"
 
 #: plugin/tramo_options.c:597
 msgid "Detect and correct for outliers"
-msgstr ""
+msgstr "偵測與修正異常值 (outliers)"
 
 #: plugin/tramo_options.c:615
 msgid "Besides additive outliers, allow for:"
-msgstr ""
+msgstr "除了異常值 (additive outliers) 之外, 允許以下:"
 
 #: plugin/tramo_options.c:622
 msgid "transitory changes"
-msgstr ""
+msgstr "暫時性變動 (transitory changes)"
 
 #: plugin/tramo_options.c:634
-#, fuzzy
 msgid "shifts of level"
-msgstr "對原始 (level) 變數檢定"
+msgstr "調整 (shift) level"
 
 #: plugin/tramo_options.c:646
 msgid "innovational outliers"
-msgstr ""
+msgstr "新的異常值 (innovational outliers)"
 
 #: plugin/tramo_options.c:665
 msgid "Critical value for outliers:"
-msgstr ""
+msgstr "異常值之臨界值 (critical value for outliers):"
 
 #: plugin/tramo_options.c:749
-#, fuzzy
 msgid "Non-seasonal differences:"
-msgstr "取季節差分(_S)"
+msgstr "取非季節差分:"
 
 #: plugin/tramo_options.c:753
-#, fuzzy
 msgid "Seasonal differences:"
-msgstr "取季節差分(_S)"
+msgstr "取季節差分:"
 
 #: plugin/tramo_options.c:766
 msgid "Non-seasonal AR terms:"
 msgstr ""
 
 #: plugin/tramo_options.c:770
-#, fuzzy
 msgid "Seasonal AR terms:"
-msgstr "加上季節虛擬變數"
+msgstr "季節 AR 項:"
 
 #: plugin/tramo_options.c:783
 msgid "Non-seasonal MA terms:"
 msgstr ""
 
 #: plugin/tramo_options.c:787
-#, fuzzy
 msgid "Seasonal MA terms:"
-msgstr "加上季節虛擬變數"
+msgstr "季節 MA 項:"
 
 #: plugin/tramo-x12a.c:60
 #, c-format
 msgid "seasonally adjusted %s"
-msgstr ""
+msgstr "季節調整後: %s"
 
 #: plugin/tramo-x12a.c:61
-#, fuzzy, c-format
+#, c-format
 msgid "trend/cycle for %s"
-msgstr "檢查有無更新版(_u)"
+msgstr "%s 的趨勢或循環值"
 
 #: plugin/tramo-x12a.c:62
 #, c-format
 msgid "irregular component of %s"
-msgstr ""
+msgstr "%s 的不規則成份"
 
 #: plugin/tramo-x12a.c:230
-#, fuzzy
 msgid "Show full output"
-msgstr "恢復為全樣本(_R)"
+msgstr "顯示全部結果"
 
 #: plugin/tramo-x12a.c:351
 #: plugin/tramo-x12a.c:353
 msgid "irregular"
-msgstr ""
+msgstr "不規則成份變數 (irregular)"
 
 #: plugin/tramo-x12a.c:380
-#, fuzzy
 msgid "trend/cycle"
-msgstr "新增時間趨勢變數(_T)"
+msgstr "趨勢或循環值"
 
 #: plugin/tramo-x12a.c:397
 msgid "adjusted"
-msgstr ""
+msgstr "調整後"
 
 #: plugin/vif.c:107
 msgid "Properties of matrix X'X"
