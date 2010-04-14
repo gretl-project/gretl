@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-04-15 01:36+0800\n"
+"PO-Revision-Date: 2010-04-15 01:47+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -3621,7 +3621,7 @@ msgstr ""
 #: lib/src/gretl_paths.c:1802
 #, c-format
 msgid "gretl: using these basic search paths:\n"
-msgstr ""
+msgstr "gretl: using these basic search paths:\n"
 
 #: lib/src/gretl_paths.c:1894
 #: lib/src/gretl_paths.c:1911
