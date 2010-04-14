@@ -5697,8 +5697,7 @@ void display_fit_resid (GtkAction *action, gpointer p)
 
 int max_untouchable_series_ID (void)
 {
-    int vsave = 0;
-    int i, vmax;
+    int vmax, vsave = 0;
 
     /* check open model windows */
     vmax = highest_numbered_variable_in_winstack();

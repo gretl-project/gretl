@@ -44,6 +44,8 @@
 # define LHDEBUG 0
 #endif
 
+#define ENSURE_FINITE 0
+
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
 
@@ -2732,7 +2734,7 @@ static double real_apply_func (double x, int f, parser *p)
 
     errno = 0;
 
-    if (xna(x)) {
+    if (na(x)) {
 	switch (f) {
 	case F_MISSING:
 	    return 1.0;
@@ -2740,9 +2742,11 @@ static double real_apply_func (double x, int f, parser *p)
 	case F_MISSZERO:
 	    return 0.0;
 	default:
-	    return NADBL;
+	    if (na(x)) {
+		return NADBL;
+	    }
 	}
-    }
+    } 
 
     switch (f) {
     case U_NEG: 
@@ -8536,16 +8540,24 @@ static void gen_check_errvals (parser *p)
 
     if (n->t == NUM) {
 	if (!isfinite(n->v.xval)) {
+#if ENSURE_FINITE
 	    n->v.xval = NADBL;
 	    set_gretl_warning(W_GENMISS);
+#else
+	    set_gretl_warning(W_GENNAN);
+#endif
 	}
     } else if (n->t == VEC) {
 	int t;
 
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
+#if ENSURE_FINITE
 		n->v.xvec[t] = NADBL;
 		set_gretl_warning(W_GENMISS);
+#else
+		set_gretl_warning(W_GENNAN);
+#endif
 		break;
 	    }
 	}
@@ -9022,6 +9034,8 @@ static int gen_allocate_storage (parser *p)
     return p->err;
 }
 
+#if ENSURE_FINITE
+
 static void series_ensure_finite (double *x, int n)
 {
     int i;
@@ -9037,6 +9051,8 @@ static void series_ensure_finite (double *x, int n)
 	}
     }
 }
+
+#endif
 
 static int save_generated_var (parser *p, PRN *prn)
 {
@@ -9153,10 +9169,11 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	}
+#if ENSURE_FINITE
 	if (!p->err) {
-	    /* FIXME? */
 	    series_ensure_finite(Z[v], p->dinfo->n);
 	}
+#endif
 	strcpy(p->dinfo->varname[v], p->lh.name);
 #if EDEBUG
 	fprintf(stderr, "var %d: gave generated series the name '%s'\n", 

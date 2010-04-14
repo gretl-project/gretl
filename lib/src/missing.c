@@ -360,7 +360,7 @@ static char *model_missmask (const int *list, int t1, int t2,
 		/* dummy weight variable */
 		xx *= Z[dwt][t];
 	    }
-	    if (na(xx)) {
+	    if (xna(xx)) {
 #if MASKDEBUG > 1
 		fprintf(stderr, "model_missmask: NA at list[%d] (%d), obs %d\n",
 			i, list[i], t);
@@ -432,7 +432,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	    if (dwt) {
 		xx *= Z[dwt][t];
 	    }
-	    if (na(xx)) {
+	    if (xna(xx)) {
 		missobs = 1;
 		break;
 	    }
@@ -456,7 +456,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	    if (dwt) {
 		xx *= Z[dwt][t];
 	    }
-	    if (na(xx)) {
+	    if (xna(xx)) {
 		missobs = 1;
 		break;
 	    }
@@ -481,7 +481,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 		if (dwt) {
 		    xx *= Z[dwt][t];
 		}
-		if (na(xx)) {
+		if (xna(xx)) {
 		    /* identify first missing obs and var */
 		    *misst = t + 1;
 		    ret = vi;
@@ -506,7 +506,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 		if (dwt) {
 		    xx *= Z[dwt][t];
 		}
-		if (na(xx)) {
+		if (xna(xx)) {
 		    missobs++;
 		    break;
 		}
@@ -577,17 +577,17 @@ int array_adjust_t1t2 (const double *x, int *t1, int *t2)
     int t, t1min = *t1, t2max = *t2;
 
     for (t=t1min; t<t2max; t++) {
-	if (na(x[t])) t1min++;
+	if (xna(x[t])) t1min++;
 	else break;
     }
 
     for (t=t2max; t>t1min; t--) {
-	if (na(x[t])) t2max--;
+	if (xna(x[t])) t2max--;
 	else break;
     }
 
     for (t=t1min; t<=t2max; t++) {
-	if (na(x[t])) {
+	if (xna(x[t])) {
 	    return t;
 	}
     }
@@ -849,7 +849,7 @@ double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo)
     for (t=0; t<pdinfo->n; t++) {
 	missrow = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!na(Z[i][t])) {
+	    if (!xna(Z[i][t])) {
 		missrow = 0;
 		break;
 	    }
@@ -880,7 +880,7 @@ int any_missing_user_values (const double **Z, const DATAINFO *pdinfo)
     for (i=1; i<pdinfo->v; i++) {
 	if (!var_is_hidden(pdinfo, i)) {
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		if (na(Z[i][t])) {
+		if (xna(Z[i][t])) {
 		    return 1;
 		}
 	    }

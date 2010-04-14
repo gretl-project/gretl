@@ -1280,7 +1280,7 @@ static void print_series_by_var (const double *z, const DATAINFO *pdinfo,
     char format[12];
     int t, ls = 0;
     int anyneg = 0;
-    double xx;
+    double x;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (z[t] < 0) {
@@ -1299,12 +1299,17 @@ static void print_series_by_var (const double *z, const DATAINFO *pdinfo,
 	char str[32];
 	int n;
 
-	xx = z[t];
+	x = z[t];
 
-	if (na(xx)) {
+	if (na(x)) {
 	    sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, "NA");
+	} else if (isnan(x)) {
+	    sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, "NaN");
+	} else if (isinf(x)) {
+	    sprintf(str, "%*s  ", GRETL_DIGITS + 1 + anyneg, 
+		    (x < 0)? "-inf" : "inf");
 	} else {
-	    sprintf(str, format, xx);
+	    sprintf(str, format, x);
 	}
 
 	n = strlen(str);
@@ -1465,6 +1470,14 @@ static char *bufprintnum (char *buf, double x, int signif,
     int i, l;
 
     *buf = '\0';
+
+    if (isnan(x)) {
+	strcpy(numstr, "NaN");
+	goto finish;
+    } else if (isinf(x)) {
+	strcpy(numstr, (x < 0)? "-inf" : "inf");
+	goto finish;
+    }
 
     /* guard against monster numbers that will smash the stack */
     if (fabs(x) > 1.0e20 || signif == PMAX_NOT_AVAILABLE) {
