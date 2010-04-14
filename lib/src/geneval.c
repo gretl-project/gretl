@@ -44,7 +44,7 @@
 # define LHDEBUG 0
 #endif
 
-#define ENSURE_FINITE 0
+#define ENSURE_FINITE 1 /* debatable */
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
