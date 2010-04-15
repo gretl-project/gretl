@@ -7573,6 +7573,17 @@ static int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
+static int graph_saved_to_specified_file (void)
+{
+    if (graph_written_to_file()) {
+	const char *test = gretl_plotfile();
+
+	return strstr(test, "gpttmp") == NULL;
+    } else {
+	return 0;
+    }
+}
+
 #define GRAPHING_CI(c) (c==GNUPLOT || c==SCATTERS || c==BXPLOT)
 
 static void gui_exec_callback (ExecState *s, double ***pZ,
@@ -7598,8 +7609,8 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     } else if (ci == GRAPHPG) {
 	err = graph_page_parse_line(s->line);
     } else if (GRAPHING_CI(ci)) {
-	if (graph_written_to_file()) {
-	    ; /* saved to named file: handled */
+	if (graph_saved_to_specified_file()) {
+	    ; /* no-op: handled */
 	} else if (*s->cmd->savename != '\0') {
 	    GretlObjType otype = (ci == BXPLOT)?
 		GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
