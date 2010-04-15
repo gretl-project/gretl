@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-04-15 16:47-0400\n"
-"PO-Revision-Date: 2010-04-09 13:14-0400\n"
+"PO-Revision-Date: 2010-04-16 00:10+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:245
 msgid "lagged differences"
@@ -799,10 +799,12 @@ msgid "   definitely not a four-digit year\n"
 msgstr "   определенно не номер года из четырех цифр\n"
 
 #: lib/src/csvdata.c:1144
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
-msgstr "Обнаружены двоичные данные (%d): этот файл не является текстовым\n"
+msgstr ""
+"Обнаружены двоичные данные (%d, строка %d:%d): этот файл не является "
+"текстовым\n"
 
 #: lib/src/csvdata.c:1167 lib/src/dataio.c:2601
 msgid "Data file is empty\n"
@@ -1382,17 +1384,15 @@ msgstr "Из всех переменных для сохранения, %d уж�
 
 #: lib/src/describe.c:1102
 msgid "Insufficient data"
-msgstr ""
+msgstr "Недостаточно данных"
 
 #: lib/src/describe.c:1411
-#, fuzzy
 msgid "Residual correlation matrix, C"
-msgstr "Использовать матрицу корреляций"
+msgstr "Матрица корреляций остатков, С"
 
 #: lib/src/describe.c:1418
-#, fuzzy
 msgid "Eigenvalues of C"
-msgstr "Собственные значения"
+msgstr "Собственные значения С"
 
 #: lib/src/describe.c:1497 lib/src/describe.c:5937
 msgid "Doornik-Hansen test"
@@ -5274,6 +5274,8 @@ msgid ""
 "The formula '%s'\n"
 " produced a scalar result"
 msgstr ""
+"По формуле '%s'\n"
+" получился скалярный результат"
 
 #: lib/src/nls.c:947
 #, c-format
@@ -8249,7 +8251,7 @@ msgstr "точка с запятой"
 
 #: gui2/dialogs.c:502
 msgid "auto-detect"
-msgstr ""
+msgstr "автоматически"
 
 #: gui2/dialogs.c:514
 msgid "decimal point character:"
@@ -8349,7 +8351,7 @@ msgstr ""
 
 #: gui2/dialogs.c:1293
 msgid "Maximum iterations:"
-msgstr ""
+msgstr "Максимальное количество итераций:"
 
 #: gui2/dialogs.c:1304
 msgid "Convergence tolerance:"
@@ -9014,7 +9016,7 @@ msgstr "Описания пакета функций отсутствует"
 
 #: gui2/fnsave.c:325
 msgid "Please add a sample script for this package"
-msgstr ""
+msgstr "Пожалуйста, добавьте пример скрипта для этого пакета"
 
 #: gui2/fnsave.c:330
 msgid "Invalid version string: use numbers and '.' only"
@@ -9392,7 +9394,7 @@ msgstr "Разрешить сглаживание линий"
 
 #: gui2/gpt_dialog.c:1740
 msgid "Show bars"
-msgstr ""
+msgstr "Показывать столбцы"
 
 #: gui2/gpt_dialog.c:1749
 msgid "NBER recessions"
@@ -9546,11 +9548,11 @@ msgstr "Дюймы"
 
 #: gui2/graphics.c:202
 msgid "cm"
-msgstr ""
+msgstr "Сантиметры"
 
 #: gui2/graphics.c:215
 msgid "line width factor"
-msgstr ""
+msgstr "Толщина линии"
 
 #: gui2/graphics.c:412
 msgid "save graph"
@@ -11297,7 +11299,7 @@ msgstr ""
 
 #: gui2/gui_utils.c:3998
 msgid "dataset is subsampled"
-msgstr ""
+msgstr "Выборка ограничена"
 
 #: gui2/gui_utils.c:4011
 #, c-format
@@ -12228,9 +12230,8 @@ msgstr ""
 "Ошибка при исполнении скрипта: завершение работы\n"
 
 #: gui2/library.c:7569
-#, fuzzy
 msgid "Unterminated comment in script"
-msgstr "неверное условие для команды 'if'"
+msgstr "Незавершенный комментарий в скрипте"
 
 #: gui2/library.c:7962
 msgid "Script done\n"
