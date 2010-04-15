@@ -6708,6 +6708,10 @@
 	  <effect>estimate the between-groups model</effect>
         </option>
         <option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors; see below</effect>
+        </option>
+        <option>
 	  <flag>--time-dummies</flag>
 	  <effect>include time dummy variables</effect>
         </option>
@@ -6761,6 +6765,13 @@
 	As a further alternative, if the <lit>--between</lit> flag is
 	given, the between-groups model is estimated (that is, an OLS
 	regression using the group means).
+      </para>
+      <para context="cli">
+	The <lit>--robust</lit> option is available only for fixed
+	effects models. The default variant is the Arellano HAC
+	estimator, but Beck&ndash;Katz <quote>Panel Corrected Standard
+	  Errors</quote> can be selected via the command
+	<lit>set pcse on</lit>.
       </para>
       <para context="gui">
 	If the "Random effects" button is checked, random effects
