@@ -44,7 +44,8 @@
 # define LHDEBUG 0
 #endif
 
-#define ENSURE_FINITE 1 /* debatable */
+#define SCALARS_ENSURE_FINITE 1 /* debatable */
+#define SERIES_ENSURE_FINITE 1  /* debatable */
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
 #define is_tmp_node(n) (n != NULL && (n->flags & TMP_NODE))
@@ -8540,7 +8541,7 @@ static void gen_check_errvals (parser *p)
 
     if (n->t == NUM) {
 	if (!isfinite(n->v.xval)) {
-#if ENSURE_FINITE
+#if SCALARS_ENSURE_FINITE
 	    n->v.xval = NADBL;
 	    set_gretl_warning(W_GENMISS);
 #else
@@ -8552,8 +8553,7 @@ static void gen_check_errvals (parser *p)
 
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
-#if ENSURE_FINITE
-		n->v.xvec[t] = NADBL;
+#if SERIES_ENSURE_FINITE
 		set_gretl_warning(W_GENMISS);
 #else
 		set_gretl_warning(W_GENNAN);
@@ -9034,7 +9034,7 @@ static int gen_allocate_storage (parser *p)
     return p->err;
 }
 
-#if ENSURE_FINITE
+#if SERIES_ENSURE_FINITE
 
 static void series_ensure_finite (double *x, int n)
 {
@@ -9169,7 +9169,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	}
-#if ENSURE_FINITE
+#if SERIES_ENSURE_FINITE
 	if (!p->err) {
 	    series_ensure_finite(Z[v], p->dinfo->n);
 	}
