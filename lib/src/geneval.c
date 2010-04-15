@@ -44,7 +44,7 @@
 # define LHDEBUG 0
 #endif
 
-#define SCALARS_ENSURE_FINITE 1 /* debatable */
+#define SCALARS_ENSURE_FINITE 1 /* debatable, but watch out for read/write */
 #define SERIES_ENSURE_FINITE 1  /* debatable */
 
 #define is_aux_node(n) (n != NULL && (n->flags & AUX_NODE))
@@ -569,11 +569,13 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	    x, y, op, getsymb(op, NULL));
 #endif
 
-    if (targ != MAT) {
+#if SERIES_ENSURE_FINITE
+    if (targ == VEC) {
 	/* this may be questionable */
 	if (isnan(x)) x = NADBL;
 	if (isnan(y)) y = NADBL;
     }
+#endif
 
     /* assignment */
     if (op == B_ASN) {
@@ -585,9 +587,9 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
 	return NADBL;
     }
 
-    /* special case: 0 * anything (including even NA) = 0 */
-    if (op == B_MUL && (x == 0.0 || y == 0.0)) {
-	return 0.0;
+    /* 0 * NA = NA * 0 = 0 */
+    if (op == B_MUL && ((na(x) && y == 0) || (na(y) && x == 0))) {
+	return 0;
     }
 
     /* logical OR: if x is non-zero, ignore NA for y */

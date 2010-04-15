@@ -1407,14 +1407,15 @@ multivariate_normality_test (const gretl_matrix *E,
 	goto bailout;
     }
 
-    gretl_matrix_print_to_prn(C, "\nResidual correlation matrix, C", prn);
+    pputc(prn, '\n');
+    gretl_matrix_print_to_prn(C, _("Residual correlation matrix, C"), prn);
 
     evals = gretl_symmetric_matrix_eigenvals(C, 1, &err);
     if (err) {
 	goto bailout;
     }
 
-    pputs(prn, "Eigenvalues of the correlation matrix:\n\n");
+    pprintf(prn, "%s\n\n", _("Eigenvalues of C"));
     for (i=0; i<p; i++) {
 	pprintf(prn, " %10g\n", evals->val[i]);
     }
@@ -1491,9 +1492,11 @@ multivariate_normality_test (const gretl_matrix *E,
     if (na(X2)) {
 	pputs(prn, "Calculation of test statistic failed\n");
     } else {
-	pputs(prn, "Test for multivariate normality of residuals\n");
-	pprintf(prn, "Doornik-Hansen Chi-square(%d) = %g, ", 2 * p, X2);
-	pprintf(prn, "with p-value = %g\n", chisq_cdf_comp(2 * p, X2));
+	double pv = chisq_cdf_comp(2 * p, X2);
+
+	pputs(prn, _("Doornik-Hansen test"));
+	pprintf(prn, "\n %s(%d) = %g [%.4f]\n\n", _("Chi-square"), 2 * p, 
+		X2, pv);
     }
 
  bailout:
