@@ -1810,13 +1810,11 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 {
     xmlNodePtr cur;
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
-    int i, err = 0;
+    int i, nv = 0, err = 0;
 
     if (tmp != NULL) {
-	int v;
-
-	if (sscanf((char *) tmp, "%d", &v) == 1) {
-	    pdinfo->v = v + 1;
+	if (sscanf((char *) tmp, "%d", &nv) == 1) {
+	    pdinfo->v = nv + 1;
 	} else {
 	    gretl_errmsg_set(_("Failed to parse count of variables"));
 	    err = 1;
@@ -1836,7 +1834,12 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	err = 1;
     }
 
-    if (err) return 1;
+    if (err) {
+	return 1;
+    } else if (nv == 0) {
+	fprintf(stderr, "Empty dataset!\n");
+	return 0;
+    }
 
     /* now get individual variable info: names and labels */
     cur = node->xmlChildrenNode;
@@ -1845,8 +1848,8 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
     }
 
     if (cur == NULL) {
-	fprintf(stderr, "Empty dataset!\n");
-	return 0;
+	gretl_errmsg_set(_("Got no variables"));
+	return 1;
     }
 
     i = 1;
