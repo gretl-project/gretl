@@ -1844,9 +1844,9 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	cur = cur->next;
     }
 
-    if (cur == 0) {
-	gretl_errmsg_set(_("Got no variables"));
-	return 1;
+    if (cur == NULL) {
+	fprintf(stderr, "Empty dataset!\n");
+	return 0;
     }
 
     i = 1;
@@ -2108,10 +2108,12 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		}
 		free(tmp);
 		t++;
-	    } else {
+	    } else if (pdinfo->v > 1) {
 		gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
 		err = E_DATA;
 		goto bailout;
+	    } else {
+		t++;
 	    }
 	}	   
  
@@ -2364,6 +2366,23 @@ static long get_filesize (const char *fname)
     return (err)? -1 : buf.st_size;
 }
 
+static int remedy_empty_data (double ***pZ, DATAINFO *pdinfo)
+{
+    int err = dataset_add_series(1, pZ, pdinfo);
+
+    if (!err) {
+	int t;
+
+	strcpy(pdinfo->varname[1], "index");
+	strcpy(VARLABEL(pdinfo, 1), _("index variable"));
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[1][t] = (double) (t + 1);
+	}
+    }
+
+    return err;
+}
+
 /**
  * gretl_read_gdt:
  * @fname: name of file to try.
@@ -2547,6 +2566,10 @@ int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    err = dataset_finalize_panel_indices(pdinfo);
 	}
+    }
+
+    if (!err && pdinfo->v == 1) {
+	err = remedy_empty_data(pZ, pdinfo);
     }
 
     if (!err && gdtversion < 1.2) {
