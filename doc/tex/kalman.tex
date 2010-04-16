@@ -466,7 +466,7 @@ scalar accessor variables become available: \verb+$kalman_lnl+, which
 gives the overall log-likelihood under the joint normality assumption,
 %
 \[
-  \ell = -\frac{1}{2} \left[nT \log(2 \pi) + \sum_{t=1}^T\left|\predvar_t\right| + 
+  \ell = -\frac{1}{2} \left[nT \log(2 \pi) + \sum_{t=1}^T\log \left|\predvar_t\right| + 
     \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
   \right]
 \]
@@ -482,7 +482,7 @@ diffuse prior).  In addition the accessor \verb+$kalman_llt+ gives a
 ($T \times 1$) vector, element $t$ of which is
 %
 \[
-  \ell_t = -\frac{1}{2} \left[n \log(2 \pi) + \left|\predvar_t\right| + 
+  \ell_t = -\frac{1}{2} \left[n \log(2 \pi) + \log \left|\predvar_t\right| + 
     \prederr_t'\predvar_t^{-1} \prederr_t
   \right]
 \]
@@ -539,7 +539,7 @@ section~\ref{sec:amble}).  In case $\statevar_{1|0} = \kappa
 %
 \[
   \ell = -\frac{1}{2} \left[(nT-d) \log(2 \pi) + 
-    \sum_{t=1}^T\left|\predvar_t\right| + 
+    \sum_{t=1}^T\log \left|\predvar_t\right| + 
     \sum_{t=1}^T\prederr_t'\predvar_t^{-1} \prederr_t
     - d \log(\kappa)
   \right]
