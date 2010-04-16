@@ -128,6 +128,7 @@ struct gretl_option gretl_opts[] = {
     { DATA,     OPT_O, "odbc", 0 },
     { DATAMOD,  OPT_P, "preserve", 0 },
     { DELEET,   OPT_D, "db", 0 },
+    { DELEET,   OPT_L, "list", 0 },
     { DIFFTEST, OPT_G, "sign", 0 },
     { DIFFTEST, OPT_R, "rank-sum", 0 },
     { DIFFTEST, OPT_I, "signed-rank", 0 },
@@ -150,6 +151,9 @@ struct gretl_option gretl_opts[] = {
     { EQNPRINT, OPT_T, "t-ratios", 0 },
     { TABPRINT, OPT_O, "complete", 0 },
     { TABPRINT, OPT_R, "rtf", 0 },
+#if 0 /* not yet */
+    { TABPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
+#endif
     { ESTIMATE, OPT_I, "iterate", 0 },
     { ESTIMATE, OPT_M, "geomean", 0 },
     { ESTIMATE, OPT_N, "no-df-corr", 0 },
@@ -242,6 +246,7 @@ struct gretl_option gretl_opts[] = {
     { MLE,      OPT_R, "robust", 0 },
     { MLE,      OPT_U, "continue", 0 },
     { MLE,      OPT_V, "verbose", 0 },
+    { MODPRINT, OPT_A, "addstats", 2 },
     { MODPRINT, OPT_C, "csv", 0 },
     { MODPRINT, OPT_O, "complete", 0 },
     { MODPRINT, OPT_R, "rtf", 0 },
