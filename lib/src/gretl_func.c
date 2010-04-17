@@ -5207,11 +5207,13 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
 	for (i=0; i<n; i++) {
 	    if (!strcmp(argvar, u->params[i].name)) {
 		*err = 0;
-		if (args->arg[i]->upname != NULL) {
+		if (args->arg[i]->upname == NULL) {
+		    ret = gretl_strdup("");
+		} else {
 		    ret = gretl_strdup(args->arg[i]->upname); 
-		    if (ret == NULL) {
-			*err = E_ALLOC;
-		    }
+		}
+		if (ret == NULL) {
+		    *err = E_ALLOC;
 		}
 		break;
 	    }

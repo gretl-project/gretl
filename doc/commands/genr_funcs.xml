@@ -684,6 +684,19 @@
       </description>
     </function>
 
+    <function name="argname" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  For <argname>s</argname> the name of a parameter to a 
+	  user-defined function, returns the name of the corresponding
+	  argument, or an empty string if the argument was anonymous.
+	</para>
+      </description>
+    </function>
+
     <function name="asin" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>

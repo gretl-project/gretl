@@ -3770,10 +3770,6 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
 	} else {
 	    p->err = E_DATA;
 	}
-
-	if (!p->err && ret->v.str == NULL) {
-	    p->err = E_ALLOC;
-	}    
     }
 
     return ret;

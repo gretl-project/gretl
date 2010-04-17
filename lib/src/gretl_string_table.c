@@ -792,10 +792,9 @@ char *gretl_backtick (const char *arg, int *err)
 
 char *gretl_getenv (const char *key, int *err)
 {
-    char *test = NULL;
+    char *test = getenv(key);
     char *val = NULL;
 
-    test = getenv(key);
     if (test == NULL) {
 	val = gretl_strdup("");
     } else {
@@ -858,7 +857,6 @@ char *retrieve_file_content (const char *fname, int *err)
 	char fullname[FILENAME_MAX];
 	GError *gerr = NULL;
 	gsize len = 0;
-	
 
 	*fullname = '\0';
 	strncat(fullname, fname, FILENAME_MAX - 1);

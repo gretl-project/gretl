@@ -557,7 +557,7 @@ static void unwrap_string_arg (parser *p)
    controlled by the second argument.
 */
 
-static NODE *get_final_string_arg (parser *p, int eat_last)
+static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 {
     const char *src = NULL;
     int wrapped = 0;
@@ -629,7 +629,7 @@ static NODE *get_final_string_arg (parser *p, int eat_last)
 
     if (wrapped) {
 	unwrap_string_arg(p);
-    } else {
+    } else if (sym != F_ISSTRING) {
 	/* not quoted: give priority to string variables */
 	const char *s = get_string_by_name(p->idstr);
 
@@ -959,7 +959,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	if (i > 0 && i < k - 1 && (opt & MID_STR)) {
 	    child = get_middle_string_arg(p);
 	} else if (i == k - 1 && (opt & RIGHT_STR)) {
-	    child = get_final_string_arg(p, 0);
+	    child = get_final_string_arg(p, 0, 0);
 	} else {
 	    child = expr(p);
 	}
@@ -1113,7 +1113,7 @@ static NODE *powterm (parser *p)
 	t = newb1(sym, NULL);
 	if (t != NULL) {
 	    lex(p);
-	    t->v.b1.b = get_final_string_arg(p, 1);
+	    t->v.b1.b = get_final_string_arg(p, sym, 1);
 	}	
     } else if (func1_symb(sym)) {
 	t = newb1(sym, NULL);
@@ -1156,7 +1156,7 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newref(p, MVAR);
 	    lex(p);
-	    t->v.b2.r = get_final_string_arg(p, 1);
+	    t->v.b2.r = get_final_string_arg(p, sym, 1);
 	}
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
