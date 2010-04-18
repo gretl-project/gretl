@@ -1154,18 +1154,20 @@ static void Lr_chisq (MODEL *pmod, const double **Z)
 
     zeros = m - ones;
 
-    Lr = (double) ones * log((double) ones / (double) m);
-    Lr += (double) zeros * log((double) zeros /(double) m);
+    Lr = ones * log(ones / (double) m);
+    Lr += zeros * log(zeros /(double) m);
 
     chisq = 2.0 * (pmod->lnL - Lr);
 
     if (chisq < 0) {
 	pmod->rsq = pmod->adjrsq = pmod->chisq = NADBL;
     } else {
+	int dfn = pmod->ncoeff - pmod->ifc;
+
 	pmod->chisq = chisq;
 	/* McFadden pseudo-R^2 */
 	pmod->rsq = 1.0 - pmod->lnL / Lr;
-	pmod->adjrsq = 1.0 - (pmod->lnL - pmod->ncoeff) / Lr;
+	pmod->adjrsq = 1.0 - (pmod->lnL - dfn) / Lr;
     }
 }
 
