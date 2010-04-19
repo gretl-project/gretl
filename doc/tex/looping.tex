@@ -319,7 +319,7 @@ shown in Example~\ref{monte-carlo-loop}.
   \label{monte-carlo-loop}
 \begin{scode}
 nulldata 50
-seed 547
+set seed 547
 genr x = 100 * uniform()
 # open a "progressive" loop, to be repeated 100 times
 loop 100 --progressive
@@ -397,7 +397,7 @@ loop while essdiff > .00001
    genr essbak = ess
 endloop 
 # print parameter estimates using their "proper names"
-noecho
+set echo off
 printf "alpha = %g\n", $coeff(0)
 printf "beta  = %g\n", beta
 printf "gamma = %g\n", gamma
@@ -467,8 +467,8 @@ genr se_c = $stderr(sc_c)
 genr se_a = $stderr(sc_a)
 genr se_m = $stderr(sc_m)
 
-noecho
-print "
+set echo off
+printf "\n"
 printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
 printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
 printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
