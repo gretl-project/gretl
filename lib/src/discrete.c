@@ -1143,6 +1143,14 @@ static void Lr_chisq (MODEL *pmod, const double **Z)
 {
     int t, zeros, ones = 0, m = pmod->nobs;
     double Lr, chisq;
+
+    if (pmod->ncoeff == 1 && pmod->ifc) {
+	/* constant-only model */
+	pmod->chisq = NADBL;
+	pmod->rsq = 0;
+	pmod->adjrsq = NADBL;
+	return;
+    }
     
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!model_missing(pmod, t)) {
@@ -1162,12 +1170,12 @@ static void Lr_chisq (MODEL *pmod, const double **Z)
     if (chisq < 0) {
 	pmod->rsq = pmod->adjrsq = pmod->chisq = NADBL;
     } else {
-	int dfn = pmod->ncoeff - pmod->ifc;
+	int K = pmod->ncoeff;
 
 	pmod->chisq = chisq;
 	/* McFadden pseudo-R^2 */
 	pmod->rsq = 1.0 - pmod->lnL / Lr;
-	pmod->adjrsq = 1.0 - (pmod->lnL - dfn) / Lr;
+	pmod->adjrsq = 1.0 - (pmod->lnL - K) / Lr;
     }
 }
 

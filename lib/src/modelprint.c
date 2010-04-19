@@ -2343,16 +2343,16 @@ static char *print_eight (char *s, struct middletab *mt, int i)
 	return s;
     }    
 
-    if (i == RSQ_POS || i == RSQ_POS + 1) {
-	/* R-squared: don't use scientific notation */
-	sprintf(s, "%9.6f", x);
-	return s;
-    }
-
     if (na(x)) {
 	sprintf(s, "%9s", "NA");
 	return s;
     }
+
+    if (i == RSQ_POS || i == RSQ_POS + 1) {
+	/* R-squared: don't use scientific notation */
+	sprintf(s, "%9.6f", x);
+	return s;
+    }    
 
     mtab_numstart(s, x, d7, mt->minus);
 

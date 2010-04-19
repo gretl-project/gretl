@@ -2100,7 +2100,7 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	ok = 1;	
     } else if (wildcard_expand(s, &k, pdinfo, cmd)) {
 	ok = 1;
-    } else if (truncate_varname(s, &k, pdinfo, cmd)) {
+    } else if (0 && truncate_varname(s, &k, pdinfo, cmd)) {
 	ok = 1;
     } else if (cmd->ci == PRINT && print_name_ok(s, cmd)) {
 	ok = 1;
