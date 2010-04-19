@@ -260,7 +260,10 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "list")) {
 	char lname[VNAMELEN];
 
-	if (gretl_string_ends_with(line, "delete")) {
+	if (string_is_blank(line + 4)) {
+	    cmd->ci = VARLIST;
+	    strcpy(line, "varlist");
+	} else if (gretl_string_ends_with(line, "delete")) {
 	    if (sscanf(line, "list %15s delete", lname)) {
 		free(cmd->extra);
 		cmd->extra = gretl_strdup(lname);
@@ -1322,27 +1325,6 @@ static int add_time_ok (const char *s, int *lpos,
     return ok;
 }
 
-static int truncate_varname (const char *s, int *k, const DATAINFO *pdinfo,
-			     CMD *cmd)
-{
-    int ok = 0;
-
-    if (strlen(s) > 8) {
-	char test[9];
-	int v;
-
-	*test = 0;
-	strncat(test, s, 8);
-	if ((v = series_index(pdinfo, test)) < pdinfo->v) {
-	    cmd->list[*k] = v;
-	    *k += 1;
-	    ok = 1;
-	} 
-    } 
-
-    return ok;
-}
-
 static int wildcard_expand (const char *s, int *lpos,
 			    const DATAINFO *pdinfo, CMD *cmd)
 {
@@ -1622,27 +1604,6 @@ static int get_next_field (char *field, const char *s)
 #endif
 
     return err;
-}
-
-static void accommodate_obsolete_commands (char *line, CMD *cmd)
-{
-    if (!strcmp(cmd->word, "noecho")) {
-	strcpy(cmd->word, "set");
-	strcpy(line, "set echo off");
-    } else if (!strcmp(cmd->word, "seed")) {
-	char seedstr[16];
-
-	strcpy(cmd->word, "set");
-	if (sscanf(line, "%*s %15s", seedstr)) {
-	    sprintf(line, "set seed %s", seedstr);
-	} else {
-	    strcpy(line, "set seed");
-	}
-    } else if (!strcmp(cmd->word, "list") &&
-	       string_is_blank(line + 4)) {
-	strcpy(cmd->word, "varlist");
-	strcpy(line, "varlist");
-    }
 }
 
 /* look for a line with an "implicit genr", such as
@@ -2100,8 +2061,6 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	ok = 1;	
     } else if (wildcard_expand(s, &k, pdinfo, cmd)) {
 	ok = 1;
-    } else if (0 && truncate_varname(s, &k, pdinfo, cmd)) {
-	ok = 1;
     } else if (cmd->ci == PRINT && print_name_ok(s, cmd)) {
 	ok = 1;
     } 
@@ -2275,8 +2234,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (!cmd->context) {
-	/* backwards compatibility */
-	accommodate_obsolete_commands(line, cmd);
 	/* replace simple aliases and a few specials */
 	catch_command_alias(line, cmd);
     }

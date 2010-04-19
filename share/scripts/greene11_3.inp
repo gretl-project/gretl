@@ -21,7 +21,7 @@ loop while essdiff > .00001 --quiet
    genr essbak = ess
 endloop 
 # print parameter estimates using their "proper names"
-noecho
+set echo off
 printf "alpha = %g\n", $coeff(0)
 printf "beta  = %g\n", b
 printf "gamma = %g\n", g
