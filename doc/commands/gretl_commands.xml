@@ -7085,10 +7085,12 @@
     label="Print data or strings" context="cli">
 
     <usage>
-      <arguments>
-	<argument>varlist</argument>
-	<argument alternate="true">string_literal</argument>
-      </arguments>
+      <altforms>
+        <altform><lit>print</lit> <repl>varlist</repl></altform>
+	<altform><lit>print</lit></altform>
+	<altform><lit>print</lit> <repl>object_name</repl></altform>
+        <altform><lit>print</lit> <repl>string_literal</repl></altform>
+      </altforms>
       <options>
 	<option>
 	  <flag>--byobs</flag>
@@ -7101,51 +7103,38 @@
       </options>
       <examples>
 	<example>print x1 x2 --byobs</example>
+	<example>print my_matrix</example>
 	<example>print "This is a string"</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	If <repl>varlist</repl> is given, prints the values of the
-	specified variables; if no list is given, prints the values of
-	all variables in the current data file. If the
-	<lit>--byobs</lit> flag is given the data are printed by
-	observation, otherwise they are printed by variable.
-	Please note, for greater control over the printing format
-	and/or to expose a greater number of digits than are
-	shown by <lit>print</lit>, see <cmdref targ="printf"/>.
+	If <repl>varlist</repl> is given, prints the values of the specified
+	series, or if no list is given, prints the values of all series in the
+	current dataset. If the <lit>--byobs</lit> flag is given the data are
+	printed by observation, otherwise they are printed by variable. When
+	the data are printed by observation, the default is to show the date
+	(with time-series data) or the observation marker string (if any) at
+	the start of each line. The <lit>--no-dates</lit> option suppresses
+	the printing of dates or markers; a simple observation number is shown
+	instead.
       </para>
       <para>
-	If the <lit>--byobs</lit> flag is given and the data are
-	printed by observation, the default is to show the date (with
-	time-series data) or the observation marker string (if any) at
-	the start of each line.  The <lit>--no-dates</lit> option
-	suppresses the printing of dates or markers; a simple
-	observation number is shown instead.
+	Besides printing series, you may give the name of a (single) matrix
+	or scalar variable for printing. In this case the option flags are
+	not applicable.
       </para>
+      <para>
+	Note that when printing numerical values you can gain greater control
+	over the printing format (and so, for example, expose a greater number
+	of digits than are shown by default) by using <cmdref targ="printf"/>.
+      </para>	
       <para>
 	If the argument to <cmd>print</cmd> is a literal string (which
 	must start with a double-quote, <lit>"</lit>), the string is
-	printed as is.  See also <cmdref
-	  targ="printf"/>.
+	printed as is.  See also <cmdref targ="printf"/>.
       </para>
-      <para>
-	Note: a special <quote>hack</quote> is available with this
-	command, in conjunction with the <lit>--byobs</lit> flag, which
-	can be useful when working with missing values in a data set.  If
-	you give a list of variables followed by a semi-colon, followed by
-	one final variable, then the final variable is not printed but is
-	used to screen the observations to print.  Any observations for
-	which the screening variable has value 0 are not printed.  As an
-	example of use, suppose you have a daily time series
-	<lit>x</lit>, and you want a list of the dates for which
-	<lit>x</lit> is missing.  You can do
-      </para>
-      <code>
-	genr filt = missing(x)
-	print x ; filt --byobs
-      </code>
     </description>
 
     <gui-access>
