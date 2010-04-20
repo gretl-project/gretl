@@ -1,11 +1,23 @@
 version 1.8.8, in progress
 
-The long-undocumented aliasas "noecho" (for "set echo off") 
-and "seed X" (for "set seed X") has been removed.
+Many old (and now undocumented) aliasas are now officially 
+deprecated and will be removed before long, including the 
+following:
 
-The "set" command "set bkbp_limits <f1> <f2>" is no longer 
-valid; these limits may now be specified as arguments to
-the bkfilt function (see "help bkfilt").
+noecho   (use "set echo off")
+seed X   (use "set seed X")
+end if   (use "endif")
+corc     (use "ar1")
+hilu     (use "ar1 ... --hilu")
+pwe      (use "ar1 ... --pwe")
+hccm     (use "ols ... --jackknife")
+lmtest   (use "modtest")
+testuhat (use "modtest")
+
+The following parameters to the "set" command are now declared
+obsolete and will be removed before long: bkbp_k, bkbp_limits,
+hp_lambda. Use the optional arguments to the functions 
+bkfilt and hpfilt instead.
 
 Gretl now requires gnuplot version 4.2.0 or higher for
 graphing.  Since version 4.2 was released in March 2007,

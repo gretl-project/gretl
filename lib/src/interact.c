@@ -219,13 +219,18 @@ static void cmd_set_param_direct (CMD *cmd, const char *s)
     }
 }
 
-#if 0 /* FIXME re-establish these for gretl 1.9.0; drop in 2.0 */
+static void deprecate_alias (const char *targ, const char *repl)
+{
+    gretl_warnmsg_sprintf("\"%s\": obsolete command; please use \"%s\"",
+			  targ, repl);
+}
 
 static void accommodate_obsolete_commands (char *line, CMD *cmd)
 {
     if (!strcmp(cmd->word, "noecho")) {
 	strcpy(cmd->word, "set");
 	strcpy(line, "set echo off");
+	deprecate_alias("noecho", "set echo off");
     } else if (!strcmp(cmd->word, "seed")) {
 	char seedstr[16];
 
@@ -235,10 +240,9 @@ static void accommodate_obsolete_commands (char *line, CMD *cmd)
 	} else {
 	    strcpy(line, "set seed");
 	}
+	deprecate_alias("seed", "set seed");
     } 
 }
-
-#endif
 
 /* catch aliased command words and assign ci; return
    ci if alias caught, else 0. */
@@ -249,28 +253,31 @@ static int catch_command_alias (char *line, CMD *cmd)
 
     cmd->ci = 0;
 
+    accommodate_obsolete_commands(line, cmd);
+
     if (!strcmp(line, "exit")) {
 	strcpy(s, "quit");
 	cmd->ci = QUIT;
 	cmd->opt = OPT_X;
     } else if (!strcmp(s, "ls")) {
 	cmd->ci = VARLIST;
-    } else if (!strcmp(s, "boxplots")) { 
-	cmd->ci = BXPLOT;
-    } else if (!strcmp(s, "man")) {
-	cmd->ci = HELP;
     } else if (!strcmp(s, "pooled")) {
+	deprecate_alias("pooled", "ols");
 	cmd->ci = OLS;
     } else if (!strcmp(s, "import")) {
+	deprecate_alias("import", "open");
 	cmd->ci = OPEN;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;
     } else if (!strcmp(s, "sample")) {
+	deprecate_alias("sample", "smpl");
 	cmd->ci = SMPL;
     } else if (!strcmp(s, "lmtest")) {
+	deprecate_alias("lmtest", "modtest");
 	cmd->ci = MODTEST;
     } else if (!strcmp(s, "testuhat")) {
+	deprecate_alias("testuhat", "modtest");
 	cmd->ci = MODTEST;
 	cmd->opt |= OPT_N;
     } else if (!strcmp(s, "graph")) {
@@ -301,6 +308,7 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (*s == '!' || !strcmp(s, "launch")) {
 	cmd->ci = SHELL;
     } else if (!strcmp(line, "end if")) {
+	deprecate_alias("end if", "endif");
 	strcpy(s, "endif");
 	strcpy(line, "endif");
 	cmd->ci = ENDIF;
@@ -313,25 +321,25 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "transpos")) {
 	cmd->ci = DATAMOD;
 	cmd_set_param_direct(cmd, "transpose");
-    } else if (!strcmp(s, "fit")) {
-	cmd->ci = FCAST;
-	cmd->opt |= OPT_F;
-	strcpy(line, "fcast autofit");
     } else if (!strcmp(s, "fcasterr")) {
 	cmd->ci = FCAST;
 	cmd->opt |= OPT_E;
     } else if (!strcmp(s, "corc")) {
+	deprecate_alias("corc", "ar1");
 	strcpy(s, "ar1");
 	cmd->ci = AR1;
     } else if (!strcmp(s, "hilu")) {
+	deprecate_alias("hilu", "ar1 ... --hilu");
 	strcpy(s, "ar1");
 	cmd->ci = AR1;
 	cmd->opt |= OPT_H;
     } else if (!strcmp(s, "pwe")) {
+	deprecate_alias("pwe", "ar1 ... --pwe");
 	strcpy(s, "ar1");
 	cmd->ci = AR1;
 	cmd->opt |= OPT_P;
     } else if (!strcmp(s, "hccm")) {
+	deprecate_alias("hccm", "ols ... --jackknife");
 	strcpy(s, "ols");
 	cmd->ci = OLS;
 	cmd->opt |= OPT_J;
@@ -4275,7 +4283,9 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 
 static void exec_state_prep (ExecState *s)
 {
-    gretl_error_clear();
+#if 0
+    gretl_error_clear(); /* disabled AC 2009-04-20 */
+#endif
     s->flags &= ~CALLBACK_EXEC;
     s->pmod = NULL;
 }

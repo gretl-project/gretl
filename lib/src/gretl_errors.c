@@ -201,7 +201,9 @@ void errmsg (int err, PRN *prn)
 
 void warnmsg (PRN *prn)
 {
-    if (prn == NULL || gretl_warnnum == 0) return;
+    if (prn == NULL || gretl_warnnum == 0) {
+	return;
+    }
 
     if (!gretl_warnings_on()) {
 	*gretl_warnmsg = '\0';

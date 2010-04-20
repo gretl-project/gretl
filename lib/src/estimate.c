@@ -1001,8 +1001,6 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int nullmod = 0, ldv = 0;
     int yno, i;
 
-    gretl_error_clear();
-
     if (list == NULL || pZ == NULL || pdinfo == NULL) {
 	fprintf(stderr, "E_DATA: lsq: list = %p, pZ = %p, pdinfo = %p\n",
 		(void *) list, (void *) pZ, (void *) pdinfo);
@@ -2050,7 +2048,6 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     int ascii = !(opt & OPT_G);
     MODEL armod;
 
-    gretl_error_clear();
     *err = 0;
 
     missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
@@ -2569,8 +2566,6 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
     int t1, t2;
     double xx;
     int err = 0;
-
-    gretl_error_clear();
 
     t1 = pmod->t1;
     t2 = pmod->t2;
@@ -4523,8 +4518,6 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn)
 {
     MODEL mod;
-
-    gretl_error_clear();
 
     if (check_panel_options(opt)) {
 	gretl_model_init(&mod);

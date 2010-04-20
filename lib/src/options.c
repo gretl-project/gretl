@@ -1125,8 +1125,6 @@ gretlopt get_gretl_options (char *line, int *err)
     int endblock = 0;
     int ci, myerr = 0;
 
-    gretl_error_clear();
-
     if (err != NULL) {
 	*err = 0;
     }
