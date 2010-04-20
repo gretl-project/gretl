@@ -1,5 +1,12 @@
 version 1.8.8, in progress
 
+The long-undocumented aliasas "noecho" (for "set echo off") 
+and "seed X" (for "set seed X") has been removed.
+
+The "set" command "set bkbp_limits <f1> <f2>" is no longer 
+valid; these limits may now be specified as arguments to
+the bkfilt function (see "help bkfilt").
+
 Gretl now requires gnuplot version 4.2.0 or higher for
 graphing.  Since version 4.2 was released in March 2007,
 hopefully this should not be too onerous.

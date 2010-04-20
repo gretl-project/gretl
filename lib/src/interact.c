@@ -219,6 +219,27 @@ static void cmd_set_param_direct (CMD *cmd, const char *s)
     }
 }
 
+#if 0 /* FIXME re-establish these for gretl 1.9.0; drop in 2.0 */
+
+static void accommodate_obsolete_commands (char *line, CMD *cmd)
+{
+    if (!strcmp(cmd->word, "noecho")) {
+	strcpy(cmd->word, "set");
+	strcpy(line, "set echo off");
+    } else if (!strcmp(cmd->word, "seed")) {
+	char seedstr[16];
+
+	strcpy(cmd->word, "set");
+	if (sscanf(line, "%*s %15s", seedstr)) {
+	    sprintf(line, "set seed %s", seedstr);
+	} else {
+	    strcpy(line, "set seed");
+	}
+    } 
+}
+
+#endif
+
 /* catch aliased command words and assign ci; return
    ci if alias caught, else 0. */
 
