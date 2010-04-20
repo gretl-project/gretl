@@ -4944,7 +4944,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	} else {
 	    err = system_parse_line(s->sys, line, pZ, pdinfo);
-	    fprintf(stderr, "system_parse_line: err = %d\n", err);
 	    if (err) {
 		s->sys = NULL;
 	    } 

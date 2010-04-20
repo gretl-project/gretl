@@ -316,10 +316,6 @@ equation_system_new (int method, const char *name, int *err)
     sys->name = NULL;
 
     if (name != NULL) {
-	/* FIXME check for existing system of same name */
-	if (get_equation_system_by_name(name) != NULL) {
-	    fprintf(stderr, "FIXME: there's already a system called '%s'\n", name);
-	}
 	equation_system_set_name(sys, name);
     }
 
@@ -2158,7 +2154,7 @@ system_parse_line (equation_system *sys, const char *line,
 
     gretl_error_clear();
 
-#if 1 || SYSDEBUG > 1
+#if SYSDEBUG > 1
     fprintf(stderr, "*** system_parse_line: '%s'\n", line);
 #endif
 
