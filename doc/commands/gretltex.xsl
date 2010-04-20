@@ -301,6 +301,12 @@
   <xsl:text>}</xsl:text>
 </xsl:template>
 
+<xsl:template match="cmd">
+  <xsl:text>\texttt{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
 <xsl:template match="effect">
   <xsl:text> (</xsl:text>
   <xsl:apply-templates/>

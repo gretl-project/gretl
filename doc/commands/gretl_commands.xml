@@ -7111,30 +7111,26 @@
     <description>
       <para>
 	If <repl>varlist</repl> is given, prints the values of the specified
-	series, or if no list is given, prints the values of all series in the
-	current dataset. If the <lit>--byobs</lit> flag is given the data are
-	printed by observation, otherwise they are printed by variable. When
-	the data are printed by observation, the default is to show the date
-	(with time-series data) or the observation marker string (if any) at
-	the start of each line. The <lit>--no-dates</lit> option suppresses
-	the printing of dates or markers; a simple observation number is shown
+	series, or if no argument is given, prints the values of all series in
+	the current dataset. If the <lit>--byobs</lit> flag is added the data
+	are printed by observation, otherwise they are printed by variable.
+	When printing by observation, the default is to show the date (with
+	time-series data) or the observation marker string (if any) at the
+	start of each line. The <lit>--no-dates</lit> option suppresses the
+	printing of dates or markers; a simple observation number is shown
 	instead.
       </para>
       <para>
-	Besides printing series, you may give the name of a (single) matrix
-	or scalar variable for printing. In this case the option flags are
-	not applicable.
+	Besides printing series, you may give the name of a (single) matrix or
+	scalar variable for printing. Or you may give a literal string
+	argument, enclosed in double quotes, to be printed as is. In these
+	case the option flags are not applicable.
       </para>
       <para>
-	Note that when printing numerical values you can gain greater control
-	over the printing format (and so, for example, expose a greater number
-	of digits than are shown by default) by using <cmdref targ="printf"/>.
+	Note that you can gain greater control over the printing format (and
+	so, for example, expose a greater number of digits than are shown by
+	default) by using <cmdref targ="printf"/>.
       </para>	
-      <para>
-	If the argument to <cmd>print</cmd> is a literal string (which
-	must start with a double-quote, <lit>"</lit>), the string is
-	printed as is.  See also <cmdref targ="printf"/>.
-      </para>
     </description>
 
     <gui-access>
