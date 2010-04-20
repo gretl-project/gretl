@@ -4944,6 +4944,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	} else {
 	    err = system_parse_line(s->sys, line, pZ, pdinfo);
+	    fprintf(stderr, "system_parse_line: err = %d\n", err);
 	    if (err) {
 		s->sys = NULL;
 	    } 
@@ -5187,7 +5188,6 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (system_save_flag_is_set(s->sys)) {
-	/* only warrants action in GUI program */
 	system_unset_save_flag(s->sys);
 	s->sys = NULL;
     }

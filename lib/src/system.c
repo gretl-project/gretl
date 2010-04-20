@@ -316,6 +316,10 @@ equation_system_new (int method, const char *name, int *err)
     sys->name = NULL;
 
     if (name != NULL) {
+	/* FIXME check for existing system of same name */
+	if (get_equation_system_by_name(name) != NULL) {
+	    fprintf(stderr, "FIXME: there's already a system called '%s'\n", name);
+	}
 	equation_system_set_name(sys, name);
     }
 
@@ -453,6 +457,10 @@ void equation_system_destroy (equation_system *sys)
 {
     int i;
 
+#if SYSDEBUG
+    fprintf(stderr, "equation_system_destroy: %p\n", (void *) sys);
+#endif
+
     if (sys == NULL || sys->lists == NULL) {
 	return;
     }
@@ -544,7 +552,7 @@ int equation_system_append (equation_system *sys,
     return 0;
 }
 
-/* retrieve the name -- possible quoted with embedded spaces -- for
+/* retrieve the name -- possibly quoted with embedded spaces -- for
    an equation system */
 
 char *get_system_name_from_line (const char *s, int context)
@@ -668,6 +676,10 @@ equation_system *equation_system_start (const char *line,
     char *sysname = NULL;
     int method;
 
+#if SYSDEBUG > 1
+    fprintf(stderr, "equation_system_start: '%s'\n", line);
+#endif
+
     method = get_estimation_method_from_line(line);
 
     if (method == SYS_METHOD_MAX) {
@@ -697,6 +709,10 @@ equation_system *equation_system_start (const char *line,
     if (sys != NULL && (opt & OPT_I)) {
 	sys->flags |= SYSTEM_ITERATE;
     }
+
+#if SYSDEBUG > 1
+    fprintf(stderr, "new system '%s' at %p\n", sysname, (void *) sys);
+#endif
 
     if (sysname != NULL) {
 	free(sysname);
@@ -2142,14 +2158,18 @@ system_parse_line (equation_system *sys, const char *line,
 
     gretl_error_clear();
 
+#if 1 || SYSDEBUG > 1
+    fprintf(stderr, "*** system_parse_line: '%s'\n", line);
+#endif
+
     if (strncmp(line, "identity", 8) == 0) {
 	err = add_identity_to_sys(sys, line + 8, pZ, pdinfo);
     } else if (strncmp(line, "endog", 5) == 0) {
 	err = add_aux_list_to_sys(sys, line + 5, pZ, pdinfo, ENDOG_LIST);
     } else if (strncmp(line, "instr", 5) == 0) {
 	err = add_aux_list_to_sys(sys, line + 5, pZ, pdinfo, INSTR_LIST);
-    } else {
-	err = E_PARSE;
+    } else if (strncmp(line, "system", 6) == 0) {
+	err = E_DATA;
     }
 
     if (err) {
@@ -2556,13 +2576,7 @@ void system_unset_save_flag (equation_system *sys)
 
 int system_save_flag_is_set (equation_system *sys)
 {
-    if (sys == NULL) {
-	return 0;
-    } else if (sys->flags & SYSTEM_SAVEIT) {
-	return 1;
-    } else {
-	return 0;
-    }
+    return (sys != NULL && (sys->flags & SYSTEM_SAVEIT));
 }
 
 static int sur_ols_diag (equation_system *sys)

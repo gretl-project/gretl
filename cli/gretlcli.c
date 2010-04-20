@@ -991,7 +991,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (system_save_flag_is_set(s->sys)) {
-	/* only warrants action in GUI program */
 	system_unset_save_flag(s->sys);
 	s->sys = NULL;
     }

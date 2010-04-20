@@ -29,6 +29,7 @@
 #include "gretl_func.h"
 #include "gretl_scalar.h"
 #include "flow_control.h"
+#include "system.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -2873,6 +2874,12 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		    printmodel(s->models[0], pdinfo, cmd->opt, prn);
 		    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 		}
+
+		if (system_save_flag_is_set(s->sys)) {
+		    system_unset_save_flag(s->sys);
+		    s->sys = NULL;
+		}		
+
 	    }
 	} /* end execution of commands within loop */
 
