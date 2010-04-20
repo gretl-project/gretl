@@ -1,4 +1,4 @@
-version 1.8.8, in progress
+version 1.9.0, in progress
 - New command: "duration", for estimation of parametric
   duration models (e.g. Weibull)
 - New command: "negbin", for estimation of count data
