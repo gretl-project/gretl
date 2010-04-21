@@ -849,8 +849,10 @@ static void get_stock_yogo_critvals (int n, int K2, gretlopt opt,
 
     if (lookup != NULL) {
 	if (opt & OPT_L) {
+	    /* LIML test size */
 	    *p2 = (*lookup) (n, K2, 3);
 	} else {
+	    /* TSLS relative bias, test size */
 	    *p1 = (*lookup) (n, K2, 1);
 	    *p2 = (*lookup) (n, K2, 2);
 	}

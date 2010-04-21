@@ -488,7 +488,6 @@ static int tsls_loglik (MODEL *pmod,
 	    pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
 	} 
     }
-
     
     mle_criteria(pmod, 0);
 

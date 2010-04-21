@@ -265,7 +265,7 @@ static gretl_matrix *panel_model_xpxinv (MODEL *pmod,
 	    pmod->vcv[i] /= s2;
 	}
     } else {
-	*err = makevcv(pmod, 1.0); /* invert X'X into pmod->vcv */
+	*err = makevcv(pmod, 1.0);
 	if (*err) {
 	    return NULL;
 	}
