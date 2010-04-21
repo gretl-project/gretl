@@ -481,12 +481,15 @@ static int tsls_loglik (MODEL *pmod,
     if (!err) {
 	double ldet = gretl_matrix_log_determinant(W, &err);
 
-	if (!err) {
+	if (err) {
+	    pmod->lnL = NADBL;
+	} else {
 	    /* Davidson and MacKinnon, ETM, p. 538 */
 	    pmod->lnL = -(T / 2.0) * (LN_2_PI + ldet);
 	} 
     }
 
+    
     mle_criteria(pmod, 0);
 
     gretl_matrix_free(E);
@@ -603,11 +606,16 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	goto bailout;
     } 
 
+#if HTDBG
+    pprintf(dbgprn, "Hausman: unrestricted model\n");
+    printmodel(&hmod, pdinfo, OPT_NONE, dbgprn);
+#endif
+
     URSS = hmod.ess;
     nobs1 = hmod.nobs;
     ku = hmod.ncoeff;
 
-    /* add fitted values from unrestricted model to dataset  */
+    /* add fitted values from unrestricted model to dataset */
     err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
 	goto bailout;
@@ -624,7 +632,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     HT_list[1] = nv;
 
     /* regress the U fitted values on the regressors of the restricted 
-     model (so the sum of squares equals RRSS-URSS)
+       model (so the sum of squares equals RRSS-URSS)
     */
     hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
 
@@ -1106,6 +1114,14 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     }
 
     if (!err) {
+	double rc = gretl_symmetric_matrix_rcond(S, &err);
+
+	if (!err && (na(rc) || rc < 1.0e-6)) {
+	    err = E_SINGULAR;
+	}
+    }
+
+    if (!err) {
 	/* S^{-1/2}: invert S and Cholesky-decompose */
 	err = gretl_invert_symmetric_matrix(S);
 	if (!err) {
@@ -1544,6 +1560,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	/* give the fitted series the same name as the original */
 	strcpy(pdinfo->varname[v1], pdinfo->varname[v0]);
+	strcpy(pdinfo->varname[v1], "h_");
+	strncat(pdinfo->varname[v1], pdinfo->varname[v0], VNAMELEN - 3);
 
 	/* substitute v1 into the right place in the second-stage
 	   regression list */
