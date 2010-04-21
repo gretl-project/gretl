@@ -1635,6 +1635,8 @@ int set_odbc_dsn (const char *line, PRN *prn)
     }
 
     if (err) {
+	pprintf(prn, "Failed to connect to ODBC data source '%s'\n", 
+		gretl_odinfo.dsn);
 	ODBC_info_clear_all();
     } else if (gretl_messages_on()) {
 	pprintf(prn, "Connected to ODBC data source '%s'\n", 
