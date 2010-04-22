@@ -649,6 +649,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     int err = 0;
 
     if (!(cmd->opt & OPT_O)) {
+	/* not using ODBC */
 	err = getopenfile(line, newfile, (cmd->opt & OPT_W)?
 			  OPT_W : OPT_NONE);
 	if (err) {

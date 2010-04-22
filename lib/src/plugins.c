@@ -295,7 +295,6 @@ void *gretl_dlsym (void *handle, const char *name)
 static void *get_plugin_handle (const char *plugin)
 {
     char pluginpath[MAXLEN];
-    void *handle = NULL;
 
     strcpy(pluginpath, gretl_lib_path());
 
@@ -308,16 +307,7 @@ static void *get_plugin_handle (const char *plugin)
     strcat(pluginpath, ".so");
 #endif 
 
-    handle = gretl_dlopen(pluginpath, 0);
-
-    if (handle == NULL) {
-        gretl_errmsg_sprintf(_("Failed to load plugin: %s"), pluginpath);
-#if !defined(WIN32) && !defined(OSX_NATIVE)
-	fprintf(stderr, "%s\n", dlerror());
-#endif
-    }     
-
-    return handle;
+    return gretl_dlopen(pluginpath, 0);
 }
 
 void *get_plugin_function (const char *funcname, void **handle)

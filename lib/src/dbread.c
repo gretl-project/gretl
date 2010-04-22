@@ -1602,6 +1602,7 @@ int set_odbc_dsn (const char *line, PRN *prn)
     char *dbname = NULL;
     char *uname = NULL;
     char *pword = NULL;
+    int got_plugin = 0;
     int err = 0;
 
     /* skip command word */
@@ -1624,19 +1625,24 @@ int set_odbc_dsn (const char *line, PRN *prn)
     gretl_odinfo.password = pword;
 
     gretl_error_clear();
-    
+
     check_dsn = get_plugin_function("gretl_odbc_check_dsn", &handle);
 
     if (check_dsn == NULL) {
         err = 1;
     } else {
+	got_plugin = 1;
         err = (* check_dsn) (&gretl_odinfo);
         close_plugin(handle);
     }
 
     if (err) {
-	pprintf(prn, "Failed to connect to ODBC data source '%s'\n", 
-		gretl_odinfo.dsn);
+	if (!got_plugin) {
+	    pprintf(prn, "Couldn't open the gretl ODBC plugin\n");
+	} else {	    
+	    pprintf(prn, "Failed to connect to ODBC data source '%s'\n", 
+		    gretl_odinfo.dsn);
+	} 
 	ODBC_info_clear_all();
     } else if (gretl_messages_on()) {
 	pprintf(prn, "Connected to ODBC data source '%s'\n", 

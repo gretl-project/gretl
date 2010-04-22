@@ -7653,6 +7653,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (!(cmd->opt & OPT_O)) {
+	/* not using ODBC */
 	err = getopenfile(line, myfile, (cmd->opt & OPT_W)? 
 			  OPT_W : OPT_NONE);
 	if (err) {
@@ -7716,6 +7717,7 @@ static int script_open_append (ExecState *s, double ***pZ,
 
     if (err) {
 	pputc(prn, '\n');
+	gui_errmsg(err);
 	return err;
     }
 
