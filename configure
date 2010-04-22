@@ -2773,6 +2773,7 @@ bundled_sourceview="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
+try_odbc="no"
 have_odbc="no"
 try_libR="yes"
 have_libR="no"
@@ -6362,10 +6363,10 @@ fi
 if test "${with_odbc+set}" = set; then :
   withval=$with_odbc; if test "$withval" = "yes"
 then
-  have_odbc=yes
+  try_odbc=yes
 fi
 else
-  have_odbc=no
+  try_odbc=no
 fi
 
 
@@ -7430,13 +7431,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:7433: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:7434: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7436: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:7437: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:7439: output\"" >&5)
+  (eval echo "\"\$as_me:7440: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -8641,7 +8642,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 8644 "configure"' > conftest.$ac_ext
+  echo '#line 8645 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9867,11 +9868,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9870: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9871: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9874: \$? = $ac_status" >&5
+   echo "$as_me:9875: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10206,11 +10207,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10209: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10210: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10213: \$? = $ac_status" >&5
+   echo "$as_me:10214: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -10311,11 +10312,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10314: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10315: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10318: \$? = $ac_status" >&5
+   echo "$as_me:10319: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10366,11 +10367,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10369: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10370: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10373: \$? = $ac_status" >&5
+   echo "$as_me:10374: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12733,7 +12734,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12736 "configure"
+#line 12737 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12829,7 +12830,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12832 "configure"
+#line 12833 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15194,7 +15195,13 @@ rm -f core conftest.err conftest.$ac_objext \
 
 fi
 
-if test "$have_odbc" = "yes" ; then
+if test "$try_odbc" = "yes" ; then
+  case $host_os in
+    *arwin*)
+      ODBC_LIBS="-liodbc"
+      have_odbc="yes"
+    ;;
+    *)
 
 # Check whether --with-ODBC-prefix was given.
 if test "${with_ODBC_prefix+set}" = set; then :
@@ -15307,6 +15314,8 @@ rm -f core conftest.err conftest.$ac_objext \
 
   rm -f conf.ODBCtest
 
+    ;;
+  esac
 fi
 
 if test "$check_gnuplot" = "no" ; then

@@ -56,6 +56,7 @@ bundled_sourceview="yes"
 have_gnu_regex="no"
 have_libxml2="no"
 have_xslt="no"
+try_odbc="no"
 have_odbc="no"
 try_libR="yes"
 have_libR="no"
@@ -245,9 +246,9 @@ AC_ARG_WITH(odbc,
 [  --with-odbc            include ODBC support (experimental)],
 if test "$withval" = "yes"
 then
-  have_odbc=yes
+  try_odbc=yes
 fi,
-have_odbc=no)
+try_odbc=no)
 
 AC_PROG_CC
 
@@ -424,11 +425,19 @@ fi
 dnl
 dnl Check for unixODBC?
 dnl
-if test "$have_odbc" = "yes" ; then
-  AM_PATH_ODBC(, 
-    have_odbc="yes",
-    have_odbc="no"
-  )
+if test "$try_odbc" = "yes" ; then
+  case $host_os in
+    *arwin*) 
+      ODBC_LIBS="-liodbc"
+      have_odbc="yes"
+    ;; 
+    *)
+      AM_PATH_ODBC(, 
+        have_odbc="yes",
+        have_odbc="no"
+      )
+    ;;
+  esac
 fi
 
 dnl
