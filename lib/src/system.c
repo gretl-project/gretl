@@ -742,18 +742,20 @@ system_print_F_test (const equation_system *sys,
 {
     const gretl_matrix *R = sys->R;
     const gretl_matrix *q = sys->q;
-    int Rrows = gretl_matrix_rows(R);
-    int dfu = system_get_dfu(sys);
-    int dfn = gretl_matrix_rows(R);
+    int Rrows, dfu, dfn;
     gretl_matrix *Rbq = NULL;
     gretl_matrix *RvR = NULL;
     double F = NADBL;
     int err = 0;
 
     if (R == NULL || q == NULL || b == NULL || vcv == NULL) {
-	pputs(prn, "Missing data in F test\n");
-	goto bailout;
+	pputs(prn, "Missing matrix in system F test!\n");
+	return;
     }
+
+    Rrows = gretl_matrix_rows(R);
+    dfu = system_get_dfu(sys);
+    dfn = gretl_matrix_rows(R);
 
     Rbq = gretl_matrix_alloc(Rrows, 1);
     RvR = gretl_matrix_alloc(Rrows, Rrows);
@@ -858,6 +860,10 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
     gretl_matrix *V;
     double x;
     int i, j;
+
+    if (sys->vcv == NULL) {
+	return E_DATA;
+    }
 
     if (sys->vcv->rows == nc) {
 	/* no-op (shouldn't happen) */

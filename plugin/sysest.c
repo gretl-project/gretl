@@ -335,7 +335,7 @@ calculate_sys_coeffs (equation_system *sys,
 
     vcv = gretl_matrix_copy(X);
     if (vcv == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     err = gretl_LU_solve(X, y);
@@ -898,7 +898,9 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     /* allocate models etc */
     err = basic_system_allocate(sys, mk, nr, &X, &y);
-    if (err) goto cleanup;
+    if (err) {
+	goto cleanup;
+    }
 
     /* convenience pointers */
     models = sys->models;
@@ -1151,8 +1153,11 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
        unless, that is, we're just doing restricted OLS, WLS or TSLS
        estimates.
     */
-    calculate_sys_coeffs(sys, (const double **) *pZ, X, 
-			 y, mk, nr, do_iteration);
+    err = calculate_sys_coeffs(sys, (const double **) *pZ, X, 
+			       y, mk, nr, do_iteration);
+    if (err) {
+	goto cleanup;
+    }
 
     if (rtsls) {
 	rtsls = 0;
