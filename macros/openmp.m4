@@ -13,7 +13,7 @@ AC_DEFUN([AC_C_OPENMP],
   AC_MSG_CHECKING([whether to use OpenMP])
   AC_ARG_ENABLE(openmp,
     [AS_HELP_STRING([--enable-openmp], [use OpenMP if available])],
-    [enable_openmp=yes]
+    [enable_openmp=$enableval]
   )
   AC_MSG_RESULT([$enable_openmp])
   ac_openmp_result=no

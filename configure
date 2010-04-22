@@ -13776,7 +13776,7 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 $as_echo_n "checking whether to use OpenMP... " >&6; }
   # Check whether --enable-openmp was given.
 if test "${enable_openmp+set}" = set; then :
-  enableval=$enable_openmp; enable_openmp=yes
+  enableval=$enable_openmp; enable_openmp=$enableval
 
 fi
 
