@@ -231,6 +231,14 @@ then
 fi,
 try_libR=yes)
 
+AC_ARG_WITH(odbc,
+[  --with-odbc            include ODBC support],
+if test "$withval" = "yes"
+then
+  try_odbc=yes
+fi,
+try_odbc=no)
+
 AC_ARG_WITH(audio,
 [  --with-audio           include audio graph support (experimental)],
 if test "$withval" = "yes"
@@ -241,14 +249,6 @@ then
   have_audio=yes
 fi,
 have_audio=no)
-
-AC_ARG_WITH(odbc,
-[  --with-odbc            include ODBC support (experimental)],
-if test "$withval" = "yes"
-then
-  try_odbc=yes
-fi,
-try_odbc=no)
 
 AC_PROG_CC
 
@@ -784,8 +784,8 @@ Configuration:
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
+  ODBC support:                           ${have_odbc}
   Experimental audio support:             ${have_audio}
-  Experimental ODBC support:              ${have_odbc}
   LAPACK libraries:
     ${LAPACK_LIBS}
 

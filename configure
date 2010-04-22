@@ -935,8 +935,8 @@ with_gtksourceview
 with_x_12_arima
 with_tramo_seats
 with_libR
-with_audio
 with_odbc
+with_audio
 enable_static
 enable_shared
 with_pic
@@ -1627,8 +1627,8 @@ Optional Packages:
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
+  --with-odbc            include ODBC support
   --with-audio           include audio graph support (experimental)
-  --with-odbc            include ODBC support (experimental)
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
@@ -6343,6 +6343,18 @@ fi
 
 
 
+# Check whether --with-odbc was given.
+if test "${with_odbc+set}" = set; then :
+  withval=$with_odbc; if test "$withval" = "yes"
+then
+  try_odbc=yes
+fi
+else
+  try_odbc=no
+fi
+
+
+
 # Check whether --with-audio was given.
 if test "${with_audio+set}" = set; then :
   withval=$with_audio; if test "$withval" = "yes"
@@ -6355,18 +6367,6 @@ then
 fi
 else
   have_audio=no
-fi
-
-
-
-# Check whether --with-odbc was given.
-if test "${with_odbc+set}" = set; then :
-  withval=$with_odbc; if test "$withval" = "yes"
-then
-  try_odbc=yes
-fi
-else
-  try_odbc=no
 fi
 
 
@@ -21267,8 +21267,8 @@ Configuration:
   X-12-ARIMA support:                     ${have_x12a}
   TRAMO/SEATS support:                    ${have_tramo}
   libR support:                           ${have_libR}
+  ODBC support:                           ${have_odbc}
   Experimental audio support:             ${have_audio}
-  Experimental ODBC support:              ${have_odbc}
   LAPACK libraries:
     ${LAPACK_LIBS}
 
