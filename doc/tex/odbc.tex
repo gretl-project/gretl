@@ -2,17 +2,37 @@
 \label{chap:odbc}
 
 Since version 1.7.5, \app{gretl} provides a method for retrieving data
-from databases which support the ODBC standard. Most users won't be
-interested in this, but there may be some for whom this feature
-matters a lot --- typically, those who work in an environment where
-huge data collections are accessible via a Data Base Management System
-(DBMS).
+from databases which support the Open Database Connectivity (ODBC)
+standard. Most users won't be interested in this, but there may be
+some for whom this feature matters a lot --- typically, those who work
+in an environment where huge data collections are accessible via a
+Data Base Management System (DBMS).
 
-ODBC is the \emph{de facto} standard for interacting with such
-systems. In the next section we provide some background information on
-how ODBC works. What you actually need to do to have \app{gretl}
-retrieve data from a database is explained in
+In the following section we explain what is needed for ODBC support in
+\app{gretl}. We provide some background information on how ODBC works
+in section~\ref{sec:odbc-base}, and explain the details of getting
+\app{gretl} to retrieve data from a database in
 section~\ref{sec:odbc-syntax}.
+
+\section{ODBC support}
+\label{sec:odbc-support}
+
+The piece of software that bridges between \app{gretl} and the ODBC
+system is a dynamically loaded ``plugin''. This is included in the
+\app{gretl} packages for MS Windows and Mac OS X (on OS X support was
+added in \app{gretl} 1.9.0). On other unix-type platforms (notably
+Linux) you will have to build \app{gretl} from source to get ODBC
+support.  This is because the \app{gretl} plugin depends on
+having \app{unixODBC} installed, which we cannot assume to be the
+case on typical Linux systems. To enable the ODBC plugin when building 
+\app{gretl}, you must pass the option \verb|--with-odbc| to
+\app{gretl}'s \texttt{configure} script. In addition, if
+\app{unixODBC} is installed in a non-standard location you will have
+to specify its installation prefix using \verb|--with-ODBC-prefix|,
+as in (for example)
+\begin{code}
+  ./configure --with-odbc --with-ODBC-prefix=/opt/ODBC
+\end{code}
 
 \section{ODBC base concepts}
 \label{sec:odbc-base}
