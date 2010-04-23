@@ -1564,6 +1564,12 @@ static double gmm_log_10 (double x)
     return y;
 }
 
+/* The user didn't specify a matrix of initial weights in
+   GMM, and gretl assigned an identity matrix; here we try
+   to see if we should scale the weights for the sake of
+   keeping computer arithmetic in bounds.
+*/
+
 static int maybe_preadjust_weights (nlspec *s)
 {
     double *coeff;
