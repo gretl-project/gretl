@@ -27,6 +27,8 @@
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"
 
+#include <errno.h>
+
 #define GMM_DEBUG 0
 
 typedef struct colsrc_ colsrc;
@@ -40,7 +42,7 @@ struct colsrc_ {
 
 struct hac_info_ {
     int kern;              /* kernel type */
-    int h;                 /* integer bandwidth (Bartlett, Parzen) */                
+    int h;                 /* integer bandwidth (Bartlett, Parzen) */
     double bt;             /* QS bandwidth */
     int whiten;            /* pre-whiten (1) or not (0) */
 };
@@ -55,6 +57,7 @@ struct ocset_ {
     colsrc *ecols;        /* info on provenance of columns of 'e' */
     int noc;              /* total number of orthogonality conds. */
     int step;             /* number of estimation steps */
+    int userwts;          /* got weights matrix from user (1/0) */
     hac_info hinfo;       /* HAC characteristics */
     char Wname[VNAMELEN]; /* name of weighting matrix */
     char **lnames;        /* names of LHS terms in O.C.s */
@@ -107,6 +110,7 @@ static ocset *oc_set_new (void)
 	oc->ecols = NULL;
 	oc->noc = 0;
 	oc->step = 0;
+	oc->userwts = 0;
 	*oc->Wname = '\0';
 	oc->lnames = NULL;
 	oc->rnames = NULL;
@@ -745,6 +749,21 @@ static int gmm_fix_datarows (nlspec *s)
     return err;
 }
 
+static int gmm_add_workspace (nlspec *s)
+{
+    int k = s->oc->noc;
+    int err = 0;
+
+    s->oc->tmp = gretl_matrix_alloc(s->nobs, k);
+    s->oc->sum = gretl_column_vector_alloc(k);
+
+    if (s->oc->tmp == NULL || s->oc->sum == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
 /* Add the matrix of weights to the GMM specification: this must
    come after all the O.C.s are given, so that we can check the
    dimensions of the supplied matrix.
@@ -807,11 +826,7 @@ int nlspec_add_weights (nlspec *s, const char *str)
     /* now we're ready to add the workspace matrices */
 
     if (!err) {
-	s->oc->tmp = gretl_matrix_alloc(s->nobs, k);
-	s->oc->sum = gretl_column_vector_alloc(k);
-	if (s->oc->tmp == NULL || s->oc->sum == NULL) {
-	    err = E_ALLOC;
-	}
+	err = gmm_add_workspace(s);
     }
 
     return err;
@@ -863,17 +878,23 @@ void nlspec_print_gmm_info (const nlspec *spec, PRN *prn)
 
 int check_gmm_requirements (nlspec *spec)
 {
+    int err = 0;
+
     if (spec->oc == NULL) {
 	gretl_errmsg_set(_("No orthogonality conditions have been specified"));
-	return 1;
+	err = E_DATA;
+    } else if (spec->oc->W == NULL) {
+	spec->oc->W = gretl_identity_matrix_new(spec->oc->noc);
+	if (spec->oc->W == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gmm_add_workspace(spec);
+	}
+    } else {
+	spec->oc->userwts = 1;
     }
 
-    if (spec->oc->W == NULL) {
-	gretl_errmsg_set(_("No weights have been specified"));
-	return 1;
-    }
-
-    return 0;
+    return err;
 }
 
 /* Update the column(s) of the LHS matrix in the O.C. set,
@@ -931,6 +952,10 @@ static int gmm_multiply_ocs (nlspec *s)
 	err = gretl_matrix_columnwise_product(s->oc->e,
 					      s->oc->Z,
 					      s->oc->tmp);
+	if (err) {
+	    fprintf(stderr, "gmm_multiply_ocs: err = %d from "
+		    "gretl_matrix_columnwise_product\n", err);
+	}
     } else {
 	/* select the wanted i, j pairs */
 	int i, j, k, m, t, p = 0;
@@ -967,6 +992,8 @@ static int gmm_multiply_ocs (nlspec *s)
     return err;
 }
 
+#define CRIT_DEBUG 0
+
 /* calculate the value of the GMM criterion given the current
    parameter values */
 
@@ -978,15 +1005,24 @@ static double get_gmm_crit (const double *b, void *p)
 
     update_coeff_values(b, s);
 
-    if (nl_calculate_fvec(s)) {
+    if ((err = nl_calculate_fvec(s))) {
+#if CRIT_DEBUG
+	fprintf(stderr, "get_gmm_crit: err on nl_calculate_fvec = %d\n", err);
+#endif
 	return NADBL;
     }
 
-    if (gmm_update_e(s)) {
+    if ((err = gmm_update_e(s))) {
+#if CRIT_DEBUG
+	fprintf(stderr, "get_gmm_crit: err on gmm_update_e = %d\n", err);
+#endif
 	return NADBL;
     }
 
-    if (gmm_multiply_ocs(s)) {
+    if ((err = gmm_multiply_ocs(s))) {
+#if CRIT_DEBUG
+	fprintf(stderr, "get_gmm_crit: err on gmm_multiply_ocs = %d\n", err);
+#endif
 	return NADBL;
     }
     
@@ -1005,7 +1041,7 @@ static double get_gmm_crit (const double *b, void *p)
     }
 
 #if GMM_DEBUG > 2
-    gretl_matrix_print(s->oc->sum, "s->oc->sum");
+    gretl_matrix_print(s->oc->sum, "GMM: s->oc->sum");
     fprintf(stderr, "GMM: s->crit = %g\n", s->crit);
 #endif
 
@@ -1511,6 +1547,65 @@ static void gmm_print_oc (nlspec *s, PRN *prn)
     gretl_matrix_free(V);
 }
 
+static double gmm_log_10 (double x)
+{
+    double y;
+
+    errno = 0;
+
+    y = log(fabs(x));
+
+    if (errno) {
+	y = NADBL;
+    } else {
+	y /= log(10.0);
+    }
+
+    return y;
+}
+
+static int maybe_preadjust_weights (nlspec *s)
+{
+    double *coeff;
+    double crit, lc, m;
+ 
+    coeff = copyvec(s->coeff, s->ncoeff);
+    if (coeff == NULL) {
+	return E_ALLOC;
+    }
+
+    crit = -1 * get_gmm_crit(coeff, s);
+
+    if (na(crit)) {
+	return E_DATA;
+    } else if (crit == 0.0) {
+	return 0;
+    }
+
+    lc = gmm_log_10(crit);
+
+#if 0
+    fprintf(stderr, "maybe_preadjust_weights: crit=%g, lc=%g\n", 
+	    crit, lc);
+#endif
+
+    if (!na(lc) && (lc > 5 || lc < -5)) {
+	if (lc > 0) {
+	    m = floor(lc/2);
+	    m = pow(10, -m);
+	} else {
+	    m = ceil(lc/3);
+	    m = pow(10, -m);
+	}
+	fprintf(stderr, "GMM weights matrix: scaling by %g\n", m);
+	gretl_matrix_multiply_by_scalar(s->oc->W, m);
+    } 
+
+    free(coeff);
+
+    return 0;
+}
+
 /* BFGS driver, for the case of GMM estimation.  We may have to handle
    both "inner" (BFGS) and "outer" iterations here: the "outer"
    iterations (if applicable) are re-runs of BFGS using an updated
@@ -1541,6 +1636,11 @@ int gmm_calculate (nlspec *s, PRN *prn)
     } else if (s->opt & OPT_T) {
 	/* two-step */
 	outer_max = 2;
+    }
+
+    /* experimental, 2010-04-22 */
+    if (!s->oc->userwts) {
+	maybe_preadjust_weights(s);
     }
 
     while (!err && outer_iters < outer_max && !converged) {
