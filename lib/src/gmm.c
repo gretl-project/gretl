@@ -90,6 +90,11 @@ void oc_set_destroy (ocset *oc)
     if (oc->rnames != NULL) {
 	free_strings_array(oc->rnames, oc->n_names);
     }
+
+    if (!oc->userwts) {
+	/* we used auto-generated weights */
+	gretl_matrix_free(oc->W);
+    }
 	
     free(oc);
 }
@@ -884,10 +889,12 @@ int check_gmm_requirements (nlspec *spec)
 	gretl_errmsg_set(_("No orthogonality conditions have been specified"));
 	err = E_DATA;
     } else if (spec->oc->W == NULL) {
+	/* add automatic weights matrix */
 	spec->oc->W = gretl_identity_matrix_new(spec->oc->noc);
 	if (spec->oc->W == NULL) {
 	    err = E_ALLOC;
 	} else {
+	    strcpy(spec->oc->Wname, "auto");
 	    err = gmm_add_workspace(spec);
 	}
     } else {
@@ -1582,12 +1589,13 @@ static int maybe_prescale_weights (nlspec *s)
 
     crit = -1 * get_gmm_crit(coeff, s);
 
-    if (!na(crit) && crit != 0.0) {
+    if (crit > 0 && !na(crit)) {
 	double m, lc = gmm_log_10(crit);
 
 #if 0
 	fprintf(stderr, "maybe_preadjust_weights: crit=%g, lc=%g\n", 
 		crit, lc);
+	gretl_matrix_print(s->oc->sum, "s->oc->sum");
 #endif
 
 	if (!na(lc) && (lc > 5 || lc < -5)) {

@@ -106,11 +106,13 @@ static double **triangular_array_new (int n)
    construct a numerical approximation to the Hessian using that
    function.  This is intended for building a covariance matrix at
    convergence; note that it will be unlikely to work at an arbitrary
-   point in the parameter space.  Also note that the NULL pointer
-   passed to gradfun in the 4th argument corresponds to the
-   BFGS_CRIT_FUNC parameter, so this will fail horribly unless
-   @gradfun calculates the score independently of the
-   criterion function (and so does not use the 4th argument).
+   point in the parameter space.  
+
+   Also note that the NULL pointer passed to gradfun in the 4th 
+   argument corresponds to the BFGS_CRIT_FUNC parameter, so this 
+   will fail horribly unless @gradfun calculates the score independently 
+   of the criterion function (and so does not try to access the 4th 
+   argument).
 */
 
 gretl_matrix *hessian_from_score (double *b, int n, 
@@ -498,6 +500,7 @@ static int richardson_gradient (double *b, double *g, int n,
     return err;
 }
 
+/* trigger for switch to Richardson gradient */
 #define B_RELMIN 1.0e-14
 
 static int simple_gradient (double *b, double *g, int n,

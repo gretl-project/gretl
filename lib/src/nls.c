@@ -2863,7 +2863,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	spec->tol = libset_get_double(NLS_TOLER);
     }
 
-    if (!(spec->opt & OPT_Q)) {
+    if (spec->ci != GMM && !(spec->opt & OPT_Q)) {
 	pputs(prn, (numeric_mode(spec))?
 	      _("Using numerical derivatives\n") :
 	      _("Using analytical derivatives\n"));

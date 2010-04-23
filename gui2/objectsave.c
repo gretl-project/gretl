@@ -120,7 +120,7 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 
     gretl_cmd_get_savename(name);
 
-    if (*name == 0) {
+    if (*name == '\0') {
 	*pvar = NULL;
     } else {
 	var = *pvar;
@@ -138,7 +138,7 @@ int maybe_save_system (const CMD *cmd, equation_system *sys, PRN *prn)
 
     gretl_cmd_get_savename(name);
 
-    if (*name != 0) {
+    if (*name != '\0') {
 	err = finalize_model_save(sys, GRETL_OBJ_SYS, name, prn);
     }
 
