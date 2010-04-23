@@ -1570,10 +1570,10 @@ static double gmm_log_10 (double x)
    keeping computer arithmetic in bounds.
 */
 
-static int maybe_preadjust_weights (nlspec *s)
+static int maybe_prescale_weights (nlspec *s)
 {
     double *coeff;
-    double crit, lc, m;
+    double crit;
  
     coeff = copyvec(s->coeff, s->ncoeff);
     if (coeff == NULL) {
@@ -1582,30 +1582,26 @@ static int maybe_preadjust_weights (nlspec *s)
 
     crit = -1 * get_gmm_crit(coeff, s);
 
-    if (na(crit)) {
-	return E_DATA;
-    } else if (crit == 0.0) {
-	return 0;
-    }
-
-    lc = gmm_log_10(crit);
+    if (!na(crit) && crit != 0.0) {
+	double m, lc = gmm_log_10(crit);
 
 #if 0
-    fprintf(stderr, "maybe_preadjust_weights: crit=%g, lc=%g\n", 
-	    crit, lc);
+	fprintf(stderr, "maybe_preadjust_weights: crit=%g, lc=%g\n", 
+		crit, lc);
 #endif
 
-    if (!na(lc) && (lc > 5 || lc < -5)) {
-	if (lc > 0) {
-	    m = floor(lc/2);
+	if (!na(lc) && (lc > 5 || lc < -5)) {
+	    /* FIXME ? */
+	    if (lc > 0) {
+		m = floor(lc/2);
+	    } else {
+		m = ceil(lc/3);
+	    }
 	    m = pow(10, -m);
-	} else {
-	    m = ceil(lc/3);
-	    m = pow(10, -m);
+	    fprintf(stderr, "GMM weights matrix: scaling by %g\n", m);
+	    gretl_matrix_multiply_by_scalar(s->oc->W, m);
 	}
-	fprintf(stderr, "GMM weights matrix: scaling by %g\n", m);
-	gretl_matrix_multiply_by_scalar(s->oc->W, m);
-    } 
+    }
 
     free(coeff);
 
@@ -1646,7 +1642,7 @@ int gmm_calculate (nlspec *s, PRN *prn)
 
     /* experimental, 2010-04-22 */
     if (!s->oc->userwts) {
-	maybe_preadjust_weights(s);
+	maybe_prescale_weights(s);
     }
 
     while (!err && outer_iters < outer_max && !converged) {
