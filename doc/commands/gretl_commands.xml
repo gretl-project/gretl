@@ -2899,7 +2899,7 @@
 	  foreign</lit>; at this point the stacked commands are executed.
       </para>
       <para>
-	At present three <quote>foreign</quote> programs supported in this
+	At present three <quote>foreign</quote> programs are supported in this
 	way, GNU R (<lit>language=R</lit>), Jurgen Doornik's Ox
 	(<lit>language=Ox</lit>) and GNU Octave (<lit>language=Octave</lit>).
 	(Language names are recognized on a case-insensitive basis.)  Note
@@ -3381,19 +3381,6 @@
 	left-hand side of the formula.  For example, <lit>genr x[3] = 30</lit>
 	or <lit>genr x[1950:04] = 303.7</lit>.
       </para>
-
-      <para>
-	A tip regarding dummy variables: Suppose <lit>x</lit> is coded
-	with values 1, 2, or 3 and you want three dummy variables,
-	<lit>d1</lit> = 1 if <lit>x</lit> = 1, 0 otherwise, <lit>d2</lit>
-	= 1 if <lit>x</lit> = 2, and so on.  To create these you can use
-	the commands:
-      </para>
-      <code>
-	    genr d1 = (x=1)
-	    genr d2 = (x=2)
-	    genr d3 = (x=3)
-      </code>
 
       <table id="tab-genr" title="Examples of use of genr command"
 	lhead="Formula" rhead="Comment" lwidth="100pt" rwidth="300pt" 
@@ -4724,8 +4711,8 @@
 
     <description>
       <para>
-	Prints out the informative labels (if present) for the variables in
-	<repl>varlist</repl>, or for all variables in the dataset if
+	Prints out the informative labels (if present) for the series in
+	<repl>varlist</repl>, or for all series in the dataset if
 	<repl>varlist</repl> is not specified.
       </para>
     </description>
@@ -4786,8 +4773,8 @@
 
     <description>
       <para>
-	Creates new variables which are lagged values of each of the variables in
-	<repl>varlist</repl>.  By default the number of lagged variables equals the
+	Creates new series which are lagged values of each of the series in
+	<repl>varlist</repl>.  By default the number of lags created equals the
 	periodicity of the data. For example, if the periodicity is 4 (quarterly),
 	the command <cmd>lags x</cmd> creates
       </para>
@@ -4859,9 +4846,9 @@
 
     <description>
       <para>
-	The first difference of the natural log of each variable in
+	The first difference of the natural log of each series in
 	<repl>varlist</repl> is obtained and the result stored in a
-	new variable with the prefix <lit>ld_</lit>.  Thus <cmd>ldiff
+	new series with the prefix <lit>ld_</lit>.  Thus <cmd>ldiff
 	  x y</cmd> creates the new variables
       </para>
       <code>
@@ -5130,8 +5117,8 @@
 
     <description>
       <para>
-	The natural log of each of the variables in <repl>varlist</repl>
-	is obtained and the result stored in a new variable with the
+	The natural log of each of the series in <repl>varlist</repl>
+	is obtained and the result stored in a new series with the
 	prefix <lit>l_</lit> (<quote>el</quote> underscore).  For example,
 	<cmd>logs x y</cmd> creates the new variables <lit>l_x</lit> =
 	ln(<lit>x</lit>) and <lit>l_y</lit> = ln(<lit>y</lit>).
@@ -5367,7 +5354,7 @@
     <usage>
       <arguments>
         <argument>log-likelihood function</argument>
-        <argument>derivatives</argument>
+	<argument optional="true">derivatives</argument>
       </arguments>
       <options>
 	<option>
@@ -7581,19 +7568,18 @@
     label="Rename variables" context="cli">
 
     <usage>
-      <altforms>
-	<altform><lit>rename</lit> <repl>varnumber</repl> <repl>newname</repl></altform>
-	<altform><lit>rename</lit> <repl>varname</repl> <repl>newname</repl></altform>
-      </altforms>
+      <arguments>
+	<argument>series</argument>
+	<argument>newname</argument>
+      </arguments>
     </usage>
 
     <description>
       <para>
-	Changes the name of the variable with identification number
-	<repl>varnumber</repl> or current name <repl>varname</repl> to
-	<repl>newname</repl>.  The new name must be of 15 characters maximum,
-	must start with a letter, and must be composed of only letters, digits,
-	and the underscore character.
+	Changes the name of <repl>series</repl> (identified by name or ID
+	number) to <repl>newname</repl>.  The new name must be of 15
+	characters maximum, must start with a letter, and must be composed of
+	only letters, digits, and the underscore character.
       </para>
     </description>
 
@@ -9197,7 +9183,7 @@
 
     <description>
       <para>
-	Generates new variables which are squares of the variables in
+	Generates new series which are squares of the series in
 	<repl>varlist</repl> (plus cross-products if the
 	<lit>--cross</lit> option is given).  For example, <cmd>square
 	  x y</cmd> will generate <lit>sq_x</lit> = <lit>x</lit>
