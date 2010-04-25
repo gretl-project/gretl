@@ -825,33 +825,22 @@ int gretl_stack_object_as (void *ptr, GretlObjType type, const char *name)
     return real_stack_object(ptr, type, name, NULL);
 }
 
-int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
+int maybe_stack_var (GRETL_VAR *var, CMD *cmd)
 {
-    char name[MAXSAVENAME];
-    int ret = 0;
+    const char *name;
+    int err = 0;
 
-    if (var == NULL) {
-	return 0;
+    if (var != NULL) {
+	set_as_last_model(var, GRETL_OBJ_VAR);
+
+	name = gretl_cmd_get_savename(cmd);
+
+	if (*name != '\0') {
+	    err = real_stack_object(var, GRETL_OBJ_VAR, name, NULL);
+	} 
     }
 
-    gretl_cmd_get_savename(name);
-
-#if ODEBUG
-    fprintf(stderr, "\nmaybe_stack_var: initial refcount = %d\n", var->refcount);
-#endif
-
-    set_as_last_model(var, GRETL_OBJ_VAR);
-
-#if ODEBUG
-    fprintf(stderr, "maybe_stack_var: set %p as last model, refcount = %d\n", 
-	    (void *) var, var->refcount);
-#endif
-
-    if (*name) {
-	ret = real_stack_object(var, GRETL_OBJ_VAR, name, NULL);
-    } 
-
-    return ret;
+    return err;
 }
 
 /* Called in gretlcli.c, after sucessful estimation of a
@@ -869,33 +858,29 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
    this model pointer is the one on the stack of named objects.
 */
 
-int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
+int maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn)
 {
-    char name[MAXSAVENAME];
-    MODEL *cpy = NULL;
+    const char *name;
     int err = 0;
-
-    gretl_cmd_get_savename(name);
 
     set_as_last_model(pmod, GRETL_OBJ_EQN);
 
-    if (*name == 0) {
-	return 0;
-    }
+    name = gretl_cmd_get_savename(cmd);
 
-    cpy = gretl_model_copy(pmod);
-    if (cpy == NULL) {
-	err = E_ALLOC;
-    }
+    if (*name != '\0') {
+	MODEL *cpy = gretl_model_copy(pmod);
 
-    if (!err) {
-	err = real_stack_object(cpy, GRETL_OBJ_EQN, name, NULL);
-    }
+	if (cpy == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = real_stack_object(cpy, GRETL_OBJ_EQN, name, NULL);
+	}
 
-    if (!err) {
-	pprintf(prn, _("%s saved\n"), name);
-    } else {
-	errmsg(err, prn);
+	if (!err) {
+	    pprintf(prn, _("%s saved\n"), name);
+	} else {
+	    errmsg(err, prn);
+	}
     }
 
     return err;

@@ -97,6 +97,7 @@ struct equation_system_ {
 };
 
 equation_system *equation_system_start (const char *line, 
+					char *name,
 					gretlopt opt,
 					int *err);
 

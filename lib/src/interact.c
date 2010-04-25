@@ -480,7 +480,10 @@ static int catch_command_alias (char *line, CMD *cmd)
 			  c == SQUARE || \
 	                  c == ORTHDEV)
 
-static char cmd_savename[MAXSAVENAME];
+/* given an assignment such as "foo <- command", extract
+   the first field and record it in the "savename"
+   member of CMD.
+*/
 
 static void maybe_extract_savename (char *s, CMD *cmd)
 {
@@ -504,7 +507,6 @@ static void maybe_extract_savename (char *s, CMD *cmd)
 	if (cmd->savename[n-1] == '"') {
 	    cmd->savename[n-1] = 0;
 	}
-	strcpy(cmd_savename, cmd->savename);
 	shift_string_left(s, len + 2);
 	while (*s == ' ') {
 	    shift_string_left(s, 1);
@@ -2248,9 +2250,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }  
 
-    if (cmd->context) {
-	*cmd->savename = '\0';
-    } else {
+    if (!cmd->context) {
 	/* extract "savename" for storing an object? */
 	maybe_extract_savename(line, cmd);
     } 
@@ -2683,6 +2683,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->err) {
 	cmd->context = 0;
+	/* FIXME respond to CATCH flag here? */
     }
 
     return cmd->err;
@@ -3560,7 +3561,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
     /* command is preceded by a "savename" to which an object will
        be assigned */
-    if (*cmd->savename) {
+    if (*cmd->savename && !cmd->context && cmd->ci != END) {
 	if (haschar(' ', cmd->savename) >= 0) {
 	    pprintf(prn, "\"%s\" <- ", cmd->savename);
 	    llen += strlen(cmd->savename) + 6;
@@ -4095,7 +4096,6 @@ static int append_data (const char *line, int *list,
 static void schedule_callback (ExecState *s)
 {
     if (s->callback != NULL) {
-	s->flags &= ~CALLBACK_ATEND;
 	s->flags |= CALLBACK_EXEC;
     }
 }
@@ -4105,37 +4105,15 @@ static int callback_scheduled (ExecState *s)
     return (s->flags & CALLBACK_EXEC) ? 1 : 0;
 }
 
-static int callback_deferred (ExecState *s)
-{
-    return (s->flags & CALLBACK_ATEND) ? 1 : 0;
-}
-
-#define GRAPH_COMMAND(c) (c == GNUPLOT || c == BXPLOT || c == SCATTERS)
-
-static void check_for_named_object_save (ExecState *s)
-{
-    if (*cmd_savename != '\0' && gretl_in_gui_mode()) {
-	int ci = s->cmd->ci;
-
-	if (ci == MLE || ci == NLS || ci == GMM) {
-	    /* attach the save callback to the corresponding 'end'
-	       statement */
-	    if (s->callback != NULL) {
-		s->flags |= CALLBACK_ATEND;
-	    }	    
-	} else if (MODEL_COMMAND(ci) || GRAPH_COMMAND(ci)) {
-	    schedule_callback(s);
-	}
-    }
-}
-
 static void callback_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 			   int err)
 {
     if (!err && s->callback != NULL) {
 	s->callback(s, pZ, pdinfo);
     }
+
     s->flags &= ~CALLBACK_EXEC;
+    *s->cmd->savename = '\0';
 }
 
 static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
@@ -4146,7 +4124,7 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     int err = 0;
 
     if ((cmd->opt & OPT_F) || (ropt & OPT_F)) {
-	/* FIXME non-vecm case */
+	/* FIXME non-vecm VAR case */
 	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 
 				       pdinfo, cmd->opt, prn, &err);
 	if (s->var != NULL) {
@@ -4361,6 +4339,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (pZ != NULL) {
 	Z = (const double **) *pZ;
     }
+
+#if 0
+    check_for_named_object_save(s);
+#endif
 
     switch (cmd->ci) {
 
@@ -4936,9 +4918,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SYSTEM:
-	/* system of equations */
 	if (s->sys == NULL) {
-	    s->sys = equation_system_start(line, cmd->opt, &err);
+	    /* no equation system is defined currently */
+	    s->sys = equation_system_start(line, cmd->savename, cmd->opt, &err);
 	    if (!err) {
 		gretl_cmd_set_context(cmd, SYSTEM);
 	    }
@@ -4971,9 +4953,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    clear_model(models[0]);
 	    *models[0] = nl_model(pZ, pdinfo, cmd->opt, prn);
 	    err = maybe_print_model(models[0], pdinfo, prn, s);
-	    if (callback_deferred(s)) {
-		schedule_callback(s);
-	    }
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
 	} else if (!strcmp(cmd->param, "foreign")) {
@@ -5102,13 +5081,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (err == E_OK) {
 	err = 0;
-    }
-
-    if (err) {
-	/* scrub any deferred object-save callback */
-	s->flags &= ~CALLBACK_ATEND;
-    } else {
-	check_for_named_object_save(s);
     }
 
     if (callback_scheduled(s)) {
@@ -5416,6 +5388,7 @@ void gretl_cmd_set_context (CMD *cmd, int ci)
 void gretl_cmd_destroy_context (CMD *cmd)
 {
     cmd->context = 0;
+    *cmd->savename = '\0';
 }
 
 gretlopt gretl_cmd_get_opt (const CMD *cmd)
@@ -5428,17 +5401,9 @@ void gretl_cmd_set_opt (CMD *cmd, gretlopt opt)
     cmd->opt = opt;
 }
 
-char *gretl_cmd_get_savename (char *sname)
+const char *gretl_cmd_get_savename (CMD *cmd)
 {
-    strcpy(sname, cmd_savename);
-    *cmd_savename = '\0';
-
-    return sname;
-}
-
-void gretl_cmd_zero_savename (void)
-{
-    *cmd_savename = '\0';
+    return cmd->savename;
 }
 
 void gretl_exec_state_init (ExecState *s,

@@ -394,22 +394,17 @@ static int lib_cmd_init (void)
     return cmd_init(cmdline, 0);
 }
 
-static int console_cmd_init (char *s, int *crun)
+static int console_cmd_init (char *line, int *console_run)
 {
-    int ret = 0;
-
-    if (*crun) {
+    if (*console_run) {
 	libcmd.word[0] = 0;
 	libcmd.param[0] = 0;
 	libcmd.extra[0] = 0;
 	libcmd.opt = OPT_NONE;
-	ret = cmd_init(s, CONSOLE_EXEC);
-	*crun = 0;
-    } else {
-	ret = cmd_init(s, CONSOLE_EXEC);
+	*console_run = 0;
     }
 
-    return ret;
+    return cmd_init(line, CONSOLE_EXEC);
 }
 
 /* checks command line @s for validity, but does not
@@ -3073,7 +3068,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	    startline = g_strdup_printf("system method=%s", 
 					system_method_short_string(method));
 	    /* FIXME opt? */
-	    my_sys = equation_system_start(startline, OPT_NONE, &err);
+	    my_sys = equation_system_start(startline, NULL, OPT_NONE, &err);
 	}
 
 	if (err) {
@@ -6767,7 +6762,7 @@ void gui_resample_data (void)
     }
 }
 
-static int db_write_response (const char *savename, const int *list)
+static int db_write_response (const char *filename, const int *list)
 {
     gchar *msg;
     int resp, ret = 0;
@@ -6779,7 +6774,7 @@ static int db_write_response (const char *savename, const int *list)
     if (resp == GRETL_NO) {
 	ret = 1;
     } else {
-	ret = write_db_data(savename, list, OPT_F,
+	ret = write_db_data(filename, list, OPT_F,
 			    (const double **) Z, datainfo);
     }
 
@@ -6885,12 +6880,12 @@ static int shrink_dataset_to_sublist (void)
     return err;
 }
 
-static void maybe_shrink_dataset (const char *savename, int sublist)
+static void maybe_shrink_dataset (const char *newname, int sublist)
 {
     int shrink = 0;
     int resp;
 
-    if (datafile == savename || !strcmp(datafile, savename)) {
+    if (datafile == newname || !strcmp(datafile, newname)) {
 	shrink = 1;
     } else {
 	resp = yes_no_dialog(_("gretl: revised data set"), 
@@ -6906,8 +6901,8 @@ static void maybe_shrink_dataset (const char *savename, int sublist)
 	if (sublist) {
 	    shrink_dataset_to_sublist();
 	}
-	if (datafile != savename) {
-	    strcpy(datafile, savename);
+	if (datafile != newname) {
+	    strcpy(datafile, newname);
 	}
     }	
 }
@@ -6919,7 +6914,7 @@ static void maybe_shrink_dataset (const char *savename, int sublist)
    a file of the same name; returning 0 means we'll query
    the user about overwriting */
 
-int do_store (char *savename, gretlopt opt)
+int do_store (char *filename, gretlopt opt)
 {
     const char *mylist;
     gchar *tmp = NULL;
@@ -6928,7 +6923,7 @@ int do_store (char *savename, gretlopt opt)
     int sublist = 0;
     int err = 0;
 
-    overwrite_ok = set_auto_overwrite(savename, opt, &sublist);
+    overwrite_ok = set_auto_overwrite(filename, opt, &sublist);
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
@@ -6941,23 +6936,23 @@ int do_store (char *savename, gretlopt opt)
 
     if (opt & OPT_X) {
 	/* session: exporting gdt */
-	tmp = g_strdup_printf("store '%s' %s", savename, mylist);
+	tmp = g_strdup_printf("store '%s' %s", filename, mylist);
     } else if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
 	const char *flagstr = print_flags(opt, STORE);
 
-	tmp = g_strdup_printf("store '%s' %s%s", savename, mylist, flagstr);
-    } else if (has_suffix(savename, ".dat")) { 
+	tmp = g_strdup_printf("store '%s' %s%s", filename, mylist, flagstr);
+    } else if (has_suffix(filename, ".dat")) { 
 	/* saving in "traditional" mode as ".dat" */
-	tmp = g_strdup_printf("store '%s' %s -t", savename, mylist);
+	tmp = g_strdup_printf("store '%s' %s -t", filename, mylist);
 	opt = OPT_T;
     } else {
 	/* standard data save */
-	tmp = g_strdup_printf("store '%s' %s", savename, mylist);
+	tmp = g_strdup_printf("store '%s' %s", filename, mylist);
     }
 
     if (!overwrite_ok) {
-	fp = gretl_fopen(savename, "rb");
+	fp = gretl_fopen(filename, "rb");
 	if (fp != NULL) {
 	    fclose(fp);
 	    if (yes_no_dialog(_("gretl: save data"), 
@@ -6981,10 +6976,10 @@ int do_store (char *savename, gretlopt opt)
 
     /* back up existing datafile if need be (not for databases) */
     if (!WRITING_DB(opt)) {
-	if ((fp = gretl_fopen(savename, "rb")) && fgetc(fp) != EOF &&
+	if ((fp = gretl_fopen(filename, "rb")) && fgetc(fp) != EOF &&
 	    fclose(fp) == 0) {
-	    tmp = g_strdup_printf("%s~", savename);
-	    if (copyfile(savename, tmp)) {
+	    tmp = g_strdup_printf("%s~", filename);
+	    if (copyfile(filename, tmp)) {
 		err = 1;
 		goto store_get_out;
 	    }
@@ -6992,12 +6987,12 @@ int do_store (char *savename, gretlopt opt)
     } 
 
     /* actually write the data to file */
-    err = write_data(savename, libcmd.list, (const double **) Z, datainfo, 
+    err = write_data(filename, libcmd.list, (const double **) Z, datainfo, 
 		     opt, 1);
 
     if (err) {
 	if (WRITING_DB(opt) && err == E_DB_DUP) {
-	    err = db_write_response(savename, libcmd.list);
+	    err = db_write_response(filename, libcmd.list);
 	    if (err) {
 		goto store_get_out;
 	    }
@@ -7009,11 +7004,11 @@ int do_store (char *savename, gretlopt opt)
 
     /* record that data have been saved, etc. */
     if (!DATA_EXPORT(opt)) {
-	mkfilelist(FILE_LIST_DATA, savename);
+	mkfilelist(FILE_LIST_DATA, filename);
 	if (dataset_is_subsampled() || sublist) {
-	    maybe_shrink_dataset(savename, sublist);
-	} else if (datafile != savename) {
-	    strcpy(datafile, savename);
+	    maybe_shrink_dataset(filename, sublist);
+	} else if (datafile != filename) {
+	    strcpy(datafile, filename);
 	}
 	data_status = (HAVE_DATA | USER_DATA);
 	if (is_gzipped(datafile)) {
@@ -7024,7 +7019,7 @@ int do_store (char *savename, gretlopt opt)
 
     /* tell the user */
     if (WRITING_DB(opt)) {
-	database_description_dialog(savename);
+	database_description_dialog(filename);
     } 
 
  store_get_out:
@@ -7592,15 +7587,16 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
     int ci = s->cmd->ci;
     int err = 0;
 
-    if (ci == FREQ && s->flags == CONSOLE_EXEC) {
+    if (ci == FREQ && (s->flags & CONSOLE_EXEC)) {
 	register_graph(NULL);
     } else if (ci == SETOBS || ci == SMPL) {
 	set_sample_label(pdinfo);
     } else if (ci == VAR || ci == VECM) {
 	maybe_save_var(s->cmd, &s->var, s->prn);
-    } else if (s->var != NULL && ci == END && 
-	       !strcmp(s->cmd->param, "restrict")) {
-	maybe_save_var(s->cmd, &s->var, s->prn);
+    } else if (ci == END) {
+	if (s->var != NULL && !strcmp(s->cmd->param, "restrict")) {
+	    maybe_save_var(s->cmd, &s->var, s->prn);
+	}
     } else if (ci == DATAMOD) {
 	mark_dataset_as_modified();
 	populate_varlist();
@@ -7620,18 +7616,7 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 	} else {
 	    register_graph(NULL);
 	}
-    } else if (MODEL_COMMAND(ci)) {
-	/* FIXME is this always right? */
-	MODEL *pmod = s->models[0];
-
-	if (pmod != NULL) {
-	    maybe_save_model(s->cmd, pmod, s->prn);
-	}
-    }
-
-    /* ensure we zero out the "savename" in case it
-       hasn't been used */
-    gretl_cmd_zero_savename();
+    } 
 
     if (err) {
 	gui_errmsg(err);
@@ -7779,7 +7764,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = gretl_function_append_line(line);
 	if (err) {
 	    errmsg(err, prn);
-	} else if (s->flags == CONSOLE_EXEC) {
+	} else if (s->flags & CONSOLE_EXEC) {
 	    add_command_to_stack(line);
 	}
 	return err;
@@ -7825,7 +7810,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	return 1;
     }
 
-    if (cmd->ci == LOOP && s->flags == CONSOLE_EXEC) {
+    if (cmd->ci == LOOP && (s->flags & CONSOLE_EXEC)) {
 	pputs(prn, _("Enter commands for loop.  "
 		     "Type 'endloop' to get out\n"));
     }
@@ -7837,7 +7822,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    errmsg(err, prn);
 	    return 1;
 	}
-	if (s->flags == CONSOLE_EXEC) {
+	if (s->flags & CONSOLE_EXEC) {
 	    cmd_init(line, CONSOLE_EXEC);
 	}
 	return 0;
@@ -7923,7 +7908,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case HELP:
-	if (s->flags == CONSOLE_EXEC && try_gui_help(cmd)) {
+	if ((s->flags & CONSOLE_EXEC) && try_gui_help(cmd)) {
 	    err = gui_console_help(cmd->param);
 	    if (err) {
 		err = 0;
@@ -7989,25 +7974,24 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    err = 1;
 	} else {
-	    int orig_code = s->flags;
-	    int script_code = s->flags;
-	    int save_batch;
+	    int save_batch = gretl_in_batch_mode();
+	    int orig_flags = s->flags;
 
-	    if (s->flags == CONSOLE_EXEC) {
-		script_code = SCRIPT_EXEC;
-	    }
+	    s->flags = SCRIPT_EXEC;
+
 	    if (cmd->ci == INCLUDE) {
 		if (libset_get_bool(VERBOSE_INCLUDE)) {
 		    pprintf(prn, _("%s opened OK\n"), runfile);
 		}
-		script_code |= INCLUDE_EXEC;
+		s->flags |= INCLUDE_EXEC;
 	    }
-	    save_batch = gretl_in_batch_mode();
-	    err = execute_script(runfile, NULL, prn, script_code);
+
+	    err = execute_script(runfile, NULL, prn, s->flags);
 	    gretl_set_batch_mode(save_batch);
-	    if (!err && orig_code == CONSOLE_EXEC) {
+	    if (!err && (orig_flags & CONSOLE_EXEC)) {
 		console_run = 1;
 	    }
+	    s->flags = orig_flags;
 	}
 	break;
 
@@ -8040,8 +8024,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
     } /* end of command switch */
 
-    /* log the specific command? */
-    if (s->flags == CONSOLE_EXEC && !err) {
+    if ((s->flags & CONSOLE_EXEC) && !err) {
+	/* log the specific command */
 	console_cmd_init(line, &console_run);
     }
 

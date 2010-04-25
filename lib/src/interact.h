@@ -56,8 +56,7 @@ typedef enum {
     INCLUDE_EXEC      = 1 << 2,
     FUNCTION_EXEC     = 1 << 3,
     DEBUG_EXEC        = 1 << 4,
-    CALLBACK_EXEC     = 1 << 5,
-    CALLBACK_ATEND    = 1 << 6
+    CALLBACK_EXEC     = 1 << 5
 } ExecFlags;
 
 #define HIDDEN_COMMAND(c) (c == FUNCERR || c == FUNCRET)
@@ -76,9 +75,7 @@ void gretl_cmd_set_context (CMD *cmd, int ci);
 
 void gretl_cmd_destroy_context (CMD *cmd);
 
-char *gretl_cmd_get_savename (char *sname);
-
-void gretl_cmd_zero_savename (void);
+const char *gretl_cmd_get_savename (CMD *cmd);
 
 gretlopt gretl_cmd_get_opt (const CMD *cmd);
 

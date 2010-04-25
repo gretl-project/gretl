@@ -83,21 +83,20 @@ finalize_model_save (void *ptr, GretlObjType type, const char *name,
 
 /* public interface below */
 
-int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
+int maybe_save_model (CMD *cmd, MODEL *pmod, PRN *prn)
 {
-    char name[MAXSAVENAME];
-    MODEL *cpy = NULL;
+    const char *name = gretl_cmd_get_savename(cmd);
     int err = 0;
 
-    gretl_cmd_get_savename(name);
+    if (*name != '\0') {
+	MODEL *cpy = gretl_model_copy(pmod);
 
-    if (*name != 0) {
-	cpy = gretl_model_copy(pmod);
 	if (cpy == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    err = finalize_model_save(cpy, GRETL_OBJ_EQN, name, prn);
 	}
+
 	if (!err) {
 	    set_as_last_model(cpy, GRETL_OBJ_EQN);
 	} else {
@@ -110,15 +109,15 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
     return err;
 }
 
-int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
+int maybe_save_var (CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 {
-    char name[MAXSAVENAME];
+    const char *name;
     GRETL_VAR *var;
     int err = 0;
 
     set_as_last_model(*pvar, GRETL_OBJ_VAR);
 
-    gretl_cmd_get_savename(name);
+    name = gretl_cmd_get_savename(cmd);
 
     if (*name == '\0') {
 	*pvar = NULL;
@@ -131,56 +130,60 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     return err;
 }
 
-int maybe_save_system (const CMD *cmd, equation_system *sys, PRN *prn)
+/* note: not used at this point */
+
+int maybe_save_system (CMD *cmd, equation_system **psys, PRN *prn)
 {
-    char name[MAXSAVENAME];
+    const char *name = gretl_cmd_get_savename(cmd);
+    equation_system *sys;
     int err = 0;
 
-    gretl_cmd_get_savename(name);
-
-    if (*name != '\0') {
+    if (*name == '\0') {
+	set_as_last_model(*psys, GRETL_OBJ_SYS);
+	*psys = NULL;
+    } else {
+	/* not actually estimated yet */
+	sys = *psys;
+	*psys = NULL;
 	err = finalize_model_save(sys, GRETL_OBJ_SYS, name, prn);
     }
 
     return err;
 }
 
-int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type, 
+int maybe_save_graph (CMD *cmd, const char *fname, GretlObjType type, 
 		      PRN *prn)
 {
-    char gname[MAXSAVENAME];
-    int ret, err = 0;
+    const char *name = gretl_cmd_get_savename(cmd);
+    int err = 0;
 
-    gretl_cmd_get_savename(gname);
-    if (*gname == 0) {
-	return 0;
-    }
+    if (*name != '\0') {
+	int add = cli_add_graph_to_session(fname, name, type);
 
-    ret = cli_add_graph_to_session(fname, gname, type);
-
-    if (ret == ADD_OBJECT_FAIL) {
-	err = 1;
-    } else if (ret == ADD_OBJECT_REPLACE) {
-	pprintf(prn, _("%s replaced\n"), gname);
-    } else {
-	pprintf(prn, _("%s saved\n"), gname);
+	if (add == ADD_OBJECT_FAIL) {
+	    err = 1;
+	} else if (add == ADD_OBJECT_REPLACE) {
+	    pprintf(prn, _("%s replaced\n"), name);
+	} else {
+	    pprintf(prn, _("%s saved\n"), name);
+	}
     }
 
     return err;
 }
 
-int save_text_buffer (PRN *prn, const char *savename)
+int save_text_buffer (PRN *prn, const char *name)
 {
     int add, err = 0;
 
-    add = real_add_text_to_session(prn, savename);
+    add = real_add_text_to_session(prn, name);
 
     if (add == ADD_OBJECT_FAIL) {
 	err = 1;
     } else if (add == ADD_OBJECT_REPLACE) {
-	pprintf(prn, _("%s replaced\n"), savename);
+	pprintf(prn, _("%s replaced\n"), name);
     } else {
-	pprintf(prn, _("%s saved\n"), savename);
+	pprintf(prn, _("%s saved\n"), name);
     }
 
     return err;

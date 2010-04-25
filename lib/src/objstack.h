@@ -103,9 +103,9 @@ void gretl_object_remove_from_stack (void *ptr, GretlObjType type);
 
 void remove_model_from_stack_on_exit (MODEL *pmod);
 
-int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn);
+int maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn);
 
-int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
+int maybe_stack_var (GRETL_VAR *var, CMD *cmd);
 
 void gretl_object_ref (void *ptr, GretlObjType type);
 

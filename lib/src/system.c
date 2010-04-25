@@ -562,20 +562,11 @@ char *get_system_name_from_line (const char *s, int context)
     char *name = NULL;
     int pchars = 0;
 
-    if (context < 0 || context > 3) {
+    if (context < 0 || context > 2) {
 	return NULL;
     }
 
     p = strstr(s, tests[context]);
-
-    if (context == SYSNAME_NEW && p == NULL) {
-	char savename[MAXSAVENAME];
-
-	gretl_cmd_get_savename(savename);
-	if (*savename != '\0') {
-	    return gretl_strdup(savename);
-	} 
-    } 
 
     if (p == NULL) {
 	return NULL;
@@ -650,21 +641,32 @@ static int get_estimation_method_from_line (const char *s)
 /**
  * equation_system_start:
  * @line: command line.
- * @opt: may include %OPT_I for iterative estimation, if the
- * estimation method supports this.
+ * @name: On input, name to be given to system, if any (otherwise
+ * may be %NULL or an empty string). On output, see below.
+ * on output, if non-%NULL, name given via "name=foo" mechanism in
+ * @line, if present.
+ * @opt: may include %OPT_I for iterative estimation (will be
+ * ignored if the the estimation method does not supports it).
  * 
- * Start compiling an equation system: @line must specify a "method" 
- * (estimation method) and/or a name for the system.  If a method is
- * given, the system will be estimated as soon as its definition is 
- * complete.  If a name is given, the system definition is saved on a 
- * stack, and it can subsequently be estimated via various methods
- * If both a name and an estimation method are given, the system 
+ * Start compiling an equation system. Either @line must contain
+ * an estimation method or the system must be given a name.
+ * If a method is given, the system will be estimated as soon as its 
+ * definition is complete. If a name is given, the system definition 
+ * is saved on a stack and it can subsequently be estimated via various 
+ * methods. If both a name and an estimation method are given, the system
  * is both estimated and saved.
+ *
+ * The name may be given via the @name argument, or (for backward
+ * compatibility) it may be given via "name=foo" in @line. In the
+ * latter case, if @name is non-%NULL, the name extracted from
+ * @line is written into that variable on output. The variable
+ * must be able to hold up to #MAXSAVENAME bytes.
  * 
  * Returns: pointer to a new equation system, or %NULL on error.
  */
 
 equation_system *equation_system_start (const char *line, 
+					char *name, 
 					gretlopt opt,
 					int *err)
 {
@@ -685,7 +687,13 @@ equation_system *equation_system_start (const char *line,
 	return NULL;
     }
 
-    sysname = get_system_name_from_line(line, SYSNAME_NEW);
+    if (name != NULL && *name != '\0') {
+	/* "foo <- system" */
+	sysname = gretl_strdup(name);
+    } else {
+	/* "system name=foo" (maybe) */
+	sysname = get_system_name_from_line(line, SYSNAME_NEW);
+    }
 
     if (method < 0 && sysname == NULL) {
 	/* neither a method nor a name was specified */
@@ -711,6 +719,9 @@ equation_system *equation_system_start (const char *line,
 #endif
 
     if (sysname != NULL) {
+	if (name != NULL && *name == '\0') {
+	    strcpy(name, sysname);
+	}
 	free(sysname);
     }
 
