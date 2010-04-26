@@ -699,22 +699,22 @@ void save_output_as_text_icon (windata_t *vwin)
     }
 }
 
-static int real_add_model_to_session (void *ptr, const char *name,
-				      GretlObjType type)
+static int add_model_to_session (void *ptr, const char *name,
+				 GretlObjType type)
 {
     SESSION_MODEL *mod;
+    int err = 0;
 
 #if SESSION_DEBUG
-    fprintf(stderr, "real_add_model_to_session: doing session_model_new\n"
+    fprintf(stderr, "add_model_to_session: doing session_model_new\n"
 	    " with ptr = %p\n", ptr);
 #endif
 
     mod = session_model_new(ptr, name, type);
-    if (mod == NULL || session_append_model(mod)) {
-	return 1;
-    } 
 
-    if (iconlist != NULL) {
+    if (mod == NULL || session_append_model(mod)) {
+	err = E_ALLOC;
+    } else if (iconlist != NULL) {
 	session_add_icon(mod, type, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
 	view_session(NULL);
@@ -941,7 +941,7 @@ int add_model_to_session_callback (void *ptr, GretlObjType type)
 	targ->type = type;
 	mark_session_changed();
     } else {
-	ret = real_add_model_to_session(ptr, name, type);
+	ret = add_model_to_session(ptr, name, type);
     }
 
     return ret;
@@ -1004,7 +1004,7 @@ void model_add_as_icon (GtkAction *action, gpointer p)
 	return;
     }    
 
-    err = real_add_model_to_session(ptr, name, type);
+    err = add_model_to_session(ptr, name, type);
 
     if (!err) {
 	mark_session_changed();
