@@ -3993,7 +3993,7 @@ static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
     return err;
 }
 
-static void gui_save_var_vecm (ExecState *s)
+static void save_var_vecm (ExecState *s)
 {
     maybe_stack_var(s->var, s->cmd);
 
@@ -4005,6 +4005,11 @@ static void gui_save_var_vecm (ExecState *s)
 
 static void gui_save_system (ExecState *s)
 {
+    /* note: with GRETL_OBJ_SYS, the business of calling
+       "maybe_stack" is handled within system.c, so here
+       all we have to do is invoke the GUI callback, if
+       appropriate
+    */
     if (s->callback != NULL && *s->cmd->savename != '\0' &&
 	gretl_in_gui_mode()) {
 	s->callback(s, s->sys, GRETL_OBJ_SYS);
@@ -4150,7 +4155,7 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 
 				       pdinfo, cmd->opt, prn, &err);
 	if (!err && s->var != NULL) {
-	    gui_save_var_vecm(s);
+	    save_var_vecm(s);
 	}
     } else {
 	err = gretl_restriction_finalize(s->rset, (const double **) *pZ, 
@@ -4996,7 +5001,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	}
 	if (!err && s->var != NULL) {
-	    gui_save_var_vecm(s);
+	    save_var_vecm(s);
 	}
 	break;
 
