@@ -4709,11 +4709,7 @@ static void func_exec_callback (ExecState *s, void *ptr,
 {
     int ci = s->cmd->ci;
 
-    if (ci == VAR || ci == VECM) {
-	maybe_stack_var(s->var, s->cmd);
-    } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
-	maybe_stack_var(s->var, s->cmd);
-    } else if (ci == GNUPLOT) {
+    if (ci == GNUPLOT) {
 	/* we permit "reach-back" into the GUI here */
 	EXEC_CALLBACK gc = get_gui_callback();
 

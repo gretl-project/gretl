@@ -247,8 +247,6 @@ static gboolean session_view_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static int real_delete_model_from_session (SESSION_MODEL *model);
-static int session_model_replace_model (SESSION_MODEL *targ,
-					void *ptr, GretlObjType type);
 static void make_short_label_string (char *targ, const char *src);
 static gui_obj *get_gui_obj_by_data (void *finddata);
 static void add_user_matrix_callback (void);
@@ -916,45 +914,10 @@ static void delete_icon_for_data (void *data)
     }
 }
 
-int maybe_add_model_to_session (void *ptr, GretlObjType type,
-				const char *name)
-{
-    SESSION_MODEL *oldmod = NULL;
-    int ret = 0;
-
-    if (get_session_model_by_data(ptr)) {
-	/* model already present */
-	return 0;
-    }
-
-    if (name == NULL) {
-	/* ensure we have a model name */
-	name = gretl_object_get_name(ptr, type);
-    }    
-
-    /* check to see if there's already a (different) model with the
-       same name: if so, delete or replace it
-    */
-    if (*name != '\0') {
-	oldmod = get_session_model_by_name(name); 
-    }
-
-    if (oldmod != NULL) {
-	if (iconlist != NULL) {
-	    ret = session_model_replace_model(oldmod, ptr, type);
-	} else {
-	    real_delete_model_from_session(oldmod);
-	    ret = real_add_model_to_session(ptr, name, type);
-	}
-    } else {
-	ret = real_add_model_to_session(ptr, name, type);
-    }
-
-    return ret;
-}
-
-/* callback (indirect) from libgretl for a model created via 
-   script command
+/* Callback (indirect) from libgretl for a model created via 
+   script command. When this function is called, the model
+   in question has already been stacked; it is just a matter
+   of syncing the GUI session with the model stack state.
 */
 
 int add_model_to_session_callback (void *ptr, GretlObjType type)
@@ -963,12 +926,14 @@ int add_model_to_session_callback (void *ptr, GretlObjType type)
     char *name = gretl_object_get_name(ptr, type);
     int ret = 0;
 
+    /* are we replacing a session model's content? */
     targ = get_session_model_by_name(name); 
 
     if (targ != NULL) {
 	GtkWidget *w = match_window_by_data(targ->ptr);
 
 	if (w != NULL) {
+	    /* current model window is "orphaned" */
 	    gtk_widget_destroy(w);
 	}
 
@@ -2055,25 +2020,6 @@ static int real_delete_model_from_session (SESSION_MODEL *model)
     }
 
     session.nmodels = nm;
-    mark_session_changed();
-
-    return 0;
-}
-
-static int session_model_replace_model (SESSION_MODEL *targ,
-					void *ptr, GretlObjType type)
-{
-    GtkWidget *w = match_window_by_data(targ->ptr);
-
-    if (w != NULL) {
-	gtk_widget_destroy(w);
-    }
-
-    gretl_object_remove_from_stack(targ->ptr, targ->type);
-    gretl_stack_object_as(ptr, type, targ->name);
-    targ->ptr = ptr;
-    targ->type = type;
-
     mark_session_changed();
 
     return 0;

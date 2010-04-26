@@ -628,11 +628,7 @@ static void cli_exec_callback (ExecState *s, void *ptr,
 {
     int ci = s->cmd->ci;
 
-    if (ci == VAR || ci == VECM) {
-	maybe_stack_var(s->var, s->cmd);
-    } else if (ci == END && !strcmp(s->cmd->param, "restrict")) {
-	maybe_stack_var(s->var, s->cmd);
-    } else if (ci == MODELTAB || ci == GRAPHPG) {
+    if (ci == MODELTAB || ci == GRAPHPG) {
 	pprintf(s->prn, _("%s: command not available\n"), s->cmd->word);
     } 
 
@@ -987,17 +983,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     default:
 	err = gretl_cmd_exec(s, pZ, pdinfo);
 	break;
-    }
-
-#if 0
-    if (!err && s->pmod != NULL) { 
-	maybe_stack_model(s->pmod, cmd, prn, &err);
-    }
-#endif
-
-    if (system_save_flag_is_set(s->sys)) {
-	system_unset_save_flag(s->sys);
-	s->sys = NULL;
     }
 
     if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {

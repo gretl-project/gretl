@@ -3961,14 +3961,19 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 
 /* Print a model that was just estimated, provided it's not carrying
    an error code, and provided we're not in looping mode, in which
-   case the printing (or not) of models requires special handling.  In
-   addition (if not looping) register the fact that we successfully
+   case the printing (or not) of models requires special handling.  
+
+   In addition (if not looping) register the fact that we successfully
    estimated a model.  Note that in this context, "looping" means that
    a loop is in progress at the current level of function execution.
+
+   Finally, if we're called by the GUI program and the model in
+   question has been assigned a name, activate the callback that
+   adds the model to the GUI session.
 */
 
-static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
-			      PRN *prn, ExecState *s)
+static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
+			     PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
     
@@ -3977,24 +3982,33 @@ static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 	if (!gretl_looping_currently()) {
 	    printmodel(pmod, pdinfo, s->cmd->opt, prn);
 	    attach_subsample_to_model(pmod, pdinfo);
-#if 1 /* new, needs testing */
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
-	    if (!err && *s->cmd->savename != '\0' && 
+	    if (!err && s->callback != NULL && *s->cmd->savename != '\0' && 
 		gretl_in_gui_mode()) {
 		s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	    }
-#else
-	    s->pmod = pmod;
-#endif
 	}
-    } else if (cmd_catch(s->cmd)) {
-	errmsg(err, prn);
-	set_gretl_errno(err);
-	s->cmd->flags ^= CMD_CATCH;
-	err = 0;
     } 
 
     return err;
+}
+
+static void gui_save_var_vecm (ExecState *s)
+{
+    maybe_stack_var(s->var, s->cmd);
+
+    if (s->callback != NULL && *s->cmd->savename != '\0' &&
+	gretl_in_gui_mode()) {
+	s->callback(s, s->var, GRETL_OBJ_VAR);
+    }    
+}
+
+static void gui_save_system (ExecState *s)
+{
+    if (s->callback != NULL && *s->cmd->savename != '\0' &&
+	gretl_in_gui_mode()) {
+	s->callback(s, s->sys, GRETL_OBJ_SYS);
+    }    
 }
 
 static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
@@ -4132,11 +4146,11 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     int err = 0;
 
     if ((cmd->opt & OPT_F) || (ropt & OPT_F)) {
-	/* FIXME non-vecm VAR case */
+	/* FIXME non-vecm VAR case? */
 	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 
 				       pdinfo, cmd->opt, prn, &err);
-	if (s->var != NULL) {
-	    schedule_callback(s);
+	if (!err && s->var != NULL) {
+	    gui_save_var_vecm(s);
 	}
     } else {
 	err = gretl_restriction_finalize(s->rset, (const double **) *pZ, 
@@ -4347,10 +4361,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (pZ != NULL) {
 	Z = (const double **) *pZ;
     }
-
-#if 0
-    check_for_named_object_save(s);
-#endif
 
     switch (cmd->ci) {
 
@@ -4695,14 +4705,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case WLS:
 	clear_model(models[0]);
 	*models[0] = lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
-	err = maybe_print_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, prn, s);
 	break;
 	
 #ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
 	*models[0] = mp_ols(cmd->list, Z, pdinfo);
-	err = maybe_print_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, prn, s);
 	break;
 #endif
 
@@ -4719,7 +4729,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
 				    cmd->opt, prn);
 	}
-	err = maybe_print_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, prn, s);
 	break;
 
     case AR1:
@@ -4727,7 +4737,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (!err) {
 	    clear_model(models[0]);
 	    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
-	    err = maybe_print_model(models[0], pdinfo, prn, s);
+	    err = print_save_model(models[0], pdinfo, prn, s);
 	}
 	break;
 
@@ -4788,7 +4798,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 1;
 	    break;
 	}
-	err = maybe_print_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, prn, s);
 	break;
 
     case GMM:
@@ -4950,17 +4960,17 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case END:
 	if (!strcmp(cmd->param, "system")) {
 	    err = equation_system_finalize(s->sys, pZ, pdinfo, cmd->opt, prn);
-	    if (err || s->sys->name == NULL) {
-		s->sys = NULL;
-	    } else {
-		system_set_save_flag(s->sys);
+	    if (!err) {
+		gui_save_system(s);
 	    }
+	    /* clear for next use */
+	    s->sys = NULL;
 	} else if (!strcmp(cmd->param, "mle") || 
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(models[0]);
 	    *models[0] = nl_model(pZ, pdinfo, cmd->opt, prn);
-	    err = maybe_print_model(models[0], pdinfo, prn, s);
+	    err = print_save_model(models[0], pdinfo, prn, s);
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
 	} else if (!strcmp(cmd->param, "foreign")) {
@@ -4985,8 +4995,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				    cmd->opt, prn, &err);
 	    }
 	}
-	if (s->var != NULL) {
-	    schedule_callback(s);
+	if (!err && s->var != NULL) {
+	    gui_save_var_vecm(s);
 	}
 	break;
 
@@ -5157,18 +5167,6 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     } else {
 	/* note: error messages may be printed to s->prn */
 	err = gretl_cmd_exec(s, pZ, pdinfo);
-    }
-
-    /* FIXME: problem with "set_as_last_model" below (?) */
-
-    if (!err && s->pmod != NULL) {
-	attach_subsample_to_model(s->pmod, pdinfo);
-	set_as_last_model(s->pmod, GRETL_OBJ_EQN);
-    }
-
-    if (system_save_flag_is_set(s->sys)) {
-	system_unset_save_flag(s->sys);
-	s->sys = NULL;
     }
 
     return err;

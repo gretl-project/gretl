@@ -2639,8 +2639,8 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
     return genr;
 }
 
-static int loop_maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
-				   PRN *prn, ExecState *s)
+static int loop_print_save_model (MODEL *pmod, DATAINFO *pdinfo,
+				  PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
     
@@ -2650,20 +2650,11 @@ static int loop_maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 	    printmodel(pmod, pdinfo, s->cmd->opt, prn);
 	}
 	attach_subsample_to_model(pmod, pdinfo);
-#if 1 /* new, needs testing */
 	s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
-	if (!err && *s->cmd->savename != '\0' &&
+	if (!err && s->callback != NULL && *s->cmd->savename != '\0' &&
 	    gretl_in_gui_mode()) {
 	    s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	}
-#else
-	s->pmod = pmod;
-#endif
-    } else if (cmd_catch(s->cmd)) {
-	errmsg(err, prn);
-	set_gretl_errno(err);
-	s->cmd->flags ^= CMD_CATCH;
-	err = 0;
     } 
 
     return err;
@@ -2860,7 +2851,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			set_as_last_model(pmod, GRETL_OBJ_EQN);
 			model_count_minus();
 		    } else {
-			loop_maybe_print_model(s->models[0], pdinfo, prn, s);
+			loop_print_save_model(s->models[0], pdinfo, prn, s);
 		    }
 		}
 	    } else if (cmd->ci == PRINT && *cmd->param == '\0' &&
@@ -2897,14 +2888,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		err = gretl_cmd_exec(s, pZ, pdinfo);
 		if (!err && !check_gretl_errno() && block_model(cmd)) {
 		    /* NLS, etc. */
-		    loop_maybe_print_model(s->models[0], pdinfo, prn, s);
+		    loop_print_save_model(s->models[0], pdinfo, prn, s);
 		}
-
-		if (system_save_flag_is_set(s->sys)) {
-		    system_unset_save_flag(s->sys);
-		    s->sys = NULL;
-		}		
-
 	    }
 	} /* end execution of commands within loop */
 

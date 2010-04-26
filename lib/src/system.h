@@ -32,7 +32,7 @@ typedef enum {
 } GretlSystemMethods;
 
 enum {
-    /* allow for obsoleted flags */
+    /* leave as is: allow for obsoleted flags in saved sessions */
     SYSTEM_DFCORR      = 1 << 2,
     SYSTEM_VCV_GEOMEAN = 1 << 3,
     SYSTEM_RESTRICT    = 1 << 4,
@@ -199,12 +199,6 @@ int highest_numbered_var_in_system (const equation_system *sys,
 int equation_system_serialize (equation_system *sys, 
 			       SavedObjectFlags flags,
 			       FILE *fp);
-
-void system_set_save_flag (equation_system *sys);
-
-void system_unset_save_flag (equation_system *sys);
-
-int system_save_flag_is_set (equation_system *sys);
 
 int gretl_system_print (equation_system *sys, 
 			const double **Z, const DATAINFO *pdinfo, 

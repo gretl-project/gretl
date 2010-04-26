@@ -7589,16 +7589,14 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 
     if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type);
+    } else if (ptr != NULL && type == GRETL_OBJ_VAR) {
+	add_model_to_session_callback(ptr, type);
+    } else if (ptr != NULL && type == GRETL_OBJ_SYS) {
+	add_model_to_session_callback(ptr, type);
     } else if (ci == FREQ && (s->flags & CONSOLE_EXEC)) {
 	register_graph(NULL);
     } else if (ci == SETOBS || ci == SMPL) {
 	set_sample_label(datainfo);
-    } else if (ci == VAR || ci == VECM) {
-	maybe_save_var(s->cmd, &s->var, s->prn);
-    } else if (ci == END) {
-	if (s->var != NULL && !strcmp(s->cmd->param, "restrict")) {
-	    maybe_save_var(s->cmd, &s->var, s->prn);
-	}
     } else if (ci == DATAMOD) {
 	mark_dataset_as_modified();
 	populate_varlist();
@@ -8036,20 +8034,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    gretl_print_unset_save_position(prn);
 	}
-    }
-
-#if 0
-    if (!err && s->pmod != NULL) {
-	err = maybe_save_model(cmd, s->pmod, prn);
-    }
-#endif
-
-    if (system_save_flag_is_set(s->sys)) {
-	if (!err) {
-	    maybe_add_model_to_session(s->sys, GRETL_OBJ_SYS, NULL);
-	}
-	system_unset_save_flag(s->sys);
-	s->sys = NULL;
     }
 
     return err;

@@ -1108,7 +1108,7 @@ equation_system_estimate (equation_system *sys,
 	close_plugin(handle);
     }
 
-    if (!err && sys->neqns >= 2) {
+    if (!err && sys->neqns >= 1) {
 	set_as_last_model(sys, GRETL_OBJ_SYS);
     } 
 
@@ -2575,21 +2575,6 @@ int equation_system_serialize (equation_system *sys,
     fputs("</gretl-equation-system>\n", fp);
 
     return err;
-}
-
-void system_set_save_flag (equation_system *sys)
-{
-    sys->flags |= SYSTEM_SAVEIT;
-}
-
-void system_unset_save_flag (equation_system *sys)
-{
-    sys->flags &= ~SYSTEM_SAVEIT;
-}
-
-int system_save_flag_is_set (equation_system *sys)
-{
-    return (sys != NULL && (sys->flags & SYSTEM_SAVEIT));
 }
 
 static int sur_ols_diag (equation_system *sys)

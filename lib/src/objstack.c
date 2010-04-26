@@ -851,7 +851,7 @@ int maybe_stack_var (GRETL_VAR *var, CMD *cmd)
     return err;
 }
 
-/* Called in gretlcli.c, after sucessful estimation of a
+/* Called from interact.c, after sucessful estimation of a
    (single-equation) model.  We automatically put the model in place
    as the "last model" for reference purposes (e.g. in genr).  In
    addition, if the model has been assigned a "savename" (via
