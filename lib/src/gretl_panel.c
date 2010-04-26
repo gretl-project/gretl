@@ -2459,7 +2459,7 @@ breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
 	}
     }
 
-    pan->BP = (n * n /(2.0 * (M - n))) * pow((A / pan->pooled->ess) - 1.0, 2);
+    pan->BP = ((double) n * n /(2.0 * (M - n))) * pow((A / pan->pooled->ess) - 1.0, 2);
 
     if (pan->opt & OPT_V) {
 	pprintf(prn, _("\nBreusch-Pagan test statistic:\n"
