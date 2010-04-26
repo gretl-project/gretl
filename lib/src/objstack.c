@@ -170,6 +170,8 @@ static void gretl_object_destroy (void *ptr, GretlObjType type)
     }
 }
 
+#if ODEBUG
+
 static int gretl_object_get_refcount (void *ptr, GretlObjType type)
 {
     int rc = -999;
@@ -196,7 +198,9 @@ static int gretl_object_get_refcount (void *ptr, GretlObjType type)
     }
 
     return rc;
-}    
+} 
+
+#endif   
 
 /* The stuff below: Note that we can't "protect" a model (against
    deletion) simply by setting its refcount to some special value,
@@ -298,7 +302,7 @@ static int model_is_protected (MODEL *pmod)
 
 void gretl_object_unref (void *ptr, GretlObjType type)
 {
-    int rc = 999;
+    int *rc = NULL;
 
     if (ptr == NULL) {
 	/* no-op */
@@ -309,11 +313,6 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 	type = get_stacked_type_by_data(ptr);
     } 
 
-#if ODEBUG
-    fprintf(stderr, "gretl_object_unref: %p (incoming count = %d)\n", 
-	    ptr, gretl_object_get_refcount(ptr, type));
-#endif
-
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) ptr;
 
@@ -321,27 +320,36 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 	    if (model_is_protected(pmod)) {
 		return; /* note */
 	    }
-	    pmod->refcount -= 1;
-	    rc = pmod->refcount;
+	    rc = &pmod->refcount;
 	}
     } else if (type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) ptr;
 
 	if (var != NULL) {
-	    var->refcount -= 1;
-	    rc = var->refcount;
+	    rc = &var->refcount;
 	}
     } else if (type == GRETL_OBJ_SYS) {
 	equation_system *sys = (equation_system *) ptr;
 
 	if (sys != NULL) {
-	    sys->refcount -= 1;
-	    rc = sys->refcount;
+	    rc = &sys->refcount;
 	}
+    } else {
+	fprintf(stderr, "gretl_object_unref: %p: bad object type\n",
+		ptr);
+	return;
     }
 
-    if (rc <= 0) {
-	gretl_object_destroy(ptr, type);
+#if ODEBUG
+    fprintf(stderr, "gretl_object_unref: %p (incoming count = %d)\n", 
+	    ptr, *rc);
+#endif
+
+    if (rc != NULL) {
+	*rc -= 1;
+	if (*rc <= 0) {
+	    gretl_object_destroy(ptr, type);
+	}
     }
 }
 
@@ -856,34 +864,38 @@ int maybe_stack_var (GRETL_VAR *var, CMD *cmd)
    refcount raised to 2 on account of set_as_last_model.  The refcount of
    the copy (if applicable) should be 1, since the only reference to
    this model pointer is the one on the stack of named objects.
+
+   We return a pointer to the model as stacked, in case any further
+   action has to be taken (e.g. in the GUI).
 */
 
-int maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn)
+MODEL *maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn, int *err)
 {
-    const char *name;
-    int err = 0;
-
-    set_as_last_model(pmod, GRETL_OBJ_EQN);
-
-    name = gretl_cmd_get_savename(cmd);
+    const char *name = gretl_cmd_get_savename(cmd);
+    MODEL *smod = NULL;
 
     if (*name != '\0') {
 	MODEL *cpy = gretl_model_copy(pmod);
 
 	if (cpy == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	} else {
-	    err = real_stack_object(cpy, GRETL_OBJ_EQN, name, NULL);
+	    *err = real_stack_object(cpy, GRETL_OBJ_EQN, name, NULL);
 	}
 
-	if (!err) {
+	if (!*err) {
+	    set_as_last_model(cpy, GRETL_OBJ_EQN);
 	    pprintf(prn, _("%s saved\n"), name);
 	} else {
-	    errmsg(err, prn);
+	    errmsg(*err, prn);
 	}
+	smod = cpy;
+    } else {
+	set_as_last_model(pmod, GRETL_OBJ_EQN);
+	smod = pmod;
     }
 
-    return err;
+    return smod;
 }
 
 #define INVALID_STAT -999.999
@@ -1452,6 +1464,8 @@ int check_variable_deletion_list (int *list, const DATAINFO *pdinfo)
 
 void gretl_saved_objects_cleanup (void)
 {
+    void *lmp = last_model.ptr;
+    int lmt = last_model.type;
     int i;
 
 #if ODEBUG
@@ -1459,15 +1473,13 @@ void gretl_saved_objects_cleanup (void)
 #endif
 
     for (i=0; i<n_obj; i++) {
-	if (ostack[i].ptr == last_model.ptr) {
-	    if (gretl_object_get_refcount(ostack[i].ptr, ostack[i].type) == 1) {
-		/* don't double-free! */
-		last_model.ptr = NULL;
-		
-	    }
+	if (ostack[i].ptr == lmp) {
+	    /* don't double-free! */
+	    lmp = NULL;
 	}
 #if ODEBUG
-	fprintf(stderr, " calling saved_object_free on ostack[%d]\n", i);
+	fprintf(stderr, " calling saved_object_free on ostack[%d] (%p)\n", 
+		i, ostack[i].ptr);
 #endif
 	saved_object_free(&ostack[i]);
     }
@@ -1479,14 +1491,13 @@ void gretl_saved_objects_cleanup (void)
     n_sys = 0;
     n_vars = 0;
 
-    if (last_model.ptr != NULL) {
-	if (last_model.type != GRETL_OBJ_EQN || 
-	    !model_is_protected(last_model.ptr)) {
+    if (lmp != NULL) {
+	if (lmt != GRETL_OBJ_EQN || !model_is_protected(lmp)) {
 #if ODEBUG
 	    fprintf(stderr, "gretl_saved_objects_cleanup:\n"
-		    " calling gretl_object_destroy on last_model\n");
+		    " calling gretl_object_destroy on last_model (%p)\n", lmp);
 #endif
-	    gretl_object_destroy(last_model.ptr, last_model.type);
+	    gretl_object_destroy(lmp, lmt);
 	}
 	last_model.ptr = NULL;
 	last_model.type = 0;

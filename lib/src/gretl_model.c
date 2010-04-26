@@ -4399,6 +4399,35 @@ MODEL *gretl_model_copy (const MODEL *pmod)
 }
 
 /**
+ * gretl_model_copy_steal:
+ * @pmod: pointer to #MODEL to copy from.
+ *
+ * Allocates a new #MODEL pointer which "steals" all the 
+ * allocated data in @pmod, which is then cleared. The 
+ * reference count is set to zero on the copy.
+ *
+ * Returns: the model copy, or %NULL on failure.
+ */
+
+MODEL *gretl_model_copy_steal (MODEL *pmod)
+{
+    MODEL *new = malloc(sizeof *new);
+
+#if MDEBUG
+    fprintf(stderr, "gretl_model_copy_steal: copying %p, allocated at %p\n", 
+	    pmod, new);
+#endif
+
+    if (new != NULL) {
+	*new = *pmod;
+	clear_model(pmod);
+	new->refcount = 0;
+    }
+
+    return new;
+}
+
+/**
  * swap_models:
  * @targ: pointer to target #MODEL.
  * @src: pointer to source #MODEL.

@@ -77,6 +77,8 @@ void model_add_as_icon (GtkAction *action, gpointer p);
 int maybe_add_model_to_session (void *ptr, GretlObjType type,
 				const char *name);
 
+int add_model_to_session_callback (void *ptr, GretlObjType type);
+
 void session_model_callback (void *ptr, int action);
 
 void *get_session_object_by_name (const char *name, GretlObjType *type);

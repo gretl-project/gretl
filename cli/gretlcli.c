@@ -623,8 +623,8 @@ static void printline (const char *s)
     }
 }
 
-static void cli_exec_callback (ExecState *s, double ***pZ,
-			       DATAINFO *pdinfo)
+static void cli_exec_callback (ExecState *s, void *ptr,
+			       GretlObjType type)
 {
     int ci = s->cmd->ci;
 
@@ -759,8 +759,11 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
 	k = saved_object_action(line, pZ, pdinfo, models, prn);
-	if (k == 1) return 0;   /* action was OK, or ignored */
-	if (k == -1) return 1;  /* action was faulty */
+	if (k == 1) {
+	    return 0; /* action was OK, or ignored */
+	} else if (k == -1) {
+	    return 1; /* action was faulty */
+	}
     }
 
     /* tell libgretl if we're in batch mode */
@@ -986,10 +989,11 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
     }
 
+#if 0
     if (!err && s->pmod != NULL) { 
-	attach_subsample_to_model(s->pmod, pdinfo);
-	err = maybe_stack_model(s->pmod, cmd, prn);
+	maybe_stack_model(s->pmod, cmd, prn, &err);
     }
+#endif
 
     if (system_save_flag_is_set(s->sys)) {
 	system_unset_save_flag(s->sys);

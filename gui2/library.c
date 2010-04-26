@@ -7581,16 +7581,18 @@ static int graph_saved_to_specified_file (void)
 
 #define GRAPHING_CI(c) (c==GNUPLOT || c==SCATTERS || c==BXPLOT)
 
-static void gui_exec_callback (ExecState *s, double ***pZ,
-			       DATAINFO *pdinfo)
+static void gui_exec_callback (ExecState *s, void *ptr,
+			       GretlObjType type)
 {
     int ci = s->cmd->ci;
     int err = 0;
 
-    if (ci == FREQ && (s->flags & CONSOLE_EXEC)) {
+    if (ptr != NULL && type == GRETL_OBJ_EQN) {
+	add_model_to_session_callback(ptr, type);
+    } else if (ci == FREQ && (s->flags & CONSOLE_EXEC)) {
 	register_graph(NULL);
     } else if (ci == SETOBS || ci == SMPL) {
-	set_sample_label(pdinfo);
+	set_sample_label(datainfo);
     } else if (ci == VAR || ci == VECM) {
 	maybe_save_var(s->cmd, &s->var, s->prn);
     } else if (ci == END) {
@@ -7608,11 +7610,9 @@ static void gui_exec_callback (ExecState *s, double ***pZ,
 	if (graph_saved_to_specified_file()) {
 	    ; /* no-op: handled */
 	} else if (*s->cmd->savename != '\0') {
-	    GretlObjType otype = (ci == BXPLOT)?
-		GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
-
+	    type = (ci == BXPLOT)? GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
 	    maybe_save_graph(s->cmd, gretl_plotfile(),
-			     otype, s->prn);
+			     type, s->prn);
 	} else {
 	    register_graph(NULL);
 	}
@@ -8038,10 +8038,11 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
+#if 0
     if (!err && s->pmod != NULL) {
-	attach_subsample_to_model(s->pmod, pdinfo);
 	err = maybe_save_model(cmd, s->pmod, prn);
     }
+#endif
 
     if (system_save_flag_is_set(s->sys)) {
 	if (!err) {

@@ -4704,8 +4704,8 @@ static void set_funcerr_message (ufunc *u, const char *s)
     strncat(funcerr_msg, s, 255 - n);
 }
 
-static void func_exec_callback (ExecState *s, double ***pZ,
-				DATAINFO *pdinfo)
+static void func_exec_callback (ExecState *s, void *ptr,
+				GretlObjType type)
 {
     int ci = s->cmd->ci;
 
@@ -4718,7 +4718,7 @@ static void func_exec_callback (ExecState *s, double ***pZ,
 	EXEC_CALLBACK gc = get_gui_callback();
 
 	if (gc != NULL) {
-	    gc(s, pZ, pdinfo);
+	    gc(s, NULL, 0);
 	}
     }
 }

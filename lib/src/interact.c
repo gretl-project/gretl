@@ -2250,7 +2250,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     }  
 
-    if (!cmd->context) {
+    if (!cmd->context && gretl_function_depth() == 0) {
 	/* extract "savename" for storing an object? */
 	maybe_extract_savename(line, cmd);
     } 
@@ -3976,7 +3976,16 @@ static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
 	set_gretl_errno(0);
 	if (!gretl_looping_currently()) {
 	    printmodel(pmod, pdinfo, s->cmd->opt, prn);
+	    attach_subsample_to_model(pmod, pdinfo);
+#if 1 /* new, needs testing */
+	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
+	    if (!err && *s->cmd->savename != '\0' && 
+		gretl_in_gui_mode()) {
+		s->callback(s, s->pmod, GRETL_OBJ_EQN);
+	    }
+#else
 	    s->pmod = pmod;
+#endif
 	}
     } else if (cmd_catch(s->cmd)) {
 	errmsg(err, prn);
@@ -4105,11 +4114,10 @@ static int callback_scheduled (ExecState *s)
     return (s->flags & CALLBACK_EXEC) ? 1 : 0;
 }
 
-static void callback_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
-			   int err)
+static void callback_exec (ExecState *s, int err)
 {
     if (!err && s->callback != NULL) {
-	s->callback(s, pZ, pdinfo);
+	s->callback(s, NULL, 0);
     }
 
     s->flags &= ~CALLBACK_EXEC;
@@ -5084,7 +5092,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (callback_scheduled(s)) {
-	callback_exec(s, pZ, pdinfo, err);
+	callback_exec(s, err);
     }
 
  bailout:
@@ -5153,7 +5161,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     /* FIXME: problem with "set_as_last_model" below (?) */
 
-    if (s->pmod != NULL) {
+    if (!err && s->pmod != NULL) {
 	attach_subsample_to_model(s->pmod, pdinfo);
 	set_as_last_model(s->pmod, GRETL_OBJ_EQN);
     }

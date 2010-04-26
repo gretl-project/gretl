@@ -106,7 +106,7 @@ struct SESSION_TEXT_ {
 };
 
 struct SESSION_MODEL_ {
-    char *name;
+    char name[MAXSAVENAME];
     void *ptr;
     GretlObjType type;
 };
@@ -320,7 +320,7 @@ static SESSION_MODEL *session_model_new (void *ptr, const char *name,
 	mod->ptr = ptr;
 	mod->type = type;
 	gretl_stack_object_as(ptr, type, name);
-	mod->name = gretl_object_get_name(ptr, type);
+	strcpy(mod->name, gretl_object_get_name(ptr, type));
 	/* note: we don't add a reference here: that's handled by the
 	   mechanism in objstack.c 
 	*/
@@ -946,6 +946,35 @@ int maybe_add_model_to_session (void *ptr, GretlObjType type,
 	    real_delete_model_from_session(oldmod);
 	    ret = real_add_model_to_session(ptr, name, type);
 	}
+    } else {
+	ret = real_add_model_to_session(ptr, name, type);
+    }
+
+    return ret;
+}
+
+/* callback (indirect) from libgretl for a model created via 
+   script command
+*/
+
+int add_model_to_session_callback (void *ptr, GretlObjType type)
+{
+    SESSION_MODEL *targ = NULL;
+    char *name = gretl_object_get_name(ptr, type);
+    int ret = 0;
+
+    targ = get_session_model_by_name(name); 
+
+    if (targ != NULL) {
+	GtkWidget *w = match_window_by_data(targ->ptr);
+
+	if (w != NULL) {
+	    gtk_widget_destroy(w);
+	}
+
+	targ->ptr = ptr;
+	targ->type = type;
+	mark_session_changed();
     } else {
 	ret = real_add_model_to_session(ptr, name, type);
     }
@@ -2035,25 +2064,15 @@ static int session_model_replace_model (SESSION_MODEL *targ,
 					void *ptr, GretlObjType type)
 {
     GtkWidget *w = match_window_by_data(targ->ptr);
-    char *name = g_strdup(targ->name);
 
     if (w != NULL) {
 	gtk_widget_destroy(w);
     }
 
-    /* note: targ->name is just a pointer to the model's
-       name, which is convenient in some contexts but
-       which means we have to be careful here, saving
-       a copy of the original then reattaching to the
-       replacement model
-    */
-
     gretl_object_remove_from_stack(targ->ptr, targ->type);
-    gretl_stack_object_as(ptr, type, name);
+    gretl_stack_object_as(ptr, type, targ->name);
     targ->ptr = ptr;
     targ->type = type;
-    targ->name = gretl_object_get_name(ptr, type);
-    g_free(name);
 
     mark_session_changed();
 
@@ -2262,6 +2281,8 @@ static int rename_session_object (gui_obj *obj, const char *newname)
 	} else {
 	    sm = obj->data;
 	    gretl_object_rename(sm->ptr, sm->type, newname);
+	    *sm->name = '\0';
+	    strncat(sm->name, newname, MAXSAVENAME - 1);
 	    maybe_sync_model_window_name(sm);
 	}
     } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
