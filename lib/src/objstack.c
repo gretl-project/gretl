@@ -56,6 +56,60 @@ static GretlObjType get_stacked_type_by_data (void *ptr)
     return GRETL_OBJ_NULL;
 }
 
+#if ODEBUG
+
+static int object_get_refcount (void *ptr, GretlObjType type)
+{
+    int rc = -999;
+
+    if (type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) ptr;
+
+	if (pmod != NULL) {
+	    rc = pmod->refcount;
+	}
+	rc = pmod->refcount;
+    } else if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) ptr;
+
+	if (var != NULL) {
+	    rc = var->refcount;
+	}
+    } else if (type == GRETL_OBJ_SYS) {
+	equation_system *sys = (equation_system *) ptr;
+
+	if (sys != NULL) {
+	    rc = sys->refcount;
+	}
+    }
+
+    return rc;
+} 
+
+#endif
+
+#if ODEBUG > 1
+
+static void print_ostack (void)
+{
+    fprintf(stderr, "\n*** object stack: n_obj = %d\n", n_obj);
+
+    if (n_obj > 0) {
+	void *p;
+	int i, t;
+
+	for (i=0; i<n_obj; i++) {
+	    p = ostack[i].ptr;
+	    t = ostack[i].type;
+	    fprintf(stderr, " %d: %p (type=%d, refcount=%d)\n", i, p, 
+		    t, object_get_refcount(p, t));
+	}
+	fputc('\n', stderr);
+    }
+}
+
+#endif
+
 /**
  * gretl_object_ref:
  * @ptr: pointer to gretl obejct (e.g. #MODEL).
@@ -169,38 +223,6 @@ static void gretl_object_destroy (void *ptr, GretlObjType type)
 	equation_system_destroy(ptr);
     }
 }
-
-#if ODEBUG
-
-static int gretl_object_get_refcount (void *ptr, GretlObjType type)
-{
-    int rc = -999;
-
-    if (type == GRETL_OBJ_EQN) {
-	MODEL *pmod = (MODEL *) ptr;
-
-	if (pmod != NULL) {
-	    rc = pmod->refcount;
-	}
-	rc = pmod->refcount;
-    } else if (type == GRETL_OBJ_VAR) {
-	GRETL_VAR *var = (GRETL_VAR *) ptr;
-
-	if (var != NULL) {
-	    rc = var->refcount;
-	}
-    } else if (type == GRETL_OBJ_SYS) {
-	equation_system *sys = (equation_system *) ptr;
-
-	if (sys != NULL) {
-	    rc = sys->refcount;
-	}
-    }
-
-    return rc;
-} 
-
-#endif   
 
 /* The stuff below: Note that we can't "protect" a model (against
    deletion) simply by setting its refcount to some special value,
@@ -351,6 +373,10 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 	    gretl_object_destroy(ptr, type);
 	}
     }
+
+#if ODEBUG > 1
+    print_ostack();
+#endif
 }
 
 /**
@@ -388,7 +414,7 @@ void set_as_last_model (void *ptr, GretlObjType type)
 #if ODEBUG
     if (last_model.ptr != NULL) {
 	fprintf(stderr, " refcount on \"last_model\" = %d\n",
-		gretl_object_get_refcount(last_model.ptr, last_model.type));
+		object_get_refcount(last_model.ptr, last_model.type));
     }
 #endif
 }
@@ -758,7 +784,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     int onum, err = 0;
 
 #if ODEBUG
-    fprintf(stderr, " real_stack_object: on entry, p=%p, type=%d, name='%s'\n", 
+    fprintf(stderr, "real_stack_object: on entry, p=%p, type=%d, name='%s'\n", 
 	    (void *) p, type, name);
 #endif
 
@@ -816,7 +842,11 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 #if ODEBUG
     fprintf(stderr, " real_stack_object, on exit: '%s', type=%d, ptr=%p (n_obj=%d)\n",
 	    name, type, (void *) p, n_obj);
-#endif  
+#endif 
+
+#if ODEBUG > 1
+    print_ostack();
+#endif
 
     return 0;
 }
@@ -861,7 +891,7 @@ int maybe_stack_var (GRETL_VAR *var, CMD *cmd)
    estimation command, we do not lose the saved (named) model content.
 
    Reference counting: the model that is passed in should have its
-   refcount raised to 2 on account of set_as_last_model.  The refcount of
+   refcount raised by 1 on account of set_as_last_model.  The refcount of
    the copy (if applicable) should be 1, since the only reference to
    this model pointer is the one on the stack of named objects.
 

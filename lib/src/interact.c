@@ -5448,9 +5448,20 @@ void gretl_exec_state_init (ExecState *s,
     s->in_comment = 0;
     s->funcerr = 0;
 
-    /* save pointer to 'last model', if any */
-    s->prev_model = get_last_model(&s->prev_type);
-    gretl_object_ref(s->prev_model, s->prev_type);
+    if (flags == FUNCTION_EXEC) {
+	/* record pointer to 'last model', if any, and add
+	   a reference to prevent it from getting lost: we
+	   want to able to restore this state on exit from
+	   function execution
+	*/
+	s->prev_model = get_last_model(&s->prev_type);
+	if (s->prev_model != NULL) {
+	    gretl_object_ref(s->prev_model, s->prev_type);
+	}
+    } else {
+	s->prev_model = NULL;
+	s->prev_type = 0;
+    }
 
     s->submask = NULL;
     s->callback = NULL;
@@ -5474,14 +5485,25 @@ EXEC_CALLBACK get_gui_callback (void)
     return gui_callback;
 }
 
+/* called after executing a function */
+
 void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
     destroy_working_models(s->models, 2);
+
+    /* restore whatever was the 'last model' before 
+       function execution (note that this includes
+       the case where there was no 'last model', in
+       which case we restore the null state)
+    */
     set_as_last_model(s->prev_model, s->prev_type);
-    gretl_object_unref(s->prev_model, s->prev_type);
-    s->prev_model = NULL;
+    if (s->prev_model != NULL) {
+	gretl_object_unref(s->prev_model, s->prev_type);
+	s->prev_model = NULL;
+    }
     s->prev_type = 0;
+
     free_subsample_mask(s->submask);
     s->funcerr = 0;
 }
