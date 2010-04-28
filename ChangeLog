@@ -19,7 +19,7 @@ version 1.9.0, in progress
 - ODBC import: enable extraction of multiple data series
   per SQL query
 - ODBC: enable support in the binary packages for OS X
-- Observation labels: permit non-ASII UTF-8 characters
+- Observation labels: permit non-ASCII UTF-8 characters
 - Export of data to R, interactively: add a message
   confirming that the export worked
 - "foreign" code blocks: add support for GNU Octave
@@ -50,6 +50,7 @@ version 1.9.0, in progress
   copy and paste, e.g. in script windows
 - Fix bug in Hausman test after tsls: ensure the sample size 
   is consistent
+- Fix integer overflow bug in Breusch-Pagan poolability test
 - Graphing via gnuplot: require version >= 4.2.0
 
 01/24/2010 version 1.8.7
