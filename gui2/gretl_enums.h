@@ -26,7 +26,6 @@ enum extra_cmds {
     GR_XYZ,
     GR_BOX,
     GR_NBOX,
-    GR_QQ,
     GR_3D,
     COMPACT,
     EXPAND, 

@@ -7392,15 +7392,15 @@
 
     <description>
       <para context="gui">
-	Displays a plot of the empirical quantiles of the selected series
-	against the quantiles of the normal distribution. The series must
-	include at least 20 valid observations in the current sample
-	range. By default the empirical quantiles are plotted against
-	quantiles of the normal distribution having the same mean and
-	variance as the sample data, but two alternatives are available:
-	the data may be standardized (converted to z-scores) before
-	plotting, or the <quote>raw</quote> empirical quantiles may be
-	plotted against the quantiles of the standard normal distribution.
+	With just one series selected, displays a plot of the empirical
+	quantiles of the given series against the quantiles of the normal
+	distribution. The series must include at least 20 valid observations
+	in the current sample range. By default the empirical quantiles are
+	plotted against quantiles of the normal distribution having the same
+	mean and variance as the sample data, but two alternatives are
+	available: the data may be standardized (converted to z-scores) before
+	plotting, or the <quote>raw</quote> empirical quantiles may be plotted
+	against the quantiles of the standard normal distribution.
       </para>
       <para context="cli">
 	Given just one series argument, displays a plot of the empirical
@@ -7415,7 +7415,7 @@
 	<quote>raw</quote> empirical quantiles are plotted against the
 	quantiles of the standard normal distribution. 
       </para>
-      <para context="cli">
+      <para>
 	Given two series arguments, <repl>y</repl> and <repl>x</repl>,
 	displays a plot of the empirical quantiles of <repl>y</repl> against
 	those of <repl>x</repl>. The data values are not standardized.
@@ -7424,6 +7424,7 @@
 
     <gui-access>
       <menu-path>/Variable/Normal Q-Q plot</menu-path>
+      <menu-path>/View/Graph specified vars/Q-Q plot</menu-path>
     </gui-access>
 
   </command>

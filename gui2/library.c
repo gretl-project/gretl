@@ -825,7 +825,7 @@ static int menu_op_wrapper (selector *sr)
 
     if (buf == NULL) {
 	err = 1;
-    } else if (ci == GR_QQ) {
+    } else if (ci == QQPLOT) {
 	do_qq_xyplot(buf, opt);
     } else {
 	do_menu_op(ci, buf, opt);
@@ -843,7 +843,7 @@ static int menu_op_ci (GtkAction *action)
 	if (!strcmp(s, "VarSummary")) {
 	    ci = VAR_SUMMARY;
 	} else if (!strcmp(s, "GR_QQ")) {
-	    ci = GR_QQ;
+	    ci = QQPLOT;
 	}
     }
 
