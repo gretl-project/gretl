@@ -5449,18 +5449,25 @@ void gretl_exec_state_init (ExecState *s,
     s->funcerr = 0;
 
     if (flags == FUNCTION_EXEC) {
-	/* record pointer to 'last model', if any, and add
-	   a reference to prevent it from getting lost: we
-	   want to able to restore this state on exit from
-	   function execution
+	/* On entry to function execution we check if there's
+	   a 'last model' in place. If so, we want to make
+	   this invisible within the function, but set things
+	   up so that we can restore it as last model on
+	   exit from the function -- the idea being that
+	   excuting a function should not change the 'last
+	   model' state at caller level. To achieve this we
+	   need to take out a 'private' reference to the
+	   model, stored in the ExecState, and then remove
+	   it from last model position for the present.
 	*/
 	s->prev_model = get_last_model(&s->prev_type);
 	if (s->prev_model != NULL) {
 	    gretl_object_ref(s->prev_model, s->prev_type);
+	    set_as_last_model(NULL, GRETL_OBJ_NULL);
 	}
     } else {
 	s->prev_model = NULL;
-	s->prev_type = 0;
+	s->prev_type = GRETL_OBJ_NULL;
     }
 
     s->submask = NULL;
@@ -5485,24 +5492,29 @@ EXEC_CALLBACK get_gui_callback (void)
     return gui_callback;
 }
 
-/* called after executing a function */
-
 void gretl_exec_state_clear (ExecState *s)
 {
     gretl_cmd_free(s->cmd);
+
+    if (s->flags & FUNCTION_EXEC) {
+	/* Restore whatever was the 'last model' before 
+	   function execution. Note that this includes
+	   the case where there was no 'last model', in
+	   which case we restore the null state. Drop
+	   the extra refcount for the model we put into
+	   last model position (if any), so we don't end 
+	   up leaking memory.
+	*/
+	set_as_last_model(s->prev_model, s->prev_type);
+	if (s->prev_model != NULL) {
+	    gretl_object_unref(s->prev_model, s->prev_type);
+	}
+    }
+
     destroy_working_models(s->models, 2);
 
-    /* restore whatever was the 'last model' before 
-       function execution (note that this includes
-       the case where there was no 'last model', in
-       which case we restore the null state)
-    */
-    set_as_last_model(s->prev_model, s->prev_type);
-    if (s->prev_model != NULL) {
-	gretl_object_unref(s->prev_model, s->prev_type);
-	s->prev_model = NULL;
-    }
-    s->prev_type = 0;
+    s->prev_model = NULL;
+    s->prev_type = GRETL_OBJ_NULL;
 
     free_subsample_mask(s->submask);
     s->funcerr = 0;

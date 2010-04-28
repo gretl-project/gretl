@@ -1108,7 +1108,7 @@ equation_system_estimate (equation_system *sys,
 	close_plugin(handle);
     }
 
-    if (!err && sys->neqns >= 1) {
+    if (!err && sys->neqns > 1) {
 	set_as_last_model(sys, GRETL_OBJ_SYS);
     } 
 
@@ -1471,8 +1471,10 @@ int equation_system_finalize (equation_system *sys,
 
     err = sys_check_lists(sys, (const double **) *pZ, pdinfo);
 
-    if (!err && sys->name != NULL && *sys->name != '\0') {
-	/* save the system for subsequent estimation */
+    if (!err && !(opt & OPT_S) && sys->name != NULL && *sys->name != '\0') {
+	/* save the system for subsequent estimation: note that we
+	   should not do this if given OPT_S, for single-equation
+	   LIML */
 	err = gretl_stack_object_as(sys, GRETL_OBJ_SYS, sys->name);
     }
 

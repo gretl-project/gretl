@@ -347,8 +347,6 @@ int gretl_model_add_arinfo (MODEL *pmod, int nterms);
 
 MODEL *gretl_model_copy (const MODEL *pmod);
 
-MODEL *gretl_model_copy_steal (MODEL *pmod);
-
 void swap_models (MODEL *targ, MODEL *src);
 
 int command_ok_for_model (int test_ci, gretlopt opt, int mci);
