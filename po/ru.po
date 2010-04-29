@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-04-29 09:07-0400\n"
-"PO-Revision-Date: 2010-04-16 00:10+0300\n"
+"PO-Revision-Date: 2010-04-30 00:20+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:245
 msgid "lagged differences"
@@ -2603,14 +2603,13 @@ msgid "Q-Q plot"
 msgstr "Q-Q график"
 
 #: lib/src/graphing.c:4980
-#, fuzzy, c-format
+#, c-format
 msgid "Q-Q plot for %s"
-msgstr "Q-Q график"
+msgstr "Q-Q график для %s"
 
 #: lib/src/graphing.c:4983
-#, fuzzy
 msgid "Normal quantiles"
-msgstr "Тест на _нормальное распределение"
+msgstr "Квантили нормального распределения"
 
 #: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
@@ -4140,7 +4139,7 @@ msgstr "J тест"
 
 #: lib/src/modelprint.c:329 lib/src/modelprint.c:335
 msgid "Overdispersion test"
-msgstr ""
+msgstr "Тест на избыточную дисперсию"
 
 #: lib/src/modelprint.c:332
 msgid "Sargan test"
@@ -10458,7 +10457,7 @@ msgstr "Модель Хекмана (_Heckit)..."
 
 #: gui2/gretl.c:1532
 msgid "_Count data..."
-msgstr "_Сортировать данные..."
+msgstr "_Счетная модель..."
 
 #: gui2/gretl.c:1533
 msgid "_Duration data..."
@@ -12609,7 +12608,7 @@ msgstr "С поправкой на гетероскедастичность"
 
 #: gui2/selector.c:3054
 msgid "Count data model"
-msgstr ""
+msgstr "Счетная модель"
 
 #: gui2/selector.c:3056
 msgid "Duration model"
@@ -13108,9 +13107,8 @@ msgid "Select two variables"
 msgstr "Выберите две переменные"
 
 #: gui2/selector.c:5457
-#, fuzzy
 msgid "Select one or two variables"
-msgstr "Выберите две переменные"
+msgstr "Выберите одну или две переменные"
 
 #: gui2/selector.c:5459
 msgid "Confidence region: select two variables"
