@@ -7,6 +7,8 @@ version 1.9.0, in progress
   --robust option to get a QML covariance matrix
 - New command modifier, "catch" to catch errors and
   permit continuation of script execution
+- "labels" command: add options to write variable labels
+  to file, and to read labels from file
 - Consolidate commands: the old "graph" and "plot"
   commands (ASCII graphics) are unified in "textplot"
 - Enable full-text search of "online" help files
