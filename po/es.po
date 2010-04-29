@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-04-28 18:37-0400\n"
-"PO-Revision-Date: 2010-04-13 19:06+0200\n"
+"PO-Revision-Date: 2010-04-29 09:45+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -1372,14 +1372,12 @@ msgid "Insufficient data"
 msgstr "No hay datos suficientes"
 
 #: lib/src/describe.c:1411
-#, fuzzy
 msgid "Residual correlation matrix, C"
-msgstr "Usar la matriz de correlación"
+msgstr "Matriz de correlación de los residuos, C"
 
 #: lib/src/describe.c:1418
-#, fuzzy
 msgid "Eigenvalues of C"
-msgstr "Valores propios"
+msgstr "Valores propios de C"
 
 #: lib/src/describe.c:1497 lib/src/describe.c:5937
 msgid "Doornik-Hansen test"
@@ -13206,9 +13204,8 @@ msgid "Select two variables"
 msgstr "Elija dos variables"
 
 #: gui2/selector.c:5457
-#, fuzzy
 msgid "Select one or two variables"
-msgstr "Elija dos variables"
+msgstr "Elija una o dos variables"
 
 #: gui2/selector.c:5459
 msgid "Confidence region: select two variables"
