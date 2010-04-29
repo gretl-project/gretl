@@ -229,6 +229,8 @@ struct gretl_option gretl_opts[] = {
     { MODTEST,  OPT_R, "robust", 0 },
     { MODTEST,  OPT_W, "white", 0 },
     { MODTEST,  OPT_X, "white-nocross", 0 },
+    { LABELS,   OPT_F, "from-file", 2 },
+    { LABELS,   OPT_T, "to_file", 2 },
     { LOGIT,    OPT_M, "multinomial", 0 },
     { LOGIT,    OPT_P, "p-values", 0 },
     { LOGIT,    OPT_R, "robust", 0 },

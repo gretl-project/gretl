@@ -4704,16 +4704,34 @@
     label="Print labels for variables" context="cli">
 
     <usage>
-      <arguments>
-	<argument optional="true">varlist</argument>
-      </arguments>
+      <altforms>
+	<altform>labels <lit>[</lit> <repl>varlist</repl> <lit>]</lit></altform>	
+	<altform>labels <lit>--to-file=</lit><repl>filename</repl></altform>
+	<altform>labels <lit>--from-file=</lit><repl>filename</repl></altform>
+      </altforms>
     </usage>
 
     <description>
       <para>
-	Prints out the informative labels (if present) for the series in
-	<repl>varlist</repl>, or for all series in the dataset if
-	<repl>varlist</repl> is not specified.
+	In the first form, prints out the informative labels (if present) for
+	the series in <repl>varlist</repl>, or for all series in the dataset
+	if <repl>varlist</repl> is not specified.
+      </para>
+      <para>
+	With the option <lit>--to-file</lit>, writes to the named file the
+	labels for all series in the dataset, one per line. If no labels are
+	present an error is flagged; if some series have labels and others
+	do not, a blank line is printed for series with no label.
+      </para>
+      <para>
+	With the option <lit>--from-file</lit>, reads the specified file
+	(which should be plain text) and assigns labels to the series in
+	the dataset, reading one label per line and taking blank lines
+	to indicate blank labels.
+      </para>
+      <para>
+	Via the file writing and reading options it is possible to copy
+	series labels from one data file to another.
       </para>
     </description>
 

@@ -126,6 +126,12 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
 
 int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname);
 
+int save_var_labels_to_file (const DATAINFO *pdinfo, const char *fname);
+
+int dataset_has_var_labels (const DATAINFO *pdinfo);
+
+int read_or_write_var_labels (gretlopt opt, DATAINFO *pdinfo, PRN *prn);
+
 GretlFileType detect_filetype (char *fname);
 
 gretlopt data_save_opt_from_suffix (const char *fname);

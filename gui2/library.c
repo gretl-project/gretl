@@ -1437,43 +1437,20 @@ void do_add_labels (const char *fname)
 
 int do_save_labels (const char *fname)
 {
-    FILE *fp;
-    int i;
+    int err;
 
-    fp = gretl_fopen(fname, "w");
+    err = save_var_labels_to_file(datainfo, fname);
 
-    if (fp == NULL) {
+    if (err) {
 	file_write_errbox(fname);
-	return E_FOPEN;
     }
 
-    for (i=1; i<datainfo->v; i++) {
-	fprintf(fp, "%s\n", VARLABEL(datainfo, i));
-    }
-
-    fclose(fp);
-
-    return 0;
-}
-
-static int have_var_labels (void)
-{
-    const char *label;
-    int i;
-
-    for (i=1; i<datainfo->v; i++) {
-	label = VARLABEL(datainfo, i);
-	if (*label != '\0') {
-	    return 1;
-	}
-    }
-
-    return 0;
+    return err;
 }
 
 void labels_callback (void) 
 {
-    if (have_var_labels()) {
+    if (dataset_has_var_labels(datainfo)) {
 	/* we have (some) labels in place */
 	const char *opts[] = {
 	    N_("Export the labels to file"),

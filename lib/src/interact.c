@@ -4580,7 +4580,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
         break;
 
     case LABELS:
-	showlabels(cmd->list, pdinfo, prn);
+	if (cmd->opt) {
+	    err = read_or_write_var_labels(cmd->opt, pdinfo, prn);
+	} else {
+	    showlabels(cmd->list, pdinfo, prn);
+	}
 	break;
 
     case VARLIST:

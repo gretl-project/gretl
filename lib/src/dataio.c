@@ -2483,6 +2483,59 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 }
 
 /**
+ * dataset_has_var_labels:
+ * @pdinfo: data information struct.
+ * 
+ * Returns: 1 if at least one variable in the current dataset
+ * has a descriptive label, otherwise 0.
+ */
+
+int dataset_has_var_labels (const DATAINFO *pdinfo)
+{
+    const char *label;
+    int i;
+
+    for (i=1; i<pdinfo->v; i++) {
+	label = VARLABEL(pdinfo, i);
+	if (*label != '\0') {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * save_var_labels_to_file:
+ * @pdinfo: data information struct.
+ * @fname: name of file containing labels.
+ * 
+ * Writes to @fname the descriptive labels for the series in
+ * the current dataset.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int save_var_labels_to_file (const DATAINFO *pdinfo, const char *fname)
+{
+    FILE *fp;
+    int i, err = 0;
+
+    fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	err = E_FOPEN;
+    } else {
+	for (i=1; i<pdinfo->v; i++) {
+	    fprintf(fp, "%s\n", VARLABEL(pdinfo, i));
+	}
+	fclose(fp);
+    }
+
+    return err;
+}
+
+/**
  * add_var_labels_from_file:
  * @pdinfo: data information struct.
  * @fname: name of file containing labels.
@@ -2530,6 +2583,43 @@ int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname)
     if (!err && nlabels == 0) {
 	gretl_errmsg_set("No labels found");
 	err = E_DATA;
+    }
+
+    return err;
+}
+
+int read_or_write_var_labels (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
+{
+    const char *fname;
+    int err;
+
+    err = incompatible_options(opt, OPT_T | OPT_F); 
+    if (err) {
+	return err;
+    }
+
+    fname = get_optval_string(LABELS, opt);
+    if (fname == NULL) {
+	return E_BADOPT;
+    }
+
+    if (opt & OPT_T) {
+	/* to-file */
+	if (!dataset_has_var_labels(pdinfo)) {
+	    pprintf(prn, "No labels are available for writing\n");
+	    err = E_DATA;
+	} else {
+	    err = save_var_labels_to_file(pdinfo, fname);
+	    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+		pprintf(prn, "Labels written OK\n");
+	    }
+	}
+    } else if (opt & OPT_F) {
+	/* from-file */
+	err = add_var_labels_from_file(pdinfo, fname);
+	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
+	    pprintf(prn, "Labels loaded OK\n");
+	}	
     }
 
     return err;
