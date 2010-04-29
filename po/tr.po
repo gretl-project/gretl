@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-04-28 18:37-0400\n"
-"PO-Revision-Date: 2010-04-09 13:12-0400\n"
+"PO-Revision-Date: 2010-04-29 09:27+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -776,11 +776,12 @@ msgid "   definitely not a four-digit year\n"
 msgstr "   dört basamaklı yıl olmadığı kesin\n"
 
 #: lib/src/csvdata.c:1144
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
 msgstr ""
-"İkili veriler (%d) ile karşılaşıldı: bu geçerli bir metin dosyası değil\n"
+"İkili veriler (%d) ile karşılaşıldı (satır %d:%d): bu geçerli bir metin "
+"dosyası değil\n"
 
 #: lib/src/csvdata.c:1167 lib/src/dataio.c:2601
 msgid "Data file is empty\n"
@@ -1361,14 +1362,12 @@ msgid "Insufficient data"
 msgstr "Yetersiz veriler"
 
 #: lib/src/describe.c:1411
-#, fuzzy
 msgid "Residual correlation matrix, C"
-msgstr "İlinti dizeyi kullan"
+msgstr "Kalıntı ilinti dizeyi, C"
 
 #: lib/src/describe.c:1418
-#, fuzzy
 msgid "Eigenvalues of C"
-msgstr "Özdeğerler"
+msgstr "C'nin özdeğerleri"
 
 #: lib/src/describe.c:1497 lib/src/describe.c:5937
 msgid "Doornik-Hansen test"
@@ -11202,7 +11201,7 @@ msgstr "X-12-ARIMA çıktılarını göster"
 
 #: gui2/gui_utils.c:3032
 msgid "Cholesky ordering:"
-msgstr ""
+msgstr "Cholesky sıralaması:"
 
 #: gui2/gui_utils.c:3106
 msgid "include bootstrap confidence interval"
@@ -12255,9 +12254,8 @@ msgstr ""
 "Betik çalıştırma hatası: durduruluyor\n"
 
 #: gui2/library.c:7566
-#, fuzzy
 msgid "Unterminated comment in script"
-msgstr "'if' için belirsizlik koşulu"
+msgstr "Betikte sonlandırılmamış açımlama"
 
 #: gui2/library.c:7949
 msgid "Script done\n"
@@ -13123,9 +13121,8 @@ msgid "Select two variables"
 msgstr "İki değişken seçiniz"
 
 #: gui2/selector.c:5457
-#, fuzzy
 msgid "Select one or two variables"
-msgstr "İki değişken seçiniz"
+msgstr "Bir ya da iki değişken seçiniz"
 
 #: gui2/selector.c:5459
 msgid "Confidence region: select two variables"
