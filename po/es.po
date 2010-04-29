@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-28 18:37-0400\n"
+"POT-Creation-Date: 2010-04-29 09:07-0400\n"
 "PO-Revision-Date: 2010-04-29 09:45+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
@@ -1391,7 +1391,7 @@ msgstr ""
 "variable %s"
 
 #: lib/src/describe.c:1565 lib/src/describe.c:2829 lib/src/describe.c:3338
-#: lib/src/describe.c:3830 lib/src/graphing.c:4948
+#: lib/src/describe.c:3830 lib/src/graphing.c:4949
 #, c-format
 msgid "%s is a constant"
 msgstr "%s es una constante"
@@ -2586,12 +2586,26 @@ msgstr "raíces inversas del VAR en relación al círculo unidad"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "Elipse de confianza %g%% e intervalos marginales de confianza %g%%"
 
-#: lib/src/graphing.c:5117 lib/src/graphing.c:5118
+#: lib/src/graphing.c:4891 gui2/library.c:2421
+msgid "Q-Q plot"
+msgstr "Gráfico Q-Q"
+
+#: lib/src/graphing.c:4980
+#, fuzzy, c-format
+msgid "Q-Q plot for %s"
+msgstr "Gráfico Q-Q"
+
+#: lib/src/graphing.c:4983
+#, fuzzy
+msgid "Normal quantiles"
+msgstr "Contraste de _Normalidad"
+
+#: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
 msgid "adjusted %s"
 msgstr "%s corregido"
 
-#: lib/src/graphing.c:5180 plugin/range-mean.c:67
+#: lib/src/graphing.c:5181 plugin/range-mean.c:67
 msgid "with least squares fit"
 msgstr "con ajuste mínimo-cuadrático"
 
@@ -11867,10 +11881,6 @@ msgstr "Estandarizar los datos"
 #: gui2/library.c:2414
 msgid "raw quantiles versus N(0, 1)"
 msgstr "cuantiles brutos contra la N(0,1)"
-
-#: gui2/library.c:2421
-msgid "Q-Q plot"
-msgstr "Gráfico Q-Q"
 
 #: gui2/library.c:2422
 msgid "Normal Q-Q plot"

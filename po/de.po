@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-28 18:37-0400\n"
+"POT-Creation-Date: 2010-04-29 09:07-0400\n"
 "PO-Revision-Date: 2010-04-09 13:10-0400\n"
 "Last-Translator: Sven Schreiber <svetosch (at no spam) gmx (dot no spam) "
 "net>\n"
@@ -1383,7 +1383,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr "Zu wenig Daten um Häufigkeitsverteilung für Variable %s zu erstellen"
 
 #: lib/src/describe.c:1565 lib/src/describe.c:2829 lib/src/describe.c:3338
-#: lib/src/describe.c:3830 lib/src/graphing.c:4948
+#: lib/src/describe.c:3830 lib/src/graphing.c:4949
 #, c-format
 msgid "%s is a constant"
 msgstr "%s ist eine Konstante"
@@ -2577,12 +2577,26 @@ msgstr "Inverse VAR-Wurzeln im Vgl. mit Einheitskreis"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%%-Konfidenzellipse und %g%%-intervalle der Randverteilungen"
 
-#: lib/src/graphing.c:5117 lib/src/graphing.c:5118
+#: lib/src/graphing.c:4891 gui2/library.c:2421
+msgid "Q-Q plot"
+msgstr "Q-Q -Graph"
+
+#: lib/src/graphing.c:4980
+#, fuzzy, c-format
+msgid "Q-Q plot for %s"
+msgstr "Q-Q -Graph"
+
+#: lib/src/graphing.c:4983
+#, fuzzy
+msgid "Normal quantiles"
+msgstr "_Normalitäts-Test"
+
+#: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
 msgid "adjusted %s"
 msgstr "korrigiertes %s"
 
-#: lib/src/graphing.c:5180 plugin/range-mean.c:67
+#: lib/src/graphing.c:5181 plugin/range-mean.c:67
 msgid "with least squares fit"
 msgstr "mit Kleinst-Quadrate-Fit"
 
@@ -11807,10 +11821,6 @@ msgstr "standardisiere die Daten"
 #: gui2/library.c:2414
 msgid "raw quantiles versus N(0, 1)"
 msgstr "Roh-Quantile versus N(0, 1) "
-
-#: gui2/library.c:2421
-msgid "Q-Q plot"
-msgstr "Q-Q -Graph"
 
 #: gui2/library.c:2422
 msgid "Normal Q-Q plot"

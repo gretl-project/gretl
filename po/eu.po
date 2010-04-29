@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: eu\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-28 18:37-0400\n"
+"POT-Creation-Date: 2010-04-29 09:07-0400\n"
 "PO-Revision-Date: 2010-04-09 13:11-0400\n"
 "Last-Translator: Susan Orbe <susan.orbe@ehu.es>, Marian Zubia <marian."
 "zubia@ehu.es>\n"
@@ -1399,7 +1399,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr "Datu gutxiegi %s aldagaiaren maiztasun banaketa eraikitzeko"
 
 #: lib/src/describe.c:1565 lib/src/describe.c:2829 lib/src/describe.c:3338
-#: lib/src/describe.c:3830 lib/src/graphing.c:4948
+#: lib/src/describe.c:3830 lib/src/graphing.c:4949
 #, c-format
 msgid "%s is a constant"
 msgstr "%s konstantea da"
@@ -2595,12 +2595,27 @@ msgstr "VAR erroen alderantzizkoa unitateko zirkunferentziarekiko"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%%%g -ko konfidantza elipsea eta %%%g -ko tarte marginalak"
 
-#: lib/src/graphing.c:5117 lib/src/graphing.c:5118
+#: lib/src/graphing.c:4891 gui2/library.c:2421
+#, fuzzy
+msgid "Q-Q plot"
+msgstr "3D grafikoa"
+
+#: lib/src/graphing.c:4980
+#, fuzzy, c-format
+msgid "Q-Q plot for %s"
+msgstr "3D grafikoa"
+
+#: lib/src/graphing.c:4983
+#, fuzzy
+msgid "Normal quantiles"
+msgstr "_Normaltasun kontrastea"
+
+#: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
 msgid "adjusted %s"
 msgstr "doitutako %s"
 
-#: lib/src/graphing.c:5180 plugin/range-mean.c:67
+#: lib/src/graphing.c:5181 plugin/range-mean.c:67
 msgid "with least squares fit"
 msgstr "karratu txikieneko doikuntzarekin"
 
@@ -11956,11 +11971,6 @@ msgstr "Perturbazioen desbideratze estimatua = %g"
 #: gui2/library.c:2414
 msgid "raw quantiles versus N(0, 1)"
 msgstr ""
-
-#: gui2/library.c:2421
-#, fuzzy
-msgid "Q-Q plot"
-msgstr "3D grafikoa"
 
 #: gui2/library.c:2422
 msgid "Normal Q-Q plot"

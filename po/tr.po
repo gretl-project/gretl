@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-28 18:37-0400\n"
+"POT-Creation-Date: 2010-04-29 09:07-0400\n"
 "PO-Revision-Date: 2010-04-29 09:27+0300\n"
 "Last-Translator: \n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
@@ -1379,7 +1379,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr "%s değişkenine sıklık dağılımı oluşturmak için yetersiz veriler"
 
 #: lib/src/describe.c:1565 lib/src/describe.c:2829 lib/src/describe.c:3338
-#: lib/src/describe.c:3830 lib/src/graphing.c:4948
+#: lib/src/describe.c:3830 lib/src/graphing.c:4949
 #, c-format
 msgid "%s is a constant"
 msgstr "%s bir sabit"
@@ -2572,12 +2572,26 @@ msgstr "YÖB evrik kökleri, birim çembere göre"
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%%%g GÜVEN ELİPSİ VE %%%g MARJİNAL ARALIKLARI"
 
-#: lib/src/graphing.c:5117 lib/src/graphing.c:5118
+#: lib/src/graphing.c:4891 gui2/library.c:2421
+msgid "Q-Q plot"
+msgstr "Q-Q çizimi"
+
+#: lib/src/graphing.c:4980
+#, fuzzy, c-format
+msgid "Q-Q plot for %s"
+msgstr "Q-Q çizimi"
+
+#: lib/src/graphing.c:4983
+#, fuzzy
+msgid "Normal quantiles"
+msgstr "_Normallik sınaması"
+
+#: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
 msgid "adjusted %s"
 msgstr "ayarlamalı %s"
 
-#: lib/src/graphing.c:5180 plugin/range-mean.c:67
+#: lib/src/graphing.c:5181 plugin/range-mean.c:67
 msgid "with least squares fit"
 msgstr "en küçük kareler yakıştırması ile"
 
@@ -11788,10 +11802,6 @@ msgstr "ölçünlemeli veriler"
 #: gui2/library.c:2414
 msgid "raw quantiles versus N(0, 1)"
 msgstr "ham bölütler ve N(0,1)"
-
-#: gui2/library.c:2421
-msgid "Q-Q plot"
-msgstr "Q-Q çizimi"
 
 #: gui2/library.c:2422
 msgid "Normal Q-Q plot"

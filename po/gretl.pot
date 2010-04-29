@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-28 18:37-0400\n"
+"POT-Creation-Date: 2010-04-29 09:07-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1302,7 +1302,7 @@ msgid "Insufficient data to build frequency distribution for variable %s"
 msgstr ""
 
 #: lib/src/describe.c:1565 lib/src/describe.c:2829 lib/src/describe.c:3338
-#: lib/src/describe.c:3830 lib/src/graphing.c:4948
+#: lib/src/describe.c:3830 lib/src/graphing.c:4949
 #, c-format
 msgid "%s is a constant"
 msgstr ""
@@ -2456,12 +2456,25 @@ msgstr ""
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr ""
 
-#: lib/src/graphing.c:5117 lib/src/graphing.c:5118
+#: lib/src/graphing.c:4891 gui2/library.c:2421
+msgid "Q-Q plot"
+msgstr ""
+
+#: lib/src/graphing.c:4980
+#, c-format
+msgid "Q-Q plot for %s"
+msgstr ""
+
+#: lib/src/graphing.c:4983
+msgid "Normal quantiles"
+msgstr ""
+
+#: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
 msgid "adjusted %s"
 msgstr ""
 
-#: lib/src/graphing.c:5180 plugin/range-mean.c:67
+#: lib/src/graphing.c:5181 plugin/range-mean.c:67
 msgid "with least squares fit"
 msgstr ""
 
@@ -11404,10 +11417,6 @@ msgstr ""
 
 #: gui2/library.c:2414
 msgid "raw quantiles versus N(0, 1)"
-msgstr ""
-
-#: gui2/library.c:2421
-msgid "Q-Q plot"
 msgstr ""
 
 #: gui2/library.c:2422

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-04-28 18:37-0400\n"
+"POT-Creation-Date: 2010-04-29 09:07-0400\n"
 "PO-Revision-Date: 2010-04-16 00:10+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
@@ -1405,7 +1405,7 @@ msgstr ""
 "Неподходящие данные, чтобы построить распределение частот для переменной %s"
 
 #: lib/src/describe.c:1565 lib/src/describe.c:2829 lib/src/describe.c:3338
-#: lib/src/describe.c:3830 lib/src/graphing.c:4948
+#: lib/src/describe.c:3830 lib/src/graphing.c:4949
 #, c-format
 msgid "%s is a constant"
 msgstr "%s является константой"
@@ -2598,12 +2598,26 @@ msgstr "Обратные корни VAR по отношению к единич�
 msgid "%g%% confidence ellipse and %g%% marginal intervals"
 msgstr "%g%% доверительный эллипс и %g%% доверительные интервалы"
 
-#: lib/src/graphing.c:5117 lib/src/graphing.c:5118
+#: lib/src/graphing.c:4891 gui2/library.c:2421
+msgid "Q-Q plot"
+msgstr "Q-Q график"
+
+#: lib/src/graphing.c:4980
+#, fuzzy, c-format
+msgid "Q-Q plot for %s"
+msgstr "Q-Q график"
+
+#: lib/src/graphing.c:4983
+#, fuzzy
+msgid "Normal quantiles"
+msgstr "Тест на _нормальное распределение"
+
+#: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
 msgid "adjusted %s"
 msgstr "исправлен. %s"
 
-#: lib/src/graphing.c:5180 plugin/range-mean.c:67
+#: lib/src/graphing.c:5181 plugin/range-mean.c:67
 msgid "with least squares fit"
 msgstr "с подбором по МНК"
 
@@ -11760,10 +11774,6 @@ msgstr "Стандартизировать данные"
 #: gui2/library.c:2414
 msgid "raw quantiles versus N(0, 1)"
 msgstr ""
-
-#: gui2/library.c:2421
-msgid "Q-Q plot"
-msgstr "Q-Q график"
 
 #: gui2/library.c:2422
 msgid "Normal Q-Q plot"

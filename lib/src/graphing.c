@@ -4888,7 +4888,7 @@ static int qq_plot_two_series (const int *list, const double **Z,
 	return err;
     }   
 
-    fputs("set title \"Q-Q plot\"\n", fp);
+    fprintf(fp, "set title \"%s\"\n", _("Q-Q plot"));
     fputs("set datafile missing '?'\n", fp);
     fputs("set key top left\n", fp);
     fprintf(fp, "set xlabel \"%s\"\n", var_get_graph_name(pdinfo, vx));
@@ -4933,6 +4933,7 @@ static int qq_plot_two_series (const int *list, const double **Z,
 static int normal_qq_plot (const int *list, const double **Z, 
 			   const DATAINFO *pdinfo, gretlopt opt)
 {
+    char title[48];
     int zscores = 0;
     double ym = 0, ys = 1;
     double p, qx, qy;
@@ -4976,10 +4977,10 @@ static int normal_qq_plot (const int *list, const double **Z,
 	return err;
     }
 
-    fprintf(fp, "set title \"Q-Q plot for %s\"\n", 
-	    var_get_graph_name(pdinfo, v));
+    sprintf(title, _("Q-Q plot for %s"), var_get_graph_name(pdinfo, v));
+    fprintf(fp, "set title \"%s\"\n", title);
     fputs("set datafile missing '?'\n", fp);
-    fputs("set xlabel \"Normal quantiles\"\n", fp);
+    fprintf(fp, "set xlabel \"%s\"\n", _("Normal quantiles"));
 
     if (opt & OPT_R) {
 	fputs("set nokey\n", fp);
