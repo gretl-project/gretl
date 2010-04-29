@@ -4706,7 +4706,9 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 	opt |= OPT_L;
     }
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
     if (code == SELECTED_VAR) {
 	const char *flagstr = print_flags(opt, PERGM);
