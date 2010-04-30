@@ -873,11 +873,11 @@ static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
 
     pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, Z[yno], pmod->yhat);
 #else
-    pmod->rsq = 1.0 - pmod->ess / pmod->tss;
+    pmod->rsq = 1 - pmod->ess / pmod->tss;
 #endif
-    
-    r = 1.0 - pmod->rsq;
-    pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1.0) / pmod->dfd);
+
+    r = 1 - pmod->rsq;
+    pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1) / pmod->dfd);
 
     pmod->fstt = pmod->chisq = NADBL;
 

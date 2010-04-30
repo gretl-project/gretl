@@ -138,8 +138,8 @@ static struct gui_help_item gui_help_items[] = {
     { SAVE_SESSION,   "save-session" },
     { SAVE_CMD_LOG,   "save-script" },
     { BFGS_CONFIG,    "bfgs-config" },
-    { SAVE_LABELS,    "save-labels" },
-    { OPEN_LABELS,    "add-labels" },
+    { SAVE_LABELS,    "save-labels" }, /* FIXME */
+    { OPEN_LABELS,    "add-labels" },  /* FIXME */
     { COUNTMOD,       "count-model" },
     { -1,             NULL },
 };

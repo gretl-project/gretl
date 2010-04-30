@@ -1475,7 +1475,7 @@ void labels_callback (void)
 
 	resp = radio_dialog("gretl", _("The dataset has variable labels.\n"
 				       "Would you like to:"),
-			    opts, 2, 0, SAVE_LABELS);
+			    opts, 2, 0, 0);
 	if (resp == 0) {
 	    file_selector(SAVE_LABELS, FSEL_DATA_NONE, NULL);
 	} else if (resp == 1) {

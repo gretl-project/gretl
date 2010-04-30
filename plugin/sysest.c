@@ -193,10 +193,13 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
 
 /* compute residuals, for all cases other than FIML */
 
+#define SYS_CORR_RSQ 1
+
 static void 
 sys_resids (equation_system *sys, int eq, const double **Z)
 {
     MODEL *pmod = sys->models[eq];
+    int yno = pmod->list[1];
     double yh;
     int i, t;
 
@@ -208,7 +211,7 @@ sys_resids (equation_system *sys, int eq, const double **Z)
 	    yh += pmod->coeff[i] * Z[pmod->list[i+2]][t];
 	}
 	pmod->yhat[t] = yh;
-	pmod->uhat[t] = Z[pmod->list[1]][t] - yh;
+	pmod->uhat[t] = Z[yno][t] - yh;
 	/* for cross-equation vcv */
 	gretl_matrix_set(sys->E, t - pmod->t1, pmod->ID, pmod->uhat[t]);
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
@@ -221,16 +224,21 @@ sys_resids (equation_system *sys, int eq, const double **Z)
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     }
 
-     if (pmod->ifc && pmod->tss > 0) {
+    if (pmod->ifc && pmod->tss > 0) {
 	/* R-squared */
-	double den;
+	double r;
+
+#if SYS_CORR_RSQ
+	pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, Z[yno], pmod->yhat);
+#else
 
 	pmod->rsq = 1 - (pmod->ess / pmod->tss);
-	den = pmod->tss * pmod->dfd;
-	pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
-     } else {
-	 pmod->rsq = pmod->adjrsq = NADBL;
-     }
+#endif
+	r = 1 - pmod->rsq;
+	pmod->adjrsq = 1.0 - (r * (pmod->nobs - 1) / pmod->dfd);
+    } else {
+	pmod->rsq = pmod->adjrsq = NADBL;
+    }
 }
 
 static void
