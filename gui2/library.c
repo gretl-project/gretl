@@ -1448,9 +1448,24 @@ int do_save_labels (const char *fname)
     return err;
 }
 
+static int var_labels_not_applicable (void)
+{
+    int ret = 0;
+
+    if (datainfo->v == 2 && 
+	!strcmp(datainfo->varname[1], "index")) {
+	warnbox(_("Not ready for variable labels"));
+	return 1;
+    }
+
+    return ret;
+}
+
 void labels_callback (void) 
 {
-    if (dataset_has_var_labels(datainfo)) {
+    if (var_labels_not_applicable()) {
+	return;
+    } else if (dataset_has_var_labels(datainfo)) {
 	/* we have (some) labels in place */
 	const char *opts[] = {
 	    N_("Export the labels to file"),
@@ -1459,8 +1474,8 @@ void labels_callback (void)
 	int resp;
 
 	resp = radio_dialog("gretl", _("The dataset has variable labels.\n"
-				"Would you like to:"),
-			    opts, 2, 0, 0);
+				       "Would you like to:"),
+			    opts, 2, 0, SAVE_LABELS);
 	if (resp == 0) {
 	    file_selector(SAVE_LABELS, FSEL_DATA_NONE, NULL);
 	} else if (resp == 1) {

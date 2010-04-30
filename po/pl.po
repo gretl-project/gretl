@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.8.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-04-29 09:07-0400\n"
-"PO-Revision-Date: 2010-04-09 13:13-0400\n"
+"PO-Revision-Date: 2010-04-30 01:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -784,10 +784,10 @@ msgid "   definitely not a four-digit year\n"
 msgstr "   definicja roku nie na czterech znakach\n"
 
 #: lib/src/csvdata.c:1144
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Binary data (%d) encountered (line %d:%d): this is not a valid text file\n"
-msgstr "Analizowany plik binarny (%d) nie jest prawidłowym plikiem tekstowym\n"
+msgstr "Plik (%d) w lini (%d:%d) nie jest prawidłowym plikiem tekstowym\n"
 
 #: lib/src/csvdata.c:1167 lib/src/dataio.c:2601
 msgid "Data file is empty\n"
@@ -1367,14 +1367,12 @@ msgid "Insufficient data"
 msgstr "Nieodpowiednie dane"
 
 #: lib/src/describe.c:1411
-#, fuzzy
 msgid "Residual correlation matrix, C"
-msgstr "Wykorzystaj macierz korelacji"
+msgstr "Macierz korelacji reszt, C"
 
 #: lib/src/describe.c:1418
-#, fuzzy
 msgid "Eigenvalues of C"
-msgstr "Wartość własna"
+msgstr "Wartość własna dla C"
 
 #: lib/src/describe.c:1497 lib/src/describe.c:5937
 msgid "Doornik-Hansen test"
@@ -2593,14 +2591,13 @@ msgid "Q-Q plot"
 msgstr "Wykres Q-Q (kwantyle-kwantyle)"
 
 #: lib/src/graphing.c:4980
-#, fuzzy, c-format
+#, c-format
 msgid "Q-Q plot for %s"
-msgstr "Wykres Q-Q (kwantyle-kwantyle)"
+msgstr "Wykres Q-Q (kwantyle-kwantyle) dla %s"
 
 #: lib/src/graphing.c:4983
-#, fuzzy
 msgid "Normal quantiles"
-msgstr "Testy normalności rozkładu"
+msgstr "Normalny rozkład kwantylowy"
 
 #: lib/src/graphing.c:5118 lib/src/graphing.c:5119
 #, c-format
@@ -3235,7 +3232,7 @@ msgid ""
 msgstr ""
 "\n"
 "Statystyka testu Breuscha-Pagana:\n"
-" LM = %g z wartością p = prob(chi-square(1) > %g) = %g\n"
+" LM = %g z wartością p = prob(chi-kwadrat(1) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:2469
 msgid ""
@@ -11251,7 +11248,7 @@ msgstr "Wyniki X-12-ARIMA"
 
 #: gui2/gui_utils.c:3032
 msgid "Cholesky ordering:"
-msgstr ""
+msgstr "Uporządkowanie dla Choleskiego:"
 
 #: gui2/gui_utils.c:3106
 msgid "include bootstrap confidence interval"
@@ -12300,9 +12297,8 @@ msgstr ""
 "Błąd skryptu: wykonanie przerwano\n"
 
 #: gui2/library.c:7566
-#, fuzzy
 msgid "Unterminated comment in script"
-msgstr "nieokreślony warunek dla polecenia 'if'"
+msgstr "Nieokreślone polecenie w skrypcie"
 
 #: gui2/library.c:7949
 msgid "Script done\n"
@@ -12541,7 +12537,7 @@ msgstr "wartość $p$ w nawiasach"
 
 #: gui2/model_table.c:1151
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
+msgstr ""         
 "Dla modeli logitowych i probitowych, $R^2$ jest liczone według pseudo-$R^2$ "
 "McFaddena"
 
@@ -13174,9 +13170,8 @@ msgid "Select two variables"
 msgstr "Wybierz dwie zmienne"
 
 #: gui2/selector.c:5457
-#, fuzzy
 msgid "Select one or two variables"
-msgstr "Wybierz dwie zmienne"
+msgstr "Wybierz jedną lub dwie zmienne"
 
 #: gui2/selector.c:5459
 msgid "Confidence region: select two variables"
@@ -14931,8 +14926,7 @@ msgid "unknown data type"
 msgstr "Nierozpoznany typ danych"
 
 #: plugin/stata_import.c:649
-msgid ""
-"something strange in the file\n"
+msgid "something strange in the file\n"
 "(Type 0 characteristic of nonzero length)"
 msgstr ""
 "Błąd w pliku. (Wpisz 0 dla\n"
@@ -15176,15 +15170,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "No weights have been specified"
-#~ msgstr "Niewyspecyfikowana macierzy wag"
-
-#~ msgid "system fitted value, equation %d"
-#~ msgstr "teoretyczne wartości z systemu, równanie %d"
-
-#~ msgid "gretl: VAR impulse responses"
-#~ msgstr "gretl: Odpowiedzi na impuls w modelu VAR"
-
-#~ msgid "gretl: VAR variance decompositions"
-#~ msgstr "gretl: Dekompozycje wariancji w modelu VAR"

@@ -2493,9 +2493,16 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 int dataset_has_var_labels (const DATAINFO *pdinfo)
 {
     const char *label;
-    int i;
+    int i, imin = 1;
 
-    for (i=1; i<pdinfo->v; i++) {
+    if (pdinfo->v > 1) {
+	if (!strcmp(pdinfo->varname[1], "index") &&
+	    !strcmp(VARLABEL(pdinfo, 1), _("index variable"))) {
+	    imin = 2;
+	}
+    }
+
+    for (i=imin; i<pdinfo->v; i++) {
 	label = VARLABEL(pdinfo, i);
 	if (*label != '\0') {
 	    return 1;

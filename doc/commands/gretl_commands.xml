@@ -8101,7 +8101,25 @@
 	Please see <guideref targ="sampling"/> for further details.
       </para>
     </description>
+  </command>
 
+  <command name="save-labels" section="Utilities" 
+    label="Save or remove labels" context="gui">
+    <description>
+      <para>
+	If you choose Export here, gretl will write a file containing 
+	the descriptive labels of any series in the current dataset
+	that have such labels. This is a plain text file with one
+	line per variable. The line will be empty for variables that
+	have no descriptive label.
+      </para>
+      <para>
+	If you choose Remove, the descriptive labels will be removed
+	for all series that have such labels. This is presumably
+	appropriate only if the current labels have somehow been
+	added in error.
+      </para>
+    </description>
   </command>
 
   <command name="save-script" section="Utilities" 
@@ -9315,9 +9333,7 @@
 	print m
       </code>
     </description>
-
   </command>
-
 
   <command name="store" section="Dataset" label="Save data">
 
