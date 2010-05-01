@@ -3718,7 +3718,9 @@ int do_vector_model (selector *sr)
 	}	
     } else if (action == VECM) {
 	/* Vector Error Correction Model */
-	var = gretl_VECM(order, libcmd.aux, libcmd.list, (const double **) Z, 
+	int rank;
+	sscanf(buf, "%d %d", &order, &rank);
+	var = gretl_VECM(order, rank, libcmd.list, (const double **) Z, 
 			 datainfo, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
