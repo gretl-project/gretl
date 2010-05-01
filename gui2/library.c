@@ -3661,7 +3661,7 @@ int do_vector_model (selector *sr)
     const char *buf;
     const char *flagstr;
     PRN *prn;
-    int order, action;
+    int action;
     int err = 0;
 
     if (selector_error(sr)) {
@@ -3693,8 +3693,7 @@ int do_vector_model (selector *sr)
 	return 1;
     }
 
-    sscanf(buf, "%d", &order);
-    if (order > var_max_order(libcmd.list, datainfo)) {
+    if (libcmd.order > var_max_order(libcmd.list, datainfo)) {
 	gui_errmsg(E_TOOFEW);
 	gretl_print_destroy(prn);
 	return 1;
@@ -3702,7 +3701,7 @@ int do_vector_model (selector *sr)
 
     if (action == VAR && !(libcmd.opt & OPT_L)) {
 	/* regular VAR, not VAR lag selection */
-	var = gretl_VAR(order, libcmd.list, (const double **) Z, 
+	var = gretl_VAR(libcmd.order, libcmd.list, (const double **) Z, 
 			datainfo, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
@@ -3710,7 +3709,7 @@ int do_vector_model (selector *sr)
 	}
     } else if (action == VAR) {
 	/* VAR lag selection */
-	gretl_VAR(order, libcmd.list, (const double **) Z, 
+	gretl_VAR(libcmd.order, libcmd.list, (const double **) Z, 
 		  datainfo, libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 72, 350, _("gretl: VAR lag selection"), 
@@ -3721,7 +3720,7 @@ int do_vector_model (selector *sr)
 	int rank = gretl_int_from_string(libcmd.extra, &err);
 
 	if (!err) {
-	    var = gretl_VECM(order, rank, libcmd.list, (const double **) Z, 
+	    var = gretl_VECM(libcmd.order, rank, libcmd.list, (const double **) Z, 
 			     datainfo, libcmd.opt, prn, &err);
 	}
 	if (!err) {
