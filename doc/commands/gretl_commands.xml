@@ -8104,7 +8104,7 @@
   </command>
 
   <command name="save-labels" section="Utilities" 
-    label="Save or remove labels" context="gui">
+    label="Save or remove series labels" context="gui">
     <description>
       <para>
 	If you choose Export here, gretl will write a file containing 
@@ -8115,9 +8115,23 @@
       </para>
       <para>
 	If you choose Remove, the descriptive labels will be removed
-	for all series that have such labels. This is presumably
+	for all series that have such labels. This would be
 	appropriate only if the current labels have somehow been
 	added in error.
+      </para>
+    </description>
+  </command>
+
+  <command name="add-labels" section="Utilities" 
+    label="Add series labels" context="gui">
+    <description>
+      <para>
+	If you choose Yes here, you are offered a file-open dialog box to
+	select a plain text file containing descriptive labels for the
+	series in the current dataset. The file should contain one label
+	per line; a blank line means no label. Gretl will attempt to read
+	as many labels as there are series in the dataset, excluding the
+	constant.
       </para>
     </description>
   </command>

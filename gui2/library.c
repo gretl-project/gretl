@@ -1452,6 +1452,10 @@ static int var_labels_not_applicable (void)
 {
     int ret = 0;
 
+    if (datainfo == NULL) {
+	return 1;
+    }
+
     if (datainfo->v == 2 && 
 	!strcmp(datainfo->varname[1], "index")) {
 	warnbox(_("Not ready for variable labels"));
@@ -1459,6 +1463,18 @@ static int var_labels_not_applicable (void)
     }
 
     return ret;
+}
+
+static void gui_remove_var_labels (void)
+{
+    int i;
+
+    for (i=1; i<datainfo->v; i++) {
+	VARLABEL(datainfo, i)[0] = '\0';
+    }
+
+    populate_varlist();
+    mark_dataset_as_modified();
 }
 
 void labels_callback (void) 
@@ -1475,18 +1491,16 @@ void labels_callback (void)
 
 	resp = radio_dialog("gretl", _("The dataset has variable labels.\n"
 				       "Would you like to:"),
-			    opts, 2, 0, 0);
+			    opts, 2, 0, SAVE_LABELS);
 	if (resp == 0) {
 	    file_selector(SAVE_LABELS, FSEL_DATA_NONE, NULL);
 	} else if (resp == 1) {
-	    dataset_destroy_obs_markers(datainfo);
-	    mark_dataset_as_modified();
+	    gui_remove_var_labels();
 	}
     } else {
-	if (yes_no_dialog("gretl",
-			  _("The dataset has no variable labels.\n"
-			    "Add some from file now?"),
-			  0) == GRETL_YES) {
+	if (yes_no_help_dialog(_("The dataset has no variable labels.\n"
+				 "Add some from file now?"), 
+			       OPEN_LABELS) == GRETL_YES) {
 	    file_selector(OPEN_LABELS, FSEL_DATA_NONE, NULL);
 	}
     }

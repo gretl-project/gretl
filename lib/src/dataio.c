@@ -2577,7 +2577,8 @@ int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname)
 	} else {
 	    targ = VARLABEL(pdinfo, i);
 	    g_strstrip(label);
-	    strcpy(targ, label);
+	    *targ = '\0';
+	    strncat(targ, label, MAXLABEL - 1);
 	    err = check_imported_string(targ, i+1, MAXLABEL);
 	    if (err) {
 		*targ = '\0';

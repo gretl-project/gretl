@@ -120,6 +120,8 @@ int spin_dialog (const char *title, const char *blurb,
 		 int *spinvar, const char *spintxt, 
 		 int spinmin, int spinmax, int helpcode);
 
+int yes_no_help_dialog (const char *msg, int hcode);
+
 int get_obs_dialog (const char *title, const char *text,
 		    const char *t1str, const char *t2str,
 		    int t1min, int t1max, int *t1, 

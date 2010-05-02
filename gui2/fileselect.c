@@ -700,6 +700,9 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 		filesel_add_filter(filesel, _("Ox files (*.ox)"), "*.ox");
 	    }
 	}
+    } else if (action == OPEN_LABELS) {
+	filesel_add_filter(filesel, _("ASCII files (*.txt)"), "*.txt");
+	filesel_add_filter(filesel, _("all files (*.*)"), "*");
     } else {
 	GtkFileFilter *filter = get_file_filter(action, data);
 

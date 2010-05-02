@@ -3693,6 +3693,52 @@ int spin_dialog (const char *title, const char *blurb,
 			 spinmin, spinmax, hcode);
 }
 
+static void set_response_yes (GtkButton *b, int *ret)
+{
+    *ret = GRETL_YES;
+}
+
+int yes_no_help_dialog (const char *msg, int hcode)
+{
+    GtkWidget *dlg;
+    GtkWidget *vbox, *hbox, *tmp;
+    GtkWidget *button = NULL;
+    int ret = GRETL_NO;
+
+    dlg = gretl_dialog_new("gretl", NULL, GRETL_DLG_BLOCK);
+    gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    tmp = dialog_blurb_box(msg);
+    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+
+    /* Yes button */
+    button = gtk_button_new_from_stock(GTK_STOCK_YES);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_response_yes), &ret);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    gtk_widget_grab_default(button);
+
+    /* No button */
+    button = gtk_button_new_from_stock(GTK_STOCK_NO);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+
+    /* Help button */
+    context_help_button(hbox, hcode);
+
+    gtk_widget_show_all(dlg);
+
+    return ret;
+}
+
 /* mechanism for adjusting properties of frequency plot */
 
 struct freqdist_info {
