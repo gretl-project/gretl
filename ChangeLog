@@ -28,6 +28,9 @@ version 1.9.0, in progress
 - GUI: add export/import of variable labels
 - GUI: enable choice of ordering for Cholesky decomposition
   for VAR impulse response plots
+- GUI graph editor: add option to show a grid; add facility
+  to display highlight bars in time-series graphs, e.g.
+  NBER recession dates
 - Filter functions movavg, bkfilt and hpfilt: offer
   greater control via additional optional arguments
 - Add new functions, digamma, kdensity, monthlen and
@@ -36,6 +39,8 @@ version 1.9.0, in progress
   machine precision
 - OS X package: add icons and associations for gretl data,
   script and session files
+- Add compile-time option to use openmp for multi-threaded 
+  matrix multiplication
 - Fix bug: crash on exact collinearity when estimating a
   system of equations
 - Fix bug: broken test output in tsls when the matrix of
