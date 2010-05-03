@@ -3470,24 +3470,10 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = aux_vec_node(p, p->dinfo->n);
 
     if (ret != NULL && starting(p)) {
-	const double *vx = NULL;
-	double x = 0.0;
-	double y = 0.0;
-	int v = 0;
+	double x, y;
 
-	if (f == F_RPOISSON) {
-	    if (l->t == VEC) {
-		vx = l->v.xvec;
-		v = 1;
-	    } else {
-		x = node_get_scalar(l, p);
-	    }
-	} else if (f == F_RUNIFORM || f == F_RNORMAL) {
-	    x = (l->t == EMPTY)? NADBL : node_get_scalar(l, p);
-	    y = (r->t == EMPTY)? NADBL : node_get_scalar(r, p);
-	} else {
-	    v = l->v.xval;
-	}
+	x = (l->t == EMPTY)? NADBL : node_get_scalar(l, p);
+	y = (r->t == EMPTY)? NADBL : node_get_scalar(r, p);
 
 	switch (f) {
 	case F_RUNIFORM:
@@ -3501,10 +3487,6 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 					    p->dinfo->t1, 
 					    p->dinfo->t2,
 					    x, y);
-	    break;
-	case F_RPOISSON:
-	    gretl_rand_poisson(ret->v.xvec, p->dinfo->t1, p->dinfo->t2,
-			       (v)? vx : &x, v);
 	    break;
 	default:
 	    break;
@@ -7203,14 +7185,6 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, (l->t == NUM)? 2 : 1,
 			    NUM, (l->t == NUM)? r : l, p);
-	} 
-	break;
-    case F_RPOISSON:
-	/* one arg: scalar or series */
-	if (scalar_node(l) || l->t == VEC) {
-	    ret = series_fill_func(l, NULL, t->t, p);
-	} else {
-	    node_type_error(t->t, 1, VEC, l, p);
 	} 
 	break;
     case F_COR:

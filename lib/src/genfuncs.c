@@ -1056,15 +1056,9 @@ int maybe_pick_up_sorted_markers (parser *p)
     return 0;
 }
 
-static double hp_lambda (const DATAINFO *pdinfo)
+static double default_hp_lambda (const DATAINFO *pdinfo)
 {
-    double la = libset_get_double(HP_LAMBDA);
-
-    if (na(la)) {
-	la = 100 * pdinfo->pd * pdinfo->pd;
-    }
-
-    return la;
+    return 100 * pdinfo->pd * pdinfo->pd;
 }
 
 /**
@@ -1112,7 +1106,7 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
     }
 
     if (na(lambda)) {
-	lambda = hp_lambda(pdinfo);
+	lambda = default_hp_lambda(pdinfo);
     }
 
     V = doubles_array_new(4, T);

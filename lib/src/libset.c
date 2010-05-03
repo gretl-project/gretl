@@ -79,7 +79,6 @@ struct robust_opts {
 struct set_vars_ {
     int flags;
     unsigned int seed;          /* for PRNG */
-    double hp_lambda;           /* for Hodrick-Prescott filter */
     int horizon;                /* for VAR impulse responses */ 
     int bootrep;                /* bootstrap replications */
     double nls_toler;           /* NLS convergence criterion */
@@ -96,9 +95,6 @@ struct set_vars_ {
     int garch_vcv;              /* GARCH vcv variant */
     int garch_robust_vcv;       /* GARCH vcv variant, robust estimation */
     int arma_vcv;               /* ARMA vcv variant */
-    int bkbp_k;                 /* Baxter-King k */
-    int bkbp_p0;                /* Baxter-King periods[0] */
-    int bkbp_p1;                /* Baxter-King periods[1] */
     int rq_maxiter;             /* max iterations for quantreg, simplex */
     gretl_matrix *initvals;     /* parameter initializer */
     struct robust_opts ropts;   /* robust standard error options */
@@ -135,7 +131,6 @@ struct set_vars_ {
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BFGS_MAXGRAD) || \
 			  !strcmp(s, BHHH_TOLER) || \
-			  !strcmp(s, HP_LAMBDA) || \
 			  !strcmp(s, NLS_TOLER) || \
 			  !strcmp(s, QS_BANDWIDTH))
 
@@ -143,7 +138,6 @@ struct set_vars_ {
 		       !strcmp(s, BFGS_VERBSKIP) || \
 		       !strcmp(s, BHHH_MAXITER) || \
 		       !strcmp(s, LBFGS_MEM) || \
-                       !strcmp(s, BKBP_K) || \
 		       !strcmp(s, BOOTREP) || \
 		       !strcmp(s, HAC_KERNEL) || \
                        !strcmp(s, HC_VERSION) || \
@@ -349,7 +343,6 @@ static void state_vars_copy (set_vars *sv)
     sv->flags &= ~STATE_LOOPING;
 
     sv->seed = state->seed;
-    sv->hp_lambda = state->hp_lambda;
     sv->horizon = state->horizon;
     sv->bootrep = state->bootrep;
     sv->loop_maxiter = state->loop_maxiter;
@@ -366,9 +359,6 @@ static void state_vars_copy (set_vars *sv)
     sv->lbfgs_mem = state->lbfgs_mem;
     sv->garch_vcv = state->garch_vcv;
     sv->garch_robust_vcv = state->garch_robust_vcv;
-    sv->bkbp_k = state->bkbp_k;
-    sv->bkbp_p0 = state->bkbp_p0;
-    sv->bkbp_p1 = state->bkbp_p1;
 
     sv->initvals = gretl_matrix_copy(state->initvals);
     strcpy(sv->shelldir, state->shelldir);
@@ -385,7 +375,6 @@ static void state_vars_init (set_vars *sv)
     sv->flags = STATE_ECHO_ON | STATE_MSGS_ON | STATE_WARN_ON | 
 	STATE_HALT_ON_ERR | STATE_SKIP_MISSING;
     sv->seed = 0;
-    sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
     sv->bootrep = 1000;
     sv->nls_toler = NADBL;
@@ -406,10 +395,6 @@ static void state_vars_init (set_vars *sv)
     sv->arma_vcv = VCV_HESSIAN;
     sv->garch_robust_vcv = VCV_UNSET;
 
-    sv->bkbp_k = UNSET_INT;
-    sv->bkbp_p0 = UNSET_INT;
-    sv->bkbp_p1 = UNSET_INT;
-
     *sv->shelldir = '\0';
     *sv->csv_na = '\0';
 
@@ -418,92 +403,24 @@ static void state_vars_init (set_vars *sv)
 
 int get_bkbp_k (const DATAINFO *pdinfo)
 {
-    if (check_for_state()) {
-	return 0;
-    }
-
-    if (is_unset(state->bkbp_k)) {
-	if (pdinfo->pd == 1) {
-	    return 3;
-	} else if (pdinfo->pd == 4) {
-	    return 12;
-	} else if (pdinfo->pd == 12) {
-	    return 36;
-	} else {
-	    return 3;
-	}
+    if (pdinfo->pd == 1) {
+	return 3;
+    } else if (pdinfo->pd == 4) {
+	return 12;
+    } else if (pdinfo->pd == 12) {
+	return 36;
     } else {
-	return state->bkbp_k;
+	return 3;
     }
-}
-
-int set_bkbp_k (int k)
-{
-    if (check_for_state()) {
-	return E_ALLOC;
-    }
-
-    if (k > 0) {
-	state->bkbp_k = k;
-	return 0;
-    } else {
-	return 1;
-    }
-}
-
-void unset_bkbp_k (void)
-{
-    if (check_for_state()) {
-	return;
-    }
-
-    state->bkbp_k = UNSET_INT;
 }
 
 void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u)
 {
-    if (check_for_state()) {
-	return;
-    }
+    *l = (pdinfo->pd == 4)? 6 :
+	(pdinfo->pd == 12)? 18 : 2;
 
-    if (is_unset(state->bkbp_p0)) {
-	*l = (pdinfo->pd == 4)? 6 :
-	    (pdinfo->pd == 12)? 18 : 2;
-    } else {
-	*l = state->bkbp_p0;
-    }
-
-    if (is_unset(state->bkbp_p1)) {
-	*u = (pdinfo->pd == 4)? 32 :
-	    (pdinfo->pd == 12)? 96 : 8;
-    } else {
-	*u = state->bkbp_p1;
-    }
-}
-
-int set_bkbp_periods (int l, int u)
-{
-    if (check_for_state()) {
-	return E_ALLOC;
-    }
-
-    if (l > 0 && u > l) {
-	state->bkbp_p0 = l;
-	state->bkbp_p1 = u;
-	return 0;
-    } else {
-	return 1;
-    }
-}
-
-void unset_bkbp_periods (void)
-{
-    if (check_for_state()) {
-	return;
-    }
-
-    state->bkbp_p0 = UNSET_INT;
-    state->bkbp_p1 = UNSET_INT;
+    *u = (pdinfo->pd == 4)? 32 :
+	(pdinfo->pd == 12)? 96 : 8;
 }
 
 void set_gretl_echo (int e)
@@ -972,37 +889,6 @@ static int set_line_width (const char *s0, const char *s1,
     return err;
 }
 
-static int set_bkbp_limits (const char *s0, const char *s1,
-			    PRN *prn)
-{
-    int p0, p1;
-    int err = 0;
-
-    err = libset_get_scalar(NULL, s0, &p0, NULL);
-    if (!err) {
-	err = libset_get_scalar(NULL, s1, &p1, NULL);
-    }
-
-    if (err) {
-	return err;
-    }
-
-    if (p1 < p0) {
-	/* 2nd entry should be bigger than 1st */
-	int tmp = p1;
-
-	p1 = p0;
-	p0 = tmp;
-    }
-
-    pprintf(prn, _("Baxter-King band = %d-%d periods\n"), p0, p1);
-
-    state->bkbp_p0 = p0;
-    state->bkbp_p1 = p1;
-
-    return 0;
-}
-
 static int set_initvals (const char *s, PRN *prn)
 {
     gretl_matrix *m;
@@ -1367,26 +1253,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(PCSE, prn, opt);
     libset_print_double(QS_BANDWIDTH, prn, opt);
 
-    libset_header(N_("Filtering"), prn, opt);
-
-    if (opt & OPT_D) {
-	if (is_unset(state->bkbp_p0) ||
-	    is_unset(state->bkbp_p1)) {
-	    pputs(prn, " bkbp_limits = auto\n");
-	} else {
-	    pprintf(prn, " bkbp_limits = (%d, %d)\n", 
-		    state->bkbp_p0, 
-		    state->bkbp_p1);
-	}
-    } else if (!is_unset(state->bkbp_p0) &&
-	       !is_unset(state->bkbp_p1)) {
-	pprintf(prn, "set bkbp_limits %d %d\n", 
-		state->bkbp_p0, state->bkbp_p1);
-    }	
-
-    libset_print_int(BKBP_K, prn, opt);
-    libset_print_double(HP_LAMBDA, prn, opt);
-
     libset_header(N_("Time series"), prn, opt);
 
     libset_print_int(HORIZON, prn, opt);
@@ -1453,8 +1319,6 @@ static int libset_query_settings (const char *s, PRN *prn)
 		state->csv_na);
     } else if (!strcmp(s, "stopwatch")) {
 	err = 0;
-    } else if (!strcmp(s, "bkbp_limits")) {
-	err = 0;
     } else {
 	err = 1;
     }
@@ -1470,8 +1334,7 @@ int is_libset_var (const char *s)
 }
 
 #define default_ok(s) (!strcmp(s, BFGS_TOLER) || \
-                       !strcmp(s, BHHH_TOLER) || \
-                       !strcmp(s, HP_LAMBDA))
+                       !strcmp(s, BHHH_TOLER))
 
 #define default_str(s) (!strcmp(s, "auto") || !strcmp(s, "default"))
 
@@ -1615,9 +1478,7 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
 	    err = E_UNKVAR;
 	}
     } else if (nw == 3) {
-	if (!strcmp(setobj, "bkbp_limits")) {
-	    err = set_bkbp_limits(setarg, setarg2, prn);
-	} else if (!strcmp(setobj, "linewidth")) {
+	if (!strcmp(setobj, "linewidth")) {
 	    err = set_line_width(setarg, setarg2, pdinfo, prn);
 	} else {
 	    err = E_UNKVAR;
@@ -1660,8 +1521,6 @@ double libset_get_double (const char *key)
 	}
     } else if (!strcmp(key, BFGS_MAXGRAD)) {
 	return state->bfgs_maxgrad;
-    } else if (!strcmp(key, HP_LAMBDA)) {
-	return state->hp_lambda;
     } else {
 	fprintf(stderr, "libset_get_double: unrecognized "
 		"variable '%s'\n", key);	
@@ -1707,8 +1566,6 @@ int libset_set_double (const char *key, double val)
 	state->bfgs_toler = val;
     } else if (!strcmp(key, BFGS_MAXGRAD)) {
 	state->bfgs_maxgrad = val;
-    } else if (!strcmp(key, HP_LAMBDA)) {
-	state->hp_lambda = val;
     } else {
 	fprintf(stderr, "libset_set_double: unrecognized "
 		"variable '%s'\n", key);	
@@ -1732,8 +1589,6 @@ int libset_get_int (const char *key)
 	return state->rq_maxiter;
     } else if (!strcmp(key, LBFGS_MEM)) {
 	return state->lbfgs_mem;
-    } else if (!strcmp(key, BKBP_K)) {
-	return state->bkbp_k;
     } else if (!strcmp(key, BOOTREP)) {
 	return state->bootrep;
     } else if (!strcmp(key, GARCH_VCV)) {
@@ -1786,9 +1641,6 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 3;
 	*max = 20;
 	*var = &state->lbfgs_mem;
-    } else if (!strcmp(s, BKBP_K)) {
-	*min = 1;
-	*var = &state->bkbp_k;
     } else if (!strcmp(s, BOOTREP)) {
 	*min = 1;
 	*var = &state->bootrep;

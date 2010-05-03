@@ -38,7 +38,6 @@ typedef enum {
 #define BHHH_MAXITER     "bhhh_maxiter"
 #define BHHH_TOLER       "bhhh_toler"
 #define LBFGS_MEM        "lbfgs_mem"
-#define BKBP_K           "bkbp_k"
 #define BOOTREP          "bootrep"
 #define FORCE_DECP       "force_decpoint"
 #define FORCE_HC         "force_hc"
@@ -49,7 +48,6 @@ typedef enum {
 #define HALT_ON_ERR      "halt_on_error"
 #define HC_VERSION       "hc_version"
 #define HORIZON          "horizon"
-#define HP_LAMBDA        "hp_lambda"
 #define USE_LBFGS        "lbfgs"
 #define LOOP_MAXITER     "loop_maxiter"
 #define RQ_MAXITER       "rq_maxiter"
@@ -107,10 +105,6 @@ int data_based_hac_bandwidth (void);
 
 int get_bkbp_k (const DATAINFO *pdinfo);
 void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u);
-int set_bkbp_k (int k);
-int set_bkbp_periods (int bkl, int bku);
-void unset_bkbp_k (void);
-void unset_bkbp_periods (void);
 
 void set_mp_bits (int b);
 int get_mp_bits (void);

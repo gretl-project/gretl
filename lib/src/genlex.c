@@ -178,7 +178,6 @@ struct str_table funcs[] = {
     { F_T2,       "lastobs" },
     { F_RUNIFORM, "uniform" }, 
     { F_RNORMAL,  "normal" }, 
-    { F_RPOISSON, "genpois" },
     { F_CUM,      "cum" }, 
     { F_MISSING,  "missing" },
     { F_DATAOK,   "ok" },        /* opposite of missing */
@@ -349,7 +348,6 @@ struct str_table funcs[] = {
 struct str_table func_alias[] = {
     { F_GAMMA,     "gammafunc" },
     { F_GAMMA,     "gamma" },
-    { F_RPOISSON,  "poisson" },
     { F_PVAL,      "pval" },
     { F_LOG,       "logs" },
     { F_OBSLABEL,  "date" },

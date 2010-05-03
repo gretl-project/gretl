@@ -130,16 +130,10 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     } else if (ftype == FILTER_EMA) {
 	finfo->lambda = 0.2;
     } else if (ftype == FILTER_HP) {
-	finfo->lambda = libset_get_double(HP_LAMBDA);
-	if (na(finfo->lambda)) {
-	    finfo->lambda = 100 * pd * pd;
-	}
+	finfo->lambda = 100 * pd * pd;
     } else if (ftype == FILTER_BK) {
 	finfo->bkk = get_bkbp_k(datainfo);
 	get_bkbp_periods(datainfo, &finfo->bkl, &finfo->bku);
-	if (finfo->bku <= finfo->bkl) {
-	    finfo->bku = finfo->bkl + 1;
-	}
     } else if (ftype == FILTER_FD) {
 	finfo->lambda = 0.5;
     }

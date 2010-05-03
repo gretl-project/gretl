@@ -219,7 +219,6 @@ enum {
     F_CRIT, 
     F_URCPVAL,
     F_RANDGEN,
-    F_RPOISSON,
     F_MAKEMASK,
     F_VALUES,
     F_NULLSPC,
