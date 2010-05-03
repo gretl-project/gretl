@@ -547,21 +547,23 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 	N_("Weight variable is all zeros, aborting regression");
     const char *wtneg = 
 	N_("Weight variable contains negative values");
-    int t;
-
-    if (gretl_iszero(pmod->t1, pmod->t2, w)) {
-	gretl_errmsg_set(_(wtzero));
-	pmod->errcode = E_DATA;
-	return 1;
-    }
+    int t, allzero = 1;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (w[t] < 0.0) {
 	    gretl_errmsg_set(_(wtneg));
 	    pmod->errcode = E_DATA;
 	    return 1;
+	} else if (w[t] > 0.0) {
+	    allzero = 0;
 	}
     }
+
+    if (allzero) {
+	gretl_errmsg_set(_(wtzero));
+	pmod->errcode = E_DATA;
+	return 1;
+    }	
 
     *effobs = gretl_isdummy(pmod->t1, pmod->t2, w);
 
