@@ -283,28 +283,34 @@ double tcrit95 (int df)
 /**
  * rhocrit95:
  * @n: sample size.
+ *
+ * Computes the two-sided 5 percent critical value of the sample
+ * correlation coefficient for a sample of size @n. This is based 
+ * on the inverse of the function which maps from the correlation 
+ * coefficient, r, to a student t statistic, namely
+ *
+ *            t = r / sqrt[(1—r^2) / (n-2)]
+ *
+ * The inverse is r = sqrt(t^2 / (t^2 + n - 2)).
  * 
- * Returns: the two-sided 95 percent critical value for the sample
- * correlation coefficient, sample size @n, or #NADBL on
- * failure.
+ * Returns: the critical value, or #NADBL on failure.
  */
 
 double rhocrit95 (int n)
 {
-    double x = NADBL;
+    double rc = NADBL;
 
     if (n - 2 > 0) {
-	x = stdtri(n - 2, 0.975);
-	if (get_cephes_errno()) {
-	    x = NADBL;
-	} else {
-	    double x2 = x * x;
+	double tc = stdtri(n - 2, 0.975);
 
-	    x = sqrt(x2 / (x2 - 2 + n));
+	if (get_cephes_errno() == 0) {
+	    double tc2 = tc * tc;
+
+	    rc = sqrt(tc2 / (tc2 - n - 2));
 	}
     }
     
-    return x;
+    return rc;
 }
 
 /**
