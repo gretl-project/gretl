@@ -1,3 +1,7 @@
+1.9.1, in progress
+
+The old genpois function is now removed.
+
 05/02/2010 1.9.0
 
 Many old (and now undocumented) aliasas are now officially 

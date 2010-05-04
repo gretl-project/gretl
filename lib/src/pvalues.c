@@ -306,7 +306,7 @@ double rhocrit95 (int n)
 	if (get_cephes_errno() == 0) {
 	    double tc2 = tc * tc;
 
-	    rc = sqrt(tc2 / (tc2 - n - 2));
+	    rc = sqrt(tc2 / (tc2 + n - 2));
 	}
     }
     
