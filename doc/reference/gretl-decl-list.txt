@@ -25,7 +25,6 @@ genr_get_loopline
 genr_get_output_type
 genr_get_output_varnum
 genr_get_output_scalar
-genr_get_warning
 genr_get_last_output_type
 genr_get_output_matrix
 series_index
@@ -51,6 +50,7 @@ function_from_string
 is_gretl_function_call
 function_lookup
 const_lookup
+get_const_by_name
 gretl_function_complete
 gretl_function_hash_cleanup
 </SECTION>
@@ -161,17 +161,21 @@ reverse_data
 
 <SECTION>
 <FILE>gretl_bfgs</FILE>
-RSTEPS
+OptimizerCode
 BFGS_CRIT_FUNC
 BFGS_GRAD_FUNC
-BFGS_SCORE_FUNC
+BFGS_LLT_FUNC
+HESS_FUNC
 BFGS_max
 LBFGS_max
+newton_raphson_max
 BFGS_numeric_gradient
-build_OPG_matrix
+build_score_matrix
+hessian_from_score
 numerical_hessian
 user_BFGS
 fdjac
+BFGS_defaults
 </SECTION>
 
 <SECTION>
@@ -205,12 +209,15 @@ kalman_parse_line
 user_kalman_run
 user_kalman_smooth
 user_kalman_simulate
+kalman_attach_printer
+kalman_get_printer
 kalman_cleanup
 delete_kalman
 </SECTION>
 
 <SECTION>
 <FILE>gretl_scalar</FILE>
+ScalarAction
 n_saved_scalars
 gretl_is_scalar
 gretl_scalar_get_index
@@ -231,6 +238,8 @@ print_scalar_by_name
 set_auxiliary_scalars
 unset_auxiliary_scalars
 write_scalars_to_file
+print_scalars
+set_scalar_edit_callback
 </SECTION>
 
 <SECTION>
@@ -245,7 +254,7 @@ johansen_test
 johansen_test_simple
 print_Johansen_test_case
 gretl_VECM_id
-list_composite
+VAR_list_composite
 </SECTION>
 
 <SECTION>
@@ -302,6 +311,7 @@ gretl_iszero
 gretl_isconst
 gretl_isunits
 gretl_isint
+gretl_iscount
 gretl_isdiscrete
 gretl_is_oprobit_ok
 true_const
@@ -322,15 +332,17 @@ gretl_type_from_name
 copyvec
 doubles_array_free
 doubles_array_new
+doubles_array_new0
+doubles_array_adjust_length
 data_array_from_model
 ijton
+transcribe_array
 ztox
 get_xvalue
 gretl_copy_file
 gretl_delete_var_by_name
 gretl_spawn
 gretl_calculate_criteria
-gretl_print_criteria
 ls_criteria
 record_test_result
 record_LR_test_result
@@ -410,7 +422,6 @@ adjust_indent
 <FILE>nlspec</FILE>
 parm
 ocset
-nlspec
 nlspec_destroy_arrays
 oc_set_destroy
 nl_calculate_fvec
@@ -429,7 +440,7 @@ gmm_missval_check_etc
 <SECTION>
 <FILE>compat</FILE>
 graphyx
-ascii_graph
+textplot
 </SECTION>
 
 <SECTION>
@@ -452,8 +463,9 @@ func2_symb
 func3_symb
 funcn_symb
 string_arg_func
-string0_func
+char0_func
 string_last_func
+string_mid_func
 unary_op
 binary_op
 bool_comp
@@ -532,6 +544,7 @@ numeric_string
 integer_string
 count_fields
 dot_atof
+set_atof_point
 dotpos
 slashpos
 delchar
@@ -621,6 +634,7 @@ gretl_cmd_destroy_context
 gretl_cmd_get_savename
 gretl_cmd_get_opt
 gretl_cmd_set_opt
+filter_comments
 parse_command_line
 get_command_index
 command_number
@@ -637,9 +651,12 @@ gretl_shell_grab
 <SECTION>
 <FILE>pvalues</FILE>
 gamma_function
-log_gamma_function
+ln_gamma
+digamma
 binomial_cdf
 binomial_cdf_comp
+binomial_pmf
+poisson_pmf
 x_factorial
 log_x_factorial
 normal_pvalue_2
@@ -703,6 +720,10 @@ import_csv
 import_spreadsheet
 import_other
 add_obs_markers_from_file
+add_var_labels_from_file
+save_var_labels_to_file
+dataset_has_var_labels
+read_or_write_var_labels
 detect_filetype
 data_save_opt_from_suffix
 check_varname
@@ -795,14 +816,11 @@ rhs_var_in_identity
 print_equation_system_info
 system_set_restriction_matrices
 system_normality_test
-system_add_resids_to_dataset
+system_get_resid_series
 equation_system_get_series
 equation_system_get_matrix
 highest_numbered_var_in_system
 equation_system_serialize
-system_set_save_flag
-system_unset_save_flag
-system_save_flag_is_set
 gretl_system_print
 system_print_sigma
 system_get_forecast_matrix
@@ -843,6 +861,7 @@ set_stdio_use_utf8
 get_stdio_use_utf8
 string_is_utf8
 gretl_fopen
+gretl_read_user_file
 gretl_open
 gretl_rename
 gretl_remove
@@ -874,6 +893,7 @@ gretl_maybe_prepend_dir
 gretl_gnuplot_path
 gretl_plotfile
 set_gretl_plotfile
+report_plot_written
 gretl_binbase
 gretl_ratsbase
 gretl_tramo
@@ -884,6 +904,7 @@ gretl_rbin_path
 gretl_rlib_path
 gretl_png_font
 gretl_oxl_path
+gretl_octave_path
 gretl_current_dir
 gretl_set_current_dir
 set_gretl_png_font
@@ -907,6 +928,7 @@ AR_MODEL
 SIMPLE_AR_MODEL
 ML_ESTIMATOR
 LIMDEP
+COUNT_MODEL
 LSQ_MODEL
 ASYMPTOTIC_MODEL
 NONLIST_MODEL
@@ -915,7 +937,6 @@ RQ_SPECIAL_MODEL
 POOLED_MODEL
 ModelTestType
 gretl_model_new
-model_stats_init
 gretl_model_init
 gretl_model_allocate_storage
 gretl_model_array_new
@@ -927,6 +948,7 @@ impose_model_smpl
 gretl_model_set_auxiliary
 clear_model
 gretl_model_free
+clear_model_xpx
 gretl_model_free_on_exit
 display_model_data_items
 gretl_model_set_data_with_destructor
@@ -1029,14 +1051,14 @@ lad
 quantreg
 arma
 tobit_model
-poisson_model
+duration_model
+count_model
 heckit_model
 garch
 mp_ols
 panel_model
 ivreg
 arbond_model
-groupwise_hetero_test
 hsk_func
 whites_test
 ar_func
@@ -1052,26 +1074,7 @@ get_x12a_maxpd
 
 <SECTION>
 <FILE>bhhh_max</FILE>
-BHHH_opts
-model_info
-LL_FUNC
-model_info_free
-model_info_new
-model_info_capture_OPG_model
-model_info_get_VCV
-model_info_get_theta
-model_info_get_t1
-model_info_get_t2
-model_info_get_n
-model_info_get_iters
-model_info_get_extra_info
-model_info_get_ll
-model_info_get_series
-model_info_set_extra_info
-model_info_set_n_series
-model_info_get_k
-model_info_set_opts
-model_info_set_ll
+BHHH_FUNC
 bhhh_max
 </SECTION>
 
@@ -1084,7 +1087,9 @@ dbnumber
 dbwrapper
 SERIESINFO
 ODBC_info
-ODBC_MAXCOLS
+ODBC_OBSCOLS
+netfloat
+retrieve_float
 get_native_db_data
 get_remote_db_data
 get_pcgive_db_data
@@ -1211,6 +1216,7 @@ gretl_covar
 gretl_corr
 gretl_corr_rsq
 gretl_moments
+gretl_sorted_series
 free_freq
 freq_setup
 get_freq
@@ -1277,7 +1283,9 @@ foreign_execute
 write_gretl_R_files
 delete_gretl_R_files
 write_gretl_ox_file
+write_gretl_octave_file
 delete_gretl_ox_file
+delete_gretl_octave_file
 get_R_function_by_name
 gretl_R_get_call
 gretl_R_function_add_scalar
@@ -1327,6 +1335,8 @@ block_resample_series
 fracdiff_series
 boxcox_series
 filter_series
+exponential_movavg_series
+movavg_series
 seasonally_adjust_series
 panel_statistic
 hp_filter
@@ -1339,6 +1349,7 @@ gen_time
 gen_wkday
 plotvar_code
 gretl_plotx
+get_fit_or_resid
 genr_fit_resid
 get_observation_number
 get_t_from_obs_string
@@ -1352,11 +1363,14 @@ gretl_round
 gretl_bessel
 gretl_npv
 gretl_irr
+logistic_cdf
 </SECTION>
 
 <SECTION>
 <FILE>random</FILE>
 gretl_rand_set_seed
+gretl_rand_set_box_muller
+gretl_rand_get_box_muller
 gretl_one_snormal
 gretl_rand_uniform
 gretl_rand_uniform_minmax
@@ -1396,6 +1410,7 @@ gretlRGB
 MAXTITLE
 N_GP_COLORS
 BOXCOLOR
+SHADECOLOR
 PlotType
 FitType
 TermType
@@ -1407,17 +1422,18 @@ get_png_output
 get_gretl_png_term_line
 get_gretl_emf_term_line
 gp_justification_string
-gnuplot_label_front_string
 split_graph_fontspec
 gnuplot_missval_string
-gnuplot_init
-gnuplot_batch_init
+get_plot_input_stream
+get_gnuplot_batch_stream
+gnuplot_cleanup
 specified_gp_output_format
 write_plot_type_string
 write_plot_line_styles
 print_plot_bounding_box_request
 plot_type_from_string
 gnuplot_make_graph
+graph_written_to_file
 reset_plot_count
 matrix_plot
 gnuplot
@@ -1427,6 +1443,7 @@ plot_freq
 garch_resid_plot
 rmplot
 hurstplot
+qq_plot
 theil_forecast_plot
 gretl_panel_ts_plot
 plot_fcast_errs
@@ -1438,18 +1455,15 @@ gretl_system_residual_mplot
 gretl_VAR_roots_plot
 confidence_ellipse_plot
 xy_plot_with_control
+gnuplot_process_file
 is_auto_fit_string
 gnuplot_has_ttf
 gnuplot_pdf_terminal
 gnuplot_png_terminal
-gnuplot_has_rgb
-gnuplot_has_style_fill
 gnuplot_has_latin5
-gnuplot_has_cp1250
 gnuplot_has_cp1254
 gnuplot_has_bbox
 gnuplot_has_utf8
-gnuplot_uses_datafile_missing
 set_graph_palette
 set_graph_palette_from_string
 graph_palette_reset
@@ -1468,6 +1482,7 @@ panel_diagnostics
 real_panel_model
 panel_wls_by_unit
 panel_autocorr_test
+groupwise_hetero_test
 panel_tsls_robust_vcv
 set_panel_structure_from_vars
 set_panel_structure_from_line
@@ -1634,7 +1649,8 @@ gretl_VAR_get_n_equations
 gretl_VAR_get_t1
 gretl_VAR_get_t2
 gretl_VAR_get_model
-gretl_VAR_add_resids_to_dataset
+gretl_VAR_get_resid_series
+gretl_VAR_set_ordering
 gretl_VAR_do_irf
 gretl_VAR_get_highest_variable
 gretl_VECM_n_beta
@@ -1691,6 +1707,7 @@ gretl_matrix_unset_equals_tolerance
 gretl_matrix_alloc
 gretl_matrix_reuse
 gretl_matrix_realloc
+gretl_matrix_replace
 gretl_matrix_block_destroy
 gretl_matrix_block_new
 gretl_identity_matrix_new
@@ -1706,6 +1723,7 @@ gretl_matrix_copy_transpose
 gretl_matrix_reverse_rows
 gretl_matrix_reverse_cols
 gretl_matrix_get_diagonal
+gretl_matrix_get_row
 gretl_matrix_trace
 gretl_matrix_random_fill
 gretl_random_matrix_new
@@ -1716,6 +1734,7 @@ gretl_vector_variance
 gretl_matrix_zero
 gretl_matrix_zero_upper
 gretl_matrix_zero_lower
+gretl_matrix_mirror
 gretl_matrix_fill
 gretl_matrix_multiply_by_scalar
 gretl_matrix_divide_by_scalar
@@ -1801,6 +1820,8 @@ gretl_symmetric_eigen_sort
 gretl_general_matrix_eigenvals
 gretl_symmetric_matrix_eigenvals
 gretl_gensymm_eigenvals
+gretl_symm_matrix_lambda_min
+gretl_symm_matrix_lambda_max
 gretl_matrix_right_nullspace
 gretl_matrix_left_nullspace
 gretl_matrix_row_concat
@@ -1836,6 +1857,7 @@ gretl_is_zero_matrix
 gretl_matrix_get_structure
 gretl_matrices_are_equal
 gretl_covariance_matrix
+gretl_matrix_GG_inverse
 gretl_matrix_array_new
 gretl_matrix_array_new_with_size
 gretl_matrix_array_free
@@ -2123,6 +2145,7 @@ DatasetStructure
 DatasetMarkerType
 VarinfoFlags
 DatasetOp
+DataCopyFlag
 dataset_is_cross_section
 dataset_is_time_series
 dataset_is_seasonal
@@ -2137,6 +2160,7 @@ dated_weekly_data
 calendar_data
 quarterly_or_monthly
 dataset_is_panel
+dataset_has_markers
 var_is_discrete
 var_is_hidden
 var_is_generated
@@ -2176,6 +2200,7 @@ dataset_add_series_as
 dataset_copy_variable_as
 overwrite_err
 series_is_parent
+dataset_replace_series
 dataset_rename_series
 dataset_drop_listed_variables
 dataset_drop_variable
@@ -2206,8 +2231,11 @@ set_dataset_is_changed
 
 <SECTION>
 <FILE>options</FILE>
+OptStatus
 get_gretl_options
 opt_from_flag
+valid_long_opt
+valid_short_opt
 print_flags
 get_opts_for_command
 check_for_loop_only_options
@@ -2217,6 +2245,7 @@ delete_option_flags
 incompatible_options
 option_prereq_missing
 inapplicable_option_error
+push_option_param
 get_optval_double
 set_optval_double
 get_optval_string
@@ -2227,16 +2256,22 @@ option_flags_cleanup
 <SECTION>
 <FILE>gretl_errors</FILE>
 errmsg
+warnmsg
 errmsg_get_with_default
 gretl_errmsg_get
+gretl_warnmsg_get
 gretl_errmsg_set
+gretl_warnmsg_set
 gretl_errmsg_sprintf
+gretl_warnmsg_sprintf
 gretl_errmsg_set_from_errno
 gretl_error_clear
 set_gretl_alarm
 set_gretl_errno
+set_gretl_warning
 get_gretl_errno
 check_gretl_errno
+check_gretl_warning
 gretl_error_is_fatal
 gretl_errmsg_is_set
 </SECTION>
@@ -2248,7 +2283,10 @@ GP_BORDER_DEFAULT
 LT_AUTO
 GpLineStyle
 GpKeyPos
+GpRange
 gp_style_spec
+gp_key_spec
+plotbars
 gp_line_flags
 GPT_LINE
 PLOT_LABEL_TEXT_LEN
@@ -2268,15 +2306,20 @@ plotspec_clone_labels
 plotspec_print
 plotspec_add_fit
 print_auto_fit_string
-gp_line_style_string
-gp_style_from_string
-gp_style_from_translation
+gp_line_style_display_name
+gp_style_index_from_name
+gp_style_index_from_display_name
 get_style_spec
-gp_keypos_from_string
-gp_keypos_from_translation
+gp_keypos_from_name
+gp_keypos_from_display_name
 get_keypos_spec
 print_keypos_string
 set_plotfit_line
+plotspec_add_bars_info
+plotspec_allocate_bars
+plotspec_set_bar_info
+plotspec_set_bars_limits
+plotspec_remove_bars
 </SECTION>
 
 <SECTION>
@@ -2327,6 +2370,7 @@ gretl_vcv_matrix_from_model
 gretl_coeff_vector_from_model
 gretl_covariance_matrix_from_varlist
 gretl_matrix_row_to_array
+gretl_matrix_get_columns
 gretl_matrix_data_subset_masked
 gretl_matrix_data_subset
 gretl_dataset_from_matrix
@@ -2365,6 +2409,7 @@ forecast_matrix_cleanup
 <SECTION>
 <FILE>calendar</FILE>
 FOUR_DIGIT_YEAR
+epoch_day_from_ymd
 get_epoch_day
 get_day_of_week
 day_starts_month
@@ -2376,6 +2421,7 @@ calendar_obs_number
 calendar_date_string
 MS_excel_date_string
 get_dec_date
+day_of_week
 n_hidden_missing_obs
 guess_daily_pd
 </SECTION>
@@ -2412,11 +2458,11 @@ VAR_write_A_matrix
 johansen_stage_1
 gretl_VAR_ldet
 VAR_LR_lag_test
-last_lag_LR_prep
 VAR_portmanteau_test
 VAR_do_lagsel
 VAR_wald_omit_tests
 VAR_coeff_matrix_from_VECM
+reorder_responses
 irf_bootstrap
 </SECTION>
 
@@ -2425,9 +2471,12 @@ irf_bootstrap
 VECMnorm
 BFGS_MAXITER
 BFGS_TOLER
+BFGS_MAXGRAD
+BFGS_VERBSKIP
+BFGS_RSTEP
 BHHH_MAXITER
 BHHH_TOLER
-BKBP_K
+LBFGS_MEM
 BOOTREP
 FORCE_DECP
 FORCE_HC
@@ -2438,7 +2487,6 @@ HAC_LAG
 HALT_ON_ERR
 HC_VERSION
 HORIZON
-HP_LAMBDA
 USE_LBFGS
 LOOP_MAXITER
 RQ_MAXITER
@@ -2457,6 +2505,7 @@ VERBOSE_INCLUDE
 SKIP_MISSING
 R_FUNCTIONS
 R_LIB
+NORMAL_RAND
 ITER_PRINT_FUNC
 DEBUG_READLINE
 DEBUG_OUTPUT
@@ -2470,8 +2519,10 @@ libset_get_bool
 libset_set_bool
 libset_get_double
 libset_set_double
+libset_get_user_tolerance
 libset_get_int
 libset_set_int
+is_libset_var
 set_xsect_hccme
 set_tseries_hccme
 set_panel_hccme
@@ -2480,10 +2531,6 @@ get_hac_lag
 data_based_hac_bandwidth
 get_bkbp_k
 get_bkbp_periods
-set_bkbp_k
-set_bkbp_periods
-unset_bkbp_k
-unset_bkbp_periods
 set_mp_bits
 get_mp_bits
 get_init_vals
@@ -2494,6 +2541,7 @@ set_loop_off
 gretl_looping
 gretl_looping_currently
 gretl_looping_quietly
+gretl_looping_progressive
 gretl_set_batch_mode
 gretl_in_batch_mode
 gretl_set_gui_mode
