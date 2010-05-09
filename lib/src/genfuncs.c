@@ -28,104 +28,41 @@
 
 #include <errno.h>
 
-/* apparatus for saving sorted case markers */
-
-struct val_mark {
-    double x;
-    char mark[OBSLEN];
-};
-
-static int compare_vms (const void *a, const void *b)
-{
-    const struct val_mark *va = (const struct val_mark *) a;
-    const struct val_mark *vb = (const struct val_mark *) b;
-     
-    return (va->x > vb->x) - (va->x < vb->x);
-}
-
-static int inverse_compare_vms (const void *a, const void *b)
-{
-    const struct val_mark *va = (const struct val_mark *) a;
-    const struct val_mark *vb = (const struct val_mark *) b;
-     
-    return (vb->x > va->x) - (vb->x < va->x);
-}
-
-static char **SortedS;
-
-/* do a simple sort if there are no case markers in the dataset,
-   but if there are case markers, keep a record of the sorted
-   markers and attach it to the newly generated variable
-*/
-
 int sort_series (const double *x, double *y, int f, 
 		 const DATAINFO *pdinfo)
 {
     double *z = NULL;
-    struct val_mark *vm = NULL;
-    int markers = 0;
     int n = sample_size(pdinfo);
     int i, t;
 
-    if (pdinfo->S != NULL && !complex_subsampled()) {
-	SortedS = strings_array_new_with_length(pdinfo->n, OBSLEN);
-	markers = SortedS != NULL;
-    }
-
-    if (markers) {
-	vm = malloc(n * sizeof *vm);
-	if (vm == NULL) {
-	    free_strings_array(SortedS, pdinfo->n);
-	    SortedS = NULL;
-	    return E_ALLOC;
-	}
-    } else {
-	z = malloc(n * sizeof *z);
-	if (z == NULL) {
-	    return E_ALLOC;
-	}
+    z = malloc(n * sizeof *z);
+    if (z == NULL) {
+	return E_ALLOC;
     }
 
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (!na(x[t])) {
-	    if (markers) {
-		vm[i].x = x[t];
-		strcpy(vm[i++].mark, pdinfo->S[t]);
-	    } else {
-		z[i++] = x[t];
-	    }
+	    z[i++] = x[t];
 	}
     }
 
     if (f == F_DSORT) {
-	if (markers) {
-	    qsort(vm, i, sizeof *vm, inverse_compare_vms);
-	} else {
-	    qsort(z, i, sizeof *z, gretl_inverse_compare_doubles);
-	}
+	qsort(z, i, sizeof *z, gretl_inverse_compare_doubles);
     } else {
-	if (markers) {
-	    qsort(vm, i, sizeof *vm, compare_vms);
-	} else {
-	    qsort(z, i, sizeof *z, gretl_compare_doubles);
-	}
+	qsort(z, i, sizeof *z, gretl_compare_doubles);
     }
 
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (na(x[t])) {
 	    y[t] = NADBL;
-	} else if (markers) {
-	    y[t] = vm[i].x;
-	    strcpy(SortedS[t], vm[i++].mark);
 	} else {
 	    y[t] = z[i++];
 	}
     }
 
     free(z);
-    free(vm);
 
     return 0;
 }
@@ -1035,23 +972,6 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
     default:
 	break;
     }
-
-    return 0;
-}
-
-/* handling sorted marker strings */
-
-int maybe_pick_up_sorted_markers (parser *p)
-{
-    if (SortedS != NULL) {
-	if (p->flags & P_SORT) {
-	    /* "genr foo = sort(baz)" */
-	    set_sorted_markers(p->dinfo, p->lh.v, SortedS);
-	} else {
-	    free_strings_array(SortedS, p->dinfo->n);
-	}
-	SortedS = NULL;	
-    } 
 
     return 0;
 }

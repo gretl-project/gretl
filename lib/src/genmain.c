@@ -637,10 +637,6 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	gen_save_or_print(&p, prn);
     }
 
-    if (!p.err) {
-	maybe_pick_up_sorted_markers(&p);
-    }
-
     if (!p.err && gen_verbose(p.flags)) {
 	gen_write_label(&p, oldv);
 	if (!(opt & OPT_Q)) {

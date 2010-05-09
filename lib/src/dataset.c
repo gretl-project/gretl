@@ -88,20 +88,6 @@ void dataset_destroy_obs_markers (DATAINFO *pdinfo)
     } 
 }
 
-static void free_sorted_markers (DATAINFO *pdinfo, int v)
-{
-    VARINFO *vinfo = pdinfo->varinfo[v];
-    int i;
-
-    if (vinfo->sorted_markers != NULL) {
-	for (i=0; i<pdinfo->n; i++) {
-	    free(vinfo->sorted_markers[i]);
-	}
-	free(vinfo->sorted_markers);
-	vinfo->sorted_markers = NULL;
-    }    
-}
-
 void dataset_destroy_panel_info (DATAINFO *pdinfo)
 {
     if (pdinfo->paninfo != NULL) {
@@ -115,14 +101,7 @@ void dataset_destroy_panel_info (DATAINFO *pdinfo)
 
 static void free_varinfo (DATAINFO *pdinfo, int v)
 {
-    free_sorted_markers(pdinfo, v);
     free(pdinfo->varinfo[v]);
-}
-
-void set_sorted_markers (DATAINFO *pdinfo, int v, char **S)
-{
-    free_sorted_markers(pdinfo, v);
-    pdinfo->varinfo[v]->sorted_markers = S;
 }
 
 /**
@@ -510,7 +489,6 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->lag = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->line_width = 1;
-    vinfo->sorted_markers = NULL;
     vinfo->stack_level = gretl_function_depth();
 }
 
@@ -537,7 +515,6 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
     targ->line_width = src->line_width;
-    targ->sorted_markers = NULL;
 }
 
 /**

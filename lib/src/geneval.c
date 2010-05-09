@@ -9397,13 +9397,7 @@ static void maybe_set_return_flags (parser *p)
 {
     NODE *t = p->tree;
 
-    if (t != NULL && (t->t == F_SORT || t->t == F_DSORT)) {
-	NODE *l = t->v.b1.b;
-
-	if (l->t == VEC && l->vnum >= 0) {
-	    p->flags |= P_SORT;
-	}
-    } else if (t != NULL && t->t == UFUN) {
+    if (t != NULL && t->t == UFUN) {
 	p->flags |= P_UFRET;
     }
 }

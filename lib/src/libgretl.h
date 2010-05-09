@@ -248,7 +248,6 @@ struct VARINFO_ {
     char compact_method;
     char stack_level; /* FIXME should be int? */
     char line_width;
-    char **sorted_markers;
 };
 
 /* panel indexing information */
@@ -370,7 +369,6 @@ struct MODEL_ {
 #define PARENT(p,i)          ((p->varinfo[i])->parent)
 #define COMPACT_METHOD(p,i)  ((p->varinfo[i])->compact_method)
 #define STACK_LEVEL(p,i)     ((p->varinfo[i])->stack_level)
-#define SORTED_MARKER(p,i,t) ((p->varinfo[i])->sorted_markers[t])
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"

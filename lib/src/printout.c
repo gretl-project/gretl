@@ -1673,48 +1673,6 @@ void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-/* See if there is a variable that is an outcome of sorting,
-   and has sorted case-markers attached to it.  If so,
-   we'll arrange to print the case-markers in the correct
-   sequence, provided the variable in question is being
-   printed by itself, or as the last in a short list of
-   variables.
-*/
-
-static int 
-check_for_sorted_var (int *list, const DATAINFO *pdinfo)
-{
-    int i, v, ret = 0;
-    int l0 = list[0];
-    int pos = 0;
-
-    if (l0 < 5 && !complex_subsampled()) {
-	for (i=1; i<=l0; i++) {
-	    v = list[i];
-	    if (pdinfo->varinfo[v]->sorted_markers != NULL) {
-		if (ret == 0) {
-		    ret = v;
-		    pos = i;
-		} else {
-		    ret = 0;
-		    pos = 0;
-		    break;
-		}
-	    }
-	}
-    }
-
-    if (ret && pos != list[0]) {
-	/* sorted var should be last in list */
-	int tmp = list[l0];
-
-	list[l0] = list[pos];
-	list[pos] = tmp;
-    }
-
-    return ret;
-}
-
 static void print_varlist (const char *name, const int *list, 
 			   const DATAINFO *pdinfo, PRN *prn)
 {
@@ -1856,7 +1814,7 @@ static int print_by_obs (int *list, const double **Z,
 			 PRN *prn)
 {
     int i, j, j0, k, t, nrem;
-    int colwidth, sortvar, obslen;
+    int colwidth, obslen;
     int *pmax = NULL;
     char obslabel[OBSLEN];
     char buf[128];
@@ -1869,8 +1827,6 @@ static int print_by_obs (int *list, const double **Z,
     if (pmax == NULL) {
 	return E_ALLOC;
     }
-
-    sortvar = check_for_sorted_var(list, pdinfo);
 
     if (opt & OPT_N) {
 	obslen = obslen_from_t(pdinfo->t2);
@@ -1903,9 +1859,7 @@ static int print_by_obs (int *list, const double **Z,
 		continue;
 	    }
 
-	    if (sortvar && list[0] == 1) {
-		strcpy(obslabel, SORTED_MARKER(pdinfo, sortvar, t));
-	    } else if (opt & OPT_N) {
+	    if (opt & OPT_N) {
 		sprintf(obslabel, "%d", t + 1);
 	    } else if (dataset_has_markers(pdinfo)) {
 		strcpy(obslabel, pdinfo->S[t]);
@@ -1924,10 +1878,6 @@ static int print_by_obs (int *list, const double **Z,
 		    bufprintnum(buf, x, pmax[j-1], gprec, colwidth);
 		    pputs(prn, buf);
 		}
-	    }
-
-	    if (sortvar && list[0] > 1) {
-		pprintf(prn, "%*s", obslen, SORTED_MARKER(pdinfo, sortvar, t));
 	    }
 
 	    pputc(prn, '\n');
