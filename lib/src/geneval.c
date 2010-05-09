@@ -9112,7 +9112,6 @@ static int save_generated_var (parser *p, PRN *prn)
 		    Z[v][t] = xy_calc(Z[v][t], x[t], p->op, VEC, p);
 		}
 	    }
-	    set_dataset_is_changed();
 	} else if (r->t == MAT) {
 	    const gretl_matrix *m = r->v.m;
 	    int s, k = gretl_vector_get_length(m);
@@ -9151,6 +9150,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	fprintf(stderr, "var %d: gave generated series the name '%s'\n", 
 		v, p->lh.name);
 #endif
+	if (!p->err) {
+	    set_dataset_is_changed();
+	}
     } else if (p->targ == MAT) {
 	/* writing a matrix */
 	if (p->lh.m0 == NULL) {
