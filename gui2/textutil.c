@@ -463,6 +463,27 @@ static gchar *maybe_amend_buffer (gchar *inbuf, int fmt)
     return outbuf;
 }
 
+int multiple_formats_ok (windata_t *vwin)
+{
+    int r = vwin->role;
+
+    if (r == SUMMARY || r == VAR_SUMMARY || 
+	r == ALL_SUMMARY || r == AFR || 
+	r == CORR || r == ALL_CORR || 
+	r == FCAST || r == COEFFINT || 
+	r == COVAR || r == VIEW_MODELTABLE || 
+	r == VAR || r == VECM || 
+	r == VAR_IRF || r == VAR_DECOMP) {
+	return 1;
+    } else if (r == VIEW_MODEL) {
+	MODEL *pmod = (MODEL *) vwin->data;
+
+	return !RQ_SPECIAL_MODEL(pmod);
+    } else {
+	return 0;
+    }
+}
+
 /* copying text from gretl windows */
 
 #define SPECIAL_FORMAT(f) ((f & GRETL_FORMAT_TEX) || \
@@ -474,7 +495,7 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 
     if (vwin->role == VIEW_MODEL && fmt == GRETL_FORMAT_CSV) {
 	special_text_handler(vwin, fmt, action);
-    } else if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
+    } else if (multiple_formats_ok(vwin) && SPECIAL_FORMAT(fmt)) {
 	special_text_handler(vwin, fmt, action);
     } else if (fmt == GRETL_FORMAT_CSV || fmt == GRETL_FORMAT_TAB ||
 	       fmt == GRETL_FORMAT_RTF) {

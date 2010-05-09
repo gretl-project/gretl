@@ -28,6 +28,8 @@ enum {
 
 int prn_to_clipboard (PRN *prn, int copycode);
 
+int multiple_formats_ok (windata_t *vwin);
+
 void window_tex_callback (GtkWidget *w, windata_t *vwin);
 
 void model_tex_view (GtkAction *action, gpointer data);

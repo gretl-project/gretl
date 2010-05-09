@@ -704,7 +704,7 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!help_ok(r) && f == HELP_ITEM) {
 	return NULL;
-    } else if ((!latex_ok || !MULTI_FORMAT_ENABLED(r)) && f == TEX_ITEM) {
+    } else if ((!latex_ok || !multiple_formats_ok(vwin)) && f == TEX_ITEM) {
 	return NULL;
     } else if (!add_data_ok(r) && f == ADD_DATA_ITEM) {
 	return NULL;
@@ -738,7 +738,7 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (f == SAVE_AS_ITEM) {
 	if (!save_as_ok(r)) {
 	    return NULL;
-	} else if (MULTI_FORMAT_ENABLED(r) || (r == PRINT && vwin->data != NULL)) {
+	} else if (multiple_formats_ok(vwin) || (r == PRINT && vwin->data != NULL)) {
 	    func = G_CALLBACK(multi_save_as_callback);
 	}
     }

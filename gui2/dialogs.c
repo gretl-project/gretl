@@ -770,7 +770,7 @@ void copy_format_dialog (windata_t *vwin, int action)
     finfo->vwin = vwin;
     finfo->dialog = dialog;
 
-    finfo->multi = MULTI_FORMAT_ENABLED(vwin->role);
+    finfo->multi = multiple_formats_ok(vwin);
     finfo->format = pref = preferred_format(0, finfo->multi);
     finfo->action = action;
 

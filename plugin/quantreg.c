@@ -1407,7 +1407,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     if (!err) {
 	if (opt & OPT_I) {
-	    /* doing confidence intervals -> use Borrodale-Roberts */
+	    /* doing confidence intervals -> use Barrodale-Roberts */
 	    err = rq_fit_br(y, X, tau, opt, pmod);
 	} else {
 	    /* otherwise use Frisch-Newton */

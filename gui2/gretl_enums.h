@@ -283,12 +283,4 @@ enum auto_dummies {
     PANEL_TIME_DUMMIES
 };
 
-#define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
-                                 c == ALL_SUMMARY || c == AFR || \
-	                         c == CORR || c == ALL_CORR || \
-	                         c == FCAST || c == COEFFINT || \
-	                         c == COVAR || c == VIEW_MODEL || \
-                                 c == VIEW_MODELTABLE || c == VAR || c == VECM || \
-                                 c == VAR_IRF || c == VAR_DECOMP)
-
 #endif /* GRETL_ENUMS_H */

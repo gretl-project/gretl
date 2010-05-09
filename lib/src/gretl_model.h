@@ -183,7 +183,7 @@ struct VCVInfo_ {
 	                     c == RESTRICT || \
                              c == VIF)
 
-#define RQ_SPECIAL_MODEL(m) (m->ci == LAD && \
+#define RQ_SPECIAL_MODEL(m) ((m->ci == LAD || m->ci == QUANTREG) &&	\
                              NULL != gretl_model_get_data(m, "rq_tauvec"))
 
 #define POOLED_MODEL(m) ((m->ci == OLS || m->ci == PANEL) && \
