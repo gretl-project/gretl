@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-05-14 00:10+0800\n"
+"PO-Revision-Date: 2010-05-15 23:59+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -14076,15 +14076,13 @@ msgid "maximum lag:"
 msgstr "最大落後期數 (max. lag):"
 
 #: gui2/selector.c:3569
-#, fuzzy
 msgid "ARCH order:"
-msgstr "落後期 %d\n"
+msgstr "ARCH order:"
 
 #: gui2/selector.c:3574
 #: gui2/selector.c:4127
-#, fuzzy
 msgid "AR order:"
-msgstr "落後期 %d\n"
+msgstr "AR order:"
 
 #: gui2/selector.c:3618
 #, fuzzy
@@ -14136,23 +14134,20 @@ msgid "ARCH q:"
 msgstr "ARCH q:"
 
 #: gui2/selector.c:4080
-#, fuzzy
 msgid "Non-seasonal"
-msgstr "非線性"
+msgstr "非季節性參數設定"
 
 #: gui2/selector.c:4081
-#, fuzzy
 msgid "Seasonal"
-msgstr "加上季節虛擬變數"
+msgstr "季節性參數設定"
 
 #: gui2/selector.c:4128
 msgid "Difference:"
-msgstr "Difference 差異 :"
+msgstr "Difference 差分階次 :"
 
 #: gui2/selector.c:4129
-#, fuzzy
 msgid "MA order:"
-msgstr "落後期 %d\n"
+msgstr "MA order:"
 
 #: gui2/selector.c:4149
 #: gui2/selector.c:4178
