@@ -1513,7 +1513,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 
     if (gretl_is_null_matrix(A) ||
 	gretl_is_null_matrix(B)) {
-	if (op != B_HCAT && op != B_VCAT) {
+	if (op != B_HCAT && op != B_VCAT && op != F_DSUM) {
 	    *err = E_NONCONF;
 	    return NULL;
 	}
