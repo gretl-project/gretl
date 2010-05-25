@@ -8090,6 +8090,59 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 
 /**
  * gretl_matrix_inplace_colcat:
+ * @a: top left matrix.
+ * @b: bottom right matrix.
+ * @err: location to receive error code.
+ *
+ * Returns: a new matrix containing the direct sum of @a and
+ * @b, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_direct_sum (const gretl_matrix *a,
+				       const gretl_matrix *b,
+				       int *err)
+{
+    gretl_matrix *c = NULL;
+
+    if (gretl_is_null_matrix(a) && gretl_is_null_matrix(b)) {
+	c = gretl_null_matrix_new();
+    } else if (gretl_is_null_matrix(a)) {
+	c = gretl_matrix_copy(b);
+    } else if (gretl_is_null_matrix(b)) {
+	c = gretl_matrix_copy(a);
+    } else {
+	int m = a->rows + b->rows;
+	int n = a->cols + b->cols;
+	int i, j;
+	double x;
+
+	c = gretl_zero_matrix_new(m, n);
+
+	if (c != NULL) {
+	    for (i=0; i<a->rows; i++) {
+		for (j=0; j<a->cols; j++) {
+		    x = gretl_matrix_get(a, i, j);
+		    gretl_matrix_set(c, i, j, x);
+		}
+	    }
+	    for (i=0; i<b->rows; i++) {
+		for (j=0; j<b->cols; j++) {
+		    x = gretl_matrix_get(b, i, j);
+		    gretl_matrix_set(c, i + a->rows, j + a->cols, x);
+		}
+	    }
+	}
+    }
+
+    if (c == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return c;
+}
+
+/**
+ * gretl_matrix_inplace_colcat:
  * @a: matrix to be enlarged (m x n).
  * @b: matrix from which columns should be added (m x p).
  * @mask: char array, of length p, with 1s in positions
@@ -9895,6 +9948,40 @@ int gretl_is_zero_matrix (const gretl_matrix *m)
     }
 
     return 1;
+}
+
+/**
+ * gretl_matrix_isfinite:
+ * @m: matrix to examine.
+ * @err: location to receive error code.
+ *
+ * Returns: a matrix with 1s in positions corresponding to
+ * finite elements of @m, zeros otherwise.
+ */
+
+gretl_matrix *gretl_matrix_isfinite (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *f;
+
+    if (gretl_is_null_matrix(m)) {
+	f = gretl_null_matrix_new();
+    } else {
+	f = gretl_matrix_alloc(m->rows, m->cols);
+
+	if (f != NULL) {
+	    int i, n = m->rows * m->cols;
+
+	    for (i=0; i<n; i++) {
+		f->val[i] = (xna(m->val[i]))? 0 : 1;
+	    }
+	}
+    }
+
+    if (f == NULL) {
+	*err = E_ALLOC;
+    }
+
+    return f;
 }
 
 /**

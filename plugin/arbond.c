@@ -1444,7 +1444,7 @@ static int make_first_diff_matrix (dpd *ab, int i)
     }
 
     if (rc == NULL) {
-	rc = malloc((ab->T) * sizeof *rc);
+	rc = malloc(ab->T * sizeof *rc);
 	if (rc == NULL) {
 	    return E_ALLOC;
 	}

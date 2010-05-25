@@ -508,6 +508,10 @@ gretl_matrix *
 gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 			 int *err);
 
+gretl_matrix *gretl_matrix_direct_sum (const gretl_matrix *a,
+				       const gretl_matrix *b,
+				       int *err);
+
 int
 gretl_matrix_inplace_colcat (gretl_matrix *a, const gretl_matrix *b,
 			     const char *mask);
@@ -607,6 +611,8 @@ int gretl_matrix_get_t2 (const gretl_matrix *m);
 int gretl_is_identity_matrix (const gretl_matrix *m);
 
 int gretl_is_zero_matrix (const gretl_matrix *m);
+
+gretl_matrix *gretl_matrix_isfinite (const gretl_matrix *m, int *err);
 
 int gretl_matrix_get_structure (const gretl_matrix *m);
 

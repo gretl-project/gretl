@@ -1553,6 +1553,9 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case B_VCAT:
 	C = gretl_matrix_row_concat(A, B, err);
 	break;
+    case F_DSUM:
+	C = gretl_matrix_direct_sum(A, B, err);
+	break;
     case B_MUL:
 	ra = gretl_matrix_rows(A);
 	ca = gretl_matrix_cols(A);
@@ -2323,6 +2326,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_DIFF:
 	    ret->v.m = gretl_matrix_diffcol(m, 0, &p->err);
+	    break;
+	case F_DATAOK:
+	    ret->v.m = gretl_matrix_isfinite(m, &p->err);
 	    break;
 	case F_RESAMPLE:
 	    if (r != NULL && r->t == NUM) {
@@ -6915,6 +6921,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MRSEL:
     case F_MCSEL:
     case F_MLAG:
+    case F_DSUM:
 	/* matrix-only binary operators (but promote scalars) */
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {
@@ -7009,7 +7016,13 @@ static NODE *eval (NODE *t, parser *p)
     case F_MISSING:	
     case F_DATAOK:
 	/* series, scalar or list argument needed */
-	if (l->t == VEC) {
+	if (l->t == MAT) {
+	    if (t->t == F_DATAOK) {
+		ret = matrix_to_matrix_func(l, NULL, t->t, p);
+	    } else {
+		node_type_error(t->t, 1, VEC, l, p);
+	    }
+	} else if (l->t == VEC) {
 	    ret = apply_series_func(l, t->t, p);
 	} else if (l->t == NUM) {
 	    ret = apply_scalar_func(l, t->t, p);

@@ -957,6 +957,7 @@ static const char *arg_type_string (int t)
     case GRETL_TYPE_INT:        return "int";
     case GRETL_TYPE_DOUBLE:     return "scalar";
     case GRETL_TYPE_SERIES:     return "series";
+    case GRETL_TYPE_USERIES:    return "series";
     case GRETL_TYPE_MATRIX:     return "matrix";	
     case GRETL_TYPE_LIST:       return "list";
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
@@ -4081,6 +4082,8 @@ static int allocate_function_args (fncall *call,
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    if (arg->type == GRETL_TYPE_NONE) {
 		err = create_named_null_list(fp->name);
+	    } else if (arg->type == GRETL_TYPE_USERIES) {
+		err = create_named_singleton_list(arg->val.idnum, fp->name);
 	    } else {
 		err = localize_list(call, arg->val.str, fp, pdinfo);
 	    }
@@ -4759,6 +4762,7 @@ static int check_function_args (ufunc *u, fnargs *args,
 		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK */
 	} else if (fp->type != arg->type) {
+	    /* FIXME case where list is wanted and the arg is a series */
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
 		    u->name, i + 1, arg_type_string(arg->type), arg_type_string(fp->type));
 	    err = E_TYPES;

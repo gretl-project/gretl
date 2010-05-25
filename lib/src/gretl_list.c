@@ -539,6 +539,44 @@ int create_named_null_list (const char *name)
 }
 
 /**
+ * create_named_signgleton_list:
+ * @varnum: ID number of the series to use.
+ * @name: the name to be given to the list.
+ *
+ * Creates a one-element list under the given @name and adds it
+ * to the stack of saved lists at the next level of
+ * function execution.  This is intended for use when a single 
+ * series is given as an argument to a user-defined function in
+ * a 'slot' where a list is required.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int create_named_singleton_list (int varnum, const char *name)
+{
+    saved_list *sl;
+    int *list;
+    int err;
+
+    list = gretl_list_new(1);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    list[1] = varnum;
+
+    err = real_remember_list(list, name, 1, NULL);
+    if (!err) {
+	sl = list_stack[n_lists - 1];
+	sl->level += 1;
+    } else {
+	free(list);
+    }
+
+    return err;
+}
+
+/**
  * destroy_saved_lists_at_level:
  * @level: stack level of function execution.
  *

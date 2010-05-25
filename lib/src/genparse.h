@@ -298,6 +298,7 @@ enum {
     F_DESEAS,
     F_PERGM,
     F_NPV,
+    F_DSUM,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,
