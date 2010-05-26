@@ -630,9 +630,8 @@ int destroy_saved_lists_at_level (int level)
 
 int delete_list_by_name (const char *name)
 {
-    saved_list *sl;
+    saved_list *sl = get_saved_list_by_name(name);
 
-    sl = get_saved_list_by_name(name);
     if (sl == NULL) {
 	return E_UNKVAR;
     } else {

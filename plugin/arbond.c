@@ -2172,6 +2172,409 @@ static int dpd_invert_A_N (dpd *ab)
     return err;
 }
 
+#define ARBOND_TEST 1
+
+#ifdef ARBOND_TEST
+
+typedef struct dpd_unit_ dpd_unit;
+
+struct dpd_unit_ {
+    int T;
+    int k;
+    int nz;
+    char *mask;
+    gretl_matrix *y;
+    gretl_matrix *X;
+    gretl_matrix *Z;
+};
+
+static gretl_matrix *Hmat (int n)
+{
+    gretl_matrix *H;
+    int i;
+
+    H = gretl_identity_matrix_new(n);
+
+    for (i=0; i<n-1; i++) {
+	gretl_matrix_set(H, i, i+1, -0.5);
+	gretl_matrix_set(H, i+1, i, -0.5);
+    }
+
+    return H;
+}
+
+static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz)
+{
+    /* for the moment, matrices are perhaps (but maybe not) larger
+       than they actually need to be; we can shave off extra rows/cols
+       later 
+    */
+    int err = 0;
+
+    unit->T = T; 
+    unit->k = k; 
+    unit->nz = nz;
+
+    unit->mask = calloc(T-2, 1);
+    unit->y = gretl_vector_alloc(T-2); 
+    unit->X = gretl_matrix_alloc(k, T-2); 
+    unit->Z = gretl_matrix_alloc(nz, T-2); 
+
+    if (unit->mask == NULL || unit->y == NULL ||
+	unit->X == NULL || unit->Z == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
+static void dpd_unit_free (dpd_unit *unit)
+{
+    gretl_matrix_free(unit->y);
+    gretl_matrix_free(unit->X);
+    gretl_matrix_free(unit->Z);
+    free(unit->mask);
+}
+
+static int ab_per_unit (const double *y, const int *xlist, 
+			const double **Z, 
+			int T, int t0, int maxlag, 
+			dpd_unit *unit)
+{
+    double x;
+    int i, s, t;
+    int nx, j, nv, k;
+    int err = 0;
+
+    /* transformed y */
+    t = t0 + 2;
+    for (s=0; s<T-2; s++) {
+	if (na(y[t]) || na(y[t-1])) {
+	    unit->y->val[s] = NADBL; 
+	} else {
+	    unit->y->val[s] = y[t] - y[t-1]; /* or orthdev */
+	}
+	t++;
+    }
+
+    /* the right-hand side */
+
+    /* lagged transformed y first */
+    t = t0 + 1;
+    for (s=0; s<T-2; s++) {
+	for (i=0; i<maxlag; i++) {
+	    if (i<=s) {
+		if (na(y[t-i]) || na(y[t-i-1])) {
+		    x = NADBL;
+		} else {
+		    x = y[t-i] - y[t-i-1]; /* or orthdev */
+		}
+	    } else {
+		x = NADBL;
+	    }
+	    gretl_matrix_set(unit->X, i, s, x);
+	}
+	t++;
+    }
+
+    /* now other regressors */
+    nx = unit->k - maxlag;
+
+    if (nx > 0) {
+	t = t0 + 2;
+	for (s=0; s<T-2; s++) {
+	    j = 1;
+	    for (i=maxlag; i<unit->k; i++) {
+		nv = xlist[j++];
+		gretl_matrix_set(unit->X, i, s, Z[nv][t]);
+	    }
+	    t++;
+	}
+    }
+
+    /* instruments */
+
+    gretl_matrix_zero(unit->Z);
+
+    /* lagged levels of y first */
+    t = t0;
+    j = 0;
+    for (s=0; s<T-2; s++) {
+	for (i=0; i<=s; i++) {
+	    gretl_matrix_set(unit->Z, j++, s, y[t-s+i]);
+	}
+	t++;
+    }
+
+    /* now other regressors */
+    nx = unit->k - maxlag;
+    if (nx > 0) {
+	k = j;
+	t = t0 + 2;
+	for (s=0; s<T-2; s++) {
+	    j = 1;
+	    for (i=0; i<nx; i++) {
+		nv = xlist[j++];
+		gretl_matrix_set(unit->Z, i+k, s, Z[nv][t]);
+	    }
+	    t++;
+	}
+    }
+
+#if 0
+    gretl_matrix_print(unit->y, "y");
+    gretl_matrix_print(unit->X, "X");
+    gretl_matrix_print(unit->Z, "Z");
+#endif
+
+    return err;
+}
+
+static int dpd_unit_cleanup (dpd_unit *unit)
+{
+    int real_T = unit->T-2;
+    int valid = real_T;
+    int i, t;
+    double x;
+
+    for (t=0; t<real_T; t++) {
+	unit->mask[t] = xna(gretl_vector_get(unit->y, t));
+	if (unit->mask[t]==0) {
+	    for (i=0; i<unit->k; i++) {
+		x = gretl_matrix_get(unit->X, i, t);
+		if (xna(x)) {
+		    unit->mask[t] = 1;
+		    break;
+		}
+	    }
+	}
+	valid -= unit->mask[t];
+    }
+
+#if 0
+    for (t=0; t<real_T; t++) {
+	fprintf(stdout, "%d ", (unit->mask[t]!=0));
+    }
+    fputc('\n', stdout);
+#endif
+
+    if (valid < real_T) {
+	for (t=0; t<real_T; t++) {
+	    if (unit->mask[t]) {
+		gretl_vector_set(unit->y, t, 0);
+		for (i=0; i<unit->k; i++) {
+		    gretl_matrix_set(unit->X, i, t, 0);
+		}
+		for (i=0; i<unit->nz; i++) {
+		    gretl_matrix_set(unit->Z, i, t, 0);
+		}
+	    }
+	}
+    }
+
+    for (t=0; t<unit->Z->cols; t++) {
+	for (i=0; i<unit->nz; i++) {
+	    x = gretl_matrix_get(unit->Z, i, t);
+	    if (xna(x)) {
+		gretl_matrix_set(unit->Z, i, t, 0);
+	    }
+	}
+    }
+
+    return valid;
+}
+
+static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ, 
+			   gretl_matrix *ZY)
+{
+    int i, n = ZZ->rows;
+    int needed = 0;
+
+    for (i=0; i<n; i++) {
+	if (gretl_matrix_get(ZZ, i, i) == 0.0) {
+	    needed = 1;
+	    break;
+	}
+    }
+
+    if (needed) {
+	char *mask = calloc(n, 1);
+
+	for (i=0; i<n; i++) {
+	    mask[i] = (gretl_matrix_get(ZZ, i, i) == 0.0);
+	}
+
+	gretl_matrix_cut_cols(XZ, mask);
+	gretl_matrix_cut_rows_cols(ZZ, mask);
+	gretl_matrix_cut_rows(ZY, mask);
+
+	free(mask);
+    }
+
+    return ZZ->rows;
+}
+
+static int dpd_calc_beta (gretl_matrix *XZ,
+			  gretl_matrix *ZZ,
+			  gretl_matrix *ZY,
+			  int k, int nz)
+{
+    gretl_matrix *tmp1 = NULL;
+    gretl_matrix *tmp2 = NULL;
+    gretl_matrix *tmp3 = NULL;
+    gretl_matrix *beta = NULL;
+    int err = 0;
+
+    tmp1 = gretl_matrix_alloc(k, k);
+    tmp2 = gretl_matrix_alloc(k, nz);
+    tmp3 = gretl_matrix_alloc(k, 1);
+    beta = gretl_matrix_alloc(k, 1);
+    
+    if (tmp1 == NULL || tmp2 == NULL ||
+	tmp3 == NULL || beta == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    gretl_invert_symmetric_matrix(ZZ);
+
+    gretl_matrix_qform(XZ, GRETL_MOD_NONE,
+		       ZZ, tmp1, GRETL_MOD_NONE);
+
+    gretl_matrix_multiply_mod(XZ, GRETL_MOD_NONE,
+			      ZZ, GRETL_MOD_NONE,
+			      tmp2, GRETL_MOD_NONE);
+
+    gretl_matrix_multiply_mod(tmp2, GRETL_MOD_NONE,
+			      ZY, GRETL_MOD_NONE,
+			      tmp3, GRETL_MOD_NONE);
+
+    gretl_invert_symmetric_matrix(tmp1);
+
+    gretl_matrix_multiply_mod(tmp1,GRETL_MOD_NONE,
+			      tmp3, GRETL_MOD_NONE,
+			      beta, GRETL_MOD_NONE);
+
+    gretl_matrix_print(beta, "beta");
+
+ bailout:
+
+    gretl_matrix_free(tmp1);
+    gretl_matrix_free(tmp2);
+    gretl_matrix_free(tmp3);
+    gretl_matrix_free(beta);
+
+    return err;
+}
+
+static int new_ab_driver (int yno, const int *xlist, int maxlag,
+			  const double **Z, const DATAINFO *pdinfo,
+			  PRN *prn)
+{
+    dpd_unit unit;
+    const double *y;
+    gretl_matrix *XZ;
+    gretl_matrix *ZZ;
+    gretl_matrix *ZY;
+    gretl_matrix *H;
+    int i, n, T, t0;
+    int k, nz, valid;
+    int actual_n = 0;
+    int err = 0;
+
+    T = pdinfo->pd;
+    t0 = pdinfo->t1;
+    n = (pdinfo->t2 - t0 + 1) / T;
+
+    y = Z[yno];
+
+    k = maxlag + ((xlist == NULL) ? 0 : xlist[0]);
+
+    /* FIXME nz will have to be set to something that makes sense */
+    nz = 15;
+
+    err = dpd_unit_init(&unit, T, k, nz);
+    if (err) {
+	dpd_unit_free(&unit);
+	return err;
+    }
+
+    XZ = gretl_zero_matrix_new(k, nz);
+    ZZ = gretl_zero_matrix_new(nz, nz);
+    ZY = gretl_zero_matrix_new(nz, 1);
+    H = Hmat(T-2);
+
+    if (XZ == NULL || ZZ == NULL || ZY == NULL || H == NULL) {
+	err = E_ALLOC;
+    }
+
+    for (i=0; i<n && !err; i++) {
+	ab_per_unit(y, xlist, Z, T, t0, maxlag, &unit);
+	valid = dpd_unit_cleanup(&unit);
+
+	fprintf(stderr, "---- valid obs for unit %d = %d ----\n", i, valid);
+
+	if (valid > 0) {
+	    gretl_matrix_multiply_mod(unit.X, GRETL_MOD_NONE,
+				      unit.Z, GRETL_MOD_TRANSPOSE,
+				      XZ, GRETL_MOD_CUMULATE);
+
+	    gretl_matrix_qform(unit.Z, GRETL_MOD_NONE,
+			       H, ZZ, GRETL_MOD_CUMULATE);
+	    
+	    gretl_matrix_multiply_mod(unit.Z, GRETL_MOD_NONE,
+				      unit.y, GRETL_MOD_TRANSPOSE,
+				      ZY, GRETL_MOD_CUMULATE);
+	    actual_n++;
+	}
+
+#if 0
+	gretl_matrix_print(XZ, "XZ");
+	gretl_matrix_print(ZZ, "ZZ");
+	gretl_matrix_print(ZY, "ZY");
+#endif
+
+	t0 += T;
+    }
+
+    if (!err) {
+	nz = trim_zero_inst(XZ, ZZ, ZY);
+    }
+
+#if 1
+    fputs("After trimming\n", stderr);
+    gretl_matrix_print(XZ, "XZ");
+    gretl_matrix_print(ZZ, "ZZ");
+    gretl_matrix_print(ZY, "ZY");
+#endif
+
+    if (!err) {
+	err = dpd_calc_beta(XZ, ZZ, ZY, k, nz);
+    }
+
+    dpd_unit_free(&unit);
+
+    gretl_matrix_free(XZ);
+    gretl_matrix_free(ZZ);
+    gretl_matrix_free(ZY);
+    gretl_matrix_free(H);
+
+    return err;
+}
+
+static int arbond_test (int yno, int maxlag, const int *xlist, 
+			const double **Z, const DATAINFO *pdinfo, 
+			PRN *prn)
+{
+    int err = 0;
+
+    err = new_ab_driver(yno, xlist, maxlag, Z, pdinfo, prn);
+
+    return err;
+}
+
+#endif
+
 /* public interface: driver for Arellano-Bond type estimation */
 
 /* TODO: implement option OPT_L to do "system GMM" with levels

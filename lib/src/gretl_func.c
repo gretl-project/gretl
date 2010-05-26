@@ -4106,7 +4106,7 @@ static int allocate_function_args (fncall *call,
 	}
 
 	if (!err) {
-	    if (arg->type == GRETL_TYPE_USERIES) {
+	    if (arg->type == GRETL_TYPE_USERIES && fp->type != GRETL_TYPE_LIST) {
 		arg->upname = gretl_strdup(pdinfo->varname[arg->val.idnum]);
 	    } else if (arg->type == GRETL_TYPE_USCALAR) {
 		arg->upname = gretl_strdup(gretl_scalar_get_name(arg->val.idnum));
@@ -4270,14 +4270,15 @@ static gretl_matrix *get_matrix_return (const char *mname, int copy, int *err)
 
 enum {
     LIST_DIRECT_RETURN,
-    LIST_WAS_ARG
+    LIST_WAS_ARG,
+    LIST_WAS_TEMP
 };
 
 /* Deal with a list that exists at the level of a user-defined
    function whose execution is now terminating.  Note that this list
    may be the direct return value of the function, or it may have been
-   given to the function as an argument.  This is flagged by
-   @status.  
+   given to the function as an argument, or it may have been constructed
+   on the fly.  This is flagged by @status.  
 */
 
 static int unlocalize_list (const char *lname, int status,
@@ -4307,6 +4308,10 @@ static int unlocalize_list (const char *lname, int status,
        redefined in that way we also need to adjust the list itself,
        replacing the ID numbers of local variables with the
        caller-level IDs.
+
+       On the other hand, if the list was a temporary construction
+       (a list parameter was required, but a single series was given as
+       argument), we destroy the list.
     */
 
     if (status == LIST_DIRECT_RETURN) {
@@ -4349,13 +4354,15 @@ static int unlocalize_list (const char *lname, int status,
 	    }
 #endif
 	}
-    } else {
-	/* LIST_WAS_ARG */
+    } else if (status == LIST_WAS_ARG) {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    unset_var_listarg(pdinfo, vi);
 	    STACK_LEVEL(pdinfo, vi) = upd;
 	}
+    } else if (status == LIST_WAS_TEMP) {
+	int err = delete_list_by_name(lname);
+	fprintf(stderr, "delete_list_by_name: '%s': err=%d\n", lname, err);
     }
 
     return 0;
@@ -4504,7 +4511,11 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    user_matrix_adjust_level(u, -1);
 	    user_matrix_set_name(u, arg->upname);
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    unlocalize_list(fp->name, LIST_WAS_ARG, Z, pdinfo);
+	    if (arg->type == GRETL_TYPE_LIST) {
+		unlocalize_list(fp->name, LIST_WAS_ARG, Z, pdinfo);
+	    } else {
+		unlocalize_list(fp->name, LIST_WAS_TEMP, Z, pdinfo);
+	    }
 	}
     }
 
@@ -4645,11 +4656,14 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     }    
 
     anyerr = destroy_saved_lists_at_level(d);
+
+#if FN_DEBUG
+    fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", d, anyerr);
+#endif
+
+
     if (anyerr && !err) {
 	err = anyerr;
-#if FN_DEBUG
-	fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", d, err);
-#endif
     }    
 
     /* if the function defined a Kalman filter, clean that up */
@@ -4760,6 +4774,8 @@ static int check_function_args (ufunc *u, fnargs *args,
 	} else if (gretl_scalar_type(fp->type) && 
 		   arg->type == GRETL_TYPE_MATRIX &&
 		   gretl_matrix_is_scalar(arg->val.m)) {
+	    ; /* OK */
+	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK */
 	} else if (fp->type != arg->type) {
 	    /* FIXME case where list is wanted and the arg is a series */
