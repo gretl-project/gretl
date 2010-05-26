@@ -2172,7 +2172,7 @@ static int dpd_invert_A_N (dpd *ab)
     return err;
 }
 
-#define ARBOND_TEST 1
+#define ARBOND_TEST 0
 
 #ifdef ARBOND_TEST
 
@@ -2562,17 +2562,6 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag,
     return err;
 }
 
-static int arbond_test (int yno, int maxlag, const int *xlist, 
-			const double **Z, const DATAINFO *pdinfo, 
-			PRN *prn)
-{
-    int err = 0;
-
-    err = new_ab_driver(yno, xlist, maxlag, Z, pdinfo, prn);
-
-    return err;
-}
-
 #endif
 
 /* public interface: driver for Arellano-Bond type estimation */
@@ -2646,6 +2635,12 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 	/* first-step calculation */
 	err = dpd_calculate(ab);
     }
+
+#ifdef ARBOND_TEST
+    if (!err) {
+	new_ab_driver(ab->yno, ab->xlist, ab->p, X, pdinfo, prn);
+    }
+#endif
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
