@@ -1262,7 +1262,7 @@ void debug_print_matrix (const gretl_matrix *m, const char *msg)
     }
 }
 
-static int count_unmasked_rows (const char *mask, int n)
+static int count_unmasked_elements (const char *mask, int n)
 {
     int i, c = 0;
 
@@ -1295,7 +1295,7 @@ int gretl_matrix_cut_rows (gretl_matrix *m, const char *mask)
 	return E_DATA;
     }
 
-    n = count_unmasked_rows(mask, m->rows);
+    n = count_unmasked_elements(mask, m->rows);
 
     for (j=0; j<m->cols; j++) {
 	k = 0;
@@ -1309,6 +1309,45 @@ int gretl_matrix_cut_rows (gretl_matrix *m, const char *mask)
     }
 
     m->rows = n;
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_cut_cols:
+ * @m: matrix to process.
+ * @mask: character array of length equal to the cols of @m,
+ * with 1s indicating cols to be cut, 0s for cols to be
+ * retained.
+ *
+ * In-place reduction of @m based on @mask: the masked cols
+ * are cut out of @m.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_matrix_cut_cols (gretl_matrix *m, const char *mask)
+{
+    int i, j, k, n;
+    double x;
+
+    if (m == NULL || mask == NULL) {
+	return E_DATA;
+    }
+
+    n = count_unmasked_elements(mask, m->cols);
+
+    k = 0;
+    for (i=0; i<m->cols; i++) {
+	if (!mask[i]) {
+	    for (j=0; j<m->rows; j++) {
+		x = gretl_matrix_get(m, j, i);
+		m->val[k++] = x;
+	    }
+	}
+    }
+
+    m->cols = n;
 
     return 0;
 }
@@ -1336,7 +1375,7 @@ int gretl_matrix_cut_rows_cols (gretl_matrix *m, const char *mask)
 	return E_DATA;
     }
 
-    n = count_unmasked_rows(mask, m->rows);
+    n = count_unmasked_elements(mask, m->rows);
 
     /* allocate smaller temp matrix */
     tmp = gretl_matrix_alloc(n, n);
