@@ -2191,14 +2191,15 @@ struct dpd_unit_ {
 
 static gretl_matrix *Hmat (int n)
 {
-    gretl_matrix *H;
-    int i;
+    gretl_matrix *H = gretl_identity_matrix_new(n);
 
-    H = gretl_identity_matrix_new(n);
+    if (H != NULL) {
+	int i;
 
-    for (i=0; i<n-1; i++) {
-	gretl_matrix_set(H, i, i+1, -0.5);
-	gretl_matrix_set(H, i+1, i, -0.5);
+	for (i=0; i<n-1; i++) {
+	    gretl_matrix_set(H, i, i+1, -0.5);
+	    gretl_matrix_set(H, i+1, i, -0.5);
+	}
     }
 
     return H;
@@ -2307,7 +2308,7 @@ static int ab_per_unit (const double *y, const int *xlist,
     gretl_matrix_zero(unit->Z);
 
     /* lagged levels of y first */
-    t = t0 + unit->offset - 2;
+    t = t0 + unit->offset - 2; /* ?? */
     j = 0;
     for (s=0; s<smax; s++) {
 	for (i=0; i<=s; i++) {
@@ -2316,7 +2317,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 	t++;
     }
 
-    /* now other regressors */
+    /* now other regressors as instruments */
     nx = unit->k - maxlag;
     if (nx > 0) {
 	k = j;
@@ -2343,7 +2344,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 static int dpd_unit_cleanup (dpd_unit *unit)
 {
     int real_T = unit->T - unit->offset;
-    int valid = real_T;
+    int valid_obs = real_T;
     int i, t;
     double x;
 
@@ -2358,17 +2359,10 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 		}
 	    }
 	}
-	valid -= unit->mask[t];
+	valid_obs -= unit->mask[t];
     }
 
-#if 0
-    for (t=0; t<real_T; t++) {
-	fprintf(stdout, "%d ", (unit->mask[t]!=0));
-    }
-    fputc('\n', stdout);
-#endif
-
-    if (valid < real_T) {
+    if (valid_obs < real_T) {
 	for (t=0; t<real_T; t++) {
 	    if (unit->mask[t]) {
 		gretl_vector_set(unit->y, t, 0);
@@ -2391,23 +2385,23 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 	}
     }
 
-    return valid;
+    return valid_obs;
 }
 
 static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ, 
 			   gretl_matrix *ZY)
 {
     int i, n = ZZ->rows;
-    int needed = 0;
+    int trim = 0;
 
     for (i=0; i<n; i++) {
 	if (gretl_matrix_get(ZZ, i, i) == 0.0) {
-	    needed = 1;
+	    trim = 1;
 	    break;
 	}
     }
 
-    if (needed) {
+    if (trim) {
 	char *mask = calloc(n, 1);
 
 	for (i=0; i<n; i++) {
@@ -2426,10 +2420,8 @@ static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ,
     return ZZ->rows;
 }
 
-static int dpd_calc_beta (gretl_matrix *XZ,
-			  gretl_matrix *ZZ,
-			  gretl_matrix *ZY,
-			  int k, int nz,
+static int dpd_calc_beta (gretl_matrix *XZ, gretl_matrix *ZZ,
+			  gretl_matrix *ZY, int k, int nz,
 			  PRN *prn)
 {
     gretl_matrix_block *B;
@@ -2458,13 +2450,8 @@ static int dpd_calc_beta (gretl_matrix *XZ,
     gretl_matrix_qform(XZ, GRETL_MOD_NONE,
 		       ZZ, tmp1, GRETL_MOD_NONE);
 
-    gretl_matrix_multiply_mod(XZ, GRETL_MOD_NONE,
-			      ZZ, GRETL_MOD_NONE,
-			      tmp2, GRETL_MOD_NONE);
-
-    gretl_matrix_multiply_mod(tmp2, GRETL_MOD_NONE,
-			      ZY, GRETL_MOD_NONE,
-			      tmp3, GRETL_MOD_NONE);
+    gretl_matrix_multiply(XZ, ZZ, tmp2);
+    gretl_matrix_multiply(tmp2, ZY, tmp3);
 
     gretl_invert_symmetric_matrix(tmp1);
 
