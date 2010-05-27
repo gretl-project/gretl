@@ -2513,7 +2513,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
     XZ = gretl_zero_matrix_new(k, nz);
     ZZ = gretl_zero_matrix_new(nz, nz);
     ZY = gretl_zero_matrix_new(nz, 1);
-    H = Hmat(T-2);
+    H = Hmat(T - unit.offset);
 
     if (XZ == NULL || ZZ == NULL || ZY == NULL || H == NULL) {
 	err = E_ALLOC;
