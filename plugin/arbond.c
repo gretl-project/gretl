@@ -2179,13 +2179,14 @@ static int dpd_invert_A_N (dpd *ab)
 typedef struct dpd_unit_ dpd_unit;
 
 struct dpd_unit_ {
-    int T;           /* full time-series length per unit */
-    int k;           /* number of regressors, including lagged dep var */
-    int nz;          /* number of columns in Z matrix */
-    char *mask;      /* for cutting unusable elements */    
-    gretl_matrix *y; /* dependent variable */
-    gretl_matrix *X; /* regressors */
-    gretl_matrix *Z; /* instruments */
+    int T;            /* full time-series length per unit */
+    int offset;       /* offset to minimum usable observation */
+    int k;            /* number of regressors, including lagged dep var */
+    int nz;           /* number of columns in Z matrix */
+    char *mask;       /* for cutting unusable elements */    
+    gretl_matrix *y;  /* dependent variable */
+    gretl_matrix *X;  /* regressors */
+    gretl_matrix *Z;  /* instruments */
 };
 
 static gretl_matrix *Hmat (int n)
@@ -2203,22 +2204,29 @@ static gretl_matrix *Hmat (int n)
     return H;
 }
 
-static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz)
+static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag)
 {
     /* for the moment, matrices are perhaps (but maybe not) larger
        than they actually need to be; we can shave off extra rows/cols
        later 
     */
-    int err = 0;
+    int len, err = 0;
 
     unit->T = T; 
+#if 0
+    unit->offset = maxlag + 1;
+#else
+    unit->offset = 2;
+#endif
     unit->k = k; 
     unit->nz = nz;
 
-    unit->mask = calloc(T-2, 1);
-    unit->y = gretl_matrix_alloc(T-2, 1); 
-    unit->X = gretl_matrix_alloc(T-2, k); 
-    unit->Z = gretl_matrix_alloc(T-2, nz); 
+    len = T - unit->offset;
+
+    unit->mask = calloc(len, 1);
+    unit->y = gretl_matrix_alloc(len, 1); 
+    unit->X = gretl_matrix_alloc(len, k); 
+    unit->Z = gretl_matrix_alloc(len, nz); 
 
     if (unit->mask == NULL || unit->y == NULL ||
 	unit->X == NULL || unit->Z == NULL) {
@@ -2242,13 +2250,15 @@ static int ab_per_unit (const double *y, const int *xlist,
 			dpd_unit *unit)
 {
     double x;
-    int i, s, t;
+    int i, s, t, smax;
     int nx, j, nv, k;
     int err = 0;
 
+    smax = T - unit->offset;
+
     /* transformed y */
-    t = t0 + 2;
-    for (s=0; s<T-2; s++) {
+    t = t0 + unit->offset;
+    for (s=0; s<smax; s++) {
 	if (na(y[t]) || na(y[t-1])) {
 	    unit->y->val[s] = NADBL; 
 	} else {
@@ -2260,8 +2270,8 @@ static int ab_per_unit (const double *y, const int *xlist,
     /* the right-hand side */
 
     /* lagged transformed y first */
-    t = t0 + 1;
-    for (s=0; s<T-2; s++) {
+    t = t0 + unit->offset - 1;
+    for (s=0; s<smax; s++) {
 	for (i=0; i<maxlag; i++) {
 	    if (i<=s) {
 		if (na(y[t-i]) || na(y[t-i-1])) {
@@ -2281,8 +2291,8 @@ static int ab_per_unit (const double *y, const int *xlist,
     nx = unit->k - maxlag;
 
     if (nx > 0) {
-	t = t0 + 2;
-	for (s=0; s<T-2; s++) {
+	t = t0 + unit->offset;
+	for (s=0; s<smax; s++) {
 	    j = 1;
 	    for (i=maxlag; i<unit->k; i++) {
 		nv = xlist[j++];
@@ -2297,9 +2307,9 @@ static int ab_per_unit (const double *y, const int *xlist,
     gretl_matrix_zero(unit->Z);
 
     /* lagged levels of y first */
-    t = t0;
+    t = t0 + unit->offset - 2;
     j = 0;
-    for (s=0; s<T-2; s++) {
+    for (s=0; s<smax; s++) {
 	for (i=0; i<=s; i++) {
 	    gretl_matrix_set(unit->Z, s, j++, y[t-s+i]);
 	}
@@ -2310,8 +2320,8 @@ static int ab_per_unit (const double *y, const int *xlist,
     nx = unit->k - maxlag;
     if (nx > 0) {
 	k = j;
-	t = t0 + 2;
-	for (s=0; s<T-2; s++) {
+	t = t0 + unit->offset;
+	for (s=0; s<smax; s++) {
 	    j = 1;
 	    for (i=0; i<nx; i++) {
 		nv = xlist[j++];
@@ -2332,7 +2342,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 
 static int dpd_unit_cleanup (dpd_unit *unit)
 {
-    int real_T = unit->T-2;
+    int real_T = unit->T - unit->offset;
     int valid = real_T;
     int i, t;
     double x;
@@ -2401,7 +2411,9 @@ static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ,
 	char *mask = calloc(n, 1);
 
 	for (i=0; i<n; i++) {
-	    mask[i] = (gretl_matrix_get(ZZ, i, i) == 0.0);
+	    if (gretl_matrix_get(ZZ, i, i) == 0.0) {
+		mask[i] = 1;
+	    }
 	}
 
 	gretl_matrix_cut_cols(XZ, mask);
@@ -2492,7 +2504,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 
     k = maxlag + ((xlist == NULL) ? 0 : xlist[0]);
 
-    err = dpd_unit_init(&unit, T, k, nz);
+    err = dpd_unit_init(&unit, T, k, nz, maxlag);
     if (err) {
 	dpd_unit_free(&unit);
 	return err;
