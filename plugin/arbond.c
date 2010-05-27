@@ -674,10 +674,10 @@ static void dpd_compute_Z_cols (dpd *ab, int t1min, int t2max)
     for (i=0; i<nblocks; i++) {
 	/* block-diagonal lagged y values */
 	cols = (ab->p + i > ab->qmax - 1)? ab->qmax - 1 : ab->p + i;
-	ab->m += cols;
 #if ADEBUG
 	fprintf(stderr, "block %d: adding %d cols for y lags\n", i, cols);
 #endif
+	ab->m += cols;
 	if (ab->nzb > 0) {
 	    /* other block-diagonal instruments */
 	    bcols = bzcols(ab, i);
@@ -2260,7 +2260,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 
     smax = T - unit->offset;
 
-    /* first thing: reset the number of rows to smax */
+    /* first thing: reset the matrices to full size */
     unit->y->rows = unit->X->rows = unit->Z->rows = smax;
     unit->H->rows = unit->H->cols = smax;
     gretl_matrix_copy_values(unit->H, H);
@@ -2316,11 +2316,15 @@ static int ab_per_unit (const double *y, const int *xlist,
     gretl_matrix_zero(unit->Z);
 
     /* lagged levels of y first */
-    t = t0 + unit->offset - 2; /* ?? */
+    t = t0 + unit->offset - 2; 
     j = 0;
-    for (s=0; s<smax; s++) {
+    for (s=maxlag-1; s<smax; s++) { 
 	for (i=0; i<=s; i++) {
-	    gretl_matrix_set(unit->Z, s, j++, y[t-s+i]);
+	    x = y[t-s+i+maxlag-1];
+	    if (!xna(x)) {
+		gretl_matrix_set(unit->Z, s, j, x);
+	    }
+	    j++;
 	}
 	t++;
     }
@@ -2331,10 +2335,12 @@ static int ab_per_unit (const double *y, const int *xlist,
 	k = j;
 	t = t0 + unit->offset;
 	for (s=0; s<smax; s++) {
-	    j = 1;
 	    for (i=0; i<nx; i++) {
-		nv = xlist[j++];
-		gretl_matrix_set(unit->Z, s, i+k, Z[nv][t]);
+		nv = xlist[i+1];
+		x = Z[nv][t];
+		if (!xna(x)) {
+		    gretl_matrix_set(unit->Z, s, i+k, x);
+		}
 	    }
 	    t++;
 	}
@@ -2363,7 +2369,6 @@ static int dpd_unit_cleanup (dpd_unit *unit)
     gretl_matrix_print(unit->Z, "Z"); 
 #endif
 
-
     for (t=0; t<real_T; t++) {
 	unit->mask[t] = xna(gretl_vector_get(unit->y, t));
 	if (unit->mask[t] == 0) {
@@ -2378,36 +2383,11 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 	valid_obs -= unit->mask[t];
     }
 
-#if 1
     if (valid_obs < real_T) {
 	gretl_matrix_cut_rows(unit->y, unit->mask);
 	gretl_matrix_cut_rows(unit->X, unit->mask);
 	gretl_matrix_cut_rows(unit->Z, unit->mask);
 	gretl_matrix_cut_rows_cols(unit->H, unit->mask);
-    }
-#else 
-    if (valid_obs < real_T) {
-	for (t=0; t<real_T; t++) {
-	    if (unit->mask[t]) {
-		gretl_vector_set(unit->y, t, 0);
-		for (i=0; i<unit->k; i++) {
-		    gretl_matrix_set(unit->X, t, i, 0);
-		}
-		for (i=0; i<unit->nz; i++) {
-		    gretl_matrix_set(unit->Z, t, i, 0);
-		}
-	    }
-	}
-    }
-#endif
-
-    for (t=0; t<unit->Z->rows; t++) {
-	for (i=0; i<unit->nz; i++) {
-	    x = gretl_matrix_get(unit->Z, t, i);
-	    if (xna(x)) {
-		gretl_matrix_set(unit->Z, t, i, 0);
-	    }
-	}
     }
 
 #if 0
@@ -2459,7 +2439,7 @@ static int dpd_calc_beta (gretl_matrix *XZ, gretl_matrix *ZZ,
     gretl_matrix_block *B;
     gretl_matrix *tmp1, *tmp2, *tmp3, *ZZcopy;
     gretl_matrix *beta = NULL;
-    int err = 0;
+    int check, err = 0;
 
     B = gretl_matrix_block_new(&tmp1, k, k,
 			       &tmp2, k, nz,
@@ -2479,25 +2459,31 @@ static int dpd_calc_beta (gretl_matrix *XZ, gretl_matrix *ZZ,
     }
 
     gretl_matrix_copy_values(ZZcopy, ZZ);
-    int check = gretl_invert_symmetric_matrix(ZZ);
+    check = gretl_invert_symmetric_matrix(ZZ);
+
     if (check) {
-	fprintf(stdout, "dpd_calc_beta: check = %d\n", check);
+	fprintf(stderr, "dpd_calc_beta: check = %d\n", check);
 	gretl_matrix_copy_values(ZZ, ZZcopy);
-	check = gretl_SVD_invert_matrix(ZZ);
+	err = gretl_SVD_invert_matrix(ZZ);
+	if (!err) {
+	    gretl_matrix_xtr_symmetric(ZZ);
+	}
     }
 
-    gretl_matrix_qform(XZ, GRETL_MOD_NONE,
-		       ZZ, tmp1, GRETL_MOD_NONE);
+    if (!err) {
+	gretl_matrix_qform(XZ, GRETL_MOD_NONE,
+			   ZZ, tmp1, GRETL_MOD_NONE);
 
-    gretl_matrix_multiply(XZ, ZZ, tmp2);
-    gretl_matrix_multiply(tmp2, ZY, tmp3);
+	gretl_matrix_multiply(XZ, ZZ, tmp2);
+	gretl_matrix_multiply(tmp2, ZY, tmp3);
 
-    gretl_invert_symmetric_matrix(tmp1);
+	gretl_invert_symmetric_matrix(tmp1);
 
-    gretl_matrix_multiply(tmp1, tmp3, beta);
+	gretl_matrix_multiply(tmp1, tmp3, beta);
 
-    pputs(prn, "beta (new nethod)\n\n");
-    gretl_matrix_print_with_format(beta, "%#14.6g", -1, -1, prn);
+	pputs(prn, "beta (new nethod)\n\n");
+	gretl_matrix_print_with_format(beta, "%#14.6g", -1, -1, prn);
+    }
 
  bailout:
 
@@ -2688,10 +2674,11 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 #if ARBOND_TEST
     if (!err) {
 	double new_t;
+	int nz = ab->m;
 
 	gretl_stopwatch();
-	pprintf(prn, "\ab_m = %d\n", ab->m);
-	new_ab_driver(ab->yno, ab->xlist, ab->p, 10 + ab->m, Z, pdinfo, prn);
+	fprintf(stderr, "\n*** ab_m = %d, setting nz = %d\n", ab->m, nz);
+	new_ab_driver(ab->yno, ab->xlist, ab->p, nz, Z, pdinfo, prn);
 	new_t = gretl_stopwatch();
 	pprintf(prn, "\nnew code: time = %g\n", new_t);
     }
