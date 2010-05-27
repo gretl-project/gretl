@@ -2172,7 +2172,7 @@ static int dpd_invert_A_N (dpd *ab)
     return err;
 }
 
-#define ARBOND_TEST 1
+#define ARBOND_TEST 0
 
 #ifdef ARBOND_TEST
 
