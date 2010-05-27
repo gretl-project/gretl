@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "matrix_extra.h"
 
-#define ADEBUG 0
+#define ADEBUG 1
 
 enum {
     DPD_TWOSTEP = 1 << 0,
@@ -2179,7 +2179,7 @@ static int dpd_invert_A_N (dpd *ab)
 typedef struct dpd_unit_ dpd_unit;
 
 struct dpd_unit_ {
-    int T;            /* full time-series length per unit */
+    gretlopt opt;     /* for orthog deviations etc */
     int offset;       /* offset to minimum usable observation */
     int k;            /* number of regressors, including lagged dep var */
     int nz;           /* number of columns in Z matrix */
@@ -2190,11 +2190,11 @@ struct dpd_unit_ {
     gretl_matrix *H;  /* weights matrix for GMM */
 };
 
-static gretl_matrix *Hmat (int n)
+static gretl_matrix *Hmat (int n, gretlopt opt)
 {
     gretl_matrix *H = gretl_identity_matrix_new(n);
 
-    if (H != NULL) {
+    if (H != NULL && !(opt & OPT_H)) {
 	int i;
 
 	for (i=0; i<n-1; i++) {
@@ -2206,7 +2206,8 @@ static gretl_matrix *Hmat (int n)
     return H;
 }
 
-static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag)
+static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag,
+			  gretlopt opt)
 {
     /* for the moment, matrices are perhaps (but maybe not) larger
        than they actually need to be; we can shave off extra rows/cols
@@ -2214,7 +2215,6 @@ static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag)
     */
     int len, err = 0;
 
-    unit->T = T; 
 #if 0
     unit->offset = maxlag + 1;
 #else
@@ -2222,6 +2222,7 @@ static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag)
 #endif
     unit->k = k; 
     unit->nz = nz;
+    unit->opt = opt;
 
     len = T - unit->offset;
 
@@ -2229,7 +2230,7 @@ static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag)
     unit->y = gretl_matrix_alloc(len, 1); 
     unit->X = gretl_matrix_alloc(len, k); 
     unit->Z = gretl_matrix_alloc(len, nz); 
-    unit->H = Hmat(len); 
+    unit->H = Hmat(len, opt); 
 
     if (unit->mask == NULL || unit->y == NULL ||
 	unit->X == NULL || unit->Z == NULL) {
@@ -2268,10 +2269,13 @@ static int ab_per_unit (const double *y, const int *xlist,
     /* transformed y */
     t = t0 + unit->offset;
     for (s=0; s<smax; s++) {
-	if (na(y[t]) || na(y[t-1])) {
+	if (unit->opt & OPT_H) {
+	    /* orthdev */
+	    unit->y->val[s] = odev_at_lag(y, t, 0, T);	    
+	} else if (na(y[t]) || na(y[t-1])) {
 	    unit->y->val[s] = NADBL; 
 	} else {
-	    unit->y->val[s] = y[t] - y[t-1]; /* or orthdev */
+	    unit->y->val[s] = y[t] - y[t-1];
 	}
 	t++;
     }
@@ -2283,10 +2287,13 @@ static int ab_per_unit (const double *y, const int *xlist,
     for (s=0; s<smax; s++) {
 	for (i=0; i<maxlag; i++) {
 	    if (i<=s) {
-		if (na(y[t-i]) || na(y[t-i-1])) {
+		if (unit->opt & OPT_H) {
+		    /* FIXME */
+		    x = odev_at_lag(y, t, i+1, T);
+		} else if (na(y[t-i]) || na(y[t-i-1])) {
 		    x = NADBL;
 		} else {
-		    x = y[t-i] - y[t-i-1]; /* or orthdev */
+		    x = y[t-i] - y[t-i-1];
 		}
 	    } else {
 		x = NADBL;
@@ -2346,7 +2353,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 	}
     }
 
-#if 0
+#if ADEBUG
     gretl_matrix_print(unit->y, "y");
     gretl_matrix_print(unit->X, "X");
     gretl_matrix_print(unit->Z, "Z");
@@ -2355,9 +2362,9 @@ static int ab_per_unit (const double *y, const int *xlist,
     return err;
 }
 
-static int dpd_unit_cleanup (dpd_unit *unit)
+static int dpd_unit_cleanup (dpd_unit *unit, int T)
 {
-    int real_T = unit->T - unit->offset;
+    int real_T = T - unit->offset;
     int valid_obs = real_T;
     int i, t;
     double x;
@@ -2515,7 +2522,7 @@ static int calc_Z_cols (int T, int maxlag, int nx)
 
 static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 			  const double **Z, const DATAINFO *pdinfo,
-			  PRN *prn)
+			  gretlopt opt, PRN *prn)
 {
     dpd_unit unit;
     const double *y;
@@ -2540,7 +2547,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
     nz = calc_Z_cols(T, maxlag, nx);
     fprintf(stderr, "in fact using calculated nz = %d\n", nz);
 
-    err = dpd_unit_init(&unit, T, k, nz, maxlag);
+    err = dpd_unit_init(&unit, T, k, nz, maxlag, opt);
     if (err) {
 	dpd_unit_free(&unit);
 	return err;
@@ -2549,7 +2556,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
     XZ = gretl_zero_matrix_new(k, nz);
     ZZ = gretl_zero_matrix_new(nz, nz);
     ZY = gretl_zero_matrix_new(nz, 1);
-    H = Hmat(T - unit.offset);
+    H = Hmat(T - unit.offset, opt);
 
     if (XZ == NULL || ZZ == NULL || ZY == NULL || H == NULL) {
 	err = E_ALLOC;
@@ -2557,7 +2564,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 
     for (i=0; i<n && !err; i++) {
 	ab_per_unit(y, xlist, Z, H, T, t0, maxlag, &unit);
-	valid = dpd_unit_cleanup(&unit);
+	valid = dpd_unit_cleanup(&unit, T);
 
 #if 0
 	pprintf(prn, "--- valid obs for unit %d = %d\n", i, valid);
@@ -2702,7 +2709,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 
 	gretl_stopwatch();
 	fprintf(stderr, "\n*** ab_m = %d, setting nz = %d\n", ab->m, nz);
-	new_ab_driver(ab->yno, ab->xlist, ab->p, nz, Z, pdinfo, prn);
+	new_ab_driver(ab->yno, ab->xlist, ab->p, nz, Z, pdinfo, opt, prn);
 	new_t = gretl_stopwatch();
 	pprintf(prn, "\nnew code: time = %g\n", new_t);
     }
