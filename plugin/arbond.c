@@ -2174,7 +2174,7 @@ static int dpd_invert_A_N (dpd *ab)
 
 #define ARBOND_TEST 0
 
-#ifdef ARBOND_TEST
+#if ARBOND_TEST
 
 typedef struct dpd_unit_ dpd_unit;
 
@@ -2187,6 +2187,7 @@ struct dpd_unit_ {
     gretl_matrix *y;  /* dependent variable */
     gretl_matrix *X;  /* regressors */
     gretl_matrix *Z;  /* instruments */
+    gretl_matrix *H;  /* weights matrix for GMM */
 };
 
 static gretl_matrix *Hmat (int n)
@@ -2228,6 +2229,7 @@ static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag)
     unit->y = gretl_matrix_alloc(len, 1); 
     unit->X = gretl_matrix_alloc(len, k); 
     unit->Z = gretl_matrix_alloc(len, nz); 
+    unit->H = Hmat(len); 
 
     if (unit->mask == NULL || unit->y == NULL ||
 	unit->X == NULL || unit->Z == NULL) {
@@ -2242,11 +2244,12 @@ static void dpd_unit_free (dpd_unit *unit)
     gretl_matrix_free(unit->y);
     gretl_matrix_free(unit->X);
     gretl_matrix_free(unit->Z);
+    gretl_matrix_free(unit->H);
     free(unit->mask);
 }
 
 static int ab_per_unit (const double *y, const int *xlist, 
-			const double **Z, 
+			const double **Z, const gretl_matrix *H,
 			int T, int t0, int maxlag, 
 			dpd_unit *unit)
 {
@@ -2256,6 +2259,11 @@ static int ab_per_unit (const double *y, const int *xlist,
     int err = 0;
 
     smax = T - unit->offset;
+
+    /* first thing: reset the number of rows to smax */
+    unit->y->rows = unit->X->rows = unit->Z->rows = smax;
+    unit->H->rows = unit->H->cols = smax;
+    gretl_matrix_copy_values(unit->H, H);
 
     /* transformed y */
     t = t0 + unit->offset;
@@ -2348,6 +2356,14 @@ static int dpd_unit_cleanup (dpd_unit *unit)
     int i, t;
     double x;
 
+#if 0
+    fputs("\nBefore cleanup\n", stderr);
+    gretl_matrix_print(unit->y, "y"); 
+    gretl_matrix_print(unit->X, "X"); 
+    gretl_matrix_print(unit->Z, "Z"); 
+#endif
+
+
     for (t=0; t<real_T; t++) {
 	unit->mask[t] = xna(gretl_vector_get(unit->y, t));
 	if (unit->mask[t] == 0) {
@@ -2362,6 +2378,14 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 	valid_obs -= unit->mask[t];
     }
 
+#if 1
+    if (valid_obs < real_T) {
+	gretl_matrix_cut_rows(unit->y, unit->mask);
+	gretl_matrix_cut_rows(unit->X, unit->mask);
+	gretl_matrix_cut_rows(unit->Z, unit->mask);
+	gretl_matrix_cut_rows_cols(unit->H, unit->mask);
+    }
+#else 
     if (valid_obs < real_T) {
 	for (t=0; t<real_T; t++) {
 	    if (unit->mask[t]) {
@@ -2375,6 +2399,7 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 	    }
 	}
     }
+#endif
 
     for (t=0; t<unit->Z->rows; t++) {
 	for (i=0; i<unit->nz; i++) {
@@ -2384,6 +2409,13 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 	    }
 	}
     }
+
+#if 0
+    fputs("After cleanup\n", stderr);
+    gretl_matrix_print(unit->y, "y"); 
+    gretl_matrix_print(unit->X, "X"); 
+    gretl_matrix_print(unit->Z, "Z"); 
+#endif
 
     return valid_obs;
 }
@@ -2425,13 +2457,14 @@ static int dpd_calc_beta (gretl_matrix *XZ, gretl_matrix *ZZ,
 			  PRN *prn)
 {
     gretl_matrix_block *B;
-    gretl_matrix *tmp1, *tmp2, *tmp3;
+    gretl_matrix *tmp1, *tmp2, *tmp3, *ZZcopy;
     gretl_matrix *beta = NULL;
     int err = 0;
 
     B = gretl_matrix_block_new(&tmp1, k, k,
 			       &tmp2, k, nz,
 			       &tmp3, k, 1,
+			       &ZZcopy, nz, nz,
 			       NULL);
 
     if (B == NULL) {
@@ -2445,7 +2478,13 @@ static int dpd_calc_beta (gretl_matrix *XZ, gretl_matrix *ZZ,
 	goto bailout;
     }
 
-    gretl_invert_symmetric_matrix(ZZ);
+    gretl_matrix_copy_values(ZZcopy, ZZ);
+    int check = gretl_invert_symmetric_matrix(ZZ);
+    if (check) {
+	fprintf(stdout, "dpd_calc_beta: check = %d\n", check);
+	gretl_matrix_copy_values(ZZ, ZZcopy);
+	check = gretl_SVD_invert_matrix(ZZ);
+    }
 
     gretl_matrix_qform(XZ, GRETL_MOD_NONE,
 		       ZZ, tmp1, GRETL_MOD_NONE);
@@ -2507,7 +2546,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
     }
 
     for (i=0; i<n && !err; i++) {
-	ab_per_unit(y, xlist, Z, T, t0, maxlag, &unit);
+	ab_per_unit(y, xlist, Z, H, T, t0, maxlag, &unit);
 	valid = dpd_unit_cleanup(&unit);
 
 #if 0
@@ -2520,7 +2559,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 				      XZ, GRETL_MOD_CUMULATE);
 
 	    gretl_matrix_qform(unit.Z, GRETL_MOD_TRANSPOSE,
-			       H, ZZ, GRETL_MOD_CUMULATE);
+			       unit.H, ZZ, GRETL_MOD_CUMULATE);
 	    
 	    gretl_matrix_multiply_mod(unit.Z, GRETL_MOD_TRANSPOSE,
 				      unit.y, GRETL_MOD_NONE,
@@ -2610,7 +2649,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 	dpd_zero_check(ab, Z);
     }
 
-#ifdef ARBOND_TEST
+#if ARBOND_TEST
     gretl_stopwatch();
 #endif
 
@@ -2638,7 +2677,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     if (!err) {
 	/* first-step calculation */
 	err = dpd_calculate(ab);
-#ifdef ARBOND_TEST
+#if ARBOND_TEST
 	double old_t;
 	
 	old_t = gretl_stopwatch();
@@ -2646,12 +2685,13 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 #endif
     }
 
-#ifdef ARBOND_TEST
+#if ARBOND_TEST
     if (!err) {
 	double new_t;
 
 	gretl_stopwatch();
-	new_ab_driver(ab->yno, ab->xlist, ab->p, 2 * ab->m, Z, pdinfo, prn);
+	pprintf(prn, "\ab_m = %d\n", ab->m);
+	new_ab_driver(ab->yno, ab->xlist, ab->p, 10 + ab->m, Z, pdinfo, prn);
 	new_t = gretl_stopwatch();
 	pprintf(prn, "\nnew code: time = %g\n", new_t);
     }
