@@ -2172,7 +2172,7 @@ static int dpd_invert_A_N (dpd *ab)
     return err;
 }
 
-#define ARBOND_TEST 0
+#define ARBOND_TEST 1
 
 #ifdef ARBOND_TEST
 
@@ -2420,19 +2420,23 @@ static int dpd_calc_beta (gretl_matrix *XZ,
 			  int k, int nz,
 			  PRN *prn)
 {
-    gretl_matrix *tmp1 = NULL;
-    gretl_matrix *tmp2 = NULL;
-    gretl_matrix *tmp3 = NULL;
+    gretl_matrix_block *B;
+    gretl_matrix *tmp1, *tmp2, *tmp3;
     gretl_matrix *beta = NULL;
     int err = 0;
 
-    tmp1 = gretl_matrix_alloc(k, k);
-    tmp2 = gretl_matrix_alloc(k, nz);
-    tmp3 = gretl_matrix_alloc(k, 1);
+    B = gretl_matrix_block_new(&tmp1, k, k,
+			       &tmp2, k, nz,
+			       &tmp3, k, 1,
+			       NULL);
+
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
     beta = gretl_matrix_alloc(k, 1);
     
-    if (tmp1 == NULL || tmp2 == NULL ||
-	tmp3 == NULL || beta == NULL) {
+    if (beta == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -2452,18 +2456,14 @@ static int dpd_calc_beta (gretl_matrix *XZ,
 
     gretl_invert_symmetric_matrix(tmp1);
 
-    gretl_matrix_multiply_mod(tmp1,GRETL_MOD_NONE,
-			      tmp3, GRETL_MOD_NONE,
-			      beta, GRETL_MOD_NONE);
+    gretl_matrix_multiply(tmp1, tmp3, beta);
 
     pputs(prn, "beta (new nethod)\n\n");
     gretl_matrix_print_with_format(beta, "%#14.6g", -1, -1, prn);
 
  bailout:
 
-    gretl_matrix_free(tmp1);
-    gretl_matrix_free(tmp2);
-    gretl_matrix_free(tmp3);
+    gretl_matrix_block_destroy(B);
     gretl_matrix_free(beta);
 
     return err;
