@@ -2179,13 +2179,13 @@ static int dpd_invert_A_N (dpd *ab)
 typedef struct dpd_unit_ dpd_unit;
 
 struct dpd_unit_ {
-    int T;
-    int k;
-    int nz;
-    char *mask;
-    gretl_matrix *y;
-    gretl_matrix *X;
-    gretl_matrix *Z;
+    int T;           /* full time-series length per unit */
+    int k;           /* number of regressors, including lagged dep var */
+    int nz;          /* number of columns in Z matrix */
+    char *mask;      /* for cutting unusable elements */    
+    gretl_matrix *y; /* dependent variable */
+    gretl_matrix *X; /* regressors */
+    gretl_matrix *Z; /* instruments */
 };
 
 static gretl_matrix *Hmat (int n)
@@ -2216,9 +2216,9 @@ static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz)
     unit->nz = nz;
 
     unit->mask = calloc(T-2, 1);
-    unit->y = gretl_vector_alloc(T-2); 
-    unit->X = gretl_matrix_alloc(k, T-2); 
-    unit->Z = gretl_matrix_alloc(nz, T-2); 
+    unit->y = gretl_matrix_alloc(T-2, 1); 
+    unit->X = gretl_matrix_alloc(T-2, k); 
+    unit->Z = gretl_matrix_alloc(T-2, nz); 
 
     if (unit->mask == NULL || unit->y == NULL ||
 	unit->X == NULL || unit->Z == NULL) {
@@ -2272,7 +2272,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 	    } else {
 		x = NADBL;
 	    }
-	    gretl_matrix_set(unit->X, i, s, x);
+	    gretl_matrix_set(unit->X, s, i, x);
 	}
 	t++;
     }
@@ -2286,7 +2286,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 	    j = 1;
 	    for (i=maxlag; i<unit->k; i++) {
 		nv = xlist[j++];
-		gretl_matrix_set(unit->X, i, s, Z[nv][t]);
+		gretl_matrix_set(unit->X, s, i, Z[nv][t]);
 	    }
 	    t++;
 	}
@@ -2301,7 +2301,7 @@ static int ab_per_unit (const double *y, const int *xlist,
     j = 0;
     for (s=0; s<T-2; s++) {
 	for (i=0; i<=s; i++) {
-	    gretl_matrix_set(unit->Z, j++, s, y[t-s+i]);
+	    gretl_matrix_set(unit->Z, s, j++, y[t-s+i]);
 	}
 	t++;
     }
@@ -2315,7 +2315,7 @@ static int ab_per_unit (const double *y, const int *xlist,
 	    j = 1;
 	    for (i=0; i<nx; i++) {
 		nv = xlist[j++];
-		gretl_matrix_set(unit->Z, i+k, s, Z[nv][t]);
+		gretl_matrix_set(unit->Z, s, i+k, Z[nv][t]);
 	    }
 	    t++;
 	}
@@ -2341,7 +2341,7 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 	unit->mask[t] = xna(gretl_vector_get(unit->y, t));
 	if (unit->mask[t] == 0) {
 	    for (i=0; i<unit->k; i++) {
-		x = gretl_matrix_get(unit->X, i, t);
+		x = gretl_matrix_get(unit->X, t, i);
 		if (xna(x)) {
 		    unit->mask[t] = 1;
 		    break;
@@ -2363,20 +2363,20 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 	    if (unit->mask[t]) {
 		gretl_vector_set(unit->y, t, 0);
 		for (i=0; i<unit->k; i++) {
-		    gretl_matrix_set(unit->X, i, t, 0);
+		    gretl_matrix_set(unit->X, t, i, 0);
 		}
 		for (i=0; i<unit->nz; i++) {
-		    gretl_matrix_set(unit->Z, i, t, 0);
+		    gretl_matrix_set(unit->Z, t, i, 0);
 		}
 	    }
 	}
     }
 
-    for (t=0; t<unit->Z->cols; t++) {
+    for (t=0; t<unit->Z->rows; t++) {
 	for (i=0; i<unit->nz; i++) {
-	    x = gretl_matrix_get(unit->Z, i, t);
+	    x = gretl_matrix_get(unit->Z, t, i);
 	    if (xna(x)) {
-		gretl_matrix_set(unit->Z, i, t, 0);
+		gretl_matrix_set(unit->Z, t, i, 0);
 	    }
 	}
     }
@@ -2516,15 +2516,15 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 #endif
 
 	if (valid > 0) {
-	    gretl_matrix_multiply_mod(unit.X, GRETL_MOD_NONE,
-				      unit.Z, GRETL_MOD_TRANSPOSE,
+	    gretl_matrix_multiply_mod(unit.X, GRETL_MOD_TRANSPOSE,
+				      unit.Z, GRETL_MOD_NONE,
 				      XZ, GRETL_MOD_CUMULATE);
 
-	    gretl_matrix_qform(unit.Z, GRETL_MOD_NONE,
+	    gretl_matrix_qform(unit.Z, GRETL_MOD_TRANSPOSE,
 			       H, ZZ, GRETL_MOD_CUMULATE);
 	    
-	    gretl_matrix_multiply_mod(unit.Z, GRETL_MOD_NONE,
-				      unit.y, GRETL_MOD_TRANSPOSE,
+	    gretl_matrix_multiply_mod(unit.Z, GRETL_MOD_TRANSPOSE,
+				      unit.y, GRETL_MOD_NONE,
 				      ZY, GRETL_MOD_CUMULATE);
 	    actual_n++;
 	}
