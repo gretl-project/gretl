@@ -2339,7 +2339,7 @@ static int dpd_unit_cleanup (dpd_unit *unit)
 
     for (t=0; t<real_T; t++) {
 	unit->mask[t] = xna(gretl_vector_get(unit->y, t));
-	if (unit->mask[t]==0) {
+	if (unit->mask[t] == 0) {
 	    for (i=0; i<unit->k; i++) {
 		x = gretl_matrix_get(unit->X, i, t);
 		if (xna(x)) {
@@ -2417,7 +2417,8 @@ static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ,
 static int dpd_calc_beta (gretl_matrix *XZ,
 			  gretl_matrix *ZZ,
 			  gretl_matrix *ZY,
-			  int k, int nz)
+			  int k, int nz,
+			  PRN *prn)
 {
     gretl_matrix *tmp1 = NULL;
     gretl_matrix *tmp2 = NULL;
@@ -2455,7 +2456,8 @@ static int dpd_calc_beta (gretl_matrix *XZ,
 			      tmp3, GRETL_MOD_NONE,
 			      beta, GRETL_MOD_NONE);
 
-    gretl_matrix_print(beta, "beta");
+    pputs(prn, "beta (new nethod)\n\n");
+    gretl_matrix_print_with_format(beta, "%#14.6g", -1, -1, prn);
 
  bailout:
 
@@ -2467,7 +2469,7 @@ static int dpd_calc_beta (gretl_matrix *XZ,
     return err;
 }
 
-static int new_ab_driver (int yno, const int *xlist, int maxlag,
+static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 			  const double **Z, const DATAINFO *pdinfo,
 			  PRN *prn)
 {
@@ -2478,7 +2480,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag,
     gretl_matrix *ZY;
     gretl_matrix *H;
     int i, n, T, t0;
-    int k, nz, valid;
+    int k, valid;
     int actual_n = 0;
     int err = 0;
 
@@ -2489,9 +2491,6 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag,
     y = Z[yno];
 
     k = maxlag + ((xlist == NULL) ? 0 : xlist[0]);
-
-    /* FIXME nz will have to be set to something that makes sense */
-    nz = 15;
 
     err = dpd_unit_init(&unit, T, k, nz);
     if (err) {
@@ -2512,7 +2511,9 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag,
 	ab_per_unit(y, xlist, Z, T, t0, maxlag, &unit);
 	valid = dpd_unit_cleanup(&unit);
 
-	fprintf(stderr, "---- valid obs for unit %d = %d ----\n", i, valid);
+#if 0
+	pprintf(prn, "--- valid obs for unit %d = %d\n", i, valid);
+#endif
 
 	if (valid > 0) {
 	    gretl_matrix_multiply_mod(unit.X, GRETL_MOD_NONE,
@@ -2541,15 +2542,15 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag,
 	nz = trim_zero_inst(XZ, ZZ, ZY);
     }
 
-#if 1
-    fputs("After trimming\n", stderr);
-    gretl_matrix_print(XZ, "XZ");
-    gretl_matrix_print(ZZ, "ZZ");
-    gretl_matrix_print(ZY, "ZY");
+#if 0
+    pputs(prn, "\nAfter trimming\n\n");
+    gretl_matrix_print_to_prn(XZ, "XZ", prn);
+    gretl_matrix_print_to_prn(ZZ, "ZZ", prn);
+    gretl_matrix_print_to_prn(ZY, "ZY", prn);
 #endif
 
     if (!err) {
-	err = dpd_calc_beta(XZ, ZZ, ZY, k, nz);
+	err = dpd_calc_beta(XZ, ZZ, ZY, k, nz, prn);
     }
 
     dpd_unit_free(&unit);
@@ -2570,7 +2571,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag,
    equations included */
 
 MODEL
-arbond_estimate (const int *list, const char *istr, const double **X, 
+arbond_estimate (const int *list, const char *istr, const double **Z, 
 		 const DATAINFO *pdinfo, gretlopt opt,
 		 PRN *prn)
 {
@@ -2600,15 +2601,19 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     }
 
     /* see if we have a usable sample */
-    err = dpd_sample_check(ab, X);
+    err = dpd_sample_check(ab, Z);
     if (err) {
 	fprintf(stderr, "Error %d in dpd_sample_check\n", err);
     }
 
     if (!err && ab->nx > 0) {
 	/* cut out any all-zero variables */
-	dpd_zero_check(ab, X);
+	dpd_zero_check(ab, Z);
     }
+
+#ifdef ARBOND_TEST
+    gretl_stopwatch();
+#endif
 
     if (!err) {
 	/* main workspace allocation */
@@ -2617,13 +2622,13 @@ arbond_estimate (const int *list, const char *istr, const double **X,
 
     if (!err) {
 	/* build y^* and W^* */
-	err = dpd_make_y_W(ab, X[ab->yno], X, pdinfo);
+	err = dpd_make_y_W(ab, Z[ab->yno], Z, pdinfo);
     }
 
     if (!err) {
 	/* build instrument matrix blocks, Z_i, and insert into
 	   big Z' matrix; cumulate first-stage A_N as we go */
-	err = dpd_make_Z_and_A(ab, X[ab->yno], X);
+	err = dpd_make_Z_and_A(ab, Z[ab->yno], Z);
     }
 
     if (!err) {
@@ -2634,11 +2639,22 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     if (!err) {
 	/* first-step calculation */
 	err = dpd_calculate(ab);
+#ifdef ARBOND_TEST
+	double old_t;
+	
+	old_t = gretl_stopwatch();
+	pprintf(prn, "old code: time = %g\n", old_t);
+#endif
     }
 
 #ifdef ARBOND_TEST
     if (!err) {
-	new_ab_driver(ab->yno, ab->xlist, ab->p, X, pdinfo, prn);
+	double new_t;
+
+	gretl_stopwatch();
+	new_ab_driver(ab->yno, ab->xlist, ab->p, 2 * ab->m, Z, pdinfo, prn);
+	new_t = gretl_stopwatch();
+	pprintf(prn, "\nnew code: time = %g\n", new_t);
     }
 #endif
 
@@ -2654,7 +2670,7 @@ arbond_estimate (const int *list, const char *istr, const double **X,
     if (!mod.errcode) {
 	/* insert estimation info into mod */
 	mod.errcode = dpd_finalize_model(&mod, ab, list, istr, 
-					 X, pdinfo);
+					 Z, pdinfo);
     }
 
     dpd_free(ab);
