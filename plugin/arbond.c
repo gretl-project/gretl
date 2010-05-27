@@ -2493,6 +2493,26 @@ static int dpd_calc_beta (gretl_matrix *XZ, gretl_matrix *ZZ,
     return err;
 }
 
+/* Simple, temporary calculation of the number of columns required in
+   the instruments matrix: this takes into account neither "GMM-type
+   instruments" nor any limitation on the maximum number of lags of
+   the dependent variable to be used.
+*/
+
+static int calc_Z_cols (int T, int maxlag, int nx)
+{
+    int cols = nx;
+    int add = maxlag;
+    int i;
+
+    for (i=maxlag+1; i<T; i++) {
+	cols += add;
+	add++;
+    }
+
+    return cols;
+}
+
 static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 			  const double **Z, const DATAINFO *pdinfo,
 			  PRN *prn)
@@ -2504,7 +2524,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
     gretl_matrix *ZY;
     gretl_matrix *H;
     int i, n, T, t0;
-    int k, valid;
+    int k, nx, valid;
     int actual_n = 0;
     int err = 0;
 
@@ -2514,7 +2534,11 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 
     y = Z[yno];
 
-    k = maxlag + ((xlist == NULL) ? 0 : xlist[0]);
+    nx = (xlist == NULL)? 0 : xlist[0];
+    k = maxlag + nx;
+
+    nz = calc_Z_cols(T, maxlag, nx);
+    fprintf(stderr, "in fact using calculated nz = %d\n", nz);
 
     err = dpd_unit_init(&unit, T, k, nz, maxlag);
     if (err) {
