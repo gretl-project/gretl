@@ -36,6 +36,7 @@
 			 c == CORRGM ||		\
 			 c == CUSUM ||		\
 			 c == DATA ||		\
+			 c == DPANEL ||		\
 			 c == ESTIMATE ||	\
 			 c == FCAST ||		\
 			 c == FOREIGN ||	\
@@ -372,6 +373,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_T, "traditional", 0 },
     { STORE,    OPT_Z, "gzipped", 0 },
     { STORE,    OPT_X, "omit-obs", 0 },
+    { STORE,    OPT_P, "function-pkg", 0 },    
     { SUMMARY,  OPT_B, "by", 2 },
     { SUMMARY,  OPT_S, "simple", 0 },
     { SYSTEM,   OPT_I, "iterate", 0 },

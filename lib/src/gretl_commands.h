@@ -46,6 +46,7 @@ typedef enum {
     DIFF,
     DIFFTEST,
     DISCRETE,
+    DPANEL,
     DUMMIFY,
     DURATION,
     ELIF,

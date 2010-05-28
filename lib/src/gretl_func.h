@@ -119,6 +119,8 @@ const char *function_package_get_name (fnpkg *pkg);
 
 int function_package_write_file (fnpkg *pkg);
 
+int create_and_write_function_package (const char *fname, PRN *prn);
+
 int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 			  int minver);
 

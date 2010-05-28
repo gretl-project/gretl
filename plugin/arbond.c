@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "matrix_extra.h"
 
-#define ADEBUG 1
+#define ADEBUG 0
 
 enum {
     DPD_TWOSTEP = 1 << 0,
@@ -2172,10 +2172,6 @@ static int dpd_invert_A_N (dpd *ab)
     return err;
 }
 
-#define ARBOND_TEST 0
-
-#if ARBOND_TEST
-
 typedef struct dpd_unit_ dpd_unit;
 
 struct dpd_unit_ {
@@ -2618,7 +2614,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
     return err;
 }
 
-#endif
+#define DPD_TEST 0
 
 /* public interface: driver for Arellano-Bond type estimation */
 
@@ -2666,7 +2662,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 	dpd_zero_check(ab, Z);
     }
 
-#if ARBOND_TEST
+#if DPD_TEST
     gretl_stopwatch();
 #endif
 
@@ -2694,7 +2690,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     if (!err) {
 	/* first-step calculation */
 	err = dpd_calculate(ab);
-#if ARBOND_TEST
+#if DPD_TEST
 	double old_t;
 	
 	old_t = gretl_stopwatch();
@@ -2702,8 +2698,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 #endif
     }
 
-#if ARBOND_TEST
-    if (!err) {
+    if (!err && (opt & OPT_L)) {
 	double new_t;
 	int nz = ab->m;
 
@@ -2713,7 +2708,6 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 	new_t = gretl_stopwatch();
 	pprintf(prn, "\nnew code: time = %g\n", new_t);
     }
-#endif
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
@@ -2733,4 +2727,11 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     dpd_free(ab);
 
     return mod;
+}
+
+MODEL
+dpd_estimate (const int *list, const double **Z, const DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn)
+{
+    return arbond_estimate(list, NULL, Z, pdinfo, opt | OPT_L, prn);
 }

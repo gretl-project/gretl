@@ -211,8 +211,9 @@ struct plugin_function plugin_functions[] = {
     { "gretl_unzip_file",         P_ZIPFILE},
     { "gretl_zipfile_get_topdir", P_ZIPFILE},
 
-    /* Arellano-Bond estimation */
+    /* Dynamic panel data estimation */
     { "arbond_estimate",    P_ARBOND},
+    { "dpd_estimate",       P_ARBOND},
 
     /* ODBC */
     { "gretl_odbc_check_dsn", P_ODBC},

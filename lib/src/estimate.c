@@ -4623,6 +4623,47 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
 }
 
 /**
+ * dpd_model:
+ * @list: regression list.
+ * @Z: data array.
+ * @pdinfo: information on the (panel) data set.
+ * @opt: to be hooked up.
+ * @prn: printing struct (or %NULL).
+ *
+ * To be written.  This function is currently just for
+ * testing.
+ *
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
+{
+    void *handle = NULL;
+    MODEL (*dpd_estimate) (const int *, const double **, const DATAINFO *, 
+			   gretlopt, PRN *);
+    MODEL mod;
+
+    gretl_model_init(&mod);
+
+    dpd_estimate = get_plugin_function("dpd_estimate", &handle);
+    if (dpd_estimate == NULL) {
+	mod.errcode = 1;
+	return mod;
+    }
+
+    mod = (*dpd_estimate)(list, Z, pdinfo, opt, prn);
+
+    close_plugin(handle);
+
+    if (!mod.errcode) {
+	set_model_id(&mod);
+    }
+
+    return mod;    
+}
+
+/**
  * anova:
  * @list: must contain the response and treatment variables.
  * @Z: data array.

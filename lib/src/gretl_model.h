@@ -102,6 +102,7 @@ struct VCVInfo_ {
                           c == ARBOND || \
                           c == ARCH || \
                           c == ARMA || \
+			  c == DPANEL ||   \
 			  c == DURATION || \
                           c == GARCH || \
                           c == GMM || \
@@ -155,6 +156,7 @@ struct VCVInfo_ {
 
 #define ASYMPTOTIC_MODEL(c) (c == ARBOND || \
                              c == ARMA || \
+			     c == DPANEL ||   \
 			     c == DURATION || \
                              c == GARCH || \
                              c == GMM || \

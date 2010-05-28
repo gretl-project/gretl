@@ -56,6 +56,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { DIFF,     "diff" },
     { DIFFTEST, "difftest" },
     { DISCRETE, "discrete" },
+    { DPANEL,   "dpanel" },
     { DUMMIFY,  "dummify" },
     { DURATION, "duration" },
     { ELIF,     "elif" },

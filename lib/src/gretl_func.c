@@ -149,6 +149,7 @@ static fnpkg **pkgs;        /* array of pointers to loaded packages */
 
 static int function_package_record (fnpkg *pkg);
 static void function_package_free (fnpkg *pkg);
+static int version_number_from_string (const char *s);
 
 /* record of state, and communication of state with outside world */
 
@@ -2022,6 +2023,240 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 int function_package_write_file (fnpkg *pkg)
 {
     return real_write_function_package(pkg, NULL);
+}
+
+static int is_unclaimed (const char *s, char **S, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	if (strcmp(s, S[i]) == 0) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+static gchar *pkg_aux_content (const char *fname, int *err)
+{
+    gchar *ret = NULL;
+    GError *gerr = NULL;
+    gsize len = 0;
+
+    g_file_get_contents(fname, &ret, &len, &gerr);
+
+    if (gerr != NULL) {
+	gretl_errmsg_set(gerr->message);
+	g_error_free(gerr);
+	*err = E_FOPEN;
+    }
+
+    return ret;
+}
+
+static int pkg_set_dreq (fnpkg *pkg, const char *s)
+{
+    int err = 0;
+
+    if (!strcmp(s, NEEDS_TS)) {
+	pkg->dreq = FN_NEEDS_TS;
+    } else if (!strcmp(s, NEEDS_QM)) {
+	pkg->dreq = FN_NEEDS_QM;
+    } else if (!strcmp(s, NEEDS_PANEL)) {
+	pkg->dreq = FN_NEEDS_PANEL;
+    } else {
+	err = E_PARSE;
+    }
+
+    return err;
+}
+
+static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
+{
+    char *p, line[1024];
+    gchar *tmp;
+    int got = 0;
+    int err = 0;
+
+    while (fgets(line, sizeof line, fp) && !err) {
+	if (*line == '#' || string_is_blank(line)) {
+	    continue;
+	}
+	tailstrip(line);
+	p = strchr(line, '=');
+	if (p == NULL) {
+	    err = E_PARSE;
+	} else {
+	    p++;
+	    p += strspn(p, " ");
+	    if (!strncmp(line, "author", 6)) {
+		err = function_package_set_properties(pkg, "author", p, NULL);
+		if (!err) got++;
+	    } else if (!strncmp(line, "version", 7)) {
+		err = function_package_set_properties(pkg, "version", p, NULL);
+		if (!err) got++;
+	    } else if (!strncmp(line, "date", 4)) {
+		err = function_package_set_properties(pkg, "date", p, NULL);
+		if (!err) got++;
+	    } else if (!strncmp(line, "description", 11)) {
+		err = function_package_set_properties(pkg, "description", p, NULL);
+		if (!err) got++;
+	    } else if (!strncmp(line, "help", 4)) {
+		pprintf(prn, "Looking for help text in %s\n", p);
+		tmp = pkg_aux_content(p, &err);
+		if (!err) {
+		    err = function_package_set_properties(pkg, "help", tmp, NULL);
+		    if (!err) got++;
+		    g_free(tmp);
+		}
+	    } else if (!strncmp(line, "sample-script", 13)) {
+		pprintf(prn, "Looking for sample script in %s\n", p);
+		tmp = pkg_aux_content(p, &err);
+		if (!err) {
+		    err = function_package_set_properties(pkg, "sample-script", tmp, NULL);
+		    if (!err) got++;
+		    g_free(tmp);
+		}
+	    } else if (!strncmp(line, "data-requirement", 16)) {
+		err = pkg_set_dreq(pkg, p);
+	    } else if (!strncmp(line, "min-version", 11)) {
+		pkg->minver = version_number_from_string(p);
+		got++;
+	    } 
+	}
+    }
+
+    if (!err && got < 7) {
+	gretl_errmsg_set("Some required information was missing");
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
+				      int *err)
+{
+    fnpkg *pkg = NULL;
+    char *p, fname[FILENAME_MAX];
+    char line[1024];
+    FILE *fp;
+
+    if (!has_suffix(gfnname, ".gfn")) {
+	gretl_errmsg_set("Output must have extension \".gfn\"");
+	*err = E_DATA;
+	return NULL;
+    }
+
+    strcpy(fname, gfnname);
+    p = strrchr(fname, '.');
+    strcpy(p, ".spec");
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	*err = E_FOPEN;
+    } else {
+	char **pubnames = NULL;
+	char **privnames = NULL;
+	int npub = 0, npriv = 0;
+	int i;
+
+	pprintf(prn, "Found spec file '%s'\n", fname);
+
+	while (fgets(line, sizeof line, fp) && !*err) {
+	    if (!strncmp(line, "public =", 8)) {
+		tailstrip(line);
+		pubnames = gretl_string_split(line + 8, &npub);
+		if (npub == 0) {
+		    *err = E_DATA;
+		}
+	    }
+	}
+
+	if (!*err) {
+	    pprintf(prn, "number of public interfaces = %d\n", npub);
+	    npriv = n_free_functions() - npub;
+	    if (npriv < 0) {
+		npriv = 0;
+	    }
+
+	    for (i=0; i<npub && !*err; i++) {
+		pprintf(prn, " %s\n", pubnames[i]);
+		if (get_user_function_by_name(pubnames[i]) == NULL) {
+		    gretl_errmsg_sprintf("'%s': no such function", pubnames[i]);
+		    *err = E_DATA;
+		}
+	    }
+	}
+
+	if (!*err && npriv > 0) {
+	    npriv = 0;
+	    for (i=0; i<n_ufuns && !*err; i++) {
+		if (ufuns[i]->pkg == NULL && is_unclaimed(ufuns[i]->name, pubnames, npub)) {
+		    *err = strings_array_add(&privnames, &npriv, ufuns[i]->name);
+		}
+	    }
+	}
+
+	if (!*err && npriv > 0) {
+	    pprintf(prn, "number of private functions = %d\n", npriv);
+	    for (i=0; i<npriv; i++) {
+		pprintf(prn, " %s\n", privnames[i]);
+	    }
+	}
+
+	if (!*err) {
+	    pkg = function_package_new(gfnname, pubnames, npub,
+				       privnames, npriv, err);
+	}
+
+	free_strings_array(pubnames, npub);
+	free_strings_array(privnames, npriv);
+
+	if (!*err) {
+	    rewind(fp);
+	    *err = new_package_info_from_spec(pkg, fp, prn);
+	}
+
+	if (*err && pkg != NULL) {
+	    function_package_free(pkg);
+	    pkg = NULL;
+	}
+
+	fclose(fp);
+    }
+
+    return pkg;
+}
+
+/**
+ * create_and_write_function_package:
+ * @fname: filename for function package.
+ * @prn: printer struct for feedback.
+ *
+ * Create a package based on the functions currently loaded, and
+ * write it out as an XML file.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int create_and_write_function_package (const char *fname, PRN *prn)
+{
+    fnpkg *pkg = NULL;
+    int err = 0;
+
+    if (n_free_functions() == 0) {
+	gretl_errmsg_set(_("No functions are available for packaging at present."));
+	err = E_DATA;
+    } else {
+	pkg = new_pkg_from_spec_file(fname, prn, &err);
+	if (pkg != NULL) {
+	    err = function_package_write_file(pkg);
+	}
+    }
+
+    return err;
 }
 
 /**

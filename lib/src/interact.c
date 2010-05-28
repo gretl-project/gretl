@@ -430,6 +430,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == ARBOND || \
                          c == ARMA || \
                          c == COINT2 || \
+			 c == DPANEL ||	\
                          c == EQUATION || \
                          c == GARCH || \
                          c == HECKIT || \
@@ -452,6 +453,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define NEEDS_LISTSEP(c) (c == AR || \
                           c == ARBOND || \
                           c == ARMA || \
+			  c == DPANEL || \
                           c == GARCH || \
                           c == HECKIT || \
                           c == IVREG)
@@ -2546,7 +2548,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "sepcount = %d\n", sepcount);
 #endif
 
-    if (cmd->ci == AR || cmd->ci == ARBOND ||
+    if (cmd->ci == AR || cmd->ci == ARBOND || cmd->ci == DPANEL ||
 	cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of plain ints in list */
 	ints_ok = 1;
@@ -3459,6 +3461,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
 #define dont_print_list(c) ((c->flags & CMD_NOLIST) || \
                              c->ci == ARBOND || \
                              c->ci == ARMA || \
+                             c->ci == DPANEL || \
 			     c->ci == GARCH || \
                              c->ci == OPEN)
 
@@ -4690,7 +4693,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case STORE:
-	if (pZ == NULL || Z == NULL || pdinfo == NULL) {
+	if (cmd->opt & OPT_P) {
+	    /* saving function package */
+	    err = create_and_write_function_package(cmd->param, prn);
+	    break;
+	} else if (pZ == NULL || Z == NULL || pdinfo == NULL) {
 	    err = E_NODATA;
 	} else if (*cmd->param == '\0') {
 	    pputs(prn, _("store: no filename given\n"));
@@ -4752,6 +4759,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case ARBOND:
     case PANEL:	
+    case DPANEL:
 	if (!dataset_is_panel(pdinfo)) {
 	    gretl_errmsg_set(_("This estimator requires panel data"));
 	    err = E_DATA;
@@ -4800,6 +4808,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == ARBOND) {
 	    *models[0] = arbond_model(cmd->list, cmd->param, Z, pdinfo, 
 				      cmd->opt, prn);
+	} else if (cmd->ci == DPANEL) {
+	    *models[0] = dpd_model(cmd->list, Z, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
 	    *models[0] = intreg(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {

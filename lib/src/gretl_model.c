@@ -723,8 +723,9 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	} else if (pmod->ci == PANEL && (pmod->opt & OPT_W)) {
 	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
 	} else if (NONLIST_MODEL(pmod->ci) ||
-		   pmod->ci == ARMA || pmod->ci == PANEL ||
-		   pmod->ci == ARBOND || pmod->ci == GARCH) {
+		   pmod->ci == ARMA || pmod->ci == PANEL || 
+		   pmod->ci == ARBOND || pmod->ci == DPANEL ||
+		   pmod->ci == GARCH) {
 	    k = i;
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	    k = i;
@@ -1411,7 +1412,7 @@ int gretl_model_get_depvar (const MODEL *pmod)
 	    dv = pmod->list[4];
 	} else if (pmod->ci == ARMA) {
 	    dv = pmod->list[arma_depvar_pos(pmod)];
-	} else if (pmod->ci == ARBOND) {
+	} else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
 	    dv = arbond_get_depvar(pmod);
 	} else {
 	    dv = pmod->list[1];
@@ -1446,7 +1447,7 @@ const char *gretl_model_get_depvar_name (const MODEL *pmod,
 		dv = pmod->list[4];
 	    } else if (pmod->ci == ARMA) {
 		dv = pmod->list[arma_depvar_pos(pmod)];
-	    } else if (pmod->ci == ARBOND) {
+	    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
 		dv = arbond_get_depvar(pmod);
 	    } else {
 		dv = pmod->list[1];
@@ -1510,7 +1511,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
-    } else if (pmod->ci == ARBOND) {
+    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
 	int sep = 0;
 
 	nx = 0;
@@ -4468,14 +4469,14 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 
     case VIF:
 	if (mci == IVREG || mci == ARMA || mci == GARCH ||
-	    mci == PANEL || mci == ARBOND) {
+	    mci == PANEL || mci == ARBOND || mci == DPANEL) {
 	    ok = 0;
 	}
 	break;
 
     case EQNPRINT:
-	if (mci == ARMA || mci == ARBOND || mci == HECKIT ||
-	    mci == INTREG) {
+	if (mci == ARMA || mci == ARBOND || mci == DPANEL ||
+	    mci == HECKIT || mci == INTREG) {
 	    ok = 0; 
 	}
 	break;
