@@ -2025,6 +2025,10 @@ int function_package_write_file (fnpkg *pkg)
     return real_write_function_package(pkg, NULL);
 }
 
+/* below: apparatus for constructing and saving a gfn function
+   package from the command line
+*/
+
 static int is_unclaimed (const char *s, char **S, int n)
 {
     int i;
