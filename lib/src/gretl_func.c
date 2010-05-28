@@ -2086,7 +2086,7 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	tailstrip(line);
 	p = strchr(line, '=');
 	if (p == NULL) {
-	    err = E_PARSE;
+	    continue;
 	} else {
 	    p++;
 	    p += strspn(p, " ");
@@ -2140,7 +2140,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 {
     fnpkg *pkg = NULL;
     char *p, fname[FILENAME_MAX];
-    char line[1024];
+    char line[4096], cont[1024];
     FILE *fp;
 
     if (!has_suffix(gfnname, ".gfn")) {
@@ -2166,6 +2166,12 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 
 	while (fgets(line, sizeof line, fp) && !*err) {
 	    if (!strncmp(line, "public =", 8)) {
+		while (ends_with_backslash(line)) {
+		    charsub(line, '\\', '\0');
+		    *cont = '\0';
+		    fgets(cont, sizeof cont, fp);
+		    strcat(line, cont);
+		}
 		tailstrip(line);
 		pubnames = gretl_string_split(line + 8, &npub);
 		if (npub == 0) {
