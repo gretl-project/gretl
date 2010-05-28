@@ -2181,6 +2181,7 @@ struct dpd_unit_ {
     int k;            /* number of regressors, including lagged dep var */
     int nx;           /* number of exogenous variables */
     int nz;           /* number of columns in Z matrix */
+    int zcol;         /* current column in Z */
     char *mask;       /* for cutting unusable elements */    
     gretl_matrix *y;  /* dependent variable */
     gretl_matrix *X;  /* regressors */
@@ -2226,6 +2227,7 @@ static int dpd_unit_init (dpd_unit *unit, int T, int k, int nz, int maxlag,
     unit->nx = k - maxlag;
     unit->nz = nz;
     unit->opt = opt;
+    unit->zcol = 0;
 
     unit->neqns = T - unit->offset;
     if (opt & OPT_L) {
@@ -2329,17 +2331,17 @@ static int ab_per_unit (const double *y, const int *xlist,
     /* instruments */
 
     gretl_matrix_zero(unit->Z);
+    unit->zcol = 0;
 
     /* lagged levels of y first */
     t = t0 + unit->offset - 2; 
-    j = 0;
     for (s=maxlag-1; s<smax; s++) { 
 	for (i=0; i<=s; i++) {
 	    x = y[t-s+i+maxlag-1];
 	    if (!xna(x)) {
-		gretl_matrix_set(unit->Z, s, j, x);
+		gretl_matrix_set(unit->Z, s, unit->zcol, x);
 	    }
-	    j++;
+	    unit->zcol += 1;
 	}
 	t++;
     }
@@ -2360,32 +2362,33 @@ static int bb_per_unit (const double *y, const int *xlist,
 {
     double x;
     int i, s, t, smax;
-    int j, k, nv;
+    int j, nv;
+    int r, c;
     int err = 0;
 
     smax = T - unit->offset + 1;
 
     /* plain y */
     t = t0 + unit->offset - 1;
-    k = T - unit->offset;
+    r = T - unit->offset;
     for (s=0; s<smax; s++) {
-	unit->y->val[k++] = y[t++];
+	unit->y->val[r++] = y[t++];
     }
 
     /* the right-hand side */
 
     /* lagged y first */
     t = t0 + unit->offset - 2;
-    k = T - unit->offset;
+    r = T - unit->offset;
     for (s=0; s<smax; s++) {
 	for (i=0; i<maxlag; i++) {
 	    if (i<=s) {
-		gretl_matrix_set(unit->X, k, i, y[t-i]);
+		gretl_matrix_set(unit->X, r, i, y[t-i]);
 	    } else {
-		gretl_matrix_set(unit->X, k, i, NADBL);
+		gretl_matrix_set(unit->X, r, i, NADBL);
 	    }
 	}
-	k++;
+	r++;
 	t++;
     }
 
@@ -2393,35 +2396,39 @@ static int bb_per_unit (const double *y, const int *xlist,
 
     if (unit->nx > 0) {
 	t = t0 + unit->offset - 1;
-	k = T - unit->offset;
+	r = T - unit->offset;
 	for (s=0; s<smax; s++) {
 	    j = 1;
 	    for (i=maxlag; i<unit->k; i++) {
 		nv = xlist[j++];
-		gretl_matrix_set(unit->X, k, i, Z[nv][t]);
+		gretl_matrix_set(unit->X, r, i, Z[nv][t]);
 	    }
-	    k++;
+	    r++;
 	    t++;
 	}
     }
 
     /* instruments */
 
-#if 0
-    /* lagged differences of y first */
-    t = t0 + unit->offset - 2; 
+    r = T - 2 + (maxlag - 1);
     j = 0;
-    for (s=maxlag-1; s<smax; s++) { 
-	for (i=0; i<=s; i++) {
-	    x = y[t-s+i+maxlag-1];
-	    if (!xna(x)) {
-		gretl_matrix_set(unit->Z, s, j, x);
-	    }
-	    j++;
+
+    fprintf(stderr, "*** T = %d, maxlag = %d, r = %d\n",
+	    T, maxlag, r);
+
+    for (t=t0+1; t<t0+T-1; t++) {
+	if (na(y[t]) || na(y[t-1])) {
+	    x = 0.0;
+	} else {
+	    x = y[t] - y[t-1];
 	}
-	t++;
+	gretl_matrix_set(unit->Z, r, unit->zcol, x);
+	j++;
+	unit->zcol += 1;
+	if (j > maxlag - 2) {
+	    r++;
+	}
     }
-#endif
 
 #if 1 || ADEBUG
     gretl_matrix_print(unit->y, "y");
@@ -2432,10 +2439,8 @@ static int bb_per_unit (const double *y, const int *xlist,
     return err;
 }
 
-static int ab_x_insts (const int *xlist, 
-		       const double **Z, 
-		       int T, int t0,
-		       dpd_unit *unit)
+static int ab_x_insts (const int *xlist, const double **Z, 
+		       int T, int t0, dpd_unit *unit)
 {
     double xt, xt1;
     int i, s, t, smax;
@@ -2463,6 +2468,31 @@ static int ab_x_insts (const int *xlist,
     }
 
     return err;
+}
+
+static int bb_x_insts (const int *xlist, const double **Z, 
+		       int T, int t0, int maxlag, dpd_unit *unit)
+{
+    int t, s, smax, i, r;
+    int k, nv;
+
+    smax = T - unit->offset + 1;
+    k = unit->Z->cols - unit->nx;
+
+    if (unit->nx > 0) {
+	t = t0 + unit->offset - 1;
+	r = T - 2;
+	for (s=0; s<smax; s++) {
+	    for (i=0; i<unit->nx; i++) {
+		nv = xlist[i+1];
+		gretl_matrix_set(unit->Z, r, i+k, Z[nv][t]);
+	    }
+	    r++;
+	    t++;
+	}
+    }
+
+    return 0;
 }
 
 static int dpd_unit_cleanup (dpd_unit *unit, int T)
@@ -2685,6 +2715,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 	ab_per_unit(y, xlist, Z, H, T, t0, maxlag, &unit);
 	ab_x_insts(xlist, Z, T, t0, &unit);
 	bb_per_unit(y, xlist, Z, T, t0, maxlag, &unit);
+	bb_x_insts(xlist, Z, T, t0, maxlag, &unit);
 	valid = dpd_unit_cleanup(&unit, T);
 
 #if 0
