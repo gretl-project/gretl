@@ -5297,6 +5297,22 @@
     </description>
   </command>
 
+  <command name="makepkg" section="Programming" context="cli"
+    label="Make function package">
+
+    <usage>
+      <arguments>
+        <argument>filename</argument>
+      </arguments>
+    </usage>    
+
+    <description>
+      <para>
+	To be documented!
+      </para>
+    </description>
+  </command>
+
   <command name="meantest" section="Tests" label="Difference of means">
 
     <usage>
