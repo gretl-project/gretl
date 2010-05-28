@@ -398,6 +398,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == KALMAN || \
                        c == LEVERAGE || \
                        c == LOOP || \
+		       c == MAKEPKG || \
                        c == MLE || \
                        c == MODELTAB || \
                        c == MODPRINT || \
@@ -4692,12 +4693,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}	
 	break;
 
+    case MAKEPKG:
+	err = create_and_write_function_package(cmd->param, prn);
+	break;
+
     case STORE:
-	if (cmd->opt & OPT_P) {
-	    /* saving function package */
-	    err = create_and_write_function_package(cmd->param, prn);
-	    break;
-	} else if (pZ == NULL || Z == NULL || pdinfo == NULL) {
+	if (pZ == NULL || Z == NULL || pdinfo == NULL) {
 	    err = E_NODATA;
 	} else if (*cmd->param == '\0') {
 	    pputs(prn, _("store: no filename given\n"));

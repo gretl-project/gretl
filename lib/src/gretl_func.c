@@ -2240,6 +2240,55 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
     return pkg;
 }
 
+static int cli_validate_package_file (const char *fname, PRN *prn)
+{
+    char dtdname[FILENAME_MAX];
+    xmlDocPtr doc;
+    xmlDtdPtr dtd;
+    int err = 0;
+
+    doc = xmlParseFile(fname);
+    if (doc == NULL) {
+	pprintf(prn, "Couldn't parse %s\n", fname);
+	return 1;
+    }
+
+    sprintf(dtdname, "%sfunctions%cgretlfunc.dtd", gretl_home(), SLASH);
+    dtd = xmlParseDTD(NULL, (const xmlChar *) dtdname); 
+
+    if (dtd == NULL) {
+	pputs(prn, "Couldn't open DTD to check package\n");
+    } else {
+	const char *pkgname = path_last_element(fname);
+	xmlValidCtxtPtr cvp = xmlNewValidCtxt();
+
+	if (cvp == NULL) {
+	    pputs(prn, "Couldn't get an XML validation context\n");
+	    xmlFreeDtd(dtd);
+	    xmlFreeDoc(doc);
+	    return 0;
+	}
+
+	cvp->userData = (void *) prn;
+	cvp->error    = (xmlValidityErrorFunc) pprintf;
+	cvp->warning  = (xmlValidityWarningFunc) pprintf;
+
+	if (!xmlValidateDtd(cvp, doc, dtd)) {
+	    err = 1;
+	} else {
+	    pprintf(prn, _("%s: validated against DTD OK"), pkgname);
+	    pputc(prn, '\n');
+	}
+
+	xmlFreeValidCtxt(cvp);
+	xmlFreeDtd(dtd);
+    } 
+
+    xmlFreeDoc(doc);
+
+    return err;
+}
+
 /**
  * create_and_write_function_package:
  * @fname: filename for function package.
@@ -2263,6 +2312,9 @@ int create_and_write_function_package (const char *fname, PRN *prn)
 	pkg = new_pkg_from_spec_file(fname, prn, &err);
 	if (pkg != NULL) {
 	    err = function_package_write_file(pkg);
+	    if (!err) {
+		err = cli_validate_package_file(fname, prn);
+	    }
 	}
     }
 
