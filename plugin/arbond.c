@@ -2412,15 +2412,20 @@ static int bb_per_unit (const double *y, const int *xlist,
     r = T - 2 + (maxlag - 1);
     j = 0;
 
-    for (t=t0+1; t<t0+T-1; t++) {
-	if (na(y[t]) || na(y[t-1])) {
+    for (t=t0; t<t0+T-1; t++) {
+	/* 
+	   FIXME: this is a horrid hack to replicate the behaviour
+	   of the prototype and have the numbers come out right when 
+	   maxlag==1, but it'll have to be done properly at some stage
+	*/
+	if ((t==t0) || na(y[t]) || na(y[t-1])) {
 	    x = 0.0;
 	} else {
 	    x = y[t] - y[t-1];
 	}
 	gretl_matrix_set(unit->Z, r, unit->zcol, x);
 	unit->zcol += 1;
-	if (++j > maxlag - 2) {
+	if (++j > maxlag - 1) {
 	    r++;
 	}
     }
@@ -2488,7 +2493,7 @@ static int dpd_unit_cleanup (dpd_unit *unit, int T)
     int i, t;
     double x;
 
-#if 1
+#if ADEBUG
     fputs("\nBefore cleanup\n", stderr);
     gretl_matrix_print(unit->y, "y"); 
     gretl_matrix_print(unit->X, "X"); 
@@ -2517,7 +2522,7 @@ static int dpd_unit_cleanup (dpd_unit *unit, int T)
 	gretl_matrix_cut_rows_cols(unit->H, unit->mask);
     }
 
-#if 1
+#if ADEBUG
     fputs("After cleanup\n", stderr);
     gretl_matrix_print(unit->y, "y"); 
     gretl_matrix_print(unit->X, "X"); 
@@ -2729,7 +2734,7 @@ static int new_ab_driver (int yno, const int *xlist, int maxlag, int nz,
 	    actual_n++;
 	}
 
-#if 1
+#if ADEBUG
 	gretl_matrix_print(XZ, "XZ");
 	gretl_matrix_print(ZZ, "ZZ");
 	gretl_matrix_print(ZY, "ZY");
