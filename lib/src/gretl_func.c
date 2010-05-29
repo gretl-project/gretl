@@ -4659,6 +4659,7 @@ static int unlocalize_list (const char *lname, int status,
 	}
     } else if (status == LIST_WAS_TEMP) {
 	int err = delete_list_by_name(lname);
+
 	fprintf(stderr, "delete_list_by_name: '%s': err=%d\n", lname, err);
     }
 

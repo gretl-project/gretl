@@ -554,8 +554,8 @@ int create_named_null_list (const char *name)
 
 int create_named_singleton_list (int varnum, const char *name)
 {
-    saved_list *sl;
-    int *list;
+    saved_list *sl = NULL;
+    int *list = NULL;
     int err;
 
     list = gretl_list_new(1);
@@ -569,9 +569,13 @@ int create_named_singleton_list (int varnum, const char *name)
     if (!err) {
 	sl = list_stack[n_lists - 1];
 	sl->level += 1;
-    } else {
-	free(list);
-    }
+    } 
+
+#if LDEBUG
+    fprintf(stderr, "create_named_singleton_list: sl at %p\n", (void *) sl);
+#endif
+
+    free(list);
 
     return err;
 }
