@@ -708,6 +708,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == GARCH) return N_("GARCH");
     else if (ci == INTREG) return N_("Interval estimates");
+    else if (ci == DPANEL) return N_("Dynamic panel");
     else if (ci == ARBOND) {
 	if (tex_format(prn)) return N_("Arellano--Bond");
 	else return N_("Arellano-Bond");
@@ -759,6 +760,12 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("2-step Arellano-Bond");
 	} else {
 	    return N_("1-step Arellano-Bond");
+	}
+    } else if (pmod->ci == DPANEL) {
+	if (gretl_model_get_int(pmod, "step") == 2) {
+	    return N_("2-step dynamic panel");
+	} else {
+	    return N_("1-step dynamic panel");
 	}
     } else if (gmm_model(pmod)) {
 	if (pmod->opt & OPT_T) {
@@ -1105,7 +1112,7 @@ print_ivreg_instruments (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-static void arbond_asy_vcv_line (const MODEL *pmod, PRN *prn)
+static void dpd_asy_vcv_line (const MODEL *pmod, PRN *prn)
 {
     if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"", I_("Asymptotic standard errors (unreliable)"));
@@ -1290,7 +1297,7 @@ static void tex_vecm_depvar_name (char *s, const char *vname)
     }    
 }
 
-static void tex_arbond_depvar_name (char *s, const char *vname)
+static void tex_dpd_depvar_name (char *s, const char *vname)
 {
     char vnesc[32];
 
@@ -1306,8 +1313,9 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	rq_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "panel_bk_failed")) {
 	beck_katz_failed_line(prn);
-    } else if (pmod->ci == ARBOND && gretl_model_get_int(pmod, "asy")) {
-	arbond_asy_vcv_line(pmod, prn);
+    } else if ((pmod->ci == ARBOND || pmod->ci == DPANEL) && 
+	       gretl_model_get_int(pmod, "asy")) {
+	dpd_asy_vcv_line(pmod, prn);
     } else {
 	vi = gretl_model_get_data(pmod, "vcv_info");
     }
@@ -1752,8 +1760,8 @@ static void print_model_heading (const MODEL *pmod,
 	if (tex) {
 	    if (pmod->aux == AUX_VECM) {
 		tex_vecm_depvar_name(vname, dvname);
-	    } else if (pmod->ci == ARBOND) {
-		tex_arbond_depvar_name(vname, dvname);
+	    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+		tex_dpd_depvar_name(vname, dvname);
 	    } else {
 		tex_escape(vname, dvname);
 	    }
@@ -2669,7 +2677,7 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	    N_("McFadden R-squared");  /* 22: McFadden's pseudo-R-squared */
     }
 
-    if (pmod->ci == ARBOND) {
+    if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
 	for (i=0; i<MID_STATS; i++) {
 	    if (i < 2 || i > 3) {
 		val[i] = NADBL;
@@ -2975,7 +2983,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	panel_variance_lines(pmod, prn);
     } else if (gmm_model(pmod)) {
 	print_GMM_stats(pmod, prn);
-    } else if (pmod->ci == ARBOND) {
+    } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
 	print_DPD_stats(pmod, prn);
     } else if (logit_probit_model(pmod)) {
 	logit_probit_stats(pmod, pdinfo, prn);
@@ -3000,8 +3008,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
 	pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != HECKIT && 
-	pmod->ci != ARBOND && pmod->ci != GARCH && pmod->ci != DURATION &&
-	!ordered_model(pmod) && !multinomial_model(pmod) && 
+	pmod->ci != ARBOND && pmod->ci != DPANEL && pmod->ci != GARCH && 
+	pmod->ci != DURATION && !ordered_model(pmod) && !multinomial_model(pmod) && 
 	!COUNT_MODEL(pmod->ci) && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }

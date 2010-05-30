@@ -4640,8 +4640,8 @@ MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 		 gretlopt opt, PRN *prn)
 {
     void *handle = NULL;
-    MODEL (*dpd_estimate) (const int *, const double **, const DATAINFO *, 
-			   gretlopt, PRN *);
+    MODEL (*dpd_estimate) (const int *, const char *, const double **, 
+			   const DATAINFO *, gretlopt, PRN *);
     MODEL mod;
 
     gretl_model_init(&mod);
@@ -4652,7 +4652,7 @@ MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return mod;
     }
 
-    mod = (*dpd_estimate)(list, Z, pdinfo, opt, prn);
+    mod = (*dpd_estimate)(list, NULL, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 
