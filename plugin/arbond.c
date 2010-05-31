@@ -23,14 +23,15 @@
 #define ADEBUG 0
 
 enum {
-    DPD_TWOSTEP = 1 << 0,
-    DPD_ORTHDEV = 1 << 1,
-    DPD_TIMEDUM = 1 << 2,
-    DPD_ASYERRS = 1 << 3,
-    DPD_LEVELEQ = 1 << 4
+    DPD_TWOSTEP  = 1 << 0,
+    DPD_ORTHDEV  = 1 << 1,
+    DPD_TIMEDUM  = 1 << 2,
+    DPD_ASYERRS  = 1 << 3,
+    DPD_NEWSTYLE = 1 << 4,
+    DPD_LEVELEQ  = 1 << 5
 };
 
-typedef struct dpd_ dpd;
+typedef struct dpdinfo_ dpdinfo;
 typedef struct unit_info_ unit_info; /* old-style struct */
 typedef struct dpd_unit_ dpd_unit;   /* new-style struct */
 
@@ -47,7 +48,7 @@ struct diag_info {
     int maxlag;  /* maximum lag order */
 };
 
-struct dpd_ {
+struct dpdinfo_ {
     int flags;            /* option flags */
     int step;             /* what step are we on? (1 or 2) */
     int yno;              /* ID number of dependent var */
@@ -90,15 +91,15 @@ struct dpd_ {
     gretl_matrix *ZT;     /* transpose of full instrument matrix */
     gretl_matrix *Zi;     /* per-unit instrument matrix */
     gretl_matrix *y;      /* first difference (or deviation) of dependent var */
-    gretl_matrix *W;      /* lagged differences of y, indep vars, etc. */
+    gretl_matrix *X;      /* lagged differences of y, indep vars, etc. */
     gretl_matrix *tmp1;   /* workspace */
     gretl_matrix *kmtmp;
     gretl_matrix *kktmp;
     gretl_matrix *den;
     gretl_matrix *L1;
-    gretl_matrix *WZA;
+    gretl_matrix *XZA;
     gretl_matrix *R1;
-    gretl_matrix *ZW;
+    gretl_matrix *ZX;
     struct diag_info *d;   /* info on block-diagonal instruments */
     unit_info *ui;         /* old-style info on panel units (diffs or devs) */
     dpd_unit *unit;        /* new-style info on panel unit */
@@ -121,7 +122,7 @@ struct dpd_unit_ {
     gretl_matrix *H;  /* weights matrix for GMM */
 };
 
-#define data_index(ab,i) (i * ab->T + ab->t1)
+#define data_index(dpd,i) (i * dpd->T + dpd->t1)
 
 static void dpd_unit_free (dpd_unit *unit)
 {
@@ -133,86 +134,84 @@ static void dpd_unit_free (dpd_unit *unit)
     free(unit);
 }
 
-static void dpd_free (dpd *ab)
+static void dpdinfo_free (dpdinfo *dpd)
 {
     int i;
 
-    if (ab == NULL) {
+    if (dpd == NULL) {
 	return;
     }
 
-    gretl_matrix_block_destroy(ab->B1);
-    gretl_matrix_block_destroy(ab->B2);
+    gretl_matrix_block_destroy(dpd->B1);
+    gretl_matrix_block_destroy(dpd->B2);
 
-    gretl_matrix_free(ab->V);
+    gretl_matrix_free(dpd->V);
 
-    free(ab->xlist);
-    free(ab->ilist);
+    free(dpd->xlist);
+    free(dpd->ilist);
 
-    free(ab->d);
-    free(ab->used);
+    free(dpd->d);
+    free(dpd->used);
 
-    if (ab->ui != NULL) {
+    if (dpd->ui != NULL) {
 	/* old-style */
-	for (i=0; i<ab->N; i++) {
-	    free(ab->ui[i].skip);
+	for (i=0; i<dpd->N; i++) {
+	    free(dpd->ui[i].skip);
 	}
-	free(ab->ui);
+	free(dpd->ui);
     }
 
-    if (ab->unit != NULL) {
+    if (dpd->unit != NULL) {
 	/* new-style */
-	dpd_unit_free(ab->unit);
+	dpd_unit_free(dpd->unit);
     }
 
-    free(ab);
+    free(dpd);
 }
 
-static int dpd_allocate_matrices (dpd *ab)
+static int dpd_allocate_matrices (dpdinfo *dpd)
 {
-    int T = ab->maxTi;
+    int T = dpd->maxTi;
 
-    ab->B1 = gretl_matrix_block_new(&ab->beta,  ab->k, 1,
-				    &ab->vbeta, ab->k, ab->k,
-				    &ab->uhat,  ab->nobs, 1,
-				    &ab->ZT,    ab->m, ab->nobs,
-				    &ab->H,     T, T,
-				    &ab->A,     ab->m, ab->m,
-				    &ab->Acpy,  ab->m, ab->m,
-				    &ab->Zi,    T, ab->m,
-				    &ab->y,     ab->nobs, 1,
-				    &ab->W,     ab->nobs, ab->k,
-				    NULL);
-    if (ab->B1 == NULL) {
+    if (dpd->flags & DPD_NEWSTYLE) {
+	/* temporary hack */
+	dpd->vbeta = dpd->uhat = dpd->ZT = dpd->H = NULL;
+	dpd->A = dpd->Acpy = dpd->Zi = dpd->y = dpd->X = NULL;
+
+	dpd->tmp1 = dpd->kmtmp = dpd->kktmp = dpd->den = NULL;
+	dpd->L1 = dpd->XZA = dpd->R1 = dpd->ZX = NULL;
+
+	return 0;	
+    }
+
+    dpd->B1 = gretl_matrix_block_new(&dpd->beta,  dpd->k, 1,
+				     &dpd->vbeta, dpd->k, dpd->k,
+				     &dpd->uhat,  dpd->nobs, 1,
+				     &dpd->ZT,    dpd->m, dpd->nobs,
+				     &dpd->H,     T, T,
+				     &dpd->A,     dpd->m, dpd->m,
+				     &dpd->Acpy,  dpd->m, dpd->m,
+				     &dpd->Zi,    T, dpd->m,
+				     &dpd->y,     dpd->nobs, 1,
+				     &dpd->X,     dpd->nobs, dpd->k,
+				     NULL);
+    if (dpd->B1 == NULL) {
 	return E_ALLOC;
     }
 
-    ab->B2 = gretl_matrix_block_new(&ab->tmp1,  ab->m, ab->m,
-				    &ab->kmtmp, ab->k, ab->m,
-				    &ab->kktmp, ab->k, ab->k,
-				    &ab->den,   ab->k, ab->k,
-				    &ab->L1,    1, ab->m,
-				    &ab->WZA,   ab->k, ab->m,
-				    &ab->R1,    ab->m, 1,
-				    &ab->ZW,    ab->m, ab->k,
-				    NULL);
+    dpd->B2 = gretl_matrix_block_new(&dpd->tmp1,  dpd->m, dpd->m,
+				     &dpd->kmtmp, dpd->k, dpd->m,
+				     &dpd->kktmp, dpd->k, dpd->k,
+				     &dpd->den,   dpd->k, dpd->k,
+				     &dpd->L1,    1, dpd->m,
+				     &dpd->XZA,   dpd->k, dpd->m,
+				     &dpd->R1,    dpd->m, 1,
+				     &dpd->ZX,    dpd->m, dpd->k,
+				     NULL);
 
-    if (ab->B2 == NULL) {
+    if (dpd->B2 == NULL) {
 	return E_ALLOC;
     }    
-
-    return 0;
-}
-
-/* temporary hack for new-style estimation */
-
-static int dpd_null_matrices (dpd *ab)
-{
-    ab->vbeta = ab->uhat = ab->ZT = ab->H = NULL;
-    ab->A = ab->Acpy = ab->Zi = ab->y = ab->W = NULL;
-
-    ab->tmp1 = ab->kmtmp = ab->kktmp = ab->den = NULL;
-    ab->L1 = ab->WZA = ab->R1 = ab->ZW = NULL;
 
     return 0;
 }
@@ -220,26 +219,26 @@ static int dpd_null_matrices (dpd *ab)
 /* if the const has been included among the regressors but not the
    instruments, add it to the instruments */
 
-static int maybe_add_const_to_ilist (dpd *ab)
+static int maybe_add_const_to_ilist (dpdinfo *dpd)
 {
     int i, addc = 0;
     int err = 0;
 
-    if (ab->xlist == NULL || (ab->nz == 0 && ab->nzb == 0)) {
+    if (dpd->xlist == NULL || (dpd->nz == 0 && dpd->nzb == 0)) {
 	/* no x's, or all x's treated as exogenous already */
 	return 0;
     }
 
-    for (i=1; i<=ab->xlist[0]; i++) {
-	if (ab->xlist[i] == 0) {
+    for (i=1; i<=dpd->xlist[0]; i++) {
+	if (dpd->xlist[i] == 0) {
 	    addc = 1;
 	    break;
 	}
     }
 
-    if (addc && ab->ilist != NULL) {
-	for (i=1; i<=ab->ilist[0]; i++) {
-	    if (ab->ilist[i] == 0) {
+    if (addc && dpd->ilist != NULL) {
+	for (i=1; i<=dpd->ilist[0]; i++) {
+	    if (dpd->ilist[i] == 0) {
 		addc = 0;
 		break;
 	    }
@@ -247,18 +246,18 @@ static int maybe_add_const_to_ilist (dpd *ab)
     }
 
     if (addc) {
-	ab->ilist = gretl_list_append_term(&ab->ilist, 0);
-	if (ab->ilist == NULL) {
+	dpd->ilist = gretl_list_append_term(&dpd->ilist, 0);
+	if (dpd->ilist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    ab->nz += 1;
+	    dpd->nz += 1;
 	}
     }
 
     return err;
 }
 
-static int dpd_make_lists (dpd *ab, const int *list, int xpos)
+static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 {
     int i, nz = 0, spos = 0;
     int err = 0;
@@ -277,35 +276,35 @@ static int dpd_make_lists (dpd *ab, const int *list, int xpos)
 #endif
 
     if (spos > 0) {
-	ab->nx = spos - xpos;
+	dpd->nx = spos - xpos;
 	nz = list[0] - spos;
     } else {
-	ab->nx = list[0] - (xpos - 1);
+	dpd->nx = list[0] - (xpos - 1);
     }
 
 #if ADEBUG
-    fprintf(stderr, "got intial ab->nx = %d, nz = %d\n", ab->nx, nz);
+    fprintf(stderr, "got intial dpd->nx = %d, nz = %d\n", dpd->nx, nz);
 #endif
 
-    if (ab->nx > 0) {
+    if (dpd->nx > 0) {
 	/* compose indep vars list */
-	ab->xlist = gretl_list_new(ab->nx);
-	if (ab->xlist == NULL) {
+	dpd->xlist = gretl_list_new(dpd->nx);
+	if (dpd->xlist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (i=0; i<ab->nx; i++) {
-		ab->xlist[i+1] = list[xpos + i];
+	    for (i=0; i<dpd->nx; i++) {
+		dpd->xlist[i+1] = list[xpos + i];
 	    }
 #if ADEBUG
-	    printlist(ab->xlist, "ab->xlist");
+	    printlist(dpd->xlist, "dpd->xlist");
 #endif
-	    if (nz == 0 && ab->nzb == 0) {
+	    if (nz == 0 && dpd->nzb == 0) {
 		/* implicitly all x vars are exogenous */
-		ab->ilist = gretl_list_copy(ab->xlist);
-		if (ab->ilist == NULL) {
+		dpd->ilist = gretl_list_copy(dpd->xlist);
+		if (dpd->ilist == NULL) {
 		    err = E_ALLOC;
 		} else {
-		    ab->nz = ab->ilist[0];
+		    dpd->nz = dpd->ilist[0];
 		}
 	    }
 	}
@@ -313,23 +312,23 @@ static int dpd_make_lists (dpd *ab, const int *list, int xpos)
 
     if (!err && nz > 0) {
 	/* compose regular instruments list */
-	ab->ilist = gretl_list_new(nz);
-	if (ab->ilist == NULL) {
+	dpd->ilist = gretl_list_new(nz);
+	if (dpd->ilist == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (i=0; i<nz; i++) {
-		ab->ilist[i+1] = list[spos + i + 1];
+		dpd->ilist[i+1] = list[spos + i + 1];
 	    }
-	    ab->nz = nz;
+	    dpd->nz = nz;
 	}
     } 
 
     if (!err) {
-	err = maybe_add_const_to_ilist(ab);
+	err = maybe_add_const_to_ilist(dpd);
     }
 
 #if ADEBUG
-    printlist(ab->ilist, "ab->ilist");
+    printlist(dpd->ilist, "dpd->ilist");
 #endif
 
     return err;
@@ -337,29 +336,29 @@ static int dpd_make_lists (dpd *ab, const int *list, int xpos)
 
 /* FIXME: qmin doesn't actually do anything below, yet */
 
-static int dpd_process_list (dpd *ab, const int *list)
+static int dpd_process_list (dpdinfo *dpd, const int *list)
 {
     int xpos = 0;
     int err = 0;
 
-    ab->p = list[1];
-    ab->qmin = 2;
+    dpd->p = list[1];
+    dpd->qmin = 2;
 
     if (list[2] == LISTSEP) {
 	/* arbond p ; y ... */
-	ab->qmax = 0;
-	ab->yno = list[3];
+	dpd->qmax = 0;
+	dpd->yno = list[3];
 	xpos = 4;
     } else if (list[3] == LISTSEP && list[0] >= 4) {
 	/* arbond p qmax ; y ... */
-	ab->qmax = list[2];
-	ab->yno = list[4];
+	dpd->qmax = list[2];
+	dpd->yno = list[4];
 	xpos = 5;
     } else if (list[4] == LISTSEP && list[0] >= 5) {
 	/* arbond p qmax qmin ; y ... */
-	ab->qmax = list[2];
-	ab->qmin = list[3];
-	ab->yno = list[5];
+	dpd->qmax = list[2];
+	dpd->qmin = list[3];
+	dpd->yno = list[5];
 	xpos = 6;
     } else {
 	err = E_PARSE;
@@ -367,37 +366,37 @@ static int dpd_process_list (dpd *ab, const int *list)
 
     if (!err) {
 	/* FIXME: are these tests all valid? */
-	if (ab->p < 1) {
-	    fprintf(stderr, "arbond lag order = %d < 1\n", ab->p);
+	if (dpd->p < 1) {
+	    fprintf(stderr, "arbond lag order = %d < 1\n", dpd->p);
 	    err = E_INVARG;
-	} else if (ab->qmax != 0 && ab->qmax < ab->p + 1) {
-	    fprintf(stderr, "arbond qmax = %d < ab->p + 1 = %d\n", 
-		    ab->qmax, ab->p + 1);
+	} else if (dpd->qmax != 0 && dpd->qmax < dpd->p + 1) {
+	    fprintf(stderr, "arbond qmax = %d < dpd->p + 1 = %d\n", 
+		    dpd->qmax, dpd->p + 1);
 	    err = E_INVARG;
-	} else if (ab->qmax != 0 && ab->qmin > ab->qmax) {
-	    fprintf(stderr, "arbond qmin = %d > ab->qmax = %d\n", 
-		    ab->qmin, ab->qmax);
+	} else if (dpd->qmax != 0 && dpd->qmin > dpd->qmax) {
+	    fprintf(stderr, "arbond qmin = %d > dpd->qmax = %d\n", 
+		    dpd->qmin, dpd->qmax);
 	    err = E_INVARG;
 	}
     }
 
     if (!err && list[0] >= xpos) {
-	err = dpd_make_lists(ab, list, xpos);
+	err = dpd_make_lists(dpd, list, xpos);
     }
 
     return err;
 }
 
-static int dpd_add_unit_diff_info (dpd *ab)
+static int dpd_add_unit_diff_info (dpdinfo *dpd)
 {
     int i, err = 0;
 
-    ab->ui = malloc(ab->N * sizeof *ab->ui);
-    if (ab->ui == NULL) {
+    dpd->ui = malloc(dpd->N * sizeof *dpd->ui);
+    if (dpd->ui == NULL) {
 	err = E_ALLOC;
     } else {
-	for (i=0; i<ab->N; i++) {
-	    ab->ui[i].skip = NULL;
+	for (i=0; i<dpd->N; i++) {
+	    dpd->ui[i].skip = NULL;
 	}
     }
 
@@ -428,6 +427,11 @@ static int dpd_flags_from_opt (gretlopt opt)
 	f |= DPD_TWOSTEP;
     }
 
+    if (opt & OPT_B) {
+	/* new calculation method */
+	f |= DPD_NEWSTYLE;
+    }
+
     if (opt & OPT_L) {
 	/* system GMM: include levels equations */
 	f |= DPD_LEVELEQ;
@@ -435,8 +439,6 @@ static int dpd_flags_from_opt (gretlopt opt)
 
     return f;
 }
-
-
 
 /* Simple, temporary calculation of the number of columns required in
    the instruments matrix: this takes into account neither "GMM-type
@@ -483,7 +485,7 @@ static gretl_matrix *Hmat (int T, int offset, gretlopt opt)
     return H;
 }
 
-static int dpd_add_unit (dpd *ab, gretlopt opt)
+static int dpd_add_unit (dpdinfo *dpd, gretlopt opt)
 {
     /* for the moment, matrices are perhaps (but maybe not) larger
        than they actually need to be; we can shave off extra rows/cols
@@ -497,18 +499,18 @@ static int dpd_add_unit (dpd *ab, gretlopt opt)
 	return E_ALLOC;
     }
 
-    ab->unit = unit;
+    dpd->unit = unit;
 
 #if 0
-    unit->offset = ab->p + 1;
+    unit->offset = dpd->p + 1;
 #else
     unit->offset = 2;
 #endif
 
-    unit->T = ab->T;
-    unit->nx = (ab->xlist == NULL)? 0 : ab->xlist[0];
-    unit->k = unit->nx + ab->p;
-    unit->nz = calc_Z_cols(ab->T, ab->p, unit->nx, opt);
+    unit->T = dpd->T;
+    unit->nx = (dpd->xlist == NULL)? 0 : dpd->xlist[0];
+    unit->k = unit->nx + dpd->p;
+    unit->nz = calc_Z_cols(dpd->T, dpd->p, unit->nx, opt);
     unit->opt = opt;
     unit->zcol = 0;
 
@@ -531,11 +533,11 @@ static int dpd_add_unit (dpd *ab, gretlopt opt)
     return err;
 }
 
-static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
-		     gretlopt opt, struct diag_info *d, int nzb,
-		     int *err)
+static dpdinfo *dpdinfo_new (const int *list, const DATAINFO *pdinfo,
+			     gretlopt opt, struct diag_info *d, int nzb,
+			     int *err)
 {
-    dpd *ab = NULL;
+    dpdinfo *dpd = NULL;
     int NT;
 
     if (list[0] < 3) {
@@ -543,75 +545,74 @@ static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    ab = malloc(sizeof *ab);
-    if (ab == NULL) {
+    dpd = malloc(sizeof *dpd);
+    if (dpd == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
     /* set pointer members to NULL just in case */
-    ab->xlist = ab->ilist = NULL;
-    ab->B1 = ab->B2 = NULL;
-    ab->V = NULL;
-    ab->ui = NULL;
-    ab->unit = NULL;
-    ab->used = NULL;
+    dpd->xlist = dpd->ilist = NULL;
+    dpd->B1 = dpd->B2 = NULL;
+    dpd->V = NULL;
+    dpd->ui = NULL;
+    dpd->unit = NULL;
+    dpd->used = NULL;
 
-    ab->flags = dpd_flags_from_opt(opt);
+    dpd->flags = dpd_flags_from_opt(opt);
 
-    ab->d = d;
-    ab->nzb = nzb;
-    ab->step = 1;
-    ab->nx = 0;
-    ab->nz = 0;
-    ab->t1min = 0;
-    ab->ndum = 0;
+    dpd->d = d;
+    dpd->nzb = nzb;
+    dpd->step = 1;
+    dpd->nx = 0;
+    dpd->nz = 0;
+    dpd->t1min = 0;
+    dpd->ndum = 0;
 
-    *err = dpd_process_list(ab, list);
+    *err = dpd_process_list(dpd, list);
     if (*err) {
 	goto bailout;
     }
 
     NT = sample_size(pdinfo);
 
-    ab->t1 = pdinfo->t1;           /* start of sample range */
-    ab->T = pdinfo->pd;            /* max obs. per individual */
-    ab->effN = ab->N = NT / ab->T; /* included individuals */
-    ab->k = ab->p + ab->nx;        /* # of coeffs on lagged dep var, indep vars */
-    ab->maxTi = 0;
-    ab->m = 0;
-    ab->pc0 = 0;
-    ab->xc0 = 0;
-    ab->nobs = 0;
-    ab->SSR = NADBL;
-    ab->s2 = NADBL;
-    ab->AR1 = NADBL;
-    ab->AR2 = NADBL;
-    ab->sargan = NADBL;
-    ab->wald = NADBL;
-    ab->wdf = 0;
+    dpd->t1 = pdinfo->t1;             /* start of sample range */
+    dpd->T = pdinfo->pd;              /* max obs. per individual */
+    dpd->effN = dpd->N = NT / dpd->T; /* included individuals */
+    dpd->k = dpd->p + dpd->nx;        /* # of coeffs on lagged dep var, indep vars */
+    dpd->maxTi = 0;
+    dpd->m = 0;
+    dpd->pc0 = 0;
+    dpd->xc0 = 0;
+    dpd->nobs = 0;
+    dpd->SSR = NADBL;
+    dpd->s2 = NADBL;
+    dpd->AR1 = NADBL;
+    dpd->AR2 = NADBL;
+    dpd->sargan = NADBL;
+    dpd->wald = NADBL;
+    dpd->wdf = 0;
 
 #if ADEBUG
     fprintf(stderr, "yno = %d, p = %d, qmax = %d, qmin = %d, nx = %d, k = %d\n",
-	    ab->yno, ab->p, ab->qmax, ab->qmin, ab->nx, ab->k);
-    fprintf(stderr, "t1 = %d, T = %d, N = %d\n", ab->t1, ab->T, ab->N);
+	    dpd->yno, dpd->p, dpd->qmax, dpd->qmin, dpd->nx, dpd->k);
+    fprintf(stderr, "t1 = %d, T = %d, N = %d\n", dpd->t1, dpd->T, dpd->N);
 #endif
 
-    if (opt & OPT_B) {
-	/* new-style, allowing for levels */
-	*err = dpd_add_unit(ab, opt);
+    if (dpd->flags & DPD_NEWSTYLE) {
+	*err = dpd_add_unit(dpd, opt);
     } else {
-	*err = dpd_add_unit_diff_info(ab);
+	*err = dpd_add_unit_diff_info(dpd);
     }
 
  bailout:
 
     if (*err) {
-	dpd_free(ab);
-	ab = NULL;
+	dpdinfo_free(dpd);
+	dpd = NULL;
     }
 
-    return ab;
+    return dpd;
 }
 
 /* See if we have valid values for the dependent variable (in
@@ -621,9 +622,9 @@ static dpd *dpd_new (const int *list, const DATAINFO *pdinfo,
    for handling equations in levels.
 */
 
-static int obs_is_usable (dpd *ab, const double **Z, int s)
+static int obs_is_usable (dpdinfo *dpd, const double **Z, int s)
 {
-    int imax = ab->p + 1;
+    int imax = dpd->p + 1;
     int i;
 
     /* FIXME orthgonal deviations: we can compute such a
@@ -636,15 +637,15 @@ static int obs_is_usable (dpd *ab, const double **Z, int s)
     */
 
     for (i=0; i<=imax; i++) {
-	if (na(Z[ab->yno][s-i])) {
+	if (na(Z[dpd->yno][s-i])) {
 	    return 0;
 	}
     }
 
-    if (ab->xlist != NULL) {
+    if (dpd->xlist != NULL) {
 	/* check the independent vars */
-	for (i=1; i<=ab->xlist[0]; i++) {
-	    if (na(Z[ab->xlist[i]][s])) {
+	for (i=1; i<=dpd->xlist[0]; i++) {
+	    if (na(Z[dpd->xlist[i]][s])) {
 		return 0;
 	    }
 	}
@@ -653,13 +654,13 @@ static int obs_is_usable (dpd *ab, const double **Z, int s)
     return 1;
 }
 
-static int bzcols (dpd *ab, int i)
+static int bzcols (dpdinfo *dpd, int i)
 {
     int j, k, nc = 0;
-    int t = i + ab->p + 1; /* ?? */
+    int t = i + dpd->p + 1; /* ?? */
 
-    for (j=0; j<ab->nzb; j++) {
-	for (k=ab->d[j].minlag; k<=ab->d[j].maxlag; k++) {
+    for (j=0; j<dpd->nzb; j++) {
+	for (k=dpd->d[j].minlag; k<=dpd->d[j].maxlag; k++) {
 	    if (t - k >= 0) {
 		nc++;
 	    }
@@ -671,16 +672,16 @@ static int bzcols (dpd *ab, int i)
 
 /* find the first y observation, all units */
 
-static int dpd_find_t1min (dpd *ab, const double *y)
+static int dpd_find_t1min (dpdinfo *dpd, const double *y)
 {
-    int t1min = ab->T - 1;
+    int t1min = dpd->T - 1;
     int i, s, t;
 
-    for (i=0; i<ab->N; i++) {
+    for (i=0; i<dpd->N; i++) {
 	/* loop across units */
 	if (t1min > 0) {
-	    s = data_index(ab, i);
-	    for (t=0; t<ab->T; t++) {
+	    s = data_index(dpd, i);
+	    for (t=0; t<dpd->T; t++) {
 		if (!na(y[s+t])) {
 		    if (t < t1min) {
 			t1min = t;
@@ -696,13 +697,13 @@ static int dpd_find_t1min (dpd *ab, const double *y)
 
 /* check the sample for unit/individual i */
 
-static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
+static int dpd_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
 				  int *t1imin, int *t2max)
 {
-    unit_info *unit = &ab->ui[i];
-    int t1i = ab->T - 1, t2i = 0; 
-    int s = data_index(ab, i);
-    int tmin = ab->p + 1;
+    unit_info *unit = &dpd->ui[i];
+    int t1i = dpd->T - 1, t2i = 0; 
+    int s = data_index(dpd, i);
+    int tmin = dpd->p + 1;
     int Ti = 0;
     char *mask = NULL;
     int t;
@@ -711,7 +712,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
     fprintf(stderr, "Checking unit %d\n", i);
 #endif
 
-    mask = calloc(ab->T, 1);
+    mask = calloc(dpd->T, 1);
     if (mask == NULL) {
 	return E_ALLOC;
     }
@@ -724,8 +725,8 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
        condition using a lagged level of y.
     */
 
-    for (t=tmin; t<ab->T; t++) {
-	if (obs_is_usable(ab, Z, s + t)) {
+    for (t=tmin; t<dpd->T; t++) {
+	if (obs_is_usable(dpd, Z, s + t)) {
 	    unit->nobs += 1;
 	    if (t < t1i) t1i = t;
 	    if (t > t2i) t2i = t;
@@ -735,7 +736,7 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
     }
 
     if (unit->nobs == 0) {
-	ab->effN -= 1;
+	dpd->effN -= 1;
 	unit->t1 = -1;
 	unit->t2 = -1;
 	unit->nobs = 0;
@@ -755,11 +756,11 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 	free(mask);
     }
 
-    if (unit->nobs > ab->maxTi) {
-	ab->maxTi = unit->nobs;
+    if (unit->nobs > dpd->maxTi) {
+	dpd->maxTi = unit->nobs;
     }
 
-    ab->nobs += unit->nobs;
+    dpd->nobs += unit->nobs;
 
     if (t1i < *t1imin) {
 	*t1imin = t1i;
@@ -782,27 +783,27 @@ static int dpd_sample_check_unit (dpd *ab, const double **Z, int i,
 
 /* compute the column-structure of the matrix Zi */
 
-static void dpd_compute_Z_cols (dpd *ab, int t1min, int t2max)
+static void dpd_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
 {
     int tau = t2max - t1min + 1;
-    int nblocks = tau - ab->p - 1;
+    int nblocks = tau - dpd->p - 1;
     int i, bcols, cols = 0;
 
 #if ADEBUG
-    fprintf(stderr, "\ntau = %d (ab->p = %d)\n", tau, ab->p);
+    fprintf(stderr, "\ntau = %d (dpd->p = %d)\n", tau, dpd->p);
 #endif
 
     for (i=0; i<nblocks; i++) {
 	/* block-diagonal lagged y values */
-	cols = (ab->p + i > ab->qmax - 1)? ab->qmax - 1 : ab->p + i;
+	cols = (dpd->p + i > dpd->qmax - 1)? dpd->qmax - 1 : dpd->p + i;
 #if ADEBUG
 	fprintf(stderr, "block %d: adding %d cols for y lags\n", i, cols);
 #endif
-	ab->m += cols;
-	if (ab->nzb > 0) {
+	dpd->m += cols;
+	if (dpd->nzb > 0) {
 	    /* other block-diagonal instruments */
-	    bcols = bzcols(ab, i);
-	    ab->m += bcols;
+	    bcols = bzcols(dpd, i);
+	    dpd->m += bcols;
 #if ADEBUG
 	    fprintf(stderr, " plus %d cols for z lags\n", bcols);
 #endif
@@ -810,41 +811,41 @@ static void dpd_compute_Z_cols (dpd *ab, int t1min, int t2max)
     }
 
 #if ADEBUG
-    fprintf(stderr, "'basic' m = %d\n", ab->m);
+    fprintf(stderr, "'basic' m = %d\n", dpd->m);
 #endif
 
-    ab->qmax = cols + 1;
+    dpd->qmax = cols + 1;
     /* record the column where the exogenous vars start, in xc0 */
-    ab->xc0 = ab->m;
-    ab->m += ab->nz;
-    ab->m += ab->ndum;
+    dpd->xc0 = dpd->m;
+    dpd->m += dpd->nz;
+    dpd->m += dpd->ndum;
 
 #if ADEBUG
     fprintf(stderr, "total m = %d (dummies = %d, exog = %d)\n", 
-	    ab->m, ab->ndum, ab->nz);
+	    dpd->m, dpd->ndum, dpd->nz);
 #endif
 }
 
-static int dpd_sample_check (dpd *ab, const double **Z)
+static int dpd_sample_check (dpdinfo *dpd, const double **Z)
 {
-    int t1min, t1imin = ab->T - 1;
+    int t1min, t1imin = dpd->T - 1;
     int t2max = 0;
     int i, err = 0;
 
     /* find "global" first y observation */
-    t1min = dpd_find_t1min(ab, Z[ab->yno]);
+    t1min = dpd_find_t1min(dpd, Z[dpd->yno]);
 
 #if ADEBUG
     fprintf(stderr, "dpd_sample_check, initial scan: "
-	    "ab->T = %d, t1min = %d\n", ab->T, t1min);
+	    "dpd->T = %d, t1min = %d\n", dpd->T, t1min);
 #endif
 
-    if (ab->qmax == 0) {
-	ab->qmax = ab->T;
+    if (dpd->qmax == 0) {
+	dpd->qmax = dpd->T;
     }
 
-    for (i=0; i<ab->N && !err; i++) {
-	err = dpd_sample_check_unit(ab, Z, i, &t1imin, &t2max);
+    for (i=0; i<dpd->N && !err; i++) {
+	err = dpd_sample_check_unit(dpd, Z, i, &t1imin, &t2max);
     }
 
     if (err) {
@@ -852,32 +853,32 @@ static int dpd_sample_check (dpd *ab, const double **Z)
     }
 
     /* record first usable obs, any unit */
-    ab->t1min = t1imin;
+    dpd->t1min = t1imin;
 
     /* figure number of time dummies, if wanted */
-    if (ab->flags & DPD_TIMEDUM) {
-	ab->ndum = t2max - t1imin;
-	ab->k += ab->ndum;
+    if (dpd->flags & DPD_TIMEDUM) {
+	dpd->ndum = t2max - t1imin;
+	dpd->k += dpd->ndum;
     }
 
     /* is t1min actually "reachable"? */
-    if (t1min < t1imin - ab->qmax) {
-	t1min = t1imin - ab->qmax;
+    if (t1min < t1imin - dpd->qmax) {
+	t1min = t1imin - dpd->qmax;
     }
 
 #if ADEBUG
-    fprintf(stderr, "Number of units with usable observations = %d\n", ab->effN);
-    fprintf(stderr, "Total usable observations = %d\n", ab->nobs);
-    fprintf(stderr, "Max equations for any given unit = %d\n", ab->maxTi);
+    fprintf(stderr, "Number of units with usable observations = %d\n", dpd->effN);
+    fprintf(stderr, "Total usable observations = %d\n", dpd->nobs);
+    fprintf(stderr, "Max equations for any given unit = %d\n", dpd->maxTi);
     fprintf(stderr, "Maximal relevant time-series span: %d to %d = %d\n", 
 	    t1min, t2max, t2max - t1min + 1);
 #endif
 
-    if (ab->effN == 0) {
+    if (dpd->effN == 0) {
 	err = E_MISSDATA;
     } else {
 	/* compute the number of columns in Zi */
-	dpd_compute_Z_cols(ab, t1min, t2max);
+	dpd_compute_Z_cols(dpd, t1min, t2max);
     }
 
     return err;
@@ -911,15 +912,15 @@ static int ar_skip_unit (unit_info *u, int k)
 /* See if we have sufficient data to calculate the z-statistic for
    AR(k) errors: return the length of the needed arrays, or 0 if we
    can't do it.
- */
+*/
 
-static int ar_data_check (dpd *ab, int k)
+static int ar_data_check (dpdinfo *dpd, int k)
 {
     unit_info *ui;
     int i, t, T = 0;
 
-    for (i=0; i<ab->N; i++) {
-	ui = &ab->ui[i];
+    for (i=0; i<dpd->N; i++) {
+	ui = &dpd->ui[i];
 	if (skip_unit(ui)) {
 	    continue;
 	}
@@ -933,16 +934,16 @@ static int ar_data_check (dpd *ab, int k)
     return T;
 }
 
-static int dpd_const_pos (dpd *ab)
+static int dpd_const_pos (dpdinfo *dpd)
 {
     int i;
 
-    if (ab->xlist == NULL) {
+    if (dpd->xlist == NULL) {
 	return 0;
     }
 
-    for (i=1; i<=ab->xlist[0]; i++) {
-	if (ab->xlist[i] == 0) {
+    for (i=1; i<=dpd->xlist[0]; i++) {
+	if (dpd->xlist[i] == 0) {
 	    return i;
 	}
     }
@@ -952,21 +953,21 @@ static int dpd_const_pos (dpd *ab)
 
 /* FIXME try to detect and omit periodic dummies? */
 
-static int dpd_wald_test (dpd *ab)
+static int dpd_wald_test (dpdinfo *dpd)
 {
     gretl_matrix_block *B;
     gretl_matrix *vcv = NULL;
     gretl_vector *b = NULL;
     double x = 0.0;
-    int cpos = dpd_const_pos(ab);
-    int i, j, k, kc = ab->p + ab->nx;
+    int cpos = dpd_const_pos(dpd);
+    int i, j, k, kc = dpd->p + dpd->nx;
     int ri, rj;
     int err;
 
     /* position of const in coeff vector? */
     if (cpos != 0) {
 	k = kc - 1;
-	cpos += ab->p - 1;
+	cpos += dpd->p - 1;
     } else {
 	k = kc;
 	cpos = -1;
@@ -982,7 +983,7 @@ static int dpd_wald_test (dpd *ab)
     ri = 0;
     for (i=0; i<kc; i++) {
 	if (i != cpos) {
-	    b->val[ri++] = ab->beta->val[i];
+	    b->val[ri++] = dpd->beta->val[i];
 	}
     }
 
@@ -992,7 +993,7 @@ static int dpd_wald_test (dpd *ab)
 	    rj = 0;
 	    for (j=0; j<kc; j++) {
 		if (j != cpos) {
-		    x = gretl_matrix_get(ab->vbeta, i, j);
+		    x = gretl_matrix_get(dpd->vbeta, i, j);
 		    gretl_matrix_set(vcv, ri, rj++, x);
 		}
 	    }
@@ -1007,8 +1008,8 @@ static int dpd_wald_test (dpd *ab)
     }
 
     if (!err) {
-	ab->wald = x;
-	ab->wdf = k;
+	dpd->wald = x;
+	dpd->wdf = k;
     }
 
 #if ADEBUG
@@ -1020,42 +1021,42 @@ static int dpd_wald_test (dpd *ab)
     return err;
 }
 
-static int sargan_test (dpd *ab)
+static int sargan_test (dpdinfo *dpd)
 {
     gretl_matrix_block *B;
     gretl_matrix *Zu = NULL;
     gretl_matrix *m1 = NULL;
     int err = 0;
 
-    B = gretl_matrix_block_new(&Zu, ab->m, 1,
-			       &m1, ab->m, 1,
+    B = gretl_matrix_block_new(&Zu, dpd->m, 1,
+			       &m1, dpd->m, 1,
 			       NULL);
     if (B == NULL) {
 	return E_ALLOC;
     }
 
-    gretl_matrix_multiply(ab->ZT, ab->uhat, Zu);
-    gretl_matrix_divide_by_scalar(ab->A, ab->effN);
-    gretl_matrix_multiply(ab->A, Zu, m1);
+    gretl_matrix_multiply(dpd->ZT, dpd->uhat, Zu);
+    gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
+    gretl_matrix_multiply(dpd->A, Zu, m1);
 
-    ab->sargan = gretl_matrix_dot_product(Zu, GRETL_MOD_TRANSPOSE,
-					  m1, GRETL_MOD_NONE,
-					  &err);
+    dpd->sargan = gretl_matrix_dot_product(Zu, GRETL_MOD_TRANSPOSE,
+					   m1, GRETL_MOD_NONE,
+					   &err);
 
-    if (ab->step == 1) {
+    if (dpd->step == 1) {
 	/* allow for scale factor in H matrix */
-	if (ab->flags & DPD_ORTHDEV) {
-	    ab->sargan /= ab->s2;
+	if (dpd->flags & DPD_ORTHDEV) {
+	    dpd->sargan /= dpd->s2;
 	} else {
-	    ab->sargan *= 2.0 / ab->s2; 
+	    dpd->sargan *= 2.0 / dpd->s2; 
 	}
     }
 
 #if ADEBUG
     fprintf(stderr, "Sargan df = m - k = %d - %d\n",
-	    ab->m, ab->k);
+	    dpd->m, dpd->k);
     fprintf(stderr, "Sargan test: Chi-square(%d) = %g\n",
-	    ab->m - ab->k, ab->sargan);
+	    dpd->m - dpd->k, dpd->sargan);
 #endif
 
     gretl_matrix_block_destroy(B);
@@ -1068,7 +1069,7 @@ static int sargan_test (dpd *ab)
    efficiency.
 */
 
-static int ar_test (dpd *ab, const gretl_matrix *C)
+static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
 {
     gretl_matrix_block *B = NULL;
     gretl_matrix *v;
@@ -1087,7 +1088,7 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
 
  restart:
 
-    Q = ar_data_check(ab, ++k);
+    Q = ar_data_check(dpd, ++k);
     if (Q == 0) {
 	gretl_matrix_block_destroy(B);
 	return 0;
@@ -1100,12 +1101,12 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
     if (k == 1) {
 	B = gretl_matrix_block_new(&v,    Q, 1,
 				   &vk,   Q, 1,
-				   &X,    Q, ab->k,
-				   &vkX,  1, ab->k, 
-				   &tmpk, 1, ab->k,
-				   &ui,   ab->maxTi, 1,
-				   &m1,   ab->m, 1,
-				   &SZv,  ab->m, 1,
+				   &X,    Q, dpd->k,
+				   &vkX,  1, dpd->k, 
+				   &tmpk, 1, dpd->k,
+				   &ui,   dpd->maxTi, 1,
+				   &m1,   dpd->m, 1,
+				   &SZv,  dpd->m, 1,
 				   NULL);
 	if (B == NULL) {
 	    return E_ALLOC;
@@ -1115,15 +1116,15 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
 	gretl_matrix_reuse(v,  Q, 1);
 	gretl_matrix_reuse(vk, Q, 1);
 	gretl_matrix_reuse(X,  Q, -1);
-	gretl_matrix_reuse(m1, ab->m, 1);
+	gretl_matrix_reuse(m1, dpd->m, 1);
     }
 
     gretl_matrix_zero(SZv);
     den = 0.0;
     q = s = sbig = 0;
 
-    for (i=0; i<ab->N; i++) {
-	unit_info *unit = &ab->ui[i];
+    for (i=0; i<dpd->N; i++) {
+	unit_info *unit = &dpd->ui[i];
 	int Ti = unit->nobs;
 	double den1i = 0.0;
 	int si = 0;
@@ -1139,17 +1140,17 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
 	}
 
 	gretl_matrix_reuse(ui, Ti, -1);
-	gretl_matrix_reuse(ab->Zi, ab->m, Ti);
+	gretl_matrix_reuse(dpd->Zi, dpd->m, Ti);
 
 	/* extract full-length Z'_i and u_i */
 
 	for (t=unit->t1; t<=unit->t2; t++) {
 	    if (!skip_obs(unit, t)) {
-		for (j=0; j<ab->m; j++) {
-		    x = gretl_matrix_get(ab->ZT, j, sbig);
-		    gretl_matrix_set(ab->Zi, j, si, x);
+		for (j=0; j<dpd->m; j++) {
+		    x = gretl_matrix_get(dpd->ZT, j, sbig);
+		    gretl_matrix_set(dpd->Zi, j, si, x);
 		}
-		x = ab->uhat->val[sbig];
+		x = dpd->uhat->val[sbig];
 		gretl_vector_set(ui, si, x);
 		sbig++;
 		si++;
@@ -1168,11 +1169,11 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
 	for (t=unit->t1+k; t<=unit->t2; t++) {
 	    if (!skip_obs(unit, t)) {
 		if (!skip_obs(unit, t-k)) {
-		    v->val[q] = ab->uhat->val[s];
-		    vk->val[q] = ab->uhat->val[s-k];
+		    v->val[q] = dpd->uhat->val[s];
+		    vk->val[q] = dpd->uhat->val[s-k];
 		    den1i += v->val[q] * vk->val[q];
-		    for (j=0; j<ab->k; j++) {
-			x = gretl_matrix_get(ab->W, s, j);
+		    for (j=0; j<dpd->k; j++) {
+			x = gretl_matrix_get(dpd->X, s, j);
 			gretl_matrix_set(X, q, j, x);
 		    }
 		    q++;
@@ -1183,7 +1184,7 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
 
 	/* cumulate Z'_i u_i u_i'_* u_{i,-k} */
 	gretl_matrix_multiply_by_scalar(ui, den1i);
-	gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_NONE,
+	gretl_matrix_multiply_mod(dpd->Zi, GRETL_MOD_NONE,
 				  ui, GRETL_MOD_NONE,
 				  SZv, GRETL_MOD_CUMULATE);
 
@@ -1211,15 +1212,15 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
     
     /* vk' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
     gretl_matrix_multiply(vkX, C, tmpk);
-    gretl_matrix_reuse(m1, 1, ab->m);
-    gretl_matrix_multiply(tmpk, ab->WZA, m1);
+    gretl_matrix_reuse(m1, 1, dpd->m);
+    gretl_matrix_multiply(tmpk, dpd->XZA, m1);
     den2 = gretl_matrix_dot_product(m1, GRETL_MOD_NONE,
 				    SZv, GRETL_MOD_NONE,
 				    &err);
     den -= 2.0 * den2;
 
     /* additive term vk' X_* vbeta X_*' vk */
-    gretl_matrix_multiply(vkX, ab->vbeta, tmpk);
+    gretl_matrix_multiply(vkX, dpd->vbeta, tmpk);
     den3 = gretl_matrix_dot_product(tmpk, GRETL_MOD_NONE,
 				    vkX, GRETL_MOD_TRANSPOSE,
 				    &err);
@@ -1236,10 +1237,10 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
 #endif
 
 	if (k == 1) {
-	    ab->AR1 = z;
+	    dpd->AR1 = z;
 	    goto restart;
 	} else {
-	    ab->AR2 = z;
+	    dpd->AR2 = z;
 	}
     }
 
@@ -1258,7 +1259,7 @@ static int ar_test (dpd *ab, const gretl_matrix *C)
    matrix with respect to the successive independent variables.
 */
 
-static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
+static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 			       const gretl_matrix *varb1)
 {
     gretl_matrix_block *B;
@@ -1274,16 +1275,16 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
     int i, j, t;
     int err = 0;
 
-    aV = gretl_matrix_copy(ab->vbeta);
+    aV = gretl_matrix_copy(dpd->vbeta);
 
-    B = gretl_matrix_block_new(&D,   ab->k, ab->k,
-			       &dWj, ab->m, ab->m,
-			       &ui,  ab->maxTi, 1,
-			       &xij, ab->maxTi, 1,
-			       &TT,  ab->maxTi, ab->maxTi,
-			       &mT,  ab->m, ab->nobs,
-			       &km,  ab->k, ab->m,
-			       &k1,  ab->k, 1,
+    B = gretl_matrix_block_new(&D,   dpd->k, dpd->k,
+			       &dWj, dpd->m, dpd->m,
+			       &ui,  dpd->maxTi, 1,
+			       &xij, dpd->maxTi, 1,
+			       &TT,  dpd->maxTi, dpd->maxTi,
+			       &mT,  dpd->m, dpd->nobs,
+			       &km,  dpd->k, dpd->m,
+			       &k1,  dpd->k, 1,
 			       NULL);
     if (B == NULL) {
 	err = E_ALLOC;
@@ -1291,22 +1292,22 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
     }
 
     /* form -(1/N) * asyV * XZW^{-1} */
-    gretl_matrix_multiply(aV, ab->WZA, ab->kmtmp);
-    gretl_matrix_multiply_by_scalar(ab->kmtmp, -1.0 / ab->effN);
+    gretl_matrix_multiply(aV, dpd->XZA, dpd->kmtmp);
+    gretl_matrix_multiply_by_scalar(dpd->kmtmp, -1.0 / dpd->effN);
 
     /* form W^{-1}Z'v_2 */
-    gretl_matrix_multiply(ab->A, ab->ZT, mT);
-    gretl_matrix_multiply(mT, ab->uhat, ab->R1);
+    gretl_matrix_multiply(dpd->A, dpd->ZT, mT);
+    gretl_matrix_multiply(mT, dpd->uhat, dpd->R1);
 
-    for (j=0; j<ab->k; j++) { /* loop across the X's */
+    for (j=0; j<dpd->k; j++) { /* loop across the X's */
 	int s = 0;
 
 	gretl_matrix_zero(dWj);
 
 	/* form dWj = -(1/N) \sum Z_i'(X_j u' + u X_j')Z_i */
 
-	for (i=0; i<ab->N; i++) {
-	    int Ti = ab->ui[i].nobs;
+	for (i=0; i<dpd->N; i++) {
+	    int Ti = dpd->ui[i].nobs;
 
 	    if (Ti == 0) {
 		continue;
@@ -1314,7 +1315,7 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
 
 	    gretl_matrix_reuse(ui, Ti, 1);
 	    gretl_matrix_reuse(xij, Ti, 1);
-	    gretl_matrix_reuse(ab->Zi, Ti, ab->m);
+	    gretl_matrix_reuse(dpd->Zi, Ti, dpd->m);
 	    gretl_matrix_reuse(TT, Ti, Ti);
 
 	    /* extract ui */
@@ -1323,7 +1324,7 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
 	    }
 
 	    /* extract xij */
-	    gretl_matrix_extract_matrix(xij, ab->W, s - Ti, j,
+	    gretl_matrix_extract_matrix(xij, dpd->X, s - Ti, j,
 					GRETL_MOD_NONE);
 	    gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
 				      xij, GRETL_MOD_TRANSPOSE,
@@ -1331,21 +1332,21 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
 	    gretl_matrix_add_self_transpose(TT);
 
 	    /* extract Zi */
-	    gretl_matrix_extract_matrix(ab->Zi, ab->ZT, 0, s - Ti,
+	    gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, s - Ti,
 					GRETL_MOD_TRANSPOSE);
 
-	    gretl_matrix_qform(ab->Zi, GRETL_MOD_TRANSPOSE,
+	    gretl_matrix_qform(dpd->Zi, GRETL_MOD_TRANSPOSE,
 			       TT, dWj, GRETL_MOD_CUMULATE);
 	}
 
-	gretl_matrix_multiply_by_scalar(dWj, -1.0 / ab->effN);
+	gretl_matrix_multiply_by_scalar(dWj, -1.0 / dpd->effN);
 
 	/* D[.,j] = -aV * XZW^{-1} * dWj * W^{-1}Z'v_2 */
-	gretl_matrix_multiply(ab->kmtmp, dWj, km);
-	gretl_matrix_multiply(km, ab->R1, k1);
+	gretl_matrix_multiply(dpd->kmtmp, dWj, km);
+	gretl_matrix_multiply(km, dpd->R1, k1);
 
 	/* write into appropriate column of D (k x k) */
-	for (i=0; i<ab->k; i++) {
+	for (i=0; i<dpd->k; i++) {
 	    gretl_matrix_set(D, i, j, k1->val[i]);
 	}
     }
@@ -1353,16 +1354,16 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
     /* add to AsyV: D * AsyV */
     gretl_matrix_multiply_mod(D, GRETL_MOD_NONE,
 			      aV, GRETL_MOD_NONE,
-			      ab->vbeta, GRETL_MOD_CUMULATE);
+			      dpd->vbeta, GRETL_MOD_CUMULATE);
 
     /* add to AsyV: AsyV * D' */
     gretl_matrix_multiply_mod(aV, GRETL_MOD_NONE,
 			      D, GRETL_MOD_TRANSPOSE,
-			      ab->vbeta, GRETL_MOD_CUMULATE);
+			      dpd->vbeta, GRETL_MOD_CUMULATE);
 
     /* add to AsyV: D * var(\hat{\beta}_1) * D' */
     gretl_matrix_qform(D, GRETL_MOD_NONE, varb1,
-		       ab->vbeta, GRETL_MOD_CUMULATE);
+		       dpd->vbeta, GRETL_MOD_CUMULATE);
 
  bailout:
 
@@ -1375,115 +1376,121 @@ static int windmeijer_correct (dpd *ab, const gretl_matrix *uhat1,
 /* 
    Compute the variance matrix:
 
-   N * C^{-1} * (W'*Z*A_N*\hat{V}_N*A_N*Z'*W) * C^{-1} 
+   N * C^{-1} * (X'*Z*A_N*\hat{V}_N*A_N*Z'*X) * C^{-1} 
 
-   where C = W'*Z*A_N*Z'*W and
+   where 
+
+   C = X'*Z*A_N*Z'*X 
+   
+   and
+
    \hat{V}_N = N^{-1} \sum Z_i'*v_i*v_i'*Z_i,
-   (v_i being the step-1 residuals)
 
-   we compute the residuals while we're at it
+   (v_i being the step-1 residuals).
+
+   We compute the residuals while we're at it.
 */
 
-static int dpd_variance (dpd *ab)
+static int dpd_variance (dpdinfo *dpd)
 {
     gretl_matrix *kk = NULL;
     gretl_matrix *V = NULL;
     gretl_matrix *ui = NULL;
     gretl_matrix *u1 = NULL;
-    gretl_matrix *C = ab->den;
+    gretl_matrix *C = dpd->den;
     double x, ut, SSR;
     int i, j, t, k, c;
     int err = 0;
 
-    kk = gretl_matrix_alloc(ab->k, ab->k);
+    kk = gretl_matrix_alloc(dpd->k, dpd->k);
     if (kk == NULL) {
 	return E_ALLOC;
     }
 
-    if (ab->step == 1) {
-	V = gretl_zero_matrix_new(ab->m, ab->m);
-	ui = gretl_column_vector_alloc(ab->maxTi);
+    if (dpd->step == 1) {
+	V = gretl_zero_matrix_new(dpd->m, dpd->m);
+	ui = gretl_column_vector_alloc(dpd->maxTi);
 	if (V == NULL || ui == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
     } else {
-	u1 = gretl_matrix_copy(ab->uhat);
+	u1 = gretl_matrix_copy(dpd->uhat);
 	if (u1 == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
 	}
 	/* copy 1-step coefficient variance */
-	gretl_matrix_copy_values(kk, ab->vbeta);
+	gretl_matrix_copy_values(kk, dpd->vbeta);
     }
 
     SSR = 0.0;
     c = k = 0;
 
-    for (i=0; i<ab->N; i++) {
-	int Ti = ab->ui[i].nobs;
+    for (i=0; i<dpd->N; i++) {
+	int Ti = dpd->ui[i].nobs;
 
 	if (Ti == 0) {
 	    continue;
 	}
 
-	if (ab->step == 1) {
-	    gretl_matrix_reuse(ab->Zi, Ti, ab->m);
+	if (dpd->step == 1) {
+	    gretl_matrix_reuse(dpd->Zi, Ti, dpd->m);
 	    gretl_matrix_reuse(ui, Ti, 1);
-	    gretl_matrix_extract_matrix(ab->Zi, ab->ZT, 0, c,
+	    gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, c,
 					GRETL_MOD_TRANSPOSE);
 	    c += Ti;
 	}
 
 	for (t=0; t<Ti; t++) {
-	    ut = ab->y->val[k]; 
-	    for (j=0; j<ab->k; j++) {
-		x = gretl_matrix_get(ab->W, k, j);
-		ut -= ab->beta->val[j] * x;
+	    ut = dpd->y->val[k]; 
+	    for (j=0; j<dpd->k; j++) {
+		x = gretl_matrix_get(dpd->X, k, j);
+		ut -= dpd->beta->val[j] * x;
 	    }
 	    SSR += ut * ut;
-	    ab->uhat->val[k] = ut;
+	    dpd->uhat->val[k] = ut;
 	    if (ui != NULL) {
 		ui->val[t] = ut;
 	    }	
 	    k++;
 	}
 
-	if (ab->step == 1) {
+	if (dpd->step == 1) {
 	    gretl_matrix_multiply_mod(ui, GRETL_MOD_TRANSPOSE,
-				      ab->Zi, GRETL_MOD_NONE,
-				      ab->L1, GRETL_MOD_NONE);
-	    gretl_matrix_multiply_mod(ab->L1, GRETL_MOD_TRANSPOSE,
-				      ab->L1, GRETL_MOD_NONE,
+				      dpd->Zi, GRETL_MOD_NONE,
+				      dpd->L1, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(dpd->L1, GRETL_MOD_TRANSPOSE,
+				      dpd->L1, GRETL_MOD_NONE,
 				      V, GRETL_MOD_CUMULATE);
 	}
     }
 
-    if (ab->step == 1) {
-	gretl_matrix_divide_by_scalar(V, ab->effN);
+    if (dpd->step == 1) {
+	gretl_matrix_divide_by_scalar(V, dpd->effN);
 
-	/* form W'Z A_N Z'W  */
-	gretl_matrix_multiply_mod(ab->ZW, GRETL_MOD_TRANSPOSE,
-				  ab->A, GRETL_MOD_NONE,
-				  ab->kmtmp, GRETL_MOD_NONE);
-	gretl_matrix_qform(ab->kmtmp, GRETL_MOD_NONE, V,
+	/* form X'Z A_N Z'X  */
+	gretl_matrix_multiply_mod(dpd->ZX, GRETL_MOD_TRANSPOSE,
+				  dpd->A, GRETL_MOD_NONE,
+				  dpd->kmtmp, GRETL_MOD_NONE);
+	gretl_matrix_qform(dpd->kmtmp, GRETL_MOD_NONE, V,
 			   kk, GRETL_MOD_NONE);
 
 	/* pre- and post-multiply by C^{-1} */
 	err = gretl_invert_symmetric_matrix(C);
-	gretl_matrix_qform(C, GRETL_MOD_NONE, kk, ab->vbeta,
+	gretl_matrix_qform(C, GRETL_MOD_NONE, kk, dpd->vbeta,
 			   GRETL_MOD_NONE);
 
-	if (ab->flags & DPD_TWOSTEP) {
+	if (dpd->flags & DPD_TWOSTEP) {
 	    /* preserve V for second stage */
-	    ab->V = V;
+	    dpd->V = V;
 	    V = NULL;
 	}
     } else {
 	/* second step */
-	gretl_matrix_qform(ab->ZW, GRETL_MOD_TRANSPOSE, ab->V,
-			   ab->vbeta, GRETL_MOD_NONE);
-	err = gretl_invert_symmetric_matrix(ab->vbeta);
+	gretl_matrix_qform(dpd->ZX, GRETL_MOD_TRANSPOSE, dpd->V,
+			   dpd->vbeta, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(dpd->vbeta);
 	if (!err) {
 	    /* for AR test, below */
 	    err = gretl_invert_symmetric_matrix(C);
@@ -1494,34 +1501,34 @@ static int dpd_variance (dpd *ab)
 	goto bailout;
     }
 
-    gretl_matrix_multiply_by_scalar(ab->vbeta, ab->effN);
+    gretl_matrix_multiply_by_scalar(dpd->vbeta, dpd->effN);
 
-    ab->SSR = SSR;
-    ab->s2 = SSR / (ab->nobs - ab->k);
+    dpd->SSR = SSR;
+    dpd->s2 = SSR / (dpd->nobs - dpd->k);
 
-    if (ab->step == 2 && !(ab->flags & DPD_ASYERRS)) {
-	windmeijer_correct(ab, u1, kk);
+    if (dpd->step == 2 && !(dpd->flags & DPD_ASYERRS)) {
+	windmeijer_correct(dpd, u1, kk);
     }   
 
 #if ADEBUG
-    gretl_matrix_print(ab->vbeta, "Var(beta)");
-    for (i=0; i<ab->k; i++) {
-	x = gretl_matrix_get(ab->vbeta, i, i);
+    gretl_matrix_print(dpd->vbeta, "Var(beta)");
+    for (i=0; i<dpd->k; i++) {
+	x = gretl_matrix_get(dpd->vbeta, i, i);
 	fprintf(stderr, "se(beta[%d]) = %g\n", i, sqrt(x));
     }
-    fprintf(stderr, "\nSSR = %.11g\n", ab->SSR);
-    fprintf(stderr, "sigma^2 = %.7g\n", ab->s2);
-    fprintf(stderr, "sigma = %.7g\n", sqrt(ab->s2));
+    fprintf(stderr, "\nSSR = %.11g\n", dpd->SSR);
+    fprintf(stderr, "sigma^2 = %.7g\n", dpd->s2);
+    fprintf(stderr, "sigma = %.7g\n", sqrt(dpd->s2));
 #endif
 
     /* while we're at it... */
-    if (!(ab->flags & DPD_ORTHDEV)) {
+    if (!(dpd->flags & DPD_ORTHDEV)) {
 	/* FIXME case of orthogonal deviations */
-	ar_test(ab, C);
+	ar_test(dpd, C);
     }
 
-    sargan_test(ab);
-    dpd_wald_test(ab);
+    sargan_test(dpd);
+    dpd_wald_test(dpd);
 
  bailout:
 
@@ -1549,7 +1556,7 @@ static int next_obs (unit_info *ui, int j0, int n)
 /* construct the H matrix for first-differencing
    as applied to unit i */
 
-static int make_first_diff_matrix (dpd *ab, int i)
+static int make_first_diff_matrix (dpdinfo *dpd, int i)
 {
     static int *rc;
     unit_info *unit;
@@ -1557,7 +1564,7 @@ static int make_first_diff_matrix (dpd *ab, int i)
     double x;
     int k, j, adjacent, skip = 0;
 
-    if (ab == NULL) {
+    if (dpd == NULL) {
 	/* clean-up signal */
 	free(rc);
 	rc = NULL;
@@ -1565,13 +1572,13 @@ static int make_first_diff_matrix (dpd *ab, int i)
     }
 
     if (rc == NULL) {
-	rc = malloc(ab->T * sizeof *rc);
+	rc = malloc(dpd->T * sizeof *rc);
 	if (rc == NULL) {
 	    return E_ALLOC;
 	}
     }
 
-    unit = &ab->ui[i];
+    unit = &dpd->ui[i];
     n = unit->t2 - unit->t1 + 1;
     m = unit->nobs;
 
@@ -1584,7 +1591,7 @@ static int make_first_diff_matrix (dpd *ab, int i)
 	}
     }
 
-    gretl_matrix_reuse(ab->H, m, m);
+    gretl_matrix_reuse(dpd->H, m, m);
 
     for (j=0; j<m; j++) {
 	for (k=j; k<m; k++) {
@@ -1594,20 +1601,20 @@ static int make_first_diff_matrix (dpd *ab, int i)
 		adjacent = (abs(k-j) == 1);
 	    }
 	    x = (k==j)? 2 : (adjacent)? -1 : 0;
-	    gretl_matrix_set(ab->H, j, k, x);
-	    gretl_matrix_set(ab->H, k, j, x);
+	    gretl_matrix_set(dpd->H, j, k, x);
+	    gretl_matrix_set(dpd->H, k, j, x);
 	}
     }
 
     return 0;
 }
 
-static int dpd_finalize_model (MODEL *pmod, dpd *ab,
+static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 			       const int *list, const char *istr,
 			       const double **X, const DATAINFO *pdinfo,
 			       gretlopt opt)
 {
-    const double *y = X[ab->yno];
+    const double *y = X[dpd->yno];
     char tmp[32];
     char prefix;
     int i, j;
@@ -1615,8 +1622,8 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 
     pmod->t1 = pdinfo->t1;
     pmod->t2 = pdinfo->t2;
-    pmod->dfn = ab->k;
-    pmod->dfd = ab->nobs - ab->k;
+    pmod->dfn = dpd->k;
+    pmod->dfd = dpd->nobs - dpd->k;
 
     pmod->list = gretl_list_copy(list);
     if (pmod->list == NULL) {
@@ -1624,60 +1631,60 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 	return pmod->errcode;
     }
 
-    gretl_model_set_int(pmod, "yno", ab->yno);
-    gretl_model_set_int(pmod, "n_included_units", ab->effN);
+    gretl_model_set_int(pmod, "yno", dpd->yno);
+    gretl_model_set_int(pmod, "n_included_units", dpd->effN);
 
-    if (opt & OPT_B) {
+    if (dpd->flags & DPD_NEWSTYLE) {
 	pmod->ci = DPANEL;
     } else {
 	pmod->ci = ARBOND;
     }
 
-    pmod->ncoeff = ab->k;
-    pmod->nobs = ab->nobs;
+    pmod->ncoeff = dpd->k;
+    pmod->nobs = dpd->nobs;
     pmod->full_n = pdinfo->n;
-    pmod->ess = ab->SSR;
-    if (ab->s2 >= 0) {
-	pmod->sigma = sqrt(ab->s2);
+    pmod->ess = dpd->SSR;
+    if (dpd->s2 >= 0) {
+	pmod->sigma = sqrt(dpd->s2);
     }
 
     pmod->rsq = pmod->adjrsq = NADBL;
     pmod->fstt = pmod->chisq = NADBL;
     pmod->lnL = NADBL;
   
-    gretl_model_allocate_params(pmod, ab->k);
+    gretl_model_allocate_params(pmod, dpd->k);
     if (pmod->errcode) {
 	return pmod->errcode;
     }
 
-    prefix = (ab->flags & DPD_ORTHDEV)? 'O' : 'D';
+    prefix = (dpd->flags & DPD_ORTHDEV)? 'O' : 'D';
 
     j = 0;
-    for (i=0; i<ab->p; i++) {
+    for (i=0; i<dpd->p; i++) {
 	pmod->params[j][0] = '\0';
-	sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[ab->yno], i+1);
+	sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[dpd->yno], i+1);
 	strncat(pmod->params[j++], tmp, 15);
     }
 
-    for (i=0; i<ab->nx; i++) {
-	strcpy(pmod->params[j++], pdinfo->varname[ab->xlist[i+1]]);
+    for (i=0; i<dpd->nx; i++) {
+	strcpy(pmod->params[j++], pdinfo->varname[dpd->xlist[i+1]]);
     }
 
-    for (i=0; i<ab->ndum; i++) {
+    for (i=0; i<dpd->ndum; i++) {
 	sprintf(pmod->params[j++], "T%d", i + 2);
     }
 
     err = gretl_model_allocate_storage(pmod);
 
     if (!err) {
-	for (i=0; i<ab->k; i++) {
-	    pmod->coeff[i] = ab->beta->val[i];
+	for (i=0; i<dpd->k; i++) {
+	    pmod->coeff[i] = dpd->beta->val[i];
 	}
-	if (ab->vbeta != NULL) {
-	    err = gretl_model_write_vcv(pmod, ab->vbeta);
+	if (dpd->vbeta != NULL) {
+	    err = gretl_model_write_vcv(pmod, dpd->vbeta);
 	} else {
 	    /* temporary hack */
-	    for (i=0; i<ab->k; i++) {
+	    for (i=0; i<dpd->k; i++) {
 		pmod->sderr[i] = 1.0;
 	    }
 	}
@@ -1686,34 +1693,34 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
     /* add uhat, yhat */
 
     if (!err) {
-	if (ab->ui != NULL) {
+	if (dpd->ui != NULL) {
 	    /* old-style */
 	    int s, t, k = 0;
 
-	    for (i=0; i<ab->N; i++) {
-		unit_info *unit = &ab->ui[i];
+	    for (i=0; i<dpd->N; i++) {
+		unit_info *unit = &dpd->ui[i];
 
 		if (skip_unit(unit)) {
 		    continue;
 		}
-		for (t=0; t<ab->T; t++) {
+		for (t=0; t<dpd->T; t++) {
 		    if (t >= unit->t1 && t <= unit->t2) {
 			if (!skip_obs(unit, t)) {
-			    s = data_index(ab, i) + t;
-			    pmod->uhat[s] = ab->uhat->val[k];
+			    s = data_index(dpd, i) + t;
+			    pmod->uhat[s] = dpd->uhat->val[k];
 			    pmod->yhat[s] = y[s] - pmod->uhat[s];
 			    k++;
 			}
 		    }
 		}
 	    }
-	} else if (ab->unit != NULL) {
+	} else if (dpd->unit != NULL) {
 	    /* new-style */
 	    int t, s = 0;
 
 	    for (t=0; t<pdinfo->n; t++) {
-		if (ab->used[t]) {
-		    pmod->uhat[t] = ab->uhat->val[s++];
+		if (dpd->used[t]) {
+		    pmod->uhat[t] = dpd->uhat->val[s++];
 		    pmod->yhat[t] = y[t] - pmod->uhat[t];
 		}
 	    }
@@ -1723,28 +1730,28 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
     /* additional dpd-specific data */
 
     if (!err) {
-	gretl_model_set_int(pmod, "step", ab->step);
-	if (!na(ab->AR1)) {
-	    gretl_model_set_double(pmod, "AR1", ab->AR1);
+	gretl_model_set_int(pmod, "step", dpd->step);
+	if (!na(dpd->AR1)) {
+	    gretl_model_set_double(pmod, "AR1", dpd->AR1);
 	}
-	if (!na(ab->AR2)) {
-	    gretl_model_set_double(pmod, "AR2", ab->AR2);
+	if (!na(dpd->AR2)) {
+	    gretl_model_set_double(pmod, "AR2", dpd->AR2);
 	}
-	if (!na(ab->sargan)) {
-	    gretl_model_set_int(pmod, "sargan_df", ab->m - ab->k);
-	    gretl_model_set_double(pmod, "sargan", ab->sargan);
+	if (!na(dpd->sargan)) {
+	    gretl_model_set_int(pmod, "sargan_df", dpd->m - dpd->k);
+	    gretl_model_set_double(pmod, "sargan", dpd->sargan);
 	}
-	if (!na(ab->wald)) {
-	    gretl_model_set_int(pmod, "wald_df", ab->wdf);
-	    gretl_model_set_double(pmod, "wald", ab->wald);
+	if (!na(dpd->wald)) {
+	    gretl_model_set_int(pmod, "wald_df", dpd->wdf);
+	    gretl_model_set_double(pmod, "wald", dpd->wald);
 	}
 	if (istr != NULL && *istr != '\0') {
 	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
 	}
-	if (ab->flags & DPD_TIMEDUM) {
+	if (dpd->flags & DPD_TIMEDUM) {
 	    pmod->opt |= OPT_D;
 	}
-	if ((ab->flags & DPD_TWOSTEP) && (ab->flags & DPD_ASYERRS)) {
+	if ((dpd->flags & DPD_TWOSTEP) && (dpd->flags & DPD_ASYERRS)) {
 	    gretl_model_set_int(pmod, "asy", 1);
 	}
     }
@@ -1755,44 +1762,44 @@ static int dpd_finalize_model (MODEL *pmod, dpd *ab,
 /* exclude any independent variables that are zero at all
    relevant observations */
 
-static int dpd_zero_check (dpd *ab, const double **Z)
+static int dpd_zero_check (dpdinfo *dpd, const double **Z)
 {
     unit_info *ui;
     const double *x;
     int drop = 0;
     int i, j, k, t;
 
-    for (j=0; j<ab->nx; j++) {
+    for (j=0; j<dpd->nx; j++) {
 	int all0 = 1;
 
-	x = Z[ab->xlist[j+1]];
-	for (i=0; i<ab->N && all0; i++) {
-	    ui = &ab->ui[i];
+	x = Z[dpd->xlist[j+1]];
+	for (i=0; i<dpd->N && all0; i++) {
+	    ui = &dpd->ui[i];
 	    if (skip_unit(ui)) {
 		continue;
 	    }
 	    for (t=ui->t1; t<=ui->t2 && all0; t++) {
-		k = data_index(ab, i) + t;
+		k = data_index(dpd, i) + t;
 		if (x[k] != 0.0 && !na(x[k])) {
 		    all0 = 0;
 		}
 	    }
 	}
 	if (all0) {
-	    ab->xlist[j+1] = -1;
+	    dpd->xlist[j+1] = -1;
 	    drop++;
 	}
     }
 
     if (drop > 0) {
-	for (i=1; i<=ab->xlist[0]; i++) {
-	    if (ab->xlist[i] < 0) {
-		gretl_list_delete_at_pos(ab->xlist, i);
+	for (i=1; i<=dpd->xlist[0]; i++) {
+	    if (dpd->xlist[i] < 0) {
+		gretl_list_delete_at_pos(dpd->xlist, i);
 		i--;
 	    }
 	}
-	ab->nx = ab->xlist[0];
-	ab->k -= drop;
+	dpd->nx = dpd->xlist[0];
+	dpd->k -= drop;
     }
 
     return 0;
@@ -1800,24 +1807,24 @@ static int dpd_zero_check (dpd *ab, const double **Z)
 
 /* Based on reduction of the A matrix, trim ZT to match and
    adjust the sizes of all workspace matrices that have a 
-   dimension involving ab->m.
+   dimension involving dpd->m.
 */
 
-static void real_shrink_matrices (dpd *ab, const char *mask)
+static void real_shrink_matrices (dpdinfo *dpd, const char *mask)
 {
     fprintf(stderr, "A matrix: shrinking m from %d to %d\n", 
-	    ab->m, ab->A->rows);
+	    dpd->m, dpd->A->rows);
 
-    gretl_matrix_cut_rows(ab->ZT, mask);
+    gretl_matrix_cut_rows(dpd->ZT, mask);
 
-    ab->m = ab->A->rows;
-    gretl_matrix_reuse(ab->Acpy,  ab->m, ab->m);
-    gretl_matrix_reuse(ab->tmp1,  ab->m, ab->m);
-    gretl_matrix_reuse(ab->kmtmp, -1, ab->m);
-    gretl_matrix_reuse(ab->L1,    -1, ab->m);
-    gretl_matrix_reuse(ab->WZA,   -1, ab->m);
-    gretl_matrix_reuse(ab->R1,    ab->m, -1);
-    gretl_matrix_reuse(ab->ZW,    ab->m, -1);
+    dpd->m = dpd->A->rows;
+    gretl_matrix_reuse(dpd->Acpy,  dpd->m, dpd->m);
+    gretl_matrix_reuse(dpd->tmp1,  dpd->m, dpd->m);
+    gretl_matrix_reuse(dpd->kmtmp, -1, dpd->m);
+    gretl_matrix_reuse(dpd->L1,    -1, dpd->m);
+    gretl_matrix_reuse(dpd->XZA,   -1, dpd->m);
+    gretl_matrix_reuse(dpd->R1,    dpd->m, -1);
+    gretl_matrix_reuse(dpd->ZX,    dpd->m, -1);
 }
 
 /* Remove zero rows/cols from A, as indicated by mask, and delete the
@@ -1825,12 +1832,12 @@ static void real_shrink_matrices (dpd *ab, const char *mask)
    question of whether the reduced A matrix is positive definite.
 */
 
-static int reduce_Z_and_A (dpd *ab, const char *mask)
+static int reduce_Z_and_A (dpdinfo *dpd, const char *mask)
 {
-    int err = gretl_matrix_cut_rows_cols(ab->A, mask);
+    int err = gretl_matrix_cut_rows_cols(dpd->A, mask);
 
     if (!err) {
-	real_shrink_matrices(ab, mask);
+	real_shrink_matrices(dpd, mask);
     }
 
     return err;
@@ -1838,28 +1845,28 @@ static int reduce_Z_and_A (dpd *ab, const char *mask)
 
 /* We already removed any zero rows/columns from A, but it couldn't
    be inverted.  Now we try reducing the dimension of A to its rank.
-   We need to read from the backup, Acpy, since ab->A will have been
+   We need to read from the backup, Acpy, since dpd->A will have been
    mangled in the failed inversion attempt.  We proceed to check that
    the reduced A is invertible; if not we flag an error.
 */
 
-static int try_alt_inverse (dpd *ab)
+static int try_alt_inverse (dpdinfo *dpd)
 {
     char *mask = NULL;
     int err = 0;
 
-    gretl_matrix_copy_values(ab->A, ab->Acpy); 
+    gretl_matrix_copy_values(dpd->A, dpd->Acpy); 
 
-    mask = gretl_matrix_rank_mask(ab->A, &err);
+    mask = gretl_matrix_rank_mask(dpd->A, &err);
 
     if (!err) {
-	err = gretl_matrix_cut_rows_cols(ab->A, mask);
+	err = gretl_matrix_cut_rows_cols(dpd->A, mask);
     }
 
     if (!err) {
-	err = gretl_invert_symmetric_matrix(ab->A);
+	err = gretl_invert_symmetric_matrix(dpd->A);
 	if (!err) {
-	    real_shrink_matrices(ab, mask);
+	    real_shrink_matrices(dpd, mask);
 	} else {
 	    fprintf(stderr, "try_alt_inverse: error inverting\n");
 	}
@@ -1870,88 +1877,88 @@ static int try_alt_inverse (dpd *ab)
     return err;
 }
 
-static int dpd_calculate (dpd *ab)
+static int dpd_calculate (dpdinfo *dpd)
 {
     int err = 0;
 
-    /* find Z'W, if this job is not already done */
-    if (ab->step == 1) {
-	gretl_matrix_multiply(ab->ZT, ab->W, ab->ZW);
+    /* find Z'X, if this job is not already done */
+    if (dpd->step == 1) {
+	gretl_matrix_multiply(dpd->ZT, dpd->X, dpd->ZX);
     }
 
 #if ADEBUG
-    gretl_matrix_print(ab->ZW, "Z'W (dpd_calculate)");
+    gretl_matrix_print(dpd->ZX, "Z'X (dpd_calculate)");
 #endif
 
-    /* find W'Z A */
-    gretl_matrix_multiply_mod(ab->ZW, GRETL_MOD_TRANSPOSE,
-			      ab->A, GRETL_MOD_NONE,
-			      ab->WZA, GRETL_MOD_NONE);
+    /* find X'Z A */
+    gretl_matrix_multiply_mod(dpd->ZX, GRETL_MOD_TRANSPOSE,
+			      dpd->A, GRETL_MOD_NONE,
+			      dpd->XZA, GRETL_MOD_NONE);
 
-    /* calculate "numerator", W'ZAZ'y */
-    gretl_matrix_multiply(ab->ZT, ab->y, ab->R1);
+    /* calculate "numerator", X'ZAZ'y */
+    gretl_matrix_multiply(dpd->ZT, dpd->y, dpd->R1);
 
 #if ADEBUG
-    gretl_matrix_print(ab->R1, "Z'y (dpd_calculate)");
+    gretl_matrix_print(dpd->R1, "Z'y (dpd_calculate)");
 #endif
-    gretl_matrix_multiply(ab->WZA, ab->R1, ab->beta);
+    gretl_matrix_multiply(dpd->XZA, dpd->R1, dpd->beta);
 
-    /* calculate "denominator", W'ZAZ'X */
-    gretl_matrix_multiply(ab->WZA, ab->ZW, ab->den);
-    gretl_matrix_xtr_symmetric(ab->den);
+    /* calculate "denominator", X'ZAZ'X */
+    gretl_matrix_multiply(dpd->XZA, dpd->ZX, dpd->den);
+    gretl_matrix_xtr_symmetric(dpd->den);
 
-    gretl_matrix_copy_values(ab->kktmp, ab->den);
-    err = gretl_cholesky_decomp_solve(ab->kktmp, ab->beta);
+    gretl_matrix_copy_values(dpd->kktmp, dpd->den);
+    err = gretl_cholesky_decomp_solve(dpd->kktmp, dpd->beta);
 
 #if ADEBUG
     if (!err) {
 	int i;
 
-	fprintf(stderr, "%d-step estimates:\n\n", ab->step);
-	for (i=0; i<ab->k; i++) {
-	    fprintf(stderr, "beta[%d] = %g\n", i, ab->beta->val[i]);
+	fprintf(stderr, "%d-step estimates:\n\n", dpd->step);
+	for (i=0; i<dpd->k; i++) {
+	    fprintf(stderr, "beta[%d] = %g\n", i, dpd->beta->val[i]);
 	}
 	fputc('\n', stderr);
     }
 #endif
 
     if (!err) {
-	err = dpd_variance(ab);
+	err = dpd_variance(dpd);
     }
 
     return err;
 }
 
-static int dpd_step_2 (dpd *ab)
+static int dpd_step_2 (dpdinfo *dpd)
 {
     int err = 0;
 
 #if ADEBUG
-    gretl_matrix_print(ab->V, "V, in dpd_step_2");
+    gretl_matrix_print(dpd->V, "V, in dpd_step_2");
 #endif
 
-    if (gretl_matrix_rows(ab->V) > ab->effN) {
+    if (gretl_matrix_rows(dpd->V) > dpd->effN) {
 	err = 1; /* we know this case won't work */
     } else {
-	gretl_matrix_copy_values(ab->Acpy, ab->V);
-	err = gretl_invert_symmetric_matrix(ab->V);
+	gretl_matrix_copy_values(dpd->Acpy, dpd->V);
+	err = gretl_invert_symmetric_matrix(dpd->V);
 	if (err) {
-	    /* revert the data in ab->V */
-	    gretl_matrix_copy_values(ab->V, ab->Acpy);
+	    /* revert the data in dpd->V */
+	    gretl_matrix_copy_values(dpd->V, dpd->Acpy);
 	}
     }
 
     if (err) {
-	err = gretl_SVD_invert_matrix(ab->V);
+	err = gretl_SVD_invert_matrix(dpd->V);
 	if (!err) {
-	    gretl_matrix_xtr_symmetric(ab->V);
+	    gretl_matrix_xtr_symmetric(dpd->V);
 	}
     }
 
     if (!err) {
-	gretl_matrix_copy_values(ab->A, ab->V);
-	ab->step = 2;
-	err = dpd_calculate(ab);
+	gretl_matrix_copy_values(dpd->A, dpd->V);
+	dpd->step = 2;
+	err = dpd_calculate(dpd);
     }
 
     if (err) {
@@ -1991,17 +1998,17 @@ static double odev_at_lag (const double *x, int t, int lag, int pd)
     return ret;
 }
 
-static int dpd_make_y_W (dpd *ab, const double *y,
+static int dpd_make_y_X (dpdinfo *dpd, const double *y,
 			 const double **Z, 
 			 const DATAINFO *pdinfo)
 {
     unit_info *unit;
-    int odev = (ab->flags & DPD_ORTHDEV);
+    int odev = (dpd->flags & DPD_ORTHDEV);
     int i, j, s, t, k = 0;
     double x;
 
-    for (i=0; i<ab->N; i++) {
-	unit = &ab->ui[i];
+    for (i=0; i<dpd->N; i++) {
+	unit = &dpd->ui[i];
 	if (skip_unit(unit)) {
 	    continue;
 	}
@@ -2009,46 +2016,46 @@ static int dpd_make_y_W (dpd *ab, const double *y,
 	    if (skip_obs(unit, t)) {
 		continue;
 	    }
-	    s = data_index(ab, i) + t;
+	    s = data_index(dpd, i) + t;
 	    /* current difference (or deviation) of dependent var */
 	    if (odev) {
 		x = odev_at_lag(y, s, 0, pdinfo->pd);
-		gretl_vector_set(ab->y, k, x);
+		gretl_vector_set(dpd->y, k, x);
 	    } else {
-		gretl_vector_set(ab->y, k, y[s] - y[s-1]);
+		gretl_vector_set(dpd->y, k, y[s] - y[s-1]);
 	    }
-	    for (j=0; j<ab->p; j++) {
+	    for (j=0; j<dpd->p; j++) {
 		/* lagged difference of dependent var */
 		if (odev) {
 		    x = odev_at_lag(y, s, j + 1, pdinfo->pd);
-		    gretl_matrix_set(ab->W, k, j, x);
+		    gretl_matrix_set(dpd->X, k, j, x);
 		} else {
-		    gretl_matrix_set(ab->W, k, j, y[s-j-1] - y[s-j-2]);
+		    gretl_matrix_set(dpd->X, k, j, y[s-j-1] - y[s-j-2]);
 		}
 	    }
-	    for (j=0; j<ab->nx; j++) {
+	    for (j=0; j<dpd->nx; j++) {
 		/* independent vars */
-		x = Z[ab->xlist[j+1]][s];
-		gretl_matrix_set(ab->W, k, j + ab->p, x);
+		x = Z[dpd->xlist[j+1]][s];
+		gretl_matrix_set(dpd->X, k, j + dpd->p, x);
 	    }
-	    for (j=0; j<ab->ndum; j++) {
+	    for (j=0; j<dpd->ndum; j++) {
 		/* time dummies */
-		x = (t - ab->t1min - 1 == j)? 1 : 0;
-		gretl_matrix_set(ab->W, k, j + ab->p + ab->nx, x);
+		x = (t - dpd->t1min - 1 == j)? 1 : 0;
+		gretl_matrix_set(dpd->X, k, j + dpd->p + dpd->nx, x);
 	    }	    
 	    k++;
 	}
     }
 
 #if ADEBUG
-    gretl_matrix_print(ab->y, "y");
-    gretl_matrix_print(ab->W, "W");
+    gretl_matrix_print(dpd->y, "y");
+    gretl_matrix_print(dpd->X, "X");
 #endif
 
     return 0;
 }
 
-static int dpd_make_Z_and_A (dpd *ab, const double *y,
+static int dpd_make_Z_and_A (dpdinfo *dpd, const double *y,
 			     const double **Z)
 {
     int i, j, k, s, t, c = 0;
@@ -2060,13 +2067,13 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 #endif
     int err = 0;
 
-    gretl_matrix_zero(ab->A);
-    gretl_matrix_zero(ab->ZW);
-    gretl_matrix_zero(ab->R1);
+    gretl_matrix_zero(dpd->A);
+    gretl_matrix_zero(dpd->ZX);
+    gretl_matrix_zero(dpd->R1);
 
-    for (i=0; i<ab->N && !err; i++) {
-	unit_info *unit = &ab->ui[i];
-	int ycols = ab->p;    /* intial y block width */
+    for (i=0; i<dpd->N && !err; i++) {
+	unit_info *unit = &dpd->ui[i];
+	int ycols = dpd->p;    /* intial y block width */
 	int offj = 0;         /* initialize column offset */
 	int Ti = unit->nobs;
 
@@ -2074,18 +2081,18 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 	    continue;
 	}
 
-	gretl_matrix_reuse(ab->Zi, Ti, ab->m);
-	gretl_matrix_zero(ab->Zi);
+	gretl_matrix_reuse(dpd->Zi, Ti, dpd->m);
+	gretl_matrix_zero(dpd->Zi);
 
-	for (t=ab->p+1; t<unit->t1; t++) {
+	for (t=dpd->p+1; t<unit->t1; t++) {
 	    /* unbalanced case: compute initial column offset */
 	    offj += ycols;
-	    if (ycols < ab->qmax - 1) {
+	    if (ycols < dpd->qmax - 1) {
 		ycols++;
 	    }
 	    zj = 0;
-	    for (zi=0; zi<ab->nzb; zi++) {
-		for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
+	    for (zi=0; zi<dpd->nzb; zi++) {
+		for (zk=dpd->d[zi].minlag; zk<=dpd->d[zi].maxlag; zk++) {
 		    if (t - zk >= 0) {
 			zj++;
 		    }
@@ -2102,9 +2109,9 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 	    if (!skip) {
 		/* lagged y (GMM instr) columns */
 		for (j=0; j<ycols; j++) {
-		    s = data_index(ab, i) + t - (ycols + 1) + j;
+		    s = data_index(dpd, i) + t - (ycols + 1) + j;
 		    if (!na(y[s])) {
-			gretl_matrix_set(ab->Zi, k, j + offj, y[s]);
+			gretl_matrix_set(dpd->Zi, k, j + offj, y[s]);
 		    }
 		}
 	    }
@@ -2113,14 +2120,14 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 	       needs checking for the unbalanced case 
 	    */
 	    zj = 0;
-	    for (zi=0; zi<ab->nzb; zi++) {
-		for (zk=ab->d[zi].minlag; zk<=ab->d[zi].maxlag; zk++) {
+	    for (zi=0; zi<dpd->nzb; zi++) {
+		for (zk=dpd->d[zi].minlag; zk<=dpd->d[zi].maxlag; zk++) {
 		    if (t - zk >= 0) { /* ?? */
 			if (!skip) {
-			    s = data_index(ab, i) + t - zk;
-			    x = Z[ab->d[zi].v][s];
+			    s = data_index(dpd, i) + t - zk;
+			    x = Z[dpd->d[zi].v][s];
 			    if (!na(x)) {
-				gretl_matrix_set(ab->Zi, k, zj + offj + ycols, x);
+				gretl_matrix_set(dpd->Zi, k, zj + offj + ycols, x);
 			    }
 			}
 			zj++;
@@ -2131,21 +2138,21 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 
 	    if (!skip) {
 		/* additional full-length instrument columns */
-		s = data_index(ab, i) + t;
-		for (j=0; j<ab->nz; j++) {
-		    x = Z[ab->ilist[j+1]][s];
-		    gretl_matrix_set(ab->Zi, k, ab->xc0 + j, x);
+		s = data_index(dpd, i) + t;
+		for (j=0; j<dpd->nz; j++) {
+		    x = Z[dpd->ilist[j+1]][s];
+		    gretl_matrix_set(dpd->Zi, k, dpd->xc0 + j, x);
 		}
 		/* plus time dummies, if wanted */
-		for (j=0; j<ab->ndum; j++) {
-		    x = (t - ab->t1min - 1 == j)? 1 : 0;
-		    gretl_matrix_set(ab->Zi, k, ab->xc0 + ab->nz + j, x);
+		for (j=0; j<dpd->ndum; j++) {
+		    x = (t - dpd->t1min - 1 == j)? 1 : 0;
+		    gretl_matrix_set(dpd->Zi, k, dpd->xc0 + dpd->nz + j, x);
 		}
 		k++; /* increment target row */	
 	    }
 
 	    offj += offincr; /* starting column for next block */
-	    if (ycols < ab->qmax - 1) {
+	    if (ycols < dpd->qmax - 1) {
 		/* increment y block width, if we're not already at max */
 		ycols++;
 	    }
@@ -2153,51 +2160,51 @@ static int dpd_make_Z_and_A (dpd *ab, const double *y,
 
 #if ADEBUG
 	sprintf(zstr, "Z_%d", i + 1);
-	gretl_matrix_print(ab->Zi, zstr);
+	gretl_matrix_print(dpd->Zi, zstr);
 #endif
 
 	/* Cumulate Z_i' H Z_i into A_N */
-	if (ab->flags & DPD_ORTHDEV) {
+	if (dpd->flags & DPD_ORTHDEV) {
 	    /* orthogonal deviations: "H" is identity matrix */
-	    gretl_matrix_multiply_mod(ab->Zi, GRETL_MOD_TRANSPOSE,
-				      ab->Zi, GRETL_MOD_NONE,
-				      ab->A, GRETL_MOD_CUMULATE);
+	    gretl_matrix_multiply_mod(dpd->Zi, GRETL_MOD_TRANSPOSE,
+				      dpd->Zi, GRETL_MOD_NONE,
+				      dpd->A, GRETL_MOD_CUMULATE);
 	} else {
-	    err = make_first_diff_matrix(ab, i);
-	    gretl_matrix_qform(ab->Zi, GRETL_MOD_TRANSPOSE,
-			       ab->H, ab->A, GRETL_MOD_CUMULATE);
+	    err = make_first_diff_matrix(dpd, i);
+	    gretl_matrix_qform(dpd->Zi, GRETL_MOD_TRANSPOSE,
+			       dpd->H, dpd->A, GRETL_MOD_CUMULATE);
 	}
 
 	/* Write Zi into ZT at offset 0, c */
-	gretl_matrix_inscribe_matrix(ab->ZT, ab->Zi, 0, c, GRETL_MOD_TRANSPOSE);
+	gretl_matrix_inscribe_matrix(dpd->ZT, dpd->Zi, 0, c, GRETL_MOD_TRANSPOSE);
 	c += Ti;
     }
 
-    if (!(ab->flags & DPD_ORTHDEV)) {
+    if (!(dpd->flags & DPD_ORTHDEV)) {
 	/* clean up */
 	make_first_diff_matrix(NULL, 0);
     }
 
     if (!err) {
 	/* mask zero rows of ZT, if required */
-	zmask = gretl_matrix_zero_row_mask(ab->ZT, &err);
+	zmask = gretl_matrix_zero_row_mask(dpd->ZT, &err);
 	if (zmask != NULL) {
-	    err = reduce_Z_and_A(ab, zmask);
+	    err = reduce_Z_and_A(dpd, zmask);
 	    free(zmask);
 	}
     } 
 
 #if ADEBUG
-    gretl_matrix_print(ab->A, "\\sum Z_i' H Z_i");
+    gretl_matrix_print(dpd->A, "\\sum Z_i' H Z_i");
 #endif
 
     if (!err) {
-	gretl_matrix_divide_by_scalar(ab->A, ab->N);
+	gretl_matrix_divide_by_scalar(dpd->A, dpd->N);
     }
 
 #if ADEBUG
-    gretl_matrix_print(ab->ZT, "ZT");
-    gretl_matrix_print(ab->A, "N^{-1} * \\sum Z_i' H Z_i");
+    gretl_matrix_print(dpd->ZT, "ZT");
+    gretl_matrix_print(dpd->A, "N^{-1} * \\sum Z_i' H Z_i");
 #endif
 
     return err;
@@ -2242,7 +2249,7 @@ static int parse_diag_info (const char *s, struct diag_info *d,
 */
 
 static int dpd_parse_istr (const char *istr, const DATAINFO *pdinfo,
-			      struct diag_info **pd, int *ns)
+			   struct diag_info **pd, int *ns)
 {
     struct diag_info *d = NULL;
     char *s0 = gretl_strdup(istr);
@@ -2296,28 +2303,34 @@ static int dpd_parse_istr (const char *istr, const DATAINFO *pdinfo,
     return err;
 }
 
-static int dpd_invert_A_N (dpd *ab)
+static int dpd_invert_A_N (dpdinfo *dpd)
 {
     int err = 0;
 
     /* make a backup in case the first attempt fails */
-    gretl_matrix_copy_values(ab->Acpy, ab->A);
+    gretl_matrix_copy_values(dpd->Acpy, dpd->A);
 
     /* first try straight inversion */
-    err = gretl_invert_symmetric_matrix(ab->A);
+    err = gretl_invert_symmetric_matrix(dpd->A);
 
     if (err) {
 	/* try again, reducing A based on its rank */
-	fprintf(stderr, "inverting ab->A failed on first pass\n");
-	err = try_alt_inverse(ab);
+	fprintf(stderr, "inverting dpd->A failed on first pass\n");
+	err = try_alt_inverse(dpd);
     }
 
 #if ADEBUG
-    gretl_matrix_print(ab->A, "A_N");
+    gretl_matrix_print(dpd->A, "A_N");
 #endif
 
     return err;
 }
+
+/* For a given panel unit, fill the portion of the y, X and Z matrices
+   relating to the equations in differences. @t0 gives the offset into 
+   the full dataset at the start of the observations for the given
+   unit.
+*/
 
 static int ab_per_unit (const double *y, const int *xlist, 
 			const double **Z, const gretl_matrix *H,
@@ -2417,6 +2430,12 @@ static int ab_per_unit (const double *y, const int *xlist,
     return err;
 }
 
+/* For a given panel unit, fill the portion of the y, X and Z matrices
+   relating to the equations in levels, if wanted. @t0 gives the offset
+   into the full dataset at the start of the observations for the given
+   unit.
+*/
+
 static int bb_per_unit (const double *y, const int *xlist, 
 			const double **Z, 
 			int t0, int maxlag, 
@@ -2502,6 +2521,8 @@ static int bb_per_unit (const double *y, const int *xlist,
     return err;
 }
 
+/* Add to Z the "regular" instruments for the equations in differences */
+
 static void ab_x_insts (const int *xlist, const double **Z, 
 			int t0, dpd_unit *unit)
 {
@@ -2526,6 +2547,8 @@ static void ab_x_insts (const int *xlist, const double **Z,
     }
 }
 
+/* Add to Z the "regular" instruments for the equations in levels */
+
 static void bb_x_insts (const int *xlist, const double **Z, 
 			int t0, int maxlag, dpd_unit *unit)
 {
@@ -2543,6 +2566,12 @@ static void bb_x_insts (const int *xlist, const double **Z,
 	t++;
     }
 }
+
+/* After assembling the data matrices for a given panel unit, scan and
+   remove rows that are not usable on account of missing values.
+   Record the bad rows in unit->mask, and also keep a running record
+   of the observations actually used in @used.
+*/
 
 static int dpd_unit_cleanup (dpd_unit *unit, int iu, int t0, char *used)
 {
@@ -2687,45 +2716,46 @@ static gretl_matrix *dpd_calc_beta (gretl_matrix *XZ, gretl_matrix *ZZ,
     return beta;
 }
 
-static int dpd_add_residual_vector (dpd *ab, const double *y,
+static int dpd_add_residual_vector (dpdinfo *dpd, const double *y,
 				    const double **Z, const DATAINFO *pdinfo)
 {
-    const double *b = ab->beta->val;
+    const double *b = dpd->beta->val;
+    const double *x;
     double ut, xd;
     int i, j, s, t;
 
-    if (ab->uhat == NULL) {
-	ab->uhat = gretl_column_vector_alloc(ab->nobs);
-	if (ab->uhat == NULL) {
+    if (dpd->uhat == NULL) {
+	dpd->uhat = gretl_column_vector_alloc(dpd->nobs);
+	if (dpd->uhat == NULL) {
 	    return E_ALLOC;
 	}
     }
 
-    ab->SSR = 0.0;
+    dpd->SSR = 0.0;
     s = 0;
 
     for (t=0; t<pdinfo->n; t++) {
-	if (ab->used[t]) {
+	if (dpd->used[t]) {
 	    ut = y[t] - y[t-1];
 	    j = 0;
-	    for (i=0; i<ab->p; i++) {
+	    for (i=0; i<dpd->p; i++) {
 		xd = y[t-i-1] - y[t-i-2];
 		ut -= b[j++] * xd;
 	    }
 	    /* FIXME automatic time dummies */
-	    if (ab->xlist != NULL) {
-		for (i=1; i<=ab->xlist[0]; i++) {
-		    xd = Z[ab->xlist[i]][t];
-		    xd -= Z[ab->xlist[i]][t-1];
+	    if (dpd->xlist != NULL) {
+		for (i=1; i<=dpd->xlist[0]; i++) {
+		    x = Z[dpd->xlist[i]];
+		    xd = x[t] - x[t-1];
 		    ut -= b[j++] * xd;
 		}
 	    }
-	    gretl_vector_set(ab->uhat, s++, ut);
-	    ab->SSR += ut * ut;
+	    gretl_vector_set(dpd->uhat, s++, ut);
+	    dpd->SSR += ut * ut;
 	}
     }
 
-    ab->s2 = ab->SSR / (ab->nobs - ab->k);
+    dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
 
     return 0;
 }
@@ -2738,11 +2768,11 @@ static void dpd_matrices_restore_size (dpd_unit *unit,
     gretl_matrix_copy_values(unit->H, H);
 }
 
-static int dpanel_driver (dpd *ab, const double **Z, const DATAINFO *pdinfo,
+static int dpanel_driver (dpdinfo *dpd, const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
-    const double *y = Z[ab->yno];
-    dpd_unit *unit = ab->unit;
+    const double *y = Z[dpd->yno];
+    dpd_unit *unit = dpd->unit;
     gretl_matrix *XZ;
     gretl_matrix *ZZ;
     gretl_matrix *ZY;
@@ -2762,27 +2792,27 @@ static int dpanel_driver (dpd *ab, const double **Z, const DATAINFO *pdinfo,
 	err = E_ALLOC;
     }
 
-    ab->effN = ab->nobs = 0;
+    dpd->effN = dpd->nobs = 0;
 
     for (i=0; i<n && !err; i++) {
 	/* equations in differences */
-	ab_per_unit(y, ab->xlist, Z, H, t0, ab->p, unit);
+	ab_per_unit(y, dpd->xlist, Z, H, t0, dpd->p, unit);
 
 	if (unit->nx > 0) {
 	    /* regular instruments, differences equations */
-	    ab_x_insts(ab->xlist, Z, t0, unit);
+	    ab_x_insts(dpd->xlist, Z, t0, unit);
 	}
 
 	if (opt & OPT_L) {
 	    /* equations in levels */
-	    bb_per_unit(y, ab->xlist, Z, t0, ab->p, unit);
+	    bb_per_unit(y, dpd->xlist, Z, t0, dpd->p, unit);
 	    if (unit->nx > 0) {
 		/* regular instruments, levels equations */
-		bb_x_insts(ab->xlist, Z, t0, ab->p, unit);
+		bb_x_insts(dpd->xlist, Z, t0, dpd->p, unit);
 	    }
 	}
 
-	n_i = dpd_unit_cleanup(unit, i, t0, ab->used);
+	n_i = dpd_unit_cleanup(unit, i, t0, dpd->used);
 
 	if (n_i > 0) {
 	    gretl_matrix_multiply_mod(unit->X, GRETL_MOD_TRANSPOSE,
@@ -2795,8 +2825,8 @@ static int dpanel_driver (dpd *ab, const double **Z, const DATAINFO *pdinfo,
 	    gretl_matrix_multiply_mod(unit->Z, GRETL_MOD_TRANSPOSE,
 				      unit->y, GRETL_MOD_NONE,
 				      ZY, GRETL_MOD_CUMULATE);
-	    ab->effN += 1;
-	    ab->nobs += n_i;
+	    dpd->effN += 1;
+	    dpd->nobs += n_i;
 	}
 
 #if ADEBUG > 1
@@ -2822,16 +2852,16 @@ static int dpanel_driver (dpd *ab, const double **Z, const DATAINFO *pdinfo,
 #endif
 
     if (!err) {
-	ab->beta = dpd_calc_beta(XZ, ZZ, ZY, unit->k, unit->nz, &err);
+	dpd->beta = dpd_calc_beta(XZ, ZZ, ZY, unit->k, unit->nz, &err);
     }
 
     if (!err) {
-	err = dpd_add_residual_vector(ab, y, Z, pdinfo);
+	err = dpd_add_residual_vector(dpd, y, Z, pdinfo);
     }
 
     if (!err) {
 	pprintf(prn, "Used %d units and %d total obs\n",
-		ab->effN, ab->nobs);
+		dpd->effN, dpd->nobs);
     }
 
     gretl_matrix_free(XZ);
@@ -2850,7 +2880,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 		 PRN *prn)
 {
     struct diag_info *d = NULL;
-    dpd *ab = NULL;
+    dpdinfo *dpd = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
@@ -2868,52 +2898,52 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     }
 
     /* initialize (including some memory allocation) */
-    ab = dpd_new(list, pdinfo, opt, d, nzb, &mod.errcode);
+    dpd = dpdinfo_new(list, pdinfo, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
     }
 
     /* see if we have a usable sample */
-    err = dpd_sample_check(ab, Z);
+    err = dpd_sample_check(dpd, Z);
     if (err) {
 	fprintf(stderr, "Error %d in dpd_sample_check\n", err);
     }
 
-    if (!err && ab->nx > 0) {
+    if (!err && dpd->nx > 0) {
 	/* cut out any all-zero variables */
-	dpd_zero_check(ab, Z);
+	dpd_zero_check(dpd, Z);
     }
 
     if (!err) {
 	/* main workspace allocation */
-	err = dpd_allocate_matrices(ab);
+	err = dpd_allocate_matrices(dpd);
     }
 
     if (!err) {
-	/* build y^* and W^* */
-	err = dpd_make_y_W(ab, Z[ab->yno], Z, pdinfo);
+	/* build y^* and X^* */
+	err = dpd_make_y_X(dpd, Z[dpd->yno], Z, pdinfo);
     }
 
     if (!err) {
 	/* build instrument matrix blocks, Z_i, and insert into
 	   big Z' matrix; cumulate first-stage A_N as we go */
-	err = dpd_make_Z_and_A(ab, Z[ab->yno], Z);
+	err = dpd_make_Z_and_A(dpd, Z[dpd->yno], Z);
     }
 
     if (!err) {
 	/* invert A_N: note that we allow two attempts */
-	err = dpd_invert_A_N(ab);
+	err = dpd_invert_A_N(dpd);
     }
 
     if (!err) {
 	/* first-step calculation */
-	err = dpd_calculate(ab);
+	err = dpd_calculate(dpd);
     }
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
-	err = dpd_step_2(ab);
+	err = dpd_step_2(dpd);
     }
 
     if (err && !mod.errcode) {
@@ -2922,11 +2952,11 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 
     if (!mod.errcode) {
 	/* insert estimation info into mod */
-	mod.errcode = dpd_finalize_model(&mod, ab, list, istr, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
 					 Z, pdinfo, opt);
     }
 
-    dpd_free(ab);
+    dpdinfo_free(dpd);
 
     return mod;
 }
@@ -2936,32 +2966,30 @@ MODEL dpd_estimate (const int *list, const char *istr,
 		    gretlopt opt, PRN *prn)
 {
     struct diag_info *d = NULL;
-    dpd *ab = NULL;
+    dpdinfo *dpd = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
 
-    opt |= OPT_B; /* flag new style: allowing for levels */
-
     gretl_model_init(&mod);
     gretl_model_smpl_init(&mod, pdinfo);
 
-    ab = dpd_new(list, pdinfo, opt, d, nzb, &mod.errcode);
+    dpd = dpdinfo_new(list, pdinfo, opt | OPT_B, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
     }
 
-    if (ab != NULL) {
-	dpd_null_matrices(ab);
-	ab->used = calloc(pdinfo->n, 1);
-	if (ab->used == NULL) {
+    if (dpd != NULL) {
+	dpd_allocate_matrices(dpd); /* just NULLs things at present */
+	dpd->used = calloc(pdinfo->n, 1);
+	if (dpd->used == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	err = dpanel_driver(ab, Z, pdinfo, opt, prn);
+	err = dpanel_driver(dpd, Z, pdinfo, opt, prn);
     }
 
     if (err && !mod.errcode) {
@@ -2970,13 +2998,13 @@ MODEL dpd_estimate (const int *list, const char *istr,
 
     if (!mod.errcode) {
 	/* insert estimation info into mod */
-	mod.errcode = dpd_finalize_model(&mod, ab, list, istr, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
 					 Z, pdinfo, opt);
     }
 
-    gretl_matrix_free(ab->beta); /* FIXME */
-    gretl_matrix_free(ab->uhat); /* FIXME */
-    dpd_free(ab);
+    gretl_matrix_free(dpd->beta); /* FIXME */
+    gretl_matrix_free(dpd->uhat); /* FIXME */
+    dpdinfo_free(dpd);
 
     return mod;
 }
