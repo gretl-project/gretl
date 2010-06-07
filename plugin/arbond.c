@@ -407,6 +407,7 @@ static int dpd_add_unit_diff_info (dpdinfo *dpd)
     int i, err = 0;
 
     dpd->ui = malloc(dpd->N * sizeof *dpd->ui);
+
     if (dpd->ui == NULL) {
 	err = E_ALLOC;
     } else {
