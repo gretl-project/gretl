@@ -1,6 +1,8 @@
 version 1.9.1, in progress
 - wls: amend the criterion for complaining that the weights
   are all zero
+- logit/probit: correct ordering of estimates when the
+  constant is not first in the supplied list of regressors
 - Remove the old genpois function
 
 05-02-2010 version 1.9.0

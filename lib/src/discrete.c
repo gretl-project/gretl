@@ -1905,7 +1905,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     if (beta == NULL) {
 	dmod.errcode = E_ALLOC;
     } else {
-	dmod.errcode = do_BRMR(list, &dmod, ci, beta, Z, pdinfo, 
+	dmod.errcode = do_BRMR(dmod.list, &dmod, ci, beta, Z, pdinfo, 
 			       (opt & OPT_V)? prn : NULL);
     }
 

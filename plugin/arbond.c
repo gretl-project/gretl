@@ -101,7 +101,7 @@ struct dpdinfo_ {
     gretl_matrix *R1;
     gretl_matrix *ZX;
     struct diag_info *d;   /* info on block-diagonal instruments */
-    unit_info *ui;         /* old-style info on panel units (diffs or devs) */
+    unit_info *ui;         /* old-style info on panel units */
     dpd_unit *unit;        /* new-style info on panel unit */
     char *used;            /* global record of observations used */
     gretl_matrix *XZ;      /* for new prodecure */
@@ -117,6 +117,9 @@ struct dpd_unit_ {
     gretl_matrix *X;  /* regressors */
     gretl_matrix *Z;  /* instruments */
     gretl_matrix *H;  /* weights matrix for GMM */
+    gretl_matrix *big_y;
+    gretl_matrix *big_X;
+    gretl_matrix *big_Z;
 };
 
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
@@ -182,7 +185,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 
 	dpd->B1 = gretl_matrix_block_new(&dpd->beta,  dpd->k, 1,
 					 &dpd->vbeta, dpd->k, dpd->k,
-					 &dpd->A,    dpd->nz, dpd->nz,
+					 &dpd->A,     dpd->nz, dpd->nz,
 					 NULL);
 
 	if (dpd->B1 == NULL) {
@@ -2582,7 +2585,8 @@ static void bb_x_insts (const double **Z, int t0, dpdinfo *dpd)
 static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0)
 {
     dpd_unit *unit = dpd->unit;
-    int valid_obs = unit->neqns;
+    int smax = dpd->T - unit->offset;
+    int valid_eqns = unit->neqns;
     int i, s, t;
     double x;
 
@@ -2591,29 +2595,29 @@ static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0)
     gretl_matrix_print(unit->y, "y"); 
     gretl_matrix_print(unit->X, "X"); 
     gretl_matrix_print(unit->Z, "Z"); 
-    fprintf(stderr, "valid_obs = %d\n", valid_obs);
 #endif
 
-    for (t=0; t<unit->neqns; t++) {
-	s = t0 + unit->offset + t;
-	unit->mask[t] = xna(gretl_vector_get(unit->y, t));
-	if (unit->mask[t] == 0) {
+    for (s=0; s<unit->neqns; s++) {
+	t = t0 + unit->offset + s;
+	unit->mask[s] = xna(gretl_vector_get(unit->y, s));
+	if (unit->mask[s] == 0) {
 	    for (i=0; i<dpd->k; i++) {
-		x = gretl_matrix_get(unit->X, t, i);
+		x = gretl_matrix_get(unit->X, s, i);
 		if (xna(x)) {
-		    unit->mask[t] = 1;
+		    unit->mask[s] = 1;
 		    break;
 		}
 	    }
 	}
-	if (unit->mask[t]) {
-	    valid_obs--;
-	} else {
-	    dpd->used[s] = 1;
+	if (unit->mask[s]) {
+	    valid_eqns--;
+	} else if (s < smax) {
+	    /* ?? FIXME */
+	    dpd->used[t] = 1;
 	}
     }
 
-    if (valid_obs < unit->neqns) {
+    if (valid_eqns < unit->neqns) {
 	gretl_matrix_cut_rows(unit->y, unit->mask);
 	gretl_matrix_cut_rows(unit->X, unit->mask);
 	gretl_matrix_cut_rows(unit->Z, unit->mask);
@@ -2625,10 +2629,10 @@ static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0)
     gretl_matrix_print(unit->y, "y"); 
     gretl_matrix_print(unit->X, "X"); 
     gretl_matrix_print(unit->Z, "Z"); 
-    fprintf(stderr, "valid_obs = %d\n", valid_obs);
+    fprintf(stderr, "valid_eqns = %d\n", valid_eqns);
 #endif
 
-    return valid_obs;
+    return valid_eqns;
 }
 
 static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *A, 
@@ -2759,6 +2763,40 @@ static void dpd_matrices_restore_size (dpd_unit *unit, const gretl_matrix *H)
     gretl_matrix_copy_values(unit->H, H);
 }
 
+#define BIGMATS 0
+
+#if BIGMATS
+
+static int allocate_bigmats (dpdinfo *dpd)
+{
+    int smax = dpd->T - unit->offset;
+    int NT = dpd->N * dpd->T;
+    int M =  dpd->N * unit->neqns;
+
+    unit->big_y = gretl_matrix_alloc(NT, 1);
+    unit->big_X = gretl_matrix_alloc(NT, dpd->k);
+    unit->big_Z = gretl_matrix_alloc(dpd->nz, M); /* transposed */
+
+    if (unit->big_y == NULL || unit->big_X == NULL ||
+	unit->big_Z == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+static void add_to_bigmats (dpdinfo *dpd, int *r, int *c)
+{
+    gretl_matrix_inscribe_matrix(unit->big_y, unit->y, *r, 0, GRETL_MOD_NONE);
+    gretl_matrix_inscribe_matrix(unit->big_X, unit->X, *r, 0, GRETL_MOD_NONE);
+    gretl_matrix_inscribe_matrix(unit->big_Z, unit->Z, 0, *c, GRETL_MOD_NONE);
+
+    *r += unit->y->rows;
+    *c += unit->Z->rows;
+}
+
+#endif
+
 static int dpanel_driver (dpdinfo *dpd, const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
@@ -2777,6 +2815,8 @@ static int dpanel_driver (dpdinfo *dpd, const double **Z, const DATAINFO *pdinfo
     if (dpd->XZ == NULL || dpd->ZY == NULL || dpd->H == NULL) {
 	err = E_ALLOC;
     }
+
+    gretl_matrix_zero(dpd->A);
 
     dpd->effN = dpd->nobs = 0;
 
@@ -2812,7 +2852,7 @@ static int dpanel_driver (dpdinfo *dpd, const double **Z, const DATAINFO *pdinfo
 				      unit->y, GRETL_MOD_NONE,
 				      dpd->ZY, GRETL_MOD_CUMULATE);
 	    dpd->effN += 1;
-	    dpd->nobs += n_i;
+	    dpd->nobs += n_i; /* watch out for --system! */
 	}
 
 #if ADEBUG > 1
@@ -2908,7 +2948,8 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 
     if (!err) {
 	/* build instrument matrix blocks, Z_i, and insert into
-	   big Z' matrix; cumulate first-stage A_N as we go */
+	   big Z' matrix; cumulate first-stage A_N as we go 
+	*/
 	err = dpd_make_Z_and_A(dpd, Z[dpd->yno], Z);
     }
 
@@ -2932,7 +2973,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     }
 
     if (!mod.errcode) {
-	/* insert estimation info into mod */
+	/* write estimation info into model struct */
 	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
 					 Z, pdinfo, opt);
     }
@@ -2978,7 +3019,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
     }
 
     if (!mod.errcode) {
-	/* insert estimation info into mod */
+	/* write estimation info into model struct */
 	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
 					 Z, pdinfo, opt);
     }
