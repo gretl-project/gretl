@@ -237,7 +237,7 @@ char latex[MAXSTR] = "pdflatex.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
 char Rcommand[MAXSTR] = "RGui.exe";
 #elif defined(OSX_BUILD)
-char calculator[MAXSTR] = "xcalc";
+char calculator[MAXSTR] = "/Applications/Calculator.app/Contents/MacOS/Calculator";
 char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
 char Rcommand[MAXSTR] = "/usr/X11R6/bin/xterm -e R";

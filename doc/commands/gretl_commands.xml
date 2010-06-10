@@ -5308,9 +5308,18 @@
 
     <description>
       <para>
-	To be documented!
+	Supports creation of a gretl function package via the command
+	line. The filename argument represents the name of the package
+	to be created, and should have the <lit>.gfn</lit>
+	extension. Please see <guideref targ="chap:functions"/> for
+	details.
       </para>
     </description>
+
+    <gui-access>
+      <menu-path>/File/Function files/New package</menu-path>
+    </gui-access>
+
   </command>
 
   <command name="meantest" section="Tests" label="Difference of means">

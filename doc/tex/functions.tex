@@ -765,6 +765,10 @@ may proceed to the next stage.
 
 \subsection{Create a package}
 
+We first present the mechanism for creating a function package via
+\app{gretl}'s graphical interface. This can also be done via the
+command line; an explanation is given at the end of this chapter.
+
 Start the GUI program and take a look at the ``File, Function files'' menu.
 This menu contains four items: ``On local machine'', ``On server'', ``Edit
 package'', ``New package''.
@@ -903,6 +907,116 @@ include pc.gfn
 open np
 foo = pc(iprod)
 \end{code}
+
+\subsection{Creating a package via the command line}
+
+The mechanism described above, for creating function packages using
+the GUI, is likely to be convenient for small to medium-sized packages
+but may be too cumbersome for ambitious packages that include a large
+hierarchy of private functions. To facilitate the building of such
+packages \app{gretl} offers the \texttt{makepkg} command.
+
+To use \texttt{makepkg} you create three files: a driver script that
+loads all the function you want to package and invokes
+\texttt{makepkg}; a small, plain-text specification file that contains
+the required package details (author, version, etc.); and a plain text
+help file.  You run the driver script and \app{gretl} writes the
+package (\texttt{.gfn}) file.
+
+We will illustrate this using the \app{gig} (GARCH-in-gretl) package.
+The driver script for \app{gig}, called \texttt{makepkg.inp}, looks
+like this:
+%
+\begin{code}
+set echo off
+set messages off
+run gig.inp
+makepkg gig.gfn
+\end{code}
+
+The job of \texttt{gig.inp} is to include all the relevant functions,
+both public and private. Here is a trimmed version:
+%
+\begin{code}
+string basedir = "/home/jack/Lavori/gig-2.0"
+
+# GENERAL AUXILIARY FUNCTIONS
+include @basedir/library/functions.inp
+include @basedir/library/init.inp
+include @basedir/library/printout.inp
+include @basedir/library/getresults.inp
+
+# MLE AUXILIARY FUNCTIONS
+include @basedir/mle/library/functions.inp
+\end{code}
+%
+These commands could be included in the top-level script,
+\texttt{makepkg.inp}, but we have chosen to use a separate file.
+
+Note that the \texttt{makepkg} command takes one argument, the name of
+the package file to be created. The package \emph{specification file}
+should have the same basename but the extension \texttt{.spec}. In
+this case \app{gretl} will therefore look for \texttt{gig.spec}. The
+content of this file is as follows:
+%
+\begin{code}
+# gig.spec
+author = Stefano Balietti and Riccardo "Jack" Lucchetti
+version = 1.1
+date = 2010-06-05
+description = An assortment of univariate GARCH models
+public = garchFit gjrFit aparchFit egarchFit \
+    garchTFit gjrTFit aparchTFit egarchTFit \
+    garchGEDFit gjrGEDFit aparchGEDFit egarchGEDFit \
+    garchSkTFit gjrSkTFit aparchSkTFit egarchSkTFit \
+    garchmle \
+    gig_getScalar gig_getMatrix gig_getSeries gig_getInfo \
+    gig_print gig_plot
+
+help = gig.help
+sample-script = examples/code/example1.inp
+min-version = 1.9.0
+data-requirement = needs-time-series-data
+\end{code}
+
+As you can see, the format of each line in this file is \texttt{key =
+  value}, with two qualifications: blank lines are permitted (and
+ignored, as are comment lines that start with \verb|#|), and backslash
+continuation can be used for the elements of the \texttt{public}
+listing (the listing of functions that are to be made available to
+users).  
+
+With the expception of \texttt{data-requirement}, all of the fields
+shown above (\texttt{author}, \texttt{version} and so on) are
+required, though the order is immaterial. The date must be given in
+ISO 8601 format: YYYY-MM-DD. The \texttt{help} and
+\texttt{sample-script} fields must contain paths to a help file and a
+sample script which illustrates the functionality of the package,
+respectively; \texttt{min-version} specifies the minimum version of
+\app{gretl} that is required for the package to work correctly.  
+
+The \texttt{data-requirement} field should be specified if the package
+requires time-series or panel data. In that case the value must be one
+of the following standard strings: 
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{needs-time-series-data} & (any time-series data OK) \\ 
+\texttt{needs-qm-data} & (must be quarterly or monthly) \\ 
+\texttt{needs-panel-data} & (must be a panel)
+\end{tabular}
+\end{center}
+
+A further comment is required on the \texttt{public} listing. As
+mentioned above, this specifies the public interfaces that are
+available to users. All of the functions listed must be loaded in
+\app{gretl} at the point when the package is created --- that is
+achieved by the call \texttt{run gig.inp} in \texttt{makepkg.inp}
+above. Also please note that any other functions in memory at this
+time are assumed to be private ``helper'' functions that should also
+be made part of the package: the listing of private functions is
+implicit.
+
 
 %%% Local Variables: 
 %%% mode: latex
