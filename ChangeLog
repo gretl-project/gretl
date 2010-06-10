@@ -1,9 +1,13 @@
 version 1.9.1, in progress
+- New command: "makepkg", for command-line creation of gretl
+  function packages (.gfn files)
 - wls: amend the criterion for complaining that the weights
   are all zero
 - logit/probit: correct ordering of estimates when the
   constant is not first in the supplied list of regressors
 - Remove the old genpois function
+- OS X: use the native Mac calculator app for gretl's
+  calculator toolbar item by default
 
 05-02-2010 version 1.9.0
 - New command: "duration", for estimation of parametric
