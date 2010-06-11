@@ -2471,7 +2471,7 @@ static int bb_per_unit (const double *y, const double **Z,
     r = T - unit->offset;
     for (s=0; s<smax; s++) {
 	for (i=0; i<dpd->p; i++) {
-	    if (i<=s) {
+	    if (i <= s) {
 		gretl_matrix_set(unit->X, r, i, y[t-i]);
 	    } else {
 		gretl_matrix_set(unit->X, r, i, NADBL);
@@ -2582,7 +2582,7 @@ static void bb_x_insts (const double **Z, int t0, dpdinfo *dpd)
    of the observations skipped in dpd->used.
 */
 
-static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0)
+static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0, int *Ti)
 {
     dpd_unit *unit = dpd->unit;
     int smax = dpd->T - unit->offset;
@@ -2591,11 +2591,19 @@ static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0)
     double x;
 
 #if ADEBUG
-    fputs("\nunit %d, before cleanup\n", iu, stderr);
+    gretl_matrix *ZT = gretl_matrix_copy_transpose(unit->Z);
+
+    fprintf(stderr, "\nunit %d, before cleanup\n", iu);
     gretl_matrix_print(unit->y, "y"); 
     gretl_matrix_print(unit->X, "X"); 
-    gretl_matrix_print(unit->Z, "Z"); 
+    gretl_matrix_print(ZT, "Z'"); 
+    gretl_matrix_free(ZT);
 #endif
+
+    if (dpd->flags & DPD_LEVELEQ) {
+	/* allow for leading "extra observation" */
+	;
+    }
 
     for (s=0; s<unit->neqns; s++) {
 	t = t0 + unit->offset + s;
@@ -2614,6 +2622,7 @@ static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0)
 	} else if (s < smax) {
 	    /* ?? FIXME */
 	    dpd->used[t] = 1;
+	    *Ti += 1;
 	}
     }
 
@@ -2625,10 +2634,12 @@ static int dpd_unit_cleanup (dpdinfo *dpd, int iu, int t0)
     }
 
 #if ADEBUG
-    fputs("unit %d, after cleanup\n", iu, stderr);
+    fprintf(stderr, "unit %d, after cleanup\n", iu);
     gretl_matrix_print(unit->y, "y"); 
     gretl_matrix_print(unit->X, "X"); 
-    gretl_matrix_print(unit->Z, "Z"); 
+    ZT = gretl_matrix_copy_transpose(unit->Z);
+    gretl_matrix_print(ZT, "Z'");
+    gretl_matrix_free(ZT);
     fprintf(stderr, "valid_eqns = %d\n", valid_eqns);
 #endif
 
@@ -2821,6 +2832,8 @@ static int dpanel_driver (dpdinfo *dpd, const double **Z, const DATAINFO *pdinfo
     dpd->effN = dpd->nobs = 0;
 
     for (i=0; i<n && !err; i++) {
+	int Ti = 0;
+
 	/* equations in differences */
 	ab_per_unit(y, Z, t0, dpd);
 
@@ -2838,7 +2851,7 @@ static int dpanel_driver (dpdinfo *dpd, const double **Z, const DATAINFO *pdinfo
 	    }
 	}
 
-	n_i = dpd_unit_cleanup(dpd, i, t0);
+	n_i = dpd_unit_cleanup(dpd, i, t0, &Ti);
 
 	if (n_i > 0) {
 	    gretl_matrix_multiply_mod(unit->X, GRETL_MOD_TRANSPOSE,
@@ -2852,7 +2865,11 @@ static int dpanel_driver (dpdinfo *dpd, const double **Z, const DATAINFO *pdinfo
 				      unit->y, GRETL_MOD_NONE,
 				      dpd->ZY, GRETL_MOD_CUMULATE);
 	    dpd->effN += 1;
-	    dpd->nobs += n_i; /* watch out for --system! */
+	    if (dpd->flags & DPD_LEVELEQ) {
+		/* ?? */
+		Ti++;
+	    }
+	    dpd->nobs += Ti;
 	}
 
 #if ADEBUG > 1
