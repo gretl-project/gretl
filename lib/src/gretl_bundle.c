@@ -102,11 +102,6 @@ static void bundle_value_destroy (gpointer data)
     free(val);
 }
 
-static void free_hash_key (gpointer data)
-{
-    return;
-}
-
 static void gretl_bundle_free (gretl_bundle *b)
 {
     if (b != NULL) {
@@ -280,10 +275,12 @@ int gretl_bundle_set_data (const char *name, const char *key,
 	bundle_value *val = bundle_value_new(type, ptr, &err);
 
 	if (!err) {
+	    gchar *k = g_strdup(key);
+
 	    if (g_hash_table_lookup(b->ht, key) != NULL) {
-		g_hash_table_replace(b->ht, (gpointer) key, val);
+		g_hash_table_replace(b->ht, k, val);
 	    } else {
-		g_hash_table_insert(b->ht, (gpointer) key, val);
+		g_hash_table_insert(b->ht, k, val);
 	    }
 	}
     }
@@ -334,7 +331,7 @@ int gretl_bundle_add (const char *name)
 
     strcpy(b->name, name);
     b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				  free_hash_key, bundle_value_destroy);
+				  g_free, bundle_value_destroy);
     b->level = gretl_function_depth();
 
     return gretl_bundle_push(b);
