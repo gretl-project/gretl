@@ -26,6 +26,7 @@
 #include "usermat.h"
 #include "gretl_panel.h"
 #include "gretl_scalar.h"
+#include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "forecast.h"
 #include "kalman.h"
@@ -1673,6 +1674,7 @@ void libgretl_session_cleanup (int mode)
     if (mode != SESSION_PRESERVE_MATRICES) {
 	destroy_user_scalars();
 	destroy_user_matrices();
+	destroy_user_bundles();
     }
 }
 

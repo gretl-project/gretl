@@ -23,6 +23,7 @@
 #include "usermat.h"
 #include "gretl_func.h"
 #include "gretl_scalar.h"
+#include "gretl_bundle.h"
 
 #define GENDEBUG 0
 
@@ -101,14 +102,15 @@ enum {
   /* 70 */    LIST,	  /* reference to named list */
 	      LISTVAR,    /* variable in list */
 	      STR,	  /* string */
+	      BUNDLE,     /* gretl bundle (hash table) */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,      /* "null" */
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
               UFUN,	  /* user-defined function */
-	      RFUN,       /* GNU R function */
-  /* 80 */    VSTR,       /* string variable */
+  /* 80 */    RFUN,       /* GNU R function */
+              VSTR,       /* string variable */
               INC,   
 	      DEC,
 	      QUERY,
@@ -299,6 +301,7 @@ enum {
     F_PERGM,
     F_NPV,
     F_DSUM,
+    F_HASHGET,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,
@@ -315,6 +318,7 @@ enum {
     F_EPOCHDAY,
     F_MOVAVG,
     F_KDENSITY,
+    F_HASHSET,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

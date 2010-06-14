@@ -343,6 +343,8 @@ struct str_table funcs[] = {
     { F_KDENSITY, "kdensity" },
     { F_MONTHLEN, "monthlen" },
     { F_EPOCHDAY, "epochday" },
+    { F_HASHGET,  "bundle_get" },
+    { F_HASHSET,  "bundle_set" },
     { 0,          NULL }
 };
 
@@ -859,6 +861,9 @@ static void look_up_word (const char *s, parser *p)
 		    p->idstr = gretl_strdup(s);
 		} else if (get_matrix_by_name(s)) {
 		    p->sym = UMAT;
+		    p->idstr = gretl_strdup(s);
+		} else if (gretl_is_bundle(s)) {
+		    p->sym = BUNDLE;
 		    p->idstr = gretl_strdup(s);
 		} else if (gretl_get_object_by_name(s)) {
 		    p->sym = UOBJ;
@@ -1446,7 +1451,7 @@ const char *getsymb (int t, const parser *p)
 	return "EMPTY";
     } else if (t == LISTVAR) {
 	return "LISTVAR";
-    }
+    } 
 
     if (p != NULL) {
 	if (t == NUM) {
@@ -1454,6 +1459,8 @@ const char *getsymb (int t, const parser *p)
 	} else if (t == USERIES) {
 	    return p->dinfo->varname[p->idnum];
 	} else if (t == USCALAR) {
+	    return p->idstr;
+	} else if (t == BUNDLE) {
 	    return p->idstr;
 	} else if (t == UMAT || t == UOBJ) {
 	    return p->idstr;

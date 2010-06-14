@@ -1592,7 +1592,7 @@ char *gretl_default_workdir (void)
     int ok = 0;
 
     if (home != NULL) {
-	ret = g_strdup_printf("%s/gretl/", home);
+	ret = gretl_strdup_printf("%s/gretl/", home);
 	if (strcmp(ret, paths.workdir)) {
 	    DIR *dir = opendir(ret);
 

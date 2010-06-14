@@ -2127,6 +2127,7 @@ int check_declarations (char ***pS, parser *p)
     for (i=0; i<n && !p->err; i++) {
 	if (gretl_is_series(S[i], p->dinfo) ||
 	    gretl_is_scalar(S[i]) ||
+	    gretl_is_bundle(S[i]) ||
 	    get_matrix_by_name(S[i]) ||
 	    get_list_by_name(S[i]) ||
 	    get_string_by_name(S[i])) {

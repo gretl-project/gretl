@@ -259,6 +259,7 @@ static const char *reswords[] = {
     "matrix",
     "string",
     "list",
+    "bundle",
     "kalman",
     "void",
     /* debugging instructions, etc. */

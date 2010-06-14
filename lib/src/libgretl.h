@@ -107,6 +107,7 @@ typedef enum {
     GRETL_TYPE_USCALAR,
     GRETL_TYPE_USERIES,
     GRETL_TYPE_DATE,
+    GRETL_TYPE_BUNDLE,
     GRETL_TYPE_VOID
 } GretlType;
 
