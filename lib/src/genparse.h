@@ -397,7 +397,7 @@ enum {
 #define bnsym(s) (s == MDEF || s == FARGS)
 
 #define freestr(s) (s == STR || s == USCALAR || s == UMAT || s == UOBJ || \
-                    s == LIST || s == VSTR)
+                    s == LIST || s == VSTR || s == BUNDLE)
 
 #define bare_data_type(s) (s > PUNCT_MAX && s < DTYPE_MAX)
 
