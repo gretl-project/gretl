@@ -34,6 +34,7 @@
 #include "texprint.h"
 #include "gretl_xml.h"
 #include "gretl_scalar.h"
+#include "gretl_bundle.h"
 #include "gretl_string_table.h"
 #include "dbread.h"
 #include "gretl_foreign.h"
@@ -2451,6 +2452,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (nf == 1 && (!strcmp(rem, "kalman") ||
 			gretl_is_scalar(rem) ||
 			gretl_is_matrix(rem) || 
+			gretl_is_bundle(rem) ||
 			get_string_by_name(rem))) {
 	    /* special for deleting a named matrix, string, ... */
 	    cmd_param_grab_string(cmd, rem);
