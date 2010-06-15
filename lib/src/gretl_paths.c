@@ -597,7 +597,6 @@ int gretl_mkstemp (char *tmpl)
 int gretl_mkdir (const char *path)
 {
     int err = 0;
-    extern int errno;
 
     errno = 0;
 

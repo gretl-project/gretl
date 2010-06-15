@@ -55,13 +55,6 @@
 # include <arpa/inet.h>
 #endif /* WIN32 */
 
-#ifndef errno
-extern int errno;
-#endif
-#ifndef h_errno
-extern int h_errno;
-#endif
-
 #define DBHLEN     64
 
 static int wproxy;
