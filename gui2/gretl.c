@@ -43,6 +43,7 @@
 #include "datawiz.h"
 #include "varinfo.h"
 #include "dlgutils.h"
+#include "fncall.h"
 
 #include <dirent.h>
 
@@ -74,6 +75,7 @@ static void auto_store (void);
 static void restore_sample_callback (void);
 static void show_sample_callback (void);
 static void mdata_select_all (void);
+static void mdata_select_list (void);
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
@@ -1070,6 +1072,56 @@ void mdata_select_last_var (void)
     gtk_tree_selection_select_iter(select, &iter);
 }
 
+static void mdata_real_select_list (const int *list)
+{
+    GtkTreeIter iter;
+    GtkTreeView *view;
+    GtkTreeModel *model;
+    GtkTreeSelection *select;
+    gchar *idstr;
+    int nsel = 0;
+
+    view = GTK_TREE_VIEW(mdata->listbox);
+    model = gtk_tree_view_get_model(view);
+    select = gtk_tree_view_get_selection(view);
+    gtk_tree_selection_unselect_all(select);
+
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    while (nsel < list[0]) {
+	if (!gtk_tree_model_iter_next(model, &iter)) {
+	    break;
+	}	
+	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
+	if (in_gretl_list(list, atoi(idstr))) {
+	    gtk_tree_selection_select_iter(select, &iter);
+	    nsel++;
+	} 
+	g_free(idstr);
+    }
+}
+
+static void mdata_select_list (void)
+{
+    int nl = n_saved_lists();
+
+    if (nl == 0) {
+	warnbox(_("No lists are currently defined"));
+	return;
+    } else {
+	char lname[32];
+	int cancel = 0;
+
+	select_list_dialog(nl, lname, &cancel);
+
+	if (!cancel) {
+	    int *list = get_list_by_name(lname);
+
+	    mdata_real_select_list(list);
+	}
+    }
+}
+
 void clear_varlist (GtkWidget *widget)
 {
     GtkTreeModel *model;
@@ -1374,6 +1426,8 @@ GtkActionEntry main_entries[] = {
     /* Data */
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
     { "DataSelectAll", NULL, N_("Select _all"), "<control>A", NULL, G_CALLBACK(mdata_select_all) },
+    { "DefineList", NULL, N_("Define _list..."), NULL, NULL, G_CALLBACK(gui_define_list) },
+    { "SelectList", NULL, N_("_Select list..."), NULL, NULL, G_CALLBACK(mdata_select_list) },
     { "DisplayValues", NULL, N_("_Display values"), NULL, NULL, G_CALLBACK(display_selected) },
     { "EditValues", NULL, N_("_Edit values"), NULL, NULL, G_CALLBACK(spreadsheet_edit) },
     { "AddObs", NULL, N_("_Add observations..."), NULL, NULL, G_CALLBACK(do_add_obs) },

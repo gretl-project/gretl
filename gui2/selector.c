@@ -5634,6 +5634,15 @@ add_to_rvars1_from_named_list (selector *sr, const int *list)
     }
 }
 
+static void maybe_set_tsplot_vars (selector *sr)
+{
+    int mc = mdata_selection_count();
+
+    if (mc > 1 && mc < 7) {
+	set_vars_from_main(sr);
+    }
+}
+
 static void maybe_set_listdef_vars (selector *sr)
 {
     const char *lname = selector_entry_text(sr);
@@ -5644,28 +5653,28 @@ static void maybe_set_listdef_vars (selector *sr)
 	if (list != NULL) {
 	    add_to_rvars1_from_named_list(sr, list);
 	}
-    }
-}
+    } else if (sr->data == NULL) {
+	/* called from main window */
+	int mc = mdata_selection_count();
 
-static void maybe_set_tsplot_vars (selector *sr)
-{
-    int mc = mdata_selection_count();
-
-    if (mc > 1 && mc < 7) {
-	set_vars_from_main(sr);
+	if (mc > 1) {
+	    set_vars_from_main(sr);
+	}	
     }
 }
 
 static void selector_add_top_entry (selector *sr)
 {
-    GtkWidget *src;
+    const char *lname = NULL;
+    GtkWidget *src = NULL;
     GtkWidget *hbox;
     GtkWidget *label;
     GtkWidget *entry;
-    const char *lname;
 
-    src = GTK_WIDGET(sr->data);
-    lname = gtk_entry_get_text(GTK_ENTRY(src));
+    if (sr->data != NULL) {
+	src = GTK_WIDGET(sr->data);
+	lname = gtk_entry_get_text(GTK_ENTRY(src));
+    }
 
     hbox = gtk_hbox_new(FALSE, 0);
     label = gtk_label_new(_("Name for list:"));

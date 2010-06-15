@@ -462,8 +462,6 @@ static void update_list_selectors (call_info *cinfo)
 
 int do_make_list (selector *sr)
 {
-    GtkWidget *w = GTK_WIDGET(selector_get_data(sr));
-    call_info *cinfo = g_object_get_data(G_OBJECT(w), "cinfo");
     const char *buf = selector_list(sr);
     const char *lname = selector_entry_text(sr);
     const char *msg;
@@ -476,7 +474,7 @@ int do_make_list (selector *sr)
 	return 1;
     }   
 
-    if (buf == NULL || *buf == 0) {
+    if (buf == NULL || *buf == '\0') {
 	int resp;
 
 	resp = yes_no_dialog("gretl", _("Really create an empty list?"), 0);
@@ -508,8 +506,15 @@ int do_make_list (selector *sr)
     if (err) {
 	errbox(msg);
     } else {
+	gpointer data = selector_get_data(sr);
+
 	infobox(msg);
-	update_list_selectors(cinfo);
+	if (data != NULL) {
+	    GtkWidget *w = GTK_WIDGET(data);
+	    call_info *cinfo = g_object_get_data(G_OBJECT(w), "cinfo");
+	    
+	    update_list_selectors(cinfo);
+	}
     }
 
     free(list);
@@ -527,6 +532,11 @@ static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 			  entry);
     dlg = selector_get_window(sr);
     gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);
+}
+
+void gui_define_list (void)
+{
+    launch_list_maker(NULL, NULL);
 }
 
 static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)

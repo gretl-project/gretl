@@ -112,6 +112,9 @@
     <menu action="Data">
       <menuitem action="DataSelectAll"/>
       <separator/>
+      <menuitem action="DefineList"/>
+      <menuitem action="SelectList"/>
+      <separator/>
       <menuitem action="DisplayValues"/>
       <menuitem action="EditValues"/>
       <menuitem action="AddObs"/>

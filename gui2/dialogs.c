@@ -1243,6 +1243,63 @@ void rand_seed_dialog (void)
     gtk_widget_show_all(dlg);
 }
 
+static void set_listname (GtkComboBox *combo,
+			  char *listname)
+{
+    gchar *active = gtk_combo_box_get_active_text(combo);
+
+    strcpy(listname, active);
+    g_free(active);
+}
+
+void select_list_dialog (int nl, char *listname, int *cancel)
+{
+    GtkWidget *dlg;
+    GtkWidget *combo;
+    GtkWidget *hbox, *vbox, *tmp;
+    GList *llist = NULL;
+    const char *lname;
+    int i;
+
+    if (maybe_raise_dialog()) {
+	return;
+    }
+
+    dlg = gretl_dialog_new(_("gretl: choose list"), NULL,
+			   GRETL_DLG_BLOCK);
+
+    for (i=0; i<nl; i++) {
+	lname = get_list_name_by_index(i);
+	if (i == 0) {
+	    strcpy(listname, lname);
+	}
+	llist = g_list_append(llist, (gpointer) lname);
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    combo = gtk_combo_box_new_text();
+    set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), llist);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(set_listname), listname);
+    g_list_free(llist);
+    
+    gtk_box_pack_start(GTK_BOX(hbox), combo, TRUE, TRUE, 5);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+    cancel_delete_button(hbox, dlg, cancel);
+    
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tmp);
+
+    gtk_widget_show_all(dlg);
+}
+
 static void bfgs_mode_callback (GtkToggleButton *button, int *s)
 {
     if (gtk_toggle_button_get_active(button)) {
