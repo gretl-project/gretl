@@ -26,6 +26,9 @@
 
 #include <glib.h>
 
+#define BDEBUG 1
+#define BUNDLE_RETVAL 999
+
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundle_value_ bundle_value;
 
@@ -42,7 +45,6 @@ struct bundle_value_ {
 
 static gretl_bundle **bundles;
 static int n_bundles;
-static int bundle_imin;
 
 static bundle_value *bundle_value_new (GretlType type, void *ptr, int *err)
 {
@@ -138,12 +140,13 @@ static int reallocate_bundles (int n)
 
 static gretl_bundle *get_bundle_pointer (const char *s, int level)
 {
+    gretl_bundle *b;
     int i;
 
-    for (i=bundle_imin; i<n_bundles; i++) {
-	if (bundles[i]->level == level &&
-	    !strcmp(s, bundles[i]->name)) {
-	    return bundles[i];
+    for (i=0; i<n_bundles; i++) {
+	b = bundles[i];
+	if (b->level == level && !strcmp(s, b->name)) {
+	    return b;
 	}
     }
 
@@ -170,6 +173,10 @@ static int real_delete_bundle (int i)
     int n = n_bundles - 1;
     int err = 0;
 
+    if (i < 0 || i > n) {
+	return E_DATA;
+    }
+
     gretl_bundle_free(bundles[i]);
     bundles[i] = NULL;
 
@@ -191,11 +198,6 @@ static int real_delete_bundle (int i)
     return err;
 }
 
-int n_saved_bundles (void)
-{
-    return n_bundles;
-}
-
 int gretl_is_bundle (const char *name)
 {
     int ret = 0;
@@ -206,37 +208,7 @@ int gretl_is_bundle (const char *name)
 
     ret = (get_bundle_pointer(name, gretl_function_depth()) != NULL);
 
-    if (!ret) {
-	ret = const_lookup(name);
-    }
-
     return ret;
-}
-
-int gretl_bundle_get_index (const char *name, int *err)
-{
-    int level = gretl_function_depth();
-    int i;
-
-    for (i=0; i<n_bundles; i++) {
-	if (level == bundles[i]->level &&
-	    !strcmp(name, bundles[i]->name)) {
-	    return i;
-	}
-    }
-
-    *err = E_UNKVAR;
-
-    return -1;
-}
-
-const char *gretl_bundle_get_name (int i)
-{
-    if (i >= 0 && i < n_bundles) {
-	return bundles[i]->name;
-    } else {
-	return NULL;
-    }
 }
 
 void *gretl_bundle_get_data (const char *name, const char *key,
@@ -288,30 +260,6 @@ int gretl_bundle_set_data (const char *name, const char *key,
     return err;
 }
 
-/* check that we're not colliding with a pre-existing object of
-   different type */
-
-static int gretl_bundle_check_name (const char *s, const DATAINFO *pdinfo)
-{
-    int v, err = 0;
-
-    if ((v = series_index(pdinfo, s)) < pdinfo->v) {
-	err = E_TYPES;
-    } else if (get_matrix_by_name(s)) {
-	err = E_TYPES;
-    } else if (get_list_by_name(s)) {
-	err = E_TYPES;
-    } else if (get_string_by_name(s)) {
-	err = E_TYPES;
-    } else if (gretl_is_scalar(s)) {
-	err = E_TYPES;
-    } else {
-	err = check_varname(s);
-    }
-
-    return err;
-}	
-
 int gretl_bundle_add (const char *name)
 {
     int level = gretl_function_depth();
@@ -320,7 +268,7 @@ int gretl_bundle_add (const char *name)
     b = get_bundle_pointer(name, level);
     if (b != NULL) {
 	fprintf(stderr, "*** gretl_bundle_add: there's already a '%s' at level %d\n", 
-		name, b->level);
+		name, level);
 	return E_DATA;
     }
 
@@ -332,44 +280,79 @@ int gretl_bundle_add (const char *name)
     strcpy(b->name, name);
     b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
 				  g_free, bundle_value_destroy);
-    b->level = gretl_function_depth();
+    b->level = level;
 
     return gretl_bundle_push(b);
 }
 
-int gretl_bundle_add_with_check (const char *name, const DATAINFO *pdinfo)
+int gretl_bundle_mark_as_return (const char *name)
 {
-    int err = gretl_bundle_check_name(name, pdinfo);
+    gretl_bundle *b;
 
-    if (!err) {
-	err = gretl_bundle_add(name);
-    }
+#if BDEBUG
+    fprintf(stderr, "gretl_bundle_mark_as_return: '%s' (depth %d)\n",
+	    name, gretl_function_depth());
+#endif
 
-    return err;
-}
-
-int gretl_bundle_set_local_name (int i, const char *name)
-{
-    if (i >= 0 && i < n_bundles) {
-	bundles[i]->name[0] = '\0';
-	strncat(bundles[i]->name, name, VNAMELEN - 1);
-	bundles[i]->level += 1;
-	return 0;
-    } else {
+    b = get_bundle_pointer(name, gretl_function_depth());
+    
+    if (b == NULL) {
 	return E_DATA;
+    } else {
+	b->level = BUNDLE_RETVAL;
+	return 0;
     }
 }
 
-int gretl_bundle_restore_name (int i, const char *name)
+static int get_bundle_index (gretl_bundle *b)
 {
-    if (i >= 0 && i < n_bundles) {
-	bundles[i]->name[0] = '\0';
-	strncat(bundles[i]->name, name, VNAMELEN - 1);
-	bundles[i]->level -= 1;
-	return 0;
-    } else {
+    int i;
+
+    for (i=0; i<n_bundles; i++) {
+	if (b == bundles[i]) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
+int gretl_bundle_name_return (const char *name)
+{
+    gretl_bundle *b0, *b1 = NULL;
+    int level = gretl_function_depth();
+    int i;
+
+#if BDEBUG
+    fprintf(stderr, "gretl_bundle_name_return: '%s'\n", name);
+#endif
+
+    for (i=0; i<n_bundles; i++) {
+	if (bundles[i]->level == BUNDLE_RETVAL) {
+	    b1 = bundles[i];
+	    break;
+	}
+    }
+
+    if (b1 == NULL) {
 	return E_DATA;
     }
+
+    b0 = get_bundle_pointer(name, level);
+    
+    if (b0 != NULL) {
+	/* replace */
+	g_hash_table_destroy(b0->ht);
+	b0->ht = b1->ht;
+	b1->ht = NULL;
+	real_delete_bundle(get_bundle_index(b1));
+    } else {
+	/* rename and set level */
+	strcpy(b1->name, name);
+	b1->level = level;
+    }
+
+    return 0;
 }
 
 int gretl_bundle_delete (const char *name, PRN *prn)

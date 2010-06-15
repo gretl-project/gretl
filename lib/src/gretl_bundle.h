@@ -17,8 +17,6 @@
  * 
  */
 
-int n_saved_bundles (void);
-
 int gretl_is_bundle (const char *name);
 
 void *gretl_bundle_get_data (const char *name, const char *key,
@@ -29,9 +27,11 @@ int gretl_bundle_set_data (const char *name, const char *key,
 
 int gretl_bundle_add (const char *name);
 
-int gretl_bundle_add_with_check (const char *name, const DATAINFO *pdinfo);
-
 int gretl_bundle_delete (const char *name, PRN *prn);
+
+int gretl_bundle_mark_as_return (const char *name);
+
+int gretl_bundle_name_return (const char *name);
 
 int destroy_user_bundles_at_level (int level);
 

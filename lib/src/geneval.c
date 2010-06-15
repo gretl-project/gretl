@@ -4712,7 +4712,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	rtype = user_func_get_return_type(uf);
 	if (rtype != GRETL_TYPE_DOUBLE && rtype != GRETL_TYPE_SERIES &&
 	    rtype != GRETL_TYPE_MATRIX && rtype != GRETL_TYPE_LIST &&
-	    rtype != GRETL_TYPE_STRING) {
+	    rtype != GRETL_TYPE_STRING && rtype != GRETL_TYPE_BUNDLE) {
 	    fprintf(stderr, "eval_ufunc: %s: invalid return type %d\n", 
 		    funname, rtype);
 	    p->err = E_TYPES;
@@ -4841,6 +4841,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    retp = &iret;
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    retp = &sret;
+	} else if (rtype == GRETL_TYPE_BUNDLE) {
+	    retp = &sret;
 	}
 
 	if ((p->flags & P_UFRET) && 
@@ -4888,6 +4890,15 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    if (is_tmp_node(ret)) {
 			free(ret->v.str);
 		    }
+		    ret->v.str = sret;
+		}
+	    } else if (rtype == GRETL_TYPE_BUNDLE) {
+		ret = aux_string_node(p);
+		if (ret != NULL) {
+		    if (is_tmp_node(ret)) {
+			free(ret->v.str);
+		    }
+		    ret->t = BUNDLE;
 		    ret->v.str = sret;
 		}
 	    }		
@@ -5372,7 +5383,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else if (m->t != STR) {
 	    node_type_error(f, 2, STR, m, p);
 	} else if (!ok_bundle_type(r->t)) {
-	    p->err = E_INVARG; /* FIXME missing args */
+	    node_type_error(f, 3, 0, r, p);
 	} else {
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
@@ -6780,6 +6791,21 @@ static void node_type_error (int ntype, int argnum, int goodt,
 	nstr = (goodt == NUM)? "lag order" : "lag variable";
     } else {
 	nstr = getsymb(ntype, NULL);
+    }
+
+    if (goodt == 0 && bad != NULL) {
+	if (bad->t == EMPTY) {
+	    pprintf(p->prn, _("%s: insufficient arguments"), nstr);
+	} else if (argnum <= 0) {
+	    pprintf(p->prn, _("%s: invalid argument type %s"),
+		    nstr, typestr(bad->t));
+	} else {
+	    pprintf(p->prn, _("%s: argument %d: invalid type %s"),
+		    nstr, argnum, typestr(bad->t));
+	}
+	pputc(p->prn, '\n');
+	p->err = E_TYPES;
+	return;
     }
 
     if (ntype < OP_MAX) {
@@ -9031,7 +9057,7 @@ static int edit_list (parser *p)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
 			   t == LIST || t == LVEC || t == DUM || \
-			   t == EMPTY || t == STR)
+			   t == EMPTY || t == STR || t == BUNDLE)
 
 static int gen_check_return_type (parser *p)
 {
@@ -9049,7 +9075,8 @@ static int gen_check_return_type (parser *p)
 
     if ((p->dinfo == NULL || p->dinfo->n == 0) && 
 	r->t != MAT && r->t != NUM && 
-	r->t != STR && r->t != EMPTY) {
+	r->t != STR && r->t != BUNDLE &&
+	r->t != EMPTY) {
 	no_data_error(p);
 	return p->err;
     }
@@ -9084,6 +9111,10 @@ static int gen_check_return_type (parser *p)
 	if (r->t != EMPTY && r->t != STR) {
 	    p->err = E_TYPES;
 	}
+    } else if (p->targ == BUNDLE) {
+	if (r->t != BUNDLE) {
+	    p->err = E_TYPES;
+	}	
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
@@ -9299,6 +9330,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	edit_list(p);
     } else if (p->targ == STR) {
 	edit_string(p);
+    } else if (p->targ == BUNDLE) {
+	p->err = gretl_bundle_name_return(p->lh.name);
     }
 
 #if EDEBUG /* print results */

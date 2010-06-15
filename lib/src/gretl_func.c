@@ -29,6 +29,7 @@
 #include "cmd_private.h"
 #include "gretl_string_table.h"
 #include "gretl_scalar.h"
+#include "gretl_bundle.h"
 #include "flow_control.h"
 #include "kalman.h"
 
@@ -121,10 +122,10 @@ enum {
 /* structure representing an argument to a user-defined function */
 
 struct fnarg {
-    char type;         /* argument type */
-    char flags;        /* ARG_OPTIONAL, ARG_CONST as appropriate */
-    const char *name;  /* name as function param */
-    char *upname;      /* name of supplied arg at caller level */
+    char type;           /* argument type */
+    char flags;          /* ARG_OPTIONAL, ARG_CONST as appropriate */
+    const char *name;    /* name as function param */
+    char *upname;        /* name of supplied arg at caller level */
     union {
 	int idnum;        /* named series arg: series ID */
 	double x;         /* scalar arg: value */
@@ -961,6 +962,7 @@ static const char *arg_type_string (int t)
     case GRETL_TYPE_USERIES:    return "series";
     case GRETL_TYPE_MATRIX:     return "matrix";	
     case GRETL_TYPE_LIST:       return "list";
+    case GRETL_TYPE_BUNDLE:     return "bundle";	
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
@@ -995,6 +997,7 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "matrix"))   return GRETL_TYPE_MATRIX;
     if (!strcmp(s, "list"))     return GRETL_TYPE_LIST;
     if (!strcmp(s, "string"))   return GRETL_TYPE_STRING;
+    if (!strcmp(s, "bundle"))   return GRETL_TYPE_BUNDLE;
 
     if (!strcmp(s, "scalar *"))  return GRETL_TYPE_SCALAR_REF;
     if (!strcmp(s, "series *"))  return GRETL_TYPE_SERIES_REF;
@@ -1015,6 +1018,7 @@ static int arg_type_from_string (const char *s)
 	                   r == GRETL_TYPE_MATRIX || \
 	                   r == GRETL_TYPE_LIST || \
                            r == GRETL_TYPE_STRING || \
+	                   r == GRETL_TYPE_BUNDLE || \
                            r == GRETL_TYPE_VOID)
 
 static int return_type_from_string (const char *s)
@@ -4762,9 +4766,16 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	       listed variables so they don't get deleted
 	    */
 	    err = unlocalize_list(call->retname, LIST_DIRECT_RETURN, Z, pdinfo);
+	} else if (rtype == GRETL_TYPE_BUNDLE) {
+	    if (gretl_is_bundle(call->retname)) {
+		*(char **) ret = gretl_strdup(call->retname);
+		gretl_bundle_mark_as_return(call->retname);
+	    } else {
+		err = E_UNKVAR;
+	    }
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    *(char **) ret = get_string_return(call->retname, Z, pdinfo, &err);
-	}
+	} 
 
 	if (err == E_UNKVAR) {
 	    pprintf(prn, "Function %s did not provide the specified return value\n",
@@ -4964,6 +4975,9 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     /* if the function defined a Kalman filter, clean that up */
     delete_kalman(NULL);
+
+    /* if any bundles were defined bu not returned, clean up */
+    destroy_user_bundles_at_level(d);
 
     pop_program_state();
 
