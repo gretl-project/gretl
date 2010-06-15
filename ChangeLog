@@ -8,6 +8,8 @@ version 1.9.1, in progress
 - Remove the old genpois function
 - OS X: use the native Mac calculator app for gretl's
   calculator toolbar item by default
+- GUI: add mechanism for defining named lists, and for
+  setting the main window selection from a chosen list
 
 05-02-2010 version 1.9.0
 - New command: "duration", for estimation of parametric

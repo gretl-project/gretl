@@ -1265,8 +1265,7 @@ void select_list_dialog (int nl, char *listname, int *cancel)
 	return;
     }
 
-    dlg = gretl_dialog_new(_("gretl: choose list"), NULL,
-			   GRETL_DLG_BLOCK);
+    dlg = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
 
     for (i=0; i<nl; i++) {
 	lname = get_list_name_by_index(i);
@@ -1276,18 +1275,24 @@ void select_list_dialog (int nl, char *listname, int *cancel)
 	llist = g_list_append(llist, (gpointer) lname);
     }
 
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    /* label */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Choose named list"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* selector */
     hbox = gtk_hbox_new(FALSE, 5);
     combo = gtk_combo_box_new_text();
     set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), llist);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(set_listname), listname);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, TRUE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     g_list_free(llist);
-    
-    gtk_box_pack_start(GTK_BOX(hbox), combo, TRUE, TRUE, 5);
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
     cancel_delete_button(hbox, dlg, cancel);

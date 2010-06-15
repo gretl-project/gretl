@@ -33,9 +33,9 @@ typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundle_value_ bundle_value;
 
 struct gretl_bundle_ {
-    char name[VNAMELEN];
-    GHashTable *ht;
-    int level;
+    char name[VNAMELEN]; 
+    GHashTable *ht;      /* holds key/value pairs */
+    int level;           /* level of function execution */
 };
 
 struct bundle_value_ {
@@ -46,6 +46,9 @@ struct bundle_value_ {
 static gretl_bundle **bundles;
 static int n_bundles;
 
+/* allocate and fill out a 'value' (type plus data pointer) that will
+   be inserted into a bundle's hash table */
+
 static bundle_value *bundle_value_new (GretlType type, void *ptr, int *err)
 {
     bundle_value *val = malloc(sizeof *val);
@@ -53,14 +56,13 @@ static bundle_value *bundle_value_new (GretlType type, void *ptr, int *err)
     if (val == NULL) {
 	*err = E_ALLOC;
     } else {
-	double *dp;
-
 	val->type = type;
 	switch (val->type) {
 	case GRETL_TYPE_DOUBLE:
 	    val->data = malloc(sizeof(double));
 	    if (val->data != NULL) {
-		dp = val->data;
+		double *dp = val->data;
+
 		*dp = *(double *) ptr;
 	    }
 	    break;
@@ -84,6 +86,8 @@ static bundle_value *bundle_value_new (GretlType type, void *ptr, int *err)
 
     return val;
 }
+
+/* callback invoked when a bundle's hash table is destroyed */
 
 static void bundle_value_destroy (gpointer data)
 {
@@ -138,14 +142,14 @@ static int reallocate_bundles (int n)
     }
 }
 
-static gretl_bundle *get_bundle_pointer (const char *s, int level)
+static gretl_bundle *get_bundle_pointer (const char *name, int level)
 {
     gretl_bundle *b;
     int i;
 
     for (i=0; i<n_bundles; i++) {
 	b = bundles[i];
-	if (b->level == level && !strcmp(s, b->name)) {
+	if (b->level == level && !strcmp(name, b->name)) {
 	    return b;
 	}
     }
@@ -153,16 +157,16 @@ static gretl_bundle *get_bundle_pointer (const char *s, int level)
     return NULL;
 }
 
-static int gretl_bundle_push (gretl_bundle *s)
+static int gretl_bundle_push (gretl_bundle *b)
 {
     int n = n_bundles + 1;
 
     if (reallocate_bundles(n)) {
-	free(s);
+	free(b);
 	return E_ALLOC;
     }
 
-    bundles[n-1] = s;
+    bundles[n-1] = b;
     set_n_bundles(n);
 
     return 0;
@@ -198,18 +202,26 @@ static int real_delete_bundle (int i)
     return err;
 }
 
+/* Determine whether @name is the name of a saved bundle. */
+
 int gretl_is_bundle (const char *name)
 {
-    int ret = 0;
-
     if (name == NULL || *name == '\0') {
 	return 0;
+    } else {
+	return (get_bundle_pointer(name, gretl_function_depth()) != NULL);
     }
-
-    ret = (get_bundle_pointer(name, gretl_function_depth()) != NULL);
-
-    return ret;
 }
+
+/**
+ * gretl_bundle_get_data:
+ * @name: name of bundle.
+ * @key: name of key to access.
+ * @type: location to receive data type.
+ *
+ * Returns: the data pointer associated with @key in the
+ * bundle given by @name, or NULL on failure.
+ */
 
 void *gretl_bundle_get_data (const char *name, const char *key,
 			     GretlType *type)
@@ -232,6 +244,21 @@ void *gretl_bundle_get_data (const char *name, const char *key,
 
     return ret;
 }
+
+/**
+ * gretl_bundle_set_data:
+ * @name: name of bundle.
+ * @key: name of key to create or replace.
+ * @ptr: data pointer.
+ * @type: type of data.
+ * 
+ * Sets the data type and pointer to be associated with @key in 
+ * the bundle given by @name. If @key is already present in
+ * the bundle's hash table the original value is replaced
+ * and destroyed.
+ *
+ * Returns: 0 on success, error code on error.
+ */
 
 int gretl_bundle_set_data (const char *name, const char *key,
 			   void *ptr, GretlType type)
@@ -285,6 +312,11 @@ int gretl_bundle_add (const char *name)
     return gretl_bundle_push(b);
 }
 
+/* Called from gretl_func.c on return, to mark a given
+   bundle as a function return value; we do this by
+   setting the bundle's level to a special value.
+*/
+
 int gretl_bundle_mark_as_return (const char *name)
 {
     gretl_bundle *b;
@@ -316,6 +348,14 @@ static int get_bundle_index (gretl_bundle *b)
 
     return -1;
 }
+
+/* Called from geneval.c to operate on a bundle that
+   has been marked as a function return value (indentfied
+   by its special "level" value). We see if there's
+   already a bundle of the given name at caller level,
+   and either overwrite an existing bundle or adjust
+   the bundle's name and level.
+*/
 
 int gretl_bundle_name_return (const char *name)
 {
@@ -354,6 +394,17 @@ int gretl_bundle_name_return (const char *name)
 
     return 0;
 }
+
+/**
+ * gretl_bundle_delete:
+ * @name: name of bundle to delete.
+ * @prn: gretl printing struct.
+ *
+ * Deletes the named bundle, and prints a message to @prn if
+ * messages are turned on.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int gretl_bundle_delete (const char *name, PRN *prn)
 {

@@ -309,6 +309,8 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(d), title);
+    } else {
+	gtk_window_set_title(GTK_WINDOW(d), "gretl");
     }
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
