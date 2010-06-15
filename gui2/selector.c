@@ -993,14 +993,14 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     GtkCellRenderer *renderer; 
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
-    int flagcol = 0;
+    gboolean flagcol = FALSE;
     int width = 120;
     int height = -1;
     
     if (USE_RXLIST(sr->ci) && locus == SR_RVARS2) {
 	store = gtk_list_store_new(4, G_TYPE_INT, G_TYPE_INT, 
 				   G_TYPE_STRING, G_TYPE_STRING);
-	flagcol = 1;
+	flagcol = TRUE;
     } else {
 	store = gtk_list_store_new(3, G_TYPE_INT, G_TYPE_INT, G_TYPE_STRING);
     }
@@ -1785,11 +1785,6 @@ static void flag_popup_activated (GtkWidget *w, gpointer data)
     gtk_widget_destroy(w);
 }
 
-static void flag_popup_delete (GtkWidget *w, gpointer data)
-{
-    gtk_widget_destroy(GTK_WIDGET(data));
-}
-
 static void create_flag_item (GtkWidget *popup, int i, GtkWidget *view)
 {
     static char *flag_strs[] = {
@@ -1804,7 +1799,7 @@ static void create_flag_item (GtkWidget *popup, int i, GtkWidget *view)
 		     G_CALLBACK(flag_popup_activated),
 		     view);
     g_signal_connect(G_OBJECT(item), "destroy",
-		     G_CALLBACK(flag_popup_delete),
+		     G_CALLBACK(delete_widget),
 		     popup);
     gtk_widget_show(item);
     gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
@@ -1833,6 +1828,140 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
     return FALSE;
 }
 
+static int selection_get_row_info (GtkTreeModel *model,
+				   GtkTreeSelection *sel,
+				   int *r0, int *r1, int *rmin)
+{
+    GtkTreeIter iter;
+    int i, rmax = 0;
+
+    *r0 = 10000;
+    *r1 = -1;
+    *rmin = 0;
+
+    if (gtk_tree_model_get_iter_first(model, &iter)) {
+	gint id;
+
+	gtk_tree_model_get(model, &iter, 0, &id, -1);
+	if (id == 0) {
+	    /* don't shift const from position 0 */
+	    *rmin = 1;
+	}
+	for (i=0; ; i++) {
+	    if (gtk_tree_selection_iter_is_selected(sel, &iter)) {
+		if (i < *r0) {
+		    *r0 = i;
+		}
+		if (i > *r1) {
+		    *r1 = i;
+		}	    
+	    }
+	    if (!gtk_tree_model_iter_next(model, &iter)) {
+		break;
+	    }
+	}
+	rmax = i;
+    }
+
+    return rmax;
+}
+
+static void set_selection_from_list (GtkTreeView *view,
+				     GtkTreeModel *model,
+				     GtkTreeSelection *sel,
+				     const int *list)
+{
+    GtkTreeIter iter;
+    int id, nsel = 0;
+
+    gtk_tree_selection_unselect_all(sel);
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    while (gtk_tree_model_iter_next(model, &iter) && nsel < list[0]) {
+	gtk_tree_model_get(model, &iter, 0, &id, -1);
+	if (in_gretl_list(list, id)) {
+	    gtk_tree_selection_select_iter(sel, &iter);
+	    nsel++;
+	} 
+    }
+}
+
+static int swap_row_content (GtkTreeModel *model, GtkTreeIter *iter0,
+			     GtkTreeIter *iter1, int flags)
+{
+    GtkListStore *store = GTK_LIST_STORE(model);
+    gint id0, id1, l0, l1;
+    gchar *s0, *s1;
+
+    gtk_tree_model_get(model, iter0, 0, &id0, 1, &l0, 2, &s0, -1);
+    gtk_tree_model_get(model, iter1, 0, &id1, 1, &l1, 2, &s1, -1);
+    gtk_list_store_set(store, iter0, 0, id1, 1, l1, 2, s1, -1);
+    gtk_list_store_set(store, iter1, 0, id0, 1, l0, 2, s0, -1);
+
+    g_free(s0);
+    g_free(s1);
+
+    if (flags) {
+	gtk_tree_model_get(model, iter0, 3, &s0);
+	gtk_tree_model_get(model, iter1, 3, &s1);
+	gtk_list_store_set(store, iter0, 3, s1);
+	gtk_list_store_set(store, iter1, 3, s0);
+
+	g_free(s0);
+	g_free(s1);
+    }    
+
+    return id1;
+}
+
+static void move_selected_rows (GtkMenuItem *item, GtkTreeView *view)
+{
+    gint down = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(item), "down"));
+    GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
+    GtkTreeModel *model = gtk_tree_view_get_model(view);
+    GtkTreeIter iter0, iter1;
+    GtkTreePath *path;
+    gboolean flags = FALSE;
+    int id, *sellist = NULL;
+
+    if (gtk_tree_view_get_column(view, 3) != NULL) {
+	flags = TRUE;
+    }
+
+    if (down) {
+	tree_model_get_iter_last(model, &iter1);
+	while (tree_model_iter_prev(model, &iter1)) {
+	    if (gtk_tree_selection_iter_is_selected(sel, &iter1)) {
+		path = gtk_tree_model_get_path(model, &iter1);
+		gtk_tree_path_next(path);
+		gtk_tree_model_get_iter(model, &iter0, path);
+		id = swap_row_content(model, &iter0, &iter1, flags);
+		gretl_list_append_term(&sellist, id);
+		gtk_tree_path_free(path);
+	    }	    
+	}	
+    } else {
+	gtk_tree_model_get_iter_first(model, &iter1);
+	while (gtk_tree_model_iter_next(model, &iter1)) {
+	    if (gtk_tree_selection_iter_is_selected(sel, &iter1)) {
+		path = gtk_tree_model_get_path(model, &iter1);
+		gtk_tree_path_prev(path);
+		gtk_tree_model_get_iter(model, &iter0, path);
+		id = swap_row_content(model, &iter0, &iter1, flags);
+		gretl_list_append_term(&sellist, id);
+		gtk_tree_path_free(path);
+	    }
+	}
+    }
+    
+    if (sellist != NULL) {
+	set_selection_from_list(view, model, sel, sellist);    
+	free(sellist);
+    }
+
+    gtk_widget_destroy(GTK_WIDGET(item));
+}
+
 static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data)
 {
@@ -1840,17 +1969,60 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 
     mods = parent_get_pointer_mask(GTK_WIDGET(data));
 
-    /* FIXME below: does this do anything useful?  I think
-       it's dead code (AC, 2007-10-31). */
-
-    if (mods & GDK_BUTTON2_MASK) {
-	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(data), TRUE);
-    } else {
-	gtk_tree_view_set_reorderable(GTK_TREE_VIEW(data), FALSE);
-    }
-
     if (mods & GDK_BUTTON3_MASK) {
-	remove_from_right_callback(NULL, data);
+	GtkTreeView *view = GTK_TREE_VIEW(data);
+	GtkTreeModel *model = gtk_tree_view_get_model(view);
+	GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
+	int r0, r1, rmin, rmax;
+
+	rmax = selection_get_row_info(model, sel, &r0, &r1, &rmin);
+
+	if (r0 >= 0) {
+	    const char *lstrs[] = {
+		N_("Remove"),
+		N_("Move up"),
+		N_("Move down")
+	    };		
+	    GtkWidget *popup = gtk_menu_new();
+	    GtkWidget *item;
+	    int i;
+
+	    for (i=0; i<3; i++) {
+		if (i > 0 && rmin == 1 && r0 == 0) {
+		    /* const is selected: don't offer move */
+		    continue;
+		} else if (i == 1 && r0 <= rmin) {
+		    /* can't do move up */
+		    continue;
+		} else if (i == 2 && r1 >= rmax) {
+		    /* can't do move down */
+		    continue;
+		}
+
+		item = gtk_menu_item_new_with_label(_(lstrs[i]));
+
+		if (i == 0) {
+		    g_signal_connect(G_OBJECT(item), "activate",
+				     G_CALLBACK(remove_from_right_callback), 
+				     view);
+		} else {
+		    if (i == 2) {
+			g_object_set_data(G_OBJECT(item), "down", 
+					  GINT_TO_POINTER(1));
+		    }
+		    g_signal_connect(G_OBJECT(item), "activate",
+				     G_CALLBACK(move_selected_rows), view);
+		}
+
+		g_signal_connect(G_OBJECT(item), "destroy",
+				 G_CALLBACK(delete_widget), popup);
+		gtk_widget_show(item);
+		gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);	
+	    }
+	
+	    gtk_menu_popup(GTK_MENU(popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	}
 	return TRUE;
     } 
 

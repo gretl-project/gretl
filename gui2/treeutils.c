@@ -624,6 +624,20 @@ void tree_model_get_iter_last (GtkTreeModel *mod, GtkTreeIter *iter)
     }
 }
 
+gboolean tree_model_iter_prev (GtkTreeModel *mod, GtkTreeIter *iter)
+{
+    GtkTreePath *path;
+    gboolean s;
+
+    path = gtk_tree_model_get_path(mod, iter);
+    s = gtk_tree_path_prev(path);
+    if (s) {
+	gtk_tree_model_get_iter(mod, iter, path);
+    }
+    gtk_tree_path_free(path);
+    return s;
+}
+
 static void add_to_selection_count (GtkTreeModel *model, GtkTreePath *path,
 				    GtkTreeIter *iter, int *count)
 {

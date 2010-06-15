@@ -10,6 +10,8 @@ version 1.9.1, in progress
   calculator toolbar item by default
 - GUI: add mechanism for defining named lists, and for
   setting the main window selection from a chosen list
+- GUI model selection dialog: implement re-ordering of 
+  regressors via right-click
 
 05-02-2010 version 1.9.0
 - New command: "duration", for estimation of parametric

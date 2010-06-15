@@ -22,6 +22,8 @@ int tree_path_get_row_number (GtkTreePath *path);
 
 void tree_model_get_iter_last (GtkTreeModel *mod, GtkTreeIter *iter);
 
+gboolean tree_model_iter_prev (GtkTreeModel *mod, GtkTreeIter *iter);
+
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 			windata_t *win);
 
