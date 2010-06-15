@@ -1977,46 +1977,34 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 
 	rmax = selection_get_row_info(model, sel, &r0, &r1, &rmin);
 
-	if (r0 >= 0) {
-	    const char *lstrs[] = {
-		N_("Remove"),
-		N_("Move up"),
-		N_("Move down")
-	    };		
+	if (r0 >= 0 && !(rmin == 1 && r0 == 0)) {
+	    const gchar *icons[] = {
+		GTK_STOCK_GO_UP,
+		GTK_STOCK_GO_DOWN
+	    };
+	    GtkIconSize sz = GTK_ICON_SIZE_MENU;
 	    GtkWidget *popup = gtk_menu_new();
-	    GtkWidget *item;
+	    GtkWidget *item, *image;
 	    int i;
 
-	    for (i=0; i<3; i++) {
-		if (i > 0 && rmin == 1 && r0 == 0) {
-		    /* const is selected: don't offer move */
-		    continue;
-		} else if (i == 1 && r0 <= rmin) {
+	    for (i=0; i<2; i++) {
+		if (i == 0 && r0 <= rmin) {
 		    /* can't do move up */
 		    continue;
-		} else if (i == 2 && r1 >= rmax) {
+		} else if (i == 1 && r1 >= rmax) {
 		    /* can't do move down */
 		    continue;
 		}
-
-		item = gtk_menu_item_new_with_label(_(lstrs[i]));
-
-		if (i == 0) {
-		    g_signal_connect(G_OBJECT(item), "activate",
-				     G_CALLBACK(remove_from_right_callback), 
-				     view);
-		} else {
-		    if (i == 2) {
-			g_object_set_data(G_OBJECT(item), "down", 
-					  GINT_TO_POINTER(1));
-		    }
-		    g_signal_connect(G_OBJECT(item), "activate",
-				     G_CALLBACK(move_selected_rows), view);
-		}
-
+		item = gtk_menu_item_new();
+		image = gtk_image_new_from_stock(icons[i], sz);
+		g_object_set_data(G_OBJECT(item), "down", 
+				  GINT_TO_POINTER(i));
+		gtk_container_add(GTK_CONTAINER(item), image);
+		g_signal_connect(G_OBJECT(item), "activate",
+				 G_CALLBACK(move_selected_rows), view);
 		g_signal_connect(G_OBJECT(item), "destroy",
 				 G_CALLBACK(delete_widget), popup);
-		gtk_widget_show(item);
+		gtk_widget_show_all(item);
 		gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);	
 	    }
 	
