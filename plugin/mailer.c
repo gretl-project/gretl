@@ -35,8 +35,6 @@
 # include "gtk_compat.h"
 #endif
 
-extern int h_errno;
-
 #include "mpack/mpack.h"
 
 typedef enum {
