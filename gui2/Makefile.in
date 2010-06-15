@@ -74,7 +74,7 @@ ifeq ($(have_gnome),2.0)
   GNOMEDEF = -DDATADIR=\"$(gnome_prefix)/share\"
 endif
 
-LIBS = $(GTK_LIBS) $(GTKSOURCEVIEW_LIBS) ../lib/libgretl-1.0.la
+LIBS = $(GTKSOURCEVIEW_LIBS) $(GTK_LIBS) ../lib/libgretl-1.0.la
 GUI_CFLAGS = $(GTK_CFLAGS) $(GTKSOURCEVIEW_CFLAGS)
 
 ifeq ($(USE_NLS),yes)
