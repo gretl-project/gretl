@@ -1856,6 +1856,66 @@ int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo)
 }
 
 /**
+ * dataset_renumber_variable:
+ * @v_old: original ID number of variable.
+ * @v_new: new ID number.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ *
+ * Moves the variable that was originally at position @v_old
+ * in the datset to position @v_new, renumbering other 
+ * variables as required.
+ *
+ * Returns: 0 on success, error code on error;
+ */
+
+int dataset_renumber_variable (int v_old, int v_new, 
+			       double **Z, DATAINFO *pdinfo)
+{
+    double *x;
+    VARINFO *vinfo;
+    char vname[VNAMELEN];
+    int i;
+
+    if (v_old < 1 || v_old > pdinfo->v - 1 ||
+	v_new < 1 || v_new > pdinfo->v - 1) {
+	return E_DATA;
+    }
+
+    if (v_old == v_new) {
+	return 0;
+    }
+
+    x = Z[v_old];
+    vinfo = pdinfo->varinfo[v_old];
+    strcpy(vname, pdinfo->varname[v_old]);
+
+    if (v_new < v_old) {
+	/* moving up in ordering */
+	for (i=v_old; i>v_new; i--) {
+	    Z[i] = Z[i-1];
+	    strcpy(pdinfo->varname[i], pdinfo->varname[i-1]);
+	    pdinfo->varinfo[i] = pdinfo->varinfo[i-1];
+	}
+    } else {
+	/* moving down in ordering */
+	for (i=v_old; i<v_new-1; i++) {
+	    Z[i] = Z[i+1];
+	    strcpy(pdinfo->varname[i], pdinfo->varname[i+1]);
+	    pdinfo->varinfo[i] = pdinfo->varinfo[i+1];
+	}
+    }
+
+    Z[v_new] = x;
+    strcpy(pdinfo->varname[v_new], vname);
+    pdinfo->varinfo[v_new] = vinfo;
+
+    set_dataset_is_changed();
+
+    return 0;
+}
+
+/**
  * dataset_destroy_hidden_variables:
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.

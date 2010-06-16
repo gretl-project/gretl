@@ -36,6 +36,7 @@ enum {
     VSET_COMPACT,
     VSET_LINEWIDTH,
     VSET_DISCRETE,
+    VSET_IDNUM,
     VSET_MAX
 };
 
@@ -53,6 +54,7 @@ struct gui_varinfo_ {
     GtkWidget *compaction_menu;
     GtkWidget *line_spin;
     GtkWidget *discrete_check;
+    GtkWidget *id_spin;
     GtkWidget *apply;
     GtkWidget *up;
     GtkWidget *down;
@@ -91,6 +93,7 @@ static void gui_varinfo_init (gui_varinfo *vset, int v)
     vset->compaction_menu = NULL;
     vset->line_spin = NULL;
     vset->discrete_check = NULL;
+    vset->id_spin = NULL;
     vset->up = vset->down = NULL;
     vset->apply = NULL;
     varinfo_set_unchanged(vset);
@@ -287,15 +290,21 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     if (!err && vset->changed[VSET_DISCRETE]) {
 	ival = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vset->discrete_check));
 	set_var_discrete(datainfo, v, ival);
-    }   
+    }  
+
+    if (!err && vset->changed[VSET_IDNUM]) {
+	ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vset->id_spin));
+    }
 
     if (!err) {
-	if (vset->changed[VSET_LABEL] ||
-	    vset->changed[VSET_DISPLAY]) {
+	if (vset->changed[VSET_LABEL] || vset->changed[VSET_DISPLAY]) {
 	    record_varlabel_change(v);
 	}
-	if (vset->changed[VSET_VARNAME] ||
-	    vset->changed[VSET_LABEL]) {
+	if (vset->changed[VSET_IDNUM]) {
+	    ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vset->id_spin));
+	    dataset_renumber_variable(v, ival, Z, datainfo);
+	    populate_varlist();
+	} else if (vset->changed[VSET_VARNAME] || vset->changed[VSET_LABEL]) {
 	    show_varinfo_changes(v);
 	}
 	if (check_dataset_is_changed()) {
@@ -466,6 +475,10 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
     gtk_widget_set_sensitive(vset->name_entry, !is_parent);
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), !is_parent);
 
+    if (vset->id_spin != NULL) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->id_spin), v);
+    }
+
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
 		       VARLABEL(datainfo, v));
 
@@ -598,6 +611,13 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
     g_free(newstr);
 }
 
+static void varinfo_id_changed (GtkSpinButton *b, gui_varinfo *vset)
+{
+    int id = gtk_spin_button_get_value_as_int(b);
+    
+    varinfo_set_field_changed(vset, VSET_IDNUM, id != vset->varnum);
+}
+
 static void nset_text_changed (GtkEditable *e, name_setter *nset)
 {
     GtkWidget *w = GTK_WIDGET(e);
@@ -713,7 +733,7 @@ void varinfo_dialog (int varnum)
 
     /* name of variable */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new (_("Name of variable:"));
+    tmp = gtk_label_new(_("Name of variable:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
@@ -740,6 +760,26 @@ void varinfo_dialog (int varnum)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(vset->dlg));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
+
+    if (0) { /* not yet */
+	/* change variable's ID number? */
+	int m = max_untouchable_series_ID() + 1;
+	int n = datainfo->v - 1;
+
+	if (varnum >= m && varnum < n) {
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    tmp = gtk_label_new(_("ID number:"));
+	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	    tmp = gtk_spin_button_new_with_range(m, n, 1);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), varnum);
+	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	    gtk_widget_show_all(hbox);
+	    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	    g_signal_connect(G_OBJECT(tmp), "value-changed", 
+			     G_CALLBACK(varinfo_id_changed), vset);
+	    vset->id_spin = tmp;
+	}
+    }
     
     /* descriptive string, or genr formula */
     hbox = gtk_hbox_new(FALSE, 5);
