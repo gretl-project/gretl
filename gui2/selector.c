@@ -1982,9 +1982,8 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 		GTK_STOCK_GO_UP,
 		GTK_STOCK_GO_DOWN
 	    };
-	    GtkIconSize sz = GTK_ICON_SIZE_MENU;
 	    GtkWidget *popup = gtk_menu_new();
-	    GtkWidget *item, *image;
+	    GtkWidget *item;
 	    int i;
 
 	    for (i=0; i<2; i++) {
@@ -1995,11 +1994,9 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 		    /* can't do move down */
 		    continue;
 		}
-		item = gtk_menu_item_new();
-		image = gtk_image_new_from_stock(icons[i], sz);
+		item = gtk_image_menu_item_new_from_stock(icons[i], NULL);
 		g_object_set_data(G_OBJECT(item), "down", 
 				  GINT_TO_POINTER(i));
-		gtk_container_add(GTK_CONTAINER(item), image);
 		g_signal_connect(G_OBJECT(item), "activate",
 				 G_CALLBACK(move_selected_rows), view);
 		g_signal_connect(G_OBJECT(item), "destroy",
