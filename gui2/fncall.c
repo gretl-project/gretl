@@ -508,7 +508,9 @@ int do_make_list (selector *sr)
     } else {
 	gpointer data = selector_get_data(sr);
 
+	gtk_widget_hide(selector_get_window(sr));
 	infobox(msg);
+
 	if (data != NULL) {
 	    GtkWidget *w = GTK_WIDGET(data);
 	    call_info *cinfo = g_object_get_data(G_OBJECT(w), "cinfo");
