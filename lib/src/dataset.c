@@ -1899,7 +1899,7 @@ int dataset_renumber_variable (int v_old, int v_new,
 	}
     } else {
 	/* moving down in ordering */
-	for (i=v_old; i<v_new-1; i++) {
+	for (i=v_old; i<v_new; i++) {
 	    Z[i] = Z[i+1];
 	    strcpy(pdinfo->varname[i], pdinfo->varname[i+1]);
 	    pdinfo->varinfo[i] = pdinfo->varinfo[i+1];

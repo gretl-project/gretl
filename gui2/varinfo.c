@@ -292,10 +292,6 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	set_var_discrete(datainfo, v, ival);
     }  
 
-    if (!err && vset->changed[VSET_IDNUM]) {
-	ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vset->id_spin));
-    }
-
     if (!err) {
 	if (vset->changed[VSET_LABEL] || vset->changed[VSET_DISPLAY]) {
 	    record_varlabel_change(v);
@@ -304,6 +300,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	    ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vset->id_spin));
 	    dataset_renumber_variable(v, ival, Z, datainfo);
 	    populate_varlist();
+	    vset->varnum = ival;
 	} else if (vset->changed[VSET_VARNAME] || vset->changed[VSET_LABEL]) {
 	    show_varinfo_changes(v);
 	}
@@ -761,12 +758,17 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
 
-    if (0) { /* not yet */
+    if (!complex_subsampled()) {
 	/* change variable's ID number? */
-	int m = max_untouchable_series_ID() + 1;
+	int m = max_untouchable_series_ID();
+	int m1 = max_varno_in_saved_lists();
 	int n = datainfo->v - 1;
 
-	if (varnum >= m && varnum < n) {
+	if (m1 > m) {
+	    m = m1;
+	}
+
+	if (varnum > m && varnum < n) {
 	    hbox = gtk_hbox_new(FALSE, 5);
 	    tmp = gtk_label_new(_("ID number:"));
 	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
