@@ -1910,6 +1910,13 @@ int dataset_renumber_variable (int v_old, int v_new,
     strcpy(pdinfo->varname[v_new], vname);
     pdinfo->varinfo[v_new] = vinfo;
 
+    if (complex_subsampled()) {
+	double ***fZ = fetch_full_Z();
+	DATAINFO *fdinfo = fetch_full_datainfo();
+
+	dataset_renumber_variable(v_old, v_new, *fZ, fdinfo);
+    }
+
     set_dataset_is_changed();
 
     return 0;

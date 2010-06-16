@@ -12,6 +12,9 @@ version 1.9.1, in progress
   setting the main window selection from a chosen list
 - GUI model selection dialog: implement re-ordering of 
   regressors via right-click
+- GUI, right-click popup in main window: on selecting the
+  correlation matrix option, give the user a chance to 
+  insist on a uniform sample for the correlations
 
 05-02-2010 version 1.9.0
 - New command: "duration", for estimation of parametric

@@ -360,7 +360,13 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
 	ci = CORR;
     }
 
-    if (ci != 0) {
+    if (ci == CORR) {
+	gchar *title;
+
+	title = g_strdup_printf("gretl: %s", gretl_command_word(ci));
+	simple_selection(title, menu_op_wrapper, ci, NULL);
+	g_free(title);
+    } else if (ci != 0) {
 	char *buf = main_window_selection_as_string();
 	
 	do_menu_op(ci, buf, OPT_NONE);

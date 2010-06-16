@@ -816,7 +816,7 @@ static void do_qq_xyplot (const char *buf, gretlopt opt)
     }     
 }
 
-static int menu_op_wrapper (selector *sr)
+int menu_op_wrapper (selector *sr)
 {
     const char *buf = selector_list(sr);
     int ci = selector_code(sr);

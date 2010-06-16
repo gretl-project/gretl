@@ -307,6 +307,8 @@ int check_and_record_command (void);
 
 /* other */
 
+int menu_op_wrapper (selector *sr);
+
 int max_untouchable_series_ID (void);
 
 int latex_compile (char *texshort);

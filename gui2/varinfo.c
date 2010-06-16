@@ -758,7 +758,7 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
 
-    if (!complex_subsampled()) {
+    if (1) {
 	/* change variable's ID number? */
 	int m = max_untouchable_series_ID();
 	int m1 = max_varno_in_saved_lists();
