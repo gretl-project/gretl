@@ -5,7 +5,6 @@ version 1.9.1, in progress
   are all zero
 - logit/probit: correct ordering of estimates when the
   constant is not first in the supplied list of regressors
-- Remove the old genpois function
 - OS X: use the native Mac calculator app for gretl's
   calculator toolbar item by default
 - GUI: add mechanism for defining named lists, and for
@@ -15,6 +14,7 @@ version 1.9.1, in progress
 - GUI, right-click popup in main window: on selecting the
   correlation matrix option, give the user a chance to 
   insist on a uniform sample for the correlations
+- Remove the old genpois function
 
 05-02-2010 version 1.9.0
 - New command: "duration", for estimation of parametric
