@@ -396,6 +396,65 @@ int gretl_bundle_name_return (const char *name)
 }
 
 /**
+ * gretl_bundle_localize:
+ * @origname: name of bundle at caller level.
+ * @localname: name to be used within function.
+ *
+ * On entry to a function, renames the named bundle (provided 
+ * as an argument) and sets its level so that is is accessible
+ * within the function.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_bundle_localize (const char *origname,
+			   const char *localname)
+{
+    gretl_bundle *b;
+    int err = 0;
+
+    b = get_bundle_pointer(origname, gretl_function_depth());
+
+    if (b == NULL) {
+	err = E_DATA;
+    } else {
+	strcpy(b->name, localname);
+	b->level += 1;
+    }
+
+    return err;
+}
+
+/**
+ * gretl_bundle_unlocalize:
+ * @localname: name of bundle within function.
+ * @origname: name used at caller level.
+ *
+ * On exit from a function, restores the original name and
+ * level of a bundle which has been made available as an argument. 
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_bundle_unlocalize (const char *localname,
+			     const char *origname)
+{
+    gretl_bundle *b;
+    int err = 0;
+
+    b = get_bundle_pointer(localname, gretl_function_depth());
+
+    if (b == NULL) {
+	err = E_DATA;
+    } else {
+	strcpy(b->name, origname);
+	b->level -= 1;
+    }
+
+    return err;
+}
+
+/**
  * gretl_bundle_delete:
  * @name: name of bundle to delete.
  * @prn: gretl printing struct.

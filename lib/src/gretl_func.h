@@ -36,6 +36,14 @@ typedef enum {
 
 #define FN_NAMELEN 32
 
+#define ok_function_return_type(r) (r == GRETL_TYPE_DOUBLE || \
+				    r == GRETL_TYPE_SERIES || \
+				    r == GRETL_TYPE_MATRIX || \
+				    r == GRETL_TYPE_LIST ||   \
+				    r == GRETL_TYPE_STRING || \
+				    r == GRETL_TYPE_BUNDLE || \
+				    r == GRETL_TYPE_VOID)
+
 typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
 typedef struct fnargs_ fnargs;

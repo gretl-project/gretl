@@ -108,6 +108,7 @@ typedef enum {
     GRETL_TYPE_USERIES,
     GRETL_TYPE_DATE,
     GRETL_TYPE_BUNDLE,
+    GRETL_TYPE_BUNDLE_REF,
     GRETL_TYPE_VOID
 } GretlType;
 
@@ -117,7 +118,8 @@ typedef enum {
 
 #define gretl_ref_type(t) (t == GRETL_TYPE_SCALAR_REF || \
 			   t == GRETL_TYPE_SERIES_REF || \
-			   t == GRETL_TYPE_MATRIX_REF)
+			   t == GRETL_TYPE_MATRIX_REF || \
+			   t == GRETL_TYPE_BUNDLE_REF)
 
 enum ts_codes {
     CROSS_SECTION,

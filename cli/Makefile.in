@@ -56,7 +56,7 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(READLINE_CFLAGS) $(DEFS)
 
-CLI = gretlcli
+CLI = gretlcli$(EXEEXT)
 LIBTOOL = ../libtool
 
 %.o: %.c

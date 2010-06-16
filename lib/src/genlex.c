@@ -343,8 +343,8 @@ struct str_table funcs[] = {
     { F_KDENSITY, "kdensity" },
     { F_MONTHLEN, "monthlen" },
     { F_EPOCHDAY, "epochday" },
-    { F_HASHGET,  "bundle_get" },
-    { F_HASHSET,  "bundle_set" },
+    { F_HASHGET,  "bundleget" },
+    { F_HASHSET,  "bundleset" },
     { 0,          NULL }
 };
 

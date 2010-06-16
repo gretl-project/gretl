@@ -114,6 +114,20 @@ struct fnpkg_ {
     int n_priv;       /* number of private functions */
 };
 
+/* acceptable types for parameters of user-defined functions */
+
+#define ok_function_arg_type(t) (t == GRETL_TYPE_BOOL ||	\
+				 t == GRETL_TYPE_INT ||		\
+				 t == GRETL_TYPE_DOUBLE ||	\
+				 t == GRETL_TYPE_SERIES ||	\
+				 t == GRETL_TYPE_LIST ||	\
+				 t == GRETL_TYPE_MATRIX ||	\
+				 t == GRETL_TYPE_STRING ||	\
+				 t == GRETL_TYPE_SCALAR_REF ||	\
+				 t == GRETL_TYPE_SERIES_REF ||	\
+				 t == GRETL_TYPE_MATRIX_REF ||	\
+				 t == GRETL_TYPE_BUNDLE_REF)
+
 enum {
     ARG_OPTIONAL = 1 << 0,
     ARG_CONST    = 1 << 1
@@ -222,6 +236,8 @@ struct fnarg *fn_arg_new (int type, void *p, int *err)
 	       arg->val.idnum = * (int *) p;
     } else if (type == GRETL_TYPE_MATRIX_REF) {
 	arg->val.um = (user_matrix *) p;
+    } else if (type == GRETL_TYPE_BUNDLE_REF) {
+	arg->val.str = (char *) p;
     } else {
 	*err = E_TYPES;
 	free(arg);
@@ -966,6 +982,7 @@ static const char *arg_type_string (int t)
     case GRETL_TYPE_SCALAR_REF: return "scalar *";
     case GRETL_TYPE_SERIES_REF: return "series *";
     case GRETL_TYPE_MATRIX_REF: return "matrix *";
+    case GRETL_TYPE_BUNDLE_REF: return "bundle *";
     case GRETL_TYPE_STRING:     return "string";
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
@@ -1002,24 +1019,10 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "scalar *"))  return GRETL_TYPE_SCALAR_REF;
     if (!strcmp(s, "series *"))  return GRETL_TYPE_SERIES_REF;
     if (!strcmp(s, "matrix *"))  return GRETL_TYPE_MATRIX_REF;
-
-    if (!strcmp(s, "scalarref"))  return GRETL_TYPE_SCALAR_REF;
-    if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
-    if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
+    if (!strcmp(s, "bundle *"))  return GRETL_TYPE_BUNDLE_REF;
 
     return 0;
 }
-
-/* the subset of gretl types that are acceptable as
-   function return values */
-
-#define ok_return_type(r) (r == GRETL_TYPE_DOUBLE || \
-	                   r == GRETL_TYPE_SERIES || \
-	                   r == GRETL_TYPE_MATRIX || \
-	                   r == GRETL_TYPE_LIST || \
-                           r == GRETL_TYPE_STRING || \
-	                   r == GRETL_TYPE_BUNDLE || \
-                           r == GRETL_TYPE_VOID)
 
 static int return_type_from_string (const char *s)
 {
@@ -1032,7 +1035,7 @@ static int return_type_from_string (const char *s)
 	t = arg_type_from_string(s);
     }
 
-    return (ok_return_type(t))? t : 0;
+    return (ok_function_return_type(t))? t : 0;
 }
 
 /* backward compatibility for nasty old numeric type references */
@@ -3428,7 +3431,10 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    if (type == 0) {
 		gretl_errmsg_sprintf("Unrecognized data type '%s'", tstr);
 		err = E_PARSE;
-	    }
+	    } else if (!ok_function_arg_type(type)) {
+		gretl_errmsg_sprintf("%s: invalid parameter type", tstr);
+		err = E_INVARG;
+	    }		
 	} 
     }
 
@@ -3559,7 +3565,7 @@ static int parse_fn_definition (char *fname,
 	t = return_type_from_string(typeword);
 
 	if (t > 0) {
-	    if (!ok_return_type(t)) {
+	    if (!ok_function_return_type(t)) {
 		gretl_errmsg_set("Invalid return type for function");
 		return E_TYPES;
 	    } else {		
@@ -3988,7 +3994,7 @@ static int extract_funcname (char *name, const char *s)
     if (type == 0) {
 	/* old-style */
 	strcpy(name, word);
-    } else if (!ok_return_type(type)) {
+    } else if (!ok_function_return_type(type)) {
 	err = E_DATA;
     } else {
 	s += n;
@@ -4254,8 +4260,20 @@ static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
     return 0;
 }
 
+static int localize_bundle_ref (struct fnarg *arg, fn_param *fp)
+{
+    arg->upname = gretl_strdup(arg->val.str);
+    if (arg->upname == NULL) {
+	return E_ALLOC;
+    }
+
+    gretl_bundle_localize(arg->upname, fp->name);
+
+    return 0;
+}
+
 static int localize_scalar_ref (fncall *call, struct fnarg *arg, 
-				fn_param *fp, DATAINFO *pdinfo)
+				fn_param *fp)
 {
     int i = arg->val.idnum;
     const char *s = gretl_scalar_get_name(i);
@@ -4394,7 +4412,7 @@ static int allocate_function_args (fncall *call,
 	    }
 	} else if (fp->type == GRETL_TYPE_SCALAR_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_scalar_ref(call, arg, fp, pdinfo);
+		err = localize_scalar_ref(call, arg, fp);
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -4404,7 +4422,11 @@ static int allocate_function_args (fncall *call,
 	    if (arg->type != GRETL_TYPE_NONE) {
 		err = localize_matrix_ref(arg, fp);
 	    }
-	}
+	} else if (fp->type == GRETL_TYPE_BUNDLE_REF) {
+	    if (arg->type != GRETL_TYPE_NONE) {
+		err = localize_bundle_ref(arg, fp);
+	    }
+	}	    
 
 	if (!err) {
 	    if (arg->type == GRETL_TYPE_USERIES && fp->type != GRETL_TYPE_LIST) {
@@ -4811,6 +4833,8 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 
 		user_matrix_adjust_level(u, -1);
 		user_matrix_set_name(u, arg->upname);
+	    } else if (arg->type == GRETL_TYPE_BUNDLE_REF) {
+		gretl_bundle_unlocalize(fp->name, arg->upname);
 	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX && arg->upname != NULL) {
 	    user_matrix *u = get_user_matrix_by_data(arg->val.m);

@@ -119,7 +119,7 @@ override LIBS += $(GDK_PIXBUF_LIBS)
 
 SHELL = /bin/sh
 LIBTOOL = ../libtool
-PROG  = gretl_x11
+PROG  = gretl_x11$(EXEEXT)
 
 vpath %.c $(topsrc)/gui2
 vpath %.h $(topsrc)/gui2

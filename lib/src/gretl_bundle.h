@@ -33,6 +33,12 @@ int gretl_bundle_mark_as_return (const char *name);
 
 int gretl_bundle_name_return (const char *name);
 
+int gretl_bundle_localize (const char *origname,
+			   const char *localname);
+
+int gretl_bundle_unlocalize (const char *localname,
+			     const char *origname);
+
 int destroy_user_bundles_at_level (int level);
 
 void destroy_user_bundles (void);

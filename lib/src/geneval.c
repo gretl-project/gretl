@@ -4710,9 +4710,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* check that the function returns something suitable, if required */
     if (!simple_ufun_call(p)) {
 	rtype = user_func_get_return_type(uf);
-	if (rtype != GRETL_TYPE_DOUBLE && rtype != GRETL_TYPE_SERIES &&
-	    rtype != GRETL_TYPE_MATRIX && rtype != GRETL_TYPE_LIST &&
-	    rtype != GRETL_TYPE_STRING && rtype != GRETL_TYPE_BUNDLE) {
+	if (!ok_function_return_type(rtype) || rtype == GRETL_TYPE_VOID) {
 	    fprintf(stderr, "eval_ufunc: %s: invalid return type %d\n", 
 		    funname, rtype);
 	    p->err = E_TYPES;
@@ -4754,7 +4752,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    if (n == NULL) {
 		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
 	    } else if (!ok_ufunc_sym(n->t)) {
-		fprintf(stderr, "%s: node type %d: not OK\n", funname, n->t);
+		gretl_errmsg_sprintf("%s: invalid argument type %s", funname, 
+				     typestr(n->t));
 		p->err = E_TYPES;
 	    }
 	}
@@ -4788,6 +4787,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		user_matrix *m = get_user_matrix_by_name(u->v.str);
 
 		p->err = push_fn_arg(args, GRETL_TYPE_MATRIX_REF, m);
+	    } else if (u->t == BUNDLE) {
+		p->err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, u->v.str);
 	    } else {
 		pputs(p->prn, _("Wrong type of operand for unary '&'"));
 		pputc(p->prn, '\n');
