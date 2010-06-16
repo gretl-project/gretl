@@ -1252,28 +1252,22 @@ static void set_listname (GtkComboBox *combo,
     g_free(active);
 }
 
-void select_list_dialog (int nl, char *listname, int *cancel)
+void select_list_dialog (char *listname, int *cancel)
 {
     GtkWidget *dlg;
     GtkWidget *combo;
     GtkWidget *hbox, *vbox, *tmp;
-    GList *llist = NULL;
-    const char *lname;
-    int i;
+    GList *llist;
 
     if (maybe_raise_dialog()) {
 	return;
     }
 
     dlg = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
-
-    for (i=0; i<nl; i++) {
-	lname = get_list_name_by_index(i);
-	if (i == 0) {
-	    strcpy(listname, lname);
-	}
-	llist = g_list_append(llist, (gpointer) lname);
-    }
+    
+    llist = get_list_of_listnames();
+    llist = g_list_first(llist);
+    strcpy(listname, (char *) llist->data);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 

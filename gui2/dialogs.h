@@ -64,7 +64,7 @@ int csv_options_dialog (gretlopt *optp);
 
 void rand_seed_dialog (void);
 
-void select_list_dialog (int nl, char *listname, int *cancel);
+void select_list_dialog (char *listname, int *cancel);
 
 void database_description_dialog (const char *binname);
 

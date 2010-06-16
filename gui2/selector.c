@@ -5771,7 +5771,8 @@ static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
 }
 
 static void 
-add_to_rvars1_from_named_list (selector *sr, const int *list)
+add_to_rvars1_from_named_list (selector *sr, const int *list,
+			       int clear)
 {
     GtkTreeModel *mod;
     GtkTreeIter iter;
@@ -5783,6 +5784,11 @@ add_to_rvars1_from_named_list (selector *sr, const int *list)
     }
 
     gtk_tree_model_get_iter_first(mod, &iter);
+
+    if (clear) {
+	gtk_list_store_clear(GTK_LIST_STORE(mod));
+    }
+
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
@@ -5800,6 +5806,8 @@ static void maybe_set_tsplot_vars (selector *sr)
     }
 }
 
+/* the following is called on start-up when defining a list */
+
 static void maybe_set_listdef_vars (selector *sr)
 {
     const char *lname = selector_entry_text(sr);
@@ -5808,7 +5816,7 @@ static void maybe_set_listdef_vars (selector *sr)
 	int *list = get_list_by_name(lname);
 
 	if (list != NULL) {
-	    add_to_rvars1_from_named_list(sr, list);
+	    add_to_rvars1_from_named_list(sr, list, 0);
 	}
     } else if (sr->data == NULL) {
 	/* called from main window */
@@ -5820,33 +5828,70 @@ static void maybe_set_listdef_vars (selector *sr)
     }
 }
 
+/* callback from change in combo selector, when defining or editing
+   a list */
+
+static void listdef_vars_callback (GtkComboBox *b, selector *sr)
+{
+    const char *lname = selector_entry_text(sr);
+
+    if (lname != NULL && *lname != '\0') {
+	int *list = get_list_by_name(lname);
+
+	if (list != NULL) {
+	    add_to_rvars1_from_named_list(sr, list, 1);
+	}
+    } 
+}
+
 static void selector_add_top_entry (selector *sr)
 {
     const char *lname = NULL;
     GtkWidget *src = NULL;
-    GtkWidget *hbox;
-    GtkWidget *label;
+    GList *lnames = NULL;
+    GtkWidget *combo = NULL;
+    GtkWidget *hbox, *label;
     GtkWidget *entry;
 
     if (sr->data != NULL) {
+	/* called from function call dialog */
 	src = GTK_WIDGET(sr->data);
 	lname = gtk_entry_get_text(GTK_ENTRY(src));
+    } else {
+	lnames = get_list_of_listnames();
     }
 
     hbox = gtk_hbox_new(FALSE, 0);
-    label = gtk_label_new(_("Name for list:"));
+    label = gtk_label_new(_("Name of list:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    entry = gtk_entry_new();
+
+    if (lnames != NULL) {
+	combo = gtk_combo_box_entry_new_text();
+	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), lnames);
+	entry = GTK_BIN(combo)->child;
+	g_signal_connect(G_OBJECT(combo), "changed",
+			 G_CALLBACK(listdef_vars_callback), sr);
+    } else {
+	entry = gtk_entry_new();
+    }
+
+    sr->extra[0] = entry;
+
     gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
-    if (lname != NULL && *lname != 0 && strcmp(lname, "null")) {
+
+    if (lname != NULL && *lname != '\0' && strcmp(lname, "null")) {
 	gtk_entry_set_text(GTK_ENTRY(entry), lname);
 	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
     }
-    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
-    sr->extra[0] = entry;
+    if (combo != NULL) {
+	gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    } else {
+	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+    }
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
     gtk_widget_show_all(hbox);
 }

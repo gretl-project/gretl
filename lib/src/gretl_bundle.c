@@ -26,7 +26,7 @@
 
 #include <glib.h>
 
-#define BDEBUG 1
+#define BDEBUG 0
 #define BUNDLE_RETVAL 999
 
 typedef struct gretl_bundle_ gretl_bundle;

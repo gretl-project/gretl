@@ -1872,7 +1872,6 @@ int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo)
 int dataset_renumber_variable (int v_old, int v_new, 
 			       double **Z, DATAINFO *pdinfo)
 {
-    double ***fZ = fetch_full_Z();
     double *x;
     VARINFO *vinfo;
     char vname[VNAMELEN];
@@ -1880,10 +1879,12 @@ int dataset_renumber_variable (int v_old, int v_new,
 
     if (v_old < 1 || v_old > pdinfo->v - 1 ||
 	v_new < 1 || v_new > pdinfo->v - 1) {
+	/* out of bounds */
 	return E_DATA;
     }
 
     if (v_old == v_new) {
+	/* no-op */
 	return 0;
     }
 
@@ -1910,13 +1911,6 @@ int dataset_renumber_variable (int v_old, int v_new,
     Z[v_new] = x;
     strcpy(pdinfo->varname[v_new], vname);
     pdinfo->varinfo[v_new] = vinfo;
-
-    if (*fZ != NULL && *fZ != Z) {
-	/* subsampled: sync the full dataset */
-	DATAINFO *fdinfo = fetch_full_datainfo();
-
-	dataset_renumber_variable(v_old, v_new, *fZ, fdinfo);
-    }
 
     set_dataset_is_changed();
 
