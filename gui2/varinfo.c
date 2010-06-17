@@ -766,7 +766,7 @@ void varinfo_dialog (int varnum)
 	    tmp = gtk_label_new(_(idstr));
 	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	    gtk_widget_show(tmp);
-	    tmp = gtk_spin_button_new_with_range(m, n, 1);
+	    tmp = gtk_spin_button_new_with_range(m+1, n, 1);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), varnum);
 	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 	    gtk_widget_show(tmp);
