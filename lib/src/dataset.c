@@ -1879,6 +1879,7 @@ int dataset_renumber_variable (int v_old, int v_new,
 
     if (complex_subsampled()) {
 	/* too tricky */
+	gretl_errmsg_set(_("dataset is subsampled"));
 	return E_DATA;
     }
 
@@ -3132,22 +3133,44 @@ int dataset_resample (int n, unsigned int seed,
     return err;
 }
 
-static int renumber_series_wrapper (const char *s, double **Z,
-				    DATAINFO *pdinfo, PRN *prn)
+/* note: @s should be a string containing a varname and new
+   number (it is originally obtained as the "param" string
+   from the dataset command); @fixmax is the greatest series 
+   ID number that cannot be changed (based on saved models, 
+   etc., as determined by the caller)
+*/
+
+int renumber_series_with_checks (const char *s, int fixmax,
+				 double **Z, DATAINFO *pdinfo, 
+				 PRN *prn)
 {
     char vname[VNAMELEN];
     int v_old, v_new;
     int n, err = 0;
-
+    
     n = sscanf(s, "%s %d", vname, &v_new);
-    if (n < 2) {
+    if (n != 2) {
 	err = E_PARSE;
     } else {
 	v_old = current_series_index(pdinfo, vname);
 	if (v_old < 0) {
 	    err = E_UNKVAR;
 	} else {
-	    err = dataset_renumber_variable(v_old, v_new, Z, pdinfo);
+	    int f1 = max_varno_in_saved_lists();
+
+	    if (f1 > fixmax) {
+		fixmax = f1;
+	    }
+
+	    if (v_old <= fixmax) {
+		gretl_errmsg_sprintf(_("Variable %s cannot be renumbered"), vname);
+		err = E_DATA;
+	    } else if (v_new <= fixmax) {
+		gretl_errmsg_sprintf(_("Target ID %d is not available"), v_new);
+		err = E_DATA;
+	    } else {		
+		err = dataset_renumber_variable(v_old, v_new, Z, pdinfo);
+	    }
 	}
     }
 
@@ -3191,7 +3214,7 @@ int modify_dataset (int op, const int *list, const char *s,
     printlist(list, "list");
 #endif
 
-    if (op == DS_CLEAR) {
+    if (op == DS_CLEAR || op == DS_RENUMBER) {
 	/* must be handled by the calling program */
 	return E_NOTIMP;
     }
@@ -3254,8 +3277,6 @@ int modify_dataset (int op, const int *list, const char *s,
 	    pprintf(prn, _("dataset restore: dataset is not resampled\n"));
 	    err = E_DATA;
 	}
-    } else if (op == DS_RENUMBER) {
-	err = renumber_series_wrapper(s, *pZ, pdinfo, prn);
     } else if (op == DS_DELETE) {
 	pprintf(prn, "dataset delete: not ready yet\n");
     } else if (op == DS_KEEP) {

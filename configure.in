@@ -383,7 +383,7 @@ if test x"${try_mpfr}" != xno ; then
 fi
 
 dnl
-dnl Check for LAPACK: Apple _will_ be different
+dnl Check for LAPACK
 dnl
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
@@ -393,14 +393,20 @@ case $host_os in
     darwin_build="yes"
     AC_DEFINE(OSX_BUILD)
   ;; 
+  *cygwin*) 
+    AM_PATH_LAPACK(, have_lapack="yes") 
+    if test "$have_lapack" = "yes" ; then
+      LAPACK_LIBS="${LAPACK_LIBS} -XCClinker,-lgfortran"
+    fi
+  ;;  
   *)
-   AM_PATH_LAPACK(, have_lapack="yes") 
-   if test "$have_lapack" = "yes" ; then
-     SAVE_LIBS=$LIBS
-     LIBS=$LAPACK_LIBS
-     AC_CHECK_LIB(lapack, dgejsv_, AC_DEFINE(HAVE_LAPACK_3_2))
-     LIBS=$SAVE_LIBS
-   fi
+    AM_PATH_LAPACK(, have_lapack="yes") 
+    if test "$have_lapack" = "yes" ; then
+      SAVE_LIBS=$LIBS
+      LIBS=$LAPACK_LIBS
+      AC_CHECK_LIB(lapack, dgejsv_, AC_DEFINE(HAVE_LAPACK_3_2))
+      LIBS=$SAVE_LIBS
+    fi
   ;;
 esac
 

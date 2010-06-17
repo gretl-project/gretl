@@ -7632,6 +7632,19 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     }
 }
 
+static int script_renumber_series (const char *s, double **Z, 
+				   DATAINFO *pdinfo, PRN *prn)
+{
+    int err, fixmax = max_untouchable_series_ID();
+
+    err = renumber_series_with_checks(s, fixmax, Z, pdinfo, prn);
+    if (err) {
+	errmsg(err, prn);
+    }
+
+    return err;
+}
+
 static int script_open_append (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo, PRN *prn)
 {
@@ -8025,8 +8038,11 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->aux == DS_CLEAR) {
 	    close_session(s, pZ, pdinfo, cmd->opt);
 	    break;
+	} else if (cmd->aux == DS_RENUMBER) {
+	    err = script_renumber_series(cmd->param, *pZ, pdinfo, prn);
+	    break;
 	}
-	/* else fall through intended */
+	/* else fall-through intended */
 
     default:
 	err = gretl_cmd_exec(s, pZ, pdinfo);

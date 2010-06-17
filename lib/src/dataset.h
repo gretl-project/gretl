@@ -372,6 +372,10 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo);
 int dataset_renumber_variable (int v_old, int v_new, 
 			       double **Z, DATAINFO *pdinfo);
 
+int renumber_series_with_checks (const char *s, int fixmax,
+				 double **Z, DATAINFO *pdinfo, 
+				 PRN *prn);
+
 int maybe_prune_dataset (double ***pZ, DATAINFO **ppdinfo, void *p);
 
 int dataset_stack_variables (const char *vname, const char *line,

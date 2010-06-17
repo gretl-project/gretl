@@ -635,6 +635,19 @@ static void cli_exec_callback (ExecState *s, void *ptr,
     /* otherwise, no-op */
 }
 
+static int cli_renumber_series (const char *s, double **Z, 
+				DATAINFO *pdinfo, PRN *prn)
+{
+    int err, fixmax = highest_numbered_var_in_saved_object(pdinfo);
+
+    err = renumber_series_with_checks(s, fixmax, Z, pdinfo, prn);
+    if (err) {
+	errmsg(err, prn);
+    }
+
+    return err;
+}
+
 static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 			    DATAINFO *pdinfo, MODEL **models,
 			    PRN *prn)
@@ -977,8 +990,11 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = cli_clear_data(cmd, pZ, pdinfo, models);
 	    pputs(prn, _("Dataset cleared\n"));
 	    break;
+	} else if (cmd->aux == DS_RENUMBER) {
+	    err = cli_renumber_series(cmd->param, *pZ, pdinfo, prn);
+	    break;
 	}
-	/* else fall through */
+	/* else fall-through intended */
 
     default:
 	err = gretl_cmd_exec(s, pZ, pdinfo);
