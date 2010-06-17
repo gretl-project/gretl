@@ -762,7 +762,7 @@ void varinfo_dialog (int varnum)
 	    m = m1;
 	}
 
-	if (varnum > m && varnum < n) {
+	if (varnum > m && varnum <= n) {
 	    tmp = gtk_label_new(_(idstr));
 	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	    gtk_widget_show(tmp);
