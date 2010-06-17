@@ -702,6 +702,7 @@ static void varinfo_add_toolbar (gui_varinfo *vset, GtkWidget *hbox)
 
 void varinfo_dialog (int varnum)
 {
+    const char *idstr = N_("ID number:");
     GtkWidget *tmp, *vbox, *hbox;
     gui_varinfo *vset;
     unsigned char flags;
@@ -730,7 +731,7 @@ void varinfo_dialog (int varnum)
 
     /* name of variable */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new(_("Name of variable:"));
+    tmp = gtk_label_new(_("Name:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
@@ -751,15 +752,8 @@ void varinfo_dialog (int varnum)
 	gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
     }
 
-    /* Apply, Up and Down buttons */
-    varinfo_add_toolbar(vset, hbox);
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(vset->dlg));
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox); 
-
-    if (!complex_subsampled()) {
-	/* change variable's ID number? */
+    if (!is_parent && !complex_subsampled()) {
+	/* allow changing variable's ID number? */
 	int m = max_untouchable_series_ID();
 	int m1 = max_varno_in_saved_lists();
 	int n = datainfo->v - 1;
@@ -769,20 +763,35 @@ void varinfo_dialog (int varnum)
 	}
 
 	if (varnum > m && varnum < n) {
-	    hbox = gtk_hbox_new(FALSE, 5);
-	    tmp = gtk_label_new(_("ID number:"));
+	    tmp = gtk_label_new(_(idstr));
 	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	    gtk_widget_show(tmp);
 	    tmp = gtk_spin_button_new_with_range(m, n, 1);
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), varnum);
-	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	    gtk_widget_show_all(hbox);
-	    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	    gtk_widget_show(tmp);
 	    g_signal_connect(G_OBJECT(tmp), "value-changed", 
 			     G_CALLBACK(varinfo_id_changed), vset);
 	    vset->id_spin = tmp;
 	}
     }
-    
+
+    if (vset->id_spin == NULL) {
+	gchar *s = g_strdup_printf("%s %d", _(idstr), varnum);
+
+	tmp = gtk_label_new(s);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
+	g_free(s);
+    }
+
+    /* Apply, Up and Down buttons */
+    varinfo_add_toolbar(vset, hbox);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(vset->dlg));
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox); 
+
     /* descriptive string, or genr formula */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_combo_box_new_text();
