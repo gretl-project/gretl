@@ -304,12 +304,9 @@ static void *get_plugin_handle (const char *plugin)
     char pluginpath[MAXLEN];
 
     strcpy(pluginpath, gretl_lib_path());
-
-#if defined(WIN32)
+#ifdef WIN32
     append_dir(pluginpath, "plugins");
-    strcat(pluginpath, plugin);
 #endif
-    
     strcat(pluginpath, plugin);
     strcat(pluginpath, PLUGIN_EXT);
 
