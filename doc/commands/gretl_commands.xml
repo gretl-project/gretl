@@ -1893,19 +1893,22 @@
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
+	<example>dataset renumber x 4</example>
 	<example>dataset clear</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Performs various operations on the data set as a whole, depending on
-	the given <repl>keyword</repl>, which must be <lit>addobs</lit>,
-	<lit>clear</lit>, <lit>compact</lit>, <lit>expand</lit>,
-	<lit>transpose</lit>, <lit>sortby</lit>, <lit>dsortby</lit> or
-	<lit>resample</lit>. Note: with the exception of <lit>clear</lit>,
-	these actions are not available when the dataset is currently
-	subsampled by selection of cases on some Boolean criterion.
+	Performs various operations on the data set as a whole,
+	depending on the given <repl>keyword</repl>, which must be
+	<lit>addobs</lit>, <lit>clear</lit>, <lit>compact</lit>,
+	<lit>expand</lit>, <lit>transpose</lit>, <lit>sortby</lit>,
+	<lit>dsortby</lit>, <lit>resample</lit> or
+	<lit>renumber</lit>. Note: with the exception of
+	<lit>clear</lit>, these actions are not available when the
+	dataset is currently subsampled by selection of cases on some
+	Boolean criterion.
       </para>
       <para>
 	<lit>addobs</lit>: Must be followed by a positive integer.  Adds
@@ -1973,7 +1976,14 @@
 	original dataset can be retrieved via the command
 	<lit>smpl full</lit>.  
       </para>
-
+      <para>
+	<lit>renumber</lit>: Requires the name of an existing series
+	followed by an integer between 1 and the number of series in the
+	dataset minus one. Moves the specified series to the specified
+	position in the dataset, renumbering the other series
+	accordingly. (Position 0 is occupied by the constant, which
+	cannot be moved.)
+      </para>
     </description>
 
     <gui-access>

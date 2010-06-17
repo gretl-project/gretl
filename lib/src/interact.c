@@ -2395,7 +2395,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* dataset-modifying commands */
     if (cmd->ci == DATAMOD) {
 	capture_param(line, cmd);
-	if (cmd->aux != DS_SORTBY && cmd->aux != DS_DSORTBY) {
+	if (cmd->aux != DS_SORTBY && 
+	    cmd->aux != DS_DSORTBY) {
 	    cmd_set_nolist(cmd);
 	    return cmd->err;
 	}
@@ -2520,8 +2521,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    linelen = strlen(line);
 	} 
     } else if (cmd->ci == DATAMOD) {
-	/* at this point, must be doing a dataset sort, so we
-	   want a list of variables to sort by */
+	/* at this point, must be doing a dataset operation that
+	   requires a list argument (e.g. sorting) */
 	char *s = line + pos;
 
 	s += strspn(s, " ");
@@ -4481,7 +4482,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = modify_dataset(cmd->aux, cmd->list, cmd->param, pZ, 
 			     pdinfo, prn);
 	if (!err) { 
-	    print_smpl(pdinfo, get_full_length_n(), prn);
 	    schedule_callback(s);
 	} 
 	break;

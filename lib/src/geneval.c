@@ -4707,8 +4707,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	return NULL;
     }
 
-    /* check that the function returns something suitable, if required */
     if (!simple_ufun_call(p)) {
+	/* check that the function returns something suitable */
 	rtype = user_func_get_return_type(uf);
 	if (!ok_function_return_type(rtype) || rtype == GRETL_TYPE_VOID) {
 	    fprintf(stderr, "eval_ufunc: %s: invalid return type %d\n", 
@@ -4716,6 +4716,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	    return NULL;
 	}
+    } else if (user_func_get_return_type(uf) == GRETL_TYPE_BUNDLE) {
+	/* makes no sense to discard bundle return */
+	pprintf(p->prn, "Error: cannot discard returned bundle\n");
+	p->err = E_DATA;
+	return NULL;
     }
 
     /* check the argument count */

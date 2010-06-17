@@ -1,6 +1,8 @@
 version 1.9.1, in progress
 - New command: "makepkg", for command-line creation of gretl
   function packages (.gfn files)
+- "dataset" command: add new sub-command, "renumber", for
+  moving a series to a new position
 - wls: amend the criterion for complaining that the weights
   are all zero
 - logit/probit: correct ordering of estimates when the
@@ -9,6 +11,8 @@ version 1.9.1, in progress
   calculator toolbar item by default
 - GUI: add mechanism for defining named lists, and for
   setting the main window selection from a chosen list
+- GUI: "Edit attributes" (of series) dialog: add option
+  to change the position of a series in the dataset
 - GUI model selection dialog: implement re-ordering of 
   regressors via right-click
 - GUI, right-click popup in main window: on selecting the

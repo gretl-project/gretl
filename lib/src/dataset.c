@@ -1877,6 +1877,11 @@ int dataset_renumber_variable (int v_old, int v_new,
     char vname[VNAMELEN];
     int i;
 
+    if (complex_subsampled()) {
+	/* too tricky */
+	return E_DATA;
+    }
+
     if (v_old < 1 || v_old > pdinfo->v - 1 ||
 	v_new < 1 || v_new > pdinfo->v - 1) {
 	/* out of bounds */
@@ -2924,6 +2929,8 @@ int dataset_op_from_string (const char *s)
 	op = DS_RESTORE;
     } else if (!strcmp(s, "clear")) {
 	op = DS_CLEAR;
+    } else if (!strcmp(s, "renumber")) {
+	op = DS_RENUMBER;
     }
 
     return op;
@@ -3125,6 +3132,34 @@ int dataset_resample (int n, unsigned int seed,
     return err;
 }
 
+static int renumber_series_wrapper (const char *s, double **Z,
+				    DATAINFO *pdinfo, PRN *prn)
+{
+    char vname[VNAMELEN];
+    int v_old, v_new;
+    int n, err = 0;
+
+    n = sscanf(s, "%s %d", vname, &v_new);
+    if (n < 2) {
+	err = E_PARSE;
+    } else {
+	v_old = current_series_index(pdinfo, vname);
+	if (v_old < 0) {
+	    err = E_UNKVAR;
+	} else {
+	    err = dataset_renumber_variable(v_old, v_new, Z, pdinfo);
+	}
+    }
+
+    if (!err && gretl_messages_on()) {
+	pprintf(prn, _("Renumbered %s as variable %d\n"),
+		vname, v_new);
+	maybe_list_vars(pdinfo, prn);
+    }
+
+    return err;
+}
+
 /* alternate forms:
 
            op         list   s
@@ -3135,7 +3170,8 @@ int dataset_resample (int n, unsigned int seed,
    dataset transpose
    dataset sortby     x1
    dataset resample          500
-   dataset clear   
+   dataset clear 
+   dataset renumber   orig   2  
 
 */
 
@@ -3218,6 +3254,8 @@ int modify_dataset (int op, const int *list, const char *s,
 	    pprintf(prn, _("dataset restore: dataset is not resampled\n"));
 	    err = E_DATA;
 	}
+    } else if (op == DS_RENUMBER) {
+	err = renumber_series_wrapper(s, *pZ, pdinfo, prn);
     } else if (op == DS_DELETE) {
 	pprintf(prn, "dataset delete: not ready yet\n");
     } else if (op == DS_KEEP) {
@@ -3225,6 +3263,10 @@ int modify_dataset (int op, const int *list, const char *s,
     } else {
 	err = E_PARSE;
     }
+
+    if (!err && op != DS_RENUMBER) {
+	print_smpl(pdinfo, get_full_length_n(), prn);
+    }  
 
     return err;
 }

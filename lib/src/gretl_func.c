@@ -4763,7 +4763,8 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
     int copy, i, err = 0;
 
 #if UDEBUG
-    fprintf(stderr, "function_assign_returns: rtype = %d\n", rtype);
+    fprintf(stderr, "function_assign_returns: rtype = %d, call->retname = %s\n", 
+	    rtype, call->retname);
 #endif
 
     if (*perr == 0) {
