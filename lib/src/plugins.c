@@ -293,20 +293,25 @@ void *gretl_dlsym (void *handle, const char *name)
 #endif
 }
 
+#if defined(WIN32) || defined(CYGWIN)
+# define PLUGIN_EXT ".dll"
+#else
+# define PLUGIN_EXT ".so"
+#endif
+
 static void *get_plugin_handle (const char *plugin)
 {
     char pluginpath[MAXLEN];
 
     strcpy(pluginpath, gretl_lib_path());
 
-#ifdef WIN32
+#if defined(WIN32)
     append_dir(pluginpath, "plugins");
     strcat(pluginpath, plugin);
-    strcat(pluginpath, ".dll");
-#else
+#endif
+    
     strcat(pluginpath, plugin);
-    strcat(pluginpath, ".so");
-#endif 
+    strcat(pluginpath, PLUGIN_EXT);
 
     return gretl_dlopen(pluginpath, 0);
 }
