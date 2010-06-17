@@ -3881,12 +3881,16 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 
 /**
  * quantreg:
- * @parm: 
+ * @parm: string specifying tau: numerical value, or the name
+ * of a scalar variable (in the range 0.01 to 0.99), or the
+ * name of a vector (gretl_matrix) that holds one or more values 
+ * of tau.
  * @list: model specification: dependent var and regressors.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
- * @opt:
- * @prn:
+ * @opt: may contain %OPT_R for robust standard errors, 
+ * %OPT_I to produce confidence intervals.
+ * @prn: gretl printing struct.
  *
  * Estimate the model given in @list using the method of 
  * quantile regression.

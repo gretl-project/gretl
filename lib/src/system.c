@@ -647,6 +647,7 @@ static int get_estimation_method_from_line (const char *s)
  * @line, if present.
  * @opt: may include %OPT_I for iterative estimation (will be
  * ignored if the the estimation method does not supports it).
+ * @err: location to receive error code.
  * 
  * Start compiling an equation system. Either @line must contain
  * an estimation method or the system must be given a name.

@@ -1683,7 +1683,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 
 /**
  * gretl_function_print_code:
- * @fun: pointer to user-function.
+ * @u: pointer to user-function.
  * @prn: printing struct.
  *
  * Prints out function @fun to @prn, script-style.
@@ -1691,24 +1691,24 @@ static void print_function_start (ufunc *fun, PRN *prn)
  * Returns: 0 on success, non-zero if @fun is %NULL.
  */
 
-int gretl_function_print_code (ufunc *fun, PRN *prn)
+int gretl_function_print_code (ufunc *u, PRN *prn)
 {
     int this_indent = 0;
     int next_indent = 0;
     int i, j;
 
-    if (fun == NULL) {
+    if (u == NULL) {
 	return E_DATA;
     }
    
-    print_function_start(fun, prn);
+    print_function_start(u, prn);
 
-    for (i=0; i<fun->n_lines; i++) {
-	adjust_indent(fun->lines[i], &this_indent, &next_indent);
+    for (i=0; i<u->n_lines; i++) {
+	adjust_indent(u->lines[i], &this_indent, &next_indent);
 	for (j=0; j<=this_indent; j++) {
 	    pputs(prn, "  ");
 	}
-	pputs(prn, fun->lines[i]);
+	pputs(prn, u->lines[i]);
 	pputc(prn, '\n');
     }
 

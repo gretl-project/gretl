@@ -500,6 +500,8 @@ void print_freq (const FreqDist *freq, PRN *prn)
 /**
  * print_xtab:
  * @tab: gretl cross-tabulation struct.
+ * @opt: may contain %OPT_R to print row percentages, %OPT_C
+ * to print column percentages, %OPT_Z to display zero entries.
  * @prn: gretl printing struct.
  *
  * Print crosstab to @prn.

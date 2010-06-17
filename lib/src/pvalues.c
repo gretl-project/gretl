@@ -1794,7 +1794,7 @@ double gretl_get_pvalue (char st, const double *parm, double x)
 /**
  * gretl_get_random_series:
  * @st: distribution code.
- * @parm: array holding either one or two scalar 
+ * @p: array holding either one or two scalar 
  * parameter values, depending on the distribution.
  * @serp1: series containing values for first param,
  * or %NULL.

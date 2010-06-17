@@ -113,7 +113,6 @@ DISPLAYNAME
 PARENT
 COMPACT_METHOD
 STACK_LEVEL
-SORTED_MARKER
 </SECTION>
 
 <SECTION>
@@ -360,6 +359,7 @@ NEEDS_QM
 NEEDS_PANEL
 NO_DATA_OK
 FN_NAMELEN
+ok_function_return_type
 ufunc
 fnpkg
 fnargs
@@ -398,6 +398,7 @@ function_package_set_properties
 function_package_get_properties
 function_package_get_name
 function_package_write_file
+create_and_write_function_package
 check_function_needs
 write_session_functions_file
 read_session_functions_file
@@ -514,7 +515,6 @@ dvarname
 mvarname
 dumname
 check_declarations
-maybe_pick_up_sorted_markers
 cross_sectional_stat
 x_sectional_weighted_stat
 gen_func_count
@@ -1059,6 +1059,7 @@ mp_ols
 panel_model
 ivreg
 arbond_model
+dpd_model
 hsk_func
 whites_test
 ar_func
@@ -1826,6 +1827,7 @@ gretl_matrix_right_nullspace
 gretl_matrix_left_nullspace
 gretl_matrix_row_concat
 gretl_matrix_col_concat
+gretl_matrix_direct_sum
 gretl_matrix_inplace_colcat
 gretl_matrix_cumcol
 gretl_matrix_diffcol
@@ -1854,6 +1856,7 @@ gretl_matrix_get_t1
 gretl_matrix_get_t2
 gretl_is_identity_matrix
 gretl_is_zero_matrix
+gretl_matrix_isfinite
 gretl_matrix_get_structure
 gretl_matrices_are_equal
 gretl_covariance_matrix
@@ -1986,6 +1989,7 @@ copy_named_list_as
 named_list_lower_level
 rename_saved_list
 create_named_null_list
+create_named_singleton_list
 delete_list_by_name
 destroy_saved_lists_at_level
 gretl_lists_revise
@@ -2206,6 +2210,8 @@ dataset_drop_listed_variables
 dataset_drop_variable
 dataset_destroy_hidden_variables
 dataset_drop_last_variables
+dataset_renumber_variable
+renumber_series_with_checks
 maybe_prune_dataset
 dataset_stack_variables
 dataset_sort_by
@@ -2383,6 +2389,7 @@ gretl_packed_matrix_print
 debug_print_matrix
 gretl_matrix_print_with_col_heads
 gretl_matrix_print_with_format
+gretl_matrix_cut_cols
 gretl_matrix_cut_rows
 gretl_matrix_cut_rows_cols
 gretl_matrix_zero_row_mask
@@ -2464,6 +2471,21 @@ VAR_wald_omit_tests
 VAR_coeff_matrix_from_VECM
 reorder_responses
 irf_bootstrap
+</SECTION>
+
+<SECTION>
+<FILE>gretl_bundle</FILE>
+gretl_is_bundle
+gretl_bundle_get_data
+gretl_bundle_set_data
+gretl_bundle_add
+gretl_bundle_delete
+gretl_bundle_mark_as_return
+gretl_bundle_name_return
+gretl_bundle_localize
+gretl_bundle_unlocalize
+destroy_user_bundles_at_level
+destroy_user_bundles
 </SECTION>
 
 <SECTION>

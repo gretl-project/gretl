@@ -3310,6 +3310,7 @@ static int kalman_simulate (kalman *K,
  * @V: artificial disturbance to state.
  * @W: artificial disturbance to observation.
  * @Sname: name of matrix to retrieve simulated state (or %NULL).
+ * @prn: gretl printing struct.
  * @err: location to receive error code.
  * 
  * If a user-defined Kalman filter is found, use it to 

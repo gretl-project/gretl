@@ -27,7 +27,7 @@ typedef double (*BHHH_FUNC) (double *,
 			     int *);
 
 int bhhh_max (double *theta, int k, 
-	      gretl_matrix *G,
+	      gretl_matrix *M,
 	      BHHH_FUNC callback, 
 	      double toler, 
 	      int *fncount,
