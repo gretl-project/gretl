@@ -17,33 +17,11 @@
  * 
  */
 
-/*
- * Modified by the GTK+ Team and others 1997-2000.  See the AUTHORS
- * file for a list of people on the GTK+ Team.  See the ChangeLog
- * files for a list of changes.  These files are distributed with
- * GTK+ at ftp://ftp.gtk.org/pub/gtk/. 
- */
-
 #ifndef OBS_BUTTON_H__
 #define OBS_BUTTON_H__
 
-#define GTK_TYPE_OBS_BUTTON            (obs_button_get_type())
+GtkWidget* obs_button_new (GtkAdjustment *adjustment, DATAINFO *pdinfo);
 
-#define OBS_BUTTON(obj)                (G_TYPE_CHECK_INSTANCE_CAST ((obj), GTK_TYPE_OBS_BUTTON, ObsButton))
-#define OBS_BUTTON_CLASS(klass)        (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_OBS_BUTTON, ObsButtonClass))
-#define GTK_IS_OBS_BUTTON(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GTK_TYPE_OBS_BUTTON))
-#define GTK_IS_OBS_BUTTON_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_OBS_BUTTON))
-#define OBS_BUTTON_GET_CLASS(obj)      (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_OBS_BUTTON, ObsButtonClass))
-
-#define GTK_INPUT_ERROR -1
-
-typedef struct _ObsButton ObsButton;
-typedef struct _ObsButtonClass ObsButtonClass;
-
-GType		obs_button_get_type	   (void) G_GNUC_CONST;
-GtkWidget*	obs_button_new		   (GtkAdjustment *adjustment, const DATAINFO *pdinfo);
-gdouble		obs_button_get_value       (ObsButton *obs_button);
-void		obs_button_set_value	   (ObsButton *obs_button, gdouble value);
-void            obs_button_update          (ObsButton *obs_button);
+int obs_button_get_value (GtkWidget *button);
 
 #endif /* OBS_BUTTON_H__ */

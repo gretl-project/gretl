@@ -39,8 +39,6 @@
 
 #include <errno.h>
 
-#define widget_get_int(w,s) GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), s))
-
 static int all_done;
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
@@ -1511,7 +1509,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	/* random subsample */
 	int subn;
 
-	subn = gtk_spin_button_get_value(GTK_SPIN_BUTTON(rset->startspin));
+	subn = obs_button_get_value(rset->startspin);
 	gretl_command_sprintf("smpl %d --random", subn);
 	if (check_and_record_command()) {
 	    return TRUE;
@@ -1522,17 +1520,17 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    gtk_widget_destroy(rset->dlg);
 	} 
     } else {
-	ObsButton *button;
+	GtkSpinButton *button;
 	char s1[OBSLEN], s2[OBSLEN];
 	int t1, t2;	
 
-	button = OBS_BUTTON(rset->startspin);
+	button = GTK_SPIN_BUTTON(rset->startspin);
 	strcpy(s1, gtk_entry_get_text(GTK_ENTRY(button)));
-	t1 = (int) obs_button_get_value(button);
+	t1 = gtk_spin_button_get_value_as_int(button);
 
-	button = OBS_BUTTON(rset->endspin);
+	button = GTK_SPIN_BUTTON(rset->endspin);
 	strcpy(s2, gtk_entry_get_text(GTK_ENTRY(button)));
-	t2 = (int) obs_button_get_value(button); 
+	t2 = gtk_spin_button_get_value_as_int(button); 
 
 	if (rset->opt & OPT_C) {
 	    /* creating a new dataset */
@@ -1575,19 +1573,19 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 static gboolean
 set_obs_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
-    ObsButton *button;
+    GtkSpinButton *button;
     const gchar *s;
 
     if (rset->startspin != NULL && rset->t1 != NULL) {
-	button = OBS_BUTTON(rset->startspin);
+	button = GTK_SPIN_BUTTON(rset->startspin);
 	s = gtk_entry_get_text(GTK_ENTRY(button));
-	*rset->t1 = (int) obs_button_get_value(button);
+	*rset->t1 = gtk_spin_button_get_value_as_int(button);
     }
 
     if (rset->endspin != NULL && rset->t2 != NULL) {
-	button = OBS_BUTTON(rset->endspin);
+	button = GTK_SPIN_BUTTON(rset->endspin);
 	s = gtk_entry_get_text(GTK_ENTRY(button));
-	*rset->t2 = (int) obs_button_get_value(button); 
+	*rset->t2 = gtk_spin_button_get_value_as_int(button); 
     }
 
     gtk_widget_destroy(rset->dlg);
@@ -1631,8 +1629,8 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	    g_free(vname);
 	}
     } else {
-	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
-	int t2 = (int) obs_button_get_value(OBS_BUTTON(rset->endspin));
+	int t1 = obs_button_get_value(rset->startspin);
+	int t2 = obs_button_get_value(rset->endspin);
 
 	n = t2 - t1 + 1;  
     }
@@ -2240,7 +2238,7 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv)
 static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
 {
     if (rset->p != NULL) {
-	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
+	int t1 = obs_button_get_value(rset->startspin);
 	GtkAdjustment *preadj = GTK_ADJUSTMENT(rset->p);
 
 	if (preadj->upper != t1) {
@@ -2256,7 +2254,7 @@ static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
 
 static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
 {
-    int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
+    int t1 = obs_button_get_value(rset->startspin);
     int i = widget_get_int(w, "action");
 
     if (rset->pmod == NULL) {
@@ -2267,8 +2265,8 @@ static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
 	int t1min = rset->pmod->t1 + rset->pmod->ncoeff;
 
 	if (t1 < t1min) {
-	    obs_button_set_value(OBS_BUTTON(rset->startspin), 
-				 (gdouble) t1min);
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rset->startspin), 
+				      (gdouble) t1min);
 	    g_object_set(rset->adj1, "lower", (gdouble) t1min, NULL);
 	}
     } else if (i == 2) {

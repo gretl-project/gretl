@@ -142,11 +142,6 @@ static void widget_set_int (GtkWidget *w, const gchar *key, gint val)
     g_object_set_data(G_OBJECT(w), key, GINT_TO_POINTER(val));
 }
 
-static int widget_get_int (GtkWidget *w, const char *key)
-{
-    return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), key));
-}
-
 /* graph color selection apparatus */
 
 #define XPMROWS 19

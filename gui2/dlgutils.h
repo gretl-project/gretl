@@ -38,6 +38,31 @@ struct combo_opts_ {
     const char **strs;
 };
 
+/* convenience abbreviations */
+
+#define button_is_active(b) gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b))
+#define widget_get_int(w,s) GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), s))
+
+/* remedial macros for old GTK installations */
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# define gtk_dialog_get_content_area(d) (d->vbox)
+# define gtk_dialog_get_action_area(d) (d->action_area)
+#endif
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
+# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
+# define gtk_widget_has_focus(w) GTK_WIDGET_HAS_FOCUS(w)
+#endif
+
+/* and a remedial function */
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+
+gchar *gtk_combo_box_get_active_text (GtkComboBox *box);
+
+#endif
+
 GtkWidget *get_active_edit_id (void);
 
 GtkWidget *get_active_edit_name (void);
@@ -143,22 +168,6 @@ void set_combo_box_default_text (GtkComboBox *box, const char *s);
 
 void depopulate_combo_box (GtkComboBox *box);
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-
-gchar *gtk_combo_box_get_active_text (GtkComboBox *box);
-
-#endif
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
-# define gtk_dialog_get_content_area(d) (d->vbox)
-# define gtk_dialog_get_action_area(d) (d->action_area)
-#endif
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
-# define gtk_widget_has_focus(w) GTK_WIDGET_HAS_FOCUS(w)
-#endif
-
 GdkModifierType widget_get_pointer_mask (GtkWidget *w);
 
 GdkModifierType parent_get_pointer_mask (GtkWidget *w);
@@ -169,7 +178,5 @@ gboolean widget_get_pointer_info (GtkWidget *w, gint *x, gint *y,
 void gretl_emulated_dialog_add_structure (GtkWidget *dlg,
 					  GtkWidget **pvbox,
 					  GtkWidget **pbbox);
-
-#define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
 
 #endif /* DLGUTILS_H */
