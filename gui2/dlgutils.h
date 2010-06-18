@@ -154,6 +154,11 @@ gchar *gtk_combo_box_get_active_text (GtkComboBox *box);
 # define gtk_dialog_get_action_area(d) (d->action_area)
 #endif
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
+# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
+# define gtk_widget_has_focus(w) GTK_WIDGET_HAS_FOCUS(w)
+#endif
+
 GdkModifierType widget_get_pointer_mask (GtkWidget *w);
 
 GdkModifierType parent_get_pointer_mask (GtkWidget *w);

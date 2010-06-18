@@ -3824,7 +3824,7 @@ static gboolean freq_info_set (GtkWidget *w, struct freqdist_info *f)
 
     /* update complementary fields */
 
-    if (snum == 0 && GTK_WIDGET_SENSITIVE(f->spin[0])) {
+    if (snum == 0 && gtk_widget_is_sensitive(f->spin[0])) {
 	*f->fwid = (f->xmax - f->xmin) / (*f->nbins - 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(f->spin[2]), *f->fwid);
 	*f->fmin = f->xmin - 0.5 * (*f->fwid);
@@ -3832,7 +3832,7 @@ static gboolean freq_info_set (GtkWidget *w, struct freqdist_info *f)
 	    *f->fmin = 0.0;
 	}
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(f->spin[1]), *f->fmin);
-    } else if (snum == 2 && GTK_WIDGET_SENSITIVE(f->spin[2])) {
+    } else if (snum == 2 && gtk_widget_is_sensitive(f->spin[2])) {
 	*f->nbins = ceil((f->xmax - *f->fmin) / *f->fwid);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(f->spin[0]), *f->nbins);
     }
@@ -3864,7 +3864,7 @@ static void freq_info_control (GtkWidget *w, struct freqdist_info *f)
 
 static void revise_finfo (GtkWidget *w, struct freqdist_info *f)
 {
-    if (!GTK_WIDGET_SENSITIVE(f->spin[0])) {
+    if (!gtk_widget_is_sensitive(f->spin[0])) {
 	*f->nbins = 0;
     } else {
 	*f->fmin = NADBL;

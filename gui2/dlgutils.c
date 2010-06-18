@@ -1181,7 +1181,7 @@ void raise_and_focus_dialog (GtkEditable *entry,
 {
     gtk_window_present(GTK_WINDOW(parent));
 
-    if (!GTK_WIDGET_HAS_FOCUS(GTK_WIDGET(entry))) {
+    if (!gtk_widget_has_focus(GTK_WIDGET(entry))) {
 	gtk_widget_grab_focus(GTK_WIDGET(entry));
     }
 }

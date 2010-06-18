@@ -3023,7 +3023,7 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
     strcpy(mdlg->spec->name, etxt);
     mdlg->spec->uselist = 0;
 
-    if (GTK_WIDGET_SENSITIVE(mdlg->numerics)) {
+    if (gtk_widget_is_sensitive(mdlg->numerics)) {
 	double x;
 
 	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->ventry));
@@ -3032,7 +3032,7 @@ static void matrix_dialog_ok (GtkWidget *w, struct mdialog *mdlg)
 	    return;
 	}
 	mdlg->spec->fill = x;
-    } else if (GTK_WIDGET_SENSITIVE(mdlg->formula)) {
+    } else if (gtk_widget_is_sensitive(mdlg->formula)) {
 	etxt = gtk_entry_get_text(GTK_ENTRY(mdlg->formula));
 	if (etxt == NULL || *etxt == '\0') {
 	    errbox(_("The matrix formula is empty"));

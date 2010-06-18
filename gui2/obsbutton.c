@@ -31,6 +31,18 @@
 
 #include "obsbutton.h"
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
+# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
+# define gtk_widget_has_focus(w) GTK_WIDGET_HAS_FOCUS(w)
+# define gtk_widget_is_drawable(w) GTK_WIDGET_DRAWABLE(w)
+# define gtk_widget_get_state(w) GTK_WIDGET_STATE(w)
+#endif
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20)
+# define gtk_widget_get_realized(w) GTK_WIDGET_REALIZED(w)
+# define gtk_widget_get_mapped(w) GTK_WIDGET_MAPPED(w)
+#endif
+
 #define MIN_OBS_BUTTON_WIDTH              30
 #define OBS_BUTTON_INITIAL_TIMER_DELAY    200
 #define OBS_BUTTON_TIMER_DELAY            20
@@ -312,7 +324,7 @@ obs_button_destroy (GtkObject *object)
 static void
 obs_button_map (GtkWidget *widget)
 {
-    if (GTK_WIDGET_REALIZED(widget) && !GTK_WIDGET_MAPPED(widget)) {
+    if (gtk_widget_get_realized(widget) && !gtk_widget_get_mapped(widget)) {
 	GTK_WIDGET_CLASS(parent_class)->map(widget);
 	gdk_window_show(OBS_BUTTON(widget)->panel);
     }
@@ -321,7 +333,7 @@ obs_button_map (GtkWidget *widget)
 static void
 obs_button_unmap (GtkWidget *widget)
 {
-    if (GTK_WIDGET_MAPPED(widget)) {
+    if (gtk_widget_get_mapped(widget)) {
 	gdk_window_hide(OBS_BUTTON(widget)->panel);
 	GTK_WIDGET_CLASS(parent_class)->unmap(widget);
     }
@@ -485,7 +497,7 @@ obs_button_size_allocate (GtkWidget     *widget,
 
     GTK_WIDGET_CLASS(parent_class)->size_allocate(widget, &entry_allocation);
 
-    if (GTK_WIDGET_REALIZED(widget)) {
+    if (gtk_widget_get_realized(widget)) {
 	gdk_window_move_resize(OBS_BUTTON(widget)->panel, 
 			       panel_allocation.x,
 			       panel_allocation.y,
@@ -507,7 +519,7 @@ obs_button_expose (GtkWidget      *widget,
 
     spin = OBS_BUTTON(widget);
 
-    if (GTK_WIDGET_DRAWABLE(widget)) {
+    if (gtk_widget_is_drawable(widget)) {
 	GtkShadowType shadow_type;
 	GdkRectangle rect;
 
@@ -600,7 +612,7 @@ obs_button_draw_arrow (ObsButton *obs_button,
   
     widget = GTK_WIDGET (obs_button);
 
-    if (GTK_WIDGET_DRAWABLE (widget)) {
+    if (gtk_widget_is_drawable (widget)) {
 	width = obs_button_get_arrow_size (obs_button) + 2 * widget->style->xthickness;
 
 	if (arrow_type == GTK_ARROW_UP) {
@@ -627,7 +639,7 @@ obs_button_draw_arrow (ObsButton *obs_button,
 		    obs_button->click_child == NO_ARROW) {
 		    state_type = GTK_STATE_PRELIGHT;
 		} else {
-		    state_type = GTK_WIDGET_STATE (widget);
+		    state_type = gtk_widget_get_state (widget);
 		}
 	      
 		shadow_type = GTK_SHADOW_OUT;
@@ -738,7 +750,7 @@ obs_button_state_changed (GtkWidget    *widget,
 {
     ObsButton *spin = OBS_BUTTON(widget);
 
-    if (!GTK_WIDGET_IS_SENSITIVE(widget)) {
+    if (!gtk_widget_is_sensitive(widget)) {
 	obs_button_stop_spinning(spin);    
 	obs_button_redraw(spin);
     }
@@ -751,12 +763,12 @@ obs_button_scroll (GtkWidget      *widget,
     ObsButton *spin = OBS_BUTTON (widget);
 
     if (event->direction == GDK_SCROLL_UP) {
-	if (!GTK_WIDGET_HAS_FOCUS (widget))
+	if (!gtk_widget_has_focus (widget))
 	    gtk_widget_grab_focus (widget);
 	obs_button_real_spin (spin, spin->adjustment->step_increment);
     }
     else if (event->direction == GDK_SCROLL_DOWN) {
-	if (!GTK_WIDGET_HAS_FOCUS (widget))
+	if (!gtk_widget_has_focus (widget))
 	    gtk_widget_grab_focus (widget);
 	obs_button_real_spin (spin, -spin->adjustment->step_increment); 
     }
@@ -813,7 +825,7 @@ obs_button_button_press (GtkWidget      *widget,
 
     if (!spin->button) {
 	if (event->window == spin->panel) {
-	    if (!GTK_WIDGET_HAS_FOCUS (widget))
+	    if (!gtk_widget_has_focus (widget))
 		gtk_widget_grab_focus (widget);
 	    spin->button = event->button;
 	  
@@ -1287,7 +1299,7 @@ obs_button_redraw (ObsButton *obs_button)
 
     widget = GTK_WIDGET(obs_button);
 
-    if (GTK_WIDGET_DRAWABLE(widget)) {
+    if (gtk_widget_is_drawable(widget)) {
 	gtk_widget_queue_draw(widget);
 
 	/* We must invalidate the panel window ourselves, because it

@@ -269,7 +269,7 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
     } 
 
     if (finfo->kspin != NULL) {
-	if (GTK_WIDGET_SENSITIVE(finfo->kspin)) {
+	if (gtk_widget_is_sensitive(finfo->kspin)) {
 	    finfo->k = (int) 
 		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->kspin));
 	} else {

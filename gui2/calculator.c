@@ -2134,7 +2134,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     int err = 0;
 
     g_return_if_fail(GTK_IS_COMBO_BOX(p));
-    if (!GTK_WIDGET_SENSITIVE(p)) {
+    if (!gtk_widget_is_sensitive(p)) {
 	return;
     } 
 

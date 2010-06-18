@@ -1716,7 +1716,7 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
     }
 
     if (sr->add_button != NULL &&
-	!GTK_WIDGET_SENSITIVE(sr->add_button) &&
+	!gtk_widget_is_sensitive(sr->add_button) &&
 	!selection_at_max(sr, nsel)) {
 	gtk_widget_set_sensitive(sr->add_button, TRUE);
     }
@@ -2109,7 +2109,7 @@ static gint varlist_row_count (selector *sr, int locus, int *realrows)
 
     w = (locus == SR_RVARS1)? sr->rvars1 : sr->rvars2;
 
-    if (w == NULL || !GTK_WIDGET_IS_SENSITIVE(w)) {
+    if (w == NULL || !gtk_widget_is_sensitive(w)) {
 	return 0;
     }
 
@@ -2239,7 +2239,7 @@ static void arma_spec_to_cmdlist (selector *sr)
     free(malags);
     malags = NULL;
 
-    if (GTK_WIDGET_SENSITIVE(sr->extra[0])) {
+    if (gtk_widget_is_sensitive(sr->extra[0])) {
 	arma_p = spinner_get_int(sr->extra[0]);
 	sprintf(s, "%d ", arma_p);
 	add_to_cmdlist(sr, s);
@@ -2253,7 +2253,7 @@ static void arma_spec_to_cmdlist (selector *sr)
     sprintf(s, "%d ", arima_d);
     add_to_cmdlist(sr, s);
 
-    if (GTK_WIDGET_SENSITIVE(sr->extra[3])) {
+    if (gtk_widget_is_sensitive(sr->extra[3])) {
 	arma_q = spinner_get_int(sr->extra[3]);
 	sprintf(s, "%d ; ", arma_q);
 	add_to_cmdlist(sr, s);
@@ -2715,7 +2715,7 @@ static void read_quantreg_extras (selector *sr)
     }
 
     if (!sr->error && sr->extra[1] != NULL &&
-	GTK_WIDGET_SENSITIVE(sr->extra[1])) {
+	gtk_widget_is_sensitive(sr->extra[1])) {
 	GtkAdjustment *adj;
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
@@ -2725,7 +2725,7 @@ static void read_quantreg_extras (selector *sr)
 
 static void read_omit_cutoff (selector *sr)
 {
-    if (sr->extra[0] != NULL && GTK_WIDGET_IS_SENSITIVE(sr->extra[0])) {
+    if (sr->extra[0] != NULL && gtk_widget_is_sensitive(sr->extra[0])) {
 	double val;
 
 	val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(sr->extra[0]));
@@ -2941,7 +2941,7 @@ static void parse_third_var_slot (selector *sr)
 static void selector_cancel_unavailable_options (selector *sr)
 {
     if (sr->ci == ARMA) {
-	if ((sr->opts & OPT_H) && !GTK_WIDGET_SENSITIVE(sr->hess_button)) {
+	if ((sr->opts & OPT_H) && !gtk_widget_is_sensitive(sr->hess_button)) {
 	    sr->opts ^= OPT_H;
 	}
     }
@@ -3614,7 +3614,8 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 
 static void lag_order_sync (GtkSpinButton *b, selector *sr)
 {
-    if (GTK_WIDGET_IS_SENSITIVE(b) && sr->extra[EXTRA_LAGS] != NULL) {
+    if (gtk_widget_is_sensitive(GTK_WIDGET(b)) && 
+	sr->extra[EXTRA_LAGS] != NULL) {
 	int lmax = gtk_spin_button_get_value_as_int(b);
 
 	set_VAR_max_lag(lmax);
@@ -6547,8 +6548,8 @@ static void lag_toggle_register (GtkWidget *w, var_lag_info *vlinfo)
 
     for (i=0; i<vlinfo->nvl; i++) {
 	if (depvar_row(vlset[i].context)) {
-	    if (!GTK_WIDGET_SENSITIVE(vlset[i].spin1) &&
-		!GTK_WIDGET_SENSITIVE(vlset[i].entry)) {
+	    if (!gtk_widget_is_sensitive(vlset[i].spin1) &&
+		!gtk_widget_is_sensitive(vlset[i].entry)) {
 		/* dependent var lags are disabled */
 		vlset[i].lmin = vlset[i].lmax = NOT_LAG; /* ?? */
 		free(vlset[i].lspec);

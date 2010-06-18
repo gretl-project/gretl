@@ -410,7 +410,7 @@ static void apply_line_color (GtkWidget *cb, GPT_SPEC *spec,
 {
     gretlRGB *rgb = NULL;
  
-    if (cb != NULL && GTK_WIDGET_SENSITIVE(cb)) {
+    if (cb != NULL && gtk_widget_is_sensitive(cb)) {
 	rgb = g_object_get_data(G_OBJECT(cb), "rgb");
     }
 
@@ -535,7 +535,7 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
     f = gtk_combo_box_get_active(box);
 
     if ((spec->flags & GPT_TS) && f != PLOT_FIT_NONE && ed->keycombo != NULL) {
-	if (!GTK_WIDGET_SENSITIVE(ed->keycombo)) {
+	if (!gtk_widget_is_sensitive(ed->keycombo)) {
 	    gtk_widget_set_sensitive(ed->keycombo, TRUE);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->keycombo), 0);
 	}
@@ -715,7 +715,7 @@ static void maybe_set_point_type (GPT_LINE *line, GtkWidget *w, int i)
 {
     GtkWidget *ptsel = g_object_get_data(G_OBJECT(w), "pointsel");
 
-    if (ptsel != NULL && GTK_WIDGET_SENSITIVE(ptsel)) {
+    if (ptsel != NULL && gtk_widget_is_sensitive(ptsel)) {
 	int pt = gtk_combo_box_get_active(GTK_COMBO_BOX(ptsel));
 	int ptdef = (line->type == LT_AUTO)? i : line->type - 1;
 
@@ -865,7 +865,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 		}
 	    }
 	    if (spec->code == PLOT_REGULAR && ed->axis_range[i].lbase != NULL) {
-		if (GTK_WIDGET_SENSITIVE(ed->axis_range[i].lbase)) {
+		if (gtk_widget_is_sensitive(ed->axis_range[i].lbase)) {
 		    err = set_logscale_from_entry(spec, i, ed->axis_range[i].lbase);
 		} else {
 		    spec->logbase[i] = 0.0;
@@ -878,7 +878,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	GtkWidget *combo = ed->stylecombo[i];
 
 	line = &spec->lines[i];
-	if (combo != NULL && GTK_WIDGET_IS_SENSITIVE(combo)) {
+	if (combo != NULL && gtk_widget_is_sensitive(combo)) {
 	    int oldalt = 0;
 
 	    if (line->style == GP_STYLE_FILLEDCURVE ||
@@ -902,7 +902,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 			       sizeof spec->lines[0].title);
 	}
 	if (ed->lineformula[i] != NULL && 
-	    GTK_WIDGET_IS_SENSITIVE(ed->lineformula[i])) {
+	    gtk_widget_is_sensitive(ed->lineformula[i])) {
 	    entry_to_gp_string(ed->lineformula[i], line->formula, 
 			       sizeof spec->lines[0].formula);
 	}
@@ -960,7 +960,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (!err && ed->fitcombo != NULL && GTK_WIDGET_IS_SENSITIVE(ed->fitcombo)) {
+    if (!err && ed->fitcombo != NULL && gtk_widget_is_sensitive(ed->fitcombo)) {
 	fittype_from_combo(GTK_COMBO_BOX(ed->fitcombo), spec);
     }
 
