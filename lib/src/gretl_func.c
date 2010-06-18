@@ -3196,6 +3196,36 @@ int get_function_file_header (const char *fname, char **pdesc,
     return err;
 }
 
+char *get_function_package_name (const char *path)
+{
+    char *pkgname = NULL;
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    int err;
+
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(path, "gretl-functions", &doc, &node);
+
+    if (!err) {
+	node = node->xmlChildrenNode;
+	while (node != NULL) {
+	    if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
+		gretl_xml_get_prop_as_string(node, "name", &pkgname);
+		break;
+	    }
+	    node = node->next;
+	}
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return pkgname;
+}
+
 /**
  * gretl_is_public_user_function:
  * @name: name to test.

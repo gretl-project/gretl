@@ -30,6 +30,7 @@
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
+#include "datafiles.h"
 
 #define FCDEBUG 0
 
@@ -1106,7 +1107,9 @@ void call_function_package (const char *fname, GtkWidget *w,
 	err = load_function_package_from_file(fname);
 	if (err) {
 	    file_read_errbox(fname);
-	    *loaderr = 1;
+	    if (loaderr != NULL) {
+		*loaderr = 1;
+	    }
 	} else {
 	    /* should be OK now */
 	    pkg = get_function_package_by_filename(fname);
@@ -1193,4 +1196,43 @@ void function_call_cleanup (void)
     if (open_fncall_dlg != NULL) {
 	gtk_widget_destroy(open_fncall_dlg);
     }
+}
+
+static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
+{
+    const gchar *aname = gtk_action_get_name(action);
+    char path[FILENAME_MAX];
+
+    function_package_path_from_name(path, aname);
+
+    if (*path == '\0') {
+	errbox("Couldn't find package %s\n", aname);
+    } else {
+	call_function_package(path, vwin->main, NULL);
+    }
+}
+
+void maybe_add_package_to_menu (const char *pkgname, 
+				const char *menupath,
+				windata_t *vwin)
+{
+    static GtkActionEntry pkg_item = {
+	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
+    };
+    GtkActionGroup *actions;
+    char label[48];
+
+    pkg_item.name = pkgname;
+    sprintf(label, "_%s...", pkgname);
+    pkg_item.label = label;
+
+    gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
+			  menupath, label, pkgname,
+			  GTK_UI_MANAGER_MENUITEM, 
+			  FALSE);
+
+    actions = gtk_action_group_new(pkgname);
+    gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
 }

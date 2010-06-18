@@ -63,4 +63,6 @@ windata_t *get_local_viewer (int remote_role);
 
 void listbox_select_first (windata_t *vwin);
 
+int function_package_path_from_name (char *path, const char *name);
+
 #endif /* DATAFILES_H */

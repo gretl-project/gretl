@@ -99,7 +99,7 @@ struct fpkg_response {
                           c == REMOTE_DATA_PKGS)
 
 static void
-read_fn_files_in_dir (int role, DIR *dir, const char *path, 
+read_fn_files_in_dir (DIR *dir, const char *path, 
 		      GtkListStore *store, GtkTreeIter *iter,
 		      int *nfn, int *maxlen);
 
@@ -865,8 +865,7 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 	}
 
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-	read_fn_files_in_dir(vwin->role, dir, path, store, &iter,
-			     &nfn, &maxlen);
+	read_fn_files_in_dir(dir, path, store, &iter, &nfn, &maxlen);
 	if (nfn > nfn0) {
 	    infobox(_("Found %d function file(s)"), nfn - nfn0);
 	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
@@ -1576,10 +1575,10 @@ void show_files (GtkAction *action, gpointer p)
     display_files(code, p);
 }
 
-static int get_func_info (const char *fullname, char **pdesc, 
+static int get_func_info (const char *path, char **pdesc, 
 			  char **pver)
 {
-    int err = get_function_file_header(fullname, pdesc, pver);
+    int err = get_function_file_header(path, pdesc, pver);
 
     if (err) {
 	gui_errmsg(err);
@@ -1629,7 +1628,7 @@ static int fn_file_is_duplicate (const char *fname,
 #define pkg_is_loaded(n) (get_function_package_by_filename(n) != NULL)
 
 static void
-read_fn_files_in_dir (int role, DIR *dir, const char *path, 
+read_fn_files_in_dir (DIR *dir, const char *path, 
 		      GtkListStore *store, GtkTreeIter *iter,
 		      int *nfn, int *maxlen)
 {
@@ -1761,7 +1760,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	for (i=0; i<ndirs; i++) {
 	    dir = opendir(dnames[i]);
 	    if (dir != NULL) {
-		read_fn_files_in_dir(vwin->role, dir, dnames[i], store, &iter,
+		read_fn_files_in_dir(dir, dnames[i], store, &iter,
 				     &nfn, &maxlen);
 		closedir(dir);
 	    }
@@ -1799,7 +1798,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	    if (*fndir != '\0') {
 		dir = opendir(fndir);
 		if (dir != NULL) {
-		    read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter,
+		    read_fn_files_in_dir(dir, fndir, store, &iter,
 					 &nfn, &maxlen);
 		    closedir(dir);
 		}
@@ -1828,6 +1827,48 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     }
 
     return 0;
+}
+
+int function_package_path_from_name (char *path, const char *name)
+{
+    char dirname[FILENAME_MAX];
+    DIR *dir;
+    int i, found = 0;
+
+    *path = '\0';
+
+    for (i=0; i<3 && !found; i++) {
+	*dirname = '\0';
+
+	if (i == 0) {
+	    build_path(dirname, gretl_home(), "functions", NULL);
+	} else if (i == 1) {
+	    strcpy(dirname, gretl_workdir());
+	} else if (i == 2) {
+	    build_path(dirname, gretl_workdir(), "functions", NULL);
+	} 
+
+	if (*dirname != '\0' && (dir = opendir(dirname)) != NULL) {
+	    struct dirent *dirent;
+	    char mypath[MAXLEN];
+	    char *myname;
+
+	    while ((dirent = readdir(dir)) != NULL && !found) {
+		if (has_suffix(dirent->d_name, ".gfn")) {
+		    build_path(mypath, dirname, dirent->d_name, NULL);
+		    myname = get_function_package_name(mypath);
+		    if (!strcmp(myname, name)) {
+			strcpy(path, mypath);
+			found = 1;
+		    }
+		    free(myname);
+		}
+	    }
+	    closedir(dir);
+	}
+    }
+
+    return !found; /* error condition */
 }
 
 static void revise_loaded_status (GtkWidget *lbox)

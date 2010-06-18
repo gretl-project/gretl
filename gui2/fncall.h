@@ -27,4 +27,8 @@ void function_call_cleanup (void);
 
 void gui_define_list (void);
 
+void maybe_add_package_to_menu (const char *pkgname, 
+				const char *menupath,
+				windata_t *vwin);
+
 #endif /* FNCALL_H */

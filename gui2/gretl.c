@@ -1608,8 +1608,9 @@ GtkActionEntry main_entries[] = {
     { "About", GTK_STOCK_ABOUT, N_("_About gretl"), NULL, NULL, G_CALLBACK(about_dialog) }
 };
 
-static void add_conditional_items (GtkUIManager *ui)
+static void add_conditional_items (windata_t *vwin)
 {
+    GtkUIManager *ui = vwin->ui;
     int add_appfont = 1;
 
 #ifdef G_OS_WIN32
@@ -1653,6 +1654,10 @@ static void add_conditional_items (GtkUIManager *ui)
 			      GTK_UI_MANAGER_MENUITEM, 
 			      FALSE);
     }
+
+#if 0 /* not quite yet */
+    maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
+#endif
 }
 
 /* retrieve the XML description of the main window menus */
@@ -1695,7 +1700,7 @@ static int set_up_main_menu (void)
 	g_message("building menus failed: %s", error->message);
 	g_error_free(error);
     } else {
-	add_conditional_items(mdata->ui);
+	add_conditional_items(mdata);
     }
 
     g_free(main_ui);
