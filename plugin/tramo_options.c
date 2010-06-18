@@ -23,6 +23,10 @@
 
 #define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
+# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
+#endif
+
 typedef struct _tramo_options tramo_options;
 
 struct _tramo_options {
@@ -136,7 +140,7 @@ static void va_spinner_set_state (tramo_options *opts)
     if (!option_widgets_shown(opts)) return;
     
     gtk_widget_set_sensitive(opts->va_spinner, 
-			     GTK_WIDGET_IS_SENSITIVE(opts->va_label) &&
+			     gtk_widget_is_sensitive(opts->va_label) &&
 			     !button_is_active(opts->va_button));
 }
 

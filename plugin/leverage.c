@@ -159,7 +159,7 @@ unsigned char leverage_data_dialog (void)
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
-    gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
+    gtk_box_set_spacing(GTK_BOX(hbox), 10);
 
     /* Cancel button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);

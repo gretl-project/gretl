@@ -758,10 +758,50 @@ static void set_graph_font_from_widgets (plot_editor *ed)
     g_free(tmp);
 }
 
-static gchar *default_bars_file (void)
+static char *default_bars_filename (void)
 {
-    return g_strdup_printf("%sdata%cplotbars%cnber.txt",
-			   gretl_home(), SLASH, SLASH);
+    static char barsname[FILENAME_MAX];
+
+    if (*barsname == '\0') {
+	sprintf(barsname, "%sdata%cplotbars%cnber.txt",
+		gretl_home(), SLASH, SLASH);
+    }
+
+    return barsname;
+}
+
+static char user_barsfile[FILENAME_MAX];
+
+static void remember_user_bars_file (const char *fname)
+{
+    strcpy(user_barsfile, fname);
+}
+
+static gchar *retrieve_user_bars_file (void)
+{
+    if (*user_barsfile != '\0') {
+	return g_strdup(user_barsfile);
+    } else {
+	return NULL;
+    }
+}
+
+static gboolean maybe_append_user_bars_file (GtkComboBox *combo,
+					     plot_editor *ed)
+{
+    if (ed->barsfile == NULL) {
+	ed->barsfile = retrieve_user_bars_file();
+    }
+
+    if (ed->barsfile != NULL) {
+	const char *p = strrchr(ed->barsfile, SLASH);
+	const char *show = (p != NULL)? (p+1) : ed->barsfile;
+
+	gtk_combo_box_append_text(combo, show);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
 }
 
 static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
@@ -769,12 +809,13 @@ static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
     png_plot *plot = (png_plot *) spec->ptr;
     double xmin = -1, xmax = -1;
     double ymin = -1, ymax = -1;
-    gchar *fname;
     int err;
 
     err = plot_get_coordinates(plot, &xmin, &xmax, &ymin, &ymax);
 
     if (!err) {
+	const char *fname;
+
 	if (!button_is_active(ed->axis_range[1].isauto)) {
 	    /* we have a manual y-axis setting that may override the
 	       current (ymin, ymax) as read from the plot */
@@ -789,14 +830,13 @@ static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
 
 	if (gtk_combo_box_get_active(GTK_COMBO_BOX(ed->barscombo)) == 1
 	    && ed->barsfile != NULL) {
-	    err = plotspec_add_bars_info(spec, xmin, xmax,
-					 ymin, ymax, ed->barsfile);
+	    fname = ed->barsfile;
 	} else {
-	    fname = default_bars_file();
-	    err = plotspec_add_bars_info(spec, xmin, xmax,
-					 ymin, ymax, fname);
-	    g_free(fname);
+	    fname = default_bars_filename();
 	}
+
+	err = plotspec_add_bars_info(spec, xmin, xmax,
+				     ymin, ymax, fname);
     }
 
     if (err) {
@@ -1386,9 +1426,8 @@ void set_plotbars_filename (const char *fname, gpointer data)
     } else {
 	/* completed selection */
 	const char *p = strrchr(fname, SLASH);
-	const char *show;
+	const char *show = (p != NULL)? (p+1) : fname;
 
-	show = (p != NULL)? (p+1) : fname;
 	g_free(ed->barsfile);
 	ed->barsfile = g_strdup(fname);
 	gtk_combo_box_remove_text(box, 1);
@@ -1441,10 +1480,9 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 	    file_selector_with_parent(OPEN_BARS, FSEL_DATA_MISC, 
 				      ed, ed->dialog);
 	} else if (ret == 2) {
-	    gchar *fname = default_bars_file();
+	    const char *fname = default_bars_filename();
 
 	    view_file(fname, 0, 0, 60, 420, VIEW_FILE);
-	    g_free(fname);
 	}
     }
 } 
@@ -1733,6 +1771,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
     if (show_bars_check(spec)) {
 	/* option to display NBER "recession bars" or similar */
+	gboolean userbars = FALSE;
 	GtkWidget *combo;
 
 	/* check button */
@@ -1747,8 +1786,9 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	/* plus combo selector */
 	ed->barscombo = combo = gtk_combo_box_new_text();
 	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("NBER recessions"));
+	userbars = maybe_append_user_bars_file(GTK_COMBO_BOX(combo), ed);
 	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("other..."));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), userbars ? 1 : 0);
 	gtk_widget_set_sensitive(combo, spec->nbars > 0);
 	g_signal_connect(G_OBJECT(combo), "changed", 
 			 G_CALLBACK(plot_bars_changed),
@@ -3014,7 +3054,11 @@ static void plot_editor_destroy (plot_editor *ed)
     }  
 
     g_free(ed->fontname);
-    g_free(ed->barsfile);
+
+    if (ed->barsfile != NULL) {
+	remember_user_bars_file(ed->barsfile);
+	g_free(ed->barsfile);
+    }
 
     free(ed->linetitle);
     free(ed->lineformula);
