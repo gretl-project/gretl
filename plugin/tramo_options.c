@@ -21,6 +21,8 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
+#define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
+
 typedef struct _tramo_options tramo_options;
 
 struct _tramo_options {
@@ -120,7 +122,7 @@ static void main_auto_callback (GtkWidget *w, GtkWidget *notebook)
 {
     tramo_options *opts = g_object_get_data(G_OBJECT(notebook), "opts");
 
-    if (w == NULL || GTK_TOGGLE_BUTTON(w)->active) {
+    if (w == NULL || button_is_active(w)) {
 	tramo_custom_tabs_set_sensitive(notebook, FALSE);
 	opts->rsa = 3;
     } else {
@@ -135,7 +137,7 @@ static void va_spinner_set_state (tramo_options *opts)
     
     gtk_widget_set_sensitive(opts->va_spinner, 
 			     GTK_WIDGET_IS_SENSITIVE(opts->va_label) &&
-			     !GTK_TOGGLE_BUTTON(opts->va_button)->active);
+			     !button_is_active(opts->va_button));
 }
 
 static void outlier_options_set_sensitive (tramo_options *opts, gboolean s)
@@ -155,7 +157,7 @@ static void flip_iatip (GtkWidget *w, tramo_options *opts)
 {
     if (!option_widgets_shown(opts)) return;
     
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (button_is_active(w)) {
 	outlier_options_set_sensitive(opts, TRUE);
 	opts->iatip = 1;
     } else {
@@ -168,7 +170,7 @@ static void flip_auto_va (GtkWidget *w, tramo_options *opts)
 {
     if (!option_widgets_shown(opts)) return;  
   
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (button_is_active(w)) {
 	gtk_widget_set_sensitive(opts->va_spinner, FALSE);
 	opts->va = 0.0;
     } else {
@@ -193,7 +195,7 @@ static void flip_auto_arima (GtkWidget *w, tramo_options *opts)
 {
     if (!option_widgets_shown(opts)) return;  
   
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (button_is_active(w)) {
 	arima_options_set_sensitive(opts, FALSE);
 	opts->auto_arima = 1;
     } else {
@@ -204,7 +206,7 @@ static void flip_auto_arima (GtkWidget *w, tramo_options *opts)
 
 static void tramo_innov_callback (GtkWidget *w, tramo_options *opts)
 {
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (button_is_active(w)) {
 	gtk_toggle_button_set_active
 	    (GTK_TOGGLE_BUTTON(opts->aio_transitory_button), TRUE);
 	gtk_toggle_button_set_active
@@ -227,13 +229,12 @@ static void tramo_aio_callback (GtkWidget *w, tramo_options *opts)
     }
 
     /* must have at least one box checked */
-    if (!GTK_TOGGLE_BUTTON(this_button)->active && 
-	!GTK_TOGGLE_BUTTON(other_button)->active) {
+    if (!button_is_active(this_button) && !button_is_active(other_button)) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(other_button), TRUE);
     }
 
-    if (GTK_TOGGLE_BUTTON(opts->aio_transitory_button)->active) {
-	if (GTK_TOGGLE_BUTTON(opts->aio_shift_button)->active) {
+    if (button_is_active(opts->aio_transitory_button)) {
+	if (button_is_active(opts->aio_shift_button)) {
 	    /* both transitory and level-shifts */
 	    opts->aio = 2;
 	} else {
