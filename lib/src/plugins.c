@@ -293,7 +293,7 @@ void *gretl_dlsym (void *handle, const char *name)
 #endif
 }
 
-#if defined(WIN32) || defined(CYGWIN)
+#if defined(WIN32) || defined(__CYGWIN__)
 # define PLUGIN_EXT ".dll"
 #else
 # define PLUGIN_EXT ".so"
