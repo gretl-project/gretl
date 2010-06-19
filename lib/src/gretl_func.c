@@ -999,6 +999,8 @@ static const char *arg_type_xml_string (int t)
 	return "seriesref";
     } else if (t == GRETL_TYPE_MATRIX_REF) {
 	return "matrixref";
+    } else if (t == GRETL_TYPE_BUNDLE_REF) {
+	return "bundleref";
     } else {
 	return arg_type_string(t);
     }
@@ -1020,6 +1022,11 @@ static int arg_type_from_string (const char *s)
     if (!strcmp(s, "series *"))  return GRETL_TYPE_SERIES_REF;
     if (!strcmp(s, "matrix *"))  return GRETL_TYPE_MATRIX_REF;
     if (!strcmp(s, "bundle *"))  return GRETL_TYPE_BUNDLE_REF;
+
+    if (!strcmp(s, "scalarref"))  return GRETL_TYPE_SCALAR_REF;
+    if (!strcmp(s, "seriesref"))  return GRETL_TYPE_SERIES_REF;
+    if (!strcmp(s, "matrixref"))  return GRETL_TYPE_MATRIX_REF;
+    if (!strcmp(s, "bundleref"))  return GRETL_TYPE_BUNDLE_REF;
 
     return 0;
 }
