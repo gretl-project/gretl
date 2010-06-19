@@ -702,9 +702,7 @@ static void function_call_dialog (call_info *cinfo)
 		     G_CALLBACK(fncall_dialog_destruction), cinfo);
 
     fnname = user_function_name_by_index(cinfo->iface);
-    txt = g_strdup_printf(_("Call to function %s"), fnname);
-    hbox = label_hbox(vbox, txt, 5, 1);
-    g_free(txt);
+    hbox = label_hbox(vbox, fnname, 5, 1);
 
     if (cinfo->n_params > 0) {
 	tcols = (cinfo->extracol)? 3 : 2;
@@ -722,63 +720,62 @@ static void function_call_dialog (call_info *cinfo)
     }
 
     if (cinfo->n_params > 0) {
-
 	add_table_header(tbl, _("Select arguments:"), tcols, row);
+    }
 
-	for (i=0; i<cinfo->n_params; i++) {
-	    const char *desc = fn_param_descrip(cinfo->func, i);
-	    int ptype = fn_param_type(cinfo->func, i);
+    for (i=0; i<cinfo->n_params; i++) {
+	const char *desc = fn_param_descrip(cinfo->func, i);
+	int ptype = fn_param_type(cinfo->func, i);
 
-	    if (desc != NULL) {
-		label = gtk_label_new(desc);
-	    } else {
-		txt = g_strdup_printf("%s (%s)",
-				      fn_param_name(cinfo->func, i), 
-				      arg_type_string(ptype));
-		label = gtk_label_new(txt);
-		g_free(txt);			     
-	    }
-
-	    row++;
-	    gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-	    add_table_cell(tbl, label, 0, 1, row);
-
-	    if (ptype == GRETL_TYPE_BOOL) {
-		sel = bool_arg_selector(cinfo, i);
-	    } else if (ptype == GRETL_TYPE_INT && spinner_arg(cinfo, i)) {
-		sel = spin_arg_selector(cinfo, i);
-	    } else {
-		sel = combo_arg_selector(cinfo, ptype, i);
-	    }
-
-	    add_table_cell(tbl, sel, 1, 2, row);
-
-	    if (ptype == GRETL_TYPE_LIST) {
-		cinfo->lsels = g_list_append(cinfo->lsels, sel);
-		button = gtk_button_new_with_label(_("More..."));
-		add_table_cell(tbl, button, 2, 3, row);
-		g_signal_connect(G_OBJECT(button), "clicked", 
-				 G_CALLBACK(launch_list_maker),
-				 gtk_bin_get_child(GTK_BIN(sel)));
-	    } else if (ptype == GRETL_TYPE_MATRIX) {
-		cinfo->msels = g_list_append(cinfo->msels, sel);
-		button = gtk_button_new_with_label(_("New..."));
-		add_table_cell(tbl, button, 2, 3, row);
-		g_signal_connect(G_OBJECT(button), "clicked", 
-				 G_CALLBACK(launch_matrix_maker), 
-				 cinfo);
-	    } 
+	if (desc != NULL) {
+	    label = gtk_label_new(desc);
+	} else {
+	    txt = g_strdup_printf("%s (%s)",
+				  fn_param_name(cinfo->func, i), 
+				  arg_type_string(ptype));
+	    label = gtk_label_new(txt);
+	    g_free(txt);			     
 	}
 
-	if (cinfo_has_return(cinfo)) {
-	    row++;
-	    add_table_hsep(tbl, tcols, row++);
+	row++;
+	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
+	add_table_cell(tbl, label, 0, 1, row);
+
+	if (ptype == GRETL_TYPE_BOOL) {
+	    sel = bool_arg_selector(cinfo, i);
+	} else if (ptype == GRETL_TYPE_INT && spinner_arg(cinfo, i)) {
+	    sel = spin_arg_selector(cinfo, i);
+	} else {
+	    sel = combo_arg_selector(cinfo, ptype, i);
 	}
+
+	add_table_cell(tbl, sel, 1, 2, row);
+
+	if (ptype == GRETL_TYPE_LIST) {
+	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
+	    button = gtk_button_new_with_label(_("More..."));
+	    add_table_cell(tbl, button, 2, 3, row);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(launch_list_maker),
+			     gtk_bin_get_child(GTK_BIN(sel)));
+	} else if (ptype == GRETL_TYPE_MATRIX) {
+	    cinfo->msels = g_list_append(cinfo->msels, sel);
+	    button = gtk_button_new_with_label(_("New..."));
+	    add_table_cell(tbl, button, 2, 3, row);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(launch_matrix_maker), 
+			     cinfo);
+	} 
     }
 	
     if (cinfo_has_return(cinfo)) {
 	GtkWidget *child;
 	GList *list = NULL;
+
+	if (cinfo->n_params > 0) {
+	    row++;
+	    add_table_hsep(tbl, tcols, row++);
+	}	    
 
 	add_table_header(tbl, _("Assign return value (optional):"), tcols, row);
 	row++;
@@ -819,12 +816,10 @@ static void function_call_dialog (call_info *cinfo)
 		     G_CALLBACK(fncall_OK_callback), cinfo);
     gtk_widget_grab_default(button);
 
-    /* Help button? */
-    if (cinfo->n_params > 0 || cinfo->rettype != GRETL_TYPE_NONE) {
-	button = context_help_button(bbox, -1);
-	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(fncall_help), cinfo);
-    }  
+    /* Help button */
+    button = context_help_button(bbox, -1);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(fncall_help), cinfo);
 
     gtk_widget_show_all(cinfo->dlg);
 }

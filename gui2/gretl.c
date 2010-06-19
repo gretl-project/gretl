@@ -1655,7 +1655,7 @@ static void add_conditional_items (windata_t *vwin)
 			      FALSE);
     }
 
-#if 0 /* not quite yet */
+#if 1 /* not quite yet */
     maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
 #endif
 }

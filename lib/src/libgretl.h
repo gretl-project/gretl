@@ -160,7 +160,7 @@ enum test_stats {
     GRETL_STAT_Z
 };
 
-enum gretl_opt_flags {
+typedef enum {
     OPT_NONE = 0,
     OPT_A = 1 <<  0,
     OPT_B = 1 <<  1,
@@ -189,7 +189,7 @@ enum gretl_opt_flags {
     OPT_Z = 1 << 24,
     OPT_Y = 1 << 25,
     OPT_UNSET = 1 << 30
-};
+} gretlopt;
 
 typedef enum {
     OP_EQ  = '=',
@@ -221,9 +221,6 @@ typedef struct _cmplx {
 } cmplx;
 #endif
 
-typedef unsigned int gretlopt;
-
-typedef struct PRN_ PRN;
 typedef struct FITRESID_ FITRESID;
 typedef struct GRETL_VAR_ GRETL_VAR;
 
@@ -379,6 +376,7 @@ typedef struct MODEL_ {
 #define STACK_LEVEL(p,i)     ((p->varinfo[i])->stack_level)
 
 #include "gretl_commands.h"
+#include "gretl_prn.h"
 #include "gretl_errors.h"
 #include "interact.h"
 #include "dataset.h"
@@ -391,7 +389,6 @@ typedef struct MODEL_ {
 #include "gretl_paths.h"
 #include "gretl_utils.h"
 #include "gretl_model.h"
-#include "gretl_prn.h"
 #include "pvalues.h"
 #include "dataio.h"
 #include "strutils.h"

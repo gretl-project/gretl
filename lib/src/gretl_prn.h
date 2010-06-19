@@ -20,6 +20,13 @@
 #ifndef GRETL_PRN_H
 #define GRETL_PRN_H
 
+/**
+ * PRN:
+ * An opaque structure accessed only via gretl_prn functions.
+ */
+
+typedef struct PRN_ PRN;
+
 typedef enum {
     GRETL_PRINT_STDOUT,
     GRETL_PRINT_STDERR,
