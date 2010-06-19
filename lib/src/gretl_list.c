@@ -30,6 +30,22 @@
 
 #define LDEBUG 0
 
+/**
+ * SECTION:gretl_list
+ * @short_description: handling of lists of integers.
+ * @title: libgretl lists
+ * @include: libgretl.h
+ *
+ * Lists of integers are used in many contexts in libgretl, e.g.
+ * for holding the ID numbers of variables in a regression
+ * specification. A gretl "list" is simply an array of ints
+ * following a definite convention: the value at position 0
+ * gives the number of elements that follow. The total number
+ * of ints in the list foo is therefore foo[0] + 1, and reading
+ * the substantive members of foo involves looping from
+ * position 1 to position foo[0].
+ */
+
 typedef struct saved_list_ saved_list;
 
 struct saved_list_ {

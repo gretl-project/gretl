@@ -187,7 +187,7 @@ enum gretl_opt_flags {
     OPT_W = 1 << 22,
     OPT_X = 1 << 23,
     OPT_Z = 1 << 24,
-    OPT_Y = 1 << 25, /* added 2009-03-15 */
+    OPT_Y = 1 << 25,
     OPT_UNSET = 1 << 30
 };
 
@@ -215,33 +215,38 @@ typedef enum {
 } ModelSelCriteria;
 
 #ifndef CMPLX
-typedef struct _cmplx cmplx;
-struct _cmplx {
+typedef struct _cmplx {
     double r;
     double i;
-};
+} cmplx;
 #endif
 
 typedef unsigned int gretlopt;
 
-typedef struct VARINFO_ VARINFO;
-typedef struct PANINFO_ PANINFO;
-typedef struct DATAINFO_ DATAINFO;
-typedef struct VMatrix_ VMatrix;
-typedef struct SAMPLE_ SAMPLE;
-typedef struct ARINFO_ ARINFO;
-typedef struct MODEL_ MODEL;
 typedef struct PRN_ PRN;
 typedef struct FITRESID_ FITRESID;
-typedef struct DATASET_ DATASET;
 typedef struct GRETL_VAR_ GRETL_VAR;
 
 typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
 typedef struct equation_system_ equation_system;
 
-/* information on individual variable */
-struct VARINFO_ {
+/**
+ * VARINFO:
+ * @label: descriptive label.
+ * @display_name: name shown in graphs.
+ * @parent: name of "parent" series if applicable (e.g. logs) 
+ * @flags: to record boolean status flags.
+ * @transform:
+ * @lag:
+ * @compact_method:
+ * @stack_level:
+ * @line_width: for use in graphing.
+ *
+ * Holds extended information on an individual data series.
+ */
+
+typedef struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
     char parent[VNAMELEN];
@@ -251,10 +256,10 @@ struct VARINFO_ {
     char compact_method;
     char stack_level; /* FIXME should be int? */
     char line_width;
-};
+} VARINFO;
 
 /* panel indexing information */
-struct PANINFO_ {
+typedef struct PANINFO_ {
     int nunits;    /* number of cross-sectional units */
     int Tmin;      /* min. number of time-series observations per unit */
     int Tmax;      /* max. number of time-series observations per unit */
@@ -262,10 +267,10 @@ struct PANINFO_ {
     int *unit;     /* index array, cross-sectional units */
     int *period;   /* index array, time periods */
     char *padmask; /* mask recording padding, when subsampled */
-};
+} PANINFO;
 
 /* information on data set */
-struct DATAINFO_ { 
+typedef struct DATAINFO_ { 
     int v;              /* number of variables */
     int n;              /* number of observations */
     int pd;             /* periodicity or frequency of data */
@@ -284,15 +289,15 @@ struct DATAINFO_ {
     char *descrip;      /* to hold info on data sources etc. */
     char *submask;      /* subsampling mask */
     char *restriction;  /* record of sub-sampling restriction */
-};
+} DATAINFO;
 
 /* wrapper for the two main elements of a gretl data set */
-struct DATASET_ {
+typedef struct DATASET_ {
     DATAINFO *dinfo;
     double **Z;
-};
+} DATASET;
 
-struct VMatrix_ {
+typedef struct VMatrix_ {
     int ci;
     int dim;
     int t1, t2, n;
@@ -300,21 +305,21 @@ struct VMatrix_ {
     double *vec;
     int *list;
     int missing;
-};
+} VMatrix;
 
-struct SAMPLE_ {
+typedef struct SAMPLE_ {
     int t1;
     int t2;
-};
+} SAMPLE;
 
-struct ARINFO_ {
+typedef struct ARINFO_ {
     int *arlist;          /* list of autoreg lags */
     double *rho;          /* array of autoreg. coeffs. */
     double *sderr;        /* and their standard errors */
-};
+} ARINFO;
 
 /* struct to hold model results */
-struct MODEL_ {
+typedef struct MODEL_ {
     int ID;                      /* ID number for model */
     int refcount;                /* for saving/deleting */
     int ci;                      /* "command index" -- estimation method */
@@ -365,7 +370,7 @@ struct MODEL_ {
 				    sub-sampled portion of the dataset */
     int n_data_items;            /* number of extra data items */
     model_data_item **data_items; /* pointer to additional data */
-};
+} MODEL;
 
 #define VARLABEL(p,i)        ((p->varinfo[i])->label)
 #define DISPLAYNAME(p,i)     ((p->varinfo[i])->display_name)

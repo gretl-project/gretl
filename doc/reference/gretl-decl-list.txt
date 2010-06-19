@@ -94,13 +94,6 @@ DistCode
 ModelSelCriteria
 cmplx
 gretlopt
-VARINFO
-PANINFO
-DATAINFO
-VMatrix
-SAMPLE
-ARINFO
-MODEL
 PRN
 FITRESID
 DATASET
@@ -108,6 +101,13 @@ GRETL_VAR
 model_data_item
 ModelTest
 equation_system
+VARINFO
+PANINFO
+DATAINFO
+VMatrix
+SAMPLE
+ARINFO
+MODEL
 VARLABEL
 DISPLAYNAME
 PARENT
