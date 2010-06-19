@@ -111,7 +111,7 @@ GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
 static void set_canceled (GtkWidget *w, int *c)
 {
     if (c != NULL) {
-	*c = 1;
+	*c = -1;
     }
 }
 
@@ -119,7 +119,7 @@ static void maybe_set_canceled (GtkDialog *d, int resp, int *c)
 {
     if (resp == GTK_RESPONSE_DELETE_EVENT ||
 	resp == GTK_RESPONSE_CANCEL) {
-	*c = 1;
+	*c = -1;
     }
 }
 

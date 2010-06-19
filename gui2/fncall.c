@@ -1014,40 +1014,54 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 }
 
 /* In case a function package offers more than one public
-   interface, put up a radio-button selector */
+   interface, give the user a selector: for four or fewer
+   options we use radio buttons, otherwise we use a pull-down
+   list.
+*/
 
 static void select_interface (call_info *cinfo)
 {
     const char *funname;
     char **opts = NULL;
-    int nopts = 0;
-    int i, err = 0;
+    GList *ilist = NULL;
+    int npub = cinfo->publist[0];
+    int radios = (npub < 5);
+    int i, nopts = 0;
+    int resp, err = 0;
 
-    for (i=1; i<=cinfo->publist[0] && !err; i++) {
+    for (i=1; i<=npub && !err; i++) {
 	funname = user_function_name_by_index(cinfo->publist[i]);
 	if (funname == NULL) {
 	    err = E_DATA;
-	} else {
+	} else if (radios) {
 	    err = strings_array_add(&opts, &nopts, funname);
+	} else {
+	    ilist = g_list_append(ilist, (gpointer) funname);
 	}
     }
 
     if (err) {
 	cinfo->iface = -1;
 	gui_errmsg(err);
-    } else {
-	int resp = radio_dialog("gretl", "select function", 
-				(const char **) opts, 
-				nopts, 0, 0);
-
+    } else if (radios) {
+	resp = radio_dialog("gretl", "select function", 
+			    (const char **) opts, 
+			    nopts, 0, 0);
 	if (resp >= 0) {
 	    cinfo->iface = cinfo->publist[resp+1];
 	} else {
 	    cinfo->iface = -1;
 	}
+	free_strings_array(opts, nopts);
+    } else {
+	resp = combo_selector_dialog(ilist, "select function", 0);
+	if (resp >= 0) {
+	    cinfo->iface = cinfo->publist[resp+1];
+	} else {
+	    cinfo->iface = -1;
+	}	
+	g_list_free(ilist);
     }
-
-    free_strings_array(opts, nopts);
 }
 
 /* Callback from "OK" button in function call GUI: if there's a
@@ -1198,19 +1212,34 @@ void function_call_cleanup (void)
     }
 }
 
+/* Callback for a menu item representing a function package, whose
+   name (e.g. "gig") is attached to @action. We first see if we can
+   find the full path to the corresponding gfn file; if so we
+   initiate a GUI call to the package.
+*/
+
 static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 {
-    const gchar *aname = gtk_action_get_name(action);
-    char path[FILENAME_MAX];
+    const gchar *name = gtk_action_get_name(action);
+    gchar *path;
 
-    function_package_path_from_name(path, aname);
+    path = gretl_function_package_get_path(name);
 
-    if (*path == '\0') {
-	errbox("Couldn't find package %s\n", aname);
+    if (path == NULL) {
+	errbox("Couldn't find package %s\n", name);
     } else {
 	call_function_package(path, vwin->main, NULL);
+	g_free(path);
     }
 }
+
+/* For a "privileged" function package: given its internal
+   package name (e.g. "gig") and a menu path where we'd like
+   it to appear (e.g. "/menubar/Model/TSModels" -- see the
+   ui definition file gui2/gretlmain.xml), construct the
+   appropriate menu item and connect it to gfn_menu_callback(), 
+   which see above.
+*/
 
 void maybe_add_package_to_menu (const char *pkgname, 
 				const char *menupath,
@@ -1220,10 +1249,10 @@ void maybe_add_package_to_menu (const char *pkgname,
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
     GtkActionGroup *actions;
-    char label[48];
+    gchar *label;
 
     pkg_item.name = pkgname;
-    sprintf(label, "_%s...", pkgname);
+    label = g_strdup_printf("_%s...", pkgname);
     pkg_item.label = label;
 
     gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
@@ -1235,4 +1264,5 @@ void maybe_add_package_to_menu (const char *pkgname,
     gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
+    g_free(label);
 }

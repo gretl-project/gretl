@@ -207,13 +207,13 @@ int rank_series (const double *x, double *y, int f,
  * diff_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @f: function, %F_DIFF, %F_SDIFF or %F_LDIFF.
+ * @f: function, F_DIFF, F_SDIFF or F_LDIFF.
  * @pdinfo: data set information.
  *
  * Calculates the differenced counterpart to the input 
- * series @x.  If @f = %F_SDIFF, the seasonal difference is
- * computed; if @f = %F_LDIFF, the log difference, and if
- * @f = %F_DIFF, the ordinary first difference.
+ * series @x.  If @f = F_SDIFF, the seasonal difference is
+ * computed; if @f = F_LDIFF, the log difference, and if
+ * @f = F_DIFF, the ordinary first difference.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -543,7 +543,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * AR order is p, @A should be a vector of length p.  If the 
  * intended MA order is q, @C should be vector of length (q+1), 
  * the first entry giving the coefficient at lag 0.  However, if 
- * @C is %NULL this is taken to mean that the lag-0 MA coefficient 
+ * @C is NULL this is taken to mean that the lag-0 MA coefficient 
  * is unity (and all others are zero).
  *
  * Returns: 0 on success, non-zero error code on failure.
@@ -1713,7 +1713,7 @@ int plotvar_code (const DATAINFO *pdinfo)
  * configured for the data frequency.  Do not try to free this
  * variable.
  *
- * Returns: pointer to plot x-variable, or %NULL on failure.
+ * Returns: pointer to plot x-variable, or NULL on failure.
  */
 
 const double *gretl_plotx (const DATAINFO *pdinfo)
@@ -1826,16 +1826,16 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
  * @pmod: pointer to source model.
  * @pdinfo: information on the data set.
  * @code: M_UHAT, M_UHAT2, M_YHAT, M_AHAT or M_H.
- * @vname: location to write series name (length #VNAMELEN)
+ * @vname: location to write series name (length %VNAMELEN)
  * @vlabel: location to write series description (length should
- * be #MAXLABEL).
+ * be %MAXLABEL).
  * @err: location to receive error code.
  *
  * Creates a full-length array holding the specified model
  * data, and writes name and description into the @vname and
  * @vlabel.
  * 
- * Returns: allocated array on success or %NULL on failure.
+ * Returns: allocated array on success or NULL on failure.
  */
 
 double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,

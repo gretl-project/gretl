@@ -19,10 +19,8 @@
 
 #include "libgretl.h"
 
-#if defined(WIN32)
+#ifdef WIN32
 # include <windows.h>
-#elif defined(OSX_NATIVE)
-# include <mach-o/dyld.h>
 #else
 # include <dlfcn.h>
 #endif
@@ -246,27 +244,27 @@ static const char *get_plugin_name_for_function (const char *func)
     return plugins[idx].pname;
 }
 
+/**
+ * gretl_dlopen:
+ * @path: full path to the shared object to be opened.
+ * @now: on *nix, if non-zero we call dlopen with the flag 
+ * RTLD_NOW, else we use RTLD_LAZY.
+ *
+ * Cross-platform wrapper for opening a shared code object
+ * on MS Windows or unix-type systems (including OS X).
+ *
+ * Returns: handle to the shared object.
+ */
+
 void *gretl_dlopen (const char *path, int now)
 {
-#ifdef OSX_NATIVE
-    NSObjectFileImage file;
-    NSObjectFileImageReturnCode rc;
-#endif
     void *handle = NULL;
 
-#if defined(WIN32)
+#ifdef WIN32
     if (strstr(path, "R.dll")) {
 	handle = LoadLibraryEx(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
     } else {
 	handle = LoadLibrary(path);
-    }
-#elif defined(OSX_NATIVE)
-    rc = NSCreateObjectFileImageFromFile(path, &file);
-    if (rc == NSObjectFileImageSuccess) {
-	Rhandle = NSLinkModule(file, path,
-			       NSLINKMODULE_OPTION_BINDNOW |
-			       NSLINKMODULE_OPTION_PRIVATE |
-			       NSLINKMODULE_OPTION_RETURN_ON_ERROR);
     }
 #else
     handle = dlopen(path, (now)? RTLD_NOW : RTLD_LAZY);
@@ -274,7 +272,7 @@ void *gretl_dlopen (const char *path, int now)
 
     if (handle == NULL) {
         gretl_errmsg_sprintf(_("Failed to load plugin: %s"), path);
-#if !defined(WIN32) && !defined(OSX_NATIVE)
+#if !defined(WIN32)
 	fprintf(stderr, "%s\n", dlerror());
 #endif
     }   
@@ -282,12 +280,21 @@ void *gretl_dlopen (const char *path, int now)
     return handle;
 }
 
+/**
+ * gretl_dlsym:
+ * @handle: handle to shared object; see gretl_dlopen().
+ * @name: name of symbol to look up.
+ *
+ * Cross-platform wrapper for obtained a handle to
+ * a named symbol in a shared object.
+ *
+ * Returns: pointer corresponding to @name, or NULL.
+ */
+
 void *gretl_dlsym (void *handle, const char *name)
 {
-#if defined(WIN32)
+#ifdef WIN32
     return GetProcAddress(handle, name);
-#elif defined(OSX_NATIVE)
-    return NSLookupSymbolInModule(handle, name);
 #else
     return dlsym(handle, name);
 #endif
@@ -313,6 +320,21 @@ static void *get_plugin_handle (const char *plugin)
     return gretl_dlopen(pluginpath, 0);
 }
 
+/**
+ * get_plugin_function:
+ * @funcname: name of function to access.
+ * @handle: location to receive handle to shared object.
+ *
+ * Looks up @funcname in gretl's internal plugin table and
+ * attempts to open the plugin object file that offers the
+ * given function. If successful, the @handle argument 
+ * receives the pointer obtained from dlopen or 
+ * equivalent, and this can be used to close the plugin
+ * once the caller is finished with it; see close_plugin().
+ *
+ * Returns: function pointer, or NULL on failure.
+ */
+
 void *get_plugin_function (const char *funcname, void **handle)
 {
     void *funp;
@@ -331,10 +353,8 @@ void *get_plugin_function (const char *funcname, void **handle)
 	return NULL;
     }
 
-#if defined(WIN32)
+#ifdef WIN32
     funp = GetProcAddress(*handle, funcname);
-#elif defined(OSX_NATIVE)
-    funp = NSLookupSymbolInModule(*handle, funcname);
 #else
     funp = dlsym(*handle, funcname);
     if (funp == NULL) {
@@ -357,15 +377,21 @@ void *get_plugin_function (const char *funcname, void **handle)
     return funp;
 }
 
+/**
+ * close_plugin:
+ * @handle: pointer obtained via the handle argument to
+ * get_plugin_function().
+ *
+ * Closes a shared plugin object.
+ */
+
 void close_plugin (void *handle)
 {
-    if (handle == NULL) return;
-
-#if defined(WIN32)
-    FreeLibrary(handle);
-#elif defined(OSX_NATIVE)
-    NSUnLinkModule(handle, NSUNLINKMODULE_OPTION_NONE);
+    if (handle != NULL) {
+#ifdef WIN32
+	FreeLibrary(handle);
 #else
-    dlclose(handle);
+	dlclose(handle);
 #endif
+    }
 }

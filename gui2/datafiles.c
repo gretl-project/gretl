@@ -1643,35 +1643,32 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	    !strcmp(dirent->d_name, "..")) {
 	    continue;
 	}
-	fname = g_strdup(dirent->d_name);
-	n = strlen(fname);
-	if (!g_ascii_strcasecmp(fname + n - 4, ".gfn")) {
+	if (has_suffix(dirent->d_name, ".gfn")) {
 	    char *descrip = NULL, *version = NULL;
 
-	    build_path(fullname, path, fname, NULL);
+	    build_path(fullname, path, dirent->d_name, NULL);
 	    err = get_func_info(fullname, &descrip, &version);
 
-	    if (!err) {
-		if (!fn_file_is_duplicate(fname, version, store, imax)) {
-		    gtk_list_store_append(store, iter);
-		    n -= 4;
-		    fname[n] = '\0';
-		    if (n > *maxlen) {
-			*maxlen = n;
-		    }
-		    gtk_list_store_set(store, iter, 
-				       0, fname, 
-				       1, version,
-				       2, descrip, 
-				       3, pkg_is_loaded(fullname), 
-				       4, path, -1);
-		    *nfn += 1;
+	    if (!err && !fn_file_is_duplicate(dirent->d_name, version, store, imax)) {
+		gtk_list_store_append(store, iter);
+		fname = g_strdup(dirent->d_name);
+		n = strlen(fname) - 4;
+		fname[n] = '\0';
+		if (n > *maxlen) {
+		    *maxlen = n;
 		}
-		free(descrip);
-		free(version);
+		gtk_list_store_set(store, iter, 
+				   0, fname, 
+				   1, version,
+				   2, descrip, 
+				   3, pkg_is_loaded(fullname), 
+				   4, path, -1);
+		*nfn += 1;
+		g_free(fname);
 	    }
+	    free(descrip);
+	    free(version);
 	}
-	g_free(fname);
     }
 }
 
@@ -1829,17 +1826,20 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     return 0;
 }
 
-int function_package_path_from_name (char *path, const char *name)
+/* Given the name of a package (its internal name, not a path, e.g.
+   "gig"), search some plausible directories and see if we can
+   find the corresponding gfn file. If so, return an allocated copy 
+   of the absolute path, otherwise return NULL.
+*/
+
+gchar *gretl_function_package_get_path (const char *name)
 {
+    gchar *path = NULL;
     char dirname[FILENAME_MAX];
     DIR *dir;
     int i, found = 0;
 
-    *path = '\0';
-
     for (i=0; i<3 && !found; i++) {
-	*dirname = '\0';
-
 	if (i == 0) {
 	    build_path(dirname, gretl_home(), "functions", NULL);
 	} else if (i == 1) {
@@ -1848,9 +1848,9 @@ int function_package_path_from_name (char *path, const char *name)
 	    build_path(dirname, gretl_workdir(), "functions", NULL);
 	} 
 
-	if (*dirname != '\0' && (dir = opendir(dirname)) != NULL) {
+	if ((dir = opendir(dirname)) != NULL) {
 	    struct dirent *dirent;
-	    char mypath[MAXLEN];
+	    char mypath[FILENAME_MAX];
 	    char *myname;
 
 	    while ((dirent = readdir(dir)) != NULL && !found) {
@@ -1858,7 +1858,7 @@ int function_package_path_from_name (char *path, const char *name)
 		    build_path(mypath, dirname, dirent->d_name, NULL);
 		    myname = get_function_package_name(mypath);
 		    if (!strcmp(myname, name)) {
-			strcpy(path, mypath);
+			path = g_strdup(mypath);
 			found = 1;
 		    }
 		    free(myname);
@@ -1868,7 +1868,7 @@ int function_package_path_from_name (char *path, const char *name)
 	}
     }
 
-    return !found; /* error condition */
+    return path;
 }
 
 static void revise_loaded_status (GtkWidget *lbox)

@@ -3203,6 +3203,11 @@ int get_function_file_header (const char *fname, char **pdesc,
     return err;
 }
 
+/* Given the full path to a gfn file, try to get its
+   internal package name (e.g. "gig"). Return an
+   allocated copy of the name if found, else NULL.
+*/
+
 char *get_function_package_name (const char *path)
 {
     char *pkgname = NULL;

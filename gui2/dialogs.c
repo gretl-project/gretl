@@ -1297,6 +1297,51 @@ void select_list_dialog (char *listname, int *cancel)
     gtk_widget_show_all(dlg);
 }
 
+static void combo_set_retval (GtkComboBox *combo, int *ret)
+{
+    *ret = gtk_combo_box_get_active(combo);
+}
+
+int combo_selector_dialog (GList *list, const char *msg,
+			   int deflt)
+{
+    GtkWidget *dlg;
+    GtkWidget *combo;
+    GtkWidget *hbox, *vbox, *tmp;
+    int ret = deflt;
+
+    dlg = gretl_dialog_new(NULL, NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    /* label */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    /* selector */
+    hbox = gtk_hbox_new(FALSE, 5);
+    combo = gtk_combo_box_new_text();
+    set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(combo_set_retval), &ret);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, TRUE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+    cancel_delete_button(hbox, dlg, &ret);
+    
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tmp);
+
+    gtk_widget_show_all(dlg);
+
+    return ret;
+}
+
 static void bfgs_mode_callback (GtkToggleButton *button, int *s)
 {
     if (gtk_toggle_button_get_active(button)) {

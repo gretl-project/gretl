@@ -297,8 +297,7 @@ char *comma_separate_numbers (char *s)
 /**
  * has_suffix:
  * @str: the string to check.
- * @sfx: the suffix to check for, including a leading '.'
- * if applicable.
+ * @sfx: the suffix to check for, including the leading '.'
  *
  * Returns: 1 if @str ends with @sfx (on a case-insensitive
  * comparison), 0 otherwise.  
@@ -306,19 +305,19 @@ char *comma_separate_numbers (char *s)
 
 int has_suffix (const char *str, const char *sfx)
 {
-    int diff, ret = 0;
+    const char *p;
+    int ret = 0;
 
     if (str != NULL && sfx != NULL) {
-	diff = strlen(str) - strlen(sfx);
-	if (diff >= 0) {
+	p = strrchr(str, '.');
+	if (p != NULL && strlen(p) == strlen(sfx)) {
 	    ret = 1;
-	    str += diff;
-	    while (*str) {
-		if (*str != *sfx && *str != toupper(*sfx)) {
+	    while (*p) {
+		if (*p != *sfx && *p != toupper(*sfx)) {
 		    ret = 0;
 		    break;
 		}
-		str++;
+		p++;
 		sfx++;
 	    }
 	}
