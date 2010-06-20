@@ -23,6 +23,21 @@
 #include <time.h>
 #include <glib.h>
 
+/**
+ * SECTION:random
+ * @short_description: generate pseudo-random values
+ * @title: libgretl PRNG
+ * @include: libgretl.h
+ *
+ * Libgretl uses the GLib PRNG as its underlying engine,
+ * but offers added value in the form of generators for
+ * several distributions commonly used in econometrics.
+ *
+ * Note that before using the libgretl PRNG you must call
+ * either libgretl_init() or the specific initialization
+ * function shown below, gretl_rand_init(). 
+ */
+
 static GRand *gretl_rand;
 static unsigned int useed;
 
@@ -46,7 +61,9 @@ unsigned int gretl_rand_get_seed (void)
 void gretl_rand_init (void)
 {
     useed = time(NULL);
-    gretl_rand = g_rand_new();
+    if (gretl_rand == NULL) {
+	gretl_rand = g_rand_new();
+    }
     gretl_rand_set_seed((guint32) useed);
 }
 
@@ -314,10 +331,28 @@ static void box_muller_env_check (void)
     env_checked = 1;
 }
 
+/**
+ * gretl_rand_set_box_muller:
+ * @s: 1 or 0.
+ *
+ * If @s is non-zero, set libgretl's generator for normal
+ * variates to use the Box-Muller method, as opposed to the
+ * default which is to use the Ziggurat method. If @s is
+ * zero, reset to the Ziggurat.
+ */
+
 void gretl_rand_set_box_muller (int s)
 {
     use_box_muller = s;
 }
+
+/**
+ * gretl_rand_get_box_muller:
+ *
+ * Returns: non-zero if libgretl is using the Box-Muller method
+ * for generating normal random variates, zero if the default
+ * Ziggurat method is in use.
+ */
 
 int gretl_rand_get_box_muller (void)
 {

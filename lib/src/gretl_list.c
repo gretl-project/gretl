@@ -32,7 +32,7 @@
 
 /**
  * SECTION:gretl_list
- * @short_description: handling of lists of integers.
+ * @short_description: handling of lists of integers
  * @title: libgretl lists
  * @include: libgretl.h
  *
