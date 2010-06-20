@@ -2,7 +2,6 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" 
                "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 <!ENTITY adf-kpss  SYSTEM "xml/adf_kpss.xml">
-<!ENTITY bhhh-max  SYSTEM "xml/bhhh_max.xml">
 <!ENTITY bootstrap SYSTEM "xml/bootstrap.xml">
 <!ENTITY boxplots  SYSTEM "xml/boxplots.xml">
 <!ENTITY calendar SYSTEM "xml/calendar.xml">
@@ -44,7 +43,6 @@
 <!ENTITY matrix-extra   SYSTEM "xml/matrix_extra.xml">
 <!ENTITY missing        SYSTEM "xml/missing.xml">
 <!ENTITY modelprint     SYSTEM "xml/modelprint.xml">
-<!ENTITY modelspec      SYSTEM "xml/modelspec.xml">
 <!ENTITY nls            SYSTEM "xml/nls.xml">
 <!ENTITY nonparam       SYSTEM "xml/nonparam.xml">
 <!ENTITY objstack       SYSTEM "xml/objstack.xml">
@@ -108,12 +106,10 @@
     &nonparam; 
     &gretl-panel;
     &gretl-model;
-    &modelspec;
     &tsls;
     &nls;
     &system;   
     &var;   
-    &bhhh-max;
     &forecast;
     &kalman;
   </chapter>

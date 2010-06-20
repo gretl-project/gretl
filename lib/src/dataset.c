@@ -1557,6 +1557,9 @@ int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name)
  * @v: ID number of the series to be replaced.
  * @x: replacement values.
  * @descrip: replacement description.
+ * @flag: if = DS_GRAB_VALUES then replace Z[@v]
+ * with x, otherwise copy the values the values in
+ * x to Z[@v];
  *
  * Replaces the description and numerical content of
  * series @v with the information provided. 

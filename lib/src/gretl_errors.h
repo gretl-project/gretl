@@ -20,7 +20,7 @@
 #ifndef GRETL_ERRORS_H
 #define GRETL_ERRORS_H
 
-enum gretl_error_codes {
+typedef enum {
     E_DATA = 2,
     E_SINGULAR,     /* 3 */
     E_DF,           /* 4 */
@@ -70,7 +70,7 @@ enum gretl_error_codes {
     E_DB_DUP,      /* 48 : duplicate vars found when saving to database */
     E_OK,          /* 49 : not really an error */
     E_MAX          /* 50 */
-}; 
+} GretlError; 
 
 enum gretl_warning_codes {
     W_GRADIENT = 1,

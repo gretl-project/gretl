@@ -2186,12 +2186,12 @@ static int get_command_word (const char *line, char *cnext, CMD *cmd)
  * parse_command_line:
  * @line: the command line.
  * @cmd: pointer to command struct.
- * @pZ: pointer to data matrix.
- * @pdinfo: pointer to data information struct.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  *
  * Parses @line and fills out @cmd accordingly. 
  *
- * Returns: 0 on success, non-zero error code on error.
+ * Returns: 0 on success, non-zero code on error.
  */
 
 int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo) 
@@ -2356,7 +2356,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     } 
 
-    /** now for a few commands which may or may not take a list **/
+    /* now for a few commands which may or may not take a list */
 
     if (cmd->ci == PRINT && strstr(line, "\"")) {
 	/* no list in string literal variant */
@@ -2402,8 +2402,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    /** OK, now we're definitely doing a list-oriented command;
-	we begin by taking care of a few specials **/
+    /* OK, now we're definitely doing a list-oriented command;
+	we begin by taking care of a few specials */
 
     if (cmd->ci == GNUPLOT) {
 	/* we may have a block of stuff to pass literally
@@ -2433,8 +2433,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    /* find number of space-separated fields remaining in line,
-       record our reading position, and make a copy of the
+    /* find the number of space-separated fields remaining in
+       line, record our reading position, and make a copy of the
        remainder of the line
     */
     nf = count_free_fields(line) - 1;

@@ -25,6 +25,8 @@ SCAN_OPTIONS =
 # Header files to ignore when scanning.
 IGNORE_SRCS = \
         gretl_f2c.h \
+	bhhh_max.c \
+	bhhh_max.h \
 	clapack_double.h \
 	cmd_private.h \
 	csvdata.c \

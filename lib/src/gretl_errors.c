@@ -282,6 +282,7 @@ void gretl_warnmsg_set (const char *str)
 /**
  * gretl_errmsg_sprintf:
  * @fmt: format string.
+ * @...: arguments, as to sprintf.
  *
  * Append a formatted message to the current gretl
  * error message.
@@ -315,6 +316,7 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 /**
  * gretl_warnmsg_sprintf:
  * @fmt: format string.
+ * @...: arguments, as to sprintf.
  *
  * Write a formatted message to the current gretl
  * warning message space.
