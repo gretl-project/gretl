@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-06-20 11:27-0400\n"
-"PO-Revision-Date: 2010-04-30 00:20+0300\n"
+"PO-Revision-Date: 2010-06-21 00:11+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Lokalize 1.0\n"
+"X-Generator: Lokalize 1.1\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:245
 msgid "lagged differences"
@@ -1254,19 +1254,19 @@ msgid "Dataset extended by %d observations"
 msgstr "Выборка продолжена %d наблюдениями"
 
 #: lib/src/dataset.c:3166
-#, fuzzy, c-format
+#, c-format
 msgid "Variable %s cannot be renumbered"
-msgstr "Переменная '%s' не определена"
+msgstr "Номер переменной %s не может быть изменен"
 
 #: lib/src/dataset.c:3169
-#, fuzzy, c-format
+#, c-format
 msgid "Target ID %d is not available"
-msgstr "Переменная '%s' не является бинарной (значения 0/1)."
+msgstr "Идентификатор %d недоступен"
 
 #: lib/src/dataset.c:3178
-#, fuzzy, c-format
+#, c-format
 msgid "Renumbered %s as variable %d\n"
-msgstr "   число переменных: %d\n"
+msgstr ""
 
 #: lib/src/dataset.c:3223
 msgid "The 'dataset' command is not available within functions"
@@ -2116,19 +2116,19 @@ msgid "%s: no such object\n"
 msgstr "%s: нет такого объекта\n"
 
 #: lib/src/geneval.c:6804
-#, fuzzy, c-format
+#, c-format
 msgid "%s: insufficient arguments"
-msgstr "Команда имеет неверные аргументы"
+msgstr "%s: недостаточно аргументов"
 
 #: lib/src/geneval.c:6806
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid argument type %s"
-msgstr "'%s': неверный аргумент для %s()\n"
+msgstr "%s: неверный тип аргумента %s"
 
 #: lib/src/geneval.c:6809
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument %d: invalid type %s"
-msgstr "%s: аргумент %d должен быть равен %s"
+msgstr "%s: аргумент %d: неверный тип %s"
 
 #: lib/src/geneval.c:6819
 #, c-format
@@ -2697,9 +2697,9 @@ msgid "Initial value of objective function is not finite"
 msgstr ""
 
 #: lib/src/gretl_bundle.c:482
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted bundle %s"
-msgstr "Скалярная переменная %s удалена"
+msgstr ""
 
 #: lib/src/gretl_errors.c:38
 msgid "Data error"
@@ -2899,11 +2899,8 @@ msgid "%s: validated against DTD OK"
 msgstr ""
 
 #: lib/src/gretl_func.c:2323
-#, fuzzy
 msgid "No functions are available for packaging at present."
-msgstr ""
-"Нет доступных для объединения в пакет функций.\n"
-"Хотите создать новую функцию?"
+msgstr "Нет доступных функций для объединения в пакет."
 
 #: lib/src/gretl_func.c:3192
 msgid "No description available"
@@ -4354,7 +4351,6 @@ msgid "Interval estimates"
 msgstr "Интервальная оценка"
 
 #: lib/src/modelprint.c:711
-#, fuzzy
 msgid "Dynamic panel"
 msgstr "Динамическая панельная модель"
 
@@ -4431,14 +4427,12 @@ msgid "1-step Arellano-Bond"
 msgstr "1-шаговый метод Ареллано-Бонда"
 
 #: lib/src/modelprint.c:766
-#, fuzzy
 msgid "2-step dynamic panel"
-msgstr "Динамическая панельная модель"
+msgstr "Двухшаговая динамическая панель"
 
 #: lib/src/modelprint.c:768
-#, fuzzy
 msgid "1-step dynamic panel"
-msgstr "Динамическая панельная модель"
+msgstr "Одношаговая динамическая панель"
 
 #: lib/src/modelprint.c:772 lib/src/modelprint.c:776
 msgid "2-step GMM"
@@ -8403,9 +8397,8 @@ msgid "Seed for generator:"
 msgstr "Инициализировать датчик:"
 
 #: gui2/dialogs.c:1274
-#, fuzzy
 msgid "Choose named list"
-msgstr "Создать новый список"
+msgstr "Выберите именованный список"
 
 #: gui2/dialogs.c:1369
 msgid "gretl: iteration controls"
@@ -9707,9 +9700,8 @@ msgid "%s found\n"
 msgstr "%s найден(а)\n"
 
 #: gui2/gretl.c:1109
-#, fuzzy
 msgid "No lists are currently defined"
-msgstr "Скалярные переменные не определены"
+msgstr "Списки не определены"
 
 #: gui2/gretl.c:1208
 msgid "ID #"
@@ -10008,14 +10000,12 @@ msgid "Select _all"
 msgstr "Выделить _все"
 
 #: gui2/gretl.c:1431
-#, fuzzy
 msgid "Define or edit _list..."
-msgstr "Создать новый список"
+msgstr "Создать или изменить список..."
 
 #: gui2/gretl.c:1432
-#, fuzzy
 msgid "_Select listed variables..."
-msgstr "Выберите две переменные"
+msgstr ""
 
 #: gui2/gretl.c:1433 gui2/gretl.c:1511
 msgid "_Display values"
@@ -11730,9 +11720,8 @@ msgid ""
 msgstr ""
 
 #: gui2/library.c:1461
-#, fuzzy
 msgid "Not ready for variable labels"
-msgstr "Неполучено переменных"
+msgstr ""
 
 #: gui2/library.c:1487
 msgid "Export the labels to file"
@@ -13195,7 +13184,6 @@ msgid "Define named list"
 msgstr "Создать новый список"
 
 #: gui2/selector.c:5866
-#, fuzzy
 msgid "Name of list:"
 msgstr "Название списка:"
 
