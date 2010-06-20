@@ -889,7 +889,7 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
 }
 
 /**
- * gretl_matrix_write_as text:
+ * gretl_matrix_write_as_text:
  * @A: matrix.
  * @fname: name of file to write.
  *

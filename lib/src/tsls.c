@@ -41,6 +41,14 @@ static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
     }
 }
 
+/**
+ * tsls_free_data:
+ * @pmod: model to operate on.
+ *
+ * Frees the first-stage data attached to a two-stage least squares 
+ * model that was estimated using %OPT_E (part of a system).
+ */
+
 void tsls_free_data (const MODEL *pmod)
 {
     const char *endog = gretl_model_get_data(pmod, "endog");
@@ -56,6 +64,11 @@ void tsls_free_data (const MODEL *pmod)
 	}
     }
 }
+
+/* when tsls is called for initial estimation of an equation
+   within a system of equations, save the first-stage fitted
+   values on the model under the key "tslsX".
+*/
 
 static int 
 tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
@@ -331,12 +344,25 @@ ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err)
     return newlist;
 }
 
-/*
-  tsls_make_endolist: determines which variables in reglist, when
-  checked against the predetermined and exogenous vars in instlist,
-  need to be instrumented, and populates the returned list 
-  accordingly
-*/
+/**
+ * tsls_make_endolist:
+ * @reglist: regression specification.
+ * @instlist: predetermined and exogenous variables.
+ * @addconst: location to receive notification of whether
+ * the constant was added to the content of @instlist,
+ * or NULL.
+ * @err: location to receive error code.
+ *
+ * Determines which variables in @reglist, when checked against the
+ * predetermined and exogenous vars in @instlist, need to be 
+ * instrumented, and populates the returned list accordingly.
+ *
+ * If @addconst is non-NULL and the constant is found in @reglist
+ * but not in @instlist, then it is added to @instlist and this
+ * is flagged by writing 1 into @addconst.
+ *
+ * Returns: allocated list of variables to be instrumented.
+ */
 
 int *tsls_make_endolist (const int *reglist, int **instlist, 
 			 int *addconst, int *err)

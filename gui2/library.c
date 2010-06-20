@@ -4226,7 +4226,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     }	
 
     if (!err) {
-	err = genr_fit_resid(pmod, pZ, pdinfo, M_UHAT, 1);
+	err = genr_fit_resid(pmod, pZ, pdinfo, M_UHAT);
     }
 
     if (err) {
@@ -4647,7 +4647,7 @@ void do_corrgm (void)
 static int tmp_add_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			      int code)
 {
-    int err = genr_fit_resid(pmod, pZ, pdinfo, code, 1);
+    int err = genr_fit_resid(pmod, pZ, pdinfo, code);
 
     if (err) {
 	gui_errmsg(err);

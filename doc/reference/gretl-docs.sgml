@@ -8,7 +8,6 @@
 <!ENTITY calendar SYSTEM "xml/calendar.xml">
 <!ENTITY compare  SYSTEM "xml/compare.xml">
 <!ENTITY compat   SYSTEM "xml/compat.xml">
-<!ENTITY csvdata  SYSTEM "xml/csvdata.xml">
 <!ENTITY dataio   SYSTEM "xml/dataio.xml">
 <!ENTITY dataset  SYSTEM "xml/dataset.xml">
 <!ENTITY dbread   SYSTEM "xml/dbread.xml">
@@ -36,7 +35,6 @@
 <!ENTITY gretl-scalar   SYSTEM "xml/gretl_scalar.xml">
 <!ENTITY gretl-string-table SYSTEM "xml/gretl_string_table.xml">
 <!ENTITY gretl-utils    SYSTEM "xml/gretl_utils.xml">
-<!ENTITY gretl-win32    SYSTEM "xml/gretl_win32.xml">
 <!ENTITY gretl-www      SYSTEM "xml/gretl_www.xml">
 <!ENTITY gretl-xml      SYSTEM "xml/gretl_xml.xml">
 <!ENTITY interact       SYSTEM "xml/interact.xml">
@@ -100,7 +98,6 @@
 
   <chapter id="ch-dataset">
     <title>Data input and output</title>
-    &csvdata;
     &dataio; 
     &gretl-xml; 
     &dbread; 
@@ -201,7 +198,6 @@
     &gretl-paths; 
     &plugins; 
     &gretl-intl;
-    &gretl-win32;
     &gretl-www;
   </chapter>
 

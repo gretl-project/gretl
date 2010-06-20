@@ -23,6 +23,7 @@ lib/src/gensyntax.c
 lib/src/gmm.c
 lib/src/graphing.c
 lib/src/gretl_bfgs.c
+lib/src/gretl_bundle.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c
 lib/src/gretl_fft.c

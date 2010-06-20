@@ -34,17 +34,13 @@ enum {
     FILTER_FD
 };
 
-enum {
-    FILTER_SAVE_NONE = 0,
-    FILTER_SAVE_TREND = 1 << 0,
-    FILTER_SAVE_CYCLE = 1 << 1
-};
+#define FILTER_SAVE_NONE 0
+#define FILTER_SAVE_TREND OPT_A
+#define FILTER_SAVE_CYCLE OPT_B
 
-enum {
-    FILTER_GRAPH_NONE = 0,
-    FILTER_GRAPH_TREND = 1 << 0,
-    FILTER_GRAPH_CYCLE = 1 << 1
-};
+#define FILTER_GRAPH_NONE 0
+#define FILTER_GRAPH_TREND OPT_A
+#define FILTER_GRAPH_CYCLE OPT_B
 
 typedef struct filter_info_ filter_info;
 

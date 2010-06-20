@@ -82,20 +82,17 @@ PUBLIC_HDRS = \
 	calendar.h \
 	compare.h \
 	compat.h \
-	csvdata.h \
 	dataio.h \
 	dataset.h \
 	dbread.h \
 	describe.h \
 	discrete.h \
 	estimate.h \
-	flow_control.h \
 	forecast.h \
 	genmain.h \
 	genfuncs.h \
 	graphing.h \
 	gretl_bfgs.h \
-	gretl_bundle.h \
 	gretl_commands.h \
 	gretl_errors.h \
 	gretl_f2c.h \

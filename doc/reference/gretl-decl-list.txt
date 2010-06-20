@@ -89,14 +89,12 @@ screen_zero
 GretlType
 gretl_scalar_type
 gretl_ref_type
+gretlopt
 GretlOp
 DistCode
 ModelSelCriteria
 cmplx
-gretlopt
-PRN
 FITRESID
-DATASET
 GRETL_VAR
 model_data_item
 ModelTest
@@ -104,6 +102,7 @@ equation_system
 VARINFO
 PANINFO
 DATAINFO
+DATASET
 VMatrix
 SAMPLE
 ARINFO
@@ -148,14 +147,6 @@ chinese_locale
 UTF_WIDTH
 TRANSLATED_WIDTH
 gettext
-</SECTION>
-
-<SECTION>
-<FILE>csvdata</FILE>
-import_na_string
-import_obs_label
-test_markers_for_dates
-reverse_data
 </SECTION>
 
 <SECTION>
@@ -1352,7 +1343,6 @@ gen_wkday
 plotvar_code
 gretl_plotx
 get_fit_or_resid
-genr_fit_resid
 get_observation_number
 get_t_from_obs_string
 list_linear_combo
@@ -1391,17 +1381,6 @@ gretl_rand_int
 gretl_rand_init
 gretl_rand_free
 gretl_rand_get_seed
-</SECTION>
-
-<SECTION>
-<FILE>flow_control</FILE>
-gretl_if_state_clear
-gretl_if_state_finalize
-gretl_if_state_record
-gretl_if_state_false
-gretl_if_state_check
-gretl_if_state_reset
-flow_control
 </SECTION>
 
 <SECTION>
@@ -1570,6 +1549,7 @@ tex_column_format
 
 <SECTION>
 <FILE>gretl_prn</FILE>
+PRN
 PrnType
 PrnFormat
 gretl_print_destroy
@@ -2435,29 +2415,6 @@ guess_daily_pd
 </SECTION>
 
 <SECTION>
-<FILE>gretl_win32</FILE>
-win32_opendir
-read_reg_val
-get_gretlnet_filename
-set_gretlnet_filename
-cli_read_registry
-win_show_last_error
-winfork
-gretl_spawn
-gretl_shell
-gretl_win32_grab_output
-slash_convert
-desktop_path
-appdata_path
-mydocs_path
-program_files_path
-win32_write_access
-win32_delete_dir
-R_path_from_registry
-maybe_print_R_path_addition
-</SECTION>
-
-<SECTION>
 <FILE>vartest</FILE>
 N_IVALS
 gretl_VAR_clear
@@ -2472,21 +2429,6 @@ VAR_wald_omit_tests
 VAR_coeff_matrix_from_VECM
 reorder_responses
 irf_bootstrap
-</SECTION>
-
-<SECTION>
-<FILE>gretl_bundle</FILE>
-gretl_is_bundle
-gretl_bundle_get_data
-gretl_bundle_set_data
-gretl_bundle_add
-gretl_bundle_delete
-gretl_bundle_mark_as_return
-gretl_bundle_name_return
-gretl_bundle_localize
-gretl_bundle_unlocalize
-destroy_user_bundles_at_level
-destroy_user_bundles
 </SECTION>
 
 <SECTION>

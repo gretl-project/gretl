@@ -1271,7 +1271,7 @@ int gretl_print_alloc (PRN *prn, size_t s)
 }
 
 /**
- * set_up_verbose_printer.
+ * set_up_verbose_printer:
  * @opt: %OPT_V for verbosity.
  * @prn: currently active printing struct.
  *
@@ -1295,6 +1295,14 @@ PRN *set_up_verbose_printer (gretlopt opt, PRN *prn)
 
     return vprn;
 }
+
+/**
+ * close_down_verbose_printer:
+ * @vprn: prn pointer obtained via set_up_verbose_printer().
+ *
+ * Turns off verbose printing and frees the resources 
+ * associated with @vprn.
+ */
 
 void close_down_verbose_printer (PRN *vprn)
 {

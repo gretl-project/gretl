@@ -48,6 +48,13 @@ typedef enum {
     R_MAX
 } RetrievalIndex;
 
+/**
+ * ModelDataIndex:
+ * 
+ * Symbolic names for various scalars, series and matrices
+ * that can be retrieved from gretl models.
+ */
+
 typedef enum {
     M_ESS = R_MAX + 1, /* error sum of squares */
     M_T,          /* observations used */
@@ -139,9 +146,8 @@ int current_series_index (const DATAINFO *pdinfo, const char *vname);
 
 int extract_varname (char *targ, const char *src, int *len);
 
-int genr_fit_resid (const MODEL *pmod, 
-		    double ***pZ, DATAINFO *pdinfo,
-		    int code, int undo);
+int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		    ModelDataIndex idx);
 
 double generate_scalar (const char *s, double ***pZ, 
 			DATAINFO *pdinfo, int *err);

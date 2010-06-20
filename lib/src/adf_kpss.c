@@ -422,6 +422,24 @@ static void copy_list_values (int *targ, const int *src)
     }
 }
 
+/**
+ * df_pvalue_from_plugin:
+ * @tau: test statistic.
+ * @n: sample size (or 0 for asymptotic result).
+ * @niv: number of potentially cointegrated variables
+ * (1 for simple unit-root test).
+ * @itv: code: 1, 2, 3, 4 for nc, c, ct, ctt models
+ * respectively.
+ * @opt: give OPT_G if GLS adjustment was applied in
+ * the test from which @tau was obtained.
+ *
+ * Retrieves the p-value for @tau from the Dickey–Fuller 
+ * unit-root test or the Engle–Granger cointegration 
+ * test, as per James MacKinnon (1996).
+ *
+ * Returns: p-value, or %NADBL on failure.
+ */
+
 double df_pvalue_from_plugin (double tau, int n, int niv, int itv,
 			      gretlopt opt)
 {

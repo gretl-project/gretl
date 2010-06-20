@@ -353,7 +353,7 @@ int MS_excel_date_string (char *date, int mst, int pd, int d1904)
 
 /**
  * get_dec_date:
- * @date: calendar representation of date.
+ * @date: calendar representation of date: YYYY/MM/DD.
  * 
  * Returns: representation of date as year plus fraction of year.
  */
@@ -406,7 +406,17 @@ static int day_of_week_from_ymd (int yr, int mo, int day)
 	    - ((2 * c) % 7)) % 7; 
 }
 
-/* public access to the function above, with error checking */
+/**
+ * day_of_week:
+ * @yr: year, preferably 4-digit.
+ * @mo: month, 1 to 12.
+ * @day: day in month, 1 to 31.
+ * @err: location to receive error code.
+ *
+ * Returns: the day of the week for the supplied date
+ * (Sunday = 0, Monday = 1, ...) or %NADBL on failure 
+ * (the date is invalid).
+ */
 
 double day_of_week (int yr, int mo, int day, int *err)
 {
@@ -563,6 +573,18 @@ int get_days_in_month (int mon, int yr, int wkdays)
     return ret;
 }
 
+/**
+ * days_in_month_before:
+ * @yr: 4-digit year
+ * @mon: month number, 1-based
+ * @day: day in month.
+ * @wkdays: number of days in week (7, 6 or 5)
+ * 
+ * Returns: the number of relevant days in the month prior to
+ * the supplied date, allowing for the possibility of a 5- or 
+ * 6-day week.
+ */
+
 int days_in_month_before (int yr, int mon, int day, int wkdays)
 {
     int ret = 0;
@@ -580,6 +602,18 @@ int days_in_month_before (int yr, int mon, int day, int wkdays)
 
     return ret;    
 }
+
+/**
+ * days_in_month_after:
+ * @yr: 4-digit year
+ * @mon: month number, 1-based
+ * @day: day in month.
+ * @wkdays: number of days in week (7, 6 or 5)
+ * 
+ * Returns: the number of relevant days in the month after
+ * the supplied date, allowing for the possibility of a 5- or 
+ * 6-day week.
+ */
 
 int days_in_month_after (int yr, int mon, int day, int wkdays)
 {
@@ -601,14 +635,20 @@ int days_in_month_after (int yr, int mon, int day, int wkdays)
     return ret;    
 }
 
-/* For daily data with user-supplied data strings, 
-   determine the number of "hidden" missing observations,
-   i.e. the difference between the actual number of
-   observations and the number that should be there,
-   according to the calendar (may include holidays).
-   Allowance is made for business-day data, via the
-   frequency, pdinfo->pd.
-*/
+/**
+ * n_hidden_missing_obs:
+ * @pdinfo: dataset information.
+ *
+ * For daily data with user-supplied data strings, 
+ * determine the number of "hidden" missing observations,
+ * i.e. the difference between the actual number of
+ * observations and the number that should be there,
+ * according to the calendar. Allowance is made for 
+ * 5- or 6-day data, via the data frequency given
+ * in @pdinfo.
+ *
+ * Returns: number of hidden observations.
+ */
 
 int n_hidden_missing_obs (const DATAINFO *pdinfo)
 {
@@ -627,8 +667,17 @@ int n_hidden_missing_obs (const DATAINFO *pdinfo)
     return cal_n - pdinfo->n;
 }
 
-/* based on supplied data strings, try to guess whether
-   daily data is 7-day, 6-day or 5-day */
+/**
+ * guess_daily_pd:
+ * @pdinfo: dataset information.
+ *
+ * Based on user-supplied daily date strings recorded in
+ * @pdinfo, try to guess whether the number of observations
+ * per week is 5, 6 or 7 (given that some observations 
+ * may be missing).
+ *
+ * Returns: best quess at data frequency.
+ */
 
 int guess_daily_pd (const DATAINFO *pdinfo)
 {

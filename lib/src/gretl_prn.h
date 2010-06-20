@@ -22,6 +22,7 @@
 
 /**
  * PRN:
+ *
  * An opaque structure accessed only via gretl_prn functions.
  */
 

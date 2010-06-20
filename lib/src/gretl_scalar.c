@@ -467,7 +467,7 @@ static int levels_match (gretl_scalar *s, int lev)
 }
 
 /**
- * destroy_user_scalars_at_level.
+ * destroy_user_scalars_at_level:
  * @level: depth of function execution.
  *
  * Deletes any saved scalars at a particular level of function

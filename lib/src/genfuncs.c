@@ -1825,7 +1825,7 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
  * get_fit_or_resid:
  * @pmod: pointer to source model.
  * @pdinfo: information on the data set.
- * @code: M_UHAT, M_UHAT2, M_YHAT, M_AHAT or M_H.
+ * @idx: %M_UHAT, %M_UHAT2, %M_YHAT, %M_AHAT or %M_H.
  * @vname: location to write series name (length %VNAMELEN)
  * @vlabel: location to write series description (length should
  * be %MAXLABEL).
@@ -1838,20 +1838,21 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
  * Returns: allocated array on success or NULL on failure.
  */
 
-double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
-			  char *vname, char *vlabel, int *err)
+double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, 
+			  ModelDataIndex idx, char *vname, 
+			  char *vlabel, int *err)
 {
     const double *src = NULL;
     double *ret = NULL;
     int t;
 
-    if (code == M_H) {
+    if (idx == M_H) {
 	src = gretl_model_get_data(pmod, "garch_h");
-    } else if (code == M_AHAT) {
+    } else if (idx == M_AHAT) {
 	src = gretl_model_get_data(pmod, "ahat");
-    } else if (code == M_UHAT || code == M_UHAT2) {
+    } else if (idx == M_UHAT || idx == M_UHAT2) {
 	src = pmod->uhat;
-    } else if (code == M_YHAT) {
+    } else if (idx == M_YHAT) {
 	src = pmod->yhat;
     }
 
@@ -1868,7 +1869,7 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
 
     for (t=0; t<pdinfo->n; t++) {
 	if (t >= pmod->t1 && t <= pmod->t2) {
-	    if (code == M_UHAT2) {
+	    if (idx == M_UHAT2) {
 		ret[t] = na(src[t]) ? NADBL : (src[t] * src[t]);
 	    } else {
 		ret[t] = src[t];
@@ -1878,17 +1879,17 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
 	}
     }
 
-    if (code == M_UHAT) {
+    if (idx == M_UHAT) {
 	sprintf(vname, "uhat%d", pmod->ID);
 	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
 	    sprintf(vlabel, _("standardized residual from model %d"), pmod->ID);
 	} else {
 	    sprintf(vlabel, _("residual from model %d"), pmod->ID);
 	}
-    } else if (code == M_YHAT) {
+    } else if (idx == M_YHAT) {
 	sprintf(vname, "yhat%d", pmod->ID);
 	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
-    } else if (code == M_UHAT2) { 
+    } else if (idx == M_UHAT2) { 
 	/* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
@@ -1896,11 +1897,11 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
 	} else {
 	    sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
 	}
-    } else if (code == M_H) { 
+    } else if (idx == M_H) { 
 	/* garch variance */
 	sprintf(vname, "h%d", pmod->ID);
 	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
-    } else if (code == M_AHAT) { 
+    } else if (idx == M_AHAT) { 
 	/* fixed-effects constants */
 	sprintf(vname, "ahat%d", pmod->ID);
 	sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
@@ -1914,8 +1915,7 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
  * @pmod: pointer to source model.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
- * @code: M_UHAT, M_UHAT2, M_YHAT, M_AHAT or M_H.
- * @undo: if non-zero, don't bother labeling the series.
+ * @idx: %M_UHAT, %M_UHAT2, %M_YHAT, %M_AHAT or %M_H.
  * 
  * Adds residuals or fitted values or squared residuals from a
  * given model to the data set.
@@ -1924,13 +1924,13 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, int code,
  */
 
 int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		    int code, int undo)
+		    ModelDataIndex idx)
 {
     char vname[VNAMELEN], vlabel[MAXLABEL];
     double *x;
     int err = 0;
 
-    x = get_fit_or_resid(pmod, pdinfo, code, vname, vlabel, &err);
+    x = get_fit_or_resid(pmod, pdinfo, idx, vname, vlabel, &err);
 
     if (!err) {
 	err = dataset_add_allocated_series(x, pZ, pdinfo);
@@ -1942,9 +1942,7 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	int v = pdinfo->v - 1;
 
 	strcpy(pdinfo->varname[v], vname);
-	if (!undo) {
-	    strcpy(VARLABEL(pdinfo, v), vlabel);
-	}
+	strcpy(VARLABEL(pdinfo, v), vlabel);
     }
 
     return err;

@@ -23,16 +23,24 @@ DOC_SOURCE_DIR = ../../lib/src
 SCAN_OPTIONS =
 
 # Header files to ignore when scanning.
-IGNORE_HFILES = \
+IGNORE_SRCS = \
         gretl_f2c.h \
 	clapack_double.h \
 	cmd_private.h \
+	csvdata.c \
+	csvdata.h \
         estim_private.h \
+	flow_control.c \
+	flow_control.h \
+	gretl_bundle.c \
+	gretl_bundle.h \
+	gretl_win32.c \
+	gretl_win32.h \
 	missing_private.h \
 	version.h
 
 # Extra options to supply to gtkdoc-mkdb.
-MKDB_OPTIONS = --output-format=xml --ignore-files="$(IGNORE_HFILES)" \
+MKDB_OPTIONS = --output-format=xml --ignore-files="$(IGNORE_SRCS)" \
                --expand-content-files=""
 
 # Extra options to supply to gtkdoc-fixref.
@@ -75,7 +83,7 @@ scan-build.stamp: $(HFILE_GLOB)
 	@echo '*** Scanning header files ***'
 	cd $(srcdir) && \
 	  gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) \
-	--ignore-headers="$(IGNORE_HFILES)" $(SCAN_OPTIONS) $(EXTRA_HFILES)
+	--ignore-headers="$(IGNORE_SRCS)" $(SCAN_OPTIONS) $(EXTRA_HFILES)
 	touch scan-build.stamp
 
 $(DOC_MODULE)-decl.txt: scan-build.stamp
