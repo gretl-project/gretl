@@ -854,10 +854,10 @@ int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
     } else {
 	if (!na(pmod->adjrsq)) {
-	    pprintf(prn, ", R-squared = %.3f ", pmod->rsq);
+	    pprintf(prn, ", %s = %.3f ", I_("R-squared"), pmod->rsq);
 	} else if (!na(pmod->lnL)) {
 	    eqn_numstr(pmod->lnL, xstr);
-	    pprintf(prn, ", loglikelihood = %s ", xstr);
+	    pprintf(prn, ", %s = %s ", I_("loglikelihood"), xstr);
 	}
 	x = gretl_model_get_double(pmod, "rho_in");
 	if (!na(x)) {
