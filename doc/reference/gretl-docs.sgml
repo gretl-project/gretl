@@ -23,7 +23,6 @@
 <!ENTITY gretl-commands SYSTEM "xml/gretl_commands.xml">
 <!ENTITY gretl-errors   SYSTEM "xml/gretl_errors.xml">
 <!ENTITY gretl-fft      SYSTEM "xml/gretl_fft.xml">
-<!ENTITY gretl-func     SYSTEM "xml/gretl_func.xml">
 <!ENTITY gretl-intl     SYSTEM "xml/gretl_intl.xml">
 <!ENTITY gretl-list     SYSTEM "xml/gretl_list.xml">
 <!ENTITY gretl-matrix   SYSTEM "xml/gretl_matrix.xml">
@@ -46,7 +45,6 @@
 <!ENTITY missing        SYSTEM "xml/missing.xml">
 <!ENTITY modelprint     SYSTEM "xml/modelprint.xml">
 <!ENTITY modelspec      SYSTEM "xml/modelspec.xml">
-<!ENTITY monte-carlo    SYSTEM "xml/monte_carlo.xml">
 <!ENTITY nls            SYSTEM "xml/nls.xml">
 <!ENTITY nonparam       SYSTEM "xml/nonparam.xml">
 <!ENTITY objstack       SYSTEM "xml/objstack.xml">
@@ -54,7 +52,6 @@
 <!ENTITY plotspec       SYSTEM "xml/plotspec.xml">
 <!ENTITY plugins        SYSTEM "xml/plugins.xml">
 <!ENTITY printout       SYSTEM "xml/printout.xml">
-<!ENTITY printscan      SYSTEM "xml/printscan.xml">
 <!ENTITY pvalues        SYSTEM "xml/pvalues.xml">
 <!ENTITY qr-estimate    SYSTEM "xml/qr_estimate.xml">
 <!ENTITY random         SYSTEM "xml/random.xml">
@@ -64,7 +61,6 @@
 <!ENTITY texprint       SYSTEM "xml/texprint.xml">
 <!ENTITY transforms     SYSTEM "xml/transforms.xml">
 <!ENTITY tsls           SYSTEM "xml/tsls.xml">
-<!ENTITY usermat        SYSTEM "xml/usermat.xml">
 <!ENTITY var            SYSTEM "xml/var.xml">
 <!ENTITY varprint       SYSTEM "xml/varprint.xml">
 <!ENTITY vartest        SYSTEM "xml/vartest.xml">
@@ -145,7 +141,6 @@
   <chapter id="ch-printing">
     <title>Printing and graphing</title>
     &printout; 
-    &printscan; 
     &modelprint;
     &texprint;
     &graphing;
@@ -159,13 +154,6 @@
     <title>Matrix manipulation</title>
     &gretl-matrix;
     &matrix-extra;
-    &usermat;  
-  </chapter>
-
-  <chapter id="ch-func">
-    <title>Command structures: loops and functions</title>
-    &monte-carlo;
-    &gretl-func;   
   </chapter>
 
   <chapter id="ch-interact">

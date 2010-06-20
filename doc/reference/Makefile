@@ -34,9 +34,17 @@ IGNORE_SRCS = \
 	flow_control.h \
 	gretl_bundle.c \
 	gretl_bundle.h \
+	gretl_func.c \
+	gretl_func.h \
 	gretl_win32.c \
 	gretl_win32.h \
 	missing_private.h \
+	monte_carlo.c \
+	monte_carlo.h \
+	printscan.c \
+	printscan.h \
+	usermat.c \
+	usermat.h \
 	version.h
 
 # Extra options to supply to gtkdoc-mkdb.
