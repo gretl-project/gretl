@@ -1115,9 +1115,9 @@ int do_rankcorr (selector *sr)
     }
 
     if (opt & OPT_K) {
-	err = kendall(libcmd.list, (const double **) Z, datainfo, opt, prn);
+	err = kendall_tau(libcmd.list, (const double **) Z, datainfo, opt, prn);
     } else {
-	err = spearman(libcmd.list, (const double **) Z, datainfo, opt, prn);
+	err = spearman_rho(libcmd.list, (const double **) Z, datainfo, opt, prn);
     }
 
     if (err) {

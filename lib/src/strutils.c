@@ -26,6 +26,16 @@
 #include <glib.h>
 
 /**
+ * SECTION:strutils
+ * @short_description: miscellaneous string-handling utilities
+ * @title: Strings
+ * @include: libgretl.h
+ *
+ * Various functions for creating, testing and manipulating
+ * strings and arrays of strings.
+ */
+
+/**
  * string_is_blank:
  * @s: the string to examine.
  *
@@ -191,7 +201,7 @@ char *gretl_delete (char *str, int idx, int count)
 }
 
 /**
- * haschar:
+ * charpos:
  * @c: the character to look for.
  * @s: the string to examine.
  *
@@ -199,7 +209,7 @@ char *gretl_delete (char *str, int idx, int count)
  * found.
  */
 
-int haschar (char c, const char *s)
+int charpos (char c, const char *s)
 {
     int i = 0;
 
@@ -263,8 +273,7 @@ char *charsub (char *str, char find, char repl)
  *
  * Given a string which contains two or more numbers
  * separated by spaces and/or commas, revise the
- * string to ensure that all the numbers are comma-
- * separated.
+ * string to ensure that all the numbers are comma-separated.
  *
  * Returns: the (possibly modified) string.
  */
@@ -439,7 +448,7 @@ char *lower (char *str)
  * gretl_strdup:
  * @src: the string to duplicate.
  *
- * Returns: an allocated copy of @src, or %NULL on error.
+ * Returns: an allocated copy of @src, or NULL on error.
  */
 
 char *gretl_strdup (const char *src)
@@ -462,7 +471,7 @@ char *gretl_strdup (const char *src)
  * @n: the maximum number of characters to copy.
  *
  * Returns: an allocated copy of at most @n characters from 
- * @src, or %NULL on error.
+ * @src, or NULL on error.
  */
 
 char *gretl_strndup (const char *src, size_t n)
@@ -493,7 +502,7 @@ char *gretl_strndup (const char *src, size_t n)
  *
  * Print the arguments according to @format.
  * 
- * Returns: allocated result of the printing, or %NULL on failure.
+ * Returns: allocated result of the printing, or NULL on failure.
  */
 
 char *gretl_strdup_printf (const char *format, ...)
@@ -525,16 +534,16 @@ char *gretl_strdup_printf (const char *format, ...)
  * gretl_str_expand:
  * @orig: pointer to the base string.
  * @add: the string to be added.
- * @sep: string to be interpolated, or %NULL.
+ * @sep: string to be interpolated, or NULL.
  *
  * Creates a newly allocated string built by concatenating
  * @orig and @add, with @sep interpolated unless @sep is
- * %NULL, and replaces the content of @orig with the new string.
- * As a special case, if @orig is %NULL, or if the content of
- * @orig is %NULL, we just duplicate @add.
+ * NULL, and replaces the content of @orig with the new string.
+ * As a special case, if @orig is NULL, or if the content of
+ * @orig is NULL, we just duplicate @add.
  *
- * Returns: the reallocated string, or %NULL on failure.  In case
- * of failure the content of @orig is freed, if @orig is not %NULL,
+ * Returns: the reallocated string, or NULL on failure.  In case
+ * of failure the content of @orig is freed, if @orig is not NULL,
  * to avoid memory leakage.
  */
 
@@ -578,15 +587,15 @@ char *gretl_str_expand (char **orig, const char *add, const char *sep)
 /**
  * gretl_word_strdup:
  * @src: the source string.
- * @ptr: location to receive end of word pointer, or %NULL.
+ * @ptr: location to receive end of word pointer, or NULL.
  *
  * Copies the first 'word' found in @src, where a word
  * is defined as consisting of alphanumeric characters
- * and the underscore.  If @ptr is not %NULL, on exit it
+ * and the underscore.  If @ptr is not NULL, on exit it
  * points at the next position in @src after the copied
  * word.
  *
- * Returns: the allocated word or %NULL in case no word is
+ * Returns: the allocated word or NULL in case no word is
  * found, or if allocation fails.
  */
 
@@ -632,15 +641,15 @@ char *gretl_word_strdup (const char *src, const char **ptr)
 /**
  * gretl_quoted_string_strdup:
  * @s: the source string.
- * @ptr: location to receive end pointer, or %NULL.
+ * @ptr: location to receive end pointer, or NULL.
  *
  * If @s starts with a quote (double or single), return a copy of  
  * the portion of @s that is enclosed in quotes.  That is, 
  * from @s + 1 up to but not including the next matching quote.
- * If @ptr is not %NULL, on output it receives a pointer to
+ * If @ptr is not NULL, on output it receives a pointer to
  * the next byte in @s after the closing quote.
  *
- * Returns: the allocated string or %NULL on failure.
+ * Returns: the allocated string or NULL on failure.
  */
 
 char *gretl_quoted_string_strdup (const char *s, const char **ptr)
@@ -690,7 +699,7 @@ char *gretl_quoted_string_strdup (const char *s, const char **ptr)
  * by one or more spaces, and creates an array of those substrings. 
  * On sucessful exit, @n holds the number of substrings. 
  *
- * Returns: the allocated array or %NULL in case of failure.
+ * Returns: the allocated array or NULL in case of failure.
  */
 
 char **gretl_string_split (const char *s, int *n)
@@ -941,12 +950,12 @@ int get_base (char *targ, const char *src, char c)
  * top_n_tail:
  * @str: the string to process.
  * @maxlen: maximum length of string, including NUL termination.
- * @err: location to receive error code, or %NULL.
+ * @err: location to receive error code, or NULL.
  *
  * Drop leading space and trailing space and newline from string,
  * then replace a trailing backslash (if any) with a space.
  * If @str does not end with a newline within the limit set by
- * @maxlen, and @err is not %NULL, then %E_TOOLONG is written 
+ * @maxlen, and @err is not NULL, then E_TOOLONG is written 
  * to @err.
  * 
  * Returns: 1 if a trailing backslash or comma was found, 
@@ -1209,9 +1218,9 @@ char *safecpy (char *targ, const char *src, int n)
  * @nstrs: number of strings in array.
  *
  * Allocates storage for @nstrs strings and initalizes all 
- * to %NULL.
+ * to NULL.
  * 
- * Returns: the allocated array, or %NULL on failure.
+ * Returns: the allocated array, or NULL on failure.
  */
 
 char **strings_array_new (int nstrs)
@@ -1281,7 +1290,7 @@ int strings_array_add (char ***pS, int *n, const char *p)
  * @len bytes long.  The first byte of each string is
  * initialized to 0.
  * 
- * Returns: the allocated array, or %NULL on failure.
+ * Returns: the allocated array, or NULL on failure.
  */
 
 char **strings_array_new_with_length (int nstrs, int len)
@@ -1324,7 +1333,7 @@ char **strings_array_new_with_length (int nstrs, int len)
  * This function may be used either to expand or to
  * shrink an existing array of strings.
  * 
- * Returns: the new array, or %NULL on failure.
+ * Returns: the new array, or NULL on failure.
  */
 
 char **strings_array_realloc_with_length (char ***pS, 
@@ -1388,7 +1397,7 @@ char **strings_array_realloc_with_length (char ***pS,
  * @strs: array of strings to be copied.
  * @n: number of strings in array.
  *
- * Returns: an allocated copy of @strs, or %NULL on failure.
+ * Returns: an allocated copy of @strs, or NULL on failure.
  */
 
 char **strings_array_dup (char **strs, int n)
@@ -1429,7 +1438,7 @@ char **strings_array_dup (char **strs, int n)
  *
  * Compares for equality two arrays of strings, each of
  * which must contain at least @n elements.  Equality
- * of the arrays means that %strcmp returns 0 for
+ * of the arrays means that strcmp returns 0 for
  * each pair of strings @strs1[i], @strs2[i], for i
  * equals 0 to @n - 1.
  *
@@ -1454,7 +1463,7 @@ int strings_array_cmp (char **strs1, char **strs2, int n)
  * @nstrs: number of strings in array.
  *
  * Frees each allocated string in @strs, then frees @strs itself.
- * Checks that @strs is not %NULL before proceeding.
+ * Checks that @strs is not NULL before proceeding.
  */
 
 void free_strings_array (char **strs, int nstrs)
@@ -1869,7 +1878,7 @@ char *append_dir (char *fname, const char *dir)
  * @targ: target string to write to (must be pre-allocated).
  * @dirname: first part of path.
  * @fname: filename.
- * @ext: filename extension to be appended (or %NULL).
+ * @ext: filename extension to be appended (or NULL).
  *
  * Writes to @targ a full path composed of @dirname,
  * @fname and (optionally) @ext.  This function ensures

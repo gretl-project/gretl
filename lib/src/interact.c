@@ -189,7 +189,7 @@ int filter_comments (char *s, CMD *cmd)
 
 static int get_lags_param (char *s, CMD *cmd)
 {
-    int k = haschar(';', s);
+    int k = charpos(';', s);
     int ret = 0;
 
     if (k > 0) {
@@ -3569,7 +3569,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
     /* command is preceded by a "savename" to which an object will
        be assigned */
     if (*cmd->savename && !cmd->context && cmd->ci != END) {
-	if (haschar(' ', cmd->savename) >= 0) {
+	if (strchr(cmd->savename, ' ') != NULL) {
 	    pprintf(prn, "\"%s\" <- ", cmd->savename);
 	    llen += strlen(cmd->savename) + 6;
 	} else {
@@ -3724,7 +3724,7 @@ static void get_optional_filename_etc (const char *line, CMD *cmd)
 	    set_tex_param_format(NULL);
 	} else if (q != NULL && *(q + 9) == '"') {
 	    q += 10;
-	    len = haschar('"', q);
+	    len = charpos('"', q);
 	    if (len > 0) {
 		p = gretl_strndup(q, len);
 		if (p != NULL) {
@@ -4409,9 +4409,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 	if (cmd->opt & OPT_K) {
-	    err = kendall(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    err = kendall_tau(cmd->list, Z, pdinfo, cmd->opt, prn);
 	} else if (cmd->opt & OPT_S) {
-	    err = spearman(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    err = spearman_rho(cmd->list, Z, pdinfo, cmd->opt, prn);
 	} else {
 	    err = gretl_corrmx(cmd->list, Z, pdinfo, cmd->opt, prn);
 	}
@@ -4657,7 +4657,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SPEARMAN:
-	err = spearman(cmd->list, Z, pdinfo, cmd->opt, prn);
+	err = spearman_rho(cmd->list, Z, pdinfo, cmd->opt, prn);
 	break;
 
     case DIFFTEST:

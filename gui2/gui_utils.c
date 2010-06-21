@@ -669,7 +669,7 @@ static void gui_record_data_opening (const char *fname, const int *list)
 {
     const char *recname = (fname != NULL)? fname : datafile;
 
-    if (haschar(' ', recname) >= 0) {
+    if (strchr(recname, ' ') != NULL) {
 	gretl_command_sprintf("open \"%s\"", recname);
     } else {
 	gretl_command_sprintf("open %s", recname);

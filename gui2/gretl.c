@@ -2097,8 +2097,8 @@ mdata_handle_drag  (GtkWidget *widget,
 
     /* there may be multiple files: we ignore all but the first */
     *tmp = 0;
-    if ((pos = haschar('\r', dfname)) > 0 || 
-	(pos = haschar('\n', dfname) > 0)) {
+    if ((pos = charpos('\r', dfname)) > 0 || 
+	(pos = charpos('\n', dfname) > 0)) {
 	strncat(tmp, dfname + skip, pos - skip);
     } else {
 	strcat(tmp, dfname + skip);

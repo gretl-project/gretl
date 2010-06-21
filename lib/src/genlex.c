@@ -742,7 +742,7 @@ NODE *obs_node (parser *p)
     int special = 0;
     int t = -1;
 
-    close = haschar(']', s);
+    close = charpos(']', s);
 
 #if LDEBUG
     fprintf(stderr, "obs_node: s='%s', ch='%c', close=%d\n", 
@@ -756,7 +756,7 @@ NODE *obs_node (parser *p)
 	pprintf(p->prn, _("Unmatched '%c'\n"), '[');
 	p->err = E_PARSE;
     } else if (*s == '"' && close < OBSLEN + 2 &&
-	       haschar('"', s+1) == close - 2) {
+	       charpos('"', s+1) == close - 2) {
 	/* quoted observation label? */
 	strncat(word, s, close);
 	special = 1;

@@ -17,9 +17,18 @@
  * 
  */
 
-/* non-parametric stats for gretl */
-
 #include "libgretl.h"
+
+/**
+ * SECTION:nonparam
+ * @short_description: selected nonparametric routines
+ * @title: Nonparametric
+ * @include: libgretl.h
+ *
+ * Includes various nonparametric tests: rank correlation,
+ * runs (randomness), and differences between series.  Also
+ * "loess" regression a la William Cleveland.
+ */
 
 /* Spearman, one-tailed alpha = .005, .025, .05 */
 
@@ -264,7 +273,7 @@ static void print_raw_and_ranked (int vx, int vy,
 }
 
 /**
- * spearman:
+ * spearman_rho:
  * @list: list of (two) variables to process.
  * @Z: data array.
  * @pdinfo: information on the data set.
@@ -277,8 +286,8 @@ static void print_raw_and_ranked (int vx, int vy,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int spearman (const int *list, const double **Z, const DATAINFO *pdinfo, 
-	      gretlopt opt, PRN *prn)
+int spearman_rho (const int *list, const double **Z, const DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn)
 {
     int T = pdinfo->t2 - pdinfo->t1 + 1;
     double *rx = NULL, *ry = NULL;
@@ -502,8 +511,22 @@ static int real_kendall_tau (const double *x, const double *y,
     return 0;
 }
 
-int kendall (const int *list, const double **Z, const DATAINFO *pdinfo, 
-	     gretlopt opt, PRN *prn)
+/**
+ * kendall_tau:
+ * @list: list of (two) variables to process.
+ * @Z: data array.
+ * @pdinfo: information on the data set.
+ * @opt: if includes %OPT_V, print both the "raw" and the ranked data.
+ * @prn: gretl printing struct.
+ *
+ * Calculates and prints Kendall's rank correlation tau statistic for
+ * the two variables specified in @list.
+ * 
+ * Returns: 0 on successful completion, 1 on error.
+ */
+
+int kendall_tau (const int *list, const double **Z, const DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
 {
     struct xy_pair *xy = NULL;
     int T = pdinfo->t2 - pdinfo->t1 + 1;
@@ -567,7 +590,6 @@ int kendall (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     pputc(prn, '\n');
 
-    /* clean up */
     free(xy);
 
     return err;
@@ -719,7 +741,7 @@ double lockes_test (const double *x, int t1, int t2)
  * @prn: gretl printing struct.
  *
  * Performs, and prints the results of, the runs test for randomness
- * for the variable specified by @varno.  The normal approximation
+ * for the variable specified by @v.  The normal approximation
  * is that given in Gary Smith, Statistical Reasoning, 2e, p. 674.
  * 
  * Returns: 0 on successful completion, non-zero on error.

@@ -57,7 +57,7 @@ int slashpos (const char *str);
 
 char *delchar (int c, char *str);
 
-int haschar (char c, const char *s);
+int charpos (char c, const char *s);
 
 int lastchar (char c, const char *s);
 

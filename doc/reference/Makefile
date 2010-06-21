@@ -149,6 +149,7 @@ realclean: clean
 
 install:
 	mkdir -p $(HTML_DIR)
+	rm -f $(HTML_DIR)/*.html
 	(installfiles=`echo $(srcdir)/html/*.html`; \
 	if test "$$installfiles" = '$(srcdir)/html/*.html'; \
 	then echo '-- Nothing to install' ; \

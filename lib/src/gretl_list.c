@@ -33,7 +33,7 @@
 /**
  * SECTION:gretl_list
  * @short_description: handling of lists of integers
- * @title: libgretl lists
+ * @title: Lists
  * @include: libgretl.h
  *
  * Lists of integers are used in many contexts in libgretl, e.g.
