@@ -94,7 +94,7 @@ double gretl_get_cdf_inverse (char st, const double *parm, double a);
 
 double gretl_get_critval (char st, const double *parm, double a);
 
-double *gretl_get_random_series (char st, const double *p,
+double *gretl_get_random_series (char st, const double *parm,
 				 const double *serp1, 
 				 const double *serp2, 
 				 const DATAINFO *pdinfo,
@@ -104,7 +104,7 @@ int batch_pvalue (const char *str,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  PRN *prn);
 
-void print_pvalue (char st, const double *p, double x, double pv, PRN *prn);
+void print_pvalue (char st, const double *parm, double x, double pv, PRN *prn);
 
 void print_critval (char st, const double *parm, double a, double c, PRN *prn);
 

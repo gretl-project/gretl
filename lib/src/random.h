@@ -20,11 +20,17 @@
 #ifndef RANDOM_H
 #define RANDOM_H
 
+void gretl_rand_init (void);
+
+void gretl_rand_free (void);
+
 void gretl_rand_set_seed (unsigned int seed);
 
-void gretl_rand_set_box_muller (int s);
+unsigned int gretl_rand_int (void);
 
-int gretl_rand_get_box_muller (void);
+unsigned int gretl_rand_int_max (unsigned int max);
+
+int gretl_rand_int_minmax (int *a, int n, int min, int max);
 
 double gretl_one_snormal (void);
 
@@ -32,8 +38,6 @@ void gretl_rand_uniform (double *a, int t1, int t2);
 
 int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 			       double min, double max);
-
-int gretl_rand_int_minmax (int *a, int n, int min, int max);
 
 void gretl_rand_normal (double *a, int t1, int t2);
 
@@ -57,13 +61,9 @@ int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 int gretl_rand_gamma (double *a, int t1, int t2,  
 		      double shape, double scale);
 
-unsigned int gretl_rand_int_max (unsigned int max);
+void gretl_rand_set_box_muller (int s);
 
-unsigned int gretl_rand_int (void);
-
-void gretl_rand_init (void);
-
-void gretl_rand_free (void);
+int gretl_rand_get_box_muller (void);
 
 unsigned int gretl_rand_get_seed (void);
 

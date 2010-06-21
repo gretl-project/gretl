@@ -42,7 +42,23 @@
 
 #define BLOCKT -666
 
-struct _gretl_matrix_block {
+/**
+ * SECTION:gretl_matrix
+ * @short_description: construct and manipulate matrices
+ * @title: Matrices
+ * @include: libgretl.h
+ *
+ * Libgretl implements most of the matrix functionality that is
+ * likely to be required in econometric calculation.  For basics
+ * such as decomposition and inversion we use LAPACK as the
+ * underlying engine.
+ * 
+ * To get yourself a gretl matrix, use gretl_matrix_alloc() or
+ * one of the more specialized constructors; to free such a
+ * matrix use gretl_matrix_free().
+ */
+
+struct gretl_matrix_block_ {
     int n;
     double *val;
     gretl_matrix **matrix;
@@ -129,6 +145,14 @@ static void *lapack_realloc (void *p, size_t sz)
     return lapack_malloc(sz);
 }
 
+/**
+ * lapack_mem_free:
+ *
+ * Cleanup function, called by libgretl_cleanup(). Frees
+ * any memory that has been allocated internally as 
+ * temporary workspace for LAPACK functions.
+ */
+
 void lapack_mem_free (void)
 {
     free(lapack_mem_chunk);
@@ -136,7 +160,7 @@ void lapack_mem_free (void)
     lapack_mem_sz = 0;
 }
 
-void lapack_free (void *p)
+static void lapack_free (void *p)
 {
     return;
 }
@@ -3499,22 +3523,51 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 
 static int blas_nmk_min = -1; 
 
-void set_blas_nmk_min (int n)
+/**
+ * set_blas_nmk_min:
+ * @nmk: value to set.
+ *
+ * By default all matrix multiplication within libgretl is
+ * done using native code, but there is the possibility of
+ * farming out multiplication to the BLAS. 
+ * 
+ * When multiplying an m x n matrix into an n x k matrix
+ * libgretl finds the product of the dimensions, m*n*k,
+ * and compares this with an internal threshhold variable, 
+ * blas_nmk_min. If and only if blas_nmk_min >= 0 and
+ * n*m*k >= blas_nmk_min, then we use the BLAS. By default
+ * blas_nmk_min is set to -1 (BLAS never used). 
+ *
+ * If you have an optimized version of the BLAS you may want
+ * to set blas_nmk_min to some suitable positive value. (Setting
+ * it to 0 would result in external calls to the BLAS for all
+ * matrix multiplications, however small, which is not
+ * going to be optimal.)
+ */
+
+void set_blas_nmk_min (int nmk)
 {
-    blas_nmk_min = n;
+    blas_nmk_min = nmk;
 }
+
+/**
+ * get_blas_nmk_min:
+ *
+ * Returns: the value of the internal variable blas_nmk_min.
+ * See set_blas_nmk_min().
+ */
 
 int get_blas_nmk_min (void)
 {
     return blas_nmk_min;
 }
 
-static int USE_BLAS (int n, int m, int k)
+static int use_blas (int n, int m, int k)
 {
     if (blas_nmk_min >= 0) {
 	double nmk = (double) n * m * k;
 
-	if (nmk > (double) blas_nmk_min) {
+	if (nmk >= (double) blas_nmk_min) {
 #if BLAS_DEBUG
 	    fprintf(stderr, "nmk = %g, using blas\n", nmk);
 #endif
@@ -3591,7 +3644,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	return E_NONCONF;
     }
 
-    if (USE_BLAS(nc, nc, nr)) {
+    if (use_blas(nc, nc, nr)) {
 	return gretl_blas_dsyrk(a, atr, c, cmod);
     }
 
@@ -3913,7 +3966,7 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return E_NONCONF;
     }
 
-    if (USE_BLAS(lrows, rcols, lcols)) { 
+    if (use_blas(lrows, rcols, lcols)) { 
 	gretl_blas_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);
     } else {
 	gretl_dgemm(a, atr, b, btr, c, cmod, lrows, rcols, lcols);

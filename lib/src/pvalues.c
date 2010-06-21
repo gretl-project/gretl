@@ -27,6 +27,20 @@
 #include <errno.h>
 
 /**
+ * SECTION:pvalues
+ * @short_description: probability values for test statistics and
+ * related functionality
+ * @title: P-values
+ * @include: libgretl.h
+ *
+ * Libgretl uses the cephes library, developed by Stephen
+ * Moshier, as the basic engine for most of the functionality
+ * herein. We add some extra distributions, and wrap the cephes
+ * functions for ease of use with libgretl (e.g. on failure
+ * they return the libgretl missing value code, %NADBL).
+ */
+
+/**
  * gamma_function:
  * @x: argument.
  *
@@ -1468,7 +1482,16 @@ static double weibull_cdf_comp (double shape, double scale, double x)
     return ret;
 }
 
-/* order in x: [params], alpha, critval */
+/**
+ * print_critval:
+ * @st: distribution code.
+ * @parm: array holding 1 or 2 parameter values.
+ * @a: alpha.
+ * @c: the critical value.
+ * @prn: gretl printer.
+ *
+ * Prints the critical value information in a consistent manner.
+ */
 
 void print_critval (char st, const double *parm, double a, double c, PRN *prn)
 {
@@ -1794,7 +1817,7 @@ double gretl_get_pvalue (char st, const double *parm, double x)
 /**
  * gretl_get_random_series:
  * @st: distribution code.
- * @p: array holding either one or two scalar 
+ * @parm: array holding either one or two scalar 
  * parameter values, depending on the distribution.
  * @serp1: series containing values for first param,
  * or %NULL.
@@ -1814,7 +1837,7 @@ double gretl_get_pvalue (char st, const double *parm, double x)
  * on error.
  */
 
-double *gretl_get_random_series (char st, const double *p,
+double *gretl_get_random_series (char st, const double *parm,
 				 const double *serp1, 
 				 const double *serp2,
 				 const DATAINFO *pdinfo,
@@ -1836,7 +1859,7 @@ double *gretl_get_random_series (char st, const double *p,
 
     if (st == 'u') {
 	/* uniform */
-	double min = p[0], max = p[1];
+	double min = parm[0], max = parm[1];
 
 	if (serp1 != NULL || serp2 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1849,7 +1872,7 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'z') {
 	/* normal */
-	double mu = p[0], sd = p[1];
+	double mu = parm[0], sd = parm[1];
 
 	if (serp1 != NULL || serp2 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1862,7 +1885,7 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 't') {
 	/* Student's t */
-	int v = p[0];
+	int v = parm[0];
 
 	if (serp1 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1874,7 +1897,7 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'X') {
 	/* chi-square */
-	int v = p[0];
+	int v = parm[0];
 
 	if (serp1 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1886,7 +1909,7 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'F') {
 	/* Snedecor F */
-	int v1 = p[0], v2 = p[1];
+	int v1 = parm[0], v2 = parm[1];
 
 	if (serp1 != NULL || serp2 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1899,7 +1922,7 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'G') {
 	/* gamma */
-	double shape = p[0], scale = p[1];
+	double shape = parm[0], scale = parm[1];
 
 	if (serp1 != NULL || serp2 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1912,8 +1935,8 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'B') {
 	/* binomial */
-	double pr = p[0];
-	int n = p[1];
+	double pr = parm[0];
+	int n = parm[1];
 
 	if (serp1 != NULL || serp2 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1926,7 +1949,7 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'P') {
 	/* Poisson */
-	double m = p[0];
+	double m = parm[0];
 
 	if (serp1 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1938,7 +1961,7 @@ double *gretl_get_random_series (char st, const double *p,
 	}
     } else if (st == 'W') {
 	/* Weibull */ 
-	double shape = p[0], scale = p[1];
+	double shape = parm[0], scale = parm[1];
 
 	if (serp1 != NULL || serp2 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {
@@ -1974,6 +1997,17 @@ print_pv_string (double x, double p, PRN *prn)
 
     return 0;
 }
+
+/**
+ * print_pvalue:
+ * @st: distribution code.
+ * @parm: array holding 1 or 2 parameter values.
+ * @x: the value in the distribution.
+ * @pv: the p-value.
+ * @prn: gretl printer.
+ *
+ * Prints the p-value information in a consistent manner.
+ */
 
 void print_pvalue (char st, const double *parm, double x,
 		   double pv, PRN *prn)

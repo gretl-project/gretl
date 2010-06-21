@@ -41,6 +41,19 @@
 
 #include "libgretl.h"
 
+/**
+ * SECTION:calendar
+ * @short_description: functions for working with dates
+ * @title: Calendar
+ * @include: libgretl.h
+ *
+ * Here we have various functions dealing with calendar dates;
+ * for the most part these are designed for handling daily
+ * time-series data. Most of the basic code is derived from 
+ * the unix "cal" program which is released under the BSD 
+ * license (reproduced in the libgretl source file calendar.c).
+ */
+
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
 	((yr) <= 1752 ? !((yr) % 4) : \

@@ -20,6 +20,14 @@
 #ifndef CALENDAR_H
 #define CALENDAR_H
 
+/**
+ * FOUR_DIGIT_YEAR:
+ * @y: year given to only two digits.
+ *
+ * Returns: a guess at the 4-digit year intended when
+ * two digits were provided. But really, who knows?
+ */
+
 #define FOUR_DIGIT_YEAR(y) ((y < 50)? y + 2000 : y + 1900)
 
 long epoch_day_from_ymd (int y, int m, int d);

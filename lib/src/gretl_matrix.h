@@ -47,17 +47,31 @@ typedef enum {
     GRETL_MATRIX_SCALAR,
 } GretlMatrixStructure;
 
-typedef struct _gretl_matrix gretl_matrix;
-typedef struct _gretl_matrix gretl_vector;
+typedef struct gretl_matrix_ gretl_vector;
 
-struct _gretl_matrix {
+/**
+ * gretl_matrix:
+ * @rows: number of rows in matrix
+ * @cols: number of columns
+ * @t1: observation number corresponding to first row (if
+ * applicable, otherwise 0)
+ * @t2: observation number corresponding to last row (if
+ * applicable, otherwise 0)
+ * @val: flat array of double-precision values
+ *
+ * The basic libgretl matrix type; #gretl_vector is an alias
+ * that can be used for matrices with @rows or @cols = 1.
+ */
+
+typedef struct gretl_matrix_ {
     int rows;
     int cols;
-    int t1, t2;
+    int t1;
+    int t2;
     double *val;
-};
+} gretl_matrix;
 
-typedef struct _gretl_matrix_block gretl_matrix_block;
+typedef struct gretl_matrix_block_ gretl_matrix_block;
 
 /**
  * gretl_matrix_get:
@@ -671,7 +685,7 @@ void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
 
 void lapack_mem_free (void);
 
-void set_blas_nmk_min (int n);
+void set_blas_nmk_min (int nmk);
 
 int get_blas_nmk_min (void);
 

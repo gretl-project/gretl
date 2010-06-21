@@ -112,6 +112,6 @@ void bufgets_finalize (const char *buf);
 
 void buf_rewind (const char *buf);
 
-int bufseek (const char *buf, long offset);
+int bufseek (const char *buf, long int offset);
 
 long buftell (const char *buf);

@@ -2899,7 +2899,7 @@ char *bufgets (char *s, size_t size, const char *buf)
  * Returns: 0 on success, 1 on error.
  */
 
-int bufseek (const char *buf, long offset)
+int bufseek (const char *buf, long int offset)
 {
     readbuf *rbuf = matching_buffer(buf);
 

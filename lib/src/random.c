@@ -26,31 +26,24 @@
 /**
  * SECTION:random
  * @short_description: generate pseudo-random values
- * @title: libgretl PRNG
+ * @title: PRNG
  * @include: libgretl.h
  *
- * Libgretl uses the GLib PRNG as its underlying engine,
- * but offers added value in the form of generators for
- * several distributions commonly used in econometrics.
+ * Libgretl uses the GLib PRNG as its underlying engine
+ * for uniform random values, but offers added value in 
+ * the form of generators for several distributions commonly 
+ * used in econometrics. GLib uses the Mersenne Twister,
+ * originally developed by Makoto Matsumoto and Takuji Nishimura.
  *
  * Note that before using the libgretl PRNG you must call
  * either libgretl_init() or the specific initialization
- * function shown below, gretl_rand_init(). 
+ * function shown below, gretl_rand_init(). And once you're
+ * finished with it, you may call gretl_rand_free() or the
+ * global libgretl function libgretl_cleanup().
  */
 
 static GRand *gretl_rand;
 static unsigned int useed;
-
-/**
- * gretl_rand_get_seed:
- *
- * Returns: the value of the seed for gretl's PRNG.
- */
-
-unsigned int gretl_rand_get_seed (void)
-{
-    return useed;
-}
 
 /**
  * gretl_rand_init:
@@ -65,6 +58,29 @@ void gretl_rand_init (void)
 	gretl_rand = g_rand_new();
     }
     gretl_rand_set_seed((guint32) useed);
+}
+
+/**
+ * gretl_rand_free:
+ *
+ * Free the gretl_rand structure (may be called at program exit).
+ */
+
+void gretl_rand_free (void)
+{
+    g_rand_free(gretl_rand);
+    gretl_rand = NULL;
+}
+
+/**
+ * gretl_rand_get_seed:
+ *
+ * Returns: the value of the seed for gretl's PRNG.
+ */
+
+unsigned int gretl_rand_get_seed (void)
+{
+    return useed;
 }
 
 /**
@@ -920,15 +936,6 @@ unsigned int gretl_rand_int (void)
     return g_rand_int(gretl_rand);
 }
 
-/**
- * gretl_rand_free:
- *
- * Free the gretl_rand structure (may be called at program exit).
- */
 
-void gretl_rand_free (void)
-{
-    g_rand_free(gretl_rand);
-}
 
 
