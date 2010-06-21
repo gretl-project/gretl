@@ -17,8 +17,6 @@
  * 
  */
 
-/* Matrix routines for gretl, several of which are LAPACK-related */
-
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_matrix.h"
@@ -5375,7 +5373,7 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
  * 
  * Estimates the reciprocal condition number of the general
  * real matrix @m (in the 1-norm), using the lapack 
- * functions %dgetrf and %dgecon.
+ * functions dgetrf and dgecon.
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
  */
@@ -5444,7 +5442,7 @@ static double gretl_general_matrix_rcond (const gretl_matrix *A,
  * 
  * Estimates the reciprocal condition number of the real symmetric
  * positive definite matrix @m (in the 1-norm), using the lapack 
- * functions %dpotrf and %dpocon.
+ * functions dpotrf and dpocon.
  *
  * Returns: the estimate, or #NADBL on failure to allocate memory.
  */
@@ -5529,7 +5527,7 @@ double gretl_matrix_rcond (const gretl_matrix *m, int *err)
  * positive definite matrix @a.  On exit the lower triangle of 
  * @a is replaced by the factor L, as in a = LL', and the
  * upper triangle is set to zero.  Uses the lapack function 
- * %dpotrf.
+ * dpotrf.
  *
  * Returns: 0 on success; 1 on failure.
  */
@@ -5758,7 +5756,7 @@ int gretl_matrix_QR_pivot_decomp (gretl_matrix *M, gretl_matrix *R,
  * Computes the QR factorization of @M.  On successful exit
  * the matrix @M holds Q, and, if @R is not %NULL, the upper 
  * triangle of @R holds R.  Uses the lapack functions 
- * %dgeqrf and %dorgqr.
+ * dgeqrf and dorgqr.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -5990,7 +5988,7 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
  * 
  * Computes the inverse of a triangular matrix.  On exit
  * @a is overwritten with the inverse.  Uses the lapack 
- * function %dtrtri.
+ * function dtrtri.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -6028,7 +6026,7 @@ int gretl_invert_triangular_matrix (gretl_matrix *a, char uplo)
  * 
  * Computes the inverse of a general matrix using LU
  * factorization.  On exit @a is overwritten with the inverse.
- * Uses the lapack functions %dgetrf and %dgetri.
+ * Uses the lapack functions dgetrf and dgetri.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -6241,7 +6239,7 @@ int gretl_invert_matrix (gretl_matrix *a)
  * 
  * Computes the inverse of a real symmetric matrix via the 
  * Bunch-Kaufman diagonal pivoting method.  Uses the lapack 
- * functions %dsytrf and %dsytri.  On exit @a is overwritten
+ * functions dsytrf and dsytri.  On exit @a is overwritten
  * with the inverse.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -6354,7 +6352,7 @@ int gretl_invert_symmetric_indef_matrix (gretl_matrix *a)
  * 
  * Computes the inverse of a symmetric positive definite matrix
  * using Cholesky factorization.  On exit @a is overwritten with 
- * the inverse. Uses the lapack functions %dpotrf and %dpotri.
+ * the inverse. Uses the lapack functions dpotrf and dpotri.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -6480,7 +6478,7 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
  * 
  * Computes the inverse of a symmetric positive definite matrix
  * using Cholesky factorization.  On exit @a is overwritten with 
- * the inverse. Uses the lapack functions %dpotrf and %dpotri.
+ * the inverse. Uses the lapack functions dpotrf and dpotri.
  * Little checking is done, for speed: we assume the caller
  * knows what he's doing.
  *
@@ -6498,7 +6496,7 @@ int gretl_invpd (gretl_matrix *a)
  * 
  * Attempts to computes the inverse of a matrix which may be
  * positive definite.  On exit @a is overwritten with 
- * the inverse. Uses the lapack functions %dpotrf and %dpotri.
+ * the inverse. Uses the lapack functions dpotrf and dpotri.
  * Little checking is done, for speed: we assume the caller
  * knows what he's doing.  Unlike gretl_invpd() this function
  * does not sump error messages to %stderr in case the matrix
@@ -6565,7 +6563,7 @@ int gretl_inverse_from_cholesky_decomp (gretl_matrix *targ,
  * using Cholesky factorization, computing the log-determinant 
  * in the process.  On exit @a is overwritten with the inverse 
  * and if @ldet is not %NULL the log-determinant is written to 
- * that location.  Uses the lapack functions %dpotrf and %dpotri.
+ * that location.  Uses the lapack functions dpotrf and dpotri.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -6685,7 +6683,7 @@ static int invert_packed_symm_indef_matrix (gretl_matrix *v,
  * Computes the inverse of a symmetric positive definite matrix,
  * stored in vech form, using Cholesky factorization.  On exit 
  * @v is overwritten with the lower triangle of the inverse.
- * Uses the lapack functions %dpptrf and %dpptri.
+ * Uses the lapack functions dpptrf and dpptri.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -6875,7 +6873,7 @@ static void gretl_matrix_replace_data (gretl_matrix *m, double *x)
  * Computes the eigenvalues of the general matrix @m.  
  * If @eigenvecs is non-zero, also compute the right
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
- * function %dgeev.
+ * function dgeev.
  * 
  * Returns: allocated matrix containing the eigenvalues, or %NULL
  * on failure.  The returned matrix, on successful completion,
@@ -6995,7 +6993,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
  * Computes the eigenvalues of the real symmetric matrix @m.  
  * If @eigenvecs is non-zero, also compute the orthonormal
  * eigenvectors of @m, which are stored in @m. Uses the lapack 
- * function %dsyev.
+ * function dsyev.
  *
  * Returns: n x 1 matrix containing the eigenvalues, or %NULL
  * on failure.
@@ -7301,7 +7299,7 @@ static int dgejsv_workspace_size (integer m, integer n,
  * @pvt: location for matrix V (transposed), or %NULL if not wanted.
  * 
  * Computes SVD factorization of a general matrix using the lapack
- * function %dgesvd or %dgejsv. A = u * diag(s) * vt.
+ * function dgesvd or dgejsv. A = u * diag(s) * vt.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -7638,7 +7636,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
  * @pvt: location for matrix V (transposed), or %NULL if not wanted.
  * 
  * Computes SVD factorization of a general matrix using the lapack
- * function %dgesvd. A = u * diag(s) * vt.
+ * function dgesvd. A = u * diag(s) * vt.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
@@ -9003,7 +9001,7 @@ int gretl_matrix_multi_SVD_ols (const gretl_matrix *Y,
  * 
  * Computes the generalized inverse of matrix @a via its SVD
  * factorization, with the help of the lapack function 
- * %dgesvd.  On exit the original matrix is overwritten by 
+ * dgesvd.  On exit the original matrix is overwritten by 
  * the inverse.
  *
  * Returns: 0 on success; non-zero error code on failure.
@@ -9072,7 +9070,7 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
  * 
  * Computes the inverse (or generalized inverse) of a general square 
  * matrix using SVD factorization, with the help of the lapack function 
- * %dgesvd.  If any of the singular values of @a are less than 1.0e-9
+ * dgesvd.  If any of the singular values of @a are less than 1.0e-9
  * the Moore-Penrose generalized inverse is computed instead of the
  * standard inverse.  On exit the original matrix is overwritten by 
  * the inverse.

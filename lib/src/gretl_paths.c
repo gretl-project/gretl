@@ -286,7 +286,7 @@ int gretl_open (const char *pathname, int flags)
 /**
  * gretl_stat:
  * @fname: name of file to be examined.
- * @buf: pointer to %struct %stat.
+ * @buf: pointer to a C struct stat.
  *
  * A wrapper for the C library's stat(), making allowance for
  * the possibility that @fname has to be converted from UTF-8 
@@ -1121,7 +1121,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
  * Elementary path-searching: try adding various paths to the given
  * @fname and see if it can be opened.  Usually called by getopenfile().
  *
- * Returns: the full name of the file that was found, or %NULL if no
+ * Returns: the full name of the file that was found, or NULL if no
  * file could be found.
  */
 
@@ -1304,8 +1304,8 @@ static int substitute_homedir (char *fname)
  * getopenfile:
  * @line: command line (e.g. "open foo").
  * @fname: filename to be filled out.
- * @opt: if includes %OPT_W, treat as web filename and don't
- * try to add path; if %OPT_S, treat as a script; if %OPT_I
+ * @opt: if includes OPT_W, treat as web filename and don't
+ * try to add path; if OPT_S, treat as a script; if OPT_I
  * we're responding to the "include" command.
  * 
  * Elementary path-searching: try adding various paths to the given
@@ -2390,10 +2390,10 @@ const char *gretl_maybe_switch_dir (const char *fname)
 /**
  * gretl_maybe_prepend_dir:
  * @fname: the original filename, which should be in a
- * location of length %FILENAME_MAX.
+ * location of length FILENAME_MAX.
  *
  * If @fname starts with the construction "~/" to indicate
- * the user's %HOME, replace this with the full path to that
+ * the user's HOME, replace this with the full path to that
  * directory.  Otherwise, if @fname is not already an
  * absolute path, prepend either the gretl "shelldir" or the
  * user's gretl working directory, depending on whether or
@@ -2442,7 +2442,7 @@ char *gretl_maybe_prepend_dir (char *fname)
  * gretl_maybe_prepend_dir() to prepend the user's gretl 
  * working directory and try again.
  *
- * Returns: file pointer, or %NULL on failure.
+ * Returns: file pointer, or NULL on failure.
  */
 
 FILE *gretl_read_user_file (const char *fname)
