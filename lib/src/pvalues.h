@@ -70,6 +70,8 @@ double log_normal_pdf (double x);
 
 double bvnorm_cdf (double rho, double a, double b);
 
+double gamma_cdf (double s1, double s2, double x, int control);
+
 double gamma_cdf_comp (double s1, double s2, double x, int control);
 
 double tcrit95 (int df);
