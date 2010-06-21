@@ -58,7 +58,6 @@
 <!ENTITY system         SYSTEM "xml/system.xml">
 <!ENTITY texprint       SYSTEM "xml/texprint.xml">
 <!ENTITY transforms     SYSTEM "xml/transforms.xml">
-<!ENTITY tsls           SYSTEM "xml/tsls.xml">
 <!ENTITY var            SYSTEM "xml/var.xml">
 <!ENTITY varprint       SYSTEM "xml/varprint.xml">
 <!ENTITY vartest        SYSTEM "xml/vartest.xml">
@@ -68,17 +67,35 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.9.0</releaseinfo>
+    <releaseinfo>for gretl 1.9.0cvs</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">
-    <title>Gretl Overview</title>
+    <title>Libgretl Overview</title>
 
-    <para>Gretl stands for Gnu Regression, Econometrics and
-      Time-Series Library.  The libgretl library is free software
-      released under the GNU General Public License.  This document
-      describes the libgretl API. It is at an early stage, and is
-      incomplete.
+    <para>
+      Gretl stands for Gnu Regression, Econometrics and Time-Series Library.
+      The libgretl library is free software released under the GNU General
+      Public License, version 3.
+    </para>
+    <para>
+      Libgretl has been developed as the common back end for the command-line
+      program <command>gretlcli</command> and the GUI program
+      <command>gretl</command>. In some ways the library is closely tied to
+      these programs but we hope it may also be useful to third-party coders,
+      and to that end we have begun to document the libgretl API. At this
+      stage the documentation is still radically incomplete but we aim to
+      gradually increase its coverage; and in that process we will no doubt
+      have to clarify and regularize some of the APIs themselves.
+    </para>
+    <para>
+      In the contents listing for this document you will see that some
+      sections are titled with a bare name (corresponding to the name of a
+      libgretl C source file) while others have a fuller title including
+      a short explanatory string. The latter sections are reasonably
+      fully documented and present relatively coherent APIs; the former
+      are presented <quote>as is</quote> and may or may not contain
+      much explanation at this point.  
     </para>
     <para>
       Note that if you are using the libgretl API in a program of your own,
@@ -106,7 +123,6 @@
     &nonparam; 
     &gretl-panel;
     &gretl-model;
-    &tsls;
     &nls;
     &system;   
     &var;   
@@ -136,13 +152,13 @@
 
   <chapter id="ch-printing">
     <title>Printing and graphing</title>
+    &gretl-prn;
     &printout; 
     &modelprint;
     &texprint;
     &graphing;
     &boxplots;
     &plotspec;
-    &gretl-prn;
     &varprint;
   </chapter>
 

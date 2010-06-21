@@ -162,6 +162,14 @@ int gretl_VAR_do_irf (GRETL_VAR *var, const char *line,
 
 int gretl_VAR_get_highest_variable (const GRETL_VAR *var);
 
+GRETL_VAR *johansen_test (int order, const int *list, 
+			  const double **Z, const DATAINFO *pdinfo,
+			  gretlopt opt, PRN *prn);
+
+int johansen_test_simple (int order, const int *list, 
+			  const double **Z, const DATAINFO *pdinfo,
+			  gretlopt opt, PRN *prn);
+
 int gretl_VECM_n_beta (const GRETL_VAR *vecm);
 
 int gretl_VECM_n_alpha (const GRETL_VAR *vecm);

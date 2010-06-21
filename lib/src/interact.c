@@ -4394,7 +4394,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case COINT:
-	err = coint(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
+	err = engle_granger_test(cmd->order, cmd->list, pZ, pdinfo, 
+				 cmd->opt, prn);
 	break;
 
     case COINT2:

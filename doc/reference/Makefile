@@ -45,6 +45,8 @@ IGNORE_SRCS = \
 	monte_carlo.h \
 	printscan.c \
 	printscan.h \
+	tsls.c \
+	tsls.h \
 	usermat.c \
 	usermat.h \
 	version.h

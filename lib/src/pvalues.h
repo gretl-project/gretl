@@ -74,6 +74,12 @@ double gamma_cdf (double s1, double s2, double x, int control);
 
 double gamma_cdf_comp (double s1, double s2, double x, int control);
 
+double GED_pdf (double nu, double x);
+
+double GED_cdf (double nu, double x);
+
+double GED_cdf_comp (double nu, double x);
+
 double tcrit95 (int df);
 
 double rhocrit95 (int n);

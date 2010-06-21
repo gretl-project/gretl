@@ -69,14 +69,6 @@ struct JohansenInfo_ {
 /* number of extra terms confined to the cointegrating space */
 int nrestr (const GRETL_VAR *v);
 
-GRETL_VAR *johansen_test (int order, const int *list, 
-			  const double **Z, const DATAINFO *pdinfo,
-			  gretlopt opt, PRN *prn);
-
-int johansen_test_simple (int order, const int *list, 
-			  const double **Z, const DATAINFO *pdinfo,
-			  gretlopt opt, PRN *prn);
-
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
 
 int gretl_VECM_id (GRETL_VAR *vecm);

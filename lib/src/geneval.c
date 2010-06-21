@@ -730,6 +730,13 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	} else {
 	    *np = 2; /* shape, scale */
 	}
+    } else if (*s == 'E') {
+	/* GED: critical values and inverse cdf not supported */
+	if (f == F_CRIT || f == F_INVCDF) {
+	    err = E_INVARG;
+	} else {
+	    *np = 1; /* shape */
+	}	
     } else if (*s == 'd') {
 	/* Durbin-Watson: only critical value */
 	if (f == F_CRIT) {
@@ -1027,8 +1034,8 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL) {
-		ret->v.xval = df_pvalue_from_plugin(tau, nobs, niv, 
-						    itv, OPT_NONE);
+		ret->v.xval = get_urc_pvalue(tau, nobs, niv, 
+					     itv, OPT_NONE);
 	    }
 	}
     } else {

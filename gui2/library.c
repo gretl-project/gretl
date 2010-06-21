@@ -901,7 +901,8 @@ int do_coint (selector *sr)
     order = atoi(libcmd.param);
 
     if (action == COINT) {
-	err = coint(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	err = engle_granger_test(order, libcmd.list, &Z, datainfo, 
+				 libcmd.opt, prn);
     } else {
 	jvar = johansen_test(order, libcmd.list, (const double **) Z, 
 			     datainfo, libcmd.opt, prn);

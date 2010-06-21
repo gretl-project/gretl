@@ -34,7 +34,7 @@
  * @include: libgretl.h
  *
  * Libgretl uses the cephes library, developed by Stephen
- * Moshier, as the basic engine for most of the functionality
+ * Moshier, as the basic engine for much of the functionality
  * herein. We add some extra distributions, and wrap the cephes
  * functions for ease of use with libgretl (e.g. on failure
  * they return the libgretl missing value code, %NADBL).
@@ -1483,6 +1483,122 @@ static double weibull_cdf_comp (double shape, double scale, double x)
 }
 
 /**
+ * GED_pdf:
+ * @nu: shape parameter.
+ * @x: double.
+ * 
+ * Returns: the density function of the Generalized Error distribution
+ * with shape parameter @nu at @x, or #NADBL on failure.
+ */
+
+double GED_pdf (double nu, double x)
+{
+    if (nu > 0) {
+	double lg1 = ln_gamma(1/nu);
+	double lg3 = ln_gamma(3/nu);
+	double lC  = 0.5*(lg3 - 3*lg1);
+	double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
+	double znu = pow(fabs(x/k), nu);
+
+	return (0.5 * nu) * exp(lC - 0.5 * znu);
+    } else {
+	return NADBL;
+    }
+}
+
+static int GED_pdf_array (double nu, double *x, int n)
+{
+    int i, err = 0;
+
+    if (nu > 0) {
+	double lg1 = ln_gamma(1/nu);
+	double lg3 = ln_gamma(3/nu);
+	double lC  = 0.5*(lg3 - 3*lg1);
+	double k   = pow(0.5, 1/nu) * exp(0.5*(lg1 - lg3));
+	double znu; 
+
+	for (i=0; i<n; i++) {
+	    if (!na(x[i])) {
+		znu = pow(fabs(x[i]/k), nu);
+		x[i] = (0.5 * nu) * exp(lC - 0.5 * znu);
+	    } else {
+		x[i] = NADBL;
+	    }
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+    }
+
+    return err;
+}
+
+/**
+ * GED_cdf:
+ * @nu: shape parameter.
+ * @x: reference value.
+ *
+ * Calculates the value of the CDF of the Generalized Error
+ * distribution with parameter @nu at @x. We exploit the fact that
+ * if x ~ GED(n), then |x/k|^n is a Gamma rv.
+ *
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
+
+double GED_cdf (double nu, double x)
+{
+    if (nu > 0) {
+	int sgn    = (x > 0)? 1 : -1;
+	double p   = 1/nu;
+	double lg1 = ln_gamma(p);
+	double lg3 = ln_gamma(3*p);
+	double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
+	double znu = pow(fabs(x/k), nu);
+	double P   = gamma_cdf(p, 2, znu, 1);
+
+	P = 0.5 * (1 + sgn*P);
+	return P;
+    } else {
+	return NADBL;
+    }
+}
+
+/**
+ * GED_cdf_comp:
+ * @nu: shape parameter.
+ * @x: reference value.
+ *
+ * Calculates the complement of the CDF of the Generalized Error
+ * distribution with parameter @nu at @x. We exploit the fact that
+ * if x ~ GED(n), then |x/k|^n is a Gamma rv.
+ *
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
+
+double GED_cdf_comp (double nu, double x)
+{
+    if (nu > 0) {
+	int sgn    = (x > 0)? 1 : -1;
+	double p   = 1/nu;
+	double lg1 = ln_gamma(p);
+	double lg3 = ln_gamma(3*p);
+	double k   = pow(0.5, p) * exp(0.5*(lg1 - lg3));
+	double znu = pow(fabs(x/k), nu);
+	double P   = gamma_cdf_comp(p, 2, znu, 1);
+
+	P = (sgn == 1) ? 0.5 * P : 1 - 0.5 * P;
+	return P;
+    } else {
+	return NADBL;
+    }
+}
+
+/**
  * print_critval:
  * @st: distribution code.
  * @parm: array holding 1 or 2 parameter values.
@@ -1688,6 +1804,8 @@ double gretl_get_cdf (char st, const double *parm, double x)
 	y = poisson_cdf(parm[0], (int) x);
     } else if (st == 'W') {
 	y = weibull_cdf(parm[0], parm[1], x);
+    } else if (st == 'E') {
+	y = GED_cdf(parm[0], x);
     }
 
     return y;
@@ -1726,6 +1844,8 @@ double gretl_get_pdf (char st, const double *parm, double x)
 	y = gamma_pdf(parm[0], parm[1], x);
     } else if (st == 'W') {
 	y = weibull_pdf(parm[0], parm[1], x);
+    } else if (st == 'E') {
+	y = GED_pdf(parm[0], x);
     }
 
     return y;
@@ -1767,6 +1887,8 @@ int gretl_fill_pdf_array (char st, const double *parm,
 	err = gamma_pdf_array(parm[0], parm[1], x, n); 
     } else if (st == 'W') {
 	err = weibull_pdf_array(parm[0], parm[1], x, n);
+    } else if (st == 'E') {
+	err = GED_pdf_array(parm[0], x, n);
     }
 
     return err;
@@ -1807,6 +1929,8 @@ double gretl_get_pvalue (char st, const double *parm, double x)
 	y = poisson_cdf_comp(parm[0], x);
     } else if (st == 'W') {
 	y = weibull_cdf_comp(parm[0], parm[1], x);
+    } else if (st == 'E') {
+	y = GED_cdf_comp(parm[0], x);
     }
 
     remember_pvalue_args(parm, x);
@@ -2122,6 +2246,14 @@ void print_pvalue (char st, const double *parm, double x,
 	err = print_pv_string(x, pv, prn);
 	if (err) return;
 	pc = weibull_cdf(parm[0], parm[1], x);
+	pprintf(prn, _("(to the left: %g)\n"), pc);
+	break;
+
+    case 'E':
+	pprintf(prn, _("GED (shape = %g): "), parm[0]);
+	err = print_pv_string(x, pv, prn);
+	if (err) return;
+	pc = GED_cdf(parm[0], x);
 	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 

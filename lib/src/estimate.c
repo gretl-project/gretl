@@ -4539,13 +4539,17 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 /**
  * ivreg:
- * @list: regression list, as per ivreg documentation.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the (panel) data set.
- * @opt: can include %OPT_Q (quiet estimation), %OPT_L
- * (LIML estimation), %OPT_G (GMM).
+ * @list: regression list; see the documentation for the "tsls"
+ * command.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: option flags.
  *
- * Calculate IV estimates using 2sls, LIML or GMM.
+ * Calculate IV estimates for a linear model, by default via two-stage 
+ * least squares. The option flags can include OPT_Q for quiet
+ * operation, and either OPT_L to specify estimation via Limited
+ * Information Maximum Likelihood or OPT_G for estimation via
+ * Generalized method of Moments.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */

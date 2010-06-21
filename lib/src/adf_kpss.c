@@ -23,6 +23,30 @@
 #include "libgretl.h" 
 #include "transforms.h"
 
+/**
+ * SECTION:adf_kpss
+ * @short_description: unit root and cointegration tests
+ * @title: ADF, KPSS, Engle-Granger 
+ * @include: libgretl.h
+ *
+ * Implementations of the (Augmented) Dickey-Fuller test
+ * and the Kwiatkowski, Phillips, Schmidt and Shin test for
+ * the presence of a unit root in a time series, along with
+ * the Engle-Granger test for cointegration of two or more
+ * time series.
+ *
+ * The Johansen cointegration test is also provided in
+ * libgretl; see johansen_test() and johansen_test_simple().
+ */
+
+enum {
+    UR_NO_CONST = 1,
+    UR_CONST,
+    UR_TREND,
+    UR_QUAD_TREND,
+    UR_MAX
+} AdfCode;
+
 enum {
     ADF_EG_TEST   = 1 << 0,
     ADF_EG_RESIDS = 1 << 1
@@ -423,7 +447,7 @@ static void copy_list_values (int *targ, const int *src)
 }
 
 /**
- * df_pvalue_from_plugin:
+ * get_urc_pvalue:
  * @tau: test statistic.
  * @n: sample size (or 0 for asymptotic result).
  * @niv: number of potentially cointegrated variables
@@ -440,8 +464,8 @@ static void copy_list_values (int *targ, const int *src)
  * Returns: p-value, or %NADBL on failure.
  */
 
-double df_pvalue_from_plugin (double tau, int n, int niv, int itv,
-			      gretlopt opt)
+double get_urc_pvalue (double tau, int n, int niv, int itv,
+		       gretlopt opt)
 {
     char datapath[FILENAME_MAX];
     void *handle;
@@ -524,6 +548,37 @@ static int engle_granger_itv (gretlopt opt)
     }
 
     return itv;
+}
+
+static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
+{
+    int idx, t, v = pdinfo->v;
+    double x;
+
+    idx = series_index(pdinfo, (square)? "timesq" : "time");
+
+    if (idx < v) {
+	return idx;
+    }
+
+    if (dataset_add_series(1, pZ, pdinfo)) {
+	return 0; /* error: valid value cannot == 0 */
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	x = (double) t + 1; 
+	(*pZ)[v][t] = (square)? x * x : x;
+    }
+
+    if (square) {
+	strcpy(pdinfo->varname[v], "timesq");
+	strcpy(VARLABEL(pdinfo, v), _("squared time trend variable"));
+    } else {
+	strcpy(pdinfo->varname[v], "time");
+	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
+    }
+	    
+    return idx;
 }
 
 static int real_adf_test (int varno, int order, int niv,
@@ -716,8 +771,8 @@ static int real_adf_test (int varno, int order, int niv,
 	    */
 	    int asymp = (order > 0 || (opt & OPT_G));
 
-	    pv = df_pvalue_from_plugin(DFt, (asymp)? 0 : dfmod.nobs, 
-				       niv, itv, opt);
+	    pv = get_urc_pvalue(DFt, (asymp)? 0 : dfmod.nobs, 
+				niv, itv, opt);
 	}
 
 	if (!(opt & OPT_Q)) {
@@ -762,15 +817,30 @@ static int real_adf_test (int varno, int order, int niv,
 
 /**
  * adf_test:
- * @order: lag order for the test.
+ * @order: lag order for the (augmented) test.
  * @list: list of variables to test.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: option flag.
+ * @opt: option flags.
  * @prn: gretl printing struct.
  *
  * Carries out and prints the results of the Augmented Dickey-Fuller test for 
- * a unit root.
+ * a unit root. 
+ *
+ * By default two tests are performed, one for a model
+ * including a constant and one including a linear trend. The 
+ * deterministic components of the model can be controlled via
+ * flags in @opt as follows: OPT_N, omit the constant; OPT_C,
+ * run just one test using the constant; OPT_T, one test including
+ * linear trend; OPT_R, one test including a quadratic trend;
+ * OPT_D, include seasonal dummy variables.
+ *
+ * Additional flags that may be given in @opt include: 
+ * OPT_V for verbose operation; OPT_F to apply first-differencing
+ * before testing; OPT_G for GLS preprocessing as in Elliott, Rothenberg
+ * and Stock (incompatible with OPT_N, OPT_R, OPT_D); OPT_E to
+ * "test down" from a given maximum lag order (see the entry for
+ * "adf" in the Gretl Command Reference for details).
  *
  * Returns: 0 on successful completion, non-zero on error.
  */
@@ -944,11 +1014,14 @@ real_kpss_test (int order, int varno, double ***pZ,
  * @list: list of variables to test.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: option flag.
+ * @opt: option flags.
  * @prn: gretl printing struct.
  *
  * Carries out and prints the results of the KPSS test for 
- * stationarity.
+ * stationarity. Flags that may be given in @opt include:
+ * OPT_T to include a linear trend; OPT_F to apply 
+ * first-differencing before testing; OPT_V for verbose
+ * operation.
  *
  * Returns: 0 on successful completion, non-zero on error.
  */
@@ -1100,24 +1173,28 @@ static int coint_set_sample (const int *list, int nv, int order,
 }
 
 /**
- * coint:
+ * engle_granger_test:
  * @order: lag order for the test.
  * @list: specifies the variables to use.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: if %OPT_N, do not an include a constant in the
- *       cointegrating regression, if %OPT_S, skip
- *       DF tests for individual variables; if %OPT_E,
- *       test down from maximum lag order.
+ * @opt: option flags.
  * @prn: gretl printing struct.
  *
- * Carries out the Engle-Granger test for cointegration.  
+ * Carries out the Engle-Granger test for cointegration. 
+ * Flags that may be given in @opt include: OPT_N, do
+ * not an include a constant in the cointegrating regression;
+ * OPT_T include constant and linear trend; OPT_R, include
+ * quadratic trend; OPT_S, skip DF tests for individual variables; 
+ * OPT_E, test down from maximum lag order (see the entry for
+ * "adf" in the Gretl Command Reference for details).
  *
- * Returns: 0 on successful completion.
+ * Returns: 0 on successful completion, non-zero code
+ * on error.
  */
 
-int coint (int order, const int *list, double ***pZ, 
-	   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+int engle_granger_test (int order, const int *list, double ***pZ, 
+			DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     int orig_t1 = pdinfo->t1;
     int orig_t2 = pdinfo->t2;

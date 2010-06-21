@@ -60,8 +60,6 @@ int dumgenr_with_oddval (int **plist, double ***pZ, DATAINFO *pdinfo,
 
 int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt);
 
-int gettrend (double ***pZ, DATAINFO *pdinfo, int square);
-
 void gretl_transforms_cleanup (void);
 
 #endif /* TRANSFORMS_H */

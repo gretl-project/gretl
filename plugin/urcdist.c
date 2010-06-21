@@ -10,11 +10,10 @@
    The calculation code here is Copyright (c) James G. MacKinnon, 
    1996 (corrected 2003-5-5).
 
-   The "wrapper" is written by Allin Cottrell, 2004.
+   This "wrapper" written by Allin Cottrell, 2004.
 */
 
 #include "libgretl.h"
-#include "var.h"
 
 #define URDEBUG 0
 
@@ -33,13 +32,13 @@ enum urc_errs {
 #define URCLEN 221
 #define BIGLEN 884
 
+/* Copyright (c) James G. MacKinnon, 1995. Routine to evaluate
+   response surface for specified betas and sample size. 
+*/
+
 static double eval_crit (double *b, int model, int nreg, int nobs)
 {
     double d, cval = 0.0;
-
-    /* Copyright (c) James G. MacKinnon, 1995. Routine to evaluate
-       response surface for specified betas and sample size. 
-    */
 
     if (nobs == 0) {
 	cval = b[0];
@@ -198,15 +197,15 @@ static double ddnor (double ystar)
     return erfc * .5;
 }
 
+/* Copyright (c) James G. MacKinnon, 1993.  This routine uses the
+   Cholesky decomposition to invert a real symmetric matrix.
+*/
+
 static int cholx (double *a, int m, int n)
 {
     int i, j, k, kl;
     double t, ooa = 0.0;
     int err = 0;
-
-    /* Copyright (c) James G. MacKinnon, 1993.  This routine uses the
-       cholesky decomposition to invert a real symmetric matrix.
-    */
 
     /* Parameter adjustment */
     a -= 1 + m;
@@ -218,11 +217,10 @@ static int cholx (double *a, int m, int n)
 		for (k = 1; k <= kl; ++k) {
 		    a[i + j * m] -= a[k + i * m] * a[k + j * m];
 		}
-	    } else {
-		if (a[i + i * m] <= 0.0) {
-		    err = i;
-		    goto cholx_exit;
-		}
+	    } else if (a[i + i * m] <= 0.0) {
+		/* error: get out */
+		err = i;
+		goto cholx_exit;
 	    }
 	    if (i == j) {
 		a[i + i * m] = sqrt(a[i + i * m]);
@@ -240,14 +238,13 @@ static int cholx (double *a, int m, int n)
 	    ooa = 1. / a[j + j * m];
 	    if (i >= j) {
 		t = 1.;
-		goto cholx_jump;
+	    } else {
+		kl = j - 1;
+		t = 0.;
+		for (k = i; k <= kl; ++k) {
+		    t -= a[i + k * m] * a[k + j * m];
+		}
 	    }
-	    kl = j - 1;
-	    t = 0.;
-	    for (k = i; k <= kl; ++k) {
-		t -= a[i + k * m] * a[k + j * m];
-	    }
-	cholx_jump:
 	    a[i + j * m] = t * ooa;
 	}
     }
@@ -268,6 +265,11 @@ static int cholx (double *a, int m, int n)
     return err;
 }
 
+/* Copyright (c) James G. MacKinnon, 1995.  Subroutine to do GLS
+   estimation the obvious way.  Use only when sample size is small
+   (nobs <= 50). 1995-1-3 
+*/
+
 static int gls (double *xmat, double *yvec, double *omega, 
 		double *beta, double *xomx, double *fits, 
 		double *resid, double *ssr, double *ssrt, int nobs, 
@@ -278,11 +280,6 @@ static int gls (double *xmat, double *yvec, double *omega,
     int xmat_offset = 1 + nomax;
     int i, j, k, l;
     double xomy[50];
-
-    /* Copyright (c) James G. MacKinnon, 1995.  Subroutine to do GLS
-       estimation the obvious way.  Use only when sample size is small
-       (nobs <= 50). 1995-1-3 
-    */
 
     /* xomx is covariance matrix of parameter estimates if omega is
        truly known.  First, invert omega matrix if ivrt=0. Original one
@@ -361,6 +358,10 @@ static int gls (double *xmat, double *yvec, double *omega,
     return 0;
 }
 
+/* Copyright (c) James G. MacKinnon, 1995.
+   Routine to find P value for any specified test statistic. 
+*/
+
 static double fpval (double *beta, double *cnorm, double *wght, 
 		     double *prob, double stat, int nobs, 
 		     int model, int nreg)
@@ -375,10 +376,6 @@ static double fpval (double *beta, double *cnorm, double *wght,
     double xmat[80], xomx[16], gamma[4], omega[400];
     double crits[URCLEN];
     double pval = 0.0;
-
-    /* Copyright (c) James G. MacKinnon, 1995.
-       Routine to find P value for any specified test statistic. 
-    */
 
     /* Parameter adjustments */
     --prob;
@@ -403,9 +400,11 @@ static double fpval (double *beta, double *cnorm, double *wght,
 
     nph = np / 2;
     nptop = URCLEN - nph;
-    if (imin > nph && imin < nptop) {
 
-	/* imin is not too close to the end. Use np points around stat. */
+    if (imin > nph && imin < nptop) {
+	/* imin is not too close to the end. 
+	   Use np points around stat. 
+	*/
 	for (i = 1; i <= np; ++i) {
 	    ic = imin - nph - 1 + i;
 	    yvec[i - 1] = cnorm[ic];
@@ -441,17 +440,17 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) + 
 		gamma[3] * (d1 * d1 * d1);
-	    return ddnor(crfit);
 	} else {
 	    gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt, 
 		np, 3, 20, 4, 1);
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1);
-	    return ddnor(crfit);
 	}
+	pval = ddnor(crfit);
     } else {
-
-	/* imin is close to one of the ends. Use points from imin +/- nph to end. */
+	/* imin is close to one of the ends. Use points from 
+	   imin +/- nph to end. 
+	*/
 	if (imin < np) {
 	    np1 = imin + nph;
 	    if (np1 < 5) {
@@ -487,7 +486,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 		    bot = prob[j] * (1. - prob[i]);
 		    omega[i + j * 20 - 21] = wght[i] * wght[j] * sqrt(top / bot);
 		} else {
-		    /* This is to avoid numerical singularities at the upper end */
+		    /* Avoid numerical singularities at the upper end */
 		    omega[i + j * 20 - 21] = 0.;
 		    if (i == j) {
 			omega[i + i * 20 - 21] = 1.;
@@ -495,6 +494,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 		}
 	    }
 	}
+
 	for (i = 1; i <= np1; ++i) {
 	    for (j = i; j <= np1; ++j) {
 		omega[j + i * 20 - 21] = omega[i + j * 20 - 21];
@@ -528,7 +528,6 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	if (imin == URCLEN && pval < prob[URCLEN]) {
 	    pval = prob[URCLEN];
 	}
-	return pval;
     }
 
     return pval;
@@ -552,11 +551,11 @@ static char *read_double_and_advance (double *val, char *s)
    itv = appropriate ur_code for nc, c, ct, ctt models
    nobs = sample size (0 for asymptotic)
    arg = test statistic
-   val = P-value (returned by routine)
+   pval = location to receive P-value
 */
 
 static int urcval (int niv, int itv, int nobs, double arg, 
-		   const char *path, double *val)
+		   const char *path, double *pval)
 {
     gzFile fz;
     char line[80], code[8];
@@ -587,7 +586,10 @@ static int urcval (int niv, int itv, int nobs, double arg,
     if (niv < 1 || niv > MAXVARS) {
 	return URC_BAD_PARAM;
     }
-    if (itv < UR_NO_CONST || itv > UR_QUAD_TREND) {
+
+    if (itv < 1 || itv > 4) {
+	/* these limits correspond to UR_NO_CONST and UR_QUAD_TREND
+	   in lib/src/adf_kpss.c */
 	return URC_BAD_PARAM;
     }
 
@@ -642,8 +644,8 @@ static int urcval (int niv, int itv, int nobs, double arg,
 	urc_ret = URC_SMALL_SAMPLE;
     }
 
-    *val = fpval(urc.beta, urc.cnorm, urc.wght, urc.probs,
-		 arg, nobs, urc.model, urc.nreg);
+    *pval = fpval(urc.beta, urc.cnorm, urc.wght, urc.probs,
+		  arg, nobs, urc.model, urc.nreg);
 
     gzclose(fz);
 
@@ -651,44 +653,44 @@ static int urcval (int niv, int itv, int nobs, double arg,
 }
 
 /* 
-   tval = tau test statistic
+   tau = test statistic
    n = sample size (or 0 for asymptotic)
    niv = # of integrated variables
-   itv = 1, 2, 3, 4 for nc, c, ct, ctt models.
+   itv = 1, 2, 3, or 4 for nc, c, ct, ctt models.
    path = path to urc data files
    
    returns: the computed P-value
 */
 
-double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
+double mackinnon_pvalue (double tau, int n, int niv, int itv, char *path)
 {
-    double val = NADBL;
-    int check;
+    double pval = NADBL;
+    int err;
 
 #if URDEBUG
     fdb = fopen("debug.txt", "w");
-    fprintf(fdb, "mackinnon_pvalue: tval=%g, n=%d, niv=%d, itv=%d\n",
-	    tval, n, niv, itv);
+    fprintf(fdb, "mackinnon_pvalue: tau=%g, n=%d, niv=%d, itv=%d\n",
+	    tau, n, niv, itv);
     fprintf(fdb, "mackinnon_pvalue: path='%s'\n", path);
     fflush(fdb);
 #endif
 
     gretl_push_c_numeric_locale();
-    check = urcval(niv, itv, n, tval, path, &val);
+    err = urcval(niv, itv, n, tau, path, &pval);
     gretl_pop_c_numeric_locale();
 
 #if URDEBUG
     fclose(fdb);
 #endif
 
-    if (check == URC_NOT_FOUND) {
+    if (err == URC_NOT_FOUND) {
 	path[0] = '\0';
     }
 
-    if (check != URC_OK && check != URC_SMALL_SAMPLE) {
-	val = NADBL;
+    if (err != URC_OK && err != URC_SMALL_SAMPLE) {
+	pval = NADBL;
     }
 
-    return val;
+    return pval;
 }
 

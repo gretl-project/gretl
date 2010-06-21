@@ -25,6 +25,29 @@
 # include <dlfcn.h>
 #endif
 
+/**
+ * SECTION:plugins
+ * @short_description: accessing gretl plugins
+ * @title: Plugins
+ * @include: libgretl.h
+ *
+ * Some of the functionality of libgretl is provided by plugin
+ * modules that are loaded on demand. Here we have functions for
+ * opening and closing plugins, and for obtaining a pointer to
+ * a symbol from a gretl plugin. These functions should work on
+ * both unix-type systems (including Mac OS X) and MS Windows.
+ *
+ * Note that if you wish to make use of gretl plugins in your own
+ * program, you will have to build and install the plugins (of
+ * course) and you will also have to tell libgretl where to
+ * find them. This can be done via the  environment variable
+ * GRETL_PLUGIN_PATH.  If gretl has been installed under
+ * /usr/local then in a C program you could do:
+ *
+ * putenv("GRETL_PLUGIN_PATH=/usr/local/lib/gretl-gtk2");
+ *
+ */
+
 enum {
     P_EXCEL_IMPORT = 1,
     P_GNUMERIC_IMPORT,

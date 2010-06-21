@@ -21,6 +21,16 @@
 
 #define TRDEBUG 0
 
+/**
+ * SECTION:transforms
+ * @short_description: standard transformations of series in the dataset
+ * @title: Transformations 
+ * @include: libgretl.h
+ *
+ * Functions to generate standard transformations (logs, lags, first
+ * differences and so on) of series in the dataset.
+ */
+
 enum {
     VARS_IDENTICAL,
     X_HAS_MISSING,
@@ -155,6 +165,18 @@ make_transform_label (char *label, const char *parent,
     return err;
 }
 
+/**
+ * is_standard_lag:
+ * @v: ID number of variable to test.
+ * @pdinfo: dataset information.
+ * @parent: location to receive ID number of parent variable,
+ * or NULL.
+ *
+ * Returns: 1 if the variable @v is marked as being a
+ * lag of some "parent" variable in the dataset,
+ * otherwise 0.
+ */
+
 int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
 {
     int pv = 0, ret = 0;
@@ -186,6 +208,18 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
     return ret;
 }
 
+/**
+ * is_standard_diff:
+ * @v: ID number of variable to test.
+ * @pdinfo: dataset information.
+ * @parent: location to receive ID number of parent variable,
+ * or NULL.
+ *
+ * Returns: 1 if the variable @v is marked as being the first
+ * difference of some "parent" variable in the dataset,
+ * otherwise 0.
+ */
+
 int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent)
 {
     int pv = 0, ret = 0;
@@ -207,6 +241,18 @@ int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent)
 
     return ret;
 }
+
+/**
+ * is_dummy_child:
+ * @v: ID number of variable to test.
+ * @pdinfo: dataset information.
+ * @parent: location to receive ID number of parent variable,
+ * or NULL.
+ *
+ * Returns: 1 if the variable @v is marked as being a dummy
+ * variable that codes for a specific value of some "parent" 
+ * variable in the dataset, otherwise 0.
+ */
 
 int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
 {
@@ -295,6 +341,13 @@ static double *testvec (int n)
 
     return x;
 }
+
+/**
+ * gretl_transforms_cleanup:
+ *
+ * Called by libgretl_cleanup(). Frees any memory allocated
+ * as workspace for the creation of transformed variables.
+ */
 
 void gretl_transforms_cleanup (void)
 {
@@ -840,7 +893,7 @@ int invgenr (int v, double ***pZ, DATAINFO *pdinfo)
 /**
  * diffgenr: 
  * @v: ID number in dataset of source variable.
- * @ci: %DIFF (first difference), %LDIFF (log difference) or %SDIFF
+ * @ci: DIFF (first difference), LDIFF (log difference) or SDIFF
  * (seasonal difference).
  * @pZ: pointer to data array.
  * @pdinfo: information on dataset.
@@ -1377,7 +1430,7 @@ int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo)
  * @opt: If OPT_O, both squares and cross-products are generated,
  * otherwise only squares.
  *
- * Generates and adds to the data set squares and (if @opt is %OPT_O) 
+ * Generates and adds to the data set squares and (if @opt is OPT_O) 
  * cross-products of the variables given in the list pointed to
  * by @plist.
  *
@@ -1567,14 +1620,14 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
  * the list holds the ID numbers of the generated dummies.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: can be %OPT_F to drop the first value, %OPT_L to drop
- * the last, or %OPT_NONE.
+ * @opt: can include OPT_F to drop the first value, OPT_L to drop
+ * the last value.
  *
  * For each of the variables given in the list to which @plist
  * points, generates and adds to the data set k dummy variables 
  * coding for the k distinct values of the variable in question.
  * All these variables must have already been marked as discrete.
- * If the %OPT_F or %OPT_L option is given, either the first or
+ * If the OPT_F or OPT_L option is given, either the first or
  * the last value of each variable is taken as the "base" and is
  * not given a dummy encoding (that is, only k - 1 dummies are
  * added for each variable).
@@ -1641,35 +1694,6 @@ int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt)
     return err;
 }
 
-int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
-{
-    int idx, t, v = pdinfo->v;
-    double x;
 
-    idx = series_index(pdinfo, (square)? "timesq" : "time");
-
-    if (idx < v) {
-	return idx;
-    }
-
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	return 0; /* error: valid value cannot == 0 */
-    }
-
-    for (t=0; t<pdinfo->n; t++) {
-	x = (double) t + 1; 
-	(*pZ)[v][t] = (square)? x * x : x;
-    }
-
-    if (square) {
-	strcpy(pdinfo->varname[v], "timesq");
-	strcpy(VARLABEL(pdinfo, v), _("squared time trend variable"));
-    } else {
-	strcpy(pdinfo->varname[v], "time");
-	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
-    }
-	    
-    return idx;
-}
 
 

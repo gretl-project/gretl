@@ -23,6 +23,34 @@
 #include <errno.h>
 #include <glib.h>
 
+/**
+ * SECTION:gretl_prn
+ * @short_description: gretl printing struct
+ * @title: PRN 
+ * @include: libgretl.h
+ *
+ * Most libgretl functions that print output call for a
+ * pointer-to-PRN as one of their arguments. The PRN type is
+ * an opaque structure, constructed and manipulated by the
+ * functions listed here. It is used as a means of generalizing
+ * the printing operation, which may be to a regular file, a
+ * temporary file or a buffer.
+ *
+ * To get hold of a PRN use gretl_print_new() or one of the more
+ * specific constructors, and to free it use gretl_print_destroy().
+ * If you want to use a PRN dirctly for printing in your own code, use
+ * the functions pprintf(), pputs() and pputc(). These are
+ * counterparts to the standard C functions fprintf, fputs and
+ * fputc, but note that with pputs and pputc the PRN argument
+ * must be given first (unlike fputs and fputc in which the
+ * FILE argument goes last). 
+ *
+ * Note that whenever a PRN appears as a function parameter
+ * in libgretl it is OK to give a NULL argument: in that case 
+ * printing is suppressed. (This obviously makes sense only if the
+ * function in question does something besides just printing.)
+ */
+
 struct PRN_ {
     FILE *fp;          /* file to which to print, or NULL */
     FILE *fpaux;       /* auxiliary file (output redirected) */

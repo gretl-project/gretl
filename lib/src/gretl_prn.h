@@ -23,7 +23,7 @@
 /**
  * PRN:
  *
- * An opaque structure accessed only via gretl_prn functions.
+ * An opaque structure accessed only via gretl_print functions.
  */
 
 typedef struct PRN_ PRN;
@@ -54,9 +54,9 @@ typedef enum {
 
 /* functions follow */
 
-void gretl_print_destroy (PRN *prn);
-
 PRN *gretl_print_new (PrnType ptype, int *err);
+
+void gretl_print_destroy (PRN *prn);
 
 PRN *gretl_print_new_with_filename (const char *fname, int *err);
 

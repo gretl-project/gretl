@@ -20,24 +20,16 @@
 #ifndef ADF_KPSS_H
 #define ADF_KPSS_H
 
-typedef enum {
-    UR_NO_CONST = 1,
-    UR_CONST,
-    UR_TREND,
-    UR_QUAD_TREND,
-    UR_MAX
-} AdfCode;
-
 int adf_test (int order, const int *list, double ***pZ,
 	      DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
 int kpss_test (int order, const int *list, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
-int coint (int order, const int *list, double ***pZ, 
-	   DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+int engle_granger_test (int order, const int *list, double ***pZ, 
+			DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
-double df_pvalue_from_plugin (double tau, int n, int niv, 
-			      int itv, gretlopt opt);
+double get_urc_pvalue (double tau, int n, int niv, 
+		       int itv, gretlopt opt);
 
 #endif /* ADF_KPSS_H */

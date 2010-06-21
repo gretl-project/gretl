@@ -481,10 +481,10 @@ int true_const (int v, const double **Z, const DATAINFO *pdinfo)
  * @a: pointer to first element to compare.
  * @b: pointer to second element to compare.
  *
- * Comparison function for use with %qsort.  Sorts doubles in
+ * Comparison function for use with qsort.  Sorts doubles in
  * ascending order.
  * 
- * Returns: appropriate value for %qsort.
+ * Returns: appropriate value for qsort.
  */
 
 int gretl_compare_doubles (const void *a, const void *b)
@@ -500,10 +500,10 @@ int gretl_compare_doubles (const void *a, const void *b)
  * @a: pointer to first element to compare.
  * @b: pointer to second element to compare.
  * 
- * Comparison function for use with %qsort.  Sorts doubles in
+ * Comparison function for use with qsort.  Sorts doubles in
  * descending order.
  * 
- * Returns: appropriate value for %qsort.
+ * Returns: appropriate value for qsort.
  */
 
 int gretl_inverse_compare_doubles (const void *a, const void *b)
@@ -519,10 +519,10 @@ int gretl_inverse_compare_doubles (const void *a, const void *b)
  * @a: pointer to first element to compare.
  * @b: pointer to second element to compare.
  *
- * Comparison function for use with %qsort.  Sorts integers in
+ * Comparison function for use with qsort.  Sorts integers in
  * ascending order.
  * 
- * Returns: appropriate value for %qsort.
+ * Returns: appropriate value for qsort.
  */
 
 int gretl_compare_ints (const void *a, const void *b)
