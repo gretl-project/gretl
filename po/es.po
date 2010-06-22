@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-06-20 11:27-0400\n"
-"PO-Revision-Date: 2010-04-30 12:39+0200\n"
+"PO-Revision-Date: 2010-06-22 14:22+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -1237,20 +1237,17 @@ msgstr "El conjunto de datos ahora tiene el tamaño muestral recortado.\n"
 msgid "Dataset extended by %d observations"
 msgstr "El conjunto de datos ha sido extendido en %d observaciones"
 
-#: lib/src/dataset.c:3166
-#, fuzzy, c-format
+#: lib/src/dataset.c:3166, c-format
 msgid "Variable %s cannot be renumbered"
-msgstr "Variable '%s' no definida"
+msgstr "La variable '%s' no puede ser renumerada"
 
-#: lib/src/dataset.c:3169
-#, fuzzy, c-format
+#: lib/src/dataset.c:3169, c-format
 msgid "Target ID %d is not available"
-msgstr "La variable '%s' no es una variable 0/1."
+msgstr "El objetivo ID '%s' no está disponible"
 
-#: lib/src/dataset.c:3178
-#, fuzzy, c-format
+#: lib/src/dataset.c:3178, c-format
 msgid "Renumbered %s as variable %d\n"
-msgstr "   número de variables: %d\n"
+msgstr "Variable %s renumerada como variable %d\n"
 
 #: lib/src/dataset.c:3223
 msgid "The 'dataset' command is not available within functions"
@@ -2099,20 +2096,17 @@ msgstr "'%s': Argumento no válido para %s()\n"
 msgid "%s: no such object\n"
 msgstr "%s: no existe ese objeto\n"
 
-#: lib/src/geneval.c:6804
-#, fuzzy, c-format
+#: lib/src/geneval.c:6804, c-format
 msgid "%s: insufficient arguments"
-msgstr "La orden no tiene suficientes argumentos"
+msgstr "%s: no se han determinado suficientes argumentos"
 
-#: lib/src/geneval.c:6806
-#, fuzzy, c-format
+#: lib/src/geneval.c:6806, c-format
 msgid "%s: invalid argument type %s"
-msgstr "'%s': Argumento no válido para %s()\n"
+msgstr "%s: Argumento de tipo no válido %s"
 
-#: lib/src/geneval.c:6809
-#, fuzzy, c-format
+#: lib/src/geneval.c:6809, c-format
 msgid "%s: argument %d: invalid type %s"
-msgstr "%s: el argumento %d debería ser %s"
+msgstr "%s: argumento %d: el tipo %s no es válido"
 
 #: lib/src/geneval.c:6819
 #, c-format
@@ -2684,10 +2678,9 @@ msgstr "Evaluaciones del gradiente: %d\n"
 msgid "Initial value of objective function is not finite"
 msgstr "El valor inicial de la función objetivo no es finito"
 
-#: lib/src/gretl_bundle.c:482
-#, fuzzy, c-format
+#: lib/src/gretl_bundle.c:482, c-format
 msgid "Deleted bundle %s"
-msgstr "Se ha borrado el escalar %s"
+msgstr "Se ha borrado el paquete %s"
 
 #: lib/src/gretl_errors.c:38
 msgid "Data error"
@@ -2892,12 +2885,10 @@ msgid "%s: validated against DTD OK"
 msgstr "%s: validó correctamente con respecto a DTD"
 
 #: lib/src/gretl_func.c:2323
-#, fuzzy
 msgid "No functions are available for packaging at present."
 msgstr ""
-"No hay cargada ninguna función definida por el usuario\n"
-"que se pueda empaquetar.\n"
-"¿Desea escribir una función ahora?"
+"En este momento no hay cargada ninguna función\n"
+"que se pueda empaquetar."
 
 #: lib/src/gretl_func.c:3192
 msgid "No description available"
@@ -4376,9 +4367,8 @@ msgid "Interval estimates"
 msgstr "Estimaciones por intervalo"
 
 #: lib/src/modelprint.c:711
-#, fuzzy
 msgid "Dynamic panel"
-msgstr "Modelo de panel dinámico"
+msgstr "Panel dinámico"
 
 #: lib/src/modelprint.c:713
 msgid "Arellano--Bond"
@@ -4453,14 +4443,12 @@ msgid "1-step Arellano-Bond"
 msgstr "Arellano-Bond en una etapa"
 
 #: lib/src/modelprint.c:766
-#, fuzzy
 msgid "2-step dynamic panel"
-msgstr "Modelo de panel dinámico"
+msgstr "Panel dinámico en dos etapas"
 
 #: lib/src/modelprint.c:768
-#, fuzzy
 msgid "1-step dynamic panel"
-msgstr "Modelo de panel dinámico"
+msgstr "Panel dinámico en un etapa"
 
 #: lib/src/modelprint.c:772 lib/src/modelprint.c:776
 msgid "2-step GMM"
@@ -8483,9 +8471,8 @@ msgid "Seed for generator:"
 msgstr "Semilla para el generador:"
 
 #: gui2/dialogs.c:1274
-#, fuzzy
 msgid "Choose named list"
-msgstr "Definir una lista nominal"
+msgstr "Elegir una lista nominal"
 
 #: gui2/dialogs.c:1369
 msgid "gretl: iteration controls"
@@ -9798,9 +9785,8 @@ msgid "%s found\n"
 msgstr "encontrado %s\n"
 
 #: gui2/gretl.c:1109
-#, fuzzy
 msgid "No lists are currently defined"
-msgstr "En este momento no hay definida ninguna variable escalar"
+msgstr "En este momento no hay definida ninguna lista"
 
 #: gui2/gretl.c:1208
 msgid "ID #"
@@ -10099,14 +10085,12 @@ msgid "Select _all"
 msgstr "Seleccionar _todos"
 
 #: gui2/gretl.c:1431
-#, fuzzy
 msgid "Define or edit _list..."
-msgstr "Definir una lista nominal"
+msgstr "Definir o editar una _lista..."
 
 #: gui2/gretl.c:1432
-#, fuzzy
 msgid "_Select listed variables..."
-msgstr "Elija dos variables"
+msgstr "_Seleccionar las variables de una lista..."
 
 #: gui2/gretl.c:1433 gui2/gretl.c:1511
 msgid "_Display values"
@@ -11832,9 +11816,8 @@ msgstr ""
 "¿Desea añadirlas ahora desde un fichero?"
 
 #: gui2/library.c:1461
-#, fuzzy
 msgid "Not ready for variable labels"
-msgstr "No se obtuvieron variables"
+msgstr "No estoy listo para incorporar etiquetas de variables"
 
 #: gui2/library.c:1487
 msgid "Export the labels to file"
@@ -13302,9 +13285,8 @@ msgid "Define named list"
 msgstr "Definir una lista nominal"
 
 #: gui2/selector.c:5866
-#, fuzzy
 msgid "Name of list:"
-msgstr "Nombre para la lista:"
+msgstr "Nombre de la lista:"
 
 #: gui2/selector.c:5971
 msgid "Available vars"
@@ -14421,9 +14403,8 @@ msgid "last observation"
 msgstr "última observación"
 
 #: gui2/varinfo.c:705
-#, fuzzy
 msgid "ID number:"
-msgstr "Por número de _ID"
+msgstr "Número de _ID:"
 
 #: gui2/varinfo.c:721 gui2/varinfo.c:971
 msgid "gretl: variable attributes"
