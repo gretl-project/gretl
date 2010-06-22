@@ -47,7 +47,9 @@ How to compile libgretl itself
       </para>
       <para>
         The <emphasis>Gretl User's Guide</emphasis> contains
-        further details about the build process and ways to influence it.
+        further details about the build process and ways to influence it;
+        see <ulink 
+        uri="http://sourceforge.net/projects/gretl/files/manual/">sourceforge.net</ulink>.
       </para>
     </refsect1>
     <refsect1 id="dependencies">
@@ -64,7 +66,7 @@ How to compile libgretl itself
 	    <ulink
 	    url="http://www.freedesktop.org/software/pkgconfig/">pkg-config</ulink>
 	    is a tool for tracking the compilation flags needed for
-	    libraries that are used by the GLib library. (For each
+	    libraries that are used by libgretl. (For each
 	    library, a small <literal>.pc</literal> text file is installed
 	    in a standard location that contains the compilation flags
 	    needed for that library along with version number
@@ -88,18 +90,18 @@ How to compile libgretl itself
       <itemizedlist>
        <listitem>
 	<para>
-	  Libxml2; see <ulink url="http://www.xmlsoft.org/">xmlsoft.org</ulink>.
+	  Libxml2; see <ulink url="http://www.xmlsoft.org/">www.xmlsoft.org</ulink>.
 	</para>
       </listitem>     
       <listitem>
 	<para>
 	  The LAPACK and BLAS libraries; see 
-	  <ulink url="http://www.netlib.org/lapack/">netlib.org</ulink>.
+	  <ulink url="http://www.netlib.org/lapack/">www.netlib.org</ulink>.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  FFTW; see <ulink url="http://www.fftw.org/">fftw.org</ulink>.
+	  FFTW; see <ulink url="http://www.fftw.org/">www.fftw.org</ulink>.
 	</para>
       </listitem>      
     </itemizedlist>

@@ -40,9 +40,17 @@ IGNORE_SRCS = \
 	gretl_func.h \
 	gretl_win32.c \
 	gretl_win32.h \
+	interact.c \
+	interact.h \
+	libglue.c \
+	libglue.h \
 	missing_private.h \
 	monte_carlo.c \
 	monte_carlo.h \
+	objstack.c \
+	objstack.h \
+	options.c \
+	options.h \
 	printscan.c \
 	printscan.h \
 	tsls.c \

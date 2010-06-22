@@ -48,7 +48,7 @@ gretl-users covers general gretl topics from the standpoint of users of the prog
 <varlistentry>
 <term><ulink url="http://lists.wfu.edu/mailman/listinfo/gretl-devel">gretl-devel@lists.wfu.edu</ulink></term>
 <listitem><para>
-gretl-devel-list is for discussion of work on gretl itself. It is 
+gretl-devel is for discussion of work on gretl itself. It is 
 <emphasis>not</emphasis> for asking questions about how to use gretl,
 but is (for the present) the right place for asking questions about developing
 and running programs that use libgretl.
