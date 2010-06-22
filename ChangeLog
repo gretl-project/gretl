@@ -7,6 +7,9 @@ version 1.9.1, in progress
   are all zero
 - logit/probit: correct ordering of estimates when the
   constant is not first in the supplied list of regressors
+- Reading gdt data files: don't stop if a denormalized tiny
+  value is found: accept what the C library gives and ignore
+  errno
 - OS X: use the native Mac calculator app for gretl's
   calculator toolbar item by default
 - GUI: add mechanism for defining named lists, and for
