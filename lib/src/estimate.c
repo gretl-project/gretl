@@ -32,6 +32,20 @@
 
 #include <glib.h>
 
+/**
+ * SECTION:estimate
+ * @short_description: estimation of regression models
+ * @title: Estimation
+ * @include: libgretl.h
+ *
+ * Most libgretl functions that estimate regression models are 
+ * collected here.
+ *
+ * Please note that most of these functions return a #MODEL
+ * struct. This is literally a struct, not a pointer to one.
+ * FIXME add more explanation.
+ */
+
 /* Comment on 'TINY': It's the minimum value for 'test' (see below)
    that libgretl's Cholesky decomposition routine will accept before
    rejecting a data matrix as too highly collinear.  If you set it too
@@ -1011,7 +1025,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (ci == HSK) {
-	return hsk_func(list, pZ, pdinfo);
+	return hsk_model(list, pZ, pdinfo);
     } 
 
     gretl_model_init(&mdl);
@@ -1254,8 +1268,8 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @ci: one of the command indices in #LSQ_MODEL.
  * @opt: option flags: zero or more of the following --
  *   %OPT_R compute robust standard errors;
@@ -2019,8 +2033,8 @@ static double autores (MODEL *pmod, const double **Z, gretlopt opt)
 /**
  * estimate_rho:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt: option flags: may include %OPT_H to use Hildreth-Lu,
  *       %OPT_P to use Prais-Winsten, %OPT_B to suppress Cochrane-Orcutt
  *       fine-tuning of Hildreth-Lu results, %OPT_G to generate
@@ -2250,7 +2264,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
  * @orig: list giving original regression specification.
  * @aux: either %AUX_SQ, %AUX_LOG or %AUX_WHITE.
  * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @pdinfo: dataset information.
  *
  * Augment the regression list @orig with auxiliary terms.  If @aux 
  * is %AUX_SQ add the squares of the original regressors; if @aux
@@ -2461,10 +2475,10 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 }
 
 /**
- * hsk_func:
+ * hsk_model:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @pdinfo: dataset information.
  *
  * Estimate the model given in @list using a correction for
  * heteroskedasticity.
@@ -2472,7 +2486,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hsk_func (const int *list, double ***pZ, DATAINFO *pdinfo)
+MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, err;
     int orig_nvar = pdinfo->v;
@@ -2750,8 +2764,8 @@ static int get_whites_aux (const MODEL *pmod, const double **Z)
 /**
  * tsls_hetero_test:
  * @pmod: pointer to model.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt: if flags include %OPT_S, save results to model; %OPT_Q
  * means don't print the auxiliary regression.
  * @prn: gretl printing struct.
@@ -2951,8 +2965,8 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 /**
  * whites_test:
  * @pmod: pointer to model.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt: if flags include %OPT_S, save results to model; %OPT_Q
  * means don't print the auxiliary regression;  %OPT_B means
  * do the simpler Breusch-Pagan variant.
@@ -3132,10 +3146,10 @@ static int ar_list_max (const int *list)
 }
 
 /**
- * ar_func:
+ * ar_model:
  * @list: list of lags plus dependent variable and list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt: may contain OPT_O to print covariance matrix.
  * @prn: gretl printing struct.
  *
@@ -3145,8 +3159,8 @@ static int ar_list_max (const int *list)
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_func (const int *list, double ***pZ, 
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+MODEL ar_model (const int *list, double ***pZ, 
+		DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     double diff, ess, tss, xx;
     int i, j, t, t1, t2, vc, yno, ryno, iter;
@@ -3645,7 +3659,7 @@ static int real_arch_test (const double *u, int T, int order,
  * arch_test:
  * @pmod: model to be tested.
  * @order: lag order for ARCH process.
- * @pdinfo: information on the data set.
+ * @pdinfo: dataset information.
  * @opt: if flags include %OPT_S, save test results to model;
  * if %OPT_Q, be less verbose.
  * @prn: gretl printing struct.
@@ -3687,8 +3701,8 @@ int array_arch_test (const double *u, int n, int order,
  * arch_model:
  * @list: dependent variable plus list of regressors.
  * @order: lag order for ARCH process.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt: may contain OPT_O to print covariance matrix.
  * @prn: gretl printing struct.
  *
@@ -3837,7 +3851,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
  * lad:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @pdinfo: dataset information.
  *
  * Estimate the model given in @list using the method of Least
  * Absolute Deviation (LAD).
@@ -3881,15 +3895,13 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 
 /**
  * quantreg:
- * @parm: string specifying tau: numerical value, or the name
- * of a scalar variable (in the range 0.01 to 0.99), or the
- * name of a vector (gretl_matrix) that holds one or more values 
- * of tau.
+ * @tau: vector containing one or more quantile values, in the range 
+ * 0.01 to 0.99.
  * @list: model specification: dependent var and regressors.
  * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
- * @opt: may contain %OPT_R for robust standard errors, 
- * %OPT_I to produce confidence intervals.
+ * @pdinfo: dataset information.
+ * @opt: may contain OPT_R for robust standard errors, 
+ * OPT_I to produce confidence intervals.
  * @prn: gretl printing struct.
  *
  * Estimate the model given in @list using the method of 
@@ -3898,13 +3910,13 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL quantreg (const char *parm, const int *list, 
+MODEL quantreg (const gretl_matrix *tau, const int *list, 
 		double ***pZ, DATAINFO *pdinfo,
 		gretlopt opt, PRN *prn)
 {
     MODEL qmod;
     void *handle;
-    int (*rq_driver) (const char *, MODEL *, double ***, DATAINFO *,
+    int (*rq_driver) (const gretl_matrix *, MODEL *, double **, DATAINFO *,
 		      gretlopt, PRN *);
     gretlopt olsopt = (OPT_A | OPT_M);
 
@@ -3932,7 +3944,7 @@ MODEL quantreg (const char *parm, const int *list,
 	return qmod;
     }
 
-    (*rq_driver) (parm, &qmod, pZ, pdinfo, opt, prn);
+    (*rq_driver) (tau, &qmod, *pZ, pdinfo, opt, prn);
     close_plugin(handle);
 
     if (qmod.errcode == 0) {
@@ -3942,12 +3954,20 @@ MODEL quantreg (const char *parm, const int *list,
     return qmod;
 }
 
-#ifdef WIN32
+/*
+ * get_x12a_maxpd:
+ *
+ * Retrieve the highest data frequency handled by X-12-ARIMA,
+ * which may vary depending on how the program was built.
+ * This may be relevant when executing the gretl arima
+ * command with gthe option to use X-12-ARIMA.
+ */
 
 int get_x12a_maxpd (void)
 {
     static int n;
 
+#ifdef WIN32
     if (n == 0) {
 	char *sout = NULL;
 
@@ -3966,16 +3986,7 @@ int get_x12a_maxpd (void)
 	    n = 12;
 	}
     }
-
-    return n;
-}
-
 #else
-
-int get_x12a_maxpd (void)
-{
-    static int n;
-
     if (n == 0) {
 	const char *x12a = gretl_x12_arima();
 	gchar *argv[] = { (gchar *) x12a, NULL };
@@ -3998,11 +4009,10 @@ int get_x12a_maxpd (void)
 	    n = 12;
 	}
     }
+#endif
 
     return n;
 }
-
-#endif
 
 /**
  * arma:
@@ -4010,7 +4020,7 @@ int get_x12a_maxpd (void)
  * regressors.
  * @pqspec: string giving specific non-seasonal AR/MA lags (or %NULL).
  * @Z: data array.
- * @pdinfo: information on the data set.
+ * @pdinfo: dataset information.
  * @opt: options: may include %OPT_S to suppress intercept, %OPT_V
  * for verbose results, %OPT_X to use X-12-ARIMA, %OPT_C to put
  * X-12-ARIMA into conditional maximum-likelihood mode.
@@ -4080,314 +4090,10 @@ MODEL arma (const int *list, const char *pqspec,
 } 
 
 /**
- * tobit_model:
- * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
- * @opt: may include %OPT_V for verbose operation.
- * @prn: printing struct for iteration info (or %NULL is this is not
- * wanted).
- *
- * Produce Tobit estimates of the model given in @list.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn)
-{
-    MODEL tmod;
-    void *handle;
-    MODEL (* tobit_estimate) (const int *, double ***, DATAINFO *, 
-			      gretlopt, PRN *);
-
-    gretl_error_clear();
-
-    tobit_estimate = get_plugin_function("tobit_estimate", &handle);
-    if (tobit_estimate == NULL) {
-	gretl_model_init(&tmod);
-	tmod.errcode = E_FOPEN;
-	return tmod;
-    }
-
-    tmod = (*tobit_estimate) (list, pZ, pdinfo, opt, prn);
-
-    close_plugin(handle);
-    set_model_id(&tmod);
-
-    return tmod;
-}
-
-/* run several checks on the data supplied for a duration
-   model, before invoking the duration plugin to complete
-   the business
-*/
-
-static int duration_precheck (const int *list, double ***pZ,
-			      DATAINFO *pdinfo, MODEL *pmod,
-			      int *pcensvar)
-{
-    const double **Z = (const double **) *pZ;
-    int *olslist = NULL;
-    int seppos, censvar = 0;
-    int l0 = list[0];
-    int err = 0;
-
-    /* such models must contain a constant */
-    if (!gretl_list_const_pos(list, 2, Z, pdinfo)) {
-	return E_NOCONST;
-    }
-
-    /* if there's a separator, it must be in second-last place */
-    seppos = gretl_list_separator_position(list);
-    if (seppos > 0 && seppos != l0 - 1) {
-	return E_PARSE;
-    }
-
-    if (seppos) {
-	/* the censoring variable, if present, must be a dummy */
-	censvar = list[l0];
-	if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[censvar])) {
-	    gretl_errmsg_sprintf(_("The variable '%s' is not a 0/1 variable."),
-				 pdinfo->varname[censvar]);
-	    err = E_DATA;
-	} else {
-	    olslist = gretl_list_copy(list);
-	    if (olslist == NULL) {
-		err = E_ALLOC;
-	    } else {
-		/* include the censoring dummy. to ensure the
-		   sample is right */
-		olslist[l0 - 1] = censvar;
-		olslist[0] -= 1;
-	    }
-	}
-    }
-
-    if (!err) {
-	/* run an initial OLS to "set the model up" and check for errors;
-	   the duration_estimate_driver function will overwrite the
-	   coefficients etc.
-	*/	
-	if (olslist != NULL) {
-	    *pmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
-	    if (!pmod->errcode) {
-		/* remove reference to censoring var */
-		pmod->list[0] -= 1;
-		pmod->ncoeff -= 1;
-		pmod->dfn -= 1;
-		pmod->dfd += 1;
-	    }
-	    free(olslist);
-	} else {
-	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
-	}
-	err = pmod->errcode;
-	*pcensvar = censvar;
-    }
-
-    if (!err) {
-	int t, yno = pmod->list[1];
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!na(pmod->uhat[t]) && (*pZ)[yno][t] <= 0) {
-		gretl_errmsg_set(_("Durations must be positive"));
-		err = E_DATA;
-	    }
-	}
-    }
-
-    return err;
-}
-
-/**
- * duration_model:
- * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: may include %OPT_R for robust covariance matrix.
- * @prn: printing struct for iteration info (or %NULL is this is not
- * wanted).
- *
- * Estimate the duration model given in @list using ML.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL duration_model (const int *list, double ***pZ, 
-		      DATAINFO *pdinfo, gretlopt opt, 
-		      PRN *prn)
-{
-    MODEL dmod;
-    void *handle;
-    int censvar = 0;
-    int (* duration_estimate) (MODEL *, int, const double **, 
-			       const DATAINFO *, gretlopt, 
-			       PRN *);
-
-    gretl_error_clear();
-    gretl_model_init(&dmod);
-
-    dmod.errcode = duration_precheck(list, pZ, pdinfo, &dmod,
-				     &censvar);
-    if (dmod.errcode) {
-        return dmod;
-    }
-
-    duration_estimate = get_plugin_function("duration_estimate", 
-					    &handle);
-
-    if (duration_estimate == NULL) {
-	dmod.errcode = E_FOPEN;
-	return dmod;
-    }
-
-    (*duration_estimate) (&dmod, censvar, (const double **) *pZ, pdinfo, 
-			  opt, prn);
-
-    close_plugin(handle);
-
-    set_model_id(&dmod);
-
-    return dmod;
-}
-
-static int get_trailing_var (int *list)
-{
-    int l0 = list[0];
-    int ret = 0;
-
-    if (list[l0 - 1] == LISTSEP) {
-	ret = list[l0];
-	list[0] -= 2;
-    }
-
-    return ret;
-}
-
-/**
- * count_model:
- * @list: dependent variable plus list of regressors.
- * @ci: either #POISSON or #NEGBIN.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: may include %OPT_R for robust covariance matrix.
- * @prn: printing struct for iteration info (or %NULL is this is not
- * wanted).
- *
- * Estimate the count data model given in @list using ML.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL count_model (const int *list, int ci, 
-		   double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn)
-{
-    MODEL cmod;
-    void *handle;
-    int *listcpy;
-    int offvar;
-    int (* count_data_estimate) (MODEL *, int, int,
-				 double ***, DATAINFO *, 
-				 gretlopt, PRN *);
-
-    gretl_error_clear();
-
-    gretl_model_init(&cmod);
-
-    if (!gretl_iscount(pdinfo->t1, pdinfo->t2, (*pZ)[list[1]])) {
-	gretl_errmsg_sprintf(_("%s: the dependent variable must be count data"),
-			     gretl_command_word(ci));
-	cmod.errcode = E_DATA;
-	return cmod;
-    }
-
-    listcpy = gretl_list_copy(list);
-    if (listcpy == NULL) {
-	cmod.errcode = E_ALLOC;
-        return cmod;
-    }
-
-    offvar = get_trailing_var(listcpy);
-
-    /* run an initial OLS to "set the model up" and check for errors.
-       the count_data_estimate_driver function will overwrite the
-       coefficients etc.
-    */
-
-    cmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
-    free(listcpy);
-
-    if (cmod.errcode) {
-        return cmod;
-    }
-
-    count_data_estimate = get_plugin_function("count_data_estimate", 
-					      &handle);
-
-    if (count_data_estimate == NULL) {
-	cmod.errcode = E_FOPEN;
-	return cmod;
-    }
-
-    (*count_data_estimate) (&cmod, ci, offvar, pZ, pdinfo, opt, prn);
-
-    close_plugin(handle);
-
-    set_model_id(&cmod);
-
-    return cmod;
-}
-
-
-/**
- * heckit_model:
- * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
- * @opt: option flags (may include %OPT_V for verbose output).
- * @prn: printing struct for iteration info (or %NULL is this is not
- * wanted).
- *
- * Produce Heckit estimates of the model given in @list. The list must
- * include a separator to divide the main equation from the selection
- * equation.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		    gretlopt opt, PRN *prn)
-{
-    MODEL hmod;
-    void *handle;
-    MODEL (* heckit_estimate) (const int *, double ***, DATAINFO *, 
-			       gretlopt, PRN *);
-
-    gretl_error_clear();
-
-    heckit_estimate = get_plugin_function("heckit_estimate", &handle);
-    if (heckit_estimate == NULL) {
-	gretl_model_init(&hmod);
-	hmod.errcode = E_FOPEN;
-	return hmod;
-    }
-
-    hmod = (*heckit_estimate) (list, pZ, pdinfo, opt, prn);
-
-    close_plugin(handle);
-
-    set_model_id(&hmod);
-
-    return hmod;
-}
-
-/**
  * garch:
  * @list: dependent variable plus arch and garch orders.
  * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @pdinfo: dataset information.
  * @opt: can specify robust standard errors and VCV.
  * @prn: for printing details of iterations (or %NULL).
  *
@@ -4434,7 +4140,7 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
  * mp_ols:
  * @list: specification of variables to use.
  * @Z: data array.
- * @pdinfo: information on the data set.
+ * @pdinfo: dataset information.
  *
  * Estimate an OLS model using multiple-precision arithmetic
  * via the GMP library.
@@ -4503,8 +4209,8 @@ static int check_panel_options (gretlopt opt)
  * panel_model:
  * @list: regression list (dependent variable plus independent 
  * variables).
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the (panel) data set.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt: can include %OPT_Q (quiet estimation), %OPT_S
  * (silent estimation), %OPT_R (random effects model),
  * %OPT_W (weights based on the error variance for the
@@ -4592,12 +4298,18 @@ MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
  * @list: regression list.
  * @istr: may contain additional instrument specification.
  * @Z: data array.
- * @pdinfo: information on the (panel) data set.
- * @opt: to be hooked up.
- * @prn: printing struct (or %NULL).
+ * @pdinfo: dataset information.
+ * @opt: may include OPT_D to include time dummies, 
+ * OPT_H to transform the dependent variable via orthogonal
+ * deviations rather than first differences, OPT_T for two-step
+ * estimation, OPT_A to force production of asymptotic standard
+ * errors rather than finite-sample corrected ones.
+ * @prn: printing struct.
  *
- * To be written.  This function is currently just for
- * testing.
+ * Produces estimates of a dynamic panel-data model in
+ * the manner of Arellano and Bond. See the documentation for
+ * the "arbond" command in gretl for the construction of the
+ * @list argument and also the syntax of @istr.
  *
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -4634,12 +4346,11 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
  * dpd_model:
  * @list: regression list.
  * @Z: data array.
- * @pdinfo: information on the (panel) data set.
+ * @pdinfo: dataset information.
  * @opt: to be hooked up.
- * @prn: printing struct (or %NULL).
+ * @prn: printing struct.
  *
- * To be written.  This function is currently just for
- * testing.
+ * This is at present a secret function, for testing only.
  *
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -4676,7 +4387,7 @@ MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo,
  * @list: must contain the response and treatment variables.
  * @Z: data array.
  * @pdinfo: dataset information.
- * @opt: not used yet.
+ * @opt: unused at present.
  * @prn: printing struct.
  * 
  * Does one-way or two-way Analysis of Variance (prints table and F-test).

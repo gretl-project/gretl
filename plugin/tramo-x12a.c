@@ -20,6 +20,8 @@
 /* TRAMO/SEATS, X-12-ARIMA plugin for gretl */
 
 #include "libgretl.h"
+#include "estim_private.h"
+
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 

@@ -24,6 +24,19 @@
 
 #include <errno.h>
 
+/**
+ * SECTION:discrete
+ * @short_description: models for limited dependent variables
+ * and related cases.
+ * @title: Limdep
+ * @include: libgretl.h
+ *
+ * Covers logit (binary, ordered or multinomial), probit (binary
+ * or ordered), logistic, tobit, interval regression, models for count data
+ * and for duration data, and the heckit sample-selection model. 
+ * Plus a few utility functions.
+ */
+
 #define LPDEBUG 0
 #define USE_MILLS 0
 
@@ -478,8 +491,15 @@ static int ihess_from_ascore (op_container *OC, gretl_matrix *inH)
     return err;
 }
 
-/* Get the predicted value of y; that is, the value for which the estimated 
-   probability is greatest.  This is also used in forecast.c */
+/**
+ * ordered_model_prediction:
+ * @pmod: model for ordered data, either logit or probit.
+ * @Xb: X\beta, the value of the index function at a given
+ * observation.
+ *
+ * Returns: the predicted value of the (ordinal) dependent variable;
+ * that is, the value for which the estimated probability is greatest.
+ */
 
 double ordered_model_prediction (const MODEL *pmod, double Xb)
 {
@@ -1021,13 +1041,24 @@ static int check_for_missing_dummies (MODEL *pmod, int *dlist)
     return 0;
 }
 
+static int ordered_depvar_check (int v, double **Z, const DATAINFO *pdinfo)
+{
+    if (!var_is_discrete(pdinfo, v) && 
+	!gretl_is_oprobit_ok(pdinfo->t1, pdinfo->t2, Z[v])) {
+	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
+			     pdinfo->varname[v]);
+	return E_DATA;
+    } 
+
+    return 0;
+}
+
 /* driver function for ordered logit/probit: note, prn is non-NULL
    only if the verbose option has been selected
 */
 
-static MODEL ordered_estimate (int *list, int ci, 
-			       double ***pZ, DATAINFO *pdinfo,
-			       gretlopt opt, PRN *prn) 
+static MODEL ordered_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
+			       int ci, gretlopt opt, PRN *prn) 
 {
     MODEL model;
     int orig_v = pdinfo->v;
@@ -1038,13 +1069,18 @@ static MODEL ordered_estimate (int *list, int ci,
 
     gretl_model_init(&model);
 
-    /* remove the constant from the incoming list, if present */
-    list_purge_const(list);
+    model.errcode = ordered_depvar_check(list[1], *pZ, pdinfo);
 
-    /* construct augmented regression list, including dummies 
-       for the level of the dependent variable
-    */
-    biglist = make_op_list(list, pZ, pdinfo, &dumlist, &model.errcode);
+    if (!model.errcode) {
+	/* remove the constant from the incoming list, if present */
+	list_purge_const(list);
+
+	/* construct augmented regression list, including dummies 
+	   for the level of the dependent variable
+	*/
+	biglist = make_op_list(list, pZ, pdinfo, &dumlist, &model.errcode);
+    }
+
     if (model.errcode) {
 	return model;
     }
@@ -1362,6 +1398,8 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
 
     return err;
 }
+
+
 
 /* calculate standard errors etc using the Hessian */
 
@@ -1868,13 +1906,21 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&dmod);
 
+    depvar = inlist[1];
+    Z = (const double **) *pZ;
+
+    if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[depvar])) {
+	gretl_errmsg_sprintf(_("'%s' is not a binary variable"), 
+			     pdinfo->varname[depvar]);
+	dmod.errcode = E_DATA;
+	goto bailout;
+    }
+
     list = gretl_list_copy(inlist);
     if (list == NULL) {
 	dmod.errcode = E_ALLOC;
 	goto bailout;
     }
-
-    Z = (const double **) *pZ;
 
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
 
@@ -2459,17 +2505,6 @@ static int mn_value_count (const double *y, MODEL *pmod,
     return n;
 }
 
-const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, int i)
-{
-    static char ret[32];
-    const char *vname = gretl_model_get_depvar_name(pmod, pdinfo);
-    const int *list = (const int *) gretl_model_get_data(pmod, "yvals");
-    int val = (list != NULL)? list[i+1] : i;
-
-    sprintf(ret, "%s = %d", vname, val);
-    return ret;
-}
-
 /* transcribe multinomial logit results into @pmod, which was
    initialized via OLS, and add covariance matrix
 */
@@ -2645,64 +2680,126 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     return mod;
 }
 
-static int 
-discrete_depvar_ok (double **Z, const DATAINFO *pdinfo, int v)
-{
-    if (!var_is_discrete(pdinfo, v) && 
-	!gretl_is_oprobit_ok(pdinfo->t1, pdinfo->t2, Z[v])) {
-	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"),
-			     pdinfo->varname[v]);
-	return 0;
-    } 
-
-    return 1;
-}
-
 /**
- * logit_probit:
- * @list: dependent variable plus list of regressors.
+ * binary_logit:
+ * @list: binary dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ci: command index: if = %LOGIT, perform logit regression, otherwise
- * perform probit regression.
- * @opt: if includes %OPT_R form robust (QML) estimates of standard
- * errors and covariance matrix, in binary case; if %OPT_P arrange for
- * printing of p-values, not slopes at mean; if %OPT_A treat as an
+ * @opt: if includes OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix; if OPT_P arrange for
+ * printing of p-values, not slopes at mean; if OPT_A treat as an
  * auxiliary regression.
  * @prn: printing struct in case additional information is
- * wanted (%OPT_V).
+ * wanted (in which case add OPT_V to @opt).
  *
- * Computes estimates of the discrete model specified by @list,
- * using an estimator determined by the value of @ci.  In the
- * binary case, uses the BRMR auxiliary regression; see Davidson 
- * and MacKinnon.  If the dependent variable is not binary but 
- * is discrete and has a minimum value of 0, we do ordered 
- * logit/probit.
+ * Computes estimates of the logit model specified by @list,
+ * using the BRMR auxiliary regression; see Davidson 
+ * and MacKinnon.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
-		    int ci, gretlopt opt, PRN *prn)
+MODEL binary_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
 {
-    PRN *vprn = NULL;
-    int yv = list[1];
+    return binary_logit_probit(list, pZ, pdinfo, LOGIT, opt, prn);
+}
 
-    if (ci == LOGIT && (opt & OPT_M)) {
-	vprn = (opt & OPT_V)? prn : NULL;
-	return mnl_model(list, pZ, pdinfo, opt, vprn);
-    } else if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
-	return binary_logit_probit(list, pZ, pdinfo, ci, opt, prn);
-    } else if (discrete_depvar_ok(*pZ, pdinfo, yv)) {
-	vprn = (opt & OPT_V)? prn : NULL;
-	return ordered_estimate(list, ci, pZ, pdinfo, opt, vprn);
-    } else {
-	MODEL dmod;
+/**
+ * binary_probit:
+ * @list: binary dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if includes OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix; if OPT_P arrange for
+ * printing of p-values, not slopes at mean; if OPT_A treat as an
+ * auxiliary regression.
+ * @prn: printing struct in case additional information is
+ * wanted (in which case add OPT_V to @opt).
+ *
+ * Computes estimates of the probit model specified by @list,
+ * using the BRMR auxiliary regression; see Davidson 
+ * and MacKinnon.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
 
-	gretl_model_init(&dmod);
-	dmod.errcode = E_UNSPEC;
-	return dmod;
-    }
+MODEL binary_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn)
+{
+    return binary_logit_probit(list, pZ, pdinfo, PROBIT, opt, prn);
+}
+
+/**
+ * ordered_logit:
+ * @list: ordinal dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if includes OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix; if includes OPT_V, produce verbose
+ * output.
+ * @prn: printing struct in case additional information is
+ * wanted (OPT_V).
+ *
+ * Computes ML estimates of the ordered logit model specified by @list.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL ordered_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn)
+{
+    PRN *vprn = (opt & OPT_V)? prn : NULL;
+
+    return ordered_estimate(list, pZ, pdinfo, LOGIT, opt, vprn);
+}
+
+/**
+ * ordered_probit:
+ * @list: ordinal dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if includes OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix; if includes OPT_V, produce verbose
+ * output.
+ * @prn: printing struct in case additional information is
+ * wanted (OPT_V).
+ *
+ * Computes ML estimates of the ordered probit model specified by @list.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL ordered_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
+{
+    PRN *vprn = (opt & OPT_V)? prn : NULL;
+
+    return ordered_estimate(list, pZ, pdinfo, PROBIT, opt, vprn);
+}
+
+/**
+ * multinomial_logit:
+ * @list: discrete dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if includes OPT_R form robust (QML) estimates of standard
+ * errors and covariance matrix; if includes OPT_V, produce verbose
+ * output.
+ * @prn: printing struct in case additional information is
+ * wanted (OPT_V).
+ *
+ * Computes ML estimates of the multinomial model specified by @list.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL multinomial_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn)
+{
+    PRN *vprn = (opt & OPT_V)? prn : NULL;
+
+    return mnl_model(list, pZ, pdinfo, opt, vprn);    
 }
 
 /* Solves for diagonal elements of X'X inverse matrix.
@@ -2807,6 +2904,22 @@ static int cholesky_decomp (double *xpx, int nv)
     return 0; 
 }
 
+/**
+ * logistic_ymax_lmax:
+ * @y: data series.
+ * @pdinfo: dataset information.
+ * @ymax: location to receive max(y).
+ * @lmax: location to receive a guess at a suitable
+ * asymptote for a logistic curve fitted to @y.
+ *
+ * Checks that the non-missing values of @y are all positive,
+ * and if so writes the maximum value of @y to @ymax. The
+ * value written to @lmax is 1 if max(y) < 1, else 100
+ * if max(y) < 100, else 1.1 * max(y).
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
 			double *ymax, double *lmax)
 {
@@ -2840,50 +2953,27 @@ int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
     return 0;
 }
 
-static double real_get_lmax (const double *y, const DATAINFO *pdinfo,
-			     const char *lmstr)
-{
-    double lmax, ymax = 0.0;
-    int err;
-
-    err = logistic_ymax_lmax(y, pdinfo, &ymax, &lmax);
-
-    if (err) {
-	return NADBL;
-    }
-
-    if (lmstr != NULL && *lmstr != '\0') {
-	lmax = atof(lmstr + 5);
-	if (lmax <= ymax) {
-	    gretl_errmsg_set(_("Invalid value for the maximum of the "
-			       "dependent variable"));
-	    lmax = NADBL;
-	}
-    }	
-	    
-    return lmax;
-}
-
 static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo, 
 				 int dv, double lmax)
 {
     int t, v = pdinfo->v;
+    int err;
 
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	return 1;
-    }
+    err = dataset_add_series(1, pZ, pdinfo);
 
-    for (t=0; t<pdinfo->n; t++) {
-	double p = (*pZ)[dv][t];
+    if (!err) {
+	for (t=0; t<pdinfo->n; t++) {
+	    double p = (*pZ)[dv][t];
 
-	if (na(p)) {
-	    (*pZ)[v][t] = NADBL;
-	} else {
-	    (*pZ)[v][t] = log(p / (lmax - p));
+	    if (na(p)) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		(*pZ)[v][t] = log(p / (lmax - p));
+	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
 static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
@@ -2922,13 +3012,39 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+static double get_real_lmax (const double *y, 
+			     const DATAINFO *pdinfo,
+			     double user_lmax)
+{
+    double ymax, lmax;
+    int err;
+
+    err = logistic_ymax_lmax(y, pdinfo, &ymax, &lmax);
+    if (err) {
+	return NADBL;
+    }
+
+    if (!na(user_lmax)) {
+	if (user_lmax <= ymax) {
+	    gretl_errmsg_set(_("Invalid value for the maximum of the "
+			       "dependent variable"));
+	    lmax = NADBL;
+	} else {
+	    /* respect the user's choice */
+	    lmax = user_lmax;
+	}
+    }	
+	    
+    return lmax;
+}
+
 /**
  * logistic_model:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @param: may contain "ymax=value" for user setting of the
- * asymptotic maximum of the dependent variable.
+ * @lmax: value for the asymptote of the logistic curve, or
+ * %NADBL for automatic treatment of this.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  *
  * Estimate the model given in @list using the logistic transformation
  * of the dependent variable.
@@ -2936,47 +3052,46 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
-		      const char *param) 
+MODEL logistic_model (const int *list, double lmax,
+		      double ***pZ, DATAINFO *pdinfo)
 {
-    double lmax;
     int *llist = NULL;
     int dv = list[1];
+    double real_lmax;
     MODEL lmod;
+    int err = 0;
 
     gretl_model_init(&lmod); 
 
     llist = gretl_list_copy(list);
     if (llist == NULL) {
-	lmod.errcode = E_ALLOC;
-	return lmod;
+	err = E_ALLOC;
     }
 
-    lmax = real_get_lmax((*pZ)[dv], pdinfo, param);
-
-    if (na(lmax)) {
-	lmod.errcode = E_DATA;
-    } else if (lmax == 0.0) {
-	lmod.errcode = E_CANCEL;
-    }
-
-    if (!lmod.errcode) {
-	if (make_logistic_depvar(pZ, pdinfo, dv, lmax)) {
-	    lmod.errcode = E_ALLOC;	
+    if (!err) {
+	real_lmax = get_real_lmax((*pZ)[dv], pdinfo, lmax);
+	if (na(real_lmax)) {
+	    err = E_DATA;
 	}
+    } 
+
+    if (!err) {
+	err = make_logistic_depvar(pZ, pdinfo, dv, real_lmax);
     }
 
-    if (lmod.errcode) {
+    if (err) {
 	free(llist);
+	lmod.errcode = err;
 	return lmod;
     }
 
+    /* replace with transformed dependent variable */
     llist[1] = pdinfo->v - 1;
 
     lmod = lsq(llist, pZ, pdinfo, OLS, OPT_A);
     if (!lmod.errcode) {
 	rewrite_logistic_stats((const double **) *pZ, pdinfo, &lmod,
-			       dv, lmax);
+			       dv, real_lmax);
 	set_model_id(&lmod);
     }
 
@@ -3016,14 +3131,25 @@ static double table_prob (double a, double b, double c, double d,
     return P;
 }
 
-/* for use with cross-tabulation (xtab command) in the
-   2 x 2 case
-*/
+/**
+ * fishers_exact_test:
+ * @tab: pointer to 2 x 2 cross-tabulation struct.
+ * @prn: gretl printer.
+ *
+ * Computes and prints to @prn the p-value for Fisher's Exact Test for 
+ * assocation between the two variables represented in @tab.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int fishers_exact_test (const Xtab *tab, PRN *prn)
 {
     double a, b, c, d, n, E0;
     double P0, Pi, PL, PR, P2;
+
+    if (tab->rows != 2 || tab->cols != 2) {
+	return E_DATA;
+    }
 
     a = tab->f[0][0];
     b = tab->f[0][1];
@@ -3075,7 +3201,7 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
 }
 
 /**
- * intreg:
+ * interval_model:
  * @list: high/low (2 variables) plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
@@ -3089,8 +3215,8 @@ int fishers_exact_test (const Xtab *tab, PRN *prn)
  * model specified by @list.
  */
 
-MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt, 
-	      PRN *prn)
+MODEL interval_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
 {
     MODEL intmod;
     void *handle;
@@ -3116,3 +3242,305 @@ MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     return intmod;
 }
 
+/**
+ * tobit_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: may include OPT_V for verbose operation.
+ * @prn: printing struct for iteration info (or NULL is this is not
+ * wanted).
+ *
+ * Produce Tobit estimates of the model given in @list.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn)
+{
+    MODEL tmod;
+    void *handle;
+    MODEL (* tobit_estimate) (const int *, double ***, DATAINFO *, 
+			      gretlopt, PRN *);
+
+    gretl_error_clear();
+
+    tobit_estimate = get_plugin_function("tobit_estimate", &handle);
+    if (tobit_estimate == NULL) {
+	gretl_model_init(&tmod);
+	tmod.errcode = E_FOPEN;
+	return tmod;
+    }
+
+    tmod = (*tobit_estimate) (list, pZ, pdinfo, opt, prn);
+
+    close_plugin(handle);
+    set_model_id(&tmod);
+
+    return tmod;
+}
+
+/* run several checks on the data supplied for a duration
+   model, before invoking the duration plugin to complete
+   the business
+*/
+
+static int duration_precheck (const int *list, double ***pZ,
+			      DATAINFO *pdinfo, MODEL *pmod,
+			      int *pcensvar)
+{
+    const double **Z = (const double **) *pZ;
+    int *olslist = NULL;
+    int seppos, censvar = 0;
+    int l0 = list[0];
+    int err = 0;
+
+    /* such models must contain a constant */
+    if (!gretl_list_const_pos(list, 2, Z, pdinfo)) {
+	return E_NOCONST;
+    }
+
+    /* if there's a separator, it must be in second-last place */
+    seppos = gretl_list_separator_position(list);
+    if (seppos > 0 && seppos != l0 - 1) {
+	return E_PARSE;
+    }
+
+    if (seppos) {
+	/* the censoring variable, if present, must be a dummy */
+	censvar = list[l0];
+	if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[censvar])) {
+	    gretl_errmsg_sprintf(_("The variable '%s' is not a 0/1 variable."),
+				 pdinfo->varname[censvar]);
+	    err = E_DATA;
+	} else {
+	    olslist = gretl_list_copy(list);
+	    if (olslist == NULL) {
+		err = E_ALLOC;
+	    } else {
+		/* include the censoring dummy. to ensure the
+		   sample is right */
+		olslist[l0 - 1] = censvar;
+		olslist[0] -= 1;
+	    }
+	}
+    }
+
+    if (!err) {
+	/* run an initial OLS to "set the model up" and check for errors;
+	   the duration_estimate_driver function will overwrite the
+	   coefficients etc.
+	*/	
+	if (olslist != NULL) {
+	    *pmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
+	    if (!pmod->errcode) {
+		/* remove reference to censoring var */
+		pmod->list[0] -= 1;
+		pmod->ncoeff -= 1;
+		pmod->dfn -= 1;
+		pmod->dfd += 1;
+	    }
+	    free(olslist);
+	} else {
+	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	}
+	err = pmod->errcode;
+	*pcensvar = censvar;
+    }
+
+    if (!err) {
+	int t, yno = pmod->list[1];
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->uhat[t]) && (*pZ)[yno][t] <= 0) {
+		gretl_errmsg_set(_("Durations must be positive"));
+		err = E_DATA;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
+ * duration_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: may include OPT_R for robust covariance matrix.
+ * @prn: printing struct for iteration info (or NULL is this is not
+ * wanted).
+ *
+ * Estimate the duration model given in @list using ML.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL duration_model (const int *list, double ***pZ, 
+		      DATAINFO *pdinfo, gretlopt opt, 
+		      PRN *prn)
+{
+    MODEL dmod;
+    void *handle;
+    int censvar = 0;
+    int (* duration_estimate) (MODEL *, int, const double **, 
+			       const DATAINFO *, gretlopt, 
+			       PRN *);
+
+    gretl_error_clear();
+    gretl_model_init(&dmod);
+
+    dmod.errcode = duration_precheck(list, pZ, pdinfo, &dmod,
+				     &censvar);
+    if (dmod.errcode) {
+        return dmod;
+    }
+
+    duration_estimate = get_plugin_function("duration_estimate", 
+					    &handle);
+
+    if (duration_estimate == NULL) {
+	dmod.errcode = E_FOPEN;
+	return dmod;
+    }
+
+    (*duration_estimate) (&dmod, censvar, (const double **) *pZ, pdinfo, 
+			  opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&dmod);
+
+    return dmod;
+}
+
+static int get_trailing_var (int *list)
+{
+    int l0 = list[0];
+    int ret = 0;
+
+    if (list[l0 - 1] == LISTSEP) {
+	ret = list[l0];
+	list[0] -= 2;
+    }
+
+    return ret;
+}
+
+/**
+ * count_model:
+ * @list: dependent variable plus list of regressors.
+ * @ci: either POISSON or NEGBIN.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: may include OPT_R for robust covariance matrix.
+ * @prn: printing struct for iteration info (or NULL is this is not
+ * wanted).
+ *
+ * Estimate the count data model given in @list using ML.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL count_model (const int *list, int ci, 
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn)
+{
+    MODEL cmod;
+    void *handle;
+    int *listcpy;
+    int offvar;
+    int (* count_data_estimate) (MODEL *, int, int,
+				 double ***, DATAINFO *, 
+				 gretlopt, PRN *);
+
+    gretl_error_clear();
+
+    gretl_model_init(&cmod);
+
+    if (!gretl_iscount(pdinfo->t1, pdinfo->t2, (*pZ)[list[1]])) {
+	gretl_errmsg_sprintf(_("%s: the dependent variable must be count data"),
+			     gretl_command_word(ci));
+	cmod.errcode = E_DATA;
+	return cmod;
+    }
+
+    listcpy = gretl_list_copy(list);
+    if (listcpy == NULL) {
+	cmod.errcode = E_ALLOC;
+        return cmod;
+    }
+
+    offvar = get_trailing_var(listcpy);
+
+    /* run an initial OLS to "set the model up" and check for errors.
+       the count_data_estimate_driver function will overwrite the
+       coefficients etc.
+    */
+
+    cmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
+    free(listcpy);
+
+    if (cmod.errcode) {
+        return cmod;
+    }
+
+    count_data_estimate = get_plugin_function("count_data_estimate", 
+					      &handle);
+
+    if (count_data_estimate == NULL) {
+	cmod.errcode = E_FOPEN;
+	return cmod;
+    }
+
+    (*count_data_estimate) (&cmod, ci, offvar, pZ, pdinfo, opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&cmod);
+
+    return cmod;
+}
+
+/**
+ * heckit_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: option flags (may include OPT_V for verbose output).
+ * @prn: printing struct for iteration info (or NULL is this is not
+ * wanted).
+ *
+ * Produce Heckit estimates of the model given in @list. The list must
+ * include a separator to divide the main equation from the selection
+ * equation.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
+{
+    MODEL hmod;
+    void *handle;
+    MODEL (* heckit_estimate) (const int *, double ***, DATAINFO *, 
+			       gretlopt, PRN *);
+
+    gretl_error_clear();
+
+    heckit_estimate = get_plugin_function("heckit_estimate", &handle);
+    if (heckit_estimate == NULL) {
+	gretl_model_init(&hmod);
+	hmod.errcode = E_FOPEN;
+	return hmod;
+    }
+
+    hmod = (*heckit_estimate) (list, pZ, pdinfo, opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&hmod);
+
+    return hmod;
+}

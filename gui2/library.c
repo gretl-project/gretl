@@ -40,6 +40,7 @@
 #include "cmd_private.h"
 #include "flow_control.h"
 #include "libset.h"
+#include "libglue.h"
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
@@ -2521,6 +2522,8 @@ void do_chow_cusum (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
     gretlopt opt = OPT_S; /* save test result */
+    int splitbrk = 0;
+    int splitdum = 0;
     PRN *prn;
     int ci, err = 0;
 
@@ -2536,23 +2539,24 @@ void do_chow_cusum (GtkAction *action, gpointer p)
     ci = chow_cusum_ci(action);
 
     if (ci == CHOW) {
-	char brkstr[OBSLEN];
-	int resp, brk = (pmod->t2 - pmod->t1) / 2;
-	int dumv = 0;
+	int resp;
 
+	splitbrk = (pmod->t2 - pmod->t1) / 2;
 	set_window_busy(vwin);
-	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &brk, &dumv);
+	resp = chow_dialog(pmod->t1 + 1, pmod->t2 - 1, &splitbrk, &splitdum);
 	unset_window_busy(vwin);
 
 	if (resp < 0) {
 	    return;
 	}
 
-	if (dumv > 0) {
-	    gretl_command_sprintf("chow %s --dummy", datainfo->varname[dumv]);
+	if (splitdum > 0) {
+	    gretl_command_sprintf("chow %s --dummy", datainfo->varname[splitdum]);
 	    opt |= OPT_D;
 	} else {
-	    ntodate(brkstr, brk, datainfo);
+	    char brkstr[OBSLEN];
+
+	    ntodate(brkstr, splitbrk, datainfo);
 	    gretl_command_sprintf("chow %s", brkstr);
 	}
     } else if (ci == QLRTEST) {
@@ -2567,11 +2571,14 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	return;
     }
 
-    if (ci == CHOW || ci == QLRTEST) {
-	if (ci == QLRTEST) {
-	    opt |= OPT_T;
-	} 
-	err = chow_test(cmdline, pmod, &Z, datainfo, opt, prn);
+    if (ci == CHOW) {
+	if (opt & OPT_D) {
+	    err = chow_test_from_dummy(splitdum, pmod, &Z, datainfo, opt, prn);
+	} else {
+	    err = chow_test(splitbrk, pmod, &Z, datainfo, opt, prn);
+	}
+    } else if (ci == QLRTEST) {
+	err = QLR_test(pmod, &Z, datainfo, opt, prn);
     } else {
 	if (ci == CUSUMSQ) {
 	    opt |= OPT_R;
@@ -2743,7 +2750,7 @@ void do_dwpval (GtkAction *action, gpointer p)
 	return;
     }
 
-    pv = get_dw_pvalue(pmod, &Z, datainfo, &err);
+    pv = get_DW_pvalue_for_model(pmod, &Z, datainfo, &err);
 
     if (err) {
 	gui_errmsg(err);
@@ -3466,7 +3473,7 @@ static int real_do_model (int action)
 	break;
 
     case HSK:
-	*pmod = hsk_func(libcmd.list, &Z, datainfo);
+	*pmod = hsk_model(libcmd.list, &Z, datainfo);
 	err = model_output(pmod, prn);
 	break;
 
@@ -3476,7 +3483,7 @@ static int real_do_model (int action)
 	break;
 
     case AR:
-	*pmod = ar_func(libcmd.list, &Z, datainfo, OPT_NONE, prn);
+	*pmod = ar_model(libcmd.list, &Z, datainfo, OPT_NONE, prn);
 	err = model_output(pmod, prn);
 	break;
 
@@ -3536,7 +3543,7 @@ static int real_do_model (int action)
 	    gui_errmsg(err);
 	    break;
 	} else {
-	    *pmod = logistic_model(libcmd.list, &Z, datainfo, libcmd.param);
+	    *pmod = logistic_driver(libcmd.list, &Z, datainfo, libcmd.param);
 	    err = model_output(pmod, prn);
 	}
 	break;	
@@ -3547,12 +3554,13 @@ static int real_do_model (int action)
 	break;	
 
     case QUANTREG:
-	*pmod = quantreg(libcmd.param, libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	*pmod = quantreg_driver(libcmd.param, libcmd.list, &Z, datainfo, 
+				libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;	
 
     case INTREG:
-	*pmod = intreg(libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	*pmod = interval_model(libcmd.list, &Z, datainfo, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;	
 

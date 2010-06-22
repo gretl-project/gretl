@@ -20,24 +20,47 @@
 #ifndef DISCRETE_H
 #define DISCRETE_H
 
-MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
-		    int ci, gretlopt opt, PRN *prn);
+MODEL binary_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn);
 
-MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
-		      const char *param); 
+MODEL binary_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn);
 
-int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
-			double *ymax, double *lmax);
+MODEL ordered_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn);
+
+MODEL ordered_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn);
+
+MODEL multinomial_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn);
+
+MODEL logistic_model (const int *list, double lmax,
+		      double ***pZ, DATAINFO *pdinfo);
+
+MODEL interval_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn);
+
+MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn);
+
+MODEL duration_model (const int *list, double ***pZ, 
+		      DATAINFO *pdinfo, gretlopt opt, 
+		      PRN *prn);
+
+MODEL count_model (const int *list, int ci,
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn);
+
+MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn);
 
 int fishers_exact_test (const Xtab *tab, PRN *prn);
 
-MODEL intreg (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt, 
-	      PRN *prn);
-
-const char *mn_logit_coeffsep (const MODEL *pmod, const DATAINFO *pdinfo, 
-			       int i);
-
 double ordered_model_prediction (const MODEL *pmod, double Xb);
+
+int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
+			double *ymax, double *lmax);
 
 #endif /* DISCRETE_H */
 

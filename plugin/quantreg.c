@@ -315,7 +315,7 @@ static void correct_multi_tau_model (MODEL *pmod)
 */
 
 static int rq_attach_multi_results (MODEL *pmod, 
-				    gretl_vector *tauvec,
+				    const gretl_vector *tauvec,
 				    gretl_matrix *tbeta,
 				    double alpha, gretlopt opt)
 {
@@ -1069,7 +1069,7 @@ write_tbeta_block_fn (gretl_matrix *tbeta, int nt, double *x,
 */
 
 static int rq_fit_br (gretl_matrix *y, gretl_matrix *X, 
-		      gretl_vector *tauvec, gretlopt opt, 
+		      const gretl_vector *tauvec, gretlopt opt, 
 		      MODEL *pmod)
 {
     struct br_info rq;
@@ -1164,7 +1164,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 /* sub-driver for Frisch-Newton interior point variant */
 
 static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT, 
-		      gretl_vector *tauvec, gretlopt opt, 
+		      const gretl_vector *tauvec, gretlopt opt, 
 		      MODEL *pmod)
 {
     struct fn_info rq;
@@ -1324,61 +1324,40 @@ static int rq_transpose_X (gretl_matrix **pX)
     return err;
 }
 
-/* we try for a vector here, in case the user wishes to supply one,
-   but we'll happily settle for a scalar result (a 1-vector) 
-*/
-
-static gretl_vector *get_user_tau (const char *parm, double ***pZ, 
-				   DATAINFO *pdinfo, int *ntau,
-				   int *err)
+static int check_user_tau (const gretl_matrix *tau, int *ntau)
 {
-    gretl_vector *tau;
-    int i;
-
-    tau = generate_matrix(parm, pZ, pdinfo, err);
-    if (*err) {
-	return NULL;
-    }
+    int err = 0;
 
     *ntau = gretl_vector_get_length(tau);
 
     if (*ntau == 0) {
-	*err = E_DATA;
+	err = E_DATA;
     } else {
 	double p;
+	int i;
 
 	for (i=0; i<*ntau; i++) {
 	    p = gretl_vector_get(tau, i);
 	    if (p < .01 || p > .99) {
 		gretl_errmsg_sprintf("quantreg: tau must be >= .01 and <= .99");
-		*err = E_DATA;
+		err = E_DATA;
 	    }
 	}
     }
 
-    if (*err) {
-	gretl_matrix_free(tau);
-	tau = NULL;
-    } 
-
-#if QDEBUG
-    gretl_matrix_print(tau, "get_user_tau: tau");
-#endif
-
-    return tau;
+    return err;
 }
 
-int rq_driver (const char *parm, MODEL *pmod,
-	       double ***pZ, DATAINFO *pdinfo,
+int rq_driver (const gretl_matrix *tau, MODEL *pmod,
+	       double **Z, DATAINFO *pdinfo,
 	       gretlopt opt, PRN *prn)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
-    gretl_vector *tau = NULL;
     int ntau = 0;
-    int err = 0;
+    int err;
 
-    tau = get_user_tau(parm, pZ, pdinfo, &ntau, &err);
+    err = check_user_tau(tau, &ntau);
 
     if (!err && (opt & OPT_I) && pmod->list[0] < 3) {
 	gretl_errmsg_set("quantreg: can't do confidence intervals with "
@@ -1392,7 +1371,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 	       using F-N so the model will be equipped with standard
 	       errors
 	    */
-	    err = rq_make_matrices(pmod, *pZ, pdinfo, &y, &X, OPT_NONE);
+	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, OPT_NONE);
 	    if (!err) {
 		err = rq_fit_fn(y, X, tau, opt, pmod);
 	    }
@@ -1401,7 +1380,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 		err = rq_transpose_X(&X);
 	    }
 	} else {
-	    err = rq_make_matrices(pmod, *pZ, pdinfo, &y, &X, opt);
+	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, opt);
 	}
     }
 
@@ -1417,7 +1396,7 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     if (!err) {
 	/* some common finishing touches */
-	gretl_model_add_y_median(pmod, (*pZ)[pmod->list[1]]);
+	gretl_model_add_y_median(pmod, Z[pmod->list[1]]);
 	pmod->ci = LAD;
 	gretl_model_set_int(pmod, "rq", 1);
 	if (opt & OPT_R) {
@@ -1430,7 +1409,6 @@ int rq_driver (const char *parm, MODEL *pmod,
 
     gretl_matrix_free(y);
     gretl_matrix_free(X);
-    gretl_matrix_free(tau);
 
     if (err && pmod->errcode == 0) {
 	pmod->errcode = err;

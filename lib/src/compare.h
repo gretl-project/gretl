@@ -17,8 +17,6 @@
  * 
  */
 
-/* compare.h for gretl */
-
 #ifndef COMPARE_H
 #define COMPARE_H
 
@@ -33,34 +31,64 @@ typedef enum {
     SAVE_CYCLE     = 1 << 4
 } SeriesSaveCode;
 
+/**
+ * ModelAuxCode:
+ * @AUX_NONE: not an auxiliary regression
+ * @AUX_SQ: nonlinearity test (squared terms)
+ * @AUX_LOG: nonlinearity test (log terms)
+ * @AUX_CHOW: Chow test
+ * @AUX_ADD: test for adding variables
+ * @AUX_AR: autocorrelation test 
+ * @AUX_ARCH: ARCH test
+ * @AUX_WHITE: heteroskedasticity (White's test) 
+ * @AUX_COINT: cointegration test
+ * @AUX_DF: Dickey-Fuller test
+ * @AUX_ADF: augmented Dickey-Fuller test
+ * @AUX_KPSS: KPSS unit-root test
+ * @AUX_OMIT: test for omission of variables
+ * @AUX_RESET: Ramsey's RESET
+ * @AUX_SYS: single equation from multivariate system
+ * @AUX_VAR: single equation from VAR system
+ * @AUX_VECM: single equation from VECM system
+ * @AUX_JOHANSEN: Johansen cointegration test
+ * @AUX_GROUPWISE: test for groupwise heteroskedasticity
+ * @AUX_HET_1: Pesaran-Taylor HET_1 test
+ * @AUX_BP: Breusch-Pagan heteroskedastcity test 
+ * @AUX_AUX: auxiliary regression not otherwise specified
+ * @AUX_COMFAC: common factor test
+ *
+ * Symbolic names to keep track of auxiliary regression models,
+ * which are estimated either for the purpose of carrying out
+ * some sort of diagnostic test or which form part of a
+ * multi-equation system.
+ */
+
 typedef enum {
-    AUX_NONE,  /* not an auxiliary regression */
-    AUX_SQ,    /* aux. regression for nonlinearity (squared terms) */
-    AUX_LOG,   /* aux. regression for nonlinearity (log terms) */
-    AUX_CHOW,  /* aux. regression for Chow test */
-    AUX_ADD,   /* aux. regression for adding variables */
-    AUX_AR,    /* aux. regression for autocorrelation test */
-    AUX_ARCH,  /* aux. regression for ARCH test */
-    AUX_WHITE, /* aux. regression for heteroskedasticity (White's test) */
-    AUX_COINT, /* aux. regression for cointegreation test */
-    AUX_DF,    /* aux. regression for Dickey-Fuller test */
-    AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
-    AUX_KPSS,  /* aux. regression for KPSS test */
-    AUX_OMIT,  /* aux. regression for omitting variables */
-    AUX_RESET, /* aux. regression for Ramsey's RESET */
-    AUX_SYS,   /* single equation from multivariate system */
-    AUX_VAR,   /* single equation from VAR system */
-    AUX_VECM,  /* single equation from VECM system */
-    AUX_JOHANSEN,  /* Johansen cointegration test */
-    AUX_GROUPWISE, /* testing for groupwise heteroskedasticity */
-    AUX_HET_1, /* aux. regression for Pesaran-Taylor HET_1 test */
-    AUX_BP,    /* aux. regression for Breusch-Pagan heterosked. test */
-    AUX_AUX,   /* auxiliary regression not otherwise specified */
-    AUX_COMFAC /* aux. regression for common factor test */
+    AUX_NONE, 
+    AUX_SQ,
+    AUX_LOG,
+    AUX_CHOW,
+    AUX_ADD,
+    AUX_AR,
+    AUX_ARCH,
+    AUX_WHITE,
+    AUX_COINT,
+    AUX_DF,
+    AUX_ADF,
+    AUX_KPSS, 
+    AUX_OMIT, 
+    AUX_RESET,
+    AUX_SYS,
+    AUX_VAR,
+    AUX_VECM,
+    AUX_JOHANSEN,
+    AUX_GROUPWISE,
+    AUX_HET_1,
+    AUX_BP,
+    AUX_AUX,
+    AUX_COMFAC
 } ModelAuxCode;
 
-/* functions follow */
- 
 double wald_omit_F (const int *list, MODEL *pmod);
 
 double wald_omit_chisq (const int *list, MODEL *pmod);
@@ -74,7 +102,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	       gretlopt opt, PRN *prn);
 
 int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		       int aux_code, gretlopt opt, PRN *prn); 
+		       ModelAuxCode aux, gretlopt opt, PRN *prn); 
 
 int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn);
@@ -86,12 +114,18 @@ int autocorr_test (MODEL *pmod, int order,
 int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
-double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		      int *err);
+double get_DW_pvalue_for_model (const MODEL *pmod, 
+				double ***pZ, DATAINFO *pdinfo,
+				int *err);
 
-int chow_test (const char *line, MODEL *pmod, 
-	       double ***pZ, DATAINFO *pdinfo, 
-	       gretlopt opt, PRN *prn);
+int chow_test (int splitobs, MODEL *pmod, double ***pZ,
+	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+
+int chow_test_from_dummy (int splitvar, MODEL *pmod, double ***pZ,
+			  DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+
+int QLR_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+	      gretlopt opt, PRN *prn);
 
 int cusum_test (MODEL *pmod, 
 		double ***pZ, DATAINFO *pdinfo, 
@@ -110,10 +144,6 @@ int leverage_test (MODEL *pmod,
 		   gretlopt opt, PRN *prn);
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				    gretl_matrix *m, unsigned char flags);
-
-int model_test_driver (const char *param,
-		       double ***pZ, DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn);
+				    gretl_matrix *m, int flags);
 
 #endif /* COMPARE_H */

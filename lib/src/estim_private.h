@@ -29,4 +29,9 @@ int check_for_effective_const (MODEL *pmod, const double *y);
 void maybe_shift_ldepvar (MODEL *pmod, const double **Z, 
 			  DATAINFO *pdinfo);
 
+MODEL ivreg_via_gmm (const int *list, double ***pZ,
+		     DATAINFO *pdinfo, gretlopt opt);
+
+int get_x12a_maxpd (void);
+
 #endif /* ESTIM_PRIVATE_H */

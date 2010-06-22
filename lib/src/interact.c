@@ -41,6 +41,7 @@
 #include "boxplots.h"
 #include "kalman.h"
 #include "flow_control.h"
+#include "libglue.h"
 
 #include <errno.h>
 #include <glib.h>
@@ -4741,7 +4742,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case ARCH:
 	clear_model(models[0]);
 	if (cmd->ci == AR) {
-	    *models[0] = ar_func(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = ar_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
 	    *models[0] = arma(cmd->list, cmd->param, Z, pdinfo, 
 			      cmd->opt, prn);
@@ -4787,9 +4788,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
 	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, prn);
 	} else if (cmd->ci == HSK) {
-	    *models[0] = hsk_func(cmd->list, pZ, pdinfo);
+	    *models[0] = hsk_model(cmd->list, pZ, pdinfo);
 	} else if (cmd->ci == LOGISTIC) {
-	    *models[0] = logistic_model(cmd->list, pZ, pdinfo, cmd->param);
+	    *models[0] = logistic_driver(cmd->list, pZ, pdinfo, cmd->param);
 	} else if (cmd->ci == TOBIT) {
 	    *models[0] = tobit_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == POISSON || cmd->ci == NEGBIN) {
@@ -4801,8 +4802,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == LAD) {
 	    *models[0] = lad(cmd->list, pZ, pdinfo);
 	} else if (cmd->ci == QUANTREG) {
-	    *models[0] = quantreg(cmd->param, cmd->list, pZ, pdinfo,
-				  cmd->opt, prn);
+	    *models[0] = quantreg_driver(cmd->param, cmd->list, pZ, pdinfo,
+					 cmd->opt, prn);
 	} else if (cmd->ci == DURATION) {
 	    *models[0] = duration_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == GARCH) {
@@ -4815,7 +4816,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == DPANEL) {
 	    *models[0] = dpd_model(cmd->list, Z, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
-	    *models[0] = intreg(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = interval_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;
@@ -4886,9 +4887,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == RESET) {
 	    err = reset_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == CHOW) {
-	    err = chow_test(line, models[0], pZ, pdinfo, cmd->opt, prn);
+	    err = chow_test_driver(line, models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == QLRTEST) {
-	    err = chow_test(NULL, models[0], pZ, pdinfo, cmd->opt | OPT_T, prn);
+	    err = QLR_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == VIF) { 
 	    err = vif_test(models[0], pZ, pdinfo, prn);
 	} 

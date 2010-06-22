@@ -5209,7 +5209,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 	x = (double) pmod->nobs;
 	break;
     case M_DWPVAL:
-	x = get_dw_pvalue(pmod, pZ, pdinfo, err);
+	x = get_DW_pvalue_for_model(pmod, pZ, pdinfo, err);
 	break;
     case M_FSTT:
 	x = pmod->fstt;

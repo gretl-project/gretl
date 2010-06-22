@@ -17,12 +17,9 @@
  * 
  */
 
-/*
-    compare.c - gretl model comparison procedures
-*/
-
 #include "libgretl.h"
 #include "libset.h"
+#include "libglue.h"
 #include "gretl_panel.h"
 #include "var.h"
 #include "system.h"
@@ -30,6 +27,17 @@
 #include "matrix_extra.h"
 #include "plotspec.h"
 #include "tsls.h"
+
+/**
+ * SECTION:compare
+ * @short_description: diagnostic and specification tests for models
+ * @title: Model tests
+ * @include: libgretl.h
+ *
+ * Included here are several tests for "pathologies" of the error
+ * term in regression models, as well as specification tests 
+ * covering nonlinearity and the omission or addition of variables.
+ */
 
 #define WDEBUG 0
 
@@ -222,7 +230,7 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
 
 /**
  * wald_omit_F:
- * @list: list of variables to omit (or NULL).
+ * @list: list of variables to omit, or NULL.
  * @pmod: model to be tested.
  *
  * Simple form of Wald F-test for omission of variables.  If @list
@@ -243,7 +251,7 @@ double wald_omit_F (const int *list, MODEL *pmod)
 
 /**
  * wald_omit_chisq:
- * @list: list of variables to omit (or NULL).
+ * @list: list of variables to omit, or NULL.
  * @pmod: model to be tested.
  *
  * Simple form of Wald chi-square for omission of variables.  If @list
@@ -759,7 +767,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_func(list, pZ, pdinfo, myopt, prn);
+	rep = ar_model(list, pZ, pdinfo, myopt, prn);
 	break;
     case ARBOND:
 	rep = arbond_model(list, param, (const double **) *pZ, 
@@ -777,7 +785,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	break;
     case LAD:
 	if (gretl_model_get_int(orig, "rq")) {
-	    rep = quantreg(altparm, list, pZ, pdinfo, myopt, NULL);
+	    rep = quantreg_driver(altparm, list, pZ, pdinfo, myopt, NULL);
 	} else {
 	    rep = lad(list, pZ, pdinfo);
 	}
@@ -797,12 +805,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	break;
     case LOGISTIC: 
 	{
-	    char lmaxstr[32];
-	    double lmax;
+	    double lmax = gretl_model_get_double(orig, "lmax");
 
-	    lmax = gretl_model_get_double(orig, "lmax");
-	    sprintf(lmaxstr, "lmax=%g", lmax);
-	    rep = logistic_model(list, pZ, pdinfo, lmaxstr);
+	    rep = logistic_model(list, lmax, pZ, pdinfo);
 	}
 	break;
     case PANEL:
@@ -933,11 +938,11 @@ real_nonlinearity_test (MODEL *pmod, int *list,
  * @pmod: pointer to original model.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
- * @aux_code: %AUX_SQ for squares or %AUX_LOG for logs
- * @opt: if contains %OPT_S, save test results to model.
+ * @aux: AUX_SQ for squares or AUX_LOG for logs
+ * @opt: if contains OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
- * Run an auxiliary regression to test @pmod for non-linearity,
+ * Run an auxiliary regression to test @pmod for nonlinearity,
  * via the addition of either squares or logs of the original
  * indepdendent variables.
  * 
@@ -945,7 +950,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
  */
 
 int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		       int aux_code, gretlopt opt, PRN *prn) 
+		       ModelAuxCode aux, gretlopt opt, PRN *prn) 
 {
     int save_t1 = pdinfo->t1;
     int save_t2 = pdinfo->t2;
@@ -972,23 +977,23 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     impose_model_smpl(pmod, pdinfo);
 
     /* add squares or logs */
-    tmplist = augment_regression_list(pmod->list, aux_code, 
+    tmplist = augment_regression_list(pmod->list, aux, 
 				      pZ, pdinfo);
     if (tmplist == NULL) {
 	return E_ALLOC;
     } else if (tmplist[0] == pmod->list[0]) {
 	/* no vars were added */
-	if (aux_code == AUX_SQ) {
+	if (aux == AUX_SQ) {
 	    fprintf(stderr, "gretl: generation of squares failed\n");
 	    err = E_SQUARES;
-	} else if (aux_code == AUX_LOG) {
+	} else if (aux == AUX_LOG) {
 	    fprintf(stderr, "gretl: generation of logs failed\n");
 	    err = E_LOGS;
 	}
     }
 
     if (!err) {
-	err = real_nonlinearity_test(pmod, tmplist, pZ, pdinfo, aux_code, 
+	err = real_nonlinearity_test(pmod, tmplist, pZ, pdinfo, aux, 
 				     opt, prn);
     }
 	
@@ -1036,11 +1041,11 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
  * @pmod: pointer to receive new model, with vars added.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: can contain %OPT_Q (quiet) to suppress printing
- * of the new model, %OPT_O to print covariance matrix,
- * %OPT_I for silent operation.  Additional options that
- * are applicable only for 2SLS models: %OPT_B (add to
- * both list of regressors and list of instruments), %OPT_T
+ * @opt: can contain OPT_Q (quiet) to suppress printing
+ * of the new model, OPT_O to print covariance matrix,
+ * OPT_I for silent operation.  Additional options that
+ * are applicable only for 2SLS models: OPT_B (add to
+ * both list of regressors and list of instruments), OPT_T
  * (add to list of instruments only).
  * @prn: gretl printing struct.
  *
@@ -1404,19 +1409,19 @@ static int omit_options_inconsistent (gretlopt opt)
  * @pmod: pointer to receive new model, with vars omitted.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
- * @opt: can contain %OPT_Q (quiet) to suppress printing
- * of the new model, %OPT_O to print covariance matrix,
- * %OPT_I for silent operation; for %OPT_A, see below.
+ * @opt: can contain OPT_Q (quiet) to suppress printing
+ * of the new model, OPT_O to print covariance matrix,
+ * OPT_I for silent operation; for OPT_A, see below.
  * Additional options that are applicable only for IV models: 
- * %OPT_B (omit from both list of regressors and list of 
- * instruments), %OPT_T (omit from list of instruments only).
+ * OPT_B (omit from both list of regressors and list of 
+ * instruments), OPT_T (omit from list of instruments only).
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
- * specified in @omitvars.  Or if %OPT_A is given, proceed 
+ * specified in @omitvars.  Or if OPT_A is given, proceed 
  * sequentially, at each step dropping the least significant 
  * variable provided its p-value is above a certain threshold 
- * (currently 0.10, two-sided).  Or if @omitvars is %NULL 
+ * (currently 0.10, two-sided).  Or if @omitvars is NULL 
  * and @orig was not estimated using two-stage least squares,
  * drop the last independent variable in @orig.
  * 
@@ -1529,8 +1534,22 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
     return err;
 }
 
-double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		      int *err)
+/**
+ * get_DW_pvalue_for_model:
+ * @pmod: model to be tested.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @err: location to receive error code.
+ *
+ * Computes the p-value for the Durbin-Watson statistic for the
+ * given model, using the Imhof method.
+ *
+ * Returns: the p-value, or #NADBL on error.
+ */
+
+double get_DW_pvalue_for_model (const MODEL *pmod, 
+				double ***pZ, DATAINFO *pdinfo,
+				int *err)
 {
     MODEL dwmod;
     int save_t1 = pdinfo->t1;
@@ -1591,7 +1610,7 @@ double get_dw_pvalue (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * %OPT_C stand for "squares only" and "cubes only", respectively.
  * @prn: gretl printing struct.
  *
- * Carries out Ramsey's RESET test for model specification.
+ * Carries out and prints Ramsey's RESET test for model specification.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -1820,8 +1839,8 @@ static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
  * @order: lag order for test.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save test results to model;
- * if %OPT_Q, be less verbose.
+ * @opt: if flags include OPT_S, save test results to model;
+ * if OPT_Q, be less verbose.
  * @prn: gretl printing struct.
  *
  * Tests the given IV model for autocorrelation of order equal
@@ -1978,13 +1997,13 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
  * @order: lag order for test.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save test results to model;
- * if %OPT_Q, be less verbose.
+ * @opt: if flags include OPT_S, save test results to model;
+ * if OPT_Q, be less verbose.
  * @prn: gretl printing struct.
  *
  * Tests the given model for autocorrelation of order equal to
  * the specified value, or equal to the frequency of the data if
- * the supplied @order is zero. Gives TR^2 and LMF test statistics.
+ * the supplied @order is zero. Prints TR^2 and LMF test statistics.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -2389,20 +2408,29 @@ static double robust_chow_test (MODEL *pmod, const int *list,
     return test;
 }
 
-static void save_chow_test (MODEL *pmod, char *chowparm,
-			    int dumv, double test, double pval,
-			    int dfn, int dfd)
+static void save_chow_test (MODEL *pmod, int chowparm,
+			    double test, double pval,
+			    int dfn, int dfd, 
+			    const DATAINFO *pdinfo,
+			    gretlopt opt)
 {
-    int ttype = (dumv > 0)? GRETL_TEST_CHOWDUM : GRETL_TEST_CHOW;
+    int ttype = (opt & OPT_D)? GRETL_TEST_CHOWDUM : GRETL_TEST_CHOW;
     ModelTest *mt = model_test_new(ttype);
 
     if (mt != NULL) {
+	char testparm[VNAMELEN];
+
 	if (dfd == 0) {
 	    model_test_set_teststat(mt, GRETL_STAT_WALD_CHISQ);
 	} else {
 	    model_test_set_teststat(mt, GRETL_STAT_F);
 	}
-	model_test_set_param(mt, chowparm);
+	if (opt & OPT_D) {
+	    strcpy(testparm, pdinfo->varname[chowparm]);
+	} else { 
+	    ntodate(testparm, chowparm, pdinfo);
+	}
+	model_test_set_param(mt, testparm);
 	model_test_set_value(mt, test);
 	model_test_set_pvalue(mt, pval);
 	model_test_set_dfn(mt, dfn);
@@ -2411,46 +2439,28 @@ static void save_chow_test (MODEL *pmod, char *chowparm,
     }	  
 }
 
-static int get_chow_dummy (const char *s, const double **Z,
-			   const DATAINFO *pdinfo, int *err)
-{
-    int v = current_series_index(pdinfo, s);
-
-    if (v < 0) {
-	*err = E_UNKVAR;
-	return 0;
-    } else if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {
-	*err = E_DATA;
-	return 0;
-    }
-
-    return v;
-}
-
-/**
- * chow_test:
- * @line: command line for parsing.
+/*
+ * real_chow_test:
+ * @chowparm: sample breakpoint; or ID number of dummy
+ * variable if given OPT_D; or ignored if given OPT_T.
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: if flags include %OPT_S, save test results to model;
- * if %OPT_D included, do the Chow test based on a given dummy
- * variable; if %OPT_T included, do the QLR test.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: if flags include OPT_S, save test results to model;
+ * if OPT_D included, do the Chow test based on a given dummy
+ * variable; if OPT_T included, do the QLR test.
  * @prn: gretl printing struct.
  *
- * Tests the given model for structural stability (Chow test).
- * 
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test (const char *line, MODEL *pmod, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
+			   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     int save_t1 = pdinfo->t1;
     int save_t2 = pdinfo->t2;
     int *chowlist = NULL;
     int origv = pdinfo->v;
-    char chowparm[VNAMELEN];
     MODEL chow_mod;
     int QLR = (opt & OPT_T);
     int dumv = 0, split = 0, smax = 0;
@@ -2474,19 +2484,12 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	/* 15 percent trimming */
 	split = pmod->t1 + 0.15 * pmod->nobs;
 	smax = pmod->t1 + 0.85 * pmod->nobs;
+    } else if (opt & OPT_D) {
+	/* Chow, using dummy */
+	dumv = chowparm;
     } else {
-	if (sscanf(line, "%*s %15s", chowparm) != 1) {
-	    err = E_PARSE;
-	} else if (opt & OPT_D) {
-	    dumv = get_chow_dummy(chowparm, (const double **) *pZ, pdinfo, &err);
-	} else {
-	    split = dateton(chowparm, pdinfo);
-	    if (split <= 0 || split >= pdinfo->n) { 
-		gretl_errmsg_set(_("Invalid sample split for Chow test"));
-		err = E_DATA;
-	    }
-	    smax = split;
-	}
+	/* Chow, using break observation */
+	smax = split = chowparm;
     }
 
     if (!err) {
@@ -2614,7 +2617,8 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		}
 
 		if (opt & OPT_S) {
-		    save_chow_test(pmod, chowparm, dumv, test, pval, dfn, dfd);
+		    save_chow_test(pmod, chowparm, test, pval, dfn, dfd,
+				   pdinfo, opt);
 		}
 
 		record_test_result(test, pval, "Chow");
@@ -2633,6 +2637,93 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     pdinfo->t2 = save_t2;
 
     return err;
+}
+
+/**
+ * chow_test:
+ * @splitobs: the 0-based observation number at which to split
+ * the sample.
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: if flags include OPT_S, save test results to model.
+ * @prn: gretl printing struct.
+ *
+ * Tests the given model for structural stability (Chow test)
+ * using the sample break-point given by @splitobs
+ * and prints the results to @prn. (The second portion of
+ * the sample runs from observation @splitobs to the
+ * end of the original sample range.)
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int chow_test (int splitobs, MODEL *pmod, double ***pZ,
+	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+{
+    int err = 0;
+
+    if (splitobs <= 0 || splitobs >= pdinfo->n) { 
+	gretl_errmsg_set(_("Invalid sample split for Chow test"));
+	err = E_DATA;
+    } else {
+	err = real_chow_test(splitobs, pmod, pZ, pdinfo, opt, prn);
+    }
+
+    return err;
+}
+
+/**
+ * chow_test_from_dummy:
+ * @splitvar: the ID number of a dummy variable that should
+ * be used to divide the sample.
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: if flags include OPT_S, save test results to model.
+ * @prn: gretl printing struct.
+ *
+ * Tests the given model for structural stability (Chow test),
+ * using the dummy variable specified by @splitvar to divide the
+ * original sample range of @pmod into two portions.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int chow_test_from_dummy (int splitvar, MODEL *pmod, double ***pZ,
+			  DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+{
+    int err = 0;
+
+    if (splitvar <= 0 || splitvar >= pdinfo->v) { 
+	gretl_errmsg_set(_("Invalid sample split for Chow test"));
+	err = E_DATA;
+    } else {
+	err = real_chow_test(splitvar, pmod, pZ, pdinfo, opt | OPT_D, prn);
+    }
+
+    return err;
+}
+
+/**
+ * QLR_test:
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: if flags include OPT_S, save test results to model.
+ * @prn: gretl printing struct.
+ *
+ * Tests the given model for structural stability via the
+ * Quandt Likelihood Ratio test for a structural break at 
+ * an unknown point in the sample range.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int QLR_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+	      gretlopt opt, PRN *prn)
+{
+    return real_chow_test(0, pmod, pZ, pdinfo, opt | OPT_T, prn);
 }
 
 /* compute v'Mv, for symmetric M */
@@ -3170,18 +3261,17 @@ int panel_hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  * @m: matrix containing leverage values.
- * @flags: option flags: combination of %SAVE_LEVERAGE, %SAVE_INFLUENCE,
- * and %SAVE_DFFITS.
+ * @flags: may include SAVE_LEVERAGE, SAVE_INFLUENCE,
+ * and/or SAVE_DFFITS.
  *
  * Adds to the working dataset one or more series calculated by
  * the gretl test for leverage/influence of data points.
  * 
  * Returns: 0 on successful completion, error code on error.
- *
  */
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				    gretl_matrix *m, unsigned char flags)
+				    gretl_matrix *m, int flags)
 {
     int t1, t2;
     int addvars = 0;
@@ -3189,6 +3279,10 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
     if (flags & SAVE_LEVERAGE) addvars++;
     if (flags & SAVE_INFLUENCE) addvars++;
     if (flags & SAVE_DFFITS) addvars++;
+
+    if (addvars == 0) {
+	return 0;
+    }
 
     if (dataset_add_series(addvars, pZ, pdinfo)) {
 	return E_ALLOC;
@@ -3266,14 +3360,13 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: if %OPT_S, add calculated series to data set.
+ * @opt: if OPT_S, add calculated series to data set.
  * @prn: gretl printing struct.
  *
  * Tests the data used in the given model for points with
  * high leverage and influence on the estimates.
  * 
  * Returns: 0 on successful completion, error code on error.
- *
  */
 
 int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
@@ -3322,7 +3415,6 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * the independent variables in the given model.
  * 
  * Returns: 0 on successful completion, error code on error.
- *
  */
 
 int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
@@ -3341,146 +3433,6 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     err = (*print_vifs)(pmod, pZ, pdinfo, prn);
 
     close_plugin(handle);
-
-    return err;
-}
-
-/**
- * model_test_driver:
- * @param: auxiliary parameter for some uses.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @opt: controls which test(s) will be performed; %OPT_Q
- * gives less verbose results.
- * @prn: gretl printing struct.
- * 
- * Performs some subset of gretl's "modtest" tests on the
- * model last estimated, and prints the results to @prn.
- * 
- * Returns: 0 on successful completion, error code on error.
- */
-
-int model_test_driver (const char *param, 
-		       double ***pZ, DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn)
-{
-    GretlObjType type;
-    gretlopt testopt;
-    void *ptr;
-    int k = 0;
-    int err = 0;
-
-    if (opt == OPT_NONE || opt == OPT_Q) {
-	pprintf(prn, "modtest: no options selected\n");
-	return 0;
-    }
-
-    err = incompatible_options(opt, OPT_A | OPT_H | OPT_L | OPT_S |
-			       OPT_N | OPT_P | OPT_W | OPT_X);
-    if (err) {
-	return err;
-    }
-
-    ptr = get_last_model(&type);  
-    if (ptr == NULL) {
-	return E_DATA;
-    }
-
-    if (type == GRETL_OBJ_EQN && exact_fit_check(ptr, prn)) {
-	return 0;
-    }
-
-    if (opt & (OPT_A | OPT_H)) {
-	/* autocorrelation and arch: lag order */
-	k = atoi(param);
-	if (k == 0) {
-	    k = pdinfo->pd;
-	}
-    }
-
-    testopt = (opt & OPT_Q)? OPT_Q : OPT_NONE;
-
-    /* non-linearity (squares) */
-    if (!err && (opt & OPT_S)) {
-	if (type == GRETL_OBJ_EQN) {
-	    err = nonlinearity_test(ptr, pZ, pdinfo, 
-				    AUX_SQ, testopt, prn);
-	} else {
-	    err = E_NOTIMP;
-	}
-    }
-
-    /* non-linearity (logs) */
-    if (!err && (opt & OPT_L)) {
-	if (type == GRETL_OBJ_EQN) {
-	    err = nonlinearity_test(ptr, pZ, pdinfo, 
-				    AUX_LOG, testopt, prn);
-	} else {
-	    err = E_NOTIMP;
-	}
-    }
-
-    /* heteroskedasticity (White or Breusch-Pagan) */
-    if (!err && (opt & (OPT_W | OPT_X | OPT_B))) {
-	if (type == GRETL_OBJ_EQN) {
-	    transcribe_option_flags(&testopt, opt, OPT_B | OPT_X);
-	    if ((opt & OPT_B) && (opt & OPT_R)) {
-		testopt |= OPT_R;
-	    }
-	    err = whites_test(ptr, pZ, pdinfo, testopt, prn);
-	} else {
-	    err = E_NOTIMP;
-	}
-    }
-
-    /* autocorrelation */
-    if (!err && (opt & OPT_A)) {
-	if (type == GRETL_OBJ_EQN) {
-	    err = autocorr_test(ptr, k, pZ, pdinfo, testopt, prn);
-	} else if (type == GRETL_OBJ_VAR) {
-	    err = gretl_VAR_autocorrelation_test(ptr, k, pZ, pdinfo, prn);
-	} else if (type == GRETL_OBJ_SYS) {
-	    err = system_autocorrelation_test(ptr, k, prn);
-	} else {
-	    err = E_NOTIMP;
-	}
-    }
-
-    /* ARCH */
-    if (!err && (opt & OPT_H)) {
-	if (type == GRETL_OBJ_EQN) {
-	    err = arch_test(ptr, k, pdinfo, testopt, prn);
-	} else if (type == GRETL_OBJ_VAR) {
-	    err = gretl_VAR_arch_test(ptr, k, pdinfo, prn);
-	} else if (type == GRETL_OBJ_SYS) {
-	    err = system_arch_test(ptr, k, prn);
-	} else {
-	    err = E_NOTIMP;
-	}
-    }    
-
-    /* normality of residual */
-    if (!err && (opt & OPT_N)) {
-	err = last_model_test_uhat(pZ, pdinfo, testopt, prn);
-    }
-
-    /* groupwise heteroskedasticity */
-    if (!err && (opt & OPT_P)) {
-	if (type == GRETL_OBJ_EQN) {
-	    err = groupwise_hetero_test(ptr, pdinfo, testopt, prn);
-	} else {
-	    err = E_NOTIMP;
-	}
-    }
-
-    /* common factor restriction */
-    if (!err && (opt & OPT_C)) {
-	if (type == GRETL_OBJ_EQN) {
-	    err = comfac_test(ptr, pZ, pdinfo, testopt, prn);
-	} else {
-	    err = E_NOTIMP;
-	}
-    }    
 
     return err;
 }

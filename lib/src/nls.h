@@ -26,6 +26,12 @@ enum {
     C_OTHER
 };
 
+/**
+ * nlspec:
+ *
+ * An opaque structure handled only via accessor functions.
+ */
+
 typedef struct nlspec_ nlspec;
 
 nlspec *nlspec_new (int ci, const DATAINFO *pdinfo);
@@ -57,9 +63,6 @@ MODEL nl_model (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 MODEL model_from_nlspec (nlspec *spec, double ***pZ, 
 			 DATAINFO *pdinfo, gretlopt opt, 
 			 PRN *prn);
-
-MODEL ivreg_via_gmm (const int *list, double ***pZ,
-		     DATAINFO *pdinfo, gretlopt opt);
 
 int nls_boot_calc (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		   int ft1, int ft2, double *fcerr); 

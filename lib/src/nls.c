@@ -29,12 +29,23 @@
 #include "gretl_func.h"
 #include "nlspec.h"
 #include "cmd_private.h"
+#include "estim_private.h"
 #include "gretl_scalar.h"
 #include "gretl_bfgs.h"
 #include "tsls.h"
 
 #include "gretl_f2c.h"
 #include "../../minpack/minpack.h"  
+
+/**
+ * SECTION:nls
+ * @short_description: estimation of nonlinear models
+ * @title: Nonlinear models
+ * @include: libgretl.h
+ *
+ * Provides mechanisms for estimating nonlinear models via
+ * Nonlinear Least Squares, Maximum Likelihood, or GMM.
+ */
 
 #define NLS_DEBUG 0
 #define ML_DEBUG 0
@@ -3007,7 +3018,7 @@ MODEL model_from_nlspec (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
  * @pdinfo: information on dataset.
  *
  * Returns: a pointer to a newly allocated nonlinear model
- * specification, or %NULL on failure.
+ * specification, or NULL on failure.
  */
 
 nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
@@ -3255,6 +3266,9 @@ static int finalize_ivreg_model (MODEL *pmod, MODEL *ols,
 
     return err;
 }
+
+/* Responds when OPT_L is given to the ivreg() function,
+   which lives in estimate.c */
 
 MODEL ivreg_via_gmm (const int *list, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt opt)

@@ -3999,6 +3999,16 @@ static void print_ar_sum (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void mn_logit_coeffsep (char *sep, const MODEL *pmod, 
+			       const DATAINFO *pdinfo, int i)
+{
+    const char *vname = gretl_model_get_depvar_name(pmod, pdinfo);
+    const int *list = (const int *) gretl_model_get_data(pmod, "yvals");
+    int val = (list != NULL)? list[i+1] : i;
+
+    sprintf(sep, "%s = %d", vname, val);
+}
+
 static int plain_print_coeffs (const MODEL *pmod, 
 			       const DATAINFO *pdinfo, 
 			       PRN *prn)
@@ -4200,8 +4210,10 @@ static int plain_print_coeffs (const MODEL *pmod,
 	if (i == seppos) {
 	    print_coeff_separator(sepstr, dotlen, prn);
 	} else if (cblock > 0 && i % cblock == 0) {
-	    sepstr = mn_logit_coeffsep(pmod, pdinfo, ++k);
-	    print_coeff_separator(sepstr, 0, prn);
+	    char mnlsep[32];
+
+	    mn_logit_coeffsep(mnlsep, pmod, pdinfo, ++k);
+	    print_coeff_separator(mnlsep, 0, prn);
 	}
 	pprintf(prn, "  %-*s", namelen, names[i]);
 	bufspace(colsep, prn);

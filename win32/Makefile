@@ -200,6 +200,7 @@ LIBSRC = adf_kpss.c \
 	gretl_xml.c \
 	interact.c \
 	kalman.c \
+	libglue.c \
 	libset.c \
 	matrix_extra.c \
 	missing.c \

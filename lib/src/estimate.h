@@ -22,38 +22,30 @@
 #ifndef ESTIMATE_H
 #define ESTIMATE_H
 
+#include "gretl_matrix.h"
+
 MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
 	   GretlCmdIndex ci, gretlopt opt);
 
 MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
 	    GretlCmdIndex ci, gretlopt opt, double rho);
 
+MODEL ar_model (const int *list,  
+		double ***pZ, DATAINFO *pdinfo, 
+		gretlopt opt, PRN *prn);
+
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn, int *err);
 
 MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo); 
 
-MODEL quantreg (const char *parm, const int *list, 
+MODEL quantreg (const gretl_matrix *tau, const int *list, 
 		double ***pZ, DATAINFO *pdinfo,
 		gretlopt opt, PRN *prn);
 
 MODEL arma (const int *list, const char *pqspec,
 	    const double **Z, const DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn);
-
-MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn);
-
-MODEL duration_model (const int *list, double ***pZ, 
-		      DATAINFO *pdinfo, gretlopt opt, 
-		      PRN *prn);
-
-MODEL count_model (const int *list, int ci,
-		   double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn);
-
-MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
-		    gretlopt opt, PRN *prn);
 
 MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	     PRN *prn);
@@ -73,25 +65,21 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
 MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
-MODEL hsk_func (const int *list, double ***pZ, DATAINFO *pdinfo);
+MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo);
+
+MODEL arch_model (const int *list, int order, 
+		  double ***pZ, DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn);
 
 int whites_test (MODEL *pmod, 
 		 double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
-
-MODEL ar_func (const int *list,  
-	       double ***pZ, DATAINFO *pdinfo, 
-	       gretlopt opt, PRN *prn);
 
 int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
 int array_arch_test (const double *u, int n, int order, 
 		     gretlopt opt, PRN *prn);
-
-MODEL arch_model (const int *list, int order, 
-		  double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt, PRN *prn);
 
 int makevcv (MODEL *pmod, double sigma);
 
@@ -102,8 +90,6 @@ double *gretl_XTX (const MODEL *pmod, const double **Z, int *err);
 
 int anova (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	   gretlopt opt, PRN *prn);
-
-int get_x12a_maxpd (void);
 
 #endif /* ESTIMATE_H */
 
