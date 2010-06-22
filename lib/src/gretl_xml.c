@@ -1946,7 +1946,11 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     for (i=1; i<pdinfo->v && !err; i++) {
 	while (isspace(*s)) s++;
 	x = strtod(s, &test);
+#if 0
+	if (errno & (x!=0)) {
+#else
 	if (errno) {
+#endif
 	    err = 1;
 	} else if (!strncmp(test, "NA", 2)) {
 	    x = NADBL;

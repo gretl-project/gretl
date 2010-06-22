@@ -68,6 +68,8 @@ double student_critval (double df, double a);
 
 double log_normal_pdf (double x);
 
+double invmills (double x);
+
 double bvnorm_cdf (double rho, double a, double b);
 
 double gamma_cdf (double s1, double s2, double x, int control);

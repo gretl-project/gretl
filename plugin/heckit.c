@@ -24,6 +24,7 @@
 #include "gretl_bfgs.h"
 
 #define HDEBUG 0
+#define USE_MILLS 0
 
 typedef struct h_container_ h_container;
 
@@ -562,13 +563,21 @@ static double h_loglik (const double *param, void *ptr)
 
 		ll1 -= LN_SQRT_2_PI + 0.5*ut*ut + lnsig;
 		P = normal_cdf(x);
+#if USE_MILLS
+		mills = invmills(-x);
+#else
 		f = normal_pdf(x);
 		mills = f/P;
+#endif
 		ll2 += log(P);
 	    } else {
 		P = normal_cdf(-ndxt);
+#if USE_MILLS
+		mills = -invmills(ndxt);
+#else
 		f = normal_pdf(ndxt);
 		mills = -f/P;
+#endif
 		ll0 += log(P);
 	    }
 
@@ -763,9 +772,13 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 
 	if (Z[HC->selvar][t] == 0) {
 	    /* censored */
-	    f = normal_pdf(zg);
 	    F = normal_cdf(-zg);
+#if USE_MILLS
+	    hm->uhat[t] = -lam * invmills(zg);
+#else
+	    f = normal_pdf(zg);
 	    hm->uhat[t] = -lam * f / F;
+#endif
 	    hm->llt[t] = log(F);
 	} else if (!na(xb) && Z[HC->selvar][t] == 1) {
 	    /* uncensored */

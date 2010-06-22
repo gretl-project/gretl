@@ -1073,6 +1073,89 @@ double log_normal_pdf (double x)
 }
 
 /**
+ * invmills:
+ * @x: double-precision value.
+ *
+ * Adapted by putting together code from gsl and TDA (Univ. Bochum). 
+ * The latter is, in turn, based on 
+ *
+ * A. V. Swan, The Reciprocal of Mill's Ratio, Algorithm AS 17,
+ * Applied Statistics 18 (1969), 115 - 116.
+ *
+ * Returns: the inverse Mill's ratio, that is the ratio between the
+ * normal density function and the complement of the distribution 
+ * function, both evaluated at @x.
+ */
+
+#define SQRT_HALF_PI 1.2533141373155002512078826424
+#define MILLS_BOTTOM -22.9
+#define MILLS_TOP 25
+#define MILLS_EPS 1.0e-09
+
+double invmills(double x)
+{
+    double a,a0,a1,a2,b,b0,b1,b2,r,s,t,d,imill;
+
+    if (x == 0.0) {
+        return 1.0 / SQRT_HALF_PI;
+    }
+
+    if (x < MILLS_BOTTOM) {
+	return 0;
+    }
+
+    if (x > MILLS_TOP) {
+	a0 = 1.0/(x * x);
+	a1 = 1.0 - 9.0 * a0 * (1.0 - 11.0 * a0);
+	const double a2 = 1.0 - 5.0 * a0 * (1.0 - 7.0 * a0 * a1);
+	const double d = 1.0 - a0 * (1.0 - 3.0 * a0 * a2);
+	return x / d;
+    }
+
+    d = (x < 0.0) ? -1.0 : 1.0;
+    x = fabs(x);
+
+    if (x <= 2.0) {
+	s = 0.0;
+	a = 1.0;
+	r = t = x;
+	b = x * x;
+	while (fabs(s-t) > MILLS_EPS) {
+	    a += 2.0;
+	    s = t;
+	    r *= b / a;
+	    t += r;
+	}
+	imill = 1.0 / (SQRT_HALF_PI * exp(0.5 * b) - d * t);
+    } else {
+	a = 2.0;
+	r = s = b1 = x;
+	a1 = x * x + 1.0;
+	a2 = x * (a1 + 2.0);
+	b2 = a1 + 1.0;
+	t  = a2 / b2;
+	while (fabs(r-t) > MILLS_EPS && fabs(s-t) > MILLS_EPS) {
+	    a += 1.0;
+	    a0 = a1;
+	    a1 = a2;
+	    a2 = x * a1 + a * a0;
+	    b0 = b1;
+	    b1 = b2;
+	    b2 = x * b1 + a * b0;
+	    r  = s;
+	    s  = t;
+	    t  = a2 / b2;
+	}
+	imill = t;
+	if (d < 0.0) {
+	    imill /= (2.0 * SQRT_HALF_PI * exp(0.5 * x * x) * t - 1.0);
+	}
+    }
+
+    return(imill);
+}
+
+/**
  * bvnorm_cdf:
  * @rho: correlation coefficient.
  * @a: abscissa value, first Gaussian r.v.
