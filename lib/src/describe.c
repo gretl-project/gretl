@@ -17,8 +17,6 @@
  * 
  */
 
-/* describe.c - gretl descriptive statistics */
-
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "gretl_fft.h"
@@ -36,6 +34,17 @@
 #endif
 
 #include <glib.h>
+
+/**
+ * SECTION:describe
+ * @short_description: descriptive statistics plus some tests
+ * @title: Descriptive statistics
+ * @include: libgretl.h
+ *
+ * Computation and printing of numerous descriptive statistics
+ * along with some hypothesis tests, for example regarding the
+ * normality of a data series.
+ */
 
 /* return 1 if series x has any missing observations, 0 if it does
    not */
@@ -220,9 +229,9 @@ double gretl_mean (int t1, int t2, const double *x)
 
 /**
  * eval_ytest:
- * @y: reference value.
+ * @y: reference numerical value.
  * @op: operator.
- * @test: test value.
+ * @test: numerical test value.
  *
  * Returns: 1 if the expression @y @yop @test (for example
  * "y = 2" or "y <= 45") evaluates as true, else 0.
@@ -1126,10 +1135,10 @@ double *gretl_sorted_series (int v, const double **Z,
 
 /**
  * free_freq:
- * @freq: gretl frequency distribution struct
+ * @freq: pointer to gretl frequency distribution struct
  *
- * Frees all malloced elements of the struct.
- *
+ * Frees all resources associated with @freq, and the
+ * pointer itself.
  */
 
 void free_freq (FreqDist *freq)
@@ -1166,7 +1175,7 @@ static FreqDist *freq_new (void)
     return freq;
 }
 
-/**
+/*
  * dh_root_b1_to_z1:
  * @rb1: square root b1, skewness.
  * @n: number of observations.
@@ -1179,7 +1188,7 @@ static FreqDist *freq_new (void)
  * Returns: the z1 value.
  */
 
-double dh_root_b1_to_z1 (double rb1, double n)
+static double dh_root_b1_to_z1 (double rb1, double n)
 {
     double b, w2, d, y, z1;
 
@@ -1194,7 +1203,7 @@ double dh_root_b1_to_z1 (double rb1, double n)
     return z1;
 }
 
-/**
+/*
  * dh_b2_to_z2:
  * @b1: skewness.
  * @b2: kurtosis.
@@ -1207,7 +1216,7 @@ double dh_root_b1_to_z1 (double rb1, double n)
  * Returns: the z2 value, or #NADBL on failure.
  */
 
-double dh_b2_to_z2 (double b1, double b2, double n)
+static double dh_b2_to_z2 (double b1, double b2, double n)
 {
     double d, a, c, k, alpha, chi, z2;
     double n2 = n * n;
@@ -1952,10 +1961,10 @@ gretl_matrix *xtab_to_matrix (const Xtab *tab)
 
 /**
  * free_xtab:
- * @tab: gretl crosstab struct.
+ * @tab: pointer to gretl crosstab struct.
  *
- * Frees all malloced elements of the struct, and then
- * the pointer itself.
+ * Frees all resources associated with @tab, and the
+ * pointer itself.
  */
 
 void free_xtab (Xtab *tab)
@@ -2545,7 +2554,7 @@ static double gretl_acf (int k, int t1, int t2, const double *y,
  * @t1: starting observation.
  * @t2: ending observation.
  * @y: data series.
- * @err: location to receive erro code.
+ * @err: location to receive error code.
  *
  * Returns: the Ljung-Box statistic for lag order @m for
  * the series @y over the sample @t1 to @t2, or #NADBL 
@@ -2784,8 +2793,8 @@ static int corrgm_ascii_plot (const char *vname,
  * @Z: data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @opt: if includes %OPT_Q, no plot, else if includes %OPT_A, 
- * use ASCII graphics; if includes %OPT_R, variable in question 
+ * @opt: if includes OPT_Q, no plot, else if includes OPT_A, 
+ * use ASCII graphics; if includes OPT_R, variable in question 
  * is a model residual generated "on the fly".
  *
  * Computes the autocorrelation function and plots the correlogram for
@@ -3212,15 +3221,15 @@ static int xcf_data_check (const double *x, const double *y, int T,
  * @x: first series.
  * @y: second series.
  * @p: maximum lag for cross-correlation function.
- * @pdinfo: information on the data set, or %NULL.
- * @n: length of series (required if @pdinfo is %NULL).
+ * @pdinfo: information on the data set, or NULL.
+ * @n: length of series (required only if @pdinfo is NULL).
  * @err: location to receive error code.
  *
  * Computes the cross-correlation function for series @x with
  * series @y up to maximum lag @order.
  *
  * Returns: column vector containing the values of the
- * cross-correlation function, or %NULL on error.
+ * cross-correlation function, or NULL on error.
  */
 
 gretl_matrix *xcf_vec (const double *x, const double *y,
@@ -3293,10 +3302,10 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
  * @Z: data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @opt: if includes %OPT_Q, no graphics, else if includes 
- * %OPT_A, use ASCII graphics.
+ * @opt: if includes OPT_Q, no graphics; else if includes 
+ * OPT_A, use ASCII graphics.
  *
- * Computes the cross-cocorrelation function and plots the 
+ * Computes the cross-correlation function and plots the 
  * cross-correlogram for the specified variables.
  *
  * Returns: 0 on successful completion, error code on error.
@@ -3964,9 +3973,9 @@ static int real_periodogram (const double *x, int varno, int width,
  * @width: width of window.
  * @Z: data array.
  * @pdinfo: information on the data set.
- * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
- * if includes %OPT_N, don't display gnuplot graph; if includes
- * %OPT_R, the variable is a model residual; %OPT_L, use log scale.
+ * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
+ * if includes OPT_N, don't display gnuplot graph; if includes
+ * OPT_R, the variable is a model residual; OPT_L, use log scale.
  * @prn: gretl printing struct.
  *
  * Computes and displays the periodogram for the variable specified 
@@ -4109,7 +4118,7 @@ static void print_summary_single (const Summary *s, int j,
 
 /**
  * print_summary:
- * @summ: gretl summary statistics struct.
+ * @summ: pointer to gretl summary statistics struct.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  *
@@ -4237,9 +4246,10 @@ void print_summary (const Summary *summ,
 
 /**
  * free_summary:
- * @summ: gretl summary statistics struct
+ * @summ: pointer to gretl summary statistics struct
  *
- * Frees all malloced elements of the struct.
+ * Frees all resources associated with @summ, and
+ * the pointer itself.
  */
 
 void free_summary (Summary *summ)
@@ -4295,13 +4305,13 @@ static Summary *summary_new (const int *list, gretlopt opt)
  * @list: list of variables to process.
  * @Z: data matrix.
  * @pdinfo: information on the data set.
- * @opt: may include %OPT_S for "simple" version.
+ * @opt: may include OPT_S for "simple" version.
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *
  * Calculates descriptive summary statistics for the specified variables.
  *
- * Returns: struct containing the summary statistics, or %NULL
+ * Returns: #Summary object containing the summary statistics, or NULL
  * on failure.
  */
 
@@ -4437,9 +4447,10 @@ VMatrix *vmatrix_new (void)
 
 /**
  * free_vmatrix:
- * @vmat: gretl correlation matrix struct
+ * @vmat: pointer to gretl correlation matrix struct
  *
- * Frees all malloced elements of the struct.
+ * Frees all resources associated with @vmat, and 
+ * the pointer itself.
  */
 
 void free_vmatrix (VMatrix *vmat)
@@ -4656,12 +4667,12 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
  *
  * Computes pairwise correlation coefficients for the variables
  * specified in @list, skipping any constants.  If the option
- * flags contain %OPT_U, a uniform sample is ensured: only those
+ * flags contain OPT_U, a uniform sample is ensured: only those
  * observations for which all the listed variables have valid
- * values are used.  If %OPT_C is included, we actually calculate
+ * values are used.  If OPT_C is included, we actually calculate
  * covariances rather than correlations.
  *
- * Returns: gretl correlation matrix struct, or %NULL on failure.
+ * Returns: gretl correlation matrix struct, or NULL on failure.
  */
 
 VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
@@ -4807,7 +4818,7 @@ void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
  * @list: gives the ID numbers of the variables to process.
  * @Z: data array.
  * @pdinfo: data information struct.
- * @opt: option flags: %OPT_U = use uniform sample size.
+ * @opt: option flags: OPT_U = use uniform sample size.
  * @prn: gretl printing struct.
  *
  * Computes and prints the correlation matrix for the specified list
@@ -5417,10 +5428,10 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 
 /**
  * gini:
- * @vnum: ID number of variable to examine.
+ * @varno: ID number of variable to examine.
  * @Z: data array
  * @pdinfo: data information struct.
- * @opt: not used yet.
+ * @opt: unused.
  * @prn: gretl printing struct.
  *
  * Graphs the Lorenz curve for variable @vnum and prints the
@@ -5429,7 +5440,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int gini (int vnum, const double **Z, DATAINFO *pdinfo, 
+int gini (int varno, const double **Z, DATAINFO *pdinfo, 
 	  gretlopt opt, PRN *prn)
 {
     double *lz = NULL;
@@ -5437,7 +5448,7 @@ int gini (int vnum, const double **Z, DATAINFO *pdinfo,
     int n, fulln;
     int err = 0;
 
-    gini = gini_coeff(Z[vnum], pdinfo->t1, pdinfo->t2, 
+    gini = gini_coeff(Z[varno], pdinfo->t1, pdinfo->t2, 
 		      &lz, &n, &err);
 
     if (err) {
@@ -5445,7 +5456,7 @@ int gini (int vnum, const double **Z, DATAINFO *pdinfo,
     }
 
     fulln = pdinfo->t2 - pdinfo->t1 - 1;
-    pprintf(prn, "%s\n", pdinfo->varname[vnum], n);
+    pprintf(prn, "%s\n", pdinfo->varname[varno], n);
     pprintf(prn, _("Number of observations = %d\n"), n);
 
     if (n < fulln) {
@@ -5458,7 +5469,7 @@ int gini (int vnum, const double **Z, DATAINFO *pdinfo,
     pprintf(prn, "%s = %g\n", _("Estimate of population value"), 
 	    gini * (double) n / (n - 1));
 
-    err = lorenz_graph(pdinfo->varname[vnum], lz, n);
+    err = lorenz_graph(pdinfo->varname[varno], lz, n);
 
     free(lz);
 
@@ -5637,7 +5648,7 @@ static int sw_w (float *x, int n, int n1, int n2, float *a,
 	
     /* Calculate significance level for W */
     if (n == 3) { 
-	/* exact P value */
+	/* exact P-value */
 	*pval = pi6 * (asin(sqrt(*W)) - stqr);
 	return 0;
     }
@@ -5663,7 +5674,8 @@ static int sw_w (float *x, int n, int n1, int n2, float *a,
 	
     if (ncens > 0) { 
 	/* Censoring by proportion ncens/n.
-	   Calculate mean and sd of normal equivalent deviate of W */
+	   Calculate mean and sd of normal equivalent deviate of W 
+	*/
 	float delta = (float) ncens / an;
 
 	ld = -log(delta);
@@ -5675,7 +5687,8 @@ static int sw_w (float *x, int n, int n1, int n2, float *a,
 	z99f = z99 + bf * pow(poly(c9, 2, xx), (double) ld);
 
 	/* Regress Z90F,...,Z99F on normal deviates Z90,...,Z99 to get
-	   pseudo-mean and pseudo-sd of z as the slope and intercept */
+	   pseudo-mean and pseudo-sd of z as the slope and intercept 
+	*/
 	zfm = (z90f + z95f + z99f) / 3.0;
 	zsd = (z90 * (z90f - zfm) + z95 * (z95f - zfm) + z99 * (z99f - zfm)) / zss;
 	zbar = zfm - zsd * zm;
@@ -5719,13 +5732,18 @@ static int sw_sample_check (int n, int n1)
  * @t2: ending observation.
  * @W: location to receive test statistic.
  * @pval: location to receive p-value.
+ *
+ * Computes the Shapiro-Wilk W statistic as a test for
+ * normality of the data @x, and also the p-value for
+ * the test. These are written into the pointer
+ * arguments @W and @pval.
  * 
  * Returns: 0 on success, non-zero on failure.
 */
 
 int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval) 
 {
-    int n1 = 0;         /* number of uncensored obs: we may make use of this later */
+    int n1 = 0;         /* number of uncensored obs */
     float *a = NULL;	/* array of coefficients */
     float *xf = NULL;   /* copy of x in float format */
     int i, t, n2, n = 0;
@@ -5960,7 +5978,7 @@ static void print_normality_stat (double test, double pval,
    OPT_Q: quiet
 */
 
-int gretl_normality_test (const char *param,
+int gretl_normality_test (const char *varname,
 			  const double **Z,
 			  const DATAINFO *pdinfo,
 			  gretlopt opt,
@@ -5976,7 +5994,7 @@ int gretl_normality_test (const char *param,
     err = incompatible_options(opt, OPT_A | alltests);
 
     if (!err) {
-	v = current_series_index(pdinfo, param);
+	v = current_series_index(pdinfo, varname);
 	if (v < 0) {
 	    err = E_UNKVAR;
 	} 
@@ -5997,7 +6015,7 @@ int gretl_normality_test (const char *param,
     }
 
     if (!(opt & OPT_Q)) {
-	pprintf(prn, _("Test for normality of %s:"), param);
+	pprintf(prn, _("Test for normality of %s:"), varname);
 	if (opt & OPT_A) {
 	    pputs(prn, "\n\n");
 	} else {

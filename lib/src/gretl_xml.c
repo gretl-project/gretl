@@ -2389,13 +2389,15 @@ static int remedy_empty_data (double ***pZ, DATAINFO *pdinfo)
 /**
  * gretl_read_gdt:
  * @fname: name of file to try.
- * @pZ: pointer to data set.
- * @pdinfo: pointer to data information struct.
- * @opt: use %OPT_B to display gui progress bar.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: use OPT_B to display gui progress bar,
+ * otherwise OPT_NONE.
  * @prn: where messages should be written.
  * 
- * Read data from file into gretl's work space, allocating space as
- * required.  If the array to which @pZ points is not %NULL, attempt
+ * Read data from file into gretl's work space, allocating memory as
+ * required.  It is OK if the array to which @pZ points is
+ * NULL, but if it is non-NULL then this function attempts
  * to merge the new data with the original data.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.

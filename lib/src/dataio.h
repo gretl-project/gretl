@@ -103,7 +103,7 @@ int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
 			   double ***pZ1, DATAINFO **ppdinfo1,
 			   gretlopt opt, PRN *prn);
 
-int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo, 
+int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
@@ -113,12 +113,12 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo, 
 	        gretlopt opt, PRN *prn);
 
-int import_spreadsheet (const char *fname, int ftype,
+int import_spreadsheet (const char *fname, GretlFileType ftype,
 			int *list, char *sheetname,
 			double ***pZ, DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn);
 
-int import_other (const char *fname, int ftype,
+int import_other (const char *fname, GretlFileType ftype,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn);
 

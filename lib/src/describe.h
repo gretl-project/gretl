@@ -20,12 +20,9 @@
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
 
-typedef struct Summary_ Summary;
-typedef struct FreqDist_ FreqDist;
-typedef struct Xtab_ Xtab;
 typedef struct MahalDist_ MahalDist;
 
-struct Summary_ {
+typedef struct Summary_ {
     gretlopt opt;
     int n;
     int missing;
@@ -41,9 +38,9 @@ struct Summary_ {
     double *cv;
     double sw;
     double sb;
-};
+} Summary;
 
-struct FreqDist_ {
+typedef struct FreqDist_ {
     char varname[VNAMELEN];  /* for ID purposes */
     int discrete;            /* 1 if variable contains integers */
     int dist;                /* code for theoretical distribution */
@@ -57,9 +54,9 @@ struct FreqDist_ {
 			        for testing for Gamma dist. */
     int n;
     int t1, t2;
-};
+} FreqDist;
 
-struct Xtab_ {
+typedef struct Xtab_ {
     char rvarname[VNAMELEN]; 
     char cvarname[VNAMELEN]; 
     int rows, cols;
@@ -68,7 +65,7 @@ struct Xtab_ {
     int **f;
     int n, missing;
     int t1, t2;
-};
+} Xtab;
 
 /* functions follow */
 
@@ -222,10 +219,6 @@ int vars_test (const int *list, const double **Z,
 
 void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn);
 
-double dh_root_b1_to_z1 (double rb1, double n);
-
-double dh_b2_to_z2 (double b1, double b2, double n);
-
 double doornik_chisq (double skew, double xkurt, int n);
 
 int multivariate_normality_test (const gretl_matrix *E, 
@@ -250,12 +243,12 @@ const int *mahal_dist_get_varlist(const MahalDist *md);
 
 double gretl_gini (int t1, int t2, const double *x);
 
-int gini (int vnum, const double **Z, DATAINFO *pdinfo, 
+int gini (int varno, const double **Z, DATAINFO *pdinfo, 
 	  gretlopt opt, PRN *prn);
 
 int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval);
 
-int gretl_normality_test (const char *param,
+int gretl_normality_test (const char *varname,
 			  const double **Z,
 			  const DATAINFO *pdinfo,
 			  gretlopt opt,

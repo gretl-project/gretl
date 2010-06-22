@@ -1717,19 +1717,34 @@ static void try_gdt (char *fname)
 
 /**
  * gretl_get_data:
- * @datfile: name of file to try.
+ * @fname: name of file to try.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
- * @opt: for use with "append".
+ * @opt: option flags.
  * @prn: where messages should be written.
  * 
- * Read data from file into gretl's work space, allocating space as
- * required.
+ * Read "native" data from file into gretl's work space, 
+ * allocating space as required. This function handles
+ * both the current gretl XML data format and the
+ * traditional data format of gretl's precursor, ESL.
+ * It also handles incomplete information: it can perform 
+ * path-searching on @fname, and will try adding the .gdt
+ * extension to @fname if this is not given.
+ *
+ * A more straightforward function for reading a current
+ * gretl XML data file (.gdt), given the correct path,
+ * is gretl_read_gdt().
+ *
+ * The only applicable option is that @opt may contain
+ * OPT_T when appending data to a panel dataset: in
+ * that case we try to interpret the new data as time
+ * series, in common across all panel units. In most
+ * cases, just give OPT_NONE.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo, 
+int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo = NULL;
@@ -1745,19 +1760,20 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
 
     *hdrfile = '\0';
 
-    gdtsuff = has_suffix(datfile, ".gdt");
+    gdtsuff = has_suffix(fname, ".gdt");
     if (!gdtsuff) {
-	gzsuff = has_suffix(datfile, ".gz");
+	gzsuff = has_suffix(fname, ".gz");
     }
 
-    if (addpath(datfile, 0) == NULL) { /* not found yet */
+    if (addpath(fname, 0) == NULL) { 
+	/* not found yet */
 	char tryfile[MAXLEN];
 	int found = 0;
 
 	if (!gdtsuff) {
 	    /* try using the .gdt suffix? */
 	    *tryfile = '\0';
-	    strncat(tryfile, datfile, MAXLEN-1);
+	    strncat(tryfile, fname, MAXLEN-1);
 	    try_gdt(tryfile); 
 	    found = (addpath(tryfile, 0) != NULL);
 	    if (found) {
@@ -1769,7 +1785,7 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
 	   (backward compatibility) 
 	*/
 	if (!found && !gzsuff) { 
-	    sprintf(tryfile, "%s.gz", datfile);
+	    sprintf(tryfile, "%s.gz", fname);
 	    if (addpath(tryfile, 0) != NULL) {
 		gzsuff = 1;
 		found = 1;
@@ -1777,16 +1793,16 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (!found) {
-	    gretl_errmsg_sprintf(_("Couldn't open file %s"), datfile);
+	    gretl_errmsg_sprintf(_("Couldn't open file %s"), fname);
 	    return E_FOPEN;
 	} else {
-	    strcpy(datfile, tryfile);
+	    strcpy(fname, tryfile);
 	}
     }
 
     /* catch XML files that have strayed in here? */
-    if (gdtsuff && gretl_is_xml_file(datfile)) {
-	return gretl_read_gdt(datfile, pZ, pdinfo, OPT_NONE, prn);
+    if (gdtsuff && gretl_is_xml_file(fname)) {
+	return gretl_read_gdt(fname, pZ, pdinfo, OPT_NONE, prn);
     }
 
     tmpdinfo = datainfo_new();
@@ -1795,18 +1811,18 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
     }
 	
     if (!gzsuff) {
-	switch_ext(hdrfile, datfile, "hdr");
-	switch_ext(lblfile, datfile, "lbl");
+	switch_ext(hdrfile, fname, "hdr");
+	switch_ext(lblfile, fname, "lbl");
     } else {
-	gz_switch_ext(hdrfile, datfile, "hdr");
-	gz_switch_ext(lblfile, datfile, "lbl");
+	gz_switch_ext(hdrfile, fname, "hdr");
+	gz_switch_ext(lblfile, fname, "lbl");
     }
 
     /* read data header file */
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
-	return import_csv(datfile, pZ, pdinfo, OPT_NONE, prn);
+	return import_csv(fname, pZ, pdinfo, OPT_NONE, prn);
     } else if (err) {
 	return err;
     } else { 
@@ -1828,16 +1844,16 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
 
     /* Invoke data (Z) reading function */
     if (gzsuff) {
-	fz = gretl_gzopen(datfile, "rb");
+	fz = gretl_gzopen(fname, "rb");
 	if (fz == NULL) {
 	    err = E_FOPEN;
 	    goto bailout;
 	}
     } else {
 	if (binary) {
-	    dat = gretl_fopen(datfile, "rb");
+	    dat = gretl_fopen(fname, "rb");
 	} else {
-	    dat = gretl_fopen(datfile, "r");
+	    dat = gretl_fopen(fname, "r");
 	}
 	if (dat == NULL) {
 	    err = E_FOPEN;
@@ -1874,10 +1890,10 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
     pputs(prn, (tmpdinfo->structure == TIME_SERIES) ? 
 	    I_("time-series") : _("cross-sectional"));
     pputs(prn, I_(" datafile"));
-    if (strlen(datfile) > 40) {
+    if (strlen(fname) > 40) {
 	pputc(prn, '\n');
     }
-    pprintf(prn, " %s\n\n", datfile);
+    pprintf(prn, " %s\n\n", fname);
 
     /* Set sample range to entire length of dataset by default */
     tmpdinfo->t1 = 0; 
@@ -1906,7 +1922,7 @@ int gretl_get_data (char *datfile, double ***pZ, DATAINFO *pdinfo,
  * @length: desired length of data series.
  * @prn: gretl printing struct.
  * 
- * Create an empty "dummy" data set, suitable for Monte Carlo simulations.
+ * Create an empty "dummy" data set, suitable for simulations.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  *
@@ -2903,7 +2919,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
  * @ftype: type of data file.
  * @pZ: pointer to data set.
  * @pdinfo: pointer to data information struct.
- * @opt: for use with "append".
+ * @opt: option flag; see gretl_get_data().
  * @prn: gretl printing struct.
  * 
  * Open a data file of a type that requires a special plugin.
@@ -2911,7 +2927,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_other (const char *fname, int ftype,
+int import_other (const char *fname, GretlFileType ftype,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
@@ -2973,18 +2989,20 @@ int import_other (const char *fname, int ftype,
  * @fname: name of file.
  * @ftype: type of data file.
  * @list: list of parameters for spreadsheet import, or %NULL.
- * @sheetname: name of worksheet, or %NULL.
+ * @sheetname: name of specific worksheet, or %NULL.
  * @pZ: pointer to data set.
- * @pdinfo: pointer to data information struct.
- * @opt: for use with "append".
+ * @pdinfo: dataset information.
+ * @opt: option flag; see gretl_get_data().
  * @prn: gretl printing struct.
  * 
  * Open a data file of a type that requires a special plugin.
+ * Acceptable values for @ftype are %GRETL_GNUMERIC,
+ * %GRETL_XLS and %GRETL_ODS.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int import_spreadsheet (const char *fname, int ftype, 
+int import_spreadsheet (const char *fname, GretlFileType ftype, 
 			int *list, char *sheetname,
 			double ***pZ, DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn)
