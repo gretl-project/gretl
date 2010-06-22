@@ -822,6 +822,8 @@ int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc,
     return ret;
 }
 
+#define SMALLPOS(x) (x >= 0 && x < 1e-40)
+
 static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 				  GretlType type,
 				  int *nelem, int *err)
@@ -890,7 +892,9 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 			*err = E_DATA;
 		    } else if (errno) {
 			perror(NULL);
-			x = (x == 0.0)? 0.0 : NADBL;
+			if (!SMALLPOS(x)) {
+			    x = NADBL;
+			}
 			errno = 0;
 		    }
 		}
@@ -922,7 +926,12 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 		while (isspace(*s)) s++;
 		x = strtod(s, &test);
 		if (errno) {
-		    *err = E_DATA;
+		    if (SMALLPOS(x)) {
+			errno = 0;
+		    } else {
+			perror(NULL);
+			*err = E_DATA;
+		    }
 		} else if (*test != '\0' && !isspace(*test)) {
 		    *err = E_DATA;
 		} else {
@@ -1946,12 +1955,14 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     for (i=1; i<pdinfo->v && !err; i++) {
 	while (isspace(*s)) s++;
 	x = strtod(s, &test);
-#if 0
-	if (errno & (x!=0)) {
-#else
 	if (errno) {
-#endif
-	    err = 1;
+	    if (SMALLPOS(x)) {
+		errno = 0; /* underflow, OK */
+	    } else {
+		fprintf(stderr, "%s: %d: bad data\n", __FILE__, __LINE__);
+		perror(NULL);
+		err = 1;
+	    }
 	} else if (!strncmp(test, "NA", 2)) {
 	    x = NADBL;
 	    s = test + 2;
