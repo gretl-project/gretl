@@ -2373,7 +2373,6 @@ static void graph_month_name (char *mname, int m)
     mt.tm_year = 100;
 
     strftime(mname, 7, "%b", &mt);
-    mname[4] = '\0';
 }
 
 /* for short daily time-series plots: write month names

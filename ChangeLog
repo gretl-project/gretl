@@ -10,6 +10,8 @@ version 1.9.1, in progress
 - Reading gdt data files: don't stop if a denormalized tiny
   value is found: accept what the C library gives and ignore
   errno
+- Fix for printing of month names on time-series plots in
+  locales with multi-byte characters
 - OS X: use the native Mac calculator app for gretl's
   calculator toolbar item by default
 - GUI: add mechanism for defining named lists, and for
