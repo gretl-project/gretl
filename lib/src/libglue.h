@@ -37,4 +37,6 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL logistic_driver (const int *list, double ***pZ, DATAINFO *pdinfo,
 		       const char *param); 
 
+int do_modprint (const char *line, gretlopt opt, PRN *prn);
+
 #endif /* LIBGLUE_H */

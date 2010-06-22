@@ -55,6 +55,8 @@ int print_coeffs (const double *b,
 		  int nc, int df, int ci,
 		  PRN *prn);
 
-int do_modprint (const char *line, gretlopt opt, PRN *prn);
+int print_model_from_matrices (const gretl_matrix *cs, 
+			       const gretl_matrix *adds, 
+			       const char *s, PRN *prn);
 
 #endif /* MODELPRINT_H */

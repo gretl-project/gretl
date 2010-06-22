@@ -4881,10 +4881,26 @@ int ols_print_anova (const MODEL *pmod, PRN *prn)
     return 0;
 }
 
-static int print_user_model (const gretl_matrix *cs, 
-			     const gretl_matrix *adds, 
-			     const char *s, gretlopt opt,
-			     PRN *prn)
+/**
+ * print_model_from_matrices:
+ * @cs: k x 2 matrix containing coefficients and standard errors.
+ * @adds: matrix containing an additional p statistics, or NULL.
+ * @s: string containing all required names, space-separated.
+ * @prn: gretl printer.
+ *
+ * Prints to @prn the coefficient table and optional additional statistics
+ * for a model estimated "by hand". Mainly useful for user-written functions.
+ *
+ * The number of space-separated "words" in the string @s must be k + p, where 
+ * k is the number of coefficients and p the number of additional statistics 
+ * given in @adds.
+ * 
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int print_model_from_matrices (const gretl_matrix *cs, 
+			       const gretl_matrix *adds, 
+			       const char *s, PRN *prn)
 {
     int ncoef = gretl_matrix_rows(cs);
     int nadd = gretl_vector_get_length(adds);
@@ -4921,19 +4937,8 @@ static int print_user_model (const gretl_matrix *cs,
     if (plain_format(prn)) {
 	/* newline here is useless for TeX and makes RTF choke */
 	pputc(prn, '\n'); 
-    } 
-
-    if (opt & OPT_C) {
-	gretl_print_set_format(prn, GRETL_FORMAT_CSV);
+    } else if (csv_format(prn)) {
 	set_csv_delim(prn);
-    } else if (opt & OPT_R) {
-	gretl_print_set_format(prn, GRETL_FORMAT_RTF);
-    } else if (opt & OPT_T) {
-	if (opt & OPT_O) {
-	    gretl_print_set_format(prn, GRETL_FORMAT_TEX | GRETL_FORMAT_DOC);
-	} else {
-	    gretl_print_set_format(prn, GRETL_FORMAT_TEX);
-	}
     }
 
     model_format_start(prn);
@@ -4956,86 +4961,3 @@ static int print_user_model (const gretl_matrix *cs,
 
     return err;
 }
-
-/**
- * do_modprint:
- * @line: command line.
- * @opt: may contain %OPT_C for CSV, %OPT_R for RTF, or %OPT_T 
- * to use TeX format.  If %OPT_T is given, then %OPT_O calls for
- * a complete LaTeX document, otherwise %OPT_O is ignored.
- * @prn: gretl printer.
- *
- * Prints to @prn the coefficient table and optional additional statistics
- * for a model estimated "by hand". Mainly useful for user-written functions.
- * 
- * The string @line must contain, in order: (1) the name of a k x 2 matrix
- * containing k coefficients and k associated standard errors and (2) the
- * name of a string containing at least k comma-separated names for
- * the coefficients.  Optionally, @line may contain a third element, the 
- * name of a vector containing p additional statistics.  If this argument 
- * is supplied, then argument (2) should contain k + p comma-separated 
- * names, the additional p names to be associated with the additional 
- * statistics. 
- *
- * Returns: 0 on success, non-zero on failure.
- */
-
-int do_modprint (const char *line, gretlopt opt, PRN *prn)
-{
-    gretl_matrix *coef_se = NULL;
-    gretl_matrix *addstats = NULL;
-    char *parnames = NULL;
-    char **tmp;
-    char s[MAXLEN];
-    int i, err = 0;
-
-    err = incompatible_options(opt, OPT_C | OPT_R | OPT_T);
-    if (err) {
-	return err;
-    }
-
-    tmp = malloc(4 * sizeof *tmp);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    *s = '\0';
-    strncat(s, line, MAXLEN - 1);
-
-    for (i=0; i<4 && !err; i++) {
-	tmp[i] = strtok((i == 0)? s : NULL, " ");
-	if (tmp[i] == NULL && (i < 3)) { 
-	    /* 3rd argument is optional */
-	    err = E_PARSE;
-	}
-    }
-
-    if (!err) {
-	coef_se = get_matrix_by_name(tmp[1]);
-	parnames = get_string_by_name(tmp[2]);
-	if (coef_se == NULL || parnames == NULL) {
-	    err = E_DATA;
-	}
-    }
-
-    if (!err && gretl_matrix_cols(coef_se) != 2) {
-	gretl_errmsg_set(_("modprint: the first matrix argument must have 2 columns"));
-	err = E_DATA;
-    }
-
-    if (!err && tmp[3] != NULL && *tmp[3] != '\0') {
-	addstats = get_matrix_by_name(tmp[3]);
-	if (addstats == NULL) {
-	    err = E_DATA;
-	}
-    }
-
-    if (!err) {
-	err = print_user_model(coef_se, addstats, parnames, opt, prn);
-    }
-
-    free(tmp);
-
-    return err;
-}
-
