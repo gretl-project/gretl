@@ -2408,29 +2408,21 @@ static double robust_chow_test (MODEL *pmod, const int *list,
     return test;
 }
 
-static void save_chow_test (MODEL *pmod, int chowparm,
+static void save_chow_test (MODEL *pmod, const char *chowstr,
 			    double test, double pval,
 			    int dfn, int dfd, 
-			    const DATAINFO *pdinfo,
 			    gretlopt opt)
 {
     int ttype = (opt & OPT_D)? GRETL_TEST_CHOWDUM : GRETL_TEST_CHOW;
     ModelTest *mt = model_test_new(ttype);
 
     if (mt != NULL) {
-	char testparm[VNAMELEN];
-
 	if (dfd == 0) {
 	    model_test_set_teststat(mt, GRETL_STAT_WALD_CHISQ);
 	} else {
 	    model_test_set_teststat(mt, GRETL_STAT_F);
 	}
-	if (opt & OPT_D) {
-	    strcpy(testparm, pdinfo->varname[chowparm]);
-	} else { 
-	    ntodate(testparm, chowparm, pdinfo);
-	}
-	model_test_set_param(mt, testparm);
+	model_test_set_param(mt, chowstr);
 	model_test_set_value(mt, test);
 	model_test_set_pvalue(mt, pval);
 	model_test_set_dfn(mt, dfn);
@@ -2593,15 +2585,19 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 	    }
 
 	    if (!na(test) && !na(pval)) {
+		char chowstr[VNAMELEN];
+
 		if (opt & OPT_Q) {
 		    pputc(prn, '\n');
 		}
 		if (opt & OPT_D) {
+		    strcpy(chowstr, pdinfo->varname[chowparm]);
 		    pprintf(prn, _("Chow test for structural difference with respect to %s"),
-			    chowparm);
+			    chowstr);
 		} else {
+		    ntodate(chowstr, chowparm, pdinfo);
 		    pprintf(prn, _("Chow test for structural break at observation %s"),
-			    chowparm);
+			    chowstr);
 		} 
 		pputc(prn, '\n');
 
@@ -2617,8 +2613,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 		}
 
 		if (opt & OPT_S) {
-		    save_chow_test(pmod, chowparm, test, pval, dfn, dfd,
-				   pdinfo, opt);
+		    save_chow_test(pmod, chowstr, test, pval, dfn, dfd, opt);
 		}
 
 		record_test_result(test, pval, "Chow");
