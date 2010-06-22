@@ -1,69 +1,10 @@
 <?xml version="1.0"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" 
                "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
-<!ENTITY adf-kpss  SYSTEM "xml/adf_kpss.xml">
-<!ENTITY bootstrap SYSTEM "xml/bootstrap.xml">
-<!ENTITY boxplots  SYSTEM "xml/boxplots.xml">
-<!ENTITY calendar SYSTEM "xml/calendar.xml">
-<!ENTITY compare  SYSTEM "xml/compare.xml">
-<!ENTITY compat   SYSTEM "xml/compat.xml">
-<!ENTITY dataio   SYSTEM "xml/dataio.xml">
-<!ENTITY dataset  SYSTEM "xml/dataset.xml">
-<!ENTITY dbread   SYSTEM "xml/dbread.xml">
-<!ENTITY dbwrite  SYSTEM "xml/dbwrite.xml">
-<!ENTITY describe SYSTEM "xml/describe.xml">
-<!ENTITY discrete SYSTEM "xml/discrete.xml">
-<!ENTITY estimate SYSTEM "xml/estimate.xml">
-<!ENTITY forecast SYSTEM "xml/forecast.xml">
-<!ENTITY genfuncs SYSTEM "xml/genfuncs.xml">
-<!ENTITY genmain  SYSTEM "xml/genmain.xml">
-<!ENTITY graphing SYSTEM "xml/graphing.xml">
-<!ENTITY gretl-bfgs     SYSTEM "xml/gretl_bfgs.xml">
-<!ENTITY gretl-commands SYSTEM "xml/gretl_commands.xml">
-<!ENTITY gretl-errors   SYSTEM "xml/gretl_errors.xml">
-<!ENTITY gretl-fft      SYSTEM "xml/gretl_fft.xml">
-<!ENTITY gretl-intl     SYSTEM "xml/gretl_intl.xml">
-<!ENTITY gretl-list     SYSTEM "xml/gretl_list.xml">
-<!ENTITY gretl-matrix   SYSTEM "xml/gretl_matrix.xml">
-<!ENTITY gretl-model    SYSTEM "xml/gretl_model.xml">
-<!ENTITY gretl-panel    SYSTEM "xml/gretl_panel.xml">
-<!ENTITY gretl-paths    SYSTEM "xml/gretl_paths.xml">
-<!ENTITY gretl-prn      SYSTEM "xml/gretl_prn.xml">
-<!ENTITY gretl-restrict SYSTEM "xml/gretl_restrict.xml">
-<!ENTITY gretl-scalar   SYSTEM "xml/gretl_scalar.xml">
-<!ENTITY gretl-string-table SYSTEM "xml/gretl_string_table.xml">
-<!ENTITY gretl-utils    SYSTEM "xml/gretl_utils.xml">
-<!ENTITY gretl-www      SYSTEM "xml/gretl_www.xml">
-<!ENTITY gretl-xml      SYSTEM "xml/gretl_xml.xml">
-<!ENTITY interact       SYSTEM "xml/interact.xml">
-<!ENTITY irfboot        SYSTEM "xml/irfboot.xml">
-<!ENTITY kalman         SYSTEM "xml/kalman.xml">
-<!ENTITY libgretl       SYSTEM "xml/libgretl.xml">
-<!ENTITY libset         SYSTEM "xml/libset.xml">
-<!ENTITY matrix-extra   SYSTEM "xml/matrix_extra.xml">
-<!ENTITY missing        SYSTEM "xml/missing.xml">
-<!ENTITY modelprint     SYSTEM "xml/modelprint.xml">
-<!ENTITY nls            SYSTEM "xml/nls.xml">
-<!ENTITY nonparam       SYSTEM "xml/nonparam.xml">
-<!ENTITY objstack       SYSTEM "xml/objstack.xml">
-<!ENTITY options        SYSTEM "xml/options.xml">
-<!ENTITY plotspec       SYSTEM "xml/plotspec.xml">
-<!ENTITY plugins        SYSTEM "xml/plugins.xml">
-<!ENTITY printout       SYSTEM "xml/printout.xml">
-<!ENTITY pvalues        SYSTEM "xml/pvalues.xml">
-<!ENTITY qr-estimate    SYSTEM "xml/qr_estimate.xml">
-<!ENTITY random         SYSTEM "xml/random.xml">
-<!ENTITY strutils       SYSTEM "xml/strutils.xml">
-<!ENTITY subsample      SYSTEM "xml/subsample.xml">
-<!ENTITY system         SYSTEM "xml/system.xml">
-<!ENTITY texprint       SYSTEM "xml/texprint.xml">
-<!ENTITY transforms     SYSTEM "xml/transforms.xml">
-<!ENTITY var            SYSTEM "xml/var.xml">
-<!ENTITY varprint       SYSTEM "xml/varprint.xml">
-<!ENTITY vartest        SYSTEM "xml/vartest.xml">
+<!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">	       
 ]>
 
-<book id="index">
+<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
@@ -104,101 +45,103 @@
       <function>libgretl_cleanup()</function> once you're finished using the
       library. See <link linkend="gretl-gretl-utils">Utilities</link>.
     </para>
+    
+    <xi:include href="building.sgml" />
+    <xi:include href="resources.sgml" />   
 
   </chapter>
 
   <chapter id="ch-dataset">
     <title>Data input and output</title>
-    &dataio; 
-    &gretl-xml; 
-    &dbread; 
-    &dbwrite;
-    &gretl-string-table;  
+    <xi:include href="xml/dataio.xml" />
+    <xi:include href="xml/gretl_xml.xml" />
+    <xi:include href="xml/dbread.xml" />
+    <xi:include href="xml/dbwrite.xml" />
+    <xi:include href="xml/gretl_string_table.xml" />
   </chapter>
 
   <chapter id="ch-estimation">
-    <title>Estimation and forecasting</title>    
-    &estimate;
-    &discrete;   
-    &nonparam; 
-    &gretl-panel;
-    &gretl-model;
-    &nls;
-    &system;   
-    &var;   
-    &forecast;
-    &kalman;
+    <title>Estimation and forecasting</title>   
+    <xi:include href="xml/estimate.xml" />
+    <xi:include href="xml/discrete.xml" />
+    <xi:include href="xml/nonparam.xml" />
+    <xi:include href="xml/gretl_panel.xml" />
+    <xi:include href="xml/gretl_model.xml" />
+    <xi:include href="xml/nls.xml" />
+    <xi:include href="xml/system.xml" />
+    <xi:include href="xml/var.xml" />
+    <xi:include href="xml/forecast.xml" />
+    <xi:include href="xml/kalman.xml" />
   </chapter>
 
   <chapter id="ch-tests">
     <title>Descriptive statistics and tests</title> 
-    &adf-kpss;
-    &describe; 
-    &compare;
-    &gretl-restrict;
-    &vartest;
+    <xi:include href="xml/adf_kpss.xml" />
+    <xi:include href="xml/describe.xml" />
+    <xi:include href="xml/compare.xml" />
+    <xi:include href="xml/gretl_restrict.xml" />
+    <xi:include href="xml/vartest.xml" />    
   </chapter>
 
   <chapter id="ch-data-manipulation">
     <title>Manipulating datasets</title>
-    &calendar; 
-    &dataset;
-    &genmain;
-    &genfuncs;
-    &transforms;
-    &subsample;
-    &missing;
+    <xi:include href="xml/calendar.xml" />
+    <xi:include href="xml/dataset.xml" />
+    <xi:include href="xml/genmain.xml" />
+    <xi:include href="xml/genfuncs.xml" />
+    <xi:include href="xml/transforms.xml" />        
+    <xi:include href="xml/subsample.xml" />
+    <xi:include href="xml/missing.xml" />        
   </chapter>
 
   <chapter id="ch-printing">
     <title>Printing and graphing</title>
-    &gretl-prn;
-    &printout; 
-    &modelprint;
-    &texprint;
-    &graphing;
-    &boxplots;
-    &plotspec;
-    &varprint;
+    <xi:include href="xml/gretl_prn.xml" />
+    <xi:include href="xml/printout.xml" />
+    <xi:include href="xml/modelprint.xml" />
+    <xi:include href="xml/texprint.xml" />
+    <xi:include href="xml/graphing.xml" />        
+    <xi:include href="xml/boxplots.xml" />
+    <xi:include href="xml/varprint.xml" />            
   </chapter>
 
   <chapter id="ch-matrix">
     <title>Matrix manipulation</title>
-    &gretl-matrix;
-    &matrix-extra;
+    <xi:include href="xml/gretl_matrix.xml" />
+    <xi:include href="xml/matrix_extra.xml" />
   </chapter>
 
   <chapter id="ch-interact">
     <title>User interaction, options and errors</title>
-    &gretl-commands; 
-    &interact; 
-    &objstack;  
-    &libset;
-    &options;
-    &gretl-errors; 
+    <xi:include href="xml/gretl_commands.xml" />
+    <xi:include href="xml/interact.xml" />
+    <xi:include href="xml/objstack.xml" />
+    <xi:include href="xml/libset.xml" />
+    <xi:include href="xml/options.xml" />        
+    <xi:include href="xml/gretl_errors.xml" />    
   </chapter>
 
   <chapter id="ch-libgretl">
     <title>Main definitions and structs</title>
-    &libgretl;   
+    <xi:include href="xml/libgretl.xml" />
   </chapter>
 
   <chapter id="ch-pvalues">
     <title>Random numbers and probability distributions</title>
-    &random; 
-    &pvalues;   
+    <xi:include href="xml/random.xml" />
+    <xi:include href="xml/pvalues.xml" />
   </chapter>
 
   <chapter id="utils">
     <title>Utilities</title>
-    &gretl-bfgs;
-    &gretl-utils;
-    &strutils; 
-    &gretl-list;
-    &gretl-paths; 
-    &plugins; 
-    &gretl-intl;
-    &gretl-www;
+    <xi:include href="xml/gretl_bfgs.xml" />
+    <xi:include href="xml/gretl_utils.xml" />
+    <xi:include href="xml/strutils.xml" />
+    <xi:include href="xml/gretl_list.xml" />
+    <xi:include href="xml/gretl_paths.xml" />        
+    <xi:include href="xml/plugins.xml" />        
+    <xi:include href="xml/gretl_intl.xml" />        
+    <xi:include href="xml/gretl_www.xml" />        
   </chapter>
 
 </book>

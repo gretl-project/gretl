@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+               "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+]>
+<refentry id="gretl-resources" revision="21 Jun 2010">
+<refmeta>
+<refentrytitle>Mailing lists and bug reports</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>Mailing lists and bug reports</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>Mailing lists and bug reports</refname>
+<refpurpose>
+Getting help with libgretl
+</refpurpose>
+</refnamediv>
+
+<refsect1>
+<title>Filing a bug report or feature request</title>
+
+<para>
+If you encounter a bug, misfeature, or missing feature in libgretl, please
+file a bug report or feature request at
+<ulink url="http://sourceforge.net/tracker/?group_id=36234">sourceforge.net</ulink>.
+</para>
+
+</refsect1>
+
+<refsect1>
+<title>Mailing lists</title>
+
+<para>
+There are two main mailing lists dedicated to gretl.
+</para>
+
+<para>
+<variablelist>
+
+<varlistentry>
+<term><ulink url="http://lists.wfu.edu/mailman/listinfo/gretl-users">gretl-users@lists.wfu.edu</ulink></term>
+<listitem><para>
+gretl-users covers general gretl topics from the standpoint of users of the programs
+<application>gretl</application> and <application>gretlcli</application>.
+</para></listitem>
+</varlistentry>
+
+<varlistentry>
+<term><ulink url="http://lists.wfu.edu/mailman/listinfo/gretl-devel">gretl-devel@lists.wfu.edu</ulink></term>
+<listitem><para>
+gretl-devel-list is for discussion of work on gretl itself. It is 
+<emphasis>not</emphasis> for asking questions about how to use gretl,
+but is (for the present) the right place for asking questions about developing
+and running programs that use libgretl.
+</para></listitem>
+</varlistentry>
+
+</variablelist>
+</para>
+
+</refsect1>
+
+
+</refentry>
