@@ -1082,7 +1082,7 @@ double log_normal_pdf (double x)
  * A. V. Swan, The Reciprocal of Mill's Ratio, Algorithm AS 17,
  * Applied Statistics 18 (1969), 115 - 116.
  *
- * Returns: the inverse Mill's ratio, that is the ratio between the
+ * Returns: the inverse Mills ratio, that is the ratio between the
  * normal density function and the complement of the distribution 
  * function, both evaluated at @x.
  */
@@ -1092,9 +1092,12 @@ double log_normal_pdf (double x)
 #define MILLS_TOP 25
 #define MILLS_EPS 1.0e-09
 
-double invmills(double x)
+double invmills (double x)
 {
-    double a,a0,a1,a2,b,b0,b1,b2,r,s,t,d,imill;
+    double a, a0, a1, a2;
+    double b, b0, b1, b2;
+    double r, s, t, d;
+    double imills;
 
     if (x == 0.0) {
         return 1.0 / SQRT_HALF_PI;
@@ -1107,12 +1110,12 @@ double invmills(double x)
     if (x > MILLS_TOP) {
 	a0 = 1.0/(x * x);
 	a1 = 1.0 - 9.0 * a0 * (1.0 - 11.0 * a0);
-	const double a2 = 1.0 - 5.0 * a0 * (1.0 - 7.0 * a0 * a1);
-	const double d = 1.0 - a0 * (1.0 - 3.0 * a0 * a2);
+	a2 = 1.0 - 5.0 * a0 * (1.0 - 7.0 * a0 * a1);
+	d = 1.0 - a0 * (1.0 - 3.0 * a0 * a2);
 	return x / d;
     }
 
-    d = (x < 0.0) ? -1.0 : 1.0;
+    d = (x < 0.0)? -1.0 : 1.0;
     x = fabs(x);
 
     if (x <= 2.0) {
@@ -1126,7 +1129,7 @@ double invmills(double x)
 	    r *= b / a;
 	    t += r;
 	}
-	imill = 1.0 / (SQRT_HALF_PI * exp(0.5 * b) - d * t);
+	imills = 1.0 / (SQRT_HALF_PI * exp(0.5 * b) - d * t);
     } else {
 	a = 2.0;
 	r = s = b1 = x;
@@ -1146,13 +1149,13 @@ double invmills(double x)
 	    s  = t;
 	    t  = a2 / b2;
 	}
-	imill = t;
+	imills = t;
 	if (d < 0.0) {
-	    imill /= (2.0 * SQRT_HALF_PI * exp(0.5 * x * x) * t - 1.0);
+	    imills /= (2.0 * SQRT_HALF_PI * exp(0.5 * x * x) * t - 1.0);
 	}
     }
 
-    return(imill);
+    return imills;
 }
 
 /**
