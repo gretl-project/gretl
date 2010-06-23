@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-06-23 14:33-0400\n"
-"PO-Revision-Date: 2010-06-21 00:11+0300\n"
+"PO-Revision-Date: 2010-06-23 23:59+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:269
 msgid "lagged differences"
@@ -1914,9 +1914,9 @@ msgid "Iteration %d: log likelihood = %#.12g"
 msgstr "Итерация %d: логарифмическое правдоподобие = %#.12g"
 
 #: lib/src/discrete.c:1903
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a binary variable"
-msgstr "'%s' не является фиктивной переменной"
+msgstr "'%s' не является бинарной переменной"
 
 #: lib/src/discrete.c:2925
 msgid "Illegal non-positive value of the dependent variable"
@@ -6146,9 +6146,9 @@ msgid "Weibull (shape = %g, scale = %g): "
 msgstr "Вейбулл (форма = %g, масштаб = %g): "
 
 #: lib/src/pvalues.c:2339
-#, fuzzy, c-format
+#, c-format
 msgid "GED (shape = %g): "
-msgstr " (шаг = %g)"
+msgstr "GED (форма = %g):"
 
 #: lib/src/strutils.c:1659
 msgid "out of memory in XML encoding"
@@ -9685,9 +9685,8 @@ msgid "force use of English"
 msgstr "force use of English"
 
 #: gui2/gretl.c:126 gui2/gretl.c:203
-#, fuzzy
 msgid "force use of Basque"
-msgstr "force use of English"
+msgstr "force use of Basque"
 
 #: gui2/gretl.c:127 gui2/gretl.c:205
 msgid "dump gretl configuration to file"
