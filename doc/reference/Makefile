@@ -11,15 +11,20 @@ LIBTOOL = ../../libtool
 # The name of the module.
 DOC_MODULE = gretl
 
+# Uncomment for versioned docs and specify the version of the module, e.g. '2'.
+#DOC_MODULE_VERSION=2
+
 # The top-level SGML file. Change it if you want.
 DOC_MAIN_SGML_FILE = $(DOC_MODULE)-docs.sgml
 
-# The directory containing the source code. Relative to $(srcdir).
-# gtk-doc will search all .c & .h files beneath here for inline comments
-# documenting functions and macros.
+# Directories containing the source code, relative to $(srcdir).
+# gtk-doc will search all .c and .h files beneath these paths
+# for inline comments documenting functions and macros.
+# e.g. DOC_SOURCE_DIR=../../../gtk ../../../gdk
 DOC_SOURCE_DIR = ../../lib/src
 
 # Extra options to supply to gtkdoc-scan.
+# e.g. SCAN_OPTIONS=--deprecated-guards="GTK_DISABLE_DEPRECATED"
 SCAN_OPTIONS =
 
 # Header files to ignore when scanning.
@@ -66,9 +71,13 @@ MKDB_OPTIONS = --output-format=xml --ignore-files="$(IGNORE_SRCS)" \
 # Extra options to supply to gtkdoc-fixref.
 FIXXREF_OPTIONS =
 
-# Used for dependencies.
-HFILE_GLOB=
-CFILE_GLOB=
+# Used for dependencies. The docs will be rebuilt if any of these change.
+HFILE_GLOB=$(DOC_SOURCE_DIR)/*.h
+CFILE_GLOB=$(DOC_SOURCE_DIR)/*.c
+
+# Extra header to include when scanning, which are not under DOC_SOURCE_DIR
+# e.g. EXTRA_HFILES=$(top_srcdir}/contrib/extra.h
+EXTRA_HFILES=
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE).
 content_files =
@@ -93,7 +102,9 @@ GTKDOC_LD = $(LIBTOOL) --mode=link $(CC)
 ###########################################################################
 
 DOC_STAMPS=scan-build.stamp tmpl-build.stamp sgml-build.stamp html-build.stamp \
-	   $(srcdir)/tmpl.stamp $(srcdir)/sgml.stamp $(srcdir)/html.stamp
+	pdf-build.stamp \
+	$(srcdir)/tmpl.stamp $(srcdir)/sgml.stamp $(srcdir)/html.stamp \
+	$(srcdir)/pdf.stamp
 
 all-local: html-build.stamp
 

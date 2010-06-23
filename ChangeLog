@@ -1,6 +1,8 @@
 version 1.9.1, in progress
 - New command: "makepkg", for command-line creation of gretl
   function packages (.gfn files)
+- pdf, cdf and pvalue functions: add support for the
+  Generalized Error distribution
 - "dataset" command: add new sub-command, "renumber", for
   moving a series to a new position
 - wls: amend the criterion for complaining that the weights
