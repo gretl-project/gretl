@@ -7,6 +7,6 @@ ompopt=@OPENMP_CFLAGS@
 Name: gretl
 Description: Econometrics library (and program)
 Version: @LIBVERSION@
-Requires: libxml-2.0
+Requires: libxml-2.0 fftw3 glib-2.0
 Libs: ${ompopt} -L${libdir} -lgretl-1.0
 Cflags: -I${includedir}
