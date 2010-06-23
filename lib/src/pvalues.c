@@ -1078,9 +1078,9 @@ double log_normal_pdf (double x)
  *
  * Adapted by putting together code from gsl and TDA (Univ. Bochum). 
  * The latter is, in turn, based on 
- *
- * A. V. Swan, The Reciprocal of Mill's Ratio, Algorithm AS 17,
- * Applied Statistics 18 (1969), 115 - 116.
+ * A. V. Swan, The Reciprocal of Mills's Ratio, Algorithm AS 17,
+ * Journal of the Royal Statistical Society. Series C (Applied Statistics), 
+ * Vol. 18, No. 1 (1969), 115-116.
  *
  * Returns: the inverse Mills ratio, that is the ratio between the
  * normal density function and the complement of the distribution 
@@ -1097,7 +1097,7 @@ double invmills (double x)
     double a, a0, a1, a2;
     double b, b0, b1, b2;
     double r, s, t, d;
-    double imills;
+    double ret;
 
     if (x == 0.0) {
         return 1.0 / SQRT_HALF_PI;
@@ -1129,7 +1129,7 @@ double invmills (double x)
 	    r *= b / a;
 	    t += r;
 	}
-	imills = 1.0 / (SQRT_HALF_PI * exp(0.5 * b) - d * t);
+	ret = 1.0 / (SQRT_HALF_PI * exp(0.5 * b) - d * t);
     } else {
 	a = 2.0;
 	r = s = b1 = x;
@@ -1149,13 +1149,13 @@ double invmills (double x)
 	    s  = t;
 	    t  = a2 / b2;
 	}
-	imills = t;
+	ret = t;
 	if (d < 0.0) {
-	    imills /= (2.0 * SQRT_HALF_PI * exp(0.5 * x * x) * t - 1.0);
+	    ret /= (2.0 * SQRT_HALF_PI * exp(0.5 * x * x) * t - 1.0);
 	}
     }
 
-    return imills;
+    return ret;
 }
 
 /**
