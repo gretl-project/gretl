@@ -47,7 +47,8 @@ typedef enum {
     OPT_DUMP    = 1 << 7,
     OPT_DEBUG   = 1 << 8,
     OPT_QUIET   = 1 << 9,
-    OPT_ENGLISH = 1 << 10
+    OPT_ENGLISH = 1 << 10,
+    OPT_BASQUE  = 1 << 11
 } ProgramOptions;
 
 typedef enum {

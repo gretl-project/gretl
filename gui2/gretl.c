@@ -97,7 +97,7 @@ mdata_handle_drag  (GtkWidget          *widget,
 		    gpointer            p);
 
 static char *optrun, *optdb, *optwebdb, *optpkg;
-static int opteng, optdump, optver;
+static int opteng, optbasque, optdump, optver;
 #ifndef OLD_GTK
 static int optswitch;
 #endif
@@ -123,6 +123,7 @@ static struct start_opts options[] = {
     { "webdb",   'w', N_("open a remote (web) database on startup"), "REMOTE_DB" },
     { "pkg",     'p', N_("open (edit) a function package on startup"), "FUNCPKG" },
     { "english", 'e', N_("force use of English"), NULL },
+    { "basque",  'q', N_("force use of Basque"), NULL },
     { "dump",    'c', N_("dump gretl configuration to file"), NULL },
     { "version", 'v', N_("print version information"), NULL }, 
     { NULL, 0, NULL, NULL },
@@ -156,7 +157,9 @@ static void old_gretl_init (int *pargc, char ***pargv, char *filearg)
 
     if (opt & OPT_ENGLISH) {
 	opteng = 1;
-    } 
+    } else if (opt & OPT_BASQUE) {
+	optbasque = 1;
+    }
 
     if (err || (opt & (OPT_HELP | OPT_VERSION))) {
 	int ecode = (err)? EXIT_FAILURE : EXIT_SUCCESS;
@@ -196,6 +199,8 @@ static GOptionEntry options[] = {
       N_("open (edit) a function package on startup"), "FUNCPKG" },
     { "english", 'e', 0, G_OPTION_ARG_NONE, &opteng, 
       N_("force use of English"), NULL },
+    { "basque", 'q', 0, G_OPTION_ARG_NONE, &optbasque, 
+      N_("force use of Basque"), NULL },
     { "dump", 'c', 0, G_OPTION_ARG_NONE, &optdump, 
       N_("dump gretl configuration to file"), NULL },
 #ifdef G_OS_WIN32
@@ -538,7 +543,9 @@ int main (int argc, char **argv)
     if (opteng) {
 	force_language(LANG_C);
 	force_english_help();
-    } 
+    } else if (optbasque) {
+	force_language(LANG_EU);
+    }
 
     set_workdir_callback(gui_set_working_dir);
 

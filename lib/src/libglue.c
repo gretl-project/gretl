@@ -286,7 +286,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 }
 
-/* parse out optional "ymax=..." parameter before called the real
+/* parse out optional "ymax=..." parameter before calling the real
    logistic model function 
 */
 
