@@ -2373,6 +2373,18 @@ static void graph_month_name (char *mname, int m)
     mt.tm_year = 100;
 
     strftime(mname, 7, "%b", &mt);
+
+    if (!g_utf8_validate(mname, -1, NULL)) {
+	/* we might be in a non-UTF-8 locale */
+	gchar *tmp;
+	gsize bytes;
+
+	tmp = g_locale_to_utf8(mname, -1, NULL, &bytes, NULL);
+	if (tmp != NULL) {
+	    strcpy(mname, tmp);
+	    g_free(tmp);
+	}
+    }
 }
 
 /* for short daily time-series plots: write month names
@@ -2385,7 +2397,7 @@ static void make_named_month_tics (const gnuplot_info *gi, double yrs,
     double t1 = gi->x[gi->t2];
     double x, tw = 1.0/12;
     int i, m, n = 0;
-    char mname[8];
+    char mname[16];
     int notfirst = 0;
     int scale = (int) (yrs * 1.5);
 

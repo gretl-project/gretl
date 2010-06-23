@@ -38,7 +38,6 @@
  */
 
 #define LPDEBUG 0
-#define USE_MILLS 0
 
 #define CHOL_TINY 1.0e-13
 
@@ -1256,11 +1255,7 @@ static double *hess_wts (MODEL *pmod, const double **Z, int ci)
 	if (ci == LOGIT) {
 	    w[tw] = -1.0 * logit(bx) * (1.0 - logit(bx));
 	} else {
-#if USE_MILLS
 	    xx = q * invmills(-q * bx);
-#else
-	    xx = (q * normal_pdf(q * bx)) / normal_cdf(q * bx);
-#endif
 	    w[tw] = -xx * (xx + bx);
 	}
     }
@@ -1832,7 +1827,7 @@ static int add_slopes_to_model (MODEL *pmod, const double **Z)
 static void binary_model_add_stats (MODEL *pmod, const double *y)
 {
     int *act_pred;
-    double f, F, xx = 0.0;
+    double F, xx = 0.0;
     int i, t;
 
     /* space for actual/predicted matrix */
@@ -1866,12 +1861,7 @@ static void binary_model_add_stats (MODEL *pmod, const double *y)
 	} else {
 	    F = normal_cdf(xb);
 	    pmod->yhat[t] = F; 
-#if USE_MILLS
 	    pmod->uhat[t] = (yt != 0)? invmills(-xb) : -invmills(xb);
-#else
-	    f = normal_pdf(xb);
-	    pmod->uhat[t] = (yt != 0)? f/F : -f/(1-F);
-#endif
 	}
 
 	pmod->llt[t] = (yt != 0)? log(F) : log(1-F);

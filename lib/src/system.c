@@ -197,7 +197,7 @@ static int get_predet_parent (const equation_system *sys, int v, int *lag)
  * print_equation_system_info:
  * @sys: gretl equation system.
  * @pdinfo: dataset information.
- * @opt: use %OPT_H for printing in a form designed to appear
+ * @opt: use OPT_H for printing in a form designed to appear
  * in the header when results of estimation are printed.
  * @prn: printing struct.
  * 
@@ -642,10 +642,10 @@ static int get_estimation_method_from_line (const char *s)
  * equation_system_start:
  * @line: command line.
  * @name: On input, name to be given to system, if any (otherwise
- * may be %NULL or an empty string). On output, see below.
- * on output, if non-%NULL, name given via "name=foo" mechanism in
+ * may be NULL or an empty string). On output, see below.
+ * on output, if non-NULL, name given via "name=foo" mechanism in
  * @line, if present.
- * @opt: may include %OPT_I for iterative estimation (will be
+ * @opt: may include OPT_I for iterative estimation (will be
  * ignored if the the estimation method does not supports it).
  * @err: location to receive error code.
  * 
@@ -659,9 +659,9 @@ static int get_estimation_method_from_line (const char *s)
  *
  * The name may be given via the @name argument, or (for backward
  * compatibility) it may be given via "name=foo" in @line. In the
- * latter case, if @name is non-%NULL, the name extracted from
+ * latter case, if @name is non-NULL, the name extracted from
  * @line is written into that variable on output. The variable
- * must be able to hold up to #MAXSAVENAME bytes.
+ * must be able to hold up to %MAXSAVENAME bytes.
  * 
  * Returns: pointer to a new equation system, or %NULL on error.
  */
@@ -1033,7 +1033,7 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
  * @sys: pre-defined equation system.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: may include %OPT_V for more verbose operation.
+ * @opt: may include OPT_V for more verbose operation.
  * @prn: printing struct.
  * 
  * Estimate a pre-defined equation system and print the results
@@ -1431,7 +1431,7 @@ static int sys_check_lists (equation_system *sys, const double **Z,
  * @sys: pre-defined equation system.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: may include %OPT_V for verbose operation, %OPT_S
+ * @opt: may include OPT_V for verbose operation, OPT_S
  * to permit estimation of a single equation.
  * @prn: printing struct.
  * 

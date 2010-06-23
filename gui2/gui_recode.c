@@ -294,7 +294,7 @@ int maybe_rewrite_gp_file (const char *fname)
 	    } 
 	    modline = recoded = 1;
 	}
-#
+
 	if (modline) {
 	    modified = 1;
 	} else {

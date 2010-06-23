@@ -191,9 +191,14 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
     return 0;
 }
 
-/* compute residuals, for all cases other than FIML */
+/* Note: this was changed in Revision 1.86 of Fri Apr 30 2010. Up till
+   then we were reporting the regular R^2 for models estimated as part
+   of a system, which seems wrong.
+*/
 
 #define SYS_CORR_RSQ 1
+
+/* compute residuals, for all cases other than FIML */
 
 static void 
 sys_resids (equation_system *sys, int eq, const double **Z)
@@ -231,7 +236,6 @@ sys_resids (equation_system *sys, int eq, const double **Z)
 #if SYS_CORR_RSQ
 	pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, Z[yno], pmod->yhat);
 #else
-
 	pmod->rsq = 1 - (pmod->ess / pmod->tss);
 #endif
 	r = 1 - pmod->rsq;

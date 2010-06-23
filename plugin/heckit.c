@@ -24,7 +24,6 @@
 #include "gretl_bfgs.h"
 
 #define HDEBUG 0
-#define USE_MILLS 0
 
 typedef struct h_container_ h_container;
 
@@ -545,7 +544,7 @@ static double h_loglik (const double *param, void *ptr)
     if (!err) {
 	double ll0 = 0, ll1 = 0, ll2 = 0;
 	double ndxt, ut = 0;
-	double P, f, mills, tmp, psum;
+	double P, mills, tmp, psum;
 	int sel, k;
 
 	gretl_matrix_zero(HC->score);
@@ -560,24 +559,13 @@ static double h_loglik (const double *param, void *ptr)
 	    if (sel) {
 		ut = gretl_vector_get(HC->u, j);
 		x = ca * (ndxt + HC->rho*ut);
-
 		ll1 -= LN_SQRT_2_PI + 0.5*ut*ut + lnsig;
 		P = normal_cdf(x);
-#if USE_MILLS
 		mills = invmills(-x);
-#else
-		f = normal_pdf(x);
-		mills = f/P;
-#endif
 		ll2 += log(P);
 	    } else {
 		P = normal_cdf(-ndxt);
-#if USE_MILLS
 		mills = -invmills(ndxt);
-#else
-		f = normal_pdf(ndxt);
-		mills = -f/P;
-#endif
 		ll0 += log(P);
 	    }
 
@@ -728,7 +716,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 			      const double **Z, DATAINFO *pdinfo)
 {
     double x, xb, zg, u;
-    double f, F, lam = HC->lambda;
+    double F, lam = HC->lambda;
     double rho = HC->rho;
     double rhofunc = 1 / sqrt(1 - rho * rho);
     double lnsig = log(HC->sigma);
@@ -773,12 +761,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	if (Z[HC->selvar][t] == 0) {
 	    /* censored */
 	    F = normal_cdf(-zg);
-#if USE_MILLS
 	    hm->uhat[t] = -lam * invmills(zg);
-#else
-	    f = normal_pdf(zg);
-	    hm->uhat[t] = -lam * f / F;
-#endif
 	    hm->llt[t] = log(F);
 	} else if (!na(xb) && Z[HC->selvar][t] == 1) {
 	    /* uncensored */
