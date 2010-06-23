@@ -2091,6 +2091,23 @@ static int compare_ranges (const DATAINFO *targ,
     return addobs;
 }
 
+/* When appending data to a current panel dataset, and the length of
+   the series in the new data is less than the full panel size
+   (n * T), try to determine if it's OK to expand the incoming data to
+   match.
+
+   We'll say it's OK if the new series length equals the panel T: in
+   that case we'll take the new data to be time-series, which should
+   be replicated for each panel unit.
+
+   A second possibility arises if the length of the new series 
+   equals the panel n: in that case we could treat it as a time-
+   invariant characteristic of the panel unit, which should be
+   replicated for each time period.  But note that if OPT_T is
+   given, this second expansion is forbidden: the user has
+   stipulated that the new data are time-varying.
+*/
+
 static int panel_expand_ok (DATAINFO *pdinfo, DATAINFO *addinfo,
 			    gretlopt opt)
 {
@@ -2218,7 +2235,7 @@ static int markers_are_ints (const DATAINFO *pdinfo)
  * @pdinfo: data information struct.
  * @addZ: new data set to be merged in.
  * @addinfo: data information associated with @addZ.
- * @opt: may include %OPT_T to force a time-series interpretation
+ * @opt: may include OPT_T to force a time-series interpretation
  * when appending to a panel dataset.
  * @prn: print struct to accept messages.
  * 
@@ -2380,7 +2397,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
  * @pdinfo0: original dataset information struct.
  * @pZ1: new data set.
  * @ppdinfo1: pointer to dataset information associated with @pZ1.
- * @opt: may include %OPT_T when appending to a panel dataset,
+ * @opt: may include OPT_T when appending to a panel dataset,
  * to force a time-series interpretation of the added data.
  * @prn: print struct to accept messages.
  *

@@ -7678,8 +7678,9 @@ static int script_open_append (ExecState *s, double ***pZ,
 	}
     }
 
-    /* the "drop-empty" and "quiet" options should be passed on */
-    transcribe_option_flags(&openopt, cmd->opt, OPT_D | OPT_Q);
+    /* the "drop-empty", "quiet" and "time-series" options 
+       should be passed on */
+    transcribe_option_flags(&openopt, cmd->opt, OPT_D | OPT_Q | OPT_T);
 
     if (cmd->opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
