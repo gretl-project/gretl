@@ -396,6 +396,9 @@ void set_app_font (const char *fontname)
 
     settings = gtk_settings_get_default();
 
+    /* dammit, we want these! */
+    g_object_set(G_OBJECT(settings), "gtk-menu-images", TRUE, NULL);
+
     if (fontname == NULL) {
 	g_object_set(G_OBJECT(settings), "gtk-font-name", appfontname, NULL);
     } else {
