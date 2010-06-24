@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.8.7cvs
+# Polish translation for gretl-1.9.0cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2010
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2010
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.8.7\n"
+"Project-Id-Version: gretl-1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-06-23 14:33-0400\n"
-"PO-Revision-Date: 2010-04-30 01:30-0400\n"
+"PO-Revision-Date: 2010-06-24 03:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1242,19 +1242,19 @@ msgid "Dataset extended by %d observations"
 msgstr "Zakres danych rozszerzony o %d obserwacje"
 
 #: lib/src/dataset.c:3169
-#, fuzzy, c-format
+#, c-format
 msgid "Variable %s cannot be renumbered"
-msgstr "Zmienna '%s' jest niezdefiniowana"
+msgstr "Zmienną '%s' nie można przenumerować"
 
 #: lib/src/dataset.c:3172
-#, fuzzy, c-format
+#, c-format
 msgid "Target ID %d is not available"
-msgstr "Zmienna zależna '%s' nie jest zmienną zero-jedynkową."
+msgstr "Zmienna ID %d nie jest dostępna"
 
 #: lib/src/dataset.c:3181
-#, fuzzy, c-format
+#, c-format
 msgid "Renumbered %s as variable %d\n"
-msgstr "   liczba zmiennych: %d\n"
+msgstr "Przenumerowano zmienną %s na zmienną %d\n"
 
 #: lib/src/dataset.c:3226
 msgid "The 'dataset' command is not available within functions"
@@ -1901,7 +1901,7 @@ msgid "Iteration %d: log likelihood = %#.12g"
 msgstr "Iteracja %d: Logarytm wiarygodności = %#.12g"
 
 #: lib/src/discrete.c:1903
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a binary variable"
 msgstr "'%s' nie jest zmienną zero-jedynkową"
 
@@ -2118,19 +2118,19 @@ msgid "%s: no such object\n"
 msgstr "%s: nie jest takim obiektem\n"
 
 #: lib/src/geneval.c:6811
-#, fuzzy, c-format
+#, c-format
 msgid "%s: insufficient arguments"
-msgstr "Polecenie ma nieodpowiedni argument"
+msgstr "%s: nieodpowiednie argumenty"
 
 #: lib/src/geneval.c:6813
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid argument type %s"
-msgstr "'%s': błędny argument dla %s()\n"
+msgstr "%s: błędny argument typu %s"
 
 #: lib/src/geneval.c:6816
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument %d: invalid type %s"
-msgstr "%s: argument %d powinnien być %s"
+msgstr "%s: argument %d: powinnien być typu %s"
 
 #: lib/src/geneval.c:6826
 #, c-format
@@ -2694,9 +2694,9 @@ msgid "Initial value of objective function is not finite"
 msgstr "Wartość początkowa dla nieskończonej funkcji"
 
 #: lib/src/gretl_bundle.c:482
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted bundle %s"
-msgstr "Usunięto skalar %s"
+msgstr "Usunięto paczkę %s"
 
 #: lib/src/gretl_errors.c:38
 msgid "Data error"
@@ -2896,11 +2896,8 @@ msgid "%s: validated against DTD OK"
 msgstr "%s: poprawność w stosunku do DTD OK"
 
 #: lib/src/gretl_func.c:2323
-#, fuzzy
 msgid "No functions are available for packaging at present."
-msgstr ""
-"Nie dostępne są funkcje pakietu.\n"
-"Czy chcesz zapisać je teraz?"
+msgstr "Niedostępne są funkcje dla bieżących pakietów."
 
 #: lib/src/gretl_func.c:3192
 msgid "No description available"
@@ -4366,9 +4363,8 @@ msgid "Interval estimates"
 msgstr "Estymacja przedziałowa"
 
 #: lib/src/modelprint.c:711
-#, fuzzy
 msgid "Dynamic panel"
-msgstr "Dynamiczny model panelowy"
+msgstr "Dynamiczny panel"
 
 #: lib/src/modelprint.c:713
 msgid "Arellano--Bond"
@@ -4443,14 +4439,12 @@ msgid "1-step Arellano-Bond"
 msgstr "1-step Arellano-Bond"
 
 #: lib/src/modelprint.c:766
-#, fuzzy
 msgid "2-step dynamic panel"
-msgstr "Dynamiczny model panelowy"
+msgstr "dynamiczny panel 2-step"
 
 #: lib/src/modelprint.c:768
-#, fuzzy
 msgid "1-step dynamic panel"
-msgstr "Dynamiczny model panelowy"
+msgstr "dynamiczny panel 1-step"
 
 #: lib/src/modelprint.c:772 lib/src/modelprint.c:776
 msgid "2-step GMM"
@@ -6158,9 +6152,9 @@ msgid "Weibull (shape = %g, scale = %g): "
 msgstr "Weibull (parametr kształtu = %g, parametr skali = %g): "
 
 #: lib/src/pvalues.c:2339
-#, fuzzy, c-format
+#, c-format
 msgid "GED (shape = %g): "
-msgstr " (długość kroku = %g)"
+msgstr "GED (parametr kształtu = %g)"
 
 #: lib/src/strutils.c:1659
 msgid "out of memory in XML encoding"
@@ -8448,9 +8442,8 @@ msgid "Seed for generator:"
 msgstr "Ziarno generatora:"
 
 #: gui2/dialogs.c:1274
-#, fuzzy
 msgid "Choose named list"
-msgstr "Definiowanie listy"
+msgstr "Wybierz listę zmiennych"
 
 #: gui2/dialogs.c:1369
 msgid "gretl: iteration controls"
@@ -9735,9 +9728,8 @@ msgid "force use of English"
 msgstr "użyj wersji angielskiej"
 
 #: gui2/gretl.c:126 gui2/gretl.c:203
-#, fuzzy
 msgid "force use of Basque"
-msgstr "użyj wersji angielskiej"
+msgstr "użyj wersji baskijskiej"
 
 #: gui2/gretl.c:127 gui2/gretl.c:205
 msgid "dump gretl configuration to file"
@@ -9766,9 +9758,8 @@ msgid "%s found\n"
 msgstr "znaleziono %s\n"
 
 #: gui2/gretl.c:1116
-#, fuzzy
 msgid "No lists are currently defined"
-msgstr "Brak zdefiniowanych skalarów w bieżącej sesji"
+msgstr "Brak zdefiniowanych list zmiennych w bieżącej sesji"
 
 #: gui2/gretl.c:1215
 msgid "ID #"
@@ -9908,23 +9899,23 @@ msgstr "_nowy plik skryptowy"
 
 #: gui2/gretl.c:1384
 msgid "gretl script"
-msgstr "skrypty gretla"
+msgstr "skrypt gretla"
 
 #: gui2/gretl.c:1385
 msgid "gnuplot script"
-msgstr "skrypty gnuplot"
+msgstr "skrypt gnuplot"
 
 #: gui2/gretl.c:1386
 msgid "R script"
-msgstr "skrypty R"
+msgstr "skrypt R"
 
 #: gui2/gretl.c:1387
 msgid "Octave script"
-msgstr "skrypy Octave"
+msgstr "skrypt Octave"
 
 #: gui2/gretl.c:1388 gui2/gretl.c:1659
 msgid "Ox program"
-msgstr "Ox program"
+msgstr "skrypt Ox"
 
 #: gui2/gretl.c:1390
 msgid "_Session files"
@@ -10067,14 +10058,12 @@ msgid "Select _all"
 msgstr "Z_aznacz wszystko"
 
 #: gui2/gretl.c:1438
-#, fuzzy
 msgid "Define or edit _list..."
-msgstr "Definiowanie listy"
+msgstr "Definiowanie lub edycja listy zmiennych..."
 
 #: gui2/gretl.c:1439
-#, fuzzy
 msgid "_Select listed variables..."
-msgstr "Wybierz dwie zmienne"
+msgstr "_Zaznacz listę zmiennych..."
 
 #: gui2/gretl.c:1440 gui2/gretl.c:1518
 msgid "_Display values"
@@ -11804,7 +11793,6 @@ msgstr ""
 "Czy chcesz wczytać plik z opisami przypadków (obserwacji) teraz?"
 
 #: gui2/library.c:1463
-#, fuzzy
 msgid "Not ready for variable labels"
 msgstr "Nie otrzymano żadnych zmiennych"
 
@@ -13271,12 +13259,11 @@ msgstr "Wybór zmiennych do kopiowania"
 
 #: gui2/selector.c:5635
 msgid "Define named list"
-msgstr "Definiowanie listy"
+msgstr "Definiowanie listy zmiennych"
 
 #: gui2/selector.c:5866
-#, fuzzy
 msgid "Name of list:"
-msgstr "Nazwy list:"
+msgstr "Nazwa listy:"
 
 #: gui2/selector.c:5971
 msgid "Available vars"
@@ -14386,7 +14373,7 @@ msgstr "ostatnia obserwacja"
 
 #: gui2/varinfo.c:705
 msgid "ID number:"
-msgstr ""
+msgstr "Numer ID:"
 
 #: gui2/varinfo.c:721 gui2/varinfo.c:971
 msgid "gretl: variable attributes"
@@ -15256,15 +15243,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "Baxter-King band = %d-%d periods\n"
-#~ msgstr "Baxter-King band = %d-%d okresów\n"
-
-#~ msgid "Filtering"
-#~ msgstr "Filtrowanie"
-
-#~ msgid "Call to function %s"
-#~ msgstr "Wywołanie funkcji %s"
-
-#~ msgid "Reads the current value, or sets a new value"
-#~ msgstr "Wczytaj bieżącą wartość lub ustaw nową"
