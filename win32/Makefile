@@ -179,6 +179,7 @@ LIBSRC = adf_kpss.c \
 	gretl_bfgs.c \
 	gretl_bundle.c \
 	gretl_commands.c \
+	gretl_data_io.c \
 	gretl_errors.c \
 	gretl_fft.c \
 	gretl_foreign.c \

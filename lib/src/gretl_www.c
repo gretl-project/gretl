@@ -1990,6 +1990,17 @@ int check_remote_db (const char *dbname)
     return err;
 }
 
+/**
+ * retrieve_remote_function_package:
+ * @pkgname: name of function package to retrieve, e.g. "foo.gfn".
+ * @localname: full path to which the package file should be
+ * written on the local machine.
+ *
+ * Retrieves the specified file from the gretl data server.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname)
 {
@@ -1997,12 +2008,38 @@ int retrieve_remote_function_package (const char *pkgname,
 			 localname, NULL);
 }
 
+/**
+ * retrieve_remote_datafiles_package:
+ * @pkgname: name of data files package to retrieve, e.g. 
+ * "wooldridge.tar.gz".
+ * @localname: full path to which the package file should be
+ * written on the local machine.
+ *
+ * Retrieves the specified file from the gretl data server.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
 int retrieve_remote_datafiles_package (const char *pkgname, 
 				       const char *localname)
 {
     return retrieve_url (gretlhost, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL);
 }
+
+/**
+ * retrieve_remote_db_data:
+ * @dbname: name of gretl database to access.
+ * @varname: name of the variable (series) to retrieve.
+ * @getbuf: location to receive allocated buffer containing
+ * the data.
+ * @opt: either GRAB_NBO_DATA to get data in network byte
+ * order, or GRAB_DATA to get the data in little-endian order.
+ *
+ * Retrieves the specified data from the gretl data server.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
 
 int retrieve_remote_db_data (const char *dbname,
 			     const char *varname,
@@ -2012,6 +2049,18 @@ int retrieve_remote_db_data (const char *dbname,
     return retrieve_url (dbhost, opt, dbname, varname, SAVE_TO_BUFFER, 
 			 NULL, getbuf);
 }
+
+/**
+ * retrieve_manfile:
+ * @fname: name of manual file to retrieve.
+ * @localname: full path to which the file should be written
+ * on the local machine.
+ *
+ * Retrieves the specified manual file in PDF format from the 
+ * gretl data server.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
 
 int retrieve_manfile (const char *fname, const char *localname)
 {

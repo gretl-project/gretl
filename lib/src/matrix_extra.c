@@ -21,11 +21,17 @@
 #include "usermat.h"
 #include "matrix_extra.h"
 
-/* functions that convert between gretl_matrix and other
-   datatypes; also printing of gretl_matrices and some
-   functions relating to masking and cutting rows and/or
-   columns of matrices.
-*/
+/**
+ * SECTION:matrix_extra
+ * @short_description: more matrix operations
+ * @title: Matrix extra
+ * @include: gretl/libgretl.h, gretl/matrix_extra.h
+ *
+ * Functions that convert between gretl_matrix and other
+ * datatypes; also printing of gretl_matrices and some
+ * functions relating to masking and cutting rows and/or
+ * columns of matrices.
+ */
 
 /**
  * gretl_vector_from_array:
@@ -35,7 +41,7 @@
  * to use the squares of the elements of @x.
  *
  * Returns: pointer to a newly allocated gretl_vector containing
- * the elements of x (or their squares), or %NULL on failure.  
+ * the elements of x (or their squares), or NULL on failure.  
  * Missing valies in @x are skipped.
  */
 
@@ -73,7 +79,7 @@ gretl_vector_from_array (const double *x, int n, GretlMatrixMod mod)
  * @t2: ending observation.
  *
  * Returns: a newly allocated gretl_vector containing the values
- * of the given data series for the given range, or %NULL on failure.  
+ * of the given data series for the given range, or NULL on failure.  
  */
 
 gretl_vector *gretl_vector_from_series (const double *x, 
@@ -104,7 +110,7 @@ gretl_vector *gretl_vector_from_series (const double *x,
  * @cols: number of columns in target matrix.
  *
  * Returns: allocated gretl_matrix, the elements of which are set to
- * the values in @X, or %NULL on allocation failure.
+ * the values in @X, or NULL on allocation failure.
  */
 
 gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
@@ -130,9 +136,9 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
  * gretl_matrix_from_scalar:
  * @x: scalar to be "promoted".
  *
- * Returns: allocated 1x1 gretl_matrix, the single element
- * of which is set to @x, or %NULL on allocation failure.
- * If @x = #NADBL the matrix value is #M_NA.
+ * Returns: allocated 1 x 1 gretl_matrix, the single element
+ * of which is set to @x, or NULL on allocation failure.
+ * If @x = %NADBL the matrix value is %M_NA.
  */
 
 gretl_matrix *gretl_matrix_from_scalar (double x) 
@@ -163,16 +169,16 @@ static int count_selection (const char *s, int n)
  * gretl_vcv_matrix_from_model:
  * @pmod: pointer to model
  * @select: char array indicating which rows and colums to select
- * (or %NULL for the full matrix).
+ * (or NULL for the full matrix).
  * @err: location to receive error code.
  *
  * Produces all or part of the covariance matrix for @pmod 
  * in the form of a gretl_matrix.  Storage is allocated, to be freed
- * by the caller.  If @select is not %NULL, it should be an array
+ * by the caller.  If @select is not NULL, it should be an array
  * with non-zero elements in positions corresponding to the
  * desired rows (and columns), and zero elements otherwise.
  * 
- * Returns: the covariance matrix, or %NULL on error.
+ * Returns: the covariance matrix, or NULL on error.
  */
 
 gretl_matrix *
@@ -233,16 +239,16 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select, int *err)
  * gretl_coeff_vector_from_model:
  * @pmod: pointer to model
  * @select: char array indicating which rows to select
- * (or %NULL for the full vector).
+ * (or NULL for the full vector).
  * @err: location to receive error code.
  *
  * Produces all or part of the coefficient vector for @pmod  
  * in the form of a gretl column vector.  Storage is allocated, to be freed
- * by the caller.  If @select is non-%NULL, it should be an array
+ * by the caller.  If @select is non-NULL, it should be an array
  * with non-zero elements in positions corresponding to the
  * desired rows and zero elements otherwise.
  * 
- * Returns: the coefficient vector, or %NULL on error.
+ * Returns: the coefficient vector, or NULL on error.
  */
 
 gretl_vector *
@@ -285,12 +291,12 @@ gretl_coeff_vector_from_model (const MODEL *pmod, const char *select, int *err)
  * @list: list of variables by ID number.
  * @Z: data array.
  * @pdinfo: pointer to data information struct.
- * @means: pointer to pick up vector of means, or %NULL to discard.
+ * @means: pointer to pick up vector of means, or NULL to discard.
  * @errp: pointer to receive non-zero error code in case of
- * failure, or %NULL.
+ * failure, or NULL.
  *
  * Returns: the variance-covariance matrix of the listed variables
- * (over the currently defined data sample), or %NULL in case of
+ * (over the currently defined data sample), or NULL in case of
  * failure.
  */
 
@@ -376,7 +382,7 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
  * Copies the values from row @i of matrix @m into the array
  * @x, which should already be allocated to the correct size.
  *
- * Returns: 0 on sucess, 1 if the row is out of bounds.
+ * Returns: 0 on sucess, non-zero if the row is out of bounds.
  */
 
 int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
@@ -384,7 +390,7 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
     int j, err = 0;
 
     if (i < 0 || i >= gretl_matrix_rows(m)) {
-	err = 1;
+	err = E_DATA;
     } else {
 	for (j=0; j<m->cols; j++) {
 	    x[j] = gretl_matrix_get(m, i, j);
@@ -404,7 +410,7 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x)
  * belongs to @m and must not be freed; only the returned
  * pointer itself should be freed.
  *
- * Returns: the constructed array on success or %NULL on failure.
+ * Returns: the constructed array on success or NULL on failure.
  */
 
 double **gretl_matrix_get_columns (const gretl_matrix *m, int *err)
@@ -575,7 +581,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
  * found), or %M_MISSING_SKIP (observations with any missing
  * values are omitted from the matrix).
  *
- * Returns: allocated matrix or %NULL on failure. 
+ * Returns: allocated matrix or NULL on failure. 
  */
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
@@ -592,7 +598,7 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
  * @Z: data array.
  * @t1: starting observation.
  * @t2: ending observation.
- * @mask: missing observations mask, or %NULL.
+ * @mask: missing observations mask, or NULL.
  * @err: location to receive error code.
  *
  * Creates a gretl matrix holding the subset of variables from
@@ -602,7 +608,7 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
  * of observations to exclude from the subset and zeros elsewhere. 
  * This apparatus can be used to exclude missing observations.
  *
- * Returns: allocated matrix or %NULL on failure. 
+ * Returns: allocated matrix or NULL on failure. 
  */
 
 gretl_matrix *
@@ -617,16 +623,16 @@ gretl_matrix_data_subset_masked (const int *list, const double **Z,
 /**
  * gretl_dataset_from_matrix:
  * @m: source matrix.
- * @list: list of columns (1-based) to include, or %NULL.
+ * @list: list of columns (1-based) to include, or NULL.
  * @pZ: location to receive data array.
  * @err: location to receive error code.
  *
  * Creates a gretl dataset from matrix @m, either using the
  * columns specified in @list or using all columns if @list
- * is %NULL.
+ * is NULL.
  *
  * Returns: pointer to new dataset information struct on success, 
- * or %NULL on failure.
+ * or NULL on failure.
  */
 
 DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
@@ -790,39 +796,6 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
     return err;
 }
 
-/* delete the columns of X specified in @list */
-
-int gretl_matrix_delete_columns (gretl_matrix *X, int *list)
-{
-    size_t csz = X->rows * sizeof *X->val;
-    void *dest, *src;
-    int i, j, n, col;
-
-    for (i=1; i<=list[0]; i++) {
-	col = list[i];
-	if (col < 0 || col >= X->cols) {
-	    return E_NONCONF;
-	}
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	col = list[i];
-	dest = X->val + col * X->rows;
-	src = X->val + (col + 1) * X->rows;
-	n = X->cols - col - 1;
-	if (n > 0) {
-	    memmove(dest, src, n * csz);
-	}
-	for (j=i+1; j<=list[0]; j++) {
-	    list[j] -= 1;
-	}
-    }
-
-    X->cols -= list[0];
-
-    return 0;
-}
-
 /**
  * gretl_matrix_read_from_text:
  * @fname: name of text file.
@@ -834,7 +807,7 @@ int gretl_matrix_delete_columns (gretl_matrix *X, int *list)
  * of the csv file, so no heuristics are necessary. In case of error,
  * an empty matrix is returned and @err is filled appropriately.
  *
- * Returns: The matrix read from file, or %NULL.
+ * Returns: The matrix read from file, or NULL.
  */
 
 gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
@@ -1074,7 +1047,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 /**
  * gretl_matrix_print_to_prn:
  * @m: matrix to print.
- * @msg: accompanying message text (or %NULL if no message is wanted).
+ * @msg: accompanying message text (or NULL if no message is wanted).
  * @prn: pointer to gretl printing struct.
  *
  * Prints the matrix @m to @prn.
@@ -1088,9 +1061,9 @@ gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 
 /**
  * gretl_matrix_print_with_col_heads:
- * @m: matrix to print.
- * @title: accompanying title (or %NULL if no title is wanted).
- * @heads: array of strings to identify the columns.
+ * @m: T x k matrix to print.
+ * @title: accompanying title (or NULL if no title is wanted).
+ * @heads: array of k strings to identify the columns.
  * @prn: pointer to gretl printing struct.
  *
  * Prints the matrix @m to @prn, with column headings given
@@ -1149,6 +1122,24 @@ static void maybe_print_col_heads (const gretl_matrix *m,
     }
 }
 
+/**
+ * gretl_matrix_print_with_format:
+ * @m: matrix to print.
+ * @fmt: a printf-type format string.
+ * @wid: an integer width, or 0.
+ * @prec: an integer precision, or 0.
+ * @prn: pointer to gretl printing struct.
+ *
+ * Prints the matrix @m to @prn, with the elements of @m
+ * formatted as specified by @fmt, @wid and @prec. 
+ * The arguments @wid and/or @prec are required only if 
+ * @fmt contains one or more placeholders ("*") to be filled out.
+ * For example, if @fmt is "\%14.6f" then neither @wid nor
+ * @prec is needed and both should be set to 0; if 
+ * @fmt is "\%*.6f" then a @wid value is needed but @prec
+ * should be 0.
+ */
+
 void gretl_matrix_print_with_format (const gretl_matrix *m, 
 				     const char *fmt,
 				     int wid, int prec,
@@ -1201,34 +1192,12 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 }
 
 /**
- * gretl_packed_matrix_print:
- * @m: packed matrix to print.
- * @msg: accompanying message text (or %NULL if no message is wanted).
- *
- * Prints the symmetric matrix @m (packed as lower triangle)
- * to stderr.
- */
-
-void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg)
-{
-    PRN *prn;
-    int err = 0;
-
-    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-
-    if (!err) {
-	real_matrix_print_to_prn(m, msg, 1, 0, 0, NULL, prn);
-	gretl_print_destroy(prn);
-    }
-}
-
-/**
  * debug_print_matrix:
  * @m: matrix to print.
- * @msg: accompanying message text (or %NULL if no message is wanted).
+ * @msg: accompanying message text (or NULL if no message is wanted).
  *
- * Prints the matrix @m to stderr, as with gretl_matrix_print(), but
- * appends the address of the matrix struct.
+ * Prints the matrix @m to stderr with high precision, along
+ * with the address of the matrix struct.
  */
 
 void debug_print_matrix (const gretl_matrix *m, const char *msg)
@@ -1417,10 +1386,10 @@ int gretl_matrix_cut_rows_cols (gretl_matrix *m, const char *mask)
  * number of rows in @m, with 1s indicating zero rows, 0s
  * elsewhere.  If there are no such rows, returns NULL.
  * 
- * %E_ALLOC is written to @err in case a mask should have
+ * E_ALLOC is written to @err in case a mask should have
  * been constructed but allocation failed.
  *
- * Returns: allocated mask or %NULL.
+ * Returns: allocated mask or NULL.
  */
 
 char *gretl_matrix_zero_row_mask (const gretl_matrix *m, int *err)
@@ -1467,13 +1436,13 @@ char *gretl_matrix_zero_row_mask (const gretl_matrix *m, int *err)
  * constructs a mask of length equal to the numbers of
  * columns in @m, with 1s in positions corresponding 
  * to diagonal elements of R that are effectively 0, and
- * 0s elsewhere.  If @m is of full column rank, %NULL is
+ * 0s elsewhere.  If @m is of full column rank, NULL is
  * returned.
  * 
- * %E_ALLOC is written to @err in case a mask should have
+ * E_ALLOC is written to @err in case a mask should have
  * been constructed but allocation failed.
  *
- * Returns: allocated mask or %NULL.
+ * Returns: allocated mask or NULL.
  */
 
 char *gretl_matrix_rank_mask (const gretl_matrix *m, int *err)
@@ -1534,11 +1503,11 @@ char *gretl_matrix_rank_mask (const gretl_matrix *m, int *err)
  * @X: matrix of independent variables.
  * @b: vector to hold coefficient estimates.
  * @vcv: matrix to hold the covariance matrix of the coefficients,
- * or %NULL if this is not needed.
- * @uhat: vector to hold the regression residuals, or %NULL if 
+ * or NULL if this is not needed.
+ * @uhat: vector to hold the regression residuals, or NULL if 
  * these are not needed.
- * @s2: pointer to receive residual variance, or %NULL.  Note:
- * if @s2 is %NULL, the "vcv" estimate will be plain (X'X)^{-1}.
+ * @s2: pointer to receive residual variance, or NULL.  Note:
+ * if @s2 is NULL, the "vcv" estimate will be plain (X'X)^{-1}.
  *
  * Computes OLS estimates using Cholesky factorization, via
  * the GMP multiple-precision library, and puts the

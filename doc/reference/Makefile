@@ -45,6 +45,8 @@ IGNORE_SRCS = \
 	gretl_func.h \
 	gretl_win32.c \
 	gretl_win32.h \
+	gretl_www.c \
+	gretl_www.h \
 	interact.c \
 	interact.h \
 	libglue.c \

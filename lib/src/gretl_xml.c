@@ -2420,7 +2420,7 @@ static int remedy_empty_data (double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt (char *fname, double ***pZ, DATAINFO *pdinfo, 
+int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn) 
 {
     DATAINFO *tmpdinfo;

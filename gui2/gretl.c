@@ -596,7 +596,7 @@ int main (int argc, char **argv)
 	/* keep a copy of input filename */
 	strcpy(tryfile, datafile);
 
-	ftype = detect_filetype(datafile);
+	ftype = detect_filetype(datafile, OPT_P);
 
 	switch (ftype) {
 	case GRETL_NATIVE_DATA:

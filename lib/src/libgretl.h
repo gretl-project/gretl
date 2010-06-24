@@ -391,6 +391,7 @@ typedef struct MODEL_ {
 #include "gretl_model.h"
 #include "pvalues.h"
 #include "dataio.h"
+#include "gretl_data_io.h"
 #include "strutils.h"
 #include "describe.h"
 #include "printout.h"

@@ -1049,7 +1049,7 @@ void do_open_data (windata_t *fwin, int code)
 	ftype = GRETL_JMULTI;
     } else {
 	/* no filetype specified: have to guess */
-	ftype = detect_filetype(tryfile);
+	ftype = detect_filetype(tryfile, OPT_P);
     }
 
     /* destroy the current data set, etc., unless we're explicitly appending */

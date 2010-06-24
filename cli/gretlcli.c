@@ -449,7 +449,7 @@ int main (int argc, char *argv[])
 	strcpy(given_file, filearg);
 	strcpy(datafile, filearg);
 
-	ftype = detect_filetype(datafile);
+	ftype = detect_filetype(datafile, OPT_P);
 
 	switch (ftype) {
 	case GRETL_UNRECOGNIZED:
@@ -672,7 +672,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     } else if (cmd->opt & OPT_O) {
 	ftype = GRETL_ODBC;
     } else {
-	ftype = detect_filetype(newfile);
+	ftype = detect_filetype(newfile, OPT_P);
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||

@@ -20,6 +20,15 @@
 #include "libgretl.h"
 #include "dbwrite.h"
 
+/**
+ * SECTION:dbwrite
+ * @short_description: writing to a gretl database
+ * @title: DB write
+ * @include: gretl/libgretl.h, gretl/dbwrite.h
+ *
+ * Functionality for writing series to a native-format gretl database.
+ */
+
 #define DB_DEBUG 0
 
 static void dotify (char *s)
@@ -526,12 +535,22 @@ static int *make_db_save_list (const int *list, const double **Z,
     return dlist;
 }
 
-/* public function: write listed vars from working memory to a gretl
-   database.  If opt & OPT_F (force, overwrite), then in case any vars
-   in the database have the same names as some of those in list,
-   replace the ones in the database.  Otherwise, in case of replicated
-   variables, print a message and return E_DB_DUP.
-*/
+/**
+ * write_db_data:
+ * @fname: name of target database file (e.g. "foo.bin").
+ * @list: list of series ID numbers.
+ * @opt: option flag.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ *
+ * Writes the listed series from @Z to a gretl database. If @opt
+ * includes OPT_F (force, overwrite), then in case any variables
+ * in the database have the same names as some of those in @list,
+ * replace the ones in the database.  Otherwise, in case of replicated
+ * variables, set an error message and return E_DB_DUP.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
 
 int write_db_data (const char *fname, const int *list, gretlopt opt,
 		   const double **Z, const DATAINFO *pdinfo) 

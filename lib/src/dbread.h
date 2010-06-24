@@ -26,7 +26,23 @@ typedef enum {
     DB_MISSING_DATA = E_MAX + 1,
     DB_NO_SUCH_SERIES,
     DB_PARSE_ERROR
-} db_error_codes;
+} DBError;
+
+/**
+ * CompactMethod:
+ * @COMPACT_NONE: no data compaction
+ * @COMPACT_SUM: take sum of higher frequency data
+ * @COMPACT_AVG: take mean of higher frequency data
+ * @COMPACT_SOP: use start-of-period value
+ * @COMPACT_EOP: use end-of-period value
+ * @COMPACT_WDAY: use a specified day of the week
+ * @COMPACT_MAX: sentinel value
+ *
+ * Symbolic codes for various methods of compacting data
+ * series (i.e. converting from a higher to a lower
+ * frequency). %COMPACT_WDAY is applicable only when
+ * converting from daily to weekly frequency.
+ */
 
 typedef enum {
     COMPACT_NONE,
@@ -38,12 +54,15 @@ typedef enum {
     COMPACT_MAX
 } CompactMethod; 
 
-typedef float dbnumber;
-typedef struct dbwrapper_ dbwrapper;
-typedef struct SERIESINFO_ SERIESINFO;
-typedef struct ODBC_info_ ODBC_info;
+/**
+ * dbnumber: 
+ *
+ * The type used for representing primary data in gretl databases.
+ */
 
-struct SERIESINFO_ {
+typedef float dbnumber;
+
+typedef struct SERIESINFO_ {
     int t1, t2, v;
     char varname[VNAMELEN];
     char descrip[MAXLABEL];
@@ -54,17 +73,17 @@ struct SERIESINFO_ {
     int offset;
     int err;
     int undated;
-};
+} SERIESINFO;
 
-struct dbwrapper_ {
+typedef struct dbwrapper_ {
     int nv;
     int nalloc;
     SERIESINFO *sinfo;
-};
+} dbwrapper;
 
 #define ODBC_OBSCOLS 3
 
-struct ODBC_info_ {
+typedef struct ODBC_info_ {
     char *dsn;
     char *username;
     char *password;
@@ -76,7 +95,7 @@ struct ODBC_info_ {
     int nrows;
     int obscols;
     int nvars;
-};
+} ODBC_info;
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 typedef struct {

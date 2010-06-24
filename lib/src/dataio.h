@@ -24,9 +24,9 @@
 #include <string.h>
 
 typedef enum {
-    GRETL_NATIVE_DATA,    /* gretl native format data file */
-    GRETL_XML_DATA,       /* gretl xml format data file */
-    GRETL_CSV,            /* comma-separated data file */
+    GRETL_NATIVE_DATA,    /* old-style gretl format data file */
+    GRETL_XML_DATA,       /* gretl XML data file (.gdt) */
+    GRETL_CSV,            /* comma-separated or other plain text data */
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
     GRETL_XLS,            /* MS Excel spreadsheet data */
@@ -35,13 +35,14 @@ typedef enum {
     GRETL_DTA,            /* Stata .dta data */
     GRETL_SAV,            /* SPSS .sav data */
     GRETL_SAS,            /* SAS xport data file */
+    GRETL_JMULTI,         /* JMulTi data file */
+    GRETL_DATA_MAX,       /* -- place marker -- */
     GRETL_SCRIPT,         /* file containing gretl commands */
     GRETL_SESSION,        /* zipped session file */
     GRETL_NATIVE_DB,      /* gretl database */
     GRETL_NATIVE_DB_WWW,  /* gretl database, accessed via internet */
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_PCGIVE_DB,      /* PcGive bn7/in7 pair */
-    GRETL_JMULTI,         /* JMulTi data file */
     GRETL_ODBC,           /* Open DataBase Connectivity */
     GRETL_UNRECOGNIZED    /* none of the above */
 } GretlFileType;
@@ -132,7 +133,7 @@ int dataset_has_var_labels (const DATAINFO *pdinfo);
 
 int read_or_write_var_labels (gretlopt opt, DATAINFO *pdinfo, PRN *prn);
 
-GretlFileType detect_filetype (char *fname);
+GretlFileType detect_filetype (char *fname, gretlopt opt);
 
 gretlopt data_save_opt_from_suffix (const char *fname);
 

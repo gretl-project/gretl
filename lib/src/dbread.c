@@ -34,6 +34,19 @@
 # include <netinet/in.h>
 #endif
 
+/**
+ * SECTION:dbread
+ * @short_description: reading from databases
+ * @title: DB read
+ * @include: gretl/libgretl.h, gretl/dbread.h 
+ *
+ * Functions that read data from native gretl databases as
+ * well as RATS 4.0 and PcGive databases. As you will see,
+ * this area is mostly undocumented at present, but since it
+ * may ultimately be useful for third-party coders we will
+ * try to remedy this!
+ */
+
 #define DB_DEBUG 0
 
 #define RECNUM long
@@ -140,6 +153,16 @@ static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
     return fp;
 }
 
+/**
+ * get_native_db_data:
+ * @dbbase: 
+ * @sinfo:
+ * @Z: data array.
+ *
+ *
+ * Returns: 0 on success, non-zero code on failure.
+ */
+
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z)
 {
@@ -172,6 +195,16 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 
     return err;
 }
+
+/**
+ * get_remote_db_data:
+ * @dbbase:
+ * @sinfo:
+ * @Z: data array.
+ *
+ *
+ * Returns:  0 on success, non-zero code on failure.
+ */
 
 int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z)
@@ -221,6 +254,16 @@ int get_remote_db_data (const char *dbbase, SERIESINFO *sinfo,
 
     return 0;
 }
+
+/**
+ * get_pcgive_db_data:
+ * @dbbase:
+ * @sinfo:
+ * @Z: data array.
+ *
+ *
+ * Returns: 0 on success, non-zero code on failure.
+ */
 
 int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z)
@@ -902,6 +945,14 @@ static void series_info_init (SERIESINFO *sinfo)
 
 #define DB_INIT_ROWS 32
 
+/**
+ * dbwrapper_destroy:
+ * @dw: database series wrapper.
+ *
+ * Frees all resources associated with @dw as well as the pointer
+ * itself.
+ */
+
 void dbwrapper_destroy (dbwrapper *dw)
 {
     if (dw != NULL) {
@@ -909,6 +960,13 @@ void dbwrapper_destroy (dbwrapper *dw)
 	free(dw);
     }
 }
+
+/**
+ * dbwrapper_new:
+ * @n:
+ *
+ * Returns: an allocated database series wrapper.
+ */
 
 dbwrapper *dbwrapper_new (int n)
 {

@@ -7687,7 +7687,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     } else if (cmd->opt & OPT_O) {
 	ftype = GRETL_ODBC;
     } else {
-	ftype = detect_filetype(myfile);
+	ftype = detect_filetype(myfile, OPT_P);
     }
 
     dbdata = (ftype == GRETL_NATIVE_DB || ftype == GRETL_NATIVE_DB_WWW ||

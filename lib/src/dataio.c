@@ -32,6 +32,18 @@
 
 #include <glib.h>
 
+/**
+ * SECTION:dataio
+ * @short_description: data handling (internal)
+ * @title: Data support
+ * @include: gretl/libgretl.h
+ *
+ * Data handling functions that are basically internal to
+ * gretl and not in a state where they can be readily
+ * documented as public APIs.
+ * 
+ */
+
 typedef enum {
     GRETL_FMT_FLOAT = 1, /* single-precision binary data */
     GRETL_FMT_DOUBLE,    /* double-precision binary data */
@@ -3005,8 +3017,8 @@ int import_other (const char *fname, GretlFileType ftype,
  * import_spreadsheet:
  * @fname: name of file.
  * @ftype: type of data file.
- * @list: list of parameters for spreadsheet import, or %NULL.
- * @sheetname: name of specific worksheet, or %NULL.
+ * @list: list of parameters for spreadsheet import, or NULL.
+ * @sheetname: name of specific worksheet, or NULL.
  * @pZ: pointer to data set.
  * @pdinfo: dataset information.
  * @opt: option flag; see gretl_get_data().
@@ -3126,14 +3138,19 @@ int gretl_is_pkzip_file (const char *fname)
 /**
  * detect_filetype:
  * @fname: name of file to examine.
+ * @opt: include OPT_P to permit path-searching if @fname
+ * is not an absolute path; in that case the @fname argument
+ * may be modified, otherwise it will be left unchanged.
  * 
  * Attempt to determine the type of a file to be opened in gretl:
- * data file (of various formats), or command script.
+ * data file (of various formats), or command script. If OPT_P
+ * is given, the @fname argument must be an array of length 
+ * at least %MAXLEN.
  * 
  * Returns: integer code indicating the type of file.
  */
 
-GretlFileType detect_filetype (char *fname)
+GretlFileType detect_filetype (char *fname, gretlopt opt)
 {
     int i, c, ftype = GRETL_NATIVE_DATA;
     char teststr[5];
@@ -3179,7 +3196,9 @@ GretlFileType detect_filetype (char *fname)
     if (has_suffix(fname, ".bn7"))
 	return GRETL_PCGIVE_DB;
 
-    addpath(fname, 0); 
+    if (opt & OPT_P) {
+	addpath(fname, 0); 
+    }
 
     if (gretl_is_xml_file(fname)) {
 	return GRETL_XML_DATA;  

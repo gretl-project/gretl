@@ -805,7 +805,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
  * Creates the specified lags of variable @v if they do not
  * already exist.
  *
- * Returns: list of lag variables, or %NULL or on error.
+ * Returns: list of lag variables, or NULL or on error.
  */
 
 int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ, 
@@ -1294,7 +1294,6 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
  *
  * Returns: the default lag order for generating lags, performing
  * autocorrelation test, and so on.
- *
  */
 
 int default_lag_order (const DATAINFO *pdinfo)
@@ -1312,14 +1311,14 @@ int default_lag_order (const DATAINFO *pdinfo)
  * list_diffgenr:
  * @list: on entry, list of variables to process; on exit,
  * ID numbers of the generated variables.
- * @ci: must be %DIFF, %LDIFF or %SDIFF.
+ * @ci: must be DIFF, LDIFF or SDIFF.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  *
  * Generate differences of the variables in @list, and add them
- * to the data set.  If @ci is %DIFF these are ordinary first
- * differences; if @ci is %LDIFF they are log differences; and
- * if @ci is %SDIFF they are seasonal differences.
+ * to the data set.  If @ci is DIFF these are ordinary first
+ * differences; if @ci is LDIFF they are log differences; and
+ * if @ci is SDIFF they are seasonal differences.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
@@ -1654,7 +1653,7 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
  * points, generates and adds to the data set k dummy variables 
  * coding for the k distinct values of the variable in question.
  * All these variables must have already been marked as discrete.
- * if @oddval is not #NADBL, it is treated as the omitted
+ * if @oddval is not %NADBL, it is treated as the omitted
  * category and only k - 1 dummies are added for each variable).
  *
  * Returns: 0 on success, error code on error.
@@ -1670,10 +1669,10 @@ int dumgenr_with_oddval (int **plist, double ***pZ, DATAINFO *pdinfo,
  * list_makediscrete:
  * @list: list of variables to process.
  * @pdinfo: data information struct.
- * @opt: if %OPT_R, reverse the operation.
+ * @opt: if OPT_R, reverse the operation.
  *
  * Sets the variables given in @list as discrete, unless
- * opt is %OPT_R, in which case the variables are set as
+ * opt is OPT_R, in which case the variables are set as
  * continuous.
  *
  * Returns: 0 on success, error code on error.

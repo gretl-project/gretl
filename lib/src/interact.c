@@ -4113,7 +4113,7 @@ static int append_data (const char *line, int *list,
 	return err;
     }
 
-    ftype = detect_filetype(fname);
+    ftype = detect_filetype(fname, OPT_P);
 
     if (ftype == GRETL_CSV) {
 	err = import_csv(fname, pZ, pdinfo, opt, prn);
