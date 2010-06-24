@@ -68,7 +68,7 @@ IGNORE_SRCS = \
 
 # Extra options to supply to gtkdoc-mkdb.
 MKDB_OPTIONS = --output-format=xml --ignore-files="$(IGNORE_SRCS)" \
-               --expand-content-files=""
+               --sgml-mode --expand-content-files=""
 
 # Extra options to supply to gtkdoc-fixref.
 FIXXREF_OPTIONS =

@@ -29,6 +29,49 @@
  * Functionality for writing data from native-format gretl
  * datafiles, and writing data to such files. Plus importation
  * of data from various sorts of non-native data files.
+ *
+ * Here is a simple but complete example of use of gretl_read_native_data()
+ * to pull data into a program's workspace and print basic info
+ * on the data that were read.
+ * 
+ * <informalexample><programlisting>
+ * #include &lt;gretl/libgretl.h&gt;
+ * 
+ * int main (int argc, char **argv)
+ * {
+ *     char *fname;
+ *     double **Z = NULL;
+ *     DATAINFO *pdinfo;
+ *     PRN *prn;
+ *     int err;
+ *
+ *     if (argc >= 2) {
+ *         fname = argv[1];
+ *     } else {
+ *         exit(EXIT_FAILURE);
+ *     }
+ *
+ *     libgretl_init();
+ *     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
+ *     pdinfo = datainfo_new();
+ *    
+ *     err = gretl_read_native_data(fname, &Z, pdinfo);
+ *     if (err) {
+ *         pprintf(prn, "Got error %d reading data from %s\n", err, fname);
+ *         errmsg(err, prn);
+ *     } else {
+ *         pprintf(prn, "Read data from %s OK\n", fname);
+ *         print_smpl(pdinfo, 0, prn);
+ *         varlist(pdinfo, prn);
+ *     }
+ * 
+ *     destroy_dataset(Z, pdinfo);
+ *     gretl_print_destroy(prn);
+ *     libgretl_cleanup();
+ *
+ *     return 0;
+ * }
+ * </programlisting></informalexample>
  */
 
 /* wrappers for functions in dataio.c and gretl_xml.c, presenting

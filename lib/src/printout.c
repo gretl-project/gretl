@@ -626,7 +626,8 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 /**
  * print_smpl:
  * @pdinfo: data information struct
- * @fulln: full length of data series.
+ * @fulln: full length of data series, if dataset is
+ * subsampled, or 0 if not applicable/known.
  * @prn: gretl printing struct.
  *
  * Prints the current sample information to @prn.
