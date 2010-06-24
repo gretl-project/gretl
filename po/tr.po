@@ -4,13 +4,14 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # A. Talha YALTA <yalta@etu.edu.tr>, 2008, 2009, 2010.
+# A. Talha Yalta, 2010.
 msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-06-23 14:33-0400\n"
-"PO-Revision-Date: 2010-04-30 12:54+0200\n"
-"Last-Translator: A. Talha Yalta <yalta@etu.edu.tr>\n"
+"PO-Revision-Date: 2010-06-24 15:59+0300\n"
+"Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1236,19 +1237,19 @@ msgid "Dataset extended by %d observations"
 msgstr "Veri seti %d gözlem ile genişletildi"
 
 #: lib/src/dataset.c:3169
-#, fuzzy, c-format
+#, c-format
 msgid "Variable %s cannot be renumbered"
-msgstr "Değişken '%s' tanımlı değil"
+msgstr "Değişken %s yeniden numaralandırılamaz"
 
 #: lib/src/dataset.c:3172
-#, fuzzy, c-format
+#, c-format
 msgid "Target ID %d is not available"
-msgstr "'%s' değişkeni bir 0/1 değişkeni değil."
+msgstr "Hedef Kimlik# %d bulunmuyor"
 
 #: lib/src/dataset.c:3181
-#, fuzzy, c-format
+#, c-format
 msgid "Renumbered %s as variable %d\n"
-msgstr "   değişken sayısı: %d\n"
+msgstr "Değişken %s, %d olarak yeniden numaralandırıldı\n"
 
 #: lib/src/dataset.c:3226
 msgid "The 'dataset' command is not available within functions"
@@ -1888,9 +1889,9 @@ msgid "Iteration %d: log likelihood = %#.12g"
 msgstr "Yineleme %d: log-olabilirlik = %#.12g"
 
 #: lib/src/discrete.c:1903
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not a binary variable"
-msgstr "'%s' bir kukla değişken değil"
+msgstr "'%s' bir ikili değişken değil"
 
 #: lib/src/discrete.c:2925
 msgid "Illegal non-positive value of the dependent variable"
@@ -2103,19 +2104,19 @@ msgid "%s: no such object\n"
 msgstr "%s: böyle bir nesne yok\n"
 
 #: lib/src/geneval.c:6811
-#, fuzzy, c-format
+#, c-format
 msgid "%s: insufficient arguments"
-msgstr "Komut argümanları yetersiz"
+msgstr "%s: yetersiz argüman"
 
 #: lib/src/geneval.c:6813
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid argument type %s"
-msgstr "'%s': %s() için geçersiz argüman\n"
+msgstr "%s: geçersiz argüman türü %s"
 
 #: lib/src/geneval.c:6816
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument %d: invalid type %s"
-msgstr "%s: argüman %d, %s olmalı"
+msgstr "%s: argüman %d için geçersiz tür %s"
 
 #: lib/src/geneval.c:6826
 #, c-format
@@ -2175,7 +2176,7 @@ msgstr "'%s': bu tür için eklenmedi"
 
 #: lib/src/genfuncs.c:794 gui2/library.c:4461
 msgid "Input must be a monthly or quarterly time series"
-msgstr "Girdi, aylık ya da üç aylık bir zaman serisi olmalıdır"
+msgstr "Girdi, aylık veya üç aylık bir zaman serisi olmalıdır"
 
 #: lib/src/genfuncs.c:804 plugin/tramo-x12a.c:996
 msgid ""
@@ -2680,9 +2681,9 @@ msgid "Initial value of objective function is not finite"
 msgstr "Hedef işlev başlangıç değeri sonlu değil"
 
 #: lib/src/gretl_bundle.c:482
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted bundle %s"
-msgstr "%s adlı sayıl silindi"
+msgstr "Tomar %s silindi"
 
 #: lib/src/gretl_errors.c:38
 msgid "Data error"
@@ -2882,11 +2883,8 @@ msgid "%s: validated against DTD OK"
 msgstr "%s: DTD'ye karşı geçerleme tamam"
 
 #: lib/src/gretl_func.c:2323
-#, fuzzy
 msgid "No functions are available for packaging at present."
-msgstr ""
-"Şu an elde paketlemek için işlev yok.\n"
-"Şimdi bir işlev yazmak ister misiniz?"
+msgstr "Şu an elde paketlemek için işlev yok."
 
 #: lib/src/gretl_func.c:3192
 msgid "No description available"
@@ -3517,7 +3515,7 @@ msgid ""
 "\n"
 msgstr ""
 "Ayrıca, sayısal değerlerden metin etiketlerine bazı eşleştirmeler\n"
-"bulunmuş ve aşağıda listelenmiştir.\n"
+"bulunmuş ve aşağıda basılmıştır.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:357
@@ -3930,7 +3928,7 @@ msgstr "Tanımlı bir seri yok\n"
 
 #: lib/src/interact.c:3812
 msgid "Listing labels for variables:\n"
-msgstr "Değişken listeleme etiketleri:\n"
+msgstr "Değişken etiketleri listesi:\n"
 
 #: lib/src/interact.c:3860
 msgid "Output is not currently diverted to file\n"
@@ -4347,9 +4345,8 @@ msgid "Interval estimates"
 msgstr "Aralık tahminleri"
 
 #: lib/src/modelprint.c:711
-#, fuzzy
 msgid "Dynamic panel"
-msgstr "Devingen panel modeli"
+msgstr "Devingen panel"
 
 #: lib/src/modelprint.c:713
 msgid "Arellano--Bond"
@@ -4424,14 +4421,12 @@ msgid "1-step Arellano-Bond"
 msgstr "1-adımlı Arellano-Bond"
 
 #: lib/src/modelprint.c:766
-#, fuzzy
 msgid "2-step dynamic panel"
-msgstr "Devingen panel modeli"
+msgstr "2-adımlı devingen panel"
 
 #: lib/src/modelprint.c:768
-#, fuzzy
 msgid "1-step dynamic panel"
-msgstr "Devingen panel modeli"
+msgstr "1-adımlı devingen panel"
 
 #: lib/src/modelprint.c:772 lib/src/modelprint.c:776
 msgid "2-step GMM"
@@ -6132,9 +6127,9 @@ msgid "Weibull (shape = %g, scale = %g): "
 msgstr "Weibull (şekil = %g, ölçek = %g): "
 
 #: lib/src/pvalues.c:2339
-#, fuzzy, c-format
+#, c-format
 msgid "GED (shape = %g): "
-msgstr " (adım uzunluğu = %g)"
+msgstr "GED (şekil = %g): "
 
 #: lib/src/strutils.c:1659
 msgid "out of memory in XML encoding"
@@ -6307,7 +6302,7 @@ msgstr "Veri türü"
 
 #: lib/src/subsample.c:2269
 msgid "Listing of variables"
-msgstr "Değişken listesi"
+msgstr "Değişkenlerin listesi"
 
 #: lib/src/system.c:89
 msgid "SUR"
@@ -7260,7 +7255,7 @@ msgstr "payda sd"
 
 #: gui2/calculator.c:1984
 msgid "shape"
-msgstr "biçim"
+msgstr "şekil"
 
 #: gui2/calculator.c:1985 gui2/gpt_dialog.c:2558
 msgid "scale"
@@ -7669,7 +7664,7 @@ msgstr "çapraz-ilintiçizit"
 #: gui2/cmdstack.c:105
 #, c-format
 msgid "# Log re-started %s\n"
-msgstr "# Kayıt defteri yeniden başlama tarihi: %s\n"
+msgstr "# Kayıt defteri yeniden başlama: %s\n"
 
 #: gui2/cmdstack.c:145
 #, c-format
@@ -8419,9 +8414,8 @@ msgid "Seed for generator:"
 msgstr "Oluşturucu tohumu:"
 
 #: gui2/dialogs.c:1274
-#, fuzzy
 msgid "Choose named list"
-msgstr "Adlandırmalı liste tanımla"
+msgstr "Adlandırmalı liste seç"
 
 #: gui2/dialogs.c:1369
 msgid "gretl: iteration controls"
@@ -9056,7 +9050,7 @@ msgstr "Argüman %d (%s) eksik"
 
 #: gui2/fncall.c:474
 msgid "No name was given for the list"
-msgstr "Listeye verilen bir ad yok"
+msgstr "Listeye verili bir ad yok"
 
 #: gui2/fncall.c:481
 msgid "Really create an empty list?"
@@ -9736,9 +9730,8 @@ msgid "%s found\n"
 msgstr "%s bulundu\n"
 
 #: gui2/gretl.c:1116
-#, fuzzy
 msgid "No lists are currently defined"
-msgstr "Şu an, tanımlı sayıl değişken yok"
+msgstr "Şu an tanımlı liste yok"
 
 #: gui2/gretl.c:1215
 msgid "ID #"
@@ -10037,14 +10030,12 @@ msgid "Select _all"
 msgstr "_Tümünü seç"
 
 #: gui2/gretl.c:1438
-#, fuzzy
 msgid "Define or edit _list..."
-msgstr "Adlandırmalı liste tanımla"
+msgstr "_Liste tanımla veya düzenle..."
 
 #: gui2/gretl.c:1439
-#, fuzzy
 msgid "_Select listed variables..."
-msgstr "İki değişken seçiniz"
+msgstr "_Adlandırmalı liste seç..."
 
 #: gui2/gretl.c:1440 gui2/gretl.c:1518
 msgid "_Display values"
@@ -11769,9 +11760,8 @@ msgstr ""
 "Dosyadan eklemek ister misiniz?"
 
 #: gui2/library.c:1463
-#, fuzzy
 msgid "Not ready for variable labels"
-msgstr "Alınan değişken yok"
+msgstr "Değişken etiketi için hazır değil"
 
 #: gui2/library.c:1489
 msgid "Export the labels to file"
@@ -12658,7 +12648,7 @@ msgstr "Bir ağırlık değişkeni seçmelisiniz"
 
 #: gui2/selector.c:2775
 msgid "You must specify a list of lags"
-msgstr "Gecikmeler için bir liste belirtmelisiniz"
+msgstr "Bir gecikmeler listesi belirtmelisiniz"
 
 #: gui2/selector.c:2778
 msgid "You must specify a selection variable"
@@ -13206,7 +13196,7 @@ msgstr "İki değişken seçiniz"
 
 #: gui2/selector.c:5615
 msgid "Select one or two variables"
-msgstr "Bir ya da iki değişken seçiniz"
+msgstr "Bir veya iki değişken seçiniz"
 
 #: gui2/selector.c:5617
 msgid "Confidence region: select two variables"
@@ -13233,9 +13223,8 @@ msgid "Define named list"
 msgstr "Adlandırmalı liste tanımla"
 
 #: gui2/selector.c:5866
-#, fuzzy
 msgid "Name of list:"
-msgstr "Liste adı:"
+msgstr "Listenin adı:"
 
 #: gui2/selector.c:5971
 msgid "Available vars"
@@ -14347,7 +14336,7 @@ msgstr "son gözlem"
 
 #: gui2/varinfo.c:705
 msgid "ID number:"
-msgstr ""
+msgstr "Kimlik no:"
 
 #: gui2/varinfo.c:721 gui2/varinfo.c:971
 msgid "gretl: variable attributes"
@@ -15198,7 +15187,7 @@ msgstr "Oluşturma ve I/O"
 
 #: doc/commands/matfuncs.c:51
 msgid "Shape/size/arrangement"
-msgstr "Biçim/boyut/düzen"
+msgstr "Şekil/boyut/düzen"
 
 #: doc/commands/matfuncs.c:52
 msgid "Element by element"
