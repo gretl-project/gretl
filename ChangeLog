@@ -1,4 +1,4 @@
-version 1.9.1, in progress
+06-24-2010 version 1.9.1
 - New command: "makepkg", for command-line creation of gretl
   function packages (.gfn files)
 - pdf, cdf and pvalue functions: add support for the
@@ -21,11 +21,15 @@ version 1.9.1, in progress
   setting the main window selection from a chosen list
 - GUI: "Edit attributes" (of series) dialog: add option
   to change the position of a series in the dataset
-- GUI model selection dialog: implement re-ordering of 
+- GUI model selection dialog: implement re-ordering of
   regressors via right-click
 - GUI, right-click popup in main window: on selecting the
-  correlation matrix option, give the user a chance to 
+  correlation matrix option, give the user a chance to
   insist on a uniform sample for the correlations
+- Internals: new, improved code for calulating the inverse
+  Mills ratio (probit, heckit)
+- API documentation: take this a step further, though it's
+  still radically incomplete
 - Remove the old genpois function
 
 05-02-2010 version 1.9.0
@@ -46,7 +50,7 @@ version 1.9.1, in progress
   "help set lbfgs"
 - "mread": search the gretl working directory if the
   file is not found at first
-- "dataset sortby": allow the use of a list to specify 
+- "dataset sortby": allow the use of a list to specify
   multiple sort keys
 - ODBC import: enable extraction of multiple data series
   per SQL query
