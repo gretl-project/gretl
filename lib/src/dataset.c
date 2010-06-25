@@ -2140,7 +2140,7 @@ int dataset_sort_by (const int *list, double **Z, DATAINFO *pdinfo, gretlopt opt
     spoint_t *sv = NULL;
     double *x = NULL;
     char **S = NULL;
-    int ns = list[1];
+    int ns = list[0];
     int i, t, v;
     int err = 0;
 
