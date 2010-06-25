@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: pt_BR\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-06-23 14:33-0400\n"
-"PO-Revision-Date: 2010-06-24 15:35-0300\n"
+"PO-Revision-Date: 2010-06-25 00:48-0300\n"
 "Last-Translator: Henrique Andrade <henrique.coelho@gmail.com>\n"
 "Language-Team: Portuguese <translation-team-pt@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4907,7 +4907,7 @@ msgstr "Painel dinâmico em 2 passos"
 
 #: lib/src/modelprint.c:768
 msgid "1-step dynamic panel"
-msgstr "Painel dinâmico em 3 passos"
+msgstr "Painel dinâmico em 1 passo"
 
 #: lib/src/modelprint.c:772
 #: lib/src/modelprint.c:776
@@ -7663,7 +7663,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 24 de junho de 2010."
+"Tradução de 25 de junho de 2010."
 
 #: gui2/about.c:175
 msgid "License"
