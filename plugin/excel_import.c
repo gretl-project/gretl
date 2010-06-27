@@ -1615,6 +1615,13 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 	    newinfo->v, newinfo->n);
 
+    if (newinfo->v == 1) {
+	/* only the constant! */
+	gretl_errmsg_set(_("No numeric data were found"));
+	err = E_DATA;
+	goto getout;
+    }
+
     /* create import dataset */
     err = start_new_Z(&newZ, newinfo, 0);
     if (err) {

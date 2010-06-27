@@ -679,15 +679,15 @@ static void gui_record_data_opening (const char *fname, const int *list)
 	/* record spreadsheet parameters */
 	char parm[32];
 
-	if (list[1] != 1) {
+	if (list[1] > 1) {
 	    sprintf(parm, " --sheet=%d", list[1]);
 	    gretl_command_strcat(parm);
 	}
-	if (list[2] != 0) {
+	if (list[2] > 0) {
 	    sprintf(parm, " --coloffset=%d", list[2]);
 	    gretl_command_strcat(parm);
 	}
-	if (list[3] != 0) {
+	if (list[3] > 0) {
 	    sprintf(parm, " --rowoffset=%d", list[3]);
 	    gretl_command_strcat(parm);
 	}
