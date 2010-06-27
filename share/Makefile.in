@@ -108,6 +108,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/db
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions
+	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/functions/docs
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/fonts
 
 clean:

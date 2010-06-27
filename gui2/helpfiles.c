@@ -1951,7 +1951,8 @@ static int get_writable_path (char *path, const char *fname)
 enum {
     GRETL_GUIDE = 1,
     GRETL_REF,
-    GNUPLOT_REF
+    GNUPLOT_REF,
+    GFN_DOC
 };
 
 static int find_or_download_pdf (int code, int i, char *fullpath)
@@ -1969,7 +1970,9 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	"gretl-ref-es.pdf"  
     };
     const char *fname;
+    char *tmp = NULL;
     FILE *fp;
+    int gotit = 0;
     int err = 0;
 
     if (i < 0 || i > 3) {
@@ -1982,43 +1985,57 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = ref_files[i];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
+    } else if (code == GFN_DOC) {
+	tmp = gretl_strdup(fullpath);
+	fname = tmp;
     } else {
 	return E_DATA;
     }
 
     /* is the file available in public dir? */
-    sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
+    if (code == GFN_DOC) {
+	sprintf(fullpath, "%sfunctions%cdoc%c%s", gretl_home(), SLASH, 
+		SLASH, fname);
+    } else {
+	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
+    }
     fp = gretl_fopen(fullpath, "r");
     if (fp != NULL) {
 	fclose(fp);
-	return 0;
+	gotit = 1;
     }
 
-    /* or maybe in user dir? */
-    sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
-    fp = gretl_fopen(fullpath, "r");
-    if (fp != NULL) {
-	fclose(fp);
-	return 0;
-    }
-
-    /* check for download location */
-    err = get_writable_path(fullpath, fname);
-
-    /* do actual download */
-    if (!err) {
-	err = retrieve_manfile(fname, fullpath);
-    }
-
-    if (err) {
-	const char *buf = gretl_errmsg_get();
-
-	if (*buf) {
-	    errbox(buf);
-	} else {
-	    errbox(_("Failed to download file"));
+    if (!gotit) {
+	/* or maybe in user dir? */
+	sprintf(fullpath, "%sdoc%c%s", gretl_dotdir(), SLASH, fname);
+	fp = gretl_fopen(fullpath, "r");
+	if (fp != NULL) {
+	    fclose(fp);
+	    gotit = 1;
 	}
     }
+
+    if (!gotit) {
+	/* check for download location */
+	err = get_writable_path(fullpath, fname);
+
+	/* do actual download */
+	if (!err) {
+	    err = retrieve_manfile(fname, fullpath);
+	}
+
+	if (err) {
+	    const char *buf = gretl_errmsg_get();
+
+	    if (*buf) {
+		errbox(buf);
+	    } else {
+		errbox(_("Failed to download file"));
+	    }
+	}
+    }
+
+    free(tmp);
 
     return err;
 }
@@ -2039,9 +2056,11 @@ void display_pdf_help (GtkAction *action)
     char fname[FILENAME_MAX];
     int err, code = GRETL_GUIDE;
 
-    if (action != NULL && strcmp(gtk_action_get_name(action), "UserGuide")) {
-	/* PDF command ref wanted */
-	code = GRETL_REF;
+    if (action != NULL) {
+	if (strcmp(gtk_action_get_name(action), "UserGuide")) {
+	    /* PDF command ref wanted */
+	    code = GRETL_REF;
+	} 
     }
 
     err = find_or_download_pdf(code, get_manpref(), fname);

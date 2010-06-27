@@ -318,7 +318,7 @@ int has_suffix (const char *str, const char *sfx)
     int ret = 0;
 
     if (str != NULL && sfx != NULL) {
-	p = strrchr(str, '.');
+	p = strrchr(str, *sfx);
 	if (p != NULL && strlen(p) == strlen(sfx)) {
 	    ret = 1;
 	    while (*p) {

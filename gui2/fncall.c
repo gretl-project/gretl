@@ -345,6 +345,20 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
     return list;
 }
 
+static void insert_gfn_help_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
+				  const char *fname)
+{
+    GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
+    GtkTextTag *tag;
+    gchar *pdfname;
+
+    tag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
+				     "family", "sans", NULL);
+    pdfname = g_strdup(fname);
+    g_object_set_data_full(G_OBJECT(tag), "pdfname", pdfname, g_free);
+    gtk_text_buffer_insert_with_tags(tbuf, iter, fname, -1, tag, NULL);
+}
+
 static void fncall_help (GtkWidget *w, call_info *cinfo)
 {
     const char *fnname = user_function_name_by_index(cinfo->iface);

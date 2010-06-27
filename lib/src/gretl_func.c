@@ -1993,7 +1993,7 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     if (pkg->help != NULL) {
 	fputs("<help>\n", fp);
 	gretl_xml_put_raw_string(trim_text(pkg->help), fp);
-	fputs("\n</help>\n", fp);	
+	fputs("\n</help>\n", fp);
     }  
 
     if (pkg->pub != NULL) {
@@ -2121,8 +2121,13 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		err = function_package_set_properties(pkg, "description", p, NULL);
 		if (!err) got++;
 	    } else if (!strncmp(line, "help", 4)) {
-		pprintf(prn, "Looking for help text in %s\n", p);
-		tmp = pkg_aux_content(p, &err);
+		if (has_suffix(p, ".pdf")) {
+		    pprintf(prn, "Recording help reference %s\n", p);
+		    tmp = g_strdup_printf("pdfdoc:%s", p);
+		} else {
+		    pprintf(prn, "Looking for help text in %s\n", p);
+		    tmp = pkg_aux_content(p, &err);
+		}
 		if (!err) {
 		    err = function_package_set_properties(pkg, "help", tmp, NULL);
 		    if (!err) got++;
@@ -2834,7 +2839,17 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
 
     if (pkg->help != NULL) {
 	pputs(prn, "Help text:\n");
-	pputs(prn, pkg->help);
+	if (has_suffix(pkg->help, ".pdf")) {
+	    const char *s = strrchr(pkg->help, ':');
+
+	    if (s != NULL) {
+		pprintf(prn, "See %s", s + 1);
+	    } else {
+		pputs(prn, pkg->help);
+	    }
+	} else {	
+	    pputs(prn, pkg->help);
+	}
 	pprintf(prn, "\n\n");
     }
 
@@ -5729,10 +5744,20 @@ static void real_user_function_help (ufunc *fun, PRN *prn)
     } else {
 	pputs(prn, "Return value: none\n\n");
     }
-	
+
     if (pkg != NULL && pkg->help != NULL) {
 	pputs(prn, "Help text:\n");
-	pputs(prn, pkg->help);
+	if (has_suffix(pkg->help, ".pdf")) {
+	    const char *s = strrchr(pkg->help, ':');
+
+	    if (s != NULL) {
+		pprintf(prn, "See %s", s + 1);
+	    } else {
+		pputs(prn, pkg->help);
+	    }
+	} else {	
+	    pputs(prn, pkg->help);
+	}
 	pprintf(prn, "\n\n");
     }
 
