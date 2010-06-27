@@ -1587,28 +1587,32 @@ static void parse_data_open_params (const char *s, CMD *cmd)
     }
 }
 
-#define FIELDLEN 64
+#define FIELDLEN 512
 
 static int get_field_length (const char *s)
 {
+    const char *p = s;
     int inparen = 0;
     int len = 0;
 
-    while (*s) {
-	if (*s == '(') {
+    while (*p) {
+	if (*p == '(') {
 	    inparen++;
-	} else if (*s == ')') {
+	} else if (*p == ')') {
 	    inparen--;
 	}
-	if (!inparen && *s == ' ') {
+	if (!inparen && *p == ' ') {
 	    break;
 	}
-	s++;
+	p++;
 	len++;
     }
 
     if (len >= FIELDLEN) {
-	fprintf(stderr, "list field in command is too long\n");
+	fprintf(stderr, "list field in command is too long "
+		"(len = %d, max = %d)\n", len, FIELDLEN);
+	fprintf(stderr, "s = '%s'\n", s);
+	gretl_errmsg_set("Overflow in command list field");
 	len = -1;
     }
 
@@ -1632,7 +1636,7 @@ static int get_next_field (char *field, const char *s)
     if (len >= 0) {
 	strncat(field, s, len);
     } else {
-	err = 1;
+	err = E_DATA;
     }
 
 #if CMD_DEBUG
