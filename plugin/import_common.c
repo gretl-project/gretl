@@ -29,6 +29,18 @@ static void invalid_varname (PRN *prn)
 
 #ifndef ODS_IMPORTER
 
+static int worksheet_start_dataset (double ***pZ, DATAINFO *newinfo)
+{
+    if (newinfo->v == 1) {
+	/* only the constant is present! */
+	gretl_errmsg_set(_("No numeric data were found"));
+	return E_DATA;
+    } else {
+	/* create import dataset */
+	return start_new_Z(pZ, newinfo, 0);
+    }
+}
+
 #ifdef EXCEL_IMPORTER
 # define cell_string(i,j) ((rows[i].cells != NULL)? rows[i].cells[j] : NULL)
 #else

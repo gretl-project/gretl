@@ -742,7 +742,8 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 		newinfo->v, newinfo->n);
 
-	err = start_new_Z(&newZ, newinfo, 0);
+	/* create import dataset */
+	err = worksheet_start_dataset(&newZ, newinfo);
 	if (err) {
 	    goto getout;
 	}

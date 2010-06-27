@@ -1213,6 +1213,11 @@ static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
 
     err = ods_prune_columns(sheet);
 
+    if (!err && sheet->dinfo->v == 1) {
+	gretl_errmsg_set(_("No numeric data were found"));
+	err = E_DATA;
+    }
+
     if (!err) {
 	tprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	ts_check(sheet, tprn);

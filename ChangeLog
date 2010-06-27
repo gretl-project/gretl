@@ -1,5 +1,6 @@
 version 1.9.2, in progress
-- 
+- Fix bug 3021540 (sorting dataset)
+- Fix bug 3021854 (spreadsheet import with no numeric data)
 
 2010-06-24 version 1.9.1
 - New command: "makepkg", for command-line creation of gretl

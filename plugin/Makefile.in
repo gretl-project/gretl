@@ -147,13 +147,15 @@ PLUGINS = arbond.la \
 	interval.la \
 	anova.la
 
-GUI_DEPENDENT_PLUGINS = excel_import.la \
+GUI_DEPENDENT_PLUGINS = arma_x12.la \
+	excel_import.la \
 	gnumeric_import.la \
-	ods_import.la \
-	progress_bar.la \
 	leverage.la \
-	tramo-x12a.la \
-	pca.la 
+	mailer.la \
+	ods_import.la \
+	pca.la \
+	progress_bar.la \
+	tramo-x12a.la 
 
 MAILER_PLUGIN = mailer.la
 
@@ -246,24 +248,6 @@ vif.la: vif.lo
 urcdist.la: urcdist.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-pca.la: pca.lo
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
-
-tramo-x12a.la: tramo-x12a.lo tramo_options.lo
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
-
-progress_bar.la: progress_bar.lo
-	$(LINK) -o $@ $< $(GTK_LIBS)
-
-gnumeric_import.la: gnumeric_import.lo
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
-
-ods_import.la: ods_import.lo
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
-
-excel_import.la: excel_import.lo workbook.lo ms-ole.lo
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
-
 mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS) $(MPFR_LIBS)
 
@@ -273,9 +257,6 @@ johansen.la: johansen.lo jrestrict.lo jalpha.lo
 sysest.la: sysest.lo fiml.lo liml.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-leverage.la: leverage.lo 
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
-
 nistcheck.la: nistcheck.lo 
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
@@ -284,9 +265,6 @@ arbond.la: arbond.lo
 
 arma.la: arma.lo arma_init.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
-
-arma_x12.la: arma_x12.lo 
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 tobit.la: tobit.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
@@ -309,9 +287,6 @@ gretlzip.la: gretlzip.lo $(ZIPOBJ)
 audio.la: audio.lo midi_utils.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(AUDIO_LIBS)
 
-mailer.la: mailer.lo codes.lo encode.lo md5c.lo
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
-
 odbc_import.la: odbc_import.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(ODBC_LIBS)
 
@@ -323,6 +298,35 @@ interval.la: interval.lo
 
 anova.la: anova.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
+
+# plugins that require GTK+
+
+arma_x12.la: arma_x12.lo 
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
+
+excel_import.la: excel_import.lo workbook.lo ms-ole.lo
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
+
+gnumeric_import.la: gnumeric_import.lo
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
+
+leverage.la: leverage.lo 
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
+
+mailer.la: mailer.lo codes.lo encode.lo md5c.lo
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
+
+ods_import.la: ods_import.lo
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
+
+pca.la: pca.lo
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
+
+progress_bar.la: progress_bar.lo
+	$(LINK) -o $@ $< $(GTK_LIBS)
+
+tramo-x12a.la: tramo-x12a.lo tramo_options.lo
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib
