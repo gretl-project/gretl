@@ -4,23 +4,15 @@
 #include <time.h>
 #include <locale.h>
 
-#define JACK 0
-
-#if JACK
-#define WEBDIR "/home/jack/src/gretl/doc/website"
-#define SRCDIR "/home/jack/src/gretl/"
-#define WEBSRC "/home/jack/src/gretl/doc/website"
-#else
-#define WEBDIR "/home/cottrell/stats/esl/website"
-#define SRCDIR "/home/cottrell/src"
-#define WEBSRC "/home/cottrell/src/doc/website"
-#endif
-
 #define MYLEN 96
 #define HTMLLEN 1024
 #define BUFFER_SIZE 4096
 
 #define NLANGS 5
+
+static char WEBDIR[256];
+static char SRCDIR[256];
+static char WEBSRC[256];
 
 enum {
     EN,
@@ -493,13 +485,13 @@ int version_history (char *fname, gretl_version *versions)
     int ret, M, m, r, n = 0;
     FILE *clog;
     char line[MYLEN];
-    int ye,mo,da;
+    int year, mon, day;
 
     clog = fopen(fname, "r");
 
     while (fgets(line, MYLEN, clog)) {
-	ret = sscanf(line, "%d/%d/%d version %d.%d.%d\n", 
-		     &da, &mo, &ye, &M, &m, &r);
+	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n", 
+		     &year, &mon, &day, &M, &m, &r);
 	if (ret == 6) {
 	    versions[n].major = M;
 	    versions[n].minor = m;
@@ -662,6 +654,27 @@ int make_gretldata_dtd_page (void)
     return 0;
 }
 
+int set_working_directories (void)
+{
+    char *home = getenv("HOME");
+
+    if (home == NULL) {
+	return 1;
+    }
+
+    if (!strcmp(home, "/home/cottrell")) {
+	strcpy(WEBDIR, "/home/cottrell/stats/esl/website");
+	strcpy(SRCDIR, "/home/cottrell/src");
+	strcpy(WEBSRC, "/home/cottrell/src/doc/website");
+    } else {
+	sprintf(WEBDIR, "%s/src/gretl/doc/website", home);
+	sprintf(SRCDIR, "%s/src/gretl", home);
+	sprintf(WEBSRC, "%s/src/gretl/doc/website", home);
+    }
+
+    return 0;
+}
+
 int main (int argc, char **argv)
 {
     char *progdate;
@@ -675,6 +688,12 @@ int main (int argc, char **argv)
 		"or say \"auto\" to read version info from the source tree.\n",
 		argv[0]);
 	fputs("You can specify a program date, YYYY.MM.DD, as a second arg\n", stderr);
+	exit(EXIT_FAILURE);
+    }
+
+    err = set_working_directories();
+    if (err) {
+	fputs("Couldn't determine working directories (no $HOME)\n", stderr);
 	exit(EXIT_FAILURE);
     }
 

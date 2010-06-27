@@ -245,6 +245,25 @@ void *gretl_bundle_get_data (const char *name, const char *key,
     return ret;
 }
 
+static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
+				       void *ptr, GretlType type)
+{
+    int err = 0;
+    bundle_value *val = bundle_value_new(type, ptr, &err);
+
+    if (!err) {
+	gchar *k = g_strdup(key);
+
+	if (g_hash_table_lookup(b->ht, key) != NULL) {
+	    g_hash_table_replace(b->ht, k, val);
+	} else {
+	    g_hash_table_insert(b->ht, k, val);
+	}
+    }
+
+    return err;
+}
+
 /**
  * gretl_bundle_set_data:
  * @name: name of bundle.
@@ -264,24 +283,14 @@ int gretl_bundle_set_data (const char *name, const char *key,
 			   void *ptr, GretlType type)
 {
     gretl_bundle *b;
-    int err = 0;
+    int err;
 
     b = get_bundle_pointer(name, gretl_function_depth());
     
     if (b == NULL) {
 	err = E_UNKVAR;
     } else {
-	bundle_value *val = bundle_value_new(type, ptr, &err);
-
-	if (!err) {
-	    gchar *k = g_strdup(key);
-
-	    if (g_hash_table_lookup(b->ht, key) != NULL) {
-		g_hash_table_replace(b->ht, k, val);
-	    } else {
-		g_hash_table_insert(b->ht, k, val);
-	    }
-	}
+	err = real_gretl_bundle_set_data(b, key, ptr, type);
     }
 
     return err;
@@ -310,6 +319,57 @@ int gretl_bundle_add (const char *name)
     b->level = level;
 
     return gretl_bundle_push(b);
+}
+
+void copy_bundle_value (gpointer key, gpointer value, gpointer p)
+{
+    bundle_value *bval = (bundle_value *) value;
+    gretl_bundle *targ = (gretl_bundle *) p;
+
+    real_gretl_bundle_set_data(targ, (const char *) key,
+			       bval->data, bval->type);
+}
+
+/* Called from geneval.c on completion of assignment to a
+   bundle named @cpyname, where the returned value on the
+   right-hand side has not been produced by a user-function
+*/
+
+int gretl_bundle_copy_as (const char *name, const char *cpyname)
+{
+    int level = gretl_function_depth();
+    gretl_bundle *b0, *b1;
+    int err = 0;
+
+    b0 = get_bundle_pointer(name, level);
+    if (b0 == NULL) {
+	return E_UNKVAR;
+    }    
+
+    b1 = get_bundle_pointer(cpyname, level);
+
+    if (b1 != NULL) {
+	g_hash_table_destroy(b1->ht);
+	b1->ht = NULL;
+    } else {
+	b1 = malloc(sizeof *b1);
+	if (b1 == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    strcpy(b1->name, cpyname);
+	    b1->ht = NULL;
+	    b1->level = level;
+	    err = gretl_bundle_push(b1);
+	}
+    }
+
+    if (!err) {
+	b1->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
+				       g_free, bundle_value_destroy);
+	g_hash_table_foreach(b0->ht, copy_bundle_value, b1);
+    }
+
+    return err;
 }
 
 /* Called from gretl_func.c on return, to mark a given
@@ -349,12 +409,11 @@ static int get_bundle_index (gretl_bundle *b)
     return -1;
 }
 
-/* Called from geneval.c to operate on a bundle that
-   has been marked as a function return value (indentfied
-   by its special "level" value). We see if there's
-   already a bundle of the given name at caller level,
-   and either overwrite an existing bundle or adjust
-   the bundle's name and level.
+/* Called from geneval.c to operate on a bundle that has been marked
+   as a user-function return value (indentfied by its special "level"
+   value). We see if there's already a bundle of the given name at
+   caller level, and either overwrite an existing bundle or adjust the
+   bundle's name and level.
 */
 
 int gretl_bundle_name_return (const char *name)
@@ -375,6 +434,7 @@ int gretl_bundle_name_return (const char *name)
     }
 
     if (b1 == NULL) {
+	fprintf(stderr, "bundle_name_return: no returned bundle found\n");
 	return E_DATA;
     }
 

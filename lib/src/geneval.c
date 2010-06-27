@@ -9141,6 +9141,11 @@ static int gen_check_return_type (parser *p)
 	}
     }
 
+#if EDEBUG
+    fprintf(stderr, "gen_check_return_type: returning with p->err = %d\n", 
+	    p->err);
+#endif
+
     return p->err;
 }
 
@@ -9344,12 +9349,21 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	p->err = gretl_bundle_name_return(p->lh.name);
+	if (p->flags & P_UFRET) {
+	    /* bundle returned by user-function */
+	    p->err = gretl_bundle_name_return(p->lh.name);
+	} else {
+	    /* assignment from pre-existing bundle */
+	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);
+	}
     }
 
-#if EDEBUG /* print results */
+#if EDEBUG
     if (!p->err) {
 	parser_print_result(p, prn);
+    } else {
+	fprintf(stderr, "save_generated_var: returning p->err = %d\n",
+		p->err);
     }
 #endif
 

@@ -27,6 +27,8 @@ int gretl_bundle_set_data (const char *name, const char *key,
 
 int gretl_bundle_add (const char *name);
 
+int gretl_bundle_copy_as (const char *name, const char *cpyname);
+
 int gretl_bundle_delete (const char *name, PRN *prn);
 
 int gretl_bundle_mark_as_return (const char *name);
