@@ -281,7 +281,7 @@ typedef enum {
 
 #define sample_size(p) ((p == NULL)? 0 : (p->t2 - p->t1 + 1))
 
-void free_Z (double **Z, DATAINFO *pdinfo);
+void free_Z (double **Z, const DATAINFO *pdinfo);
 
 DATAINFO *datainfo_new (void);
 

@@ -29,6 +29,15 @@
 
 static int dataset_changed;
 
+/**
+ * check_dataset_is_changed:
+ *
+ * Returns: 1 if the current dataset has been modified since
+ * the last call to this function, or since the library was
+ * initialized if this function has not yet been called;
+ * otherwise 0.
+ */
+
 int check_dataset_is_changed (void)
 {
     int ret = dataset_changed;
@@ -36,6 +45,12 @@ int check_dataset_is_changed (void)
     dataset_changed = 0;
     return ret;
 }
+
+/**
+ * set_dataset_is_changed:
+ *
+ * Sets the internal "dataset changed" flag to 1
+ */
 
 void set_dataset_is_changed (void)
 {
@@ -45,12 +60,12 @@ void set_dataset_is_changed (void)
 /**
  * free_Z:
  * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @pdinfo: dataset information.
  *
  * Does a deep free on the data matrix.
  */
 
-void free_Z (double **Z, DATAINFO *pdinfo)
+void free_Z (double **Z, const DATAINFO *pdinfo)
 {
     if (Z != NULL && pdinfo != NULL) {
 	int i;
@@ -88,6 +103,17 @@ void dataset_destroy_obs_markers (DATAINFO *pdinfo)
     } 
 }
 
+/**
+ * dataset_destroy_panel_info:
+ * @pdinfo: data information struct.
+ *
+ * If @pdinfo currently represents a panel dataset, it will have
+ * some special information recorded. This function frees 
+ * the resources associated with that special information.
+ * This function should never be called if the dataset is to
+ * remain a penel.
+ */
+
 void dataset_destroy_panel_info (DATAINFO *pdinfo)
 {
     if (pdinfo->paninfo != NULL) {
@@ -109,7 +135,8 @@ static void free_varinfo (DATAINFO *pdinfo, int v)
  * @pdinfo: data information struct.
  * @code: either %CLEAR_FULL or %CLEAR_SUBSAMPLE.
  *
- * Frees the allocated content of a data information struct.
+ * Frees the allocated content of a data information struct;
+ * note that @pdinfo itself is not freed.
  */
 
 void clear_datainfo (DATAINFO *pdinfo, int code)
@@ -168,7 +195,8 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
  * @Z: data array.
  * @pdinfo: dataset information struct.
  *
- * Frees all resources associated with @Z and @pdinfo.
+ * Frees all resources associated with @Z and @pdinfo, 
+ * including the pointers @Z and @pdinfo themselves.
  */
 
 void destroy_dataset (double **Z, DATAINFO *pdinfo)
@@ -228,7 +256,7 @@ void dataset_obs_info_default (DATAINFO *pdinfo)
  * strings.  Note that These strings have a fixed maximum 
  * length of #OBSLEN - 1.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_allocate_obs_markers (DATAINFO *pdinfo)
@@ -261,7 +289,7 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo)
  * the unit or group and time-period, respectively, of each 
  * observation in a panel data set.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_allocate_panel_info (DATAINFO *pdinfo)
@@ -411,7 +439,7 @@ int dataset_add_default_panel_indices (DATAINFO *pdinfo)
  * and maximum observations per unit.  If it turns out
  * there's only one unit, or only one period, in the
  * dataset, then it's not really a panel: we destroy
- * the panel info and return %E_PDWRONG.
+ * the panel info and return E_PDWRONG.
  *
  * Returns: 0 on success, non-zero code on error.
  */
@@ -523,10 +551,11 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
  *
  * Given a blank @pdinfo, which should have been obtained using
  * datainfo_new(), allocate space for the names of variables.
- * The @v member of @pdinfo (number of variables) must be
+ * The @v member of @pdinfo (representing the number of variables,
+ * including the automatically added constant at position 0) must be
  * set before calling this function.
  * 
- * Returns: 0 on sucess, %E_ALLOC on failure.
+ * Returns: 0 on sucess, E_ALLOC on failure.
  */
 
 int dataset_allocate_varnames (DATAINFO *pdinfo)
@@ -572,7 +601,7 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
  * datainfo_new:
  *
  * Creates a new data information struct pointer from scratch,
- * properly initialized as empty.
+ * properly initialized as empty (no variables, no observations).
  * 
  * Returns: pointer to data information struct, or NULL on error.
  */
@@ -615,16 +644,18 @@ DATAINFO *datainfo_new (void)
 
 /**
  * create_new_dataset:
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @nvar: number of variables.
- * @nobs: number of observations per variable 
- * @markers: 1 if there are case markers for the observations, 0
- * otherwise.
+ * @nobs: number of observations per variable.
+ * @markers: 1 if space should be allocated for "case markers" for 
+ * the observations, 0 otherwise.
  *
- * Creates a new data information struct corresponding to a given
- * data matrix.
+ * Allocates space in the two-dimensional array to which @pZ points,
+ * to hold the specified number of variables and observations.
+ * Also allocates a new dataset information struct that matches the
+ * dimensions of the data array.
  * 
- * Returns: pointer to data information struct, or %NULL on error.
+ * Returns: pointer to data information struct, or NULL on error.
  */
 
 DATAINFO *
@@ -677,12 +708,12 @@ DATAINFO *create_auxiliary_dataset (double ***pZ, int nvar, int nobs)
  * @pdinfo: dataset information struct.
  *
  * Allocates the two-dimensional array to which @pZ points,
- * based on the %v (number of variables) and %n (number of
+ * based on the v (number of variables) and n (number of
  * observations) members of @pdinfo.  The variable at 
  * position 0 is initialized to all 1s; other variables
  * are initialized to #NADBL.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int allocate_Z (double ***pZ, const DATAINFO *pdinfo)
@@ -998,17 +1029,17 @@ maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
  * @newobs: number of observations to add.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: use %OPT_A to attempt to recognize and
+ * @opt: use OPT_A to attempt to recognize and
  * automatically extend simple deterministic variables such 
  * as a time trend and periodic dummy variables; 
- * use %OPT_D to drop any observation markers rather than
+ * use OPT_D to drop any observation markers rather than
  * expanding the set of markers and padding it out with
  * dummy values.
  *
  * Extends all series in the dataset by the specified number of
  * extra observations.  The added values are initialized to
  * the missing value code, #NADBL, with the exception of
- * simple deterministic variables when %OPT_A is given.
+ * simple deterministic variables when OPT_A is given.
  *
  * Returns: 0 on success, non-zero code on error.
  */
@@ -1144,7 +1175,7 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
  * @pdinfo: dataset information.
  *
  * Truncates the range of observations in the dataset, based on
- * the current values of the %t1 and %t2 members of @pdinfo.
+ * the current values of the t1 and t2 members of @pdinfo.
  *
  * Returns: 0 on success, non-zero code on error.
  */
@@ -1308,7 +1339,7 @@ static int real_add_series (int newvars, double *x,
  * to the dataset.  It is the caller's responsibility to
  * initialize the numerical values of the new series.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int 
@@ -1327,7 +1358,7 @@ dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo)
  * The array @x is not copied; it should be treated as
  * belonging to @pZ after this operation.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int 
@@ -1348,7 +1379,7 @@ dataset_add_allocated_series (double *x, double ***pZ, DATAINFO *pdinfo)
  * level "deeper" (in terms of function execution) than the
  * current level.  This is for use with user-defined functions.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_add_series_as (double *x, const char *newname,
@@ -1395,7 +1426,7 @@ int dataset_add_series_as (double *x, const char *newname,
  * function's namespace under the name it was given as a
  * parameter.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_copy_variable_as (int v, const char *newname,
@@ -1767,15 +1798,15 @@ static int *make_dollar_list (DATAINFO *pdinfo, int *err)
  * @pdinfo: dataset information.
  * @renumber: location for return of information on whether
  * remaining variables have been renumbered as a result, or
- * %NULL.
+ * NULL.
  * @prn: pointer to printing struct.
  *
  * Deletes the variables given in @list from the dataset.  Remaining
  * variables may have their ID numbers changed as a consequence. If
- * @renumber is not %NULL, this location receives 1 in case variables
+ * @renumber is not NULL, this location receives 1 in case variables
  * have been renumbered, 0 otherwise.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_drop_listed_variables (int *list, double ***pZ, 
@@ -1844,7 +1875,7 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
  *
  * Deletes variable @v from the dataset.  
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo) 
@@ -1938,7 +1969,7 @@ int dataset_renumber_variable (int v_old, int v_new,
  * numbers greater than or equal to @vmin.  Never deletes the
  * automatically generated constant (ID number 0).
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
@@ -2229,7 +2260,7 @@ static int dataset_sort (const int *list, double **Z, DATAINFO *pdinfo,
  * Deletes from the dataset the number @delvars of variables 
  * that were added most recently (that have the highest ID numbers).
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, E_ALLOC on error.
  */
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
