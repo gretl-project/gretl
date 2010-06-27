@@ -32,11 +32,14 @@
 <!ELEMENT gretl-function (params?, return?, code)>
 <!ATTLIST gretl-function
    name CDATA #REQUIRED
-   type (void | scalar | series | matrix | list | string) 'void'
+   type (void | scalar | series | matrix | list | string | bundle) 'void'
    private (0|1) '0'
 >
 
 <!ELEMENT help (#PCDATA)>
+<!ATTLIST help 
+   pdffile CDATA #IMPLIED
+>
 
 <!ELEMENT params (param+)>
 <!ATTLIST params 
@@ -53,13 +56,13 @@
    const    (true|false) 'false'
    type (bool | boolean | int | scalar | series | list |
          matrix | scalarref | seriesref | matrixref |
-         string) 'series'
+         bundleref | string) 'series'
 >
 
 <!ELEMENT return EMPTY>
 <!ATTLIST return
    name CDATA #REQUIRED
-   type (scalar | series | matrix | list | string) 'series'
+   type (scalar | series | matrix | list | string | bundle) 'series'
 >
 
 <!ELEMENT sample-script (#PCDATA)>
