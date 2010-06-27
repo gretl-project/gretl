@@ -17,13 +17,19 @@
  * 
  */
 
+typedef struct gretl_bundle_ gretl_bundle;
+
 int gretl_is_bundle (const char *name);
+
+gretl_bundle *get_gretl_bundle_by_name (const char *name);
 
 void *gretl_bundle_get_data (const char *name, const char *key,
 			     GretlType *type);
 
 int gretl_bundle_set_data (const char *name, const char *key,
 			   void *ptr, GretlType type);
+
+int gretl_bundle_add_or_replace (gretl_bundle *b, const char *name);
 
 int gretl_bundle_add (const char *name);
 
@@ -40,6 +46,12 @@ int gretl_bundle_localize (const char *origname,
 
 int gretl_bundle_unlocalize (const char *localname,
 			     const char *origname);
+
+gretl_bundle *gretl_bundle_union (const gretl_bundle *b1,
+				  const gretl_bundle *b2,
+				  int *err);
+
+void gretl_bundle_destroy (gretl_bundle *b);
 
 int destroy_user_bundles_at_level (int level);
 

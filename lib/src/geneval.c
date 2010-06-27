@@ -166,6 +166,8 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
 	    free(t->v.mspec);
+	} else if (t->t == BUNDLE) {
+	    gretl_bundle_destroy(t->v.b);
 	}
     }
 
@@ -386,6 +388,25 @@ static NODE *newstring (void)
     return b;
 }
 
+static NODE *newbundle (void)
+{  
+    NODE *b = malloc(sizeof *b);
+
+#if EDEBUG
+    fprintf(stderr, "newbundle: allocated node at %p\n", (void *) b); 
+#endif
+
+    if (b != NULL) {
+	b->t = BUNDLE;
+	b->flags = TMP_NODE;
+	b->vnum = NO_VNUM;
+	b->v.b = NULL;
+    }
+
+    return b;
+}
+
+
 /* push an auxiliary evaluation node onto the stack of
    such nodes */
 
@@ -434,6 +455,8 @@ static NODE *get_aux_node (parser *p, int t, int n, int tmp)
 	    ret = newlist();
 	} else if (t == STR) {
 	    ret = newstring();
+	} else if (t == BUNDLE) {
+	    ret = newbundle();
 	}
 
 	if (ret == NULL) {
@@ -520,6 +543,11 @@ static NODE *aux_mspec_node (parser *p)
 static NODE *aux_string_node (parser *p)
 {
     return get_aux_node(p, STR, 0, 0);
+}
+
+static NODE *aux_bundle_node (parser *p)
+{
+    return get_aux_node(p, BUNDLE, 0, 0);
 }
 
 static NODE *aux_any_node (parser *p)
@@ -3264,6 +3292,45 @@ static NODE *list_and_or (NODE *l, NODE *r, int f, parser *p)
 	ret->v.ivec = list;
 	free(llist);
 	free(rlist);
+    }
+
+    return ret;
+}
+
+static gretl_bundle *node_get_bundle (NODE *n, parser *p)
+{
+    gretl_bundle *b;
+
+    if (n->flags & TMP_NODE) {
+	/* should have an actual bundle attached */
+	b = n->v.b;
+    } else {
+	/* should have the name of a bundle */
+	b = get_gretl_bundle_by_name(n->v.str);
+    }
+
+    if (b == NULL) {
+	p->err = E_DATA;
+    }
+
+    return b;
+}
+
+static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_bundle_node(p);
+
+    if (ret != NULL && starting(p)) {
+	gretl_bundle *bl = node_get_bundle(l, p);
+	gretl_bundle *br = node_get_bundle(r, p);
+
+	if (!p->err) {
+	    if (f == B_OR) {
+		ret->v.b = gretl_bundle_union(bl, br, &p->err);
+	    } else {
+		p->err = E_TYPES;
+	    }
+	}
     }
 
     return ret;
@@ -6979,6 +7046,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = strings_are_equal(l, r, p);
 	} else if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
+	} else if (l->t == BUNDLE && r->t == BUNDLE) {
+	    ret = bundle_op(l, r, t->t, p);
 	} else if (series_calc_nodes(l, r)) {
 	    ret = series_calc(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == MAT) {
@@ -9349,11 +9418,17 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if (p->flags & P_UFRET) {
+	if (r->flags & TMP_NODE) {
+	    /* bundle created on the fly */
+	    p->err = gretl_bundle_add_or_replace(r->v.b, p->lh.name);
+	    if (!p->err) {
+		r->v.b = NULL;
+	    }
+	} else if (p->flags & P_UFRET) {
 	    /* bundle returned by user-function */
 	    p->err = gretl_bundle_name_return(p->lh.name);
 	} else {
-	    /* assignment from pre-existing bundle */
+	    /* assignment from pre-existing named bundle */
 	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);
 	}
     }

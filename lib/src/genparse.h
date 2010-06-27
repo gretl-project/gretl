@@ -449,6 +449,7 @@ union val {
     int *ivec;
     gretl_matrix *m;
     matrix_subspec *mspec;
+    gretl_bundle *b;
 };
 
 enum {

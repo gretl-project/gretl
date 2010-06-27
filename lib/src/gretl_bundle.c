@@ -29,7 +29,6 @@
 #define BDEBUG 0
 #define BUNDLE_RETVAL 999
 
-typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundle_value_ bundle_value;
 
 struct gretl_bundle_ {
@@ -45,6 +44,48 @@ struct bundle_value_ {
 
 static gretl_bundle **bundles;
 static int n_bundles;
+
+/* given a bundle pointer, return its 0-based stack position
+   or -1 if it's not on the stack */
+
+static int get_bundle_index (gretl_bundle *b)
+{
+    if (b != NULL) {
+	int i;
+
+	for (i=0; i<n_bundles; i++) {
+	    if (b == bundles[i]) {
+		return i;
+	    }
+	}
+    }
+
+    return -1;
+}
+
+/* given a name and function exec level, return the bundle
+   pointer corresponding to @name or NULL if there's no 
+   such bundle */
+
+static gretl_bundle *get_bundle_pointer (const char *name, int level)
+{
+    gretl_bundle *b;
+    int i;
+
+    for (i=0; i<n_bundles; i++) {
+	b = bundles[i];
+	if (b->level == level && !strcmp(name, b->name)) {
+	    return b;
+	}
+    }
+
+    return NULL;
+}
+
+static int bundle_index_by_name (const char *name, int level)
+{
+    return get_bundle_index(get_bundle_pointer(name, level));
+}
 
 /* allocate and fill out a 'value' (type plus data pointer) that will
    be inserted into a bundle's hash table */
@@ -108,7 +149,9 @@ static void bundle_value_destroy (gpointer data)
     free(val);
 }
 
-static void gretl_bundle_free (gretl_bundle *b)
+/* destructor for gretl_bundle */
+
+void gretl_bundle_destroy (gretl_bundle *b)
 {
     if (b != NULL) {
 	if (b->ht != NULL) {
@@ -116,6 +159,21 @@ static void gretl_bundle_free (gretl_bundle *b)
 	}
 	free(b);
     }
+}
+
+/* constructor for gretl_bundle */
+
+static gretl_bundle *gretl_bundle_new (void)
+{
+    gretl_bundle *b = malloc(sizeof *b);
+
+    if (b != NULL) {
+	b->level = 0;
+	*b->name = '\0';
+	b->ht = NULL;
+    }
+
+    return b;
 }
 
 static void set_n_bundles (int n)
@@ -142,27 +200,15 @@ static int reallocate_bundles (int n)
     }
 }
 
-static gretl_bundle *get_bundle_pointer (const char *name, int level)
-{
-    gretl_bundle *b;
-    int i;
-
-    for (i=0; i<n_bundles; i++) {
-	b = bundles[i];
-	if (b->level == level && !strcmp(name, b->name)) {
-	    return b;
-	}
-    }
-
-    return NULL;
-}
+/* push a bundle onto the saved stack: note that if this
+   fails we destroy the bundle and return non-zero */
 
 static int gretl_bundle_push (gretl_bundle *b)
 {
     int n = n_bundles + 1;
 
     if (reallocate_bundles(n)) {
-	free(b);
+	gretl_bundle_destroy(b);
 	return E_ALLOC;
     }
 
@@ -171,6 +217,9 @@ static int gretl_bundle_push (gretl_bundle *b)
 
     return 0;
 }
+
+/* destroy a stacked bundle indentified by its stack position,
+   and resize the stack */
 
 static int real_delete_bundle (int i)
 {
@@ -181,7 +230,7 @@ static int real_delete_bundle (int i)
 	return E_DATA;
     }
 
-    gretl_bundle_free(bundles[i]);
+    gretl_bundle_destroy(bundles[i]);
     bundles[i] = NULL;
 
     if (n == 0) {
@@ -211,6 +260,22 @@ int gretl_is_bundle (const char *name)
     } else {
 	return (get_bundle_pointer(name, gretl_function_depth()) != NULL);
     }
+}
+
+gretl_bundle *get_gretl_bundle_by_name (const char *name)
+{
+    if (name == NULL || *name == '\0') {
+	return NULL;
+    } else {
+	return get_bundle_pointer(name, gretl_function_depth());
+    }
+}
+
+static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
+{
+    gpointer p = g_hash_table_lookup(b->ht, key);
+
+    return (p != NULL);
 }
 
 /**
@@ -296,6 +361,9 @@ int gretl_bundle_set_data (const char *name, const char *key,
     return err;
 }
 
+/* create a named bundle, initialize it, and push it onto 
+   the stack */
+
 int gretl_bundle_add (const char *name)
 {
     int level = gretl_function_depth();
@@ -321,7 +389,51 @@ int gretl_bundle_add (const char *name)
     return gretl_bundle_push(b);
 }
 
-void copy_bundle_value (gpointer key, gpointer value, gpointer p)
+/* For use by geneval: take bundle @b, created on the fly, and stack
+   it under @name.  If there's already a bundle with the given name
+   destroy and replace it.
+*/
+
+int gretl_bundle_add_or_replace (gretl_bundle *b, const char *name)
+{
+    int level = gretl_function_depth();
+    int b0idx = bundle_index_by_name(name, level);
+    int err = 0;
+
+    strcpy(b->name, name);
+    b->level = level;
+
+    if (b0idx >= 0) {
+	/* just replace on stack */
+	gretl_bundle_destroy(bundles[b0idx]);
+	bundles[b0idx] = b;
+    } else {
+	err = gretl_bundle_push(b);
+    }
+
+    return err;
+}
+
+/* replicate on a target bundle a bundle-value from some other
+   other bundle, provided the target bundle does not already
+   have a bundle-value under the same key
+*/
+
+static void copy_new_bundle_value (gpointer key, gpointer value, gpointer p)
+{
+    bundle_value *bval = (bundle_value *) value;
+    gretl_bundle *targ = (gretl_bundle *) p;
+
+    if (!gretl_bundle_has_data(targ, (const char *) key)) {
+	real_gretl_bundle_set_data(targ, (const char *) key,
+				   bval->data, bval->type);
+    }
+}
+
+/* replicate on a target bundle a bundle-value from some other
+   bundle */
+
+static void copy_bundle_value (gpointer key, gpointer value, gpointer p)
 {
     bundle_value *bval = (bundle_value *) value;
     gretl_bundle *targ = (gretl_bundle *) p;
@@ -330,9 +442,35 @@ void copy_bundle_value (gpointer key, gpointer value, gpointer p)
 			       bval->data, bval->type);
 }
 
+/* Create a new bundle as the union of two existing bundles:
+   we first copy b1 in its entirety, then append any elements
+   of b2 whose keys that are not already present in the
+   copy-target. In case b1 and b2 share any keys, the
+   value copied to the target is therefore that from b1.
+*/
+
+gretl_bundle *gretl_bundle_union (const gretl_bundle *b1,
+				  const gretl_bundle *b2,
+				  int *err)
+{
+    gretl_bundle *b = gretl_bundle_new();
+
+    if (b == NULL) {
+	*err = E_ALLOC;
+    } else {
+	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
+				      g_free, bundle_value_destroy);
+	g_hash_table_foreach(b1->ht, copy_bundle_value, b);
+	g_hash_table_foreach(b2->ht, copy_new_bundle_value, b);
+    }
+    
+    return b;
+}
+
 /* Called from geneval.c on completion of assignment to a
    bundle named @cpyname, where the returned value on the
-   right-hand side has not been produced by a user-function
+   right-hand side is a pre-existing named bundle that has 
+   not been produced by a user-function
 */
 
 int gretl_bundle_copy_as (const char *name, const char *cpyname)
@@ -394,19 +532,6 @@ int gretl_bundle_mark_as_return (const char *name)
 	b->level = BUNDLE_RETVAL;
 	return 0;
     }
-}
-
-static int get_bundle_index (gretl_bundle *b)
-{
-    int i;
-
-    for (i=0; i<n_bundles; i++) {
-	if (b == bundles[i]) {
-	    return i;
-	}
-    }
-
-    return -1;
 }
 
 /* Called from geneval.c to operate on a bundle that has been marked
@@ -565,7 +690,7 @@ int destroy_user_bundles_at_level (int level)
 
     for (i=bmax; i>=0; i--) {
 	if (bundles[i]->level == level) {
-	    gretl_bundle_free(bundles[i]);
+	    gretl_bundle_destroy(bundles[i]);
 	    bundles[i] = NULL;
 	    for (j=i; j<bmax; j++) {
 		bundles[j] = bundles[j+1];
@@ -601,7 +726,7 @@ void destroy_user_bundles (void)
     }
 
     for (i=0; i<n_bundles; i++) {
-	gretl_bundle_free(bundles[i]);
+	gretl_bundle_destroy(bundles[i]);
     }
 
     set_n_bundles(0);
