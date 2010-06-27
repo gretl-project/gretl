@@ -37,9 +37,6 @@
 >
 
 <!ELEMENT help (#PCDATA)>
-<!ATTLIST help 
-   pdffile CDATA #IMPLIED
->
 
 <!ELEMENT params (param+)>
 <!ATTLIST params 
