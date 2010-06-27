@@ -1,4 +1,7 @@
-06-24-2010 version 1.9.1
+version 1.9.2, in progress
+- 
+
+2010-06-24 version 1.9.1
 - New command: "makepkg", for command-line creation of gretl
   function packages (.gfn files)
 - pdf, cdf and pvalue functions: add support for the
@@ -32,7 +35,7 @@
   still radically incomplete
 - Remove the old genpois function
 
-05-02-2010 version 1.9.0
+2010-05-02 version 1.9.0
 - New command: "duration", for estimation of parametric
   duration models (e.g. Weibull)
 - New command: "negbin", for estimation of count data
@@ -94,7 +97,7 @@
 - Fix integer overflow bug in Breusch-Pagan poolability test
 - Graphing via gnuplot: require version >= 4.2.0
 
-01/24/2010 version 1.8.7
+2010-01-24 version 1.8.7
 - GUI enhancement: add apparatus to help keep track of
   gretl windows
 - GUI menus: clean-up and consolidation
@@ -126,7 +129,7 @@
 - Fix bugs: miscellaneous small GUI bugs
 - Fix bugs 2918790, 2918783, 2918775, 2917053
 
-11/25/2008 version 1.8.6
+2008-11-25 version 1.8.6
 - Fix bug: the "print" command for series fails after
   exiting a loop with the --progressive option set
 - ARIMAX models: follow the practice of most software
@@ -173,7 +176,7 @@
 - Fix memory leak on repeated sub-sampling
 - Miscellaneous small GUI fixes
 
-10/10/2009 version 1.8.5
+2009-10-10 version 1.8.5
 - Fix: avoid duplicating the return line when saving
   packaged functions that were originally old-style
 - Several refinements for function-package editor
@@ -219,7 +222,7 @@
 - win32: update GTK+ stack to 2.16.6; update gnuplot to
   CVS as of 2009-09-13
 
-8/28/2009 version 1.8.4
+2009-08-28 version 1.8.4
 - Fix breakage in GUI interface for calling user-defined
   functions, plus fixes for GUI function package editor
 - Patches from Mandriva: build OK with -Wformat-security,
@@ -239,7 +242,7 @@
 - ODS import: fix bug 2841292
 - win32: update GTK+ stack to 2.16.5
 
-8/10/2009 version 1.8.3
+2009-08-10 version 1.8.3
 - Fix bugs 2819633, 2827358, 2828349, 2833434
 - $stopwatch: use times() function if available, to include
   execution time of child processes
@@ -285,7 +288,7 @@
 - fix bug: crash in estimating a system via LIML when the
   equations are given in TSLS fashion (i.e., y X ; Z)
 
-7/8/2009 version 1.8.2
+2009-07-08 version 1.8.2
 - Fixes for GARCH "corner cases"
 - "summary" command: add --simple and --by=byvar options
 - Fix another XLS import bug
@@ -324,7 +327,7 @@
 - Several small fixes for the GUI
 - Fix bugs 2806815, 2810219
 
-5/21/2009 version 1.8.1
+2009-05-21 version 1.8.1
 - Fix bugs 2533543, 2590417, 2604963, 2687954, 2734471, 
    2741374, 2780592
 - resample() function: add a second, optional parameter,
@@ -396,7 +399,7 @@
   command "kalman" and new functions kfilter, ksmooth and
   ksimul
 
-1/23/2009 version 1.8.0
+2009-01-23 version 1.8.0
 - Fix bug: crash in "Add random variable" dialog
 - Translation fixes
 - Add new command: "modprint"
@@ -454,7 +457,7 @@
 - Several updates to the documentation
 - Fix bugs 2042328, 2472732, 2510727, 2510759
 
-9/28/2008 version 1.7.9
+2008-09-28 version 1.7.9
 - Revamp the data structure "wizard"
 - Fix bugs 2102478, 2116172, 2118506 
 - Periodogram graph: fix bug for case where the locale
@@ -471,7 +474,7 @@
 - ordered probit/logit: fix bug with displaying these 
   models in the GUI model window
 
-9/14/2008 version 1.7.8
+2008-09-14 version 1.7.8
 - Add a language-switching option to the gretl GUI (under
   Preferences/General)
 - Improve formatting of HCCME options pane
@@ -502,7 +505,7 @@
 - Seasonal ARMA: fix for bad handling of automatically
   added scalars
 
-8/28/2008 version 1.7.7
+2008-08-28 version 1.7.7
 - Revamp of internal handling of scalar variables
 - The --preserve option to the "nulldata" and "open" commands
   now preserves existing scalars as well as matrices
@@ -539,7 +542,7 @@
 - Fix for reading native data files containing auto-generated
   lags: re-establish the lag info correctly
 
-7/30/2008 version 1.7.6
+2008-07-30 version 1.7.6
 - Fix bug: revise the way that list arguments to user-defined
   functions are handled, to avoid potential namespace 
   collisions
@@ -566,7 +569,7 @@
 - File dialogs: try to ensure that focus falls back to the right
   window when such windows are closed
 
-6/13/2008 version 1.7.5
+2008-06-13 version 1.7.5
 - max() and min() functions: extend the syntax to allow a list
   argument
 - Reading CSV data: automatically substitute '_' for illegal
@@ -655,7 +658,7 @@
 - Durbin-Watson statistic: supply a larger table of critical
   values (thanks to Marcin Blazejowski and Tadeusz Kufel) 
 
-3/21/2008 version 1.7.4
+2008-03-21 version 1.7.4
 - Fix for ADF-GLS test with missing values
 - Fix for detection of unit-diagonal matrix (oops!)
 - Merge fit and fcasterr commands with fcast
@@ -692,7 +695,7 @@
   we'll just do Ljung-Box)
 - Fix sub-sampling bug (new in 1.7.3)
 
-2/29/2008 version 1.7.3
+2008-02-29 version 1.7.3
 - Fix for 64-bit platforms: don't use "long" as the C
   counterpart of Fortran 77 "INTEGER"
 - Make the rcond function available for asymmetric matrices
@@ -707,7 +710,7 @@
   function
 - Update several screenshots in User's Guide
 
-2/25/2008 version 1.7.2
+2008-02-25 version 1.7.2
 - list-creation: add "dataset" option to use all currently
   available data series
 - Fix bug in recording result of TSLS heteroskedasticity test
@@ -750,7 +753,7 @@
 - Fix bug in arima auto-differencing, for non-seasonal order
   greater than 1 plus seasonal differencing
 
-12/25/2007 version 1.7.1
+2007-12-25 version 1.7.1
 - Add documentation for "set stopwatch"
 - Add movavg function to genr (not documented yet)
 - Add autocorrelation and heteroskedasticity tests for models
@@ -794,7 +797,7 @@
   gui console
 - Fix handling of "quit" when it's blocked by "if"
 
-11/27/2007 version 1.7.0
+2007-11-27 version 1.7.0
 - Add heckit estimator
 - Add estimation/testing for restricted VECM models
 - Fix for loop on empty list
@@ -874,7 +877,7 @@
 - Fix bug in mailer dialog (crash when closed via
   window manager)
 
-5/17/2007 version 1.6.5
+2007-05-17 version 1.6.5
 - Fix new breakage in configuration of user directory
 - Updates to manual
 - Mark some more strings for translation
@@ -883,13 +886,13 @@
 - Add --difference option for runs command
 - Various small bug-fixes
 
-5/13/2007 version 1.6.4
+2007-05-13 version 1.6.4
 - Fix breakage in relation to the Windows registry
 - Fixes for accented characters in graphs, on systems with
   UTF-8 as the standard character encoding
 - Additional fixes for Polish text in graphs
 
-5/10/2007 version 1.6.3
+2007-05-10 version 1.6.3
 - Add facility for bootstrap analysis in GUI, for OLS
 - Model table: fixes for including panel models; allow up to
   12 models; formatting enhancements
@@ -929,7 +932,7 @@
 - Further optimization of gretl_matrix functions
 - Various modifications to the configuration process
 
-3/24/2007 version 1.6.2
+2007-03-24 version 1.6.2
 - Add Poisson distribution to p-value finder
 - Fix breakage in GUI "graph page" apparatus
 - Graph page: give color / monochrome option
@@ -959,7 +962,7 @@
 - Update the API documentation (still very much incomplete)
 - Update gnuplot to version 4.2.0 in the Windows installer    
 
-2/26/2007 version 1.6.1
+2007-02-26 version 1.6.1
 - Revamp for internal "genr" mechanism plus some user-visible
   changes to genr
 - Make the "delete" command do what the manual says
@@ -1006,7 +1009,7 @@
 - Add nonlinear GMM estimation (experimental)
 - Numerous small bug-fixes
 
-9/13/2006 version 1.6.0
+2006-09-13 version 1.6.0
 - Revamp mechanism for saving sessions in gui program (we
   now save sessions as zipfiles containing XML representations
   of any models that have been estimated)
@@ -1093,7 +1096,7 @@
   selection of the MacKinnon p-value for this test
 - Tobit: enable handling of missing observations for this estimator
   
-3/24/2006 version 1.5.1
+2006-03-24 version 1.5.1
 - Add matrix manipulation functionality
 - Fix translation bug for VAR menus
 - Fix bug in assignment of values returned from user-defined
@@ -1148,7 +1151,7 @@
 - Enhance and robustify script capabilities
 
 
-12/15/2005 version 1.5.0
+2005-12-15 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series
   data
 - Add confidence ellipse option for two coefficients, in 
@@ -1223,7 +1226,7 @@
 - Split gretl manual into a User's Guide and a Command Reference
   and update both parts 
 
-06/30/2005 version 1.4.1
+2005-06-30 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 
   and tobit, big mess)	
 - Add utf8 validation/conversion for database descriptions 
@@ -1231,7 +1234,7 @@
 - Allow dynamic forecasts with models estimated via corc and 
   similar
 
-06/29/2005 version 1.4.0
+2005-06-29 version 1.4.0
 - Revise definition of functions in gretl scripts (a backward-
   incompatible change) in the interest of more structured
   programming
@@ -1277,7 +1280,7 @@
 - Improvements to many dialog boxes
 - Numerous small bug-fixes
 
-03/14/2005 version 1.3.3
+2005-03-14 version 1.3.3
 - Add "poisson" command (thanks to Jack Lucchetti)
 - Fix memory leak in VAR command with impulse responses, in the
   command-line program
@@ -1320,7 +1323,7 @@
 - genr command: $nvars gives the number of variables in the
   dataset
 
-01/28/2005 version 1.3.2
+2005-01-28 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking
   at the wrong coefficient in some cases
 - Fix bug in VAR impulse responses: could get messed up by
@@ -1362,7 +1365,7 @@
 - Remove unused GUI popup menu item "Simulate..."
 - Updates to documentation (manual and helpfiles)
 
-01/19/2005 version 1.3.1
+2005-01-19 version 1.3.1
 - Add new dataset structure "wizard" in place of the old dialogs
   for setting frequency, starting observation and time-series
   or panel interpretation of the data
@@ -1415,7 +1418,7 @@
 - Add an emacs file, utils/emacs/gretl.el, offering an emacs
   major mode for editing and running gretl scripts.
 
-11/15/2004 version 1.3.0
+2004-11-15 version 1.3.0
 - add "append" command, to append data to the current dataset,
   as in the gui File/Append data
 - add KPSS stationarity test ("kpss" command, Jack Lucchetti)
@@ -1479,7 +1482,7 @@
 - start adding user-defined functions
 - add mechanism for customizing gretl's tex preamble
 
-7/23/2004 version 1.2.9
+2004-07-23 version 1.2.9
 - fixes for LaTeX printing of autoregressive models
 - correct Spanish help strings
 - fix font problem for some objects in session window
@@ -1529,7 +1532,7 @@
 version 1.2.8: a "test-only" version, with some of the features
 of 1.2.9, depending on the date of the build.
 
-6/13/2004 version 1.2.7
+2004-06-13 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)
 - update Spanish helpfiles 
 - add start-up option "-e" or "--english" to force use of
@@ -1552,7 +1555,7 @@ of 1.2.9, depending on the date of the build.
 - build tweaks for OS X
 - make available a pre-built disk image for OS X
 
-5/25/2004 version 1.2.6
+2004-05-25 version 1.2.6
 - add Hodrick-Prescott filter, as "hpfilt" function in the
   genr command
 - revamp xls importer: should now be substantially more
@@ -1570,7 +1573,7 @@ of 1.2.9, depending on the date of the build.
 - with gtk >= 2.4.0 on Linux, use the new gtk file chooser
 - update the Windows gtk version to 2.4.1
 
-5/04/2004 version 1.2.5
+2004-05-04 version 1.2.5
 - fix problem with acf and pacf calculations
 - add Prais-Winsten estimator for AR1 models ("pwe" command)
 - fix bugs in gretl "graph page"
@@ -1593,7 +1596,7 @@ of 1.2.9, depending on the date of the build.
   work again (this was broken by an MS security update of April
   13, 2004)
 
-3/30/2004 version 1.2.4
+2004-03-30 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables
 - Add GARCH models, using Fiorentini-Calzolari-Panattoni approach
   (Journal of Applied Econometrics, 1996)
@@ -1622,7 +1625,7 @@ of 1.2.9, depending on the date of the build.
 - Add Three-Stage Least Squares (system type=3sls): this is
   still at the testing stage
 
-2/24/2004 version 1.2.3
+2004-02-24 version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack
   Lucchetti)
 - Add color selector for the histogram in frequency plots
@@ -1670,7 +1673,7 @@ of 1.2.9, depending on the date of the build.
   console
 - Updated help files and manual
 
-2/2/2004 version 1.2.2
+2004-02-02 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")
 - Fix brokenness in RTF printing/copying of ARMA models
 - Add calculation of modulus and frequency for ARMA roots,
@@ -1702,7 +1705,7 @@ of 1.2.9, depending on the date of the build.
 - Fix bug: Sorting variables by ID in the main window did not
   work correctly for more than 9 variables
 
-1/22/2004 version 1.2.1
+2004-01-22 version 1.2.1
 - Add Cristian Rigamonti's Italian translation
 - More flexible and general support for collections of data
   files or script files
@@ -1729,7 +1732,7 @@ of 1.2.9, depending on the date of the build.
 - Fixes for several nameless bugs
 - Various GUI tweaks
 
-12/14/2003 version 1.2.0
+2003-12-14 version 1.2.0
 - add "rename" command (rename a variable)
 - add "printf" command for generating formatted output
 - "delete" command: add the ability to delete specified
@@ -1792,10 +1795,10 @@ of 1.2.9, depending on the date of the build.
   by setting the environment variable GRETL_MAX_ITER
 - Update to gcc-3.3.1 and mingw-runtime-3.2 for Windows build
 
-10/31/2003 version 1.1.6
+2003-10-31 version 1.1.6
 - Test release for Fedora (Linux) packaging
 
-10/24/2003 version 1.1.5
+2003-10-24 version 1.1.5
 - Updates to manual
 - Gtk2 version: Make selection dialog tall enough for wls,
   tsls and ar model selections
@@ -1829,7 +1832,7 @@ of 1.2.9, depending on the date of the build.
 - Fixes for reading of plot range info in graph window in
   non-English locales
 
-10/06/2003 version 1.1.4
+2003-10-06 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter
 - Fixes for display of data values with huge datasets
 - Fix to handle "weird" cases in plotting frequency distributions
@@ -1855,7 +1858,7 @@ of 1.2.9, depending on the date of the build.
 - 3-D plot command: fix for localized decimal point, and use
   rxvt to control gnuplot if xterm is not available
 
-10/01/2003 version 1.1.3
+2003-10-01 version 1.1.3
 - Fix crashing bug in viewing dataset info
 - Improve formatting of "influential observations" test output
   for non-English locales
@@ -1885,7 +1888,7 @@ of 1.2.9, depending on the date of the build.
 - Add facility for generating 3-D data plots
 - Add "import ASCII" data option
 
-09/09/2003 version 1.1.2
+2003-09-09 version 1.1.2
 - Fix bug in time-series plot from popup menu in main window
 - Fix build problem: "make install" could fail to install the
   GUI program under some conditions (thanks to Dirk Eddelbuettel
@@ -1898,7 +1901,7 @@ of 1.2.9, depending on the date of the build.
 - Library: switch to using the Cephes gamma() code throughout,
   and delete some redundant code
 
-09/07/2003 version 1.1.1
+2003-09-07 version 1.1.1
 - Graph editing: add facility to write labels onto the graph
 - Graph editing: allow removal of auto-fitted OLS line
 - Graph editing: allow choice of TrueType font if gnuplot supports
@@ -1928,7 +1931,7 @@ of 1.2.9, depending on the date of the build.
   extreme cases
 - Windows version: update to gtk 2.2.3 runtime
 
-07/23/2003 version 1.1.0
+2003-07-23 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display
   names" for variables (these are shown in graphs)
 - Provide "label" command for setting the description and/or
@@ -1956,7 +1959,7 @@ of 1.2.9, depending on the date of the build.
 - Update to libtool 1.5
 - Update win32 version to gtk version 2.2.2
 
-05/26/2003 version 1.0.9
+2003-05-26 version 1.0.9
 - Add non-linear least squares ("nls" command, Levenberg-
   Marquandt algorithm from minpack, with either analytical or
   numerical derivatives)
@@ -1971,7 +1974,7 @@ of 1.2.9, depending on the date of the build.
   append "{ ... }" block to gretl gnuplot command, containing
   literal gnuplot command lines, each terminated with ";")
 
-05/02/2003 version 1.0.8
+2003-05-02 version 1.0.8
 - Require lapack
 - Fixes to build for Mac OS X
 - Avoid duplication of "against time" in model graph menus, when 
@@ -2004,7 +2007,7 @@ of 1.2.9, depending on the date of the build.
 - Add experimental "model table" in session icon view (not submitted
   for translation yet)
 
-04/09/2003 version 1.0.7
+2003-04-09 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey
   rather than Breusch-Pagan)
 - Fix bug in display of remote database info line (Gtk-2.0 version)
@@ -2029,7 +2032,7 @@ of 1.2.9, depending on the date of the build.
 - Fix installation of bcih database so that it works on big-
   endian machines too
 
-03/16/2003 version 1.0.6
+2003-03-16 version 1.0.6
 - minor adjustment to model print output formatting
 - fix for correlogram graph (was incompatible with older gnuplot)
 - fix a couple of minor gretlcli bugs
@@ -2052,11 +2055,11 @@ of 1.2.9, depending on the date of the build.
 - make correlogram and periodogram functions more robust in
   the face of weird data
 
-02/20/2003 version 1.0.5
+2003-02-20 version 1.0.5
 - fix missing translations; fix build of rpm
 - add support for Gujarati textbook data files
 
-02/19/2003 version 1.0.4
+2003-02-19 version 1.0.4
 - add sst() function in genr for Total Sum of Squares of a 
   variable
 - fix bug in genr: a long genr command could overflow the space
@@ -2080,7 +2083,7 @@ of 1.2.9, depending on the date of the build.
 - update libtool to 1.4.3 and autoreconf
 - raise library revision number to 4
 
-02/04/2003 version 1.0.3
+2003-02-04 version 1.0.3
 - Add PNG graphs to win32 version, and standardize on PNG graphs for
   all display including graph editing
 - Add facility to identify labeled data-points in a scatter plot
@@ -2109,7 +2112,7 @@ of 1.2.9, depending on the date of the build.
 - Updates to manual
 - Raise shared library revision number to 3
 
-12/09/2002 version 1.0.2
+2002-12-09 version 1.0.2
 - generalize support for X-12-ARIMA to gtk-1.2 version, and 
   win32 version (TRAMO/SEATS proving is more difficult)
 - make x-12-arima support the configure default, if the x12a
@@ -2133,7 +2136,7 @@ of 1.2.9, depending on the date of the build.
 - fix bug in invocation of GNU R under Windows (needed to
   replace "\" with "/" in paths for use by Rgui.exe)
 
-11/27/2002 version 1.0.1
+2002-11-27 version 1.0.1
 - fix to configure script in re. glib-2.0
 - fix missing name of dependent var in gui mpols printout
 - remove RTF and LaTeX items from mpols copy options (not yet
@@ -2152,7 +2155,7 @@ of 1.2.9, depending on the date of the build.
 - make "sim" command available in loops (and update docs)
 - raise "revision" number of *nix library
 
-11/15/2002 version 1.0
+2002-11-15 version 1.0
 - change *nix library name to libgretl-1.0
 - improve sizing of some windows
 - incorporate new translations
@@ -2160,7 +2163,7 @@ of 1.2.9, depending on the date of the build.
 - fix the stats available in connection with a LAD model
 - open the champagne (hope this is not premature!)
 
-11/06/2002 version 1.0pre4 (for translators)
+2002-11-06 version 1.0pre4 (for translators)
 - fix bug in progress bar when loading large data set
 - fix bad "smpl -r" bug in gretlcli
 - add Ramsey's RESET test (command "reset")
@@ -2183,7 +2186,7 @@ of 1.2.9, depending on the date of the build.
 - make names and labels for monthly and quarterly dummies more
   descriptive
 
-10/10/2002 version 1.0pre3
+2002-10-10 version 1.0pre3
 - improve accuracy of calculation of standard errors, and
   numerical accuracy on MS Windows in general
 - make gretl databases installable in user directory as well as
@@ -2204,7 +2207,7 @@ of 1.2.9, depending on the date of the build.
 - remove Gtk 2.0 right click menu on text windows
 - update translations and integrate the French translation
 
-09/20/2002 version 1.0pre2 (pre1 was "for translators only")
+2002-09-20 version 1.0pre2 (pre1 was "for translators only")
 - add range-mean graph option to GUI Variable menu, and
   as new command "rmplot"
 - add retrievable variable $pd = data periodicity
@@ -2226,7 +2229,7 @@ of 1.2.9, depending on the date of the build.
 - remove HTML print/copy options: can't maintain four formats
   with internationalization!
 
-08/25/2002 version 0.999
+2002-08-25 version 0.999
 - add support for gtk 2.0 and gnome 2.0
 - enhanced gui with gtk 2.0
 - add "make check" target to test against the NIST reference
@@ -2246,7 +2249,7 @@ of 1.2.9, depending on the date of the build.
 - fix miscellaneous bugs revealed by valgrind
 - raise library version to 16.0.0
 
-07/09/2002 version 0.998 
+2002-07-09 version 0.998 
 - increment library version to 15.0.0
 - update Spanish translations
 - fixes to RPM build process
@@ -2265,7 +2268,7 @@ of 1.2.9, depending on the date of the build.
 - recompile gretl_updater.exe with new zlib dll
 - fixes to graph editing (this got broken by NLS changes)
 
-05/28/2002 version 0.997
+2002-05-28 version 0.997
 - increment library version to 14.0.1
 - NLS fixes: disable "foreign" LC_NUMERIC for the present;
   gnuplot graphs should work now; some missing
@@ -2277,7 +2280,7 @@ of 1.2.9, depending on the date of the build.
   some years)
 - portability fixes to configure script
 
-05/24/2002 version 0.996
+2002-05-24 version 0.996
 - Raise library version to 14.0.0
 - closing a session clears the selector dialog presets
 - fix bug with scalar data and the data-editing spreadsheet
@@ -2292,7 +2295,7 @@ of 1.2.9, depending on the date of the build.
 - tweaks to the configure script
 - updates to the help files and manual
 
-05/15/2002 version 0.995
+2002-05-15 version 0.995
 - Raise library version to 13.0.0
 - numerous small updates to facilitate internationalization
 - give the user a choice of delimiters (comma, space or tab)
@@ -2319,7 +2322,7 @@ of 1.2.9, depending on the date of the build.
 - add checks for illegal variable names when importing from
   CSV, Excel and Gnumeric
 
-04/21/2002 version 0.994
+2002-04-21 version 0.994
 - fix bugs in win32 copy to clipboard
 - fix RTF printing of correlation matrix
 - fix bug in genr (generating a scalar when data set is sub-
@@ -2336,7 +2339,7 @@ of 1.2.9, depending on the date of the build.
 - update versions of gtk and glib for win32
 - fix build problems revealed by the Debian package build
 
-04/15/2002 version 0.993
+2002-04-15 version 0.993
 - add option to specify lag order in autocorrelation test;
   also add Box-Pierce and Ljung-Box stats to test output
 - fix brokenness in Excel importer on win32
@@ -2364,7 +2367,7 @@ of 1.2.9, depending on the date of the build.
   Lu estimators
 - add edit/print taskbar to more windows
 
-04/01/2002 version 0.992
+2002-04-01 version 0.992
 - bounds checking for critical values look-up; also add this
   as a regular gretlcli command, "critical"
 - add sanity checks for regression commands and ADF test
@@ -2372,7 +2375,7 @@ of 1.2.9, depending on the date of the build.
 - add "Append data" menu item
 - fix bug in "Create data set" functions
 
-03/20/2002 version 0.991
+2002-03-20 version 0.991
 - fix several "out of bounds" bugs kindly reported by Tavis Barr
 - streamline the online help system
 - in GUI, allow deletion of any variable (popup menu)
@@ -2392,7 +2395,7 @@ of 1.2.9, depending on the date of the build.
 - prepare the program sources for internationalization via
   GNU gettext; add a blank .pot file to the source package
 
-02/27/2002 version 0.99
+2002-02-27 version 0.99
 - add option for HTTP proxy when contacting gretl data server
 - fix bugs in drag and drop under Windows
 - fix crashing bug when trying to save a data file with over
@@ -2418,7 +2421,7 @@ of 1.2.9, depending on the date of the build.
 - improve handling of scripts opened in the GUI (including a
   prompt to save before running if changes have been made)
 
-02/11/2002 version 0.98
+2002-02-11 version 0.98
 - fig bug affecting frequency distributions and the test for
   normality of residuals
 - improve functionality relating to saving of data files
@@ -2447,7 +2450,7 @@ of 1.2.9, depending on the date of the build.
   register the .gdt suffix for gretl datafiles, and add an icon
   for these files
 
-12/14/2001 version 0.97
+2001-12-14 version 0.97
 - fix breakage of var command in GUI
 - add facility to draw boxplots
 - add various formats to copy of models to clipboard (HTML,
@@ -2473,28 +2476,28 @@ of 1.2.9, depending on the date of the build.
   for win32)
 - add a menu bar to the spreadsheet window
 
-07/26/2001 version 0.96
+2001-07-26 version 0.96
 - update to gtkextra version 0.99.16
 - fix bug in Preferences/Toolbar entries
 
-07/17/2001 version 0.95
+2001-07-17 version 0.95
 - update to gtkextra version 0.99.15
 - fix crash bug on opening a saved "session"
 - fix bug that broke the "run" command on win32
 
-06/14/2001 version 0.94
+2001-06-14 version 0.94
 - make "false" the default for the automatic gretl update query
   on startup
 - catch errors in ar, tsls and scatters commands due to insufficient
   arguments
 
-05/11/2001 version 0.93
+2001-05-11 version 0.93
 - fix problem with printing of actual, fitted and residual in the
   case of a binary dependent variable
 - CVS data export: put quote marks around the dates or observation
   marker strings
 
-04/23/2001 version 0.92
+2001-04-23 version 0.92
 - library version goes to 6.0.0
 - fixes to pprintf() function
 - add "pooled OLS" model command and panel diagnostics test
@@ -2508,7 +2511,7 @@ of 1.2.9, depending on the date of the build.
 - add options for compacting data when adding a higher-frequency
   series from a database to the working data set
 
-04/03/2001 version 0.91
+2001-04-03 version 0.91
 - library version goes to 5.0.0
 - Disable saving anything other than native data file with
   extension ".dat" (safety measure)
@@ -2523,7 +2526,7 @@ of 1.2.9, depending on the date of the build.
   and native Microsoft dialogs under Windows
 - Bug fix in pprintf() function
 
-03/28/01 version 0.90
+2001-03-28 version 0.90
 - Raise version number to 0.90 reflecting fact that the feature
   set for version 1.0 is now complete
 - Raise library version to 4.0.0 due to changed interfaces
@@ -2543,7 +2546,7 @@ of 1.2.9, depending on the date of the build.
   running
 - TODO: manual is not fully updated yet
 
-03/16/2001 version 0.70
+2001-03-16 version 0.70
 - Changed a few library interfaces, and so raised the library
   version number (now 3.0.0)
 - update manual (please consult it on the new options below)
@@ -2569,7 +2572,7 @@ of 1.2.9, depending on the date of the build.
 - fix memory bug when switching datasets
 - fix issues with displaying data, with very large datasets
 
-03/04/2001 version 0.69
+2001-03-04 version 0.69
 - change one library interface to permit error box if gnuplot
   command fails (and so raise library version number)
 - bugfix: after running lmtest for non-linearity, the wrong
@@ -2588,7 +2591,7 @@ of 1.2.9, depending on the date of the build.
 - genr: add '&', '|' and '!' logical operators 
 - add program icon for X11
 
-02/26/2001 version 0.68
+2001-02-26 version 0.68
 - fix functions associated with opening datafiles
 - fix brokenness in logging of commands to script
 - "remember" models generated via GUI so that genr functions 
@@ -2598,7 +2601,7 @@ of 1.2.9, depending on the date of the build.
   actions
 - Small improvements to "gretl console"
 
-02/21/2001 version 0.67
+2001-02-21 version 0.67
 - cleanups in datafile writing routines (avoid excessive
   trailing zeros in data)
 - make search in list boxes wrap
@@ -2610,7 +2613,7 @@ of 1.2.9, depending on the date of the build.
 - fix bug: "gretl website" entry on toolbar under unix/Linux
   worked only if netscape was already running
 
-02/15/2001 version 0.66
+2001-02-15 version 0.66
 - add string search to listing of Ramanathan data files
 - add "plugin" for looking up critical values of statistics
 - add a toolbar (partly configurable under Preferences)
@@ -2619,13 +2622,13 @@ of 1.2.9, depending on the date of the build.
   (under Model data menu in model window)
 - add the Ramanathan practice file ps2-1.inp
 
-02/06/2001 version 0.65
+2001-02-06 version 0.65
 - fix crashing bug in adding data to dataset from model window
 - update bundled gtkextra to release 0.99.13
 - various "internal" bugfixes and cleanups
 - minor fixes to graphing routines, datafile saving
 
-02/02/2001 version 0.64
+2001-02-02 version 0.64
 - add tooltips to show full path of previously-opened files
 - get "previous files" list working on win32
 - minor improvements to file listing routines
@@ -2633,13 +2636,13 @@ of 1.2.9, depending on the date of the build.
 - add -m (impulses) flag to gnuplot command
 - fixes to auto-update mechanism (plus add documentation)
 
-01/26/2001 version 0.63
+2001-01-26 version 0.63
 - add gretl manpage
 - add p-value finder to GUI
 - add "hypothesis test calculator" to GUI
 - fix error in normal batch p-value function 
 
-01/15/2001 version 0.62
+2001-01-15 version 0.62
 - allow comment lines starting with '#' in input files
 - allow estimation of a model with df = zero
 - add CUSUM (parameter stability) test for OLS models
@@ -2648,10 +2651,10 @@ of 1.2.9, depending on the date of the build.
   for situation where sample lengths are different
 - small fixes to manual
 
-12/09/2000 version 0.61
+2000-12-09 version 0.61
 - fix to configure process for gtkextra
 
-12/08/2000 version 0.60
+2000-12-08 version 0.60
 - various fixes to distribution files
 - change default user dir to $HOME/.gretl
 - fixes to icon file selector
@@ -2674,25 +2677,25 @@ version 0.60pre
 (note: version 0.50 was a Windows-only one, and was not really
  released)
 
-11/18/2000 version 0.40
+2000-11-18 version 0.40
 - add critical value to printout of correlation matrix
 - add capacity to read gretl databases from remote server
 - add built-in data decompression with zlib	
 - rename exported library functions, avoiding leading underscore
 - add libtool versioning
 
-11/03/2000 version 0.32
+2000-11-03 version 0.32
 - Add capacity to read BOX1-format data files
 - Add lists of recently opened files to file menus
 - fix various bugs connected with "session" concept
 - fix gtkextra headers bug in make process
 
-10/20/2000 version 0.31
+2000-10-20 version 0.31
 - add gamma distribution to pvalue command
 - fix some more bugs
 - hush gtk warnings in win32 version
 
-10/15/2000 version 0.30
+2000-10-15 version 0.30
 - introduce experimental "session" idea
 - update manual
 - add "pergm" (periodogram) command.  Also see "Spectrum" under
@@ -2715,7 +2718,7 @@ version 0.60pre
 - configure: use installed gtkextra if available
 - substantial code cleanups and speedups in GUI.
 
-06/14/2000 version 0.2i
+2000-06-14 version 0.2i
 - improve consistency in GUI w.r.t. opening of data files
   and databases
 - update manual and help files
@@ -2734,7 +2737,7 @@ version 0.60pre
 - code cleanup in compare.c
 - can capture log-likelihood in genr with "$lnl" after logit, probit
 
-06/09/2000 version 0.2h
+2000-06-09 version 0.2h
 - add estimation of logit and probit models and update manual
 - fixes to "configure" script (gtk, termcap, paths.h) after
   compilation on HPUX
@@ -2744,7 +2747,7 @@ version 0.60pre
 - rename Windows dll
 - fix bug in "fcast" command
 
-06/01/2000 version 0.2g
+2000-06-01 version 0.2g
 - "smpl -o" drops all observations with missing values
 - binary datafiles can be saved in single or double precision
   (-s or -o flags)
@@ -2757,7 +2760,7 @@ version 0.60pre
 - improve some string handling functions
 - fix win32 path-searching bug?
 
-05/24/2000 version 0.2f
+2000-05-24 version 0.2f
 - updates to manual
 - add handler for Penn World Table
 - improve handling of native databases
@@ -2773,7 +2776,7 @@ version 0.60pre
 - add to path-searching for datafiles called from scripts
   (include the script dir in the search)
 
-05/10/2000 version 0.2e
+2000-05-10 version 0.2e
 - minor changes to GUI menus
 - add xpm icon for X
 - correct printout of t-stats for AR coefficients
@@ -2791,7 +2794,7 @@ version 0.60pre
 - fix paths in win32 (helpfile and executable, for rerunning
   commands)
 
-05/05/2000 version 0.2d
+2000-05-05 version 0.2d
 - improvements to manual
 - fix wrong error message for zero weight var in wls
 - explicit check for degeneracy in figuring summary stats
@@ -2801,7 +2804,7 @@ version 0.60pre
 - fix bug in calculation of rho hat
 - fix lengths of series created by diff, etc, in relation to smpl
 
-05/01/2000 version 0.2c
+2000-05-01 version 0.2c
 - add setobs command
 - add seed command
 - manual: add section on panel data, improve "genr" section
@@ -2809,7 +2812,7 @@ version 0.60pre
 - make adf, coint commands more informative
 - add "paneldum" (for panel data) to genr command
 
-04/28/2000 version 0.2b
+2000-04-28 version 0.2b
 - add fcasterr command
 - many fixes in response to comments from Ramu Ramanathan and
   Dirk Eddelbuettel
@@ -2817,42 +2820,42 @@ version 0.60pre
 - bugfix in binary datafile handling
 - update manual
 
-04/22/2000 version 0.2a
+2000-04-22 version 0.2a
 - add arch, sim and multiply commands
 - many bugfixes after running numerous test files
 - further code cleanups
 - improvements in printing forecasts
 - fix memory leaks
 
-04/14/2000 version 0.2
+2000-04-14 version 0.2
 - many fixes for greater consistency with esl
 - printout improvements
 - internal code cleanups
 - bug fixes (notably for CSV file handling)
 
-04/05/2000 version 0.1z
+2000-04-05 version 0.1z
 - add a gui controller for gnuplot graphs
 - many bugfixes
 - reorganize (simplify) command-line arguments
 - more updates to documentation
 
-03/27/2000 version 0.1y
+2000-03-27 version 0.1y
 - improvements and bugfixes to CSV file handling
 - improvements to "add" and "omit" commands
 - add "coint" command (cointegration test)
 
-03/23/2000 version 0.1x
+2000-03-23 version 0.1x
 - many small bugfixes
 - add GNU autoconf apparatus for configuring/compiling
 - updates to documentation
 
-02/29/2000 version 0.1w
+2000-02-29 version 0.1w
 - fixes to build process
 - add iconic file selector
 - add "export CSV" function
 - bug fixes to database reading routines
 
-02/22/2000 version 0.1v
+2000-02-22 version 0.1v
 - add White's standard errors (hccm command)
 - update help files
 - Make model stats (e.g. ess) available for adding to data
@@ -2867,20 +2870,20 @@ version 0.60pre
 - Fix (I think) bug in setup of new spreadsheet data set.
 - Give "infobox" feedback when importing database series.
 
-02/13/2000 version 0.1u
+2000-02-13 version 0.1u
 - save data files in GNU Octave format
 - updates to documentation
 
-02/08/2000 version 0.1t
+2000-02-08 version 0.1t
 - gretl adopted as GNU program
 - add context-sensitive help for command dialogs
 - add file, save for model output windows
 - add search facility for help file, database windows
 
-02/02/2000 version 0.1s
+2000-02-02 version 0.1s
 - Fixes to Makefiles
 - Improvements to loop mode (Monte Carlo simulations)
 
-01/31/2000 version 0.1r
+2000-01-31 version 0.1r
 - Initial public release
 
