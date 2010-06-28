@@ -55,6 +55,26 @@
 
 #include <gtksourceview/gtksourceview.h>
 
+/* remedial macros for old GTK installations */
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# define gtk_dialog_get_content_area(d) ((d)->vbox)
+# define gtk_dialog_get_action_area(d) ((d)->action_area)
+# define gtk_widget_get_window(w) ((w)->window)
+# define gtk_selection_data_get_data_type(s) ((s)->type)
+# define gtk_selection_data_get_data(s) ((s)->data)
+# define gtk_adjustment_get_upper(a) ((a)->upper)
+# define gtk_adjustment_set_upper(a, v) ((a)->upper = v)
+# define gtk_color_selection_dialog_get_color_selection(d) ((d)->colorsel)
+#endif
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
+# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
+# define gtk_widget_has_focus(w) GTK_WIDGET_HAS_FOCUS(w)
+# define gtk_widget_set_can_default(w,s) GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT)
+# define gtk_widget_set_can_focus(w,s) GTK_WIDGET_SET_FLAGS(w, GTK_CAN_FOCUS)
+#endif
+
 #include "gretltypes.h"
 #include "gui_utils.h"
 #include "callbacks.h"
