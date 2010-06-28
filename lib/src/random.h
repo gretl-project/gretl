@@ -61,6 +61,8 @@ int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 int gretl_rand_gamma (double *a, int t1, int t2,  
 		      double shape, double scale);
 
+int gretl_rand_GED (double *a, int t1, int t2, double nu);
+
 void gretl_rand_set_box_muller (int s);
 
 int gretl_rand_get_box_muller (void);

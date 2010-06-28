@@ -2182,6 +2182,18 @@ double *gretl_get_random_series (char st, const double *parm,
 	} else {
 	    *err = gretl_rand_weibull(x, t1, t2, shape, scale);
 	}
+    } else if (st == 'E') {
+	/* GED */ 
+	double nu = parm[0];
+
+	if (serp1 != NULL) {
+	    for (t=t1; t<=t2 && !*err; t++) {
+		if (serp1 != NULL) nu = serp1[t];
+		*err = gretl_rand_GED(x, t, t, nu);
+	    }
+	} else {
+	    *err = gretl_rand_GED(x, t1, t2, nu);
+	}
     }	
 
     return x;

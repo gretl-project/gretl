@@ -912,6 +912,45 @@ int gretl_rand_weibull (double *a, int t1, int t2, double shape,
 }
 
 /**
+ * gretl_rand_GED:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @nu: shape parameter > 0.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the GED distribution with shape @nu. We exploit the fact that
+ * if x ~ GED(n), then |x/k|^n is a Gamma rv.
+ *
+ * Returns: 0 on success, non-zero if @nu is out of bounds.
+ */
+
+int gretl_rand_GED (double *a, int t1, int t2, double nu)
+{
+    int err, t;
+    double p, scale;
+
+    if (nu < 0) {
+	return E_INVARG;
+    }
+
+    p = 1.0/nu;
+    scale = pow(0.5, p) * sqrt(gamma_function(p) / gamma_function(3.0*p));
+    err = gretl_rand_gamma(a, t1, t2, p, 2);
+
+    if (!err) {
+	for (t=t1; t<=t2; t++) {
+	    a[t] = scale * pow(a[t], p);
+	    if (gretl_rand_01() < 0.5) {
+		a[t] = -a[t];
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_rand_int_max:
  * @max: the maximum value (open)
  *
@@ -935,7 +974,5 @@ unsigned int gretl_rand_int (void)
 {
     return g_rand_int(gretl_rand);
 }
-
-
 
 
