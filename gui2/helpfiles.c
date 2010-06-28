@@ -1895,7 +1895,14 @@ enum {
     SPANISH
 };
 
-static int get_writable_path (char *path, const char *fname)
+enum {
+    GRETL_GUIDE = 1,
+    GRETL_REF,
+    GNUPLOT_REF,
+    GFN_DOC
+};
+
+static int get_writable_path (char *path, const char *fname, int code)
 {
     static int sysdoc_writable = -1;
     static int userdoc_writable = -1;
@@ -1905,7 +1912,11 @@ static int get_writable_path (char *path, const char *fname)
     int err = 0;
 
     if (sysdoc_writable == 1) {
-	sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
+	if (code == GFN_DOC) {
+	    sprintf(path, "%sfunctions%cdocs%c%s", gretldir, SLASH, SLASH, fname);
+	} else {
+	    sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
+	}
 	return 0;
     } else if (userdoc_writable == 1) {
 	sprintf(path, "%sdoc%c%s", dotdir, SLASH, fname);
@@ -1914,9 +1925,14 @@ static int get_writable_path (char *path, const char *fname)
 
     if (sysdoc_writable < 0) {
 	sysdoc_writable = 0;
-	sprintf(path, "%sdoc", gretldir);
+	if (code == GFN_DOC) {
+	    sprintf(path, "%sfunctions%cdocs", gretldir, SLASH);
+	} else {
+	    sprintf(path, "%sdoc", gretldir);
+	}
 	if (gretl_mkdir(path) == 0) {
-	    sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
+	    strcat(path, SLASHSTR);
+	    strcat(path, fname);
 	    fp = gretl_fopen(path, "w");
 	    if (fp != NULL) {
 		sysdoc_writable = 1;
@@ -1947,13 +1963,6 @@ static int get_writable_path (char *path, const char *fname)
 
     return err;
 }
-
-enum {
-    GRETL_GUIDE = 1,
-    GRETL_REF,
-    GNUPLOT_REF,
-    GFN_DOC
-};
 
 static int find_or_download_pdf (int code, int i, char *fullpath)
 {
@@ -1994,7 +2003,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 
     /* is the file available in public dir? */
     if (code == GFN_DOC) {
-	sprintf(fullpath, "%sfunctions%cdoc%c%s", gretl_home(), SLASH, 
+	sprintf(fullpath, "%sfunctions%cdocs%c%s", gretl_home(), SLASH, 
 		SLASH, fname);
     } else {
 	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
@@ -2017,11 +2026,15 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 
     if (!gotit) {
 	/* check for download location */
-	err = get_writable_path(fullpath, fname);
+	err = get_writable_path(fullpath, fname, code);
 
 	/* do actual download */
 	if (!err) {
-	    err = retrieve_manfile(fname, fullpath);
+	    if (code == GFN_DOC) {
+		err = retrieve_gfndoc(fname, fullpath);
+	    } else {
+		err = retrieve_manfile(fname, fullpath);
+	    }
 	}
 
 	if (err) {
@@ -2080,4 +2093,19 @@ void display_gnuplot_help (void)
     if (!err) {
 	show_pdf(fname);
     }
+}
+
+int display_gfn_help (const char *pdfname)
+{
+    char fname[FILENAME_MAX];
+    int err;
+
+    strcpy(fname, pdfname);
+    err = find_or_download_pdf(GFN_DOC, 0, fname);
+
+    if (!err) {
+	show_pdf(fname);
+    }
+
+    return err;
 }

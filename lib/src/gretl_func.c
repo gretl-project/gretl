@@ -5794,3 +5794,38 @@ int user_function_help (const char *fnname, PRN *prn)
 
     return err;
 }
+
+/**
+ * user_function_has_PDF_doc:
+ * @fnname: name of function.
+ * @pdfname: location to receive basename of PDF file,
+ * if applicable (or NULL if this is not wanted).
+ * 
+ * Looks for a function named @fnname and checks whether
+ * it is documented in the form of a PDF file.
+ *
+ * Returns: 1 if the named user function exists, and is documented in the 
+ * form of a PDF file (in which case the name of that file is
+ * returned via @pdfname), 0 otherwise.
+ */
+
+int user_function_has_PDF_doc (const char *fnname, char **pdfname)
+{
+    ufunc *fun = get_user_function_by_name(fnname);
+    int ret = 0;
+
+    if (fun != NULL) {
+	fnpkg *pkg = fun->pkg;
+
+	if (pkg != NULL && pkg->help != NULL) {
+	    if (!strncmp(pkg->help, "pdfdoc:", 7)) {
+		ret = 1;
+		if (pdfname != NULL) {
+		    *pdfname = gretl_strdup(pkg->help + 7);
+		}
+	    }
+	}
+    }
+
+    return ret;
+}

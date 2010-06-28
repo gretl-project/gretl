@@ -58,11 +58,12 @@
 #define DBHLEN     64
 
 static int wproxy;
-static char dbhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
-static char gretlhost[DBHLEN] = "ricardo.ecn.wfu.edu";
-static char datacgi[DBHLEN]   = "/gretl/cgi-bin/gretldata.cgi";
-static char updatecgi[DBHLEN] = "/gretl/cgi-bin/gretl_update.cgi";
-static char mpath[DBHLEN]     = "/pub/gretl/manual/PDF/";
+static char dbhost[DBHLEN]      = "ricardo.ecn.wfu.edu";
+static char gretlhost[DBHLEN]   = "ricardo.ecn.wfu.edu";
+static char datacgi[DBHLEN]     = "/gretl/cgi-bin/gretldata.cgi";
+static char updatecgi[DBHLEN]   = "/gretl/cgi-bin/gretl_update.cgi";
+static char manual_path[DBHLEN] = "/pub/gretl/manual/PDF/";
+static char gfndoc_path[DBHLEN] = "/pub/gretl/gfndoc/";
 
 typedef enum {
     SAVE_NONE,
@@ -1523,40 +1524,56 @@ static int open_local_file (urlinfo *u)
     return err;
 }
 
-static int 
-urlinfo_set_path (urlinfo *u, const char *cgi, const char *mname)
+static int urlinfo_set_cgi_path (urlinfo *u, const char *cgi)
 {
-    int len = 1;
+    int len = strlen(cgi) + 1;
+    int err = 0;
 
     if (wproxy) {
 	len += strlen(u->host) + 7;
     }
 
-    if (cgi != NULL && *cgi != '\0') {
-	len += strlen(cgi);
-    } else if (mname != NULL && *mname != '\0') {
-	len += strlen(mpath) + strlen(mname);
+    u->path = malloc(len);
+
+    if (u->path == NULL) {
+	err = 1;
+    } else {
+	if (wproxy) {
+	    sprintf(u->path, "http://%s", u->host);
+	} else {
+	    *u->path = '\0';
+	}
+	strcat(u->path, cgi);
+    }
+	
+    return err;
+}
+
+static int urlinfo_set_dl_path (urlinfo *u, const char *dirname,
+				const char *fname)
+{
+    int len = strlen(dirname) + strlen(fname) + 1;
+    int err = 0;
+
+    if (wproxy) {
+	len += strlen(u->host) + 7;
     }
 
     u->path = malloc(len);
+
     if (u->path == NULL) {
-	return 1;
-    }
-
-    *u->path = '\0';
-
-    if (wproxy) {
-	sprintf(u->path, "http://%s", u->host);
-    }
-    
-    if (cgi != NULL && *cgi != '\0') {
-	strcat(u->path, cgi);
-    } else if (mname != NULL && *mname != '\0') {
-	strcat(u->path, mpath);
-	strcat(u->path, mname);
+	err = 1;
+    } else {
+	if (wproxy) {
+	    sprintf(u->path, "http://%s", u->host);
+	} else {
+	    *u->path = '\0';
+	}
+	strcat(u->path, dirname);
+	strcat(u->path, fname);
     }
 	
-    return 0;
+    return err;
 }
 
 static int 
@@ -1599,6 +1616,8 @@ urlinfo_set_params (urlinfo *u, CGIOpt opt, const char *fname,
     return (u->params != NULL);
 }
 
+#define BINTYPE(t) (t == GRAB_PKG || t == GRAB_PDF || t == GRAB_GFNDOC)
+
 /* when we're expecting binary data, check that we didn't get
    text/plain instead, which presumably in fact means we got
    an error message from the server
@@ -1608,9 +1627,8 @@ static int maybe_register_type_error (urlinfo *u, CGIOpt opt)
 {
     int err = 0;
 
-    if ((opt == GRAB_PKG || opt == GRAB_PDF) && 
-	!strcmp(u->gottype, "text/plain")) {
-	/* we shouldn't have got plain text */
+    if (BINTYPE(opt) && !strcmp(u->gottype, "text/plain")) {
+	/* we should not have got plain text */
 	err = 1;
 	if (u->fp != NULL) {
 	    char buf[256];
@@ -1632,7 +1650,8 @@ static void maybe_revise_www_paths (void)
 	strcpy(gretlhost, "www.wfu.edu");
 	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
 	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
-	strcpy(mpath, "/~cottrell/gretl/manual/");
+	strcpy(manual_path, "/~cottrell/gretl/manual/");
+	strcpy(gfndoc_path, "/~cottrell/gretl/gfndoc/");
     }
 }
 
@@ -1661,13 +1680,15 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
     if (u == NULL) {
 	return E_ALLOC;
     }
-    
-    if (opt == GRAB_FILE) {
-	urlinfo_set_path(u, updatecgi, NULL);
-    } else if (opt == GRAB_PDF) {
-	urlinfo_set_path(u, NULL, fname);
+
+    if (opt == GRAB_PDF) {
+	urlinfo_set_dl_path(u, manual_path, fname);
+    } else if (opt == GRAB_GFNDOC) {
+	urlinfo_set_dl_path(u, gfndoc_path, fname);
+    } else if (opt == GRAB_FILE) {
+	urlinfo_set_cgi_path(u, updatecgi);
     } else {
-	urlinfo_set_path(u, datacgi, NULL);
+	urlinfo_set_cgi_path(u, datacgi);
     }
 
     if (u->path == NULL) {
@@ -1675,7 +1696,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return 1;
     }
 
-    if (opt != GRAB_PDF) {
+    if (opt != GRAB_PDF && opt != GRAB_GFNDOC) {
 	urlinfo_set_params(u, opt, fname, dbseries);
 	if (u->params == NULL) {
 	    urlinfo_destroy(u, 0);
@@ -1820,7 +1841,7 @@ int get_update_info (char **saver, time_t filedate, int queryopt)
 	return E_ALLOC;
     }
 
-    urlinfo_set_path(u, updatecgi, NULL);
+    urlinfo_set_cgi_path(u, updatecgi);
     urlinfo_set_update_params(u, filedate, queryopt);
     getbuf_init(u);
 
@@ -1902,7 +1923,7 @@ int upload_function_package (const char *login, const char *pass,
 	return E_ALLOC;
     }
 
-    urlinfo_set_path(u, datacgi, NULL);
+    urlinfo_set_cgi_path(u, datacgi);
     urlinfo_set_upload_params(u, login, pass, fname);
     getbuf_init(u);
 
@@ -2065,6 +2086,24 @@ int retrieve_remote_db_data (const char *dbname,
 int retrieve_manfile (const char *fname, const char *localname)
 {
     return retrieve_url (gretlhost, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
+			 localname, NULL);
+}
+
+/**
+ * retrieve_gfndoc:
+ * @fname: name of PDF file to retrieve.
+ * @localname: full path to which the file should be written
+ * on the local machine.
+ *
+ * Retrieves the specified gfn documentation in PDF format from the 
+ * gretl data server.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int retrieve_gfndoc (const char *fname, const char *localname)
+{
+    return retrieve_url (gretlhost, GRAB_GFNDOC, fname, NULL, SAVE_TO_FILE,
 			 localname, NULL);
 }
 

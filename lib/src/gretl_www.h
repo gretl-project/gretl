@@ -35,7 +35,8 @@ typedef enum {
     CHECK_DB,
     UPLOAD,
     LIST_PKGS,
-    GRAB_PKG
+    GRAB_PKG,
+    GRAB_GFNDOC
 } CGIOpt;
 
 typedef enum {
@@ -71,6 +72,8 @@ int retrieve_remote_db_data (const char *dbname,
 			     int opt);
 
 int retrieve_manfile (const char *fname, const char *localname);
+
+int retrieve_gfndoc (const char *fname, const char *localname);
 
 int get_update_info (char **saver, time_t filedate, int queryopt);
 
