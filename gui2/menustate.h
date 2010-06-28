@@ -28,6 +28,8 @@ void clear_sample_label (void);
 void set_sample_label (DATAINFO *pdinfo);
 void set_main_window_title (const char *name, gboolean modified);
 
+void check_var_labels_state (GtkMenuItem *item, gpointer p);
+
 void action_entry_init (GtkActionEntry *entry);
 
 int vwin_add_ui (windata_t *vwin, GtkActionEntry *entries,

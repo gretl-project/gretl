@@ -1259,7 +1259,7 @@ static GtkWidget *make_main_window (void)
 #endif
 
     main_vbox = gtk_vbox_new(FALSE, 4);
-    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 4); /* was 8 */
+    gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 4);
     gtk_container_add(GTK_CONTAINER(mdata->main), main_vbox);
     g_object_set_data(G_OBJECT(mdata->main), "vbox", main_vbox);
 
@@ -1683,6 +1683,7 @@ static gchar *get_main_ui (void)
 static int set_up_main_menu (void)
 {
     GtkActionGroup *actions;
+    GtkWidget *dataitem;
     gchar *main_ui = NULL;
     GError *error = NULL;
 
@@ -1712,6 +1713,10 @@ static int set_up_main_menu (void)
 
     g_free(main_ui);
     mdata->mbar = gtk_ui_manager_get_widget(mdata->ui, "/menubar");
+
+    dataitem = gtk_ui_manager_get_widget(mdata->ui, "/menubar/Data");
+    g_signal_connect(G_OBJECT(dataitem), "activate",
+		     G_CALLBACK(check_var_labels_state), mdata);
 
     return 0;
 }

@@ -1450,23 +1450,6 @@ int do_save_labels (const char *fname)
     return err;
 }
 
-static int var_labels_not_applicable (void)
-{
-    int ret = 0;
-
-    if (datainfo == NULL) {
-	return 1;
-    }
-
-    if (datainfo->v == 2 && 
-	!strcmp(datainfo->varname[1], "index")) {
-	warnbox(_("Not ready for variable labels"));
-	return 1;
-    }
-
-    return ret;
-}
-
 static void gui_remove_var_labels (void)
 {
     int i;
@@ -1481,9 +1464,7 @@ static void gui_remove_var_labels (void)
 
 void labels_callback (void) 
 {
-    if (var_labels_not_applicable()) {
-	return;
-    } else if (dataset_has_var_labels(datainfo)) {
+    if (dataset_has_var_labels(datainfo)) {
 	/* we have (some) labels in place */
 	const char *opts[] = {
 	    N_("Export the labels to file"),

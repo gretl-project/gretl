@@ -303,6 +303,19 @@ void main_menus_enable (gboolean s)
     }
 }
 
+void check_var_labels_state (GtkMenuItem *item, gpointer p)
+{
+    gboolean s = FALSE;
+
+    if (datainfo != NULL) {
+	if (datainfo->v > 2 || strcmp(datainfo->varname[1], "index")) {
+	    s = TRUE;
+	}
+    }
+
+    flip(mdata->ui, "/menubar/Data/VarLabels", s);
+}
+
 static gint var_popup_click (GtkWidget *w, gpointer p)
 {
     gchar *item = (gchar *) p;
