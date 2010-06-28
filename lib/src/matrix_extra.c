@@ -138,7 +138,7 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
  *
  * Returns: allocated 1 x 1 gretl_matrix, the single element
  * of which is set to @x, or NULL on allocation failure.
- * If @x = %NADBL the matrix value is %M_NA.
+ * If @x = #NADBL the matrix value is #M_NA.
  */
 
 gretl_matrix *gretl_matrix_from_scalar (double x) 

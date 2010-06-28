@@ -8874,12 +8874,10 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp)
     gretl_matrix *m = NULL;
 
     if (p->ret->t == NUM) {
-	m = gretl_matrix_alloc(1, 1);
+	m = gretl_matrix_from_scalar(p->ret->v.xval);
 	if (m == NULL) {
 	    p->err = E_ALLOC;
-	} else {
-	    m->val[0] = p->ret->v.xval;
-	}
+	} 
     } else {
 	m = grab_or_copy_matrix_result(p);
     }
@@ -8895,24 +8893,6 @@ static gretl_matrix *matrix_from_scratch (parser *p, int tmp)
 
     p->lh.m1 = m;
     
-    return m;
-}
-
-static gretl_matrix *copy_old_matrix (parser *p)
-{
-    gretl_matrix *old = get_matrix_by_name(p->lh.name);
-    gretl_matrix *m;
-
-    if (old == NULL) {
-	p->err = E_UNKVAR;
-	return NULL;
-    }
-
-    m = gretl_matrix_copy(old);
-    if (m == NULL) {
-	p->err = E_ALLOC;
-    }
-
     return m;
 }
 
@@ -8977,34 +8957,20 @@ static void assign_to_matrix (parser *p)
 static void assign_to_matrix_mod (parser *p)
 {
     gretl_matrix *m = NULL;
+    gretl_matrix *a, *b;
 
-    if (p->ret->t == NUM) {
-	/* copy original matrix and calculate */
-	m = copy_old_matrix(p);
-	if (m != NULL) {
-	    int i, n = m->rows * m->cols;
+    a = get_matrix_by_name(p->lh.name);
 
-	    for (i=0; i<n; i++) {
-		m->val[i] = xy_calc(m->val[i], p->ret->v.xval, p->op, MAT, p);
-	    }
-	}
+    if (a == NULL) {
+	p->err = E_UNKVAR;
     } else {
-	/* get a pointer to original matrix and calculate */
-	gretl_matrix *a = get_matrix_by_name(p->lh.name);
-	gretl_matrix *b = NULL;
-
-	if (a == NULL) {
-	    p->err = E_UNKVAR;
-	} else {
-	    b = matrix_from_scratch(p, 1);
-	}
-
-	if (a != NULL && b != NULL) {
+	b = matrix_from_scratch(p, 1);
+	if (b != NULL) {
 	    m = real_matrix_calc(a, b, p->op, &p->err);
+	    gretl_matrix_free(b);
 	}
-	gretl_matrix_free(b);
     }
-
+ 
     p->lh.m1 = m;
 
     if (!p->err) {
