@@ -20,7 +20,16 @@
 #ifndef GTK_COMPAT_H
 #define GTK_COMPAT_H
 
-#define gtk_dialog_get_content_area(d) (d->vbox)
-#define gtk_dialog_get_action_area(d) (d->action_area)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+# define gtk_dialog_get_content_area(d) (d->vbox)
+# define gtk_dialog_get_action_area(d) (d->action_area)
+#endif
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
+# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
+# define gtk_widget_has_focus(w) GTK_WIDGET_HAS_FOCUS(w)
+# define gtk_widget_set_can_default(w,s) GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT)
+# define gtk_widget_set_can_focus(w,s) GTK_WIDGET_SET_FLAGS(w, GTK_CAN_FOCUS)
+#endif
 
 #endif /* GTK_COMPAT_H */

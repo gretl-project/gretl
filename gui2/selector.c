@@ -2690,7 +2690,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 
 static void read_quantreg_extras (selector *sr)
 {
-    GtkWidget *e = GTK_BIN(sr->extra[0])->child;
+    GtkWidget *e = gtk_bin_get_child(GTK_BIN(sr->extra[0]));
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(e));
 	
     if (s == NULL || *s == '\0') {
@@ -2719,7 +2719,7 @@ static void read_quantreg_extras (selector *sr)
 	GtkAdjustment *adj;
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
-	set_optval_double(QUANTREG, OPT_I, adj->value);
+	set_optval_double(QUANTREG, OPT_I, gtk_adjustment_get_value(adj));
     }
 } 
 
@@ -3995,9 +3995,12 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 			   FALSE, TRUE, 0);
 	maybe_set_entry_text(sr->extra[0], arlags);
     } else if (sr->ci == QUANTREG) {
+	GtkWidget *child;
+
 	sr->extra[0] = gtk_combo_box_entry_new_text();
 	make_tau_list(sr->extra[0]);
-	gtk_entry_set_text(GTK_ENTRY(GTK_BIN(sr->extra[0])->child), "0.5");
+	child = gtk_bin_get_child(GTK_BIN(sr->extra[0]));
+	gtk_entry_set_text(GTK_ENTRY(child), "0.5");
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
     } else if (sr->ci == VAR || sr->ci == VLAGSEL) {
@@ -5257,7 +5260,7 @@ static void build_selector_buttons (selector *sr)
 	}
 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
-	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+	gtk_widget_set_can_default(tmp, TRUE);
 	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
 	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(sr->action_area),
 					   tmp, TRUE);
@@ -5268,20 +5271,20 @@ static void build_selector_buttons (selector *sr)
 
     if (sr->ci != EDIT_FUNCTIONS) {
 	tmp = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
-	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+	gtk_widget_set_can_default(tmp, TRUE);
 	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
 	g_signal_connect(G_OBJECT(tmp), "clicked", 
 			 G_CALLBACK(clear_vars), sr);
     }
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(tmp, TRUE);
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(cancel_selector), sr);
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(tmp, TRUE);
     gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(selector_doit), sr);
@@ -5869,7 +5872,7 @@ static void selector_add_top_entry (selector *sr)
     if (lnames != NULL) {
 	combo = gtk_combo_box_entry_new_text();
 	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), lnames);
-	entry = GTK_BIN(combo)->child;
+	entry = gtk_bin_get_child(GTK_BIN(combo));
 	g_signal_connect(G_OBJECT(combo), "changed",
 			 G_CALLBACK(listdef_vars_callback), sr);
     } else {

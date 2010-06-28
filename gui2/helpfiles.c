@@ -1877,7 +1877,7 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 
     /* find button */
     button = gtk_button_new_from_stock(GTK_STOCK_FIND);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(findfunc), find_dialog);

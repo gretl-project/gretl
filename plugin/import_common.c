@@ -17,7 +17,7 @@
  * 
  */
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
 # include "gtk_compat.h"
 #endif
 
@@ -509,7 +509,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     g_signal_connect_swapped(G_OBJECT (tmp), "clicked", 
 			     G_CALLBACK (gtk_widget_destroy), 
 			     G_OBJECT (w));
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(tmp, TRUE);
     gtk_widget_grab_default(tmp);
 
     gtk_entry_set_activates_default(GTK_ENTRY(book->colspin), TRUE);

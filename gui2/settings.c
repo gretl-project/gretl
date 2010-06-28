@@ -878,7 +878,7 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     make_prefs_tab(notebook, TAB_VCV);
     make_prefs_tab(notebook, TAB_MAN);
 
-    hbox = GTK_DIALOG(dialog)->action_area;
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     /* Apply button */
     button = apply_button(hbox);
@@ -923,7 +923,7 @@ static void flip_sensitive (GtkWidget *w, gpointer data)
 {
     GtkWidget *entry = GTK_WIDGET(data);
     
-    gtk_widget_set_sensitive(entry, GTK_TOGGLE_BUTTON(w)->active);
+    gtk_widget_set_sensitive(entry, button_is_active(w));
 }
 
 void set_path_callback (char *setvar, char *setting)
@@ -1074,7 +1074,7 @@ get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse,
 
 static void radio_change_value (GtkWidget *w, int *v)
 {
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (button_is_active(w)) {
 	gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
 	*v = i;
@@ -1190,7 +1190,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    /* special case: link between toggle and preceding entry */
 	    if (rc->len && !(rc->flags & FIXSET)) {
 		gtk_widget_set_sensitive(rc_vars[i-1].widget,
-					 GTK_TOGGLE_BUTTON(rc->widget)->active);
+					 button_is_active(rc->widget));
 		g_signal_connect(G_OBJECT(rc->widget), "clicked",
 				 G_CALLBACK(flip_sensitive),
 				 rc_vars[i-1].widget);

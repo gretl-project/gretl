@@ -512,7 +512,7 @@ int gp_term_code (gpointer p, int action)
     return spec->termtype;
 }
 
-static void get_pdfcairo_term_string (char *termstr)
+static void get_pdfcairo_term_string (char *termstr, int change_size)
 {
     const char *pngfont = gretl_png_font();
     char fontname[64];
@@ -524,10 +524,8 @@ static void get_pdfcairo_term_string (char *termstr)
 	split_graph_fontspec(pngfont, fontname, &psz);
     }    
 
-    fprintf(stderr, "get_pdfcairo_term_string!\n");
-
     if (*fontname != '\0') {
-	if (psz > 0) {
+	if (psz > 0 && change_size) {
 	    sprintf(termstr, "set term pdfcairo font \"%s,%d\"\n",
 		    fontname, psz / 2);
 	} else {
@@ -551,7 +549,7 @@ static void get_full_term_string (const GPT_SPEC *spec, char *termstr)
 	} 
     } else if (spec->termtype == GP_TERM_PDF) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	    get_pdfcairo_term_string(termstr);
+	    get_pdfcairo_term_string(termstr, 1);
 	} else {
 	    strcpy(termstr, "set term pdf");
 	}
@@ -842,7 +840,7 @@ static void graph_display_pdf (GPT_SPEC *spec)
 
     if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
 	fprintf(stderr, "gnuplot: using pdfcairo driver\n");
-	get_pdfcairo_term_string(setterm);
+	get_pdfcairo_term_string(setterm, 0);
     } else {
 	strcpy(setterm, "set term pdf");
     }
@@ -2922,34 +2920,36 @@ static void audio_render_plot (png_plot *plot)
 
 #endif
 
-static gint color_popup_activated (GtkWidget *w, gpointer data)
+static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 {
-    gchar *item = (gchar *) data;
-    gpointer ptr = g_object_get_data(G_OBJECT(w), "plot");
-    png_plot *plot = (png_plot *) ptr;
-    GtkWidget *wpar, *parent;
-    gchar *up_item;
+    png_plot *plot = g_object_get_data(G_OBJECT(item), "plot");
+    GtkWidget *parent = data;
+    gchar *item_string = NULL;
+    gchar *menu_string = NULL;
 
-    wpar = gtk_widget_get_parent(w);
-    parent = GTK_MENU(wpar)->parent_menu_item; /* FIXME */
-    up_item = g_object_get_data(G_OBJECT(parent), "string");
+    g_object_get(item, "label", &item_string, NULL);
+    g_object_get(parent, "label", &menu_string, NULL);
 
-    if (!strcmp(item, _("monochrome"))) {
+    if (!strcmp(item_string, _("monochrome"))) {
 	plot->spec->flags |= GPT_MONO;
     }
 
-    if (!strcmp(up_item, _("Save as Windows metafile (EMF)..."))) {
+    if (!strcmp(menu_string, _("Save as Windows metafile (EMF)..."))) {
 	plot->spec->termtype = GP_TERM_EMF;
 	file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
 				  plot->spec, plot->shell);
     } 
+
 #ifdef G_OS_WIN32
-    else if (!strcmp(up_item, _("Copy to clipboard"))) {
+    else if (!strcmp(menu_string, _("Copy to clipboard"))) {
 	win32_process_graph(plot->spec, WIN32_TO_CLIPBOARD);
-    } else if (!strcmp(up_item, _("Print"))) {
+    } else if (!strcmp(menu_string, _("Print"))) {
 	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
     }    
-#endif   
+#endif 
+
+    g_free(item_string);
+    g_free(menu_string);
 
     plot->spec->flags &= ~GPT_MONO;
 
@@ -3090,42 +3090,40 @@ static void clear_labels (png_plot *plot)
     plot->format &= ~PLOT_MARKERS_UP;
 }
 
-static gint plot_popup_activated (GtkWidget *w, gpointer data)
+static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 {
-    gchar *item = (gchar *) data;
-    gpointer ptr = g_object_get_data(G_OBJECT(w), "plot");
-    png_plot *plot = (png_plot *) ptr;
+    png_plot *plot = (png_plot *) data;
+    gchar *item_string = NULL;
     int killplot = 0;
 
-    gtk_widget_destroy(plot->popup);
-    plot->popup = NULL;
+    g_object_get(item, "label", &item_string, NULL);
 
-    if (!strcmp(item, _("Add another curve..."))) {
+    if (!strcmp(item_string, _("Add another curve..."))) {
 	dist_graph_add(plot);
-    } else if (!strcmp(item, _("Save as PNG..."))) {
+    } else if (!strcmp(item_string, _("Save as PNG..."))) {
 	plot->spec->termtype = GP_TERM_PNG;
         file_selector_with_parent(SAVE_GNUPLOT, FSEL_DATA_MISC, 
 				  plot->spec, plot->shell);
-    } else if (!strcmp(item, _("Save as PDF..."))) {
+    } else if (!strcmp(item_string, _("Save as PDF..."))) {
 	plot->spec->termtype = GP_TERM_PDF;
 	pdf_ps_dialog(plot->spec, plot->shell);
-    } else if (!strcmp(item, _("Save as postscript (EPS)..."))) {
+    } else if (!strcmp(item_string, _("Save as postscript (EPS)..."))) {
 	plot->spec->termtype = GP_TERM_EPS;
 	pdf_ps_dialog(plot->spec, plot->shell);
-    } else if (!strcmp(item, _("Save to session as icon"))) { 
+    } else if (!strcmp(item_string, _("Save to session as icon"))) { 
 	add_to_session_callback(plot->spec);
-    } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
+    } else if (plot_is_range_mean(plot) && !strcmp(item_string, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(RMPLOT));
-    } else if (plot_is_hurst(plot) && !strcmp(item, _("Help"))) { 
+    } else if (plot_is_hurst(plot) && !strcmp(item_string, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(HURST));
-    } else if (!strcmp(item, _("Freeze data labels"))) {
+    } else if (!strcmp(item_string, _("Freeze data labels"))) {
 	plot->spec->flags |= GPT_PRINT_MARKERS;
 	redisplay_edited_plot(plot);
-    } else if (!strcmp(item, _("Clear data labels"))) { 
+    } else if (!strcmp(item_string, _("Clear data labels"))) { 
 	clear_labels(plot);
-    } else if (!strcmp(item, _("All data labels"))) { 
+    } else if (!strcmp(item_string, _("All data labels"))) { 
 	show_all_labels(plot);
-    } else if (!strcmp(item, _("Zoom..."))) { 
+    } else if (!strcmp(item_string, _("Zoom..."))) { 
 	GdkWindow *window;
 	GdkCursor* cursor;
 
@@ -3137,29 +3135,31 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
 			   _(" Drag to define zoom rectangle"));
 	create_selection_gc(plot);
-    } else if (!strcmp(item, _("Restore full view"))) { 
+    } else if (!strcmp(item_string, _("Restore full view"))) { 
 	repaint_png(plot, PNG_UNZOOM);
     }
 #ifdef GTK_PRINTING
-    else if (!strcmp(item, _("Print..."))) { 
+    else if (!strcmp(item_string, _("Print..."))) { 
 	gtk_print_graph(plot->spec->fname);
     }
 #endif 
-    else if (!strcmp(item, _("Display PDF"))) { 
+    else if (!strcmp(item_string, _("Display PDF"))) { 
 	graph_display_pdf(plot->spec);
-    } else if (!strcmp(item, _("OLS estimates"))) { 
+    } else if (!strcmp(item_string, _("OLS estimates"))) { 
 	if (plot->spec != NULL) {
 	    do_graph_model(plot->spec->reglist, plot->spec->fit);
 	}
-    } else if (!strcmp(item, _("Numerical values"))) {
+    } else if (!strcmp(item_string, _("Numerical values"))) {
 	show_numbers_from_markers(plot->spec);
-    } else if (!strcmp(item, _("Numerical summary"))) {
+    } else if (!strcmp(item_string, _("Numerical summary"))) {
 	boxplot_show_summary(plot->spec);
-    } else if (!strcmp(item, _("Edit"))) { 
+    } else if (!strcmp(item_string, _("Edit"))) { 
 	start_editing_png_plot(plot);
-    } else if (!strcmp(item, _("Close"))) { 
+    } else if (!strcmp(item_string, _("Close"))) { 
         killplot = 1;
     } 
+
+    g_free(item_string);
 
     if (killplot) {
 	gtk_widget_destroy(plot->shell);
@@ -3182,8 +3182,7 @@ static void attach_color_popup (GtkWidget *w, png_plot *plot)
     for (i=0; i<2; i++) {
 	item = gtk_menu_item_new_with_label(_(color_items[i]));
 	g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(color_popup_activated),
-			 _(color_items[i]));
+			 G_CALLBACK(color_popup_activated), w);
 	g_object_set_data(G_OBJECT(item), "plot", plot);
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(cpopup), item);
@@ -3333,21 +3332,22 @@ static void build_plot_menu (png_plot *plot)
 	}
 
         item = gtk_menu_item_new_with_label(_(plot_items[i]));
-        g_object_set_data(G_OBJECT(item), "plot", plot);
-        gtk_widget_show(item);
-        gtk_menu_shell_append(GTK_MENU_SHELL(plot->popup), item);
 
-	/* items with color sub-menu */
 	if (!strcmp(plot_items[i], "Save as Windows metafile (EMF)...") ||
 	    !strcmp(plot_items[i], "Copy to clipboard") ||
 	    !strcmp(plot_items[i], "Print")) {
+	    /* special: items with color sub-menu */
 	    attach_color_popup(item, plot);
-	    g_object_set_data(G_OBJECT(item), "string", _(plot_items[i]));
 	} else {
+	    /* all other menu items */
 	    g_signal_connect(G_OBJECT(item), "activate",
 			     G_CALLBACK(plot_popup_activated),
-			     _(plot_items[i]));
+			     plot);
 	}
+
+        gtk_widget_show(item);
+        gtk_menu_shell_append(GTK_MENU_SHELL(plot->popup), item);
+
         i++;
     }
 

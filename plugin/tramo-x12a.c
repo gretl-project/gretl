@@ -25,7 +25,7 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
 # include "gtk_compat.h"
 #endif
 
@@ -695,7 +695,8 @@ static void set_opts (tx_request *request)
 
     for (i=0; i<TX_MAXOPT; i++) {
 	if (request->opts[i].check != NULL && 
-	    GTK_TOGGLE_BUTTON(request->opts[i].check)->active) {
+	    gtk_toggle_button_get_active
+	    (GTK_TOGGLE_BUTTON(request->opts[i].check))) {
 	    request->opts[i].save = 1;
 	    if (i < TRIGRAPH) {
 		request->savevars++;

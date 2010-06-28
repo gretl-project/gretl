@@ -25,7 +25,7 @@
 
 #include <gtk/gtk.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
 # include "gtk_compat.h"
 #endif
 
@@ -173,7 +173,7 @@ unsigned char leverage_data_dialog (void)
     gtk_container_add(GTK_CONTAINER(hbox), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(save_dialog_finalize), finfo);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(tmp, TRUE);
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
 

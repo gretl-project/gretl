@@ -202,7 +202,7 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
     gint i;
 
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
-    csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
+    csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(w));
 
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
 
@@ -266,7 +266,7 @@ static void color_patch_button_reset (GtkWidget *button, int cnum)
 static void graph_color_selector (GtkWidget *w, gpointer p)
 {
     GPT_SPEC *spec;
-    GtkWidget *cdlg;
+    GtkWidget *cdlg, *csel;
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
     char colstr[8];
@@ -293,15 +293,14 @@ static void graph_color_selector (GtkWidget *w, gpointer p)
     widget_set_int(cdlg, "colnum", i);
     g_object_set_data(G_OBJECT(cdlg), "color_button", w);
 
-    gtk_color_selection_set_current_color(GTK_COLOR_SELECTION
-					  (GTK_COLOR_SELECTION_DIALOG(cdlg)->colorsel),
-					  &gcolor);					  
+    csel = gtk_color_selection_dialog_get_color_selection(GTK_COLOR_SELECTION_DIALOG(cdlg));
+    gtk_color_selection_set_current_color(GTK_COLOR_SELECTION(csel), &gcolor);
 
-    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
+    g_object_get(G_OBJECT(cdlg), "ok-button", &button, NULL);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(color_select_callback), cdlg);
 
-    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->cancel_button;
+    g_object_get(G_OBJECT(cdlg), "cancel-button", &button, NULL);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(color_cancel), cdlg);
 
@@ -3323,7 +3322,7 @@ GtkWidget *plot_add_editor (png_plot *plot)
 
     /* Close button (do not apply changes) */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect_swapped(G_OBJECT(button), "clicked",
 			     G_CALLBACK(gtk_widget_destroy), 

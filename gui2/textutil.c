@@ -112,7 +112,7 @@ static void replace_string_dialog (struct search_replace *s)
 
     /* replace button -- make this the default */
     button = gtk_button_new_with_label(_("Replace all"));
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(replace_string_setup), s);
@@ -121,7 +121,7 @@ static void replace_string_dialog (struct search_replace *s)
 
     /* cancel button */
     button = gtk_button_new_with_label(_("Cancel"));
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(trash_replace), s);

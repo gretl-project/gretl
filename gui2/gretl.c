@@ -1152,7 +1152,6 @@ static float get_gui_scale (void)
     float scale = 1.0;
 
     settings = gtk_settings_get_default();
-
     g_object_get(G_OBJECT(settings), "gtk-font-name", &fontname, NULL);
 
     if (fontname != NULL) {
@@ -1173,7 +1172,8 @@ mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
     mainwin_width = event->width;
     mainwin_height = event->height;
 
-    gdk_window_get_root_origin(mdata->main->window, &main_x, &main_y);
+    gdk_window_get_root_origin(gtk_widget_get_window(mdata->main), 
+			       &main_x, &main_y);
 
     return FALSE;
 }
@@ -2060,10 +2060,11 @@ int gretl_fork (const char *progvar, const char *arg)
 
 void set_wm_icon (GtkWidget *w, gpointer data)
 {
+    GdkWindow *window = gtk_widget_get_window(w);
     GdkPixmap *icon;
 
-    icon = gdk_pixmap_create_from_xpm_d(w->window, NULL, NULL, gretl_xpm);
-    gdk_window_set_icon(w->window, NULL, icon, NULL);
+    icon = gdk_pixmap_create_from_xpm_d(window, NULL, NULL, gretl_xpm);
+    gdk_window_set_icon(window, NULL, icon, NULL);
 }
 
 #endif
@@ -2080,15 +2081,21 @@ mdata_handle_drag  (GtkWidget *widget,
 		    guint time,
 		    gpointer p)
 {
+    GdkAtom type = gtk_selection_data_get_data_type(data);
+    const guchar *seldata = NULL;
     gchar *dfname;
     char tmp[MAXLEN];
     int pos, skip = 5;
     int ftype = 0;
 
+    if (data != NULL) {
+	seldata = gtk_selection_data_get_data(data);
+    }
+
     /* handle drag of pointer from database window */
     if (info == GRETL_DBSERIES_PTR && data != NULL && 
-	data->type == GDK_SELECTION_TYPE_INTEGER) {
-	import_db_series(*(void **) data->data);
+	type == GDK_SELECTION_TYPE_INTEGER) {
+	import_db_series(*(void **) seldata);
 	return;
     }
 
@@ -2097,7 +2104,7 @@ mdata_handle_drag  (GtkWidget *widget,
     }
 
     /* ignore the wrong sort of data */
-    if (data == NULL || (dfname = (gchar *) data->data) == NULL || 
+    if (data == NULL || (dfname = (gchar *) seldata) == NULL || 
 	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5)) {
 	return;
     }

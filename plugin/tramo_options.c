@@ -21,11 +21,11 @@
 #include <gtk/gtk.h>
 #include "tramo_x12a.h"
 
-#define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
-
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
-# define gtk_widget_is_sensitive(w) GTK_WIDGET_IS_SENSITIVE(w)
+# include "gtk_compat.h"
 #endif
+
+#define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
 
 typedef struct _tramo_options tramo_options;
 

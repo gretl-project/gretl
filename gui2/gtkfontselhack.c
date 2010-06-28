@@ -1227,33 +1227,40 @@ gtk_fontsel_hack_update_preview (GtkFontselHack *fontsel)
 {
     GtkRcStyle *rc_style;
     gint new_height;
-    GtkRequisition old_requisition;
+    GtkRequisition req, old_requisition;
     GtkWidget *preview_entry = fontsel->preview_entry;
     const gchar *text;
 
-    gtk_widget_get_child_requisition (preview_entry, &old_requisition);
+    gtk_widget_get_child_requisition(preview_entry, &old_requisition);
   
-    rc_style = gtk_rc_style_new ();
-    rc_style->font_desc = gtk_fontsel_hack_get_font_description (fontsel);
+    rc_style = gtk_rc_style_new();
+    rc_style->font_desc = gtk_fontsel_hack_get_font_description(fontsel);
   
-    gtk_widget_modify_style (preview_entry, rc_style);
-    g_object_unref (rc_style);
+    gtk_widget_modify_style(preview_entry, rc_style);
+    g_object_unref(rc_style);
 
-    gtk_widget_size_request (preview_entry, NULL);
+    gtk_widget_size_request(preview_entry, NULL);
+
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20)
+    req = preview_entry->requisition;
+#else
+    gtk_widget_get_requisition(preview_entry, &req);
+#endif
   
     /* We don't ever want to be over MAX_PREVIEW_HEIGHT pixels high. */
-    new_height = CLAMP(preview_entry->requisition.height, 
+    new_height = CLAMP(req.height, 
 		       INITIAL_PREVIEW_HEIGHT, 
 		       MAX_PREVIEW_HEIGHT);
 
     if (new_height > old_requisition.height || new_height < old_requisition.height - 30)
-	gtk_widget_set_size_request (preview_entry, -1, new_height);
+	gtk_widget_set_size_request(preview_entry, -1, new_height);
   
     /* This sets the preview text, if it hasn't been set already. */
-    text = gtk_entry_get_text (GTK_ENTRY (preview_entry));
-    if (strlen (text) == 0)
-	gtk_entry_set_text (GTK_ENTRY (preview_entry), _(PREVIEW_TEXT));
-    gtk_editable_set_position (GTK_EDITABLE (preview_entry), 0);
+    text = gtk_entry_get_text(GTK_ENTRY (preview_entry));
+    if (*text == '\0') {
+	gtk_entry_set_text(GTK_ENTRY(preview_entry), _(PREVIEW_TEXT));
+    }
+    gtk_editable_set_position(GTK_EDITABLE(preview_entry), 0);
 }
 
 /*****************************************************************************

@@ -599,7 +599,7 @@ spreadsheet_scroll_to_new_col (Spreadsheet *sheet, GtkTreeViewColumn *column)
     sw = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
     if (sw != NULL) {
 	adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(sw));
-	gtk_adjustment_set_value(adj, adj->upper);
+	gtk_adjustment_set_value(adj, gtk_adjustment_get_upper(adj));
     }
     gtk_tree_path_free(path);
     g_free(pstr);
@@ -680,7 +680,7 @@ static void add_scalar_callback (GtkWidget *w, Spreadsheet *sheet)
     sw = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
     if (sw != NULL) {
 	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(sw));
-	gtk_adjustment_set_value(adj, adj->upper);
+	gtk_adjustment_set_value(adj, gtk_adjustment_get_upper(adj));
     }
 }
 
@@ -701,7 +701,7 @@ spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col)
     sw = gtk_widget_get_ancestor(GTK_WIDGET(view), GTK_TYPE_BIN);
     if (sw != NULL) {
 	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(sw));
-	gtk_adjustment_set_value(adj, adj->upper);
+	gtk_adjustment_set_value(adj, gtk_adjustment_get_upper(adj));
     }
     gtk_tree_path_free(path);
     g_free(pstr);
@@ -1987,7 +1987,7 @@ static void manufacture_keystroke (GtkWidget *widget, guint uval)
 	g_free(keys);
 
 	event = gdk_event_new(GDK_KEY_PRESS);
-	event->key.window = g_object_ref(widget->window);
+	event->key.window = g_object_ref(gtk_widget_get_window(widget));
 	event->key.hardware_keycode = hardware_keycode;
 
 	event->key.keyval = gdk_unicode_to_keyval(uval);

@@ -31,7 +31,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
 # include "gtk_compat.h"
 #endif
 
@@ -737,14 +737,14 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 
     /* Cancel button */
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(cancel_mail_settings), &md);
 
     /* Create the "OK" button */
     button = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(finalize_mail_settings), &md);
@@ -833,14 +833,14 @@ static void pop_info_dialog (struct mail_info *minfo)
 
     /* Cancel button */
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(cancel_pop_settings), &pd);
 
     /* "OK" button */
     button = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(finalize_pop_settings), &pd);

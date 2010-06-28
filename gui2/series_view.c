@@ -553,7 +553,7 @@ static void series_view_toggle_view (GtkWidget *w, struct view_toggler *vt)
 {
     gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "view"));
 
-    if (GTK_TOGGLE_BUTTON(w)->active) {
+    if (button_is_active(w)) {
         *vt->view = i;
 	gtk_widget_set_sensitive(vt->spin, i == VIEW_CUSTOM);
 	if (vt->combo != NULL) {

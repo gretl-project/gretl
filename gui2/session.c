@@ -2893,14 +2893,20 @@ session_data_received (GtkWidget *widget,
 		       guint time,
 		       gpointer p)
 {
-    if (info == GRETL_MODEL_PTR && data != NULL) {
-	MODEL **ppmod = (MODEL **) data->data;
+    const guchar *seldata = NULL;
+
+    if (data != NULL) {
+	seldata = gtk_selection_data_get_data(data);
+    }
+
+    if (info == GRETL_MODEL_PTR && seldata != NULL) {
+	MODEL **ppmod = (MODEL **) seldata;
 
 	if (ppmod != NULL) {
 	    add_to_model_table(*ppmod, MODEL_ADD_BY_DRAG, 0, NULL);
 	}
-    } else if (info == GRETL_GRAPH_FILE && data != NULL) {
-	gchar *fname = (gchar *) data->data;
+    } else if (info == GRETL_GRAPH_FILE && seldata != NULL) {
+	gchar *fname = (gchar *) seldata;
 
 	if (fname != NULL) {
 	    graph_page_add_file(fname);
@@ -3278,7 +3284,7 @@ void view_session (GtkWidget *parent)
 			  (GtkCallback) white_bg_style, 
 			  NULL);
 
-    GTK_WIDGET_SET_FLAGS(icon_table, GTK_CAN_FOCUS);
+    gtk_widget_set_can_focus(icon_table, TRUE);
     gtk_widget_grab_focus(icon_table);
 }
 
