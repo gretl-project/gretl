@@ -348,7 +348,6 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
 static void insert_gfn_help_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
 				  const char *fname)
 {
-    GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
     gchar *pdfname;
 
@@ -370,9 +369,10 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     }
     
     err = user_function_help(fnname, prn);
+
     if (err) {
 	gretl_print_destroy(prn);
-	dummy_call();
+	errbox("Couldn't find any help");
     } else {
 	view_buffer(prn, 80, 400, fnname, VIEW_PKG_INFO, NULL);
     }

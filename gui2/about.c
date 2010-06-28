@@ -173,7 +173,7 @@ void about_dialog (void)
 
     /* GPL button */
     button = gtk_button_new_with_label(_("License"));
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(license_callback), 
@@ -181,7 +181,7 @@ void about_dialog (void)
 
     /* OK button */
     button = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(abox), button, FALSE, FALSE, 0);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 

@@ -1349,9 +1349,14 @@ db_window_handle_drag  (GtkWidget *widget,
 			gpointer p)
 {
     /* handle drag of pointer from remote database window */
-    if (info == GRETL_REMOTE_DB_PTR && data != NULL && 
-	data->type == GDK_SELECTION_TYPE_INTEGER) {
-	install_file_from_server(NULL, *(void **) data->data);
+    if (info == GRETL_REMOTE_DB_PTR && data != NULL) {
+	GdkAtom type = gtk_selection_data_get_data_type(data);
+	
+	if (type == GDK_SELECTION_TYPE_INTEGER) {
+	    const guchar *seldata = gtk_selection_data_get_data(data);
+
+	    install_file_from_server(NULL, *(void **) seldata);
+	}
     }
 }
 
@@ -1366,9 +1371,14 @@ pkg_window_handle_drag  (GtkWidget *widget,
 			 gpointer p)
 {
     /* handle drag of pointer from remote function package window */
-    if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL && 
-	data->type == GDK_SELECTION_TYPE_INTEGER) {
-	install_file_from_server(NULL, *(void **) data->data);
+    if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL) {
+	GdkAtom type = gtk_selection_data_get_data_type(data);
+
+	if (type == GDK_SELECTION_TYPE_INTEGER) {
+	    const guchar *seldata = gtk_selection_data_get_data(data);
+
+	    install_file_from_server(NULL, *(void **) seldata);
+	}
     }
 }
 

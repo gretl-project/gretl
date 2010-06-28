@@ -182,7 +182,8 @@ static int save_session_prompt (int gui_session)
     g_signal_connect(G_OBJECT(b), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-    GTK_WIDGET_SET_FLAGS(b, GTK_CAN_DEFAULT);
+    
+    gtk_widget_set_can_default(b, TRUE);
     gtk_widget_grab_default(b);
     gtk_widget_grab_focus(b);
 
@@ -1176,7 +1177,7 @@ void database_description_dialog (const char *binname)
 
 static void record_seed (GtkWidget *w, guint32 *s)
 {
-    *s = (guint32) GTK_ADJUSTMENT(w)->value;
+    *s = (guint32) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
 }
 
 static void set_rand_seed (GtkWidget *w, guint32 *s)
@@ -2284,15 +2285,15 @@ static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
 {
     if (rset->p != NULL) {
 	int t1 = obs_button_get_value(rset->startspin);
-	GtkAdjustment *preadj = GTK_ADJUSTMENT(rset->p);
+	GtkAdjustment *adj = GTK_ADJUSTMENT(rset->p);
 
-	if (preadj->upper != t1) {
-	    preadj->upper = t1;
-	    if (preadj->value > t1) {
-		preadj->value = t1;
-		gtk_adjustment_value_changed(preadj);
+	if (gtk_adjustment_get_upper(adj) != t1) {
+	    gtk_adjustment_set_upper(adj, t1);
+	    if (gtk_adjustment_get_value(adj) > t1) {
+		gtk_adjustment_set_value(adj, t1);
+		gtk_adjustment_value_changed(adj);
 	    }
-	    gtk_adjustment_changed(preadj);
+	    gtk_adjustment_changed(adj);
 	}
     }
 }
@@ -3820,7 +3821,7 @@ int yes_no_help_dialog (const char *msg, int hcode)
 		     G_CALLBACK(set_response_yes), &ret);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     gtk_widget_grab_default(button);
 

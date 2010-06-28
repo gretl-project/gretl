@@ -94,7 +94,7 @@ GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
     GtkWidget *button;
 
     button = gtk_button_new_from_stock(GTK_STOCK_HELP);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
 				       button, TRUE);
@@ -129,7 +129,7 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
     GtkWidget *button;
 
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
 
     if (canceled != NULL) {
@@ -168,7 +168,7 @@ GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
     GtkWidget *button;
 
     button = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
 
     if (opt != NULL) {
@@ -192,7 +192,7 @@ GtkWidget *ok_button (GtkWidget *hbox)
     GtkWidget *w;
 
     w = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(w, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
@@ -203,7 +203,7 @@ GtkWidget *apply_button (GtkWidget *hbox)
     GtkWidget *w;
 
     w = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(w, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
@@ -214,7 +214,7 @@ GtkWidget *cancel_button (GtkWidget *hbox)
     GtkWidget *w;
 
     w = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(w, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
@@ -225,7 +225,7 @@ GtkWidget *close_button (GtkWidget *hbox)
     GtkWidget *w;
 
     w = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(w, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
@@ -236,7 +236,7 @@ GtkWidget *next_button (GtkWidget *hbox)
     GtkWidget *w;
 
     w = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(w, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
@@ -247,7 +247,7 @@ GtkWidget *back_button (GtkWidget *hbox)
     GtkWidget *w;
 
     w = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
-    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(w, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
@@ -306,6 +306,7 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 			     unsigned char flags)
 {
     GtkWidget *d = gtk_dialog_new();
+    GtkWidget *aa;
 
     if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(d), title);
@@ -318,8 +319,8 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 		     G_CALLBACK(esc_kills_window), NULL);
 #endif
 
-    gtk_button_box_set_layout(GTK_BUTTON_BOX(GTK_DIALOG(d)->action_area), 
-			      GTK_BUTTONBOX_END);
+    aa = gtk_dialog_get_action_area(GTK_DIALOG(d));
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(aa), GTK_BUTTONBOX_END);
     set_dialog_border_widths(d);
     gtk_window_set_position(GTK_WINDOW(d), GTK_WIN_POS_MOUSE);
 
@@ -541,6 +542,7 @@ dialog_data_new (gpointer p, gint code, const char *title,
 		 int *canceled)
 {
     dialog_t *d = mymalloc(sizeof *d);
+    GtkWidget *aa;
 
     if (d == NULL) {
 	return NULL;
@@ -563,8 +565,8 @@ dialog_data_new (gpointer p, gint code, const char *title,
 
     gtk_window_set_title(GTK_WINDOW(d->dialog), title);
 
-    gtk_box_set_homogeneous(GTK_BOX 
-			    (GTK_DIALOG(d->dialog)->action_area), TRUE);
+    aa = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
+    gtk_box_set_homogeneous(GTK_BOX(aa), TRUE); 
     gtk_window_set_position(GTK_WINDOW(d->dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(d->dialog), "destroy", 

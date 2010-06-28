@@ -178,16 +178,16 @@ static int get_png_bounds_info (png_bounds *bounds);
 
 static void terminate_plot_positioning (png_plot *plot)
 {
-    if (!(plot->status & PLOT_POSITIONING)) {
-	return;
-    }
-	    
-    plot->status ^= PLOT_POSITIONING;
-    plot->labelpos_entry = NULL;
-    gdk_window_set_cursor(plot->canvas->window, NULL);
-    gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
-    if (plot->editor != NULL) {
-	gtk_window_present(GTK_WINDOW(plot->editor));
+    if (plot->status & PLOT_POSITIONING) {
+	GdkWindow *window = gtk_widget_get_window(plot->canvas);
+
+	plot->status ^= PLOT_POSITIONING;
+	plot->labelpos_entry = NULL;
+	gdk_window_set_cursor(window, NULL);
+	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+	if (plot->editor != NULL) {
+	    gtk_window_present(GTK_WINDOW(plot->editor));
+	}
     }
 }
 
@@ -263,9 +263,11 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
     if (plot != NULL) {
 	GtkWidget *entry;
 	GdkCursor* cursor;
+	GdkWindow *window;
 
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
-	gdk_window_set_cursor(plot->canvas->window, cursor);
+	window = gtk_widget_get_window(plot->canvas);
+	gdk_window_set_cursor(window, cursor);
 	gdk_cursor_unref(cursor);
 	entry = g_object_get_data(G_OBJECT(w), "labelpos_entry");
 	plot->labelpos_entry = entry;
@@ -2533,7 +2535,9 @@ static void x_to_date (double x, int pd, char *str)
 static void create_selection_gc (png_plot *plot)
 {
     if (plot->invert_gc == NULL) {
-	plot->invert_gc = gdk_gc_new(plot->canvas->window);
+	GdkWindow *window = gtk_widget_get_window(plot->canvas);
+
+	plot->invert_gc = gdk_gc_new(window);
 	gdk_gc_set_function(plot->invert_gc, GDK_INVERT);
     }
 }
@@ -2541,6 +2545,8 @@ static void create_selection_gc (png_plot *plot)
 static void draw_selection_rectangle (png_plot *plot,
 				      int x, int y)
 {
+    GdkWindow *window;
+    GtkStyle *style;
     int rx, ry, rw, rh;
 
     rx = (plot->screen_xmin < x)? plot->screen_xmin : x;
@@ -2555,13 +2561,17 @@ static void draw_selection_rectangle (png_plot *plot,
 		       plot->invert_gc,
 		       FALSE,
 		       rx, ry, rw, rh);
+
     /* show the modified pixmap */
-    gdk_draw_drawable(plot->canvas->window,
-		      plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+    window = gtk_widget_get_window(plot->canvas);
+    style = gtk_widget_get_style(plot->canvas);
+    gdk_draw_drawable(window,
+		      style->fg_gc[GTK_STATE_NORMAL],
 		      plot->pixmap,
 		      0, 0,
 		      0, 0,
 		      plot->pixel_width, plot->pixel_height);
+
     /* draw (invert) again to erase the rectangle */
     gdk_draw_rectangle(plot->pixmap,
 		       plot->invert_gc,
@@ -2599,6 +2609,8 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     const gchar *label = plot->spec->markers[i];
     PangoContext *context;
     PangoLayout *pl;
+    GdkWindow *window;
+    GtkStyle *style;
 
     if (plot_is_roots(plot)) {
 	gchar alt_label[12];
@@ -2622,8 +2634,10 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     gdk_draw_layout(plot->pixmap, plot->invert_gc, x, y, pl);
 
     /* show the modified pixmap */
-    gdk_draw_drawable(plot->canvas->window,
-		      plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+    window = gtk_widget_get_window(plot->canvas);
+    style = gtk_widget_get_style(plot->canvas);
+    gdk_draw_drawable(window,
+		      style->fg_gc[GTK_STATE_NORMAL],
 		      plot->pixmap,
 		      0, 0,
 		      0, 0,
@@ -2913,8 +2927,12 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
     gchar *item = (gchar *) data;
     gpointer ptr = g_object_get_data(G_OBJECT(w), "plot");
     png_plot *plot = (png_plot *) ptr;
-    GtkWidget *parent = (GTK_MENU(w->parent))->parent_menu_item;
-    gchar *up_item = g_object_get_data(G_OBJECT(parent), "string");
+    GtkWidget *wpar, *parent;
+    gchar *up_item;
+
+    wpar = gtk_widget_get_parent(w);
+    parent = GTK_MENU(wpar)->parent_menu_item; /* FIXME */
+    up_item = g_object_get_data(G_OBJECT(parent), "string");
 
     if (!strcmp(item, _("monochrome"))) {
 	plot->spec->flags |= GPT_MONO;
@@ -3108,10 +3126,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     } else if (!strcmp(item, _("All data labels"))) { 
 	show_all_labels(plot);
     } else if (!strcmp(item, _("Zoom..."))) { 
+	GdkWindow *window;
 	GdkCursor* cursor;
 
+	window = gtk_widget_get_window(plot->canvas);
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
-	gdk_window_set_cursor(plot->canvas->window, cursor);
+	gdk_window_set_cursor(window, cursor);
 	gdk_cursor_unref(cursor);
 	plot->status |= PLOT_ZOOMING;
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
@@ -3453,6 +3473,7 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 				 png_plot *plot)
 {
     if (plot_is_zooming(plot)) {
+	GdkWindow *window;
 	double z;
 
 	if (!get_data_xy(plot, event->x, event->y, 
@@ -3479,7 +3500,8 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 	}
 
 	plot->status ^= PLOT_ZOOMING;
-	gdk_window_set_cursor(plot->canvas->window, NULL);
+	window = gtk_widget_get_window(plot->canvas);
+	gdk_window_set_cursor(window, NULL);
 	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
     }
 
@@ -3562,13 +3584,16 @@ static
 void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 		  GdkPixmap *dbuf_pixmap)
 {
+    GdkWindow *window = gtk_widget_get_window(widget);
+    GtkStyle *style = gtk_widget_get_style(widget);
+
     /* Don't repaint entire window on each exposure */
-    gdk_window_set_back_pixmap(widget->window, NULL, FALSE);
+    gdk_window_set_back_pixmap(window, NULL, FALSE);
 
     /* Refresh double buffer, then copy the "dirtied" area to
        the on-screen GdkWindow */
-    gdk_draw_drawable(widget->window,
-		      widget->style->fg_gc[GTK_STATE_NORMAL],
+    gdk_draw_drawable(window,
+		      style->fg_gc[GTK_STATE_NORMAL],
 		      dbuf_pixmap,
 		      event->area.x, event->area.y,
 		      event->area.x, event->area.y,
@@ -3632,6 +3657,7 @@ static int render_pngfile (png_plot *plot, int view)
 {
     gint width, height;
     GdkPixbuf *pbuf;
+    GtkStyle *style;
     char pngname[MAXLEN];
 
     build_path(pngname, gretl_dotdir(), "gretltmp.png", NULL);
@@ -3663,8 +3689,9 @@ static int render_pngfile (png_plot *plot, int view)
 	} 
     }
 
+    style = gtk_widget_get_style(plot->canvas);
     gdk_draw_pixbuf(plot->pixmap, 
-		    plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+		    style->fg_gc[GTK_STATE_NORMAL],
 		    pbuf, 0, 0, 0, 0, width, height,
 		    GDK_RGB_DITHER_NONE, 0, 0);
 
@@ -3673,8 +3700,10 @@ static int render_pngfile (png_plot *plot, int view)
    
     if (view != PNG_START) { 
 	/* we're changing the view, so refresh the whole canvas */
-	gdk_draw_drawable(plot->canvas->window,
-			  plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+	GdkWindow *window = gtk_widget_get_window(plot->canvas);
+
+	gdk_draw_drawable(window,
+			  style->fg_gc[GTK_STATE_NORMAL],
 			  plot->pixmap,
 			  0, 0,
 			  0, 0,
@@ -4232,8 +4261,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
                            | GDK_POINTER_MOTION_MASK
                            | GDK_POINTER_MOTION_HINT_MASK);
 
-    GTK_WIDGET_SET_FLAGS(plot->canvas, GTK_CAN_FOCUS);
-
+    gtk_widget_set_can_focus(plot->canvas, TRUE);
     g_signal_connect(G_OBJECT(plot->canvas), "button-press-event", 
 		     G_CALLBACK(plot_button_press), plot);
     g_signal_connect(G_OBJECT(plot->canvas), "button-release-event", 
@@ -4292,7 +4320,8 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gtk_widget_show(plot->statusarea);
 
     gtk_widget_realize(plot->canvas);
-    gdk_window_set_back_pixmap(plot->canvas->window, NULL, FALSE);
+    gdk_window_set_back_pixmap(gtk_widget_get_window(plot->canvas),
+			       NULL, FALSE);
 
     if (plot_has_xrange(plot)) {
 	gtk_widget_realize(plot->cursor_label);
@@ -4306,7 +4335,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     /* set the focus to the canvas area */
     gtk_widget_grab_focus(plot->canvas);  
 
-    plot->pixmap = gdk_pixmap_new(plot->shell->window, 
+    plot->pixmap = gdk_pixmap_new(gtk_widget_get_window(plot->shell), 
 				  plot->pixel_width, plot->pixel_height, 
 				  -1);
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",

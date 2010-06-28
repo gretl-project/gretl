@@ -3031,7 +3031,7 @@ static void real_stats_calculator (int code, gpointer data)
 
     /* Close button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(tmp, TRUE);
     gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), 
@@ -3039,7 +3039,7 @@ static void real_stats_calculator (int code, gpointer data)
 
     /* OK button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(tmp, TRUE);
     gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", child->callback, child);
 
@@ -3047,7 +3047,6 @@ static void real_stats_calculator (int code, gpointer data)
     hcode = calc_help_code(code);
     if (hcode) { 
 	tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
-	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_container_add(GTK_CONTAINER(child->bbox), tmp);
 	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(child->bbox),
 					   tmp, TRUE);

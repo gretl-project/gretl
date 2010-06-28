@@ -1165,7 +1165,7 @@ static void finfo_dialog (function_info *finfo)
 
     /* "Save as" button */
     button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(finfo_save_callback), finfo);
@@ -1174,7 +1174,7 @@ static void finfo_dialog (function_info *finfo)
 
     /* Save button */
     button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(finfo_save_callback), finfo);
@@ -1182,7 +1182,7 @@ static void finfo_dialog (function_info *finfo)
 
     /* Close button */
     button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(delete_pkg_editor), finfo);
@@ -1270,7 +1270,7 @@ static void login_dialog (login_info *linfo)
 
     /* Website */
     button = gtk_button_new_with_label("Website");
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
 				       button, TRUE);

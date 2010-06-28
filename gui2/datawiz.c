@@ -518,7 +518,7 @@ static void dwiz_set_radio_opt (GtkWidget *w, dw_opts *opts)
 		gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(opts->spinner));
 
 	    gtk_widget_set_sensitive(opts->spinner, TRUE);
-	    val = (int) adj->value;
+	    val = (int) gtk_adjustment_get_value(adj);
 	    if (opts->extra != NULL) {
 		*opts->extra = SPECIAL_TIME_SERIES;
 	    }
@@ -1071,7 +1071,7 @@ static GtkWidget *dwiz_combo (GList *vlist, dw_opts *opts)
 
 static void dw_set_custom_frequency (GtkWidget *w, DATAINFO *dwinfo)
 {
-    dwinfo->pd = (int) GTK_ADJUSTMENT(w)->value;
+    dwinfo->pd = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
 #if DWDEBUG
     fprintf(stderr, "dw_set_custom_frequency: set dwinfo->pd = %d\n", dwinfo->pd);
 #endif
@@ -1079,7 +1079,7 @@ static void dw_set_custom_frequency (GtkWidget *w, DATAINFO *dwinfo)
 
 static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
 {
-    dwinfo->t1 = (int) GTK_ADJUSTMENT(w)->value;
+    dwinfo->t1 = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
 #if DWDEBUG
     fprintf(stderr, "dw_set_t1: set dwinfo->t1 = %d\n", dwinfo->t1);
 #endif

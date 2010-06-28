@@ -29,6 +29,7 @@
 #include "treeutils.h"
 #include "winstack.h"
 #include "toolbar.h"
+#include "dlgutils.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -808,6 +809,7 @@ static void
 maybe_adjust_descrip_column (windata_t *vwin)
 {
     GtkTreeViewColumn *col;
+    GdkWindow *window;
     gint w0, w1, lw, w1max;
 
     col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), 0);
@@ -816,7 +818,8 @@ maybe_adjust_descrip_column (windata_t *vwin)
     col = gtk_tree_view_get_column(GTK_TREE_VIEW(vwin->listbox), 1);
     w1 = gtk_tree_view_column_get_width(col);
 
-    gdk_drawable_get_size(vwin->listbox->window, &lw, NULL);
+    window = gtk_widget_get_window(vwin->listbox);
+    gdk_drawable_get_size(window, &lw, NULL);
 
     w1max = lw - w0 - 140;
 
