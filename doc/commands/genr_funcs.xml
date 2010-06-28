@@ -4050,51 +4050,6 @@
       </description>
     </function>
 
-    <function name="rank" section="linalg" output="scalar">
-      <fnargs>
-	<fnarg type="matrix">X</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns the rank of <argname>X</argname>, numerically computed
-	  via the singular value decomposition. 
-	  <seelist> 
-	    <fncref targ="svd"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
-    <function name="ranking" section="stats" output="series">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Returns a series with the ranks of <math>y</math>. The rank for
-	  observation <math>i</math> is the number of elements in the
-	  series that are less than <math>y</math><sub>i</sub> plus one
-	  half the number of elements in the series that are equal to
-	  <math>y</math><sub>i</sub>. (Intuitively, you may think of chess
-	  points, where victory gives you one point and a draw gives you
-	  half a point.) One is added so the lowest rank is 1 instead of
-	  0.
-	</para>
-	<para context="tex">
-	  Formally, 
-	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[
-	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
-	  where $I$ denotes the indicator function.
-	</para>
-	<para>
-	  <seelist>
-	    <fncref targ="sort"/>
-	    <fncref targ="sortby"/>
-	  </seelist>
-	</para>
-      </description>
-    </function>
-
     <function name="randgen" section="probdist" output="series">
       <fnargs>
 	<fnarg type="char">c</fnarg>
@@ -4192,7 +4147,7 @@
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; $p$ &amp; $n$ \\
 	  Poisson &amp; \texttt{p} or \texttt{P} &amp; mean &amp; -- \\
 	  Weibull &amp; \texttt{w} or \texttt{W} &amp; shape &amp; scale \\
-	  Generalized Error &amp; \texttt{w} or \texttt{W} &amp; shape &amp; -- 
+	  Generalized Error &amp; \texttt{e} or \texttt{E} &amp; shape &amp; -- 
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -4200,6 +4155,51 @@
 	  <seelist>
 	    <fncref targ="normal"/>
 	    <fncref targ="uniform"/> 
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="rank" section="linalg" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the rank of <argname>X</argname>, numerically computed
+	  via the singular value decomposition. 
+	  <seelist> 
+	    <fncref targ="svd"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="ranking" section="stats" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a series with the ranks of <math>y</math>. The rank for
+	  observation <math>i</math> is the number of elements in the
+	  series that are less than <math>y</math><sub>i</sub> plus one
+	  half the number of elements in the series that are equal to
+	  <math>y</math><sub>i</sub>. (Intuitively, you may think of chess
+	  points, where victory gives you one point and a draw gives you
+	  half a point.) One is added so the lowest rank is 1 instead of
+	  0.
+	</para>
+	<para context="tex">
+	  Formally, 
+	  \[ \mathrm{rank}(y_i) = 1 + \sum_{j \ne i} \left[
+	  I(y_j &lt; y_i) + 0.5 \cdot I(y_j = y_i) \right] \] 
+	  where $I$ denotes the indicator function.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="sort"/>
+	    <fncref targ="sortby"/>
 	  </seelist>
 	</para>
       </description>
