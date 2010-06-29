@@ -77,12 +77,6 @@
 
 #define CMD_DEBUG 0
 
-#if 0 /* not yet */
-#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 20
-# define USE_SPINNER
-#endif
-#endif
-
 /* private functions */
 static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *dlg);
@@ -6352,7 +6346,6 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
 static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 {
     static GdkCursor *busy_cursor;
-    GtkWidget *spinner = NULL;
     GdkWindow *wcurr = NULL;
     GdkWindow *wtxt = NULL;
     gpointer vp = NULL;
@@ -6375,15 +6368,10 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	check_and_record_command();
     } 
 
-#ifdef USE_SPINNER
-    spinner = g_object_get_data(G_OBJECT(vwin->mbar), "spinner");
-    if (spinner != NULL) {
-	gtk_widget_show(spinner);
-	gtk_spinner_start(GTK_SPINNER(spinner));
-    }
-#endif
+    wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
+				    GTK_TEXT_WINDOW_TEXT);
 
-    if (spinner == NULL) {
+    if (wtxt != NULL) {
 	GdkDisplay *disp;
 
 	if (busy_cursor == NULL) {
@@ -6391,8 +6379,6 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	}
 
 	/* set a "busy" cursor on the script text window */
-	wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
-					GTK_TEXT_WINDOW_TEXT);
 	gdk_window_set_cursor(wtxt, busy_cursor);
 
 	/* and also on the window that the mouse pointer is in, 
@@ -6417,21 +6403,12 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
     gretl_set_batch_mode(save_batch);
 
-#ifdef USE_SPINNER
-    if (spinner != NULL) {
-	gtk_spinner_stop(GTK_SPINNER(spinner));
-	gtk_widget_hide(spinner);
+    /* reset regular cursor */
+    if (wtxt != NULL) {
+	gdk_window_set_cursor(wtxt, NULL);
     }
-#endif
-
-    if (spinner == NULL) {
-	/* reset regular cursor */
-	if (wtxt != NULL) {
-	    gdk_window_set_cursor(wtxt, NULL);
-	}
-	if (wcurr != NULL) {
-	    gdk_window_set_cursor(wcurr, NULL);
-	}
+    if (wcurr != NULL) {
+	gdk_window_set_cursor(wcurr, NULL);
     }
 
     refresh_data();
