@@ -9,6 +9,11 @@ XML_CFLAGS = @XML_CFLAGS@
 GTK_CFLAGS = @GTK_CFLAGS@
 RX_CFLAGS = @CFLAGS@ -I$(topsrc)/gui2/gtksourceview
 have_gnu_regex = @have_gnu_regex@
+quiet_build = @quiet_build@
+
+ifeq ($(CC),gcc)
+  override CFLAGS += -Wno-missing-field-initializers
+endif
 
 ifeq ($(have_gnu_regex),no)
   REGEX_OBJ = regex.o
@@ -16,9 +21,16 @@ else
   REGEX_DEF = -D_GNU_SOURCE -DNATIVE_GNU_REGEX
 endif
 
-DATADIR = $(prefix)/share/gretl
+ifeq ($(quiet_build),yes)
+  AMP = @
+  CCECHO = @echo "  CC    $@"
+  LDECHO = @echo "  LD    $@" 
+  CCV = $(CC) > /dev/null
+else
+  CCV = $(CC)
+endif
 
-LIBTOOL = ../../libtool
+DATADIR = $(prefix)/share/gretl
 
 VPATH = $(topsrc)/gui2/gtksourceview:$(topsrc)/gui2/gtksourceview/gnu-regex
 
@@ -43,14 +55,16 @@ SRCS = gtksourcebuffer.c \
 OBJS = $(SRCS:.c=.o)
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $<
-	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
+	$(CCECHO)
+	$(AMP)$(CC) -c $(CFLAGS) $<
+	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
 libgtksourceview-lite.a: .deps $(OBJS) $(REGEX_OBJ)
 	$(AR) -rs $@ $(OBJS) $(REGEX_OBJ)
 
 regex.o: regex.c
-	$(CC) -c $(RX_CFLAGS) $<
+	$(CCECHO)
+	$(AMP)$(CC) -c $(RX_CFLAGS) $<
 
 .deps:
 	mkdir $@

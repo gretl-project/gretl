@@ -1207,7 +1207,7 @@ language_file_parse (GtkSourceLanguage *language,
 			
 			escape = xmlNodeListGetString (doc, cur->xmlChildrenNode, 1);
 			esc_char = g_utf8_get_char_validated ((gchar *)escape, -1);
-			if (esc_char < 0)
+			if (esc_char == (gunichar) -1)
 			{
 				g_warning ("Invalid (non UTF8) escape character in file '%s'",
 					   language->priv->lang_file_name);
