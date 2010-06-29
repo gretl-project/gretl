@@ -885,6 +885,17 @@ void vwin_add_viewbar (windata_t *vwin, ViewbarFlags flags)
 
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
     gtk_widget_show_all(hbox);
+
+#if 0 
+    /* (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 20) */
+    if (vwin->role == EDIT_SCRIPT || vwin->role == VIEW_SCRIPT) {
+	GtkWidget *spinner = gtk_spinner_new();
+
+	gtk_widget_set_size_request(spinner, 24, 24);
+	gtk_box_pack_end(GTK_BOX(hbox), spinner, FALSE, FALSE, 5);
+	g_object_set_data(G_OBJECT(vwin->mbar), "spinner", spinner);
+    }
+#endif
 }
 
 static void remove_child (GtkWidget *child, GtkWidget *cont)

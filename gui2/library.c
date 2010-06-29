@@ -77,6 +77,12 @@
 
 #define CMD_DEBUG 0
 
+#if 0 /* not yet */
+#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 20
+# define USE_SPINNER
+#endif
+#endif
+
 /* private functions */
 static void update_model_tests (windata_t *vwin);
 static int finish_genr (MODEL *pmod, dialog_t *dlg);
@@ -6346,9 +6352,9 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
 static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 {
     static GdkCursor *busy_cursor;
-    GdkDisplay *disp;
+    GtkWidget *spinner = NULL;
     GdkWindow *wcurr = NULL;
-    GdkWindow *wtxt;
+    GdkWindow *wtxt = NULL;
     gpointer vp = NULL;
     PRN *prn;
     int save_batch;
@@ -6369,41 +6375,64 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	check_and_record_command();
     } 
 
-    if (busy_cursor == NULL) {
-	busy_cursor = gdk_cursor_new(GDK_WATCH);
+#ifdef USE_SPINNER
+    spinner = g_object_get_data(G_OBJECT(vwin->mbar), "spinner");
+    if (spinner != NULL) {
+	gtk_widget_show(spinner);
+	gtk_spinner_start(GTK_SPINNER(spinner));
     }
+#endif
 
-    /* set a "busy" cursor on the script text window */
-    wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
-				    GTK_TEXT_WINDOW_TEXT);
-    gdk_window_set_cursor(wtxt, busy_cursor);
+    if (spinner == NULL) {
+	GdkDisplay *disp;
 
-    /* and also on the window that the mouse pointer is in, 
-       if it's not the script text window */
-    disp = gdk_display_get_default();
-    if (disp != NULL) {
-	gint x, y;
-
-	wcurr = gdk_display_get_window_at_pointer(disp, &x, &y);
-	if (wcurr != wtxt) {
-	    gdk_window_set_cursor(wcurr, busy_cursor);
-	} else {
-	    wcurr = NULL;
+	if (busy_cursor == NULL) {
+	    busy_cursor = gdk_cursor_new(GDK_WATCH);
 	}
-    }
 
-    /* update cursor */
-    gdk_flush();
+	/* set a "busy" cursor on the script text window */
+	wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
+					GTK_TEXT_WINDOW_TEXT);
+	gdk_window_set_cursor(wtxt, busy_cursor);
+
+	/* and also on the window that the mouse pointer is in, 
+	   if it's not the script text window */
+	disp = gdk_display_get_default();
+	if (disp != NULL) {
+	    gint x, y;
+
+	    wcurr = gdk_display_get_window_at_pointer(disp, &x, &y);
+	    if (wcurr != wtxt) {
+		gdk_window_set_cursor(wcurr, busy_cursor);
+	    } else {
+		wcurr = NULL;
+	    }
+	}
+
+	/* update cursor */
+	gdk_flush();
+    }
 
     save_batch = gretl_in_batch_mode();
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
     gretl_set_batch_mode(save_batch);
 
-    /* reset regular cursor */
-    if (wcurr != NULL) {
-	gdk_window_set_cursor(wcurr, NULL);
+#ifdef USE_SPINNER
+    if (spinner != NULL) {
+	gtk_spinner_stop(GTK_SPINNER(spinner));
+	gtk_widget_hide(spinner);
     }
-    gdk_window_set_cursor(wtxt, NULL);
+#endif
+
+    if (spinner == NULL) {
+	/* reset regular cursor */
+	if (wtxt != NULL) {
+	    gdk_window_set_cursor(wtxt, NULL);
+	}
+	if (wcurr != NULL) {
+	    gdk_window_set_cursor(wcurr, NULL);
+	}
+    }
 
     refresh_data();
     suppress_logo = 0;

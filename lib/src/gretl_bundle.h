@@ -24,10 +24,10 @@ int gretl_is_bundle (const char *name);
 gretl_bundle *get_gretl_bundle_by_name (const char *name);
 
 void *gretl_bundle_get_data (const char *name, const char *key,
-			     GretlType *type);
+			     GretlType *type, int *size);
 
 int gretl_bundle_set_data (const char *name, const char *key,
-			   void *ptr, GretlType type);
+			   void *ptr, GretlType type, int size);
 
 int gretl_bundle_add_or_replace (gretl_bundle *b, const char *name);
 

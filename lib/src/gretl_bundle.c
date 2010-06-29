@@ -39,6 +39,7 @@ struct gretl_bundle_ {
 
 struct bundle_value_ {
     GretlType type;
+    int size;
     gpointer data;
 };
 
@@ -90,7 +91,8 @@ static int bundle_index_by_name (const char *name, int level)
 /* allocate and fill out a 'value' (type plus data pointer) that will
    be inserted into a bundle's hash table */
 
-static bundle_value *bundle_value_new (GretlType type, void *ptr, int *err)
+static bundle_value *bundle_value_new (GretlType type, void *ptr, 
+				       int size, int *err)
 {
     bundle_value *val = malloc(sizeof *val);
 
@@ -98,6 +100,7 @@ static bundle_value *bundle_value_new (GretlType type, void *ptr, int *err)
 	*err = E_ALLOC;
     } else {
 	val->type = type;
+	val->size = 0;
 	switch (val->type) {
 	case GRETL_TYPE_DOUBLE:
 	    val->data = malloc(sizeof(double));
@@ -112,6 +115,10 @@ static bundle_value *bundle_value_new (GretlType type, void *ptr, int *err)
 	    break;
 	case GRETL_TYPE_MATRIX:
 	    val->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	    break;
+	case GRETL_TYPE_SERIES:
+	    val->data = copyvec((const double *) ptr, size);
+	    val->size = size;
 	    break;
 	default:
 	    *err = E_TYPES;
@@ -136,7 +143,8 @@ static void bundle_value_destroy (gpointer data)
 
     switch (val->type) {
     case GRETL_TYPE_DOUBLE:
-    case GRETL_TYPE_STRING:	
+    case GRETL_TYPE_STRING:
+    case GRETL_TYPE_SERIES:
 	free(val->data);
 	break;
     case GRETL_TYPE_MATRIX:
@@ -283,13 +291,15 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * @name: name of bundle.
  * @key: name of key to access.
  * @type: location to receive data type.
+ * @size: location to receive size of data (= series
+ * length for GRETL_TYPE_SERIES, otherwise 0).
  *
  * Returns: the data pointer associated with @key in the
  * bundle given by @name, or NULL on failure.
  */
 
 void *gretl_bundle_get_data (const char *name, const char *key,
-			     GretlType *type)
+			     GretlType *type, int *size)
 {
     void *ret = NULL;
     gretl_bundle *b;
@@ -304,6 +314,7 @@ void *gretl_bundle_get_data (const char *name, const char *key,
 	    
 	    *type = val->type;
 	    ret = val->data;
+	    *size = val->size;
 	}
     }
 
@@ -311,10 +322,11 @@ void *gretl_bundle_get_data (const char *name, const char *key,
 }
 
 static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
-				       void *ptr, GretlType type)
+				       void *ptr, GretlType type,
+				       int size)
 {
     int err = 0;
-    bundle_value *val = bundle_value_new(type, ptr, &err);
+    bundle_value *val = bundle_value_new(type, ptr, size, &err);
 
     if (!err) {
 	gchar *k = g_strdup(key);
@@ -335,6 +347,8 @@ static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
  * @key: name of key to create or replace.
  * @ptr: data pointer.
  * @type: type of data.
+ * @size: if @type == GRETL_TYPE_SERIES, the length of
+ * the series, otherwise 0.
  * 
  * Sets the data type and pointer to be associated with @key in 
  * the bundle given by @name. If @key is already present in
@@ -345,7 +359,7 @@ static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
  */
 
 int gretl_bundle_set_data (const char *name, const char *key,
-			   void *ptr, GretlType type)
+			   void *ptr, GretlType type, int size)
 {
     gretl_bundle *b;
     int err;
@@ -355,7 +369,7 @@ int gretl_bundle_set_data (const char *name, const char *key,
     if (b == NULL) {
 	err = E_UNKVAR;
     } else {
-	err = real_gretl_bundle_set_data(b, key, ptr, type);
+	err = real_gretl_bundle_set_data(b, key, ptr, type, size);
     }
 
     return err;
@@ -426,7 +440,8 @@ static void copy_new_bundle_value (gpointer key, gpointer value, gpointer p)
 
     if (!gretl_bundle_has_data(targ, (const char *) key)) {
 	real_gretl_bundle_set_data(targ, (const char *) key,
-				   bval->data, bval->type);
+				   bval->data, bval->type,
+				   bval->size);
     }
 }
 
@@ -439,7 +454,8 @@ static void copy_bundle_value (gpointer key, gpointer value, gpointer p)
     gretl_bundle *targ = (gretl_bundle *) p;
 
     real_gretl_bundle_set_data(targ, (const char *) key,
-			       bval->data, bval->type);
+			       bval->data, bval->type,
+			       bval->size);
 }
 
 /* Create a new bundle as the union of two existing bundles:

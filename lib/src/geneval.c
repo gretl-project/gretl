@@ -71,7 +71,7 @@
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
 #define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
 
-#define ok_bundle_type(t) (t == NUM || t == STR || t == MAT) 
+#define ok_bundle_type(t) (t == NUM || t == STR || t == MAT || t == VEC) 
 
 #define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
@@ -5111,12 +5111,13 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     const char *key = r->v.str;
     GretlType type;
     void *val;
+    int size = 0;
     NODE *ret = NULL;
 
     if (!gretl_is_bundle(name)) {
 	p->err = E_UNKVAR;
     } else {
-	val = gretl_bundle_get_data(name, key, &type);
+	val = gretl_bundle_get_data(name, key, &type, &size);
 	if (val == NULL) {
 	    p->err = E_DATA;
 	} else if (type == GRETL_TYPE_DOUBLE) {
@@ -5142,6 +5143,20 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 		    p->err = E_ALLOC;
 		}		
 	    }
+	} else if (type == GRETL_TYPE_SERIES) {
+	    if (size != p->dinfo->n) {
+		p->err = E_TYPES;
+	    } else {
+		ret = aux_vec_node(p, p->dinfo->n);
+		if (ret != NULL) {
+		    const double *x = val;
+		    int t;
+
+		    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+			ret->v.xvec[t] = x[t];
+		    }
+		}
+	    }
 	}
     }
 
@@ -5149,10 +5164,11 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 }
 
 static int set_named_bundle_value (const char *name, const char *key,
-				   NODE *n)
+				   NODE *n, parser *p)
 {
     GretlType type;
     void *ptr = NULL;
+    int size = 0;
     int err = 0;
 
     switch (n->t) {
@@ -5168,13 +5184,18 @@ static int set_named_bundle_value (const char *name, const char *key,
 	ptr = n->v.m;
 	type = GRETL_TYPE_MATRIX;
 	break;
+    case VEC:
+	ptr = n->v.xvec;
+	type = GRETL_TYPE_SERIES;
+	size = p->dinfo->n;
+	break;
     default:
 	err = E_DATA;
 	break;
     }
 
     if (!err) {
-	err = gretl_bundle_set_data(name, key, ptr, type);
+	err = gretl_bundle_set_data(name, key, ptr, type, size);
     }
 
     return err;
@@ -5468,7 +5489,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else {
 	    ret = aux_scalar_node(p);
 	    if (!p->err) {
-		ret->v.xval = set_named_bundle_value(l->v.str, m->v.str, r);
+		ret->v.xval = set_named_bundle_value(l->v.str, m->v.str, r, p);
 	    }
 	}
     }
