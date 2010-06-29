@@ -1,7 +1,7 @@
-The sources here are a slighly simplied version of
+The sources here are a slighly simplified version of
 gtksourceview version 1.8.5 (March, 2007)
 
-They incorporate a couple of changes for use with gretl.
+They incorporate a few changes for use with gretl.
 
 * Location of the "language spec" directories: we use the
   registry on Windows, and we consult the environment variable
@@ -11,5 +11,9 @@ They incorporate a couple of changes for use with gretl.
   newline from being escaped in the context of a gtksourceview
   regex.  That way, we prevent the "line comment" coloration
   from bleeding over onto backslash-continued lines.
+
+* The sources are updated so that they will build with GTK+ 3.
+
+
 
 

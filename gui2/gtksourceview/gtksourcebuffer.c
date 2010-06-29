@@ -459,11 +459,10 @@ gtk_source_buffer_constructor (GType                  type,
 							       n_construct_properties,
 							       construct_param);
 
-	if (g_object) 
-	{
+	if (g_object) {
 		GtkSourceTagStyle *tag_style;
-		
 		GtkSourceBuffer *source_buffer = GTK_SOURCE_BUFFER (g_object);
+		GtkTextTagTable *tag_table;
 
 		tag_style = gtk_source_tag_style_new ();
 		
@@ -482,29 +481,29 @@ gtk_source_buffer_constructor (GType                  type,
 
 		gtk_source_tag_style_free (tag_style);
 
-		if (GTK_IS_SOURCE_TAG_TABLE (GTK_TEXT_BUFFER (source_buffer)->tag_table))
-		{
+		tag_table = gtk_text_buffer_get_tag_table (GTK_TEXT_BUFFER (source_buffer));
+
+		if (GTK_IS_SOURCE_TAG_TABLE (tag_table)) {
 			/* sync with the tag table if the user passed one */
 			if (tag_table_specified)
 				sync_with_tag_table (source_buffer);
 
-			g_signal_connect (GTK_TEXT_BUFFER (source_buffer)->tag_table ,
+			tag_table = gtk_text_buffer_get_tag_table (GTK_TEXT_BUFFER (source_buffer));
+			g_signal_connect (tag_table ,
 					  "changed",
 					  G_CALLBACK (tag_table_changed_cb),
 					  source_buffer);
-		}
-		else
-		{
-			g_assert (GTK_IS_TEXT_TAG_TABLE (GTK_TEXT_BUFFER (source_buffer)->tag_table));
+		} else {
+			g_assert (GTK_IS_TEXT_TAG_TABLE (tag_table));
 
 			g_warning ("Please use GtkSourceTagTable with GtkSourceBuffer.");
 
-			g_signal_connect (GTK_TEXT_BUFFER (source_buffer)->tag_table,
+			g_signal_connect (tag_table,
 					  "tag_added",
 					  G_CALLBACK (tag_added_or_removed_cb),
 					  source_buffer);
 
-			g_signal_connect (GTK_TEXT_BUFFER (source_buffer)->tag_table,
+			g_signal_connect (tag_table,
 					  "tag_removed",
 					  G_CALLBACK (tag_added_or_removed_cb),
 					  source_buffer);				
@@ -554,7 +553,7 @@ gtk_source_buffer_finalize (GObject *object)
 	if (buffer->priv->language != NULL)
 		g_object_unref (buffer->priv->language);
 
-	tag_table = GTK_TEXT_BUFFER (buffer)->tag_table;
+	tag_table = gtk_text_buffer_get_tag_table(GTK_TEXT_BUFFER (buffer));
 	g_signal_handlers_disconnect_by_func (tag_table,
 					      (gpointer)tag_table_changed_cb,
 					      buffer);

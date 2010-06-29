@@ -535,7 +535,7 @@ move_cursor (GtkTextView       *text_view,
 	     const GtkTextIter *new_location,
 	     gboolean           extend_selection)
 {
-	GtkTextBuffer *buffer = text_view->buffer;
+	GtkTextBuffer *buffer = gtk_text_view_get_buffer(text_view);
 
 	if (extend_selection)
 		gtk_text_buffer_move_mark_by_name (buffer, "insert",
@@ -554,7 +554,7 @@ gtk_source_view_move_cursor (GtkTextView    *text_view,
 			     gboolean        extend_selection)
 {
 	GtkSourceView *source_view = GTK_SOURCE_VIEW (text_view);
-	GtkTextBuffer *buffer = text_view->buffer;
+	GtkTextBuffer *buffer = gtk_text_view_get_buffer(text_view);
 	GtkTextMark *mark;
 	GtkTextIter cur, iter;
 
@@ -704,6 +704,7 @@ gtk_source_view_paint_margin (GtkSourceView *view,
 			      GdkEventExpose *event)
 {
 	GtkTextView *text_view;
+	GtkTextBuffer *buffer;
 	GdkWindow *win;
 	PangoLayout *layout;
 	GArray *numbers;
@@ -777,10 +778,12 @@ gtk_source_view_paint_margin (GtkSourceView *view,
 			   g_array_index (numbers, gint, 0),
 			   g_array_index (numbers, gint, count - 1));
 	});
+
+	buffer = gtk_text_view_get_buffer (text_view);
 	
 	/* set size. */
 	g_snprintf (str, sizeof (str),
-		    "%d", MAX (99, gtk_text_buffer_get_line_count (text_view->buffer)));
+		    "%d", MAX (99, gtk_text_buffer_get_line_count (buffer)));
 	layout = gtk_widget_create_pango_layout (GTK_WIDGET (view), str);
 
 	pango_layout_get_pixel_size (layout, &text_width, NULL);
@@ -801,10 +804,10 @@ gtk_source_view_paint_margin (GtkSourceView *view,
 					      margin_width);
 
 	i = 0;
-	
-	gtk_text_buffer_get_iter_at_mark (text_view->buffer, 
+
+	gtk_text_buffer_get_iter_at_mark (buffer, 
 					  &cur, 
-					  gtk_text_buffer_get_insert (text_view->buffer));
+					  gtk_text_buffer_get_insert (buffer));
 
 	cur_line = gtk_text_iter_get_line (&cur) + 1;
 	
@@ -840,9 +843,9 @@ gtk_source_view_paint_margin (GtkSourceView *view,
 				pango_layout_set_markup (layout, str, -1);
 			}
 
-			gtk_paint_layout (GTK_WIDGET (view)->style,
+			gtk_paint_layout (gtk_widget_get_style (GTK_WIDGET (view)),
 					  win,
-					  GTK_WIDGET_STATE (view),
+					  gtk_widget_get_state (GTK_WIDGET (view)),
 					  FALSE,
 					  NULL,
 					  GTK_WIDGET (view),
@@ -867,18 +870,20 @@ gtk_source_view_expose (GtkWidget      *widget,
 {
 	GtkSourceView *view;
 	GtkTextView *text_view;
+	GtkTextBuffer *buffer;
 	gboolean event_handled;
 	
 	view = GTK_SOURCE_VIEW (widget);
 	text_view = GTK_TEXT_VIEW (widget);
+	buffer = gtk_text_view_get_buffer (text_view);
 
 	event_handled = FALSE;
 	
 	/* maintain the our source_buffer pointer synchronized */
-	if (text_view->buffer != GTK_TEXT_BUFFER (view->priv->source_buffer) &&
-	    GTK_IS_SOURCE_BUFFER (text_view->buffer)) 
+	if (buffer != GTK_TEXT_BUFFER (view->priv->source_buffer) &&
+	    GTK_IS_SOURCE_BUFFER (buffer)) 
 	{
-		set_source_buffer (view, text_view->buffer);
+		set_source_buffer (view, buffer);
 	}
 	
 	/* check if the expose event is for the text window first, and
@@ -911,10 +916,11 @@ gtk_source_view_expose (GtkWidget      *widget,
 	} 
 	else 
 	{
+		GtkTextBuffer *buffer = gtk_text_view_get_buffer(text_view);
 		gint lines;
 
 		/* FIXME: could it be a performances problem? - Paolo */
-		lines = gtk_text_buffer_get_line_count (text_view->buffer);
+		lines = gtk_text_buffer_get_line_count (buffer);
 
 		if (view->priv->old_lines != lines)
 		{
@@ -1440,11 +1446,13 @@ gtk_source_view_key_press_event (GtkWidget *widget, GdkEventKey *event)
 
 		if (indent != NULL)
 		{
+#if 0
 			/* Allow input methods to internally handle a key press event. 
 			 * If this function returns TRUE, then no further processing should be done 
 			 * for this keystroke. */
 			if (gtk_im_context_filter_keypress (GTK_TEXT_VIEW(view)->im_context, event))
 				return TRUE;
+#endif
 
 			/* If an input method has inserted some test while handling the key press event,
 			 * the cur iterm may be invalid, so get the iter again */
@@ -1725,6 +1733,12 @@ gtk_source_view_set_indent_on_tab (GtkSourceView *view, gboolean enable)
 	g_object_notify (G_OBJECT (view), "indent_on_tab");
 }
 
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14
+# define gtk_selection_data_get_length(s) ((s)->length)
+# define gtk_selection_data_get_format(s) ((s)->format)
+# define gtk_selection_data_get_data(s) ((s)->data)
+#endif
+
 static void 
 view_dnd_drop (GtkTextView *view, 
 	       GdkDragContext *context,
@@ -1744,17 +1758,20 @@ view_dnd_drop (GtkTextView *view,
 		gchar string[] = "#000000";
 		gint buffer_x;
 		gint buffer_y;
+		gint length;
+
+		length = gtk_selection_data_get_length (selection_data);
 		
-		if (selection_data->length < 0)
+		if (length < 0)
 			return;
 
-		if ((selection_data->format != 16) || (selection_data->length != 8)) 
+		if ((gtk_selection_data_get_format (selection_data) != 16) || (length != 8)) 
 		{
 			g_warning ("Received invalid color data\n");
 			return;
 		}
 
-		vals = (guint16 *) selection_data->data;
+		vals = (guint16 *) gtk_selection_data_get_data (selection_data);
 
 		vals[0] /= 256;
 	        vals[1] /= 256;
