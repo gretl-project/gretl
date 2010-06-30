@@ -5144,18 +5144,28 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 		}		
 	    }
 	} else if (type == GRETL_TYPE_SERIES) {
-	    if (size != p->dinfo->n) {
-		p->err = E_TYPES;
-	    } else {
+	    const double *x = val;
+
+	    if (size == p->dinfo->n) {
 		ret = aux_vec_node(p, p->dinfo->n);
 		if (ret != NULL) {
-		    const double *x = val;
 		    int t;
 
 		    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 			ret->v.xvec[t] = x[t];
 		    }
 		}
+	    } else if (size > 0) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL) {
+		    ret->v.m = gretl_vector_from_array(x, size, 
+						       GRETL_MOD_NONE);
+		    if (ret->v.m == NULL) {
+			p->err = E_ALLOC;
+		    }
+		}
+	    } else {
+		p->err = E_DATA;
 	    }
 	}
     }
