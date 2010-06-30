@@ -2703,6 +2703,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     LOOP_PRINT *lprn;
     char errline[MAXLINE];
     int indent0, subst, lrefresh;
+    int show_activity = 0;
     int j, err = 0;
 
     /* for the benefit of the caller: register the fact that execution
@@ -2727,6 +2728,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (err) {
 	*errline = '\0';
     }
+
+    show_activity = show_activity_func_installed();
     
     while (!err && loop_condition(loop, pZ, pdinfo, &err)) {
 #if LOOP_DEBUG
@@ -2920,6 +2923,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    } else if (lrefresh) {
 		/* added 2008-01-11, AC */
 		loop_list_refresh(loop, pdinfo);
+	    }
+	    if (show_activity && (loop->iter % 10 == 0)) {
+		show_activity_callback();
 	    }
 	}
 

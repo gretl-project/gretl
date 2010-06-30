@@ -2118,6 +2118,8 @@ int gretl_in_gui_mode (void)
     return gui_mode;
 }
 
+/* mechanism to support callback for printing iteration info */
+
 static ITER_PRINT_FUNC ifunc;
 
 void set_iter_print_func (ITER_PRINT_FUNC func)
@@ -2139,6 +2141,28 @@ int iter_print_callback (int i, PRN *prn)
     }
 
     return ret;
+}
+
+/* mechanism to support callback for representing ongoing 
+   activity in the GUI */
+
+static SHOW_ACTIVITY_FUNC sfunc;
+
+void set_show_activity_func (SHOW_ACTIVITY_FUNC func)
+{
+    sfunc = func;
+}
+
+int show_activity_func_installed (void)
+{
+    return sfunc != NULL;
+}
+
+void show_activity_callback (void)
+{
+    if (sfunc != NULL) {
+	(*sfunc)();
+    }
 }
 
 /* mechanism for interactive debugging */

@@ -13,6 +13,7 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 have_readline = @have_readline@
 have_sourceview = @have_sourceview@
+have_gtkspinner = @have_gtkspinner@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
@@ -34,7 +35,7 @@ MKLANG = @MKLANG@
 GRETL_LANG = gretl.lang
 GNUPLOT_LANG = gnuplot.lang
 
-# Bundled gtksourceview subset?
+# use the bundled gtksourceview subset?
 ifeq ($(have_sourceview),no)
   GTKSOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
   GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
@@ -167,6 +168,11 @@ SRCS = about.c \
 	update.c \
 	varinfo.c \
 	winstack.c
+
+# use back-ported gtkspinner code?
+ifeq ($(have_gtkspinner),no)
+  SRCS += spinner.c
+endif
 
 OBJS = $(SRCS:.c=.o)
 

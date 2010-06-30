@@ -37,19 +37,19 @@
 typedef struct call_info_ call_info;
 
 struct call_info_ {
-    GtkWidget *dlg;
-    GList *lsels; /* list arg selectors */
-    GList *msels; /* matrix arg selectors */
-    GList *ssels; /* string arg selectors */
-    int *publist; /* list of public interfaces */
-    int iface;    /* selected interface */
+    GtkWidget *dlg;      /* main dialog */
+    GtkWidget *top_hbox; /* upper hbox in dialog */
+    GList *lsels;        /* list argument selectors */
+    GList *msels;        /* matrix arg selectors */
+    GList *ssels;        /* string arg selectors */
+    int *publist;        /* list of public interfaces */
+    int iface;           /* selected interface */
     int extracol;
     const ufunc *func;
     int n_params;
     char rettype;
-    gchar **args; /* FIXME use GLib */
+    gchar **args;
     gchar *ret;
-    int ok;
 };
 
 #define scalar_arg(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
@@ -102,7 +102,6 @@ static call_info *cinfo_new (void)
     cinfo->ret = NULL;
 
     cinfo->extracol = 0;
-    cinfo->ok = 0;
 
     return cinfo;
 }
@@ -152,10 +151,12 @@ static const char *arg_type_string (int t)
     if (t == GRETL_TYPE_SERIES) return "series";
     if (t == GRETL_TYPE_MATRIX) return "matrix";
     if (t == GRETL_TYPE_STRING) return "string";
+    if (t == GRETL_TYPE_BUNDLE) return "bundle";
     
     if (t == GRETL_TYPE_SCALAR_REF) return "scalar *";
     if (t == GRETL_TYPE_SERIES_REF) return "series *";
     if (t == GRETL_TYPE_MATRIX_REF) return "matrix *";
+    if (t == GRETL_TYPE_BUNDLE_REF) return "bundle *";
 
     return "";
 }
@@ -181,15 +182,11 @@ static int check_args (call_info *cinfo)
 
 static void fncall_dialog_destruction (GtkWidget *w, call_info *cinfo)
 {
-    if (!cinfo->ok) {
-	/* don't free cinfo if we're going to use it */
-	cinfo_free(cinfo);
-    }
-
+    cinfo_free(cinfo);
     open_fncall_dlg = NULL;
 }
 
-static void fncall_cancel (GtkWidget *w, call_info *cinfo)
+static void fncall_close (GtkWidget *w, call_info *cinfo)
 {
     gtk_widget_destroy(cinfo->dlg);
 }
@@ -203,11 +200,13 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt,
     gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, vspace);
 
     label = gtk_label_new(txt);
+
     if (center) {
 	gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
     } else {
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     }
+
     gtk_widget_show(label);
 
     return hbox;
@@ -712,7 +711,7 @@ static void function_call_dialog (call_info *cinfo)
 		     G_CALLBACK(fncall_dialog_destruction), cinfo);
 
     fnname = user_function_name_by_index(cinfo->iface);
-    hbox = label_hbox(vbox, fnname, 5, 1);
+    cinfo->top_hbox = hbox = label_hbox(vbox, fnname, 5, 1);
 
     if (cinfo->n_params > 0) {
 	tcols = (cinfo->extracol)? 3 : 2;
@@ -815,10 +814,10 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
-    /* Cancel button */
-    button = cancel_button(bbox);
+    /* Close button */
+    button = close_button(bbox);
     g_signal_connect(G_OBJECT (button), "clicked", 
-		     G_CALLBACK(fncall_cancel), cinfo);
+		     G_CALLBACK(fncall_close), cinfo);
 
     /* "OK" button */
     button = ok_button(bbox);
@@ -1003,12 +1002,16 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     /* note: gretl_exec_state_init zeros the first byte of the
        supplied 'line' */
     state.line = fnline;
+
+    start_wait_for_output(cinfo->top_hbox); 
     err = gui_exec_line(&state, &Z, datainfo);
+    stop_wait_for_output(cinfo->top_hbox);
+
     view_buffer(prn, 80, 400, funname, PRINT, NULL);
 
     if (err) {
 	gui_errmsg(err);
-    }    
+    } 
 
     if (datainfo->v > orig_v) {
 	mark_dataset_as_modified();
@@ -1071,10 +1074,8 @@ static void select_interface (call_info *cinfo)
 
 /* Callback from "OK" button in function call GUI: if there's a
    problem with the argument selection just return so the dialog stays
-   in place and the user can correct matters; otherwise close the
-   dialog and execute the function, then clean up.  (Note that we
-   need to set cinfo->ok so that the cinfo structure won't get
-   destroyed along with the dialog.)
+   in place and the user can correct matters; otherwise really
+   execute the function.
 */
 
 static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
@@ -1084,9 +1085,6 @@ static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
     } else {
 	PRN *prn = NULL;
 	int err;
-
-	cinfo->ok = 1; /* flag preservation of cinfo */
-	gtk_widget_destroy(cinfo->dlg);
 
 	err = bufopen(&prn);
 
@@ -1103,7 +1101,10 @@ static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
 	    gretl_print_destroy(prn);
 	}
 
-	cinfo_free(cinfo);
+#if 0
+	/* let the user choose when to do this? */
+	gtk_widget_destroy(cinfo->dlg);
+#endif
     }
 }
 

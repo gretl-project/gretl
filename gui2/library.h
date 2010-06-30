@@ -305,6 +305,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 
 int check_and_record_command (void);
 
+void start_wait_for_output (GtkWidget *w);
+
+void stop_wait_for_output (GtkWidget *w);
+
 /* other */
 
 int menu_op_wrapper (selector *sr);

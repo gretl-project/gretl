@@ -41,6 +41,7 @@ new_readline="no"
 have_zlib="no"
 have_gtk="no"
 have_gtkprint="no"
+have_gtkspinner="no"
 have_gnome="no"
 have_gmp="no"
 have_mpfr="no"
@@ -546,12 +547,22 @@ if test "$build_gui" = "yes" ; then
 fi
 
 dnl
-dnl Check for GTK 2.10 or higher
+dnl For gtkprint: check for GTK 2.10 or higher
 dnl
 if test "$have_gtk" = "2.0" ; then
     PKG_CHECK_MODULES(GTKPRINT, gtk+-2.0 >= 2.10.0,
       have_gtkprint="yes",
       have_gtkprint="no"      
+    )
+fi
+
+dnl
+dnl For gtkspinner: check for GTK 2.20 or higher
+dnl
+if test "$have_gtk" = "2.0" ; then
+    PKG_CHECK_MODULES(GTKSPINNER, gtk+-2.0 >= 2.20.0,
+      have_gtkspinner="yes",
+      have_gtkspinner="no"      
     )
 fi
 
@@ -592,6 +603,7 @@ AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
 AC_SUBST(have_mpfr)
 AC_SUBST(have_sourceview)
+AC_SUBST(have_gtkspinner)
 AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
 AC_SUBST(have_odbc)

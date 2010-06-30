@@ -69,6 +69,7 @@ typedef enum {
 #define NORMAL_RAND      "normal_rand"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
+typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
 typedef int (*DEBUG_OUTPUT) (void *);
 
@@ -152,6 +153,10 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
 void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);
 int iter_print_func_installed (void);
+
+void set_show_activity_func (SHOW_ACTIVITY_FUNC func);
+void show_activity_callback (void);
+int show_activity_func_installed (void);
 
 void set_debug_read_func (DEBUG_READLINE dfunc);
 DEBUG_READLINE get_debug_read_func (void);

@@ -75,6 +75,14 @@
 #include "filelists.h"
 #include "fnsave.h"
 
+#define USE_GTK_SPINNER 1
+
+#if USE_GTK_SPINNER
+# if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
+#  include "spinner.h"
+# endif
+#endif
+
 #define CMD_DEBUG 0
 
 /* private functions */
@@ -6339,15 +6347,103 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
     return 0;
 }
 
+/* Start a spinner as visual indication that there's
+   something going on: the argument @w should be of
+   type GTK_BOX, into which a spinner may be packed.
+*/
+
+void start_wait_for_output (GtkWidget *w)
+{
+    GtkWidget *spinner = g_object_get_data(G_OBJECT(w), "spinner");
+
+    g_return_if_fail(GTK_IS_BOX(w));
+
+    if (spinner == NULL) {
+	spinner = gtk_spinner_new();
+	gtk_widget_set_size_request(spinner, 24, 24);
+	gtk_box_pack_end(GTK_BOX(w), spinner, FALSE, FALSE, 5);
+	g_object_set_data(G_OBJECT(w), "spinner", spinner);
+    }
+
+    gtk_widget_show(spinner);
+    gtk_spinner_start(GTK_SPINNER(spinner));
+}
+
+/* done: stop spinner */
+
+void stop_wait_for_output (GtkWidget *w)
+{
+    GtkWidget *spinner = g_object_get_data(G_OBJECT(w), "spinner");
+
+    if (spinner != NULL) {
+	gtk_spinner_stop(GTK_SPINNER(spinner));
+	gtk_widget_hide(spinner);
+    }
+
+    gdk_flush();
+}
+
+#if !USE_GTK_SPINNER
+
+/* set "busy" cursor as visual indication that there's
+   something going on */
+
+static void start_busy_cursor (GdkWidget *w, GdkWindow **wcurrent)
+{
+    static GdkCursor *busy_cursor;
+    GdkWindow *text_window = NULL;
+    GdkDisplay *display;
+
+    if (busy_cursor == NULL) {
+	busy_cursor = gdk_cursor_new(GDK_WATCH);
+    }
+
+    if (GTK_IS_TEXT_VIEW(w)) {
+	text_window = gtk_text_view_get_window(GTK_TEXT_VIEW(tview),
+					       GTK_TEXT_WINDOW_TEXT);    
+	gdk_window_set_cursor(text_window, busy_cursor);
+    }    
+
+    if ((display = gdk_display_get_default()) != NULL) {
+	*wcurrent = gdk_display_get_window_at_pointer(display, NULL, NULL);
+	if (*wcurrent != text_window) {
+	    gdk_window_set_cursor(*wcurrent, busy_cursor);
+	} else {
+	    *wcurrent = NULL;
+	}
+    }
+
+    gdk_flush();
+}
+
+/* done: reset regular cursor */
+
+static void stop_busy_cursor (GtkWidget *w, GdkWindow *wcurrent)
+{
+    if (GTK_IS_TEXT_VIEW(w)) {
+	GdkWindow *text_window = 
+	    gtk_text_view_get_window(GTK_TEXT_VIEW(w),
+				     GTK_TEXT_WINDOW_TEXT);
+
+	gdk_window_set_cursor(text_window, NULL);
+    }     
+    
+    if (wcurrent != NULL) {
+	gdk_window_set_cursor(wcurrent, NULL);
+    }
+}
+
+#endif
+
 /* Execute a script from the buffer in a viewer window.  The script
    may be executed in full or in part (in case sel is non-zero)
 */
 
 static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 {
-    static GdkCursor *busy_cursor;
+#if !USE_GTK_SPINNER
     GdkWindow *wcurr = NULL;
-    GdkWindow *wtxt = NULL;
+#endif
     gpointer vp = NULL;
     PRN *prn;
     int save_batch;
@@ -6368,48 +6464,21 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	check_and_record_command();
     } 
 
-    wtxt = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->text),
-				    GTK_TEXT_WINDOW_TEXT);
-
-    if (wtxt != NULL) {
-	GdkDisplay *disp;
-
-	if (busy_cursor == NULL) {
-	    busy_cursor = gdk_cursor_new(GDK_WATCH);
-	}
-
-	/* set a "busy" cursor on the script text window */
-	gdk_window_set_cursor(wtxt, busy_cursor);
-
-	/* and also on the window that the mouse pointer is in, 
-	   if it's not the script text window */
-	disp = gdk_display_get_default();
-	if (disp != NULL) {
-	    gint x, y;
-
-	    wcurr = gdk_display_get_window_at_pointer(disp, &x, &y);
-	    if (wcurr != wtxt) {
-		gdk_window_set_cursor(wcurr, busy_cursor);
-	    } else {
-		wcurr = NULL;
-	    }
-	}
-
-	/* update cursor */
-	gdk_flush();
-    }
+#if USE_GTK_SPINNER
+    start_wait_for_output(gtk_widget_get_parent(vwin->mbar));
+#else
+    start_busy_cursor(vwin->text, &wcurr);
+#endif
 
     save_batch = gretl_in_batch_mode();
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
     gretl_set_batch_mode(save_batch);
 
-    /* reset regular cursor */
-    if (wtxt != NULL) {
-	gdk_window_set_cursor(wtxt, NULL);
-    }
-    if (wcurr != NULL) {
-	gdk_window_set_cursor(wcurr, NULL);
-    }
+#if USE_GTK_SPINNER
+    stop_wait_for_output(gtk_widget_get_parent(vwin->mbar));
+#else
+    stop_busy_cursor(vwin->text, wcurr);
+#endif
 
     refresh_data();
     suppress_logo = 0;

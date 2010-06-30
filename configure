@@ -625,6 +625,7 @@ build_mailer
 have_odbc
 have_audio
 have_gnu_regex
+have_gtkspinner
 have_sourceview
 have_mpfr
 have_gmp
@@ -632,6 +633,8 @@ have_gtk
 build_gui
 GTKSOURCEVIEW_LIBS
 GTKSOURCEVIEW_CFLAGS
+GTKSPINNER_LIBS
+GTKSPINNER_CFLAGS
 GTKPRINT_LIBS
 GTKPRINT_CFLAGS
 GTK_LIBS
@@ -832,6 +835,8 @@ GTK_CFLAGS
 GTK_LIBS
 GTKPRINT_CFLAGS
 GTKPRINT_LIBS
+GTKSPINNER_CFLAGS
+GTKSPINNER_LIBS
 GTKSOURCEVIEW_CFLAGS
 GTKSOURCEVIEW_LIBS
 GDK_PIXBUF_CFLAGS
@@ -1523,6 +1528,10 @@ Some influential environment variables:
               C compiler flags for GTKPRINT, overriding pkg-config
   GTKPRINT_LIBS
               linker flags for GTKPRINT, overriding pkg-config
+  GTKSPINNER_CFLAGS
+              C compiler flags for GTKSPINNER, overriding pkg-config
+  GTKSPINNER_LIBS
+              linker flags for GTKSPINNER, overriding pkg-config
   GTKSOURCEVIEW_CFLAGS
               C compiler flags for GTKSOURCEVIEW, overriding pkg-config
   GTKSOURCEVIEW_LIBS
@@ -2619,6 +2628,7 @@ new_readline="no"
 have_zlib="no"
 have_gtk="no"
 have_gtkprint="no"
+have_gtkspinner="no"
 have_gnome="no"
 have_gmp="no"
 have_mpfr="no"
@@ -16334,6 +16344,78 @@ $as_echo "yes" >&6; }
 fi
 fi
 
+if test "$have_gtk" = "2.0" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSPINNER" >&5
+$as_echo_n "checking for GTKSPINNER... " >&6; }
+
+if test -n "$GTKSPINNER_CFLAGS"; then
+    pkg_cv_GTKSPINNER_CFLAGS="$GTKSPINNER_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKSPINNER_CFLAGS=`$PKG_CONFIG --cflags "gtk+-2.0 >= 2.20.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTKSPINNER_LIBS"; then
+    pkg_cv_GTKSPINNER_LIBS="$GTKSPINNER_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-2.0 >= 2.20.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-2.0 >= 2.20.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTKSPINNER_LIBS=`$PKG_CONFIG --libs "gtk+-2.0 >= 2.20.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtk+-2.0 >= 2.20.0" 2>&1`
+        else
+	        GTKSPINNER_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtk+-2.0 >= 2.20.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GTKSPINNER_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                have_gtkspinner="no"
+
+elif test $pkg_failed = untried; then
+	have_gtkspinner="no"
+
+else
+	GTKSPINNER_CFLAGS=$pkg_cv_GTKSPINNER_CFLAGS
+	GTKSPINNER_LIBS=$pkg_cv_GTKSPINNER_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_gtkspinner="yes"
+fi
+fi
+
 if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
 
 pkg_failed=no
@@ -16504,6 +16586,7 @@ if test x"${MSGFMT}" != x ; then
 else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
+
 
 
 

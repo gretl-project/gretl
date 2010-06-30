@@ -47,7 +47,8 @@ extern int rqfnb_ (integer *n,    /* number of observations */
 		   double *wn,     /* work array, length n */
 		   double *wp,     /* work array, length p */
 		   integer *nit,   /* iteration counts */
-		   integer *info); /* exit status */
+		   integer *info, /* exit status */
+		   void (*callback)(void));
 
 /* Modified simplex, a la Barrodale-Roberts: this variant lets us get
    confidence intervals using the rank-inversion method.
@@ -74,7 +75,8 @@ extern int rqbr_ (int n,         /* number of observations */
 		  double *tnmat, /* matrix of JGPK rank-test statistics */
 		  double big,    /* "large positive floating-point number" */
 		  int rmax,      /* max iterations (added for gretl) */
-		  int ci1);      /* doing confidence intervals? */
+		  int ci1,       /* doing confidence intervals? */
+		  void (*callback)(void));
 
 /* machine precision to the 2/3 */
 #define calc_eps23 (pow(2.22045e-16, 2/3.0))
@@ -100,6 +102,7 @@ struct br_info {
     int *s, *h;
     gretl_matrix *ci;
     gretl_matrix *tnmat;
+    void (*callback)();
 };
 
 /* wrapper struct for use with Frisch-Newton method */
@@ -117,6 +120,7 @@ struct fn_info {
     double *coeff;
     integer nit[3];
     integer info;
+    void (*callback)();
 };
 
 /* destructors for the above wrappers */
@@ -633,6 +637,12 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
 	rq->cut = student_cdf_inverse(n - p, 1 - alpha/2);
     }
 
+    if (show_activity_func_installed()) {
+	rq->callback = show_activity_callback;
+    } else {
+	rq->callback = NULL;
+    }
+
     return 0;
 }
 
@@ -652,7 +662,8 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
 		rq->coeff, rq->resid, rq->s, rq->wa, rq->wb, 
 		rq->sol, rq->dsol, rq->h, rq->qn, rq->cut, 
 		rq->ci->val, rq->tnmat->val, 
-		rq->big, rq->rmax, calc_ci);
+		rq->big, rq->rmax, calc_ci,
+		rq->callback);
 
 #if QDEBUG
     fprintf(stderr, "rqbr: ift = %d\n", ret);
@@ -709,6 +720,12 @@ static int fn_info_alloc (struct fn_info *rq, int n, int p,
     rq->beta = .99995;
     rq->eps = 1.0e-7;
 
+    if (show_activity_func_installed()) {
+	rq->callback = show_activity_callback;
+    } else {
+	rq->callback = NULL;
+    }
+
     return 0;
 }
 
@@ -752,7 +769,8 @@ static void rq_call_FN (integer *n, integer *p, gretl_matrix *XT,
 
     rqfnb_(n, p, XT->val, y->val, rq->rhs, 
 	   rq->d, rq->u, &rq->beta, &rq->eps, 
-	   rq->resid, rq->coeff, rq->nit, &rq->info);
+	   rq->resid, rq->coeff, rq->nit, &rq->info, 
+	   rq->callback);
 }
 
 static int rq_write_variance (const gretl_matrix *V,

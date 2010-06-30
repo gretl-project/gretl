@@ -280,6 +280,10 @@ GUISRC = about.c \
 	varinfo.c \
 	winstack.c
 
+ifeq ($(HAVE_GTK_SPINNER),no)
+  GUISRC += spinner.c
+endif
+
 GUIOBJ = $(GUISRC:.c=.o)
 
 PROBSRC = airy.c const.c hyp2f1.c igami.c j1.c kn.c pdtr.c struve.c \

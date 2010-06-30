@@ -698,6 +698,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     double *g, *t, *X, *c;
     int verbskip, verbose = (opt & OPT_V);
     int fcount, gcount, ndelta = 0;
+    int show_activity = 0;
     double sumgrad, gradmax, gradnorm = 0.0;
     double fmax, f, f0, d = 0.0;
     double s, steplen = 0.0;
@@ -758,10 +759,15 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     }
 
     verbskip = libset_get_int("bfgs_verbskip");
+    show_activity = show_activity_func_installed();
 
     do {
 	if (bfgs_print_iter(verbose, verbskip, iter)) {
 	    print_iter_info(iter, f, crittype, n, b, g, steplen, prn);
+	}
+
+	if (show_activity && (iter % 10 == 0)) {
+	    show_activity_callback();
 	}
 
 	if (iter > 1 && ilast == gcount) {
@@ -1004,6 +1010,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     int isave[44];
     int lsave[4];
     int iter, ibak = 0;
+    int show_activity = 0;
     int verbskip, verbose = (opt & OPT_V);
     int err = 0;
 
@@ -1037,6 +1044,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     }
 
     verbskip = libset_get_int("bfgs_verbskip");
+    show_activity = show_activity_func_installed();
 
     if (gradfunc == NULL) {
 	gradfunc = BFGS_numeric_gradient;
@@ -1056,6 +1064,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     strcpy(task, "START");
 
     while (1) {
+
 	/* Call the L-BFGS-B code */
 	setulb_(&n, &m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
 		task, csave, lsave, isave, dsave);
@@ -1101,6 +1110,10 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 		reverse_gradient(g, n);
 	    }
 	    ibak = iter;
+	}
+
+	if (show_activity && (iter % 10 == 0)) {
+	    show_activity_callback();
 	}
     }
 

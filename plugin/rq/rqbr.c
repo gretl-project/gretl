@@ -5,16 +5,18 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 #define sgn(x) (((x) >= 0)? 1.0 : -1.0)
 
-int rqbr_(int n, int pp, double *x, double *y, double tau, 
-	  double tol, double *coeff, double *resid, 
-	  int *s, double *wa, double *wb, 
-	  double *sol, double *dsol, int *h, 
-	  double *qn, double cutoff, double *ci, double *tnmat,
-	  double big, int rmax, int ci1)
+int rqbr_ (int n, int pp, double *x, double *y, double tau, 
+	   double tol, double *coeff, double *resid, 
+	   int *s, double *wa, double *wb, 
+	   double *sol, double *dsol, int *h, 
+	   double *qn, double cutoff, double *ci, double *tnmat,
+	   double big, int rmax, int ci1,
+	   void (*callback)(void))
 {
     static double d, a1, b1;
     int i, j, k, l, jj;
@@ -26,6 +28,7 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     double tnew, smax = 0;
     char lup, stage1, test = 0;
     int idxcf, kount, out = 0;
+    int main_iters = 0;
     double pivot;
     int p = pp;
     int p3 = p + 3, p4 = p + 4, n5 = n + 5;
@@ -76,6 +79,11 @@ int rqbr_(int n, int pp, double *x, double *y, double tau,
     }
 
  looptop:
+
+    if (callback != NULL && (main_iters++ % 10 == 0)) {
+	callback();
+    }
+
     for (i = 1; i <= n; ++i) {
 	k = 1;
 	for (j = 1; j <= pp; ++j) {

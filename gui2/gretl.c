@@ -108,7 +108,7 @@ static int optdebug;
 static gchar *param_msg = 
     N_("\nYou may supply the name of a data file on the command line");
 
-#ifdef OLD_GTK
+#ifdef OLD_GTK /* handle absence of GOptionEntry */
 
 struct start_opts {
     const char *longopt;
@@ -186,7 +186,7 @@ static void old_gretl_init (int *pargc, char ***pargv, char *filearg)
     }
 }
 
-#else
+#else /* newer GLib/GTK */
 
 static GOptionEntry options[] = {
     { "run", 'r', 0, G_OPTION_ARG_FILENAME, &optrun, 
@@ -214,7 +214,7 @@ static GOptionEntry options[] = {
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
-#endif
+#endif /* old vs new GTK switch */
 
 windata_t *mdata;
 DATAINFO *datainfo;
@@ -431,7 +431,7 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-#else /* regular *nix treatment */
+#else /* regular *nix treatment of NLS */
 
 static void real_nls_init (void)
 {
@@ -475,6 +475,18 @@ static void record_filearg (char *targ, const char *src)
 }
 
 #endif
+
+/* callback from within potentially lengthy libgretl
+   operations: try to avoid haveing the GUI become
+   totally unresponsive
+*/
+
+static void gui_show_activity (void)
+{
+    while (gtk_events_pending()) {
+	gtk_main_iteration();
+    }
+}
 
 static int have_data (void)
 {
@@ -548,6 +560,7 @@ int main (int argc, char **argv)
     }
 
     set_workdir_callback(gui_set_working_dir);
+    set_show_activity_func(gui_show_activity);
 
     /* allocate data information struct */
     datainfo = datainfo_new();
@@ -1662,8 +1675,11 @@ static void add_conditional_items (windata_t *vwin)
 			      FALSE);
     }
 
-#if 0 /* not quite yet */
-    maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
+#if 1
+    /* not public yet */
+    if (getenv("GRETL_USE_GIG") != NULL) {
+	maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
+    }
 #endif
 }
 
