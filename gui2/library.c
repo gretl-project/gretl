@@ -75,8 +75,6 @@
 #include "filelists.h"
 #include "fnsave.h"
 
-#define USE_GTK_SPINNER 1
-
 #if USE_GTK_SPINNER
 # if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 20
 #  include "spinner.h"
@@ -6347,6 +6345,8 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
     return 0;
 }
 
+#if USE_GTK_SPINNER
+
 /* Start a spinner as visual indication that there's
    something going on: the argument @w should be of
    type GTK_BOX, into which a spinner may be packed.
@@ -6383,12 +6383,12 @@ void stop_wait_for_output (GtkWidget *w)
     gdk_flush();
 }
 
-#if !USE_GTK_SPINNER
+#else
 
 /* set "busy" cursor as visual indication that there's
    something going on */
 
-static void start_busy_cursor (GdkWidget *w, GdkWindow **wcurrent)
+static void start_busy_cursor (GtkWidget *w, GdkWindow **wcurrent)
 {
     static GdkCursor *busy_cursor;
     GdkWindow *text_window = NULL;
@@ -6399,7 +6399,7 @@ static void start_busy_cursor (GdkWidget *w, GdkWindow **wcurrent)
     }
 
     if (GTK_IS_TEXT_VIEW(w)) {
-	text_window = gtk_text_view_get_window(GTK_TEXT_VIEW(tview),
+	text_window = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
 					       GTK_TEXT_WINDOW_TEXT);    
 	gdk_window_set_cursor(text_window, busy_cursor);
     }    
@@ -6433,7 +6433,7 @@ static void stop_busy_cursor (GtkWidget *w, GdkWindow *wcurrent)
     }
 }
 
-#endif
+#endif /* USE_GTK_SPINNER or not */
 
 /* Execute a script from the buffer in a viewer window.  The script
    may be executed in full or in part (in case sel is non-zero)

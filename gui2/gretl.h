@@ -51,6 +51,10 @@
 # define NATIVE_PRINTING
 #endif
 
+#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 8
+# define USE_GTK_SPINNER 1
+#endif
+
 #define GNULL (gconstpointer) NULL
 
 #include <gtksourceview/gtksourceview.h>

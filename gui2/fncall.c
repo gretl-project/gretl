@@ -1003,9 +1003,13 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
        supplied 'line' */
     state.line = fnline;
 
+#if USE_GTK_SPINNER
     start_wait_for_output(cinfo->top_hbox); 
+#endif
     err = gui_exec_line(&state, &Z, datainfo);
+#if USE_GTK_SPINNER
     stop_wait_for_output(cinfo->top_hbox);
+#endif
 
     view_buffer(prn, 80, 400, funname, PRINT, NULL);
 

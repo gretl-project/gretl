@@ -305,9 +305,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
 
 int check_and_record_command (void);
 
+#if USE_GTK_SPINNER
+
 void start_wait_for_output (GtkWidget *w);
 
 void stop_wait_for_output (GtkWidget *w);
+
+#endif
 
 /* other */
 

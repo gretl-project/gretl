@@ -13,11 +13,11 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 have_readline = @have_readline@
 have_sourceview = @have_sourceview@
-have_gtkspinner = @have_gtkspinner@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
 quiet_build = @quiet_build@
+fake_gtkspinner = @fake_gtkspinner@
 
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
@@ -170,7 +170,7 @@ SRCS = about.c \
 	winstack.c
 
 # use back-ported gtkspinner code?
-ifeq ($(have_gtkspinner),no)
+ifeq ($(fake_gtkspinner),yes)
   SRCS += spinner.c
 endif
 
