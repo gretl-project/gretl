@@ -24,7 +24,7 @@ int gretl_is_bundle (const char *name);
 
 gretl_bundle *get_gretl_bundle_by_name (const char *name);
 
-void *gretl_bundle_get_contents (gretl_bundle *bundle);
+void *gretl_bundle_get_content (gretl_bundle *bundle);
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size);
@@ -32,16 +32,16 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 void *bundled_item_get_data (bundled_item *item, GretlType *type,
 			     int *size);
 
-int gretl_bundle_set_data (const char *name, const char *key,
+int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 			   void *ptr, GretlType type, int size);
 
-int gretl_bundle_add_or_replace (gretl_bundle *b, const char *name);
+int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name);
 
 int gretl_bundle_add (const char *name);
 
 int gretl_bundle_copy_as (const char *name, const char *cpyname);
 
-int gretl_bundle_delete (const char *name, PRN *prn);
+int gretl_bundle_delete_by_name (const char *name, PRN *prn);
 
 int gretl_bundle_mark_as_return (const char *name);
 
@@ -53,13 +53,13 @@ int gretl_bundle_localize (const char *origname,
 int gretl_bundle_unlocalize (const char *localname,
 			     const char *origname);
 
-gretl_bundle *gretl_bundle_union (const gretl_bundle *b1,
-				  const gretl_bundle *b2,
+gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
+				  const gretl_bundle *bundle2,
 				  int *err);
 
-void gretl_bundle_destroy (gretl_bundle *b);
+void gretl_bundle_destroy (gretl_bundle *bundle);
 
-int destroy_user_bundles_at_level (int level);
+int destroy_saved_bundles_at_level (int level);
 
 void destroy_user_bundles (void);
 

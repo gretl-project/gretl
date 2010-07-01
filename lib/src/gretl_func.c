@@ -5059,7 +5059,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     delete_kalman(NULL);
 
     /* if any bundles were defined bu not returned, clean up */
-    destroy_user_bundles_at_level(d);
+    destroy_saved_bundles_at_level(d);
 
     pop_program_state();
 

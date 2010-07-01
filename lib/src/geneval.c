@@ -5179,10 +5179,17 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 static int set_named_bundle_value (const char *name, const char *key,
 				   NODE *n, parser *p)
 {
+    gretl_bundle *bundle;
     GretlType type;
     void *ptr = NULL;
     int size = 0;
     int err = 0;
+
+    bundle = get_gretl_bundle_by_name(name);
+    if (bundle == NULL) {
+	p->err = E_UNKVAR;
+	return p->err;
+    }
 
     switch (n->t) {
     case NUM:
@@ -5208,7 +5215,7 @@ static int set_named_bundle_value (const char *name, const char *key,
     }
 
     if (!err) {
-	err = gretl_bundle_set_data(name, key, ptr, type, size);
+	err = gretl_bundle_set_data(bundle, key, ptr, type, size);
     }
 
     return err;

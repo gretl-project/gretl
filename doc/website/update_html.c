@@ -530,7 +530,7 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     FILE *clog;
     FILE *clogh;
     char line[MYLEN];
-    int ye, mo, da;
+    int year, mon, day;
 
     clogh = fopen(targ, "a");
     clog = fopen(src, "r");
@@ -555,12 +555,12 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>\n", clogh);
 
     while (fgets(line, MYLEN, clog)) {
-	ret = sscanf(line, "%d/%d/%d version %d.%d.%d\n", 
-		     &da, &mo, &ye, &M, &m, &r);
+	ret = sscanf(line, "%d-%d-%d version %d.%d.%d\n", 
+		     &year, &mon, &day, &M, &m, &r);
 	if (ret == 6) {
 	    fprintf(clogh, "<a name=\"v%d-%d-%d\">", M, m, r); 
-	    fprintf(clogh, " %d/%d/%d Version %d.%d.%d</a>", 
-		    da, mo, ye, M, m, r);
+	    fprintf(clogh, " %d-%02d-%02d Version %d.%d.%d</a>", 
+		    year, mon, day, M, m, r);
 	    fputs(" [<a href=\"#top\">Back to top</a>]\n", clogh);
 	} else {
 	    bug_print_line(line, clogh);

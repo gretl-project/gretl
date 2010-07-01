@@ -3942,7 +3942,7 @@ static void add_bundled_item_to_menu (gpointer key,
 static void add_bundle_menu_items (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
-    GHashTable *ht = (GHashTable *) gretl_bundle_get_contents(bundle);
+    GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
  
     g_hash_table_foreach(ht, add_bundled_item_to_menu, vwin);
 }

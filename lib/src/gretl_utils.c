@@ -1557,7 +1557,7 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     } else if (get_string_by_name(s)) {
 	err = delete_saved_string(s, prn);
     } else if (gretl_is_bundle(s)) {
-	err = gretl_bundle_delete(s, prn);
+	err = gretl_bundle_delete_by_name(s, prn);
     } else {
 	err = E_UNKVAR;
     }

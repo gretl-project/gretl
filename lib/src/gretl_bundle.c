@@ -29,11 +29,24 @@
 #define BDEBUG 0
 #define BUNDLE_RETVAL 999
 
+/**
+ * gretl_bundle:
+ *
+ * An opaque type; use the relevant accessor functions.
+ */
+
 struct gretl_bundle_ {
     char name[VNAMELEN]; 
     GHashTable *ht;      /* holds key/value pairs */
     int level;           /* level of function execution */
 };
+
+/**
+ * bundled_item:
+ *
+ * An item of data within a gretl_bundle. This is an
+ * opaque type; use the relevant accessor functions.
+ */
 
 struct bundled_item_ {
     GretlType type;
@@ -42,7 +55,7 @@ struct bundled_item_ {
 };
 
 static gretl_bundle **bundles;
-static int n_bundles;
+static int n_saved_bundles;
 
 /* given a bundle pointer, return its 0-based stack position
    or -1 if it's not on the stack */
@@ -52,7 +65,7 @@ static int get_bundle_index (gretl_bundle *b)
     if (b != NULL) {
 	int i;
 
-	for (i=0; i<n_bundles; i++) {
+	for (i=0; i<n_saved_bundles; i++) {
 	    if (b == bundles[i]) {
 		return i;
 	    }
@@ -71,7 +84,7 @@ static gretl_bundle *get_bundle_pointer (const char *name, int level)
     gretl_bundle *b;
     int i;
 
-    for (i=0; i<n_bundles; i++) {
+    for (i=0; i<n_saved_bundles; i++) {
 	b = bundles[i];
 	if (b->level == level && !strcmp(name, b->name)) {
 	    return b;
@@ -92,82 +105,91 @@ static int bundle_index_by_name (const char *name, int level)
 static bundled_item *bundled_item_new (GretlType type, void *ptr, 
 				       int size, int *err)
 {
-    bundled_item *val = malloc(sizeof *val);
+    bundled_item *item = malloc(sizeof *item);
 
-    if (val == NULL) {
+    if (item == NULL) {
 	*err = E_ALLOC;
     } else {
-	val->type = type;
-	val->size = 0;
-	switch (val->type) {
+	item->type = type;
+	item->size = 0;
+	switch (item->type) {
 	case GRETL_TYPE_DOUBLE:
-	    val->data = malloc(sizeof(double));
-	    if (val->data != NULL) {
-		double *dp = val->data;
+	    item->data = malloc(sizeof(double));
+	    if (item->data != NULL) {
+		double *dp = item->data;
 
 		*dp = *(double *) ptr;
 	    }
 	    break;
 	case GRETL_TYPE_STRING:	
-	    val->data = gretl_strdup((char *) ptr);
+	    item->data = gretl_strdup((char *) ptr);
 	    break;
 	case GRETL_TYPE_MATRIX:
-	    val->data = gretl_matrix_copy((gretl_matrix *) ptr);
+	    item->data = gretl_matrix_copy((gretl_matrix *) ptr);
 	    break;
 	case GRETL_TYPE_SERIES:
-	    val->data = copyvec((const double *) ptr, size);
-	    val->size = size;
+	    item->data = copyvec((const double *) ptr, size);
+	    item->size = size;
 	    break;
 	default:
 	    *err = E_TYPES;
 	    break;
 	}
 
-	if (!*err && val->data == NULL) {
-	    free(val);
-	    val = NULL;
+	if (!*err && item->data == NULL) {
+	    free(item);
+	    item = NULL;
 	    *err = E_ALLOC;
 	}
     }
 
-    return val;
+    return item;
 }
 
 /* callback invoked when a bundle's hash table is destroyed */
 
 static void bundled_item_destroy (gpointer data)
 {
-    bundled_item *val = data;
+    bundled_item *item = data;
 
-    switch (val->type) {
+    switch (item->type) {
     case GRETL_TYPE_DOUBLE:
     case GRETL_TYPE_STRING:
     case GRETL_TYPE_SERIES:
-	free(val->data);
+	free(item->data);
 	break;
     case GRETL_TYPE_MATRIX:
-	gretl_matrix_free((gretl_matrix *) val->data);
+	gretl_matrix_free((gretl_matrix *) item->data);
 	break;
     default:
 	break;
     }
 
-    free(val);
+    free(item);
 }
 
-/* destructor for gretl_bundle */
+/**
+ * gretl_bundle_destroy:
+ * @bundle: bundle to destroy.
+ *
+ * Frees all contents of @bundle as well as the pointer itself.
+ */
 
-void gretl_bundle_destroy (gretl_bundle *b)
+void gretl_bundle_destroy (gretl_bundle *bundle)
 {
-    if (b != NULL) {
-	if (b->ht != NULL) {
-	    g_hash_table_destroy(b->ht);
+    if (bundle != NULL) {
+	if (bundle->ht != NULL) {
+	    g_hash_table_destroy(bundle->ht);
 	}
-	free(b);
+	free(bundle);
     }
 }
 
-/* constructor for gretl_bundle */
+/*
+ * gretl_bundle_new:
+ *
+ * Returns: a newly allocated, empty bundle.
+ */
 
 static gretl_bundle *gretl_bundle_new (void)
 {
@@ -182,11 +204,11 @@ static gretl_bundle *gretl_bundle_new (void)
     return b;
 }
 
-static void set_n_bundles (int n)
+static void set_n_saved_bundles (int n)
 {
-    n_bundles = n;
+    n_saved_bundles = n;
 
-    if (n_bundles == 0) {
+    if (n_saved_bundles == 0) {
 	free(bundles);
 	bundles = NULL;
     }
@@ -211,7 +233,7 @@ static int reallocate_bundles (int n)
 
 static int gretl_bundle_push (gretl_bundle *b)
 {
-    int n = n_bundles + 1;
+    int n = n_saved_bundles + 1;
 
     if (reallocate_bundles(n)) {
 	gretl_bundle_destroy(b);
@@ -219,7 +241,7 @@ static int gretl_bundle_push (gretl_bundle *b)
     }
 
     bundles[n-1] = b;
-    set_n_bundles(n);
+    set_n_saved_bundles(n);
 
     return 0;
 }
@@ -229,7 +251,7 @@ static int gretl_bundle_push (gretl_bundle *b)
 
 static int real_delete_bundle (int i)
 {
-    int n = n_bundles - 1;
+    int n = n_saved_bundles - 1;
     int err = 0;
 
     if (i < 0 || i > n) {
@@ -240,7 +262,7 @@ static int real_delete_bundle (int i)
     bundles[i] = NULL;
 
     if (n == 0) {
-	set_n_bundles(0);
+	set_n_saved_bundles(0);
     } else {
 	int j;
 
@@ -250,7 +272,7 @@ static int real_delete_bundle (int i)
 	if (reallocate_bundles(n)) {
 	    err = E_ALLOC;
 	} else {
-	    set_n_bundles(n);
+	    set_n_saved_bundles(n);
 	}
     }
 
@@ -267,6 +289,13 @@ int gretl_is_bundle (const char *name)
 	return (get_bundle_pointer(name, gretl_function_depth()) != NULL);
     }
 }
+
+/**
+ * get_gretl_bundle_by_name:
+ * @name: the name to look up.
+ *
+ * Returns: pointer to a saved gretl bundle, if found, else NULL.
+ */
 
 gretl_bundle *get_gretl_bundle_by_name (const char *name)
 {
@@ -305,16 +334,27 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {
-	    bundled_item *val = p;
+	    bundled_item *item = p;
 	    
-	    *type = val->type;
-	    ret = val->data;
-	    *size = val->size;
+	    *type = item->type;
+	    ret = item->data;
+	    *size = item->size;
 	}
     }
 
     return ret;
 }
+
+/**
+ * bundle_item_get_data:
+ * @item: bundled item to access.
+ * @type: location to receive data type.
+ * @size: location to receive size of data (= series
+ * length for GRETL_TYPE_SERIES, otherwise 0).
+ *
+ * Returns: the data pointer associated with @item, or
+ * NULL on failure.
+ */
 
 void *bundled_item_get_data (bundled_item *item, GretlType *type,
 			     int *size)
@@ -324,7 +364,15 @@ void *bundled_item_get_data (bundled_item *item, GretlType *type,
     return item->data;
 }
 
-void *gretl_bundle_get_contents (gretl_bundle *bundle)
+/**
+ * gretl_bundle_get_content:
+ * @bundle: bundle to access.
+ *
+ * Returns: the content of @bundle, which is in fact
+ * a GHashTable object.
+ */
+
+void *gretl_bundle_get_content (gretl_bundle *bundle)
 {
     return (bundle == NULL)? NULL : (void *) bundle->ht;
 }
@@ -334,15 +382,15 @@ static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
 				       int size)
 {
     int err = 0;
-    bundled_item *val = bundled_item_new(type, ptr, size, &err);
+    bundled_item *item = bundled_item_new(type, ptr, size, &err);
 
     if (!err) {
 	gchar *k = g_strdup(key);
 
 	if (g_hash_table_lookup(b->ht, key) != NULL) {
-	    g_hash_table_replace(b->ht, k, val);
+	    g_hash_table_replace(b->ht, k, item);
 	} else {
-	    g_hash_table_insert(b->ht, k, val);
+	    g_hash_table_insert(b->ht, k, item);
 	}
     }
 
@@ -351,7 +399,7 @@ static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
 
 /**
  * gretl_bundle_set_data:
- * @name: name of bundle.
+ * @bundle: target bundle.
  * @key: name of key to create or replace.
  * @ptr: data pointer.
  * @type: type of data.
@@ -366,25 +414,27 @@ static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
  * Returns: 0 on success, error code on error.
  */
 
-int gretl_bundle_set_data (const char *name, const char *key,
+int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 			   void *ptr, GretlType type, int size)
 {
-    gretl_bundle *b;
     int err;
 
-    b = get_bundle_pointer(name, gretl_function_depth());
-    
-    if (b == NULL) {
+    if (bundle == NULL) {
 	err = E_UNKVAR;
     } else {
-	err = real_gretl_bundle_set_data(b, key, ptr, type, size);
+	err = real_gretl_bundle_set_data(bundle, key, ptr, type, size);
     }
 
     return err;
 }
 
-/* create a named bundle, initialize it, and push it onto 
-   the stack */
+/**
+ * gretl_bundle_add:
+ * @name: name to give the bundle.
+ *
+ * Creates an empty gretl bundle with the given name and pushes it onto
+ * the stack of saved bundles.
+ */
 
 int gretl_bundle_add (const char *name)
 {
@@ -411,70 +461,70 @@ int gretl_bundle_add (const char *name)
     return gretl_bundle_push(b);
 }
 
-/* For use by geneval: take bundle @b, created on the fly, and stack
+/* For use by geneval: take @bundle, created on the fly, and stack
    it under @name.  If there's already a bundle with the given name
    destroy and replace it.
 */
 
-int gretl_bundle_add_or_replace (gretl_bundle *b, const char *name)
+int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name)
 {
     int level = gretl_function_depth();
     int b0idx = bundle_index_by_name(name, level);
     int err = 0;
 
-    strcpy(b->name, name);
-    b->level = level;
+    strcpy(bundle->name, name);
+    bundle->level = level;
 
     if (b0idx >= 0) {
 	/* just replace on stack */
 	gretl_bundle_destroy(bundles[b0idx]);
-	bundles[b0idx] = b;
+	bundles[b0idx] = bundle;
     } else {
-	err = gretl_bundle_push(b);
+	err = gretl_bundle_push(bundle);
     }
 
     return err;
 }
 
-/* replicate on a target bundle a bundle-value from some other
+/* replicate on a target bundle a bundled_item from some other
    other bundle, provided the target bundle does not already
-   have a bundle-value under the same key
+   have a bundled_item under the same key
 */
 
 static void copy_new_bundled_item (gpointer key, gpointer value, gpointer p)
 {
-    bundled_item *bval = (bundled_item *) value;
+    bundled_item *item = (bundled_item *) value;
     gretl_bundle *targ = (gretl_bundle *) p;
 
     if (!gretl_bundle_has_data(targ, (const char *) key)) {
 	real_gretl_bundle_set_data(targ, (const char *) key,
-				   bval->data, bval->type,
-				   bval->size);
+				   item->data, item->type,
+				   item->size);
     }
 }
 
-/* replicate on a target bundle a bundle-value from some other
+/* replicate on a target bundle a bundled_item from some other
    bundle */
 
 static void copy_bundled_item (gpointer key, gpointer value, gpointer p)
 {
-    bundled_item *bval = (bundled_item *) value;
+    bundled_item *item = (bundled_item *) value;
     gretl_bundle *targ = (gretl_bundle *) p;
 
     real_gretl_bundle_set_data(targ, (const char *) key,
-			       bval->data, bval->type,
-			       bval->size);
+			       item->data, item->type,
+			       item->size);
 }
 
 /* Create a new bundle as the union of two existing bundles:
-   we first copy b1 in its entirety, then append any elements
-   of b2 whose keys that are not already present in the
-   copy-target. In case b1 and b2 share any keys, the
-   value copied to the target is therefore that from b1.
+   we first copy bundle1 in its entirety, then append any elements
+   of bundle2 whose keys that are not already present in the
+   copy-target. In case bundle1 and bundle2 share any keys, the
+   value copied to the target is therefore that from bundle1.
 */
 
-gretl_bundle *gretl_bundle_union (const gretl_bundle *b1,
-				  const gretl_bundle *b2,
+gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
+				  const gretl_bundle *bundle2,
 				  int *err)
 {
     gretl_bundle *b = gretl_bundle_new();
@@ -484,8 +534,8 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *b1,
     } else {
 	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
 				      g_free, bundled_item_destroy);
-	g_hash_table_foreach(b1->ht, copy_bundled_item, b);
-	g_hash_table_foreach(b2->ht, copy_new_bundled_item, b);
+	g_hash_table_foreach(bundle1->ht, copy_bundled_item, b);
+	g_hash_table_foreach(bundle2->ht, copy_new_bundled_item, b);
     }
     
     return b;
@@ -575,7 +625,7 @@ int gretl_bundle_name_return (const char *name)
     fprintf(stderr, "gretl_bundle_name_return: '%s'\n", name);
 #endif
 
-    for (i=0; i<n_bundles; i++) {
+    for (i=0; i<n_saved_bundles; i++) {
 	if (bundles[i]->level == BUNDLE_RETVAL) {
 	    b1 = bundles[i];
 	    break;
@@ -664,7 +714,7 @@ int gretl_bundle_unlocalize (const char *localname,
 }
 
 /**
- * gretl_bundle_delete:
+ * gretl_bundle_delete_by_name:
  * @name: name of bundle to delete.
  * @prn: gretl printing struct.
  *
@@ -674,12 +724,12 @@ int gretl_bundle_unlocalize (const char *localname,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_bundle_delete (const char *name, PRN *prn)
+int gretl_bundle_delete_by_name (const char *name, PRN *prn)
 {
     int level = gretl_function_depth();
     int i, err = E_UNKVAR;
 
-    for (i=0; i<n_bundles; i++) {
+    for (i=0; i<n_saved_bundles; i++) {
 	if (bundles[i]->level == level && 
 	    !strcmp(name, bundles[i]->name)) {
 	    err = real_delete_bundle(i);
@@ -696,7 +746,7 @@ int gretl_bundle_delete (const char *name, PRN *prn)
 }
 
 /**
- * destroy_user_bundles_at_level.
+ * destroy_saved_bundles_at_level.
  * @level: depth of function execution.
  *
  * Deletes any saved bundles at a particular level of function
@@ -705,9 +755,9 @@ int gretl_bundle_delete (const char *name, PRN *prn)
  * Returns: 0 on success, non-zero on error.
  */
 
-int destroy_user_bundles_at_level (int level)
+int destroy_saved_bundles_at_level (int level)
 {
-    int nb = n_bundles;
+    int nb = n_saved_bundles;
     int bmax = nb - 1;
     int i, j;
     int err = 0;
@@ -724,8 +774,8 @@ int destroy_user_bundles_at_level (int level)
 	} 
     }
 
-    if (nb < n_bundles) {
-	set_n_bundles(nb);
+    if (nb < n_saved_bundles) {
+	set_n_saved_bundles(nb);
 	if (nb > 0) {
 	    err = reallocate_bundles(nb);
 	}
@@ -749,10 +799,10 @@ void destroy_user_bundles (void)
 	return;
     }
 
-    for (i=0; i<n_bundles; i++) {
+    for (i=0; i<n_saved_bundles; i++) {
 	gretl_bundle_destroy(bundles[i]);
     }
 
-    set_n_bundles(0);
+    set_n_saved_bundles(0);
 }
 
