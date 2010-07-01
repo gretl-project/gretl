@@ -1002,7 +1002,7 @@ signed_rank_test (const double *x, const double *y,
     pprintf(prn, "  n = %d\n", n);
     pprintf(prn, "  W+ = %g, W- = %g\n", wp, wm);
     pprintf(prn, "  (%s: %d, %s: %d)\n", _("zero differences"), 
-	    _("non-zero ties"), Z, k);
+	    Z, _("non-zero ties"), k);
 
     if (n > 8) {
 	double s2, x, num, z;
