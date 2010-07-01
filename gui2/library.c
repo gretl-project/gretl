@@ -4676,6 +4676,12 @@ void residual_correlogram (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
+enum {
+    PERGM_SAMPLE,   /* sample periodogram only */
+    PERGM_BARTLETT, /* Bartlett window */
+    PERGM_FRACTINT  /* fractional integration test only */
+};
+
 /* If code == SELECTED_VAR we're doing the periodiogram for a
    selected variable from the dataset; otherwise we're doing it
    for a regression residual, added to the dataset on the fly
@@ -4683,7 +4689,7 @@ void residual_correlogram (GtkAction *action, gpointer p)
 */
 
 static void 
-real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
+real_do_pergm (int flag, double **Z, DATAINFO *pdinfo, int code)
 {
     PRN *prn;
     const gchar *title = N_("gretl: periodogram");
@@ -4693,21 +4699,41 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 	NULL
     };
     int active[1] = {0};
-    gretlopt opt = (bartlett)? OPT_O : OPT_NONE;
-    int width, err;
+    gretlopt opt = OPT_NONE;
+    int width = 0;
+    int err;
 
-    width = auto_spectrum_order(T, opt);
+    if (flag == PERGM_BARTLETT) {
+	opt = OPT_O;
+    } else if (flag == PERGM_SAMPLE) {
+	opt = OPT_P;
+    } else if (flag == PERGM_FRACTINT) {
+	title = N_("gretl: fractional integration");
+	opt = OPT_F;
+    }
 
-    err = checks_dialog(_(title), NULL, 
-			opts, 1, active, 0, NULL,
-			&width, _("Bandwidth:"),
-			2, T / 2, PERGM);
+    if (opt & OPT_O) {
+	width = auto_spectrum_order(T, opt);
+	err = checks_dialog(_(title), NULL, 
+			    opts, 1, active, 0, NULL,
+			    &width, _("Bandwidth:"),
+			    2, T / 2, PERGM);
+    } else if (opt & OPT_F) {
+	width = auto_spectrum_order(T, opt);
+	err = spin_dialog(_(title), NULL, &width, _("Lag order:"),
+			  2, T / 2, 0);
+    } else {
+	err = checks_dialog(_(title), NULL, 
+			    opts, 1, active, 0, NULL,
+			    NULL, NULL, 0, 0, 0);
+    }	
 
     if (err < 0) {
 	return;
     }   
 
     if (active[0]) {
+	/* log scale */
 	opt |= OPT_L;
     }
 
@@ -4738,22 +4764,28 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 	return;
     }
 
-    register_graph(NULL);
+    if (flag != PERGM_FRACTINT) {
+	register_graph(NULL);
+    }
 
     view_buffer(prn, 60, 400, _(title), PERGM, NULL);
 }
 
 void do_pergm (GtkAction *action)
 {
-    int bartlett = 1;
+    int flag = PERGM_SAMPLE;
 
     if (action != NULL) {
 	const gchar *s = gtk_action_get_name(action);
-    
-	bartlett = (strcmp(s, "Bartlett") == 0);
+
+	if (!strcmp(s, "Bartlett")) {
+	    flag = PERGM_BARTLETT;
+	} else if (!strcmp(s, "FractInt")) {
+	    flag = PERGM_FRACTINT;
+	}
     }
     
-    real_do_pergm(bartlett, Z, datainfo, SELECTED_VAR);
+    real_do_pergm(flag, Z, datainfo, SELECTED_VAR);
 }
 
 void residual_periodogram (GtkAction *action, gpointer p)
@@ -4773,7 +4805,7 @@ void residual_periodogram (GtkAction *action, gpointer p)
     /* add residuals to data set temporarily */
     if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT)) return;
 
-    real_do_pergm(1, *pZ, pdinfo, MODEL_VAR);
+    real_do_pergm(PERGM_BARTLETT, *pZ, pdinfo, MODEL_VAR);
 
     trim_dataset(pmod, origv); 
 }

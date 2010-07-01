@@ -3785,6 +3785,11 @@ static void
 pergm_print_header (const char *vname, int T, int L,
 		    gretlopt opt, PRN *prn)
 {
+    if (opt & OPT_F) {
+	pprintf(prn, "\n%s, T = %d\n\n", vname, T);
+	return;
+    }
+
     if (opt & OPT_R) {
 	pprintf(prn, "\n%s\n", _("Residual periodogram"));
     } else {
@@ -3928,11 +3933,16 @@ static int real_periodogram (const double *x, int varno, int width,
     vname = var_get_graph_name(pdinfo, varno);
     pergm_print_header(vname, T, L, opt, prn);
 
-    if (!window) {
+    if (!window && !(opt & OPT_P)) {
 	if (fract_int_GPH(m, hhat, omega, prn)) {
 	    pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
 	}
 	fract_int_LWE(x, width, t1, t2, prn);
+    }
+
+    if (opt & OPT_F) {
+	/* fraction integration test only */
+	goto bailout;
     }
 
     if (opt & OPT_L) {
@@ -3976,7 +3986,8 @@ static int real_periodogram (const double *x, int varno, int width,
  * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
  * if includes OPT_N, don't display gnuplot graph; if includes
  * OPT_R, the variable is a model residual; OPT_L, use log scale.
- * @prn: gretl printing struct.
+ * @prn: gretl printing struct. (GUI: OPT_P for sample periodogram only;
+ * OPT_F for fractional integration test only.)
  *
  * Computes and displays the periodogram for the variable specified 
  * by @varno.

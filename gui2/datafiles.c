@@ -1834,6 +1834,10 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     return 0;
 }
 
+#ifndef NAME_MAX
+# define NAME_MAX 255
+#endif
+
 /* Given the name of a package (its internal name, not a path, e.g.
    "gig"), search some plausible directories and see if we can
    find the corresponding gfn file. If so, return an allocated copy 

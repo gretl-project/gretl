@@ -215,6 +215,7 @@
 	<menuitem action="Pergm"/>
 	<menuitem action="Bartlett"/>
       </menu>
+      <menuitem action="FractInt"/>
       <menuitem action="ADF"/>
       <menuitem action="DFGLS"/>
       <menuitem action="KPSS"/>

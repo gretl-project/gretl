@@ -315,6 +315,8 @@ struct gretl_option gretl_opts[] = {
     { PCA,      OPT_O, "save", 0 },
     { PERGM,    OPT_O, "bartlett", 0 },
     { PERGM,    OPT_L, "log", 0 },
+    { PERGM,    OPT_P, "simple", 0 },
+    { PERGM,    OPT_F, "fractint", 0 },
     { PLOT,     OPT_O, "one-scale", 0 },
     { PLOT,     OPT_S, "time-series", 0 },
     { PLOT,     OPT_T, "tall", 0 },

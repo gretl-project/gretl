@@ -1541,6 +1541,7 @@ GtkActionEntry main_entries[] = {
     { "Spectrum", NULL, N_("_Spectrum"), NULL, NULL, NULL },
     { "Pergm", NULL, N_("Sample _periodogram"), NULL, NULL, G_CALLBACK(do_pergm) },
     { "Bartlett", NULL, N_("_Bartlett lag window"), NULL, NULL, G_CALLBACK(do_pergm) },
+    { "FractInt", NULL, N_("_Fractional integration"), NULL, NULL, G_CALLBACK(do_pergm) },
     { "ADF", NULL, N_("_Augmented Dickey-Fuller test"), NULL, NULL, G_CALLBACK(ur_callback) },
     { "DFGLS", NULL, N_("ADF-GLS test"), NULL, NULL, G_CALLBACK(ur_callback) },
     { "KPSS", NULL, N_("_KPSS test"), NULL, NULL, G_CALLBACK(ur_callback) },
