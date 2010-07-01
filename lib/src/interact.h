@@ -48,7 +48,8 @@ typedef enum {
     OPT_DEBUG   = 1 << 8,
     OPT_QUIET   = 1 << 9,
     OPT_ENGLISH = 1 << 10,
-    OPT_BASQUE  = 1 << 11
+    OPT_BASQUE  = 1 << 11,
+    OPT_MAKEPKG = 1 << 12
 } ProgramOptions;
 
 typedef enum {

@@ -136,9 +136,11 @@ int write_session_functions_file (const char *fname);
 
 int read_session_functions_file (const char *fname);
 
-fnpkg *get_function_package_by_filename (const char *fname);
+fnpkg *get_function_package_by_filename (const char *fname, int *err);
 
 int load_function_package_from_file (const char *fname);
+
+int function_package_is_loaded (const char *fname);
 
 void function_package_unload_by_filename (const char *fname);
 
@@ -148,12 +150,9 @@ int print_function_package_info (const char *fname, PRN *prn);
 
 int print_function_package_code (const char *fname, PRN *prn);
 
-ufunc *get_packaged_function_by_name (const char *name,
-				      fnpkg *pkg);
+ufunc *get_function_from_package (const char *funname, fnpkg *pkg);
 
 int get_function_file_header (const char *fname, char **pdesc, char **pver);
-
-char *get_function_package_name (const char *path);
 
 int update_function_from_script (const char *funname, const char *path,
 				 fnpkg *pkg);
@@ -164,11 +163,13 @@ int user_function_has_PDF_doc (const char *fnname, char **pdfname);
 
 void gretl_functions_cleanup (void);
 
+const char *gretl_arg_type_name (GretlType type);
+
 fnargs *fn_args_new (void);
 
 void fn_args_free (fnargs *args);
 
-int push_fn_arg (fnargs *args, int type, void *p);
+int push_fn_arg (fnargs *args, GretlType type, void *p);
 
 void adjust_indent (const char *line, int *this_indent,
 		    int *next_indent);

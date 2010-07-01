@@ -394,10 +394,10 @@ gretl_matrix *gretl_matrix_pow (const gretl_matrix *A,
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,
-				 int *errp);
+				 int *err);
 
 double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
-				 int *errp);
+				 int *err);
 
 gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m, int *err);
 
@@ -604,7 +604,7 @@ int gretl_matrix_qform (const gretl_matrix *A, GretlMatrixMod amod,
 
 double gretl_scalar_qform (const gretl_vector *b, 
 			   const gretl_matrix *X,
-			   int *errp);
+			   int *err);
 
 int gretl_matrix_columnwise_product (const gretl_matrix *A,
 				     const gretl_matrix *B,
@@ -634,7 +634,7 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 			      int *err);
 
 gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
-				       int *errp);
+				       int *err);
 
 gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err);
 

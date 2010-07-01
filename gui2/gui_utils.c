@@ -30,6 +30,8 @@
 #include "bootstrap.h"
 #include "gretl_foreign.h"
 #include "gretl_bundle.h"
+#include "gretl_scalar.h"
+#include "gretl_string_table.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -369,7 +371,11 @@ static const gchar *sys_ui =
     "</ui>";
 
 static GtkActionEntry bundle_items[] = {
-    { "File", NULL, N_("_File"), NULL, NULL, NULL },      
+    { "File", NULL, N_("_File"), NULL, NULL, NULL },  
+    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },      
+#ifdef NATIVE_PRINTING
+    { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
+#endif
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
 };
@@ -380,6 +386,10 @@ static const gchar *bundle_ui =
     "<ui>"
     "  <menubar>"
     "    <menu action='File'>"
+    "      <menuitem action='SaveAs'/>"
+#ifdef NATIVE_PRINTING
+    "      <menuitem action='Print'/>"
+#endif
     "      <menuitem action='Close'/>"
     "    </menu>"
     "    <menu action='Save'/>"
@@ -1382,9 +1392,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_series_view(vwin->data);
 	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_EN) {
 	    free(vwin->data); /* help file text */
+	} else if (vwin->role == VIEW_BUNDLE) {
+	    gretl_bundle_destroy(vwin->data);
 	}
-
-	/* FIXME gretl_bundle attached */
 
 	if (window_delete_filename(vwin)) {
 	    /* there's a temporary file associated */
@@ -3889,12 +3899,55 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     GretlType type;
     void *val;
     int size = 0;
+    int err = 0;
 
     val = gretl_bundle_get_data(bundle, key, &type, &size);
     if (val == NULL) {
 	errbox("Couldn't find '%s'\n", key);
+	return;
+    }
+
+    if (type == GRETL_TYPE_SERIES && size == datainfo->n) {
+	const double *x = (double *) val;
+
+	save_bundled_series(x, key);
     } else {
-	warnbox("Save '%s': sorry, not ready yet", key);
+	char vname[VNAMELEN];
+	gchar *blurb;
+	int cancel = 0;
+
+	strcpy(vname, key);
+	blurb = g_strdup_printf("%s (%s) from bundle\n"
+				"Name (max. 15 characters):",
+				key, gretl_arg_type_name(type));
+	object_name_entry_dialog(vname, type, blurb, &cancel);
+	g_free(blurb);
+
+	if (!cancel) {
+	    if (type == GRETL_TYPE_DOUBLE) {
+		double x = *(double *) val;
+		
+		err = gretl_scalar_add(vname, x);
+	    } else if (type == GRETL_TYPE_MATRIX) {
+		gretl_matrix *m = (gretl_matrix *) val;
+
+		err = user_matrix_add(gretl_matrix_copy(m), vname);
+	    } else if (type == GRETL_TYPE_SERIES) {
+		double *x = (double *) val;
+		gretl_matrix *m;
+
+		m = gretl_vector_from_array(x, size, GRETL_MOD_NONE);
+		err = user_matrix_add(m, vname);
+	    } else if (type == GRETL_TYPE_STRING) {
+		char *s = (char *) val;
+
+		err = save_named_string(vname, s, NULL);
+	    }
+	}
+    }
+
+    if (err) {
+	gui_errmsg(err);
     }
 }
 
@@ -3918,17 +3971,9 @@ static void add_bundled_item_to_menu (gpointer key,
 
     if (type == GRETL_TYPE_SERIES && size != datainfo->n) {
 	type = GRETL_TYPE_MATRIX;
-    }    
-
-    if (type == GRETL_TYPE_DOUBLE) {
-	typestr = N_("scalar");
-    } else if (type == GRETL_TYPE_STRING) {
-	typestr = N_("string");
-    } else if (type == GRETL_TYPE_MATRIX) {
-	typestr = N_("matrix");
-    } else if (type == GRETL_TYPE_SERIES) {
-	typestr = N_("series");
     }
+
+    typestr = gretl_arg_type_name(type);
 
     action_entry_init(&item);    
     item.name = (gchar *) key;

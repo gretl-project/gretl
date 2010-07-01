@@ -3062,6 +3062,8 @@ int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname)
 	    opt |= OPT_DUMP;
 	} else if (!strcmp(s, "-q") || !strcmp(s, "--quiet")) { 
 	    opt |= OPT_QUIET;
+	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
+	    opt |= OPT_MAKEPKG;
 	} else if (!strncmp(s, "--switch=", 9)) {
 	    set_script_switch(atoi(s + 9));
 	} else if (*s == '-') {
@@ -3078,7 +3080,10 @@ int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname)
 
     if (!err) {
 	err = incompatible_options(opt, OPT_BATCH | OPT_RUNIT | 
-				   OPT_DBOPEN | OPT_WEBDB);
+				   OPT_DBOPEN | OPT_WEBDB | OPT_MAKEPKG);
+	if (!err) {
+	    err = incompatible_options(opt, OPT_ENGLISH | OPT_BASQUE);
+	}
     }
 
     *pargc = argc;

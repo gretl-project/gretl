@@ -17,6 +17,7 @@
    needs-time-series-data (true|false) 'false'
    needs-qm-data (true|false) 'false'
    needs-panel-data (true|false) 'false'
+   no-data-ok (true|false) 'false'
    has-pdf-doc (true|false) 'false'
    minver CDATA #IMPLIED
 >

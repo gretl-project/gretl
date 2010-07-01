@@ -243,7 +243,7 @@ void add_system_resid (GtkAction *action, gpointer p);
 
 int save_fit_resid (MODEL *pmod, int code);
 
-void set_scalar_name (GtkWidget *widget, dialog_t *dlg);
+int save_bundled_series (const double *x, const char *key);
 
 void add_model_stat (MODEL *pmod, int which);
 

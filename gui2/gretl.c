@@ -1675,13 +1675,10 @@ static void add_conditional_items (windata_t *vwin)
 			      FALSE);
     }
 
-#if 1
     /* not public yet */
     if (getenv("GRETL_TEST_GFN") != NULL) {
-	maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
-	maybe_add_package_to_menu("olsbundle", "/menubar/Model", vwin);
+	maybe_add_packages_to_menus(vwin);
     }
-#endif
 }
 
 /* retrieve the XML description of the main window menus */

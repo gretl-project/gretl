@@ -1635,8 +1635,6 @@ static int fn_file_is_duplicate (const char *fname,
     return ret;
 }
 
-#define pkg_is_loaded(n) (get_function_package_by_filename(n) != NULL)
-
 static void
 read_fn_files_in_dir (DIR *dir, const char *path, 
 		      GtkListStore *store, GtkTreeIter *iter,
@@ -1671,7 +1669,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 				   0, fname, 
 				   1, version,
 				   2, descrip, 
-				   3, pkg_is_loaded(fullname), 
+				   3, function_package_is_loaded(fullname), 
 				   4, path, -1);
 		*nfn += 1;
 		g_free(fname);
@@ -1860,18 +1858,17 @@ gchar *gretl_function_package_get_path (const char *name)
 
 	if ((dir = opendir(dirname)) != NULL) {
 	    struct dirent *dirent;
-	    char mypath[FILENAME_MAX];
-	    char *myname;
+	    char *p, test[NAME_MAX+1];
 
 	    while ((dirent = readdir(dir)) != NULL && !found) {
 		if (has_suffix(dirent->d_name, ".gfn")) {
-		    build_path(mypath, dirname, dirent->d_name, NULL);
-		    myname = get_function_package_name(mypath);
-		    if (!strcmp(myname, name)) {
-			path = g_strdup(mypath);
+		    strcpy(test, dirent->d_name);
+		    p = strrchr(test, '.');
+		    *p = '\0';
+		    if (!strcmp(test, name)) {
+			path = g_strdup_printf("%s%c%s", dirname, SLASH, dirent->d_name);
 			found = 1;
 		    }
-		    free(myname);
 		}
 	    }
 	    closedir(dir);
@@ -1904,7 +1901,7 @@ static void revise_loaded_status (GtkWidget *lbox)
 	g_free(fname);
 	g_free(fdir);
 	gtk_list_store_set(store, &iter, 
-			   3, pkg_is_loaded(fullname), 
+			   3, function_package_is_loaded(fullname), 
 			   -1);
 	if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
 	    break;

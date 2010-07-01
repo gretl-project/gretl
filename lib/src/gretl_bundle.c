@@ -27,7 +27,6 @@
 #include <glib.h>
 
 #define BDEBUG 0
-#define BUNDLE_RETVAL 999
 
 /**
  * gretl_bundle:
@@ -196,9 +195,10 @@ static gretl_bundle *gretl_bundle_new (void)
     gretl_bundle *b = malloc(sizeof *b);
 
     if (b != NULL) {
-	b->level = 0;
 	*b->name = '\0';
-	b->ht = NULL;
+	b->level = 0;
+	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
+				      g_free, bundled_item_destroy);
     }
 
     return b;
@@ -214,7 +214,7 @@ static void set_n_saved_bundles (int n)
     }
 }
 
-static int reallocate_bundles (int n)
+static int resize_bundle_stack (int n)
 {
     gretl_bundle **tmp;
 
@@ -235,7 +235,7 @@ static int gretl_bundle_push (gretl_bundle *b)
 {
     int n = n_saved_bundles + 1;
 
-    if (reallocate_bundles(n)) {
+    if (resize_bundle_stack(n)) {
 	gretl_bundle_destroy(b);
 	return E_ALLOC;
     }
@@ -246,10 +246,15 @@ static int gretl_bundle_push (gretl_bundle *b)
     return 0;
 }
 
+enum {
+    UNSTACK_ONLY,
+    UNSTACK_AND_FREE
+};
+
 /* destroy a stacked bundle indentified by its stack position,
    and resize the stack */
 
-static int real_delete_bundle (int i)
+static int real_unstack_bundle (int i, int mode)
 {
     int n = n_saved_bundles - 1;
     int err = 0;
@@ -258,7 +263,14 @@ static int real_delete_bundle (int i)
 	return E_DATA;
     }
 
-    gretl_bundle_destroy(bundles[i]);
+    if (mode == UNSTACK_AND_FREE) {
+	gretl_bundle_destroy(bundles[i]);
+    } else {
+	/* just detach bundle from stack */
+	bundles[i]->name[0] = '\0';
+	bundles[i]->level = 0;
+    }
+
     bundles[i] = NULL;
 
     if (n == 0) {
@@ -269,7 +281,7 @@ static int real_delete_bundle (int i)
 	for (j=i; j<n; j++) {
 	    bundles[j] = bundles[j+1];
 	}
-	if (reallocate_bundles(n)) {
+	if (resize_bundle_stack(n)) {
 	    err = E_ALLOC;
 	} else {
 	    set_n_saved_bundles(n);
@@ -429,36 +441,36 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 }
 
 /**
- * gretl_bundle_add:
+ * save_named_bundle:
  * @name: name to give the bundle.
  *
- * Creates an empty gretl bundle with the given name and pushes it onto
- * the stack of saved bundles.
+ * Creates an empty gretl bundle with the given @name and pushes it onto
+ * the stack of saved bundles. Used to support simple declaration of 
+ * a new bundle.
  */
 
-int gretl_bundle_add (const char *name)
+int save_named_bundle (const char *name)
 {
     int level = gretl_function_depth();
-    gretl_bundle *b;
+    gretl_bundle *b = get_bundle_pointer(name, level);
+    int err = 0;
 
-    b = get_bundle_pointer(name, level);
     if (b != NULL) {
-	fprintf(stderr, "*** gretl_bundle_add: there's already a '%s' at level %d\n", 
+	fprintf(stderr, "*** save_named_bundle: there's already a '%s' at level %d\n", 
 		name, level);
-	return E_DATA;
+	err = E_DATA;
+    } else {
+	b = gretl_bundle_new();
+	if (b == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    strcpy(b->name, name);
+	    b->level = level;
+	    err = gretl_bundle_push(b);
+	}
     }
 
-    b = malloc(sizeof *b);
-    if (b == NULL) {
-	return E_ALLOC;
-    }
-
-    strcpy(b->name, name);
-    b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				  g_free, bundled_item_destroy);
-    b->level = level;
-
-    return gretl_bundle_push(b);
+    return err;
 }
 
 /* For use by geneval: take @bundle, created on the fly, and stack
@@ -532,8 +544,6 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
     if (b == NULL) {
 	*err = E_ALLOC;
     } else {
-	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				      g_free, bundled_item_destroy);
 	g_hash_table_foreach(bundle1->ht, copy_bundled_item, b);
 	g_hash_table_foreach(bundle2->ht, copy_new_bundled_item, b);
     }
@@ -541,13 +551,21 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
     return b;
 }
 
-/* Called from geneval.c on completion of assignment to a
-   bundle named @cpyname, where the returned value on the
-   right-hand side is a pre-existing named bundle that has 
-   not been produced by a user-function
-*/
+/**
+ * gretl_bundle_copy_as:
+ * @name: name of source bundle.
+ * @copyname: name for copy.
+ *
+ * Look for a saved bundle specified by @name, and if found,
+ * make a full copy and save it under @copyname. This is
+ * called from geneval.c on completion of assignment to a
+ * bundle named @cpyname, where the returned value on the
+ * right-hand side is a pre-existing saved bundle.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
 
-int gretl_bundle_copy_as (const char *name, const char *cpyname)
+int gretl_bundle_copy_as (const char *name, const char *copyname)
 {
     int level = gretl_function_depth();
     gretl_bundle *b0, *b1;
@@ -558,7 +576,7 @@ int gretl_bundle_copy_as (const char *name, const char *cpyname)
 	return E_UNKVAR;
     }    
 
-    b1 = get_bundle_pointer(cpyname, level);
+    b1 = get_bundle_pointer(copyname, level);
 
     if (b1 != NULL) {
 	g_hash_table_destroy(b1->ht);
@@ -568,7 +586,7 @@ int gretl_bundle_copy_as (const char *name, const char *cpyname)
 	if (b1 == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    strcpy(b1->name, cpyname);
+	    strcpy(b1->name, copyname);
 	    b1->ht = NULL;
 	    b1->level = level;
 	    err = gretl_bundle_push(b1);
@@ -584,74 +602,57 @@ int gretl_bundle_copy_as (const char *name, const char *cpyname)
     return err;
 }
 
-/* Called from gretl_func.c on return, to mark a given
-   bundle as a function return value; we do this by
-   setting the bundle's level to a special value.
-*/
+/**
+ * gretl_bundle_copy:
+ * @bundle: gretl bundle to be copied.
+ * @err: location to receive error code.
+ *
+ * Returns: a "deep copy" of @bundle (all the items in @bundle
+ * are themselves copied), or NULL on failure.
+ */
 
-int gretl_bundle_mark_as_return (const char *name)
+gretl_bundle *gretl_bundle_copy (gretl_bundle *bundle, int *err)
 {
-    gretl_bundle *b;
+    gretl_bundle *bcpy = NULL;
 
-#if BDEBUG
-    fprintf(stderr, "gretl_bundle_mark_as_return: '%s' (depth %d)\n",
-	    name, gretl_function_depth());
-#endif
-
-    b = get_bundle_pointer(name, gretl_function_depth());
-    
-    if (b == NULL) {
-	return E_DATA;
+    if (bundle == NULL) {
+	*err = E_DATA;
     } else {
-	b->level = BUNDLE_RETVAL;
-	return 0;
-    }
-}
-
-/* Called from geneval.c to operate on a bundle that has been marked
-   as a user-function return value (indentfied by its special "level"
-   value). We see if there's already a bundle of the given name at
-   caller level, and either overwrite an existing bundle or adjust the
-   bundle's name and level.
-*/
-
-int gretl_bundle_name_return (const char *name)
-{
-    gretl_bundle *b0, *b1 = NULL;
-    int level = gretl_function_depth();
-    int i;
-
-#if BDEBUG
-    fprintf(stderr, "gretl_bundle_name_return: '%s'\n", name);
-#endif
-
-    for (i=0; i<n_saved_bundles; i++) {
-	if (bundles[i]->level == BUNDLE_RETVAL) {
-	    b1 = bundles[i];
-	    break;
+	bcpy = gretl_bundle_new();
+	if (bcpy == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    g_hash_table_foreach(bundle->ht, copy_bundled_item, bcpy);
 	}
     }
 
-    if (b1 == NULL) {
-	fprintf(stderr, "bundle_name_return: no returned bundle found\n");
-	return E_DATA;
-    }
+    return bcpy;
+}
 
-    b0 = get_bundle_pointer(name, level);
+/* Called from gretl_func.c on return, to remove
+   a given bundle from the stack of named bundles in
+   preparation for handing it over to the caller,
+   who will take ownership of it.
+*/
+
+gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
+					    int *err)
+{
+    gretl_bundle *b = 
+	get_bundle_pointer(name, gretl_function_depth());
+
+#if BDEBUG
+    fprintf(stderr, "gretl_bundle_pull_from_stack: '%s' (depth %d): %p\n",
+	    name, gretl_function_depth(), (void *) b);
+#endif
     
-    if (b0 != NULL) {
-	/* replace */
-	g_hash_table_destroy(b0->ht);
-	b0->ht = b1->ht;
-	b1->ht = NULL;
-	real_delete_bundle(get_bundle_index(b1));
+    if (b == NULL) {
+	*err = E_DATA;
     } else {
-	/* rename and set level */
-	strcpy(b1->name, name);
-	b1->level = level;
+	*err = real_unstack_bundle(get_bundle_index(b), UNSTACK_ONLY);
     }
 
-    return 0;
+    return b;
 }
 
 /**
@@ -732,7 +733,7 @@ int gretl_bundle_delete_by_name (const char *name, PRN *prn)
     for (i=0; i<n_saved_bundles; i++) {
 	if (bundles[i]->level == level && 
 	    !strcmp(name, bundles[i]->name)) {
-	    err = real_delete_bundle(i);
+	    err = real_unstack_bundle(i, UNSTACK_AND_FREE);
 	    break;
 	}
     }
@@ -777,7 +778,7 @@ int destroy_saved_bundles_at_level (int level)
     if (nb < n_saved_bundles) {
 	set_n_saved_bundles(nb);
 	if (nb > 0) {
-	    err = reallocate_bundles(nb);
+	    err = resize_bundle_stack(nb);
 	}
     }
 

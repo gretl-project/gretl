@@ -1124,23 +1124,13 @@ void call_function_package (const char *fname, GtkWidget *w,
     fnpkg *pkg;
     int err = 0;
 
-    pkg = get_function_package_by_filename(fname);
+    pkg = get_function_package_by_filename(fname, &err);
 
-    if (pkg == NULL) {
-	/* not already loaded */
-	err = load_function_package_from_file(fname);
-	if (err) {
-	    file_read_errbox(fname);
-	    if (loaderr != NULL) {
-		*loaderr = 1;
-	    }
-	} else {
-	    /* should be OK now */
-	    pkg = get_function_package_by_filename(fname);
+    if (err) {
+	gui_errmsg(err); /* FIXME error not very informative? */
+	if (loaderr != NULL) {
+	    *loaderr = 1;
 	}
-    }
-
-    if (err || pkg == NULL) {
 	return;
     }
 
@@ -1226,8 +1216,11 @@ void function_call_cleanup (void)
 
 #include "gretl_bundle.h"
 
-/* The following is a terribly ungainly hack; we'll have to
-   add stuff to the API to make this easier 
+/* This is quite complicated, because we're bypassing the "standard"
+   mechanism for a function call, and instead using output from the
+   gretl model selection dialog and constructing a "direct" call to
+   the function, as is done inside geneval.c. There's probably a
+   simpler way of doing this.
 */
 
 static int ols_bundle_callback (selector *sr)
@@ -1235,98 +1228,90 @@ static int ols_bundle_callback (selector *sr)
     const char *funname = "ols_pack";
     const char *pkgname = "olsbundle";
     gchar *path = NULL;
-    char *buf;
-    fnpkg *pkg;
     ufunc *uf = NULL;
     fnargs *args = NULL;
-    PRN *prn = NULL;
     int yno, err = 0;
 
     if (selector_error(sr)) {
 	return 1;
     }
 
-    /* The following needs to be simplified greatly! */
+    /* get path to package; load package if not already loaded;
+       get specific function from package */
 
     path = gretl_function_package_get_path(pkgname);
     if (path == NULL) {
-	errbox("Couldn't get path to %s!", pkgname);
+	gretl_errmsg_sprintf("Couldn't find package '%s'", pkgname);
 	err = E_DATA;
     } else {
-	err = load_function_package_from_file(path);
-	pkg = get_function_package_by_filename(path);
-	if (pkg == NULL) {
-	    errbox("Couldn't get handle to olsbundle!");
-	} else {
-	    uf = get_packaged_function_by_name(funname, pkg);
+	fnpkg *pkg = get_function_package_by_filename(path, &err);
+
+	if (!err) {
+	    uf = get_function_from_package(funname, pkg);
 	}
 	if (uf == NULL) {
-	    errbox("Couldn't find %s!");
+	    gretl_errmsg_sprintf("Couldn't find function '%s'", funname);
 	    err = E_DATA;
 	}
 	g_free(path);
     }
 
     if (err) {
+	gui_errmsg(err);
 	return err;
+    } else {
+	/* args: get ID of dependent var plus X list */
+	const char *buf = selector_list(sr);
+
+	if (buf == NULL) {
+	    err = E_DATA;
+	} else {
+	    int *list = gretl_list_from_string(buf, &err);
+
+	    if (!err) {
+		yno = list[1];
+		gretl_list_delete_at_pos(list, 1);
+		remember_list(list, "arg1temp", NULL);
+		free(list);
+	    }
+	}
     }
 
-    buf = gretl_strdup(selector_list(sr));
-    if (buf == NULL) {
-	err = E_ALLOC;
-    } else {
-	char *s = buf;
-	int *list;
+    if (!err) {
+	/* push args to function */
+	args = fn_args_new();
+	if (args == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = push_fn_arg(args, GRETL_TYPE_USERIES, &yno);
+	    if (!err) {
+		err = push_fn_arg(args, GRETL_TYPE_LIST, "arg1temp");
+	    }
+	}
+    }
 
-	yno = atoi(s);
-	s += strcspn(s, " ");
-	fprintf(stderr, "yno = %d, s = '%s'\n", yno, s);
-	list = gretl_list_from_string(s, &err);
-	printlist(list, "list");
-	remember_list(list, "argtemp", NULL);
-	free(list);
-	free(buf);
+    if (!err) {
+	/* execute function and retrieve bundle */
+	gretl_bundle *bundle = NULL;
+	PRN *prn = NULL;
+
+	err = bufopen(&prn);
+
+	if (!err) {
+	    err = gretl_function_exec(uf, args, GRETL_TYPE_BUNDLE, &Z, datainfo, 
+				      &bundle, NULL, prn);
+	}
+	if (!err) {
+	    view_buffer(prn, 80, 400, funname, VIEW_BUNDLE, bundle);
+	}
     }
 
     if (err) {
-	return err;
-    }    
-
-    args = fn_args_new();
-    if (args == NULL) {
-	err = E_ALLOC;
-    } else {
-	err = push_fn_arg(args, GRETL_TYPE_USERIES, &yno);
-	if (!err) {
-	    err = push_fn_arg(args, GRETL_TYPE_LIST, "argtemp");
-	}
-	fprintf(stderr, "args pushed, err = %d\n", err);
-    }
-
-    if (!err) {
-	bufopen(&prn);
-    }
-
-    if (!err) {
-	gretl_bundle *bundle = NULL;
-	char *sret = NULL;
-
-	err = gretl_function_exec(uf, args, GRETL_TYPE_BUNDLE, &Z, datainfo, 
-				  &sret, NULL, prn);
-	fprintf(stderr, "exec'd: err = %d, sret = %s\n", err, sret);
-	if (!err) {
-	    err = gretl_bundle_name_return("rettemp");
-	}
-	if (!err) {
-	    bundle = get_gretl_bundle_by_name("rettemp");
-	    fprintf(stderr, "returned bundle: %p\n", (void *) bundle);
-	}
-
-	view_buffer(prn, 80, 400, funname, VIEW_BUNDLE, bundle);
+	gui_errmsg(err);
     }
 
     fn_args_free(args);
-    delete_list_by_name("argtemp");
+    delete_list_by_name("arg1temp");
 
     return err;
 }
@@ -1349,6 +1334,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     if (path == NULL) {
 	errbox("Couldn't find package %s\n", name);
     } else if (!strcmp(name, "olsbundle")) {
+	/* see if we can get cosy with olsbundle */
 	selection_dialog(_("gretl: specify model"), 
 			 ols_bundle_callback, OLS);
     } else {
@@ -1357,7 +1343,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 }
 
-/* For a "privileged" function package: given its internal
+/* For "privileged" function packages: given the internal
    package name (e.g. "gig") and a menu path where we'd like
    it to appear (e.g. "/menubar/Model/TSModels" -- see the
    ui definition file gui2/gretlmain.xml), construct the
@@ -1365,9 +1351,9 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
    which see above.
 */
 
-void maybe_add_package_to_menu (const char *pkgname, 
-				const char *menupath,
-				windata_t *vwin)
+static void maybe_add_package_to_menu (const char *pkgname, 
+				       const char *menupath,
+				       windata_t *vwin)
 {
     static GtkActionEntry pkg_item = {
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
@@ -1390,3 +1376,10 @@ void maybe_add_package_to_menu (const char *pkgname,
     g_object_unref(actions);
     g_free(label);
 }
+
+void maybe_add_packages_to_menus (windata_t *vwin)
+{
+    maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
+    maybe_add_package_to_menu("olsbundle", "/menubar/Model", vwin);
+}
+

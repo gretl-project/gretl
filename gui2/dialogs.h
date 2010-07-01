@@ -162,6 +162,10 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 
 void tex_format_dialog (void);
 
+void object_name_entry_dialog (char *name, GretlType type,
+			       const char *labeltxt,
+			       int *cancel);
+
 int gretl_all_done (void);
 
 #endif /* DIALOGS_H */

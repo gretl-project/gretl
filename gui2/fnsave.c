@@ -469,8 +469,7 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 	return;
     }
 
-    fun = get_packaged_function_by_name(finfo->active,
-					finfo->pkg);
+    fun = get_function_from_package(finfo->active, finfo->pkg);
     if (fun == NULL) {
 	errbox(_("Can't find the function '%s'"), finfo->active);
     }
@@ -1582,8 +1581,8 @@ int save_function_package_as_script (const char *fname, gpointer p)
     pprintf(prn, "# date='%s'\n", finfo->date);
 
     for (i=0; i<finfo->n_priv; i++) {
-	fun = get_packaged_function_by_name(finfo->privnames[i],
-					    finfo->pkg);
+	fun = get_function_from_package(finfo->privnames[i],
+					finfo->pkg);
 	if (fun != NULL) {
 	    pputc(prn, '\n');
 	    gretl_function_print_code(fun, prn);
@@ -1591,8 +1590,8 @@ int save_function_package_as_script (const char *fname, gpointer p)
     }
 
     for (i=0; i<finfo->n_pub; i++) {
-	fun = get_packaged_function_by_name(finfo->pubnames[i],
-					    finfo->pkg);
+	fun = get_function_from_package(finfo->pubnames[i],
+					finfo->pkg);
 	if (fun != NULL) {
 	    pputc(prn, '\n');
 	    gretl_function_print_code(fun, prn);
@@ -1725,16 +1724,10 @@ void edit_function_package (const char *fname)
     const char *p;
     int err = 0;
 
-    pkg = get_function_package_by_filename(fname);
-
-    if (pkg == NULL) {
-	err = load_function_package_from_file(fname);
-	if (err) {
-	    file_read_errbox(fname);
-	    return;
-	} else {
-	    pkg = get_function_package_by_filename(fname);
-	}
+    pkg = get_function_package_by_filename(fname, &err);
+    if (err) {
+	gui_errmsg(err);
+	return;
     }
 
     finfo = finfo_new();

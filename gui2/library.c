@@ -5193,6 +5193,31 @@ int save_fit_resid (MODEL *pmod, int code)
     return err;
 }
 
+int save_bundled_series (const double *x, const char *key)
+{
+    char vname[VNAMELEN];
+    char descrip[MAXLABEL];
+    int cancel = 0;
+    int err = 0;
+
+    strcpy(vname, key);
+    *descrip = '\0';
+    name_new_variable_dialog(vname, descrip, &cancel);
+
+    if (cancel) {
+	return 0;
+    }
+
+    err = add_or_replace_series((double *) x, vname, descrip, DS_COPY_VALUES);
+
+    if (!err) {
+	populate_varlist();
+	mark_dataset_as_modified();
+    }
+
+    return err;
+}
+
 void add_system_resid (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -5251,7 +5276,7 @@ void add_system_resid (GtkAction *action, gpointer p)
     }
 }
 
-void set_scalar_name (GtkWidget *widget, dialog_t *dlg)
+static void set_scalar_name (GtkWidget *widget, dialog_t *dlg)
 {
     char *vname = (char *) edit_dialog_get_data(dlg);
     const gchar *s = edit_dialog_get_text(dlg);
@@ -5345,7 +5370,7 @@ void add_model_stat (MODEL *pmod, int which)
 
     /* note: since this is a scalar, which will not be saved by
        default on File/Save data, we will not mark the data set
-       as "modified" here. (FIXME saving scalars?) */
+       as "modified" here */
 }
 
 static void xvar_from_action (GtkAction *action, int *xvar)

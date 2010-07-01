@@ -203,7 +203,7 @@ int gretl_function_depth (void)
  * Returns: the allocated argument, or %NULL of failure.
  */
 
-struct fnarg *fn_arg_new (int type, void *p, int *err)
+struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
 {
     struct fnarg *arg;
 
@@ -302,7 +302,7 @@ void fn_args_free (fnargs *args)
  * Returns: 0 on success, non-zero on failure.
  */
 
-int push_fn_arg (fnargs *args, int type, void *p)
+int push_fn_arg (fnargs *args, GretlType type, void *p)
 {
     int err = 0;
 
@@ -808,24 +808,23 @@ ufunc *get_user_function_by_name (const char *name)
 }
 
 /**
- * get_packaged_ufunc_by_name:
- * @name: name to test.
+ * get_function_from_package:
+ * @funname: name if fuction to retrieve.
  * @pkg: function package.
  *
  * Returns: pointer to a user-function, if there exists a
- * function of the given @name that is associated with
- * function package @pkg, otherwise %NULL.  This is used
+ * function of the given @funname that is associated with
+ * function package @pkg, otherwise NULL.  This is used
  * in the gretl function package editor.
  */
 
-ufunc *get_packaged_function_by_name (const char *name,
-				      fnpkg *pkg)
+ufunc *get_function_from_package (const char *funname, fnpkg *pkg)
 {
     int i;
 
     for (i=0; i<n_ufuns; i++) {
 	if (ufuns[i]->pkg == pkg && 
-	    !strcmp(name, ufuns[i]->name)) {
+	    !strcmp(funname, ufuns[i]->name)) {
 	    return ufuns[i];
 	}
     }
@@ -960,17 +959,17 @@ static ufunc *add_ufunc (const char *fname)
     return fun;
 }
 
-/* handling of XML function packages */
+/**
+ * gretl_arg_type_name:
+ * @type: a gretl type.
+ *
+ * Returns: the name of gretl type that is valid as a 
+ * function argument or return value.
+ */
 
-enum {
-    FUNCS_INFO,
-    FUNCS_LOAD,
-    FUNCS_CODE
-};
-
-static const char *arg_type_string (int t)
+const char *gretl_arg_type_name (GretlType type)
 {
-    switch (t) {
+    switch (type) {
     case GRETL_TYPE_BOOL:       return "bool";
     case GRETL_TYPE_INT:        return "int";
     case GRETL_TYPE_DOUBLE:     return "scalar";
@@ -986,10 +985,18 @@ static const char *arg_type_string (int t)
     case GRETL_TYPE_STRING:     return "string";
     case GRETL_TYPE_VOID:       return "void";
     case GRETL_TYPE_NONE:       return "null";
+    default:
+	return "invalid";
     }
-
-    return "unknown";
 }
+
+/* handling of XML function packages */
+
+enum {
+    FUNCS_INFO,
+    FUNCS_LOAD,
+    FUNCS_CODE
+};
 
 static const char *arg_type_xml_string (int t)
 {
@@ -1002,7 +1009,7 @@ static const char *arg_type_xml_string (int t)
     } else if (t == GRETL_TYPE_BUNDLE_REF) {
 	return "bundleref";
     } else {
-	return arg_type_string(t);
+	return gretl_arg_type_name(t);
     }
 }
 
@@ -1574,7 +1581,7 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     }
 
     fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\" private=\"%d\">\n", 
-	    fun->name, arg_type_string(rtype), fun->private);
+	    fun->name, gretl_arg_type_name(rtype), fun->private);
 
     if (fun->n_params > 0) {
 
@@ -1644,7 +1651,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
     if (fun->rettype == GRETL_TYPE_NONE) {
 	pprintf(prn, "function void %s ", fun->name);
     } else {
-	const char *typestr = arg_type_string(fun->rettype);
+	const char *typestr = gretl_arg_type_name(fun->rettype);
 
 	pprintf(prn, "function %s %s ", typestr, fun->name);
     }
@@ -1658,7 +1665,7 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	if (fun->params[i].flags & ARG_CONST) {
 	    pputs(prn, "const ");
 	}
-	s = arg_type_string(fun->params[i].type);
+	s = gretl_arg_type_name(fun->params[i].type);
 	if (s[strlen(s) - 1] == '*') {
 	    pprintf(prn, "%s%s", s, fun->params[i].name);
 	} else {
@@ -1975,6 +1982,8 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	fprintf(fp, " %s=\"true\"", NEEDS_QM);
     } else if (pkg->dreq == FN_NEEDS_PANEL) {
 	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
+    } else if (pkg->dreq == FN_NODATA_OK) {
+	fprintf(fp, " %s=\"true\"", NO_DATA_OK);
     }
 
     if (pkg->minver > 0) {
@@ -2083,6 +2092,8 @@ static int pkg_set_dreq (fnpkg *pkg, const char *s)
 	pkg->dreq = FN_NEEDS_QM;
     } else if (!strcmp(s, NEEDS_PANEL)) {
 	pkg->dreq = FN_NEEDS_PANEL;
+    } else if (!strcmp(s, NO_DATA_OK)) {
+	pkg->dreq = FN_NODATA_OK;
     } else {
 	err = E_PARSE;
     }
@@ -2640,6 +2651,21 @@ static void function_package_free_full (fnpkg *pkg)
     real_function_package_free(pkg, 1);
 }
 
+/* is the package with filename @fname already in memory? */
+
+static fnpkg *get_loaded_pkg_by_filename (const char *fname)
+{
+    int i;
+
+    for (i=0; i<n_pkgs; i++) {
+	if (!strcmp(fname, pkgs[i]->fname)) {
+	    return pkgs[i];
+	}
+    }
+
+    return NULL;
+}
+
 /**
  * function_package_unload_by_filename:
  * @fname: package filename.
@@ -2652,7 +2678,7 @@ static void function_package_free_full (fnpkg *pkg)
 
 void function_package_unload_by_filename (const char *fname)
 {
-    fnpkg *pkg = get_function_package_by_filename(fname);
+    fnpkg *pkg = get_loaded_pkg_by_filename(fname);
 
     if (pkg != NULL) {
 	real_function_package_unload(pkg, 0);
@@ -2670,7 +2696,7 @@ void function_package_unload_by_filename (const char *fname)
 
 void function_package_unload_full_by_filename (const char *fname)
 {
-    fnpkg *pkg = get_function_package_by_filename(fname);
+    fnpkg *pkg = get_loaded_pkg_by_filename(fname);
 
     if (pkg != NULL) {
 	real_function_package_unload(pkg, 1);
@@ -2918,6 +2944,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	pkg->dreq = FN_NEEDS_QM;
     } else if (gretl_xml_get_prop_as_bool(node, NEEDS_PANEL)) {
 	pkg->dreq = FN_NEEDS_PANEL;
+    } else if (gretl_xml_get_prop_as_bool(node, NO_DATA_OK)) {
+	pkg->dreq = FN_NODATA_OK;
     }
 
     if (gretl_xml_get_prop_as_string(node, "minver", &tmp)) {
@@ -3062,28 +3090,35 @@ static fnpkg *read_package_file (const char *fname, int *err)
     return pkg;
 }
 
-fnpkg *get_function_package_by_filename (const char *fname)
+/** 
+ * function_package_is_loaded:
+ * @fname: full path to gfn file.
+ *
+ * Returns: 1 if the function package with filename @fname is
+ * loaded in memory, otherwise 0.
+ */
+
+int function_package_is_loaded (const char *fname)
 {
-    int i;
-
-    for (i=0; i<n_pkgs; i++) {
-	if (!strcmp(fname, pkgs[i]->fname)) {
-	    return pkgs[i];
-	}
-    }
-
-    return NULL;
+    return (get_loaded_pkg_by_filename(fname) != NULL);
 }
 
-/* read functions from file into gretl's workspace: called via
-   GUI means and also in response to the "include" command
-   for a .gfn filename */
+/** 
+ * load_function_package_from_file:
+ * @fname: full path to gfn file.
+ *
+ * Loads the function package located by @fname into
+ * memory, if possible. Supports gretl's "include" command
+ * for gfn files.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
 
 int load_function_package_from_file (const char *fname)
 {
     int err = 0;
 
-    if (get_function_package_by_filename(fname) != NULL) {
+    if (function_package_is_loaded(fname)) {
 	/* already loaded: no-op */
 	fprintf(stderr, "load_function_package_from_file:\n"
 		" '%s' is already loaded\n", fname);
@@ -3102,6 +3137,45 @@ int load_function_package_from_file (const char *fname)
     return err;
 }
 
+/** 
+ * get_function_package_by_filename:
+ * @fname: gfn filename.
+ * @err: location to receive error code.
+ *
+ * If the package whose filename is @fname is already loaded,
+ * returns the package pointer, otherwise attempts to load the
+ * package from file. Similar to load_function_package_from_file()
+ * but returns the package pointer rather than just a status
+ * code.
+ *
+ * Returns: package-pointer on success, NULL on error.
+ */
+
+fnpkg *get_function_package_by_filename (const char *fname, int *err)
+{
+    fnpkg *pkg = NULL;
+    int i;
+
+    for (i=0; i<n_pkgs; i++) {
+	if (!strcmp(fname, pkgs[i]->fname)) {
+	    pkg = pkgs[i];
+	    break;
+	}
+    }
+
+    if (pkg == NULL) {
+	pkg = read_package_file(fname, err);
+	if (!*err) {
+	    *err = real_load_package(pkg);
+	    if (*err) {
+		pkg = NULL;
+	    }
+	}
+    } 	
+
+    return pkg;
+}
+
 /* Retrieve summary info or code listing for a function package,
    identified by its filename.  This is called (indirectly) from the
    GUI (see below for the actual callbacks).
@@ -3118,7 +3192,7 @@ real_print_function_package_data (const char *fname, PRN *prn, int task)
     fprintf(stderr, "real_get_function_file_info: fname = '%s'\n", fname);
 #endif
 
-    pkg = get_function_package_by_filename(fname);
+    pkg = get_loaded_pkg_by_filename(fname);
 
     if (pkg == NULL) {
 	/* package is not loaded, read it now */
@@ -3216,41 +3290,6 @@ int get_function_file_header (const char *fname, char **pdesc,
     }
 
     return err;
-}
-
-/* Given the full path to a gfn file, try to get its
-   internal package name (e.g. "gig"). Return an
-   allocated copy of the name if found, else NULL.
-*/
-
-char *get_function_package_name (const char *path)
-{
-    char *pkgname = NULL;
-    xmlDocPtr doc = NULL;
-    xmlNodePtr node = NULL;
-    int err;
-
-    xmlKeepBlanksDefault(0);
-
-    err = gretl_xml_open_doc_root(path, "gretl-functions", &doc, &node);
-
-    if (!err) {
-	node = node->xmlChildrenNode;
-	while (node != NULL) {
-	    if (!xmlStrcmp(node->name, (XUC) "gretl-function-package")) {
-		gretl_xml_get_prop_as_string(node, "name", &pkgname);
-		break;
-	    }
-	    node = node->next;
-	}
-    }
-
-    if (doc != NULL) {
-	xmlFreeDoc(doc);
-	xmlCleanupParser();
-    }
-
-    return pkgname;
 }
 
 /**
@@ -4129,7 +4168,7 @@ int update_function_from_script (const char *funname, const char *path,
     if (pkg == NULL) {
 	orig = get_user_function_by_name(funname);
     } else {
-	orig = get_packaged_function_by_name(funname, pkg);
+	orig = get_function_from_package(funname, pkg);
     }
 
     if (orig == NULL) {
@@ -4250,6 +4289,10 @@ static int localize_list (fncall *call, const char *oldname,
 	    }
 	}
     }
+
+#if UDEBUG
+    fprintf(stderr, "localize_list: returning %d\n", err);
+#endif
 
     return err;
 }
@@ -4518,6 +4561,10 @@ static int allocate_function_args (fncall *call,
 	set_listargs_from_call(call, pdinfo);
     }
 
+#if UDEBUG
+    fprintf(stderr, "allocate_function args: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -4551,20 +4598,23 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 	return 1;
     }
 
-    if (dreq == FN_NEEDS_TS && 
-	(pdinfo == NULL || !dataset_is_time_series(pdinfo))) {
+    if ((pdinfo == NULL || pdinfo->v == 0) && dreq != FN_NODATA_OK) {
+	gretl_errmsg_set("This function needs a dataset in place");
+	return 1;
+    }
+
+    if (dreq == FN_NEEDS_TS && !dataset_is_time_series(pdinfo)) {
 	gretl_errmsg_set("This function needs time-series data");
 	return 1;
     }
 
-    if (dreq == FN_NEEDS_PANEL && 
-	(pdinfo == NULL || !dataset_is_panel(pdinfo))) {
+    if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(pdinfo)) {
 	gretl_errmsg_set("This function needs panel data");
 	return 1;
     }
 
     if (dreq == FN_NEEDS_QM && 
-	(pdinfo == NULL || !dataset_is_time_series(pdinfo) || 
+	(!dataset_is_time_series(pdinfo) || 
 	 (pdinfo->pd != 4 || pdinfo->pd != 12))) {
 	gretl_errmsg_set("This function needs quarterly or monthly data");
 	return 1;
@@ -4624,12 +4674,12 @@ static double *get_series_return (const char *vname, double **Z,
     return x;
 }
 
-static gretl_matrix *get_matrix_return (const char *mname, int copy, int *err)
+static gretl_matrix *get_matrix_return (const char *name, int copy, int *err)
 {
     gretl_matrix *ret = NULL;
 
     if (copy) {
-	gretl_matrix *m = get_matrix_by_name(mname);
+	gretl_matrix *m = get_matrix_by_name(name);
 
 	if (m != NULL) {
 	    ret = gretl_matrix_copy(m);
@@ -4638,11 +4688,28 @@ static gretl_matrix *get_matrix_return (const char *mname, int copy, int *err)
 	    }
 	} 
     } else {
-	ret = steal_matrix_by_name(mname);
+	ret = steal_matrix_by_name(name);
     }
 
     if (ret == NULL && !*err) {
 	*err = E_UNKVAR;
+    }
+
+    return ret;
+}
+
+static gretl_bundle *get_bundle_return (const char *name, int copy, int *err)
+{
+    gretl_bundle *ret = NULL;
+
+    if (copy) {
+	gretl_bundle *b = get_gretl_bundle_by_name(name);
+
+	if (b != NULL) {
+	    ret = gretl_bundle_copy(b, err);
+	} 
+    } else {
+	ret = gretl_bundle_pull_from_stack(name, err);
     }
 
     return ret;
@@ -4847,12 +4914,9 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    */
 	    err = unlocalize_list(call->retname, LIST_DIRECT_RETURN, Z, pdinfo);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
-	    if (gretl_is_bundle(call->retname)) {
-		*(char **) ret = gretl_strdup(call->retname);
-		gretl_bundle_mark_as_return(call->retname);
-	    } else {
-		err = E_UNKVAR;
-	    }
+	    copy = is_pointer_arg(call, args, rtype);
+	    *(gretl_bundle **) ret = get_bundle_return(call->retname, 
+						       copy, &err);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    *(char **) ret = get_string_return(call->retname, Z, pdinfo, &err);
 	} 
@@ -5172,7 +5236,8 @@ static int check_function_args (ufunc *u, fnargs *args,
 	} else if (fp->type != arg->type) {
 	    /* FIXME case where list is wanted and the arg is a series */
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
-		    u->name, i + 1, arg_type_string(arg->type), arg_type_string(fp->type));
+		    u->name, i + 1, gretl_arg_type_name(arg->type), 
+		    gretl_arg_type_name(fp->type));
 	    err = E_TYPES;
 	}
 
@@ -5330,7 +5395,7 @@ static int handle_return_statement (fncall *call,
 	    /* returning a named variable */
 	    call->retname = gretl_strndup(s, len);
 	} else {
-	    const char *typestr = arg_type_string(fun->rettype);
+	    const char *typestr = gretl_arg_type_name(fun->rettype);
 	    char formula[MAXLINE];
 	    
 	    sprintf(formula, "%s $retval=%s", typestr, s);
@@ -5732,7 +5797,7 @@ static void real_user_function_help (ufunc *fun, PRN *prn)
 	pprintf(prn, "Parameters:\n");
 	for (i=0; i<fun->n_params; i++) {
 	    pprintf(prn, " %s (%s)\n", 
-		    fun->params[i].name, arg_type_string(fun->params[i].type));
+		    fun->params[i].name, gretl_arg_type_name(fun->params[i].type));
 	}
 	pputc(prn, '\n');
     } else {
@@ -5740,7 +5805,7 @@ static void real_user_function_help (ufunc *fun, PRN *prn)
     }
 
     if (fun->rettype != GRETL_TYPE_NONE && fun->rettype != GRETL_TYPE_VOID) {
-	pprintf(prn, "Return value: %s\n\n", arg_type_string(fun->rettype));
+	pprintf(prn, "Return value: %s\n\n", gretl_arg_type_name(fun->rettype));
     } else {
 	pputs(prn, "Return value: none\n\n");
     }

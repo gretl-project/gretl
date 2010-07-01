@@ -996,14 +996,18 @@ respectively; \texttt{min-version} specifies the minimum version of
 \app{gretl} that is required for the package to work correctly.  
 
 The \texttt{data-requirement} field should be specified if the package
-requires time-series or panel data. In that case the value must be one
-of the following standard strings: 
+requires time-series or panel data, or if no dataset is required.
+(The default assumption is that a dataset of some sort must be in
+place, but if the packaged functions do not use any series or lists
+this requirement can be relaxed.)  In that case the value must be one
+of the following standard strings:
 
 \begin{center}
 \begin{tabular}{ll}
 \texttt{needs-time-series-data} & (any time-series data OK) \\ 
 \texttt{needs-qm-data} & (must be quarterly or monthly) \\ 
-\texttt{needs-panel-data} & (must be a panel)
+\texttt{needs-panel-data} & (must be a panel) \\
+\texttt{no-data-ok} & (no dataset is needed) \\
 \end{tabular}
 \end{center}
 

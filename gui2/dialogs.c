@@ -4398,6 +4398,68 @@ void lmax_dialog (double *lmax, double ymax)
     gtk_widget_show_all(opt.dlg);
 }
 
+static void name_entry_finalize (GtkWidget *w, GtkWidget *dlg)
+{
+    GtkWidget *entry = g_object_get_data(G_OBJECT(dlg), "entry");
+    char *name = g_object_get_data(G_OBJECT(dlg), "name");
+    GretlType type = widget_get_int(dlg, "type");
+    const gchar *txt = gtk_entry_get_text(GTK_ENTRY(entry));
+
+    if (gui_validate_varname(txt, type) == 0) {
+	strcpy(name, txt);
+	gtk_widget_destroy(dlg);
+    }
+}
+
+void object_name_entry_dialog (char *name, GretlType type,
+			       const char *labeltxt,
+			       int *cancel)
+{
+    GtkWidget *dlg, *tmp, *vbox, *hbox;
+    GtkWidget *entry;
+
+    dlg = gretl_dialog_new(_("gretl: name variable"), NULL, GRETL_DLG_BLOCK);
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+
+    if (labeltxt != NULL) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new(_(labeltxt));
+	gtk_label_set_justify(GTK_LABEL(tmp), GTK_JUSTIFY_CENTER);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    entry = gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN - 1);
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN - 1);
+    gtk_entry_set_text(GTK_ENTRY(entry), name);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
+
+    /* Cancel button */
+    tmp = cancel_delete_button(hbox, dlg, cancel);
+
+    g_object_set_data(G_OBJECT(dlg), "entry", entry);
+    g_object_set_data(G_OBJECT(dlg), "name", name);
+    g_object_set_data(G_OBJECT(dlg), "type", GINT_TO_POINTER(type));
+
+    /* "OK" button */
+    tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(name_entry_finalize), dlg);
+    gtk_widget_grab_default(tmp);
+
+    gretl_dialog_keep_above(dlg);
+    gtk_widget_show_all(dlg);
+}
+
 /* apparatus for setting custom format for TeX tabular model output */
 
 struct rbin {

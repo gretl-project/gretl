@@ -71,7 +71,7 @@
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
 #define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
 
-#define ok_bundle_type(t) (t == NUM || t == STR || t == MAT || t == VEC) 
+#define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || t == VEC) 
 
 #define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
@@ -4791,12 +4791,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	    return NULL;
 	}
-    } else if (user_func_get_return_type(uf) == GRETL_TYPE_BUNDLE) {
-	/* makes no sense to discard bundle return */
-	pprintf(p->prn, "Error: cannot discard returned bundle\n");
-	p->err = E_DATA;
-	return NULL;
-    }
+    } 
 
     /* check the argument count */
     argc = fn_n_params(uf);
@@ -4908,6 +4903,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	double xret = NADBL;
 	double *Xret = NULL;
 	gretl_matrix *mret = NULL;
+	gretl_bundle *bret = NULL;
 	char *sret = NULL;
 	int *iret = NULL;
 	void *retp = NULL;
@@ -4923,7 +4919,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    retp = &sret;
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
-	    retp = &sret;
+	    retp = &bret;
 	}
 
 	if ((p->flags & P_UFRET) && 
@@ -4974,13 +4970,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    ret->v.str = sret;
 		}
 	    } else if (rtype == GRETL_TYPE_BUNDLE) {
-		ret = aux_string_node(p);
+		ret = aux_bundle_node(p);
 		if (ret != NULL) {
 		    if (is_tmp_node(ret)) {
-			free(ret->v.str);
+			gretl_bundle_destroy(ret->v.b);
 		    }
 		    ret->t = BUNDLE;
-		    ret->v.str = sret;
+		    ret->v.b = bret;
 		}
 	    }		
 	}
@@ -5504,7 +5500,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    node_type_error(f, 1, BUNDLE, l, p);
 	} else if (m->t != STR) {
 	    node_type_error(f, 2, STR, m, p);
-	} else if (!ok_bundle_type(r->t)) {
+	} else if (!ok_bundled_type(r->t)) {
 	    node_type_error(f, 3, 0, r, p);
 	} else {
 	    ret = aux_scalar_node(p);
@@ -8327,7 +8323,7 @@ static void do_decl (parser *p)
 	    } else if (p->targ == STR) {
 		p->err = save_named_string(S[i], "", NULL);
 	    } else if (p->targ == BUNDLE) {
-		p->err = gretl_bundle_add(S[i]);
+		p->err = save_named_bundle(S[i]);
 	    }
 	}
     }
@@ -9426,15 +9422,13 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if (r->flags & TMP_NODE) {
+	if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
 	    p->err = gretl_bundle_add_or_replace(r->v.b, p->lh.name);
 	    if (!p->err) {
+		/* avoid destroying bundle */
 		r->v.b = NULL;
 	    }
-	} else if (p->flags & P_UFRET) {
-	    /* bundle returned by user-function */
-	    p->err = gretl_bundle_name_return(p->lh.name);
 	} else {
 	    /* assignment from pre-existing named bundle */
 	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);

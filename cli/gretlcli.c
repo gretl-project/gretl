@@ -67,6 +67,7 @@ PRN *cmdprn;
 FILE *fb;
 int batch;
 int runit;
+int makepkg;
 int data_status;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
@@ -86,6 +87,7 @@ static void usage (int err)
 	     "Options:\n"
 	     " -b or --batch     Process a command script and exit.\n"
 	     " -r or --run       Run a script then hand control to command line.\n"
+	     " -m or --makepkg   Run a script and create a package from it.\n"
 	     " -h or --help      Print this info and exit.\n"
 	     " -v or --version   Print version info and exit.\n"
 	     " -e or --english   Force use of English rather than translation.\n"
@@ -378,7 +380,7 @@ int main (int argc, char *argv[])
 	    }
 	}
 	    
-	if (opt & (OPT_BATCH | OPT_RUNIT)) {
+	if (opt & (OPT_BATCH | OPT_RUNIT | OPT_MAKEPKG)) {
 	    if (*filearg == '\0') {
 		/* we're missing a filename argument */
 		usage(1);
@@ -388,6 +390,9 @@ int main (int argc, char *argv[])
 		load_datafile = 0;
 		if (opt & OPT_BATCH) {
 		    batch = 1;
+		} else if (opt & OPT_MAKEPKG) {
+		    batch = 1;
+		    makepkg = 1;
 		} else {
 		    runit = 1;
 		}
@@ -553,7 +558,7 @@ int main (int argc, char *argv[])
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
 	sprintf(line, "run %s\n", runfile);
-	exec_line(&state, &Z, datainfo);
+	err = exec_line(&state, &Z, datainfo);
     }
 
     /* main command loop */
@@ -594,6 +599,12 @@ int main (int argc, char *argv[])
 	if (err) {
 	    errmsg(err, prn);
 	}
+    }
+
+    if (makepkg && !err) {
+	switch_ext(filearg, runfile, "gfn");
+	sprintf(line, "makepkg %s\n", filearg);
+	exec_line(&state, &Z, datainfo);
     }
 
     /* leak check -- try explicitly freeing all memory allocated */
