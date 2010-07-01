@@ -4676,6 +4676,12 @@ void residual_correlogram (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
+/* If code == SELECTED_VAR we're doing the periodiogram for a
+   selected variable from the dataset; otherwise we're doing it
+   for a regression residual, added to the dataset on the fly
+   as the last series.
+*/
+
 static void 
 real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 {
@@ -4687,21 +4693,15 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
 	NULL
     };
     int active[1] = {0};
-    int width = 0;
     gretlopt opt = (bartlett)? OPT_O : OPT_NONE;
-    int err;
+    int width, err;
 
-    if (bartlett) {
-	width = auto_spectrum_order(T, opt);
-	err = checks_dialog(_(title), NULL, 
-			    opts, 1, active, 0, NULL,
-			    &width, _("Bandwidth:"),
-			    2, T / 2, PERGM);
-    } else {
-	err = checks_dialog(_(title), NULL, 
-			    opts, 1, active, 0, NULL,
-			    NULL, NULL, 0, 0, 0);
-    }
+    width = auto_spectrum_order(T, opt);
+
+    err = checks_dialog(_(title), NULL, 
+			opts, 1, active, 0, NULL,
+			&width, _("Bandwidth:"),
+			2, T / 2, PERGM);
 
     if (err < 0) {
 	return;
@@ -4718,7 +4718,8 @@ real_do_pergm (guint bartlett, double **Z, DATAINFO *pdinfo, int code)
     if (code == SELECTED_VAR) {
 	const char *flagstr = print_flags(opt, PERGM);
 
-	gretl_command_sprintf("pergm %s%s", selected_varname(), flagstr);
+	gretl_command_sprintf("pergm %s %d%s", selected_varname(), 
+			      width, flagstr);
 	if (check_and_record_command()) {
 	    gretl_print_destroy(prn);
 	    return;
