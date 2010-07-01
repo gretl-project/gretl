@@ -5251,7 +5251,7 @@ void add_system_resid (GtkAction *action, gpointer p)
     }
 }
 
-static void set_model_stat_name (GtkWidget *widget, dialog_t *dlg)
+void set_scalar_name (GtkWidget *widget, dialog_t *dlg)
 {
     char *vname = (char *) edit_dialog_get_data(dlg);
     const gchar *s = edit_dialog_get_text(dlg);
@@ -5332,7 +5332,7 @@ void add_model_stat (MODEL *pmod, int which)
 			    pmod->ID, descrip, val);
 
     edit_dialog(_("gretl: add scalar"),
-		blurb, vname, set_model_stat_name, vname, 
+		blurb, vname, set_scalar_name, vname, 
 		0, VARCLICK_NONE, &cancel);
 
     g_free(blurb);

@@ -5109,15 +5109,18 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 {
     const char *name = l->v.str;
     const char *key = r->v.str;
+    gretl_bundle *bundle;
     GretlType type;
     void *val;
     int size = 0;
     NODE *ret = NULL;
 
-    if (!gretl_is_bundle(name)) {
+    bundle = get_gretl_bundle_by_name(name);
+    
+    if (bundle == NULL) {
 	p->err = E_UNKVAR;
     } else {
-	val = gretl_bundle_get_data(name, key, &type, &size);
+	val = gretl_bundle_get_data(bundle, key, &type, &size);
 	if (val == NULL) {
 	    p->err = E_DATA;
 	} else if (type == GRETL_TYPE_DOUBLE) {

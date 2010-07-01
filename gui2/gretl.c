@@ -1677,8 +1677,9 @@ static void add_conditional_items (windata_t *vwin)
 
 #if 1
     /* not public yet */
-    if (getenv("GRETL_USE_GIG") != NULL) {
+    if (getenv("GRETL_TEST_GFN") != NULL) {
 	maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
+	maybe_add_package_to_menu("olsbundle", "/menubar/Model", vwin);
     }
 #endif
 }

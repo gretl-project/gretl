@@ -29,15 +29,13 @@
 #define BDEBUG 0
 #define BUNDLE_RETVAL 999
 
-typedef struct bundle_value_ bundle_value;
-
 struct gretl_bundle_ {
     char name[VNAMELEN]; 
     GHashTable *ht;      /* holds key/value pairs */
     int level;           /* level of function execution */
 };
 
-struct bundle_value_ {
+struct bundled_item_ {
     GretlType type;
     int size;
     gpointer data;
@@ -91,10 +89,10 @@ static int bundle_index_by_name (const char *name, int level)
 /* allocate and fill out a 'value' (type plus data pointer) that will
    be inserted into a bundle's hash table */
 
-static bundle_value *bundle_value_new (GretlType type, void *ptr, 
+static bundled_item *bundled_item_new (GretlType type, void *ptr, 
 				       int size, int *err)
 {
-    bundle_value *val = malloc(sizeof *val);
+    bundled_item *val = malloc(sizeof *val);
 
     if (val == NULL) {
 	*err = E_ALLOC;
@@ -137,9 +135,9 @@ static bundle_value *bundle_value_new (GretlType type, void *ptr,
 
 /* callback invoked when a bundle's hash table is destroyed */
 
-static void bundle_value_destroy (gpointer data)
+static void bundled_item_destroy (gpointer data)
 {
-    bundle_value *val = data;
+    bundled_item *val = data;
 
     switch (val->type) {
     case GRETL_TYPE_DOUBLE:
@@ -288,29 +286,26 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
 
 /**
  * gretl_bundle_get_data:
- * @name: name of bundle.
+ * @bundle: bundle to access.
  * @key: name of key to access.
  * @type: location to receive data type.
  * @size: location to receive size of data (= series
  * length for GRETL_TYPE_SERIES, otherwise 0).
  *
  * Returns: the data pointer associated with @key in the
- * bundle given by @name, or NULL on failure.
+ * specified @bundle, or NULL on failure.
  */
 
-void *gretl_bundle_get_data (const char *name, const char *key,
+void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size)
 {
     void *ret = NULL;
-    gretl_bundle *b;
 
-    b = get_bundle_pointer(name, gretl_function_depth());
-
-    if (b != NULL) {
-	gpointer p = g_hash_table_lookup(b->ht, key);
+    if (bundle != NULL) {
+	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {
-	    bundle_value *val = p;
+	    bundled_item *val = p;
 	    
 	    *type = val->type;
 	    ret = val->data;
@@ -321,12 +316,25 @@ void *gretl_bundle_get_data (const char *name, const char *key,
     return ret;
 }
 
+void *bundled_item_get_data (bundled_item *item, GretlType *type,
+			     int *size)
+{
+    *type = item->type;
+    *size = item->size;
+    return item->data;
+}
+
+void *gretl_bundle_get_contents (gretl_bundle *bundle)
+{
+    return (bundle == NULL)? NULL : (void *) bundle->ht;
+}
+
 static int real_gretl_bundle_set_data (gretl_bundle *b, const char *key,
 				       void *ptr, GretlType type,
 				       int size)
 {
     int err = 0;
-    bundle_value *val = bundle_value_new(type, ptr, size, &err);
+    bundled_item *val = bundled_item_new(type, ptr, size, &err);
 
     if (!err) {
 	gchar *k = g_strdup(key);
@@ -397,7 +405,7 @@ int gretl_bundle_add (const char *name)
 
     strcpy(b->name, name);
     b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				  g_free, bundle_value_destroy);
+				  g_free, bundled_item_destroy);
     b->level = level;
 
     return gretl_bundle_push(b);
@@ -433,9 +441,9 @@ int gretl_bundle_add_or_replace (gretl_bundle *b, const char *name)
    have a bundle-value under the same key
 */
 
-static void copy_new_bundle_value (gpointer key, gpointer value, gpointer p)
+static void copy_new_bundled_item (gpointer key, gpointer value, gpointer p)
 {
-    bundle_value *bval = (bundle_value *) value;
+    bundled_item *bval = (bundled_item *) value;
     gretl_bundle *targ = (gretl_bundle *) p;
 
     if (!gretl_bundle_has_data(targ, (const char *) key)) {
@@ -448,9 +456,9 @@ static void copy_new_bundle_value (gpointer key, gpointer value, gpointer p)
 /* replicate on a target bundle a bundle-value from some other
    bundle */
 
-static void copy_bundle_value (gpointer key, gpointer value, gpointer p)
+static void copy_bundled_item (gpointer key, gpointer value, gpointer p)
 {
-    bundle_value *bval = (bundle_value *) value;
+    bundled_item *bval = (bundled_item *) value;
     gretl_bundle *targ = (gretl_bundle *) p;
 
     real_gretl_bundle_set_data(targ, (const char *) key,
@@ -475,9 +483,9 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *b1,
 	*err = E_ALLOC;
     } else {
 	b->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				      g_free, bundle_value_destroy);
-	g_hash_table_foreach(b1->ht, copy_bundle_value, b);
-	g_hash_table_foreach(b2->ht, copy_new_bundle_value, b);
+				      g_free, bundled_item_destroy);
+	g_hash_table_foreach(b1->ht, copy_bundled_item, b);
+	g_hash_table_foreach(b2->ht, copy_new_bundled_item, b);
     }
     
     return b;
@@ -519,8 +527,8 @@ int gretl_bundle_copy_as (const char *name, const char *cpyname)
 
     if (!err) {
 	b1->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				       g_free, bundle_value_destroy);
-	g_hash_table_foreach(b0->ht, copy_bundle_value, b1);
+				       g_free, bundled_item_destroy);
+	g_hash_table_foreach(b0->ht, copy_bundled_item, b1);
     }
 
     return err;

@@ -44,6 +44,7 @@ enum extra_cmds {
     VIEW_MODELTABLE,
     VIEW_PKG_INFO,
     VIEW_PKG_CODE,
+    VIEW_BUNDLE,
     VIEW_FILE,
     DATA_REPORT,
     SCRIPT_OUT,

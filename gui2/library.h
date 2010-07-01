@@ -243,6 +243,8 @@ void add_system_resid (GtkAction *action, gpointer p);
 
 int save_fit_resid (MODEL *pmod, int code);
 
+void set_scalar_name (GtkWidget *widget, dialog_t *dlg);
+
 void add_model_stat (MODEL *pmod, int which);
 
 void resid_plot (GtkAction *action, gpointer p);

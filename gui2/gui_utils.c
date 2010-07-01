@@ -29,6 +29,7 @@
 #include "matrix_extra.h"
 #include "bootstrap.h"
 #include "gretl_foreign.h"
+#include "gretl_bundle.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -63,6 +64,7 @@ char *storelist = NULL;
 
 static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
+static void add_bundle_menu_items (windata_t *vwin);
 static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
@@ -363,6 +365,24 @@ static const gchar *sys_ui =
     "    <menu action='Analysis'>"
     "      <menu action='Forecasts'/>"
     "    </menu>"
+    "  </menubar>"
+    "</ui>";
+
+static GtkActionEntry bundle_items[] = {
+    { "File", NULL, N_("_File"), NULL, NULL, NULL },      
+    { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
+    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
+};
+
+static gint n_bundle_items = G_N_ELEMENTS(bundle_items);
+
+static const gchar *bundle_ui =
+    "<ui>"
+    "  <menubar>"
+    "    <menu action='File'>"
+    "      <menuitem action='Close'/>"
+    "    </menu>"
+    "    <menu action='Save'/>"
     "  </menubar>"
     "</ui>";
 
@@ -1364,6 +1384,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free(vwin->data); /* help file text */
 	}
 
+	/* FIXME gretl_bundle attached */
+
 	if (window_delete_filename(vwin)) {
 	    /* there's a temporary file associated */
 	    gretl_remove(vwin->fname);
@@ -1619,6 +1641,10 @@ view_buffer_with_parent (windata_t *parent, PRN *prn,
 	}
 	gtk_widget_show(vwin->mbar);
 	gretl_object_ref(data, (role == SYSTEM)? GRETL_OBJ_SYS : GRETL_OBJ_VAR);
+    } else if (role == VIEW_BUNDLE) {
+	vwin_add_ui(vwin, bundle_items, n_bundle_items, bundle_ui);
+	add_bundle_menu_items(vwin);
+	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     } else if (role == VIEW_PKG_CODE || role == VIEW_MODELTABLE) {
 	vwin_add_viewbar(vwin, 0);
     } else if (role == EDIT_PKG_CODE ||
@@ -3853,6 +3879,72 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_items(vwin, "/menubar/LaTeX",
 			    sys_tex_items + 1, n - 1);
     }
+}
+
+static void save_bundled_item_call (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    gretl_bundle *bundle = vwin->data;
+    const gchar *key = gtk_action_get_name(action);
+    GretlType type;
+    void *val;
+    int size = 0;
+
+    val = gretl_bundle_get_data(bundle, key, &type, &size);
+    if (val == NULL) {
+	errbox("Couldn't find '%s'\n", key);
+    } else {
+	warnbox("Save '%s': sorry, not ready yet", key);
+    }
+}
+
+static void add_bundled_item_to_menu (gpointer key, 
+				      gpointer value, 
+				      gpointer data)
+{
+    windata_t *vwin = data;
+    GtkActionEntry item;
+    gchar *label;
+    const char *typestr = "?";
+    GretlType type;
+    void *val;
+    int size = 0;
+
+    val = bundled_item_get_data((bundled_item *) value, &type, &size);
+    if (val == NULL) {
+	/* shouldn't be possible */
+	return;
+    }
+
+    if (type == GRETL_TYPE_SERIES && size != datainfo->n) {
+	type = GRETL_TYPE_MATRIX;
+    }    
+
+    if (type == GRETL_TYPE_DOUBLE) {
+	typestr = N_("scalar");
+    } else if (type == GRETL_TYPE_STRING) {
+	typestr = N_("string");
+    } else if (type == GRETL_TYPE_MATRIX) {
+	typestr = N_("matrix");
+    } else if (type == GRETL_TYPE_SERIES) {
+	typestr = N_("series");
+    }
+
+    action_entry_init(&item);    
+    item.name = (gchar *) key;
+    label = g_strdup_printf("%s (%s)", (gchar *) key, typestr);
+    item.label = label;
+    item.callback = G_CALLBACK(save_bundled_item_call);
+    vwin_menu_add_item(vwin, "/menubar/Save", &item);
+    g_free(label);
+}
+
+static void add_bundle_menu_items (windata_t *vwin)
+{
+    gretl_bundle *bundle = vwin->data;
+    GHashTable *ht = (GHashTable *) gretl_bundle_get_contents(bundle);
+ 
+    g_hash_table_foreach(ht, add_bundled_item_to_menu, vwin);
 }
 
 static int set_sample_from_model (MODEL *pmod)

@@ -1222,6 +1222,117 @@ void function_call_cleanup (void)
     }
 }
 
+#if 1
+
+#include "gretl_bundle.h"
+
+/* The following is a terribly ungainly hack; we'll have to
+   add stuff to the API to make this easier 
+*/
+
+static int ols_bundle_callback (selector *sr)
+{
+    const char *funname = "ols_pack";
+    const char *pkgname = "olsbundle";
+    gchar *path = NULL;
+    char *buf;
+    fnpkg *pkg;
+    ufunc *uf = NULL;
+    fnargs *args = NULL;
+    PRN *prn = NULL;
+    int yno, err = 0;
+
+    if (selector_error(sr)) {
+	return 1;
+    }
+
+    /* The following needs to be simplified greatly! */
+
+    path = gretl_function_package_get_path(pkgname);
+    if (path == NULL) {
+	errbox("Couldn't get path to %s!", pkgname);
+	err = E_DATA;
+    } else {
+	err = load_function_package_from_file(path);
+	pkg = get_function_package_by_filename(path);
+	if (pkg == NULL) {
+	    errbox("Couldn't get handle to olsbundle!");
+	} else {
+	    uf = get_packaged_function_by_name(funname, pkg);
+	}
+	if (uf == NULL) {
+	    errbox("Couldn't find %s!");
+	    err = E_DATA;
+	}
+	g_free(path);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    buf = gretl_strdup(selector_list(sr));
+    if (buf == NULL) {
+	err = E_ALLOC;
+    } else {
+	char *s = buf;
+	int *list;
+
+	yno = atoi(s);
+	s += strcspn(s, " ");
+	fprintf(stderr, "yno = %d, s = '%s'\n", yno, s);
+	list = gretl_list_from_string(s, &err);
+	printlist(list, "list");
+	remember_list(list, "argtemp", NULL);
+	free(list);
+	free(buf);
+    }
+
+    if (err) {
+	return err;
+    }    
+
+    args = fn_args_new();
+    if (args == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = push_fn_arg(args, GRETL_TYPE_USERIES, &yno);
+	if (!err) {
+	    err = push_fn_arg(args, GRETL_TYPE_LIST, "argtemp");
+	}
+	fprintf(stderr, "args pushed, err = %d\n", err);
+    }
+
+    if (!err) {
+	bufopen(&prn);
+    }
+
+    if (!err) {
+	gretl_bundle *bundle = NULL;
+	char *sret = NULL;
+
+	err = gretl_function_exec(uf, args, GRETL_TYPE_BUNDLE, &Z, datainfo, 
+				  &sret, NULL, prn);
+	fprintf(stderr, "exec'd: err = %d, sret = %s\n", err, sret);
+	if (!err) {
+	    err = gretl_bundle_name_return("rettemp");
+	}
+	if (!err) {
+	    bundle = get_gretl_bundle_by_name("rettemp");
+	    fprintf(stderr, "returned bundle: %p\n", (void *) bundle);
+	}
+
+	view_buffer(prn, 80, 400, funname, VIEW_BUNDLE, bundle);
+    }
+
+    fn_args_free(args);
+    delete_list_by_name("argtemp");
+
+    return err;
+}
+
+#endif
+
 /* Callback for a menu item representing a function package, whose
    name (e.g. "gig") is attached to @action. We first see if we can
    find the full path to the corresponding gfn file; if so we
@@ -1237,6 +1348,9 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
     if (path == NULL) {
 	errbox("Couldn't find package %s\n", name);
+    } else if (!strcmp(name, "olsbundle")) {
+	selection_dialog(_("gretl: specify model"), 
+			 ols_bundle_callback, OLS);
     } else {
 	call_function_package(path, vwin->main, NULL);
 	g_free(path);

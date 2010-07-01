@@ -18,13 +18,19 @@
  */
 
 typedef struct gretl_bundle_ gretl_bundle;
+typedef struct bundled_item_ bundled_item;
 
 int gretl_is_bundle (const char *name);
 
 gretl_bundle *get_gretl_bundle_by_name (const char *name);
 
-void *gretl_bundle_get_data (const char *name, const char *key,
+void *gretl_bundle_get_contents (gretl_bundle *bundle);
+
+void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size);
+
+void *bundled_item_get_data (bundled_item *item, GretlType *type,
+			     int *size);
 
 int gretl_bundle_set_data (const char *name, const char *key,
 			   void *ptr, GretlType type, int size);
