@@ -2204,7 +2204,7 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	/* ignore all but right-clicks */
 	int selcount = vwin_selection_count(mdata, NULL);
 

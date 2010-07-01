@@ -2696,7 +2696,7 @@ static gboolean session_view_click (GtkWidget *widget,
 
     mods = widget_get_pointer_mask(widget);
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	if (obj->sort == GRETL_OBJ_EQN  || obj->sort == GRETL_OBJ_GRAPH || 
 	    obj->sort == GRETL_OBJ_TEXT || obj->sort == GRETL_OBJ_DSET || 
 	    obj->sort == GRETL_OBJ_INFO || obj->sort == GRETL_OBJ_GPAGE ||

@@ -939,7 +939,7 @@ static gint today_popup (GtkWidget *entry, GdkEventButton *event,
 {
     GdkModifierType mods = parent_get_pointer_mask(entry);
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	if (*popup == NULL) {
 	    GtkWidget *menu = gtk_menu_new();
 	    GtkWidget *item;

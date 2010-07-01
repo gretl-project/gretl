@@ -2125,7 +2125,7 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     mods = widget_get_pointer_mask(view);
 
     if (sheet->matrix == NULL && !editing_scalars(sheet) && 
-	(mods & GDK_BUTTON3_MASK)) {
+	(RIGHT_CLICK(mods))) {
 	GdkEventButton *bevent = (GdkEventButton *) event;
 
 	if (sheet->popup == NULL) {

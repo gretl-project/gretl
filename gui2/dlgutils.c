@@ -851,7 +851,7 @@ edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	if (d->popup != NULL) {
 	    gtk_widget_destroy(d->popup);
 	    d->popup = NULL;
@@ -1532,14 +1532,9 @@ gchar *gtk_combo_box_get_active_text (GtkComboBox *box)
 
 GdkModifierType widget_get_pointer_mask (GtkWidget *w)
 {
+    GdkWindow *window = gtk_widget_get_window(w);
     GdkModifierType mods = 0;
-    GdkWindow *window;
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 14)    
-    window = w->window;
-#else
-    window = gtk_widget_get_window(w);
-#endif
     if (window != NULL) {
 	gdk_window_get_pointer(window, NULL, NULL, &mods);
     }

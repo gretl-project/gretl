@@ -1815,7 +1815,7 @@ static gint listvar_flagcol_click (GtkWidget *widget, GdkEventButton *event,
 
     mods = parent_get_pointer_mask(view);
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	flag_popup = gtk_menu_new();
 	for (i=0; i<2; i++) {
 	    create_flag_item(flag_popup, i, view);
@@ -1969,7 +1969,7 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 
     mods = parent_get_pointer_mask(GTK_WIDGET(data));
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	GtkTreeView *view = GTK_TREE_VIEW(data);
 	GtkTreeModel *model = gtk_tree_view_get_model(view);
 	GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
@@ -2019,7 +2019,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 {
     GdkModifierType mods = parent_get_pointer_mask(sr->lvars);
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	add_to_rvars1_callback(NULL, sr);
 	return TRUE;
     }

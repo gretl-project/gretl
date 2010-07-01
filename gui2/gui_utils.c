@@ -1410,7 +1410,7 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
 {
     GdkModifierType mods = widget_get_pointer_mask(w);
 
-    if (mods & GDK_BUTTON3_MASK) {
+    if (RIGHT_CLICK(mods)) {
 	windata_t *vwin = (windata_t *) p;
 
 	if (vwin->popup) {
@@ -4239,7 +4239,7 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 {
     GdkModifierType mods = widget_get_pointer_mask(widget);
 
-    if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
+    if (RIGHT_CLICK(mods) && event->type == GDK_BUTTON_PRESS) {
 	GdkEventButton *bevent = (GdkEventButton *) event; 
 
 	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
