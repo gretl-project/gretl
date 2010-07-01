@@ -68,7 +68,7 @@
 # define gtk_selection_data_get_data_type(s) ((s)->type)
 # define gtk_selection_data_get_data(s) ((s)->data)
 # define gtk_adjustment_get_upper(a) ((a)->upper)
-# define gtk_adjustment_set_upper(a, v) ((a)->upper = v)
+# define gtk_adjustment_set_upper(a,v) ((a)->upper = v)
 # define gtk_color_selection_dialog_get_color_selection(d) ((d)->colorsel)
 #endif
 

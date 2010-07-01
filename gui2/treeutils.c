@@ -259,6 +259,9 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 	return FALSE;
     }
 
+    /* OS X: any way to translate from GDK_META_MASK to
+       GDK_CONTROL_MASK ?? */
+
     return (row == 0);
 }
 
