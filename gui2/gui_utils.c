@@ -3896,6 +3896,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     gretl_bundle *bundle = vwin->data;
     const gchar *key = gtk_action_get_name(action);
+    const char *note;
     GretlType type;
     void *val;
     int size = 0;
@@ -3907,10 +3908,12 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	return;
     }
 
+    note = gretl_bundle_get_note(bundle, key);
+
     if (type == GRETL_TYPE_SERIES && size == datainfo->n) {
 	const double *x = (double *) val;
 
-	save_bundled_series(x, key);
+	save_bundled_series(x, key, note);
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;
@@ -3967,6 +3970,11 @@ static void add_bundled_item_to_menu (gpointer key,
     val = bundled_item_get_data((bundled_item *) value, &type, &size);
     if (val == NULL) {
 	/* shouldn't be possible */
+	return;
+    }
+
+    if (type == GRETL_TYPE_STRING) {
+	/* not very useful in GUI? */
 	return;
     }
 

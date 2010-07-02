@@ -3793,6 +3793,91 @@ int spin_dialog (const char *title, const char *blurb,
 			 spinmin, spinmax, hcode);
 }
 
+static void pergm_set_bartlett (GtkToggleButton *button, gretlopt *opt)
+{
+    if (gtk_toggle_button_get_active(button)) {
+	*opt |= OPT_O;
+    } else {
+	*opt &= ~OPT_O;
+    }
+}
+
+static void pergm_set_log_scale (GtkToggleButton *button, gretlopt *opt)
+{
+    if (gtk_toggle_button_get_active(button)) {
+	*opt |= OPT_L;
+    } else {
+	*opt &= ~OPT_L;
+    }
+}
+
+static void pergm_set_bandwidth (GtkSpinButton *spin, int *bw)
+{
+    *bw = gtk_spin_button_get_value_as_int(spin);
+}
+
+void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
+		   int *cancel)
+{
+    GtkWidget *dialog, *vbox, *hbox;
+    GtkWidget *button, *spin;
+    GSList *group;
+
+    if (maybe_raise_dialog()) {
+	return;
+    }
+
+    dialog = gretl_dialog_new(_("gretl: periodogram"), NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    /* sample vs Bartlett radios, with Bartlett spinner */
+    hbox = gtk_hbox_new(FALSE, 5);
+    button = gtk_radio_button_new_with_label(NULL, _("Sample periodogram"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("Bartlett window, bandwidth:"));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(pergm_set_bartlett), opt);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+
+    spin = gtk_spin_button_new_with_range(spinmin, spinmax, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), *spinval);
+    g_signal_connect(G_OBJECT(spin), "value-changed",
+		     G_CALLBACK(pergm_set_bandwidth), spinval);
+    gtk_widget_set_sensitive(spin, FALSE);
+    sensitize_conditional_on(spin, button);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+
+    /* Log scale checkbox */
+    hbox = gtk_hbox_new(FALSE, 5);
+    button = gtk_check_button_new_with_label(_("log scale"));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(pergm_set_log_scale), opt);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
+
+    /* Cancel button */
+    cancel_options_button(hbox, dialog, cancel);
+
+    /* "OK" button */
+    button = ok_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+    gtk_widget_grab_default(button);
+
+    /* "Help" button */
+    context_help_button(hbox, PERGM);
+
+    gtk_widget_show_all(dialog);
+}
+
 static void set_response_yes (GtkButton *b, int *ret)
 {
     *ret = GRETL_YES;

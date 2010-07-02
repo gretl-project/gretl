@@ -87,6 +87,9 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
 void data_expand_dialog (GtkWidget *w, int spd, int *target_pd);
 
+void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
+		   int *cancel);
+
 int density_dialog (int vnum, double *bw);
 
 int radio_dialog (const char *title, const char *label, const char **opts, 

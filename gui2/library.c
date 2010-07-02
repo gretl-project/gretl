@@ -4676,76 +4676,34 @@ void residual_correlogram (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
-enum {
-    PERGM_SAMPLE,   /* sample periodogram only */
-    PERGM_BARTLETT, /* Bartlett window */
-    PERGM_FRACTINT  /* fractional integration test only */
-};
-
 /* If code == SELECTED_VAR we're doing the periodiogram for a
    selected variable from the dataset; otherwise we're doing it
    for a regression residual, added to the dataset on the fly
    as the last series.
 */
 
-static void 
-real_do_pergm (int flag, double **Z, DATAINFO *pdinfo, int code)
+static void real_do_pergm (double **Z, DATAINFO *pdinfo, int code)
 {
     PRN *prn;
     const gchar *title = N_("gretl: periodogram");
     int T = sample_size(pdinfo);
-    const char *opts[] = {
-	N_("log scale"),
-	NULL
-    };
-    int active[1] = {0};
     gretlopt opt = OPT_NONE;
-    int width = 0;
-    int err;
+    int width, err;
 
-    if (flag == PERGM_BARTLETT) {
-	opt = OPT_O;
-    } else if (flag == PERGM_SAMPLE) {
-	opt = OPT_P;
-    } else if (flag == PERGM_FRACTINT) {
-	title = N_("gretl: fractional integration");
-	opt = OPT_F;
-    }
+    width = auto_spectrum_order(T, OPT_O);
+    pergm_dialog(&opt, &width, 2, T / 2, &err);
 
-    if (opt & OPT_O) {
-	width = auto_spectrum_order(T, opt);
-	err = checks_dialog(_(title), NULL, 
-			    opts, 1, active, 0, NULL,
-			    &width, _("Bandwidth:"),
-			    2, T / 2, PERGM);
-    } else if (opt & OPT_F) {
-	width = auto_spectrum_order(T, opt);
-	err = spin_dialog(_(title), NULL, &width, _("Lag order:"),
-			  2, T / 2, 0);
-    } else {
-	err = checks_dialog(_(title), NULL, 
-			    opts, 1, active, 0, NULL,
-			    NULL, NULL, 0, 0, 0);
-    }	
-
-    if (err < 0) {
+    if (err < 0 || bufopen(&prn)) {
 	return;
-    }   
+    }  
 
-    if (active[0]) {
-	/* log scale */
-	opt |= OPT_L;
-    }
-
-    if (bufopen(&prn)) {
-	return;
+    if (!(opt & OPT_O)) {
+	opt |= OPT_P; /* hmm */
     }
 
     if (code == SELECTED_VAR) {
-	const char *flagstr = print_flags(opt, PERGM);
-
 	gretl_command_sprintf("pergm %s %d%s", selected_varname(), 
-			      width, flagstr);
+			      width, print_flags(opt, PERGM));
 	if (check_and_record_command()) {
 	    gretl_print_destroy(prn);
 	    return;
@@ -4761,31 +4719,15 @@ real_do_pergm (int flag, double **Z, DATAINFO *pdinfo, int code)
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-	return;
-    }
-
-    if (flag != PERGM_FRACTINT) {
+    } else {
 	register_graph(NULL);
+	view_buffer(prn, 60, 400, _(title), PERGM, NULL);
     }
-
-    view_buffer(prn, 60, 400, _(title), PERGM, NULL);
 }
 
 void do_pergm (GtkAction *action)
 {
-    int flag = PERGM_SAMPLE;
-
-    if (action != NULL) {
-	const gchar *s = gtk_action_get_name(action);
-
-	if (!strcmp(s, "Bartlett")) {
-	    flag = PERGM_BARTLETT;
-	} else if (!strcmp(s, "FractInt")) {
-	    flag = PERGM_FRACTINT;
-	}
-    }
-    
-    real_do_pergm(flag, Z, datainfo, SELECTED_VAR);
+    real_do_pergm(Z, datainfo, SELECTED_VAR);
 }
 
 void residual_periodogram (GtkAction *action, gpointer p)
@@ -4798,16 +4740,49 @@ void residual_periodogram (GtkAction *action, gpointer p)
     int err = 0;
 
     pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
-    if (err) {
-	return;
+
+    if (!err) {
+	err = tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT);
     }
 
-    /* add residuals to data set temporarily */
-    if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT)) return;
+    if (!err) {
+	real_do_pergm(*pZ, pdinfo, MODEL_VAR);
+	trim_dataset(pmod, origv); 
+    }
+}
 
-    real_do_pergm(PERGM_BARTLETT, *pZ, pdinfo, MODEL_VAR);
+void do_fractint (GtkAction *action)
+{
+    const gchar *title = N_("gretl: fractional integration");
+    int T = sample_size(datainfo);
+    gretlopt opt = OPT_F;
+    int width, err;
+    PRN *prn;    
 
-    trim_dataset(pmod, origv); 
+    width = auto_spectrum_order(T, OPT_NONE);
+    err = spin_dialog(_(title), NULL, &width, _("Lag order:"),
+		      2, T / 2, 0);
+    if (err < 0 || bufopen(&prn)) {
+	return;
+    }   
+
+    gretl_command_sprintf("pergm %s %d%s", selected_varname(), 
+			  width, print_flags(opt, PERGM));
+    err = check_and_record_command();
+
+    if (!err) {
+	err = periodogram(libcmd.list[1], width, (const double **) Z, 
+			  datainfo, libcmd.opt, prn);
+	if (err) {
+	    gui_errmsg(err);
+	}
+    }
+
+    if (err) {
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 60, 400, _(title), PERGM, NULL);
+    }
 }
 
 void residual_qq_plot (GtkAction *action, gpointer p)
@@ -5225,7 +5200,8 @@ int save_fit_resid (MODEL *pmod, int code)
     return err;
 }
 
-int save_bundled_series (const double *x, const char *key)
+int save_bundled_series (const double *x, const char *key,
+			 const char *note)
 {
     char vname[VNAMELEN];
     char descrip[MAXLABEL];
@@ -5234,6 +5210,9 @@ int save_bundled_series (const double *x, const char *key)
 
     strcpy(vname, key);
     *descrip = '\0';
+    if (note != NULL) {
+	strncat(descrip, note, MAXLABEL - 1);
+    }
     name_new_variable_dialog(vname, descrip, &cancel);
 
     if (cancel) {

@@ -207,7 +207,7 @@ void time_series_menu_state (gboolean s)
 
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/corrgm", s);
-    flip(mdata->ui, "/menubar/Variable/Spectrum", s);
+    flip(mdata->ui, "/menubar/Variable/pergm", s);
     flip(mdata->ui, "/menubar/Variable/ADF", s);
     flip(mdata->ui, "/menubar/Variable/DFGLS", s);
     flip(mdata->ui, "/menubar/Variable/KPSS", s);
@@ -335,7 +335,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	do_gini();
     else if (!strcmp(item, _("Correlogram")))
 	do_corrgm();
-    else if (!strcmp(item, _("Spectrum"))) 
+    else if (!strcmp(item, _("Periodogram"))) 
 	do_pergm(NULL);
     else if (!strcmp(item, _("ARIMA model"))) {
 	selector_set_varnum(v);
@@ -418,7 +418,7 @@ GtkWidget *build_var_popup (void)
 	N_("Frequency distribution"),
 	N_("Boxplot"),
 	N_("Correlogram"),
-	N_("Spectrum"),
+	N_("Periodogram"),
 	N_("Edit attributes"),
 	N_("Edit values"),
 	N_("Copy to clipboard"),

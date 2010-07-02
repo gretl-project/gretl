@@ -211,6 +211,8 @@ void residual_correlogram (GtkAction *action, gpointer p);
 
 void do_pergm (GtkAction *action);
 
+void do_fractint (GtkAction *action);
+
 void residual_periodogram (GtkAction *action, gpointer p);
 
 void residual_qq_plot (GtkAction *action, gpointer p);
@@ -243,7 +245,8 @@ void add_system_resid (GtkAction *action, gpointer p);
 
 int save_fit_resid (MODEL *pmod, int code);
 
-int save_bundled_series (const double *x, const char *key);
+int save_bundled_series (const double *x, const char *key,
+			 const char *note);
 
 void add_model_stat (MODEL *pmod, int which);
 

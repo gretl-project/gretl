@@ -211,10 +211,7 @@
       <separator/>
       <menuitem action="VarTSPlot"/>
       <menuitem action="corrgm"/>
-      <menu action="Spectrum">
-	<menuitem action="Pergm"/>
-	<menuitem action="Bartlett"/>
-      </menu>
+      <menuitem action="pergm"/>
       <menuitem action="FractInt"/>
       <menuitem action="ADF"/>
       <menuitem action="DFGLS"/>

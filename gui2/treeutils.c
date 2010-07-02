@@ -150,21 +150,12 @@ static void get_selected_varnum (GtkTreeModel *model, GtkTreePath *path,
     g_free(id);
 }
 
-static void count_selections (GtkTreeModel *model, GtkTreePath *path,
-			      GtkTreeIter *iter, int *selcount)
-{
-    *selcount += 1;
-}
-
 int tree_selection_count (GtkTreeSelection *select, int *vnum)
 {
     int selcount = 0;
 
     if (select != NULL) {
-	gtk_tree_selection_selected_foreach(select, 
-					    (GtkTreeSelectionForeachFunc) 
-					    count_selections,
-					    &selcount);
+	selcount = gtk_tree_selection_count_selected_rows(select);
     }
     
     if (vnum != NULL && selcount == 1) {
@@ -228,12 +219,29 @@ static void update_dialogs_from_varclick (int active_var)
     }  
 }
 
-gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
-			windata_t *win)
+#ifdef OSX_BUILD
+
+static gboolean maybe_do_meta_click (GtkWidget *widget, GtkTreeView *view,
+				     GtkTreePath *path)
 {
-    GtkTreeView *view = GTK_TREE_VIEW(win->listbox);
+    if (widget_get_pointer_mask(widget) & GDK_META_MASK) {
+	GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
+
+	gtk_tree_selection_select_path(sel, path);
+	return TRUE;
+    } else {
+	return FALSE;
+    }
+}
+
+#endif
+
+gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
+			windata_t *vwin)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
     GtkTreePath *path;
-    gint row = 0;
+    gboolean ret = FALSE;
 
     if (datainfo == NULL || datainfo->n == 0) {
 	return TRUE;
@@ -241,28 +249,31 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 
     if (gtk_tree_view_get_path_at_pos(view, event->x, event->y, &path, 
 				      NULL, NULL, NULL)) {
-	row = tree_path_get_row_number(path);
+	gint row = tree_path_get_row_number(path);
 
-	if (row != 0) {
+	if (row == 0) {
+	    ret = TRUE;
+	} else {
 	    gchar *varnum;
 
-	    g_object_set_data(G_OBJECT(win->listbox), "active_row",
+	    g_object_set_data(G_OBJECT(vwin->listbox), "active_row",
 			      GINT_TO_POINTER(row));
 	    tree_view_get_string(view, row, 0, &varnum);
-	    win->active_var = atoi(varnum);
+	    vwin->active_var = atoi(varnum);
 	    g_free(varnum);
-	    update_dialogs_from_varclick(win->active_var);
-	}
+	    update_dialogs_from_varclick(vwin->active_var);
+#ifdef OSX_BUILD
+	    ret = maybe_do_meta_click(widget, view, path);
+#endif
+	} 
+
 	gtk_tree_path_free(path);
     } else {
 	/* clicked below the lines representing variables */
 	return FALSE;
     }
 
-    /* OS X: any way to translate from GDK_META_MASK to
-       GDK_CONTROL_MASK ?? */
-
-    return (row == 0);
+    return ret;
 }
 
 static void
