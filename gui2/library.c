@@ -4763,7 +4763,7 @@ void do_fractint (GtkAction *action)
     }   
 
     gretl_command_sprintf("fractint %s %d%s", selected_varname(), 
-			  width, print_flags(opt, PERGM));
+			  width, print_flags(opt, FRACTINT));
     err = check_and_record_command();
 
     if (!err) {

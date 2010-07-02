@@ -2955,7 +2955,7 @@
 	In either case the null hypothesis is that the integration
 	order of the series is zero.  By default the order for these
 	tests is the lesser of <math>T</math>/2 and
-	<math>T</math><sup>0.6</sup>.  Again, this value can be
+	<math>T</math><sup>0.6</sup>.  This value can be
 	adjusted using the <repl>order</repl> parameter.
       </para>
     </description>
