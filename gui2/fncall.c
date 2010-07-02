@@ -46,6 +46,7 @@ struct call_info_ {
     int iface;           /* selected interface */
     int extracol;
     const ufunc *func;
+    FuncDataReq dreq;
     int n_params;
     char rettype;
     gchar **args;
@@ -102,6 +103,7 @@ static call_info *cinfo_new (void)
     cinfo->ret = NULL;
 
     cinfo->extracol = 0;
+    cinfo->dreq = 0;
 
     return cinfo;
 }
@@ -837,12 +839,11 @@ static int function_data_check (call_info *cinfo)
 {
     int i, err = 0;
 
-    /* FIXME provide a way for a function to signal that
-       it doesn't need data loaded? */
-
-    if (datainfo == NULL || datainfo->v == 0) {
-	warnbox(_("Please open a data file first"));
-	return 1;
+    if (cinfo->dreq != FN_NODATA_OK) {
+	if (datainfo == NULL || datainfo->v == 0) {
+	    warnbox(_("Please open a data file first"));
+	    return 1;
+	}
     }
 
     for (i=0; i<cinfo->n_params; i++) {
@@ -1118,7 +1119,6 @@ static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
 void call_function_package (const char *fname, GtkWidget *w,
 			    int *loaderr)
 {
-    FuncDataReq dreq = 0;
     int minver = 0;
     call_info *cinfo;
     fnpkg *pkg;
@@ -1143,7 +1143,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     err = function_package_get_properties(pkg,
 					  "publist", &cinfo->publist,
-					  "data-requirement", &dreq,
+					  "data-requirement", &cinfo->dreq,
 					  "min-version", &minver,
 					  NULL);
 
@@ -1157,7 +1157,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 
     if (!err) {
 	/* do we have suitable data in place? */
-	err = check_function_needs(datainfo, dreq, minver);
+	err = check_function_needs(datainfo, cinfo->dreq, minver);
 	if (err) {
 	    gui_errmsg(err);
 	}
