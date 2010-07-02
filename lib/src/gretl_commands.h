@@ -59,6 +59,7 @@ typedef enum {
     ESTIMATE,
     FCAST,  
     FOREIGN,
+    FRACTINT,
     FREQ, 
     FUNC,
     FUNCERR,

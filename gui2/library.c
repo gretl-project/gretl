@@ -4697,10 +4697,6 @@ static void real_do_pergm (double **Z, DATAINFO *pdinfo, int code)
 	return;
     }  
 
-    if (!(opt & OPT_O)) {
-	opt |= OPT_P; /* hmm */
-    }
-
     if (code == SELECTED_VAR) {
 	gretl_command_sprintf("pergm %s %d%s", selected_varname(), 
 			      width, print_flags(opt, PERGM));
@@ -4755,7 +4751,7 @@ void do_fractint (GtkAction *action)
 {
     const gchar *title = N_("gretl: fractional integration");
     int T = sample_size(datainfo);
-    gretlopt opt = OPT_F;
+    gretlopt opt = OPT_A;
     int width, err;
     PRN *prn;    
 
@@ -4766,13 +4762,13 @@ void do_fractint (GtkAction *action)
 	return;
     }   
 
-    gretl_command_sprintf("pergm %s %d%s", selected_varname(), 
+    gretl_command_sprintf("fractint %s %d%s", selected_varname(), 
 			  width, print_flags(opt, PERGM));
     err = check_and_record_command();
 
     if (!err) {
-	err = periodogram(libcmd.list[1], width, (const double **) Z, 
-			  datainfo, libcmd.opt, prn);
+	err = fractint(libcmd.list[1], width, (const double **) Z, 
+		       datainfo, libcmd.opt, prn);
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -4781,7 +4777,7 @@ void do_fractint (GtkAction *action)
     if (err) {
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 60, 400, _(title), PERGM, NULL);
+	view_buffer(prn, 60, 400, _(title), FRACTINT, NULL);
     }
 }
 

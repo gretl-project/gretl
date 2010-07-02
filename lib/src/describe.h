@@ -185,6 +185,10 @@ gretl_matrix *periodogram_func (const double *x,
 				const DATAINFO *pdinfo,
 				int width, int *err);
 
+int fractint (int varno, int order, 
+	      const double **Z, const DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn);
+
 Summary *get_summary (const int *list, const double **Z, 
 		      const DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn, 

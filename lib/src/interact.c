@@ -2583,7 +2583,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	strcpy(rem, line + pos + 1);
 
 	/* special: optional width for correlogram, periodogram */
-	if ((cmd->ci == CORRGM || cmd->ci == PERGM) && j == 2) {
+	if ((cmd->ci == CORRGM || cmd->ci == PERGM ||
+	     cmd->ci == FRACTINT) && j == 2) {
 	    cmd->list[0] = 1;
 	    cmd_param_grab_word(cmd, rem);
 	    break;
@@ -3375,7 +3376,8 @@ static int effective_ci (const CMD *cmd)
                        c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON || c == XCORRGM || \
-                       c == HECKIT || c == NEGBIN || c == DURATION)
+                       c == HECKIT || c == NEGBIN || c == DURATION || \
+		       c == FRACTINT)
 
 #define TESTLEN 62
 #define LINELEN 78
@@ -3488,6 +3490,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
 			     c == LOGISTIC || \
 	                     c == CORRGM || \
                              c == PERGM || \
+	                     c == FRACTINT || \
                              c == XCORRGM)
 
 /**
@@ -4334,7 +4337,8 @@ static int param_to_order (const char *s)
                          c == MLE || c == NLS)
 
 #define want_param_to_order(c) (c == CORRGM || c == XCORRGM || \
-				c == PERGM || c == LAGS)
+				c == PERGM || c == LAGS || \
+				c == FRACTINT)
 
 int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
@@ -4445,6 +4449,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = periodogram(cmd->list[1], cmd->order, Z, pdinfo, 
 			  cmd->opt | OPT_N, prn);
 	break;
+
+    case FRACTINT:
+	err = fractint(cmd->list[1], cmd->order, Z, pdinfo, 
+		       cmd->opt, prn);
+	break;	
 
     case FUNDEBUG:
 	err = do_debug_command(s, cmd->param, cmd->opt);

@@ -1083,7 +1083,7 @@ int gretl_moments (int t1, int t2, const double *x,
  * @v: ID number of input series.
  * @Z: data array.
  * @pdinfo: dataset information.
- * @opt: may include %OPT_M to flag an error in case
+ * @opt: may include OPT_M to flag an error in case
  * missing values are found.
  * @n: on input, the minimum acceptable number of
  * non-missing observations; on output, the number
@@ -1092,9 +1092,9 @@ int gretl_moments (int t1, int t2, const double *x,
  *
  * Returns: an array containing the valid values of the
  * input series over the sample range given in @pdinfo, 
- * sorted from smallest to largest, or %NULL on error.
+ * sorted from smallest to largest, or NULL on error.
  * An error is flagged if the number of valid observations
- * is less than that given in @n on input, or if %OPT_M 
+ * is less than that given in @n on input, or if OPT_M 
  * is given and the input contains missing values.
  */
 
@@ -3431,13 +3431,13 @@ static int roundup_mod (int i, double x)
     return (int) ceil((double) x * i);
 }
 
-static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
+static int fract_int_GPH (int T, int m, const double *xvec, PRN *prn)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *V = NULL;
-    double x;
+    double x, w;
     int t, err = 0;
 
     y = gretl_column_vector_alloc(m);
@@ -3454,8 +3454,9 @@ static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
        Greene, Econometric Analysis 4e, p. 787 */
 
     for (t=0; t<m; t++) {
-	y->val[t] = log(hhat[t]);
-	x = sin(omega[t] / 2);
+	y->val[t] = log(xvec[t+1]);
+	w = M_2PI * (t + 1) / (double) T;
+	x = sin(w / 2);
 	gretl_matrix_set(X, t, 1, log(4 * x * x));
     }    
 
@@ -3469,8 +3470,8 @@ static int fract_int_GPH (int m, double *hhat, double *omega, PRN *prn)
 
 	pprintf(prn, "%s (m = %d)\n"
 		"  %s = %g (%g)\n"
-		"  %s: t(%d) = %g, %s %.4f\n",
-		_("GPH test for fractional integration"), m,
+		"  %s: t(%d) = %g, %s %.4f\n\n",
+		_("GPH test"), m,
 		_("Estimated degree of integration"), bi, se,
 		_("test statistic"), df, tval, 
 		_("with p-value"), student_pvalue_2(df, tval));
@@ -3597,7 +3598,7 @@ LWE_init (struct LWE_helper *L, const gretl_matrix *X, int m)
     return err;
 }
 
-static double LWE (const gretl_matrix *X, int m)
+static double LWE (const gretl_matrix *X, int m, int *err)
 {
     struct LWE_helper L;
     double d = 0, dd = 1.0;
@@ -3605,10 +3606,9 @@ static double LWE (const gretl_matrix *X, int m)
     double f, incr, incl, deriv, h;
     int iter = 0;
     const int MAX_ITER = 100;
-    int err;
 
-    err = LWE_init(&L, X, m);
-    if (err) {
+    *err = LWE_init(&L, X, m);
+    if (*err) {
 	return NADBL;
     }
 
@@ -3634,7 +3634,7 @@ static double LWE (const gretl_matrix *X, int m)
 	iter++;
     }
 
-    if (err) {
+    if (*err) {
 	d = NADBL;
     } else if (iter == MAX_ITER) {
 	fprintf(stderr, "Maximum number of iterations reached\n");
@@ -3670,11 +3670,11 @@ static int fract_int_LWE (const double *x, int m, int t1, int t2,
 {
     gretl_matrix *X;
     double d, se, z;
-    int T;
+    int T, err = 0;
 
     X = gretl_vector_from_series(x, t1, t2);
     if (X == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     T = gretl_vector_get_length(X);
@@ -3685,16 +3685,16 @@ static int fract_int_LWE (const double *x, int m, int t1, int t2,
 	m = T / 2.0;
     }
 
-    d = LWE(X, m);
-    if (na(d)) {
+    d = LWE(X, m, &err);
+    if (err) {
 	gretl_matrix_free(X);
-	return 1;
+	return err;
     }
 
     se = 1 / (2.0 * sqrt((double) m));
     z = d / se;
 
-    pprintf(prn, "\n%s (m = %d)\n"
+    pprintf(prn, "%s (m = %d)\n"
 	    "  %s = %g (%g)\n"
 	    "  %s: z = %g, %s %.4f\n\n",
 	    _("Local Whittle Estimator"), m,
@@ -3704,7 +3704,7 @@ static int fract_int_LWE (const double *x, int m, int t1, int t2,
 
     gretl_matrix_free(X);
 
-    return 0;
+    return err;
 }
 
 static int pergm_graph (const char *vname,
@@ -3840,9 +3840,9 @@ static void pergm_print (const double *x, int T, gretlopt opt,
     pputc(prn, '\n');
 }
 
-static double *pergm_allocate_workspace (int L, int m, int T)
+static double *pergm_allocate_workspace (int L, int T)
 {
-    int n = T + (L + 1) + (1 + T/2) + 2*m;
+    int n = T + (L + 1) + (1 + T/2);
     double *w = malloc(n * sizeof *w);
 
     return w;
@@ -3859,12 +3859,11 @@ static int real_periodogram (const double *x, int varno, int width,
 {
     double *workspace = NULL;
     double *sdy, *acov, *xvec;
-    double *omega = NULL, *hhat = NULL;
     double xx, yy, vx, sx, w;
     int k, L, T, t, m = 0; 
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int bartlett = (opt & OPT_O);
-    int do_fract_int = 1;
+    int do_fract_int = 0;
     int do_graph = 1;
     int err = 0;
 
@@ -3888,8 +3887,8 @@ static int real_periodogram (const double *x, int varno, int width,
     }
 
     /* should we do the fraction integration tests? */
-    if (bartlett || pmat != NULL || (opt & OPT_P)) {
-	do_fract_int = 0;
+    if (opt & OPT_F) {
+	do_fract_int = 1;
     } 
 
     /* should we show a graph? */
@@ -3918,7 +3917,7 @@ static int real_periodogram (const double *x, int varno, int width,
 	}
     } 
 
-    workspace = pergm_allocate_workspace(L, m, T);
+    workspace = pergm_allocate_workspace(L, T);
     if (workspace == NULL) {
 	return E_ALLOC;
     }
@@ -3927,11 +3926,6 @@ static int real_periodogram (const double *x, int varno, int width,
     sdy = workspace; 
     acov = sdy + T;
     xvec = acov + L + 1;
-
-    if (do_fract_int) {
-	omega = xvec + (1 + T/2);
-	hhat = omega + m;
-    }
 
     xx = gretl_mean(t1, t2, x);
     vx = real_gretl_variance(t1, t2, x, 1);
@@ -3963,12 +3957,7 @@ static int real_periodogram (const double *x, int varno, int width,
 		xx += 2.0 * acov[k] * cos(yy * k);
 	    }
 	}
-	xx *= vx;
-	xvec[t] = xx;
-	if (t <= m) {
-	    omega[t-1] = yy;
-	    hhat[t-1] = xx;
-	}
+	xvec[t] = xx * vx;
     }
 
     if (pmat != NULL) {
@@ -3991,10 +3980,12 @@ static int real_periodogram (const double *x, int varno, int width,
 	pergm_print_header(pdinfo->varname[varno], T, L, opt, prn);
 
 	if (do_fract_int) {
-	    if (fract_int_GPH(m, hhat, omega, prn)) {
-		pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
+	    if (!(opt & OPT_G)) {
+		err = fract_int_LWE(x, width, t1, t2, prn);
 	    }
-	    fract_int_LWE(x, width, t1, t2, prn);
+	    if (!err && (opt & (OPT_A | OPT_G))) {
+		err = fract_int_GPH(T, m, xvec, prn);
+	    }
 	}
 
 	if (!(opt & OPT_F)) {
@@ -4022,8 +4013,7 @@ static int real_periodogram (const double *x, int varno, int width,
  * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
  * if includes OPT_N, don't display gnuplot graph; if includes
  * OPT_R, the variable is a model residual; OPT_L, use log scale.
- * @prn: gretl printing struct. (GUI: OPT_P for sample periodogram only;
- * OPT_F for fractional integration test only.)
+ * @prn: gretl printing struct.
  *
  * Computes and displays the periodogram for the variable specified 
  * by @varno.
@@ -4048,6 +4038,30 @@ gretl_matrix *periodogram_func (const double *x, const DATAINFO *pdinfo,
     *err = real_periodogram(x, -1, width, pdinfo, opt, NULL, &m);
 
     return m;
+}
+
+/**
+ * fractint:
+ * @varno: ID number of variable to process.
+ * @width: lag order / window size.
+ * @Z: data array.
+ * @pdinfo: information on the data set.
+ * @opt: if includes OPT_G do Geweke and Porter-Hudak test, otherwise
+ * use Local Whittle Estimator. But if includes OPT_A, do both.
+ * @prn: gretl printing struct.
+ *
+ * Computes and prints a test for fractional integration of the
+ * series specified by @varno.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int fractint (int varno, int order, 
+	      const double **Z, const DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn)
+{
+    return real_periodogram(Z[varno], varno, order, 
+			    pdinfo, opt | OPT_F, prn, NULL);
 }
 
 static void printf15 (double x, PRN *prn)
