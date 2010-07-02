@@ -26,6 +26,7 @@
 #include "gretl_func.h"
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
+#include "gretl_bundle.h"
 
 #include <time.h>
 #include <glib.h>
@@ -1709,6 +1710,7 @@ static void print_listed_objects (const char *s,
 {
     const gretl_matrix *m;
     const int *list;
+    gretl_bundle *b;
     char *name;
 
     while ((name = gretl_word_strdup(s, &s)) != NULL) {
@@ -1718,7 +1720,9 @@ static void print_listed_objects (const char *s,
 	    gretl_matrix_print_to_prn(m, name, prn);
 	} else if ((list = get_list_by_name(name)) != NULL) {
 	    print_varlist(name, list, pdinfo, prn);
-	} 
+	} else if ((b = get_gretl_bundle_by_name(name)) != NULL) {
+	    gretl_bundle_print(b, prn);
+	}
 	    
 	free(name);
     }
@@ -1924,8 +1928,8 @@ static int print_by_var (const int *list, const double **Z,
  * @mstr: optional string holding names of matrices to print.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @opt: if %OPT_O, print the data by observation (series in columns);
- * if %OPT_N, use simple obs numbers, not dates.
+ * @opt: if OPT_O, print the data by observation (series in columns);
+ * if OPT_N, use simple obs numbers, not dates.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list over the currently

@@ -1394,7 +1394,7 @@ static int print_name_ok (const char *s, CMD *cmd)
 
     if (cmd->ci == PRINT) {
 	if (gretl_is_matrix(s) || gretl_is_scalar(s) || 
-	    !strcmp(s, "scalars")) {
+	    gretl_is_bundle(s) || !strcmp(s, "scalars")) {
 	    cmd->extra = gretl_str_expand(&cmd->extra, s, " ");
 	    cmd->list[0] -= 1;
 	    ok = 1;
@@ -1674,7 +1674,9 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 	ret = 1;
     } else if (get_string_by_name(s)) {
 	ret = 1;
-    } 
+    } else if (gretl_is_bundle(s)) {
+	ret = 1;
+    }
 
     return ret;
 }

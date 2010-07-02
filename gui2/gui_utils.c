@@ -3959,6 +3959,7 @@ static void add_bundled_item_to_menu (gpointer key,
     GtkActionEntry item;
     gchar *label;
     const char *typestr = "?";
+    const char *note;
     GretlType type;
     void *val;
     int size = 0;
@@ -3974,13 +3975,21 @@ static void add_bundled_item_to_menu (gpointer key,
     }
 
     typestr = gretl_arg_type_name(type);
+    note = bundled_item_get_note((bundled_item *) value);
+
+    if (note != NULL) {
+	label = g_strdup_printf("%s (%s: %s)", (gchar *) key, 
+				typestr, note);
+    } else {
+	label = g_strdup_printf("%s (%s)", (gchar *) key, typestr);
+    }
 
     action_entry_init(&item);    
     item.name = (gchar *) key;
-    label = g_strdup_printf("%s (%s)", (gchar *) key, typestr);
     item.label = label;
     item.callback = G_CALLBACK(save_bundled_item_call);
     vwin_menu_add_item(vwin, "/menubar/Save", &item);
+
     g_free(label);
 }
 

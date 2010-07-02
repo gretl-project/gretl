@@ -345,6 +345,8 @@ struct str_table funcs[] = {
     { F_EPOCHDAY, "epochday" },
     { F_HASHGET,  "bundleget" },
     { F_HASHSET,  "bundleset" },
+    { F_HASHDEL,  "bundledel" },
+    { F_SETNOTE,  "setnote" },
     { 0,          NULL }
 };
 

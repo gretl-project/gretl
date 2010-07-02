@@ -71,7 +71,8 @@
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
 #define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
 
-#define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || t == VEC) 
+#define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
+			    t == VEC || t == BUNDLE) 
 
 #define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
@@ -84,7 +85,7 @@ static void parser_init (parser *p, const char *str,
 static void parser_reinit (parser *p, double ***pZ, 
 			   DATAINFO *dinfo, PRN *prn);
 
-static void printnode (const NODE *t, const parser *p);
+static void printnode (NODE *t, parser *p);
 
 static NODE *eval (NODE *t, parser *p);
 
@@ -3310,7 +3311,7 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p)
 	b = get_gretl_bundle_by_name(n->v.str);
     }
 
-    if (b == NULL) {
+    if (b == NULL && p != NULL) {
 	p->err = E_DATA;
     }
 
@@ -5142,6 +5143,12 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 		    p->err = E_ALLOC;
 		}		
 	    }
+	} else if (type == GRETL_TYPE_BUNDLE) {
+	    ret = aux_bundle_node(p);
+	    if (ret != NULL) {
+		ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
+					     &p->err);
+	    }	    
 	} else if (type == GRETL_TYPE_SERIES) {
 	    const double *x = val;
 
@@ -5166,6 +5173,28 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	    } else {
 		p->err = E_DATA;
 	    }
+	}
+    }
+
+    return ret;
+}
+
+static NODE *delete_named_bundle_value (NODE *l, NODE *r, parser *p)
+{
+    const char *name = l->v.str;
+    const char *key = r->v.str;
+    gretl_bundle *bundle;
+    NODE *ret = NULL;
+
+    bundle = get_gretl_bundle_by_name(name);
+    
+    if (bundle == NULL) {
+	p->err = E_UNKVAR;
+    } else {
+	gretl_bundle_delete_data(bundle, key);
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
+	    ret->v.xval = 0;
 	}
     }
 
@@ -5205,6 +5234,11 @@ static int set_named_bundle_value (const char *name, const char *key,
 	type = GRETL_TYPE_SERIES;
 	size = p->dinfo->n;
 	break;
+    case BUNDLE:
+	ptr = node_get_bundle(n, p);
+	type = GRETL_TYPE_BUNDLE;
+	err = p->err;
+	break;
     default:
 	err = E_DATA;
 	break;
@@ -5212,6 +5246,22 @@ static int set_named_bundle_value (const char *name, const char *key,
 
     if (!err) {
 	err = gretl_bundle_set_data(bundle, key, ptr, type, size);
+    }
+
+    return err;
+}
+
+static int set_named_bundle_note (const char *name, const char *key,
+				  const char *note, parser *p)
+{
+    gretl_bundle *bundle;
+    int err = 0;
+
+    bundle = get_gretl_bundle_by_name(name);
+    if (bundle == NULL) {
+	p->err = E_UNKVAR;
+    } else {
+	err = gretl_bundle_set_note(bundle, key, note);
     }
 
     return err;
@@ -5508,11 +5558,25 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		ret->v.xval = set_named_bundle_value(l->v.str, m->v.str, r, p);
 	    }
 	}
+    } else if (f == F_SETNOTE) {
+	if (l->t != BUNDLE) {
+	    node_type_error(f, 1, BUNDLE, l, p);
+	} else if (m->t != STR) {
+	    node_type_error(f, 2, STR, m, p);
+	} else if (r->t != STR) {
+	    node_type_error(f, 3, STR, r, p);
+	} else {
+	    ret = aux_scalar_node(p);
+	    if (!p->err) {
+		ret->v.xval = set_named_bundle_note(l->v.str, m->v.str, 
+						    r->v.str, p);
+	    }
+	}
     }
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
-	f != F_HASHSET) {
+	f != F_HASHSET && f != F_SETNOTE) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -7627,6 +7691,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_EPOCHDAY:
     case F_KDENSITY:
     case F_HASHSET:
+    case F_SETNOTE:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
@@ -7819,12 +7884,15 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_HASHGET:
-	if (l->t == BUNDLE && r->t == STR) {
-	    ret = get_named_bundle_value(l, r, p);
-	} else if (l->t != BUNDLE) {
+    case F_HASHDEL:
+	if (l->t != BUNDLE) {
 	    node_type_error(t->t, 1, BUNDLE, l, p);
 	} else if (r->t != STR) {
 	    node_type_error(t->t, 2, STR, r, p);
+	} else if (t->t == F_HASHGET) {
+	    ret = get_named_bundle_value(l, r, p);
+	} else {
+	    ret = delete_named_bundle_value(l, r, p);
 	}
 	break;
     default: 
@@ -7950,7 +8018,7 @@ static void printsymb (int symb, const parser *p)
     pputs(p->prn, getsymb(symb, NULL));
 }
 
-static void printnode (const NODE *t, const parser *p)
+static void printnode (NODE *t, parser *p)
 {  
     if (t == NULL) {
 	pputs(p->prn, "NULL"); 
@@ -7986,6 +8054,8 @@ static void printnode (const NODE *t, const parser *p)
 	}
     } else if (t->t == MAT) {
 	gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
+    } else if (t->t == BUNDLE) {
+	gretl_bundle_print(node_get_bundle(t, p), p->prn);
     } else if (t->t == UMAT || t->t == UOBJ) {
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == DVAR) {
@@ -8379,6 +8449,9 @@ static void parser_try_print (parser *p)
     } else {
 	/* e.g. "series x", for an existing series named 'x' */
 	p->flags |= (P_PRINT | P_DISCARD);
+#if EDEBUG
+	fprintf(stderr, "parser_try_print: set print/discard flags\n");
+#endif
     }
 }
 
@@ -8617,7 +8690,11 @@ static void pre_process (parser *p, int flags)
 	p->flags |= P_LHSTR;
 	p->lh.t = STR;
 	newvar = 0;
-    }	    
+    } else if (gretl_is_bundle(test)) {	
+	p->flags |= P_LHSTR;
+	p->lh.t = BUNDLE;
+	newvar = 0;
+    }	
 
     /* if pre-existing var, check for const-ness */
     if (!newvar && overwrite_const_check(test, p)) {
@@ -9587,6 +9664,8 @@ void gen_save_or_print (parser *p, PRN *prn)
 		gretl_list_print(p->lh.name, p->dinfo, p->prn);
 	    } else if (p->ret->t == STR) {
 		pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));
+	    } else if (p->ret->t == BUNDLE) {
+		gretl_bundle_print(get_gretl_bundle_by_name(p->lh.name), prn);
 	    } else {
 		printnode(p->ret, p);
 		pputc(p->prn, '\n');
@@ -9606,11 +9685,9 @@ void gen_save_or_print (parser *p, PRN *prn)
 	fprintf(stderr, "genr exec (%s): "
 		" m0 = %p, m1 = %p\n", p->lh.name, (void *) p->lh.m0, 
 		(void *) p->lh.m1);
-    } else {
-	if (p->lh.v == 0) {
-	    fprintf(stderr, "genr exec (%s): p->lh.v = %d\n", p->lh.name,
-		    p->lh.v);
-	}
+    } else if (p->lh.v == 0) {
+	fprintf(stderr, "genr exec (%s): p->lh.v = %d\n", p->lh.name,
+		p->lh.v);
     }
 #endif    
 }
