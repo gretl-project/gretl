@@ -26,7 +26,7 @@
  * @title: Data I-O
  * @include: gretl/libgretl.h
  *
- * Functionality for writing data from native-format gretl
+ * Functionality for reading data from native-format gretl
  * datafiles, and writing data to such files. Plus importation
  * of data from various sorts of non-native data files.
  *

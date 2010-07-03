@@ -198,7 +198,7 @@ static int savenum (const int *list, int i)
  * @i: value to put (as attribute)
  * @fp: file to which to write.
  * 
- * Writes to @fp a string of the form "%s=%d".
+ * Writes to @fp a string of the form "\%s=\%d".
  */
 
 void gretl_xml_put_int (const char *tag, int i, FILE *fp)
@@ -212,8 +212,8 @@ void gretl_xml_put_int (const char *tag, int i, FILE *fp)
  * @x: value to put (as attribute)
  * @fp: file to which to write.
  * 
- * Writes to @fp a string of the form "%s=%.15g" if the value of
- * @x is valid, otherwise "%s=NA".
+ * Writes to @fp a string of the form "\%s=\%.15g" if the value of
+ * @x is valid, otherwise "\%s=NA".
  */
 
 void gretl_xml_put_double (const char *tag, double x, FILE *fp)
