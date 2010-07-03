@@ -213,7 +213,7 @@ print_equation_system_info (const equation_system *sys,
     int i, vi, lag;
     
     if (header && sys->name != NULL) {
-	pprintf(prn, "Equation system %s\n", sys->name);
+	pprintf(prn, "%s %s\n", _("Equation system"), sys->name);
     }
 
     if (!header) {
@@ -227,7 +227,7 @@ print_equation_system_info (const equation_system *sys,
     }
 
     if (sys->ylist != NULL) {
-	pputs(prn, (header)? "Endogenous variables:" : "endog");
+	pputs(prn, (header)? _("Endogenous variables:") : "endog");
 	for (i=1; i<=sys->ylist[0]; i++) {
 	    vi = sys->ylist[i];
 	    pprintf(prn, " %s", pdinfo->varname[vi]);
@@ -237,7 +237,7 @@ print_equation_system_info (const equation_system *sys,
 
     if (header) {
 	if (sys->pre_vars != NULL) {
-	    pputs(prn, "Predetermined variables:");
+	    pputs(prn, _("Predetermined variables:"));
 	    for (i=0; i<sys->plist[0]; i++) {
 		vi = sys->pre_vars[i].src;
 		lag = sys->pre_vars[i].lag;
@@ -246,7 +246,7 @@ print_equation_system_info (const equation_system *sys,
 	    pputc(prn, '\n');
 	}    
 	if (sys->ilist != NULL && sys->ilist[0] > sys->plist[0]) {
-	    pputs(prn, "Exogenous variables:");
+	    pputs(prn, _("Exogenous variables:"));
 	    for (i=1; i<=sys->ilist[0]; i++) {
 		vi = sys->ilist[i];
 		if (!in_gretl_list(sys->plist, vi)) {
