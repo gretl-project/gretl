@@ -3584,6 +3584,7 @@ LWE_init (struct LWE_helper *L, const gretl_matrix *X, int m)
 
     L->lpow = gretl_matrix_copy(L->lambda);
     L->I2 = gretl_matrix_copy(L->I);
+
     if (L->lpow == NULL || L->I2 == NULL) {
 	err = E_ALLOC;
 	LWE_free(L);
@@ -3598,6 +3599,8 @@ LWE_init (struct LWE_helper *L, const gretl_matrix *X, int m)
     return err;
 }
 
+#define LWE_MAXITER 100
+
 static double LWE (const gretl_matrix *X, int m, int *err)
 {
     struct LWE_helper L;
@@ -3605,14 +3608,13 @@ static double LWE (const gretl_matrix *X, int m, int *err)
     double eps = 1.0e-05;
     double f, incr, incl, deriv, h;
     int iter = 0;
-    const int MAX_ITER = 100;
 
     *err = LWE_init(&L, X, m);
     if (*err) {
 	return NADBL;
     }
 
-    while (fabs(dd) > 1.0e-06 && iter < MAX_ITER) {
+    while (fabs(dd) > 1.0e-06 && iter++ < LWE_MAXITER) {
 	f = LWE_obj_func(&L, d);
 	incr = LWE_obj_func(&L, d + eps) / eps;
 	incl = LWE_obj_func(&L, d - eps) / eps;
@@ -3627,17 +3629,16 @@ static double LWE (const gretl_matrix *X, int m, int *err)
 	}
 
 	if (fabs(dd) > 1) {
-	    dd = (dd > 0) ? 1 : -1;
+	    dd = (dd > 0)? 1 : -1;
 	}
 	
 	d += 0.5 * dd;
-	iter++;
     }
 
     if (*err) {
 	d = NADBL;
-    } else if (iter == MAX_ITER) {
-	fprintf(stderr, "Maximum number of iterations reached\n");
+    } else if (iter == LWE_MAXITER) {
+	fprintf(stderr, "LWE: max iterations reached\n");
 	d = NADBL;
     } 
 
