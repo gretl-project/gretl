@@ -5,6 +5,8 @@ version 1.9.2, in progress
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix crashing bug in Wilcoxon signed rank test
+- Fix for OS X: we now support Ctrl-click as equivalent to
+  right-click (for popup menus, etc.)
 - Internals: modify GUI sources to ensure that gretl will build 
   OK with the forthcoming GTK+ 3.0
 
