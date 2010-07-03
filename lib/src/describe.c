@@ -3793,13 +3793,12 @@ static int pergm_graph (const char *vname,
     return gnuplot_make_graph();
 }
 
-static void pergm_print_header (const char *vname, int T, int L,
-				gretlopt opt, PRN *prn)
+static void pergm_print (const char *vname, const double *d, 
+			 int T, int L, gretlopt opt, PRN *prn)
 {
-    if (opt & OPT_F) {
-	pprintf(prn, "\n%s, T = %d\n\n", vname, T);
-	return;
-    }
+    char xstr[32];
+    double dt, yt;
+    int t;
 
     if (opt & OPT_R) {
 	pprintf(prn, "\n%s\n", _("Residual periodogram"));
@@ -3813,14 +3812,6 @@ static void pergm_print_header (const char *vname, int T, int L,
     } else {
 	pputc(prn, '\n');
     }
-}
-
-static void pergm_print (const double *x, int T, gretlopt opt,
-			 PRN *prn)
-{
-    char xstr[32];
-    double xt, yt;
-    int t;
 
     if (opt & OPT_L) {
 	pputs(prn, _(" omega  scaled frequency  periods  log spectral density\n\n"));
@@ -3830,9 +3821,9 @@ static void pergm_print (const double *x, int T, gretlopt opt,
 
     for (t=1; t<=T/2; t++) {
 	yt = M_2PI * t / (double) T;
-	xt = (opt & OPT_L)? log(x[t]) : x[t];
+	dt = (opt & OPT_L)? log(d[t]) : d[t];
 	pprintf(prn, " %.4f%9d%16.2f", yt, t, (double) T / t);
-	sprintf(xstr, "%#.5g", xt);
+	sprintf(xstr, "%#.5g", dt);
 	gretl_fix_exponent(xstr);
 	pprintf(prn, "%16s\n", xstr);
     }
@@ -3840,92 +3831,24 @@ static void pergm_print (const double *x, int T, gretlopt opt,
     pputc(prn, '\n');
 }
 
-static double *pergm_allocate_workspace (int L, int T)
+static double *pergm_compute_density (const double *x, int t1, int t2,
+				      int L, int bartlett, int *err)
 {
-    int n = T + (L + 1) + (1 + T/2);
-    double *w = malloc(n * sizeof *w);
-
-    return w;
-}
-
-/* if @pmat is non-NULL, we're filling out a matrix for the 
-   pergm() function, otherwise we're responding to the 
-   pergm command
-*/
-
-static int real_periodogram (const double *x, int varno, int width,
-			     const DATAINFO *pdinfo, gretlopt opt, 
-			     PRN *prn, gretl_matrix **pmat)
-{
-    double *workspace = NULL;
-    double *sdy, *acov, *xvec;
+    double *sdy, *acov, *dens;
     double xx, yy, vx, sx, w;
-    int k, L, T, t, m = 0; 
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int bartlett = (opt & OPT_O);
-    int do_fract_int = 0;
-    int do_graph = 1;
-    int err = 0;
+    int k, t, T = t2 - t1 + 1;
 
-    gretl_error_clear();
+    sdy = malloc(T * sizeof *sdy);
+    acov = malloc((L + 1) * sizeof *acov);
+    dens = malloc((1 + T/2) * sizeof *dens);
 
-    /* get the sample */
-    array_adjust_t1t2(x, &t1, &t2);
-    T = t2 - t1 + 1;
-
-    /* check for data problems */
-    if (missvals(x + t1, T)) {
-	return E_MISSDATA;
-    } else if (T < 12) {
-	return E_TOOFEW;
-    } else if (gretl_isconst(t1, t2, x)) {
-	if (varno >= 0) {
-	    gretl_errmsg_sprintf(_("%s is a constant"), 
-				 pdinfo->varname[varno]);
-	}
-	return E_DATA;
+    if (sdy == NULL || acov == NULL || dens == NULL) {
+	*err = E_ALLOC;
+	free(sdy);
+	free(acov);
+	free(dens);
+	return NULL;
     }
-
-    /* should we do the fraction integration tests? */
-    if (opt & OPT_F) {
-	do_fract_int = 1;
-    } 
-
-    /* should we show a graph? */
-    if (opt & (OPT_N | OPT_F)) {
-	do_graph = 0;
-    }
-
-    /* Chatfield (1996); William Greene, 4e, p. 772 */
-    if (bartlett) {
-	if (width <= 0) {
-	    L = auto_spectrum_order(T, opt);
-	} else {
-	    L = (width > T / 2)? T / 2 : width;
-	} 
-    } else {
-	/* L: use full sample */
-	L = T - 1; 
-    }
-    
-    if (do_fract_int) {
-	/* get order for fractional integration test */
-	if (width <= 0) {
-	    m = auto_spectrum_order(T, OPT_NONE);
-	} else {
-	    m = (width > T / 2)? T / 2 : width;
-	}
-    } 
-
-    workspace = pergm_allocate_workspace(L, T);
-    if (workspace == NULL) {
-	return E_ALLOC;
-    }
-
-    /* set up pointers into workspace */
-    sdy = workspace; 
-    acov = sdy + T;
-    xvec = acov + L + 1;
 
     xx = gretl_mean(t1, t2, x);
     vx = real_gretl_variance(t1, t2, x, 1);
@@ -3935,7 +3858,7 @@ static int real_periodogram (const double *x, int varno, int width,
 	sdy[t-t1] = (x[t] - xx) / sx;
     }
 
-    /* find autocovariances */
+    /* autocovariances */
     for (k=1; k<=L; k++) {
 	acov[k] = 0.0;
 	for (t=k; t<T; t++) {
@@ -3957,7 +3880,64 @@ static int real_periodogram (const double *x, int varno, int width,
 		xx += 2.0 * acov[k] * cos(yy * k);
 	    }
 	}
-	xvec[t] = xx * vx;
+	dens[t] = xx * vx;
+    }
+
+    free(sdy);
+    free(acov);
+
+    return dens;
+}
+
+/* if @pmat is non-NULL, we're filling out a matrix for the 
+   pergm() function, otherwise we're responding to the 
+   pergm command
+*/
+
+static int real_periodogram (const double *x, int varno, int width,
+			     const DATAINFO *pdinfo, gretlopt opt, 
+			     PRN *prn, gretl_matrix **pmat)
+{
+    double *dens = NULL;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int bartlett = (opt & OPT_O);
+    int L, T, t;
+    int err = 0;
+
+    gretl_error_clear();
+
+    /* get the sample */
+    array_adjust_t1t2(x, &t1, &t2);
+    T = t2 - t1 + 1;
+
+    /* check for data problems */
+    if (missvals(x + t1, T)) {
+	return E_MISSDATA;
+    } else if (T < 12) {
+	return E_TOOFEW;
+    } else if (gretl_isconst(t1, t2, x)) {
+	if (varno >= 0) {
+	    gretl_errmsg_sprintf(_("%s is a constant"), 
+				 pdinfo->varname[varno]);
+	}
+	return E_DATA;
+    }
+
+    /* Chatfield (1996); William Greene, 4e, p. 772 */
+    if (bartlett) {
+	if (width <= 0) {
+	    L = auto_spectrum_order(T, opt);
+	} else {
+	    L = (width > T / 2)? T / 2 : width;
+	} 
+    } else {
+	/* L: use full sample */
+	L = T - 1; 
+    }
+    
+    dens = pergm_compute_density(x, t1, t2, L, bartlett, &err);
+    if (err) {
+	return err;
     }
 
     if (pmat != NULL) {
@@ -3972,34 +3952,39 @@ static int real_periodogram (const double *x, int varno, int width,
 	} else {
 	    for (t=1; t<=T2; t++) {
 		gretl_matrix_set(pm, t-1, 0, M_2PI * t / (double) T);
-		gretl_matrix_set(pm, t-1, 1, xvec[t]);
+		gretl_matrix_set(pm, t-1, 1, dens[t]);
 	    }
 	}
+    } else if (opt & OPT_F) {
+	/* supporting "fractint" command */
+	const char *vname = pdinfo->varname[varno];
+	int m;
+
+	/* order for test */
+	if (width <= 0) {
+	    m = auto_spectrum_order(T, OPT_NONE);
+	} else {
+	    m = (width > T / 2)? T / 2 : width;
+	}
+
+	pprintf(prn, "\n%s, T = %d\n\n", vname, T);
+	if (!(opt & OPT_G)) {
+	    err = fract_int_LWE(x, width, t1, t2, prn);
+	}
+	if (!err && (opt & (OPT_A | OPT_G))) {
+	    err = fract_int_GPH(T, m, dens, prn);
+	}	
     } else {
 	/* supporting "pergm" command */
-	pergm_print_header(pdinfo->varname[varno], T, L, opt, prn);
+	const char *vname = pdinfo->varname[varno];
 
-	if (do_fract_int) {
-	    if (!(opt & OPT_G)) {
-		err = fract_int_LWE(x, width, t1, t2, prn);
-	    }
-	    if (!err && (opt & (OPT_A | OPT_G))) {
-		err = fract_int_GPH(T, m, xvec, prn);
-	    }
-	}
-
-	if (!(opt & OPT_F)) {
-	    pergm_print(xvec, T, opt, prn);
-	}
-
-	if (do_graph) {
-	    const char *vname = var_get_graph_name(pdinfo, varno);
-
-	    pergm_graph(vname, pdinfo, T, L, xvec, opt);
+	pergm_print(vname, dens, T, L, opt, prn);
+	if (!(opt & OPT_N)) {
+	    pergm_graph(vname, pdinfo, T, L, dens, opt);
 	}
     }
 
-    free(workspace);
+    free(dens);
 
     return err;
 }
