@@ -1,4 +1,7 @@
 version 1.9.2, in progress
+- New command "fractint" (fractional integration test)
+- The "pergm" command no longer does fractional integration
+  testing as a side-effect
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix crashing bug in Wilcoxon signed rank test

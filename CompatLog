@@ -1,3 +1,9 @@
+version 1.9.2, in progress
+
+Testing for fractional integration is now factored out of
+the "pergm" command and has its own, more functional,
+command, namely "fractint".
+
 2010-06-24 1.9.1
 
 The old genpois function is now removed.
