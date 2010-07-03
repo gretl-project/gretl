@@ -20,6 +20,8 @@
 #ifndef GRETL_LIST_H
 #define GRETL_LIST_H
 
+#define LISTSEP (-100)
+
 int *gretl_list_new (int nterms);
 
 int *gretl_list_resize (int **oldlist, int nterms);

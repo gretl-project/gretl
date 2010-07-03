@@ -597,7 +597,7 @@ maybe_shift_ldepvar (MODEL *pmod, const double **Z, DATAINFO *pdinfo)
     }
 }
 
-/**
+/*
  * XTX_XTy:
  * @list: list of variables in model.
  * @t1: starting observation.
@@ -1001,10 +1001,21 @@ static void model_free_storage (MODEL *pmod)
     pmod->sderr = NULL;
 }
 
-/* as lsq() below, except that we allow for a non-zero value
-   of the first-order quasi-differencing coefficient, rho,
-   and there's no PRN.
-*/
+/**
+ * ar1_lsq:
+ * @list: model specification.
+ * @pZ: address of data array.
+ * @pdinfo: dataset information.
+ * @ci: command index, e.g. OLS.
+ * @opt: option flags
+ * @rho: coefficient for quasi-differencing the data.
+ *
+ * A generalization of lsq(), permitting quasi-differencing 
+ * of the data "on the fly" using @rho, the absolute value of
+ * which should be less than 1.0.
+ *
+ * Returns: model struct containing the estimates.
+ */
 
 MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
 	       GretlCmdIndex ci, gretlopt opt, double rho)
@@ -4016,18 +4027,25 @@ int get_x12a_maxpd (void)
 
 /**
  * arma:
- * @list: dependent variable, AR and MA orders, and any exogenous
+ * @list: AR and MA orders, dependent variable, and any exogenous
  * regressors.
- * @pqspec: string giving specific non-seasonal AR/MA lags (or %NULL).
+ * @pqspec: string giving specific non-seasonal AR/MA lags (or NULL).
  * @Z: data array.
  * @pdinfo: dataset information.
- * @opt: options: may include %OPT_S to suppress intercept, %OPT_V
- * for verbose results, %OPT_X to use X-12-ARIMA, %OPT_C to put
- * X-12-ARIMA into conditional maximum-likelihood mode.
- * @PRN: for printing details of iterations (or %NULL). 
+ * @opt: option flags.
+ * @PRN: for printing details of iterations (or NULL). 
  *
- * Calculate ARMA estimates, using either native gretl code or
- * by invoking X-12-ARIMA.
+ * Calculates ARMA estimates. By default the estimator is
+ * exact ML, implemented via gretl's Kalman filter in
+ * conjunction with the BFGS maximizer. Other options:
+ * if @opt includes OPT_L we use L-BFGS-B rather than standard
+ * BFGS; OPT_C (incompatible with OPT_L) calls for use of
+ * conditional ML (BHHH algorithm); and OPT_X requests estimation via
+ * X-12-ARIMA rather than native code.
+ *
+ * If the model specification does not include a constant
+ * this is added automatically, unless @opt includes OPT_N
+ * ("no constant").
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */

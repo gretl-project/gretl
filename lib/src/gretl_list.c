@@ -46,6 +46,14 @@
  * position 1 to position foo[0].
  */
 
+/**
+ * LISTSEP:
+ *
+ * Symbolic name for the separator used in gretl lists; this
+ * corresponds to a semicolon in the string representation of
+ * a list.
+ */
+
 typedef struct saved_list_ saved_list;
 
 struct saved_list_ {
@@ -152,7 +160,7 @@ int max_varno_in_saved_lists (void)
  * get_list_name_by_index:
  * @idx: 0-based index into array of saved lists.
  *
- * Returns: the name of the specified saved list, or %NULL if
+ * Returns: the name of the specified saved list, or NULL if
  * @idx is out of bounds.
  */
 
@@ -172,7 +180,7 @@ const char *get_list_name_by_index (int idx)
  * Looks up @name in the stack of saved lists, at the current level
  * of function execution, and retrieves the associated list.
  *
- * Returns: the list, or %NULL if the lookup fails. 
+ * Returns: the list, or NULL if the lookup fails. 
  */
 
 int *get_list_by_name (const char *name)
@@ -672,14 +680,14 @@ static int var_is_deleted (const int *dlist, int dmin, int i)
 
 /**
  * gretl_lists_revise:
- * @dlist: list of variables to be deleted (or %NULL).
+ * @dlist: list of variables to be deleted (or NULL).
  * @dmin: lowest ID number of deleted var (referenced only
- * if @dlist is %NULL).
+ * if @dlist is NULL).
  *
  * Goes through any saved lists, adjusting the ID numbers
  * they contain to reflect the deletion from the dataset of
  * certain variables: those referenced in @dlist, if given, 
- * or if @dlist is %NULL, those variables with IDs greater 
+ * or if @dlist is NULL, those variables with IDs greater 
  * than or equal to @dmin.
  *
  * Returns: 0 on success, non-zero code on failure.
@@ -790,7 +798,7 @@ void gretl_lists_cleanup (void)
  * element of the array is set to 4.  The other elements of 
  * the list are initialized to 0.
  *
- * Returns: the newly allocated list, or %NULL on failure.
+ * Returns: the newly allocated list, or NULL on failure.
  */
 
 int *gretl_list_new (int nterms)
@@ -822,7 +830,7 @@ int *gretl_list_new (int nterms)
  * Creates a newly allocated list whose elements run from
  * @lmin to @lmax consecutively.
  *
- * Returns: the newly allocated list, or %NULL on failure.
+ * Returns: the newly allocated list, or NULL on failure.
  */
 
 int *gretl_consecutive_list_new (int lmin, int lmax)
@@ -856,7 +864,7 @@ int *gretl_consecutive_list_new (int lmin, int lmax)
  * list is longer than the old, the extra elements are initialized 
  * to zero.
  *
- * Returns: the resized list, or %NULL on failure.
+ * Returns: the resized list, or NULL on failure.
  */
 
 int *gretl_list_resize (int **oldlist, int nterms)
@@ -901,7 +909,7 @@ int *gretl_list_resize (int **oldlist, int nterms)
  * so that it can hold one extra element, and sets the last
  * element to @v.
  *
- * Returns: the augmented list, or %NULL on failure.
+ * Returns: the augmented list, or NULL on failure.
  */
 
 int *gretl_list_append_term (int **plist, int v)
@@ -994,7 +1002,7 @@ int gretl_list_cmp (const int *list1, const int *list2)
  * Creates a newly allocated "list" with only one member, 
  * which is set to zero.
  *
- * Returns: the newly allocated list, or %NULL on failure.
+ * Returns: the newly allocated list, or NULL on failure.
  */
 
 int *gretl_null_list (void)
@@ -1013,7 +1021,7 @@ int *gretl_null_list (void)
  * @src: an array of integers, the first element of which holds
  * a count of the number of elements following.
  *
- * Returns: an allocated copy @src (or %NULL if @src is %NULL).
+ * Returns: an allocated copy @src (or NULL if @src is NULL).
  */
 
 int *gretl_list_copy (const int *src)
@@ -1039,7 +1047,7 @@ int *gretl_list_copy (const int *src)
  * a count of the number of elements following.
  *
  * Returns: an allocated copy @src from position @pos onward
- * (or %NULL on failure).
+ * (or NULL on failure).
  */
 
 int *gretl_list_copy_from_pos (const int *src, int pos)
@@ -1072,7 +1080,7 @@ int *gretl_list_copy_from_pos (const int *src, int pos)
  * (increasing) integers in the list, using the notation, e.g., 
  * "1-4" as shorthand for "1 2 3 4".
  *
- * Returns: the allocated array, or %NULL on failure.
+ * Returns: the allocated array, or NULL on failure.
  */
 
 int *gretl_list_from_string (const char *str, int *err)
@@ -1216,7 +1224,7 @@ int *gretl_list_from_string (const char *str, int *err)
  * than 9998.
  *
  * Returns: The string representation of the list on success,
- * or %NULL on failure.
+ * or NULL on failure.
  */
 
 char *gretl_list_to_string (const int *list)
@@ -1264,7 +1272,7 @@ char *gretl_list_to_string (const int *list)
  * if the list contains any numbers greater than 998.
  *
  * Returns: The string representation of the list on success,
- * or %NULL on failure.
+ * or NULL on failure.
  */
 
 char *gretl_list_to_lags_string (const int *list, int *err)
@@ -1524,7 +1532,7 @@ static int *real_gretl_list_union (const int *orig, const int *add,
  * @add were already present in @orig, the error code is
  * %E_ADDDUP.
  *
- * Returns: new list on success, %NULL on error.
+ * Returns: new list on success, NULL on error.
  */
 
 int *gretl_list_add (const int *orig, const int *add, int *err)
@@ -1540,7 +1548,7 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
  *
  * Creates a list holding the union of @l1 and @l2.
  *
- * Returns: new list on success, %NULL on error.
+ * Returns: new list on success, NULL on error.
  */
 
 int *gretl_list_union (const int *l1, const int *l2, int *err)
@@ -1556,7 +1564,7 @@ int *gretl_list_union (const int *l1, const int *l2, int *err)
  *
  * Creates a list holding the intersection of @l1 and @l2.
  *
- * Returns: new list on success, %NULL on error.
+ * Returns: new list on success, NULL on error.
  */
 
 int *gretl_list_intersection (const int *l1, const int *l2, int *err)
@@ -1606,7 +1614,7 @@ int *gretl_list_intersection (const int *l1, const int *l2, int *err)
  *
  * Creates a list containing all but the last element of @orig.
  *
- * Returns: new list on success, %NULL on error.
+ * Returns: new list on success, NULL on error.
  */
 
 int *gretl_list_omit_last (const int *orig, int *err)
@@ -1750,7 +1758,7 @@ static int *real_gretl_list_omit (const int *orig, const int *omit,
  * present in @omit.  It is an error if the @omit list contains
  * members that are not present in @orig.
  *
- * Returns: new list on success, %NULL on error.
+ * Returns: new list on success, NULL on error.
  */
 
 int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
@@ -1770,7 +1778,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
  * starts from position 1 in @orig, and it is not an error if
  * some members of @drop are not present in @orig.  
  *
- * Returns: new list on success, %NULL on error.
+ * Returns: new list on success, NULL on error.
  */
 
 int *gretl_list_drop (const int *orig, const int *drop, int *err)
@@ -1835,7 +1843,7 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
  *
  * Returns: a newly allocated list including the elements of @biglist,
  * from position @minpos onwards, that are not present in @sublist, 
- * again from @minpos onwards, or %NULL on failure.  Note that
+ * again from @minpos onwards, or NULL on failure.  Note that
  * comparison stops whenever a list separator is found; i.e. only
  * the pre-separator portions of the lists are compared.
  */
@@ -2219,11 +2227,11 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
  *
  * Concatenates the content of @list2 onto @list1, after first
  * appending the list separator.  It is acceptable that @list1
- * be %NULL, in which case the returned list is just @list2
+ * be NULL, in which case the returned list is just @list2
  * with the separator prepended.  But it is not acceptable that
- * @list2 be null; in that this function returns %NULL.
+ * @list2 be null; in that this function returns NULL.
  *
- * Returns: alllcated list  on success or %NULL on failure.
+ * Returns: alllcated list  on success or NULL on failure.
  */
 
 int *gretl_lists_join_with_separator (const int *list1, const int *list2)
@@ -2410,14 +2418,14 @@ int gretl_lists_share_members (const int *list1, const int *list2)
  * Creates a newly allocated list including all series in the
  * dataset that are not hidden variables, and are accessible
  * at the current level of function execution.
- * The return value is %NULL in case either (a) allocation of
+ * The return value is NULL in case either (a) allocation of
  * memory failed, or (b) the resulting list would be empty.
  * The caller can distinguish between these possibilities by
  * examining the value returned in @nvars, which will be zero if
  * and only if the resulting list would be empty.  If this is
- * not of interest to the caller, @nvars may be given as %NULL.
+ * not of interest to the caller, @nvars may be given as NULL.
  *
- * Returns: the allocated list, or %NULL.
+ * Returns: the allocated list, or NULL.
  */
 
 int *full_var_list (const DATAINFO *pdinfo, int *nvars)
@@ -2518,7 +2526,7 @@ int gretl_list_is_consecutive (const int *list)
  * the ID numbers of variables, the names of variables, and/or the
  * names of previously defined lists (all separated by spaces).
  *
- * Returns: the constructed list, or %NULL on failure.
+ * Returns: the constructed list, or NULL on failure.
  */
 
 int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err)
@@ -2745,7 +2753,7 @@ void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
  * @pattern: pattern to be matched.
  *
  * Returns: a list of ID numbers of variables whose names
- * match @pattern, or %NULL if there are no matches.
+ * match @pattern, or NULL if there are no matches.
  */
 
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
