@@ -227,7 +227,7 @@ static void update_dialogs_from_varclick (int active_var)
 static gboolean maybe_do_meta_click (GtkWidget *widget, GtkTreeView *view,
 				     GtkTreePath *path)
 {
-    if (widget_get_pointer_mask(widget) & GDK_ALT_MASK) {
+    if (widget_get_pointer_mask(widget) & GDK_HYPER_MASK) {
 	/* The idea here is that we add to the current selection
 	   and return TRUE to block further processing of the
 	   click, so as to implement selection of non-contiguous
