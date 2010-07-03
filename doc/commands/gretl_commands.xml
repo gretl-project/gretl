@@ -2937,26 +2937,34 @@
         </option>
         <option>
 	  <flag>--all</flag>
-	  <effect>do all tests</effect>
+	  <effect>do both tests</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
         </option>
       </options>
     </usage>
 
     <description>
       <para>
-	Tests the specified series for fractional
-	integration (<quote>long memory</quote>). By default the
-	Local Whittle Estimator is used but if the <lit>--gph</lit>
-	option is given the Geweke and Porter-Hudak (GPH) test is
-	performed instead. If the <lit>--all</lit> flag is given
-	then the results of both tests are printed.
+	Tests the specified series for fractional integration (<quote>long
+	memory</quote>). The null hypothesis is that the integration order
+	of the series is zero.  By default the Local Whittle Estimator is
+	used but if the <lit>--gph</lit> option is given the Geweke and
+	Porter-Hudak (GPH) test is performed instead. If the
+	<lit>--all</lit> flag is given then the results of both tests are
+	printed.
       </para>
       <para>
-	In either case the null hypothesis is that the integration
-	order of the series is zero.  By default the order for these
-	tests is the lesser of <math>T</math>/2 and
-	<math>T</math><sup>0.6</sup>.  This value can be
-	adjusted using the <repl>order</repl> parameter.
+	If the optional <repl>order</repl> argument is not given the order
+	for the test(s) is set automatically as the lesser of
+	<math>T</math>/2 and <math>T</math><sup>0.6</sup>.
+      </para>
+      <para>
+	The results can be retrieved using the accessors <lit>$test</lit>
+	and <lit>$pvalue</lit>. These values are based on the Local
+	Whittle Estimator unless the <lit>--gph</lit> option is given.
       </para>
     </description>
 
@@ -7049,14 +7057,14 @@
       <para>
 	Computes and displays (and if not in batch mode, graphs) the
 	spectrum of the specified series.  By default the sample
-	periodogram is given; with the <lit>--bartlett</lit> flag a
-	Bartlett lag window is used in estimating the spectrum (see, for
-	example, Greene's <book>Econometric Analysis</book> for a
-	discussion of this).  The default width of the Bartlett window is
-	twice the square root of the sample size but this can be set
-	manually using the <repl>bandwidth</repl> parameter, up to a
-	maximum of half the sample size.  If the <lit>--log</lit> option
-	is given the spectrum is represented on a logarithmic scale.
+	periodogram is given, but optionally a Bartlett lag window is used
+	in estimating the spectrum (see, for example, Greene's
+	<book>Econometric Analysis</book> for a discussion of this).  The
+	default width of the Bartlett window is twice the square root of
+	the sample size but this can be set manually using the
+	<repl>bandwidth</repl> parameter, up to a maximum of half the
+	sample size.  If the <lit>--log</lit> option is given the spectrum
+	is represented on a logarithmic scale.
       </para>
     </description>
 

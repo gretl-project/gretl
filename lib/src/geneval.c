@@ -4522,27 +4522,24 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
     }
 
     if (!p->err) {
-	int save_t1 = p->dinfo->t1;
-	int save_t2 = p->dinfo->t2;
-	int width = -1;
 	const double *x = NULL;
+	int t1, t2, width = -1;
 
 	if (l->t == VEC) {
 	    x = l->v.xvec;
+	    t1 = p->dinfo->t1;
+	    t2 = p->dinfo->t2;
 	} else if (l->t == MAT) {
 	    x = l->v.m->val;
-	    p->dinfo->t1 = 0;
-	    p->dinfo->t2 = gretl_vector_get_length(l->v.m) - 1;
+	    t1 = 0;
+	    t2 = gretl_vector_get_length(l->v.m) - 1;
 	} 
 
 	if (r != NULL && r->t == NUM) {
 	    width = r->v.xval;
 	}
 
-	ret->v.m = periodogram_func(x, p->dinfo, width, &p->err);
-
-	p->dinfo->t1 = save_t1;
-	p->dinfo->t2 = save_t2;
+	ret->v.m = periodogram_func(x, t1, t2, width, &p->err);
     }
 
     return ret;

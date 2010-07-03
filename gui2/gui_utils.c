@@ -2472,7 +2472,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	entry.callback = G_CALLBACK(residual_correlogram);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
 	entry.name = "Spectrum";
-	entry.label = _("Residual _spectrum");
+	entry.label = _("Residual _periodogram");
 	entry.callback = G_CALLBACK(residual_periodogram);
 	vwin_menu_add_item(vwin, "/menubar/Graphs", &entry);
     } else {
