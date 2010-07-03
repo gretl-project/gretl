@@ -221,10 +221,20 @@ static void update_dialogs_from_varclick (int active_var)
 
 #ifdef OSX_BUILD
 
+/* Trying to support command-click as replacement for Ctrl-click
+   on OS X. But it doesn't work. I wonder why... */
+
 static gboolean maybe_do_meta_click (GtkWidget *widget, GtkTreeView *view,
 				     GtkTreePath *path)
 {
-    if (widget_get_pointer_mask(widget) & GDK_META_MASK) {
+    if (widget_get_pointer_mask(widget) & GDK_ALT_MASK) {
+	/* The idea here is that we add to the current selection
+	   and return TRUE to block further processing of the
+	   click, so as to implement selection of non-contiguous
+	   rows in the GtkTreeView. It works on Linux using 
+	   GDK_CONTROL_MASK as the criterion (i.e. faking the
+	   standard behavior of Ctrl-click as test of concept).
+	*/
 	GtkTreeSelection *sel = gtk_tree_view_get_selection(view);
 
 	gtk_tree_selection_select_path(sel, path);
@@ -235,6 +245,11 @@ static gboolean maybe_do_meta_click (GtkWidget *widget, GtkTreeView *view,
 }
 
 #endif
+
+/* Respond to a mouse click in gretl's main window. This callback
+   is connected after the one that deals with right-clicking to
+   handle popups, so here we can assume it's not a right-click.
+*/
 
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 			windata_t *vwin)
