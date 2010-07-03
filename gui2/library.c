@@ -4688,12 +4688,13 @@ static void real_do_pergm (double **Z, DATAINFO *pdinfo, int code)
     const gchar *title = N_("gretl: periodogram");
     int T = sample_size(pdinfo);
     gretlopt opt = OPT_NONE;
-    int width, err;
+    int width, cancel;
+    int err = 0;
 
     width = auto_spectrum_order(T, OPT_O);
-    pergm_dialog(&opt, &width, 2, T / 2, &err);
+    pergm_dialog(&opt, &width, 2, T / 2, &cancel);
 
-    if (err < 0 || bufopen(&prn)) {
+    if (cancel || bufopen(&prn)) {
 	return;
     }  
 

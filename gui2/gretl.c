@@ -1449,7 +1449,7 @@ GtkActionEntry main_entries[] = {
     { "Data", NULL, N_("_Data"), NULL, NULL, NULL },
     { "DataSelectAll", NULL, N_("Select _all"), "<control>A", NULL, G_CALLBACK(mdata_select_all) },
     { "DefineList", NULL, N_("Define or edit _list..."), NULL, NULL, G_CALLBACK(gui_define_list) },
-    { "SelectList", NULL, N_("_Select listed variables..."), NULL, NULL, G_CALLBACK(mdata_select_list) },
+    { "SelectList", NULL, N_("_Set selection from list..."), NULL, NULL, G_CALLBACK(mdata_select_list) },
     { "DisplayValues", NULL, N_("_Display values"), NULL, NULL, G_CALLBACK(display_selected) },
     { "EditValues", NULL, N_("_Edit values"), NULL, NULL, G_CALLBACK(spreadsheet_edit) },
     { "AddObs", NULL, N_("_Add observations..."), NULL, NULL, G_CALLBACK(do_add_obs) },

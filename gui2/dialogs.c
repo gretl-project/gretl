@@ -320,6 +320,18 @@ double gui_double_from_string (const char *str, int *err)
     return x;
 }
 
+static GtkWidget *hboxit (GtkWidget *w, GtkWidget *vbox)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    if (vbox != NULL) {
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+    }
+
+    return hbox;
+}
+
 static void csv_na_callback (GtkComboBox *box, gpointer p)
 {
     char *s = gtk_combo_box_get_active_text(box);
@@ -3824,17 +3836,17 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     GSList *group;
 
     if (maybe_raise_dialog()) {
+	*cancel = -1;
 	return;
     }
 
+    *cancel = 0;
     dialog = gretl_dialog_new(_("gretl: periodogram"), NULL, GRETL_DLG_BLOCK);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     /* sample vs Bartlett radios, with Bartlett spinner */
-    hbox = gtk_hbox_new(FALSE, 5);
     button = gtk_radio_button_new_with_label(NULL, _("Sample periodogram"));
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+    hboxit(button, vbox);
 
     hbox = gtk_hbox_new(FALSE, 5);
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
@@ -3853,13 +3865,11 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
     /* Log scale checkbox */
-    hbox = gtk_hbox_new(FALSE, 5);
     button = gtk_check_button_new_with_label(_("log scale"));
     g_signal_connect(G_OBJECT(button), "toggled",
 		     G_CALLBACK(pergm_set_log_scale), opt);
-    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
-
+    hboxit(button, vbox);
+ 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
     /* Cancel button */
