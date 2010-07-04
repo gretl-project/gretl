@@ -946,18 +946,13 @@ void populate_varlist (void)
 {
     static gint check_connected;
     static gint click_connected;
-    GtkTreeView *view;
-    GtkTreeModel *model;
-    GtkTreeStore *store;
+    GtkTreeView *view = GTK_TREE_VIEW(mdata->listbox);
+    GtkTreeModel *model = gtk_tree_view_get_model(view);
+    GtkTreeStore *store = GTK_TREE_STORE(model);
     GtkTreeSelection *select;
     GtkTreeIter iter;    
     char id[8];
-    int pos = 0;
-    int i;
-
-    view = GTK_TREE_VIEW(mdata->listbox);
-    model = gtk_tree_view_get_model(view);
-    store = GTK_TREE_STORE(model);
+    int i, pos = 0;
 
     if (store != NULL) {
 	/* record line position? */
@@ -965,7 +960,6 @@ void populate_varlist (void)
     }
     
     gtk_tree_store_clear(store);
-
     gtk_tree_model_get_iter_first(model, &iter);
 
     for (i=0; i<datainfo->v; i++) {
