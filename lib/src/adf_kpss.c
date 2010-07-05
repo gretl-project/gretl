@@ -848,8 +848,8 @@ static int real_adf_test (int varno, int order, int niv,
 int adf_test (int order, const int *list, double ***pZ,
 	      DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int v, vlist[2] = {1,0};
     int i, err;
 
@@ -864,16 +864,51 @@ int adf_test (int order, const int *list, double ***pZ,
 	err = incompatible_options(opt, OPT_C | OPT_T);
     }
 
-    for (i=1; i<=list[0] && !err; i++) {
-	v = list[i];
-	vlist[1] = v;
-	err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
-	if (!err) {
-	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
-				0, prn);
+    if (dataset_is_panel(pdinfo)) {
+	/* loop across the panel units */
+	int u0 = pdinfo->t1 / pdinfo->pd;
+	int uN = pdinfo->t2 / pdinfo->pd;
+	double test = 0.0;
+
+	vlist[1] = v = list[1];
+
+	for (i=u0; i<=uN && !err; i++) {
+	    pdinfo->t1 = i * pdinfo->pd;
+	    pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
+	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
+	    if (!err) {
+		pprintf(prn, "Unit %d\n", i + 1);
+		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
+				    0, prn);
+	    }
+	    if (!err) {
+		test += get_last_test_statistic(NULL);
+	    }
 	}
-	pdinfo->t1 = t1;
-	pdinfo->t2 = t2;
+
+	if (!err) {
+	    int n = uN - u0 + 1;
+
+	    pprintf(prn, "Number of units tested = %d\n", n);
+	    pprintf(prn, "Average test statistic (t-bar) = %g\n\n", test / n);
+	    /* FIXME critical values */
+	}
+
+	pdinfo->t1 = save_t1;
+	pdinfo->t2 = save_t2;
+    } else {
+	/* regular time series case */
+	for (i=1; i<=list[0] && !err; i++) {
+	    v = list[i];
+	    vlist[1] = v;
+	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
+	    if (!err) {
+		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
+				    0, prn);
+	    }
+	    pdinfo->t1 = save_t1;
+	    pdinfo->t2 = save_t2;
+	}
     }
 
     return err;
