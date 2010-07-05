@@ -49,7 +49,8 @@ enum {
 
 enum {
     ADF_EG_TEST   = 1 << 0,
-    ADF_EG_RESIDS = 1 << 1
+    ADF_EG_RESIDS = 1 << 1,
+    ADF_PANEL     = 1 << 2
 } adf_flags;
 
 /* replace y with demeaned or detrended y */
@@ -337,8 +338,12 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
     if (*blurb_done == 0) {
 	DF_header(vname, order, prn);
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
-	pputs(prn, _("unit-root null hypothesis: a = 1"));
-	pputs(prn, "\n\n");
+	if (flags & ADF_PANEL) {
+	    pputc(prn, '\n');
+	} else {
+	    pputs(prn, _("unit-root null hypothesis: a = 1"));
+	    pputs(prn, "\n\n");
+	}
 	*blurb_done = 1;
     }
 
@@ -588,6 +593,7 @@ static int real_adf_test (int varno, int order, int niv,
 {
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
+    gretlopt df_mod_opt = OPT_A;
     int orig_nvars = pdinfo->v;
     int blurb_done = 0;
     int auto_order = 0;
@@ -629,6 +635,14 @@ static int real_adf_test (int varno, int order, int niv,
 	 */
 	eg_opt = opt;
 	opt = OPT_N;
+    }
+
+    if (flags & ADF_PANEL) {
+	/* testing for unit root with panel data: compute standard
+	   errors (and so the ADF t-statistic) without a degrees-of-
+	   freedom adjustment, in the ADF regression
+	*/
+	df_mod_opt |= OPT_N;
     }
 
     if (opt & OPT_F) {
@@ -743,7 +757,7 @@ static int real_adf_test (int varno, int order, int niv,
 	printlist(list, "final ADF regression list");
 #endif
 
-	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	dfmod = lsq(list, pZ, pdinfo, OLS, df_mod_opt);
 	if (dfmod.errcode) {
 	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n", 
 		    dfmod.errcode);
@@ -815,6 +829,35 @@ static int real_adf_test (int varno, int order, int niv,
     return err;
 }
 
+static gretlopt panel_adjust_ADF_opt (gretlopt opt)
+{
+    gretlopt ret = opt;
+
+    /* Has the user selected an option governing the 
+       deterministic terms to be included? If so, don't 
+       mess with it.
+    */
+    if (opt & (OPT_N | OPT_C | OPT_R | OPT_T)) {
+	; /* no-op */
+    } else {
+	/* panel default: test with constant */
+	ret |= OPT_C;
+    }
+
+    return ret;
+}
+
+static int do_panel_ADF_test (const DATAINFO *pdinfo)
+{
+    int ret = 0;
+
+    if (dataset_is_panel(pdinfo)) {
+	ret = (pdinfo->t2 - pdinfo->t1 + 1 > pdinfo->pd);
+    }
+
+    return ret;
+}
+
 /**
  * adf_test:
  * @order: lag order for the (augmented) test.
@@ -864,11 +907,13 @@ int adf_test (int order, const int *list, double ***pZ,
 	err = incompatible_options(opt, OPT_C | OPT_T);
     }
 
-    if (dataset_is_panel(pdinfo)) {
-	/* loop across the panel units */
+    if (do_panel_ADF_test(pdinfo)) {
+	/* panel data: loop across the units */
 	int u0 = pdinfo->t1 / pdinfo->pd;
 	int uN = pdinfo->t2 / pdinfo->pd;
 	double test = 0.0;
+
+	opt = panel_adjust_ADF_opt(opt);
 
 	vlist[1] = v = list[1];
 
@@ -879,7 +924,7 @@ int adf_test (int order, const int *list, double ***pZ,
 	    if (!err) {
 		pprintf(prn, "Unit %d\n", i + 1);
 		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
-				    0, prn);
+				    ADF_PANEL, prn);
 	    }
 	    if (!err) {
 		test += get_last_test_statistic(NULL);
