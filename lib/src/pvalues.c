@@ -457,6 +457,31 @@ double normal_cdf_comp (double x)
 }
 
 /**
+ * student_pvalue_1:
+ * @df: degrees of freedom.
+ * @x: the cutoff point in the distribution.
+ * 
+ * Returns: the probability that t(@df) is greater than @x,
+ * or #NADBL on failure.
+ */
+
+double student_pvalue_1 (int df, double x)
+{
+    double p = NADBL;
+
+    if (df > 0) {
+	p = stdtr(df, x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	} else {
+	    p = 1 - p;
+	}
+    }
+
+    return p;
+}
+
+/**
  * student_pvalue_2:
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.

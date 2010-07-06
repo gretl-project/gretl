@@ -290,11 +290,7 @@ static void DF_header (const char *s, int p, PRN *prn)
     }
 }
 
-static void 
-print_adf_results (int order, int auto_order, double DFt, double pv, 
-		   MODEL *dfmod, int dfnum, const char *vname, 
-		   int *blurb_done, unsigned char flags, int i, 
-		   int niv, int nseas, gretlopt opt, PRN *prn)
+static const char *DF_model_string (int i)
 {
     const char *models[] = {
 	"(1-L)y = (a-1)*y(-1) + e",
@@ -302,18 +298,52 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	"(1-L)y = b0 + b1*t + (a-1)*y(-1) + e",
 	"(1-L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + e"
     };
-    const char *aug_models[] = {
+
+    if (i >= 0 && i < 4) {
+	return models[i];
+    } else {
+	return "";
+    }
+}
+
+static const char *ADF_model_string (int i)
+{
+    const char *models[] = {
 	"(1-L)y = (a-1)*y(-1) + ... + e",
 	"(1-L)y = b0 + (a-1)*y(-1) + ... + e",
 	"(1-L)y = b0 + b1*t + (a-1)*y(-1) + ... + e",
 	"(1-L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + ... + e"
     };
-    const char *teststrs[] = {
+
+    if (i >= 0 && i < 4) {
+	return models[i];
+    } else {
+	return "";
+    }
+}
+
+static const char *DF_test_string (int i)
+{
+    const char *tests[] = {
 	N_("test without constant"),
 	N_("test with constant"),
 	N_("with constant and trend"),
 	N_("with constant and quadratic trend")
     };
+
+    if (i >= 0 && i < 4) {
+	return tests[i];
+    } else {
+	return "";
+    }
+}
+
+static void 
+print_adf_results (int order, int auto_order, double DFt, double pv, 
+		   MODEL *dfmod, int dfnum, const char *vname, 
+		   int *blurb_done, unsigned char flags, int i, 
+		   int niv, int nseas, gretlopt opt, PRN *prn)
+{
     const char *urcstrs[] = {
 	"nc", "c", "ct", "ctt"
     };
@@ -335,7 +365,10 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 		pv);
     } 
 
-    if (*blurb_done == 0) {
+    if (flags & ADF_PANEL) {
+	pputs(prn, "   ");
+	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
+    } else if (*blurb_done == 0) {
 	DF_header(vname, order, prn);
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	if (flags & ADF_PANEL) {
@@ -347,8 +380,8 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	*blurb_done = 1;
     }
 
-    if (!(flags & ADF_EG_RESIDS)) {
-	pprintf(prn, "   %s ", _(teststrs[i]));
+    if (!(flags & (ADF_EG_RESIDS | ADF_PANEL))) {
+	pprintf(prn, "   %s ", _(DF_test_string(i)));
 	if (opt & OPT_G) {
 	    pputs(prn, "(GLS) ");
 	}
@@ -358,8 +391,10 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "   %s: %s\n", _("model"), 
-	    (order > 0)? aug_models[i] : models[i]);
+    if (!(flags & ADF_PANEL)) {
+	pprintf(prn, "   %s: %s\n", _("model"), 
+		(order > 0)? ADF_model_string(i) : DF_model_string(i));
+    }
 
     if (!na(dfmod->rho)) {
 	pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
@@ -847,7 +882,7 @@ static gretlopt panel_adjust_ADF_opt (gretlopt opt)
     return ret;
 }
 
-static int do_panel_ADF_test (const DATAINFO *pdinfo)
+static int multi_unit_panel_sample (const DATAINFO *pdinfo)
 {
     int ret = 0;
 
@@ -856,6 +891,19 @@ static int do_panel_ADF_test (const DATAINFO *pdinfo)
     }
 
     return ret;
+}
+
+static int DF_index (gretlopt opt)
+{
+    if (opt & OPT_N) {
+	return 0;
+    } else if (opt & OPT_C) {
+	return 1;
+    } else if (opt & OPT_T) {
+	return 2;
+    } else {
+	return 3;
+    }
 }
 
 /**
@@ -907,27 +955,52 @@ int adf_test (int order, const int *list, double ***pZ,
 	err = incompatible_options(opt, OPT_C | OPT_T);
     }
 
-    if (do_panel_ADF_test(pdinfo)) {
+    if (multi_unit_panel_sample(pdinfo)) {
 	/* panel data: loop across the units */
 	int u0 = pdinfo->t1 / pdinfo->pd;
 	int uN = pdinfo->t2 / pdinfo->pd;
-	double test = 0.0;
+	int quiet = (opt & OPT_Q);
+	double ppv = 0.0, zpv = 0.0, lpv = 0.0;
+	double pval, test = 0.0;
 
 	opt = panel_adjust_ADF_opt(opt);
 
 	vlist[1] = v = list[1];
+
+	if (!quiet) {
+	    int j = DF_index(opt);
+
+	    DF_header(pdinfo->varname[v], (opt & OPT_E)? 0 : order, prn);
+	    pprintf(prn, "   %s ", _(DF_test_string(j)));
+	    if (opt & OPT_G) {
+		pputs(prn, "(GLS) ");
+	    }
+	    pputc(prn, '\n');
+	    pprintf(prn, "   %s: %s\n\n", _("model"), 
+		    (order > 0)? ADF_model_string(j) : DF_model_string(j));
+	}
 
 	for (i=u0; i<=uN && !err; i++) {
 	    pdinfo->t1 = i * pdinfo->pd;
 	    pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
 	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
 	    if (!err) {
-		pprintf(prn, "Unit %d\n", i + 1);
+		if (!quiet) {
+		    pprintf(prn, "Unit %d\n", i + 1);
+		}
 		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
 				    ADF_PANEL, prn);
 	    }
 	    if (!err) {
 		test += get_last_test_statistic(NULL);
+		pval = get_last_pvalue(NULL);
+		if (na(pval)) {
+		    ppv = zpv = lpv = NADBL;
+		} else if (!na(ppv)) {
+		    ppv += log(pval);
+		    zpv += normal_cdf_inverse(pval);
+		    lpv += log(pval / (1-pval));
+		}
 	    }
 	}
 
@@ -935,8 +1008,24 @@ int adf_test (int order, const int *list, double ***pZ,
 	    int n = uN - u0 + 1;
 
 	    pprintf(prn, "Number of units tested = %d\n", n);
-	    pprintf(prn, "Average test statistic (t-bar) = %g\n\n", test / n);
-	    /* FIXME critical values */
+	    pprintf(prn, "Average test statistic (t-bar) = %g\n", test / n);
+	    /* FIXME IPS critical values */
+	    if (!na(ppv)) {
+		double P = -2 * ppv;
+		double Z = zpv / sqrt((double) n);
+		int tdf = 5 * n + 4;
+		double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
+		double L = sqrt(k) * lpv;
+
+		pprintf(prn, "Meta-tests:\n");
+		pprintf(prn, "   Inverse chi-square(%d) = %g [%g]\n", 2*n,
+			P, chisq_cdf_comp(2*n, P));
+		pprintf(prn, "   Inverse normal test = %g [%g]\n", Z,
+			normal_pvalue_1(-Z));
+		pprintf(prn, "   Logit test: t(%d) = %g [%g]\n", tdf, L,
+			student_pvalue_1(tdf, -L));
+	    }
+	    pputc(prn, '\n');
 	}
 
 	pdinfo->t1 = save_t1;
@@ -1110,6 +1199,12 @@ int kpss_test (int order, const int *list, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     int i, err = 0;
+
+    if (multi_unit_panel_sample(pdinfo)) {
+	gretl_errmsg_set("Sorry, this command is not yet available "
+			 "for panel data");
+	return E_DATA;
+    }
 
     for (i=1; i<=list[0] && !err; i++) {
 	err = real_kpss_test(order, list[i], pZ, pdinfo,
@@ -1286,6 +1381,12 @@ int engle_granger_test (int order, const int *list, double ***pZ,
     int step = 1;
     int *clist = NULL;
     int err = 0;
+
+    if (multi_unit_panel_sample(pdinfo)) {
+	gretl_errmsg_set("Sorry, this command is not yet available "
+			 "for panel data");
+	return E_DATA;
+    }
 
     err = coint_check_opts(opt, &detcode, &adf_opt);
     if (err) {
