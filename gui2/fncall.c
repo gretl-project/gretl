@@ -59,6 +59,7 @@ struct call_info_ {
 #define matrix_arg(t) (t == GRETL_TYPE_MATRIX || t == GRETL_TYPE_MATRIX_REF)
 
 static GtkWidget *open_fncall_dlg;
+static gboolean close_on_OK = TRUE;
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
 
@@ -669,14 +670,6 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     return combo;
 }
 
-static void add_table_hsep (GtkWidget *tbl, int cols, int r0)
-{
-    GtkWidget *hsep = gtk_hseparator_new();
-
-    gtk_table_attach(GTK_TABLE(tbl), hsep, 0, cols, r0, r0 + 1,
-		     GTK_FILL, GTK_FILL, 5, 5);
-}
-
 static void add_table_header (GtkWidget *tbl, gchar *txt,
 			      int cols, int r0)
 {
@@ -693,6 +686,11 @@ static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
 {
     gtk_table_attach(GTK_TABLE(tbl), w, c0, c1, r0, r0 + 1,
 		     GTK_FILL, GTK_FILL, 5, 3);
+}
+
+static void set_close_on_OK (GtkWidget *b, gpointer p)
+{
+    close_on_OK = button_is_active(b);
 }
 
 #define cinfo_has_return(c) (c->rettype != GRETL_TYPE_NONE && \
@@ -811,7 +809,6 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (cinfo->n_params > 0) {
 	    row++;
-	    add_table_hsep(tbl, tcols, row++);
 	}	    
 
 	add_table_header(tbl, _("Assign return value (optional):"), tcols, row);
@@ -842,19 +839,23 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
+    /* option button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    button = gtk_check_button_new_with_label(_("close this dialog on \"OK\""));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(set_close_on_OK), NULL);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+				 close_on_OK);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
     /* Close button */
     button = close_button(bbox);
     g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(fncall_close), cinfo);
 
-    /* "Apply" button */
-    button = apply_button(bbox);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(fncall_exec_callback), cinfo);
-
     /* "OK" button */
     button = ok_button(bbox);
-    widget_set_int(G_OBJECT(button), "close", 1);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(fncall_exec_callback), cinfo);
     gtk_widget_grab_default(button);
@@ -1128,10 +1129,10 @@ static void select_interface (call_info *cinfo)
     }
 }
 
-/* Callback from "Apply" or "OK" button in function call GUI: if
-   there's a problem with the argument selection just return so the
-   dialog stays in place and the user can correct matters; otherwise
-   really execute the function.
+/* Callback from "OK" button in function call GUI: if there's a
+   problem with the argument selection just return so the dialog stays
+   in place and the user can correct matters; otherwise really execute
+   the function.
 */
 
 static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
@@ -1157,7 +1158,7 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 	    gretl_print_destroy(prn);
 	}
 
-	if (widget_get_int(w, "close")) {
+	if (close_on_OK) {
 	    gtk_widget_destroy(cinfo->dlg);
 	}
     }
