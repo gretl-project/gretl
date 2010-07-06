@@ -1017,7 +1017,7 @@ int adf_test (int order, const int *list, double ***pZ,
 		double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
 		double L = sqrt(k) * lpv;
 
-		pprintf(prn, "Meta-tests:\n");
+		pprintf(prn, "\nMeta-tests (H0: all groups have unit root):\n");
 		pprintf(prn, "   Inverse chi-square(%d) = %g [%g]\n", 2*n,
 			P, chisq_cdf_comp(2*n, P));
 		pprintf(prn, "   Inverse normal test = %g [%g]\n", Z,
