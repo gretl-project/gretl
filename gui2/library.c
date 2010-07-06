@@ -6386,7 +6386,7 @@ static int send_output_to_kid (windata_t *vwin, PRN *prn)
    type GTK_BOX, into which a spinner may be packed.
 */
 
-void start_wait_for_output (GtkWidget *w)
+void start_wait_for_output (GtkWidget *w, int big)
 {
     GtkWidget *spinner = g_object_get_data(G_OBJECT(w), "spinner");
 
@@ -6394,7 +6394,9 @@ void start_wait_for_output (GtkWidget *w)
 
     if (spinner == NULL) {
 	spinner = gtk_spinner_new();
-	gtk_widget_set_size_request(spinner, 24, 24);
+	if (big) {
+	    gtk_widget_set_size_request(spinner, 24, 24);
+	}
 	gtk_box_pack_end(GTK_BOX(w), spinner, FALSE, FALSE, 5);
 	g_object_set_data(G_OBJECT(w), "spinner", spinner);
     }
@@ -6499,7 +6501,7 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
     } 
 
 #if USE_GTK_SPINNER
-    start_wait_for_output(gtk_widget_get_parent(vwin->mbar));
+    start_wait_for_output(gtk_widget_get_parent(vwin->mbar), 1);
 #else
     start_busy_cursor(vwin->text, &wcurr);
 #endif

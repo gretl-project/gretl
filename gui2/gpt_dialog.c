@@ -137,11 +137,6 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins);
 static int add_line_widget (plot_editor *ed);
 static int add_label_widget (plot_editor *ed);
 
-static void widget_set_int (GtkWidget *w, const gchar *key, gint val)
-{
-    g_object_set_data(G_OBJECT(w), key, GINT_TO_POINTER(val));
-}
-
 /* graph color selection apparatus */
 
 #define XPMROWS 19

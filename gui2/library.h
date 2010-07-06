@@ -312,7 +312,7 @@ int check_and_record_command (void);
 
 #if USE_GTK_SPINNER
 
-void start_wait_for_output (GtkWidget *w);
+void start_wait_for_output (GtkWidget *w, int big);
 
 void stop_wait_for_output (GtkWidget *w);
 

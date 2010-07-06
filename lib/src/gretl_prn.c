@@ -228,7 +228,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
 /**
  * gretl_print_new:
  * @ptype: code indicating the desired printing mode.
- * @err: location to receive error code, or %NULL.
+ * @err: location to receive error code, or NULL.
  * 
  * Create and initialize a gretl printing struct. If @ptype
  * is %GRETL_PRINT_BUFFER, output will go to an automatically
@@ -241,7 +241,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
  * attach a fixed, pre-allocated text buffer, use
  * #gretl_print_new_with_buffer.
  *
- * Returns: pointer to newly created struct, or %NULL on failure.
+ * Returns: pointer to newly created struct, or NULL on failure.
  */
 
 PRN *gretl_print_new (PrnType ptype, int *err)
@@ -266,7 +266,7 @@ PRN *gretl_print_new (PrnType ptype, int *err)
  * Create and initialize a gretl printing struct, with
  * output directed to the named file.  
  *
- * Returns: pointer to newly created struct, or %NULL on failure.
+ * Returns: pointer to newly created struct, or NULL on failure.
  */
 
 PRN *gretl_print_new_with_filename (const char *fname, int *err)
@@ -287,7 +287,7 @@ PRN *gretl_print_new_with_filename (const char *fname, int *err)
  * output directed to a temporary file, which is deleted
  * when the printing struct is destroyed.
  *
- * Returns: pointer to newly created struct, or %NULL on failure.
+ * Returns: pointer to newly created struct, or NULL on failure.
  */
 
 PRN *gretl_print_new_with_tempfile (int *err)
@@ -312,7 +312,7 @@ int gretl_print_has_tempfile (PRN *prn)
  * @prn: printing struct to test.
  * 
  * Returns: if @prn has a tempfile attached, return the name
- * of that file, otherwise return %NULL.
+ * of that file, otherwise return NULL.
  */
 
 const char * gretl_print_get_tempfile_name (PRN *prn)
@@ -329,14 +329,14 @@ const char * gretl_print_get_tempfile_name (PRN *prn)
  * @buf: pre-allocated text buffer.
  * 
  * Creates and initializes a gretl printing struct, with
- * fixed text buffer @buf.  Fails if @buf is %NULL.  This is a
+ * fixed text buffer @buf.  Fails if @buf is NULL.  This is a
  * convenience function: you can't use #pprintf, #pputs or
  * #pputc with a printing struct obtained in this way.
  *
  * Note that @buf will be freed if and when #gretl_print_destroy
  * is called on the #PRN pointer obtained.
  *
- * Returns: pointer to newly created struct, or %NULL on failure.
+ * Returns: pointer to newly created struct, or NULL on failure.
  */
 
 PRN *gretl_print_new_with_buffer (char *buf)
@@ -358,7 +358,7 @@ PRN *gretl_print_new_with_buffer (char *buf)
  * Note that @fp will be closed if and when #gretl_print_destroy
  * is called on the #PRN pointer obtained.
  *
- * Returns: pointer to newly created struct, or %NULL on failure.
+ * Returns: pointer to newly created struct, or NULL on failure.
  */
 
 PRN *gretl_print_new_with_stream (FILE *fp)
@@ -374,7 +374,7 @@ PRN *gretl_print_new_with_stream (FILE *fp)
  * gretl_print_detach_stream
  * @prn: printing struct to operate on.
  * 
- * Sets the stream member of @prn to %NULL so that @prn can
+ * Sets the stream member of @prn to NULL so that @prn can
  * be destroyed without closing the associated stream.  May be
  * used in conjunction with gretl_print_new_with_stream().
  */
@@ -387,7 +387,7 @@ void gretl_print_detach_stream (PRN *prn)
 /**
  * gretl_print_rename_file:
  * @prn: printing struct to operate on.
- * @oldpath: name of current file (or %NULL if @prn was
+ * @oldpath: name of current file (or NULL if @prn was
  * set up using #gretl_print_new_with_tempfile).
  * @newpath: new name for file.
  * 
@@ -470,7 +470,7 @@ int gretl_print_reset_buffer (PRN *prn)
  * with @prn, if any.  This pointer must not be
  * modified in any way.
  *
- * Returns: the buffer, or %NULL on failure.
+ * Returns: the buffer, or NULL on failure.
  */
 
 const char *gretl_print_get_buffer (PRN *prn)
@@ -487,7 +487,7 @@ const char *gretl_print_get_buffer (PRN *prn)
  * modified in any way.  An opening newline
  * is skipped.
  *
- * Returns: the buffer, or %NULL on failure.
+ * Returns: the buffer, or NULL on failure.
  */
 
 const char *gretl_print_get_trimmed_buffer (PRN *prn)
@@ -516,8 +516,8 @@ const char *gretl_print_get_trimmed_buffer (PRN *prn)
 /**
  * gretl_print_get_size:
  * @prn: printing struct.
- * @width: location to receive width, or %NULL.
- * @height: location to receive height, or %NULL.
+ * @width: location to receive width, or NULL.
+ * @height: location to receive height, or NULL.
  * 
  * If @prn has a non-null buffer attached, provide
  * the width and/or height of the buffer, the width in
@@ -560,11 +560,11 @@ void gretl_print_get_size (PRN *prn, int *width, int *height)
  * @prn: printing struct.
  * 
  * Obtain a pointer to the buffer associated with @prn,
- * if any.  The pointer on @prn itself is set to %NULL 
+ * if any.  The pointer on @prn itself is set to NULL 
  * and the caller takes responsibility for freeing the 
  * buffer.
  *
- * Returns: the buffer, or %NULL on failure.
+ * Returns: the buffer, or NULL on failure.
  */
 
 char *gretl_print_steal_buffer (PRN *prn)
@@ -587,7 +587,7 @@ char *gretl_print_steal_buffer (PRN *prn)
  * @prn, if any.  This should be fclosed once you're
  * finished with it.
  *
- * Returns: %FILE pointer, or %NULL on failure.
+ * Returns: %FILE pointer, or NULL on failure.
  */
 
 FILE *gretl_print_read_tempfile (PRN *prn)
@@ -679,7 +679,7 @@ void gretl_print_unset_save_position (PRN *prn)
  * starting at the offset from the start of the buffer 
  * as set by gretl_print_set_save_position().
  *
- * Returns: allocated buffer on success, or %NULL on error.
+ * Returns: allocated buffer on success, or NULL on error.
  */
 
 char *gretl_print_get_chunk (PRN *prn)

@@ -5884,8 +5884,16 @@ static void selector_add_top_entry (selector *sr)
     gtk_entry_set_max_length(GTK_ENTRY(entry), 31);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
-    if (lname != NULL && *lname != '\0' && strcmp(lname, "null")) {
-	gtk_entry_set_text(GTK_ENTRY(entry), lname);
+    if (src != NULL) {
+	if (lname != NULL && *lname != '\0' && strcmp(lname, "null")) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), lname);
+	} else {
+	    int argnum = widget_get_int(src, "argnum");
+	    gchar *tmp = g_strdup_printf("arg%d", argnum);
+
+	    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
+	    g_free(tmp);
+	}
 	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
     }
 

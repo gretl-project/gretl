@@ -27,6 +27,7 @@
 #include "gretl_www.h"
 #include "gretl_string_table.h"
 #include "gretl_scalar.h"
+#include "gretl_bundle.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -59,7 +60,7 @@ struct call_info_ {
 
 static GtkWidget *open_fncall_dlg;
 
-static void fncall_OK_callback (GtkWidget *w, call_info *cinfo);
+static void fncall_exec_callback (GtkWidget *w, call_info *cinfo);
 
 static gchar **glib_str_array_new (int n)
 {
@@ -476,10 +477,18 @@ int do_make_list (selector *sr)
 {
     const char *buf = selector_list(sr);
     const char *lname = selector_entry_text(sr);
-    const char *msg;
-    PRN *prn;
-    int *list;
+    gpointer data = selector_get_data(sr);
+    call_info *cinfo = NULL;
+    const char *msg = NULL;
+    PRN *prn = NULL;
+    int *list = NULL;
     int err = 0;
+
+    if (data != NULL) {
+	GtkWidget *w = GTK_WIDGET(data);
+	
+	cinfo = g_object_get_data(G_OBJECT(w), "cinfo");
+    }
 
     if (lname == NULL || *lname == 0) {
 	errbox(_("No name was given for the list"));
@@ -507,32 +516,38 @@ int do_make_list (selector *sr)
 	return err;
     }
 
-    if (bufopen(&prn)) {
-	free(list);
-	return 1;
+    if (cinfo != NULL) {
+	/* don't bother with "Added list..." message */
+	err = remember_list(list, lname, NULL);
+	if (err) {
+	    gui_errmsg(err);
+	}
+    } else {
+	if (bufopen(&prn)) {
+	    free(list);
+	    return 1;
+	}
+	err = remember_list(list, lname, prn);
+	msg = gretl_print_get_buffer(prn);
+	if (err) {
+	    errbox(msg);
+	}
     }
 
-    err = remember_list(list, lname, prn);
-    msg = gretl_print_get_buffer(prn);
-
-    if (err) {
-	errbox(msg);
-    } else {
-	gpointer data = selector_get_data(sr);
-
+    if (!err) {
 	gtk_widget_hide(selector_get_window(sr));
-	infobox(msg);
-
-	if (data != NULL) {
-	    GtkWidget *w = GTK_WIDGET(data);
-	    call_info *cinfo = g_object_get_data(G_OBJECT(w), "cinfo");
-	    
+	if (cinfo != NULL) {
 	    update_list_selectors(cinfo);
+	} else {
+	    infobox(msg);
 	}
     }
 
     free(list);
-    gretl_print_destroy(prn);
+
+    if (prn != NULL) {
+	gretl_print_destroy(prn);
+    }
 
     return err;
 } 
@@ -683,6 +698,10 @@ static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
 #define cinfo_has_return(c) (c->rettype != GRETL_TYPE_NONE && \
 			     c->rettype != GRETL_TYPE_VOID)
 
+#define cinfo_offer_return(c) (c->rettype != GRETL_TYPE_NONE && \
+			       c->rettype != GRETL_TYPE_VOID && \
+			       c->rettype != GRETL_TYPE_BUNDLE)
+
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
@@ -705,23 +724,26 @@ static void function_call_dialog (call_info *cinfo)
 	return;
     }
 
+    fnname = user_function_name_by_index(cinfo->iface);
+
     cinfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(cinfo->dlg), ("gretl: function call"));
+    txt = g_strdup_printf("gretl: %s", fnname);
+    gtk_window_set_title(GTK_WINDOW(cinfo->dlg), txt);
+    g_free(txt);
     gretl_emulated_dialog_add_structure(cinfo->dlg, &vbox, &bbox);
     open_fncall_dlg = cinfo->dlg;
     g_signal_connect(G_OBJECT(cinfo->dlg), "destroy",
 		     G_CALLBACK(fncall_dialog_destruction), cinfo);
 
-    fnname = user_function_name_by_index(cinfo->iface);
-    cinfo->top_hbox = hbox = label_hbox(vbox, fnname, 5, 1);
+    cinfo->top_hbox = hbox = label_hbox(vbox, fnname, 5, 0);
 
     if (cinfo->n_params > 0) {
 	tcols = (cinfo->extracol)? 3 : 2;
 	trows = cinfo->n_params + 1;
-	if (cinfo_has_return(cinfo)) { 
+	if (cinfo_offer_return(cinfo)) { 
 	    trows += 4;
 	}
-    } else if (cinfo_has_return(cinfo)) {
+    } else if (cinfo_offer_return(cinfo)) {
 	tcols = 2;
 	trows = 3;
     }
@@ -763,12 +785,16 @@ static void function_call_dialog (call_info *cinfo)
 	add_table_cell(tbl, sel, 1, 2, row);
 
 	if (ptype == GRETL_TYPE_LIST) {
+	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
+	    
 	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
 	    button = gtk_button_new_with_label(_("More..."));
 	    add_table_cell(tbl, button, 2, 3, row);
+	    g_object_set_data(G_OBJECT(entry), "argnum", 
+			      GINT_TO_POINTER(i+1));
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_list_maker),
-			     gtk_bin_get_child(GTK_BIN(sel)));
+			     entry);
 	} else if (ptype == GRETL_TYPE_MATRIX) {
 	    cinfo->msels = g_list_append(cinfo->msels, sel);
 	    button = gtk_button_new_with_label(_("New..."));
@@ -779,7 +805,7 @@ static void function_call_dialog (call_info *cinfo)
 	} 
     }
 	
-    if (cinfo_has_return(cinfo)) {
+    if (cinfo_offer_return(cinfo)) {
 	GtkWidget *child;
 	GList *list = NULL;
 
@@ -821,10 +847,16 @@ static void function_call_dialog (call_info *cinfo)
     g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(fncall_close), cinfo);
 
+    /* "Apply" button */
+    button = apply_button(bbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(fncall_exec_callback), cinfo);
+
     /* "OK" button */
     button = ok_button(bbox);
+    widget_set_int(G_OBJECT(button), "close", 1);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(fncall_OK_callback), cinfo);
+		     G_CALLBACK(fncall_exec_callback), cinfo);
     gtk_widget_grab_default(button);
 
     /* Help button */
@@ -964,21 +996,31 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
     return err;
 }
 
+#define AUTO_BUNDLE "BUNDLE_RET__"
+
 static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
     ExecState state;
     char fnline[MAXLINE];
     const char *funname;
+    gretl_bundle *bundle = NULL;
+    int attach_bundle = 0;
     int orig_v = datainfo->v;
     int i, err = 0;
 
     funname = user_function_name_by_index(cinfo->iface);
     *fnline = 0;
 
+    /* compose the function command-line */
+
     if (cinfo->ret != NULL) {
 	strcat(fnline, cinfo->ret);
 	strcat(fnline, " = ");
-    }    
+    } else if (cinfo->rettype == GRETL_TYPE_BUNDLE) {
+	strcat(fnline, AUTO_BUNDLE);
+	strcat(fnline, " = ");
+	attach_bundle = 1;
+    }	
 
     strcat(fnline, funname);
     strcat(fnline, "(");
@@ -992,27 +1034,36 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	}
     }
 
-    /* destroy any "ARG" vars or matrices that were created? */
-
     strcat(fnline, ")");
-    pprintf(prn, "? %s\n", fnline);
 
-    gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
-			  models, prn);
+    if (!attach_bundle) {
+	pprintf(prn, "? %s\n", fnline);
+    }
 
     /* note: gretl_exec_state_init zeros the first byte of the
        supplied 'line' */
+
+    gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
+			  models, prn);
     state.line = fnline;
 
 #if USE_GTK_SPINNER
-    start_wait_for_output(cinfo->top_hbox); 
+    start_wait_for_output(cinfo->top_hbox, 0); 
 #endif
     err = gui_exec_line(&state, &Z, datainfo);
 #if USE_GTK_SPINNER
     stop_wait_for_output(cinfo->top_hbox);
 #endif
 
-    view_buffer(prn, 80, 400, funname, PRINT, NULL);
+    /* destroy any "ARG" vars or matrices that were created? */
+
+    if (!err && attach_bundle) {
+	bundle = gretl_bundle_pull_from_stack(AUTO_BUNDLE, &err);
+    }
+
+    view_buffer(prn, 80, 400, funname, 
+		(bundle == NULL)? PRINT : VIEW_BUNDLE,
+		bundle);
 
     if (err) {
 	gui_errmsg(err);
@@ -1077,13 +1128,13 @@ static void select_interface (call_info *cinfo)
     }
 }
 
-/* Callback from "OK" button in function call GUI: if there's a
-   problem with the argument selection just return so the dialog stays
-   in place and the user can correct matters; otherwise really
-   execute the function.
+/* Callback from "Apply" or "OK" button in function call GUI: if
+   there's a problem with the argument selection just return so the
+   dialog stays in place and the user can correct matters; otherwise
+   really execute the function.
 */
 
-static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
+static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 {
     if (check_args(cinfo)) {
 	return;
@@ -1106,10 +1157,9 @@ static void fncall_OK_callback (GtkWidget *w, call_info *cinfo)
 	    gretl_print_destroy(prn);
 	}
 
-#if 0
-	/* let the user choose when to do this? */
-	gtk_widget_destroy(cinfo->dlg);
-#endif
+	if (widget_get_int(w, "close")) {
+	    gtk_widget_destroy(cinfo->dlg);
+	}
     }
 }
 
@@ -1213,8 +1263,6 @@ void function_call_cleanup (void)
 }
 
 #if 1
-
-#include "gretl_bundle.h"
 
 /* This is quite complicated, because we're bypassing the "standard"
    mechanism for a function call, and instead using output from the
@@ -1380,6 +1428,8 @@ static void maybe_add_package_to_menu (const char *pkgname,
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
     maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
+#if 0
     maybe_add_package_to_menu("olsbundle", "/menubar/Model", vwin);
+#endif
 }
 
