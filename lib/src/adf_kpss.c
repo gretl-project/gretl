@@ -1048,6 +1048,69 @@ int adf_test (int order, const int *list, double ***pZ,
     return err;
 }
 
+/* See Peter S. Sephton, "Response surface estimates of the KPSS 
+   stationarity test", Economics Letters 47 (1995) 255-261.
+
+   The estimates below of \beta_\infty and \beta_1 allow the
+   construction of better critical values for finite samples
+   than the values given in the original KPSS article.
+*/
+
+static void kpss_parms (double a, int trend, double *b)
+{
+    const double b0_level[] = { 0.74375, 0.46119, 0.34732 };
+    const double b1_level[] = { -0.99187, 0.45911, 0.20695 };
+    const double b0_trend[] = { 0.21778, 0.14795, 0.119298 };
+    const double b1_trend[] = { -0.235089, 0.035327, 0.100804 };
+    int i = (a == .01)? 0 : (a == .05)? 1 : 2;
+
+    if (trend) {
+	b[0] = b0_trend[i];
+	b[1] = b1_trend[i];
+    } else {
+	b[0] = b0_level[i];
+	b[1] = b1_level[i];
+    }	
+}
+
+static double kpss_critval (double alpha, int T, int trend)
+{
+    double b[2];
+
+    kpss_parms(alpha, trend, b);
+    return b[0] + b[1]/T;
+}
+
+#define PV_GT10 1.1
+#define PV_LT01 -1.0
+
+static double kpss_interp (double s, int T, int trend)
+{
+    double c10, c05, c01;
+    double pv;
+
+    c10 = kpss_critval(.10, T, trend);
+    if (s < c10) {
+	return PV_GT10;
+    }
+
+    c01 = kpss_critval(.01, T, trend);
+    if (s > c01) {
+	return PV_LT01;
+    }  
+
+    /* OK, p-value must lie between .01 and .10 */
+
+    c05 = kpss_critval(.05, T, trend);
+    if (s > c05) {
+	pv = .01 + .04 * (c01 - s) / (c01 - c05);
+    } else {
+	pv = .05 + .05 * (c05 - s) / (c05 - c10);
+    }
+
+    return pv;
+}
+
 static int 
 real_kpss_test (int order, int varno, double ***pZ,
 		DATAINFO *pdinfo, gretlopt opt, PRN *prn)
@@ -1055,18 +1118,16 @@ real_kpss_test (int order, int varno, double ***pZ,
     MODEL KPSSmod;
     int list[4];
     int hastrend = 0;
-    double s2 = 0.0;
+    double et, s2 = 0.0;
     double cumsum = 0.0, cumsum2 = 0.0;
-    double teststat;
+    double teststat, pval = NADBL;
     double *autocov;
-    double et;
-
-    int i, t;
     int t1, t2, T;
+    int i, t;
 
     /* sanity check */
     if (order < 0 || varno <= 0 || varno >= pdinfo->v) {
-	return 1;
+	return E_DATA;
     }
 
     if (opt & OPT_F) {
@@ -1146,6 +1207,12 @@ real_kpss_test (int order, int varno, double ***pZ,
 
     s2 /= T;
     teststat = cumsum2 / (s2 * T * T);
+    pval = kpss_interp(teststat, T, hastrend);
+
+    if ((pval == PV_GT10 || pval == PV_LT01) && (opt & OPT_Q)) {
+	/* if not --quiet a bad pval will be fixed below */
+	pval = NADBL;
+    }
 
     if (opt & OPT_V) {
 	pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2);
@@ -1154,24 +1221,39 @@ real_kpss_test (int order, int varno, double ***pZ,
     }
 
     if (!(opt & OPT_Q)) {
+	double a[] = { 0.1, 0.05, 0.01 };
+	double cv[3];
+
+	cv[0] = kpss_critval(a[0], T, hastrend);
+	cv[1] = kpss_critval(a[1], T, hastrend);
+	cv[2] = kpss_critval(a[2], T, hastrend);
+
 	pprintf(prn, _("\nKPSS test for %s %s\n\n"), pdinfo->varname[varno],
 		(hastrend)? _("(including trend)") : _("(without trend)"));
+	pprintf(prn, "T = %d\n", T);
 	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
 	pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
 	pprintf(prn, "%*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
-	pprintf(prn, "%g%%      %g%%    %g%%      %g%%\n", 10.0, 5.0, 2.5, 1.0);
-	if (hastrend) {
-	    pprintf(prn, "%s: %.3f   %.3f   %.3f   %.3f\n\n", 
-		    _("Critical values"), 0.119, 0.146, 0.176, 0.216);
+	pprintf(prn, "%g%%      %g%%      %g%%\n", 
+		100*a[0], 100*a[1], 100*a[2]);
+	pprintf(prn, "%s: %.3f   %.3f   %.3f\n", 
+		_("Critical values"), cv[0], cv[1], cv[2]);
+	pv = kpss_interp(teststat, T, hastrend);
+	if (pval == PV_GT10) {
+	    pprintf(prn, "%s > .10\n", _("P-value"));
+	    pval = NADBL; /* invalidate for record_test_result */
+	} else if (pval == PV_LT01) {
+	    pprintf(prn, "%s < .01\n", _("P-value"));
+	    pval = NADBL;
 	} else {
-	    pprintf(prn, "%s: %.3f   %.3f   %.3f   %.3f\n\n", 
-		    _("Critical values"), 0.347, 0.463, 0.574, 0.739);
+	    pprintf(prn, "%s %.3f\n", _("Interpolated p-value"), pval);
 	}
+	pputc(prn, '\n');
     }
 
-    record_test_result(teststat, NADBL, "KPSS");
-    clear_model(&KPSSmod);
+    record_test_result(teststat, pval, "KPSS");
 
+    clear_model(&KPSSmod);
     free(autocov);
 
     return 0;
