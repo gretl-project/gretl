@@ -1173,7 +1173,7 @@ real_kpss_test (int order, int varno, double ***pZ,
     if (autocov == NULL) {
 	return E_ALLOC;
     }
-  
+
     for (i=0; i<order; i++) {
 	autocov[i] = 0.0;
     }
@@ -1238,7 +1238,6 @@ real_kpss_test (int order, int varno, double ***pZ,
 		100*a[0], 100*a[1], 100*a[2]);
 	pprintf(prn, "%s: %.3f   %.3f   %.3f\n", 
 		_("Critical values"), cv[0], cv[1], cv[2]);
-	pv = kpss_interp(teststat, T, hastrend);
 	if (pval == PV_GT10) {
 	    pprintf(prn, "%s > .10\n", _("P-value"));
 	    pval = NADBL; /* invalidate for record_test_result */
