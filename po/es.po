@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-07-03 12:05-0400\n"
-"PO-Revision-Date: 2010-06-28 16:50+0200\n"
+"PO-Revision-Date: 2010-07-07 13:38+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: American English <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -1250,10 +1250,9 @@ msgstr "El conjunto de datos ha sido extendido en %d observaciones"
 msgid "Variable %s cannot be renumbered"
 msgstr "La variable '%s' no puede ser renumerada"
 
-#: lib/src/dataset.c:3203
-#, fuzzy, c-format
+#: lib/src/dataset.c:3203, c-format
 msgid "Target ID %d is not available"
-msgstr "El objetivo ID '%s' no está disponible"
+msgstr "El objetivo ID %d no está disponible"
 
 #: lib/src/dataset.c:3212
 #, c-format
@@ -1573,9 +1572,8 @@ msgstr ""
 "\n"
 
 #: lib/src/describe.c:3836 lib/src/describe.c:3860
-#, fuzzy
 msgid "fractional integration"
-msgstr "Contraste GPH de integración fraccional"
+msgstr "integración fraccional"
 
 #: lib/src/describe.c:3841
 msgid "Local Whittle Estimator"
@@ -1586,9 +1584,8 @@ msgid "Estimated degree of integration"
 msgstr "Orden de integración estimado"
 
 #: lib/src/describe.c:3867
-#, fuzzy
 msgid "GPH test"
-msgstr "contraste J"
+msgstr "contraste GPH"
 
 #: lib/src/describe.c:4133 lib/src/printout.c:1051 lib/src/printout.c:1052
 msgid "NA"
@@ -6417,19 +6414,16 @@ msgid "Equation system"
 msgstr "Sistema de ecuaciones"
 
 #: lib/src/system.c:230
-#, fuzzy
 msgid "Endogenous variables:"
-msgstr "Variables endógenas"
+msgstr "Variables endógenas:"
 
 #: lib/src/system.c:240
-#, fuzzy
 msgid "Predetermined variables:"
-msgstr "variable de tendencia temporal al cuadrado"
+msgstr "Variables predeterminadas:"
 
 #: lib/src/system.c:249
-#, fuzzy
 msgid "Exogenous variables:"
-msgstr "Variables exógenas"
+msgstr "Variables exógenas:"
 
 #: lib/src/system.c:800
 msgid "F test for the specified restrictions"
@@ -6848,8 +6842,7 @@ msgstr ""
 msgid "Freed %s\n"
 msgstr "Liberado %s\n"
 
-#: cli/gretlcli.c:86
-#, fuzzy, c-format
+#: cli/gretlcli.c:86, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -6877,6 +6870,7 @@ msgstr ""
 " -v o --version   Muestra la información de versión y sale.\n"
 " -e o --english   Fuerza al uso del idioma Inglés en lugar de la "
 "traducción.\n"
+" -q o --quiet      Muestra menos información al ejecutar el programa.\n"
 "Ejemplo de uso en modo 'batch':\n"
 " gretlcli -b mifichero.inp >mifichero.out\n"
 "Ejemplo de uso en modo 'run':\n"
@@ -8768,14 +8762,12 @@ msgid "gretl: periodogram"
 msgstr "gretl: periodograma"
 
 #: gui2/dialogs.c:3835
-#, fuzzy
 msgid "Sample periodogram"
-msgstr "_Periodograma muestral"
+msgstr "Periodograma muestral"
 
 #: gui2/dialogs.c:3841
-#, fuzzy
 msgid "Bartlett window, bandwidth:"
-msgstr "Ventana de Bartlett, anchura %d"
+msgstr "Ventana de Bartlett, anchura:"
 
 #: gui2/dialogs.c:4014
 msgid "Number of bins:"
@@ -10425,14 +10417,12 @@ msgid "_Correlogram"
 msgstr "_Correlograma"
 
 #: gui2/gretl.c:1541
-#, fuzzy
 msgid "_Periodogram"
-msgstr "_Periodograma muestral"
+msgstr "_Periodograma"
 
 #: gui2/gretl.c:1542
-#, fuzzy
 msgid "_Fractional integration"
-msgstr "Falló el contraste de integración fraccional"
+msgstr "Integración _fraccional"
 
 #: gui2/gretl.c:1543
 msgid "_Augmented Dickey-Fuller test"
@@ -11345,9 +11335,8 @@ msgid "Residual _correlogram"
 msgstr "_Correlograma de los residuos"
 
 #: gui2/gui_utils.c:2475
-#, fuzzy
 msgid "Residual _periodogram"
-msgstr "Periodograma de los residuos"
+msgstr "_Periodograma de los residuos"
 
 #: gui2/gui_utils.c:2484
 msgid "Residual _Q-Q plot"
@@ -12111,9 +12100,8 @@ msgid "Maximum lag:"
 msgstr "Máximo retardo:"
 
 #: gui2/library.c:4752
-#, fuzzy
 msgid "gretl: fractional integration"
-msgstr "Contraste GPH de integración fraccional"
+msgstr "gretl: integración fraccional"
 
 #: gui2/library.c:4829 gui2/toolbar.c:463
 msgid "gretl: coefficient confidence intervals"
@@ -12465,9 +12453,8 @@ msgid "Boxplot"
 msgstr "Gráfico de cajas"
 
 #: gui2/menustate.c:338 gui2/menustate.c:421
-#, fuzzy
 msgid "Periodogram"
-msgstr "Programas"
+msgstr "Periodograma"
 
 #: gui2/menustate.c:340
 msgid "ARIMA model"
