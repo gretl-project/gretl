@@ -1179,7 +1179,7 @@ void set_gretl_tex_preamble (void)
 	    }
 	    g_free(ddir);
 	}
-    }    
+    } 
 
     gretl_error_clear();
 }
@@ -1244,6 +1244,8 @@ void gretl_tex_preamble (PRN *prn, int fmt)
 	    }
 	    userfile = 1;
 	    fclose(fp);
+	    fprintf(stderr, "gretltex: using preamble file\n %s\n",
+		    tex_preamble_file);
 	}
     }
 
