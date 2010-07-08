@@ -189,6 +189,7 @@ struct plugin_function plugin_functions[] = {
     { "dw_lookup",         P_STATS_TABLES },
     { "rank_sum_lookup",   P_STATS_TABLES },
     { "stock_yogo_lookup", P_STATS_TABLES },
+    { "get_IPS_critvals",  P_STATS_TABLES },
 
     /* SUR, 3SLS, FIML */
     { "system_estimate", P_SYSEST },

@@ -1005,11 +1005,20 @@ int adf_test (int order, const int *list, double ***pZ,
 	}
 
 	if (!err) {
+	    int (*get_IPS_critvals) (int, int, int);
 	    int n = uN - u0 + 1;
+	    int T = pdinfo->pd - 1; /* FIXME! */
+	    void *handle;
 
 	    pprintf(prn, "Number of units tested = %d\n", n);
 	    pprintf(prn, "Average test statistic (t-bar) = %g\n", test / n);
-	    /* FIXME IPS critical values */
+
+	    get_IPS_critvals = get_plugin_function("get_IPS_critvals", &handle);
+	    if (get_IPS_critvals != NULL) {
+		(*get_IPS_critvals) (n, T, (opt & OPT_T));
+		close_plugin(handle);
+	    }
+
 	    if (!na(ppv)) {
 		double P = -2 * ppv;
 		double Z = zpv / sqrt((double) n);
