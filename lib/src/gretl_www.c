@@ -28,6 +28,7 @@
 
 #ifndef STANDALONE
 # include "libgretl.h"
+# include "libset.h"
 #endif
 
 #define WBUFSIZE 8192
@@ -733,7 +734,7 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
 
-    if (expected > 2 * WBUFSIZE) {
+    if (gretl_in_gui_mode() && expected > 2 * WBUFSIZE) {
 	show_progress = get_plugin_function("show_progress", 
 					    &handle);
 	if (show_progress != NULL) show = 1;
@@ -770,9 +771,13 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     allocated = WBUFSIZE;
 
     do {
+#if WDEBUG
 	fprintf(stderr, "get_contents: calling iread...\n");
+#endif
 	res = iread(fd, cbuf, sizeof cbuf);
+#if WDEBUG
 	fprintf(stderr, " got %d bytes\n", (int) res);
+#endif
 	if (res > 0) {
 	    if (fp == NULL) {
 		if ((size_t) (*len + res) > allocated) {
@@ -1552,8 +1557,13 @@ static int urlinfo_set_cgi_path (urlinfo *u, const char *cgi)
 static int urlinfo_set_dl_path (urlinfo *u, const char *dirname,
 				const char *fname)
 {
-    int len = strlen(dirname) + strlen(fname) + 1;
+    int len = strlen(fname) + 1;
     int err = 0;
+
+    if (dirname != NULL) {
+	/* dirname might be folded into fname */
+	len += strlen(dirname);
+    }
 
     if (wproxy) {
 	len += strlen(u->host) + 7;
@@ -1569,7 +1579,9 @@ static int urlinfo_set_dl_path (urlinfo *u, const char *dirname,
 	} else {
 	    *u->path = '\0';
 	}
-	strcat(u->path, dirname);
+	if (dirname != NULL) {
+	    strcat(u->path, dirname);
+	}
 	strcat(u->path, fname);
     }
 	
@@ -1681,7 +1693,10 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return E_ALLOC;
     }
 
-    if (opt == GRAB_PDF) {
+    if (opt == GRAB_FOREIGN) {
+	/* note: not using the gretl server */
+	urlinfo_set_dl_path(u, NULL, fname);
+    } else if (opt == GRAB_PDF) {
 	urlinfo_set_dl_path(u, manual_path, fname);
     } else if (opt == GRAB_GFNDOC) {
 	urlinfo_set_dl_path(u, gfndoc_path, fname);
@@ -1696,7 +1711,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return 1;
     }
 
-    if (opt != GRAB_PDF && opt != GRAB_GFNDOC) {
+    if (opt != GRAB_PDF && opt != GRAB_GFNDOC && opt != GRAB_FOREIGN) {
 	urlinfo_set_params(u, opt, fname, dbseries);
 	if (u->params == NULL) {
 	    urlinfo_destroy(u, 0);
@@ -1724,10 +1739,14 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return err;
     }
 
+#if WDEBUG
+    fprintf(stderr, "retrieve_url: calling try_http...\n"); 
+#endif
+
     result = try_http(u);
 
 #if WDEBUG
-    fprintf(stderr, "try_http returned %d, u->errbuf='%s'\n",
+    fprintf(stderr, "retrieve_url: try_http returned %d, u->errbuf='%s'\n",
 	    (int) result, u->errbuf);
 #endif
 
@@ -1753,6 +1772,10 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
     }
 
     urlinfo_destroy(u, err);
+
+#if WDEBUG
+    fprintf(stderr, "retrieve_url: returning %d\n", err);
+#endif
 
     return err;
 }
@@ -2105,6 +2128,65 @@ int retrieve_gfndoc (const char *fname, const char *localname)
 {
     return retrieve_url (gretlhost, GRAB_GFNDOC, fname, NULL, SAVE_TO_FILE,
 			 localname, NULL);
+}
+
+/**
+ * retrieve_public_file:
+ * @uri: full URI for file to grab.
+ * @localname: full path to which the file should be written
+ * on the local machine. This cannot be NULL, but it can be
+ * empty, in which case it should be of length %MAXLEN, and
+ * on successful return it will be filled with an
+ * automatically assigned local name, based on the named
+ * of the file on the server.
+ *
+ * Retrieves the specified resource and writes it to
+ * @localname, if possible.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int retrieve_public_file (const char *uri, char *localname)
+{
+    const char *s, *path, *fname = NULL;
+    int err = 0;
+
+    if (strncmp(uri, "http://", 7)) {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	s = uri + 7;
+	path = strrchr(s, '/');
+	if (path == NULL) {
+	    err = E_DATA;
+	} else {
+	    fname = path + 1;
+	    if (*fname == '\0') {
+		err = E_DATA;
+	    }
+	}
+    }
+
+    if (!err) {
+	char *host = NULL;
+
+	path = strchr(s, '/');
+	host = gretl_strndup(s, path - s);
+	if (host == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    if (*localname == '\0') {
+		strcat(localname, gretl_dotdir());
+		strcat(localname, fname);
+	    }
+	    err = retrieve_url(host, GRAB_FOREIGN, path, NULL, SAVE_TO_FILE,
+			       localname, NULL);
+	    free(host);
+	}
+    }
+
+    return err;
 }
 
 #endif /* !STANDALONE */

@@ -41,6 +41,7 @@
 #include "gretl_string_table.h"
 #include "dbread.h"
 #include "boxplots.h"
+#include "gretl_www.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -417,6 +418,9 @@ int main (int argc, char *argv[])
 #endif
 
     libgretl_init();
+#if 0
+    gretl_www_init(NULL, NULL, 0);
+#endif
 
     logo(quiet); 
     session_time(NULL);
@@ -659,17 +663,42 @@ static int cli_renumber_series (const char *s, double **Z,
     return err;
 }
 
+static int cli_try_http (const char *s, char *fname, int *http)
+{
+    int err = 0;
+
+    /* skip past command word */
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+
+    if (strncmp(s, "http://", 7) == 0) {
+	err = retrieve_public_file(s, fname);
+	if (!err) {
+	    *http = 1;
+	} 
+    }
+
+    return err;
+}
+
 static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 			    DATAINFO *pdinfo, MODEL **models,
 			    PRN *prn)
 {
     char newfile[MAXLEN] = {0};
     char response[3];
-    int ftype, dbdata = 0;
+    int http = 0, dbdata = 0;
+    int ftype;
     int err = 0;
 
-    if (!(cmd->opt & OPT_O)) {
-	/* not using ODBC */
+    err = cli_try_http(line, newfile, &http);
+    if (err) {
+	errmsg(err, prn);
+	return err;
+    }
+
+    if (!http && !(cmd->opt & OPT_O)) {
+	/* not using http or ODBC */
 	err = getopenfile(line, newfile, (cmd->opt & OPT_W)?
 			  OPT_W : OPT_NONE);
 	if (err) {
@@ -677,7 +706,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 	    return err;
 	}
     }
-
+    
     if (cmd->opt & OPT_W) {
 	ftype = GRETL_NATIVE_DB_WWW;
     } else if (cmd->opt & OPT_O) {
@@ -727,7 +756,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 	return err;
     }
 
-    if (!dbdata && cmd->ci != APPEND) {
+    if (!dbdata && !http && cmd->ci != APPEND) {
 	strncpy(datafile, newfile, MAXLEN - 1);
     }
 
@@ -735,6 +764,10 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 
     if (pdinfo->v > 0 && !dbdata && !(cmd->opt & OPT_Q)) {
 	varlist(pdinfo, prn);
+    }
+
+    if (http) {
+	remove(newfile);
     }
 
     return err;

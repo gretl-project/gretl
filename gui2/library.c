@@ -48,6 +48,7 @@
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
+#include "gretl_www.h"
 #include "texprint.h"
 #include "bootstrap.h"
 #include "fileselect.h"
@@ -7746,6 +7747,24 @@ static int script_renumber_series (const char *s, double **Z,
     return err;
 }
 
+static int gui_try_http (const char *s, char *fname, int *http)
+{
+    int err = 0;
+
+    /* skip past command word */
+    s += strcspn(s, " ");
+    s += strspn(s, " ");
+
+    if (strncmp(s, "http://", 7) == 0) {
+	err = retrieve_public_file(s, fname);
+	if (!err) {
+	    *http = 1;
+	} 
+    }
+
+    return err;
+}
+
 static int script_open_append (ExecState *s, double ***pZ,
 			       DATAINFO *pdinfo, PRN *prn)
 {
@@ -7753,14 +7772,21 @@ static int script_open_append (ExecState *s, double ***pZ,
     char *line = s->line;
     CMD *cmd = s->cmd;
     char myfile[MAXLEN] = {0};
-    int ftype, dbdata = 0;
+    int http = 0, dbdata = 0;
+    int ftype;
     int err = 0;
 
     if (dataset_locked()) {
 	return 0;
     }
 
-    if (!(cmd->opt & OPT_O)) {
+    err = gui_try_http(line, myfile, &http);
+    if (err) {
+	gui_errmsg(err);
+	return err;
+    }    
+
+    if (!http && !(cmd->opt & OPT_O)) {
 	/* not using ODBC */
 	err = getopenfile(line, myfile, (cmd->opt & OPT_W)? 
 			  OPT_W : OPT_NONE);
@@ -7851,6 +7877,10 @@ static int script_open_append (ExecState *s, double ***pZ,
 	if (!(cmd->opt & OPT_Q)) { 
 	    varlist(pdinfo, prn);
 	}
+    }
+
+    if (http) {
+	remove(myfile);
     }
 
     return err;
