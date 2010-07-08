@@ -39,6 +39,17 @@
  * libgretl; see johansen_test() and johansen_test_simple().
  */
 
+typedef struct adf_info_ adf_info;
+
+struct adf_info_ {
+    int T;
+    int df;
+    int order;
+    double b;
+    double tau;
+    double pval;
+};
+
 enum {
     UR_NO_CONST = 1,
     UR_CONST,
@@ -365,10 +376,7 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 		pv);
     } 
 
-    if (flags & ADF_PANEL) {
-	pputs(prn, "   ");
-	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
-    } else if (*blurb_done == 0) {
+    if (*blurb_done == 0) {
 	DF_header(vname, order, prn);
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	if (flags & ADF_PANEL) {
@@ -380,7 +388,7 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	*blurb_done = 1;
     }
 
-    if (!(flags & (ADF_EG_RESIDS | ADF_PANEL))) {
+    if (!(flags & ADF_EG_RESIDS)) {
 	pprintf(prn, "   %s ", _(DF_test_string(i)));
 	if (opt & OPT_G) {
 	    pputs(prn, "(GLS) ");
@@ -391,10 +399,8 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 	pputc(prn, '\n');
     }
 
-    if (!(flags & ADF_PANEL)) {
-	pprintf(prn, "   %s: %s\n", _("model"), 
-		(order > 0)? ADF_model_string(i) : DF_model_string(i));
-    }
+    pprintf(prn, "   %s: %s\n", _("model"), 
+	    (order > 0)? ADF_model_string(i) : DF_model_string(i));
 
     if (!na(dfmod->rho)) {
 	pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
@@ -624,7 +630,7 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, unsigned char flags,
-			  PRN *prn)
+			  adf_info *ainfo, PRN *prn)
 {
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
@@ -824,7 +830,16 @@ static int real_adf_test (int varno, int order, int niv,
 				niv, itv, opt);
 	}
 
-	if (!(opt & OPT_Q)) {
+	if (ainfo != NULL) {
+	    ainfo->T = dfmod.nobs;
+	    ainfo->df = dfmod.dfd;
+	    ainfo->order = order;
+	    ainfo->b = dfmod.coeff[dfnum];
+	    ainfo->tau = DFt;
+	    ainfo->pval = pv;
+	}
+
+	if (!(opt & OPT_Q) && !(flags & ADF_PANEL)) {
 	    print_adf_results(order, auto_order, DFt, pv, &dfmod, dfnum, 
 			      pdinfo->varname[varno], &blurb_done, flags,
 			      itv, niv, nseas, opt, prn);
@@ -838,7 +853,7 @@ static int real_adf_test (int varno, int order, int niv,
 		gretl_model_set_double(&dfmod, "dfpval", pv);
 	    }
 	    printmodel(&dfmod, pdinfo, OPT_NONE, prn);
-	} else if (!(opt & OPT_Q) && !(flags & ADF_EG_RESIDS)) {
+	} else if (!(opt & OPT_Q) && !(flags & (ADF_EG_RESIDS | ADF_PANEL))) {
 	    pputc(prn, '\n');
 	}
 
@@ -846,7 +861,7 @@ static int real_adf_test (int varno, int order, int niv,
     }
 
     if (!err) {
-	if (!(flags & ADF_EG_TEST) || (flags & ADF_EG_RESIDS)) {
+	if (!(flags & (ADF_EG_TEST | ADF_PANEL)) || (flags & ADF_EG_RESIDS)) {
 	    record_test_result(DFt, pv, "Dickey-Fuller");
 	}
     }
@@ -864,33 +879,37 @@ static int real_adf_test (int varno, int order, int niv,
     return err;
 }
 
-static gretlopt panel_adjust_ADF_opt (gretlopt opt)
+/* print critical value for ADF-IPS or KPSS */
+
+static void print_critical_values (double *a, double *cv, 
+				   int ci, PRN *prn)
 {
-    gretlopt ret = opt;
+    const char *label = N_("Critical values");
+    int figs = (ci == ADF)? 2 : 3;
+
+    pprintf(prn, "%*s    ", TRANSLATED_WIDTH(_(label)), " ");
+    pprintf(prn, "%g%%      %g%%      %g%%\n", 
+	    100*a[0], 100*a[1], 100*a[2]);
+    pprintf(prn, "%s: %.*f   %.*f   %.*f\n", 
+	    _(label), figs, cv[0], figs, cv[1], figs, cv[2]);
+}
+
+static int panel_adjust_ADF_opt (gretlopt *opt)
+{
+    int err = 0;
 
     /* Has the user selected an option governing the 
        deterministic terms to be included? If so, don't 
        mess with it.
     */
-    if (opt & (OPT_N | OPT_C | OPT_R | OPT_T)) {
+    if (*opt & (OPT_N | OPT_C | OPT_R | OPT_T)) {
 	; /* no-op */
     } else {
 	/* panel default: test with constant */
-	ret |= OPT_C;
+	*opt |= OPT_C;
     }
 
-    return ret;
-}
-
-static int multi_unit_panel_sample (const DATAINFO *pdinfo)
-{
-    int ret = 0;
-
-    if (dataset_is_panel(pdinfo)) {
-	ret = (pdinfo->t2 - pdinfo->t1 + 1 > pdinfo->pd);
-    }
-
-    return ret;
+    return err;
 }
 
 static int DF_index (gretlopt opt)
@@ -904,6 +923,141 @@ static int DF_index (gretlopt opt)
     } else {
 	return 3;
     }
+}
+
+static int panel_DF_test (int v, int order, 
+			  double ***pZ, DATAINFO *pdinfo, 
+			  gretlopt opt, PRN *prn)
+{
+    int u0 = pdinfo->t1 / pdinfo->pd;
+    int uN = pdinfo->t2 / pdinfo->pd;
+    int quiet = (opt & OPT_Q);
+    double ppv = 0.0, zpv = 0.0, lpv = 0.0;
+    double pval, test = 0.0;
+    int Tmax = 0, Tmin = pdinfo->pd;
+    int i, err;
+
+    err = panel_adjust_ADF_opt(&opt);
+    if (err) {
+	return err;
+    }
+
+    if (!quiet) {
+	int j = DF_index(opt);
+
+	DF_header(pdinfo->varname[v], (opt & OPT_E)? 0 : order, prn);
+	pprintf(prn, "   %s ", _(DF_test_string(j)));
+	if (opt & OPT_G) {
+	    pputs(prn, "(GLS) ");
+	}
+	pputc(prn, '\n');
+	pprintf(prn, "   %s: %s\n\n", _("model"), 
+		(order > 0)? ADF_model_string(j) : DF_model_string(j));
+    }
+
+    /* run a Dickey-Fuller test for each unit and record the
+       results */
+
+    for (i=u0; i<=uN && !err; i++) {
+	adf_info ainfo;
+
+	pdinfo->t1 = i * pdinfo->pd;
+	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
+	err = array_adjust_t1t2((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
+	if (!err) {
+	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
+				ADF_PANEL, &ainfo, prn);
+	    if (!err && !quiet) {
+		pprintf(prn, "Unit %d, T = %d\n", i + 1, ainfo.T);
+		pprintf(prn, "   %s: %g\n"
+			"   %s = %g", 
+			_("estimated value of (a - 1)"), ainfo.b,
+			_("test statistic"), ainfo.tau);
+		if (na(ainfo.pval)) {
+		    pputs(prn, "\n\n");
+		} else {
+		    pprintf(prn, " [%.4f]\n\n", ainfo.pval);
+		}
+	    }	    
+	}
+	if (!err) {
+	    if (ainfo.T < Tmin) {
+		Tmin = ainfo.T;
+	    } 
+	    if (ainfo.T > Tmax) {
+		Tmax = ainfo.T;
+	    } 	    
+	    test += ainfo.tau;
+	    pval = ainfo.pval;
+	    if (na(pval)) {
+		ppv = zpv = lpv = NADBL;
+	    } else if (!na(ppv)) {
+		ppv += log(pval);
+		zpv += normal_cdf_inverse(pval);
+		lpv += log(pval / (1-pval));
+	    }
+	}
+    }
+
+    /* process the results as per Im-Pesaran-Shin and/or Choi */
+
+    if (!err) {
+	int (*get_IPS_critvals) (int, int, int, double *);
+	int n = uN - u0 + 1;
+	int T = pdinfo->pd; /* FIXME! */
+	void *handle;
+
+	if (Tmax > Tmin) {
+	    /* FIXME */
+	    pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
+	} else {
+	    pprintf(prn, "N,T = (%d,%d)\n", n, T);
+	}
+	pprintf(prn, "Im-Pesaran-Shin t-bar = %g\n", test / n);
+
+	get_IPS_critvals = get_plugin_function("get_IPS_critvals", &handle);
+
+	if (get_IPS_critvals != NULL) {
+	    double a[] = { 0.1, 0.05, 0.01 };
+	    double cv[3];
+		
+	    err = (*get_IPS_critvals) (n, Tmax, (opt & OPT_T), cv);
+	    if (!err) {
+		print_critical_values(a, cv, ADF, prn);
+	    }
+	    close_plugin(handle);
+	}
+
+	if (!na(ppv)) {
+	    double P = -2 * ppv;
+	    double Z = zpv / sqrt((double) n);
+	    int tdf = 5 * n + 4;
+	    double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
+	    double L = sqrt(k) * lpv;
+
+	    pprintf(prn, "\nChoi meta-tests (H0: all groups have unit root):\n");
+	    pprintf(prn, "   Inverse chi-square(%d) = %g [%g]\n", 2*n,
+		    P, chisq_cdf_comp(2*n, P));
+	    pprintf(prn, "   Inverse normal test = %g [%g]\n", Z,
+		    normal_pvalue_1(-Z));
+	    pprintf(prn, "   Logit test: t(%d) = %g [%g]\n", tdf, L,
+		    student_pvalue_1(tdf, -L));
+	}
+	pputc(prn, '\n');
+    }
+
+    return err;
+}
+
+static int multi_unit_panel_sample (const DATAINFO *pdinfo)
+{
+    int ret = 0;
+
+    if (dataset_is_panel(pdinfo)) {
+	ret = (pdinfo->t2 - pdinfo->t1 + 1 > pdinfo->pd);
+    }
+
+    return ret;
 }
 
 /**
@@ -956,89 +1110,7 @@ int adf_test (int order, const int *list, double ***pZ,
     }
 
     if (multi_unit_panel_sample(pdinfo)) {
-	/* panel data: loop across the units */
-	int u0 = pdinfo->t1 / pdinfo->pd;
-	int uN = pdinfo->t2 / pdinfo->pd;
-	int quiet = (opt & OPT_Q);
-	double ppv = 0.0, zpv = 0.0, lpv = 0.0;
-	double pval, test = 0.0;
-
-	opt = panel_adjust_ADF_opt(opt);
-
-	vlist[1] = v = list[1];
-
-	if (!quiet) {
-	    int j = DF_index(opt);
-
-	    DF_header(pdinfo->varname[v], (opt & OPT_E)? 0 : order, prn);
-	    pprintf(prn, "   %s ", _(DF_test_string(j)));
-	    if (opt & OPT_G) {
-		pputs(prn, "(GLS) ");
-	    }
-	    pputc(prn, '\n');
-	    pprintf(prn, "   %s: %s\n\n", _("model"), 
-		    (order > 0)? ADF_model_string(j) : DF_model_string(j));
-	}
-
-	for (i=u0; i<=uN && !err; i++) {
-	    pdinfo->t1 = i * pdinfo->pd;
-	    pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
-	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
-	    if (!err) {
-		if (!quiet) {
-		    pprintf(prn, "Unit %d\n", i + 1);
-		}
-		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
-				    ADF_PANEL, prn);
-	    }
-	    if (!err) {
-		test += get_last_test_statistic(NULL);
-		pval = get_last_pvalue(NULL);
-		if (na(pval)) {
-		    ppv = zpv = lpv = NADBL;
-		} else if (!na(ppv)) {
-		    ppv += log(pval);
-		    zpv += normal_cdf_inverse(pval);
-		    lpv += log(pval / (1-pval));
-		}
-	    }
-	}
-
-	if (!err) {
-	    int (*get_IPS_critvals) (int, int, int);
-	    int n = uN - u0 + 1;
-	    int T = pdinfo->pd - 1; /* FIXME! */
-	    void *handle;
-
-	    pprintf(prn, "Number of units tested = %d\n", n);
-	    pprintf(prn, "Average test statistic (t-bar) = %g\n", test / n);
-
-	    get_IPS_critvals = get_plugin_function("get_IPS_critvals", &handle);
-	    if (get_IPS_critvals != NULL) {
-		(*get_IPS_critvals) (n, T, (opt & OPT_T));
-		close_plugin(handle);
-	    }
-
-	    if (!na(ppv)) {
-		double P = -2 * ppv;
-		double Z = zpv / sqrt((double) n);
-		int tdf = 5 * n + 4;
-		double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
-		double L = sqrt(k) * lpv;
-
-		pprintf(prn, "\nMeta-tests (H0: all groups have unit root):\n");
-		pprintf(prn, "   Inverse chi-square(%d) = %g [%g]\n", 2*n,
-			P, chisq_cdf_comp(2*n, P));
-		pprintf(prn, "   Inverse normal test = %g [%g]\n", Z,
-			normal_pvalue_1(-Z));
-		pprintf(prn, "   Logit test: t(%d) = %g [%g]\n", tdf, L,
-			student_pvalue_1(tdf, -L));
-	    }
-	    pputc(prn, '\n');
-	}
-
-	pdinfo->t1 = save_t1;
-	pdinfo->t2 = save_t2;
+	err = panel_DF_test(list[1], order, pZ, pdinfo, opt, prn);
     } else {
 	/* regular time series case */
 	for (i=1; i<=list[0] && !err; i++) {
@@ -1047,12 +1119,15 @@ int adf_test (int order, const int *list, double ***pZ,
 	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
 	    if (!err) {
 		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
-				    0, prn);
+				    0, NULL, prn);
 	    }
 	    pdinfo->t1 = save_t1;
 	    pdinfo->t2 = save_t2;
 	}
     }
+
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }
@@ -1242,11 +1317,7 @@ real_kpss_test (int order, int varno, double ***pZ,
 	pprintf(prn, "T = %d\n", T);
 	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
 	pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
-	pprintf(prn, "%*s    ", TRANSLATED_WIDTH(_("Critical values")), " ");
-	pprintf(prn, "%g%%      %g%%      %g%%\n", 
-		100*a[0], 100*a[1], 100*a[2]);
-	pprintf(prn, "%s: %.3f   %.3f   %.3f\n", 
-		_("Critical values"), cv[0], cv[1], cv[2]);
+	print_critical_values(a, cv, KPSS, prn);
 	if (pval == PV_GT10) {
 	    pprintf(prn, "%s > .10\n", _("P-value"));
 	    pval = NADBL; /* invalidate for record_test_result */
@@ -1507,7 +1578,7 @@ int engle_granger_test (int order, const int *list, double ***pZ,
 	    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		    step++, pdinfo->varname[clist[i]]);
 	    real_adf_test(clist[i], order, 1, pZ, pdinfo, adf_opt, 
-			  ADF_EG_TEST, prn);
+			  ADF_EG_TEST, NULL, prn);
 	}
     }
 
@@ -1549,7 +1620,7 @@ int engle_granger_test (int order, const int *list, double ***pZ,
 
     /* Run (A)DF test on the residuals */
     real_adf_test(k, order, nv, pZ, pdinfo, adf_opt, 
-		  ADF_EG_TEST | ADF_EG_RESIDS, prn); 
+		  ADF_EG_TEST | ADF_EG_RESIDS, NULL, prn); 
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 		 "(a) The unit-root hypothesis is not rejected for the individual"

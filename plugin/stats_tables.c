@@ -533,6 +533,8 @@ const double tbar_ct_10[] = {
 const int IPS_N[IPS_N_MAX+1] = { 5, 7, 10, 15, 20, 25, 50, 100 };
 const int IPS_T[IPS_T_MAX+1] = { 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 100 };
 
+#define IPS_DEBUG 0
+
 /* Look up a critical value in one of the tables above. At this point
    both N and T must be values that are directly represented in the
    tables.
@@ -563,20 +565,12 @@ static double IPS_crit (double a, int N, int T, int trend)
 	}
     } 
 
-#if 0
+#if IPS_DEBUG
     fprintf(stderr, "IPS_crit(%g,N=%d,T=%d,%d) = %.3f (row=%d, col=%d)\n",
 	    a, N, T, trend, table[(IPS_T_MAX+1)*row + col], row, col);
 #endif
 
     return table[(IPS_T_MAX+1)*row + col];
-}
-
-static double interpolate_1d (double x, double x0, double x1, double *y)
-{
-    double fulld = fabs(x1 - x0);
-    double d = fabs(x - x0);
-
-    return y[0] + (d/fulld)*y[1];
 }
 
 /* Given N and T, find the limits (N1, N2) and (T1, T2), from among
@@ -619,7 +613,7 @@ static int get_IPS_limits (int N, int *N1, int *N2,
 	}
     }  
 
-#if 1
+#if IPS_DEBUG
     fprintf(stderr, "get_IPS_limits: N: %d->(%d,%d); T: %d->(%d,%d)\n",
 	    N, *N1, *N2, T, *T1, *T2);
 #endif
@@ -648,11 +642,15 @@ static double IPS_interpolate (int N, int N1, int N2,
     if (N == N1 || N == N2) {
 	c[0] = IPS_crit(a, N, T1, trend);
 	c[1] = IPS_crit(a, N, T2, trend);
-	return interpolate_1d(T, T1, T2, c);
+	w[0] = 1.0 / fabs(T-T1);
+	w[1] = 1.0 / fabs(T-T2);
+	return (w[0]*c[0] + w[1]*c[1]) / (w[0] + w[1]);
     } else if (T == T1 || T == T2) {
 	c[0] = IPS_crit(a, N1, T, trend);
 	c[1] = IPS_crit(a, N2, T, trend);
-	return interpolate_1d(N, N1, N2, c);
+	w[0] = 1.0 / fabs(N-N1);
+	w[1] = 1.0 / fabs(N-N2);
+	return (w[0]*c[0] + w[1]*c[1]) / (w[0] + w[1]);
     }
     
     /*get the values at the corners of the box */
@@ -667,7 +665,7 @@ static double IPS_interpolate (int N, int N1, int N2,
     w[2] = 1.0 / hypot(N-N2, T-T2);
     w[3] = 1.0 / hypot(N-N2, T-T1);
 
-#if 0
+#if IPS_DEBUG
     fprintf(stderr, "2-d interpolate: weights=%g(%.3f),%g(%.3f),%g(%.3f),%g(%.3f)\n", 
 	    w[0], c[0], w[1], c[1], w[2], c[2], w[3], c[3]);
 #endif
@@ -676,19 +674,21 @@ static double IPS_interpolate (int N, int N1, int N2,
 	(w[0] + w[1] + w[2] + w[3]);
 }
 
-int get_IPS_critvals (int N, int T, int trend)
+int get_IPS_critvals (int N, int T, int trend, double *c)
 {
     int N1 = -1, N2 = -1, T1 = -1, T2 = -1;
-    double cv;
     int err;
 
     err = get_IPS_limits(N, &N1, &N2, T, &T1, &T2);
 
     if (!err) {
+#if IPS_DEBUG
 	fprintf(stderr, "get_IPS_critvals: N=%d, T=%d, Nlims(%d,%d), Tlims(%d,%d)\n",
 		N, T, N1, N2, T1, T2);
-	cv = IPS_interpolate(N, N1, N2, T, T1, T2, .01, trend);
-	fprintf(stderr, "cv = %.3f\n", cv);
+#endif
+	c[0] = IPS_interpolate(N, N1, N2, T, T1, T2, .10, trend);
+	c[1] = IPS_interpolate(N, N1, N2, T, T1, T2, .05, trend);
+	c[2] = IPS_interpolate(N, N1, N2, T, T1, T2, .01, trend);
     }
 
     return err;

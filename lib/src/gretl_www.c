@@ -2132,16 +2132,16 @@ int retrieve_gfndoc (const char *fname, const char *localname)
 
 /**
  * retrieve_public_file:
- * @uri: full URI for file to grab.
+ * @uri: full URI for file to grab: host and path.
  * @localname: full path to which the file should be written
  * on the local machine. This cannot be NULL, but it can be
  * empty, in which case it should be of length %MAXLEN, and
  * on successful return it will be filled with an
- * automatically assigned local name, based on the named
+ * automatically assigned local name, based on the name
  * of the file on the server.
  *
  * Retrieves the specified resource and writes it to
- * @localname, if possible.
+ * @localname, if possible. Only handles http requests.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -2177,6 +2177,7 @@ int retrieve_public_file (const char *uri, char *localname)
 	    err = E_ALLOC;
 	} else {
 	    if (*localname == '\0') {
+		/* write into user's dotdir */
 		strcat(localname, gretl_dotdir());
 		strcat(localname, fname);
 	    }
