@@ -4,11 +4,13 @@ version 1.9.2, in progress
   testing as a side-effect
 - The "open" command now supports http to get a data file
   (of any supported format) from the web
+- New function invmills() to get the inverse Mills ratio
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix crashing bug in Wilcoxon signed rank test
 - Fix for OS X: we now support Ctrl-click as equivalent to
   right-click (for popup menus, etc.)
+- Fix for finding user's customized LaTeX preamble file 
 - Internals: modify GUI sources to ensure that gretl will build 
   OK with the forthcoming GTK+ 3.0
 
