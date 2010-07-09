@@ -1135,7 +1135,7 @@ static const char *get_gretltex_local (char *local)
 void set_gretl_tex_preamble (void)
 {
     const char *wdir = gretl_workdir();
-    char local[32], test[MAXLEN];
+    char local[16], test[MAXLEN];
     FILE *fp;
     int gotit = 0;
 

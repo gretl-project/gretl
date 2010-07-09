@@ -30,7 +30,7 @@ enum {
     DPD_TIMEDUM  = 1 << 2,
     DPD_ASYERRS  = 1 << 3,
     DPD_NEWSTYLE = 1 << 4,
-    DPD_LEVELEQ  = 1 << 5
+    DPD_SYSTEM   = 1 << 5
 };
 
 typedef struct dpdinfo_ dpdinfo;
@@ -109,6 +109,7 @@ struct dpdinfo_ {
     gretl_matrix *XZ;      /* for new prodecure */
     gretl_matrix *ZY;      /* ditto */
     gretl_matrix *ZZ;      /* ditto */
+    int *laglist;          /* ditto */
 };
 
 struct dpd_unit_ {
@@ -152,6 +153,7 @@ static void dpdinfo_free (dpdinfo *dpd)
 
     free(dpd->xlist);
     free(dpd->ilist);
+    free(dpd->laglist);
 
     free(dpd->d);
     free(dpd->used);
@@ -180,7 +182,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 
     if (dpd->flags & DPD_NEWSTYLE) {
 	/* temporary hack */
-	dpd->vbeta = dpd->uhat = dpd->ZT = dpd->H = NULL;
+	dpd->uhat = dpd->ZT = dpd->H = NULL;
 	dpd->Acpy = dpd->Zi = dpd->y = dpd->X = NULL;
 
 	dpd->tmp1 = dpd->kmtmp = dpd->kktmp = dpd->den = NULL;
@@ -343,6 +345,18 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 	err = maybe_add_const_to_ilist(dpd);
     }
 
+    if (!err && (dpd->flags & DPD_NEWSTYLE)) {
+	/* FIXME real support here? */
+	dpd->laglist = gretl_list_new(dpd->p);
+	if (dpd->laglist == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=1; i<=dpd->p; i++) {
+		dpd->laglist[i] = i;
+	    }
+	}	    
+    }
+
 #if ADEBUG
     printlist(dpd->ilist, "dpd->ilist");
 #endif
@@ -353,6 +367,9 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 /* Process the incoming list and figure out various parameters
    including the maximum lag of the dependent variable, dpd->p,
    and the number of exogenous regressors, dpd->nx.
+
+   (If we're going to handle discontinuous lags via
+   dpd->laglist, this would be the place to set it up.)
 
    FIXME: qmin doesn't actually do anything below, yet.
 */
@@ -456,7 +473,7 @@ static int dpd_flags_from_opt (gretlopt opt)
 
     if (opt & OPT_L) {
 	/* system GMM: include levels equations */
-	f |= DPD_LEVELEQ;
+	f |= DPD_SYSTEM;
     }
 
     return f;
@@ -586,6 +603,8 @@ static dpdinfo *dpdinfo_new (const int *list, const DATAINFO *pdinfo,
     dpd->nzr = 0;
     dpd->t1min = 0;
     dpd->ndum = 0;
+
+    dpd->xlist = dpd->ilist = dpd->laglist = NULL;
 
     *err = dpd_process_list(dpd, list);
     if (*err) {
@@ -2422,30 +2441,32 @@ static int dpd_add_residual_vector (dpdinfo *dpd, const double *y,
 
 #endif /* 0 : FIXME */
 
+/* --- NEXT BIG BLOCK: new "dpanel" material --- */
+
 /* 
    Constructs a list holding usable observations: they are defined 
    as those periods for which we have all the data for the equation
    _in levels_
 */
 
-static void mask_per_unit (int ny, int *xlist, int *laglist, int *mask, 
-			   const double **Z, int T, int t0)
+static void mask_per_unit (dpdinfo *dpd, int *mask, const double **Z, 
+			   int t0)
 {
     int i, s, t, ok;
 
     mask[0] = 0;
 
-    for (t=0; t<T; t++) {
-	ok = !na(Z[ny][t+t0]);
+    for (t=0; t<dpd->T; t++) {
+	ok = !na(Z[dpd->yno][t+t0]);
 
 	if (ok) {
 	    /* lags */
-	    for (i=1; i<=laglist[0]; i++) {
-		s = t - laglist[i];
+	    for (i=1; i<=dpd->laglist[0]; i++) {
+		s = t - dpd->laglist[i];
 		if (s<0) {
 		    ok = 0;
 		} else {
-		    ok &= !na(Z[ny][s+t0]);
+		    ok &= !na(Z[dpd->yno][s+t0]);
 		}
 		if (!ok) {
 		    break;
@@ -2453,9 +2474,9 @@ static void mask_per_unit (int ny, int *xlist, int *laglist, int *mask,
 	    }
 	}
 
-	if (ok && xlist != NULL) {
-	    for (i=1; i<=xlist[0]; i++) {
-		ok &= !na(Z[xlist[i]][t+t0]);
+	if (ok && dpd->xlist != NULL) {
+	    for (i=1; i<=dpd->xlist[0]; i++) {
+		ok &= !na(Z[dpd->xlist[i]][t+t0]);
 		if (!ok) {
 		    break;
 		}
@@ -2469,17 +2490,17 @@ static void mask_per_unit (int ny, int *xlist, int *laglist, int *mask,
     }
 }
 
-static int usable_obs_in_unit (int *goodobs, int T, int maxlag, 
-			       int diffonly, 
+static int usable_obs_in_unit (dpdinfo *dpd, int *goodobs, 
 			       gretl_matrix *D)
 {
     int usable = goodobs[0] - 1;
 
     if (usable > 0) {
+	int maxlag = dpd->p;
 	int i, j, i0, i1;    
 
 	/* zero all elements */
-	for (i=0; i<T; i++) {
+	for (i=0; i<dpd->T; i++) {
 	    for (j=0; j<D->cols; j++) {
 		gretl_matrix_set(D, i, j, 0);
 	    }
@@ -2494,11 +2515,11 @@ static int usable_obs_in_unit (int *goodobs, int T, int maxlag,
 
 	}
     
-	if (!diffonly) {
+	if (dpd->flags & DPD_SYSTEM) {
 	    /* levels */
 	    for (i=1; i<=goodobs[0]; i++) {
 		i1 = goodobs[i];
-		gretl_matrix_set(D, i1, (T-maxlag)+(i1-1-maxlag), 1);
+		gretl_matrix_set(D, i1, (dpd->T-maxlag)+(i1-1-maxlag), 1);
 	    }
 	}
 #if ADEBUG > 2
@@ -2529,12 +2550,13 @@ static void compute_H (int dpdstyle, int ni_d, const gretl_matrix *D,
     }
 }
 
-static void build_Y (int *goodobs, int T, int maxlag,
-		     const double **Z, int ny, int t, 
-		     gretl_matrix *dep, int diffonly)
+static void build_Y (dpdinfo *dpd, int *goodobs, const double **Z, 
+		     int t, gretl_matrix *dep)
 {
     int i, usable = goodobs[0] - 1;
     double x0, x1;
+    int maxlag = dpd->p;
+    int T = dpd->T;
     int t0, t1, i0, i1;
 
     /* zero all elements */
@@ -2549,35 +2571,33 @@ static void build_Y (int *goodobs, int T, int maxlag,
 	t0 = t+i0;
 	t1 = t+i1;
 
-	x0 = Z[ny][t0];
-	x1 = Z[ny][t1];
+	x0 = Z[dpd->yno][t0];
+	x1 = Z[dpd->yno][t1];
 	gretl_matrix_set(dep, 0, (i1-1-maxlag), x1 - x0);
     }
     
-    if (!diffonly) {
+    if (dpd->flags & DPD_SYSTEM) {
 	/* levels */
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
 	    t1 = t+i1;
-	    x1 = Z[ny][t1];
+	    x1 = Z[dpd->yno][t1];
 	    gretl_matrix_set(dep, 0, (T-1-maxlag) + (i1-maxlag), x1);
 	}
     }
 }
 
-static void build_X (int *goodobs, int T, const double **Z, 
-		     int ny, int *laglist, int *xlist, int t, 
-		     gretl_matrix *ind, int diffonly)
+static void build_X (dpdinfo *dpd, int *goodobs, const double **Z, 
+		     int t, gretl_matrix *ind)
 {
     int i, j, usable = goodobs[0] - 1;
     double x0, x1;
     int t0, t1, i0, i1;
-    int nlags = laglist[0];
-    int maxlag = laglist[nlags];
-    int nx = (xlist == NULL) ? 0 : xlist[0];
+    int nlags = dpd->laglist[0];
+    int maxlag = dpd->p;
 
     /* zero all elements */
-    for (i=0; i<(nx+nlags); i++) {
+    for (i=0; i<(dpd->nx+nlags); i++) {
 	for (j=0; j<ind->cols; j++) {
 	    gretl_matrix_set(ind, i, j, 0);
 	}
@@ -2591,51 +2611,50 @@ static void build_X (int *goodobs, int T, const double **Z,
 	t1 = t+i1;
 
 	for (j=1; j<=nlags; j++) {
-	    x0 = Z[ny][t0 - laglist[j]];
-	    x1 = Z[ny][t1 - laglist[j]];
+	    x0 = Z[dpd->yno][t0 - dpd->laglist[j]];
+	    x1 = Z[dpd->yno][t1 - dpd->laglist[j]];
 	    gretl_matrix_set(ind, j-1, (i1-1-maxlag), x1 - x0);
 	}
 
-	for (j=1; j<=nx; j++) {
-	    x0 = Z[xlist[j]][t0];
-	    x1 = Z[xlist[j]][t1];
+	for (j=1; j<=dpd->nx; j++) {
+	    x0 = Z[dpd->xlist[j]][t0];
+	    x1 = Z[dpd->xlist[j]][t1];
 	    gretl_matrix_set(ind, j+nlags-1, (i1-1-maxlag), x1 - x0);
 	}
     }
     
-    if (!diffonly) {
+    if (dpd->flags & DPD_SYSTEM) {
 	/* levels */
 	int col;
 
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
 	    t1 = t+i1;
-	    col = (T-1-maxlag) + (i1-maxlag);
+	    col = (dpd->T-1-maxlag) + (i1-maxlag);
 
 	    for (j=1; j<=nlags; j++) {
-		x1 = Z[ny][t1 - laglist[j]];
+		x1 = Z[dpd->yno][t1 - dpd->laglist[j]];
 		gretl_matrix_set(ind, j-1, col, x1);
 	    }
 
-	    for (j=1; j<=nx; j++) {
-		x1 = Z[xlist[j]][t1];
+	    for (j=1; j<=dpd->nx; j++) {
+		x1 = Z[dpd->xlist[j]][t1];
 		gretl_matrix_set(ind, j+nlags-1, col, x1);
 	    }
 	}
     }
 }
 
-static void build_Z (int *goodobs, int T, const double **Z, 
-		     int ny, int *laglist, int *xlist, int t, 
-		     int ni_d, int ni_l, int nx, 
-		     gretl_matrix *inst, int diffonly)
+static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
+		     int t, int ni_d, int ni_l, 
+		     gretl_matrix *inst)
 {
     int i, j, usable = goodobs[0] - 1;
     double x0, x1;
     int t0, t1, i0, i1;
     int k, k2 = ni_d + ni_l;
-    int nlags = laglist[0];
-    int maxlag = laglist[nlags];
+    int maxlag = dpd->p;
+    int T = dpd->T;
 
     /* zero all elements */
     for (i=0; i<inst->rows; i++) {
@@ -2650,7 +2669,7 @@ static void build_Z (int *goodobs, int T, const double **Z,
 	i1 = goodobs[i+2];
 	k = i0 * (i0-1) / 2;
 	for (j=0; j<i0; j++) {
-	    x0 = Z[ny][t+j];
+	    x0 = Z[dpd->yno][t+j];
 	    if (!na(x0)) {
 		gretl_matrix_set(inst, k, i1-1-maxlag, x0);
 	    }
@@ -2660,22 +2679,22 @@ static void build_Z (int *goodobs, int T, const double **Z,
 
     /* differences --- exo vars */
   
-    if (nx > 0) {
+    if (dpd->nx > 0) {
 	for (i=0; i<usable; i++) {
 	    i0 = goodobs[i+1];
 	    i1 = goodobs[i+2];
 	    t0 = t+i0;
 	    t1 = t+i1;
 
-	    for (j=0; j<nx; j++) {
-		x0 = Z[xlist[j+1]][t0];
-		x1 = Z[xlist[j+1]][t1];
+	    for (j=0; j<dpd->nx; j++) {
+		x0 = Z[dpd->xlist[j+1]][t0];
+		x1 = Z[dpd->xlist[j+1]][t1];
 		gretl_matrix_set(inst, k2 + j, (i1-1-maxlag), x1 - x0);
 	    }
 	}
     }
 
-    if (!diffonly) {
+    if (dpd->flags & DPD_SYSTEM) {
 	int offset, col, row;
 	int lastdiff = 0;
 	/* levels --- diff lags */
@@ -2687,8 +2706,8 @@ static void build_Z (int *goodobs, int T, const double **Z,
 	    i0 = goodobs[i+1];
 	    col = offset + i0 - maxlag;
 	    for (j=lastdiff; j<i0; j++) {
-		x0 = (j<1) ? NADBL : Z[ny][t+j-1];
-		x1 = Z[ny][t+j];
+		x0 = (j<1) ? NADBL : Z[dpd->yno][t+j-1];
+		x1 = Z[dpd->yno][t+j];
 		if (!na(x1) && !na(x0)) {
 		    gretl_matrix_set(inst, row, col, x1 - x0);
 		}
@@ -2698,13 +2717,13 @@ static void build_Z (int *goodobs, int T, const double **Z,
 	}
 
 	/* levels  --- exo vars */
-	if (nx>0) {
+	if (dpd->nx > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
 		t1 = t+i1;
 		col = (T-1-maxlag) + (i1-maxlag);
-		for (j=0; j<nx; j++) {
-		    x1 = Z[xlist[j+1]][t1];
+		for (j=0; j<dpd->nx; j++) {
+		    x1 = Z[dpd->xlist[j+1]][t1];
 		    gretl_matrix_set(inst, k2 + j, col, x1);
 		}
 	    }
@@ -2717,28 +2736,26 @@ static void build_Z (int *goodobs, int T, const double **Z,
   no attempt is made to compute the covariance matrix
 */
 
-static int do_estimator (gretl_matrix *XZ, gretl_matrix *ZZ, 
-			 gretl_matrix *ZY, gretl_matrix *beta)
+static int do_estimator (dpdinfo *dpd)
 {
     gretl_matrix *iZZ, *M, *M1, *M2;
     int k, m, err = 0;
     
-    trim_zero_inst(XZ, ZZ, ZY); /* FIXME discard return value,
-				   rows of ZZ? */
+    trim_zero_inst(dpd->XZ, dpd->ZZ, dpd->ZY);
 
 #if ADEBUG > 0
-    gretl_matrix_print(XZ, "XZ (trimmed)");
-    gretl_matrix_print(ZZ, "ZZ (trimmed)");
-    gretl_matrix_print(ZY, "ZY (trimmed)");
+    gretl_matrix_print(dpd->XZ, "XZ (trimmed)");
+    gretl_matrix_print(dpd->ZZ, "ZZ (trimmed)");
+    gretl_matrix_print(dpd->ZY, "ZY (trimmed)");
 #endif
 
-    k = XZ->rows;
-    m = XZ->cols;
+    k = dpd->XZ->rows;
+    m = dpd->XZ->cols;
 
     M = gretl_matrix_alloc(k, m);
     M1 = gretl_matrix_alloc(k, k);
     M2 = gretl_matrix_alloc(k, 1);
-    iZZ = gretl_matrix_copy(ZZ);
+    iZZ = gretl_matrix_copy(dpd->ZZ);
 
     if (M == NULL || M1 == NULL || M2 == NULL || iZZ == NULL) {
 	err = E_ALLOC;
@@ -2751,9 +2768,9 @@ static int do_estimator (gretl_matrix *XZ, gretl_matrix *ZZ,
     }
 
     if (!err) {
-	gretl_matrix_multiply(XZ, iZZ, M);
+	gretl_matrix_multiply(dpd->XZ, iZZ, M);
 	gretl_matrix_multiply_mod(M, GRETL_MOD_NONE, 
-				  XZ, GRETL_MOD_TRANSPOSE,
+				  dpd->XZ, GRETL_MOD_TRANSPOSE,
 				  M1, GRETL_MOD_NONE);
 	gretl_matrix_xtr_symmetric(M1);
     }
@@ -2763,8 +2780,8 @@ static int do_estimator (gretl_matrix *XZ, gretl_matrix *ZZ,
     }
 
     if (!err) {
-	gretl_matrix_multiply(M, ZY, M2);
-	gretl_matrix_multiply(M1, M2, beta);
+	gretl_matrix_multiply(M, dpd->ZY, M2);
+	gretl_matrix_multiply(M1, M2, dpd->beta);
     }
 
 #if ADEBUG > 0
@@ -2780,9 +2797,8 @@ static int do_estimator (gretl_matrix *XZ, gretl_matrix *ZZ,
     return err;
 }
 
-static int do_units (int ny, int *xlist, int *laglist,
-		     const double **Z, const DATAINFO *pdinfo, 
-		     dpdinfo *dpd, PRN *prn)
+static int do_units (dpdinfo *dpd, const double **Z, 
+		     const DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *D = NULL;
     gretl_matrix *dep = NULL;
@@ -2792,18 +2808,20 @@ static int do_units (int ny, int *xlist, int *laglist,
     int *goodobs;
     int T = dpd->T;
     int t, uT, unit = 0;
-    int diffonly = 0;
-    int totobs = 0;
-    int nlags = laglist[0];
-    int k = nlags + dpd->nx;
-    int maxlag = laglist[nlags];
-    int north = diffonly ? (T-maxlag-1) : (T-maxlag-1) * 2 + 1;
+    int maxlag = dpd->p;
+    int north;
     int nz, nz_d, nz_l;
     int err = 0;
 
+    if (dpd->flags & DPD_SYSTEM) {
+	north = (T-maxlag-1) * 2 + 1;
+    } else {
+	north = T-maxlag-1;
+    }
+
     /* number of instruments */
     nz = nz_d = (T-1)*(T-2)/2;
-    if (!diffonly) {
+    if (dpd->flags & DPD_SYSTEM) {
 	nz_l = T-1;
 	nz += nz_l;
     } else {
@@ -2815,7 +2833,7 @@ static int do_units (int ny, int *xlist, int *laglist,
     pprintf(prn, "nz = %4d:\n", nz);
 #endif
 
-    dpd->XZ = gretl_zero_matrix_new(k, nz);
+    dpd->XZ = gretl_zero_matrix_new(dpd->k, nz);
     dpd->ZZ = gretl_zero_matrix_new(nz, nz);
     dpd->ZY = gretl_zero_matrix_new(nz, 1);
     goodobs = gretl_list_new(T);
@@ -2829,7 +2847,7 @@ static int do_units (int ny, int *xlist, int *laglist,
     D = gretl_matrix_alloc(T, north);
     H = gretl_identity_matrix_new(north);
     dep = gretl_matrix_alloc(1, north);
-    ind = gretl_matrix_alloc(k, north);
+    ind = gretl_matrix_alloc(dpd->k, north);
     inst = gretl_matrix_alloc(nz, north);
 
     if (D == NULL || H == NULL || dep == NULL ||
@@ -2838,33 +2856,34 @@ static int do_units (int ny, int *xlist, int *laglist,
 	goto bailout;
     }
 
+    dpd->effN = dpd->nobs = 0;
+
     for (t=pdinfo->t1; t<pdinfo->t2; t+=T) {
-	mask_per_unit(ny, xlist, laglist, goodobs, Z, T, t);
-	uT = usable_obs_in_unit(goodobs, T, maxlag, diffonly, D);
+	mask_per_unit(dpd, goodobs, Z, t);
+	uT = usable_obs_in_unit(dpd, goodobs, D);
+
 #if ADEBUG > 0
 	pprintf(prn, "\n\nUnit %4d:", unit);
 	pprintf(prn, "usable obs = %4d:\n", uT);
 #endif
 
 	if (uT > 0) {
-	    totobs += uT;
+	    dpd->effN += 1;
+	    dpd->nobs += uT;
 	    compute_H(DPDSTYLE, T-maxlag-1, D, H);
 #if ADEBUG > 2
 	    if (t==pdinfo->t1) {
 		gretl_matrix_print_to_prn(H, "H", prn);
 	    }
 #endif
-	    build_Y(goodobs, T, maxlag, Z, ny, t, dep, diffonly);
-	    build_X(goodobs, T, Z, ny, laglist, xlist, t, ind, 
-		    diffonly);
-	    build_Z(goodobs, T, Z, ny, laglist, xlist, t, nz_d,
-		    nz_l, dpd->nx, inst, diffonly);
+	    build_Y(dpd, goodobs, Z, t, dep);
+	    build_X(dpd, goodobs, Z, t, ind);
+	    build_Z(dpd, goodobs, Z, t, nz_d, nz_l, inst);
 #if ADEBUG > 1
 	    gretl_matrix_print_to_prn(dep, "Y", prn);
 	    gretl_matrix_print_to_prn(ind, "X", prn);
 	    gretl_matrix_print_to_prn(inst, "Z", prn);
 #endif
-
 	    gretl_matrix_multiply_mod(ind, GRETL_MOD_NONE,
 				      inst, GRETL_MOD_TRANSPOSE,
 				      dpd->XZ, GRETL_MOD_CUMULATE);
@@ -2877,7 +2896,7 @@ static int do_units (int ny, int *xlist, int *laglist,
 	unit++;
     }
 
-    pprintf(prn, "Total obs = %d\n", totobs);
+    pprintf(prn, "Total obs = %d\n", dpd->nobs);
 
  bailout:
 
@@ -2896,41 +2915,22 @@ static int dpanel_driver (dpdinfo *dpd, const double **Z,
 			  const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
-    int *laglist;
-    int maxlag = 1;
-    int i, err = 0;
+    int err = 0;
 
     dpd->effN = dpd->nobs = 0;
 
-    laglist = gretl_list_new(maxlag);
-    if (laglist == NULL) {
-	return E_ALLOC;
-    } else {
-	for (i=1; i<=maxlag; i++) {
-	    laglist[i] = i;
-	}
-    }
-
-    dpd->beta = gretl_column_vector_alloc(maxlag + dpd->nx);
-    if (dpd->beta == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	do_units(dpd->yno, dpd->xlist, laglist, Z, pdinfo, 
-		 dpd, prn);
+    err = do_units(dpd, Z, pdinfo, prn);
 
 #if ADEBUG > 0
-	gretl_matrix_print_to_prn(dpd->XZ, "XZ", prn);
-	gretl_matrix_print_to_prn(dpd->ZZ, "ZZ", prn);
-	gretl_matrix_print_to_prn(dpd->ZY, "ZY", prn);
+    gretl_matrix_print_to_prn(dpd->XZ, "XZ", prn);
+    gretl_matrix_print_to_prn(dpd->ZZ, "ZZ", prn);
+    gretl_matrix_print_to_prn(dpd->ZY, "ZY", prn);
 #endif
 
-	do_estimator(dpd->XZ, dpd->ZZ, dpd->ZY, dpd->beta);
+    if (!err) {
+	do_estimator(dpd);
 	gretl_matrix_print_to_prn(dpd->beta, "beta", prn);
     }
-
-    free(laglist);
 
 #if 0 /* FIXME! */
     if (!err) {
