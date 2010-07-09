@@ -300,20 +300,20 @@ packages to \emph{run} \app{gretl}, but most of these should already
 be part of a standard installation.  In order to enable other optional
 features, like audio support, you may need to install more libraries.
 
-\textbf{Note!} The above steps can be much simplified on Linux systems
+\tip{The above steps can be much simplified on Linux systems
 that provide deb-based package managers, such as Debian and its
 derivatives (Ubuntu, Knoppix and other distributions). The command
-\begin{code}
-  apt-get build-dep gretl
-\end{code}
+
+\texttt{apt-get build-dep gretl}
+
 will download and install all the necessary packages for building the
 version of \app{gretl} that is currently present in your APT
 sources. Techincally, this does not guarantee that all the software
 necessary to build the CVS version is included, because the version of
 \app{gretl} on your repository may be quite old and build requirements
 may have changed in the meantime. However, the chances of a mismatch
-are rather remote for a reasonably up-to-date system, so the above
-command should in most cases take care of everything correctly.
+are rather remote for a reasonably up-to-date system, so in most cases
+the above command should take care of everything correctly.}
 
 \subsection{Getting the source: release or CVS}
 
