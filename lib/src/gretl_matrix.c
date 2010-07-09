@@ -38,8 +38,6 @@
 # define USE_JACOBI 0
 #endif
 
-#define BLOCKT -666
-
 /**
  * SECTION:gretl_matrix
  * @short_description: construct and manipulate matrices

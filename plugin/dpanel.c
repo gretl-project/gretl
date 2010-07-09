@@ -10,16 +10,15 @@
 #define DPDSTYLE 0
 #define DPDEBUG 0
 
-#if 0 /* FIXME this needs to be hooked up or somehow
-	 replaced */
+#define LEV_ONLY (-1) /* flag for an obs that's good only for levels */
 
-static int dpd_add_residual_vector (dpdinfo *dpd, const double *y,
-				    const double **Z, const DATAINFO *pdinfo)
+static int dpd_add_residual_vector (dpdinfo *dpd, const double **Z, 
+				    const DATAINFO *pdinfo)
 {
     const double *b = dpd->beta->val;
     const double *x;
-    double ut, xd;
-    int i, j, s, t;
+    double ut, dx;
+    int i, j, li, s, t;
 
     if (dpd->uhat == NULL) {
 	dpd->uhat = gretl_column_vector_alloc(dpd->nobs);
@@ -31,20 +30,25 @@ static int dpd_add_residual_vector (dpdinfo *dpd, const double *y,
     dpd->SSR = 0.0;
     s = 0;
 
+    /* calculate and store the residuals in differences */
+
     for (t=0; t<pdinfo->n; t++) {
-	if (dpd->used[t]) {
-	    ut = y[t] - y[t-1];
+	if (dpd->used[t] && dpd->used[t] != LEV_ONLY) {
 	    j = 0;
-	    for (i=0; i<dpd->p; i++) {
-		xd = y[t-i-1] - y[t-i-2];
-		ut -= b[j++] * xd;
+	    ut = dpd->y[t] - dpd->y[t-1];
+	    for (i=1; i<=dpd->laglist[0]; i++) {
+		li = dpd->laglist[i];
+		dx = dpd->y[t-li] - dpd->y[t-li-1];
+		ut -= b[j++] * dx;
+		
 	    }
 	    /* FIXME automatic time dummies */
-	    if (dpd->xlist != NULL) {
+	    if (dpd->nx > 0) {
 		for (i=1; i<=dpd->xlist[0]; i++) {
 		    x = Z[dpd->xlist[i]];
-		    xd = x[t] - x[t-1];
-		    ut -= b[j++] * xd;
+		    dx = x[t] - x[t-1];
+		    ut -= b[j++] * dx;
+		    
 		}
 	    }
 	    gretl_vector_set(dpd->uhat, s++, ut);
@@ -54,10 +58,47 @@ static int dpd_add_residual_vector (dpdinfo *dpd, const double *y,
 
     dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
 
+    /* residuals in levels: for the present these are not used
+       subsequently, we just print their summary stats for
+       comparison with Ox/DPD. But note that the values will
+       agree only if DPDSTYLE is turned on.
+    */
+
+    if (dpd->flags & DPD_SYSTEM) {
+	double SSR_lev = 0.0;
+	int nobs_lev = 0;
+
+ 	for (t=0; t<pdinfo->n; t++) {
+	    if (dpd->used[t]) {
+		j = 0;
+		ut = dpd->y[t];
+		for (i=1; i<=dpd->laglist[0]; i++) {
+		    li = dpd->laglist[i];
+		    ut -= b[j++] * dpd->y[t-li];
+		}
+		if (dpd->nx > 0) {
+		    for (i=1; i<=dpd->xlist[0]; i++) {
+			x = Z[dpd->xlist[i]];
+			ut -= b[j++] * x[t];
+		    }
+		}
+		SSR_lev += ut * ut;
+		nobs_lev++;
+	    }
+
+	    /* for now, clear the "used" flag to avoid crashing 
+	       when saving the residuals to the model */
+	    if (dpd->used[t] == LEV_ONLY) {
+		dpd->used[t] = 0;
+	    }
+	}
+
+	fprintf(stderr, "SSR (levels) = %g\n", SSR_lev);
+	fprintf(stderr, "s^2 (levels) = %g\n", SSR_lev / (nobs_lev - dpd->k));
+    }    
+
     return 0;
 }
-
-#endif /* 0 : FIXME */
 
 /* 
    This is the first thing we do for each panel unit: construct a list
@@ -67,10 +108,13 @@ static int dpd_add_residual_vector (dpdinfo *dpd, const double *y,
    The list of good observations takes this form: the first element
    gives the number of good observations and the following elements
    give their positions, i.e. the 0-based places relative to the start
-   of the time-series for the unit.
+   of the time-series for the unit. While we're at it we record the
+   positions of the good observations relative to the full dataset,
+   in the big array dpd->used, so that we can place the residuals
+   correctly later on.
 
-   Parameter @t0 gives the offset in the full dataset of the start of 
-   the unit's data.
+   (Note that @t0 gives the offset in the full dataset of the start of 
+   the unit's data.)
 
    We return the number of "good observations" minus one, to allow
    for differencing; the return value (if positive) will be the
@@ -85,8 +129,10 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
     goodobs[0] = 0;
 
     for (t=0; t<dpd->T; t++) {
+	int big_t = t + t0;
+
 	/* do we have the dependent variable? */
-	ok = !na(dpd->y[t+t0]);
+	ok = !na(dpd->y[big_t]);
 
 	/* lags of dependent variable? */
 	for (i=1; i<=dpd->laglist[0] && ok; i++) {
@@ -101,13 +147,18 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 	if (ok && dpd->xlist != NULL) {
 	    /* regressors */
 	    for (i=1; i<=dpd->xlist[0] && ok; i++) {
-		ok &= !na(Z[dpd->xlist[i]][t+t0]);
+		ok &= !na(Z[dpd->xlist[i]][big_t]);
 	    }
 	}
 
 	if (ok) {
 	    goodobs[0] += 1;
 	    goodobs[goodobs[0]] = t;
+	    if (goodobs[0] > 1) {
+		dpd->used[big_t] = 1;
+	    } else {
+		dpd->used[big_t] = LEV_ONLY;
+	    }
 	}
     }
     
@@ -116,7 +167,7 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 }
 
 /* Based on the accounting of good observations for a unit recorded
-   in the @goodobs list, fill matrix D (which will be used to
+   in the @goodobs list, fill matrix D (which may be used to
    construct H).
 */
 
@@ -126,7 +177,6 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
     int maxlag = dpd->p;
     int i, j, i0, i1;    
 
-    /* zero all elements */
     gretl_matrix_zero(D);
 
     /* differences */
@@ -149,13 +199,13 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
     }
 
 #if DPDEBUG > 2
-    gretl_matrix_print_to_prn(D, "D", prn);
+    gretl_matrix_print(D, "D");
 #endif
 }
 
 /* Variant computations of H: for "dpdstyle" we emulate what
    the Ox DPD package does, otherwise we use the pre-formed
-   D matrix
+   D matrix.
 */
 
 static void compute_H (const gretl_matrix *D, gretl_matrix *H, 
@@ -192,7 +242,6 @@ static void build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
     int t0, t1, i0, i1;
     double dy;
 
-    /* zero all elements */
     gretl_matrix_zero(Yi);
 
     /* differences */
@@ -226,19 +275,19 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     int nlags = dpd->laglist[0];
     int maxlag = dpd->p;
     int Tshort = dpd->T - maxlag - 1;
+    const double *xj;
     int t0, t1, i0, i1;
-    int i, j, lj, xj;
+    int i, j, lj;
     double dx;
 
-    /* zero all elements */
     gretl_matrix_zero(Xi);
 
     /* differences */
     for (i=0; i<usable; i++) {
 	i0 = goodobs[i+1];
 	i1 = goodobs[i+2];
-	t0 = t+i0;
-	t1 = t+i1;
+	t0 = t + i0;
+	t1 = t + i1;
 
 	for (j=1; j<=nlags; j++) {
 	    lj = dpd->laglist[j];
@@ -247,8 +296,8 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	}
 
 	for (j=1; j<=dpd->nx; j++) {
-	    xj = dpd->xlist[j];
-	    dx = Z[xj][t1] - Z[xj][t0];
+	    xj = Z[dpd->xlist[j]];
+	    dx = xj[t1] - xj[t0];
 	    gretl_matrix_set(Xi, j+nlags-1, i1-1-maxlag, dx);
 	}
     }
@@ -268,8 +317,8 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 
 	    for (j=1; j<=dpd->nx; j++) {
-		xj = dpd->xlist[j];
-		gretl_matrix_set(Xi, j+nlags-1, col, Z[xj][t1]);
+		xj = Z[dpd->xlist[j]];
+		gretl_matrix_set(Xi, j+nlags-1, col, xj[t1]);
 	    }
 	}
     }
@@ -287,29 +336,29 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     int usable = goodobs[0] - 1;
     int maxlag = dpd->p;
     int T = dpd->T;
-    double x0, x1;
+    const double *xj;
+    double dx, y0;
     int t0, t1, i0, i1;
     int k, k2 = nz_diff + nz_lev;
     int i, j;
 
-    /* zero all elements */
     gretl_matrix_zero(Zi);
 
-    /* equations in differences -- lagged levels of y */
+    /* equations in differences: lagged levels of y */
     for (i=0; i<usable; i++) {
 	i0 = goodobs[i+1];
 	i1 = goodobs[i+2];
 	k = i0 * (i0-1) / 2;
 	for (j=0; j<i0; j++) {
-	    x0 = dpd->y[t+j];
-	    if (!na(x0)) {
-		gretl_matrix_set(Zi, k, i1-1-maxlag, x0);
+	    y0 = dpd->y[t+j];
+	    if (!na(y0)) {
+		gretl_matrix_set(Zi, k, i1-1-maxlag, y0);
 	    }
 	    k++;
 	}
     }
 
-    /* equations in differences -- differenced exog vars */
+    /* equations in differences: differenced exog vars */
     if (dpd->nx > 0) {
 	for (i=0; i<usable; i++) {
 	    i0 = goodobs[i+1];
@@ -317,45 +366,43 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    t0 = t + i0;
 	    t1 = t + i1;
 	    for (j=0; j<dpd->nx; j++) {
-		x0 = Z[dpd->xlist[j+1]][t0];
-		x1 = Z[dpd->xlist[j+1]][t1];
-		gretl_matrix_set(Zi, k2 + j, (i1-1-maxlag), x1 - x0);
+		xj = Z[dpd->xlist[j+1]];
+		dx = xj[t1] - xj[t0];
+		gretl_matrix_set(Zi, k2 + j, (i1-1-maxlag), dx);
 	    }
 	}
     }
 
     if (dpd->flags & DPD_SYSTEM) {
-	int offset, col, row;
+	int offset = T - maxlag - 1;
+	int col, row = (T-1)*(T-2)/2;
 	int lastdiff = 0;
+	double y1;
 
-	/* equations in levels -- lagged differences of y */
-
-	row = (T-1)*(T-2)/2;
-	offset = T-maxlag-1;
-
+	/* equations in levels: lagged differences of y */
 	for (i=0; i<=usable; i++) {
 	    i0 = goodobs[i+1];
 	    col = offset + i0 - maxlag;
 	    for (j=lastdiff; j<i0; j++) {
-		x0 = (j < 1) ? NADBL : dpd->y[t+j-1];
-		x1 = dpd->y[t+j];
-		if (!na(x1) && !na(x0)) {
-		    gretl_matrix_set(Zi, row, col, x1 - x0);
+		y0 = (j < 1)? NADBL : dpd->y[t+j-1];
+		y1 = dpd->y[t+j];
+		if (!na(y1) && !na(y0)) {
+		    gretl_matrix_set(Zi, row, col, y1 - y0);
 		}
 		row++;
 	    }
 	    lastdiff = j;
 	}
 
-	/* equations in levels -- exog vars */
+	/* equations in levels: exog vars */
 	if (dpd->nx > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
-		t1 = t+i1;
+		t1 = t + i1;
 		col = (T-1-maxlag) + (i1-maxlag);
 		for (j=0; j<dpd->nx; j++) {
-		    x1 = Z[dpd->xlist[j+1]][t1];
-		    gretl_matrix_set(Zi, k2 + j, col, x1);
+		    xj = Z[dpd->xlist[j+1]];
+		    gretl_matrix_set(Zi, k2 + j, col, xj[t1]);
 		}
 	    }
 	}
@@ -476,7 +523,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
     int err = 0;
 
     /* do H as per Ox/dpd? */
-    int dpdstyle = DPDSTYLE;
+    int dpdstyle = DPDSTYLE; /* defined at top for now */
 
     /* full T - maxlag - 1 */
     Tshort = dpd->T - dpd->p - 1;
@@ -634,6 +681,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
     } 
 
     if (!err) {
+	/* build the moment matrices */
 	err = do_units(dpd, Z, pdinfo, prn);
     }
 
@@ -645,15 +693,14 @@ MODEL dpd_estimate (const int *list, const char *istr,
 #endif
 
     if (!err) {
+	/* calculate \hat{\beta} */
 	do_estimator(dpd);
-	gretl_matrix_print_to_prn(dpd->beta, "beta", prn);
     }
 
-#if 0 /* FIXME! */
     if (!err) {
-	err = dpd_add_residual_vector(dpd, y, Z, pdinfo);
+	/* add residuals in differences */
+	err = dpd_add_residual_vector(dpd, Z, pdinfo);
     }
-#endif
 
     if (err && !mod.errcode) {
 	mod.errcode = err;

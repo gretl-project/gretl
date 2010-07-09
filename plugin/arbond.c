@@ -249,6 +249,26 @@ static int maybe_add_const_to_ilist (dpdinfo *dpd)
     return err;
 }
 
+static int dpd_make_laglist (dpdinfo *dpd)
+{
+    int err = 0;
+
+    /* FIXME this should be hooked up to user input */
+    dpd->laglist = gretl_list_new(dpd->p);
+
+    if (dpd->laglist == NULL) {
+	err = E_ALLOC;
+    } else {
+	int i;
+
+	for (i=1; i<=dpd->p; i++) {
+	    dpd->laglist[i] = i;
+	}
+    }
+
+    return err;
+}
+
 static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 {
     int i, nz = 0, spos = 0;
@@ -319,18 +339,6 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 	err = maybe_add_const_to_ilist(dpd);
     }
 
-    if (!err && (dpd->flags & DPD_NEWSTYLE)) {
-	/* FIXME real support here? */
-	dpd->laglist = gretl_list_new(dpd->p);
-	if (dpd->laglist == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    for (i=1; i<=dpd->p; i++) {
-		dpd->laglist[i] = i;
-	    }
-	}	    
-    }
-
 #if ADEBUG
     printlist(dpd->ilist, "dpd->ilist");
 #endif
@@ -394,6 +402,10 @@ static int dpd_process_list (dpdinfo *dpd, const int *list)
 
     if (!err && list[0] >= xpos) {
 	err = dpd_make_lists(dpd, list, xpos);
+    }
+
+    if (!err && (dpd->flags & DPD_NEWSTYLE)) {
+	err = dpd_make_laglist(dpd);
     }
 
     return err;

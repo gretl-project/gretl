@@ -979,7 +979,9 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 
     if (msg != NULL && *msg != '\0' && !plain) {
 	pprintf(prn, "%s (%d x %d)", msg, m->rows, m->cols);
-	if (!(m->t1 == 0 && m->t2 == 0)) {
+	if (m->t1 == BLOCKT && m->t2 == BLOCKT) {
+	    pprintf(prn, " (part of matrix block)\n\n");
+	} else if (m->t1 != 0 || m->t2 != 0) {
 	    pprintf(prn, " [t1 = %d, t2 = %d]\n\n", m->t1 + 1, m->t2 + 1);
 	} else {
 	    pputs(prn, "\n\n");

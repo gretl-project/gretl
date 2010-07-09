@@ -28,6 +28,7 @@
    as non-zero for the purpose of determining the rank of X */
 
 #define R_DIAG_MIN 1.0e-8
+#define BLOCKT -666
 
 typedef enum {
     GRETL_MOD_NONE = 0,
