@@ -347,6 +347,7 @@ struct str_table funcs[] = {
     { F_HASHSET,  "bundleset" },
     { F_HASHDEL,  "bundledel" },
     { F_SETNOTE,  "setnote" },
+    { F_INVMILLS, "invmills" },
     { 0,          NULL }
 };
 
