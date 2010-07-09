@@ -420,6 +420,8 @@ static int set_time_info (int t1, int pd, DATAINFO *dinfo)
 {
     int yr, mo, qt;
 
+    *dinfo->stobs = '\0';
+
     if (pd == 12) {
 	yr = (t1 / 12) + 1960;
 	mo = t1 % 12 + 1;
@@ -430,14 +432,20 @@ static int set_time_info (int t1, int pd, DATAINFO *dinfo)
 	sprintf(dinfo->stobs, "%d:%d", yr, qt);
     } else {
 	yr = t1 + 1960;
-	sprintf(dinfo->stobs, "%d", yr);
+	if (yr > 2050) {
+	    ; /* Can't be a year? (FIXME: how did we get here?) */
+	} else {
+	    sprintf(dinfo->stobs, "%d", yr);
+	}
     }
 
-    printf("starting obs seems to be %s\n", dinfo->stobs);
-    
     dinfo->pd = pd;
-    dinfo->structure = TIME_SERIES;
-    dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
+
+    if (*dinfo->stobs != '\0') {
+	printf("starting obs seems to be %s\n", dinfo->stobs);
+	dinfo->structure = TIME_SERIES;
+	dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
+    } 
 
     return 0;
 }
