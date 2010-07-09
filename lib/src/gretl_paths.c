@@ -1552,7 +1552,7 @@ const char *gretl_workdir (void)
 
 /* If the default workdir is a valid directory, and
    not equal to the current workdir, return the path
-   to it.
+   to it (allocated).
 */
 
 char *gretl_default_workdir (void)
@@ -1562,7 +1562,7 @@ char *gretl_default_workdir (void)
     int ok = 0;
 
     if (base != NULL) {
-	ret = g_strdup_printf("%s\\gretl\\", base);
+	ret = gretl_strdup_printf("%s\\gretl\\", base);
 	if (strcmp(ret, paths.workdir)) {
 	    DIR *dir = win32_opendir(ret);
 

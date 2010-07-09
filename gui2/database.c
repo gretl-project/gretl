@@ -2647,6 +2647,7 @@ gint populate_dbfilelist (windata_t *vwin)
     GtkListStore *store;
     GtkTreeIter iter;
     const char *dbdir;
+    char *wdir = NULL;
     DIR *dir = NULL;
     int ndb = 0;
 
@@ -2675,17 +2676,18 @@ gint populate_dbfilelist (windata_t *vwin)
     }
 
     /* and in the default working dir? */
-    dbdir = gretl_default_workdir();
-    if (dbdir != NULL) {
+    wdir = gretl_default_workdir();
+    if (wdir != NULL) {
 #ifdef G_OS_WIN32 
-	dir = win32_opendir(dbdir);
+	dir = win32_opendir(wdir);
 #else
-	dir = opendir(dbdir);
+	dir = opendir(wdir);
 #endif
 	if (dir != NULL) {
-	    ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
+	    ndb += read_db_files_in_dir(dir, vwin->role, wdir, store, &iter);
 	    closedir(dir);
 	}
+	free(wdir);
     }
 
     if (ndb == 0) {

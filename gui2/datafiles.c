@@ -454,11 +454,11 @@ static int seek_file_collections (int location)
     int i = 0, err = 0;
 
     if (location == DATA_SEARCH) {
-	tmp = g_strdup_printf("%sdata", gretl_home());
+	tmp = gretl_strdup_printf("%sdata", gretl_home());
     } else if (location == SCRIPT_SEARCH) {
-	tmp = g_strdup_printf("%sscripts", gretl_home());
+	tmp = gretl_strdup_printf("%sscripts", gretl_home());
     } else if (location == USER_SEARCH) {
-	tmp = g_strdup(gretl_workdir());
+	tmp = gretl_strdup(gretl_workdir());
 	trim_slash(tmp);
     } else {
 	return 1;
@@ -468,7 +468,7 @@ static int seek_file_collections (int location)
 
     dir = opendir(tmp);
     if (dir == NULL) {
-	g_free(tmp);
+	free(tmp);
 	return 1;
     }
 
@@ -498,7 +498,7 @@ static int seek_file_collections (int location)
     }
 
     closedir(dir);
-    g_free(tmp);
+    free(tmp);
 
     if (location == USER_SEARCH && i++ == 0) {
 	tmp = gretl_default_workdir();
