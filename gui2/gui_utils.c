@@ -2171,6 +2171,9 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ui, "/menubar/Analysis/DisplayAFR", FALSE);
 	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
 	flip(vwin->ui, "/menubar/Graphs", FALSE);
+    } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
+	/* relax this? */
+	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     } 

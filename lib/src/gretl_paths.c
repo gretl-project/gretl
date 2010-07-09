@@ -1212,7 +1212,7 @@ char *addpath (char *fname, int script)
 
     /* try looking in default workdir? */
     if (1) {
-	char *dwork = gretl_default_workdir();
+	const char *dwork = gretl_default_workdir();
 
 	if (dwork != NULL) {
 	    int ok = 0;
@@ -1222,7 +1222,6 @@ char *addpath (char *fname, int script)
 	    if ((fname = search_dir(fname, dwork, USER_SEARCH))) { 
 		ok = 1;
 	    }
-	    free(dwork);
 	    if (ok) {
 		return fname;
 	    }
@@ -1548,23 +1547,22 @@ const char *gretl_workdir (void)
     return paths.workdir;
 }
 
+static char default_workdir[MAXLEN];
+
 #ifdef WIN32
 
-/* If the default workdir is a valid directory, and
-   not equal to the current workdir, return the path
-   to it (allocated).
-*/
-
-char *gretl_default_workdir (void)
+static const char *win32_default_workdir (void)
 {
+    const char *ret = NULL;
     char *base = mydocs_path();
-    char *ret = NULL;
     int ok = 0;
 
     if (base != NULL) {
-	ret = gretl_strdup_printf("%s\\gretl\\", base);
-	if (strcmp(ret, paths.workdir)) {
-	    DIR *dir = win32_opendir(ret);
+	sprintf(default_workdir, "%s\\gretl\\", base);
+	if (!strcmp(default_workdir, paths.workdir)) {
+	    *default_workdir = '\0';
+	} else {
+	    DIR *dir = win32_opendir(default_workdir);
 
 	    if (dir != NULL) {
 		closedir(dir);
@@ -1574,9 +1572,8 @@ char *gretl_default_workdir (void)
 	free(base);
     }
 
-    if (ret && !ok) {
-	free(ret);
-	ret = NULL;
+    if (ok) {
+	ret = default_workdir;
     }
 
     return ret;
@@ -1584,16 +1581,18 @@ char *gretl_default_workdir (void)
 
 #else /* !WIN32 */
 
-char *gretl_default_workdir (void)
+static const char *regular_default_workdir (void)
 {
+    const char *ret = NULL;
     char *home = getenv("HOME");
-    char *ret = NULL;
     int ok = 0;
 
     if (home != NULL) {
-	ret = gretl_strdup_printf("%s/gretl/", home);
-	if (strcmp(ret, paths.workdir)) {
-	    DIR *dir = opendir(ret);
+	sprintf(default_workdir, "%s/gretl/", home);
+	if (!strcmp(default_workdir, paths.workdir)) {
+	    *default_workdir = '\0';
+	} else {
+	    DIR *dir = opendir(default_workdir);
 
 	    if (dir != NULL) {
 		closedir(dir);
@@ -1602,15 +1601,32 @@ char *gretl_default_workdir (void)
 	}
     }
 
-    if (ret && !ok) {
-	free(ret);
-	ret = NULL;
+    if (ok) {
+	ret = default_workdir;
     }
 
     return ret;
 }
 
 #endif /* WIN32 or not */
+
+/**
+ * gretl_default_workdir:
+ *
+ * Returns: the full path to the default value of the
+ * user's gretl working directory if this differs from
+ * the user's currently-defined gretl working directory,
+ * or NULL if the two are the same.
+ */
+
+const char *gretl_default_workdir (void)
+{
+#ifdef WIN32
+    return win32_default_workdir();
+#else
+    return regular_default_workdir();
+#endif
+}
 
 static int validate_writedir (const char *dirname)
 {

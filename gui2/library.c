@@ -7331,6 +7331,9 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	sprintf(texfile, "%swindow.tex", gretl_dotdir());
     } 
 
+    /* ensure we don't get stale output */
+    remove(texfile);
+
     fprn = gretl_print_new_with_filename(texfile, &err);
     if (err) {
 	gui_errmsg(err);
@@ -7408,7 +7411,8 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
-	gretl_remove(texfile);
+	fprintf(stderr, "not removing '%s'\n", texfile);
+	/* gretl_remove(texfile); */
 	gretl_remove(tmp);
     }
 

@@ -1935,15 +1935,18 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
     } else if (pmod->ci == LOGISTIC) {
 	lmax = gretl_model_get_double(pmod, "lmax");
     } else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	if (gretl_model_get_int(pmod, "ordered")) {
+	if (gretl_model_get_int(pmod, "multinom")) {
+	    /* FIXME */
+	    return E_NOTIMP;
+	} else if (gretl_model_get_int(pmod, "ordered")) {
 	    /* we need to know how many coeffs are not
 	       just estimated cut-points */
 	    k = gretl_model_get_int(pmod, "nx");
 	    if (k <= 0) {
 		return E_MISSDATA;
 	    }
-	}
-    }
+	} 
+    } 
 
     for (t=fc->t1; t<=fc->t2; t++) {
 	double yht = 0.0;
@@ -2867,6 +2870,11 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	/* FIXME */
 	return E_NOTIMP;
     }
+
+    if (pmod->ci == LOGIT && (gretl_model_get_int(pmod, "multinom"))) {
+	/* FIXME */
+	return E_NOTIMP;
+    }	
 
     /* Reject in case model was estimated using repacked daily
        data: this case should be handled more elegantly */

@@ -2155,17 +2155,16 @@ static void get_local_object_status (const char *fname, int role,
 	    if (err == -1) {
 		if (role == REMOTE_FUNC_FILES || role == REMOTE_DATA_PKGS) {
 		    /* try default working dir */
-		    char *tmp = gretl_default_workdir();
+		    const char *dw = gretl_default_workdir();
 
-		    if (tmp != NULL) {
+		    if (dw != NULL) {
 			if (role == REMOTE_FUNC_FILES) {
-			    build_path(filedir, tmp, "functions", NULL);
+			    build_path(filedir, dw, "functions", NULL);
 			    build_path(fullname, filedir, fname, NULL);
 			} else {
-			    build_path(fullname, tmp, fname, NULL);
+			    build_path(fullname, dw, fname, NULL);
 			}
 			err = stat(fullname, &fbuf);
-			free(tmp);
 		    }
 		} 
 		if (err == -1) {
@@ -2647,7 +2646,6 @@ gint populate_dbfilelist (windata_t *vwin)
     GtkListStore *store;
     GtkTreeIter iter;
     const char *dbdir;
-    char *wdir = NULL;
     DIR *dir = NULL;
     int ndb = 0;
 
@@ -2676,18 +2674,17 @@ gint populate_dbfilelist (windata_t *vwin)
     }
 
     /* and in the default working dir? */
-    wdir = gretl_default_workdir();
-    if (wdir != NULL) {
+    dbdir = gretl_default_workdir();
+    if (dbdir != NULL) {
 #ifdef G_OS_WIN32 
-	dir = win32_opendir(wdir);
+	dir = win32_opendir(dbdir);
 #else
-	dir = opendir(wdir);
+	dir = opendir(dbdir);
 #endif
 	if (dir != NULL) {
-	    ndb += read_db_files_in_dir(dir, vwin->role, wdir, store, &iter);
+	    ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
 	    closedir(dir);
 	}
-	free(wdir);
     }
 
     if (ndb == 0) {

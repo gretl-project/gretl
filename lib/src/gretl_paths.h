@@ -127,7 +127,7 @@ const char *gretl_dotdir (void);
 
 const char *gretl_workdir (void);
 
-char *gretl_default_workdir (void);
+const char *gretl_default_workdir (void);
 
 int set_gretl_work_dir (const char *path);
 

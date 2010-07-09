@@ -1164,7 +1164,7 @@ void set_gretl_tex_preamble (void)
     }
 
     if (!gotit) {
-	char *ddir = gretl_default_workdir();
+	const char *ddir = gretl_default_workdir();
 
 	if (ddir != NULL) {
 	    /* localized preamble file in standard working dir? */
@@ -1188,8 +1188,6 @@ void set_gretl_tex_preamble (void)
 		    gotit = 1;
 		}
 	    }
-
-	    free(ddir);
 	}
     } 
 
@@ -1240,7 +1238,7 @@ void gretl_tex_preamble (PRN *prn, int fmt)
     FILE *fp = NULL;
     int userfile = 0;
 
-    if (tex_preamble_file[0] != '\0') {
+    if (*tex_preamble_file != '\0') {
 	fp = gretl_fopen(tex_preamble_file, "r");
 	if (fp != NULL) {
 	    char line[256];

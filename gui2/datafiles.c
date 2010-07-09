@@ -501,7 +501,7 @@ static int seek_file_collections (int location)
     free(tmp);
 
     if (location == USER_SEARCH && i++ == 0) {
-	tmp = gretl_default_workdir();
+	tmp = gretl_strdup(gretl_default_workdir());
 	if (tmp != NULL) {
 	    goto user_search_2;
 	}
@@ -1792,11 +1792,10 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 		build_path(fndir, gretl_dotdir(), "functions", NULL);
 	    } else if (i == 4) {
 		/* plus any in the default working dir, if not already searched */
-		char *tmp = gretl_default_workdir();
+		const char *wdir = gretl_default_workdir();
 
-		if (tmp != NULL) {
-		    build_path(fndir, tmp, "functions", NULL);
-		    g_free(tmp);
+		if (wdir != NULL) {
+		    build_path(fndir, wdir, "functions", NULL);
 		} 
 	    }
 
