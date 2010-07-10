@@ -2142,6 +2142,45 @@ static void rq_coeff_intervals_mod (windata_t *vwin)
     flip(vwin->ui, "/menubar/Analysis/ConfIntervals", FALSE);
 }
 
+static void mnl_probs_callback (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = vwin->data;
+    gretl_matrix *P = NULL;
+    int err = 0;
+
+    if (pmod == NULL) return;
+
+    P = mn_logit_probabilities(pmod, (const double **) Z, datainfo, &err);
+ 
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	PRN *prn = NULL;
+
+	if (bufopen(&prn)) {
+	    gretl_matrix_free(P);
+	} else {
+	    /* FIXME: make this window less inert */
+	    gretl_matrix_print_to_prn(P, "Outcome probabilities", prn);
+	    view_buffer(prn, 78, 400, _("Outcome probabilities"), PRINT, NULL);
+	    gretl_matrix_free(P);
+	}
+    }
+}
+
+static void add_multinomial_probs_item (windata_t *vwin)
+{
+    const gchar *mpath = "/menubar/Analysis";
+    GtkActionEntry entry;
+
+    action_entry_init(&entry);
+    entry.name = "mnlprobs";
+    entry.label = _("Outcome probabilities");
+    entry.callback = G_CALLBACK(mnl_probs_callback);
+    vwin_menu_add_item(vwin, mpath, &entry);
+}
+
 #define intervals_model(m) (m->ci == LAD && \
 			    gretl_model_get_data(m, "coeff_intervals"))
 
@@ -2174,6 +2213,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     } else if (pmod->ci == LOGIT && gretl_model_get_int(pmod, "multinom")) {
 	/* relax this? */
 	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
+	add_multinomial_probs_item(vwin);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
     } 
