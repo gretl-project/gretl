@@ -822,6 +822,11 @@ static void look_up_dollar_word (const char *s, parser *p)
 	    undefined_symbol_error(s, p);
 	}
     }
+
+#if LDEBUG
+    fprintf(stderr, "look_up_dollar_word: '%s' -> %d\n",
+	    s, p->idnum);
+#endif
 }
 
 #ifdef USE_RLIB
@@ -911,7 +916,9 @@ static void look_up_word (const char *s, parser *p)
     }
 }
 
-#define could_be_matrix(t) (model_data_matrix(t) || t == M_UHAT)
+#define could_be_matrix(t) (model_data_matrix(t) || \
+			    model_data_matrix_builder(t) || \
+			    t == M_UHAT)
 
 static void word_check_next_char (const char *s, parser *p)
 {
