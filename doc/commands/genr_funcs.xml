@@ -2238,17 +2238,17 @@
       </fnargs>  
       <description>
 	<para>
-	  Returns the inverse Mills ratio at <argname>x</argname>,
-	  that is the ratio between the standard normal density and the
-	  complement to one of the standard normal distribution
-	  function, both evaluated at <argname>x</argname>. 
-
-	  This function uses a dedicated algorithm which yields
-	  improved accuracy, but there is little difference between
-	  the output of this function and the ratio between
-	  <fncref targ="dnorm"/> and <fncref targ="cnorm"/> (apart for
-	  the sign of the argument) except for very large negative
-	  values.
+	  Returns the inverse Mills ratio at <argname>x</argname>, that is
+	  the ratio between the standard normal density and the complement
+	  to the standard normal distribution function, both evaluated at
+	  <argname>x</argname>. 
+	</para>
+	<para>
+	  This function uses a dedicated algorithm which yields greater
+	  accuracy compared to calculation using <fncref targ="dnorm"/>
+	  and <fncref targ="cnorm"/>, but the difference between the two
+	  methods is appreciable only for very large negative values of
+	  <argname>x</argname>.
 	</para>
 	<para>
 	  <seelist>
