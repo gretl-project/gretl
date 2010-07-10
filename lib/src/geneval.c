@@ -6720,6 +6720,10 @@ static NODE *dollar_var_node (NODE *t, parser *p)
     return ret;
 }
 
+/* The incoming node here is binary: matrix ID on the left, and
+   specification of a matrix sub-slice on the right.
+*/
+
 static gretl_matrix *
 object_var_get_submatrix (const char *oname, int idx, NODE *t, parser *p,
 			  int needs_data)
@@ -6815,9 +6819,22 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
     return ret;
 }
 
-/* the left-hand subnode holds the name of the object in
-   question; on the right is a specification of what we
-   want from that object 
+/* Retrieve a data item from an object (typically, a model). We're not
+   sure in advance here of the type of the data item (scalar, matrix,
+   etc.): we look that up with object_var_type().
+
+   This function handles two cases: the input @t may be a binary node
+   with the name of an object on its left-hand subnode (as in
+   "mymodel.$vcv"), or the object may be implicit (as when accessing
+   data from the last model). In the latter case @t is itself the data
+   item specification, while in the former the data item spec will be
+   found on the right-hand subnode of @t. 
+
+   And there's another thing: in the case where the data item to be
+   retrieved is a matrix, we handle the possibility that the user
+   actually wants a sub-slice of that matrix. Handling that in
+   this function may be the wrong thing to do -- perhaps it should be
+   subsumed under the more general handling of <matrix>[<subspec>].
 */
 
 static NODE *object_var_node (NODE *t, parser *p)
@@ -6829,11 +6846,20 @@ static NODE *object_var_node (NODE *t, parser *p)
 #endif
 
     if (starting(p)) {
-	NODE *r = (t->t == OVAR)? t->v.b2.r : t;
-	const char *oname = (t->t == OVAR)? t->v.b2.l->v.str : NULL;
-	int mslice = r->t == DMSL;
+	NODE *r = NULL; /* the data spec node */
+	const char *oname = NULL;
 	GretlType vtype;
-	int idx, needs_data = 0;
+	int idx, mslice;
+	int needs_data = 0;
+
+	if (t->t == OVAR) {
+	    /* objectname.<stuff> */
+	    oname = t->v.b2.l->v.str;
+	    r = t->v.b2.r;
+	} else {
+	    /* plain <stuff> */
+	    r = t;
+	}
 
 	if (oname != NULL && gretl_get_object_by_name(oname) == NULL) {
 	    gretl_errmsg_sprintf(_("%s: no such object\n"), oname);
@@ -6852,9 +6878,14 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    }
 	}
 
+	mslice = (r->t == DMSL);
+
+	/* find the index which identifies the data item
+	   the user wants */
+
 	if (mslice) {
-	    /* slice spec is on right subnode, ID on left */
-	    idx = t->v.b2.l->v.idnum;
+	    /* slice spec is on right subnode, index on left */
+	    idx = r->v.b2.l->v.idnum;
 	} else {
 	    idx = r->v.idnum;
 	}
