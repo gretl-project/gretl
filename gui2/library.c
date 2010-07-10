@@ -7860,7 +7860,7 @@ static int script_open_append (ExecState *s, double ***pZ,
 	return err;
     }
 
-    if (!dbdata && cmd->ci != APPEND) {
+    if (!dbdata && !http && cmd->ci != APPEND) {
 	strncpy(datafile, myfile, MAXLEN - 1);
     }
 
