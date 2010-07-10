@@ -28,7 +28,8 @@ enum {
     DPD_TIMEDUM  = 1 << 2,
     DPD_ASYERRS  = 1 << 3,
     DPD_NEWSTYLE = 1 << 4,
-    DPD_SYSTEM   = 1 << 5
+    DPD_SYSTEM   = 1 << 5,
+    DPD_DPDSTYLE = 1 << 6
 };
 
 typedef struct dpdinfo_ dpdinfo;
@@ -455,11 +456,16 @@ static int dpd_flags_from_opt (gretlopt opt)
     if (opt & OPT_B) {
 	/* new calculation method */
 	f |= DPD_NEWSTYLE;
-    }
 
-    if (opt & OPT_L) {
-	/* system GMM: include levels equations */
-	f |= DPD_SYSTEM;
+	if (opt & OPT_L) {
+	    /* system GMM: include levels equations */
+	    f |= DPD_SYSTEM;
+	}
+
+	if (opt & OPT_X) {
+	    /* compute H as per Ox/DPD */
+	    f |= DPD_DPDSTYLE;
+	}	
     }
 
     return f;

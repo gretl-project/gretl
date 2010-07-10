@@ -7,7 +7,6 @@
    prototype code, newmask.c.
 */
 
-#define DPDSTYLE 0
 #define DPDEBUG 0
 
 #define LEV_ONLY (-1) /* flag for an obs that's good only for levels */
@@ -208,10 +207,14 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
    D matrix.
 */
 
-static void compute_H (const gretl_matrix *D, gretl_matrix *H, 
-		       int nh, int dpdstyle)
+static void compute_H (gretl_matrix *H, int nh,
+		       const gretl_matrix *D)
 {
-    if (dpdstyle) {
+    if (D != NULL) {
+	gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
+				  D, GRETL_MOD_NONE, 
+				  H, GRETL_MOD_NONE);
+    } else {	
 	int i;
 
 	gretl_matrix_set(H, 0, 0, 2);
@@ -220,12 +223,10 @@ static void compute_H (const gretl_matrix *D, gretl_matrix *H,
 	    gretl_matrix_set(H, i-1, i, -1);
 	    gretl_matrix_set(H, i, i-1, -1);
 	}
-	gretl_matrix_multiply_by_scalar(H, 1); /* or not? */
-    } else {
-	gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
-				  D, GRETL_MOD_NONE, 
-				  H, GRETL_MOD_NONE);
-    }
+#if 0
+	gretl_matrix_multiply_by_scalar(H, scale);
+#endif
+    } 
 }
 
 /* Build row vector of dependent variable values in @Yi using
@@ -489,15 +490,23 @@ static int dpd_allocate_new (dpdinfo *dpd, int north,
     if (dpd->XZ == NULL || dpd->ZZ == NULL || dpd->ZY == NULL) {
 	return E_ALLOC;
     }
-    
-    *D = gretl_matrix_alloc(dpd->T, north);
+
+    if (dpd->flags & DPD_DPDSTYLE) {
+	/* Ox/DPD-style H matrix: D is not needed */
+	*D = NULL;
+    } else {
+	*D = gretl_matrix_alloc(dpd->T, north);
+	if (*D == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
     *H = gretl_identity_matrix_new(north);
     *Yi = gretl_matrix_alloc(1, north);
     *Xi = gretl_matrix_alloc(dpd->k, north);
     *Zi = gretl_matrix_alloc(dpd->nz, north);
 
-    if (*D == NULL || *H == NULL || *Yi == NULL ||
-	*Xi == NULL || *Zi == NULL) {
+    if (*H == NULL || *Yi == NULL || *Xi == NULL || *Zi == NULL) {
 	return E_ALLOC;
     }
 
@@ -521,9 +530,6 @@ static int do_units (dpdinfo *dpd, const double **Z,
     int nz_diff, nz_lev = 0;
     int north, t, unit = 0;
     int err = 0;
-
-    /* do H as per Ox/dpd? */
-    int dpdstyle = DPDSTYLE; /* defined at top for now */
 
     /* full T - maxlag - 1 */
     Tshort = dpd->T - dpd->p - 1;
@@ -574,8 +580,10 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	    /* this unit is usable */
 	    dpd->effN += 1;
 	    dpd->nobs += uT;
-	    build_unit_D_matrix(dpd, goodobs, D);
-	    compute_H(D, H, Tshort, dpdstyle);
+	    if (D != NULL) {
+		build_unit_D_matrix(dpd, goodobs, D);
+	    }
+	    compute_H(H, Tshort, D);
 #if DPDEBUG > 2
 	    if (t == pdinfo->t1) {
 		gretl_matrix_print_to_prn(H, "H", prn);
@@ -618,7 +626,8 @@ static int do_units (dpdinfo *dpd, const double **Z,
 
 /* "Secret" public interface for new approach, including system GMM:
    in a script use --system (OPT_L, think "levels") to get
-   Blundell-Bond.
+   Blundell-Bond. To build the H matrix as per Ox/DPD use the
+   option --dpdstyle (OPT_X).
 
    The dpdinfo struct that is used here is a hybrid. It contains some
    useful common information, filled out by dpdinfo_new; it also has a
