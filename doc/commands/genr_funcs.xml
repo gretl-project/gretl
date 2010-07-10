@@ -289,6 +289,18 @@
       </description>
     </function>
 
+    <function name="$mnl_prob" section="access" output="matrix">
+      <description>
+	<para>
+	  Following estimation of a multinomial logit model (only),
+	  retrieves a matrix holding the estimated probabilities
+	  of each possible outcome at each observation in the model's
+	  sample range. Each row represents an observation and
+	  each column an outcome. 
+	</para>
+      </description>
+    </function>
+
     <function name="$ncoeff" section="access" output="scalar">
       <description>
 	<para>
