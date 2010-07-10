@@ -6721,7 +6721,8 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 }
 
 static gretl_matrix *
-object_var_get_submatrix (const char *oname, NODE *t, parser *p)
+object_var_get_submatrix (const char *oname, NODE *t, parser *p,
+			  int needs_data)
 {
     NODE *r = eval(t->v.b2.r, p);
     gretl_matrix *M, *S = NULL;
@@ -6736,7 +6737,14 @@ object_var_get_submatrix (const char *oname, NODE *t, parser *p)
 
     /* the sort of matrix we want (e.g. $coeff) */
     idx = t->v.b2.l->v.idnum;
-    M = saved_object_get_matrix(oname, idx, &p->err);
+
+    if (needs_data) {
+	M = saved_object_build_matrix(oname, idx, 
+				      (const double **) *p->Z,
+				      p->dinfo, &p->err);
+    } else {
+	M = saved_object_get_matrix(oname, idx, &p->err);
+    }
 
     if (M != NULL) {
 	S = matrix_get_submatrix(M, r->v.mspec, &p->err);
@@ -6746,9 +6754,12 @@ object_var_get_submatrix (const char *oname, NODE *t, parser *p)
     return S;
 }
 
-static GretlType object_var_type (int idx, const char *oname)
+static GretlType object_var_type (int idx, const char *oname,
+				  int *needs_data)
 {
     GretlType vtype = GRETL_TYPE_NONE;
+
+    *needs_data = 0;
     
     if (model_data_scalar(idx)) {
 	vtype = GRETL_TYPE_DOUBLE;
@@ -6756,10 +6767,13 @@ static GretlType object_var_type (int idx, const char *oname)
 	vtype = GRETL_TYPE_SERIES;
     } else if (model_data_matrix(idx)) {
 	vtype = GRETL_TYPE_MATRIX;
+    } else if (model_data_matrix_builder(idx)) {
+	vtype = GRETL_TYPE_MATRIX;
+	*needs_data = 1;
     } else if (model_data_list(idx)) {
 	vtype = GRETL_TYPE_LIST;
-    }
-    
+    } 
+
     if (idx == M_UHAT || idx == M_YHAT || idx == M_SIGMA) {
 	/* could be a matrix */
 	GretlObjType otype = gretl_model_get_type_and_ci(oname, NULL);
@@ -6823,6 +6837,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	const char *oname = (t->t == OVAR)? t->v.b2.l->v.str : NULL;
 	int mslice = r->t == DMSL;
 	GretlType vtype;
+	int needs_data = 0;
 
 	if (oname != NULL && gretl_get_object_by_name(oname) == NULL) {
 	    gretl_errmsg_sprintf(_("%s: no such object\n"), oname);
@@ -6841,7 +6856,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    }
 	}
 		
-	vtype = object_var_type(r->v.idnum, oname);
+	vtype = object_var_type(r->v.idnum, oname, &needs_data);
 
 #if EDEBUG
 	fprintf(stderr, "object_var_node: t->t = %d (%s), r->t = %d (%s)\n", 
@@ -6859,22 +6874,29 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    ret = aux_matrix_node(p);
 	}
 
-	if (ret != NULL) {
-	    if (vtype == GRETL_TYPE_DOUBLE) {
-		ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, p->Z,
-						      p->dinfo, &p->err);
-	    } else if (vtype == GRETL_TYPE_SERIES) {
-		ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
-						      &p->err);
-	    } else if (vtype == GRETL_TYPE_LIST) {
-		ret->v.ivec = saved_object_get_list(oname, r->v.idnum, &p->err);
-	    } else if (mslice) {
-		/* the right-hand subnode needs more work */
-		ret->v.m = object_var_get_submatrix(oname, r, p);
-	    } else if (vtype == GRETL_TYPE_MATRIX) {
-		ret->v.m = saved_object_get_matrix(oname, r->v.idnum, &p->err);
-	    } 
-	}
+	if (ret == NULL) {
+	    return ret;
+	} else if (vtype == GRETL_TYPE_DOUBLE) {
+	    ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, p->Z,
+						  p->dinfo, &p->err);
+	} else if (vtype == GRETL_TYPE_SERIES) {
+	    ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
+						  &p->err);
+	} else if (vtype == GRETL_TYPE_LIST) {
+	    ret->v.ivec = saved_object_get_list(oname, r->v.idnum, &p->err);
+	} else if (mslice) {
+	    /* the right-hand subnode needs more work */
+	    ret->v.m = object_var_get_submatrix(oname, r, p, needs_data);
+	} else if (vtype == GRETL_TYPE_MATRIX) {
+	    if (needs_data) {
+		ret->v.m = saved_object_build_matrix(oname, r->v.idnum,
+						     (const double **) *p->Z,
+						     p->dinfo, &p->err);
+	    } else {
+		ret->v.m = saved_object_get_matrix(oname, r->v.idnum, 
+						   &p->err);
+	    }
+	} 
     } else {
 	ret = aux_any_node(p);
     }

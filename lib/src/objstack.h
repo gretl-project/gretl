@@ -127,6 +127,11 @@ double *saved_object_get_series (const char *oname, int idx,
 gretl_matrix *
 saved_object_get_matrix (const char *oname, int idx, int *err);
 
+gretl_matrix *
+saved_object_build_matrix (const char *oname, int idx, 
+			   const double **Z, const DATAINFO *pdinfo,
+			   int *err);
+
 int *saved_object_get_list (const char *oname, int idx, int *err);
 
 int gretl_object_rename (void *p, GretlObjType type, const char *oname);

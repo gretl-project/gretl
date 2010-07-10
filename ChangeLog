@@ -5,9 +5,13 @@ version 1.9.2, in progress
 - The "open" command now supports http to get a data file
   (of any supported format) from the web
 - New function invmills() to get the inverse Mills ratio
+- New accessor $mnl_probs to get the estimated outcome
+  probabilities for a multinomial logit model
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix crashing bug in Wilcoxon signed rank test
+- Fix for multinomial logit: correct bias in favor of the
+  base case in the reported fitted values ($yhat)
 - Fix for OS X: we now support Ctrl-click as equivalent to
   right-click (for popup menus, etc.)
 - Fix for finding user's customized LaTeX preamble file 

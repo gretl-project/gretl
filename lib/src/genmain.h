@@ -71,7 +71,7 @@ typedef enum {
     M_DWPVAL,     /* Durbin-Watson p-value, last model */
     M_FSTT,       /* overall F-statistic, last model */
     M_CHISQ,      /* overall chi-square stat, last model */   
-    M_SCALAR_MAX, /* -- separator, scalars/series -- */
+    M_SCALAR_MAX, /* -- SEPARATOR, scalars/series -- */
     M_UHAT,       /* residuals */
     M_YHAT,       /* fitted values */
     M_LLT,        /* per-observation loglikelihood */
@@ -79,7 +79,7 @@ typedef enum {
     M_H,          /* GARCH predicted variances */
     M_SAMPLE,     /* observations used in estimation */
     M_UHAT2,      /* squared residuals */
-    M_SERIES_MAX, /* -- separator, series/matrices -- */
+    M_SERIES_MAX, /* -- SEPARATOR, series/matrices -- */
     M_COEFF,      /* parameter estimates */
     M_SE,         /* parameter standard errors */
     M_VCV,        /* parameter covariance matrix */
@@ -103,7 +103,9 @@ typedef enum {
     M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
     M_KLLT,       /* Kalman log-likelihood, per time-step */
     M_KUHAT,      /* Kalman: current prediction error */
-    M_MATRIX_MAX, /* -- separator, matrices/lists -- */
+    M_MATRIX_MAX, /* -- SEPARATOR, matrices/matrix-builders -- */
+    M_MNLPROBS,   /* case probabilities for multinomial logit */
+    M_MBUILD_MAX, /* -- SEPARATOR, matrix-builders/lists -- */
     M_XLIST,      /* list of regressors */
     M_MAX         /* sentinel */
 } ModelDataIndex;
@@ -111,7 +113,9 @@ typedef enum {
 #define model_data_scalar(i) (i > R_MAX && i < M_SCALAR_MAX)
 #define model_data_series(i) (i > M_SCALAR_MAX && i < M_SERIES_MAX)
 #define model_data_matrix(i) (i > M_SERIES_MAX && i < M_MATRIX_MAX)
-#define model_data_list(i)   (i > M_MATRIX_MAX && i < M_MAX)
+#define model_data_matrix_builder(i) (i > M_MATRIX_MAX && \
+				      i < M_MBUILD_MAX)
+#define model_data_list(i)   (i > M_MBUILD_MAX && i < M_MAX)
 
 typedef struct parser_ GENERATOR;
 

@@ -62,6 +62,11 @@ double ordered_model_prediction (const MODEL *pmod, double Xb);
 int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
 			double *ymax, double *lmax);
 
+gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
+				      const double **Z,
+				      const DATAINFO *pdinfo,
+				      int *err);
+
 #endif /* DISCRETE_H */
 
 

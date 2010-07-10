@@ -1220,6 +1220,30 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
     return M;
 }
 
+/* similar to the above, but in this case the matrix to be
+   retrieved is not pre-built, and requires (or may require)
+   access to the current dataset for its building.
+*/
+
+gretl_matrix *
+saved_object_build_matrix (const char *oname, int idx, 
+			   const double **Z, const DATAINFO *pdinfo,
+			   int *err)
+{
+    stacker *smatch = find_smatch(oname);
+    gretl_matrix *M = NULL;
+
+    if (smatch == NULL) {
+	*err = E_DATA;
+    } else if (idx == M_MNLPROBS && smatch->type == GRETL_OBJ_EQN) {
+	M = mn_logit_probabilities(smatch->ptr, Z, pdinfo, err);
+    } else {
+	*err = E_BADSTAT;
+    }
+
+    return M;
+}
+
 static int namechar_spn_with_space (const char *s)
 {
     const char *ok = "abcdefghijklmnopqrstuvwxyz"

@@ -2320,7 +2320,7 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
 	if (na(pmod->yhat[t])) {
 	    continue;
 	}
-	pmax = 0.0; /* 2010-07-09: was 1.0 */
+	pmax = 0.0;
 	iymax = 0;
 	for (i=0; i<mnl->n; i++) {
 	    p = gretl_matrix_get(mnl->Xb, s, i);
@@ -2344,6 +2344,132 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
     }
 
     gretl_model_set_int(pmod, "correct", ncorrect);
+}
+
+/**
+ * mn_logit_probabilities:
+ * @pmod: pointer to multinomial logit model
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @err: location to receive error code.
+ *
+ * Computes the estimated probabilities of the outcomes
+ * for a multinomial logit model. The returned matrix
+ * is n x m, where n is the number of observations in
+ * the sample range over which the model was estimated
+ * and m is the number of distinct outcomes. Each element
+ * represents the conditional probability of outcome j
+ * given the values of the regressors at observation i.
+ * 
+ * If any of the regressor values are missing at a given
+ * observation the probabiity is set to NaN; provided the
+ * regressor information is complete we compute the
+ * outcome probabilities even if the actual outcome is
+ * missing.
+ *
+ * Returns: allocated matrix or NULL on failure.
+ */
+
+gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
+				      const double **Z,
+				      const DATAINFO *pdinfo,
+				      int *err)
+{
+    gretl_matrix *P = NULL;
+    const int *yvals = NULL;
+    double *eXbt = NULL;
+    int i, m = 0;
+
+    if (pmod == NULL || pmod->list == NULL || pmod->coeff == NULL) {
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	/* list of outcome values (including the base case) */
+	yvals = gretl_model_get_data(pmod, "yvals");
+	if (yvals == NULL) {
+	    *err = E_DATA;
+	} else {
+	    m = yvals[0];
+	}
+    }
+
+    if (!*err) {
+	for (i=1; i<=pmod->list[0]; i++) {
+	    if (pmod->list[i] >= pdinfo->v) {
+		/* a regressor has disappeared */
+		*err = E_DATA;
+		break;
+	    }
+	}
+    }
+
+    if (!*err) {
+	int n = pmod->t2 - pmod->t1 + 1;
+
+	P = gretl_matrix_alloc(n, m);
+	if (P == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    /* allow for casting results to series */
+	    gretl_matrix_set_t1(P, pmod->t1);
+	    gretl_matrix_set_t2(P, pmod->t2);
+	}
+    }
+
+    if (!*err) {
+	/* allocate required workspace */
+	eXbt = malloc(m * sizeof *eXbt);
+	if (eXbt == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	const double *b = pmod->coeff;
+	double St, ptj;
+	int j, k, t, vi, ok;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    ok = 1;
+	    for (i=2; i<=pmod->list[0]; i++) {
+		vi = pmod->list[i];
+		if (na(Z[vi][t])) {
+		    ok = 0;
+		    break;
+		}
+	    }
+	    if (!ok) {
+		/* one or more regressors missing */
+		for (j=0; j<m; j++) {
+		    gretl_matrix_set(P, t, j, M_NA);
+		}
+	    } else {
+		/* base case */
+		eXbt[0] = St = 1.0;
+		k = 0;
+		/* loop across the other y-values */
+		for (j=1; j<m; j++) {
+		    /* accumulate exp(X*beta) */
+		    eXbt[j] = 0.0;
+		    for (i=2; i<=pmod->list[0]; i++) {
+			vi = pmod->list[i];
+			eXbt[j] += Z[vi][t] * b[k++];
+		    }
+		    eXbt[j] = exp(eXbt[j]);
+		    St += eXbt[j];
+		}
+		for (j=0; j<m; j++) {
+		    ptj = eXbt[j] / St;
+		    gretl_matrix_set(P, t, j, ptj);
+		}
+	    }
+	}
+    }
+
+    free(eXbt);
+
+    return P;
 }
 
 /* In case the dependent variable is not in canonical form for
