@@ -136,7 +136,7 @@ struct str_table mvars[] = {
     { M_COEFF_CI,"$coeff_ci" },
     { M_KLLT,    "$kalman_llt" },
     { M_KUHAT,   "$kalman_uhat" },
-    { M_MNLPROBS, "$mnl_prob" },
+    { M_MNLPROBS, "$mnlprobs" },
     { M_XLIST,   "$xlist" },
     { 0,         NULL }
 };

@@ -289,7 +289,7 @@
       </description>
     </function>
 
-    <function name="$mnl_prob" section="access" output="matrix">
+    <function name="$mnlprobs" section="access" output="matrix">
       <description>
 	<para>
 	  Following estimation of a multinomial logit model (only),

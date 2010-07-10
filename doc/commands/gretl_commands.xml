@@ -5163,7 +5163,7 @@
 	is interpreted as an unordered response, and Multinomial Logit
 	estimates are produced. (In either case, if the variable selected
 	as dependent is not discrete an error is flagged.) In the
-	multinomial case, the accessor <lit>$mnl_prob</lit> is available
+	multinomial case, the accessor <lit>$mnlprobs</lit> is available
 	after estimation, to get a matrix containing the estimated
 	probabilities of the outcomes at each observation (observations in
 	rows, outcomes in columns).
