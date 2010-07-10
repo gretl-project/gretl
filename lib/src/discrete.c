@@ -2320,7 +2320,7 @@ static void mn_logit_yhat (MODEL *pmod, mnl_info *mnl,
 	if (na(pmod->yhat[t])) {
 	    continue;
 	}
-	pmax = 1.0;
+	pmax = 0.0; /* 2010-07-09: was 1.0 */
 	iymax = 0;
 	for (i=0; i<mnl->n; i++) {
 	    p = gretl_matrix_get(mnl->Xb, s, i);
