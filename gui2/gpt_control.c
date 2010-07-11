@@ -2920,15 +2920,22 @@ static void audio_render_plot (png_plot *plot)
 
 #endif
 
+static const gchar *menu_item_get_text (GtkMenuItem *item)
+{
+    GtkWidget *label = gtk_bin_get_child(GTK_BIN(item));
+
+    return gtk_label_get_text(GTK_LABEL(label));
+}
+
 static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 {
     png_plot *plot = g_object_get_data(G_OBJECT(item), "plot");
     GtkWidget *parent = data;
-    gchar *item_string = NULL;
-    gchar *menu_string = NULL;
+    const gchar *item_string = NULL;
+    const gchar *menu_string = NULL;
 
-    g_object_get(item, "label", &item_string, NULL);
-    g_object_get(parent, "label", &menu_string, NULL);
+    item_string = menu_item_get_text(item);
+    menu_string = menu_item_get_text(GTK_MENU_ITEM(parent));
 
     if (!strcmp(item_string, _("monochrome"))) {
 	plot->spec->flags |= GPT_MONO;
@@ -2947,9 +2954,6 @@ static gint color_popup_activated (GtkMenuItem *item, gpointer data)
 	win32_process_graph(plot->spec, WIN32_TO_PRINTER);
     }    
 #endif 
-
-    g_free(item_string);
-    g_free(menu_string);
 
     plot->spec->flags &= ~GPT_MONO;
 
@@ -3093,10 +3097,10 @@ static void clear_labels (png_plot *plot)
 static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 {
     png_plot *plot = (png_plot *) data;
-    gchar *item_string = NULL;
+    const gchar *item_string = NULL;
     int killplot = 0;
 
-    g_object_get(item, "label", &item_string, NULL);
+    item_string = menu_item_get_text(item);
 
     if (!strcmp(item_string, _("Add another curve..."))) {
 	dist_graph_add(plot);
@@ -3158,8 +3162,6 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
     } else if (!strcmp(item_string, _("Close"))) { 
         killplot = 1;
     } 
-
-    g_free(item_string);
 
     if (killplot) {
 	gtk_widget_destroy(plot->shell);
