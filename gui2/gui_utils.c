@@ -2161,8 +2161,47 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	if (bufopen(&prn)) {
 	    gretl_matrix_free(P);
 	} else {
-	    /* FIXME: make this window less inert */
-	    gretl_matrix_print_to_prn(P, "Outcome probabilities", prn);
+	    const int *yvals = gretl_model_get_data(pmod, "yvals");
+	    int obslen = max_obs_label_length(datainfo);
+	    int i, j, t = P->t1;
+	    char obslabel[OBSLEN];
+	    double x;
+
+	    pprintf(prn, "\nEstimated outcome probabilities for %s\n\n",
+		    gretl_model_get_depvar_name(pmod, datainfo));
+
+	    /* case values */
+	    bufspace(obslen, prn);
+	    for (j=1; j<=yvals[0]; j++) {
+		pprintf(prn, "%9d", yvals[j]);
+	    }
+	    pputc(prn, '\n');
+
+	    /* format the matrix content nicely, prepending
+	       observation strings */
+
+	    for (i=0; i<P->rows; i++) {
+		int thislen = obslen;
+
+		if (dataset_has_markers(datainfo)) {
+		    strcpy(obslabel, datainfo->S[t]);
+		    thislen = get_utf_width(obslabel, obslen);
+		} else {
+		    ntodate(obslabel, t, datainfo);
+		}
+		pprintf(prn, "%*s", thislen, obslabel);
+		for (j=0; j<P->cols; j++) {
+		    x = gretl_matrix_get(P, i, j);
+		    if (xna(x)) {
+			pprintf(prn, "%9s", " ");
+		    } else {
+			pprintf(prn, "%9.4f", x);
+		    }
+		}
+		pputc(prn, '\n');
+		t++;
+	    }
+
 	    view_buffer(prn, 78, 400, _("Outcome probabilities"), PRINT, NULL);
 	    gretl_matrix_free(P);
 	}
