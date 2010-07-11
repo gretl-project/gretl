@@ -49,7 +49,13 @@ const char *tex_column_format (int i)
 void set_tex_use_pdf (const char *prog)
 {
     use_pdf = strstr(prog, "pdf") != NULL ||
-	strstr(prog, "PDF") != NULL;
+	strstr(prog, "PDF") != NULL ||
+	strstr(prog, "Pdf") != NULL;
+}
+
+int get_tex_use_pdf (void)
+{
+    return use_pdf;
 }
 
 static const char *tex_greek_var (const char *s)

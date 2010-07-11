@@ -7318,6 +7318,7 @@ static int check_for_rerun (const char *texbase)
 static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
+    int use_pdf = get_tex_use_pdf();
     int dot, err = LATEX_OK;
     char *texshort = NULL;
     const char *buf;
@@ -7372,7 +7373,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 
     if (err == LATEX_OK) {
 #if defined(G_OS_WIN32)
-	if (!strncmp(latex, "pdf", 3)) {
+	if (use_pdf) {
 	    sprintf(tmp, "%s.pdf", texbase);
 	    win32_open_file(tmp);
 	} else {
@@ -7382,7 +7383,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	    }
 	}
 #elif defined(OSX_BUILD)
-	if (!strncmp(latex, "pdf", 3)) {
+	if (use_pdf) {
 	    sprintf(tmp, "%s.pdf", texbase);
 	} else {
 	    sprintf(tmp, "%s.dvi", texbase);
@@ -7391,7 +7392,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	    file_read_errbox(tmp);
 	}
 #else
-	if (!strncmp(latex, "pdf", 3)) {
+	if (use_pdf) {
 	    sprintf(tmp, "%s.pdf", texbase);
 	    gretl_fork("viewpdf", tmp);
 	} else {
@@ -7401,17 +7402,11 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 #endif
     }
 
-#ifdef KILL_DVI_FILE
-    sleep(2); /* let forked xdvi get the DVI file */
-    sprintf(tmp, "%s.dvi", texbase);
-    gretl_remove(tmp);
-#endif
-
     sprintf(tmp, "%s.log", texbase);
     if (err == LATEX_ERROR) {
 	view_file(tmp, 0, 1, 78, 350, VIEW_FILE);
     } else {
-	fprintf(stderr, "not removing '%s'\n", texfile);
+	fprintf(stderr, "wrote '%s'\n", texfile);
 	/* gretl_remove(texfile); */
 	gretl_remove(tmp);
     }

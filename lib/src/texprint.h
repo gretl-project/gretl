@@ -69,6 +69,8 @@ void set_tex_use_utf (int s);
 
 void set_tex_use_pdf (const char *prog);
 
+int get_tex_use_pdf (void);
+
 void gretl_tex_preamble (PRN *prn, int fmt);
 
 void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);

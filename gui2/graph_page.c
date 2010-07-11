@@ -21,6 +21,7 @@
 #include "graph_page.h"
 #include "session.h"
 #include "gpt_control.h"
+#include "texprint.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -628,7 +629,7 @@ int display_graph_page (void)
 
     gpage_filenames_init(NULL);
 
-    if (!strncmp(latex, "pdf", 3)) {
+    if (get_tex_use_pdf()) {
 	if (gnuplot_pdf_terminal()) {
 	    gpage.term = GP_TERM_PDF;
 	} else {
@@ -703,7 +704,7 @@ int save_graph_page (const char *fname)
 
     gpage_filenames_init(fname);
 
-    if (!strncmp(latex, "pdf", 3)) {
+    if (get_tex_use_pdf()) {
 	if (gnuplot_pdf_terminal()) {
 	    gpage.term = GP_TERM_PDF;
 	} else {
