@@ -678,13 +678,15 @@ static int real_adf_test (int varno, int order, int niv,
 	opt = OPT_N;
     }
 
+#if 0
     if (flags & ADF_PANEL) {
 	/* testing for unit root with panel data: compute standard
 	   errors (and so the ADF t-statistic) without a degrees-of-
-	   freedom adjustment, in the ADF regression
+	   freedom adjustment in the ADF regression
 	*/
 	df_mod_opt |= OPT_N;
     }
+#endif
 
     if (opt & OPT_F) {
 	/* difference the variable before testing */
@@ -925,6 +927,127 @@ static int DF_index (gretlopt opt)
     }
 }
 
+/* See Im, Pesaran and Shin, "Testing for unit roots in
+   heterogeneous panels", Journal of Econometrics 115 (2003),
+   53-74.
+*/
+
+static int do_IPS_test (double tbar, int n, const int *Ti, 
+			int order, const int *Oi,
+			const DATAINFO *pdinfo,
+			gretlopt opt, PRN *prn)
+{
+    int (*get_IPS_critvals) (int, int, int, double *);
+    int (*IPS_tbar_moments) (int, double *, double *);
+    int (*IPS_tbar_rho_moments) (int, int, int, double *, double *);
+    void *handle = NULL;
+    int Tmin = Ti[1], Tmax = Ti[1];
+    int i, T, err = 0;
+
+    for (i=2; i<=n; i++) {
+	if (Ti[i] > Tmax) {
+	    Tmax = Ti[i];
+	}
+	if (Ti[i] < Tmin) {
+	    Tmin = Ti[i];
+	}
+    }
+
+    if (Oi != NULL || order > 0 ) {
+	/* non-zero lag order: use IPS's W_{tbar} statistic */
+	double E, V, Etbar, Vtbar, Wtbar;
+	int order_i;
+
+	IPS_tbar_rho_moments = get_plugin_function("IPS_tbar_rho_moments", &handle);
+
+	if (IPS_tbar_rho_moments != NULL) {
+	    for (i=0; i<n && !err; i++) {
+		T = Ti[i+1];
+		order_i = (Oi != NULL)? Oi[i+1] : order;
+		err = IPS_tbar_rho_moments(order_i, T, (opt & OPT_T), &E, &V);
+		Etbar += E;
+		Vtbar += V;
+	    }
+
+	    if (!err) {
+		Etbar /= n;
+		Vtbar /= n;
+		Wtbar = sqrt(n) * (tbar - Etbar) / sqrt(Vtbar);
+		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
+		pprintf(prn, "Im-Pesaran-Shin W_tbar = %g [%g]\n", Wtbar, 
+			normal_pvalue_1(-Wtbar));
+	    }
+	}
+    } else if (Tmax > Tmin) {
+	/* sample sizes differ: use IPS's Z_{tbar} */
+	double E, V, Etbar, Vtbar, Ztbar;
+
+	IPS_tbar_moments = get_plugin_function("IPS_tbar_moments", &handle);
+
+	if (IPS_tbar_moments != NULL) {
+	    for (i=0; i<n && !err; i++) {
+		T = Ti[i+1];
+		err = IPS_tbar_moments(T, &E, &V);
+		Etbar += E;
+		Vtbar += V;
+	    }
+
+	    if (!err) {
+		Etbar /= n;
+		Vtbar /= n;
+		Ztbar = sqrt(n) * (tbar - Etbar) / sqrt(Vtbar);
+		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
+		pprintf(prn, "Im-Pesaran-Shin Z_tbar = %g [%g]\n", Ztbar, 
+			normal_pvalue_1(-Ztbar));
+	    }
+	}
+    } else {
+	/* simple case: use tbar with exact critical values */
+	pprintf(prn, "N,T = (%d,%d)\n", n, Tmax);
+	pprintf(prn, "Im-Pesaran-Shin t-bar = %g\n", tbar);
+
+	get_IPS_critvals = get_plugin_function("get_IPS_critvals", &handle);
+
+	if (get_IPS_critvals != NULL) {
+	    double a[] = { 0.1, 0.05, 0.01 };
+	    double cv[3];
+		
+	    err = (*get_IPS_critvals) (n, Tmax, (opt & OPT_T), cv);
+	    if (!err) {
+		print_critical_values(a, cv, ADF, prn);
+	    }
+	}
+    }
+
+    if (handle != NULL) {
+	close_plugin(handle);
+    }
+
+    return err;
+}
+
+/* See In Choi, "Unit root tests for panel data", Journal of
+   International Money and Finance 20 (2001), 249-272.
+*/
+
+static void do_choi_test (double ppv, double zpv, double lpv, 
+			  int n, PRN *prn)
+{
+    double P = -2 * ppv;
+    double Z = zpv / sqrt((double) n);
+    int tdf = 5 * n + 4;
+    double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
+    double L = sqrt(k) * lpv;
+
+    pprintf(prn, "\nChoi meta-tests (H0: all groups have unit root):\n");
+    pprintf(prn, "   Inverse chi-square(%d) = %g [%g]\n", 2*n,
+	    P, chisq_cdf_comp(2*n, P));
+    pprintf(prn, "   Inverse normal test = %g [%g]\n", Z,
+	    normal_pvalue_1(-Z));
+    pprintf(prn, "   Logit test: t(%d) = %g [%g]\n", tdf, L,
+	    student_pvalue_1(tdf, -L));
+}
+
 static int panel_DF_test (int v, int order, 
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, PRN *prn)
@@ -933,13 +1056,31 @@ static int panel_DF_test (int v, int order,
     int uN = pdinfo->t2 / pdinfo->pd;
     int quiet = (opt & OPT_Q);
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
-    double pval, test = 0.0;
-    int Tmax = 0, Tmin = pdinfo->pd;
-    int i, err;
+    double pval, tbar = 0.0;
+    int *Ti = NULL, *Oi = NULL;
+    int i, n, err;
 
     err = panel_adjust_ADF_opt(&opt);
     if (err) {
 	return err;
+    }
+
+    if (opt & OPT_G) {
+	/* GLS option: can't do IPS t-bar test */
+	tbar = NADBL;
+    } else {
+	Ti = gretl_list_new(uN - u0 + 1);
+	if (Ti == NULL) {
+	    return E_ALLOC;
+	}
+	if ((opt & OPT_E) || order < 0) {
+	    /* testing down: lag order may vary by unit */
+	    Oi = gretl_list_new(uN - u0 + 1);
+	    if (Oi == NULL) {
+		free(Ti);
+		return E_ALLOC;
+	    }
+	}	    
     }
 
     if (!quiet) {
@@ -955,6 +1096,9 @@ static int panel_DF_test (int v, int order,
 		(order > 0)? ADF_model_string(j) : DF_model_string(j));
     }
 
+    /* number of units in sample range */
+    n = uN - u0 + 1;
+
     /* run a Dickey-Fuller test for each unit and record the
        results */
 
@@ -964,6 +1108,7 @@ static int panel_DF_test (int v, int order,
 	pdinfo->t1 = i * pdinfo->pd;
 	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
 	err = array_adjust_t1t2((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
+
 	if (!err) {
 	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
 				ADF_PANEL, &ainfo, prn);
@@ -980,14 +1125,17 @@ static int panel_DF_test (int v, int order,
 		}
 	    }	    
 	}
+
 	if (!err) {
-	    if (ainfo.T < Tmin) {
-		Tmin = ainfo.T;
-	    } 
-	    if (ainfo.T > Tmax) {
-		Tmax = ainfo.T;
-	    } 	    
-	    test += ainfo.tau;
+	    if (Ti != NULL) {
+		Ti[i-u0+1] = ainfo.T;
+	    }
+	    if (Oi != NULL) {
+		Oi[i-u0+1] = ainfo.order;
+	    }	    
+	    if (!na(tbar)) {
+		tbar += ainfo.tau;
+	    }
 	    pval = ainfo.pval;
 	    if (na(pval)) {
 		ppv = zpv = lpv = NADBL;
@@ -1002,49 +1150,18 @@ static int panel_DF_test (int v, int order,
     /* process the results as per Im-Pesaran-Shin and/or Choi */
 
     if (!err) {
-	int (*get_IPS_critvals) (int, int, int, double *);
-	int n = uN - u0 + 1;
-	int T = pdinfo->pd; /* FIXME! */
-	void *handle;
-
-	if (Tmax > Tmin) {
-	    /* FIXME */
-	    pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
-	} else {
-	    pprintf(prn, "N,T = (%d,%d)\n", n, T);
+	if (!na(tbar)) {
+	    tbar /= n;
+	    do_IPS_test(tbar, n, Ti, order, Oi, pdinfo, opt, prn);
 	}
-	pprintf(prn, "Im-Pesaran-Shin t-bar = %g\n", test / n);
-
-	get_IPS_critvals = get_plugin_function("get_IPS_critvals", &handle);
-
-	if (get_IPS_critvals != NULL) {
-	    double a[] = { 0.1, 0.05, 0.01 };
-	    double cv[3];
-		
-	    err = (*get_IPS_critvals) (n, Tmax, (opt & OPT_T), cv);
-	    if (!err) {
-		print_critical_values(a, cv, ADF, prn);
-	    }
-	    close_plugin(handle);
-	}
-
 	if (!na(ppv)) {
-	    double P = -2 * ppv;
-	    double Z = zpv / sqrt((double) n);
-	    int tdf = 5 * n + 4;
-	    double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
-	    double L = sqrt(k) * lpv;
-
-	    pprintf(prn, "\nChoi meta-tests (H0: all groups have unit root):\n");
-	    pprintf(prn, "   Inverse chi-square(%d) = %g [%g]\n", 2*n,
-		    P, chisq_cdf_comp(2*n, P));
-	    pprintf(prn, "   Inverse normal test = %g [%g]\n", Z,
-		    normal_pvalue_1(-Z));
-	    pprintf(prn, "   Logit test: t(%d) = %g [%g]\n", tdf, L,
-		    student_pvalue_1(tdf, -L));
+	    do_choi_test(ppv, zpv, lpv, n, prn);
 	}
-	pputc(prn, '\n');
+	pputc(prn, '\n'); /* FIXME quiet */
     }
+
+    free(Ti);
+    free(Oi);
 
     return err;
 }

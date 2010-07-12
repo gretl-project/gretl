@@ -443,7 +443,8 @@ gretl_matrix *stock_yogo_lookup (int n, int K2, int which)
 
 /*  
     Table 2 from Im, Pesaran and Shin, "Testing for unit roots in
-    heterogeneous panels", J. of Econometrics 115, 2003.
+    heterogeneous panels", J. of Econometrics 115, 2003. Critical
+    values for the tbar_{NT} statistic.
 
     Each sub-table has 8 rows and 11 columns as follows:
 
@@ -693,3 +694,193 @@ int get_IPS_critvals (int N, int T, int trend, double *c)
 
     return err;
 }
+
+/* Moments of t_{iT}: Table 1 in IPS (2003), based on
+   Nabeya (1999).
+*/
+
+static const double nabeya_moments[] = {
+    /* E(),   V() */
+    -1.520, 1.745, /*    6 */
+    -1.514, 1.414, /*    7 */
+    -1.501, 1.228, /*    8 */
+    -1.501, 1.132, /*    9 */
+    -1.504, 1.069, /*   10 */
+    -1.514, 0.923, /*   15 */
+    -1.522, 0.851, /*   20 */
+    -1.520, 0.809, /*   25 */
+    -1.526, 0.789, /*   30 */
+    -1.523, 0.770, /*   40 */
+    -1.527, 0.760, /*   50 */
+    -1.532, 0.735, /*  100 */
+    -1.531, 0.715, /*  500 */
+    -1.529, 0.707  /* 1000 */
+};
+
+static const int nabeya_T[] = {6, 7, 8, 9, 10, 15, 20, 25, 
+			       30, 40, 50, 100, 500, 1000};
+
+int IPS_tbar_moments (int T, double *Etbar, double *Vtbar)
+{
+    int err = 0;
+
+    if (T < 6) {
+	*Etbar = *Vtbar = NADBL;
+	err = E_DATA;
+    } else if (T >= 1000) {
+	*Etbar = nabeya_moments[2*13];
+	*Vtbar = nabeya_moments[2*13+1];
+    } else {
+	double w1, w2, E1, E2, V1, V2;
+	int i, j;
+
+	for (i=12; i>=0; i--) {
+	    j = 2 * i;
+	    if (T == nabeya_T[i]) {
+		*Etbar = nabeya_moments[j+1];
+		*Vtbar = nabeya_moments[j+2];
+		break;
+	    } else if (T > nabeya_T[i]) {
+		w1 = 1.0 / (T - nabeya_T[i]);
+		w2 = 1.0 / (nabeya_T[i+1] - T);
+		E1 = nabeya_moments[j];
+		V1 = nabeya_moments[j+1];
+		E2 = nabeya_moments[j+2];
+		V2 = nabeya_moments[j+3];
+		*Etbar = (w1 * E1 + w2 * E2) / (w1 + w2);
+		*Vtbar = (w1 * V1 + w2 * V2) / (w1 + w2);
+		break;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* IPS (2003) Table 3: expected values and variances of the
+   t_T(\rho, 0) statistic, both without and with time trend.
+
+   Rows represent T, from 10 to 100.
+   Columns represent the lag order, p, from 0 to 8.
+*/
+
+/* IPS Table 3, without time trend, expected values */
+
+static const double E_Wtbar[] = {
+    /*   0       1       2       3       4       5       6       7       8 */
+    -1.504, -1.488, -1.319, -1.306, -1.171,      0,      0,      0,      0, /* 10 */
+    -1.514, -1.503, -1.387, -1.366, -1.260,      0,      0,      0,      0, /* 15 */
+    -1.522, -1.516, -1.428, -1.413, -1.329, -1.313,      0,      0,      0, /* 20 */
+    -1.520, -1.514, -1.443, -1.433, -1.363, -1.351, -1.289, -1.273, -1.212, /* 25 */
+    -1.526, -1.519, -1.460, -1.453, -1.394, -1.384, -1.331, -1.319, -1.266, /* 30 */
+    -1.523, -1.520, -1.476, -1.471, -1.428, -1.421, -1.380, -1.371, -1.329, /* 40 */
+    -1.527, -1.524, -1.493, -1.489, -1.454, -1.451, -1.418, -1.411, -1.377, /* 50 */
+    -1.519, -1.519, -1.490, -1.486, -1.458, -1.454, -1.427, -1.423, -1.393, /* 60 */
+    -1.524, -1.522, -1.498, -1.495, -1.470, -1.467, -1.444, -1.441, -1.415, /* 70 */
+    -1.532, -1.530, -1.514, -1.512, -1.495, -1.494, -1.476, -1.474, -1.456  /* 100 */
+};
+
+/* IPS Table 3, without time trend, variances */
+
+static const double V_Wtbar[] = {
+    1.069, 1.255, 1.421, 1.759, 2.080,     0,     0,     0,     0,
+    0.923, 1.011, 1.078, 1.181, 1.279,     0,     0,     0,     0,
+    0.851, 0.915, 0.969, 1.037, 1.097, 1.171,     0,     0,     0,
+    0.809, 0.861, 0.905, 0.952, 1.005, 1.055, 1.114, 1.164, 1.217,
+    0.789, 0.831, 0.865, 0.907, 0.946, 0.980, 1.023, 1.062, 1.105,
+    0.770, 0.803, 0.830, 0.858, 0.886, 0.912, 0.942, 0.968, 0.996,
+    0.760, 0.781, 0.798, 0.819, 0.842, 0.863, 0.886, 0.910, 0.929,
+    0.749, 0.770, 0.789, 0.802, 0.819, 0.839, 0.858, 0.875, 0.896,
+    0.736, 0.753, 0.766, 0.782, 0.801, 0.814, 0.834, 0.851, 0.871,
+    0.735, 0.745, 0.754, 0.761, 0.771, 0.781, 0.795, 0.806, 0.818
+};
+
+/* IPS Table 3, with time trend, expected values */
+
+static const double E_Wtbar_t[] = {
+    -2.166, -2.173, -1.914, -1.922, -1.750,      0,      0,      0,      0,
+    -2.167, -2.169, -1.999, -1.977, -1.823,      0,      0,      0,      0,
+    -2.168, -2.172, -2.047, -2.032, -1.911, -1.888,      0,      0,      0, 
+    -2.167, -2.172, -2.074, -2.065, -1.968, -1.955, -1.868, -1.851, -1.761,
+    -2.172, -2.173, -2.095, -2.091, -2.009, -1.998, -1.923, -1.912, -1.835,
+    -2.173, -2.177, -2.120, -2.117, -2.057, -2.051, -1.995, -1.986, -1.925,
+    -2.176, -2.180, -2.137, -2.137, -2.091, -2.087, -2.042, -2.036, -1.987,
+    -2.174, -2.178, -2.143, -2.142, -2.103, -2.101, -2.065, -2.063, -2.024,
+    -2.174, -2.176, -2.146, -2.146, -2.114, -2.111, -2.081, -2.079, -2.046,
+    -2.177, -2.179, -2.158, -2.158, -2.135, -2.135, -2.113, -2.112, -2.088
+};
+
+/* IPS Table 3, with time trend, variances */
+
+static const double V_Wtbar_t[] = {
+    1.132, 1.453, 1.627, 2.482, 3.947,     0,     0,     0,     0, 
+    0.869, 0.975, 1.036, 1.214, 1.332,     0,     0,     0,     0,
+    0.763, 0.845, 0.882, 0.983, 1.052, 1.165,     0,     0,     0, 
+    0.713, 0.769, 0.796, 0.861, 0.913, 0.991, 1.055, 1.145, 1.208,
+    0.690, 0.734, 0.756, 0.808, 0.845, 0.899, 0.945, 1.009, 1.063, 
+    0.655, 0.687, 0.702, 0.735, 0.759, 0.792, 0.828, 0.872, 0.902,
+    0.633, 0.654, 0.661, 0.688, 0.705, 0.730, 0.753, 0.786, 0.808, 
+    0.621, 0.641, 0.653, 0.674, 0.685, 0.705, 0.725, 0.747, 0.766,
+    0.610, 0.627, 0.634, 0.650, 0.662, 0.673, 0.689, 0.713, 0.728, 
+    0.597, 0.605, 0.613, 0.625, 0.629, 0.638, 0.650, 0.661, 0.670
+};
+
+static const int tbar_rho_T[] = {10, 15, 20, 25, 30, 40, 50, 60, 70, 100};
+
+int IPS_tbar_rho_moments (int p, int T, int trend, double *Etbar, double *Vtbar)
+{
+    const double *Etab, *Vtab;
+    int err = 0;
+
+    if (trend) {
+	Etab = E_Wtbar_t;
+	Vtab = V_Wtbar_t;
+    } else {
+	Etab = E_Wtbar;
+	Vtab = V_Wtbar;
+    }	
+
+    if (T < 10 || p > 8) {
+	*Etbar = *Vtbar = NADBL;
+	err = E_DATA;
+    } else if (T >= 100) {
+	*Etbar = Etab[9*9+p];
+	*Vtbar = Vtab[9*9+p];
+    } else {
+	double w1, w2, E1, E2, V1, V2;
+	int i, j;
+
+	for (i=8; i>=0; i--) {
+	    j = 9 * i;
+	    if (T == tbar_rho_T[i]) {
+		if (Etab[j+p] == 0.0) {
+		    *Etbar = *Vtbar = NADBL;
+		    err = E_DATA;
+		} else {
+		    *Etbar = Etab[j+p];
+		    *Vtbar = Vtab[j+p];
+		}
+		break;
+	    } else if (T > tbar_rho_T[i]) {
+		E1 = Etab[j+p];
+		if (E1 == 0.0) {
+		    *Etbar = *Vtbar = NADBL;
+		    err = E_DATA;
+		} else {
+		    w1 = 1.0 / (T - tbar_rho_T[i]);
+		    w2 = 1.0 / (tbar_rho_T[i+1] - T);
+		    E2 = Etab[j+9+p];
+		    V1 = Vtab[j+p];
+		    V2 = Vtab[j+9+p];
+		    *Etbar = (w1 * E1 + w2 * E2) / (w1 + w2);
+		    *Vtbar = (w1 * V1 + w2 * V2) / (w1 + w2);
+		}
+		break;
+	    }
+	}
+    }
+
+    return err;
+}
+
+
