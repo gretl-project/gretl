@@ -814,7 +814,7 @@ static int *make_ols_list (const int *list, int *err)
     return olist;
 }
 
-static MODEL garch_run_ols (const int *list, double ***pZ,
+static MODEL garch_run_ols (const int *list, double **Z,
 			    DATAINFO *pdinfo, PRN *prn)
 {
     int *ols_list;
@@ -828,7 +828,7 @@ static MODEL garch_run_ols (const int *list, double ***pZ,
 	return model;
     }
 
-    model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M | OPT_U);
+    model = lsq(ols_list, Z, pdinfo, OLS, OPT_A | OPT_M | OPT_U);
 
 #if 0
     fprintf(stderr, "errcode=%d, ess=%g, sigma=%g\n",
@@ -908,7 +908,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* run initial OLS */
-    model = garch_run_ols(list, pZ, pdinfo, prn);
+    model = garch_run_ols(list, *pZ, pdinfo, prn);
     if (model.errcode) {
 	free(list);
 	return model;

@@ -231,7 +231,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 
     /* pass 1 proper */
 
-    armod = lsq(pass1list, &aZ, adinfo, OLS, OPT_A);
+    armod = lsq(pass1list, aZ, adinfo, OLS, OPT_A);
     if (armod.errcode) {
 	err = armod.errcode;
 	goto bailout;
@@ -318,7 +318,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     
     /* now do pass2 */
     clear_model(&armod);
-    armod = lsq(pass2list, &aZ, adinfo, OLS, OPT_A);
+    armod = lsq(pass2list, aZ, adinfo, OLS, OPT_A);
 
     if (armod.errcode) {
 	err = armod.errcode;
@@ -672,7 +672,7 @@ static void arma_init_build_dataset (arma_info *ainfo,
 #endif
 }
 
-static void nls_kickstart (MODEL *pmod, double ***pZ, 
+static void nls_kickstart (MODEL *pmod, double **Z, 
 			   DATAINFO *pdinfo,
 			   double *b0, double *by1)
 {
@@ -689,7 +689,7 @@ static void nls_kickstart (MODEL *pmod, double ***pZ,
 	list[2] = 2;
     }
 
-    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
+    *pmod = lsq(list, Z, pdinfo, OLS, OPT_A | OPT_Z);
 
     if (!pmod->errcode) {
 	if (b0 != 0) {
@@ -909,7 +909,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 
     if (!err) {
 	if (coeff == NULL) {
-	    nls_kickstart(amod, pZ, pdinfo, b0, by1);
+	    nls_kickstart(amod, *pZ, pdinfo, b0, by1);
 	}
 
 #if AINIT_DEBUG
@@ -1076,7 +1076,7 @@ int ar_arma_init (double *coeff, const double **Z,
 #if AINIT_DEBUG
 	printlist(arlist, "'arlist' in ar_arma_init (OLS)");
 #endif
-	armod = lsq(arlist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
+	armod = lsq(arlist, aZ, adinfo, OLS, OPT_A | OPT_Z);
 	err = armod.errcode;
     }
 
@@ -1158,7 +1158,7 @@ int arma_by_ls (const double *coeff,
 	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, &aZ, adinfo,
 					   prn);
     } else {
-	*pmod = lsq(arlist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
+	*pmod = lsq(arlist, aZ, adinfo, OLS, OPT_A | OPT_Z);
     }
 
     /* clean up */

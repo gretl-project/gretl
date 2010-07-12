@@ -353,7 +353,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	if (t > pmod->t1) {
 	    dum[t-1] = 0.0;
 	}
-	smod = lsq(slist, pZ, pdinfo, OLS, OPT_A);
+	smod = lsq(slist, *pZ, pdinfo, OLS, OPT_A);
 	if (smod.errcode) {
 	    err = smod.errcode;
 	} else {

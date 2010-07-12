@@ -941,7 +941,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (sys_ols_ok(sys)) {
-	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	    *pmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
 	} else {
 	    *pmod = tsls(list, pZ, pdinfo, sys_tsls_opt(sys));
 	}
@@ -986,7 +986,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     if (method == SYS_METHOD_LIML) {
 	/* compute the minimum eigenvalues and generate the
 	   k-class data matrices */
-	err = liml_driver(sys, pZ, pdinfo, prn);
+	err = liml_driver(sys, *pZ, pdinfo, prn);
 	if (err) goto cleanup;
     }
 
@@ -1197,7 +1197,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (method == SYS_METHOD_FIML) {
 	/* compute FIML estimates */
-	err = fiml_driver(sys, pZ, pdinfo, opt, prn);
+	err = fiml_driver(sys, *pZ, pdinfo, opt, prn);
     }
 
     if (!err && !(sys->flags & SYSTEM_SINGLE)) {

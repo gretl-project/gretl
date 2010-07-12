@@ -444,7 +444,7 @@ static int auto_adjust_order (int *list, int order_max,
 
     for (k=order_max; k>0; k--) {
 
-	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	kmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
 
 	if (kmod.errcode) {
 	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
@@ -800,7 +800,7 @@ static int real_adf_test (int varno, int order, int niv,
 	printlist(list, "final ADF regression list");
 #endif
 
-	dfmod = lsq(list, pZ, pdinfo, OLS, df_mod_opt);
+	dfmod = lsq(list, *pZ, pdinfo, OLS, df_mod_opt);
 	if (dfmod.errcode) {
 	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n", 
 		    dfmod.errcode);
@@ -1355,7 +1355,7 @@ real_kpss_test (int order, int varno, double ***pZ,
     }
 
     /* OPT_M: reject missing values within sample range */
-    KPSSmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    KPSSmod = lsq(list, *pZ, pdinfo, OLS, OPT_A | OPT_M);
     if (KPSSmod.errcode) {
 	clear_model(&KPSSmod);
 	return KPSSmod.errcode;
@@ -1710,7 +1710,7 @@ int engle_granger_test (int order, const int *list, double ***pZ,
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
-    cmod = lsq(clist, pZ, pdinfo, OLS, OPT_NONE);
+    cmod = lsq(clist, *pZ, pdinfo, OLS, OPT_NONE);
     err = cmod.errcode;
     if (err) {
 	goto bailout;

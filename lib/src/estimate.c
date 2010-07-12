@@ -287,7 +287,7 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
 
-    emod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    emod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
     if (emod.errcode) {
 	err = emod.errcode;
     } else {
@@ -310,7 +310,7 @@ ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     pdinfo->t1 = orig_t1;
     pdinfo->t2 = orig_t2;
 
-    if (err) {
+    if (err && !pmod->errcode) {
 	pmod->errcode = err;
     }
 
@@ -608,17 +608,17 @@ maybe_shift_ldepvar (MODEL *pmod, const double **Z, DATAINFO *pdinfo)
  * @pwe: if non-zero, use Prais-Winsten for first observation.
  * @xpx: on output, X'X matrix as lower triangle, stacked by columns.
  * @xpy: on output, X'y vector (but see below).
- * @ysum: location to recieve \sum y_i, or %NULL.
- * @ypy: location to recieve (scalar) y'y, or %NULL.
- * @mask: missing observations mask, or %NULL.
+ * @ysum: location to recieve \sum y_i, or NULL.
+ * @ypy: location to recieve (scalar) y'y, or NULL.
+ * @mask: missing observations mask, or NULL.
  *
  * Calculates X'X and X'y, with various possible transformations
  * of the original data, depending on @nwt, @rho and @pwe.
- * If X'y is not required, @xpy can be given as %NULL.
+ * If X'y is not required, @xpy can be given as NULL.
  *
  * Note: the y-related pointer arguments @xpy, @ysum, and @ypy 
  * form a "package": either all should be given, or all should 
- * be %NULL.
+ * be NULL.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -787,7 +787,7 @@ static int XTX_XTy (const int *list, int t1, int t2,
  * of the original data depending on whether estimation of 
  * @pmod involved weighting or quasi-differencing.
  *
- * Returns: The vech of X'X or %NULL on error.
+ * Returns: The vech of X'X or NULL on error.
  */
 
 double *gretl_XTX (const MODEL *pmod, const double **Z, int *err)
@@ -1001,24 +1001,24 @@ static void model_free_storage (MODEL *pmod)
     pmod->sderr = NULL;
 }
 
-/**
- * ar1_lsq:
+/*
+ * real_ar1_lsq:
  * @list: model specification.
- * @pZ: address of data array.
+ * @Z: data array.
+ * @pZ: address of data array (required only for ar1).
  * @pdinfo: dataset information.
  * @ci: command index, e.g. OLS.
  * @opt: option flags
  * @rho: coefficient for quasi-differencing the data.
  *
- * A generalization of lsq(), permitting quasi-differencing 
- * of the data "on the fly" using @rho, the absolute value of
- * which should be less than 1.0.
+ * Nests lsq() and ar1_lsq().
  *
  * Returns: model struct containing the estimates.
  */
 
-MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
-	       GretlCmdIndex ci, gretlopt opt, double rho)
+static MODEL real_ar1_lsq (const int *list, double **Z, double ***pZ, 
+			   DATAINFO *pdinfo, GretlCmdIndex ci, 
+			   gretlopt opt, double rho)
 {
     MODEL mdl;
     int effobs = 0;
@@ -1028,16 +1028,16 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     int nullmod = 0, ldv = 0;
     int yno, i;
 
-    if (list == NULL || pZ == NULL || pdinfo == NULL) {
+    if (list == NULL || (pZ == NULL && Z == NULL) || pdinfo == NULL) {
 	fprintf(stderr, "E_DATA: lsq: list = %p, pZ = %p, pdinfo = %p\n",
 		(void *) list, (void *) pZ, (void *) pdinfo);
 	mdl.errcode = E_DATA;
         return mdl;
     }
 
-    if (ci == HSK) {
-	return hsk_model(list, pZ, pdinfo);
-    } 
+    if (Z == NULL) {
+	Z = *pZ;
+    }
 
     gretl_model_init(&mdl);
     gretl_model_smpl_init(&mdl, pdinfo);
@@ -1074,7 +1074,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* Doing weighted least squares? */
     if (ci == WLS) { 
-	check_weight_var(&mdl, (*pZ)[mdl.list[1]], &effobs);
+	check_weight_var(&mdl, Z[mdl.list[1]], &effobs);
 	if (mdl.errcode) {
 	    return mdl;
 	}
@@ -1092,7 +1092,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* adjust sample range and check for missing obs: this
        may set the model errcode */
     missv = lsq_check_for_missing_obs(&mdl, opt, pdinfo,
-				      (const double **) *pZ,
+				      (const double **) Z,
 				      &misst);
     if (mdl.errcode) {
         goto lsq_abort;
@@ -1101,7 +1101,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* react to presence of unhandled missing obs */
     if (missv) {
 	if (dated_daily_data(pdinfo)) {
-	    if (repack_missing_daily_obs(&mdl, *pZ, pdinfo)) {
+	    if (repack_missing_daily_obs(&mdl, Z, pdinfo)) {
 		return mdl;
 	    }
 	} else {
@@ -1128,23 +1128,23 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* check for zero dependent var */
-    if (depvar_zero(&mdl, yno, (const double **) *pZ)) {  
+    if (depvar_zero(&mdl, yno, (const double **) Z)) {  
         mdl.errcode = E_ZERO;
         goto lsq_abort; 
     } 
 
     /* drop any vars that are all zero and repack the list */
-    omitzero(&mdl, (const double **) *pZ, pdinfo, opt);
+    omitzero(&mdl, (const double **) Z, pdinfo, opt);
 
     /* if regressor list contains a constant, record this fact and 
        place it first among the regressors */
-    mdl.ifc = reglist_check_for_const(mdl.list, (const double **) *pZ, 
+    mdl.ifc = reglist_check_for_const(mdl.list, (const double **) Z, 
 				      pdinfo);
 
     /* Check for presence of lagged dependent variable? 
        (Don't bother if this is an auxiliary regression.) */
     if (!(opt & OPT_A)) {
-	ldv = lagged_depvar_check(&mdl, (const double **) *pZ, pdinfo);
+	ldv = lagged_depvar_check(&mdl, (const double **) Z, pdinfo);
     }
 
     /* AR1: advance the starting observation by one? */
@@ -1186,17 +1186,17 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (nullmod) {
-	gretl_null_regress(&mdl, (const double **) *pZ);
+	gretl_null_regress(&mdl, (const double **) Z);
     } else if (!jackknife && (opt & (OPT_R | OPT_I | OPT_Q))) { 
 	mdl.rho = rho;
-	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
+	gretl_qr_regress(&mdl, (const double **) Z, pdinfo, opt);
     } else {
-	gretl_choleski_regress(&mdl, (const double **) *pZ, rho, pwe, opt);
+	gretl_choleski_regress(&mdl, (const double **) Z, rho, pwe, opt);
 	if (mdl.errcode == E_SINGULAR && !jackknife) {
 	    /* (near-) perfect collinearity is better handled by QR */
 	    model_free_storage(&mdl);
 	    mdl.rho = rho;
-	    gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo, opt);
+	    gretl_qr_regress(&mdl, (const double **) Z, pdinfo, opt);
 	}
     }
 
@@ -1205,15 +1205,17 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get the mean and sd of dep. var. and make available */
-    model_depvar_stats(&mdl, (const double **) *pZ);
+    model_depvar_stats(&mdl, (const double **) Z);
 
     /* Doing an autoregressive procedure? */
     if (ci == AR1) {
-	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) { 
+	if (compute_ar_stats(&mdl, (const double **) Z, rho)) { 
 	    goto lsq_abort;
 	}
 	if (ldv) {
-	    if (ldepvar_std_errors(&mdl, pZ, pdinfo)) {
+	    ldepvar_std_errors(&mdl, pZ, pdinfo);
+	    Z = *pZ;
+	    if (mdl.errcode) {
 		goto lsq_abort;
 	    }
 	}
@@ -1226,13 +1228,13 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
        ESS and sigma based on unweighted data
     */
     if (ci == WLS) {
-	get_wls_stats(&mdl, (const double **) *pZ);
-	fix_wls_values(&mdl, *pZ);
+	get_wls_stats(&mdl, (const double **) Z);
+	fix_wls_values(&mdl, Z);
     }
 
     if (mdl.missmask == NULL && (opt & OPT_T) && !(opt & OPT_I)) {
 	mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
-	mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
+	mdl.dw = dwstat(1, &mdl, (const double **) Z);
     } else if (!(opt & OPT_I)) {
 	mdl.rho = mdl.dw = NADBL;
     }
@@ -1251,12 +1253,12 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	ls_criteria(&mdl);
     }
     if (!(opt & OPT_A) && !na(mdl.lnL)) {
-	log_depvar_ll(&mdl, (const double **) *pZ, pdinfo);
+	log_depvar_ll(&mdl, (const double **) Z, pdinfo);
     }
 
     /* hccm command or HC3a */
     if (jackknife) {
-	mdl.errcode = jackknife_vcv(&mdl, (const double **) *pZ);
+	mdl.errcode = jackknife_vcv(&mdl, (const double **) Z);
     }
 
  lsq_abort:
@@ -1264,7 +1266,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* If we reshuffled any missing observations, put them
        back in their right places now */
     if (gretl_model_get_int(&mdl, "daily_repack")) {
-	undo_daily_repack(&mdl, *pZ, pdinfo);
+	undo_daily_repack(&mdl, Z, pdinfo);
     }
 
     if (!(opt & OPT_A)) {
@@ -1279,24 +1281,24 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data array.
+ * @Z: data array.
  * @pdinfo: dataset information.
  * @ci: one of the command indices in #LSQ_MODEL.
  * @opt: option flags: zero or more of the following --
- *   %OPT_R compute robust standard errors;
- *   %OPT_A treat as auxiliary regression (don't bother checking
+ *   OPT_R compute robust standard errors;
+ *   OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
- *   %OPT_P use Prais-Winsten for first obs;
- *   %OPT_N don't use degrees of freedom correction for standard
+ *   OPT_P use Prais-Winsten for first obs;
+ *   OPT_N don't use degrees of freedom correction for standard
  *      error of regression;
- *   %OPT_M reject missing observations within sample range;
- *   %OPT_Z (internal use) suppress the automatic elimination of 
+ *   OPT_M reject missing observations within sample range;
+ *   OPT_Z (internal use) suppress the automatic elimination of 
  *      perfectly collinear variables.
- *   %OPT_X: compute "variance matrix" as just (X'X)^{-1}
- *   %OPT_B: don't compute R^2.
- *   %OPT_I: compute Durbin-Watson p-value.
- *   %OPT_Q: use QR decomposition (not necessarily robust VCV).
- *   %OPT_U: treat null model as OK.
+ *   OPT_X: compute "variance matrix" as just (X'X)^{-1}
+ *   OPT_B: don't compute R^2.
+ *   OPT_I: compute Durbin-Watson p-value.
+ *   OPT_Q: use QR decomposition (not necessarily robust VCV).
+ *   OPT_U: treat null model as OK.
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
@@ -1304,12 +1306,33 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL lsq (const int *list, double **Z, DATAINFO *pdinfo, 
 	   GretlCmdIndex ci, gretlopt opt)
 {
-    return ar1_lsq(list, pZ, pdinfo, ci, opt, 0.0);
+    return real_ar1_lsq(list, Z, NULL, pdinfo, ci, opt, 0.0);
 }
 
+/**
+ * ar1_lsq:
+ * @list: model specification.
+ * @pZ: address of data array.
+ * @pdinfo: dataset information.
+ * @ci: command index, e.g. OLS.
+ * @opt: option flags
+ * @rho: coefficient for quasi-differencing the data.
+ *
+ * A generalization of lsq(), permitting quasi-differencing 
+ * of the data "on the fly" using @rho, the absolute value of
+ * which should be less than 1.0.
+ *
+ * Returns: model struct containing the estimates.
+ */
+
+MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
+	       GretlCmdIndex ci, gretlopt opt, double rho)
+{
+    return real_ar1_lsq(list, NULL, pZ, pdinfo, ci, opt, 0.0);
+}
 
 static int make_ess (MODEL *pmod, const double **Z)
 {
@@ -2046,9 +2069,9 @@ static double autores (MODEL *pmod, const double **Z, gretlopt opt)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: option flags: may include %OPT_H to use Hildreth-Lu,
- *       %OPT_P to use Prais-Winsten, %OPT_B to suppress Cochrane-Orcutt
- *       fine-tuning of Hildreth-Lu results, %OPT_G to generate
+ * @opt: option flags: may include OPT_H to use Hildreth-Lu,
+ *       OPT_P to use Prais-Winsten, OPT_B to suppress Cochrane-Orcutt
+ *       fine-tuning of Hildreth-Lu results, OPT_G to generate
  *       a gnuplot graph of the search in Hildreth-Lu case.
  * @prn: gretl printing struct.
  * @err: location to receeve error code.
@@ -2180,7 +2203,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } else { 
 	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
-	armod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	armod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
 	if (!armod.errcode && armod.dfd == 0) {
 	    armod.errcode = E_DF;
 	}
@@ -2453,7 +2476,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
 
-    aux = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    aux = lsq(list, *pZ, pdinfo, OLS, OPT_A);
     err = aux.errcode;
     if (err) {
 	shrink = pdinfo->v - oldv;
@@ -2504,10 +2527,15 @@ MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo)
     int *hsklist;
     MODEL hsk;
 
+    if (pZ == NULL) {
+	hsk.errcode = E_DATA;
+	return hsk;
+    }
+
     gretl_error_clear();
 
     /* run initial OLS */
-    hsk = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    hsk = lsq(list, *pZ, pdinfo, OLS, OPT_A);
     if (hsk.errcode) {
 	return hsk;
     }
@@ -2538,7 +2566,7 @@ MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo)
     }
 
     clear_model(&hsk);
-    hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_NONE);
+    hsk = lsq(hsklist, *pZ, pdinfo, WLS, OPT_NONE);
     hsk.ci = HSK;
 
     dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
@@ -2777,7 +2805,7 @@ static int get_whites_aux (const MODEL *pmod, const double **Z)
  * @pmod: pointer to model.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: if flags include %OPT_S, save results to model; %OPT_Q
+ * @opt: if flags include OPT_S, save results to model; OPT_Q
  * means don't print the auxiliary regression.
  * @prn: gretl printing struct.
  *
@@ -2834,7 +2862,7 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     /* reduced form: regress the original dependent variable on all of
        the instruments from the original model
     */
-    ptmod = lsq(auxlist, pZ, pdinfo, OLS, OPT_A);
+    ptmod = lsq(auxlist, *pZ, pdinfo, OLS, OPT_A);
     err = ptmod.errcode;
     if (err) {
 	goto bailout;
@@ -2871,7 +2899,7 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
     /* regress the squared residuals on the squared fitted
        values from the reduced-form auxiliary regression
     */
-    ptmod = lsq(testlist, pZ, pdinfo, OLS, OPT_A);
+    ptmod = lsq(testlist, *pZ, pdinfo, OLS, OPT_A);
     err = ptmod.errcode;
 
     if (!err) {
@@ -2920,7 +2948,7 @@ static int tsls_hetero_test (MODEL *pmod, double ***pZ,
 */
 
 static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
-			 double ***pZ, DATAINFO *pdinfo,
+			 double **Z, DATAINFO *pdinfo,
 			 gretlopt opt, int *err)
 {
     double s2, u2t, gt;
@@ -2942,15 +2970,15 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (na(pmod->uhat[t])) {
-	    (*pZ)[v][t] = NADBL;
+	    Z[v][t] = NADBL;
 	} else {
 	    u2t = pmod->uhat[t] * pmod->uhat[t];
 	    gt = (opt & OPT_R)? (u2t - s2) : (u2t / s2);
-	    (*pZ)[v][t] = gt;
+	    Z[v][t] = gt;
 	}
     }
 
-    *aux = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    *aux = lsq(list, Z, pdinfo, OLS, OPT_A);
     *err = aux->errcode;
 
     if (!*err) {
@@ -2978,8 +3006,8 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
  * @pmod: pointer to model.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: if flags include %OPT_S, save results to model; %OPT_Q
- * means don't print the auxiliary regression;  %OPT_B means
+ * @opt: if flags include OPT_S, save results to model; OPT_Q
+ * means don't print the auxiliary regression;  OPT_B means
  * do the simpler Breusch-Pagan variant.
  * @prn: gretl printing struct.
  *
@@ -3079,9 +3107,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	/* run auxiliary regression */
 	if (BP) {
-	    LM = get_BP_LM(pmod, list, &white, pZ, pdinfo, opt, &err);
+	    LM = get_BP_LM(pmod, list, &white, *pZ, pdinfo, opt, &err);
 	} else {
-	    white = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Q);
+	    white = lsq(list, *pZ, pdinfo, OLS, OPT_A | OPT_Q);
 	    err = white.errcode;
 	    if (!err) {
 		LM = white.rsq * white.nobs;
@@ -3228,7 +3256,7 @@ MODEL ar_model (const int *list, double ***pZ,
     /* first pass: estimate model via OLS: use OPT_M to generate an
        error in case of missing values within sample range 
     */
-    ar = lsq(reglist, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    ar = lsq(reglist, *pZ, pdinfo, OLS, OPT_A | OPT_M);
     if (ar.errcode) {
 	goto bailout;
     }
@@ -3281,7 +3309,7 @@ MODEL ar_model (const int *list, double ***pZ,
 	if (iter > 1) {
 	    clear_model(&rhomod);
 	}
-	rhomod = lsq(rholist, pZ, pdinfo, OLS, OPT_A);
+	rhomod = lsq(rholist, *pZ, pdinfo, OLS, OPT_A);
 
 	/* and rho-transform the data */
 	ryno = vc = v + i;
@@ -3303,7 +3331,7 @@ MODEL ar_model (const int *list, double ***pZ,
 
 	/* estimate the transformed model */
 	clear_model(&ar);
-	ar = lsq(reglist2, pZ, pdinfo, OLS, OPT_A);
+	ar = lsq(reglist2, *pZ, pdinfo, OLS, OPT_A);
 
         if (iter > 1) {
 	    diff = 100 * (ar.ess - ess) / ess;
@@ -3671,8 +3699,8 @@ static int real_arch_test (const double *u, int T, int order,
  * @pmod: model to be tested.
  * @order: lag order for ARCH process.
  * @pdinfo: dataset information.
- * @opt: if flags include %OPT_S, save test results to model;
- * if %OPT_Q, be less verbose.
+ * @opt: if flags include OPT_S, save test results to model;
+ * if OPT_Q, be less verbose.
  * @prn: gretl printing struct.
  *
  * Tests @pmod for AutoRegressive Conditional Heteroskedasticity.  
@@ -3769,7 +3797,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
     alist[2] = 0;
 
     /* run initial OLS and get squared residuals */
-    amod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    amod = lsq(list, *pZ, pdinfo, OLS, OPT_A | OPT_M);
     if (amod.errcode) {
 	goto bailout;
     }
@@ -3798,7 +3826,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 
     /* run auxiliary regression */
     clear_model(&amod);
-    amod = lsq(alist, pZ, pdinfo, OLS, OPT_A);
+    amod = lsq(alist, *pZ, pdinfo, OLS, OPT_A);
     if (amod.errcode) {
 	goto bailout;
     }
@@ -3834,7 +3862,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	clear_model(&amod);
-	amod = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE);
+	amod = lsq(wlist, *pZ, pdinfo, WLS, OPT_NONE);
 	amod.ci = ARCH;
 
 	if (!amod.errcode) {
@@ -3861,7 +3889,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 /**
  * lad:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data array.
+ * @Z: data array.
  * @pdinfo: dataset information.
  *
  * Estimate the model given in @list using the method of Least
@@ -3870,7 +3898,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
+MODEL lad (const int *list, double **Z, DATAINFO *pdinfo)
 {
     MODEL lmod;
     void *handle;
@@ -3880,7 +3908,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
        the lad_driver function will overwrite the coefficients etc.
     */
 
-    lmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    lmod = lsq(list, Z, pdinfo, OLS, OPT_A);
 
     if (lmod.errcode) {
         return lmod;
@@ -3894,7 +3922,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
 	return lmod;
     }
 
-    (*lad_driver) (&lmod, *pZ, pdinfo);
+    (*lad_driver) (&lmod, Z, pdinfo);
     close_plugin(handle);
 
     if (lmod.errcode == 0) {
@@ -3909,7 +3937,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  * @tau: vector containing one or more quantile values, in the range 
  * 0.01 to 0.99.
  * @list: model specification: dependent var and regressors.
- * @pZ: pointer to data array.
+ * @Z: data array.
  * @pdinfo: dataset information.
  * @opt: may contain OPT_R for robust standard errors, 
  * OPT_I to produce confidence intervals.
@@ -3922,7 +3950,7 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  */
 
 MODEL quantreg (const gretl_matrix *tau, const int *list, 
-		double ***pZ, DATAINFO *pdinfo,
+		double **Z, DATAINFO *pdinfo,
 		gretlopt opt, PRN *prn)
 {
     MODEL qmod;
@@ -3941,7 +3969,7 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
 	olsopt |= OPT_R;
     }
 
-    qmod = lsq(list, pZ, pdinfo, OLS, olsopt);
+    qmod = lsq(list, Z, pdinfo, OLS, olsopt);
 
     if (qmod.errcode) {
         return qmod;
@@ -3955,7 +3983,7 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
 	return qmod;
     }
 
-    (*rq_driver) (tau, &qmod, *pZ, pdinfo, opt, prn);
+    (*rq_driver) (tau, &qmod, Z, pdinfo, opt, prn);
     close_plugin(handle);
 
     if (qmod.errcode == 0) {
@@ -4113,7 +4141,7 @@ MODEL arma (const int *list, const char *pqspec,
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  * @opt: can specify robust standard errors and VCV.
- * @prn: for printing details of iterations (or %NULL).
+ * @prn: for printing details of iterations (or NULL).
  *
  * Calculate GARCH estimates.
  * 
@@ -4229,12 +4257,12 @@ static int check_panel_options (gretlopt opt)
  * variables).
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: can include %OPT_Q (quiet estimation), %OPT_S
- * (silent estimation), %OPT_R (random effects model),
- * %OPT_W (weights based on the error variance for the
- * respective cross-sectional units), %OPT_I (iterate, only
- * available in conjunction with %OPT_W).
- * @prn: printing struct (or %NULL).
+ * @opt: can include OPT_Q (quiet estimation), OPT_S
+ * (silent estimation), OPT_R (random effects model),
+ * OPT_W (weights based on the error variance for the
+ * respective cross-sectional units), OPT_I (iterate, only
+ * available in conjunction with OPT_W).
+ * @prn: printing struct (or NULL).
  *
  * Calculate estimates for a panel dataset, using fixed
  * effects (the default), random effects, or weighted

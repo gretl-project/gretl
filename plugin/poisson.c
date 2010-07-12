@@ -834,7 +834,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 
 	iter++;
 
-	tmpmod = lsq(local_list, pZ, pdinfo, WLS, OPT_A);
+	tmpmod = lsq(local_list, *pZ, pdinfo, WLS, OPT_A);
 
 	if (tmpmod.errcode) {
 	    fprintf(stderr, "poisson_estimate: lsq returned %d\n", 

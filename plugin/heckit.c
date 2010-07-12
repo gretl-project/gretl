@@ -1257,7 +1257,7 @@ static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
     gretl_list_append_term(&reglist, HC->millsvar);
 
     /* run OLS including Mills variable */
-    hm = lsq(reglist, pZ, pdinfo, OLS, OPT_A);
+    hm = lsq(reglist, *pZ, pdinfo, OLS, OPT_A);
     if (!hm.errcode) {
 	hm.ci = HECKIT;
 	gretl_model_set_int(&hm, "totobs", probmod.nobs); 

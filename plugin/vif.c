@@ -120,7 +120,7 @@ static int XTX_properties (const MODEL *pmod, const double **Z,
 
 static double get_vif (MODEL *mod, const int *xlist, 
 		       int *vlist, int k,
-		       double ***pZ, DATAINFO *pdinfo,
+		       double **Z, DATAINFO *pdinfo,
 		       int *err)
 {
     double vk = NADBL;
@@ -135,7 +135,7 @@ static double get_vif (MODEL *mod, const int *xlist,
 	}
     }
 
-    *mod = lsq(vlist, pZ, pdinfo, OLS, OPT_A); 
+    *mod = lsq(vlist, Z, pdinfo, OLS, OPT_A); 
     *err = mod->errcode;
 
     if (!*err && !xna(mod->rsq) && mod->rsq != 1.0) {
@@ -150,7 +150,7 @@ static double get_vif (MODEL *mod, const int *xlist,
 /* run regressions of each x_i on the other x_j's */
 
 static double *model_vif_vector (MODEL *pmod, const int *xlist,
-				 double ***pZ, DATAINFO *pdinfo,
+				 double **Z, DATAINFO *pdinfo,
 				 int *err)
 {
     MODEL tmpmod;
@@ -187,7 +187,7 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
     pdinfo->t2 = pmod->t2;
 
     for (i=1; i<=xlist[0] && !*err; i++) {
-	vif[i-1] = get_vif(&tmpmod, xlist, vlist, i, pZ, pdinfo, err);
+	vif[i-1] = get_vif(&tmpmod, xlist, vlist, i, Z, pdinfo, err);
     }
 
     /* reinstate sample */
@@ -206,7 +206,7 @@ static double *model_vif_vector (MODEL *pmod, const int *xlist,
 
 #define xtx_ok(c) (c == OLS || c == AR1 || c == WLS) 
 
-int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int print_vifs (MODEL *pmod, double **Z, DATAINFO *pdinfo, 
 		PRN *prn)
 {
     double *vif = NULL;
@@ -229,7 +229,7 @@ int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    vif = model_vif_vector(pmod, xlist, pZ, pdinfo, &err);
+    vif = model_vif_vector(pmod, xlist, Z, pdinfo, &err);
     if (err) {
 	return err;
     }
@@ -256,7 +256,7 @@ int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     pputc(prn, '\n');
 
     if (xtx_ok(pmod->ci)) {
-	XTX_properties(pmod, (const double **) *pZ, prn);
+	XTX_properties(pmod, (const double **) Z, prn);
     }
 
     free(vif);

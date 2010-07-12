@@ -252,7 +252,7 @@ MODEL quantreg_driver (const char *parm, const int *list,
 	gretl_model_init(&mod);
 	mod.errcode = err;
     } else {
-	mod = quantreg(tau, list, pZ, pdinfo, opt, prn);
+	mod = quantreg(tau, list, *pZ, pdinfo, opt, prn);
     }
 
     gretl_matrix_free(tau);

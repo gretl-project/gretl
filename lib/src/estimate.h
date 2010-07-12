@@ -24,11 +24,11 @@
 
 #include "gretl_matrix.h"
 
-MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL lsq (const int *list, double **Z, DATAINFO *pdinfo, 
 	   GretlCmdIndex ci, gretlopt opt);
 
 MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
-	    GretlCmdIndex ci, gretlopt opt, double rho);
+	       GretlCmdIndex ci, gretlopt opt, double rho);
 
 MODEL ar_model (const int *list,  
 		double ***pZ, DATAINFO *pdinfo, 
@@ -37,10 +37,10 @@ MODEL ar_model (const int *list,
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		     gretlopt opt, PRN *prn, int *err);
 
-MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo); 
+MODEL lad (const int *list, double **Z, DATAINFO *pdinfo); 
 
 MODEL quantreg (const gretl_matrix *tau, const int *list, 
-		double ***pZ, DATAINFO *pdinfo,
+		double **Z, DATAINFO *pdinfo,
 		gretlopt opt, PRN *prn);
 
 MODEL arma (const int *list, const char *pqspec,

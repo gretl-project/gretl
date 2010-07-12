@@ -52,7 +52,7 @@
 
 static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 			const int *exlist, const int *list, 
-			double ***pZ, DATAINFO *pdinfo)
+			double **Z, DATAINFO *pdinfo)
 {
     int i, vi, t, j = 0;
     int T = E->rows;
@@ -70,7 +70,7 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 
 	/* regress the given endogenous var on the specified
 	   set of instruments */
-	*lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A);
+	*lmod = lsq(reglist, Z, pdinfo, OLS, OPT_A);
 	if ((err = lmod->errcode)) {
 	    clear_model(lmod);
 	    break;
@@ -215,7 +215,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 }
 
 static int liml_do_equation (equation_system *sys, int eq, 
-			     double ***pZ, DATAINFO *pdinfo, 
+			     double **Z, DATAINFO *pdinfo, 
 			     PRN *prn)
 {
     int *list = system_get_list(sys, eq);
@@ -293,7 +293,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     }
 
     err = resids_to_E(E, &lmod, reglist, exlist, list, 
-		      pZ, pdinfo);
+		      Z, pdinfo);
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
@@ -312,7 +312,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 	    reglist[i] = exlist[i-1];
 	}
 	err = resids_to_E(E, &lmod, reglist, exlist, list, 
-			  pZ, pdinfo);
+			  Z, pdinfo);
     }
 
     if (!err) {
@@ -348,7 +348,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 #endif
 
 	err = liml_set_model_data(pmod, E, exlist, list, T, pdinfo->t1, 
-				  pdinfo->n, lmin, *pZ);
+				  pdinfo->n, lmin, Z);
 	if (err) {
 	    fprintf(stderr, "error in liml_set_model_data()\n");
 	}
@@ -387,7 +387,7 @@ static int liml_do_equation (equation_system *sys, int eq,
    models
 */
 
-int liml_driver (equation_system *sys, double ***pZ, 
+int liml_driver (equation_system *sys, double **Z, 
 		 DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0;
@@ -400,7 +400,7 @@ int liml_driver (equation_system *sys, double ***pZ,
 #if LDEBUG > 1
 	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
 #endif
-	err = liml_do_equation(sys, i, pZ, pdinfo, prn);
+	err = liml_do_equation(sys, i, Z, pdinfo, prn);
     }
 
     return err;

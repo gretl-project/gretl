@@ -4747,7 +4747,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case OLS:
     case WLS:
 	clear_model(models[0]);
-	*models[0] = lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
+	*models[0] = lsq(cmd->list, *pZ, pdinfo, cmd->ci, cmd->opt);
 	err = print_save_model(models[0], pdinfo, prn, s);
 	break;
 	
@@ -4822,7 +4822,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == IVREG) {
 	    *models[0] = ivreg(cmd->list, pZ, pdinfo, cmd->opt);
 	} else if (cmd->ci == LAD) {
-	    *models[0] = lad(cmd->list, pZ, pdinfo);
+	    *models[0] = lad(cmd->list, *pZ, pdinfo);
 	} else if (cmd->ci == QUANTREG) {
 	    *models[0] = quantreg_driver(cmd->param, cmd->list, pZ, pdinfo,
 					 cmd->opt, prn);
@@ -4913,7 +4913,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == QLRTEST) {
 	    err = QLR_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == VIF) { 
-	    err = vif_test(models[0], pZ, pdinfo, prn);
+	    err = vif_test(models[0], *pZ, pdinfo, prn);
 	} 
 	break;
 

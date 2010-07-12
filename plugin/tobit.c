@@ -383,7 +383,7 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
 	}
     }
 
-    mod = lsq(list, &cZ, cinfo, OLS, OPT_A);
+    mod = lsq(list, cZ, cinfo, OLS, OPT_A);
     if (!mod.errcode) {
 	add_norm_test_to_model(pmod, mod.nobs - mod.ess);
     }
@@ -709,7 +709,7 @@ static int probit_init (const int *list, double ***pZ, DATAINFO *pdinfo,
     strcpy(pdinfo->varname[v], "yaux");
     strcpy(pdinfo->varname[v+1], "uhat");
     
-    aux = lsq(plist, pZ, pdinfo, OLS, OPT_A);
+    aux = lsq(plist, *pZ, pdinfo, OLS, OPT_A);
     err = aux.errcode;
 
     printmodel(&aux, pdinfo, OPT_NONE, prn);
@@ -737,6 +737,7 @@ static int probit_init (const int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn) 
 {
+    double **Z = *pZ;
     PRN *vprn = NULL;
     MODEL model;
     double *y;
@@ -751,9 +752,10 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 #if 0
     /* initial probit (broken at present) */
     probit_init(list, pZ, pdinfo, &model, vprn);
+    Z = *pZ;
 #else
     /* run initial OLS */
-    model = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    model = lsq(list, Z, pdinfo, OLS, OPT_A);
 #endif
     if (model.errcode) {
 	return model;
@@ -762,7 +764,7 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* handle scale issues */
     scale = tobit_depvar_scale(&model, &missvals);
     if (scale != 1.0) {
-	y = (*pZ)[model.list[1]];
+	y = Z[model.list[1]];
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!na(y[t])) {
 		y[t] *= scale;
@@ -772,7 +774,7 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "Tobit: rescaling depvar using %g\n", scale);
 #endif
 	clear_model(&model);
-	model = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	model = lsq(list, Z, pdinfo, OLS, OPT_A);
     }
 
 #if TDEBUG
@@ -783,12 +785,12 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* do the actual Tobit analysis */
     if (model.errcode == 0) {
 	clear_model_xpx(&model);
-	model.errcode = do_tobit(*pZ, pdinfo, &model, scale, 
+	model.errcode = do_tobit(Z, pdinfo, &model, scale, 
 				 missvals, vprn);
     }
 
     if (scale != 1.0) {
-	y = (*pZ)[model.list[1]];
+	y = Z[model.list[1]];
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!na(y[t])) {
 		y[t] /= scale;

@@ -192,7 +192,7 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo,
     strcpy(rminfo->varname[1], "range");
     strcpy(rminfo->varname[2], "mean");
 
-    rmmod = lsq(rmlist, &rmZ, rminfo, OLS, OPT_A);
+    rmmod = lsq(rmlist, rmZ, rminfo, OLS, OPT_A);
 
     a = b = NADBL;
 

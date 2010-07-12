@@ -159,7 +159,7 @@ static fiml_system *fiml_system_new (equation_system *sys, int *err)
 */
 
 static int 
-fiml_overid_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
+fiml_overid_test (fiml_system *fsys, double **Z, DATAINFO *pdinfo)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
@@ -202,7 +202,7 @@ fiml_overid_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
 
     for (i=0; i<fsys->g; i++) {
 	list[1] = enlist[i + 1];
-	umod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	umod = lsq(list, Z, pdinfo, OLS, OPT_A);
 	if (umod.errcode) {
 	    err = umod.errcode;
 	    goto bailout;
@@ -905,7 +905,7 @@ static void fiml_print_gradients (const gretl_matrix *b, PRN *prn)
 
 #define FIML_ITER_MAX 250
 
-int fiml_driver (equation_system *sys, double ***pZ, 
+int fiml_driver (equation_system *sys, double **Z, 
 		 DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R = NULL;
@@ -940,7 +940,7 @@ int fiml_driver (equation_system *sys, double ***pZ,
     fiml_B_init(fsys, pdinfo);
 
     /* initial loglikelihood */
-    err = fiml_ll(fsys, (const double **) *pZ, t1);
+    err = fiml_ll(fsys, (const double **) Z, t1);
     if (err) {
 	fputs("fiml_ll: failed\n", stderr);
 	goto bailout;
@@ -962,14 +962,14 @@ int fiml_driver (equation_system *sys, double ***pZ,
 	fiml_form_depvar(fsys);
 
 	/* instrument the RHS endog vars */
-	err = fiml_endog_rhs(fsys, (const double **) *pZ, t1);
+	err = fiml_endog_rhs(fsys, (const double **) Z, t1);
 	if (err) {
 	    fputs("fiml_endog_rhs: failed\n", stderr);
 	    break;
 	}	
 
 	/* form RHS matrix for artificial regression */
-	fiml_form_indepvars(fsys, (const double **) *pZ, t1);
+	fiml_form_indepvars(fsys, (const double **) Z, t1);
 
 	/* run artificial regression (ETM, equation 12.86) */
 	if (R != NULL) {
@@ -992,7 +992,7 @@ int fiml_driver (equation_system *sys, double ***pZ,
 	}
 
 	/* adjust param estimates based on gradients in fsys->artb */
-	err = fiml_adjust_estimates(fsys, (const double **) *pZ, 
+	err = fiml_adjust_estimates(fsys, (const double **) Z, 
 				    t1, &step);
 	if (err) {
 	    break;
@@ -1029,11 +1029,11 @@ int fiml_driver (equation_system *sys, double ***pZ,
     }
 
     if (R != NULL && verbose) {
-	fiml_overid_test(fsys, pZ, pdinfo);
+	fiml_overid_test(fsys, Z, pdinfo);
     }
 
     /* write the results into the parent system */
-    fiml_transcribe_results(fsys, (const double **) *pZ, t1, iters);
+    fiml_transcribe_results(fsys, (const double **) Z, t1, iters);
 
  bailout:
     

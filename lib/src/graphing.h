@@ -185,7 +185,7 @@ int multi_scatters (const int *list, const double **Z,
 		    const DATAINFO *pdinfo, gretlopt opt);
 
 int gnuplot_3d (int *list, const char *literal,
-		double ***pZ, DATAINFO *pdinfo, 
+		double **Z, DATAINFO *pdinfo, 
 		gretlopt opt);
 
 int plot_freq (FreqDist *freq, DistCode dist);

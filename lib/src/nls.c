@@ -1720,7 +1720,7 @@ static MODEL GNR (nlspec *spec, const double **Z, DATAINFO *pdinfo,
 	lsqopt |= OPT_R;
     }
 
-    gnr = lsq(glist, &gZ, gdinfo, OLS, lsqopt);
+    gnr = lsq(glist, gZ, gdinfo, OLS, lsqopt);
 
 #if NLS_DEBUG
     gnr.name = gretl_strdup("GNR for NLS");
@@ -3294,7 +3294,7 @@ MODEL ivreg_via_gmm (const int *list, double ***pZ,
 
     if (!err) {
 	/* OLS baseline and check */
-	olsmod = lsq(mlist, pZ, pdinfo, OLS, OPT_A | OPT_M | OPT_Z);
+	olsmod = lsq(mlist, *pZ, pdinfo, OLS, OPT_A | OPT_M | OPT_Z);
 	err = olsmod.errcode;
     }
 

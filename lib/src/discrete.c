@@ -1085,7 +1085,7 @@ static MODEL ordered_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* run initial OLS, with dummies added */
-    model = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
+    model = lsq(biglist, *pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
 	fprintf(stderr, "ordered_estimate: initial OLS failed\n");
 	free(dumlist);
@@ -1928,7 +1928,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!dmod.errcode) {
-	dmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	dmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
 	if (dmod.errcode == 0 && dmod.ncoeff != nx) {
 	    dmod.errcode = E_DATA;
 	}
@@ -2720,7 +2720,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     int i, vi, t, s;
 
     /* we'll start with OLS to flush out data issues */
-    mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    mod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
     if (mod.errcode) {
 	return mod;
     }
@@ -3204,7 +3204,7 @@ MODEL logistic_model (const int *list, double lmax,
     /* replace with transformed dependent variable */
     llist[1] = pdinfo->v - 1;
 
-    lmod = lsq(llist, pZ, pdinfo, OLS, OPT_A);
+    lmod = lsq(llist, *pZ, pdinfo, OLS, OPT_A);
     if (!lmod.errcode) {
 	rewrite_logistic_stats((const double **) *pZ, pdinfo, &lmod,
 			       dv, real_lmax);
@@ -3449,7 +3449,7 @@ static int duration_precheck (const int *list, double ***pZ,
 	   coefficients etc.
 	*/	
 	if (olslist != NULL) {
-	    *pmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
+	    *pmod = lsq(olslist, *pZ, pdinfo, OLS, OPT_A);
 	    if (!pmod->errcode) {
 		/* remove reference to censoring var */
 		pmod->list[0] -= 1;
@@ -3459,7 +3459,7 @@ static int duration_precheck (const int *list, double ***pZ,
 	    }
 	    free(olslist);
 	} else {
-	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	    *pmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
 	}
 	err = pmod->errcode;
 	*pcensvar = censvar;
@@ -3595,7 +3595,7 @@ MODEL count_model (const int *list, int ci,
        coefficients etc.
     */
 
-    cmod = lsq(listcpy, pZ, pdinfo, OLS, OPT_A);
+    cmod = lsq(listcpy, *pZ, pdinfo, OLS, OPT_A);
     free(listcpy);
 
     if (cmod.errcode) {

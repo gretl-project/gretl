@@ -3193,7 +3193,7 @@ static int get_3d_output_file (FILE **fpp)
 }
 
 static gchar *maybe_get_surface (const int *list, 
-				 double ***pZ, DATAINFO *pdinfo, 
+				 double **Z, DATAINFO *pdinfo, 
 				 gretlopt opt)
 {
     MODEL smod;
@@ -3207,10 +3207,10 @@ static gchar *maybe_get_surface (const int *list,
     olslist[3] = list[2];
     olslist[4] = list[1];
 
-    gretl_minmax(pdinfo->t1, pdinfo->t2, (*pZ)[list[2]], &umin, &umax);
-    gretl_minmax(pdinfo->t1, pdinfo->t2, (*pZ)[list[1]], &vmin, &vmax);
+    gretl_minmax(pdinfo->t1, pdinfo->t2, Z[list[2]], &umin, &umax);
+    gretl_minmax(pdinfo->t1, pdinfo->t2, Z[list[1]], &vmin, &vmax);
 
-    smod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
+    smod = lsq(olslist, Z, pdinfo, OLS, OPT_A);
 
     if (!smod.errcode && !na(smod.fstt) &&
 	(snedecor_cdf_comp(smod.dfn, smod.dfd, smod.fstt) < .10 || (opt & OPT_F))) {
@@ -3234,7 +3234,7 @@ static gchar *maybe_get_surface (const int *list,
  * gnuplot_3d:
  * @list: list of variables to plot, by ID number: Y, X, Z
  * @literal: literal command(s) to pass to gnuplot (or NULL)
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: data information struct.
  * @opt: unused at present.
  *
@@ -3245,7 +3245,7 @@ static gchar *maybe_get_surface (const int *list,
  */
 
 int gnuplot_3d (int *list, const char *literal,
-		double ***pZ, DATAINFO *pdinfo,  
+		double **Z, DATAINFO *pdinfo,  
 		gretlopt opt)
 {
     FILE *fq = NULL;
@@ -3265,7 +3265,7 @@ int gnuplot_3d (int *list, const char *literal,
 	return E_FOPEN;
     }
 
-    varlist_adjust_sample(list, &t1, &t2, (const double **) *pZ);
+    varlist_adjust_sample(list, &t1, &t2, (const double **) Z);
 
     /* if resulting sample range is empty, complain */
     if (t2 == t1) {
@@ -3303,7 +3303,7 @@ int gnuplot_3d (int *list, const char *literal,
 	print_gnuplot_literal_lines(literal, fq);
     }
 
-    surface = maybe_get_surface(list, pZ, pdinfo, opt);
+    surface = maybe_get_surface(list, Z, pdinfo, opt);
 
     if (surface != NULL) {
 	if (addstyle) {
@@ -3331,7 +3331,7 @@ int gnuplot_3d (int *list, const char *literal,
 	if (pdinfo->markers) {
 	    label = pdinfo->S[t];
 	}
-	printvars(fq, t, datlist, (const double **) *pZ, NULL, label, 0.0);
+	printvars(fq, t, datlist, (const double **) Z, NULL, label, 0.0);
     }	
     fputs("e\n", fq);
 
@@ -5143,7 +5143,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 
     mlist[1] = 1;
     mlist[2] = 3;
-    mod = lsq(mlist, &gZ, ginfo, OLS, OPT_A);
+    mod = lsq(mlist, gZ, ginfo, OLS, OPT_A);
     err = mod.errcode;
     if (err) {
 	clear_model(&mod);
@@ -5158,7 +5158,7 @@ int xy_plot_with_control (const int *list, const char *literal,
     /* regress X on Z and save the residuals */
 
     mlist[1] = 2;    
-    mod = lsq(mlist, &gZ, ginfo, OLS, OPT_A);
+    mod = lsq(mlist, gZ, ginfo, OLS, OPT_A);
     err = mod.errcode;
     if (err) {
 	clear_model(&mod);

@@ -787,7 +787,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	if (gretl_model_get_int(orig, "rq")) {
 	    rep = quantreg_driver(altparm, list, pZ, pdinfo, myopt, NULL);
 	} else {
-	    rep = lad(list, pZ, pdinfo);
+	    rep = lad(list, *pZ, pdinfo);
 	}
 	break;
     case POISSON:
@@ -813,15 +813,18 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     case PANEL:
 	rep = panel_model(list, pZ, pdinfo, myopt, prn);
 	break;
+    case HSK:
+	rep = hsk_model(list, pZ, pdinfo);
+	break;
     default:
-	/* handles OLS, AR1, WLS, HSK, etc. */
+	/* handles OLS, AR1, WLS, etc. */
 	if (rho != 0.0) {
 	    rep = ar1_lsq(list, pZ, pdinfo, repci, myopt, rho);
 	} else if (gretl_model_get_int(orig, "pooled")) {
 	    myopt |= OPT_P;
 	    rep = panel_model(list, pZ, pdinfo, myopt, prn);
 	} else {
-	    rep = lsq(list, pZ, pdinfo, repci, myopt);
+	    rep = lsq(list, *pZ, pdinfo, repci, myopt);
 	}
 	break;
     }
@@ -889,7 +892,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
     /* replace the dependent var */
     list[1] = pdinfo->v - 1;
 
-    aux = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    aux = lsq(list, *pZ, pdinfo, OLS, OPT_A);
     if (aux.errcode) {
 	err = aux.errcode;
 	fprintf(stderr, "auxiliary regression failed\n");
@@ -1706,7 +1709,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
+	aux = lsq(newlist, *pZ, pdinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -2104,7 +2107,7 @@ int autocorr_test (MODEL *pmod, int order,
 	/* regression on [X~E], using original sample */
 	impose_model_smpl(pmod, pdinfo);
 	newlist[1] = v;
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
+	aux = lsq(newlist, *pZ, pdinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	   errmsg(err, prn);
@@ -2505,7 +2508,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 	}
 	
 	for (t=split; t<=smax; t++) {
-	    chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A);
+	    chow_mod = lsq(chowlist, *pZ, pdinfo, OLS, OPT_A);
 	    if (chow_mod.errcode) {
 		err = chow_mod.errcode;
 		errmsg(err, prn);
@@ -2553,7 +2556,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 	    lsqopt |= OPT_R;
 	}
 
-	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, lsqopt);
+	chow_mod = lsq(chowlist, *pZ, pdinfo, OLS, lsqopt);
 
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
@@ -2770,7 +2773,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
     }
 
     for (j=0; j<n && !err; j++) {
-	cmod = lsq(pmod->list, pZ, pdinfo, OLS, opt);
+	cmod = lsq(pmod->list, *pZ, pdinfo, OLS, opt);
 	if (cmod.errcode) {
 	    err = cmod.errcode;
 	} else {
@@ -3143,7 +3146,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	/* re-impose the sample that was in force when the original model
 	   was estimated */
 	impose_model_smpl(pmod, pdinfo);
-	cmod = lsq(biglist, pZ, pdinfo, OLS, OPT_A);
+	cmod = lsq(biglist, *pZ, pdinfo, OLS, OPT_A);
 	clearit = 1;
 	err = cmod.errcode;
     }
@@ -3402,7 +3405,7 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 /**
  * vif_test:
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
+ * @Z: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  *
@@ -3412,10 +3415,10 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+int vif_test (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
 {
     void *handle;
-    int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
+    int (*print_vifs) (MODEL *, double **, DATAINFO *, PRN *);
     int err;
 
     gretl_error_clear();
@@ -3425,7 +3428,7 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
 
-    err = (*print_vifs)(pmod, pZ, pdinfo, prn);
+    err = (*print_vifs)(pmod, Z, pdinfo, prn);
 
     close_plugin(handle);
 

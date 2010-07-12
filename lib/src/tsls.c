@@ -436,7 +436,7 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 	}
 
 	/* regress the given endogenous var on all the instruments */
-	emod = lsq(elist, pZ, pdinfo, OLS, OPT_A);
+	emod = lsq(elist, *pZ, pdinfo, OLS, OPT_A);
 	if ((err = emod.errcode)) {
 	    clear_model(&emod);
 	    break;
@@ -567,7 +567,7 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 	OT_list[i] = instlist[i-1];
     }
 
-    smod = lsq(OT_list, pZ, pdinfo, OLS, OPT_A);
+    smod = lsq(OT_list, *pZ, pdinfo, OLS, OPT_A);
     if (smod.errcode) {
 	fprintf(stderr, "ivreg_sargan_test: smod.errcode = %d\n", smod.errcode);
 	err = smod.errcode;
@@ -624,7 +624,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     } 
 
     /* estimate the unrestricted model */
-    hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
+    hmod = lsq(HT_list, *pZ, pdinfo, OLS, OPT_A);
     if (hmod.errcode) {
 	fprintf(stderr, "tsls_hausman_test: hmod.errcode (U) = %d\n", hmod.errcode);
 	err = hmod.errcode;
@@ -659,7 +659,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     /* regress the U fitted values on the regressors of the restricted 
        model (so the sum of squares equals RRSS-URSS)
     */
-    hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
+    hmod = lsq(HT_list, *pZ, pdinfo, OLS, OPT_A);
 
 #if HTDBG
     printmodel(&hmod, pdinfo, OPT_NONE, dbgprn);
@@ -1242,7 +1242,7 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
     if (!err) {
 	gretlopt myopt = (opt & OPT_R)? (OPT_A | OPT_R) : OPT_A;
 
-	mod1 = lsq(list1, pZ, pdinfo, OLS, myopt);
+	mod1 = lsq(list1, *pZ, pdinfo, OLS, myopt);
 	err = mod1.errcode;
     }
 
@@ -1597,7 +1597,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* second-stage regression */
-    tsls = lsq(s2list, pZ, pdinfo, OLS, (sysest)? OPT_Z : OPT_NONE);
+    tsls = lsq(s2list, *pZ, pdinfo, OLS, (sysest)? OPT_Z : OPT_NONE);
     if (tsls.errcode) {
 	fprintf(stderr, "tsls, stage 2: tsls.errcode = %d\n", tsls.errcode);
 	goto bailout;

@@ -1407,7 +1407,7 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     }
 
     bopt = (pan->opt & OPT_B)? OPT_NONE : OPT_A;
-    bmod = lsq(blist, gZ, ginfo, OLS, bopt);
+    bmod = lsq(blist, *gZ, ginfo, OLS, bopt);
 
     if (bmod.errcode == 0) {
 	pan->between_s2 = bmod.sigma * bmod.sigma;
@@ -1968,7 +1968,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	felist[i] = i - 1;
     }
 
-    femod = lsq(felist, &wZ, winfo, OLS, lsqopt);
+    femod = lsq(felist, wZ, winfo, OLS, lsqopt);
 
     if (femod.errcode) {
 	; /* pass on */
@@ -2336,7 +2336,7 @@ static int random_effects (panelmod_t *pan,
 	int *biglist = gretl_list_add(relist, hlist, &err);
 
 	if (!err) {
-	    remod = lsq(biglist, &reZ, reinfo, OLS, OPT_A);
+	    remod = lsq(biglist, reZ, reinfo, OLS, OPT_A);
 	    if (remod.errcode == 0) {
 		/* record unrestricted SSR */
 		URSS = remod.ess;
@@ -2347,7 +2347,7 @@ static int random_effects (panelmod_t *pan,
     }	
 
     /* regular random-effects model */
-    remod = lsq(relist, &reZ, reinfo, OLS, lsqopt);
+    remod = lsq(relist, reZ, reinfo, OLS, lsqopt);
 
     if ((err = remod.errcode)) {
 	pputs(prn, _("Error estimating random effects model\n"));
@@ -2985,7 +2985,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* baseline: estimate via pooled OLS */
-    mod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
+    mod = lsq(olslist, *pZ, pdinfo, OLS, OPT_A);
     if (mod.errcode) {
 	err = mod.errcode;
 	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 
@@ -3423,7 +3423,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* baseline pooled model */
-    mdl = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    mdl = lsq(list, *pZ, pdinfo, OLS, OPT_A);
     if (mdl.errcode) {
 	goto bailout;
     }
@@ -3512,7 +3512,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	clear_model(&mdl);
-	mdl = lsq(wlist, pZ, pdinfo, WLS, wlsopt);
+	mdl = lsq(wlist, *pZ, pdinfo, WLS, wlsopt);
 	if (mdl.errcode) {
 	    break;
 	}
@@ -3804,7 +3804,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     }
 
     if (!err) {
-	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, OPT_A);
+	aux = lsq(aclist, tmpZ, tmpinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);

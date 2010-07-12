@@ -872,7 +872,7 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* run initial OLS */
-    model = lsq(initlist, pZ, pdinfo, OLS, OPT_A);
+    model = lsq(initlist, *pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
 	fprintf(stderr, "interval_estimate: initial OLS failed\n");
 	free(initlist);

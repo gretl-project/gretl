@@ -1631,7 +1631,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (rolling) {
-	fr = rolling_OLS_k_step_fcast(pmod, &Z, datainfo,
+	fr = rolling_OLS_k_step_fcast(pmod, Z, datainfo,
 				      t1, t2, k, pre_n, &err);
     } else {
 	const char *flagstr;
@@ -2336,7 +2336,7 @@ void do_vif (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
+    int (*print_vifs) (MODEL *, double **, DATAINFO *, PRN *);
     void *handle;
     double ***pZ;
     DATAINFO *pdinfo;
@@ -2361,7 +2361,7 @@ void do_vif (GtkAction *action, gpointer p)
 	return;
     }	
 	
-    err = (*print_vifs)(pmod, pZ, pdinfo, prn);
+    err = (*print_vifs)(pmod, Z, pdinfo, prn);
     close_plugin(handle);
 
     if (err) {
@@ -3444,7 +3444,7 @@ static int real_do_model (int action)
 
     case OLS:
     case WLS:
-	*pmod = lsq(libcmd.list, &Z, datainfo, action, libcmd.opt);
+	*pmod = lsq(libcmd.list, Z, datainfo, action, libcmd.opt);
 	err = model_output(pmod, prn);
 	break;
 
@@ -3537,7 +3537,7 @@ static int real_do_model (int action)
 	break;	
 
     case LAD:
-	*pmod = lad(libcmd.list, &Z, datainfo);
+	*pmod = lad(libcmd.list, Z, datainfo);
 	err = model_output(pmod, prn);
 	break;	
 
@@ -3828,7 +3828,7 @@ void do_graph_model (const int *list, int fit)
 	return;
     }
 
-    *pmod = lsq(libcmd.list, &Z, datainfo, OLS, libcmd.opt);
+    *pmod = lsq(libcmd.list, Z, datainfo, OLS, libcmd.opt);
     err = model_output(pmod, prn);
 
     if (err) {
@@ -5623,7 +5623,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
     free(xlist);
 
-    err = gnuplot_3d(list, NULL, pZ, pdinfo, GPT_GUI | GPT_FA);
+    err = gnuplot_3d(list, NULL, Z, pdinfo, GPT_GUI | GPT_FA);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -6170,7 +6170,7 @@ int do_splot_from_selector (selector *sr)
 	return err;
     }
 
-    err = gnuplot_3d(list, NULL, &Z, datainfo, GPT_GUI);
+    err = gnuplot_3d(list, NULL, Z, datainfo, GPT_GUI);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));

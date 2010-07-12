@@ -2903,7 +2903,7 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     if (opt & OPT_R) {
-	fr = rolling_OLS_k_step_fcast(pmod, pZ, pdinfo, t1, t2, 
+	fr = rolling_OLS_k_step_fcast(pmod, *pZ, pdinfo, t1, t2, 
 				      k, 0, &err);
     } else {
 	fr = get_forecast(pmod, t1, t2, 0, pZ, pdinfo, opt, &err);
@@ -3448,7 +3448,7 @@ static int rolling_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
 /* recursive k-step ahead forecasts, for models estimated via OLS */
 
 FITRESID * 
-rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 			  int t1, int t2, int k, int pre_n, int *err)
 {
     FITRESID *fr;
@@ -3484,7 +3484,7 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (k > 1) {
-	*err = k_step_init(pmod, pdinfo, *pZ, k, &y, &llist);
+	*err = k_step_init(pmod, pdinfo, Z, k, &y, &llist);
 	if (*err) {
 	    return NULL;
 	}
@@ -3511,11 +3511,11 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    pdinfo->t1, pdinfo->t2, t1, t2, k, nf);
 
     for (t=0; t<pdinfo->n; t++) {
-	fr->actual[t] = (*pZ)[pmod->list[1]][t];
+	fr->actual[t] = Z[pmod->list[1]][t];
     }
 
     for (s=0; s<nf; s++) {
-	mod = lsq(pmod->list, pZ, pdinfo, OLS, OPT_A | OPT_Z);
+	mod = lsq(pmod->list, Z, pdinfo, OLS, OPT_A | OPT_Z);
 	if (mod.errcode) {
 	    *err = mod.errcode;
 	    clear_model(&mod);
@@ -3534,7 +3534,7 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		if (p > 0 && p <= j) {
 		    xit = y[t-p];
 		} else {
-		    xit = (*pZ)[vi][t];
+		    xit = Z[vi][t];
 		}
 		if (na(xit)) {
 		    yf = NADBL;
