@@ -4347,7 +4347,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     MODEL **models = s->models;
     const double **Z = NULL;
     PRN *prn = s->prn;
-    double rho;
     char runfile[MAXLEN];
     int *listcpy = NULL;
     int err = 0;
@@ -4760,11 +4759,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     case AR:
+    case AR1:
     case ARMA:
     case ARCH:
 	clear_model(models[0]);
 	if (cmd->ci == AR) {
 	    *models[0] = ar_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	} else if (cmd->ci == AR1) {
+	    *models[0] = ar1_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
 	    *models[0] = arma(cmd->list, cmd->param, Z, pdinfo, 
 			      cmd->opt, prn);
@@ -4773,15 +4775,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				    cmd->opt, prn);
 	}
 	err = print_save_model(models[0], pdinfo, prn, s);
-	break;
-
-    case AR1:
-	rho = estimate_rho(cmd->list, pZ, pdinfo, cmd->opt, prn, &err);
-	if (!err) {
-	    clear_model(models[0]);
-	    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
-	    err = print_save_model(models[0], pdinfo, prn, s);
-	}
 	break;
 
     case ARBOND:

@@ -684,7 +684,6 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     MODEL rep;
     const char *param = NULL;
     char altparm[32] = {0};
-    double rho = 0.0;
     int *list = *plist;
     int mc = get_model_count();
     int repci = orig->ci;
@@ -707,7 +706,6 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	} else if (orig->opt & OPT_P) {
 	    myopt |= OPT_P;
 	}
-	rho = estimate_rho(list, pZ, pdinfo, myopt, prn, &rep.errcode);
     } else if (orig->ci == WLS || orig->ci == AR || get_extra_var(orig)) {
 	int *full_list = full_model_list(orig, list);
 
@@ -769,6 +767,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     case AR:
 	rep = ar_model(list, pZ, pdinfo, myopt, prn);
 	break;
+    case AR1:
+	rep = ar1_model(list, pZ, pdinfo, myopt, prn);
+	break;
     case ARBOND:
 	rep = arbond_model(list, param, (const double **) *pZ, 
 			   pdinfo, myopt, prn);
@@ -817,10 +818,8 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep = hsk_model(list, pZ, pdinfo);
 	break;
     default:
-	/* handles OLS, AR1, WLS, etc. */
-	if (rho != 0.0) {
-	    rep = ar1_lsq(list, pZ, pdinfo, repci, myopt, rho);
-	} else if (gretl_model_get_int(orig, "pooled")) {
+	/* handles OLS, WLS, etc. */
+	if (gretl_model_get_int(orig, "pooled")) {
 	    myopt |= OPT_P;
 	    rep = panel_model(list, pZ, pdinfo, myopt, prn);
 	} else {

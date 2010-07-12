@@ -78,6 +78,8 @@ static void omitzero (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		      gretlopt opt);
 static int lagdepvar (const int *list, const double **Z, const DATAINFO *pdinfo); 
 static int jackknife_vcv (MODEL *pmod, const double **Z);
+static double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
+			    gretlopt opt, PRN *prn, int *err);
 
 /* compute statistics for the dependent variable in a model */
 
@@ -1002,23 +1004,25 @@ static void model_free_storage (MODEL *pmod)
 }
 
 /*
- * real_ar1_lsq:
+ * ar1_lsq:
  * @list: model specification.
  * @Z: data array.
- * @pZ: address of data array (required only for ar1).
+ * @pZ: address of data array (required only for ar1 case).
  * @pdinfo: dataset information.
- * @ci: command index, e.g. OLS.
- * @opt: option flags
- * @rho: coefficient for quasi-differencing the data.
+ * @ci: command index, e.g. OLS, AR1.
+ * @opt: option flags (see lsq and ar1_model).
+ * @rho: coefficient for quasi-differencing the data, or 0.
  *
- * Nests lsq() and ar1_lsq().
+ * Nests lsq() and ar1_model(); is also used internally with ci == OLS
+ * but rho != 0.0 when estimating rho via, e.g., Cochrane-Orcutt
+ * iteration.
  *
  * Returns: model struct containing the estimates.
  */
 
-static MODEL real_ar1_lsq (const int *list, double **Z, double ***pZ, 
-			   DATAINFO *pdinfo, GretlCmdIndex ci, 
-			   gretlopt opt, double rho)
+static MODEL ar1_lsq (const int *list, double **Z, double ***pZ, 
+		      DATAINFO *pdinfo, GretlCmdIndex ci, 
+		      gretlopt opt, double rho)
 {
     MODEL mdl;
     int effobs = 0;
@@ -1288,7 +1292,6 @@ static MODEL real_ar1_lsq (const int *list, double **Z, double ***pZ,
  *   OPT_R compute robust standard errors;
  *   OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
- *   OPT_P use Prais-Winsten for first obs;
  *   OPT_N don't use degrees of freedom correction for standard
  *      error of regression;
  *   OPT_M reject missing observations within sample range;
@@ -1309,29 +1312,38 @@ static MODEL real_ar1_lsq (const int *list, double **Z, double ***pZ,
 MODEL lsq (const int *list, double **Z, DATAINFO *pdinfo, 
 	   GretlCmdIndex ci, gretlopt opt)
 {
-    return real_ar1_lsq(list, Z, NULL, pdinfo, ci, opt, 0.0);
+    return ar1_lsq(list, Z, NULL, pdinfo, ci, opt, 0.0);
 }
 
 /**
- * ar1_lsq:
+ * ar1_model:
  * @list: model specification.
  * @pZ: address of data array.
  * @pdinfo: dataset information.
- * @ci: command index, e.g. OLS.
- * @opt: option flags
- * @rho: coefficient for quasi-differencing the data.
- *
- * A generalization of lsq(), permitting quasi-differencing 
- * of the data "on the fly" using @rho, the absolute value of
- * which should be less than 1.0.
+ * @opt: option flags: may include OPT_H to use Hildreth-Lu,
+ *       OPT_P to use Prais-Winsten, OPT_B to suppress Cochrane-Orcutt
+ *       fine-tuning of Hildreth-Lu results, OPT_G to generate
+ *       a gnuplot graph of the search in Hildreth-Lu case.
+ * @prn: gretl printer.
  *
  * Returns: model struct containing the estimates.
  */
 
-MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
-	       GretlCmdIndex ci, gretlopt opt, double rho)
+MODEL ar1_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn)
 {
-    return real_ar1_lsq(list, NULL, pZ, pdinfo, ci, opt, 0.0);
+    MODEL mdl;
+    double rho;
+    int err = 0;
+
+    rho = estimate_rho(list, pZ, pdinfo, opt, prn, &err);
+
+    if (err) {
+	mdl.errcode = err;
+	return mdl;
+    } else {
+	return ar1_lsq(list, NULL, pZ, pdinfo, AR1, opt, rho);
+    }
 }
 
 static int make_ess (MODEL *pmod, const double **Z)
@@ -2064,7 +2076,7 @@ static double autores (MODEL *pmod, const double **Z, gretlopt opt)
 
 #define AR_DEBUG 0
 
-/**
+/*
  * estimate_rho:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data array.
@@ -2084,8 +2096,8 @@ static double autores (MODEL *pmod, const double **Z, gretlopt opt)
  * Returns: rho estimate on successful completion, #NADBL on error.
  */
 
-double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     gretlopt opt, PRN *prn, int *err)
+static double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
+			    gretlopt opt, PRN *prn, int *err)
 {
     double rho = 0.0, rho0 = 0.0, diff;
     double finalrho = 0.0, essmin = 1.0e8;
@@ -2120,7 +2132,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	/* Do Hildreth-Lu first */
 	for (rho = -0.990, iter = 0; rho < 1.0; rho += .01, iter++) {
 	    clear_model(&armod);
-	    armod = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+	    armod = ar1_lsq(list, NULL, pZ, pdinfo, OLS, OPT_A, rho);
 	    if ((*err = armod.errcode)) {
 		clear_model(&armod);
 		goto bailout;
@@ -2161,7 +2173,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    /* try exploring this funny region? */
 	    for (rho = 0.99; rho <= 0.999; rho += .001) {
 		clear_model(&armod);
-		armod = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+		armod = ar1_lsq(list, NULL, pZ, pdinfo, OLS, OPT_A, rho);
 		if ((*err = armod.errcode)) {
 		    clear_model(&armod);
 		    goto bailout;
@@ -2178,7 +2190,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    /* this even funnier one? */
 	    for (rho = 0.9991; rho <= 0.9999; rho += .0001) {
 		clear_model(&armod);
-		armod = ar1_lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+		armod = ar1_lsq(list, NULL, pZ, pdinfo, OLS, OPT_A, rho);
 		if ((*err = armod.errcode)) {
 		    clear_model(&armod);
 		    goto bailout;
@@ -2238,7 +2250,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	while (diff > 0.001) {
 	    clear_model(&armod);
-	    armod = ar1_lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
+	    armod = ar1_lsq(list, NULL, pZ, pdinfo, OLS, lsqopt, rho);
 #if AR_DEBUG
 	    fprintf(stderr, "armod: t1=%d, first two uhats: %g, %g\n",
 		    armod.t1, 
@@ -3203,7 +3215,7 @@ MODEL ar_model (const int *list, double ***pZ,
 {
     double diff, ess, tss, xx;
     int i, j, t, t1, t2, vc, yno, ryno, iter;
-    int err, lag, maxlag, v = pdinfo->v;
+    int lag, maxlag, v = pdinfo->v;
     int *arlist = NULL, *rholist = NULL;
     int *reglist = NULL, *reglist2 = NULL;
     int pos, cpos;
@@ -3244,12 +3256,7 @@ MODEL ar_model (const int *list, double ***pZ,
 
     /* special case: ar 1 ; ... => use AR1 */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	xx = estimate_rho(reglist, pZ, pdinfo, OPT_NONE, prn, &err);
-	if (err) {
-	    ar.errcode = err;
-	} else {
-	    ar = ar1_lsq(reglist, pZ, pdinfo, AR1, OPT_NONE, xx);
-	}
+	ar = ar1_model(reglist, pZ, pdinfo, OPT_NONE, prn);
 	goto bailout;
     }
 

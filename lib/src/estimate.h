@@ -27,15 +27,13 @@
 MODEL lsq (const int *list, double **Z, DATAINFO *pdinfo, 
 	   GretlCmdIndex ci, gretlopt opt);
 
-MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
-	       GretlCmdIndex ci, gretlopt opt, double rho);
-
 MODEL ar_model (const int *list,  
 		double ***pZ, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn);
 
-double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
-		     gretlopt opt, PRN *prn, int *err);
+MODEL ar1_model (const int *list,  
+		 double ***pZ, DATAINFO *pdinfo, 
+		 gretlopt opt, PRN *prn);
 
 MODEL lad (const int *list, double **Z, DATAINFO *pdinfo); 
 

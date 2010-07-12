@@ -3405,7 +3405,6 @@ static int real_do_model (int action)
     PRN *prn;
     MODEL *pmod;
     char title[26];
-    double rho;
     int err = 0;
 
 #if 0
@@ -3429,13 +3428,7 @@ static int real_do_model (int action)
     switch (action) {
 
     case AR1:
-	rho = estimate_rho(libcmd.list, &Z, datainfo,  
-			   (libcmd.opt | OPT_G), prn, &err);
-	if (err) {
-	    gui_errmsg(err);
-	    break;
-	}
-	*pmod = ar1_lsq(libcmd.list, &Z, datainfo, action, libcmd.opt, rho);
+	*pmod = ar1_model(libcmd.list, &Z, datainfo, libcmd.opt | OPT_G, prn);
 	err = model_output(pmod, prn);
 	if (libcmd.opt & OPT_H) {
 	    register_graph(NULL);
