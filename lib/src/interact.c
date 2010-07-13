@@ -449,6 +449,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == XTAB)
 
 #define DOUBLE_SEP_OK(c) (c == ARBOND || \
+                          c == DPANEL || \
                           c == ARMA || \
                           c == COINT2 || \
 			  c == VECM) 
@@ -1994,7 +1995,7 @@ static char *copy_remainder (const char *line, int pos)
     return rem;
 }
 
-#define semi_special(c) (c == ARBOND)
+#define semi_special(c) (c == ARBOND || c == DPANEL)
 
 static int handle_semicolon (int *k, int *ints_ok, int *poly, 
 			     int *sepcount, CMD *cmd)
@@ -2433,7 +2434,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* arbond special: if there's a block-diagonal instruments
        portion to the command, grab that in literal form for
        later processing */
-    if (cmd->ci == ARBOND && get_sepcount(line) == 2) {
+    if ((cmd->ci == ARBOND || cmd->ci == DPANEL) && get_sepcount(line) == 2) {
 	grab_arbond_diag(line, cmd);
 	if (cmd->err) {
 	    return cmd->err;
@@ -3372,7 +3373,7 @@ static int effective_ci (const CMD *cmd)
 
 #define listsep_switch(c) (c == AR || c == MPOLS)
 
-#define hold_param(c) (c == IVREG || c == AR || c == ARBOND || c == ARMA || \
+#define hold_param(c) (c == IVREG || c == AR || c == ARBOND || c == DPANEL || c == ARMA || \
                        c == CORRGM || c == PERGM || c == SCATTERS || c == MPOLS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON || c == XCORRGM || \
@@ -3486,6 +3487,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
                              c->ci == OPEN)
 
 #define print_param_last(c) (c == ARBOND || \
+			     c == DPANEL || \
 			     c == DELEET || \
 			     c == LOGISTIC || \
 	                     c == CORRGM || \

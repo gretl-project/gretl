@@ -2349,7 +2349,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	if (ret == -1) {
 	    ret = real_list_dup(list, 1, start - 2);
 	}
-    } else if (ci == ARBOND) {
+    } else if (ci == ARBOND || ci == DPANEL) {
 	int stop = 0;
 
 	multi = 1;

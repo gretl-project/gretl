@@ -342,6 +342,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     int t0, t1, i0, i1;
     int k, k2 = nz_diff + nz_lev;
     int i, j;
+    int qmax = dpd->qmax;
 
     gretl_matrix_zero(Zi);
 
@@ -351,10 +352,12 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	i1 = goodobs[i+2];
 	k = i0 * (i0-1) / 2;
 	for (j=0; j<i0; j++) {
-	    y0 = dpd->y[t+j];
-	    if (!na(y0)) {
-		gretl_matrix_set(Zi, k, i1-1-maxlag, y0);
-	    }
+	    if ((qmax==0) || (j>i0-qmax)) {
+		y0 = dpd->y[t+j];
+		if (!na(y0)) {
+		    gretl_matrix_set(Zi, k, i1-1-maxlag, y0);
+		}
+	    } 
 	    k++;
 	}
     }
@@ -385,10 +388,12 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    i0 = goodobs[i+1];
 	    col = offset + i0 - maxlag;
 	    for (j=lastdiff; j<i0; j++) {
-		y0 = (j < 1)? NADBL : dpd->y[t+j-1];
-		y1 = dpd->y[t+j];
-		if (!na(y1) && !na(y0)) {
-		    gretl_matrix_set(Zi, row, col, y1 - y0);
+		if ((qmax==0) || (j>i0-qmax)) {
+		    y0 = (j < 1)? NADBL : dpd->y[t+j-1];
+		    y1 = dpd->y[t+j];
+		    if (!na(y1) && !na(y0)) {
+			gretl_matrix_set(Zi, row, col, y1 - y0);
+		    }
 		}
 		row++;
 	    }
