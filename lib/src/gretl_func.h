@@ -157,7 +157,7 @@ int get_function_file_header (const char *fname, char **pdesc, char **pver);
 int update_function_from_script (const char *funname, const char *path,
 				 fnpkg *pkg);
 
-int user_function_help (const char *fnname, PRN *prn);
+int user_function_help (const char *fnname, gretlopt opt, PRN *prn);
 
 int user_function_has_PDF_doc (const char *fnname, char **pdfname);
 

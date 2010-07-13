@@ -2962,7 +2962,7 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
     } else if (genr_function_word(needle)) {
 	sprintf(helpfile, "%sgenrcli.hlp", gretl_home());
     } else if (gretl_is_public_user_function(needle)) {
-	return user_function_help(needle, prn);
+	return user_function_help(needle, OPT_NONE, prn);
     } else {
 	pprintf(prn, _("\"%s\" is not a gretl command.\n"), needle);
 	return 1;

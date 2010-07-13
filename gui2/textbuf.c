@@ -739,7 +739,9 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("code");
-    g_object_set(tag, "family", "monospace", NULL);
+    g_object_set(tag, "family", "monospace", 
+		 "paragraph-background", "#e6f3ff",
+		 NULL);
     gtk_text_tag_table_add(table, tag);
 
     return table;
@@ -2449,7 +2451,8 @@ enum {
     INSERT_TEXT,
     INSERT_PDFLINK,
     INSERT_INPLINK,
-    INSERT_GFRLINK
+    INSERT_GFRLINK,
+    INSERT_BOLD
 };
 
 static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
@@ -2490,6 +2493,9 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
     case INSERT_SUB:
 	ftag = "subscript";
 	break;
+    case INSERT_BOLD:
+	ftag = "heading";
+	break;
     default:
 	break;
     }
@@ -2527,6 +2533,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_INPLINK;
     } else if (!strncmp(p, "gfr", 3)) {
 	ins = INSERT_GFRLINK;
+    } else if (!strncmp(p, "hd1", 3)) {
+	ins = INSERT_BOLD;
     }
 
     if (ins != INSERT_NONE) {
@@ -2742,6 +2750,19 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
     cursor_to_top(hwin);
 
     return 1;
+}
+
+void add_user_function_help_buffer (windata_t *hwin, char *buf)
+{
+    GtkTextBuffer *textb;
+    GtkTextIter iter;
+
+    textb = gretl_text_buf_new();
+    gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
+    insert_text_with_markup(textb, &iter, buf, FUNCS_HELP);
+
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), textb);
+    cursor_to_top(hwin);
 }
 
 static int get_screen_height (void)

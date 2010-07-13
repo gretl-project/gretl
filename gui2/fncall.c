@@ -32,6 +32,8 @@
 #include "guiprint.h"
 #include "ssheet.h"
 #include "datafiles.h"
+#include "winstack.h"
+#include "textbuf.h"
 
 #define FCDEBUG 0
 
@@ -348,6 +350,36 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
     return list;
 }
 
+static windata_t *make_help_viewer (const char *fnname, char *buf)
+{
+    windata_t *vwin;
+    gchar *title;
+
+    title = g_strdup_printf(_("help on %s"), fnname);
+    vwin = gretl_viewer_new(PRINT, title, NULL, 0);
+    g_free(title);
+
+    if (vwin == NULL) return NULL;
+
+    /* FIXME give this window some sort of toolbar/menu */
+
+    vwin->vbox = gtk_vbox_new(FALSE, 1);
+    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
+    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+
+    create_text(vwin, 70, 350, 0, FALSE);
+    text_table_setup(vwin->vbox, vwin->text);
+    add_user_function_help_buffer(vwin, buf);
+
+    gtk_widget_show(vwin->vbox);
+    gtk_widget_show(vwin->main);
+
+    gtk_widget_grab_focus(vwin->text);
+
+    return vwin;
+}
+
 static void fncall_help (GtkWidget *w, call_info *cinfo)
 {
     const char *fnname = user_function_name_by_index(cinfo->iface);
@@ -355,6 +387,7 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     PRN *prn;
     int err;
 
+    /* FIXME incorpoate this into markup */
     if (user_function_has_PDF_doc(fnname, &pdfname)) {
 	err = display_gfn_help(pdfname);
 	free(pdfname);
@@ -367,13 +400,17 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 	return;
     }
     
-    err = user_function_help(fnname, prn);
+    err = user_function_help(fnname, OPT_M, prn);
 
     if (err) {
 	gretl_print_destroy(prn);
 	errbox("Couldn't find any help");
     } else {
-	view_buffer(prn, 80, 400, fnname, VIEW_PKG_INFO, NULL);
+	char *buf = gretl_print_steal_buffer(prn);
+
+	make_help_viewer(fnname, buf);
+	free(buf);
+	gretl_print_destroy(prn);
     }
 }
 

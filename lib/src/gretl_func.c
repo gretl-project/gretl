@@ -5780,43 +5780,70 @@ void gretl_functions_cleanup (void)
     n_pkgs = 0;
 }
 
-static void real_user_function_help (ufunc *fun, PRN *prn)
+static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 {
     fnpkg *pkg = fun->pkg;
+    int markup = (opt & OPT_M);
     int i;
 
     pprintf(prn, "function %s\n\n", fun->name);
 
     if (pkg != NULL) {
-	pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
-	pprintf(prn, "Version: %s\n", pkg->version? pkg->version : "unknown");
-	pprintf(prn, "Date: %s\n\n", pkg->date? pkg->date : "unknown");
+	if (markup) {
+	    pprintf(prn, "<@hd1=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
+	    pprintf(prn, "<@hd1=\"Version\">: %s\n", pkg->version? pkg->version : "unknown");
+	    pprintf(prn, "<@hd1=\"Date\">: %s\n\n", pkg->date? pkg->date : "unknown");
+	} else {
+	    pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
+	    pprintf(prn, "Version: %s\n", pkg->version? pkg->version : "unknown");
+	    pprintf(prn, "Date: %s\n\n", pkg->date? pkg->date : "unknown");
+	}
     }
 
+    if (markup) {
+	pputs(prn, "<@hd1=\"Parameters\">: ");
+    } else {
+	pputs(prn, "Parameters: ");
+    }    
+
     if (fun->n_params > 0) {
-	pprintf(prn, "Parameters:\n");
+	pputc(prn, '\n');
 	for (i=0; i<fun->n_params; i++) {
 	    pprintf(prn, " %s (%s)\n", 
 		    fun->params[i].name, gretl_arg_type_name(fun->params[i].type));
 	}
 	pputc(prn, '\n');
     } else {
-	pputs(prn, "Parameters: none\n\n");
+	pputs(prn, "none\n\n");
     }
 
-    if (fun->rettype != GRETL_TYPE_NONE && fun->rettype != GRETL_TYPE_VOID) {
-	pprintf(prn, "Return value: %s\n\n", gretl_arg_type_name(fun->rettype));
+    if (markup) {
+	pputs(prn, "<@hd1=\"Return value\">: ");
     } else {
-	pputs(prn, "Return value: none\n\n");
+	pputs(prn, "Return value: ");
+    }      
+
+    if (fun->rettype != GRETL_TYPE_NONE && fun->rettype != GRETL_TYPE_VOID) {
+	pprintf(prn, "%s\n\n", gretl_arg_type_name(fun->rettype));
+    } else {
+	pputs(prn, "none\n\n");
     }
 
     if (pkg != NULL && pkg->help != NULL) {
-	pputs(prn, "Help text:\n");
+	if (markup) {
+	    pputs(prn, "<@hd1=\"Help text\">:\n");
+	} else {
+	    pputs(prn, "Help text:\n");
+	}   	
 	if (has_suffix(pkg->help, ".pdf")) {
 	    const char *s = strrchr(pkg->help, ':');
 
 	    if (s != NULL) {
-		pprintf(prn, "See %s", s + 1);
+		if (markup) {
+		    pprintf(prn, "See <@pdf=\"%s\">", s + 1);
+		} else {
+		    pprintf(prn, "See %s", s + 1);
+		}
 	    } else {
 		pputs(prn, pkg->help);
 	    }
@@ -5827,15 +5854,25 @@ static void real_user_function_help (ufunc *fun, PRN *prn)
     }
 
     if (pkg != NULL && pkg->sample != NULL) {
-	pputs(prn, "Sample script:\n");
+	if (markup) {
+	    pputs(prn, "<@hd1=\"Sample script\">:\n\n");
+	    pputs(prn, "<code>\n");
+	} else {
+	    pputs(prn, "Sample script:\n\n");
+	}
 	pputs(prn, pkg->sample);
-	pprintf(prn, "\n\n");
+	if (markup) {
+	    pputs(prn, "\n</code>\n");
+	} else {
+	    pprintf(prn, "\n\n");
+	}
     }	
 }
 
 /**
  * user_function_help:
  * @fnname: name of function.
+ * @opt: may include OPT_M for adding markup.
  * @prn: printing struct.
  * 
  * Looks for a function named @fnname and prints
@@ -5845,7 +5882,7 @@ static void real_user_function_help (ufunc *fun, PRN *prn)
  * found.
  */
 
-int user_function_help (const char *fnname, PRN *prn)
+int user_function_help (const char *fnname, gretlopt opt, PRN *prn)
 {
     ufunc *fun = get_user_function_by_name(fnname);
     int err = 0;
@@ -5854,7 +5891,7 @@ int user_function_help (const char *fnname, PRN *prn)
 	pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
 	err = 1;
     } else {
-	real_user_function_help(fun, prn);
+	real_user_function_help(fun, opt, prn);
     }
 
     return err;
