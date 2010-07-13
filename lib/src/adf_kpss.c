@@ -974,7 +974,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		Vtbar /= n;
 		Wtbar = sqrt(n) * (tbar - Etbar) / sqrt(Vtbar);
 		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
-		pprintf(prn, "Im-Pesaran-Shin W_tbar = %g [%g]\n", Wtbar, 
+		pprintf(prn, "Im-Pesaran-Shin W_tbar = %g [%.4f]\n", Wtbar, 
 			normal_pvalue_1(-Wtbar));
 	    }
 	}
@@ -997,7 +997,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 		Vtbar /= n;
 		Ztbar = sqrt(n) * (tbar - Etbar) / sqrt(Vtbar);
 		pprintf(prn, "N = %d, Tmin = %d, Tmax = %d\n", n, Tmin, Tmax);
-		pprintf(prn, "Im-Pesaran-Shin Z_tbar = %g [%g]\n", Ztbar, 
+		pprintf(prn, "Im-Pesaran-Shin Z_tbar = %g [%.4f]\n", Ztbar, 
 			normal_pvalue_1(-Ztbar));
 	    }
 	}
@@ -1040,11 +1040,11 @@ static void do_choi_test (double ppv, double zpv, double lpv,
     double L = sqrt(k) * lpv;
 
     pprintf(prn, "\nChoi meta-tests (H0: all groups have unit root):\n");
-    pprintf(prn, "   Inverse chi-square(%d) = %g [%g]\n", 2*n,
+    pprintf(prn, "   Inverse chi-square(%d) = %g [%.4f]\n", 2*n,
 	    P, chisq_cdf_comp(2*n, P));
-    pprintf(prn, "   Inverse normal test = %g [%g]\n", Z,
+    pprintf(prn, "   Inverse normal test = %g [%.4f]\n", Z,
 	    normal_pvalue_1(-Z));
-    pprintf(prn, "   Logit test: t(%d) = %g [%g]\n", tdf, L,
+    pprintf(prn, "   Logit test: t(%d) = %g [%.4f]\n", tdf, L,
 	    student_pvalue_1(tdf, -L));
 }
 

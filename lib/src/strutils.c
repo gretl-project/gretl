@@ -508,24 +508,35 @@ char *gretl_strndup (const char *src, size_t n)
 char *gretl_strdup_printf (const char *format, ...)
 {
     va_list args;
-    int plen, bsize = 2048;
-    char *buf;
+    char *buf = NULL;
+    int len;
+
+#ifdef HAVE_VASPRINTF
+    va_start(args, format);
+    len = vasprintf(&buf, format, args);
+    va_end(args);
+    if (len < 0) {
+	buf = NULL;
+    }
+#else 
+    int bsize = 2048;
 
     buf = malloc(bsize);
     if (buf == NULL) {
 	return NULL;
     }
 
-    memset(buf, 0, 1);
+    memset(buf, 0, 1); 
 
     va_start(args, format);
-    plen = vsnprintf(buf, bsize, format, args);
+    len = vsnprintf(buf, bsize, format, args);
     va_end(args);
 
-    if (plen >= bsize) {
+    if (len >= bsize) {
 	fputs("gretl_strdup_printf warning: string was truncated\n",
 	      stderr);
     }
+#endif
 
     return buf;
 }

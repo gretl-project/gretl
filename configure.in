@@ -285,6 +285,7 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(unistd.h dirent.h fnmatch.h byteswap.h sys/times.h)
 AC_C_CONST
 AC_C_LONG_DOUBLE 
+AC_CHECK_FUNCS(vasprintf)
 AC_CHECK_SIZEOF(int)
 AC_TYPE_SIGNAL 
 AC_C_BIGENDIAN 

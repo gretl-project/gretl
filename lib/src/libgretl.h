@@ -20,7 +20,18 @@
 #ifndef LIBGRETL_H
 #define LIBGRETL_H
 
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#ifdef HAVE_VASPRINTF
+# define _GNU_SOURCE
+# include <stdio.h>
+# undef _GNU_SOURCE
+#else
+# include <stdio.h>
+#endif
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
@@ -31,10 +42,6 @@
 #ifdef FULL_XML_HEADERS
 # include <libxml/xmlmemory.h>
 # include <libxml/parser.h>
-#endif
-
-#ifdef HAVE_CONFIG_H
-# include "config.h"
 #endif
 
 #ifdef WIN32
