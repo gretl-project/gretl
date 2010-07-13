@@ -40,6 +40,7 @@
  */
 
 typedef struct adf_info_ adf_info;
+typedef struct kpss_info_ kpss_info;
 
 struct adf_info_ {
     int T;
@@ -47,6 +48,12 @@ struct adf_info_ {
     int order;
     double b;
     double tau;
+    double pval;
+};
+
+struct kpss_info_ {
+    int T;
+    double test;
     double pval;
 };
 
@@ -1030,7 +1037,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
    International Money and Finance 20 (2001), 249-272.
 */
 
-static void do_choi_test (double ppv, double zpv, double lpv, 
+static void do_choi_test (int ci, double ppv, double zpv, double lpv, 
 			  int n, PRN *prn)
 {
     double P = -2 * ppv;
@@ -1039,7 +1046,11 @@ static void do_choi_test (double ppv, double zpv, double lpv,
     double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
     double L = sqrt(k) * lpv;
 
-    pprintf(prn, "\nChoi meta-tests (H0: all groups have unit root):\n");
+    if (ci == KPSS) {
+	pprintf(prn, "Choi meta-tests (H0: all groups stationary):\n");
+    } else {
+	pprintf(prn, "\nChoi meta-tests (H0: all groups have unit root):\n");
+    }
     pprintf(prn, "   Inverse chi-square(%d) = %g [%.4f]\n", 2*n,
 	    P, chisq_cdf_comp(2*n, P));
     pprintf(prn, "   Inverse normal test = %g [%.4f]\n", Z,
@@ -1155,7 +1166,7 @@ static int panel_DF_test (int v, int order,
 	    do_IPS_test(tbar, n, Ti, order, Oi, pdinfo, opt, prn);
 	}
 	if (!na(ppv)) {
-	    do_choi_test(ppv, zpv, lpv, n, prn);
+	    do_choi_test(ADF, ppv, zpv, lpv, n, prn);
 	}
 	pputc(prn, '\n'); /* FIXME quiet */
     }
@@ -1314,7 +1325,8 @@ static double kpss_interp (double s, int T, int trend)
 
 static int 
 real_kpss_test (int order, int varno, double ***pZ,
-		DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+		DATAINFO *pdinfo, gretlopt opt, 
+		kpss_info *kinfo, PRN *prn)
 {
     MODEL KPSSmod;
     int list[4];
@@ -1410,6 +1422,12 @@ real_kpss_test (int order, int varno, double ***pZ,
     teststat = cumsum2 / (s2 * T * T);
     pval = kpss_interp(teststat, T, hastrend);
 
+    if (kinfo != NULL) {
+	kinfo->T = T;
+	kinfo->test = teststat;
+	kinfo->pval = pval;
+    }
+
     if ((pval == PV_GT10 || pval == PV_LT01) && (opt & OPT_Q)) {
 	/* if not --quiet a bad pval will be fixed below */
 	pval = NADBL;
@@ -1447,7 +1465,9 @@ real_kpss_test (int order, int varno, double ***pZ,
 	pputc(prn, '\n');
     }
 
-    record_test_result(teststat, pval, "KPSS");
+    if (kinfo == NULL) {
+	record_test_result(teststat, pval, "KPSS");
+    }
 
     clear_model(&KPSSmod);
     free(autocov);
@@ -1455,12 +1475,105 @@ real_kpss_test (int order, int varno, double ***pZ,
     return 0;
 }
 
+static int panel_kpss_test (int order, int v, 
+			    double ***pZ, DATAINFO *pdinfo, 
+			    gretlopt opt, PRN *prn)
+{
+    kpss_info kinfo;
+    int u0 = pdinfo->t1 / pdinfo->pd;
+    int uN = pdinfo->t2 / pdinfo->pd;
+    int n = uN - u0 + 1;
+    int quiet = (opt & OPT_Q);
+    double ppv = 0.0, zpv = 0.0, lpv = 0.0;
+    int gt_10 = 0, lt_01 = 0;
+    double pval;
+    int i, err;
+
+    /* run a KPSS test for each unit and record the
+       results */
+
+    pprintf(prn, _("\nKPSS test for %s %s\n"), pdinfo->varname[v],
+	    (opt & OPT_T)? _("(including trend)") : _("(without trend)"));
+    pprintf(prn, _("Lag truncation parameter = %d\n"), order);
+    pputc(prn, '\n');
+
+    for (i=u0; i<=uN && !err; i++) {
+	pdinfo->t1 = i * pdinfo->pd;
+	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
+	err = array_adjust_t1t2((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
+	if (!err) {
+	    err = real_kpss_test(order, v, pZ, pdinfo, opt | OPT_Q, &kinfo, prn);
+	    if (!err && !quiet) {
+		pprintf(prn, "Unit %d, T = %d\n", i + 1, kinfo.T);
+		if (na(kinfo.pval)) {
+		    pputs(prn, "\n\n");
+		} else {
+		    pprintf(prn, "test = %g, ", kinfo.test);
+		    if (kinfo.pval == PV_GT10) {
+			pprintf(prn, "%s > .10\n", _("p-value"));
+		    } else if (kinfo.pval == PV_LT01) {
+			pprintf(prn, "%s < .01\n", _("p-value"));
+		    } else {
+			pprintf(prn, "%s %.3f\n", _("interpolated p-value"), kinfo.pval);
+		    }
+		    pputc(prn, '\n');
+		}
+	    }
+	}
+
+	if (!err) {
+	    pval = kinfo.pval;
+
+	    if (pval == PV_GT10) {
+		gt_10++;
+		if (lt_01 == 0) {
+		    /* record lower bound */
+		    pval = .10;
+		} else {
+		    pval = NADBL;
+		}
+	    } else if (pval == PV_LT01) {
+		lt_01++;
+		if (gt_10 == 0) {
+		    /* record upper bound */
+		    pval = .01;
+		} else {
+		    pval = NADBL;
+		}
+	    }
+
+	    if (na(pval)) {
+		ppv = zpv = lpv = NADBL;
+	    } else if (!na(ppv)) {
+		ppv += log(pval);
+		zpv += normal_cdf_inverse(pval);
+		lpv += log(pval / (1-pval));
+	    }
+	}
+    }
+
+    if (!err && !na(ppv)) {
+	/* process the results as per Choi, as best we can */
+	do_choi_test(KPSS, ppv, zpv, lpv, n, prn);
+	if (gt_10 > 0) {
+	    pputs(prn, "   Note: these are LOWER BOUNDS "
+		  "on the true p-values\n");
+	} else if (lt_01 > 0) {
+	    pputs(prn, "   Note: these are UPPER BOUNDS "
+		  "on the true p-values\n");
+	} 
+	pputc(prn, '\n');
+    }
+
+    return err;
+}
+
 /**
  * kpss_test:
  * @order: window size for Bartlett smoothing.
  * @list: list of variables to test.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
@@ -1476,17 +1589,17 @@ real_kpss_test (int order, int varno, double ***pZ,
 int kpss_test (int order, const int *list, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    int i, err = 0;
+    int err = 0;
 
     if (multi_unit_panel_sample(pdinfo)) {
-	gretl_errmsg_set("Sorry, this command is not yet available "
-			 "for panel data");
-	return E_DATA;
-    }
+	err = panel_kpss_test(order, list[1], pZ, pdinfo, opt, prn);
+    } else {
+	int i;
 
-    for (i=1; i<=list[0] && !err; i++) {
-	err = real_kpss_test(order, list[i], pZ, pdinfo,
-			     opt, prn);
+	for (i=1; i<=list[0] && !err; i++) {
+	    err = real_kpss_test(order, list[i], pZ, pdinfo,
+				 opt, NULL, prn);
+	}
     }
 
     return err;
