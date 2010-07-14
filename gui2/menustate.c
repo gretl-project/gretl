@@ -206,9 +206,13 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx);
 
     /* Variable menu */
+    flip(mdata->ui, "/menubar/Variable/URTests", s); /* make this "sx" when ready */
+    if (sx && !s) {
+	flip(mdata->ui, "/menubar/Variable/URTests/DFGLS", s);
+	flip(mdata->ui, "/menubar/Variable/URTests/FractInt", s);
+    }
     flip(mdata->ui, "/menubar/Variable/corrgm", s);
     flip(mdata->ui, "/menubar/Variable/pergm", s);
-    flip(mdata->ui, "/menubar/Variable/URTests", s);
     flip(mdata->ui, "/menubar/Variable/Filter", s);
 #ifdef HAVE_X12A
     flip(mdata->ui, "/menubar/Variable/X12A", get_x12a_ok());

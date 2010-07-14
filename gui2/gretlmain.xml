@@ -210,14 +210,14 @@
       <menuitem action="rmplot"/>
       <separator/>
       <menuitem action="VarTSPlot"/>
-      <menuitem action="corrgm"/>
-      <menuitem action="pergm"/>
       <menu action="URTests">
 	<menuitem action="ADF"/>
 	<menuitem action="DFGLS"/>
 	<menuitem action="KPSS"/>
 	<menuitem action="FractInt"/>
       </menu>
+      <menuitem action="corrgm"/>
+      <menuitem action="pergm"/>
       <menu action="Filter">
 	<menuitem action="FilterSMA"/>
 	<menuitem action="FilterEMA"/>
