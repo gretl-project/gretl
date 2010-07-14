@@ -966,10 +966,20 @@ void unit_root_test (int ci)
 	N_("use level of variable"),
 	N_("use first difference of variable")
     };
+    const char *panel_adf_opts[] = {
+	N_("with constant"),
+	N_("with constant and trend"),
+	N_("test down from maximum lag order"),
+	N_("use first difference of variable")
+    };
     const char *alt_opts[] = {
 	N_("include a trend"),
 	N_("show regression results"),
 	N_("use level of variable"),
+	N_("use first difference of variable")
+    };
+    const char *panel_alt_opts[] = {
+	N_("include a trend"),
 	N_("use first difference of variable")
     };
 
@@ -982,40 +992,51 @@ void unit_root_test (int ci)
 
     /* save the user's settings, per session */
     static int adf_active[] = { 0, 1, 1, 0, 0, 0, 0 };
+    static int panel_adf_active[] = { 0, 0 };
     static int alt_active[] = { 0, 0 };
+    static int panel_alt_active[] = { 0, 0 };
     static int order = 1;
 
-    int difference = 0;
-    int v = mdata_active_var();
+    int difference = 0, *pdiff = NULL;
+    int panel = dataset_is_panel(datainfo);
+    int omax, okT, v = mdata_active_var();
     int *active = NULL;
-    int okT, omax, nchecks;
+    int nchecks, nradios;
     int err;
 
     if (order < 0) {
 	order = -order;
     }
 
-    okT = ok_obs_in_series(v);
+    if (panel) {
+	okT = datainfo->pd;
+    } else {
+	okT = ok_obs_in_series(v);
+    }
+
     omax = okT / 2;
 
     if (ci == ADF) {
 	title = adf_title;
 	spintext = adf_spintext;
-	opts = adf_opts;
-	nchecks = 7;
-	active = adf_active;
+	opts = (panel)? panel_adf_opts : adf_opts;
+	nchecks = (panel)? 2 : 7;
+	active = (panel)? panel_adf_active : adf_active;
+	nradios = (panel)? -2 : 2;
     } else if (ci == DFGLS) {
 	title = dfgls_title;
 	spintext = adf_spintext;
-	opts = alt_opts;
+	opts = (panel)? panel_alt_opts : alt_opts;
 	nchecks = 2;
-	active = alt_active;
+	active = (panel)? panel_alt_active : alt_active;
+	nradios = (panel)? 0 : 2;
     } else {
 	title = kpss_title;
 	spintext = kpss_spintext;
-	opts = alt_opts;
+	opts = (panel)? panel_alt_opts : alt_opts;
 	nchecks = 2;
-	active = alt_active;
+	active = (panel)? panel_alt_active : alt_active;
+	nradios = (panel)? 0 : 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
     }
 
@@ -1027,15 +1048,19 @@ void unit_root_test (int ci)
 	adf_active[4] = -1;
     }
 
+    if (!panel) {
+	pdiff = &difference;
+    }
+
     err = checks_dialog(_(title), NULL, opts, nchecks, active,
-			2, &difference,
-			&order, _(spintext),
+			nradios, pdiff, &order, _(spintext),
 			0, omax, ci);
     if (err < 0) {
 	return;
     }
 
-    if (ci == ADF) {
+    if (ci == ADF && !panel) {
+	/* no models selected */
 	if (active[0] == 0 &&
 	    active[1] == 0 &&
 	    active[2] == 0 &&
@@ -1048,21 +1073,34 @@ void unit_root_test (int ci)
 			  selected_varname());
 
     if (ci == ADF) {
-	if (active[0]) gretl_command_strcat(" --nc");
-	if (active[1]) gretl_command_strcat(" --c");
-	if (active[2]) gretl_command_strcat(" --ct");
-	if (active[3]) gretl_command_strcat(" --ctt");
-	if (active[4] > 0) gretl_command_strcat(" --seasonals");
-	if (active[5]) gretl_command_strcat(" --verbose");
-	if (active[6]) gretl_command_strcat(" --test-down");
+	if (panel) {
+	    if (active[0]) gretl_command_strcat(" --test-down");
+	    if (active[1]) difference = 1;
+	} else {
+	    if (active[0]) gretl_command_strcat(" --nc");
+	    if (active[1]) gretl_command_strcat(" --c");
+	    if (active[2]) gretl_command_strcat(" --ct");
+	    if (active[3]) gretl_command_strcat(" --ctt");
+	    if (active[4] > 0) gretl_command_strcat(" --seasonals");
+	    if (active[5]) gretl_command_strcat(" --verbose");
+	    if (active[6]) gretl_command_strcat(" --test-down");
+	}
     } else if (ci == DFGLS) {
 	if (active[0]) gretl_command_strcat(" --ct --gls");
 	else gretl_command_strcat(" --c --gls");
-	if (active[1]) gretl_command_strcat(" --verbose");
+	if (!panel && active[1]) {
+	    gretl_command_strcat(" --verbose");
+	}
     } else {
 	if (active[0]) gretl_command_strcat(" --trend");
-	if (active[1]) gretl_command_strcat(" --verbose");
+	if (!panel && active[1]) {
+	    gretl_command_strcat(" --verbose");
+	}
     } 
+
+    if (panel) {
+	difference = active[1];
+    }
 
     if (difference) {
 	gretl_command_strcat(" --difference");

@@ -3652,42 +3652,14 @@ static void set_checks_opt (GtkWidget *w, int *active)
     active[i] = button_is_active(w);
 }
 
-GtkWidget *
-build_checks_dialog (const char *title, const char *blurb,
-		     const char **opts, int nopts,
-		     int *active, int nradios, int *rvar, int *spinvar, 
-		     const char *spintxt, int spinmin, int spinmax, 
-		     int hcode, int *ret)
+static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
+				      const char **opts, int nchecks,
+				      int *active)
 {
-    GtkWidget *dialog;
-    GtkWidget *vbox, *hbox, *tmp, *okb;
-    GtkWidget *button = NULL;
-    GtkWidget *spin = NULL;
+    GtkWidget *button;
     int i;
 
-    if (maybe_raise_dialog()) {
-	return NULL;
-    }
-
-    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
-
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-
-    /* create upper label if wanted */
-    if (blurb != NULL) {
-	tmp = dialog_blurb_box(blurb);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
-    }
-
-    /* create spinner if wanted */
-    if (spinvar != NULL) {
-	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
-	spin = g_object_get_data(G_OBJECT(tmp), "spin-button");
-    }
-
-    /* create check buttons, if any */
-    for (i=0; i<nopts; i++) {
+    for (i=0; i<nchecks; i++) {
 	button = gtk_check_button_new_with_label(_(opts[i]));
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 	if (active[i] < 0) {
@@ -3703,28 +3675,89 @@ build_checks_dialog (const char *title, const char *blurb,
 	}
     }
 
-    if (nopts == 1) {
+    if (nchecks == 1) {
+	/* add handle for switching sensitivity */
 	g_object_set_data(G_OBJECT(dialog), "checkbox", button);
     }    
+}
 
-    /* create radio buttons, if any */
+static void checks_dialog_add_radios (GtkWidget *vbox, const char **opts, 
+				      int nradios, int *rvar)
+{
+    GtkWidget *button = NULL;
+    GSList *group = NULL;
+    int i;
+
     for (i=0; i<nradios; i++) {
-	int j = nopts + i;
-	GSList *group;
-
-	if (i == 0) {
-	    group = NULL;
-	    tmp = gtk_hseparator_new();
-	    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
-	} else {
-	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	}
-	button = gtk_radio_button_new_with_label(group, _(opts[j]));
+	button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_radio_opt), rvar);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
+	
+    }
+
+}
+
+GtkWidget *
+build_checks_dialog (const char *title, const char *blurb,
+		     const char **opts, int nchecks,
+		     int *active, int nradios, int *rvar, int *spinvar, 
+		     const char *spintxt, int spinmin, int spinmax, 
+		     int hcode, int *ret)
+{
+    GtkWidget *dialog, *tmp;
+    GtkWidget *vbox, *hbox, *okb;
+    int radios_first = 0;
+
+    if (maybe_raise_dialog()) {
+	return NULL;
+    }
+
+    dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+    if (nradios < 0) {
+	/* negative value for nradios says put the radios first */
+	radios_first = 1;
+	nradios = -nradios;
+    }
+
+    /* create upper label if wanted */
+    if (blurb != NULL) {
+	tmp = dialog_blurb_box(blurb);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+    }
+
+    /* create spinner if wanted */
+    if (spinvar != NULL) {
+	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, hcode, NULL);
+	gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
+    }
+
+    /* create leading radio buttons, if any */
+    if (radios_first) {
+	checks_dialog_add_radios(vbox, opts, nradios, rvar);
+	opts += nradios;
+    }
+
+    /* create check buttons, if any */
+    if (nchecks > 0) {
+	if (radios_first) {
+	    gtk_box_pack_start(GTK_BOX(vbox), gtk_hseparator_new(), TRUE, TRUE, 5);
+	}
+	checks_dialog_add_checks(dialog, vbox, opts, nchecks, active);
+	opts += nchecks;
+    }
+
+    /* create trailing radio buttons, if any */
+    if (nradios > 0 && !radios_first) {
+	if (nchecks > 0) {
+	    gtk_box_pack_start(GTK_BOX(vbox), gtk_hseparator_new(), TRUE, TRUE, 5);
+	}
+	checks_dialog_add_radios(vbox, opts, nradios, rvar);
     }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
@@ -3755,7 +3788,7 @@ build_checks_dialog (const char *title, const char *blurb,
    a spinner with numerical values */
 
 int checks_dialog (const char *title, const char *blurb,
-		   const char **opts, int nopts,
+		   const char **opts, int nchecks,
 		   int *active, int nradios, int *rvar, int *spinvar, 
 		   const char *spintxt, int spinmin, int spinmax, 
 		   int hcode)
@@ -3763,7 +3796,7 @@ int checks_dialog (const char *title, const char *blurb,
     GtkWidget *dlg;
     int ret = 0;
 
-    dlg = build_checks_dialog(title, blurb, opts, nopts, active,
+    dlg = build_checks_dialog(title, blurb, opts, nchecks, active,
 			      nradios, rvar, spinvar, spintxt,
 			      spinmin, spinmax, hcode, &ret);
 

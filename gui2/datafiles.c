@@ -757,8 +757,8 @@ static int gui_delete_fn_pkg (const char *fname, windata_t *vwin)
     int active[] = {1, 1};
     int resp, err = 0;
 
-    resp = checks_only_dialog ("gretl", msg,
-			       opts, 2, active, 0);
+    resp = checks_only_dialog("gretl", msg,
+			      opts, 2, active, 0);
     g_free(msg);
 
     if (resp < 0 || (active[0] == 0 && active[1] == 0)) {

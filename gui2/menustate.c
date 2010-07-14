@@ -206,9 +206,8 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx);
 
     /* Variable menu */
-    flip(mdata->ui, "/menubar/Variable/URTests", s); /* make this "sx" when ready */
+    flip(mdata->ui, "/menubar/Variable/URTests", s); /* "sx" allows panel tests */
     if (sx && !s) {
-	flip(mdata->ui, "/menubar/Variable/URTests/DFGLS", s);
 	flip(mdata->ui, "/menubar/Variable/URTests/FractInt", s);
     }
     flip(mdata->ui, "/menubar/Variable/corrgm", s);
