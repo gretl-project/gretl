@@ -992,6 +992,8 @@ static char *get_gp_encoding_set (char *s, int targ)
 	    /* default is ISO-8859-1 */
 	    strcat(s, "1");
 	}
+    } else if (chinese_locale()) {
+	strcpy(s, "CP950");
     } else {
 	strcpy(s, "CP125");
 	if (latin == 2) {

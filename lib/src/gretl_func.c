@@ -5780,23 +5780,32 @@ void gretl_functions_cleanup (void)
     n_pkgs = 0;
 }
 
+/* generate help output for a packaged function, either for
+   display on the console, or with markup for display in a
+   GtkTextView window in the GUI (opt == OPT_M)
+*/
+
 static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 {
     fnpkg *pkg = fun->pkg;
     int markup = (opt & OPT_M);
     int i;
 
-    pprintf(prn, "function %s\n\n", fun->name);
+    if (markup) {
+	pprintf(prn, "<@hd1=\"%s\">\n\n", fun->name);
+    } else {
+	pprintf(prn, "%s\n\n", fun->name);
+    }
 
     if (pkg != NULL) {
 	if (markup) {
 	    pprintf(prn, "<@hd1=\"Author\">: %s\n", pkg->author? pkg->author : "unknown");
-	    pprintf(prn, "<@hd1=\"Version\">: %s\n", pkg->version? pkg->version : "unknown");
-	    pprintf(prn, "<@hd1=\"Date\">: %s\n\n", pkg->date? pkg->date : "unknown");
+	    pprintf(prn, "<@hd1=\"Version\">: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
+		    pkg->date? pkg->date : "unknown");
 	} else {
 	    pprintf(prn, "Author: %s\n", pkg->author? pkg->author : "unknown");
-	    pprintf(prn, "Version: %s\n", pkg->version? pkg->version : "unknown");
-	    pprintf(prn, "Date: %s\n\n", pkg->date? pkg->date : "unknown");
+	    pprintf(prn, "Version: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
+		    pkg->date? pkg->date : "unknown");
 	}
     }
 

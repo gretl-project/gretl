@@ -616,7 +616,7 @@ static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
 
     if (!gretl_is_ascii(s) && g_utf8_validate(s, -1, NULL)) {
 	char *tmp;
-	
+
 	if (ttype == GP_TERM_EMF) {
 	    tmp = utf8_to_cp(s);
 	} else {
@@ -685,7 +685,7 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 {
     char pline[512];
     int dataline = -1;
-    int err = 0;
+    int err, err_shown = 0;
 
     while (fgets(pline, sizeof pline, fpin)) {
 	if (set_print_line(pline)) {
@@ -708,9 +708,10 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 	}
 
 	if (latin && dataline <= 0 && *pline != '#') {
-	    err += maybe_recode_gp_line(pline, ttype, fpout);
-	    if (err == 1) {
+	    err = maybe_recode_gp_line(pline, ttype, fpout);
+	    if (err && !err_shown) {
 		gui_errmsg(err);
+		err_shown = 1;
 	    }
 	} else {
 	    fputs(pline, fpout);
@@ -781,8 +782,6 @@ static int revise_plot_file (GPT_SPEC *spec,
 	    fputs("set encoding utf8\n", fpout);
 	}
     }
-
-    /* FIXME font name */
 
     if (outtarg != NULL && *outtarg != '\0') {
 	fprintf(fpout, "%s\n", setterm);
