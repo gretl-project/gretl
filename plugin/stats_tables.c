@@ -696,12 +696,12 @@ int get_IPS_critvals (int N, int T, int trend, double *c)
 }
 
 /* Moments of t_{iT}: Table 1 in IPS (2003), based on
-   Nabeya (1999).
+   50,000 Monte Carlo replications.
 */
 
-static const double nabeya_moments[] = {
+static const double IPS_moments[] = {
     /* E(),   V() */
-    -1.520, 1.745, /*    6 */
+    -1.520, 1.745, /*  T=6 */
     -1.514, 1.414, /*    7 */
     -1.501, 1.228, /*    8 */
     -1.501, 1.132, /*    9 */
@@ -717,8 +717,8 @@ static const double nabeya_moments[] = {
     -1.529, 0.707  /* 1000 */
 };
 
-static const int nabeya_T[] = {6, 7, 8, 9, 10, 15, 20, 25, 
-			       30, 40, 50, 100, 500, 1000};
+static const int IPS_mom_T[] = {6, 7, 8, 9, 10, 15, 20, 25, 
+				30, 40, 50, 100, 500, 1000};
 
 int IPS_tbar_moments (int T, double *Etbar, double *Vtbar)
 {
@@ -728,25 +728,25 @@ int IPS_tbar_moments (int T, double *Etbar, double *Vtbar)
 	*Etbar = *Vtbar = NADBL;
 	err = E_DATA;
     } else if (T >= 1000) {
-	*Etbar = nabeya_moments[2*13];
-	*Vtbar = nabeya_moments[2*13+1];
+	*Etbar = IPS_moments[2*13];
+	*Vtbar = IPS_moments[2*13+1];
     } else {
 	double w1, w2, E1, E2, V1, V2;
 	int i, j;
 
 	for (i=12; i>=0; i--) {
 	    j = 2 * i;
-	    if (T == nabeya_T[i]) {
-		*Etbar = nabeya_moments[j+1];
-		*Vtbar = nabeya_moments[j+2];
+	    if (T == IPS_mom_T[i]) {
+		*Etbar = IPS_moments[j+1];
+		*Vtbar = IPS_moments[j+2];
 		break;
-	    } else if (T > nabeya_T[i]) {
-		w1 = 1.0 / (T - nabeya_T[i]);
-		w2 = 1.0 / (nabeya_T[i+1] - T);
-		E1 = nabeya_moments[j];
-		V1 = nabeya_moments[j+1];
-		E2 = nabeya_moments[j+2];
-		V2 = nabeya_moments[j+3];
+	    } else if (T > IPS_mom_T[i]) {
+		w1 = 1.0 / (T - IPS_mom_T[i]);
+		w2 = 1.0 / (IPS_mom_T[i+1] - T);
+		E1 = IPS_moments[j];
+		V1 = IPS_moments[j+1];
+		E2 = IPS_moments[j+2];
+		V2 = IPS_moments[j+3];
 		*Etbar = (w1 * E1 + w2 * E2) / (w1 + w2);
 		*Vtbar = (w1 * V1 + w2 * V2) / (w1 + w2);
 		break;
