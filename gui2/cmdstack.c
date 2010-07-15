@@ -323,7 +323,7 @@ gchar *get_logfile_content (int *err)
     *err = flush_logfile();
 
     if (!*err) {
-	*err = gretl_file_get_contents(logname, &s);
+	*err = gretl_file_get_contents(logname, &s, NULL);
     }
 
     return s;

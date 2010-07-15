@@ -444,7 +444,7 @@ static GtkTreeStore *make_help_topics_tree (int role)
 	return NULL;
     } 
 
-    err = gretl_file_get_contents(fname, &buf);
+    err = gretl_file_get_contents(fname, &buf, NULL);
     if (err) {
 	return NULL;
     }

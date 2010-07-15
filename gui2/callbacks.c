@@ -425,7 +425,6 @@ void selector_callback (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) data;
-    char title[64];
     int ci;
 
     ci = selector_callback_code(s);
@@ -433,8 +432,6 @@ void selector_callback (GtkAction *action, gpointer data)
     if (ci == ADD || ci == OMIT || ci == COEFFSUM || ci == ELLIPSE) {
 	set_window_busy(vwin);
     }
-
-    strcpy(title, "gretl: ");
 
     if (ci == COINT || ci == COINT2) {
 	selection_dialog(_("gretl: cointegration test"), do_coint, ci);
@@ -482,6 +479,9 @@ void selector_callback (GtkAction *action, gpointer data)
     } else if (ci == TSPLOTS) {
 	simple_selection(_("gretl: define graph"), do_scatters, ci, vwin);
     } else if (ci == SPEARMAN) {
+	char title[64];
+	
+	strcpy(title, "gretl: ");
 	strcat(title, _("rank correlation"));
 	simple_selection(title, do_rankcorr, ci, vwin);
     } else {

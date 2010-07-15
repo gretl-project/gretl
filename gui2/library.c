@@ -4526,7 +4526,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     } else {
 	/* note that in some error cases this file might
 	   be informative */
-	int ferr = gretl_file_get_contents(fname, &databuf);
+	int ferr = gretl_file_get_contents(fname, &databuf, NULL);
 
 	if (ferr) {
 	    remove(fname);

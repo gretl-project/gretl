@@ -131,7 +131,7 @@ char *double_underscores (char *targ, const char *src);
 
 void verbose_gerror_report (GError *gerr, const char *src);
 
-int gretl_file_get_contents (const gchar *fname, gchar **contents);
+int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size);
 
 void start_R (const char *buf, int send_data, int interactive);
 

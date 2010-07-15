@@ -1683,7 +1683,7 @@ static gchar *get_main_ui (void)
     gchar *main_ui = NULL;
 
     sprintf(fname, "%sui%cgretlmain.xml", gretl_home(), SLASH);
-    gretl_file_get_contents(fname, &main_ui);
+    gretl_file_get_contents(fname, &main_ui, NULL);
 
     return main_ui;
 }

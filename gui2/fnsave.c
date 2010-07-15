@@ -1388,7 +1388,7 @@ static void do_upload (const char *fname)
 	gdk_cursor_unref(cursor);
     }
 
-    err = gretl_file_get_contents(fname, &buf);
+    err = gretl_file_get_contents(fname, &buf, NULL);
 
     if (err) {
 	error_printed = 1;

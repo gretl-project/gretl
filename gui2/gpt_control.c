@@ -2200,7 +2200,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     }
 
     /* get the content of the plot file */
-    err = gretl_file_get_contents(spec->fname, &buf);
+    err = gretl_file_get_contents(spec->fname, &buf, NULL);
     if (err) {
 	gui_errmsg(err);
 	return err;
@@ -3601,49 +3601,67 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 		      event->area.width, event->area.height);
 }
 
+static void plot_area_updated (GdkPixbufLoader *loader, gint x, gint y,
+			       gint width, gint height, gpointer p)
+{
+    int *gotit = (int *) p;
+    
+    *gotit = 1;
+}
+
+static int is_png (const guchar *buf, gsize length)
+{
+    return length > 8 &&
+	buf[0] == 0x89 && buf[1] == 0x50 &&
+	buf[2] == 0x4E && buf[3] == 0x47 &&
+	buf[4] == 0x0D && buf[5] == 0x0A &&
+	buf[6] == 0x1A && buf[7] == 0x0A;
+}
+
 static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 {
-    GdkPixbuf *pbuf;
-    GError *gerr = NULL;
+    GdkPixbuf *pbuf = NULL;
+    gchar *cbuf = NULL;
+    gsize length = 0;
+    int err;
 
-    pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
+    err = gretl_file_get_contents(fname, &cbuf, &length);
 
-    if (pbuf == NULL) {
-	verbose_gerror_report(gerr, "gdk_pixbuf_new_from_file");
-	if (g_error_matches(gerr, G_FILE_ERROR, G_FILE_ERROR_INVAL)) {
-	    gchar *trfname = NULL;
-	    gsize bytes;
+    if (!err && !is_png((const guchar *) cbuf, length)) {
+	errbox("'%s' is not a PNG file");
+	err = 1;
+    }
+	
+    if (!err) {
+	GdkPixbufLoader *loader;
+	GError *gerr = NULL;
+	int gotit = 0;
 
-	    g_error_free(gerr);
-	    gerr = NULL;
+	loader = gdk_pixbuf_loader_new_with_type("png", &gerr);
 
-	    if (!g_utf8_validate(fname, -1, NULL)) {
-		fprintf(stderr, "Trying g_locale_to_utf8 on filename\n");
-		trfname = g_locale_to_utf8(fname, -1, NULL, &bytes, &gerr);
-		if (trfname == NULL) {
-		    verbose_gerror_report(gerr, "g_locale_to_utf8");
-		}
-	    } else {
-		fprintf(stderr, "Trying g_locale_from_utf8 on filename\n");
-		trfname = g_locale_from_utf8(fname, -1, NULL, &bytes, &gerr);
-		if (trfname == NULL) {
-		    verbose_gerror_report(gerr, "g_locale_from_utf8");
-		}
-	    }
-
-	    if (trfname != NULL) {
-		pbuf = gdk_pixbuf_new_from_file(trfname, &gerr);
-		g_free(trfname);
-		if (pbuf == NULL) {
-		    verbose_gerror_report(gerr, "gdk_pixbuf_new_from_file");
+	if (gerr == NULL) {
+	    g_signal_connect(loader, "area-updated", 
+			     G_CALLBACK(plot_area_updated), &gotit);
+	    gdk_pixbuf_loader_write(loader, (const guchar *) cbuf, length, &gerr);
+	    while (!gotit) {
+		if (gtk_events_pending()) {
+		    gtk_main_iteration();
 		}
 	    }
-	}
+	    pbuf = gdk_pixbuf_loader_get_pixbuf(loader);
+	    if (pbuf != NULL) {
+		g_object_ref(pbuf);
+	    }
+	    gdk_pixbuf_loader_close(loader, &gerr);
+	} 
+
 	if (gerr != NULL) {
 	    errbox(gerr->message);
 	    g_error_free(gerr);
 	}
-    } 
+
+	g_free(cbuf);
+    }
 
     return pbuf;
 }

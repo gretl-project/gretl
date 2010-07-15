@@ -1881,7 +1881,7 @@ windata_t *view_help_file (const char *filename, int role)
     int hsize = 80, vsize = 400;
 
     /* grab content of the appropriate help file into a buffer */
-    gretl_file_get_contents(filename, &fbuf);
+    gretl_file_get_contents(filename, &fbuf, NULL);
     if (fbuf == NULL) {
 	return NULL;
     }
@@ -4718,12 +4718,12 @@ void verbose_gerror_report (GError *gerr, const char *src)
 	    src, gerr->message, gerr->domain, gerr->code);
 }
 
-int gretl_file_get_contents (const gchar *fname, gchar **contents)
+int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size)
 {
     GError *gerr = NULL;
     gboolean ok;
 
-    ok = g_file_get_contents(fname, contents, NULL, &gerr);
+    ok = g_file_get_contents(fname, contents, size, &gerr);
 
     if (gerr != NULL) {
 	verbose_gerror_report(gerr, "g_file_get_contents");
