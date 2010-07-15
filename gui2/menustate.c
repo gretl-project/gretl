@@ -189,12 +189,19 @@ void window_list_state (gboolean s)
 			(d)->structure == SPECIAL_TIME_SERIES || \
 			(d)->structure == STACKED_TIME_SERIES)
 
+
+
 void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(datainfo);
+    gboolean ur = s;
 
     if (mdata->ui == NULL) {
 	return;
+    }
+
+    if (dataset_is_panel(datainfo)) {
+	ur = datainfo->pd > 5;
     }
 
     /* File menu */
@@ -206,8 +213,8 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx);
 
     /* Variable menu */
-    flip(mdata->ui, "/menubar/Variable/URTests", s); /* "sx" allows panel tests */
-    if (sx && !s) {
+    flip(mdata->ui, "/menubar/Variable/URTests", ur); 
+    if (ur && !s) {
 	flip(mdata->ui, "/menubar/Variable/URTests/FractInt", s);
     }
     flip(mdata->ui, "/menubar/Variable/corrgm", s);

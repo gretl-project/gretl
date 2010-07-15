@@ -658,6 +658,11 @@ static int real_adf_test (int varno, int order, int niv,
     fprintf(stderr, "real_adf_test: got order = %d\n", order);
 #endif
 
+    if (gretl_isconst(pdinfo->t1, pdinfo->t2, (*pZ)[varno])) {
+	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[varno]);
+	return E_DATA;
+    }    
+
     if (opt & OPT_E) {
 	/* testing down */
 	auto_order = 1;
@@ -854,7 +859,7 @@ static int real_adf_test (int varno, int order, int niv,
 			      itv, niv, nseas, opt, prn);
 	}
 
-	if (opt & OPT_V) {
+	if ((opt & OPT_V) && !(flags & ADF_PANEL)) {
 	    /* verbose */
 	    dfmod.aux = (order > 0)? AUX_ADF : AUX_DF;
 	    if (!na(pv)) {
@@ -1037,7 +1042,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
    International Money and Finance 20 (2001), 249-272.
 */
 
-static void do_choi_test (int ci, double ppv, double zpv, double lpv, 
+static void do_choi_test (double ppv, double zpv, double lpv, 
 			  int n, PRN *prn)
 {
     double P = -2 * ppv;
@@ -1046,11 +1051,7 @@ static void do_choi_test (int ci, double ppv, double zpv, double lpv,
     double k = (3.0*tdf)/(M_PI*M_PI*n*(5*n+2));
     double L = sqrt(k) * lpv;
 
-    if (ci == KPSS) {
-	pprintf(prn, "Choi meta-tests (H0: all groups stationary):\n");
-    } else {
-	pprintf(prn, "\nChoi meta-tests (H0: all groups have unit root):\n");
-    }
+    pprintf(prn, "%s\n", _("Choi meta-tests:"));
     pprintf(prn, "   Inverse chi-square(%d) = %g [%.4f]\n", 2*n,
 	    P, chisq_cdf_comp(2*n, P));
     pprintf(prn, "   Inverse normal test = %g [%.4f]\n", Z,
@@ -1066,6 +1067,7 @@ static int panel_DF_test (int v, int order,
     int u0 = pdinfo->t1 / pdinfo->pd;
     int uN = pdinfo->t2 / pdinfo->pd;
     int quiet = (opt & OPT_Q);
+    int verbose = (opt & OPT_V);
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
     double pval, tbar = 0.0;
     int *Ti = NULL, *Oi = NULL;
@@ -1123,7 +1125,7 @@ static int panel_DF_test (int v, int order,
 	if (!err) {
 	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
 				ADF_PANEL, &ainfo, prn);
-	    if (!err && !quiet) {
+	    if (!err && verbose) {
 		pprintf(prn, "Unit %d, T = %d\n", i + 1, ainfo.T);
 		pprintf(prn, "   %s: %g\n"
 			"   %s = %g", 
@@ -1161,14 +1163,16 @@ static int panel_DF_test (int v, int order,
     /* process the results as per Im-Pesaran-Shin and/or Choi */
 
     if (!err) {
+	pprintf(prn, "%s\n\n", _("H0: all groups have unit root"));
 	if (!na(tbar)) {
 	    tbar /= n;
 	    do_IPS_test(tbar, n, Ti, order, Oi, pdinfo, opt, prn);
 	}
 	if (!na(ppv)) {
-	    do_choi_test(ADF, ppv, zpv, lpv, n, prn);
+	    pputc(prn, '\n');
+	    do_choi_test(ppv, zpv, lpv, n, prn);
 	}
-	pputc(prn, '\n'); /* FIXME quiet */
+	pputc(prn, '\n');
     }
 
     free(Ti);
@@ -1223,8 +1227,7 @@ int adf_test (int order, const int *list, double ***pZ,
 {
     int save_t1 = pdinfo->t1;
     int save_t2 = pdinfo->t2;
-    int v, vlist[2] = {1,0};
-    int i, err;
+    int err;
 
     /* GLS incompatible with no const, quadratic trend or seasonals */
     err = incompatible_options(opt, OPT_N | OPT_R | OPT_G);
@@ -1241,6 +1244,8 @@ int adf_test (int order, const int *list, double ***pZ,
 	err = panel_DF_test(list[1], order, pZ, pdinfo, opt, prn);
     } else {
 	/* regular time series case */
+	int i, v, vlist[2] = {1, 0};
+
 	for (i=1; i<=list[0] && !err; i++) {
 	    v = list[i];
 	    vlist[1] = v;
@@ -1343,6 +1348,11 @@ real_kpss_test (int order, int varno, double ***pZ,
 	return E_DATA;
     }
 
+    if (gretl_isconst(pdinfo->t1, pdinfo->t2, (*pZ)[varno])) {
+	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[varno]);
+	return E_DATA;
+    }
+
     if (opt & OPT_F) {
 	/* difference the variable before testing */
 	varno = diffgenr(varno, DIFF, pZ, pdinfo);
@@ -1377,7 +1387,7 @@ real_kpss_test (int order, int varno, double ***pZ,
     t2 = KPSSmod.t2;
     T = KPSSmod.nobs;
 
-    if (opt & OPT_V) {
+    if (kinfo == NULL && (opt & OPT_V)) {
 	KPSSmod.aux = AUX_KPSS;
 	printmodel(&KPSSmod, pdinfo, OPT_NONE, prn);
     }
@@ -1419,24 +1429,29 @@ real_kpss_test (int order, int varno, double ***pZ,
     }
 
     s2 /= T;
-    teststat = cumsum2 / (s2 * T * T);
-    pval = kpss_interp(teststat, T, hastrend);
+
+    if (s2 <= 0.0) {
+	teststat = pval = NADBL;
+    } else {
+	teststat = cumsum2 / (s2 * T * T);
+	pval = kpss_interp(teststat, T, hastrend);
+    }
 
     if (kinfo != NULL) {
+	/* storing info for panel test */
 	kinfo->T = T;
 	kinfo->test = teststat;
 	kinfo->pval = pval;
-    }
-
-    if ((pval == PV_GT10 || pval == PV_LT01) && (opt & OPT_Q)) {
-	/* if not --quiet a bad pval will be fixed below */
-	pval = NADBL;
-    }
-
-    if (opt & OPT_V) {
-	pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2);
-	pprintf(prn, "  %s: %g\n", _("Sum of squares of cumulated residuals"), 
-		cumsum2);
+    } else {
+	/* testing individual time series */
+	if (pval == PV_GT10 || pval == PV_LT01) {
+	    pval = NADBL;
+	}
+	if (opt & OPT_V) {
+	    pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2);
+	    pprintf(prn, "  %s: %g\n", _("Sum of squares of cumulated residuals"), 
+		    cumsum2);
+	}
     }
 
     if (!(opt & OPT_Q)) {
@@ -1483,7 +1498,7 @@ static int panel_kpss_test (int order, int v,
     int u0 = pdinfo->t1 / pdinfo->pd;
     int uN = pdinfo->t2 / pdinfo->pd;
     int n = uN - u0 + 1;
-    int quiet = (opt & OPT_Q);
+    int verbose = (opt & OPT_V);
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
     int gt_10 = 0, lt_01 = 0;
     double pval;
@@ -1503,7 +1518,7 @@ static int panel_kpss_test (int order, int v,
 	err = array_adjust_t1t2((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
 	if (!err) {
 	    err = real_kpss_test(order, v, pZ, pdinfo, opt | OPT_Q, &kinfo, prn);
-	    if (!err && !quiet) {
+	    if (!err && verbose) {
 		pprintf(prn, "Unit %d, T = %d\n", i + 1, kinfo.T);
 		if (na(kinfo.pval)) {
 		    pputs(prn, "\n\n");
@@ -1542,7 +1557,7 @@ static int panel_kpss_test (int order, int v,
 		}
 	    }
 
-	    if (na(pval)) {
+	    if (xna(pval)) {
 		ppv = zpv = lpv = NADBL;
 	    } else if (!na(ppv)) {
 		ppv += log(pval);
@@ -1554,15 +1569,22 @@ static int panel_kpss_test (int order, int v,
 
     if (!err && !na(ppv)) {
 	/* process the results as per Choi, as best we can */
-	do_choi_test(KPSS, ppv, zpv, lpv, n, prn);
+	pprintf(prn, "%s\n\n", _("H0: all groups are stationary"));
+	do_choi_test(ppv, zpv, lpv, n, prn);
 	if (gt_10 > 0) {
 	    pputs(prn, "   Note: these are LOWER BOUNDS "
 		  "on the true p-values\n");
+	    pprintf(prn, "   (%d individual p-values were > .10 and were recorded as .10)\n",
+		    gt_10);
 	} else if (lt_01 > 0) {
 	    pputs(prn, "   Note: these are UPPER BOUNDS "
 		  "on the true p-values\n");
+	    pprintf(prn, "   (%d individual p-values were < .01 and were recorded as .01)\n",
+		    lt_01);
 	} 
 	pputc(prn, '\n');
+    } else {
+	pprintf(prn, "Choi test: cannot be calculated\n");
     }
 
     return err;
@@ -1589,18 +1611,30 @@ static int panel_kpss_test (int order, int v,
 int kpss_test (int order, const int *list, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
     int err = 0;
 
     if (multi_unit_panel_sample(pdinfo)) {
 	err = panel_kpss_test(order, list[1], pZ, pdinfo, opt, prn);
     } else {
-	int i;
+	/* regular time series case */
+	int i, v, vlist[2] = {1, 0};
 
 	for (i=1; i<=list[0] && !err; i++) {
-	    err = real_kpss_test(order, list[i], pZ, pdinfo,
-				 opt, NULL, prn);
+	    v = list[i];
+	    vlist[1] = v;
+	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
+	    if (!err) {
+		err = real_kpss_test(order, v, pZ, pdinfo, opt, NULL, prn);
+	    }
+	    pdinfo->t1 = save_t1;
+	    pdinfo->t2 = save_t2;
 	}
     }
+
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
 
     return err;
 }

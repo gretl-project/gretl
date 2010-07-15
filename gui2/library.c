@@ -970,7 +970,8 @@ void unit_root_test (int ci)
 	N_("with constant"),
 	N_("with constant and trend"),
 	N_("test down from maximum lag order"),
-	N_("use first difference of variable")
+	N_("use first difference of variable"),
+	N_("show individual test results")
     };
     const char *alt_opts[] = {
 	N_("include a trend"),
@@ -980,7 +981,8 @@ void unit_root_test (int ci)
     };
     const char *panel_alt_opts[] = {
 	N_("include a trend"),
-	N_("use first difference of variable")
+	N_("use first difference of variable"),
+	N_("show individual test results")
     };
 
     const char *adf_title = N_("gretl: ADF test");
@@ -992,26 +994,28 @@ void unit_root_test (int ci)
 
     /* save the user's settings, per session */
     static int adf_active[] = { 0, 1, 1, 0, 0, 0, 0 };
-    static int panel_adf_active[] = { 0, 0 };
+    static int panel_adf_active[] = { 0, 0, 1 };
     static int alt_active[] = { 0, 0 };
-    static int panel_alt_active[] = { 0, 0 };
-    static int order = 1;
+    static int panel_alt_active[] = { 0, 0, 1 };
+    static int ts_order = 1;
+    static int panel_order = 0;
 
     int difference = 0, *pdiff = NULL;
     int panel = dataset_is_panel(datainfo);
-    int omax, okT, v = mdata_active_var();
+    int order, omax, okT, v = mdata_active_var();
     int *active = NULL;
     int nchecks, nradios;
+    int helpcode = 0;
+    int verbose = 0;
     int err;
-
-    if (order < 0) {
-	order = -order;
-    }
 
     if (panel) {
 	okT = datainfo->pd;
+	order = (panel_order < 0)? -panel_order : panel_order;
     } else {
 	okT = ok_obs_in_series(v);
+	order = (ts_order < 0)? -ts_order : ts_order;
+	helpcode = ci;
     }
 
     omax = okT / 2;
@@ -1020,21 +1024,21 @@ void unit_root_test (int ci)
 	title = adf_title;
 	spintext = adf_spintext;
 	opts = (panel)? panel_adf_opts : adf_opts;
-	nchecks = (panel)? 2 : 7;
+	nchecks = (panel)? 3 : 7;
 	active = (panel)? panel_adf_active : adf_active;
 	nradios = (panel)? -2 : 2;
     } else if (ci == DFGLS) {
 	title = dfgls_title;
 	spintext = adf_spintext;
 	opts = (panel)? panel_alt_opts : alt_opts;
-	nchecks = 2;
+	nchecks = (panel)? 3 : 2;
 	active = (panel)? panel_alt_active : alt_active;
 	nradios = (panel)? 0 : 2;
     } else {
 	title = kpss_title;
 	spintext = kpss_spintext;
 	opts = (panel)? panel_alt_opts : alt_opts;
-	nchecks = 2;
+	nchecks = (panel)? 3 : 2;
 	active = (panel)? panel_alt_active : alt_active;
 	nradios = (panel)? 0 : 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
@@ -1054,7 +1058,7 @@ void unit_root_test (int ci)
 
     err = checks_dialog(_(title), NULL, opts, nchecks, active,
 			nradios, pdiff, &order, _(spintext),
-			0, omax, ci);
+			0, omax, helpcode);
     if (err < 0) {
 	return;
     }
@@ -1075,36 +1079,40 @@ void unit_root_test (int ci)
     if (ci == ADF) {
 	if (panel) {
 	    if (active[0]) gretl_command_strcat(" --test-down");
-	    if (active[1]) difference = 1;
 	} else {
 	    if (active[0]) gretl_command_strcat(" --nc");
 	    if (active[1]) gretl_command_strcat(" --c");
 	    if (active[2]) gretl_command_strcat(" --ct");
 	    if (active[3]) gretl_command_strcat(" --ctt");
 	    if (active[4] > 0) gretl_command_strcat(" --seasonals");
-	    if (active[5]) gretl_command_strcat(" --verbose");
 	    if (active[6]) gretl_command_strcat(" --test-down");
+	    verbose = active[5];
 	}
     } else if (ci == DFGLS) {
 	if (active[0]) gretl_command_strcat(" --ct --gls");
 	else gretl_command_strcat(" --c --gls");
-	if (!panel && active[1]) {
-	    gretl_command_strcat(" --verbose");
+	if (!panel) {
+	    verbose = active[1];
 	}
     } else {
 	if (active[0]) gretl_command_strcat(" --trend");
-	if (!panel && active[1]) {
-	    gretl_command_strcat(" --verbose");
+	if (!panel) {
+	    verbose = active[1];
 	}
     } 
 
     if (panel) {
 	difference = active[1];
+	verbose = active[2];
     }
 
     if (difference) {
 	gretl_command_strcat(" --difference");
     }
+
+    if (verbose) {
+	gretl_command_strcat(" --verbose");
+    }    
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return;
@@ -1120,6 +1128,11 @@ void unit_root_test (int ci)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	if (panel) {
+	    panel_order = order;
+	} else {
+	    ts_order = order;
+	}
 	view_buffer(prn, 78, 350, title, ci, NULL);
     }    
 }
