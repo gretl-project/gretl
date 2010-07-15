@@ -32,6 +32,7 @@
 #include <glib.h>
 
 #define GP_DEBUG 0
+#define GP_SPEED
 
 #ifdef WIN32
 # include <windows.h>
@@ -1391,15 +1392,27 @@ int gnuplot_make_graph (void)
 
 #ifdef WIN32
     sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
+# ifdef GP_SPEED
+    fprintf(stderr, "execing wgnuplot.exe: %g\n", gretl_stopwatch());
+# endif
     err = winfork(buf, NULL, SW_SHOWMINIMIZED, 0);
-#else
+# ifdef GP_SPEED
+    fprintf(stderr, "wgnuplot.exe done: %g\n", gretl_stopwatch());
+# endif
+#else /* !WIN32 */
     if (gui || fmt) {
 	sprintf(buf, "%s \"%s\"", gretl_gnuplot_path(), fname);
     } else {
 	/* gretlcli, interactive */
 	sprintf(buf, "%s -persist \"%s\"", gretl_gnuplot_path(), fname);
     }
+# ifdef GP_SPEED
+    fprintf(stderr, "execing gnuplot: %g\n", gretl_stopwatch());
+# endif
     err = gretl_spawn(buf);  
+# ifdef GP_SPEED
+    fprintf(stderr, "gnuplot done: %g\n", gretl_stopwatch());
+# endif
 #endif
 
 #if GP_DEBUG

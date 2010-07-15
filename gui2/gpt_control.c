@@ -34,6 +34,7 @@
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
+#define PLOT_SPEED
 
 #ifdef G_OS_WIN32
 # include <io.h>
@@ -4152,6 +4153,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
     int polar = 0;
     int err = 0;
 
+#ifdef PLOT_SPEED
+    fprintf(stderr, "gnuplot_show_png starting: %g\n", gretl_stopwatch());
+#endif
+
 #if GPDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
 	    fname, (void *) spec, saved);
@@ -4186,9 +4191,13 @@ static int gnuplot_show_png (const char *fname, const char *name,
     */
     plot->err = read_plotspec_from_file(plot->spec, &plot->pd, &polar);
 
-#if GPDEBUG
+#if GPDEBUG 
     fprintf(stderr, "gnuplot_show_png: read_plotspec_from_file returned %d\n",
 	    plot->err);
+#endif
+
+#ifdef PLOT_SPEED
+    fprintf(stderr, "done read_plotspec_from_file: %g\n", gretl_stopwatch());
 #endif
 
     if (plot->err) {
@@ -4360,11 +4369,19 @@ static int gnuplot_show_png (const char *fname, const char *name,
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
 		     G_CALLBACK(plot_expose), plot->pixmap);
 
+#ifdef PLOT_SPEED
+    fprintf(stderr, "calling render_pngfile: %g\n", gretl_stopwatch());
+#endif
+
     err = render_pngfile(plot, PNG_START);
     if (err) {
 	gtk_widget_destroy(plot->shell);
 	plot = NULL;
     } 
+
+#ifdef PLOT_SPEED
+    fprintf(stderr, "done render_pngfile: %g\n", gretl_stopwatch());
+#endif
 
     return err;
 }
