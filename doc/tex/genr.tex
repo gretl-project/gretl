@@ -45,8 +45,8 @@ One sort of specialized function in \verb+genr+ is time-series
 filtering. In addition to the usual application of lags and
 differences, \app{gretl} provides fractional differencing and two
 filters commonly used in macroeconomics for trend-cycle decomposition:
-the Hodrick--Prescott filter (Hodrick and Prescott, 1997) and the
-Baxter--King bandpass filter (Baxter and King, 1999).
+the Hodrick--Prescott filter \citep{hodrick97} and the Baxter--King
+bandpass filter \citep{baxter-king99}.
 
 \subsection{Fractional differencing}
 \label{sec:fracdiff}
@@ -123,12 +123,12 @@ genr ct = hpfilt(yt)
 genr gt = yt - ct
 \end{code}
 
-Hodrick and Prescott (1997) suggest that a value of $\lambda = 1600$
-is reasonable for quarterly data.  The default value in \app{gretl} is
-100 times the square of the data frequency (which, of course, yields
-1600 for quarterly data).  The value can be adjusted using the
-\cmd{set} command, with a parameter of \cmd{hp\_lambda}.  For example,
-\cmd{set hp\_lambda 1200}.
+\cite{hodrick97} suggest that a value of $\lambda = 1600$ is reasonable
+for quarterly data.  The default value in \app{gretl} is 100 times the
+square of the data frequency (which, of course, yields 1600 for
+quarterly data).  The value can be adjusted using the \cmd{set}
+command, with a parameter of \cmd{hp\_lambda}.  For example, \cmd{set
+  hp\_lambda 1200}.
 
 
 \subsection{The Baxter and King filter}
@@ -348,7 +348,8 @@ model.  We repeat this procedure a large number of times, and record
 the number of cases where the absolute value of the $t$-ratio is
 greater than 2.5: the proportion of such cases is our bootstrap
 p-value.  For a good discussion of simulation-based tests and
-bootstrapping, see Davidson and MacKinnon (2004, chapter 4).
+bootstrapping, see Davidson and MacKinnon
+(\citeyear{davidson-mackinnon04}, chapter 4).
 
 \begin{script}[htbp]
   \caption{Calculation of bootstrap p-value}
@@ -809,7 +810,7 @@ printf "\nTest for MPC = 1: %g (p-value = %g)\n", \
 \end{script}
 
 Script \ref{delta-method} exemplifies such a case: the example is
-taken from Greene (2003), section 9.3.1. The slight differences
+taken from \cite{greene03}, section 9.3.1. The slight differences
 between the results reported in the original source and what
 \app{gretl} returns are due to the fact that the Jacobian is computed
 numerically, rather than analytically as in the book.
@@ -848,7 +849,7 @@ That is, $\mathcal{F}(\mathbf{z})_k = \mathcal{F}(\mathbf{x})_k
 \mathcal{F}(\mathbf{y})_k$.
 
 For computing the Fourier transform, \app{gretl} uses the external
-library \texttt{fftw3}: see Frigo and Johnson (2003). This guarantees
+library \texttt{fftw3}: see \cite{frigo05}. This guarantees
 extreme speed and accuracy. In fact, the CPU time needed to perform
 the transform is $O(n \log n)$ for any $n$. This is why the array of
 numerical techniques employed in \texttt{fftw3} is commonly known as

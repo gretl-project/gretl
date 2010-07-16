@@ -105,18 +105,8 @@
 \newcommand{\tip}[1]{\par\vspace{4pt}
  \ding{43} {\small \sffamily #1}\par}
 
-%% define a very simple bibliography environment
-\renewenvironment{thebibliography}
-     {\chapter*{\bibname\@mkboth{\bibname}{\bibname}}
-      \label{refs}
-      \addcontentsline{toc}{chapter}{\bibname}
-      \list{}{\itemindent -2em\listparindent\itemindent\leftmargin 2em
-      \sloppy
-      \clubpenalty4000
-      \@clubpenalty \clubpenalty
-      \widowpenalty4000%
-      \sfcode`\.\@m\item\relax}}
-      {\endlist}
+%% rule for use in bibliography
+\newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
 
 %% custom page headings 
 \if@twoside

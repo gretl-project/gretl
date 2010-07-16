@@ -4,7 +4,7 @@
 \section{Introduction}
 \label{Ox-intro}
 
-\app{Ox}, written by Jurgen A. Doornik (see Doornik, 2007), is
+\app{Ox}, written by Jurgen A. Doornik \citep[see][]{doornik07}, is
 described by its author as ``an object-oriented statistical system. At
 its core is a powerful matrix language, which is complemented by a
 comprehensive statistical library. Among the special features of Ox
@@ -31,9 +31,9 @@ exceptional coverage of cutting-edge techniques in econometrics.  The
 \app{gretl} authors have used \app{Ox} for benchmarking some of
 \app{gretl}'s more advanced features such as dynamic panel models and
 the state space models.\footnote{For a review of \app{Ox}, see
-  Cribari-Neto and Zarkos (2003) and for a (somewhat dated) comparison
+  \cite{cribari-neto03} and for a (somewhat dated) comparison
   of \app{Ox} with other matrix-oriented packages such as \app{GAUSS},
-  see Steinhaus (1999).}
+  see \cite{steinhaus99}.}
 
 \section{\app{Ox} support in \app{gretl}}
 \label{sec:Ox-support}
@@ -114,10 +114,11 @@ expects to find the named file in the user's dotdir.
 \label{sec:dpd-replication}
 
 Example~\ref{Ox-DPD} shows a more ambitious case.  This script
-replicates one of the dynamic panel data models in Arellano and Bond
-(1991), first using \app{gretl} and then using \app{Ox}; we then check
-the relative differences between the parameter estimates produced by
-the two programs (which turn out to be reassuringly small).
+replicates one of the dynamic panel data models in
+\cite{arellano-bond91}, first using \app{gretl} and then using
+\app{Ox}; we then check the relative differences between the parameter
+estimates produced by the two programs (which turn out to be
+reassuringly small).
 
 Unlike the previous example, in this case we pass the dataset from
 \app{gretl} to \app{Ox} as a CSV file in order to preserve the

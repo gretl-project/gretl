@@ -38,8 +38,8 @@ quite some time, in computing ARMA estimates.  But user access to the
 Kalman filter is new and it has not yet been tested to any great
 extent.  We have run some tests of relatively simple cases against the
 benchmark of \textsf{SsfPack Basic}.  This is state-space software
-written by Koopman, Shephard and Doornik and documented in Koopman
-\textit{et al} (1999).  It requires Doornik's \textsf{ox} program.
+written by Koopman, Shephard and Doornik and documented in
+\cite{koopman-etal99}.  It requires Doornik's \textsf{ox} program.
 Both \textsf{ox} and \textsf{SsfPack} are available as free downloads
 for academic use but neither is open-source; see
 \url{http://www.ssfpack.com}.  Since Koopman is one of the leading
@@ -53,8 +53,8 @@ We welcome both success reports and bug reports.
 
 It seems that in econometrics everyone is happy with $y = X \beta +
 u$, but we can't, as a community, make up our minds on a standard
-notation for state-space models. Harvey (1989), Hamilton (1994),
-Harvey and Proietti (2005) and Pollock (1999) all use different
+notation for state-space models. \cite{harvey89}, \cite{hamilton94},
+\cite{harvey-proietti05} and \cite{pollock99} all use different
 conventions. The notation used here is based on James Hamilton's, with
 slight variations.
 
@@ -114,10 +114,10 @@ Usually these are given by $\hat{\statevec}_{1|0} = \mathbf{0}$ and
 but see below for further discussion of the initial variance.
 
 Iteration then proceeds in two steps.\footnote{For a justification of
-  the following formulae see the classic book by Anderson and Moore
-  (1979) or, for a more modern treatment, Pollock (1999) or Hamilton
-  (1994).  A transcription of R. E. Kalman's original paper of 1960 is
-  available at
+  the following formulae see the classic book by
+  \cite{anderson-moore79} or, for a more modern treatment,
+  \cite{pollock99} or \cite{hamilton94}.  A transcription of
+  R. E. Kalman's original paper of 1960 is available at
   \url{http://www.cs.unc.edu/~welch/kalman/kalmanPaper.html}.}  First
 we update the estimate of the state
 %
@@ -239,7 +239,7 @@ $\obsvec_t$ as a by-product).
 The usefulness of the classical filter is well known; the usefulness
 of the Kalman filter as a simulation tool may be huge too. Think for
 instance of Monte Carlo experiments, simulation-based inference---see
-Gourieroux--Monfort (1996)---or Bayesian methods, especially in the
+\cite{gourieroux96}---or Bayesian methods, especially in the
 context of the estimation of DSGE models.
 
 \section{Overview of syntax}
@@ -357,9 +357,9 @@ If you wish to impose this diffuse prior from the outset, append the
 option flag \verb|--diffuse| to the \texttt{end kalman}
 statement.\footnote{ Initialization of the Kalman filter outside of
   the case where equation (\ref{eq:inivar}) applies has been the
-  subject of much discussion in the literature---see for example de
-  Jong (1991), Koopman (1997).  At present gretl does not implement
-  any of the more elaborate proposals that have been made.}
+  subject of much discussion in the literature---see for example
+  \cite{dejong91}, \cite{koopman97}.  At present gretl does not
+  implement any of the more elaborate proposals that have been made.}
 
 \subsection{Time-varying matrices}
 
@@ -533,7 +533,7 @@ There seems to be general agreement in the literature that the
 log-likelihood calculation should be modified in the case of a diffuse
 prior for $\statevar_{1|0}$.  However, it is not clear to us that
 there is a well-defined ``correct'' method for this.  At present we
-emulate \textsf{SsfPack} (see Koopman \textit{et al} (1999) and
+emulate \textsf{SsfPack} (see \cite{koopman-etal99} and
 section~\ref{sec:amble}).  In case $\statevar_{1|0} = \kappa
 \mathbf{I}_r$, we set $d = r$ and calculate
 %
@@ -741,8 +741,8 @@ Suppose we have a series $y_t = \mu_t + \varepsilon_t$, where $\mu_t$
 is a random walk with normal increments of variance $\sigma^2_1$ and $
 \varepsilon_t$ is a normal white noise with variance $\sigma^2_2$,
 independent of $\mu_t$. This is known as the ``local level'' model in
-Harvey's (1991) terminology, and it can be cast in state-space form as
-equations (\ref{eq:state})-(\ref{eq:obs}) with
+Harvey's \citeyearpar{harvey89} terminology, and it can be cast in
+state-space form as equations (\ref{eq:state})-(\ref{eq:obs}) with
 $\statemat = 1$, $\strdist_t \sim N(0,\, \sigma^2_1)$, $\obsmat = 1$
 and $\obsdist_t \sim N(0,\, \sigma^2_2)$.  The translation to a
 \texttt{kalman} block is

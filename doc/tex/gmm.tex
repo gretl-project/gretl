@@ -7,9 +7,9 @@
 The Generalized Method of Moments (GMM) is a very powerful and general
 estimation method, which encompasses practically all the parametric
 estimation techniques used in econometrics. It was introduced in
-Hansen (1982) and Hansen and Singleton (1982); an excellent and
-thorough treatment is given in Davidson and MacKinnon (1993), chapter
-17.
+\cite{hansen82} and \cite{hansen-singleton82}; an excellent and
+thorough treatment is given in chapter 17 of
+\cite{davidson-mackinnon93}.
 
 The basic principle on which GMM is built is rather straightforward.
 Suppose we wish to estimate a scalar parameter $\theta$ based on
@@ -120,7 +120,8 @@ minimum, suitably scaled by the number of observations, yields
 \emph{Hansen's J statistic}; this statistic can be interpreted as a
 test statistic that has a $\chi^2$ distribution with $m \cdot p -n $
 degrees of freedom under the null hypothesis of correct specification.
-See Davidson and MacKinnon (1993), section 17.6 for details.
+See Davidson and MacKinnon (\citeyear{davidson-mackinnon93}, section
+17.6) for details.
 
 In the following sections we will show how these ideas are
 implemented in \app{gretl} through some examples.
@@ -397,7 +398,7 @@ set force_hc on
 \label{sec:gmm-CBAPM}
 
 To illustrate \app{gretl}'s implementation of GMM, we will replicate
-the example given in chapter 3 of Hall (2005). The model to estimate
+the example given in chapter 3 of \cite{hall05}. The model to estimate
 is a classic application of GMM, and provides an example of a case
 when orthogonality conditions do not stem from statistical
 considerations, but rather from economic theory.
@@ -548,7 +549,7 @@ e = d*ewr*consrat^(alpha-1) - 1
 \end{script}
 
 In the example code given in \ref{gmm-CBAPM-script}, we replicate
-selected portions of table 3.7 in Hall (2005).  The variable
+selected portions of table 3.7 in \cite{hall05}.  The variable
 \texttt{consrat} is defined as the ratio of monthly consecutive real
 per capita consumption (services and nondurables) for the US, and
 \texttt{ewr} is the return--price ratio of a fictitious asset

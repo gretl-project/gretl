@@ -100,10 +100,11 @@ probit GRADE const GPA TUCE PSI
 \end{scode}
 \end{script}
 
-As an example, we reproduce the results given in Greene (2000),
-chapter 21, where the effectiveness of a program for teaching
+As an example, we reproduce the results given in chapter 21 of
+\cite{greene00}, where the effectiveness of a program for teaching
 economics is evaluated by the improvements of students' grades.
-Running the code in example \ref{simple-QR} gives the following output:
+Running the code in example \ref{simple-QR} gives the following
+output:
 \begin{code}
 
 Model 1: Logit estimates using the 32 observations 1-32
@@ -158,11 +159,10 @@ Dependent variable: GRADE
 
 \end{code}
 
-In this context, the \dollar{uhat} accessor function takes a
-special meaning: it returns generalized residuals as defined in
-Gourieroux \textit{et al} (1987), which can be interpreted as unbiased
-estimators of the latent disturbances $\varepsilon_t$. These are
-defined as
+In this context, the \dollar{uhat} accessor function takes a special
+meaning: it returns generalized residuals as defined in
+\cite{gourieroux87}, which can be interpreted as unbiased estimators
+of the latent disturbances $\varepsilon_t$. These are defined as
 %
 \begin{equation}
   \label{eq:QR-genres}
@@ -230,7 +230,7 @@ revenues), it is normally a small-sample problem: you probably just
 don't have enough data to estimate your model. You may want to drop
 some of your explanatory variables.
 
-This problem is well analyzed in Stokes (2004); the results therein
+This problem is well analyzed in \cite{stokes04}; the results therein
 are replicated in the example script \texttt{murder\_rates.inp}. 
 
 \section{Ordered response models}
@@ -292,7 +292,7 @@ separate command for ordered models: the \texttt{logit} and
 the dependent variable is acceptable, but not binary.
 
 Example \ref{ex:oprobit} reproduces the results presented in section
-15.10 of Wooldridge (2002a).  The question of interest in this
+15.10 of \cite{wooldridge-panel}.  The question of interest in this
 analysis is what difference it makes, to the allocation of assets
 in pension funds, whether individual plan participants have a
 choice in the matter.  The response variable is an ordinal measure of
@@ -397,15 +397,15 @@ and
   P(y_i = 0 |  x_i) = \frac{1}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} .
 \]
 
-Example~\ref{ex:mlogit} reproduces Table 15.2 in Wooldridge (2002a),
-based on data on career choice from Keane and Wolpin (1997).  The
-dependent variable is the occupational status of an individual (0 = in
-school; 1 = not in school and not working; 2 = working), and the
-explanatory variables are education and work experience (linear and
-square) plus a ``black'' binary variable.  The full data set is a
-panel; here the analysis is confined to a cross-section for 1987.  For
-explanations of the matrix methods employed in the script, see
-chapter~\ref{chap:matrices}.
+Example~\ref{ex:mlogit} reproduces Table 15.2 in
+\cite{wooldridge-panel}, based on data on career choice from
+\cite{keane97}.  The dependent variable is the occupational status of
+an individual (0 = in school; 1 = not in school and not working; 2 =
+working), and the explanatory variables are education and work
+experience (linear and square) plus a ``black'' binary variable.  The
+full data set is a panel; here the analysis is confined to a
+cross-section for 1987.  For explanations of the matrix methods
+employed in the script, see chapter~\ref{chap:matrices}.
 
 \begin{script}[htbp]
   \caption{Multinomial logit}
@@ -505,7 +505,7 @@ An important difference between the Tobit estimator and OLS is that
 the consequences of non-normality of the disturbance term are much
 more severe: non-normality implies inconsistency for the Tobit
 estimator. For this reason, the output for the tobit model includes
-the Chesher--Irish (1987) normality test by default.
+the \cite{chesher-irish87} normality test by default.
 
 \section{Interval regression}
 \label{sec:intreg}
@@ -631,7 +631,7 @@ of $y^*_i$ by summing this estimate to $x_i \hat{\beta}$. Script
 \ref{ex:interval} shows an example. As a further similarity with
 Tobit, the interval regression model may deliver inconsistent
 estimates if the disturbances are non-normal; hence, the
-Chesher--Irish (1987) test for normality is included by default here
+\cite{chesher-irish87} test for normality is included by default here
 too.
 
 
@@ -690,8 +690,8 @@ hypothesis $H_0: \lambda = 0$, which can be easily tested.
 The parameters can be estimated via maximum likelihood under the
 assumption of joint normality of $\varepsilon_i$ and $\eta_i$;
 however, a widely used alternative method yields the so-called
-\emph{Heckit} estimator, named after Heckman (1979). The procedure can
-be briefly outlined as follows: first, a probit model is fit on
+\emph{Heckit} estimator, named after \cite{heckman79}. The procedure
+can be briefly outlined as follows: first, a probit model is fit on
 equation (\ref{eq:heckit2}); next, the generalized residuals are
 inserted in equation (\ref{eq:heckit1}) to correct for the effect of
 sample selection.
@@ -717,12 +717,12 @@ equal the difference between actual and fitted $y_i$ only for
 uncensored observations (those for which $d_i = 1$).
 
 Example \ref{ex:heckit} shows two estimates from the dataset used in
-Mroz (1987): the first one replicates Table 22.7 in Greene
-(2003),\footnote{Note that the estimates given by \app{gretl} do not
-  coincide with those found in the printed volume.  They do, however,
-  match those found on the errata web page for Greene's book:
+\cite{mroz87}: the first one replicates Table 22.7 in
+\cite{greene03},\footnote{Note that the estimates given by \app{gretl}
+  do not coincide with those found in the printed volume.  They do,
+  however, match those found on the errata web page for Greene's book:
   \url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}.}
-while the second one replicates table 17.1 in Wooldridge (2002a).
+while the second one replicates table 17.1 in \cite{wooldridge-panel}.
 
 \begin{script}[htbp]
   \caption{Heckit model}
@@ -803,7 +803,7 @@ long as $t$, what is the likelihood that it ends within a short
 increment of time beyond $t$ --- that is, it ends between $t$ and $t +
 \Delta$?  Taking the limit as $\Delta$ goes to zero, we end up with
 the ratio of the density to the survivor function:\footnote{For a
-  fuller discussion see, for example, Davidson and MacKinnon (2004).}
+  fuller discussion see, for example, \cite{davidson-mackinnon04}.}
 \begin{equation}
 \label{eq:surv-decomp}
 \lambda(t, X, \theta) = \frac{f(t, X, \theta)}{S(t, X, \theta)}
@@ -879,8 +879,8 @@ Note that the expressions for the log-normal density and hazard
 contain the term $(\log t - \mu)/\sigma$.  Replacing $\mu$ with
 $X\beta$ this becomes $(\log t - X\beta)/\sigma$.  It turns out that
 this constitutes a useful simplifying change of variables for all of
-the distributions discussed here. As in Kalbfleisch and Prentice
-(2002), we define
+the distributions discussed here. As in \cite{kalbfleisch02}, we
+define
 \[
 w_i \equiv (\log t_i - x_i\beta)/\sigma
 \]
@@ -959,7 +959,7 @@ option flags \verb|--exponential|, \verb|--loglogistic| or
 
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
-Wooldridge (2002a, section 20.3), and it concerns criminal
+section 20.3 of \cite{wooldridge-panel}, and it concerns criminal
 recidivism.\footnote{Germán Rodríguez of Princeton University has a
   page disussing this example and displaying estimates from
   \app{Stata} at \url{http://data.princeton.edu/pop509a/recid1.html}.}
@@ -1167,7 +1167,8 @@ from AFT estimates to log relative-hazard form it is necessary to
 multiply the coefficients by $-\sigma^{-1}$. For example, the
 \texttt{married} coefficient in the Weibull specification as shown
 here is 0.188104 and $\hat{\sigma}$ is 1.24090, so the alternative
-value is $-0.152$, which is what Wooldridge shows (2002a, Table 20.1).
+value is $-0.152$, which is what Wooldridge shows
+(\citeyear{wooldridge-panel}, Table 20.1).
 
 \subsection{Fitted values and residuals}
 
@@ -1207,8 +1208,8 @@ which equals the negative of the log of the survivor function:
 \]
 Under the null of correct specification of the model these generalized
 residuals should follow the unit exponential distribution, which has
-mean and variance both equal to 1 and density $e^{-1}$. See Cameron
-and Trivedi (2005) for further discussion.
+mean and variance both equal to 1 and density $e^{-1}$. See
+\cite{cameron-trivedi05} for further discussion.
 
 %%% Local Variables: 
 %%% mode: latex

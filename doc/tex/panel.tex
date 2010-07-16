@@ -183,8 +183,8 @@ $\sigma^2_v$.  (These are often referred to as the ``within'' and
 ``between'' variances respectively, since the former refers to
 variation within each cross-sectional unit and the latter to variation
 between the units).  Several means of estimating these magnitudes have
-been suggested in the literature (see Baltagi, 1995); \app{gretl} uses
-the method of Swamy and Arora (1972): $\sigma^2_\varepsilon$ is
+been suggested in the literature \citep[see][]{baltagi95}; \app{gretl} uses
+the method of \cite{swamy72}: $\sigma^2_\varepsilon$ is
 estimated by the residual variance from the fixed effects model, and
 the sum $\sigma^2_\varepsilon + T_i \sigma^2_v$ is estimated as $T_i$
 times the residual variance from the ``between'' estimator,
@@ -319,7 +319,7 @@ method is this:
   - \mbox{Var}(\hat{\beta}) = \Psi$, where $\mbox{Var}(\tilde{\beta})$
   and $\mbox{Var}(\hat{\beta})$ are estimated by the sample variance
   matrices of the fixed- and random-effects models
-  respectively.\footnote{Hausman (1978) showed that the covariance of
+  respectively.\footnote{\cite{hausman78} showed that the covariance of
     the difference takes this simple form when $\hat{\beta}$ is an
     efficient estimator and $\tilde{\beta}$ is inefficient.}
 \item Compute $H = \left(\tilde{\beta} - \hat{\beta}\right)' \Psi^{-1}
@@ -397,10 +397,10 @@ case the marginal effect of $\varepsilon_{it}$ on the group mean of
 $y$ tends to vanish).  
 
 One strategy for handling this problem, and producing consistent
-estimates of $\beta$ and $\rho$, was proposed by Anderson and Hsiao
-(1981).  Instead of de-meaning the data, they suggest taking the first
-difference of (\ref{eq:pooled-dyn}), an alternative tactic for
-sweeping out the group effects:
+estimates of $\beta$ and $\rho$, was proposed by
+\cite{anderson-hsiao81}.  Instead of de-meaning the data, they suggest
+taking the first difference of (\ref{eq:pooled-dyn}), an alternative
+tactic for sweeping out the group effects:
 \begin{equation}
 \label{eq:fe-dyn}
 \Delta y_{it} = \Delta X_{it}\beta + \rho \Delta y_{i,t-1} 
@@ -421,8 +421,8 @@ The Anderson--Hsiao estimator is not provided as a built-in function
 in \app{gretl}, since \app{gretl}'s sensible handling of lags and
 differences for panel data makes it a simple application of regression
 with instrumental variables --- see Example~\ref{anderson-hsiao},
-which is based on a study of country growth rates by Nerlove
-(1999).\footnote{Also see Clint Cummins' benchmarks page,
+which is based on a study of country growth rates by
+\cite{nerlove99}.\footnote{Also see Clint Cummins' benchmarks page,
   \url{http://www.stanford.edu/~clint/bench/}.}
  
 \begin{script}[htbp]
@@ -448,15 +448,14 @@ Although the Anderson--Hsiao estimator is consistent, it is not most
 efficient: it does not make the fullest use of the available
 instruments for $\Delta y_{i,t-1}$, nor does it take into account the
 differenced structure of the error $\eta_{it}$.  It is improved upon
-by the methods of Arellano and Bond (1991) and Blundell and Bond
-(1998).  
+by the methods of \cite{arellano-bond91} and \cite{blundell-bond98}.
 
 \app{Gretl} implements natively the Arellano--Bond estimator.  The
 rationale behind it is, strictly speaking, that of a GMM estimator,
-but it can be illustrated briefly as follows (see Arellano (2003) for
-a comprehensive exposition). Consider again equation
-(\ref{eq:fe-dyn}): if for each individual we have observations
-dated from 1 to $T$, we may write the following system:
+but it can be illustrated briefly as follows (see \cite{arellano03}
+for a comprehensive exposition). Consider again equation
+(\ref{eq:fe-dyn}): if for each individual we have observations dated
+from 1 to $T$, we may write the following system:
 \begin{eqnarray}
   \label{eq:arbond3}
   \Delta y_{i,3} & = & \Delta X_{i,3}\beta + \rho \Delta y_{i,2} +
@@ -503,12 +502,12 @@ heteroskedasticity and/or serial correlation, plus producing
 estimators that are asymptotically efficient.
 
 One-step estimators have sometimes been preferred on the grounds that
-they are more robust.  Moreover, computing the covariance matrix of the
-2-step estimator via the standard GMM formulae has been shown to
+they are more robust.  Moreover, computing the covariance matrix of
+the 2-step estimator via the standard GMM formulae has been shown to
 produce grossly biased results in finite samples. \app{Gretl},
-however, implements the finite-sample correction devised by Windmeijer
-(2005), so standard errors for the 2-step estimator can be considered
-relatively accurate.
+however, implements the finite-sample correction devised by
+\cite{windmeijer05}, so standard errors for the 2-step estimator can
+be considered relatively accurate.
 
 By default, \app{gretl}'s \cmd{arbond} command estimates the parameters in
 \[

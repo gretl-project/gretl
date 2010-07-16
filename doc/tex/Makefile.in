@@ -47,14 +47,17 @@ TEXSRC = cli.tex \
 	gretlOctave.tex \
 	df.tex
 
+BIBSRC = gretl.bib gretl.bst
+
 STYSRC = $(docsrc)/gretl.sty.in
 
 ALLSRC = $(wildcard $(docsrc)/tex/*.tex) $(STYSRC)
 
 all: $(GUIDE) $(REF) $(ALTGUIDE) $(ALTREF)
 
-$(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC)
+$(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
+	bibtex gretl-guide
 	pdflatex $<
 	pdflatex $<
 
@@ -63,8 +66,9 @@ $(REF): gretl-ref.tex links cmdtex functex textables topiclist date.tex $(STYSRC
 	pdflatex $<
 	pdflatex $<
 
-$(ALTGUIDE): gretl-guide-a4.tex links textables date.tex $(STYSRC)
+$(ALTGUIDE): gretl-guide-a4.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
+	bibtex gretl-guide
 	pdflatex $<
 	pdflatex $<
 
@@ -95,6 +99,8 @@ links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s $(docsrc)/figures ./figures
 	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
+	for f in $(BIBSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 
 cmdtex:

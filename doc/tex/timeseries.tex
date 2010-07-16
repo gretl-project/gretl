@@ -299,7 +299,7 @@ Hessian at convergence.
 
 The alternative method, invoked with the \option{conditional} switch,
 is conditional maximum likelihood (CML), also known as ``conditional
-sum of squares'' --- see Hamilton (1994, p.\ 132).  This method was
+sum of squares'' \citep[see][p.\ 132]{hamilton94}.  This method was
 exemplified in the script~\ref{jack-arma}, and only a brief
 description will be given here.  Given a sample of size $T$, the CML
 method minimizes the sum of squared one-step-ahead prediction errors
@@ -395,12 +395,11 @@ the command \cmd{set initvals auto}.
 
 Two variants of the BFGS algorithm are available in \app{gretl}.  In
 general we recommend the default variant, which is based on an
-implementation by J. C. Nash (1990), but for some problems the
-alternative, limited-memory version (L-BFGS-B, see Byrd \textit{et
-  al.}, 1995) may increase the chances of convergence on the ML
-solution.  This can be selected via the \option{lbfgs} option to the
-\texttt{arma} command.
-
+implementation by \cite{nash90}, but for some problems the
+alternative, limited-memory version (L-BFGS-B, see
+\citealp{byrd-etal95}) may increase the chances of convergence on the
+ML solution.  This can be selected via the \option{lbfgs} option to
+the \texttt{arma} command.
 
 \subsection{Estimation via X-12-ARIMA}
 
@@ -445,7 +444,7 @@ forecasting a process ``out of sample'' over a substantial time
 horizon.
 
 \app{Gretl} supports forecasting on the basis of ARMA models using the
-method set out by Box and Jenkins (1976).\footnote{See in particular
+method set out by \cite{box-jenkins76}.\footnote{See in particular
   their ``Program 4'' on p.\ 505ff.}  The Box and Jenkins algorithm
 produces a set of integrated AR coefficients which take into account
 any differencing of the dependent variable (seasonal and/or
@@ -531,7 +530,7 @@ One peculiar aspect of this test is that its limit distribution is
 non-standard under the null hypothesis: moreover, the shape of the
 distribution, and consequently the critical values for the test,
 depends on the form of the $\mu_t$ term.  A full analysis of the
-various cases is inappropriate here: Hamilton (1994) contains an
+various cases is inappropriate here: \cite{hamilton94} contains an
 excellent discussion, but any recent time series textbook covers
 this topic. Suffice it to say that \app{gretl} allows the user to
 choose the specification for $\mu_t$ among four different
@@ -554,7 +553,7 @@ These options are not mutually exclusive; when they are used together
 the statistic will be reported separately for each case.  By default,
 \app{gretl} uses by default the combination \verb|--c --ct --ctt|. For
 each case, approximate p-values are calculated by means of the
-algorithm developed in MacKinnon (1996).
+algorithm developed in \cite{mackinnon96}.
 
 The \app{gretl} command used to perform the test is \cmd{adf}; for example
 \begin{code}
@@ -577,10 +576,10 @@ the parameter $\gamma_p$ exceeds 1.645 in absolute value.
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
-The KPSS test (Kwiatkowski, Phillips, Schmidt and Shin, 1992) is a
-unit root test in which the null hypothesis is opposite to that in the
-ADF test: under the null, the series in question is stationary; the
-alternative is that the series is $I(1)$.
+The KPSS test \citep{KPSS92} is a unit root test in which the null
+hypothesis is opposite to that in the ADF test: under the null, the
+series in question is stationary; the alternative is that the series
+is $I(1)$.
 
 The basic intuition behind this test statistic is very simple: if
 $y_t$ can be written as $y_t = \mu + u_t$, where $u_t$ is some
@@ -774,18 +773,18 @@ straightforward task.  (Consider equation~\ref{eq:garch-vareq}: the
 conditional variance at any point in time, $\sigma^2_t$, depends on
 the conditional variance in earlier periods, but $\sigma^2_t$ is not
 observed, and must be inferred by some sort of Maximum Likelihood
-procedure.)  \app{Gretl} uses the method proposed by Fiorentini,
-Calzolari and Panattoni (1996),\footnote{The algorithm is based on
-  Fortran code deposited in the archive of the \textit{Journal of
-    Applied Econometrics} by the authors, and is used by kind
-  permission of Professor Fiorentini.}  which was adopted as a
-benchmark in the study of GARCH results by McCullough and Renfro
-(1998).  It employs analytical first and second derivatives of the
-log-likelihood, and uses a mixed-gradient algorithm, exploiting the
-information matrix in the early iterations and then switching to the
-Hessian in the neighborhood of the maximum likelihood.  (This progress
-can be observed if you append the \option{verbose} option to
-\app{gretl}'s \cmd{garch} command.)
+procedure.)  \app{Gretl} uses the method proposed by
+\cite{fiorentini96},\footnote{The algorithm is based on Fortran code
+  deposited in the archive of the \textit{Journal of Applied
+    Econometrics} by the authors, and is used by kind permission of
+  Professor Fiorentini.} which was adopted as a benchmark in the
+study of GARCH results by \cite{mccullough98}.  It employs
+analytical first and second derivatives of the log-likelihood, and
+uses a mixed-gradient algorithm, exploiting the information matrix in
+the early iterations and then switching to the Hessian in the
+neighborhood of the maximum likelihood.  (This progress can be
+observed if you append the \option{verbose} option to \app{gretl}'s
+\cmd{garch} command.)
 
 Several options are available for computing the covariance matrix of
 the parameter estimates in connection with the \cmd{garch} command.

@@ -41,9 +41,9 @@ parameters, other things equal.
 \section{Information criteria}
 \label{select-aic}
 
-A more general criterion in a similar spirit is Akaike's (1974)
-``Information Criterion'' (AIC).  The original formulation of this
-measure is
+A more general criterion in a similar spirit is Akaike's
+\citeyearpar{akaike74} ``Information Criterion'' (AIC).  The original
+formulation of this measure is
 %
 \begin{equation}
 \label{aic-orig}
@@ -58,7 +58,7 @@ to the likelihood and positively related to the number of parameters,
 the researcher seeks the minimum AIC.
 
 The AIC can be confusing, in that several variants of the calculation
-are ``in circulation.''  For example, Davidson and MacKinnon (2004)
+are ``in circulation.''  For example, \cite{davidson-mackinnon04}
 present a simplified version,
 %
 \[
@@ -129,12 +129,12 @@ it does not go far enough in that direction.  For instance, if we have
 two nested models with $k-1$ and $k$ parameters respectively, and if
 the null hypothesis that parameter $k$ equals 0 is true, in large
 samples the AIC will nonetheless tend to select the less parsimonious
-model about 16 percent of the time (see Davidson and MacKinnon, 2004,
-chapter 15).
+model about 16 percent of the time \citep[see][chapter
+15]{davidson-mackinnon04}.
 
-An alternative to the AIC which avoids this problem is the Schwarz
-(1978) ``Bayesian information criterion'' (BIC).  The BIC can be
-written (in line with Akaike's formulation of the AIC) as
+An alternative to the AIC which avoids this problem is the
+\cite{schwarz78} ``Bayesian information criterion'' (BIC).  The BIC
+can be written (in line with Akaike's formulation of the AIC) as
 %
 \[
 {\rm BIC} = -2 \ell(\hat{\theta}) + k \log n
@@ -146,7 +146,7 @@ a correctly specified parsimonious model.
 
 A further alternative to AIC, which again tends to select more
 parsimonious models than AIC, is the Hannan--Quinn criterion or HQC
-(Hannan and Quinn, 1979).  Written consistently with the formulations
+\citep{hannan-quinn79}.  Written consistently with the formulations
 above, this is
 %
 \[
