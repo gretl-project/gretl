@@ -108,6 +108,28 @@
 %% rule for use in bibliography
 \newcommand{\bibliorule}{\rule[-.01in]{.5in}{.005in}}
 
+%% get the bibliography into the TOC
+\renewenvironment{thebibliography}[1]
+     {\chapter*{\bibname\@mkboth{\bibname}{\bibname}}
+      \label{refs}
+      \addcontentsline{toc}{chapter}{\bibname}
+      \list{\@biblabel{\@arabic\c@enumiv}}%
+           {\settowidth\labelwidth{\@biblabel{#1}}%
+            \leftmargin\labelwidth
+            \advance\leftmargin\labelsep
+            \@openbib@code
+            \usecounter{enumiv}%
+            \let\p@enumiv\@empty
+            \renewcommand\theenumiv{\@arabic\c@enumiv}}%
+      \sloppy
+      \clubpenalty4000
+      \@clubpenalty \clubpenalty
+      \widowpenalty4000%
+      \sfcode`\.\@m}
+     {\def\@noitemerr
+       {\@latex@warning{Empty `thebibliography' environment}}%
+      \endlist}
+
 %% custom page headings 
 \if@twoside
   \def\ps@headings{%
