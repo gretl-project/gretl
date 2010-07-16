@@ -1474,7 +1474,7 @@ real_kpss_test (int order, int varno, double ***pZ,
 	} else if (pval == PV_LT01) {
 	    pprintf(prn, "%s < .01\n", _("P-value"));
 	    pval = NADBL;
-	} else {
+	} else if (!xna(pval)) {
 	    pprintf(prn, "%s %.3f\n", _("Interpolated p-value"), pval);
 	}
 	pputc(prn, '\n');
