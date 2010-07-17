@@ -61,19 +61,23 @@ $(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref.tex links cmdtex functex textables topiclist date.tex $(STYSRC)
+$(REF): gretl-ref.tex links cmdtex functex textables topiclist \
+	date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
+	bibtex gretl-ref
 	pdflatex $<
 	pdflatex $<
 
 $(ALTGUIDE): gretl-guide-a4.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
-	bibtex gretl-guide
+	bibtex gretl-guide-a4
 	pdflatex $<
 	pdflatex $<
 
-$(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist date.tex $(STYSRC)
+$(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist \
+	date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
+	bibtex gretl-ref-a4
 	pdflatex $<
 	pdflatex $<
 
@@ -126,8 +130,12 @@ onepass: gretl-guide.tex links textables
 refpass: gretl-ref.tex links cmdtex textables functex topiclist
 	pdflatex $<
 
+bibpass: onepass refpass
+	bibtex gretl-guide
+	bibtex gretl-ref
+
 clean:
-	rm -f *.aux *.log *.out *.toc *.tpt *.pdf
+	rm -f *.aux *.log *.out *.toc *.pdf *.bbl *.blg
 	rm -f refbody.tex funcbody.tex cmdtopics.tex
 	rm -f gretl-guide-a4.tex gretl-ref-a4.tex
 	rm -f ../commands/textables ../commands/topiclist_en 

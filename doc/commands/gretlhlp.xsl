@@ -424,6 +424,10 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="cite">
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="quote">
   <xsl:text>"</xsl:text>
   <xsl:apply-templates/>

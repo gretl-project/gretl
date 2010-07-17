@@ -773,18 +773,20 @@ straightforward task.  (Consider equation~\ref{eq:garch-vareq}: the
 conditional variance at any point in time, $\sigma^2_t$, depends on
 the conditional variance in earlier periods, but $\sigma^2_t$ is not
 observed, and must be inferred by some sort of Maximum Likelihood
-procedure.)  \app{Gretl} uses the method proposed by
+procedure.)  By default \app{gretl} uses native code that employs the
+BFGS maximizer; you also have the option (activated by the
+\verb|--fcp| command-line switch) of using the method proposed by
 \cite{fiorentini96},\footnote{The algorithm is based on Fortran code
   deposited in the archive of the \textit{Journal of Applied
     Econometrics} by the authors, and is used by kind permission of
-  Professor Fiorentini.} which was adopted as a benchmark in the
-study of GARCH results by \cite{mccullough98}.  It employs
-analytical first and second derivatives of the log-likelihood, and
-uses a mixed-gradient algorithm, exploiting the information matrix in
-the early iterations and then switching to the Hessian in the
-neighborhood of the maximum likelihood.  (This progress can be
-observed if you append the \option{verbose} option to \app{gretl}'s
-\cmd{garch} command.)
+  Professor Fiorentini.} which was adopted as a benchmark in the study
+of GARCH results by \cite{mccullough98}.  It employs analytical first
+and second derivatives of the log-likelihood, and uses a
+mixed-gradient algorithm, exploiting the information matrix in the
+early iterations and then switching to the Hessian in the neighborhood
+of the maximum likelihood.  (This progress can be observed if you
+append the \option{verbose} option to \app{gretl}'s \cmd{garch}
+command.)
 
 Several options are available for computing the covariance matrix of
 the parameter estimates in connection with the \cmd{garch} command.

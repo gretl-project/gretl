@@ -91,7 +91,7 @@
                 lit | emphasis | book | quote | filename | by |
                 func | guideref | cmdref| fncref | tabref | 
                 sub | sup | flag | footnote | refnote | 
-                cmd | seelist)*>
+                cmd | cite | seelist)*>
 <!ATTLIST para
    context (cli | gui | tex | notex | all) "all"
 >
@@ -99,6 +99,12 @@
 <!ELEMENT refnote (#PCDATA | gfr | book | quote)*>
 <!ATTLIST refnote
    xref (true | false) "false"
+>
+
+<!ELEMENT cite (#PCDATA | book | emphasis)*>
+<!ATTLIST cite
+   key  CDATA #IMPLIED
+   p (true | false) "false"
 >
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>

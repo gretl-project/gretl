@@ -2046,12 +2046,12 @@
 	<para context="notex">
 	  Computes Prob(<math>u'Au</math> &lt; <math>x</math>) for a quadratic
 	  form in standard normal variates, <math>u</math>, using the procedure
-	  developed by Imhof (1961).
+	  developed by <cite key="imhof61">Imhof (1961)</cite>.
 	</para>
 	<para context="tex">
 	  Computes ${\rm Prob}(u'Au &lt; x)$ for a quadratic form in standard
 	  normal variates, $u$, using the procedure developed by
-	  Imhof (1961).
+	  <cite key="imhof61">Imhof (1961)</cite>.
 	</para>
 	<para>
 	  If the first argument, <argname>M</argname>, is a square matrix it
@@ -2951,8 +2951,9 @@
       </fnargs>
       <description>
 	<para context="notex">
-	  Computes the matrix exponential of <argname>A</argname>, using
-	  algorithm 11.3.1 from Golub and Van Loan (1996).
+	  Computes the matrix exponential of <argname>A</argname>,
+	  using algorithm 11.3.1 from <cite key="golub96">Golub and
+	  Van Loan (1996)</cite>.
 	</para>
 	<para context="tex">
 	  Matrix exponential, 
@@ -2960,7 +2961,8 @@
 	  = \frac{I}{0!} + \frac{A}{1!} + \frac{A^2}{2!} + \frac{A^3}{3!}
 	  + \cdots\] 
 	  (This series is sure to converge.) The algorithm used
-	  is 11.3.1 from Golub and Van Loan (1996).
+	  is 11.3.1 from <cite key="golub96">Golub and Van Loan 
+	  (1996)</cite>.
 	</para>
       </description>
     </function>
@@ -3450,11 +3452,12 @@
       </fnargs>
       <description>
 	<para>
-	  Generates a series of Gaussian pseudo-random variates with mean
-	  &mu; and standard deviation &sigma;. If no arguments are
-	  supplied, standard normal variates <math>N</math>(0,1) are
-	  produced.  The values are produced using the Ziggurat method
-	  (Marsaglia and Tsang, 2000).
+	  Generates a series of Gaussian pseudo-random variates with
+	  mean &mu; and standard deviation &sigma;. If no arguments
+	  are supplied, standard normal variates <math>N</math>(0,1)
+	  are produced.  The values are produced using the Ziggurat
+	  method <cite key="marsaglia00" p="true">(Marsaglia and
+	  Tsang, 2000)</cite>.
 	</para>
 	<para>
 	  <seelist>
@@ -4955,9 +4958,10 @@
       <description>
 	<para>
 	  Generates a series of uniform pseudo-random variates in the
-	  interval (<argname>a</argname>, <argname>b</argname>), or, if no
-	  arguments are supplied, in the interval (0,1). The algorithm
-	  used is the Mersenne Twister by Matsumoto and Nishimura (1998).
+	  interval (<argname>a</argname>, <argname>b</argname>), or,
+	  if no arguments are supplied, in the interval (0,1). The
+	  algorithm used is the Mersenne Twister by <cite
+	  key="matsumoto98">Matsumoto and Nishimura (1998)</cite>.
 	</para>
 	<para>
 	  <seelist>
@@ -5026,8 +5030,9 @@
       <description>
 	<para>
 	  <math>P</math>-values for the test statistic from the
-	  Dickey&ndash;Fuller unit-root test and the Engle&ndash;Granger
-	  cointegration test, as per James MacKinnon (1996).
+	  Dickey&ndash;Fuller unit-root test and the
+	  Engle&ndash;Granger cointegration test, as per <cite
+	  key="mackinnon96">James MacKinnon (1996)</cite>.
 	</para>
 	<para>
 	  The arguments are as follows: <argname>tau</argname> denotes the

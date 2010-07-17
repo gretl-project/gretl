@@ -688,6 +688,28 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="cite">
+  <xsl:choose>
+    <xsl:when test="@key">
+      <xsl:choose>
+        <xsl:when test="(@p)">
+          <xsl:text>\citep{</xsl:text>
+          <xsl:value-of select="@key"/>
+          <xsl:text>}</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>\cite{</xsl:text>
+          <xsl:value-of select="@key"/>
+          <xsl:text>}</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:apply-templates/>
+    </xsl:otherwise>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template match="table">
   <xsl:choose>
     <xsl:when test="@title">

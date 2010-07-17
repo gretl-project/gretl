@@ -1,8 +1,10 @@
 \documentclass[oneside]{book}
-\usepackage{url,verbatim,fancyvrb,color,gretl,appendix}
+\usepackage{url,verbatim,fancyvrb,color,appendix}
 \usepackage{array,longtable}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
+\usepackage[authoryear]{natbib}
+\usepackage{gretl}
 \usepackage[compat2,letterpaper,hmargin=1.1in,top=.5in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
@@ -13,6 +15,7 @@
             colorlinks=true,
             linkcolor=blue,
             urlcolor=red,
+            citecolor=myteal,
             plainpages=false
 }
 
@@ -84,5 +87,7 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 \include{comments}
 \include{optarg}
 \include{reftables}
+\clearpage
+\include{biblio}
 
 \end{document}

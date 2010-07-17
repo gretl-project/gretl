@@ -58,7 +58,7 @@
     type      (scalar | series | vector | rvec | cvec | matrix | smatrix | symmat | 
                matrixref | anyfloat | scalar-or-series | series-or-vec | 
                series-or-mat | list | coeffname | string | char | sslist | 
-               series-or-list | smlist | pscalar | seebelow |
+               series-or-list | smlist | pscalar | seebelow | fncall |
                anyfloat-or-list | list-or-string| scalar-or-vec |
                scalar-or-list | varargs) "series"
     optional  (true | false) "false"
@@ -72,7 +72,7 @@
 <!ELEMENT para (#PCDATA | repl | program | math | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref | fncref | tabref | 
-                footnote | argname | sub | sup | seelist | 
+                footnote | argname | sub | sup | cite | seelist | 
                 by | cmd)*>
 <!ATTLIST para
   context (tex | notex | both) "both"
@@ -106,6 +106,12 @@
 <!ELEMENT cmdref EMPTY>
 <!ATTLIST cmdref
    targ    CDATA #REQUIRED
+>
+
+<!ELEMENT cite (#PCDATA | book | emphasis)*>
+<!ATTLIST cite
+   key  CDATA #IMPLIED
+   p (true | false) "false"
 >
 
 <!ELEMENT seelist (fncref | cmdref)+>

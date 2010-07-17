@@ -120,7 +120,7 @@ FUNCTION {output.check}
   if$
 }
 FUNCTION {fin.entry}
-{ 
+{ add.period$
   write$
   newline$
 }
@@ -661,7 +661,7 @@ FUNCTION {format.date}
   if$
   extra.label *
   before.all 'output.state :=
-  " " swap$ * "." *
+  " (" swap$ * ")" *
 }
 FUNCTION {format.btitle}
 { title "title" bibinfo.check
