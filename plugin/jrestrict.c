@@ -732,6 +732,9 @@ static int update_phi (Jwrap *J, switcher *s)
 
     /* combine first and second chunks */
     err = gretl_cholesky_decomp_solve(J->I11, s->TmpL);
+    if (err) {
+	fprintf(stderr, "cholesky decomp failed in update_phi\n");
+    }
 
     if (!err) {
 	/* right-hand chunk */
@@ -1242,14 +1245,21 @@ static int switchit (Jwrap *J, PRN *prn)
 	llbak = J->ll;
     }
 
-    pprintf(prn, _("Switching algorithm: %d iterations"), j);
-    if (uinit) {
-	pprintf(prn, " (%s)", _("user-supplied initial values"));
-    }
-    pputc(prn, '\n');
-    pprintf(prn, " -(T/2)log|Omega| = %.8g, lldiff = %g\n", J->ll, lldiff);
+    if (err) {
+	pputs(prn, _("Switching algorithm: failed"));
+	pputc(prn, '\n');
+    } else {
+	pprintf(prn, _("Switching algorithm: %d iterations"), j);
 
-    if (!err) {
+	if (uinit) {
+	    pprintf(prn, " (%s)", _("user-supplied initial values"));
+	}
+	pputc(prn, '\n');
+
+	if (!na(J->ll) && !na(lldiff)) {
+	    pprintf(prn, " -(T/2)log|Omega| = %.8g, lldiff = %g\n", J->ll, lldiff);
+	}
+
 	if (conv == 1) {
 	    pputs(prn, "Strong convergence\n"); 
 	} else if (conv == 2) {

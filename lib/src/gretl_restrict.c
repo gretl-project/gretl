@@ -2271,6 +2271,11 @@ gretl_restricted_vecm (gretl_restriction *rset,
 
     destroy_restriction_set(rset);
 
+    if (jvar != NULL && *err != 0) {
+	gretl_VAR_free(jvar);
+	jvar = NULL;
+    }
+
     return jvar;
 }
 

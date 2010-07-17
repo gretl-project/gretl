@@ -1389,11 +1389,15 @@ gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
 
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k)
 {
+    int vnum = 0;
+
     if (var->models != NULL && k >= 0 && k < var->neqns) {
-	return var->models[k]->list[1];
-    } else {
-	return 0;
-    }
+	if (var->models[k] != NULL && var->models[k]->list != NULL) {
+	    vnum = var->models[k]->list[1];
+	} 
+    } 
+
+    return vnum;
 }
 
 int gretl_VAR_get_n_equations (const GRETL_VAR *var)
@@ -2187,25 +2191,37 @@ int transcribe_VAR_models (GRETL_VAR *var,
 
 	err = gretl_model_allocate_storage(pmod);
 
-	VAR_depvar_name(var, i, pdinfo->varname[yno]);
+	if (!err) {
+	    VAR_depvar_name(var, i, pdinfo->varname[yno]);
 
-	if (i == 0) {
-	    pmod->params = params;
-	} else {
-	    pmod->params = strings_array_dup(params, var->ncoeff);
+	    if (i == 0) {
+		pmod->params = params;
+	    } else {
+		pmod->params = strings_array_dup(params, var->ncoeff);
+		if (pmod->params == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
 	}
-	pmod->nparams = var->ncoeff;
 
-	pmod->list = gretl_list_new(1);
-	pmod->list[1] = yno;
+	if (!err) {
+	    pmod->nparams = var->ncoeff;
+	    pmod->list = gretl_list_new(1);
+	    if (pmod->list == NULL) {
+		err = E_ALLOC;
+	    } 
+	}
 
-	set_VAR_model_stats(var, i);
+	if (!err) {
+	    pmod->list[1] = yno;
+	    set_VAR_model_stats(var, i);
 
-	for (j=0; j<jmax; j++) {
-	    pmod->coeff[j] = gretl_matrix_get(var->B, j, i);
-	    if (XTX != NULL) {
-		x = gretl_matrix_get(XTX, j, j);
-		pmod->sderr[j] = pmod->sigma * sqrt(x);
+	    for (j=0; j<jmax; j++) {
+		pmod->coeff[j] = gretl_matrix_get(var->B, j, i);
+		if (XTX != NULL) {
+		    x = gretl_matrix_get(XTX, j, j);
+		    pmod->sderr[j] = pmod->sigma * sqrt(x);
+		}
 	    }
 	}
     }
@@ -2768,10 +2784,6 @@ johansen_wrapper (int code, int order, int rank,
 
     jvar = gretl_VAR_new(code, order - 1, rank, lags, list, Z, pdinfo,
 			 opt, err);
-    if (jvar == NULL) {
-	return NULL;
-    } 
-
     if (jvar != NULL && !jvar->err) {
 	*err = jvar->err = johansen_driver(jvar, rset, Z, pdinfo, opt, prn);
     }
@@ -2883,6 +2895,9 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
 
     jvar = johansen_wrapper(VECM_ESTIMATE, order, rank, lags, list, 
 			    NULL, Z, pdinfo, opt, prn, err);
+
+    fprintf(stderr, "HERE: jvar = %p, jvar->err = %d\n",
+	    (void *) jvar, (jvar == NULL)? 1: jvar->err);
     
     if (jvar != NULL && !jvar->err) {
 	gretl_VAR_print(jvar, pdinfo, opt, prn);

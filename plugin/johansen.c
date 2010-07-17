@@ -2047,19 +2047,19 @@ int johansen_estimate (GRETL_VAR *jvar,
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
-    int ret = 0;
+    int err = 0;
 
     if (rset == NULL) {
-	ret = j_estimate_unrestr(jvar, Z, pdinfo);
+	err = j_estimate_unrestr(jvar, Z, pdinfo);
     } else if (simple_beta_restriction(jvar, rset)) {
-	ret = est_simple_beta_restr(jvar, rset, Z, pdinfo);
+	err = est_simple_beta_restr(jvar, rset, Z, pdinfo);
     } else if (simple_alpha_restriction(jvar, rset)) {
-	ret = est_simple_alpha_restr(jvar, rset, Z, pdinfo, prn);
+	err = est_simple_alpha_restr(jvar, rset, Z, pdinfo, prn);
     } else {
-	ret = j_estimate_general(jvar, rset, Z, pdinfo, prn);
+	err = j_estimate_general(jvar, rset, Z, pdinfo, prn);
     }
 
-    return ret;
+    return err;
 }
 
 /* Simplified version of the Johansen procedure, to be called in
