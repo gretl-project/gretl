@@ -518,6 +518,7 @@ static void switcher_free (switcher *s)
 static int make_lsPi (Jwrap *J)
 {
     gretl_matrix *S11i;
+    int err = 0;
 
     if (J->lsPi != NULL) {
 	/* already done */
@@ -535,15 +536,19 @@ static int make_lsPi (Jwrap *J)
 	return E_ALLOC;
     }
 
-    gretl_invert_symmetric_matrix(S11i);
-    gretl_matrix_multiply_mod(S11i, GRETL_MOD_NONE,
-			      J->S01, GRETL_MOD_TRANSPOSE,
-			      J->lsPi, GRETL_MOD_NONE);
-    /* make into vec(\Pi'_{LS}) */
-    gretl_matrix_reuse(J->lsPi, J->p1 * J->p, 1);
+    err = gretl_invert_symmetric_matrix(S11i);
+
+    if (!err) {
+	gretl_matrix_multiply_mod(S11i, GRETL_MOD_NONE,
+				  J->S01, GRETL_MOD_TRANSPOSE,
+				  J->lsPi, GRETL_MOD_NONE);
+	/* make into vec(\Pi'_{LS}) */
+	gretl_matrix_reuse(J->lsPi, J->p1 * J->p, 1);
+    }
+
     gretl_matrix_free(S11i);
 
-    return 0;
+    return err;
 }
 
 static int switcher_init (switcher *s, Jwrap *J)
@@ -652,10 +657,12 @@ static int update_psi (Jwrap *J, switcher *s)
     gretl_matrix_multiply(s->TmpR1, J->lsPi, J->psi);
 
     /* combine */
-    gretl_cholesky_decomp_solve(J->I00, J->psi);
+    err = gretl_cholesky_decomp_solve(J->I00, J->psi);
 
     /* update alpha */
-    alpha_from_psi(J);
+    if (!err) {
+	alpha_from_psi(J);
+    }
 
     return err;
 }
@@ -724,23 +731,25 @@ static int update_phi (Jwrap *J, switcher *s)
     }
 
     /* combine first and second chunks */
-    gretl_cholesky_decomp_solve(J->I11, s->TmpL);
+    err = gretl_cholesky_decomp_solve(J->I11, s->TmpL);
 
-    /* right-hand chunk */
-    gretl_matrix_copy_values(s->TmpR, J->lsPi);
-    if (J->h != NULL && !gretl_is_zero_matrix(J->h)) {
-	gretl_matrix_reuse(s->K2, J->p * J->p1, J->r * J->p1);
-	gretl_matrix_kronecker_I(J->alpha, J->p1, s->K2);
-	gretl_matrix_multiply_mod(s->K2, GRETL_MOD_NONE,
-				  J->h, GRETL_MOD_NONE,
-				  s->TmpR, GRETL_MOD_DECREMENT);
+    if (!err) {
+	/* right-hand chunk */
+	gretl_matrix_copy_values(s->TmpR, J->lsPi);
+	if (J->h != NULL && !gretl_is_zero_matrix(J->h)) {
+	    gretl_matrix_reuse(s->K2, J->p * J->p1, J->r * J->p1);
+	    gretl_matrix_kronecker_I(J->alpha, J->p1, s->K2);
+	    gretl_matrix_multiply_mod(s->K2, GRETL_MOD_NONE,
+				      J->h, GRETL_MOD_NONE,
+				      s->TmpR, GRETL_MOD_DECREMENT);
+	}
+
+	/* combine */
+	gretl_matrix_multiply(s->TmpL, s->TmpR, J->phi);
+
+	/* update beta */
+	beta_from_phi(J);
     }
-
-    /* combine */
-    gretl_matrix_multiply(s->TmpL, s->TmpR, J->phi);
-
-    /* update beta */
-    beta_from_phi(J);
 
     return err;
 }

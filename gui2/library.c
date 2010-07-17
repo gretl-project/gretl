@@ -2879,6 +2879,8 @@ record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 
 void do_restrict (GtkWidget *w, dialog_t *dlg)
 {
+    windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
+    gretlopt opt = edit_dialog_get_opt(dlg);
     MODEL *pmod = NULL;
     equation_system *sys = NULL;
     GRETL_VAR *vecm = NULL;
@@ -2886,8 +2888,6 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     gchar *buf;
     PRN *prn;
     char title[64], bufline[MAXLINE];
-    windata_t *vwin = (windata_t *) edit_dialog_get_data(dlg);
-    gretlopt opt = edit_dialog_get_opt(dlg);
     gretl_restriction *my_rset = NULL;
     int save_t1 = datainfo->t1;
     int save_t2 = datainfo->t2;

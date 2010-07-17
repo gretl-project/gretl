@@ -519,7 +519,7 @@ static int gretl_callback_code (const gchar *s)
 }
 
 /* callback for menu items, where we want to prepare an "edit dialog"
-   for handle the request */
+   to handle the request */
 
 void gretl_callback (GtkAction *action, gpointer data)
 {

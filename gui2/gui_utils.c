@@ -3813,7 +3813,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
     vwin_menu_add_item(vwin, tests, &item);
 
     if (ci == VECM || ci == SYSTEM) {
-	/* linear restrictions (on cointegrating relations, for VECM) */
+	/* linear restrictions */
 	item.name = "restrict";
 	item.label = N_("Linear restrictions");
 	item.callback = G_CALLBACK(gretl_callback);

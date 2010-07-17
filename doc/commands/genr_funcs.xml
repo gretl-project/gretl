@@ -1618,6 +1618,20 @@
       </description>
     </function>
 
+    <function name="eigensym" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="symmat">A</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Works just as <fncref targ="eigengen"/>, but the argument
+	  <argname>A</argname> must be symmetric (in which case the
+	  calculations can be reduced).
+	</para>
+      </description>
+    </function>
+
     <function name="epochday" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="scalar">year</fnarg>
