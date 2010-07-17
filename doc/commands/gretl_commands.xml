@@ -10401,7 +10401,7 @@
 	include an <quote>unrestricted constant</quote>, which allows for the
 	presence of a non-zero intercept in the cointegrating relations as well
 	as a trend in the levels of the endogenous variables.  In the literature
-	stemming from the work of Johensen (see for example his 1995 book) this
+	stemming from the work of Johansen (see for example his 1995 book) this
 	is often referred to as <quote>case 3</quote>.  The first four options
 	given above, which are mutually exclusive, produce cases 1, 2, 4 and 5
 	respectively.  The meaning of these cases and the criteria for selecting
@@ -10425,7 +10425,7 @@
 	constant</quote>, which allows for the presence of a non-zero
 	intercept in the cointegrating relations as well as a trend in the
 	levels of the endogenous variables.  In the literature stemming
-	from the work of Johensen (see for example his 1995 book) this is
+	from the work of Johansen (see for example his 1995 book) this is
 	often referred to as <quote>case 3</quote>.  The other four
 	options produce cases 1, 2, 4 and 5 respectively.  The meaning of
 	these cases and the criteria for selecting a case are explained in
