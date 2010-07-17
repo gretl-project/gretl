@@ -13,6 +13,8 @@ version 1.9.2, in progress
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix crashing bug in Wilcoxon signed rank test
+- Fix bug: crash in GUI when estimation of a restricted VECM
+  was not successfully completed
 - Fix for OS X: we now support Ctrl-click as equivalent to
   right-click (for popup menus, etc.)
 - Fix for finding user's customized LaTeX preamble file 
