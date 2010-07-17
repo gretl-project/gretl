@@ -4735,21 +4735,21 @@
 
       <para context="gui">
 	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and Shin,
-	1992) for stationarity of the given variable (or its first
-	difference, if the differencing option is selected).  The null
-	hypothesis is that the variable in question is stationary, either
-	around a level or, if the <quote>include a trend</quote> box is
-	checked, around a deterministic linear trend.  
+	Journal of Econometrics, 1992) for stationarity of the given
+	variable (or its first difference, if the differencing option is
+	selected).  The null hypothesis is that the variable in question
+	is stationary, either around a level or, if the <quote>include a
+	trend</quote> box is checked, around a deterministic linear trend.
       </para>
 
       <para context="cli">
 	Computes the KPSS test <cite key="KPSS92" p="true">(Kwiatkowski,
-	Phillips, Schmidt and Shin, 1992)</cite> for stationarity, for
-	each of the specified variables (or their first difference, if the
-	<lit>--difference</lit> option is selected). The null hypothesis
-	is that the variable in question is stationary, either around a
-	level or, if the <lit>--trend</lit> option is given, around a
-	deterministic linear trend.
+	Phillips, Schmidt and Shin, Journal of Econometrics, 1992)</cite>
+	for stationarity, for each of the specified variables (or their
+	first difference, if the <lit>--difference</lit> option is
+	selected). The null hypothesis is that the variable in question is
+	stationary, either around a level or, if the <lit>--trend</lit>
+	option is given, around a deterministic linear trend.
       </para>
 
       <para context="gui">
@@ -4768,6 +4768,15 @@
 	of the variable.
       </para>
 
+      <para>
+	The critical values shown for the test statistic are based on the
+	response surfaces estimated by <cite key="sephton95">Sephton
+	(Economics Letters, 1995)</cite>, which are more accurate for
+	small samples than the values given in the original KPSS
+	article. When the test statistic lies between the 10 percent and 1
+	percent critical values a p-value is shown; this is obtained
+	by linear interpolation and should not be taken too literally.
+      </para>
     </description>
 
     <gui-access>
