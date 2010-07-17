@@ -1,7 +1,7 @@
-# Note: tex_es was included below: it can be reinstated
-# if the Spanish TeX files are updated at some point
+# Note: three transation subdirs are present: tex_es, tex_it
+# and tex_pt. These can be added to SUBDIRS if wanted.
 
-SUBDIRS = tex tex_it tex_pt 
+SUBDIRS = tex
 
 .PHONY : subdirs $(SUBDIRS) clean install 
 
