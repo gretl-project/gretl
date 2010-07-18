@@ -179,6 +179,13 @@
       </para>
 
       <para context="cli">
+	The options shown above and the discussion which follows pertain
+	to the use of the <lit>adf</lit> command with regular time series
+	data. For the special use of this command with panel data please
+	see below.
+      </para>
+
+      <para context="cli">
 	Computes a set of Dickey&ndash;Fuller tests on each of the the
 	listed variables, the null hypothesis being that the variable in
 	question has a unit root.  (But if the <lit>--difference</lit>
@@ -271,10 +278,39 @@
       are shown instead.
       </para>
 
+      <subhead context="cli">Panel data</subhead>
+
+      <para context="cli">
+	When the <lit>adf</lit> command is used with panel data, to
+	produce a panel unit root test, the applicable options and the
+	results shown are somewhat different.
+      </para>
+      <para context="cli">
+	First, while you may give a list of variables for testing in
+	the regular time-series case, with panel data only one
+	variable may be tested per command. Second, the options
+	governing the inclusion of deterministic terms become mutually
+	exclusive: you must choose between no-constant, constant only,
+	and constant plus trend; the default is constant only. In
+	addition, the <lit>--seasonals</lit> option is not available.
+	Third, the <lit>--verbose</lit> option has a different meaning:
+	it produces a brief account of the test for each individual
+	time series (the default being to show only the overall
+	result).
+      </para>
+      <para>
+	The overall test (null hypothesis: the series in question has
+	a unit root for all the panel units) is calculated in one or
+	both of two ways: using the method of <cite key="IPS03">Im,
+	Pesaran and Shin (Journal of Econometrics, 2003)</cite> or that
+	of <cite key="choi01">Choi (Journal of International Money and
+	Finance, 2001)</cite>.
+      </para>
+
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Augmented Dickey-Fuller test</menu-path>
+      <menu-path>/Variable/Unit root tests/Augmented Dickey-Fuller test</menu-path>
     </gui-access>
 
   </command>
@@ -2978,7 +3014,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Fractional integration</menu-path>
+      <menu-path>/Variable/Unit root tests/Fractional integration</menu-path>
     </gui-access>
 
   </command>
@@ -4780,7 +4816,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/KPSS test</menu-path>
+      <menu-path>/Variable/Unit root tests/KPSS test</menu-path>
     </gui-access>
 
   </command>

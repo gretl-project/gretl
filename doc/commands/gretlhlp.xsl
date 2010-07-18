@@ -523,6 +523,16 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="subhead">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:text>[PARA]</xsl:text>
+    <xsl:text>&lt;@itl="</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:text>"&gt;</xsl:text>
+    <xsl:text>[/PARA]</xsl:text>
+  </xsl:if>
+</xsl:template>
+
 <xsl:template match="cmdref">
   <xsl:choose>
     <xsl:when test="$topic = 'funcs'">

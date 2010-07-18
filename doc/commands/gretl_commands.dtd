@@ -52,7 +52,7 @@
 <!ELEMENT examples     (example*, demos?)>
 <!ELEMENT demos        (demo)+>
 <!ELEMENT altforms     (altform)+>
-<!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
+<!ELEMENT description  (para | code | pre | ilist | nlist | table | subhead)*>
 <!ELEMENT gui-access   (menu-path*, other-access?)>
 
 <!ELEMENT argpunct (#PCDATA)>
@@ -79,6 +79,11 @@
 <!ELEMENT effect   (#PCDATA)>
 <!ELEMENT optparm  (#PCDATA)>
 <!ELEMENT note     (#PCDATA)>
+
+<!ELEMENT subhead  (#PCDATA)>
+<!ATTLIST subhead
+   context (cli | gui | both) "both"
+>
 
 <!ATTLIST optparm 
     optional (true | false) "false"
@@ -114,7 +119,7 @@
 
 <!ELEMENT code (#PCDATA)>
 <!ATTLIST code
-   context (cli | gui | tex | notex| all) "all"
+   context (cli | gui | tex | notex | all) "all"
 >
 
 <!ELEMENT ilist (li)+>
@@ -128,6 +133,9 @@
 >
 
 <!ELEMENT li (para | code | table)*>
+<!ATTLIST li
+   label CDATA #IMPLIED
+>
 
 <!ELEMENT equation EMPTY>
 <!ATTLIST equation

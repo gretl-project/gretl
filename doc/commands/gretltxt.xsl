@@ -482,6 +482,14 @@
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="subhead">
+  <xsl:if test="not(@context) or @context=$hlp">
+    <xsl:text>[PARA]</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:text>[/PARA]&#xa;</xsl:text>    
+  </xsl:if>
+</xsl:template>
+
 <xsl:template match="cmdref">
   <xsl:text>"</xsl:text>
   <xsl:value-of select="@targ"/>

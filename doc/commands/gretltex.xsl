@@ -502,9 +502,26 @@
 </xsl:template>
 
 <xsl:template match="li">
-  <xsl:text>\item </xsl:text>
+  <xsl:choose>
+    <xsl:when test="@label">
+      <xsl:text>\item[</xsl:text>
+      <xsl:value-of select="@label"/>
+      <xsl:text>] </xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>&#10;</xsl:text>  
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>\item </xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>&#10;</xsl:text>    
+    </xsl:otherwise>    
+  </xsl:choose>
+</xsl:template>
+
+<xsl:template match="subhead">
+  <xsl:text>\subsubsection{</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>&#10;</xsl:text>
+  <xsl:text>}</xsl:text>
 </xsl:template>
 
 <xsl:template match="math">
