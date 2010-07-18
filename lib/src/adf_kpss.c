@@ -1574,12 +1574,12 @@ static int panel_kpss_test (int order, int v,
 	if (gt_10 > 0) {
 	    pputs(prn, "   Note: these are LOWER BOUNDS "
 		  "on the true p-values\n");
-	    pprintf(prn, "   (%d individual p-values were > .10 and were recorded as .10)\n",
+	    pprintf(prn, "   (Individual p-values > .10, and recorded as .10: %d)\n",
 		    gt_10);
 	} else if (lt_01 > 0) {
 	    pputs(prn, "   Note: these are UPPER BOUNDS "
 		  "on the true p-values\n");
-	    pprintf(prn, "   (%d individual p-values were < .01 and were recorded as .01)\n",
+	    pprintf(prn, "   (Individual p-values < .01, and recorded as .01: %d)\n",
 		    lt_01);
 	} 
 	pputc(prn, '\n');
