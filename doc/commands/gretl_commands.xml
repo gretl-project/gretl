@@ -298,7 +298,7 @@
 	time series (the default being to show only the overall
 	result).
       </para>
-      <para>
+      <para context="cli">
 	The overall test (null hypothesis: the series in question has
 	a unit root for all the panel units) is calculated in one or
 	both of two ways: using the method of <cite key="IPS03">Im,
