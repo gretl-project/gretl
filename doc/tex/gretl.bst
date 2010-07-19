@@ -928,7 +928,7 @@ FUNCTION {name.or.dash}
    oldname empty$
      { s 'oldname := s }
      { s oldname =
-         { "\bibliorule{} " }
+         { "\bibliorule{}" }
          { s 'oldname := s }
        if$
      }

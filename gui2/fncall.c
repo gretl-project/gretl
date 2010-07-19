@@ -32,8 +32,6 @@
 #include "guiprint.h"
 #include "ssheet.h"
 #include "datafiles.h"
-#include "winstack.h"
-#include "textbuf.h"
 
 #define FCDEBUG 0
 
@@ -356,26 +354,8 @@ static windata_t *make_help_viewer (const char *fnname, char *buf)
     gchar *title;
 
     title = g_strdup_printf(_("help on %s"), fnname);
-    vwin = gretl_viewer_new(PRINT, title, NULL, 0);
+    vwin = view_formatted_text_buffer(title, buf, 70, 350);
     g_free(title);
-
-    if (vwin == NULL) return NULL;
-
-    /* FIXME give this window some sort of toolbar/menu */
-
-    vwin->vbox = gtk_vbox_new(FALSE, 1);
-    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
-    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
-    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
-
-    create_text(vwin, 70, 350, 0, FALSE);
-    text_table_setup(vwin->vbox, vwin->text);
-    add_user_function_help_buffer(vwin, buf);
-
-    gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->main);
-
-    gtk_widget_grab_focus(vwin->text);
 
     return vwin;
 }

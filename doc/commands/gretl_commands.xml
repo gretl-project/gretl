@@ -51,12 +51,12 @@
 	are jointly significant at the 5 percent level.
       </para>
       <para context="cli">
-	If the <lit>--quiet</lit> option is given the printed results
+	If the <opt>--quiet</opt> option is given the printed results
 	are confined to the test for the joint significance of the
 	added variables, otherwise the estimates for the augmented
 	model are also printed.  In the latter case, the
-	<lit>--vcv</lit> flag causes the covariance matrix for the
-	coefficients to be printed also.  If the <lit>--silent</lit>
+	<opt>--vcv</opt> flag causes the covariance matrix for the
+	coefficients to be printed also.  If the <opt>--silent</opt>
 	option is given, nothing is printed; nonetheless, the results
 	of the test can be retrieved using the special variables
         <lit>$test</lit> and <lit>$pvalue</lit>.
@@ -66,8 +66,8 @@
 	ambiguity arises: should the new variables be added as regressors, as
 	instruments, or as both?  This is resolved as follows: by default the
 	new variables are added as endogenous regressors, but if the
-	<lit>--inst</lit> flag is given they are added as instruments, or
-	if the <lit>--both</lit> flag is given they are added as exogenous
+	<opt>--inst</opt> flag is given they are added as instruments, or
+	if the <opt>--both</opt> flag is given they are added as exogenous
 	regressors.
       </para>
       <para context="gui">
@@ -188,7 +188,7 @@
       <para context="cli">
 	Computes a set of Dickey&ndash;Fuller tests on each of the the
 	listed variables, the null hypothesis being that the variable in
-	question has a unit root.  (But if the <lit>--difference</lit>
+	question has a unit root.  (But if the <opt>--difference</opt>
 	flag is given, the first difference of the variable is taken prior
 	to testing, and the discussion below must be taken as referring to
 	the transformed variable.)
@@ -220,7 +220,7 @@
 	If the lag order, <math>k</math>, is greater than 0, then
 	<math>k</math> lags of the dependent variable are included
 	on the right-hand side of the test regressions, subject to the
-	following qualification.  If the <lit>--test-down</lit> option is
+	following qualification.  If the <opt>--test-down</opt> option is
 	given, <math>k</math> is taken as the maximum lag
 	and the actual lag order used is obtained by testing down, using
 	this algorithm:
@@ -256,16 +256,16 @@
 	against the normal distribution, of 0.10 or less.</para> 
 
       <para context="cli">
-	The <lit>--gls</lit> option can be used in conjunction with
-	one or other of the flags <lit>--c</lit> and <lit>--ct</lit>
+	The <opt>--gls</opt> option can be used in conjunction with
+	one or other of the flags <opt>--c</opt> and <opt>--ct</opt>
 	(the model with constant, or model with constant and trend).
 	The effect of this option is that the de-meaning or
 	de-trending of the variable to be tested is done using the GLS
 	procedure suggested by <cite key="ERS96">Elliott,
 	Rothenberg and Stock (1996)</cite>, which gives a test of
 	greater power than the standard Dickey&ndash;Fuller approach.
-	This option is not compatible with <lit>--nc</lit>,
-	<lit>--ctt</lit> or <lit>--seasonals</lit>.
+	This option is not compatible with <opt>--nc</opt>,
+	<opt>--ctt</opt> or <opt>--seasonals</opt>.
       </para>
 
       <para><emphasis>P</emphasis>-values for the Dickey&ndash;Fuller
@@ -292,8 +292,8 @@
 	governing the inclusion of deterministic terms become mutually
 	exclusive: you must choose between no-constant, constant only,
 	and constant plus trend; the default is constant only. In
-	addition, the <lit>--seasonals</lit> option is not available.
-	Third, the <lit>--verbose</lit> option has a different meaning:
+	addition, the <opt>--seasonals</opt> option is not available.
+	Third, the <opt>--verbose</opt> option has a different meaning:
 	it produces a brief account of the test for each individual
 	time series (the default being to show only the overall
 	result).
@@ -339,7 +339,7 @@
 	variable.
       </para>
       <para context="cli">
-	Unless the <lit>--quiet</lit> option is given, this command prints a
+	Unless the <opt>--quiet</opt> option is given, this command prints a
 	table showing the sums of squares and mean squares along with an
 	<math>F</math>-test.  The <math>F</math>-test and its P-value can be
 	retrieved using the accessors <lit>$test</lit> and <lit>$pvalue</lit>
@@ -360,7 +360,7 @@
 	a set of dummies coding for all but one of the <quote>blocks</quote>.
 	Then regress <repl>response</repl> on a constant and the dummies using
 	<cmdref targ="ols"/>.  For a one-way design the ANOVA table is printed
-	via the <lit>--anova</lit> option to <lit>ols</lit>.  In the two-way
+	via the <opt>--anova</opt> option to <lit>ols</lit>.  In the two-way
 	case the relevant <math>F</math>-test is found by using the <cmdref
 	targ="omit"/> command.  For example (assuming <lit>y</lit> is the
 	response, <lit>xt</lit> codes for the treatment, and <lit>xb</lit>
@@ -426,7 +426,7 @@
 	<quote>square</quote>, and <math>m</math> equals both <math>n</math>
 	and <math>T</math>, an ambiguity arises. The default in this case is
 	to treat the new data as time-invariant, but you can force gretl to
-	treat the new data as time series via the <lit>--time-series</lit>
+	treat the new data as time series via the <opt>--time-series</opt>
 	option.  (This option is ignored in all other cases.)
       </para>
 
@@ -542,14 +542,14 @@
 	iterations.
       </para>
       <para>
-	If the <lit>--hilu</lit> option is given, the Hildreth&ndash;Lu search
+	If the <opt>--hilu</opt> option is given, the Hildreth&ndash;Lu search
 	procedure is used.  The results are then fine-tuned using the
-	Cochrane&ndash;Orcutt method, unless the <lit>--no-corc</lit> flag is
-	specified.  (The latter option is ignored if <lit>--hilu</lit>
+	Cochrane&ndash;Orcutt method, unless the <opt>--no-corc</opt> flag is
+	specified.  (The latter option is ignored if <opt>--hilu</opt>
 	is not specified.)
       </para>
       <para>
-	If the <lit>--pwe</lit> option is given, the Prais&ndash;Winsten
+	If the <opt>--pwe</opt> option is given, the Prais&ndash;Winsten
 	estimator is used.  This involves an an iteration similar to
 	Cochrane&ndash;Orcutt; the difference is that while
 	Cochrane&ndash;Orcutt discards the first observation,
@@ -681,11 +681,11 @@
 	asymptotic standard errors associated with the 2-step estimator
 	are generally reckoned to be an unreliable guide to inference, but
 	if for some reason you want to see them you can use the
-	<lit>--asymptotic</lit> option to turn off the Windmeijer
+	<opt>--asymptotic</opt> option to turn off the Windmeijer
 	correction.
       </para>
       <para context="cli">
-	If the <lit>--time-dummies</lit> option is given, a set of
+	If the <opt>--time-dummies</opt> option is given, a set of
 	time dummy variables is added to the specified regressors.  
 	The number of dummies is one less than the maximum number of
 	periods used in estimation, to avoid perfect collinearity with
@@ -734,7 +734,7 @@
       </para>
       <para>
 	See also <cmdref targ="garch"/> and <cmdref targ="modtest"/> (the
-	<lit>--arch</lit> option).  
+	<opt>--arch</opt> option).  
       </para>
     </description>
 
@@ -841,7 +841,7 @@
       <para context="cli">
 	In the univariate case the default is to include an intercept
 	in the model but this can be suppressed with the
-	<lit>--nc</lit> flag.  If <repl>indepvars</repl> are added,
+	<opt>--nc</opt> flag.  If <repl>indepvars</repl> are added,
 	the model becomes ARMAX; in this case the constant should be
 	included explicitly if you want an intercept (as in the second
 	example above).
@@ -889,13 +889,13 @@
       <para context="cli">
 	When the native ARMA code is used, estimated standard errors are by
 	default based on a numerical approximation to the (negative inverse
-	of) the Hessian.  But if the <lit>--opg</lit> option is given they are
+	of) the Hessian.  But if the <opt>--opg</opt> option is given they are
 	instead based on the Outer Product of the Gradient.  This option is
 	ignored if estimation via <program>X-12-ARIMA</program> is selected. 
       </para>
 
       <para context="cli">
-	The option <lit>--lbfgs</lit> is specific to estimation using
+	The option <opt>--lbfgs</opt> is specific to estimation using
 	native ARMA code and exact ML: it calls for use of the 
 	<quote>limited memory</quote> L-BFGS-B algorithm in place
 	of the regular BFGS maximizer.  This may help in some
@@ -903,7 +903,7 @@
       </para>
 
       <para context="cli">
-	The option <lit>--y-diff-only</lit> is specific to estimation of
+	The option <opt>--y-diff-only</opt> is specific to estimation of
 	ARIMAX models (models with a non-zero order of integration and
 	including exogenous regressors), and applies only when gretl's native
 	exact ML is used. For such models the default behavior is to
@@ -915,7 +915,7 @@
       <para context="cli">
 	In general if a gretl command fails to complete successfully,
 	execution of a script is halted.  However, if the
-	<lit>--continue</lit> option is given for this command, execution
+	<opt>--continue</opt> option is given for this command, execution
 	continues provided that that error is <quote>numerical</quote> (&eg;
 	failure to converge, to the specified tolerance).  In this case the
 	internal variable <lit>$error</lit> is set to a non-zero value;
@@ -1302,22 +1302,22 @@
 	hypothesis that each of the variables listed has a unit root; (2)
 	estimate the cointegrating regression; and (3) run a DF test
 	on the residuals from the cointegrating regression.  If the
-	<lit>--skip-df</lit> flag is given, step (1) is omitted.
+	<opt>--skip-df</opt> flag is given, step (1) is omitted.
       </para>
       <para context="cli">
 	If the specified lag order is positive all the Dickey&ndash;Fuller
 	tests use that order, with this qualification: if the
-	<lit>--test-down</lit> option is given, the given value is taken as
+	<opt>--test-down</opt> option is given, the given value is taken as
 	the maximum and the actual lag order used in each case is obtained
 	by testing down.  See the <cmdref targ="adf"/> command for
 	details of this procedure.
       </para>
       <para context="cli">
 	By default, the cointegrating regression contains a constant. If
-	you wish to suppress the constant, add the <lit>--nc</lit> flag.
+	you wish to suppress the constant, add the <opt>--nc</opt> flag.
 	If you wish to augment the list of deterministic terms in the
 	cointegrating regression with a linear or quadratic trend, add
-	the <lit>--ct</lit> or <lit>--ctt</lit> flag.  These option
+	the <opt>--ct</opt> or <opt>--ctt</opt> flag.  These option
 	flags are mutually exclusive.
       </para>
 
@@ -1473,7 +1473,7 @@
       </para>
 
       <para context="cli">
-	The <lit>--seasonals</lit> option, which may be combined with any of the
+	The <opt>--seasonals</opt> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
@@ -1669,14 +1669,14 @@
 	for the variables used.
       </para>
       <para>
-	The (mutually exclusive) options <lit>--spearman</lit> and
-	<lit>--kendall</lit> produce, respectively, Spearman's rank
+	The (mutually exclusive) options <opt>--spearman</opt> and
+	<opt>--kendall</opt> produce, respectively, Spearman's rank
 	correlation rho and Kendall's rank correlation tau in place of the
 	default Pearson coefficient.  When either of these options is given,
 	<repl>varlist</repl> should contain just two variables.
       </para>
       <para>
-	When a rank correlation is computed, the <lit>verbose</lit> option can
+	When a rank correlation is computed, the <opt>verbose</opt> option can
 	be used to print the original and ranked data (otherwise this option
 	is ignored).
       </para>
@@ -1727,7 +1727,7 @@
 	<math>Q</math> statistic is printed.  This may be used to test the
 	null hypothesis that the series is <quote>white noise</quote>; it is
 	asymptotically distributed as chi-square with degrees of freedom equal
-	to the number of lags used.  Unless the <lit>--quiet</lit> option is
+	to the number of lags used.  Unless the <opt>--quiet</opt> option is
 	given, a plot of the correlogram is printed.
       </para>
       <para>
@@ -1824,7 +1824,7 @@
     <description>
       <para>
 	Must follow the estimation of a model via OLS.  Performs the
-	CUSUM test&mdash;or if the <lit>--squares</lit> option is
+	CUSUM test&mdash;or if the <opt>--squares</opt> option is
 	given, the CUSUMSQ test&mdash;for parameter stability.  A
 	series of one-step ahead forecast errors is obtained by
 	running a series of regressions: the first regression uses the
@@ -2104,7 +2104,7 @@
 	will be re-numbered.
       </para>
       <para>
-	If the <lit>--db</lit> option is given, this command deletes the
+	If the <opt>--db</opt> option is given, this command deletes the
 	listed variables not from the current dataset but from a gretl
 	database, assuming that a database has been opened, and the user
 	has write permission for file in question.  See also the
@@ -2182,7 +2182,7 @@
 	the standard Dickey&ndash;Fuller approach.
       </para>
       <para>
-	See also the <cmdref targ="adf"/> command and the <lit>--gls</lit>
+	See also the <cmdref targ="adf"/> command and the <opt>--gls</opt>
 	option.
       </para>
     </description>
@@ -2280,7 +2280,7 @@
 	selected.
       </para>
       <para>
-	With the <lit>--sign</lit> option, the Sign test is performed.
+	With the <opt>--sign</opt> option, the Sign test is performed.
 	This test is based on the fact that if two samples,
 	<math>x</math> and <math>y</math>, are drawn randomly
 	from the same distribution, the probability that
@@ -2295,7 +2295,7 @@
 	number of observations.
       </para>
       <para>
-	With the <lit>--rank-sum</lit> option, the Wilcoxon rank-sum test
+	With the <opt>--rank-sum</opt> option, the Wilcoxon rank-sum test
 	is performed.  This test proceeds by ranking the observations from
 	both samples jointly, from smallest to largest, then finding the
 	sum of the ranks of the observations from one of the samples.  The
@@ -2307,7 +2307,7 @@
 	samples a close Normal approximation exists.
       </para>
       <para>
-	With the <lit>--signed-rank</lit> option, the Wilcoxon signed-rank
+	With the <opt>--signed-rank</opt> option, the Wilcoxon signed-rank
 	test is performed.  This is designed for matched data pairs such
 	as, for example, the values of a variable for a sample of
 	individuals before and after some treatment.  The test proceeds by
@@ -2323,7 +2323,7 @@
 	of reasonable size.
       </para>
       <para>
-	For the Wilcoxon tests, if the <lit>--verbose</lit> option is
+	For the Wilcoxon tests, if the <opt>--verbose</opt> option is
 	given then the ranking is printed.  (This option has no effect if
 	the Sign test is selected.)
       </para>
@@ -2355,7 +2355,7 @@
 	the command <cmdref targ="dummify"/>.
       </para>
       <para>
-	If the <lit>--reverse</lit> flag is given, the operation is reversed;
+	If the <opt>--reverse</opt> flag is given, the operation is reversed;
 	that is, the variables in <repl>varlist</repl> are marked as
 	being continuous.
       </para>
@@ -2404,7 +2404,7 @@
 	observations where <lit>x</lit> takes on its smallest value, 0
 	otherwise; the next dummy will have value 1 when <lit>x</lit>
 	takes on its second-smallest value, and so on.  If one of the
-	option flags <lit>--drop-first</lit> or <lit>--drop-last</lit>
+	option flags <opt>--drop-first</opt> or <opt>--drop-last</opt>
 	is added, then either the lowest or the highest value of each
 	variable is omitted from the encoding (which may be useful for
 	avoiding the <quote>dummy variable trap</quote>).
@@ -2560,7 +2560,7 @@
 	See also <cmdref targ="tabprint"/>.
       </para>
       <para>
-	If the <lit>--complete</lit> flag is given, the &latex; file is
+	If the <opt>--complete</opt> flag is given, the &latex; file is
 	a complete document, ready for processing; otherwise it must
 	be included in a document.
       </para>
@@ -2650,18 +2650,18 @@
       </para>
       <para>
 	If the estimation method is <cmd>sur</cmd> or <cmd>3sls</cmd>
-	and the <lit>--iterate</lit> flag is given, the estimator will
+	and the <opt>--iterate</opt> flag is given, the estimator will
 	be iterated.  In the case of SUR, if the procedure converges
 	the results are maximum likelihood estimates.  Iteration of
 	three-stage least squares, however, does not in general
 	converge on the full-information maximum likelihood results.
-	The <lit>--iterate</lit> flag is ignored for other methods of
+	The <opt>--iterate</opt> flag is ignored for other methods of
 	estimation.  
       </para>
       <para>If the equation-by-equation estimators <cmd>ols</cmd> or
 	<cmd>tsls</cmd> are chosen, the default is to apply a degrees
 	of freedom correction when calculating standard errors. This
-	can be suppressed using the <lit>--no-df-corr</lit> flag. This
+	can be suppressed using the <opt>--no-df-corr</opt> flag. This
 	flag has no effect with the other estimators; no degrees of
 	freedom correction is applied in any case.
       </para>
@@ -2671,7 +2671,7 @@
 	tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]"
 	ascii="sigma(i,j) = u(i)' * u(j) / T"
 	graphic="syssigma1"/>
-	If the <lit>--geomean</lit> flag is
+	If the <opt>--geomean</opt> flag is
 	given, a degrees of freedom correction is applied: the
 	formula is
 	<equation status="display"
@@ -2682,7 +2682,7 @@
 	independent parameters in each equation.
       </para>
       <para>
-	If the <lit>verbose</lit> option is given and an iterative
+	If the <opt>verbose</opt> option is given and an iterative
 	method is specified, details of the iterations are printed.
       </para>
     </description>
@@ -2828,13 +2828,13 @@
 	Must follow an estimation command.  Forecasts are generated for a
 	certain range of observations: if <repl>startobs</repl> and
 	<repl>endobs</repl> are given, for that range (if possible); otherwise
-	if the <lit>--out-of-sample</lit> option is given, for observations
+	if the <opt>--out-of-sample</opt> option is given, for observations
 	following the range over which the model was estimated; otherwise over
 	the currently defined sample range.  If an out-of-sample forecast is
 	requested but no relevant observations are available, an error is
 	flagged. Depending on the nature of the model, standard errors may
 	also be generated; see below.  Also see below for the special effect
-	of the <lit>--rolling</lit> option.
+	of the <opt>--rolling</opt> option.
       </para>
 
       <para context="cli">
@@ -2870,26 +2870,26 @@
 	the model was estimated, and a dynamic forecast (if relevant)
 	out of sample.  The <lit>dynamic</lit> option requests a
 	dynamic forecast from the earliest possible date, and the
-	<lit>static</lit> option requests a static forecast even out
+	<opt>static</opt> option requests a static forecast even out
 	of sample.  
       </para>
 
       <para context="cli">
-	The <lit>rolling</lit> option is presently available only for
+	The <opt>rolling</opt> option is presently available only for
 	single-equation models estimated via OLS.  When this option is given
 	the forecasts are recursive. That is, each forecast is generated from
 	an estimate of the given model using data from a fixed starting point
 	(namely, the start of the sample range for the original estimation) up
 	to the forecast date minus <math>k</math>, where <math>k</math> is the
 	number of steps ahead, which must be given in the
-	<lit>steps-ahead</lit> argument. The forecasts are always dynamic if
-	this is applicable.  Note that the <lit>steps-ahead</lit> argument
-	should be given only in conjunction with the <lit>rolling</lit>
+	<repl>steps-ahead</repl> argument. The forecasts are always dynamic if
+	this is applicable.  Note that the <repl>steps-ahead</repl> argument
+	should be given only in conjunction with the <opt>rolling</opt>
 	option.
       </para>
 
       <para context="cli">
-	The <lit>--plot</lit> option calls for a plot file to be produced,
+	The <opt>--plot</opt> option calls for a plot file to be produced,
 	containing a graphical representation of the forecast.  When no
 	<repl>filename</repl> parameter is given, gretl writes a gnuplot
 	command file with a name on the pattern <lit>gpttmp01.plt</lit> to the
@@ -2958,7 +2958,7 @@
 	way, GNU R (<lit>language=R</lit>), Jurgen Doornik's Ox
 	(<lit>language=Ox</lit>) and GNU Octave (<lit>language=Octave</lit>).
 	(Language names are recognized on a case-insensitive basis.)  Note
-	that the <lit>--send-data</lit> is only available in connection with
+	that the <opt>--send-data</opt> is only available in connection with
 	R.
       </para>
       <para>
@@ -2996,9 +2996,9 @@
 	Tests the specified series for fractional integration (<quote>long
 	memory</quote>). The null hypothesis is that the integration order
 	of the series is zero.  By default the Local Whittle Estimator is
-	used but if the <lit>--gph</lit> option is given the Geweke and
+	used but if the <opt>--gph</opt> option is given the Geweke and
 	Porter-Hudak (GPH) test is performed instead. If the
-	<lit>--all</lit> flag is given then the results of both tests are
+	<opt>--all</opt> flag is given then the results of both tests are
 	printed.
       </para>
       <para>
@@ -3009,7 +3009,7 @@
       <para>
 	The results can be retrieved using the accessors <lit>$test</lit>
 	and <lit>$pvalue</lit>. These values are based on the Local
-	Whittle Estimator unless the <lit>--gph</lit> option is given.
+	Whittle Estimator unless the <opt>--gph</opt> option is given.
       </para>
     </description>
 
@@ -3052,9 +3052,9 @@
 	<repl>series</repl> (given by name or number).
       </para>
       <para>
-	If the <lit>--normal</lit> option is given, the
+	If the <opt>--normal</opt> option is given, the
 	Doornik&ndash;Hansen chi-square test for normality is computed. If
-	the <lit>--gamma</lit> option is given, the test for normality is
+	the <opt>--gamma</opt> option is given, the test for normality is
 	replaced by Locke's nonparametric test for the null hypothesis
 	that the variable follows the gamma distribution; see <cite
 	key="locke76">Locke (1976)</cite>, <cite
@@ -3064,11 +3064,11 @@
       </para>
       <para>
 	In interactive mode a graph of the distribution is displayed by
-	default.  The <lit>--quiet</lit> flag can be used to suppress
+	default.  The <opt>--quiet</opt> flag can be used to suppress
 	this.
       </para>
       <para>
-	The <lit>--silent</lit> flag suppresses the usual output entirely.
+	The <opt>--silent</opt> flag suppresses the usual output entirely.
 	This makes sense only in conjunction with one or other of the
 	distribution test options: the test statistic and its p-value are
 	recorded, and can be retrieved using the accessors
@@ -3204,7 +3204,7 @@
 	by setting <repl>q</repl> to a positive value and <repl>p</repl>
 	to zero.  The sum of <repl>p</repl> and <repl>q</repl> must be no
 	greater than 5.  Note that a constant is automatically included in
-	the mean equation unless the <lit>--nc</lit> option is given.
+	the mean equation unless the <opt>--nc</opt> option is given.
       </para>
 
       <para context="gui">
@@ -3241,7 +3241,7 @@
       <para context="cli">
 	Several variant estimators of the covariance matrix are available
 	with this command.  By default, the Hessian is used unless the
-	<lit>--robust</lit> option is given, in which case the QML (White)
+	<opt>--robust</opt> option is given, in which case the QML (White)
 	covariance matrix is used.  Other possibilities (&eg; the
 	information matrix, or the Bollerslev&ndash;Wooldridge estimator)
 	can be specified using the <cmdref targ="set"/> command.
@@ -3272,7 +3272,7 @@
 	initialized using the unconditional error variance from
 	initial OLS estimation for the constant, and small positive
 	values for the coefficients on the past values of the squared
-	error and the error variance.  The flag <lit>--arma-init</lit>
+	error and the error variance.  The flag <opt>--arma-init</opt>
 	calls for the starting values of these parameters to be
 	set using an initial ARMA model, exploiting the relationship
 	between GARCH and ARMA set out in Chapter 21 of Hamilton's
@@ -3289,7 +3289,7 @@
 	genr ht = $h
       </code>
       <para context="cli">
-	If the <lit>--stdresid</lit> option is given, the <lit>$uhat</lit>
+	If the <opt>--stdresid</opt> option is given, the <lit>$uhat</lit>
 	values are divided by the square root of <math>h</math><sub>t</sub>.
       </para>
 
@@ -3837,11 +3837,11 @@
 	The variables in the list <repl>yvars</repl> are graphed against
 	<repl>xvar</repl>.  For a time series plot you may either
 	give <lit>time</lit> as <repl>xvar</repl> or use the option
-	flag <lit>--time-series</lit>.
+	flag <opt>--time-series</opt>.
       </para>
 
       <para>
-	If the <lit>--dummy</lit> option is selected, exactly three variables
+	If the <opt>--dummy</opt> option is selected, exactly three variables
 	should be given: a single <math>y</math> variable, an <math>x</math>
 	variable, and <repl>dumvar</repl>, a dummy variable.  The effect is to
 	plot <repl>yvar</repl> against <repl>xvar</repl> with the points shown
@@ -3852,7 +3852,7 @@
       <para context="cli">
 	Generally, <repl>yvars</repl> and <repl>xvar</repl> refer to series in
 	the current dataset (given either by name or ID number).  But if a
-	named matrix is supplied via the <lit>--matrix</lit> option these
+	named matrix is supplied via the <opt>--matrix</opt> option these
 	arguments (which must be given as numerical values) denote
 	(1-based) column indices for the given matrix.  So for example
 	if you want a scatterplot of column 2 of matrix <lit>M</lit> against
@@ -3869,7 +3869,7 @@
 	<filename>gpttmpN.plt</filename>, starting with N = <lit>01</lit>. The
 	actual plots may be generated later using <program>gnuplot</program>
 	(under MS Windows, <program>wgnuplot</program>).  This behavior can be
-	modified by use of the <lit>--output=</lit><repl>filename</repl>
+	modified by use of the <opt>--output=</opt><repl>filename</repl>
 	option.  This option controls the filename used, and at the same time
 	allows you to specify a particular output format via the three-letter
 	extension of the file name, as follows: <lit>.eps</lit> results in the
@@ -3888,11 +3888,11 @@
 	the case of a bivariate scatterplot.  The default behavior
 	is to show the OLS fitted line if and only if the slope
 	coefficient is significant at the 10 percent level. If the
-	<lit>suppress</lit> option is given, no fitted line is shown.
-	If the <lit>linear</lit> option is given, the OLS line is
+	<opt>suppress</opt> option is given, no fitted line is shown.
+	If the <opt>linear</opt> option is given, the OLS line is
 	shown regardless of whether or not it is significant.  The other
-	options&mdash;<lit>inverse</lit>, <lit>quadratic</lit> and
-	<lit>loess</lit>&mdash;produce respectively an inverse fit
+	options&mdash;<opt>inverse</opt>, <opt>quadratic</opt> and
+	<opt>loess</opt>&mdash;produce respectively an inverse fit
 	(regression of <math>y</math> on 1/<math>x</math>), a
 	quadratic fit, or a loess fit.  Loess (also sometimes called
 	<quote>lowess</quote>) is a robust locally weighted regression.  
@@ -4325,7 +4325,7 @@
 	By default, the parameters are estimated by maximum
 	likelihood. The covariance matrix of the parameters is
 	computed using the negative inverse of the Hessian. If
-	two-step estimation is desired, use the <lit>--two-step</lit>
+	two-step estimation is desired, use the <opt>--two-step</opt>
 	option. In this case, the covariance matrix of the parameters
 	of the outcome equation is appropriately adjusted as per
 	<cite key="heckman79">Heckman (1979)</cite>.
@@ -4378,7 +4378,7 @@
 	Some functions have the same names as related commands (&eg;
 	<lit>diff</lit>): in that case the default is to print help
 	for the command, but you can get help on the function by
-	using the <lit>--func</lit> option.
+	using the <opt>--func</opt> option.
       </para> 
     </description>
 
@@ -4642,7 +4642,7 @@
 
       <para context="cli">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	inverse of the Hessian.  If the <opt>--robust</opt> flag is given,
 	then QML or Huber&ndash;White standard errors are calculated
 	instead. In this case the estimated covariance matrix is a
 	<quote>sandwich</quote> of the inverse of the estimated Hessian
@@ -4782,9 +4782,9 @@
 	Computes the KPSS test <cite key="KPSS92" p="true">(Kwiatkowski,
 	Phillips, Schmidt and Shin, Journal of Econometrics, 1992)</cite>
 	for stationarity, for each of the specified variables (or their
-	first difference, if the <lit>--difference</lit> option is
+	first difference, if the <opt>--difference</opt> option is
 	selected). The null hypothesis is that the variable in question is
-	stationary, either around a level or, if the <lit>--trend</lit>
+	stationary, either around a level or, if the <opt>--trend</opt>
 	option is given, around a deterministic linear trend.
       </para>
 
@@ -4798,7 +4798,7 @@
 
       <para context="cli">
 	The order argument determines the size of the window used for
-	Bartlett smoothing.  If the <lit>--verbose</lit> option is
+	Bartlett smoothing.  If the <opt>--verbose</opt> option is
 	chosen the results of the auxiliary regression are printed,
 	along with the estimated variance of the random walk component
 	of the variable.
@@ -4839,13 +4839,13 @@
 	if <repl>varlist</repl> is not specified.
       </para>
       <para>
-	With the option <lit>--to-file</lit>, writes to the named file the
+	With the option <opt>--to-file</opt>, writes to the named file the
 	labels for all series in the dataset, one per line. If no labels are
 	present an error is flagged; if some series have labels and others
 	do not, a blank line is printed for series with no label.
       </para>
       <para>
-	With the option <lit>--from-file</lit>, reads the specified file
+	With the option <opt>--from-file</opt>, reads the specified file
 	(which should be plain text) and assigns labels to the series in
 	the dataset, reading one label per line and taking blank lines
 	to indicate blank labels.
@@ -4885,7 +4885,7 @@
       <para>
 	Standard errors are derived using the bootstrap procedure with
 	500 drawings. The covariance matrix for the parameter
-	estimates, printed when the <lit>--vcv</lit> flag is given, is
+	estimates, printed when the <opt>--vcv</opt> flag is given, is
 	based on the same bootstrap.
       </para>
     </description>
@@ -5054,7 +5054,7 @@
 	predicted residual by its standard error.
       </para>
       <para context="cli">
-	If the <lit>--save</lit> flag is given with this command, then the
+	If the <opt>--save</opt> flag is given with this command, then the
 	leverage, influence and DFFITS values are added to the current
 	data set.
       </para>
@@ -5111,7 +5111,7 @@
 
       <para context="cli">
 	If you wish to set a different maximum, use the optional
-	<lit>ymax=</lit><repl>value</repl> syntax following the list of
+	<opt>ymax=</opt><repl>value</repl> syntax following the list of
 	regressors.  The supplied value must be greater than all of the
 	observed values of the dependent variable.
       </para>
@@ -5191,13 +5191,13 @@
 	respect to each of the independent variables are calculated (at
 	the means of those variables) and these slopes replace the usual
 	p-values in the regression output.  This behavior can be
-	suppressed my giving the <lit>--p-values</lit> option. The
+	suppressed my giving the <opt>--p-values</opt> option. The
 	chi-square statistic tests the null hypothesis that all
 	coefficients are zero apart from the constant.
       </para>
       <para context="cli">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	inverse of the Hessian.  If the <opt>--robust</opt> flag is given,
 	then QML or Huber&ndash;White standard errors are calculated
 	instead. In this case the estimated covariance matrix is a
 	<quote>sandwich</quote> of the inverse of the estimated Hessian
@@ -5217,7 +5217,7 @@
 	If the dependent variable is not binary but is discrete, then by
 	default it is interpreted as an ordinal response, and Ordered
 	Logit estimates are obtained.  However, if the
-	<lit>--multinomial</lit> option is given, the dependent variable
+	<opt>--multinomial</opt> option is given, the dependent variable
 	is interpreted as an unordered response, and Multinomial Logit
 	estimates are produced. (In either case, if the variable selected
 	as dependent is not discrete an error is flagged.) In the
@@ -5323,7 +5323,7 @@
       </para>
       <para>
 	See <guideref targ="chap:looping"/> for further details and
-	examples.  The effect of the <lit>--progressive</lit> option
+	examples.  The effect of the <opt>--progressive</opt> option
 	(which is designed for use in Monte Carlo simulations) is
 	explained there. Not all gretl commands may be used within
 	a loop; the commands available in this context are also
@@ -5380,9 +5380,9 @@
 	observations.
       </para>
       <para context="cli">
-	If the <lit>--vcv</lit> option is given, the
+	If the <opt>--vcv</opt> option is given, the
 	covariance matrix and its inverse are printed.  If the
-	<lit>--save</lit> option is given, the distances are saved to
+	<opt>--save</opt> option is given, the distances are saved to
 	the dataset under the name <lit>mdist</lit> (or
 	<lit>mdist1</lit>, <lit>mdist2</lit> and so on if there is
 	already a variable of that name).
@@ -5471,7 +5471,7 @@
       <para>
 	By default the test statistic is calculated on the assumption
 	that the variances are equal for the two variables; with the
-	<lit>--unequal-vars</lit> option the variances are assumed to
+	<opt>--unequal-vars</opt> option the variances are assumed to
 	be different.  This will make a difference to the test
 	statistic only if there are different numbers of non-missing
 	observations for the two variables.
@@ -5671,10 +5671,10 @@
       </para>
       <para>
 	By default, estimated standard errors are based on the Outer
-	Product of the Gradient.  If the <lit>--hessian</lit> option is
+	Product of the Gradient.  If the <opt>--hessian</opt> option is
 	given, they are instead based on the negative inverse of the
 	Hessian (which is approximated numerically).  If the
-	<lit>--robust</lit> option is given, a QML estimator is used
+	<opt>--robust</opt> option is given, a QML estimator is used
 	(namely, a sandwich of the negative inverse of the Hessian and the
 	covariance matrix of the gradient). 
       </para>
@@ -5684,7 +5684,7 @@
 	produce false positives, instances where correct derivatives
 	appear to be wrong and estimation is refused. To counter this,
 	or to achieve a little extra speed, you can give the option
-	<lit>--no-gradient-check</lit>.  Obviously, you should do
+	<opt>--no-gradient-check</opt>.  Obviously, you should do
 	this only if you are quite confident that the gradient you
 	have specified is right.
       </para>
@@ -5894,26 +5894,26 @@
       </para>
       <para>
 	The optional <lit>order</lit> argument is relevant only in case
-	the <lit>--autocorr</lit> or <lit>--arch</lit> options are
+	the <opt>--autocorr</opt> or <opt>--arch</opt> options are
 	selected.  The default is to run these tests using a lag order
 	equal to the periodicity of the data, but this can be adjusted by
 	supplying a specific lag order.
       </para>
       <para>
-	The <lit>--robust</lit> option applies only when the
+	The <opt>--robust</opt> option applies only when the
 	Breusch&ndash;Pagan test is selected; its effect is to use the
 	robust variance estimator proposed by <cite
 	key="koenker81">Koenker (1981)</cite>, making the test less
 	sensitive to the assumption of normality.
       </para>
       <para>
-	The <lit>--panel</lit> option is available only when the model
+	The <opt>--panel</opt> option is available only when the model
 	is estimated on panel data: in this case a test for groupwise
 	heteroskedasticity is performed (that is, for a differing
 	error variance across the cross-sectional units).
       </para>
       <para>
-	The <lit>--comfac</lit> option is available only when the model is
+	The <opt>--comfac</opt> option is available only when the model is
 	estimated via an AR(1) method such as Hildreth&ndash;Lu.  The
 	auxiliary regression takes the form of a relatively unrestricted
 	dynamic model, which is used to test the common factor restriction
@@ -5922,7 +5922,7 @@
       <para>
 	By default, the program prints the auxiliary regression on which the
 	test statistic is based, where applicable.  This may be suppressed by
-	using the <lit>--quiet</lit> flag.  The test statistic and its p-value
+	using the <opt>--quiet</opt> flag.  The test statistic and its p-value
 	may be retrieved using the accessors <lit>$test</lit> and
 	<lit>$pvalue</lit> respectively.
       </para>
@@ -6043,7 +6043,7 @@
 	must have only non-negative integer values. By default the model
 	NegBin 2 is used, in which the conditional variance of the count is
 	given by &mu;(1 + &alpha;&mu;), where &mu; denotes the conditional
-	mean.  But if the <lit>--model1</lit> option is given the conditional
+	mean.  But if the <opt>--model1</opt> option is given the conditional
 	variance is &mu;(1 + &alpha;).
       </para>
       <para>
@@ -6054,9 +6054,9 @@
       <para>
 	By default, standard errors are computed using a numerical
 	approximation to the Hessian at convergence.  But if the
-	<lit>--opg</lit> option is given the covariance matrix is based on
+	<opt>--opg</opt> option is given the covariance matrix is based on
 	the Outer Product of the Gradient (OPG), or if the
-	<lit>--robust</lit> option is given QML standard errors are
+	<opt>--robust</opt> option is given QML standard errors are
 	calculated, using a <quote>sandwich</quote> of the inverse of the
 	Hessian and the OPG.
       </para>
@@ -6179,7 +6179,7 @@
 	<book>Econometric Analysis</book> (Chapter 11 of the 4th
 	edition, or Chapter 9 of the 5th).  The numbers to the left of
 	the lines are for reference and are not part of the commands.
-	Note that any option flags, such as <lit>--vcv</lit> for
+	Note that any option flags, such as <opt>--vcv</opt> for
 	printing the covariance matrix of the parameter estimates,
 	should be appended to the final command, <lit>end nls</lit>.
       </para>
@@ -6283,7 +6283,7 @@
       <para>
 	The test statistic and its p-value may be retrieved
 	using the accessors <lit>$test</lit> and <lit>$pvalue</lit>.
-	Please note that if the <lit>--all</lit> option is given,
+	Please note that if the <opt>--all</opt> option is given,
 	the result recorded is that from the Doornik&ndash;Hansen
 	test.
       </para>
@@ -6327,7 +6327,7 @@
       </para>
       <para>
 	By default, this command cleans out all data in gretl's current
-	workspace.  If you give the <lit>--preserve</lit> option, however,
+	workspace.  If you give the <opt>--preserve</opt> option, however,
 	any currently defined matrices are retained.
       </para>
     </description>
@@ -6414,13 +6414,13 @@
 	minus two times the maximized log-likelihood plus two times the 
 	number of parameters estimated.</para>
 
-      <para context="cli">If the option <lit>--no-df-corr</lit> is
+      <para context="cli">If the option <opt>--no-df-corr</opt> is
 	given, the usual degrees of freedom correction is not applied
 	when calculating the estimated error variance (and hence also
 	the standard errors of the parameter estimates).</para>
 
       <para context="cli">
-	The option <lit>--print-final</lit> is applicable only in the
+	The option <opt>--print-final</opt> is applicable only in the
 	context of a <cmdref targ="loop"/>.  It arranges for the
 	regression to be run silently on all but the final iteration
 	of the loop. See <guideref targ="loop-examples"/> for details.
@@ -6441,9 +6441,9 @@
       </para>
 
       <para context="cli">The specific formula used for generating
-	robust standard errors (when the <lit>--robust</lit> option is
+	robust standard errors (when the <opt>--robust</opt> option is
 	given) can be adjusted via the <cmdref targ="set"/> command.
-	The <lit>--jackknife</lit> option has the effect of
+	The <opt>--jackknife</opt> option has the effect of
 	selecting an <lit>hc_version</lit> of <lit>3a</lit>; it is
 	provided to emulate the old <lit>hccm</lit> command.
       </para>
@@ -6538,7 +6538,7 @@
 	variables in the model last estimated. 
       </para>
       <para>
-	Alternatively, if the <lit>--auto</lit> flag is given, sequential
+	Alternatively, if the <opt>--auto</opt> flag is given, sequential
 	elimination is performed: at each step the variable with the highest
 	p-value is omitted, until all remaining variables have a p-value no
 	greater than some cutoff.  The default cutoff is 10 percent
@@ -6559,7 +6559,7 @@
 	test).
       </para>
       <para>
-	For estimators other than OLS, or if the <lit>--wald</lit> option
+	For estimators other than OLS, or if the <opt>--wald</opt> option
 	is given, the statistic is an asymptotic Wald chi-square value
 	based on the covariance matrix of the original model.
       </para>
@@ -6574,15 +6574,15 @@
       <para>
 	If the Wald option is selected, the restricted model is not
 	estimated (and so the current model is not replaced). The
-	<lit>--quiet</lit> option suppresses the printout of the
+	<opt>--quiet</opt> option suppresses the printout of the
 	restricted model (if applicable): only the result of the test is
 	printed.  If the restricted model is both estimated and printed,
-	the <lit>--vcv</lit> option has the effect of printing the
+	the <opt>--vcv</opt> option has the effect of printing the
 	covariance matrix for the coefficients in the restricted model,
 	otherwise this option is ignored.
       </para>
       <para>
-	If the <lit>--silent</lit> option is given, nothing is printed;
+	If the <opt>--silent</opt> option is given, nothing is printed;
 	nonetheless, the results of the test can be retrieved using the
 	special variables <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
@@ -6591,11 +6591,11 @@
 	squares, an ambiguity arises: should the selected variables be
 	omitted as regressors, as instruments, or as both?  This is
 	resolved as follows: by default the variables are dropped from
-	the list of regressors, but if the <lit>--inst</lit> flag is
+	the list of regressors, but if the <opt>--inst</opt> flag is
 	given they are dropped as instruments, or if the
-	<lit>--both</lit> flag is given they are dropped from the
+	<opt>--both</opt> flag is given they are dropped from the
 	model altogether.  These two options are incompatible with the
-	<lit>--wald</lit> option; if one or more instruments are
+	<opt>--wald</opt> option; if one or more instruments are
 	omitted the model must be re-estimated.
       </para>
     </description>
@@ -6708,8 +6708,8 @@
 	may give up to three additional parameters following the filename.
 	First, you can select a particular worksheet within the file.  This is
 	done either by giving its (1-based) number, using the syntax, &eg;,
-	<lit>--sheet=2</lit>, or, if you know the name of the sheet, by giving
-	the name in double quotes, as in <lit>--sheet="MacroData"</lit>. The
+	<opt>--sheet=2</opt>, or, if you know the name of the sheet, by giving
+	the name in double quotes, as in <opt>--sheet="MacroData"</opt>. The
 	default is to read the first worksheet. You can also specify a column
 	and/or row offset into the worksheet via, &eg;,
       </para>
@@ -6728,7 +6728,7 @@
 	which there are no delimiters but there is a known specification of the
 	form, &eg;, <quote>variable <math>k</math> occupies 8 columns starting
 	at column 24</quote>.  To read such files, you should append a string
-	<lit>--cols=</lit><repl>colspec</repl>, where <repl>colspec</repl> is
+	<opt>--cols=</opt><repl>colspec</repl>, where <repl>colspec</repl> is
 	composed of comma-separated integers.  These integers are interpreted
 	as a set of pairs.  The first element of each pair denotes a starting
 	column, measured in bytes from the beginning of the line with 1
@@ -6817,13 +6817,13 @@
     <description>
       <para>
 	Diverts output to <repl>filename</repl>, until further
-	notice.  Use the flag <lit>--append</lit> to append output to
-	an existing file or <lit>--write</lit> to start a new file
+	notice.  Use the flag <opt>--append</opt> to append output to
+	an existing file or <opt>--write</opt> to start a new file
 	(or overwrite an existing one).  Only one file can be opened
 	in this way at any given time.
       </para>
       <para>
-	The <lit>--close</lit> flag is used to close an output
+	The <opt>--close</opt> flag is used to close an output
 	file that was previously opened as above.  Output will then
 	revert to the default stream.
       </para>
@@ -6831,13 +6831,13 @@
 	In the first example command above, the file
 	<filename>regress.txt</filename> is opened for writing, and in the
 	second it is closed.  This would make sense as a sequence only if
-	some commands were issued before the <lit>--close</lit>.  For
+	some commands were issued before the <opt>--close</opt>.  For
 	example if an <cmd>ols</cmd> command intervened, its output would
 	go to <filename>regress.txt</filename> rather than the screen.
       </para>
       <para>
 	In a variant on the above, if you give the keyword <lit>null</lit>
-	in place of a real filename along with the <lit>--write</lit>
+	in place of a real filename along with the <opt>--write</opt>
 	option, the effect is to suppress all printed output until
 	the next <lit>outfile --close</lit>.
       </para>
@@ -6907,29 +6907,29 @@
 	the original data.
       </para>
       <para context="cli">
-	If the <lit>--random-effects</lit> flag is given, random effects
+	If the <opt>--random-effects</opt> flag is given, random effects
 	estimates are computed, using the method of Swamy and Arora. In this
-	case (only) the option <lit>--matrix-diff</lit> forces use of the
+	case (only) the option <opt>--matrix-diff</opt> forces use of the
 	matrix-difference method (as opposed to the regression method) for
 	carrying out the Hausman test for the consistency of the random
 	effects estimator.
       </para>
       <para context="cli">
-	Alternatively, if the <lit>--unit-weights</lit> flag is given, the
+	Alternatively, if the <opt>--unit-weights</opt> flag is given, the
 	model is estimated via weighted least squares, with the weights
 	based on the residual variance for the respective cross-sectional
-	units in the sample.  In this case (only) the <lit>--iterate</lit>
+	units in the sample.  In this case (only) the <opt>--iterate</opt>
 	flag may be added to produce iterative estimates: if the
 	iteration converges, the resulting estimates are Maximum
 	Likelihood.
       </para>
       <para context="cli">
-	As a further alternative, if the <lit>--between</lit> flag is
+	As a further alternative, if the <opt>--between</opt> flag is
 	given, the between-groups model is estimated (that is, an OLS
 	regression using the group means).
       </para>
       <para context="cli">
-	The <lit>--robust</lit> option is available only for fixed
+	The <opt>--robust</opt> option is available only for fixed
 	effects models. The default variant is the Arellano HAC
 	estimator, but Beck&ndash;Katz <quote>Panel Corrected Standard
 	  Errors</quote> can be selected via the command
@@ -7083,7 +7083,7 @@
 	eigenvectors (or <quote>component loadings</quote>).
       </para>
       <para>
-	If the <lit>--save</lit> flag is given, components with eigenvalues
+	If the <opt>--save</opt> flag is given, components with eigenvalues
 	greater than the mean (which means greater than 1.0 if the analysis is
 	based on the correlation matrix) are saved to the dataset as
 	series, with names <lit>PC1</lit>, <lit>PC2</lit> and so on.  These
@@ -7092,7 +7092,7 @@
 	<math>i</math>th variable in <repl>varlist</repl>.
       </para>
       <para>
-	If the <lit>--save-all</lit> flag is given, all of the components are
+	If the <opt>--save-all</opt> flag is given, all of the components are
 	saved as described above.
       </para> 
     </description>
@@ -7136,7 +7136,7 @@
 	sample size.
       </para>
       <para>
-	If the <lit>--log</lit> option is given the spectrum is
+	If the <opt>--log</opt> option is given the spectrum is
 	represented on a logarithmic scale.
       </para>
     </description>
@@ -7218,7 +7218,7 @@
       </para>
       <para>
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	inverse of the Hessian.  If the <opt>--robust</opt> flag is given,
 	then QML or Huber&ndash;White standard errors are calculated
 	instead. In this case the estimated covariance matrix is a
 	<quote>sandwich</quote> of the inverse of the estimated Hessian
@@ -7266,11 +7266,11 @@
       <para>
 	If <repl>varlist</repl> is given, prints the values of the specified
 	series, or if no argument is given, prints the values of all series in
-	the current dataset. If the <lit>--byobs</lit> flag is added the data
+	the current dataset. If the <opt>--byobs</opt> flag is added the data
 	are printed by observation, otherwise they are printed by variable.
 	When printing by observation, the default is to show the date (with
 	time-series data) or the observation marker string (if any) at the
-	start of each line. The <lit>--no-dates</lit> option suppresses the
+	start of each line. The <opt>--no-dates</opt> option suppresses the
 	printing of dates or markers; a simple observation number is shown
 	instead.
       </para>
@@ -7410,13 +7410,13 @@
 	respect to each of the independent variables are calculated (at
 	the means of those variables) and these slopes replace the usual
 	p-values in the regression output.  This behavior can be
-	suppressed my giving the <lit>--p-values</lit> option. The
+	suppressed my giving the <opt>--p-values</opt> option. The
 	chi-square statistic tests the null hypothesis that all
 	coefficients are zero apart from the constant.
       </para>
       <para context="cli">
 	By default, standard errors are computed using the negative
-	inverse of the Hessian.  If the <lit>--robust</lit> flag is given,
+	inverse of the Hessian.  If the <opt>--robust</opt> flag is given,
 	then QML or Huber&ndash;White standard errors are calculated
 	instead. In this case the estimated covariance matrix is a
 	<quote>sandwich</quote> of the inverse of the estimated Hessian
@@ -7579,8 +7579,8 @@
 	range. By default the empirical quantiles are plotted against
 	quantiles of the normal distribution having the same mean and
 	variance as the sample data, but two alternatives are available:
-	if the <lit>--z-scores</lit> option is given the data are
-	standardized, while if the <lit>--raw</lit> option is given the
+	if the <opt>--z-scores</opt> option is given the data are
+	standardized, while if the <opt>--raw</opt> option is given the
 	<quote>raw</quote> empirical quantiles are plotted against the
 	quantiles of the standard normal distribution. 
       </para>
@@ -7684,22 +7684,22 @@
 	list on the same pattern as <cmdref targ="ols"/>.
       </para>
       <para>
-	Without the <lit>--intervals</lit> option, standard errors are
+	Without the <opt>--intervals</opt> option, standard errors are
 	printed for the quantile estimates.  By default, these are
 	computed according to the asymptotic formula given by <cite
 	key="koenker-bassett78">Koenker and Bassett (1978)</cite>, but if
-	the <lit>--robust</lit> option is given, standard errors that are
+	the <opt>--robust</opt> option is given, standard errors that are
 	robust with respect to heteroskedasticity are calculated using the
 	method of <cite key="koenker-zhao94">Koenker and Zhao
 	(1994)</cite>.
       </para>
       <para>
-	When the <lit>--intervals</lit> option is chosen, confidence
+	When the <opt>--intervals</opt> option is chosen, confidence
 	intervals are given for the parameter estimates instead of
 	standard errors.  These intervals are computed using the rank
 	inversion method, and in general they are asymmetrical about the
 	point estimates.  The specifics of the calculation are inflected
-	by the <lit>--robust</lit> option: without this, the intervals are
+	by the <opt>--robust</opt> option: without this, the intervals are
 	computed on the assumption of IID errors <cite key="koenker94"
 	p="true">(Koenker, 1994)</cite>; with it, they use the robust
 	estimator developed by <cite key="koenker-machado99">Koenker and
@@ -7708,7 +7708,7 @@
       <para>
 	By default, 90 percent confidence intervals are produced.  You can
 	change this by appending a confidence level (expressed as a decimal
-	fraction) to the intervals option, as in <lit>--intervals=0.95</lit>.
+	fraction) to the intervals option, as in <opt>--intervals=0.95</opt>.
       </para>
       <para>
 	Vector-valued <repl>tau</repl>:  instead of supplying a scalar, you
@@ -7796,7 +7796,7 @@
       </para>
       <para context="cli">
 	Both the square and the cube are added, unless one of the options
-	<lit>--squares-only</lit> or <lit>--cubes-only</lit> is given.
+	<opt>--squares-only</opt> or <opt>--cubes-only</opt> is given.
       </para>
     </description>
 
@@ -7894,9 +7894,9 @@
 	via a Wald test, using the covariance matrix of the model in question.
 	If the original model was estimated via OLS then the restricted
 	coefficient estimates are printed; to suppress this, append the
-	<lit>--quiet</lit> option flag to the initial <lit>restrict</lit>
+	<opt>--quiet</opt> option flag to the initial <lit>restrict</lit>
 	command.  As an alternative to the Wald test, for models estimated via
-	OLS or WLS only, you can give the <lit>--bootstrap</lit> option to
+	OLS or WLS only, you can give the <opt>--bootstrap</opt> option to
 	perform a bootstrapped test of the restriction.
       </para>
       <para>
@@ -8117,7 +8117,7 @@
 	respectively.
       </para>
       <para context="cli">
-	If the <lit>--quiet</lit> option is given, no graph is shown and no
+	If the <opt>--quiet</opt> option is given, no graph is shown and no
 	output is printed; only the <math>t</math>-statistic and p-value
 	are recorded.
       </para>
@@ -8188,13 +8188,13 @@
 	runs signx1
       </code>
       <para>
-	If the <lit>--difference</lit> option is given, the variable is
+	If the <opt>--difference</opt> option is given, the variable is
 	differenced prior to the analysis, hence the runs are interpreted
 	as sequences of consecutive increases or decreases in the
 	value of the variable.
       </para>
       <para>
-	If the <lit>--equal</lit> option is given, the null hypothesis
+	If the <opt>--equal</opt> option is given, the null hypothesis
 	incorporates the assumption that positive and negative values
 	are equiprobable, otherwise the test statistic is invariant
 	with respect to the <quote>fairness</quote> of the process
@@ -8384,10 +8384,10 @@
       </para>
       <para context="cli">
 	By default the graphs are scatterplots, but if you give the
-	<lit>--with-lines</lit> flag they will be line graphs.
+	<opt>--with-lines</opt> flag they will be line graphs.
       </para>
       <para context="cli">
-	For details on usage of the <lit>--output</lit> option, please see
+	For details on usage of the <opt>--output</opt> option, please see
 	the <cmdref targ="gnuplot"/> command.
       </para>
       <para context="gui">
@@ -8455,8 +8455,8 @@
 	The most common use of this command is the first variant shown above,
 	where it is used to set the value of a selected program parameter.
 	This is discussed in detail below.  The other uses are: with
-	<lit>--to-file</lit>, to write a script file containing all the
-	current parameter settings; with <lit>--from-file</lit> to read a
+	<opt>--to-file</opt>, to write a script file containing all the
+	current parameter settings; with <opt>--from-file</opt> to read a
 	script file containing parameter settings and apply them to the
 	current session; with <lit>stopwatch</lit> to zero the gretl
 	<quote>stopwatch</quote> which can be used to measure CPU time (see
@@ -8470,7 +8470,7 @@
 	<cmd>set</cmd>.  The parameters that can be set in this way are
 	enumerated below. Note that the settings of <lit>hc_version</lit>,
 	<lit>hac_lag</lit> and <lit>hac_kernel</lit> are used when the
-	<lit>--robust</lit> option is given to an estimation command. 
+	<opt>--robust</opt> option is given to an estimation command. 
       </para>
       <para>
 	The available settings are grouped under the following categories:
@@ -8589,10 +8589,10 @@
 	</li>
 	<li>
 	  <para><lit>bfgs_verbskip</lit>: one integer. This setting
-	  affects the behavior of the <lit>--verbose</lit> option to
+	  affects the behavior of the <opt>--verbose</opt> option to
 	  those commands that use BFGS as an optimization algorithm and
 	  is used to compact output. if <lit>bfgs_verbskip</lit> is
-	  set to, say, 3, then the <lit>--verbose</lit> switch will
+	  set to, say, 3, then the <opt>--verbose</opt> switch will
 	  only print iterations 3, 6, 9 and so on.
 	  </para>
 	</li>
@@ -8730,7 +8730,7 @@
 	<li>
 	  <para><lit>bootrep</lit>: an integer. Sets the number of
 	  replications for the <cmdref targ="restrict"/> command with
-	  the <lit>--bootstrap</lit> option.</para>
+	  the <opt>--bootstrap</opt> option.</para>
 	</li>
 	<li>
 	  <para><lit>garch_vcv</lit>: <lit>unset</lit>,
@@ -8811,7 +8811,7 @@
 	<li>
 	  <para><lit>pcse</lit>: <lit>off</lit> (the default) or
 	    <lit>on</lit>.  By default, when estimating a model using
-	    pooled OLS on panel data with the <lit>--robust</lit> option,
+	    pooled OLS on panel data with the <opt>--robust</opt> option,
 	    the Arellano estimator is used for the covariance matrix.  If
 	    you set <lit>pcse</lit> to <quote>on</quote>, this forces use
 	    of the Beck and Katz Panel Corrected Standard Errors (which do
@@ -8923,8 +8923,8 @@
       </para>
 
       <para>
-	If one or other of the <lit>--discrete</lit> or
-	<lit>--continuous</lit> option flags is given, the variable's
+	If one or other of the <opt>--discrete</opt> or
+	<opt>--continuous</opt> option flags is given, the variable's
 	numerical character is set accordingly.  The default is to treat
 	all series as continuous; setting a series as discrete
 	affects the way the variable is handled in frequency plots.
@@ -9037,7 +9037,7 @@
       </para>
       <para>
 	The second form of the command (which requires the
-	<lit>--panel-vars</lit> flag) may be used to impose a panel
+	<opt>--panel-vars</opt> flag) may be used to impose a panel
 	interpretation when the data set contains variables that uniquely
 	identify the cross-sectional units and the time periods.  The data
 	set will be sorted as stacked time series, by ascending values of
@@ -9210,14 +9210,14 @@
 	existing sample range. In the third form <repl>dummyvar</repl> must be
 	an indicator variable with values 0 or 1 at each observation; the
 	sample will be restricted to observations where the value is 1. The
-	fourth form, using <lit>--restrict</lit>, restricts the sample to
+	fourth form, using <opt>--restrict</opt>, restricts the sample to
 	observations that satisfy the given Boolean condition (which is
 	specified according to the syntax of the <cmdref targ="genr"/>
 	command).
       </para>
 
       <para>
-	With the <lit>--no-missing</lit> form, if <repl>varlist</repl> is
+	With the <opt>--no-missing</opt> form, if <repl>varlist</repl> is
 	specified observations are selected on condition that all variables in
 	<repl>varlist</repl> have valid values at that observation; otherwise,
 	if no <repl>varlist</repl> is given, observations are selected on
@@ -9226,7 +9226,7 @@
       </para>
 
       <para>
-	The <lit>--contiguous</lit> form of <lit>smpl</lit> is intended for
+	The <opt>--contiguous</opt> form of <lit>smpl</lit> is intended for
 	use with time series data.  The effect is to trim any observations
 	at the start and end of the current sample range that contain
 	missing values (either for the variables in <repl>varlist</repl>, or
@@ -9236,7 +9236,7 @@
       </para>
 
       <para>
-	With the <lit>--random</lit> flag, the specified number of cases are
+	With the <opt>--random</opt> flag, the specified number of cases are
 	selected from the current dataset at random.  If you wish to be able to
 	replicate this selection you should set the seed for the random number
 	generator first (see the <cmdref targ="set"/> command).
@@ -9250,14 +9250,14 @@
 	Note that sample restrictions are, by default, cumulative: the
 	baseline for any <lit>smpl</lit> command is the current sample. If you
 	wish the command to act so as to replace any existing restriction you
-	can add the option flag <lit>--replace</lit> to the end of the
+	can add the option flag <opt>--replace</opt> to the end of the
 	command. (But this option is not compatible with the
-	<lit>--contiguous</lit> option.)
+	<opt>--contiguous</opt> option.)
       </para>
 
       <para>
 	The internal variable <lit>obs</lit> may be used with the
-	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude particular
+	<opt>--restrict</opt> form of <lit>smpl</lit> to exclude particular
 	observations from the sample.  For example
       </para>
       <code>
@@ -9274,13 +9274,13 @@
       </para>
 
       <para>
-	One point should be noted about the <lit>--dummy</lit>,
-	<lit>--restrict</lit> and <lit>--no-missing</lit> forms of
+	One point should be noted about the <opt>--dummy</opt>,
+	<opt>--restrict</opt> and <opt>--no-missing</opt> forms of
 	<lit>smpl</lit>: <quote>structural</quote> information in the data
 	file (regarding the time series or panel nature of the data) is likely
 	to be lost when this command is issued.  You may reimpose structure
 	with the <cmdref targ="setobs"/> command.  A related option, for use
-	with panel data, is the <lit>--balanced</lit> flag: this requests that
+	with panel data, is the <opt>--balanced</opt> flag: this requests that
 	a balanced panel is reconstituted after sub-sampling, via the
 	insertion of <quote>missing rows</quote> if need be.  But note that it
 	is not always possible to comply with this request.  
@@ -9394,7 +9394,7 @@
       <para>
 	Generates new series which are squares of the series in
 	<repl>varlist</repl> (plus cross-products if the
-	<lit>--cross</lit> option is given).  For example, <cmd>square
+	<opt>--cross</opt> option is given).  For example, <cmd>square
 	  x y</cmd> will generate <lit>sq_x</lit> = <lit>x</lit>
 	squared, <lit>sq_y</lit> = <lit>y</lit> squared and
 	(optionally) <lit>x_y</lit> = <lit>x</lit> times <lit>y</lit>.
@@ -9581,13 +9581,13 @@
 	various formats.
       </para>
       <para>
-	The option flags <lit>--omit-obs</lit> and <lit>--no-header</lit>
+	The option flags <opt>--omit-obs</opt> and <opt>--no-header</opt>
 	are applicable only when saving data in CSV format.  By default,
 	if the data are time series or panel, or if the dataset includes
 	specific observation markers, the CSV file includes a first column
 	identifying the observations (&eg; by date).  If the
-	<lit>--omit-obs</lit> flag is given this column is omitted. The
-	<lit>--no-header</lit> flag suppresses the usual printing of the
+	<opt>--omit-obs</opt> flag is given this column is omitted. The
+	<opt>--no-header</opt> flag suppresses the usual printing of the
 	names of the variables at the top of the columns.
       </para>
       <para>
@@ -9600,7 +9600,7 @@
 	content of the database.  In this context it is an error if one or
 	more of the variables to be saved has the same name as a variable
 	that is already present in the database. The
-	<lit>--overwrite</lit> flag has the effect that, if there are
+	<opt>--overwrite</opt> flag has the effect that, if there are
 	variable names in common, the newly saved variable replaces the
 	variable of the same name in the original dataset.
       </para>
@@ -9638,12 +9638,12 @@
 	for all the variables in the data set if <repl>varlist</repl> is
 	omitted.  By default, output consists of the mean, standard deviation
 	(sd), coefficient of variation (= sd/mean), median, minimum, maximum,
-	skewness coefficient, and excess kurtosis.  If the <lit>--simple</lit>
+	skewness coefficient, and excess kurtosis.  If the <opt>--simple</opt>
 	option is given, output is restricted to the mean, minimum, maximum
 	and standard deviation.
       </para>
       <para>
-	If the <lit>--by</lit> option is given (in which case the parameter
+	If the <opt>--by</opt> option is given (in which case the parameter
 	<repl>byvar</repl> should be the name of a discrete variable), then
 	statistics are printed for sub-samples corresponding to the distinct
 	values taken on by <repl>byvar</repl>.  For example, if
@@ -9844,7 +9844,7 @@
       <para>
 	Must follow the estimation of a model.  Prints the estimated model in
 	tabular form &mdash; by default as &latex;, but as RTF if the
-	<lit>--rtf</lit> flag is given.  If a filename is specified using the
+	<opt>--rtf</opt> flag is given.  If a filename is specified using the
 	<lit>-f</lit> flag output goes to that file, otherwise it goes to a
 	file with a name of the form <filename>model_N.tex</filename> (or
 	<filename>model_N.rtf</filename>), where <lit>N</lit> is the number of
@@ -9855,13 +9855,13 @@
 	the model as &latex;.
       </para>
       <para>
-	If the <lit>--complete</lit> flag is given the &latex; file is
+	If the <opt>--complete</opt> flag is given the &latex; file is
 	a complete document, ready for processing; otherwise it must
 	be included in a document.
       </para>
       <para>
 	If you wish alter the appearance of the tabular output, you can
-	specify a custom row format using the <lit>--format</lit> flag.
+	specify a custom row format using the <opt>--format</opt> flag.
 	The format string must be enclosed in double quotes and must be
 	tied to the flag with an equals sign.  The pattern for the format
 	string is as follows.  There are four fields, representing the
@@ -9891,7 +9891,7 @@
 	Once you set a custom format in this way, it is remembered and
 	used for the duration of the gretl session.  To revert to
 	the default format you can use the special variant
-	<lit>--format=default</lit>.
+	<opt>--format=default</opt>.
       </para>
     </description>
 
@@ -9926,16 +9926,16 @@
 
     <description>
       <para>
-	Quick and simple ASCII graphics.  Without the <lit>--time-series</lit>
+	Quick and simple ASCII graphics.  Without the <opt>--time-series</opt>
 	flag, <repl>varlist</repl> must contain at least two series, the last
 	of which is taken as the variable for the <math>x</math> axis, and a
-	scatter plot is produced. In this case the <lit>--tall</lit> option
+	scatter plot is produced. In this case the <opt>--tall</opt> option
 	may be used to produce a graph in which the <math>y</math> axis is
 	represented by 40 rows of characters (the default is 20 rows).
       </para>
       <para>
-	With the <lit>--time-series</lit>, a plot by observation is produced.
-	In this case the option <lit>--one-scale</lit> may be used to force
+	With the <opt>--time-series</opt>, a plot by observation is produced.
+	In this case the option <opt>--one-scale</opt> may be used to force
 	the use of a single scale; otherwise if <repl>varlist</repl> contains
 	more than one series the data may be scaled. Each line represents an
 	observation, with the data values plotted horizontally.  
@@ -10085,7 +10085,7 @@
       <para>
 	For both TSLS and LIML estimation, an additional test result is
 	shown provided that the model is estimated under the assumption of
-	i.i.d.  errors (that is, the <lit>--robust</lit> option is not
+	i.i.d.  errors (that is, the <opt>--robust</opt> option is not
 	selected). This is a test for weakness of the instruments.  Weak
 	instruments can lead to serious problems in IV regression: biased
 	estimates and/or incorrect size of hypothesis tests based on the
@@ -10108,8 +10108,8 @@
 
       <para context="cli">
 	As alternatives to TSLS, the model may be estimated via Limited
-	Information Maximum Likelihood (the <lit>--liml</lit> option) or via
-	the Generalized Method of Moments (<lit>--gmm</lit> option). Note that
+	Information Maximum Likelihood (the <opt>--liml</opt> option) or via
+	the Generalized Method of Moments (<opt>--gmm</opt> option). Note that
 	if the model is just identified these methods should produce the same
 	results as TSLS, but if it is over-identified the results will differ
 	in general.
@@ -10123,18 +10123,18 @@
       <ilist context="cli">
 	<li>
 	  <para>
-	    <lit>--two-step</lit>: perform two-step GMM rather than the
+	    <opt>--two-step</opt>: perform two-step GMM rather than the
 	    default of one-step.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>--iterate</lit>: Iterate GMM to convergence.
+	    <opt>--iterate</opt>: Iterate GMM to convergence.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <lit>--weights=</lit><repl>Wmat</repl>: specify a square matrix of
+	    <opt>--weights=</opt><repl>Wmat</repl>: specify a square matrix of
 	    weights to be used when computing the GMM criterion function. The
 	    dimension of this matrix must equal the number of instruments. The
 	    default is an appropriately sized identity matrix.
@@ -10229,7 +10229,7 @@
       <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression (VAR).
 	The first argument specifies the lag order &mdash; or the maximum
-	lag order in case the <lit>--lagselect</lit> option is given (see
+	lag order in case the <opt>--lagselect</opt> option is given (see
 	below).  The order may be given numerically, or as the name of a
 	pre-existing scalar variable. Then follows the setup for the first
 	equation.  Don't include lags among the elements of
@@ -10237,9 +10237,9 @@
 	The semi-colon separates the stochastic variables, for which
 	<repl>order</repl> lags will be included, from any exogenous
 	variables in <repl>xlist</repl>.  Note that a constant is
-	included automatically unless you give the <lit>--nc</lit> flag, a
-	trend can be added with the <lit>--trend</lit> flag, and seasonal
-	dummy variables may be added using the <lit>--seasonals</lit>
+	included automatically unless you give the <opt>--nc</opt> flag, a
+	trend can be added with the <opt>--trend</opt> flag, and seasonal
+	dummy variables may be added using the <opt>--seasonals</opt>
 	flag.
       </para>
 
@@ -10248,7 +10248,7 @@
 	Output for each equation includes <math>F</math>-tests for zero
 	restrictions on all lags of each of the variables, an
 	<math>F</math>-test for the significance of the maximum lag, and,
-	if the <lit>--impulse-responses</lit> flag is given, forecast variance
+	if the <opt>--impulse-responses</opt> flag is given, forecast variance
 	decompositions and impulse responses.
       </para>
 
@@ -10263,7 +10263,7 @@
       </para>
 
       <para context="cli">
-	If the <lit>--lagselect</lit> option is given, the first parameter to
+	If the <opt>--lagselect</opt> option is given, the first parameter to
 	the <lit>var</lit> command is taken as the maximum lag order.  Output
 	consists of a table showing the values of the Akaike (AIC), Schwartz
 	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
@@ -10336,7 +10336,7 @@
 	available.  <cmd>list</cmd> and <cmd>ls</cmd> are synonyms.
       </para>
       <para>
-	If the <lit>--scalars</lit> opton is given, prints a 
+	If the <opt>--scalars</opt> opton is given, prints a 
 	listing of any currently defined scalar variables and
 	their values.
       </para>
@@ -10516,7 +10516,7 @@
       </para>
 
       <para context="cli">
-	The <lit>--seasonals</lit> option, which may be combined with any of the
+	The <opt>--seasonals</opt> option, which may be combined with any of the
 	other options, specifies the inclusion of a set of centered seasonal
 	dummy variables.  This option is available only for quarterly or monthly
 	data.
@@ -10771,16 +10771,16 @@
 	in <repl>xlist</repl> (by column).  Variables in these lists can
 	be referenced by name or by number.  Note that all the variables
 	must have been marked as discrete.  Alternatively, if the 
-	<lit>--matrix</lit> option is given, treat the named matrix as
+	<opt>--matrix</opt> option is given, treat the named matrix as
 	a precomputed set of frequencies and display this as a 
 	cross-tabulation.
       </para>
       <para>
 	By default the cell entries are given as frequency counts. The
-	<lit>--row</lit> and <lit>--column</lit> options (which are
+	<opt>--row</opt> and <opt>--column</opt> options (which are
 	mutually exclusive), replace the counts with the percentages for
 	each row or column, respectively.  By default, cells with a zero
-	count are left blank; the <lit>--zeros</lit> option, which has the
+	count are left blank; the <opt>--zeros</opt> option, which has the
 	effect of showing zero counts explicitly, may be useful for
 	importing the table into another program, such as a spreadsheet.
       </para>

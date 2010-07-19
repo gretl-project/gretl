@@ -390,6 +390,12 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
+<xsl:template match="opt">
+  <xsl:text>&lt;@opt="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
+</xsl:template>
+
 <xsl:template match="program">
   <xsl:apply-templates/>
 </xsl:template>
@@ -419,13 +425,25 @@
 </xsl:template>
 
 <xsl:template match="book">
-  <xsl:text>&lt;@itl="</xsl:text>
+  <xsl:if test="$hlp='gui'">
+    <xsl:text>&lt;@itl="</xsl:text>
+  </xsl:if>
   <xsl:apply-templates/>
-  <xsl:text>"&gt;</xsl:text>
+  <xsl:if test="$hlp='gui'">
+    <xsl:text>"&gt;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="cite">
+  <xsl:if test="$hlp='cli'">
+    <xsl:text>&lt;@bib="</xsl:text>
+  </xsl:if>  
   <xsl:apply-templates/>
+  <xsl:if test="$hlp='cli'">
+    <xsl:text>;</xsl:text>
+    <xsl:value-of select="@key"/>
+    <xsl:text>"&gt;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="quote">

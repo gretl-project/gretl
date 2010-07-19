@@ -55,17 +55,21 @@ EQNXSL = $(CMDSDIR)/equations.xsl
 HLPSTAMP = $(SHAREDIR)/hlp.stamp
 FIGSTAMP = $(SHAREDIR)/fig.stamp
 GENSTAMP = $(SHAREDIR)/gen.stamp
+HELPREFS = $(SHAREDIR)/gretlhelp.refs
 OUTPUT_DIR = $(SHAREDIR)
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
-progs: xsltrans skeleton reflow validate topiclist tables matfuncs
+progs: xsltrans skeleton reflow bbl2txt validate topiclist tables matfuncs
 
 xsltrans: xsltrans.c 
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
 
 reflow: reflow.c
-	$(CC) $(CFLAGS) -o $@ $^ 
+	$(CC) $(CFLAGS) -o $@ $< 
+
+bbl2txt: bbl2txt.c
+	$(CC) $(CFLAGS) -o $@ $< 
 
 skeleton: skeleton.o
 	$(LIBTOOL) --mode=link $(CC) $(OMP_OPT) -o $@ $^ $(GRETLLIB)
@@ -154,6 +158,12 @@ $(GENSTAMP): xsltrans reflow $(FNCSRC) $(FNCDTD) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --funcs --pango $(CMDSDIR)/genr_funcs_pt.xml && \
 	./reflow --markup < tmp.txt > $(SHAREDIR)/genrgui.hlp.pt
 	touch $@
+
+$(HELPREFS): bbl2txt $(HLPSTAMP) $(GENSTAMP) ../tex/gretl-ref.bbl
+	./bbl2txt ../tex/gretl-ref.bbl > $@
+
+../tex/gretl-ref.bbl:
+	make -C ../tex gretl-ref.pdf
 
 .PHONY: test
 
@@ -272,7 +282,7 @@ topiclist_pt: topiclist $(CMDSDIR)/gretl_commands_pt.xml
 test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 	xmllint --valid --noout $< && ./xsltrans --all skeleton.xml $(CMDSDIR)
 
-help-all: $(HLPSTAMP) $(GENSTAMP)
+help-all: $(HLPSTAMP) $(GENSTAMP) $(HELPREFS)
 
 # Validate the commands "master" XML files against libgretl
 check: validate 
@@ -284,6 +294,6 @@ docclean:
 	 rm -f *.txt
 
 clean: docclean
-	rm -f xsltrans skeleton reflow validate tables topiclist *.o
+	rm -f $(progs) *.o
 	rm -f textables cmdtex* functex* topiclist_*
 	rm -rf .libs

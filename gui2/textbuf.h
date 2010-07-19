@@ -33,7 +33,7 @@ gint get_char_width (GtkWidget *widget);
 
 GtkTextBuffer *gretl_text_buf_new (void);
 
-void add_user_function_help_buffer (windata_t *hwin, char *buf);
+void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf);
 
 gchar *textview_get_text (GtkWidget *view);
 

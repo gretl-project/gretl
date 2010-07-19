@@ -30,7 +30,8 @@ AUTO_HELPFILES = \
 	genrcli.hlp.it \
 	genrgui.hlp.it \
         genrcli.hlp.pt \
-	genrgui.hlp.pt
+	genrgui.hlp.pt \
+	gretlhelp.refs
 
 ifeq ($(build_docs),yes)
   query_make_help = help

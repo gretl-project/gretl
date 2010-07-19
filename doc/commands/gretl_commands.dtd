@@ -95,7 +95,7 @@
 <!ELEMENT para (#PCDATA | repl | program | math | equation |
                 lit | emphasis | book | quote | filename | by |
                 func | guideref | cmdref| fncref | tabref | 
-                sub | sup | flag | footnote | refnote | 
+                sub | sup | flag | footnote | refnote | opt |
                 cmd | cite | seelist)*>
 <!ATTLIST para
    context (cli | gui | tex | notex | all) "all"
@@ -192,6 +192,7 @@
 <!ELEMENT repl     (#PCDATA)>
 <!ELEMENT program  (#PCDATA)>
 <!ELEMENT lit      (#PCDATA)>
+<!ELEMENT opt      (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
 <!ELEMENT quote    (#PCDATA | lit | math)*>

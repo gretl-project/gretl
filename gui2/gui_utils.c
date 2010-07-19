@@ -1935,6 +1935,32 @@ windata_t *view_help_file (const char *filename, int role)
     return vwin;
 }
 
+windata_t *view_formatted_text_buffer (const gchar *title, const char *buf, 
+				       int width, int height)
+{
+    windata_t *vwin;
+
+    vwin = gretl_viewer_new_with_parent(NULL, PRINT, title,
+					NULL, 0);
+    if (vwin == NULL) return NULL;
+
+    vwin->vbox = gtk_vbox_new(FALSE, 1);
+    gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
+    gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
+    gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
+
+    create_text(vwin, width, height, 0, FALSE);
+    text_table_setup(vwin->vbox, vwin->text);
+    gretl_viewer_set_formatted_buffer(vwin, buf);
+
+    gtk_widget_show(vwin->vbox);
+    gtk_widget_show(vwin->main);
+
+    gtk_widget_grab_focus(vwin->text); 
+
+    return vwin;
+}
+
 void view_window_set_editable (windata_t *vwin)
 {
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->text), TRUE);

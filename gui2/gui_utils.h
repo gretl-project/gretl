@@ -89,6 +89,9 @@ windata_t *view_buffer_with_parent (windata_t *parent, PRN *prn,
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role);
 
+windata_t *view_formatted_text_buffer (const gchar *title, const char *buf, 
+				       int width, int height);
+
 gchar *gretl_window_title (const char *s1, const char *s2);
 
 gchar *title_from_filename (const char *fname);

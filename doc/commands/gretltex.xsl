@@ -608,6 +608,12 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template match="opt">
+  <xsl:text>\verb@</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>@</xsl:text>
+</xsl:template>
+
 <xsl:template match="repl">
   <xsl:text>\textsl{</xsl:text>
   <xsl:value-of select="translate(., '_', '-')"/>

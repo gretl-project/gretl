@@ -59,10 +59,14 @@ $(GUIDE): gretl-guide.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
 	bibtex gretl-guide
 	pdflatex $<
+	bibtex gretl-guide
+	pdflatex $<
 	pdflatex $<
 
 $(REF): gretl-ref.tex links cmdtex functex textables topiclist \
 	date.tex $(STYSRC) $(BIBSRC)
+	pdflatex $<
+	bibtex gretl-ref
 	pdflatex $<
 	bibtex gretl-ref
 	pdflatex $<
@@ -72,10 +76,14 @@ $(ALTGUIDE): gretl-guide-a4.tex links textables date.tex $(STYSRC) $(BIBSRC)
 	pdflatex $<
 	bibtex gretl-guide-a4
 	pdflatex $<
+	bibtex gretl-guide-a4
+	pdflatex $<
 	pdflatex $<
 
 $(ALTREF): gretl-ref-a4.tex links cmdtex functex textables topiclist \
 	date.tex $(STYSRC) $(BIBSRC)
+	pdflatex $<
+	bibtex gretl-ref-a4
 	pdflatex $<
 	bibtex gretl-ref-a4
 	pdflatex $<

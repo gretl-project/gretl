@@ -375,6 +375,10 @@
   </xsl:if>  
 </xsl:template>
 
+<xsl:template match="opt">
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="math">
   <xsl:apply-templates/>
 </xsl:template>

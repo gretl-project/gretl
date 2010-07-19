@@ -34,6 +34,7 @@
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
 #define GFR_PAGE    997
+#define BIB_PAGE    996
 
 enum {
     PLAIN_TEXT,
@@ -945,12 +946,22 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 {
     GtkTextTagTable *tab = gtk_text_buffer_get_tag_table(tbuf);
     GtkTextTag *tag;
+    gchar *show = NULL;
     gchar tagname[32];
 
     if (page == GUIDE_PAGE) {
 	strcpy(tagname, "tag:guide");
     } else if (page == SCRIPT_PAGE) {
 	strcpy(tagname, text);
+    } else if (page == BIB_PAGE) {
+	char *p = strrchr(text, ';');
+
+	if (p != NULL) {
+	    strcpy(tagname, p + 1);
+	    show = g_strndup(text, p - text);
+	} else {
+	    strcpy(tagname, text);
+	}
     } else {
 	sprintf(tagname, "tag:p%d", page);
     }
@@ -958,14 +969,12 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     tag = gtk_text_tag_table_lookup(tab, tagname);
 
     if (tag == NULL) {
-	if (page == GUIDE_PAGE) {
+	if (page == GUIDE_PAGE || page == BIB_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", "sans", NULL);
 	} else if (page == SCRIPT_PAGE) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "family", "monospace", NULL);
-	    g_object_set_data_full(G_OBJECT(tag), "fname", g_strdup(text), 
-				   g_free);
 	} else if (indent != NULL) {
 	    tag = gtk_text_buffer_create_tag(tbuf, tagname, "foreground", "blue", 
 					     "left_margin", 30, NULL);
@@ -975,7 +984,12 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
     } 
 
-    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
+    if (show != NULL) {
+	gtk_text_buffer_insert_with_tags(tbuf, iter, show, -1, tag, NULL);
+	g_free(show);
+    } else {
+	gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
+    }
 }
 
 static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter, 
@@ -1015,15 +1029,17 @@ static void insert_xlink (GtkTextBuffer *tbuf, GtkTextIter *iter,
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
 }
 
-static void link_open_script (GtkTextTag *tag)
+static void open_script_link (GtkTextTag *tag)
 {
-    const char *fname = g_object_get_data(G_OBJECT(tag), "fname");
     const char *gretldir = gretl_home();
+    gchar *fname = NULL;
     char fullname[MAXLEN];
     FILE *fp;
 
+    g_object_get(G_OBJECT(tag), "name", &fname, NULL);
     sprintf(fullname, "%sscripts%cmisc%c%s", gretldir, 
 	    SLASH, SLASH, fname);
+    g_free(fname);
 
     fp = gretl_fopen(fullname, "r");
     if (fp != NULL) {
@@ -1034,6 +1050,40 @@ static void link_open_script (GtkTextTag *tag)
     }
 
     view_file(fullname, 0, 0, 78, 370, VIEW_SCRIPT);
+}
+
+static void open_bibitem_link (GtkTextTag *tag)
+{
+    const char *gretldir = gretl_home();
+    gchar *key = NULL;
+    char fullname[MAXLEN];
+    FILE *fp;
+
+    g_object_get(G_OBJECT(tag), "name", &key, NULL);
+    sprintf(fullname, "%sgretlhelp.refs", gretldir);
+    fp = gretl_fopen(fullname, "r");
+
+    if (fp != NULL) {
+	char *buf, line[4096];
+	int n = strlen(key);
+
+	while (fgets(line, sizeof line, fp)) {
+	    if (!strncmp(line, "<@key=\"", 7)) {
+		if (!strncmp(line + 7, key, n)) {
+		    buf = strchr(line + 7, '>');
+		    if (buf != NULL) {
+			view_formatted_text_buffer(_("gretl: reference"), 
+						   buf + 1, 64, 100);
+		    }
+		    break;
+		}
+	    }
+	}
+
+	fclose(fp);
+    }    
+
+    g_free(key);
 }
 
 static int object_get_int (gpointer p, const char *key)
@@ -1057,7 +1107,9 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	    if (page == GUIDE_PAGE) {
 		display_pdf_help(NULL);
 	    } else if (page == SCRIPT_PAGE) {
-		link_open_script(tag);
+		open_script_link(tag);
+	    } else if (page == BIB_PAGE) {
+		open_bibitem_link(tag);
 	    } else {
 		int role = object_get_int(tview, "role");
 
@@ -2447,6 +2499,7 @@ enum {
     INSERT_FIG,
     INSERT_REPL,
     INSERT_LIT,
+    INSERT_OPT,
     INSERT_ITAL,
     INSERT_SUP,
     INSERT_SUB,
@@ -2454,6 +2507,7 @@ enum {
     INSERT_PDFLINK,
     INSERT_INPLINK,
     INSERT_GFRLINK,
+    INSERT_BIBLINK,
     INSERT_BOLD
 };
 
@@ -2488,6 +2542,9 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	break;
     case INSERT_LIT:
 	ftag = "literal";
+	break;
+    case INSERT_OPT:
+	ftag = "literal"; /* FIXME? */
 	break;
     case INSERT_SUP:
 	ftag = "superscript";
@@ -2525,6 +2582,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_REPL;
     } else if (!strncmp(p, "lit", 3)) {
 	ins = INSERT_LIT;
+    } else if (!strncmp(p, "opt", 3)) {
+	ins = INSERT_OPT;
     } else if (!strncmp(p, "sup", 3)) {
 	ins = INSERT_SUP;
     } else if (!strncmp(p, "sub", 3)) {
@@ -2535,6 +2594,8 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_INPLINK;
     } else if (!strncmp(p, "gfr", 3)) {
 	ins = INSERT_GFRLINK;
+    } else if (!strncmp(p, "bib", 3)) {
+	ins = INSERT_BIBLINK;
     } else if (!strncmp(p, "hd1", 3)) {
 	ins = INSERT_BOLD;
     }
@@ -2617,6 +2678,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
 	    } else if (ins == INSERT_INPLINK) {
 		insert_link(tbuf, iter, targ, SCRIPT_PAGE, indent);
+	    } else if (ins == INSERT_BIBLINK) {
+		insert_link(tbuf, iter, targ, BIB_PAGE, indent);
 	    } else if (ins == INSERT_GFRLINK) {
 		insert_xlink(tbuf, iter, targ, GFR_PAGE, indent);
 	    } else if (ins == INSERT_FIG) {
@@ -2754,7 +2817,7 @@ int set_help_topic_buffer (windata_t *hwin, int pos, int en)
     return 1;
 }
 
-void add_user_function_help_buffer (windata_t *hwin, char *buf)
+void gretl_viewer_set_formatted_buffer (windata_t *vwin, const char *buf)
 {
     GtkTextBuffer *textb;
     GtkTextIter iter;
@@ -2763,8 +2826,8 @@ void add_user_function_help_buffer (windata_t *hwin, char *buf)
     gtk_text_buffer_get_iter_at_offset(textb, &iter, 0);
     insert_text_with_markup(textb, &iter, buf, FUNCS_HELP);
 
-    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->text), textb);
-    cursor_to_top(hwin);
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(vwin->text), textb);
+    cursor_to_top(vwin);
 }
 
 static int get_screen_height (void)
