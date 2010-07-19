@@ -1072,8 +1072,7 @@ static void open_bibitem_link (GtkTextTag *tag)
 		if (!strncmp(line + 7, key, n)) {
 		    buf = strchr(line + 7, '>');
 		    if (buf != NULL) {
-			view_formatted_text_buffer(_("gretl: reference"), 
-						   buf + 1, 64, 100);
+			view_formatted_text_buffer(NULL, buf + 1, 64, 100);
 		    }
 		    break;
 		}

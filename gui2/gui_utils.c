@@ -1935,9 +1935,49 @@ windata_t *view_help_file (const char *filename, int role)
     return vwin;
 }
 
+static GtkWidget *small_close_button (GtkWidget *targ)
+{
+    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_CLOSE, 
+					      GTK_ICON_SIZE_MENU);
+    GtkWidget *button = gtk_button_new();
+
+    gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
+    gtk_container_add(GTK_CONTAINER(button), img);
+    g_signal_connect_swapped(button, "clicked",
+			     G_CALLBACK(gtk_widget_destroy),
+			     targ);
+    gtk_widget_show_all(button);
+
+    return button;
+}
+
+static void add_text_closer (windata_t *vwin)
+{
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter, iend;
+    GtkTextTag *tag;
+    GtkTextChildAnchor *anchor;
+    GtkWidget *button;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+    gtk_text_buffer_get_start_iter(tbuf, &iter);
+    tag = gtk_text_buffer_create_tag(tbuf, NULL, "justification",
+				     GTK_JUSTIFY_RIGHT, NULL);
+    anchor = gtk_text_buffer_create_child_anchor(tbuf, &iter);
+    button = small_close_button(vwin->main);
+    gtk_text_view_add_child_at_anchor(GTK_TEXT_VIEW(vwin->text),
+				      button, anchor);
+    gtk_text_buffer_get_iter_at_child_anchor(tbuf, &iend, anchor);
+    gtk_text_iter_forward_char(&iend);
+    gtk_text_buffer_insert(tbuf, &iend, "\n", -1);
+    gtk_text_buffer_get_start_iter(tbuf, &iter);
+    gtk_text_buffer_apply_tag(tbuf, tag, &iter, &iend);
+}
+
 windata_t *view_formatted_text_buffer (const gchar *title, const char *buf, 
 				       int width, int height)
 {
+    int minimal = (title == NULL);
     windata_t *vwin;
 
     vwin = gretl_viewer_new_with_parent(NULL, PRINT, title,
@@ -1950,8 +1990,20 @@ windata_t *view_formatted_text_buffer (const gchar *title, const char *buf,
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
 
     create_text(vwin, width, height, 0, FALSE);
-    text_table_setup(vwin->vbox, vwin->text);
+
+    if (minimal) {
+	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
+	gtk_widget_show(vwin->text);
+	gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);
+    } else {
+	text_table_setup(vwin->vbox, vwin->text);
+    }
+
     gretl_viewer_set_formatted_buffer(vwin, buf);
+
+    if (minimal) {
+	add_text_closer(vwin);
+    }
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->main);
