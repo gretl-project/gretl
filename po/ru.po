@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-07-03 12:05-0400\n"
-"PO-Revision-Date: 2010-06-23 23:59+0300\n"
+"PO-Revision-Date: 2010-07-20 16:59-0400\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
-"X-Generator: Lokalize 1.1\n"
+"X-Generator: Lokalize 1.0\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
@@ -30,8 +30,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
-"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:269
 msgid "lagged differences"
@@ -1589,9 +1589,8 @@ msgstr ""
 "\n"
 
 #: lib/src/describe.c:3836 lib/src/describe.c:3860
-#, fuzzy
 msgid "fractional integration"
-msgstr "GPH тест на частичное интегрирование"
+msgstr "частичное интегрирование"
 
 #: lib/src/describe.c:3841
 msgid "Local Whittle Estimator"
@@ -1602,9 +1601,8 @@ msgid "Estimated degree of integration"
 msgstr "Оцененная степень интегрирования"
 
 #: lib/src/describe.c:3867
-#, fuzzy
 msgid "GPH test"
-msgstr "J тест"
+msgstr "GPH-тест"
 
 #: lib/src/describe.c:4133 lib/src/printout.c:1051 lib/src/printout.c:1052
 msgid "NA"
@@ -6370,19 +6368,16 @@ msgid "Equation system"
 msgstr "Система уравнений"
 
 #: lib/src/system.c:230
-#, fuzzy
 msgid "Endogenous variables:"
-msgstr "Эндогенные переменные"
+msgstr "Эндогенные переменные:"
 
 #: lib/src/system.c:240
-#, fuzzy
 msgid "Predetermined variables:"
-msgstr "переменная для квадратичного временного тренда"
+msgstr ""
 
 #: lib/src/system.c:249
-#, fuzzy
 msgid "Exogenous variables:"
-msgstr "Экзогенные переменные"
+msgstr "Экзогенные переменные:"
 
 #: lib/src/system.c:800
 msgid "F test for the specified restrictions"
@@ -8687,14 +8682,12 @@ msgid "gretl: periodogram"
 msgstr "gretl: периодограмма"
 
 #: gui2/dialogs.c:3835
-#, fuzzy
 msgid "Sample periodogram"
-msgstr "_Выборочная периодограмма"
+msgstr "Выборочная периодограмма"
 
 #: gui2/dialogs.c:3841
-#, fuzzy
 msgid "Bartlett window, bandwidth:"
-msgstr "окно Бартлета, ширина %d"
+msgstr "Окно Бартлета, ширина:"
 
 #: gui2/dialogs.c:4014
 msgid "Number of bins:"
@@ -10333,14 +10326,12 @@ msgid "_Correlogram"
 msgstr "_Коррелограмма"
 
 #: gui2/gretl.c:1541
-#, fuzzy
 msgid "_Periodogram"
-msgstr "_Выборочная периодограмма"
+msgstr "_Периодограмма"
 
 #: gui2/gretl.c:1542
-#, fuzzy
 msgid "_Fractional integration"
-msgstr "Тест на частичное интегрирование не пройден"
+msgstr "_Частичное интегрирование"
 
 #: gui2/gretl.c:1543
 msgid "_Augmented Dickey-Fuller test"
@@ -11251,9 +11242,8 @@ msgid "Residual _correlogram"
 msgstr "_Коррелограмма остатков"
 
 #: gui2/gui_utils.c:2475
-#, fuzzy
 msgid "Residual _periodogram"
-msgstr "Периодограмма остатков"
+msgstr "Периодограмма _остатков"
 
 #: gui2/gui_utils.c:2484
 msgid "Residual _Q-Q plot"
@@ -12002,9 +11992,8 @@ msgid "Maximum lag:"
 msgstr "Максимальный лаг:"
 
 #: gui2/library.c:4752
-#, fuzzy
 msgid "gretl: fractional integration"
-msgstr "GPH тест на частичное интегрирование"
+msgstr "gretl: частичное интегрирование"
 
 #: gui2/library.c:4829 gui2/toolbar.c:463
 msgid "gretl: coefficient confidence intervals"
@@ -12354,9 +12343,8 @@ msgid "Boxplot"
 msgstr "Коробчатая диаграмма"
 
 #: gui2/menustate.c:338 gui2/menustate.c:421
-#, fuzzy
 msgid "Periodogram"
-msgstr "Программы"
+msgstr "Периодограмма"
 
 #: gui2/menustate.c:340
 msgid "ARIMA model"
@@ -14573,9 +14561,8 @@ msgstr ""
 "Задайте новое имя для данной переменной и повторите попытку"
 
 #: plugin/import_common.c:36 plugin/ods_import.c:1217
-#, fuzzy
 msgid "No numeric data were found"
-msgstr "Наблюдения не были найдены"
+msgstr ""
 
 #: plugin/import_common.c:269 plugin/import_common.c:274
 #, c-format
