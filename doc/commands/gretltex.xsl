@@ -548,7 +548,7 @@
   <xsl:text>}}</xsl:text> 
 </xsl:template>
 
-<xsl:template match="code">
+<xsl:template match="code|mono">
   <xsl:if test="not(@context = 'notex')">
     <xsl:text>&#10;\begin{code}</xsl:text>  
     <xsl:apply-templates/>

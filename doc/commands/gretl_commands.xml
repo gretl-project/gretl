@@ -940,15 +940,56 @@
 	is by conditional ML.
       </para>
 
-      <para>
+      <para context="tex">
+	The AR and MA roots shown in connection with ARMA estimation
+	are based on the following representation of an ARMA($p,q$)
+	process:
+	\[
+	(1-\phi_1 L - \phi_2 L^2 - \cdots - \phi_p L^p)Y =
+          c + (1 + \theta_1 L + \theta_2 L^2 + \cdots +
+         \theta_q L^q)\varepsilon_t
+        \]
+        The AR roots are therefore the solutions to
+        \[
+         1 - \phi_1 z - \phi_2 z^2 - \cdots - \phi_p L^p = 0
+        \]
+        and stability requires that these roots lie outside the
+	unit circle.
+      </para>
+
+      <para context="tex">
+	The <quote>frequency</quote> figure printed in connection with
+	the AR and MA roots is the $\lambda$ value that solves 
+	$z=re^{i2\pi\lambda}$, where $z$ is the root in question
+	and $r$ is its modulus.
+      </para>
+
+      <para context="notex">
+	The AR and MA roots shown in connection with ARMA estimation
+	are based on the following representation of an ARMA(p, q)
+	process:
+      </para>
+      <mono context="notex">
+	(1 - a_1*L - a_2*L^2 - ... - a_p*L^p)Y =
+          c + (1 + b_1*L + b_2*L^2 + ... + b_q*L^q) e_t
+      </mono>
+      <para context="notex">
+        The AR roots are therefore the solutions to
+      </para>
+      <mono context="notex">
+         1 - a_1*z - a_2*z^2 - ... - a_p*L^p = 0
+      </mono>
+      <para context="notex">
+        and stability requires that these roots lie outside the
+	unit circle.
+      </para>
+
+      <para context="notex">
 	The <quote>frequency</quote> figure
 	printed in connection with AR and MA roots is the &lgr; value
-	that solves
-	  <equation status="display" 
-	  tex="\[z=re^{i2\pi\lambda}\]"
-	  ascii="z = r * exp(i*2*pi*lambda)"
-	  graphic="lambda"/> where <math>z</math> is the root in
-	question and <math>r</math> is its modulus.
+	that solves <math>z</math> = <math>r</math> * exp(i*2*&pi;*&lgr;)
+	where <math>z</math> is the root in question and <math>r</math> 
+	is its modulus.
       </para>
 
     </description>
@@ -1494,15 +1535,15 @@
 	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
 	number of cointegrating relations.
       </para>
-      <code context="notex">
-                 Rank     Trace test         Lmax test
-                          H0     H1          H0     H1
-                 ---------------------------------------
-                  0      c = 0  c = 3       c = 0  c = 1
-                  1      c = 1  c = 3       c = 1  c = 2
-                  2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------
-      </code>
+      <mono context="notex">
+         Rank     Trace test         Lmax test
+                  H0     H1          H0     H1
+         ---------------------------------------
+          0      c = 0  c = 3       c = 0  c = 1
+          1      c = 1  c = 3       c = 1  c = 2
+          2      c = 2  c = 3       c = 2  c = 3
+         ---------------------------------------
+      </mono>
       <para context="tex">
 	The following table is offered as a guide to the
 	interpretation of the results shown for the test, for the
@@ -2233,10 +2274,10 @@
 	prefix <lit>d_</lit>.  Thus <cmd>diff x y</cmd> creates the
 	new variables
       </para>
-      <code>
+      <mono>
 	d_x = x(t) - x(t-1)
 	d_y = y(t) - y(t-1)
-      </code>
+      </mono>
     </description>
 
     <gui-access>
@@ -4779,13 +4820,13 @@
       </para>
 
       <para context="cli">
-	Computes the KPSS test <cite key="KPSS92" p="true">(Kwiatkowski,
-	Phillips, Schmidt and Shin, Journal of Econometrics, 1992)</cite>
-	for stationarity, for each of the specified variables (or their
-	first difference, if the <opt>--difference</opt> option is
-	selected). The null hypothesis is that the variable in question is
-	stationary, either around a level or, if the <opt>--trend</opt>
-	option is given, around a deterministic linear trend.
+	Computes the KPSS test <cite key="KPSS92" p="true">(Kwiatkowski
+	et al, Journal of Econometrics, 1992)</cite> for stationarity,
+	for each of the specified variables (or their first difference,
+	if the <opt>--difference</opt> option is selected). The null
+	hypothesis is that the variable in question is stationary,
+	either around a level or, if the <opt>--trend</opt> option is
+	given, around a deterministic linear trend.
       </para>
 
       <para context="gui">
@@ -4917,12 +4958,12 @@
 	periodicity of the data. For example, if the periodicity is 4 (quarterly),
 	the command <cmd>lags x</cmd> creates
       </para>
-      <code>
+      <mono>
 	x_1 = x(t-1)
 	x_2 = x(t-2)
 	x_3 = x(t-3)
 	x_4 = x(t-4)
-      </code>
+      </mono>
       <para>
 	The number of lags created can be controlled by the optional
 	first parameter.
@@ -4990,10 +5031,10 @@
 	new series with the prefix <lit>ld_</lit>.  Thus <cmd>ldiff
 	  x y</cmd> creates the new variables
       </para>
-      <code>
+      <mono>
 	ld_x = log(x) - log(x(-1))
 	ld_y = log(y) - log(y(-1))
-      </code>
+      </mono>
     </description>
 
     <gui-access>
@@ -5037,11 +5078,11 @@
 	  <equation status="inline" 
 	  tex="$\sqrt{h/(1 - h)}$"
 	  ascii="sqrt[h/(1 - h)]"
-	  graphic="dffit"/>. For a discussion of studentized residuals
-	and DFFITS see chapter 12 of Maddala's <book>Introduction to
-	  Econometrics</book> <cite key="maddala92" p="true"></cite>; 
-        also <cite key="belsley-etal80">Belsley, Kuh and
-	Welsch (1980)</cite>.
+	  graphic="dffit"/>. 
+	  For discussions of studentized residuals and DFFITS see chapter 
+	  12 of <cite key="maddala92">Maddala's Introduction to
+	  Econometrics</cite> or <cite key="belsley-etal80">Belsley, 
+	  Kuh and Welsch (1980)</cite>.
       </para>
       <para>
 	Briefly, a <quote>predicted residual</quote> is the difference

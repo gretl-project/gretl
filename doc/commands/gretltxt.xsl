@@ -462,7 +462,7 @@
  </xsl:if>
 </xsl:template>
 
-<xsl:template match="code">
+<xsl:template match="code|mono">
   <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
     <xsl:call-template name="dnl"/>
     <xsl:apply-templates/>

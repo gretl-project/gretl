@@ -11,6 +11,7 @@
 <!ENTITY mu     "&#0956;">
 <!ENTITY sigma  "&#0963;">
 <!ENTITY tau    "&#0964;">
+<!ENTITY pi     "&#0960;">
 <!ENTITY rgr    "&#0961;">
 <!ENTITY hellip "&#8230;">
 <!ENTITY mdash  "&#8212;">
@@ -52,7 +53,7 @@
 <!ELEMENT examples     (example*, demos?)>
 <!ELEMENT demos        (demo)+>
 <!ELEMENT altforms     (altform)+>
-<!ELEMENT description  (para | code | pre | ilist | nlist | table | subhead)*>
+<!ELEMENT description  (para | code | mono | pre | ilist | nlist | table | subhead)*>
 <!ELEMENT gui-access   (menu-path*, other-access?)>
 
 <!ELEMENT argpunct (#PCDATA)>
@@ -122,6 +123,11 @@
    context (cli | gui | tex | notex | all) "all"
 >
 
+<!ELEMENT mono (#PCDATA)>
+<!ATTLIST mono
+   context (cli | gui | tex | notex | all) "all"
+>
+
 <!ELEMENT ilist (li)+>
 <!ATTLIST ilist 
    context (cli | gui | both) "both"
@@ -132,7 +138,7 @@
    context (cli | gui | both) "both"
 >
 
-<!ELEMENT li (para | code | table)*>
+<!ELEMENT li (para | code | mono | table)*>
 <!ATTLIST li
    label CDATA #IMPLIED
 >

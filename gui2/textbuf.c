@@ -747,6 +747,10 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("mono");
+    g_object_set(tag, "family", "monospace", NULL);
+    gtk_text_tag_table_add(table, tag);    
+
     return table;
 }
 
@@ -2654,16 +2658,20 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 {
     static char targ[128];
     const char *indent = NULL;
-    const char *code = NULL;
     const char *p;
+    int code = 0;
+    int mono = 0;
     int itarg, ins;
 
     while ((p = strstr(s, "<"))) {
 	int skip = 0;
 
-	if (code != NULL) {
+	if (code) {
 	    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, p - s,
 						     "code", indent, NULL);
+	} else if (mono) {
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, p - s,
+						     "mono", indent, NULL);
 	} else {
 	    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, p - s,
 						     "text", indent, NULL);
@@ -2709,10 +2717,16 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    indent = NULL;
 	    skip = 8 + (*(p+8) == '\n');
 	} else if (!strncmp(p, "code", 4)) {
-	    code = "code";
+	    code = 1;
 	    skip = get_code_skip(p + 5);
 	} else if (!strncmp(p, "/code", 5)) {
-	    code = NULL;
+	    code = 0;
+	    skip = 6 + (*(p+6) == '\n');
+	} else if (!strncmp(p, "mono", 4)) {
+	    mono = 1;
+	    skip = get_code_skip(p + 5);
+	} else if (!strncmp(p, "/mono", 5)) {
+	    mono = 0;
 	    skip = 6 + (*(p+6) == '\n');
 	} else {
 	    /* literal "<" */
@@ -2722,9 +2736,12 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	s = p + skip;
     }
 
-    if (code != NULL) {
+    if (code) {
 	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
 						 "code", indent, NULL);
+    } else if (mono) {
+	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
+						 "mono", indent, NULL);
     } else {
 	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
 						 "text", indent, NULL);

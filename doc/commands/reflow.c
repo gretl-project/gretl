@@ -24,7 +24,8 @@ enum {
     NLISTPAR,
     TABLE,
     CODE,
-    PRE
+    PRE,
+    MONO
 } para_types;
 
 struct table_row {
@@ -454,7 +455,7 @@ static int process_table (char *buf, int inlist)
     return 0;
 }
 
-static void format_code_buf (char *buf)
+static void format_code_buf (char *buf, int ptype)
 {
     int i, n = strlen(buf);
 
@@ -466,9 +467,19 @@ static void format_code_buf (char *buf)
 	}
     }
 
-    fputs("<code>", stdout);
+    if (ptype == CODE) {
+	fputs("<code>", stdout);
+    } else {
+	fputs("<mono>", stdout);
+    }
+
     puts(buf);
-    fputs("</code>\n\n", stdout);
+
+    if (ptype == CODE) {
+	fputs("</code>\n\n", stdout);
+    } else {
+	fputs("</mono>\n\n", stdout);
+    }
 }
 
 /* remove special marker put into the text by xsl to identify
@@ -510,7 +521,8 @@ int process_para (char *s, char *inbuf, int ptype, int markup)
 	"[NLISTPAR]", 
 	"[TABLE]",
 	"[CODE]",
-	"[PRE]"
+	"[PRE]",
+	"[MONO]"
     };
     const char *stops[] = { 
 	"[/PARA]", 
@@ -518,7 +530,8 @@ int process_para (char *s, char *inbuf, int ptype, int markup)
 	"[/NLISTPAR]",
 	"[/TABLE]",
 	"[/CODE]",
-	"[/PRE]"
+	"[/PRE]",
+	"[/MONO]"
     };
     char *p, *buf;
     int done = 0;
@@ -552,9 +565,9 @@ int process_para (char *s, char *inbuf, int ptype, int markup)
 
     if (ptype == TABLE) {
 	process_table(buf, ptype);
-    } else if (ptype == CODE) {
+    } else if (ptype == CODE || ptype == MONO) {
 	if (markup) {
-	    format_code_buf(buf);
+	    format_code_buf(buf, ptype);
 	} else {
 	    puts(buf);
 	}
@@ -604,6 +617,9 @@ int main (int argc, char **argv)
 	    blank++;
 	} else if (strstr(line, "[PRE]")) {
 	    process_para(line, buf, PRE, markup);
+	    blank++;
+	} else if (strstr(line, "[MONO]")) {
+	    process_para(line, buf, MONO, markup);
 	    blank++;
 	} else {
 	    if (blank_string(line)) {

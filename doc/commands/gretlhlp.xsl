@@ -521,6 +521,14 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="mono">
+  <xsl:if test="not(@context) or @context=$hlp or @context='notex'">
+    <xsl:text>[MONO]</xsl:text>
+    <xsl:apply-templates/>
+    <xsl:text>[/MONO]&#xa;</xsl:text>
+  </xsl:if>
+</xsl:template>
+
 <xsl:template match="pre">
   <xsl:apply-templates/>
 </xsl:template>
