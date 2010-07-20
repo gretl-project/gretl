@@ -2006,9 +2006,11 @@ windata_t *view_formatted_text_buffer (const gchar *title, const char *buf,
     }
 
     gtk_widget_show(vwin->vbox);
-    gtk_widget_show(vwin->main);
 
-    gtk_widget_grab_focus(vwin->text); 
+    if (!minimal) {
+	gtk_widget_show(vwin->main);
+	gtk_widget_grab_focus(vwin->text);
+    }
 
     return vwin;
 }

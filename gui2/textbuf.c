@@ -1052,7 +1052,22 @@ static void open_script_link (GtkTextTag *tag)
     view_file(fullname, 0, 0, 78, 370, VIEW_SCRIPT);
 }
 
-static void open_bibitem_link (GtkTextTag *tag)
+static void make_bibitem_window (const char *buf,
+				 GtkWidget *tview)
+{
+    windata_t *vwin;
+    GtkWidget *top;
+
+    vwin = view_formatted_text_buffer(NULL, buf, 64, 100);
+    top = gtk_widget_get_toplevel(tview);
+    gtk_window_set_transient_for(GTK_WINDOW(vwin->main),
+				 GTK_WINDOW(top));
+    gtk_window_set_destroy_with_parent(GTK_WINDOW(vwin->main), 
+				       TRUE);
+    gtk_widget_show(vwin->main);
+}
+
+static void open_bibitem_link (GtkTextTag *tag, GtkWidget *tview)
 {
     const char *gretldir = gretl_home();
     gchar *key = NULL;
@@ -1072,7 +1087,7 @@ static void open_bibitem_link (GtkTextTag *tag)
 		if (!strncmp(line + 7, key, n)) {
 		    buf = strchr(line + 7, '>');
 		    if (buf != NULL) {
-			view_formatted_text_buffer(NULL, buf + 1, 64, 100);
+			make_bibitem_window(buf + 1, tview);
 		    }
 		    break;
 		}
@@ -1108,7 +1123,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	    } else if (page == SCRIPT_PAGE) {
 		open_script_link(tag);
 	    } else if (page == BIB_PAGE) {
-		open_bibitem_link(tag);
+		open_bibitem_link(tag, tview);
 	    } else {
 		int role = object_get_int(tview, "role");
 
