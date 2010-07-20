@@ -4,6 +4,10 @@ Testing for fractional integration is now factored out of
 the "pergm" command and has its own, more functional,
 command, namely "fractint".
 
+The --continue option for arima and certain other commands,
+deprecated as of version 1.9.0, is now removed; use 
+"catch" instead.
+
 2010-06-24 1.9.1
 
 The old genpois function is now removed.

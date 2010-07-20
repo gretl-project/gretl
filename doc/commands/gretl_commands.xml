@@ -794,10 +794,6 @@
 	  <flag>--y-diff-only</flag>
 	  <effect>ARIMAX special, see below</effect>
 	</option>
-	<option>
-	  <flag>--continue</flag>
-	  <effect>continue on numerical errors</effect>
-	</option>
       </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -910,18 +906,6 @@
 	difference both the dependent variable and the regressors, but when
 	this option is specified only the dependent variable is differenced,
 	the regressors remaining in level form.
-      </para>
-
-      <para context="cli">
-	In general if a gretl command fails to complete successfully,
-	execution of a script is halted.  However, if the
-	<opt>--continue</opt> option is given for this command, execution
-	continues provided that that error is <quote>numerical</quote> (&eg;
-	failure to converge, to the specified tolerance).  In this case the
-	internal variable <lit>$error</lit> is set to a non-zero value;
-	accessing this variable causes it to be cleared to zero. See the
-	<cmdref targ="set"/> command for related ways of controlling gretl's
-	behavior.
       </para>
 
       <para>The AIC value given in connection with ARIMA models is

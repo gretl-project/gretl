@@ -4374,12 +4374,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	goto bailout;
     }
 
-    if (can_continue(cmd->ci) && (cmd->opt & OPT_U)) {
-	/* backward compat for old OPT_U mechanism */
-	cmd->flags |= CMD_CATCH;
-	cmd->opt &= ~OPT_U;
-    }
-
     if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
 	cmd->ci = PANEL;
 	cmd->opt |= OPT_P; /* panel pooled OLS flag */
