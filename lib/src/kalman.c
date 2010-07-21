@@ -3314,6 +3314,11 @@ static int kalman_simulate (kalman *K,
 	} else {	    
 	    load_from_row(K->S1, V, K->t, GRETL_MOD_CUMULATE);
 	} 
+
+	if (K->mu != NULL) {
+	    gretl_matrix_add_to(K->S1, K->mu);
+	}
+
 	gretl_matrix_copy_values(K->S0, K->S1);
     }
 
