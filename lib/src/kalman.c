@@ -863,7 +863,7 @@ enum {
    and K->C and form the 'real' Q and R.  But note that in the
    time-step case it may be that only one of Q, R needs to be treated
    in this way (if only one is time-varying, only one will have 
-   been redefined via function call).
+   been redefined via a function call).
 */
 
 static int kalman_update_crossinfo (kalman *K, int mode)
@@ -2514,7 +2514,7 @@ static void transcribe_and_free (double *x, gretl_matrix *m,
 }
 
 /* Called on behalf of the kfilter() function: run a user-defined Kalman
-   filter in forecasting mode. The doc for kfilter says that it return
+   filter in forecasting mode. The doc for kfilter says that it returns
    0 on successful completion or 1 if numerical problems are encountered.
 */
 
