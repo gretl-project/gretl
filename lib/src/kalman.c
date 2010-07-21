@@ -836,6 +836,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->x = x;
     K->Sini = S;
     K->Pini = P;
+    K->mu = m;
 
     /* non-const, but again use external pointer */
     K->E = E;
