@@ -1658,7 +1658,7 @@ static int kalman_arma (double *coeff,
     /* publish ainfo */
     kainfo = ainfo;
 
-    K = kalman_new(S, P, F, A, H, Q, NULL, y, X, E, &err);
+    K = kalman_new(S, P, F, A, H, Q, NULL, y, X, NULL, E, &err);
 
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);

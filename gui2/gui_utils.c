@@ -1935,6 +1935,27 @@ windata_t *view_help_file (const char *filename, int role)
     return vwin;
 }
 
+static gboolean enter_close_button (GtkWidget *button,
+				    GdkEventCrossing *event,
+				    gpointer p)
+{
+    /* remove text cursor: looks broken over a button */
+    gdk_window_set_cursor(gtk_widget_get_window(button), NULL);
+    return FALSE;
+}
+
+static gboolean leave_close_button (GtkWidget *button,
+				    GdkEventCrossing *event,
+				    gpointer p)
+{
+    GdkCursor *cursor = gdk_cursor_new(GDK_XTERM);
+
+    /* replace text cursor */
+    gdk_window_set_cursor(gtk_widget_get_window(button), cursor);
+    gdk_cursor_unref(cursor);
+    return FALSE;
+}
+
 static GtkWidget *small_close_button (GtkWidget *targ)
 {
     GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_CLOSE, 
@@ -1943,6 +1964,13 @@ static GtkWidget *small_close_button (GtkWidget *targ)
 
     gtk_button_set_relief(GTK_BUTTON(button), GTK_RELIEF_NONE);
     gtk_container_add(GTK_CONTAINER(button), img);
+
+    gtk_widget_add_events(button, GDK_ENTER_NOTIFY_MASK |
+			  GDK_LEAVE_NOTIFY_MASK);
+    g_signal_connect(button, "enter-notify-event",
+		     G_CALLBACK(enter_close_button), NULL);
+    g_signal_connect(button, "leave-notify-event",
+		     G_CALLBACK(leave_close_button), NULL);
     g_signal_connect_swapped(button, "clicked",
 			     G_CALLBACK(gtk_widget_destroy),
 			     targ);
@@ -1950,6 +1978,8 @@ static GtkWidget *small_close_button (GtkWidget *targ)
 
     return button;
 }
+
+/* Stick a little "close" button into a GtkTextBuffer */
 
 static void add_text_closer (windata_t *vwin)
 {
@@ -1974,6 +2004,15 @@ static void add_text_closer (windata_t *vwin)
     gtk_text_buffer_apply_tag(tbuf, tag, &iter, &iend);
 }
 
+/* For use when we want to display a piece of formatted text -- such
+   as help for a gretl function package or a help bibliography entry
+   -- in a window of its own, without any menu apparatus on the
+   window. Note that if the @title is NULL we assume that this should
+   be a minimal window with no decorations and a simple "closer"
+   button embedded in the GtkTextView; we use this for bibliographical
+   popups.
+*/
+
 windata_t *view_formatted_text_buffer (const gchar *title, const char *buf, 
 				       int width, int height)
 {
@@ -1992,6 +2031,7 @@ windata_t *view_formatted_text_buffer (const gchar *title, const char *buf,
     create_text(vwin, width, height, 0, FALSE);
 
     if (minimal) {
+	/* no scrolling apparatus */
 	gtk_container_add(GTK_CONTAINER(vwin->vbox), vwin->text);
 	gtk_widget_show(vwin->text);
 	gtk_window_set_decorated(GTK_WINDOW(vwin->main), FALSE);

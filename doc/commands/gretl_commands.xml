@@ -3018,13 +3018,15 @@
 
     <description>
       <para>
-	Tests the specified series for fractional integration (<quote>long
-	memory</quote>). The null hypothesis is that the integration order
-	of the series is zero.  By default the Local Whittle Estimator is
-	used but if the <opt>--gph</opt> option is given the Geweke and
-	Porter-Hudak (GPH) test is performed instead. If the
-	<opt>--all</opt> flag is given then the results of both tests are
-	printed.
+	Tests the specified series for fractional integration
+	(<quote>long memory</quote>). The null hypothesis is that the
+	integration order of the series is zero.  By default the Local
+	Whittle Estimator <cite key="robinson95" p="true">(Robinson,
+	1995)</cite> is used but if the <opt>--gph</opt> option is given
+	the GPH test <cite key="GPH83" p="true">(Geweke and
+	Porter-Hudak, 1983)</cite> is performed instead. If the
+	<opt>--all</opt> flag is given then the results of both tests
+	are printed.
       </para>
       <para>
 	If the optional <repl>order</repl> argument is not given the order

@@ -92,6 +92,7 @@ struct kalman_ {
     const gretl_matrix *x; /* T x k: independent variables matrix */
     const gretl_matrix *Sini; /* r x 1: S_{1|0} */
     const gretl_matrix *Pini; /* r x r: P_{1|0} */
+    const gretl_matrix *mu; /* r x 1: constant term in state transition */
 
     /* optional array of names of input matrices */
     char **mnames;
@@ -173,6 +174,7 @@ enum {
     K_x,
     K_S,
     K_P,
+    K_m,
     K_MMAX /* sentinel */
 };
 
@@ -274,6 +276,7 @@ static kalman *kalman_new_empty (int flags)
 	K->Q = K->R = NULL;
 	K->E = K->V = K->S = K->P = K->K = NULL;
 	K->y = K->x = NULL;
+	K->mu = NULL;
 	K->mnames = NULL;
 	K->matcalls = NULL;
 	K->cross = NULL;
@@ -397,10 +400,10 @@ static int check_matrix_dims (kalman *K, const gretl_matrix *m, int i)
 	c = K->n;
     } else if (i == K_R)  {
 	r = c = K->n;
-    } else if (i == K_S) {
+    } else if (i == K_S || i == K_m) {
 	r = K->r;
 	c = 1;
-    }
+    } 
 
     if (m->rows != r || m->cols != c) {
 	gretl_errmsg_sprintf("kalman: %s is %d x %d, should be %d x %d\n", 
@@ -513,6 +516,11 @@ static int kalman_check_dimensions (kalman *K)
 	    err = E_NONCONF;
 	}
     }
+
+    /* mu should be r x 1, if present */
+    if (!err && K->mu != NULL) {
+	err = check_matrix_dims(K, K->mu, K_m);
+    }    
 
     if (err) {
 	return err;
@@ -777,11 +785,12 @@ static void kalman_set_dimensions (kalman *K, gretlopt opt)
  * @Q: r x r contemporaneous covariance matrix for the errors in the
  * state equation.
  * @R: n x n contemporaneous covariance matrix for the errors in the 
- * observation equation (or %NULL if this is not applicable).
+ * observation equation (or NULL if this is not applicable).
  * @y: T x n matrix of dependent variable(s).
- * @x: T x k matrix of exogenous variable(s).  May be %NULL if there
+ * @x: T x k matrix of exogenous variable(s).  May be NULL if there
  * are no exogenous variables, or if there's only a constant.
- * @E: T x n matrix in which to record forecast errors (or %NULL if
+ * @m: r x 1 vector of constants in the state transition, or NULL.
+ * @E: T x n matrix in which to record forecast errors (or NULL if
  * this is not required).
  * @err: location to receive error code.
  *
@@ -791,7 +800,7 @@ static void kalman_set_dimensions (kalman *K, gretlopt opt)
  * Series Analysis (1994, chapter 13), except that "S" is used in
  * place of Hamilton's \xi for the state vector.
  *
- * Returns: pointer to allocated struct, or %NULL on failure, in
+ * Returns: pointer to allocated struct, or NULL on failure, in
  * which case @err will receive a non-zero code.
  */
 
@@ -799,8 +808,8 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *F, const gretl_matrix *A,
 		    const gretl_matrix *H, const gretl_matrix *Q,
 		    const gretl_matrix *R, const gretl_matrix *y,
-		    const gretl_matrix *x, gretl_matrix *E,
-		    int *err)
+		    const gretl_matrix *x, const gretl_matrix *m,
+		    gretl_matrix *E, int *err)
 {
     kalman *K;
 
@@ -1199,6 +1208,11 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
     /* write F*S into S+ */
     err += multiply_by_F(K, K->S0, K->S1, 0);
 
+    /* add \mu if present */
+    if (K->mu != NULL) {
+	gretl_matrix_add_to(K->S1, K->mu);
+    }
+
     if (missobs) {
 	/* the observable is not in fact observed at t */
 	*llt = 0.0;
@@ -1210,9 +1224,9 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
 
     /* form e = y - A'x - H'S (e is already initialized to y) */
     err += gretl_matrix_subtract_from(K->e, K->Ax);
-    gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
-			      K->S0, GRETL_MOD_NONE,
-			      K->e, GRETL_MOD_DECREMENT);
+    err += gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
+				     K->S0, GRETL_MOD_NONE,
+				     K->e, GRETL_MOD_DECREMENT);
 
     if (!err) {
 	/* contribution to log-likelihood -- see Hamilton
@@ -1450,7 +1464,7 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
- * @prn: printing apparatus (or %NULL).
+ * @prn: printing apparatus (or NULL).
  *
  * Generates a series of one-step ahead forecasts for y, based on
  * information entered initially using kalman_new(), and possibly
@@ -1777,7 +1791,8 @@ struct K_input_mat K_input_mats[] = {
     { K_F, "statemat" },
     { K_Q, "statevar" },
     { K_S, "inistate" },
-    { K_P, "inivar" }
+    { K_P, "inivar" },
+    { K_m, "statemu" }
 };
 
 /* Add storage to record function calls for updating matrices.
@@ -2024,7 +2039,9 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	    K->Sini = m;
 	} else if (i == K_P) {
 	    K->Pini = m;
-	} 
+	} else if (i == K_m) {
+	    K->mu = m;
+	}
 
 	/* record name of matrix */
 	strcpy(K->mnames[i], mname);
@@ -2348,8 +2365,8 @@ static const char *kalman_matrix_name (int sym)
  * @line: "kalman" to start, "end kalman" to end; otherwise
  * this string should contain a matrix specification on the 
  * pattern "key value".
- * @Z: data array (may be %NULL).
- * @pdinfo: dataset information (may be %NULL).
+ * @Z: data array (may be NULL).
+ * @pdinfo: dataset information (may be NULL).
  * @opt: may contain %OPT_D for diffuse initialization of the
  * Kalman filter, %OPT_C to specify that the disturbances are 
  * correlated across the two equations.
@@ -3019,9 +3036,9 @@ static int kalman_add_stepinfo (kalman *K)
 /**
  * user_kalman_smooth:
  * @Pname: name of matrix in which to retrieve the MSE of the
- * smoothed state (or %NULL if this is not required).
+ * smoothed state (or NULL if this is not required).
  * @Uname: name of matrix in which to retrieve the smoothed
- * disturbances (or %NULL if this is not required).
+ * disturbances (or NULL if this is not required).
  * @err: location to receive error code.
  * 
  * If a user-defined Kalman filter is found, runs a filtering
@@ -3030,7 +3047,7 @@ static int kalman_add_stepinfo (kalman *K)
  * not actually do anything unless @Pname is left null.
  *
  * Returns: matrix containing the smoothed estimate of the
- * state, or %NULL on error.
+ * state, or NULL on error.
  */
 
 gretl_matrix *user_kalman_smooth (const char *Pname, 
@@ -3309,7 +3326,7 @@ static int kalman_simulate (kalman *K,
  * user_kalman_simulate:
  * @V: artificial disturbance to state.
  * @W: artificial disturbance to observation.
- * @Sname: name of matrix to retrieve simulated state (or %NULL).
+ * @Sname: name of matrix to retrieve simulated state (or NULL).
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  * 
@@ -3321,10 +3338,10 @@ static int kalman_simulate (kalman *K,
  * those in the observation equation (if any).  But if the 
  * disturbances are correlated, then @V should contain the
  * "combined" disturbance vector at each time step, and
- * @W should be left %NULL.
+ * @W should be left NULL.
  *
  * Returns: matrix containing the simulated values of the
- * observables, or %NULL on failure.
+ * observables, or NULL on failure.
  */
 
 gretl_matrix *user_kalman_simulate (const gretl_matrix *V, 
@@ -3448,7 +3465,7 @@ double user_kalman_get_loglik (void)
  * Retrieves a matrix, specified by @idx, from the last
  * run of a kalman forecast, if applicable.
  * 
- * Returns: allocated matrix, or %NULL on failure.
+ * Returns: allocated matrix, or NULL on failure.
  */
 
 gretl_matrix *user_kalman_get_matrix (int idx, int *err)

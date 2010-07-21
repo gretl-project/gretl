@@ -115,7 +115,7 @@
 
 <!ELEMENT pre (#PCDATA | repl | lit)*>
 <!ATTLIST pre
-   context (cli | gui | both) "both"
+   context (cli | gui | tex | notex | all) "all"
 >
 
 <!ELEMENT code (#PCDATA)>
