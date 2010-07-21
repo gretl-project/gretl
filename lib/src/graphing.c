@@ -388,8 +388,14 @@ int gnuplot_has_latin5 (void)
 
 int gnuplot_has_cp1254 (void)
 {
-    /* ... and that it doesn't support CP1254 */
-    return 0;
+    /* ... and that it supports CP1254 */
+    return 1;
+}
+
+int gnuplot_has_cp950 (void)
+{
+    /* ... and that it supports CP950 */
+    return 1;
 }
 
 int gnuplot_has_bbox (void)
@@ -449,6 +455,19 @@ int gnuplot_has_cp1254 (void)
 
     if (err == -1) {
 	err = gnuplot_test_command("set encoding cp1254");
+    }
+
+    return !err;
+}
+
+int gnuplot_has_cp950 (void)
+{
+    static int err = -1; 
+
+    /* not OK in gnuplot 4.4.0 */
+
+    if (err == -1) {
+	err = gnuplot_test_command("set encoding cp950");
     }
 
     return !err;

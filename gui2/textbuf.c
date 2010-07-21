@@ -1068,6 +1068,8 @@ static void make_bibitem_window (const char *buf,
 				 GTK_WINDOW(top));
     gtk_window_set_destroy_with_parent(GTK_WINDOW(vwin->main), 
 				       TRUE);
+    gtk_window_set_position(GTK_WINDOW(vwin->main), 
+			    GTK_WIN_POS_CENTER_ON_PARENT);
     gtk_widget_show(vwin->main);
 }
 

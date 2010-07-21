@@ -609,7 +609,7 @@ static void dataline_check (char *s, int *d)
     }
 }
 
-/* for postscript output, e.g. in Latin-2, or EMF output in CP125X */
+/* for postscript output, e.g. in Latin-2, or EMF output in CPXXXX */
 
 static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
 {
@@ -735,6 +735,8 @@ static void maybe_print_gp_encoding (int ttype, int latin, FILE *fp)
 	    fputs("set encoding cp1250\n", fp);
 	} else if (latin == 9 && gnuplot_has_cp1254()) {
 	    fputs("set encoding cp1254\n", fp);
+	} else if (chinese_locale() && gnuplot_has_cp950()) {
+	    fputs("set encoding cp950\n", fp);
 	}
     } else {
 	if (latin != 1 && latin != 2 && latin != 15 && latin != 9) {
