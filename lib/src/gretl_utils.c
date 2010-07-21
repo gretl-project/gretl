@@ -646,7 +646,7 @@ void printlist (const int *list, const char *msg)
  * @k: number of parameters estimated.
  * @ll: pointer to recieve loglikelihood.
  * @aic: pointer to recieve Akaike criterion.
- * @bic: pointer to recieve Schwartz Bayesian criterion.
+ * @bic: pointer to recieve Schwarz Bayesian criterion.
  * @hqc: pointer to recieve Hannan-Quinn criterion.
  *
  * Calculates model selection criteria based on @ess, @nobs and
