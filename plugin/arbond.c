@@ -1627,7 +1627,16 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     /* add uhat, yhat */
 
     if (!err) {
-	if (dpd->ui != NULL) {
+	if (dpd->flags & DPD_NEWSTYLE) {
+	    int t, s = 0;
+
+	    for (t=0; t<pdinfo->n; t++) {
+		if (dpd->used[t] > 0) {
+		    pmod->uhat[t] = dpd->uhat->val[s++];
+		    pmod->yhat[t] = y[t] - pmod->uhat[t];
+		}
+	    }
+	} else {	    
 	    /* old-style */
 	    int s, t, k = 0;
 
@@ -1648,16 +1657,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 		    }
 		}
 	    }
-	} else if (dpd->flags & DPD_NEWSTYLE) {
-	    int t, s = 0;
-
-	    for (t=0; t<pdinfo->n; t++) {
-		if (dpd->used[t]) {
-		    pmod->uhat[t] = dpd->uhat->val[s++];
-		    pmod->yhat[t] = y[t] - pmod->uhat[t];
-		}
-	    }
-	}  
+	} 
     }  
 
     /* additional dpd-specific data */

@@ -1429,6 +1429,56 @@ char *gretl_matrix_zero_row_mask (const gretl_matrix *m, int *err)
 }
 
 /**
+ * gretl_matrix_zero_col_mask:
+ * @m: matrix to process.
+ * @err: location to receive error code.
+ *
+ * Checks matrix @m for columns that are all zero.  If there are
+ * any such columns, constructs a mask of length equal to the
+ * number of columns in @m, with 1s indicating zero columns, 0s
+ * elsewhere.  If there are no such columns, returns NULL.
+ * 
+ * E_ALLOC is written to @err in case a mask should have
+ * been constructed but allocation failed.
+ *
+ * Returns: allocated mask or NULL.
+ */
+
+char *gretl_matrix_zero_col_mask (const gretl_matrix *m, int *err)
+{
+    char *mask = NULL;
+    int col0, any0 = 0;
+    int i, j;
+
+    mask = calloc(m->cols, 1);
+    if (mask == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    for (j=0; j<m->cols; j++) {
+	col0 = 1;
+	for (i=0; i<m->rows; i++) {
+	    if (gretl_matrix_get(m, i, j) != 0.0) {
+		col0 = 0;
+		break;
+	    }
+	}
+	if (col0) {
+	    mask[j] = 1;
+	    any0 = 1;
+	}
+    }
+
+    if (!any0) {
+	free(mask);
+	mask = NULL;
+    }
+
+    return mask;
+}
+
+/**
  * gretl_matrix_rank_mask:
  * @m: matrix to process.
  * @err: location to receive error code.

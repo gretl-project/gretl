@@ -97,6 +97,8 @@ int gretl_matrix_cut_rows_cols (gretl_matrix *m, const char *mask);
 
 char *gretl_matrix_zero_row_mask (const gretl_matrix *m, int *err);
 
+char *gretl_matrix_zero_col_mask (const gretl_matrix *m, int *err);
+
 char *gretl_matrix_rank_mask (const gretl_matrix *m, int *err);
 
 int gretl_matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
