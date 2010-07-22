@@ -82,17 +82,20 @@ struct kalman_ {
     gretl_matrix *P1; /* r x r: MSE matrix, after updating */
     gretl_matrix *e;  /* n x 1: one-step forecast error(s), time t */
 
-    /* input data matrices: the order matters for various functions */
+    /* input data matrices: note that the order matters for various 
+       functions, including user_kalman_recheck_matrices() and the
+       matrix_is_varying() macro
+    */
     const gretl_matrix *F; /* r x r: state transition matrix */
     const gretl_matrix *A; /* k x n: coeffs on exogenous vars, obs eqn */
     const gretl_matrix *H; /* r x n: coeffs on state variables, obs eqn */
     const gretl_matrix *Q; /* r x r: contemp covariance matrix, state eqn */
     const gretl_matrix *R; /* n x n: contemp covariance matrix, obs eqn */
+    const gretl_matrix *mu; /* r x 1: constant term in state transition */
     const gretl_matrix *y; /* T x n: dependent variable vector (or matrix) */
     const gretl_matrix *x; /* T x k: independent variables matrix */
     const gretl_matrix *Sini; /* r x 1: S_{1|0} */
     const gretl_matrix *Pini; /* r x r: P_{1|0} */
-    const gretl_matrix *mu; /* r x 1: constant term in state transition */
 
     /* optional array of names of input matrices */
     char **mnames;
@@ -135,7 +138,8 @@ struct kalman_ {
     PRN *prn; /* verbose printer */
 };
 
-#define NMATCALLS 5  /* max number of time-varying matrices */
+/* max number of time-varying matrices: F, A, H, Q, R, mu */
+#define NMATCALLS 6
 
 #define arma_ll(K) (K->flags & KALMAN_ARMA_LL)
 
@@ -170,11 +174,11 @@ enum {
     K_H,
     K_Q,
     K_R,
+    K_m,
     K_y,
     K_x,
     K_S,
     K_P,
-    K_m,
     K_MMAX /* sentinel */
 };
 
@@ -233,7 +237,7 @@ void kalman_free (kalman *K)
     if (K->mnames != NULL) {
 	const gretl_matrix **mptr[] = {
 	    &K->F, &K->A, &K->H, &K->Q, &K->R,
-	    &K->y, &K->x, &K->Sini, &K->Pini
+	    &K->mu, &K->y, &K->x, &K->Sini, &K->Pini
 	};
 	int i;
 
@@ -1422,7 +1426,7 @@ static gretl_matrix *kalman_update_matrix (kalman *K, int i,
 static int kalman_refresh_matrices (kalman *K, PRN *prn)
 {
     const gretl_matrix **cptr[] = {
-	&K->F, &K->A, &K->H, &K->Q, &K->R
+	&K->F, &K->A, &K->H, &K->Q, &K->R, &K->mu
     };  
     int cross_update = 0;
     int i, err = 0;
@@ -1791,9 +1795,9 @@ struct K_input_mat K_input_mats[] = {
     { K_R, "obsvar" },
     { K_F, "statemat" },
     { K_Q, "statevar" },
+    { K_m, "stconst" },
     { K_S, "inistate" },
-    { K_P, "inivar" },
-    { K_m, "stdrift" }
+    { K_P, "inivar" }
 };
 
 /* Add storage to record function calls for updating matrices.
@@ -2032,6 +2036,8 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	    K->Q = m;
 	} else if (i == K_R) {
 	    K->R = m;
+	} else if (i == K_m) {
+	    K->mu = m;
 	} else if (i == K_y) {
 	    K->y = m;
 	} else if (i == K_x) {
@@ -2040,9 +2046,7 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	    K->Sini = m;
 	} else if (i == K_P) {
 	    K->Pini = m;
-	} else if (i == K_m) {
-	    K->mu = m;
-	}
+	} 
 
 	/* record name of matrix */
 	strcpy(K->mnames[i], mname);
@@ -2119,19 +2123,19 @@ static int user_kalman_recheck_matrices (user_kalman *u)
     kalman *K = u->K;
     const gretl_matrix **cptr[] = {
 	&K->F, &K->A, &K->H, &K->Q, &K->R,
-	&K->y, &K->x, &K->Sini, &K->Pini
+	&K->mu, &K->y, &K->x, &K->Sini, &K->Pini
     };
     int i, err = 0;
 
-    for (i=0; i<=K_P; i++) {
+    for (i=0; i<K_MMAX; i++) {
 	if (!kalman_owns_matrix(K, i)) {
 	    /* pointer may be invalid, needs refreshing */
 	    *cptr[i] = NULL;
 	}
     }
 
-    for (i=0; i<=K_P && !err; i++) {
-	if (i <= K_R && matrix_is_varying(K, i)) {
+    for (i=0; i<K_MMAX && !err; i++) {
+	if (i <= K_m && matrix_is_varying(K, i)) {
 	    *cptr[i] = kalman_update_matrix(K, i, NULL, &err);
 	} else if (kalman_owns_matrix(K, i)) {
 	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);

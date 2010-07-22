@@ -818,7 +818,7 @@ so the log-likelihood can be written as
 
 One point of interest is the shape of the hazard function, in
 particular its dependence (or not) on time since the state began.  If
-$h$ does not depend on $t$ we say the process in question exhibits
+$\lambda$ does not depend on $t$ we say the process in question exhibits
 \emph{duration independence}: the probability of exiting the state at
 any given moment neither increases nor decreases based simply on how
 long the state has persisted to date. The alternatives are positive
@@ -831,8 +831,8 @@ some parameterizations allow for this possibility and some do not.
 Since durations are inherently positive the probability distribution
 used in modeling must respect this requirement, giving a density of
 zero for $t \leq 0$.  Four common candidates are the exponential,
-Weibull, log-logistic and log-normal, the Weibull being perhaps the
-most common choice. The table below displays the PDF and the hazard
+Weibull, log-logistic and log-normal, the Weibull being the most
+common choice. The table below displays the density and the hazard
 function for each of these distributions as they are commonly
 parameterized, written as functions of $t$ alone. ($\phi$ and $\Phi$
 denote, respectively, the Gaussian PDF and CDF.)
@@ -840,7 +840,7 @@ denote, respectively, the Gaussian PDF and CDF.)
 \begin{center}
 \setlength\tabcolsep{1.5em}
 \begin{tabular}{lll}
- & PDF, $f(t)$ & hazard, $\lambda(t)$ \\ [1ex]
+ & density, $f(t)$ & hazard, $\lambda(t)$ \\ [1ex]
 Exponential & $\displaystyle 
 \gamma \exp\,(-\gamma t)$ &$\displaystyle
 \gamma$ \\ [1ex]
@@ -861,12 +861,12 @@ Log-normal & $\displaystyle
 \end{tabular}
 \end{center}
 
-As the table shows, the hazard is constant for the exponential
-distribution.  For the Weibull, the hazard is monotone increasing in
-$t$ if $\alpha > 1$, or monotone decreasing for $\alpha < 1$. (If
-$\alpha = 1$ the Weibull collapses to the exponential.)  The
-log-logistic and log-normal distributions allow the hazard to vary
-with $t$ in a non-monotonic fashion.
+The hazard is constant for the exponential distribution.  For the
+Weibull, it is monotone increasing in $t$ if $\alpha > 1$, or
+monotone decreasing for $\alpha < 1$. (If $\alpha = 1$ the Weibull
+collapses to the exponential.)  The log-logistic and log-normal
+distributions allow the hazard to vary with $t$ in a non-monotonic
+fashion.
 
 Covariates are brought into the picture by allowing them to govern one
 of the parameters of the density, so that the durations are not
@@ -899,7 +899,7 @@ Weibull).
 \begin{center}
 \setlength\tabcolsep{1.5em}
 \begin{tabular}{lll}
- & Density, $f(w_i)$ & Survivor, $S(w_i)$ \\ [4pt]
+ & density, $f(w_i)$ & survivor, $S(w_i)$ \\ [4pt]
 Weibull & 
 $\exp\left(w_i - e^{w_i}\right)$ & $\exp(-e^{w_i})$
 \\ [4pt]
@@ -1194,11 +1194,11 @@ is not noted in all software.\footnote{The \texttt{predict} adjunct to
   produces large negative values for the log-logistic mean in duration
   models with $\sigma > 1$.}
 
-Alternatively, if given the \verb|--medians| option, \app{gretl}'s
+Alternatively, if the \verb|--medians| option is given, \app{gretl}'s
 \texttt{duration} command will produce conditional medians as the
-content of \dollar{yhat}.  For the Weibull the median
-is $\exp(X\beta)(\log 2)^\sigma$; for the log-logistic and log-normal
-it is just $\exp(X\beta)$.
+content of \dollar{yhat}.  For the Weibull the median is
+$\exp(X\beta)(\log 2)^\sigma$; for the log-logistic and log-normal it
+is just $\exp(X\beta)$.
 
 The values we give for the accessor \dollar{uhat} are generalized
 (Cox--Snell) residuals, computed as the integrated hazard function,

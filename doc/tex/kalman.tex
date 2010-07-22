@@ -11,6 +11,7 @@
 \newcommand{\strdist}{\mathbf{v}}
 \newcommand{\strvar}{\mathbf{Q}}
 \newcommand{\gain}{\mathbf{K}}
+\newcommand{\statemu}{\bm{\mu}}
 
 \newcommand{\altstrvar}{\mathbf{B}}
 \newcommand{\altobsvar}{\mathbf{C}}
@@ -117,7 +118,7 @@ Iteration then proceeds in two steps.\footnote{For a justification of
   the following formulae see the classic book by
   \cite{anderson-moore79} or, for a more modern treatment,
   \cite{pollock99} or \cite{hamilton94}.  A transcription of
-  R. E. Kalman's original paper of 1960 is available at
+  R. E. Kalman's original paper \citep{kalman60} is available at
   \url{http://www.cs.unc.edu/~welch/kalman/kalmanPaper.html}.}  First
 we update the estimate of the state
 %
@@ -261,7 +262,9 @@ takes the form
 \vspace{1ex}
 
 \noindent where \textsl{keyword} represents a matrix, as shown 
-below.
+below. (An additional matrix which may be useful in some cases
+is introduced later under the heading ``Constant term in the
+state transition''.)
 % % in Table~\ref{tab:keywords}.
 
 %% \begin{table}[htbp]
@@ -414,6 +417,84 @@ the gain as given in equation (\ref{eq:altgain}).  As mentioned
 above, $\altstrvar$ should be ($r \times p$) and $\altobsvar$
 should be ($n \times p$), where $p$ is the number of elements
 in the combined disturbance vector $\alldist_t$.
+
+\subsection{Constant term in the state transition}
+
+In some applications it is useful to be able to represent a constant
+term in the state transition equation explicitly; that is, equation
+(\ref{eq:state}) becomes
+%
+\begin{equation}
+\label{eq:statemu}
+\statevec_{t+1} =  \statemu + \statemat_t \statevec_t + \strdist_t
+\end{equation}
+%
+This is never strictly necessary; the system (\ref{eq:state}) and
+(\ref{eq:obs}) is general enough to accommodate such a term, by
+absorbing it as an extra (unvarying) element in the state vector. But
+this comes at the cost of expanding all the matrices that touch the
+state ($\statevec$, $\statemat$, $\strdist$, $\strvar$, $\obsmat$),
+making the model relatively awkward to formulate and forecasts
+relatively expensive to compute.
+
+As a simple illustration, consider a univariate model in which the
+state, $s_t$, is just a random walk with drift $\mu$ and the observed
+variable, $y_t$, is the state plus white noise:
+\begin{align}
+  \label{eq:state-rw}
+  s_{t+1} &=  \mu + s_t + v_t \\
+  \label{eq:obs-y}
+  y_t &= s_t + w_t 
+\end{align}
+%
+Putting this into the standard form of (\ref{eq:state}) and
+(\ref{eq:obs}) we get:
+%
+\begin{align*}
+\left[ \begin{array}{c} s_{t+1} \\ \mu \end{array} \right] 
+&=
+\left[ \begin{array}{cc} 1 & 1 \\ 0 & 1 \end{array} \right]
+\left[ \begin{array}{c} s_t \\ \mu \end{array} \right] +
+\left[ \begin{array}{c} v_t \\ 0 \end{array} \right] ,
+\qquad
+\strvar = \left[ 
+\begin{array}{cc} \sigma^2_v & 0 \\ 0 & 0 \end{array} 
+\right] \\
+y_t &= 
+\left[ \begin{array}{cc} 1 & 0 \end{array} \right]
+\left[ \begin{array}{c} s_t \\ \mu \end{array} \right] + w_t
+\end{align*}
+
+In such a simple case the notational and computational burden is not
+very great; nonetheless it is clearly more ``natural'' to express this
+system in the form of (\ref{eq:state-rw}) and (\ref{eq:obs-y}) and in
+a multivariate model the gain in parsimony could be substantial.
+
+For this reason we support the use of an additional named matrix
+in the \texttt{kalman} setup, namely \texttt{stconst}. This
+corresponds to $\statemu$ in equation (\ref{eq:statemu}); it
+should be an $r \times 1$ vector (or if $r=1$ may be given as
+the name of a scalar variable). The use of \texttt{stconst}
+in setting up a filter corresponding to (\ref{eq:state-rw}) and
+(\ref{eq:obs-y}) is shown below.
+
+
+\begin{code}
+matrix H = {1}
+matrix R = {1}
+matrix F = {1}
+matrix Q = {1}
+matrix mu = {0.05}
+
+kalman 
+  obsy y
+  obsymat H
+  obsvar R
+  statemat F
+  statevar Q
+  stconst mu
+end kalman
+\end{code} 
 
 \subsection{Handling of missing values}
 
@@ -685,7 +766,7 @@ include an ``error term''; this is equivalent to saying that
 $V(\obsdist_t) = 0$ and, as a consequence, the \texttt{kalman} block
 does not include an \texttt{obsvar} keyword.
 
-Once the filter is set up, all it takes to compute the loglikelihood
+Once the filter is set up, all it takes to compute the log-likelihood
 for given values of $\phi$, $\theta$ and $\sigma^2$ is to execute the
 \texttt{kfilter()} function and use the \verb+$kalman_lnl+ accessor
 (which returns the total log-likelihood) or, more appropriately if the
