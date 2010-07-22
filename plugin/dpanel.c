@@ -45,6 +45,7 @@ static int n_available_residuals (dpdinfo *dpd, gretl_matrix *ui,
 
     for (t=t0; t<tmax; t++) {
 	if (dpd->used[t] > 0) {
+	    /* only catches residuals in differences */
 	    gretl_vector_set(ui, n++, dpd->uhat->val[s++]);
 	}
     }
@@ -65,7 +66,7 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
        being ignored!
     */
 
-    nz = dpd->nx + (dpd->T - 1) * (dpd->T - 2) / 2;
+    nz = dpd->A->rows;
 
     B = gretl_matrix_block_new(&kk, dpd->k, dpd->k,
 			       &kz, dpd->k, nz,
@@ -120,9 +121,11 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
 
     if (!err) {
 	gretl_matrix_divide_by_scalar(V, dpd->effN);
-	gretl_matrix_multiply(dpd->XZ, dpd->A, kz);
-	gretl_matrix_qform(kz, GRETL_MOD_NONE, V,
-			   kk, GRETL_MOD_NONE);
+	err = gretl_matrix_multiply(dpd->XZ, dpd->A, kz);
+	if (!err) {
+	    err = gretl_matrix_qform(kz, GRETL_MOD_NONE, V,
+				     kk, GRETL_MOD_NONE);
+	}
     }
 
 #if DPDEBUG > 1
@@ -132,15 +135,21 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
     gretl_matrix_print(dpd->den, "den");
 #endif
 
-    /* pre- and post-multiply by den */
-    gretl_matrix_qform(dpd->den, GRETL_MOD_NONE, kk, dpd->vbeta,
-		       GRETL_MOD_NONE);
+    if (!err) {
+	/* pre- and post-multiply by den */
+	err = gretl_matrix_qform(dpd->den, GRETL_MOD_NONE, kk, dpd->vbeta,
+				 GRETL_MOD_NONE);
+    }
 
     if (!err) {
 	gretl_matrix_multiply_by_scalar(dpd->vbeta, dpd->effN);
     }
 
     gretl_matrix_block_destroy(B);
+
+    if (err) {
+	fprintf(stderr, "dpanel_step1_variance: err = %d (nz = %d)\n", err, nz);
+    }
 
     return err;
 }
@@ -898,6 +907,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
     }
 
     if (!err && !use_levels(dpd)) {
+	/* FIXME system case */
 	err = dpanel_step1_variance(dpd, pdinfo);
     }
 
@@ -922,6 +932,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
     gretl_matrix_free(dpd->ZT);
     gretl_matrix_free(dpd->den);
     gretl_matrix_free(dpd->A);
+    gretl_matrix_free(dpd->uhl);
 
     dpdinfo_free(dpd);
 

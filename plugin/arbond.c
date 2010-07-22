@@ -114,6 +114,7 @@ struct dpdinfo_ {
     gretl_matrix *XZ;      /* cross-moments */
     gretl_matrix *ZY;      /* ditto */
     gretl_matrix *ZZ;      /* ditto */
+    gretl_matrix *uhl;     /* residuals in levels */
     int *laglist;          /* (possibly discontinuous) list of lags */
 };
 
@@ -154,7 +155,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 {
     int T = dpd->maxTi;
 
-    dpd->XZ = dpd->ZY = dpd->ZZ = NULL;
+    dpd->XZ = dpd->ZY = dpd->ZZ = dpd->uhl = NULL;
 
     if (dpd->flags & DPD_NEWSTYLE) {
 	/* temporary hack */
