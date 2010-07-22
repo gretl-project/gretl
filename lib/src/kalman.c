@@ -1793,7 +1793,7 @@ struct K_input_mat K_input_mats[] = {
     { K_Q, "statevar" },
     { K_S, "inistate" },
     { K_P, "inivar" },
-    { K_m, "statemu" }
+    { K_m, "stdrift" }
 };
 
 /* Add storage to record function calls for updating matrices.
