@@ -7,7 +7,7 @@
    prototype code, newmask.c.
 */
 
-#define DPDEBUG 0
+#define DPDEBUG 2
 
 #define LEV_ONLY (-1) /* flag for an obs that's good only for levels */
 
@@ -527,7 +527,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
    instruments for equations in levels if wanted.
 */
 
-#define AC_REVISION 1
+#define AC_REVISION 0
 
 static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
 		     int t, int nz_diff, int nz_lev, 
