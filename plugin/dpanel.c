@@ -527,7 +527,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
    instruments for equations in levels if wanted.
 */
 
-#define AC_REVISION 0
+#define ALT_LAGGED_Y 0
 
 static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
 		     int t, int nz_diff, int nz_lev, 
@@ -553,11 +553,13 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	i1 = goodobs[i+2];
 	d = i1 - i0;
 	col = i1 - 1 - maxlag;
-#if AC_REVISION
-	/* I think the row-placement of the lagged levels was wrong here,
-	   for the case when a difference of order greater than 1 has to 
-	   be used. But I'm not sure that what I have here is right yet.
-	   AC 2010-07-23
+#if ALT_LAGGED_Y
+	/* I thought that the row-placement of the lagged levels was
+	   perhaps wrong here, for the case when a difference of order
+	   greater than 1 has to be used. But I'm not sure that what I
+	   have here is right, and it's difficult to find firm ground
+	   to stand on. I'm leaving this code here for now, but not
+	   activated. AC 2010-07-23
 	*/
 	k = (i1-1) * (i1-2) / 2; /* calculate the base row */
 	fprintf(stderr, "Zi: i0=%d, i1=%d, d=%d, base row=%d\n", i0, i1, d, k);
