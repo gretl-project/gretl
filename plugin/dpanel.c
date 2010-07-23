@@ -612,8 +612,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 }
 
 /*
-  here we construct \hat{\beta} from the moment matrices;
-  no attempt is made to compute the covariance matrix
+  Here we construct \hat{\beta} from the moment matrices.
 */
 
 static int do_estimator (dpdinfo *dpd, char **ZZmask)
@@ -838,8 +837,6 @@ static int do_units (dpdinfo *dpd, const double **Z,
 
 	unit++;
     }
-
-    pprintf(prn, "Total obs = %d\n", dpd->nobs);
 
  bailout:
 
