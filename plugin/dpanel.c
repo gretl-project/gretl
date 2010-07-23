@@ -13,28 +13,13 @@
 
 #define use_levels(d) (d->flags & DPD_SYSTEM)
 
-/* Used for a given unit's Zi matrix: get rid of any columns that are
-   all zeros.
-*/
+/* For a given unit, whose observations start at @t0: count the
+   available residuals and while we're at it transcribe those
+   residuals into the vector @ui. We place residuals from the
+   differences equations first, then those from the levels 
+   equations in the "system" case.
 
-static int trim_zero_cols (gretl_matrix *m)
-{
-    char *mask;
-    int err = 0;
-
-    mask = gretl_matrix_zero_col_mask(m, &err);
-    
-    if (mask != NULL) {
-	gretl_matrix_cut_cols(m, mask);
-	free(mask);
-    }
-
-    return err;
-}
-
-/* For a given unit (whose observations start at @t0): count
-   the available residuals in differences and while we're at
-   it transcribe those residuals into the vector @ui.
+   If @ui is NULL we just count and don't transcribe.
 */
 
 static int n_available_residuals (dpdinfo *dpd, gretl_matrix *ui,
@@ -43,11 +28,13 @@ static int n_available_residuals (dpdinfo *dpd, gretl_matrix *ui,
     int t, tmax = t0 + dpd->T;
     int s, n = 0;
 
+    /* count and transcribe the residuals from the differences
+       equations */
+
     s = *sd;
 
     for (t=t0; t<tmax; t++) {
 	if (dpd->used[t] > 0) {
-	    /* only catches residuals in differences */
 	    if (ui != NULL) {
 		gretl_vector_set(ui, n++, dpd->uhat->val[s++]);
 	    } else {
@@ -59,17 +46,19 @@ static int n_available_residuals (dpdinfo *dpd, gretl_matrix *ui,
 
     *sd = s;
 
+    /* count and transcribe the residuals from the levels
+       equations, if applicable */
+
     if (use_levels(dpd)) {
-	/* not right yet */
 	s = *sl;
 	for (t=t0; t<tmax; t++) {
 	    if (dpd->used[t]) {
-		if (dpd->used[t] > 0 && ui != NULL) {
+		if (ui != NULL) {
 		    gretl_vector_set(ui, n++, dpd->uhl->val[s++]);
-		} else if (dpd->used[t] > 0) {
+		} else {
 		    n++;
+		    s++;
 		}
-		s++;
 	    }
 	}
 	*sl = s;
@@ -78,20 +67,17 @@ static int n_available_residuals (dpdinfo *dpd, gretl_matrix *ui,
     return n;
 }
 
-static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
+static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo,
+				  const char *ZZmask)
 {
     gretl_matrix_block *B;
     gretl_matrix *kk, *kz, *V;
     gretl_matrix *ui, *Zi, *uZ;
-    int s, sd, sl, t, nz, max_ni;
+    int sd, sl, t, nz, max_ni;
+    int Zcol = 0;
     int err = 0;
 
-    /* FIXME: I'm not sure what to do with the levels
-       equations here, and for the present they're just
-       being ignored!
-    */
-
-    nz = dpd->A->rows;
+    nz = dpd->A->rows; /* note: may be trimmed relative to dpd->nz */
 
     sd = sl = max_ni = 0;
 
@@ -111,7 +97,7 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
 			       &kz, dpd->k, nz,
 			       &V,  nz, nz,
 			       &ui, max_ni, 1,
-			       &Zi, max_ni, nz,
+			       &Zi, max_ni, dpd->nz,
 			       &uZ, 1, nz,
 			       NULL);
     if (B == NULL) {
@@ -120,7 +106,7 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
 
     gretl_matrix_zero(V);
 
-    s = sd = sl = 0;
+    sd = sl = 0;
 
     for (t=pdinfo->t1; t<pdinfo->t2; t+=dpd->T) {
 	int ni = n_available_residuals(dpd, ui, t, &sd, &sl);
@@ -129,16 +115,26 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
 	    continue;
 	}
 
-	gretl_matrix_reuse(Zi, ni, -1);
+	gretl_matrix_reuse(Zi, ni, dpd->nz);
 	gretl_matrix_reuse(ui, ni, -1);
 
-	/* Here we extract Zi from the stack in dpd->ZT:
-	   for the present we're ignoring the levels 
-	   instruments!
+	/* Extract the saved Zi from the stack in dpd->ZT:
+	   it will need trimming if the cross-moment matrices
+	   have been trimmed, which is recorded in ZZmask.
 	*/
 
-	gretl_matrix_extract_matrix(Zi, dpd->ZT, 0, s,
+	gretl_matrix_extract_matrix(Zi, dpd->ZT, 0, Zcol,
 				    GRETL_MOD_TRANSPOSE);
+	Zcol += Zi->rows;
+
+	if (ZZmask != NULL) {
+	    gretl_matrix_cut_cols(Zi, ZZmask);
+	}
+
+#if DPDEBUG
+	gretl_matrix_print(ui, "ui (vcalc)");
+	gretl_matrix_print(Zi, "Zi (vcalc)");
+#endif
 
 	err = gretl_matrix_multiply_mod(ui, GRETL_MOD_TRANSPOSE,
 					Zi, GRETL_MOD_NONE,
@@ -154,8 +150,6 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
 		    t, ni);
 	    break;
 	}
-
-	s += ni;
     }
 
     if (!err) {
@@ -193,8 +187,8 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo)
     return err;
 }
 
-static int dpd_add_residual_vector (dpdinfo *dpd, const double **Z, 
-				    const DATAINFO *pdinfo)
+static int dpanel_add_residuals (dpdinfo *dpd, const double **Z, 
+				 const DATAINFO *pdinfo)
 {
     const double *b = dpd->beta->val;
     const double *x;
@@ -243,10 +237,8 @@ static int dpd_add_residual_vector (dpdinfo *dpd, const double **Z,
 
     dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
 
-    /* residuals in levels: for the present these are not used
-       subsequently, we just print their summary stats for
-       comparison with Ox/DPD. But note that the values will
-       agree only if the --dpdstyle option is given.
+    /* residuals in levels: note that the values will agree with
+       Ox/DPD only if the --dpdstyle option is given.
     */
 
     if (use_levels(dpd)) {
@@ -283,6 +275,10 @@ static int dpd_add_residual_vector (dpdinfo *dpd, const double **Z,
 	fprintf(stderr, "nobs (levels) = %d\n", nobs_lev);
 	fprintf(stderr, "SSR (levels) = %g\n", SSR_lev);
 	fprintf(stderr, "s^2 (levels) = %g\n", SSR_lev / (nobs_lev - dpd->k));
+
+	dpd->nobs = nobs_lev;
+	dpd->SSR = SSR_lev;
+	dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
     }    
 
     return 0;
@@ -620,12 +616,12 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
   no attempt is made to compute the covariance matrix
 */
 
-static int do_estimator (dpdinfo *dpd)
+static int do_estimator (dpdinfo *dpd, char **ZZmask)
 {
     gretl_matrix *iZZ, *M, *M1, *M2;
     int k, m, err = 0;
     
-    trim_zero_inst(dpd->XZ, dpd->ZZ, dpd->ZY);
+    trim_zero_inst(dpd->XZ, dpd->ZZ, dpd->ZY, ZZmask);
 
 #if DPDEBUG > 0
     gretl_matrix_print(dpd->XZ, "XZ (trimmed)");
@@ -782,7 +778,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
     }
 
     /* holder for stacking the per-unit Zi matrices */
-    dpd->ZT = gretl_zero_matrix_new(Zi->rows, north * dpd->N);
+    dpd->ZT = gretl_zero_matrix_new(Zi->rows, dpd->N * north);
     if (dpd->ZT == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -831,18 +827,13 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_NONE,
 				      Yi, GRETL_MOD_TRANSPOSE,
 				      dpd->ZY, GRETL_MOD_CUMULATE);
-	    /* keep the (trimmed) Zi's for future use */
-#if DPDEBUG > 1
+	    /* stack the individual Zi's for future use */
+#if DPDEBUG
 	    gretl_matrix_print(Zi, "Zi, in do units");
 #endif
-	    trim_zero_cols(Zi); /* FIXME */
-#if DPDEBUG > 1
-	    fprintf(stderr, " trimmed: %d x %d\n", Zi->rows, Zi->cols);
-#endif    
 	    gretl_matrix_inscribe_matrix(dpd->ZT, Zi, 0, Zcol,
 					 GRETL_MOD_NONE);
 	    Zcol += Zi->cols;
-	    Zi->cols = north;
 	}
 
 	unit++;
@@ -913,6 +904,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
 {
     struct diag_info *d = NULL;
     dpdinfo *dpd = NULL;
+    char *ZZmask = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
@@ -946,17 +938,17 @@ MODEL dpd_estimate (const int *list, const char *istr,
 
     if (!err) {
 	/* calculate \hat{\beta} */
-	do_estimator(dpd);
+	do_estimator(dpd, &ZZmask);
     }
 
     if (!err) {
 	/* add residuals in differences */
-	err = dpd_add_residual_vector(dpd, Z, pdinfo);
+	err = dpanel_add_residuals(dpd, Z, pdinfo);
     }
 
-    if (!err && (1 || !use_levels(dpd))) {
-	/* FIXME system case */
-	err = dpanel_step1_variance(dpd, pdinfo);
+    if (!err) {
+	/* calculate variance of \hat{\beta} */
+	err = dpanel_step1_variance(dpd, pdinfo, ZZmask);
     }
 
     if (err && !mod.errcode) {
@@ -983,6 +975,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
     gretl_matrix_free(dpd->uhl);
 
     dpdinfo_free(dpd);
+    free(ZZmask);
 
     return mod;
 }

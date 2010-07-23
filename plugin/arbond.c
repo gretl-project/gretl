@@ -2261,7 +2261,7 @@ static int dpd_invert_A_N (dpdinfo *dpd)
 }
 
 static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ, 
-			   gretl_matrix *ZY)
+			   gretl_matrix *ZY, char **pmask)
 {
     int i, n = ZZ->rows;
     int trim = 0;
@@ -2286,7 +2286,11 @@ static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ,
 	gretl_matrix_cut_rows_cols(ZZ, mask);
 	gretl_matrix_cut_rows(ZY, mask);
 
-	free(mask);
+	if (pmask != NULL) {
+	    *pmask = mask;
+	} else {
+	    free(mask);
+	}
     }
 
     return ZZ->rows;
