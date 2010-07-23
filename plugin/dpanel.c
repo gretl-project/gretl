@@ -193,7 +193,7 @@ static int dpanel_add_residuals (dpdinfo *dpd, const double **Z,
     const double *b = dpd->beta->val;
     const double *x;
     double ut, dx;
-    int i, j, li, s, t;
+    int i, j, k, li, s, t;
 
     if (dpd->uhat == NULL) {
 	dpd->uhat = gretl_column_vector_alloc(dpd->nobs);
@@ -209,11 +209,17 @@ static int dpanel_add_residuals (dpdinfo *dpd, const double **Z,
 
     for (t=0; t<pdinfo->n; t++) {
 	if (dpd->used[t] > 0) {
+	    /* find the lag needed to create a valid difference */
+	    k = t - 1;
+	    while (dpd->used[k] <= 0) {
+		k--;
+	    }
+	    k = t - k;
 	    j = 0;
-	    ut = dpd->y[t] - dpd->y[t-1];
+	    ut = dpd->y[t] - dpd->y[t-k];
 	    for (i=1; i<=dpd->laglist[0]; i++) {
 		li = dpd->laglist[i];
-		dx = dpd->y[t-li] - dpd->y[t-li-1];
+		dx = dpd->y[t-li] - dpd->y[t-li-k];
 		ut -= b[j++] * dx;
 	    }
 	    /* FIXME automatic time dummies */
@@ -224,7 +230,7 @@ static int dpanel_add_residuals (dpdinfo *dpd, const double **Z,
 			ut -= b[j++];
 		    } else {
 			x = Z[dpd->xlist[i]];
-			dx = x[t] - x[t-1];
+			dx = x[t] - x[t-k];
 			ut -= b[j++] * dx;
 		    }
 		    
@@ -521,6 +527,8 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
    instruments for equations in levels if wanted.
 */
 
+#define AC_REVISION 1
+
 static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
 		     int t, int nz_diff, int nz_lev, 
 		     gretl_matrix *Zi)
@@ -532,25 +540,60 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     double dx, y0;
     int t0, t1, i0, i1;
     int k, k2 = nz_diff + nz_lev;
-    int i, j;
+    int i, j, col;
     int qmax = dpd->qmax;
 
     gretl_matrix_zero(Zi);
 
     /* equations in differences: lagged levels of y */
     for (i=0; i<usable; i++) {
+	int d;
+
 	i0 = goodobs[i+1];
 	i1 = goodobs[i+2];
+	d = i1 - i0;
+	col = i1 - 1 - maxlag;
+#if AC_REVISION
+	/* I think the row-placement of the lagged levels was wrong here,
+	   for the case when a difference of order greater than 1 has to 
+	   be used. But I'm not sure that what I have here is right yet.
+	   AC 2010-07-23
+	*/
+	k = (i1-1) * (i1-2) / 2; /* calculate the base row */
+	fprintf(stderr, "Zi: i0=%d, i1=%d, d=%d, base row=%d\n", i0, i1, d, k);
+	for (j=0; j<i1-1; j++) {
+	    int lag = i1 - 1 - j + d;
+	    int pos = i1 - lag;
+
+	    if (pos < 0) {
+		fprintf(stderr, "skippingZi(%d,%d): out of bounds\n", k, col);
+	    } else {
+		y0 = dpd->y[t+pos];
+		if (!na(y0)) {
+		    fprintf(stderr, "setting Zi(%d,%d) = y[%d] = %g\n", k, col, pos, y0);
+		    gretl_matrix_set(Zi, k, col, y0);
+		} else {
+		    fprintf(stderr, "skipping Zi(%d,%d): NA\n", k, col);
+		}
+	    }
+	    k++;
+	}
+#else
 	k = i0 * (i0-1) / 2;
+	fprintf(stderr, "Zi: i0=%d, i1=%d, d=%d, base row=%d\n", i0, i1, d, k);
 	for (j=0; j<i0; j++) {
 	    if (qmax == 0 || j > i0 - qmax) {
 		y0 = dpd->y[t+j];
 		if (!na(y0)) {
-		    gretl_matrix_set(Zi, k, i1-1-maxlag, y0);
+		    fprintf(stderr, "setting Zi(%d,%d) = y[%d] = %g\n", k, col, j, y0);
+		    gretl_matrix_set(Zi, k, col, y0);
+		} else {
+		    fprintf(stderr, "skipping Zi(%d,%d) = NA\n", k, col);
 		}
 	    } 
 	    k++;
 	}
+#endif
     }
 
     /* equations in differences: differenced exog vars */
@@ -558,6 +601,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	for (i=0; i<usable; i++) {
 	    i0 = goodobs[i+1];
 	    i1 = goodobs[i+2];
+	    col = i1 - 1 - maxlag;
 	    t0 = t + i0;
 	    t1 = t + i1;
 	    for (j=0; j<dpd->nx; j++) {
@@ -568,14 +612,14 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 		    xj = Z[dpd->xlist[j+1]];
 		    dx = xj[t1] - xj[t0];
 		}
-		gretl_matrix_set(Zi, k2 + j, (i1-1-maxlag), dx);
+		gretl_matrix_set(Zi, k2 + j, col, dx);
 	    }
 	}
     }
 
     if (use_levels(dpd)) {
 	int offset = T - maxlag - 1;
-	int col, row = (T-1)*(T-2)/2;
+	int row = (T-1)*(T-2)/2;
 	int lastdiff = 0;
 	double y1;
 
@@ -814,9 +858,9 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	    build_X(dpd, goodobs, Z, t, Xi);
 	    build_Z(dpd, goodobs, Z, t, nz_diff, nz_lev, Zi);
 #if DPDEBUG > 1
-	    gretl_matrix_print_to_prn(Yi, "Yi", prn);
-	    gretl_matrix_print_to_prn(Xi, "Xi", prn);
-	    gretl_matrix_print_to_prn(Zi, "Zi", prn);
+	    gretl_matrix_print(Yi, "do_units: Yi");
+	    gretl_matrix_print(Xi, "do_units: Xi");
+	    gretl_matrix_print(Zi, "do_units: Zi");
 #endif
 	    gretl_matrix_multiply_mod(Xi, GRETL_MOD_NONE,
 				      Zi, GRETL_MOD_TRANSPOSE,
@@ -827,7 +871,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 				      Yi, GRETL_MOD_TRANSPOSE,
 				      dpd->ZY, GRETL_MOD_CUMULATE);
 	    /* stack the individual Zi's for future use */
-#if DPDEBUG
+#if DPDEBUG == 1
 	    gretl_matrix_print(Zi, "Zi, in do units");
 #endif
 	    gretl_matrix_inscribe_matrix(dpd->ZT, Zi, 0, Zcol,
