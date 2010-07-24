@@ -4882,6 +4882,9 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
     }
 
     if (effn > 1) {
+	/* between variance: \sum_{i=1}^N (\bar{x}_i - \bar{x})^2 
+	   \times (N-1)^{-1}
+	*/
 	sb /= (effn - 1);
 	sb = sqrt(sb);
     } else {
@@ -4889,6 +4892,9 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
     }
 
     if (effnT - effn > 0) {
+	/* within variance: \sum_{i=1}^N \sum_{t=1}^T (x_{it} - \bar{x}_i)^2  
+	   \times (\sum_{i=1}^N T_i - N)^{-1} 
+	*/
 	sw /= (effnT - effn);
 	sw = sqrt(sw);
     } else {
