@@ -3,7 +3,7 @@
    "dpanel" command, which is intended to generalize the old "arbond"
    to handle system GMM.
 
-   Added by Allin, 2010-07-09; contents are mostly from Jack's 
+   Added by Allin, 2010-07-09; initial content was from Jack's 
    prototype code, newmask.c.
 */
 
@@ -533,7 +533,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 
 static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
 		     int t, int nz_diff, int nz_lev, 
-		     gretl_matrix *Zi)
+		     gretl_matrix *Zi, const char *d_order)
 {
     int usable = goodobs[0] - 1;
     int maxlag = dpd->p;
@@ -832,8 +832,8 @@ static int do_units (dpdinfo *dpd, char *d_order,
 #endif
 	    build_Y(dpd, goodobs, Z, t, Yi, d_order);
 	    build_X(dpd, goodobs, Z, t, Xi);
-	    build_Z(dpd, goodobs, Z, t, nz_diff, nz_lev, Zi);
-#if DPDEBUG > 1
+	    build_Z(dpd, goodobs, Z, t, nz_diff, nz_lev, Zi, d_order);
+#if DPDEBUG
 	    gretl_matrix_print(Yi, "do_units: Yi");
 	    gretl_matrix_print(Xi, "do_units: Xi");
 	    gretl_matrix_print(Zi, "do_units: Zi");
@@ -847,9 +847,6 @@ static int do_units (dpdinfo *dpd, char *d_order,
 				      Yi, GRETL_MOD_TRANSPOSE,
 				      dpd->ZY, GRETL_MOD_CUMULATE);
 	    /* stack the individual Zi's for future use */
-#if DPDEBUG == 1
-	    gretl_matrix_print(Zi, "Zi, in do units");
-#endif
 	    gretl_matrix_inscribe_matrix(dpd->ZT, Zi, 0, Zcol,
 					 GRETL_MOD_NONE);
 	    Zcol += Zi->cols;
