@@ -4,6 +4,8 @@ version 1.9.2, in progress
   testing as a side-effect
 - The "open" command now supports http to get a data file
   (of any supported format) from the web
+- "kalman": allow a constant term in the state transition
+  equation
 - New function invmills() to get the inverse Mills ratio
 - New accessor $mnl_probs to get the estimated outcome
   probabilities for a multinomial logit model (plus GUI
@@ -20,6 +22,8 @@ version 1.9.2, in progress
 - Fix for finding user's customized LaTeX preamble file 
 - Fix: more rigorous detection of whether TeX output is PDF
   rather than DVI
+- Traditional Chinese locale: encode text to CP950 for EMF
+  files via gnuplot
 - Internals: modify GUI sources to ensure that gretl will build 
   OK with the forthcoming GTK+ 3.0
 
