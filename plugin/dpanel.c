@@ -611,7 +611,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    lastdiff = j;
 	}
 
-	/* equations in levels: exog vars */
+	/* equations in levels: levels of exog vars */
 	if (dpd->nx > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
