@@ -64,6 +64,7 @@ struct dpdinfo_ {
     int N;                /* total number of units in sample */
     int effN;             /* number of units with usable observations */
     int T;                /* total number of observations per unit */
+    int minTi;            /* minumum equations (> 0) for any given unit */
     int maxTi;            /* maximum equations for any given unit */
     int k;                /* number of parameters estimated */
     int nobs;             /* total observations actually used */
@@ -519,6 +520,7 @@ static dpdinfo *dpdinfo_new (const int *list, const double **Z,
     dpd->T = pdinfo->pd;              /* max obs. per individual */
     dpd->effN = dpd->N = NT / dpd->T; /* included individuals */
     dpd->k = dpd->p + dpd->nx;        /* # of coeffs on lagged dep var, indep vars */
+    dpd->minTi = 0;
     dpd->maxTi = 0;
     dpd->nz = 0;
     dpd->pc0 = 0;
@@ -1688,6 +1690,21 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	if ((dpd->flags & DPD_TWOSTEP) && (dpd->flags & DPD_ASYERRS)) {
 	    gretl_model_set_int(pmod, "asy", 1);
 	}
+	if (dpd->A != NULL) {
+	    gretl_model_set_int(pmod, "ninst", dpd->A->rows);
+	}
+	if (pmod->ci == DPANEL) {
+	    if (dpd->flags & DPD_SYSTEM) {
+		pmod->opt |= OPT_L;
+	    }
+	    if (dpd->flags & DPD_DPDSTYLE) {
+		pmod->opt |= OPT_X;
+	    }
+	    if (dpd->maxTi > 0 && dpd->minTi > 0 && dpd->maxTi > dpd->minTi) {
+		gretl_model_set_int(pmod, "Tmin", dpd->minTi);
+		gretl_model_set_int(pmod, "Tmax", dpd->maxTi);
+	    }
+	}	    
     }
 
     return err;

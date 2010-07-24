@@ -7,7 +7,7 @@
    prototype code, newmask.c.
 */
 
-#define DPDEBUG 2
+#define DPDEBUG 0
 
 #define LEV_ONLY (-1) /* flag for an obs that's good only for levels */
 
@@ -16,10 +16,10 @@
 /* For a given unit, whose observations start at @t0: count the
    available residuals and while we're at it transcribe those
    residuals into the vector @ui. We place residuals from the
-   differences equations first, then those from the levels 
+   differences equations first, followed by those from the levels
    equations in the "system" case.
 
-   If @ui is NULL we just count and don't transcribe.
+   (If @ui is NULL we just count and don't transcribe.)
 */
 
 static int n_available_residuals (dpdinfo *dpd, gretl_matrix *ui,
@@ -187,8 +187,9 @@ static int dpanel_step1_variance (dpdinfo *dpd, const DATAINFO *pdinfo,
     return err;
 }
 
-static int dpanel_add_residuals (dpdinfo *dpd, const double **Z, 
-				 const DATAINFO *pdinfo)
+static int 
+dpanel_add_residuals (dpdinfo *dpd, const char *d_order,
+		      const double **Z, const DATAINFO *pdinfo)
 {
     const double *b = dpd->beta->val;
     const double *x;
@@ -209,12 +210,8 @@ static int dpanel_add_residuals (dpdinfo *dpd, const double **Z,
 
     for (t=0; t<pdinfo->n; t++) {
 	if (dpd->used[t] > 0) {
-	    /* find the lag needed to create a valid difference */
-	    k = t - 1;
-	    while (dpd->used[k] <= 0) {
-		k--;
-	    }
-	    k = t - k;
+	    /* look up the lag needed to create a valid difference */
+	    k = d_order[t];
 	    j = 0;
 	    ut = dpd->y[t] - dpd->y[t-k];
 	    for (i=1; i<=dpd->laglist[0]; i++) {
@@ -256,6 +253,12 @@ static int dpanel_add_residuals (dpdinfo *dpd, const double **Z,
 	    return E_ALLOC;
 	}
 
+	/* These will be over-written, print them here for
+	   reference */
+	fprintf(stderr, "nobs (diffs) = %d\n", dpd->nobs);
+	fprintf(stderr, "SSR (diffs) = %g\n", dpd->SSR);
+	fprintf(stderr, "s^2 (diffs) = %g\n", dpd->s2);
+
 	s = 0;
 
  	for (t=0; t<pdinfo->n; t++) {
@@ -277,10 +280,6 @@ static int dpanel_add_residuals (dpdinfo *dpd, const double **Z,
 		nobs_lev++;
 	    }
 	}
-
-	fprintf(stderr, "nobs (levels) = %d\n", nobs_lev);
-	fprintf(stderr, "SSR (levels) = %g\n", SSR_lev);
-	fprintf(stderr, "s^2 (levels) = %g\n", SSR_lev / (nobs_lev - dpd->k));
 
 	dpd->nobs = nobs_lev;
 	dpd->SSR = SSR_lev;
@@ -421,11 +420,15 @@ static void compute_H (gretl_matrix *H, int nh,
 }
 
 /* Build row vector of dependent variable values in @Yi using
-   differences, followed by levels if wanted.
+   differences, followed by levels if wanted. As we go, we write into
+   @d_order the order of differencing at each observation (allowing
+   for the possibility that we need a difference of order greater than
+   1 due to missing values). This information will be needed when
+   calculating the residuals from the equations in differences.
 */
 
 static void build_Y (dpdinfo *dpd, int *goodobs, const double **Z, 
-		     int t, gretl_matrix *Yi)
+		     int t, gretl_matrix *Yi, char *d_order)
 {
     int i, usable = goodobs[0] - 1;
     int maxlag = dpd->p;
@@ -443,6 +446,7 @@ static void build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	t0 = t + i0;
 	t1 = t + i1;
 	dy = dpd->y[t1] - dpd->y[t0];
+	d_order[t1] = t1 - t0;
 	gretl_vector_set(Yi, i1-1-maxlag, dy);
     }
     
@@ -527,8 +531,6 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
    instruments for equations in levels if wanted.
 */
 
-#define ALT_LAGGED_Y 0
-
 static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
 		     int t, int nz_diff, int nz_lev, 
 		     gretl_matrix *Zi)
@@ -547,55 +549,22 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 
     /* equations in differences: lagged levels of y */
     for (i=0; i<usable; i++) {
-	int d;
-
 	i0 = goodobs[i+1];
 	i1 = goodobs[i+2];
-	d = i1 - i0;
 	col = i1 - 1 - maxlag;
-#if ALT_LAGGED_Y
-	/* I thought that the row-placement of the lagged levels was
-	   perhaps wrong here, for the case when a difference of order
-	   greater than 1 has to be used. But I'm not sure that what I
-	   have here is right, and it's difficult to find firm ground
-	   to stand on. I'm leaving this code here for now, but not
-	   activated. AC 2010-07-23
-	*/
-	k = (i1-1) * (i1-2) / 2; /* calculate the base row */
-	fprintf(stderr, "Zi: i0=%d, i1=%d, d=%d, base row=%d\n", i0, i1, d, k);
-	for (j=0; j<i1-1; j++) {
-	    int lag = i1 - 1 - j + d;
-	    int pos = i1 - lag;
-
-	    if (pos < 0) {
-		fprintf(stderr, "skippingZi(%d,%d): out of bounds\n", k, col);
-	    } else {
-		y0 = dpd->y[t+pos];
-		if (!na(y0)) {
-		    fprintf(stderr, "setting Zi(%d,%d) = y[%d] = %g\n", k, col, pos, y0);
-		    gretl_matrix_set(Zi, k, col, y0);
-		} else {
-		    fprintf(stderr, "skipping Zi(%d,%d): NA\n", k, col);
-		}
-	    }
-	    k++;
-	}
-#else
-	k = i0 * (i0-1) / 2;
-	fprintf(stderr, "Zi: i0=%d, i1=%d, d=%d, base row=%d\n", i0, i1, d, k);
+	k = i0 * (i0 - 1) / 2;
+#if DPDEBUG
+	fprintf(stderr, "Zi: i0=%d, i1=%d, base row=%d\n", i0, i1, k);
+#endif
 	for (j=0; j<i0; j++) {
 	    if (qmax == 0 || j > i0 - qmax) {
 		y0 = dpd->y[t+j];
 		if (!na(y0)) {
-		    fprintf(stderr, "setting Zi(%d,%d) = y[%d] = %g\n", k, col, j, y0);
 		    gretl_matrix_set(Zi, k, col, y0);
-		} else {
-		    fprintf(stderr, "skipping Zi(%d,%d) = NA\n", k, col);
-		}
+		} 
 	    } 
 	    k++;
 	}
-#endif
     }
 
     /* equations in differences: differenced exog vars */
@@ -657,9 +626,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
-/*
-  Here we construct \hat{\beta} from the moment matrices.
-*/
+/* Here we compute \hat{\beta} from the moment matrices. */
 
 static int do_estimator (dpdinfo *dpd, char **ZZmask)
 {
@@ -721,6 +688,8 @@ static int do_estimator (dpdinfo *dpd, char **ZZmask)
     gretl_matrix_free(M2);
 
     if (!err) {
+	/* save the matrices needed for computing the
+	   variance of \hat{\beta} */
 	dpd->den = M1;
 	dpd->A = iZZ;
 	gretl_matrix_divide_by_scalar(dpd->den, dpd->N);
@@ -774,8 +743,9 @@ static int dpd_allocate_new (dpdinfo *dpd, int north,
    the panel units to build the moment matrices.
 */
 
-static int do_units (dpdinfo *dpd, const double **Z, 
-		     const DATAINFO *pdinfo, PRN *prn)
+static int do_units (dpdinfo *dpd, char *d_order,
+		     const double **Z, const DATAINFO *pdinfo, 
+		     PRN *prn)
 {
     gretl_matrix *D = NULL;
     gretl_matrix *H = NULL;
@@ -831,6 +801,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 
     /* initialize observation counts */
     dpd->effN = dpd->nobs = 0;
+    dpd->minTi = dpd->T;
 
     for (t=pdinfo->t1; t<pdinfo->t2; t+=dpd->T) {
 	int Ti = check_unit_obs(dpd, goodobs, Z, t);
@@ -847,6 +818,9 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	    if (Ti > dpd->maxTi) {
 		dpd->maxTi = Ti;
 	    }
+	    if (Ti < dpd->minTi) {
+		dpd->minTi = Ti;
+	    }	    
 	    if (D != NULL) {
 		build_unit_D_matrix(dpd, goodobs, D);
 	    }
@@ -856,7 +830,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 		gretl_matrix_print(H, "H");
 	    }
 #endif
-	    build_Y(dpd, goodobs, Z, t, Yi);
+	    build_Y(dpd, goodobs, Z, t, Yi, d_order);
 	    build_X(dpd, goodobs, Z, t, Xi);
 	    build_Z(dpd, goodobs, Z, t, nz_diff, nz_lev, Zi);
 #if DPDEBUG > 1
@@ -933,11 +907,13 @@ static int do_units (dpdinfo *dpd, const double **Z,
    dpd->effN: number of units actually used
    dpd->maxTi: the max number of equations in differences
                for any unit
+   dpd->minTi: the min number of equations in differences
+               for any unit actually used
    dpd->nz:   total number of instruments
-   dpd->XZ:   cross-moment matrix (NULL, so far)
+   dpd->XZ:   cross-moment matrix (not allocated yet)
    dpd->ZZ:   ditto
    dpd->ZY:   ditto
-   dpd->ZT:   all Zs, ditto
+   dpd->ZT:   all Zs, stacked, not allocated yet
 
 */
 
@@ -948,6 +924,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
     struct diag_info *d = NULL;
     dpdinfo *dpd = NULL;
     char *ZZmask = NULL;
+    char *d_order = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
@@ -962,14 +939,23 @@ MODEL dpd_estimate (const int *list, const char *istr,
     }
 
     dpd_allocate_matrices(dpd);
+
+    /* additional info that should be folded into dpdinfo
+       at some point */
+
     dpd->used = calloc(pdinfo->n, 1);
     if (dpd->used == NULL) {
 	err = E_ALLOC;
     } 
 
+    d_order = calloc(pdinfo->n, 1);
+    if (d_order == NULL) {
+	err = E_ALLOC;
+    }     
+
     if (!err) {
 	/* build the moment matrices */
-	err = do_units(dpd, Z, pdinfo, prn);
+	err = do_units(dpd, d_order, Z, pdinfo, prn);
     }
 
 #if DPDEBUG > 0
@@ -986,7 +972,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
 
     if (!err) {
 	/* add residuals in differences */
-	err = dpanel_add_residuals(dpd, Z, pdinfo);
+	err = dpanel_add_residuals(dpd, d_order, Z, pdinfo);
     }
 
     if (!err) {
@@ -1019,6 +1005,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
 
     dpdinfo_free(dpd);
     free(ZZmask);
+    free(d_order);
 
     return mod;
 }

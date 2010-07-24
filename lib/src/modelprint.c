@@ -418,11 +418,22 @@ static void print_GMM_stats (const MODEL *pmod, PRN *prn)
 static void print_DPD_stats (const MODEL *pmod, PRN *prn)
 {
     double x;
+    int k;
 
     ensure_vsep(prn);
 
     if (tex_format(prn)) {
 	pputs(prn, "\\begin{tabular}{ll}\n");
+    }
+
+    k = gretl_model_get_int(pmod, "ninst");
+    if (k > 0) {
+	if (plain_format(prn)) {
+	    pprintf(prn, _("Number of instruments = %d"), k);
+	} else {
+	    pprintf(prn, I_("Number of instruments = %d"), k);
+	}
+	gretl_prn_newline(prn);
     }
 
     x = gretl_model_get_double(pmod, "AR1");
@@ -1686,6 +1697,7 @@ static void print_model_heading (const MODEL *pmod,
 	    }
 	} 
     } else {
+	/* panel data */
 	int effn = gretl_model_get_int(pmod, "n_included_units");
 	int Tmin = gretl_model_get_int(pmod, "Tmin");
 	int Tmax = gretl_model_get_int(pmod, "Tmax");
@@ -1704,6 +1716,16 @@ static void print_model_heading (const MODEL *pmod,
 		pprintf(prn, I_("Time-series length: minimum %d, maximum %d"), 
 			Tmin, Tmax);
 	    }
+	}
+	if (pmod->ci == DPANEL) {
+	    if (pmod->opt & OPT_L) {
+		gretl_prn_newline(prn);
+		pputs(prn, "Including equations in levels");
+	    }
+	    if (pmod->opt & OPT_X) {
+		gretl_prn_newline(prn);
+		pputs(prn, "H-matrix as per Ox/DPD");
+	    }	    
 	}
     }
 
