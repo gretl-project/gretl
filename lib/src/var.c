@@ -2896,9 +2896,6 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     jvar = johansen_wrapper(VECM_ESTIMATE, order, rank, lags, list, 
 			    NULL, Z, pdinfo, opt, prn, err);
 
-    fprintf(stderr, "HERE: jvar = %p, jvar->err = %d\n",
-	    (void *) jvar, (jvar == NULL)? 1: jvar->err);
-    
     if (jvar != NULL && !jvar->err) {
 	gretl_VAR_print(jvar, pdinfo, opt, prn);
     } 
