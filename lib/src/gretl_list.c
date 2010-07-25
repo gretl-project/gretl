@@ -146,9 +146,11 @@ int max_varno_in_saved_lists (void)
 
     for (i=0; i<n_lists; i++) {
 	list = list_stack[i]->list;
-	for (j=1; j<=list[0]; j++) {
-	    if (list[j] > vmax) {
-		vmax = list[j];
+	if (list != NULL) {
+	    for (j=1; j<=list[0]; j++) {
+		if (list[j] > vmax) {
+		    vmax = list[j];
+		}
 	    }
 	}
     }    
@@ -717,9 +719,11 @@ int gretl_lists_revise (const int *dlist, int dmin)
     /* find highest ID ref'd in any saved list */
     for (j=0; j<n_lists; j++) {
 	list = list_stack[j]->list;
-	for (i=1; i<=list[0]; i++) {
-	    if (list[i] > lmax) {
-		lmax = list[i];
+	if (list != NULL) {
+	    for (i=1; i<=list[0]; i++) {
+		if (list[i] > lmax) {
+		    lmax = list[i];
+		}
 	    }
 	}
     }
@@ -749,6 +753,9 @@ int gretl_lists_revise (const int *dlist, int dmin)
     /* use mapping to revise saved lists */
     for (j=0; j<n_lists; j++) {
 	list = list_stack[j]->list;
+	if (list == NULL) {
+	    continue;
+	}
 	for (i=list[0]; i>0; i--) {
 	    k = list[i] - dmin + 1;
 	    if (k >= 1) {
