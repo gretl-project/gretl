@@ -998,6 +998,7 @@ static int sargan_test (dpdinfo *dpd)
 	if (dpd->flags & DPD_ORTHDEV) {
 	    dpd->sargan /= dpd->s2;
 	} else {
+	    fprintf(stderr, "before scaling, sargan = %g\n", dpd->sargan);
 	    dpd->sargan *= 2.0 / dpd->s2; 
 	}
     }
