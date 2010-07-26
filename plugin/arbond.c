@@ -117,7 +117,6 @@ struct dpdinfo_ {
     gretl_matrix *XZ;      /* cross-moments */
     gretl_matrix *ZY;      /* ditto */
     gretl_matrix *ZZ;      /* ditto */
-    gretl_matrix *uhl;     /* residuals in levels */
     int *laglist;          /* (possibly discontinuous) list of lags */
 };
 
@@ -157,7 +156,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 {
     int T = dpd->maxTi;
 
-    dpd->XZ = dpd->ZY = dpd->ZZ = dpd->uhl = NULL;
+    dpd->XZ = dpd->ZY = dpd->ZZ = NULL;
 
     if (dpd->flags & DPD_NEWSTYLE) {
 	/* temporary hack */
@@ -174,8 +173,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 	if (dpd->B1 == NULL) {
 	    return E_ALLOC;
 	} else {
-	    /* FIXME */
-	    gretl_matrix_inscribe_I(dpd->vbeta, 0, 0, dpd->k);
+	    gretl_matrix_zero(dpd->vbeta);
 	    return 0;	
 	}
     }
@@ -526,6 +524,8 @@ static dpdinfo *dpdinfo_new (const int *list, const double **Z,
     dpd->pc0 = 0;
     dpd->xc0 = 0;
     dpd->nobs = 0;
+    dpd->ndiff = 0;
+    dpd->nlev = 0;
     dpd->SSR = NADBL;
     dpd->s2 = NADBL;
     dpd->AR1 = NADBL;
@@ -1211,18 +1211,31 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
     gretl_matrix *TT;  /* workspace follows */
     gretl_matrix *mT;  
     gretl_matrix *km;  
-    gretl_matrix *k1;  
+    gretl_matrix *k1; 
+    int max_ni, totobs;
     int i, j, t;
     int err = 0;
 
     aV = gretl_matrix_copy(dpd->vbeta);
+    if (aV == NULL) {
+	return E_ALLOC;
+    }
+
+    max_ni = dpd->maxTi;
+    totobs = dpd->nobs;
+
+    if (dpd->flags & DPD_SYSTEM) {
+	/* levels included */
+	max_ni += dpd->maxTi + 1;
+	totobs += dpd->ndiff;
+    }    
 
     B = gretl_matrix_block_new(&D,   dpd->k, dpd->k,
 			       &dWj, dpd->nz, dpd->nz,
-			       &ui,  dpd->maxTi, 1,
-			       &xij, dpd->maxTi, 1,
-			       &TT,  dpd->maxTi, dpd->maxTi,
-			       &mT,  dpd->nz, dpd->nobs,
+			       &ui,  max_ni, 1,
+			       &xij, max_ni, 1,
+			       &TT,  max_ni, max_ni,
+			       &mT,  dpd->nz, totobs,
 			       &km,  dpd->k, dpd->nz,
 			       &k1,  dpd->k, 1,
 			       NULL);
@@ -1247,24 +1260,24 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	/* form dWj = -(1/N) \sum Z_i'(X_j u' + u X_j')Z_i */
 
 	for (i=0; i<dpd->N; i++) {
-	    int Ti = dpd->ui[i].nobs;
+	    int ni = dpd->ui[i].nobs;
 
-	    if (Ti == 0) {
+	    if (ni == 0) {
 		continue;
 	    }
 
-	    gretl_matrix_reuse(ui, Ti, 1);
-	    gretl_matrix_reuse(xij, Ti, 1);
-	    gretl_matrix_reuse(dpd->Zi, Ti, dpd->nz);
-	    gretl_matrix_reuse(TT, Ti, Ti);
+	    gretl_matrix_reuse(ui, ni, 1);
+	    gretl_matrix_reuse(xij, ni, 1);
+	    gretl_matrix_reuse(dpd->Zi, ni, dpd->nz);
+	    gretl_matrix_reuse(TT, ni, ni);
 
-	    /* extract ui */
-	    for (t=0; t<Ti; t++) {
+	    /* extract ui (first-step residuals) */
+	    for (t=0; t<ni; t++) {
 		ui->val[t] = uhat1->val[s++];
 	    }
 
 	    /* extract xij */
-	    gretl_matrix_extract_matrix(xij, dpd->X, s - Ti, j,
+	    gretl_matrix_extract_matrix(xij, dpd->X, s - ni, j,
 					GRETL_MOD_NONE);
 	    gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
 				      xij, GRETL_MOD_TRANSPOSE,
@@ -1272,7 +1285,7 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	    gretl_matrix_add_self_transpose(TT);
 
 	    /* extract Zi */
-	    gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, s - Ti,
+	    gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, s - ni,
 					GRETL_MOD_TRANSPOSE);
 
 	    gretl_matrix_qform(dpd->Zi, GRETL_MOD_TRANSPOSE,
@@ -1472,7 +1485,7 @@ static int dpd_variance (dpdinfo *dpd)
     if (dpd->step == 2) {
 	err = dpd_variance_2(dpd);
 	if (!err && (dpd->flags & DPD_WINCORR)) {
-	    windmeijer_correct(dpd, u1, V1);
+	    err = windmeijer_correct(dpd, u1, V1);
 	    gretl_matrix_free(u1);
 	    gretl_matrix_free(V1);
 	}
@@ -1583,6 +1596,37 @@ static int make_first_diff_matrix (dpdinfo *dpd, int i)
     return 0;
 }
 
+/* For the "dpanel" case where dpd->uhat contains both differenced
+   residuals and levels residuals (stacked per unit) trim the vector
+   down so that it conly contains the levels residuals prior to
+   transcribing the residuals in series form.  
+*/
+
+static int condense_uhat (dpdinfo *dpd)
+{
+    gretl_matrix *u;
+    int i, k, s, t;
+
+    u = gretl_column_vector_alloc(dpd->nlev);
+    if (u == NULL) {
+	return E_ALLOC;
+    }
+
+    k = s = 0;
+    for (i=0; i<dpd->N; i++) {
+	/* skip residuals in differences */
+	k += dpd->ui[i].t1;
+	for (t=0; t<dpd->ui[i].t2; t++) {
+	    u->val[s++] = dpd->uhat->val[k++];
+	}
+    }
+
+    gretl_matrix_free(dpd->uhat);
+    dpd->uhat = u;
+
+    return 0;
+}
+
 static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 			       const int *list, const char *istr,
 			       const DATAINFO *pdinfo,
@@ -1658,6 +1702,10 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     }
 
     /* add uhat, yhat */
+
+    if (!err && dpd->nlev > 0) {
+	err = condense_uhat(dpd);
+    }
 
     if (!err) {
 	if (dpd->flags & DPD_NEWSTYLE) {
@@ -2307,42 +2355,6 @@ static int dpd_invert_A_N (dpdinfo *dpd)
 #endif
 
     return err;
-}
-
-static int trim_zero_inst (gretl_matrix *XZ, gretl_matrix *ZZ, 
-			   gretl_matrix *ZY, char **pmask)
-{
-    int i, n = ZZ->rows;
-    int trim = 0;
-
-    for (i=0; i<n; i++) {
-	if (gretl_matrix_get(ZZ, i, i) == 0.0) {
-	    trim = 1;
-	    break;
-	}
-    }
-
-    if (trim) {
-	char *mask = calloc(n, 1);
-
-	for (i=0; i<n; i++) {
-	    if (gretl_matrix_get(ZZ, i, i) == 0.0) {
-		mask[i] = 1;
-	    }
-	}
-
-	gretl_matrix_cut_cols(XZ, mask);
-	gretl_matrix_cut_rows_cols(ZZ, mask);
-	gretl_matrix_cut_rows(ZY, mask);
-
-	if (pmask != NULL) {
-	    *pmask = mask;
-	} else {
-	    free(mask);
-	}
-    }
-
-    return ZZ->rows;
 }
 
 /* public interface: driver for Arellano-Bond type estimation */
