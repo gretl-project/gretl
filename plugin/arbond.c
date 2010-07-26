@@ -100,7 +100,7 @@ struct dpdinfo_ {
     gretl_matrix *L1;
     gretl_matrix *XZA;
     gretl_matrix *R1;
-    gretl_matrix *ZX;
+    gretl_matrix *XZ;
     struct diag_info *d;   /* info on block-diagonal instruments */
     unit_info *ui;         /* old-style info on panel units */
 
@@ -114,8 +114,7 @@ struct dpdinfo_ {
     int nlev;              /* total levels observations */
     int max_ni;            /* max number of (possibly stacked) obs per unit */
     char *used;            /* global record of observations used */
-    gretl_matrix *XZ;      /* cross-moments */
-    gretl_matrix *ZY;      /* ditto */
+    gretl_matrix *ZY;      /* cross-moment matrix */
     gretl_matrix *ZZ;      /* ditto */
     int *laglist;          /* (possibly discontinuous) list of lags */
 };
@@ -156,7 +155,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 {
     int T = dpd->maxTi;
 
-    dpd->XZ = dpd->ZY = dpd->ZZ = NULL;
+    dpd->ZY = dpd->ZZ = NULL;
 
     if (dpd->flags & DPD_NEWSTYLE) {
 	/* temporary hack */
@@ -164,7 +163,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 	dpd->Acpy = dpd->Zi = dpd->Y = dpd->X = NULL;
 
 	dpd->tmp1 = dpd->kmtmp = dpd->kktmp = dpd->den = NULL;
-	dpd->L1 = dpd->XZA = dpd->R1 = dpd->ZX = NULL;
+	dpd->L1 = dpd->XZA = dpd->R1 = dpd->XZ = NULL;
 
 	dpd->B1 = gretl_matrix_block_new(&dpd->beta,  dpd->k, 1,
 					 &dpd->vbeta, dpd->k, dpd->k,
@@ -200,7 +199,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
 				     &dpd->L1,    1, dpd->nz,
 				     &dpd->XZA,   dpd->k, dpd->nz,
 				     &dpd->R1,    dpd->nz, 1,
-				     &dpd->ZX,    dpd->nz, dpd->k,
+				     &dpd->XZ,    dpd->k, dpd->nz,
 				     NULL);
 
     if (dpd->B2 == NULL) {
@@ -975,7 +974,12 @@ static int sargan_test (dpdinfo *dpd)
     }
 
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, Zu);
-    gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
+
+    if ((dpd->flags & DPD_NEWSTYLE) && dpd->step == 1) {
+	; /* FIXME regularize this somehow */
+    } else {
+	gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
+    }
     gretl_matrix_multiply(dpd->A, Zu, m1);
 
     dpd->sargan = gretl_matrix_dot_product(Zu, GRETL_MOD_TRANSPOSE,
@@ -1323,11 +1327,13 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 
 /* second-step (asymptotic) variance */
 
-static int dpd_variance_2 (dpdinfo *dpd)
+static int dpd_variance_2 (dpdinfo *dpd,
+			   gretl_matrix *u1,
+			   gretl_matrix *V1)
 {
     int err;
 
-    err = gretl_matrix_qform(dpd->ZX, GRETL_MOD_TRANSPOSE, dpd->V,
+    err = gretl_matrix_qform(dpd->XZ, GRETL_MOD_NONE, dpd->V,
 			     dpd->vbeta, GRETL_MOD_NONE);
 
     if (!err) {
@@ -1336,7 +1342,11 @@ static int dpd_variance_2 (dpdinfo *dpd)
 
     if (!err) {
 	gretl_matrix_multiply_by_scalar(dpd->vbeta, dpd->effN);
-    }   
+    }  
+
+    if (!err && u1 != NULL && V1 != NULL) {
+	err = windmeijer_correct(dpd, u1, V1);
+    } 
 
     return err;
 }
@@ -1366,7 +1376,7 @@ static int dpd_variance_1 (dpdinfo *dpd)
 
     kk = gretl_matrix_alloc(dpd->k, dpd->k);
     V = gretl_zero_matrix_new(dpd->nz, dpd->nz);
-    ui = gretl_column_vector_alloc(dpd->maxTi);
+    ui = gretl_column_vector_alloc(dpd->max_ni);
 
     if (kk == NULL || V == NULL || ui == NULL) {
 	gretl_matrix_free(kk);
@@ -1378,21 +1388,21 @@ static int dpd_variance_1 (dpdinfo *dpd)
     c = k = 0;
 
     for (i=0; i<dpd->N; i++) {
-	int Ti = dpd->ui[i].nobs;
+	int ni = dpd->ui[i].nobs;
 
-	if (Ti == 0) {
+	if (ni == 0) {
 	    continue;
 	}
 
 	/* get per-unit instruments matrix, Zi */
-	gretl_matrix_reuse(dpd->Zi, Ti, dpd->nz);
-	gretl_matrix_reuse(ui, Ti, 1);
+	gretl_matrix_reuse(dpd->Zi, ni, dpd->nz);
+	gretl_matrix_reuse(ui, ni, 1);
 	gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, c,
 				    GRETL_MOD_TRANSPOSE);
-	c += Ti;
+	c += ni;
 	
 	/* load residuals into the ui vector */
-	for (t=0; t<Ti; t++) {
+	for (t=0; t<ni; t++) {
 	    ui->val[t] = dpd->uhat->val[k++];
 	}
 
@@ -1407,14 +1417,16 @@ static int dpd_variance_1 (dpdinfo *dpd)
     gretl_matrix_divide_by_scalar(V, dpd->effN);
 
     /* form X'Z A_N Z'X  */
-    gretl_matrix_multiply_mod(dpd->ZX, GRETL_MOD_TRANSPOSE,
-			      dpd->A, GRETL_MOD_NONE,
-			      dpd->kmtmp, GRETL_MOD_NONE);
+    gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->kmtmp);
     gretl_matrix_qform(dpd->kmtmp, GRETL_MOD_NONE, V,
 		       kk, GRETL_MOD_NONE);
 
     /* pre- and post-multiply by C^{-1} */
-    err = gretl_invert_symmetric_matrix(dpd->den);
+    if (!(dpd->flags & DPD_NEWSTYLE)) {
+	/* the new-style \hat{\beta} calculation has 
+	   already done this inversion */
+	err = gretl_invert_symmetric_matrix(dpd->den);
+    }
     if (!err) {
 	gretl_matrix_qform(dpd->den, GRETL_MOD_NONE, kk, 
 			   dpd->vbeta, GRETL_MOD_NONE);
@@ -1436,7 +1448,8 @@ static int dpd_variance_1 (dpdinfo *dpd)
 
 static void dpd_residuals (dpdinfo *dpd)
 {
-    double ut, x;
+    const double *b = dpd->beta->val;
+    double x, ut;
     int i, j, t, k = 0;
 
     dpd->SSR = 0.0;
@@ -1448,7 +1461,7 @@ static void dpd_residuals (dpdinfo *dpd)
 	    ut = dpd->Y->val[k]; 
 	    for (j=0; j<dpd->k; j++) {
 		x = gretl_matrix_get(dpd->X, k, j);
-		ut -= dpd->beta->val[j] * x;
+		ut -= b[j] * x;
 	    }
 	    dpd->SSR += ut * ut;
 	    dpd->uhat->val[k++] = ut;
@@ -1478,12 +1491,9 @@ static int dpd_variance (dpdinfo *dpd)
     dpd_residuals(dpd);
 
     if (dpd->step == 2) {
-	err = dpd_variance_2(dpd);
-	if (!err && (dpd->flags & DPD_WINCORR)) {
-	    err = windmeijer_correct(dpd, u1, V1);
-	    gretl_matrix_free(u1);
-	    gretl_matrix_free(V1);
-	}
+	err = dpd_variance_2(dpd, u1, V1);
+	gretl_matrix_free(u1);
+	gretl_matrix_free(V1);
     } else {
 	err = dpd_variance_1(dpd);
     }
@@ -1852,8 +1862,8 @@ static void real_shrink_matrices (dpdinfo *dpd, const char *mask)
     gretl_matrix_reuse(dpd->kmtmp, -1, dpd->nz);
     gretl_matrix_reuse(dpd->L1,    -1, dpd->nz);
     gretl_matrix_reuse(dpd->XZA,   -1, dpd->nz);
+    gretl_matrix_reuse(dpd->XZ,    -1, dpd->nz);
     gretl_matrix_reuse(dpd->R1,    dpd->nz, -1);
-    gretl_matrix_reuse(dpd->ZX,    dpd->nz, -1);
 }
 
 /* Remove zero rows/cols from A, as indicated by mask, and delete the
@@ -1912,18 +1922,18 @@ static int dpd_calculate (dpdinfo *dpd)
 
     /* find Z'X, if this job is not already done */
     if (dpd->step == 1) {
-	gretl_matrix_multiply(dpd->ZT, dpd->X, dpd->ZX);
+	err = gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
+					dpd->ZT, GRETL_MOD_TRANSPOSE,
+					dpd->XZ, GRETL_MOD_NONE);
     }
 
 #if ADEBUG
-    gretl_matrix_print(dpd->ZX, "Z'X (dpd_calculate)");
+    gretl_matrix_print(dpd->XZ, "XZ' (dpd_calculate)");
     gretl_matrix_print(dpd->A, "A (dpd_calculate)");
 #endif
 
     /* find X'Z A */
-    gretl_matrix_multiply_mod(dpd->ZX, GRETL_MOD_TRANSPOSE,
-			      dpd->A, GRETL_MOD_NONE,
-			      dpd->XZA, GRETL_MOD_NONE);
+    gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
 
     /* calculate "numerator", X'ZAZ'y */
     gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->R1);
@@ -1934,7 +1944,9 @@ static int dpd_calculate (dpdinfo *dpd)
     gretl_matrix_multiply(dpd->XZA, dpd->R1, dpd->beta);
 
     /* calculate "denominator", X'ZAZ'X */
-    gretl_matrix_multiply(dpd->XZA, dpd->ZX, dpd->den);
+    gretl_matrix_multiply_mod(dpd->XZA, GRETL_MOD_NONE,
+			      dpd->XZ, GRETL_MOD_TRANSPOSE,
+			      dpd->den, GRETL_MOD_NONE);
     gretl_matrix_xtr_symmetric(dpd->den);
 
     gretl_matrix_copy_values(dpd->kktmp, dpd->den);
@@ -1961,6 +1973,7 @@ static int dpd_calculate (dpdinfo *dpd)
 
 static int dpd_step_2 (dpdinfo *dpd)
 {
+    gretl_matrix *Vcpy;
     int err = 0;
 
 #if ADEBUG
@@ -1968,14 +1981,23 @@ static int dpd_step_2 (dpdinfo *dpd)
 #endif
 
     if (gretl_matrix_rows(dpd->V) > dpd->effN) {
-	err = 1; /* we know this case won't work */
+	return E_DF; /* this case won't work? */
+    }
+
+    if (dpd->Acpy != NULL) {
+	Vcpy = dpd->Acpy;
+	gretl_matrix_copy_values(Vcpy, dpd->V);
     } else {
-	gretl_matrix_copy_values(dpd->Acpy, dpd->V);
-	err = gretl_invert_symmetric_matrix(dpd->V);
-	if (err) {
-	    /* revert the data in dpd->V */
-	    gretl_matrix_copy_values(dpd->V, dpd->Acpy);
+	Vcpy = gretl_matrix_copy(dpd->V);
+	if (Vcpy == NULL) {
+	    return E_ALLOC;
 	}
+    }	
+
+    err = gretl_invert_symmetric_matrix(dpd->V);
+    if (err) {
+	/* revert the data in dpd->V */
+	gretl_matrix_copy_values(dpd->V, Vcpy);
     }
 
     if (err) {
@@ -1990,6 +2012,10 @@ static int dpd_step_2 (dpdinfo *dpd)
 	gretl_matrix_copy_values(dpd->A, dpd->V);
 	dpd->step = 2;
 	err = dpd_calculate(dpd);
+    }
+
+    if (Vcpy != dpd->Acpy) {
+	gretl_matrix_free(Vcpy);
     }
 
     if (err) {
@@ -2099,7 +2125,7 @@ static int dpd_make_Z_and_A (dpdinfo *dpd, const double **Z)
     int err = 0;
 
     gretl_matrix_zero(dpd->A);
-    gretl_matrix_zero(dpd->ZX);
+    gretl_matrix_zero(dpd->XZ);
     gretl_matrix_zero(dpd->R1);
 
     for (i=0; i<dpd->N && !err; i++) {

@@ -10429,6 +10429,7 @@ gretl_matrix *gretl_matrix_trim_rows (const gretl_matrix *A,
     
     B = gretl_matrix_alloc(m, A->cols);
     if (B == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
