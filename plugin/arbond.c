@@ -635,15 +635,18 @@ static int dpd_find_t1min (dpdinfo *dpd, const double *y)
 /* check the sample for unit/individual i */
 
 static int dpd_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
-				  int *t1imin, int *t2max)
+				  int s, int *t1imin, int *t2max)
 {
     unit_info *unit = &dpd->ui[i];
     int t1i = dpd->T - 1, t2i = 0; 
-    int s = data_index(dpd, i);
     int tmin = dpd->p + 1;
     int Ti = 0;
     char *mask = NULL;
     int t;
+
+#if 1
+    s = data_index(dpd, i);
+#endif
 
 #if ADEBUG
     fprintf(stderr, "Checking unit %d\n", i);
@@ -763,10 +766,11 @@ static void dpd_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
 #endif
 }
 
-static int dpd_sample_check (dpdinfo *dpd, const double **Z)
+static int dpd_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
+			     const double **Z)
 {
     int t1min, t1imin = dpd->T - 1;
-    int t2max = 0;
+    int s, t2max = 0;
     int i, err = 0;
 
     /* find "global" first y observation */
@@ -781,8 +785,11 @@ static int dpd_sample_check (dpdinfo *dpd, const double **Z)
 	dpd->qmax = dpd->T;
     }
 
+    s = pdinfo->t1;
+
     for (i=0; i<dpd->N && !err; i++) {
-	err = dpd_sample_check_unit(dpd, Z, i, &t1imin, &t2max);
+	err = dpd_sample_check_unit(dpd, Z, i, s, &t1imin, &t2max);
+	s += dpd->T;
     }
 
     if (err) {
@@ -2416,7 +2423,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     }
 
     /* see if we have a usable sample */
-    err = dpd_sample_check(dpd, Z);
+    err = dpd_sample_check(dpd, pdinfo, Z);
     if (err) {
 	fprintf(stderr, "Error %d in dpd_sample_check\n", err);
     }
