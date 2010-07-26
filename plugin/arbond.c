@@ -112,8 +112,8 @@ struct dpdinfo_ {
 									
     int ndiff;             /* total differenced observations */
     int nlev;              /* total levels observations */
+    int max_ni;            /* max number of (possibly stacked) obs per unit */
     char *used;            /* global record of observations used */
-    const double *y;       /* dependent variable in dataset */
     gretl_matrix *XZ;      /* cross-moments */
     gretl_matrix *ZY;      /* ditto */
     gretl_matrix *ZZ;      /* ditto */
@@ -520,6 +520,7 @@ static dpdinfo *dpdinfo_new (const int *list, const double **Z,
     dpd->k = dpd->p + dpd->nx;        /* # of coeffs on lagged dep var, indep vars */
     dpd->minTi = 0;
     dpd->maxTi = 0;
+    dpd->max_ni = 0;
     dpd->nz = 0;
     dpd->pc0 = 0;
     dpd->xc0 = 0;
@@ -533,9 +534,6 @@ static dpdinfo *dpdinfo_new (const int *list, const double **Z,
     dpd->sargan = NADBL;
     dpd->wald = NADBL;
     dpd->wdf = 0;
-
-    /* convenience pointer */
-    dpd->y = Z[dpd->yno];
 
 #if ADEBUG
     fprintf(stderr, "yno = %d, p = %d, qmax = %d, qmin = %d, nx = %d, k = %d\n",
@@ -577,7 +575,7 @@ static int obs_is_usable (dpdinfo *dpd, const double **Z, int s)
     */
 
     for (i=0; i<=imax; i++) {
-	if (na(dpd->y[s-i])) {
+	if (na(Z[dpd->yno][s-i])) {
 	    return 0;
 	}
     }
@@ -612,7 +610,7 @@ static int bzcols (dpdinfo *dpd, int i)
 
 /* find the first y observation, all units */
 
-static int dpd_find_t1min (dpdinfo *dpd)
+static int dpd_find_t1min (dpdinfo *dpd, const double *y)
 {
     int t1min = dpd->T - 1;
     int i, s, t;
@@ -622,7 +620,7 @@ static int dpd_find_t1min (dpdinfo *dpd)
 	if (t1min > 0) {
 	    s = data_index(dpd, i);
 	    for (t=0; t<dpd->T; t++) {
-		if (!na(dpd->y[s+t])) {
+		if (!na(y[s+t])) {
 		    if (t < t1min) {
 			t1min = t;
 		    }
@@ -773,7 +771,7 @@ static int dpd_sample_check (dpdinfo *dpd, const double **Z)
     int i, err = 0;
 
     /* find "global" first y observation */
-    t1min = dpd_find_t1min(dpd);
+    t1min = dpd_find_t1min(dpd, Z[dpd->yno]);
 
 #if ADEBUG
     fprintf(stderr, "dpd_sample_check, initial scan: "
@@ -819,6 +817,7 @@ static int dpd_sample_check (dpdinfo *dpd, const double **Z)
     } else {
 	/* compute the number of columns in Zi */
 	dpd_compute_Z_cols(dpd, t1min, t2max);
+	dpd->max_ni = dpd->maxTi;
     }
 
     return err;
@@ -1212,7 +1211,7 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
     gretl_matrix *mT;  
     gretl_matrix *km;  
     gretl_matrix *k1; 
-    int max_ni, totobs;
+    int totobs = dpd->nobs;
     int i, j, t;
     int err = 0;
 
@@ -1221,20 +1220,16 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	return E_ALLOC;
     }
 
-    max_ni = dpd->maxTi;
-    totobs = dpd->nobs;
-
     if (dpd->flags & DPD_SYSTEM) {
 	/* levels included */
-	max_ni += dpd->maxTi + 1;
 	totobs += dpd->ndiff;
     }    
 
     B = gretl_matrix_block_new(&D,   dpd->k, dpd->k,
 			       &dWj, dpd->nz, dpd->nz,
-			       &ui,  max_ni, 1,
-			       &xij, max_ni, 1,
-			       &TT,  max_ni, max_ni,
+			       &ui,  dpd->max_ni, 1,
+			       &xij, dpd->max_ni, 1,
+			       &TT,  dpd->max_ni, dpd->max_ni,
 			       &mT,  dpd->nz, totobs,
 			       &km,  dpd->k, dpd->nz,
 			       &k1,  dpd->k, 1,
@@ -1510,19 +1505,21 @@ static int dpd_variance (dpdinfo *dpd)
     fprintf(stderr, "sigma = %.7g\n", sqrt(dpd->s2));
 #endif
 
-    /* carry out the various tests */
+    /* if we're on the final step, carry out the various tests */
 
-    if (!(dpd->flags & DPD_ORTHDEV)) {
-	if (dpd->step == 2) {
-	    err = gretl_invert_symmetric_matrix(dpd->den);
+    if (dpd->step == 2 || !(dpd->flags & DPD_TWOSTEP)) {
+	if (!(dpd->flags & DPD_ORTHDEV)) {
+	    if (dpd->step == 2) {
+		err = gretl_invert_symmetric_matrix(dpd->den);
+	    }
+	    if (!err) {
+		ar_test(dpd, dpd->den);
+	    }
 	}
-	if (!err) {
-	    ar_test(dpd, dpd->den);
-	}
+
+	sargan_test(dpd);
+	dpd_wald_test(dpd);
     }
-
-    sargan_test(dpd);
-    dpd_wald_test(dpd);
 
     return err;
 }
@@ -1596,19 +1593,19 @@ static int make_first_diff_matrix (dpdinfo *dpd, int i)
     return 0;
 }
 
-/* For the "dpanel" case where dpd->uhat contains both differenced
-   residuals and levels residuals (stacked per unit) trim the vector
-   down so that it conly contains the levels residuals prior to
-   transcribing the residuals in series form.  
+/* In the "dpanel" case dpd->uhat may contain both differenced
+   residuals and levels residuals (stacked per unit). In that case
+   trim the vector down so that it conly contains the levels residuals
+   prior to transcribing the residuals in series form.
 */
 
-static int condense_uhat (dpdinfo *dpd)
+static int dpanel_adjust_uhat (dpdinfo *dpd)
 {
-    gretl_matrix *u;
+    double *tmp;
     int i, k, s, t;
 
-    u = gretl_column_vector_alloc(dpd->nlev);
-    if (u == NULL) {
+    tmp = malloc(dpd->nlev * sizeof *tmp);
+    if (tmp == NULL) {
 	return E_ALLOC;
     }
 
@@ -1617,22 +1614,25 @@ static int condense_uhat (dpdinfo *dpd)
 	/* skip residuals in differences */
 	k += dpd->ui[i].t1;
 	for (t=0; t<dpd->ui[i].t2; t++) {
-	    u->val[s++] = dpd->uhat->val[k++];
+	    tmp[s++] = dpd->uhat->val[k++];
 	}
     }
 
-    gretl_matrix_free(dpd->uhat);
-    dpd->uhat = u;
+    for (t=0; t<dpd->nlev; t++) {
+	dpd->uhat->val[t] = tmp[t];
+    }
+
+    gretl_matrix_reuse(dpd->uhat, dpd->nlev, 1);
+    free(tmp);
 
     return 0;
 }
 
 static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 			       const int *list, const char *istr,
-			       const DATAINFO *pdinfo,
+			       const double *y, const DATAINFO *pdinfo,
 			       gretlopt opt)
 {
-    const double *y = dpd->y;
     char tmp[32];
     char prefix;
     int i, j;
@@ -1704,7 +1704,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     /* add uhat, yhat */
 
     if (!err && dpd->nlev > 0) {
-	err = condense_uhat(dpd);
+	err = dpanel_adjust_uhat(dpd);
     }
 
     if (!err) {
@@ -1712,7 +1712,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	    int t, s = 0;
 
 	    for (t=0; t<pdinfo->n; t++) {
-		if (dpd->used[t] > 0) {
+		if (dpd->used[t]) {
 		    pmod->uhat[t] = dpd->uhat->val[s++];
 		    pmod->yhat[t] = y[t] - pmod->uhat[t];
 		}
@@ -2029,10 +2029,10 @@ static double odev_at_lag (const double *x, int t, int lag, int pd)
     return ret;
 }
 
-static int dpd_make_y_X (dpdinfo *dpd, const double *y,
-			 const double **Z, 
+static int dpd_make_y_X (dpdinfo *dpd, const double **Z, 
 			 const DATAINFO *pdinfo)
 {
+    const double *y = Z[dpd->yno];
     unit_info *unit;
     int odev = (dpd->flags & DPD_ORTHDEV);
     int i, j, s, t, k = 0;
@@ -2086,9 +2086,9 @@ static int dpd_make_y_X (dpdinfo *dpd, const double *y,
     return 0;
 }
 
-static int dpd_make_Z_and_A (dpdinfo *dpd, const double *y,
-			     const double **Z)
+static int dpd_make_Z_and_A (dpdinfo *dpd, const double **Z)
 {
+    const double *y = Z[dpd->yno];
     int i, j, k, s, t, c = 0;
     int zi, zj, zk;
     double x;
@@ -2407,14 +2407,14 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 
     if (!err) {
 	/* build y^* and X^* */
-	err = dpd_make_y_X(dpd, dpd->y, Z, pdinfo);
+	err = dpd_make_y_X(dpd, Z, pdinfo);
     }
 
     if (!err) {
 	/* build instrument matrix blocks, Z_i, and insert into
 	   big Z' matrix; cumulate first-stage A_N as we go 
 	*/
-	err = dpd_make_Z_and_A(dpd, dpd->y, Z);
+	err = dpd_make_Z_and_A(dpd, Z);
     }
 
     if (!err) {
@@ -2439,7 +2439,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     if (!mod.errcode) {
 	/* write estimation info into model struct */
 	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
-					 pdinfo, opt);
+					 Z[dpd->yno], pdinfo, opt);
     }
 
     dpdinfo_free(dpd);
