@@ -7,7 +7,7 @@
    prototype code, newmask.c.
 */
 
-#define DPDEBUG 0
+#define DPDEBUG 1
 
 #define use_levels(d) (d->flags & DPD_SYSTEM)
 
@@ -36,7 +36,7 @@ static int dpanel_step1_variance (dpdinfo *dpd)
     }
 
 #if DPDEBUG
-    fprintf(stderr, "nz = %d, max_ni = %d\n", nz, dpd->max_ni);
+    fprintf(stderr, "nz = %d, max_ni = %d\n", dpd->nz, dpd->max_ni);
 #endif
 
     B = gretl_matrix_block_new(&kk, dpd->k, dpd->k,
@@ -73,7 +73,7 @@ static int dpanel_step1_variance (dpdinfo *dpd)
 
 #if DPDEBUG
 	gretl_matrix_print(ui, "ui (vcalc)");
-	gretl_matrix_print(Zi, "Zi (vcalc)");
+	gretl_matrix_print(dpd->Zi, "Zi (vcalc)");
 #endif
 
 	err = gretl_matrix_multiply_mod(ui, GRETL_MOD_TRANSPOSE,
