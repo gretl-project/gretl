@@ -644,12 +644,8 @@ static int dpd_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
     char *mask = NULL;
     int t;
 
-#if 1
-    s = data_index(dpd, i);
-#endif
-
 #if ADEBUG
-    fprintf(stderr, "Checking unit %d\n", i);
+    fprintf(stderr, "Checking unit %d: s = %d\n", i, s);
 #endif
 
     mask = calloc(dpd->T, 1);
