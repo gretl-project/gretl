@@ -27,6 +27,7 @@
 #include "usermat.h"
 #include "gretl_xml.h"
 #include "genparse.h"
+#include "gretl_bundle.h"
 
 #define MDEBUG 0
 #define LEVEL_AUTO -1
@@ -276,6 +277,13 @@ static void usermat_destroy_colnames (user_matrix *u)
     }
 }
 
+static void usermat_destroy_matrix (user_matrix *u)
+{
+    if (!data_is_bundled(u->M)) {
+	gretl_matrix_free(u->M);
+    }
+}
+
 int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 {
     if (u == NULL) {
@@ -290,7 +298,7 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 	if (u->colnames != NULL && M->cols != u->M->cols) {
 	    usermat_destroy_colnames(u);
 	}
-	gretl_matrix_free(u->M);
+	usermat_destroy_matrix(u);
 	u->M = M;
     }
 
@@ -944,7 +952,7 @@ static void destroy_user_matrix (user_matrix *u)
 #endif
 
     usermat_destroy_colnames(u);
-    gretl_matrix_free(u->M);
+    usermat_destroy_matrix(u);
     free(u);
 
 #if MDEBUG

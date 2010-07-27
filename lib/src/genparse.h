@@ -103,13 +103,14 @@ enum {
 	      LISTVAR,    /* variable in list */
 	      STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
+	      BOBJ,       /* object from inside a bundle */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,      /* "null" */
 	      ABSENT,
 	      DTYPE_MAX,  /* SEPARATOR: end of "bare" types */
 	      EROOT,	  /* dummy root for (...) expression */
-              UFUN,	  /* user-defined function */
-  /* 80 */    RFUN,       /* GNU R function */
+  /* 80 */    UFUN,	  /* user-defined function */
+	      RFUN,       /* GNU R function */
               VSTR,       /* string variable */
               INC,   
 	      DEC,
@@ -383,7 +384,7 @@ enum {
 
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL || s == LAG || \
-                   s == OBS)
+                   s == OBS || s == BOBJ)
 
 #define b1sym(s) (unary_op(s) || func1_symb(s) || funcn_symb(s) || \
                   s == G_LPR || s == EROOT)
@@ -456,9 +457,10 @@ union val {
 };
 
 enum {
-    AUX_NODE    = 1 << 0,
-    TMP_NODE    = 1 << 1,
-    TRANSP_NODE = 1 << 2
+    AUX_NODE    = 1 << 0, /* auxiliary: free on exit */
+    TMP_NODE    = 1 << 1, /* temporary: free content on exit */
+    TRANSP_NODE = 1 << 2, /* matrix node: should be transposed */
+    BOBJ_NODE   = 1 << 3  /* holds pointer to bundled object */
 };
 
 struct node {

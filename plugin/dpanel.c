@@ -22,23 +22,22 @@ static int dpanel_residuals (dpdinfo *dpd)
     const double *b = dpd->beta->val;
     double SSRd = 0.0, SSRl = 0.0;
     double x, ut;
-    int i, j, k, t;
+    int i, j, k, kd, t;
 
-    /* allocate if we haven't already done so */
-
-    if (dpd->uhat == NULL) {
-	int totobs = dpd->ndiff + dpd->nlev;
-
-	dpd->uhat = gretl_column_vector_alloc(totobs);
-	if (dpd->uhat == NULL) {
+    if (use_levels(dpd) && dpd->uhatd == NULL) {
+	/* resids in differences will be needed for AR tests */
+	dpd->uhatd = gretl_column_vector_alloc(dpd->ndiff);
+	if (dpd->uhatd == NULL) {
 	    return E_ALLOC;
 	}
     }
 
-    k = 0;
+    k = kd = 0;
 
     for (i=0; i<dpd->N; i++) {
-	for (t=0; t<dpd->ui[i].t1; t++) {
+	int ndiff = dpd->ui[i].nobs - dpd->ui[i].nlev;
+
+	for (t=0; t<ndiff; t++) {
 	    /* differences */
 	    ut = dpd->Y->val[k];
 	    for (j=0; j<dpd->k; j++) {
@@ -47,8 +46,11 @@ static int dpanel_residuals (dpdinfo *dpd)
 	    }
 	    SSRd += ut * ut;
 	    dpd->uhat->val[k++] = ut;
+	    if (dpd->uhatd != NULL) {
+		dpd->uhatd->val[kd++] = ut;
+	    }
 	}
-	for (t=0; t<dpd->ui[i].t2; t++) {
+	for (t=0; t<dpd->ui[i].nlev; t++) {
 	    /* levels, it applicable */
 	    ut = dpd->Y->val[k];
 	    for (j=0; j<dpd->k; j++) {
@@ -131,14 +133,71 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 	if (ok) {
 	    goodobs[0] += 1;
 	    goodobs[goodobs[0]] = t;
-	    if (goodobs[0] > 1 || use_levels(dpd)) {
+	    if (goodobs[0] > 1) {
 		dpd->used[big_t] = 1;
-	    } 
+	    } else if (use_levels(dpd)) {
+		dpd->used[big_t] = 2;
+	    }
 	}
     }
     
     /* allow for differencing */
     return goodobs[0] - 1;
+}
+
+/* We do this accounting first so that we know the sizes of the
+   various (and numerous) matrices that we'll need for the whole
+   analysis at the outset; we can then allocate memory en bloc.
+*/
+
+static void do_unit_accounting (dpdinfo *dpd, const double **Z,
+				int **Goodobs)
+{
+    int i, t;
+
+    /* instruments specific to equations in differences */
+    dpd->nzdiff = (dpd->T - 1) * (dpd->T - 2) / 2;
+
+    /* and to equations in levels */
+    if (use_levels(dpd)) {
+	dpd->nzlev = dpd->T - 1;
+    } 
+
+    /* total instruments */
+    dpd->nz = dpd->nzdiff + dpd->nzlev + dpd->nx;
+
+    /* initialize observation counts */
+    dpd->effN = dpd->ndiff = dpd->nlev = 0;
+    dpd->minTi = dpd->T;
+
+    for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
+	int *goodobs = Goodobs[i];
+	int Ti = check_unit_obs(dpd, goodobs, Z, t);
+
+	if (Ti > 0) {
+	    /* this unit is usable */
+	    dpd->effN += 1;
+	    dpd->ndiff += Ti;
+	    if (use_levels(dpd)) {
+		dpd->nlev += Ti + 1;
+	    }
+	    if (Ti > dpd->maxTi) {
+		dpd->maxTi = Ti;
+	    }
+	    if (Ti < dpd->minTi) {
+		dpd->minTi = Ti;
+	    }
+	}
+    }
+
+    /* figure the max number of stacked observations per unit */
+    dpd->max_ni = dpd->maxTi;
+    if (dpd->flags & DPD_SYSTEM) {
+	dpd->max_ni += dpd->maxTi + 1;
+    }  
+
+    /* and the total observations overall */
+    dpd->totobs = dpd->ndiff + dpd->nlev;
 }
 
 /* Based on the accounting of good observations for a unit recorded
@@ -178,31 +237,31 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
 #endif
 }
 
-/* Variant computations of H: for "dpdstyle" we emulate what
-   the Ox DPD package does, otherwise we use the pre-formed
-   D matrix.
-*/
-
-static void compute_H (gretl_matrix *H, int nh,
-		       const gretl_matrix *D)
+static void build_unit_H_matrix (dpdinfo *dpd, int *goodobs, 
+				 gretl_matrix *D)
 {
-    if (D != NULL) {
-	gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
-				  D, GRETL_MOD_NONE, 
-				  H, GRETL_MOD_NONE);
-    } else {	
-	int i;
+    build_unit_D_matrix(dpd, goodobs, D);
+    gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
+			      D, GRETL_MOD_NONE, 
+			      dpd->H, GRETL_MOD_NONE);
+}
 
-	gretl_matrix_set(H, 0, 0, 2);
-	for (i=1; i<nh; i++) {
+static void make_dpdstyle_H (gretl_matrix *H, int nd)
+{
+    int i;
+
+    gretl_matrix_zero(H);
+    gretl_matrix_set(H, 0, 0, 2);
+
+    for (i=1; i<H->rows; i++) {
+	if (i < nd) {
 	    gretl_matrix_set(H, i, i, 2);
 	    gretl_matrix_set(H, i-1, i, -1);
 	    gretl_matrix_set(H, i, i-1, -1);
+	} else {
+	    gretl_matrix_set(H, i, i, 1);
 	}
-#if 0
-	gretl_matrix_multiply_by_scalar(H, scale);
-#endif
-    } 
+    }
 }
 
 /* Build row vector of dependent variable values in @Yi using
@@ -315,8 +374,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 */
 
 static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
-		     int t, int nz_diff, int nz_lev, 
-		     gretl_matrix *Zi)
+		     int t, gretl_matrix *Zi)
 {
     const double *y = Z[dpd->yno];
     int usable = goodobs[0] - 1;
@@ -325,7 +383,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     const double *xj;
     double dx, y0;
     int t0, t1, i0, i1;
-    int k, k2 = nz_diff + nz_lev;
+    int k, k2 = dpd->nzdiff + dpd->nzlev;
     int i, j, col;
     int qmax = dpd->qmax;
 
@@ -410,13 +468,13 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
-static int trim_zero_inst (dpdinfo *dpd)
+static void trim_zero_inst (dpdinfo *dpd)
 {
-    int i, n = dpd->ZZ->rows;
+    int i, n = dpd->A->rows;
     int trim = 0;
 
     for (i=0; i<n; i++) {
-	if (gretl_matrix_get(dpd->ZZ, i, i) == 0.0) {
+	if (gretl_matrix_get(dpd->A, i, i) == 0.0) {
 	    trim = 1;
 	    break;
 	}
@@ -426,20 +484,26 @@ static int trim_zero_inst (dpdinfo *dpd)
 	char *mask = calloc(n, 1);
 
 	for (i=0; i<n; i++) {
-	    if (gretl_matrix_get(dpd->ZZ, i, i) == 0.0) {
+	    if (gretl_matrix_get(dpd->A, i, i) == 0.0) {
 		mask[i] = 1;
 	    }
 	}
 
+	gretl_matrix_cut_rows_cols(dpd->A, mask);
 	gretl_matrix_cut_cols(dpd->XZ, mask);
-	gretl_matrix_cut_rows_cols(dpd->ZZ, mask);
 	gretl_matrix_cut_rows(dpd->ZY, mask);
 	gretl_matrix_cut_rows(dpd->ZT, mask);
 
+	dpd->nz = dpd->A->rows;
+
+	/* adjust other matrices whose dimensions involve nz */
+	gretl_matrix_reuse(dpd->Acpy,  dpd->nz, dpd->nz);
+	gretl_matrix_reuse(dpd->kmtmp, -1, dpd->nz);
+	gretl_matrix_reuse(dpd->L1,    -1, dpd->nz);
+	gretl_matrix_reuse(dpd->XZA,   -1, dpd->nz);
+
 	free(mask);
     }
-
-    return dpd->ZZ->rows;
 }
 
 /* Here we compute \hat{\beta} from the moment matrices. */
@@ -447,34 +511,18 @@ static int trim_zero_inst (dpdinfo *dpd)
 static int do_estimator (dpdinfo *dpd)
 {
     gretl_matrix *M1 = NULL, *M2 = NULL;
-    int k, m, err = 0;
+    int k, err = 0;
 
     if (dpd->step == 1) {
-	dpd->nz = trim_zero_inst(dpd);
+	trim_zero_inst(dpd);
 #if DPDEBUG > 1
+	gretl_matrix_print(dpd->A, "A (trimmed)");
 	gretl_matrix_print(dpd->XZ, "XZ (trimmed)");
-	gretl_matrix_print(dpd->ZZ, "ZZ (trimmed)");
 	gretl_matrix_print(dpd->ZY, "ZY (trimmed)");
 #endif
     }
 
-    if (dpd->A == NULL) {
-	/* first step: A will be set to ZZ^{-1} */
-	dpd->A = gretl_matrix_copy(dpd->ZZ);
-	if (dpd->A == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
     k = dpd->XZ->rows;
-    m = dpd->XZ->cols;
-
-    if (dpd->XZA == NULL) {
-	dpd->XZA = gretl_matrix_alloc(k, m);
-	if (dpd->XZA == NULL) {
-	    err = E_ALLOC;
-	}
-    }
 
     if (!err) {
 	M1 = gretl_matrix_alloc(k, k);
@@ -502,7 +550,7 @@ static int do_estimator (dpdinfo *dpd)
     }
 
     if (!err) {
-	/* dpd->XZA ("M") <- XZ * A */
+	/* dpd->XZA <- XZ * A */
 	gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
 	/* M2 <- XZ * A * ZY */
 	gretl_matrix_multiply(dpd->XZA, dpd->ZY, M2);
@@ -519,7 +567,7 @@ static int do_estimator (dpdinfo *dpd)
 
     if (!err) {
 	/* wanted for computing the variance of \hat{\beta} */
-	dpd->den = M1;
+	dpd->M = M1;
     } else {
 	gretl_matrix_free(M1);
     }
@@ -535,31 +583,23 @@ static int do_estimator_2 (dpdinfo *dpd)
     gretl_matrix_print(dpd->V, "V, in do_estimator_2");
 #endif
 
-    if (gretl_matrix_rows(dpd->V) > dpd->effN) {
+    if (dpd->V->rows > dpd->effN) {
 	/* we know this case requires special treatment */
 	err = gretl_SVD_invert_matrix(dpd->V);
 	if (!err) {
 	    gretl_matrix_xtr_symmetric(dpd->V);
 	}
     } else {
-	gretl_matrix *Vcpy = gretl_matrix_copy(dpd->V);
-
-	if (Vcpy == NULL) {
-	    return E_ALLOC;
-	}
-
+	gretl_matrix_copy_values(dpd->Acpy, dpd->V);
 	err = gretl_invert_symmetric_matrix(dpd->V);
-
 	if (err) {
 	    /* revert the data in dpd->V */
-	    gretl_matrix_copy_values(dpd->V, Vcpy);
+	    gretl_matrix_copy_values(dpd->V, dpd->Acpy);
 	    err = gretl_SVD_invert_matrix(dpd->V);
 	    if (!err) {
 		gretl_matrix_xtr_symmetric(dpd->V);
 	    }
 	}
-
-	gretl_matrix_free(Vcpy);
     }
 
     if (!err) {
@@ -576,55 +616,30 @@ static int do_estimator_2 (dpdinfo *dpd)
     return err;
 }
 
-/* allocate storage needed by do_units() and friends */
+/* allocate temporary storage needed by do_units() */
 
-static int dpd_allocate_new (dpdinfo *dpd, int north,
-			     gretl_matrix **D, gretl_matrix **H,
-			     gretl_matrix **Yi, gretl_matrix **Xi,
-			     gretl_matrix **Zi)
+static int make_units_workspace (dpdinfo *dpd, gretl_matrix **D, 
+				 gretl_matrix **Yi, gretl_matrix **Xi)
 {
     int err = 0;
-
-    dpd->XZ = gretl_zero_matrix_new(dpd->k, dpd->nz);
-    dpd->ZZ = gretl_zero_matrix_new(dpd->nz, dpd->nz);
-    dpd->ZY = gretl_zero_matrix_new(dpd->nz, 1);
-
-    if (dpd->XZ == NULL || dpd->ZZ == NULL || dpd->ZY == NULL) {
-	return E_ALLOC;
-    }
 
     if (dpd->flags & DPD_DPDSTYLE) {
 	/* Ox/DPD-style H matrix: D is not needed */
 	*D = NULL;
     } else {
-	*D = gretl_matrix_alloc(dpd->T, north);
+	*D = gretl_matrix_alloc(dpd->T, dpd->max_ni);
 	if (*D == NULL) {
 	    return E_ALLOC;
 	}
     }
 
-    *H = gretl_identity_matrix_new(north);
-    *Yi = gretl_matrix_alloc(1, north);
-    *Xi = gretl_matrix_alloc(dpd->k, north);
-    *Zi = gretl_matrix_alloc(dpd->nz, north);
+    *Yi = gretl_matrix_alloc(1, dpd->max_ni);
+    *Xi = gretl_matrix_alloc(dpd->k, dpd->max_ni);
 
-    if (*H == NULL || *Yi == NULL || *Xi == NULL || *Zi == NULL) {
+    if (*Yi == NULL || *Xi == NULL) {
 	err = E_ALLOC;
     }
     
-    if (!err) {
-	int bigN = dpd->N * north;
-
-	/* holders for stacking the per-unit data matrices */
-	dpd->Y = gretl_zero_matrix_new(bigN, 1);
-	dpd->X = gretl_zero_matrix_new(bigN, dpd->k);
-	dpd->ZT = gretl_zero_matrix_new(dpd->nz, bigN);
-
-	if (dpd->Y == NULL || dpd->X == NULL || dpd->ZT == NULL) {
-	    err = E_ALLOC;
-	}
-    } 
-
     return err;
 }
 
@@ -657,8 +672,13 @@ static void stack_unit_data (dpdinfo *dpd,
 	t++;
     }
 
-    /* record the number of differenced obs in t1 */
-    dpd->ui[unum].t1 = goodobs[0] - 1;
+    /* record the indices of the first and last
+       differenced observations */
+    dpd->ui[unum].t1 = goodobs[2];
+    dpd->ui[unum].t2 = goodobs[goodobs[0]];
+
+    /* record the number of differenced obs */
+    dpd->ui[unum].nobs = goodobs[0] - 1;
 
     if (use_levels(dpd)) {
 	int k0 = dpd->T - dpd->p - 1;
@@ -676,16 +696,18 @@ static void stack_unit_data (dpdinfo *dpd,
 	    }
 	    t++;
 	}
-	/* record the number of levels obs in t2 */
-	dpd->ui[unum].t2 = goodobs[0];
+	/* record the number of levels obs and augment total */
+	dpd->ui[unum].nlev = goodobs[0];
+	dpd->ui[unum].nobs += dpd->ui[unum].nlev;
     }
-
-    dpd->ui[unum].nobs = dpd->ui[unum].t1 + dpd->ui[unum].t2;
 
     *row = t;
 }
 
-/* trims the last @ntrim rows from matrix @m, in place */
+/* Trims the last @ntrim rows from matrix @m, in place; note 
+   that you cannot do this just by adusting m->rows if @m has 
+   more than one column.
+*/
 
 void matrix_trim_rows (gretl_matrix *m, int ntrim)
 {
@@ -713,89 +735,52 @@ void matrix_trim_rows (gretl_matrix *m, int ntrim)
 */
 
 static int do_units (dpdinfo *dpd, const double **Z, 
-		     const DATAINFO *pdinfo, PRN *prn)
+		     int **Goodobs)
 {
     gretl_matrix *D = NULL;
-    gretl_matrix *H = NULL;
     gretl_matrix *Yi = NULL;
     gretl_matrix *Xi = NULL;
     gretl_matrix *Zi = NULL;
-    int *goodobs, Tshort;
-    int Yrow;
-    int nz_diff, nz_lev = 0;
-    int north, i, t;
+    int i, t, Yrow;
     int err = 0;
 
-    /* full T - maxlag - 1 */
-    Tshort = dpd->T - dpd->p - 1;
-
-    if (use_levels(dpd)) {
-	north = Tshort * 2 + 1;
-    } else {
-	north = Tshort;
-    }
-
-    /* instruments specific to equations in differences */
-    nz_diff = (dpd->T - 1) * (dpd->T - 2) / 2;
-
-    /* and to equations in levels */
-    if (use_levels(dpd)) {
-	nz_lev = dpd->T - 1;
-    } 
-
-    /* total instruments */
-    dpd->nz = nz_diff + nz_lev + dpd->nx;
-
-    goodobs = gretl_list_new(dpd->T);
-    if (goodobs == NULL) {
-	return E_ALLOC;
-    }
-
-    err = dpd_allocate_new(dpd, north, &D, &H, &Yi, &Xi, &Zi);
+    err = make_units_workspace(dpd, &D, &Yi, &Xi);
     if (err) {
 	goto bailout;
     }
 
-    /* initialize observation counts */
-    dpd->effN = dpd->ndiff = dpd->nlev = 0;
-    dpd->minTi = dpd->T;
+    Zi = dpd->Zi;
+    gretl_matrix_reuse(Zi, dpd->nz, dpd->max_ni);
+    
+    if (D == NULL) {
+	/* H will not vary by unit */
+	make_dpdstyle_H(dpd->H, dpd->maxTi);
+    }
+
+    /* initialize matrices to cumulate */
+    gretl_matrix_zero(dpd->XZ);
+    gretl_matrix_zero(dpd->A);
+    gretl_matrix_zero(dpd->ZY);
 
     /* initialize data stacker */
     Yrow = 0;
 
-    for (i=0, t=pdinfo->t1; i<dpd->N; i++, t+=dpd->T) {
-	int Ti = check_unit_obs(dpd, goodobs, Z, t);
+    for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
+	int *goodobs = Goodobs[i];
+	int Ti = goodobs[0] - 1;
 
-#if DPDEBUG > 0
-	fprintf(stderr, "\n\nUnit %4d:", i + 1);
-	fprintf(stderr, " usable obs = %4d:\n", Ti);
+#if DPDEBUG
+	fprintf(stderr, "\n\nUnit %d, usable obs %d:", i + 1, Ti);
 #endif
 
 	if (Ti > 0) {
 	    /* this unit is usable */
-	    dpd->effN += 1;
-	    dpd->ndiff += Ti;
-	    if (use_levels(dpd)) {
-		dpd->nlev += Ti + 1;
-	    }
-	    if (Ti > dpd->maxTi) {
-		dpd->maxTi = Ti;
-	    }
-	    if (Ti < dpd->minTi) {
-		dpd->minTi = Ti;
-	    }
 	    if (D != NULL) {
-		build_unit_D_matrix(dpd, goodobs, D);
+		build_unit_H_matrix(dpd, goodobs, D);
 	    }
-	    compute_H(H, Tshort, D);
-#if DPDEBUG > 2
-	    if (t == pdinfo->t1) {
-		gretl_matrix_print(H, "H");
-	    }
-#endif
 	    build_Y(dpd, goodobs, Z, t, Yi);
 	    build_X(dpd, goodobs, Z, t, Xi);
-	    build_Z(dpd, goodobs, Z, t, nz_diff, nz_lev, Zi);
+	    build_Z(dpd, goodobs, Z, t, Zi);
 #if DPDEBUG
 	    gretl_matrix_print(Yi, "do_units: Yi");
 	    gretl_matrix_print(Xi, "do_units: Xi");
@@ -805,17 +790,17 @@ static int do_units (dpdinfo *dpd, const double **Z,
 				      Zi, GRETL_MOD_TRANSPOSE,
 				      dpd->XZ, GRETL_MOD_CUMULATE);
 	    gretl_matrix_qform(Zi, GRETL_MOD_NONE,
-			       H, dpd->ZZ, GRETL_MOD_CUMULATE);
+			       dpd->H, dpd->A, GRETL_MOD_CUMULATE);
 	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_NONE,
 				      Yi, GRETL_MOD_TRANSPOSE,
 				      dpd->ZY, GRETL_MOD_CUMULATE);
-
 	    /* stack the individual data matrices for future use */
 	    stack_unit_data(dpd, Yi, Xi, Zi, goodobs, i, &Yrow);
 	}
     }
 
     if (Yrow < dpd->Y->rows) {
+	fprintf(stderr, "*** obs TRIMMING is needed *** \n");
 	dpd->Y->rows = dpd->ZT->cols = Yrow;
 	matrix_trim_rows(dpd->X, dpd->X->rows - Yrow);
     }
@@ -825,22 +810,11 @@ static int do_units (dpdinfo *dpd, const double **Z,
     gretl_matrix_print(dpd->X, "dpd->X");
 #endif
 
-    /* max number of stacked observations per unit */
-    dpd->max_ni = dpd->maxTi;
-    if (dpd->flags & DPD_SYSTEM) {
-	dpd->max_ni += dpd->maxTi + 1;
-    }    
-
  bailout:
 
-    free(goodobs);
-
     gretl_matrix_free(D);
-    gretl_matrix_free(H);
     gretl_matrix_free(Yi);
     gretl_matrix_free(Xi);
-
-    dpd->Zi = Zi; /* useful later */
 
     return err;
 }
@@ -871,20 +845,16 @@ static int dpanel_step_2 (dpdinfo *dpd)
     }
 
     if (!err) {
-	if (dpd->R1 == NULL) {
-	    dpd->R1 = gretl_matrix_alloc(dpd->nz, 1);
-	}
-	if (dpd->R1 == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = dpd_variance_2(dpd, u1, V1);
-	}
+	err = dpd_variance_2(dpd, u1, V1);
     }
 
     gretl_matrix_free(u1);
     gretl_matrix_free(V1);
 
     if (!err) {
+#if 0 /* not just yet */
+	ar_test(dpd, dpd->M);
+#endif
 	sargan_test(dpd);
 	dpd_wald_test(dpd);
     }
@@ -906,12 +876,13 @@ static int dpanel_step_1 (dpdinfo *dpd)
 
     if (!err) {
 	/* calculate variance of \hat{\beta} */
-	dpd->L1 = gretl_matrix_alloc(1, dpd->nz);
-	dpd->kmtmp = gretl_matrix_alloc(dpd->k, dpd->nz);
 	err = dpd_variance_1(dpd);
     }
 
     if (!err && !(dpd->flags & DPD_TWOSTEP)) {
+#if 0 /* not just yet */
+	ar_test(dpd, dpd->M);
+#endif
 	sargan_test(dpd);
 	dpd_wald_test(dpd);
     }
@@ -960,7 +931,7 @@ static int dpanel_step_1 (dpdinfo *dpd)
                for any unit actually used
    dpd->nz:    total number of instruments
    dpd->XZ:    cross-moment matrix (not allocated yet)
-   dpd->ZZ:    ditto
+   dpd->A:     ditto
    dpd->ZY:    ditto
    dpd->ZT:    all Zs, stacked, not allocated yet
 
@@ -972,6 +943,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
 {
     struct diag_info *d = NULL;
     dpdinfo *dpd = NULL;
+    int **Goodobs = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
@@ -985,27 +957,22 @@ MODEL dpd_estimate (const int *list, const char *istr,
 	return mod;
     }
 
-    dpd_allocate_matrices(dpd);
-
-    /* additional info that should be folded into dpdinfo
-       at some point */
-
-    dpd->used = calloc(pdinfo->n, 1);
-    if (dpd->used == NULL) {
+    Goodobs = gretl_list_array_new(dpd->N, dpd->T);
+    if (Goodobs == NULL) {
 	err = E_ALLOC;
-    } 
+    }
+
+    if (!err) {
+	do_unit_accounting(dpd, Z, Goodobs);
+	err = dpd_allocate_matrices(dpd);
+    }
 
     if (!err) {
 	/* build the moment matrices */
-	err = do_units(dpd, Z, pdinfo, prn);
+	err = do_units(dpd, Z, Goodobs);
     }
 
-#if DPDEBUG > 0
-    fprintf(stderr, "dpd_estimate, after do_units:\n");
-    gretl_matrix_print(dpd->XZ, "XZ");
-    gretl_matrix_print(dpd->ZZ, "ZZ");
-    gretl_matrix_print(dpd->ZY, "ZY");
-#endif
+    gretl_list_array_free(Goodobs, dpd->N);
 
     if (!err) {
 	err = dpanel_step_1(dpd);
@@ -1025,25 +992,6 @@ MODEL dpd_estimate (const int *list, const char *istr,
 	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
 					 Z[dpd->yno], pdinfo, opt);
     }
-
-    /* FIXME these deallocations should be handled by dpdinfo_free(),
-       eventually, but right now that's awkward because of the way
-       gretl_matrix_block is used in dpdinfo.
-    */
-    gretl_matrix_free(dpd->uhat);
-    gretl_matrix_free(dpd->XZ);
-    gretl_matrix_free(dpd->ZY);
-    gretl_matrix_free(dpd->ZZ);
-    gretl_matrix_free(dpd->Y);
-    gretl_matrix_free(dpd->X);
-    gretl_matrix_free(dpd->ZT);
-    gretl_matrix_free(dpd->den);
-    gretl_matrix_free(dpd->A);
-    gretl_matrix_free(dpd->XZA);
-    gretl_matrix_free(dpd->kmtmp);
-    gretl_matrix_free(dpd->R1);
-    gretl_matrix_free(dpd->Zi);
-    gretl_matrix_free(dpd->L1);
 
     dpdinfo_free(dpd);
 

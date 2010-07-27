@@ -830,6 +830,57 @@ int *gretl_list_new (int nterms)
 }
 
 /**
+ * gretl_list_array_new:
+ * @nlists: the number of lists to create.
+ * @nterms: the maximum number of elements to be stored in each list.
+ * 
+ * Creates an array of newly allocated lists, each of which as described
+ * in connection with gretl_list_new().
+ *
+ * Returns: the newly allocated lists, or NULL on failure.
+ */
+
+int **gretl_list_array_new (int nlists, int nterms)
+{
+    int **lists = NULL;
+    int i;
+    
+    if (nlists < 0) {
+	return NULL;
+    }
+
+    lists = malloc(nlists * sizeof *lists);
+    
+    if (lists != NULL) {
+	for (i=0; i<nlists; i++) {
+	    lists[i] = gretl_list_new(nterms);
+	}
+    }
+
+    return lists;
+}
+
+/**
+ * gretl_list_array_free:
+ * @lists: array of gretl lists.
+ * @nlists: the number of lists in @lists.
+ * 
+ * Frees all the lists in @lists and also the top-level pointer.
+ */
+
+void gretl_list_array_free (int **lists, int nlists)
+{
+    if (lists != NULL) {
+	int i;
+
+	for (i=0; i<nlists; i++) {
+	    free(lists[i]);
+	}
+	free(lists);
+    }
+}
+
+/**
  * gretl_consecutive_list_new:
  * @lmin: starting value for consecutive list elements.
  * @lmax: ending value.

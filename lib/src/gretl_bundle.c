@@ -789,6 +789,43 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
     }
 }
 
+static gboolean match_by_data (gpointer key, gpointer value, gpointer p)
+{
+    bundled_item *item = value;
+
+    return item->data == p;
+}
+
+/**
+ * data_is_bundled:
+ * @ptr: pointer to check.
+ *
+ * Returns: 1 if @ptr corresponds to an object that is
+ * contained within a currently-defined gretl bundle,
+ * otherwise 0.
+ */
+
+int data_is_bundled (void *ptr)
+{
+    int ret = 0;
+
+    if (bundles != NULL) {
+	gpointer chk;
+	int i;
+
+	for (i=0; i<n_saved_bundles && !ret; i++) {
+	    if (bundles[i] != NULL) {
+		chk = g_hash_table_find(bundles[i]->ht, match_by_data, ptr);
+		if (chk != NULL) {
+		    ret = 1;
+		}
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* Called from gretl_func.c on return, to remove
    a given bundle from the stack of named bundles in
    preparation for handing it over to the caller,

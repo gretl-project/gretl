@@ -36,6 +36,10 @@ int *gretl_null_list (void);
 
 int *gretl_consecutive_list_new (int lmin, int lmax);
 
+int **gretl_list_array_new (int nlists, int nterms);
+
+void gretl_list_array_free (int **lists, int nlists);
+
 int *gretl_list_copy (const int *src);
 
 int *gretl_list_copy_from_pos (const int *src, int pos);

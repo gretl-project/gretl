@@ -3324,6 +3324,10 @@ static gretl_bundle *node_get_bundle (NODE *n, parser *p)
     return b;
 }
 
+/* Binary operator applied to two bundles: at present only '+'
+   (for union) is supported.
+*/
+
 static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_bundle_node(p);
@@ -3333,7 +3337,7 @@ static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
 	gretl_bundle *br = node_get_bundle(r, p);
 
 	if (!p->err) {
-	    if (f == B_OR) {
+	    if (f == B_ADD) {
 		ret->v.b = gretl_bundle_union(bl, br, &p->err);
 	    } else {
 		p->err = E_TYPES;
@@ -3343,6 +3347,11 @@ static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
 
     return ret;
 }
+
+/* Getting an object from within a bundle: on the left is the
+   bundle reference, on the right should be a string -- the
+   key to look up to get content.
+*/
 
 /* in case we switched the LHS and RHS in a boolean comparison */
 
@@ -5103,9 +5112,16 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
 #endif
 
-/* args are two strings: name of bundle and key */
+/* Getting an object from within a bundle: on the left is the
+   bundle reference, on the right should be a string -- the
+   key to look up to get content. If @copy is non-zero then
+   we make a copy of the object from the bundle, regardless
+   of its type; if copy is zero and the object to be retrieved
+   is a matrix then we just return a reference to it.
+*/
 
-static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
+static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p,
+				     int copy)
 {
     const char *name = l->v.str;
     const char *key = r->v.str;
@@ -5139,19 +5155,28 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 		}
 	    }
 	} else if (type == GRETL_TYPE_MATRIX) {
-	    ret = aux_matrix_node(p);
-	    if (ret != NULL) {
-		ret->v.m = gretl_matrix_copy((gretl_matrix *) val);
-		if (ret->v.m == NULL) {
-		    p->err = E_ALLOC;
-		}		
+	    if (copy) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL) {
+		    ret->v.m = gretl_matrix_copy((gretl_matrix *) val);
+		    if (ret->v.m == NULL) {
+			p->err = E_ALLOC;
+		    }
+		}
+	    } else {
+		ret = matrix_pointer_node(p);
+		if (ret != NULL) {
+		    ret->v.m = (gretl_matrix *) val;
+		    ret->flags |= BOBJ_NODE;
+		}
 	    }
 	} else if (type == GRETL_TYPE_BUNDLE) {
+	    /* find a way to respect copy == 0 here? */
 	    ret = aux_bundle_node(p);
 	    if (ret != NULL) {
 		ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
 					     &p->err);
-	    }	    
+	    } 
 	} else if (type == GRETL_TYPE_SERIES) {
 	    const double *x = val;
 
@@ -7452,6 +7477,10 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix sub-slice, x:y, or lag range, 'p to q' */
 	ret = process_subslice(l, r, p);
 	break;
+    case BOBJ:
+	/* name of bundle plus key */
+	ret = get_named_bundle_value(l, r, p, 0);
+	break;
     case F_LDIFF:
     case F_SDIFF:
     case F_ODEV:	
@@ -7950,7 +7979,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (r->t != STR) {
 	    node_type_error(t->t, 2, STR, r, p);
 	} else if (t->t == F_HASHGET) {
-	    ret = get_named_bundle_value(l, r, p);
+	    ret = get_named_bundle_value(l, r, p, 1);
 	} else {
 	    ret = delete_named_bundle_value(l, r, p);
 	}
@@ -8989,10 +9018,39 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
     gretl_matrix *m = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "grab_or_copy_matrix_result: r->t = %d\n", r->t);
+    fprintf(stderr, "grab_or_copy_matrix_result: r = %p, r->t = %d\n", 
+	    (void *) r, r->t);
 #endif
 
-    if (r->t == NUM) {
+    if (r->t == MAT) {
+	/* result was a matrix, fine */
+	if (is_tmp_node(r)) {
+	    /* r->v.m is newly allocated, just steal it */
+#if EDEBUG
+	    fprintf(stderr, "matrix result (%p) is tmp, stealing it\n", 
+		    (void *) r->v.m);
+#endif
+	    m = r->v.m;
+	    r->v.m = NULL; /* avoid double-freeing */
+	} else if (r->flags & BOBJ_NODE) {
+	    /* r->v.m is a bundled matrix, use the pointer */
+#if EDEBUG
+	    fprintf(stderr, "matrix result (%p) is in bundle, using pointer\n",
+		    (void *) r->v.m);
+#endif
+	    m = r->v.m;
+	} else {
+	    /* r->v.m is an existing user matrix, copy it */
+#if EDEBUG
+	    fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
+		    (void *) r->v.m);
+#endif
+	    m = gretl_matrix_copy(r->v.m);
+	    if (m == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    } else if (r->t == NUM) {
 	/* result was a scalar, not a matrix */
 	m = gretl_matrix_alloc(1, 1);
 	if (m == NULL) {
@@ -9012,24 +9070,6 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	    for (i=0; i<n; i++) {
 		m->val[i] = x[i + p->dinfo->t1];
 	    }
-	}
-    } else if (r->t == MAT && is_tmp_node(r)) {
-	/* result r->v.m is newly allocated, steal it */
-#if EDEBUG
-	fprintf(stderr, "matrix result (%p) is tmp, stealing it\n", 
-		(void *) r->v.m);
-#endif
-	m = r->v.m;
-	r->v.m = NULL; /* avoid double-freeing */
-    } else if (r->t == MAT) {
-	/* r->v.m is an existing user matrix, copy it */
-#if EDEBUG
-	fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
-		(void *) r->v.m);
-#endif
-	m = gretl_matrix_copy(r->v.m);
-	if (m == NULL) {
-	    p->err = E_ALLOC;
 	}
     } else if (r->t == LIST) {
 	m = list_to_matrix(r->v.str, &p->err);

@@ -17,6 +17,9 @@
  * 
  */
 
+#ifndef GRETL_BUNDLE_H_
+#define GRETL_BUNDLE_H_
+
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 
@@ -56,6 +59,8 @@ int gretl_bundle_delete_by_name (const char *name, PRN *prn);
 
 int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);
 
+int data_is_bundled (void *ptr);
+
 gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 					    int *err);
 
@@ -74,6 +79,8 @@ void gretl_bundle_destroy (gretl_bundle *bundle);
 int destroy_saved_bundles_at_level (int level);
 
 void destroy_user_bundles (void);
+
+#endif /* GRETL_BUNDLE_H_ */
 
 
 

@@ -561,6 +561,8 @@ static void unwrap_string_arg (parser *p)
 
 static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 {
+    char p0 = (sym == BOBJ)? '[' : '(';
+    char p1 = (sym == BOBJ)? ']' : ')';
     const char *src = NULL;
     int wrapped = 0;
 
@@ -573,7 +575,7 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 	parser_getc(p);
     }
 
-    if (p->ch == ')') {
+    if (p->ch == p1) {
 	if (wrapped) {
 	    p->err = E_PARSE;
 	    return NULL;
@@ -588,14 +590,14 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 	/* find length of string to closing paren */
 	i = 0;
 	while (*s) {
-	    if (!quoted && *s == ')') paren--;
+	    if (!quoted && *s == p1) paren--;
 	    if (paren == 0) {
 		close = i;
 		break;
 	    }
 	    if (*s == '"') {
 		quoted = !quoted;
-	    } else if (!quoted && *s == '(') {
+	    } else if (!quoted && *s == p0) {
 		paren++;
 	    } 
 	    s++;
@@ -603,7 +605,7 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 	}
 
 	if (close < 0) {
-	    unmatched_symbol_error('(', p);
+	    unmatched_symbol_error(p0, p);
 	    return NULL;
 	}
 
@@ -1160,6 +1162,13 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b2.r = get_final_string_arg(p, sym, 1);
 	}
+    } else if (sym == BOBJ) {
+	t = newb2(sym, NULL, NULL);
+	if (t != NULL) {
+	    t->v.b2.l = newref(p, BUNDLE);
+	    lex(p);
+	    t->v.b2.r = get_final_string_arg(p, sym, 1);
+	}	
     } else if (sym == OVAR) {
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {

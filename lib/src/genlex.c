@@ -724,7 +724,7 @@ static int might_be_date_string (const char *s, int n)
     strncat(test, s, n);
 
     if (strspn(s, "1234567890") == n) {
-	/* plain integer */
+	/* plain integer (FIXME?) */
 	return 1;
     } else if (sscanf(s, "%d:%d", &y, &m) == 2) {
 	/* quarterly, monthly date */
@@ -955,6 +955,9 @@ static void word_check_next_char (const char *s, parser *p)
 	} else if (p->sym == USERIES) {
 	    /* observation from series */
 	    p->sym = OBS;
+	} else if (p->sym == BUNDLE) {
+	    /* object from bundle */
+	    p->sym = BOBJ;
 	} else {
 	    p->err = E_PARSE;
 	} 
@@ -1462,7 +1465,9 @@ const char *getsymb (int t, const parser *p)
 	return "EMPTY";
     } else if (t == LISTVAR) {
 	return "LISTVAR";
-    } 
+    } else if (t == BOBJ) {
+	return "BOBJ";
+    }
 
     if (p != NULL) {
 	if (t == NUM) {
