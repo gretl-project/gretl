@@ -1895,12 +1895,12 @@ static int dpd_calculate (dpdinfo *dpd)
     return err;
 }
 
-static int dpd_step_2 (dpdinfo *dpd)
+static int prepare_step_2 (dpdinfo *dpd)
 {
     int err = 0;
 
 #if ADEBUG
-    gretl_matrix_print(dpd->V, "V, in dpd_step_2");
+    gretl_matrix_print(dpd->V, "V, in prepare_step_2");
 #endif
 
     if (gretl_matrix_rows(dpd->V) > dpd->effN) {
@@ -1926,6 +1926,18 @@ static int dpd_step_2 (dpdinfo *dpd)
 	/* A <- V^{-1} */
 	gretl_matrix_copy_values(dpd->A, dpd->V);
 	dpd->step = 2;
+    }
+
+    return err;
+}
+
+static int dpd_step_2 (dpdinfo *dpd)
+{
+    int err;
+
+    err = prepare_step_2(dpd);
+
+    if (!err) {
 	err = dpd_calculate(dpd);
     }
 

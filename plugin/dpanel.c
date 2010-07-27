@@ -575,47 +575,6 @@ static int do_estimator (dpdinfo *dpd)
     return err;
 }
 
-static int do_estimator_2 (dpdinfo *dpd)
-{
-    int err = 0;
-
-#if DPDEBUG
-    gretl_matrix_print(dpd->V, "V, in do_estimator_2");
-#endif
-
-    if (dpd->V->rows > dpd->effN) {
-	/* we know this case requires special treatment */
-	err = gretl_SVD_invert_matrix(dpd->V);
-	if (!err) {
-	    gretl_matrix_xtr_symmetric(dpd->V);
-	}
-    } else {
-	gretl_matrix_copy_values(dpd->Acpy, dpd->V);
-	err = gretl_invert_symmetric_matrix(dpd->V);
-	if (err) {
-	    /* revert the data in dpd->V */
-	    gretl_matrix_copy_values(dpd->V, dpd->Acpy);
-	    err = gretl_SVD_invert_matrix(dpd->V);
-	    if (!err) {
-		gretl_matrix_xtr_symmetric(dpd->V);
-	    }
-	}
-    }
-
-    if (!err) {
-	/* A <- V^{-1} */
-	gretl_matrix_copy_values(dpd->A, dpd->V);
-	dpd->step = 2;
-	err = do_estimator(dpd);
-    }
-
-    if (err) {
-	fprintf(stderr, "step 2: do_estimator_2 returning %d\n", err);
-    }
-
-    return err;
-}
-
 /* allocate temporary storage needed by do_units() */
 
 static int make_units_workspace (dpdinfo *dpd, gretl_matrix **D, 
@@ -827,7 +786,11 @@ static int dpanel_step_2 (dpdinfo *dpd)
     gretl_matrix *V1 = NULL;
     int err;
 
-    err = do_estimator_2(dpd);
+    err = prepare_step_2(dpd);
+
+    if (!err) {
+	err = do_estimator(dpd);
+    }
 
     if (!err && (dpd->flags & DPD_WINCORR)) {
 	/* we'll need a copy of the step-1 residuals, and also
