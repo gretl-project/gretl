@@ -1981,7 +1981,6 @@ static int dpd_calculate (dpdinfo *dpd)
 
 static int dpd_step_2 (dpdinfo *dpd)
 {
-    gretl_matrix *Vcpy;
     int err = 0;
 
 #if ADEBUG
@@ -1989,29 +1988,37 @@ static int dpd_step_2 (dpdinfo *dpd)
 #endif
 
     if (gretl_matrix_rows(dpd->V) > dpd->effN) {
-	return E_DF; /* this case won't work? */
-    }
-
-    if (dpd->Acpy != NULL) {
-	Vcpy = dpd->Acpy;
-	gretl_matrix_copy_values(Vcpy, dpd->V);
-    } else {
-	Vcpy = gretl_matrix_copy(dpd->V);
-	if (Vcpy == NULL) {
-	    return E_ALLOC;
-	}
-    }	
-
-    err = gretl_invert_symmetric_matrix(dpd->V);
-    if (err) {
-	/* revert the data in dpd->V */
-	gretl_matrix_copy_values(dpd->V, Vcpy);
-    }
-
-    if (err) {
+	/* we know this case requires special attention */
 	err = gretl_SVD_invert_matrix(dpd->V);
 	if (!err) {
 	    gretl_matrix_xtr_symmetric(dpd->V);
+	}	
+    } else {
+	gretl_matrix *Vcpy;
+
+	if (dpd->Acpy != NULL) {
+	    Vcpy = dpd->Acpy;
+	    gretl_matrix_copy_values(Vcpy, dpd->V);
+	} else {
+	    Vcpy = gretl_matrix_copy(dpd->V);
+	    if (Vcpy == NULL) {
+		return E_ALLOC;
+	    }
+	}	
+
+ 	err = gretl_invert_symmetric_matrix(dpd->V);
+	
+	if (err) {
+	    /* revert the data in dpd->V */
+	    gretl_matrix_copy_values(dpd->V, Vcpy);
+	    err = gretl_SVD_invert_matrix(dpd->V);
+	    if (!err) {
+		gretl_matrix_xtr_symmetric(dpd->V);
+	    }
+	}
+    
+	if (Vcpy != dpd->Acpy) {
+	    gretl_matrix_free(Vcpy);
 	}
     }
 
@@ -2020,10 +2027,6 @@ static int dpd_step_2 (dpdinfo *dpd)
 	gretl_matrix_copy_values(dpd->A, dpd->V);
 	dpd->step = 2;
 	err = dpd_calculate(dpd);
-    }
-
-    if (Vcpy != dpd->Acpy) {
-	gretl_matrix_free(Vcpy);
     }
 
     if (err) {
