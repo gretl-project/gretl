@@ -510,8 +510,8 @@ static void trim_zero_inst (dpdinfo *dpd)
 
 static int do_estimator (dpdinfo *dpd)
 {
-    gretl_matrix *M1 = NULL, *M2 = NULL;
-    int k, err = 0;
+    gretl_matrix *k1;
+    int err = 0;
 
     if (dpd->step == 1) {
 	trim_zero_inst(dpd);
@@ -522,55 +522,41 @@ static int do_estimator (dpdinfo *dpd)
 #endif
     }
 
-    k = dpd->XZ->rows;
+    /* workspace */
+    k1 = gretl_matrix_reuse(dpd->kktmp, dpd->k, 1);
 
-    if (!err) {
-	M1 = gretl_matrix_alloc(k, k);
-	M2 = gretl_matrix_alloc(k, 1);
-	if (M1 == NULL || M2 == NULL) {
-	    err = E_ALLOC;
-	}
-    }
-
-    if (dpd->step == 1 && !err) {
+    if (dpd->step == 1) {
 	/* symmetrize A; you never know */
 	gretl_matrix_xtr_symmetric(dpd->A);
 	err = gretl_invert_symmetric_matrix(dpd->A);
     }
 
     if (!err) {
-	/* M1 <- XZ * A * XZ' */
+	/* M <- XZ * A * XZ' */
 	gretl_matrix_qform(dpd->XZ, GRETL_MOD_NONE,
-			   dpd->A, M1, GRETL_MOD_NONE);
+			   dpd->A, dpd->M, GRETL_MOD_NONE);
     }
 
     if (!err) {
-	/* M1 <- (XZ * A * XZ')^{1} */
-	err = gretl_invert_symmetric_matrix(M1);
+	/* M <- (XZ * A * XZ')^{1} */
+	err = gretl_invert_symmetric_matrix(dpd->M);
     }
 
     if (!err) {
 	/* dpd->XZA <- XZ * A */
 	gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
 	/* M2 <- XZ * A * ZY */
-	gretl_matrix_multiply(dpd->XZA, dpd->ZY, M2);
+	gretl_matrix_multiply(dpd->XZA, dpd->ZY, k1);
 	/* beta <- (XZ * A * XZ')^{1} * (XZ * A * ZY) */
-	gretl_matrix_multiply(M1, M2, dpd->beta);
+	gretl_matrix_multiply(dpd->M, k1, dpd->beta);
     }
 
 #if DPDEBUG > 1
-    gretl_matrix_print(M1, "M1");
-    gretl_matrix_print(M2, "M2");
+    gretl_matrix_print(dpd->M, "M");
 #endif
 
-    gretl_matrix_free(M2);
-
-    if (!err) {
-	/* wanted for computing the variance of \hat{\beta} */
-	dpd->M = M1;
-    } else {
-	gretl_matrix_free(M1);
-    }
+    /* restore original workspace size */
+    gretl_matrix_reuse(dpd->kktmp, dpd->k, dpd->k);
 
     return err;
 }
@@ -614,79 +600,54 @@ static void stack_unit_data (dpdinfo *dpd,
 			     int *goodobs, int unum,
 			     int *row)
 {
+    unit_info *unit = &dpd->ui[unum];
     double x;
-    int i, j, k, t = *row;
+    int i, j, k, s = *row;
 
     for (i=2; i<=goodobs[0]; i++) {
 	k = goodobs[i] - 2;
-	gretl_vector_set(dpd->Y, t, Yi->val[k]);
+	gretl_vector_set(dpd->Y, s, Yi->val[k]);
 	for (j=0; j<Xi->rows; j++) {
 	    x = gretl_matrix_get(Xi, j, k);
-	    gretl_matrix_set(dpd->X, t, j, x);
+	    gretl_matrix_set(dpd->X, s, j, x);
 	}
 	for (j=0; j<dpd->nz; j++) {
 	    x = gretl_matrix_get(Zi, j, k);
-	    gretl_matrix_set(dpd->ZT, j, t, x);
+	    gretl_matrix_set(dpd->ZT, j, s, x);
 	}
-	t++;
+	s++;
     }
 
     /* record the indices of the first and last
        differenced observations */
-    dpd->ui[unum].t1 = goodobs[2];
-    dpd->ui[unum].t2 = goodobs[goodobs[0]];
+    unit->t1 = goodobs[2];
+    unit->t2 = goodobs[goodobs[0]];
 
     /* record the number of differenced obs */
-    dpd->ui[unum].nobs = goodobs[0] - 1;
+    unit->nobs = goodobs[0] - 1;
 
     if (use_levels(dpd)) {
 	int k0 = dpd->T - dpd->p - 1;
 
 	for (i=1; i<=goodobs[0]; i++) {
 	    k = k0 + goodobs[i] - 1;
-	    gretl_vector_set(dpd->Y, t, Yi->val[k]);
+	    gretl_vector_set(dpd->Y, s, Yi->val[k]);
 	    for (j=0; j<Xi->rows; j++) {
 		x = gretl_matrix_get(Xi, j, k);
-		gretl_matrix_set(dpd->X, t, j, x);
+		gretl_matrix_set(dpd->X, s, j, x);
 	    }
 	    for (j=0; j<dpd->nz; j++) {
 		x = gretl_matrix_get(Zi, j, k);
-		gretl_matrix_set(dpd->ZT, j, t, x);
+		gretl_matrix_set(dpd->ZT, j, s, x);
 	    }
-	    t++;
+	    s++;
 	}
 	/* record the number of levels obs and augment total */
-	dpd->ui[unum].nlev = goodobs[0];
-	dpd->ui[unum].nobs += dpd->ui[unum].nlev;
+	unit->nlev = goodobs[0];
+	unit->nobs += unit->nlev;
     }
 
-    *row = t;
-}
-
-/* Trims the last @ntrim rows from matrix @m, in place; note 
-   that you cannot do this just by adusting m->rows if @m has 
-   more than one column.
-*/
-
-void matrix_trim_rows (gretl_matrix *m, int ntrim)
-{
-    if (m->cols > 1) {
-	double *dest, *src;
-	int k = m->rows - ntrim;
-	int n = k * sizeof *src;
-	int j;
-
-	dest = m->val + k;
-	src = m->val + m->rows;
-
-	for (j=1; j<m->cols; j++) {
-	    memmove(dest, src, n);
-	    dest += k;
-	    src += m->rows;
-	}
-    }
-
-    m->rows -= ntrim;
+    *row = s;
 }
 
 /* Main driver for system GMM: the core is a loop across
@@ -756,12 +717,6 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	    /* stack the individual data matrices for future use */
 	    stack_unit_data(dpd, Yi, Xi, Zi, goodobs, i, &Yrow);
 	}
-    }
-
-    if (Yrow < dpd->Y->rows) {
-	fprintf(stderr, "*** obs TRIMMING is needed *** \n");
-	dpd->Y->rows = dpd->ZT->cols = Yrow;
-	matrix_trim_rows(dpd->X, dpd->X->rows - Yrow);
     }
 
 #if DPDEBUG

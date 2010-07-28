@@ -969,18 +969,15 @@ static int sargan_test (dpdinfo *dpd)
     return err;
 }
 
-/* Compute the z test for AR errors, if possible.  This should
-   perhaps be rolled into dpd_variance() for the sake of
-   efficiency.
-*/
+/* Compute the z test for AR errors, if possible. */
 
 static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
 {
     gretl_matrix_block *B = NULL;
     gretl_matrix *v;
-    gretl_matrix *vk;
+    gretl_matrix *w;
     gretl_matrix *X;  /* this is the trimmed "X_{*}" */
-    gretl_matrix *vkX; 
+    gretl_matrix *wX; 
     gretl_matrix *tmpk;
     gretl_matrix *ui; 
     gretl_matrix *m1; 
@@ -1006,9 +1003,9 @@ static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
 
     if (k == 1) {
 	B = gretl_matrix_block_new(&v,    Q, 1,
-				   &vk,   Q, 1,
+				   &w,    Q, 1,
 				   &X,    Q, dpd->k,
-				   &vkX,  1, dpd->k, 
+				   &wX,   1, dpd->k, 
 				   &tmpk, 1, dpd->k,
 				   &ui,   dpd->maxTi, 1,
 				   &m1,   dpd->nz, 1,
@@ -1020,7 +1017,7 @@ static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
     } else {
 	/* k == 2 */
 	gretl_matrix_reuse(v,  Q, 1);
-	gretl_matrix_reuse(vk, Q, 1);
+	gretl_matrix_reuse(w,  Q, 1);
 	gretl_matrix_reuse(X,  Q, -1);
 	gretl_matrix_reuse(m1, dpd->nz, 1);
     }
@@ -1074,14 +1071,14 @@ static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
 	    }
 	}
 
-	/* extract lagged residuals vk along with v_{*} and X_{*} */
+	/* extract lagged residuals w along with v_{*} and X_{*} */
 
 	for (t=unit->t1+k; t<=unit->t2; t++) {
 	    if (ok_diff(dpd, t0+t)) {
 		if (ok_diff(dpd, t0+t-k)) {
 		    v->val[q] = uhat->val[s];
-		    vk->val[q] = uhat->val[s-k];
-		    den1i += v->val[q] * vk->val[q];
+		    w->val[q] = uhat->val[s-k];
+		    den1i += v->val[q] * w->val[q];
 		    for (j=0; j<dpd->k; j++) {
 			x = gretl_matrix_get(dpd->X, s, j);
 			gretl_matrix_set(X, q, j, x);
@@ -1102,26 +1099,26 @@ static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
     }
 
 #if ADEBUG > 1
-    gretl_matrix_print(vk, "lagged residuals");
+    gretl_matrix_print(w, "lagged residuals");
     gretl_matrix_print(v, "current residuals");
 #endif
 
     /* the numerator */
     num = 0.0;
     for (i=0; i<Q; i++) {
-	num += vk->val[i] * v->val[i];
+	num += w->val[i] * v->val[i];
     }
 
     /* the denominator has three components, the first of which
        is already handled */
 
-    /* required component "vkX" = \hat{v}'_{-k} X_{*} */
-    gretl_matrix_multiply_mod(vk, GRETL_MOD_TRANSPOSE,
+    /* required component "wX" = \hat{v}'_{-k} X_{*} */
+    gretl_matrix_multiply_mod(w, GRETL_MOD_TRANSPOSE,
 			      X, GRETL_MOD_NONE,
-			      vkX, GRETL_MOD_NONE);
+			      wX, GRETL_MOD_NONE);
     
-    /* vk' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
-    gretl_matrix_multiply(vkX, C, tmpk);
+    /* w' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
+    gretl_matrix_multiply(wX, C, tmpk);
     gretl_matrix_reuse(m1, 1, dpd->nz);
     gretl_matrix_multiply(tmpk, dpd->XZA, m1);
     den2 = gretl_matrix_dot_product(m1, GRETL_MOD_NONE,
@@ -1129,10 +1126,10 @@ static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
 				    &err);
     den -= 2.0 * den2;
 
-    /* additive term vk' X_* vbeta X_*' vk */
-    gretl_matrix_multiply(vkX, dpd->vbeta, tmpk);
+    /* additive term w' X_* vbeta X_*' w */
+    gretl_matrix_multiply(wX, dpd->vbeta, tmpk);
     den3 = gretl_matrix_dot_product(tmpk, GRETL_MOD_NONE,
-				    vkX, GRETL_MOD_TRANSPOSE,
+				    wX, GRETL_MOD_TRANSPOSE,
 				    &err);
     den += den3;
 
@@ -1496,58 +1493,6 @@ static int dpd_variance (dpdinfo *dpd)
     }
 
     return err;
-}
-
-static int next_obs (dpdinfo *dpd, int t0, int j0, int n)
-{
-    int j;
-
-    for (j=j0; j<n; j++) {
-	if (dpd->used[j + t0]) {
-	    return j;
-	}
-    }
-
-    return 0;
-}
-
-/* construct the H matrix for first-differencing
-   as applied to unit i */
-
-static void make_first_diff_matrix (dpdinfo *dpd, int *rc, 
-				    int i, int t0)
-{
-    unit_info *unit =  &dpd->ui[i];
-    int n = unit->t2 - unit->t1 + 1;
-    int m = unit->nobs;
-    double x;
-    int k, j, adjacent, skip = 0;
-
-    t0 += unit->t1;
-
-    if (m < n) {
-	skip = 1;
-	j = next_obs(dpd, t0, 0, n);
-	for (k=0; k<m; k++) {
-	    rc[k] = j;
-	    j = next_obs(dpd, t0, j+1, n);
-	}
-    }
-
-    gretl_matrix_reuse(dpd->H, m, m);
-
-    for (j=0; j<m; j++) {
-	for (k=j; k<m; k++) {
-	    if (skip) {
-		adjacent = (abs(rc[k] - rc[j]) == 1); 
-	    } else {
-		adjacent = (abs(k-j) == 1);
-	    }
-	    x = (k == j)? 2 : (adjacent)? -1 : 0;
-	    gretl_matrix_set(dpd->H, j, k, x);
-	    gretl_matrix_set(dpd->H, k, j, x);
-	}
-    }
 }
 
 /* In the "dpanel" case dpd->uhat may contain both differenced
@@ -2037,6 +1982,58 @@ static int dpd_make_y_X (dpdinfo *dpd, const double **Z,
     return 0;
 }
 
+static int next_obs (dpdinfo *dpd, int t0, int j0, int n)
+{
+    int j;
+
+    for (j=j0; j<n; j++) {
+	if (dpd->used[j + t0]) {
+	    return j;
+	}
+    }
+
+    return 0;
+}
+
+/* construct the H matrix for first-differencing
+   as applied to unit i */
+
+static void make_first_diff_matrix (dpdinfo *dpd, int *rc, 
+				    int i, int t0)
+{
+    unit_info *unit =  &dpd->ui[i];
+    int n = unit->t2 - unit->t1 + 1;
+    int m = unit->nobs;
+    double x;
+    int k, j, adjacent, skip = 0;
+
+    t0 += unit->t1;
+
+    if (m < n) {
+	skip = 1;
+	j = next_obs(dpd, t0, 0, n);
+	for (k=0; k<m; k++) {
+	    rc[k] = j;
+	    j = next_obs(dpd, t0, j+1, n);
+	}
+    }
+
+    gretl_matrix_reuse(dpd->H, m, m);
+
+    for (j=0; j<m; j++) {
+	for (k=j; k<m; k++) {
+	    if (skip) {
+		adjacent = (abs(rc[k] - rc[j]) == 1); 
+	    } else {
+		adjacent = (abs(k-j) == 1);
+	    }
+	    x = (k == j)? 2 : (adjacent)? -1 : 0;
+	    gretl_matrix_set(dpd->H, j, k, x);
+	    gretl_matrix_set(dpd->H, k, j, x);
+	}
+    }
+}
+
 static int dpd_make_Z_and_A (dpdinfo *dpd, const double **Z)
 {
     const double *y = Z[dpd->yno];
@@ -2170,7 +2167,8 @@ static int dpd_make_Z_and_A (dpdinfo *dpd, const double **Z)
 	}
 
 	/* Write Zi into ZT at offset 0, c */
-	gretl_matrix_inscribe_matrix(dpd->ZT, dpd->Zi, 0, c, GRETL_MOD_TRANSPOSE);
+	gretl_matrix_inscribe_matrix(dpd->ZT, dpd->Zi, 0, c, 
+				     GRETL_MOD_TRANSPOSE);
 	c += Ti;
     }
 
