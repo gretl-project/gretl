@@ -27,13 +27,14 @@ enum {
     DPD_ORTHDEV  = 1 << 1,
     DPD_TIMEDUM  = 1 << 2,
     DPD_WINCORR  = 1 << 3,
-    DPD_DPANEL   = 1 << 4,
-    DPD_SYSTEM   = 1 << 5,
-    DPD_DPDSTYLE = 1 << 6
+    DPD_SYSTEM   = 1 << 4,
+    DPD_DPDSTYLE = 1 << 5
 };
 
+#define use_levels(d) (d->flags & DPD_SYSTEM)
+
 typedef struct dpdinfo_ dpdinfo;
-typedef struct unit_info_ unit_info; /* old-style struct */
+typedef struct unit_info_ unit_info;
 
 struct unit_info_ {
     int t1;      /* first usable obs in differences for unit */
@@ -51,6 +52,7 @@ struct diag_info {
 };
 
 struct dpdinfo_ {
+    int ci;               /* ARBOND or DPANEL */
     int flags;            /* option flags */
     int step;             /* what step are we on? (1 or 2) */
     int yno;              /* ID number of dependent var */
@@ -67,7 +69,9 @@ struct dpdinfo_ {
     int effN;             /* number of units with usable observations */
     int T;                /* total number of observations per unit */
     int minTi;            /* minumum equations (> 0) for any given unit */
-    int maxTi;            /* maximum equations for any given unit */
+    int maxTi;            /* maximum diff. equations for any given unit */
+    int max_ni;           /* max number of (possibly stacked) obs per unit
+			     (equals maxTi except in system case) */
     int k;                /* number of parameters estimated */
     int nobs;             /* total observations actually used (diffs or levels) */
     int totobs;           /* total observations (diffs + levels) */
@@ -115,11 +119,9 @@ struct dpdinfo_ {
 									
     int ndiff;             /* total differenced observations */
     int nlev;              /* total levels observations */
-    int max_ni;            /* max number of (possibly stacked) obs per unit */
-    int nzdiff;            /* number of insts specific to equations in differences */
-    int nzlev;             /* number of insts specific to equations in levels */
+    int nzdiff;            /* number of insts specific to eqns in differences */
+    int nzlev;             /* number of insts specific to eqns in levels */
     int *laglist;          /* (possibly discontinuous) list of lags */
-    gretl_matrix *uhatd;   /* residuals in differences (for AR tests) */
 };
 
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
@@ -134,7 +136,6 @@ static void dpdinfo_free (dpdinfo *dpd)
     gretl_matrix_block_destroy(dpd->B2);
 
     gretl_matrix_free(dpd->V);
-    gretl_matrix_free(dpd->uhatd);
 
     free(dpd->xlist);
     free(dpd->ilist);
@@ -378,7 +379,7 @@ static int dpd_process_list (dpdinfo *dpd, const int *list)
 	err = dpd_make_lists(dpd, list, xpos);
     }
 
-    if (!err && (dpd->flags & DPD_DPANEL)) {
+    if (!err && dpd->ci == DPANEL) {
 	err = dpd_make_laglist(dpd);
     }
 
@@ -425,28 +426,23 @@ static int dpd_flags_from_opt (gretlopt opt)
 	f |= DPD_TWOSTEP;
     }
 
-    if (opt & OPT_B) {
-	/* new calculation method */
-	f |= DPD_DPANEL;
-
-	if (opt & OPT_L) {
-	    /* system GMM: include levels equations */
-	    f |= DPD_SYSTEM;
-	}
-
-	if (opt & OPT_X) {
-	    /* compute H as per Ox/DPD */
-	    f |= DPD_DPDSTYLE;
-	}	
+    if (opt & OPT_L) {
+	/* system GMM: include levels equations (DPANEL only) */
+	f |= DPD_SYSTEM;
     }
+
+    if (opt & OPT_X) {
+	/* compute H as per Ox/DPD (DPANEL only) */
+	f |= DPD_DPDSTYLE;
+    }	
 
     return f;
 }
 
-static dpdinfo *dpdinfo_new (const int *list, const double **Z,
-			     const DATAINFO *pdinfo, gretlopt opt, 
-			     struct diag_info *d, int nzb,
-			     int *err)
+static dpdinfo *dpdinfo_new (int ci, const int *list, 
+			     const double **Z, const DATAINFO *pdinfo, 
+			     gretlopt opt, struct diag_info *d, 
+			     int nzb, int *err)
 {
     dpdinfo *dpd = NULL;
     int NT;
@@ -462,12 +458,13 @@ static dpdinfo *dpdinfo_new (const int *list, const double **Z,
 	return NULL;
     }
 
+    dpd->ci = ci;
+
     /* set pointer members to NULL just in case */
     dpd->B1 = dpd->B2 = NULL;
     dpd->V = NULL;
     dpd->ui = NULL;
     dpd->used = NULL;
-    dpd->uhatd = NULL;
     dpd->xlist = dpd->ilist = dpd->laglist = NULL;
 
     dpd->flags = dpd_flags_from_opt(opt);
@@ -588,7 +585,7 @@ static int bzcols (dpdinfo *dpd, int i)
 
 /* find the first y observation, all units */
 
-static int dpd_find_t1min (dpdinfo *dpd, const double *y)
+static int arbond_find_t1min (dpdinfo *dpd, const double *y)
 {
     int t1min = dpd->T - 1;
     int i, s, t;
@@ -613,8 +610,9 @@ static int dpd_find_t1min (dpdinfo *dpd, const double *y)
 
 /* check the sample for unit/individual i */
 
-static int dpd_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
-				  int s, int *t1imin, int *t2max)
+static int 
+arbond_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
+			  int s, int *t1imin, int *t2max)
 {
     unit_info *unit = &dpd->ui[i];
     int t1i = dpd->T - 1, t2i = 0; 
@@ -682,7 +680,7 @@ static int dpd_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
 
 /* compute the column-structure of the matrix Zi */
 
-static void dpd_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
+static void arbond_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
 {
     int tau = t2max - t1min + 1;
     int nblocks = tau - dpd->p - 1;
@@ -725,15 +723,15 @@ static void dpd_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
 #endif
 }
 
-static int dpd_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
-			     const double **Z)
+static int arbond_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
+				const double **Z)
 {
     int t1min, t1imin = dpd->T - 1;
     int s, t2max = 0;
     int i, err = 0;
 
     /* find "global" first y observation */
-    t1min = dpd_find_t1min(dpd, Z[dpd->yno]);
+    t1min = arbond_find_t1min(dpd, Z[dpd->yno]);
 
 #if ADEBUG
     fprintf(stderr, "dpd_sample_check, initial scan: "
@@ -747,7 +745,7 @@ static int dpd_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
     s = pdinfo->t1;
 
     for (i=0; i<dpd->N && !err; i++) {
-	err = dpd_sample_check_unit(dpd, Z, i, s, &t1imin, &t2max);
+	err = arbond_sample_check_unit(dpd, Z, i, s, &t1imin, &t2max);
 	s += dpd->T;
     }
 
@@ -781,7 +779,7 @@ static int dpd_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
 	err = E_MISSDATA;
     } else {
 	/* compute the number of columns in Zi */
-	dpd_compute_Z_cols(dpd, t1min, t2max);
+	arbond_compute_Z_cols(dpd, t1min, t2max);
 	dpd->max_ni = dpd->maxTi;
 	dpd->totobs = dpd->nobs;
     }
@@ -789,96 +787,42 @@ static int dpd_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
     return err;
 }
 
-#define ok_diff(d,t) (d->used[t] == 1)
-
-/* should a certain panel unit be skipped when computing
-   a z-statistic for autocorrelated errors? 
-*/
-
-static int ar_skip_unit (dpdinfo *dpd, int i, int t0, int k)
+static int dpd_const_pos (dpdinfo *dpd)
 {
-    unit_info *u = &dpd->ui[i];
-    int t;
+    if (dpd->xlist != NULL) {
+	int i;
 
-    for (t=u->t1+k; t<=u->t2; t++) {
-	if (ok_diff(dpd, t0+t) && ok_diff(dpd, t0+t-k)) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
-/* See if we have sufficient data to calculate the z-statistic for
-   AR(k) errors: return the length of the needed arrays, or 0 if we
-   can't do it.
-*/
-
-static int ar_data_check (dpdinfo *dpd, int k)
-{
-    unit_info *ui;
-    int i, t, t0, T = 0;
-
-    for (i=0, t=dpd->t1; i<dpd->N; i++, t0+=dpd->T) {
-	ui = &dpd->ui[i];
-	if (ui->nobs < 2) {
-	    continue;
-	}
-	for (t=ui->t1+k; t<=ui->t2; t++) {
-	    if (ok_diff(dpd, t0+t) && ok_diff(dpd, t0+t-k)) {
-		T++;
+	for (i=1; i<=dpd->xlist[0]; i++) {
+	    if (dpd->xlist[i] == 0) {
+		return i;
 	    }
 	}
     }
 
-    return T;
-}
-
-static int dpd_const_pos (dpdinfo *dpd)
-{
-    int i;
-
-    if (dpd->xlist == NULL) {
-	return 0;
-    }
-
-    for (i=1; i<=dpd->xlist[0]; i++) {
-	if (dpd->xlist[i] == 0) {
-	    return i;
-	}
-    }
-
-    return 0;
+    return -1;
 }
 
 /* FIXME try to detect and omit periodic dummies? */
 
 static int dpd_wald_test (dpdinfo *dpd)
 {
-    gretl_matrix_block *B;
-    gretl_matrix *vcv = NULL;
-    gretl_vector *b = NULL;
+    gretl_matrix *b, *V;
     double x = 0.0;
     int cpos = dpd_const_pos(dpd);
-    int i, j, k, kc = dpd->p + dpd->nx;
-    int ri, rj;
+    int k, kc = dpd->p + dpd->nx;
+    int i, j, ri, rj;
     int err;
 
     /* position of const in coeff vector? */
-    if (cpos != 0) {
+    if (cpos > 0) {
 	k = kc - 1;
 	cpos += dpd->p - 1;
     } else {
 	k = kc;
-	cpos = -1;
     }
 
-    B = gretl_matrix_block_new(&b,   k, 1,
-			       &vcv, k, k,
-			       NULL);
-    if (B == NULL) {
-	return E_ALLOC;
-    }
+    b = gretl_matrix_reuse(dpd->kmtmp, k, 1);
+    V = gretl_matrix_reuse(dpd->kktmp, k, k);
 
     ri = 0;
     for (i=0; i<kc; i++) {
@@ -894,17 +838,17 @@ static int dpd_wald_test (dpdinfo *dpd)
 	    for (j=0; j<kc; j++) {
 		if (j != cpos) {
 		    x = gretl_matrix_get(dpd->vbeta, i, j);
-		    gretl_matrix_set(vcv, ri, rj++, x);
+		    gretl_matrix_set(V, ri, rj++, x);
 		}
 	    }
 	    ri++;
 	}
     } 
 
-    err = gretl_invert_symmetric_matrix(vcv);
+    err = gretl_invert_symmetric_matrix(V);
 
     if (!err) {
-	x = gretl_scalar_qform(b, vcv, &err);
+	x = gretl_scalar_qform(b, V, &err);
     }
 
     if (!err) {
@@ -912,43 +856,29 @@ static int dpd_wald_test (dpdinfo *dpd)
 	dpd->wdf = k;
     }
 
-#if ADEBUG
-    fprintf(stderr, "Wald chi^2(%d) = %g\n", k, x);
-#endif
-
-    gretl_matrix_block_destroy(B);
+    gretl_matrix_reuse(dpd->kmtmp, dpd->k, dpd->nz);
+    gretl_matrix_reuse(dpd->kktmp, dpd->k, dpd->k);
     
     return err;
 }
 
 static int sargan_test (dpdinfo *dpd)
 {
-    gretl_matrix_block *B;
-    gretl_matrix *Zu = NULL;
-    gretl_matrix *m1 = NULL;
+    gretl_matrix *Zu;
     int err = 0;
 
-    B = gretl_matrix_block_new(&Zu, dpd->nz, 1,
-			       &m1, dpd->nz, 1,
-			       NULL);
-    if (B == NULL) {
-	return E_ALLOC;
-    }
-
+    Zu = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, Zu);
 
-    if ((dpd->flags & DPD_DPANEL) && dpd->step == 1) {
+    if (dpd->ci == DPANEL && dpd->step == 1) {
 	; /* FIXME regularize this somehow */
     } else {
 	gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     }
-    gretl_matrix_multiply(dpd->A, Zu, m1);
 
-    dpd->sargan = gretl_matrix_dot_product(Zu, GRETL_MOD_TRANSPOSE,
-					   m1, GRETL_MOD_NONE,
-					   &err);
+    dpd->sargan = gretl_scalar_qform(Zu, dpd->A, &err);
 
-    if (dpd->step == 1) {
+    if (!err && dpd->step == 1) {
 	/* allow for scale factor in H matrix */
 	if (dpd->flags & DPD_ORTHDEV) {
 	    dpd->sargan /= dpd->s2;
@@ -964,194 +894,239 @@ static int sargan_test (dpdinfo *dpd)
 	    dpd->nz - dpd->k, dpd->sargan);
 #endif
 
-    gretl_matrix_block_destroy(B);
+    gretl_matrix_reuse(dpd->L1, 1, dpd->nz);
 
     return err;
 }
 
-/* Compute the z test for AR errors, if possible. */
+/*
+  AR(1) and AR(2) tests for residuals, see
+  Doornik, Arellano and Bond, DPD manual (2006), pp. 28-29.
 
-static int ar_test (dpdinfo *dpd, const gretl_matrix *C)
+  AR(m) = \frac{d_0}{\sqrt{d_1 + d_2 + d_3}}
+
+  d_0 = \sum_i w_i' u_i
+
+  d_1 = \sum w_i' H_i w_i
+
+  d_2 = -2(\sum_i w_i' X_i) M^{-1} 
+        ( \sum_i X_i' Z_i) A_N (\sum Z_i' H_i w_i)
+
+  d_3 = (\sum_i w_i' X_i) \hat{V}[\hat{\beta}] (\sum_i X_i' w_i)
+
+  The w_i, u_i, X_i and Z_i in the above equations are all in 
+  differences. In the "system" case the last term in d2 is
+  modified as
+
+  (\sum Z_i^f' u_i^f u_i' w_i)
+
+  where the f superscript indicates that all observations are
+  used, differences and levels. 
+
+  one step, robust: H_i = H_{2,i}; M = M_1
+  two step:         H_i = H_{2,i}; M = M_2
+
+  H_{2,i} = v^*_{1,i} v^*_{1,i}'
+
+*/
+
+static int ar_test (dpdinfo *dpd)
 {
-    gretl_matrix_block *B = NULL;
-    gretl_matrix *v;
-    gretl_matrix *w;
-    gretl_matrix *X;  /* this is the trimmed "X_{*}" */
-    gretl_matrix *wX; 
-    gretl_matrix *tmpk;
-    gretl_matrix *ui; 
-    gretl_matrix *m1; 
-    gretl_matrix *SZv;
-    gretl_matrix *uhat;
-    double x, num, den;
-    double den2, den3;
-    int s, t, t0, q, Q;
-    int sbig, k = 0;
-    int i, j, err = 0;
+    double x, d0, d1, d2, d3;
+    gretl_matrix_block *B;
+    gretl_matrix *ui, *wi;
+    gretl_matrix *Xi, *Zi;
+    gretl_matrix *Hi, *ZHi;
+    gretl_matrix *wX, *ZHw;
+    gretl_matrix *Tmp;
+    gretl_matrix *Zu = NULL;
+    int T = dpd->maxTi;
+    int nz = dpd->nz;
+    int i, j, k, s, t;
+    int m = 1;
+    int err = 0;
+
+    if (use_levels(dpd)) {
+	/* needed for the more complex d2 calculation */
+	Zu = gretl_matrix_alloc(nz, 1);
+	if (Zu == NULL) {
+	    return E_ALLOC;
+	}
+    }
+
+    B = gretl_matrix_block_new(&ui,  T, 1,
+			       &wi,  T, 1,
+			       &Xi,  T, dpd->k,
+			       &Hi,  T, T,
+			       &ZHi, nz, T,
+			       &wX,  1, dpd->k,
+			       &ZHw, nz, 1,
+			       &Tmp, dpd->k, nz,
+			       NULL);
+
+    if (B == NULL) {
+	gretl_matrix_free(Zu);
+	return E_ALLOC;
+    }
+
+    Zi = gretl_matrix_reuse(dpd->Zi, T, nz);
 
  restart:
 
-    Q = ar_data_check(dpd, ++k);
-    if (Q == 0) {
-	gretl_matrix_block_destroy(B);
-	return 0;
-    }
+    /* initialize cumulators */
+    d0 = d1 = 0.0;
+    gretl_matrix_zero(wX);
+    gretl_matrix_zero(ZHw);
 
-#if ADEBUG 
-    fprintf(stderr, "AR(%d) test: number of usable obs = %d\n", k, Q);
-#endif
+    s = 0;
 
-    if (k == 1) {
-	B = gretl_matrix_block_new(&v,    Q, 1,
-				   &w,    Q, 1,
-				   &X,    Q, dpd->k,
-				   &wX,   1, dpd->k, 
-				   &tmpk, 1, dpd->k,
-				   &ui,   dpd->maxTi, 1,
-				   &m1,   dpd->nz, 1,
-				   &SZv,  dpd->nz, 1,
-				   NULL);
-	if (B == NULL) {
-	    return E_ALLOC;
-	}
-    } else {
-	/* k == 2 */
-	gretl_matrix_reuse(v,  Q, 1);
-	gretl_matrix_reuse(w,  Q, 1);
-	gretl_matrix_reuse(X,  Q, -1);
-	gretl_matrix_reuse(m1, dpd->nz, 1);
-    }
-
-    if (dpd->uhatd != NULL) {
-	uhat = dpd->uhatd;
-    } else {
-	uhat = dpd->uhat;
-    }
-
-    gretl_matrix_zero(SZv);
-    den = 0.0;
-    q = s = sbig = 0;
-
-    for (i=0, t0=dpd->t1; i<dpd->N; i++, t0+=dpd->T) {
+    for (i=0; i<dpd->N; i++) {
 	unit_info *unit = &dpd->ui[i];
-	int Ti = unit->nobs;
-	double den1i = 0.0;
-	int si = 0;
+	int s_, t0, ni = unit->nobs;
+	int Ti = ni - unit->nlev;
+	double uw;
 
 	if (Ti == 0) {
 	    continue;
 	}
 
-	if (ar_skip_unit(dpd, i, t0, k)) {
-	    sbig += Ti;
-	    s += Ti;
-	    continue;
-	}
-
 	gretl_matrix_reuse(ui, Ti, -1);
-	gretl_matrix_reuse(dpd->Zi, dpd->nz, Ti);
+	gretl_matrix_reuse(wi, Ti, -1);
+	gretl_matrix_reuse(Xi, Ti, -1);
+	gretl_matrix_reuse(Zi, Ti, -1);
+	gretl_matrix_reuse(Hi, Ti, Ti);
+	gretl_matrix_reuse(ZHi, -1, Ti);
 
-	/* extract full-length Z'_i and u_i */
+	gretl_matrix_zero(wi);
+	t0 = data_index(dpd, i);
 
+	/* construct ui, wi, Xi, Zi */
+
+	k = 0;
 	for (t=unit->t1; t<=unit->t2; t++) {
-	    if (ok_diff(dpd, t0+t)) {
-		for (j=0; j<dpd->nz; j++) {
-		    x = gretl_matrix_get(dpd->ZT, j, sbig);
-		    gretl_matrix_set(dpd->Zi, j, si, x);
-		}
-		x = uhat->val[sbig++];
-		gretl_vector_set(ui, si++, x);
-	    }
-	}
-
-	for (t=unit->t1; t<unit->t1+k; t++) {
-	    /* skip any obs prior to t1 + k */
-	    if (ok_diff(dpd, t0+t)) {
-		s++;
-	    }
-	}
-
-	/* extract lagged residuals w along with v_{*} and X_{*} */
-
-	for (t=unit->t1+k; t<=unit->t2; t++) {
-	    if (ok_diff(dpd, t0+t)) {
-		if (ok_diff(dpd, t0+t-k)) {
-		    v->val[q] = uhat->val[s];
-		    w->val[q] = uhat->val[s-k];
-		    den1i += v->val[q] * w->val[q];
-		    for (j=0; j<dpd->k; j++) {
-			x = gretl_matrix_get(dpd->X, s, j);
-			gretl_matrix_set(X, q, j, x);
+	    if (dpd->used[t0+t]) {
+		ui->val[k] = dpd->uhat->val[s];
+		if (m == 1) {
+		    if (dpd->used[t0+t-1]) {
+			wi->val[k] = dpd->uhat->val[s-1];
 		    }
-		    q++;
+		} else if (dpd->used[t0+t-2]) {	
+		    /* m = 2: due to missing values the lag-2
+		       residual might be at slot s-1, not s-2 
+		    */
+		    s_ = (dpd->used[t0+t-1])? (s-2) : (s-1);
+		    wi->val[k] = dpd->uhat->val[s_];
 		}
+		for (j=0; j<dpd->k; j++) {
+		    x = gretl_matrix_get(dpd->X, s, j);
+		    gretl_matrix_set(Xi, k, j, x);
+		}
+		for (j=0; j<nz; j++) {
+		    x = gretl_matrix_get(dpd->ZT, j, s);
+		    gretl_matrix_set(Zi, k, j, x);
+		}
+		k++;
 		s++;
 	    }
 	}
 
-	/* cumulate Z'_i u_i u_i'_* u_{i,-k} */
-	gretl_matrix_multiply_by_scalar(ui, den1i);
-	gretl_matrix_multiply_mod(dpd->Zi, GRETL_MOD_NONE,
-				  ui, GRETL_MOD_NONE,
-				  SZv, GRETL_MOD_CUMULATE);
+	/* d0 += w_i' * u_i */
+	uw = gretl_matrix_dot_product(wi, GRETL_MOD_TRANSPOSE,
+				      ui, GRETL_MOD_NONE, &err);
+	d0 += uw;
 
-	den += den1i * den1i;
+	/* form H_i */
+	gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
+				  ui, GRETL_MOD_TRANSPOSE,
+				  Hi, GRETL_MOD_NONE);
+
+	/* d1 += w_i' H_i w_i */
+	d1 += gretl_scalar_qform(wi, Hi, &err);
+
+	/* wX += w_i' X_i */
+	gretl_matrix_multiply_mod(wi, GRETL_MOD_TRANSPOSE,
+				  Xi, GRETL_MOD_NONE,
+				  wX, GRETL_MOD_CUMULATE);
+
+	if (use_levels(dpd)) {
+	    /* Here we need (Z_i^f' u_i^f)(u_i' w_i), which
+	       mixes full series and differences.
+	    */
+	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_TRANSPOSE,
+				      ui, GRETL_MOD_NONE,
+				      Zu, GRETL_MOD_NONE);
+	    for (t=unit->t2+1; t<dpd->T; t++) {
+		/* catch the additional levels terms */
+		if (dpd->used[t0+t]) {
+		    for (j=0; j<nz; j++) {
+			x = gretl_matrix_get(dpd->ZT, j, s);
+			Zu->val[j] += x * dpd->uhat->val[s];
+		    }
+		    s++;
+		}
+	    }
+	    gretl_matrix_multiply_by_scalar(Zu, uw);
+	    gretl_matrix_add_to(ZHw, Zu);
+	} else {
+	    /* differences only: ZHw += Z_i' H_i w_i */
+	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_TRANSPOSE,
+				      Hi, GRETL_MOD_NONE,
+				      ZHi, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(ZHi, GRETL_MOD_NONE,
+				      wi, GRETL_MOD_NONE,
+				      ZHw, GRETL_MOD_CUMULATE);
+	}
     }
 
-#if ADEBUG > 1
-    gretl_matrix_print(w, "lagged residuals");
-    gretl_matrix_print(v, "current residuals");
-#endif
-
-    /* the numerator */
-    num = 0.0;
-    for (i=0; i<Q; i++) {
-	num += w->val[i] * v->val[i];
+    if (m == 1) {
+	/* form M^{-1} * X'Z * A -- this doesn't need to
+	   be repeated for m = 2
+	*/
+	gretl_matrix_multiply(dpd->M, dpd->XZ, dpd->kmtmp);
+	gretl_matrix_multiply(dpd->kmtmp, dpd->A, Tmp);
     }
 
-    /* the denominator has three components, the first of which
-       is already handled */
+    /* d2 = -2 * w'X * (M^{-1} * XZ * A) * ZHw */
+    gretl_matrix_multiply(wX, Tmp, dpd->L1); 
+    d2 = gretl_matrix_dot_product(dpd->L1, GRETL_MOD_NONE,
+				  ZHw, GRETL_MOD_NONE, &err);
 
-    /* required component "wX" = \hat{v}'_{-k} X_{*} */
-    gretl_matrix_multiply_mod(w, GRETL_MOD_TRANSPOSE,
-			      X, GRETL_MOD_NONE,
-			      wX, GRETL_MOD_NONE);
-    
-    /* w' X_* (X'ZAZ'X)^{-1} X'ZA(sum stuff) */
-    gretl_matrix_multiply(wX, C, tmpk);
-    gretl_matrix_reuse(m1, 1, dpd->nz);
-    gretl_matrix_multiply(tmpk, dpd->XZA, m1);
-    den2 = gretl_matrix_dot_product(m1, GRETL_MOD_NONE,
-				    SZv, GRETL_MOD_NONE,
-				    &err);
-    den -= 2.0 * den2;
+    if (!err) {
+	d2 *= -2.0;
+	/* d3 = w'X * Var(beta) * wX' */
+	d3 = gretl_scalar_qform(wX, dpd->vbeta, &err);
+    }
 
-    /* additive term w' X_* vbeta X_*' w */
-    gretl_matrix_multiply(wX, dpd->vbeta, tmpk);
-    den3 = gretl_matrix_dot_product(tmpk, GRETL_MOD_NONE,
-				    wX, GRETL_MOD_TRANSPOSE,
-				    &err);
-    den += den3;
-
-    if (den < 0) {
-	err = E_NAN;
-    } else {
-	double z = num / sqrt(den);
+    if (!err) {
+	double z, den = d1 + d2 + d3;
 
 #if ADEBUG
-	fprintf(stderr, "AR(%d) test: z = %g / sqrt(%g) = %.4g\n", k, 
-		num, den, z);
-#endif
+	fprintf(stderr, "ar_test: d0=%g, d1=%g, d2=%g, d3=%g, den=%g\n",
+		d0, d1, d2, d3, den);
+#endif	
 
-	if (k == 1) {
-	    dpd->AR1 = z;
-	    goto restart;
+	if (den <= 0) {
+	    err = E_NAN;
 	} else {
-	    dpd->AR2 = z;
+	    z = d0 / sqrt(den);
+	    if (m == 1) {
+		dpd->AR1 = z;
+	    } else {
+		dpd->AR2 = z;
+	    }
 	}
+    }
+
+    if (!err && m == 1) {
+	m = 2;
+	goto restart;
     }
 
     gretl_matrix_block_destroy(B);
+    gretl_matrix_free(Zu);
+
+    /* restore original dimensions */
+    gretl_matrix_reuse(dpd->Zi, dpd->max_ni, dpd->nz);
 
     return err;
 }
@@ -1315,11 +1290,11 @@ static int dpd_variance_2 (dpdinfo *dpd,
 /* 
    Compute the step-1 robust variance matrix:
 
-   N * C^{-1} * (X'*Z*A_N*\hat{V}_N*A_N*Z'*X) * C^{-1} 
+   N * M^{-1} * (X'*Z*A_N*\hat{V}_N*A_N*Z'*X) * M^{-1} 
 
    where 
 
-   C = X'*Z*A_N*Z'*X 
+   M = X'*Z*A_N*Z'*X 
    
    and
 
@@ -1331,16 +1306,14 @@ static int dpd_variance_2 (dpdinfo *dpd,
 
 static int dpd_variance_1 (dpdinfo *dpd)
 {
-    gretl_matrix *kk, *V, *ui;
+    gretl_matrix *V, *ui;
     int i, t, k, c;
     int err = 0;
 
-    kk = gretl_matrix_alloc(dpd->k, dpd->k);
     V = gretl_zero_matrix_new(dpd->nz, dpd->nz);
     ui = gretl_column_vector_alloc(dpd->max_ni);
 
-    if (kk == NULL || V == NULL || ui == NULL) {
-	gretl_matrix_free(kk);
+    if (V == NULL || ui == NULL) {
 	gretl_matrix_free(V);
 	gretl_matrix_free(ui);
 	return E_ALLOC;
@@ -1380,16 +1353,11 @@ static int dpd_variance_1 (dpdinfo *dpd)
     /* form X'Z A_N Z'X  */
     gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->kmtmp);
     gretl_matrix_qform(dpd->kmtmp, GRETL_MOD_NONE, V,
-		       kk, GRETL_MOD_NONE);
+		       dpd->kktmp, GRETL_MOD_NONE);
 
-    /* pre- and post-multiply by C^{-1} */
-    if (!(dpd->flags & DPD_DPANEL)) {
-	/* the new-style \hat{\beta} calculation has 
-	   already done this inversion */
-	err = gretl_invert_symmetric_matrix(dpd->M);
-    }
     if (!err) {
-	gretl_matrix_qform(dpd->M, GRETL_MOD_NONE, kk, 
+	/* pre- and post-multiply by M^{-1} */
+	gretl_matrix_qform(dpd->M, GRETL_MOD_NONE, dpd->kktmp, 
 			   dpd->vbeta, GRETL_MOD_NONE);
 	gretl_matrix_multiply_by_scalar(dpd->vbeta, dpd->effN);
     }
@@ -1402,12 +1370,13 @@ static int dpd_variance_1 (dpdinfo *dpd)
     }
 
     gretl_matrix_free(ui);
-    gretl_matrix_free(kk);
 
     return err;
 }
 
-static void dpd_residuals (dpdinfo *dpd)
+/* no "system" case here: all residuals are in differences */
+
+static void arbond_residuals (dpdinfo *dpd)
 {
     const double *b = dpd->beta->val;
     double x, ut;
@@ -1430,69 +1399,6 @@ static void dpd_residuals (dpdinfo *dpd)
     }
 
     dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
-}
-
-static int dpd_variance (dpdinfo *dpd)
-{
-    gretl_matrix *u1 = NULL;
-    gretl_matrix *V1 = NULL;
-    int err;
-
-    if (dpd->step == 2 && (dpd->flags & DPD_WINCORR)) {
-	/* we'll need a copy of the step-1 residuals, and also
-	   the step-1 var(\hat{\beta})
-	*/
-	u1 = gretl_matrix_copy(dpd->uhat);
-	V1 = gretl_matrix_copy(dpd->vbeta);
-	if (u1 == NULL || V1 == NULL) {
-	    return E_ALLOC;
-	}
-    }	
-
-    dpd_residuals(dpd);
-
-    if (dpd->step == 2) {
-	err = dpd_variance_2(dpd, u1, V1);
-	gretl_matrix_free(u1);
-	gretl_matrix_free(V1);
-    } else {
-	err = dpd_variance_1(dpd);
-    }
-
-    if (err) {
-	return err;
-    }
-
-#if ADEBUG
-    int i;
-
-    gretl_matrix_print(dpd->vbeta, "Var(beta)");
-    for (i=0; i<dpd->k; i++) {
-	x = gretl_matrix_get(dpd->vbeta, i, i);
-	fprintf(stderr, "se(beta[%d]) = %g\n", i, sqrt(x));
-    }
-    fprintf(stderr, "\nSSR = %.11g\n", dpd->SSR);
-    fprintf(stderr, "sigma^2 = %.7g\n", dpd->s2);
-    fprintf(stderr, "sigma = %.7g\n", sqrt(dpd->s2));
-#endif
-
-    /* if we're on the final step, carry out the various tests */
-
-    if (dpd->step == 2 || !(dpd->flags & DPD_TWOSTEP)) {
-	if (!(dpd->flags & DPD_ORTHDEV)) {
-	    if (dpd->step == 2) {
-		err = gretl_invert_symmetric_matrix(dpd->M);
-	    }
-	    if (!err) {
-		ar_test(dpd, dpd->M);
-	    }
-	}
-
-	sargan_test(dpd);
-	dpd_wald_test(dpd);
-    }
-
-    return err;
 }
 
 /* In the "dpanel" case dpd->uhat may contain both differenced
@@ -1540,6 +1446,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     int i, j;
     int err = 0;
 
+    pmod->ci = dpd->ci;
     pmod->t1 = pdinfo->t1;
     pmod->t2 = pdinfo->t2;
     pmod->dfn = dpd->k;
@@ -1553,12 +1460,6 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 
     gretl_model_set_int(pmod, "yno", dpd->yno);
     gretl_model_set_int(pmod, "n_included_units", dpd->effN);
-
-    if (dpd->flags & DPD_DPANEL) {
-	pmod->ci = DPANEL;
-    } else {
-	pmod->ci = ARBOND;
-    }
 
     pmod->ncoeff = dpd->k;
     pmod->nobs = dpd->nobs;
@@ -1785,7 +1686,7 @@ static int try_alt_inverse (dpdinfo *dpd)
     return err;
 }
 
-static int dpd_calculate (dpdinfo *dpd)
+static int arbond_beta_hat (dpdinfo *dpd)
 {
     int err = 0;
 
@@ -1796,23 +1697,21 @@ static int dpd_calculate (dpdinfo *dpd)
 					dpd->XZ, GRETL_MOD_NONE);
     }
 
-#if ADEBUG
-    gretl_matrix_print(dpd->XZ, "XZ' (dpd_calculate)");
-    gretl_matrix_print(dpd->A, "A (dpd_calculate)");
-#endif
-
-    /* find X'Z A */
+    /* dpd->XZA <- XZ * A */
     gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
 
-    /* calculate "numerator", X'ZAZ'y */
     gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
 
-#if ADEBUG
-    gretl_matrix_print(dpd->ZY, "Z'y (dpd_calculate)");
+#if ADEBUG > 1
+    gretl_matrix_print(dpd->XZ, "XZ' (arbond)");
+    gretl_matrix_print(dpd->A, "A (arbond)");
+    gretl_matrix_print(dpd->ZY, "Z'y (arbond)");
 #endif
+
+    /* using beta as workspace */
     gretl_matrix_multiply(dpd->XZA, dpd->ZY, dpd->beta);
 
-    /* calculate "denominator", X'ZAZ'X */
+    /* calculate M = X'ZAZ'X */
     gretl_matrix_multiply_mod(dpd->XZA, GRETL_MOD_NONE,
 			      dpd->XZ, GRETL_MOD_TRANSPOSE,
 			      dpd->M, GRETL_MOD_NONE);
@@ -1821,24 +1720,21 @@ static int dpd_calculate (dpdinfo *dpd)
     gretl_matrix_copy_values(dpd->kktmp, dpd->M);
     err = gretl_cholesky_decomp_solve(dpd->kktmp, dpd->beta);
 
-#if ADEBUG
     if (!err) {
-	int i;
-
-	fprintf(stderr, "%d-step estimates:\n\n", dpd->step);
-	for (i=0; i<dpd->k; i++) {
-	    fprintf(stderr, "beta[%d] = %g\n", i, dpd->beta->val[i]);
-	}
-	fputc('\n', stderr);
+	/* prepare M^{-1} for variance calculation */
+	err = gretl_inverse_from_cholesky_decomp(dpd->M, dpd->kktmp);
     }
+
+#if ADEBUG > 1
+    gretl_matrix_print(dpd->M, "M");
 #endif
-
-    if (!err) {
-	err = dpd_variance(dpd);
-    }
 
     return err;
 }
+
+/* This preparation is in common between the "arbond" code 
+   and the "dpanel" code.
+*/
 
 static int prepare_step_2 (dpdinfo *dpd)
 {
@@ -1876,18 +1772,41 @@ static int prepare_step_2 (dpdinfo *dpd)
     return err;
 }
 
-static int dpd_step_2 (dpdinfo *dpd)
+static int arbond_step_2 (dpdinfo *dpd)
 {
+    gretl_matrix *u1 = NULL;
+    gretl_matrix *V1 = NULL;
     int err;
 
     err = prepare_step_2(dpd);
 
     if (!err) {
-	err = dpd_calculate(dpd);
+	err = arbond_beta_hat(dpd);
     }
 
-    if (err) {
-	fprintf(stderr, "step 2: dpd_calculate returning %d\n", err);
+    if (!err && (dpd->flags & DPD_WINCORR)) {
+	/* we'll need a copy of the step-1 residuals, and also
+	   the step-1 var(\hat{\beta})
+	*/
+	u1 = gretl_matrix_copy(dpd->uhat);
+	V1 = gretl_matrix_copy(dpd->vbeta);
+	if (u1 == NULL || V1 == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	arbond_residuals(dpd);
+	err = dpd_variance_2(dpd, u1, V1);
+    }
+
+    gretl_matrix_free(u1);
+    gretl_matrix_free(V1);
+
+    if (!err) {
+	ar_test(dpd);
+	sargan_test(dpd);
+	dpd_wald_test(dpd);
     }
 
     return err;
@@ -1923,8 +1842,7 @@ static double odev_at_lag (const double *x, int t, int lag, int pd)
     return ret;
 }
 
-static int dpd_make_y_X (dpdinfo *dpd, const double **Z, 
-			 const DATAINFO *pdinfo)
+static int arbond_make_y_X (dpdinfo *dpd, const double **Z)
 {
     const double *y = Z[dpd->yno];
     int odev = (dpd->flags & DPD_ORTHDEV);
@@ -1946,7 +1864,7 @@ static int dpd_make_y_X (dpdinfo *dpd, const double **Z,
 	    }
 	    /* current difference (or deviation) of dependent var */
 	    if (odev) {
-		x = odev_at_lag(y, s, 0, pdinfo->pd);
+		x = odev_at_lag(y, s, 0, dpd->T);
 		gretl_vector_set(dpd->Y, k, x);
 	    } else {
 		gretl_vector_set(dpd->Y, k, y[s] - y[s-1]);
@@ -1954,7 +1872,7 @@ static int dpd_make_y_X (dpdinfo *dpd, const double **Z,
 	    for (j=0; j<dpd->p; j++) {
 		/* lagged difference of dependent var */
 		if (odev) {
-		    x = odev_at_lag(y, s, j + 1, pdinfo->pd);
+		    x = odev_at_lag(y, s, j + 1, dpd->T);
 		    gretl_matrix_set(dpd->X, k, j, x);
 		} else {
 		    gretl_matrix_set(dpd->X, k, j, y[s-j-1] - y[s-j-2]);
@@ -2034,7 +1952,7 @@ static void make_first_diff_matrix (dpdinfo *dpd, int *rc,
     }
 }
 
-static int dpd_make_Z_and_A (dpdinfo *dpd, const double **Z)
+static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 {
     const double *y = Z[dpd->yno];
     int i, j, k, c = 0;
@@ -2292,7 +2210,7 @@ static int dpd_parse_istr (const char *istr, const DATAINFO *pdinfo,
     return err;
 }
 
-static int dpd_invert_A_N (dpdinfo *dpd)
+static int arbond_invert_A_N (dpdinfo *dpd)
 {
     int err = 0;
 
@@ -2311,6 +2229,44 @@ static int dpd_invert_A_N (dpdinfo *dpd)
 #if ADEBUG
     gretl_matrix_print(dpd->A, "A_N");
 #endif
+
+    return err;
+}
+
+static int arbond_step_1 (dpdinfo *dpd, const double **Z)
+{
+    int err = 0;
+
+    /* build y^* and X^* */
+    err = arbond_make_y_X(dpd, Z);
+
+    if (!err) {
+	/* build instrument matrix blocks, Z_i, and insert into
+	   big Z' matrix; cumulate first-stage A_N as we go 
+	*/
+	err = arbond_make_Z_and_A(dpd, Z);
+    }
+
+    if (!err) {
+	/* invert A_N: we allow two attempts */
+	err = arbond_invert_A_N(dpd);
+    }
+
+    if (!err) {
+	/* first-step calculation of \hat{\beta} */
+	err = arbond_beta_hat(dpd);
+    }
+
+    if (!err) {
+	arbond_residuals(dpd);
+	err = dpd_variance_1(dpd);
+    }
+
+    if (!err && !(dpd->flags & DPD_TWOSTEP)) {
+	ar_test(dpd);
+	sargan_test(dpd);
+	dpd_wald_test(dpd);
+    }
 
     return err;
 }
@@ -2341,14 +2297,14 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     }
 
     /* initialize (including some memory allocation) */
-    dpd = dpdinfo_new(list, Z, pdinfo, opt, d, nzb, &mod.errcode);
+    dpd = dpdinfo_new(ARBOND, list, Z, pdinfo, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
     }
 
     /* see if we have a usable sample */
-    err = dpd_sample_check(dpd, pdinfo, Z);
+    err = arbond_sample_check(dpd, pdinfo, Z);
     if (err) {
 	fprintf(stderr, "Error %d in dpd_sample_check\n", err);
     }
@@ -2364,30 +2320,12 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     }
 
     if (!err) {
-	/* build y^* and X^* */
-	err = dpd_make_y_X(dpd, Z, pdinfo);
-    }
-
-    if (!err) {
-	/* build instrument matrix blocks, Z_i, and insert into
-	   big Z' matrix; cumulate first-stage A_N as we go 
-	*/
-	err = dpd_make_Z_and_A(dpd, Z);
-    }
-
-    if (!err) {
-	/* invert A_N: note that we allow two attempts */
-	err = dpd_invert_A_N(dpd);
-    }
-
-    if (!err) {
-	/* first-step calculation */
-	err = dpd_calculate(dpd);
+	err = arbond_step_1(dpd, Z);
     }
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
-	err = dpd_step_2(dpd);
+	err = arbond_step_2(dpd);
     }
 
     if (err && !mod.errcode) {

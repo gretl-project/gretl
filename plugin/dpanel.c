@@ -1,15 +1,23 @@
 /* 
-   Holder (possibly temporary) for the code to support the new
-   "dpanel" command, which is intended to generalize the old "arbond"
-   to handle system GMM.
-
-   Added by Allin, 2010-07-09; initial content was from Jack's 
-   prototype code, newmask.c.
-*/
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 #define DPDEBUG 0
-
-#define use_levels(d) (d->flags & DPD_SYSTEM)
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
@@ -17,25 +25,18 @@
    we're at it.
 */
 
-static int dpanel_residuals (dpdinfo *dpd)
+static void dpanel_residuals (dpdinfo *dpd)
 {
     const double *b = dpd->beta->val;
     double SSRd = 0.0, SSRl = 0.0;
     double x, ut;
-    int i, j, k, kd, t;
+    int i, j, k, t;
 
-    if (use_levels(dpd) && dpd->uhatd == NULL) {
-	/* resids in differences will be needed for AR tests */
-	dpd->uhatd = gretl_column_vector_alloc(dpd->ndiff);
-	if (dpd->uhatd == NULL) {
-	    return E_ALLOC;
-	}
-    }
-
-    k = kd = 0;
+    k = 0;
 
     for (i=0; i<dpd->N; i++) {
-	int ndiff = dpd->ui[i].nobs - dpd->ui[i].nlev;
+	unit_info *unit = &dpd->ui[i];
+	int ndiff = unit->nobs - unit->nlev;
 
 	for (t=0; t<ndiff; t++) {
 	    /* differences */
@@ -46,11 +47,8 @@ static int dpanel_residuals (dpdinfo *dpd)
 	    }
 	    SSRd += ut * ut;
 	    dpd->uhat->val[k++] = ut;
-	    if (dpd->uhatd != NULL) {
-		dpd->uhatd->val[kd++] = ut;
-	    }
 	}
-	for (t=0; t<dpd->ui[i].nlev; t++) {
+	for (t=0; t<unit->nlev; t++) {
 	    /* levels, it applicable */
 	    ut = dpd->Y->val[k];
 	    for (j=0; j<dpd->k; j++) {
@@ -74,8 +72,6 @@ static int dpanel_residuals (dpdinfo *dpd)
     }
 
     dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
-
-    return 0;
 }
 
 /* 
@@ -508,9 +504,8 @@ static void trim_zero_inst (dpdinfo *dpd)
 
 /* Here we compute \hat{\beta} from the moment matrices. */
 
-static int do_estimator (dpdinfo *dpd)
+static int dpanel_beta_hat (dpdinfo *dpd)
 {
-    gretl_matrix *k1;
     int err = 0;
 
     if (dpd->step == 1) {
@@ -520,12 +515,6 @@ static int do_estimator (dpdinfo *dpd)
 	gretl_matrix_print(dpd->XZ, "XZ (trimmed)");
 	gretl_matrix_print(dpd->ZY, "ZY (trimmed)");
 #endif
-    }
-
-    /* workspace */
-    k1 = gretl_matrix_reuse(dpd->kktmp, dpd->k, 1);
-
-    if (dpd->step == 1) {
 	/* symmetrize A; you never know */
 	gretl_matrix_xtr_symmetric(dpd->A);
 	err = gretl_invert_symmetric_matrix(dpd->A);
@@ -538,25 +527,22 @@ static int do_estimator (dpdinfo *dpd)
     }
 
     if (!err) {
-	/* M <- (XZ * A * XZ')^{1} */
-	err = gretl_invert_symmetric_matrix(dpd->M);
+ 	/* dpd->XZA <- XZ * A */
+	gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
+	/* using beta as workspace */
+	gretl_matrix_multiply(dpd->XZA, dpd->ZY, dpd->beta);
+	gretl_matrix_copy_values(dpd->kktmp, dpd->M);
+	err = gretl_cholesky_decomp_solve(dpd->kktmp, dpd->beta);
     }
 
     if (!err) {
-	/* dpd->XZA <- XZ * A */
-	gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
-	/* M2 <- XZ * A * ZY */
-	gretl_matrix_multiply(dpd->XZA, dpd->ZY, k1);
-	/* beta <- (XZ * A * XZ')^{1} * (XZ * A * ZY) */
-	gretl_matrix_multiply(dpd->M, k1, dpd->beta);
+	/* prepare M^{-1} for variance calculation */
+	err = gretl_inverse_from_cholesky_decomp(dpd->M, dpd->kktmp);
     }
 
 #if DPDEBUG > 1
     gretl_matrix_print(dpd->M, "M");
 #endif
-
-    /* restore original workspace size */
-    gretl_matrix_reuse(dpd->kktmp, dpd->k, dpd->k);
 
     return err;
 }
@@ -677,7 +663,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	make_dpdstyle_H(dpd->H, dpd->maxTi);
     }
 
-    /* initialize matrices to cumulate */
+    /* initialize matrices to be cumulated */
     gretl_matrix_zero(dpd->XZ);
     gretl_matrix_zero(dpd->A);
     gretl_matrix_zero(dpd->ZY);
@@ -744,7 +730,7 @@ static int dpanel_step_2 (dpdinfo *dpd)
     err = prepare_step_2(dpd);
 
     if (!err) {
-	err = do_estimator(dpd);
+	err = dpanel_beta_hat(dpd);
     }
 
     if (!err && (dpd->flags & DPD_WINCORR)) {
@@ -759,10 +745,7 @@ static int dpanel_step_2 (dpdinfo *dpd)
     }		
 	
     if (!err) {
-	err = dpanel_residuals(dpd);
-    }
-
-    if (!err) {
+	dpanel_residuals(dpd);
 	err = dpd_variance_2(dpd, u1, V1);
     }
 
@@ -771,7 +754,7 @@ static int dpanel_step_2 (dpdinfo *dpd)
 
     if (!err) {
 #if 0 /* not just yet */
-	ar_test(dpd, dpd->M);
+	ar_test(dpd);
 #endif
 	sargan_test(dpd);
 	dpd_wald_test(dpd);
@@ -782,18 +765,10 @@ static int dpanel_step_2 (dpdinfo *dpd)
 
 static int dpanel_step_1 (dpdinfo *dpd)
 {
-    int err;
-
-    /* calculate \hat{\beta} */
-    err = do_estimator(dpd);
+    int err = dpanel_beta_hat(dpd);
 
     if (!err) {
-	/* add residuals */
-	err = dpanel_residuals(dpd);
-    }
-
-    if (!err) {
-	/* calculate variance of \hat{\beta} */
+	dpanel_residuals(dpd);
 	err = dpd_variance_1(dpd);
     }
 
@@ -812,47 +787,6 @@ static int dpanel_step_1 (dpdinfo *dpd)
    in a script use --system (OPT_L, think "levels") to get
    Blundell-Bond. To build the H matrix as per Ox/DPD use the
    option --dpdstyle (OPT_X).
-
-   The dpdinfo struct that is used here is a hybrid. It contains some
-   useful common information, filled out by dpdinfo_new; it also has a
-   fair number of members that are used by arbond but not (currently)
-   by dpanel.  And it contains a few members that are specific to
-   dpanel. This will have to be tidied up eventually.
-
-   When dpdinfo_new() and dpd_allocate_matrices() have returned
-   successfully, we have the following information available in the
-   dpd struct:
-
-   dpd->T:       total observations per unit (= pdinfo->pd)
-   dpd->N:       number of units in sample range
-   dpd->yno:     ID number of dependent variable
-   dpd->xlist:   list of exogenous vars
-   dpd->nx:      number of exogenous variables (= dpd->xlist[0])
-   dpd->laglist: list of lags of y (faked up at present)
-   dpd->p:       (max) lag order for y
-   dpd->k:       total number of parameters
-
-   and the following pre-allocated matrices:
-
-   dpd->beta:    dpd->k x 1
-   dpd->vbeta:   dpd->k x dpd->k (identity matrix, so far)
-
-   We have the following things still to be set:
-
-   dpd->ndiff: number of observations in differences
-   dpd->nlev:  number of observations in levels
-   dpd->nobs:  total number of observations actually used
-   dpd->effN:  number of units actually used
-   dpd->maxTi: the max number of equations in differences
-               for any unit
-   dpd->minTi: the min number of equations in differences
-               for any unit actually used
-   dpd->nz:    total number of instruments
-   dpd->XZ:    cross-moment matrix (not allocated yet)
-   dpd->A:     ditto
-   dpd->ZY:    ditto
-   dpd->ZT:    all Zs, stacked, not allocated yet
-
 */
 
 MODEL dpd_estimate (const int *list, const char *istr, 
@@ -869,7 +803,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
     gretl_model_init(&mod);
     gretl_model_smpl_init(&mod, pdinfo);
 
-    dpd = dpdinfo_new(list, Z, pdinfo, opt | OPT_B, d, nzb, &mod.errcode);
+    dpd = dpdinfo_new(DPANEL, list, Z, pdinfo, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;

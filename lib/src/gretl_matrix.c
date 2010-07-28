@@ -3234,7 +3234,7 @@ static int native_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 /**
  * gretl_cholesky_decomp_solve:
  * @a: symmetric positive-definite matrix.
- * @b: vector 'x'.
+ * @b: vector 'x' on input, solution 'b' on output.
  *
  * Solves ax = b for the unknown vector x, using Cholesky decomposition
  * via the lapack functions dpotrf and dpotrs.
