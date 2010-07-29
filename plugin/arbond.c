@@ -33,6 +33,8 @@ enum {
 
 #define use_levels(d) (d->flags & DPD_SYSTEM)
 
+#define LEVEL_ONLY 2
+
 typedef struct dpdinfo_ dpdinfo;
 typedef struct unit_info_ unit_info;
 
@@ -943,7 +945,7 @@ static int ar_test (dpdinfo *dpd)
     int T = dpd->maxTi;
     int nz = dpd->nz;
     int i, j, k, s, t;
-    int m = 1;
+    int nlags, m = 1;
     int err = 0;
 
     if (use_levels(dpd)) {
@@ -977,6 +979,7 @@ static int ar_test (dpdinfo *dpd)
     d0 = d1 = 0.0;
     gretl_matrix_zero(wX);
     gretl_matrix_zero(ZHw);
+    nlags = 0;
 
     s = 0;
 
@@ -984,6 +987,7 @@ static int ar_test (dpdinfo *dpd)
 	unit_info *unit = &dpd->ui[i];
 	int s_, t0, ni = unit->nobs;
 	int Ti = ni - unit->nlev;
+	int nlags_i = 0;
 	double uw;
 
 	if (Ti == 0) {
@@ -1009,6 +1013,7 @@ static int ar_test (dpdinfo *dpd)
 		if (m == 1) {
 		    if (dpd->used[t0+t-1]) {
 			wi->val[k] = dpd->uhat->val[s-1];
+			nlags_i++;
 		    }
 		} else if (dpd->used[t0+t-2]) {	
 		    /* m = 2: due to missing values the lag-2
@@ -1016,6 +1021,7 @@ static int ar_test (dpdinfo *dpd)
 		    */
 		    s_ = (dpd->used[t0+t-1])? (s-2) : (s-1);
 		    wi->val[k] = dpd->uhat->val[s_];
+		    nlags_i++;
 		}
 		for (j=0; j<dpd->k; j++) {
 		    x = gretl_matrix_get(dpd->X, s, j);
@@ -1029,6 +1035,14 @@ static int ar_test (dpdinfo *dpd)
 		s++;
 	    }
 	}
+
+	if (nlags_i == 0) {
+	    /* no lagged residuals available for this unit */
+	    s += unit->nlev;
+	    continue;
+	}
+
+	nlags += nlags_i;
 
 	/* d0 += w_i' * u_i */
 	uw = gretl_matrix_dot_product(wi, GRETL_MOD_TRANSPOSE,
@@ -1077,11 +1091,21 @@ static int ar_test (dpdinfo *dpd)
     }
 
     if (m == 1) {
-	/* form M^{-1} * X'Z * A -- this doesn't need to
+	/* form M^{-1} * X'Z * A -- this doesn't have to
 	   be repeated for m = 2
 	*/
 	gretl_matrix_multiply(dpd->M, dpd->XZ, dpd->kmtmp);
 	gretl_matrix_multiply(dpd->kmtmp, dpd->A, Tmp);
+    }
+
+    if (nlags == 0) {
+	/* no data for AR(m) test at current m */
+	if (m == 1) {
+	    m = 2;
+	    goto restart;
+	} else {
+	    goto finish;
+	}
     }
 
     /* d2 = -2 * w'X * (M^{-1} * XZ * A) * ZHw */
@@ -1119,6 +1143,8 @@ static int ar_test (dpdinfo *dpd)
 	m = 2;
 	goto restart;
     }
+
+ finish:
 
     gretl_matrix_block_destroy(B);
     gretl_matrix_free(Zu);
@@ -1399,37 +1425,60 @@ static void arbond_residuals (dpdinfo *dpd)
     dpd->s2 = dpd->SSR / (dpd->nobs - dpd->k);
 }
 
-/* In the "dpanel" case dpd->uhat may contain both differenced
+/* In the "system" case dpd->uhat contains both differenced
    residuals and levels residuals (stacked per unit). In that case
-   trim the vector down so that it conly contains the levels residuals
-   prior to transcribing the residuals in series form.
+   trim the vector down so that it contains only one set of
+   residuals prior to transcribing in series form. Which set
+   we preserve is governed by @save_levels.
 */
 
-static int dpanel_adjust_uhat (dpdinfo *dpd)
+static int dpanel_adjust_uhat (dpdinfo *dpd, 
+			       const DATAINFO *pdinfo,
+			       int save_levels)
 {
     double *tmp;
+    int ntmp, nd;
     int i, k, s, t;
 
-    tmp = malloc(dpd->nlev * sizeof *tmp);
+    ntmp = (save_levels)? dpd->nlev : dpd->ndiff;
+
+    tmp = malloc(ntmp * sizeof *tmp);
     if (tmp == NULL) {
 	return E_ALLOC;
     }
 
     k = s = 0;
     for (i=0; i<dpd->N; i++) {
-	/* skip residuals in differences */
-	k += dpd->ui[i].nobs - dpd->ui[i].nlev;
-	for (t=0; t<dpd->ui[i].nlev; t++) {
-	    tmp[s++] = dpd->uhat->val[k++];
+	nd = dpd->ui[i].nobs - dpd->ui[i].nlev;
+	if (save_levels) {
+	    /* skip residuals in differences */
+	    k += nd;
+	    for (t=0; t<dpd->ui[i].nlev; t++) {
+		tmp[s++] = dpd->uhat->val[k++];
+	    }
+	} else {
+	    /* use only residuals in differences */
+	    for (t=0; t<nd; t++) {
+		tmp[s++] = dpd->uhat->val[k++];
+	    }
+	    k += dpd->ui[i].nlev;
 	}
     }
 
-    for (t=0; t<dpd->nlev; t++) {
+    for (t=0; t<ntmp; t++) {
 	dpd->uhat->val[t] = tmp[t];
     }
 
-    gretl_matrix_reuse(dpd->uhat, dpd->nlev, 1);
+    gretl_matrix_reuse(dpd->uhat, ntmp, 1);
     free(tmp);
+
+    if (!save_levels) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (dpd->used[t] == LEVEL_ONLY) {
+		dpd->used[t] = 0;
+	    }
+	}
+    }
 
     return 0;
 }
@@ -1505,7 +1554,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     /* add uhat, yhat */
 
     if (!err && dpd->nlev > 0) {
-	err = dpanel_adjust_uhat(dpd);
+	err = dpanel_adjust_uhat(dpd, pdinfo, 0); /* or 1 */
     }
 
     if (!err) {

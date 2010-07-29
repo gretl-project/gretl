@@ -62,8 +62,10 @@ static void dpanel_residuals (dpdinfo *dpd)
 
     if (use_levels(dpd)) {
 	/* we could attach these to the final model */
+#if 0
 	fprintf(stderr, "nobs (diffs) = %d\n", dpd->ndiff);
 	fprintf(stderr, "SSR (diffs) = %g\n", SSRd);
+#endif
 	dpd->nobs = dpd->nlev;
 	dpd->SSR = SSRl;
     } else {
@@ -132,7 +134,7 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 	    if (goodobs[0] > 1) {
 		dpd->used[big_t] = 1;
 	    } else if (use_levels(dpd)) {
-		dpd->used[big_t] = 2;
+		dpd->used[big_t] = LEVEL_ONLY;
 	    }
 	}
     }
@@ -492,7 +494,8 @@ static void trim_zero_inst (dpdinfo *dpd)
 
 	dpd->nz = dpd->A->rows;
 
-	/* adjust other matrices whose dimensions involve nz */
+	/* resize other workspace matrices whose dimensions 
+	   involve nz */
 	gretl_matrix_reuse(dpd->Acpy,  dpd->nz, dpd->nz);
 	gretl_matrix_reuse(dpd->kmtmp, -1, dpd->nz);
 	gretl_matrix_reuse(dpd->L1,    -1, dpd->nz);
@@ -502,7 +505,7 @@ static void trim_zero_inst (dpdinfo *dpd)
     }
 }
 
-/* Here we compute \hat{\beta} from the moment matrices. */
+/* compute \hat{\beta} from the moment matrices */
 
 static int dpanel_beta_hat (dpdinfo *dpd)
 {
@@ -638,7 +641,9 @@ static void stack_unit_data (dpdinfo *dpd,
 }
 
 /* Main driver for system GMM: the core is a loop across
-   the panel units to build the moment matrices.
+   the panel units to build the moment matrices. At this
+   point we have already done the observations
+   accounts, which are recorded in the Goodobs lists.
 */
 
 static int do_units (dpdinfo *dpd, const double **Z, 
@@ -664,7 +669,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	make_dpdstyle_H(dpd->H, dpd->maxTi);
     }
 
-    /* initialize matrices to be cumulated */
+    /* initialize cumulators */
     gretl_matrix_zero(dpd->XZ);
     gretl_matrix_zero(dpd->A);
     gretl_matrix_zero(dpd->ZY);
@@ -681,7 +686,6 @@ static int do_units (dpdinfo *dpd, const double **Z,
 #endif
 
 	if (Ti > 0) {
-	    /* this unit is usable */
 	    if (D != NULL) {
 		build_unit_H_matrix(dpd, goodobs, D);
 	    }
@@ -754,9 +758,7 @@ static int dpanel_step_2 (dpdinfo *dpd)
     gretl_matrix_free(V1);
 
     if (!err) {
-#if 1 /* not just yet */
 	ar_test(dpd);
-#endif
 	sargan_test(dpd);
 	dpd_wald_test(dpd);
     }
@@ -774,9 +776,8 @@ static int dpanel_step_1 (dpdinfo *dpd)
     }
 
     if (!err && !(dpd->flags & DPD_TWOSTEP)) {
-#if 1 /* not just yet */
+	/* do the tests if we're not continuing */
 	ar_test(dpd);
-#endif
 	sargan_test(dpd);
 	dpd_wald_test(dpd);
     }
