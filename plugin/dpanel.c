@@ -628,6 +628,7 @@ static void stack_unit_data (dpdinfo *dpd,
 	    }
 	    s++;
 	}
+
 	/* record the number of levels obs and augment total */
 	unit->nlev = goodobs[0];
 	unit->nobs += unit->nlev;
@@ -753,7 +754,7 @@ static int dpanel_step_2 (dpdinfo *dpd)
     gretl_matrix_free(V1);
 
     if (!err) {
-#if 0 /* not just yet */
+#if 1 /* not just yet */
 	ar_test(dpd);
 #endif
 	sargan_test(dpd);
@@ -773,8 +774,8 @@ static int dpanel_step_1 (dpdinfo *dpd)
     }
 
     if (!err && !(dpd->flags & DPD_TWOSTEP)) {
-#if 0 /* not just yet */
-	ar_test(dpd, dpd->M);
+#if 1 /* not just yet */
+	ar_test(dpd);
 #endif
 	sargan_test(dpd);
 	dpd_wald_test(dpd);

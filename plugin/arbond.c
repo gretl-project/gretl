@@ -1049,21 +1049,19 @@ static int ar_test (dpdinfo *dpd)
 				  wX, GRETL_MOD_CUMULATE);
 
 	if (use_levels(dpd)) {
-	    /* Here we need (Z_i^f' u_i^f)(u_i' w_i), which
+	    /* Here we need (Z_i^f' u_i^f)*(u_i' w_i), which
 	       mixes full series and differences.
 	    */
 	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_TRANSPOSE,
 				      ui, GRETL_MOD_NONE,
 				      Zu, GRETL_MOD_NONE);
-	    for (t=unit->t2+1; t<dpd->T; t++) {
-		/* catch the additional levels terms */
-		if (dpd->used[t0+t]) {
-		    for (j=0; j<nz; j++) {
-			x = gretl_matrix_get(dpd->ZT, j, s);
-			Zu->val[j] += x * dpd->uhat->val[s];
-		    }
-		    s++;
+	    for (t=0; t<unit->nlev; t++) {
+		/* catch the levels terms */
+		for (j=0; j<nz; j++) {
+		    x = gretl_matrix_get(dpd->ZT, j, s);
+		    Zu->val[j] += x * dpd->uhat->val[s];
 		}
+		s++;
 	    }
 	    gretl_matrix_multiply_by_scalar(Zu, uw);
 	    gretl_matrix_add_to(ZHw, Zu);
