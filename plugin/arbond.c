@@ -128,6 +128,8 @@ struct dpdinfo_ {
 
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
 
+static void dpanel_residuals (dpdinfo *dpd);
+
 static void dpdinfo_free (dpdinfo *dpd)
 {
     if (dpd == NULL) {
@@ -864,7 +866,7 @@ static int dpd_wald_test (dpdinfo *dpd)
     return err;
 }
 
-static int sargan_test (dpdinfo *dpd)
+static int dpd_sargan_test (dpdinfo *dpd)
 {
     gretl_matrix *Zu;
     int err = 0;
@@ -909,15 +911,15 @@ static int sargan_test (dpdinfo *dpd)
 
   d_0 = \sum_i w_i' u_i
 
-  d_1 = \sum w_i' H_i w_i
+  d_1 = \sum_i w_i' H_i w_i
 
   d_2 = -2(\sum_i w_i' X_i) M^{-1} 
-        ( \sum_i X_i' Z_i) A_N (\sum Z_i' H_i w_i)
+        (\sum_i X_i' Z_i) A_N (\sum Z_i' H_i w_i)
 
-  d_3 = (\sum_i w_i' X_i) \hat{V}[\hat{\beta}] (\sum_i X_i' w_i)
+  d_3 = (\sum_i w_i' X_i) var(\hat{\beta}) (\sum_i X_i' w_i)
 
-  The w_i, u_i, X_i and Z_i in the above equations are all in 
-  differences. In the "system" case the last term in d2 is
+  The matrices with subscript i in the above equations are all 
+  in differences. In the "system" case the last term in d2 is
   modified as
 
   (\sum Z_i^f' u_i^f u_i' w_i)
@@ -932,42 +934,37 @@ static int sargan_test (dpdinfo *dpd)
 
 */
 
-static int ar_test (dpdinfo *dpd)
+static int dpd_ar_test (dpdinfo *dpd)
 {
     double x, d0, d1, d2, d3;
     gretl_matrix_block *B;
     gretl_matrix *ui, *wi;
     gretl_matrix *Xi, *Zi;
-    gretl_matrix *Hi, *ZHi;
+    gretl_matrix *Hi, *ZU;
     gretl_matrix *wX, *ZHw;
     gretl_matrix *Tmp;
-    gretl_matrix *Zu = NULL;
     int T = dpd->maxTi;
     int nz = dpd->nz;
+    int ZU_cols;
     int i, j, k, s, t;
     int nlags, m = 1;
     int err = 0;
 
-    if (use_levels(dpd)) {
-	/* needed for the more complex d2 calculation */
-	Zu = gretl_matrix_alloc(nz, 1);
-	if (Zu == NULL) {
-	    return E_ALLOC;
-	}
-    }
+    /* The required size of the workspace matrix ZU depends on 
+       whether or not we're in the system case */
+    ZU_cols = (use_levels(dpd))? 1 : T;
 
     B = gretl_matrix_block_new(&ui,  T, 1,
 			       &wi,  T, 1,
 			       &Xi,  T, dpd->k,
 			       &Hi,  T, T,
-			       &ZHi, nz, T,
+			       &ZU,  nz, ZU_cols,
 			       &wX,  1, dpd->k,
 			       &ZHw, nz, 1,
 			       &Tmp, dpd->k, nz,
 			       NULL);
 
     if (B == NULL) {
-	gretl_matrix_free(Zu);
 	return E_ALLOC;
     }
 
@@ -999,27 +996,35 @@ static int ar_test (dpdinfo *dpd)
 	gretl_matrix_reuse(Xi, Ti, -1);
 	gretl_matrix_reuse(Zi, Ti, -1);
 	gretl_matrix_reuse(Hi, Ti, Ti);
-	gretl_matrix_reuse(ZHi, -1, Ti);
+
+	if (!use_levels(dpd)) {
+	    gretl_matrix_reuse(ZU, -1, Ti);
+	}
 
 	gretl_matrix_zero(wi);
 	t0 = data_index(dpd, i);
 
-	/* construct ui, wi, Xi, Zi */
+	/* Construct the per-unit matrices ui, wi, Xi and Zi. We have
+	   to be careful with the dpd->used values for the lags here:
+	   1 indicates an observation in (both levels and) differences
+	   while observations that are levels-only have a "used" value
+	   of LEVEL_ONLY.
+	*/
 
 	k = 0;
 	for (t=unit->t1; t<=unit->t2; t++) {
 	    if (dpd->used[t0+t]) {
 		ui->val[k] = dpd->uhat->val[s];
 		if (m == 1) {
-		    if (dpd->used[t0+t-1]) {
+		    if (dpd->used[t0+t-1] == 1) {
 			wi->val[k] = dpd->uhat->val[s-1];
 			nlags_i++;
 		    }
-		} else if (dpd->used[t0+t-2]) {	
+		} else if (dpd->used[t0+t-2] == 1) {	
 		    /* m = 2: due to missing values the lag-2
 		       residual might be at slot s-1, not s-2 
 		    */
-		    s_ = (dpd->used[t0+t-1])? (s-2) : (s-1);
+		    s_ = (dpd->used[t0+t-1] == 1)? (s-2) : (s-1);
 		    wi->val[k] = dpd->uhat->val[s_];
 		    nlags_i++;
 		}
@@ -1063,28 +1068,28 @@ static int ar_test (dpdinfo *dpd)
 				  wX, GRETL_MOD_CUMULATE);
 
 	if (use_levels(dpd)) {
-	    /* Here we need (Z_i^f' u_i^f)*(u_i' w_i), which
+	    /* Here we need (Z_i^f' u_i^f) * (u_i' w_i), which
 	       mixes full series and differences.
 	    */
 	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_TRANSPOSE,
 				      ui, GRETL_MOD_NONE,
-				      Zu, GRETL_MOD_NONE);
+				      ZU, GRETL_MOD_NONE);
 	    for (t=0; t<unit->nlev; t++) {
 		/* catch the levels terms */
 		for (j=0; j<nz; j++) {
 		    x = gretl_matrix_get(dpd->ZT, j, s);
-		    Zu->val[j] += x * dpd->uhat->val[s];
+		    ZU->val[j] += x * dpd->uhat->val[s];
 		}
 		s++;
 	    }
-	    gretl_matrix_multiply_by_scalar(Zu, uw);
-	    gretl_matrix_add_to(ZHw, Zu);
+	    gretl_matrix_multiply_by_scalar(ZU, uw);
+	    gretl_matrix_add_to(ZHw, ZU);
 	} else {
 	    /* differences only: ZHw += Z_i' H_i w_i */
 	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_TRANSPOSE,
 				      Hi, GRETL_MOD_NONE,
-				      ZHi, GRETL_MOD_NONE);
-	    gretl_matrix_multiply_mod(ZHi, GRETL_MOD_NONE,
+				      ZU, GRETL_MOD_NONE);
+	    gretl_matrix_multiply_mod(ZU, GRETL_MOD_NONE,
 				      wi, GRETL_MOD_NONE,
 				      ZHw, GRETL_MOD_CUMULATE);
 	}
@@ -1092,8 +1097,7 @@ static int ar_test (dpdinfo *dpd)
 
     if (m == 1) {
 	/* form M^{-1} * X'Z * A -- this doesn't have to
-	   be repeated for m = 2
-	*/
+	   be repeated for m = 2 */
 	gretl_matrix_multiply(dpd->M, dpd->XZ, dpd->kmtmp);
 	gretl_matrix_multiply(dpd->kmtmp, dpd->A, Tmp);
     }
@@ -1108,14 +1112,14 @@ static int ar_test (dpdinfo *dpd)
 	}
     }
 
-    /* d2 = -2 * w'X * (M^{-1} * XZ * A) * ZHw */
+    /* d2 = -2 * w'X * (M^{-1} * XZ * A) * Z'Hw */
     gretl_matrix_multiply(wX, Tmp, dpd->L1); 
     d2 = gretl_matrix_dot_product(dpd->L1, GRETL_MOD_NONE,
 				  ZHw, GRETL_MOD_NONE, &err);
 
     if (!err) {
 	d2 *= -2.0;
-	/* d3 = w'X * Var(beta) * wX' */
+	/* d3 = w'X * var(\hat{\beta}) * X'w */
 	d3 = gretl_scalar_qform(wX, dpd->vbeta, &err);
     }
 
@@ -1126,7 +1130,6 @@ static int ar_test (dpdinfo *dpd)
 	fprintf(stderr, "ar_test: d0=%g, d1=%g, d2=%g, d3=%g, den=%g\n",
 		d0, d1, d2, d3, den);
 #endif	
-
 	if (den <= 0) {
 	    err = E_NAN;
 	} else {
@@ -1147,7 +1150,6 @@ static int ar_test (dpdinfo *dpd)
  finish:
 
     gretl_matrix_block_destroy(B);
-    gretl_matrix_free(Zu);
 
     /* restore original dimensions */
     gretl_matrix_reuse(dpd->Zi, dpd->max_ni, dpd->nz);
@@ -1554,7 +1556,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     /* add uhat, yhat */
 
     if (!err && dpd->nlev > 0) {
-	err = dpanel_adjust_uhat(dpd, pdinfo, 0); /* or 1 */
+	err = dpanel_adjust_uhat(dpd, pdinfo, 1); /* or 0 */
     }
 
     if (!err) {
@@ -1733,66 +1735,16 @@ static int try_alt_inverse (dpdinfo *dpd)
     return err;
 }
 
-static int arbond_beta_hat (dpdinfo *dpd)
-{
-    int err = 0;
-
-    /* find Z'X, if this job is not already done */
-    if (dpd->step == 1) {
-	err = gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
-					dpd->ZT, GRETL_MOD_TRANSPOSE,
-					dpd->XZ, GRETL_MOD_NONE);
-    }
-
-    /* dpd->XZA <- XZ * A */
-    gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
-
-    gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
-
-#if ADEBUG > 1
-    gretl_matrix_print(dpd->XZ, "XZ' (arbond)");
-    gretl_matrix_print(dpd->A, "A (arbond)");
-    gretl_matrix_print(dpd->ZY, "Z'y (arbond)");
-#endif
-
-    /* using beta as workspace */
-    gretl_matrix_multiply(dpd->XZA, dpd->ZY, dpd->beta);
-
-    /* calculate M = X'ZAZ'X */
-    gretl_matrix_multiply_mod(dpd->XZA, GRETL_MOD_NONE,
-			      dpd->XZ, GRETL_MOD_TRANSPOSE,
-			      dpd->M, GRETL_MOD_NONE);
-    gretl_matrix_xtr_symmetric(dpd->M);
-
-    gretl_matrix_copy_values(dpd->kktmp, dpd->M);
-    err = gretl_cholesky_decomp_solve(dpd->kktmp, dpd->beta);
-
-    if (!err) {
-	/* prepare M^{-1} for variance calculation */
-	err = gretl_inverse_from_cholesky_decomp(dpd->M, dpd->kktmp);
-    }
-
-#if ADEBUG > 1
-    gretl_matrix_print(dpd->M, "M");
-#endif
-
-    return err;
-}
-
-/* This preparation is in common between the "arbond" code 
-   and the "dpanel" code.
-*/
-
-static int prepare_step_2 (dpdinfo *dpd)
+static int dpd_step_2_A (dpdinfo *dpd)
 {
     int err = 0;
 
 #if ADEBUG
-    gretl_matrix_print(dpd->V, "V, in prepare_step_2");
+    gretl_matrix_print(dpd->V, "V, in dpd_step_2_A");
 #endif
 
     if (gretl_matrix_rows(dpd->V) > dpd->effN) {
-	/* we know this case requires special attention */
+	/* we know this case requires special treatment */
 	err = gretl_SVD_invert_matrix(dpd->V);
 	if (!err) {
 	    gretl_matrix_xtr_symmetric(dpd->V);
@@ -1819,17 +1771,55 @@ static int prepare_step_2 (dpdinfo *dpd)
     return err;
 }
 
-static int arbond_step_2 (dpdinfo *dpd)
+/* compute \hat{\beta} from the moment matrices */
+
+static int dpd_beta_hat (dpdinfo *dpd)
+{
+    int err = 0;
+
+    if (dpd->step == 2) {
+	/* form the new A matrix */
+	err = dpd_step_2_A(dpd);
+    }
+
+    if (!err) {
+	/* M <- XZ * A * XZ' */
+	err = gretl_matrix_qform(dpd->XZ, GRETL_MOD_NONE,
+				 dpd->A, dpd->M, GRETL_MOD_NONE);
+    }
+
+    if (!err) {
+	/* dpd->XZA <- XZ * A */
+	gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
+	/* using beta as workspace */
+	gretl_matrix_multiply(dpd->XZA, dpd->ZY, dpd->beta);
+	gretl_matrix_copy_values(dpd->kktmp, dpd->M);
+	err = gretl_cholesky_decomp_solve(dpd->kktmp, dpd->beta);
+    }
+
+    if (!err) {
+	/* prepare M^{-1} for variance calculation */
+	err = gretl_inverse_from_cholesky_decomp(dpd->M, dpd->kktmp);
+    }
+
+#if ADEBUG > 1
+    gretl_matrix_print(dpd->M, "M");
+#endif
+
+    return err;
+}
+
+/* recompute \hat{\beta} and its variance matrix */
+
+static int dpd_step_2 (dpdinfo *dpd)
 {
     gretl_matrix *u1 = NULL;
     gretl_matrix *V1 = NULL;
     int err;
 
-    err = prepare_step_2(dpd);
+    dpd->step = 2;
 
-    if (!err) {
-	err = arbond_beta_hat(dpd);
-    }
+    err = dpd_beta_hat(dpd);
 
     if (!err && (dpd->flags & DPD_WINCORR)) {
 	/* we'll need a copy of the step-1 residuals, and also
@@ -1843,7 +1833,11 @@ static int arbond_step_2 (dpdinfo *dpd)
     }
 
     if (!err) {
-	arbond_residuals(dpd);
+	if (dpd->ci == DPANEL) {
+	    dpanel_residuals(dpd);
+	} else {
+	    arbond_residuals(dpd);
+	}
 	err = dpd_variance_2(dpd, u1, V1);
     }
 
@@ -1851,8 +1845,8 @@ static int arbond_step_2 (dpdinfo *dpd)
     gretl_matrix_free(V1);
 
     if (!err) {
-	ar_test(dpd);
-	sargan_test(dpd);
+	dpd_ar_test(dpd);
+	dpd_sargan_test(dpd);
 	dpd_wald_test(dpd);
     }
 
@@ -1963,8 +1957,8 @@ static int next_obs (dpdinfo *dpd, int t0, int j0, int n)
 /* construct the H matrix for first-differencing
    as applied to unit i */
 
-static void make_first_diff_matrix (dpdinfo *dpd, int *rc, 
-				    int i, int t0)
+static void arbond_H_matrix (dpdinfo *dpd, int *rc, 
+			     int i, int t0)
 {
     unit_info *unit =  &dpd->ui[i];
     int n = unit->t2 - unit->t1 + 1;
@@ -2126,7 +2120,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 				      dpd->Zi, GRETL_MOD_NONE,
 				      dpd->A, GRETL_MOD_CUMULATE);
 	} else {
-	    make_first_diff_matrix(dpd, rc, i, t0);
+	    arbond_H_matrix(dpd, rc, i, t0);
 	    gretl_matrix_qform(dpd->Zi, GRETL_MOD_TRANSPOSE,
 			       dpd->H, dpd->A, GRETL_MOD_CUMULATE);
 	}
@@ -2299,9 +2293,22 @@ static int arbond_step_1 (dpdinfo *dpd, const double **Z)
 	err = arbond_invert_A_N(dpd);
     }
 
+    /* construct additional moment matrices */
+    if (!err) {
+	gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
+	gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
+				  dpd->ZT, GRETL_MOD_TRANSPOSE,
+				  dpd->XZ, GRETL_MOD_NONE);
+    }
+
+#if ADEBUG > 1
+    gretl_matrix_print(dpd->XZ, "XZ' (arbond)");
+    gretl_matrix_print(dpd->ZY, "Z'y (arbond)");
+#endif
+
     if (!err) {
 	/* first-step calculation of \hat{\beta} */
-	err = arbond_beta_hat(dpd);
+	err = dpd_beta_hat(dpd);
     }
 
     if (!err) {
@@ -2310,8 +2317,8 @@ static int arbond_step_1 (dpdinfo *dpd, const double **Z)
     }
 
     if (!err && !(dpd->flags & DPD_TWOSTEP)) {
-	ar_test(dpd);
-	sargan_test(dpd);
+	dpd_ar_test(dpd);
+	dpd_sargan_test(dpd);
 	dpd_wald_test(dpd);
     }
 
@@ -2372,7 +2379,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
-	err = arbond_step_2(dpd);
+	err = dpd_step_2(dpd);
     }
 
     if (err && !mod.errcode) {

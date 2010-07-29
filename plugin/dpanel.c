@@ -505,51 +505,6 @@ static void trim_zero_inst (dpdinfo *dpd)
     }
 }
 
-/* compute \hat{\beta} from the moment matrices */
-
-static int dpanel_beta_hat (dpdinfo *dpd)
-{
-    int err = 0;
-
-    if (dpd->step == 1) {
-	trim_zero_inst(dpd);
-#if DPDEBUG > 1
-	gretl_matrix_print(dpd->A, "A (trimmed)");
-	gretl_matrix_print(dpd->XZ, "XZ (trimmed)");
-	gretl_matrix_print(dpd->ZY, "ZY (trimmed)");
-#endif
-	/* symmetrize A; you never know */
-	gretl_matrix_xtr_symmetric(dpd->A);
-	err = gretl_invert_symmetric_matrix(dpd->A);
-    }
-
-    if (!err) {
-	/* M <- XZ * A * XZ' */
-	gretl_matrix_qform(dpd->XZ, GRETL_MOD_NONE,
-			   dpd->A, dpd->M, GRETL_MOD_NONE);
-    }
-
-    if (!err) {
- 	/* dpd->XZA <- XZ * A */
-	gretl_matrix_multiply(dpd->XZ, dpd->A, dpd->XZA);
-	/* using beta as workspace */
-	gretl_matrix_multiply(dpd->XZA, dpd->ZY, dpd->beta);
-	gretl_matrix_copy_values(dpd->kktmp, dpd->M);
-	err = gretl_cholesky_decomp_solve(dpd->kktmp, dpd->beta);
-    }
-
-    if (!err) {
-	/* prepare M^{-1} for variance calculation */
-	err = gretl_inverse_from_cholesky_decomp(dpd->M, dpd->kktmp);
-    }
-
-#if DPDEBUG > 1
-    gretl_matrix_print(dpd->M, "M");
-#endif
-
-    return err;
-}
-
 /* allocate temporary storage needed by do_units() */
 
 static int make_units_workspace (dpdinfo *dpd, gretl_matrix **D, 
@@ -724,51 +679,25 @@ static int do_units (dpdinfo *dpd, const double **Z,
     return err;
 }
 
-/* recompute \hat{\beta} and its variance matrix */
-
-static int dpanel_step_2 (dpdinfo *dpd)
-{
-    gretl_matrix *u1 = NULL;
-    gretl_matrix *V1 = NULL;
-    int err;
-
-    err = prepare_step_2(dpd);
-
-    if (!err) {
-	err = dpanel_beta_hat(dpd);
-    }
-
-    if (!err && (dpd->flags & DPD_WINCORR)) {
-	/* we'll need a copy of the step-1 residuals, and also
-	   the step-1 var(\hat{\beta})
-	*/
-	u1 = gretl_matrix_copy(dpd->uhat);
-	V1 = gretl_matrix_copy(dpd->vbeta);
-	if (u1 == NULL || V1 == NULL) {
-	    err = E_ALLOC;
-	}
-    }		
-	
-    if (!err) {
-	dpanel_residuals(dpd);
-	err = dpd_variance_2(dpd, u1, V1);
-    }
-
-    gretl_matrix_free(u1);
-    gretl_matrix_free(V1);
-
-    if (!err) {
-	ar_test(dpd);
-	sargan_test(dpd);
-	dpd_wald_test(dpd);
-    }
-
-    return err;
-}
-
 static int dpanel_step_1 (dpdinfo *dpd)
 {
-    int err = dpanel_beta_hat(dpd);
+    int err = 0;
+
+    trim_zero_inst(dpd);
+
+#if DPDEBUG > 1
+    gretl_matrix_print(dpd->A, "A (trimmed)");
+    gretl_matrix_print(dpd->XZ, "XZ (trimmed)");
+    gretl_matrix_print(dpd->ZY, "ZY (trimmed)");
+#endif
+
+    /* symmetrize A; you never know */
+    gretl_matrix_xtr_symmetric(dpd->A);
+    err = gretl_invert_symmetric_matrix(dpd->A);
+
+    if (!err) {
+	err = dpd_beta_hat(dpd);
+    }
 
     if (!err) {
 	dpanel_residuals(dpd);
@@ -777,8 +706,8 @@ static int dpanel_step_1 (dpdinfo *dpd)
 
     if (!err && !(dpd->flags & DPD_TWOSTEP)) {
 	/* do the tests if we're not continuing */
-	ar_test(dpd);
-	sargan_test(dpd);
+	dpd_ar_test(dpd);
+	dpd_sargan_test(dpd);
 	dpd_wald_test(dpd);
     }
 
@@ -834,7 +763,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
-	err = dpanel_step_2(dpd);
+	err = dpd_step_2(dpd);
     }	
 
     if (err && !mod.errcode) {
