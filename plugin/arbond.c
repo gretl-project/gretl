@@ -51,6 +51,7 @@ struct diag_info {
     int v;       /* ID number of variable */
     int minlag;  /* minimum lag order */
     int maxlag;  /* maximum lag order */
+    int level;   /* instrument spec is for levels */
 };
 
 struct dpdinfo_ {
@@ -96,7 +97,7 @@ struct dpdinfo_ {
     gretl_matrix *uhat;   /* residuals, differenced version */
     gretl_matrix *H;      /* step 1 error covariance matrix */
     gretl_matrix *A;      /* \sum Z'_i H Z_i */
-    gretl_matrix *Acpy;
+    gretl_matrix *Acpy;   /* back-up of A matrix */
     gretl_matrix *V;      /* covariance matrix */
     gretl_matrix *ZT;     /* transpose of full instrument matrix */
     gretl_matrix *Zi;     /* per-unit instrument matrix */
@@ -571,7 +572,7 @@ static int obs_is_usable (dpdinfo *dpd, const double **Z, int s)
     return 1;
 }
 
-static int bzcols (dpdinfo *dpd, int i)
+static int bz_columns (dpdinfo *dpd, int i)
 {
     int j, k, nc = 0;
     int t = i + dpd->p + 1; /* ?? */
@@ -580,6 +581,8 @@ static int bzcols (dpdinfo *dpd, int i)
 	for (k=dpd->d[j].minlag; k<=dpd->d[j].maxlag; k++) {
 	    if (t - k >= 0) {
 		nc++;
+	    } else {
+		break;
 	    }
 	}
     }
@@ -703,7 +706,7 @@ static void arbond_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
 	dpd->nz += cols;
 	if (dpd->nzb > 0) {
 	    /* other block-diagonal instruments */
-	    bcols = bzcols(dpd, i);
+	    bcols = bz_columns(dpd, i);
 	    dpd->nz += bcols;
 #if ADEBUG
 	    fprintf(stderr, " plus %d cols for z lags\n", bcols);
@@ -716,7 +719,7 @@ static void arbond_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
 #endif
 
     dpd->qmax = cols + 1;
-    /* record the column where the exogenous vars start, in xc0 */
+    /* xc0 records the column where the exogenous vars start */
     dpd->xc0 = dpd->nz;
     dpd->nz += dpd->nzr;
     dpd->nz += dpd->ndum;
@@ -1888,11 +1891,12 @@ static int arbond_make_y_X (dpdinfo *dpd, const double **Z)
     const double *y = Z[dpd->yno];
     int odev = (dpd->flags & DPD_ORTHDEV);
     int i, j, k = 0;
-    int s, t, t0;
+    int s, t;
     double x;
 
-    for (i=0, t0=dpd->t1; i<dpd->N; i++, t0+=dpd->T) {
+    for (i=0; i<dpd->N; i++) {
 	unit_info *unit = &dpd->ui[i];
+	int t0 = data_index(dpd, i);
 
 	if (unit->nobs == 0) {
 	    continue;
@@ -2021,7 +2025,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
     /* t0 holds the obs index in the full dataset at the start
        of the data for unit i */
 
-    for (i=0, t0=dpd->t1; i<dpd->N; i++, t0+=dpd->T) {
+    for (i=0; i<dpd->N; i++) {
 	unit_info *unit = &dpd->ui[i];
 	int ycols = dpd->p;   /* intial y block width */
 	int offj = 0;         /* initialize column offset */
@@ -2031,6 +2035,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 	    continue;
 	}
 
+	t0 = data_index(dpd, i);
 	gretl_matrix_reuse(dpd->Zi, Ti, dpd->nz);
 	gretl_matrix_zero(dpd->Zi);
 
@@ -2158,28 +2163,46 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
     return err;
 }
 
+/* Parse a particular entry in the (optional) incoming array 
+   of "GMM(foo,m1,m2)" specifications.  We check that foo
+   exists and that m1 and m2 have sane values (allowing that
+   an m2 value of 0 means use all available lags).
+*/
+
 static int parse_diag_info (const char *s, struct diag_info *d,
 			    const DATAINFO *pdinfo)
 {
     char vname[VNAMELEN];
-    int v, m1, m2;
+    int m1, m2;
     int err = 0;
 
-    if (s == NULL) {
-	err = E_ALLOC;
-    } else if (sscanf(s, "GMM(%15[^, ],%d,%d)", vname, &m1, &m2) != 3) {
+    if (!strncmp(s, "GMM(", 4)) {
+	d->level = 0;
+	s += 4;
+    } else if (!strncmp(s, "GMMlevel(", 9)) {
+	d->level = 1;
+	s += 9;
+    } else {
+	return E_PARSE;
+    }
+
+    if (sscanf(s, "%15[^, ],%d,%d)", vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
+	int v;
+
 	if (m2 == 0) {
+	    /* flag for unlimited lags */
 	    m2 = 99;
 	}
-	v = series_index(pdinfo, vname);
-	if (v == pdinfo->v) {
+	v = current_series_index(pdinfo, vname);
+	if (v < 0) {
 	    err = E_UNKVAR;
 	} else if (m1 < 0 || m2 < m1) {
 	    err = E_DATA;
 	} else {
-	    d->v = v;
+	    /* record series ID plus min and max lags */
+	    d->v = v;      
 	    d->minlag = m1;
 	    d->maxlag = m2;
 	}
@@ -2196,56 +2219,64 @@ static int parse_diag_info (const char *s, struct diag_info *d,
    fashion
 */
 
-static int dpd_parse_istr (const char *istr, const DATAINFO *pdinfo,
-			   struct diag_info **pd, int *ns)
+static int 
+parse_GMM_instrument_spec (const char *spec, const DATAINFO *pdinfo,
+			   struct diag_info **pd, int *pnspec)
 {
     struct diag_info *d = NULL;
-    char *s0 = gretl_strdup(istr);
-    char *s, *p, *spec;
-    int i, err = 0;
+    const char *s;
+    int nspec = 0;
+    int err = 0;
 
-    if (s0 == NULL) {
-	return E_ALLOC;
-    }
-
-    /* count ')'-terminated fields */
-    s = s0;
+    /* first rough check: count closing parentheses */
+    s = spec;
     while (*s) {
 	if (*s == ')') {
-	    *ns += 1;
+	    nspec++;
 	}
 	s++;
     }
 
-    if (*ns == 0) {
+    if (nspec == 0) {
+	/* istr is junk */
 	err = E_PARSE;
     } else {
-	d = malloc(*ns * sizeof *d);
+	/* allocate info structs */
+	d = malloc(nspec * sizeof *d);
 	if (d == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
-    /* parse and record individual GMM instrument specs */
-    s = s0;
-    i = 0;
-    while (*s && !err) {
-	while (*s == ' ') s++;
-	p = s;
-	while (*p && *p != ')') p++;
-	spec = gretl_strndup(s, p - s + 1);
-	err = parse_diag_info(spec, &d[i++], pdinfo);
-	free(spec);
-	s = p + 1;
-    }
+    if (!err) {
+	/* parse and record individual GMM instrument specs */
+	char test[48];
+	const char *p;
+	int len, i = 0;
 
-    free(s0);
+	s = spec;
+	while (*s && !err) {
+	    while (*s == ' ') s++;
+	    p = s;
+	    while (*p && *p != ')') p++;
+	    len = p - s + 1;
+	    if (len > 47) {
+		err = E_PARSE;
+	    } else {
+		*test = '\0';
+		strncat(test, s, len);
+		err = parse_diag_info(test, &d[i++], pdinfo);
+		s = p + 1;
+	    }
+	}
+    }
 
     if (err) {
 	free(d);
-	*ns = 0;
+	*pnspec = 0;
     } else {
 	*pd = d;
+	*pnspec = nspec;
     }
 
     return err;
@@ -2328,7 +2359,7 @@ static int arbond_step_1 (dpdinfo *dpd, const double **Z)
 /* public interface: driver for Arellano-Bond type estimation */
 
 MODEL
-arbond_estimate (const int *list, const char *istr, const double **Z, 
+arbond_estimate (const int *list, const char *ispec, const double **Z, 
 		 const DATAINFO *pdinfo, gretlopt opt,
 		 PRN *prn)
 {
@@ -2341,11 +2372,10 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
     gretl_model_init(&mod);
     gretl_model_smpl_init(&mod, pdinfo);
 
-    /* parse special instrument info, if present */
-    if (istr != NULL && *istr != '\0') {
-	mod.errcode = dpd_parse_istr(istr, pdinfo, &d, &nzb);
+    /* parse GMM instrument info, if present */
+    if (ispec != NULL && *ispec != '\0') {
+	mod.errcode = parse_GMM_instrument_spec(ispec, pdinfo, &d, &nzb);
 	if (mod.errcode) {
-	    fprintf(stderr, "Error %d in dpd_parse_istr\n", mod.errcode);
 	    return mod;
 	}
     }
@@ -2388,7 +2418,7 @@ arbond_estimate (const int *list, const char *istr, const double **Z,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, ispec, 
 					 Z[dpd->yno], pdinfo, opt);
     }
 

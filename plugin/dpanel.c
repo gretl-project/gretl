@@ -720,7 +720,7 @@ static int dpanel_step_1 (dpdinfo *dpd)
    option --dpdstyle (OPT_X).
 */
 
-MODEL dpd_estimate (const int *list, const char *istr, 
+MODEL dpd_estimate (const int *list, const char *ispec, 
 		    const double **Z, const DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn)
 {
@@ -733,6 +733,14 @@ MODEL dpd_estimate (const int *list, const char *istr,
 
     gretl_model_init(&mod);
     gretl_model_smpl_init(&mod, pdinfo);
+
+    /* parse GMM instrument info, if present */
+    if (ispec != NULL && *ispec != '\0') {
+	mod.errcode = parse_GMM_instrument_spec(ispec, pdinfo, &d, &nzb);
+	if (mod.errcode) {
+	    return mod;
+	}
+    }
 
     dpd = dpdinfo_new(DPANEL, list, Z, pdinfo, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
@@ -772,7 +780,7 @@ MODEL dpd_estimate (const int *list, const char *istr,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, istr, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, ispec, 
 					 Z[dpd->yno], pdinfo, opt);
     }
 
