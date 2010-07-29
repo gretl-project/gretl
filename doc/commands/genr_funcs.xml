@@ -1302,6 +1302,11 @@
 	      Binomial (b or B): probability; trials
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      Poisson (p or P): mean
+	    </para>
+	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center} 
@@ -1318,6 +1323,8 @@
 	  df (num.) &amp; df (den.) \\ 
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
 	  $p$ &amp; $n$ \\ 
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp; 
+	  $\lambda$ &amp; -- \\ 
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -2229,6 +2236,11 @@
 	      Binomial (b or B): probability; trials
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      Poisson (p or P): mean
+	    </para>
+	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center} 
@@ -2245,6 +2257,8 @@
 	  df (num.) &amp; df (den.) \\ 
 	  Binomial &amp; \texttt{b} or \texttt{B} &amp; 
 	  $p$ &amp; $n$ \\
+	  Poisson &amp; \texttt{p} or \texttt{P} &amp;
+          $\lambda$ &amp; -- \\ 
 	  \end{tabular}
 	  \end{center}
 	</para>
@@ -3719,7 +3733,10 @@
 	  <argname>c</argname>.  See <fncref targ="cdf"/> for details of the
 	  required (scalar) arguments.  The distributions supported by the
 	  <lit>pdf</lit> function are the normal, Student's <math>t</math>,
-	  chi-square, <math>F</math>, Gamma, Weibull and Generalized Error.
+	  chi-square, <math>F</math>, Gamma, Weibull, Generalized Error,
+	  Binomial and Poisson. Note that for the Binomial and the
+	  Poisson what's calculated is in fact the probability
+	  mass at the specified point.
 	</para>
 	<para>
 	  For the normal distribution, see also <fncref targ="dnorm"/>.

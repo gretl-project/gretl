@@ -459,8 +459,7 @@ union val {
 enum {
     AUX_NODE    = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE    = 1 << 1, /* temporary: free content on exit */
-    TRANSP_NODE = 1 << 2, /* matrix node: should be transposed */
-    BOBJ_NODE   = 1 << 3  /* holds pointer to bundled object */
+    TRANSP_NODE = 1 << 2  /* matrix node: should be transposed */
 };
 
 struct node {

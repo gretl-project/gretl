@@ -727,13 +727,9 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	    *np = 2; /* shape, scale */
 	}
     } else if (*s == '6' || *s == 'b' || *s == 'B') {
-	/* Binomial: pdf not supported */
+	/* Binomial */
 	*s = 'B';
-	if (f == F_PDF) {
-	    err = E_INVARG;
-	} else {
-	    *np = 2; /* prob, trials */
-	}
+	*np = 2; /* prob, trials */
     } else if (*s == '7' || *s == 'D') {
 	/* bivariate normal: cdf only */
 	*s = 'D';
@@ -744,13 +740,9 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	    err = E_INVARG;
 	}
     } else if (*s == '8' || *s == 'p' || *s == 'P') {
-	/* Poisson: pdf not supported */
+	/* Poisson */
 	*s = 'P';
-	if (f == F_PDF) {
-	    err = E_INVARG;
-	} else {
-	    *np = 1;
-	}
+	*np = 1;
     } else if (*s == '9' || *s == 'w' || *s == 'W') {
 	/* Weibull: inverse cdf not supported */
 	*s = 'W';
@@ -5114,14 +5106,10 @@ static NODE *eval_Rfunc (NODE *t, parser *p)
 
 /* Getting an object from within a bundle: on the left is the
    bundle reference, on the right should be a string -- the
-   key to look up to get content. If @copy is non-zero then
-   we make a copy of the object from the bundle, regardless
-   of its type; if copy is zero and the object to be retrieved
-   is a matrix then we just return a reference to it.
+   key to look up to get content. 
 */
 
-static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p,
-				     int copy)
+static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 {
     const char *name = l->v.str;
     const char *key = r->v.str;
@@ -5155,23 +5143,11 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p,
 		}
 	    }
 	} else if (type == GRETL_TYPE_MATRIX) {
-	    if (copy) {
-		ret = aux_matrix_node(p);
-		if (ret != NULL) {
-		    ret->v.m = gretl_matrix_copy((gretl_matrix *) val);
-		    if (ret->v.m == NULL) {
-			p->err = E_ALLOC;
-		    }
-		}
-	    } else {
-		ret = matrix_pointer_node(p);
-		if (ret != NULL) {
-		    ret->v.m = (gretl_matrix *) val;
-		    ret->flags |= BOBJ_NODE;
-		}
+	    ret = matrix_pointer_node(p);
+	    if (ret != NULL) {
+		ret->v.m = (gretl_matrix *) val;
 	    }
 	} else if (type == GRETL_TYPE_BUNDLE) {
-	    /* find a way to respect copy == 0 here? */
 	    ret = aux_bundle_node(p);
 	    if (ret != NULL) {
 		ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
@@ -7479,7 +7455,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case BOBJ:
 	/* name of bundle plus key */
-	ret = get_named_bundle_value(l, r, p, 0);
+	ret = get_named_bundle_value(l, r, p);
 	break;
     case F_LDIFF:
     case F_SDIFF:
@@ -7979,7 +7955,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (r->t != STR) {
 	    node_type_error(t->t, 2, STR, r, p);
 	} else if (t->t == F_HASHGET) {
-	    ret = get_named_bundle_value(l, r, p, 1);
+	    ret = get_named_bundle_value(l, r, p);
 	} else {
 	    ret = delete_named_bundle_value(l, r, p);
 	}
@@ -9032,13 +9008,6 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 #endif
 	    m = r->v.m;
 	    r->v.m = NULL; /* avoid double-freeing */
-	} else if (r->flags & BOBJ_NODE) {
-	    /* r->v.m is a bundled matrix, use the pointer */
-#if EDEBUG
-	    fprintf(stderr, "matrix result (%p) is in bundle, using pointer\n",
-		    (void *) r->v.m);
-#endif
-	    m = r->v.m;
 	} else {
 	    /* r->v.m is an existing user matrix, copy it */
 #if EDEBUG

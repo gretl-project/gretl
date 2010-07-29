@@ -151,6 +151,8 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 				int **Goodobs)
 {
+    int t1min = dpd->T;
+    int t2max = 0;
     int i, t;
 
     /* instruments specific to equations in differences */
@@ -161,7 +163,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	dpd->nzlev = dpd->T - 1;
     } 
 
-    /* total instruments */
+    /* total instruments, so far */
     dpd->nz = dpd->nzdiff + dpd->nzlev + dpd->nx;
 
     /* initialize observation counts */
@@ -171,6 +173,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
 	int *goodobs = Goodobs[i];
 	int Ti = check_unit_obs(dpd, goodobs, Z, t);
+	int gmax = goodobs[0];
 
 	if (Ti > 0) {
 	    /* this unit is usable */
@@ -185,7 +188,23 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    if (Ti < dpd->minTi) {
 		dpd->minTi = Ti;
 	    }
+	    if (goodobs[2] < t1min) {
+		t1min = goodobs[2];
+	    }
+	    if (goodobs[gmax] > t2max) {
+		t2max = goodobs[gmax];
+	    }	    
 	}
+    }
+
+    /* figure number of time dummies, if wanted */
+    if (dpd->flags & DPD_TIMEDUM) {
+	dpd->ndum = t2max - t1min;
+	if (use_levels(dpd)) {
+	    dpd->ndum += 1;
+	}
+	dpd->k += dpd->ndum;
+	dpd->nz += dpd->ndum;
     }
 
     /* figure the max number of stacked observations per unit */
@@ -314,6 +333,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     const double *xj;
     int t0, t1, i0, i1;
     int i, j, lj;
+    int row, col;
     double dx;
 
     gretl_matrix_zero(Xi);
@@ -325,10 +345,13 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	t0 = t + i0;
 	t1 = t + i1;
 
+	row = 0;
+	col = i1 - 1 - maxlag;
+
 	for (j=1; j<=nlags; j++) {
 	    lj = dpd->laglist[j];
 	    dx = y[t1-lj] - y[t0-lj];
-	    gretl_matrix_set(Xi, j-1, i1-1-maxlag, dx);
+	    gretl_matrix_set(Xi, row++, col, dx);
 	}
 
 	for (j=1; j<=dpd->nx; j++) {
@@ -340,27 +363,38 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 		xj = Z[dpd->xlist[j]];
 		dx = xj[t1] - xj[t0];
 	    }
-	    gretl_matrix_set(Xi, j+nlags-1, i1-1-maxlag, dx);
+	    gretl_matrix_set(Xi, row++, col, dx);
+	}
+
+	if (!use_levels(dpd)) {
+	    for (j=0; j<dpd->ndum; j++) {
+		dx = (col == j)? 1 : 0;
+		gretl_matrix_set(Xi, row++, col, dx);
+	    }
 	}
     }
     
     if (use_levels(dpd)) {
 	/* levels */
-	int col;
-
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
-	    t1 = t+i1;
+	    t1 = t + i1;
+	    row = 0;
 	    col = Tshort + (i1-maxlag);
 
 	    for (j=1; j<=nlags; j++) {
 		lj = dpd->laglist[j];
-		gretl_matrix_set(Xi, j-1, col, y[t1-lj]);
+		gretl_matrix_set(Xi, row++, col, y[t1-lj]);
 	    }
 
 	    for (j=1; j<=dpd->nx; j++) {
 		xj = Z[dpd->xlist[j]];
-		gretl_matrix_set(Xi, j+nlags-1, col, xj[t1]);
+		gretl_matrix_set(Xi, row++, col, xj[t1]);
+	    }
+
+	    for (j=0; j<dpd->ndum; j++) {
+		dx = (col == j)? 1 : 0;
+		gretl_matrix_set(Xi, row++, col, dx);
 	    }
 	}
     }
@@ -381,8 +415,9 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     const double *xj;
     double dx, y0;
     int t0, t1, i0, i1;
-    int k, k2 = dpd->nzdiff + dpd->nzlev;
-    int i, j, col;
+    int k2 = dpd->nzdiff + dpd->nzlev;
+    int k3 = k2 + dpd->nx;
+    int i, j, k, col;
     int qmax = dpd->qmax;
 
     gretl_matrix_zero(Zi);
@@ -403,9 +438,12 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 		    gretl_matrix_set(Zi, k, col, y0);
 		} 
 	    } 
-	    k++;
+	    k++; /* advance the row */
 	}
     }
+
+    /* insert here: GMM-style instruments blocks for any
+       exogenous vars selected for such treatment */
 
     /* equations in differences: differenced exog vars */
     if (dpd->nx > 0) {
@@ -428,9 +466,21 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	}
     }
 
+    /* equations in differences: time dummies */
+    if (dpd->ndum > 0 && !use_levels(dpd)) {
+	for (i=0; i<usable; i++) {
+	    i1 = goodobs[i+2];
+	    col = i1 - 1 - maxlag;
+	    for (j=0; j<dpd->ndum; j++) {
+		dx = (col == j)? 1 : 0;
+		gretl_matrix_set(Zi, k3 + j, col, dx);
+	    }
+	}	
+    }
+
     if (use_levels(dpd)) {
 	int offset = T - maxlag - 1;
-	int row = (T-1)*(T-2)/2;
+	int row = (T-1) * (T-2) / 2;
 	int lastdiff = 0;
 	double y1;
 
@@ -451,6 +501,8 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    lastdiff = j;
 	}
 
+	/* insert here: GMMlevel-style blocks, if any */
+
 	/* equations in levels: levels of exog vars */
 	if (dpd->nx > 0) {
 	    for (i=0; i<=usable; i++) {
@@ -460,6 +512,19 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 		for (j=0; j<dpd->nx; j++) {
 		    xj = Z[dpd->xlist[j+1]];
 		    gretl_matrix_set(Zi, k2 + j, col, xj[t1]);
+		}
+	    }
+	}
+
+	/* equations in levels: time dummies */
+	if (dpd->ndum > 0) {
+	    for (i=0; i<=usable; i++) {
+		i1 = goodobs[i+1];
+		t1 = i1 - 1 - maxlag;
+		col = (T-1-maxlag) + (i1-maxlag);
+		for (j=0; j<dpd->ndum; j++) {
+		    dx = (t1 == j)? 1 : 0;
+		    gretl_matrix_set(Zi, k3 + j, col, dx);
 		}
 	    }
 	}

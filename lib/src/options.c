@@ -135,6 +135,7 @@ struct gretl_option gretl_opts[] = {
     { DIFFTEST, OPT_V, "verbose", 0 },
     { DISCRETE, OPT_R, "reverse", 0 },
     { DPANEL,   OPT_A, "asymptotic", 0 },
+    { DPANEL,   OPT_D, "time-dummies", 0 },    
     { DPANEL,   OPT_L, "system", 0 },
     { DPANEL,   OPT_T, "two-step", 0 },
     { DPANEL,   OPT_X, "dpdstyle", 0 },

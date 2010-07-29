@@ -2861,6 +2861,9 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    i = 0;
+#if 0
+	    fprintf(stderr, "spec->fvec = %p\n", (void *) spec->fvec);
+#endif
 	    for (t=spec->t1; t<=spec->t2; t++) {
 		spec->fvec[i++] = (*spec->Z)[spec->lhv][t];
 	    }

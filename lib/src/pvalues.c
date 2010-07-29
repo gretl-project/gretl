@@ -1953,6 +1953,10 @@ double gretl_get_pdf (char st, const double *parm, double x)
 	y = snedecor_pdf((int) parm[0], (int) parm[1], x);
     } else if (st == 'G') {
 	y = gamma_pdf(parm[0], parm[1], x);
+    } else if (st == 'B') {
+	y = binomial_pmf(parm[0], parm[1], x);
+    } else if (st == 'P') {
+	y = poisson_pmf(parm[0], x);
     } else if (st == 'W') {
 	y = weibull_pdf(parm[0], parm[1], x);
     } else if (st == 'E') {
