@@ -2675,8 +2675,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (dupv >= 0) {
 	    printlist(cmd->list, "cmd->list with duplicate(s)");
 	    cmd->err = E_UNSPEC;
-	    gretl_errmsg_sprintf(_("var number %d duplicated in the command list."),
-				 dupv);
+	    gretl_errmsg_sprintf(_("variable %d duplicated in the "
+				   "command list."), dupv);
 	} 
     }
 

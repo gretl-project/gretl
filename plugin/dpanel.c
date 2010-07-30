@@ -143,6 +143,43 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
     return goodobs[0] - 1;
 }
 
+static int block_instrument_count (dpdinfo *dpd, int t2max)
+{
+    /* the greatest lag we can actually support? */
+    int maxlag = t2max - dpd->t1min;
+    int nrows = 0;
+    int i, j;
+
+    for (i=0; i<dpd->nzb; i++) {
+	if (dpd->d[i].minlag > maxlag) {
+	    /* this spec is altogether otiose */
+	    dpd->nzb -= 1;
+	    for (j=i; j<dpd->nzb; j++) {
+		dpd->d[j].v = dpd->d[j+1].v;
+		dpd->d[j].v = dpd->d[j+1].minlag;
+		dpd->d[j].v = dpd->d[j+1].maxlag;
+		dpd->d[j].v = dpd->d[j+1].level;
+	    }	    
+	    i--;
+	    continue;
+	} 
+	if (dpd->d[i].maxlag > maxlag) {
+	    /* trim maxlag to what's feasible */
+	    dpd->d[i].maxlag = maxlag;
+	}
+	nrows += dpd->d[i].maxlag - dpd->d[i].minlag + 1;
+    }
+
+#if 1
+    fprintf(stderr, "nzb = %d, extra Z rows = %d\n", dpd->nzb,
+	    nrows);
+    fprintf(stderr, "This doesn't account for subtractions from "
+	    "the 'regular' instrument count\n");
+#endif
+
+    return nrows;
+}
+
 /* We do this accounting first so that we know the sizes of the
    various (and numerous) matrices that we'll need for the whole
    analysis at the outset; we can then allocate memory en bloc.
@@ -205,6 +242,11 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	dpd->ndum = t2max - dpd->t1min;
 	dpd->k += dpd->ndum;
 	dpd->nz += dpd->ndum;
+    }
+
+    if (dpd->nzb > 0) {
+	/* figure number of extra block-diagonal instruments */
+	block_instrument_count(dpd, t2max);
     }
 
     /* figure the max number of stacked observations per unit */

@@ -2271,6 +2271,21 @@ parse_GMM_instrument_spec (const char *spec, const DATAINFO *pdinfo,
 	}
     }
 
+    if (!err) {
+	int i, j;
+
+	for (i=1; i<nspec && !err; i++) {
+	    for (j=0; j<i && !err; j++) {
+		if (d[i].v == d[j].v && d[i].level == d[j].level) {
+		    gretl_errmsg_sprintf(_("variable %d duplicated "
+					   "in the command list."),
+					 d[i].v);
+		    err = E_DATA;
+		}
+	    }
+	}
+    }
+
     if (err) {
 	free(d);
 	*pnspec = 0;
