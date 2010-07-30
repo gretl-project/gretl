@@ -8994,32 +8994,10 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
     gretl_matrix *m = NULL;
 
 #if EDEBUG
-    fprintf(stderr, "grab_or_copy_matrix_result: r = %p, r->t = %d\n", 
-	    (void *) r, r->t);
+    fprintf(stderr, "grab_or_copy_matrix_result: r->t = %d\n", r->t);
 #endif
 
-    if (r->t == MAT) {
-	/* result was a matrix, fine */
-	if (is_tmp_node(r)) {
-	    /* r->v.m is newly allocated, just steal it */
-#if EDEBUG
-	    fprintf(stderr, "matrix result (%p) is tmp, stealing it\n", 
-		    (void *) r->v.m);
-#endif
-	    m = r->v.m;
-	    r->v.m = NULL; /* avoid double-freeing */
-	} else {
-	    /* r->v.m is an existing user matrix, copy it */
-#if EDEBUG
-	    fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
-		    (void *) r->v.m);
-#endif
-	    m = gretl_matrix_copy(r->v.m);
-	    if (m == NULL) {
-		p->err = E_ALLOC;
-	    }
-	}
-    } else if (r->t == NUM) {
+    if (r->t == NUM) {
 	/* result was a scalar, not a matrix */
 	m = gretl_matrix_alloc(1, 1);
 	if (m == NULL) {
@@ -9039,6 +9017,24 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	    for (i=0; i<n; i++) {
 		m->val[i] = x[i + p->dinfo->t1];
 	    }
+	}
+    } else if (r->t == MAT && is_tmp_node(r)) {
+	/* result r->v.m is newly allocated, steal it */
+#if EDEBUG
+	fprintf(stderr, "matrix result (%p) is tmp, stealing it\n", 
+		(void *) r->v.m);
+#endif
+	m = r->v.m;
+	r->v.m = NULL; /* avoid double-freeing */
+    } else if (r->t == MAT) {
+	/* r->v.m is an existing user matrix, copy it */
+#if EDEBUG
+	fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
+		(void *) r->v.m);
+#endif
+	m = gretl_matrix_copy(r->v.m);
+	if (m == NULL) {
+	    p->err = E_ALLOC;
 	}
     } else if (r->t == LIST) {
 	m = list_to_matrix(r->v.str, &p->err);

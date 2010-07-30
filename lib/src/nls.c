@@ -2782,14 +2782,18 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 			    gretlopt opt, PRN *prn)
 {
     MODEL nlmod;
-    int origv = pdinfo->v;
-    int i, t, err = 0;
-
-#if NLS_DEBUG
-    fprintf(stderr, "real_nl_model: starting, pdinfo->v = %d\n", origv);
-#endif
+    int i, t, origv;
+    int err = 0;
 
     gretl_model_init(&nlmod);
+
+    if (pdinfo == NULL || pdinfo->v == 0) {
+	gretl_errmsg_set(_("No dataset is in place"));
+	nlmod.errcode = E_DATA;
+	return nlmod;
+    }
+
+    origv = pdinfo->v;
     gretl_model_smpl_init(&nlmod, pdinfo);
 
     if (spec == NULL) {
@@ -2861,9 +2865,6 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    i = 0;
-#if 0
-	    fprintf(stderr, "spec->fvec = %p\n", (void *) spec->fvec);
-#endif
 	    for (t=spec->t1; t<=spec->t2; t++) {
 		spec->fvec[i++] = (*spec->Z)[spec->lhv][t];
 	    }

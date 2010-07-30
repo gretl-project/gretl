@@ -846,8 +846,6 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
 	    if (fscanf(fp, "%lf", &x) != 1) {
 		*err = E_DATA;
 		fprintf(stderr, "error reading row %d, column %d\n", i+1, j+1);
-		gretl_matrix_free(A);
-		A = NULL;
 	    } else {
 		gretl_matrix_set(A, i, j, x);
 	    }
@@ -857,6 +855,11 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
     gretl_pop_c_numeric_locale();
     
     fclose(fp);
+
+    if (*err) {
+	gretl_matrix_free(A);
+	A = NULL;
+    }
 
     return A;
 }
