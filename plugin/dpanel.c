@@ -216,7 +216,6 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	int gmax = goodobs[0];
 
 	if (Ti > 0) {
-	    /* this unit is usable */
 	    dpd->effN += 1;
 	    dpd->ndiff += Ti;
 	    if (use_levels(dpd)) {
@@ -233,8 +232,8 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    }
 	    if (goodobs[gmax] > t2max) {
 		t2max = goodobs[gmax];
-	    }	    
-	}
+	    }
+	}	    
     }
 
     /* figure number of time dummies, if wanted */
@@ -336,8 +335,8 @@ static double timedum_diff (dpdinfo *dpd, int j, int t)
    differences, followed by levels if wanted. 
 */
 
-static void build_Y (dpdinfo *dpd, int *goodobs, const double **Z, 
-		     int t, gretl_matrix *Yi)
+static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z, 
+		    int t, gretl_matrix *Yi)
 {
     const double *y = Z[dpd->yno];
     int i, usable = goodobs[0] - 1;
@@ -356,7 +355,12 @@ static void build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	t0 = t + i0;
 	t1 = t + i1;
 	dy = y[t1] - y[t0];
-	gretl_vector_set(Yi, i1-1-maxlag, dy);
+	if (i1-1-maxlag >= Yi->cols) {
+	    fprintf(stderr, "Bzzt! scribbled off the end of Yi\n");
+	    return E_DATA;
+	} else {
+	    gretl_vector_set(Yi, i1-1-maxlag, dy);
+	}
     }
     
     if (use_levels(dpd)) {
@@ -367,14 +371,16 @@ static void build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	    gretl_vector_set(Yi, Tshort + (i1-maxlag), y[t1]);
 	}
     }
+
+    return 0;
 }
 
 /* Build matrix of right-hand side variable values in @Xi using
    differences, followed by levels if wanted.
 */
 
-static void build_X (dpdinfo *dpd, int *goodobs, const double **Z, 
-		     int t, gretl_matrix *Xi)
+static int build_X (dpdinfo *dpd, int *goodobs, const double **Z, 
+		    int t, gretl_matrix *Xi)
 {
     const double *y = Z[dpd->yno];
     int usable = goodobs[0] - 1;
@@ -452,6 +458,8 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 	}
     }
+
+    return 0;
 }
 
 /* level instruments for the equations in differences */
@@ -514,8 +522,8 @@ static void gmm_inst_lev (const double *x, int t, int *goodobs,
    instruments for equations in levels if wanted.
 */
 
-static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
-		     int t, gretl_matrix *Zi)
+static int build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
+		    int t, gretl_matrix *Zi)
 {
     const double *y = Z[dpd->yno];
     int usable = goodobs[0] - 1;
@@ -603,6 +611,8 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 	}
     }
+
+    return 0;
 }
 
 static void trim_zero_inst (dpdinfo *dpd)
@@ -771,37 +781,46 @@ static int do_units (dpdinfo *dpd, const double **Z,
     /* initialize data stacker */
     Yrow = 0;
 
-    for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
+    for (i=0; i<dpd->N; i++) {
 	int *goodobs = Goodobs[i];
 	int Ti = goodobs[0] - 1;
 
 #if DPDEBUG
 	fprintf(stderr, "\n\nUnit %d, usable obs %d:", i + 1, Ti);
 #endif
-
-	if (Ti > 0) {
-	    if (D != NULL) {
-		build_unit_H_matrix(dpd, goodobs, D);
-	    }
-	    build_Y(dpd, goodobs, Z, t, Yi);
-	    build_X(dpd, goodobs, Z, t, Xi);
-	    build_Z(dpd, goodobs, Z, t, Zi);
-#if DPDEBUG
-	    gretl_matrix_print(Yi, "do_units: Yi");
-	    gretl_matrix_print(Xi, "do_units: Xi");
-	    gretl_matrix_print(Zi, "do_units: Zi");
-#endif
-	    gretl_matrix_multiply_mod(Xi, GRETL_MOD_NONE,
-				      Zi, GRETL_MOD_TRANSPOSE,
-				      dpd->XZ, GRETL_MOD_CUMULATE);
-	    gretl_matrix_qform(Zi, GRETL_MOD_NONE,
-			       dpd->H, dpd->A, GRETL_MOD_CUMULATE);
-	    gretl_matrix_multiply_mod(Zi, GRETL_MOD_NONE,
-				      Yi, GRETL_MOD_TRANSPOSE,
-				      dpd->ZY, GRETL_MOD_CUMULATE);
-	    /* stack the individual data matrices for future use */
-	    stack_unit_data(dpd, Yi, Xi, Zi, goodobs, i, &Yrow);
+	if (Ti == 0) {
+	    continue;
 	}
+
+	t = data_index(dpd, i);
+	if (D != NULL) {
+	    build_unit_H_matrix(dpd, goodobs, D);
+	}
+	err = build_Y(dpd, goodobs, Z, t, Yi);
+	if (!err) {
+	    err = build_X(dpd, goodobs, Z, t, Xi);
+	}
+	if (!err) {
+	    err = build_Z(dpd, goodobs, Z, t, Zi);
+	}
+	if (err) {
+	    break;
+	}
+#if DPDEBUG
+	gretl_matrix_print(Yi, "do_units: Yi");
+	gretl_matrix_print(Xi, "do_units: Xi");
+	gretl_matrix_print(Zi, "do_units: Zi");
+#endif
+	gretl_matrix_multiply_mod(Xi, GRETL_MOD_NONE,
+				  Zi, GRETL_MOD_TRANSPOSE,
+				  dpd->XZ, GRETL_MOD_CUMULATE);
+	gretl_matrix_qform(Zi, GRETL_MOD_NONE,
+			   dpd->H, dpd->A, GRETL_MOD_CUMULATE);
+	gretl_matrix_multiply_mod(Zi, GRETL_MOD_NONE,
+				  Yi, GRETL_MOD_TRANSPOSE,
+				  dpd->ZY, GRETL_MOD_CUMULATE);
+	/* stack the individual data matrices for future use */
+	stack_unit_data(dpd, Yi, Xi, Zi, goodobs, i, &Yrow);
     }
 
 #if DPDEBUG
