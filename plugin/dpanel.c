@@ -356,7 +356,7 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	t1 = t + i1;
 	dy = y[t1] - y[t0];
 	if (i1-1-maxlag >= Yi->cols) {
-	    fprintf(stderr, "Bzzt! scribbled off the end of Yi\n");
+	    fprintf(stderr, "Bzzt! scribbling off the end of Yi\n");
 	    return E_DATA;
 	} else {
 	    gretl_vector_set(Yi, i1-1-maxlag, dy);
