@@ -4349,7 +4349,7 @@ MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
 /**
  * arbond_model:
  * @list: regression list.
- * @istr: may contain additional instrument specification.
+ * @ispec: may contain additional instrument specification.
  * @Z: data array.
  * @pdinfo: dataset information.
  * @opt: may include OPT_D to include time dummies, 
@@ -4362,12 +4362,12 @@ MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
  * Produces estimates of a dynamic panel-data model in
  * the manner of Arellano and Bond. See the documentation for
  * the "arbond" command in gretl for the construction of the
- * @list argument and also the syntax of @istr.
+ * @list argument and also the syntax of @ispec.
  *
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arbond_model (const int *list, const char *istr, const double **Z, 
+MODEL arbond_model (const int *list, const char *ispec, const double **Z, 
 		    const DATAINFO *pdinfo, gretlopt opt, 
 		    PRN *prn)
 {
@@ -4384,7 +4384,7 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
 	return mod;
     }
 
-    mod = (*arbond_estimate)(list, istr, Z, pdinfo, opt, prn);
+    mod = (*arbond_estimate)(list, ispec, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 
@@ -4398,6 +4398,7 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
 /**
  * dpd_model:
  * @list: regression list.
+ * @ispec: may contain additional instrument specification.
  * @Z: data array.
  * @pdinfo: dataset information.
  * @opt: to be hooked up.
@@ -4408,8 +4409,8 @@ MODEL arbond_model (const int *list, const char *istr, const double **Z,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn)
+MODEL dpd_model (const int *list, const char *ispec, const double **Z, 
+		 const DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     void *handle = NULL;
     MODEL (*dpd_estimate) (const int *, const char *, const double **, 
@@ -4424,7 +4425,7 @@ MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return mod;
     }
 
-    mod = (*dpd_estimate)(list, NULL, Z, pdinfo, opt, prn);
+    mod = (*dpd_estimate)(list, ispec, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 

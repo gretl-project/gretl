@@ -56,12 +56,11 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
 	     gretlopt opt);
 
-MODEL arbond_model (const int *list, const char *istr, const double **Z, 
-		    const DATAINFO *pdinfo, gretlopt opt, 
-		    PRN *prn);
+MODEL arbond_model (const int *list, const char *ispec, const double **Z, 
+		    const DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
-MODEL dpd_model (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		 gretlopt opt, PRN *prn);
+MODEL dpd_model (const int *list, const char *ispec, const double **Z, 
+		 const DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
 MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo);
 

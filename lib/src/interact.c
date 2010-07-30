@@ -4825,7 +4825,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    *models[0] = arbond_model(cmd->list, cmd->param, Z, pdinfo, 
 				      cmd->opt, prn);
 	} else if (cmd->ci == DPANEL) {
-	    *models[0] = dpd_model(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    *models[0] = dpd_model(cmd->list, cmd->param, Z, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
 	    *models[0] = interval_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {

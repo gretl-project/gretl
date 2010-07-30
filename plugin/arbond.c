@@ -2249,7 +2249,7 @@ parse_GMM_instrument_spec (const char *spec, const DATAINFO *pdinfo,
     }
 
     if (nspec == 0) {
-	/* istr is junk */
+	/* spec is junk */
 	err = E_PARSE;
     } else {
 	/* allocate info structs */
