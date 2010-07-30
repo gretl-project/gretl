@@ -4927,6 +4927,7 @@ int print_model_from_matrices (const gretl_matrix *cs,
     int ncoef = gretl_matrix_rows(cs);
     int nadd = gretl_vector_get_length(adds);
     int ntot = ncoef + nadd;
+    const char *sep = ",";
     char **names = NULL;
     char *tmp;
     const double *b, *se;
@@ -4944,8 +4945,12 @@ int print_model_from_matrices (const gretl_matrix *cs,
 	return E_ALLOC;
     }
 
+    if (strchr(s, ',') == NULL) {
+	sep = " ";
+    }
+
     for (i=0; i<ntot && !err; i++) {
-	names[i] = strtok((i == 0)? tmp : NULL, ",");
+	names[i] = strtok((i == 0)? tmp : NULL, sep);
 	if (names[i] == NULL) {
 	    free(names);
 	    gretl_errmsg_sprintf(_("modprint: expected %d names"), ntot);

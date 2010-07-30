@@ -206,6 +206,23 @@ double binomial_pmf (double p, int n, int k)
     return pm;
 }
 
+static int binomial_pmf_array (double p, int n, double *x, int T)
+{
+    double pm;
+    int i, k;
+
+    for (i=0; i<T; i++) {
+	k = x[i];
+	pm = binomial_cdf(p, n, k);
+	if (k > 0 && !na(pm)) {
+	    pm -= binomial_cdf(p, n, k - 1);
+	}
+	x[i] = pm;
+    }
+
+    return 0;
+}
+
 /**
  * x_factorial:
  * @x: input value.
@@ -1449,6 +1466,40 @@ static double poisson_cdf_comp (double lambda, int k)
     return x;
 }
 
+static int poisson_pmf_array (double lambda, double *x, int n)
+{
+    double den, l0, p;
+    int i, j, k;
+
+    if (lambda <= 0) {
+	for (i=0; i<n; i++) {
+	    x[i] = NADBL;
+	}
+	return 0;
+    }
+
+    l0 = exp(-lambda);
+
+    for (i=0; i<n; i++) {
+	k = x[i];
+	den = x_factorial((double) k);
+	if (xna(den)) {
+	    p = NADBL;
+	} else {
+	    p = l0 * pow(lambda, (double) k) / den;
+	}
+	if (xna(p)) {
+	    p = l0;
+	    for (j=1; j<=k; j++) {
+		p *= lambda / j;
+	    }
+	}
+	x[i] = p;
+    }	    
+
+    return 0;
+}
+
 /**
  * poisson_pmf:
  * @lambda: mean (also variance).
@@ -1469,13 +1520,13 @@ double poisson_pmf (double lambda, int k)
     den = x_factorial((double) k);
     l0 = exp(-lambda);
 
-    if (na(den) || isinf(den) || isnan(den)) {
+    if (xna(den)) {
 	p = NADBL;
     } else {
 	p = l0 * pow(lambda, (double) k) / den;
     }
 
-    if (na(p) || isinf(p) || isnan(p)) {
+    if (xna(p)) {
 	int i;
 
 	p = l0;
@@ -2000,6 +2051,10 @@ int gretl_fill_pdf_array (char st, const double *parm,
 	err = snedecor_pdf_array((int) parm[0], (int) parm[1], x, n);
     } else if (st == 'G') {
 	err = gamma_pdf_array(parm[0], parm[1], x, n); 
+    } else if (st == 'B') {
+	err = binomial_pmf_array(parm[0], parm[1], x, n);
+    } else if (st == 'P') {
+	err = poisson_pmf_array(parm[0], x, n);
     } else if (st == 'W') {
 	err = weibull_pdf_array(parm[0], parm[1], x, n);
     } else if (st == 'E') {

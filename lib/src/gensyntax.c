@@ -926,8 +926,8 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
                                    (i==k-1 && (o & RIGHT_STR)))
 
 /* Get up to k comma-separated arguments (possibly optional).
-   However, if k < 0 this is a signal for get as many arguments as we
-   can find (the number is unknown in advance).
+   However, if k < 0 this is a signal to get as many arguments as we
+   can find (the number unknown in advance).
 */
 
 static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
@@ -995,7 +995,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    } 
 	    /* matrix functions: handle trailing transpose */
 	    if (p->ch == '\'') {
-		set_transpose(t);
+		*next = p->ch;
 		parser_getc(p);
 	    }
 	    lex(p);
@@ -1250,6 +1250,9 @@ static NODE *powterm (parser *p)
 		get_slice_parts(t->v.b2.r, p);
 	    }
 	}	
+    } else if (next == '\'') {
+	/* support func(args)' */
+	set_transpose(t);
     }
 
 #if SDEBUG

@@ -6,6 +6,11 @@ version 1.9.2, in progress
   (of any supported format) from the web
 - "kalman": allow a constant term in the state transition
   equation
+- "modprint" command: allow a string literal for the second
+  argument; support both comma- and space-separation of 
+  parameter names
+- pdf function: support the poisson and binomial distributions
+  (giving the probability mass)
 - New function invmills() to get the inverse Mills ratio
 - New accessor $mnl_probs to get the estimated outcome
   probabilities for a multinomial logit model (plus GUI

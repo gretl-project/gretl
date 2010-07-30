@@ -5826,11 +5826,14 @@
 	functions.
       </para>
       <para>
-	The argument <repl>coeffmat</repl> should be a <math>k</math> by 2
-	matrix containing <math>k</math> coefficients and <math>k</math>
-	associated standard errors, and <repl>names</repl> should be a string
-	containing at least <math>k</math> comma-separated names for the
-	coefficients.
+	The argument <repl>coeffmat</repl> should be a <math>k</math>
+	by 2 matrix containing <math>k</math> coefficients and
+	<math>k</math> associated standard errors, and
+	<repl>names</repl> should be a string containing at least
+	<math>k</math> names for the coefficients, separated by commas
+	or spaces. (The <repl>names</repl> argument may be either the
+	name of a string variable or a literal string, enclosed in
+	double quotes.)
       </para>
       <para>
 	The optional argument <repl>addstats</repl> is a vector containing
