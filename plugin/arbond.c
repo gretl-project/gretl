@@ -1543,19 +1543,8 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	strcpy(pmod->params[j++], pdinfo->varname[dpd->xlist[i+1]]);
     }
 
-    if (dpd->ndum > 0) {
-	/* labels for time dummies */
-	int t1min = dpd->T;
-
-	for (i=0; i<dpd->N; i++) {
-	    if (dpd->ui[i].t1 < t1min) {
-		t1min = dpd->ui[i].t1;
-	    }
-	}
-
-	for (i=0; i<dpd->ndum; i++) {
-	    sprintf(pmod->params[j++], "T%d", t1min + i + 1);
-	}
+    for (i=0; i<dpd->ndum; i++) {
+	sprintf(pmod->params[j++], "T%d", dpd->t1min + i + 2);
     }
 
     err = gretl_model_allocate_storage(pmod);

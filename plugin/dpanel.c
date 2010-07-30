@@ -151,8 +151,7 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 				int **Goodobs)
 {
-    int t1min = dpd->T;
-    int t2max = 0;
+    int gmin, t2max = 0;
     int i, t;
 
     /* instruments specific to equations in differences */
@@ -169,6 +168,10 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     /* initialize observation counts */
     dpd->effN = dpd->ndiff = dpd->nlev = 0;
     dpd->minTi = dpd->T;
+
+    /* initialize other accounts */
+    gmin = (use_levels(dpd))? 1 : 2;
+    dpd->t1min = dpd->T;
 
     for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
 	int *goodobs = Goodobs[i];
@@ -188,8 +191,8 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    if (Ti < dpd->minTi) {
 		dpd->minTi = Ti;
 	    }
-	    if (goodobs[2] < t1min) {
-		t1min = goodobs[2];
+	    if (goodobs[gmin] < dpd->t1min) {
+		dpd->t1min = goodobs[gmin];
 	    }
 	    if (goodobs[gmax] > t2max) {
 		t2max = goodobs[gmax];
@@ -199,10 +202,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 
     /* figure number of time dummies, if wanted */
     if (dpd->flags & DPD_TIMEDUM) {
-	dpd->ndum = t2max - t1min;
-	if (use_levels(dpd)) {
-	    dpd->ndum += 1;
-	}
+	dpd->ndum = t2max - dpd->t1min;
 	dpd->k += dpd->ndum;
 	dpd->nz += dpd->ndum;
     }
@@ -278,6 +278,16 @@ static void make_dpdstyle_H (gretl_matrix *H, int nd)
 	    gretl_matrix_set(H, i, i, 1);
 	}
     }
+}
+
+#define timedum_level(d,j,t) ((t == j + 1 + d->t1min)? 1 : 0)
+
+static double timedum_diff (dpdinfo *dpd, int j, int t)
+{
+    int d0 = timedum_level(dpd, j, t);
+    int d1 = timedum_level(dpd, j, t-1);
+
+    return d0 - d1;
 }
 
 /* Build row vector of dependent variable values in @Yi using
@@ -366,18 +376,11 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	}
 
 	if (dpd->ndum > 0) {
-	    double dx1;
-
 	    for (j=0; j<dpd->ndum; j++) {
-		dx = (col == j)? 1 : 0;
 		if (use_levels(dpd)) {
-		    /* difference the time dummies */
-		    if (col > 0 && dx == 0) {
-			dx1 = gretl_matrix_get(Xi, row, col-1);
-			if (dx1 == 1) {
-			    dx -= 1;
-			}
-		    }
+		    dx = timedum_diff(dpd, j, i1);
+		} else {
+		    dx = timedum_level(dpd, j, i1);
 		}
 		gretl_matrix_set(Xi, row++, col, dx);
 	    }
@@ -402,7 +405,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 
 	    for (j=0; j<dpd->ndum; j++) {
-		dx = (col - Tshort - 1 == j)? 1 : 0;
+		dx = timedum_level(dpd, j, i1);
 		gretl_matrix_set(Xi, row++, col, dx);
 	    }
 	}
@@ -519,7 +522,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    i1 = goodobs[i+2];
 	    col = i1 - 1 - maxlag;
 	    for (j=0; j<dpd->ndum; j++) {
-		dx = (col == j)? 1 : 0;
+		dx = timedum_level(dpd, j, i1);
 		gretl_matrix_set(Zi, k3 + j, col, dx);
 	    }
 	}	
@@ -550,10 +553,9 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	if (dpd->ndum > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
-		t1 = i1 - 1 - maxlag;
 		col = (T-1-maxlag) + (i1-maxlag);
 		for (j=0; j<dpd->ndum; j++) {
-		    dx = (t1 == j)? 1 : 0;
+		    dx = timedum_level(dpd, j, i1);
 		    gretl_matrix_set(Zi, k3 + j, col, dx);
 		}
 	    }
