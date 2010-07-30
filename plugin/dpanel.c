@@ -400,6 +400,65 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
+/* level instruments for the equations in differences */
+ 
+static void gmm_inst_diff(const double *x, int t, int *goodobs, 
+			  int maxlag, int qmax, int offset,
+			  gretl_matrix *Zi)
+{
+    int i, j, n = goodobs[0] - 1;
+    int i0, i1, col, k;
+    double x0;
+
+    for (i=0; i<n; i++) {
+	i0 = goodobs[i+1];
+	i1 = goodobs[i+2];
+	col = i1 - 1 - maxlag;
+	k = offset + i0 * (i0 - 1) / 2;
+#if DPDEBUG
+	fprintf(stderr, "Zi: i0=%d, i1=%d, base row=%d\n", i0, i1, k);
+#endif
+	for (j=0; j<i0; j++) {
+	    if (qmax == 0 || j > i0 - qmax) {
+		x0 = x[t+j];
+		if (!na(x0)) {
+		    gretl_matrix_set(Zi, k, col, x0);
+		} 
+	    } 
+	    k++; /* advance the row */
+	}
+    }
+}
+
+
+/* diff instruments for the equations in levels */
+ 
+static void gmm_inst_lev(const double *x, int t, int *goodobs, 
+			 int maxlag, int qmax, int roffset,
+			 int coffset, gretl_matrix *Zi)
+{
+    int i, j, n = goodobs[0] - 1;
+    int lastdiff = 0;
+    int i0, col, row = roffset;
+    double x0, x1;
+
+    for (i=0; i<=n; i++) {
+	i0 = goodobs[i+1];
+	col = coffset + i0 - maxlag;
+	for (j=lastdiff; j<i0; j++) {
+	    if (qmax == 0 || j > i0 - qmax) {
+		x0 = (j < 1)? NADBL : x[t+j-1];
+		x1 = x[t+j];
+		if (!na(x1) && !na(x0)) {
+		    gretl_matrix_set(Zi, row, col, x1 - x0);
+		}
+	    }
+		row++;
+	}
+	lastdiff = j;
+    }
+}
+
 /* Build matrix of instrument values in @Zi: instruments
    for the equations in differences come first, followed by
    instruments for equations in levels if wanted.
@@ -423,24 +482,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     gretl_matrix_zero(Zi);
 
     /* equations in differences: lagged levels of y */
-    for (i=0; i<usable; i++) {
-	i0 = goodobs[i+1];
-	i1 = goodobs[i+2];
-	col = i1 - 1 - maxlag;
-	k = i0 * (i0 - 1) / 2;
-#if DPDEBUG
-	fprintf(stderr, "Zi: i0=%d, i1=%d, base row=%d\n", i0, i1, k);
-#endif
-	for (j=0; j<i0; j++) {
-	    if (qmax == 0 || j > i0 - qmax) {
-		y0 = y[t+j];
-		if (!na(y0)) {
-		    gretl_matrix_set(Zi, k, col, y0);
-		} 
-	    } 
-	    k++; /* advance the row */
-	}
-    }
+    gmm_inst_diff(y, t, goodobs, maxlag, qmax, 0, Zi);
 
     /* insert here: GMM-style instruments blocks for any
        exogenous vars selected for such treatment */
@@ -479,27 +521,10 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 
     if (use_levels(dpd)) {
-	int offset = T - maxlag - 1;
-	int row = (T-1) * (T-2) / 2;
-	int lastdiff = 0;
-	double y1;
-
 	/* equations in levels: lagged differences of y */
-	for (i=0; i<=usable; i++) {
-	    i0 = goodobs[i+1];
-	    col = offset + i0 - maxlag;
-	    for (j=lastdiff; j<i0; j++) {
-		if (qmax == 0 || j > i0 - qmax) {
-		    y0 = (j < 1)? NADBL : y[t+j-1];
-		    y1 = y[t+j];
-		    if (!na(y1) && !na(y0)) {
-			gretl_matrix_set(Zi, row, col, y1 - y0);
-		    }
-		}
-		row++;
-	    }
-	    lastdiff = j;
-	}
+	int roffset = (T-1) * (T-2) / 2;
+	int coffset = T - maxlag - 1;
+	gmm_inst_lev(y, t, goodobs, maxlag, qmax, roffset, coffset, Zi);
 
 	/* insert here: GMMlevel-style blocks, if any */
 
