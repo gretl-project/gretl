@@ -1720,7 +1720,7 @@ static int try_alt_inverse (dpdinfo *dpd)
 
     mask = gretl_matrix_rank_mask(dpd->A, &err);
 
-    if (!err) {
+    if (!err && mask != NULL) {
 	err = gretl_matrix_cut_rows_cols(dpd->A, mask);
     }
 
