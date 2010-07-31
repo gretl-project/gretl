@@ -1482,6 +1482,60 @@ char *gretl_matrix_zero_col_mask (const gretl_matrix *m, int *err)
 }
 
 /**
+ * gretl_matrix_zero_diag_mask:
+ * @m: matrix to process.
+ * @err: location to receive error code.
+ *
+ * Checks square matrix @m for diagonal elements that are zero.  
+ * If there are any such, constructs a mask of length equal to
+ * the number of rows (and columns) of @m, with 1s indicating
+ * the zero diagonal entries. If there are no zero diagonal
+ * elements, returns NULL.
+ * 
+ * E_ALLOC is written to @err in case a mask should have
+ * been constructed but allocation failed.
+ *
+ * Returns: allocated mask or NULL.
+ */
+
+char *gretl_matrix_zero_diag_mask (const gretl_matrix *m, int *err)
+{
+    char *mask = NULL;
+    int i, trim = 0;
+
+    if (gretl_is_null_matrix(m)) {
+	return NULL;
+    }
+
+    if (m->rows != m->cols) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	if (gretl_matrix_get(m, i, i) == 0.0) {
+	    trim = 1;
+	    break;
+	}
+    }
+
+    if (trim) {
+	mask = calloc(m->rows, 1);
+	if (mask == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<m->rows; i++) {
+		if (gretl_matrix_get(m, i, i) == 0.0) {
+		    mask[i] = 1;
+		}
+	    }
+	}
+    }
+
+    return mask;
+}
+
+/**
  * gretl_matrix_rank_mask:
  * @m: matrix to process.
  * @err: location to receive error code.

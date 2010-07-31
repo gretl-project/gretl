@@ -634,50 +634,24 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
-static void trim_zero_inst (dpdinfo *dpd)
+static int trim_zero_inst (dpdinfo *dpd)
 {
-    int i, n = dpd->A->rows;
-    int trim = 0;
+    char *mask;
+    int err = 0;
 
 #if WRITE_MATRICES
     gretl_matrix_write_as_text(dpd->A, "dpd-bigA.mat");
 #endif
 
-    for (i=0; i<n; i++) {
-	if (gretl_matrix_get(dpd->A, i, i) == 0.0) {
-	    trim = 1;
-	    break;
-	}
-    }
+    mask = gretl_matrix_zero_diag_mask(dpd->A, &err);
 
-    if (trim) {
-	char *mask = calloc(n, 1);
-
-	for (i=0; i<n; i++) {
-	    if (gretl_matrix_get(dpd->A, i, i) == 0.0) {
-		mask[i] = 1;
-	    }
-	}
-
+    if (mask != NULL) {
 	gretl_matrix_cut_rows_cols(dpd->A, mask);
-	gretl_matrix_cut_rows(dpd->ZT, mask);
-
-	fprintf(stderr, "dpanel: trim_zero_inst: trimmed from %d to %d\n",
-		n, dpd->A->rows);
-
-	dpd->nz = dpd->A->rows;
-
-	/* resize other workspace matrices whose dimensions 
-	   involve nz */
-	gretl_matrix_reuse(dpd->Acpy,  dpd->nz, dpd->nz);
-	gretl_matrix_reuse(dpd->kmtmp, -1, dpd->nz);
-	gretl_matrix_reuse(dpd->L1,    -1, dpd->nz);
-	gretl_matrix_reuse(dpd->XZA,   -1, dpd->nz);
-	gretl_matrix_reuse(dpd->XZ,    -1, dpd->nz);
-	gretl_matrix_reuse(dpd->ZY,    dpd->nz, -1);
-
+	dpd_shrink_matrices(dpd, mask);
 	free(mask);
     }
+
+    return err;
 }
 
 /* allocate temporary storage needed by do_units() */
@@ -865,52 +839,6 @@ static int do_units (dpdinfo *dpd, const double **Z,
     return err;
 }
 
-static int dpanel_step_1 (dpdinfo *dpd)
-{
-    int err = 0;
-
-    trim_zero_inst(dpd);
-
-    err = dpd_invert_A_N(dpd);
-
-    if (!err) {
-	/* construct additional moment matrices */
-	gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
-	gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
-				  dpd->ZT, GRETL_MOD_TRANSPOSE,
-				  dpd->XZ, GRETL_MOD_NONE);
-    }
-
-#if DPDEBUG > 1
-    gretl_matrix_print(dpd->XZ, "XZ' (dpanel)");
-    gretl_matrix_print(dpd->ZY, "Z'Y (dpanel)");
-#endif
-
-#if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->ZT, "dpdZT.mat");
-    gretl_matrix_write_as_text(dpd->XZ, "dpdXZ.mat");
-    gretl_matrix_write_as_text(dpd->ZY, "dpdZY.mat");
-#endif
-
-    if (!err) {
-	err = dpd_beta_hat(dpd);
-    }
-
-    if (!err) {
-	dpanel_residuals(dpd);
-	err = dpd_variance_1(dpd);
-    }
-
-    if (!err && !(dpd->flags & DPD_TWOSTEP)) {
-	/* do the tests if we're not continuing */
-	dpd_ar_test(dpd);
-	dpd_sargan_test(dpd);
-	dpd_wald_test(dpd);
-    }
-
-    return err;
-}
-
 /* "Secret" public interface for new approach, including system GMM:
    in a script use --system (OPT_L, think "levels") to get
    Blundell-Bond. To build the H matrix as per Ox/DPD use the
@@ -976,7 +904,11 @@ MODEL dpd_estimate (const int *list, const char *ispec,
     gretl_list_array_free(Goodobs, dpd->N);
 
     if (!err) {
-	err = dpanel_step_1(dpd);
+	err = trim_zero_inst(dpd);
+    }
+
+    if (!err) {
+	err = dpd_step_1(dpd);
     }
 
     if (!err && (opt & OPT_T)) {

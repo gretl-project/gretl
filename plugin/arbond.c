@@ -1676,9 +1676,9 @@ static int dpd_zero_check (dpdinfo *dpd, const double **Z)
    should just have their nz dimension changed.
 */
 
-static void real_shrink_matrices (dpdinfo *dpd, const char *mask)
+static void dpd_shrink_matrices (dpdinfo *dpd, const char *mask)
 {
-    fprintf(stderr, "%s: real_shrink_matrices: cut nz from %d to %d\n", 
+    fprintf(stderr, "%s: dpd_shrink_matrices: cut nz from %d to %d\n", 
 	    (dpd->ci == DPANEL)? "dpanel" : "arbond", 
 	    dpd->nz, dpd->A->rows);
 
@@ -1708,7 +1708,7 @@ static int reduce_Z_and_A (dpdinfo *dpd, const char *zmask)
     int err = gretl_matrix_cut_rows_cols(dpd->A, zmask);
 
     if (!err) {
-	real_shrink_matrices(dpd, zmask);
+	dpd_shrink_matrices(dpd, zmask);
     }
 
     return err;
@@ -2315,7 +2315,7 @@ static int dpd_invert_A_N (dpdinfo *dpd)
 	    err = gretl_invert_symmetric_matrix(dpd->A);
 	    if (!err) {
 		/* OK, now register effects of reducing nz */
-		real_shrink_matrices(dpd, mask);
+		dpd_shrink_matrices(dpd, mask);
 	    } else {
 		fprintf(stderr, "inverting dpd->A failed on second pass\n");
 	    }
@@ -2331,24 +2331,12 @@ static int dpd_invert_A_N (dpdinfo *dpd)
     return err;
 }
 
-static int arbond_step_1 (dpdinfo *dpd, const double **Z)
+static int dpd_step_1 (dpdinfo *dpd)
 {
-    int err = 0;
+    int err;
 
-    /* build y^* and X^* */
-    err = arbond_make_y_X(dpd, Z);
-
-    if (!err) {
-	/* build instrument matrix blocks, Z_i, and insert into
-	   big Z' matrix; cumulate first-stage A_N as we go 
-	*/
-	err = arbond_make_Z_and_A(dpd, Z);
-    }
-
-    if (!err) {
-	/* invert A_N: we allow two attempts */
-	err = dpd_invert_A_N(dpd);
-    }
+    /* invert A_N: we allow two attempts */
+    err = dpd_invert_A_N(dpd);
 
     if (!err) {
 	/* construct additional moment matrices */
@@ -2370,16 +2358,20 @@ static int arbond_step_1 (dpdinfo *dpd, const double **Z)
 #endif
 
     if (!err) {
-	/* first-step calculation of \hat{\beta} */
 	err = dpd_beta_hat(dpd);
     }
 
     if (!err) {
-	arbond_residuals(dpd);
+	if (dpd->ci == DPANEL) {
+	    dpanel_residuals(dpd);
+	} else {
+	    arbond_residuals(dpd);
+	}
 	err = dpd_variance_1(dpd);
     }
 
     if (!err && !(dpd->flags & DPD_TWOSTEP)) {
+	/* do the tests if we're not continuing */
 	dpd_ar_test(dpd);
 	dpd_sargan_test(dpd);
 	dpd_wald_test(dpd);
@@ -2436,7 +2428,18 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
     }
 
     if (!err) {
-	err = arbond_step_1(dpd, Z);
+	err = arbond_make_y_X(dpd, Z);
+    } 
+
+    if (!err) {
+	/* build instrument matrix blocks, Z_i, and insert into
+	   big Z' matrix; cumulate first-stage A_N as we go 
+	*/
+	err = arbond_make_Z_and_A(dpd, Z);
+    }
+
+    if (!err) {
+	err = dpd_step_1(dpd);
     }
 
     if (!err && (opt & OPT_T)) {
