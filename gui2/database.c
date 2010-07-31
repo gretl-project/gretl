@@ -1486,7 +1486,8 @@ void open_named_db_index (char *dbname)
 
     fp = gretl_fopen(dbname, "rb");
 
-    if (fp == NULL && action == NATIVE_SERIES) {
+    if (fp == NULL && action == NATIVE_SERIES &&
+	!has_suffix(dbname, ".bin")) {
 	strcat(dbname, ".bin");
 	fp = gretl_fopen(dbname, "rb");
     }

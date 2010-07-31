@@ -2077,6 +2077,13 @@ void set_wm_icon (GtkWidget *w, gpointer data)
 
 #endif
 
+static int has_db_suffix (const char *fname)
+{
+    return has_suffix(fname, ".bin") ||
+	has_suffix(fname, ".rat") ||
+	has_suffix(fname, ".bn7");
+}
+
 /* Drag 'n' drop: respond to data dropped into the main window */
 
 static void  
@@ -2140,7 +2147,9 @@ mdata_handle_drag  (GtkWidget *widget,
     strcpy(tryfile, tmp);
 #endif
 
-    if (has_suffix(tryfile, ".gretl") && gretl_is_pkzip_file(tryfile)) {
+    if (has_db_suffix(tryfile)) {
+	open_named_db_index(tryfile);
+    } else if (has_suffix(tryfile, ".gretl") && gretl_is_pkzip_file(tryfile)) {
 	verify_open_session();
     } else if ((ftype = script_type(tryfile))) {
 	do_open_script(ftype);

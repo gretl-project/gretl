@@ -1003,9 +1003,13 @@ static int get_csv_data (char *fname, int ftype, int append)
 static int get_native_data (char *fname, int ftype, int append, 
 			    windata_t *fwin)
 {
-    /* we'll send any output to stderr */
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    PRN *prn = NULL;
+    char *buf = NULL;
     int err;
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
 
     if (ftype == GRETL_XML_DATA) {
 	err = gretl_read_gdt(fname, &Z, datainfo, OPT_B, prn);
@@ -1013,8 +1017,7 @@ static int get_native_data (char *fname, int ftype, int append,
 	err = gretl_get_data(fname, &Z, datainfo, OPT_NONE, prn);
     }
 
-    /* FIXME NEW : fname to datafile */
-
+    buf = gretl_print_steal_buffer(prn);
     gretl_print_destroy(prn);
 
     if (fwin != NULL) {
@@ -1025,13 +1028,18 @@ static int get_native_data (char *fname, int ftype, int append,
     if (err) {
 	if (err == E_FOPEN) {
 	    file_read_errbox(tryfile);
+	} else if (buf != NULL && *buf != '\0') {
+	    errbox(buf);
 	} else {
 	    gui_errmsg(err);
 	}
 	delete_from_filelist(FILE_LIST_DATA, fname);
     } else {
 	finalize_data_open(fname, ftype, 0, append, NULL);
+	fputs(buf, stderr);
     } 
+
+    free(buf);
 
     return err;
 }
