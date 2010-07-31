@@ -249,13 +249,29 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     }
 
     /* figure the max number of stacked observations per unit */
+#if 0
+    /* what we had: max obs for any given unit */
     dpd->max_ni = dpd->maxTi;
     if (dpd->flags & DPD_SYSTEM) {
 	dpd->max_ni += dpd->maxTi + 1;
     }  
+#else
+    /* needed (??): max _obs range_, accounting for all units */
+    dpd->max_ni = t2max - dpd->t1min + 1;
+    if (dpd->flags & DPD_SYSTEM) {
+	dpd->max_ni += dpd->max_ni - 1;
+    }      
+#endif
 
     /* and the total observations overall */
     dpd->totobs = dpd->ndiff + dpd->nlev;
+
+#if DPDEBUG
+    fprintf(stderr, "After dpanel accounting:\n"
+	    " effN=%d, max_ni=%d, k=%d, ndum=%d, nz=%d\n", 
+	    dpd->effN, dpd->max_ni, dpd->k, dpd->ndum, dpd->nz);
+    fprintf(stderr, " maxTi=%d, minTi=%d\n", dpd->maxTi, dpd->minTi);
+#endif    
 }
 
 /* Based on the accounting of good observations for a unit recorded
@@ -356,7 +372,9 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	t1 = t + i1;
 	dy = y[t1] - y[t0];
 	if (i1-1-maxlag >= Yi->cols) {
-	    fprintf(stderr, "Bzzt! scribbling off the end of Yi\n");
+	    fprintf(stderr, "Bzzt! scribbling off the end of Yi\n"
+		    " Yi->cols = %d; i1-1-maxlag = %d-1-%d = %d\n", 
+		    Yi->cols, i1, maxlag, i1-1-maxlag);
 	    return E_DATA;
 	} else {
 	    gretl_vector_set(Yi, i1-1-maxlag, dy);
@@ -677,7 +695,7 @@ static int make_units_workspace (dpdinfo *dpd, gretl_matrix **D,
     if (*Yi == NULL || *Xi == NULL) {
 	err = E_ALLOC;
     }
-    
+
     return err;
 }
 
@@ -786,7 +804,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	int Ti = goodobs[0] - 1;
 
 #if DPDEBUG
-	fprintf(stderr, "\n\nUnit %d, usable obs %d:", i + 1, Ti);
+	fprintf(stderr, "\nUnit %d, usable obs %d:\n", i + 1, Ti);
 #endif
 	if (Ti == 0) {
 	    continue;
@@ -824,8 +842,10 @@ static int do_units (dpdinfo *dpd, const double **Z,
     }
 
 #if DPDEBUG
-    gretl_matrix_print(dpd->Y, "dpd->Y");
-    gretl_matrix_print(dpd->X, "dpd->X");
+    if (!err) {
+	gretl_matrix_print(dpd->Y, "dpd->Y");
+	gretl_matrix_print(dpd->X, "dpd->X");
+    }
 #endif
 
  bailout:
@@ -849,9 +869,7 @@ static int dpanel_step_1 (dpdinfo *dpd)
     gretl_matrix_print(dpd->ZY, "ZY (trimmed)");
 #endif
 
-    /* symmetrize A; you never know */
-    gretl_matrix_xtr_symmetric(dpd->A);
-    err = gretl_invert_symmetric_matrix(dpd->A);
+    err = dpd_invert_A_N(dpd);
 
     if (!err) {
 	err = dpd_beta_hat(dpd);

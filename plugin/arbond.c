@@ -2297,9 +2297,12 @@ parse_GMM_instrument_spec (const char *spec, const DATAINFO *pdinfo,
     return err;
 }
 
-static int arbond_invert_A_N (dpdinfo *dpd)
+static int dpd_invert_A_N (dpdinfo *dpd)
 {
     int err = 0;
+
+    /* just in case */
+    gretl_matrix_xtr_symmetric(dpd->A);
 
     /* make a backup in case the first attempt fails */
     gretl_matrix_copy_values(dpd->Acpy, dpd->A);
@@ -2336,7 +2339,7 @@ static int arbond_step_1 (dpdinfo *dpd, const double **Z)
 
     if (!err) {
 	/* invert A_N: we allow two attempts */
-	err = arbond_invert_A_N(dpd);
+	err = dpd_invert_A_N(dpd);
     }
 
     /* construct additional moment matrices */
