@@ -313,15 +313,6 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
 #endif
 }
 
-static void build_unit_H_matrix (dpdinfo *dpd, int *goodobs, 
-				 gretl_matrix *D)
-{
-    build_unit_D_matrix(dpd, goodobs, D);
-    gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
-			      D, GRETL_MOD_NONE, 
-			      dpd->H, GRETL_MOD_NONE);
-}
-
 static void make_dpdstyle_H (gretl_matrix *H, int nd)
 {
     int i;
@@ -338,6 +329,17 @@ static void make_dpdstyle_H (gretl_matrix *H, int nd)
 	    gretl_matrix_set(H, i, i, 1);
 	}
     }
+}
+
+static void build_unit_H_matrix (dpdinfo *dpd, int *goodobs, 
+				 gretl_matrix *D)
+{
+    if (D != NULL) {
+	build_unit_D_matrix(dpd, goodobs, D);
+	gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
+				  D, GRETL_MOD_NONE, 
+				  dpd->H, GRETL_MOD_NONE);
+    } 
 }
 
 #define timedum_level(d,j,t) ((t == j + 1 + d->t1min)? 1 : 0)
@@ -637,6 +639,10 @@ static void trim_zero_inst (dpdinfo *dpd)
     int i, n = dpd->A->rows;
     int trim = 0;
 
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->A, "dpd-bigA.mat");
+#endif
+
     for (i=0; i<n; i++) {
 	if (gretl_matrix_get(dpd->A, i, i) == 0.0) {
 	    trim = 1;
@@ -654,9 +660,10 @@ static void trim_zero_inst (dpdinfo *dpd)
 	}
 
 	gretl_matrix_cut_rows_cols(dpd->A, mask);
-	gretl_matrix_cut_cols(dpd->XZ, mask);
-	gretl_matrix_cut_rows(dpd->ZY, mask);
 	gretl_matrix_cut_rows(dpd->ZT, mask);
+
+	fprintf(stderr, "dpanel: trim_zero_inst: trimmed from %d to %d\n",
+		n, dpd->A->rows);
 
 	dpd->nz = dpd->A->rows;
 
@@ -666,6 +673,8 @@ static void trim_zero_inst (dpdinfo *dpd)
 	gretl_matrix_reuse(dpd->kmtmp, -1, dpd->nz);
 	gretl_matrix_reuse(dpd->L1,    -1, dpd->nz);
 	gretl_matrix_reuse(dpd->XZA,   -1, dpd->nz);
+	gretl_matrix_reuse(dpd->XZ,    -1, dpd->nz);
+	gretl_matrix_reuse(dpd->ZY,    dpd->nz, -1);
 
 	free(mask);
     }
@@ -761,6 +770,10 @@ static void stack_unit_data (dpdinfo *dpd,
 	unit->nobs += unit->nlev;
     }
 
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->ZT, "dpdZT.mat");
+#endif
+
     *row = s;
 }
 
@@ -829,14 +842,8 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	if (D != NULL) {
 	    build_unit_H_matrix(dpd, goodobs, D);
 	}
-	gretl_matrix_multiply_mod(Xi, GRETL_MOD_NONE,
-				  Zi, GRETL_MOD_TRANSPOSE,
-				  dpd->XZ, GRETL_MOD_CUMULATE);
 	gretl_matrix_qform(Zi, GRETL_MOD_NONE,
 			   dpd->H, dpd->A, GRETL_MOD_CUMULATE);
-	gretl_matrix_multiply_mod(Zi, GRETL_MOD_NONE,
-				  Yi, GRETL_MOD_TRANSPOSE,
-				  dpd->ZY, GRETL_MOD_CUMULATE);
 	/* stack the individual data matrices for future use */
 	stack_unit_data(dpd, Yi, Xi, Zi, goodobs, i, &Yrow);
     }
@@ -845,6 +852,11 @@ static int do_units (dpdinfo *dpd, const double **Z,
     gretl_matrix_print(dpd->Y, "dpd->Y");
     gretl_matrix_print(dpd->X, "dpd->X");
 #endif
+
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->Y, "dpdY.mat");
+    gretl_matrix_write_as_text(dpd->X, "dpdX.mat");
+#endif    
 
     gretl_matrix_free(D);
     gretl_matrix_free(Yi);
@@ -859,13 +871,26 @@ static int dpanel_step_1 (dpdinfo *dpd)
 
     trim_zero_inst(dpd);
 
+    err = dpd_invert_A_N(dpd);
+
+    if (!err) {
+	/* construct additional moment matrices */
+	gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
+	gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
+				  dpd->ZT, GRETL_MOD_TRANSPOSE,
+				  dpd->XZ, GRETL_MOD_NONE);
+    }
+
 #if DPDEBUG > 1
-    gretl_matrix_print(dpd->A, "A (trimmed)");
-    gretl_matrix_print(dpd->XZ, "XZ (trimmed)");
-    gretl_matrix_print(dpd->ZY, "ZY (trimmed)");
+    gretl_matrix_print(dpd->XZ, "XZ' (dpanel)");
+    gretl_matrix_print(dpd->ZY, "Z'Y (dpanel)");
 #endif
 
-    err = dpd_invert_A_N(dpd);
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->ZT, "dpdZT.mat");
+    gretl_matrix_write_as_text(dpd->XZ, "dpdXZ.mat");
+    gretl_matrix_write_as_text(dpd->ZY, "dpdZY.mat");
+#endif
 
     if (!err) {
 	err = dpd_beta_hat(dpd);

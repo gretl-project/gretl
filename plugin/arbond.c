@@ -21,6 +21,7 @@
 #include "matrix_extra.h"
 
 #define ADEBUG 0
+#define WRITE_MATRICES 0
 
 enum {
     DPD_TWOSTEP  = 1 << 0,
@@ -1668,12 +1669,17 @@ static int dpd_zero_check (dpdinfo *dpd, const double **Z)
 
 /* Based on reduction of the A matrix, trim ZT to match and
    adjust the sizes of all workspace matrices that have a 
-   dimension involving dpd->nz.
+   dimension involving dpd->nz. Note that this is called 
+   on the first step only, and it is called before computing
+   XZ' and Z'Y. The only matrices we need to actually "cut"
+   are A (already done when we get here) and ZT; XZ' and Z'Y 
+   should just have their nz dimension changed.
 */
 
 static void real_shrink_matrices (dpdinfo *dpd, const char *mask)
 {
-    fprintf(stderr, "A matrix: shrinking m from %d to %d\n", 
+    fprintf(stderr, "%s: real_shrink_matrices: cut nz from %d to %d\n", 
+	    (dpd->ci == DPANEL)? "dpanel" : "arbond", 
 	    dpd->nz, dpd->A->rows);
 
     gretl_matrix_cut_rows(dpd->ZT, mask);
@@ -1688,52 +1694,22 @@ static void real_shrink_matrices (dpdinfo *dpd, const char *mask)
     gretl_matrix_reuse(dpd->ZY,    dpd->nz, -1);
 }
 
-/* Remove zero rows/cols from A, as indicated by mask, and delete the
+/* Remove zero rows/cols from A, as indicated by zmask, and delete the
    corresponding columns from Z.  At this point we leave open the
    question of whether the reduced A matrix is positive definite.
+
+   This function is invoked on the first step only, prior to
+   attempting to invert the A matrix; and at present it is used
+   only for the arbond command.
 */
 
-static int reduce_Z_and_A (dpdinfo *dpd, const char *mask)
+static int reduce_Z_and_A (dpdinfo *dpd, const char *zmask)
 {
-    int err = gretl_matrix_cut_rows_cols(dpd->A, mask);
+    int err = gretl_matrix_cut_rows_cols(dpd->A, zmask);
 
     if (!err) {
-	real_shrink_matrices(dpd, mask);
+	real_shrink_matrices(dpd, zmask);
     }
-
-    return err;
-}
-
-/* We already removed any zero rows/columns from A, but it couldn't
-   be inverted.  Now we try reducing the dimension of A to its rank.
-   We need to read from the backup, Acpy, since dpd->A will have been
-   mangled in the failed inversion attempt.  We proceed to check that
-   the reduced A is invertible; if not we flag an error.
-*/
-
-static int try_alt_inverse (dpdinfo *dpd)
-{
-    char *mask = NULL;
-    int err = 0;
-
-    gretl_matrix_copy_values(dpd->A, dpd->Acpy); 
-
-    mask = gretl_matrix_rank_mask(dpd->A, &err);
-
-    if (!err && mask != NULL) {
-	err = gretl_matrix_cut_rows_cols(dpd->A, mask);
-    }
-
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(dpd->A);
-	if (!err) {
-	    real_shrink_matrices(dpd, mask);
-	} else {
-	    fprintf(stderr, "try_alt_inverse: error inverting\n");
-	}
-    }
-
-    free(mask);
 
     return err;
 }
@@ -1942,6 +1918,11 @@ static int arbond_make_y_X (dpdinfo *dpd, const double **Z)
     gretl_matrix_print(dpd->X, "X (arbond)");
 #endif
 
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->Y, "arbondY.mat");
+    gretl_matrix_write_as_text(dpd->X, "arbondX.mat");
+#endif  
+
     return 0;
 }
 
@@ -2004,7 +1985,6 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
     int s, t, t0;
     int zi, zj, zk;
     double x;
-    char *zmask;
     int *rc = NULL;
 #if ADEBUG
     char zstr[8];
@@ -2138,9 +2118,14 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 
     free(rc);
 
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->A, "arbond-bigA.mat");
+#endif
+
     if (!err) {
 	/* mask zero rows of ZT, if required */
-	zmask = gretl_matrix_zero_row_mask(dpd->ZT, &err);
+	char *zmask = gretl_matrix_zero_row_mask(dpd->ZT, &err);
+
 	if (zmask != NULL) {
 	    err = reduce_Z_and_A(dpd, zmask);
 	    free(zmask);
@@ -2297,6 +2282,9 @@ parse_GMM_instrument_spec (const char *spec, const DATAINFO *pdinfo,
     return err;
 }
 
+/* This function is used on the first step (only), by both
+   arbond and dpanel. */
+
 static int dpd_invert_A_N (dpdinfo *dpd)
 {
     int err = 0;
@@ -2311,9 +2299,29 @@ static int dpd_invert_A_N (dpdinfo *dpd)
     err = gretl_invert_symmetric_matrix(dpd->A);
 
     if (err) {
-	/* try again, reducing A based on its rank */
+	/* try again, first reducing A based on its rank */
+	char *mask = NULL;
+
 	fprintf(stderr, "inverting dpd->A failed on first pass\n");
-	err = try_alt_inverse(dpd);
+
+	gretl_matrix_copy_values(dpd->A, dpd->Acpy); 
+	mask = gretl_matrix_rank_mask(dpd->A, &err);
+
+	if (!err) {
+	    err = gretl_matrix_cut_rows_cols(dpd->A, mask);
+	}
+
+	if (!err) {
+	    err = gretl_invert_symmetric_matrix(dpd->A);
+	    if (!err) {
+		/* OK, now register effects of reducing nz */
+		real_shrink_matrices(dpd, mask);
+	    } else {
+		fprintf(stderr, "inverting dpd->A failed on second pass\n");
+	    }
+	}
+
+	free(mask);
     }
 
 #if ADEBUG
@@ -2342,8 +2350,8 @@ static int arbond_step_1 (dpdinfo *dpd, const double **Z)
 	err = dpd_invert_A_N(dpd);
     }
 
-    /* construct additional moment matrices */
     if (!err) {
+	/* construct additional moment matrices */
 	gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
 	gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
 				  dpd->ZT, GRETL_MOD_TRANSPOSE,
@@ -2352,7 +2360,13 @@ static int arbond_step_1 (dpdinfo *dpd, const double **Z)
 
 #if ADEBUG > 1
     gretl_matrix_print(dpd->XZ, "XZ' (arbond)");
-    gretl_matrix_print(dpd->ZY, "Z'y (arbond)");
+    gretl_matrix_print(dpd->ZY, "Z'Y (arbond)");
+#endif
+
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->ZT, "arbondZT.mat");
+    gretl_matrix_write_as_text(dpd->XZ, "arbondXZ.mat");
+    gretl_matrix_write_as_text(dpd->ZY, "arbondZY.mat");
 #endif
 
     if (!err) {
@@ -2446,5 +2460,4 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
 }
 
 #include "dpanel.c"
-
 
