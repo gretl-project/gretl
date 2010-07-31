@@ -215,6 +215,9 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	int Ti = check_unit_obs(dpd, goodobs, Z, t);
 	int gmax = goodobs[0];
 
+#if DPDEBUG
+	fprintf(stderr, "\nunit %d: Ti = %d\n", i+1, Ti);
+#endif
 	if (Ti > 0) {
 	    dpd->effN += 1;
 	    dpd->ndiff += Ti;
@@ -397,8 +400,8 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
    differences, followed by levels if wanted.
 */
 
-static int build_X (dpdinfo *dpd, int *goodobs, const double **Z, 
-		    int t, gretl_matrix *Xi)
+static void build_X (dpdinfo *dpd, int *goodobs, const double **Z, 
+		     int t, gretl_matrix *Xi)
 {
     const double *y = Z[dpd->yno];
     int usable = goodobs[0] - 1;
@@ -476,8 +479,6 @@ static int build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 	}
     }
-
-    return 0;
 }
 
 /* level instruments for the equations in differences */
@@ -540,8 +541,8 @@ static void gmm_inst_lev (const double *x, int t, int *goodobs,
    instruments for equations in levels if wanted.
 */
 
-static int build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
-		    int t, gretl_matrix *Zi)
+static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
+		     int t, gretl_matrix *Zi)
 {
     const double *y = Z[dpd->yno];
     int usable = goodobs[0] - 1;
@@ -629,8 +630,6 @@ static int build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 	}
     }
-
-    return 0;
 }
 
 static void trim_zero_inst (dpdinfo *dpd)
@@ -693,6 +692,9 @@ static int make_units_workspace (dpdinfo *dpd, gretl_matrix **D,
     *Xi = gretl_matrix_alloc(dpd->k, dpd->max_ni);
 
     if (*Yi == NULL || *Xi == NULL) {
+	gretl_matrix_free(*D);
+	gretl_matrix_free(*Yi);
+	gretl_matrix_free(*Xi);
 	err = E_ALLOC;
     }
 
@@ -780,7 +782,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 
     err = make_units_workspace(dpd, &D, &Yi, &Xi);
     if (err) {
-	goto bailout;
+	return err;
     }
 
     Zi = dpd->Zi;
@@ -799,36 +801,34 @@ static int do_units (dpdinfo *dpd, const double **Z,
     /* initialize data stacker */
     Yrow = 0;
 
+#if DPDEBUG
+    gretl_matrix_zero(dpd->Y);
+    gretl_matrix_zero(dpd->X);
+#endif
+
     for (i=0; i<dpd->N; i++) {
 	int *goodobs = Goodobs[i];
 	int Ti = goodobs[0] - 1;
 
-#if DPDEBUG
-	fprintf(stderr, "\nUnit %d, usable obs %d:\n", i + 1, Ti);
-#endif
 	if (Ti == 0) {
 	    continue;
 	}
 
 	t = data_index(dpd, i);
-	if (D != NULL) {
-	    build_unit_H_matrix(dpd, goodobs, D);
-	}
 	err = build_Y(dpd, goodobs, Z, t, Yi);
-	if (!err) {
-	    err = build_X(dpd, goodobs, Z, t, Xi);
-	}
-	if (!err) {
-	    err = build_Z(dpd, goodobs, Z, t, Zi);
-	}
 	if (err) {
 	    break;
 	}
+	build_X(dpd, goodobs, Z, t, Xi);
+	build_Z(dpd, goodobs, Z, t, Zi);
 #if DPDEBUG
 	gretl_matrix_print(Yi, "do_units: Yi");
 	gretl_matrix_print(Xi, "do_units: Xi");
 	gretl_matrix_print(Zi, "do_units: Zi");
 #endif
+	if (D != NULL) {
+	    build_unit_H_matrix(dpd, goodobs, D);
+	}
 	gretl_matrix_multiply_mod(Xi, GRETL_MOD_NONE,
 				  Zi, GRETL_MOD_TRANSPOSE,
 				  dpd->XZ, GRETL_MOD_CUMULATE);
@@ -842,13 +842,9 @@ static int do_units (dpdinfo *dpd, const double **Z,
     }
 
 #if DPDEBUG
-    if (!err) {
-	gretl_matrix_print(dpd->Y, "dpd->Y");
-	gretl_matrix_print(dpd->X, "dpd->X");
-    }
+    gretl_matrix_print(dpd->Y, "dpd->Y");
+    gretl_matrix_print(dpd->X, "dpd->X");
 #endif
-
- bailout:
 
     gretl_matrix_free(D);
     gretl_matrix_free(Yi);
