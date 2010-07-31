@@ -2347,14 +2347,14 @@ static int dpd_step_1 (dpdinfo *dpd)
     }
 
 #if ADEBUG > 1
-    gretl_matrix_print(dpd->XZ, "XZ' (arbond)");
-    gretl_matrix_print(dpd->ZY, "Z'Y (arbond)");
+    gretl_matrix_print(dpd->XZ, "XZ'");
+    gretl_matrix_print(dpd->ZY, "Z'Y");
 #endif
 
 #if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->ZT, "arbondZT.mat");
-    gretl_matrix_write_as_text(dpd->XZ, "arbondXZ.mat");
-    gretl_matrix_write_as_text(dpd->ZY, "arbondZY.mat");
+    gretl_matrix_write_as_text(dpd->ZT, "ZT.mat");
+    gretl_matrix_write_as_text(dpd->XZ, "XZ.mat");
+    gretl_matrix_write_as_text(dpd->ZY, "ZY.mat");
 #endif
 
     if (!err) {
