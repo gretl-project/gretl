@@ -892,10 +892,8 @@ static int dpd_sargan_test (dpdinfo *dpd)
     }
 
 #if ADEBUG
-    fprintf(stderr, "Sargan df = m - k = %d - %d\n",
-	    dpd->nz, dpd->k);
-    fprintf(stderr, "Sargan test: Chi-square(%d) = %g\n",
-	    dpd->nz - dpd->k, dpd->sargan);
+    fprintf(stderr, "Sargan test: Chi-square(%d-%d) = %g\n",
+	    dpd->nz, dpd->k, dpd->sargan);
 #endif
 
     gretl_matrix_reuse(dpd->L1, 1, dpd->nz);
