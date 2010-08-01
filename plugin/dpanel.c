@@ -138,9 +138,13 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 	}
     }
-    
+
+    ok = goodobs[0];
+
     /* allow for differencing */
-    return goodobs[0] - 1;
+    if (ok > 0) ok--;
+
+    return ok;
 }
 
 static int block_instrument_count (dpdinfo *dpd)
@@ -216,7 +220,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	int gmax = goodobs[0];
 
 #if DPDEBUG
-	fprintf(stderr, "\nunit %d: Ti = %d\n", i+1, Ti);
+	fprintf(stderr, "unit %d: Ti = %d\n", i+1, Ti);
 #endif
 	if (Ti > 0) {
 	    dpd->effN += 1;
@@ -236,7 +240,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    if (goodobs[gmax] > dpd->t2max) {
 		dpd->t2max = goodobs[gmax];
 	    }
-	}	    
+	}
     }
 
     /* figure number of time dummies, if wanted */
@@ -251,26 +255,20 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	block_instrument_count(dpd);
     }
 
-    /* figure the max number of stacked observations per unit */
-#if 0
-    /* what we had: max obs for any given unit */
-    dpd->max_ni = dpd->maxTi;
-    if (dpd->flags & DPD_SYSTEM) {
-	dpd->max_ni += dpd->maxTi + 1;
-    }  
-#else
-    /* needed (??): max _obs range_, accounting for all units */
+    /* figure the required number of columns for the Yi and Xi data
+       matrices: this must be great enough to span the data range 
+       for all units taken together
+    */
     dpd->max_ni = dpd->t2max - dpd->t1min + 1;
     if (dpd->flags & DPD_SYSTEM) {
 	dpd->max_ni += dpd->max_ni - 1;
     }      
-#endif
 
-    /* and the total observations overall */
+    /* sum the total observations overall */
     dpd->totobs = dpd->ndiff + dpd->nlev;
 
 #if DPDEBUG
-    fprintf(stderr, "After dpanel accounting:\n"
+    fprintf(stderr, "*** after dpanel accounting:\n"
 	    " effN=%d, max_ni=%d, k=%d, ndum=%d, nz=%d\n", 
 	    dpd->effN, dpd->max_ni, dpd->k, dpd->ndum, dpd->nz);
     fprintf(stderr, " maxTi=%d, minTi=%d\n", dpd->maxTi, dpd->minTi);
@@ -329,6 +327,10 @@ static void make_dpdstyle_H (gretl_matrix *H, int nd)
 	    gretl_matrix_set(H, i, i, 1);
 	}
     }
+
+#if DPDEBUG
+    gretl_matrix_print(H, "dpdstyle H");
+#endif
 }
 
 static void build_unit_H_matrix (dpdinfo *dpd, int *goodobs, 
@@ -653,6 +655,14 @@ static int trim_zero_inst (dpdinfo *dpd)
 	free(mask);
     }
 
+    if (!err) {
+	gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
+    }
+
+#if DPDEBUG
+    gretl_matrix_print(dpd->A, "dpd->A, after trim_zero_inst");
+#endif
+
     return err;
 }
 
@@ -703,7 +713,14 @@ static void stack_unit_data (dpdinfo *dpd,
     int i, j, k, s = *row;
 
     for (i=2; i<=goodobs[0]; i++) {
-	k = goodobs[i] - 2;
+	k = goodobs[i] - 1 - dpd->p;
+#if DPDEBUG
+	if (i==2) {
+	    fprintf(stderr, "Stacking Y for unit %d: starting at "
+		    "k = %d - %d = %d (s=%d)\n", unum, goodobs[i], 
+		    1 + dpd->p, k, s);
+	}
+#endif
 	gretl_vector_set(dpd->Y, s, Yi->val[k]);
 	for (j=0; j<Xi->rows; j++) {
 	    x = gretl_matrix_get(Xi, j, k);
@@ -722,7 +739,7 @@ static void stack_unit_data (dpdinfo *dpd,
     unit->t2 = goodobs[goodobs[0]];
 
     /* record the number of differenced obs */
-    unit->nobs = goodobs[0] - 1;
+    unit->nobs = (goodobs[0] > 0)? (goodobs[0] - 1) : 0;
 
     if (use_levels(dpd)) {
 	int k0 = dpd->T - dpd->p - 1;

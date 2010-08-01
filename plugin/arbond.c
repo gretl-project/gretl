@@ -879,13 +879,7 @@ static int dpd_sargan_test (dpdinfo *dpd)
 
     Zu = gretl_matrix_reuse(dpd->L1, dpd->nz, 1);
     gretl_matrix_multiply(dpd->ZT, dpd->uhat, Zu);
-
-    if (dpd->ci == DPANEL && dpd->step == 1) {
-	; /* FIXME regularize this somehow */
-    } else {
-	gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
-    }
-
+    gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     dpd->sargan = gretl_scalar_qform(Zu, dpd->A, &err);
 
     if (!err && dpd->step == 1) {
@@ -2122,12 +2116,16 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 #endif
 
     if (!err) {
-	gretl_matrix_divide_by_scalar(dpd->A, dpd->N);
+	gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     }
 
 #if ADEBUG
     gretl_matrix_print(dpd->ZT, "ZT");
     gretl_matrix_print(dpd->A, "N^{-1} * \\sum Z_i' H Z_i");
+#endif
+
+#if WRITE_MATRICES
+    gretl_matrix_write_as_text(dpd->ZT, "arbondZT.mat");
 #endif
 
     return err;
