@@ -147,14 +147,14 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
     return ok;
 }
 
-static int block_instrument_count (dpdinfo *dpd)
+static int block_instrument_count (dpdinfo *dpd, int **Goodobs)
 {
     /* the greatest lag we can actually support? */
     int maxlag = dpd->t2max - dpd->t1min;
     int nrows = 0;
-    int i, j;
+    int i, j, t;
 
-    for (i=0; i<dpd->nzb; i++) {
+     for (i=0; i<dpd->nzb; i++) {
 	if (dpd->d[i].minlag > maxlag) {
 	    /* this spec is altogether otiose */
 	    dpd->nzb -= 1;
@@ -171,14 +171,19 @@ static int block_instrument_count (dpdinfo *dpd)
 	    /* trim maxlag to what's feasible */
 	    dpd->d[i].maxlag = maxlag;
 	}
-	nrows += dpd->d[i].maxlag - dpd->d[i].minlag + 1;
+	for (t=dpd->t1min; t<=dpd->t2max; t++) {
+	    /* FIXME levels equations */
+	    for (j=dpd->d[i].minlag; j<=dpd->d[i].maxlag; j++) {
+		if (t - j >= 0) {
+		    nrows++;
+		}
+	    }
+	}
     }
 
 #if 1
-    fprintf(stderr, "nzb = %d, extra Z rows = %d\n", dpd->nzb,
-	    nrows);
-    fprintf(stderr, "This doesn't account for subtractions from "
-	    "the 'regular' instrument count\n");
+    fprintf(stderr, "nzb = %d, extra Z rows = %d (total %d)\n", dpd->nzb,
+	    nrows, dpd->nz + nrows);
 #endif
 
     return nrows;
@@ -203,7 +208,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     } 
 
     /* total instruments, so far */
-    dpd->nz = dpd->nzdiff + dpd->nzlev + dpd->nx;
+    dpd->nz = dpd->nzdiff + dpd->nzlev + dpd->nzr;
 
     /* initialize observation counts */
     dpd->effN = dpd->ndiff = dpd->nlev = 0;
@@ -252,7 +257,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 
     if (dpd->nzb > 0) {
 	/* figure number of extra block-diagonal instruments */
-	block_instrument_count(dpd);
+	block_instrument_count(dpd, Goodobs);
     }
 
     /* figure the required number of columns for the Yi and Xi data
@@ -557,31 +562,40 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     int t0, t1, i0, i1;
     int k2 = dpd->nzdiff + dpd->nzlev;
     int k3 = k2 + dpd->nx;
-    int i, j, col;
+    int i, j, col, row = 0;
     int qmax = dpd->qmax;
 
     gretl_matrix_zero(Zi);
 
     /* equations in differences: lagged levels of y */
-    gmm_inst_diff(y, t, goodobs, maxlag, qmax, 0, Zi);
+    gmm_inst_diff(y, t, goodobs, maxlag, qmax, row, Zi);
 
     /* insert here: GMM-style instruments blocks for any
        exogenous vars selected for such treatment */
+#if 0
+    for (i=0; i<dpd->nzb; i++) {
+	const double *x = Z[dpd->d[i].v];
 
-    /* equations in differences: differenced exog vars */
-    if (dpd->nx > 0) {
+	row = gmm_inst_diff(x, t, goodobs, maxlag, dpd->d[i].maxlag, row, Zi);
+    }
+#endif
+
+    /* equations in differences: differenced exog vars 
+       ("regular" instruments) 
+    */
+    if (dpd->nzr > 0) {
 	for (i=0; i<usable; i++) {
 	    i0 = goodobs[i+1];
 	    i1 = goodobs[i+2];
 	    col = i1 - 1 - maxlag;
 	    t0 = t + i0;
 	    t1 = t + i1;
-	    for (j=0; j<dpd->nx; j++) {
+	    for (j=0; j<dpd->nzr; j++) {
 		/* Allin 2010-07-22: not differencing out the constant */
-		if (!use_levels(dpd) && dpd->xlist[j+1] == 0) {
+		if (!use_levels(dpd) && dpd->ilist[j+1] == 0) {
 		    dx = 1.0;
 		} else {
-		    xj = Z[dpd->xlist[j+1]];
+		    xj = Z[dpd->ilist[j+1]];
 		    dx = xj[t1] - xj[t0];
 		}
 		gretl_matrix_set(Zi, k2 + j, col, dx);
@@ -605,18 +619,22 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	/* equations in levels: lagged differences of y */
 	int roffset = (T-1) * (T-2) / 2;
 	int coffset = T - maxlag - 1;
+
 	gmm_inst_lev(y, t, goodobs, maxlag, qmax, roffset, coffset, Zi);
 
 	/* insert here: GMMlevel-style blocks, if any */
 
-	/* equations in levels: levels of exog vars */
-	if (dpd->nx > 0) {
+	/* equations in levels: levels of exog vars:
+	   FIXME we may need two "ilists", one for 
+	   diffs and one for levels, and two "nzr"s?
+	*/
+	if (dpd->nzr > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
 		t1 = t + i1;
 		col = (T-1-maxlag) + (i1-maxlag);
-		for (j=0; j<dpd->nx; j++) {
-		    xj = Z[dpd->xlist[j+1]];
+		for (j=0; j<dpd->nzr; j++) {
+		    xj = Z[dpd->ilist[j+1]];
 		    gretl_matrix_set(Zi, k2 + j, col, xj[t1]);
 		}
 	    }
@@ -898,16 +916,20 @@ MODEL dpd_estimate (const int *list, const char *ispec,
 	return mod;
     }
 
-#if 0
-    if (ispec != NULL) {
+#if 1
+    if (ispec != NULL && *ispec != '\0') {
 	int i;
 
-	printf("ispec = %s\n", ispec); 
-	printf("nzb = %d\n", dpd->nzb); 
+	fprintf(stderr, "ispec = %s\n", ispec); 
+	fprintf(stderr, "nzb = %d\n", dpd->nzb); 
+	fprintf(stderr, "nzr = %d\n", dpd->nzr); 
 	for (i=0; i<dpd->nzb; i++) {
-	    printf("%3d %3d %3d %d\n", dpd->d[i].v, 
-		   dpd->d[i].minlag, dpd->d[i].maxlag, dpd->d[i].level);
+	    fprintf(stderr, "var %d (%s): lags %d to %d (%s)\n", 
+		    dpd->d[i].v, pdinfo->varname[dpd->d[i].v], 
+		    dpd->d[i].minlag, dpd->d[i].maxlag, 
+		    (dpd->d[i].level)? "Gmmlev" : "Gmm");
 	}
+	printlist(dpd->ilist, "ilist (regular Z)");
     }
 #endif
 

@@ -717,7 +717,7 @@ static void arbond_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
     }
 
 #if ADEBUG
-    fprintf(stderr, "'basic' m = %d\n", dpd->nz);
+    fprintf(stderr, "'basic' nz = %d\n", dpd->nz);
 #endif
 
     dpd->qmax = cols + 1;
@@ -727,7 +727,7 @@ static void arbond_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
     dpd->nz += dpd->ndum;
 
 #if ADEBUG
-    fprintf(stderr, "total m = %d (dummies = %d, exog = %d)\n", 
+    fprintf(stderr, "total nz = %d (dummies = %d, exog = %d)\n", 
 	    dpd->nz, dpd->ndum, dpd->nzr);
 #endif
 }
