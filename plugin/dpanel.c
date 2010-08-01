@@ -143,10 +143,10 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
     return goodobs[0] - 1;
 }
 
-static int block_instrument_count (dpdinfo *dpd, int t2max)
+static int block_instrument_count (dpdinfo *dpd)
 {
     /* the greatest lag we can actually support? */
-    int maxlag = t2max - dpd->t1min;
+    int maxlag = dpd->t2max - dpd->t1min;
     int nrows = 0;
     int i, j;
 
@@ -188,8 +188,7 @@ static int block_instrument_count (dpdinfo *dpd, int t2max)
 static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 				int **Goodobs)
 {
-    int gmin, t2max = 0;
-    int i, t;
+    int gmin, i, t;
 
     /* instruments specific to equations in differences */
     dpd->nzdiff = (dpd->T - 1) * (dpd->T - 2) / 2;
@@ -209,6 +208,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     /* initialize other accounts */
     gmin = (use_levels(dpd))? 1 : 2;
     dpd->t1min = dpd->T;
+    dpd->t2max = 0;
 
     for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
 	int *goodobs = Goodobs[i];
@@ -233,22 +233,22 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    if (goodobs[gmin] < dpd->t1min) {
 		dpd->t1min = goodobs[gmin];
 	    }
-	    if (goodobs[gmax] > t2max) {
-		t2max = goodobs[gmax];
+	    if (goodobs[gmax] > dpd->t2max) {
+		dpd->t2max = goodobs[gmax];
 	    }
 	}	    
     }
 
     /* figure number of time dummies, if wanted */
     if (dpd->flags & DPD_TIMEDUM) {
-	dpd->ndum = t2max - dpd->t1min;
+	dpd->ndum = dpd->t2max - dpd->t1min;
 	dpd->k += dpd->ndum;
 	dpd->nz += dpd->ndum;
     }
 
     if (dpd->nzb > 0) {
 	/* figure number of extra block-diagonal instruments */
-	block_instrument_count(dpd, t2max);
+	block_instrument_count(dpd);
     }
 
     /* figure the max number of stacked observations per unit */
@@ -260,7 +260,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     }  
 #else
     /* needed (??): max _obs range_, accounting for all units */
-    dpd->max_ni = t2max - dpd->t1min + 1;
+    dpd->max_ni = dpd->t2max - dpd->t1min + 1;
     if (dpd->flags & DPD_SYSTEM) {
 	dpd->max_ni += dpd->max_ni - 1;
     }      
@@ -646,8 +646,10 @@ static int trim_zero_inst (dpdinfo *dpd)
     mask = gretl_matrix_zero_diag_mask(dpd->A, &err);
 
     if (mask != NULL) {
-	gretl_matrix_cut_rows_cols(dpd->A, mask);
-	dpd_shrink_matrices(dpd, mask);
+	err = gretl_matrix_cut_rows_cols(dpd->A, mask);
+	if (!err) {
+	    dpd_shrink_matrices(dpd, mask);
+	}
 	free(mask);
     }
 
@@ -776,8 +778,14 @@ static int do_units (dpdinfo *dpd, const double **Z,
     gretl_matrix_reuse(Zi, dpd->nz, dpd->max_ni);
     
     if (D == NULL) {
-	/* H will not vary by unit */
-	make_dpdstyle_H(dpd->H, dpd->maxTi);
+	/* the H matrix will not vary by unit */
+	int tau = dpd->t2max - dpd->t1min + 1;
+
+	if (use_levels(dpd)) {
+	    /* t1min is actually "levels-only" */
+	    tau--;
+	}
+	make_dpdstyle_H(dpd->H, tau);
     }
 
     /* initialize cumulators */

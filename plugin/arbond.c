@@ -81,6 +81,7 @@ struct dpdinfo_ {
     int totobs;           /* total observations (diffs + levels) */
     int t1;               /* initial offset into dataset */
     int t1min;            /* first usable observation, any unit */
+    int t2max;            /* last usable observation, any unit */
     int ndum;             /* number of time dummies to use */
     double SSR;           /* sum of squared residuals */
     double s2;            /* residual variance */
@@ -480,7 +481,7 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->step = 1;
     dpd->nx = dpd->nzr = 0;
     dpd->nzdiff = dpd->nzlev = 0;
-    dpd->t1min = 0;
+    dpd->t1min = dpd->t2max = 0;
     dpd->ndum = 0;
 
     *err = dpd_process_list(dpd, list);
@@ -790,6 +791,7 @@ static int arbond_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
 	arbond_compute_Z_cols(dpd, t1min, t2max);
 	dpd->max_ni = dpd->maxTi;
 	dpd->totobs = dpd->nobs;
+	dpd->t2max = t2max;
     }
 
     return err;
@@ -1694,26 +1696,6 @@ static void dpd_shrink_matrices (dpdinfo *dpd, const char *mask)
     gretl_matrix_reuse(dpd->ZY,    dpd->nz, -1);
 }
 
-/* Remove zero rows/cols from A, as indicated by zmask, and delete the
-   corresponding columns from Z.  At this point we leave open the
-   question of whether the reduced A matrix is positive definite.
-
-   This function is invoked on the first step only, prior to
-   attempting to invert the A matrix; and at present it is used
-   only for the arbond command.
-*/
-
-static int reduce_Z_and_A (dpdinfo *dpd, const char *zmask)
-{
-    int err = gretl_matrix_cut_rows_cols(dpd->A, zmask);
-
-    if (!err) {
-	dpd_shrink_matrices(dpd, zmask);
-    }
-
-    return err;
-}
-
 static int dpd_step_2_A (dpdinfo *dpd)
 {
     int err = 0;
@@ -2124,11 +2106,14 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 
     if (!err) {
 	/* mask zero rows of ZT, if required */
-	char *zmask = gretl_matrix_zero_row_mask(dpd->ZT, &err);
+	char *mask = gretl_matrix_zero_row_mask(dpd->ZT, &err);
 
-	if (zmask != NULL) {
-	    err = reduce_Z_and_A(dpd, zmask);
-	    free(zmask);
+	if (mask != NULL) {
+	    err = gretl_matrix_cut_rows_cols(dpd->A, mask);
+	    if (!err) {
+		dpd_shrink_matrices(dpd, mask);
+	    }
+	    free(mask);
 	}
     } 
 
@@ -2351,12 +2336,6 @@ static int dpd_step_1 (dpdinfo *dpd)
     gretl_matrix_print(dpd->ZY, "Z'Y");
 #endif
 
-#if WRITE_MATRICES
-    gretl_matrix_write_as_text(dpd->ZT, "ZT.mat");
-    gretl_matrix_write_as_text(dpd->XZ, "XZ.mat");
-    gretl_matrix_write_as_text(dpd->ZY, "ZY.mat");
-#endif
-
     if (!err) {
 	err = dpd_beta_hat(dpd);
     }
@@ -2429,7 +2408,7 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
 
     if (!err) {
 	err = arbond_make_y_X(dpd, Z);
-    } 
+    }
 
     if (!err) {
 	/* build instrument matrix blocks, Z_i, and insert into
