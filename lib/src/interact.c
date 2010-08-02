@@ -885,6 +885,23 @@ static int arma_maybe_rewrite (char *s, CMD *cmd)
     return cmd->err;
 }
 
+static char *got_gmm_spec (char *s)
+{
+    /* return whichever variant is found first */
+    char *p1 = strstr(s, "GMM(");
+    char *p2 = strstr(s, "GMMlevel(");
+
+    if (p1 != NULL && p2 == NULL) {
+	return p1;
+    } else if (p2 != NULL && p1 == NULL) {
+	return p2;
+    } else if (p1 != NULL && p2 != NULL) {
+	return (p2 - p1 > 0)? p1 : p2;
+    } else {
+	return NULL;
+    }
+}
+
 /* pluck the specification for "block-diagonal" instruments out of an
    arbond command line, and put it in the command's "param" field for
    subsequent special processing in arbond.c */
@@ -897,7 +914,7 @@ static void grab_arbond_diag (char *s, CMD *cmd)
 
     s0 = s = strrchr(s, ';');
 
-    while ((s = strstr(s, "GMM("))) {
+    while ((s = got_gmm_spec(s)) != NULL) {
 	p = strchr(s, ')');
 	if (p == NULL) {
 	    cmd->err = E_PARSE;

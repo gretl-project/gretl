@@ -38,6 +38,7 @@ enum {
 
 typedef struct dpdinfo_ dpdinfo;
 typedef struct unit_info_ unit_info;
+typedef struct diag_info_ diag_info;
 
 struct unit_info_ {
     int t1;      /* first usable obs in differences for unit */
@@ -48,7 +49,7 @@ struct unit_info_ {
     int nlev;    /* number of obs in levels (0 in non-system case) */
 };
 
-struct diag_info {
+struct diag_info_ {
     int v;       /* ID number of variable */
     int minlag;  /* minimum lag order */
     int maxlag;  /* maximum lag order */
@@ -91,7 +92,7 @@ struct dpdinfo_ {
     double wald;          /* Wald test statistic */
     int wdf;              /* degrees of freedom for Wald test */
     int *xlist;           /* list of independent variables */
-    int *ilist;           /* list of instruments */
+    int *ilist;           /* list of regular instruments */
     gretl_matrix_block *B1; /* matrix holder */
     gretl_matrix_block *B2; /* matrix holder */
     gretl_matrix *beta;   /* parameter estimates */
@@ -112,7 +113,7 @@ struct dpdinfo_ {
     gretl_matrix *XZA;
     gretl_matrix *ZY;
     gretl_matrix *XZ;
-    struct diag_info *d;   /* info on block-diagonal instruments */
+    diag_info *d;          /* info on block-diagonal instruments */
     unit_info *ui;         /* info on panel units */
     char *used;            /* global record of observations used */
 
@@ -124,10 +125,13 @@ struct dpdinfo_ {
 									
     int ndiff;             /* total differenced observations */
     int nlev;              /* total levels observations */
+    int nzb2;              /* number of block-diagonal specs, levels eqns */
     int nzydiff;           /* number of y insts specific to eqns in differences */
     int nzxdiff;           /* number of other insts specific to eqns in differences */
     int nzlev;             /* number of insts specific to eqns in levels */
     int *laglist;          /* (possibly discontinuous) list of lags */
+    diag_info *d2;         /* info on block-diagonal instruments, levels eqns
+			      (note: not independently allocated) */
 };
 
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
@@ -449,7 +453,7 @@ static int dpd_flags_from_opt (gretlopt opt)
 
 static dpdinfo *dpdinfo_new (int ci, const int *list, 
 			     const double **Z, const DATAINFO *pdinfo, 
-			     gretlopt opt, struct diag_info *d, 
+			     gretlopt opt, diag_info *d, 
 			     int nzb, int *err)
 {
     dpdinfo *dpd = NULL;
@@ -473,11 +477,14 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->V = NULL;
     dpd->ui = NULL;
     dpd->used = NULL;
-    dpd->xlist = dpd->ilist = dpd->laglist = NULL;
+    dpd->xlist = NULL;
+    dpd->ilist = NULL;
+    dpd->laglist = NULL;
 
     dpd->flags = dpd_flags_from_opt(opt);
 
     dpd->d = d;
+    dpd->d2 = NULL;
     dpd->nzb = nzb;
     dpd->step = 1;
     dpd->nx = dpd->nzr = 0;
@@ -485,6 +492,10 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->nzlev = 0;
     dpd->t1min = dpd->t2max = 0;
     dpd->ndum = 0;
+
+    /* "system"-specific */
+    dpd->d2 = NULL;
+    dpd->nzb2 = 0;
 
     *err = dpd_process_list(dpd, list);
     if (*err) {
@@ -2074,7 +2085,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 	gretl_matrix_print(dpd->Zi, zstr);
 #endif
 
-#if 1
+#if 0
 	gretl_matrix_print(dpd->Zi, "Zi, arbond");
 #endif
 
@@ -2141,7 +2152,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
    an m2 value of 0 means use all available lags).
 */
 
-static int parse_diag_info (const char *s, struct diag_info *d,
+static int parse_diag_info (int ci, const char *s, diag_info *d,
 			    const DATAINFO *pdinfo)
 {
     char vname[VNAMELEN];
@@ -2154,7 +2165,10 @@ static int parse_diag_info (const char *s, struct diag_info *d,
     } else if (!strncmp(s, "GMMlevel(", 9)) {
 	d->level = 1;
 	s += 9;
-    } else {
+    }	
+
+    if (ci == ARBOND && d->level != 0) {
+	/* only dpanel supports "gmmlevel" */
 	return E_PARSE;
     }
 
@@ -2192,10 +2206,10 @@ static int parse_diag_info (const char *s, struct diag_info *d,
 */
 
 static int 
-parse_GMM_instrument_spec (const char *spec, const DATAINFO *pdinfo,
-			   struct diag_info **pd, int *pnspec)
+parse_GMM_instrument_spec (int ci, const char *spec, const DATAINFO *pdinfo,
+			   diag_info **pd, int *pnspec)
 {
-    struct diag_info *d = NULL;
+    diag_info *d = NULL;
     const char *s;
     int nspec = 0;
     int err = 0;
@@ -2237,7 +2251,7 @@ parse_GMM_instrument_spec (const char *spec, const DATAINFO *pdinfo,
 	    } else {
 		*test = '\0';
 		strncat(test, s, len);
-		err = parse_diag_info(test, &d[i++], pdinfo);
+		err = parse_diag_info(ci, test, &d[i++], pdinfo);
 		s = p + 1;
 	    }
 	}
@@ -2368,7 +2382,7 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
 		 const DATAINFO *pdinfo, gretlopt opt,
 		 PRN *prn)
 {
-    struct diag_info *d = NULL;
+    diag_info *d = NULL;
     dpdinfo *dpd = NULL;
     int nzb = 0;
     MODEL mod;
@@ -2379,7 +2393,7 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
-	mod.errcode = parse_GMM_instrument_spec(ispec, pdinfo, &d, &nzb);
+	mod.errcode = parse_GMM_instrument_spec(ARBOND, ispec, pdinfo, &d, &nzb);
 	if (mod.errcode) {
 	    return mod;
 	}

@@ -18,7 +18,7 @@
  */
 
 #define DPDEBUG 0
-#define TRY_GMM 1
+#define NEW_GMM 1
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
@@ -148,10 +148,57 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
     return ok;
 }
 
+static void copy_diag_info (diag_info *targ, diag_info *src)
+{
+    targ->v = src->v;
+    targ->minlag = src->minlag;
+    targ->maxlag = src->maxlag;
+    targ->level = src->level;
+}
+
+static int insert_default_ydiff_spec (dpdinfo *dpd)
+{
+    diag_info *d;
+
+    d = realloc(dpd->d, (dpd->nzb + 1) * sizeof *d);
+
+    if (d == NULL) {
+	return E_ALLOC;
+    } else {
+	/* insert the y spec in first place, moving
+	   any other specs up */
+	int i;
+
+	dpd->d = d;
+
+	for (i=dpd->nzb; i>0; i--) {
+	    copy_diag_info(&dpd->d[i], &dpd->d[i-1]);
+	}
+
+	d = &dpd->d[0];
+	d->v = dpd->yno;
+	d->minlag = 2;
+	d->maxlag = 99;
+	d->level = 0;
+
+	dpd->nzb += 1;
+    }
+
+    return 0;
+}
+
+/* So far this function is specific to levels lags for
+   the equations in differences. Something parallel will
+   have to be done for the equations in levels. Note that
+   dpd->nzb represents the number of instrument specs
+   for the differences equations only; dpd->nzb2 gives
+   the number of such specs for the levels equations.
+*/
+
 static int block_instrument_count (dpdinfo *dpd)
 {
-    /* the greatest lag we can actually support? */
-    int maxlag = dpd->t2max - dpd->t1min;
+    /* the greatest lag we can actually support */
+    int maxlag = dpd->t2max; /* - dpd->t1min; */
     int nrows = 0;
     int i, j, t;
 
@@ -160,10 +207,7 @@ static int block_instrument_count (dpdinfo *dpd)
 	    /* this spec is altogether otiose */
 	    dpd->nzb -= 1;
 	    for (j=i; j<dpd->nzb; j++) {
-		dpd->d[j].v = dpd->d[j+1].v;
-		dpd->d[j].v = dpd->d[j+1].minlag;
-		dpd->d[j].v = dpd->d[j+1].maxlag;
-		dpd->d[j].v = dpd->d[j+1].level;
+		copy_diag_info(&dpd->d[j], &dpd->d[j+1]);
 	    }	    
 	    i--;
 	    continue;
@@ -173,7 +217,6 @@ static int block_instrument_count (dpdinfo *dpd)
 	    dpd->d[i].maxlag = maxlag;
 	}
 	for (t=dpd->t1min; t<=dpd->t2max; t++) {
-	    /* FIXME levels equations */
 	    for (j=dpd->d[i].minlag; j<=dpd->d[i].maxlag; j++) {
 		if (t - j >= 0) {
 		    nrows++;
@@ -187,8 +230,8 @@ static int block_instrument_count (dpdinfo *dpd)
 	    nrows, dpd->nz + nrows);
 #endif
 
-#if TRY_GMM
-    dpd->nzxdiff = nrows; /* FIXME levels */
+#if NEW_GMM
+    dpd->nzxdiff = nrows;
     dpd->nz += nrows;
 #endif
 
@@ -205,8 +248,12 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 {
     int gmin, i, t;
 
+#if NEW_GMM
+    dpd->nzydiff = 0;
+#else
     /* instruments specific to equations in differences */
     dpd->nzydiff = (dpd->T - 1) * (dpd->T - 2) / 2;
+#endif
 
     /* and to equations in levels */
     if (use_levels(dpd)) {
@@ -496,10 +543,106 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
+#if NEW_GMM
+
+/* check if a level (putative instrument) is entangled 
+   in the differenced dependent variable */
+
+static int used_in_diff (int t, int k, int *goodobs)
+{
+    int i, difflag;
+
+    for (i=2; i<=goodobs[0]; i++) {
+	if (goodobs[i] == t) {
+	    difflag = t - goodobs[i-1];
+	    if (difflag == k) {
+		return 1;
+	    }
+	    break;
+	}
+    }
+
+    return 0;
+}
+
+/* Trying for block-diagonal levels instruments in differences 
+   equations, other than the dependent variable.
+
+   @bnum gives the index into the block-diagonal info array;
+   @t0 gives the starting obs of the unit's data relative to the
+   full dataset.
+*/
+
+static int alt_gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x, int t0, 
+			      int *goodobs, int row, int col, 
+			      gretl_matrix *Zi)
+{
+    int tmin = (use_levels(dpd))? dpd->t1min + 1 : dpd->t1min;
+    int maxlag = dpd->d[bnum].maxlag;
+    int minlag = dpd->d[bnum].minlag;
+    double xt;
+    int k, s, t;
+
+    for (t=tmin; t<=dpd->t2max; t++) {
+	s = t0 + t;
+	for (k=maxlag; k>=minlag; k--) {
+	    if (t - k >= 0) {
+		if (dpd->used[s] == 1 && !used_in_diff(t, k, goodobs)) {
+		    xt = x[s-k];
+		    if (!na(xt)) {
+			gretl_matrix_set(Zi, row, col, xt);
+		    }
+		}
+		row++;
+	    }
+	}
+	col++;
+    }
+
+    return row;
+}
+
+static int alt_gmm_inst_lev (dpdinfo *dpd, diag_info *d, 
+			     const double *x, int t0, 
+			     int *goodobs, int row, int col, 
+			     gretl_matrix *Zi)
+{
+    int maxlag = d->maxlag;
+    int minlag = d->minlag;
+    double x0, x1;
+    int k, s, t;
+
+    /* backwards compat? */
+    row++;
+
+    for (t=dpd->t1min; t<=dpd->t2max; t++) {
+	s = t0 + t;
+	if (t - minlag - 1 >= 0) {
+	    for (k=maxlag; k>=minlag; k--) {
+		if (t - k > 0) {
+		    if (dpd->used[s]) {
+			x0 = x[s-k];
+			x1 = x[s-k-1];
+			if (!na(x0) && !na(x1)) {
+			    gretl_matrix_set(Zi, row, col, x0 - x1);
+			}
+		    }
+		}
+	    }
+	    row++;
+	}
+	col++;
+    }
+
+    return row;
+}
+
+#else /* !NEW_GMM */
+
 /* level instruments for the equations in differences */
  
-static void gmm_inst_diff (const double *x, int t, int *goodobs, 
-			   int maxlag, int qmax, int roffset,
+static void gmm_inst_diff (dpdinfo *dpd, const double *x, int t, 
+			   int *goodobs, int roffset, int coffset, 
 			   gretl_matrix *Zi)
 {
     int i, j, n = goodobs[0] - 1;
@@ -509,10 +652,10 @@ static void gmm_inst_diff (const double *x, int t, int *goodobs,
     for (i=0; i<n; i++) {
 	i0 = goodobs[i+1];
 	i1 = goodobs[i+2];
-	col = i1 - 1 - maxlag;
+	col = coffset + i1 - 1 - dpd->p;
 	row = roffset + i0 * (i0 - 1) / 2;
 	for (j=0; j<i0; j++) {
-	    if (qmax == 0 || j > i0 - qmax) {
+	    if (dpd->qmax == 0 || j > i0 - dpd->qmax) {
 		x0 = x[t+j];
 		if (!na(x0)) {
 		    gretl_matrix_set(Zi, row, col, x0);
@@ -523,22 +666,24 @@ static void gmm_inst_diff (const double *x, int t, int *goodobs,
     }
 }
 
-/* diff instruments for the equations in levels */
+#endif /* NEW_GMM or not */
+
+/* instruments in differences for the equations in levels */
  
-static void gmm_inst_lev (const double *x, int t, int *goodobs, 
-			  int maxlag, int qmax, int roffset,
-			  int coffset, gretl_matrix *Zi)
+static void gmm_inst_lev (dpdinfo *dpd, const double *x, int t, 
+			  int *goodobs, int row, int coffset, 
+			  gretl_matrix *Zi)
 {
     int i, j, n = goodobs[0] - 1;
     int lastdiff = 0;
-    int i0, col, row = roffset;
+    int i0, col;
     double x0, x1;
 
     for (i=0; i<=n; i++) {
 	i0 = goodobs[i+1];
-	col = coffset + i0 - maxlag;
+	col = coffset + i0 - dpd->p;
 	for (j=lastdiff; j<i0; j++) {
-	    if (qmax == 0 || j > i0 - qmax) {
+	    if (dpd->qmax == 0 || j > i0 - dpd->qmax) {
 		x0 = (j < 1)? NADBL : x[t+j-1];
 		x1 = x[t+j];
 		if (!na(x1) && !na(x0)) {
@@ -551,18 +696,52 @@ static void gmm_inst_lev (const double *x, int t, int *goodobs,
     }
 }
 
-/* Build matrix of instrument values in @Zi: instruments
-   for the equations in differences come first, followed by
-   instruments for equations in levels if wanted.
+/* Build the matrix of per-unit instrument values in @Zi, which
+   has the instruments in rows and the observations in columns.
+
+   Note that each unit's Zi is the same size, padded with zero columns
+   for missing observations as needed. The number of columns in Zi
+   equals the maximal span of the data for all units taken together,
+   counting both observations in differences and observations in
+   levels, if applicable.
+
+   We pack the instruments in the following order: 
+
+   1) G1: GMM-style instruments in levels for equations in
+      differences
+
+   3) G2: GMM-style instruments in differences for equations in
+      levels, if present
+
+   5) I1: "Regular" instruments, differenced exog vars for eqns 
+      in differences
+
+   6) I2: "Regular" instruments, levels of exog vars for eqns 
+      in levels, if any
+
+   7) D1: Time dummies for eqns in differences, if specified and if
+      "system" estimation is not being done
+
+   8) D2: Time dummies for eqns in levels, if specified
+
+   The pattern for the non-system case is
+
+        Z' = | G1 : I1 : D1 |
+
+   and for the full system case it is
+
+        Z' = | G1 :  0 : I1 :  0 |
+             |  0 : G2 : I2 : D2 |
+
 */
 
 static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
 		     int t, gretl_matrix *Zi)
 {
     const double *y = Z[dpd->yno];
-    int usable = goodobs[0] - 1;
-    int maxlag = dpd->p;
-    int T = dpd->T;
+    const int usable = goodobs[0] - 1;
+    const int maxlag = dpd->p;
+    const int T = dpd->T;
     const double *xj;
     double dx;
     int t0, t1, i0, i1;
@@ -571,23 +750,21 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     int k2 = dpd->nzydiff + dpd->nzxdiff + dpd->nzlev;
     /* k3 marks the starting row for time dummies */
     int k3 = k2 + dpd->nx;
-    int i, j, col, row = 0;
-    int qmax = dpd->qmax;
+    int i, j, col;
 
     gretl_matrix_zero(Zi);
 
-    /* equations in differences: lagged levels of y */
-    gmm_inst_diff(y, t, goodobs, maxlag, qmax, row, Zi);
+#if NEW_GMM
+    int row = 0;
 
-    /* insert here: GMM-style instruments blocks for any
-       exogenous vars selected for such treatment */
-#if TRY_GMM
     for (i=0; i<dpd->nzb; i++) {
 	const double *x = Z[dpd->d[i].v];
 
-	gmm_inst_diff(x, t, goodobs, maxlag, dpd->d[i].maxlag, 
-		      dpd->nzydiff, Zi);
+	row = alt_gmm_inst_diff(dpd, i, x, t, goodobs, row, 0, Zi);
     }
+#else    
+    /* equations in differences: lagged levels of y */
+    gmm_inst_diff(dpd, y, t, goodobs, 0, 0, Zi);
 #endif
 
     /* equations in differences: differenced exog vars 
@@ -630,7 +807,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	int roffset = (T-1) * (T-2) / 2;
 	int coffset = T - maxlag - 1;
 
-	gmm_inst_lev(y, t, goodobs, maxlag, qmax, roffset, coffset, Zi);
+	gmm_inst_lev(dpd, y, t, goodobs, roffset, coffset, Zi);
 
 	/* insert here: GMMlevel-style blocks, if any */
 
@@ -866,7 +1043,9 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	gretl_matrix_print(Xi, "do_units: Xi");
 	gretl_matrix_print(Zi, "do_units: Zi");
 #endif
+#if 0
 	gretl_matrix_print(Zi, "do_units: Zi");
+#endif
 	if (D != NULL) {
 	    build_unit_H_matrix(dpd, goodobs, D);
 	}
@@ -893,6 +1072,63 @@ static int do_units (dpdinfo *dpd, const double **Z,
     return err;
 }
 
+#if NEW_GMM
+
+static int compare_gmm_specs (const void *a, const void *b)
+{
+    const diag_info *da = a;
+    const diag_info *db = b;
+
+    return (da->level - db->level);
+}
+
+/* Given the info on instrument specification returned by the
+   parser that's in common between arbond and dpanel, make
+   any adjustments that may be needed in the system case.
+*/
+
+static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
+{
+    int have_yspec = 0;
+    int i, err = 0;
+
+    /* has the user given a GMM-style spec for the 
+       dependent variable? */
+
+    for (i=0; i<dpd->nzb; i++) {
+	if (dpd->d[i].v == dpd->yno && dpd->d[i].level == 0) {
+	    have_yspec = 1;
+	    break;
+	}
+    }
+
+    if (!have_yspec) {
+	err = insert_default_ydiff_spec(dpd);
+	if (err) {
+	    return err;
+	}
+    }
+
+    /* do we have any block-diagonal specs for levels eqns? */
+    for (i=0; i<dpd->nzb; i++) {
+	if (dpd->d[i].level) {
+	    dpd->nzb2 += 1;
+	}
+    }
+
+    if (dpd->nzb2 > 0 && dpd->nzb2 < dpd->nzb) {
+	/* ensure the levels-eqns specs come last */
+	qsort(dpd->d, dpd->nzb, sizeof *dpd->d, compare_gmm_specs);
+	dpd->d2 = dpd->d + (dpd->nzb - dpd->nzb2);
+    }
+
+    dpd->nzb -= dpd->nzb2;
+
+    return err;
+}
+
+#endif
+
 /* "Secret" public interface for new approach, including system GMM:
    in a script use --system (OPT_L, think "levels") to get
    Blundell-Bond. To build the H matrix as per Ox/DPD use the
@@ -903,7 +1139,7 @@ MODEL dpd_estimate (const int *list, const char *ispec,
 		    const double **Z, const DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn)
 {
-    struct diag_info *d = NULL;
+    diag_info *d = NULL;
     dpdinfo *dpd = NULL;
     int **Goodobs = NULL;
     int nzb = 0;
@@ -915,7 +1151,7 @@ MODEL dpd_estimate (const int *list, const char *ispec,
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
-	mod.errcode = parse_GMM_instrument_spec(ispec, pdinfo, &d, &nzb);
+	mod.errcode = parse_GMM_instrument_spec(DPANEL, ispec, pdinfo, &d, &nzb);
 	if (mod.errcode) {
 	    return mod;
 	}
@@ -927,20 +1163,24 @@ MODEL dpd_estimate (const int *list, const char *ispec,
 	return mod;
     }
 
+#if NEW_GMM
+    dpanel_adjust_GMM_spec(dpd);
+#endif
+
 #if 1
     if (ispec != NULL && *ispec != '\0') {
-	int i;
+	int i, nzb = dpd->nzb + dpd->nzb2;
 
 	fprintf(stderr, "ispec = %s\n", ispec); 
-	fprintf(stderr, "nzb = %d\n", dpd->nzb); 
+	fprintf(stderr, "nzb = %d, nzb2 = %d\n", dpd->nzb, dpd->nzb2); 
 	fprintf(stderr, "nzr = %d\n", dpd->nzr); 
-	for (i=0; i<dpd->nzb; i++) {
+	for (i=0; i<nzb; i++) {
 	    fprintf(stderr, "var %d (%s): lags %d to %d (%s)\n", 
 		    dpd->d[i].v, pdinfo->varname[dpd->d[i].v], 
 		    dpd->d[i].minlag, dpd->d[i].maxlag, 
-		    (dpd->d[i].level)? "Gmmlev" : "Gmm");
+		    (dpd->d[i].level)? "GMMlevel" : "GMM");
 	}
-	printlist(dpd->ilist, "ilist (regular Z)");
+	printlist(dpd->ilist, "ilist (regular instruments)");
     }
 #endif
 
