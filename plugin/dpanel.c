@@ -18,6 +18,7 @@
  */
 
 #define DPDEBUG 0
+#define TRY_GMM 1
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
@@ -147,7 +148,7 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
     return ok;
 }
 
-static int block_instrument_count (dpdinfo *dpd, int **Goodobs)
+static int block_instrument_count (dpdinfo *dpd)
 {
     /* the greatest lag we can actually support? */
     int maxlag = dpd->t2max - dpd->t1min;
@@ -186,6 +187,11 @@ static int block_instrument_count (dpdinfo *dpd, int **Goodobs)
 	    nrows, dpd->nz + nrows);
 #endif
 
+#if TRY_GMM
+    dpd->nzxdiff = nrows; /* FIXME levels */
+    dpd->nz += nrows;
+#endif
+
     return nrows;
 }
 
@@ -200,7 +206,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     int gmin, i, t;
 
     /* instruments specific to equations in differences */
-    dpd->nzdiff = (dpd->T - 1) * (dpd->T - 2) / 2;
+    dpd->nzydiff = (dpd->T - 1) * (dpd->T - 2) / 2;
 
     /* and to equations in levels */
     if (use_levels(dpd)) {
@@ -208,7 +214,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     } 
 
     /* total instruments, so far */
-    dpd->nz = dpd->nzdiff + dpd->nzlev + dpd->nzr;
+    dpd->nz = dpd->nzydiff + dpd->nzlev + dpd->nzr;
 
     /* initialize observation counts */
     dpd->effN = dpd->ndiff = dpd->nlev = 0;
@@ -257,7 +263,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 
     if (dpd->nzb > 0) {
 	/* figure number of extra block-diagonal instruments */
-	block_instrument_count(dpd, Goodobs);
+	block_instrument_count(dpd);
     }
 
     /* figure the required number of columns for the Yi and Xi data
@@ -560,7 +566,10 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     const double *xj;
     double dx;
     int t0, t1, i0, i1;
-    int k2 = dpd->nzdiff + dpd->nzlev;
+    /* k2 marks the starting row for "regular" instruments in
+       the differences equations */
+    int k2 = dpd->nzydiff + dpd->nzxdiff + dpd->nzlev;
+    /* k3 marks the starting row for time dummies */
     int k3 = k2 + dpd->nx;
     int i, j, col, row = 0;
     int qmax = dpd->qmax;
@@ -572,11 +581,12 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 
     /* insert here: GMM-style instruments blocks for any
        exogenous vars selected for such treatment */
-#if 0
+#if TRY_GMM
     for (i=0; i<dpd->nzb; i++) {
 	const double *x = Z[dpd->d[i].v];
 
-	row = gmm_inst_diff(x, t, goodobs, maxlag, dpd->d[i].maxlag, row, Zi);
+	gmm_inst_diff(x, t, goodobs, maxlag, dpd->d[i].maxlag, 
+		      dpd->nzydiff, Zi);
     }
 #endif
 
@@ -856,6 +866,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	gretl_matrix_print(Xi, "do_units: Xi");
 	gretl_matrix_print(Zi, "do_units: Zi");
 #endif
+	gretl_matrix_print(Zi, "do_units: Zi");
 	if (D != NULL) {
 	    build_unit_H_matrix(dpd, goodobs, D);
 	}

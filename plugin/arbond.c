@@ -124,7 +124,8 @@ struct dpdinfo_ {
 									
     int ndiff;             /* total differenced observations */
     int nlev;              /* total levels observations */
-    int nzdiff;            /* number of insts specific to eqns in differences */
+    int nzydiff;           /* number of y insts specific to eqns in differences */
+    int nzxdiff;           /* number of other insts specific to eqns in differences */
     int nzlev;             /* number of insts specific to eqns in levels */
     int *laglist;          /* (possibly discontinuous) list of lags */
 };
@@ -480,7 +481,8 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->nzb = nzb;
     dpd->step = 1;
     dpd->nx = dpd->nzr = 0;
-    dpd->nzdiff = dpd->nzlev = 0;
+    dpd->nzydiff = dpd->nzxdiff = 0;
+    dpd->nzlev = 0;
     dpd->t1min = dpd->t2max = 0;
     dpd->ndum = 0;
 
@@ -2070,6 +2072,10 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 #if ADEBUG
 	sprintf(zstr, "Z_%d", i + 1);
 	gretl_matrix_print(dpd->Zi, zstr);
+#endif
+
+#if 1
+	gretl_matrix_print(dpd->Zi, "Zi, arbond");
 #endif
 
 	/* Cumulate Z_i' H Z_i into A_N */
