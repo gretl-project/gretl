@@ -154,6 +154,7 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
     targ->minlag = src->minlag;
     targ->maxlag = src->maxlag;
     targ->level = src->level;
+    targ->rows = src->rows;
 }
 
 static int insert_default_ydiff_spec (dpdinfo *dpd)
@@ -180,6 +181,7 @@ static int insert_default_ydiff_spec (dpdinfo *dpd)
 	d->minlag = 2;
 	d->maxlag = 99;
 	d->level = 0;
+	d->rows = 0;
 
 	dpd->nzb += 1;
     }
@@ -200,14 +202,15 @@ static int block_instrument_count (dpdinfo *dpd)
     /* the greatest lag we can actually support */
     int maxlag = dpd->t2max; /* - dpd->t1min; */
     int nrows = 0;
-    int i, j, t;
+    int i, k, t;
 
-     for (i=0; i<dpd->nzb; i++) {
+    for (i=0; i<dpd->nzb; i++) {
+	dpd->d[i].rows = 0;
 	if (dpd->d[i].minlag > maxlag) {
 	    /* this spec is altogether otiose */
 	    dpd->nzb -= 1;
-	    for (j=i; j<dpd->nzb; j++) {
-		copy_diag_info(&dpd->d[j], &dpd->d[j+1]);
+	    for (k=i; k<dpd->nzb; k++) {
+		copy_diag_info(&dpd->d[k], &dpd->d[k+1]);
 	    }	    
 	    i--;
 	    continue;
@@ -217,12 +220,13 @@ static int block_instrument_count (dpdinfo *dpd)
 	    dpd->d[i].maxlag = maxlag;
 	}
 	for (t=dpd->t1min; t<=dpd->t2max; t++) {
-	    for (j=dpd->d[i].minlag; j<=dpd->d[i].maxlag; j++) {
-		if (t - j >= 0) {
-		    nrows++;
+	    for (k=dpd->d[i].minlag; k<=dpd->d[i].maxlag; k++) {
+		if (t - k >= 0) {
+		    dpd->d[i].rows += 1;
 		}
 	    }
 	}
+	nrows += dpd->d[i].rows;
     }
 
 #if 1
@@ -231,7 +235,7 @@ static int block_instrument_count (dpdinfo *dpd)
 #endif
 
 #if NEW_GMM
-    dpd->nzxdiff = nrows;
+    dpd->nzdiff += nrows;
     dpd->nz += nrows;
 #endif
 
@@ -248,11 +252,11 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 {
     int gmin, i, t;
 
-#if NEW_GMM
-    dpd->nzydiff = 0;
-#else
     /* instruments specific to equations in differences */
-    dpd->nzydiff = (dpd->T - 1) * (dpd->T - 2) / 2;
+#if NEW_GMM
+    dpd->nzdiff = 0;
+#else
+    dpd->nzdiff = (dpd->T - 1) * (dpd->T - 2) / 2;
 #endif
 
     /* and to equations in levels */
@@ -261,7 +265,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     } 
 
     /* total instruments, so far */
-    dpd->nz = dpd->nzydiff + dpd->nzlev + dpd->nzr;
+    dpd->nz = dpd->nzdiff + dpd->nzlev + dpd->nzr;
 
     /* initialize observation counts */
     dpd->effN = dpd->ndiff = dpd->nlev = 0;
@@ -602,45 +606,54 @@ static int alt_gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x, int t0,
     return row;
 }
 
-static int alt_gmm_inst_lev (dpdinfo *dpd, diag_info *d, 
-			     const double *x, int t0, 
-			     int *goodobs, int row, int col, 
-			     gretl_matrix *Zi)
+static int row_increment (int t1, int maxinc)
 {
-    int maxlag = d->maxlag;
-    int minlag = d->minlag;
-    double x0, x1;
-    int k, s, t;
+    int t, i0 = 0, i1 = 0;
 
-    /* backwards compat? */
-    row++;
-
-    for (t=dpd->t1min; t<=dpd->t2max; t++) {
-	s = t0 + t;
-	if (t - minlag - 1 >= 0) {
-	    for (k=maxlag; k>=minlag; k--) {
-		if (t - k > 0) {
-		    if (dpd->used[s]) {
-			x0 = x[s-k];
-			x1 = x[s-k-1];
-			if (!na(x0) && !na(x1)) {
-			    gretl_matrix_set(Zi, row, col, x0 - x1);
-			}
-		    }
-		}
-	    }
-	    row++;
+    for (t=0; t<t1; t++) {
+	i1 += i0;
+	if (i0 < maxinc) {
+	    i0++;
 	}
-	col++;
     }
 
-    return row;
+    return i1;
 }
 
-#else /* !NEW_GMM */
-
 /* level instruments for the equations in differences */
- 
+
+static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x, 
+			  int s, int *goodobs, int row0, int col0, 
+			  gretl_matrix *Zi)
+{
+    int maxlag = dpd->d[bnum].maxlag;
+    int minlag = dpd->d[bnum].minlag;
+    int maxinc = maxlag - minlag + 1;
+    int i, t, n = goodobs[0] - 1;
+    int t1, t2, col, row;
+    double xt;
+
+    for (i=0; i<n; i++) {
+	t1 = goodobs[i+1];
+	t2 = goodobs[i+2];
+	col = col0 + t2 - 1 - dpd->p;
+	row = row0 + row_increment(t1, maxinc);
+	for (t=0; t<t1; t++) {
+	    if (t1 - t < maxlag && t1 - t >= minlag-1) {
+		xt = x[s+t];
+		if (!na(xt)) {
+		    gretl_matrix_set(Zi, row, col, xt);
+		} 
+		row++;
+	    } 
+	}
+    }
+
+    return row0 + dpd->d[bnum].rows;
+}
+
+#else
+
 static void gmm_inst_diff (dpdinfo *dpd, const double *x, int t, 
 			   int *goodobs, int roffset, int coffset, 
 			   gretl_matrix *Zi)
@@ -666,7 +679,7 @@ static void gmm_inst_diff (dpdinfo *dpd, const double *x, int t,
     }
 }
 
-#endif /* NEW_GMM or not */
+#endif
 
 /* instruments in differences for the equations in levels */
  
@@ -747,16 +760,14 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     int t0, t1, i0, i1;
     /* k2 marks the starting row for "regular" instruments in
        the differences equations */
-    int k2 = dpd->nzydiff + dpd->nzxdiff + dpd->nzlev;
+    int k2 = dpd->nzdiff + dpd->nzlev;
     /* k3 marks the starting row for time dummies */
-    int k3 = k2 + dpd->nx;
-    int i, j, col;
+    int k3 = k2 + dpd->nzr;
+    int i, j, col, row = 0;
 
     gretl_matrix_zero(Zi);
 
 #if NEW_GMM
-    int row = 0;
-
     for (i=0; i<dpd->nzb; i++) {
 	const double *x = Z[dpd->d[i].v];
 

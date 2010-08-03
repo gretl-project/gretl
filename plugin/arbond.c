@@ -54,6 +54,7 @@ struct diag_info_ {
     int minlag;  /* minimum lag order */
     int maxlag;  /* maximum lag order */
     int level;   /* instrument spec is for levels */
+    int rows;    /* max rows occupied in Zi (for dpanel) */
 };
 
 struct dpdinfo_ {
@@ -126,8 +127,7 @@ struct dpdinfo_ {
     int ndiff;             /* total differenced observations */
     int nlev;              /* total levels observations */
     int nzb2;              /* number of block-diagonal specs, levels eqns */
-    int nzydiff;           /* number of y insts specific to eqns in differences */
-    int nzxdiff;           /* number of other insts specific to eqns in differences */
+    int nzdiff;            /* number of insts specific to eqns in differences */
     int nzlev;             /* number of insts specific to eqns in levels */
     int *laglist;          /* (possibly discontinuous) list of lags */
     diag_info *d2;         /* info on block-diagonal instruments, levels eqns
@@ -488,7 +488,7 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->nzb = nzb;
     dpd->step = 1;
     dpd->nx = dpd->nzr = 0;
-    dpd->nzydiff = dpd->nzxdiff = 0;
+    dpd->nzdiff = 0;
     dpd->nzlev = 0;
     dpd->t1min = dpd->t2max = 0;
     dpd->ndum = 0;
@@ -2191,6 +2191,7 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
 	    d->v = v;      
 	    d->minlag = m1;
 	    d->maxlag = m2;
+	    d->rows = 0;
 	}
     }
 
