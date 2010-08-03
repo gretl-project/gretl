@@ -63,8 +63,7 @@ struct dpdinfo_ {
     int step;             /* what step are we on? (1 or 2) */
     int yno;              /* ID number of dependent var */
     int p;                /* lag order for dependent variable */
-    int qmax;             /* longest lag of y used as instrument */
-    int qmin;             /* shortest lag of y used as instrument */
+    int qmax;             /* longest lag of y used as instrument (arbond) */
     int nx;               /* number of independent variables */
     int nzr;              /* number of regular instruments */
     int nzb;              /* number of block-diagonal instruments (other than y) */
@@ -90,8 +89,8 @@ struct dpdinfo_ {
     double AR1;           /* z statistic for AR(1) errors */
     double AR2;           /* z statistic for AR(2) errors */
     double sargan;        /* overidentification test statistic */
-    double wald;          /* Wald test statistic */
-    int wdf;              /* degrees of freedom for Wald test */
+    double wald[2];       /* Wald test statistic(s) */
+    int wdf[2];           /* degrees of freedom for Wald test(s) */
     int *xlist;           /* list of independent variables */
     int *ilist;           /* list of regular instruments */
     gretl_matrix_block *B1; /* matrix holder */
@@ -236,26 +235,6 @@ static int maybe_add_const_to_ilist (dpdinfo *dpd)
     return err;
 }
 
-static int dpd_make_laglist (dpdinfo *dpd)
-{
-    int err = 0;
-
-    /* FIXME this should be hooked up to user input */
-    dpd->laglist = gretl_list_new(dpd->p);
-
-    if (dpd->laglist == NULL) {
-	err = E_ALLOC;
-    } else {
-	int i;
-
-	for (i=1; i<=dpd->p; i++) {
-	    dpd->laglist[i] = i;
-	}
-    }
-
-    return err;
-}
-
 static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 {
     int i, nz = 0, spos = 0;
@@ -333,46 +312,112 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
     return err;
 }
 
+static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
+				int seppos)
+{
+    int nlags = seppos - 1;
+    int i, err = 0;
+
+    if (nlags == 1) {
+	/* only got p; make "fake" list 1, ..., p */
+	dpd->p = list[1];
+	if (dpd->p < 1) {
+	    err = E_INVARG;
+	} else {
+	    dpd->laglist = gretl_consecutive_list_new(1, dpd->p);
+	    if (dpd->laglist == NULL) {
+		err = E_ALLOC;
+	    } 
+	}
+    } else {
+	/* multiple lags were specified */
+	int k;
+
+	dpd->p = 0;
+	dpd->laglist = gretl_list_new(nlags);
+	if (dpd->laglist == NULL) {
+	    err = E_ALLOC;
+	} else {	
+	    for (i=1; i<=nlags; i++) {
+		k = list[i];
+		if (k < 1) {
+		    err = E_INVARG;
+		    break;
+		} else {
+		    if (k > dpd->p) {
+			dpd->p = k;
+		    }
+		    dpd->laglist[i] = k;
+		}
+	    }
+	}
+    }
+
+    if (nlags > 1 && !err) {
+	/* sort lags and check for duplicates */
+	gretl_list_sort(dpd->laglist);
+	for (i=2; i<=nlags; i++) {
+	    if (dpd->laglist[i] == dpd->laglist[i-1]) {
+		err = E_INVARG;
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* Process the incoming list and figure out various parameters
    including the maximum lag of the dependent variable, dpd->p,
    and the number of exogenous regressors, dpd->nx.
 
-   (If we're going to handle discontinuous lags via
-   dpd->laglist, this would be the place to set it up.)
+   Note that the significance of the first sublist (before the
+   first LISTSEP) differs between arbond and dpanel. 
 
-   FIXME: qmin doesn't actually do anything below, yet.
+   In arbond this chunk contains either p alone or p plus "qmax", 
+   a limiter for the maximum lag of y to be used as an
+   instrument. 
+
+   In dpanel, it contains either p alone or a list of specific
+   lags of y to use as regressors. (But FIXME how would you
+   specify "use lag 2 only", if just putting "2" is interpreted
+   as p = 2?). Placing a limit on the max lag of y as
+   instrument can be done in dpanel via "GMM(y,min,max)". We
+   use the default pattern of GMM(y,2,99) only if the user
+   doesn't specify something else.
 */
 
 static int dpd_process_list (dpdinfo *dpd, const int *list)
 {
-    int xpos = 0;
-    int err = 0;
+    int seppos = gretl_list_separator_position(list);
+    int xpos, err = 0;
 
-    dpd->p = list[1];
-    dpd->qmin = 2;
+    if (seppos < 2 || list[0] == seppos) {
+	/* there must be at least one element before (p) and
+	   one element after (y) the first list separator
+	*/
+	return E_PARSE;
+    }
 
-    if (list[2] == LISTSEP) {
-	/* arbond p ; y ... */
-	dpd->qmax = 0;
-	dpd->yno = list[3];
-	xpos = 4;
-    } else if (list[3] == LISTSEP && list[0] >= 4) {
-	/* arbond p qmax ; y ... */
-	dpd->qmax = list[2];
-	dpd->yno = list[4];
-	xpos = 5;
-    } else if (list[4] == LISTSEP && list[0] >= 5) {
-	/* arbond p qmax qmin ; y ... */
-	dpd->qmax = list[2];
-	dpd->qmin = list[3];
-	dpd->yno = list[5];
-	xpos = 6;
+    dpd->qmax = 0;
+    dpd->yno = list[seppos + 1];
+    xpos = seppos + 2;
+
+    if (dpd->ci == DPANEL) {
+	/* the first sublist may contain specific y lags */
+	err = dpanel_make_laglist(dpd, list, seppos);
     } else {
-	err = E_PARSE;
+	dpd->p = list[1];
+	if (seppos == 2) {
+	    ; /* arbond p ; y ... */
+	} else if (seppos == 3) {
+	    /* arbond p qmax ; y ... */
+	    dpd->qmax = list[2];
+	} else {
+	    err = E_PARSE;
+	}
     }
 
     if (!err) {
-	/* FIXME: are these tests all valid? */
 	if (dpd->p < 1) {
 	    fprintf(stderr, "arbond lag order = %d < 1\n", dpd->p);
 	    err = E_INVARG;
@@ -380,19 +425,11 @@ static int dpd_process_list (dpdinfo *dpd, const int *list)
 	    fprintf(stderr, "arbond qmax = %d < dpd->p + 1 = %d\n", 
 		    dpd->qmax, dpd->p + 1);
 	    err = E_INVARG;
-	} else if (dpd->qmax != 0 && dpd->qmin > dpd->qmax) {
-	    fprintf(stderr, "arbond qmin = %d > dpd->qmax = %d\n", 
-		    dpd->qmin, dpd->qmax);
-	    err = E_INVARG;
-	}
+	} 
     }
 
     if (!err && list[0] >= xpos) {
 	err = dpd_make_lists(dpd, list, xpos);
-    }
-
-    if (!err && dpd->ci == DPANEL) {
-	err = dpd_make_laglist(dpd);
     }
 
     return err;
@@ -520,12 +557,12 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->AR1 = NADBL;
     dpd->AR2 = NADBL;
     dpd->sargan = NADBL;
-    dpd->wald = NADBL;
-    dpd->wdf = 0;
+    dpd->wald[0] = dpd->wald[1] = NADBL;
+    dpd->wdf[0] = dpd->wdf[1] = 0;
 
 #if ADEBUG
-    fprintf(stderr, "yno = %d, p = %d, qmax = %d, qmin = %d, nx = %d, k = %d\n",
-	    dpd->yno, dpd->p, dpd->qmax, dpd->qmin, dpd->nx, dpd->k);
+    fprintf(stderr, "yno = %d, p = %d, qmax = %d, nx = %d, k = %d\n",
+	    dpd->yno, dpd->p, dpd->qmax, dpd->nx, dpd->k);
     fprintf(stderr, "t1 = %d, T = %d, N = %d\n", dpd->t1, dpd->T, dpd->N);
 #endif
 
@@ -825,8 +862,6 @@ static int dpd_const_pos (dpdinfo *dpd)
     return -1;
 }
 
-/* FIXME try to detect and omit periodic dummies? */
-
 static int dpd_wald_test (dpdinfo *dpd)
 {
     gretl_matrix *b, *V;
@@ -875,8 +910,31 @@ static int dpd_wald_test (dpdinfo *dpd)
     }
 
     if (!err) {
-	dpd->wald = x;
-	dpd->wdf = k;
+	dpd->wald[0] = x;
+	dpd->wdf[0] = k;
+    }
+
+    if (!err && dpd->ndum > 0) {
+	/* we always put the dummies at the end of the coeff vector */
+	int bmin = dpd->k - dpd->ndum;
+
+	b = gretl_matrix_reuse(dpd->kmtmp, dpd->ndum, 1);
+	V = gretl_matrix_reuse(dpd->kktmp, dpd->ndum, dpd->ndum);
+	gretl_matrix_extract_matrix(b, dpd->beta, bmin, 0,
+				    GRETL_MOD_NONE);
+	gretl_matrix_extract_matrix(V, dpd->vbeta, bmin, bmin,
+				    GRETL_MOD_NONE);
+
+	err = gretl_invert_symmetric_matrix(V);
+
+	if (!err) {
+	    x = gretl_scalar_qform(b, V, &err);
+	}
+
+	if (!err) {
+	    dpd->wald[1] = x;
+	    dpd->wdf[1] = dpd->ndum;
+	}	
     }
 
     gretl_matrix_reuse(dpd->kmtmp, dpd->k, dpd->nz);
@@ -912,6 +970,30 @@ static int dpd_sargan_test (dpdinfo *dpd)
     gretl_matrix_reuse(dpd->L1, 1, dpd->nz);
 
     return err;
+}
+
+static void make_asy_Hi (dpdinfo *dpd, int i, gretl_matrix *H,
+			 char *mask)
+{
+    int T = dpd->T;
+    int t, s = data_index(dpd, i);
+
+    for (t=0; t<T; t++) {
+	mask[t] = (dpd->used[t+s] == 1)? 0 : 1;
+    }
+
+    gretl_matrix_reuse(H, T, T);
+    gretl_matrix_zero(H);
+    gretl_matrix_set(H, 0, 0, 1);
+
+    for (t=1; t<T; t++) {
+	gretl_matrix_set(H, t, t, 1);
+	gretl_matrix_set(H, t-1, t, -0.5);
+	gretl_matrix_set(H, t, t-1, -0.5);
+    } 
+
+    gretl_matrix_multiply_by_scalar(H, dpd->s2);
+    gretl_matrix_cut_rows_cols(H, mask);
 }
 
 /*
@@ -954,12 +1036,26 @@ static int dpd_ar_test (dpdinfo *dpd)
     gretl_matrix *Hi, *ZU;
     gretl_matrix *wX, *ZHw;
     gretl_matrix *Tmp;
-    int T = dpd->maxTi;
+    char *hmask = NULL;
+    int HT, T = dpd->maxTi;
     int nz = dpd->nz;
-    int ZU_cols;
+    int asy, ZU_cols;
     int i, j, k, s, t;
     int nlags, m = 1;
     int err = 0;
+
+    /* if non-robust and on first step, Hi is computed differently */
+    if ((dpd->flags & DPD_TWOSTEP) || (dpd->flags & DPD_WINCORR)) {
+	asy = 0;
+	HT = T;
+    } else {
+	asy = 1;
+	HT = dpd->T;
+	hmask = malloc(HT);
+	if (hmask == NULL) {
+	    return E_ALLOC;
+	}
+    }
 
     /* The required size of the workspace matrix ZU depends on 
        whether or not we're in the system case */
@@ -968,7 +1064,7 @@ static int dpd_ar_test (dpdinfo *dpd)
     B = gretl_matrix_block_new(&ui,  T, 1,
 			       &wi,  T, 1,
 			       &Xi,  T, dpd->k,
-			       &Hi,  T, T,
+			       &Hi,  HT, HT,
 			       &ZU,  nz, ZU_cols,
 			       &wX,  1, dpd->k,
 			       &ZHw, nz, 1,
@@ -976,6 +1072,7 @@ static int dpd_ar_test (dpdinfo *dpd)
 			       NULL);
 
     if (B == NULL) {
+	free(hmask);
 	return E_ALLOC;
     }
 
@@ -1006,7 +1103,10 @@ static int dpd_ar_test (dpdinfo *dpd)
 	gretl_matrix_reuse(wi, Ti, -1);
 	gretl_matrix_reuse(Xi, Ti, -1);
 	gretl_matrix_reuse(Zi, Ti, -1);
-	gretl_matrix_reuse(Hi, Ti, Ti);
+
+	if (!asy) {
+	    gretl_matrix_reuse(Hi, Ti, Ti);
+	}
 
 	if (!use_levels(dpd)) {
 	    gretl_matrix_reuse(ZU, -1, Ti);
@@ -1065,10 +1165,14 @@ static int dpd_ar_test (dpdinfo *dpd)
 				      ui, GRETL_MOD_NONE, &err);
 	d0 += uw;
 
-	/* form H_i */
-	gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
-				  ui, GRETL_MOD_TRANSPOSE,
-				  Hi, GRETL_MOD_NONE);
+	if ((dpd->flags & DPD_TWOSTEP) || (dpd->flags & DPD_WINCORR)) {
+	    /* form H_i (robust or step 2 variant) */
+	    gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
+				      ui, GRETL_MOD_TRANSPOSE,
+				      Hi, GRETL_MOD_NONE);
+	} else {
+	    make_asy_Hi(dpd, i, Hi, hmask);
+	}
 
 	/* d1 += w_i' H_i w_i */
 	d1 += gretl_scalar_qform(wi, Hi, &err);
@@ -1161,6 +1265,7 @@ static int dpd_ar_test (dpdinfo *dpd)
  finish:
 
     gretl_matrix_block_destroy(B);
+    free(hmask);
 
     /* restore original dimensions */
     gretl_matrix_reuse(dpd->Zi, dpd->max_ni, dpd->nz);
@@ -1325,7 +1430,7 @@ static int dpd_variance_2 (dpdinfo *dpd,
 }
 
 /* 
-   Compute the step-1 robust variance matrix:
+   Compute the robust step-1 robust variance matrix:
 
    N * M^{-1} * (X'*Z*A_N*\hat{V}_N*A_N*Z'*X) * M^{-1} 
 
@@ -1339,6 +1444,8 @@ static int dpd_variance_2 (dpdinfo *dpd,
 
    (v_i being the step-1 residuals).
 
+   (But is we're doing 1-step and get the asymptotic
+   flag, just do the simple thing, \sigma^2 M^{-1})
 */
 
 static int dpd_variance_1 (dpdinfo *dpd)
@@ -1346,6 +1453,13 @@ static int dpd_variance_1 (dpdinfo *dpd)
     gretl_matrix *V, *ui;
     int i, t, k, c;
     int err = 0;
+
+    if (!(dpd->flags & DPD_TWOSTEP) && !(dpd->flags & DPD_WINCORR)) {
+	/* one step asymptotic variance */
+	err = gretl_matrix_copy_values(dpd->vbeta, dpd->M);
+	gretl_matrix_multiply_by_scalar(dpd->vbeta, dpd->s2 * dpd->effN/2.0);
+	return 0;
+    }
 
     V = gretl_zero_matrix_new(dpd->nz, dpd->nz);
     ui = gretl_column_vector_alloc(dpd->max_ni);
@@ -1595,9 +1709,13 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	    gretl_model_set_int(pmod, "sargan_df", dpd->nz - dpd->k);
 	    gretl_model_set_double(pmod, "sargan", dpd->sargan);
 	}
-	if (!na(dpd->wald)) {
-	    gretl_model_set_int(pmod, "wald_df", dpd->wdf);
-	    gretl_model_set_double(pmod, "wald", dpd->wald);
+	if (!na(dpd->wald[0])) {
+	    gretl_model_set_int(pmod, "wald_df", dpd->wdf[0]);
+	    gretl_model_set_double(pmod, "wald", dpd->wald[0]);
+	}
+	if (!na(dpd->wald[1])) {
+	    gretl_model_set_int(pmod, "wald_time_df", dpd->wdf[1]);
+	    gretl_model_set_double(pmod, "wald_time", dpd->wald[1]);
 	}
 	if (istr != NULL && *istr != '\0') {
 	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));

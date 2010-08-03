@@ -1334,7 +1334,8 @@ int gretl_matrix_cut_cols (gretl_matrix *m, const char *mask)
  * for rows/columns to be retained.
  *
  * In-place reduction of @m based on @mask: the masked rows
- * and columns are cut out of @m.
+ * and columns are cut out of @m. (The data array within @m
+ * is not "physically" resized.)
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -1372,7 +1373,7 @@ int gretl_matrix_cut_rows_cols (gretl_matrix *m, const char *mask)
 	}
     }
 
-    /* resize the original matrix, copy the values back,
+    /* redimension the original matrix, copy the values back,
        and free the temp matrix */
     gretl_matrix_reuse(m, n, n);
     gretl_matrix_copy_values(m, tmp);

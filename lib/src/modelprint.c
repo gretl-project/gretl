@@ -315,6 +315,7 @@ static void print_panel_AR_test (double z, int order, PRN *prn)
 enum {
     AB_SARGAN,
     AB_WALD,
+    AB_WALD_TIME,
     J_TEST,
     OVERDISP
 };
@@ -325,12 +326,14 @@ print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
     const char *strs[] = {
 	N_("Sargan over-identification test"),
 	N_("Wald (joint) test"),
+	N_("Wald (time dummies)"),
 	N_("J test"),
 	N_("Overdispersion test")
     };
     const char *texstrs[] = {
 	N_("Sargan test"),
 	N_("Wald (joint) test"),
+	N_("Wald (time dummies)"),
 	N_("J test"),
 	N_("Overdispersion test")
     };
@@ -341,6 +344,8 @@ print_model_chi2_test (const MODEL *pmod, double x, int j, PRN *prn)
 	df = gretl_model_get_int(pmod, "sargan_df");
     } else if (j == AB_WALD) {
 	df = gretl_model_get_int(pmod, "wald_df");
+    } else if (j == AB_WALD_TIME) {
+	df = gretl_model_get_int(pmod, "wald_time_df");
     } else if (j == J_TEST) {
 	df = gretl_model_get_int(pmod, "J_df");
     } else if (j == OVERDISP) {
@@ -454,6 +459,11 @@ static void print_DPD_stats (const MODEL *pmod, PRN *prn)
     x = gretl_model_get_double(pmod, "wald");
     if (!na(x)) {
 	print_model_chi2_test(pmod, x, AB_WALD, prn);
+    }
+
+    x = gretl_model_get_double(pmod, "wald_time");
+    if (!na(x)) {
+	print_model_chi2_test(pmod, x, AB_WALD_TIME, prn);
     }
 
     if (tex_format(prn)) {
