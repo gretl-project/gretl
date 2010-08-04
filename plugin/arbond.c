@@ -329,25 +329,32 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
 		err = E_ALLOC;
 	    } 
 	}
+    } else if (nlags == 2 && list[1] == 0) {
+	/* flag for singleton lag (> 0) */
+	nlags = 1;
+	dpd->p = list[2];
+	if (dpd->p < 1) {
+	    err = E_INVARG;
+	} else {
+	    dpd->laglist = gretl_list_new(1);
+	    if (dpd->laglist == NULL) {
+		err = E_ALLOC;
+	    } else {
+		dpd->laglist[1] = dpd->p;
+	    }
+	}	
     } else {
 	/* multiple lags were specified */
-	int k;
-
-	dpd->p = 0;
 	dpd->laglist = gretl_list_new(nlags);
 	if (dpd->laglist == NULL) {
 	    err = E_ALLOC;
 	} else {	
 	    for (i=1; i<=nlags; i++) {
-		k = list[i];
-		if (k < 1) {
+		if (list[i] < 1) {
 		    err = E_INVARG;
 		    break;
 		} else {
-		    if (k > dpd->p) {
-			dpd->p = k;
-		    }
-		    dpd->laglist[i] = k;
+		    dpd->laglist[i] = list[i];
 		}
 	    }
 	}
@@ -356,6 +363,7 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
     if (nlags > 1 && !err) {
 	/* sort lags and check for duplicates */
 	gretl_list_sort(dpd->laglist);
+	dpd->p = dpd->laglist[nlags];
 	for (i=2; i<=nlags; i++) {
 	    if (dpd->laglist[i] == dpd->laglist[i-1]) {
 		err = E_INVARG;
@@ -378,12 +386,26 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
    instrument. 
 
    In dpanel, it contains either p alone or a list of specific
-   lags of y to use as regressors. (But FIXME how would you
-   specify "use lag 2 only", if just putting "2" is interpreted
-   as p = 2?). Placing a limit on the max lag of y as
-   instrument can be done in dpanel via "GMM(y,min,max)". We
-   use the default pattern of GMM(y,2,99) only if the user
-   doesn't specify something else.
+   lags of y to use as regressors. Placing a limit on the max 
+   lag of y as instrument is done in dpanel via "GMM(y,min,max)". 
+   (We apply the default pattern of GMM(y,2,99) only if the user
+   says --system but doesn't specify something else for y.)
+
+   Note, there's a potential ambiguity if the user says, e.g.
+
+   dpanel 2 ; y ...
+
+   Does this mean p = 2 (so use lags 1 and 2, arbond style), or
+   does it mean _just_ use lag 2 (a list with a single member)?  
+   This is debatable, but since the former interpretation
+   seems more natural, that's what it means at present: if
+   the user really wants lag 2 only, she can force the issue
+   with the (admittedly ugly) bodge,
+
+   dpanel 0 2 ; y ...
+
+   where the leading 0 (an invalid lag) is a flag for
+   "read this as a singleton, dammit".
 */
 
 static int dpd_process_list (dpdinfo *dpd, const int *list)
