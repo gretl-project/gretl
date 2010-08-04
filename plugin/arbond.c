@@ -117,11 +117,7 @@ struct dpdinfo_ {
     unit_info *ui;         /* info on panel units */
     char *used;            /* global record of observations used */
 
-    /* The members above should not be touched, since they are needed
-       to support the "arbond" command. The members below are
-       specific to the new "dpanel" approach, and can be changed
-       as needed, as the code develops.
-    */
+    /* The members below are specific to the "dpanel" approach */
 									
     int ndiff;             /* total differenced observations */
     int nlev;              /* total levels observations */
@@ -136,6 +132,7 @@ struct dpdinfo_ {
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
 
 static void dpanel_residuals (dpdinfo *dpd);
+static int dpd_process_list (dpdinfo *dpd, const int *list);
 
 static void dpdinfo_free (dpdinfo *dpd)
 {
@@ -192,6 +189,156 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
     }    
 
     return 0;
+}
+
+static int dpd_add_unit_info (dpdinfo *dpd)
+{
+    int i, err = 0;
+
+    dpd->ui = malloc(dpd->N * sizeof *dpd->ui);
+
+    if (dpd->ui == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<dpd->N; i++) {
+	    dpd->ui[i].t1 = 0;
+	    dpd->ui[i].t2 = 0;
+	    dpd->ui[i].nobs = 0;
+	    dpd->ui[i].nlev = 0;
+	}
+    }
+
+    return err;
+}
+
+static int dpd_flags_from_opt (gretlopt opt)
+{
+    /* apply Windmeijer correction unless OPT_A is given */
+    int f = (opt & OPT_A)? 0 : DPD_WINCORR;
+
+    if (opt & OPT_D) {
+	/* include time dummies */
+	f |= DPD_TIMEDUM;
+    }
+
+    if (opt & OPT_H) {
+	/* use orthogonal deviations instead of first diffs */
+	f |= DPD_ORTHDEV;
+    }
+
+    if (opt & OPT_T) {
+	/* two-step estimation */
+	f |= DPD_TWOSTEP;
+    }
+
+    if (opt & OPT_L) {
+	/* system GMM: include levels equations (DPANEL only) */
+	f |= DPD_SYSTEM;
+    }
+
+    if (opt & OPT_X) {
+	/* compute H as per Ox/DPD (DPANEL only) */
+	f |= DPD_DPDSTYLE;
+    }	
+
+    return f;
+}
+
+static dpdinfo *dpdinfo_new (int ci, const int *list, 
+			     const double **Z, const DATAINFO *pdinfo, 
+			     gretlopt opt, diag_info *d, 
+			     int nzb, int *err)
+{
+    dpdinfo *dpd = NULL;
+    int NT;
+
+    if (list[0] < 3) {
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    dpd = malloc(sizeof *dpd);
+    if (dpd == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    dpd->ci = ci;
+
+    /* set pointer members to NULL just in case */
+    dpd->B1 = dpd->B2 = NULL;
+    dpd->V = NULL;
+    dpd->ui = NULL;
+    dpd->used = NULL;
+    dpd->xlist = NULL;
+    dpd->ilist = NULL;
+    dpd->laglist = NULL;
+
+    dpd->flags = dpd_flags_from_opt(opt);
+
+    dpd->d = d;
+    dpd->d2 = NULL;
+    dpd->nzb = nzb;
+    dpd->step = 1;
+    dpd->nx = dpd->nzr = 0;
+    dpd->nzdiff = 0;
+    dpd->nzlev = 0;
+    dpd->t1min = dpd->t2max = 0;
+    dpd->ndum = 0;
+
+    /* "system"-specific */
+    dpd->d2 = NULL;
+    dpd->nzb2 = 0;
+
+    *err = dpd_process_list(dpd, list);
+    if (*err) {
+	goto bailout;
+    }
+
+    NT = sample_size(pdinfo);
+
+    dpd->t1 = pdinfo->t1;             /* start of sample range */
+    dpd->T = pdinfo->pd;              /* max obs. per individual */
+    dpd->effN = dpd->N = NT / dpd->T; /* included individuals */
+    dpd->k = dpd->p + dpd->nx;        /* # of coeffs on lagged dep var, indep vars */
+    dpd->minTi = dpd->maxTi = 0;
+    dpd->max_ni = 0;
+    dpd->nz = 0;
+    dpd->pc0 = 0;
+    dpd->xc0 = 0;
+    dpd->nobs = dpd->totobs = 0;
+    dpd->ndiff = dpd->nlev = 0;
+    dpd->SSR = NADBL;
+    dpd->s2 = NADBL;
+    dpd->AR1 = NADBL;
+    dpd->AR2 = NADBL;
+    dpd->sargan = NADBL;
+    dpd->wald[0] = dpd->wald[1] = NADBL;
+    dpd->wdf[0] = dpd->wdf[1] = 0;
+
+#if ADEBUG
+    fprintf(stderr, "yno = %d, p = %d, qmax = %d, nx = %d, k = %d\n",
+	    dpd->yno, dpd->p, dpd->qmax, dpd->nx, dpd->k);
+    fprintf(stderr, "t1 = %d, T = %d, N = %d\n", dpd->t1, dpd->T, dpd->N);
+#endif
+
+    *err = dpd_add_unit_info(dpd);
+
+    if (!*err) {
+	dpd->used = calloc(pdinfo->n, 1);
+	if (dpd->used == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+ bailout:
+
+    if (*err) {
+	dpdinfo_free(dpd);
+	dpd = NULL;
+    }
+
+    return dpd;
 }
 
 /* if the const has been included among the regressors but not the
@@ -389,7 +536,7 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
    lags of y to use as regressors. Placing a limit on the max 
    lag of y as instrument is done in dpanel via "GMM(y,min,max)". 
    (We apply the default pattern of GMM(y,2,99) only if the user
-   says --system but doesn't specify something else for y.)
+   says --system but doesn't specify the treatment of y.)
 
    Note, there's a potential ambiguity if the user says, e.g.
 
@@ -406,6 +553,9 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
 
    where the leading 0 (an invalid lag) is a flag for
    "read this as a singleton, dammit".
+
+   TODO: borrow from arima and use a matrix "{ ... }" to
+   specify gappy lags.
 */
 
 static int dpd_process_list (dpdinfo *dpd, const int *list)
@@ -457,155 +607,8 @@ static int dpd_process_list (dpdinfo *dpd, const int *list)
     return err;
 }
 
-static int dpd_add_unit_info (dpdinfo *dpd)
-{
-    int i, err = 0;
-
-    dpd->ui = malloc(dpd->N * sizeof *dpd->ui);
-
-    if (dpd->ui == NULL) {
-	err = E_ALLOC;
-    } else {
-	for (i=0; i<dpd->N; i++) {
-	    dpd->ui[i].t1 = 0;
-	    dpd->ui[i].t2 = 0;
-	    dpd->ui[i].nobs = 0;
-	    dpd->ui[i].nlev = 0;
-	}
-    }
-
-    return err;
-}
-
-static int dpd_flags_from_opt (gretlopt opt)
-{
-    /* apply Windmeijer correction unless OPT_A is given */
-    int f = (opt & OPT_A)? 0 : DPD_WINCORR;
-
-    if (opt & OPT_D) {
-	/* include time dummies */
-	f |= DPD_TIMEDUM;
-    }
-
-    if (opt & OPT_H) {
-	/* use orthogonal deviations instead of first diffs */
-	f |= DPD_ORTHDEV;
-    }
-
-    if (opt & OPT_T) {
-	/* two-step estimation */
-	f |= DPD_TWOSTEP;
-    }
-
-    if (opt & OPT_L) {
-	/* system GMM: include levels equations (DPANEL only) */
-	f |= DPD_SYSTEM;
-    }
-
-    if (opt & OPT_X) {
-	/* compute H as per Ox/DPD (DPANEL only) */
-	f |= DPD_DPDSTYLE;
-    }	
-
-    return f;
-}
-
-static dpdinfo *dpdinfo_new (int ci, const int *list, 
-			     const double **Z, const DATAINFO *pdinfo, 
-			     gretlopt opt, diag_info *d, 
-			     int nzb, int *err)
-{
-    dpdinfo *dpd = NULL;
-    int NT;
-
-    if (list[0] < 3) {
-	*err = E_PARSE;
-	return NULL;
-    }
-
-    dpd = malloc(sizeof *dpd);
-    if (dpd == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    dpd->ci = ci;
-
-    /* set pointer members to NULL just in case */
-    dpd->B1 = dpd->B2 = NULL;
-    dpd->V = NULL;
-    dpd->ui = NULL;
-    dpd->used = NULL;
-    dpd->xlist = NULL;
-    dpd->ilist = NULL;
-    dpd->laglist = NULL;
-
-    dpd->flags = dpd_flags_from_opt(opt);
-
-    dpd->d = d;
-    dpd->d2 = NULL;
-    dpd->nzb = nzb;
-    dpd->step = 1;
-    dpd->nx = dpd->nzr = 0;
-    dpd->nzdiff = 0;
-    dpd->nzlev = 0;
-    dpd->t1min = dpd->t2max = 0;
-    dpd->ndum = 0;
-
-    /* "system"-specific */
-    dpd->d2 = NULL;
-    dpd->nzb2 = 0;
-
-    *err = dpd_process_list(dpd, list);
-    if (*err) {
-	goto bailout;
-    }
-
-    NT = sample_size(pdinfo);
-
-    dpd->t1 = pdinfo->t1;             /* start of sample range */
-    dpd->T = pdinfo->pd;              /* max obs. per individual */
-    dpd->effN = dpd->N = NT / dpd->T; /* included individuals */
-    dpd->k = dpd->p + dpd->nx;        /* # of coeffs on lagged dep var, indep vars */
-    dpd->minTi = dpd->maxTi = 0;
-    dpd->max_ni = 0;
-    dpd->nz = 0;
-    dpd->pc0 = 0;
-    dpd->xc0 = 0;
-    dpd->nobs = dpd->totobs = 0;
-    dpd->ndiff = dpd->nlev = 0;
-    dpd->SSR = NADBL;
-    dpd->s2 = NADBL;
-    dpd->AR1 = NADBL;
-    dpd->AR2 = NADBL;
-    dpd->sargan = NADBL;
-    dpd->wald[0] = dpd->wald[1] = NADBL;
-    dpd->wdf[0] = dpd->wdf[1] = 0;
-
-#if ADEBUG
-    fprintf(stderr, "yno = %d, p = %d, qmax = %d, nx = %d, k = %d\n",
-	    dpd->yno, dpd->p, dpd->qmax, dpd->nx, dpd->k);
-    fprintf(stderr, "t1 = %d, T = %d, N = %d\n", dpd->t1, dpd->T, dpd->N);
-#endif
-
-    *err = dpd_add_unit_info(dpd);
-
-    if (!*err) {
-	dpd->used = calloc(pdinfo->n, 1);
-	if (dpd->used == NULL) {
-	    *err = E_ALLOC;
-	}
-    }
-
- bailout:
-
-    if (*err) {
-	dpdinfo_free(dpd);
-	dpd = NULL;
-    }
-
-    return dpd;
-}
+/* The following several book-keeping functions are specific
+   to the arbond command */
 
 /* See if we have valid values for the dependent variable (in
    differenced or deviations form) plus p lags of same, and all of
@@ -869,6 +872,8 @@ static int arbond_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
     return err;
 }
 
+/* end of arbond book-keeping block */
+
 static int dpd_const_pos (dpdinfo *dpd)
 {
     if (dpd->xlist != NULL) {
@@ -994,6 +999,8 @@ static int dpd_sargan_test (dpdinfo *dpd)
     return err;
 }
 
+/* \sigma^2 H_1, sliced and diced for unit i */
+
 static void make_asy_Hi (dpdinfo *dpd, int i, gretl_matrix *H,
 			 char *mask)
 {
@@ -1042,6 +1049,7 @@ static void make_asy_Hi (dpdinfo *dpd, int i, gretl_matrix *H,
   where the f superscript indicates that all observations are
   used, differences and levels. 
 
+  one step:         H_i = \sigma^2 H_{1,i}
   one step, robust: H_i = H_{2,i}; M = M_1
   two step:         H_i = H_{2,i}; M = M_2
 
@@ -1466,7 +1474,7 @@ static int dpd_variance_2 (dpdinfo *dpd,
 
    (v_i being the step-1 residuals).
 
-   (But is we're doing 1-step and get the asymptotic
+   (But if we're doing 1-step and get the asymptotic
    flag, just do the simple thing, \sigma^2 M^{-1})
 */
 
@@ -1959,6 +1967,8 @@ static int dpd_step_2 (dpdinfo *dpd)
     return err;
 }
 
+/* arbond-specific functions follow */
+
 static double odev_at_lag (const double *x, int t, int lag, int pd)
 {
     double ret, xbar = 0.0;
@@ -2286,6 +2296,100 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
     return err;
 }
 
+/* This function is used on the first step (only), by both
+   arbond and dpanel. */
+
+static int dpd_invert_A_N (dpdinfo *dpd)
+{
+    int err = 0;
+
+    /* just in case */
+    gretl_matrix_xtr_symmetric(dpd->A);
+
+    /* make a backup in case the first attempt fails */
+    gretl_matrix_copy_values(dpd->Acpy, dpd->A);
+
+    /* first try straight inversion */
+    err = gretl_invert_symmetric_matrix(dpd->A);
+
+    if (err) {
+	/* try again, first reducing A based on its rank */
+	char *mask = NULL;
+
+	fprintf(stderr, "inverting dpd->A failed on first pass\n");
+
+	gretl_matrix_copy_values(dpd->A, dpd->Acpy); 
+	mask = gretl_matrix_rank_mask(dpd->A, &err);
+
+	if (!err) {
+	    err = gretl_matrix_cut_rows_cols(dpd->A, mask);
+	}
+
+	if (!err) {
+	    err = gretl_invert_symmetric_matrix(dpd->A);
+	    if (!err) {
+		/* OK, now register effects of reducing nz */
+		dpd_shrink_matrices(dpd, mask);
+	    } else {
+		fprintf(stderr, "inverting dpd->A failed on second pass\n");
+	    }
+	}
+
+	free(mask);
+    }
+
+#if ADEBUG
+    gretl_matrix_print(dpd->A, "A_N");
+#endif
+
+    return err;
+}
+
+static int dpd_step_1 (dpdinfo *dpd)
+{
+    int err;
+
+    /* invert A_N: we allow two attempts */
+    err = dpd_invert_A_N(dpd);
+
+    if (!err) {
+	/* construct additional moment matrices: we waited
+	   until we knew what size these should really be 
+	*/
+	gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
+	gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
+				  dpd->ZT, GRETL_MOD_TRANSPOSE,
+				  dpd->XZ, GRETL_MOD_NONE);
+    }
+
+#if ADEBUG > 1
+    gretl_matrix_print(dpd->XZ, "XZ'");
+    gretl_matrix_print(dpd->ZY, "Z'Y");
+#endif
+
+    if (!err) {
+	err = dpd_beta_hat(dpd);
+    }
+
+    if (!err) {
+	if (dpd->ci == DPANEL) {
+	    dpanel_residuals(dpd);
+	} else {
+	    arbond_residuals(dpd);
+	}
+	err = dpd_variance_1(dpd);
+    }
+
+    if (!err && !(dpd->flags & DPD_TWOSTEP)) {
+	/* do the tests if we're not continuing */
+	dpd_ar_test(dpd);
+	dpd_sargan_test(dpd);
+	dpd_wald_test(dpd);
+    }
+
+    return err;
+}
+
 /* Parse a particular entry in the (optional) incoming array 
    of "GMM(foo,m1,m2)" specifications.  We check that foo
    exists and that m1 and m2 have sane values (allowing that
@@ -2419,98 +2523,6 @@ parse_GMM_instrument_spec (int ci, const char *spec, const DATAINFO *pdinfo,
     } else {
 	*pd = d;
 	*pnspec = nspec;
-    }
-
-    return err;
-}
-
-/* This function is used on the first step (only), by both
-   arbond and dpanel. */
-
-static int dpd_invert_A_N (dpdinfo *dpd)
-{
-    int err = 0;
-
-    /* just in case */
-    gretl_matrix_xtr_symmetric(dpd->A);
-
-    /* make a backup in case the first attempt fails */
-    gretl_matrix_copy_values(dpd->Acpy, dpd->A);
-
-    /* first try straight inversion */
-    err = gretl_invert_symmetric_matrix(dpd->A);
-
-    if (err) {
-	/* try again, first reducing A based on its rank */
-	char *mask = NULL;
-
-	fprintf(stderr, "inverting dpd->A failed on first pass\n");
-
-	gretl_matrix_copy_values(dpd->A, dpd->Acpy); 
-	mask = gretl_matrix_rank_mask(dpd->A, &err);
-
-	if (!err) {
-	    err = gretl_matrix_cut_rows_cols(dpd->A, mask);
-	}
-
-	if (!err) {
-	    err = gretl_invert_symmetric_matrix(dpd->A);
-	    if (!err) {
-		/* OK, now register effects of reducing nz */
-		dpd_shrink_matrices(dpd, mask);
-	    } else {
-		fprintf(stderr, "inverting dpd->A failed on second pass\n");
-	    }
-	}
-
-	free(mask);
-    }
-
-#if ADEBUG
-    gretl_matrix_print(dpd->A, "A_N");
-#endif
-
-    return err;
-}
-
-static int dpd_step_1 (dpdinfo *dpd)
-{
-    int err;
-
-    /* invert A_N: we allow two attempts */
-    err = dpd_invert_A_N(dpd);
-
-    if (!err) {
-	/* construct additional moment matrices */
-	gretl_matrix_multiply(dpd->ZT, dpd->Y, dpd->ZY);
-	gretl_matrix_multiply_mod(dpd->X, GRETL_MOD_TRANSPOSE,
-				  dpd->ZT, GRETL_MOD_TRANSPOSE,
-				  dpd->XZ, GRETL_MOD_NONE);
-    }
-
-#if ADEBUG > 1
-    gretl_matrix_print(dpd->XZ, "XZ'");
-    gretl_matrix_print(dpd->ZY, "Z'Y");
-#endif
-
-    if (!err) {
-	err = dpd_beta_hat(dpd);
-    }
-
-    if (!err) {
-	if (dpd->ci == DPANEL) {
-	    dpanel_residuals(dpd);
-	} else {
-	    arbond_residuals(dpd);
-	}
-	err = dpd_variance_1(dpd);
-    }
-
-    if (!err && !(dpd->flags & DPD_TWOSTEP)) {
-	/* do the tests if we're not continuing */
-	dpd_ar_test(dpd);
-	dpd_sargan_test(dpd);
-	dpd_wald_test(dpd);
     }
 
     return err;

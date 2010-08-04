@@ -141,7 +141,7 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 
     ok = goodobs[0];
 
-    /* allow for differencing */
+    /* allow for differencing (but don't set ok < 0) */
     if (ok > 0) ok--;
 
     return ok;
@@ -159,7 +159,7 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
 /* Work through the array of block-diagonal instrument
    specifications. Discard any useless ones, trim the
    maxlag values to what is supported on the data,
-   and for each spec count and record the implied number 
+   and for each spec, count and record the implied number 
    of instrument rows that will appear in the Z matrix.
 */
 
@@ -197,6 +197,7 @@ static int block_instrument_count (dpdinfo *dpd)
 
     dpd->nzdiff = nrows;
     dpd->nz += dpd->nzdiff;
+
 #if DPDEBUG
     fprintf(stderr, "block_instrument_count, diffs: got %d rows (total = %d)\n", 
 	    dpd->nzdiff, dpd->nz);
@@ -207,7 +208,7 @@ static int block_instrument_count (dpdinfo *dpd)
     for (i=0; i<dpd->nzb2; i++) {
 	dpd->d2[i].rows = 0;
 	if (dpd->d2[i].minlag > maxlag) {
-	    /* this spec is altogether otiose */
+	    /* spec is no use */
 	    dpd->nzb2 -= 1;
 	    for (k=i; k<dpd->nzb2; k++) {
 		copy_diag_info(&dpd->d2[k], &dpd->d2[k+1]);
@@ -216,7 +217,7 @@ static int block_instrument_count (dpdinfo *dpd)
 	    continue;
 	} 
 	if (dpd->d2[i].maxlag > maxlag) {
-	    /* trim maxlag to what's feasible */
+	    /* trim maxlag */
 	    dpd->d2[i].maxlag = maxlag;
 	}
 	for (t=dpd->t1min; t<=dpd->t2max; t++) {
@@ -231,6 +232,7 @@ static int block_instrument_count (dpdinfo *dpd)
 
     dpd->nzlev = nrows;
     dpd->nz += dpd->nzlev;
+
 #if DPDEBUG
     fprintf(stderr, "block_instrument_count, levels: got %d rows (total = %d)\n", 
 	    dpd->nzlev, dpd->nz);
@@ -326,7 +328,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 }
 
 /* Based on the accounting of good observations for a unit recorded
-   in the @goodobs list, fill matrix D (which will be used to
+   in the @goodobs list, fill matrix D (which is used to
    construct H unless we're doing things "dpdstyle").
 */
 
@@ -361,6 +363,15 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
 #endif
 }
 
+static void build_unit_H_matrix (dpdinfo *dpd, int *goodobs, 
+				 gretl_matrix *D)
+{
+    build_unit_D_matrix(dpd, goodobs, D);
+    gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
+			      D, GRETL_MOD_NONE, 
+			      dpd->H, GRETL_MOD_NONE);
+}
+
 static void make_dpdstyle_H (gretl_matrix *H, int nd)
 {
     int i;
@@ -381,17 +392,6 @@ static void make_dpdstyle_H (gretl_matrix *H, int nd)
 #if DPDEBUG > 1
     gretl_matrix_print(H, "dpdstyle H");
 #endif
-}
-
-static void build_unit_H_matrix (dpdinfo *dpd, int *goodobs, 
-				 gretl_matrix *D)
-{
-    if (D != NULL) {
-	build_unit_D_matrix(dpd, goodobs, D);
-	gretl_matrix_multiply_mod(D, GRETL_MOD_TRANSPOSE, 
-				  D, GRETL_MOD_NONE, 
-				  dpd->H, GRETL_MOD_NONE);
-    } 
 }
 
 #define timedum_level(d,j,t) ((t == j + 1 + d->t1min)? 1 : 0)
@@ -535,7 +535,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
-/* note: this reduces to t1*(t1-1)/2  if maxinc does 
+/* note: this amounts to t1*(t1-1)/2 if maxinc does 
    not bind */
 
 static int row_increment (int t1, int maxinc)
@@ -665,8 +665,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     const int T = dpd->T;
     const double *x;
     double dx;
-    /* k2 marks the starting row for "regular" instruments in
-       the differences equations */
+    /* k2 is the starting row for "regular" instruments */
     int k2 = dpd->nzdiff + dpd->nzlev;
     /* k3 marks the starting row for time dummies */
     int k3 = k2 + dpd->nzr;
@@ -676,6 +675,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 
     gretl_matrix_zero(Zi);
 
+    /* avoid writing leading rows of zeros when p > 1 */
     row = 1 - dpd->p;
 
     /* GMM-style instruments in levels for diffs equations */
@@ -885,8 +885,10 @@ static void stack_unit_data (dpdinfo *dpd,
 }
 
 /* Main driver for system GMM: the core is a loop across
-   the panel units to build the moment matrices. At this
-   point we have already done the observations
+   the panel units to build the data and instrument matrices
+   and cumulate A = \sum_i Z_i H_i Z_i'.
+
+   At this point we have already done the observations
    accounts, which are recorded in the Goodobs lists.
 */
 
@@ -1106,7 +1108,7 @@ static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
 
     if (dpd->nzb2 > 0) {
 	/* henceforth dpd->nzb refers to the number of specs in
-	   differences */
+	   differences, not the total number */
 	dpd->nzb -= dpd->nzb2;
 	dpd->d2 = dpd->d + dpd->nzb;
 	dpd->flags |= DPD_SYSTEM; /* in case it's not present */

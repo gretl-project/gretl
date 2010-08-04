@@ -1346,13 +1346,19 @@ int gretl_matrix_cut_rows_cols (gretl_matrix *m, const char *mask)
     double x;
     int i, j, k, l, n;
 
-    if (m == NULL || mask == NULL || m->rows != m->cols) {
+    if (m == NULL || mask == NULL) {
 	return E_DATA;
-    }
+    } else if (m->rows != m->cols) {
+	return E_NONCONF;
+    } 
 
     n = count_unmasked_elements(mask, m->rows);
+    if (n == 0) {
+	gretl_matrix_reuse(m, 0, 0);
+	return 0;
+    }
 
-    /* allocate smaller temp matrix */
+    /* create smaller temporary matrix */
     tmp = gretl_matrix_alloc(n, n);
     if (tmp == NULL) {
 	return E_ALLOC;
