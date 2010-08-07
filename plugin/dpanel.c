@@ -858,10 +858,22 @@ static void stack_unit_data (dpdinfo *dpd,
     unit->nobs = (goodobs[0] > 0)? (goodobs[0] - 1) : 0;
 
     if (use_levels(dpd)) {
-	int k0 = dpd->T - dpd->p - 1;
+	/* the starting position for levels in the data arrays */
+	int k0 = dpd->t2max - dpd->t1min;
+
+	/* FIXME something is going wrong with levels when
+	   p > 1: the index k is going out of bounds for
+	   Yi, Xi and Zi
+	*/
 
 	for (i=1; i<=goodobs[0]; i++) {
-	    k = k0 + goodobs[i] - 1;
+	    k = k0 + goodobs[i] - dpd->p; /* note: was - 1 */
+	    if (k >= Yi->cols) {
+		fprintf(stderr, "*** stack_unit_data: reading off "
+			"end of Yi (k=%d, Yi->cols=%d)\n", k, Yi->cols);
+		fprintf(stderr, " at goodobs[%d] = %d\n", i, goodobs[i]);
+		continue;
+	    }
 	    gretl_vector_set(dpd->Y, s, Yi->val[k]);
 	    for (j=0; j<Xi->rows; j++) {
 		x = gretl_matrix_get(Xi, j, k);
@@ -932,8 +944,11 @@ static int do_units (dpdinfo *dpd, const double **Z,
     Yrow = 0;
 
 #if DPDEBUG
+    /* this should not be necessary if stack_unit_data() is
+       working correctly */
     gretl_matrix_zero(dpd->Y);
     gretl_matrix_zero(dpd->X);
+    gretl_matrix_zero(dpd->ZT);
 #endif
 
     for (i=0; i<dpd->N; i++) {
