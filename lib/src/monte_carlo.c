@@ -73,6 +73,7 @@ typedef struct {
     bigval *ssq;   /* running sum of squares */
     double *xbak;  /* previous values */
     int *diff;     /* indicator for difference */
+    char *na;      /* indicator for NAs in calculation */
 } LOOP_PRINT;  
 
 /* below: used only in "progressive" loops */ 
@@ -1420,6 +1421,7 @@ static void loop_print_free (LOOP_PRINT *lprn)
     free(lprn->list);
     free(lprn->xbak);
     free(lprn->diff);
+    free(lprn->na);
 }
 
 static void loop_print_zero (LOOP_PRINT *lprn)
@@ -1437,6 +1439,7 @@ static void loop_print_zero (LOOP_PRINT *lprn)
 #endif
 	lprn->xbak[i] = NADBL;
 	lprn->diff[i] = 0;
+	lprn->na[i] = 0;
     }
 }
 
@@ -1448,6 +1451,7 @@ static void loop_print_init (LOOP_PRINT *lprn, int lno)
     lprn->ssq = NULL;
     lprn->xbak = NULL;
     lprn->diff = NULL;
+    lprn->na = NULL;
 }
 
 /* allocate and initialize @lprn, based on the number of
@@ -1472,6 +1476,9 @@ static int loop_print_start (LOOP_PRINT *lprn, const int *list)
     lprn->diff = malloc(k * sizeof *lprn->diff);
     if (lprn->diff == NULL) goto cleanup;
 
+    lprn->na = malloc(k);
+    if (lprn->na == NULL) goto cleanup;
+
     loop_print_zero(lprn);
 
     return 0;
@@ -1483,6 +1490,7 @@ static int loop_print_start (LOOP_PRINT *lprn, const int *list)
     free(lprn->ssq);
     free(lprn->xbak);
     free(lprn->diff);
+    free(lprn->na);
 
     return 1;
 }
@@ -1805,7 +1813,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 }
 
 /* Update the LOOP_PRINT struct lprn using the current values from the
-   variables in list.  If this is the fist use we need to do some
+   variables in list.  If this is the first use we need to do some
    allocation first.
 */
 
@@ -1833,8 +1841,15 @@ static int loop_print_update (LOOP_PRINT *lprn,
 #endif
     
     for (j=0; j<list[0]; j++) {
+	if (lprn->na[j]) {
+	    continue;
+	}
 	vj = list[j+1];
 	x = gretl_scalar_get_value_by_index(vj);
+	if (na(x)) {
+	    lprn->na[j] = 1;
+	    continue;
+	}
 #ifdef ENABLE_GMP
 	mpf_set_d(m, x); 
 	mpf_add(lprn->sum[j], lprn->sum[j], m);
@@ -2125,7 +2140,7 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 #endif
 }
 
-static void print_loop_model (LOOP_MODEL *lmod, const DATAINFO *pdinfo, 
+static void loop_model_print (LOOP_MODEL *lmod, const DATAINFO *pdinfo, 
 			      PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
@@ -2157,8 +2172,8 @@ static void print_loop_model (LOOP_MODEL *lmod, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 }
 
-static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo, 
-			    PRN *prn)
+static void loop_print_print (LOOP_PRINT *lprn, const DATAINFO *pdinfo, 
+			      PRN *prn)
 {
     bigval mean, m, sd;
     int i, vi, n;
@@ -2182,6 +2197,11 @@ static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
     for (i=0; i<lprn->list[0]; i++) {
 	vi = lprn->list[i+1];
 	s = gretl_scalar_get_name(vi);
+	if (lprn->na[i]) {
+	    pprintf(prn, "%*s", VNAMELEN - 1, s);
+	    pprintf(prn, "%14s %14s\n", "NA   ", "NA   ");
+	    continue;
+	}
 	mpf_div_ui(mean, lprn->sum[i], (unsigned long) n);
 	if (lprn->diff[i] == 0) {
 	    mpf_set_d(sd, 0.0);
@@ -2207,6 +2227,11 @@ static void print_loop_prn (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
     for (i=0; i<lprn->list[0]; i++) {
 	vi = lprn->list[i+1];
 	s = gretl_scalar_get_name(vi);
+	if (lprn->na[i]) {
+	    pprintf(prn, "%*s", VNAMELEN - 1, s);
+	    pprintf(prn, "%14s %14s\n", "NA   ", "NA   ");
+	    continue;
+	}
 	mean = lprn->sum[i] / n;
 	if (lprn->diff[i] == 0) {
 	    sd = 0.0;
@@ -2296,11 +2321,11 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 
 	if (loop_is_progressive(loop)) {
 	    if (plain_model_ci(loop->ci[i]) && !(opt & OPT_Q)) {
-		print_loop_model(&loop->lmodels[j], pdinfo, prn);
+		loop_model_print(&loop->lmodels[j], pdinfo, prn);
 		loop_model_zero(&loop->lmodels[j]);
 		j++;
 	    } else if (loop->ci[i] == PRINT) {
-		print_loop_prn(&loop->prns[k], pdinfo, prn);
+		loop_print_print(&loop->prns[k], pdinfo, prn);
 		loop_print_zero(&loop->prns[k]);
 		k++;
 	    } else if (loop->ci[i] == STORE) {

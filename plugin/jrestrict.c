@@ -2896,6 +2896,11 @@ static int simann (Jwrap *J, gretlopt opt, PRN *prn)
     int improved = 0;
     int err = 0;
 
+    if (b == NULL) {
+	fprintf(stderr, "simann: J->theta = NULL\n");
+	return E_DATA;
+    }
+
     b0 = gretl_matrix_copy(b);
     b1 = gretl_matrix_copy(b);
     bstar = gretl_matrix_copy(b);
@@ -3050,8 +3055,8 @@ static int make_theta (Jwrap *J)
     }
 
     if (k == 0) {
-	/* can't happen */
-	return 0;
+	fprintf(stderr, "jrestrict: make_theta: k = 0\n");
+	return E_DATA;
     }
 
     J->theta = gretl_column_vector_alloc(k);
@@ -3164,6 +3169,11 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
     if (!err) {
 	err = vecm_id_check(J, jvar, prn);
+	if (J->df == 0) {
+	    fprintf(stderr, "warning: test df = 0\n");
+	    J->flags &= ~J_USE_LBFGS;
+	    do_simann = 0;
+	}
     }
 
     if (!err && J->blen == 0 && J->G == NULL) {
