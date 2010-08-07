@@ -861,11 +861,6 @@ static void stack_unit_data (dpdinfo *dpd,
 	/* the starting position for levels in the data arrays */
 	int k0 = dpd->t2max - dpd->t1min;
 
-	/* FIXME something is going wrong with levels when
-	   p > 1: the index k is going out of bounds for
-	   Yi, Xi and Zi
-	*/
-
 	for (i=1; i<=goodobs[0]; i++) {
 	    k = k0 + goodobs[i] - dpd->p; /* note: was - 1 */
 	    if (k >= Yi->cols) {
