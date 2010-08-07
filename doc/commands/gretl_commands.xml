@@ -7983,6 +7983,11 @@
 	end function
       </code>
       <para>
+	On successful completion of the <lit>restrict</lit> command
+	the accessors <lit>$test</lit> and <lit>$pvalue</lit> give the
+	test statistic and its p-value.
+      </para>
+      <para>
 	Note that some special considerations apply in the case of testing
 	restrictions on Vector Error Correction Models. Please see <guideref
 	targ="chap:vecm"/> for details.
