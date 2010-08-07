@@ -7123,7 +7123,7 @@ int do_store (char *filename, gretlopt opt)
 	if (fp != NULL) {
 	    fclose(fp);
 	    if (yes_no_dialog(_("gretl: save data"), 
-			      _("There is already a data file of this name.\n"
+			      _("There is already a file of this name.\n"
 				"OK to overwrite it?"), 
 			      0) == GRETL_NO) {
 		goto store_get_out;

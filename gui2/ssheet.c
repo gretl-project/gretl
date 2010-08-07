@@ -26,6 +26,7 @@
 #include "session.h"
 #include "winstack.h"
 #include "toolbar.h"
+#include "cmdstack.h"
 #include "usermat.h"
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
@@ -3227,7 +3228,7 @@ static int new_matrix_dialog (struct gui_matrix_spec *spec)
     return canceled;
 }
 
-static int matrix_from_list (selector *sr)
+static int gui_matrix_from_list (selector *sr)
 {
     struct gui_matrix_spec *s = selector_get_data(sr);
     const char *buf = selector_list(sr);
@@ -3256,6 +3257,25 @@ static int matrix_from_list (selector *sr)
 
     if (err) {
 	gui_errmsg(err);
+    } else {
+	/* record in command log */
+	PRN *prn = NULL;
+
+	if (bufopen(&prn) == 0) {
+	    int i;
+
+	    pprintf(prn, "matrix %s = {", s->name);
+	    for (i=1; i<=list[0]; i++) {
+		pprintf(prn, "%s", datainfo->varname[list[i]]);
+		if (i < list[0]) {
+		    pputc(prn, ',');
+		} else {
+		    pputc(prn, '}');
+		}
+	    }
+	    add_command_to_stack(gretl_print_get_buffer(prn));
+	    gretl_print_destroy(prn);
+	}	    
     }
 
     free(list);
@@ -3277,6 +3297,8 @@ matrix_from_formula (struct gui_matrix_spec *s)
 	s->m = get_matrix_by_name(s->name);
 	if (s->m == NULL) {
 	    err = 1;
+	} else {
+	    add_command_to_stack(genline);
 	}
     }
 
@@ -3386,7 +3408,7 @@ static void real_gui_new_matrix (gretl_matrix *m, const char *name)
 
     if (spec.uselist) {
 	/* matrix from listed vars */
-	simple_selection(_("Define matrix"), matrix_from_list, 
+	simple_selection(_("Define matrix"), gui_matrix_from_list, 
 			 DEFINE_MATRIX, &spec);
     } else if (spec.formula != NULL) {
 	/* matrix from genr-style formula */

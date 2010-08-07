@@ -172,6 +172,7 @@ enum file_ops {
     SAVE_BOOT_DATA,
     SAVE_MARKERS,
     SAVE_LABELS,
+    END_SAVE_OTHER, /* marker for end of other user-file saving */
     EDIT_FUNCTIONS,
     SET_PROG,
     SET_DIR,

@@ -453,6 +453,23 @@ static void maybe_set_fsel_status (int action, FselDataSrc src,
     }
 }
 
+static int overwrite_stop (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+
+    if (fp != NULL) {
+	fclose(fp);
+	if (yes_no_dialog(NULL, 
+			  _("There is already a file of this name.\n"
+			    "OK to overwrite it?"), 
+			  0) == GRETL_NO) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void
 file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 			      gpointer data)
@@ -512,6 +529,14 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 
     if (check_maybe_add_ext(fname, action, data)) {
 	return;
+    }
+
+    if (EXPORT_ACTION(action, src) || 
+	(action > END_SAVE_DATA && action < END_SAVE_OTHER)) {
+	/* saving CSV, graphs etc.; check overwrite */
+	if (overwrite_stop(fname)) {
+	    return;
+	}
     }
 
     if (action == SAVE_TEX) {
