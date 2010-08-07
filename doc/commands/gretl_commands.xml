@@ -7853,6 +7853,10 @@
 	  <flag>--bootstrap</flag>
 	  <effect>bootstrap the test if possible</effect>
 	</option>
+	<option>
+	  <flag>--full</flag>
+	  <effect>VECM-only option, see below</effect>
+	</option>
       </options>
     </usage>    
 
@@ -7990,7 +7994,11 @@
       <para>
 	Note that some special considerations apply in the case of testing
 	restrictions on Vector Error Correction Models. Please see <guideref
-	targ="chap:vecm"/> for details.
+	targ="chap:vecm"/> for details. When testing restrictions on a
+	VECM (only) the <opt>--full</opt> option can be used to set the
+	restricted system as the <quote>last model</quote> for the
+	purposes of further testing or the use of accessors such
+	as <lit>$coeff</lit>.
       </para>
     </description>
 
