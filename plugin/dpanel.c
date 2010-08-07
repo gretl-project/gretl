@@ -572,7 +572,8 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 	row = row0 + row_increment(t1, maxinc);
 	for (t=0; t<t1; t++) {
 	    k = t1 - t;
-	    if (k < maxlag && k >= minlag-1) {
+	    if (k < maxlag && t2 - t >= minlag) {
+		/* the criterion here needs some thought */
 		xt = x[s+t];
 		if (!na(xt)) {
 		    gretl_matrix_set(Zi, row, col, xt);
@@ -604,6 +605,7 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
 	for (t=lastdiff; t<t1; t++) {
 	    k = t1 - t;
 	    if (k <= maxlag && k >= minlag-1) {
+		/* the criterion here needs some thought */
 		x0 = (t < 1)? NADBL : x[s+t-1];
 		x1 = x[s+t];
 		if (!na(x1) && !na(x0)) {
