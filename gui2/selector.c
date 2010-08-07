@@ -4591,6 +4591,9 @@ static void build_selector_switches (selector *sr)
 			     G_CALLBACK(hc_config), sr);
 	    gtk_widget_set_sensitive(b2, using_hc_by_default());
 	    sensitize_conditional_on(b2, b1);
+	    if (model_opt & OPT_R) {
+		gtk_widget_set_sensitive(b2, TRUE);
+	    }
 	    gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
 	}
 
