@@ -19,6 +19,8 @@
 
 #define DPDEBUG 0
 
+static int row_increment (int t1, int maxinc);
+
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
    differences, per unit. Calculate SSR and \sigma^2 while
@@ -166,7 +168,7 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
 static int block_instrument_count (dpdinfo *dpd)
 {
     /* the greatest lag we can actually support */
-    int maxlag = dpd->t2max; /* - dpd->t1min; */
+    int maxlag = dpd->t2max;
     int nrows = 0;
     int i, k, t;
 
@@ -185,12 +187,22 @@ static int block_instrument_count (dpdinfo *dpd)
 	    /* trim maxlag to what's feasible */
 	    dpd->d[i].maxlag = maxlag;
 	}
+	
 	for (t=dpd->t1min; t<=dpd->t2max; t++) {
+	    /* FIXME the following limits?? */
+#if 1
 	    for (k=dpd->d[i].minlag; k<=dpd->d[i].maxlag; k++) {
+		/* excessive rows? */
+		dpd->d[i].rows += 1;
+	    }
+#else
+	    for (k=dpd->d[i].minlag-1; k<=dpd->d[i].maxlag; k++) {
+		/* not enough rows in some cases? */
 		if (t - k >= 0) {
 		    dpd->d[i].rows += 1;
 		}
 	    }
+#endif
 	}
 	nrows += dpd->d[i].rows;
     }
@@ -564,6 +576,11 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
     int i, k, t, n = goodobs[0] - 1;
     int t1, t2, col, row;
     double xt;
+
+#if DPDEBUG    
+    fprintf(stderr, "bnum=%d, maxlag=%d, minlag=%d, maxinc=%d\n",
+	    bnum, maxlag, minlag, maxinc);
+#endif
 
     for (i=0; i<n; i++) {
 	t1 = goodobs[i+1];
