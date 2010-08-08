@@ -2637,6 +2637,18 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     /* draw the label */
     gdk_draw_layout(plot->pixmap, plot->invert_gc, x, y, pl);
 
+#if 0
+    cairo_t *cr;
+
+    cr = gdk_cairo_create(plot->pixmap);
+    /* set the correct source color */
+    gdk_cairo_set_source_color(cr, &gtk_widget_get_style(widget)->text[state]);
+    /* draw the text */
+    cairo_move_to(cr, x, y);
+    pango_cairo_show_layout(cr, pl);
+    cairo_destroy(cr);   
+#endif
+
     /* show the modified pixmap */
     window = gtk_widget_get_window(plot->canvas);
     style = gtk_widget_get_style(plot->canvas);
@@ -3720,6 +3732,13 @@ static int render_pngfile (png_plot *plot, int view)
 		    style->fg_gc[GTK_STATE_NORMAL],
 		    pbuf, 0, 0, 0, 0, width, height,
 		    GDK_RGB_DITHER_NONE, 0, 0);
+
+#if 0
+    cairo_t *cr = gdk_cairo_create(plot->pixmap);
+    gdk_cairo_set_source_pixbuf(cr, pbuf, 0, 0);
+    cairo_paint(cr);
+    cairo_destroy(cr);
+#endif
 
     g_object_unref(pbuf);
     gretl_remove(pngname);
