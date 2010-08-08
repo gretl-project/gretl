@@ -18,8 +18,7 @@
  */
 
 #define DPDEBUG 0
-
-static int row_increment (int t1, int maxinc);
+#define IVDEBUG 0
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
@@ -158,6 +157,195 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
     targ->rows = src->rows;
 }
 
+/* diff_iv_accounts:
+
+   On input tmin should be the first available obs in levels;
+   tmax should be the second-last available obs in levels
+   (in each case, for any unit). These indices are based at 0
+   for the first period in the unit's data, and they 
+   represent the subtractive terms in the first and last
+   feasible observations in differences, respectively.
+
+   minlag and maxlag represent the minimum and maximum
+   lags that have been specified for the given instrument.
+   These lags are relative to the "base" of the differenced
+   observation, that is, the x_t from which x_{t-k} is
+   subtracted to foem a difference. With non-gappy data
+   k = 1 (the differences are x_t - x_{t-1}) but with
+   gappy data we may have k > 1 for some observations;
+   nonethless, we "impute" a difference-base index of
+   (the subtractive term's index + 1). This ensures
+   that we don't use level instruments that are entangled 
+   in the difference they are supposed to be instrumenting.
+*/
+
+int diff_iv_accounts (dpdinfo *dpd, int tmin, int tmax)
+{
+    int t, tbot, ttop;
+    int k, i, nrows = 0;
+
+    tbot = tmin + 1;
+    ttop = tmax + 1;
+
+#if IVDEBUG
+    fprintf(stderr, "*** diffs: tbot = %d, ttop = %d\n", tbot, ttop);
+#endif
+
+    for (i=0; i<dpd->nzb; i++) {
+	int minlag = dpd->d[i].minlag;
+	int maxlag = dpd->d[i].maxlag;
+	int usable_maxlag = 0;
+	int tbase = tmax + 2;
+	int ii, itot = 0;
+
+	dpd->d[i].rows = 0;
+
+#if IVDEBUG	
+	fprintf(stderr, "spec %d: minlag = %d, maxlag = %d\n", 
+		i, minlag, maxlag);
+#endif
+
+	/* find tbase = the 'base' of the first differenced observation 
+	   for which there can be any usable instruments */
+
+	for (t=tbot; t<=ttop; t++) {
+	    if (t - minlag >= 0) {
+		tbase = t;
+		break;
+	    }
+	}
+
+	if (tbase > ttop) {
+	    fprintf(stderr, " no usable instruments for this spec\n");
+	    dpd->nzb -= 1;
+	    for (k=i; k<dpd->nzb; k++) {
+		copy_diag_info(&dpd->d[k], &dpd->d[k+1]);
+	    }	    
+	    i--;
+	    continue;
+	}
+
+#if IVDEBUG
+	fprintf(stderr, " tbase = %d\n", tbase);
+#endif
+
+	/* step forward, cumulating in-principle usable instruments */
+	for (t=tbase; t<=ttop; t++) {
+	    ii = 0;
+	    for (k=minlag; k<=maxlag && t-k >= 0; k++) {
+		ii++;
+		if (k > usable_maxlag) {
+		    usable_maxlag = k;
+		}
+	    }
+#if IVDEBUG
+	    fprintf(stderr, "  ii = max insts at t=%d = %d\n", t, ii);
+#endif
+	    itot += ii;
+	}
+
+#if IVDEBUG    
+	fprintf(stderr, " total insts = %d\n", itot);
+	fprintf(stderr, " usable maxlag = %d\n", usable_maxlag);
+#endif
+
+	dpd->d[i].tbase = tbase;
+	dpd->d[i].rows = itot;
+	dpd->d[i].maxlag = usable_maxlag;
+	nrows += itot;
+    }
+
+    return nrows;
+}
+
+/* lev_iv_accounts:
+
+   On input tbot should be the first available obs in levels
+   and ttop should be the last available obs in levels
+   (in each case, for any unit). These indices are based at 0
+   for the first period in the unit's data.
+
+   minlag and maxlag represent the minimum and maximum
+   lags that have been specified for the given instrument.
+*/
+
+int lev_iv_accounts (dpdinfo *dpd, int tbot, int ttop)
+{
+    int i, t, k, nrows = 0;
+
+#if IVDEBUG    
+    fprintf(stderr, "*** levels: tbot = %d, ttop = %d\n", tbot, ttop);
+#endif
+
+    for (i=0; i<dpd->nzb2; i++) {
+	int minlag = dpd->d2[i].minlag;
+	int maxlag = dpd->d2[i].maxlag;
+	int usable_maxlag = 0;
+	int tbase = ttop + 1;
+	int ii, itot = 0;
+
+	dpd->d2[i].rows = 0;
+
+#if IVDEBUG  	
+	fprintf(stderr, "spec %d: minlag = %d, maxlag = %d\n", 
+		i, minlag, maxlag);
+#endif
+
+	/* find tbase = the first obs in levels for which there can 
+	   be any usable instruments; since these instruments are
+	   differences we need to go back one step beyond minlag
+	*/
+
+	for (t=tbot; t<=ttop; t++) {
+	    if (t - minlag - 1 >= 0) {
+		tbase = t;
+		break;
+	    }
+	}
+
+	if (tbase > ttop) {
+	    fprintf(stderr, " no usable instruments for this spec\n");
+	    dpd->nzb2 -= 1;
+	    for (k=i; k<dpd->nzb2; k++) {
+		copy_diag_info(&dpd->d2[k], &dpd->d2[k+1]);
+	    }	    
+	    i--;
+	    continue;
+	}
+
+#if IVDEBUG  
+	fprintf(stderr, " tbase = %d\n", tbase);
+#endif
+
+	/* step forward, cumulating in-principle usable instruments */
+	for (t=tbase; t<=ttop; t++) {
+	    ii = 0;
+	    for (k=minlag; k<=maxlag && t-k-1 >= 0; k++) {
+		ii++;
+		if (k > usable_maxlag) {
+		    usable_maxlag = k;
+		}
+	    }
+#if IVDEBUG
+	    fprintf(stderr, "  ii = max insts at t=%d = %d\n", t, ii);
+#endif
+	    itot += ii;
+	}
+
+#if IVDEBUG    
+	fprintf(stderr, " total insts = %d\n", itot);
+	fprintf(stderr, " usable maxlag = %d\n", usable_maxlag);
+#endif
+
+	dpd->d2[i].tbase = tbase;
+	dpd->d2[i].rows = itot;
+	dpd->d2[i].maxlag = usable_maxlag;
+	nrows += itot;
+    }
+
+    return nrows;
+}
+
 /* Work through the array of block-diagonal instrument
    specifications. Discard any useless ones, trim the
    maxlag values to what is supported on the data,
@@ -165,92 +353,33 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
    of instrument rows that will appear in the Z matrix.
 */
 
-static int block_instrument_count (dpdinfo *dpd)
+static int block_instrument_count (dpdinfo *dpd, int t1lev, int t2pen)
 {
-    /* the greatest lag we can actually support */
-    int maxlag = dpd->t2max;
-    int nrows = 0;
-    int i, k, t;
+    int nrows;
 
-    for (i=0; i<dpd->nzb; i++) {
-	dpd->d[i].rows = 0;
-	if (dpd->d[i].minlag > maxlag) {
-	    /* this spec is altogether otiose */
-	    dpd->nzb -= 1;
-	    for (k=i; k<dpd->nzb; k++) {
-		copy_diag_info(&dpd->d[k], &dpd->d[k+1]);
-	    }	    
-	    i--;
-	    continue;
-	} 
-	if (dpd->d[i].maxlag > maxlag) {
-	    /* trim maxlag to what's feasible */
-	    dpd->d[i].maxlag = maxlag;
-	}
-	
-	for (t=dpd->t1min; t<=dpd->t2max; t++) {
-	    /* FIXME the following limits?? */
-#if 1
-	    for (k=dpd->d[i].minlag; k<=dpd->d[i].maxlag; k++) {
-		/* excessive rows? */
-		dpd->d[i].rows += 1;
-	    }
-#else
-	    for (k=dpd->d[i].minlag-1; k<=dpd->d[i].maxlag; k++) {
-		/* not enough rows in some cases? */
-		if (t - k >= 0) {
-		    dpd->d[i].rows += 1;
-		}
-	    }
-#endif
-	}
-	nrows += dpd->d[i].rows;
-    }
-
+    nrows = diff_iv_accounts(dpd, t1lev, t2pen);
     dpd->nzdiff = nrows;
     dpd->nz += dpd->nzdiff;
 
-#if DPDEBUG
+#if IVDEBUG
     fprintf(stderr, "block_instrument_count, diffs: got %d rows (total = %d)\n", 
 	    dpd->nzdiff, dpd->nz);
 #endif
 
-    nrows = 0;
-
-    for (i=0; i<dpd->nzb2; i++) {
-	dpd->d2[i].rows = 0;
-	if (dpd->d2[i].minlag > maxlag) {
-	    /* spec is no use */
-	    dpd->nzb2 -= 1;
-	    for (k=i; k<dpd->nzb2; k++) {
-		copy_diag_info(&dpd->d2[k], &dpd->d2[k+1]);
-	    }	    
-	    i--;
-	    continue;
-	} 
-	if (dpd->d2[i].maxlag > maxlag) {
-	    /* trim maxlag */
-	    dpd->d2[i].maxlag = maxlag;
-	}
-	for (t=dpd->t1min; t<=dpd->t2max; t++) {
-	    for (k=dpd->d2[i].minlag; k<=dpd->d2[i].maxlag; k++) {
-		if (t - k >= 0) {
-		    dpd->d2[i].rows += 1;
-		}
-	    }
-	}
-	nrows += dpd->d2[i].rows;
+    if (use_levels(dpd)) {
+	nrows = lev_iv_accounts(dpd, dpd->t1min, dpd->t2max);
+	dpd->nzlev = nrows;
+	dpd->nz += dpd->nzlev;
+    } else {
+	nrows = 0;
     }
 
-    dpd->nzlev = nrows;
-    dpd->nz += dpd->nzlev;
-
-#if DPDEBUG
+#if IVDEBUG
     fprintf(stderr, "block_instrument_count, levels: got %d rows (total = %d)\n", 
 	    dpd->nzlev, dpd->nz);
-#endif
+#endif  
 
-    return nrows;
+    return 0;
 }
 
 /* We do this accounting first so that we know the sizes of the
@@ -261,6 +390,10 @@ static int block_instrument_count (dpdinfo *dpd)
 static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 				int **Goodobs)
 {
+    /* t1lev = index of first good obs in levels, and
+       t2pen = index of penultimate good obs in levels 
+    */
+    int t1lev = dpd->T, t2pen = 0;
     int gmin, i, t;
 
     /* just make sure these are zeroed */
@@ -301,8 +434,14 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    if (goodobs[gmin] < dpd->t1min) {
 		dpd->t1min = goodobs[gmin];
 	    }
+	    if (goodobs[1] < t1lev) {
+		t1lev = goodobs[1];
+	    }
 	    if (goodobs[gmax] > dpd->t2max) {
 		dpd->t2max = goodobs[gmax];
+	    }
+	    if (goodobs[gmax-1] > t2pen) {
+		t2pen = goodobs[gmax-1];
 	    }
 	}
     }
@@ -316,7 +455,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 
     if (dpd->nzb > 0) {
 	/* figure number of extra block-diagonal instruments */
-	block_instrument_count(dpd);
+	block_instrument_count(dpd, t1lev, t2pen);
     }
 
     /* figure the required number of columns for the Yi and Xi data
@@ -547,21 +686,20 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
-/* note: this amounts to t1*(t1-1)/2 if maxinc does 
-   not bind */
+/* note: this amounts to t1*(t1-1)/2 in the
+   straightforward case */
 
-static int row_increment (int t1, int maxinc)
+static int row_increment (diag_info *d, int t1)
 {
-    int t, i0 = 0, i1 = 0;
+    int t, k, r = 0;
 
-    for (t=0; t<t1; t++) {
-	i1 += i0;
-	if (i0 < maxinc) {
-	    i0++;
+    for (t=d->tbase; t<t1; t++) {
+	for (k=d->minlag; k<=d->maxlag && t-k >= 0; k++) {
+	    r++;
 	}
     }
 
-    return i1;
+    return r;
 }
 
 /* GMM-style instruments in levels for the eqns in differences */
@@ -572,25 +710,19 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 {
     int maxlag = dpd->d[bnum].maxlag;
     int minlag = dpd->d[bnum].minlag;
-    int maxinc = maxlag - minlag + 1;
-    int i, k, t, n = goodobs[0] - 1;
-    int t1, t2, col, row;
+    int i, k, t, t1, t2;
+    int col, row;
     double xt;
 
-#if DPDEBUG    
-    fprintf(stderr, "bnum=%d, maxlag=%d, minlag=%d, maxinc=%d\n",
-	    bnum, maxlag, minlag, maxinc);
-#endif
-
-    for (i=0; i<n; i++) {
-	t1 = goodobs[i+1];
-	t2 = goodobs[i+2];
+    for (i=1; i<goodobs[0]; i++) {
+	t1 = goodobs[i];
+	t2 = goodobs[i+1];
 	col = col0 + t2 - 1 - dpd->p;
-	row = row0 + row_increment(t1, maxinc);
+	row = row0 + row_increment(&dpd->d[bnum], t1+1);
 	for (t=0; t<t1; t++) {
 	    k = t1 - t;
 	    if (k < maxlag && t2 - t >= minlag) {
-		/* the criterion here needs some thought */
+		/* the criterion here needs some thought? */
 		xt = x[s+t];
 		if (!na(xt)) {
 		    gretl_matrix_set(Zi, row, col, xt);
@@ -611,19 +743,19 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
 {
     int maxlag = dpd->d2[bnum].maxlag;
     int minlag = dpd->d2[bnum].minlag;
-    int i, k, t, n = goodobs[0] - 1;
-    int lastdiff = 0;
-    int t1, col, row = row0;
+    int i, k, t, t1;
+    int lastdiff = 1; /* note: was 0 */
+    int col, row = row0;
     double x0, x1;
 
-    for (i=0; i<=n; i++) {
-	t1 = goodobs[i+1];
+    for (i=1; i<=goodobs[0]; i++) {
+	t1 = goodobs[i];
 	col = col0 + t1 - dpd->p;
 	for (t=lastdiff; t<t1; t++) {
 	    k = t1 - t;
 	    if (k <= maxlag && k >= minlag-1) {
-		/* the criterion here needs some thought */
-		x0 = (t < 1)? NADBL : x[s+t-1];
+		/* the criterion here needs some thought? */
+		x0 = x[s+t-1];
 		x1 = x[s+t];
 		if (!na(x1) && !na(x0)) {
 		    gretl_matrix_set(Zi, row, col, x1 - x0);
@@ -689,13 +821,9 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     /* k3 marks the starting row for time dummies */
     int k3 = k2 + dpd->nzr;
     int t0, t1, i0, i1;
-    int i, j, col, row;
-    int levels_col;
+    int i, j, col, row = 0;
 
     gretl_matrix_zero(Zi);
-
-    /* avoid writing leading rows of zeros when p > 1 */
-    row = 1 - dpd->p;
 
     /* GMM-style instruments in levels for diffs equations */
     for (i=0; i<dpd->nzb; i++) {
@@ -703,15 +831,13 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	row = gmm_inst_diff(dpd, i, x, t, goodobs, row, 0, Zi);	
     }
 
-    col = levels_col = dpd->t2max - dpd->t1min;
+    col = dpd->t2max - dpd->t1min;
 
     /* GMM-style instruments in diffs for levels equations */
     for (i=0; i<dpd->nzb2; i++) {
 	x = Z[dpd->d2[i].v];
 	row = gmm_inst_lev(dpd, i, x, t, goodobs, row, col, Zi);	
     }
-
-    col = 0;
 
     /* equations in differences: differenced exog vars */
     if (dpd->nzr > 0) {
@@ -745,8 +871,6 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 	}	
     }
-
-    col = levels_col;
 
     if (use_levels(dpd)) {
 	/* equations in levels: levels of exog vars */

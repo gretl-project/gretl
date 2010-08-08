@@ -55,6 +55,7 @@ struct diag_info_ {
     int maxlag;  /* maximum lag order */
     int level;   /* instrument spec is for levels */
     int rows;    /* max rows occupied in Zi (for dpanel) */
+    int tbase;   /* first obs with potentially available instruments */
 };
 
 struct dpdinfo_ {
