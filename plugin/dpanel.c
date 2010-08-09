@@ -17,8 +17,8 @@
  * 
  */
 
-#define DPDEBUG 1
-#define IVDEBUG 1
+#define DPDEBUG 0
+#define IVDEBUG 0
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
