@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-07-03 12:05-0400\n"
-"PO-Revision-Date: 2010-06-24 15:59+0300\n"
+"PO-Revision-Date: 2010-08-09 10:51+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -182,7 +182,7 @@ msgstr "Adım %d: %s için birim kök sınaması\n"
 #: lib/src/adf_kpss.c:1246
 #, c-format
 msgid "Step %d: cointegrating regression\n"
-msgstr "Adım %d: eştümleyen bağlanım\n"
+msgstr "Adım %d: eştümleşme bağlanımı\n"
 
 #: lib/src/adf_kpss.c:1283
 msgid ""
@@ -195,8 +195,8 @@ msgstr ""
 "\n"
 "Eğer:\n"
 "(a) Her bir değişken için birim kök varsayımı reddedilmezse ve\n"
-"(b) Eştümleyen bağlanım kalıntıları için birim kök önsavı reddedilirse\n"
-"Eştümlevleyen bir ilişkinin varlığı için elde delil var demektir.\n"
+"(b) Eştümleşme bağlanımı kalıntıları için birim kök önsavı reddedilirse\n"
+"bir eştümleşme ilişkisi varlığı için elde delil var demektir.\n"
 
 #: lib/src/bootstrap.c:406
 #, c-format
@@ -1564,9 +1564,8 @@ msgstr ""
 "\n"
 
 #: lib/src/describe.c:3836 lib/src/describe.c:3860
-#, fuzzy
 msgid "fractional integration"
-msgstr "Kesirli tümleme için GPH sınaması"
+msgstr "Kesirsel tümleşim"
 
 #: lib/src/describe.c:3841
 msgid "Local Whittle Estimator"
@@ -1574,12 +1573,11 @@ msgstr "Yerel Whittle tahmincisi"
 
 #: lib/src/describe.c:3842 lib/src/describe.c:3868
 msgid "Estimated degree of integration"
-msgstr "Tahmin edilen tümleme derecesi"
+msgstr "Tahmin edilen tümleşim derecesi"
 
 #: lib/src/describe.c:3867
-#, fuzzy
 msgid "GPH test"
-msgstr "J sınaması"
+msgstr "GPH sınaması"
 
 #: lib/src/describe.c:4133 lib/src/printout.c:1051 lib/src/printout.c:1052
 msgid "NA"
@@ -4214,11 +4212,11 @@ msgstr "Chow sınaması için genişletmeli bağlanım"
 
 #: lib/src/modelprint.c:650
 msgid "Cointegrating regression -- "
-msgstr "Eştümleyen bağlanım -- "
+msgstr "Eştümleşme bağlanımı -- "
 
 #: lib/src/modelprint.c:652
 msgid "Cointegrating regression - "
-msgstr "Eştümleyen bağlanım - "
+msgstr "Eştümleşme bağlanımı - "
 
 #: lib/src/modelprint.c:656
 msgid "Augmented Dickey--Fuller regression"
@@ -6352,19 +6350,16 @@ msgid "Equation system"
 msgstr "Denklem sistemi"
 
 #: lib/src/system.c:230
-#, fuzzy
 msgid "Endogenous variables:"
-msgstr "İçtürel değişkenler"
+msgstr "İçtürel değişkenler:"
 
 #: lib/src/system.c:240
-#, fuzzy
 msgid "Predetermined variables:"
-msgstr "zaman eğilimi değişkeni karesi"
+msgstr "Önbelirlemeli değişkenler:"
 
 #: lib/src/system.c:249
-#, fuzzy
 msgid "Exogenous variables:"
-msgstr "Dıştürel değişkenler"
+msgstr "Dıştürel değişkenler:"
 
 #: lib/src/system.c:800
 msgid "F test for the specified restrictions"
@@ -6441,7 +6436,7 @@ msgstr "belirleyen"
 
 #: lib/src/texprint.c:936 plugin/jrestrict.c:2793
 msgid "Cointegrating vectors"
-msgstr "Eştümleyen yöneyler"
+msgstr "Eştümleşme yöneyleri"
 
 #: lib/src/texprint.c:938 lib/src/texprint.c:994 lib/src/texprint.c:1529
 #: lib/src/varprint.c:618 lib/src/varprint.c:619 lib/src/varprint.c:676
@@ -6618,7 +6613,7 @@ msgstr "Durum 5: Sınırlamasız eğilim ve sabit terim"
 
 #: lib/src/varprint.c:615 lib/src/varprint.c:616
 msgid "cointegrating vectors"
-msgstr "eştümleyen yöneyler"
+msgstr "eştümleşme yöneyleri"
 
 #: lib/src/varprint.c:673 lib/src/varprint.c:674
 msgid "adjustment vectors"
@@ -6663,7 +6658,7 @@ msgstr "Sınırlamalı log-olabilirlik  (lr) = %.8g"
 
 #: lib/src/varprint.c:920
 msgid "Cointegration rank"
-msgstr "Eştümleme sırası"
+msgstr "Eştümleşim sırası"
 
 #: lib/src/varprint.c:951 lib/src/varprint.c:955 lib/src/varprint.c:959
 msgid "Portmanteau test"
@@ -6780,7 +6775,7 @@ msgid "Freed %s\n"
 msgstr "%s serbest bırakıldı\n"
 
 #: cli/gretlcli.c:86
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -6801,14 +6796,15 @@ msgstr ""
 "Komut satırından bir veri dosyası adı sağlayabilirsiniz.\n"
 "Seçenekler:\n"
 " -b veya --batch     Bir komut betiği işle ve çık.\n"
-" -r veya --run       Bir betik çalıştır ve denetimi komut satırına ver.\n"
+" -r veya --run       Bir betik çalıştırıp denetimi komut satırına ver.\n"
+"-m veya -makepkg   Bir betik çalıştır ve bundan bir paket oluştur.\n"
 " -h veya --help      Bu bilgiyi yaz ve çık.\n"
 " -v veya --version   Sürüm bilgisini yaz ve çık.\n"
 " -e veya --english   Çeviri yerine İngilizce kullanımını zorla.\n"
 " -q veya --quiet    Program bilgisini daha az ayrıntılı yaz.\n"
 "Batch kipi kullanımına örnek:\n"
 " gretlcli -b myfile.inp >myfile.out\n"
-"Run kipi kullanımına örnek:\n"
+"Çalıştırma kipi kullanımına örnek:\n"
 " gretlcli -r myfile.inp\n"
 
 #: cli/gretlcli.c:109
@@ -7541,7 +7537,7 @@ msgstr "Yeni değişken için formül giriniz:"
 
 #: gui2/callbacks.c:440 gui2/library.c:929
 msgid "gretl: cointegration test"
-msgstr "gretl: eştümleme sınaması"
+msgstr "gretl: eştümleşim sınaması"
 
 #: gui2/callbacks.c:442 gui2/selector.c:715
 msgid "gretl: VAR"
@@ -8693,14 +8689,12 @@ msgid "gretl: periodogram"
 msgstr "gretl: dönemçizit"
 
 #: gui2/dialogs.c:3835
-#, fuzzy
 msgid "Sample periodogram"
-msgstr "Örneklem _dönemçiziti"
+msgstr "Örneklem dönemçiziti"
 
 #: gui2/dialogs.c:3841
-#, fuzzy
 msgid "Bartlett window, bandwidth:"
-msgstr "Bartlett penceresi, uzunluk: %d"
+msgstr "Bartlett penceresi, uzunluk:"
 
 #: gui2/dialogs.c:4014
 msgid "Number of bins:"
@@ -10348,14 +10342,12 @@ msgid "_Correlogram"
 msgstr "_İlintiçizit"
 
 #: gui2/gretl.c:1541
-#, fuzzy
 msgid "_Periodogram"
-msgstr "Örneklem _dönemçiziti"
+msgstr "_Dönemçizit"
 
 #: gui2/gretl.c:1542
-#, fuzzy
 msgid "_Fractional integration"
-msgstr "Kesirli tümleme sınaması başarısız"
+msgstr "_Kesirsel tümleşim"
 
 #: gui2/gretl.c:1543
 msgid "_Augmented Dickey-Fuller test"
@@ -10503,7 +10495,7 @@ msgstr "YHDM (VECM)..."
 
 #: gui2/gretl.c:1589
 msgid "_Cointegration test"
-msgstr "_Eştümleme sınaması"
+msgstr "_Eştümleşim sınaması"
 
 #: gui2/gretl.c:1590
 msgid "_Engle-Granger..."
@@ -11267,9 +11259,8 @@ msgid "Residual _correlogram"
 msgstr "Kalıntı i_lintiçizit"
 
 #: gui2/gui_utils.c:2475
-#, fuzzy
 msgid "Residual _periodogram"
-msgstr "Kalıntı dönemçizit"
+msgstr "Kalıntı _dönemçiziti"
 
 #: gui2/gui_utils.c:2484
 msgid "Residual _Q-Q plot"
@@ -12030,9 +12021,8 @@ msgid "Maximum lag:"
 msgstr "Ençok gecikme:"
 
 #: gui2/library.c:4752
-#, fuzzy
 msgid "gretl: fractional integration"
-msgstr "Kesirli tümleme için GPH sınaması"
+msgstr "gretl: kesirsel tümleşim"
 
 #: gui2/library.c:4829 gui2/toolbar.c:463
 msgid "gretl: coefficient confidence intervals"
@@ -12093,7 +12083,7 @@ msgstr "En yüksek değeri atla"
 
 #: gui2/library.c:5013
 msgid "gretl: create dummy variables"
-msgstr "gretl: kukla değişken yarat"
+msgstr "gretl: kukla değişken oluştur"
 
 #: gui2/library.c:5014
 msgid "Encoding variables as dummies"
@@ -12105,7 +12095,7 @@ msgstr "gretl: gecikme oluştur"
 
 #: gui2/library.c:5038
 msgid "Number of lags to create:"
-msgstr "Üretilecek gecikme sayısı:"
+msgstr "Oluşturulacak gecikme sayısı:"
 
 #: gui2/library.c:5074
 msgid "No discrete variables were selected"
@@ -12384,9 +12374,8 @@ msgid "Boxplot"
 msgstr "Kutu çizimi"
 
 #: gui2/menustate.c:338 gui2/menustate.c:421
-#, fuzzy
 msgid "Periodogram"
-msgstr "Programlar"
+msgstr "Dönemçizit"
 
 #: gui2/menustate.c:340
 msgid "ARIMA model"
@@ -12766,7 +12755,7 @@ msgstr "Aralık bağlanımı"
 
 #: gui2/selector.c:3252
 msgid "Cointegration"
-msgstr "Eştümleme"
+msgstr "Eştümleşim"
 
 #: gui2/selector.c:3255
 msgid "Multiple precision OLS"
@@ -12858,7 +12847,7 @@ msgstr "gecikme derecesi:"
 
 #: gui2/selector.c:3639
 msgid "cointegration rank:"
-msgstr "Eştümleme sırası:"
+msgstr "eştümleşim sırası:"
 
 #: gui2/selector.c:3664
 msgid "maximum lag:"
@@ -14609,9 +14598,8 @@ msgstr ""
 "Lütfen bu değişkeni yeniden adlandırıp tekrar deneyiniz"
 
 #: plugin/import_common.c:36 plugin/ods_import.c:1217
-#, fuzzy
 msgid "No numeric data were found"
-msgstr "Bulunan gözlem yok"
+msgstr "Bulunan sayısal veriler yok"
 
 #: plugin/import_common.c:269 plugin/import_common.c:274
 #, c-format
@@ -14657,7 +14645,7 @@ msgstr "yeniden-normallemeli alfa"
 
 #: plugin/johansen.c:207
 msgid "beta (cointegrating vectors)"
-msgstr "beta (eştümleyen yöneyler)"
+msgstr "beta (eştümleşme yöneyleri)"
 
 #: plugin/johansen.c:208 plugin/jrestrict.c:2826
 msgid "alpha (adjustment vectors)"

@@ -1250,7 +1250,8 @@ msgstr "El conjunto de datos ha sido extendido en %d observaciones"
 msgid "Variable %s cannot be renumbered"
 msgstr "La variable '%s' no puede ser renumerada"
 
-#: lib/src/dataset.c:3203, c-format
+#: lib/src/dataset.c:3203
+#, c-format
 msgid "Target ID %d is not available"
 msgstr "El objetivo ID %d no está disponible"
 
@@ -6842,7 +6843,8 @@ msgstr ""
 msgid "Freed %s\n"
 msgstr "Liberado %s\n"
 
-#: cli/gretlcli.c:86, c-format
+#: cli/gretlcli.c:86
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
