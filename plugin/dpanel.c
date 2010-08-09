@@ -691,16 +691,43 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 
 static int row_increment (diag_info *d, int t1)
 {
+    int k1 = d->level ? 1 : 0;
     int t, k, r = 0;
 
     for (t=d->tbase; t<t1; t++) {
-	for (k=d->minlag; k<=d->maxlag && t-k >= 0; k++) {
+	for (k=d->minlag; k<=d->maxlag && t-k-k1 >= 0; k++) {
 	    r++;
 	}
     }
 
     return r;
 }
+
+#if IVDEBUG
+
+/* verify that we're not writing instrument values to rows of
+   the Z matrix that are incompatible with what was figured
+   out by block_instrument_count (see above).
+*/
+
+static int bad_write_check (dpdinfo *dpd, int row, int lev)
+{
+    if (!lev && row >= dpd->nzdiff) {
+	fprintf(stderr, "*** ERROR in gmm_inst_diff: writing to "
+		"bad row %d (max is %d)\n", row,
+		dpd->nzdiff - 1);
+	return 1;
+    } else if (lev && (row < dpd->nzdiff || row >= dpd->nzdiff + dpd->nzlev)) {
+	fprintf(stderr, "*** ERROR in gmm_inst_lev: writing to "
+		"bad row %d (min is %d, max is %d)\n", row,
+		dpd->nzdiff, dpd->nzdiff + dpd->nzlev - 1);
+	return 1;
+    }
+
+    return 0;
+}
+
+#endif
 
 /* GMM-style instruments in levels for the eqns in differences */
 
@@ -710,7 +737,7 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 {
     int maxlag = dpd->d[bnum].maxlag;
     int minlag = dpd->d[bnum].minlag;
-    int i, k, t, t1, t2;
+    int i, t, t1, t2;
     int col, row;
     double xt;
 
@@ -720,11 +747,13 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 	col = col0 + t2 - 1 - dpd->p;
 	row = row0 + row_increment(&dpd->d[bnum], t1+1);
 	for (t=0; t<t1; t++) {
-	    k = t1 - t;
-	    if (k < maxlag && t2 - t >= minlag) {
+	    if (t2 - t >= minlag && t1 - t < maxlag) {
 		/* the criterion here needs some thought? */
 		xt = x[s+t];
 		if (!na(xt)) {
+#if IVDEBUG
+		    bad_write_check(dpd, row, 0);
+#endif
 		    gretl_matrix_set(Zi, row, col, xt);
 		} 
 		row++;
@@ -735,9 +764,49 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
     return row0 + dpd->d[bnum].rows;
 }
 
+/* GMM-style instruments in differences for the eqns in levels */
+
+static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x, 
+			 int s, int *goodobs, int row0, int col0, 
+			 gretl_matrix *Zi)
+{
+    int maxlag = dpd->d2[bnum].maxlag;
+    int minlag = dpd->d2[bnum].minlag;
+    int i, k, t, t1;
+    int col, row;
+    double x0, x1;
+
+    for (i=1; i<=goodobs[0]; i++) {
+	t1 = goodobs[i];
+	col = col0 + t1 - dpd->p;
+	row = row0 + row_increment(&dpd->d2[bnum], t1);
+	for (t=1; t<t1; t++) {
+	    k = t1 - t;
+	    if (k <= maxlag && k >= minlag) {
+		x0 = x[s+t-1];
+		x1 = x[s+t];
+		if (!na(x1) && !na(x0)) {
+#if IVDEBUG
+		    bad_write_check(dpd, row, 1);
+#endif
+		    gretl_matrix_set(Zi, row, col, x1 - x0);
+		} 
+		row++;
+	    } 
+	}
+    }
+
+    return row0 + dpd->d2[bnum].rows;
+}
+
+#if 0
+
 /* GMM-style instruments in differences for the eqns in levels.
-   Handling of row numbers is not right in the general case
-   where p may be > 1 and instrument lags limited.
+   In think that handling of row numbers is not right in the 
+   general case where p may be > 1 and instrument lags limited.
+
+   Keeping this older version around for comparison, for the
+   moment. AC 2010-08-09
 */
  
 static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,  
@@ -772,6 +841,8 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
 
     return row0 + dpd->d2[bnum].rows;
 }
+
+#endif /* 0 */
 
 /* Build the matrix of per-unit instrument values in @Zi, which
    has the instruments in rows and the observations in columns.
@@ -909,6 +980,10 @@ static int trim_zero_inst (dpdinfo *dpd)
     char *mask;
     int err = 0;
 
+#if DPDEBUG
+    fprintf(stderr, "before trimming, order of A = %d\n", dpd->A->rows);
+#endif
+
 #if WRITE_MATRICES
     gretl_matrix_write_as_text(dpd->A, "dpd-bigA.mat");
 #endif
@@ -923,13 +998,16 @@ static int trim_zero_inst (dpdinfo *dpd)
 	free(mask);
     }
 
+#if DPDEBUG
+    /* Ox/DPD comparability */
+    gretl_matrix_divide_by_scalar(dpd->A, 2.0);
+    gretl_matrix_print(dpd->A, "dpd->A, after trim_zero_inst");
+    gretl_matrix_multiply_by_scalar(dpd->A, 2.0);
+#endif
+
     if (!err) {
 	gretl_matrix_divide_by_scalar(dpd->A, dpd->effN);
     }
-
-#if DPDEBUG
-    gretl_matrix_print(dpd->A, "dpd->A, after trim_zero_inst");
-#endif
 
     return err;
 }
@@ -1049,6 +1127,9 @@ static void stack_unit_data (dpdinfo *dpd,
 static int do_units (dpdinfo *dpd, const double **Z, 
 		     int **Goodobs)
 {
+#if DPDEBUG
+    char ystr[16];
+#endif
     gretl_matrix *D = NULL;
     gretl_matrix *Yi = NULL;
     gretl_matrix *Xi = NULL;
@@ -1107,11 +1188,9 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	build_X(dpd, goodobs, Z, t, Xi);
 	build_Z(dpd, goodobs, Z, t, Zi);
 #if DPDEBUG
-	gretl_matrix_print(Yi, "do_units: Yi");
+	sprintf(ystr, "do_units: Y_%d", i);
+	gretl_matrix_print(Yi, ystr);
 	gretl_matrix_print(Xi, "do_units: Xi");
-	gretl_matrix_print(Zi, "do_units: Zi");
-#endif
-#if 0
 	gretl_matrix_print(Zi, "do_units: Zi");
 #endif
 	if (D != NULL) {
