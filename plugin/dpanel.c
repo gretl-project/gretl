@@ -17,8 +17,8 @@
  * 
  */
 
-#define DPDEBUG 0
-#define IVDEBUG 0
+#define DPDEBUG 1
+#define IVDEBUG 1
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
@@ -416,7 +416,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	int Ti = check_unit_obs(dpd, goodobs, Z, t);
 	int gmax = goodobs[0];
 
-#if DPDEBUG
+#if DPDEBUG > 1
 	fprintf(stderr, "unit %d: Ti = %d\n", i+1, Ti);
 #endif
 	if (Ti > 0) {
@@ -735,7 +735,10 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
     return row0 + dpd->d[bnum].rows;
 }
 
-/* GMM-style instruments in differences for the eqns in levels */
+/* GMM-style instruments in differences for the eqns in levels.
+   Handling of row numbers is not right in the general case
+   where p may be > 1 and instrument lags limited.
+*/
  
 static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,  
 			 int s, int *goodobs, int row0, int col0, 
@@ -744,7 +747,9 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
     int maxlag = dpd->d2[bnum].maxlag;
     int minlag = dpd->d2[bnum].minlag;
     int i, k, t, t1;
-    int lastdiff = 1; /* note: was 0 */
+    /* note: lastdiff seems to have a dependency on p,
+       but exactly how that works is unclear */
+    int lastdiff = 1; /* was 0 */
     int col, row = row0;
     double x0, x1;
 
@@ -753,15 +758,14 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
 	col = col0 + t1 - dpd->p;
 	for (t=lastdiff; t<t1; t++) {
 	    k = t1 - t;
-	    if (k <= maxlag && k >= minlag-1) {
-		/* the criterion here needs some thought? */
+	    if (k <= maxlag && k >= minlag) {
 		x0 = x[s+t-1];
 		x1 = x[s+t];
 		if (!na(x1) && !na(x0)) {
 		    gretl_matrix_set(Zi, row, col, x1 - x0);
 		}
 	    }
-	    row++;
+	    row++; /* not always right? */
 	}
 	lastdiff = t;
     }
