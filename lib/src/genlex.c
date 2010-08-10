@@ -209,6 +209,7 @@ struct str_table funcs[] = {
     { F_PSD,      "psd" },       /* panel std dev */
     { F_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
     { F_BKFILT,   "bkfilt" },    /* Baxter-King filter */
+    { F_BWFILT,   "bwfilt" },    /* Butterworth filter */
     { F_FRACDIFF, "fracdiff" },  /* fractional difference */
     { F_BOXCOX,   "boxcox" },    /* Box-Cox transformation */
     { F_COV,      "cov" },

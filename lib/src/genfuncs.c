@@ -1242,6 +1242,330 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
     return err;
 }
 
+#define Max(x,y) (((x) > (y))? (x) : (y))
+#define Min(x,y) (((x) > (y))? (y) : (x))
+#define Sign(x)  (((x) < 0)? -1 : 1)
+
+static double safe_pow (double x, int n)
+{
+    double lp;
+
+    x = fabs(x);
+
+    if (x < 1e-35) {
+	return 0.0;
+    } else {
+	lp = n * log(x);
+	if (lp < -80) {
+	    return 0.0;
+	} else if (lp > 80) {
+	    return exp(80.0);
+	} else {
+	    return exp(lp);
+	}
+    }
+}
+
+/* This function uses a Cholesky decomposition to find the solution of
+   the equation Gx = y, where G is a symmetric Toeplitz matrix of order
+   T with q supra-diagonal and q sub-diagonal bands. The coefficients of
+   G are contained in g. The RHS vector y contains the elements of
+   the solution vector x on completion.
+*/
+
+static int symm_toeplitz (double *g, double *y, int T, int q)
+{
+    int t, j, k, jmax;
+    double **mu;
+    double m0;
+
+    mu = doubles_array_new(q+1, T);
+    if (mu == NULL) {
+	return E_ALLOC;
+    }
+
+    /* factorize */
+    for (t = 0; t < q; t++) {
+	for (j = t + 1; j <= q; j++) {
+	    mu[j][t] = 0.0;
+	}
+    }
+
+    for (t = 0; t < T; t++) { 
+	for (k = Min(q, t); k >= 0; k--) {
+	    mu[k][t] = g[k];
+	    jmax = q - k;
+	    for (j = 1; j <= jmax; j++) {
+		m0 = (t-k-j < 0)? 1 : mu[0][t-k-j];
+		mu[k][t] -= mu[j][t-k] * mu[j+k][t] * m0;
+	    }
+	    if (k > 0) {
+		mu[k][t] /= mu[0][t-k];
+	    }
+	}
+    }
+
+    /* forward solve */
+    for (t = 0; t < T; t++) {
+	jmax = Min(t, q);
+	for (j = 1; j <= jmax; j++) {
+	    y[t] -= mu[j][t] * y[t-j];
+	}
+    }
+
+    /* divide by the diagonal */
+    for (t = 0; t < T; t++) {
+	y[t] /= mu[0][t];
+    }
+
+    /* backsolve */
+    for (t = T-1; t >= 0; t--) {
+	jmax = Min(q, T - 1 - t);
+	for (j = 1; j <= jmax; j++) {
+	    y[t] -= mu[j][t+j] * y[t+j];
+	}
+    }
+
+    doubles_array_free(mu, q+1);
+
+    return 0;
+}
+
+/* Form the autocovariances of an MA process of order q. */
+
+static void form_gamma (double *g, double *mu, int q)
+{
+    int j, k;
+
+    for (j = 0; j <= q; j++) { 
+	g[j] = 0.0;
+	for (k = 0; k <= q - j; k++) {
+	    g[j] += mu[k] * mu[k+j];
+	}
+    }
+}
+
+/* Find the coefficients of the nth power of the summation 
+   operator (if sign = 1) or of the difference operator (if
+   sign = -1).
+*/
+
+static void sum_or_diff (double *theta, int n, int sign)
+{
+    int j, q;
+
+    theta[0] = 1.0;
+
+    for (q = 1; q <= n; q++) { 
+	theta[q] = 0.0;
+	for (j = q; j > 0; j--) {
+	    theta[j] += sign * theta[j-1];
+	}
+    } 
+} 
+
+/* g is the target, mu is used as workspace for the
+   summation coefficients */
+
+static void form_mvec (double *g, double *mu, int n)
+{
+    sum_or_diff(mu, n, 1);
+    form_gamma(g, mu, n);
+}
+
+/* g is the target, mu is used as workspace for the
+   differencing coefficients */
+
+static void form_svec (double *g, double *mu, int n)
+{
+    sum_or_diff(mu, n, -1);
+    form_gamma(g, mu, n);
+}
+
+/* g is the target, mu and tmp are used as workspace */
+
+static void form_wvec (double *g, double *mu, double *tmp,
+		       int n, double lam1, double lam2)
+{
+    int i;
+
+    /* svec = Q'SQ where Q is the 2nd-diff operator */
+
+    form_svec(tmp, mu, n);
+    for (i = 0; i <= n; i++) {
+	g[i] = lam1 * tmp[i];
+    }
+
+    form_mvec(tmp, mu, n);
+    for (i = 0; i <= n; i++) {
+	g[i] += lam2 * tmp[i];
+    }
+}
+
+/* Find the second differences of the elements of a vector.
+   Notice that the first two elements of the vector are lost 
+   in the process. However, we index the leading element of 
+   the differenced vector by t = 0.
+*/
+
+static void QprimeY (double *y, int T)
+{
+    int t;
+
+    for (t = 0; t < T-2; t++) {
+	y[t] += y[t+2] - 2 * y[t+1];
+    }
+}
+
+/* Premultiply vector y by a symmetric banded Toeplitz matrix 
+   Gamma with n nonzero sub-diagonal bands and n nonzero 
+   supra-diagonal bands. The elements of Gamma are contained
+   in g; tmp is used as workspace.
+*/
+
+static void GammaY (double *g, double *y, double *tmp, 
+		    int T, int n)
+{
+    double lx, rx;
+    int i, t, j;
+
+    for (i = 0; i <= n; i++) {
+	tmp[i] = 0.0;
+    }
+
+    for (t = 0; t < T; t++) {
+	for (i = n; i > 0; i--) {
+	    tmp[i] = tmp[i-1];
+	}
+	tmp[0] = g[0] * y[t];
+	for (j = 1; j <= n; j++) {
+	    if (t - j < 0) {
+		lx = 0.0;
+	    } else {
+		lx = y[t-j];
+	    }
+	    if (t + j >= T) {
+		rx = 0.0;
+	    } else {
+		rx = y[t+j];
+	    }
+	    tmp[0] += g[j] * (lx + rx);
+	}
+	if (t >= n) {
+	    y[t-n] = tmp[n];
+	}
+    }
+
+    for (j = 0; j < n; j++) {
+	y[T-j-1] = tmp[j];
+    }
+}
+
+/* Multiply the vector y of T-2 elements by matrix Q of order 
+   T times T-2, where Q' is the matrix which finds the second 
+   differences of a vector.  
+*/
+
+static void form_Qy (double *y, int T)
+{
+    double tmp, lag1 = 0.0, lag2 = 0.0;
+    int t;
+
+    for (t = 0; t < T-2; t++) { 
+	tmp = y[t];
+	y[t] += lag2 - 2 * lag1;
+	lag2 = lag1;
+	lag1 = tmp;
+    }
+
+    y[T-2] = lag2 - 2 * lag1;
+    y[T-1] = lag1;
+}
+
+/**
+ * butterworth_filter:
+ * @x: array of original data.
+ * @bw: array into which to write the filtered series.
+ * @pdinfo: data set information.
+ * @order: desired lag order.
+ * @cutoff: desired angular cutoff (0, 180).
+ *
+ * Calculates the Butterworth filter.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
+			int order, int cutoff)
+{
+    double *g, *ds, *tmp, *y;
+    double lam1, lam2 = 1.0;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int T, t, m, n = order;
+    int err = 0;
+
+    err = array_adjust_t1t2(x, &t1, &t2);
+    if (err) {
+	return err;
+    } 
+
+    if (2 * n >= t2 - t1) {
+	gretl_errmsg_set("Insufficient observations");
+	return E_DATA;
+    }
+
+    if (cutoff <= 0 || cutoff >= 180) {
+	return E_INVARG;
+    }
+
+    T = t2 - t1 + 1;
+    m = 3 * (n+1);
+
+    /* the workspace we need for everything except the
+       Toeplitz solver */
+    g = malloc(m * sizeof *g);
+    if (g == NULL) {
+	return E_ALLOC;
+    }
+
+    ds = g + n + 1;
+    tmp = ds + n + 1;
+
+    lam1 = 1 / tan(cutoff / 2);
+    lam1 = safe_pow(lam1, n * 2);
+
+    if (lam1 > 1.0) {
+	lam2 = 1 / lam1;
+	lam1 = 1.0;
+    }
+
+    /* sample offset */
+    y = bw + t1;
+
+    /* place a copy of the data in y */
+    memcpy(y, x + t1, T * sizeof *y);
+
+    form_wvec(g, ds, tmp, n, lam1, lam2); /* W = M + lambda * Q'SQ */
+    QprimeY(y, T);
+
+    /* solve (M + lambda*Q'SQ)x = d for x */
+    err = symm_toeplitz(g, y, T-2, n);
+
+    if (!err) {
+	form_Qy(y, T);
+	form_svec(g, ds, n-2);
+	GammaY(g, y, tmp, T, n-2);   /* Form SQg */
+	/* write the cycle/residual into y */
+	for (t = 0; t < T; t++) {
+	    y[t] *= lam1;
+	}	
+    }
+
+    free(g);
+
+    return err;
+}
+
 static int n_new_dummies (const DATAINFO *pdinfo,
 			  int nunits, int nperiods)
 {

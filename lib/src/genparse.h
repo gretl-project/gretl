@@ -323,6 +323,7 @@ enum {
     F_KDENSITY,
     F_HASHSET,
     F_SETNOTE,
+    F_BWFILT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

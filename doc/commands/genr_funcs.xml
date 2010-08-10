@@ -889,6 +889,26 @@
       </description>
     </function>
 
+    <function name="bwfilt" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="scalar">order</fnarg>
+	<fnarg type="scalar">cutoff</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the result from application of the Butterworth
+	  filter to the series <argname>y</argname>. 
+	  FIXME write description.
+	  See <cite key="pollock97">Pollock (1997)</cite> for details.
+	  <seelist>
+	    <fncref targ="bkfilt"/>
+	    <fncref targ="hpfilt"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="cdemean" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>

@@ -71,6 +71,9 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo, 
 		 int bkl, int bku, int k);
 
+int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
+			int order, int cutoff);
+
 int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 
 int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt);

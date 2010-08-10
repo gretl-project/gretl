@@ -5576,11 +5576,36 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 						    r->v.str, p);
 	    }
 	}
-    }
+    } else if (f == F_BWFILT) {
+	gretl_matrix *tmp = NULL;
+
+	if (l->t != VEC) {
+	    if (l->t == MAT) {
+		cast_to_series(l, f, &tmp, p);
+	    } else {
+		node_type_error(f, 1, VEC, l, p);
+	    }
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != NUM) {
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    ret = aux_vec_node(p, p->dinfo->n);
+	    if (!p->err) {
+		p->err = butterworth_filter(l->v.xvec, ret->v.xvec, p->dinfo,
+					    m->v.xval, r->v.xval);
+	    }
+	}
+
+	if (tmp != NULL) {
+	    l->v.m = tmp;
+	}
+    }	
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
-	f != F_HASHSET && f != F_SETNOTE) {
+	f != F_HASHSET && f != F_SETNOTE &&
+	f != F_BWFILT) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -7757,6 +7782,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_KDENSITY:
     case F_HASHSET:
     case F_SETNOTE:
+    case F_BWFILT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
