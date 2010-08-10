@@ -9324,9 +9324,14 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_TYPES;
 	} 
     } else if (p->targ == VEC) {
-	/* error if result is matrix of wrong dim */
-	if ((r->t == MAT && !series_compatible(r->v.m, p->dinfo)) ||
-	    r->t == LIST) {
+	/* result must be scalar, series, or conformable matrix */
+	if (r->t == NUM || r->t == VEC) {
+	    ; /* OK */
+	} else if (r->t == MAT) {
+	    if (!series_compatible(r->v.m, p->dinfo)) {
+		p->err = E_TYPES;
+	    }
+	} else {
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == MAT) {
