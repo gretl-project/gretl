@@ -1242,10 +1242,6 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
     return err;
 }
 
-#define Max(x,y) (((x) > (y))? (x) : (y))
-#define Min(x,y) (((x) > (y))? (y) : (x))
-#define Sign(x)  (((x) < 0)? -1 : 1)
-
 static double safe_pow (double x, int n)
 {
     double lp;
@@ -1266,6 +1262,8 @@ static double safe_pow (double x, int n)
     }
 }
 
+#define Min(x,y) (((x) > (y))? (y) : (x))
+
 /* This function uses a Cholesky decomposition to find the solution of
    the equation Gx = y, where G is a symmetric Toeplitz matrix of order
    T with q supra-diagonal and q sub-diagonal bands. The coefficients of
@@ -1285,17 +1283,17 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
     }
 
     /* factorize */
-    for (t = 0; t < q; t++) {
-	for (j = t + 1; j <= q; j++) {
+    for (t=0; t<q; t++) {
+	for (j=t+1; j<=q; j++) {
 	    mu[j][t] = 0.0;
 	}
     }
 
-    for (t = 0; t < T; t++) { 
-	for (k = Min(q, t); k >= 0; k--) {
+    for (t=0; t<T; t++) { 
+	for (k=Min(q, t); k>=0; k--) {
 	    mu[k][t] = g[k];
 	    jmax = q - k;
-	    for (j = 1; j <= jmax; j++) {
+	    for (j=1; j<=jmax; j++) {
 		m0 = (t-k-j < 0)? 1 : mu[0][t-k-j];
 		mu[k][t] -= mu[j][t-k] * mu[j+k][t] * m0;
 	    }
@@ -1306,22 +1304,22 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
     }
 
     /* forward solve */
-    for (t = 0; t < T; t++) {
+    for (t=0; t<T; t++) {
 	jmax = Min(t, q);
-	for (j = 1; j <= jmax; j++) {
+	for (j=1; j<=jmax; j++) {
 	    y[t] -= mu[j][t] * y[t-j];
 	}
     }
 
     /* divide by the diagonal */
-    for (t = 0; t < T; t++) {
+    for (t=0; t<T; t++) {
 	y[t] /= mu[0][t];
     }
 
     /* backsolve */
-    for (t = T-1; t >= 0; t--) {
+    for (t=T-1; t>=0; t--) {
 	jmax = Min(q, T - 1 - t);
-	for (j = 1; j <= jmax; j++) {
+	for (j=1; j<=jmax; j++) {
 	    y[t] -= mu[j][t+j] * y[t+j];
 	}
     }
@@ -1331,15 +1329,17 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
     return 0;
 }
 
+#undef Min
+
 /* Form the autocovariances of an MA process of order q. */
 
 static void form_gamma (double *g, double *mu, int q)
 {
     int j, k;
 
-    for (j = 0; j <= q; j++) { 
+    for (j=0; j<=q; j++) { 
 	g[j] = 0.0;
-	for (k = 0; k <= q - j; k++) {
+	for (k=0; k<=q-j; k++) {
 	    g[j] += mu[k] * mu[k+j];
 	}
     }
@@ -1356,9 +1356,9 @@ static void sum_or_diff (double *theta, int n, int sign)
 
     theta[0] = 1.0;
 
-    for (q = 1; q <= n; q++) { 
+    for (q=1; q<=n; q++) { 
 	theta[q] = 0.0;
-	for (j = q; j > 0; j--) {
+	for (j=q; j>0; j--) {
 	    theta[j] += sign * theta[j-1];
 	}
     } 
@@ -1392,12 +1392,12 @@ static void form_wvec (double *g, double *mu, double *tmp,
     /* svec = Q'SQ where Q is the 2nd-diff operator */
 
     form_svec(tmp, mu, n);
-    for (i = 0; i <= n; i++) {
+    for (i=0; i<=n; i++) {
 	g[i] = lam1 * tmp[i];
     }
 
     form_mvec(tmp, mu, n);
-    for (i = 0; i <= n; i++) {
+    for (i=0; i<=n; i++) {
 	g[i] += lam2 * tmp[i];
     }
 }
@@ -1412,7 +1412,7 @@ static void QprimeY (double *y, int T)
 {
     int t;
 
-    for (t = 0; t < T-2; t++) {
+    for (t=0; t<T-2; t++) {
 	y[t] += y[t+2] - 2 * y[t+1];
     }
 }
@@ -1427,28 +1427,20 @@ static void GammaY (double *g, double *y, double *tmp,
 		    int T, int n)
 {
     double lx, rx;
-    int i, t, j;
+    int t, j;
 
-    for (i = 0; i <= n; i++) {
-	tmp[i] = 0.0;
+    for (j=0; j<=n; j++) {
+	tmp[j] = 0.0;
     }
 
-    for (t = 0; t < T; t++) {
-	for (i = n; i > 0; i--) {
-	    tmp[i] = tmp[i-1];
+    for (t=0; t<T; t++) {
+	for (j=n; j>0; j--) {
+	    tmp[j] = tmp[j-1];
 	}
 	tmp[0] = g[0] * y[t];
-	for (j = 1; j <= n; j++) {
-	    if (t - j < 0) {
-		lx = 0.0;
-	    } else {
-		lx = y[t-j];
-	    }
-	    if (t + j >= T) {
-		rx = 0.0;
-	    } else {
-		rx = y[t+j];
-	    }
+	for (j=1; j<=n; j++) {
+	    lx = (t - j < 0)? 0 : y[t-j];
+	    rx = (t + j >= T)? 0 : y[t+j];
 	    tmp[0] += g[j] * (lx + rx);
 	}
 	if (t >= n) {
@@ -1456,13 +1448,13 @@ static void GammaY (double *g, double *y, double *tmp,
 	}
     }
 
-    for (j = 0; j < n; j++) {
+    for (j=0; j<n; j++) {
 	y[T-j-1] = tmp[j];
     }
 }
 
-/* Multiply the vector y of T-2 elements by matrix Q of order 
-   T times T-2, where Q' is the matrix which finds the second 
+/* Multiply the vector y by matrix Q of order T times T-2, 
+   where Q' is the matrix which finds the second 
    differences of a vector.  
 */
 
@@ -1471,7 +1463,7 @@ static void form_Qy (double *y, int T)
     double tmp, lag1 = 0.0, lag2 = 0.0;
     int t;
 
-    for (t = 0; t < T-2; t++) { 
+    for (t=0; t<T-2; t++) { 
 	tmp = y[t];
 	y[t] += lag2 - 2 * lag1;
 	lag2 = lag1;
@@ -1556,7 +1548,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	form_svec(g, ds, n-2);
 	GammaY(g, y, tmp, T, n-2);   /* Form SQg */
 	/* write the cycle/residual into y */
-	for (t = 0; t < T; t++) {
+	for (t=0; t<T; t++) {
 	    y[t] *= lam1;
 	}	
     }
