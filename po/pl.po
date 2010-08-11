@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-07-03 12:05-0400\n"
-"PO-Revision-Date: 2010-06-24 03:30-0400\n"
+"PO-Revision-Date: 2010-08-11 02:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1574,9 +1574,8 @@ msgstr ""
 "\n"
 
 #: lib/src/describe.c:3836 lib/src/describe.c:3860
-#, fuzzy
 msgid "fractional integration"
-msgstr "Test GPH (Geweke'a, Portera-Hudaka) na ułamkowy rząd integracji"
+msgstr "ułamkowy rząd integracji"
 
 #: lib/src/describe.c:3841
 msgid "Local Whittle Estimator"
@@ -1587,9 +1586,8 @@ msgid "Estimated degree of integration"
 msgstr "Estymowany ułamkowy rząd integracji"
 
 #: lib/src/describe.c:3867
-#, fuzzy
 msgid "GPH test"
-msgstr "Test J"
+msgstr "Test GPH (Geweke'a, Portera-Hudaka)"
 
 #: lib/src/describe.c:4133 lib/src/printout.c:1051 lib/src/printout.c:1052
 msgid "NA"
@@ -6377,19 +6375,16 @@ msgid "Equation system"
 msgstr "System równań"
 
 #: lib/src/system.c:230
-#, fuzzy
 msgid "Endogenous variables:"
-msgstr "Zmienne endogeniczne"
+msgstr "Zmienne endogeniczne:"
 
 #: lib/src/system.c:240
-#, fuzzy
 msgid "Predetermined variables:"
-msgstr "kwadrat zmiennej czasowej t"
+msgstr "Zmienne deterministyczne:"
 
 #: lib/src/system.c:249
-#, fuzzy
 msgid "Exogenous variables:"
-msgstr "Zmienne egzogeniczne"
+msgstr "Zmienne egzogeniczne:"
 
 #: lib/src/system.c:800
 msgid "F test for the specified restrictions"
@@ -6810,7 +6805,7 @@ msgid "Freed %s\n"
 msgstr "Uwolniono (freed) %s\n"
 
 #: cli/gretlcli.c:86
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -6835,6 +6830,7 @@ msgstr ""
 " -h lub --help     Wyświetlenie tej pomocy i wyjście.\n"
 " -v lub --version  Wyświetlenie wersji i wyjście.\n"
 " -e lub --english  Uruchomienie GRETLa w wersji angielskiej.\n"
+" -q lub --quiet    Drukuje tylko ograniczoną informację"
 "Przykład użycia w trybie batch:\n"
 " gretlcli -b mojplik.inp >mojplik.out\n"
 "Przykład użycia w trybie wykonania:\n"
@@ -8721,14 +8717,12 @@ msgid "gretl: periodogram"
 msgstr "gretl: periodogram"
 
 #: gui2/dialogs.c:3835
-#, fuzzy
 msgid "Sample periodogram"
-msgstr "_periodogram"
+msgstr "Periodogram"
 
 #: gui2/dialogs.c:3841
-#, fuzzy
 msgid "Bartlett window, bandwidth:"
-msgstr "wagi Bartletta długości %d"
+msgstr "Spektrum, wagi-okna Bartletta długości:"
 
 #: gui2/dialogs.c:4014
 msgid "Number of bins:"
@@ -10376,14 +10370,12 @@ msgid "_Correlogram"
 msgstr "_Korelogram"
 
 #: gui2/gretl.c:1541
-#, fuzzy
 msgid "_Periodogram"
-msgstr "_periodogram"
+msgstr "_Periodogram - spektrum"
 
 #: gui2/gretl.c:1542
-#, fuzzy
 msgid "_Fractional integration"
-msgstr "Błąd oszacowania testu ułamkowego rzędu integracji"
+msgstr "Testy _ułamkowego rzędu integracji"
 
 #: gui2/gretl.c:1543
 msgid "_Augmented Dickey-Fuller test"
@@ -11252,7 +11244,7 @@ msgstr "_R-kwadrat"
 
 #: gui2/gui_utils.c:2220
 msgid "_T*R-squared"
-msgstr "_T*R-kwadrat"
+msgstr "T*R-_kwadrat"
 
 #: gui2/gui_utils.c:2224
 msgid "_Log likelihood"
@@ -11300,9 +11292,8 @@ msgid "Residual _correlogram"
 msgstr "Korelogram procesu resztowego"
 
 #: gui2/gui_utils.c:2475
-#, fuzzy
 msgid "Residual _periodogram"
-msgstr "Periodogram dla procesu resztowego"
+msgstr "Periodogram-spektrum procesu resztowego"
 
 #: gui2/gui_utils.c:2484
 msgid "Residual _Q-Q plot"
@@ -12063,9 +12054,8 @@ msgid "Maximum lag:"
 msgstr "Maksymalne opóźnienie:"
 
 #: gui2/library.c:4752
-#, fuzzy
 msgid "gretl: fractional integration"
-msgstr "Test GPH (Geweke'a, Portera-Hudaka) na ułamkowy rząd integracji"
+msgstr "Testy na ułamkowy rząd integracji"
 
 #: gui2/library.c:4829 gui2/toolbar.c:463
 msgid "gretl: coefficient confidence intervals"
@@ -12417,9 +12407,8 @@ msgid "Boxplot"
 msgstr "Wykres pudełkowy"
 
 #: gui2/menustate.c:338 gui2/menustate.c:421
-#, fuzzy
 msgid "Periodogram"
-msgstr "Programy"
+msgstr "Periodogram-spektrum"
 
 #: gui2/menustate.c:340
 msgid "ARIMA model"
@@ -14646,9 +14635,8 @@ msgstr ""
 "Zmień nazwę zmiennej i spróbuj ponownie"
 
 #: plugin/import_common.c:36 plugin/ods_import.c:1217
-#, fuzzy
 msgid "No numeric data were found"
-msgstr "Nie znaleziono żadnych obserwacji"
+msgstr "Nie znaleziono numerycznych danych"
 
 #: plugin/import_common.c:269 plugin/import_common.c:274
 #, c-format
@@ -15262,30 +15250,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "quarters"
-#~ msgstr "kwartały"
-
-#~ msgid "months"
-#~ msgstr "miesiące"
-
-#~ msgid "years"
-#~ msgstr "lata"
-
-#~ msgid "_Spectrum"
-#~ msgstr "_Spektrum"
-
-#~ msgid "_Bartlett lag window"
-#~ msgstr "wagi _Bartletta"
-
-#~ msgid "Residual _spectrum"
-#~ msgstr "Spektrum procesu resztowego"
-
-#~ msgid "Bandwidth:"
-#~ msgstr "szerokość okna:"
-
-#~ msgid "Spectrum"
-#~ msgstr "Spektrum (periodogram)"
-
-#~ msgid "Not ready for variable labels"
-#~ msgstr "Nie otrzymano żadnych zmiennych"
