@@ -316,6 +316,9 @@ int winfork (char *cmdline, const char *dir,
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = wshow;
 
+    /* FIXME set HIGH_PRIORITY, also CREATE_NO_WINDOW
+       where appropriate */
+
     /* zero return means failure */
     ok = CreateProcess(NULL, cmdline, 
 		       NULL, NULL, FALSE,
@@ -759,18 +762,39 @@ char *slash_convert (char *str, int which)
     return str;
 }
 
+static int try_for_R_path (HKEY tree, char *s)
+{
+    char version[8], path[32];
+    int err = 0;
+
+    err = read_reg_val(tree, "R-core\\R", "InstallPath", s);
+    if (err) {
+	err = read_reg_val(tree, "R-core\\R", "Current Version", 
+			   version);
+	if (!err) {
+	    strcpy(path, "R-core\\R\\");
+	    strcat(path, version);
+	    err = read_reg_val(tree, path, "InstallPath", s);
+	}
+    }
+
+    if (err) {
+	err = read_reg_val(tree, "R", "InstallPath", s);
+    }
+
+    return err;
+}
+
 int R_path_from_registry (char *s, int which)
 {
     int err;
 
     *s = '\0';
 
-    /* FIXME for R 2.11; also error message if not paths not found */
-
-    err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", s);
+    err = try_for_R_path(HKEY_LOCAL_MACHINE, s);
 
     if (err) {
-	err = read_reg_val(HKEY_LOCAL_MACHINE, "R", "InstallPath", s);
+	err = try_for_R_path(HKEY_CURRENT_USER, s);
     }
 
     if (!err) {
