@@ -2570,8 +2570,9 @@ static void cairo_selection_rectangle (png_plot *plot,
     cairo_stroke(plot->cr);
 }
 
-static void copy_state_to_pixmap (png_plot *plot, GdkWindow *window)
+static void copy_state_to_pixmap (png_plot *plot)
 {
+    GdkWindow *window = gtk_widget_get_window(plot->canvas);
     cairo_t *cr;
 
     if (plot->savemap != NULL) {
@@ -2620,7 +2621,6 @@ static void redraw_plot_full (png_plot *plot)
 
 static void draw_selection_box (png_plot *plot, int x, int y)
 {
-    GdkWindow *window = gtk_widget_get_window(plot->canvas);
     GdkRectangle r;
 
     r.x = MIN(plot->screen_x0, x);
@@ -2635,7 +2635,7 @@ static void draw_selection_box (png_plot *plot, int x, int y)
 	gdk_cairo_set_source_pixmap(plot->cr, plot->savemap, 0, 0);
 	cairo_paint(plot->cr);
     } else {
-	copy_state_to_pixmap(plot, window);
+	copy_state_to_pixmap(plot);
     }
 
     /* draw the new temporary box */
@@ -3838,6 +3838,11 @@ static int render_pngfile (png_plot *plot, int view)
 	    plot->status ^= PLOT_ZOOMED;
 	}
     }
+
+#ifdef G_OS_WIN32
+    /* somehow the plot can end up underneath */
+    gtk_window_present(GTK_WINDOW(plot->shell));
+#endif
 
     return 0;
 }

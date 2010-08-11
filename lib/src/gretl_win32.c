@@ -765,6 +765,8 @@ int R_path_from_registry (char *s, int which)
 
     *s = '\0';
 
+    /* FIXME for R 2.11; also error message if not paths not found */
+
     err = read_reg_val(HKEY_LOCAL_MACHINE, "R-core\\R", "InstallPath", s);
 
     if (err) {
