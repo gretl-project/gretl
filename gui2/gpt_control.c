@@ -41,7 +41,7 @@
 # include "gretlwin32.h"
 #endif
 
-#if 0 && (GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 8) /* not yet */
+#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 8
 # define USE_CAIRO
 #endif
 
@@ -121,7 +121,7 @@ struct png_plot_t {
     GdkPixmap *pixmap;
 #ifdef USE_CAIRO
     cairo_t *cr;
-    GdkPixbuf *pixbuf;
+    GdkPixmap *savemap;
 #else
     GdkGC *invert_gc;
 #endif
@@ -137,7 +137,7 @@ struct png_plot_t {
     guint cid;
     double zoom_xmin, zoom_xmax;
     double zoom_ymin, zoom_ymax;
-    int screen_xmin, screen_ymin;
+    int screen_x0, screen_y0; /* to define selection */
     unsigned long status; 
     unsigned char format;
 };
@@ -2549,16 +2549,6 @@ static void x_to_date (double x, int pd, char *str)
 
 #ifdef USE_CAIRO
 
-static void cairo_outline_rectangle (cairo_t *cr, GdkRectangle *r)
-{
-    cairo_move_to(cr, r->x, r->y);
-    cairo_line_to(cr, r->x, r->y + r->height);
-    cairo_line_to(cr, r->x + r->width, r->y + r->height);
-    cairo_line_to(cr, r->x + r->width, r->y);
-    cairo_line_to(cr, r->x, r->y);
-    cairo_stroke(cr);
-}
-
 static void redraw_plot_full (png_plot *plot)
 {
     GdkWindow *window = gtk_widget_get_window(plot->canvas);
@@ -2567,6 +2557,33 @@ static void redraw_plot_full (png_plot *plot)
     };
 
     gdk_window_invalidate_rect(window, &r, FALSE);  
+}
+
+static void cairo_selection_rectangle (png_plot *plot,
+				       GdkRectangle *r)
+{
+    cairo_move_to(plot->cr, r->x, r->y);
+    cairo_line_to(plot->cr, r->x, r->y + r->height);
+    cairo_line_to(plot->cr, r->x + r->width, r->y + r->height);
+    cairo_line_to(plot->cr, r->x + r->width, r->y);
+    cairo_close_path(plot->cr);
+    cairo_stroke(plot->cr);
+}
+
+static void copy_state_to_pixmap (png_plot *plot, GdkWindow *window)
+{
+    cairo_t *cr;
+
+    if (plot->savemap != NULL) {
+	g_object_unref(plot->savemap);
+    }    
+
+    plot->savemap = gdk_pixmap_new(window, plot->pixel_width, 
+				   plot->pixel_height, -1);
+    cr = gdk_cairo_create(plot->savemap);
+    gdk_cairo_set_source_pixmap(cr, plot->pixmap, 0, 0);
+    cairo_paint(cr);
+    cairo_destroy(cr); 
 }
 
 #else
@@ -2595,28 +2612,36 @@ static void redraw_plot_full (png_plot *plot)
 
 #endif
 
-static void draw_selection_rectangle (png_plot *plot,
-				      int x, int y)
+/* Note that the screen coordinates as of the last mouse
+   button press are recorded in plot->screen_x0 and
+   plot->screen_y0. These represent the constant corner of
+   the box that should be drawn.
+*/
+
+static void draw_selection_box (png_plot *plot, int x, int y)
 {
-    GdkWindow *window;
+    GdkWindow *window = gtk_widget_get_window(plot->canvas);
     GdkRectangle r;
 
-    r.x = (plot->screen_xmin < x)? plot->screen_xmin : x;
-    r.y = (plot->screen_ymin < y)? plot->screen_ymin : y;
-    r.width = x - plot->screen_xmin;
-    r.height = y - plot->screen_ymin;
-
-    if (r.width < 0) r.width = -r.width;
-    if (r.height < 0) r.height = -r.height; 
-
-    window = gtk_widget_get_window(plot->canvas);
+    r.x = MIN(plot->screen_x0, x);
+    r.y = MIN(plot->screen_y0, y);
+    r.width = abs(x - plot->screen_x0);
+    r.height = abs(y - plot->screen_y0);
 
 #ifdef USE_CAIRO
     plot->cr = gdk_cairo_create(plot->pixmap);
-    cairo_outline_rectangle(plot->cr, &r);
-    gdk_window_invalidate_rect(window, &r, FALSE);
-    /* FIXME erase rectangle */
-    cairo_destroy(plot->cr);
+    if (plot->savemap != NULL) {
+	/* restore state prior to zoom start */
+	gdk_cairo_set_source_pixmap(plot->cr, plot->savemap, 0, 0);
+	cairo_paint(plot->cr);
+    } else {
+	copy_state_to_pixmap(plot, window);
+    }
+
+    /* draw the new temporary box */
+    cairo_set_source_rgba(plot->cr, 0.3, 0.3, 0.3, 0.3);
+    cairo_selection_rectangle(plot, &r);
+    redraw_plot_full(plot);
 #else
     /* draw one time to make the rectangle appear */
     gdk_draw_rectangle(plot->pixmap,
@@ -2883,7 +2908,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 	}
 
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
-	    draw_selection_rectangle(plot, x, y);
+	    draw_selection_box(plot, x, y);
 	}
     }
 
@@ -3575,8 +3600,8 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     if (plot_is_zooming(plot)) {
 	if (get_data_xy(plot, event->x, event->y, 
 			&plot->zoom_xmin, &plot->zoom_ymin)) {
-	    plot->screen_xmin = event->x;
-	    plot->screen_ymin = event->y;
+	    plot->screen_x0 = event->x;
+	    plot->screen_y0 = event->y;
 	}
 	return TRUE;
     }
@@ -3650,16 +3675,14 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 		  gpointer data)
 {
     GdkWindow *window = gtk_widget_get_window(widget);
-    GdkPixmap *pixmap = data;
+    png_plot *plot = data;
 
 #ifdef USE_CAIRO
-    cairo_t *cr;
-
-    cr = gdk_cairo_create(window);
-    gdk_cairo_set_source_pixmap(cr, pixmap, 0, 0);
-    gdk_cairo_rectangle(cr, &event->area);
-    cairo_fill(cr);
-    cairo_destroy(cr);
+    plot->cr = gdk_cairo_create(window);
+    gdk_cairo_set_source_pixmap(plot->cr, plot->pixmap, 0, 0);
+    gdk_cairo_rectangle(plot->cr, &event->area);
+    cairo_fill(plot->cr);
+    cairo_destroy(plot->cr);
 #else
     GtkStyle *style = gtk_widget_get_style(widget);
 
@@ -3670,7 +3693,7 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
        the on-screen GdkWindow */
     gdk_draw_drawable(window,
 		      style->fg_gc[GTK_STATE_NORMAL],
-		      pixmap,
+		      plot->pixmap,
 		      event->area.x, event->area.y,
 		      event->area.x, event->area.y,
 		      event->area.width, event->area.height);
@@ -3791,19 +3814,19 @@ static int render_pngfile (png_plot *plot, int view)
     gdk_cairo_set_source_pixbuf(plot->cr, pbuf, 0, 0);
     cairo_paint(plot->cr);
     cairo_destroy(plot->cr);
-    if (plot->pixbuf != NULL) {
-	g_object_unref(plot->pixbuf);
+    if (plot->savemap != NULL) {
+	g_object_unref(plot->savemap);
+	plot->savemap = NULL;
     }
-    plot->pixbuf = pbuf;
 #else
     style = gtk_widget_get_style(plot->canvas);
     gdk_draw_pixbuf(plot->pixmap, 
 		    style->fg_gc[GTK_STATE_NORMAL],
 		    pbuf, 0, 0, 0, 0, width, height,
 		    GDK_RGB_DITHER_NONE, 0, 0);
-    g_object_unref(pbuf);
 #endif
 
+    g_object_unref(pbuf);
     gretl_remove(pngname);
    
     if (view != PNG_START) { 
@@ -3859,8 +3882,8 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     plotspec_destroy(plot->spec);
 
 #ifdef USE_CAIRO
-    if (plot->pixbuf != NULL) {
-	g_object_unref(plot->pixbuf);
+    if (plot->savemap != NULL) {
+	g_object_unref(plot->savemap);
     }
 #else
     if (plot->invert_gc != NULL) {
@@ -4201,7 +4224,7 @@ static png_plot *png_plot_new (void)
     plot->pixmap = NULL;
 #ifdef USE_CAIRO
     plot->cr = NULL;
-    plot->pixbuf = NULL;
+    plot->savemap = NULL;
 #else
     plot->invert_gc = NULL;
 #endif
@@ -4217,8 +4240,7 @@ static png_plot *png_plot_new (void)
 
     plot->zoom_xmin = plot->zoom_xmax = 0.0;
     plot->zoom_ymin = plot->zoom_ymax = 0.0;
-    plot->screen_xmin = plot->screen_ymin = 0;
-
+    plot->screen_x0 = plot->screen_y0 = 0;
     plot->pd = 0;
     plot->err = 0;
     plot->cid = 0;
@@ -4458,7 +4480,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 				  plot->pixel_width, plot->pixel_height, 
 				  -1);
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
-		     G_CALLBACK(plot_expose), plot->pixmap);
+		     G_CALLBACK(plot_expose), plot);
 
 #ifdef PLOT_SPEED
     fprintf(stderr, "calling render_pngfile: %g\n", gretl_stopwatch());
