@@ -101,7 +101,6 @@ char **make_var_name_list (int *pn)
 
 void output_emacs_block (void)
 {
-    const char *s;
     char **strs;
     int nopts;
     int i, n;
@@ -188,7 +187,6 @@ void output_emacs_block (void)
 
 void output_lang2_file (void)
 {
-    const char *s;
     char **strs;
     int nopts;
     int i, n;
@@ -313,7 +311,6 @@ void output_lang2_file (void)
 
 void output_lang1_file (void)
 {
-    const char *s;
     char **strs;
     int nopts;
     int i, n;

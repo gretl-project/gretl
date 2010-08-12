@@ -1754,6 +1754,24 @@ const char *gretl_x12_arima_dir (void)
 
 const char *gretl_rbin_path (void)
 {
+#ifdef WIN32
+    /* avoid using a stale value saved to .gretl2rc */
+    static int checked;
+
+    if (!checked) {
+	char tmp[MAX_PATH];
+	int err;
+
+	err = R_path_from_registry(tmp, RTERM);
+
+	if (!err) {
+	    paths.rbinpath[0] = '\0';
+	    strncat(paths.rbinpath, tmp, MAXLEN - 1);
+	}	
+	checked = 1;
+    }
+#endif
+
     return paths.rbinpath;
 }
 
