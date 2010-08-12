@@ -336,6 +336,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 		       &si, &pi);
 
     if (!ok) {
+	fprintf(stderr, "win_run_sync: failed command:\n%s\n", cmdline);
 	win_copy_last_error();
 	err = 1;
     } else {
@@ -347,6 +348,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 		err = 1;
 	    }
 	} else {
+	    fprintf(stderr, "win_run_sync: no exit code:\n%s\n", cmdline);
 	    win_copy_last_error();
 	    err = 1;
 	}
