@@ -301,29 +301,38 @@ void win_copy_last_error (void)
     LocalFree(buf);
 }
 
-int winfork (char *cmdline, const char *dir, 
-	     int wshow, DWORD flags)
+/* covers the cases of (a) execing a console application
+   as "slave" (without opening a console window) and (b)
+   execing a GUI app (in fact, just wgnuplot.exe) as slave
+*/
+
+static int real_win_run_sync (char *cmdline, const char *currdir,
+			      int console_app) 
 {
     STARTUPINFO si;
     PROCESS_INFORMATION pi; 
     DWORD exitcode;
+    DWORD flags;
     int ok, err = 0;
 
     ZeroMemory(&si, sizeof si);
     ZeroMemory(&pi, sizeof pi);  
 
     si.cb = sizeof si;
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = wshow;
 
-    /* FIXME set HIGH_PRIORITY, also CREATE_NO_WINDOW
-       where appropriate */
+    if (console_app) {
+	flags = CREATE_NO_WINDOW | HIGH_PRIORITY_CLASS;
+    } else {
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_SHOWMINIMIZED;
+	flags = HIGH_PRIORITY_CLASS;
+    }
 
     /* zero return means failure */
     ok = CreateProcess(NULL, cmdline, 
 		       NULL, NULL, FALSE,
 		       flags,
-		       NULL, dir,
+		       NULL, currdir,
 		       &si, &pi);
 
     if (!ok) {
@@ -349,9 +358,28 @@ int winfork (char *cmdline, const char *dir,
     return err;
 }
 
+/**
+ * win_run_sync:
+ * @cmdline: command line to execute.
+ * @currdir: current directory for child process (or NULL to
+ * inherit from parent)
+ *
+ * Run a command synchronously (i.e. block until it is
+ * completed) under MS Windows. This is intended for use
+ * with "slave" console applications such a latex, dvips,
+ * tramo, x12a and so on.
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int win_run_sync (char *cmdline, const char *currdir) 
+{
+    return real_win_run_sync(cmdline, NULL, 1);
+}
+
 int gretl_spawn (char *cmdline)
 {
-    return winfork(cmdline, NULL, SW_SHOWMINIMIZED, 0);
+    return real_win_run_sync(cmdline, NULL, 0);
 }
 
 /* Retrieve various special paths from the bowels of MS
@@ -764,26 +792,40 @@ char *slash_convert (char *str, int which)
 
 static int try_for_R_path (HKEY tree, char *s)
 {
-    char version[8], path[32];
     int err = 0;
 
+    /* this used to work with R 2.9.1 */
     err = read_reg_val(tree, "R-core\\R", "InstallPath", s);
+
     if (err) {
+	char version[8], path[32];
+
+	/* new-style: path contains R version number */
 	err = read_reg_val(tree, "R-core\\R", "Current Version", 
 			   version);
 	if (!err) {
-	    strcpy(path, "R-core\\R\\");
-	    strcat(path, version);
+	    sprintf(path, "R-core\\R\\%s", version);
 	    err = read_reg_val(tree, path, "InstallPath", s);
 	}
     }
 
     if (err) {
+	/* did this variant work at one time? */
 	err = read_reg_val(tree, "R", "InstallPath", s);
     }
 
     return err;
 }
+
+/* See if we can get the R installation path from the Windows
+   registry. This is not a sure thing, since at least as of R
+   2.11.1 recording the path in the registry on installation
+   is an optional thing.
+
+   To complicate matters, the path within the registry where
+   we might find this information changed somewhere between
+   R 2.9.1 and R 2.11.1.
+*/
 
 int R_path_from_registry (char *s, int which)
 {
@@ -794,6 +836,7 @@ int R_path_from_registry (char *s, int which)
     err = try_for_R_path(HKEY_LOCAL_MACHINE, s);
 
     if (err) {
+	/* maybe user is not an admin? */
 	err = try_for_R_path(HKEY_CURRENT_USER, s);
     }
 

@@ -490,7 +490,7 @@ int dvips_compile (char *texshort)
     }
 
     sprintf(tmp, "\"%s\" -o %s.ps %s", dvips_path, texshort, texshort);
-    if (winfork(tmp, gretl_dotdir(), SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+    if (win_run_sync(tmp, gretl_dotdir())) {
 	return 1;
     }
 #else

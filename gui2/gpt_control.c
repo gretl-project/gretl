@@ -1203,7 +1203,7 @@ static void win32_process_graph (GPT_SPEC *spec, int dest)
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", 
 			      gretl_gnuplot_path(), 
 			      plttmp);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+    err = gretl_spawn(plotcmd);
     g_free(plotcmd);
     gretl_remove(plttmp);
     

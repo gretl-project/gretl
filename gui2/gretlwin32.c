@@ -171,6 +171,10 @@ void win32_start_R_async (void)
     err = real_create_child_process(Rline, 0);
 
     if (err) {
+	/* The default Rcommand (plain "Rgui.exe"), or the value
+	   entered by the user via the GUI, didn't work, so we try
+	   figuring this out from the registry.
+	*/
 	err = Rgui_path_from_registry();
 	if (!err) {
 	    g_free(Rline);

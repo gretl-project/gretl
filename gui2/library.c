@@ -4804,7 +4804,7 @@ void do_fractint (GtkAction *action)
 
     width = auto_spectrum_order(T, OPT_NONE);
     err = spin_dialog(_(title), NULL, &width, _("Lag order:"),
-		      2, T / 2, 0);
+		      2, T / 2, FRACTINT);
     if (err < 0 || bufopen(&prn)) {
 	return;
     }   
@@ -7292,7 +7292,7 @@ int latex_compile (char *texshort)
     }
 
     sprintf(tmp, "\"%s\" \\batchmode \\input %s", latex_path, texshort);
-    if (winfork(tmp, gretl_dotdir(), SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+    if (win_run_sync(tmp, gretl_dotdir())) {
 	return LATEX_EXEC_FAILED;
     }
 #else

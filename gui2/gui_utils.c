@@ -4522,15 +4522,20 @@ char *double_underscores (char *targ, const char *src)
 
 #ifdef G_OS_WIN32
 
+/* MS Windows variants of functions to exec some third-party
+   programs */
+
 static void run_R_sync (void)
 {
     gchar *cmd;
     int err;
 
+    /* should we use Rlib instead of Rterm? */
+
     cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
 			  "--slave", gretl_rbin_path());
 
-    err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
+    err = win_run_sync(cmd, NULL);
 
     if (err) {
 	gui_errmsg(err);
@@ -4665,6 +4670,7 @@ static void start_R_async (void)
 
     *s0 = *s1 = *s2 = '\0';
 
+    /* probably "xterm -e R" or similar */
     n = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
 
     if (n == 0) {
@@ -4699,7 +4705,7 @@ static void start_R_async (void)
 }
 
 /* run R or Ox in synchronous (batch) mode and display the results
-   in a gretl window
+   in a gretl window: non-Windows variant
 */
 
 static void run_prog_sync (char **argv)

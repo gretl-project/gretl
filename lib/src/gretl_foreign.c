@@ -134,7 +134,7 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
 			  "--slave", gretl_rbin_path());
 
-    err = winfork(cmd, NULL, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE);
+    err = win_run_sync(cmd, NULL);
 
     if (!err && !(opt & OPT_Q)) {
 	FILE *fp = gretl_fopen(gretl_Rout, "r");

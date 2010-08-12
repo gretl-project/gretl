@@ -51,8 +51,7 @@ void cli_read_registry (char *callname);
 
 void win_show_last_error (void);
 
-int winfork (char *cmdline, const char *dir, int wshow,
-	     DWORD flags);
+int win_run_sync (char *cmdline, const char *currdir);
 
 int gretl_spawn (char *cmdline);
 

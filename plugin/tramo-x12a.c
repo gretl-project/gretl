@@ -933,8 +933,7 @@ static int helper_spawn (const char *path, const char *vname,
     if (cmd == NULL) {
 	err = E_ALLOC;
     } else {
-	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
-		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+	err = win_run_sync(cmd, workdir);
 	g_free(cmd);
     }
 

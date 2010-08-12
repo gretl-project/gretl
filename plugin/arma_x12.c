@@ -880,8 +880,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     /* run the program */
 #ifdef WIN32
     cmd = g_strdup_printf("\"%s\" %s -r -p -q", prog, yname);
-    err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
-		  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+    err = win_run_sync(cmd, workdir);
     g_free(cmd);
 #else
     err = tramo_x12a_spawn(workdir, prog, yname, "-r", "-p", "-q", "-n", NULL);

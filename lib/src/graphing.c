@@ -1414,7 +1414,7 @@ int gnuplot_make_graph (void)
 # ifdef GP_SPEED
     fprintf(stderr, "execing wgnuplot.exe: %g\n", gretl_stopwatch());
 # endif
-    err = winfork(buf, NULL, SW_SHOWMINIMIZED, 0);
+    err = gretl_spawn(buf);
 # ifdef GP_SPEED
     fprintf(stderr, "wgnuplot.exe done: %g\n", gretl_stopwatch());
 # endif
