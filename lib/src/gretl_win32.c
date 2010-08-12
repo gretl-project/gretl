@@ -321,7 +321,13 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
     si.cb = sizeof si;
 
     if (console_app) {
+#if 0
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_SHOWMINIMIZED;
+	flags = CREATE_NEW_CONSOLE;
+#else
 	flags = CREATE_NO_WINDOW | HIGH_PRIORITY_CLASS;
+#endif
     } else {
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = SW_SHOWMINIMIZED;
@@ -374,7 +380,7 @@ static int real_win_run_sync (char *cmdline, const char *currdir,
 
 int win_run_sync (char *cmdline, const char *currdir) 
 {
-    return real_win_run_sync(cmdline, NULL, 1);
+    return real_win_run_sync(cmdline, currdir, 1);
 }
 
 int gretl_spawn (char *cmdline)
