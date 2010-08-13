@@ -129,17 +129,11 @@ static double ***allocate_H (int np, int p, int q)
 
 static int fcp_allocate (fcpinfo *f, int code)
 {
-    int i;
-
     f->zt = malloc((f->p + f->q + 1) * sizeof *f->zt);
     f->asum2 = malloc(f->nc * sizeof *f->asum2);
     f->grad = malloc(f->npar * sizeof *f->grad);
     if (f->zt == NULL || f->asum2 == NULL || f->grad == NULL) {
 	return E_ALLOC;
-    }
-
-    for (i=0; i<f->npar; i++) {
-	f->grad[i] = 0.0;
     }
 
     if (code == FCP_FULL) {
