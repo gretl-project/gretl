@@ -565,6 +565,7 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
     char p1 = (sym == BOBJ)? ']' : ')';
     const char *src = NULL;
     int wrapped = 0;
+    int strsym = STR;
 
     while (p->ch == ' ') {
 	parser_getc(p);
@@ -638,11 +639,7 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 	const char *s = get_string_by_name(p->idstr);
 
 	if (s != NULL) {
-	    free(p->idstr);
-	    p->idstr = gretl_strdup(s);
-	    if (p->idstr == NULL) {
-		p->err = E_ALLOC;
-	    }
+	    strsym = VSTR;
 	}
     }
 
@@ -650,7 +647,7 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
     fprintf(stderr, "get_final_string_arg: '%s'\n", p->idstr);
 #endif
 
-    return (p->err)? NULL : newstr(p, STR);
+    return (p->err)? NULL : newstr(p, strsym);
 }
 
 static NODE *get_middle_string_arg (parser *p)

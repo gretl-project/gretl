@@ -7181,7 +7181,7 @@ static NODE *eval (NODE *t, parser *p)
     case ABSENT:
     case U_ADDR:
     case LVEC:
-	if (t->t == NUM && t->vnum > 0) {
+	if (t->t == NUM && t->vnum > 0) { 
 	    t->v.xval = gretl_scalar_get_value_by_index(t->vnum);
 	} else if (t->t == VEC && t->vnum > 0 && (p->flags & P_EXEC)) {
 	    reattach_data_series(t, p);

@@ -129,11 +129,17 @@ static double ***allocate_H (int np, int p, int q)
 
 static int fcp_allocate (fcpinfo *f, int code)
 {
+    int i;
+
     f->zt = malloc((f->p + f->q + 1) * sizeof *f->zt);
     f->asum2 = malloc(f->nc * sizeof *f->asum2);
     f->grad = malloc(f->npar * sizeof *f->grad);
     if (f->zt == NULL || f->asum2 == NULL || f->grad == NULL) {
 	return E_ALLOC;
+    }
+
+    for (i=0; i<f->npar; i++) {
+	f->grad[i] = 0.0;
     }
 
     if (code == FCP_FULL) {
@@ -249,7 +255,7 @@ static void garch_iter_info (fcpinfo *f, int iter, double ll,
     pputs(prn, _("Parameters: "));
 
     for (i=0; i<f->npar; i++) {
-	x = f->theta[i];
+	x = f->parpre[i];
 	if (i < f->nc) {
 	    x *= f->scale;
 	} else if (i == f->nc) {
@@ -1214,7 +1220,6 @@ int garch_estimate (const double *y, const double **X,
 	fprintf(stderr, "*** Calling garch_info_matrix, round %d\n", it1);	    
 #endif
 	ll = garch_ll(f);
-	garch_iter_info(f, it1, ll, 0, prn);
 	for (i=0; i<npar; i++) {
 	    f->parpre[i] = f->theta[i];
 	}
@@ -1223,6 +1228,8 @@ int garch_estimate (const double *y, const double **X,
 	if (err) {
 	    goto garch_exit;
 	}
+
+	garch_iter_info(f, it1, ll, 0, prn);
 
 	if (converged(f, tol1)) {
 	    break;
