@@ -72,7 +72,7 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
 		 int bkl, int bku, int k);
 
 int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
-			int order, int cutoff);
+			int order, double cutoff);
 
 int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 

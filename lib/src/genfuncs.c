@@ -1275,7 +1275,6 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
 {
     int t, j, k, jmax;
     double **mu;
-    double m0;
 
     mu = doubles_array_new(q+1, T);
     if (mu == NULL) {
@@ -1293,9 +1292,8 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
 	for (k=Min(q, t); k>=0; k--) {
 	    mu[k][t] = g[k];
 	    jmax = q - k;
-	    for (j=1; j<=jmax; j++) {
-		m0 = (t-k-j < 0)? 1 : mu[0][t-k-j];
-		mu[k][t] -= mu[j][t-k] * mu[j+k][t] * m0;
+	    for (j=1; j<=jmax && t-k-j >= 0; j++) {
+		mu[k][t] -= mu[j][t-k] * mu[j+k][t] * mu[0][t-k-j];
 	    }
 	    if (k > 0) {
 		mu[k][t] /= mu[0][t-k];
@@ -1482,13 +1480,15 @@ static void form_Qy (double *y, int T)
  * @order: desired lag order.
  * @cutoff: desired angular cutoff (0, 180).
  *
- * Calculates the Butterworth filter.
+ * Calculates the Butterworth filter. The code that does this
+ * is based on D.S.G. Pollock's IDEOLOG -- see 
+ * http://www.le.ac.uk/users/dsgp1/
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
 int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
-			int order, int cutoff)
+			int order, double cutoff)
 {
     double *g, *ds, *tmp, *y;
     double lam1, lam2 = 1.0;
@@ -1506,9 +1506,12 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    if (cutoff <= 0 || cutoff >= 180) {
+    if (cutoff <= 0.0 || cutoff >= 180.0) {
 	return E_INVARG;
     }
+
+    /* FIXME input "cutoff" is currently in degrees */
+    cutoff *=  M_PI / 180.0;
 
     T = t2 - t1 + 1;
     m = 3 * (n+1);
@@ -1547,11 +1550,18 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	form_Qy(y, T);
 	form_svec(g, ds, n-2);
 	GammaY(g, y, tmp, T, n-2);   /* Form SQg */
-	/* write the cycle/residual into y */
+#if 1
+	/* write the trend into y (low-pass) */
+	for (t=0; t<T; t++) {
+	    y[t] = x[t] - lam1 * y[t];
+	}	
+#else
+	/* write the cycle/residual into y (high-pass) */
 	for (t=0; t<T; t++) {
 	    y[t] *= lam1;
 	}	
-    }
+#endif
+    }    
 
     free(g);
 

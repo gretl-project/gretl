@@ -3787,7 +3787,7 @@ static void pergm_print (const char *vname, const double *d,
     for (t=1; t<=T/2; t++) {
 	yt = M_2PI * t / (double) T;
 	dt = (opt & OPT_L)? log(d[t]) : d[t];
-	pprintf(prn, " %.4f%9d%16.2f", yt, t, (double) T / t);
+	pprintf(prn, " %.5f%8d%16.2f", yt, t, (double) T / t);
 	sprintf(xstr, "%#.5g", dt);
 	gretl_fix_exponent(xstr);
 	pprintf(prn, "%16s\n", xstr);
