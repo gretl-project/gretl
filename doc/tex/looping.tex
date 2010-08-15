@@ -146,12 +146,11 @@ out for each value of some discrete variable (see chapter
 
 \begin{code}
 open greene22_2
-open greene22_2
 discrete Z8
 v8 = values(Z8)
 n = rows(v8)
 loop i=1..n
-  scalar xi = v8[$i]
+  scalar xi = v8[i]
   smpl (Z8=xi) --restrict --replace
   printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
     xi, mean(Y), xi, sd(Y)
@@ -262,7 +261,7 @@ statement.
 
 If the initialization expression in a \texttt{for} loop takes the
 common form of setting a scalar variable to a given value, the string
-representation of that scalar's value will be available within
+representation of that scalar's value is made available within
 the loop via the accessor \dollar{\emph{varname}}.  
 
 

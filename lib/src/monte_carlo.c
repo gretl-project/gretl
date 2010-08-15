@@ -2340,17 +2340,16 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 			const double **Z, const DATAINFO *pdinfo,
 			int *subst)
 {
-    char targ[VNAMELEN + 3] = {0};
-    char ins[32];
+    char ins[32], targ[VNAMELEN + 3] = {0};
     char *p, *pins;
-    int targlen;
-    double forval = 0;
-    int idx = 0;
+    int targlen, idx = 0;
     int err = 0;
 
 #if SUBST_DEBUG
     fprintf(stderr, "subst_dollar_targ:\n original: '%s'\n", str);
 #endif
+
+    /* construct the substitution target */
 
     if (loop->type == FOR_LOOP) {
 	if (!gretl_is_scalar(loop->init.vname)) {
@@ -2378,10 +2377,16 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 
     pins = ins;
 
-    /* prepare substitute */
+    /* prepare substitute string */
+
     if (loop->type == FOR_LOOP) {
-	forval = gretl_scalar_get_value(loop->init.vname);
-	/* the rest is handled below */
+	double x = gretl_scalar_get_value(loop->init.vname);
+
+	if (na(x)) {
+	    strcpy(ins, "NA");
+	} else {
+	    sprintf(ins, "%g", x);
+	}
     } else if (loop->type == INDEX_LOOP) {
 	sprintf(ins, "%d", idx);
     } else if (loop->type == DATED_LOOP) {
@@ -2390,34 +2395,18 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	pins = loop->eachstrs[idx - 1];
     }  
 
-    while ((p = strstr(str, targ)) != NULL) {
+    while ((p = strstr(str, targ)) != NULL && !err) {
 	char *q = malloc(strlen(p));
 
 	if (q == NULL) {
-	    err = 1;
-	    break;
+	    err = E_ALLOC;
+	} else {
+	    strcpy(q, p + targlen);
+	    strcpy(p, pins);
+	    strcpy(p + strlen(pins), q);
+	    free(q);
+	    *subst = 1;
 	}
-
-	strcpy(q, p + targlen);
-
-	if (loop->type == FOR_LOOP) {
-	    sprintf(ins, "%g", forval);
-	    if (p - str > 0 && *(p - 1) == '[' && *(p + targlen) == ']') {
-		/* got an obs-type string, on the pattern [$lvar] */
-		int t = dateton(ins, pdinfo);
-
-		if (t < 0) {
-		    t = atoi(ins) - 1;
-		}
-		sprintf(ins, "%d", t);
-	    } 
-	} 
-
-	strcpy(p, pins);
-	strcpy(p + strlen(pins), q);
-	free(q);
-
-	*subst = 1;
     }
 
 #if SUBST_DEBUG
