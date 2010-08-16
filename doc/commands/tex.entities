@@ -27,6 +27,7 @@
 <!ENTITY ut "$u_t$">
 <!ENTITY zt "$z_t$">
 <!ENTITY dollar "\$">
+<!ENTITY deg "$^{\circ}$">
 <!ENTITY par "\\">
 <!ENTITY eg "e.g.{}">
 <!ENTITY ie "i.e.{}">

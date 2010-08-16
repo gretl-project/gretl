@@ -12,6 +12,9 @@ version 1.9.2, in progress
 - pdf function: support the poisson and binomial distributions
   (giving the probability mass)
 - New function invmills() to get the inverse Mills ratio
+- New function bwfilt() to compute the Butterworth filter
+  (thanks go to D.S.G. Pollock), plus GUI access under
+  /Variable/Filter (time-series data only)
 - New accessor $mnl_probs to get the estimated outcome
   probabilities for a multinomial logit model (plus GUI
   access under the Analysis menu in the model window)

@@ -106,6 +106,7 @@ enum extra_cmds {
     IV_GMM,
     BFGS_CONFIG,
     COUNTMOD,
+    BWFILTER,
     GUI_CMD_MAX
 };
 

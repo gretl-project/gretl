@@ -31,6 +31,7 @@ enum {
     FILTER_EMA,
     FILTER_HP,
     FILTER_BK,
+    FILTER_BW,
     FILTER_FD
 };
 
@@ -41,6 +42,7 @@ enum {
 #define FILTER_GRAPH_NONE 0
 #define FILTER_GRAPH_TREND OPT_A
 #define FILTER_GRAPH_CYCLE OPT_B
+#define FILTER_GRAPH_RESP OPT_C
 
 typedef struct filter_info_ filter_info;
 
@@ -56,6 +58,8 @@ struct filter_info_ {
     int bkk;              /* Baxter-King parameter */
     int bkl;              /* Baxter-King lower value */
     int bku;              /* Baxter-King upper value */
+    int order;            /* Butterworth order */
+    int cutoff;           /* Butterworth cut-off */
     gretlopt graph_opt;
     gretlopt save_opt;
     char save_t[VNAMELEN];
@@ -78,6 +82,8 @@ static const char *filter_get_title (int ftype)
 	return N_("Hodrick-Prescott filter");
     } else if (ftype == FILTER_BK) {
 	return N_("Baxter-King Band-pass filter");
+    } else if (ftype == FILTER_BW) {
+	return N_("Butterworth filter");
     } else if (ftype == FILTER_FD) {
 	return N_("Fractional difference");
     } else {
@@ -130,6 +136,9 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     } else if (ftype == FILTER_BK) {
 	finfo->bkk = get_bkbp_k(datainfo);
 	get_bkbp_periods(datainfo, &finfo->bkl, &finfo->bku);
+    } else if (ftype == FILTER_BW) {
+	finfo->order = 8;
+	finfo->cutoff = 67;
     } else if (ftype == FILTER_FD) {
 	finfo->lambda = 0.5;
     }
@@ -148,6 +157,8 @@ static void filter_make_savename (filter_info *finfo, int i)
 	strcpy(targ, (i == 0)? "hpt_" : "hp_");
     } else if (finfo->ftype == FILTER_BK) {
 	strcpy(targ, "bk_");
+    } else if (finfo->ftype == FILTER_BW) {
+	strcpy(targ, "bw_");
     } else if (finfo->ftype == FILTER_FD) {
 	strcpy(targ, "fd_");
     }
@@ -193,6 +204,14 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
     } else if (finfo->ftype == FILTER_BK) {
 	sprintf(s, _("Filtered %s: Baxter-King, frequency %d to %d"), 
 		finfo->vname, finfo->bkl, finfo->bku);
+    } else if (finfo->ftype == FILTER_BW) {
+	if (i == FILTER_SAVE_TREND) {
+	    sprintf(s, _("Filtered %s: Butterworth low-pass (n=%d, cutoff=%d)"), 
+		    finfo->vname, finfo->order, finfo->cutoff);
+	} else {
+	    sprintf(s, _("Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"), 
+		    finfo->vname, finfo->order, finfo->cutoff);
+	}
     } else if (finfo->ftype == FILTER_FD) {
 	sprintf(s, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
     }
@@ -509,6 +528,27 @@ static int filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set periods */
 	bkbp_frequencies_table(dlg, finfo);
+    } else if (finfo->ftype == FILTER_BW) {
+	/* set Butterworth order */
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_label_new(_("n (higher values -> better approximation):"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	w = gtk_spin_button_new_with_range(1.0, 32, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
+	g_signal_connect(G_OBJECT(w), "value-changed",
+			 G_CALLBACK(set_int_from_spinner), &finfo->order);
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	/* set cutoff */
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_label_new(_("frequency cutoff (degrees):"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	w = gtk_spin_button_new_with_range(1, 179, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->cutoff);
+	g_signal_connect(G_OBJECT(w), "value-changed",
+			 G_CALLBACK(set_int_from_spinner), &finfo->cutoff);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);	
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_FD) {
 	/* set "d" */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -553,6 +593,10 @@ static int filter_dialog (filter_info *finfo)
 				  FILTER_GRAPH_TREND);
 	filter_graph_check_button(dlg, finfo, _("Graph residual or cycle series"),
 				  FILTER_GRAPH_CYCLE);
+	if (finfo->ftype == FILTER_HP || finfo->ftype == FILTER_BW) {
+	    filter_graph_check_button(dlg, finfo, _("Graph frequency response"),
+				      FILTER_GRAPH_RESP);
+	}
 	/* save to dataset? */
 	filter_dialog_hsep(dlg);
 	filter_save_check_buttons(dlg, finfo);
@@ -569,6 +613,10 @@ static int filter_dialog (filter_info *finfo)
     g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(filter_dialog_ok), finfo);
     gtk_widget_grab_default(w);
+
+    if (finfo->ftype == FILTER_BW) {
+	context_help_button(hbox, BWFILTER);
+    }
 
     gtk_widget_show_all(dlg);
 
@@ -645,6 +693,9 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
     gretl_push_c_numeric_locale();
 
+    fprintf(fp, "set xrange [%g:%g]\n", floor(obs[datainfo->t1]), 
+	    ceil(obs[datainfo->t2]));
+
     if (twoplot) {
 	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.60\n", fp);
 
@@ -702,6 +753,66 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
     gretl_pop_c_numeric_locale();
 
+    fclose(fp);
+
+    err = gnuplot_make_graph();
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
+    }
+
+    return err;
+}
+
+static int do_filter_response_graph (filter_info *finfo)
+{
+    gretl_matrix *G;
+    FILE *fp = NULL;
+    char title[128];
+    int i, err = 0;
+
+    if (finfo->ftype == FILTER_BW) {
+	G = butterworth_gain(finfo->order, finfo->cutoff * M_PI / 180, 0);
+    } else {
+	G = hp_gain(finfo->lambda, 0);
+    }
+
+    if (G == NULL) {
+	gui_errmsg(E_ALLOC);
+    }
+
+    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    if (err) { 
+	gui_errmsg(err);
+	gretl_matrix_free(G);
+	return err;
+    }
+
+    fputs("set xrange [0:3.1416]\n", fp);
+    fputs("set yrange [0:1.1]\n", fp);
+    if (finfo->ftype == FILTER_BW) {
+	sprintf(title, _("Gain for Butterworth filter (n = %d, nominal cutoff %.2fπ)"),
+		finfo->order, (double) finfo->cutoff / 180);
+    } else {
+	sprintf(title, _("Gain for H-P filter (lambda = %g)"), finfo->lambda);
+    }	
+    fprintf(fp, "set title \"%s\"\n", title);
+    fputs("# literal lines 1\n", fp);
+    fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, \"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
+    fputs("plot '-' using 1:2 notitle w lines\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<G->rows; i++) {
+	fprintf(fp, "%.5f %.5f\n", gretl_matrix_get(G, i, 0),
+		gretl_matrix_get(G, i, 1));
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    gretl_matrix_free(G);
     fclose(fp);
 
     err = gnuplot_make_graph();
@@ -774,6 +885,9 @@ static void record_filter_command (filter_info *finfo)
     } else if (finfo->ftype == FILTER_BK) {
 	sprintf(s, "bkfilt(%s, %d, %d, %d)\n", finfo->vname,
 		finfo->bkl, finfo->bku, finfo->bkk);
+    } else if (finfo->ftype == FILTER_BW) {
+	sprintf(s, "bwfilt(%s, %d, %d)\n", finfo->vname,
+		finfo->order, finfo->cutoff);
     } else if (finfo->ftype == FILTER_FD) {
 	sprintf(s, "fracdiff(%s, %g)\n", finfo->vname, finfo->lambda);
     }
@@ -843,6 +957,9 @@ static int calculate_filter (filter_info *finfo)
     } else if (finfo->ftype == FILTER_BK) {
 	/* Baxter and King bandpass */
 	err = bkbp_filter(x, u, datainfo, finfo->bkl, finfo->bku, finfo->bkk);
+    } else if (finfo->ftype == FILTER_BW) {
+	/* Butterworth */
+	err = butterworth_filter(x, fx, datainfo, finfo->order, finfo->cutoff);
     } else if (finfo->ftype == FILTER_FD) {
 	/* fractional differencing */
 	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, datainfo);
@@ -864,6 +981,10 @@ static int calculate_filter (filter_info *finfo)
     if ((finfo->graph_opt & FILTER_GRAPH_TREND) ||
 	(finfo->graph_opt & FILTER_GRAPH_CYCLE)) {
 	do_filter_graph(finfo, fx, u);
+    }
+
+    if (finfo->graph_opt & FILTER_GRAPH_RESP) {
+	do_filter_response_graph(finfo);
     }
 
     if (finfo->save_opt & FILTER_SAVE_TREND) {
@@ -902,6 +1023,8 @@ static int filter_code (GtkAction *action)
 	return FILTER_HP;
     else if (!strcmp(s, "FilterBK")) 
 	return FILTER_BK;
+    else if (!strcmp(s, "FilterBW")) 
+	return FILTER_BW;
     else if (!strcmp(s, "FilterFD")) 
 	return FILTER_FD;
     else

@@ -1159,6 +1159,34 @@
     </description>
   </command>
 
+  <command name="bwfilter" section="Transformations" context="gui"
+    label="The Butterworth filter">
+
+    <description>
+      <para>
+	The Butterworth filter is an appromixation to an ideal
+	square-wave filter which allows frequencies over a certain
+	range to pass at full strength while stopping all others.
+      </para>
+      <para>
+	Higher values of the order parameter, <math>n</math>, produce
+	a closer approximation to the ideal filter, in principle,
+	but at the possible cost of numerical instability. The
+	<quote>cutoff</quote> value sets the boundary between
+	the pass band and the stop band. It is expressed in degrees,
+	and must be greater than 0 and less than 180&deg; (or &pi;
+	radians, corresponding to the highest frequency in the
+	data). Smaller values of the cutoff produce a smoother
+	trend.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Filter/Butterworth</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="catch" section="Programming" 
     label="Catch errors" context="cli">
     <usage>

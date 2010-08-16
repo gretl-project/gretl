@@ -39,90 +39,71 @@ static int mvsize (unsigned char *s, int nbytes)
     return strlen((char *) s + nbytes) + 1;
 }
 
+static void write_text (char *s, char *repl)
+{
+    while (*repl) {
+	*s++ = *repl++;
+    }
+}
+
 static void utf_replace (unsigned char *s)
 {
     while (*s) {
 	if (s[0] == 0xe2 && s[1] == 0x80) {
 	    if (s[2] == 0x93) {
 		/* &ndash; */
-		s[0] = '-';
+		write_text(s, "-");
 		memmove(s + 1, s + 3, mvsize(s, 3));
 	    } else if (s[2] == 0x94) {
 		/* &mdash; */
 		memmove(s + 4, s + 3, mvsize(s, 3));
-		s[0] = ' ';
-		s[1] = '-';
-		s[2] = '-';
-		s[3] = ' ';
+		write_text(s, " -- ");
 	    } else if (s[2] == 0xa6) {
 		/* &hellip; */
-		s[0] = '.';
-		s[1] = '.';
-		s[2] = '.';
+		write_text(s, "...");
 	    }
 	} else if (s[0] == 0xe2 && s[1] == 0x88 && s[2] == 0x92) {
 	    /* &minus; */
-	    s[0] = '-';
+	    write_text(s, "-");
 	    memmove(s + 1, s + 3, mvsize(s, 3));
 	} else if (s[0] == 0xe2 && s[1] == 0x89 && s[2] == 0xa4) {
-	    s[0] = '<';
-	    s[1] = '=';
+	    write_text(s, "<=");
 	    memmove(s + 2, s + 3, mvsize(s, 3));
 	} else if (s[0] == 0xce && s[1] == 0x93) {
 	    /* &Gamma */
 	    memmove(s + 5, s + 2, mvsize(s, 2));
-	    s[0] = 'G';
-	    s[1] = 'a';
-	    s[2] = 'm';
-	    s[3] = 'm';
-	    s[4] = 'a';
+	    write_text(s, "Gamma");
 	} else if (s[0] == 0xce && s[1] == 0xb2) {
 	    /* &beta; */
 	    memmove(s + 4, s + 2, mvsize(s, 2));
-	    s[0] = 'b';
-	    s[1] = 'e';
-	    s[2] = 't';
-	    s[3] = 'a';
+	    write_text(s, "beta");
 	} else if (s[0] == 0xce && s[1] == 0xbb) {
 	    /* &lambda; */
 	    memmove(s + 6, s + 2, mvsize(s, 2));
-	    s[0] = 'l';
-	    s[1] = 'a';
-	    s[2] = 'm';
-	    s[3] = 'b';
-	    s[4] = 'd';
-	    s[5] = 'a';
+	    write_text(s, "lambda");
 	} else if (s[0] == 0xce && s[1] == 0xbc) {
 	    /* &mu; */
-	    s[0] = 'm';
-	    s[1] = 'u';
+	    write_text(s, "mu");
 	} else if (s[0] == 0xcf && s[1] == 0x80) {
 	    /* &pi; */
-	    s[0] = 'p';
-	    s[1] = 'i';
+	    write_text(s, "pi");
 	} else if (s[0] == 0xcf && s[1] == 0x81) {
 	    /* &rho; */
 	    memmove(s + 3, s + 2, mvsize(s, 2));
-	    s[0] = 'r';
-	    s[1] = 'h';
-	    s[2] = 'o';
+	    write_text(s, "rho");
 	} else if (s[0] == 0xcf && s[1] == 0x83) {
 	    /* &sigma; */
 	    memmove(s + 5, s + 2, mvsize(s, 2));
-	    s[0] = 's';
-	    s[1] = 'i';
-	    s[2] = 'g';
-	    s[3] = 'm';
-	    s[4] = 'a';
+	    write_text(s, "sigma");
 	} else if (s[0] == 0xcf && s[1] == 0x89) {
 	    /* &omega; */
 	    memmove(s + 5, s + 2, mvsize(s, 2));
-	    s[0] = 'o';
-	    s[1] = 'm';
-	    s[2] = 'e';
-	    s[3] = 'g';
-	    s[4] = 'a';
-	} 
+	    write_text(s, "omega");
+	} else if (s[0] == 0xc2 && s[1] == 0xb0) {
+	    /* &deg; */
+	    memmove(s + 7, s + 2, mvsize(s, 2));
+	    write_text(s, "degrees");
+	}	    
 	s++;
     }
 }

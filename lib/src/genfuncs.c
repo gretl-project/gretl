@@ -1242,13 +1242,18 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
     return err;
 }
 
+/* following: material relating to the Butterworth filter */
+
+#define Min(x,y) (((x) > (y))? (y) : (x))
+#define NEAR_ZERO 1e-35
+
 static double safe_pow (double x, int n)
 {
     double lp;
 
     x = fabs(x);
 
-    if (x < 1e-35) {
+    if (x < NEAR_ZERO) {
 	return 0.0;
     } else {
 	lp = n * log(x);
@@ -1262,7 +1267,89 @@ static double safe_pow (double x, int n)
     }
 }
 
-#define Min(x,y) (((x) > (y))? (y) : (x))
+static double cotan (double theta)
+{
+    double s = sin(theta);
+    
+    if (fabs(s) < NEAR_ZERO) {
+	s = copysign(NEAR_ZERO, s);
+    }
+
+    return cos(theta) / s;
+} 
+
+/**
+ * hp_gain:
+ * @n: order of the filter.
+ * @lambda: H-P parameter.
+ * @hipass: 1 for high-pass filter, 0 for low-pass.
+ *
+ * Returns: a matrix holding omega values from 0 to \pi in
+ * column 0, and the corresponding filter gain in column 1.
+ */
+
+gretl_matrix *hp_gain (double lambda, int hipass)
+{
+    gretl_matrix *G;
+    int i, width = 180;
+    double inc = M_PI / width;
+    double x, gain, omega = 0.0;
+
+    G = gretl_matrix_alloc(width + 1, 2);
+    if (G == NULL) {
+	return NULL;
+    }
+    
+    for (i=0; i<=width; i++) {
+	x = 2 * sin(omega / 2);
+	gain = 1 / (1 + lambda * pow(x, 4));
+	if (hipass) {
+	    gain = 1.0 - gain;
+	}
+	gretl_matrix_set(G, i, 0, omega);
+	gretl_matrix_set(G, i, 1, gain);
+	omega += inc;
+    } 
+
+    return G;
+} 
+
+/**
+ * butterworth_gain:
+ * @n: order of the filter.
+ * @cutoff: angular cutoff in radians.
+ * @hipass: 1 for high-pass filter, 0 for low-pass.
+ *
+ * Returns: a matrix holding omega values from 0 to \pi in
+ * column 0, and the corresponding filter gain in column 1.
+ */
+
+gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
+{
+    gretl_matrix *G;
+    int i, width = 180;
+    double inc = M_PI / width;
+    double x, gain, omega = 0.0;
+
+    G = gretl_matrix_alloc(width + 1, 2);
+    if (G == NULL) {
+	return NULL;
+    }
+    
+    for (i=0; i<=width; i++) {
+	if (hipass) {
+	    x = cotan(omega / 2) * cotan((M_PI - cutoff) / 2);
+	} else {
+	    x = tan(omega / 2) * cotan(cutoff / 2);
+	}
+	gain = 1 / (1 + pow(x, 2 * n));
+	gretl_matrix_set(G, i, 0, omega);
+	gretl_matrix_set(G, i, 1, gain);
+	omega += inc;
+    } 
+
+    return G;
+} 
 
 /* This function uses a Cholesky decomposition to find the solution of
    the equation Gx = y, where G is a symmetric Toeplitz matrix of order
@@ -1328,6 +1415,7 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
 }
 
 #undef Min
+#undef NEAR_ZERO
 
 /* Form the autocovariances of an MA process of order q. */
 
@@ -1478,7 +1566,7 @@ static void form_Qy (double *y, int T)
  * @bw: array into which to write the filtered series.
  * @pdinfo: data set information.
  * @order: desired lag order.
- * @cutoff: desired angular cutoff (0, 180).
+ * @cutoff: desired angular cutoff in degrees (0, 180).
  *
  * Calculates the Butterworth filter. The code that does this
  * is based on D.S.G. Pollock's IDEOLOG -- see 
@@ -1510,7 +1598,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	return E_INVARG;
     }
 
-    /* FIXME input "cutoff" is currently in degrees */
+    /* note: the cutoff is expressed in radians internally */
     cutoff *=  M_PI / 180.0;
 
     T = t2 - t1 + 1;

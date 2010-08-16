@@ -74,6 +74,10 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
 int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 			int order, double cutoff);
 
+gretl_matrix *hp_gain (double lambda, int hipass);
+
+gretl_matrix *butterworth_gain (int n, double cutoff, int hipass);
+
 int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 
 int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt);
