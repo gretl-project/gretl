@@ -799,7 +799,8 @@ static int do_filter_response_graph (filter_info *finfo)
 
     if (finfo->ftype == FILTER_BW) {
 	sprintf(title, "%s (n = %d, %s %.2fπ)", _("Gain for Butterworth filter"), 
-		_("nominal cutoff"), finfo->order, (double) finfo->cutoff / 180);
+		finfo->order, _("nominal cutoff"),
+		(double) finfo->cutoff / 180);
     } else {
 	sprintf(title, _("Gain for H-P filter (lambda = %g)"), finfo->lambda);
     }	
@@ -812,7 +813,8 @@ static int do_filter_response_graph (filter_info *finfo)
     gretl_push_c_numeric_locale();
 
     if (finfo->ftype == FILTER_BW) {
-	fprintf(fp, "set arrow from %g,0 to %g,1.1 nohead\n", omega_star, omega_star);
+	fprintf(fp, "set arrow from %g,0 to %g,1.1 nohead\n", 
+		omega_star, omega_star);
     }
 
     fputs("plot \\\n", fp);
