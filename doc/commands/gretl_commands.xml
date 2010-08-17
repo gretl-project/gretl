@@ -2554,12 +2554,27 @@
   </command>  
 
   <command name="elif" section="Programming" label="Flow control" context="cli">
-    <description><para>See <cmdref targ="if"/>.</para>
+    <description>
+      <para>See <cmdref targ="if"/>.
+      </para>
     </description>
   </command>
 
   <command name="else" section="Programming" context="cli">
-    <description><para>See <cmdref targ="if"/>.</para>
+    <description>
+      <para>See <cmdref targ="if"/>. Note that <cmd>else</cmd>
+	requires a line to itself, before the following
+	conditional command. You can append a comment, as in
+      </para>
+      <code>
+	else # OK, do something different
+      </code>
+      <para>
+	But you cannot append a command, as in
+      </para>
+      <code>
+	else x = 5 # wrong!
+      </code>
     </description>
   </command>
 
@@ -7182,6 +7197,14 @@
 	  <flag>--log</flag>
 	  <effect>use log scale</effect>
         </option>
+        <option>
+	  <flag>--radians</flag>
+	  <effect>show frequency in radians</effect>
+        </option>
+        <option>
+	  <flag>--degrees</flag>
+	  <effect>show frequency in degrees</effect>
+        </option>
       </options>
     </usage>
 
@@ -7200,6 +7223,14 @@
       <para>
 	If the <opt>--log</opt> option is given the spectrum is
 	represented on a logarithmic scale.
+      </para>
+      <para>
+	The (mutually exclusive) options <opt>--radians</opt> and
+	<opt>--degrees</opt> influence the appearance of the frequency
+	axis when the periodogram is graphed. By default the frequency
+	is scaled by the number of periods in the sample, but these
+	options cause the axis to be labeled from 0 to &pi; radians
+	or from 0 to 180&deg;, respectively.
       </para>
     </description>
 

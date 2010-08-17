@@ -3688,6 +3688,8 @@ static int pergm_graph (const char *vname,
 {
     char s[80];
     FILE *fp;
+    double ft;
+    int T2 = T / 2;
     int k, t, err = 0;
 
     fp = get_plot_input_stream(PLOT_PERIODOGRAM, &err);
@@ -3702,13 +3704,20 @@ static int pergm_graph (const char *vname,
     fprintf(fp, "set x2range [0:%d]\n", roundup_mod(T, 2.0));
 
     fputs("set x2tics(", fp);
-    k = (T / 2) / 6;
-    for (t = 1; t <= T/2; t += k) {
+    k = T2 / 6;
+    for (t = 1; t <= T2; t += k) {
 	fprintf(fp, "\"%.1f\" %d, ", (double) T / t, 4 * t);
     }
     fprintf(fp, "\"\" %d)\n", 2 * T);
 
-    fprintf(fp, "set xlabel '%s'\n", _("scaled frequency"));
+    if (opt & OPT_R) {
+	fprintf(fp, "set xlabel '%s'\n", _("radians"));
+    } else if (opt & OPT_D) {
+	fprintf(fp, "set xlabel '%s'\n", _("degrees"));
+    } else {
+	fprintf(fp, "set xlabel '%s'\n", _("scaled frequency"));
+    }
+
     fputs("set xzeroaxis\n", fp);
     fputs("set nokey\n", fp);
 
@@ -3739,15 +3748,38 @@ static int pergm_graph (const char *vname,
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "set xrange [0:%d]\n", roundup_mod(T, 0.5));
+    if (opt & OPT_R) {
+	/* frequency scale in radians */
+	fputs("set xrange [0:3.1416]\n", fp);
+    } else if (opt & OPT_D) {
+	/* frequency scale in degrees */
+	fputs("set xrange [0:180]\n", fp);
+    } else {
+	/* data-scaled frequency */
+	fprintf(fp, "set xrange [0:%d]\n", roundup_mod(T, 0.5));
+    }
+
     if (!(opt & OPT_L)) {
 	fprintf(fp, "set yrange [0:%g]\n", 1.2 * gretl_max(0, T/2, x));
     }
 
+    if (opt & OPT_R) {
+	fputs("# literal lines = 1\n", fp);
+	fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, "
+	      "\"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
+    }
+
     fputs("plot '-' using 1:2 w lines\n", fp);
 
-    for (t=1; t<=T/2; t++) {
-	fprintf(fp, "%d %g\n", t, (opt & OPT_L)? log(x[t]) : x[t]);
+    for (t=1; t<=T2; t++) {
+	if (opt & OPT_R) {
+	    ft = M_PI * (double) t / T2;
+	} else if (opt & OPT_D) {
+	    ft = 180 * (double) t / T2;
+	} else {
+	    ft = t;
+	}
+	fprintf(fp, "%g %g\n", ft, (opt & OPT_L)? log(x[t]) : x[t]);
     }
 
     gretl_pop_c_numeric_locale();

@@ -567,7 +567,7 @@ static void htest_graph (int d, double x, double *parms)
 	break;
     }
 
-    fprintf(fp, "plot \\\n");
+    fputs("plot \\\n", fp);
 
     switch (d) {
     case NORMAL_DIST:

@@ -189,6 +189,57 @@ of \verb+bkfilt()+, which is
 where \textsl{f1} and \textsl{f2} represent the lower and upper
 frequency bounds respectively.
 
+\subsection{The Butterworth filter}
+\label{sec:butterworth}
+
+The Butterworth filter is an approximation to an ``ideal'' square-wave
+filter. The ideal filter divides the spectrum of a time series into a
+pass-band (frequencies less than some chosen $\omega^{\star}$ for a
+low-pass filter, or frequencies greater than $\omega^{\star}$ for
+high-pass) and a stop-band; the gain is 1 for the pass-band and 0 for
+the stop-band. The ideal filter is unattainable in practice since it
+would require an infinite number of coefficients, but the Butterworth
+filter offers a remarkably good approximation. This filter is
+discussed at length and persuasively advocated by \cite{pollock97}.
+
+The behavior of the Butterworth filter is governed by two parameters:
+the frequency cutoff $\omega^{\star}$ and an integer order, $n$, which
+determines the number of coefficients used. Higher values of $n$
+produce a better approximation to the ideal filter in principle (i.e.\
+a sharper cut between the pass-band and the stop-band) but there is a
+downside: with a greater number of coefficients numerical instability
+may be an issue, and the influence of the initial values in the sample
+may be exaggerated.
+
+Pollock recommends that the parameters of the Butterworth filter be
+tuned to the data: one should examine the periodogram of the series in
+question in search of a ``dead spot'' of low power between the
+frequencies one wishes to exclude and the frequencies one wishes to
+retain. If $\omega^{\star}$ is placed in such a dead spot then the job
+of separation can be done with a relatively small $n$, hence avoiding
+numerical problems. By way of illustration, \cite{pollock97} considers
+quarterly Swiss unemployment data; the task is to separate the
+seasonal fluctuations from the trend. With quarterly data, seasonal
+variation is centered on a frequency of $\pi/2$ or
+90$^{\circ}$. Examining the periodogram, Pollock finds that an
+$\omega^{\star}$ of $3\pi/8$ or 67.5$^{\circ}$ falls within a zone of
+low power, permitting a clean separation of frequencies with the
+reasonably low order $n=8$.
+
+In \app{gretl} the Butterworth filter is implemented by the
+\verb+bwfilt()+ function, which takes three arguments: the series to
+filter, the order $n$ and the frequency cutoff, $\omega^{\star}$,
+expressed in degrees.\footnote{The code for this filter is based on
+  D. S. G. Pollock's programs \app{IDEOLOG} and \app{DETREND}. The
+  Pascal source code for the former is available from
+  \url{http://www.le.ac.uk/users/dsgp1} and the C sources for the
+  latter were kindly made available to us by the author.} This
+function operates as a low-pass filter; for the high-pass variant,
+subtract the filtered series from the original, as in
+%
+\begin{code}
+series bwcycle = y - bwfilt(y, 8, 67)
+\end{code}
       
 \section{Panel data specifics}
 \label{panel-genr}

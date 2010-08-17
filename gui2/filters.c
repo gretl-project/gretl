@@ -770,10 +770,15 @@ static int do_filter_response_graph (filter_info *finfo)
     gretl_matrix *G;
     FILE *fp = NULL;
     char title[128];
+    double omega_star = 0.0;
     int i, err = 0;
+    
+    if (finfo->ftype == FILTER_BW) {
+	omega_star = finfo->cutoff * M_PI / 180;
+    }
 
     if (finfo->ftype == FILTER_BW) {
-	G = butterworth_gain(finfo->order, finfo->cutoff * M_PI / 180, 0);
+	G = butterworth_gain(finfo->order, omega_star, 0);
     } else {
 	G = hp_gain(finfo->lambda, 0);
     }
@@ -799,16 +804,30 @@ static int do_filter_response_graph (filter_info *finfo)
     }	
     fprintf(fp, "set title \"%s\"\n", title);
     fputs("# literal lines 1\n", fp);
-    fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, \"3π/4\" 3*pi/4, \"π\" pi)\n", fp);
-    fputs("plot '-' using 1:2 notitle w lines\n", fp);
+    fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, \"3π/4\" 3*pi/4, "
+	  "\"π\" pi)\n", fp);
+
+    fputs("plot \\\n", fp);
 
     gretl_push_c_numeric_locale();
+
+    if (finfo->ftype == FILTER_BW) {
+	fputs("'-' using 1:2 notitle w lines , \\\n", fp);
+	fputs("'-' using 1:2 notitle w impulses\n", fp);
+    } else {
+	fputs("'-' using 1:2 notitle w lines\n", fp);
+    }
 
     for (i=0; i<G->rows; i++) {
 	fprintf(fp, "%.5f %.5f\n", gretl_matrix_get(G, i, 0),
 		gretl_matrix_get(G, i, 1));
     }
     fputs("e\n", fp);
+
+    if (finfo->ftype == FILTER_BW) {
+	fprintf(fp, "%g 1.10\n", omega_star);
+	fputs("e\n", fp);
+    }	
 
     gretl_pop_c_numeric_locale();
 

@@ -3856,6 +3856,22 @@ static void pergm_set_log_scale (GtkToggleButton *button, gretlopt *opt)
     }
 }
 
+static void pergm_set_axis (GtkComboBox *combo, gretlopt *opt)
+{
+    int val = gtk_combo_box_get_active(combo);
+
+    if (val == 0) {
+	*opt &= ~OPT_R;
+	*opt &= ~OPT_D;
+    } else if (val == 1) {
+	*opt &= ~OPT_D;
+	*opt |= OPT_R;
+    } else {
+	*opt &= ~OPT_R;
+	*opt |= OPT_D;
+    }
+}
+
 static void pergm_set_bandwidth (GtkSpinButton *spin, int *bw)
 {
     *bw = gtk_spin_button_get_value_as_int(spin);
@@ -3865,7 +3881,7 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
 		   int *cancel)
 {
     GtkWidget *dialog, *vbox, *hbox;
-    GtkWidget *button, *spin;
+    GtkWidget *button, *spin, *w;
     GSList *group;
 
     if (maybe_raise_dialog()) {
@@ -3878,6 +3894,7 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
     /* sample vs Bartlett radios, with Bartlett spinner */
+
     button = gtk_radio_button_new_with_label(NULL, _("Sample periodogram"));
     hboxit(button, vbox);
 
@@ -3902,6 +3919,20 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     g_signal_connect(G_OBJECT(button), "toggled",
 		     G_CALLBACK(pergm_set_log_scale), opt);
     hboxit(button, vbox);
+
+    /* frequency axis selector */
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("frequency axis scale:"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    w = gtk_combo_box_new_text();
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "data-based");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "radians");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "degrees");
+    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    g_signal_connect(G_OBJECT(w), "changed",
+		     G_CALLBACK(pergm_set_axis), opt);
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
  
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
