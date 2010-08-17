@@ -1539,7 +1539,7 @@ static void GammaY (double *g, double *y, double *tmp,
     }
 }
 
-/* Multiply the vector y by matrix Q of order T times T-2, 
+/* Multiply the vector y by matrix Q of order T x T-2, 
    where Q' is the matrix which finds the second 
    differences of a vector.  
 */
@@ -1598,7 +1598,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	return E_INVARG;
     }
 
-    /* note: the cutoff is expressed in radians internally */
+    /* the cutoff is expressed in radians internally */
     cutoff *=  M_PI / 180.0;
 
     T = t2 - t1 + 1;
@@ -1616,6 +1616,10 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 
     lam1 = 1 / tan(cutoff / 2);
     lam1 = safe_pow(lam1, n * 2);
+
+    /* there's really only one "lambda": one out of
+       lam1, lam2 = 1 and has no effect on the
+       calculation */
 
     if (lam1 > 1.0) {
 	lam2 = 1 / lam1;
