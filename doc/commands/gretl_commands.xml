@@ -1179,6 +1179,11 @@
 	data). Smaller values of the cutoff produce a smoother
 	trend.
       </para>
+      <para>
+	Inspecting the periodogram of the target series is a
+	useful preliminary when you wish to apply this filter.  See
+	<guideref targ="chap-genr"/> for details.
+      </para>
     </description>
 
     <gui-access>

@@ -905,8 +905,12 @@
 	  values restrict the pass-band to lower frequencies and hence
 	  produce a smoother trend. Higher values of
 	  <argname>n</argname> produce a sharper cutoff, at the cost
-	  of possible numerical instability. See <guideref
-	  targ="chap-genr"/> for details.
+	  of possible numerical instability. 
+	</para>
+	<para>
+	  Inspecting the periodogram of the target series is a
+	  useful preliminary when you wish to apply this function.
+	  See <guideref targ="chap-genr"/> for details.
 	  <seelist>
 	    <fncref targ="bkfilt"/>
 	    <fncref targ="hpfilt"/>
