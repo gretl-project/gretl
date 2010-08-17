@@ -1052,12 +1052,12 @@ static void do_choi_test (double ppv, double zpv, double lpv,
     double L = sqrt(k) * lpv;
 
     pprintf(prn, "%s\n", _("Choi meta-tests:"));
-    pprintf(prn, "   Inverse chi-square(%d) = %g [%.4f]\n", 2*n,
-	    P, chisq_cdf_comp(2*n, P));
-    pprintf(prn, "   Inverse normal test = %g [%.4f]\n", Z,
-	    normal_pvalue_1(-Z));
-    pprintf(prn, "   Logit test: t(%d) = %g [%.4f]\n", tdf, L,
-	    student_pvalue_1(tdf, -L));
+    pprintf(prn, "   %s(%d) = %g [%.4f]\n", _("Inverse chi-square"),
+	    2*n, P, chisq_cdf_comp(2*n, P));
+    pprintf(prn, "   %s = %g [%.4f]\n", _("Inverse normal test"),
+	    Z, normal_pvalue_1(-Z));
+    pprintf(prn, "   %s: t(%d) = %g [%.4f]\n", _("Logit test"),
+	    tdf, L, student_pvalue_1(tdf, -L));
 }
 
 static int panel_DF_test (int v, int order, 
@@ -1126,7 +1126,7 @@ static int panel_DF_test (int v, int order,
 	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
 				ADF_PANEL, &ainfo, prn);
 	    if (!err && verbose) {
-		pprintf(prn, "Unit %d, T = %d\n", i + 1, ainfo.T);
+		pprintf(prn, "%s %d, T = %d\n", _("Unit"), i + 1, ainfo.T);
 		pprintf(prn, "   %s: %g\n"
 			"   %s = %g", 
 			_("estimated value of (a - 1)"), ainfo.b,
