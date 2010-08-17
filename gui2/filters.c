@@ -798,8 +798,8 @@ static int do_filter_response_graph (filter_info *finfo)
     fputs("set yrange [0:1.1]\n", fp);
 
     if (finfo->ftype == FILTER_BW) {
-	sprintf(title, _("Gain for Butterworth filter (n = %d, nominal cutoff %.2fπ)"),
-		finfo->order, (double) finfo->cutoff / 180);
+	sprintf(title, "%s (n = %d, %s %.2fπ)", _("Gain for Butterworth filter"), 
+		_("nominal cutoff"), finfo->order, (double) finfo->cutoff / 180);
     } else {
 	sprintf(title, _("Gain for H-P filter (lambda = %g)"), finfo->lambda);
     }	

@@ -25,6 +25,7 @@ lib/src/graphing.c
 lib/src/gretl_bfgs.c
 lib/src/gretl_bundle.c
 lib/src/gretl_commands.c
+lib/src/gretl_data_io.c
 lib/src/gretl_errors.c
 lib/src/gretl_fft.c
 lib/src/gretl_foreign.c
@@ -96,14 +97,14 @@ gui2/fncall.c
 gui2/fnsave.c
 gui2/gpt_control.c
 gui2/gpt_dialog.c
-gui2/graphics.c
 gui2/graph_page.c
+gui2/graphics.c
 gui2/gretl.c
 gui2/gretlwin32.c
 gui2/gtkfontselhack.c
-gui2/guiprint.c
 gui2/gui_recode.c
 gui2/gui_utils.c
+gui2/guiprint.c
 gui2/helpfiles.c
 gui2/lagpref.c
 gui2/library.c
@@ -117,6 +118,7 @@ gui2/series_view.c
 gui2/session.c
 gui2/session_xml.c
 gui2/settings.c
+gui2/spinner.c
 gui2/ssheet.c
 gui2/textbuf.c
 gui2/textutil.c
@@ -133,6 +135,7 @@ plugin/arma_init.c
 plugin/arma_x12.c
 plugin/audio.c
 plugin/audioprint.c
+plugin/dpanel.c
 plugin/duration.c
 plugin/eviews_import.c
 plugin/excel_import.c
@@ -170,11 +173,12 @@ plugin/stata_import.c
 plugin/stats_tables.c
 plugin/sysest.c
 plugin/tobit.c
-plugin/tramo_options.c
 plugin/tramo-x12a.c
+plugin/tramo_options.c
 plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c
+doc/commands/bbl2txt.c
 doc/commands/matfuncs.c
 doc/commands/reflow.c
 doc/commands/skeleton.c
