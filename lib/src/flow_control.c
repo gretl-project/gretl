@@ -246,6 +246,16 @@ int gretl_if_state_check (int indent0)
     return err;
 }
 
+static int trailing_junk_error (const char *s)
+{
+    char junk[16] = {0};
+ 
+    s += strspn(s, " \t");
+    sscanf(s, "%15[^ ]", junk);
+    gretl_errmsg_sprintf(_("field '%s' in command is invalid"), junk);
+    return E_PARSE;
+}
+
 int flow_control (const char *line, double ***pZ, 
 		  DATAINFO *pdinfo, CMD *cmd)
 {
@@ -279,7 +289,11 @@ int flow_control (const char *line, double ***pZ,
 	    }
 	}
     } else if (ci == ELSE) {
-	err = set_if_state(SET_ELSE);
+	if (!string_is_blank(line + 4)) {
+	    err = trailing_junk_error(line + 4);
+	} else {
+	    err = set_if_state(SET_ELSE);
+	}
     }
 
     if (err) {
