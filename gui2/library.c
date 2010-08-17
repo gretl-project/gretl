@@ -83,7 +83,6 @@
 #endif
 
 #define CMD_DEBUG 0
-#define PLOT_SPEED
 
 /* private functions */
 static void update_model_tests (windata_t *vwin);
@@ -2623,7 +2622,7 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	if (ci == CUSUMSQ) {
 	    opt |= OPT_R;
 	}
-	err = cusum_test(pmod, &Z, datainfo, opt, prn);
+	err = cusum_test(pmod, Z, datainfo, opt, prn);
     }
 
     if (err) {
@@ -5981,17 +5980,8 @@ void do_graph_var (int varnum)
 	return;
     }
 
-#ifdef PLOT_SPEED
-    fprintf(stderr, "calling gnuplot()\n"); 
-    gretl_stopwatch();
-#endif
-
     err = gnuplot(libcmd.list, NULL, (const double **) Z, 
 		  datainfo, OPT_G | OPT_O | OPT_T);
-
-#ifdef PLOT_SPEED
-    fprintf(stderr, "gnuplot() returned %d: %g\n", err, gretl_stopwatch());
-#endif
 
     gui_graph_handler(err);
 }

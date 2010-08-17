@@ -34,7 +34,6 @@
 
 #define GPDEBUG 0
 #define POINTS_DEBUG 0
-#define PLOT_SPEED
 
 #ifdef G_OS_WIN32
 # include <io.h>
@@ -121,7 +120,7 @@ struct png_plot_t {
     GdkPixmap *pixmap;
 #ifdef USE_CAIRO
     cairo_t *cr;
-    GdkPixmap *savemap;
+    GdkPixbuf *savebuf;
 #else
     GdkGC *invert_gc;
 #endif
@@ -2332,7 +2331,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	if (strstr(gpline, "printing data labels")) {
 	    spec->flags |= GPT_PRINT_MARKERS;
 	    continue;
-	}	
+	}
 
 	if (!strncmp(gpline, "# ", 2)) {
 	    /* ignore unknown comment lines */
@@ -2570,21 +2569,18 @@ static void cairo_selection_rectangle (png_plot *plot,
     cairo_stroke(plot->cr);
 }
 
-static void copy_state_to_pixmap (png_plot *plot)
+static void copy_state_to_pixbuf (png_plot *plot)
 {
-    GdkWindow *window = gtk_widget_get_window(plot->canvas);
-    cairo_t *cr;
-
-    if (plot->savemap != NULL) {
-	g_object_unref(plot->savemap);
+    if (plot->savebuf != NULL) {
+	g_object_unref(plot->savebuf);
     }    
 
-    plot->savemap = gdk_pixmap_new(window, plot->pixel_width, 
-				   plot->pixel_height, -1);
-    cr = gdk_cairo_create(plot->savemap);
-    gdk_cairo_set_source_pixmap(cr, plot->pixmap, 0, 0);
-    cairo_paint(cr);
-    cairo_destroy(cr); 
+    plot->savebuf = gdk_pixbuf_get_from_drawable(NULL,
+						 plot->pixmap,
+						 NULL,
+						 0, 0, 0, 0,
+						 plot->pixel_width,
+						 plot->pixel_height);
 }
 
 #else
@@ -2630,12 +2626,12 @@ static void draw_selection_box (png_plot *plot, int x, int y)
 
 #ifdef USE_CAIRO
     plot->cr = gdk_cairo_create(plot->pixmap);
-    if (plot->savemap != NULL) {
+    if (plot->savebuf != NULL) {
 	/* restore state prior to zoom start */
-	gdk_cairo_set_source_pixmap(plot->cr, plot->savemap, 0, 0);
+	gdk_cairo_set_source_pixbuf(plot->cr, plot->savebuf, 0, 0);
 	cairo_paint(plot->cr);
     } else {
-	copy_state_to_pixmap(plot);
+	copy_state_to_pixbuf(plot);
     }
 
     /* draw the new temporary box */
@@ -3814,9 +3810,9 @@ static int render_pngfile (png_plot *plot, int view)
     gdk_cairo_set_source_pixbuf(plot->cr, pbuf, 0, 0);
     cairo_paint(plot->cr);
     cairo_destroy(plot->cr);
-    if (plot->savemap != NULL) {
-	g_object_unref(plot->savemap);
-	plot->savemap = NULL;
+    if (plot->savebuf != NULL) {
+	g_object_unref(plot->savebuf);
+	plot->savebuf = NULL;
     }
 #else
     style = gtk_widget_get_style(plot->canvas);
@@ -3887,8 +3883,8 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     plotspec_destroy(plot->spec);
 
 #ifdef USE_CAIRO
-    if (plot->savemap != NULL) {
-	g_object_unref(plot->savemap);
+    if (plot->savebuf != NULL) {
+	g_object_unref(plot->savebuf);
     }
 #else
     if (plot->invert_gc != NULL) {
@@ -4229,7 +4225,7 @@ static png_plot *png_plot_new (void)
     plot->pixmap = NULL;
 #ifdef USE_CAIRO
     plot->cr = NULL;
-    plot->savemap = NULL;
+    plot->savebuf = NULL;
 #else
     plot->invert_gc = NULL;
 #endif
@@ -4271,10 +4267,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
     int polar = 0;
     int err = 0;
 
-#ifdef PLOT_SPEED
-    fprintf(stderr, "gnuplot_show_png starting: %g\n", gretl_stopwatch());
-#endif
-
 #if GPDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
 	    fname, (void *) spec, saved);
@@ -4312,10 +4304,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
 #if GPDEBUG 
     fprintf(stderr, "gnuplot_show_png: read_plotspec_from_file returned %d\n",
 	    plot->err);
-#endif
-
-#ifdef PLOT_SPEED
-    fprintf(stderr, "done read_plotspec_from_file: %g\n", gretl_stopwatch());
 #endif
 
     if (plot->err) {
@@ -4487,19 +4475,11 @@ static int gnuplot_show_png (const char *fname, const char *name,
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
 		     G_CALLBACK(plot_expose), plot);
 
-#ifdef PLOT_SPEED
-    fprintf(stderr, "calling render_pngfile: %g\n", gretl_stopwatch());
-#endif
-
     err = render_pngfile(plot, PNG_START);
     if (err) {
 	gtk_widget_destroy(plot->shell);
 	plot = NULL;
     } 
-
-#ifdef PLOT_SPEED
-    fprintf(stderr, "done render_pngfile: %g\n", gretl_stopwatch());
-#endif
 
     return err;
 }

@@ -771,20 +771,20 @@ static int do_filter_response_graph (filter_info *finfo)
     FILE *fp = NULL;
     char title[128];
     double omega_star = 0.0;
-    int i, err = 0;
+    int i, nlit, err = 0;
     
     if (finfo->ftype == FILTER_BW) {
 	omega_star = finfo->cutoff * M_PI / 180;
-    }
-
-    if (finfo->ftype == FILTER_BW) {
 	G = butterworth_gain(finfo->order, omega_star, 0);
+	nlit = 2;
     } else {
 	G = hp_gain(finfo->lambda, 0);
+	nlit = 1;
     }
 
     if (G == NULL) {
 	gui_errmsg(E_ALLOC);
+	return E_ALLOC;
     }
 
     fp = get_plot_input_stream(PLOT_REGULAR, &err);
@@ -796,6 +796,7 @@ static int do_filter_response_graph (filter_info *finfo)
 
     fputs("set xrange [0:3.1416]\n", fp);
     fputs("set yrange [0:1.1]\n", fp);
+
     if (finfo->ftype == FILTER_BW) {
 	sprintf(title, _("Gain for Butterworth filter (n = %d, nominal cutoff %.2fπ)"),
 		finfo->order, (double) finfo->cutoff / 180);
@@ -803,31 +804,24 @@ static int do_filter_response_graph (filter_info *finfo)
 	sprintf(title, _("Gain for H-P filter (lambda = %g)"), finfo->lambda);
     }	
     fprintf(fp, "set title \"%s\"\n", title);
-    fputs("# literal lines 1\n", fp);
+
+    fprintf(fp, "# literal lines = %d\n", nlit);
     fputs("set xtics (\"0\" 0, \"π/4\" pi/4, \"π/2\" pi/2, \"3π/4\" 3*pi/4, "
 	  "\"π\" pi)\n", fp);
-
-    fputs("plot \\\n", fp);
 
     gretl_push_c_numeric_locale();
 
     if (finfo->ftype == FILTER_BW) {
-	fputs("'-' using 1:2 notitle w lines , \\\n", fp);
-	fputs("'-' using 1:2 notitle w impulses\n", fp);
-    } else {
-	fputs("'-' using 1:2 notitle w lines\n", fp);
+	fprintf(fp, "set arrow from %g,0 to %g,1.1 nohead\n", omega_star, omega_star);
     }
 
+    fputs("plot \\\n", fp);
+    fputs("'-' using 1:2 notitle w lines\n", fp);
     for (i=0; i<G->rows; i++) {
 	fprintf(fp, "%.5f %.5f\n", gretl_matrix_get(G, i, 0),
 		gretl_matrix_get(G, i, 1));
     }
     fputs("e\n", fp);
-
-    if (finfo->ftype == FILTER_BW) {
-	fprintf(fp, "%g 1.10\n", omega_star);
-	fputs("e\n", fp);
-    }	
 
     gretl_pop_c_numeric_locale();
 

@@ -2755,46 +2755,63 @@ static double vprime_M_v (double *v, double *M, int n)
     return val;
 }
 
+/* Compute scaled recursive residuals and cumulate \bar{w} via a 
+   sequence of OLS regressions. See William Greene, Econometric 
+   Analysis 5e, pp. 135-136.
+*/
+
 static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
-			  double *wbar, double ***pZ, DATAINFO *pdinfo) 
+			  double *wbar, double **Z, DATAINFO *pdinfo) 
 {
     MODEL cmod;
     gretlopt opt = OPT_X | OPT_A;
-    double *xvec;
-    double xx;
+    double yhat, den, *xt;
     int n = T - k;
     int i, j, t;
     int err = 0;
 
-    xvec = malloc(k * sizeof *xvec);
-    if (xvec == NULL) {
+    /* vector of regressors at t */
+    xt = malloc(k * sizeof *xt);
+    if (xt == NULL) {
 	return E_ALLOC;
     }
 
+    /* set minimal sample based on model to be tested */
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t1 + k - 1;    
+
     for (j=0; j<n && !err; j++) {
-	cmod = lsq(pmod->list, *pZ, pdinfo, OLS, opt);
+	cmod = lsq(pmod->list, Z, pdinfo, OLS, opt);
 	if (cmod.errcode) {
 	    err = cmod.errcode;
 	} else {
-	    /* compute ex post prediction error */
+	    /* compute one step ahead prediction error: \hat{y}_t
+	       based on estimates through t - 1
+	    */
 	    t = pdinfo->t2 + 1;
-	    xx = 0.0;
+	    yhat = 0.0;
 	    for (i=0; i<cmod.ncoeff; i++) {
-		xvec[i] = (*pZ)[cmod.list[i+2]][t];
-		xx += cmod.coeff[i] * xvec[i];
+		xt[i] = Z[cmod.list[i+2]][t];
+		yhat += cmod.coeff[i] * xt[i];
 	    }
-	    cresid[j] = (*pZ)[pmod->list[1]][t] - xx;
+	    cresid[j] = Z[pmod->list[1]][t] - yhat;
 	    cmod.ci = CUSUM;
-	    err = makevcv(&cmod, 1.0);
-	    xx = vprime_M_v(xvec, cmod.vcv, cmod.ncoeff);
-	    cresid[j] /= sqrt(1.0 + xx);
-	    *wbar += cresid[j];
-	    pdinfo->t2 += 1;
+	    err = makevcv(&cmod, 1.0); /* (X'X)^{-1} */
+	    if (!err) {
+		/* compute scaled residual: divide by
+		   \sqrt{1 + x_t'(X_{t-1}'X_{t-1})^{-1} x_t}
+		*/
+		den = vprime_M_v(xt, cmod.vcv, cmod.ncoeff);
+		cresid[j] /= sqrt(1.0 + den);
+		*wbar += cresid[j];
+		/* extend the sample by one observation */
+		pdinfo->t2 += 1;
+	    }
 	}
 	clear_model(&cmod); 
     }
 
-    free(xvec);
+    free(xt);
 
     return err;
 }
@@ -2897,7 +2914,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
 /**
  * cusum_test:
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: if flags include %OPT_S, save results of test to model.
  * @prn: gretl printing struct.
@@ -2909,7 +2926,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn) 
 {
     int save_t1 = pdinfo->t1;
@@ -2935,12 +2952,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    /* number of forecasts */
+    /* the number of forecasts */
     m = T - k; 
-
-    /* set sample based on model to be tested */
-    pdinfo->t1 = pmod->t1;
-    pdinfo->t2 = pmod->t1 + k - 1;    
 
     cresid = malloc(m * sizeof *cresid);
     W = malloc(m * sizeof *W);
@@ -2950,7 +2963,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = cusum_compute(pmod, cresid, T, k, &wbar, pZ, pdinfo);
+	err = cusum_compute(pmod, cresid, T, k, &wbar, Z, pdinfo);
 	if (err) {
 	    errmsg(err, prn);
 	}

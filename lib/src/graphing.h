@@ -35,7 +35,7 @@ typedef enum {
     GPT_XYZ            = 1 << 5,  /* X-Y, controlling for Z */
     GPT_BATCH          = 1 << 6,  /* working in batch mode */
     GPT_GUI            = 1 << 7,  /* called from GUI context */
-    GPT_FIT_OMIT       = 1 << 8,  /* User said don't draw fitted line on graph */
+    GPT_FIT_OMIT       = 1 << 8,  /* user said don't draw fitted line on graph */
     GPT_DATA_STYLE     = 1 << 9,  /* data style is set by user */
     GPT_IDX            = 1 << 10, /* plot against time or obs index */
     GPT_TS             = 1 << 11, /* doing time series plot */

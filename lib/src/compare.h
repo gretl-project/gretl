@@ -128,7 +128,7 @@ int QLR_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 
 int cusum_test (MODEL *pmod, 
-		double ***pZ, DATAINFO *pdinfo, 
+		double **Z, DATAINFO *pdinfo, 
 		gretlopt opt, PRN *prn);
 
 int panel_hausman_test (MODEL *pmod, 

@@ -4911,7 +4911,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->ci == COEFFSUM) {
 	    err = gretl_sum_test(cmd->list, models[0], pdinfo, prn);
 	} else if (cmd->ci == CUSUM) {
-	    err = cusum_test(models[0], pZ, pdinfo, cmd->opt, prn);
+	    err = cusum_test(models[0], *pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == RESET) {
 	    err = reset_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == CHOW) {
