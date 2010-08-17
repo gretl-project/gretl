@@ -31,7 +31,7 @@ static double pheight = 3.5;
 static char psfont[64] = "Helvetica";
 static char pdffont[64] = "Sans";
 static int psfontsize = 8;
-static int pdffontsize = 6;
+static int pdffontsize = 10;
 static double lw_factor = 1.0;
 static int mono;
 
@@ -348,7 +348,7 @@ saver_make_term_string (struct pdf_ps_saver *s, char *termstr)
     } else {
 	record_selected_ps_font(s);
 	if (s->spec->termtype == GP_TERM_EPS) {
-	    ttype = (s->mono)? "post eps mono" : "post eps solid";
+	    ttype = (s->mono)? "post eps enhanced mono" : "post eps enhanced solid";
 	    sprintf(fontstr, "font \"%s,%d\"", s->psfont, 2 * s->psfontsize);
 	} else {
 	    /* PDF via pdflib */

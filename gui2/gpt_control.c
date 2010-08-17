@@ -554,9 +554,9 @@ static void get_full_term_string (const GPT_SPEC *spec, char *termstr)
 
     if (spec->termtype == GP_TERM_EPS) {
 	if (mono) {
-	    strcpy(termstr, "set term postscript eps mono"); 
+	    strcpy(termstr, "set term post eps enhanced mono"); 
 	} else {
-	    strcpy(termstr, "set term postscript eps color solid");
+	    strcpy(termstr, "set term post eps enhanced color solid");
 	} 
     } else if (spec->termtype == GP_TERM_PDF) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
@@ -619,6 +619,44 @@ static void dataline_check (char *s, int *d)
     }
 }
 
+/* Sometimes we want to put \pi into tic-marks or a graph
+   title. We just use the UTF-8 character, but if we're writing
+   a plot in EPS format this has to be changed to {/Symbol p}.
+*/
+
+static char *eps_replace_pi (unsigned char *s)
+{
+    char *repl = NULL;
+    int i, picount = 0;
+
+    for (i=0; s[i] != '\0'; i++) {
+	if (s[i] == 0xcf && s[i+1] == 0x80) {
+	    picount++;
+	}
+    }
+
+    if (picount > 0) {
+	i = picount * 9 + strlen((const char *) s) + 1;
+	repl = calloc(i, 1);
+    }
+
+    if (repl != NULL) {
+	i = 0;
+	while (*s) {
+	    if (*s == 0xcf && *(s+1) == 0x80) {
+		strcat(repl, "{/Symbol p}");
+		i += 11;
+		s++;
+	    } else {
+		repl[i++] = *s;
+	    }
+	    s++;
+	}
+    }
+
+    return repl;
+}
+
 /* for postscript output, e.g. in Latin-2, or EMF output in CPXXXX */
 
 static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
@@ -631,7 +669,14 @@ static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
 	if (ttype == GP_TERM_EMF) {
 	    tmp = utf8_to_cp(s);
 	} else {
-	    tmp = utf8_to_latin(s);
+	    char *repl = eps_replace_pi((unsigned char *) s);
+
+	    if (repl != NULL) {
+		tmp = utf8_to_latin(repl);
+		free(repl);
+	    } else {
+		tmp = utf8_to_latin(s);
+	    }
 	}
 
 	if (tmp == NULL) {
@@ -683,8 +728,6 @@ static int term_uses_utf8 (int ttype, int gp_has_utf8)
 	return 1;
     } else if (ttype == GP_TERM_PDF && 
 	       gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
-	return 1;
-    } else if (ttype == GP_TERM_EPS && gp_has_utf8) {
 	return 1;
     } else {
 	return 0;

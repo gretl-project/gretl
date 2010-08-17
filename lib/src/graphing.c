@@ -1022,7 +1022,7 @@ static void print_term_string (int tt, FILE *fp)
     const char *tstr = NULL;
 
     if (tt == GP_TERM_EPS) {
-	tstr = "set term postscript eps mono";
+	tstr = "set term post eps enhanced mono";
     } else if (tt == GP_TERM_PDF) {
 	if (gnuplot_pdf_terminal() == GP_PDF_CAIRO) {
 	    tstr = PDF_CAIRO_STRING;
