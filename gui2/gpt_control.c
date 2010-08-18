@@ -41,6 +41,7 @@
 #endif
 
 #if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 8
+/* don't use deprecated GdkGC apparatus */
 # define USE_CAIRO
 #endif
 
@@ -579,46 +580,6 @@ static void get_full_term_string (const GPT_SPEC *spec, char *termstr)
     } 
 }
 
-static char *gp_contd_string (char *s)
-{
-    char *p = strstr(s, ", \\");
-    int n = 0;
-
-    if (p != NULL) {
-	n = 3;
-    } else {
-	p = strstr(s, ",\\");
-	if (p != NULL) {
-	    n = 2;
-	}
-    }
-
-    if (p != NULL) {
-	/* ensure we've really got '\' at end of line */
-	char c = *(p+n);
-
-	if (c != '\0' && c != '\n' && c != '\r') {
-	    p = NULL;
-	}
-    }
-
-    return p;
-}
-
-static void dataline_check (char *s, int *d)
-{
-    if (!strncmp(s, "plot \\", 6)) {
-	*d = 0;
-    } else {
-	if (!strncmp(s, "plot ", 5)) {
-	    *d = 0;
-	}
-	if (*d == 0 && !gp_contd_string(s)) {
-	    *d = 1;
-	}
-    }
-}
-
 /* Sometimes we want to put \pi into tic-marks or a graph
    title. We just use the UTF-8 character, but if we're writing
    a plot in EPS format this has to be changed to {/Symbol p}.
@@ -692,16 +653,15 @@ static int maybe_recode_gp_line (char *s, int ttype, FILE *fp)
     return err;
 }
 
-/* check for non-ASCII strings in plot file: these may
-   require special treatment */
+/* Check for non-ASCII strings in plot file: these may
+   require special treatment. */
 
 static int non_ascii_gp_file (FILE *fp)
 {
     char pline[512];
-    int dataline = -1;
     int ret = 0;
 
-    while (fgets(pline, sizeof pline, fp) && dataline <= 0) {
+    while (fgets(pline, sizeof pline, fp)) {
 	if (set_print_line(pline)) {
 	    break;
 	}
@@ -712,7 +672,6 @@ static int non_ascii_gp_file (FILE *fp)
 	    ret = 1;
 	    break;
 	}
-	dataline_check(pline, &dataline);
     }
 
     rewind(fp);
@@ -740,7 +699,6 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 			  FILE *fpin, FILE *fpout)
 {
     char pline[512];
-    int dataline = -1;
     int err, err_shown = 0;
 
     while (fgets(pline, sizeof pline, fpin)) {
@@ -763,7 +721,7 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 	    }
 	}
 
-	if (latin && dataline <= 0 && *pline != '#') {
+	if (latin && *pline != '#') {
 	    err = maybe_recode_gp_line(pline, ttype, fpout);
 	    if (err && !err_shown) {
 		gui_errmsg(err);
@@ -772,8 +730,6 @@ void filter_gnuplot_file (int ttype, int latin, int mono,
 	} else {
 	    fputs(pline, fpout);
 	} 
-
-	dataline_check(pline, &dataline);
     }
 }
 
