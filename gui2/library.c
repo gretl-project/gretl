@@ -4955,8 +4955,8 @@ void add_dummies (GtkAction *action)
 	    opt = OPT_T;
 	}
     } else {
-	errbox(_("Data set is not recognized as a panel.\n"
-		 "Please use \"Sample/Set frequency, startobs\"."));
+	/* "can't happen" */
+	gui_errmsg(E_DATA);
 	return;
     }
 

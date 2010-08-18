@@ -36,6 +36,8 @@ version 1.9.2, in progress
   (gretl native, RATS or PcGive) as well as regular data files
 - Internals: modify GUI sources to ensure that gretl will build 
   OK with the forthcoming GTK+ 3.0
+- MS Windows: update Inno installer and add the officially
+  recognized translations
 
 2010-06-24 version 1.9.1
 - New command: "makepkg", for command-line creation of gretl

@@ -10,6 +10,40 @@ void usage (const char *s)
     exit(EXIT_FAILURE);
 }
 
+struct isl {
+    const char *id;
+    const char *fname;
+};
+
+void add_languages (void)
+{
+    struct isl languages[] = {
+	{ "en", "Default" },
+	{ "eu", "Basque" },
+	{ "pt_BR", "BrazilianPortuguese" },
+	{ "cs", "Czech" },
+	{ "fr", "French" },
+	{ "de", "German" },
+	{ "it", "Italian" },
+	{ "pl", "Polish" },
+	{ "pt", "Portuguese" },
+	{ "ru", "Russian" },
+	{ "es", "Spanish" },
+	{ NULL, NULL }
+    };
+    int i;
+
+    printf("\n[Languages]\n");
+
+    printf("Name: \"%s\"; MessagesFile: \"compiler:%s.isl\"\n", 
+	   languages[0].id, languages[0].fname);
+
+    for (i=1; languages[i].id != NULL; i++) {
+	printf("Name: \"%s\"; MessagesFile: \"compiler:Languages\\%s.isl\"\n", 
+	       languages[i].id, languages[i].fname);
+    }
+}
+
 void define_program_icons (void)
 {
     printf("\n[Icons]\n");
@@ -162,6 +196,8 @@ int main (int argc, char **argv)
     fprintf(stderr, "Making installer script for gretl version %s...\n",
 	    version);
     preamble(version);
+
+    add_languages();
 
     printf("\n[Files]\n");
 
