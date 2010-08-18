@@ -181,8 +181,7 @@
       <para context="cli">
 	The options shown above and the discussion which follows pertain
 	to the use of the <lit>adf</lit> command with regular time series
-	data. For the special use of this command with panel data please
-	see below.
+	data. For use of this command with panel data please see below.
       </para>
 
       <para context="cli">
@@ -4858,6 +4857,11 @@
       </para>
 
       <para context="cli">
+	For use of this command with panel data please see the final
+	section in this entry.
+      </para>
+
+      <para context="cli">
 	Computes the KPSS test <cite key="KPSS92" p="true">(Kwiatkowski
 	et al, Journal of Econometrics, 1992)</cite> for stationarity,
 	for each of the specified variables (or their first difference,
@@ -4891,6 +4895,40 @@
 	article. When the test statistic lies between the 10 percent and 1
 	percent critical values a p-value is shown; this is obtained
 	by linear interpolation and should not be taken too literally.
+      </para>
+
+      <subhead context="cli">Panel data</subhead>
+
+      <para context="cli">
+	When the <lit>kpss</lit> command is used with panel data, to
+	produce a panel unit root test, the applicable options and the
+	results shown are somewhat different.  While you may give a list
+	of variables for testing in the regular time-series case, with
+	panel data only one variable may be tested per command. And the
+	<opt>--verbose</opt> option has a different meaning: it produces a
+	brief account of the test for each individual time series (the
+	default being to show only the overall result).
+      </para>
+      <para context="cli">
+	When possible, the overall test (null hypothesis: the series in
+	question is stationary for all the panel units) is calculated
+	using the method of <cite key="choi01">Choi (Journal of
+	International Money and Finance, 2001)</cite>. This is not
+	always straightforward, the difficulty being that while the
+	Choi test is based on the p-values of the tests on the
+	individual series, we do not currently have a means of
+	calculating p-values for the KPSS test statistic; we must
+	rely on a few critical values.
+      </para>
+      <para context="cli">
+	If the test statistic for a given series falls between the 10
+	percent and 1 percent critical values, we are able to interpolate
+	a p-value. But if the test falls short of the 10 percent value, or
+	exceeds the 1 percent value, we cannot interpolate and can at best
+	place a bound on the global Choi test. If the individual test
+	statistic falls short of the 10 percent value for some units but
+	exceeds the 1 percent value for others, we cannot even compute
+	a bound for the global test.
       </para>
     </description>
 
