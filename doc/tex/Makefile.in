@@ -45,6 +45,7 @@ TEXSRC = cli.tex \
 	gretlR.tex \
 	gretlOx.tex \
 	gretlOctave.tex \
+	datatypes.tex \
 	df.tex
 
 BIBSRC = gretl.bib gretl.bst
