@@ -1280,7 +1280,6 @@ static double cotan (double theta)
 
 /**
  * hp_gain:
- * @n: order of the filter.
  * @lambda: H-P parameter.
  * @hipass: 1 for high-pass filter, 0 for low-pass.
  *
@@ -1368,13 +1367,14 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
 	return E_ALLOC;
     }
 
-    /* factorize */
+    /* initialize */
     for (t=0; t<q; t++) {
 	for (j=t+1; j<=q; j++) {
 	    mu[j][t] = 0.0;
 	}
     }
 
+    /* factorize */
     for (t=0; t<T; t++) { 
 	for (k=Min(q, t); k>=0; k--) {
 	    mu[k][t] = g[k];
@@ -1599,7 +1599,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     }
 
     /* the cutoff is expressed in radians internally */
-    cutoff *=  M_PI / 180.0;
+    cutoff *= M_PI / 180.0;
 
     T = t2 - t1 + 1;
     m = 3 * (n+1);
