@@ -158,12 +158,9 @@ static void nls_init (void)
 {
 #ifdef ENABLE_NLS
 # ifdef WIN32
-    char gretldir[MAXLEN], LOCALEDIR[MAXLEN];
+    char LOCALEDIR[MAXLEN];
 
-    if (read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", gretldir)) {
-        return;
-    }
-    sprintf(LOCALEDIR, "%s\\locale", gretldir);
+    build_path(LOCALEDIR, gretl_home(), "locale", NULL);
 # endif /* WIN32 */
 
     setlocale (LC_ALL, "");
@@ -344,6 +341,10 @@ int main (int argc, char *argv[])
     CMD cmd;
     PRN *prn;
     int err = 0;
+
+#ifdef G_OS_WIN32
+    win32_set_gretldir(callname);
+#endif
 
     nls_init();
 

@@ -29,6 +29,8 @@
 #include <shlobj.h>
 #include <aclapi.h>
 
+/* returns 0 on success */
+
 int read_reg_val (HKEY tree, const char *base, 
 		  char *keyname, char *keyval)
 {
@@ -952,3 +954,4 @@ int maybe_print_R_path_addition (FILE *fp)
 
     return err;
 }
+

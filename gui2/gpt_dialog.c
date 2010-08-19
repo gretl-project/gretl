@@ -1455,7 +1455,7 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 					  GTK_STOCK_CANCEL, 3,
 					  NULL);
 
-	gretl_dialog_add_message(dlg, msg);
+	gretl_dialog_add_message(dlg, _(msg));
 	gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
 	gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);  
 	ret = gtk_dialog_run(GTK_DIALOG(dlg));

@@ -1840,14 +1840,73 @@ void show_paths (void)
     printf("gnuplot: %s\n", paths.gnuplot);
 }
 
-#ifndef WIN32
+#ifdef WIN32
+
+static char *rightmost (char *s1, char *s2)
+{
+    if (s1 == NULL) {
+	return s2;
+    } else if (s2 == NULL) {
+	return s1;
+    } else {
+	return (s2 - s1 > 0)? s2 : s1;
+    }
+}
+
+/* This aims to be general enough to handle the case where there
+   are no gretl entries in the registry; @progname is argv[0] at
+   startup.
+*/
+
+void win32_set_gretldir (const char *progname)
+{
+    int err;
+
+    *paths.gretldir = '\0';
+
+    err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", paths.gretldir);
+    if (!err) {
+	return;
+    }
+
+    if (g_path_is_absolute(progname)) {
+	strncat(paths.gretldir, progname, MAXLEN - 1);
+    } else {
+	char *test = getcwd(paths.gretldir, MAXLEN);
+
+	if (test != NULL) {
+	    int n = strlen(paths.gretldir);
+	    int m = strlen(progname);
+
+	    if (n + m + 1 < MAXLEN) {
+		if (paths.gretldir[n-1] != '\\' &&
+		    paths.gretldir[n-1] != '/') {
+		    strncat(paths.gretldir, "\\", 1);
+		}
+		strncat(paths.gretldir, progname, m);
+	    }
+	}
+    }
+
+    if (*paths.gretldir != '\0') {
+	char *p1 = strrchr(paths.gretldir, '\\');
+	char *p2 = strrchr(paths.gretldir, '/');
+	char *s = rightmost(p1, p2);
+
+	if (s != NULL) {
+	    *(s+1) = '\0';
+	}
+    }	
+}
+
+#else /* !WIN32 */
 
 /* We have paths.gretldir in place: now test it by seeing if we can
    open the the GPL file "COPYING", which definitely should be in that
    directory.  If that doesn't work, try some remedial measures.  
    Note, @config_path is the path garnered from the config file,
    which we may or may not have used to write paths.gretldir (and
-   which may be an empty string).
+   which may indeed be an empty string).
 */
 
 static void check_gretldir (char *config_path)
@@ -1972,8 +2031,9 @@ static void initialize_gretldir (char *dirname, gretlopt opt)
 	strcpy(paths.gretldir, ghome);
 	slash_terminate(paths.gretldir);
 	done = 1;
-    } else if (*dirname != '\0') {
-	/* use value from config/registry */
+    } else if (*dirname != '\0' && *paths.gretldir == '\0') {
+	/* use value from config/registry, unless we already got
+	   a value somehow */
 	strcpy(paths.gretldir, dirname);
 	slash_terminate(paths.gretldir);
 	done = 1;

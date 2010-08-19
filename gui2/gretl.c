@@ -390,14 +390,10 @@ static void real_nls_init (void)
 
 static void real_nls_init (void)
 {
-    char gretldir[MAXSTR], localedir[MAXSTR];
+    char localedir[MAXSTR];
     char *loc;
 
-    if (read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", gretldir)) {
-	return;
-    }
-
-    build_path(localedir, gretldir, "locale", NULL);
+    build_path(localedir, gretl_home(), "locale", NULL);
     loc = setlocale(LC_ALL, "");
     set_gretl_charset(loc);
     bindtextdomain(PACKAGE, localedir);
@@ -503,6 +499,10 @@ int main (int argc, char **argv)
     char filearg[MAXLEN];
 #ifndef OLD_GTK
     GError *opterr = NULL;
+#endif
+
+#ifdef G_OS_WIN32
+    win32_set_gretldir(callname);
 #endif
 
     nls_init();

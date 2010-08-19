@@ -173,6 +173,8 @@ void set_gretl_png_font (const char *s);
 
 #ifdef WIN32
 
+void win32_set_gretldir (const char *progname);
+
 int gretl_mkstemp (char *tmpl);
 
 #else
