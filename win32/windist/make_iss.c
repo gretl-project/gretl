@@ -29,6 +29,7 @@ void add_languages (void)
 	{ "pt", "Portuguese" },
 	{ "ru", "Russian" },
 	{ "es", "Spanish" },
+	{ "tr", "Turkish" },
 	{ NULL, NULL }
     };
     int i;
