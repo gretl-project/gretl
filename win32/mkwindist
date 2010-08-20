@@ -103,7 +103,7 @@ done
 for f in \
     libgmp-3.dll libmpfr-1.dll libxml2.dll readline5.dll history5.dll \
     zlib1.dll libblas.dll liblapack.dll libgtksourceview.dll \
-    iconv.dll intl.dll libfftw3-3.dll libpng12-0.dll 
+    iconv.dll intl.dll libfftw3-3.dll libpng12-0.dll
 do
     add_file ${WINFILES}/misc-dll/$f gretl/$f
 done
@@ -259,6 +259,14 @@ if [ ! -f ${WINFILES}/gtk-runtime.tar.gz ] ; then
   exit 1
 else 
   process_tarball ${WINFILES}/gtk-runtime.tar.gz
+fi
+
+# replacement builds
+if [ -f ${WINFILES}/misc-dll/libpixmap.dll ] ; then
+  cp -p ${WINFILES}/misc-dll/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/
+fi
+if [ -f ${WINFILES}/misc-dll/libwimp.dll ] ; then
+  cp -p ${WINFILES}/misc-dll/libwimp.dll gretl/lib/gtk-2.0/2.10.0/engines/
 fi
 
 if [ ! -f ${WINFILES}/gp45cvsw32.tar.gz ] ; then
