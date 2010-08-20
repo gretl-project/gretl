@@ -3467,7 +3467,7 @@ void set_dataset_locked (gboolean s)
 int dataset_locked (void)
 {
     if (locked) {
-	errbox(_("You can't do this while editing the dataset"));
+	errbox(_("The dataset cannot be modified at present"));
     }
 
     return locked;

@@ -25,6 +25,7 @@
 #include "libset.h"
 #include "plotspec.h"
 #include "cmdstack.h"
+#include "ssheet.h"
 
 enum {
     FILTER_SMA = 1,
@@ -71,6 +72,8 @@ struct filter_info_ {
     GtkWidget *entry2;
     GtkWidget *kspin;
 };
+
+static int calculate_filter (filter_info *finfo);
 
 static const char *filter_get_title (int ftype)
 {
@@ -267,34 +270,6 @@ static int varname_error (filter_info *finfo, int i)
     return 0;
 }
 
-static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
-{
-    if (finfo->save_opt & FILTER_SAVE_TREND) {
-	strcpy(finfo->save_t, gtk_entry_get_text(GTK_ENTRY(finfo->entry1)));
-	if (varname_error(finfo, 1)) {
-	    return;
-	}
-    }
-
-    if (finfo->save_opt & FILTER_SAVE_CYCLE) {
-	strcpy(finfo->save_c, gtk_entry_get_text(GTK_ENTRY(finfo->entry2)));
-	if (varname_error(finfo, 2)) {
-	    return;
-	} 
-    } 
-
-    if (finfo->kspin != NULL) {
-	if (gtk_widget_is_sensitive(finfo->kspin)) {
-	    finfo->k = (int) 
-		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->kspin));
-	} else {
-	    finfo->k = 0;
-	}
-    }
-
-    gtk_widget_destroy(finfo->dlg);
-}
-
 static void filter_dialog_hsep (GtkWidget *dlg)
 {
     GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
@@ -446,17 +421,59 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
-static int filter_dialog (filter_info *finfo)
+static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
+{
+    if (finfo->save_opt & FILTER_SAVE_TREND) {
+	strcpy(finfo->save_t, gtk_entry_get_text(GTK_ENTRY(finfo->entry1)));
+	if (varname_error(finfo, 1)) {
+	    return;
+	}
+    }
+
+    if (finfo->save_opt & FILTER_SAVE_CYCLE) {
+	strcpy(finfo->save_c, gtk_entry_get_text(GTK_ENTRY(finfo->entry2)));
+	if (varname_error(finfo, 2)) {
+	    return;
+	} 
+    } 
+
+    if (finfo->kspin != NULL) {
+	if (gtk_widget_is_sensitive(finfo->kspin)) {
+	    finfo->k = (int) 
+		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->kspin));
+	} else {
+	    finfo->k = 0;
+	}
+    }
+
+    if (finfo->graph_opt != FILTER_GRAPH_NONE ||
+	finfo->save_opt != FILTER_SAVE_NONE) {
+	int err = calculate_filter(finfo);
+
+	if (err) {
+	    gui_errmsg(err);
+	} 
+    } 
+}
+
+static void filter_dialog_quit (GtkWidget *w, gpointer data)
+{
+    set_dataset_locked(FALSE);
+}
+
+static void filter_dialog (filter_info *finfo)
 {
     GtkWidget *dlg;
     GtkWidget *vbox;
     GtkWidget *hbox;
     GtkWidget *w;
-    int ret = 0;
 
     dlg = gretl_dialog_new(_("gretl: time-series filter"), mdata->main,
 			   GRETL_DLG_BLOCK);
     finfo->dlg = dlg;
+
+    g_signal_connect(G_OBJECT(dlg), "destroy",
+		     G_CALLBACK(filter_dialog_quit), NULL);
 
     /* box title */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -605,8 +622,10 @@ static int filter_dialog (filter_info *finfo)
     /* convenience pointer for button box */
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
-    /* Cancel button */
-    cancel_delete_button(hbox, dlg, &ret);
+    /* Close button */
+    w = close_button(hbox);
+    g_signal_connect_swapped(G_OBJECT(w), "clicked", 
+			     G_CALLBACK(gtk_widget_destroy), dlg);
 
     /* "OK" button */
     w = ok_button(hbox);
@@ -618,9 +637,9 @@ static int filter_dialog (filter_info *finfo)
 	context_help_button(hbox, BWFILTER);
     }
 
-    gtk_widget_show_all(dlg);
+    set_dataset_locked(TRUE);
 
-    return ret;
+    gtk_widget_show_all(dlg);
 }
 
 static void print_gp_data (filter_info *finfo, const double *obs,
@@ -1052,36 +1071,18 @@ void filter_callback (GtkAction *action)
     int v = mdata_active_var();
     int t1 = datainfo->t1;
     int t2 = datainfo->t2;
-    int code, cancel = 0;
-    int err = 0;
+    int code, err = 0;
 
     code = filter_code(action);
 
     err = array_adjust_t1t2(Z[v], &t1, &t2);
-    if (err) {
+
+    if (err || t2 - t1 + 1 < 4) {
 	gui_errmsg(E_MISSDATA);
 	return;
     }
-
-    if (t2 - t1 + 1 < 4) {
-	gui_errmsg(E_MISSDATA);
-	return;
-    }	
 
     filter_info_init(&finfo, code, v, t1, t2);
 
-    cancel = filter_dialog(&finfo);
-    if (cancel) {
-	return;
-    }
-
-    if (finfo.graph_opt == FILTER_GRAPH_NONE &&
-	finfo.save_opt == FILTER_SAVE_NONE) {
-	return;
-    }
-
-    err = calculate_filter(&finfo);
-    if (err) {
-	gui_errmsg(err);
-    }    
+    filter_dialog(&finfo);
 }
