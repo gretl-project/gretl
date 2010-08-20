@@ -1,4 +1,4 @@
-\chapter{Gretl datatypes}
+\chapter{Gretl data types}
 \label{chap:datatypes}
 
 \section{Introduction}
@@ -15,15 +15,18 @@
 \texttt{list} & holds the ID numbers of a set of series \\
 \texttt{string} & holds a array of characters\\
 \texttt{bundle} & holds a variable number of objects of 
- various types (see below for details)
+ various types
 \end{tabular}
 \end{center}
+
+The ``numerical values'' mentioned above are all double-precision
+floating point numbers.
 
 In this chapter we give a run-down of the basic characteristics of
 each of these types and also explain their ``life cycles'' (creation,
 modification and destruction). The list and matrix types, whose uses
 are relatively complex, are discussed at greater length in the
-following two chapters.
+following two chapters. 
 
 \section{Series}
 \label{sec:Series}
@@ -38,11 +41,11 @@ be added via the items under the \textsf{Add} menu in the main window
 (logs, squares and so on) are also series.
 
 For a gretl session to contain any series, a common series length must
-be established. This is most commonly achieved by opening a data file,
-or importing a series from a database, in which case the length is set
-by the first import. But one can also use the \texttt{nulldata}
-command, which takes as it single argument the desired length, a
-positive integer.
+be established. This is usually achieved by opening a data file, or
+importing a series from a database, in which case the length is set by
+the first import. But one can also use the \texttt{nulldata} command,
+which takes as it single argument the desired length, a positive
+integer.
 
 Each series has these basic attributes: an ID number, a name, and of
 course $n$ numerical values. In addition a series may have a
@@ -56,8 +59,8 @@ menu or via right-click), or by means of the \texttt{setinfo} command.
 
 In the context of most commands you are able to reference series by
 name or by ID number as you wish. The main exception is the definition
-of new variables via a formula (see \texttt{genr}); here you must use
-names since ID numbers would get confused with numerical constants.
+or modification of variables via a formula; here you must use names
+since ID numbers would get confused with numerical constants.
 
 Note that series ID numbers are always consecutive, and the ID number
 for a given series will change if you delete a lower-numbered series.
@@ -87,7 +90,7 @@ the main window.
 \label{sec:Matrices}
 
 Matrices in gretl work much as in other mathematical software (e.g.\
-\textsf{Matlab}, \textsf{Octave}). Like scalars they have no public ID
+\textsf{MATLAB}, \textsf{Octave}). Like scalars they have no public ID
 numbers and must be referenced by name, and they can be used without
 any dataset in place. Matrix indexing is 1-based: the top-left element
 of matrix \texttt{A} is \texttt{A[1,1]}.  Matrices are discussed at
@@ -137,7 +140,7 @@ bundles. (Yes, a bundle can contain other bundles). A bundle takes
 the form of a hash table or associative array: each item placed in the
 bundle is associated with a key string which can used to retrieve it
 subsequently. We begin by explaining the mechanics of bundles then
-offer some thoughts on what they might be good for.
+offer some thoughts on what they are good for.
 
 To use a bundle you must first ``declare'' it, as in
 
@@ -145,67 +148,73 @@ To use a bundle you must first ``declare'' it, as in
 bundle foo
 \end{code}
 
-To add an object to a bundle, use the \texttt{bundleset}
-function. This takes three arguments: the name of a bundle, a key
-string, and the name of the object to add. For example,
+To add an object to a bundle you assign to a compound left-hand value:
+the name of the bundle followed by the key string in square
+brackets. For example, the statement
 
 \begin{code}
-bundleset(foo, "matrix1", m)
+foo["matrix1"] = m
 \end{code}
 
 adds an object called \texttt{m} (presumably a matrix) to bundle
-\texttt{foo} under the key \texttt{matrix1}. To get an item out
-of a bundle, use the name of the bundle followed by the key string in
-square backets, as in
+\texttt{foo} under the key \texttt{matrix1}. To get an item out of a
+bundle, again use the name of the bundle followed by the bracketed
+key, as in
 
 \begin{code}
 matrix bm = foo["matrix1"]
 \end{code}
 
+A bundle key may be given as a double-quoted string literal, as shown
+above, or as the name of a pre-defined string variable.
+
 Note that the key identifying an object within a given bundle is
-necessarily unique. If you reuse an existing key in a new
-\texttt{bundleset} call, the effect is to replace the object
-which was previously stored under the given key.
+necessarily unique. If you reuse an existing key in a new assignment,
+the effect is to replace the object which was previously stored under
+the given key. It is not required that the type of the replacement
+object is the same as that of the original.
 
 Also note that when you add an object to a bundle, what in fact
-happens is that the bundle acquires a copy of the object. The
-external object retains its own identity and is unaffected 
-if/when the bundled object is replaced by another. Consider
-the following script fragment:
+happens is that the bundle acquires a copy of the object. The external
+object retains its own identity and is unaffected if the bundled
+object is replaced by another. Consider the following script fragment:
 
 \begin{code}
 bundle foo
 matrix m = I(3)
-bundleset(foo, "mykey", m)
+foo["mykey"] = m
 scalar x = 20
-bundleset(foo, "mykey", x)
+foo["mykey"] = x
 \end{code}
 
-After the above commands are executed bundle \texttt{foo} does not
-contain a matrix, but the original matrix \texttt{m} is still in good
-health.
+After the above commands are completed bundle \texttt{foo} does not
+contain a matrix under \texttt{mykey}, but the original matrix
+\texttt{m} is still in good health.
 
-To delete an object from a bundle, use \texttt{bundledel}: this
-function takes the name of a bundle and a key as its arguments;
-it destroys the object associated with the key and removes the
-key from the hash table.
+To delete an object from a bundle use the \texttt{delete} command, as
+in
+
+\begin{code}
+delete foo["mykey"]
+\end{code}
+
+This destroys the object associated with the key and removes the key
+from the hash table.
 
 Besides adding, accessing, replacing and deleting individual items,
 the other operations that are supported for bundles are union,
 printing and deletion. As regards union, if bundles \texttt{b1} and
-\texttt{b2} are defined you can say,
+\texttt{b2} are defined you can say
 
 \begin{code}
 bundle b3 = b1 + b2
 \end{code}
 
-to create a new bundle that is the union of the two others. One
-question arises here: what if \texttt{b2} contains an object whose key
-string is the same as some object in \texttt{b1}?  In that case
-\texttt{b3} gets the object from \texttt{b1}, the first given bundle,
-as the value associated with the common key.  The algorithm is: create
-a new bundle that is a copy of \texttt{b1}, then add any items from
-\texttt{b2} whose keys are not already present in the new bundle.
+to create a new bundle that is the union of the two others. The
+algorithm is: create a new bundle that is a copy of \texttt{b1}, then
+add any items from \texttt{b2} whose keys are not already present in
+the new bundle. (This means that bundle union is not commutative if
+the bundles have one or more key strings in common.)
 
 If \texttt{b} is a bundle and you say \texttt{print b}, you get a
 listing of the bundle's keys along with the types of the corresponding
@@ -238,9 +247,9 @@ out by a separate function.
 # modification of bundle (pointer) by user function
 
 function void fill_out_bundle (bundle *b)
-  bundleset(b, "mat", I(3))
-  bundleset(b, "str", "foo")
-  bundleset(b, "x", 32)
+  b["mat"] =  I(3)
+  b["str"] = "foo"
+  b["x"] = 32
 end function
 
 bundle my_bundle 
@@ -254,8 +263,8 @@ wants to give the user the option of accessing various results. In the
 specially: the output window that displays the printed results
 acquires a menu showing the bundled items (their names and types),
 from which the user can save items of interest. For example, a
-function package that estimates a model might return a bundle that
-contains a vector of parameter estimates, a residual series and a
+function package that estimates a model might return a bundle 
+containing a vector of parameter estimates, a residual series and a
 covariance matrix for the parameter estimates, among other
 possibilities.
 
@@ -271,10 +280,9 @@ setnote(b, "vcv", "covariance matrix")
 
 \section{The life cycle of gretl objects}
 
-Objects of the types discussed above may be brought into existence in
-various ways; they are all detroyed using the \texttt{delete} command.
+\subsection{Creation}
 
-The most basic way to create a new variable is by
+The most basic way to create a new variable of any type is by
 \textit{declaration}, where one states the type followed by the name
 of the variable to create, as in
 
@@ -312,7 +320,7 @@ Here the type of \texttt{x} is left implicit and will be determined
 automatically depending on the context: if \texttt{y} is a scalar,
 a series or a matrix \texttt{x} will inherit \texttt{y}'s type
 (otherwise an error will be generated, since division is applicable to
-these types only). And finally, the type of a new variable can be left
+these types only). In addition, the type of a new variable can be left
 implicit \textit{without} use of \texttt{genr}:
 
 \begin{code}
@@ -328,25 +336,116 @@ you don't notice at first because you didn't say what type you
 wanted). An exception to this rule might reasonably be granted for
 clear and simple cases where there's little possibility of confusion.
 
-Note that having created a matrix (say) using \texttt{matrix A} at
-some point in a script, you do not have to go on referring to this
-object as \texttt{matrix A} when you want to modify its value. You are
-allowed to do that but there's no point; gretl already knows that
-\texttt{A} is a matrix.
+\subsection{Modification}
 
-Also note that having once created \texttt{A} as a matrix (or whatever
-type), while you are free to overwrite its \textit{value} you cannot
-overwrite its \textit{type}. If you have a matrix \texttt{A} and later
-want a series \texttt{A}, you will have to delete the matrix first.
+Typically, the values of variables of all types are modified
+by assignment, using the \texttt{=} operator with the name of the
+variable on the left and a suitable value or formula on the right:
+
+\begin{code}
+z = normal()
+x = 100 * log(y) - log(y(-1))
+M = qform(a, X)
+\end{code}
+
+By a ``suitable'' value we mean one that is conformable for the type
+in question. A \app{gretl} variable acquires its type when it is first
+created and this cannot be changed via assignment; for example, if you
+have a matrix \texttt{A} and later want a string \texttt{A}, you will
+have to delete the matrix first.
 
 \tip{One point to watch out for in \app{gretl} scripting is type
   conflicts having to do with the names of series brought in from a
   data file. For example, in setting up a command loop (see
   chapter~\ref{chap:looping}) it is very common to call the loop index
   \texttt{i}. Now a loop index is a scalar (typically incremented each
-  time round the loop). If you opened a data file that happens to
+  time round the loop). If you open a data file that happens to
   contain a series named \texttt{i} you will get a type error (``Types
   not conformable for operation'') when you try to use \texttt{i} as a
   loop index.}
+
+Although the type of an existing variable cannot be changed on the
+fly, \app{gretl} will nonetheless try to be as ``understanding'' as
+possible. For example if \texttt{x} is a series and you say
+
+\begin{code}
+x = 100
+\end{code} 
+
+\app{gretl} will give the series a constant value of 100 rather than
+complaining that you are trying to assign a scalar to a series. This
+issue is particularly relevant for the matrix type --- see
+chapter~\ref{chap:matrices} for details.
+
+Besides using the regular assignment operator you also have the option
+of using an ``inflected'' equals sign, as in the C programming
+language. This is shorthand for the case where the new value of the
+variable is a function of the old value. For example,
+
+\begin{code}
+x += 100 # in longhand: x = x + 100
+x *= 100 # in longhand: x = x * 100
+\end{code} 
+
+For scalar variables you can use a more condensed shorthand for simple
+increment or decrement by 1, namely trailing \texttt{++} or \verb|--|
+respectively:
+
+\begin{code}
+x = 100
+x--     # x now equals 99
+x++     # x now equals 100
+\end{code}
+
+In the case of objects holding more than one value --- series,
+matrices and bundles --- you can modify particular values within the
+object using an expression within square brackets to identify the
+elements to access. We have discussed this above for the bundle type
+and chapter~\ref{chap:matrices} goes into details for matrices. As for
+series, there are two ways to specify particular values for
+modification: you can use a simple 1-based index, or if the dataset is
+a time series or panel (or if it has marker strings that identify the
+observations) you can use an appropriate observation string (such
+strings are displayed by \app{gretl} when you print data with the 
+\verb|--byobs| flag). Examples:
+
+\begin{code}
+x[13]      = 100  # simple index: the 13th observation
+x[1995:4]  = 100  # date: quarterly time series
+x[2003:08] = 100  # date: monthly time series
+x["AZ"]    = 100  # the observation with marker string "AZ"
+x[3:15]    = 100  # panel: the 15th obs for the 3rd unit
+\end{code}
+
+Note that with quarterly or monthly time series there is no ambiguity
+between a simple index number and a date, since dates always contain a
+colon. With annual time-series data, however, such ambiguity exists
+and it is resolved by the rule that a number in brackets is always
+read as a simple index: \texttt{x[1905]} means the nineteen-hundred
+and fifth observation, \textit{not} the observation for the year 1905.
+You can specify a year by quotation, as in \verb|x["1905"]|.
+
+\subsection{Destruction}
+
+Objects of the types discussed above, \textit{with the important
+  exception of named lists}, are all destroyed using the
+\texttt{delete} command. Lists are an exception for this reason: in
+the context of gretl commands, a named list expands to the ID numbers
+of the member series, so if you say
+
+\begin{code}
+delete L
+\end{code} 
+
+for \texttt{L} a list, the effect is to delete all the series in
+\texttt{L}; the list itself is not destroyed, but ends up empty.  To
+delete the list itself (without deleting the member series) you must
+invert the command and use the \texttt{list} keyword:
+
+\begin{code}
+list L delete
+\end{code} 
+
+
 
 

@@ -2143,7 +2143,7 @@
 
     <usage>
       <arguments>
-        <argument>varlist</argument>
+        <argument>varname</argument>
       </arguments>
       <options>
 	<option>
@@ -2155,14 +2155,21 @@
 
     <description>
       <para>
-	Removes the listed variables (given by name or number) from the
-	current dataset. <emphasis>Use with caution</emphasis>: no
-	confirmation is asked, and any variables with higher ID numbers
-	will be re-numbered.
+	This command is an all-purpose destructor for named variables
+	(whether series, scalars, matrices, strings or bundles). It
+	should be used with caution; no confirmation is asked.
+      </para>
+      <para>
+	In the case of series, <repl>varname</repl> may take the form
+	of a named list, in which case all series in the list are
+	deleted, or it may take the form of an explicit list of series
+	given by name or ID number. Note that when you delete series
+	any series with higher ID numbers than those on the deletion
+	list will be re-numbered.
       </para>
       <para>
 	If the <opt>--db</opt> option is given, this command deletes the
-	listed variables not from the current dataset but from a gretl
+	listed series not from the current dataset but from a gretl
 	database, assuming that a database has been opened, and the user
 	has write permission for file in question.  See also the
 	<cmdref targ="open"/> command.

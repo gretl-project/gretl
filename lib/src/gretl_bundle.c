@@ -513,11 +513,21 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
  * such an item is present.
  */
 
-void gretl_bundle_delete_data (gretl_bundle *bundle, const char *key)
+int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key)
 {
-    if (bundle != NULL) {
-	g_hash_table_remove(bundle->ht, key);
+    int err = 0;
+
+    if (bundle == NULL) {
+	err = E_DATA;
+    } else {
+	gboolean ok = g_hash_table_remove(bundle->ht, key);
+	
+	if (!ok) {
+	    err = E_DATA;
+	}
     }
+    
+    return err;
 }
 
 /**

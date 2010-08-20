@@ -874,7 +874,15 @@ char *retrieve_file_content (const char *fname, int *err)
     return ret;
 }
 
-int string_is_defined (const char *sname)
+/**
+ * gretl_is_string:
+ * @sname: string to test.
+ *
+ * Returns: 1 if @sname os the name of a currently defined
+ * string variable, otherwise 0.
+ */
+
+int gretl_is_string (const char *sname)
 {
     saved_string *str;
     int builtin = 0;

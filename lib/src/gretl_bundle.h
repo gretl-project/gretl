@@ -45,7 +45,7 @@ int gretl_bundle_set_data (gretl_bundle *bundle, const char *key,
 int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 			   const char *note);
 
-void gretl_bundle_delete_data (gretl_bundle *bundle, const char *key);
+int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key);
 
 int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name);
 

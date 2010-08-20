@@ -345,9 +345,6 @@ struct str_table funcs[] = {
     { F_KDENSITY, "kdensity" },
     { F_MONTHLEN, "monthlen" },
     { F_EPOCHDAY, "epochday" },
-    { F_HASHGET,  "bundleget" },
-    { F_HASHSET,  "bundleset" },
-    { F_HASHDEL,  "bundledel" },
     { F_SETNOTE,  "setnote" },
     { F_INVMILLS, "invmills" },
     { 0,          NULL }
@@ -884,7 +881,7 @@ static void look_up_word (const char *s, parser *p)
 		} else if (get_user_function_by_name(s)) {
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
-		} else if (string_is_defined(s)) {
+		} else if (gretl_is_string(s)) {
 		    p->sym = VSTR;
 		    p->idstr = gretl_strdup(s);
 		} else if (p->targ == LIST &&

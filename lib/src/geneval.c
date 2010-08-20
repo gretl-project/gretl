@@ -3675,7 +3675,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 		ret->v.xval = 0;
 	    }
 	} else if (f == F_ISSTRING) {
-	    ret->v.xval = string_is_defined(s);
+	    ret->v.xval = gretl_is_string(s);
 	} else if (f == F_ISNULL) {
 	    ret->v.xval = 1;
 	    if (gretl_is_series(s, p->dinfo)) {
@@ -4144,22 +4144,31 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+/* series on left, scalar or string on right */
+
 static NODE *series_obs (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	int t = node_get_int(r, p);
-	char word[16];
+	int t;
+
+	if (r->t == STR) {
+	    t = dateton(r->v.str, p->dinfo);
+	} else {
+	    t = node_get_int(r, p);
+	    if (!p->err) {
+		char word[16];
+
+		sprintf(word, "%d", t);
+		t = get_t_from_obs_string(word, (const double **) *p->Z, 
+					  p->dinfo);
+	    }
+	}
 
 	if (p->err) {
 	    return ret;
 	}
-
-	/* convert to 0-based, and allow for dates */
-	sprintf(word, "%d", t);
-	t = get_t_from_obs_string(word, (const double **) *p->Z, 
-				  p->dinfo);
 
 	if (t >= 0 && t < p->dinfo->n) {
 	    ret->v.xval = l->v.xvec[t];
@@ -5188,28 +5197,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *delete_named_bundle_value (NODE *l, NODE *r, parser *p)
-{
-    const char *name = l->v.str;
-    const char *key = r->v.str;
-    gretl_bundle *bundle;
-    NODE *ret = NULL;
-
-    bundle = get_gretl_bundle_by_name(name);
-    
-    if (bundle == NULL) {
-	p->err = E_UNKVAR;
-    } else {
-	gretl_bundle_delete_data(bundle, key);
-	ret = aux_scalar_node(p);
-	if (ret != NULL) {
-	    ret->v.xval = 0;
-	}
-    }
-
-    return ret;
-}
-
 static int set_named_bundle_value (const char *name, const char *key,
 				   NODE *n, parser *p)
 {
@@ -5554,19 +5541,6 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		}
 	    }
 	}
-    } else if (f == F_HASHSET) {
-	if (l->t != BUNDLE) {
-	    node_type_error(f, 1, BUNDLE, l, p);
-	} else if (m->t != STR) {
-	    node_type_error(f, 2, STR, m, p);
-	} else if (!ok_bundled_type(r->t)) {
-	    node_type_error(f, 3, 0, r, p);
-	} else {
-	    ret = aux_scalar_node(p);
-	    if (!p->err) {
-		ret->v.xval = set_named_bundle_value(l->v.str, m->v.str, r, p);
-	    }
-	}
     } else if (f == F_SETNOTE) {
 	if (l->t != BUNDLE) {
 	    node_type_error(f, 1, BUNDLE, l, p);
@@ -5609,8 +5583,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
-	f != F_HASHSET && f != F_SETNOTE &&
-	f != F_BWFILT) {
+	f != F_SETNOTE && f != F_BWFILT) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -7443,20 +7416,27 @@ static NODE *eval (NODE *t, parser *p)
 	    break;
 	}
 	/* note: otherwise fall through */
-    case OBS:
     case F_LJUNGBOX:	
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, 1, VEC, l, p);
 	} else if (!scalar_node(r)) {
+	    fprintf(stderr, "ERROR here\n");
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else if (t->t == LAG) {
 	    ret = series_lag(l, r, p); 
-	} else if (t->t == OBS) {
-	    ret = series_obs(l, r, p); 
 	} else if (t->t == F_LJUNGBOX) {
 	    ret = series_ljung_box(l, r, p); 
 	} 
+	break;
+    case OBS:
+	if (l->t != VEC) {
+	    node_type_error(t->t, 1, VEC, l, p);
+	} else if (!scalar_node(r) && r->t != STR) {
+	    node_type_error(t->t, 2, NUM, r, p);
+	} else {
+	    ret = series_obs(l, r, p); 
+	}
 	break;
     case F_MOVAVG:
 	/* series on left, plus one or two scalars */
@@ -7785,7 +7765,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_MONTHLEN:
     case F_EPOCHDAY:
     case F_KDENSITY:
-    case F_HASHSET:
     case F_SETNOTE:
     case F_BWFILT:
 	/* built-in functions taking three args */
@@ -7977,18 +7956,6 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, (l->t == STR)? 2 : 1,
 			    STR, (l->t == STR)? r : l, p);
-	}
-	break;
-    case F_HASHGET:
-    case F_HASHDEL:
-	if (l->t != BUNDLE) {
-	    node_type_error(t->t, 1, BUNDLE, l, p);
-	} else if (r->t != STR) {
-	    node_type_error(t->t, 2, STR, r, p);
-	} else if (t->t == F_HASHGET) {
-	    ret = get_named_bundle_value(l, r, p);
-	} else {
-	    ret = delete_named_bundle_value(l, r, p);
 	}
 	break;
     default: 
@@ -8404,19 +8371,9 @@ static void get_lh_mspec (parser *p)
 
 static void get_lh_key (parser *p)
 {
-    int n;
-
     if (*p->lh.substr == '"') {
-	shift_string_left(p->lh.substr, 1);
-	n = strlen(p->lh.substr);
-	if (n > 1) {
-	    if (p->lh.substr[n-1] == '"') {
-		p->lh.substr[n-1] = '\0'; /* unquote */
-	    } else {
-		p->err = E_PARSE;
-	    }
-	}
-    } else if (string_is_defined(p->lh.substr)) {
+	gretl_unquote(p->lh.substr, &p->err);
+    } else if (gretl_is_string(p->lh.substr)) {
 	const char *s = get_string_by_name(p->lh.substr);
 	
 	free(p->lh.substr);

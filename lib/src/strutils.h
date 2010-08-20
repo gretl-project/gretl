@@ -69,6 +69,8 @@ char *gretl_trunc (char *str, size_t n);
 
 char *gretl_delete (char *str, int idx, int count);
 
+char *gretl_unquote (char *str, int *err);
+
 char *gretl_strdup (const char *src);
 
 char *gretl_strndup (const char *src, size_t n);

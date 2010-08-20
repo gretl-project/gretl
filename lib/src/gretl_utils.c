@@ -1544,6 +1544,41 @@ int gretl_copy_file (const char *src, const char *dest)
     return 0;
 }  
 
+/* handle the case of "delete bundle[key]" */
+
+static int maybe_delete_bundle_value (const char *s, PRN *prn)
+{
+    char bname[VNAMELEN];
+    char key[VNAMELEN];
+    int err = 0;
+
+    if (sscanf(s, "%15[^[][%15[^]]", bname, key) == 2) {
+	gretl_bundle *bundle;
+	const char *s;
+
+	bundle = get_gretl_bundle_by_name(bname);
+	if (bundle == NULL) {
+	    err = E_UNKVAR;
+	} else {
+	    if (*key == '"') {
+		s = gretl_unquote(key, &err);
+	    } else if (gretl_is_string(key)) {
+		s = get_string_by_name(key);
+	    } else {
+		err = E_UNKVAR;
+	    }
+	}
+
+	if (!err) {
+	    err = gretl_bundle_delete_data(bundle, s);
+	}
+    } else {
+	err = E_UNKVAR;
+    }
+
+    return err;
+}
+
 int gretl_delete_var_by_name (const char *s, PRN *prn)
 {
     int err = 0;
@@ -1559,8 +1594,8 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
     } else if (gretl_is_bundle(s)) {
 	err = gretl_bundle_delete_by_name(s, prn);
     } else {
-	err = E_UNKVAR;
-    }
+	err = maybe_delete_bundle_value(s, prn);
+    } 
 
     return err;
 }

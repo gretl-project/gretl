@@ -53,7 +53,7 @@ int process_string_command (const char *line,
 
 int substitute_named_strings (char *line, int *subst);
 
-int string_is_defined (const char *sname);
+int gretl_is_string (const char *sname);
 
 int is_user_string (const char *sname);
 

@@ -201,6 +201,46 @@ char *gretl_delete (char *str, int idx, int count)
 }
 
 /**
+ * gretl_unquote:
+ * @str: the string to process.
+ * @err: location to receive error code.
+ *
+ * If @str begins with the ASCII double-quote character, checks
+ * that the last character is also a double-quote, and in that
+ * case trims the quotes from both ends. If the first character
+ * is a double quote but the last is not, flags an error. If
+ * the string is not quoted at all, returns the original
+ * string.
+ *
+ * Returns: the input string, possibly modified in place.
+ */
+
+char *gretl_unquote (char *str, int *err)
+{
+    *err = 0;
+
+    if (*str == '"') {
+	int n = strlen(str);
+
+	if (n > 1) {
+	    if (str[n-1] == '"') {
+		str[n-1] = '\0';
+	    } else {
+		*err = E_PARSE;
+	    }
+	} else {
+	    *err = E_PARSE;
+	}
+
+	if (!*err) {
+	    shift_string_left(str, 1);
+	}
+    }
+
+    return str;
+}
+
+/**
  * charpos:
  * @c: the character to look for.
  * @s: the string to examine.

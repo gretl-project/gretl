@@ -2451,7 +2451,19 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 int get_t_from_obs_string (const char *s, const double **Z, 
 			   const DATAINFO *pdinfo)
 {
-    int t = dateton(s, pdinfo);
+    int t;
+
+    if (*s == '"') {
+	char obs[16];
+	int err = 0;
+
+	*obs = '\0';
+	strncat(obs, s, 15);
+	gretl_unquote(obs, &err);
+	t = dateton(obs, pdinfo);
+    } else {
+	t = dateton(s, pdinfo);
+    }
 
 #if OBS_DEBUG
     fprintf(stderr, "\nget_t_from_obs_string: s ='%s', dateton gives t = %d\n", 

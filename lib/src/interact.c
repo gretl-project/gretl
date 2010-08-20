@@ -1412,11 +1412,28 @@ static int print_name_ok (const char *s, CMD *cmd)
 
     if (cmd->ci == PRINT) {
 	if (gretl_is_matrix(s) || gretl_is_scalar(s) || 
-	    gretl_is_bundle(s) || !strcmp(s, "scalars")) {
+	    gretl_is_bundle(s) || gretl_is_string(s) ||
+	    !strcmp(s, "scalars")) {
 	    cmd->extra = gretl_str_expand(&cmd->extra, s, " ");
 	    cmd->list[0] -= 1;
 	    ok = 1;
 	}
+    }
+
+    return ok;
+}
+
+static int delete_name_ok (const char *s, CMD *cmd)
+{
+    char bname[VNAMELEN];
+    int ok = 0;
+
+    if (sscanf(s, "%15[^[]", bname) == 1 &&
+	gretl_is_bundle(bname)) {
+	free(cmd->param);
+	cmd->param = gretl_strdup(s);
+	cmd->list[0] -= 1;
+	ok = 1;
     }
 
     return ok;
@@ -2123,7 +2140,9 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	ok = 1;
     } else if (cmd->ci == PRINT && print_name_ok(s, cmd)) {
 	ok = 1;
-    } 
+    } else if (cmd->ci == DELEET && delete_name_ok(s, cmd)) {
+	ok = 1;
+    }
 
     *pk = k;
 

@@ -303,8 +303,6 @@ enum {
     F_PERGM,
     F_NPV,
     F_DSUM,
-    F_HASHGET,
-    F_HASHDEL,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,
@@ -321,7 +319,6 @@ enum {
     F_EPOCHDAY,
     F_MOVAVG,
     F_KDENSITY,
-    F_HASHSET,
     F_SETNOTE,
     F_BWFILT,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
