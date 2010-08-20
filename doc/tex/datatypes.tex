@@ -23,7 +23,7 @@ The ``numerical values'' mentioned above are all double-precision
 floating point numbers.
 
 In this chapter we give a run-down of the basic characteristics of
-each of these types and also explain their ``life cycles'' (creation,
+each of these types and also explain their ``life cycle'' (creation,
 modification and destruction). The list and matrix types, whose uses
 are relatively complex, are discussed at greater length in the
 following two chapters. 
@@ -166,7 +166,8 @@ matrix bm = foo["matrix1"]
 \end{code}
 
 A bundle key may be given as a double-quoted string literal, as shown
-above, or as the name of a pre-defined string variable.
+above, or as the name of a pre-defined string variable. Key strings
+have a maximum length of 15 characters and cannot contain spaces.
 
 Note that the key identifying an object within a given bundle is
 necessarily unique. If you reuse an existing key in a new assignment,
@@ -278,6 +279,9 @@ bundle, a key string, and the note. For example
 setnote(b, "vcv", "covariance matrix")
 \end{code}
 
+After this, the object under the key \texttt{vcv} in bundle \texttt{b}
+will be shown as ``covariance matrix'' in a GUI menu.
+
 \section{The life cycle of gretl objects}
 
 \subsection{Creation}
@@ -306,21 +310,20 @@ series y = log(x)
 matrix A = zeros(10,4)
 \end{code}
 
-Unlike more formal programming languages, however, new variables in
-\app{gretl} do not have to be declared by type (although they do have
-to be initialized in some way before use).  The traditional way of
-creating a new variable in \app{gretl} was via the \app{genr} command
-(which is still supported), as in
+With the exception of bundles (as noted above), new variables in
+\app{gretl} do not \textit{have} to be declared by type.  The
+traditional way of creating a new variable in \app{gretl} was via the
+\app{genr} command (which is still supported), as in
 
 \begin{code}
 genr x = y/100
 \end{code}
 
 Here the type of \texttt{x} is left implicit and will be determined
-automatically depending on the context: if \texttt{y} is a scalar,
-a series or a matrix \texttt{x} will inherit \texttt{y}'s type
+automatically depending on the context: if \texttt{y} is a scalar, a
+series or a matrix \texttt{x} will inherit \texttt{y}'s type
 (otherwise an error will be generated, since division is applicable to
-these types only). In addition, the type of a new variable can be left
+these types only). Moreover, the type of a new variable can be left
 implicit \textit{without} use of \texttt{genr}:
 
 \begin{code}
@@ -329,12 +332,12 @@ x = y/100
 
 In ``modern'' \app{gretl} scripting we recommend that you state the
 type of a new variable explicitly. This makes the intent clearer to a
-reader of the script and also guards against some sorts of errors that
-might otherwise be difficult to understand (i.e.\ a certain variable
-turns out to be of the wrong type for some subsequent calculation, but
-you don't notice at first because you didn't say what type you
-wanted). An exception to this rule might reasonably be granted for
-clear and simple cases where there's little possibility of confusion.
+reader of the script and also guards against errors that might
+otherwise be difficult to understand (i.e.\ a certain variable turns
+out to be of the wrong type for some subsequent calculation, but you
+don't notice at first because you didn't say what type you needed). An
+exception to this rule might reasonably be granted for clear and
+simple cases where there's little possibility of confusion.
 
 \subsection{Modification}
 
@@ -365,7 +368,7 @@ have to delete the matrix first.
   loop index.}
 
 Although the type of an existing variable cannot be changed on the
-fly, \app{gretl} will nonetheless try to be as ``understanding'' as
+fly, \app{gretl} nonetheless tries to be as ``understanding'' as
 possible. For example if \texttt{x} is a series and you say
 
 \begin{code}
@@ -405,16 +408,16 @@ and chapter~\ref{chap:matrices} goes into details for matrices. As for
 series, there are two ways to specify particular values for
 modification: you can use a simple 1-based index, or if the dataset is
 a time series or panel (or if it has marker strings that identify the
-observations) you can use an appropriate observation string (such
+observations) you can use an appropriate observation string. Such
 strings are displayed by \app{gretl} when you print data with the 
-\verb|--byobs| flag). Examples:
+\verb|--byobs| flag. Examples:
 
 \begin{code}
 x[13]      = 100  # simple index: the 13th observation
 x[1995:4]  = 100  # date: quarterly time series
 x[2003:08] = 100  # date: monthly time series
 x["AZ"]    = 100  # the observation with marker string "AZ"
-x[3:15]    = 100  # panel: the 15th obs for the 3rd unit
+x[3:15]    = 100  # panel: the 15th observation for the 3rd unit
 \end{code}
 
 Note that with quarterly or monthly time series there is no ambiguity
@@ -429,9 +432,11 @@ You can specify a year by quotation, as in \verb|x["1905"]|.
 
 Objects of the types discussed above, \textit{with the important
   exception of named lists}, are all destroyed using the
-\texttt{delete} command. Lists are an exception for this reason: in
-the context of gretl commands, a named list expands to the ID numbers
-of the member series, so if you say
+\texttt{delete} command: \texttt{delete} \textsl{objectname}.
+
+Lists are an exception for this reason: in the context of gretl
+commands, a named list expands to the ID numbers of the member series,
+so if you say
 
 \begin{code}
 delete L
@@ -445,7 +450,3 @@ invert the command and use the \texttt{list} keyword:
 \begin{code}
 list L delete
 \end{code} 
-
-
-
-
