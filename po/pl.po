@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.0cvs
+# Polish translation for gretl-1.9.1cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2010
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2010
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-08-18 09:06-0400\n"
-"PO-Revision-Date: 2010-08-12 12:30-0400\n"
+"PO-Revision-Date: 2010-08-20 23:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -139,33 +139,28 @@ msgid "%s is a constant"
 msgstr "%s jest stałą"
 
 #: lib/src/adf_kpss.c:1054
-#, fuzzy
 msgid "Choi meta-tests:"
-msgstr "test zmian strukturalnych _Chowa"
+msgstr "Choi meta-tests:"
 
 #: lib/src/adf_kpss.c:1055
-#, fuzzy
 msgid "Inverse chi-square"
-msgstr "chi-kwadrat"
+msgstr "Odwotność chi-kwadrat"
 
 #: lib/src/adf_kpss.c:1057
-#, fuzzy
 msgid "Inverse normal test"
-msgstr "Test normalności"
+msgstr "Inverse normal test"
 
 #: lib/src/adf_kpss.c:1059
-#, fuzzy
 msgid "Logit test"
-msgstr "Logit"
+msgstr "test Logit"
 
 #: lib/src/adf_kpss.c:1129
-#, fuzzy
 msgid "Unit"
-msgstr "jednostka"
+msgstr "Jednostka"
 
 #: lib/src/adf_kpss.c:1166
 msgid "H0: all groups have unit root"
-msgstr ""
+msgstr "H0: wszystkie grupy mają pierwiastek jednostkowy"
 
 #: lib/src/adf_kpss.c:1451
 msgid "Robust estimate of variance"
@@ -218,28 +213,25 @@ msgid "P-value"
 msgstr "wartość p"
 
 #: lib/src/adf_kpss.c:1478
-#, fuzzy
 msgid "Interpolated p-value"
-msgstr "dwustronna wartość p"
+msgstr "Interpolowana wartość p"
 
 #: lib/src/adf_kpss.c:1510
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s %s\n"
 msgstr ""
 "\n"
 "Hipoteza zerowa: proces stacjonarny; test KPSS dla zmiennej %s %s\n"
-"\n"
 
 #: lib/src/adf_kpss.c:1532
-#, fuzzy
 msgid "interpolated p-value"
-msgstr "_Wartości wyrównane"
+msgstr "interpolowana wartość p"
 
 #: lib/src/adf_kpss.c:1572
 msgid "H0: all groups are stationary"
-msgstr ""
+msgstr "H0: wszystkie grupy stacjonarne"
 
 #: lib/src/adf_kpss.c:1842 lib/src/adf_kpss.c:1879
 #, c-format
@@ -1569,14 +1561,12 @@ msgid "periods"
 msgstr "okresy"
 
 #: lib/src/describe.c:3714
-#, fuzzy
 msgid "radians"
-msgstr "Gradienty:  "
+msgstr "radiany"
 
 #: lib/src/describe.c:3716
-#, fuzzy
 msgid "degrees"
-msgstr "Serie danych"
+msgstr "stopnie"
 
 #: lib/src/describe.c:3718
 msgid "scaled frequency"
@@ -3933,7 +3923,7 @@ msgid "command '%s' not recognized"
 msgstr "polecenia '%s' nie można cofnąć"
 
 #: lib/src/interact.c:2695 plugin/arbond.c:2512
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d duplicated in the command list."
 msgstr "zmienna %d jest zduplikowana w poleceniu."
 
@@ -4243,9 +4233,8 @@ msgid "Wald (joint) test"
 msgstr "Test Walda (joint)"
 
 #: lib/src/modelprint.c:329 lib/src/modelprint.c:336
-#, fuzzy
 msgid "Wald (time dummies)"
-msgstr "Włącz zmienne 0-1 jednostek czasu"
+msgstr "Wald (time dummies)"
 
 #: lib/src/modelprint.c:330 lib/src/modelprint.c:337
 msgid "J test"
@@ -4265,9 +4254,9 @@ msgid "GMM criterion"
 msgstr "Kryteria GMM"
 
 #: lib/src/modelprint.c:437 lib/src/modelprint.c:439
-#, fuzzy, c-format
+#, c-format
 msgid "Number of instruments = %d"
-msgstr "Liczba różnic: n = %d\n"
+msgstr "Liczba instrumentów = %d"
 
 #: lib/src/modelprint.c:506
 msgid "Warning: solution is probably not unique"
@@ -6847,7 +6836,6 @@ msgid "VAR system, maximum lag order %d"
 msgstr "System VAR, maksymalny rząd opóźnienia %d"
 
 #: lib/src/vartest.c:225
-#, fuzzy
 msgid ""
 "The asterisks below indicate the best (that is, minimized) values\n"
 "of the respective information criteria, AIC = Akaike criterion,\n"
@@ -8803,9 +8791,8 @@ msgid "Bartlett window, bandwidth:"
 msgstr "Spektrum, wagi-okna Bartletta długości:"
 
 #: gui2/dialogs.c:3925
-#, fuzzy
 msgid "frequency axis scale:"
-msgstr "częstość %d nie jest obsługiwana"
+msgstr "jednostki osi częstości:"
 
 #: gui2/dialogs.c:4088
 msgid "Number of bins:"
@@ -8969,12 +8956,11 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(Proszę skorzystać z porady w Pomocy dla polecenia)"
 
 #: gui2/fileselect.c:463 gui2/library.c:7116
-#, fuzzy
 msgid ""
 "There is already a file of this name.\n"
 "OK to overwrite it?"
 msgstr ""
-"Plik danych o tej nazwie już istnieje.\n"
+"Plik o tej nazwie już istnieje.\n"
 "Czy nadpiać istniejący plik?"
 
 #: gui2/fileselect.c:715
@@ -9027,7 +9013,7 @@ msgstr "Pasmo filtru Baxtera-Kinga"
 
 #: gui2/filters.c:86
 msgid "Butterworth filter"
-msgstr ""
+msgstr "Filtr dolnoprzepustowy Butterwortha"
 
 #: gui2/filters.c:88
 msgid "Fractional difference"
@@ -9076,12 +9062,12 @@ msgstr "Przefiltrowany %s: cykl Baxtera-Kinga, częstość od %d do %d"
 #: gui2/filters.c:209
 #, c-format
 msgid "Filtered %s: Butterworth low-pass (n=%d, cutoff=%d)"
-msgstr ""
+msgstr "Przefiltrowany %s: dolnoprzepustowy filtrem Butterwortha (n=%d, odcięcie=%d)"
 
 #: gui2/filters.c:212
 #, c-format
 msgid "Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"
-msgstr ""
+msgstr "Przefiltrowany %s: górnoprzepustowy filtrem Butterwortha (n=%d, odcięcie=%d)"
 
 #: gui2/filters.c:256
 msgid "Variable name is missing"
@@ -9148,13 +9134,12 @@ msgid "k (higher values -> better approximation):"
 msgstr "k (wyższa wartość -> lepsza aproksymacja):"
 
 #: gui2/filters.c:534
-#, fuzzy
 msgid "n (higher values -> better approximation):"
-msgstr "k (wyższa wartość -> lepsza aproksymacja):"
+msgstr "n (wyższa wartość -> lepsza aproksymacja):"
 
 #: gui2/filters.c:544
 msgid "frequency cutoff (degrees):"
-msgstr ""
+msgstr "częstość odcięcia (w stopniach):"
 
 #: gui2/filters.c:555
 msgid "differencing parameter:"
@@ -9162,7 +9147,7 @@ msgstr "Parametr różnicowania ułamkowego:"
 
 #: gui2/filters.c:569
 msgid "Graph filtered series"
-msgstr "Wykres cyklicznego-przefiltrowanego szeregu"
+msgstr "Wykres przefiltrowanego szeregu"
 
 #: gui2/filters.c:573
 msgid "Save filtered series as"
@@ -9181,9 +9166,8 @@ msgid "Graph residual or cycle series"
 msgstr "Wykres cyklicznego lub resztowego szeregu"
 
 #: gui2/filters.c:597
-#, fuzzy
 msgid "Graph frequency response"
-msgstr "Wykres ułamkowo zróżnicowanego szeregu"
+msgstr "Wykres pasma przenoszenia (filtrowania)"
 
 #: gui2/filters.c:706 gui2/filters.c:732
 #, c-format
@@ -9207,16 +9191,16 @@ msgstr "Składnik filtru Baxtera-Kinga dla %s o częstościach od %d do %d"
 
 #: gui2/filters.c:801
 msgid "Gain for Butterworth filter"
-msgstr ""
+msgstr "Pasmo przenoszenia filtru Butterwortha"
 
 #: gui2/filters.c:802
 msgid "nominal cutoff"
-msgstr ""
+msgstr "nominalne odcięcie"
 
 #: gui2/filters.c:805
 #, c-format
 msgid "Gain for H-P filter (lambda = %g)"
-msgstr ""
+msgstr "Pasmo przenoszenia filtru Hodricka-Prescotta (lambda = %g)"
 
 #: gui2/fncall.c:177
 #, c-format
@@ -9226,7 +9210,7 @@ msgstr "Argument %d (%s) jest błędny"
 #: gui2/fncall.c:356
 #, c-format
 msgid "help on %s"
-msgstr ""
+msgstr "Pomoc dla %s"
 
 #: gui2/fncall.c:512
 msgid "No name was given for the list"
@@ -9262,7 +9246,7 @@ msgstr "wybrana zmienna (lub nowa zmienna)"
 
 #: gui2/fncall.c:861
 msgid "close this dialog on \"OK\""
-msgstr ""
+msgstr "close this dialog on \"OK\""
 
 #: gui2/fncall.c:1223
 msgid "Function package is broken"
@@ -10224,7 +10208,7 @@ msgstr "Definiowanie lub edycja listy zmiennych..."
 
 #: gui2/gretl.c:1446
 msgid "_Set selection from list..."
-msgstr ""
+msgstr "Wybór zmiennych z listy..."
 
 #: gui2/gretl.c:1447 gui2/gretl.c:1525
 msgid "_Display values"
@@ -10509,7 +10493,7 @@ msgstr "Wykr_es szeregu czasowego"
 
 #: gui2/gretl.c:1534
 msgid "_Unit root tests"
-msgstr ""
+msgstr "Testy pierwiastka _jednostkowego"
 
 #: gui2/gretl.c:1535
 msgid "_Augmented Dickey-Fuller test"
@@ -10553,11 +10537,11 @@ msgstr "Filtr _Hodricka-Prescotta"
 
 #: gui2/gretl.c:1545
 msgid "_Baxter-King"
-msgstr "Filtr _Baxtera-Kinga"
+msgstr "Filtr Baxtera-_Kinga"
 
 #: gui2/gretl.c:1546
 msgid "_Butterworth"
-msgstr ""
+msgstr "Filtr _Butterwortha"
 
 #: gui2/gretl.c:1547
 msgid "_Fractional difference"
@@ -11218,7 +11202,7 @@ msgstr "konsola gretla"
 
 #: gui2/gui_utils.c:2333 gui2/gui_utils.c:2346
 msgid "Outcome probabilities"
-msgstr ""
+msgstr "Outcome probabilities"
 
 #: gui2/gui_utils.c:2413
 msgid "_Fitted values"
@@ -11871,7 +11855,7 @@ msgstr "wykorzystaj pierwsze różnice zmiennej"
 
 #: gui2/library.c:974 gui2/library.c:985
 msgid "show individual test results"
-msgstr ""
+msgstr "Pokaż szczegółowe wyniki testu"
 
 #: gui2/library.c:977 gui2/library.c:983
 msgid "include a trend"
@@ -14900,14 +14884,13 @@ msgid "P(Chi-Square(%d) > %g) = %g\n"
 msgstr "z wartością p = P(Chi-kwadrat(%d) > %g) = %g\n"
 
 #: plugin/jrestrict.c:1249
-#, fuzzy
 msgid "Switching algorithm: failed"
-msgstr "Przełącznik algorytmów: %d iteracja"
+msgstr "Komunikat algorytmu: brak"
 
 #: plugin/jrestrict.c:1252
 #, c-format
 msgid "Switching algorithm: %d iterations"
-msgstr "Przełącznik algorytmów: %d iteracja"
+msgstr "Komunikat algorytmu: %d iteracja"
 
 #: plugin/jrestrict.c:1255
 msgid "user-supplied initial values"
