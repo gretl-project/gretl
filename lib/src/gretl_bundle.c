@@ -347,17 +347,20 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * @type: location to receive data type.
  * @size: location to receive size of data (= series
  * length for GRETL_TYPE_SERIES, otherwise 0).
+ * @err:location to receive error code.
  *
  * Returns: the data pointer associated with @key in the
  * specified @bundle, or NULL on failure.
  */
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
-			     GretlType *type, int *size)
+			     GretlType *type, int *size, int *err)
 {
     void *ret = NULL;
 
-    if (bundle != NULL) {
+    if (bundle == NULL) {
+	*err = E_DATA;
+    } else {
 	gpointer p = g_hash_table_lookup(bundle->ht, key);
 
 	if (p != NULL) {
@@ -366,7 +369,11 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 	    *type = item->type;
 	    ret = item->data;
 	    *size = item->size;
+	} else {
+	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
+	    *err = E_DATA;
 	}
+				 
     }
 
     return ret;

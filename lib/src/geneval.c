@@ -5124,60 +5124,65 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     if (bundle == NULL) {
 	p->err = E_UNKVAR;
     } else {
-	val = gretl_bundle_get_data(bundle, key, &type, &size);
-	if (val == NULL) {
-	    p->err = E_DATA;
-	} else if (type == GRETL_TYPE_DOUBLE) {
-	    ret = aux_scalar_node(p);
-	    if (ret != NULL) {
-		double *dp = val;
+	val = gretl_bundle_get_data(bundle, key, &type, &size, &p->err);
+    }
+
+    if (p->err) {
+	return ret;
+    }
+
+    if (type == GRETL_TYPE_DOUBLE) {
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
+	    double *dp = val;
 		
-		ret->v.xval = *dp;
+	    ret->v.xval = *dp;
+	}
+    } else if (type == GRETL_TYPE_STRING) {
+	ret = aux_string_node(p);
+	if (ret != NULL) {
+	    ret->v.str = gretl_strdup((char *) val);
+	    if (ret->v.str == NULL) {
+		p->err = E_ALLOC;
 	    }
-	} else if (type == GRETL_TYPE_STRING) {
-	    ret = aux_string_node(p);
+	}
+    } else if (type == GRETL_TYPE_MATRIX) {
+	ret = matrix_pointer_node(p);
+	if (ret != NULL) {
+	    ret->v.m = (gretl_matrix *) val;
+	}
+    } else if (type == GRETL_TYPE_BUNDLE) {
+	ret = aux_bundle_node(p);
+	if (ret != NULL) {
+	    ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
+					 &p->err);
+	} 
+    } else if (type == GRETL_TYPE_SERIES) {
+	const double *x = val;
+
+	if (size == p->dinfo->n) {
+	    ret = aux_vec_node(p, p->dinfo->n);
 	    if (ret != NULL) {
-		ret->v.str = gretl_strdup((char *) val);
-		if (ret->v.str == NULL) {
+		int t;
+
+		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		    ret->v.xvec[t] = x[t];
+		}
+	    }
+	} else if (size > 0) {
+	    ret = aux_matrix_node(p);
+	    if (ret != NULL) {
+		ret->v.m = gretl_vector_from_array(x, size, 
+						   GRETL_MOD_NONE);
+		if (ret->v.m == NULL) {
 		    p->err = E_ALLOC;
 		}
 	    }
-	} else if (type == GRETL_TYPE_MATRIX) {
-	    ret = matrix_pointer_node(p);
-	    if (ret != NULL) {
-		ret->v.m = (gretl_matrix *) val;
-	    }
-	} else if (type == GRETL_TYPE_BUNDLE) {
-	    ret = aux_bundle_node(p);
-	    if (ret != NULL) {
-		ret->v.b = gretl_bundle_copy((gretl_bundle *) val,
-					     &p->err);
-	    } 
-	} else if (type == GRETL_TYPE_SERIES) {
-	    const double *x = val;
-
-	    if (size == p->dinfo->n) {
-		ret = aux_vec_node(p, p->dinfo->n);
-		if (ret != NULL) {
-		    int t;
-
-		    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-			ret->v.xvec[t] = x[t];
-		    }
-		}
-	    } else if (size > 0) {
-		ret = aux_matrix_node(p);
-		if (ret != NULL) {
-		    ret->v.m = gretl_vector_from_array(x, size, 
-						       GRETL_MOD_NONE);
-		    if (ret->v.m == NULL) {
-			p->err = E_ALLOC;
-		    }
-		}
-	    } else {
-		p->err = E_DATA;
-	    }
+	} else {
+	    p->err = E_DATA;
 	}
+    } else {
+	p->err = E_DATA;
     }
 
     return ret;
@@ -8397,6 +8402,33 @@ static void get_lh_mspec (parser *p)
     } 
 }
 
+static void get_lh_key (parser *p)
+{
+    int n;
+
+    if (*p->lh.substr == '"') {
+	shift_string_left(p->lh.substr, 1);
+	n = strlen(p->lh.substr);
+	if (n > 1) {
+	    if (p->lh.substr[n-1] == '"') {
+		p->lh.substr[n-1] = '\0'; /* unquote */
+	    } else {
+		p->err = E_PARSE;
+	    }
+	}
+    } else if (string_is_defined(p->lh.substr)) {
+	const char *s = get_string_by_name(p->lh.substr);
+	
+	free(p->lh.substr);
+	p->lh.substr = gretl_strdup(s);
+	if (p->lh.substr == NULL) {
+	    p->err = E_ALLOC;
+	}
+    } else {
+	p->err = E_DATA;
+    }
+}
+
 /* check validity of "[...]" on the LHS, and evaluate
    the expression if needed */
 
@@ -8407,11 +8439,9 @@ static void process_lhs_substr (const char *lname, parser *p)
 	    p->lh.t, p->lh.substr);
 #endif
 
-    if (p->lh.t == NUM) {
-	gretl_errmsg_sprintf("scalar target variable: specifier '[%s]' is not valid",
-			     p->lh.substr);
-	p->err = E_TYPES;
-    } else if (p->lh.t == VEC) {
+    /* FIXME stringvar[] */
+
+    if (p->lh.t == VEC) {
 	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
 					  p->dinfo); 
 	if (p->lh.obs < 0) {
@@ -8423,12 +8453,17 @@ static void process_lhs_substr (const char *lname, parser *p)
 	}
     } else if (p->lh.t == MAT) {
 	get_lh_mspec(p);
+    } else if (p->lh.t == BUNDLE) {
+	get_lh_key(p);
     } else if (p->lh.t == UNK) {
 	if (lname != NULL) {
 	    gretl_errmsg_sprintf("%s: unknown variable\n", lname);
 	}
 	p->err = E_UNKVAR;
-    }
+    } else {
+	gretl_errmsg_sprintf( _("The symbol '%c' is not valid in this context\n"), '[');
+	p->err = E_DATA;
+    }	
 }
 
 #if EDEBUG
@@ -9371,7 +9406,11 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == BUNDLE) {
-	if (r->t != BUNDLE) {
+	if (p->lh.substr != NULL) {
+	    if (!ok_bundled_type(r->t)) {
+		p->err = E_TYPES;
+	    }
+	} else if (r->t != BUNDLE) {
 	    p->err = E_TYPES;
 	}	
     } else {
@@ -9595,7 +9634,10 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
+	if (p->lh.substr != NULL) {
+	    p->err = set_named_bundle_value(p->lh.name, p->lh.substr,
+					    r, p);
+	} else if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
 	    p->err = gretl_bundle_add_or_replace(r->v.b, p->lh.name);
 	    if (!p->err) {

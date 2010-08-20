@@ -30,7 +30,7 @@ gretl_bundle *get_gretl_bundle_by_name (const char *name);
 void *gretl_bundle_get_content (gretl_bundle *bundle);
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
-			     GretlType *type, int *size);
+			     GretlType *type, int *size, int *err);
 
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 

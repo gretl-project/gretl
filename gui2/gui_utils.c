@@ -4112,9 +4112,9 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     int size = 0;
     int err = 0;
 
-    val = gretl_bundle_get_data(bundle, key, &type, &size);
-    if (val == NULL) {
-	errbox("Couldn't find '%s'\n", key);
+    val = gretl_bundle_get_data(bundle, key, &type, &size, &err);
+    if (err) {
+	gui_errmsg(err);
 	return;
     }
 
