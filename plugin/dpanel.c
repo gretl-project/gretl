@@ -653,8 +653,10 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	    for (j=0; j<dpd->ndum; j++) {
 		if (use_levels(dpd)) {
 		    dx = timedum_diff(dpd, j, i1);
-		} else {
+		} else if (dpd_style(dpd)) {
 		    dx = timedum_level(dpd, j, i1);
+		} else {
+		    dx = timedum_diff(dpd, j, i1);
 		}
 		gretl_matrix_set(Xi, row++, col, dx);
 	    }
