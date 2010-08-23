@@ -638,8 +638,10 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	}
 
 	for (j=1; j<=dpd->nx; j++) {
-	    /* Note: for now not differencing out the constant
-	       Allin 2010-07-22 */
+	    /* Note: we don't difference away the constant
+	       here, but if --dpdstyle is not applied the
+	       constant will have been removed already.
+	    */
 	    if (!use_levels(dpd) && dpd->xlist[j] == 0) {
 		dx = 1.0;
 	    } else {
@@ -925,7 +927,10 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    t0 = t + i0;
 	    t1 = t + i1;
 	    for (j=0; j<dpd->nzr; j++) {
-		/* Allin 2010-07-22: not differencing out the constant */
+		/* we don't difference the constant, but unless
+		   --dpdstyle has been selected it will have been
+		   dropped by this point
+		*/
 		if (!use_levels(dpd) && dpd->ilist[j+1] == 0) {
 		    dx = 1.0;
 		} else {
@@ -1001,10 +1006,7 @@ static int trim_zero_inst (dpdinfo *dpd)
     }
 
 #if DPDEBUG
-    /* Ox/DPD comparability */
-    gretl_matrix_divide_by_scalar(dpd->A, 2.0);
     gretl_matrix_print(dpd->A, "dpd->A, after trim_zero_inst");
-    gretl_matrix_multiply_by_scalar(dpd->A, 2.0);
 #endif
 
     if (!err) {
