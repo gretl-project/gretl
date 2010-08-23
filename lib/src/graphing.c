@@ -1163,8 +1163,8 @@ static FILE *gp_set_up_batch (char *fname, PlotType ptype,
 	}
     } else {
 	/* auto-constructed gnuplot commands filename */
-	sprintf(fname, "%sgpttmp%02d.plt", gretl_workdir(), 
-		++gretl_plot_count);
+	sprintf(fname, "gpttmp%02d.plt", ++gretl_plot_count);
+	gretl_maybe_prepend_dir(fname);
 	this_term_type = GP_TERM_PLT;
     }
 
