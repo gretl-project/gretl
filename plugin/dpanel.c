@@ -1221,6 +1221,44 @@ static int do_units (dpdinfo *dpd, const double **Z,
     return err;
 }
 
+static void maybe_prune_const (dpdinfo *dpd)
+{
+    /* the constant, if present, gets differenced away, both
+       as a regressor and as a regular instrument 
+    */
+    int i;
+
+    if (dpd->xlist != NULL) {
+	for (i=dpd->xlist[0]; i>0; i--) {
+	    if (dpd->xlist[i] == 0) {
+		if (dpd->xlist[0] == 1) {
+		    free(dpd->xlist);
+		    dpd->xlist = NULL;
+		} else {
+		    gretl_list_delete_at_pos(dpd->xlist, i);
+		}
+		dpd->nx -= 1;
+		break;
+	    }
+	}
+    }
+
+    if (dpd->ilist != NULL) {
+	for (i=dpd->ilist[0]; i>0; i--) {
+	    if (dpd->ilist[i] == 0) {
+		if (dpd->ilist[0] == 1) {
+		    free(dpd->ilist);
+		    dpd->ilist = NULL;
+		} else {
+		    gretl_list_delete_at_pos(dpd->ilist, i);
+		}
+		dpd->nzr -= 1;
+		break;
+	    }
+	}
+    }
+}
+
 /* the user hasn't supplied a block-diagonal spec for
    y in the differences equations: here we set up the
    default version, with unlimited lags 
@@ -1390,6 +1428,10 @@ MODEL dpd_estimate (const int *list, const char *ispec,
     }
 
     dpanel_adjust_GMM_spec(dpd);
+
+    if (!dpd_style(dpd) && !use_levels(dpd)) { 
+	maybe_prune_const(dpd);
+    }
 
 #if DPDEBUG
     if (dpd->nzb > 0 || dpd->nzb2 > 0) {

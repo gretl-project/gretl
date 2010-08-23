@@ -384,52 +384,6 @@ static int maybe_add_const_to_ilist (dpdinfo *dpd)
     return err;
 }
 
-static int maybe_revise_const (dpdinfo *dpd)
-{
-    int err = 0;
-
-    if (dpd->ci == DPANEL && !dpd_style(dpd) && !use_levels(dpd)) {
-	/* the constant, if present, gets differenced away, both
-	   as a regressor and as a regular instrument 
-	*/
-	int i;
-
-	if (dpd->xlist != NULL) {
-	    for (i=dpd->xlist[0]; i>0; i--) {
-		if (dpd->xlist[i] == 0) {
-		    if (dpd->xlist[0] == 1) {
-			free(dpd->xlist);
-			dpd->xlist = NULL;
-		    } else {
-			gretl_list_delete_at_pos(dpd->xlist, i);
-		    }
-		    dpd->nx -= 1;
-		    break;
-		}
-	    }
-	}
-
-	if (dpd->ilist != NULL) {
-	    for (i=dpd->ilist[0]; i>0; i--) {
-		if (dpd->ilist[i] == 0) {
-		    if (dpd->ilist[0] == 1) {
-			free(dpd->ilist);
-			dpd->ilist = NULL;
-		    } else {
-			gretl_list_delete_at_pos(dpd->ilist, i);
-		    }
-		    dpd->nzr -= 1;
-		    break;
-		}
-	    }
-	}
-    } else {
-	err = maybe_add_const_to_ilist(dpd);
-    }
-
-    return err;
-}
-
 static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 {
     int i, nz = 0, spos = 0;
@@ -497,7 +451,7 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
     } 
 
     if (!err) {
-	err = maybe_revise_const(dpd);
+	err = maybe_add_const_to_ilist(dpd);
     }
 
 #if ADEBUG
