@@ -5197,51 +5197,79 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static int set_named_bundle_value (const char *name, const char *key,
-				   NODE *n, parser *p)
+/* Setting an object in a bundle under a given key string. We get here
+   only if p->lh.substr is non-NULL. That "substr" may be a string
+   literal, or it may be the name of a string variable. In the latter
+   case we wait till this point to cash out the string, since we may
+   be in a context (e.g. a loop) where the value of the string
+   variable changes from one invocation of the generator to the
+   next.
+*/
+
+static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 {
     gretl_bundle *bundle;
     GretlType type;
     void *ptr = NULL;
+    char *key = NULL;
+    int free_key = 0;
     int size = 0;
     int err = 0;
 
     bundle = get_gretl_bundle_by_name(name);
+
     if (bundle == NULL) {
-	p->err = E_UNKVAR;
-	return p->err;
+	err = E_UNKVAR;
+    } else if (*p->lh.substr == '"') {
+	key = gretl_strdup(p->lh.substr);
+	if (key == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_unquote(key, &err);
+	    free_key = 1;
+	}
+    } else if (gretl_is_string(p->lh.substr)) {
+	key = get_string_by_name(p->lh.substr);
+    } else {
+	err = E_DATA;
     }
 
-    switch (n->t) {
-    case NUM:
-	ptr = &n->v.xval;
-	type = GRETL_TYPE_DOUBLE;
-	break;
-    case STR:
-	ptr = n->v.str;
-	type = GRETL_TYPE_STRING;
-	break;
-    case MAT:
-	ptr = n->v.m;
-	type = GRETL_TYPE_MATRIX;
-	break;
-    case VEC:
-	ptr = n->v.xvec;
-	type = GRETL_TYPE_SERIES;
-	size = p->dinfo->n;
-	break;
-    case BUNDLE:
-	ptr = node_get_bundle(n, p);
-	type = GRETL_TYPE_BUNDLE;
-	err = p->err;
-	break;
-    default:
-	err = E_DATA;
-	break;
+    if (!err) {
+	switch (n->t) {
+	case NUM:
+	    ptr = &n->v.xval;
+	    type = GRETL_TYPE_DOUBLE;
+	    break;
+	case STR:
+	    ptr = n->v.str;
+	    type = GRETL_TYPE_STRING;
+	    break;
+	case MAT:
+	    ptr = n->v.m;
+	    type = GRETL_TYPE_MATRIX;
+	    break;
+	case VEC:
+	    ptr = n->v.xvec;
+	    type = GRETL_TYPE_SERIES;
+	    size = p->dinfo->n;
+	    break;
+	case BUNDLE:
+	    ptr = node_get_bundle(n, p);
+	    type = GRETL_TYPE_BUNDLE;
+	    err = p->err;
+	    break;
+	default:
+	    err = E_DATA;
+	    break;
+	}
     }
 
     if (!err) {
 	err = gretl_bundle_set_data(bundle, key, ptr, type, size);
+    }
+
+    if (free_key) {
+	free(key);
     }
 
     return err;
@@ -8369,23 +8397,6 @@ static void get_lh_mspec (parser *p)
     } 
 }
 
-static void get_lh_key (parser *p)
-{
-    if (*p->lh.substr == '"') {
-	gretl_unquote(p->lh.substr, &p->err);
-    } else if (gretl_is_string(p->lh.substr)) {
-	const char *s = get_string_by_name(p->lh.substr);
-	
-	free(p->lh.substr);
-	p->lh.substr = gretl_strdup(s);
-	if (p->lh.substr == NULL) {
-	    p->err = E_ALLOC;
-	}
-    } else {
-	p->err = E_DATA;
-    }
-}
-
 /* check validity of "[...]" on the LHS, and evaluate
    the expression if needed */
 
@@ -8396,7 +8407,7 @@ static void process_lhs_substr (const char *lname, parser *p)
 	    p->lh.t, p->lh.substr);
 #endif
 
-    /* FIXME stringvar[] */
+    /* FIXME stringvar[] ? */
 
     if (p->lh.t == VEC) {
 	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
@@ -8411,7 +8422,7 @@ static void process_lhs_substr (const char *lname, parser *p)
     } else if (p->lh.t == MAT) {
 	get_lh_mspec(p);
     } else if (p->lh.t == BUNDLE) {
-	get_lh_key(p);
+	; /* should be key string; handled later */
     } else if (p->lh.t == UNK) {
 	if (lname != NULL) {
 	    gretl_errmsg_sprintf("%s: unknown variable\n", lname);
@@ -9592,8 +9603,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
 	if (p->lh.substr != NULL) {
-	    p->err = set_named_bundle_value(p->lh.name, p->lh.substr,
-					    r, p);
+	    p->err = set_named_bundle_value(p->lh.name, r, p);
 	} else if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
 	    p->err = gretl_bundle_add_or_replace(r->v.b, p->lh.name);
@@ -9676,7 +9686,7 @@ static void parser_reinit (parser *p, double ***pZ,
 	if (*p->lh.name != '\0' && get_list_by_name(p->lh.name)) {
 	    p->flags |= P_LHLIST;
 	}
-    }	
+    } 
 
     /* LHS matrix subspec: re-evaluate */
     if (p->subp != NULL) {
