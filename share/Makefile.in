@@ -5,6 +5,9 @@ prefix = @prefix@
 have_gtk = @have_gtk@
 build_docs = @build_docs@
 
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
 gretldir = $(prefix)/share/gretl
 tooldir = $(topsrc)/tools
 sharesrc = $(topsrc)/share

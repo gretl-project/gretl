@@ -1,6 +1,8 @@
 topsrc = @top_srcdir@
 docsrc = $(topsrc)/doc
 
+MAKE = @MAKE@
+
 GUIDE = gretl-guide.pdf
 REF = gretl-ref.pdf
 ALTGUIDE = gretl-guide-a4.pdf
