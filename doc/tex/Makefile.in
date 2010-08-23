@@ -117,16 +117,16 @@ links:
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex/$$f . ; fi ; done
 
 cmdtex:
-	make -C ../commands cmdtex
+	$(MAKE) -C ../commands cmdtex
 
 topiclist:
-	make -C ../commands topiclist_en
+	$(MAKE) -C ../commands topiclist_en
 
 textables:
-	make -C ../commands textables
+	$(MAKE) -C ../commands textables
 
 functex:
-	make -C ../commands functex
+	$(MAKE) -C ../commands functex
 
 date.tex: $(ALLSRC)
 	LANG=en_US date "+%B, %Y" > $@

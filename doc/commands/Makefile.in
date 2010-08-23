@@ -163,7 +163,7 @@ $(HELPREFS): bbl2txt $(HLPSTAMP) $(GENSTAMP) ../tex/gretl-ref.bbl
 	./bbl2txt ../tex/gretl-ref.bbl > $@
 
 ../tex/gretl-ref.bbl:
-	make -C ../tex gretl-ref.pdf
+	$(MAKE) -C ../tex gretl-ref.pdf
 
 .PHONY: test
 

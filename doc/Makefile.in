@@ -8,12 +8,12 @@ SUBDIRS = tex
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	make -C $@
+	$(MAKE) -C $@
 
 clean:
 	for d in $(SUBDIRS) ; do \
-	make -C $$d clean ; done
+	$(MAKE) -C $$d clean ; done
 
 install: 
 	for d in $(SUBDIRS) ; do \
-	make -C $$d install ; done
+	$(MAKE) -C $$d install ; done

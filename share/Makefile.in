@@ -42,14 +42,14 @@ VPATH = $(sharesrc)
 all: $(query_make_help)
 
 help:
-	make -C ../doc/commands help-all
+	$(MAKE) -C ../doc/commands help-all
 
 .PHONY :
 
 install: installdirs install_datafiles install_scripts install_functions \
 	install_fonts install_help
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(DESTDIR)$(gretldir)/gretl.stamp
-	make -C bcih install
+	$(MAKE) -C bcih install
 
 install-strip: install
 
@@ -113,7 +113,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(gretldir)/fonts
 
 clean:
-	make -C bcih clean
+	$(MAKE) -C bcih clean
 
 textclean: 
 	rm -f *.txt
@@ -123,4 +123,4 @@ helpclean:
 
 distclean: clean
 	rm -f Makefile
-	make -C bcih distclean
+	$(MAKE) -C bcih distclean

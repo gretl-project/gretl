@@ -53,13 +53,13 @@ links:
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_es/$$f . ; fi ; done
 
 cmdtex:
-	make -C ../commands cmdtex_es
+	$(MAKE) -C ../commands cmdtex_es
 
 topiclist:
-	make -C ../commands topiclist_es
+	$(MAKE) -C ../commands topiclist_es
 
 textables_es:
-	make -C ../commands textables_es
+	$(MAKE) -C ../commands textables_es
 
 date.tex:
 	LANG=es_ES date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@

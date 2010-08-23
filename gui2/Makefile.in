@@ -205,7 +205,7 @@ $(GRETL_LANG): $(MKLANG)
 	./mklang $(LANGOPT) > $@
 
 $(GTKSOURCEVIEW_LITE):
-	make -C gtksourceview
+	$(MAKE) -C gtksourceview
 
 .deps:
 	$(AMP)mkdir $@
@@ -251,7 +251,7 @@ installdirs:
 clean:
 	rm -f *.o $(PROG) mklang gretl.lang gretl.lang.2
 	rm -rf .libs .deps
-	make -C gtksourceview clean
+	$(MAKE) -C gtksourceview clean
 
 distclean: clean
 	rm -f Makefile debug

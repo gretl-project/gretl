@@ -69,16 +69,16 @@ links:
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_pt/$$f . ; fi ; done
 
 cmdtex:
-	make -C ../commands cmdtex_pt
+	$(MAKE) -C ../commands cmdtex_pt
 
 topiclist:
-	make -C ../commands topiclist_pt
+	$(MAKE) -C ../commands topiclist_pt
 
 textables_pt:
-	make -C ../commands textables_pt
+	$(MAKE) -C ../commands textables_pt
 
 functex:
-	make -C ../commands functex_pt
+	$(MAKE) -C ../commands functex_pt
 
 date.tex:
 	LANG=pt_PT date "+%B %Y" | sed 's/^[a-z]/\u&/' > $@

@@ -89,16 +89,16 @@ dist:
 	$(tooldir)/makedist
 
 distclean: clean
-	make -C win32 clean
+	$(MAKE) -C win32 clean
 	rm -f config.log config.cache config.status config.h gretl.pc
 	rm -f gretl_sh libtool Makefile
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d distclean; done
 
 check:
-	make -C tests check
+	$(MAKE) -C tests check
 
 osx-dist:
-	make -C osx postinst
+	$(MAKE) -C osx postinst
 
 # dependency for parallel builds
 cli: lib
