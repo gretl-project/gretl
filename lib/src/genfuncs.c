@@ -1660,6 +1660,81 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     return err;
 }
 
+/**
+ * poly_trend:
+ * @x: array of original data.
+ * @fx: array into which to write the fitted series.
+ * @pdinfo: data set information.
+ * @order: desired polynomial order.
+ *
+ * Calculates a trend via the method of orthogonal polynomials.
+ * Based on C code in D.S.G. Pollock's DETREND.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order)
+{
+    double tmp, denom, lagdenom = 1;
+    double alpha, gamma, delta;
+    double *phi, *philag;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int i, t, T;
+    int err;
+
+    err = array_adjust_t1t2(x, &t1, &t2);
+    if (err) {
+	return err;
+    } 
+
+    T = t2 - t1 + 1;
+
+    if (order > T) {
+	return E_DF;
+    }
+
+    phi = malloc(2 * T * sizeof *phi);
+    if (phi == NULL) {
+	return E_ALLOC;
+    }
+
+    philag = phi + T;
+    x = x + t1;
+     
+    for (t=0; t<T; t++) {
+	phi[t] = 1;
+	philag[t] = 0;
+	fx[t] = 0;
+    }
+
+    for (i=0; i<=order; i++) {
+	alpha = gamma = denom = 0.0;
+     
+	for (t=0; t<T; t++) {
+	    alpha += x[t] * phi[t];
+	    gamma += phi[t] * phi[t] * t;
+	    denom += phi[t] * phi[t];
+	}
+          
+	alpha /= denom;
+	gamma /= denom;
+	delta = denom / lagdenom;
+	lagdenom = denom;
+       
+	for (t=0; t<T; t++) {
+	    fx[t] += alpha * phi[t];
+	    tmp = phi[t];
+	    phi[t] = (t - gamma) * phi[t] - delta * philag[t];
+	    philag[t] = tmp;
+	} 
+    }
+
+    free(phi);
+
+    return err;
+} 
+
 static int n_new_dummies (const DATAINFO *pdinfo,
 			  int nunits, int nperiods)
 {

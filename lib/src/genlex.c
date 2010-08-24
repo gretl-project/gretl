@@ -347,6 +347,7 @@ struct str_table funcs[] = {
     { F_EPOCHDAY, "epochday" },
     { F_SETNOTE,  "setnote" },
     { F_INVMILLS, "invmills" },
+    { F_POLYFIT,  "polyfit" },
     { 0,          NULL }
 };
 

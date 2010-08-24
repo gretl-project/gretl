@@ -224,6 +224,7 @@
 	<menuitem action="FilterHP"/>
 	<menuitem action="FilterBK"/>
 	<menuitem action="FilterBW"/>
+	<menuitem action="FilterPoly"/>
 	<menuitem action="FilterFD"/>
       </menu>
       <placeholder action="X12A"/>

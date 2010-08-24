@@ -4203,6 +4203,22 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *series_polyfit (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	const double *x = l->v.xvec;
+	int order = node_get_int(r, p);
+
+	if (!p->err) {
+	    p->err = poly_trend(x, ret->v.xvec, p->dinfo, order);
+	}
+    }
+
+    return ret;
+}
+
 static NODE *series_movavg (NODE *l, NODE *m, NODE *r, parser *p)
 {
     NODE *ret;
@@ -7444,18 +7460,20 @@ static NODE *eval (NODE *t, parser *p)
 	    break;
 	}
 	/* note: otherwise fall through */
-    case F_LJUNGBOX:	
+    case F_LJUNGBOX:
+    case F_POLYFIT:
 	/* series on left, scalar on right */
 	if (l->t != VEC) {
 	    node_type_error(t->t, 1, VEC, l, p);
 	} else if (!scalar_node(r)) {
-	    fprintf(stderr, "ERROR here\n");
 	    node_type_error(t->t, 2, NUM, r, p);
 	} else if (t->t == LAG) {
 	    ret = series_lag(l, r, p); 
 	} else if (t->t == F_LJUNGBOX) {
 	    ret = series_ljung_box(l, r, p); 
-	} 
+	} else if (t->t == F_POLYFIT) {
+	    ret = series_polyfit(l, r, p);
+	}
 	break;
     case OBS:
 	if (l->t != VEC) {

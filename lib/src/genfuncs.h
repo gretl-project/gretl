@@ -74,6 +74,8 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
 int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 			int order, double cutoff);
 
+int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order);
+
 gretl_matrix *hp_gain (double lambda, int hipass);
 
 gretl_matrix *butterworth_gain (int n, double cutoff, int hipass);

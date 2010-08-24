@@ -1544,6 +1544,7 @@ GtkActionEntry main_entries[] = {
     { "FilterHP", NULL, N_("_Hodrick-Prescott"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterBK", NULL, N_("_Baxter-King"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterBW", NULL, N_("_Butterworth"), NULL, NULL, G_CALLBACK(filter_callback) },
+    { "FilterPoly", NULL, N_("_Polynomial trend"), NULL, NULL, G_CALLBACK(filter_callback) },
     { "FilterFD", NULL, N_("_Fractional difference"), NULL, NULL, G_CALLBACK(filter_callback) },
     
 #ifdef HAVE_X12A

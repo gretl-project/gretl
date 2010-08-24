@@ -33,6 +33,7 @@ enum {
     FILTER_HP,
     FILTER_BK,
     FILTER_BW,
+    FILTER_POLY,
     FILTER_FD
 };
 
@@ -59,7 +60,7 @@ struct filter_info_ {
     int bkk;              /* Baxter-King parameter */
     int bkl;              /* Baxter-King lower value */
     int bku;              /* Baxter-King upper value */
-    int order;            /* Butterworth order */
+    int order;            /* Butterworth or polynomial order */
     int cutoff;           /* Butterworth cut-off */
     gretlopt graph_opt;
     gretlopt save_opt;
@@ -87,6 +88,8 @@ static const char *filter_get_title (int ftype)
 	return N_("Baxter-King Band-pass filter");
     } else if (ftype == FILTER_BW) {
 	return N_("Butterworth filter");
+    } else if (ftype == FILTER_POLY) {
+	return N_("Polynomial trend");
     } else if (ftype == FILTER_FD) {
 	return N_("Fractional difference");
     } else {
@@ -142,6 +145,8 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     } else if (ftype == FILTER_BW) {
 	finfo->order = 8;
 	finfo->cutoff = 67;
+    } else if (ftype == FILTER_POLY) {
+	finfo->order = 3;
     } else if (ftype == FILTER_FD) {
 	finfo->lambda = 0.5;
     }
@@ -161,7 +166,9 @@ static void filter_make_savename (filter_info *finfo, int i)
     } else if (finfo->ftype == FILTER_BK) {
 	strcpy(targ, "bk_");
     } else if (finfo->ftype == FILTER_BW) {
-	strcpy(targ, "bw_");
+	strcpy(targ, (i == 0)? "bt_" : "bc_");
+    } else if (finfo->ftype == FILTER_POLY) {
+	strcpy(targ, (i == 0)? "pt_" : "pc_");
     } else if (finfo->ftype == FILTER_FD) {
 	strcpy(targ, "fd_");
     }
@@ -215,6 +222,14 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 	    sprintf(s, _("Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"), 
 		    finfo->vname, finfo->order, finfo->cutoff);
 	}
+    } else if (finfo->ftype == FILTER_POLY) {
+	if (i == FILTER_SAVE_TREND) {
+	    sprintf(s, _("Filtered %s: polynomial of order %d"), 
+		    finfo->vname, finfo->order);
+	} else {
+	    sprintf(s, _("Filtered %s: residual from polynomial of order %d"), 
+		    finfo->vname, finfo->order);
+	}	
     } else if (finfo->ftype == FILTER_FD) {
 	sprintf(s, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
     }
@@ -565,6 +580,16 @@ static void filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->cutoff);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);	
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    } else if (finfo->ftype == FILTER_POLY) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_label_new(_("order of polynomial:"));
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	w = gtk_spin_button_new_with_range(1.0, 15, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
+	g_signal_connect(G_OBJECT(w), "value-changed",
+			 G_CALLBACK(set_int_from_spinner), &finfo->order);
+	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_FD) {
 	/* set "d" */
@@ -922,6 +947,8 @@ static void record_filter_command (filter_info *finfo)
     } else if (finfo->ftype == FILTER_BW) {
 	sprintf(s, "bwfilt(%s, %d, %d)\n", finfo->vname,
 		finfo->order, finfo->cutoff);
+    } else if (finfo->ftype == FILTER_POLY) {
+	sprintf(s, "polyfit(%s, %d)\n", finfo->vname, finfo->order);
     } else if (finfo->ftype == FILTER_FD) {
 	sprintf(s, "fracdiff(%s, %g)\n", finfo->vname, finfo->lambda);
     }
@@ -994,6 +1021,8 @@ static int calculate_filter (filter_info *finfo)
     } else if (finfo->ftype == FILTER_BW) {
 	/* Butterworth */
 	err = butterworth_filter(x, fx, datainfo, finfo->order, finfo->cutoff);
+    } else if (finfo->ftype == FILTER_POLY) {
+	err = poly_trend(x, fx, datainfo, finfo->order);
     } else if (finfo->ftype == FILTER_FD) {
 	/* fractional differencing */
 	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, datainfo);
@@ -1059,6 +1088,8 @@ static int filter_code (GtkAction *action)
 	return FILTER_BK;
     else if (!strcmp(s, "FilterBW")) 
 	return FILTER_BW;
+    else if (!strcmp(s, "FilterPoly")) 
+	return FILTER_POLY;
     else if (!strcmp(s, "FilterFD")) 
 	return FILTER_FD;
     else
