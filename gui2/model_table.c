@@ -37,7 +37,7 @@ static int depvarnum;
 
 static int do_asts = 1;
 static int mt_figs = 4;   /* figures for printing */
-static char mt_fmt = 'g'; /* flooting-point format ('g' or 'f') */
+static char mt_fmt = 'g'; /* floating-point format ('g' or 'f') */
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
@@ -400,9 +400,11 @@ static int common_df (void)
 
 static const char *short_estimator_string (const MODEL *pmod, PRN *prn)
 {
-    if (pmod->ci == HSK) return N_("HSK");
-    else if (pmod->ci == ARCH) return N_("ARCH");
-    else if (pmod->ci == WLS) {
+    if (pmod->ci == HSK) {
+	return N_("HSK");
+    } else if (pmod->ci == ARCH) {
+	return N_("ARCH");
+    } else if (pmod->ci == WLS) {
 	if (gretl_model_get_int(pmod, "iters")) {
 	    return N_("MLE");
 	} else {
@@ -916,8 +918,6 @@ static void print_estimator_strings (int colwidth, PRN *prn)
     const char *s;
     char est[32];
     int i;
-
-    pputc(prn, '\n');
 
     for (i=0; i<n_models; i++) {
 	if (table_models[i] != NULL) {
