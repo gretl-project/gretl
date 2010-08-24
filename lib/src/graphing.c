@@ -27,6 +27,7 @@
 #include "forecast.h"
 #include "plotspec.h"
 #include "usermat.h"
+#include "missing_private.h"
 
 #include <unistd.h>
 #include <glib.h>
@@ -2756,9 +2757,14 @@ int gnuplot (const int *plotlist, const char *literal,
     /* add a simple regression line if appropriate */
     if (!use_impulses(&gi) && !(gi.flags & GPT_FIT_OMIT) && list[0] == 2 && 
 	!(gi.flags & GPT_TS) && !(gi.flags & GPT_RESIDS)) {
+	const char *xname = pdinfo->varname[list[2]];
+	const char *yname = pdinfo->varname[list[1]];
+
 	get_fitted_line(&gi, Z, pdinfo, fit_line);
-	pprintf(prn, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
-	pprintf(prn, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
+	if (*xname != '\0' && yname != '\0') {
+	    pprintf(prn, "# X = '%s' (%d)\n", xname, list[2]);
+	    pprintf(prn, "# Y = '%s' (%d)\n", yname, list[1]);
+	}
     } 
 
     /* separation by dummy: create special vars */
@@ -5089,12 +5095,12 @@ int xy_plot_with_control (const int *list, const char *literal,
 			  const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt)
 {
-    int vy = list[1], vx = list[2], vz = list[3];
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int mlist[3] = {2, 0, 0};
+    int mlist[4] = {3, 0, 0, 0};
     MODEL mod;
     DATAINFO *ginfo = NULL;
     double **gZ = NULL;
+    int vy, vx, vz;
     int s, t, T;
     int err = 0;
 
@@ -5102,40 +5108,27 @@ int xy_plot_with_control (const int *list, const char *literal,
 	return E_DATA;
     }
 
-    /* make sure we have a uniform sample for the two regressions */
+    vy = list[1];
+    vx = list[2];
+    vz = list[3];
 
-    for (t=t1; t<=t2; t++) {
-	if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {
-	    t1++;
-	} else {
-	    break;
-	}
-    }
+    adjust_t1t2(NULL, list, &t1, &t2, pdinfo->n, Z, &s);
 
-    for (t=t2; t>=t1; t--) {
-	if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {
-	    t2--;
-	} else {
-	    break;
-	}
-    }  
-
-    /* count the maximum usable observations */
+    /* maximum usable observations */
     T = t2 - t1 + 1;
-    if (T < 3) {
-	return E_DATA;
-    }
 
-    /* recount the usable observations, allowing for NAs in reduced
-       sample */
-    for (t=t1; t<=t2; t++) {
-	if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {
-	    T--;
+    if (s != 0) {
+	/* count the usable observations, allowing for NAs */
+	for (t=t1; t<=t2; t++) {
+	    if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {
+		T--;
+	    }
 	}
     }
+
     if (T < 3) {
-	return E_DATA;
-    }    
+	return E_DF;
+    } 
 
     /* create temporary dataset */
 
@@ -5143,9 +5136,6 @@ int xy_plot_with_control (const int *list, const char *literal,
     if (ginfo == NULL) {
 	return E_ALLOC;
     }
-
-    strcpy(ginfo->varname[1], pdinfo->varname[vy]);
-    strcpy(ginfo->varname[2], pdinfo->varname[vx]);
 
     sprintf(ginfo->varinfo[1]->display_name, _("adjusted %s"), pdinfo->varname[vy]);
     sprintf(ginfo->varinfo[2]->display_name, _("adjusted %s"), pdinfo->varname[vx]);
@@ -5160,10 +5150,10 @@ int xy_plot_with_control (const int *list, const char *literal,
 	}
     }
 
-    /* regress Y on Z and save the residuals */
+    /* regress Y (1) on Z (3) and save the residuals in series 1 */
 
     mlist[1] = 1;
-    mlist[2] = 3;
+    mlist[3] = 3;
     mod = lsq(mlist, gZ, ginfo, OLS, OPT_A);
     err = mod.errcode;
     if (err) {
@@ -5176,7 +5166,7 @@ int xy_plot_with_control (const int *list, const char *literal,
 	clear_model(&mod);
     }
 
-    /* regress X on Z and save the residuals */
+    /* regress X (2) on Z and save the residuals in series 2 */
 
     mlist[1] = 2;    
     mod = lsq(mlist, gZ, ginfo, OLS, OPT_A);
@@ -5191,8 +5181,9 @@ int xy_plot_with_control (const int *list, const char *literal,
 	clear_model(&mod);
     }
 
-    /* call for scatter of purged Y against purged X */
+    /* call for scatter of Y-residuals against X-residuals */
 
+    mlist[0] = 2;
     mlist[1] = 1;
     mlist[2] = 2;
     err = gnuplot(mlist, literal, (const double **) gZ, 

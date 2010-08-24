@@ -1668,7 +1668,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
  * @order: desired polynomial order.
  *
  * Calculates a trend via the method of orthogonal polynomials.
- * Based on C code in D.S.G. Pollock's DETREND.
+ * Based on C code for D.S.G. Pollock's DETREND program.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
