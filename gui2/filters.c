@@ -569,7 +569,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->order);
-	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set cutoff */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -579,7 +579,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->cutoff);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->cutoff);
-	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);	
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);	
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_POLY) {
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -589,7 +589,7 @@ static void filter_dialog (filter_info *finfo)
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->order);
-	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_FD) {
 	/* set "d" */
