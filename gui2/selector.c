@@ -2659,7 +2659,7 @@ static int get_rvars2_data (selector *sr, int rows, int context)
 	gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
 
 	if (IV_MODEL(sr->ci) && exog == ynum && lag == 0) { /* HECKIT? */
-	    errbox("You can't use the dependent variable as an instrument");
+	    errbox(_("You can't use the dependent variable as an instrument"));
 	    err = 1;
 	    break;
 	}

@@ -1402,7 +1402,7 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     } else {
 	for (i=1; i<=zlist[0]; i++) {
 	    if (zlist[i] == list[1]) {
-		gretl_errmsg_set("You can't use the dependent variable as an instrument");
+		gretl_errmsg_set(_("You can't use the dependent variable as an instrument"));
 		err = E_DATA;
 		break;
 	    }
