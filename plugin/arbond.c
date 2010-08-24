@@ -537,8 +537,6 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
    In dpanel, it contains either p alone or a list of specific
    lags of y to use as regressors. Placing a limit on the max 
    lag of y as instrument is done in dpanel via "GMM(y,min,max)". 
-   (We apply the default pattern of GMM(y,2,99) only if the user
-   says --system but doesn't specify the treatment of y.)
 
    Note, there's a potential ambiguity if the user says, e.g.
 

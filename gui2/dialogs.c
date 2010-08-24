@@ -4238,13 +4238,36 @@ int freq_dialog (const char *title, const char *blurb,
     return ret;
 }
 
+static void model_table_set_format (GtkComboBox *combo, char *fmt)
+{
+    if (gtk_combo_box_get_active(combo) == 0) {
+	*fmt = 'g';
+    } else {
+	*fmt = 'f';
+    }
+}
+
+static void model_table_spin_config (GtkComboBox *combo, GtkSpinButton *spin)
+{
+    if (gtk_combo_box_get_active(combo) == 0) {
+	gtk_spin_button_set_range(spin, 2, 6);
+    } else {
+	gtk_spin_button_set_range(spin, 0, 6);
+    }
+}
+
+static void model_table_set_figs (GtkSpinButton *spin, int *figs)
+{
+    *figs = gtk_spin_button_get_value(spin);
+}
+
 /* Sets option indices for column headings type and standard errors
    versus t-stats, also the number of significant figures to show.
    Returns GRETL_CANCEL on cancel, otherwise 0.  
 */
 
 int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
-			int *ast_opt, int *figs)
+			int *ast_opt, int *figs, char *fmt)
 {
     static char *col_opts[] = {
 	"(1), (2), (3), ...",
@@ -4258,7 +4281,7 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     };
     GtkWidget *dialog;
     GtkWidget *vbox, *hbox, *tmp;
-    GtkWidget *button = NULL;
+    GtkWidget *spin, *button = NULL;
     GSList *group = NULL;
     int i, ret = 0;
 
@@ -4334,9 +4357,29 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     vbox_add_hsep(vbox);
 
-    /* significant figs spinner */
-    tmp = option_spinbox(figs, _("significant figures"), 2, 6, 0, NULL);
-    gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+    /* spinner for number of digits */
+    hbox = gtk_hbox_new(FALSE, 5); 
+    tmp = gtk_label_new(_("Show"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    spin = gtk_spin_button_new_with_range((*fmt == 'g')? 2 : 0, 6, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), *figs);
+    g_signal_connect(G_OBJECT(GTK_SPIN_BUTTON(spin)), "value-changed",
+		     G_CALLBACK(model_table_set_figs), figs);
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);    
+    tmp = gtk_combo_box_new_text();
+    gtk_combo_box_append_text(GTK_COMBO_BOX(tmp), _("significant figures"));
+    gtk_combo_box_append_text(GTK_COMBO_BOX(tmp), _("decimal places"));
+    if (*fmt == 'g') {
+	gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
+    } else {
+	gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 1);
+    }
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(tmp)), "changed",
+		     G_CALLBACK(model_table_set_format), fmt);
+    g_signal_connect(G_OBJECT(GTK_COMBO_BOX(tmp)), "changed",
+		     G_CALLBACK(model_table_spin_config), spin);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 

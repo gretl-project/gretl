@@ -36,7 +36,8 @@ static int colheads;
 static int depvarnum;
 
 static int do_asts = 1;
-static int mt_figs = 4;
+static int mt_figs = 4;   /* figures for printing */
+static char mt_fmt = 'g'; /* flooting-point format ('g' or 'f') */
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
@@ -470,6 +471,16 @@ static double modtab_get_pval (const MODEL *pmod, int k)
     return pval;
 }
 
+static void mt_print_value (char *s, double x)
+{
+    if (mt_fmt == 'f') {
+	sprintf(s, "%.*f", mt_figs, x);
+    } else {
+	sprintf(s, "%#.*g", mt_figs, x);
+	gretl_fix_exponent(s);
+    }
+}
+
 static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 {
     const MODEL *pmod;
@@ -506,8 +517,7 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	    if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
 		double x = screen_zero(pmod->coeff[k]);
 
-		sprintf(numstr, "%#.*g", mt_figs, x);
-		gretl_fix_exponent(numstr);
+		mt_print_value(numstr, x);
 
 		if (do_asts) {
 		    double pval = modtab_get_pval(pmod, k);
@@ -572,8 +582,7 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 		    val = pmod->sderr[k];
 		}
 
-		sprintf(numstr, "%#.*g", mt_figs, val);
-		gretl_fix_exponent(numstr);
+		mt_print_value(numstr, val);
 
 		if (tex) {
 		    if (val < 0) {
@@ -1323,10 +1332,11 @@ void format_model_table (windata_t *vwin)
     int pv_opt = do_pvals;
     int ast_opt = do_asts;
     int figs = mt_figs;
+    char fmt = mt_fmt;
     int resp;
 
     resp = model_table_dialog(&colhead_opt, &se_opt, &pv_opt, &ast_opt,
-			      &figs);
+			      &figs, &fmt);
 
     if (resp == GRETL_CANCEL) {
 	return;
@@ -1346,6 +1356,7 @@ void format_model_table (windata_t *vwin)
 	do_pvals = pv_opt;
 	do_asts = ast_opt;
 	mt_figs = figs;
+	mt_fmt = fmt;
 
 	if (bufopen(&prn)) {
 	    return;
