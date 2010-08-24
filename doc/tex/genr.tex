@@ -255,15 +255,15 @@ series bwcycle = y - bwfilt(y, 8, 67)
 
 Pollock recommends that the parameters of the Butterworth filter be
 tuned to the data: one should examine the periodogram of the series in
-question in search of a ``dead spot'' of low power between the
-frequencies one wishes to exclude and the frequencies one wishes to
-retain. If $\omega^{\star}$ is placed in such a dead spot then the job
-of separation can be done with a relatively small $n$, hence avoiding
-numerical problems. By way of illustration, consider the periodogram
-for quarterly observations on new cars sales in the US,\footnote{This
-  is the variable \texttt{QNC} from the Ramanathan data file
-  \texttt{data9-7}.} 1975:1 to 1990:4 (the upper panel in
-Figure~\ref{fig:QNCfilt}).
+question (possibly after removal of a polynomial trend) in search of a
+``dead spot'' of low power between the frequencies one wishes to
+exclude and the frequencies one wishes to retain. If $\omega^{\star}$
+is placed in such a dead spot then the job of separation can be done
+with a relatively small $n$, hence avoiding numerical problems. By way
+of illustration, consider the periodogram for quarterly observations
+on new cars sales in the US,\footnote{This is the variable
+  \texttt{QNC} from the Ramanathan data file \texttt{data9-7}.} 1975:1
+to 1990:4 (the upper panel in Figure~\ref{fig:QNCfilt}).
 
 \begin{figure}[htbp]
   \centering
