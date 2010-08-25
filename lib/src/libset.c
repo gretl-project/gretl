@@ -58,8 +58,9 @@ enum {
     STATE_LOOPING         = 1 << 16, /* loop is in progress at this level */
     STATE_LOOP_QUIET      = 1 << 17, /* loop commands should be quiet */
     STATE_LOOP_PROG       = 1 << 18, /* progressive loop is in progress */
-    STATE_BFGS_RSTEP      = 1 << 19  /* use Ricardson method in BFGS numerical
+    STATE_BFGS_RSTEP      = 1 << 19, /* use Richardson method in BFGS numerical
 					gradient */
+    STATE_DPDSTYLE_ON     = 1 << 20, /* emulate dpd in dynamic panel data models */
 };    
 
 /* for values that really want a non-negative integer */
@@ -126,7 +127,8 @@ struct set_vars_ {
                            !strcmp(s, SKIP_MISSING) || \
 			   !strcmp(s, R_FUNCTIONS) || \
 			   !strcmp(s, R_LIB) || \
-			   !strcmp(s, BFGS_RSTEP))
+			   !strcmp(s, BFGS_RSTEP) || \
+			   !strcmp(s, DPDSTYLE))
 
 #define libset_double(s) (!strcmp(s, BFGS_TOLER) || \
 			  !strcmp(s, BFGS_MAXGRAD) || \
@@ -1229,6 +1231,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_double(NLS_TOLER, prn, opt);
     libset_print_bool(USE_SVD, prn, opt);
     libset_print_bool(USE_FCP, prn, opt);
+    libset_print_bool(DPDSTYLE, prn, opt);
 
     libset_header(N_("Random number generation"), prn, opt);
 
@@ -1738,6 +1741,8 @@ static int boolvar_get_flag (const char *s)
 	return STATE_SKIP_MISSING;
     } else if (!strcmp(s, BFGS_RSTEP)) {
 	return STATE_BFGS_RSTEP;
+    } else if (!strcmp(s, DPDSTYLE)) {
+	return STATE_DPDSTYLE_ON;
     } else {
 	fprintf(stderr, "libset_get_bool: unrecognized "
 		"variable '%s'\n", s);	

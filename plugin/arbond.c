@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "libset.h"
 #include "matrix_extra.h"
 
 #define ADEBUG 0
@@ -33,7 +34,7 @@ enum {
 };
 
 #define use_levels(d) (d->flags & DPD_SYSTEM)
-#define dpd_style(d) (d->flags & DPD_DPDSTYLE)
+#define dpd_style(d) ((d->flags & DPD_DPDSTYLE) || libset_get_bool(DPDSTYLE))
 
 #define LEVEL_ONLY 2
 
@@ -238,7 +239,7 @@ static int dpd_flags_from_opt (gretlopt opt)
 	f |= DPD_SYSTEM;
     }
 
-    if (opt & OPT_X) {
+    if ((opt & OPT_X) || libset_get_bool(DPDSTYLE)) {
 	/* compute H as per Ox/DPD (DPANEL only) */
 	f |= DPD_DPDSTYLE;
     }	
@@ -1793,7 +1794,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	    if (dpd->flags & DPD_SYSTEM) {
 		pmod->opt |= OPT_L;
 	    }
-	    if (dpd->flags & DPD_DPDSTYLE) {
+	    if (dpd_style(dpd)) {
 		pmod->opt |= OPT_X;
 	    }
 	    if (dpd->maxTi > 0 && dpd->minTi > 0 && dpd->maxTi > dpd->minTi) {

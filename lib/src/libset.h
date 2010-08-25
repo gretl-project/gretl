@@ -67,6 +67,7 @@ typedef enum {
 #define R_FUNCTIONS      "R_functions"
 #define R_LIB            "R_lib"
 #define NORMAL_RAND      "normal_rand"
+#define DPDSTYLE         "dpdstyle"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
