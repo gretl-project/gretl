@@ -550,8 +550,8 @@ int csv_options_dialog (gretlopt *optp)
 			  GINT_TO_POINTER(','));   
     }
 
-    if (!reading) {
-	/* on output only */
+    if (!reading && !(*optp & OPT_M)) {
+	/* on output of series only */
 	vbox_add_hsep(vbox);
 	tmp = gretl_option_check_button_switched(_("include observations column"),
 						 optp, OPT_X);

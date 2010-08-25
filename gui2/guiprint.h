@@ -64,6 +64,8 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action);
 
 int scalars_to_clipboard_as_csv (void);
 
+int matrix_to_clipboard_as_csv (const gretl_matrix *m);
+
 int font_has_minus (PangoFontDescription *desc);
 
 #endif /* GUIPRINT_H */

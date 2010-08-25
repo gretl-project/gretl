@@ -201,6 +201,7 @@ static char *matrix_items[] = {
     N_("View"),
     N_("Edit"),
     N_("Properties"),
+    N_("Copy as CSV..."),
     N_("Rename"),
     N_("Delete")
 };
@@ -2758,6 +2759,9 @@ static void matrix_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Properties"))) {
 	m = user_matrix_get_matrix(u);
 	view_matrix_properties(m, name);
+    } else if (!strcmp(item, _("Copy as CSV..."))) {
+	m = user_matrix_get_matrix(u);
+	matrix_to_clipboard_as_csv(m);
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {

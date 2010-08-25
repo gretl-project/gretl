@@ -1914,7 +1914,7 @@ int csv_selected_to_clipboard (void)
     return err;
 }
 
-/* called from session.c: copy entire dataset to clipboard */
+/* called from session.c: copy data to clipboard */
 
 int csv_to_clipboard (void)
 {
@@ -1938,6 +1938,57 @@ int csv_to_clipboard (void)
     }
 
     return err;
+}
+
+static void matrix_print_as_csv (const gretl_matrix *m, PRN *prn)
+{
+    char numstr[48];
+    double x;
+    int i, j;
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    x = gretl_matrix_get(m, i, j);
+	    sprintf(numstr, "%.*g", DBL_DIG, x);
+	    if (datainfo->decpoint != '.') {
+		charsub(numstr, '.', datainfo->decpoint);
+	    }
+	    pputs(prn, numstr);
+	    if (j < m->cols - 1) {
+		pputc(prn, datainfo->delim);
+	    }
+	}
+	pputc(prn, '\n');
+    }
+
+    gretl_pop_c_numeric_locale();
+}
+
+int matrix_to_clipboard_as_csv (const gretl_matrix *m)
+{
+    PRN *prn = NULL;
+    gretlopt opt = OPT_M;
+
+    if (m == NULL) {
+	return 0;
+    }
+
+    if (csv_options_dialog(&opt)) {
+	/* canceled */
+	return 0;
+    }
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
+    matrix_print_as_csv(m, prn);
+    prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+    gretl_print_destroy(prn);
+
+    return 0;
 }
 
 int scalars_to_clipboard_as_csv (void)
