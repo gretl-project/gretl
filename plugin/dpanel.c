@@ -641,7 +641,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 
 	for (j=1; j<=dpd->nx; j++) {
 	    /* Note: we don't difference away the constant
-	       here, but if --dpdstyle is not applied the
+	       here, but if dpdstyle is not in force the
 	       constant will have been removed already.
 	    */
 	    if (!use_levels(dpd) && dpd->xlist[j] == 0) {
@@ -932,7 +932,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	    t1 = t + i1;
 	    for (j=0; j<dpd->nzr; j++) {
 		/* we don't difference the constant, but unless
-		   --dpdstyle has been selected it will have been
+		   dpdstyle is in force it will have been
 		   dropped by this point
 		*/
 		if (!use_levels(dpd) && dpd->ilist[j+1] == 0) {
@@ -1247,6 +1247,7 @@ static void maybe_prune_const (dpdinfo *dpd)
 		    gretl_list_delete_at_pos(dpd->xlist, i);
 		}
 		dpd->nx -= 1;
+		dpd->k -= 1;
 		break;
 	    }
 	}
@@ -1442,12 +1443,9 @@ MODEL dpd_estimate (const int *list, const char *ispec,
 
     dpanel_adjust_GMM_spec(dpd);
 
-#if 1
-    /*something not right here in some cases? */
     if (!dpd_style(dpd) && !use_levels(dpd)) { 
 	maybe_prune_const(dpd);
     }
-#endif
 
 #if DPDEBUG
     if (dpd->nzb > 0 || dpd->nzb2 > 0) {
