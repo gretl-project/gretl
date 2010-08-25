@@ -1303,6 +1303,8 @@ static int dpd_ar_test (dpdinfo *dpd)
     return err;
 }
 
+#define FAST_WIND 1
+
 /* Windmeijer, Journal of Econometrics, 126 (2005), page 33:
    finite-sample correction for step-2 variance matrix.  Note: from a
    computational point of view this calculation is expressed more
@@ -1327,6 +1329,11 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
     gretl_matrix *km;  
     gretl_matrix *k1; 
     gretl_matrix *R1;
+#if FAST_WIND
+    gretl_matrix *Zui; 
+    gretl_matrix *Zxi;
+#endif
+
     int i, j, t;
     int err = 0;
 
@@ -1343,6 +1350,10 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 			       &mT,  dpd->nz, dpd->totobs,
 			       &km,  dpd->k, dpd->nz,
 			       &k1,  dpd->k, 1,
+#if FAST_WIND
+			       &Zui, dpd->nz, 1,
+			       &Zxi, 1, dpd->nz,
+#endif
 			       NULL);
     if (B == NULL) {
 	err = E_ALLOC;
@@ -1372,7 +1383,7 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	    if (ni == 0) {
 		continue;
 	    }
-
+	
 	    gretl_matrix_reuse(ui, ni, 1);
 	    gretl_matrix_reuse(xij, ni, 1);
 	    gretl_matrix_reuse(dpd->Zi, ni, dpd->nz);
@@ -1386,28 +1397,47 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	    /* extract xij */
 	    gretl_matrix_extract_matrix(xij, dpd->X, s - ni, j,
 					GRETL_MOD_NONE);
-	    gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
-				      xij, GRETL_MOD_TRANSPOSE,
-				      TT, GRETL_MOD_NONE);
-	    gretl_matrix_add_self_transpose(TT);
 
 	    /* extract Zi */
 	    gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, s - ni,
 					GRETL_MOD_TRANSPOSE);
 
+#if FAST_WIND
+	    gretl_matrix_multiply_mod(dpd->Zi, GRETL_MOD_TRANSPOSE,
+				      ui, GRETL_MOD_NONE,
+				      Zui, GRETL_MOD_NONE);
+
+	    gretl_matrix_multiply_mod(xij, GRETL_MOD_TRANSPOSE,
+				      dpd->Zi, GRETL_MOD_NONE,
+				      Zxi, GRETL_MOD_NONE);
+
+	    gretl_matrix_multiply_mod(Zui, GRETL_MOD_NONE,
+				      Zxi, GRETL_MOD_NONE,
+				      dWj, GRETL_MOD_CUMULATE);
+#else
+	    gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
+				      xij, GRETL_MOD_TRANSPOSE,
+				      TT, GRETL_MOD_NONE);
+	    gretl_matrix_add_self_transpose(TT);
+
 	    gretl_matrix_qform(dpd->Zi, GRETL_MOD_TRANSPOSE,
 			       TT, dWj, GRETL_MOD_CUMULATE);
+#endif
+
 	}
+#if FAST_WIND
+	gretl_matrix_add_self_transpose(dWj);
+#endif
 
-	gretl_matrix_multiply_by_scalar(dWj, -1.0 / dpd->effN);
+        gretl_matrix_multiply_by_scalar(dWj, -1.0 / dpd->effN);
 
-	/* D[.,j] = -aV * XZW^{-1} * dWj * W^{-1}Z'v_2 */
-	gretl_matrix_multiply(dpd->kmtmp, dWj, km);
-	gretl_matrix_multiply(km, R1, k1);
+        /* D[.,j] = -aV * XZW^{-1} * dWj * W^{-1}Z'v_2 */
+        gretl_matrix_multiply(dpd->kmtmp, dWj, km);
+        gretl_matrix_multiply(km, R1, k1);
 
-	/* write into appropriate column of D (k x k) */
-	for (i=0; i<dpd->k; i++) {
-	    gretl_matrix_set(D, i, j, k1->val[i]);
+        /* write into appropriate column of D (k x k) */
+        for (i=0; i<dpd->k; i++) {
+            gretl_matrix_set(D, i, j, k1->val[i]);
 	}
     }
 
