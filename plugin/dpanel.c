@@ -17,6 +17,8 @@
  * 
  */
 
+#include "libset.h"
+
 #define DPDEBUG 0
 #define IVDEBUG 0
 
@@ -656,8 +658,10 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 		if (use_levels(dpd)) {
 		    dx = timedum_diff(dpd, j, i1);
 		} else if (dpd_style(dpd)) {
+		    /* as per DPD: leave dummies in levels */
 		    dx = timedum_level(dpd, j, i1);
 		} else {
+		    /* as per xtabond2 */
 		    dx = timedum_diff(dpd, j, i1);
 		}
 		gretl_matrix_set(Xi, row++, col, dx);
@@ -1223,11 +1227,14 @@ static int do_units (dpdinfo *dpd, const double **Z,
     return err;
 }
 
+/* If we're not doing DPD-style, the constant, if present, 
+   gets differenced away, both as a regressor and as a regular 
+   instrument. This is for the case where we are not including
+   any equations in levels.
+*/
+
 static void maybe_prune_const (dpdinfo *dpd)
 {
-    /* the constant, if present, gets differenced away, both
-       as a regressor and as a regular instrument 
-    */
     int i;
 
     if (dpd->xlist != NULL) {
@@ -1415,6 +1422,10 @@ MODEL dpd_estimate (const int *list, const char *ispec,
     gretl_model_init(&mod);
     gretl_model_smpl_init(&mod, pdinfo);
 
+    if (libset_get_bool(DPDSTYLE)) {
+	opt |= OPT_X;
+    }
+
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
 	mod.errcode = parse_GMM_instrument_spec(DPANEL, ispec, pdinfo, &d, &nzb);
@@ -1431,9 +1442,12 @@ MODEL dpd_estimate (const int *list, const char *ispec,
 
     dpanel_adjust_GMM_spec(dpd);
 
+#if 1
+    /*something not right here in some cases? */
     if (!dpd_style(dpd) && !use_levels(dpd)) { 
 	maybe_prune_const(dpd);
     }
+#endif
 
 #if DPDEBUG
     if (dpd->nzb > 0 || dpd->nzb2 > 0) {

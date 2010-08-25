@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "libset.h"
 #include "matrix_extra.h"
 
 #define ADEBUG 0
@@ -34,7 +33,7 @@ enum {
 };
 
 #define use_levels(d) (d->flags & DPD_SYSTEM)
-#define dpd_style(d) ((d->flags & DPD_DPDSTYLE) || libset_get_bool(DPDSTYLE))
+#define dpd_style(d) (d->flags & DPD_DPDSTYLE)
 
 #define LEVEL_ONLY 2
 
@@ -239,7 +238,7 @@ static int dpd_flags_from_opt (gretlopt opt)
 	f |= DPD_SYSTEM;
     }
 
-    if ((opt & OPT_X) || libset_get_bool(DPDSTYLE)) {
+    if (opt & OPT_X) {
 	/* compute H as per Ox/DPD (DPANEL only) */
 	f |= DPD_DPDSTYLE;
     }	
@@ -538,6 +537,8 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
    In dpanel, it contains either p alone or a list of specific
    lags of y to use as regressors. Placing a limit on the max 
    lag of y as instrument is done in dpanel via "GMM(y,min,max)". 
+   (We apply the default pattern of GMM(y,2,99) only if the user
+   says --system but doesn't specify the treatment of y.)
 
    Note, there's a potential ambiguity if the user says, e.g.
 
@@ -1304,8 +1305,6 @@ static int dpd_ar_test (dpdinfo *dpd)
     return err;
 }
 
-#define FAST_WIND 1
-
 /* Windmeijer, Journal of Econometrics, 126 (2005), page 33:
    finite-sample correction for step-2 variance matrix.  Note: from a
    computational point of view this calculation is expressed more
@@ -1325,16 +1324,12 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
     gretl_matrix *dWj; /* one component of the above */
     gretl_matrix *ui;  /* per-unit residuals */
     gretl_matrix *xij; /* per-unit X_j values */
-    gretl_matrix *TT;  /* workspace follows */
-    gretl_matrix *mT;  
+    gretl_matrix *mT;  /* workspace follows */
     gretl_matrix *km;  
     gretl_matrix *k1; 
     gretl_matrix *R1;
-#if FAST_WIND
     gretl_matrix *Zui; 
     gretl_matrix *Zxi;
-#endif
-
     int i, j, t;
     int err = 0;
 
@@ -1347,14 +1342,11 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 			       &dWj, dpd->nz, dpd->nz,
 			       &ui,  dpd->max_ni, 1,
 			       &xij, dpd->max_ni, 1,
-			       &TT,  dpd->max_ni, dpd->max_ni,
 			       &mT,  dpd->nz, dpd->totobs,
 			       &km,  dpd->k, dpd->nz,
 			       &k1,  dpd->k, 1,
-#if FAST_WIND
 			       &Zui, dpd->nz, 1,
 			       &Zxi, 1, dpd->nz,
-#endif
 			       NULL);
     if (B == NULL) {
 	err = E_ALLOC;
@@ -1388,7 +1380,6 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	    gretl_matrix_reuse(ui, ni, 1);
 	    gretl_matrix_reuse(xij, ni, 1);
 	    gretl_matrix_reuse(dpd->Zi, ni, dpd->nz);
-	    gretl_matrix_reuse(TT, ni, ni);
 
 	    /* extract ui (first-step residuals) */
 	    for (t=0; t<ni; t++) {
@@ -1403,7 +1394,6 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	    gretl_matrix_extract_matrix(dpd->Zi, dpd->ZT, 0, s - ni,
 					GRETL_MOD_TRANSPOSE);
 
-#if FAST_WIND
 	    gretl_matrix_multiply_mod(dpd->Zi, GRETL_MOD_TRANSPOSE,
 				      ui, GRETL_MOD_NONE,
 				      Zui, GRETL_MOD_NONE);
@@ -1415,21 +1405,9 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 	    gretl_matrix_multiply_mod(Zui, GRETL_MOD_NONE,
 				      Zxi, GRETL_MOD_NONE,
 				      dWj, GRETL_MOD_CUMULATE);
-#else
-	    gretl_matrix_multiply_mod(ui, GRETL_MOD_NONE,
-				      xij, GRETL_MOD_TRANSPOSE,
-				      TT, GRETL_MOD_NONE);
-	    gretl_matrix_add_self_transpose(TT);
-
-	    gretl_matrix_qform(dpd->Zi, GRETL_MOD_TRANSPOSE,
-			       TT, dWj, GRETL_MOD_CUMULATE);
-#endif
-
 	}
-#if FAST_WIND
-	gretl_matrix_add_self_transpose(dWj);
-#endif
 
+	gretl_matrix_add_self_transpose(dWj);
         gretl_matrix_multiply_by_scalar(dWj, -1.0 / dpd->effN);
 
         /* D[.,j] = -aV * XZW^{-1} * dWj * W^{-1}Z'v_2 */
@@ -1794,7 +1772,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	    if (dpd->flags & DPD_SYSTEM) {
 		pmod->opt |= OPT_L;
 	    }
-	    if (dpd_style(dpd)) {
+	    if (dpd->flags & DPD_DPDSTYLE) {
 		pmod->opt |= OPT_X;
 	    }
 	    if (dpd->maxTi > 0 && dpd->minTi > 0 && dpd->maxTi > dpd->minTi) {
