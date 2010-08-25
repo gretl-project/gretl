@@ -1642,22 +1642,74 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	form_Qy(y, T);
 	form_svec(g, ds, n-2);
 	GammaY(g, y, tmp, T, n-2);   /* Form SQg */
-#if 1
 	/* write the trend into y (low-pass) */
 	for (t=0; t<T; t++) {
 	    y[t] = x[t] - lam1 * y[t];
 	}	
-#else
-	/* write the cycle/residual into y (high-pass) */
-	for (t=0; t<T; t++) {
-	    y[t] *= lam1;
-	}	
-#endif
     }    
 
     free(g);
 
     return err;
+}
+
+/* common code for both plain and weighted polynomial trend
+   estimation */
+
+static int real_poly_trend (const double *x, double *fx, double *w,
+			    int T, int order)
+{
+    double tmp, denom, lagdenom = 1;
+    double alpha, gamma, delta;
+    double *phi, *philag;
+    int i, t;
+
+    phi = malloc(2 * T * sizeof *phi);
+    if (phi == NULL) {
+	return E_ALLOC;
+    }
+
+    philag = phi + T;
+     
+    for (t=0; t<T; t++) {
+	phi[t] = 1;
+	philag[t] = 0;
+	fx[t] = 0;
+    }
+
+    for (i=0; i<=order; i++) {
+	double xadd;
+
+	alpha = gamma = denom = 0.0;
+
+	for (t=0; t<T; t++) {
+	    xadd = x[t] * phi[t];
+	    if (w != NULL) xadd *= w[t];
+	    alpha += xadd;
+	    xadd = phi[t] * phi[t] * t;
+	    if (w != NULL) xadd *= w[t];
+	    gamma += xadd;
+	    xadd = phi[t] * phi[t];
+	    if (w != NULL) xadd *= w[t];
+	    denom += xadd;
+	}	
+          
+	alpha /= denom;
+	gamma /= denom;
+	delta = denom / lagdenom;
+	lagdenom = denom;
+       
+	for (t=0; t<T; t++) {
+	    fx[t] += alpha * phi[t];
+	    tmp = phi[t];
+	    phi[t] = (t - gamma) * phi[t] - delta * philag[t];
+	    philag[t] = tmp;
+	} 
+    }
+
+    free(phi);
+
+    return 0;
 }
 
 /**
@@ -1675,13 +1727,8 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 
 int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order)
 {
-    double tmp, denom, lagdenom = 1;
-    double alpha, gamma, delta;
-    double *phi, *philag;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
-    int i, t, T;
-    int err;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int T, err;
 
     err = array_adjust_t1t2(x, &t1, &t2);
     if (err) {
@@ -1694,46 +1741,120 @@ int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order)
 	return E_DF;
     }
 
-    phi = malloc(2 * T * sizeof *phi);
-    if (phi == NULL) {
-	return E_ALLOC;
+    return real_poly_trend(x + t1, fx + t1, NULL, T, order);
+} 
+
+/* w: series to receive weights
+   T: length of data
+   opt: weighting function option
+   wmin: the minimum weight
+   wmax: the maximum weight
+   midfrac: the central portion of the data to be treated
+   specially, as a decimal fraction
+*/
+
+static void poly_weights (double *w, int T, gretlopt opt, 
+			  double wmin, double wmax,
+			  double midfrac)
+{
+    double wt, a = 0, b = 0;
+    int t, cut, T2 = T / 2;
+
+    if (midfrac > 0) {
+        cut = round(T * (1.0 - midfrac) / 2.0);
+    } else {
+        cut = T2;
     }
 
-    philag = phi + T;
-    x = x + t1;
-     
-    for (t=0; t<T; t++) {
-	phi[t] = 1;
-	philag[t] = 0;
-	fx[t] = 0;
-    }
+    if (opt == OPT_Q) {
+	/* quadratic */
+	double z1, z2, det;
 
-    for (i=0; i<=order; i++) {
-	alpha = gamma = denom = 0.0;
-     
-	for (t=0; t<T; t++) {
-	    alpha += x[t] * phi[t];
-	    gamma += phi[t] * phi[t] * t;
-	    denom += phi[t] * phi[t];
+	if (midfrac > 0) {
+	    z1 = cut;
+	    z2 = 2 * cut;
+	} else {
+	    z1 = (T-1) / 2.0;
+	    z2 = T-1;
 	}
-          
-	alpha /= denom;
-	gamma /= denom;
-	delta = denom / lagdenom;
-	lagdenom = denom;
-       
-	for (t=0; t<T; t++) {
-	    fx[t] += alpha * phi[t];
-	    tmp = phi[t];
-	    phi[t] = (t - gamma) * phi[t] - delta * philag[t];
-	    philag[t] = tmp;
-	} 
+
+	det = 1.0 / (z1 * (z1 * z2 - z2 * z2));
+	a = z2 * (wmin - wmax) * det;
+	b = -z2 * a;
+    } else if (opt == OPT_B) {
+	/* cosine-bell */
+	b = (wmax - wmin) / 2.0;
     }
 
-    free(phi);
+    for (t=0; t<=T2; t++) {
+        if (t <= cut) {
+	    if (opt == OPT_Q) {
+		wt = a * t + b;
+		wt = wt * t + wmax;
+	    } else if (opt == OPT_B) {
+		a = (t * M_PI) / cut;
+		wt = wmin + b * (1 + cos(a));
+	    } else {
+		/* "crenelated" */
+		wt = wmax;
+	    }
+        } else {
+	    wt = wmin;
+        }
+        w[t] = w[T-1-t] = wt;
+    }
+}
+
+/**
+ * weighted_poly_trend:
+ * @x: array of original data.
+ * @fx: array into which to write the fitted series.
+ * @pdinfo: data set information.
+ * @order: desired polynomial order.
+ * @opt: weighting option (OPT_Q = quadratic, OPT_B = cosine bell,
+ * OPT_C = crenelated).
+ * @wmin: minimum weight.
+ * @wmax: maximum weight.
+ * @midfrac: proprtion of the data to be treated specially, in the
+ * middle.
+ *
+ * Calculates a trend via the method of orthogonal polynomials, using
+ * the specified weighting scheme.
+ * Based on C code for D.S.G. Pollock's DETREND program.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
+			 int order, gretlopt opt, double wmax, double wmin, 
+			 double midfrac)
+{
+    double *w = NULL;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int T, err;
+
+    err = array_adjust_t1t2(x, &t1, &t2);
+    if (err) {
+	return err;
+    } 
+
+    T = t2 - t1 + 1;
+
+    if (order > T) {
+	return E_DF;
+    }
+
+    w = malloc(T * sizeof *w);
+    if (w == NULL) {
+	err = E_ALLOC;
+    } else {
+	poly_weights(w, T, opt, wmin, wmax, midfrac);
+	err = real_poly_trend(x + t1, fx + t1, w, T, order);
+	free(w);
+    }
 
     return err;
-} 
+}
 
 static int n_new_dummies (const DATAINFO *pdinfo,
 			  int nunits, int nperiods)
