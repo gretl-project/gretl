@@ -1906,7 +1906,8 @@ static int get_network_settings (void)
 
 /* Try reading user settings from .gretl2rc in appdata directory: if
    this succeeds it will pre-empt reading from the registry --
-   except that we'll respect the registry entry for gretldir.
+   except that we'll respect the registry entry (or perhaps
+   argv[0] at startup) for gretldir.
 */
 
 static void win32_read_gretlrc (void) 
@@ -1997,7 +1998,11 @@ int read_win32_config (int debug)
 
 	*value = '\0';
 
-	if (rcvar->flags & MACHSET) {
+	/* note: by now we have already determined gretldir as
+	   best we can; don't overwrite its setting 
+	*/
+
+	if ((rcvar->flags & MACHSET) && strcmp(rcvar->key, "gretldir")) {
 	    regerr = read_reg_val(HKEY_LOCAL_MACHINE, 
 				  get_reg_base(rcvar->key),
 				  rcvar->key, 

@@ -3929,6 +3929,21 @@
       </description>
     </function>
 
+    <function name="polyfit" section="filters" output="series">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+	<fnarg type="scalar">q</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Fits a polynomial trend of order <argname>q</argname> to the
+	  input series <argname>y</argname> using the method of
+	  orthogonal polynomials. The series returned holds the
+	  fitted values.
+	</para>
+      </description>
+    </function>
+
     <function name="princomp" section="stats" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>

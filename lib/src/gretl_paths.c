@@ -1864,6 +1864,7 @@ void win32_set_gretldir (const char *progname)
 
     *paths.gretldir = '\0';
 
+    /* we'll try the registry first */
     err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", paths.gretldir);
     if (!err) {
 	return;
@@ -2024,22 +2025,20 @@ static void set_helpfile_paths (gretlopt opt)
 static void initialize_gretldir (char *dirname, gretlopt opt)
 {
     char *ghome = getenv("GRETL_HOME");
-    int done = 0, err = 0;
+    int err = 0;
 
     if (ghome != NULL) {
 	/* environment setting, if any, takes precedence */
 	strcpy(paths.gretldir, ghome);
 	slash_terminate(paths.gretldir);
-	done = 1;
     } else if (*dirname != '\0' && *paths.gretldir == '\0') {
 	/* use value from config/registry, unless we already got
 	   a value somehow */
 	strcpy(paths.gretldir, dirname);
 	slash_terminate(paths.gretldir);
-	done = 1;
     } 
 
-    if (!done) {
+    if (*paths.gretldir == '\0') {
 #ifdef WIN32
 	/* fall back on installation-time default */
 	char *progfiles = program_files_path();

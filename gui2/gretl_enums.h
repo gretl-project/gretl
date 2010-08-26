@@ -107,6 +107,7 @@ enum extra_cmds {
     BFGS_CONFIG,
     COUNTMOD,
     BWFILTER,
+    POLYWEIGHTS,
     GUI_CMD_MAX
 };
 

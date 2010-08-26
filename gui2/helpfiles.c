@@ -142,6 +142,7 @@ static struct gui_help_item gui_help_items[] = {
     { OPEN_LABELS,    "add-labels" },  /* FIXME */
     { COUNTMOD,       "count-model" },
     { BWFILTER,       "bwfilter" },
+    { POLYWEIGHTS,    "polyweights" },
     { -1,             NULL },
 };
 

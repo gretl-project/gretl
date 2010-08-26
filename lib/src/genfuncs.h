@@ -77,8 +77,11 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order);
 
 int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
-			 int order, gretlopt opt, double wmax, double wmin, 
+			 int order, gretlopt opt, double wratio, 
 			 double midfrac);
+
+void poly_weights (double *w, int T, double wmax, 
+		   double midfrac, gretlopt opt);
 
 gretl_matrix *hp_gain (double lambda, int hipass);
 

@@ -24,6 +24,7 @@
 #include "filters.h"
 #include "libset.h"
 #include "plotspec.h"
+#include "usermat.h"
 #include "cmdstack.h"
 #include "ssheet.h"
 
@@ -62,6 +63,8 @@ struct filter_info_ {
     int bku;              /* Baxter-King upper value */
     int order;            /* Butterworth or polynomial order */
     int cutoff;           /* Butterworth cut-off */
+    double midfrac;       /* for weighted polynomial fit */
+    gretlopt wopt;        /* weighting-type option */
     gretlopt graph_opt;
     gretlopt save_opt;
     char save_t[VNAMELEN];
@@ -72,9 +75,13 @@ struct filter_info_ {
     GtkWidget *entry1;
     GtkWidget *entry2;
     GtkWidget *kspin;
+    GtkWidget *spin1;
+    GtkWidget *spin2;
+    GtkWidget *button;
 };
 
 static int calculate_filter (filter_info *finfo);
+static void weights_shape_graph (GtkWidget *button, filter_info *finfo);
 
 static const char *filter_get_title (int ftype)
 {
@@ -131,6 +138,9 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->entry1 = NULL;
     finfo->entry2 = NULL;
     finfo->kspin = NULL;
+    finfo->spin1 = NULL;
+    finfo->spin2 = NULL;
+    finfo->button = NULL;
 
     if (ftype == FILTER_SMA) {
 	finfo->center = 0;
@@ -147,6 +157,9 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
 	finfo->cutoff = 67;
     } else if (ftype == FILTER_POLY) {
 	finfo->order = 3;
+	finfo->wopt = OPT_NONE;
+	finfo->lambda = 1.0;
+	finfo->midfrac = 0.0;
     } else if (ftype == FILTER_FD) {
 	finfo->lambda = 0.5;
     }
@@ -436,6 +449,72 @@ static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
+static void weight_scheme_changed (GtkComboBox *combo, filter_info *finfo)
+{
+    int i = gtk_combo_box_get_active(combo);
+
+    gtk_widget_set_sensitive(finfo->spin1, (i > 0));
+    gtk_widget_set_sensitive(finfo->spin2, (i > 0));
+    gtk_widget_set_sensitive(finfo->button, (i > 0));
+
+    if (i == 0) {
+	finfo->wopt = OPT_NONE;
+    } else if (i == 1) {
+	finfo->wopt = OPT_Q;
+    } else if (i == 2) {
+	finfo->wopt = OPT_B;
+    } else {
+	finfo->wopt = OPT_C;
+    }	
+}
+
+static void add_poly_weights_options (GtkWidget *vbox, filter_info *finfo)
+{
+    GtkWidget *hbox, *label, *combo;
+    const char *wstrs[] = {
+	N_("uniform"),
+	N_("quadratic"),
+	N_("cosine-bell"),
+	N_("steps")
+    };
+    int i;
+
+    /* first row: weighting scheme */
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("Weights:"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    combo = gtk_combo_box_new_text();
+    for (i=0; i<4; i++) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), wstrs[i]);
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    g_signal_connect(GTK_COMBO_BOX(combo), "changed",
+		     G_CALLBACK(weight_scheme_changed), finfo);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 0);
+    label = gtk_label_new(_("with maximum:"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    finfo->spin1 = gtk_spin_button_new_with_range(1.0, 10.0, 0.1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(finfo->spin1), 2.0);
+    gtk_widget_set_sensitive(finfo->spin1, FALSE);
+    gtk_box_pack_start(GTK_BOX(hbox), finfo->spin1, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    /* second row: size of central section plus show button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    label = gtk_label_new(_("Central fraction:"));
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    finfo->spin2 = gtk_spin_button_new_with_range(0.0, 1.0, 0.1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(finfo->spin2), 0.4);
+    gtk_widget_set_sensitive(finfo->spin2, FALSE);
+    gtk_box_pack_start(GTK_BOX(hbox), finfo->spin2, FALSE, FALSE, 0);
+    finfo->button = gtk_button_new_with_label(_("Show weights"));
+    gtk_widget_set_sensitive(finfo->button, FALSE);
+    g_signal_connect(GTK_BUTTON(finfo->button), "clicked",
+		     G_CALLBACK(weights_shape_graph), finfo);
+    gtk_box_pack_end(GTK_BOX(hbox), finfo->button, FALSE, FALSE, 15);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+}
+
 static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 {
     if (finfo->save_opt & FILTER_SAVE_TREND) {
@@ -460,6 +539,13 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	    finfo->k = 0;
 	}
     }
+
+    if (finfo->spin1 != NULL && finfo->spin2 != NULL) {
+	if (gtk_widget_is_sensitive(finfo->spin1)) {
+	    finfo->lambda = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin1));
+	    finfo->midfrac = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
+	}
+    }    
 
     if (finfo->graph_opt != FILTER_GRAPH_NONE ||
 	finfo->save_opt != FILTER_SAVE_NONE) {
@@ -582,8 +668,9 @@ static void filter_dialog (filter_info *finfo)
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);	
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_POLY) {
+	/* set polynomial order */
 	hbox = gtk_hbox_new(FALSE, 5);
-	w = gtk_label_new(_("order of polynomial:"));
+	w = gtk_label_new(_("Order:"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_spin_button_new_with_range(1.0, 15, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
@@ -591,6 +678,9 @@ static void filter_dialog (filter_info *finfo)
 			 G_CALLBACK(set_int_from_spinner), &finfo->order);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	/* weights settings (optional) */
+	filter_dialog_hsep(dlg);
+	add_poly_weights_options(vbox, finfo);
     } else if (finfo->ftype == FILTER_FD) {
 	/* set "d" */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -638,7 +728,7 @@ static void filter_dialog (filter_info *finfo)
 	if (finfo->ftype == FILTER_HP || finfo->ftype == FILTER_BW) {
 	    filter_graph_check_button(dlg, finfo, _("Graph frequency response"),
 				      FILTER_GRAPH_RESP);
-	}
+	} 
 	/* save to dataset? */
 	filter_dialog_hsep(dlg);
 	filter_save_check_buttons(dlg, finfo);
@@ -660,6 +750,8 @@ static void filter_dialog (filter_info *finfo)
 
     if (finfo->ftype == FILTER_BW) {
 	context_help_button(hbox, BWFILTER);
+    } else if (finfo->ftype == FILTER_POLY) {
+	context_help_button(hbox, POLYWEIGHTS);
     }
 
     set_dataset_locked(TRUE);
@@ -809,6 +901,50 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     return err;
 }
 
+static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
+{
+    gretl_matrix *W;
+    int T = sample_size(datainfo);
+    int err = 0;
+
+    W = gretl_matrix_alloc(T, 2);
+
+    if (W == NULL) {
+	err = E_ALLOC;
+    } else {
+	int t, list[3] = {2, 1, 2};
+
+	err = private_matrix_add(W, "$Weights");
+
+	if (!err) {
+	    err = umatrix_set_colnames_from_string(W, "weight t");
+	}
+
+	if (!err) {
+	    char rstr[48];
+
+	    for (t=0; t<T; t++) {
+		W->val[T+t] = t;
+	    }
+
+	    finfo->lambda = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin1));
+	    finfo->midfrac = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
+	    poly_weights(W->val, T, finfo->lambda, finfo->midfrac, finfo->wopt);
+	    sprintf(rstr, "set xrange [0:%d] ; set yrange [0.8:%g] ;", T - 1, 
+		    1.1 * finfo->lambda);
+	    err = matrix_plot(W, list, rstr, OPT_O);
+	}
+
+	destroy_private_matrices();
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
+    }
+}
+
 static int do_filter_response_graph (filter_info *finfo)
 {
     gretl_matrix *G;
@@ -816,7 +952,7 @@ static int do_filter_response_graph (filter_info *finfo)
     char title[128];
     double omega_star = 0.0;
     int i, nlit, err = 0;
-    
+
     if (finfo->ftype == FILTER_BW) {
 	omega_star = finfo->cutoff * M_PI / 180;
 	G = butterworth_gain(finfo->order, omega_star, 0);
@@ -1022,7 +1158,13 @@ static int calculate_filter (filter_info *finfo)
 	/* Butterworth */
 	err = butterworth_filter(x, fx, datainfo, finfo->order, finfo->cutoff);
     } else if (finfo->ftype == FILTER_POLY) {
-	err = poly_trend(x, fx, datainfo, finfo->order);
+	if (finfo->wopt != OPT_NONE) {
+	    err = weighted_poly_trend(x, fx, datainfo, finfo->order,
+				      finfo->wopt, finfo->lambda,
+				      finfo->midfrac);
+	} else {
+	    err = poly_trend(x, fx, datainfo, finfo->order);
+	}
     } else if (finfo->ftype == FILTER_FD) {
 	/* fractional differencing */
 	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, datainfo);

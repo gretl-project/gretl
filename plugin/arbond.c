@@ -992,8 +992,23 @@ static int dpd_sargan_test (dpdinfo *dpd)
     }
 
 #if ADEBUG
-    fprintf(stderr, "Sargan test: Chi-square(%d-%d) = %g\n",
+    fprintf(stderr, "Sargan (or Hansen) test: Chi-square(%d-%d) = %g\n",
 	    dpd->nz, dpd->k, dpd->sargan);
+    if (1) {
+	/* try to replicate the xtabond2 'Sargan test' */ 
+	double sg;
+
+	gretl_matrix_multiply_mod(dpd->ZT, GRETL_MOD_NONE,
+				  dpd->ZT, GRETL_MOD_TRANSPOSE,
+				  dpd->Acpy, GRETL_MOD_NONE);
+	gretl_matrix_multiply_by_scalar(dpd->Acpy, dpd->s2);
+	err = gretl_invert_symmetric_matrix(dpd->Acpy);
+	if (!err) {
+	    sg = gretl_scalar_qform(Zu, dpd->Acpy, &err);
+	    fprintf(stderr, "Sargan (xtabond2) test: Chi-square(%d-%d) = %g\n",
+		    dpd->nz, dpd->k, sg);
+	}
+    }
 #endif
 
     gretl_matrix_reuse(dpd->L1, 1, dpd->nz);

@@ -7291,6 +7291,38 @@
 
   </command>
 
+  <command name="polyweights" section="Transformations" context="gui"
+    label="Polynomial trend fitting">
+
+    <description>
+      <para>
+	In fitting a polynomial trend to a time series it may be
+	desirable to give extra weight to the observations at the
+	start and end of the sample. (Points in the middle of the
+	sample range have neighbours on both sides that are likely to
+	be pulling the fit in the same general direction.)
+      </para>
+      <para>
+	The weighting schemes offered here (quadratic, cosine-bell and
+	steps) can be used to this effect. If you select one of these
+	schemes two additional settings must be chosen: first, what
+	maximum weight should be used (the minimum, baseline weight is
+	1.0)?  Second, what central fraction of the sample should be
+	given a uniform (minimal) weighting?
+      </para>
+      <para>
+	Suppose, for example, you select a maximum weight of 3.0 and a
+	central fraction of 0.4. This means that the middle 40 percent
+	of the data get a weight of 1.0. If the steps shape is
+	selected the first and last 30 percent of the observations get
+	a weight of 3.0; otherwise, for the first 30 percent of
+	observations the weights decline gradually from 3.0 to 1.0; and
+	for the last 30 percent the weights increase from 1.0 to 3.0.
+      </para>
+    </description>
+
+  </command>
+
   <command name="poisson" section="Estimation" 
     label="Poisson estimation">
 

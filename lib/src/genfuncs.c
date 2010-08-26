@@ -1744,18 +1744,24 @@ int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order)
     return real_poly_trend(x + t1, fx + t1, NULL, T, order);
 } 
 
-/* w: series to receive weights
-   T: length of data
-   opt: weighting function option
-   wmin: the minimum weight
-   wmax: the maximum weight
-   midfrac: the central portion of the data to be treated
-   specially, as a decimal fraction
-*/
+/**
+ * poly_weights:
+ * @w: array into which the weights will be written.
+ * @T: the length of @w.
+ * @wmax: the ratio of maximum to minimum weight.
+ * @midfrac: the size of the central section that should be given
+ * the minimum weight.
+ * @opt: weighting scheme option (OPT_Q = quadratic, OPT_B = cosine bell,
+ * OPT_C = crenelated).
+ *
+ * Calculates a set of weights; intended for use with polynomial
+ * trend fitting.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
 
-static void poly_weights (double *w, int T, gretlopt opt, 
-			  double wmin, double wmax,
-			  double midfrac)
+void poly_weights (double *w, int T, double wmax, 
+		   double midfrac, gretlopt opt)
 {
     double wt, a = 0, b = 0;
     int t, cut, T2 = T / 2;
@@ -1779,11 +1785,11 @@ static void poly_weights (double *w, int T, gretlopt opt,
 	}
 
 	det = 1.0 / (z1 * (z1 * z2 - z2 * z2));
-	a = z2 * (wmin - wmax) * det;
+	a = z2 * (1 - wmax) * det;
 	b = -z2 * a;
     } else if (opt == OPT_B) {
 	/* cosine-bell */
-	b = (wmax - wmin) / 2.0;
+	b = (wmax - 1) / 2.0;
     }
 
     for (t=0; t<=T2; t++) {
@@ -1793,13 +1799,13 @@ static void poly_weights (double *w, int T, gretlopt opt,
 		wt = wt * t + wmax;
 	    } else if (opt == OPT_B) {
 		a = (t * M_PI) / cut;
-		wt = wmin + b * (1 + cos(a));
+		wt = 1 + b * (1 + cos(a));
 	    } else {
 		/* "crenelated" */
 		wt = wmax;
 	    }
         } else {
-	    wt = wmin;
+	    wt = 1;
         }
         w[t] = w[T-1-t] = wt;
     }
@@ -1813,9 +1819,8 @@ static void poly_weights (double *w, int T, gretlopt opt,
  * @order: desired polynomial order.
  * @opt: weighting option (OPT_Q = quadratic, OPT_B = cosine bell,
  * OPT_C = crenelated).
- * @wmin: minimum weight.
- * @wmax: maximum weight.
- * @midfrac: proprtion of the data to be treated specially, in the
+ * @wratio: ratio of maximum to minimum weight.
+ * @midfrac: proportion of the data to be treated specially, in the
  * middle.
  *
  * Calculates a trend via the method of orthogonal polynomials, using
@@ -1826,7 +1831,7 @@ static void poly_weights (double *w, int T, gretlopt opt,
  */
 
 int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
-			 int order, gretlopt opt, double wmax, double wmin, 
+			 int order, gretlopt opt, double wratio, 
 			 double midfrac)
 {
     double *w = NULL;
@@ -1848,7 +1853,7 @@ int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
     if (w == NULL) {
 	err = E_ALLOC;
     } else {
-	poly_weights(w, T, opt, wmin, wmax, midfrac);
+	poly_weights(w, T, wratio, midfrac, opt);
 	err = real_poly_trend(x + t1, fx + t1, w, T, order);
 	free(w);
     }
