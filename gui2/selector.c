@@ -214,6 +214,7 @@ static int verbose;
 static int lovar;
 static int hivar;
 static int wtvar;
+static char lp_pvals;
 
 static int y_x_lags_enabled;
 static int y_w_lags_enabled;
@@ -404,6 +405,8 @@ void clear_selector (void)
     arlags = NULL;
     free(malags);
     malags = NULL;
+
+    lp_pvals = 0;
 
     destroy_lag_preferences();
     call_iters_dialog(NULL, NULL);
@@ -3134,20 +3137,20 @@ static void compose_cmdlist (selector *sr)
 	}
 	if (sr->ci == VAR || sr->ci == VLAGSEL) {
 	    vartrend = (sr->opts & OPT_T)? 1 : 0;
-	}
-	if (sr->ci == ARMA) {
+	} else if (sr->ci == ARMA) {
 	    arma_const = (sr->opts & OPT_N)? 0 : 1;
 	    arma_hessian = (sr->opts & OPT_G)? 0 : 1;
 	    arima_xdiff = (sr->opts & OPT_Y)? 0 : 1;
 	    arma_x12 = (sr->opts & OPT_X)? 1 : 0;
-	}
-	if (sr->ci == GARCH) {
+	} else 	if (sr->ci == GARCH) {
 	    if (sr->opts & OPT_F) {
 		sr->opts &= ~OPT_F;
 		libset_set_bool(USE_FCP, 1);
 	    } else {
 		libset_set_bool(USE_FCP, 0);
 	    }
+	} else if (sr->ci == LOGIT || sr->ci == PROBIT) {
+	    lp_pvals = (sr->opts & OPT_P)? 1 : 0;
 	}
 	verbose = (sr->opts & OPT_V)? 1 : 0;
     }
@@ -4868,6 +4871,12 @@ static void build_pvalues_radios (selector *sr)
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Show p-values"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_P, 0);
+
+    if (lp_pvals) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
+    } else {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
+    }
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
