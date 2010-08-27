@@ -3386,13 +3386,13 @@ static int tsld1 (const double *a1, const double *a2,
     double *c1 = NULL;
     double *c2 = NULL;  
 
+    if (fabs(a1[0]) < TOEPLITZ_SMALL) {
+	return E_SINGULAR;
+    } 
+
     /* solve the system with principal minor of order 1 */
 
     r1 = a1[0];
-
-    if (fabs(r1) < TOEPLITZ_SMALL) {
-	return E_SINGULAR;
-    } 
 
     x[0] = b[0] / r1;
     if (m == 1) {

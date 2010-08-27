@@ -95,19 +95,23 @@ static void mpf_constants_clear (void)
     mpf_clear(MPF_TINY);
 }
 
-static void free_mpZ (mpf_t **mpZ, int v, int n)
+static void mp_2d_array_free (mpf_t **X, int v, int n)
 {
     int i, t;
 
+    if (X == NULL) {
+	return;
+    }
+
     for (i=0; i<v; i++) {
-	if (mpZ[i] != NULL) {
+	if (X[i] != NULL) {
 	    for (t=0; t<n; t++) {
-		mpf_clear(mpZ[i][t]);
+		mpf_clear(X[i][t]);
 	    }
-	    free(mpZ[i]);
+	    free(X[i]);
 	}
     }
-    free(mpZ);
+    free(X);
 }
 
 /* somewhat arbitrary */
@@ -311,7 +315,7 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
     }
 
     if (err) {
-	free_mpZ(mpZ, nvars, n);
+	mp_2d_array_free(mpZ, nvars, n);
 	mpZ = NULL;
     }
 
@@ -349,7 +353,7 @@ static mpf_t **mpZ_from_matrices (const gretl_matrix *y,
     }
 
     if (*err) {
-	free_mpZ(mpZ, k, T);
+	mp_2d_array_free(mpZ, k, T);
 	mpZ = NULL;
     } else {
 	for (t=0; t<T; t++) {
@@ -1643,7 +1647,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
         gretl_errmsg_sprintf(_("No. of obs (%d) is less than no. "
 			       "of parameters (%d)"), mpmod.nobs, 
 			     mpmod.ncoeff);
-	free_mpZ(mpZ, l0, mpmod.nobs);
+	mp_2d_array_free(mpZ, l0, mpmod.nobs);
 	mpf_constants_clear();
 	err = E_DF;
 	goto bailout;
@@ -1667,7 +1671,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     } 
 
     /* free all the mpf stuff */
-    free_mpZ(mpZ, l0, mpmod.nobs);
+    mp_2d_array_free(mpZ, l0, mpmod.nobs);
     mpf_constants_clear();
 
  bailout:
@@ -1741,7 +1745,7 @@ int matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
     } 
 
     /* free all the mpf stuff */
-    free_mpZ(mpZ, l0, mpmod.nobs);
+    mp_2d_array_free(mpZ, l0, mpmod.nobs);
     mpf_constants_clear();
 
  bailout:
@@ -1750,3 +1754,137 @@ int matrix_mp_ols (const gretl_vector *y, const gretl_matrix *X,
 
     return err;
 }
+
+static mpf_t *doubles_array_to_mp (const double *dy, int n)
+{
+    mpf_t *y = NULL;
+    int i;
+
+    y = malloc(n * sizeof *y);
+    if (y == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	mpf_init_set_d(y[i], dy[i]);
+    }
+
+    return y;
+}
+
+static void mp_array_free (mpf_t *y, int n)
+{
+    if (y != NULL) {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    mpf_clear(y[i]);
+	}
+	free(y);
+    }
+}
+
+static mpf_t **mp_2d_array_new (int n, int T)
+{
+    mpf_t **x = NULL;
+    int i, t;    
+
+    x = malloc(n * sizeof *x);
+    if (x == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	x[i] = NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	x[i] = malloc(T * sizeof **x);
+	if (x[i] == NULL) {
+	    mp_2d_array_free(x, n, T);
+	    return NULL;
+	} else {
+	    for (t=0; t<T; t++) {
+		mpf_init(x[i][t]);
+	    }
+	}	
+    }    
+
+    return x;
+}
+
+#define Min(x,y) (((x) > (y))? (y) : (x))
+
+int mp_symm_toeplitz (double *g, double *dy, int T, int q)
+{
+    mpf_t *y = NULL, **mu = NULL;
+    mpf_t tmp;
+    int t, j, k, jmax;
+    int err = 0;
+
+    set_gretl_mp_bits();
+    mpf_init(tmp);
+
+    y = doubles_array_to_mp(dy, T);
+    if (y == NULL) {
+	return E_ALLOC;
+    }
+
+    mu = mp_2d_array_new(q+1, T);
+    if (mu == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* factorize */
+    for (t=0; t<T; t++) { 
+	for (k=Min(q, t); k>=0; k--) {
+	    mpf_set_d(mu[k][t], g[k]);
+	    jmax = q - k;
+	    for (j=1; j<=jmax && t-k-j >= 0; j++) {
+		mpf_mul(tmp, mu[j][t-k], mu[j+k][t]);
+		mpf_mul(tmp, tmp, mu[0][t-k-j]);
+		mpf_sub(mu[k][t], mu[k][t], tmp);
+	    }
+	    if (k > 0) {
+		mpf_div(mu[k][t], mu[k][t], mu[0][t-k]);
+	    }
+	}
+    }
+
+    /* forward solve */
+    for (t=0; t<T; t++) {
+	jmax = Min(t, q);
+	for (j=1; j<=jmax; j++) {
+	    mpf_mul(tmp, mu[j][t], y[t-j]);
+	    mpf_sub(y[t], y[t], tmp);
+	}
+    }
+
+    /* divide by the diagonal */
+    for (t=0; t<T; t++) {
+	mpf_div(y[t], y[t], mu[0][t]);
+    }
+
+    /* backsolve */
+    for (t=T-1; t>=0; t--) {
+	jmax = Min(q, T - 1 - t);
+	for (j=1; j<=jmax; j++) {
+	    mpf_mul(tmp, mu[j][t+j], y[t+j]);
+	    mpf_sub(y[t], y[t], tmp);
+	}
+    }
+
+    for (t=0; t<T; t++) {
+	dy[t] = mpf_get_d(y[t]);
+    }
+
+ bailout:
+
+    mpf_clear(tmp);
+    mp_array_free(y, T);
+    mp_2d_array_free(mu, q+1, T);
+
+    return err;
+}
+

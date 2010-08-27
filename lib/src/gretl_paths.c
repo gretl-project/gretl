@@ -1867,6 +1867,7 @@ void win32_set_gretldir (const char *progname)
     /* we'll try the registry first */
     err = read_reg_val(HKEY_LOCAL_MACHINE, "gretl", "gretldir", paths.gretldir);
     if (!err) {
+	slash_terminate(paths.gretldir);
 	return;
     }
 

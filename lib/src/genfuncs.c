@@ -1350,6 +1350,33 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
     return G;
 } 
 
+#ifdef ENABLE_GMP
+
+/* call the multiple-precision version of the function
+   symm_toeplitz
+*/
+
+static int symm_toeplitz (double *g, double *y, int T, int q)
+{
+    void *handle;
+    int (*mpfun) (double *, double *d, int, int);
+    int err = 0;
+
+    mpfun = get_plugin_function("mp_symm_toeplitz", &handle);
+
+    if (mpfun == NULL) {
+	fputs(I_("Couldn't load plugin function\n"), stderr);
+	return E_FOPEN;
+    }
+
+    err = (*mpfun) (g, y, T, q);
+    close_plugin(handle);
+
+    return err;
+}
+
+#else
+
 /* This function uses a Cholesky decomposition to find the solution of
    the equation Gx = y, where G is a symmetric Toeplitz matrix of order
    T with q supra-diagonal and q sub-diagonal bands. The coefficients of
@@ -1413,6 +1440,8 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
 
     return 0;
 }
+
+#endif /* GMP or not */
 
 #undef Min
 #undef NEAR_ZERO
