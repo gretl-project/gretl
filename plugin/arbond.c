@@ -279,7 +279,6 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->flags = dpd_flags_from_opt(opt);
 
     dpd->d = d;
-    dpd->d2 = NULL;
     dpd->nzb = nzb;
     dpd->step = 1;
     dpd->nx = dpd->nzr = 0;
