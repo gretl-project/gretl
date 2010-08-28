@@ -197,7 +197,7 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 	$(AMP)$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<
 
 mklang.o: mklang.c $(LANGDEPS)
-	$(AMP)$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
+	$(AMP)$(CC) $(CFLAGS) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
 mklang: mklang.o 
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
