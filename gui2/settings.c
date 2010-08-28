@@ -62,18 +62,12 @@ static int read_gretlrc (void);
 #ifdef G_OS_WIN32
 static char fixedfontname[MAXLEN] = "Courier New 10";
 #else
-# ifdef OSX_BUILD
-static char fixedfontname[MAXLEN] = "Monospace 12";
-# else
 static char fixedfontname[MAXLEN] = "Monospace 10";
-# endif
 #endif
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "tahoma 8";
-#elif defined(OSX_BUILD)
-static char appfontname[MAXLEN] = "Sans 12";
-# else
+#else
 static char appfontname[MAXLEN] = "Sans 10";
 #endif
 
