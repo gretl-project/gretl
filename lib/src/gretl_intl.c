@@ -409,6 +409,7 @@ struct localeinfo {
 static struct localeinfo locales[] = {
     { LANG_AUTO,  NULL },
     { LANG_C,     "english" },
+    { LANG_SQ,    "albanian" },
     { LANG_EU,    "basque" },
     { LANG_DE,    "german" },
     { LANG_ES,    "spanish" },
@@ -448,6 +449,7 @@ struct langinfo {
 static struct langinfo langs[] = {
     { LANG_AUTO,  "Automatic",            NULL    },
     { LANG_C,     "English",              "C"     },
+    { LANG_SQ,    "Albanian",             "sq_AL" },
     { LANG_EU,    "Basque",               "eu_ES" },
     { LANG_ZH_TW, "Chinese (Taiwan)",     "zh_TW" },
     { LANG_CS,    "Czech",                "cs_CZ" },

@@ -39,6 +39,7 @@ char *iso_to_ascii (char *s);
 typedef enum {
     LANG_AUTO = 0,
     LANG_C,
+    LANG_SQ,
     LANG_EU,
     LANG_ZH_TW,
     LANG_CS,
