@@ -167,6 +167,12 @@ static void	gtk_source_view_get_property		(GObject           *object,
 static void     gtk_source_view_style_set               (GtkWidget         *widget,
 							 GtkStyle          *previous_style);
 
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 18)
+static GtkStateType        gtk_widget_get_state (GtkWidget *widget)
+{
+	return GTK_WIDGET_STATE(widget);
+}
+#endif
 
 /* Private functions. */
 static void
