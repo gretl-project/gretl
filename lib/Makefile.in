@@ -4,6 +4,7 @@ datarootdir = @datarootdir@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 bindir = @bindir@
+libdir = @libdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
@@ -57,7 +58,6 @@ else
 endif
 
 # Installation directories
-libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 pkgconfigdir = $(libdir)/pkgconfig
 
