@@ -7,6 +7,7 @@ bindir = @bindir@
 libdir = @libdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
+LDFLAGS = @LDLAGS@
 OMP_OPT = @OPENMP_CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
@@ -189,7 +190,7 @@ all: $(PROG) $(GRETL_LANG)
 
 $(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE) 
 	$(LDECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LDFLAGS) $(OBJS) \
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
@@ -199,7 +200,7 @@ mklang.o: mklang.c $(LANGDEPS)
 	$(AMP)$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
 mklang: mklang.o 
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
 $(GRETL_LANG): $(MKLANG)
 	./mklang $(LANGOPT) > $@

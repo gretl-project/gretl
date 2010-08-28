@@ -3,6 +3,7 @@ prefix = @prefix@
 
 CC = @CC@
 CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 AR = @AR@
 XML_CFLAGS = @XML_CFLAGS@

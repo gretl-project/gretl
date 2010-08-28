@@ -3,6 +3,7 @@ datarootdir = @datarootdir@
 
 CC = @CC@
 CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 
@@ -66,7 +67,7 @@ LIBTOOL = ../libtool
 
 $(CLI): .deps $(OBJS)
 	$(LDECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LDFLAGS) $(OBJS) \
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(GRETLLIB) $(READLINE_LIBS)
 
 .deps:

@@ -7,6 +7,7 @@ libdir = @libdir@
 
 CC = @CC@
 CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
@@ -54,10 +55,10 @@ ifeq ($(quiet_build),yes)
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
   CCV = $(CC) > /dev/null
-  LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) -module -avoid-version -rpath $(plugindir)
+  LINK = $(LDECHO); $(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
 else
   CCV = $(CC)
-  LINK = $(LIBTOOL) --mode=link $(CC) -module -avoid-version -rpath $(plugindir)
+  LINK = $(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -module -avoid-version -rpath $(plugindir)
 endif
 
 GRETLINC = -I$(topsrc)/lib/src

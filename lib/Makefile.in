@@ -6,6 +6,7 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 CC = @CC@
 CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
@@ -250,7 +251,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 	$(LDECHO)
-	$(AMP)$(LIBTOOL) --mode=link $(CCV) -o $@ $(LOBJS) $(AUX_LOBJ) \
+	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(LOBJS) $(AUX_LOBJ) \
 	-rpath $(RPATH) $(LIBS) -version-info $(CURRENT):$(REVISION):$(AGE)
 
 .deps:
