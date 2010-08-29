@@ -82,6 +82,7 @@ struct filter_info_ {
 
 static int calculate_filter (filter_info *finfo);
 static void weights_shape_graph (GtkWidget *button, filter_info *finfo);
+static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo);
 
 static const char *filter_get_title (int ftype)
 {
@@ -667,6 +668,12 @@ static void filter_dialog (filter_info *finfo)
 			 G_CALLBACK(set_int_from_spinner), &finfo->cutoff);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);	
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_button_new_with_label(_("show poles"));
+	g_signal_connect(G_OBJECT(w), "clicked",
+			 G_CALLBACK(butterworth_poles_graph), finfo);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_POLY) {
 	/* set polynomial order */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -901,6 +908,63 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     return err;
 }
 
+static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
+{
+    FILE *fp;
+    double cut, theta, delta; 
+    double x, y, px, py;
+    int i, n = finfo->order;
+    int err = 0;
+
+    fp = get_plot_input_stream(PLOT_VAR_ROOTS, &err);
+    if (err) { 
+	gui_errmsg(err);
+	return;
+    }
+
+    cut = finfo->cutoff * M_PI / 180;
+    cut = tan(cut / 2);
+
+    fprintf(fp, "set title \"Butterworth poles (n = %d, cutoff = %d degrees)\"\n", 
+	    finfo->order, finfo->cutoff);
+
+    fputs("# literal lines = 8\n", fp);
+    fputs("unset border\n", fp);
+    fputs("unset key\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    fputs("set yzeroaxis\n", fp);
+    fputs("unset xtics\n", fp);
+    fputs("unset ytics\n", fp);
+    fputs("set size square\n", fp);
+    fputs("set polar\n", fp);
+    fputs("plot 1.0 w lines, \\\n"
+	  "'-' w points pt 7\n", fp);
+
+    gretl_push_c_numeric_locale();
+    
+    for (i=1; i<=n; i++) {
+	theta = M_PI * (2 * i - 1) / (2 * n);
+	delta = 1 + cut * (2 * sin(theta) + cut);
+	x = (1 - cut * cut) / delta;
+	y = 2 * cut * cos(theta) / delta;
+	px = atan2(y, x);
+	py = sqrt(x * x + y * y);
+	fprintf(fp, "%g %g # %g,%g\n", px, py, x, y);
+    }
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    err = gnuplot_make_graph();
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
+    }
+}
+
 static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
 {
     gretl_matrix *W;
@@ -930,8 +994,10 @@ static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
 	    finfo->lambda = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin1));
 	    finfo->midfrac = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
 	    poly_weights(W->val, T, finfo->lambda, finfo->midfrac, finfo->wopt);
+	    gretl_push_c_numeric_locale();
 	    sprintf(rstr, "set xrange [0:%d] ; set yrange [0.8:%g] ;", T - 1, 
 		    1.1 * finfo->lambda);
+	    gretl_pop_c_numeric_locale();
 	    err = matrix_plot(W, list, rstr, OPT_O);
 	}
 
