@@ -1350,32 +1350,87 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
     return G;
 } 
 
-#ifdef ENABLE_GMP
+#if 0
 
-/* call the multiple-precision version of the function
-   symm_toeplitz
+/* form the complete Toeplitz matrix represented in compressed 
+   form by the coefficients in g
 */
 
-static int symm_toeplitz (double *g, double *y, int T, int q)
+static gretl_matrix *toeplize (const double *g, int T, int k)
 {
-    void *handle;
-    int (*mpfun) (double *, double *d, int, int);
-    int err = 0;
+    gretl_matrix *tmp, *X = NULL;
+    double x;
+    int i;
 
-    mpfun = get_plugin_function("mp_symm_toeplitz", &handle);
-
-    if (mpfun == NULL) {
-	fputs(I_("Couldn't load plugin function\n"), stderr);
-	return E_FOPEN;
+    tmp = gretl_zero_matrix_new(T + 1, 1);
+    if (tmp == NULL) {
+	return NULL;
     }
 
-    err = (*mpfun) (g, y, T, q);
-    close_plugin(handle);
+    for (i=0; i<k; i++) {
+        tmp->val[i] = g[i];
+    }
+
+    X = gretl_matrix_shape(tmp, T, T);
+    if (X == NULL) {
+	gretl_matrix_free(tmp);
+	return NULL;
+    }
+
+    gretl_matrix_zero_upper(X);
+    gretl_matrix_add_self_transpose(X);
+
+    for (i=0; i<T; i++) {
+        x = gretl_matrix_get(X, i, i) - g[0];
+        gretl_matrix_set(X, i, i, x);
+    }
+
+    gretl_matrix_free(tmp);
+
+    return X;
+}
+
+#include "matrix_extra.h"
+
+static int svd_toeplitz_solve (const double *g, double *dy, int T, int q)
+{
+    gretl_matrix *y, *X;
+    int err = 0;
+
+    X = toeplize(g, T, q + 1);
+    if (X == NULL) {
+	return E_ALLOC;
+    }
+
+    err = gretl_matrix_moore_penrose(X);
+
+    if (!err) {
+	y = gretl_vector_from_array(dy, T, GRETL_MOD_NONE);
+	if (y == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    gretl_matrix s;
+	    int i;
+
+	    s.t1 = s.t2 = 0;
+	    s.rows = T;
+	    s.cols = 1;
+	    s.val = dy;
+
+	    err = gretl_matrix_multiply(X, y, &s);
+	    gretl_matrix_free(y);
+	    for (i=0; i<T; i++) {
+		fprintf(stderr, "solution[%d] = %g\n", i, dy[i]);
+	    }
+	}
+    }
+
+    gretl_matrix_free(X);
 
     return err;
 }
 
-#else
+#endif
 
 /* This function uses a Cholesky decomposition to find the solution of
    the equation Gx = y, where G is a symmetric Toeplitz matrix of order
@@ -1441,7 +1496,43 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
     return 0;
 }
 
-#endif /* GMP or not */
+/* Premultiply vector y by a symmetric banded Toeplitz matrix 
+   Gamma with n nonzero sub-diagonal bands and n nonzero 
+   supra-diagonal bands. The elements of Gamma are contained
+   in g; tmp is used as workspace.
+*/
+
+static int GammaY (double *g, double *y, double *tmp, 
+		   int T, int n)
+{
+    double lx, rx;
+    int t, j;
+
+    for (j=0; j<=n; j++) {
+	tmp[j] = 0.0;
+    }
+
+    for (t=0; t<T; t++) {
+	for (j=n; j>0; j--) {
+	    tmp[j] = tmp[j-1];
+	}
+	tmp[0] = g[0] * y[t];
+	for (j=1; j<=n; j++) {
+	    lx = (t - j < 0)? 0 : y[t-j];
+	    rx = (t + j >= T)? 0 : y[t+j];
+	    tmp[0] += g[j] * (lx + rx);
+	}
+	if (t >= n) {
+	    y[t-n] = tmp[n];
+	}
+    }
+
+    for (j=0; j<n; j++) {
+	y[T-j-1] = tmp[j];
+    }
+
+    return 0;
+}
 
 #undef Min
 #undef NEAR_ZERO
@@ -1532,42 +1623,6 @@ static void QprimeY (double *y, int T)
     }
 }
 
-/* Premultiply vector y by a symmetric banded Toeplitz matrix 
-   Gamma with n nonzero sub-diagonal bands and n nonzero 
-   supra-diagonal bands. The elements of Gamma are contained
-   in g; tmp is used as workspace.
-*/
-
-static void GammaY (double *g, double *y, double *tmp, 
-		    int T, int n)
-{
-    double lx, rx;
-    int t, j;
-
-    for (j=0; j<=n; j++) {
-	tmp[j] = 0.0;
-    }
-
-    for (t=0; t<T; t++) {
-	for (j=n; j>0; j--) {
-	    tmp[j] = tmp[j-1];
-	}
-	tmp[0] = g[0] * y[t];
-	for (j=1; j<=n; j++) {
-	    lx = (t - j < 0)? 0 : y[t-j];
-	    rx = (t + j >= T)? 0 : y[t+j];
-	    tmp[0] += g[j] * (lx + rx);
-	}
-	if (t >= n) {
-	    y[t-n] = tmp[n];
-	}
-    }
-
-    for (j=0; j<n; j++) {
-	y[T-j-1] = tmp[j];
-    }
-}
-
 /* Multiply the vector y by matrix Q of order T x T-2, 
    where Q' is the matrix which finds the second 
    differences of a vector.  
@@ -1588,6 +1643,30 @@ static void form_Qy (double *y, int T)
     y[T-2] = lag2 - 2 * lag1;
     y[T-1] = lag1;
 }
+
+#ifdef ENABLE_GMP
+
+static int mp_butterworth (const double *x, double *bw, int T,
+			   int order, double cutoff)
+{
+    void *handle;
+    int (*mpfun) (const double *, double *, int, int, double);
+    int err = 0;
+
+    mpfun = get_plugin_function("mp_bw_filter", &handle);
+
+    if (mpfun == NULL) {
+	fputs(I_("Couldn't load plugin function\n"), stderr);
+	return E_FOPEN;
+    }
+
+    err = (*mpfun) (x, bw, T, order, cutoff);
+    close_plugin(handle);
+
+    return err;
+}
+
+#endif
 
 /**
  * butterworth_filter:
@@ -1627,11 +1706,15 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	return E_INVARG;
     }
 
-    /* the cutoff is expressed in radians internally */
-    cutoff *= M_PI / 180.0;
-
     T = t2 - t1 + 1;
     m = 3 * (n+1);
+
+#ifdef ENABLE_GMP
+    /* experimental! */
+    if (cutoff < 40) {
+	return mp_butterworth(x + t1, bw + t1, T, order, cutoff);
+    }
+#endif
 
     /* the workspace we need for everything except the
        Toeplitz solver */
@@ -1643,7 +1726,11 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     ds = g + n + 1;
     tmp = ds + n + 1;
 
+    /* the cutoff is expressed in radians internally */
+    cutoff *= M_PI / 180.0;
+
     lam1 = 1 / tan(cutoff / 2);
+    fprintf(stderr, "before powering, lam1 = %g\n", lam1);
     lam1 = safe_pow(lam1, n * 2);
 
     /* there's really only one "lambda": one out of
@@ -1655,6 +1742,9 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	lam1 = 1.0;
     }
 
+    fprintf(stderr, "cutoff=%g, lam1=%g, lam2=%g\n",
+	    cutoff, lam1, lam2);
+
     /* sample offset */
     y = bw + t1;
 
@@ -1664,8 +1754,12 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     form_wvec(g, ds, tmp, n, lam1, lam2); /* W = M + lambda * Q'SQ */
     QprimeY(y, T);
 
+#if 0
+    err = svd_toeplitz_solve(g, y, T-2, n);
+#else
     /* solve (M + lambda*Q'SQ)x = d for x */
     err = symm_toeplitz(g, y, T-2, n);
+#endif
 
     if (!err) {
 	form_Qy(y, T);

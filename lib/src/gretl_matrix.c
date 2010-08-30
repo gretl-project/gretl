@@ -9050,10 +9050,13 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 	/* invert singular values and multiply into U' */
 	for (i=0; i<nsv; i++) {
 	    if (S->val[i] > SVD_SMIN) {
+		fprintf(stderr, "OK moore-penrose: S(%d) = %g\n", i, S->val[i]);
 		for (j=0; j<m; j++) {
 		    x = gretl_matrix_get(U, j, i);
 		    gretl_matrix_set(SUt, i, j, x / S->val[i]);
 		}
+	    } else {
+		fprintf(stderr, "X moore-penrose: S(%d) = %g\n", i, S->val[i]);
 	    }
 	}
 

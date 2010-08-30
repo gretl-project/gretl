@@ -32,6 +32,7 @@
 #define MP_DEBUG 0
 
 static mpf_t MPF_ONE;
+static mpf_t MPF_TWO;
 static mpf_t MPF_ZERO;
 static mpf_t MPF_MINUS_ONE;
 static mpf_t MPF_TINY;
@@ -82,6 +83,7 @@ static void set_gretl_mpfr_bits (void);
 static void mpf_constants_init (void)
 {
     mpf_init_set_d(MPF_ONE, 1.0);
+    mpf_init_set_d(MPF_TWO, 2.0);
     mpf_init_set_d(MPF_ZERO, 0.0);
     mpf_init_set_d(MPF_MINUS_ONE, -1.0);
     mpf_init_set_d(MPF_TINY, 1.0e-25);
@@ -90,6 +92,7 @@ static void mpf_constants_init (void)
 static void mpf_constants_clear (void)
 {
     mpf_clear(MPF_ONE);
+    mpf_clear(MPF_TWO);
     mpf_clear(MPF_ZERO);
     mpf_clear(MPF_MINUS_ONE);
     mpf_clear(MPF_TINY);
@@ -1772,6 +1775,23 @@ static mpf_t *doubles_array_to_mp (const double *dy, int n)
     return y;
 }
 
+static mpf_t *mp_array_new (int n)
+{
+    mpf_t *y = NULL;
+    int i;
+
+    y = malloc(n * sizeof *y);
+    if (y == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	mpf_init(y[i]);
+    }
+
+    return y;
+}
+
 static void mp_array_free (mpf_t *y, int n)
 {
     if (y != NULL) {
@@ -1815,20 +1835,14 @@ static mpf_t **mp_2d_array_new (int n, int T)
 
 #define Min(x,y) (((x) > (y))? (y) : (x))
 
-int mp_symm_toeplitz (double *g, double *dy, int T, int q)
+static int mp_symm_toeplitz (mpf_t *g, mpf_t *y, int T, int q)
 {
-    mpf_t *y = NULL, **mu = NULL;
+    mpf_t **mu = NULL;
     mpf_t tmp;
     int t, j, k, jmax;
     int err = 0;
 
-    set_gretl_mp_bits();
     mpf_init(tmp);
-
-    y = doubles_array_to_mp(dy, T);
-    if (y == NULL) {
-	return E_ALLOC;
-    }
 
     mu = mp_2d_array_new(q+1, T);
     if (mu == NULL) {
@@ -1839,7 +1853,7 @@ int mp_symm_toeplitz (double *g, double *dy, int T, int q)
     /* factorize */
     for (t=0; t<T; t++) { 
 	for (k=Min(q, t); k>=0; k--) {
-	    mpf_set_d(mu[k][t], g[k]);
+	    mpf_set(mu[k][t], g[k]);
 	    jmax = q - k;
 	    for (j=1; j<=jmax && t-k-j >= 0; j++) {
 		mpf_mul(tmp, mu[j][t-k], mu[j+k][t]);
@@ -1875,16 +1889,250 @@ int mp_symm_toeplitz (double *g, double *dy, int T, int q)
 	}
     }
 
-    for (t=0; t<T; t++) {
-	dy[t] = mpf_get_d(y[t]);
-    }
-
  bailout:
 
     mpf_clear(tmp);
-    mp_array_free(y, T);
     mp_2d_array_free(mu, q+1, T);
 
     return err;
 }
 
+static int mp_gamma_y (mpf_t *g, mpf_t *y, mpf_t *tmp, int T, int n)
+{
+    mpf_t lx, rx, lrsum, addbit;
+    int t, j;
+    int err = 0;
+
+    mpf_init(lx);
+    mpf_init(rx);
+    mpf_init(lrsum);
+    mpf_init(addbit);
+
+    for (t=0; t<T; t++) {
+	for (j=n; j>0; j--) {
+	    mpf_set(tmp[j], tmp[j-1]);
+	}
+	mpf_mul(tmp[0], g[0], y[t]);
+	for (j=1; j<=n; j++) {
+	    mpf_set(lx, (t - j < 0)? MPF_ZERO : y[t-j]);
+	    mpf_set(rx, (t + j >= T)? MPF_ZERO : y[t+j]);
+	    mpf_add(lrsum, lx, rx);
+	    mpf_mul(addbit, g[j], lrsum);
+	    mpf_add(tmp[0], tmp[0], addbit);
+	}
+	if (t >= n) {
+	    mpf_set(y[t-n], tmp[n]);
+	}
+    }
+
+    for (j=0; j<n; j++) {
+	mpf_set(y[T-j-1], tmp[j]);
+    }
+
+    mpf_clear(lx);
+    mpf_clear(rx);
+    mpf_clear(lrsum);
+    mpf_clear(addbit);
+
+    return err;
+}
+
+static void mp_form_gamma (mpf_t *g, mpf_t *mu, int q)
+{
+    mpf_t tmp;
+    int j, k;
+
+    mpf_init(tmp);
+
+    for (j=0; j<=q; j++) { 
+	mpf_set(g[j], MPF_ZERO);
+	for (k=0; k<=q-j; k++) {
+	    mpf_mul(tmp, mu[k], mu[k+j]);
+	    mpf_add(g[j], g[j], tmp);
+	}
+    }
+
+    mpf_clear(tmp);
+}
+
+static void mp_sum_or_diff (mpf_t *theta, int n, int sign)
+{
+    int j, q;
+
+    mpf_set(theta[0], MPF_ONE);
+
+    for (q=1; q<=n; q++) { 
+	mpf_set(theta[q], MPF_ZERO);
+	for (j=q; j>0; j--) {
+	    if (sign > 0) {
+		mpf_add(theta[j], theta[j], theta[j-1]);
+	    } else {
+		mpf_sub(theta[j], theta[j], theta[j-1]);
+	    }
+	}
+    } 
+} 
+
+static void mp_form_mvec (mpf_t *g, mpf_t *mu, int n)
+{
+    mp_sum_or_diff(mu, n, 1);
+    mp_form_gamma(g, mu, n);
+}
+
+static void mp_form_svec (mpf_t *g, mpf_t *mu, int n)
+{
+    mp_sum_or_diff(mu, n, -1);
+    mp_form_gamma(g, mu, n);
+}
+
+/* g is the target, mu and tmp are used as workspace */
+
+static void mp_form_wvec (mpf_t *g, mpf_t *mu, mpf_t *tmp,
+			  int n, mpf_t *lam1, mpf_t *lam2)
+{
+    mpf_t x;
+    int i;
+
+    mpf_init(x);
+
+    /* svec = Q'SQ where Q is the 2nd-diff operator */
+
+    mp_form_svec(tmp, mu, n);
+    for (i=0; i<=n; i++) {
+	mpf_mul(g[i], *lam1, tmp[i]);
+    }
+
+    mp_form_mvec(tmp, mu, n);
+    for (i=0; i<=n; i++) {
+	mpf_mul(x, *lam2, tmp[i]);
+	mpf_add(g[i], g[i], x);
+    }
+
+    mpf_clear(x);
+}
+
+static void mp_qprime_y (mpf_t *y, int T)
+{
+    mpf_t x;
+    int t;
+
+    mpf_init(x);
+
+    for (t=0; t<T-2; t++) {
+	mpf_add(y[t], y[t], y[t+2]);
+	mpf_mul(x, MPF_TWO, y[t+1]);
+	mpf_sub(y[t], y[t], x);
+    }
+
+    mpf_clear(x);
+}
+
+static void mp_form_Qy (mpf_t *y, int T)
+{
+    mpf_t tmp, lag1, lag2, x;
+    int t;
+
+    mpf_init(tmp);
+    mpf_init(lag1);
+    mpf_init(lag2);
+    mpf_init(x);
+
+    for (t=0; t<T-2; t++) {
+	mpf_set(tmp, y[t]);
+	mpf_mul(x, MPF_TWO, lag1);
+	mpf_sub(x, lag2, x);
+	mpf_add(y[t], y[t], x); /* y[t] += lag2 - 2*lag1 */
+	mpf_set(lag2, lag1);
+	mpf_set(lag1, tmp);
+    }
+
+    mpf_mul(x, MPF_TWO, lag1);
+    mpf_sub(y[T-2], lag2, x);
+    mpf_set(y[T-1], lag1);
+
+    mpf_clear(tmp);
+    mpf_clear(lag1);
+    mpf_clear(lag2);
+    mpf_clear(x);
+}
+
+int mp_bw_filter (const double *x, double *bw, int T, int order, 
+		  double cutoff)
+{
+    mpf_t *g, *ds, *tmp, *y;
+    mpf_t lam1, lam2;
+    double dlam;
+    int t, m, n = order;
+    int err = 0;
+
+    set_gretl_mp_bits();
+    mpf_constants_init();
+    mpf_init(lam1);
+    mpf_init(lam2);
+
+    m = 3 * (n+1);
+
+    /* the workspace we need for everything except the
+       Toeplitz solver */
+    g = mp_array_new(m);
+    if (g == NULL) {
+	return E_ALLOC;
+    }
+
+    ds = g + n + 1;
+    tmp = ds + n + 1;
+
+    /* the cutoff is expressed in radians internally */
+    cutoff *= M_PI / 180.0;
+
+    dlam = 1 / tan(cutoff / 2);
+    fprintf(stderr, "dlam = %g\n", dlam);
+    mpf_set_d(lam1, dlam);
+    mpf_pow_ui(lam1, lam1, n * 2);
+    mpf_set(lam2, MPF_ONE);
+
+    /* there's really only one "lambda": one out of
+       lam1, lam2 = 1 and has no effect on the
+       calculation */
+
+    if (mpf_cmp(lam1, MPF_ONE) > 0) {
+	mpf_div(lam2, MPF_ONE, lam1);
+	mpf_set(lam1, MPF_ONE);
+    }
+
+    /* copy the data into y */
+    y = doubles_array_to_mp(x, T);
+    if (y == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    mp_form_wvec(g, ds, tmp, n, &lam1, &lam2); /* W = M + lambda * Q'SQ */
+    mp_qprime_y(y, T);
+
+    /* solve (M + lambda*Q'SQ)x = d for x */
+    err = mp_symm_toeplitz(g, y, T-2, n);
+
+    if (!err) {
+	mp_form_Qy(y, T);
+	mp_form_svec(g, ds, n-2);
+	mp_gamma_y(g, y, tmp, T, n-2);   /* Form SQg */
+	/* write the trend into y (low-pass) */
+	for (t=0; t<T; t++) {
+	    mpf_mul(lam2, lam1, y[t]);
+	    bw[t] = x[t] - mpf_get_d(lam2);
+	}	
+    }  
+
+ bailout: 
+
+    mpf_clear(lam1);
+    mpf_clear(lam2);
+    
+    mpf_constants_clear();
+
+    mp_array_free(g, m);
+    mp_array_free(y, T);
+
+    return err;
+}

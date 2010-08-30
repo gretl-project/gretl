@@ -175,7 +175,7 @@ struct plugin_function plugin_functions[] = {
 #ifdef HAVE_MPFR
     { "mp_vector_ln",             P_MP_OLS },
 #endif
-    { "mp_symm_toeplitz",         P_MP_OLS },
+    { "mp_bw_filter",             P_MP_OLS },
 
     /* principal components analysis */
     { "pca_from_cmatrix", P_PCA },
