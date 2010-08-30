@@ -916,7 +916,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
     int i, n = finfo->order;
     int err = 0;
 
-    fp = get_plot_input_stream(PLOT_VAR_ROOTS, &err);
+    fp = get_plot_input_stream(PLOT_ROOTS, &err);
     if (err) { 
 	gui_errmsg(err);
 	return;

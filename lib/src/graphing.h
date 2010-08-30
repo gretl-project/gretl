@@ -86,7 +86,7 @@ typedef enum {
     PLOT_LEVERAGE,
     PLOT_IRFBOOT,
     PLOT_KERNEL,
-    PLOT_VAR_ROOTS,
+    PLOT_ROOTS,
     PLOT_ELLIPSE,
     PLOT_MULTI_IRF,
     PLOT_PANEL,

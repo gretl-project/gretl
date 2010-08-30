@@ -104,7 +104,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_H_TEST,         "sampling distribution" },
     { PLOT_PROB_DIST,      "probability distribution" },
     { PLOT_TRI_GRAPH,      "TRAMO / X12A tri-graph" },
-    { PLOT_VAR_ROOTS,      "VAR inverse roots plot" },
+    { PLOT_ROOTS,          "roots plot" },
     { PLOT_ELLIPSE,        "confidence ellipse plot" },
     { PLOT_MULTI_IRF,      "multiple impulse responses" },
     { PLOT_PANEL,          "multiple panel plots" },
@@ -896,7 +896,7 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 
     if (flags & GPT_LETTERBOX) {
 	strcpy(size_string, " size 680,400");
-    } else if (ptype == PLOT_VAR_ROOTS) {
+    } else if (ptype == PLOT_ROOTS) {
 	strcpy(size_string, " size 480,480");
     } else if (ptype == PLOT_QQ) {
 	strcpy(size_string, " size 480,480");
@@ -4715,7 +4715,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 	return err;
     }
 
-    fp = get_plot_input_stream(PLOT_VAR_ROOTS, &err);
+    fp = get_plot_input_stream(PLOT_ROOTS, &err);
     if (err) {
 	return err;
     }

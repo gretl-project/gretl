@@ -93,7 +93,7 @@ enum {
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 #define plot_is_hurst(p)        (p->spec->code == PLOT_HURST)
-#define plot_is_roots(p)        (p->spec->code == PLOT_VAR_ROOTS)
+#define plot_is_roots(p)        (p->spec->code == PLOT_ROOTS)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
 
@@ -1266,7 +1266,7 @@ static int get_gpt_marker (const char *line, char *label)
                       p == PLOT_PANEL || \
                       p == PLOT_TRI_GRAPH || \
                       p == PLOT_BI_GRAPH || \
-                      p == PLOT_VAR_ROOTS || \
+                      p == PLOT_ROOTS || \
 		      p == PLOT_ELLIPSE || \
 		      p == PLOT_RQ_TAU)
 
@@ -2083,7 +2083,7 @@ plot_get_data_and_markers (GPT_SPEC *spec, const char *buf,
 /* Get data markers from a "non-editable" plot and set the polar flag,
    if relevant.  The only case where we're able to use brush-on
    markers with non-editable plots is where we're showing numerical
-   values for the roots in a VAR roots plot.
+   values for the roots in a complex roots plot.
 */
 
 static int uneditable_get_markers (GPT_SPEC *spec, const char *buf, int *polar)
@@ -3045,7 +3045,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 	return;
     } 
 
-    pputs(prn, _("VAR roots (real, imaginary, modulus, frequency)"));
+    pputs(prn, _("roots (real, imaginary, modulus, frequency)"));
     pputs(prn, "\n\n");
 
     if (get_local_decpoint() != '.') {
@@ -3082,7 +3082,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	gchar *title = g_strdup_printf("gretl: %s", _("VAR roots"));
+	gchar *title = g_strdup_printf("gretl: %s", _("roots"));
 
 	view_buffer(prn, 72, 340, title, PRINT, NULL);
 	g_free(title);	
@@ -4320,7 +4320,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 	set_plot_format_flags(plot);
     } 
 
-    if (plot->spec->code == PLOT_VAR_ROOTS ||
+    if (plot->spec->code == PLOT_ROOTS ||
 	plot->spec->code == PLOT_QQ) {
 	plot->pixel_width = plot->pixel_height;
     }
