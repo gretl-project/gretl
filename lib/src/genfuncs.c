@@ -1358,34 +1358,26 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
 
 static gretl_matrix *toeplize (const double *g, int T, int k)
 {
-    gretl_matrix *tmp, *X = NULL;
+    gretl_matrix *X;
     double x;
-    int i;
+    int i, j;
 
-    tmp = gretl_zero_matrix_new(T + 1, 1);
-    if (tmp == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<k; i++) {
-        tmp->val[i] = g[i];
-    }
-
-    X = gretl_matrix_shape(tmp, T, T);
+    X = gretl_zero_matrix_new(T, T);
     if (X == NULL) {
-	gretl_matrix_free(tmp);
 	return NULL;
     }
-
-    gretl_matrix_zero_upper(X);
-    gretl_matrix_add_self_transpose(X);
 
     for (i=0; i<T; i++) {
-        x = gretl_matrix_get(X, i, i) - g[0];
-        gretl_matrix_set(X, i, i, x);
+        gretl_matrix_set(X, i, i, g[0]);
     }
 
-    gretl_matrix_free(tmp);
+    for (i=1; i<k; i++) {
+	x = g[i];
+	for (j=i; j<T; j++) {
+	    gretl_matrix_set(X, j, j-i, x);
+	    gretl_matrix_set(X, j-i, j, x);
+	}
+    }
 
     return X;
 }
@@ -1431,6 +1423,44 @@ static int svd_toeplitz_solve (const double *g, double *dy, int T, int q)
 }
 
 #endif /* TRY_SVD */
+
+#define NETLIB_TOEPSOLV 0
+
+#if NETLIB_TOEPSOLV
+static int symm_toeplitz (double *g, double *y, int T, int q)
+{
+    int i, err;
+
+    gretl_vector *mg;
+    gretl_vector *my;
+    gretl_vector *mx;
+
+    mg = gretl_vector_alloc(T); 
+    my = gretl_vector_alloc(T); 
+
+    for (i=0; i<T; i++) {
+	mg->val[i] = (i<=q) ? g[i] : 0;
+	my->val[i] = y[i];
+    }
+
+    mx = gretl_toeplitz_solve(mg, mg, my, &err);
+
+    if (err) {
+	fprintf(stderr, "symm_toeplitz: err = %d\n", err);
+    }
+
+    for (i=0; i<T; i++) {
+	y[i] = mx->val[i];
+    }
+
+    gretl_vector_free(mg);
+    gretl_vector_free(my);
+    gretl_vector_free(mx);
+
+    return err;
+}
+
+#else
 
 /* This function uses a Cholesky decomposition to find the solution of
    the equation Gx = y, where G is a symmetric Toeplitz matrix of order
@@ -1492,9 +1522,11 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
     }
 
     doubles_array_free(mu, q+1);
-
     return 0;
 }
+
+#endif
+
 
 /* Premultiply vector y by a symmetric banded Toeplitz matrix 
    Gamma with n nonzero sub-diagonal bands and n nonzero 
@@ -1594,7 +1626,9 @@ static void form_wvec (double *g, double *mu, double *tmp,
 		       int n, double lam1, double lam2)
 {
     int i;
-
+#if 0 
+    printf("lam1 = %20.13f, lam2 = %20.13f\n", lam1, lam2); 
+#endif
     /* svec = Q'SQ where Q is the 2nd-diff operator */
 
     form_svec(tmp, mu, n);
@@ -1605,7 +1639,11 @@ static void form_wvec (double *g, double *mu, double *tmp,
     form_mvec(tmp, mu, n);
     for (i=0; i<=n; i++) {
 	g[i] += lam2 * tmp[i];
+#if 0	
+	printf("g[%2d] = %20.3f\n", i, g[i]); 
+#endif
     }
+    
 }
 
 /* Find the second differences of the elements of a vector.
@@ -1667,6 +1705,8 @@ static int mp_butterworth (const double *x, double *bw, int T,
 }
 
 #endif
+
+#define MAX_LAM 1
 
 /**
  * butterworth_filter:
@@ -1737,17 +1777,10 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
        lam1, lam2 = 1 and has no effect on the
        calculation */
 
-#if 0
-    if (lam1 > 1.0) { /* Does this do anything? I think not */
-	lam2 = 1 / lam1;
-	lam1 = 1.0;
+    if (lam1 > MAX_LAM) { /* Does this do anything? I think not */
+	lam2 = MAX_LAM / lam1;
+	lam1 = MAX_LAM;
     }
-#else
-    if (lam1 > 1e6) { /* But neither does this */
-	lam1 = sqrt(lam1);
-	lam2 = 1/lam1;
-    }
-#endif
 
     fprintf(stderr, "cutoff=%g, lam1=%g, lam2=%g\n",
 	    cutoff, lam1, lam2);
@@ -1759,6 +1792,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     memcpy(y, x + t1, T * sizeof *y);
 
     form_wvec(g, ds, tmp, n, lam1, lam2); /* W = M + lambda * Q'SQ */
+
     QprimeY(y, T);
 
 #ifdef TRY_SVD
