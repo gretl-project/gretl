@@ -1350,7 +1350,7 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
     return G;
 } 
 
-#if 0
+#ifdef TRY_SVD
 
 /* form the complete Toeplitz matrix represented in compressed 
    form by the coefficients in g
@@ -1430,7 +1430,7 @@ static int svd_toeplitz_solve (const double *g, double *dy, int T, int q)
     return err;
 }
 
-#endif
+#endif /* TRY_SVD */
 
 /* This function uses a Cholesky decomposition to find the solution of
    the equation Gx = y, where G is a symmetric Toeplitz matrix of order
@@ -1743,7 +1743,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	lam1 = 1.0;
     }
 #else
-    if (lam1 > 1e6) { /* And neither does this! */
+    if (lam1 > 1e6) { /* But neither does this */
 	lam1 = sqrt(lam1);
 	lam2 = 1/lam1;
     }
@@ -1761,7 +1761,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     form_wvec(g, ds, tmp, n, lam1, lam2); /* W = M + lambda * Q'SQ */
     QprimeY(y, T);
 
-#if 0
+#ifdef TRY_SVD
     err = svd_toeplitz_solve(g, y, T-2, n);
 #else
     /* solve (M + lambda*Q'SQ)x = d for x */
