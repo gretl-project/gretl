@@ -1737,7 +1737,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
        lam1, lam2 = 1 and has no effect on the
        calculation */
 
-    if (0 && lam1 > 1.0) {
+    if (lam1 > 1.0) { /* Does this do anything? I think not */
 	lam2 = 1 / lam1;
 	lam1 = 1.0;
     }
