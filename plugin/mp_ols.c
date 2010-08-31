@@ -32,7 +32,6 @@
 #define MP_DEBUG 0
 
 static mpf_t MPF_ONE;
-static mpf_t MPF_TWO;
 static mpf_t MPF_ZERO;
 static mpf_t MPF_MINUS_ONE;
 static mpf_t MPF_TINY;
@@ -83,7 +82,6 @@ static void set_gretl_mpfr_bits (void);
 static void mpf_constants_init (void)
 {
     mpf_init_set_d(MPF_ONE, 1.0);
-    mpf_init_set_d(MPF_TWO, 2.0);
     mpf_init_set_d(MPF_ZERO, 0.0);
     mpf_init_set_d(MPF_MINUS_ONE, -1.0);
     mpf_init_set_d(MPF_TINY, 1.0e-25);
@@ -92,7 +90,6 @@ static void mpf_constants_init (void)
 static void mpf_constants_clear (void)
 {
     mpf_clear(MPF_ONE);
-    mpf_clear(MPF_TWO);
     mpf_clear(MPF_ZERO);
     mpf_clear(MPF_MINUS_ONE);
     mpf_clear(MPF_TINY);
@@ -1945,7 +1942,7 @@ static void mp_form_gamma (mpf_t *g, mpf_t *mu, int q)
     mpf_init(tmp);
 
     for (j=0; j<=q; j++) { 
-	mpf_set(g[j], MPF_ZERO);
+	mpf_set_ui(g[j], 0);
 	for (k=0; k<=q-j; k++) {
 	    mpf_mul(tmp, mu[k], mu[k+j]);
 	    mpf_add(g[j], g[j], tmp);
@@ -1959,10 +1956,10 @@ static void mp_sum_or_diff (mpf_t *theta, int n, int sign)
 {
     int j, q;
 
-    mpf_set(theta[0], MPF_ONE);
+    mpf_set_ui(theta[0], 1);
 
     for (q=1; q<=n; q++) { 
-	mpf_set(theta[q], MPF_ZERO);
+	mpf_set_ui(theta[q], 0);
 	for (j=q; j>0; j--) {
 	    if (sign > 0) {
 		mpf_add(theta[j], theta[j], theta[j-1]);
@@ -1988,7 +1985,7 @@ static void mp_form_svec (mpf_t *g, mpf_t *mu, int n)
 /* g is the target, mu and tmp are used as workspace */
 
 static void mp_form_wvec (mpf_t *g, mpf_t *mu, mpf_t *tmp,
-			  int n, mpf_t *lam1, mpf_t *lam2)
+			  int n, mpf_t *lambda, int uselam)
 {
     mpf_t x;
     int i;
@@ -1999,13 +1996,23 @@ static void mp_form_wvec (mpf_t *g, mpf_t *mu, mpf_t *tmp,
 
     mp_form_svec(tmp, mu, n);
     for (i=0; i<=n; i++) {
-	mpf_mul(g[i], *lam1, tmp[i]);
+	if (uselam == 0) {
+	    mpf_mul(g[i], lambda[0], tmp[i]);
+	} else {
+	    /* implicitly = 1 */
+	    mpf_set(g[i], tmp[i]);
+	}
     }
 
     mp_form_mvec(tmp, mu, n);
     for (i=0; i<=n; i++) {
-	mpf_mul(x, *lam2, tmp[i]);
-	mpf_add(g[i], g[i], x);
+	if (uselam == 1) {
+	    mpf_mul(x, lambda[1], tmp[i]);
+	    mpf_add(g[i], g[i], x);
+	} else {
+	    /* implicitly = 1 */
+	    mpf_add(g[i], g[i], tmp[i]);
+	}
     }
 
     mpf_clear(x);
@@ -2020,7 +2027,7 @@ static void mp_qprime_y (mpf_t *y, int T)
 
     for (t=0; t<T-2; t++) {
 	mpf_add(y[t], y[t], y[t+2]);
-	mpf_mul(x, MPF_TWO, y[t+1]);
+	mpf_mul_ui(x, y[t+1], 2);
 	mpf_sub(y[t], y[t], x);
     }
 
@@ -2039,14 +2046,14 @@ static void mp_form_Qy (mpf_t *y, int T)
 
     for (t=0; t<T-2; t++) {
 	mpf_set(tmp, y[t]);
-	mpf_mul(x, MPF_TWO, lag1);
+	mpf_mul_ui(x, lag1, 2);
 	mpf_sub(x, lag2, x);
 	mpf_add(y[t], y[t], x); /* y[t] += lag2 - 2*lag1 */
 	mpf_set(lag2, lag1);
 	mpf_set(lag1, tmp);
     }
 
-    mpf_mul(x, MPF_TWO, lag1);
+    mpf_mul_ui(x, lag1, 2);
     mpf_sub(y[T-2], lag2, x);
     mpf_set(y[T-1], lag1);
 
@@ -2056,19 +2063,85 @@ static void mp_form_Qy (mpf_t *y, int T)
     mpf_clear(x);
 }
 
+#if 0 /* HAVE_MPFR */
+
+static int calc_lambda (int n, double cutoff, mpf_t *lambda)
+{
+    int uselam = 0;
+
+    mpfr_set_d(XX, cutoff);
+    mpfr_const_pi(pi, XX);
+
+    mpfr_div(XX, pi, XX); /* cutoff *= M_PI / 180.0 */
+    mpfr(div, cutoff, 2.0);
+    mpfr_tan();
+ 
+    dlam = 1 / tan(cutoff / 2);
+    mpf_set_d(lambda[0], dlam);
+    mpf_pow_ui(lambda[0], lambda[0], n * 2);
+    mpf_set(lambda[1], MPF_ONE);
+
+    /* there's really only one "lambda": one out of
+       lam1, lam2 = 1 and has no effect on the
+       calculation */
+
+    if (mpfr_cmp(lambda[0], MPF_ONE) > 0) {
+	mpfr_div(lambda[1], MPF_ONE, lambda[0]);
+	mpfr_set(lambda[0], MPF_ONE);
+	uselam = 1;
+    }
+
+    return uselam;
+}
+
+#else
+
+static int calc_lambda (int n, double cutoff, mpf_t *lambda)
+{
+    double dlam;
+    int uselam = 0;
+
+    cutoff *= M_PI / 180.0;
+
+    dlam = 1 / tan(cutoff / 2);
+    mpf_set_d(lambda[0], dlam);
+    mpf_pow_ui(lambda[0], lambda[0], n * 2);
+    mpf_set_ui(lambda[1], 1);
+
+    /* there's really only one "lambda": one out of
+       lam1, lam2 = 1 and has no effect on the
+       calculation */
+
+    if (0 && mpf_cmp_ui(lambda[0], 1) > 0) {
+	mpf_ui_div(lambda[1], 1, lambda[0]);
+	mpf_set_ui(lambda[0], 1);
+	uselam = 1;
+    }
+
+    mpf_out_str(stderr, 10, 16, lambda[0]);
+    fputc('\n', stderr);
+    mpf_out_str(stderr, 10, 16, lambda[1]);
+    fputc('\n', stderr);
+
+    return uselam;
+}
+
+#endif
+
 int mp_bw_filter (const double *x, double *bw, int T, int order, 
 		  double cutoff)
 {
     mpf_t *g, *ds, *tmp, *y;
-    mpf_t lam1, lam2;
-    double dlam;
+    mpf_t mx, lambda[2];
+    int uselam = 0;
     int t, m, n = order;
     int err = 0;
 
     set_gretl_mp_bits();
     mpf_constants_init();
-    mpf_init(lam1);
-    mpf_init(lam2);
+    mpf_init(lambda[0]);
+    mpf_init(lambda[1]);
+    mpf_init(mx);
 
     m = 3 * (n+1);
 
@@ -2082,23 +2155,7 @@ int mp_bw_filter (const double *x, double *bw, int T, int order,
     ds = g + n + 1;
     tmp = ds + n + 1;
 
-    /* the cutoff is expressed in radians internally */
-    cutoff *= M_PI / 180.0;
-
-    dlam = 1 / tan(cutoff / 2);
-    fprintf(stderr, "dlam = %g\n", dlam);
-    mpf_set_d(lam1, dlam);
-    mpf_pow_ui(lam1, lam1, n * 2);
-    mpf_set(lam2, MPF_ONE);
-
-    /* there's really only one "lambda": one out of
-       lam1, lam2 = 1 and has no effect on the
-       calculation */
-
-    if (mpf_cmp(lam1, MPF_ONE) > 0) {
-	mpf_div(lam2, MPF_ONE, lam1);
-	mpf_set(lam1, MPF_ONE);
-    }
+    uselam = calc_lambda(n, cutoff, lambda);
 
     /* copy the data into y */
     y = doubles_array_to_mp(x, T);
@@ -2107,7 +2164,7 @@ int mp_bw_filter (const double *x, double *bw, int T, int order,
 	goto bailout;
     }
 
-    mp_form_wvec(g, ds, tmp, n, &lam1, &lam2); /* W = M + lambda * Q'SQ */
+    mp_form_wvec(g, ds, tmp, n, lambda, uselam); /* W = M + lambda * Q'SQ */
     mp_qprime_y(y, T);
 
     /* solve (M + lambda*Q'SQ)x = d for x */
@@ -2119,15 +2176,16 @@ int mp_bw_filter (const double *x, double *bw, int T, int order,
 	mp_gamma_y(g, y, tmp, T, n-2);   /* Form SQg */
 	/* write the trend into y (low-pass) */
 	for (t=0; t<T; t++) {
-	    mpf_mul(lam2, lam1, y[t]);
-	    bw[t] = x[t] - mpf_get_d(lam2);
+	    mpf_mul(mx, lambda[0], y[t]);
+	    bw[t] = x[t] - mpf_get_d(mx);
 	}	
     }  
 
  bailout: 
 
-    mpf_clear(lam1);
-    mpf_clear(lam2);
+    mpf_clear(lambda[0]);
+    mpf_clear(lambda[1]);
+    mpf_clear(mx);
     
     mpf_constants_clear();
 

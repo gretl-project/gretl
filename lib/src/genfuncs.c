@@ -1711,7 +1711,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 
 #ifdef ENABLE_GMP
     /* experimental! */
-    if (cutoff < 40) {
+    if (0 && cutoff < 40) {
 	return mp_butterworth(x + t1, bw + t1, T, order, cutoff);
     }
 #endif
@@ -1737,7 +1737,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
        lam1, lam2 = 1 and has no effect on the
        calculation */
 
-    if (lam1 > 1.0) {
+    if (0 && lam1 > 1.0) {
 	lam2 = 1 / lam1;
 	lam1 = 1.0;
     }
@@ -1764,7 +1764,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     if (!err) {
 	form_Qy(y, T);
 	form_svec(g, ds, n-2);
-	GammaY(g, y, tmp, T, n-2);   /* Form SQg */
+	GammaY(g, y, tmp, T, n-2);   /* Form SQy in y */
 	/* write the trend into y (low-pass) */
 	for (t=0; t<T; t++) {
 	    y[t] = x[t] - lam1 * y[t];
