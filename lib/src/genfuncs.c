@@ -1720,13 +1720,28 @@ static int mp_butterworth (const double *x, double *bw, int T,
 
 #endif
 
+/* maximum modulus among the poles of the filter:
+   too close to 1.0 is a problem
+*/
+
+static double bw_max_mod (double cut, int n)
+{
+    double tc = tan(cut / 2);
+    double theta = M_PI / (2 * n);
+    double delta = 1 + tc * (2 * sin(theta) + tc);
+    double x = (1 - tc * tc) / delta;
+    double y = 2 * tc * cos(theta) / delta;
+
+    return sqrt(x * x + y * y);
+}
+
 #define MAX_LAM 1
 
 /* Calculate the Butterworth lambda based on cutoff and
    order. Return non-zero if it seems that lambda is too
    extreme. FIXME: it remains to be figured out whether the
    criterion for "too extreme" is effective, and in fact
-   whether using lambda alone as the criterion more
+   whether using lambda alone as the criterion for
    numerical feasibility makes sense.
 */
 
@@ -1738,13 +1753,13 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
     *lam1 = 1 / tan(cutoff / 2);
     *lam1 = safe_pow(*lam1, n * 2);
 
-    fprintf(stderr, "for cutoff %g, order %d: lambda=%g\n",
-	    cutoff, n, *lam1);
+    fprintf(stderr, "for cutoff %g, order %d: lambda=%g, maxmod=%g\n",
+	    cutoff, n, *lam1, bw_max_mod(cutoff, n));
 
     if (*lam1 > 1.0e15) {
 	/* can't cope, even with multiple precision? */
 	ret = 2;
-    } else if (*lam1 > 1.0e10) {
+    } else if (*lam1 > 1.0e6) {
 	/* may be OK with multiple precision? */
 	ret = 1;
     } else {
@@ -1755,6 +1770,8 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
 	    *lam1 = MAX_LAM;
 	}
     }
+
+    
 
     return ret;
 }
