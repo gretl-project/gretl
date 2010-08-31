@@ -1350,7 +1350,17 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
     return G;
 } 
 
-#ifdef TRY_SVD
+/* Toeplitz methods:
+
+   1 = Stephen Pollock's symmetric Toeplitz solver
+   2 = gretl's netlib-based general Toeplitz solver
+   3 = build full Toeplitz matrix and apply SVD
+
+*/
+
+#define TOEPLITZ_METHOD 1
+
+#if (TOEPLITZ_METHOD == 3)
 
 /* form the complete Toeplitz matrix represented in compressed 
    form by the coefficients in g
@@ -1384,17 +1394,19 @@ static gretl_matrix *toeplize (const double *g, int T, int k)
 
 #include "matrix_extra.h"
 
-static int svd_toeplitz_solve (const double *g, double *dy, int T, int q)
+static int toeplitz_solve (const double *g, double *dy, int T, int q)
 {
     gretl_matrix *y, *X;
     int err = 0;
+
+    fprintf(stderr, "svd_toeplitz_solve...\n");
 
     X = toeplize(g, T, q + 1);
     if (X == NULL) {
 	return E_ALLOC;
     }
 
-    err = gretl_matrix_moore_penrose(X);
+    err = gretl_SVD_invert_matrix(X);
 
     if (!err) {
 	y = gretl_vector_from_array(dy, T, GRETL_MOD_NONE);
@@ -1422,24 +1434,24 @@ static int svd_toeplitz_solve (const double *g, double *dy, int T, int q)
     return err;
 }
 
-#endif /* TRY_SVD */
+#elif (TOEPLITZ_METHOD == 2)
 
-#define NETLIB_TOEPSOLV 0
-
-#if NETLIB_TOEPSOLV
-static int symm_toeplitz (double *g, double *y, int T, int q)
+static int toeplitz_solve (double *g, double *y, int T, int q)
 {
-    int i, err;
-
-    gretl_vector *mg;
-    gretl_vector *my;
-    gretl_vector *mx;
+    gretl_vector *mg = NULL;
+    gretl_vector *my = NULL;
+    gretl_vector *mx = NULL;
+    int i, err = 0;
 
     mg = gretl_vector_alloc(T); 
     my = gretl_vector_alloc(T); 
 
+    if (mg == NULL || my == NULL) {
+	return E_ALLOC;
+    }
+
     for (i=0; i<T; i++) {
-	mg->val[i] = (i<=q) ? g[i] : 0;
+	mg->val[i] = (i <= q) ? g[i] : 0;
 	my->val[i] = y[i];
     }
 
@@ -1447,10 +1459,10 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
 
     if (err) {
 	fprintf(stderr, "symm_toeplitz: err = %d\n", err);
-    }
-
-    for (i=0; i<T; i++) {
-	y[i] = mx->val[i];
+    } else {
+	for (i=0; i<T; i++) {
+	    y[i] = mx->val[i];
+	}
     }
 
     gretl_vector_free(mg);
@@ -1469,7 +1481,7 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
    the solution vector x on completion.
 */
 
-static int symm_toeplitz (double *g, double *y, int T, int q)
+static int toeplitz_solve (double *g, double *y, int T, int q)
 {
     int t, j, k, jmax;
     double **mu;
@@ -1525,7 +1537,7 @@ static int symm_toeplitz (double *g, double *y, int T, int q)
     return 0;
 }
 
-#endif
+#endif /* alternate TOEPLITZ_METHODs */
 
 
 /* Premultiply vector y by a symmetric banded Toeplitz matrix 
@@ -1550,8 +1562,8 @@ static int GammaY (double *g, double *y, double *tmp,
 	}
 	tmp[0] = g[0] * y[t];
 	for (j=1; j<=n; j++) {
-	    lx = (t - j < 0)? 0 : y[t-j];
-	    rx = (t + j >= T)? 0 : y[t+j];
+	    lx = (t - j < 0) ? 0 : y[t-j];
+	    rx = (t + j >= T) ? 0 : y[t+j];
 	    tmp[0] += g[j] * (lx + rx);
 	}
 	if (t >= n) {
@@ -1612,7 +1624,9 @@ static void form_mvec (double *g, double *mu, int n)
 }
 
 /* g is the target, mu is used as workspace for the
-   differencing coefficients */
+   differencing coefficients 
+   svec = Q'SQ where Q is the 2nd-diff operator
+*/
 
 static void form_svec (double *g, double *mu, int n)
 {
@@ -1626,10 +1640,10 @@ static void form_wvec (double *g, double *mu, double *tmp,
 		       int n, double lam1, double lam2)
 {
     int i;
+
 #if 0 
     printf("lam1 = %20.13f, lam2 = %20.13f\n", lam1, lam2); 
 #endif
-    /* svec = Q'SQ where Q is the 2nd-diff operator */
 
     form_svec(tmp, mu, n);
     for (i=0; i<=n; i++) {
@@ -1708,6 +1722,43 @@ static int mp_butterworth (const double *x, double *bw, int T,
 
 #define MAX_LAM 1
 
+/* Calculate the Butterworth lambda based on cutoff and
+   order. Return non-zero if it seems that lambda is too
+   extreme. FIXME: it remains to be figured out whether the
+   criterion for "too extreme" is effective, and in fact
+   whether using lambda alone as the criterion more
+   numerical feasibility makes sense.
+*/
+
+static int 
+set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
+{
+    int ret = 0;
+
+    *lam1 = 1 / tan(cutoff / 2);
+    *lam1 = safe_pow(*lam1, n * 2);
+
+    fprintf(stderr, "for cutoff %g, order %d: lambda=%g\n",
+	    cutoff, n, *lam1);
+
+    if (*lam1 > 1.0e15) {
+	/* can't cope, even with multiple precision? */
+	ret = 2;
+    } else if (*lam1 > 1.0e10) {
+	/* may be OK with multiple precision? */
+	ret = 1;
+    } else {
+	/* OK with regular double-precision? */
+	if (*lam1 > MAX_LAM) { 
+	    /* note: AC thinks the following doesn't help */
+	    *lam2 = MAX_LAM / *lam1;
+	    *lam1 = MAX_LAM;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * butterworth_filter:
  * @x: array of original data.
@@ -1730,6 +1781,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     double lam1, lam2 = 1.0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int T, t, m, n = order;
+    int bad_lambda = 0;
     int err = 0;
 
     err = array_adjust_t1t2(x, &t1, &t2);
@@ -1749,12 +1801,22 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     T = t2 - t1 + 1;
     m = 3 * (n+1);
 
+    /* the cutoff is expressed in radians internally */
+    cutoff *= M_PI / 180.0;
+
+    bad_lambda = set_bw_lambda(cutoff, n, &lam1, &lam2);
+
+    if (bad_lambda > 1) {
+	gretl_errmsg_set("Butterworth: infeasible lambda value");
+	return E_DATA;
+    } else if (bad_lambda) {
 #ifdef ENABLE_GMP
-    /* experimental! */
-    if (0 && cutoff < 40) {
 	return mp_butterworth(x + t1, bw + t1, T, order, cutoff);
-    }
+#else
+	gretl_errmsg_set("Butterworth: infeasible lambda value");
+	return E_DATA;
 #endif
+    }	
 
     /* the workspace we need for everything except the
        Toeplitz solver */
@@ -1766,25 +1828,6 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     ds = g + n + 1;
     tmp = ds + n + 1;
 
-    /* the cutoff is expressed in radians internally */
-    cutoff *= M_PI / 180.0;
-
-    lam1 = 1 / tan(cutoff / 2);
-    fprintf(stderr, "before powering, lam1 = %g\n", lam1);
-    lam1 = safe_pow(lam1, n * 2);
-
-    /* there's really only one "lambda": one out of
-       lam1, lam2 = 1 and has no effect on the
-       calculation */
-
-    if (lam1 > MAX_LAM) { /* Does this do anything? I think not */
-	lam2 = MAX_LAM / lam1;
-	lam1 = MAX_LAM;
-    }
-
-    fprintf(stderr, "cutoff=%g, lam1=%g, lam2=%g\n",
-	    cutoff, lam1, lam2);
-
     /* sample offset */
     y = bw + t1;
 
@@ -1795,12 +1838,8 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 
     QprimeY(y, T);
 
-#ifdef TRY_SVD
-    err = svd_toeplitz_solve(g, y, T-2, n);
-#else
     /* solve (M + lambda*Q'SQ)x = d for x */
-    err = symm_toeplitz(g, y, T-2, n);
-#endif
+    err = toeplitz_solve(g, y, T-2, n);
 
     if (!err) {
 	form_Qy(y, T);

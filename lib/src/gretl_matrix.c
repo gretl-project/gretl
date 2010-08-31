@@ -5953,6 +5953,13 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
     return rank;
 }
 
+static double svd_smin (const gretl_matrix *a)
+{
+    const double macheps = 2.0e-16;
+
+    return 1.0e4 * macheps * gretl_matrix_infinity_norm(a);
+}
+
 /**
  * gretl_matrix_rank:
  * @a: matrix to examine.
@@ -5966,8 +5973,6 @@ int gretl_check_QR_rank (const gretl_matrix *R, int *err, double *rcnd)
 int gretl_matrix_rank (const gretl_matrix *a, int *err)
 {
     gretl_matrix *S = NULL;
-    double smin = SVD_SMIN;
-    double macheps = 2.0e-16;
     int i, k, rank = 0;
 
     if (gretl_is_null_matrix(a)) {
@@ -5979,7 +5984,8 @@ int gretl_matrix_rank (const gretl_matrix *a, int *err)
     *err = gretl_matrix_SVD(a, NULL, &S, NULL);
 
     if (!*err) {
-	smin = 1.0e4 * macheps * gretl_matrix_infinity_norm(a);
+	double smin = svd_smin(a);
+
 	for (i=0; i<k; i++) {
 	    if (S->val[i] > smin) {
 		rank++;
@@ -9050,14 +9056,11 @@ int gretl_matrix_moore_penrose (gretl_matrix *A)
 	/* invert singular values and multiply into U' */
 	for (i=0; i<nsv; i++) {
 	    if (S->val[i] > SVD_SMIN) {
-		fprintf(stderr, "OK moore-penrose: S(%d) = %g\n", i, S->val[i]);
 		for (j=0; j<m; j++) {
 		    x = gretl_matrix_get(U, j, i);
 		    gretl_matrix_set(SUt, i, j, x / S->val[i]);
 		}
-	    } else {
-		fprintf(stderr, "X moore-penrose: S(%d) = %g\n", i, S->val[i]);
-	    }
+	    } 
 	}
 
 	/* A^{+} = VS^{-1}U' */
@@ -9098,7 +9101,8 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     gretl_matrix *s = NULL;
     gretl_matrix *vt = NULL;
     double x;
-    int i, j, k, n;
+    int i, j, n;
+    int rank = 0;
     int err = 0;
 
     if (gretl_is_null_matrix(a)) {
@@ -9117,26 +9121,33 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     err = gretl_matrix_SVD(a, &u, &s, &vt);
 
     if (!err) {
-	k = 0;
+#if 1 
+	double smin = svd_smin(a);
+#else
+	double smin = SVD_SMIN;
+#endif
+
 	for (i=0; i<n; i++) {
-	    if (s->val[i] < SVD_SMIN) {
+	    if (s->val[i] > smin) {
+		rank++;
+	    } else {
 		break;
 	    }
-	    k++;
-	}
-	if (k < n) {
+	}	
+
+	if (rank < n) {
 	    gretl_matrix *vt2;
 
 	    fprintf(stderr, "gretl_SVD_invert_matrix: rank = %d (dim = %d)\n", 
-		    k, (int) n);
+		    rank, n);
 	    fputs("Warning: computing Moore-Penrose generalized inverse\n", stderr);
 
-	    vt2 = gretl_matrix_alloc(k, n);
+	    vt2 = gretl_matrix_alloc(rank, n);
 	    if (vt2 == NULL) {
 		err = E_ALLOC;
 		goto bailout;
 	    }
-	    for (i=0; i<k; i++) {
+	    for (i=0; i<rank; i++) {
 		for (j=0; j<n; j++) {
 		    x = gretl_matrix_get(vt, i, j);
 		    gretl_matrix_set(vt2, i, j, x);
@@ -9144,13 +9155,13 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 	    }
 	    gretl_matrix_free(vt);
 	    vt = vt2;
-	    gretl_matrix_reuse(u, n, k);
+	    gretl_matrix_reuse(u, n, rank);
 	}	    
     }
 
     if (!err) {
 	/* invert singular values */
-	for (j=0; j<k; j++) {
+	for (j=0; j<rank; j++) {
 	    for (i=0; i<n; i++) {
 		x = gretl_matrix_get(u, i, j);
 		gretl_matrix_set(u, i, j, x / s->val[j]);

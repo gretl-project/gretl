@@ -2053,46 +2053,9 @@ static void mp_form_Qy (mpf_t *y, int T)
     mpf_clear(x);
 }
 
-#if 0 /* HAVE_MPFR */
-
-static int calc_lambda (int n, double cutoff, mpf_t *lambda)
-{
-    int uselam = 0;
-
-    mpfr_set_d(XX, cutoff);
-    mpfr_const_pi(pi, XX);
-
-    mpfr_div(XX, pi, XX); /* cutoff *= M_PI / 180.0 */
-    mpfr(div, cutoff, 2.0);
-    mpfr_tan();
- 
-    dlam = 1 / tan(cutoff / 2);
-    mpf_set_d(lambda[0], dlam);
-    mpf_pow_ui(lambda[0], lambda[0], n * 2);
-    mpf_set(lambda[1], MPF_ONE);
-
-    /* there's really only one "lambda": one out of
-       lam1, lam2 = 1 and has no effect on the
-       calculation */
-
-    if (mpfr_cmp_ui(lambda[0], 1000000000) > 0) {
-	mpf_sqrt(lam1, lam1);
-	lam2 = 1/sqrt(lam1);
-	mpfr_div(lambda[1], MPF_ONE, lambda[0]);
-	mpfr_set(lambda[0], MPF_ONE);
-	uselam = 1;
-    }
-
-    return uselam;
-}
-
-#else
-
 static void calc_lambda (int n, double cutoff, mpf_t *lambda)
 {
     double dlam;
-
-    cutoff *= M_PI / 180.0;
 
     dlam = 1 / tan(cutoff / 2);
     mpf_set_d(lambda[0], dlam);
@@ -2114,7 +2077,7 @@ static void calc_lambda (int n, double cutoff, mpf_t *lambda)
     fputc('\n', stderr);
 }
 
-#endif
+/* note: for this function the cutoff is specified in radians */
 
 int mp_bw_filter (const double *x, double *bw, int T, int order, 
 		  double cutoff)

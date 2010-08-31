@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-08-28 10:20-0400\n"
-"PO-Revision-Date: 2010-08-23 09:30-0400\n"
+"PO-Revision-Date: 2010-08-31 04:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1584,7 +1584,7 @@ msgstr "Spektrum dla zmiennej %s"
 #: lib/src/describe.c:3736
 #, c-format
 msgid "Bartlett window, length %d"
-msgstr "wagi Bartletta długości %d"
+msgstr "wagi Bartletta o długości %d"
 
 #: lib/src/describe.c:3742 gui2/dialogs.c:3918
 msgid "log scale"
@@ -1615,7 +1615,7 @@ msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr ""
-"Wykorzystano wagi Bartletta długości %d\n"
+"Wykorzystano wagi Bartletta o długości %d\n"
 "\n"
 
 #: lib/src/describe.c:3814
@@ -2750,7 +2750,7 @@ msgstr "Wartość początkowa funkcji jest nieskończona"
 
 #: lib/src/gretl_bundle.c:373
 msgid "no such item"
-msgstr ""
+msgstr "nie ten element"
 
 #: lib/src/gretl_bundle.c:956
 #, c-format
@@ -6611,9 +6611,8 @@ msgid "dummify: no suitable variables were found"
 msgstr "Nie znaleziono właściwej zmiennej"
 
 #: lib/src/tsls.c:1405 gui2/selector.c:2665
-#, fuzzy
 msgid "You can't use the dependent variable as an instrument"
-msgstr "Niemożliwe usunięcie wykorzystywanej zmiennej\n"
+msgstr "Niemożliwe wykorzystywanej zależnej zmiennej jako instrunetu"
 
 #: lib/src/tsls.c:1415 lib/src/tsls.c:1549
 #, c-format
@@ -8798,7 +8797,7 @@ msgstr "Periodogram"
 
 #: gui2/dialogs.c:3903
 msgid "Bartlett window, bandwidth:"
-msgstr "Spektrum, wagi-okna Bartletta długości:"
+msgstr "Spektrum, wagi-okna Bartletta o długości:"
 
 #: gui2/dialogs.c:3925
 msgid "frequency axis scale:"
@@ -9027,7 +9026,7 @@ msgstr "Filtr dolnoprzepustowy Butterwortha"
 
 #: gui2/filters.c:99
 msgid "Polynomial trend"
-msgstr ""
+msgstr "Filtr trendu wielomianowego z wagami"
 
 #: gui2/filters.c:101
 msgid "Fractional difference"
@@ -9088,12 +9087,12 @@ msgstr ""
 #: gui2/filters.c:240
 #, c-format
 msgid "Filtered %s: polynomial of order %d"
-msgstr ""
+msgstr "Przefiltrowany %s: wielomian stopnia %d"
 
 #: gui2/filters.c:243
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: residual from polynomial of order %d"
-msgstr "kwadraty reszt z modelu %d"
+msgstr "Przefiltrowany %s: reszty z wielomianu stopnia %d"
 
 #: gui2/filters.c:287
 msgid "Variable name is missing"
@@ -9136,33 +9135,28 @@ msgid "the mean of the whole series"
 msgstr "średnia arytmetyczna całego szeregu"
 
 #: gui2/filters.c:476
-#, fuzzy
 msgid "quadratic"
-msgstr "kwartyle"
+msgstr "kwadraty"
 
 #: gui2/filters.c:477
 msgid "cosine-bell"
-msgstr ""
+msgstr "cosinus-dzwon"
 
 #: gui2/filters.c:484
-#, fuzzy
 msgid "Weights:"
-msgstr "wysokość"
+msgstr "Typ wag:"
 
 #: gui2/filters.c:494
-#, fuzzy
 msgid "with maximum:"
-msgstr "maksimum"
+msgstr "z maksimum:"
 
 #: gui2/filters.c:504
-#, fuzzy
 msgid "Central fraction:"
-msgstr "gretl: informacja"
+msgstr "Centralne pasmo częstości:"
 
 #: gui2/filters.c:510
-#, fuzzy
 msgid "Show weights"
-msgstr "Pełne wyniki"
+msgstr "Wykres wag"
 
 #: gui2/filters.c:572
 msgid "gretl: time-series filter"
@@ -9197,9 +9191,8 @@ msgid "frequency cutoff (degrees):"
 msgstr "częstość odcięcia (w stopniach):"
 
 #: gui2/filters.c:673
-#, fuzzy
 msgid "Order:"
-msgstr "Rząd AR:"
+msgstr "Rząd:"
 
 #: gui2/filters.c:687
 msgid "differencing parameter:"
@@ -10605,7 +10598,7 @@ msgstr "Filtr _Butterwortha"
 
 #: gui2/gretl.c:1547
 msgid "_Polynomial trend"
-msgstr ""
+msgstr "Filtr _trendu wielomianowego z wagami"
 
 #: gui2/gretl.c:1548
 msgid "_Fractional difference"
@@ -10617,7 +10610,7 @@ msgstr "Analiza _X-12-ARIMA..."
 
 #: gui2/gretl.c:1554 gui2/gretl.c:1659
 msgid "_TRAMO analysis"
-msgstr "Analiza _TRAMO..."
+msgstr "Analiza _TRAMO/SEATS..."
 
 #: gui2/gretl.c:1556
 msgid "_Hurst exponent"
@@ -13817,7 +13810,7 @@ msgstr "Zapisz sesję"
 
 #: gui2/settings.c:170
 msgid "Enable Ox support"
-msgstr "Enable Ox support"
+msgstr "Włącz współpracę z programem Ox"
 
 #: gui2/settings.c:172
 msgid "Set working directory from shell"
@@ -14238,9 +14231,8 @@ msgid "Couldn't open '%s'"
 msgstr "Niemożliwe otwarcie pliku '%s'"
 
 #: gui2/ssheet.c:3470
-#, fuzzy
 msgid "The dataset cannot be modified at present"
-msgstr "Dane nie mogą być interpretowane jako panelowe"
+msgstr "Dane nie mogą być modyfikowane teraz"
 
 #: gui2/textbuf.c:281 gui2/textbuf.c:289
 msgid "No undo information available"
@@ -15445,16 +15437,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid ""
-#~ "Data set is not recognized as a panel.\n"
-#~ "Please use \"Sample/Set frequency, startobs\"."
-#~ msgstr ""
-#~ "Dane muszą być zdefiniowane jako panelowe.\n"
-#~ "Proszę użyć polecenia \"Dane/Struktura danych...\"."
-
-#~ msgid "You can't do this while editing the dataset"
-#~ msgstr "Nie możliwe wykonanie tego w czasie edycji bazy danych"
-
-#~ msgid "_Select listed variables..."
-#~ msgstr "_Zaznacz listę zmiennych..."
