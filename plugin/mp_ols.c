@@ -1985,7 +1985,7 @@ static void mp_form_svec (mpf_t *g, mpf_t *mu, int n)
 /* g is the target, mu and tmp are used as workspace */
 
 static void mp_form_wvec (mpf_t *g, mpf_t *mu, mpf_t *tmp,
-			  int n, mpf_t *lambda, int uselam)
+			  int n, mpf_t *lambda)
 {
     mpf_t x;
     int i;
@@ -1996,23 +1996,13 @@ static void mp_form_wvec (mpf_t *g, mpf_t *mu, mpf_t *tmp,
 
     mp_form_svec(tmp, mu, n);
     for (i=0; i<=n; i++) {
-	if (uselam == 0) {
-	    mpf_mul(g[i], lambda[0], tmp[i]);
-	} else {
-	    /* implicitly = 1 */
-	    mpf_set(g[i], tmp[i]);
-	}
+	mpf_mul(g[i], lambda[0], tmp[i]);
     }
 
     mp_form_mvec(tmp, mu, n);
     for (i=0; i<=n; i++) {
-	if (uselam == 1) {
-	    mpf_mul(x, lambda[1], tmp[i]);
-	    mpf_add(g[i], g[i], x);
-	} else {
-	    /* implicitly = 1 */
-	    mpf_add(g[i], g[i], tmp[i]);
-	}
+	mpf_mul(x, lambda[1], tmp[i]);
+	mpf_add(g[i], g[i], x);
     }
 
     mpf_clear(x);
@@ -2085,7 +2075,9 @@ static int calc_lambda (int n, double cutoff, mpf_t *lambda)
        lam1, lam2 = 1 and has no effect on the
        calculation */
 
-    if (mpfr_cmp(lambda[0], MPF_ONE) > 0) {
+    if (mpfr_cmp_ui(lambda[0], 1000000000) > 0) {
+	mpf_sqrt(lam1, lam1);
+	lam2 = 1/sqrt(lam1);
 	mpfr_div(lambda[1], MPF_ONE, lambda[0]);
 	mpfr_set(lambda[0], MPF_ONE);
 	uselam = 1;
@@ -2096,10 +2088,9 @@ static int calc_lambda (int n, double cutoff, mpf_t *lambda)
 
 #else
 
-static int calc_lambda (int n, double cutoff, mpf_t *lambda)
+static void calc_lambda (int n, double cutoff, mpf_t *lambda)
 {
     double dlam;
-    int uselam = 0;
 
     cutoff *= M_PI / 180.0;
 
@@ -2112,18 +2103,15 @@ static int calc_lambda (int n, double cutoff, mpf_t *lambda)
        lam1, lam2 = 1 and has no effect on the
        calculation */
 
-    if (0 && mpf_cmp_ui(lambda[0], 1) > 0) {
+    if (mpf_cmp_ui(lambda[0], 1000000) > 0) {
+	mpf_sqrt(lambda[0], lambda[0]);
 	mpf_ui_div(lambda[1], 1, lambda[0]);
-	mpf_set_ui(lambda[0], 1);
-	uselam = 1;
     }
 
     mpf_out_str(stderr, 10, 16, lambda[0]);
     fputc('\n', stderr);
     mpf_out_str(stderr, 10, 16, lambda[1]);
     fputc('\n', stderr);
-
-    return uselam;
 }
 
 #endif
@@ -2133,7 +2121,6 @@ int mp_bw_filter (const double *x, double *bw, int T, int order,
 {
     mpf_t *g, *ds, *tmp, *y;
     mpf_t mx, lambda[2];
-    int uselam = 0;
     int t, m, n = order;
     int err = 0;
 
@@ -2155,7 +2142,7 @@ int mp_bw_filter (const double *x, double *bw, int T, int order,
     ds = g + n + 1;
     tmp = ds + n + 1;
 
-    uselam = calc_lambda(n, cutoff, lambda);
+    calc_lambda(n, cutoff, lambda);
 
     /* copy the data into y */
     y = doubles_array_to_mp(x, T);
@@ -2164,7 +2151,7 @@ int mp_bw_filter (const double *x, double *bw, int T, int order,
 	goto bailout;
     }
 
-    mp_form_wvec(g, ds, tmp, n, lambda, uselam); /* W = M + lambda * Q'SQ */
+    mp_form_wvec(g, ds, tmp, n, lambda); /* W = M + lambda * Q'SQ */
     mp_qprime_y(y, T);
 
     /* solve (M + lambda*Q'SQ)x = d for x */

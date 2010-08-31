@@ -1737,10 +1737,17 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
        lam1, lam2 = 1 and has no effect on the
        calculation */
 
+#if 0
     if (lam1 > 1.0) { /* Does this do anything? I think not */
 	lam2 = 1 / lam1;
 	lam1 = 1.0;
     }
+#else
+    if (lam1 > 1e6) { /* And neither does this! */
+	lam1 = sqrt(lam1);
+	lam2 = 1/lam1;
+    }
+#endif
 
     fprintf(stderr, "cutoff=%g, lam1=%g, lam2=%g\n",
 	    cutoff, lam1, lam2);
