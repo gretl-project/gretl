@@ -2843,7 +2843,14 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {
-	maybe_delete_session_object(obj);
+	/* note: = "Clear" in some translations */
+	if (obj->sort == GRETL_OBJ_MODTAB) {
+	    clear_model_table(0, NULL);
+	} else if (obj->sort == GRETL_OBJ_GPAGE) {
+	    clear_graph_page(0);
+	} else {	
+	    maybe_delete_session_object(obj);
+	}
     } else if (!strcmp(item, _("Add to model table"))) {
 	if (obj->sort == GRETL_OBJ_EQN) {
 	    SESSION_MODEL *mod = (SESSION_MODEL *) obj->data;
