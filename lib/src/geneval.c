@@ -8415,6 +8415,34 @@ static void get_lh_mspec (parser *p)
     } 
 }
 
+static void get_lh_obsnum (parser *p)
+{
+    int done = 0;
+
+    if (p->lh.substr[0] != '"') {
+	int err = 0;
+
+	p->lh.obs = generate_scalar(p->lh.substr, p->Z, p->dinfo, &err);
+	if (!err) {
+	    p->lh.obs -= 1; /* convert to 0-based for internal use */
+	    done = 1;
+	}
+    }
+
+    if (!done) {
+	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
+					  p->dinfo);
+    }
+    
+    if (p->lh.obs < 0 || p->lh.obs >= p->dinfo->n) {
+	gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.substr);
+	p->err = E_PARSE;
+    } else {
+	gretl_error_clear();
+	p->targ = NUM;
+    }
+}
+
 /* check validity of "[...]" on the LHS, and evaluate
    the expression if needed */
 
@@ -8428,15 +8456,7 @@ static void process_lhs_substr (const char *lname, parser *p)
     /* FIXME stringvar[] ? */
 
     if (p->lh.t == VEC) {
-	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
-					  p->dinfo); 
-	if (p->lh.obs < 0) {
-	    gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.substr);
-	    p->err = E_PARSE;
-	} else {
-	    gretl_error_clear();
-	    p->targ = NUM;
-	}
+	get_lh_obsnum(p);
     } else if (p->lh.t == MAT) {
 	get_lh_mspec(p);
     } else if (p->lh.t == BUNDLE) {

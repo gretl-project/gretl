@@ -1414,7 +1414,6 @@ static int toeplitz_solve (const double *g, double *dy, int T, int q)
 	    err = E_ALLOC;
 	} else {
 	    gretl_matrix s;
-	    int i;
 
 	    s.t1 = s.t2 = 0;
 	    s.rows = T;
@@ -1423,9 +1422,6 @@ static int toeplitz_solve (const double *g, double *dy, int T, int q)
 
 	    err = gretl_matrix_multiply(X, y, &s);
 	    gretl_matrix_free(y);
-	    for (i=0; i<T; i++) {
-		fprintf(stderr, "solution[%d] = %g\n", i, dy[i]);
-	    }
 	}
     }
 
@@ -1441,7 +1437,7 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
     gretl_vector *mg = NULL;
     gretl_vector *my = NULL;
     gretl_vector *mx = NULL;
-    int i, err = 0;
+    int err = 0;
 
     mg = gretl_vector_alloc(T); 
     my = gretl_vector_alloc(T); 
@@ -1472,7 +1468,7 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
     return err;
 }
 
-#else
+#else /* TOEPLITZ_METHOD == 1 */
 
 /* This function uses a Cholesky decomposition to find the solution of
    the equation Gx = y, where G is a symmetric Toeplitz matrix of order
