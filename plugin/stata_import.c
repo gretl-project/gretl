@@ -516,6 +516,9 @@ static int label_array_header (const int *list, char **names,
     return 1;
 }
 
+/* when printing stata format strings, make sure we double any
+   '%' characters */
+
 static void print_var_format (int k, const char *s, PRN *prn)
 {
     char tmp[64];
