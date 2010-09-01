@@ -1458,12 +1458,13 @@ static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
   no maximum (despite having a supremum at 1) and no MLE exists.
 */
 
-static int perfect_pred_check (const double *y, MODEL *dmod)
+static int perfect_pred_check (const double *y, MODEL *dmod,
+			       double *beta, PRN *prn)
 {
     double max0 = -1.0e200;
     double min1 = 1.0e200;
     double yht;
-    int t;
+    int t, ret;
 
     for (t=dmod->t1; t<=dmod->t2; t++) {
 	yht = dmod->yhat[t];
@@ -1477,7 +1478,18 @@ static int perfect_pred_check (const double *y, MODEL *dmod)
 	}
     }
 
-    return (min1 > max0);
+    ret = (min1 > max0);
+
+    if (ret) {
+	pputs(prn, "\nPerfect prediction obtained with\n\n");
+	for (t=0; t<dmod->ncoeff; t++) {
+	    pprintf(prn, " beta[%d] = % .15g\n", t, beta[t]);
+	}
+	pprintf(prn, "\ny = 1 when 1/(1+exp(-X*beta)) > %.15g\n\n", 
+		1/(1+exp(-max0)));
+    }
+
+    return ret;
 }
 
 /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
@@ -1511,14 +1523,14 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
 
     for (iter=0; iter<itermax; iter++) {
 
-	if (perfect_pred_check(yvar, dmod)) {
+	if (perfect_pred_check(yvar, dmod, beta, prn)) {
 	    gretl_errmsg_sprintf("Perfect prediction detected at iteration %d;\nno MLE exists",
 				 iter);
 	    err = E_NOCONV;
 	    break;
 	}
 
-	/* construct BRMR dataset */
+	/* (re-)construct BRMR dataset */
 	s = 0;
 	for (t=dmod->t1; t<=dmod->t2; t++) {
 	    yt = dmod->yhat[t];

@@ -4857,7 +4857,8 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
-    if (list[0] == 0) {
+    if (list[0] < 2) {
+	gretl_errmsg_set(_("corr: needs at least two non-constant arguments"));
 	*err = E_DATA;
 	goto bailout;
     }	

@@ -1358,7 +1358,7 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
 
 */
 
-#define TOEPLITZ_METHOD 1
+#define TOEPLITZ_METHOD 3
 
 #if (TOEPLITZ_METHOD == 3)
 
@@ -1771,9 +1771,7 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
 	}
     }
 
-    
-
-    return ret;
+    return 0; /* ret */
 }
 
 /**
@@ -1827,7 +1825,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
 	return E_DATA;
     } else if (bad_lambda) {
-#ifdef ENABLE_GMP
+#if 0 /* def ENABLE_GMP */
 	return mp_butterworth(x + t1, bw + t1, T, order, cutoff);
 #else
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
