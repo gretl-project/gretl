@@ -516,31 +516,21 @@ static int label_array_header (const int *list, char **names,
     return 1;
 }
 
-static int is_strformat(const char *s)
+static void print_var_format (int k, const char *s, PRN *prn)
 {
-    int ret = (*s=='%');
+    char tmp[64];
+    int i = 0;
 
-    if (ret) {
-	s++;
-	int done = 0;
-	int found_s = 0;
-	while (!done && ret) {
-	    if (strchr("0123456789s", *s)) {
-		if (*s == 's') {
-		    found_s = 1;
-		} else if (*s == 0) {
-		    done = 1;
-		    ret = found_s;
-		} 
-		s++;
-	    } else {
-		done = 1;
-		ret = 0;
-	    }
+    while (*s) {
+	tmp[i++] = *s;
+	if (*s == '%') {
+	    tmp[i++] = '%';
 	}
+	s++;
     }
 
-    return ret;
+    tmp[i] = '\0';
+    pprintf(prn, "variable %d: format = '%s'\n", k, tmp);    
 }
 
 static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
@@ -620,21 +610,21 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     /* format list (use it to identify date variables?) */
     for (i=0; i<nvar && !err; i++){
         stata_read_string(fp, fmtlen, c50, &err);
+	if (stata_type_string(types[i])) {
+	    /* the format is of no interest */
+	    continue;
+	}
 	if (*c50 != '\0' && c50[strlen(c50)-1] != 'g') {
-	    if (is_strformat(c50)) {
-		pprintf(vprn, "variable %d: string\n", i+1);
-	    } else {
-		pprintf(vprn, "variable %d: format = '%s'\n", i+1, c50);
-		if (!strcmp(c50, "%tm")) {
-		    pd = 12;
-		    tnum = i;
-		} else if (!strcmp(c50, "%tq")) {
-		    pd = 4;
-		    tnum = i;
-		} else if (!strcmp(c50, "%ty")) {
-		    pd = 1;
-		    tnum = i;
-		}
+	    print_var_format(i+1, c50, vprn);
+	    if (!strcmp(c50, "%tm")) {
+		pd = 12;
+		tnum = i;
+	    } else if (!strcmp(c50, "%tq")) {
+		pd = 4;
+		tnum = i;
+	    } else if (!strcmp(c50, "%ty")) {
+		pd = 1;
+		tnum = i;
 	    }
 	}
     }

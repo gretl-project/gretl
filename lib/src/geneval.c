@@ -8415,6 +8415,11 @@ static void get_lh_mspec (parser *p)
     } 
 }
 
+/* Given a string [...], parse and evaluate it as a series observation
+   index.  This is for the case where assignment is to a specific
+   observation, as in y[obs] = foo.
+*/
+
 static void get_lh_obsnum (parser *p)
 {
     int done = 0;
