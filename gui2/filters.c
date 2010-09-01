@@ -78,7 +78,6 @@ struct filter_info_ {
     GtkWidget *spin1;
     GtkWidget *spin2;
     GtkWidget *button;
-    GtkWidget *lamlabel;
 };
 
 static int calculate_filter (filter_info *finfo);
@@ -143,7 +142,6 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->spin1 = NULL;
     finfo->spin2 = NULL;
     finfo->button = NULL;
-    finfo->lamlabel = NULL;
 
     if (ftype == FILTER_SMA) {
 	finfo->center = 0;
@@ -560,29 +558,27 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
     } 
 }
 
-static double bw_lambda (int cutoff, int n)
+static void check_bw_feasibility (GtkSpinButton *b, 
+				  filter_info *finfo)
 {
-    double omega = cutoff * M_PI / 180.0;
-    double x = 1 / tan(omega / 2);
-
-    return pow(x, n * 2);
-}
-
-static void update_lambda_label (GtkSpinButton *b, 
-				 filter_info *finfo)
-{
-    if (finfo->lamlabel != NULL &&
-	finfo->spin1 != NULL && finfo->spin2 != NULL) {
-	char lstr[32];
+    if (finfo->spin1 != NULL && finfo->spin2 != NULL) {
+	double b0 = -8.56644923648263;
+	double b1 = -0.66992007228155;
+	double b2 =  2.82851981714539;
 	double x;
 	int c, n;
 
 	n = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin1));
 	c = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
-	x = bw_lambda(c, n);
-	sprintf(lstr, "lambda = %#12.5g", x);
-	gtk_label_set_text(GTK_LABEL(finfo->lamlabel), lstr);
-	/* set text red if too big? */
+
+	x = b0 + b1*c + b2*n;
+	x = 1/(1+exp(-x));
+
+	if (x > 0.47971759156793) {
+	    warnbox("This combination of parameters is probably "
+		    "numerically unstable. Try reducing n or "
+		    "increasing the cutoff.");
+	}
     }
 }
 
@@ -685,7 +681,7 @@ static void filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(update_lambda_label), finfo);
+			 G_CALLBACK(check_bw_feasibility), finfo);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);    
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	/* set cutoff */
@@ -697,15 +693,10 @@ static void filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->cutoff);
 	g_signal_connect(G_OBJECT(w), "value-changed",
-			 G_CALLBACK(update_lambda_label), finfo);
+			 G_CALLBACK(check_bw_feasibility), finfo);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 0);	
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 	hbox = gtk_hbox_new(FALSE, 5);
-	finfo->lamlabel = w = gtk_label_new("");
-	gtk_label_set_width_chars(GTK_LABEL(w), 22);
-	gtk_misc_set_alignment(GTK_MISC(w), 0, 0.5);
-	update_lambda_label(NULL, finfo);
-	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	w = gtk_button_new_with_label(_("show poles"));
 	g_signal_connect(G_OBJECT(w), "clicked",
 			 G_CALLBACK(butterworth_poles_graph), finfo);

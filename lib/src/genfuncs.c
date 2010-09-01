@@ -1358,7 +1358,7 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass)
 
 */
 
-#define TOEPLITZ_METHOD 3
+#define TOEPLITZ_METHOD 1
 
 #if (TOEPLITZ_METHOD == 3)
 
@@ -1735,10 +1735,8 @@ static double bw_max_mod (double cut, int n)
 
 /* Calculate the Butterworth lambda based on cutoff and
    order. Return non-zero if it seems that lambda is too
-   extreme. FIXME: it remains to be figured out whether the
-   criterion for "too extreme" is effective, and in fact
-   whether using lambda alone as the criterion for
-   numerical feasibility makes sense.
+   extreme. FIXME: conditioning on lambda alone is not a
+   good approach.
 */
 
 static int 
@@ -1821,7 +1819,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
 	return E_DATA;
     } else if (bad_lambda) {
-#if 0 /* def ENABLE_GMP */
+#ifdef ENABLE_GMP
 	return mp_butterworth(x + t1, bw + t1, T, order, cutoff);
 #else
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
