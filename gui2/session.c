@@ -2843,7 +2843,7 @@ static void object_popup_callback (GtkWidget *widget, gpointer data)
     } else if (!strcmp(item, _("Rename"))) {
 	rename_object_dialog(obj);
     } else if (!strcmp(item, _("Delete"))) {
-	/* note: = "Clear" in some translations */
+	/* note: "Delete" = "Clear" in some translations */
 	if (obj->sort == GRETL_OBJ_MODTAB) {
 	    clear_model_table(0, NULL);
 	} else if (obj->sort == GRETL_OBJ_GPAGE) {
