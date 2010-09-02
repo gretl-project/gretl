@@ -91,7 +91,8 @@ enum {
     ALPHA_ITEM,
     REFRESH_ITEM,
     OPEN_ITEM,
-    SPLIT_ITEM
+    SPLIT_ITEM,
+    EDITOR_ITEM
 } viewbar_flags;
 
 static GtkIconFactory *gretl_stock_ifac;
@@ -298,6 +299,15 @@ static void cmd_log_refresh (GtkWidget *w, windata_t *vwin)
 	    textview_set_text(vwin->text, newtext);
 	    g_free(newtext);
 	}
+    }
+}
+
+static void toolbar_refresh (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin->role == VIEW_LOG) {
+	cmd_log_refresh(w, vwin);
+    } else if (vwin->role == VIEW_SERIES) {
+	series_view_refresh(w, vwin);
     }
 }
 
@@ -624,10 +634,11 @@ static GretlToolItem viewbar_items[] = {
     { N_("Send To..."), GRETL_STOCK_MAIL, G_CALLBACK(mail_script_callback), MAIL_ITEM },
     { N_("Scripts index"), GTK_STOCK_INDEX, G_CALLBACK(script_index), INDEX_ITEM },
     { N_("Confidence level..."), GRETL_STOCK_ALPHA, G_CALLBACK(coeffint_set_alpha), ALPHA_ITEM },
-    { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(cmd_log_refresh), REFRESH_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(series_view_graph), PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
+    { N_("Edit..."), GTK_STOCK_EDIT, G_CALLBACK(series_view_edit), EDITOR_ITEM },
+    { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(toolbar_refresh), REFRESH_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },
     { N_("Stickiness..."), GRETL_STOCK_PIN, G_CALLBACK(set_output_sticky), STICKIFY_ITEM },
@@ -720,6 +731,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (!format_ok && f == FORMAT_ITEM) {
 	return NULL;
+    } else if (r != VIEW_SERIES && f == EDITOR_ITEM) {
+	return NULL;
     } else if (r != EDIT_SCRIPT && r != EDIT_PKG_CODE && 
 	       r != EDIT_PKG_SAMPLE && f == EDIT_SCRIPT_ITEM) {
 	return NULL;
@@ -729,7 +742,7 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
 	return NULL;
     } else if (r != COEFFINT && f == ALPHA_ITEM) {
 	return NULL;
-    } else if (r != VIEW_LOG && f == REFRESH_ITEM) {
+    } else if (r != VIEW_LOG && r != VIEW_SERIES && f == REFRESH_ITEM) {
 	return NULL;
     } else if (r != EDIT_GP && f == GP_HELP_ITEM) {
 	return NULL;

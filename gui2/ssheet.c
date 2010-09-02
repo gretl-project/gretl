@@ -2423,7 +2423,7 @@ static int sheet_list_empty (Spreadsheet *sheet)
     return ret;
 }
 
-static Spreadsheet *spreadsheet_new (SheetCmd c)
+static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
 {
     Spreadsheet *sheet;
 
@@ -2471,7 +2471,14 @@ static Spreadsheet *spreadsheet_new (SheetCmd c)
 	sheet->varlist = gretl_list_new(1);
     } else {
 	if (sheet->cmd == SHEET_EDIT_VARLIST) {
-	    sheet->varlist = main_window_selection_as_list();
+	    if (varnum > 0) {
+		sheet->varlist = gretl_list_new(1);
+		if (sheet->varlist != NULL) {
+		    sheet->varlist[1] = varnum;
+		}
+	    } else {
+		sheet->varlist = main_window_selection_as_list();
+	    }
 	} else {
 	    sheet->varlist = full_var_list(datainfo, NULL);
 	}
@@ -2950,7 +2957,26 @@ void show_spreadsheet (SheetCmd c)
 	return;
     }
 
-    sheet = spreadsheet_new(c);
+    sheet = spreadsheet_new(c, 0);
+    if (sheet == NULL) {
+	return;
+    }
+
+    real_show_spreadsheet(&sheet, c, 0);
+}
+
+void show_spreadsheet_for_series (int varnum) 
+{
+    static Spreadsheet *sheet;
+    int c = SHEET_EDIT_VARLIST;
+
+    if (sheet != NULL) {
+	/* FIXME? */
+	gtk_window_present(GTK_WINDOW(sheet->win));
+	return;
+    }
+
+    sheet = spreadsheet_new(c, varnum);
     if (sheet == NULL) {
 	return;
     }
@@ -2967,7 +2993,7 @@ void edit_scalars (void)
 	return;
     }
 
-    sheet = spreadsheet_new(SHEET_EDIT_SCALARS);
+    sheet = spreadsheet_new(SHEET_EDIT_SCALARS, 0);
     if (sheet == NULL) {
 	return;
     }
@@ -3354,7 +3380,7 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 	return;
     }
 
-    sheet = spreadsheet_new(SHEET_EDIT_MATRIX);
+    sheet = spreadsheet_new(SHEET_EDIT_MATRIX, 0);
     if (sheet == NULL) {
 	return;
     }

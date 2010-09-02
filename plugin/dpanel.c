@@ -750,18 +750,16 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 {
     int maxlag = dpd->d[bnum].maxlag;
     int minlag = dpd->d[bnum].minlag;
-
+    int tmax = goodobs[goodobs[0]];
     int i, t, t1, t2;
     int col, row;
     double xt;
-    int tmax = goodobs[goodobs[0]];
 
     for (i=1; i<goodobs[0]; i++) {
 	t1 = goodobs[i];
 	t2 = goodobs[i+1];
 	col = col0 + t2 - 1 - dpd->p;
 	row = row0 + row_increment(&dpd->d[bnum], t1+1);
-
 	for (t=0; t<tmax; t++) {
 	    if (t2 - t >= minlag && t1 - t < maxlag) {
 		/* the criterion here needs some thought? */
@@ -789,10 +787,10 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
 {
     int maxlag = dpd->d2[bnum].maxlag;
     int minlag = dpd->d2[bnum].minlag;
+    int tmax = goodobs[goodobs[0]];
     int i, k, t, t1;
     int col, row;
     double x0, x1;
-    int tmax = goodobs[goodobs[0]];
 
     for (i=1; i<=goodobs[0]; i++) {
 	t1 = goodobs[i];

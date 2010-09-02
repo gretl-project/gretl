@@ -24,6 +24,7 @@
 #include "dlgutils.h"
 #include "menustate.h"
 #include "textbuf.h"
+#include "ssheet.h"
 #include "series_view.h"
 
 #include "libset.h"
@@ -442,6 +443,43 @@ void series_view_graph (GtkWidget *w, windata_t *vwin)
 	do_graph_var(sview->varnum);
     } else {
 	do_boxplot_var(sview->varnum);
+    }
+}
+
+void series_view_edit (GtkWidget *w, windata_t *vwin)
+{
+    series_view *sview = (series_view *) vwin->data;
+
+    if (sview != NULL && sview->varnum > 0 && sview->varnum < datainfo->v) {
+	show_spreadsheet_for_series(sview->varnum);
+    }
+}
+
+void series_view_refresh (GtkWidget *w, windata_t *vwin)
+{
+    series_view *sview = (series_view *) vwin->data;
+
+    if (sview != NULL && sview->varnum > 0 && sview->varnum < datainfo->v) {
+	int list[2] = {1, sview->varnum};
+	PRN *prn = NULL;
+	int err;
+
+	if (bufopen(&prn)) {
+	    return;
+	}
+
+	err = printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
+
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    /* replace text buffer in sview using prn */
+	    const char *buf = gretl_print_get_trimmed_buffer(prn);
+
+	    textview_set_text(vwin->text, buf);
+	    gretl_print_destroy(prn);
+	}
     }
 }
 

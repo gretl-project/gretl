@@ -34,6 +34,10 @@ series_view *multi_series_view_new (const int *list);
 
 void series_view_graph (GtkWidget *w, windata_t *vwin);
 
+void series_view_edit (GtkWidget *w, windata_t *vwin);
+
+void series_view_refresh (GtkWidget *w, windata_t *vwin);
+
 void series_view_format_dialog (GtkWidget *src, windata_t *vwin);
 
 void series_view_toggle_sort (GtkWidget *w, windata_t *vwin);

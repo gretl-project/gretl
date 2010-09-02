@@ -30,6 +30,8 @@ typedef enum {
 
 void show_spreadsheet (SheetCmd c);
 
+void show_spreadsheet_for_series (int varnum);
+
 void edit_scalars (void);
 
 void gui_new_matrix (void);
