@@ -1751,21 +1751,21 @@ static int real_drop_listed_vars (int *list, double ***pZ,
 	if (d0 == d1) {
 	    if (gretl_messages_on()) {
 		if (*vname != '\0') {
-		    pprintf(prn, "Deleted %s", vname);
+		    pprintf(prn, _("Deleted %s"), vname);
 		} else {
-		    pprintf(prn, "Deleted %d variables", d1);
+		    pprintf(prn, _("Deleted %d variables"), d1);
 		}
 		pputc(prn, '\n');
 	    }
 	} else {
 	    if (d1 == 0) {
-		pputs(prn, "No variables deleted");
+		pputs(prn, _("No variables were deleted"));
 	    } else if (*vname != '\0') {
-		pprintf(prn, "Deleted %s", vname);
+		pprintf(prn, _("Deleted %s"), vname);
 	    } else {
-		pprintf(prn, "Deleted %d variables", d1);
+		pprintf(prn, _("Deleted %d variables"), d1);
 	    }
-	    pputs(prn, " (some data were in use)\n");
+	    pprintf(prn, " (%s)\n", _("some data were in use"));
 	    
 	}
     }
