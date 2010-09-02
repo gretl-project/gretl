@@ -19,8 +19,8 @@
 
 #include "libset.h"
 
-#define DPDEBUG 2
-#define IVDEBUG 2
+#define DPDEBUG 0
+#define IVDEBUG 0
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
