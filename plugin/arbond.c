@@ -75,7 +75,7 @@ struct dpdinfo_ {
     int N;                /* total number of units in sample */
     int effN;             /* number of units with usable observations */
     int T;                /* total number of observations per unit */
-    int minTi;            /* minumum equations (> 0) for any given unit */
+    int minTi;            /* minimum equations (> 0) for any given unit */
     int maxTi;            /* maximum diff. equations for any given unit */
     int max_ni;           /* max number of (possibly stacked) obs per unit
 			     (equals maxTi except in system case) */
@@ -120,7 +120,7 @@ struct dpdinfo_ {
     char *used;            /* global record of observations used */
 
     /* The members below are specific to the "dpanel" approach */
-									
+
     int ndiff;             /* total differenced observations */
     int nlev;              /* total levels observations */
     int nzb2;              /* number of block-diagonal specs, levels eqns */

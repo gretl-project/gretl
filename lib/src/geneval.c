@@ -3478,6 +3478,44 @@ static NODE *list_to_series_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+/* arguments are series on left, list on right: we add all members 
+   of list to series, or subtract all members */
+
+static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
+{
+    NODE *ret = aux_vec_node(p, p->dinfo->n);
+
+    if (ret != NULL && starting(p)) {
+	int *list = node_get_list(r, p);
+
+	if (list != NULL) {
+	    double xt, xi;
+	    int i, t;
+
+	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		xt = l->v.xvec[t];
+		if (!na(xt)) {
+		    for (i=1; i<=list[0]; i++) {
+			xi = (*p->Z)[list[i]][t];
+			if (na(xi)) {
+			    xt = NADBL;
+			    break;
+			} else if (f == B_ADD) {
+			    xt += xi;
+			} else {
+			    xt -= xi;
+			}
+		    }
+		}
+		ret->v.xvec[t] = xt;
+	    }
+	    free(list);
+	}
+    }
+
+    return ret;
+}
+
 /* arguments are list, matrix; return is series */
 
 static NODE *list_matrix_series_func (NODE *l, NODE *r, int f, parser *p)
@@ -7288,6 +7326,9 @@ static NODE *eval (NODE *t, parser *p)
 	    } else {
 		p->err = E_TYPES;
 	    }
+	} else if ((t->t == B_ADD || t->t == B_SUB) && 
+		   l->t == VEC && ok_list_node(r)) {
+	    ret = series_list_calc(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	}
