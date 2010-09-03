@@ -1073,15 +1073,17 @@ static void plot_editor_set_fontname (plot_editor *ed, gchar *name)
 
 #ifdef G_OS_WIN32
 
-static void real_graph_font_selector (GtkButton *button, gpointer p, int type)
+static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
+				      const char *default_font)
 {
-    const char *default_font;
     char fontname[128];
 
-    if (type == 1) {
-	default_font = pdf_saver_current_font(p);
-    } else {
-	default_font = gretl_png_font();
+    if (default_font == NULL) {
+	if (type == 1) {
+	    default_font = pdf_saver_current_font(p);
+	} else {
+	    default_font = gretl_png_font();
+	}
     }
 
     strcpy(fontname, default_font);
@@ -1092,10 +1094,12 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type)
 
 	gtk_button_set_label(button, title);
 	g_free(title);
-	if (type == 1) {
-	    pdf_saver_set_fontname(p, fontname);
-	} else {
+	if (type == 0) {
 	    plot_editor_set_fontname(p, g_strdup(fontname));
+	} else if (type == 1) {
+	    pdf_saver_set_fontname(p, fontname);
+	} else if (type == 2) {
+	    activate_plot_font_choice(p, g_strdup(fontname));
 	}
     }
 }
@@ -1107,6 +1111,8 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type)
 #define gtk_font_selection_dialog_get_cancel_button(f) (f->cancel_button)
 #endif
 
+/* callback from OK button in graph font selector */
+
 static void graph_font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
 {
     gchar *fontname;
@@ -1114,17 +1120,24 @@ static void graph_font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
     fontname = gtk_font_selection_dialog_get_font_name(fs);
 
     if (fontname != NULL && *fontname != '\0') {
-	GtkWidget *b = g_object_get_data(G_OBJECT(fs), "launcher");
-	gpointer p = g_object_get_data(G_OBJECT(fs), "editor");
-	gint etype = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fs), "editor-type"));
-	gchar *title = g_strdup_printf(_("font: %s"), fontname);
+	gpointer p = g_object_get_data(G_OBJECT(fs), "parent");
+	gint type = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(fs), "parent-type"));
 
-	gtk_button_set_label(GTK_BUTTON(b), title);
-	g_free(title);
-	if (etype == 1) {
-	    pdf_saver_set_fontname(p, fontname);
-	} else {
+	if (type < 2) {
+	    GtkWidget *b = g_object_get_data(G_OBJECT(fs), "launcher");
+	    gchar *title = g_strdup_printf(_("font: %s"), fontname);
+
+	    gtk_button_set_label(GTK_BUTTON(b), title);
+	    g_free(title);
+	}
+
+	if (type == 0) {
 	    plot_editor_set_fontname(p, fontname);
+	    fontname = NULL;
+	} else if (type == 1) {
+	    pdf_saver_set_fontname(p, fontname);
+	} else if (type == 2) {
+	    activate_plot_font_choice(p, fontname);
 	    fontname = NULL;
 	}
     }
@@ -1133,10 +1146,10 @@ static void graph_font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
     gtk_widget_destroy(GTK_WIDGET(fs));
 }
 
-static void real_graph_font_selector (GtkButton *button, gpointer p, int type)
+static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
+				      const char *default_font)
 {
     static GtkWidget *fontsel = NULL;
-    const char *default_font;
     GtkWidget *b;
 
     if (fontsel != NULL) {
@@ -1144,18 +1157,22 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type)
         return;
     }
 
-    if (type == 1) {
-	default_font = pdf_saver_current_font(p);
-    } else {
-	default_font = gretl_png_font();
+    if (default_font == NULL) {
+	if (type == 1) {
+	    default_font = pdf_saver_current_font(p);
+	} else {
+	    default_font = gretl_png_font();
+	}
     }
 
     fontsel = gtk_font_selection_dialog_new(_("Font for graphs"));
     gtk_font_selection_dialog_set_font_name(GTK_FONT_SELECTION_DIALOG(fontsel), 
 					    default_font);
-    g_object_set_data(G_OBJECT(fontsel), "launcher", button);
-    g_object_set_data(G_OBJECT(fontsel), "editor", p);
-    g_object_set_data(G_OBJECT(fontsel), "editor-type", GINT_TO_POINTER(type));
+    if (button != NULL) {
+	g_object_set_data(G_OBJECT(fontsel), "launcher", button);
+    }
+    g_object_set_data(G_OBJECT(fontsel), "parent", p);
+    g_object_set_data(G_OBJECT(fontsel), "parent-type", GINT_TO_POINTER(type));
 
     gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
 
@@ -1202,12 +1219,17 @@ static int font_is_ok (const char *fname)
 
 static void graph_font_selector (GtkButton *button, gpointer p)
 {
-    real_graph_font_selector(button, p, 0);
+    real_graph_font_selector(button, p, 0, NULL);
 }
 
 void pdf_font_selector (GtkButton *button, gpointer p)
 {
-    real_graph_font_selector(button, p, 1);
+    real_graph_font_selector(button, p, 1, NULL);
+}
+
+void plot_add_font_selector (png_plot *plot, const char *oldfont) 
+{
+    real_graph_font_selector(NULL, plot, 2, oldfont);
 }
 
 static struct font_info *get_gnuplot_ttf_list (int *nf)

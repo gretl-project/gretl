@@ -60,6 +60,8 @@ GPT_SPEC *plot_get_spec (png_plot *plot);
 
 void revise_distribution_plotspec (png_plot *plot, int d, int df1, int df2);
 
+void activate_plot_font_choice (png_plot *plot, gchar *fontname);
+
 int gp_term_code (gpointer p, int action);
 
 void save_graph_to_file (gpointer p, const char *fname);

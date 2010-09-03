@@ -89,6 +89,7 @@ GPT_SPEC *plotspec_new (void)
     spec->labeled = NULL;
     spec->ptr = NULL;
     spec->bars = NULL;
+    spec->fontstr = NULL;
     spec->reglist = NULL;
     spec->nobs = 0;
     spec->okobs = 0;
@@ -149,6 +150,10 @@ void plotspec_destroy (GPT_SPEC *spec)
     if (spec->bars != NULL) {
 	plotbars_free(spec->bars);
     }
+
+    if (spec->fontstr != NULL) {
+	free(spec->fontstr);
+    }    
 
     gretl_matrix_free(spec->b_ols);
     gretl_matrix_free(spec->b_quad);

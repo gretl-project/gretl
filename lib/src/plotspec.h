@@ -152,6 +152,7 @@ typedef struct {
     char *labeled;             /* for GUI use */
     void *ptr;                 /* for GUI use */
     plotbars *bars;            /* for GUI use */
+    char *fontstr;             /* for GUI use */
 } GPT_SPEC;
 
 GPT_SPEC *plotspec_new (void);
