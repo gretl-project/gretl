@@ -769,7 +769,7 @@ static int bad_write_check (dpdinfo *dpd, int row, int lev)
 
 #endif
 
-#define OLD_IVSTYLE 0
+#define OLD_IVSTYLE 0 
 
 /* GMM-style instruments in levels for the eqns in differences */
 
