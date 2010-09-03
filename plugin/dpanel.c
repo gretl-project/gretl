@@ -22,7 +22,7 @@
 #define DPDEBUG 0
 #define IVDEBUG 0
 
-#define ALT_COL_ADJ 0
+#define ALT_COL_ADJ 1
 
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
@@ -421,6 +421,11 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     dpd->t1min = dpd->T;
     dpd->t2max = 0;
 
+#if ALT_COL_ADJ
+    dpd->dcols = 0;
+    dpd->dcolskip = 0;
+#endif
+
     for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
 	int *goodobs = Goodobs[i];
 	int Ti = check_unit_obs(dpd, goodobs, Z, t);
@@ -478,7 +483,19 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     dpd->max_ni = dpd->t2max - dpd->t1min + 1;
     if (dpd->flags & DPD_SYSTEM) {
 	dpd->max_ni += dpd->max_ni - 1;
-    }      
+    }   
+
+#if ALT_COL_ADJ
+    dpd->dcols = dpd->t2max - t1dif + 1;
+    dpd->dcolskip = dpd->p + 1;
+    if (t1dif > dpd->dcolskip) {
+	dpd->dcolskip = t1dif;
+    }
+    dpd->lcolskip = dpd->p;
+    if (t1lev > dpd->lcolskip) {
+	dpd->lcolskip = t1lev;
+    }    
+#endif
 
     /* sum the total observations overall */
     dpd->totobs = dpd->ndiff + dpd->nlev;
@@ -507,7 +524,7 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
     gretl_matrix_zero(D);
 
 #if ALT_COL_ADJ
-    col_adj = dpd->t1min;
+    col_adj = dpd->dcolskip;
 #else
     col_adj = 1 + dpd->p;
 #endif
@@ -524,7 +541,7 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
     /* levels */
     if (use_levels(dpd)) {
 #if ALT_COL_ADJ
-	col_adj = -col_adj + dpd->T - dpd->p;
+	col_adj = dpd->dcols - dpd->lcolskip;
 #else
 	col_adj = -col_adj + dpd->T - dpd->p;
 #endif
@@ -597,7 +614,7 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
     gretl_matrix_zero(Yi);
 
 #if ALT_COL_ADJ
-    col_adj = dpd->t1min;
+    col_adj = dpd->dcolskip;
 #else
     col_adj = 1 + dpd->p;
 #endif
@@ -622,7 +639,7 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
     if (use_levels(dpd)) {
 	/* levels */
 #if ALT_COL_ADJ
-	col_adj = -col_adj + dpd->T - dpd->p;
+	col_adj = dpd->dcols - dpd->lcolskip;
 #else
 	col_adj = -col_adj + dpd->T - dpd->p;
 #endif
@@ -665,7 +682,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     gretl_matrix_zero(Xi);
 
 #if ALT_COL_ADJ
-    col_adj = dpd->t1min;
+    col_adj = dpd->dcolskip;
 #else
     col_adj = 1 + dpd->p;
 #endif
@@ -718,7 +735,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     
     if (use_levels(dpd)) {
 #if ALT_COL_ADJ
-	col_adj = -col_adj + dpd->T - dpd->p;
+	col_adj = dpd->dcols - dpd->lcolskip;
 #else
 	col_adj = -col_adj + dpd->T - dpd->p;
 #endif
@@ -803,7 +820,7 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
     double xt;
 
 #if ALT_COL_ADJ
-    col_adj = dpd->t1min;
+    col_adj = dpd->dcolskip;
 #else /* what we had before */
     col_adj = 1 + dpd->p;
 #endif
@@ -846,7 +863,7 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
     double x0, x1;
 
 #if ALT_COL_ADJ
-    col_adj = dpd->p;
+    col_adj = dpd->lcolskip;
 #else
     col_adj = dpd->p;
 #endif
@@ -944,7 +961,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 
 #if ALT_COL_ADJ
-    col_adj = dpd->t1min;
+    col_adj = dpd->dcolskip;
 #else
     col_adj = 1 + dpd->p;
 #endif
@@ -987,7 +1004,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 
     if (use_levels(dpd)) {
 #if ALT_COL_ADJ
-	col_adj = -col_adj + dpd->T - dpd->p;
+	col_adj = dpd->dcols - dpd->lcolskip;
 #else
 	col_adj = -col_adj + dpd->T - dpd->p;
 #endif
@@ -1100,7 +1117,7 @@ static void stack_unit_data (dpdinfo *dpd,
     int i, j, k, s = *row;
 
 #if ALT_COL_ADJ
-    col_adj = dpd->t1min;
+    col_adj = dpd->dcolskip;
 #else
     col_adj = 1 + dpd->p;
 #endif
@@ -1129,14 +1146,14 @@ static void stack_unit_data (dpdinfo *dpd,
 
     if (use_levels(dpd)) {
 	/* the starting column for levels in the data arrays */
-	int k0 = dpd->t2max - dpd->t1min;
+#if ALT_COL_ADJ
+	int col_adj = dpd->dcols - dpd->lcolskip;
+#else
+	int col_adj = dpd->t2max - dpd->t1min - dpd->p;
+#endif
 
 	for (i=1; i<=goodobs[0]; i++) {
-#if ALT_COL_ADJ
-	    k = k0 + goodobs[i] - dpd->p;
-#else
-	    k = k0 + goodobs[i] - dpd->p;
-#endif
+	    k = goodobs[i] + col_adj;
 	    if (k >= Yi->cols) {
 		fprintf(stderr, "*** stack_unit_data: reading off "
 			"end of Yi (k=%d, Yi->cols=%d)\n", k, Yi->cols);

@@ -129,6 +129,9 @@ struct dpdinfo_ {
     int *laglist;          /* (possibly discontinuous) list of lags */
     diag_info *d2;         /* info on block-diagonal instruments, levels eqns
 			      (note: not independently allocated) */
+    int dcols;
+    int dcolskip;
+    int lcolskip;
 };
 
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
