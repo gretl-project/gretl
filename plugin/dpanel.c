@@ -421,11 +421,6 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     dpd->t1min = dpd->T;
     dpd->t2max = 0;
 
-#if ALT_COL_ADJ
-    dpd->dcols = 0;
-    dpd->dcolskip = 0;
-#endif
-
     for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
 	int *goodobs = Goodobs[i];
 	int Ti = check_unit_obs(dpd, goodobs, Z, t);
@@ -491,10 +486,13 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     if (t1dif > dpd->dcolskip) {
 	dpd->dcolskip = t1dif;
     }
+    dpd->lcolskip = (t1lev > dpd->p)? t1lev : dpd->p;
+    dpd->lcol0 = dpd->dcols - dpd->lcolskip;
+#else
+    dpd->dcols = dpd->t2max - dpd->p + 1;
+    dpd->dcolskip = dpd->p + 1;
     dpd->lcolskip = dpd->p;
-    if (t1lev > dpd->lcolskip) {
-	dpd->lcolskip = t1lev;
-    }    
+    dpd->lcol0 = dpd->T - dpd->p - (dpd->p + 1);
 #endif
 
     /* sum the total observations overall */
@@ -518,36 +516,24 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
 {
     int usable = goodobs[0] - 1;
-    int col_adj;
     int i, j, i0, i1;    
 
     gretl_matrix_zero(D);
-
-#if ALT_COL_ADJ
-    col_adj = dpd->dcolskip;
-#else
-    col_adj = 1 + dpd->p;
-#endif
 
     /* differences */
     for (i=0; i<usable; i++) {
 	i0 = goodobs[i+1];
 	i1 = goodobs[i+2];
-	j = i1 - col_adj;
+	j = i1 - dpd->dcolskip;
 	gretl_matrix_set(D, i0, j, -1);
 	gretl_matrix_set(D, i1, j,  1);
     }
 
     /* levels */
     if (use_levels(dpd)) {
-#if ALT_COL_ADJ
-	col_adj = dpd->dcols - dpd->lcolskip;
-#else
-	col_adj = -col_adj + dpd->T - dpd->p;
-#endif
 	for (i=1; i<=goodobs[0]; i++) {
 	    i1 = goodobs[i];
-	    j = i1 + col_adj;
+	    j = i1 + dpd->lcol0;
 	    gretl_matrix_set(D, i1, j, 1);
 	}
     }
@@ -613,12 +599,6 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 
     gretl_matrix_zero(Yi);
 
-#if ALT_COL_ADJ
-    col_adj = dpd->dcolskip;
-#else
-    col_adj = 1 + dpd->p;
-#endif
-
     /* differences */
     for (i=0; i<usable; i++) {
 	i0 = goodobs[i+1];
@@ -626,35 +606,30 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	t0 = t + i0;
 	t1 = t + i1;
 	dy = y[t1] - y[t0];
-	if (i1 - col_adj >= Yi->cols) {
+	if (i1 - dpd->dcolskip >= Yi->cols) {
 	    fprintf(stderr, "Bzzt! scribbling off the end of Yi (diffs)\n"
-		    " Yi->cols = %d; i1 - col_adj = %d - %d = %d\n", 
-		    Yi->cols, i1, col_adj, i1 - col_adj);
+		    " Yi->cols = %d; i1 - dcolskip = %d - %d = %d\n", 
+		    Yi->cols, i1, dpd->dcolskip, i1 - dpd->dcolskip);
 	    return E_DATA;
 	} else {
-	    gretl_vector_set(Yi, i1 - col_adj, dy);
+	    gretl_vector_set(Yi, i1 - dpd->dcolskip, dy);
 	}
     }
     
     if (use_levels(dpd)) {
 	/* levels */
-#if ALT_COL_ADJ
-	col_adj = dpd->dcols - dpd->lcolskip;
-#else
-	col_adj = -col_adj + dpd->T - dpd->p;
-#endif
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
 	    t1 = t + i1;
 	    if (i1 + col_adj >= Yi->cols) {
 		fprintf(stderr, "Bzzt! scribbling off the end of Yi (levels)\n"
-			" Yi->cols = %d; i1 + col_adj = %d + %d = %d\n", 
-			Yi->cols, i1, col_adj, i1 + col_adj);
+			" Yi->cols = %d; i1 + lcol0 = %d + %d = %d\n", 
+			Yi->cols, i1, dpd->lcol0, i1 + dpd->lcol0);
 		fprintf(stderr, " note: dpd->t1min = %d, 1 + dpd->p = %d\n",
 			dpd->t1min, 1 + dpd->p);
 		return E_DATA;
 	    } else {
-		gretl_vector_set(Yi, i1 + col_adj, y[t1]);
+		gretl_vector_set(Yi, i1 + dpd->lcol0, y[t1]);
 	    }
 	}
     }
@@ -672,7 +647,6 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     const double *y = Z[dpd->yno];
     int usable = goodobs[0] - 1;
     int nlags = dpd->laglist[0];
-    int col_adj;
     const double *xj;
     int t0, t1, i0, i1;
     int i, j, lj;
@@ -680,12 +654,6 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     double dx;
 
     gretl_matrix_zero(Xi);
-
-#if ALT_COL_ADJ
-    col_adj = dpd->dcolskip;
-#else
-    col_adj = 1 + dpd->p;
-#endif
 
     /* differences */
     for (i=0; i<usable; i++) {
@@ -695,7 +663,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	t1 = t + i1;
 
 	row = 0;
-	col = i1 - col_adj;
+	col = i1 - dpd->dcolskip;
 
 	for (j=1; j<=nlags; j++) {
 	    lj = dpd->laglist[j];
@@ -734,16 +702,11 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
     }
     
     if (use_levels(dpd)) {
-#if ALT_COL_ADJ
-	col_adj = dpd->dcols - dpd->lcolskip;
-#else
-	col_adj = -col_adj + dpd->T - dpd->p;
-#endif
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
 	    t1 = t + i1;
 	    row = 0;
-	    col = i1 + col_adj;
+	    col = i1 + dpd->lcol0;
 
 	    for (j=1; j<=nlags; j++) {
 		lj = dpd->laglist[j];
@@ -806,6 +769,8 @@ static int bad_write_check (dpdinfo *dpd, int row, int lev)
 
 #endif
 
+#define OLD_IVSTYLE 0
+
 /* GMM-style instruments in levels for the eqns in differences */
 
 static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x, 
@@ -816,20 +781,17 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
     int minlag = dpd->d[bnum].minlag;
     int tmax = goodobs[goodobs[0]];
     int i, t, t1, t2;
-    int col_adj, col, row;
+    int col, row;
     double xt;
-
-#if ALT_COL_ADJ
-    col_adj = dpd->dcolskip;
-#else /* what we had before */
-    col_adj = 1 + dpd->p;
-#endif
 
     for (i=1; i<goodobs[0]; i++) {
 	t1 = goodobs[i];
 	t2 = goodobs[i+1];
-	col = col0 + t2 - col_adj;
+	col = col0 + t2 - dpd->dcolskip;
 	row = row0 + row_increment(&dpd->d[bnum], t1+1);
+#if OLD_IVSTYLE
+	tmax = t1;
+#endif
 	for (t=0; t<tmax; t++) {
 	    if (t2 - t >= minlag && t1 - t < maxlag) {
 		/* the criterion here needs some thought? */
@@ -859,19 +821,16 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
     int minlag = dpd->d2[bnum].minlag;
     int tmax = goodobs[goodobs[0]];
     int i, k, t, t1;
-    int col_adj, col, row;
+    int col, row;
     double x0, x1;
-
-#if ALT_COL_ADJ
-    col_adj = dpd->lcolskip;
-#else
-    col_adj = dpd->p;
-#endif
 
     for (i=1; i<=goodobs[0]; i++) {
 	t1 = goodobs[i];
-	col = col0 + t1 - col_adj;
+	col = col0 + t1 - dpd->lcolskip;
 	row = row0 + row_increment(&dpd->d2[bnum], t1);
+#if OLD_IVSTYLE
+	tmax = t1 - 1;
+#endif
 	for (t=1; t<=tmax; t++) {
 	    k = t1 - t;
 	    if (k <= maxlag && k >= minlag) {
@@ -941,7 +900,6 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     /* k3 marks the starting row for time dummies */
     int k3 = k2 + dpd->nzr;
     int t0, t1, i0, i1;
-    int col_adj;
     int i, j, col, row = 0;
 
     gretl_matrix_zero(Zi);
@@ -960,18 +918,12 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	row = gmm_inst_lev(dpd, i, x, t, goodobs, row, col, Zi);	
     }
 
-#if ALT_COL_ADJ
-    col_adj = dpd->dcolskip;
-#else
-    col_adj = 1 + dpd->p;
-#endif
-
     /* equations in differences: differenced exog vars */
     if (dpd->nzr > 0) {
 	for (i=0; i<usable; i++) {
 	    i0 = goodobs[i+1];
 	    i1 = goodobs[i+2];
-	    col = i1 - col_adj;
+	    col = i1 - dpd->dcolskip;
 	    t0 = t + i0;
 	    t1 = t + i1;
 	    for (j=0; j<dpd->nzr; j++) {
@@ -994,7 +946,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     if (dpd->ndum > 0 && !use_levels(dpd)) {
 	for (i=0; i<usable; i++) {
 	    i1 = goodobs[i+2];
-	    col = i1 - col_adj;
+	    col = i1 - dpd->dcolskip;
 	    for (j=0; j<dpd->ndum; j++) {
 		dx = timedum_level(dpd, j, i1);
 		gretl_matrix_set(Zi, k3 + j, col, dx);
@@ -1003,17 +955,12 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 
     if (use_levels(dpd)) {
-#if ALT_COL_ADJ
-	col_adj = dpd->dcols - dpd->lcolskip;
-#else
-	col_adj = -col_adj + dpd->T - dpd->p;
-#endif
 	/* equations in levels: levels of exog vars */
 	if (dpd->nzr > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
 		t1 = t + i1;
-		col = i1 + col_adj;
+		col = i1 + dpd->lcol0;
 		for (j=0; j<dpd->nzr; j++) {
 		    x = Z[dpd->ilist[j+1]];
 		    gretl_matrix_set(Zi, k2 + j, col, x[t1]);
@@ -1025,7 +972,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	if (dpd->ndum > 0) {
 	    for (i=0; i<=usable; i++) {
 		i1 = goodobs[i+1];
-		col = i1 + col_adj;
+		col = i1 + dpd->lcol0;
 		for (j=0; j<dpd->ndum; j++) {
 		    dx = timedum_level(dpd, j, i1);
 		    gretl_matrix_set(Zi, k3 + j, col, dx);
@@ -1113,17 +1060,10 @@ static void stack_unit_data (dpdinfo *dpd,
 {
     unit_info *unit = &dpd->ui[unum];
     double x;
-    int col_adj;
     int i, j, k, s = *row;
 
-#if ALT_COL_ADJ
-    col_adj = dpd->dcolskip;
-#else
-    col_adj = 1 + dpd->p;
-#endif
-
     for (i=2; i<=goodobs[0]; i++) {
-	k = goodobs[i] - col_adj;
+	k = goodobs[i] - dpd->dcolskip;
 	gretl_vector_set(dpd->Y, s, Yi->val[k]);
 	for (j=0; j<Xi->rows; j++) {
 	    x = gretl_matrix_get(Xi, j, k);
@@ -1145,15 +1085,8 @@ static void stack_unit_data (dpdinfo *dpd,
     unit->nobs = (goodobs[0] > 0)? (goodobs[0] - 1) : 0;
 
     if (use_levels(dpd)) {
-	/* the starting column for levels in the data arrays */
-#if ALT_COL_ADJ
-	int col_adj = dpd->dcols - dpd->lcolskip;
-#else
-	int col_adj = dpd->t2max - dpd->t1min - dpd->p;
-#endif
-
 	for (i=1; i<=goodobs[0]; i++) {
-	    k = goodobs[i] + col_adj;
+	    k = goodobs[i] + dpd->lcol0;
 	    if (k >= Yi->cols) {
 		fprintf(stderr, "*** stack_unit_data: reading off "
 			"end of Yi (k=%d, Yi->cols=%d)\n", k, Yi->cols);
