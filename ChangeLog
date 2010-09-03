@@ -15,6 +15,7 @@ version 1.9.2, in progress
 - New function bwfilt() to compute the Butterworth filter
   (thanks go to D.S.G. Pollock), plus GUI access under
   /Variable/Filter (time-series data only)
+- New function polyfit() to obtain a polynomial trend line
 - New accessor $mnl_probs to get the estimated outcome
   probabilities for a multinomial logit model (plus GUI
   access under the Analysis menu in the model window)
@@ -34,6 +35,8 @@ version 1.9.2, in progress
   files via gnuplot
 - Drag-and-drop onto gretl main window: support database files
   (gretl native, RATS or PcGive) as well as regular data files
+- Graphs in GUI: for plots that don't support the full graph 
+  editor, add a font selector
 - Internals: modify GUI sources to ensure that gretl will build 
   OK with the forthcoming GTK+ 3.0
 - MS Windows: update Inno installer and add the officially
