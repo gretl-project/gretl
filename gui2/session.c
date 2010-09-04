@@ -114,7 +114,6 @@ struct SESSION_MODEL_ {
 struct SESSION_GRAPH_ {
     char name[MAXSAVENAME];
     char fname[MAXLEN];
-    int ID;
     GretlObjType type;
 }; 
 
@@ -253,7 +252,6 @@ static gui_obj *get_gui_obj_by_data (void *finddata);
 static void add_user_matrix_callback (void);
 
 static int session_graph_count;
-static int session_bplot_count;
 static int commands_recorded;
 
 int session_is_modified (void)
@@ -423,13 +421,8 @@ static SESSION_GRAPH *session_append_graph (const char *grname,
 
     session.graphs = graphs;
     session.graphs[ng] = graph;
-    graph->ID = session.ngraphs++;
-
-    if (type == GRETL_OBJ_GRAPH) {
-	session_graph_count++;
-    } else {
-	session_bplot_count++;
-    }
+    session.ngraphs++;     /* decremented if graph is deleted */
+    session_graph_count++; /* not decremented on deletion */
 
     return graph;
 }
@@ -723,35 +716,45 @@ static int add_model_to_session (void *ptr, const char *name,
     return 0;
 }
 
+static int replace_session_graph (SESSION_GRAPH *graph,
+				  const char *fname,
+				  GretlObjType type)
+{
+    if (fname != NULL && strcmp(graph->fname, fname)) {
+	gretl_remove(graph->fname);
+	strcpy(graph->fname, fname);
+    }
+
+    graph->type = type;
+    mark_session_changed();
+
+    return ADD_OBJECT_REPLACE;
+}
+
 static int 
 real_add_graph_to_session (const char *fname, const char *grname,
 			   GretlObjType type)
 {
     SESSION_GRAPH *graph = get_session_graph_by_name(grname);
-    int replace = 0;
 
     if (graph != NULL) {
-	graph->type = type;
-	strcpy(graph->fname, fname);	
-	replace = 1;
-    } else {
-	graph = session_append_graph(grname, fname, type);
-	if (graph == NULL) {
-	    return ADD_OBJECT_FAIL;
-	}
+	return replace_session_graph(graph, grname, type);
+    } 
+
+    graph = session_append_graph(grname, fname, type);
+    if (graph == NULL) {
+	return ADD_OBJECT_FAIL;
     }
 
     mark_session_changed();
 
-    if (iconlist != NULL && !replace) {
+    if (iconlist != NULL) {
 	session_add_icon(graph, type, ICON_ADD_SINGLE);
-    }
-
-    if (autoicon_on() && iconlist == NULL) {
+    } else if (autoicon_on()) {
 	view_session(NULL);
     }
 
-    return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
+    return ADD_OBJECT_OK;
 }
 
 const char *get_session_dirname (void)
@@ -780,7 +783,38 @@ static int session_dir_ok (void)
     return ret;
 }
 
-int add_graph_to_session (char *fname, char *fullname, int type)
+static void make_graph_name (char *shortname, char *graphname) 
+{
+    int i, n = session_graph_count + 1;
+
+    for ( ; ; n++) {
+	int unique = 1;
+
+	sprintf(shortname, "graph.%d", n);
+	sprintf(graphname, "%s %d", _("Graph"), n);
+
+	for (i=0; i<session.ngraphs; i++) {
+	    if (!strcmp(shortname, session.graphs[i]->fname) ||
+		!strcmp(graphname, session.graphs[i]->name)) {
+		unique = 0;
+		break;
+	    }
+	}
+
+	if (unique) {
+	    break;
+	} 
+    }
+}
+
+/* Callback for "add to session as icon" on a graph displayed
+   as PNG -- see gpt_control.c. Note that there is code in
+   gpt_control designed to ensure that this option is not
+   available for a graph that has already been saved in
+   this way.
+*/
+
+int gui_add_graph_to_session (char *fname, char *fullname, int type)
 {
     char shortname[MAXSAVENAME];
     char graphname[MAXSAVENAME];
@@ -806,15 +840,8 @@ int add_graph_to_session (char *fname, char *fullname, int type)
 
     gretl_chdir(gretl_dotdir());
 
-    if (type == GRETL_OBJ_PLOT) {
-	sprintf(shortname, "plot.%d", session_bplot_count + 1);
-	session_file_make_path(fullname, shortname);
-	sprintf(graphname, "%s %d", _("Boxplot"), session_bplot_count + 1);
-    } else {
-	sprintf(shortname, "graph.%d", session_graph_count + 1);
-	session_file_make_path(fullname, shortname);
-	sprintf(graphname, "%s %d", _("Graph"), session_graph_count + 1);
-    }
+    make_graph_name(shortname, graphname);
+    session_file_make_path(fullname, shortname);
 
     /* move temporary plot file to permanent */
     if (copyfile(fname, fullname)) {
@@ -832,17 +859,41 @@ int add_graph_to_session (char *fname, char *fullname, int type)
     return err;
 }
 
-/* Note that in this callback @gname may contain non-ASCII
-   characters (which will be in UTF-8). So we're better off
-   not using @gname to construct a filename in case we're on
-   a non-UTF-8 system.
+static void make_graph_filename (char *shortname) 
+{
+    int i, n = session_graph_count + 1;
+
+    for ( ; ; n++) {
+	int unique = 1;
+
+	sprintf(shortname, "graph.%d", n);
+
+	for (i=0; i<session.ngraphs; i++) {
+	    if (!strcmp(shortname, session.graphs[i]->fname)) {
+		unique = 0;
+		break;
+	    }
+	}
+
+	if (unique) {
+	    break;
+	} 
+    }
+}
+
+/* Callback for a command on the pattern "grfnname <- plotspec".
+   Note @gname may contain non-ASCII characters (which will be 
+   in UTF-8). So we'd best not use @gname to construct a filename
+   for the graph in case we're on a non-UTF-8 system.
 */
 
 int cli_add_graph_to_session (const char *fname, const char *gname,
 			      GretlObjType type)
 {
+    SESSION_GRAPH *orig;
     char shortname[MAXSAVENAME];
     char grpath[MAXLEN];
+    int replace = 0;
     
     errno = 0;
 
@@ -853,13 +904,17 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 
     gretl_chdir(gretl_dotdir());
 
-    if (type == GRETL_OBJ_PLOT) {
-	sprintf(shortname, "plot.%d", session_bplot_count + 1);
-    } else {
-	sprintf(shortname, "graph.%d", session_graph_count + 1);
-    }    
+    orig = get_session_graph_by_name(gname);
 
-    session_file_make_path(grpath, shortname);
+    if (orig != NULL) {
+	/* replacing */
+	session_file_make_path(grpath, orig->fname);
+	replace = 1;
+    } else {
+	/* ensure unique filename */
+	make_graph_filename(shortname);
+	session_file_make_path(grpath, shortname);
+    }
 
     if (copyfile(fname, grpath)) {
 	errbox(_("Failed to copy graph file"));
@@ -870,7 +925,11 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
        session directory; now delete the original */
     gretl_remove(fname);
 
-    return real_add_graph_to_session(shortname, gname, type);
+    if (replace) {
+	return replace_session_graph(orig, NULL, type);
+    } else {
+	return real_add_graph_to_session(shortname, gname, type);
+    }
 }
 
 void *get_session_object_by_name (const char *name, GretlObjType *type)
@@ -1557,7 +1616,6 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     }
 
     session_graph_count = 0;
-    session_bplot_count = 0;
 
     reset_plot_count();
 
@@ -2097,7 +2155,7 @@ static int real_delete_graph_from_session (SESSION_GRAPH *junk)
 	}
 	j = 0;
 	for (i=0; i<ng; i++) {
-	    if (session.graphs[i]->ID != junk->ID) { 
+	    if (!strcmp(session.graphs[i]->name, junk->name)) { 
 		ppgr[j++] = session.graphs[i];
 	    } else {
 		remove_session_graph_file(session.graphs[i]->fname);
@@ -2203,7 +2261,7 @@ static void rename_session_graph (SESSION_GRAPH *graph, const char *newname)
     int i;
 
     for (i=0; i<session.ngraphs; i++) {
-	if (session.graphs[i]->ID == graph->ID) { 
+	if (!strcmp(session.graphs[i]->name, graph->name)) { 
 	    session.graphs[i]->name[0] = '\0';
 	    strncat(session.graphs[i]->name, newname, MAXSAVENAME - 1);
 	    break;

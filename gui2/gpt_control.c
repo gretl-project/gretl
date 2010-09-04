@@ -3214,7 +3214,7 @@ static void add_to_session_callback (GPT_SPEC *spec)
     type = (spec->code == PLOT_BOXPLOTS)? GRETL_OBJ_PLOT :
 	GRETL_OBJ_GRAPH;
 
-    err = add_graph_to_session(spec->fname, fullname, type);
+    err = gui_add_graph_to_session(spec->fname, fullname, type);
 
     if (!err) {
 	remove_png_term_from_plot(fullname, spec);
@@ -4632,9 +4632,7 @@ void display_session_graph (const char *fname, const char *title)
     if (err) {
 	/* display the bad plot file */
 	view_file(fullname, 0, 0, 78, 350, VIEW_FILE);
-    }
-
-    if (!err) {
+    } else {
 	err = gnuplot_show_png(fullname, title, NULL, 1);
     }
 

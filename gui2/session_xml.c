@@ -53,7 +53,7 @@ static int check_graph_file (const char *fname, int type)
    constructing the graph list de novo.)
 */
 
-static void normalize_graph_filename (char *fname, int *gnum, int *pnum)
+static void normalize_graph_filename (char *fname, int gnum)
 {
     char s[16];
     int i;
@@ -63,20 +63,10 @@ static void normalize_graph_filename (char *fname, int *gnum, int *pnum)
 	char newname[MAXLEN];
 	gchar *tmp = NULL;
 
-	if (!strcmp(s, "plot")) {
-	    if (i > *pnum) {
-		session_file_make_path(oldname, fname);
-		tmp = g_strdup_printf("%s.%d", s, *pnum);
-		session_file_make_path(newname, tmp);
-	    }
-	    *pnum += 1;
-	} else {
-	    if (i > *gnum) {
-		session_file_make_path(oldname, fname);
-		tmp = g_strdup_printf("%s.%d", s, *gnum);
-		session_file_make_path(newname, tmp);
-	    }
-	    *gnum += 1;
+	if (i != gnum) {
+	    session_file_make_path(oldname, fname);
+	    tmp = g_strdup_printf("%s.%d", s, gnum);
+	    session_file_make_path(newname, tmp);
 	}
 
 	if (tmp != NULL) {
@@ -90,8 +80,8 @@ static void normalize_graph_filename (char *fname, int *gnum, int *pnum)
 static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
-    int gnum = 1, pnum = 1;
     int inpage = 0;
+    int gnum = 1;
     int errs = 0;
 
     /* reset prior to parsing */
@@ -124,7 +114,7 @@ static int restore_session_graphs (xmlNodePtr node)
 		fprintf(stderr, "checking '%s'\n", name);
 		err = check_graph_file((const char *) fname, type);
 		if (!err) {
-		    normalize_graph_filename((char *) fname, &gnum, &pnum);
+		    normalize_graph_filename((char *) fname, ++gnum);
 		}
 	    } 
 	}
@@ -792,10 +782,9 @@ static int write_session_xml (const char *datname)
 
     fprintf(fp, " <graphs count=\"%d\">\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
-	fprintf(fp, "  <session-graph name=\"%s\" fname=\"%s\" "
-		"ID=\"%d\" type=\"%d\"", 
+	fprintf(fp, "  <session-graph name=\"%s\" fname=\"%s\" type=\"%d\"", 
 		session.graphs[i]->name, session.graphs[i]->fname,
-		session.graphs[i]->ID, session.graphs[i]->type);
+		session.graphs[i]->type);
 	if (in_graph_page(session.graphs[i]->fname)) {
 	    fputs(" inpage=\"1\"/>\n", fp);
 	} else {
