@@ -1716,6 +1716,26 @@ static int mp_butterworth (const double *x, double *bw, int T,
 
 #endif
 
+#if 0 
+
+/* note: cut should be in degrees */
+
+static int bw_numeric_check (double cut, int n)
+{
+    const double b0 = -8.56644923648263;
+    const double b1 = -0.66992007228155;
+    const double b2 =  2.82851981714539;
+    double x;
+
+    /* let's be conservative here */
+    x = b0 + b1 * (cut - 1.0) + b2 * (n + 1);
+    x = 1/(1+exp(-x));
+
+    return (x > 0.479717591568)
+}
+
+#endif
+
 /* maximum modulus among the poles of the filter:
    too close to 1.0 is a problem
 */
@@ -1731,12 +1751,12 @@ static double bw_max_mod (double cut, int n)
     return sqrt(x * x + y * y);
 }
 
-#define MAX_LAM 1
+#define MAX_LAM 10000
 
 /* Calculate the Butterworth lambda based on cutoff and
    order. Return non-zero if it seems that lambda is too
-   extreme. FIXME: conditioning on lambda alone is not a
-   good approach.
+   extreme. FIXME: conditioning on lambda alone is not an
+   adequate approach.
 */
 
 static int 
@@ -1760,12 +1780,12 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
 	/* OK with regular double-precision? */
 	if (*lam1 > MAX_LAM) { 
 	    /* note: AC thinks the following doesn't help */
-	    *lam2 = MAX_LAM / *lam1;
-	    *lam1 = MAX_LAM;
+	    *lam1 = sqrt(*lam1);
+	    *lam2 = 1 / *lam1;
 	}
     }
 
-    return 0; /* ret */
+    return ret;
 }
 
 /**

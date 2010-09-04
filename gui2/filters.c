@@ -571,6 +571,10 @@ static void check_bw_feasibility (GtkSpinButton *b,
 	n = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin1));
 	c = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
 
+	/* let's be conservative here */
+	c--;
+	n++;
+
 	x = b0 + b1*c + b2*n;
 	x = 1/(1+exp(-x));
 
