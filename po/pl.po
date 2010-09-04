@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.0\n"
+"Project-Id-Version: gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-09-03 15:08-0400\n"
-"PO-Revision-Date: 2010-08-31 04:00-0400\n"
+"PO-Revision-Date: 2010-09-04 17:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -1276,24 +1276,22 @@ msgid "Please open a data file first"
 msgstr "Proszę najpierw otworzyć plik danych"
 
 #: lib/src/dataset.c:1754 lib/src/dataset.c:1764
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %s"
-msgstr "Usuwanie"
+msgstr "Usunąć %s"
 
 #: lib/src/dataset.c:1756 lib/src/dataset.c:1766
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %d variables"
-msgstr "Wybierz dwie zmienne"
+msgstr "Usunąć %d zmienne"
 
 #: lib/src/dataset.c:1762
-#, fuzzy
 msgid "No variables were deleted"
-msgstr "Brak zmiennych do wczytania\n"
+msgstr "Brak zmiennych do usunięcia"
 
 #: lib/src/dataset.c:1768
-#, fuzzy
 msgid "some data were in use"
-msgstr "Nie znaleziono numerycznych danych"
+msgstr "Część danych jest wykorzystywanych"
 
 #: lib/src/dataset.c:1916 gui2/gui_utils.c:4362
 msgid "dataset is subsampled"
@@ -1750,7 +1748,7 @@ msgstr "Dropping %s: zakres próby zawiera nieprawidłowe obserwacje\n"
 
 #: lib/src/describe.c:4861
 msgid "corr: needs at least two non-constant arguments"
-msgstr ""
+msgstr "corr: needs at least two non-constant arguments"
 
 #: lib/src/describe.c:4918 lib/src/modelprint.c:3163 lib/src/modelprint.c:3175
 #: lib/src/modelprint.c:3176 lib/src/modelprint.c:3177
@@ -9215,9 +9213,8 @@ msgid "frequency cutoff (degrees):"
 msgstr "częstość odcięcia (w stopniach):"
 
 #: gui2/filters.c:700
-#, fuzzy
 msgid "show poles"
-msgstr "Pokaż wykres"
+msgstr "Wykres 'Butterwortha poles'"
 
 #: gui2/filters.c:708
 msgid "Order:"
@@ -9353,7 +9350,7 @@ msgstr "Błędny wersja łańcucha: wykorzystaj cyfry i '.'"
 #: gui2/fnsave.c:474
 #, c-format
 msgid "Can't find the function '%s'"
-msgstr "Nie znaleziono funkcji %s"
+msgstr "Nie znaleziono funkcji '%s'"
 
 #: gui2/fnsave.c:764
 msgid "private"
@@ -9470,9 +9467,9 @@ msgid ""
 "must be less than 32 characters in length, must include only\n"
 "ASCII letters, numbers and '_', and must end with \".gfn\""
 msgstr ""
-"Błędna nazwa pakietu funkcji: nazwa musi rozpoczynać się od litery, długość "
-"do 32 znaków, może zawierać tylkoznaki ASCII, cyfry i '_' oraz kończyć się "
-"nazwą \".gfn\""
+" Błędna nazwa pakietu funkcji: nazwa musi rozpoczynać się od litery,"
+" długość do 32 znaków, może zawierać tylko znaki ASCII, cyfry"
+" i '_' oraz kończyć się nazwą \".gfn\""
 
 #: gui2/fnsave.c:1465 gui2/library.c:6928
 msgid "OK to overwrite?"
@@ -9526,14 +9523,12 @@ msgid "Print"
 msgstr "Drukuj"
 
 #: gui2/gpt_control.c:3146
-#, fuzzy
 msgid "roots (real, imaginary, modulus, frequency)"
-msgstr "Pierwiastki VAR (rzeczywiste, urojone, moduł, częstość)"
+msgstr "Pierwiastki (rzeczywiste, urojone, moduł, częstość)"
 
 #: gui2/gpt_control.c:3183
-#, fuzzy
 msgid "roots"
-msgstr "pierwiastki równania charakterystycznego VAR"
+msgstr "pierwiastki"
 
 #: gui2/gpt_control.c:3205
 msgid "gretl: boxplot data"
@@ -9606,7 +9601,6 @@ msgid "Numerical values"
 msgstr "Numeryczna wartość"
 
 #: gui2/gpt_control.c:3339 gui2/gpt_control.c:3415
-#, fuzzy
 msgid "Font"
 msgstr "Nazwa czcionki"
 
@@ -14460,9 +14454,8 @@ msgid "Reformat..."
 msgstr "Przeformatowanie..."
 
 #: gui2/toolbar.c:640
-#, fuzzy
 msgid "Edit..."
-msgstr "Edycja"
+msgstr "Edycja..."
 
 #: gui2/toolbar.c:641
 msgid "Refresh"

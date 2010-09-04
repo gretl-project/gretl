@@ -404,7 +404,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
        t2pen = index of penultimate good obs in levels 
     */
     int t1lev = dpd->T, t1dif = dpd->T, t2pen = 0;
-    int gmin, i, t;
+    int i, t;
 
     /* just make sure these are zeroed */
     dpd->nzdiff = dpd->nzlev = 0;
@@ -417,8 +417,6 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     dpd->minTi = dpd->T;
 
     /* initialize other accounts */
-    gmin = (use_levels(dpd))? 1 : 2;
-    dpd->t1min = dpd->T;
     dpd->t2max = 0;
 
     for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
@@ -441,9 +439,6 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    if (Ti < dpd->minTi) {
 		dpd->minTi = Ti;
 	    }
-	    if (goodobs[gmin] < dpd->t1min) {
-		dpd->t1min = goodobs[gmin];
-	    }
 	    if (goodobs[1] < t1lev) {
 		t1lev = goodobs[1];
 	    }
@@ -458,6 +453,8 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	    }
 	}
     }
+
+    dpd->t1min = (use_levels(dpd))? t1lev : t1dif;
 
     /* figure number of time dummies, if wanted */
     if (dpd->flags & DPD_TIMEDUM) {
@@ -793,8 +790,9 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 	tmax = t1;
 #endif
 	for (t=0; t<tmax; t++) {
-	    if (t2 - t >= minlag && t1 - t < maxlag) {
-		/* the criterion here needs some thought? */
+	    /* 2010-09-04: this was: t2 - t >= minlag && t1 - t < maxlag */
+	    if (t1 - t >= minlag - 1 && t1 - t < maxlag) {
+		/* the criterion here needs care */
 		xt = x[s+t];
 		if (!na(xt)) {
 #if IVDEBUG
