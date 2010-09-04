@@ -389,10 +389,9 @@ static int session_append_model (SESSION_MODEL *mod)
     return 0;
 }
 
-static SESSION_GRAPH *
-session_append_graph (const char *grname,
-		      const char *fname,
-		      GretlObjType type)
+static SESSION_GRAPH *session_append_graph (const char *grname,
+					    const char *fname,
+					    GretlObjType type)
 {
     SESSION_GRAPH *graph;
     SESSION_GRAPH **graphs;
@@ -833,10 +832,16 @@ int add_graph_to_session (char *fname, char *fullname, int type)
     return err;
 }
 
+/* Note that in this callback @gname may contain non-ASCII
+   characters (which will be in UTF-8). So we're better off
+   not using @gname to construct a filename in case we're on
+   a non-UTF-8 system.
+*/
+
 int cli_add_graph_to_session (const char *fname, const char *gname,
 			      GretlObjType type)
 {
-    char name[MAXSAVENAME];
+    char shortname[MAXSAVENAME];
     char grpath[MAXLEN];
     
     errno = 0;
@@ -848,10 +853,14 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
 
     gretl_chdir(gretl_dotdir());
 
-    strcpy(name, gname);
-    space_to_score(name);
+    if (type == GRETL_OBJ_PLOT) {
+	sprintf(shortname, "plot.%d", session_bplot_count + 1);
+    } else {
+	sprintf(shortname, "graph.%d", session_graph_count + 1);
+    }    
 
-    session_file_make_path(grpath, name);
+    session_file_make_path(grpath, shortname);
+
     if (copyfile(fname, grpath)) {
 	errbox(_("Failed to copy graph file"));
 	return ADD_OBJECT_FAIL;
@@ -861,7 +870,7 @@ int cli_add_graph_to_session (const char *fname, const char *gname,
        session directory; now delete the original */
     gretl_remove(fname);
 
-    return real_add_graph_to_session(name, gname, type);
+    return real_add_graph_to_session(shortname, gname, type);
 }
 
 void *get_session_object_by_name (const char *name, GretlObjType *type)
