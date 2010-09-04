@@ -63,9 +63,9 @@ static void normalize_graph_filename (char *fname, int gnum)
 	char newname[MAXLEN];
 	gchar *tmp = NULL;
 
-	if (i != gnum) {
+	if (i != gnum && (!strcmp(s, "graph") || !strcmp(s, "plot"))) {
 	    session_file_make_path(oldname, fname);
-	    tmp = g_strdup_printf("%s.%d", s, gnum);
+	    tmp = g_strdup_printf("graph.%d", gnum);
 	    session_file_make_path(newname, tmp);
 	}
 
@@ -81,7 +81,7 @@ static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
     int inpage = 0;
-    int gnum = 1;
+    int gnum = 0;
     int errs = 0;
 
     /* reset prior to parsing */
