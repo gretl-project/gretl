@@ -1775,7 +1775,7 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
     fprintf(stderr, "for cutoff %g, order %d: lambda=%g, maxmod=%g\n",
 	    cutoff, n, *lam1, bw_max_mod(cutoff, n));
 
-    if (*lam1 > 1.0e15) {
+    if (*lam1 > 1.0e18) {
 	/* can't cope, even with multiple precision? */
 	ret = 2;
     } else if (*lam1 > 1.0e6) {
