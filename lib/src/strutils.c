@@ -1953,7 +1953,7 @@ char *build_path (char *targ, const char *dirname, const char *fname,
     strcat(targ, dirname);
     len = strlen(targ);
     if (len == 0) {
-	return NULL;
+	return targ;
     }
 
     /* strip a trailing single dot */
