@@ -72,7 +72,7 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
 		 int bkl, int bku, int k);
 
 int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
-			int order, double cutoff);
+			int n, double cutoff);
 
 int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order);
 

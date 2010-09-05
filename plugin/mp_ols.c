@@ -2079,12 +2079,12 @@ static void calc_lambda (int n, double cutoff, mpf_t *lambda)
 
 /* note: for this function the cutoff is specified in radians */
 
-int mp_bw_filter (const double *x, double *bw, int T, int order, 
+int mp_bw_filter (const double *x, double *bw, int T, int n, 
 		  double cutoff)
 {
     mpf_t *g, *ds, *tmp, *y;
     mpf_t mx, lambda[2];
-    int t, m, n = order;
+    int t, m;
     int err = 0;
 
     set_gretl_mp_bits();

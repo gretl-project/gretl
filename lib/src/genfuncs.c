@@ -1837,6 +1837,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 
     /* sample offset */
     y = bw + t1;
+    x = x + t1;
 
     /* the cutoff is expressed in radians internally */
     cutoff *= M_PI / 180.0;
@@ -1848,7 +1849,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	return E_DATA;
     } else if (bad_lambda) {
 #ifdef ENABLE_GMP
-	return mp_butterworth(x + t1, y, T, n, cutoff);
+	return mp_butterworth(x, y, T, n, cutoff);
 #else
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
 	return E_DATA;
@@ -1866,7 +1867,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     tmp = ds + n + 1;
 
     /* place a copy of the data in y */
-    memcpy(y, x + t1, T * sizeof *y);
+    memcpy(y, x, T * sizeof *y);
 
     form_wvec(g, ds, tmp, n, lam1, lam2); /* W = M + lambda * Q'SQ */
 
@@ -1881,7 +1882,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	GammaY(g, y, tmp, T, n-2);   /* Form SQy in y */
 	/* write the trend into y (low-pass) */
 	for (t=0; t<T; t++) {
-	    y[t] = x[t + t1] - lam1 * y[t];
+	    y[t] = x[t] - lam1 * y[t];
 	}	
     }    
 
