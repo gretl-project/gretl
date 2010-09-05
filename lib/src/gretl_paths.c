@@ -2424,6 +2424,17 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 
     if (strcmp(paths.dotdir, paths.workdir)) { 
 	err1 = validate_writedir(paths.workdir);
+	if (err1) {
+	    /* try falling back on the default working dir */
+	    const char *defpath = gretl_default_workdir();
+
+	    if (*defpath != '\0' && strcmp(defpath, paths.workdir)) {
+		err1 = validate_writedir(defpath);
+		if (err1 == 0) {
+		    strcpy(paths.workdir, defpath);
+		}
+	    }
+	}
     }
 
     set_up_sourceview_path();
