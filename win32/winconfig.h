@@ -5,9 +5,6 @@
 #define ENABLE_NLS 1
 #define PACKAGE "gretl"
 
-/* GMP library support */
-#define ENABLE_GMP 1
-
 /* Extra floating-point GMP routines? */
 #define HAVE_MPFR 1
 

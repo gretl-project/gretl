@@ -37,18 +37,8 @@
 #define LOOP_DEBUG 0
 #define SUBST_DEBUG 0
 
-#if LOOP_DEBUG
-# undef ENABLE_GMP
-#endif
-
-#if defined(ENABLE_GMP)
-# include <gmp.h>
-  typedef mpf_t bigval;
-#elif defined(HAVE_LONG_DOUBLE)
-  typedef long double bigval;
-#else
-  typedef double bigval;
-#endif
+#include <gmp.h>
+typedef mpf_t bigval;
 
 enum loop_types {
     COUNT_LOOP,
@@ -1274,9 +1264,7 @@ static void controller_free (controller *clr)
 
 static int gretl_loop_prepare (LOOPSET *loop)
 {
-#ifdef ENABLE_GMP
     mpf_set_default_prec(256);
-#endif
 
     /* allocate some initial lines/commands for loop */
     loop->lines = malloc(LOOP_BLOCK * sizeof *loop->lines); 
@@ -1291,18 +1279,18 @@ static int gretl_loop_prepare (LOOPSET *loop)
 
 static void loop_model_free (LOOP_MODEL *lmod)
 {
+    int i, n;
+
 #if LOOP_DEBUG
     fprintf(stderr, "loop_model_free: lmod at %p, model0 at %p\n",
 	    (void *) lmod, (void *) lmod->model0);
 #endif
 
-#ifdef ENABLE_GMP
-    int i, n = 4 * lmod->model0->ncoeff;
+    n = 4 * lmod->model0->ncoeff;
 
     for (i=0; i<n; i++) {
 	mpf_clear(lmod->bigarray[i]);
     }
-#endif
 
     free(lmod->bigarray);
     free(lmod->cbak);
@@ -1322,15 +1310,10 @@ static void loop_model_zero (LOOP_MODEL *lmod)
     lmod->n = 0;
 
     for (i=0; i<lmod->nc; i++) {
-#ifdef ENABLE_GMP
 	mpf_init(lmod->sum_coeff[i]);
 	mpf_init(lmod->ssq_coeff[i]);
 	mpf_init(lmod->sum_sderr[i]);
 	mpf_init(lmod->ssq_sderr[i]);
-#else
-	lmod->sum_coeff[i] = lmod->ssq_coeff[i] = 0.0;
-	lmod->sum_sderr[i] = lmod->ssq_sderr[i] = 0.0;
-#endif
 	lmod->cbak[i] = lmod->sbak[i] = NADBL;
 	lmod->cdiff[i] = lmod->sdiff[i] = 0;
     }
@@ -1407,14 +1390,12 @@ static int loop_model_start (LOOP_MODEL *lmod, const MODEL *pmod)
 
 static void loop_print_free (LOOP_PRINT *lprn)
 {
-#ifdef ENABLE_GMP
     int i;
 
     for (i=0; i<lprn->list[0]; i++) {
 	mpf_clear(lprn->sum[i]);
 	mpf_clear(lprn->ssq[i]);
     }
-#endif
 
     free(lprn->sum);
     free(lprn->ssq);
@@ -1431,12 +1412,8 @@ static void loop_print_zero (LOOP_PRINT *lprn)
     lprn->n = 0;
 
     for (i=0; i<lprn->list[0]; i++) { 
-#ifdef ENABLE_GMP
 	mpf_init(lprn->sum[i]);
 	mpf_init(lprn->ssq[i]);
-#else
-	lprn->sum[i] = lprn->ssq[i] = 0.0;
-#endif
 	lprn->xbak[i] = NADBL;
 	lprn->diff[i] = 0;
 	lprn->na[i] = 0;
@@ -1745,9 +1722,7 @@ get_loop_model_by_line (LOOPSET *loop, int lno, int *err)
 
 static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 {
-#ifdef ENABLE_GMP
     mpf_t m;
-#endif
     int j, err = 0;
 
 #if LOOP_DEBUG
@@ -1768,12 +1743,9 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 	}
     }
 
-#ifdef ENABLE_GMP
     mpf_init(m);
-#endif
 
     for (j=0; j<pmod->ncoeff; j++) {
-#ifdef ENABLE_GMP
 	mpf_set_d(m, pmod->coeff[j]);
 	mpf_add(lmod->sum_coeff[j], lmod->sum_coeff[j], m); 
 	mpf_mul(m, m, m);
@@ -1783,12 +1755,6 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 	mpf_add(lmod->sum_sderr[j], lmod->sum_sderr[j], m);
 	mpf_mul(m, m, m);
 	mpf_add(lmod->ssq_sderr[j], lmod->ssq_sderr[j], m);
-#else
-	lmod->sum_coeff[j] += pmod->coeff[j];
-	lmod->ssq_coeff[j] += pmod->coeff[j] * pmod->coeff[j];
-	lmod->sum_sderr[j] += pmod->sderr[j];
-	lmod->ssq_sderr[j] += pmod->sderr[j] * pmod->sderr[j];
-#endif
 	if (!na(lmod->cbak[j]) && realdiff(pmod->coeff[j], lmod->cbak[j])) {
 	    lmod->cdiff[j] = 1;
 	}
@@ -1799,9 +1765,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
 	lmod->sbak[j] = pmod->sderr[j];
     }
 
-#ifdef ENABLE_GMP
     mpf_clear(m);
-#endif
 
     lmod->n += 1;
 
@@ -1821,9 +1785,7 @@ static int loop_print_update (LOOP_PRINT *lprn,
 			      const int *list, const double **Z, 
 			      const DATAINFO *pdinfo)
 {
-#ifdef ENABLE_GMP
     mpf_t m;
-#endif
     int j, vj;
     double x;
     int err = 0;
@@ -1836,9 +1798,7 @@ static int loop_print_update (LOOP_PRINT *lprn,
 	}
     }
 
-#ifdef ENABLE_GMP
     mpf_init(m);
-#endif
     
     for (j=0; j<list[0]; j++) {
 	if (lprn->na[j]) {
@@ -1850,24 +1810,17 @@ static int loop_print_update (LOOP_PRINT *lprn,
 	    lprn->na[j] = 1;
 	    continue;
 	}
-#ifdef ENABLE_GMP
 	mpf_set_d(m, x); 
 	mpf_add(lprn->sum[j], lprn->sum[j], m);
 	mpf_mul(m, m, m);
 	mpf_add(lprn->ssq[j], lprn->ssq[j], m);
-#else
-	lprn->sum[j] += x;
-	lprn->ssq[j] += x * x;
-#endif
 	if (!na(lprn->xbak[j]) && realdiff(x, lprn->xbak[j])) {
 	    lprn->diff[j] = 1;
 	}
 	lprn->xbak[j] = x;
     }
 
-#ifdef ENABLE_GMP
     mpf_clear(m);
-#endif
 
     lprn->n += 1;
 
@@ -2063,7 +2016,6 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 			      int i, PRN *prn)
 {
     char pname[VNAMELEN];
-#ifdef ENABLE_GMP
     mpf_t c1, c2, m, sd1, sd2;
     unsigned long ln = lmod->n;
 
@@ -2113,31 +2065,6 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     mpf_clear(m);
     mpf_clear(sd1);
     mpf_clear(sd2);
-#else /* non-GMP */
-    bigval m1, m2, sd1, sd2;
-    int n = lmod->n;
-
-    m1 = lmod->sum_coeff[i] / n;
-    if (lmod->cdiff[i] == 0) {
-	sd1 = 0.0;
-    } else {
-	sd1 = (lmod->ssq_coeff[i] - n * m1 * m1) / n;
-	sd1 = (sd1 <= 0.0)? 0.0 : sqrt((double) sd1);
-    }
-
-    m2 = lmod->sum_sderr[i] / n;
-    if (lmod->sdiff[i] == 0) {
-	sd2 = 0.0;
-    } else {
-	sd2 = (lmod->ssq_sderr[i] - n * m2 * m2) / n;
-	sd2 = (sd2 <= 0.0)? 0 : sqrt((double) sd2);
-    }
-
-    gretl_model_get_param_name(lmod->model0, pdinfo, i, pname);
-    pprintf(prn, "%*s", VNAMELEN - 1, pname);
-    pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
-	    (double) m2, (double) sd2);
-#endif
 }
 
 static void loop_model_print (LOOP_MODEL *lmod, const DATAINFO *pdinfo, 
@@ -2189,7 +2116,6 @@ static void loop_print_print (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
     pputs(prn, "    ");
     pputs(prn, _("   Variable     mean         std. dev.\n"));
 
-#ifdef ENABLE_GMP
     mpf_init(mean);
     mpf_init(m);
     mpf_init(sd);
@@ -2223,26 +2149,7 @@ static void loop_print_print (LOOP_PRINT *lprn, const DATAINFO *pdinfo,
     mpf_clear(mean);
     mpf_clear(m);
     mpf_clear(sd);
-#else
-    for (i=0; i<lprn->list[0]; i++) {
-	vi = lprn->list[i+1];
-	s = gretl_scalar_get_name(vi);
-	if (lprn->na[i]) {
-	    pprintf(prn, "%*s", VNAMELEN - 1, s);
-	    pprintf(prn, "%14s %14s\n", "NA   ", "NA   ");
-	    continue;
-	}
-	mean = lprn->sum[i] / n;
-	if (lprn->diff[i] == 0) {
-	    sd = 0.0;
-	} else {
-	    m = (lprn->ssq[i] - n * mean * mean) / n;
-	    sd = (m < 0)? 0 : sqrt((double) m);
-	}
-	pprintf(prn, "%*s", VNAMELEN - 1, s);
-	pprintf(prn, "%#14g %#14g\n", (double) mean, (double) sd);
-    }
-#endif
+ 
     pputc(prn, '\n');
 }
 

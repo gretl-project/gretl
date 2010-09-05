@@ -4782,13 +4782,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = print_save_model(models[0], pdinfo, prn, s);
 	break;
 	
-#ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
 	*models[0] = mp_ols(cmd->list, Z, pdinfo);
 	err = print_save_model(models[0], pdinfo, prn, s);
 	break;
-#endif
 
     case AR:
     case AR1:

@@ -1697,8 +1697,6 @@ static void form_Qy (double *y, int T)
     y[T-1] = lag1;
 }
 
-#ifdef ENABLE_GMP
-
 static int mp_butterworth (const double *x, double *bw, int T,
 			   int order, double cutoff)
 {
@@ -1718,8 +1716,6 @@ static int mp_butterworth (const double *x, double *bw, int T,
 
     return err;
 }
-
-#endif
 
 #if 0 
 
@@ -1848,12 +1844,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
 	return E_DATA;
     } else if (bad_lambda) {
-#ifdef ENABLE_GMP
 	return mp_butterworth(x, y, T, n, cutoff);
-#else
-	gretl_errmsg_set("Butterworth: infeasible lambda value");
-	return E_DATA;
-#endif
     }	
 
     /* the workspace we need for everything except the

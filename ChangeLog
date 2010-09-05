@@ -7,7 +7,7 @@ version 1.9.2, in progress
 - "kalman": allow a constant term in the state transition
   equation
 - "modprint" command: allow a string literal for the second
-  argument; support both comma- and space-separation of 
+  argument; support both comma- and space-separation of
   parameter names
 - pdf function: support the poisson and binomial distributions
   (giving the probability mass)
@@ -20,7 +20,7 @@ version 1.9.2, in progress
   probabilities for a multinomial logit model (plus GUI
   access under the Analysis menu in the model window)
 - Fix for multinomial logit: correct bias in favor of the
-  base case in the reported fitted values ($yhat)  
+  base case in the reported fitted values ($yhat)
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix crashing bug in Wilcoxon signed rank test
@@ -28,16 +28,17 @@ version 1.9.2, in progress
   was not successfully completed
 - Fix for OS X: we now support Ctrl-click as equivalent to
   right-click (for popup menus, etc.)
-- Fix for finding user's customized LaTeX preamble file 
+- Fix for finding user's customized LaTeX preamble file
 - Fix: more rigorous detection of whether TeX output is PDF
   rather than DVI
 - Traditional Chinese locale: encode text to CP950 for EMF
   files via gnuplot
 - Drag-and-drop onto gretl main window: support database files
   (gretl native, RATS or PcGive) as well as regular data files
-- Graphs in GUI: for plots that don't support the full graph 
+- Graphs in GUI: for plots that don't support the full graph
   editor, add a font selector
-- Internals: modify GUI sources to ensure that gretl will build 
+- Build: require libgmp (no longer an optional extra)
+- Internals: modify GUI sources to ensure that gretl will build
   OK with the forthcoming GTK+ 3.0
 - MS Windows: update Inno installer and add the officially
   recognized translations

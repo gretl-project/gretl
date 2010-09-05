@@ -3253,10 +3253,8 @@ static char *est_str (int cmdnum)
     case COINT:
     case COINT2:
 	return N_("Cointegration");
-#ifdef ENABLE_GMP
     case MPOLS:
 	return N_("Multiple precision OLS");
-#endif
     default:
 	return "";
     }

@@ -168,16 +168,6 @@ then
   gnome_prefix=${withval}
 fi,)
 
-AC_ARG_WITH(gmp,
-[  --with-gmp            Use Gnu Multiple Precision library [[default=auto]]],
-if test "x${withval}" = "xno"
-then
-  try_gmp=no
-else
-  try_gmp=yes
-fi,
-try_gmp=yes)
-
 AC_ARG_WITH(mpfr,
 [  --with-mpfr            Use MPFR library [[default=auto]]],
 if test "x${withval}" = "xno"
@@ -371,11 +361,9 @@ AC_CHECK_LIB(z, gzopen,have_zlib="yes" ; \
 AC_SUBST(have_zlib)
 
 dnl
-dnl See if GMP lib is available
+dnl Check for GMP
 dnl
-if test x"${try_gmp}" != xno ; then
-  AM_PATH_GMP(4.0.1, have_gmp="yes" ; AC_DEFINE(ENABLE_GMP))
-fi
+AM_PATH_GMP(4.0.1, have_gmp="yes")
 
 dnl
 dnl See if MPFR is available
@@ -570,7 +558,7 @@ fi
 
 dnl
 dnl For cairo functionality: check for GTK 2.8 or higher
-dnl (which we ned to fake gtkspinner)
+dnl (which we need to fake gtkspinner)
 dnl
 if test "$have_gtk" = "2.0" && test "$have_gtkprint" = "no" ; then
     PKG_CHECK_MODULES(GTKCAIRO, gtk+-2.0 >= 2.8.0,
@@ -787,6 +775,12 @@ Please install fftw3 and then reconfigure gretl.
 fftw3 is available from http://www.fftw.org/
 "
 
+elif test "${have_gmp}" = "no" ; then
+echo "
+Please install GMP and then reconfigure gretl.
+GMP is available from http://gmplib.org/
+"
+
 elif test "${have_glib2}" = "no" ; then
 echo "
 Please install glib-2.0 and then reconfigure gretl.
@@ -801,7 +795,6 @@ Configuration:
   Use readline library:                   ${have_readline}
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use LaTeX for typesetting output:       ${have_latex}
-  Gnu Multiple Precision support:         ${have_gmp}
   MPFR support:                           ${have_mpfr}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${have_gtk}
