@@ -1437,7 +1437,9 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
     gretl_vector *mg = NULL;
     gretl_vector *my = NULL;
     gretl_vector *mx = NULL;
-    int err = 0;
+    int i, err = 0;
+
+    fprintf(stderr, "netlib toeplitz solve...\n");
 
     mg = gretl_vector_alloc(T); 
     my = gretl_vector_alloc(T); 
