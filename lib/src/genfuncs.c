@@ -1457,6 +1457,9 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
 
     if (err) {
 	fprintf(stderr, "symm_toeplitz: err = %d\n", err);
+	for (i=0; i<T; i++) {
+	    y[i] = NADBL;
+	}
     } else {
 	for (i=0; i<T; i++) {
 	    y[i] = mx->val[i];
@@ -1795,7 +1798,7 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
  * @x: array of original data.
  * @bw: array into which to write the filtered series.
  * @pdinfo: data set information.
- * @order: desired lag order.
+ * @n: desired lag order.
  * @cutoff: desired angular cutoff in degrees (0, 180).
  *
  * Calculates the Butterworth filter. The code that does this
@@ -1806,12 +1809,12 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
  */
 
 int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
-			int order, double cutoff)
+			int n, double cutoff)
 {
     double *g, *ds, *tmp, *y;
     double lam1, lam2 = 1.0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int T, t, m, n = order;
+    int T, t, m;
     int bad_lambda = 0;
     int err = 0;
 
@@ -1832,6 +1835,9 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     T = t2 - t1 + 1;
     m = 3 * (n+1);
 
+    /* sample offset */
+    y = bw + t1;
+
     /* the cutoff is expressed in radians internally */
     cutoff *= M_PI / 180.0;
 
@@ -1842,7 +1848,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	return E_DATA;
     } else if (bad_lambda) {
 #ifdef ENABLE_GMP
-	return mp_butterworth(x + t1, bw + t1, T, order, cutoff);
+	return mp_butterworth(x + t1, y, T, n, cutoff);
 #else
 	gretl_errmsg_set("Butterworth: infeasible lambda value");
 	return E_DATA;
@@ -1858,9 +1864,6 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 
     ds = g + n + 1;
     tmp = ds + n + 1;
-
-    /* sample offset */
-    y = bw + t1;
 
     /* place a copy of the data in y */
     memcpy(y, x + t1, T * sizeof *y);
@@ -1878,7 +1881,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
 	GammaY(g, y, tmp, T, n-2);   /* Form SQy in y */
 	/* write the trend into y (low-pass) */
 	for (t=0; t<T; t++) {
-	    y[t] = x[t] - lam1 * y[t];
+	    y[t] = x[t + t1] - lam1 * y[t];
 	}	
     }    
 
