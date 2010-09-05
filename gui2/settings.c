@@ -2295,6 +2295,7 @@ static void
 add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset) 
 {
     GtkWidget *hbox, *vbox, *w = NULL;
+    GtkWidget *entry;
     GSList *group = NULL;
     GList *list = NULL;
     char tmp[MAXLEN];
@@ -2314,7 +2315,9 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     gtk_container_add(GTK_CONTAINER(hbox), w);
     set_combo_box_strings_from_list(GTK_COMBO_BOX(w), list);
     set_combo_box_default_text(GTK_COMBO_BOX(w), tmp);
-    gtk_entry_set_width_chars(GTK_ENTRY(gtk_bin_get_child(GTK_BIN(w))), 32);
+    entry = gtk_bin_get_child(GTK_BIN(w));
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
     wset->wdir_combo = w;
     w = gtk_button_new_with_label(_("Browse..."));
     g_signal_connect(G_OBJECT(w), "clicked",
@@ -2389,6 +2392,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     }
 
     err = set_gretl_work_dir(tmp);
+
     if (err) {
 	gui_errmsg(err);
 	delete_from_filelist(FILE_LIST_WDIR, tmp);
@@ -2400,6 +2404,10 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
 
     usecwd = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->cwd_radio));
     keep_folder = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(wset->keep_radio));
+
+    if (!err) {
+	gtk_widget_destroy(wset->dialog);
+    }
 }
 
 void working_dir_dialog (void) 
@@ -2434,11 +2442,9 @@ void working_dir_dialog (void)
 		     dialog);
 
     button = ok_button(hbox);
+    gtk_widget_grab_default(button);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_wdir_changes), &wset);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     dialog);
 
     context_help_button(hbox, WORKDIR);
 
