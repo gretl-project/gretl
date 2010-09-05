@@ -3833,7 +3833,7 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     err = gretl_file_get_contents(fname, &cbuf, &length);
 
     if (!err && !is_png((const guchar *) cbuf, length)) {
-	errbox("'%s' is not a PNG file");
+	errbox("'%s' is not a PNG file", fname);
 	err = 1;
     }
 	
