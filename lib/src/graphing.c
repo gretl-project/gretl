@@ -4724,7 +4724,6 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 
     fprintf(fp, "set title '%s'\n", 
 	    _("VAR inverse roots in relation to the unit circle"));
-    fputs("# literal lines = 8\n", fp);
     fputs("unset border\n", fp);
     fputs("unset key\n", fp);
     fputs("set xzeroaxis\n", fp);

@@ -64,6 +64,7 @@ GPT_SPEC *plotspec_new (void)
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
     spec->yfmt[0] = 0;
+    spec->ytics[0] = 0;
     spec->fname[0] = 0;
     spec->keyspec = GP_KEY_LEFT_TOP;
 
@@ -597,12 +598,41 @@ print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
     }
 }
 
+static int print_polar_labels (const GPT_SPEC *spec, FILE *fp)
+{
+    double x, y;
+    int t;
+
+    fputs("# printing data labels\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    for (t=0; t<spec->nobs; t++) {
+	if (spec->labeled != NULL && !spec->labeled[t]) {
+	    /* printing only specified labels */
+	    continue;
+	}
+	if (sscanf(spec->markers[t], "%lf,%lf", &x, &y) == 2) {
+	    fprintf(fp, "set label \"%.3f,%.3f\" at %.3f,%.3f\n", 
+		    x, y, x, y + .04);
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    return 0;	
+}
+
 static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 {
     const double *x, *y;
     double xrange, yrange;
     double yoff;
     int t;
+
+    if ((spec->flags & GPT_POLAR) && spec->markers != NULL) {
+	return print_polar_labels(spec, fp);
+    }
 
     if (spec->n_lines > 2 || 
 	spec->lines[0].ncols != 2 || 
@@ -926,6 +956,12 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	}
     }
 
+    if (spec->flags & GPT_POLAR) {
+	fputs("unset ytics\n", fp);
+	fputs("set size square\n", fp);
+	fputs("set polar\n", fp);
+    }
+
     gnuplot_missval_string(fp);
 
     if (spec->keyspec == GP_KEY_NONE) {
@@ -956,6 +992,15 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	}
     }
 
+    /* customized ytics? */
+    if (!strcmp(spec->ytics, "none")) {
+	fputs("set noytics\n", fp);
+    } else {
+	if (!string_is_blank(spec->ytics)) {
+	    fprintf(fp, "set ytics %s\n", spec->ytics);
+	}
+    }    
+
     if (spec->flags & GPT_Y2AXIS) {
 	/* using two y axes */
 	fputs("set ytics nomirror\n", fp);
@@ -970,7 +1015,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	if (string_is_blank(spec->xtics)) {
 	    fputs("set xtics nomirror\n", fp);
 	}
-	fputs("set ytics nomirror\n", fp);
+	if (string_is_blank(spec->ytics)) {
+	    fputs("set ytics nomirror\n", fp);
+	}
     }
 
     if (spec->bmargin > 0) {

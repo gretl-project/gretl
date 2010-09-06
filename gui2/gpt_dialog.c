@@ -1611,6 +1611,8 @@ static int show_bars_check (GPT_SPEC *spec)
 	    spec->pd == 12);
 }
 
+#define plot_has_tics(s) (strcmp(s->xtics, "none") || strcmp(s->ytics, "none"))
+
 static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec) 
 {
     static int aa_ok = 1;
@@ -1748,8 +1750,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	}
     } 
 
-    if (1) {
-	/* FIXME does this need to be conditional? */
+    if (plot_has_tics(spec)) {
 	table_add_row(tbl, &rows, TAB_MAIN_COLS);
 	ed->grid_check = gtk_check_button_new_with_label(_("Show grid"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 

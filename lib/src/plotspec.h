@@ -130,7 +130,8 @@ typedef struct {
     char xfmt[16];             /* x-axis tic format */
     char xtics[64];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
-    char yfmt[16];             /* y-axis tic format */             
+    char yfmt[16];             /* y-axis tic format */ 
+    char ytics[64];            /* y-axis tic marks */
     int termtype;              /* gnuplot "terminal" code */
     int n_lines;               /* number of lines */
     int samples;               /* number of samples for parametric plots */

@@ -51,7 +51,8 @@ typedef enum {
     GPT_FILL_SWITCH    = 1 << 21, /* switching from errorbars to fill */
     GPT_ERR_SWITCH     = 1 << 22, /* switching from fill to errorbars */
     GPT_MONO           = 1 << 23, /* monochrome output */
-    GPT_GRID           = 1 << 24  /* display default gnuplot grid */
+    GPT_GRID           = 1 << 24, /* display default gnuplot grid */
+    GPT_POLAR          = 1 << 25  /* plot is in polar mode */
 } GptFlags; 
 
 typedef struct gretlRGB_ gretlRGB;

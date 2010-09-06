@@ -960,7 +960,6 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
     fprintf(fp, "set title \"Butterworth poles (n = %d, cutoff = %d degrees)\"\n", 
 	    finfo->order, finfo->cutoff);
 
-    fputs("# literal lines = 8\n", fp);
     fputs("unset border\n", fp);
     fputs("unset key\n", fp);
     fputs("set xzeroaxis\n", fp);

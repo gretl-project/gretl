@@ -1245,6 +1245,10 @@ static int get_gpt_marker (const char *line, char *label)
     const char *p = strchr(line, '#');
     char format[6];
 
+#if GPDEBUG > 1
+    fprintf(stderr, "get_gpt_marker...\n");
+#endif
+
     if (p != NULL) {
 	sprintf(format, "%%%ds", OBSLEN - 1);
 	sscanf(p + 1, format, label);
@@ -1266,7 +1270,6 @@ static int get_gpt_marker (const char *line, char *label)
                       p == PLOT_PANEL || \
                       p == PLOT_TRI_GRAPH || \
                       p == PLOT_BI_GRAPH || \
-                      p == PLOT_ROOTS || \
 		      p == PLOT_ELLIPSE || \
 		      p == PLOT_RQ_TAU)
 
@@ -1288,7 +1291,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
     double *x[5] = { NULL };
     char test[5][32];
     int started_data_lines = 0;
-    int i, j, t;
+    int i, j, t, imin = 0;
     int err = 0;
 
     spec->okobs = spec->nobs;
@@ -1331,6 +1334,9 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 	int offset = 1;
 
 	if (ncols == 0) {
+	    if (i == 0) {
+		imin = 1;
+	    }
 	    continue;
 	}
 
@@ -1388,7 +1394,7 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 		okobs--;
 	    }
 
-	    if (i == 0 && do_markers) {
+	    if (i == imin && do_markers) {
 		get_gpt_marker(s, spec->markers[t]);
 	    }
 	}
@@ -1598,6 +1604,47 @@ static int catch_value (char *targ, const char *src, int maxlen)
     return (*targ != '\0');
 }
 
+static void fix_old_roots_plot (GPT_SPEC *spec)
+{
+    free_strings_array(spec->literal, spec->n_literal);
+    spec->literal = NULL;
+    spec->n_literal = 0;
+
+    spec->flags |= (GPT_POLAR | GPT_XZEROAXIS | GPT_YZEROAXIS);
+    spec->border = 0;
+    spec->keyspec = GP_KEY_NONE;
+    strcpy(spec->xtics, "none");
+    strcpy(spec->ytics, "none");
+}
+
+static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
+{
+    char key[16] = {0};
+    int err = 0;
+
+    if (sscanf(s + 6, "%15s", key) != 1) {
+	err = 1;
+    } else if (!strcmp(key, "border")) {
+	spec->border = 0;
+    } else if (!strcmp(key, "key")) {
+	spec->keyspec = GP_KEY_NONE;
+    } else if (!strcmp(key, "xtics")) {
+	strcpy(spec->xtics, "none");
+    } else if (!strcmp(key, "ytics")) {
+	strcpy(spec->ytics, "none");
+    } else {
+	/* unrecognized "unset" parameter */
+	err = 1;
+    }
+
+    if (err) {
+	errbox(_("Failed to parse gnuplot file"));
+	fprintf(stderr, "parse_gp_unset_line: bad line '%s'\n", s);
+    }
+
+    return err;
+}
+
 static int parse_gp_set_line (GPT_SPEC *spec, const char *s, 
 			      linestyle *styles)
 {
@@ -1643,6 +1690,9 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "parametric")) {
 	spec->flags |= GPT_PARAMETRIC;
 	return 0;
+    } else if (!strcmp(key, "polar")) {
+	spec->flags |= GPT_POLAR;
+	return 0;
     } else if (!strcmp(key, "xzeroaxis")) {
 	spec->flags |= GPT_XZEROAXIS;
 	return 0;
@@ -1654,6 +1704,9 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	return 0;
     } else if (!strcmp(key, "noxtics")) {
 	strcpy(spec->xtics, "none");
+	return 0;
+    } else if (!strcmp(key, "noytics")) {
+	strcpy(spec->ytics, "none");
 	return 0;
     } else if (!strcmp(key, "nokey")) {
 	spec->keyspec = GP_KEY_NONE;
@@ -1709,6 +1762,8 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
 	safecpy(spec->xtics, val, sizeof(spec->xtics) - 1);
     } else if (!strcmp(key, "mxtics")) { 
 	safecpy(spec->mxtics, val, sizeof(spec->mxtics) - 1);
+    } else if (!strcmp(key, "ytics")) { 
+	safecpy(spec->ytics, val, sizeof(spec->ytics) - 1);
     } else if (!strcmp(key, "border")) {
 	spec->border = atoi(val);
     } else if (!strcmp(key, "bmargin")) {
@@ -2080,49 +2135,6 @@ plot_get_data_and_markers (GPT_SPEC *spec, const char *buf,
     return err;
 }
 
-/* Get data markers from a "non-editable" plot and set the polar flag,
-   if relevant.  The only case where we're able to use brush-on
-   markers with non-editable plots is where we're showing numerical
-   values for the roots in a complex roots plot.
-*/
-
-static int uneditable_get_markers (GPT_SPEC *spec, const char *buf, int *polar)
-{
-    char line[256];
-    long offset = 0;
-    int gotit = 0;
-    int err = 0;
-
-    buf_rewind(buf);
-
-    /* advance to the right line (with data plus markers) */
-    while (bufgets(line, sizeof line, buf)) {
-	if ((isdigit(*line) || *line == '-') && strchr(line, '#')) {
-	    gotit = 1;
-	    break;
-	} else if (strstr(line, "set polar")) {
-	    *polar = 1;
-	}
-	offset = buftell(buf);
-    }
-
-    if (!gotit) {
-	return 1;
-    } else {
-	/* not found: back up */
-	bufseek(buf, offset);
-    }
-
-    err = plotspec_add_line(spec);
-    
-    if (!err) {
-	spec->lines[0].ncols = 2;
-	err = plot_get_data_and_markers(spec, buf, 2, 1);
-    }
-
-    return err;
-}
-
 /* Parse special comment to get the 0-based index numbers of
    any user-defined lines that have been added to the plot.
    The comment looks like:
@@ -2190,7 +2202,7 @@ static void linestyle_init (linestyle *ls)
    of plot that are not fully handled.
 */
 
-static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
+static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 {
     linestyle styles[MAX_STYLES];
     int do_markers = 0;
@@ -2245,9 +2257,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 
     if (cant_edit(spec->code)) {
 	fprintf(stderr, "read_plotspec_from_file: plot is not editable\n");
-	if (do_markers) {
-	    uneditable_get_markers(spec, buf, polar);
-	}
 	goto bailout;
     }
 
@@ -2338,13 +2347,21 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    continue;
 	}
 
-	if (strncmp(gpline, "set ", 4)) {
+	if (strncmp(gpline, "set ", 4) && strncmp(gpline, "unset ", 6)) {
 	    /* done reading "set" lines */
 	    break;
 	}
 
-	if (parse_gp_set_line(spec, gpline, styles)) {
-	    err = 1;
+	if (!strncmp(gpline, "set ", 4)) {
+	    err = parse_gp_set_line(spec, gpline, styles);
+	} else if (!strncmp(gpline, "unset ", 6)) {
+	    err = parse_gp_unset_line(spec, gpline);
+	} else {
+	    /* done reading "set" lines */
+	    break;
+	}	    
+
+	if (err) {
 	    goto bailout;
 	}
     }
@@ -2432,6 +2449,12 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     if (!err && spec->fit == PLOT_FIT_NONE) {
 	maybe_set_add_fit_ok(spec);
     }
+
+    if (spec->code == PLOT_ROOTS && spec->n_literal == 8) {
+	/* backward compatibility */
+	fprintf(stderr, "old roots plot: fixing\n");
+	fix_old_roots_plot(spec);
+    }   
 
  bailout:
 
@@ -2935,6 +2958,9 @@ static void set_plot_format_flags (png_plot *plot)
     if (plot->spec->flags & GPT_PRINT_MARKERS) {
 	plot->format |= PLOT_MARKERS_UP;
     }
+    if (plot->spec->flags & GPT_POLAR) {
+	plot->format |= PLOT_POLAR;
+    }    
 }
 
 /* called from png plot popup menu */
@@ -4374,7 +4400,6 @@ static int gnuplot_show_png (const char *fname, const char *name,
     GtkWidget *status_hbox = NULL;
     gchar *title = NULL;
     png_plot *plot;
-    int polar = 0;
     int err = 0;
 
 #if GPDEBUG
@@ -4409,24 +4434,15 @@ static int gnuplot_show_png (const char *fname, const char *name,
        flag this, but it's not necessarily a show-stopper in
        terms of simply displaying the graph. 
     */
-    plot->err = read_plotspec_from_file(plot->spec, &plot->pd, &polar);
+    plot->err = read_plotspec_from_file(plot->spec, &plot->pd);
 
 #if GPDEBUG 
     fprintf(stderr, "gnuplot_show_png: read_plotspec_from_file returned %d\n",
 	    plot->err);
 #endif
 
-    if (plot->err) {
+    if (plot->err || cant_edit(plot->spec->code)) {
 	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
-    } else if (cant_edit(plot->spec->code)) {
-	if (plot->spec->n_markers > 0) {
-	    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM);
-	    if (polar) {
-		plot->format |= PLOT_POLAR;
-	    }
-	} else {
-	    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
-	}
     } else {
 	set_plot_format_flags(plot);
     } 
