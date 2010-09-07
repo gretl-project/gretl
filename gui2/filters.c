@@ -558,8 +558,8 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
     } 
 }
 
-static void check_bw_feasibility (GtkSpinButton *b, 
-				  filter_info *finfo)
+static gboolean check_bw_feasibility (GtkSpinButton *b, 
+				      filter_info *finfo)
 {
     if (finfo->spin1 != NULL && finfo->spin2 != NULL) {
 	double b0 = -8.56644923648263;
@@ -584,6 +584,8 @@ static void check_bw_feasibility (GtkSpinButton *b,
 		    "increasing the cutoff.");
 	}
     }
+
+    return FALSE;
 }
 
 static void filter_dialog_quit (GtkWidget *w, gpointer data)
@@ -980,7 +982,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
 	y = 2 * cut * cos(theta) / delta;
 	px = atan2(y, x);
 	py = sqrt(x * x + y * y);
-	fprintf(fp, "%g %g # %g,%g\n", px, py, x, y);
+	fprintf(fp, "%g %g # %.4f,%.4f\n", px, py, x, y);
     }
     fputs("e\n", fp);
 

@@ -1484,8 +1484,8 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
 
 static int toeplitz_solve (double *g, double *y, int T, int q)
 {
-    int t, j, k, jmax;
     double **mu;
+    int t, j, k, jmax;
 
     mu = doubles_array_new(q+1, T);
     if (mu == NULL) {
@@ -1535,6 +1535,7 @@ static int toeplitz_solve (double *g, double *y, int T, int q)
     }
 
     doubles_array_free(mu, q+1);
+
     return 0;
 }
 
@@ -1642,10 +1643,6 @@ static void form_wvec (double *g, double *mu, double *tmp,
 {
     int i;
 
-#if 0 
-    printf("lam1 = %20.13f, lam2 = %20.13f\n", lam1, lam2); 
-#endif
-
     form_svec(tmp, mu, n);
     for (i=0; i<=n; i++) {
 	g[i] = lam1 * tmp[i];
@@ -1654,11 +1651,7 @@ static void form_wvec (double *g, double *mu, double *tmp,
     form_mvec(tmp, mu, n);
     for (i=0; i<=n; i++) {
 	g[i] += lam2 * tmp[i];
-#if 0	
-	printf("g[%2d] = %20.3f\n", i, g[i]); 
-#endif
     }
-    
 }
 
 /* Find the second differences of the elements of a vector.
