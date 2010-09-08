@@ -348,6 +348,7 @@ struct str_table funcs[] = {
     { F_SETNOTE,  "setnote" },
     { F_INVMILLS, "invmills" },
     { F_POLYFIT,  "polyfit" },
+    { F_CHOWLIN,  "chowlin" },
     { 0,          NULL }
 };
 

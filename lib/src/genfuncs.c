@@ -4166,3 +4166,21 @@ double logistic_cdf (double x)
 
     return ret;
 }
+
+gretl_matrix *matrix_chowlin (const gretl_matrix *y, int f, int *err)
+{
+    void *handle;
+    gretl_matrix *(*chowlin) (const gretl_matrix *, int, int *);
+    gretl_matrix *ret = NULL;
+
+    chowlin = get_plugin_function("chow_lin_interpolate", &handle);
+    
+    if (chowlin == NULL) {
+	*err = E_FOPEN;
+    } else {
+	ret = (*chowlin) (y, f, err);
+	close_plugin(handle);
+    }
+    
+    return ret;
+}

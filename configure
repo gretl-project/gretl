@@ -628,7 +628,6 @@ have_gnu_regex
 fake_gtkspinner
 have_sourceview
 have_mpfr
-have_gmp
 have_gtk
 build_gui
 GTKSOURCEVIEW_LIBS
@@ -16659,7 +16658,6 @@ if test x"${MSGFMT}" != x ; then
 else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
-
 
 
 

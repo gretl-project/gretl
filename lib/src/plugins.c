@@ -86,7 +86,8 @@ enum {
     P_QUANTREG,
     P_INTREG,
     P_ANOVA,
-    P_DURATION
+    P_DURATION,
+    P_INTERPOLATE
 } plugin_codes;
 
 struct plugin_info {
@@ -138,7 +139,8 @@ struct plugin_info plugins[] = {
     { P_QUANTREG,        "quantreg" },
     { P_INTREG,          "interval" },
     { P_ANOVA,           "anova" },
-    { P_DURATION,        "duration" }
+    { P_DURATION,        "duration" },
+    { P_INTERPOLATE,     "interpolate" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -252,6 +254,9 @@ struct plugin_function plugin_functions[] = {
 
     /* duration models */
     { "duration_estimate", P_DURATION},
+
+    /* data interpolation */
+    { "chow_lin_interpolate", P_INTERPOLATE},
 
     /* sentinel */
     { NULL, 0 }

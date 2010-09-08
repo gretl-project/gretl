@@ -38,11 +38,7 @@
 #define MP_CHECK_DIGITS 12
 #define MP_PRINT_DIGITS 15
 
-#ifdef USE_GMP
-# define LIBGRETLSTR "Standard libgretl:"
-#else
-# define LIBGRETLSTR "libgretl"
-#endif
+#define LIBGRETLSTR "Standard libgretl:"
 
 static int verbose;
 static int noint;
@@ -556,7 +552,6 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 			 int poorvals, int mpfails,
 			 const char *prog, PRN *prn)
 {
-#ifdef USE_GMP
     pprintf(prn, "\nSummary of NIST linear regression test results:\n"
 	    " * number of tests carried out: %d\n"
 	    " * reference data files missing or corrupted: %d\n"
@@ -566,22 +561,12 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 	    "   certified values, at %d significant figures: %d\n",
 	    ntests - missing, missing, modelerrs, poorvals,
 	    MP_CHECK_DIGITS, mpfails);
-#else
-    pprintf(prn, "\nSummary of NIST test results:\n"
-	    "  number of tests carried out: %d\n"
-	    "  reference data files missing or corrupted: %d\n"
-	    "  unexpected errors in estimation of models: %d\n"
-	    "  models showing poor or unacceptable results: %d\n",
-	    ntests - missing, missing, modelerrs, poorvals);
-#endif /* USE_GMP */
 
 #ifdef STANDALONE
     pprintf(prn, "\nYou may run '%s -v' or '%s -vv' for details\n\n",
 	    prog, prog);
 #endif
 }
-
-#ifdef USE_GMP
 
 # ifdef STANDALONE
 static void *get_mplsq (void **handle); 
@@ -723,8 +708,6 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 
     return err;
 }
-
-#endif /* USE_GMP */
 
 static
 int run_gretl_comparison (const char *datname,
@@ -904,10 +887,8 @@ int main (int argc, char *argv[])
 	    run_gretl_comparison (nist_files[j], &Z, datainfo, certvals,
 				  &modelerrs, &poorvals, prn);
 
-# ifdef USE_GMP
 	    run_gretl_mp_comparison (&Z, datainfo, certvals, polyterms, 
 				     zdigits, &mpfails, prn);
-# endif
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
@@ -948,11 +929,9 @@ static void nist_intro (PRN *prn)
 	  "Statistical Software: Part I\", The American Statistician, 52 "
 	  "(1998), pp. 358-366.\n\n");
 
-#ifdef USE_GMP
     pputs(prn, "Each test cases is run twice, once using the standard "
 	  "linear regression calculation in the gretl library and once "
 	  "using mulitple precision arithmetic.\n\n");
-#endif
 
     pputs(prn, "For more information, please see\n"
 	  "http://www.itl.nist.gov/div898/strd/general/main.html");
@@ -1007,10 +986,8 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 	    run_gretl_comparison (nist_files[j], &Z, datainfo, certvals,
 				  &modelerrs, &poorvals, prn);
 
-# ifdef USE_GMP
 	    run_gretl_mp_comparison (&Z, datainfo, certvals, polyterms, 
 				     zdigits, &mpfails, prn);
-# endif
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
@@ -1034,7 +1011,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
 #endif /* STANDALONE */
 
-#if defined(USE_GMP) && defined(STANDALONE)
+#ifdef STANDALONE
 
 # ifdef _WIN32
 #  include <windows.h>
@@ -1078,6 +1055,6 @@ static void *get_mplsq (void **handle)
     return funp;
 }
 
-#endif /* USE_GMP && STANDALONE */
+#endif /* STANDALONE */
 
 

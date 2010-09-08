@@ -601,7 +601,6 @@ fi
 dnl record the results of the above tests
 AC_SUBST(build_gui)
 AC_SUBST(have_gtk)
-AC_SUBST(have_gmp)
 AC_SUBST(have_mpfr)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)

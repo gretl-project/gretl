@@ -304,6 +304,7 @@ enum {
     F_NPV,
     F_DSUM,
     F_POLYFIT,
+    F_CHOWLIN,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,

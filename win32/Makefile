@@ -36,7 +36,7 @@ FFTW_LIBS = -lfftw3
 
 # flags/defines
 CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \
-  -I$(XML2_INC) -I$(zipdir) $(RLIB_CFLAGS) -DUSE_GMP
+  -I$(XML2_INC) -I$(zipdir) $(RLIB_CFLAGS) 
 GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 ifeq ($(BUILDTYPE),cross)
@@ -151,6 +151,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/quantreg.dll \
 	plugins/interval.dll \
 	plugins/anova.dll \
+	plugins/interpolate.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -500,6 +501,10 @@ plugins/interval.dll: interval.o dllinit.o
 plugins/anova.dll: anova.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GLIBLIB) 
+
+plugins/interpolate.dll: interpolate.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
