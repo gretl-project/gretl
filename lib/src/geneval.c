@@ -2079,9 +2079,7 @@ static NODE *matrix_scalar_func (NODE *l, NODE *r,
 
 	if (f == F_MSORTBY) {
 	    ret->v.m = gretl_matrix_sort_by_column(m, k-1, &p->err);
-	} else if (f == F_CHOWLIN) {
-	    ret->v.m = matrix_chowlin(m, k, &p->err);
-	}
+	} 
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -5663,7 +5661,19 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	if (tmp != NULL) {
 	    l->v.m = tmp;
 	}
-    }	
+    } else if (f == F_CHOWLIN) {
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != MAT && r->t != EMPTY) {
+	    node_type_error(f, 3, MAT, r, p);
+	} else {
+	    const gretl_matrix *X = (r->t == MAT)? r->v.m : NULL;
+
+	    A = matrix_chowlin(l->v.m, X, m->v.xval, &p->err);
+	}
+    }
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
@@ -7391,7 +7401,6 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_MSORTBY:
-    case F_CHOWLIN:
 	/* matrix on left, scalar on right */
 	if (l->t == MAT && scalar_node(r)) {
 	    ret = matrix_scalar_func(l, r, t->t, p);
@@ -7857,6 +7866,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_KDENSITY:
     case F_SETNOTE:
     case F_BWFILT:
+    case F_CHOWLIN:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

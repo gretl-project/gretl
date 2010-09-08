@@ -304,7 +304,6 @@ enum {
     F_NPV,
     F_DSUM,
     F_POLYFIT,
-    F_CHOWLIN,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,
@@ -323,6 +322,7 @@ enum {
     F_KDENSITY,
     F_SETNOTE,
     F_BWFILT,
+    F_CHOWLIN,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

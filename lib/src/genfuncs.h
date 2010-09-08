@@ -148,6 +148,8 @@ double gretl_irr (const double *x, int n, int pd, int *err);
 
 double logistic_cdf (double x);
 
-gretl_matrix *matrix_chowlin (const gretl_matrix *y, int f, int *err);
+gretl_matrix *matrix_chowlin (const gretl_matrix *y, 
+			      const gretl_matrix *X,
+			      int f, int *err);
 
 #endif /* GENFUNCS_H */

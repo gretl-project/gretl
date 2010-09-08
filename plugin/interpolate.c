@@ -14,15 +14,19 @@
  * 
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
  */
+
+/* Note: at present this plugin only offers Chow-Lin interpolation.
+   At some point we may want to add interpolation using the Kalman
+   filter or some other more sophisticated variant(s).
+*/
 
 #include "libgretl.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
 
 struct chowlin {
-    int xfac;
+    int n;
     double targ;
 };
 
@@ -38,11 +42,11 @@ static double chow_lin_callback (const double *pa, void *p)
     double a = *pa;
     double num, den, val;
 
-    if (cl->xfac == 3) {
+    if (cl->n == 3) {
 	num = a + 2*a*a + 3*pow(a, 3) + 2*pow(a, 4) + pow(a, 5);
 	den = 3 + 4*a + 2*a*a;
     } else {
-	/* xfac = 4 */
+	/* n = 4 */
 	num = a + 2*a*a + 3*pow(a, 3) + 4*pow(a, 4) + 3*pow(a, 5)
 	    + 2*pow(a, 6) + pow(a, 7);
 	den = 4 + 6*a + 4*a*a + 2*pow(a, 3);
@@ -66,7 +70,12 @@ static double csum (int n, double a, int k)
     return s;
 }
 
-/* generate CVC' without storing the full C or V matrices */
+/* Generate CVC' without storing the full C or V matrices.
+   C is the selection matrix that transforms from higher
+   frequency to lower frequency by summation; V is the
+   autocovariance matrix for AR(1) disturbances with
+   autoregressive coefficient a; n is the expansion factor.
+*/
 
 static void make_CVC (gretl_matrix *W, int n, double a)
 {
@@ -86,7 +95,9 @@ static void make_CVC (gretl_matrix *W, int n, double a)
     }
 }
 
-/* multiply VC' into u and increment yx by the result */
+/* Multiply VC' into u and increment yx by the result;
+   again, without storing V or C'.
+*/
 
 static void mult_VC (gretl_matrix *yx, gretl_matrix *u, 
 		     int n, double a)
@@ -102,33 +113,55 @@ static void mult_VC (gretl_matrix *yx, gretl_matrix *u,
     }
 }
 
-/* regressor matrix: constant plus quadratic trend,
-   summed appropriately based on @n */
+/* Regressor matrix: by default we put in constant plus 
+   quadratic trend, summed appropriately based on @n.
+   If the user has supplied high-frequency covariates,
+   in @X, we compress them from column 3 onward.
+*/
 
-static void make_CX (gretl_matrix *X, int n)
+static void make_CX (gretl_matrix *CX, int n,
+		     const gretl_matrix *X)
 {
     double xt1, xt2;
-    int t, i, k = 1;
+    int i, j, k = 1;
+    int t, s = 0;
 
-    for (t=0; t<X->rows; t++) {
-	gretl_matrix_set(X, t, 0, n);
+    for (t=0; t<CX->rows; t++) {
+	gretl_matrix_set(CX, t, 0, n);
 	xt1 = xt2 = 0.0;
 	for (i=0; i<n; i++) {
 	    xt1 += k;
 	    xt2 += k * k;
 	    k++;
 	}
-	gretl_matrix_set(X, t, 1, xt1);
-	gretl_matrix_set(X, t, 2, xt2);
+	gretl_matrix_set(CX, t, 1, xt1);
+	gretl_matrix_set(CX, t, 2, xt2);
+
+	if (X != NULL) {
+	    for (j=0; j<X->cols; j++) {
+		xt1 = 0.0;
+		for (i=0; i<n; i++) {
+		    xt1 += gretl_matrix_get(X, s + i, j);
+		}
+		gretl_matrix_set(CX, t, 3+j, xt1);
+	    }
+	    s += n;
+	}
     }
 }
 
-static void make_Xx_beta (gretl_vector *y, const double *b)
+static void make_Xx_beta (gretl_vector *y, const double *b,
+			  const gretl_matrix *X)
 {
-    int i;
+    int i, j;
 
     for (i=1; i<=y->rows; i++) {
 	y->val[i-1] = b[0] + b[1] * i + b[2] * i * i;
+	if (X != NULL) {
+	    for (j=0; j<X->cols; j++) {
+		y->val[i-1] += b[3+j] * gretl_matrix_get(X, i, j);
+	    }
+	}
     }
 }
 
@@ -149,37 +182,48 @@ static double acf_1 (const double *u, int T)
     return num / den;
 }
 
-/*
-   Interpolate, from annual to quarterly or quaterly to monthly,
-   via Chow-Lin method. See Gregory C. Chow and An-loh Lin,
-   "Best Linear Unbiased Interpolation, Distribution, and 
-   Extrapolation of Time Series by Related Series",
-   The Review of Economics and Statistics, Vol. 53, No. 4 
-   (Nov., 1971) pp. 372-375.
-
-   In this implementation the only regressors used are a
-   constant and quadratic trend.
-
-   @y holds the original data to be expanded.
-   @xfac is the expansion factor: 3 for quarterly to monthly
-   or 4 for annual to quarterly. Only these factors are
-   supported.
-*/
+/**
+ * chow_lin_interpolate:
+ * @y: holds the original data to be expanded. 
+ * @X: (optionally) holds covariates of y at the higher frequency:
+ * if these are supplied they supplement the default set of
+ * regressors, namely, constant plus quadratic trend.
+ * @xfac: the expansion factor: 3 for quarterly to monthly
+ * or 4 for annual to quarterly. Only these factors are
+ * supported.
+ * @err: location to receive error code.
+ *
+ * Interpolate, from annual to quarterly or quarterly to monthly,
+ * via the Chow-Lin method. See Gregory C. Chow and An-loh Lin,
+ * "Best Linear Unbiased Interpolation, Distribution, and 
+ * Extrapolation of Time Series by Related Series", The
+ * Review of Economics and Statistics, Vol. 53, No. 4 
+ * (November 1971) pp. 372-375.
+ * 
+ * Returns: column vector containing the expanded series, or
+ * NULL on failure.
+ */
 
 gretl_matrix *chow_lin_interpolate (const gretl_matrix *y, 
+				    const gretl_matrix *X,
 				    int xfac, int *err)
 {
     gretl_matrix_block *B;
-    gretl_matrix *X, *b, *u, *W, *Z;
+    gretl_matrix *CX, *b, *u, *W, *Z;
     gretl_matrix *Tmp1, *Tmp2;
     gretl_matrix *yx = NULL;
     double a = 0.5;
+    int nx = 3;
     int T = y->rows;
 
-    if (xfac != 3 && xfac != 4) {
-	*err = E_DATA;
-	return NULL;
-    }	
+    /* note: checks to the effect that xfac = 3 or 4, and,
+       if X is non-NULL, that X->cols = xfac * y->cols,
+       have already been performed
+    */
+
+    if (X != NULL) {
+	nx += X->cols;
+    }
 
     yx = gretl_column_vector_alloc(T * xfac);
     if (yx == NULL) {
@@ -187,13 +231,13 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
 	return NULL;
     }	
 
-    B = gretl_matrix_block_new(&X, T, 3,
+    B = gretl_matrix_block_new(&CX, T, nx,
 			       &W, T, T,
-			       &b, 3, 1,
+			       &b, nx, 1,
 			       &u, T, 1,
-			       &Z, 3, 3,
-			       &Tmp1, 3, T,
-			       &Tmp2, 3, T,
+			       &Z, nx, nx,
+			       &Tmp1, nx, T,
+			       &Tmp2, nx, T,
 			       NULL);
     if (B == NULL) {
 	*err = E_ALLOC;
@@ -202,19 +246,17 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
     }
 
     /* regressors: constant and quadratic trend */
-    make_CX(X, xfac);
+    make_CX(CX, xfac, X);
 
     /* initial OLS */
-    *err = gretl_matrix_ols(y, X, b, NULL, u, NULL);
+    *err = gretl_matrix_ols(y, CX, b, NULL, u, NULL);
 
     if (!*err) {
 	struct chowlin cl;
 	int c1, c2;
 
-	cl.xfac = xfac;
-	/* first-order autocorrelation of residuals */
+	cl.n = xfac;
 	cl.targ = acf_1(u->val, T);
-	/* solve for a */
 	*err = BFGS_max(&a, 1, 50, 1.0e-12, &c1, &c2, 
 			chow_lin_callback, C_OTHER, NULL,
 			&cl, NULL, OPT_NONE, NULL);
@@ -226,7 +268,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
     }
 
     if (!*err) {
-	gretl_matrix_qform(X, GRETL_MOD_TRANSPOSE,
+	gretl_matrix_qform(CX, GRETL_MOD_TRANSPOSE,
 			   W, Z, GRETL_MOD_NONE);
 	*err = gretl_invert_symmetric_matrix(Z);
     }  
@@ -234,17 +276,17 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
     if (!*err) {
 	/* GLS \hat{\beta} */
 	gretl_matrix_multiply_mod(Z, GRETL_MOD_NONE,
-				  X, GRETL_MOD_TRANSPOSE,
+				  CX, GRETL_MOD_TRANSPOSE,
 				  Tmp1, GRETL_MOD_NONE);
 	gretl_matrix_multiply(Tmp1, W, Tmp2);
 	gretl_matrix_multiply(Tmp2, y, b);
 
 	/* Xx \hat{\beta} */
-	make_Xx_beta(yx, b->val);
+	make_Xx_beta(yx, b->val, X);
 
 	/* GLS residuals */
 	gretl_matrix_copy_values(u, y);
-	gretl_matrix_multiply_mod(X, GRETL_MOD_NONE,
+	gretl_matrix_multiply_mod(CX, GRETL_MOD_NONE,
 				  b, GRETL_MOD_NONE,
 				  u, GRETL_MOD_DECREMENT);
 
@@ -259,6 +301,3 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
     
     return yx;
 }
-
-
-

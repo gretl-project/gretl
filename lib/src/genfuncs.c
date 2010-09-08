@@ -4167,18 +4167,54 @@ double logistic_cdf (double x)
     return ret;
 }
 
-gretl_matrix *matrix_chowlin (const gretl_matrix *y, int f, int *err)
+/**
+ * matrix_chowlin:
+ * @y: holds the original data to be expanded. 
+ * @X: (optionally) holds covariates of y at the higher frequency:
+ * if these are supplied they supplement the default set of
+ * regressors, namely, constant plus quadratic trend.
+ * @f: the expansion factor: 3 for quarterly to monthly or
+ * 4 for annual to quarterly. Only these factors are
+ * supported.
+ * @err: location to receive error code.
+ *
+ * Interpolate, from annual to quarterly or quarterly to monthly,
+ * via the Chow-Lin method. See Gregory C. Chow and An-loh Lin,
+ * "Best Linear Unbiased Interpolation, Distribution, and 
+ * Extrapolation of Time Series by Related Series", The
+ * Review of Economics and Statistics, Vol. 53, No. 4 
+ * (November 1971) pp. 372-375.
+ * 
+ * Returns: column vector containing the expanded series, or
+ * NULL on failure.
+ */
+
+gretl_matrix *matrix_chowlin (const gretl_matrix *y, 
+			      const gretl_matrix *X, 
+			      int f, int *err)
 {
     void *handle;
-    gretl_matrix *(*chowlin) (const gretl_matrix *, int, int *);
+    gretl_matrix *(*chowlin) (const gretl_matrix *, 
+			      const gretl_matrix *, 
+			      int, int *);
     gretl_matrix *ret = NULL;
+
+    if (f != 3 && f != 4) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
+    if (X != NULL && X->rows / y->rows != f) {
+	*err = E_INVARG;
+	return NULL;
+    }
 
     chowlin = get_plugin_function("chow_lin_interpolate", &handle);
     
     if (chowlin == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*chowlin) (y, f, err);
+	ret = (*chowlin) (y, X, f, err);
 	close_plugin(handle);
     }
     
