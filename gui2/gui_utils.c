@@ -2210,6 +2210,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     cursor_to_top(vwin);
 
+    gtk_window_present(GTK_WINDOW(vwin->main));
+
     return 0;
 }
 
