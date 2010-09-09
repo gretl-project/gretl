@@ -203,14 +203,42 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbinfo)
     free(list);
 }
 
-static gchar *expand_warning (int mult)
+static int expand_data_dialog (int src_pd, int targ_pd, int *interpol)
 {
-    return g_strdup_printf(_("Do you really want to add a lower frequency series\n"
-			     "to a higher frequency dataset?\n\n"
-			     "If you say 'yes' I will expand the source data by\n"
-			     "repeating each value %d times.  In general, this is\n"
-			     "not a valid thing to do."),
-			   mult);
+    int mult = targ_pd / src_pd;
+    int resp;
+
+    if ((targ_pd == 4 && src_pd == 1) ||
+	(targ_pd == 12 && src_pd == 4)) {
+	/* interpolation is an option */
+	const char *opts[] = {
+	    N_("Interpolate higher frequency values"),
+	    N_("Repeat the lower frequency values")
+	};
+
+	resp = radio_dialog("gretl", _("Adding a lower frequency series to a\n"
+				       "higher frequency dataset"),
+			    opts, 2, 0, 0);
+	if (resp == 0) {
+	    *interpol = 1;
+	    resp = GRETL_YES;
+	} else if (resp == 1) {
+	    resp = GRETL_YES;
+	}
+    } else {
+	/* can only do expansion via replication */
+	gchar *msg = 
+	    g_strdup_printf(_("Do you really want to add a lower frequency series\n"
+			      "to a higher frequency dataset?\n\n"
+			      "If you say 'yes' I will expand the source data by\n"
+			      "repeating each value %d times.  In general, this is\n"
+			      "not a valid thing to do."),
+			    mult);
+	resp = yes_no_dialog("gretl", msg, 0);
+	g_free(msg);
+    }
+
+    return resp;
 }
 
 static int obs_overlap_check (SERIESINFO *sinfo)
@@ -262,7 +290,8 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	int overwrite = 0;
 	double x, *xvec = NULL;
 	int v, dbv, start, stop;
-	int pad1 = 0, pad2 = 0;	
+	int pad1 = 0, pad2 = 0;
+	int interpol = 0;
 
 	sinfo = &dw->sinfo[i];
 	v = sinfo->v;
@@ -272,10 +301,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	}
 
 	if (sinfo->pd < datainfo->pd && !warned) {
-	    gchar *msg = expand_warning(datainfo->pd / sinfo->pd);
-
-	    resp = yes_no_dialog("gretl", msg, 0);
-	    g_free(msg);
+	    resp = expand_data_dialog(sinfo->pd, datainfo->pd, &interpol);
 	    if (resp != GRETL_YES) {
 		return 0;
 	    }
@@ -306,7 +332,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	}
 
 	if (sinfo->pd < datainfo->pd) {
-	    xvec = expand_db_series(dbZ[v], sinfo, datainfo->pd);
+	    xvec = expand_db_series(dbZ[v], sinfo, datainfo->pd, interpol);
 	} else if (sinfo->pd > datainfo->pd) {
 	    if (!chosen) {
 		data_compact_dialog(vwin->main, sinfo->pd, &datainfo->pd, NULL, 

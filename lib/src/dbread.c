@@ -1469,6 +1469,38 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
     return x;
 }
 
+static double *interpolate_db_series (const double *src,
+				      int oldn, int mult,
+				      int *err)
+{
+    gretl_matrix *yx;
+    gretl_matrix *y;
+    double *ret = NULL;
+    int t;
+
+    y = gretl_column_vector_alloc(oldn);
+    if (y == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=0; t<oldn; t++) {
+	y->val[t] = src[t];
+    }
+
+    yx = matrix_chowlin(y, NULL, mult, err);
+    gretl_matrix_free(y);
+
+    if (!*err) {
+	ret = yx->val;
+	yx->val = NULL;
+    }
+
+    gretl_matrix_free(yx);
+
+    return ret;
+}
+
 /* Expand a single series from a database, for importation 
    into a working dataset of higher frequency.  At present
    this is permitted only for the cases:
@@ -1479,27 +1511,37 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
 */
 
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
-			  int target_pd)
+			  int target_pd, int interpol)
 {
     char stobs[12] = {0};
     int oldn = sinfo->nobs;
     int mult, newn;
     double *x = NULL;
-    int j, s, t;
+    int j, t;
+    int err = 0;
 
     mult = target_pd / sinfo->pd;
     newn = mult * sinfo->nobs;
 
-    x = malloc(newn * sizeof *x);
-    if (x == NULL) {
-	return NULL;
-    }    
+    if (interpol) {
+	x = interpolate_db_series(src, oldn, mult, &err);
+    } else {
+	x = malloc(newn * sizeof *x);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	} else {  
+	    int s = 0;
 
-    s = 0;
-    for (t=0; t<oldn; t++) {
-	for (j=0; j<mult; j++) {
-	    x[s++] = src[t];
+	    for (t=0; t<oldn; t++) {
+		for (j=0; j<mult; j++) {
+		    x[s++] = src[t];
+		}
+	    }
 	}
+    }
+
+    if (err) {
+	return NULL;
     }
 
     if (sinfo->pd == 1) {

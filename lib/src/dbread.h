@@ -128,7 +128,7 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
 			   int target_pd, CompactMethod method);
 
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
-			  int target_pd);
+			  int target_pd, int interpol);
 
 int set_db_name (const char *fname, int filetype, PRN *prn);
 
