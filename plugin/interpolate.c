@@ -30,10 +30,10 @@ struct chowlin {
     double targ;
 };
 
-/* Callback for BFGS, as we adjust a so that the
-   theoretically derived ratio of polynomials in a
-   matches the empirical first-order autocorrelation
-   of the OLS residuals (cl->targ).
+/* Callback for BFGS, as we adjust the coefficient a so that the
+   theoretically derived ratio of polynomials in a matches the
+   empirical first-order autocorrelation of the OLS residuals
+   (cl->targ).  
 */
 
 static double chow_lin_callback (const double *pa, void *p)
@@ -70,11 +70,11 @@ static double csum (int n, double a, int k)
     return s;
 }
 
-/* Generate CVC' without storing the full C or V matrices.
-   C is the selection matrix that transforms from higher
-   frequency to lower frequency by summation; V is the
-   autocovariance matrix for AR(1) disturbances with
-   autoregressive coefficient a; n is the expansion factor.
+/* Generate CVC' without storing the full C or V matrices.  C is the
+   selection matrix that transforms from higher frequency to lower
+   frequency by summation; V is the autocovariance matrix for AR(1)
+   disturbances with autoregressive coefficient a; n is the expansion
+   factor.
 */
 
 static void make_CVC (gretl_matrix *W, int n, double a)
@@ -245,7 +245,8 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
 	return NULL;
     }
 
-    /* regressors: constant and quadratic trend */
+    /* regressors: constant and quadratic trend, plus
+       anything the user has added */
     make_CX(CX, xfac, X);
 
     /* initial OLS */
@@ -281,7 +282,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
 	gretl_matrix_multiply(Tmp1, W, Tmp2);
 	gretl_matrix_multiply(Tmp2, y, b);
 
-	/* Xx \hat{\beta} */
+	/* X(expanded) * \hat{\beta} */
 	make_Xx_beta(yx, b->val, X);
 
 	/* GLS residuals */
