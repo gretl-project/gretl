@@ -4469,6 +4469,8 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     static gretlopt opt = OPT_G;
     int v = mdata_active_var();
     int oldv = datainfo->v;
+    int save_t1 = datainfo->t1;
+    int save_t2 = datainfo->t2;
     gchar *databuf;
     void *handle;
     int (*write_tx_data) (char *, int, double ***, DATAINFO *,
@@ -4503,6 +4505,8 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
     *errtext = 0;
 
+    array_adjust_t1t2(Z[v], &datainfo->t1, &datainfo->t2);
+
     err = write_tx_data(fname, v, &Z, datainfo, &opt, tramo, 
 			&graph_ok, errtext);
     
@@ -4515,6 +4519,9 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	    gui_errmsg(err);
 	}
     } 
+
+    datainfo->t1 = save_t1;
+    datainfo->t2 = save_t2;
 
     if (*fname == '\0') {
 	return;

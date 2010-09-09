@@ -1505,9 +1505,11 @@ static double *interpolate_db_series (const double *src,
    into a working dataset of higher frequency.  At present
    this is permitted only for the cases:
 
-     annual    -> quarterly
-     annual    -> monthly
-     quarterly -> monthly
+   1) annual    -> quarterly
+   2) annual    -> monthly
+   3) quarterly -> monthly
+
+   Interpolation is supported for cases 1 and 3 only.
 */
 
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
