@@ -153,13 +153,14 @@ static void make_CX (gretl_matrix *CX, int n,
 static void make_Xx_beta (gretl_vector *y, const double *b,
 			  const gretl_matrix *X)
 {
-    int i, j;
+    int i, j, t;
 
-    for (i=1; i<=y->rows; i++) {
-	y->val[i-1] = b[0] + b[1] * i + b[2] * i * i;
+    for (i=0; i<y->rows; i++) {
+	t = i + 1;
+	y->val[i] = b[0] + b[1]*t + b[2]*t*t;
 	if (X != NULL) {
 	    for (j=0; j<X->cols; j++) {
-		y->val[i-1] += b[3+j] * gretl_matrix_get(X, i, j);
+		y->val[i] += b[3+j] * gretl_matrix_get(X, i, j);
 	    }
 	}
     }
