@@ -148,7 +148,7 @@ double gretl_irr (const double *x, int n, int pd, int *err);
 
 double logistic_cdf (double x);
 
-gretl_matrix *matrix_chowlin (const gretl_matrix *y, 
+gretl_matrix *matrix_chowlin (const gretl_matrix *Y, 
 			      const gretl_matrix *X,
 			      int f, int *err);
 

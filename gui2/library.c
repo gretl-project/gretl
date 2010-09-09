@@ -7972,7 +7972,9 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    add_command_to_stack(line);
 	}
 	return err;
-    }     
+    }  
+
+    gretl_exec_state_set_callback(s, gui_exec_callback, OPT_G);
 
     if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
@@ -8038,8 +8040,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     } 
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
-
-    gretl_exec_state_set_callback(s, gui_exec_callback, OPT_G);
 
     switch (cmd->ci) {
 

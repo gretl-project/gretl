@@ -4169,8 +4169,9 @@ double logistic_cdf (double x)
 
 /**
  * matrix_chowlin:
- * @y: holds the original data to be expanded. 
- * @X: (optionally) holds covariates of y at the higher frequency:
+ * @Y: T x k: holds the original data to be expanded, series
+ * in columns.
+ * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
  * regressors, namely, constant plus quadratic trend.
  * @f: the expansion factor: 3 for quarterly to monthly or
@@ -4184,12 +4185,14 @@ double logistic_cdf (double x)
  * Extrapolation of Time Series by Related Series", The
  * Review of Economics and Statistics, Vol. 53, No. 4 
  * (November 1971) pp. 372-375.
+ *
+ * If @X is provided, it must have T * @f rows.
  * 
- * Returns: column vector containing the expanded series, or
+ * Returns: matrix containing the expanded series, or
  * NULL on failure.
  */
 
-gretl_matrix *matrix_chowlin (const gretl_matrix *y, 
+gretl_matrix *matrix_chowlin (const gretl_matrix *Y, 
 			      const gretl_matrix *X, 
 			      int f, int *err)
 {
@@ -4199,18 +4202,12 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *y,
 			      int, int *);
     gretl_matrix *ret = NULL;
 
-    /* relax this? */
-    if (y->cols > 1) {
-	*err = E_INVARG;
-	return NULL;
-    }
-
     if (f != 3 && f != 4) {
 	*err = E_INVARG;
 	return NULL;
     }
 
-    if (X != NULL && X->rows / y->rows != f) {
+    if (X != NULL && X->rows / Y->rows != f) {
 	*err = E_INVARG;
 	return NULL;
     }
@@ -4220,7 +4217,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *y,
     if (chowlin == NULL) {
 	*err = E_FOPEN;
     } else {
-	ret = (*chowlin) (y, X, f, err);
+	ret = (*chowlin) (Y, X, f, err);
 	close_plugin(handle);
     }
     

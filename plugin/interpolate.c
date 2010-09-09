@@ -183,10 +183,31 @@ static double acf_1 (const double *u, int T)
     return num / den;
 }
 
+static int make_y_vectors (gretl_matrix **py,
+			   gretl_matrix **pyx,
+			   int T, int Tx)
+{
+    gretl_matrix *y = gretl_null_matrix_new();
+    gretl_matrix *yx = gretl_null_matrix_new();
+
+    if (y == NULL || yx == NULL) {
+	free(y);
+	free(yx);
+	return E_ALLOC;
+    } else {
+	y->rows = T;
+	yx->rows = Tx;
+	y->cols = yx->cols = 1;
+	*py = y;
+	*pyx = yx;
+	return 0;
+    }
+}
+
 /**
  * chow_lin_interpolate:
- * @y: holds the original data to be expanded. 
- * @X: (optionally) holds covariates of y at the higher frequency:
+ * @Y: T x k: holds the original data to be expanded. 
+ * @X: (optionally) holds covariates of Y at the higher frequency:
  * if these are supplied they supplement the default set of
  * regressors, namely, constant plus quadratic trend.
  * @xfac: the expansion factor: 3 for quarterly to monthly
@@ -200,34 +221,39 @@ static double acf_1 (const double *u, int T)
  * Extrapolation of Time Series by Related Series", The
  * Review of Economics and Statistics, Vol. 53, No. 4 
  * (November 1971) pp. 372-375.
+ *
+ * If @X is given it must have T * @xfac rows.
  * 
- * Returns: column vector containing the expanded series, or
+ * Returns: matrix containing the expanded series, or
  * NULL on failure.
  */
 
-gretl_matrix *chow_lin_interpolate (const gretl_matrix *y, 
+gretl_matrix *chow_lin_interpolate (const gretl_matrix *Y, 
 				    const gretl_matrix *X,
 				    int xfac, int *err)
 {
     gretl_matrix_block *B;
     gretl_matrix *CX, *b, *u, *W, *Z;
     gretl_matrix *Tmp1, *Tmp2;
-    gretl_matrix *yx = NULL;
-    double a = 0.5;
+    gretl_matrix *Yx = NULL;
+    gretl_matrix *y, *yx;
     int nx = 3;
-    int T = y->rows;
+    int ny = Y->cols;
+    int T = Y->rows;
+    int Tx = T * xfac;
+    int i;
 
-    /* note: checks to the effect that xfac = 3 or 4, and,
-       if X is non-NULL, that X->cols = xfac * y->cols,
-       have already been performed
+    /* Note: checks to the effect that xfac = 3 or 4, and,
+       if X is non-NULL, that X->rows = xfac * Y->rows,
+       have already been performed.
     */
 
     if (X != NULL) {
 	nx += X->cols;
     }
 
-    yx = gretl_column_vector_alloc(T * xfac);
-    if (yx == NULL) {
+    Yx = gretl_matrix_alloc(Tx, ny);
+    if (Yx == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }	
@@ -242,7 +268,7 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
 			       NULL);
     if (B == NULL) {
 	*err = E_ALLOC;
-	gretl_matrix_free(yx);
+	gretl_matrix_free(Yx);
 	return NULL;
     }
 
@@ -250,56 +276,86 @@ gretl_matrix *chow_lin_interpolate (const gretl_matrix *y,
        anything the user has added */
     make_CX(CX, xfac, X);
 
-    /* initial OLS */
-    *err = gretl_matrix_ols(y, CX, b, NULL, u, NULL);
-
-    if (!*err) {
-	struct chowlin cl;
-	int c1, c2;
-
-	cl.n = xfac;
-	cl.targ = acf_1(u->val, T);
-	*err = BFGS_max(&a, 1, 50, 1.0e-12, &c1, &c2, 
-			chow_lin_callback, C_OTHER, NULL,
-			&cl, NULL, OPT_NONE, NULL);
+    if (ny > 1) {
+	/* Y has more than 1 column */
+	*err = make_y_vectors(&y, &yx, T, Tx);
+	if (*err) {
+	    gretl_matrix_free(Yx);
+	    gretl_matrix_block_destroy(B);
+	    return NULL;
+	}
+    } else {
+	y = (gretl_matrix *) Y; /* don't worry, it's really const */
+	yx = Yx;
     }
 
-    if (!*err) {
-	make_CVC(W, xfac, a);
-	*err = gretl_invert_symmetric_matrix(W);
+    for (i=0; i<ny; i++) {
+	double a = 0.0;
+
+	if (ny > 1) {
+	    /* pick up the current column */
+	    y->val = Y->val + i * T;
+	    yx->val = Yx->val + i * Tx;
+	}
+
+	/* initial OLS */
+	*err = gretl_matrix_ols(y, CX, b, NULL, u, NULL);
+
+	if (!*err) {
+	    struct chowlin cl;
+	    int c1, c2;
+
+	    cl.n = xfac;
+	    cl.targ = acf_1(u->val, T);
+	    *err = BFGS_max(&a, 1, 50, 1.0e-12, &c1, &c2, 
+			    chow_lin_callback, C_OTHER, NULL,
+			    &cl, NULL, OPT_NONE, NULL);
+	}
+
+	if (!*err) {
+	    make_CVC(W, xfac, a);
+	    *err = gretl_invert_symmetric_matrix(W);
+	}
+
+	if (!*err) {
+	    gretl_matrix_qform(CX, GRETL_MOD_TRANSPOSE,
+			       W, Z, GRETL_MOD_NONE);
+	    *err = gretl_invert_symmetric_matrix(Z);
+	} 
+
+	if (!*err) {
+	    /* GLS \hat{\beta} */
+	    gretl_matrix_multiply_mod(Z, GRETL_MOD_NONE,
+				      CX, GRETL_MOD_TRANSPOSE,
+				      Tmp1, GRETL_MOD_NONE);
+	    gretl_matrix_multiply(Tmp1, W, Tmp2);
+	    gretl_matrix_multiply(Tmp2, y, b);
+
+	    /* X(expanded) * \hat{\beta} */
+	    make_Xx_beta(yx, b->val, X);
+
+	    /* GLS residuals */
+	    gretl_matrix_copy_values(u, y);
+	    gretl_matrix_multiply_mod(CX, GRETL_MOD_NONE,
+				      b, GRETL_MOD_NONE,
+				      u, GRETL_MOD_DECREMENT);
+
+	    /* yx = Xx*beta + V*C'*W*u */
+	    gretl_matrix_reuse(Tmp1, T, 1);
+	    gretl_matrix_multiply(W, u, Tmp1);
+	    mult_VC(yx, Tmp1, xfac, a);
+	    gretl_matrix_reuse(Tmp1, nx, T);
+
+	    gretl_matrix_multiply_by_scalar(yx, xfac);
+	}
     }
 
-    if (!*err) {
-	gretl_matrix_qform(CX, GRETL_MOD_TRANSPOSE,
-			   W, Z, GRETL_MOD_NONE);
-	*err = gretl_invert_symmetric_matrix(Z);
-    }  
-
-    if (!*err) {
-	/* GLS \hat{\beta} */
-	gretl_matrix_multiply_mod(Z, GRETL_MOD_NONE,
-				  CX, GRETL_MOD_TRANSPOSE,
-				  Tmp1, GRETL_MOD_NONE);
-	gretl_matrix_multiply(Tmp1, W, Tmp2);
-	gretl_matrix_multiply(Tmp2, y, b);
-
-	/* X(expanded) * \hat{\beta} */
-	make_Xx_beta(yx, b->val, X);
-
-	/* GLS residuals */
-	gretl_matrix_copy_values(u, y);
-	gretl_matrix_multiply_mod(CX, GRETL_MOD_NONE,
-				  b, GRETL_MOD_NONE,
-				  u, GRETL_MOD_DECREMENT);
-
-	/* yx = Xx*beta + V*C'*W*u */
-	gretl_matrix_reuse(Tmp1, T, 1);
-	gretl_matrix_multiply(W, u, Tmp1);
-	mult_VC(yx, Tmp1, xfac, a);
-	gretl_matrix_multiply_by_scalar(yx, xfac);
+    if (ny > 1) {
+	free(y);
+	free(yx);
     }
 
     gretl_matrix_block_destroy(B);
     
-    return yx;
+    return Yx;
 }

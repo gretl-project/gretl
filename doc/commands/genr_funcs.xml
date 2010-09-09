@@ -1116,16 +1116,15 @@
 
     <function name="chowlin" section="transforms" output="matrix">
       <fnargs>
-	<fnarg type="matrix">y</fnarg>
+	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="scalar">xfac</fnarg>
 	<fnarg type="matrix" optional="true">X</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Expands the input series (given in matrix form),
-	  <argname>y</argname>, to a higher frequency, using the
-	  interpolation method of <cite key="chowlin71">Chow and Lin
-	  (1971)</cite>.
+	  Expands the input data, <argname>Y</argname>, to a higher
+	  frequency, using the interpolation method of <cite
+	  key="chowlin71">Chow and Lin (1971)</cite>. 
 	</para>
 	<para>
 	  The second argument represents the expansion factor: it should
@@ -1141,11 +1140,6 @@
 	  rows in <argname>X</argname> does not equal
 	  <argname>xfac</argname> times the number of rows in
 	  <argname>y</argname>.
-	</para>
-	<para>
-	  At present, <argname>y</argname> must have just one
-	  column. This restriction may be relaxed at some
-	  point.
 	</para>
       </description>
     </function>

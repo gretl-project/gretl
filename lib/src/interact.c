@@ -4187,7 +4187,7 @@ static void schedule_callback (ExecState *s)
 {
     if (s->callback != NULL) {
 	s->flags |= CALLBACK_EXEC;
-    }
+    } 
 }
 
 static int callback_scheduled (ExecState *s)
@@ -5172,7 +5172,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (callback_scheduled(s)) {
 	callback_exec(s, err);
-    }
+    } 
 
  bailout:
 
