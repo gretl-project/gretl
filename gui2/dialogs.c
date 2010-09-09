@@ -3276,19 +3276,23 @@ static void set_expand_method (GtkWidget *w, gpointer data)
 
 static void expand_method_buttons (GtkWidget *dlg, int *interpol)
 { 
+    const char *opts[] = {
+	N_("Interpolate higher frequency values"),
+	N_("Repeat the lower frequency values")
+    };    
     GtkWidget *button, *vbox;
     GSList *group;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
-    button = gtk_radio_button_new_with_label(NULL, _("Interpolate"));
+    button = gtk_radio_button_new_with_label(NULL, _(opts[0]));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "toggled",
 		     G_CALLBACK(set_expand_method), interpol);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    button = gtk_radio_button_new_with_label(group, _("Repeat values"));
+    button = gtk_radio_button_new_with_label(group, _(opts[1]));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 }
 
