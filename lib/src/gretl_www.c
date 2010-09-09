@@ -844,7 +844,7 @@ static char *make_posthead (urlinfo *u)
 
 	sprintf(head, "Content-Type: multipart/form-data, boundary=%s\r\n"
 		"Content-Length: %d\r\n", 
-		partsep, strlen(u->params) + u->upsize + traillen);
+		partsep, (int) strlen(u->params) + u->upsize + traillen);
     }
 
     return head;

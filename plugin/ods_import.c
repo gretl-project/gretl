@@ -29,6 +29,10 @@
 #include <glib.h>
 #include <errno.h>
 
+#ifndef G_OS_WIN32
+# include <unistd.h>
+#endif
+
 #define ODS_IMPORTER
 
 #include "import_common.c"

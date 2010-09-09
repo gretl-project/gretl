@@ -449,7 +449,7 @@ static void finalize_pop_settings (GtkWidget *w, struct pop_dialog *pd)
 	txt = gtk_entry_get_text(GTK_ENTRY(pd->pass_entry));
 	if (txt != NULL && *txt != '\0') {
 	    minfo->pop_pass = g_strdup(txt);
-	    fprintf(stderr, "got %d character password\n", strlen(txt));
+	    fprintf(stderr, "got %d character password\n", (int) strlen(txt));
 	} else {
 	    err = MAIL_NO_PASS;
 	}
