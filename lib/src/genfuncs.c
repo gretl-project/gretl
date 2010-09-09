@@ -4199,6 +4199,12 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *y,
 			      int, int *);
     gretl_matrix *ret = NULL;
 
+    /* relax this? */
+    if (y->cols > 1) {
+	*err = E_INVARG;
+	return NULL;
+    }
+
     if (f != 3 && f != 4) {
 	*err = E_INVARG;
 	return NULL;

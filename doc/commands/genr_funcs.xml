@@ -1114,6 +1114,42 @@
       </description>
     </function>
 
+    <function name="chowlin" section="transforms" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">y</fnarg>
+	<fnarg type="scalar">xfac</fnarg>
+	<fnarg type="matrix" optional="true">X</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Expands the input series (given in matrix form),
+	  <argname>y</argname>, to a higher frequency, using the
+	  interpolation method of <cite key="chowlin71">Chow and Lin
+	  (1971)</cite>.
+	</para>
+	<para>
+	  The second argument represents the expansion factor: it should
+	  be 3 for expansion from quarterly to monthly or 4 for expansion
+	  from annual to quarterly, these being the only supported
+	  factors. The optional third argument may be used to provide a
+	  matrix of covariates at the higher (target) frequency.
+	</para>
+	<para>
+	  The regressors used by default are a constant and quadratic
+	  trend. If <argname>X</argname> is provided, its columns are
+	  used as additional regressors; it is an error if the number of
+	  rows in <argname>X</argname> does not equal
+	  <argname>xfac</argname> times the number of rows in
+	  <argname>y</argname>.
+	</para>
+	<para>
+	  At present, <argname>y</argname> must have just one
+	  column. This restriction may be relaxed at some
+	  point.
+	</para>
+      </description>
+    </function>
+
     <function name="cmult" section="linalg" output="matrix">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
