@@ -1523,6 +1523,11 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
     mult = target_pd / sinfo->pd;
     newn = mult * sinfo->nobs;
 
+    if (!((target_pd == 4 && sinfo->pd == 1) ||
+	  (target_pd == 12 && sinfo->pd == 4))) {
+	interpol = 0;
+    }
+
     if (interpol) {
 	x = interpolate_db_series(src, oldn, mult, &err);
     } else {
