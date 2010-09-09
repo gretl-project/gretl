@@ -8,6 +8,12 @@ The --continue option for arima and certain other commands,
 deprecated as of version 1.9.0, is now removed; use 
 "catch" instead.
 
+The command "dataset expand" has been modified: you can no
+longer expand directly from annual to monthly data, but you
+now have the option of interpolating rather than repeating
+the lower-frequency values (for annual to quarterly or 
+quarterly to monthly expansion). 
+
 2010-06-24 1.9.1
 
 The old genpois function is now removed.

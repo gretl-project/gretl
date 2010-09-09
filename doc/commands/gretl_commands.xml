@@ -1991,7 +1991,7 @@
         <example>dataset addobs 24</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
-        <example>dataset expand 12</example>
+        <example>dataset expand interp</example>
         <example>dataset transpose</example>
 	<example>dataset sortby x1</example>
 	<example>dataset resample 500</example>
@@ -2039,13 +2039,15 @@
 	is to compact by averaging.
       </para>
       <para>
-	<lit>expand</lit>: Must be followed by a positive integer
-	representing a new data frequency, which should be higher than the
-	current frequency.  This command is only available for annual or
-	quarterly time series data.  Annual data can be expanded to
-	quarterly or monthly; quarterly data can be expanded to monthly.
-	All the series in the data set are padded out to the new
-	frequency by repeating the existing values.
+	<lit>expand</lit>: This command is only available for annual or
+	quarterly time series data: annual data can be expanded to
+	quarterly, and quarterly data to monthly frequency. By 
+	default all the series in the data set are padded out to the new
+	frequency by repeating the existing values, but if the
+	modifier <lit>interp</lit> is appended then the series
+	are expanded using Chow-Lin interpolation: the regressors are
+	a constant and quadratic trend and an AR(1) disturbance process
+	is assumed.
       </para>
       <para>
 	<lit>transpose</lit>: No additional parameter required.
@@ -2781,27 +2783,31 @@
 	to adding a higher-frequency variable to the dataset).
       </para>
       <para>
-	Expansion of data should be considered an <quote>expert</quote>
-	option: you need to know what you are doing.  What gretl does is
-	simply replicate the values of the lower-frequency series as many
-	times as required.  For example, suppose we have a quarterly
-	series with the value 35.5 in 1990:1, the first quarter of 1990.
-	On expansion to monthly, the value 35.5 will be assigned to the
-	observations for January, February and March of 1990.  The
-	expanded variable is therefore useless for fine-grained
-	time-series analysis, outside of the special case where you know
-	that the variable in question does in fact remain constant over
-	the sub-periods.  
+	Expansion of data should be considered an
+	<quote>expert</quote> option; you need to know what you are
+	doing. When combining series of differing original frequencies
+	within one dataset, you should probably consider compacting
+	the higher-frequency data rather than expanding the
+	lower-frequency series.
       </para>
       <para>
-	Two related commands should be mentioned here.  First, when you
-	are combining series of differing original frequencies within one
-	dataset, you should consider the option of compacting the
-	higher-frequency data rather than expanding the lower-frequency
-	series.  This option can be found under gretl's Sample menu.
-	Second, if you choose to expand a series, you may wish to consider
-	smoothing the result.  Various options are available using the
-	<cmd>genr</cmd> command.
+	That said, gretl offers two options: higher-frequency values
+	can be interpolated using the method of Chow and Lin (1971),
+	or the values of the lower-frequency series can be repeated as
+	many times as required.
+      </para>
+      <para>
+	The Chow-Lin method is regression-based, using a constant and
+	quadratic trend and assuming a first-order autoregressive
+	process for the disturbances. Four degrees of freedom are used
+	up by this procedure. As for the repetition of values, suppose
+	we have a quarterly series with the value 35.5 in 1990:1, the
+	first quarter of 1990.  On expansion to monthly, the value
+	35.5 will be assigned to the observations for January,
+	February and March of 1990.  The expanded variable is
+	therefore useless for fine-grained time-series analysis,
+	outside of the special case where you know that the variable
+	in question does in fact remain constant over the sub-periods.
       </para>
     </description>
   </command>

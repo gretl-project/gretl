@@ -3013,19 +3013,6 @@ static int dataset_int_param (const char **ps, int op,
 	    *err = E_PDWRONG;
 	    gretl_errmsg_set("This conversion is not supported");
 	}
-    } else if (op == DS_EXPAND) {
-	int ok = 0;
-
-	if (pdinfo->pd == 1 && (k == 4 || k == 12)) {
-	    ok = 1;
-	} else if (pdinfo->pd == 4 && k == 12) {
-	    ok = 1;
-	} 
-
-	if (!ok) {
-	    *err = E_PDWRONG;
-	    gretl_errmsg_set("This conversion is not supported");
-	}
     }
 
     return k;
@@ -3223,7 +3210,7 @@ int renumber_series_with_checks (const char *s, int fixmax,
    dataset addobs            24
    dataset compact           1
    dataset compact           4 last
-   dataset expand            12
+   dataset expand            interpolate
    dataset transpose
    dataset sortby     x1
    dataset resample          500
@@ -3237,7 +3224,6 @@ int modify_dataset (int op, const int *list, const char *s,
 		    PRN *prn)
 {
     static int resampled;
-    int interpol = 0;
     int k = 0, err = 0;
 
     if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
@@ -3279,11 +3265,18 @@ int modify_dataset (int op, const int *list, const char *s,
 	return 1;
     }
 
-    if (op == DS_ADDOBS || op == DS_COMPACT || 
-	op == DS_EXPAND || op == DS_RESAMPLE) {
+    if (op == DS_ADDOBS || op == DS_COMPACT || op == DS_RESAMPLE) {
 	k = dataset_int_param(&s, op, *pZ, pdinfo, &err);
 	if (err) {
 	    return err;
+	}
+    } else if (op == DS_EXPAND) {
+	if (pdinfo->pd == 1) {
+	    k = 4;
+	} else if (pdinfo->pd == 4) {
+	    k = 12;
+	} else {
+	    return E_PDWRONG;
 	}
     }
 
@@ -3292,7 +3285,12 @@ int modify_dataset (int op, const int *list, const char *s,
     } else if (op == DS_COMPACT) {
 	err = compact_data_set_wrapper(s, pZ, pdinfo, k);
     } else if (op == DS_EXPAND) {
-	err = expand_data_set(pZ, pdinfo, k, interpol);
+	int interp = 0, n = strlen(s);
+
+	if (n > 0 && !strncmp(s, "interpolate", n)) {
+	    interp = 1;
+	}
+	err = expand_data_set(pZ, pdinfo, k, interp);
     } else if (op == DS_TRANSPOSE) {
 	err = transpose_data(pZ, pdinfo);
     } else if (op == DS_SORTBY) {

@@ -9,6 +9,10 @@ version 1.9.2, in progress
 - "modprint" command: allow a string literal for the second
   argument; support both comma- and space-separation of
   parameter names
+- "dataset expand" command: add an "interp" modifier to use
+  interpolation rather than repetition of values; also
+  remove the option of going directly from annual to
+  monthly frequency
 - pdf function: support the poisson and binomial distributions
   (giving the probability mass)
 - New function invmills() to get the inverse Mills ratio
@@ -16,6 +20,8 @@ version 1.9.2, in progress
   (thanks go to D.S.G. Pollock), plus GUI access under
   /Variable/Filter (time-series data only)
 - New function polyfit() to obtain a polynomial trend line
+- New function chowlin() to perform Chow-Lin interpolation
+  of higher-frequency data
 - New accessor $mnl_probs to get the estimated outcome
   probabilities for a multinomial logit model (plus GUI
   access under the Analysis menu in the model window)
@@ -23,6 +29,8 @@ version 1.9.2, in progress
   base case in the reported fitted values ($yhat)
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
+- Fix bug 3050710 (build process: LDFLAGS not respected)
+- Fix bug 3054932 (build process: libdir not used)
 - Fix crashing bug in Wilcoxon signed rank test
 - Fix bug: crash in GUI when estimation of a restricted VECM
   was not successfully completed
