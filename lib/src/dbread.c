@@ -24,6 +24,7 @@
 #include "gretl_www.h"
 #include "libset.h"
 #include "gretl_string_table.h"
+#include "matrix_extra.h"
 #include "dbread.h"
 
 #include <glib.h>
@@ -3786,11 +3787,40 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     return err;
 }
 
+static gretl_matrix *
+interpol_expand_dataset (const double **Z, const DATAINFO *pdinfo, 
+			 int newpd, int *err)
+{
+    gretl_matrix *Y0, *Y1 = NULL;
+    int *list;
+
+    list = gretl_consecutive_list_new(1, pdinfo->v - 1);
+    if (list == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    Y0 = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2,
+				  M_MISSING_ERROR, err);
+
+    if (!*err) {
+	int f = newpd / pdinfo->pd;
+
+	Y1 = matrix_chowlin(Y0, NULL, f, err);
+	gretl_matrix_free(Y0);
+    }
+
+    free(list);
+
+    return Y1;
+}
+
 /**
  * expand_data_set:
  * @pZ: pointer to data array.
  * @pdinfo: data information struct.
- * @newpd: target data frequency
+ * @newpd: target data frequency.
+ * @interpol: use interpolation (0/1).
  * 
  * Expand the data set from lower to higher frequency: an "expert"
  * option.  This is supported at present only for expansion from
@@ -3799,7 +3829,8 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
+int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
+		     int interpol)
 {
     char stobs[12];
     int oldn = pdinfo->n;
@@ -3807,6 +3838,7 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
     int mult, newn, nadd;
+    gretl_matrix *X = NULL;
     double *x = NULL;
     int i, j, s, t;
     int err = 0;
@@ -3817,11 +3849,22 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
 	return E_DATA;
     } else if (oldpd == 4 && newpd != 12) {
 	return E_DATA;
+    } else if (oldpd == 1 && newpd == 12 && interpol) {
+	return E_DATA;
     }
 
-    x = malloc(oldn * sizeof *x);
-    if (x == NULL) {
-	return E_ALLOC;
+    if (interpol) {
+	X = interpol_expand_dataset((const double **) *pZ,
+				    pdinfo, newpd, &err);
+    } else {
+	x = malloc(oldn * sizeof *x);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	return err;
     }
 
     mult = newpd / oldpd;
@@ -3833,14 +3876,22 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
 	goto bailout;
     }
 
-    for (i=1; i<pdinfo->v; i++) {
-	for (t=0; t<oldn; t++) {
-	    x[t] = (*pZ)[i][t];
+    if (interpol) {
+	for (i=1; i<pdinfo->v; i++) {
+	    for (t=0; t<newn; t++) {
+		(*pZ)[i][t] = gretl_matrix_get(X, t, i-1);
+	    }
 	}
-	s = 0;
-	for (t=0; t<oldn; t++) {
-	    for (j=0; j<mult; j++) {
-		(*pZ)[i][s++] = x[t];
+    } else {
+	for (i=1; i<pdinfo->v; i++) {
+	    for (t=0; t<oldn; t++) {
+		x[t] = (*pZ)[i][t];
+	    }
+	    s = 0;
+	    for (t=0; t<oldn; t++) {
+		for (j=0; j<mult; j++) {
+		    (*pZ)[i][s++] = x[t];
+		}
 	    }
 	}
     }
@@ -3880,6 +3931,7 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
  bailout:
     
     free(x);
+    gretl_matrix_free(X);
 
     return err;
 }

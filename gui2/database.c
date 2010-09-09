@@ -2787,18 +2787,23 @@ void do_compact_data_set (void)
 
 void do_expand_data_set (void)
 {
-    int err, newpd = 0;
+    int err, newpd, interpol = 1;
 
     if (maybe_restore_full_data(EXPAND)) {
 	return;
     }
 
-    data_expand_dialog(mdata->main, datainfo->pd, &newpd);
-    if (newpd < 0) {
+    /* supported: annual to quarterly or quarterly to monthly */
+    newpd = (datainfo->pd == 1)? 4 : 12;
+
+    data_expand_dialog(mdata->main, datainfo->pd, &interpol);
+
+    if (interpol < 0) {
+	/* canceled */
 	return;
     }
 
-    err = expand_data_set(&Z, datainfo, newpd);
+    err = expand_data_set(&Z, datainfo, newpd, interpol);
 
     if (err) {
 	gui_errmsg(err);

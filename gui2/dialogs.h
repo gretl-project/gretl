@@ -85,7 +85,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 			  int *mon_start, CompactMethod *method,
 			  int *repday);
 
-void data_expand_dialog (GtkWidget *w, int spd, int *target_pd);
+void data_expand_dialog (GtkWidget *w, int spd, int *interpol);
 
 void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
 		   int *cancel);

@@ -3237,6 +3237,7 @@ int modify_dataset (int op, const int *list, const char *s,
 		    PRN *prn)
 {
     static int resampled;
+    int interpol = 0;
     int k = 0, err = 0;
 
     if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
@@ -3291,7 +3292,7 @@ int modify_dataset (int op, const int *list, const char *s,
     } else if (op == DS_COMPACT) {
 	err = compact_data_set_wrapper(s, pZ, pdinfo, k);
     } else if (op == DS_EXPAND) {
-	err = expand_data_set(pZ, pdinfo, k);
+	err = expand_data_set(pZ, pdinfo, k, interpol);
     } else if (op == DS_TRANSPOSE) {
 	err = transpose_data(pZ, pdinfo);
     } else if (op == DS_SORTBY) {
