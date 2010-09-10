@@ -78,6 +78,7 @@ struct filter_info_ {
     GtkWidget *spin1;
     GtkWidget *spin2;
     GtkWidget *button;
+    GtkWidget *label;
 };
 
 static int calculate_filter (filter_info *finfo);
@@ -142,6 +143,7 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->spin1 = NULL;
     finfo->spin2 = NULL;
     finfo->button = NULL;
+    finfo->label = NULL;
 
     if (ftype == FILTER_SMA) {
 	finfo->center = 0;
@@ -558,6 +560,32 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
     } 
 }
 
+#if 0
+static gboolean check_bw_feasibility (GtkSpinButton *b, 
+				      filter_info *finfo)
+{
+    if (finfo->spin1 != NULL && finfo->spin2 != NULL) {
+	const double b0 = 0.131981;
+	const double b1 = 0.0126241;
+	const double b2 = 0.0658865;
+	const double b3 = 0.883492;
+	double s, lrc;
+	int c, n;
+
+	n = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin1));
+	c = gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->spin2));
+
+	s = log(sin(c*M_PI/360));
+	lrc = b0 + b1*n + b2*s + b3*n*s;
+
+	fprintf(stderr, "lrc = %g\n", lrc);
+
+	gtk_widget_set_sensitive(finfo->label, lrc < -12);
+    }
+
+    return FALSE;
+}
+#else
 static gboolean check_bw_feasibility (GtkSpinButton *b, 
 				      filter_info *finfo)
 {
@@ -578,15 +606,12 @@ static gboolean check_bw_feasibility (GtkSpinButton *b,
 	x = b0 + b1*c + b2*n;
 	x = 1/(1+exp(-x));
 
-	if (x > 0.47971759156793) {
-	    warnbox("This combination of parameters is probably "
-		    "numerically unstable. Try reducing n or "
-		    "increasing the cutoff.");
-	}
+	gtk_widget_set_sensitive(finfo->label, x > 0.47971759156793);
     }
 
     return FALSE;
 }
+#endif
 
 static void filter_dialog_quit (GtkWidget *w, gpointer data)
 {
@@ -682,7 +707,7 @@ static void filter_dialog (filter_info *finfo)
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_label_new(_("n (higher values -> better approximation):"));
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	finfo->spin1 = w = gtk_spin_button_new_with_range(1.0, 32, 1);
+	finfo->spin1 = w = gtk_spin_button_new_with_range(1.0, 16, 1);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(w), finfo->order);
 	g_signal_connect(G_OBJECT(w), "value-changed",
 			 G_CALLBACK(set_int_from_spinner), &finfo->order);
@@ -706,6 +731,9 @@ static void filter_dialog (filter_info *finfo)
 	w = gtk_button_new_with_label(_("show poles"));
 	g_signal_connect(G_OBJECT(w), "clicked",
 			 G_CALLBACK(butterworth_poles_graph), finfo);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	finfo->label = w = gtk_label_new("filter may be numerically unstable");
+	gtk_widget_set_sensitive(w, FALSE);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
     } else if (finfo->ftype == FILTER_POLY) {
