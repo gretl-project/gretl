@@ -812,12 +812,20 @@ static int write_spc_file (const char *fname, const double *y,
 
     fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, vname);
     fprintf(fp, " start=%d.%d\n", startyr, startper);
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(y[t])) {
+	    fputs(" missingcode=999999\n", fp);
+	    break;
+	}
+    }
+
     fputs(" data=(\n", fp);
 
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (na(y[t])) {
-	    fputs("-99999 ", fp); /* FIXME? */
+	    fputs("999999 ", fp);
 	} else {
 	    fprintf(fp, "%g ", y[t]);
 	}
@@ -830,7 +838,10 @@ static int write_spc_file (const char *fname, const double *y,
 
     /* FIXME: make these values configurable? */
 
-    fputs("automdl{}\nx11{", fp);
+    fputs("transform{function=auto}\n", fp);
+    fputs("automdl{}\n", fp); 
+
+    fputs("x11{", fp);
 
     if (savelist[0] > 0) {
 	if (savelist[0] == 1) {
