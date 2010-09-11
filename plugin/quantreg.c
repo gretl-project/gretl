@@ -1629,7 +1629,7 @@ static int lad_fit_br (MODEL *pmod, double **Z,
    covariance matrix.
 */
 
-int alt_lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
+int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
