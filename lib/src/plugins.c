@@ -53,7 +53,6 @@ enum {
     P_GNUMERIC_IMPORT,
     P_ODS_IMPORT,
     P_JOHANSEN,
-    P_LAD,
     P_VIF,
     P_LEVERAGE,
     P_MP_OLS,
@@ -106,7 +105,6 @@ struct plugin_info plugins[] = {
     { P_GNUMERIC_IMPORT, "gnumeric_import" },
     { P_ODS_IMPORT,      "ods_import" },
     { P_JOHANSEN,        "johansen" },
-    { P_LAD,             "lad" },
     { P_VIF,             "vif" },
     { P_LEVERAGE,        "leverage" },
     { P_MP_OLS,          "mp_ols" },
@@ -159,9 +157,6 @@ struct plugin_function plugin_functions[] = {
     { "johansen_estimate",     P_JOHANSEN },
     { "johansen_boot_round",   P_JOHANSEN },
     { "vecm_test_restriction", P_JOHANSEN },
-
-    /* least absolute deviations */
-    { "lad_driver", P_LAD },
 
     /* influential observations */
     { "model_leverage",       P_LEVERAGE },
@@ -247,7 +242,8 @@ struct plugin_function plugin_functions[] = {
     { "gretl_odbc_get_data",  P_ODBC},
 
     /* quantreg */
-    { "rq_driver", P_QUANTREG},
+    { "rq_driver",  P_QUANTREG},
+    { "lad_driver", P_QUANTREG},
 
     /* analysis of variance */
     { "gretl_anova", P_ANOVA},

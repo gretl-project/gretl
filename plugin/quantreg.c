@@ -25,6 +25,7 @@
 #include "libgretl.h"
 #include "gretl_f2c.h"
 #include "usermat.h"
+#include "matrix_extra.h"
 #include "libset.h"
 
 #include <errno.h>
@@ -194,7 +195,8 @@ static double rq_loglik (MODEL *pmod, double tau)
 
 enum {
     RQ_STAGE_1,
-    RQ_STAGE_2
+    RQ_STAGE_2,
+    RQ_LAD
 };
 
 /* Transcribe quantreg results into model struct.  Note: we have to be
@@ -221,7 +223,7 @@ static void rq_transcribe_results (MODEL *pmod,
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->coeff[i] = b[i];
-	if (stage == RQ_STAGE_1) {
+	if (stage == RQ_STAGE_1 || stage == RQ_LAD) {
 	    pmod->sderr[i] = NADBL; /* these will be replaced later */
 	}
     }
@@ -602,11 +604,14 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
 	return E_ALLOC;
     }
 
-    rq->ci = gretl_matrix_alloc(4, p);
-    rq->tnmat = gretl_matrix_alloc(4, p);
+    if (!(opt & OPT_L)) {
+	/* doing confidence intervals */
+	rq->ci = gretl_matrix_alloc(4, p);
+	rq->tnmat = gretl_matrix_alloc(4, p);
 
-    if (rq->ci == NULL || rq->tnmat == NULL) {
-	return E_ALLOC;
+	if (rq->ci == NULL || rq->tnmat == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     /* real arrays */
@@ -630,8 +635,11 @@ static int br_info_alloc (struct br_info *rq, int n, int p,
     rq->big = NADBL / 100;
     rq->rmax = libset_get_int(RQ_MAXITER);
 
-    if (opt & OPT_N) {
-	/* no df correction */
+    if (opt & OPT_L) {
+	/* doing simple LAD */
+	rq->cut = 0;
+    } else if (opt & OPT_N) {
+	/* asymptotic: no df correction */
 	rq->cut = normal_cdf_inverse(1 - alpha/2);
     } else {
 	rq->cut = student_cdf_inverse(n - p, 1 - alpha/2);
@@ -652,16 +660,22 @@ static int real_br_calc (gretl_matrix *y, gretl_matrix *X,
 			 double tau, struct br_info *rq,
 			 int calc_ci)
 {
+    double *ci_val, *tnmat_val;
     int ret, err = 0;
 
 #if QDEBUG
     fprintf(stderr, "real_br_calc: calling rqbr, calc_ci = %d\n", calc_ci);
 #endif
 
+    /* these inputs are not needed if we're not computing
+       confidence intervals */
+    ci_val = (rq->ci == NULL)? NULL : rq->ci->val; 
+    tnmat_val = (rq->tnmat == NULL)? NULL : rq->tnmat->val; 
+
     ret = rqbr_(rq->n, rq->p, X->val, y->val, tau, rq->tol, 
 		rq->coeff, rq->resid, rq->s, rq->wa, rq->wb, 
 		rq->sol, rq->dsol, rq->h, rq->qn, rq->cut, 
-		rq->ci->val, rq->tnmat->val, 
+		ci_val, tnmat_val, 
 		rq->big, rq->rmax, calc_ci,
 		rq->callback);
 
@@ -1082,8 +1096,8 @@ write_tbeta_block_fn (gretl_matrix *tbeta, int nt, double *x,
     return 0;
 }
 
-/* sub-driver for Barrodale-Roberts estimation, with confidence
-   intervals
+/* Sub-driver for Barrodale-Roberts estimation, with confidence
+   intervals.
 */
 
 static int rq_fit_br (gretl_matrix *y, gretl_matrix *X, 
@@ -1094,13 +1108,12 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
     gretl_matrix *tbeta = NULL;
     integer n = y->rows;
     integer p = X->cols;
-    double tau, alpha;
+    double tau, alpha = 0;
     int i, ntau;
     int err = 0;
 
     err = get_ci_alpha(&alpha);
     if (err) {
-	/* return right away: don't call br_info_free! */
 	return err;
     }
 
@@ -1158,7 +1171,7 @@ static int rq_fit_br (gretl_matrix *y, gretl_matrix *X,
 		/* using multiple tau values */
 		err = write_tbeta_block_br(tbeta, ntau, rq.coeff, rq.ci, i);
 	    }
-	}
+	} 
     }
 
     if (!err && rq.warning) {
@@ -1267,21 +1280,21 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 
 /* Write y and X from pmod into gretl matrices, respecting the sample
    range.  Note that for use with the Frisch-Newton version of the
-   underlying rq function we want the X matrix in transpose form.
+   underlying rq function we want the X matrix in transpose form,
+   which is signaled by @tr = 1.
 */
 
 static int rq_make_matrices (MODEL *pmod,
 			     double **Z, DATAINFO *pdinfo,
 			     gretl_matrix **py,
 			     gretl_matrix **pX,
-			     gretlopt opt)
+			     int tr)
 {
     int n = pmod->nobs;
     int p = pmod->ncoeff;
     int yno = pmod->list[1];
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
-    int tr = !(opt & OPT_I);
     int i, s, t, v;
     int err = 0;
 
@@ -1389,16 +1402,18 @@ int rq_driver (const gretl_matrix *tau, MODEL *pmod,
 	       using F-N so the model will be equipped with standard
 	       errors
 	    */
-	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, OPT_NONE);
+	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, 1);
 	    if (!err) {
 		err = rq_fit_fn(y, X, tau, opt, pmod);
 	    }
 	    if (!err) {
-		/* for F-N the X matrix is transposed */
+		/* flip the X matrix for use with B-R */
 		err = rq_transpose_X(&X);
 	    }
 	} else {
-	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, opt);
+	    int tr = !(opt & OPT_I);
+
+	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, tr);
 	}
     }
 
@@ -1434,3 +1449,210 @@ int rq_driver (const gretl_matrix *tau, MODEL *pmod,
 
     return err;
 }
+
+/* restock the y and X matrices with a bootstrap sample */
+
+static void rq_refill_matrices (MODEL *pmod,
+				double **Z, 
+				gretl_matrix *y,
+				gretl_matrix *X,
+				int *sample)
+{
+    int n = pmod->nobs;
+    int p = pmod->ncoeff;
+    int yno = pmod->list[1];
+    int i, j, t, v;
+
+    for (i=0; i<n; i++) {
+	t = sample[i];
+	gretl_vector_set(y, i, Z[yno][t]);
+    }
+
+    for (j=0; j<p; j++) {
+	v = pmod->list[j+2];
+	for (i=0; i<n; i++) {
+	    t = sample[i];
+	    gretl_matrix_set(X, i, j, Z[v][t]);
+	}
+    }
+}
+
+static void 
+adjust_sample_for_missing (int *sample, int n, const MODEL *pmod)
+{
+    int i, j, c;
+
+    for (i=0; i<n; i++) {
+	c = 0;
+	for (j=0; j<sample[i]; j++) {
+	    if (pmod->missmask[j + pmod->t1] == '1') {
+		c++;
+	    }
+	}	    
+	sample[i] += c;
+    }
+}
+
+#define ITERS 500
+
+/* obtain bootstrap estimates of LAD covariance matrix */
+
+static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
+			      gretl_matrix *y, gretl_matrix *X,
+			      struct br_info *rq)
+{
+    double **coeffs = NULL;
+    double *meanb = NULL;
+    int *sample = NULL;
+    double xi, xj;
+    int i, j, k;
+    int nc = pmod->ncoeff;
+    int nvcv, n = pmod->nobs;
+    int err = 0;
+
+    /* note: new_vcv sets all entries to zero */
+    err = gretl_model_new_vcv(pmod, &nvcv);
+    if (err) {
+	return err;
+    }
+
+    /* an array for each coefficient */
+    coeffs = doubles_array_new(nc, ITERS);
+
+    /* a scalar for each coefficient mean */
+    meanb = malloc(nc * sizeof *meanb);
+
+    /* resampling array of length pmod->nobs */
+    sample = malloc(n * sizeof *sample);
+
+    if (coeffs == NULL || meanb == NULL || sample == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }    
+
+    for (k=0; k<ITERS && !err; k++) {
+	/* create random sample index array */
+	for (i=0; i<n; i++) {
+	    sample[i] = pmod->t1 + gretl_rand_int_max(n);
+	}
+
+	if (pmod->missmask != NULL) {
+	    adjust_sample_for_missing(sample, n, pmod);
+	}
+
+	rq_refill_matrices(pmod, Z, y, X, sample);
+
+	/* re-estimate LAD model */
+	err = real_br_calc(y, X, 0.5, rq, 0);
+
+	if (!err) {
+	    for (i=0; i<nc; i++) {
+		coeffs[i][k] = rq->coeff[i];
+	    }
+	}
+    }
+
+    /* find means of coeff estimates */
+    for (i=0; i<nc && !err; i++) {
+	double bbar = 0.0;
+
+	for (k=0; k<ITERS; k++) {
+	   bbar += coeffs[i][k];
+	} 
+	meanb[i] = bbar / ITERS;
+    }    
+
+    /* find variances and covariances */
+    for (i=0; i<nc && !err; i++) {
+	double vi = 0.0;
+
+	for (k=0; k<ITERS; k++) {
+	    xi = coeffs[i][k] - meanb[i];
+	    vi += xi * xi;
+	    for (j=0; j<=i; j++) {
+		xj = coeffs[j][k] - meanb[j];
+		pmod->vcv[ijton(i, j, nc)] += xi * xj;
+	    }
+	}
+	pmod->sderr[i] = sqrt(vi / ITERS);
+    }
+
+    if (!err) {
+	for (i=0; i<nvcv; i++) {
+	    pmod->vcv[i] /= ITERS;
+	}
+    }
+
+ bailout:
+
+    free(sample);
+    free(meanb);
+    doubles_array_free(coeffs, nc);
+
+    return err;
+}
+
+static int lad_fit_br (MODEL *pmod, double **Z,
+		       gretl_matrix *y, gretl_matrix *X)
+{
+    struct br_info rq;
+    integer n = y->rows;
+    integer p = X->cols;
+    int err = 0;
+
+    err = br_info_alloc(&rq, n, p, 0.5, 0.0, OPT_L);
+
+    if (!err) {
+	/* get the actual estimates */
+	err = real_br_calc(y, X, 0.5, &rq, 0);
+    }
+
+    if (!err) {
+	rq_transcribe_results(pmod, y, 0.5, rq.coeff, 
+			      rq.resid, RQ_LAD);
+	if (rq.warning) {
+	    gretl_model_set_int(pmod, "nonunique", 1);
+	}
+    }
+
+    if (!err) {
+	err = lad_bootstrap_vcv(pmod, Z, y, X, &rq);
+    }
+
+    br_info_free(&rq);
+
+    return err;
+}
+
+/* Support the "lad" command: estimate with tau = 0.5, using
+   the Barrodale-Roberts method, and add a bootstrapped
+   covariance matrix.
+*/
+
+int alt_lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
+{
+    gretl_matrix *y = NULL;
+    gretl_matrix *X = NULL;
+    int err;
+
+    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, 0);
+
+    if (!err) {
+	err = lad_fit_br(pmod, Z, y, X);
+    }
+
+    if (!err) {
+	gretl_model_add_y_median(pmod, Z[pmod->list[1]]);
+	pmod->ci = LAD;
+    }
+
+    gretl_matrix_free(y);
+    gretl_matrix_free(X);
+
+    if (err && pmod->errcode == 0) {
+	pmod->errcode = err;
+    }
+
+    return err;
+}
+

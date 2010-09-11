@@ -78,7 +78,6 @@ PLUGINSRC = \
 	jrestrict.c \
 	jalpha.c \
 	kernel.c \
-	lad.c \
 	vif.c \
 	leverage.c \
 	mp_ols.c \
@@ -135,7 +134,6 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/fractals.dll \
 	plugins/poisson.dll \
 	plugins/duration.dll \
-	plugins/lad.dll \
 	plugins/tramo-x12a.dll \
 	plugins/leverage.dll \
 	plugins/pca.dll \
@@ -372,10 +370,6 @@ plugins/duration.dll: duration.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/kernel.dll: kernel.o dllinit.o
-	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
-
-plugins/lad.dll: lad.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
 

@@ -83,7 +83,6 @@ SRCS = excel_import.c \
 	jrestrict.c \
 	jalpha.c \
 	kernel.c \
-	lad.c \
 	longname.c \
 	mp_ols.c \
 	pca.c \
@@ -131,7 +130,6 @@ PLUGINS = arbond.la \
 	garch.la \
 	johansen.la \
 	kernel.la \
-	lad.la \
 	nistcheck.la \
 	range-mean.la \
 	stats_tables.la \
@@ -231,9 +229,6 @@ jmulti_import.la: jmulti_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 fractals.la: fractals.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
-
-lad.la: lad.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 kernel.la: kernel.lo

@@ -40,10 +40,15 @@ int rqbr_ (int n, int pp, double *x, double *y, double tau,
     --s;
     --resid;
     --y;
-    tnmat -= 5;
-    ci -= 5;
     --qn;
     --coeff;
+
+    if (ci != NULL) {
+	ci -= 5;
+    }
+    if (tnmat != NULL) {
+	tnmat -= 5;
+    }
  
     x -= (1 + n);
     wa -= (1 + n5);
