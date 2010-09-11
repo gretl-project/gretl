@@ -45,6 +45,8 @@
 static GRand *gretl_rand;
 static unsigned int useed;
 
+static guint32 gretl_rand_octet (guint32 *sign);
+
 /**
  * gretl_rand_init:
  *
@@ -97,6 +99,7 @@ void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
     g_rand_set_seed(gretl_rand, useed);
+    gretl_rand_octet(NULL);
 }
 
 static double gretl_rand_01 (void)
@@ -249,12 +252,22 @@ union wraprand {
 /* Split a 32-bit random value from GLib into 4 octets: each octet
    provides a 7-bit value for indexing into the Ziggurat plus a
    sign bit.  Load a new guint32 when the material is exhausted.
+
+   Passing NULL in place of the @sign pointer is a signal to
+   re-initialize; we do this when the user sets the seed, to
+   ensure that after re-setting the same seed one gets the
+   same sequence of pseudo-random values.
 */
 
 static guint32 gretl_rand_octet (guint32 *sign)
 {
     static union wraprand wr;
     static int i;
+
+    if (sign == NULL) {
+	i = 0;
+	return 0;
+    }
 
     if (i == 0) {
 	wr.u = g_rand_int(gretl_rand);
@@ -441,8 +454,9 @@ double gretl_one_snormal (void)
  *
  * Fill the selected range of array @a with pseudo-random drawings
  * from the normal distribution with the given mean and standard
- * deviation, using the Mersenne Twister for uniform input and the 
- * Box-Muller method for converting to the normal distribution.
+ * deviation, using the Mersenne Twister for uniform input and  
+ * either the Ziggurat or the Box-Muller method for converting to 
+ * the normal distribution.
  *
  * Returns: 0 on success, 1 on invalid input.
  */
