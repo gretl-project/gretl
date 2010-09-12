@@ -216,7 +216,6 @@ static void rq_transcribe_results (MODEL *pmod,
 				   int stage)
 {
     double SAR = 0.0;
-    int n = y->rows;
     int i, s, t;
 
     if (stage == RQ_STAGE_1) {
