@@ -968,8 +968,8 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
  * gretl_rand_int_max:
  * @max: the maximum value (open)
  *
- * Returns: a pseudo-random unsigned int in the interval [0, @max)
- * using the Mersenne Twister.
+ * Returns: a pseudo-random unsigned int in the interval 
+ * [0, max-1] using the Mersenne Twister.
  */
 
 unsigned int gretl_rand_int_max (unsigned int max)

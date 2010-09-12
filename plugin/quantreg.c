@@ -187,7 +187,9 @@ static double rq_loglik (MODEL *pmod, double tau)
     int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	R += pmod->uhat[t] * (tau - (pmod->uhat[t] < 0));
+	if (!na(pmod->uhat[t])) {
+	    R += pmod->uhat[t] * (tau - (pmod->uhat[t] < 0));
+	}
     }
 
     return n * (log(tau * (1-tau)) - 1 - log(R/n));
@@ -215,7 +217,7 @@ static void rq_transcribe_results (MODEL *pmod,
 {
     double SAR = 0.0;
     int n = y->rows;
-    int i, t;
+    int i, s, t;
 
     if (stage == RQ_STAGE_1) {
 	gretl_model_set_double(pmod, "tau", tau);
@@ -230,11 +232,15 @@ static void rq_transcribe_results (MODEL *pmod,
 
     pmod->ess = 0.0;
 
-    for (i=0, t=pmod->t1; i<n; i++, t++) {
-	pmod->uhat[t] = u[i];
-	pmod->yhat[t] = y->val[i] - u[i];
-	SAR += fabs(u[i]);
-	pmod->ess += u[i] * u[i];
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->yhat[t])) {
+	    pmod->uhat[t] = u[s];
+	    pmod->yhat[t] = y->val[s] - u[s];
+	    SAR += fabs(u[s]);
+	    pmod->ess += u[s] * u[s];
+	    s++;
+	}
     }
 
     /* sum of absolute residuals */
@@ -1281,7 +1287,10 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 /* Write y and X from pmod into gretl matrices, respecting the sample
    range.  Note that for use with the Frisch-Newton version of the
    underlying rq function we want the X matrix in transpose form,
-   which is signaled by @tr = 1.
+   which is signaled by @tr = 1. Also note that @pmod was first
+   estimated via OLS and its sample range may contain interior
+   NAs, in which case we have to avoid them when filling the
+   data matrices.
 */
 
 static int rq_make_matrices (MODEL *pmod,
@@ -1314,17 +1323,21 @@ static int rq_make_matrices (MODEL *pmod,
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	gretl_vector_set(y, s++, Z[yno][t]);
+	if (!model_missing(pmod, t)) {
+	    gretl_vector_set(y, s++, Z[yno][t]);
+	}
     }
 
     for (i=0; i<p; i++) {
 	v = pmod->list[i+2];
 	s = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (tr) {
-		gretl_matrix_set(X, i, s++, Z[v][t]);
-	    } else {
-		gretl_matrix_set(X, s++, i, Z[v][t]);
+	    if (!model_missing(pmod, t)) {
+		if (tr) {
+		    gretl_matrix_set(X, i, s++, Z[v][t]);
+		} else {
+		    gretl_matrix_set(X, s++, i, Z[v][t]);
+		}
 	    }
 	}
     }
@@ -1477,20 +1490,21 @@ static void rq_refill_matrices (MODEL *pmod,
     }
 }
 
-static void 
-adjust_sample_for_missing (int *sample, int n, const MODEL *pmod)
+static int *good_observations_array (MODEL *pmod)
 {
-    int i, j, c;
+    int *g = malloc(pmod->nobs * sizeof *g);
 
-    for (i=0; i<n; i++) {
-	c = 0;
-	for (j=0; j<sample[i]; j++) {
-	    if (pmod->missmask[j + pmod->t1] == '1') {
-		c++;
+    if (g != NULL) {
+	int t, s = 0;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!model_missing(pmod, t)) {
+		g[s++] = t;
 	    }
-	}	    
-	sample[i] += c;
+	}
     }
+
+    return g;
 }
 
 #define ITERS 500
@@ -1504,6 +1518,7 @@ static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
     double **coeffs = NULL;
     double *meanb = NULL;
     int *sample = NULL;
+    int *goodobs = NULL;
     double xi, xj;
     int i, j, k;
     int nc = pmod->ncoeff;
@@ -1528,16 +1543,26 @@ static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
     if (coeffs == NULL || meanb == NULL || sample == NULL) {
 	err = E_ALLOC;
 	goto bailout;
-    }    
+    }   
+
+    /* apparatus for handling interior NAs */
+    if (pmod->missmask != NULL) {
+	goodobs = good_observations_array(pmod);
+	if (goodobs == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	} 
+    }
 
     for (k=0; k<ITERS && !err; k++) {
 	/* create random sample index array */
 	for (i=0; i<n; i++) {
-	    sample[i] = pmod->t1 + gretl_rand_int_max(n);
-	}
-
-	if (pmod->missmask != NULL) {
-	    adjust_sample_for_missing(sample, n, pmod);
+	    j = gretl_rand_int_max(n);
+	    if (goodobs != NULL) {
+		sample[i] = goodobs[j];
+	    } else {
+		sample[i] = pmod->t1 + j;
+	    }
 	}
 
 	rq_refill_matrices(pmod, Z, y, X, sample);
@@ -1588,6 +1613,10 @@ static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
     free(sample);
     free(meanb);
     doubles_array_free(coeffs, nc);
+
+    if (goodobs != NULL) {
+	free(goodobs);
+    }
 
     return err;
 }
