@@ -508,11 +508,8 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
     gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 2, row, row + 1);
     row++;
 
-    g_signal_connect(G_OBJECT(b1), "clicked",
-		     G_CALLBACK(set_lam), 
-		     opts);
-    g_object_set_data(G_OBJECT(b1), "lam_value", 
-                      GINT_TO_POINTER(0));
+    g_signal_connect(G_OBJECT(b1), "clicked", G_CALLBACK(set_lam), opts);
+    g_object_set_data(G_OBJECT(b1), "lam_value", GINT_TO_POINTER(0));
 
     /* no logs option */
     b2 = gtk_radio_button_new_with_label(log_group, _("No log transformation"));
@@ -521,11 +518,8 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
     gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 2, row, row + 1);
     row++;
 
-    g_signal_connect(G_OBJECT(b2), "clicked",
-		     G_CALLBACK(set_lam), 
-		     opts);
-    g_object_set_data(G_OBJECT(b2), "lam_value", 
-                      GINT_TO_POINTER(1));
+    g_signal_connect(G_OBJECT(b2), "clicked", G_CALLBACK(set_lam), opts);
+    g_object_set_data(G_OBJECT(b2), "lam_value", GINT_TO_POINTER(1));
 
     /* automatic log/level option */
     b3 = gtk_radio_button_new_with_label(log_group, _("Automatic"));
@@ -534,11 +528,8 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
     gtk_table_attach_defaults(GTK_TABLE(tbl), b3, 0, 2, row, row + 1);
     row++;
 
-    g_signal_connect(G_OBJECT(b3), "clicked",
-		     G_CALLBACK(set_lam), 
-		     opts);
-    g_object_set_data(G_OBJECT(b3), "lam_value", 
-                      GINT_TO_POINTER(-1));
+    g_signal_connect(G_OBJECT(b3), "clicked", G_CALLBACK(set_lam), opts);
+    g_object_set_data(G_OBJECT(b3), "lam_value", GINT_TO_POINTER(-1));
 
     if (opts->lam == 0) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);

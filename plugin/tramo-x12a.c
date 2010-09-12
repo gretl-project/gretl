@@ -165,9 +165,111 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 
 #endif /* !WIN32 */
 
+static void toggle_outliers (GtkToggleButton *b, tx_request *request)
+{
+    request->outliers = gtk_toggle_button_get_active(b);
+}
+
+static void set_logtrans (GtkButton *b, tx_request *request)
+{
+    gpointer p = g_object_get_data(G_OBJECT(b), "transval");
+
+    request->logtrans = GPOINTER_TO_INT(p);
+}
+
+static void show_x12a_options (tx_request *request, GtkBox *vbox)
+{
+    GtkWidget *tmp, *b[3];
+    GSList *group;
+
+    tmp = gtk_label_new(_("Controls"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+
+    tmp = gtk_check_button_new_with_label(_("Detect and correct for outliers"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->outliers);
+    g_signal_connect(GTK_TOGGLE_BUTTON(tmp), "toggled",
+		     G_CALLBACK(toggle_outliers), request);
+
+    b[0] = gtk_radio_button_new_with_label(NULL, _("Log transformation"));
+    gtk_widget_show(b[0]);
+    gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
+    g_signal_connect(GTK_TOGGLE_BUTTON(b[0]), "toggled",
+		     G_CALLBACK(set_logtrans), request);
+    g_object_set_data(G_OBJECT(b[0]), "transval", GINT_TO_POINTER(1));
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
+    b[1] = gtk_radio_button_new_with_label(group, _("No log transformation"));
+    gtk_widget_show(b[1]);
+    gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
+    g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
+		     G_CALLBACK(set_logtrans), request);
+    g_object_set_data(G_OBJECT(b[1]), "transval", GINT_TO_POINTER(2));
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[1]));
+    b[2] = gtk_radio_button_new_with_label(group, _("Automatic"));
+    gtk_widget_show(b[2]);
+    gtk_box_pack_start(vbox, b[2], FALSE, FALSE, 0);
+    g_signal_connect(GTK_TOGGLE_BUTTON(b[2]), "toggled",
+		     G_CALLBACK(set_logtrans), request);
+    g_object_set_data(G_OBJECT(b[2]), "transval", GINT_TO_POINTER(3));
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[request->logtrans - 1]), 
+				 TRUE); 
+
+    tmp = gtk_hseparator_new();
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+
+    tmp = gtk_label_new(_("Save data"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+
+    tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    request->opts[TX_SA].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				 (*request->popt & OPT_A)? TRUE : FALSE);
+
+    tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    request->opts[TX_TR].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				 (*request->popt & OPT_B)? TRUE : FALSE);
+
+    tmp = gtk_check_button_new_with_label(_("Irregular"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    request->opts[TX_IR].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				 (*request->popt & OPT_C)? TRUE : FALSE);
+
+    tmp = gtk_hseparator_new();
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    
+    tmp = gtk_check_button_new_with_label(_("Generate graph"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    request->opts[TRIGRAPH].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+				 (*request->popt & OPT_G)? TRUE : FALSE);
+
+    tmp = gtk_check_button_new_with_label(_("Show full output"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    request->opts[TEXTOUT].check = tmp;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
+				 (*request->popt & OPT_Q)? FALSE : TRUE);
+}
+
 static int tx_dialog (tx_request *request)
 {
-    GtkWidget *hbox, *vbox, *tmp;
+    GtkWidget *hbox, *vbox;
     gint i, ret = 0;
 
     for (i=0; i<TX_MAXOPT; i++) {
@@ -192,49 +294,7 @@ static int tx_dialog (tx_request *request)
 	gtk_dialog_set_has_separator(GTK_DIALOG(request->dialog), FALSE);
 	show_tramo_options(request, vbox);
     } else {
-	/* X-12-ARIMA */
-	tmp = gtk_label_new(_("Save data"));
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-
-	tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opts[TX_SA].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
-				     (*request->popt & OPT_A)? TRUE : FALSE);
-
-	tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opts[TX_TR].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
-				     (*request->popt & OPT_B)? TRUE : FALSE);
-
-	tmp = gtk_check_button_new_with_label(_("Irregular"));
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opts[TX_IR].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
-				     (*request->popt & OPT_C)? TRUE : FALSE);
-
-	tmp = gtk_hseparator_new();
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-    
-	tmp = gtk_check_button_new_with_label(_("Generate graph"));
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opts[TRIGRAPH].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
-				     (*request->popt & OPT_G)? TRUE : FALSE);
-
-	tmp = gtk_check_button_new_with_label(_("Show full output"));
-	gtk_widget_show(tmp);
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
-	request->opts[TEXTOUT].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
-				     (*request->popt & OPT_Q)? FALSE : TRUE);
+	show_x12a_options(request, GTK_BOX(vbox));
     }
 
     gtk_widget_show(vbox);
@@ -677,6 +737,8 @@ static void request_opts_init (tx_request *request)
     int i;
 
     request->savevars = 0;
+    request->logtrans = 3; /* x12a: automatic logs or not */
+    request->outliers = 1; /* x12a: detect outliers */
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
@@ -691,7 +753,7 @@ static void set_opts (tx_request *request)
 
     request->savevars = 0;
 
-    *request->popt &= ~(OPT_A|OPT_B|OPT_C);
+    *request->popt &= ~(OPT_A | OPT_B | OPT_C);
 
     for (i=0; i<TX_MAXOPT; i++) {
 	if (request->opts[i].check != NULL && 
@@ -785,7 +847,8 @@ static int write_tramo_file (const char *fname,
 static int write_spc_file (const char *fname, const double *y,
 			   const char *vname,
 			   const DATAINFO *pdinfo, 
-			   const int *savelist) 
+			   const int *savelist,
+			   int logtrans, int outliers) 
 {
     int startyr, startper;
     char *p, tmp[8];
@@ -836,9 +899,18 @@ static int write_spc_file (const char *fname, const double *y,
     }
     fputs(" )\n}\n", fp);
 
-    /* FIXME: make these values configurable? */
+    if (logtrans == 1) {
+	fputs("transform{function=log}\n", fp);
+    } else if (logtrans == 2) {
+	fputs("transform{function=none}\n", fp);
+    } else {
+	fputs("transform{function=auto}\n", fp);
+    }
 
-    fputs("transform{function=auto}\n", fp);
+    if (outliers) {
+	fputs("outlier{}\n", fp);
+    }
+
     fputs("automdl{}\n", fp); 
 
     fputs("x11{", fp);
@@ -1093,7 +1165,8 @@ int write_tx_data (char *fname, int varnum,
     if (request.prog == X12A) { 
 	/* write out the .spc file for x12a */
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist);
+	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
+		       request.logtrans, request.outliers);
     } else { 
 	/* TRAMO, possibly plus SEATS */
 	lower(vname);
@@ -1231,7 +1304,7 @@ int adjust_series (const double *x, double *y, const DATAINFO *pdinfo,
 
     if (prog == X12A) { 
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	write_spc_file(fname, x, vname, pdinfo, savelist);
+	write_spc_file(fname, x, vname, pdinfo, savelist, 2, 0);
     } else { 
 	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
 	write_tramo_file(fname, x, vname, pdinfo, NULL); 

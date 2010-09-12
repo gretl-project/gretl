@@ -655,10 +655,10 @@ static void x12_pdq_string (arma_info *ainfo, FILE *fp)
     fputc(')', fp);
 }
 
-static int write_spc_file (const char *fname, 
-			   const double **Z, const DATAINFO *pdinfo,
-			   arma_info *ainfo, int pdmax, 
-			   gretlopt opt)
+static int write_arma_spc_file (const char *fname, 
+				const double **Z, const DATAINFO *pdinfo,
+				arma_info *ainfo, int pdmax, 
+				gretlopt opt)
 {
     int maxobs = pdmax * 50;
     int maxfcast = pdmax * 5;
@@ -873,7 +873,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
-    write_spc_file(path, Z, pdinfo, &ainfo, pdmax, opt);
+    write_arma_spc_file(path, Z, pdinfo, &ainfo, pdmax, opt);
 
     /* remove any files from on old run, in case of error */
     delete_old_files(path);

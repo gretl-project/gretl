@@ -41,6 +41,8 @@ struct _tx_request {
     common_opt_info opts[TX_MAXOPT];
     void *gui;
     gretlopt *popt;
+    int logtrans;
+    int outliers;
     int savevars;
     int pd;
     int seasonal_ok;
