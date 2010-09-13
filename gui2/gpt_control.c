@@ -390,15 +390,10 @@ add_or_remove_png_term (const char *fname, int action, GPT_SPEC *spec)
 
 	if (*restore_line) {
 	    fputs(restore_line, ftmp);
+	} else if (spec != NULL) {
+	    fprintf(ftmp, "%s\n", get_png_line_for_plotspec(spec));
 	} else {
-	    int ptype = (spec != NULL)? spec->code : PLOT_REGULAR;
-	    const char *pline;
-
-	    if (spec != NULL) {
-		flags = spec->flags;
-	    }
-	    pline = get_gretl_png_term_line(ptype, flags);
-	    fprintf(ftmp, "%s\n", pline);
+	    fprintf(ftmp, "%s\n", get_gretl_png_term_line(PLOT_REGULAR, flags));
 	}	    
 	fprintf(ftmp, "set output '%sgretltmp.png'\n", gretl_dotdir());
     }
@@ -504,7 +499,7 @@ static int gnuplot_png_init (png_plot *plot, FILE **fpp)
 	return 1;
     }
 
-    fprintf(*fpp, "%s\n", get_gretl_png_term_line(spec->code, spec->flags));
+    fprintf(*fpp, "%s\n", get_png_line_for_plotspec(spec));
     fprintf(*fpp, "set output '%sgretltmp.png'\n", gretl_dotdir());
 
     return 0;
@@ -568,15 +563,9 @@ static void get_full_term_string (const GPT_SPEC *spec, char *termstr)
     } else if (spec->termtype == GP_TERM_FIG) {
 	strcpy(termstr, "set term fig");
     } else if (spec->termtype == GP_TERM_PNG) { 
-	const char *png_str = 
-	    get_gretl_png_term_line(spec->code, spec->flags);
-
-	strcpy(termstr, png_str); 
+	strcpy(termstr, get_png_line_for_plotspec(spec)); 
     } else if (spec->termtype == GP_TERM_EMF) {
-	const char *emf_str = 
-	    get_gretl_emf_term_line(spec->code, !mono);
-
-	strcpy(termstr, emf_str);
+	strcpy(termstr, get_gretl_emf_term_line(spec->code, !mono));
     } 
 }
 
@@ -3018,7 +3007,7 @@ static int substitute_graph_font (char *line, const gchar *fstr)
    the full-blown graph editor.
 */
 
-void activate_plot_font_choice (png_plot *plot, gchar *grfont)
+void activate_plot_font_choice (png_plot *plot, const char *grfont)
 {
     FILE *fp = NULL;
     FILE *ftmp = NULL;
@@ -3030,7 +3019,6 @@ void activate_plot_font_choice (png_plot *plot, gchar *grfont)
     int err = 0;
 
     nf = split_graph_fontspec(grfont, fontname, &fsize);
-    g_free(grfont);
 
     if (nf == 2) {
 	fstr = g_strdup_printf("%s,%d", fontname, fsize);

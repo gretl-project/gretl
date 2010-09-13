@@ -63,6 +63,8 @@ struct gretlRGB_ {
     unsigned char b;
 };
 
+typedef struct GPT_SPEC_ GPT_SPEC;
+
 #define MAXTITLE 128
 #define N_GP_COLORS 8
 #define BOXCOLOR (N_GP_COLORS - 2)
@@ -144,6 +146,8 @@ typedef enum {
 #define get_png_output(p) (p->flags & GPT_PNG_OUTPUT) 
     
 const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags);
+
+const char *get_png_line_for_plotspec (const GPT_SPEC *spec);
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color);
 

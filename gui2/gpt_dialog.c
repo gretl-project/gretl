@@ -73,7 +73,6 @@ struct plot_editor_ {
     GtkWidget *dialog;
     GtkWidget *notebook;
     GPT_SPEC *spec;
-    gchar *fontname;
     gchar *barsfile;
 
     GtkWidget **linetitle;
@@ -136,6 +135,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins);
 static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins);
 static int add_line_widget (plot_editor *ed);
 static int add_label_widget (plot_editor *ed);
+static void plot_editor_set_fontname (plot_editor *ed, const char *name);
 
 /* graph color selection apparatus */
 
@@ -735,13 +735,10 @@ static void set_graph_font_from_widgets (plot_editor *ed)
 	const char *fname = get_font_filename(tmp);
 	char pngfont[128];
 
-	if (fname != NULL && ptsize > 5 && ptsize < 25) {
+	if (fname != NULL && ptsize >= 4 && ptsize < 25) {
 	    sprintf(pngfont, "%s %d", fname, ptsize);
-	} else {
-	    *pngfont = '\0';
-	}
-
-	set_gretl_png_font(pngfont);
+	    plot_editor_set_fontname(ed, pngfont);
+	} 
     }
 
     g_free(tmp);
@@ -979,13 +976,14 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
     }
 
     if (!err) {
-	if (ed->fontname != NULL) {
-	    set_gretl_png_font(ed->fontname);
-	} else if (ed->ttfcombo != NULL && ed->ttfspin != NULL) {
+	if (ed->ttfcombo != NULL && ed->ttfspin != NULL) {
 	    set_graph_font_from_widgets(ed);
 	}
 	if (ed->fontcheck != NULL && button_is_active(ed->fontcheck)) {
-	    update_persistent_graph_font();
+	    if (ed->spec->fontstr != NULL && *ed->spec->fontstr != '\0') {
+		set_gretl_png_font(ed->spec->fontstr);
+		update_persistent_graph_font();
+	    }
 	}
     }
 
@@ -1065,10 +1063,10 @@ static const char *get_font_filename (const char *showname)
     return NULL;
 }
 
-static void plot_editor_set_fontname (plot_editor *ed, gchar *name)
+static void plot_editor_set_fontname (plot_editor *ed, const char *name)
 {
-    g_free(ed->fontname);
-    ed->fontname = name;
+    free(ed->spec->fontstr);
+    ed->spec->fontstr = gretl_strdup(name);
 }
 
 #ifdef G_OS_WIN32
@@ -1095,11 +1093,11 @@ static void real_graph_font_selector (GtkButton *button, gpointer p, int type,
 	gtk_button_set_label(button, title);
 	g_free(title);
 	if (type == 0) {
-	    plot_editor_set_fontname(p, g_strdup(fontname));
+	    plot_editor_set_fontname(p, fontname);
 	} else if (type == 1) {
 	    pdf_saver_set_fontname(p, fontname);
 	} else if (type == 2) {
-	    activate_plot_font_choice(p, g_strdup(fontname));
+	    activate_plot_font_choice(p, fontname);
 	}
     }
 }
@@ -1133,12 +1131,10 @@ static void graph_font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
 
 	if (type == 0) {
 	    plot_editor_set_fontname(p, fontname);
-	    fontname = NULL;
 	} else if (type == 1) {
 	    pdf_saver_set_fontname(p, fontname);
 	} else if (type == 2) {
 	    activate_plot_font_choice(p, fontname);
-	    fontname = NULL;
 	}
     }
 
@@ -3065,8 +3061,6 @@ static void plot_editor_destroy (plot_editor *ed)
 	ed->spec->n_labels = ed->old_n_labels;
     }  
 
-    g_free(ed->fontname);
-
     if (ed->barsfile != NULL) {
 	remember_user_bars_file(ed->barsfile);
 	g_free(ed->barsfile);
@@ -3205,7 +3199,6 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     }
 
     ed->spec = spec;
-    ed->fontname = NULL;
     ed->barsfile = NULL;
 
     ed->dialog = NULL;

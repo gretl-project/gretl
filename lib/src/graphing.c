@@ -732,9 +732,12 @@ int split_graph_fontspec (const char *s, char *name, int *psz)
 			   t == PLOT_PANEL)
 
 static void 
-write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm)
+write_gnuplot_font_string (char *fstr, PlotType ptype, int pngterm,
+			   const char *grfont)
 {
-    const char *grfont = gretl_png_font();
+    if (grfont == NULL) {
+	grfont = gretl_png_font();
+    }
 
     if (*grfont == '\0') {
 	grfont = getenv("GRETL_PNG_GRAPH_FONT");
@@ -846,21 +849,8 @@ static void do_plot_bounding_box (void)
     }
 }
 
-/**
- * get_gretl_png_term_line:
- * @ptype: indication of the sort of plot to be made, which
- * may made a difference to the color palette chosen.
- * @flags: plot option flags.
- *
- * Constructs a suitable line for sending to gnuplot to invoke
- * the PNG "terminal".  Checks the environment for setting of 
- * %GRETL_PNG_GRAPH_FONT.  Also appends a color-specification string 
- * if the gnuplot PNG driver supports this.
- *
- * Returns: the terminal string, "set term png ..."
- */
-
-const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
+static const char *real_png_term_line (PlotType ptype, GptFlags flags,
+				       const char *specfont)
 {
     static char png_term_line[256];
     char truecolor_string[12] = {0};
@@ -881,11 +871,11 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 
     if (pngterm == GP_PNG_GD2 && gnuplot_png_use_aa) {
 	strcpy(truecolor_string, " truecolor");
-    }    
+    }   
 
-    /* plot font setup */
     if (gpttf) {
-	write_gnuplot_font_string(font_string, ptype, pngterm);
+	write_gnuplot_font_string(font_string, ptype, pngterm,
+				  specfont);
     } 
 
 #ifndef WIN32
@@ -916,6 +906,31 @@ const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
 #endif
 
     return png_term_line;
+}
+
+/**
+ * get_gretl_png_term_line:
+ * @ptype: indication of the sort of plot to be made, which
+ * may made a difference to the color palette chosen.
+ * @flags: plot option flags.
+ *
+ * Constructs a suitable line for sending to gnuplot to invoke
+ * the PNG "terminal".  Checks the environment for setting of 
+ * %GRETL_PNG_GRAPH_FONT.  Also appends a color-specification string 
+ * if the gnuplot PNG driver supports this.
+ *
+ * Returns: the terminal string, "set term png ..."
+ */
+
+const char *get_gretl_png_term_line (PlotType ptype, GptFlags flags)
+{
+    return real_png_term_line(ptype, flags, NULL);
+}
+
+const char *get_png_line_for_plotspec (const GPT_SPEC *spec)
+{
+    return real_png_term_line(spec->code, spec->flags,
+			      spec->fontstr);
 }
 
 static void png_font_to_emf (const char *pngfont, char *emfline)

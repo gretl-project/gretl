@@ -640,7 +640,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("LaTeX"), GRETL_STOCK_TEX, G_CALLBACK(window_tex_callback), TEX_ITEM },
     { N_("Graph"), GRETL_STOCK_TS, G_CALLBACK(series_view_graph), PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, G_CALLBACK(reformat_callback), FORMAT_ITEM },
-    { N_("Edit..."), GRETL_STOCK_SHEET, G_CALLBACK(series_view_edit), EDITOR_ITEM },
+    { N_("Edit values..."), GRETL_STOCK_SHEET, G_CALLBACK(series_view_edit), EDITOR_ITEM },
     { N_("Refresh"), GTK_STOCK_REFRESH, G_CALLBACK(toolbar_refresh), REFRESH_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, G_CALLBACK(add_data_callback), ADD_DATA_ITEM },
     { N_("Add as matrix..."), GTK_STOCK_ADD, G_CALLBACK(add_matrix_callback), ADD_MATRIX_ITEM },

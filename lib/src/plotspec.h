@@ -111,7 +111,7 @@ typedef struct {
 
 /* "global" information concerning a gnuplot graph specification */
 
-typedef struct {
+struct GPT_SPEC_ {
     FILE *fp;
     char fname[MAXLEN];        /* for gui purposes */
     PlotType code;             /* to deal with FREQ, FCASTERR... */
@@ -154,7 +154,7 @@ typedef struct {
     void *ptr;                 /* for GUI use */
     plotbars *bars;            /* for GUI use */
     char *fontstr;             /* for GUI use */
-} GPT_SPEC;
+};
 
 GPT_SPEC *plotspec_new (void);
 
