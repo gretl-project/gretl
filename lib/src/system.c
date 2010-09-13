@@ -1129,7 +1129,7 @@ int system_adjust_t1t2 (equation_system *sys, const double **Z,
     sys->t1 = pdinfo->t1;
     sys->t2 = pdinfo->t2;
 
-    err = check_for_missing_obs(sys->biglist, &sys->t1, &sys->t2, Z);
+    err = list_adjust_sample(sys->biglist, &sys->t1, &sys->t2, Z);
 
     if (!err) {
 	sys->T = sys->t2 - sys->t1 + 1;

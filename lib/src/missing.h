@@ -41,19 +41,15 @@
 
 int model_missval_count (const MODEL *pmod);
 
-int list_adjust_t1t2 (const int *list, const double **Z, 
-		      DATAINFO *pdinfo);
+int first_missing_index (const double *x, int t1, int t2);
 
-int array_adjust_t1t2 (const double *x, int *t1, int *t2);
+int series_adjust_sample (const double *x, int *t1, int *t2);
 
-int varlist_adjust_sample (const int *list, int *t1, int *t2, 
-			   const double **Z);
+int list_adjust_sample (const int *list, int *t1, int *t2, 
+			const double **Z);
 
 int set_reference_missmask_from_list (const int *list, const double **Z,
 				      const DATAINFO *pdinfo);
-
-int check_for_missing_obs (const int *list, int *t1, int *t2,
-			   const double **Z);
 
 int set_miss (const int *list, const char *param, double **Z,
 	      DATAINFO *pdinfo, PRN *prn);

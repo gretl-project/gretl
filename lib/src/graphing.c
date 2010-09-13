@@ -3307,7 +3307,7 @@ int gnuplot_3d (int *list, const char *literal,
 	return E_FOPEN;
     }
 
-    varlist_adjust_sample(list, &t1, &t2, (const double **) Z);
+    list_adjust_sample(list, &t1, &t2, (const double **) Z);
 
     /* if resulting sample range is empty, complain */
     if (t2 == t1) {

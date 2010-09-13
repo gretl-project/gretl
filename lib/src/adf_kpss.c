@@ -1120,7 +1120,7 @@ static int panel_DF_test (int v, int order,
 
 	pdinfo->t1 = i * pdinfo->pd;
 	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
-	err = array_adjust_t1t2((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
+	err = series_adjust_sample((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
 
 	if (!err) {
 	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
@@ -1249,7 +1249,8 @@ int adf_test (int order, const int *list, double ***pZ,
 	for (i=1; i<=list[0] && !err; i++) {
 	    v = list[i];
 	    vlist[1] = v;
-	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
+	    err = list_adjust_sample(vlist, &pdinfo->t1, &pdinfo->t2, 
+				     (const double **) *pZ);
 	    if (!err) {
 		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
 				    0, NULL, prn);
@@ -1515,7 +1516,7 @@ static int panel_kpss_test (int order, int v,
     for (i=u0; i<=uN && !err; i++) {
 	pdinfo->t1 = i * pdinfo->pd;
 	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
-	err = array_adjust_t1t2((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
+	err = series_adjust_sample((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
 	if (!err) {
 	    err = real_kpss_test(order, v, pZ, pdinfo, opt | OPT_Q, &kinfo, prn);
 	    if (!err && verbose) {
@@ -1624,7 +1625,8 @@ int kpss_test (int order, const int *list, double ***pZ,
 	for (i=1; i<=list[0] && !err; i++) {
 	    v = list[i];
 	    vlist[1] = v;
-	    err = list_adjust_t1t2(vlist, (const double **) *pZ, pdinfo);
+	    err = list_adjust_sample(vlist, &pdinfo->t1, &pdinfo->t2, 
+				     (const double **) *pZ);
 	    if (!err) {
 		err = real_kpss_test(order, v, pZ, pdinfo, opt, NULL, prn);
 	    }

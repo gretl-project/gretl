@@ -46,22 +46,6 @@
  * normality of a data series.
  */
 
-/* return 1 if series x has any missing observations, 0 if it does
-   not */
-
-static int missvals (const double *x, int n)
-{
-    int t;
-    
-    for (t=0; t<n; t++) {
-	if (na(x[t])) {
-	    return 1;
-	}
-    }
-	    
-    return 0;
-}
-
 /* return the number of "good" (non-missing) observations in series x;
    also (optionally) write to x0 the first non-missing value */
 
@@ -754,7 +738,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
     double *autocov;
     int i, t, n, order;
 
-    if (array_adjust_t1t2(x, &t1, &t2)) {
+    if (series_adjust_sample(x, &t1, &t2) != 0) {
 	return NADBL;
     }
 
@@ -2826,7 +2810,6 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     const char *vname;
     int i, k, m, T, dfQ;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int list[2] = { 1, varno };
     int err = 0, pacf_err = 0;
 
     gretl_error_clear();
@@ -2836,14 +2819,12 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	return E_DATA;
     }
 
-    varlist_adjust_sample(list, &t1, &t2, Z);
-    T = t2 - t1 + 1;
-
-    if (missvals(Z[varno] + t1, T)) {
-	return E_MISSDATA;
+    err = series_adjust_sample(Z[varno], &t1, &t2);
+    if (err) {
+	return err;
     }
 
-    if (T < 4) {
+    if ((T = t2 - t1 + 1) < 4) {
 	return E_TOOFEW;
     }
 
@@ -3350,10 +3331,12 @@ int xcorrgram (const int *list, int order, const double **Z,
     x = Z[list[1]];
     y = Z[list[2]];
     
-    varlist_adjust_sample(list, &t1, &t2, Z);
-    T = t2 - t1 + 1;
-
-    err = xcf_data_check(x + t1, y + t1, T, &badvar);
+    err = list_adjust_sample(list, &t1, &t2, Z);
+    
+    if (!err) {
+	T = t2 - t1 + 1;
+	err = xcf_data_check(x + t1, y + t1, T, &badvar);
+    }
 
     if (err) {
 	if (badvar) {
@@ -4002,17 +3985,22 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
     gretl_error_clear();
 
     /* common to all uses: check for data problems */
-    array_adjust_t1t2(x, &t1, &t2);
-    T = t2 - t1 + 1;
-    if (missvals(x + t1, T)) {
-	return E_MISSDATA;
-    } else if (T < 12) {
-	return E_TOOFEW;
-    } else if (gretl_isconst(t1, t2, x)) {
+
+    err = series_adjust_sample(x, &t1, &t2);
+
+    if (!err && (T = t2 - t1 + 1) < 12) {
+	err = E_TOOFEW;
+    }
+
+    if (!err && gretl_isconst(t1, t2, x)) {
 	if (vname != NULL) {
 	    gretl_errmsg_sprintf(_("%s is a constant"), vname);
 	}
-	return E_DATA;
+	err = E_DATA;
+    }
+
+    if (err) {
+	return err;
     }
 
     if (opt & OPT_F) {
@@ -5283,8 +5271,8 @@ real_mahalanobis_distance (const int *list, double ***pZ,
     int orig_t2 = pdinfo->t2;
     int n, err = 0;
 
-    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-			  (const double **) *pZ);
+    list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+		       (const double **) *pZ);
 
     n = sample_size(pdinfo);
     if (n < 2) {

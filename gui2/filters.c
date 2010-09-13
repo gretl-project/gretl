@@ -1375,10 +1375,14 @@ void filter_callback (GtkAction *action)
 
     code = filter_code(action);
 
-    err = array_adjust_t1t2(Z[v], &t1, &t2);
+    err = series_adjust_sample(Z[v], &t1, &t2);
 
-    if (err || t2 - t1 + 1 < 4) {
-	gui_errmsg(E_MISSDATA);
+    if (!err && t2 - t1 + 1 < 4) {
+	err = E_TOOFEW;
+    }
+
+    if (err) {
+	gui_errmsg(err);
 	return;
     }
 

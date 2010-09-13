@@ -1924,7 +1924,8 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
+    /* FIXME should the return value be ignored here? */
+    list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
 
     mask = classifier_check(list, Z, pdinfo, opt, prn,
 			    &dmod.errcode);

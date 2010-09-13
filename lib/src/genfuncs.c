@@ -330,20 +330,22 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
 int fracdiff_series (const double *x, double *y, double d,
 		     int diff, int obs, const DATAINFO *pdinfo)
 {
-    int dd, t, tmiss, T;
+    int dd, t, T;
     const double TOL = 1.0E-12;
     int t1 = pdinfo->t1;
     int t2 = (obs >= 0)? obs : pdinfo->t2;
+    int tmiss = 0;
     double phi = (diff)? -d : d;
 
 #if 0
     fprintf(stderr, "Doing fracdiff_series, with d = %g\n", d);
 #endif
 
-    tmiss = array_adjust_t1t2(x, &t1, &t2);
-
-    if (tmiss > 0 && tmiss < t2) {
-	t2 = tmiss;
+    if (series_adjust_sample(x, &t1, &t2) != 0) {
+	tmiss = first_missing_index(x, t1, t2);
+	if (tmiss > 0 && tmiss < t2) {
+	    t2 = tmiss;
+	}
     } 
  
     if (obs >= 0) {
@@ -438,7 +440,7 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
     int *z = NULL;
     int i, t, n;
 
-    array_adjust_t1t2(x, &t1, &t2);
+    series_adjust_sample(x, &t1, &t2);
 
     n = t2 - t1 + 1;
     if (n <= 1) {
@@ -480,7 +482,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
 	return resample_series(x, y, pdinfo);
     }    
 
-    array_adjust_t1t2(x, &t1, &t2);
+    series_adjust_sample(x, &t1, &t2);
 
     n = t2 - t1 + 1;
 
@@ -580,9 +582,9 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
 	}
     }
 
-    err = array_adjust_t1t2(x, &t1, &t2);
+    err = series_adjust_sample(x, &t1, &t2);
     if (err) {
-	return E_DATA;
+	return err;
     } 
 
     n = t2 - t1 + 1;
@@ -668,7 +670,7 @@ int exponential_movavg_series (const double *x, double *y,
 
     if (n < 0) {
 	return E_INVARG;
-    } else if (array_adjust_t1t2(x, &t1, &t2) != 0) {
+    } else if (series_adjust_sample(x, &t1, &t2)) {
 	return E_MISSDATA;
     }
 
@@ -719,8 +721,13 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
     int t2 = pdinfo->t2;
     int k1 = k-1, k2 = 0;
     int i, s, t, T;
+    int err;
 
-    array_adjust_t1t2(x, &t1, &t2);
+    err = series_adjust_sample(x, &t1, &t2);
+    if (err) {
+	return err;
+    }
+
     T = t2 - t1 + 1;
     if (T < k) {
 	return E_TOOFEW;
@@ -795,7 +802,7 @@ int seasonally_adjust_series (const double *x, double *y,
 	return E_PDWRONG;
     }
 
-    array_adjust_t1t2(x, &t1, &t2);
+    series_adjust_sample(x, &t1, &t2);
     T = t2 - t1 + 1;
 
     if (T < pdinfo->pd * 3) {
@@ -1014,9 +1021,8 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
 	hp[t] = NADBL;
     }
 
-    err = array_adjust_t1t2(x, &t1, &t2);
+    err = series_adjust_sample(x, &t1, &t2);
     if (err) {
-	err = E_MISSDATA;
 	goto bailout;
     }
 
@@ -1187,7 +1193,7 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    err = array_adjust_t1t2(x, &t1, &t2);
+    err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
     } 
@@ -1807,7 +1813,7 @@ int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
     int bad_lambda = 0;
     int err = 0;
 
-    err = array_adjust_t1t2(x, &t1, &t2);
+    err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
     } 
@@ -1952,7 +1958,7 @@ int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order)
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int T, err;
 
-    err = array_adjust_t1t2(x, &t1, &t2);
+    err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
     } 
@@ -2060,7 +2066,7 @@ int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int T, err;
 
-    err = array_adjust_t1t2(x, &t1, &t2);
+    err = series_adjust_sample(x, &t1, &t2);
     if (err) {
 	return err;
     } 

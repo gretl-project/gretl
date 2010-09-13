@@ -1408,11 +1408,11 @@ static int set_contiguous_sample (const int *list,
 	} else if (biglist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = list_adjust_t1t2(biglist, Z, pdinfo);
+	    err = list_adjust_sample(biglist, &pdinfo->t1, &pdinfo->t2, Z);
 	    free(biglist);
 	}
     } else {
-	err = list_adjust_t1t2(list, Z, pdinfo);
+	err = list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
     }
 
     if (err) {

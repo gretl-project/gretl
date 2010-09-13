@@ -544,13 +544,13 @@ output_series_to_spc (const int *list, const double **Z,
 {
     int i, t;
 
-    fputs(" missingcode=999999\n", fp);
+    fputs(" missingcode=-99999\n", fp);
     fputs(" data = (\n", fp);
 
     for (t=t1; t<=t2; t++) {
 	for (i=1; i<=list[0]; i++) {
 	    if (na(Z[list[i]][t])) {
-		fputs("999999 ", fp);
+		fputs("-99999 ", fp);
 	    } else {
 		fprintf(fp, "%.15g ", Z[list[i]][t]);
 	    }

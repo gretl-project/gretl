@@ -4505,7 +4505,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 
     *errtext = 0;
 
-    array_adjust_t1t2(Z[v], &datainfo->t1, &datainfo->t2);
+    series_adjust_sample(Z[v], &datainfo->t1, &datainfo->t2);
 
     err = write_tx_data(fname, v, &Z, datainfo, &opt, tramo, 
 			&graph_ok, errtext);

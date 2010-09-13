@@ -357,12 +357,11 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
 
-    varlist_adjust_sample(list, &t1, &t2, Z);
+    list_adjust_sample(list, &t1, &t2, Z);
 
     v.n = t2 - t1 + 1;
     if (v.n < 2) {
-	gretl_errmsg_set("Insufficient observations");
-	return E_DATA;
+	return E_TOOFEW;
     }
 
     y = Z[list[1]];
@@ -391,8 +390,7 @@ int gretl_anova (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
     
     if (v.n < 2) {
-	gretl_errmsg_set("Insufficient observations");
-	return E_DATA;
+	return E_TOOFEW;
     }
 
     err = anova_make_arrays(xb, &v);

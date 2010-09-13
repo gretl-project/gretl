@@ -1601,7 +1601,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     }
 
     /* check for missing obs in sample */
-    err = list_adjust_t1t2(list, Z, pdinfo);
+    err = list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
     if (err) {
 	goto bailout;
     }

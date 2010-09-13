@@ -878,7 +878,7 @@ static int write_spc_file (const char *fname, const double *y,
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (na(y[t])) {
-	    fputs(" missingcode=999999\n", fp);
+	    fputs(" missingcode=-99999\n", fp);
 	    break;
 	}
     }
@@ -888,7 +888,7 @@ static int write_spc_file (const char *fname, const double *y,
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (na(y[t])) {
-	    fputs("999999 ", fp);
+	    fputs("-99999 ", fp);
 	} else {
 	    fprintf(fp, "%g ", y[t]);
 	}

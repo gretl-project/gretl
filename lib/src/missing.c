@@ -543,38 +543,49 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     return ret;
 }
 
-/* drop first/last observations from sample if missing obs 
-   encountered -- also check for missing vals within the
-   remaining sample: return non-zero if there are such.
-   Adjust the t1 and t2 members of pdinfo if need be.
-*/
+/**
+ * first_missing_index:
+ * @x: array to be checked for missing values.
+ * @t1: start of range to check.
+ * @t2: end of range to check.
+ *
+ * Returns: the index of the first missing observation in @x 
+ * over the sample range @t1 to @t2, or -1 if there is no
+ * such observation.
+ */
 
-int list_adjust_t1t2 (const int *list, const double **Z, DATAINFO *pdinfo)
+int first_missing_index (const double *x, int t1, int t2)
 {
-    int err, misst = 0;
+    int t;
 
-    err = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-		      pdinfo->n, Z, &misst);
-    if (err) {
-	err = E_MISSDATA;
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    return t;
+	}
     }
-    
-    return err;
+
+    return -1;
 }
 
-/* 
-   Drop leading and trailing observations from the sample defined by
-   the incoming content of @t1 and @t2 if missing observations are
-   encountered in the series @x.  Also check for missing values within
-   the remaining sample, defined by the content of the adjusted @t1
-   and @t2. If such a missing value is found, this function returns
-   its observation number (that is, for the first such value, starting
-   at @t1), otherwise it returns 0.
-*/
+/**
+ * series_adjust_sample: 
+ * @x: series to be checked for missing values.
+ * @t1: on entry, initial start of sample range; on exit,
+ *      start of sample range adjusted for missing values.
+ * @t2: on entry, initial end of sample range; on exit, end
+ *      of sample range adjusted for missing values.
+ *
+ * Adjusts @t1 and @t2 so as to drop any leading or trailing 
+ * missing observations. 
+ *
+ * Returns: E_MISSDATA if interior missing values were found
+ * within the (possibly adjusted) sample range, otherwise 0.
+ */
 
-int array_adjust_t1t2 (const double *x, int *t1, int *t2)
+int series_adjust_sample (const double *x, int *t1, int *t2)
 {
     int t, t1min = *t1, t2max = *t2;
+    int err = 0;
 
     for (t=t1min; t<t2max; t++) {
 	if (na(x[t])) t1min++;
@@ -588,18 +599,19 @@ int array_adjust_t1t2 (const double *x, int *t1, int *t2)
 
     for (t=t1min; t<=t2max; t++) {
 	if (na(x[t])) {
-	    return t;
+	    err = E_MISSDATA;
+	    break;
 	}
     }
 
     *t1 = t1min; 
     *t2 = t2max;
 
-    return 0;
+    return err;
 }
 
 /**
- * varlist_adjust_sample: 
+ * list_adjust_sample: 
  * @list: list of variables to be tested for missing values.
  * @t1: on entry, initial start of sample range; on exit,
  *      start of sample range adjusted for missing values.
@@ -612,52 +624,16 @@ int array_adjust_t1t2 (const double *x, int *t1, int *t2)
  * found among the variables given in @list at the start or end of
  * the range.  
  *
- * If you want to check for missing values inside the sample
- * range, use check_for_missing_obs() instead.
- * 
- * Returns: 1 if an adjustment was made, otherwise 0.
- */
-
-int varlist_adjust_sample (const int *list, int *t1, int *t2, 
-			   const double **Z)
-{
-    int oldt1 = *t1, oldt2 = *t2;
-    int ret = 0;
-
-    adjust_t1t2(NULL, list, t1, t2, 0, Z, NULL);
-
-    if (*t1 != oldt1 || *t2 != oldt2) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
-/**
- * check_for_missing_obs: 
- * @list: list of variables to be tested for missing values.
- * @t1: on entry, intial start of sample range; on exit,
- *      start of sample range adjusted for missing values.
- * @t2: on entry, initial end of sample range; on exit, end
- *      of sample range adjusted for missing values.
- * @Z: data array.
- *
- * Drops leading or trailing observations from the sample range
- * initially given by the values in @t1 and @t2, if missing values are 
- * found among the variables given in @list.  Then checks for any
- * missing values within the adjusted range.
- * 
- * If you don't care about missing values inside the sample range,
- * use varlist_adjust_sample().
- *
- * Returns: %E_MISSDATA if missing values are found inside the
+ * Returns: %E_MISSDATA if missing values are found within the
  * (possible adjusted) sample range, else 0.
  */
 
-int check_for_missing_obs (const int *list, int *t1, int *t2,
-			   const double **Z)
+int list_adjust_sample (const int *list, int *t1, int *t2, 
+			const double **Z)
 {
-    int missv = adjust_t1t2(NULL, list, t1, t2, 0, Z, NULL);
+    int missv, misst;
+
+    missv = adjust_t1t2(NULL, list, t1, t2, 0, Z, &misst);
 
     return (missv > 0)? E_MISSDATA : 0;
 }
