@@ -37,7 +37,7 @@ int undo_daily_repack (MODEL *pmod, double **Z,
 int repack_missing_daily_obs (MODEL *pmod, double **Z, 
 			      const DATAINFO *pdinfo);
 
-int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		 int n, const double **Z, int *misst);
+int model_adjust_sample (MODEL *pmod, int n, const double **Z, 
+			 int *misst);
 
 #endif /* MISSING_PRIVATE_H */

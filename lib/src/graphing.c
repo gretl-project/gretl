@@ -5116,6 +5116,7 @@ int xy_plot_with_control (const int *list, const char *literal,
     double **gZ = NULL;
     int vy, vx, vz;
     int s, t, T;
+    int missvals = 0;
     int err = 0;
 
     if (list == NULL || list[0] != 3) {
@@ -5126,12 +5127,12 @@ int xy_plot_with_control (const int *list, const char *literal,
     vx = list[2];
     vz = list[3];
 
-    adjust_t1t2(NULL, list, &t1, &t2, pdinfo->n, Z, &s);
+    missvals = list_adjust_sample(list, &t1, &t2, Z);
 
     /* maximum usable observations */
     T = t2 - t1 + 1;
 
-    if (s != 0) {
+    if (missvals) {
 	/* count the usable observations, allowing for NAs */
 	for (t=t1; t<=t2; t++) {
 	    if (na(Z[vy][t]) || na(Z[vx][t]) || na(Z[vz][t])) {

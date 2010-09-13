@@ -357,7 +357,6 @@ static char *model_missmask (const int *list, int t1, int t2,
 	    }
 	    xx = Z[li][t];
 	    if (dwt > 0) {
-		/* dummy weight variable */
 		xx *= Z[dwt][t];
 	    }
 	    if (na(xx)) {
@@ -378,44 +377,49 @@ static char *model_missmask (const int *list, int t1, int t2,
     return mask;
 }
 
+static int really_missing (int v, int t, const double **Z, int d)
+{
+    if (d > 0 && Z[d][t] == 0) {
+	/* the obs is dummied out */
+	return 0;
+    } else {
+	return na(Z[v][t]);
+    } 
+}
+
 /**
- * adjust_t1t2: 
- * @pmod: pointer to model, or %NULL.
- * @list: list of variables to be tested for missing values.
- * @t1: on entry, initial start of sample range; on exit,
- *      start of sample range adjusted for missing values.
- * @t2: on entry, initial end of sample range; on exit, end
- *      of sample range adjusted for missing values.
+ * model_adjust_sample: 
+ * @pmod: pointer to gretl model.
  * @n: full length of data array.
  * @Z: data array.
  * @misst: location to receive the first observation with a
- *         missing value inside the sample range, or %NULL.
+ *         missing value inside the sample range, or NULL.
  *
  * Drops leading or trailing observations from the sample range
- * initially given by the values in @t1 and @t2, if missing values are 
- * found among the variables given in @list.  Also checks for missing 
- * values within the adjusted sample range.  If missing values are 
- * encountered there, either (a) flag an error (if @misst != %NULL), 
- * or (b) if @pmod != %NULL, construct a "missing mask" and attach it 
+ * initially given by the values in the t1 and t2 members of
+ * @pmod, if missing values are found among the variables given 
+ * in the list member of @pmod.
+ *
+ * Also checks for missing values within the adjusted sample range.  
+ * If such values are encountered, either flag an error (if 
+ * @misst != %NULL), or construct a "missing mask" and attach it 
  * to @pmod.
- * 
- * Returns: if @misst is not %NULL, either the ID number of the
+ *
+ * Returns: if @misst is not NULL, either the ID number of the
  * variable for which a missing value is first found inside the
  * adjusted sample range or 0 if there is no such variable.  If
- * @pmod is not %NULL, returns 1 if there is an error creating
- * the missing obs mask, otherwise 0.  If both @misst and @pmod 
- * are %NULL, always returns 0.
+ * @misst is NULL, returns 1 if there is an error creating
+ * the missing obs mask, otherwise 0.
  */
 
-int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		 int n, const double **Z, int *misst)
+int model_adjust_sample (MODEL *pmod, int n, const double **Z, 
+			 int *misst)
 {
-    int i, t, dwt = 0, t1min = *t1, t2max = *t2;
+    int i, t, dwt = 0, t1min = pmod->t1, t2max = pmod->t2;
     int vi, missobs, ret = 0;
     int move_ends = 1;
-    double xx;
 
-    if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) {
+    if (gretl_model_get_int(pmod, "wt_dummy")) {
 	/* we have a weight variable which is a 0/1 dummy */
 	dwt = pmod->nwt;
     }
@@ -423,18 +427,13 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     /* advance start of sample range to skip missing obs? */
     for (t=t1min; t<t2max; t++) {
 	missobs = 0;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (vi == 0 || vi == LISTSEP) {
-		continue;
-	    }
-	    xx = Z[vi][t];
-	    if (dwt) {
-		xx *= Z[dwt][t];
-	    }
-	    if (na(xx)) {
-		missobs = 1;
-		break;
+	for (i=1; i<=pmod->list[0]; i++) {
+	    vi = pmod->list[i];
+	    if (vi > 0 && vi != LISTSEP) {
+		if (really_missing(vi, t, Z, dwt)) {
+		    missobs = 1;
+		    break;
+		}
 	    }
 	}
 	if (missobs) {
@@ -447,18 +446,13 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     /* retard end of sample range to skip missing obs? */
     for (t=t2max; t>t1min; t--) {
 	missobs = 0;
-	for (i=1; i<=list[0]; i++) {
-	    vi = list[i];
-	    if (vi == 0 || vi == LISTSEP) {
-		continue;
-	    }
-	    xx = Z[vi][t];
-	    if (dwt) {
-		xx *= Z[dwt][t];
-	    }
-	    if (na(xx)) {
-		missobs = 1;
-		break;
+	for (i=1; i<=pmod->list[0]; i++) {
+	    vi = pmod->list[i];
+	    if (vi > 0 && vi != LISTSEP) {
+		if (really_missing(vi, t, Z, dwt)) {
+		    missobs = 1;
+		    break;
+		}		
 	    }
 	}
 	if (missobs) {
@@ -471,44 +465,31 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     if (misst != NULL) {
 	/* check for missing values within remaining range and
 	   flag an error in case any are found */
-	for (t=t1min; t<=t2max; t++) {
-	    for (i=1; i<=list[0]; i++) {
-		vi = list[i];
-		if (vi == 0 || vi == LISTSEP) {
-		    continue;
+	for (t=t1min; t<=t2max && !ret; t++) {
+	    for (i=1; i<=pmod->list[0]; i++) {
+		vi = pmod->list[i];
+		if (vi > 0 && vi != LISTSEP) {
+		    if (really_missing(vi, t, Z, dwt)) {
+			/* identify first missing obs and var */
+			*misst = t + 1;
+			ret = vi;
+			break;
+		    }		    
 		}
-		xx = Z[vi][t];
-		if (dwt) {
-		    xx *= Z[dwt][t];
-		}
-		if (na(xx)) {
-		    /* identify first missing obs and var */
-		    *misst = t + 1;
-		    ret = vi;
-		    break;
-		}
-	    }
-	    if (ret) {
-		break;
 	    }
 	}     
-    } else if (pmod != NULL) {
+    } else {
 	/* construct a mask for missing values within remaining range? 
-	   Note: we do this only if misst == NULL */
+	   we do this only if misst == NULL */
 	missobs = 0;
 	for (t=t1min; t<=t2max; t++) {
-	    for (i=1; i<=list[0]; i++) {
-		vi = list[i];
-		if (vi == 0 || vi == LISTSEP) {
-		    continue;
-		}
-		xx = Z[vi][t];
-		if (dwt) {
-		    xx *= Z[dwt][t];
-		}
-		if (na(xx)) {
-		    missobs++;
-		    break;
+	    for (i=1; i<=pmod->list[0]; i++) {
+		vi = pmod->list[i];
+		if (vi > 0 || vi != LISTSEP) {
+		    if (really_missing(vi, t, Z, dwt)) {
+			missobs++;
+			break;
+		    }
 		}
 	    }
 	}
@@ -518,7 +499,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	    pmod->errcode = E_MISSDATA;
 	    ret = 1;
 	} else if (missobs > 0) {
-	    pmod->missmask = model_missmask(list, *t1, *t2, 
+	    pmod->missmask = model_missmask(pmod->list, pmod->t1, pmod->t2, 
 					    n, Z, dwt, NULL);
 	    move_ends = 0;
 	    if (pmod->missmask == NULL) {
@@ -529,8 +510,8 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     } 
 
     if (move_ends) {
-	*t1 = t1min; 
-	*t2 = t2max;
+	pmod->t1 = t1min; 
+	pmod->t2 = t2max;
     }
 
 #if MASKDEBUG
@@ -631,11 +612,65 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
 int list_adjust_sample (const int *list, int *t1, int *t2, 
 			const double **Z)
 {
-    int missv, misst;
+    int i, t, t1min = *t1, t2max = *t2;
+    int vi, missing, err = 0;
 
-    missv = adjust_t1t2(NULL, list, t1, t2, 0, Z, &misst);
+    /* advance start of sample range to skip missing obs? */
+    for (t=t1min; t<t2max; t++) {
+	missing = 0;
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi > 0 && vi != LISTSEP) {
+		if (na(Z[vi][t])) {
+		    missing = 1;
+		    break;
+		}
+	    }
+	}
+	if (missing) {
+	    t1min++;
+	} else {
+	    break;
+	}
+    }
 
-    return (missv > 0)? E_MISSDATA : 0;
+    /* retard end of sample range to skip missing obs? */
+    for (t=t2max; t>t1min; t--) {
+	missing = 0;
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi > 0 && vi != LISTSEP) {
+		if (na(Z[vi][t])) {
+		    missing = 1;
+		    break;
+		}
+	    }
+	}
+	if (missing) {
+	    t2max--;
+	} else {
+	    break;
+	}	
+    }
+
+    /* check for missing values within remaining range and
+       flag an error in case any are found */
+    for (t=t1min; t<=t2max && !err; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi > 0 && vi != LISTSEP) {
+		if (na(Z[vi][t])) {
+		    err = E_MISSDATA;
+		    break;
+		}
+	    }
+	}
+    }     
+
+    *t1 = t1min; 
+    *t2 = t2max;
+
+    return err;
 }
 
 /* For handling the "omit" command, applied to a model that has

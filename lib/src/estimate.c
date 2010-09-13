@@ -497,12 +497,10 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 
     if (reject_missing) {
 	/* reject missing obs within adjusted sample */
-	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
-			    pdinfo->n, Z, misst);
+	missv = model_adjust_sample(pmod, pdinfo->n, Z, misst);
     } else {
 	/* we'll try to work around missing obs */
-	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
-			    pdinfo->n, Z, NULL);
+	missv = model_adjust_sample(pmod, pdinfo->n, Z, NULL);
     }
 
 #if SMPL_DEBUG
@@ -2104,20 +2102,14 @@ static double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     double ess, ssr[199], rh[199]; 
     int iter, nn = 0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int missv = 0, misst = 0;
     gretlopt lsqopt = OPT_A;
     int quiet = (opt & OPT_Q);
     int ascii = !(opt & OPT_G);
     MODEL armod;
 
-    *err = 0;
-
-    missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-			pdinfo->n, (const double **) *pZ, &misst);
-    if (missv) {
-	gretl_errmsg_sprintf(_("Missing value encountered for "
-			       "variable %d, obs %d"), missv, misst);
-	*err = E_DATA;
+    *err = list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+			      (const double **) *pZ);
+    if (*err) {
 	goto bailout;
     }
 
