@@ -1124,7 +1124,11 @@
 	<para>
 	  Expands the input data, <argname>Y</argname>, to a higher
 	  frequency, using the interpolation method of <cite
-	  key="chowlin71">Chow and Lin (1971)</cite>. 
+	  key="chowlin71">Chow and Lin (1971)</cite>. It is
+	  assumed that the columns of <argname>Y</argname>
+	  represent data series; the returned matrix has as many columns
+	  as <argname>Y</argname> and <argname>xfac</argname> times
+	  as many rows.
 	</para>
 	<para>
 	  The second argument represents the expansion factor: it should
@@ -1139,7 +1143,7 @@
 	  used as additional regressors; it is an error if the number of
 	  rows in <argname>X</argname> does not equal
 	  <argname>xfac</argname> times the number of rows in
-	  <argname>y</argname>.
+	  <argname>Y</argname>.
 	</para>
       </description>
     </function>
