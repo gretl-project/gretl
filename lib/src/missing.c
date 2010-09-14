@@ -111,7 +111,7 @@ int undo_daily_repack (MODEL *pmod, double **Z,
     int err = 0;
 
     if (!gretl_model_get_int(pmod, "daily_repack")) {
-	return 1;
+	return E_DATA;
     }
 
     mobs = (MISSOBS *) gretl_model_get_data(pmod, "missobs");
@@ -122,17 +122,13 @@ int undo_daily_repack (MODEL *pmod, double **Z,
     /* take charge of MISSOBS pointer */
     gretl_model_detach_data_item(pmod, "missobs");
 			   
-    tmpmiss = malloc(mobs->misscount * sizeof *tmpmiss);
+    tmpmiss = malloc((mobs->misscount + pmod->nobs) * sizeof *tmpmiss);
     if (tmpmiss == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    tmpgood = malloc(pmod->nobs * sizeof *tmpgood);
-    if (tmpgood == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
+    tmpgood = tmpmiss + mobs->misscount;
 
     for (j=1; j<=pmod->list[0]; j++) {
 	i = pmod->list[j];
@@ -161,7 +157,6 @@ int undo_daily_repack (MODEL *pmod, double **Z,
  bailout:
 
     free(tmpmiss);
-    free(tmpgood);
 
     if (!err) {
 	err = reorganize_uhat_yhat(pmod, mobs); 
@@ -188,47 +183,43 @@ static int
 repack_missing (const MODEL *pmod, double **Z, const DATAINFO *pdinfo, 
 		const char *missvec, int misscount)
 {
-    int i, j, t, m, g;
+    int i, v, t, m, g;
     double *tmpmiss, *tmpgood;
     int modn = pmod->t2 - pmod->t1 + 1;
 
-    tmpmiss = malloc(misscount * sizeof *tmpmiss);
+    tmpmiss = malloc(modn * sizeof *tmpmiss);
     if (tmpmiss == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
-    tmpgood = malloc((modn - misscount) * sizeof *tmpgood);
-    if (tmpgood == NULL) {
-	free(tmpmiss);
-	return 1;
-    }
+    tmpgood = tmpmiss + misscount;
 
-    for (j=1; j<=pmod->list[0]; j++) {
-	i = pmod->list[j];
+    for (i=1; i<=pmod->list[0]; i++) {
+	v = pmod->list[i];
 
-	if (i == 0 || i == LISTSEP) {
+	if (v == 0 || v == LISTSEP) {
 	    continue;
 	}
 
 	m = g = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (missvec[t] == '1') {
-		tmpmiss[m++] = Z[i][t];
+		tmpmiss[m++] = Z[v][t];
 	    } else {
-		tmpgood[g++] = Z[i][t];
+		tmpgood[g++] = Z[v][t];
 	    }
 	}
+
 	m = g = 0;
 	for (t=pmod->t1; t<=pmod->t2 - misscount; t++) {
-	     Z[i][t] = tmpgood[g++];
+	     Z[v][t] = tmpgood[g++];
 	}
 	for (t=pmod->t2 + 1 - misscount; t<=pmod->t2; t++) {
-	    Z[i][t] = tmpmiss[m++];
+	    Z[v][t] = tmpmiss[m++];
 	}
     }
 
     free(tmpmiss);
-    free(tmpgood);
 
     return 0;
 }
@@ -276,7 +267,7 @@ int repack_missing_daily_obs (MODEL *pmod, double **Z,
     err = repack_missing(pmod, Z, pdinfo, missvec, misscount);
 
     if (err) {
-	pmod->errcode = E_ALLOC;
+	pmod->errcode = err;
 	free(missvec);
     } else {
 	gretl_model_set_int(pmod, "daily_repack", 1);
@@ -319,6 +310,16 @@ int model_missval_count (const MODEL *pmod)
     return mc;
 }
 
+static int really_missing (int v, int t, const double **Z, int d)
+{
+    if (d > 0 && Z[d][t] == 0) {
+	/* the obs is dummied out */
+	return 0;
+    } else {
+	return na(Z[v][t]);
+    } 
+}
+
 /* Construct a mask to code for missing observations within the sample
    range for a model.  The mask is an array of char with '0's 
    for OK observations and '1's for missing obs, terminated with
@@ -330,8 +331,7 @@ static char *model_missmask (const int *list, int t1, int t2,
 			     int *misscount)
 {
     char *mask;
-    double xx;
-    int i, li, t;
+    int i, vi, t;
 
     mask = malloc(n + 1);
     if (mask == NULL) {
@@ -351,40 +351,25 @@ static char *model_missmask (const int *list, int t1, int t2,
 
     for (t=t1; t<=t2; t++) {
 	for (i=1; i<=list[0]; i++) {
-	    li = list[i];
-	    if (li == 0 || li == LISTSEP) {
-		continue;
-	    }
-	    xx = Z[li][t];
-	    if (dwt > 0) {
-		xx *= Z[dwt][t];
-	    }
-	    if (na(xx)) {
+	    vi = list[i];
+	    if (vi > 0 && vi != LISTSEP) {
+		if (really_missing(vi, t, Z, dwt)) {
 #if MASKDEBUG > 1
-		fprintf(stderr, "model_missmask: NA at list[%d] (%d), obs %d\n",
-			i, list[i], t);
+		    fprintf(stderr, "model_missmask: NA at list[%d] (%d), "
+			    "obs %d\n", i, vi, t);
 #endif
-		/* FIXME dwt case and nobs?? */
-		mask[t] = '1';
-		if (misscount != NULL) {
-		    *misscount += 1;
+		    /* FIXME dwt case and nobs?? */
+		    mask[t] = '1';
+		    if (misscount != NULL) {
+			*misscount += 1;
+		    }
+		    break;
 		}
-		break;
 	    }
 	}
     }
 
     return mask;
-}
-
-static int really_missing (int v, int t, const double **Z, int d)
-{
-    if (d > 0 && Z[d][t] == 0) {
-	/* the obs is dummied out */
-	return 0;
-    } else {
-	return na(Z[v][t]);
-    } 
 }
 
 /**
@@ -602,11 +587,10 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
  *
  * Drops leading or trailing observations from the sample range
  * initially given by the values in @t1 and @t2, if missing values are 
- * found among the variables given in @list at the start or end of
- * the range.  
+ * found for any of the variables given in @list.
  *
  * Returns: %E_MISSDATA if missing values are found within the
- * (possible adjusted) sample range, else 0.
+ * (possibly adjusted) sample range, else 0.
  */
 
 int list_adjust_sample (const int *list, int *t1, int *t2, 
@@ -812,7 +796,7 @@ int set_miss (const int *list, const char *param, double **Z,
 	      DATAINFO *pdinfo, PRN *prn)
 {
     double missval = atof(param);
-    int i, count, ret = 0;
+    int i, vi, count, ret = 0;
 
     if (list == NULL || list[0] == 0) {
 	count = real_setmiss(missval, 0, Z, pdinfo);
@@ -824,14 +808,15 @@ int set_miss (const int *list, const char *param, double **Z,
 	}
     } else {
 	for (i=1; i<=list[0]; i++) {
-	    count = real_setmiss(missval, list[i], Z, pdinfo);
+	    vi = list[i];
+	    count = real_setmiss(missval, vi, Z, pdinfo);
 	    if (count) { 
 		pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
-			pdinfo->varname[list[i]], count);
+			pdinfo->varname[vi], count);
 		ret = 1;
 	    } else { 
 		pprintf(prn, _("%s: Didn't find any matching observations\n"),
-			pdinfo->varname[list[i]]);
+			pdinfo->varname[vi]);
 	    }
 	}
     }
