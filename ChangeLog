@@ -25,6 +25,8 @@ version 1.9.2, in progress
 - New accessor $mnl_probs to get the estimated outcome
   probabilities for a multinomial logit model (plus GUI
   access under the Analysis menu in the model window)
+- GUI interface to X-12-ARIMA: add more options to control
+  the program's behavior
 - Fix for multinomial logit: correct bias in favor of the
   base case in the reported fitted values ($yhat)
 - Fix bug 3021540 (sorting dataset)
