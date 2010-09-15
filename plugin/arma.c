@@ -2020,9 +2020,6 @@ static int prefer_hr_init (arma_info *ainfo)
 	} else if (arma_xdiff(ainfo)) {
 	    /* don't use for ARIMAX (yet?) */
 	    ret = 0;
-	} else if (arma_missvals(ainfo)) {
-	    /* don't use if there are NAs in sample (yet?) */
-	    ret = 0;
 	} else if (ainfo->t2 - ainfo->t1 < 100) {
 	    /* unlikely to work well with small sample */
 	    ret = 0;
