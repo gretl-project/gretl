@@ -542,10 +542,18 @@ static void
 output_series_to_spc (const int *list, const double **Z, 
 		      int t1, int t2, FILE *fp)
 {
-    int i, t;
+    int i, t, done = 0;
 
-    fputs(" missingcode=-99999\n", fp);
-    fputs(" data = (\n", fp);
+    for (t=t1; t<=t2 && !done; t++) {
+	for (i=1; i<=list[0] && !done; i++) {
+	    if (na(Z[list[i]][t])) {
+		fputs(" missingcode=-99999\n", fp);
+		done = 1;
+	    }
+	}
+    }
+
+    fputs(" data=(\n", fp);
 
     for (t=t1; t<=t2; t++) {
 	for (i=1; i<=list[0]; i++) {
@@ -686,13 +694,13 @@ static int write_arma_spc_file (const char *fname,
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "series {\n title = \"%s\"\n period = %d\n", 
+    fprintf(fp, "series{\n title=\"%s\"\n period=%d\n", 
 	    pdinfo->varname[ainfo->yno], pdinfo->pd);
 
     t1 -= ainfo->maxlag;
     
     make_x12a_date_string(t1, pdinfo, datestr);
-    fprintf(fp, " start = %s\n", datestr);
+    fprintf(fp, " start=%s\n", datestr);
 
     ylist[0] = 1;
     ylist[1] = ainfo->yno;
@@ -701,8 +709,6 @@ static int write_arma_spc_file (const char *fname,
 
     if ((opt & OPT_F) && ainfo->t2 < pdinfo->n - 1) {
 	int nobs;
-
-	/* FIXME ensure we don't print any NAs */
 
 	tmax = pdinfo->n - 1;
 	nobs = tmax - ainfo->t1 + 1; /* t1? */
@@ -816,6 +822,14 @@ static void delete_old_files (const char *path)
     }
 }
 
+static void x12a_maybe_allow_missvals (arma_info *ainfo)
+{
+    if (arma_exact_ml(ainfo) &&
+	ainfo->d == 0 && ainfo->D == 0) {
+	ainfo->pflags |= ARMA_NAOK;
+    }
+}
+
 MODEL arma_x12_model (const int *list, const char *pqspec,
 		      const double **Z, const DATAINFO *pdinfo,
 		      int pdmax, gretlopt opt, PRN *prn)
@@ -825,7 +839,8 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     const char *workdir = gretl_x12_arima_dir();
     char yname[VNAMELEN], path[MAXLEN];
     MODEL armod;
-    arma_info ainfo;
+    arma_info ainfo_s, *ainfo;
+    int missv = 0, misst = 0;
 #ifdef WIN32
     char *cmd;
 #endif
@@ -836,18 +851,19 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	opt |= OPT_F;
     }
 
-    arma_info_init(&ainfo, opt | OPT_X, pqspec, pdinfo);
-    ainfo.prn = set_up_verbose_printer(opt, prn);
+    ainfo = &ainfo_s;
+    arma_info_init(ainfo, opt | OPT_X, pqspec, pdinfo);
+    ainfo->prn = set_up_verbose_printer(opt, prn);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
-    ainfo.alist = gretl_list_copy(list);
-    if (ainfo.alist == NULL) {
+    ainfo->alist = gretl_list_copy(list);
+    if (ainfo->alist == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
-	err = arma_check_list(&ainfo, Z, pdinfo, opt);
+	err = arma_check_list(ainfo, Z, pdinfo, opt);
     }
 
     if (err) {
@@ -856,24 +872,28 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     }     
 
     /* calculate maximum lag */
-    calc_max_lag(&ainfo);
+    calc_max_lag(ainfo);
+
+    x12a_maybe_allow_missvals(ainfo);
 
     /* adjust sample range if need be */
-    if (arma_adjust_sample(&ainfo, Z, pdinfo)) {
-        armod.errcode = E_DATA;
+    armod.errcode = arma_adjust_sample(ainfo, Z, pdinfo, &missv, &misst);
+    if (armod.errcode) {
 	goto bailout;
+    } else if (missv > 0) {
+	set_arma_missvals(ainfo);
     }
 
     /* create differenced series if needed */
-    if (ainfo.d > 0 || ainfo.D > 0) {
-	err = arima_difference(&ainfo, Z, pdinfo);
+    if (ainfo->d > 0 || ainfo->D > 0) {
+	err = arima_difference(ainfo, Z, pdinfo);
     }  
 
-    strcpy(yname, pdinfo->varname[ainfo.yno]);
+    strcpy(yname, pdinfo->varname[ainfo->yno]);
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
-    write_arma_spc_file(path, Z, pdinfo, &ainfo, pdmax, opt);
+    write_arma_spc_file(path, Z, pdinfo, ainfo, pdmax, opt);
 
     /* remove any files from on old run, in case of error */
     delete_old_files(path);
@@ -889,36 +909,36 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     if (!err) {
 	sprintf(path, "%s%c%s", workdir, SLASH, yname); 
-	armod.t1 = ainfo.t1;
-	armod.t2 = ainfo.t2;
-	populate_arma_model(&armod, path, Z, pdinfo, &ainfo);
+	armod.t1 = ainfo->t1;
+	armod.t2 = ainfo->t2;
+	populate_arma_model(&armod, path, Z, pdinfo, ainfo);
 	if (verbose && !armod.errcode) {
-	    print_iterations(path, ainfo.prn);
+	    print_iterations(path, ainfo->prn);
 	}
 	if (!armod.errcode) {
 	    if (gretl_in_gui_mode()) {
 		add_unique_output_file(&armod, path);
 	    }
-	    gretl_model_set_int(&armod, "arma_flags", (int) ainfo.flags);
+	    gretl_model_set_int(&armod, "arma_flags", (int) ainfo->flags);
 	}	
     } else {
 	armod.errcode = E_UNSPEC;
 	gretl_errmsg_set(_("Failed to execute x12arima"));
     }
 
-    if (armod.errcode && ainfo.prn != NULL) {
+    if (armod.errcode && ainfo->prn != NULL) {
 	sprintf(path, "%s%c%s.err", workdir, SLASH, yname);
-	print_x12a_error_file(path, ainfo.prn);
+	print_x12a_error_file(path, ainfo->prn);
     }
 
-    if (ainfo.prn != NULL && ainfo.prn != prn) {
-	iter_print_callback(0, ainfo.prn);
-	close_down_verbose_printer(ainfo.prn);
+    if (ainfo->prn != NULL && ainfo->prn != prn) {
+	iter_print_callback(0, ainfo->prn);
+	close_down_verbose_printer(ainfo->prn);
     }
 
  bailout:
 
-    arma_info_cleanup(&ainfo);
+    arma_info_cleanup(ainfo);
 
     if (armod.errcode && (opt & OPT_U)) {
 	/* continue on error */

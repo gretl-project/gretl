@@ -9,13 +9,16 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
 {
     ainfo->yno = 0;
     ainfo->flags = 0;
+    ainfo->pflags = 0;
     ainfo->alist = NULL;
 
     if (opt & OPT_X) {
+	/* we got --x-12-arima */
 	ainfo->flags |= ARMA_X12A;
     }    
 
     if (!(opt & OPT_C)) {
+	/* we didn't get --conditional */
 	ainfo->flags |= ARMA_EXACT;
     }
 
@@ -433,7 +436,7 @@ static void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 
 static void calc_max_lag (arma_info *ainfo)
 {
-    if (ainfo->flags & ARMA_EXACT) {
+    if (arma_exact_ml(ainfo)) {
 	ainfo->maxlag = ainfo->d + ainfo->D * ainfo->pd;
     } else {
 	/* conditional ML */
@@ -452,13 +455,15 @@ static void calc_max_lag (arma_info *ainfo)
 
 static int arma_adjust_sample (arma_info *ainfo, 
 			       const double **Z,
-			       const DATAINFO *pdinfo)
+			       const DATAINFO *pdinfo,
+			       int *missv, int *misst)
 {
     int *list = ainfo->alist;
     int ypos = arma_list_y_position(ainfo);
     int t0, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int i, vi, vlmax, k, t;
-    int anymiss;
+    int missing;
+    int err = 0;
 
 #if SAMPLE_DEBUG
     fprintf(stderr, "arma_adjust_sample: at start, t1=%d, t2=%d, maxlag = %d\n",
@@ -471,7 +476,7 @@ static int arma_adjust_sample (arma_info *ainfo,
     }
 
     /* list position of last var to check for lags */
-    if (ainfo->flags & ARMA_XDIFF) {
+    if (arma_xdiff(ainfo)) {
 	vlmax = list[0];
     } else {
 	vlmax = ypos;
@@ -480,23 +485,23 @@ static int arma_adjust_sample (arma_info *ainfo,
     /* advance the starting point if need be */
 
     for (t=t1; t<=t2; t++) {
-	anymiss = 0;
-	for (i=ypos; i<=list[0] && !anymiss; i++) {
+	missing = 0;
+	for (i=ypos; i<=list[0] && !missing; i++) {
 	    vi = list[i];
 	    if (na(Z[vi][t])) {
 		/* current value missing */
-		anymiss = 1;
+		missing = 1;
 	    }
 	    if (i <= vlmax) {
-		for (k=1; k<=ainfo->maxlag && !anymiss; k++) {
+		for (k=1; k<=ainfo->maxlag && !missing; k++) {
 		    if (na(Z[vi][t-k])) {
 			/* lagged value missing */
-			anymiss = 1;
+			missing = 1;
 		    }
 		}
 	    }
 	}
-	if (anymiss) {
+	if (missing) {
 	    t1++;
 	} else {
 	    break;
@@ -506,47 +511,64 @@ static int arma_adjust_sample (arma_info *ainfo,
     /* retard the ending point if need be */
 
     for (t=t2; t>=t1; t--) {
-	anymiss = 0;
-	for (i=ypos; i<=list[0] && !anymiss; i++) {
+	missing = 0;
+	for (i=ypos; i<=list[0] && !missing; i++) {
 	    vi = list[i];
 	    if (na(Z[vi][t])) {
-		anymiss = 1;
+		missing = 1;
 	    }
 	}
-	if (anymiss) {
+	if (missing) {
 	    t2--;
 	} else {
 	    break;
 	}
     }
-	
-    /* check for missing obs within the sample range */
+
+    missing = 0;
+
+    /* check for missing obs within the adjusted sample range */
     for (t=t1; t<t2; t++) {
+	int tmiss = 0;
+
 	for (i=ypos; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (na(Z[vi][t])) {
-		gretl_errmsg_sprintf(_("Missing value encountered for "
-				       "variable %d, obs %d"), vi, t + 1);
-		return E_MISSDATA;
+		if (missv != NULL && misst != NULL && *missv == 0) {
+		    /* record info on first missing obs */
+		    *missv = vi;
+		    *misst = t + 1;
+		}
+		tmiss = 1;
 	    }
+	}
+	if (tmiss) {
+	    missing++;
 	}
     }
 
-    ainfo->T = t2 - t1 + 1;
-    if (ainfo->T <= ainfo->nc) {
-	/* insufficient observations */
-	return E_DF; 
+    if (missing > 0 && !arma_na_ok(ainfo)) {
+	err = E_MISSDATA;
     }
 
+    if (!err) {
+	ainfo->T = t2 - t1 + 1 - missing;
+	if (ainfo->T <= ainfo->nc) {
+	    /* insufficient observations */
+	    err = E_DF; 
+	}
+    }
+
+    if (!err) {
 #if SAMPLE_DEBUG
-    fprintf(stderr, "arma_adjust_sample: at end, t1=%d, t2=%d\n",
-	    t1, t2);
+	fprintf(stderr, "arma_adjust_sample: at end, t1=%d, t2=%d\n",
+		t1, t2);
 #endif
+	ainfo->t1 = t1;
+	ainfo->t2 = t2;
+    }
 
-    ainfo->t1 = t1;
-    ainfo->t2 = t2;
-
-    return 0;
+    return err;
 }
 
 #define ARIMA_DEBUG 0
@@ -854,6 +876,8 @@ static int arma_check_list (arma_info *ainfo,
     return err;
 }
 
+#if 1
+
 static void 
 real_arima_difference_series (double *dx, const double *x,
 			      int t1, arma_info *ainfo)
@@ -889,6 +913,78 @@ real_arima_difference_series (double *dx, const double *x,
 	}
     }
 }
+
+#else
+
+static void 
+real_arima_difference_series (double *dx, const double *x,
+			      int t1, arma_info *ainfo)
+{
+    int t, i, s = ainfo->pd;
+    
+    for (i=0, t=t1; t<=ainfo->t2; i++, t++) {
+	dx[i] = x[t];
+	if (ainfo->d > 0 && !na(dx[i])) {
+	    if (na(x[t-1])) {
+		dx[i] = NADBL;
+	    } else {
+		dx[i] -= x[t-1];
+	    }
+	} 
+	if (ainfo->d == 2 && !na(dx[i])) {
+	    if (na(x[t-2])) {
+		dx[i] = NADBL;
+	    } else {
+		dx[i] -= x[t-1] - x[t-2];
+	    }
+	}
+	if (ainfo->D > 0 && !na(dx[i])) {
+	    if (na(x[t-s])) {
+		dx[i] = NADBL;
+	    } else {
+		dx[i] -= x[t-s];
+	    }
+	    if (ainfo->d > 0 && !na(dx[i])) {
+		if (na(x[t-s-1])) {
+		    dx[i] = NADBL;
+		} else {
+		    dx[i] += x[t-s-1];
+		}
+	    }
+	    if (ainfo->d == 2 && !na(dx[i])) {
+		if (na(x[t-s-2])) {
+		    dx[i] = NADBL;
+		} else {
+		    dx[i] += x[t-s-1] - x[t-s-2];
+		}
+	    }	    
+	} 
+	if (ainfo->D == 2 && !na(dx[i])) {
+	    if (na(x[t-2*s])) {
+		dx[i] = NADBL;
+	    } else {
+		dx[i] -= x[t-s] - x[t-2*s];
+	    }
+	    if (ainfo->d > 0 && !na(dx[i])) {
+		if (na(x[t-2*s-1])) {
+		    dx[i] = NADBL;
+		} else {
+		    dx[i] += x[t-s-1] - x[t-2*s-1];
+		}
+	    }
+	    if (ainfo->d == 2 && !na(dx[i])) {
+		if (na(x[t-2*s-2])) {
+		    dx[i] = NADBL;
+		} else {
+		    dx[i] += x[t-s-1] - x[t-2*s-1];
+		    dx[i] -= x[t-s-2] - x[t-2*s-2];
+		}
+	    }
+	}
+    }
+}
+
+#endif
 
 static int arima_difference (arma_info *ainfo, const double **Z,
 			     const DATAINFO *pdinfo)
@@ -937,7 +1033,7 @@ static int arima_difference (arma_info *ainfo, const double **Z,
 
     ainfo->y = dy;
 
-    if (ainfo->flags & ARMA_XDIFF) {
+    if (arma_xdiff(ainfo)) {
 	/* also difference the ARIMAX regressors */
 	ainfo->dX = gretl_matrix_alloc(ainfo->T, ainfo->nexo);
 	if (ainfo->dX == NULL) {

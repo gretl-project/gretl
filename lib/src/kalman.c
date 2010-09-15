@@ -1165,13 +1165,17 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
    although F and P are (r x r).
 */
 
-static int kalman_arma_iter_1 (kalman *K)
+static int kalman_arma_iter_1 (kalman *K, int missobs)
 {
     double Ve;
     int i, err = 0;
 
     /* write F*S into S+ */
     err += multiply_by_F(K, K->S0, K->S1, 0);
+
+    if (missobs) {
+	return err;
+    }
 
     /* form e = y - A'x - H'S */
     K->e->val[0] -= K->Ax->val[0];
@@ -1393,6 +1397,9 @@ static void kalman_initialize_error (kalman *K, int *missobs)
 	yti = gretl_matrix_get(K->y, K->t, i);
 	K->e->val[i] = yti;
 	if (isnan(yti)) {
+#if KDEBUG
+	    fprintf(stderr, "y: got nan at obs %d\n", K->t);
+#endif
 	    *missobs += 1;
 	}
     }
@@ -1601,7 +1608,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
 	/* first stage of dual iteration */
 	if (arma_ll(K)) {
-	    err = kalman_arma_iter_1(K);
+	    err = kalman_arma_iter_1(K, missobs);
 	} else {
 	    err = kalman_iter_1(K, missobs, &llt);
 	    if (K->LL != NULL) {

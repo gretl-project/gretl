@@ -1171,14 +1171,16 @@ static double kalman_arma_ll (const double *b, void *data)
     }
 
     err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
+
     if (!err) {
 	err = kalman_forecast(K, NULL);
 	ll = kalman_get_loglik(K);
-    }
-
 #if ARMA_DEBUG
-    fprintf(stderr, "kalman_arma_ll: loglik = %#.12g\n", ll);
+	fprintf(stderr, "kalman_arma_ll: kalman_forecast gave %d, "
+		"loglik = %#.12g\n", err, ll);
 #endif
+
+    }
 
     return ll;
 }
@@ -1186,7 +1188,7 @@ static double kalman_arma_ll (const double *b, void *data)
 static int arima_ydiff_only (arma_info *ainfo)
 {
     if ((ainfo->d > 0 || ainfo->D > 0) &&
-	ainfo->nexo > 0 && !(ainfo->flags & ARMA_XDIFF)) {
+	ainfo->nexo > 0 && !arma_xdiff(ainfo)) {
 	return 1;
     } else {
 	return 0;
@@ -1285,7 +1287,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
 	arma_model_add_roots(pmod, ainfo, b);
 	gretl_model_set_int(pmod, "arma_flags", ARMA_EXACT);
-	if (ainfo->flags & ARMA_LBFGS) {
+	if (arma_lbfgs(ainfo)) {
 	    pmod->opt |= OPT_L;
 	}
 	if (arima_ydiff_only(ainfo)) {
@@ -1294,6 +1296,17 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     }
 
     return err;
+}
+
+static void matrix_NA_to_nan (gretl_matrix *m)
+{
+    int i, n = m->rows * m->cols;
+
+    for (i=0; i<n; i++) {
+	if (na(m->val[i])) {
+	    m->val[i] = M_NA;
+	}
+    }
 }
 
 /* for Kalman: convert from full-length y series to
@@ -1314,8 +1327,11 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 
 	y = (ainfo->y != NULL)? ainfo->y : Z[ainfo->yno];
 	memcpy(yvec->val, y + ainfo->t1, ainfo->T * sizeof *y);
+	if (ainfo->pflags & ARMA_NAS) {
+	    matrix_NA_to_nan(yvec);
+	}
 #if ARMA_DEBUG
-	gretl_matrix_print(yvec, "y");
+	gretl_matrix_print(yvec, "arma y vector");
 #endif
     }
     
@@ -1327,13 +1343,20 @@ static gretl_matrix *form_arma_X_matrix (arma_info *ainfo,
 					 int *err)
 {
     gretl_matrix *X;
+    int missop;
 
 #if ARMA_DEBUG
     printlist(ainfo->xlist, "ainfo->xlist (exog vars)");
 #endif
 
+    if (arma_na_ok(ainfo)) {
+	missop = M_MISSING_OK;
+    } else {
+	missop = M_MISSING_ERROR;
+    }
+
     X = gretl_matrix_data_subset(ainfo->xlist, Z, ainfo->t1, ainfo->t2, 
-				 M_MISSING_ERROR, err);
+				 missop, err);
 
 #if ARMA_DEBUG
     gretl_matrix_print(X, "X");
@@ -1684,10 +1707,10 @@ static int kalman_arma (double *coeff,
 	save_lbfgs = libset_get_bool(USE_LBFGS);
 
 	if (save_lbfgs) {
-	    ainfo->flags |= ARMA_LBFGS;
+	    ainfo->pflags |= ARMA_LBFGS;
 	} else if (opt & OPT_L) {
 	    libset_set_bool(USE_LBFGS, 1);
-	    ainfo->flags |= ARMA_LBFGS;
+	    ainfo->pflags |= ARMA_LBFGS;
 	}
 
 	BFGS_defaults(&maxit, &toler, ARMA);
@@ -1762,7 +1785,7 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
 	return E_DATA;
     }
 
-    if (ainfo->flags & ARMA_EXACT) {
+    if (arma_exact_ml(ainfo)) {
 	/* initialization is handled within BFGS */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;
@@ -1868,7 +1891,7 @@ static int set_up_arma_OPG_info (arma_info *ainfo,
 	}
     }    
 
-    if (!err && !(ainfo->flags & ARMA_EXACT)) {
+    if (!err && !arma_exact_ml(ainfo)) {
 	/* allocate covariance matrix */
 	ainfo->V = gretl_matrix_alloc(k, k);
 	if (ainfo->V == NULL) {
@@ -1994,8 +2017,11 @@ static int prefer_hr_init (arma_info *ainfo)
 	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
 	    /* don't use for gappy arma (yet?) */
 	    ret = 0;
-	} else if (ainfo->flags & ARMA_XDIFF) {
+	} else if (arma_xdiff(ainfo)) {
 	    /* don't use for ARIMAX (yet?) */
+	    ret = 0;
+	} else if (arma_missvals(ainfo)) {
+	    /* don't use if there are NAs in sample (yet?) */
 	    ret = 0;
 	} else if (ainfo->t2 - ainfo->t1 < 100) {
 	    /* unlikely to work well with small sample */
@@ -2056,10 +2082,27 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
 
 static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
 {
-    if ((ainfo->flags & ARMA_EXACT) &&
+    if (arma_exact_ml(ainfo) &&
 	(ainfo->d > 0 || ainfo->D > 0) &&
 	ainfo->nexo > 0 && !(opt & OPT_Y)) {
-	ainfo->flags |= ARMA_XDIFF;
+	ainfo->pflags |= ARMA_XDIFF;
+    }
+}
+
+/* Set flag to allow NAs within the sample range for a plain
+   ARMA model using native exact ML ("plain" = no integration,
+   no seasonals). TODO : we should be able to handle NAs in
+   more cases, but this is predicated on changes in the
+   code for differencing and initialization of the ARMA
+   estimates.
+*/
+
+static void maybe_allow_missvals (arma_info *ainfo)
+{
+    if (arma_exact_ml(ainfo) &&
+	ainfo->d == 0 && ainfo->D == 0 &&
+	ainfo->P == 0 && ainfo->Q == 0) {
+	ainfo->pflags |= ARMA_NAOK;
     }
 }
 
@@ -2069,49 +2112,58 @@ MODEL arma_model (const int *list, const char *pqspec,
 {
     double *coeff = NULL;
     MODEL armod;
-    arma_info ainfo;
+    arma_info ainfo_s, *ainfo;
     int init_done = 0;
+    int missv = 0, misst = 0;
     int err = 0;
 
-    arma_info_init(&ainfo, opt, pqspec, pdinfo);
-    ainfo.prn = set_up_verbose_printer(opt, prn);
+    ainfo = &ainfo_s;
+    arma_info_init(ainfo, opt, pqspec, pdinfo);
+    ainfo->prn = set_up_verbose_printer(opt, prn);
 
     gretl_model_init(&armod); 
 
     err = incompatible_options(opt, OPT_C | OPT_L);
 
     if (!err) {
-	ainfo.alist = gretl_list_copy(list);
-	if (ainfo.alist == NULL) {
+	ainfo->alist = gretl_list_copy(list);
+	if (ainfo->alist == NULL) {
 	    err = E_ALLOC;
 	}
     } 
 
     if (!err) {
-	err = arma_check_list(&ainfo, Z, pdinfo, opt);
+	err = arma_check_list(ainfo, Z, pdinfo, opt);
     }
 
     if (!err) {
 	/* calculate maximum lag */
-	maybe_set_xdiff_flag(&ainfo, opt);
-	calc_max_lag(&ainfo);
+	maybe_set_xdiff_flag(ainfo, opt);
+	calc_max_lag(ainfo);
     }
 
     if (!err) {
 	/* adjust sample range if need be */
-	err = arma_adjust_sample(&ainfo, Z, pdinfo);
+	maybe_allow_missvals(ainfo);
+	err = arma_adjust_sample(ainfo, Z, pdinfo, &missv, &misst);
+	if (err) {
+	    gretl_errmsg_sprintf(_("Missing value encountered for "
+				   "variable %d, obs %d"), missv, misst);
+	} else if (missv > 0) {
+	    set_arma_missvals(ainfo);
+	}
     }
 
     if (!err) {
 	/* allocate initial coefficient vector */
-	coeff = malloc(ainfo.nc * sizeof *coeff);
+	coeff = malloc(ainfo->nc * sizeof *coeff);
 	if (coeff == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
-    if (!err && (ainfo.d > 0 || ainfo.D > 0)) {
-	err = arima_difference(&ainfo, Z, pdinfo);
+    if (!err && (ainfo->d > 0 || ainfo->D > 0)) {
+	err = arima_difference(ainfo, Z, pdinfo);
     }
 
     if (err) {
@@ -2121,35 +2173,35 @@ MODEL arma_model (const int *list, const char *pqspec,
     /* initialize the coefficients: there are 3 possible methods */
 
     /* first pass: see if the user specified some values */
-    err = user_arma_init(coeff, &ainfo, &init_done);
+    err = user_arma_init(coeff, ainfo, &init_done);
     if (err) {
 	goto bailout;
     }
 
-    if (!(ainfo.flags & ARMA_EXACT) && ainfo.q == 0 && ainfo.Q == 0) {
+    if (!arma_exact_ml(ainfo) && ainfo->q == 0 && ainfo->Q == 0) {
 	/* for a pure AR model, the conditional MLE is least squares */
 	const double *b = (init_done)? coeff : NULL;
 
-	err = arma_via_OLS(&ainfo, b, Z, pdinfo, &armod);
+	err = arma_via_OLS(ainfo, b, Z, pdinfo, &armod);
 	goto bailout;
     }
 
     /* second pass: try Hannan-Rissanen, if suitable */
-    if (!init_done && prefer_hr_init(&ainfo)) {
-	hr_arma_init(coeff, Z, pdinfo, &ainfo, &init_done);
+    if (!init_done && prefer_hr_init(ainfo)) {
+	hr_arma_init(coeff, Z, pdinfo, ainfo, &init_done);
     }
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!err && !init_done) {
-	err = ar_arma_init(coeff, Z, pdinfo, &ainfo, &armod);
+	err = ar_arma_init(coeff, Z, pdinfo, ainfo, &armod);
     }
 
     if (!err) {
 	clear_model_xpx(&armod);
-	if (ainfo.flags & ARMA_EXACT) {
-	    kalman_arma(coeff, Z, pdinfo, &ainfo, &armod, opt);
+	if (arma_exact_ml(ainfo)) {
+	    kalman_arma(coeff, Z, pdinfo, ainfo, &armod, opt);
 	} else {
-	    bhhh_arma(coeff, Z, pdinfo, &ainfo, &armod, opt);
+	    bhhh_arma(coeff, Z, pdinfo, ainfo, &armod, opt);
 	}
     }
 
@@ -2164,13 +2216,13 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     free(coeff);
-    arma_info_cleanup(&ainfo);
+    arma_info_cleanup(ainfo);
 
     /* cleanup in MA roots checker */
     bounds_checker_cleanup();
 
-    if (ainfo.prn != prn) {
-	close_down_verbose_printer(ainfo.prn);
+    if (ainfo->prn != prn) {
+	close_down_verbose_printer(ainfo->prn);
     }
 
     return armod;

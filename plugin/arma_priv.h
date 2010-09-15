@@ -20,11 +20,23 @@
 #ifndef ARMA_PRIV_H
 #define ARMA_PRIV_H
 
+typedef enum {
+    ARMA_SEAS  = 1 << 0, /* includes seasonal component */
+    ARMA_DSPEC = 1 << 1, /* input list includes differences */
+    ARMA_XDIFF = 1 << 2, /* ARIMA: exogenous regressors are differenced */
+    ARMA_LBFGS = 1 << 3, /* using L-BFGS-B with native exact ML */
+    ARMA_VECH  = 1 << 4, /* using vech representation when computing
+			    variance matrix of state for Kalman filter */
+    ARMA_NAOK  = 1 << 5, /* allow missing observations */
+    ARMA_NAS   = 1 << 6  /* sample contains NAs */
+} PrivFlags;
+
 typedef struct arma_info_ arma_info;
 
 struct arma_info_ {
     int yno;            /* ID of dependent variable */
     ArmaFlags flags;    /* specification flags */
+    PrivFlags pflags;   /* "private" flags for estimation */
     int *alist;         /* copy of incoming list */
     const char *pqspec; /* input string with specific AR, MA lags */
     char *pmask;        /* specific AR lags included */
@@ -59,19 +71,26 @@ struct arma_info_ {
     PRN *prn;           /* verbose printer */
 };
 
-#define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)
-#define arma_is_arima(a)       ((a)->flags & ARMA_DSPEC)
 #define arma_by_x12a(a)        ((a)->flags & ARMA_X12A)
 #define arma_exact_ml(a)       ((a)->flags & ARMA_EXACT)
-#define arma_using_vech(a)     ((a)->flags & ARMA_VECH)
 #define arma_least_squares(a)  ((a)->flags & ARMA_LS)
-#define arma_xdiff(a)          ((a)->flags & ARMA_XDIFF)
 
-#define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
-#define set_arma_is_arima(a)      ((a)->flags |= ARMA_DSPEC)
-#define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
-#define set_arma_use_vech(a)      ((a)->flags |= ARMA_VECH)
 #define set_arma_least_squares(a) ((a)->flags |= ARMA_LS)
+
+#define arma_has_seasonal(a)   ((a)->pflags & ARMA_SEAS)
+#define arma_is_arima(a)       ((a)->pflags & ARMA_DSPEC)
+#define arma_xdiff(a)          ((a)->pflags & ARMA_XDIFF)
+#define arma_lbfgs(a)          ((a)->pflags & ARMA_LBFGS)
+#define arma_using_vech(a)     ((a)->pflags & ARMA_VECH)
+#define arma_na_ok(a)          ((a)->pflags & ARMA_NAOK)
+#define arma_missvals(a)       ((a)->pflags & ARMA_NAS)
+
+#define set_arma_has_seasonal(a)  ((a)->pflags |= ARMA_SEAS)
+#define set_arma_is_arima(a)      ((a)->pflags |= ARMA_DSPEC)
+#define unset_arma_is_arima(a)    ((a)->pflags &= ~ARMA_DSPEC)
+#define set_arma_use_vech(a)      ((a)->pflags |= ARMA_VECH)
+#define set_arma_na_ok(a)         ((a)->pflags |= ARMA_NAOK)
+#define set_arma_missvals(a)      ((a)->pflags |= ARMA_NAS)
 
 #define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')

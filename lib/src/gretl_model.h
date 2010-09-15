@@ -23,16 +23,9 @@
 #include "objstack.h"
 
 typedef enum {
-    ARMA_SEAS  = 1 << 0, /* includes seasonal component */
-    ARMA_DSPEC = 1 << 1, /* input list includes differences */
-    ARMA_X12A  = 1 << 2, /* using X-12-ARIMA to generate estimates */
-    ARMA_EXACT = 1 << 3, /* using exact ML */
-    ARMA_VECH  = 1 << 4, /* using vech representation when computing
-			    variance matrix of state for Kalman filter
-			 */
-    ARMA_LS    = 1 << 5, /* using conditional ML, and O/NLS == CML */
-    ARMA_XDIFF = 1 << 6, /* ARIMA: exogenous regressors are differenced */
-    ARMA_LBFGS = 1 << 7  /* using L-BFGS-B with native exact ML */
+    ARMA_X12A  = 1 << 0, /* using X-12-ARIMA to generate estimates */
+    ARMA_EXACT = 1 << 1, /* using exact ML */
+    ARMA_LS    = 1 << 2, /* using conditional ML, and O/NLS == CML */
 } ArmaFlags;
 
 typedef struct CoeffIntervals_ CoeffIntervals;

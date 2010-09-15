@@ -55,7 +55,7 @@ static void transform_arma_const (double *b, arma_info *ainfo)
 
 static int use_preprocessed_y (arma_info *ainfo)
 {
-    if (ainfo->flags & ARMA_XDIFF) {
+    if (arma_xdiff(ainfo)) {
 	/* for initialization, use the level of y */
 	return 0;
     } else {
@@ -77,7 +77,7 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
 
     if (ainfo->ifc) {
 	b[0] = pmod->coeff[0];
-	if (ainfo->flags & ARMA_XDIFF) {
+	if (arma_xdiff(ainfo)) {
 	    b[0] /= ainfo->T;
 	}
 	k = 1;
@@ -175,7 +175,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 
 #if AINIT_DEBUG
     fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n", 
-	    pass1v + qtotal, an);
+	    pass1v + qtotal, ainfo->T);
 #endif
 
     /* in case we bomb before estimating a model */
@@ -478,7 +478,7 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 	b[j++] = pmod->coeff[i];
     }
 
-    if ((ainfo->flags & ARMA_XDIFF) && ainfo->ifc) {
+    if (arma_xdiff(ainfo) && ainfo->ifc) {
 	/* is this a good idea? */
 	b[0] /= ainfo->T;
     }
