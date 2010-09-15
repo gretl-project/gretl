@@ -914,7 +914,7 @@ real_arima_difference_series (double *dx, const double *x,
     }
 }
 
-#else
+#else /* not yet */
 
 static void 
 real_arima_difference_series (double *dx, const double *x,
