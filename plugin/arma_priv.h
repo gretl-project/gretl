@@ -57,7 +57,8 @@ struct arma_info_ {
     int t1;             /* starting observation */
     int t2;             /* ending observation */
     int pd;             /* periodicity of data */
-    int T;              /* sample size for estimation */
+    int T;              /* number of valid observations in sample */
+    int fullT;          /* total obs (possibly including interior NAs) */
     double *y;          /* dependent variable (possibly differenced) */
     double *e;          /* forecast errors */
     const double **Z;   /* virtual dataset */

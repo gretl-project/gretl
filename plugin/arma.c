@@ -1223,7 +1223,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     pmod->nobs = ainfo->T;
     pmod->ncoeff = ainfo->nc;
     pmod->full_n = pdinfo->n;
-    
+
     /* in the Kalman case the basic model struct is empty, so we 
        have to allocate for coefficients, residuals and so on
     */
@@ -1318,7 +1318,7 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 {
     gretl_matrix *yvec;
 
-    yvec = gretl_column_vector_alloc(ainfo->T);
+    yvec = gretl_column_vector_alloc(ainfo->fullT);
 
     if (yvec == NULL) {
 	*err = E_ALLOC;
@@ -1326,7 +1326,7 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 	const double *y;
 
 	y = (ainfo->y != NULL)? ainfo->y : Z[ainfo->yno];
-	memcpy(yvec->val, y + ainfo->t1, ainfo->T * sizeof *y);
+	memcpy(yvec->val, y + ainfo->t1, ainfo->fullT * sizeof *y);
 	if (ainfo->pflags & ARMA_NAS) {
 	    matrix_NA_to_nan(yvec);
 	}
@@ -1653,7 +1653,7 @@ static int kalman_arma (double *coeff,
 
     clear_gretl_matrix_err();
 
-    allocate_kalman_matrices(r, r2, k, ainfo->T);
+    allocate_kalman_matrices(r, r2, k, ainfo->fullT);
 
     if (arma_using_vech(ainfo)) {
 	vQ = gretl_column_vector_alloc(m);
@@ -2056,16 +2056,17 @@ static int arma_via_OLS (arma_info *ainfo, const double *coeff,
     int err = 0;
 
     ainfo->flags |= ARMA_LS;
-
     err = arma_by_ls(coeff, Z, pdinfo, ainfo, pmod);
 
     if (!err) {
+	ArmaFlags f = (arma_exact_ml(ainfo))? ARMA_OLS : ARMA_LS;
+
 	pmod->t1 = ainfo->t1;
 	pmod->t2 = ainfo->t2;
 	pmod->full_n = pdinfo->n;
 	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
 	arma_model_add_roots(pmod, ainfo, pmod->coeff);
-	gretl_model_set_int(pmod, "arma_flags", ARMA_LS);
+	gretl_model_set_int(pmod, "arma_flags", f);
     }
 
     return err;
@@ -2096,8 +2097,7 @@ static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
 
 static void maybe_allow_missvals (arma_info *ainfo)
 {
-    if (arma_exact_ml(ainfo) &&
-	ainfo->d == 0 && ainfo->D == 0 &&
+    if (arma_exact_ml(ainfo) && !arma_xdiff(ainfo) &&
 	ainfo->P == 0 && ainfo->Q == 0) {
 	ainfo->pflags |= ARMA_NAOK;
     }
@@ -2177,6 +2177,16 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     if (!arma_exact_ml(ainfo) && ainfo->q == 0 && ainfo->Q == 0) {
 	/* for a pure AR model, the conditional MLE is least squares */
+	const double *b = (init_done)? coeff : NULL;
+
+	err = arma_via_OLS(ainfo, b, Z, pdinfo, &armod);
+	goto bailout;
+    }
+
+    if (ainfo->p == 0 && ainfo->P == 0 &&
+	ainfo->q == 0 && ainfo->Q == 0 &&
+	!arma_missvals(ainfo)) {
+	/* pure "I" model, no NAs: OLS provides the MLE */
 	const double *b = (init_done)? coeff : NULL;
 
 	err = arma_via_OLS(ainfo, b, Z, pdinfo, &armod);

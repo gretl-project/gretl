@@ -1489,6 +1489,11 @@ static void arma_extra_info (const MODEL *pmod, PRN *prn)
 	pputs(prn, " (");
 	pputs(prn, (acode & ARMA_EXACT)? _("exact ML") : _("conditional ML"));
 	pputs(prn, ")\n");
+    } else if (acode & ARMA_OLS) {
+	pputs(prn, _("Estimated using least squares"));
+	pputs(prn, " (");
+	pputs(prn, _("= MLE"));
+	pputs(prn, ")\n");
     } else if (acode & ARMA_EXACT) {
 	pputs(prn, _("Estimated using Kalman filter"));
 	pputs(prn, " (");

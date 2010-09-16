@@ -254,6 +254,8 @@ static int arma_list_y_position (arma_info *ainfo)
     return ypos;
 }
 
+#define ARIMA_NAS 1
+
 #define INT_DEBUG 0
 
 static int arima_integrate (double *dx, const double *x,
@@ -276,6 +278,68 @@ static int arima_integrate (double *dx, const double *x,
 	ix[t] = 0.0;
     }
 
+#if ARIMA_NAS
+    for (t=t1; t<=t2; t++) {
+	ix[t] = dx[t];
+	if (d > 0 && !na(ix[t])) {
+	    if (na(x[t-1])) {
+		ix[t] = NADBL;
+	    } else {
+		ix[t] += x[t-1];
+	    }
+	} 
+	if (d == 2 && !na(ix[t])) {
+	    if (na(x[t-2])) {
+		ix[t] = NADBL;
+	    } else {
+		ix[t] += x[t-1] - x[t-2];
+	    }
+	}
+	if (D > 0 && !na(ix[t])) {
+	    if (na(x[t-s])) {
+		ix[t] = NADBL;
+	    } else {
+		ix[t] += x[t-s];
+	    }
+	    if (d > 0 && !na(ix[t])) {
+		if (na(x[t-s-1])) {
+		    ix[t] = NADBL;
+		} else {
+		    ix[t] -= x[t-s-1];
+		}
+	    }
+	    if (d == 2 && !na(ix[t])) {
+		if (na(x[t-s-2])) {
+		    ix[t] = NADBL;
+		} else {
+		    ix[t] -= x[t-s-1] - x[t-s-2];
+		}
+	    }	    
+	} 
+	if (D == 2 && !na(ix[t])) {
+	    if (na(x[t-2*s])) {
+		ix[t] = NADBL;
+	    } else {
+		ix[t] += x[t-s] - x[t-2*s];
+	    }
+	    if (d > 0 && !na(ix[t])) {
+		if (na(x[t-2*s-1])) {
+		    ix[t] = NADBL;
+		} else {
+		    ix[t] -= x[t-s-1] - x[t-2*s-1];
+		}
+	    }
+	    if (d == 2 && !na(ix[t])) {
+		if (na(x[t-2*s-2])) {
+		    ix[t] = NADBL;
+		} else {
+		    ix[t] -= x[t-s-1] - x[t-2*s-1];
+		    ix[t] += x[t-s-2] - x[t-2*s-2];
+		}
+	    }
+	}
+    }
+#else
     for (t=t1; t<=t2; t++) {
 	ix[t] = dx[t];
 	if (d > 0) {
@@ -304,6 +368,7 @@ static int arima_integrate (double *dx, const double *x,
 	    }
 	}
     }
+#endif
 
 #if INT_DEBUG
     for (t=0; t<=t2; t++) {
@@ -396,7 +461,7 @@ static void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    mean_error += pmod->uhat[t];
-	}
+	} 
     }
 
     if (arma_is_arima(ainfo)) {
@@ -552,7 +617,8 @@ static int arma_adjust_sample (arma_info *ainfo,
     }
 
     if (!err) {
-	ainfo->T = t2 - t1 + 1 - missing;
+	ainfo->fullT = t2 - t1 + 1;
+	ainfo->T = ainfo->fullT - missing;
 	if (ainfo->T <= ainfo->nc) {
 	    /* insufficient observations */
 	    err = E_DF; 
@@ -876,45 +942,7 @@ static int arma_check_list (arma_info *ainfo,
     return err;
 }
 
-#if 1
-
-static void 
-real_arima_difference_series (double *dx, const double *x,
-			      int t1, arma_info *ainfo)
-{
-    int t, i, s = ainfo->pd;
-    
-    for (i=0, t=t1; t<=ainfo->t2; i++, t++) {
-	dx[i] = x[t];
-	if (ainfo->d > 0) {
-	    dx[i] -= x[t-1];
-	} 
-	if (ainfo->d == 2) {
-	    dx[i] -= x[t-1] - x[t-2];
-	}
-	if (ainfo->D > 0) {
-	    dx[i] -= x[t-s];
-	    if (ainfo->d > 0) {
-		dx[i] += x[t-s-1];
-	    }
-	    if (ainfo->d == 2) {
-		dx[i] += x[t-s-1] - x[t-s-2];
-	    }	    
-	} 
-	if (ainfo->D == 2) {
-	    dx[i] -= x[t-s] - x[t-2*s];
-	    if (ainfo->d > 0) {
-		dx[i] += x[t-s-1] - x[t-2*s-1];
-	    }
-	    if (ainfo->d == 2) {
-		dx[i] += x[t-s-1] - x[t-2*s-1];
-		dx[i] -= x[t-s-2] - x[t-2*s-2];
-	    }
-	}
-    }
-}
-
-#else /* not yet */
+#if ARIMA_NAS
 
 static void 
 real_arima_difference_series (double *dx, const double *x,
@@ -979,6 +1007,44 @@ real_arima_difference_series (double *dx, const double *x,
 		    dx[i] += x[t-s-1] - x[t-2*s-1];
 		    dx[i] -= x[t-s-2] - x[t-2*s-2];
 		}
+	    }
+	}
+    }
+}
+
+#else
+
+static void 
+real_arima_difference_series (double *dx, const double *x,
+			      int t1, arma_info *ainfo)
+{
+    int t, i, s = ainfo->pd;
+    
+    for (i=0, t=t1; t<=ainfo->t2; i++, t++) {
+	dx[i] = x[t];
+	if (ainfo->d > 0) {
+	    dx[i] -= x[t-1];
+	} 
+	if (ainfo->d == 2) {
+	    dx[i] -= x[t-1] - x[t-2];
+	}
+	if (ainfo->D > 0) {
+	    dx[i] -= x[t-s];
+	    if (ainfo->d > 0) {
+		dx[i] += x[t-s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dx[i] += x[t-s-1] - x[t-s-2];
+	    }	    
+	} 
+	if (ainfo->D == 2) {
+	    dx[i] -= x[t-s] - x[t-2*s];
+	    if (ainfo->d > 0) {
+		dx[i] += x[t-s-1] - x[t-2*s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dx[i] += x[t-s-1] - x[t-2*s-1];
+		dx[i] -= x[t-s-2] - x[t-2*s-2];
 	    }
 	}
     }

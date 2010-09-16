@@ -1020,10 +1020,10 @@ int ar_arma_init (double *coeff, const double **Z,
     int i, err = 0;
 
 #if AINIT_DEBUG
-    fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
-	    "ainfo->t1=%d, ainfo->t2=%d\n",
+    fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (pdinfo->n=%d);\n"
+	    " ainfo->t1=%d, ainfo->t2=%d, ",
 	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
-    fprintf(stderr, " nmixed = %d, ptotal = %d\n", nmixed, ptotal);
+    fprintf(stderr, "nmixed = %d, ptotal = %d\n", nmixed, ptotal);
 #endif
 
     if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
@@ -1031,6 +1031,9 @@ int ar_arma_init (double *coeff, const double **Z,
 	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
 	    coeff[i] = 0.0001; 
 	} 
+#if AINIT_DEBUG
+	fprintf(stderr, " pure MA: just setting small coeff value(s)\n");
+#endif
 	return 0;
     }
 
