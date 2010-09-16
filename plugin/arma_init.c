@@ -794,7 +794,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 #endif
     }
 
-    nlspec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
+    nlspec_set_t1_t2(spec, 0, ainfo->T - 1);
 
     nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
 
@@ -1049,7 +1049,7 @@ int ar_arma_init (double *coeff, const double **Z,
 	maybe_rescale_y(ainfo, Z, pdinfo);
     }
 
-    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->T);
+    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->fullT); /* ? */
     if (adinfo == NULL) {
 	return E_ALLOC;
     }

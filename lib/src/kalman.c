@@ -61,7 +61,8 @@ struct kalman_ {
     int k;  /* columns of A = number of exogenous vars in obs eqn */
     int p;  /* length of combined disturbance vector */
     int T;  /* rows of y = number of observations */
-    int t;  /* current time step, when filtering */
+    int okT; /* T - number of missing observations */
+    int t;   /* current time step, when filtering */
 
     int ifc; /* boolean: obs equation includes an implicit constant? */
 
@@ -767,6 +768,8 @@ static void kalman_set_dimensions (kalman *K, gretlopt opt)
     K->k = gretl_matrix_rows(K->A); /* A->rows defines k */
     K->T = gretl_matrix_rows(K->y); /* y->rows defines T */
     K->n = gretl_matrix_cols(K->y); /* y->cols defines n */
+
+    K->okT = K->T;
 
     /* K->p is non-zero only under cross-correlation; in that case the
        matrix given as 'Q' in Kalman set-up in fact represents B (as
@@ -1505,6 +1508,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
     K->SSRw = K->sumldet = K->loglik = 0.0;
     K->s2 = NADBL;
+    K->okT = K->T;
 
     if (K->x == NULL) {
 	/* no exogenous vars */
@@ -1664,13 +1668,15 @@ int kalman_forecast (kalman *K, PRN *prn)
 	goto bailout;
     }
 
+    K->okT = K->T - Tmiss;
+
     if (arma_ll(K)) {
-	double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->T);
+	double ll1 = 1.0 + LN_2_PI + log(K->SSRw / K->okT);
 
 	if (K->flags & KALMAN_AVG_LL) {
-	    K->loglik = -0.5 * (ll1 + K->sumldet / K->T);
+	    K->loglik = -0.5 * (ll1 + K->sumldet / K->okT);
 	} else {
-	    K->loglik = -0.5 * (K->T * ll1 + K->sumldet);
+	    K->loglik = -0.5 * (K->okT * ll1 + K->sumldet);
 	}
     } else {
 	/* For K->s2 see Koopman, Shephard and Doornik, "Statistical
@@ -1679,7 +1685,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	   available at http://www.ssfpack.com/ .  For the role of
 	   'd', see in addition Koopman's 1997 JASA article.
 	*/
-	int nT = K->n * (K->T - Tmiss);
+	int nT = K->n * K->okT;
 	int d = (K->flags & KALMAN_DIFFUSE)? K->r : 0;
 
 	if (d > 0) {
@@ -1736,7 +1742,7 @@ double kalman_get_arma_variance (const kalman *K)
     if (na(K->SSRw)) {
 	return NADBL;
     } else {
-	return K->SSRw / K->T;
+	return K->SSRw / K->okT;
     }
 }
 

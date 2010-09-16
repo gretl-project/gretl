@@ -770,7 +770,7 @@ static int write_arma_spc_file (const char *fname,
     } else {
 	fputs(" print = (acm lkf lks mdl est rts rcm)\n", fp);
     }
-    
+
     fputs(" save = (rsd est lks acm rts rcm)\n", fp);
 
     if (opt & OPT_C) {
