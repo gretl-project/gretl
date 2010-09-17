@@ -5264,7 +5264,7 @@
 	  The <math>A_i</math> matrices must be stacked horizontally
 	  into the <argname>A</argname> argument, which is <by r="n"
 	  c="np"/> . The <math>u_t</math> vectors are contained (as
-	  rows) in <argname>U</argname> (<by r="T" c="n"/>).  Initial
+	  rows) in <argname>U</argname> (<by r="T" c="n"/>). Initial
 	  values are in <argname>x0</argname> (<by r="p" c="n"/>).
 	</para>
       </description>

@@ -3,7 +3,7 @@ version 1.9.2, in progress
 - The "pergm" command no longer does fractional integration
   testing as a side-effect
 - The "open" command now supports http to get a data file
-  (of any supported format) from the web
+  (of any supported format) directly from the internet
 - "kalman": allow a constant term in the state transition
   equation
 - "modprint" command: allow a string literal for the second
@@ -22,6 +22,7 @@ version 1.9.2, in progress
 - New function polyfit() to obtain a polynomial trend line
 - New function chowlin() to perform Chow-Lin interpolation
   of higher-frequency data
+- New function varsimul() to simulate VARs
 - New accessor $mnl_probs to get the estimated outcome
   probabilities for a multinomial logit model (plus GUI
   access under the Analysis menu in the model window)
