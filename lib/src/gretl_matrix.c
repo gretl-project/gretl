@@ -11199,19 +11199,11 @@ void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
     }
 }
 
-static gretl_matrix *reorder_A (const gretl_matrix *A, int n,
-				int *err)
+static gretl_matrix *reorder_A (const gretl_matrix *A, 
+				int n, int np, int *err)
 {
     gretl_matrix *B;
-    int p, np;
-
-    if (A->rows == n) {
-	np = A->cols;
-    } else {
-	np = A->rows;
-    }
-
-    p = np / n;
+    int p = np / n;
 
     B = gretl_matrix_alloc(np, n);
 
@@ -11236,13 +11228,14 @@ static gretl_matrix *reorder_A (const gretl_matrix *A, int n,
 	}
     } else {
 	/* source is $coeff-style */
+	int skip = (A->rows == np + 1);
 	int i, j, k, ra, rb;
 	double x;
 
 	for (j=0; j<n; j++) {
 	    rb = 0;
 	    for (k=p-1; k>=0; k--) {
-		ra = k; 
+		ra = k + skip; 
 		for (i=0; i<n; i++) {
 		    x = gretl_matrix_get(A, ra, j);
 		    gretl_matrix_set(B, rb++, j, x);
@@ -11289,12 +11282,14 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     double x;
     int p = x0->rows;
     int n = x0->cols;
+    int np = n * p;
     int T = p + U->rows;
     int t, i;
 
-    if (A->rows == n*p && A->cols == n) {
-	; /* assume A is in $coeff format */
-    } else if (A->rows != n || A->cols != n*p) {
+    if ((A->rows == np || A->rows == np + 1) && A->cols == n) {
+	; /* OK: assume A is in $coeff format, and possibly
+	     contains an intercept row */
+    } else if (A->rows != n || A->cols != np) {
 	*err = E_NONCONF;
 	return NULL;
     }
@@ -11304,7 +11299,7 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
 	return NULL;
     }
 
-    A2 = reorder_A(A, n, err);
+    A2 = reorder_A(A, n, np, err);
     X = gretl_matrix_alloc(n, T);
     UT = gretl_matrix_copy_transpose(U);
 
@@ -11319,7 +11314,7 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     xt.rows = ut.rows = 1;
     xt.cols = ut.cols = n;
     xtlag.rows = 1;
-    xtlag.cols = n*p;
+    xtlag.cols = np;
 
     for (t=0; t<p; t++) {
 	for (i=0; i<n; i++) {
@@ -11328,13 +11323,19 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
 	}
     }
 
-    xt.val = X->val + n*p;
+    xt.val = X->val + np;
     xtlag.val = X->val;
     ut.val = UT->val;
 
     for (t=p; t<T; t++) {
 	gretl_matrix_multiply(&xtlag, A2, &xt);
 	gretl_matrix_add_to(&xt, &ut);
+	if (A->rows > np) {
+	    /* handle the intercept */
+	    for (i=0; i<n; i++) {
+		xt.val[i] += gretl_matrix_get(A, 0, i);
+	    }
+	}
 	xt.val += n;
 	xtlag.val += n;
 	ut.val += n;
