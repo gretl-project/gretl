@@ -1110,6 +1110,46 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static int 
+real_insert_observation (int pos, double ***pZ, DATAINFO *pdinfo)
+{
+    double *x;
+    int n = pdinfo->n + 1;
+    int i, t;
+    int err = 0;
+
+    for (i=0; i<pdinfo->v; i++) {
+	x = realloc((*pZ)[i], n * sizeof *x);
+	if (x == NULL) {
+	    return E_ALLOC;
+	}
+	(*pZ)[i] = x;
+	for (t=pdinfo->n; t>pos; t--) {
+	    (*pZ)[i][t] = (*pZ)[i][t-1];
+	}
+	(*pZ)[i][pos] = (i == 0)? 1.0 : NADBL;
+    }
+    
+    if (dataset_has_markers(pdinfo)) {
+	if (reallocate_markers(pdinfo, n)) {
+	    return E_ALLOC;
+	}
+	for (t=pdinfo->n; t>pos; t--) {
+	    strcpy(pdinfo->S[t], pdinfo->S[t-1]); 
+	}
+	sprintf(pdinfo->S[pos], "%d", pos + 1);
+    }
+
+    if (pdinfo->t2 == pdinfo->n - 1) {
+	pdinfo->t2 = n - 1;
+    }
+
+    pdinfo->n = n;
+    ntodate(pdinfo->endobs, n - 1, pdinfo);
+
+    return err;
+}
+
 /**
  * dataset_drop_observations:
  * @n: number of observations to drop.
@@ -2938,6 +2978,24 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+static int insert_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    int err = 0;
+
+    if (complex_subsampled()) {
+	pprintf(prn, _("The data set is currently sub-sampled.\n"));
+	err = E_DATA;
+    } else if (dataset_is_panel(pdinfo)) {
+	err = E_PDWRONG;
+    } else if (n <= 0 || n > pdinfo->n) {
+	err = E_DATA;
+    } else {
+	err = real_insert_observation(n - 1, pZ, pdinfo);
+    }
+
+    return err;
+}
+
 int dataset_op_from_string (const char *s)
 {
     int op = DS_NONE;
@@ -2966,6 +3024,8 @@ int dataset_op_from_string (const char *s)
 	op = DS_CLEAR;
     } else if (!strcmp(s, "renumber")) {
 	op = DS_RENUMBER;
+    } else if (!strcmp(s, "insobs")) {
+	op = DS_INSOBS;
     }
 
     return op;
@@ -2996,6 +3056,10 @@ static int dataset_int_param (const char **ps, int op,
 
     if (k <= 0 || (op == DS_RESAMPLE && k < 1)) {
 	*err = E_DATA;
+    } else if (op == DS_INSOBS) {
+	if (k > pdinfo->n) {
+	    *err = E_DATA;
+	}
     } else if (op == DS_COMPACT) {
 	int ok = 0;
 
@@ -3216,6 +3280,7 @@ int renumber_series_with_checks (const char *s, int fixmax,
    dataset resample          500
    dataset clear 
    dataset renumber   orig   2  
+   dataset insobs     13
 
 */
 
@@ -3265,7 +3330,8 @@ int modify_dataset (int op, const int *list, const char *s,
 	return 1;
     }
 
-    if (op == DS_ADDOBS || op == DS_COMPACT || op == DS_RESAMPLE) {
+    if (op == DS_ADDOBS || op == DS_INSOBS || 
+	op == DS_COMPACT || op == DS_RESAMPLE) {
 	k = dataset_int_param(&s, op, *pZ, pdinfo, &err);
 	if (err) {
 	    return err;
@@ -3282,6 +3348,8 @@ int modify_dataset (int op, const int *list, const char *s,
 
     if (op == DS_ADDOBS) {
 	err = add_obs(k, pZ, pdinfo, prn);
+    } else if (op == DS_INSOBS) {
+	err = insert_obs(k, pZ, pdinfo, prn);
     } else if (op == DS_COMPACT) {
 	err = compact_data_set_wrapper(s, pZ, pdinfo, k);
     } else if (op == DS_EXPAND) {

@@ -323,7 +323,8 @@ static int really_missing (int v, int t, const double **Z, int d)
 /* Construct a mask to code for missing observations within the sample
    range for a model.  The mask is an array of char with '0's 
    for OK observations and '1's for missing obs, terminated with
-   a NUL byte.
+   a NUL byte. This format allows copying of the mask using
+   strcpy.
 */
 
 static char *model_missmask (const int *list, int t1, int t2,
@@ -358,7 +359,7 @@ static char *model_missmask (const int *list, int t1, int t2,
 		    fprintf(stderr, "model_missmask: NA at list[%d] (%d), "
 			    "obs %d\n", i, vi, t);
 #endif
-		    /* FIXME dwt case and nobs?? */
+		    /* FIXME dwt case and nobs? */
 		    mask[t] = '1';
 		    if (misscount != NULL) {
 			*misscount += 1;
@@ -409,7 +410,7 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 	dwt = pmod->nwt;
     }
 
-    /* advance start of sample range to skip missing obs? */
+    /* advance start of sample range to skip missing obs */
     for (t=t1min; t<t2max; t++) {
 	missobs = 0;
 	for (i=1; i<=pmod->list[0]; i++) {
@@ -428,7 +429,7 @@ int model_adjust_sample (MODEL *pmod, int n, const double **Z,
 	}
     }
 
-    /* retard end of sample range to skip missing obs? */
+    /* retard end of sample range to skip missing obs */
     for (t=t2max; t>t1min; t--) {
 	missobs = 0;
 	for (i=1; i<=pmod->list[0]; i++) {

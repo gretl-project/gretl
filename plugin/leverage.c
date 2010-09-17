@@ -306,7 +306,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
     MODEL smod;  
     int orig_v = pdinfo->v;
     int err = 0;
-    int i, t, ts, k;
+    int i, t, k;
 
     /* create a full-length dummy variable */
     dum = malloc(pdinfo->n * sizeof *dum);
@@ -339,34 +339,32 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
     slist[slist[0]] = pdinfo->v - 1; /* last var added */  
     k = slist[0] - 2;
 
-    for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
-	ts = t - pmod->t1;
-
-	if (model_missing(pmod, t)) {
-	    gretl_matrix_set(S, ts, 2, NADBL);
+    for (t=pmod->t1, i=0; t<=pmod->t2 && !err; t++, i++) {
+	if (na(pmod->uhat[t])) {
+	    gretl_matrix_set(S, i, 2, NADBL);
 	    if (t > 0) {
 		dum[t-1] = 0.0;
 	    }
-	    continue;
-	}	
-	dum[t] = 1.0;
-	if (t > pmod->t1) {
-	    dum[t-1] = 0.0;
+	} else {	
+	    dum[t] = 1.0;
+	    if (t > pmod->t1) {
+		dum[t-1] = 0.0;
+	    }
+	    smod = lsq(slist, *pZ, pdinfo, OLS, OPT_A);
+	    if (smod.errcode) {
+		err = smod.errcode;
+	    } else {
+		gretl_matrix_set(S, i, 2, smod.coeff[k] / smod.sderr[k]);
+	    }
+	    clear_model(&smod);
 	}
-	smod = lsq(slist, *pZ, pdinfo, OLS, OPT_A);
-	if (smod.errcode) {
-	    err = smod.errcode;
-	} else {
-	    gretl_matrix_set(S, ts, 2, smod.coeff[k] / smod.sderr[k]);
-	}
-	clear_model(&smod);
     }
 
     if (err) {
 	int modn = pmod->t2 - pmod->t1 + 1;
 
-	for (t=0; t<modn; t++) {
-	    gretl_matrix_set(S, t, 2, NADBL);
+	for (i=0; i<modn; i++) {
+	    gretl_matrix_set(S, i, 2, NADBL);
 	}
     }
 
@@ -392,8 +390,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     gretl_matrix *Q, *S = NULL;
     doublereal *tau, *work;
     double lp;
-    int i, j, t, tq, tmod;
-    int serr = 0, gotlp = 0;
+    int i, j, k, t;
+    int vi, serr = 0, gotlp = 0;
     /* allow for missing obs in model range */
     int modn = pmod->t2 - pmod->t1 + 1;
 
@@ -412,12 +410,13 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	goto qr_cleanup;
     }
 
-    /* copy independent var values into Q */
+    /* copy independent var values into Q, skipping missing obs */
     j = 0;
     for (i=2; i<=pmod->list[0]; i++) {
+	vi = pmod->list[i];
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!model_missing(pmod, t)) {
-		Q->val[j++] = (*pZ)[pmod->list[i]][t];
+	    if (!na(pmod->uhat[t])) {
+		Q->val[j++] = (*pZ)[vi][t];
 	    }
 	}
     }
@@ -475,20 +474,21 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     pputs(prn, "            u          0<=h<=1         u*h/(1-h)\n\n");
 
     /* do the "h" calculations */
-    tq = 0;
-    for (t=0; t<modn; t++) {
-	double q, h = 0.0;
+    k = 0;
+    for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
+	double q, h;
 
-	if (model_missing(pmod, t + pmod->t1)) {
-	    gretl_matrix_set(S, t, 0, NADBL);
+	if (na(pmod->uhat[t])) {
+	    h = NADBL;
 	} else {
+	    h = 0.0;
 	    for (i=0; i<n; i++) {
-		q = gretl_matrix_get(Q, tq, i);
+		q = gretl_matrix_get(Q, k, i);
 		h += q * q;
 	    }
-	    tq++;
-	    gretl_matrix_set(S, t, 0, h);
+	    k++;
 	}
+	gretl_matrix_set(S, j, 0, h);
     }
 
     /* put studentized resids into S[2] */
@@ -499,45 +499,44 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     obs_marker_init(pdinfo);
 
     /* print the results */
-    for (t=0; t<modn; t++) {
-	double h, s, d, f = NADBL;
+    for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
+	double h, st, d, f = NADBL;
 	char fstr[32];
 
-	tmod = t + pmod->t1;
-
-	if (model_missing(pmod, tmod)) {
-	    print_obs_marker(tmod, pdinfo, prn);
-	    gretl_matrix_set(S, t, 1, f);
+	if (na(pmod->uhat[t])) {
+	    print_obs_marker(t, pdinfo, prn);
+	    gretl_matrix_set(S, j, 1, NADBL);
 	    pputc(prn, '\n');
 	    continue;
 	}
 
-	h = gretl_matrix_get(S, t, 0);
+	h = gretl_matrix_get(S, j, 0);
 	if (h > lp) {
 	    gotlp = 1;
 	}
 
 	if (h < 1.0) {
-	    f = pmod->uhat[tmod] * h / (1.0 - h);
+	    f = pmod->uhat[t] * h / (1.0 - h);
 	    sprintf(fstr, "%15.5g", f);
 	} else {
 	    f = NADBL;
 	    sprintf(fstr, "%15s", _("undefined"));
 	}
 
-	print_obs_marker(tmod, pdinfo, prn);
+	print_obs_marker(t, pdinfo, prn);
 
 	if (!serr) {
-	    s = gretl_matrix_get(S, t, 2);
-	    d = s * sqrt(h / (1.0 - h));
-	    pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[tmod], h, 
+	    st = gretl_matrix_get(S, j, 2);
+	    d = st * sqrt(h / (1.0 - h));
+	    pprintf(prn, "%14.5g %14.3f%s %s %14.3f\n", pmod->uhat[t], h, 
 		    (h > lp)? "*" : " ", fstr, d);
 
 	} else {
-	    pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[tmod], h, 
+	    pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[t], h, 
 		    (h > lp)? "*" : " ", fstr);
 	}
-	gretl_matrix_set(S, t, 1, f);
+
+	gretl_matrix_set(S, j, 1, f);
     }
 
     if (gotlp) {

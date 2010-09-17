@@ -1322,7 +1322,7 @@ static int rq_make_matrices (MODEL *pmod,
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!model_missing(pmod, t)) {
+	if (!na(pmod->uhat[t])) {
 	    gretl_vector_set(y, s++, Z[yno][t]);
 	}
     }
@@ -1331,7 +1331,7 @@ static int rq_make_matrices (MODEL *pmod,
 	v = pmod->list[i+2];
 	s = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!model_missing(pmod, t)) {
+	    if (!na(pmod->uhat[t])) {
 		if (tr) {
 		    gretl_matrix_set(X, i, s++, Z[v][t]);
 		} else {
@@ -1497,7 +1497,7 @@ static int *good_observations_array (MODEL *pmod)
 	int t, s = 0;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!model_missing(pmod, t)) {
+	    if (!na(pmod->uhat[t])) {
 		g[s++] = t;
 	    }
 	}
