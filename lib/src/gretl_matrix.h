@@ -639,8 +639,10 @@ gretl_matrix *gretl_covariance_matrix (const gretl_matrix *m, int corr,
 
 gretl_matrix *gretl_matrix_GG_inverse (const gretl_matrix *G, int *err);
 
-gretl_matrix * gretl_matrix_varsimul(const gretl_matrix *A, gretl_matrix *U, 
-				     const gretl_matrix *x0, int *err);
+gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A, 
+				     const gretl_matrix *U, 
+				     const gretl_matrix *x0, 
+				     int *err);
 
 gretl_matrix **gretl_matrix_array_new (int n);
 
