@@ -11198,3 +11198,124 @@ void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
 	targ->t2 = src->t2;
     }
 }
+
+static gretl_matrix * reorder_A(const gretl_matrix *A, int *err)
+{
+    int i, j, k;
+    *err = 0;
+    int from, to;
+    int n = A->rows;
+    int np = A->cols;
+    int p = np / n;
+    double x, y;
+
+    gretl_matrix *B = NULL;
+    B = gretl_matrix_alloc(np, n);
+
+    if (B == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (j=0; j<n; j++) {
+	    for (k=0; k<=p/2; k++) {
+		from = k*n;
+		to = n*(p-k-1);
+		for (i=0; i<n; i++) {
+		    x = gretl_matrix_get(A, j, from + i);
+		    y = gretl_matrix_get(A, j, to + i);
+		    gretl_matrix_set(B, to + i, j, x);
+		    gretl_matrix_set(B, from + i, j, y);
+		}
+	    }
+	}
+    }
+
+    return B;
+}
+
+
+/**
+ * gretl_matrix_varsimul:
+ * @A: n x np coefficient matrix.
+ * @U: T x n data matrix.
+ * @x0: p x n matrix for initialization.
+ * @err: location to receive error code.
+ *
+ * Simulates a p-order n-variable VAR:
+ * x_t = \sum A_i x_{t-i} + u_t
+ * 
+ * The A_i matrices must be stacked horizontally into the @A
+ * argument, that is: A = A_1 ~ A_2 ~ A_p. The u_t vectors are 
+ * contained (as rows) in @U. Initial values are in @x0.
+ * 
+ * Note the that the arrangement of the @A matrix is somewhat
+ * sub-optimal computationally, since its elements have to be
+ * reordered by the function reorder_A (see above). However, the
+ * present form is more intuitive for a human being, and that's
+ * what counts.
+ *
+ * Returns: a newly allocated T x n matrix on success, whose t-th
+ * row is (x_t)', or NULL on error.
+ */
+
+gretl_matrix * gretl_matrix_varsimul(const gretl_matrix *A, gretl_matrix *U, 
+				     const gretl_matrix *x0, int *err)
+{
+    int t, i;
+    int p = x0->rows;
+    int n = x0->cols;
+    int T = p + U->rows;
+    gretl_matrix *X = NULL;
+
+    if ((A->rows != n) || (A->cols != n*p) || (U->cols != n)) {
+	*err = E_NONCONF;
+	return X;
+    }
+
+    gretl_matrix *A2 = NULL;
+    gretl_vector xt;
+    gretl_vector xtlag;
+    gretl_vector ut;
+
+    A2 = reorder_A(A, err);
+    X = gretl_matrix_alloc(n, T);
+    
+    if (X==NULL || A2 == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    xt.rows = ut.rows = 1;
+    xt.cols = ut.cols = n;
+    xtlag.rows = 1;
+    xtlag.cols = n*p;
+
+    double x;
+    for (t=0; t<p; t++) {
+	for (i=0; i<n; i++) {
+	    x = gretl_matrix_get(x0, t, i);
+	    gretl_matrix_set(X, i, t, x);
+	}
+    }
+
+    *err = gretl_matrix_transpose_in_place(U);
+
+    xt.val = X->val + n*p;
+    xtlag.val = X->val;
+    ut.val = U->val;
+
+    for (t=p; t<T; t++) {
+	*err = gretl_matrix_multiply(&xtlag, A2, &xt);
+	gretl_matrix_add_to(&xt, &ut);
+
+	xt.val += n;
+	xtlag.val += n;
+	ut.val += n;
+    }
+
+    *err = gretl_matrix_transpose_in_place(X);
+    *err = gretl_matrix_transpose_in_place(U);
+
+    gretl_matrix_free(A2);
+
+    return X;
+}

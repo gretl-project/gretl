@@ -349,6 +349,7 @@ struct str_table funcs[] = {
     { F_INVMILLS, "invmills" },
     { F_POLYFIT,  "polyfit" },
     { F_CHOWLIN,  "chowlin" },
+    { F_VARSIMUL, "varsimul" },
     { 0,          NULL }
 };
 

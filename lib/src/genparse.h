@@ -323,6 +323,7 @@ enum {
     F_SETNOTE,
     F_BWFILT,
     F_CHOWLIN,
+    F_VARSIMUL,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

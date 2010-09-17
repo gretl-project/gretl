@@ -5247,6 +5247,30 @@
       </description>
     </function>
 
+    <function name="varsimul" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">A</fnarg>
+	<fnarg type="matrix">U</fnarg>
+	<fnarg type="matrix">x0</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Simulates a <math>p</math>-order <math>n</math>-variable
+	  VAR, that is
+	  <equation status="inline"
+	  ascii="x(t) = A1 x(t-1) + A2 x(t-2) + ... + u(t)" 
+	  tex="x_t = \sum_{i=1}^p A_i x_{t-i} + u_t"/>
+
+	  The <math>A_i</math> matrices must be stacked horizontally
+	  into the <argname>A</argname> argument. The <math>u_t</math>
+	  vectors are contained (as rows) in <argname>U</argname>.
+	  Initial values are in <argname>x0</argname>, which must be a
+	  matrix with <math>p</math> rows and <math>n</math> rows and
+	  columns.
+	</para>
+      </description>
+    </function>
+
     <function name="vec" section="matbuild" output="cvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
