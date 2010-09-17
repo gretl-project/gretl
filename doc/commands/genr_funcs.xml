@@ -5262,11 +5262,10 @@
 	  tex="x_t = \sum_{i=1}^p A_i x_{t-i} + u_t"/>
 
 	  The <math>A_i</math> matrices must be stacked horizontally
-	  into the <argname>A</argname> argument. The <math>u_t</math>
-	  vectors are contained (as rows) in <argname>U</argname>.
-	  Initial values are in <argname>x0</argname>, which must be a
-	  matrix with <math>p</math> rows and <math>n</math> rows and
-	  columns.
+	  into the <argname>A</argname> argument, which is <by r="n"
+	  c="np"/> . The <math>u_t</math> vectors are contained (as
+	  rows) in <argname>U</argname> (<by r="T" c="n"/>).  Initial
+	  values are in <argname>x0</argname> (<by r="p" c="n"/>).
 	</para>
       </description>
     </function>

@@ -11199,18 +11199,25 @@ void gretl_matrix_transcribe_obs_info (gretl_matrix *targ,
     }
 }
 
-static gretl_matrix *reorder_A (const gretl_matrix *A, int *err)
+static gretl_matrix *reorder_A (const gretl_matrix *A, int n,
+				int *err)
 {
     gretl_matrix *B;
-    int n = A->rows;
-    int np = A->cols;
+    int p, np;
+
+    if (A->rows == n) {
+	np = A->cols;
+    } else {
+	np = A->rows;
+    }
+
+    p = np / n;
 
     B = gretl_matrix_alloc(np, n);
 
     if (B == NULL) {
 	*err = E_ALLOC;
-    } else {
-	int p = np / n;
+    } else if (A->rows == n) {
 	int i, j, k;
 	int from, to;
 	double x, y;
@@ -11224,6 +11231,22 @@ static gretl_matrix *reorder_A (const gretl_matrix *A, int *err)
 		    y = gretl_matrix_get(A, j, to + i);
 		    gretl_matrix_set(B, to + i, j, x);
 		    gretl_matrix_set(B, from + i, j, y);
+		}
+	    }
+	}
+    } else {
+	/* source is $coeff-style */
+	int i, j, k, ra, rb;
+	double x;
+
+	for (j=0; j<n; j++) {
+	    rb = 0;
+	    for (k=p-1; k>=0; k--) {
+		ra = k; 
+		for (i=0; i<n; i++) {
+		    x = gretl_matrix_get(A, ra, j);
+		    gretl_matrix_set(B, rb++, j, x);
+		    ra += p;
 		}
 	    }
 	}
@@ -11269,15 +11292,22 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     int T = p + U->rows;
     int t, i;
 
-    if (A->rows != n || A->cols != n*p || U->cols != n) {
+    if (A->rows == n*p && A->cols == n) {
+	; /* assume A is in $coeff format */
+    } else if (A->rows != n || A->cols != n*p) {
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    A2 = reorder_A(A, err);
+    if (U->cols != n) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    A2 = reorder_A(A, n, err);
     X = gretl_matrix_alloc(n, T);
     UT = gretl_matrix_copy_transpose(U);
-    
+
     if (X == NULL || A2 == NULL || UT == NULL) {
 	*err = E_ALLOC;
 	gretl_matrix_free(A2);
@@ -11302,17 +11332,15 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     xtlag.val = X->val;
     ut.val = UT->val;
 
-    for (t=p; t<T && !*err; t++) {
-	*err = gretl_matrix_multiply(&xtlag, A2, &xt);
+    for (t=p; t<T; t++) {
+	gretl_matrix_multiply(&xtlag, A2, &xt);
 	gretl_matrix_add_to(&xt, &ut);
 	xt.val += n;
 	xtlag.val += n;
 	ut.val += n;
     }
 
-    if (!*err) {
-	*err = gretl_matrix_transpose_in_place(X);
-    }
+    *err = gretl_matrix_transpose_in_place(X);
 
     gretl_matrix_free(A2);
     gretl_matrix_free(UT);
