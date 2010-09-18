@@ -5251,21 +5251,42 @@
       <fnargs>
 	<fnarg type="matrix">A</fnarg>
 	<fnarg type="matrix">U</fnarg>
-	<fnarg type="matrix">x0</fnarg>
+	<fnarg type="matrix">y0</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Simulates a <math>p</math>-order <math>n</math>-variable
 	  VAR, that is
 	  <equation status="inline"
-	  ascii="x(t) = A1 x(t-1) + A2 x(t-2) + ... + u(t)" 
-	  tex="x_t = \sum_{i=1}^p A_i x_{t-i} + u_t"/>
+	  ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
+	  tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
 
-	  The <math>A_i</math> matrices must be stacked horizontally
-	  into the <argname>A</argname> argument, which is <by r="n"
-	  c="np"/> . The <math>u_t</math> vectors are contained (as
-	  rows) in <argname>U</argname> (<by r="T" c="n"/>). Initial
-	  values are in <argname>x0</argname> (<by r="p" c="n"/>).
+	  The coefficient matrix <argname>A</argname> may be given in
+	  either of two forms. It may be composed by horizontal stacking
+	  of the <math>A_i</math> matrices; in that case it is <by r="n"
+	  c="np"/>, with one row per equation. Alternatively, it can be
+	  given in the format provided by the <lit>$coeff</lit> accessor
+	  after estimation of a VAR. In that case it is <by r="np" c="n"/>
+	  with the equations in columns; the ordering of the coefficients
+	  is as in the printed output from gretl's <lit>var</lit> command.
+	</para>
+	<para>
+	  The <math>u_t</math> vectors are contained (as rows) in
+	  <argname>U</argname> (<by r="T" c="n"/>). Initial values are in
+	  <argname>y0</argname> (<by r="p" c="n"/>).
+	</para>
+	<para>
+	  If the VAR contains deterministic terms and/or exogenous
+	  regressors, these can be handled by folding them into the
+	  <argname>U</argname> matrix: each row of <argname>U</argname>
+	  then becomes 
+	  <equation status="inline"
+	  ascii="u(t) = B' x(t) + e(t)." 
+	  tex="$u_t = B' x_t + e_t$."/>
+	  As a convenience, however, if <argname>A</argname> is
+	  given in <lit>$coeff</lit> format and has 
+	  <math>np</math> + 1 rows, the first row is taken to
+	  represent an intercept and is handled accordingly.
 	</para>
       </description>
     </function>
