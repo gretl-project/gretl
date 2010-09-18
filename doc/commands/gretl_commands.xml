@@ -1989,6 +1989,7 @@
       </arguments>
       <examples>
         <example>dataset addobs 24</example>
+	<example>dataset insobs 10</example>
         <example>dataset compact 1</example>
         <example>dataset compact 4 last</example>
         <example>dataset expand interp</example>
@@ -2004,9 +2005,9 @@
       <para>
 	Performs various operations on the data set as a whole,
 	depending on the given <repl>keyword</repl>, which must be
-	<lit>addobs</lit>, <lit>clear</lit>, <lit>compact</lit>,
-	<lit>expand</lit>, <lit>transpose</lit>, <lit>sortby</lit>,
-	<lit>dsortby</lit>, <lit>resample</lit> or
+	<lit>addobs</lit>, <lit>insobs</lit>, <lit>clear</lit>,
+	<lit>compact</lit>, <lit>expand</lit>, <lit>transpose</lit>,
+	<lit>sortby</lit>, <lit>dsortby</lit>, <lit>resample</lit> or
 	<lit>renumber</lit>. Note: with the exception of
 	<lit>clear</lit>, these actions are not available when the
 	dataset is currently subsampled by selection of cases on some
@@ -2020,6 +2021,15 @@
 	will be set to missing, but certain deterministic variables are
 	recognized and extended, namely, a simple linear trend and
 	periodic dummy variables. 
+      </para>
+      <para>
+	<lit>insobs</lit>: Must be followed by a positive integer no
+	greater than the current number of observations. Inserts a
+	single observation at the specified position. All subsequent
+	data are shifted by one place and the dataset is extended by
+	one observation. All variables apart from the constant are
+	given missing values at the new observation. This action is
+	not available for panel datasets.
       </para>
       <para>
 	<lit>clear</lit>: No parameter required.  Clears out the current

@@ -5288,6 +5288,12 @@
 	  <math>np</math> + 1 rows, the first row is taken to
 	  represent an intercept and is handled accordingly.
 	</para>
+	<para>
+	  The output matrix has <math>T</math> + <math>p</math> rows
+	  and <math>n</math> columns; it holds the initial <math>p</math>
+	  values of the endogenous variables plus <math>T</math>
+	  simulated values.
+	</para>
       </description>
     </function>
 

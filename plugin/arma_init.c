@@ -356,7 +356,8 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     clear_model(&armod);
 
     if (!err && prn != NULL) {
-	pputs(prn, "\narma initialization: using Hannan-Rissanen method\n\n");
+	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"), 
+		_("Hannan-Rissanen method"));
     }
 
     return err;
@@ -545,23 +546,103 @@ static void arma_init_add_varnames (arma_info *ainfo,
     }
 }
 
+/* experimental: when initializing an AR(I)MA model via
+   NLS, work around interior NAs by adding observation-
+   specific dummies to the dataset
+*/
+
+static int arma_init_add_dummies (arma_info *ainfo,
+				  double ***pZ, 
+				  DATAINFO *pdinfo)
+{
+    int *misslist = NULL;
+    int t1 = pdinfo->t1;
+    int i, t, err = 0;
+
+    /* if we have a block of leading NAs, skip it */
+
+    for (t=t1; t<=pdinfo->t2 && !err; t++) {
+	int miss = 0;
+
+	for (i=1; i<pdinfo->v; i++) {
+	    if (na((*pZ)[i][t])) {
+		miss = 1;
+		break;
+	    }
+	}
+	if (miss) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    /* form list of observation indices of interior NAs */
+
+    for (t=t1; t<=pdinfo->t2 && !err; t++) {
+	for (i=1; i<pdinfo->v; i++) {
+	    if (na((*pZ)[i][t])) {
+		misslist = gretl_list_append_term(&misslist, t);
+		if (misslist == NULL) {
+		    err = E_ALLOC;
+		}
+		break;
+	    }
+	}
+    }
+
+#if AINIT_DEBUG
+    printlist(misslist, "arma_init_add_dummies: misslist");
+#endif
+
+    if (misslist != NULL) {
+	/* For each observation with any missing values, add
+	   a specific dummy and zero out the missing data.
+	*/
+	int origv = pdinfo->v;
+	int j, v, nd = misslist[0];
+
+	err = dataset_add_series(nd, pZ, pdinfo);
+	if (!err) {
+	    for (i=1; i<=misslist[0]; i++) {
+		v = origv + i - 1;
+		t = misslist[i];
+		sprintf(pdinfo->varname[v], "d%d", i);
+		(*pZ)[v][t] = 1.0;
+		for (j=1; j<origv; j++) {
+		    if (na((*pZ)[j][t])) {
+			(*pZ)[j][t] = 0.0;
+		    }
+		}
+	    }
+	}
+    }
+
+    ainfo->misslist = misslist;
+
+    return err;
+}
+
 /* Build temporary dataset including lagged vars: if we're doing exact
    ML on an ARMAX model we need lags of the exogenous variables as
    well as lags of y_t.  Note that the auxiliary dataset has "t = 0"
    at an offset of ainfo->t1 into the "real", external dataset.
 */
 
-static void arma_init_build_dataset (arma_info *ainfo, 
-				     int ptotal, int narmax, 
-				     const int *list,
-				     const double **Z,
-				     double **aZ, 
-				     DATAINFO *adinfo)
+static int arma_init_build_dataset (arma_info *ainfo, 
+				    int ptotal, int narmax, 
+				    const int *list,
+				    const double **Z,
+				    double ***paZ, 
+				    DATAINFO *adinfo,
+				    int nonlin)
 {
+    double **aZ = *paZ;
     const double *y;
     int i, j, k, kx, ky;
     int t, s, m, k0 = 2;
     int lag, xstart;
+    int err = 0;
 
     /* add variable names to auxiliary dataset */
     arma_init_add_varnames(ainfo, ptotal, narmax, adinfo);
@@ -663,6 +744,11 @@ static void arma_init_build_dataset (arma_info *ainfo,
 	}	
     }
 
+    if (nonlin && arma_missvals(ainfo)) {
+	err = arma_init_add_dummies(ainfo, paZ, adinfo);
+	aZ = *paZ;
+    }
+
 #if AINIT_DEBUG
     fprintf(stderr, "arma init dataset:\n");
     for (i=0; i<adinfo->v; i++) {
@@ -670,6 +756,8 @@ static void arma_init_build_dataset (arma_info *ainfo,
 		aZ[i][0]);
     }
 #endif
+
+    return err;
 }
 
 static void nls_kickstart (MODEL *pmod, double **Z, 
@@ -798,6 +886,10 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 
     nparam = ainfo->ifc + ainfo->np + ainfo->P + ainfo->nexo;
 
+    if (ainfo->misslist != NULL) {
+	nparam += ainfo->misslist[0];
+    }
+
     parms = malloc(nparam * sizeof *parms);
     if (parms == NULL) {
 	err = E_ALLOC;
@@ -864,7 +956,15 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 	sprintf(pnames[k++], "b%d", i+1);
     }
 
-    /* construct NLS specification */
+    if (ainfo->misslist != NULL) {
+	for (i=1; i<=ainfo->misslist[0]; i++) {
+	    j = ainfo->misslist[i];
+	    parms[k] = (*pZ)[1][j];
+	    sprintf(pnames[k++], "c%d", i);
+	}
+    }
+
+    /* construct NLS specification string */
 
     strcpy(fnstr, "y=");
 
@@ -905,6 +1005,13 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     for (i=0; i<ainfo->nexo && !err; i++) {
 	sprintf(term, "+b%d*x%d", i+1, i+1);
 	err = add_to_spec(fnstr, term);
+    }
+
+    if (!err && ainfo->misslist != NULL) {
+	for (i=1; i<=ainfo->misslist[0]; i++) {
+	    sprintf(term, "+c%d*d%d", i, i);
+	    err = add_to_spec(fnstr, term);
+	}
     }
 
     if (!err) {
@@ -1031,9 +1138,8 @@ int ar_arma_init (double *coeff, const double **Z,
 	for (i=0; i<ainfo->nq + ainfo->Q; i++) {
 	    coeff[i] = 0.0001; 
 	} 
-#if AINIT_DEBUG
-	fprintf(stderr, " pure MA: just setting small coeff value(s)\n");
-#endif
+	pprintf(ainfo->prn, "\n%s: %s\n\n", _("ARMA initialization"), 
+		_("small MA values"));
 	return 0;
     }
 
@@ -1064,7 +1170,7 @@ int ar_arma_init (double *coeff, const double **Z,
 
     /* build temporary dataset */
     arma_init_build_dataset(ainfo, ptotal, narmax, list,
-			    Z, aZ, adinfo);
+			    Z, &aZ, adinfo, nonlin);
 
     if (nonlin) {
 	PRN *dprn = NULL;
@@ -1155,7 +1261,7 @@ int arma_by_ls (const double *coeff,
 
     /* build temporary dataset */
     arma_init_build_dataset(ainfo, ptotal, 0, list,
-			    Z, aZ, adinfo);
+			    Z, &aZ, adinfo, nonlin);
 
     if (nonlin) {
 	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, &aZ, adinfo,

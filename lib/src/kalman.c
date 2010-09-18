@@ -1368,7 +1368,7 @@ int kalman_get_options (kalman *K)
    the A matrix (the first) but no explicit entry in the x matrix.
 */
 
-static void kalman_set_Ax (kalman *K)
+static void kalman_set_Ax (kalman *K, int *missobs)
 {
     double xjt, axi;
     int i, j;
@@ -1380,6 +1380,12 @@ static void kalman_set_Ax (kalman *K)
 		xjt = (j == 0)? 1.0 : gretl_matrix_get(K->x, K->t, j - 1);
 	    } else {
 		xjt = gretl_matrix_get(K->x, K->t, j);
+	    }
+	    if (isnan(xjt)) {
+#if KDEBUG
+		fprintf(stderr, "x: got nan at obs %d\n", K->t);
+#endif
+		*missobs += 1;
 	    }
 	    axi += xjt * gretl_matrix_get(K->A, j, i);
 	}
@@ -1546,13 +1552,19 @@ int kalman_forecast (kalman *K, PRN *prn)
 	/* read slice from y */
 	kalman_initialize_error(K, &missobs);
 
-	if (missobs) {
-	    Tmiss++;
+	if (K->x != NULL) {
+	    /* read from x if applicable 
+	       note 2010-09-18: this was conditional on missobs < K->n
+	       FIXME?
+	    */
+	    kalman_set_Ax(K, &missobs);
 	}
 
-	if (K->x != NULL && missobs < K->n) {
-	    /* read from x if applicable */
-	    kalman_set_Ax(K);
+	if (missobs) {
+	    /* 2010-09-18: this was right after kalman_initialize_error 
+	       FIXME?
+	     */
+	    Tmiss++;
 	}	
 
 	/* initial matrix calculations: form PH and H'PH 
@@ -3288,6 +3300,8 @@ static int kalman_simulate (kalman *K,
     } 
 
     for (K->t = 0; K->t < K->T; K->t += 1) {
+	int missobs = 0;
+
 	if (filter_is_varying(K)) {
 	    err = kalman_refresh_matrices(K, prn);
 	    if (err) {
@@ -3300,7 +3314,7 @@ static int kalman_simulate (kalman *K,
 				  K->S0, GRETL_MOD_NONE,
 				  yt, GRETL_MOD_NONE);
 	if (K->x != NULL) {
-	    kalman_set_Ax(K);
+	    kalman_set_Ax(K, &missobs);
 	}
 	if (K->A != NULL) {
 	    gretl_matrix_add_to(yt, K->Ax);

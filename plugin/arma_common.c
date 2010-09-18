@@ -54,6 +54,7 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     ainfo->yscale = 1.0;
 
     ainfo->xlist = NULL;
+    ainfo->misslist = NULL;
     ainfo->dX = NULL;
     ainfo->G = NULL;
     ainfo->V = NULL;
@@ -73,6 +74,7 @@ static void arma_info_cleanup (arma_info *ainfo)
     free(ainfo->e);
     free(ainfo->Z);
     free(ainfo->xlist);
+    free(ainfo->misslist);
 
     gretl_matrix_free(ainfo->dX);
     gretl_matrix_free(ainfo->G);

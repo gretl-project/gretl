@@ -1327,7 +1327,7 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 
 	y = (ainfo->y != NULL)? ainfo->y : Z[ainfo->yno];
 	memcpy(yvec->val, y + ainfo->t1, ainfo->fullT * sizeof *y);
-	if (ainfo->pflags & ARMA_NAS) {
+	if (arma_missvals(ainfo)) {
 	    matrix_NA_to_nan(yvec);
 	}
 #if ARMA_DEBUG
@@ -1780,7 +1780,7 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
     if (nc == 0) {
 	return 0;
     } else if (nc < ainfo->nc) {
-	pprintf(prn, "arma initialization: need %d coeffs but got %d\n",
+	pprintf(prn, "ARMA initialization: need %d coeffs but got %d\n",
 		ainfo->nc, nc);
 	return E_DATA;
     }
@@ -1793,7 +1793,9 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
     } else {
 	const gretl_matrix *m = get_init_vals();
 
-	pputs(prn, "\narma initialization: at user-specified values\n\n");
+	pprintf(prn, "\n%s: %s\n\n", _("ARMA initialization"), 
+		_("user-specified values"));
+	      
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = gretl_vector_get(m, i);
 	}
@@ -2020,7 +2022,7 @@ static int prefer_hr_init (arma_info *ainfo)
 	} else if (arma_xdiff(ainfo)) {
 	    /* don't use for ARIMAX (yet?) */
 	    ret = 0;
-	} else if (ainfo->t2 - ainfo->t1 < 100) {
+	} else if (ainfo->T < 100) {
 	    /* unlikely to work well with small sample */
 	    ret = 0;
 	} else if (ainfo->p > 0 && ainfo->P > 0) {
@@ -2037,6 +2039,8 @@ static int prefer_hr_init (arma_info *ainfo)
 	    if (ainfo->P > 0) {
 		ret = 0;
 	    } else if (ainfo->p + ainfo->P > 0 && ainfo->nexo > 0) {
+		ret = 0;
+	    } else if (ainfo->Q > 0 && arma_missvals(ainfo)) {
 		ret = 0;
 	    }
 	}
@@ -2087,20 +2091,23 @@ static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
     }
 }
 
-/* Set flag to allow NAs within the sample range for a plain
-   ARMA model using native exact ML ("plain" = no integration,
-   no seasonals). TODO : we should be able to handle NAs in
-   more cases, but this is predicated on changes in the
-   code for differencing and initialization of the ARMA
-   estimates.
+/* Set flag to allow NAs within the sample range for an
+   ARMA model using native exact ML. FIXME : more work 
+   is needed to get this right for the ARIMA case.
 */
 
 static void maybe_allow_missvals (arma_info *ainfo)
 {
+#if 1 /* experimental: be permissive */
+    if (arma_exact_ml(ainfo)) {
+	ainfo->pflags |= ARMA_NAOK;
+    }
+#else /* more restrictive */
     if (arma_exact_ml(ainfo) && !arma_xdiff(ainfo) &&
 	ainfo->P == 0 && ainfo->Q == 0) {
 	ainfo->pflags |= ARMA_NAOK;
     }
+#endif
 }
 
 MODEL arma_model (const int *list, const char *pqspec,

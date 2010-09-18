@@ -64,6 +64,7 @@ struct arma_info_ {
     const double **Z;   /* virtual dataset */
     double yscale;      /* scale factor for y */
     int *xlist;         /* list of regressors (ARMAX) */
+    int *misslist;      /* list of missing observations */
     gretl_matrix *dX;   /* differenced regressors (ARIMAX) */
     gretl_matrix *G;    /* score matrix */
     gretl_matrix *V;    /* covariance matrix */
