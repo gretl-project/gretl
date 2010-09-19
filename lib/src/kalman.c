@@ -1231,7 +1231,7 @@ static int kalman_iter_1 (kalman *K, int missobs, double *llt)
 	if (K->K != NULL) {
 	    set_row(K->K, K->t, 0.0);
 	}
-	return 0;
+	return err;
     }   
 
     /* form e = y - A'x - H'S (e is already initialized to y) */
@@ -1640,6 +1640,10 @@ int kalman_forecast (kalman *K, PRN *prn)
 	/* record forecast errors if wanted */
 	if (!err && K->E != NULL) {
 	    if (missobs && (K->flags & KALMAN_SMOOTH)) {
+		/* should that be || instead of &&? */
+		set_row(K->E, K->t, 0.0);
+	    } else if (missobs) {
+		/* 2010-09-18 FIXME missobs? */
 		set_row(K->E, K->t, 0.0);
 	    } else {
 		load_to_row(K->E, K->e, K->t);

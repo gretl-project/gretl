@@ -824,8 +824,7 @@ static void delete_old_files (const char *path)
 
 static void x12a_maybe_allow_missvals (arma_info *ainfo)
 {
-    if (arma_exact_ml(ainfo) &&
-	ainfo->d == 0 && ainfo->D == 0) {
+    if (arma_exact_ml(ainfo)) {
 	ainfo->pflags |= ARMA_NAOK;
     }
 }
