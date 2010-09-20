@@ -11252,7 +11252,7 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
  * present form is more intuitive for a human being, and that's
  * what counts.
  *
- * Returns: a newly allocated T x n matrix on success, whose t-th
+ * Returns: a newly allocated T+p x n matrix on success, whose t-th
  * row is (x_t)', or NULL on error.
  */
 

@@ -5261,10 +5261,10 @@
 	  ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
 	  tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
 
-	  The coefficient matrix <argname>A</argname> has to be
-	  composed by horizontal stacking of the <math>A_i</math>
-	  matrices, that is a <by r="n" c="np"/> matrix, with one row
-	  per equation, in the same format as the first <math>n</math>
+	  The coefficient matrix <argname>A</argname> is composed by
+	  horizontal stacking of the <math>A</math><sub>i</sub>
+	  matrices; it is <by r="n" c="np"/>, with one row
+	  per equation. This corresponds to the first <math>n</math>
 	  rows of the matrix <lit>$compan</lit> provided by gretl's
 	  <lit>var</lit> and <lit>vecm</lit> commands.
 	</para>
@@ -5281,10 +5281,6 @@
 	  <equation status="inline"
 	  ascii="u(t) = B' x(t) + e(t)." 
 	  tex="$u_t = B' x_t + e_t$."/>
-	  As a convenience, however, if <argname>A</argname> is
-	  given in <lit>$coeff</lit> format and has 
-	  <math>np</math> + 1 rows, the first row is taken to
-	  represent an intercept and is handled accordingly.
 	</para>
 	<para>
 	  The output matrix has <math>T</math> + <math>p</math> rows
