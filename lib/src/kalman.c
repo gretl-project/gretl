@@ -1642,9 +1642,6 @@ int kalman_forecast (kalman *K, PRN *prn)
 	    if (missobs && (K->flags & KALMAN_SMOOTH)) {
 		/* should that be || instead of &&? */
 		set_row(K->E, K->t, 0.0);
-	    } else if (missobs) {
-		/* 2010-09-18 FIXME missobs? */
-		set_row(K->E, K->t, 0.0);
 	    } else {
 		load_to_row(K->E, K->e, K->t);
 	    }
