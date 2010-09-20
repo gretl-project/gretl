@@ -11209,7 +11209,8 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
 
     if (B == NULL) {
 	*err = E_ALLOC;
-    } else if (A->rows == n) {
+	return NULL;
+    } else {
 	int i, j, k;
 	int from, to;
 	double x, y;
@@ -11226,24 +11227,7 @@ static gretl_matrix *reorder_A (const gretl_matrix *A,
 		}
 	    }
 	}
-    } else {
-	/* source is $coeff-style */
-	int skip = (A->rows == np + 1);
-	int i, j, k, ra, rb;
-	double x;
-
-	for (j=0; j<n; j++) {
-	    rb = 0;
-	    for (k=p-1; k>=0; k--) {
-		ra = k + skip; 
-		for (i=0; i<n; i++) {
-		    x = gretl_matrix_get(A, ra, j);
-		    gretl_matrix_set(B, rb++, j, x);
-		    ra += p;
-		}
-	    }
-	}
-    }
+    } 
 
     return B;
 }
@@ -11286,15 +11270,7 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     int T = p + U->rows;
     int t, i;
 
-    if ((A->rows == np || A->rows == np + 1) && A->cols == n) {
-	; /* OK: assume A is in $coeff format, and possibly
-	     contains an intercept row */
-    } else if (A->rows != n || A->cols != np) {
-	*err = E_NONCONF;
-	return NULL;
-    }
-
-    if (U->cols != n) {
+    if (A->rows != n || A->cols != np || U->cols != n) {
 	*err = E_NONCONF;
 	return NULL;
     }
@@ -11330,12 +11306,6 @@ gretl_matrix *gretl_matrix_varsimul (const gretl_matrix *A,
     for (t=p; t<T; t++) {
 	gretl_matrix_multiply(&xtlag, A2, &xt);
 	gretl_matrix_add_to(&xt, &ut);
-	if (A->rows > np) {
-	    /* handle the intercept */
-	    for (i=0; i<n; i++) {
-		xt.val[i] += gretl_matrix_get(A, 0, i);
-	    }
-	}
 	xt.val += n;
 	xtlag.val += n;
 	ut.val += n;

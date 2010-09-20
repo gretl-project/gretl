@@ -5261,14 +5261,12 @@
 	  ascii="y(t) = A1 y(t-1) + ... + Ap y(t-p) + u(t)." 
 	  tex="$y_t = \sum_{i=1}^p A_i y_{t-i} + u_t$."/>
 
-	  The coefficient matrix <argname>A</argname> may be given in
-	  either of two forms. It may be composed by horizontal stacking
-	  of the <math>A_i</math> matrices; in that case it is <by r="n"
-	  c="np"/>, with one row per equation. Alternatively, it can be
-	  given in the format provided by the <lit>$coeff</lit> accessor
-	  after estimation of a VAR. In that case it is <by r="np" c="n"/>
-	  with the equations in columns; the ordering of the coefficients
-	  is as in the printed output from gretl's <lit>var</lit> command.
+	  The coefficient matrix <argname>A</argname> has to be
+	  composed by horizontal stacking of the <math>A_i</math>
+	  matrices, that is a <by r="n" c="np"/> matrix, with one row
+	  per equation, in the same format as the first <math>n</math>
+	  rows of the matrix <lit>$compan</lit> provided by gretl's
+	  <lit>var</lit> and <lit>vecm</lit> commands.
 	</para>
 	<para>
 	  The <math>u_t</math> vectors are contained (as rows) in
@@ -5294,6 +5292,14 @@
 	  values of the endogenous variables plus <math>T</math>
 	  simulated values.
 	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="$compan"/>
+	    <fncref targ="var"/>
+	    <fncref targ="vecm"/>
+	  </seelist>
+	</para>
+
       </description>
     </function>
 

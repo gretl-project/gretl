@@ -1024,7 +1024,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
     double pv;
     int i, j, k, v;
 
-    if (prn == NULL) {
+    if (prn == NULL || (opt & OPT_X)) {
 	return 0;
     }
 
