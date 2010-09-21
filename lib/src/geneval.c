@@ -3983,6 +3983,41 @@ static NODE *one_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static NODE *gretl_strsplit (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *s = l->v.str;
+	int k = node_get_int(r, p);
+
+	if (k < 1) {
+	    p->err = E_DATA;
+	} else {
+	    const char *q;
+	    int i;
+
+	    for (i=1; i<k; i++) {
+		q = strchr(s, ' ');
+		if (q != NULL) {
+		    q += strspn(q, " ");
+		    s = q;
+		} else {
+		    s = "";
+		    break;
+		}
+	    }
+	    ret->v.str = gretl_strndup(s, strcspn(s, " "));
+	} 
+
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
 static int series_get_nobs (int t1, int t2, const double *x)
 {
     int t, n = 0;
@@ -8063,6 +8098,15 @@ static NODE *eval (NODE *t, parser *p)
 			    STR, (l->t == STR)? r : l, p);
 	}
 	break;
+    case F_STRSPLIT:
+	if (l->t == STR && r->t == NUM) {
+	    ret = gretl_strsplit(l, r, p);
+	} else {
+	    node_type_error(t->t, (l->t == STR)? 2 : 1,
+			    (l->t == STR)? NUM : STR,
+			    (l->t == STR)? r : l, p);
+	}
+	break;	
     default: 
 	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);

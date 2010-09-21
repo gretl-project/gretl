@@ -4821,6 +4821,26 @@
       </description>
     </function>
 
+    <function name="strsplit" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="scalar">i</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns space-separated element <argname>i</argname> from
+	  the string <argname>s</argname>. The index
+	  <argname>i</argname> is 1-based, and it is an error if
+	  <argname>i</argname> is less than 1. In case
+	  <argname>s</argname> contains no spaces and
+	  <argname>i</argname> equals 1, a copy of the entire input
+	  string is returned; otherwise, in case <argname>i</argname>
+	  exceeds the number of space-separated elements an empty
+	  string is returned.
+	</para>
+      </description>
+    </function>
+
     <function name="strstr" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s1</fnarg>

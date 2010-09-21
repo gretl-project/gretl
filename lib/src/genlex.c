@@ -350,6 +350,7 @@ struct str_table funcs[] = {
     { F_POLYFIT,  "polyfit" },
     { F_CHOWLIN,  "chowlin" },
     { F_VARSIMUL, "varsimul" },
+    { F_STRSPLIT, "strsplit" },
     { 0,          NULL }
 };
 
