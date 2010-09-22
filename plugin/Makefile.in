@@ -95,6 +95,7 @@ SRCS = excel_import.c \
 	tramo-x12a.c \
 	workbook.c \
 	nistcheck.c \
+	arma_cml.c \
 	arma_common.c \
 	arma_init.c \
 	arma.c \
@@ -255,7 +256,7 @@ nistcheck.la: nistcheck.lo
 arbond.la: arbond.lo 
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-arma.la: arma.lo arma_init.lo
+arma.la: arma.lo arma_cml.lo arma_init.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 tobit.la: tobit.lo

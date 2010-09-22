@@ -117,4 +117,18 @@ int arma_by_ls (const double *coeff, const double **Z,
 		const DATAINFO *pdinfo,
 		arma_info *ainfo, MODEL *pmod);
 
+int bhhh_arma (double *theta, 
+	       const double **Z, const DATAINFO *pdinfo,
+	       arma_info *ainfo, MODEL *pmod,
+	       gretlopt opt);
+
+int arma_list_y_position (arma_info *ainfo);
+
+int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
+			  const double *coeff);
+
+void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
+			     const double **Z, 
+			     const DATAINFO *pdinfo);
+
 #endif /* ARMA_PRIV_H */

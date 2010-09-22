@@ -94,6 +94,7 @@ PLUGINSRC = \
 	tramo_options.c \
 	tramo-x12a.c \
 	nistcheck.c \
+	arma_cml.c \
 	arma_init.c \
 	arma.c \
         arma_x12.c \
@@ -451,7 +452,7 @@ plugins/arbond.dll: arbond.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-plugins/arma.dll: arma.o arma_init.o dllinit.o
+plugins/arma.dll: arma.o arma_cml.c arma_init.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS) -lprob
 

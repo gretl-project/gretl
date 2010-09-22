@@ -243,7 +243,7 @@ static int arma_make_masks (arma_info *ainfo, int *list)
     return err;
 }
 
-static int arma_list_y_position (arma_info *ainfo)
+int arma_list_y_position (arma_info *ainfo)
 {
     int ypos;
 
@@ -429,9 +429,9 @@ static void ainfo_data_to_model (arma_info *ainfo, MODEL *pmod)
 /* write the various statistics from ARMA estimation into
    a gretl MODEL struct */
 
-static void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
-				    const double **Z, 
-				    const DATAINFO *pdinfo)
+void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
+			     const double **Z, 
+			     const DATAINFO *pdinfo)
 {
     const double *y = NULL;
     double mean_error;
