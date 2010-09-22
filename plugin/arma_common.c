@@ -1,3 +1,21 @@
+/* 
+ *  gretl -- Gnu Regression, Econometrics and Time-series Library
+ *  Copyright (C) 2001 Allin Cottrell and Riccardo "Jack" Lucchetti
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "usermat.h"
 
 #define MAX_ARMA_ORDER 128
@@ -256,8 +274,6 @@ int arma_list_y_position (arma_info *ainfo)
     return ypos;
 }
 
-#define ARIMA_NAS 1
-
 #define INT_DEBUG 0
 
 static int arima_integrate (double *dx, const double *x,
@@ -280,68 +296,6 @@ static int arima_integrate (double *dx, const double *x,
 	ix[t] = 0.0;
     }
 
-#if ARIMA_NAS
-    for (t=t1; t<=t2; t++) {
-	ix[t] = dx[t];
-	if (d > 0 && !na(ix[t])) {
-	    if (na(x[t-1])) {
-		ix[t] = NADBL;
-	    } else {
-		ix[t] += x[t-1];
-	    }
-	} 
-	if (d == 2 && !na(ix[t])) {
-	    if (na(x[t-2])) {
-		ix[t] = NADBL;
-	    } else {
-		ix[t] += x[t-1] - x[t-2];
-	    }
-	}
-	if (D > 0 && !na(ix[t])) {
-	    if (na(x[t-s])) {
-		ix[t] = NADBL;
-	    } else {
-		ix[t] += x[t-s];
-	    }
-	    if (d > 0 && !na(ix[t])) {
-		if (na(x[t-s-1])) {
-		    ix[t] = NADBL;
-		} else {
-		    ix[t] -= x[t-s-1];
-		}
-	    }
-	    if (d == 2 && !na(ix[t])) {
-		if (na(x[t-s-2])) {
-		    ix[t] = NADBL;
-		} else {
-		    ix[t] -= x[t-s-1] - x[t-s-2];
-		}
-	    }	    
-	} 
-	if (D == 2 && !na(ix[t])) {
-	    if (na(x[t-2*s])) {
-		ix[t] = NADBL;
-	    } else {
-		ix[t] += x[t-s] - x[t-2*s];
-	    }
-	    if (d > 0 && !na(ix[t])) {
-		if (na(x[t-2*s-1])) {
-		    ix[t] = NADBL;
-		} else {
-		    ix[t] -= x[t-s-1] - x[t-2*s-1];
-		}
-	    }
-	    if (d == 2 && !na(ix[t])) {
-		if (na(x[t-2*s-2])) {
-		    ix[t] = NADBL;
-		} else {
-		    ix[t] -= x[t-s-1] - x[t-2*s-1];
-		    ix[t] += x[t-s-2] - x[t-2*s-2];
-		}
-	    }
-	}
-    }
-#else
     for (t=t1; t<=t2; t++) {
 	ix[t] = dx[t];
 	if (d > 0) {
@@ -370,7 +324,6 @@ static int arima_integrate (double *dx, const double *x,
 	    }
 	}
     }
-#endif
 
 #if INT_DEBUG
     for (t=0; t<=t2; t++) {
@@ -944,180 +897,5 @@ static int arma_check_list (arma_info *ainfo,
     return err;
 }
 
-#if ARIMA_NAS
 
-static void 
-real_arima_difference_series (double *dx, const double *x,
-			      int t1, arma_info *ainfo)
-{
-    int t, i, s = ainfo->pd;
-    
-    for (i=0, t=t1; t<=ainfo->t2; i++, t++) {
-	dx[i] = x[t];
-	if (ainfo->d > 0 && !na(dx[i])) {
-	    if (na(x[t-1])) {
-		dx[i] = NADBL;
-	    } else {
-		dx[i] -= x[t-1];
-	    }
-	} 
-	if (ainfo->d == 2 && !na(dx[i])) {
-	    if (na(x[t-2])) {
-		dx[i] = NADBL;
-	    } else {
-		dx[i] -= x[t-1] - x[t-2];
-	    }
-	}
-	if (ainfo->D > 0 && !na(dx[i])) {
-	    if (na(x[t-s])) {
-		dx[i] = NADBL;
-	    } else {
-		dx[i] -= x[t-s];
-	    }
-	    if (ainfo->d > 0 && !na(dx[i])) {
-		if (na(x[t-s-1])) {
-		    dx[i] = NADBL;
-		} else {
-		    dx[i] += x[t-s-1];
-		}
-	    }
-	    if (ainfo->d == 2 && !na(dx[i])) {
-		if (na(x[t-s-2])) {
-		    dx[i] = NADBL;
-		} else {
-		    dx[i] += x[t-s-1] - x[t-s-2];
-		}
-	    }	    
-	} 
-	if (ainfo->D == 2 && !na(dx[i])) {
-	    if (na(x[t-2*s])) {
-		dx[i] = NADBL;
-	    } else {
-		dx[i] -= x[t-s] - x[t-2*s];
-	    }
-	    if (ainfo->d > 0 && !na(dx[i])) {
-		if (na(x[t-2*s-1])) {
-		    dx[i] = NADBL;
-		} else {
-		    dx[i] += x[t-s-1] - x[t-2*s-1];
-		}
-	    }
-	    if (ainfo->d == 2 && !na(dx[i])) {
-		if (na(x[t-2*s-2])) {
-		    dx[i] = NADBL;
-		} else {
-		    dx[i] += x[t-s-1] - x[t-2*s-1];
-		    dx[i] -= x[t-s-2] - x[t-2*s-2];
-		}
-	    }
-	}
-    }
-}
-
-#else
-
-static void 
-real_arima_difference_series (double *dx, const double *x,
-			      int t1, arma_info *ainfo)
-{
-    int t, i, s = ainfo->pd;
-    
-    for (i=0, t=t1; t<=ainfo->t2; i++, t++) {
-	dx[i] = x[t];
-	if (ainfo->d > 0) {
-	    dx[i] -= x[t-1];
-	} 
-	if (ainfo->d == 2) {
-	    dx[i] -= x[t-1] - x[t-2];
-	}
-	if (ainfo->D > 0) {
-	    dx[i] -= x[t-s];
-	    if (ainfo->d > 0) {
-		dx[i] += x[t-s-1];
-	    }
-	    if (ainfo->d == 2) {
-		dx[i] += x[t-s-1] - x[t-s-2];
-	    }	    
-	} 
-	if (ainfo->D == 2) {
-	    dx[i] -= x[t-s] - x[t-2*s];
-	    if (ainfo->d > 0) {
-		dx[i] += x[t-s-1] - x[t-2*s-1];
-	    }
-	    if (ainfo->d == 2) {
-		dx[i] += x[t-s-1] - x[t-2*s-1];
-		dx[i] -= x[t-s-2] - x[t-2*s-2];
-	    }
-	}
-    }
-}
-
-#endif
-
-static int arima_difference (arma_info *ainfo, const double **Z,
-			     const DATAINFO *pdinfo)
-{
-    const double *y = Z[ainfo->yno];
-    double *dy = NULL;
-    int s = ainfo->pd;
-    int t, t1 = 0;
-    int err = 0;
-
-#if ARMA_DEBUG
-    fprintf(stderr, "doing arima_difference: d = %d, D = %d\n",
-	    ainfo->d, ainfo->D);
-    fprintf(stderr, "ainfo->t1 = %d, ainfo->t2 = %d\n", ainfo->t1,
-	    ainfo->t2);
-#endif
-
-    /* note: dy is a full length series (pdinfo->n) */
-
-    dy = malloc(pdinfo->n * sizeof *dy);
-    if (dy == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<pdinfo->n; t++) {
-	dy[t] = NADBL;
-    }
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (na(y[t])) {
-	    t1++;
-	} else {
-	    break;
-	}
-    }
-
-    t1 += ainfo->d + ainfo->D * s;
-
-    real_arima_difference_series(dy + t1, y, t1, ainfo);
-
-#if ARMA_DEBUG > 1
-    for (t=0; t<pdinfo->n; t++) {
-	fprintf(stderr, "dy[%d] = % 12.7g\n", t, dy[t]);
-    }
-#endif    
-
-    ainfo->y = dy;
-
-    if (arma_xdiff(ainfo)) {
-	/* also difference the ARIMAX regressors */
-	ainfo->dX = gretl_matrix_alloc(ainfo->T, ainfo->nexo);
-	if (ainfo->dX == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    double *val = ainfo->dX->val;
-	    int i, vi;
-
-	    for (i=0; i<ainfo->nexo; i++) {
-		vi = ainfo->xlist[i+1];
-		real_arima_difference_series(val, Z[vi], ainfo->t1, ainfo);
-		val += ainfo->T;
-	    }
-	}
-    }
-
-    return err;
-}
 

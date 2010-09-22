@@ -17,6 +17,8 @@
  * 
  */
 
+/* ARMA estimation via conditional ML (BHHH method) */
+
 #include "libgretl.h"
 #include "bhhh_max.h"
 #include "libset.h"

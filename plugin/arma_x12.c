@@ -14,7 +14,6 @@
  * 
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * 
  */
 
 #include "../cephes/mconf.h"
@@ -480,28 +479,20 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 }
 
 static void 
-populate_arma_model (MODEL *pmod, const char *path, 
-		     const double **Z, const DATAINFO *pdinfo, 
-		     arma_info *ainfo)
+populate_x12a_arma_model (MODEL *pmod, const char *path, 
+			  const double **Z, const DATAINFO *pdinfo, 
+			  arma_info *ainfo)
 {
     char fname[MAXLEN];
-    int t, err = 0;
+    int err;
 
-    pmod->uhat = malloc(pdinfo->n * sizeof *pmod->uhat);
-    pmod->yhat = malloc(pdinfo->n * sizeof *pmod->yhat);
-    pmod->coeff = malloc(ainfo->nc * sizeof *pmod->coeff);
-    pmod->sderr = malloc(ainfo->nc * sizeof *pmod->sderr);
-
-    if (pmod->uhat == NULL || pmod->yhat == NULL || 
-	pmod->coeff == NULL || pmod->sderr == NULL) {
-	pmod->errcode = E_ALLOC;
-	return;
-    }
-
+    pmod->ncoeff = ainfo->nc;
     pmod->full_n = pdinfo->n;
 
-    for (t=0; t<pdinfo->n; t++) {
-	pmod->uhat[t] = pmod->yhat[t] = NADBL;
+    err = gretl_model_allocate_storage(pmod);
+    if (err) {
+	pmod->errcode = err;
+	return;
     }
 
     sprintf(fname, "%s.est", path);
@@ -883,11 +874,6 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	set_arma_missvals(ainfo);
     }
 
-    /* create differenced series if needed */
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	err = arima_difference(ainfo, Z, pdinfo);
-    }  
-
     strcpy(yname, pdinfo->varname[ainfo->yno]);
 
     /* write out an .spc file */
@@ -910,7 +896,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	sprintf(path, "%s%c%s", workdir, SLASH, yname); 
 	armod.t1 = ainfo->t1;
 	armod.t2 = ainfo->t2;
-	populate_arma_model(&armod, path, Z, pdinfo, ainfo);
+	populate_x12a_arma_model(&armod, path, Z, pdinfo, ainfo);
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, ainfo->prn);
 	}
@@ -946,4 +932,3 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     return armod;
 }
-
