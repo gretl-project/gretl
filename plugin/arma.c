@@ -2190,6 +2190,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	goto bailout;
     }
 
+#if 0 /* FIXME this is wrong when there are regressors */
     if (ainfo->p == 0 && ainfo->P == 0 &&
 	ainfo->q == 0 && ainfo->Q == 0 &&
 	!arma_missvals(ainfo)) {
@@ -2199,6 +2200,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 	err = arma_via_OLS(ainfo, b, Z, pdinfo, &armod);
 	goto bailout;
     }
+#endif
 
     /* second pass: try Hannan-Rissanen, if suitable */
     if (!init_done && prefer_hr_init(ainfo)) {
