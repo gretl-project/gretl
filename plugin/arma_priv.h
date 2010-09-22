@@ -28,7 +28,8 @@ typedef enum {
     ARMA_VECH  = 1 << 4, /* using vech representation when computing
 			    variance matrix of state for Kalman filter */
     ARMA_NAOK  = 1 << 5, /* allow missing observations */
-    ARMA_NAS   = 1 << 6  /* sample contains NAs */
+    ARMA_NAS   = 1 << 6, /* sample contains NAs */
+    ARMA_LEV   = 1 << 7  /* doing ARIMA via levels formulation */
 } PrivFlags;
 
 typedef struct arma_info_ arma_info;
@@ -86,6 +87,7 @@ struct arma_info_ {
 #define arma_using_vech(a)     ((a)->pflags & ARMA_VECH)
 #define arma_na_ok(a)          ((a)->pflags & ARMA_NAOK)
 #define arma_missvals(a)       ((a)->pflags & ARMA_NAS)
+#define arima_levels(a)        ((a)->pflags & ARMA_LEV)
 
 #define set_arma_has_seasonal(a)  ((a)->pflags |= ARMA_SEAS)
 #define set_arma_is_arima(a)      ((a)->pflags |= ARMA_DSPEC)
@@ -93,6 +95,7 @@ struct arma_info_ {
 #define set_arma_use_vech(a)      ((a)->pflags |= ARMA_VECH)
 #define set_arma_na_ok(a)         ((a)->pflags |= ARMA_NAOK)
 #define set_arma_missvals(a)      ((a)->pflags |= ARMA_NAS)
+#define set_arima_levels(a)       ((a)->pflags |= ARMA_LEV)
 
 #define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')

@@ -136,7 +136,8 @@ struct kalman_ {
     gretl_matrix *Tmprr_2b;
     gretl_matrix *Tmpr1;
 
-    PRN *prn; /* verbose printer */
+    void *data; /* handle for attching additional info */
+    PRN *prn;   /* verbose printer */
 };
 
 /* max number of time-varying matrices: F, A, H, Q, R, mu */
@@ -290,6 +291,7 @@ static kalman *kalman_new_empty (int flags)
 	K->fnlevel = 0;
 	K->t = 0;
 	K->prn = NULL;
+	K->data = NULL;
     }
 
     return K;
@@ -2285,6 +2287,18 @@ void kalman_cleanup (void)
 int delete_kalman (PRN *prn)
 {
     return real_destroy_user_kalman(prn);
+}
+
+void kalman_attach_data (kalman *K, void *data)
+{
+    if (K != NULL) {
+	K->data = data;
+    }
+}
+
+void *kalman_get_data (const kalman *K)
+{
+    return (K != NULL)? K->data : NULL;
 }
 
 void kalman_attach_printer (kalman *K, PRN *prn)
