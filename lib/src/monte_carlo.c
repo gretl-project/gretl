@@ -1294,9 +1294,7 @@ static void loop_model_free (LOOP_MODEL *lmod)
 
     free(lmod->bigarray);
     free(lmod->cbak);
-    free(lmod->sbak);
     free(lmod->cdiff);
-    free(lmod->sdiff);
 
     gretl_model_free(lmod->model0);
 }
@@ -1327,8 +1325,8 @@ static void loop_model_init (LOOP_MODEL *lmod, int lno)
     lmod->nc = 0;
     lmod->model0 = NULL;
     lmod->bigarray = NULL;
-    lmod->cbak = lmod->sbak = NULL;
-    lmod->cdiff = lmod->sdiff = NULL;
+    lmod->cbak = NULL;
+    lmod->cdiff = NULL;
 }
 
 /* Start up a LOOP_MODEL struct: copy pmod into place and
@@ -1336,56 +1334,61 @@ static void loop_model_init (LOOP_MODEL *lmod, int lno)
 
 static int loop_model_start (LOOP_MODEL *lmod, const MODEL *pmod)
 {
-    int nc;
+    int nc = pmod->ncoeff;
+    int err = 0;
 
 #if LOOP_DEBUG
     fprintf(stderr, "init: copying model at %p\n", (void *) pmod);
 #endif
-
-    lmod->nc = nc = pmod->ncoeff;
 
     lmod->model0 = gretl_model_copy(pmod);
     if (lmod->model0 == NULL) {
 	return E_ALLOC;
     }
 
+    lmod->nc = nc;
+
     lmod->bigarray = malloc(nc * 4 * sizeof *lmod->bigarray);
-    if (lmod->bigarray == NULL) return E_ALLOC;
+    if (lmod->bigarray == NULL) {
+	return E_ALLOC;
+    }
 
     lmod->sum_coeff = lmod->bigarray;
     lmod->ssq_coeff = lmod->sum_coeff + nc;
     lmod->sum_sderr = lmod->ssq_coeff + nc;
     lmod->ssq_sderr = lmod->sum_sderr + nc;
 
-    lmod->cbak = malloc(nc * sizeof *lmod->cbak);
-    if (lmod->cbak == NULL) goto cleanup;
+    lmod->cbak = malloc(nc * 2 * sizeof *lmod->cbak);
+    if (lmod->cbak == NULL) {
+	err = E_ALLOC;
+    } else {
+	lmod->sbak = lmod->cbak + nc;
+    }
 
-    lmod->sbak = malloc(nc * sizeof *lmod->sbak);
-    if (lmod->sbak == NULL) goto cleanup;
+    if (!err) {
+	lmod->cdiff = malloc(nc * 2 * sizeof *lmod->cdiff);
+	if (lmod->cdiff == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    lmod->sdiff = lmod->cdiff + nc;
+	}
+    }
 
-    lmod->cdiff = malloc(nc * sizeof *lmod->cdiff);
-    if (lmod->cdiff == NULL) goto cleanup;
-
-    lmod->sdiff = malloc(nc * sizeof *lmod->sdiff);
-    if (lmod->sdiff == NULL) goto cleanup;
-
-    loop_model_zero(lmod);
-
+    if (!err) {
+	loop_model_zero(lmod);
 #if LOOP_DEBUG
-    fprintf(stderr, " model copied to %p, returning 0\n", 
-	    (void *) lmod->model0);
+	fprintf(stderr, " model copied to %p, returning 0\n", 
+		(void *) lmod->model0);
 #endif
+    }
 
-    return 0;
+    if (err) {
+	free(lmod->bigarray);
+	free(lmod->cbak);
+	free(lmod->cdiff);
+    }
 
- cleanup:
-    free(lmod->bigarray);
-    free(lmod->cbak);
-    free(lmod->sbak);
-    free(lmod->cdiff);
-    free(lmod->sdiff);
-
-    return E_ALLOC;
+    return err;
 }
 
 static void loop_print_free (LOOP_PRINT *lprn)
