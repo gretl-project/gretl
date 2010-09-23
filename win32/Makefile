@@ -452,7 +452,7 @@ plugins/arbond.dll: arbond.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-plugins/arma.dll: arma.o arma_cml.c arma_init.o dllinit.o
+plugins/arma.dll: arma.o arma_cml.o arma_init.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS) -lprob
 
