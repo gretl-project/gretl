@@ -130,6 +130,7 @@ gui2/winstack.c
 plugin/anova.c
 plugin/arbond.c
 plugin/arma.c
+plugin/arma_cml.c
 plugin/arma_common.c
 plugin/arma_init.c
 plugin/arma_x12.c

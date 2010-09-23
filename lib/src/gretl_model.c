@@ -1323,6 +1323,66 @@ int regarma_model_AR_coeffs (const MODEL *pmod,
 }
 
 /**
+ * arima_delta_coeffs:
+ * @d: order of non-seasonal differencing (<= 2)
+ * @D: order of seasonal differencing (<= 2)
+ * @s: seasonal periodicity
+ *
+ * Returns: array of d + s * D coefficients of the lag operator in
+ * the expansion of (1-L)^d * (1-L^s)^D. These are given in the
+ * negative; for example, if d = 1 then c[0] = 1.
+ */
+
+int *arima_delta_coeffs (int d, int D, int s)
+{
+    int i, k = d + s * D;
+    int *c = malloc(k * sizeof *c);
+
+    if (c == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<k; i++) {
+	c[i] = 0;
+    }
+
+    if (d == 1) {
+	c[0] = 1;
+    } else if (d == 2) {
+	c[0] = 2;
+	c[1] = -1;
+    }
+
+    if (D > 0) {
+	c[s-1] += 1;
+	if (d > 0) {
+	    c[s] -= 1;
+	}
+	if (d == 2) {
+	    c[s] -= 1;
+	    c[s+1] += 1;
+	}
+    } 
+
+    if (D == 2) {
+	c[s-1] += 1;
+	c[2*s-1] -= 1;
+	if (d > 0) {
+	    c[s] -= 1;
+	    c[2*s] += 1;
+	}
+	if (d == 2) {
+	    c[s] -= 1;
+	    c[2*s] += 1;
+	    c[s+1] += 1;
+	    c[2*s+1] -= 1;
+	}
+    }
+
+    return c;
+}
+
+/**
  * arma_model_get_x_coeffs:
  * @pmod: pointer to gretl model.
  *

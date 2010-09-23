@@ -109,7 +109,9 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 
 #endif /* !WIN32 */
 
+#define X12A_CODE
 #include "arma_common.c"
+#undef X12A_CODE
 
 static int add_unique_output_file (MODEL *pmod, const char *path)
 {
@@ -354,7 +356,7 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 #endif
 
 /* Below: parse the coefficient estimates and standard errors from
-   the X12ARIMA output file foo.est
+   the X-12-ARIMA output file foo.est
 */
 
 static int 
@@ -363,16 +365,13 @@ get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
     double *ar_coeff = pmod->coeff + ainfo->ifc;
     double *ma_coeff = ar_coeff + ainfo->np + ainfo->P;
     double *x_coeff = ma_coeff + ainfo->nq + ainfo->Q;
-
     double *ar_sderr = pmod->sderr + ainfo->ifc;
     double *ma_sderr = ar_sderr + ainfo->np + ainfo->P;
     double *x_sderr = ma_sderr + ainfo->nq + ainfo->Q;
-
     FILE *fp;
     char line[128], word[16];
     double b, se;
     int i, j, k;
-
     int err = 0;
 
     fp = gretl_fopen(fname, "r");
@@ -433,7 +432,7 @@ get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
     return err;
 }
 
-/* Parse the residuals from the X12ARIMA output file foo.rsd */
+/* Parse the residuals from the x12a output file foo.rsd */
 
 static int 
 get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
@@ -486,6 +485,8 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
     char fname[MAXLEN];
     int err;
 
+    pmod->t1 = ainfo->t1;
+    pmod->t2 = ainfo->t2;
     pmod->ncoeff = ainfo->nc;
     pmod->full_n = pdinfo->n;
 
@@ -874,14 +875,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	set_arma_missvals(ainfo);
     }
 
-     /* create differenced y series if needed: note that we don't need
-        this for estimation via X-12-ARIMA, it's just so that we can
-        provide summary statistics on finishing the model
-     */ 	 
-    if (ainfo->d > 0 || ainfo->D > 0) { 	 
-	err = arima_difference(ainfo, Z, pdinfo); 	 
-    }
-
+    ainfo->y = (double *) Z[ainfo->yno]; /* it's really const */
     strcpy(yname, pdinfo->varname[ainfo->yno]);
 
     /* write out an .spc file */
@@ -902,8 +896,6 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 
     if (!err) {
 	sprintf(path, "%s%c%s", workdir, SLASH, yname); 
-	armod.t1 = ainfo->t1;
-	armod.t2 = ainfo->t2;
 	populate_x12a_arma_model(&armod, path, Z, pdinfo, ainfo);
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, ainfo->prn);
@@ -932,11 +924,6 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
  bailout:
 
     arma_info_cleanup(ainfo);
-
-    if (armod.errcode && (opt & OPT_U)) {
-	/* continue on error */
-	armod.opt |= OPT_U;
-    }
 
     return armod;
 }

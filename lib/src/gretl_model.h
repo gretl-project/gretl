@@ -327,6 +327,8 @@ int regarima_model_get_AR_coeffs (const MODEL *pmod,
 				  double **phi0,
 				  int *pp);
 
+int *arima_delta_coeffs (int d, int D, int s);
+
 int gretl_model_set_coeff_separator (MODEL *pmod, const char *s, int pos);
 
 int gretl_model_get_coeff_separator (const MODEL *pmod, const char **ps, int *ppos);

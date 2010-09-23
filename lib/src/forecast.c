@@ -1152,64 +1152,24 @@ static double arma_variance (const double *phi, int p,
     return sspsi;
 }
 
-#define invalid_obs(x,t) ((t) < 0 || na(x[t]))
-
 static double arima_difference_obs (const double *x, int t, 
-				    int d, int D, int s)
+				    int *c, int k)
 {
     double dx = x[t];
 
-    if (na(dx)) {
-	return NADBL;
-    }
+    if (!na(dx)) {
+	int i, s;
 
-    if (d > 0) {
-	if (invalid_obs(x, t-1)) {
-	    return NADBL;
-	}
-	dx -= x[t-1];
-    } 
-    if (d == 2) {
-	if (invalid_obs(x, t-2)) {
-	    return NADBL;
-	}
-	dx -= x[t-1] - x[t-2];
-    }
-    if (D > 0) {
-	if (invalid_obs(x, t-s)) {
-	    return NADBL;
-	}
-	dx -= x[t-s];
-	if (d > 0) {
-	    if (invalid_obs(x, t-s-1)) {
-		return NADBL;
+	for (i=0; i<k; i++) {
+	    if (c[i] != 0) {
+		s = t - i - 1;
+		if (s < 0 || na(x[s])) {
+		    dx = NADBL;
+		    break;
+		} else {
+		    dx -= c[i] * x[s];
+		}
 	    }
-	    dx += x[t-s-1];
-	}
-	if (d == 2) {
-	    if (invalid_obs(x, t-s-2)) {
-		return NADBL;
-	    }
-	    dx += x[t-s-1] - x[t-s-2];
-	}	    
-    } 
-    if (D == 2) {
-	if (invalid_obs(x, t-2*s)) {
-	    return NADBL;
-	}
-	dx -= x[t-s] - x[t-2*s];
-	if (d > 0) {
-	    if (invalid_obs(x, t-s-1) || invalid_obs(x, t-2*s-1)) {
-		return NADBL;
-	    }
-	    dx += x[t-s-1] - x[t-2*s-1];
-	}
-	if (d == 2) {
-	    if (invalid_obs(x, t-s-2) || invalid_obs(x, t-2*s-2)) {
-		return NADBL;
-	    }
-	    dx += x[t-s-1] - x[t-2*s-1];
-	    dx -= x[t-s-2] - x[t-2*s-2];
 	}
     }
 
@@ -1233,9 +1193,10 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
 				 const double **Z)
 {
     double *Xb;
+    int *delta = NULL;
     double x;
     int miss, diff = 0;
-    int d, D, s = 0;
+    int d, D, s = 0, k = 0;
     int i, j, t, vi;
 
     Xb = malloc((fc->t2 + 1) * sizeof *Xb);
@@ -1251,6 +1212,15 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
 	diff = 1;
     }
 
+    if (diff) {
+	delta = arima_delta_coeffs(d, D, s);
+	if (delta == NULL) {
+	    free(Xb);
+	    return NULL;
+	}
+	k = s + s * D;
+    }
+
     for (t=0; t<=fc->t2; t++) {
 	Xb[t] = 0.0;
 	miss = 0;
@@ -1261,7 +1231,7 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
 		Xb[t] += pmod->coeff[0];
 	    } else {
 		if (diff) {
-		    x = arima_difference_obs(Z[vi], t, d, D, s);
+		    x = arima_difference_obs(Z[vi], t, delta, k);
 		} else {
 		    x = Z[vi][t];
 		}
@@ -1273,6 +1243,10 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
 		}
 	    }
 	}
+    }
+
+    if (delta != NULL) {
+	free(delta);
     }
 
     return Xb;

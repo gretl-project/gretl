@@ -53,17 +53,6 @@ static void transform_arma_const (double *b, arma_info *ainfo)
     b[0] /= (narfac * sarfac);
 }
 
-static int use_preprocessed_y (arma_info *ainfo)
-{
-    if (arma_xdiff(ainfo)) {
-	/* for initialization, use the level of y */
-	return 0;
-    } else {
-	/* use preprocessed y if available */
-	return (ainfo->y != NULL);
-    }
-}
-
 #define HR_MINLAGS 16
 
 static int hr_transcribe_coeffs (arma_info *ainfo,
@@ -162,11 +151,12 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     pass1v = pass1lags + nexo + 2;
 
     /* dependent variable */
-    if (use_preprocessed_y(ainfo)) {
-	y = ainfo->y;
-    } else {
+    if (arma_xdiff(ainfo)) {
+	/* for initialization, use the level of y */
 	y = Z[ainfo->yno];
-    }
+    } else { 
+	y = ainfo->y;
+    } 
 
     adinfo = create_auxiliary_dataset(&aZ, pass1v + qtotal, ainfo->T);
     if (adinfo == NULL) {
@@ -418,40 +408,15 @@ int hr_arma_init (double *coeff, const double **Z,
 }
 
 /* try to avoid numerical problems when doing exact ML: 
-   scale the dependent variable if it's "too big" 
+   arrange for scaling of the dependent variable if it's 
+   "too big" 
 */
 
-static void maybe_rescale_y (arma_info *ainfo, const double **Z,
-			     const DATAINFO *pdinfo)
+static void maybe_set_yscale (arma_info *ainfo)
 {
-    double ybar;
-    int t, doit = 0;
+    double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
 
-    if (ainfo->y != NULL) {
-	ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
-	doit = (fabs(ybar) > 250);
-    } else {
-	const double *y = Z[ainfo->yno];
-
-	ybar = gretl_mean(ainfo->t1, ainfo->t2, y);
-	if (fabs(ybar) > 250) {
-	    ainfo->y = malloc(pdinfo->n * sizeof *ainfo->y);
-	    if (ainfo->y != NULL) {
-		for (t=0; t<pdinfo->n; t++) {
-		    ainfo->y[t] = y[t];
-		}
-		doit = 1;
-	    }
-	}
-    }
-
-    if (doit) {
-	fprintf(stderr, "arma: ybar = %g, rescaling y\n", ybar);
-	for (t=0; t<=ainfo->t2; t++) {
-	    if (!na(ainfo->y[t])) {
-		ainfo->y[t] /= ybar;
-	    }
-	}
+    if (fabs(ybar) > 250) {
 	ainfo->yscale = ybar;
     }
 }
@@ -647,11 +612,11 @@ static int arma_init_build_dataset (arma_info *ainfo,
     /* add variable names to auxiliary dataset */
     arma_init_add_varnames(ainfo, ptotal, narmax, adinfo);
 
-    /* dependent variable */
-    if (use_preprocessed_y(ainfo)) {
-	y = ainfo->y;
-    } else {
+    if (arma_xdiff(ainfo)) {
+	/* for initialization, use the level of y */
 	y = Z[ainfo->yno];
+    } else {
+	y = ainfo->y;
     }
 
     /* starting position for reading exogeneous vars */
@@ -665,7 +630,11 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	int realt = t + ainfo->t1;
 	int miss = 0;
 
-	aZ[1][t] = y[realt];
+	if (ainfo->yscale != 1.0 && !na(y[realt])) {
+	    aZ[1][t] = y[realt] / ainfo->yscale;
+	} else {
+	    aZ[1][t] = y[realt];
+	}
 
 	k = k0;
 	kx = ptotal + ainfo->nexo + k0;
@@ -683,7 +652,11 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    aZ[kx++][t] = NADBL;
 		}
 	    } else {
-		aZ[k++][t] = y[s];
+		aZ[k][t] = y[s];
+		if (ainfo->yscale != 1.0 && !na(y[s])) {
+		    aZ[k][t] /= ainfo->yscale;
+		}
+		k++;
 		for (j=0; j<narmax; j++) {
 		    m = list[xstart + j];
 		    aZ[kx++][t] = Z[m][s];
@@ -705,6 +678,9 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 	    } else {
 		aZ[k][t] = y[s];
+		if (ainfo->yscale != 1.0 && !na(y[s])) {
+		    aZ[k][t] /= ainfo->yscale;
+		}		
 		for (k=0; k<narmax; k++) {
 		    m = list[xstart + k];
 		    aZ[kx++][t] = Z[m][s];
@@ -723,7 +699,11 @@ static int arma_init_build_dataset (arma_info *ainfo,
 			aZ[kx++][t] = NADBL;
 		    }
 		} else {
-		    aZ[ky++][t] = y[s];
+		    aZ[ky][t] = y[s];
+		    if (ainfo->yscale != 1.0 && !na(y[s])) {
+			aZ[ky][t] /= ainfo->yscale;
+		    }
+		    ky++;
 		    for (k=0; k<narmax; k++) {
 			m = list[xstart + k];
 			aZ[kx++][t] = Z[m][s];
@@ -1152,7 +1132,7 @@ int ar_arma_init (double *coeff, const double **Z,
     } 
 
     if (arma_exact_ml(ainfo) && ainfo->ifc) {
-	maybe_rescale_y(ainfo, Z, pdinfo);
+	maybe_set_yscale(ainfo);
     }
 
     adinfo = create_auxiliary_dataset(&aZ, av, ainfo->fullT); /* ? */
