@@ -764,7 +764,9 @@ static int write_kalman_matrices (khelper *kh,
 	gretl_matrix_inscribe_matrix(kh->F, kh->F_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->Q, kh->Q_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->P, kh->P_, 0, 0, GRETL_MOD_NONE);
-	for (i=0; i<1; i++) { /* FIXME!! */
+	k = ainfo->d + ainfo->pd * ainfo->D;
+	for (i=0; i<k; i++) {
+	    /* FIXME! */
 	    gretl_vector_set(kh->S, i + ainfo->r0, kh->y->val[0]);
 	}
     }
