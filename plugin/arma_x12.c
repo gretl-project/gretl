@@ -874,6 +874,14 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
 	set_arma_missvals(ainfo);
     }
 
+     /* create differenced y series if needed: note that we don't need
+        this for estimation via X-12-ARIMA, it's just so that we can
+        provide summary statistics on finishing the model
+     */ 	 
+    if (ainfo->d > 0 || ainfo->D > 0) { 	 
+	err = arima_difference(ainfo, Z, pdinfo); 	 
+    }
+
     strcpy(yname, pdinfo->varname[ainfo->yno]);
 
     /* write out an .spc file */

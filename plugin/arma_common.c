@@ -405,8 +405,12 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
     }
 
     if (!arma_least_squares(ainfo)) {
-	pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
-	pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
+	if (y != NULL) {
+	    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
+	    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
+	} else {
+	    pmod->ybar = pmod->sdy = NADBL;
+	}
     }
 
     mean_error = pmod->ess = 0.0;
@@ -896,6 +900,110 @@ static int arma_check_list (arma_info *ainfo,
 
     return err;
 }
+
+static void 
+real_arima_difference_series (double *dx, const double *x,
+			      int t1, arma_info *ainfo)
+{
+    int t, i, s = ainfo->pd;
+    
+    for (i=0, t=t1; t<=ainfo->t2; i++, t++) {
+	dx[i] = x[t];
+	if (ainfo->d > 0) {
+	    dx[i] -= x[t-1];
+	} 
+	if (ainfo->d == 2) {
+	    dx[i] -= x[t-1] - x[t-2];
+	}
+	if (ainfo->D > 0) {
+	    dx[i] -= x[t-s];
+	    if (ainfo->d > 0) {
+		dx[i] += x[t-s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dx[i] += x[t-s-1] - x[t-s-2];
+	    }	    
+	} 
+	if (ainfo->D == 2) {
+	    dx[i] -= x[t-s] - x[t-2*s];
+	    if (ainfo->d > 0) {
+		dx[i] += x[t-s-1] - x[t-2*s-1];
+	    }
+	    if (ainfo->d == 2) {
+		dx[i] += x[t-s-1] - x[t-2*s-1];
+		dx[i] -= x[t-s-2] - x[t-2*s-2];
+	    }
+	}
+    }
+}
+
+static int arima_difference (arma_info *ainfo, const double **Z,
+			     const DATAINFO *pdinfo)
+{
+    const double *y = Z[ainfo->yno];
+    double *dy = NULL;
+    int s = ainfo->pd;
+    int t, t1 = 0;
+    int err = 0;
+
+#if ARMA_DEBUG
+    fprintf(stderr, "doing arima_difference: d = %d, D = %d\n",
+	    ainfo->d, ainfo->D);
+    fprintf(stderr, "ainfo->t1 = %d, ainfo->t2 = %d\n", ainfo->t1,
+	    ainfo->t2);
+#endif
+
+    /* note: dy is a full length series (pdinfo->n) */
+
+    dy = malloc(pdinfo->n * sizeof *dy);
+    if (dy == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	dy[t] = NADBL;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (na(y[t])) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    t1 += ainfo->d + ainfo->D * s;
+
+    real_arima_difference_series(dy + t1, y, t1, ainfo);
+
+#if ARMA_DEBUG > 1
+    for (t=0; t<pdinfo->n; t++) {
+	fprintf(stderr, "dy[%d] = % 12.7g\n", t, dy[t]);
+    }
+#endif    
+
+    ainfo->y = dy;
+
+    if (arma_xdiff(ainfo)) {
+	/* also difference the ARIMAX regressors */
+	ainfo->dX = gretl_matrix_alloc(ainfo->T, ainfo->nexo);
+	if (ainfo->dX == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    double *val = ainfo->dX->val;
+	    int i, vi;
+
+	    for (i=0; i<ainfo->nexo; i++) {
+		vi = ainfo->xlist[i+1];
+		real_arima_difference_series(val, Z[vi], ainfo->t1, ainfo);
+		val += ainfo->T;
+	    }
+	}
+    }
+
+    return err;
+}
+
 
 
 
