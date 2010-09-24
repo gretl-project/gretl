@@ -588,6 +588,20 @@ static int arma_init_add_dummies (arma_info *ainfo,
     return err;
 }
 
+static const int *xlist;
+
+/* X, if non-NULL, holds the differenced regressors */
+
+static double get_xti (const double **Z, int i, int t, 
+		       const gretl_matrix *X)
+{
+    if (X != NULL) {
+	return gretl_matrix_get(X, t, i);
+    } else {
+	return Z[xlist[i]][t];
+    }
+}
+
 /* Build temporary dataset including lagged vars: if we're doing exact
    ML on an ARMAX model we need lags of the exogenous variables as
    well as lags of y_t.  Note that the auxiliary dataset has "t = 0"
@@ -598,26 +612,38 @@ static int arma_init_build_dataset (arma_info *ainfo,
 				    int ptotal, int narmax, 
 				    const int *list,
 				    const double **Z,
+				    const DATAINFO *pdinfo,
 				    double ***paZ, 
 				    DATAINFO *adinfo,
 				    int nonlin)
 {
     double **aZ = *paZ;
     const double *y;
+    const gretl_matrix *X = NULL;
     int i, j, k, kx, ky;
-    int t, s, m, k0 = 2;
-    int lag, xstart;
+    int t, s, k0 = 2;
+    int undo_diff = 0;
+    int xstart;
     int err = 0;
 
-    /* add variable names to auxiliary dataset */
-    arma_init_add_varnames(ainfo, ptotal, narmax, adinfo);
-
-    if (arma_xdiff(ainfo)) {
-	/* for initialization, use the level of y */
+    if (arima_levels(ainfo)) {
+	/* we'll need differences for initialization */
+	err = arima_difference(ainfo, Z, pdinfo, 1);
+	if (err) {
+	    return err;
+	}
+	undo_diff = 1;
+	y = ainfo->y;
+	X = ainfo->dX;
+    } else if (arma_xdiff(ainfo)) {
+	/* run init in levels (FIXME?) */
 	y = Z[ainfo->yno];
     } else {
 	y = ainfo->y;
     }
+
+    /* add variable names to auxiliary dataset */
+    arma_init_add_varnames(ainfo, ptotal, narmax, adinfo);
 
     /* starting position for reading exogeneous vars */
     if (ainfo->d > 0 || ainfo->D > 0) {
@@ -625,6 +651,9 @@ static int arma_init_build_dataset (arma_info *ainfo,
     } else {
 	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
     }
+
+    /* set "local" globals */
+    xlist = list + xstart;
 
     for (t=0; t<adinfo->n; t++) {
 	int realt = t + ainfo->t1;
@@ -643,8 +672,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	    if (!AR_included(ainfo, i)) {
 		continue;
 	    }
-	    lag = i + 1;
-	    s = realt - lag;
+	    s = realt - (i + 1);
 	    if (s < 0) {
 		miss = 1;
 		aZ[k++][t] = NADBL;
@@ -658,8 +686,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 		k++;
 		for (j=0; j<narmax; j++) {
-		    m = list[xstart + j];
-		    aZ[kx++][t] = Z[m][s];
+		    aZ[kx++][t] = get_xti(Z, j, s, X);
 		}
 	    }
 	}
@@ -667,8 +694,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	ky = ainfo->np + ainfo->P + k0;
 
 	for (j=0; j<ainfo->P; j++) {
-	    lag = (j + 1) * ainfo->pd;
-	    s = realt - lag;
+	    s = realt - (j + 1) * ainfo->pd;
 	    k = ainfo->np + k0 + j;
 	    if (s < 0) {
 		miss = 1;
@@ -682,16 +708,14 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    aZ[k][t] /= ainfo->yscale;
 		}		
 		for (k=0; k<narmax; k++) {
-		    m = list[xstart + k];
-		    aZ[kx++][t] = Z[m][s];
+		    aZ[kx++][t] = get_xti(Z, k, s, X);
 		}
 	    }
 	    for (i=0; i<ainfo->p; i++) {
 		if (!AR_included(ainfo, i)) {
 		    continue;
 		}
-		lag = (j + 1) * ainfo->pd + (i + 1);
-		s = realt - lag;
+		s = realt - ((j + 1) * ainfo->pd + (i + 1));
 		if (s < 0) {
 		    miss = 1;
 		    aZ[ky++][t] = NADBL;
@@ -705,8 +729,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    }
 		    ky++;
 		    for (k=0; k<narmax; k++) {
-			m = list[xstart + k];
-			aZ[kx++][t] = Z[m][s];
+			aZ[kx++][t] = get_xti(Z, k, s, X);
 		    }
 		}
 	    }
@@ -715,8 +738,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	kx = ptotal + k0;
 
 	for (i=0; i<ainfo->nexo; i++) {
-	    m = list[xstart + i];
-	    aZ[kx++][t] = Z[m][realt];
+	    aZ[kx++][t] = get_xti(Z, i, realt, X);
 	}
 
 	if (miss) {
@@ -727,6 +749,10 @@ static int arma_init_build_dataset (arma_info *ainfo,
     if (nonlin && arma_missvals(ainfo)) {
 	err = arma_init_add_dummies(ainfo, paZ, adinfo);
 	aZ = *paZ;
+    }
+
+    if (undo_diff) {
+	arima_difference_undo(ainfo, Z);
     }
 
 #if AINIT_DEBUG
@@ -1135,7 +1161,7 @@ int ar_arma_init (double *coeff, const double **Z,
 	maybe_set_yscale(ainfo);
     }
 
-    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->fullT); /* ? */
+    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->fullT);
     if (adinfo == NULL) {
 	return E_ALLOC;
     }
@@ -1150,7 +1176,7 @@ int ar_arma_init (double *coeff, const double **Z,
 
     /* build temporary dataset */
     arma_init_build_dataset(ainfo, ptotal, narmax, list,
-			    Z, &aZ, adinfo, nonlin);
+			    Z, pdinfo, &aZ, adinfo, nonlin);
 
     if (nonlin) {
 	PRN *dprn = NULL;
@@ -1241,7 +1267,7 @@ int arma_by_ls (const double *coeff,
 
     /* build temporary dataset */
     arma_init_build_dataset(ainfo, ptotal, 0, list,
-			    Z, &aZ, adinfo, nonlin);
+			    Z, pdinfo, &aZ, adinfo, nonlin);
 
     if (nonlin) {
 	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, &aZ, adinfo,

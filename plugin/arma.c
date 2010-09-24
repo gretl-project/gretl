@@ -618,10 +618,8 @@ static int kalman_matrices_init (arma_info *ainfo,
 	}
 	for (i=0; i<k; i++) {
 	    gretl_vector_set(kh->H, r0 + i, c[i]);
-	    if (c[i] != 0) {
-		s = ainfo->t1 - 1 - i;
-		gretl_vector_set(kh->S, r0 + i, y[s]);
-	    }
+	    s = ainfo->t1 - 1 - i;
+	    gretl_vector_set(kh->S, r0 + i, y[s]);
 	}
 	free(c);
 
@@ -1256,7 +1254,7 @@ static int kalman_arma (double *coeff,
 	kalman_attach_printer(K, ainfo->prn);
 	kalman_attach_data(K, kh);
 
-	if (r > 3) {
+	if (r > 3 && !arima_levels(ainfo)) {
 	    kalman_set_nonshift(K, 1);
 	} else {
 	    kalman_set_nonshift(K, r);
@@ -1648,7 +1646,7 @@ MODEL arma_model (const int *list, const char *pqspec,
 		set_arima_levels(ainfo);
 		ainfo->y = (double *) Z[ainfo->yno];
 	    } else {
-		err = arima_difference(ainfo, Z, pdinfo);
+		err = arima_difference(ainfo, Z, pdinfo, 0);
 	    }
 	} else {
 	    ainfo->y = (double *) Z[ainfo->yno];

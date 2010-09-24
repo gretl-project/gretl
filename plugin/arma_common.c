@@ -882,29 +882,37 @@ real_arima_difference_series (double *dx, const double *x,
 			      int t1, int t2, int *delta, 
 			      int k)
 {
-    int i, s, p, t;
+    int i, p, t, s = 0;
     
-    for (s=0, t=t1; t<=t2; s++, t++) {
+    for (t=t1; t<=t2; t++) {
 	dx[s] = x[t];
 	for (i=0; i<k && !na(dx[s]); i++) {
 	    if (delta[i] != 0) {
 		p = t - i - 1;
-		if (na(x[p])) {
+		if (p < 0 || na(x[p])) {
 		    dx[s]  = NADBL;
 		} else {
 		    dx[s] -= delta[i] * x[p];
 		}
 	    }
-	}	
+	}
+	s++;
     }
 }
 
 #ifndef X12A_CODE
 
-/* the following is not required when using X-12-ARIMA */
+/* Add to the ainfo struct a full-length series y holding 
+   the differenced version of the dependent variable.
+   If the "xdiff" flag is set on ainfo, in addition 
+   create a matrix dX holding the differenced regressors;
+   in that case the time-series length of dX depends on
+   the @fullX flag -- if fullX = 0, this equals
+   ainfo->T but if fullX = 0 it equals ainfo->t2 + 1.
+*/
 
-static int arima_difference (arma_info *ainfo, const double **Z,
-			     const DATAINFO *pdinfo)
+int arima_difference (arma_info *ainfo, const double **Z,
+		      const DATAINFO *pdinfo, int fullX)
 {
     const double *y = Z[ainfo->yno];
     double *dy = NULL;
@@ -961,7 +969,15 @@ static int arima_difference (arma_info *ainfo, const double **Z,
 
     if (arma_xdiff(ainfo)) {
 	/* also difference the ARIMAX regressors */
-	ainfo->dX = gretl_matrix_alloc(ainfo->T, ainfo->nexo);
+	int xt1 = ainfo->t1, xT = ainfo->T;
+
+	if (fullX) {
+	    xt1 = 0;
+	    xT = ainfo->t2 + 1;
+	} 
+
+	ainfo->dX = gretl_matrix_alloc(xT, ainfo->nexo);
+
 	if (ainfo->dX == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -970,9 +986,9 @@ static int arima_difference (arma_info *ainfo, const double **Z,
 
 	    for (i=0; i<ainfo->nexo; i++) {
 		vi = ainfo->xlist[i+1];
-		real_arima_difference_series(val, Z[vi], ainfo->t1, ainfo->t2,
+		real_arima_difference_series(val, Z[vi], xt1, ainfo->t2,
 					     delta, k);
-		val += ainfo->T;
+		val += xT;
 	    }
 	}
     }
@@ -980,6 +996,19 @@ static int arima_difference (arma_info *ainfo, const double **Z,
     free(delta);
 
     return err;
+}
+
+void arima_difference_undo (arma_info *ainfo, const double **Z)
+{
+    free(ainfo->y);
+    ainfo->y = (double *) Z[ainfo->yno];
+
+    if (ainfo->dX != NULL) {
+	gretl_matrix_free(ainfo->dX);
+	ainfo->dX = NULL;
+    }
+
+    unset_arima_ydiff(ainfo);
 }
 
 #endif /* X12A_CODE not defined */

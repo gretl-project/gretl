@@ -100,6 +100,7 @@ struct arma_info_ {
 #define set_arma_missvals(a)      ((a)->pflags |= ARMA_NAS)
 #define set_arima_levels(a)       ((a)->pflags |= ARMA_LEV)
 #define set_arima_ydiff(a)        ((a)->pflags |= ARMA_YDIFF)
+#define unset_arima_ydiff(a)      ((a)->pflags &= ~ARMA_YDIFF)
 
 #define AR_included(a,i) (a->pmask == NULL || a->pmask[i] == '1')
 #define MA_included(a,i) (a->qmask == NULL || a->qmask[i] == '1')
@@ -134,5 +135,10 @@ int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 			     const double **Z, 
 			     const DATAINFO *pdinfo);
+
+int arima_difference (arma_info *ainfo, const double **Z,
+		      const DATAINFO *pdinfo, int fullX);
+
+void arima_difference_undo (arma_info *ainfo, const double **Z);
 
 #endif /* ARMA_PRIV_H */
