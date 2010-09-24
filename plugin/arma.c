@@ -313,6 +313,8 @@ struct kalman_helper_ {
     gretl_matrix *E;
     gretl_matrix *Svar;
 
+    const gretl_matrix *y;
+
     gretl_matrix *Svar2;
     gretl_matrix *vQ;
 
@@ -353,6 +355,7 @@ static khelper *kalman_helper_new (arma_info *ainfo,
 
     kh->Svar2 = kh->vQ = NULL;
     kh->F_ = kh->Q_ = kh->P_ = NULL;
+    kh->y = NULL;
 
     kh->B = gretl_matrix_block_new(&kh->S, r, 1,
 				   &kh->P, r, r,
@@ -580,15 +583,13 @@ static void condense_state_vcv (gretl_matrix *targ,
 }
 
 static int kalman_matrices_init (arma_info *ainfo,
-				 khelper *kh,
-				 const double *y)
+				 khelper *kh)
 {
     int r0 = ainfo->r0;
     int r = kh->F->rows;
 
     gretl_matrix_zero(kh->A);
     gretl_matrix_zero(kh->P);
-    gretl_matrix_zero(kh->S);
 
     gretl_matrix_zero(kh->F);
     gretl_matrix_inscribe_I(kh->F, 1, 0, r0 - 1);
@@ -600,7 +601,7 @@ static int kalman_matrices_init (arma_info *ainfo,
     gretl_vector_set(kh->H, 0, 1.0);
 
     if (arima_levels(ainfo)) {
-	/* write additional constant elements of F, H and S */
+	/* write additional constant elements of F and H */
 	int d = ainfo->d, D = ainfo->D;
 	int s = ainfo->pd;
 	int i, k = d + s * D;
@@ -618,12 +619,6 @@ static int kalman_matrices_init (arma_info *ainfo,
 	}
 	for (i=0; i<k; i++) {
 	    gretl_vector_set(kh->H, r0 + i, c[i]);
-	}
-	for (i=0; i<k; i++) {
-	    if (c[i] != 0) {
-		s = ainfo->t1 - i - 1;
-		gretl_vector_set(kh->S, i + ainfo->r0, y[s]);
-	    }
 	}
 	free(c);
 
@@ -653,6 +648,8 @@ static int write_kalman_matrices (khelper *kh,
     int rewrite_F = 0;
     int rewrite_H = 0;
     int i, k, err = 0;
+
+    gretl_matrix_zero(kh->S);
 
     if (idx == KALMAN_ALL) {
 	rewrite_A = rewrite_F = rewrite_H = 1;
@@ -767,6 +764,11 @@ static int write_kalman_matrices (khelper *kh,
 	gretl_matrix_inscribe_matrix(kh->F, kh->F_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->Q, kh->Q_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->P, kh->P_, 0, 0, GRETL_MOD_NONE);
+	k = ainfo->d + ainfo->pd * ainfo->D;
+	for (i=0; i<k; i++) {
+	    /* FIXME! */
+	    gretl_vector_set(kh->S, i + ainfo->r0, kh->y->val[0]);
+	}
     }
 
 #if ARMA_MDEBUG
@@ -981,7 +983,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 
     pmod->t1 = ainfo->t1;
     pmod->t2 = ainfo->t2;
-    pmod->nobs = ainfo->fullT;
+    pmod->nobs = ainfo->T;
     pmod->ncoeff = ainfo->nc;
     pmod->full_n = pdinfo->n;
 
@@ -1006,7 +1008,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 
     /* rescale if we're using average loglikelihood */
     if (kopt & KALMAN_AVG_LL) {
-	pmod->lnL *= ainfo->fullT;
+	pmod->lnL *= ainfo->T;
     }
 
 #if ARMA_DEBUG
@@ -1034,7 +1036,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	kalman_do_ma_check = 1;
 	if (!err) {
 	    if (kopt & KALMAN_AVG_LL) {
-		gretl_matrix_divide_by_scalar(Hinv, ainfo->fullT);
+		gretl_matrix_divide_by_scalar(Hinv, ainfo->T);
 	    }
 	    err = arma_hessian_vcv(pmod, Hinv, kh->E);
 	    if (!err) {
@@ -1082,7 +1084,7 @@ static void matrix_NA_to_nan (gretl_matrix *m)
 }
 
 /* for Kalman: convert from full-length y series to
-   y vector of length ainfo->fullT */
+   y vector of length ainfo->T */
 
 static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 					 const double **Z,
@@ -1237,7 +1239,8 @@ static int kalman_arma (double *coeff,
 	goto bailout;
     }
 
-    kalman_matrices_init(ainfo, kh, Z[ainfo->yno]);
+    kalman_matrices_init(ainfo, kh);
+    kh->y = y;
 
 #if ARMA_DEBUG
     fprintf(stderr, "ready to estimate: ainfo specs:\n"
@@ -1478,7 +1481,7 @@ static int arima_by_ls (const double **Z, const DATAINFO *pdinfo,
 
 	y.rows = ainfo->T;
 	y.cols = 1;
-	y.val = (double *) ainfo->y + ainfo->t1;
+	y.val = ainfo->y + ainfo->t1;
 	y.t1 = ainfo->t1;
 	y.t2 = ainfo->t2;
 
@@ -1621,10 +1624,9 @@ MODEL arma_model (const int *list, const char *pqspec,
     }
 
     if (!err) {
-	/* calculate maximum lag, etc. */
+	/* calculate maximum lag */
 	maybe_set_xdiff_flag(ainfo, opt);
 	calc_max_lag(ainfo);
-	ainfo->y = (double *) Z[ainfo->yno];
     }
 
     if (!err) {
@@ -1652,10 +1654,13 @@ MODEL arma_model (const int *list, const char *pqspec,
 	if (ainfo->d > 0 || ainfo->D > 0) {
 	    if (arima_use_levels) {
 		set_arima_levels(ainfo);
+		ainfo->y = (double *) Z[ainfo->yno];
 	    } else {
 		err = arima_difference(ainfo, Z, pdinfo);
 	    }
-	} 
+	} else {
+	    ainfo->y = (double *) Z[ainfo->yno];
+	}
     }
 
     if (err) {
