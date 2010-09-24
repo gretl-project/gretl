@@ -34,6 +34,7 @@ version 1.9.2, in progress
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix bug 3050710 (build process: LDFLAGS not respected)
 - Fix bug 3054932 (build process: libdir not used)
+- Fix bug 3074946 (specific MA lags not remembered in ARMA GUI)
 - Fix crashing bug in Wilcoxon signed rank test
 - Fix bug: crash in GUI when estimation of a restricted VECM
   was not successfully completed
