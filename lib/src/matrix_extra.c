@@ -42,7 +42,7 @@
  *
  * Returns: pointer to a newly allocated gretl_vector containing
  * the elements of x (or their squares), or NULL on failure.  
- * Missing valies in @x are skipped.
+ * Missing values in @x are skipped.
  */
 
 gretl_vector *
@@ -85,18 +85,13 @@ gretl_vector_from_array (const double *x, int n, GretlMatrixMod mod)
 gretl_vector *gretl_vector_from_series (const double *x, 
 					int t1, int t2)
 {
-    gretl_matrix *v;
-    int t, T = t2 - t1 + 1;
+    gretl_matrix *v = NULL;
+    int T = t2 - t1 + 1;
 
-    if (T <= 0) {
-	return NULL;
-    }
-
-    v = gretl_column_vector_alloc(T);
-
-    if (v != NULL) {
-	for (t=0; t<T; t++) {
-	    v->val[t] = x[t + t1];
+    if (T > 0) {
+	v = gretl_column_vector_alloc(T);
+	if (v != NULL) {
+	    memcpy(v->val, x + t1, T * sizeof *x);
 	}
     }
 

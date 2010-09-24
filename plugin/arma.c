@@ -1088,14 +1088,11 @@ static gretl_matrix *form_arma_y_vector (arma_info *ainfo,
 {
     gretl_matrix *yvec;
 
-    yvec = gretl_column_vector_alloc(ainfo->fullT);
+    yvec = gretl_vector_from_series(ainfo->y, ainfo->t1, ainfo->t2);
 
     if (yvec == NULL) {
 	*err = E_ALLOC;
     } else {
-	const double *y = ainfo->y;
-
-	memcpy(yvec->val, y + ainfo->t1, ainfo->fullT * sizeof *y);
 	if (ainfo->yscale != 1.0) {
 	    kalman_rescale_y(yvec, ainfo->yscale);
 	}

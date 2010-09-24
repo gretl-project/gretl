@@ -366,7 +366,7 @@ static void ainfo_data_to_model (arma_info *ainfo, MODEL *pmod)
 static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
 			       const double **Z)
 {
-    if (arma_by_x12a(ainfo) && arma_is_arima(ainfo)) {
+    if (arma_is_arima(ainfo) && !arima_ydiff(ainfo)) {
 	/* calculate differenced y for stats */
 	int d = ainfo->d, D = ainfo->D;
 	int T = pmod->t2 - pmod->t1 + 1;
@@ -421,8 +421,7 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 	} 
     }
 
-    if (arma_is_arima(ainfo) && !arima_levels(ainfo)) {
-	/* FIXME x12a? */
+    if (arma_is_arima(ainfo) && arima_ydiff(ainfo)) {
 	arima_integrate(pmod->yhat, Z[ainfo->yno], pmod->t1, pmod->t2, 
 			ainfo->d, ainfo->D, ainfo->pd);
     }
@@ -431,7 +430,7 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
     gretl_model_set_double(pmod, "mean_error", mean_error);
 
     if (na(pmod->sigma)) {
-	/* in X12A or native exact cases this is already done */
+	/* in x12a or native exact cases this is already done */
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     } 
 

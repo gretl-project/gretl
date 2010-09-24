@@ -4341,7 +4341,7 @@ static void build_arma_spinners (selector *sr)
     /* or free-form lags */
     sr->extra[4] = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->extra[4]), 16);
-    freeform = maybe_set_entry_text(sr->extra[1], malags);
+    freeform = maybe_set_entry_text(sr->extra[4], malags);
     gtk_widget_set_sensitive(sr->extra[4], FALSE);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[4], 3, 4, 2, 3);
     if (freeform) {
