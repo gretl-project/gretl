@@ -313,8 +313,6 @@ struct kalman_helper_ {
     gretl_matrix *E;
     gretl_matrix *Svar;
 
-    const gretl_matrix *y;
-
     gretl_matrix *Svar2;
     gretl_matrix *vQ;
 
@@ -355,7 +353,6 @@ static khelper *kalman_helper_new (arma_info *ainfo,
 
     kh->Svar2 = kh->vQ = NULL;
     kh->F_ = kh->Q_ = kh->P_ = NULL;
-    kh->y = NULL;
 
     kh->B = gretl_matrix_block_new(&kh->S, r, 1,
 				   &kh->P, r, r,
@@ -583,14 +580,16 @@ static void condense_state_vcv (gretl_matrix *targ,
 }
 
 static int kalman_matrices_init (arma_info *ainfo,
-				 khelper *kh)
+				 khelper *kh,
+				 const double *y)
 {
     int r0 = ainfo->r0;
     int r = kh->F->rows;
 
     gretl_matrix_zero(kh->A);
+    gretl_matrix_zero(kh->S);
     gretl_matrix_zero(kh->P);
-
+ 
     gretl_matrix_zero(kh->F);
     gretl_matrix_inscribe_I(kh->F, 1, 0, r0 - 1);
 
@@ -601,7 +600,7 @@ static int kalman_matrices_init (arma_info *ainfo,
     gretl_vector_set(kh->H, 0, 1.0);
 
     if (arima_levels(ainfo)) {
-	/* write additional constant elements of F and H */
+	/* write additional constant elements of F, H and S */
 	int d = ainfo->d, D = ainfo->D;
 	int s = ainfo->pd;
 	int i, k = d + s * D;
@@ -619,6 +618,10 @@ static int kalman_matrices_init (arma_info *ainfo,
 	}
 	for (i=0; i<k; i++) {
 	    gretl_vector_set(kh->H, r0 + i, c[i]);
+	    if (c[i] != 0) {
+		s = ainfo->t1 - 1 - i;
+		gretl_vector_set(kh->S, r0 + i, y[s]);
+	    }
 	}
 	free(c);
 
@@ -648,8 +651,6 @@ static int write_kalman_matrices (khelper *kh,
     int rewrite_F = 0;
     int rewrite_H = 0;
     int i, k, err = 0;
-
-    gretl_matrix_zero(kh->S);
 
     if (idx == KALMAN_ALL) {
 	rewrite_A = rewrite_F = rewrite_H = 1;
@@ -764,11 +765,6 @@ static int write_kalman_matrices (khelper *kh,
 	gretl_matrix_inscribe_matrix(kh->F, kh->F_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->Q, kh->Q_, 0, 0, GRETL_MOD_NONE);
 	gretl_matrix_inscribe_matrix(kh->P, kh->P_, 0, 0, GRETL_MOD_NONE);
-	k = ainfo->d + ainfo->pd * ainfo->D;
-	for (i=0; i<k; i++) {
-	    /* FIXME! */
-	    gretl_vector_set(kh->S, i + ainfo->r0, kh->y->val[0]);
-	}
     }
 
 #if ARMA_MDEBUG
@@ -1239,8 +1235,7 @@ static int kalman_arma (double *coeff,
 	goto bailout;
     }
 
-    kalman_matrices_init(ainfo, kh);
-    kh->y = y;
+    kalman_matrices_init(ainfo, kh, Z[ainfo->yno]);
 
 #if ARMA_DEBUG
     fprintf(stderr, "ready to estimate: ainfo specs:\n"
