@@ -1249,7 +1249,6 @@ static int kalman_arma (double *coeff,
     } else {
 	int maxit, save_lbfgs = 0;
 	double toler;
-	gretl_matrix *A0 = NULL;
 
 	kalman_attach_printer(K, ainfo->prn);
 	kalman_attach_data(K, kh);
@@ -1277,16 +1276,9 @@ static int kalman_arma (double *coeff,
 
 	BFGS_defaults(&maxit, &toler, ARMA);
 
-#if KALMAN_ARMA_INITH
-	A0 = kalman_arma_init_H(b, ainfo->nc, ainfo->T, K,
-				ainfo, Z, pdinfo);
-#endif
-
 	err = BFGS_max(b, ainfo->nc, maxit, toler, 
 		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
-		       NULL, K, A0, opt, ainfo->prn);
-
-	gretl_matrix_free(A0);
+		       NULL, K, NULL, opt, ainfo->prn);
 
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
@@ -1362,26 +1354,6 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
     return 0;
 }
 
-#if KALMAN_ARMA_INITH
-
-static void delete_arma_OPG_info (arma_info *ainfo)
-{
-    free(ainfo->Z);
-    ainfo->Z = NULL;
-
-    gretl_matrix_free(ainfo->G);
-    ainfo->G = NULL;
-
-    free(ainfo->e);
-    ainfo->e = NULL;
-
-    doubles_array_free(ainfo->aux, ainfo->n_aux);
-    ainfo->aux = NULL;
-    ainfo->n_aux = 0;
-}
-
-#endif
-
 /* Should we try Hannan-Rissanen initialization of ARMA
    coefficients? */
 
@@ -1428,7 +1400,7 @@ static int prefer_hr_init (arma_info *ainfo)
     return ret;
 }
 
-/* estimate an ARIMA (0,d,0) x (0, D, 0) model via OLS */
+/* estimate an ARIMA (0,d,0) x (0,D,0) model via OLS */
 
 static int arima_by_ls (const double **Z, const DATAINFO *pdinfo,
 			arma_info *ainfo, MODEL *pmod)
@@ -1641,16 +1613,15 @@ MODEL arma_model (const int *list, const char *pqspec,
 
     if (!err) {
 	/* organize the dependent variable */
+	ainfo->y = (double *) Z[ainfo->yno];
 	if (ainfo->d > 0 || ainfo->D > 0) {
 	    if (arima_use_levels) {
 		set_arima_levels(ainfo);
-		ainfo->y = (double *) Z[ainfo->yno];
 	    } else {
+		/* this replaces ainfo->y */
 		err = arima_difference(ainfo, Z, pdinfo, 0);
 	    }
-	} else {
-	    ainfo->y = (double *) Z[ainfo->yno];
-	}
+	} 
     }
 
     if (err) {
