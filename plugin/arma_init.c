@@ -417,7 +417,7 @@ static void maybe_set_yscale (arma_info *ainfo)
     double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
 
     if (fabs(ybar) > 250) {
-	ainfo->yscale = ybar;
+	ainfo->yscale = 10 / ybar;
     }
 }
 
@@ -660,7 +660,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	int miss = 0;
 
 	if (ainfo->yscale != 1.0 && !na(y[realt])) {
-	    aZ[1][t] = y[realt] / ainfo->yscale;
+	    aZ[1][t] = y[realt] * ainfo->yscale;
 	} else {
 	    aZ[1][t] = y[realt];
 	}
@@ -682,7 +682,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	    } else {
 		aZ[k][t] = y[s];
 		if (ainfo->yscale != 1.0 && !na(y[s])) {
-		    aZ[k][t] /= ainfo->yscale;
+		    aZ[k][t] *= ainfo->yscale;
 		}
 		k++;
 		for (j=0; j<narmax; j++) {
@@ -705,7 +705,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	    } else {
 		aZ[k][t] = y[s];
 		if (ainfo->yscale != 1.0 && !na(y[s])) {
-		    aZ[k][t] /= ainfo->yscale;
+		    aZ[k][t] *= ainfo->yscale;
 		}		
 		for (k=0; k<narmax; k++) {
 		    aZ[kx++][t] = get_xti(Z, k, s, X);
@@ -725,7 +725,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		} else {
 		    aZ[ky][t] = y[s];
 		    if (ainfo->yscale != 1.0 && !na(y[s])) {
-			aZ[ky][t] /= ainfo->yscale;
+			aZ[ky][t] *= ainfo->yscale;
 		    }
 		    ky++;
 		    for (k=0; k<narmax; k++) {
@@ -1158,7 +1158,9 @@ int ar_arma_init (double *coeff, const double **Z,
     } 
 
     if (arma_exact_ml(ainfo) && ainfo->ifc) {
-	maybe_set_yscale(ainfo);
+	if (!arima_levels(ainfo)) {
+	    maybe_set_yscale(ainfo);
+	}
     }
 
     adinfo = create_auxiliary_dataset(&aZ, av, ainfo->fullT);

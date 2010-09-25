@@ -605,6 +605,7 @@ static int kalman_matrices_init (arma_info *ainfo,
 	int s = ainfo->pd;
 	int i, k = d + s * D;
 	int *c = arima_delta_coeffs(d, D, s);
+	double y0;
 
 	if (c == NULL) {
 	    return E_ALLOC;
@@ -618,10 +619,17 @@ static int kalman_matrices_init (arma_info *ainfo,
 	}
 	for (i=0; i<k; i++) {
 	    gretl_vector_set(kh->H, r0 + i, c[i]);
-	    s = ainfo->t1 - 1 - i;
-	    gretl_vector_set(kh->S, r0 + i, y[s]);
+	    y0 = y[ainfo->t1 - 1 - i];
+	    if (ainfo->yscale != 1.0 && !na(y0)) {
+		y0 *= ainfo->yscale;
+	    }
+	    gretl_vector_set(kh->S, r0 + i, y0);
 	}
 	free(c);
+
+#if ARMA_DEBUG
+	gretl_matrix_print(kh->S, "S0 (arima via levels)");
+#endif
 
 	/* and initialize the plain-arma "shadow" matrices */
 	gretl_matrix_zero(kh->F_);
@@ -1059,9 +1067,13 @@ static void kalman_rescale_y (gretl_vector *y, double scale)
 {
     int i;
 
+#if ARMA_DEBUG
+    fprintf(stderr, "kalman_rescale_y: multiplying by %g\n", scale);
+#endif
+
     for (i=0; i<y->rows; i++) {
 	if (!na(y->val[i])) {
-	    y->val[i] /= scale;
+	    y->val[i] *= scale;
 	}
     }
 }
@@ -1141,15 +1153,15 @@ static int kalman_undo_y_scaling (arma_info *ainfo,
     int i, t, T = ainfo->t2 - ainfo->t1 + 1;
     int err = 0;
 
-    b[0] *= ainfo->yscale;
+    b[0] /= ainfo->yscale;
 
     for (i=0; i<ainfo->nexo; i++) {
-	beta[i] *= ainfo->yscale;
+	beta[i] /= ainfo->yscale;
     }
 
     i = ainfo->t1;
     for (t=0; t<T; t++) {
-	y->val[t] *= ainfo->yscale;
+	y->val[t] /= ainfo->yscale;
     }
 
     if (na(kalman_arma_ll(b, K))) {
@@ -1259,7 +1271,7 @@ static int kalman_arma (double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 
-	if (getenv("KALMAN_AVG_LL") != NULL) {
+	if (arima_levels(ainfo) || getenv("KALMAN_AVG_LL") != NULL) {
 	    kalman_set_options(K, KALMAN_ARMA_LL | KALMAN_AVG_LL);
 	} else {
 	    kalman_set_options(K, KALMAN_ARMA_LL);
