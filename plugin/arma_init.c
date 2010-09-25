@@ -417,7 +417,11 @@ static void maybe_set_yscale (arma_info *ainfo)
     double ybar = gretl_mean(ainfo->t1, ainfo->t2, ainfo->y);
 
     if (fabs(ybar) > 250) {
-	ainfo->yscale = 10 / ybar;
+	if (arima_levels(ainfo)) {
+	    set_arma_avg_ll(ainfo); /* is this a good idea? */
+	} else {
+	    ainfo->yscale = 10 / ybar;
+	}
     }
 }
 
@@ -1158,9 +1162,7 @@ int ar_arma_init (double *coeff, const double **Z,
     } 
 
     if (arma_exact_ml(ainfo) && ainfo->ifc) {
-	if (!arima_levels(ainfo)) {
-	    maybe_set_yscale(ainfo);
-	}
+	maybe_set_yscale(ainfo);
     }
 
     adinfo = create_auxiliary_dataset(&aZ, av, ainfo->fullT);

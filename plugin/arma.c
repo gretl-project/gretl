@@ -1271,7 +1271,7 @@ static int kalman_arma (double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 
-	if (arima_levels(ainfo) || getenv("KALMAN_AVG_LL") != NULL) {
+	if (arma_avg_ll(ainfo) || getenv("KALMAN_AVG_LL") != NULL) {
 	    kalman_set_options(K, KALMAN_ARMA_LL | KALMAN_AVG_LL);
 	} else {
 	    kalman_set_options(K, KALMAN_ARMA_LL);

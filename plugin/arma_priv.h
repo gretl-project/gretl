@@ -30,7 +30,8 @@ typedef enum {
     ARMA_NAOK  = 1 << 5, /* allow missing observations */
     ARMA_NAS   = 1 << 6, /* sample contains NAs */
     ARMA_LEV   = 1 << 7, /* doing ARIMA via levels formulation */
-    ARMA_YDIFF = 1 << 8  /* ainfo->y contains differenced y */
+    ARMA_YDIFF = 1 << 8, /* ainfo->y contains differenced y */
+    ARMA_AVGLL = 1 << 9  /* passing average likelihood option to Kalman */
 } PrivFlags;
 
 typedef struct arma_info_ arma_info;
@@ -91,6 +92,7 @@ struct arma_info_ {
 #define arma_missvals(a)       ((a)->pflags & ARMA_NAS)
 #define arima_levels(a)        ((a)->pflags & ARMA_LEV)
 #define arima_ydiff(a)         ((a)->pflags & ARMA_YDIFF)
+#define arma_avg_ll(a)         ((a)->pflags & ARMA_AVGLL)
 
 #define set_arma_has_seasonal(a)  ((a)->pflags |= ARMA_SEAS)
 #define set_arma_is_arima(a)      ((a)->pflags |= ARMA_DSPEC)
@@ -99,6 +101,7 @@ struct arma_info_ {
 #define set_arma_na_ok(a)         ((a)->pflags |= ARMA_NAOK)
 #define set_arma_missvals(a)      ((a)->pflags |= ARMA_NAS)
 #define set_arima_levels(a)       ((a)->pflags |= ARMA_LEV)
+#define set_arma_avg_ll(a)        ((a)->pflags |= ARMA_AVGLL)
 #define set_arima_ydiff(a)        ((a)->pflags |= ARMA_YDIFF)
 #define unset_arima_ydiff(a)      ((a)->pflags &= ~ARMA_YDIFF)
 
