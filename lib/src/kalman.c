@@ -3079,6 +3079,86 @@ static int kalman_add_stepinfo (kalman *K)
 }
 
 /**
+ * kalman_arma_smooth:
+ * @K: pointer to Kalman struct.
+ * @err: location to receive error code.
+ * 
+ * Runs a filtering pass followed by a smoothing pass.
+ *
+ * Returns: matrix containing the smoothed estimate of the
+ * dependent variable, or NULL on error.
+ */
+
+gretl_matrix *kalman_arma_smooth (kalman *K, int *err)
+{
+    int nr = (K->r * K->r + K->r) / 2;
+    int nn = (K->n * K->n + K->n) / 2;
+    gretl_vector *ys = NULL;
+
+    /* Set up the matrices we need to store computed results from all
+       time steps on the forward pass: state S_{t|t-1},(inverse) error 
+       variance, gain, and MSE of state, P_{t|t-1}.
+    */
+
+    K->S = gretl_matrix_alloc(K->T, K->r);
+    K->V = gretl_matrix_alloc(K->T, nn);
+    K->K = gretl_matrix_alloc(K->T, K->r * K->n);
+    K->P = gretl_matrix_alloc(K->T, nr);
+
+    if (K->S == NULL || K->V == NULL || K->K == NULL || K->P == NULL) {
+	*err = E_ALLOC;
+    } else {
+	double yst, Sti;
+	int i, t, miss = 0;
+
+	K->flags |= KALMAN_SMOOTH;
+	*err = kalman_forecast(K, NULL);
+	K->flags &= ~KALMAN_SMOOTH;
+	K->t = 0;
+
+	if (!*err) {
+	    *err = anderson_moore_smooth(K);
+	}
+
+	if (!*err) {
+	    ys = gretl_column_vector_alloc(K->T);
+	    if (ys == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (t=0; t<K->T; t++) {
+		    yst = 0.0;
+		    for (i=0; i<K->r; i++) {
+			Sti = gretl_matrix_get(K->S, t, i);
+			yst += K->H->val[i] * Sti;
+		    }
+		    if (K->Ax != NULL) {
+			K->t = t;
+			kalman_set_Ax(K, &miss);
+			for (i=0; i<K->n; i++) {
+			    yst += gretl_vector_get(K->Ax, i);
+			}
+		    } 
+		    gretl_vector_set(ys, t, yst);
+		}
+		K->t = 0;
+	    }
+	}
+
+	gretl_matrix_replace(&K->S, NULL);
+	gretl_matrix_replace(&K->V, NULL);
+	gretl_matrix_replace(&K->K, NULL);
+	gretl_matrix_replace(&K->P, NULL);
+    }
+
+    if (*err && ys != NULL) {
+	gretl_matrix_free(ys);
+	ys = NULL;
+    }
+
+    return ys;
+}
+
+/**
  * user_kalman_smooth:
  * @Pname: name of matrix in which to retrieve the MSE of the
  * smoothed state (or NULL if this is not required).
@@ -3124,7 +3204,7 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
 
     if (!user_P && !*err) {
 	/* optional accessor for smoothed disturbances a la Koopman:
-	   experimental, and avilable only in @Pname is not given
+	   experimental, and avilable only if @Pname is not given
 	*/
 	if (Uname != NULL && strcmp(Uname, "null")) {
 	    U = get_matrix_by_name(Uname);

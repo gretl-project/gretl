@@ -56,6 +56,8 @@ int user_kalman_get_time_step (void);
 
 double kalman_get_arma_variance (const kalman *K);
 
+gretl_matrix *kalman_arma_smooth (kalman *K, int *err);
+
 int kalman_set_initial_state_vector (kalman *K, const gretl_matrix *S);
 
 int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);

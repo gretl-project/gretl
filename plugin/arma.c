@@ -1060,6 +1060,24 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	}
     }
 
+#if 0 /* not ready yet */
+    if (!err && arma_missvals(ainfo)) {
+	gretl_matrix *ys = kalman_arma_smooth(K, &err);
+	int t;
+
+	i = 0;
+	for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	    if (na(pmod->yhat[t])) {
+		pmod->yhat[t] = gretl_vector_get(ys, i);
+	    } else {
+		fprintf(stderr, "%g vs %g\n", pmod->yhat[t], ys->val[i]);
+	    }
+	    i++;
+	}
+	gretl_matrix_free(ys);
+    }
+#endif
+
     return err;
 }
 
@@ -1543,22 +1561,14 @@ static void maybe_set_xdiff_flag (arma_info *ainfo, gretlopt opt)
 }
 
 /* Set flag to allow NAs within the sample range for an
-   ARMA model using native exact ML. FIXME : more work 
-   is needed to get this right for the ARIMA case.
+   ARMA model using native exact ML. 
 */
 
 static void maybe_allow_missvals (arma_info *ainfo)
 {
-#if 1 /* experimental: be permissive */
     if (arma_exact_ml(ainfo)) {
 	ainfo->pflags |= ARMA_NAOK;
     }
-#else /* more restrictive */
-    if (arma_exact_ml(ainfo) && !arma_xdiff(ainfo) &&
-	ainfo->P == 0 && ainfo->Q == 0) {
-	ainfo->pflags |= ARMA_NAOK;
-    }
-#endif
 }
 
 MODEL arma_model (const int *list, const char *pqspec,
@@ -1570,13 +1580,7 @@ MODEL arma_model (const int *list, const char *pqspec,
     arma_info ainfo_s, *ainfo;
     int init_done = 0;
     int missv = 0, misst = 0;
-    int arima_use_levels = 0;
     int err = 0;
-
-    if (getenv("ARIMA_LEVELS")) {
-	/* use at own risk!! */
-	arima_use_levels = 1;
-    }
 
     ainfo = &ainfo_s;
     arma_info_init(ainfo, opt, pqspec, pdinfo);
@@ -1627,7 +1631,10 @@ MODEL arma_model (const int *list, const char *pqspec,
 	/* organize the dependent variable */
 	ainfo->y = (double *) Z[ainfo->yno];
 	if (ainfo->d > 0 || ainfo->D > 0) {
-	    if (arima_use_levels) {
+	    if (arma_missvals(ainfo)) {
+		set_arima_levels(ainfo);
+	    } else if (getenv("ARIMA_LEVELS")) {
+		/* for testing purposes */
 		set_arima_levels(ainfo);
 	    } else {
 		/* this replaces ainfo->y */
