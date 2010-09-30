@@ -13,6 +13,8 @@ version 1.9.2, in progress
   interpolation rather than repetition of values; also
   remove the option of going directly from annual to
   monthly frequency
+- "heckit" command: enable the --robust option for QML standard
+  errors
 - pdf function: support the poisson and binomial distributions
   (giving the probability mass)
 - New function invmills() to get the inverse Mills ratio

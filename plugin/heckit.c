@@ -1060,7 +1060,7 @@ static gretl_matrix *heckit_init_H (double *theta,
 
 #endif
 
-int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
+int heckit_ml (MODEL *hm, h_container *HC, PRN *prn, gretlopt opt)
 {
     gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
@@ -1131,6 +1131,19 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn)
 		    gretl_matrix_set(HC->vcv, j, i, hij);
 		}
 	    }
+	}
+
+	if (opt & OPT_R) {
+	    gretl_matrix *GG;
+	    gretl_matrix *tmp;
+
+	    GG = gretl_matrix_XTX_new(HC->score);
+	    tmp = gretl_matrix_alloc(np, np);
+	    gretl_matrix_qform(HC->vcv, GRETL_MOD_NONE, GG, tmp, GRETL_MOD_NONE);
+	    gretl_matrix_copy_values(HC->vcv, tmp);
+
+	    gretl_matrix_free(tmp);
+	    gretl_matrix_free(GG);
 	}
 
 	adjust_ml_vcv_hyperbolic(HC);
@@ -1329,7 +1342,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	err = heckit_2step_vcv(HC, &hm);
     } else {
 	/* use MLE */
-	err = heckit_ml(&hm, HC, vprn);
+	err = heckit_ml(&hm, HC, vprn, opt);
 	if (!err) {
 	    err = transcribe_ml_vcv(&hm, HC);
 	}
@@ -1349,6 +1362,11 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (hm.errcode == 0 && (opt & OPT_T)) {
 	hm.opt |= OPT_T;
+    }
+
+    if (opt & OPT_R) {
+	gretl_model_set_vcv_info(&hm, VCV_ML, VCV_QML);
+	hm.opt |= OPT_R;
     }
 
     if (pdinfo->v > oldv) {

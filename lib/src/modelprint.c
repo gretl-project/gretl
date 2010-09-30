@@ -1839,6 +1839,20 @@ static void print_model_heading (const MODEL *pmod,
 	    }
 	    gretl_prn_newline(prn);
 	}
+    } else if (pmod->ci == HECKIT) {
+	/* selection variable for Heckit */
+	const char *selvar = heckit_selvar_name(pmod, pdinfo);
+
+	if (selvar != NULL) {
+	    if (csv) pputc(prn, '"');
+	    if (tex) {
+		tex_escape(vname, selvar);
+	    }
+	    pprintf(prn, "%s: %s", I_("Selection variable"), 
+		    (tex)? vname : selvar);
+	    if (csv) pputc(prn, '"');
+	    pputc(prn, '\n');	    
+	}	
     }
 
     /* VCV variants */
@@ -1872,20 +1886,6 @@ static void print_model_heading (const MODEL *pmod,
 		(tex)? "$1/\\hat{\\sigma}_t$" : "1/sigma");
 	if (csv) pputc(prn, '"');
 	pputc(prn, '\n');
-    } else if (pmod->ci == HECKIT) {
-	/* selection variable for Heckit */
-	const char *selvar = heckit_selvar_name(pmod, pdinfo);
-
-	if (selvar != NULL) {
-	    if (csv) pputc(prn, '"');
-	    if (tex) {
-		tex_escape(vname, selvar);
-	    }
-	    pprintf(prn, "%s: %s", I_("Selection variable"), 
-		    (tex)? vname : selvar);
-	    if (csv) pputc(prn, '"');
-	    pputc(prn, '\n');	    
-	}	
     } else if (pmod->ci == AR1) {
 	/* rhohat for AR1 (TeX only) */
 	if (tex) {
