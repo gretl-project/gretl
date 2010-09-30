@@ -1060,7 +1060,7 @@ static gretl_matrix *heckit_init_H (double *theta,
 
 #endif
 
-int heckit_ml (MODEL *hm, h_container *HC, PRN *prn, gretlopt opt)
+int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 {
     gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
@@ -1134,21 +1134,23 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn, gretlopt opt)
 	}
 
 	if (opt & OPT_R) {
-	    gretl_matrix *GG;
-	    gretl_matrix *tmp;
+	    gretl_matrix *GG = gretl_matrix_XTX_new(HC->score);
+	    gretl_matrix *tmp = gretl_matrix_alloc(np, np);
 
-	    GG = gretl_matrix_XTX_new(HC->score);
-	    tmp = gretl_matrix_alloc(np, np);
-	    gretl_matrix_qform(HC->vcv, GRETL_MOD_NONE, GG, tmp, GRETL_MOD_NONE);
-	    gretl_matrix_copy_values(HC->vcv, tmp);
-
+	    if (GG == NULL || tmp == NULL) {
+		err = E_ALLOC;
+	    } else {
+		gretl_matrix_qform(HC->vcv, GRETL_MOD_NONE, GG, tmp, GRETL_MOD_NONE);
+		gretl_matrix_copy_values(HC->vcv, tmp);
+	    }
 	    gretl_matrix_free(tmp);
 	    gretl_matrix_free(GG);
 	}
+    }
 
+    if (!err) {
 	adjust_ml_vcv_hyperbolic(HC);
 	add_lambda_to_ml_vcv(HC);
-
 #if HDEBUG
 	for (i=0; i<np; i++) {
 	    hij = gretl_matrix_get(HC->vcv, i, i);
@@ -1164,7 +1166,7 @@ int heckit_ml (MODEL *hm, h_container *HC, PRN *prn, gretlopt opt)
 }
 
 /*
-  This function just copies the VCV matrix for the ML estimator into
+  This function copies the VCV matrix for the ML estimator into
   the model struct.  Note that we don't transcribe the variances for
   sigma and rho into the model.
 */
@@ -1342,7 +1344,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	err = heckit_2step_vcv(HC, &hm);
     } else {
 	/* use MLE */
-	err = heckit_ml(&hm, HC, vprn, opt);
+	err = heckit_ml(&hm, HC, opt, vprn);
 	if (!err) {
 	    err = transcribe_ml_vcv(&hm, HC);
 	}
