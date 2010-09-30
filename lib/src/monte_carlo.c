@@ -200,12 +200,14 @@ int gretl_execute_loop (void)
 
 /* For indexed loops: get a value from a loop "limit" element (lower
    or upper).  If we got the name of a scalar variable at setup time,
-   look up its current value (and modify the sign if wanted).
-   Otherwise we should have got a numerical constant at setup, in
-   which case we just return that value.
+   look up its current value (and modify the sign if wanted).  Or if
+   we got a "genr" expression, evaluate it.  Otherwise we should have
+   got a numerical constant at setup, in which case we just return
+   that value.  
 */
 
-static double controller_get_val (controller *clr)
+static double controller_get_val (controller *clr, double ***pZ, 
+				  DATAINFO *pdinfo, int *err)
 {
     if (clr->vname[0] != '\0') {
 	if (gretl_is_scalar(clr->vname)) {
@@ -213,7 +215,9 @@ static double controller_get_val (controller *clr)
 	} else {
 	    gretl_errmsg_sprintf(_("'%s': not a scalar"), clr->vname);
 	} 
-    } 
+    } else if (clr->expr != NULL) {
+	clr->val = generate_scalar(clr->expr, pZ, pdinfo, err);
+    }
 
 #if LOOP_DEBUG
     fprintf(stderr, "controller_get_val: vname='%s', returning %g\n", 
@@ -580,7 +584,7 @@ static int loop_attach_index_var (LOOPSET *loop, const char *vname,
 */
 
 static int index_get_limit (LOOPSET *loop, controller *clr, const char *s, 
-			    const double **Z, const DATAINFO *pdinfo)
+			    double ***pZ, DATAINFO *pdinfo)
 {
     int v, err = 0;
 
@@ -605,9 +609,12 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 	    *clr->vname = '\0';
 	    strncat(clr->vname, s, VNAMELEN - 1);
 	} else {
-	    gretl_errmsg_sprintf(_("Undefined variable '%s' in loop condition."), s);
-	    err = E_UNKVAR;
-	}
+	    /* expression to be evaluated to scalar? */
+	    clr->expr = gretl_strdup(s);
+	    if (clr->expr == NULL) {
+		err = E_ALLOC;
+	    }
+	} 
     }
 
     return err;
@@ -616,8 +623,8 @@ static int index_get_limit (LOOPSET *loop, controller *clr, const char *s,
 #define maybe_date(s) (strchr(s, ':') || strchr(s, '/'))
 
 static int parse_as_indexed_loop (LOOPSET *loop,
-				  const double **Z,
-				  const DATAINFO *pdinfo,
+				  double ***pZ,
+				  DATAINFO *pdinfo,
 				  const char *lvar, 
 				  const char *start,
 				  const char *end)
@@ -646,9 +653,9 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    }
 	}
     } else {
-	err = index_get_limit(loop, &loop->init, start, Z, pdinfo);
+	err = index_get_limit(loop, &loop->init, start, pZ, pdinfo);
 	if (!err) {
-	    err = index_get_limit(loop, &loop->final, end, Z, pdinfo);
+	    err = index_get_limit(loop, &loop->final, end, pZ, pdinfo);
 	}
 	if (!err) {
 	    loop->type = INDEX_LOOP;
@@ -668,13 +675,13 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 }
 
 static int parse_as_count_loop (LOOPSET *loop, 
-				const double **Z,
-				const DATAINFO *pdinfo,
+				double ***pZ,
+				DATAINFO *pdinfo,
 				const char *s)
 {
     int err;
 
-    err = index_get_limit(loop, &loop->final, s, Z, pdinfo);
+    err = index_get_limit(loop, &loop->final, s, pZ, pdinfo);
 
     if (!err) {
 	loop->init.val = 1;
@@ -1092,14 +1099,13 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     if (!strncmp(s, "foreach ", 8)) {
 	err = parse_as_each_loop(loop, pdinfo, s + 8);
     } else if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
-				    lvar, op, rvar);
+	err = parse_as_indexed_loop(loop, pZ, pdinfo, lvar, op, rvar);
     } else if (!strncmp(s, "for", 3)) {
 	err = parse_as_for_loop(loop, pZ, pdinfo, s + 4);
     } else if (!strncmp(s, "while", 5)) {
 	err = parse_as_while_loop(loop, pZ, pdinfo, s + 6);
     } else if (sscanf(s, "%15s", lvar) == 1) {
-	err = parse_as_count_loop(loop, (const double **) *pZ, pdinfo, lvar);
+	err = parse_as_count_loop(loop, pZ, pdinfo, lvar);
     } else {
 	printf("parse_first_loopline: failed on '%s'\n", s);
 	gretl_errmsg_set(_("No valid loop condition was given."));
@@ -2382,13 +2388,13 @@ static int top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
     if (is_list_loop(loop)) {
 	err = loop_list_refresh(loop, pdinfo);
     } else if (loop->type == INDEX_LOOP) {
-	loop->init.val = controller_get_val(&loop->init);
+	loop->init.val = controller_get_val(&loop->init, pZ, pdinfo, &err);
     } else if (loop->type == FOR_LOOP) {
 	forloop_init(loop, pZ, pdinfo, &err);
     }
 
     if (!err && (loop->type == COUNT_LOOP || indexed_loop(loop))) {
-	loop->final.val = controller_get_val(&loop->final);
+	loop->final.val = controller_get_val(&loop->final, pZ, pdinfo, &err);
 	if (na(loop->init.val) || na(loop->final.val)) {
 	    gretl_errmsg_set(_("error evaluating loop condition"));
 	    fprintf(stderr, "loop: got NA for init and/or final value\n");
