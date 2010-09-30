@@ -1072,11 +1072,6 @@ static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
 	return 0;
     }
 
-    if (gretl_looping()) {
-	/* could generate serious overflow */
-	return 0;
-    }
-
     list = full_var_list(pdinfo, &nv);
 
     if (list == NULL) {
@@ -2678,7 +2673,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     */    
     if (DEFAULTS_TO_FULL_LIST(cmd->ci)) {
 	if (cmd->list[0] == 0) {
-	    cmd_full_list(pdinfo, cmd);
+	    if (cmd->ci != SMPL) {
+		/* "smpl" accepts an empty list as "all vars" */
+		cmd_full_list(pdinfo, cmd);
+	    }
 	    /* suppress echo of the list -- may be too long */
 	    cmd_set_nolist(cmd);
 	}

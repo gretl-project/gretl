@@ -640,7 +640,7 @@ make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
 {
     int i, vi, t;
 
-    if (list != NULL) {
+    if (list != NULL && list[0] > 0) {
 	/* check specified list of variables */
 	for (t=0; t<pdinfo->n; t++) {
 	    mask[t] = 1;
@@ -657,7 +657,7 @@ make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
 	for (t=0; t<pdinfo->n; t++) {
 	    mask[t] = 1;
 	    for (i=1; i<pdinfo->v; i++) {
-		if (na(Z[i][t])) {
+		if (!var_is_hidden(pdinfo, i) && na(Z[i][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -1398,7 +1398,9 @@ static int set_contiguous_sample (const int *list,
 	return E_BADOPT;
     }
 
-    if (list == NULL) {
+    if (list != NULL && list[0] > 0) {
+	err = list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
+    } else {
 	int *biglist = NULL;
 	int nvars = 0;
 
@@ -1411,9 +1413,7 @@ static int set_contiguous_sample (const int *list,
 	    err = list_adjust_sample(biglist, &pdinfo->t1, &pdinfo->t2, Z);
 	    free(biglist);
 	}
-    } else {
-	err = list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
-    }
+    } 
 
     if (err) {
 	pdinfo->t1 = save_t1;
