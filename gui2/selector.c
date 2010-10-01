@@ -5350,7 +5350,7 @@ void selector_register_genr (int newvars, gpointer p)
     }
 }
 
-static void minibar_add_callback (GtkWidget *w, selector *sr)
+static void new_var_callback (GtkWidget *w, selector *sr)
 {
     edit_dialog(_("gretl: add var"), 
 		_("Enter formula for new variable"),
@@ -5358,18 +5358,17 @@ static void minibar_add_callback (GtkWidget *w, selector *sr)
 		GENR, VARCLICK_INSERT_NAME, NULL);  
 }
 
-static GtkWidget *add_var_minibar (selector *sr)
+static GtkWidget *add_var_button (selector *sr)
 {
-    GtkWidget *tbar = gretl_toolbar_new();
-    GtkToolItem *button;
+    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, 
+					      GTK_ICON_SIZE_MENU);
+    GtkWidget *button = gtk_button_new();
 
-    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
-    button = gtk_tool_button_new_from_stock(GTK_STOCK_ADD);
+    gtk_container_add(GTK_CONTAINER(button), img);
     gretl_tooltips_add(GTK_WIDGET(button), _("New variable"));
-    g_signal_connect(button, "clicked", G_CALLBACK(minibar_add_callback), sr);
-    gtk_toolbar_insert(GTK_TOOLBAR(tbar), button, 0);
+    g_signal_connect(button, "clicked", G_CALLBACK(new_var_callback), sr);
 
-    return tbar;
+    return button;
 }
 
 static void selection_dialog_add_top_label (selector *sr)
@@ -5379,11 +5378,11 @@ static void selection_dialog_add_top_label (selector *sr)
     int ci = sr->ci;
 
     if (MODEL_CODE(ci) || VEC_CODE(ci)) {
-	GtkWidget *hbox, *tbar;
+	GtkWidget *hbox, *button;
 
 	hbox = gtk_hbox_new(FALSE, 0); 
-	tbar = add_var_minibar(sr);
-	gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+	button = add_var_button(sr);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 	s = est_str(ci);
 	if (s != NULL) {
 	    label = gtk_label_new(_(s));
