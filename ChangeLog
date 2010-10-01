@@ -30,6 +30,7 @@ version 1.9.2, in progress
   access under the Analysis menu in the model window)
 - GUI interface to X-12-ARIMA: add more options to control
   the program's behavior
+- GUI model specification dialog: add a "genr" button
 - Fix for multinomial logit: correct bias in favor of the
   base case in the reported fitted values ($yhat)
 - Fix bug 3021540 (sorting dataset)
