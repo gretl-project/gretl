@@ -1,7 +1,13 @@
-This directory contains some scripts for creating gretl databases
-out of economic data that are freely available from nber.org, and
-also apparatus for installing a gretl-mode file for editing gretl
-scripts in emacs.
+This directory contains:
+
+* Some scripts for creating gretl databases out of economic data 
+  that are freely available from nber.org.
+
+* A C program to create a gretl database using data from the
+  FRED system of the Federal Reserve Bank of St Louis.
+
+* Apparatus for installing a gretl-mode file for editing gretl
+  scripts in emacs.
 
 Allin Cottrell
 cottrell@wfu.edu
