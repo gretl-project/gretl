@@ -5365,11 +5365,7 @@ static GtkWidget *add_var_minibar (selector *sr)
 
     gtk_toolbar_set_icon_size(GTK_TOOLBAR(tbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
     button = gtk_tool_button_new_from_stock(GTK_STOCK_ADD);
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
-    gtk_tool_item_set_tooltip(button, gretl_tips, _("New variable"), NULL);
-#else
-    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("New variable"));
-#endif
+    gretl_tooltips_add(GTK_WIDGET(button), _("New variable"));
     g_signal_connect(button, "clicked", G_CALLBACK(minibar_add_callback), sr);
     gtk_toolbar_insert(GTK_TOOLBAR(tbar), button, 0);
 
