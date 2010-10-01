@@ -3999,6 +3999,35 @@ void do_genr (GtkWidget *w, dialog_t *dlg)
     }
 }
 
+void do_selector_genr (GtkWidget *w, dialog_t *dlg) 
+{
+    const gchar *s = edit_dialog_get_text(dlg);
+    gpointer p = edit_dialog_get_data(dlg);
+    int err, oldv = datainfo->v;
+
+    if (s == NULL) {
+	return;
+    }
+
+    while (isspace((unsigned char) *s)) s++;
+
+    if (starts_with_type_word(s)) {
+	gretl_command_strcpy(s);
+    } else {
+	gretl_command_sprintf("genr %s", s);
+    }
+
+    if (check_and_record_command()) {
+	return;
+    }
+
+    err = finish_genr(NULL, dlg);
+
+    if (!err && datainfo->v > oldv) {
+	selector_register_genr(datainfo->v - oldv, p);
+    }
+}
+
 void do_model_genr (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *buf;

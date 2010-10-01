@@ -5328,30 +5328,97 @@ static int list_show_var (int v, int ci, int show_lags)
     return ret;
 }
 
-static GtkWidget *selection_dialog_top_label (int ci)
+/* callback from successful generation of a new variable or
+   variables via click on the selector's "Add variable button"
+*/
+
+void selector_register_genr (int newvars, gpointer p)
 {
+    selector *sr = p;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    int i, v;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
+    tree_model_get_iter_last(GTK_TREE_MODEL(store), &iter);
+
+    for (i=0; i<newvars; i++) {
+	v = datainfo->v - newvars + i;
+	if (list_show_var(v, sr->ci, 0)) {
+	    list_append_var_simple(store, &iter, v);
+	}
+    }
+}
+
+static void minibar_add_callback (GtkWidget *w, selector *sr)
+{
+    edit_dialog(_("gretl: add var"), 
+		_("Enter formula for new variable"),
+		NULL, do_selector_genr, sr, 
+		GENR, VARCLICK_INSERT_NAME, NULL);  
+}
+
+static GtkWidget *add_var_minibar (selector *sr)
+{
+    GtkWidget *tbar = gretl_toolbar_new();
+    GtkToolItem *button;
+
+    gtk_toolbar_set_icon_size(GTK_TOOLBAR(tbar), GTK_ICON_SIZE_SMALL_TOOLBAR);
+    button = gtk_tool_button_new_from_stock(GTK_STOCK_ADD);
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
+    gtk_tool_item_set_tooltip(button, gretl_tips, _("Add variable"), NULL);
+#else
+    gtk_widget_set_tooltip_text(GTK_WIDGET(button), _("Add variable"));
+#endif
+    g_signal_connect(button, "clicked", G_CALLBACK(minibar_add_callback), sr);
+    gtk_toolbar_insert(GTK_TOOLBAR(tbar), button, 0);
+
+    return tbar;
+}
+
+static void selection_dialog_add_top_label (selector *sr)
+{
+    GtkWidget *label;
     gchar *s = NULL;
+    int ci = sr->ci;
 
-    if (MODEL_CODE(ci) || VEC_CODE(ci))
-	s = _(est_str(ci));
-    else if (ci == GR_XY)
-	s = _("XY scatterplot");
-    else if (ci == GR_IMP)
-	s = _("plot with impulses");
-    else if (ci == GR_3D)
-	s = _("3D plot");
-    else if (ci == SCATTERS)
-	s = _("multiple scatterplots");
-    else if (ci == GR_DUMMY)
-	s = _("factorized plot");
-    else if (ci == GR_XYZ)
-	s = _("scatterplot with control");
-    else if (ci == SAVE_FUNCTIONS) 
-	s = _("functions to package");
-    else if (ci == ANOVA) 
-	s = _("ANOVA");
+    if (MODEL_CODE(ci) || VEC_CODE(ci)) {
+	GtkWidget *hbox, *tbar;
 
-    return (s != NULL)? gtk_label_new(s) : NULL;
+	hbox = gtk_hbox_new(FALSE, 0); 
+	tbar = add_var_minibar(sr);
+	gtk_box_pack_start(GTK_BOX(hbox), tbar, FALSE, FALSE, 0);
+	s = est_str(ci);
+	if (s != NULL) {
+	    label = gtk_label_new(_(s));
+	    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
+	    label = gtk_label_new("");
+	    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 16);
+	}
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    } else {
+	if (ci == GR_XY)
+	    s = N_("XY scatterplot");
+	else if (ci == GR_IMP)
+	    s = N_("plot with impulses");
+	else if (ci == GR_3D)
+	    s = N_("3D plot");
+	else if (ci == SCATTERS)
+	    s = N_("multiple scatterplots");
+	else if (ci == GR_DUMMY)
+	    s = N_("factorized plot");
+	else if (ci == GR_XYZ)
+	    s = N_("scatterplot with control");
+	else if (ci == SAVE_FUNCTIONS) 
+	    s = N_("functions to package");
+	else if (ci == ANOVA) 
+	    s = N_("ANOVA");
+
+	if (s != NULL) {
+	    label = gtk_label_new(_(s));
+	    gtk_box_pack_start(GTK_BOX(sr->vbox), label, FALSE, FALSE, 5);
+	}
+    }
 }
 
 static int has_0 (const int *list)
@@ -5472,7 +5539,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    GtkWidget *right_vbox, *tmp;
+    GtkWidget *right_vbox;
     GtkWidget *big_hbox;
     selector *sr;
     int preselect;
@@ -5495,10 +5562,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 
     selector_init(sr, ci, title, NULL, callback);
 
-    tmp = selection_dialog_top_label(ci);
-    if (tmp != NULL) {
-	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 5);
-    }
+    selection_dialog_add_top_label(sr);
 
     /* the following encloses LHS lvars, depvar and indepvar stuff */
     big_hbox = gtk_hbox_new(FALSE, 5); 
@@ -5599,6 +5663,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     build_selector_buttons(sr);
 
     gtk_widget_show_all(sr->dlg);
+    gtk_widget_grab_focus(sr->lvars);
 
     return sr;
 }
