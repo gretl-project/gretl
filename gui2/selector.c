@@ -4544,7 +4544,7 @@ static GtkWidget *mpols_bits_selector (void)
                         c != OLOGIT && c != OPROBIT &&	\
                         c != QUANTREG && c != INTREG && \
                         c != MLOGIT && c != COUNTMOD && \
-                        c != DURATION)
+                        c != DURATION && c != HECKIT)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -4554,7 +4554,8 @@ static void build_selector_switches (selector *sr)
 	sr->ci == GARCH || sr->ci == IVREG || sr->ci == VAR || 
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == MLOGIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == COUNTMOD ||
-	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG) {
+	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG || 
+	sr->ci == HECKIT) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? */
