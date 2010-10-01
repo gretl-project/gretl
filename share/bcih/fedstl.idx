@@ -27,91 +27,91 @@ ecisrvwag  Employment Cost Index: Wages and Salaries: Private Industry Workers: 
 Q  2001.1 - 2010.2  n = 38
 eciwag  Employment Cost Index: Wages & Salaries: Private Industry Workers, Index: Dec 2005=100, SA
 Q  2001.1 - 2010.2  n = 122
-fyfr  Federal Receipts, Mil. of $, NA
+fyfr  Federal Receipts, Mil. of $
 A  1901 - 2009  n = 109
-fyfsd  Federal Surplus or Deficit [-], Mil. of $, NA
+fyfsd  Federal Surplus or Deficit [-], Mil. of $
 A  1901 - 2009  n = 109
-fygfd  Gross Federal Debt, Bil. of $, NA
+fygfd  Gross Federal Debt, Bil. of $
 A  1939 - 2009  n = 71
-fygfdpub  Gross Federal Debt Held by the Public, Bil. of $, NA
+fygfdpub  Gross Federal Debt Held by the Public, Bil. of $
 A  1939 - 2009  n = 71
-fyoint  Federal Outlays: Interest, Mil. of $, NA
+fyoint  Federal Outlays: Interest, Mil. of $
 A  1940 - 2009  n = 70
-fyonet  Federal Net Outlays, Mil. of $, NA
+fyonet  Federal Net Outlays, Mil. of $
 A  1901 - 2009  n = 109
-gasallecm  PADD I All Grades All Formulations Gas Price, $ per Gallon, NA
+gasallecm  PADD I All Grades All Formulations Gas Price, $ per Gallon
 M  1993.04 - 2010.09  n = 210
-gasallgcm  PADD III All Grades All Formulations Gas Price, $ per Gallon, NA
+gasallgcm  PADD III All Grades All Formulations Gas Price, $ per Gallon
 M  1993.04 - 2010.09  n = 210
-gasallm  US All Grades All Formulations Gas Price, $ per Gallon, NA
+gasallm  US All Grades All Formulations Gas Price, $ per Gallon
 M  1993.04 - 2010.09  n = 210
-gasallmwm  PADD II All Grades All Formulations Gas Price, $ per Gallon, NA
+gasallmwm  PADD II All Grades All Formulations Gas Price, $ per Gallon
 M  1993.04 - 2010.09  n = 210
-gasallrmm  PADD IV All Grades All Formulations Gas Price, $ per Gallon, NA
+gasallrmm  PADD IV All Grades All Formulations Gas Price, $ per Gallon
 M  1993.04 - 2010.09  n = 210
-gasallwcm  PADD V All Grades All Formulations Gas Price, $ per Gallon, NA
+gasallwcm  PADD V All Grades All Formulations Gas Price, $ per Gallon
 M  1993.04 - 2010.09  n = 210
-gasdesecm  PADD I Diesel Sales Price, $ per Gallon, NA
+gasdesecm  PADD I Diesel Sales Price, $ per Gallon
 M  1994.03 - 2010.09  n = 199
-gasdesgcm  PADD III Diesel Sales Price, $ per Gallon, NA
+gasdesgcm  PADD III Diesel Sales Price, $ per Gallon
 M  1994.03 - 2010.09  n = 199
-gasdesm  US Diesel Sales Price, $ per Gallon, NA
+gasdesm  US Diesel Sales Price, $ per Gallon
 M  1994.03 - 2010.09  n = 199
-gasdesmwm  PADD II Diesel Sales Price, $ per Gallon, NA
+gasdesmwm  PADD II Diesel Sales Price, $ per Gallon
 M  1994.03 - 2010.09  n = 199
-gasdesrmm  PADD IV Diesel Sales Price, $ per Gallon, NA
+gasdesrmm  PADD IV Diesel Sales Price, $ per Gallon
 M  1994.03 - 2010.09  n = 199
-gasdeswcm  PADD V Diesel Sales Price, $ per Gallon, NA
+gasdeswcm  PADD V Diesel Sales Price, $ per Gallon
 M  1994.03 - 2010.09  n = 199
-gasmidecm  PADD I Midgrade All Formulations Gas Price, $ per Gallon, NA
+gasmidecm  PADD I Midgrade All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasmidgcm  PADD III Midgrade All Formulations Gas Price, $ per Gallon, NA
+gasmidgcm  PADD III Midgrade All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasmidm  US Midgrade All Formulations Gas Price, $ per Gallon, NA
+gasmidm  US Midgrade All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasmidmwm  PADD II Midgrade All Formulations Gas Price, $ per Gallon, NA
+gasmidmwm  PADD II Midgrade All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasmidrmm  PADD IV Midgrade All Formulations Gas Price, $ per Gallon, NA
+gasmidrmm  PADD IV Midgrade All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasmidwcm  PADD V Midgrade All Formulations Gas Price, $ per Gallon, NA
+gasmidwcm  PADD V Midgrade All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasprmecm  PADD I Premium All Formulations Gas Price, $ per Gallon, NA
+gasprmecm  PADD I Premium All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasprmgcm  PADD III Premium All Formulations Gas Price, $ per Gallon, NA
+gasprmgcm  PADD III Premium All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasprmm  US Premium All Formulations Gas Price, $ per Gallon, NA
+gasprmm  US Premium All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasprmmwm  PADD II Premium All Formulations Gas Price, $ per Gallon, NA
+gasprmmwm  PADD II Premium All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasprmrmm  PADD IV Premium All Formulations Gas Price, $ per Gallon, NA
+gasprmrmm  PADD IV Premium All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasprmwcm  PADD V Premium All Formulations Gas Price, $ per Gallon, NA
+gasprmwcm  PADD V Premium All Formulations Gas Price, $ per Gallon
 M  1994.11 - 2010.09  n = 191
-gasregecm  PADD I Regular All Formulations Gas Price, $ per Gallon, NA
+gasregecm  PADD I Regular All Formulations Gas Price, $ per Gallon
 M  1992.05 - 2010.09  n = 221
-gasreggcm  PADD III Regular All Formulations Gas Price, $ per Gallon, NA
+gasreggcm  PADD III Regular All Formulations Gas Price, $ per Gallon
 M  1992.05 - 2010.09  n = 221
-gasregm  US Regular All Formulations Gas Price, $ per Gallon, NA
+gasregm  US Regular All Formulations Gas Price, $ per Gallon
 M  1990.08 - 2010.09  n = 242
-gasregmwm  PADD II Regular All Formulations Gas Price, $ per Gallon, NA
+gasregmwm  PADD II Regular All Formulations Gas Price, $ per Gallon
 M  1992.05 - 2010.09  n = 221
-gasregrmm  PADD IV Regular All Formulations Gas Price, $ per Gallon, NA
+gasregrmm  PADD IV Regular All Formulations Gas Price, $ per Gallon
 M  1992.05 - 2010.09  n = 221
-gasregwcm  PADD V Regular All Formulations Gas Price, $ per Gallon, NA
+gasregwcm  PADD V Regular All Formulations Gas Price, $ per Gallon
 M  1992.05 - 2010.09  n = 221
-ushiccover  Health Insurance Coverage: People Covered in the United States, Thous. of Persons, NA
+ushiccover  Health Insurance Coverage: People Covered in the United States, Thous. of Persons
 A  1999 - 2008  n = 10
-ushiccovpct  Health Insurance Coverage: Coverage Rate in the United States, %, NA
+ushiccovpct  Health Insurance Coverage: Coverage Rate in the United States, %
 A  1999 - 2008  n = 10
-ushicncpct  Health Insurance Coverage: Uncovered Rate in the United States, %, NA
+ushicncpct  Health Insurance Coverage: Uncovered Rate in the United States, %
 A  1999 - 2008  n = 10
-ushicnotcov  Health Insurance Coverage: People Not Covered in the United States, Thous. of Persons, NA
+ushicnotcov  Health Insurance Coverage: People Not Covered in the United States, Thous. of Persons
 A  1999 - 2008  n = 10
-ushictotal  Health Insurance Coverage: Total Number of People in the United States, Thous. of Persons, NA
+ushictotal  Health Insurance Coverage: Total Number of People in the United States, Thous. of Persons
 A  1999 - 2008  n = 10
-cdsp  Consumer Debt Service Payments as a Percent of Disposable Personal Income (Discontinued Series), %, NA
+cdsp  Consumer Debt Service Payments as a Percent of Disposable Personal Income (Discontinued Series), %
 Q  1980.1 - 2003.1  n = 93
-fodsp  Household Financial Obligations as a percent of Disposable Personal Income, %, NA
+fodsp  Household Financial Obligations as a percent of Disposable Personal Income, %
 Q  1980.1 - 2010.2  n = 122
 houst  Housing Starts: Total: New Privately Owned Housing Units Started, Thous. of Units, SAAR
 M  1959.01 - 2010.08  n = 620
@@ -173,15 +173,15 @@ permitw  New Private Housing Units Authorized by Building Permits - West, Thous.
 M  1960.01 - 2010.08  n = 608
 permitw1  New Private Housing Units Authorized by Building Permits - West, In Structures with 1 Unit, Thous. of Units, SAAR
 M  1988.01 - 2010.08  n = 272
-tdsp  Household Debt Service Payments as a Percent of Disposable Personal Income, %, NA
+tdsp  Household Debt Service Payments as a Percent of Disposable Personal Income, %
 Q  1980.1 - 2010.2  n = 122
 cumfn  Capacity Utilization: Manufacturing (NAICS), % of Capacity, SA
 Q  1972.1 - 2010.2  n = 154
-diffone  Industrial Production: Diffusion Indexes: One month earlier, %, NA
+diffone  Industrial Production: Diffusion Indexes: One month earlier, %
 M  1967.01 - 2010.07  n = 523
-diffsix  Industrial Production: Diffusion Indexes: Six months earlier, %, NA
+diffsix  Industrial Production: Diffusion Indexes: Six months earlier, %
 M  1967.01 - 2010.07  n = 518
-diffthree  Industrial Production: Diffusion Indexes: Three months earlier, %, NA
+diffthree  Industrial Production: Diffusion Indexes: Three months earlier, %
 M  1967.01 - 2010.07  n = 521
 indpro  Industrial Production Index, Index 2007=100, SA
 M  1919.01 - 2010.08  n = 1100
@@ -235,9 +235,9 @@ ipdbs  Business Sector: Implicit Price Deflator, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 ipdnbs  Nonfarm Business Sector: Implicit Price Deflator, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
-mfgoph  Manufacturing: Output Per Hour of All Persons, Index 2000=100, NA
+mfgoph  Manufacturing: Output Per Hour of All Persons, Index 2000=100
 A  1987 - 2007  n = 59
-mfgprod  Manufacturing: Multifactor Productivity, Index 2000=100, NA
+mfgprod  Manufacturing: Multifactor Productivity, Index 2000=100
 A  1987 - 2007  n = 59
 ophmfg  Manufacturing Sector: Output Per Hour of All Persons, Index 2005=100, SA
 Q  1987.1 - 2010.2  n = 246
@@ -289,11 +289,11 @@ businv  Inventories: Total Business, Mil. of $, End of Period, SA
 M  1992.01 - 2010.07  n = 356
 dgorder  Manufacturers' New Orders: Durable Goods, Mil. of $, SA
 M  1992.02 - 2010.08  n = 631
-gasprice  Natural Gas Price: Henry Hub, LA, $ Per Mil. BTU, NA
+gasprice  Natural Gas Price: Henry Hub, LA, $ Per Mil. BTU
 M  1993.11 - 2010.08  n = 202
 isratio  Inventory to Sales Ratio: Total Business, Ratio, SA
 M  1992.01 - 2010.07  n = 751
-mich  University of Michigan Inflation Expectation, %, NA
+mich  University of Michigan Inflation Expectation, %
 M  1978.01 - 2010.08  n = 392
 napm  ISM Manufacturing: PMI Composite Index, Index, SA
 M  1948.01 - 2010.08  n = 752
@@ -329,15 +329,15 @@ nmfnoi  ISM Nonmanufacturing: New Orders Index, Index, SA
 M  1997.07 - 2010.08  n = 158
 nmfsdi  ISM Nonmanufacturing: Supplier Deliveries Index, Index, SA
 M  1997.07 - 2010.08  n = 158
-oilprice  Spot Oil Price: West Texas Intermediate, $ per Barrel, NA
+oilprice  Spot Oil Price: West Texas Intermediate, $ per Barrel
 M  1946.01 - 2010.08  n = 776
 umcsent  University of Michigan: Consumer Sentiment, Index 1st Qtr. 1966=100, NSA
 M  1978.01 - 2010.08  n = 484
-ushown  Home Ownership Rate for the United States, %, NA
+ushown  Home Ownership Rate for the United States, %
 A  1984 - 2008  n = 25
-ushvac  Home vacancy Rate for the United States, %, NA
+ushvac  Home vacancy Rate for the United States, %
 A  1986 - 2008  n = 23
-usrvac  Rental Vacancy Rate for the United States, %, NA
+usrvac  Rental Vacancy Rate for the United States, %
 A  1986 - 2008  n = 23
 cpiappns  Consumer Price Index for All Urban Consumers: Apparel, Index 1982-84=100, NSA
 M  1914.12 - 2010.08  n = 1149
@@ -515,11 +515,9 @@ unemploy  Unemployed, Thous., SA
 M  1948.01 - 2010.08  n = 752
 unrate  Civilian Unemployment Rate, %, SA
 M  1948.01 - 2010.08  n = 752
-cnp16ov  Civilian Noninstitutional Population, Thous., NSA
-M  1948.01 - 2010.08  n = 752
-pop  Total Population: All Ages including Armed Forces Overseas, Thous., NA
+pop  Total Population: All Ages including Armed Forces Overseas, Thous.
 M  1952.01 - 2010.08  n = 704
-popthm  Population: Mid-Month, Thous., NA
+popthm  Population: Mid-Month, Thous.
 M  1959.01 - 2010.07  n = 619
 jts1000jol  Job Openings: Total Private, Level, SA
 M  2000.12 - 2010.07  n = 116
@@ -1375,17 +1373,17 @@ boptexp  Exports of Goods and Services, Balance of Payments Basis, Mil. of $, SA
 M  1992.01 - 2010.07  n = 223
 bopx  Exports of Goods, Services and Income, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxa  Exports of Goods, Services and Income, Bil. of $, NA
+bopxa  Exports of Goods, Services and Income, Bil. of $
 A  1960 - 2009  n = 50
 bopxgs  Exports of Goods and Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxgsa  Exports of Goods and Services, Bil. of $, NA
+bopxgsa  Exports of Goods and Services, Bil. of $
 A  1960 - 2009  n = 50
 bopxgsn  Exports of Goods and Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxm  Exports of Merchandise: Adjusted, Excluding Military, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxma  Exports of Merchandise: Adjusted, Excluding Military, Bil. of $, NA
+bopxma  Exports of Merchandise: Adjusted, Excluding Military, Bil. of $
 A  1960 - 2009  n = 50
 bopxmn  Exports of Merchandise: Adjusted, Excluding Military, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1393,17 +1391,17 @@ bopxn  Exports of Goods, Services and Income, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxsv  Exports of Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsva  Exports of Services, Bil. of $, NA
+bopxsva  Exports of Services, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvg  Exports of Services: U.S. Government Miscellaneous, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsvga  Exports of Services: U.S. Government Miscellaneous, Bil. of $, NA
+bopxsvga  Exports of Services: U.S. Government Miscellaneous, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvgn  Exports of Services: U.S. Government Miscellaneous, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxsvmt  Exports of Services: Transfers Under U.S. Military Agency Contracts, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsvmta  Exports of Services: Transfers Under U.S. Military Agency Contracts, Bil. of $, NA
+bopxsvmta  Exports of Services: Transfers Under U.S. Military Agency Contracts, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvmtn  Exports of Services: Transfers Under U.S. Military Agency Contracts, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1411,31 +1409,31 @@ bopxsvn  Exports of Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxsvo  Exports of Other Private Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsvoa  Exports of Other Private Services, Bil. of $, NA
+bopxsvoa  Exports of Other Private Services, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvon  Exports of Other Private Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxsvot  Exports of Other Transportation Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsvota  Exports of Other Transportation Services, Bil. of $, NA
+bopxsvota  Exports of Other Transportation Services, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvotn  Exports of Other Transportation Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxsvp  Exports of Services: Passenger Fares, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsvpa  Exports of Services: Passenger Fares, Bil. of $, NA
+bopxsvpa  Exports of Services: Passenger Fares, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvpn  Exports of Services: Passenger Fares, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxsvr  Exports of Services: Royalties and Licensing Fees, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsvra  Exports of Services: Royalties and Licensing Fees, Bil. of $, NA
+bopxsvra  Exports of Services: Royalties and Licensing Fees, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvrn  Exports of Services: Royalties and Licensing Fees, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxsvt  Exports of Services: Travel, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxsvta  Exports of Services: Travel, Bil. of $, NA
+bopxsvta  Exports of Services: Travel, Bil. of $
 A  1960 - 2009  n = 50
 bopxsvtn  Exports of Services: Travel, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1457,17 +1455,17 @@ bopgimp  Imports of Goods: Balance of Payments Basis, Mil. of $, SA
 M  1992.01 - 2010.07  n = 223
 bopm  Imports of Goods, Services, and Income, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopma  Imports of Goods, Services, and Income, Bil. of $, NA
+bopma  Imports of Goods, Services, and Income, Bil. of $
 A  1960 - 2009  n = 50
 bopmgs  Imports of Goods and Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmgsa  Imports of Goods and Services, Bil. of $, NA
+bopmgsa  Imports of Goods and Services, Bil. of $
 A  1960 - 2009  n = 50
 bopmgsn  Imports of Goods and Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmm  Imports of Merchandise: Adjusted, Excluding Military, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmma  Imports of Merchandise: Adjusted, Excluding Military, Bil. of $, NA
+bopmma  Imports of Merchandise: Adjusted, Excluding Military, Bil. of $
 A  1960 - 2009  n = 50
 bopmmn  Imports of Merchandise: Adjusted, Excluding Military, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1475,17 +1473,17 @@ bopmn  Imports of Goods, Services, and Income, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmsv  Imports of Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsva  Imports of Services, Bil. of $, NA
+bopmsva  Imports of Services, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvg  Imports of U.S. Government Miscellaneous Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsvga  Imports of U.S. Government Miscellaneous Services, Bil. of $, NA
+bopmsvga  Imports of U.S. Government Miscellaneous Services, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvgn  Imports of U.S. Government Miscellaneous Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmsvmt  Imports of Services: Direct Defense Expenditures, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsvmta  Imports of Services: Direct Defense Expenditures, Bil. of $, NA
+bopmsvmta  Imports of Services: Direct Defense Expenditures, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvmtn  Imports of Services: Direct Defense Expenditures, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1493,31 +1491,31 @@ bopmsvn  Imports of Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmsvo  Imports of Other Private Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsvoa  Imports of Other Private Services, Bil. of $, NA
+bopmsvoa  Imports of Other Private Services, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvon  Imports of Other Private Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmsvot  Imports of Other Transportation Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsvota  Imports of Other Transportation Services, Bil. of $, NA
+bopmsvota  Imports of Other Transportation Services, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvotn  Imports of Other Transportation Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmsvp  Imports of Services: Passenger Fares, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsvpa  Imports of Services: Passenger Fares, Bil. of $, NA
+bopmsvpa  Imports of Services: Passenger Fares, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvpn  Imports of Services: Passenger Fares, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmsvr  Imports of Services: Royalties and Licensing Fees, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsvra  Imports of Services: Royalties and Licensing Fees, Bil. of $, NA
+bopmsvra  Imports of Services: Royalties and Licensing Fees, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvrn  Imports of Services: Royalties and Licensing Fees, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmsvt  Imports of Services: Travel, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmsvta  Imports of Services: Travel, Bil. of $, NA
+bopmsvta  Imports of Services: Travel, Bil. of $
 A  1960 - 2009  n = 50
 bopmsvtn  Imports of Services: Travel, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1541,133 +1539,133 @@ impuk  U.S. Imports from the United Kingdom, Customs Basis, Mil. of $, NSA
 M  1985.01 - 2010.07  n = 307
 bopgg  U.S. Government Grants Excluding Military, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopgga  U.S. Government Grants Excluding Military, Bil. of $, NA
+bopgga  U.S. Government Grants Excluding Military, Bil. of $
 A  1960 - 2009  n = 50
 bopggn  U.S. Government Grants Excluding Military, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopgp  U.S. Government Pensions and Other Transfers, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopgpa  U.S. Government Pensions and Other Transfers, Bil. of $, NA
+bopgpa  U.S. Government Pensions and Other Transfers, Bil. of $
 A  1960 - 2009  n = 50
 bopgpn  U.S. Government Pensions and Other Transfers, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopgr  Private Remittances and Other Transfers, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopgra  Private Remittances and Other Transfers, Bil. of $, NA
+bopgra  Private Remittances and Other Transfers, Bil. of $
 A  1960 - 2009  n = 50
 bopgrn  Private Remittances and Other Transfers, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmc  Income Payments - Compensation of Employees, Bil. of $, SA
 Q  1986.1 - 2010.2  n = 98
-bopmca  Income Payments - Compensation of Employees, Bil. of $, NA
+bopmca  Income Payments - Compensation of Employees, Bil. of $
 A  1986 - 2009  n = 24
 bopmcn  Income Payments - Compensation of Employees, Bil. of $, NSA
 Q  1986.1 - 2010.2  n = 98
 bopmd  Income Payments on Foreign Direct Investment in U.S., Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmda  Income Payments on Foreign Direct Investment in U.S., Bil. of $, NA
+bopmda  Income Payments on Foreign Direct Investment in U.S., Bil. of $
 A  1960 - 2009  n = 50
 bopmdn  Income Payments on Foreign Direct Investment in U.S., Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmg  U.S. Government Income Payments on Foreign Assets in U.S., Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmga  U.S. Government Income Payments on Foreign Assets in U.S., Bil. of $, NA
+bopmga  U.S. Government Income Payments on Foreign Assets in U.S., Bil. of $
 A  1960 - 2009  n = 50
 bopmgn  U.S. Government Income Payments on Foreign Assets in U.S., Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmi  Income Payments on Foreign Assets in the U.S., Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmia  Income Payments on Foreign Assets in the U.S., Bil. of $, NA
+bopmia  Income Payments on Foreign Assets in the U.S., Bil. of $
 A  1960 - 2009  n = 50
 bopmin  Income Payments on Foreign Assets in the U.S., Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmit  Income Payments, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmita  Income Payments, Bil. of $, NA
+bopmita  Income Payments, Bil. of $
 A  1960 - 2009  n = 50
 bopmitn  Income Payments, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopmp  Other Private Income Payments on Foreign Assets in U.S., Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopmpa  Other Private Income Payments on Foreign Assets in U.S., Bil. of $, NA
+bopmpa  Other Private Income Payments on Foreign Assets in U.S., Bil. of $
 A  1960 - 2009  n = 50
 bopmpn  Other Private Income Payments on Foreign Assets in U.S., Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxc  Income Receipts - Compensation of Employees, Bil. of $, SA
 Q  1986.1 - 2010.2  n = 98
-bopxca  Income Receipts - Compensation of Employees, Bil. of $, NA
+bopxca  Income Receipts - Compensation of Employees, Bil. of $
 A  1986 - 2009  n = 24
 bopxcn  Income Receipts - Compensation of Employees, Bil. of $, NSA
 Q  1986.1 - 2010.2  n = 98
 bopxmd  Income Receipts on U.S. Direct Investment Abroad, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxmda  Income Receipts on U.S. Direct Investment Abroad, Bil. of $, NA
+bopxmda  Income Receipts on U.S. Direct Investment Abroad, Bil. of $
 A  1960 - 2009  n = 50
 bopxmdn  Income Receipts on U.S. Direct Investment Abroad, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxmg  U.S. Government Income Receipts on Assets Abroad, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxmga  U.S. Government Income Receipts on Assets Abroad, Bil. of $, NA
+bopxmga  U.S. Government Income Receipts on Assets Abroad, Bil. of $
 A  1960 - 2009  n = 50
 bopxmgn  U.S. Government Income Receipts on Assets Abroad, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxmp  Other Private Income Receipts on U.S. Assets Abroad, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxmpa  Other Private Income Receipts on U.S. Assets Abroad, Bil. of $, NA
+bopxmpa  Other Private Income Receipts on U.S. Assets Abroad, Bil. of $
 A  1960 - 2009  n = 50
 bopxmpn  Other Private Income Receipts on U.S. Assets Abroad, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxr  Income Receipts on U.S. Assets Abroad, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxra  Income Receipts on U.S. Assets Abroad, Bil. of $, NA
+bopxra  Income Receipts on U.S. Assets Abroad, Bil. of $
 A  1960 - 2009  n = 50
 bopxrn  Income Receipts on U.S. Assets Abroad, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopxrt  Income Receipts, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopxrta  Income Receipts, Bil. of $, NA
+bopxrta  Income Receipts, Bil. of $
 A  1960 - 2009  n = 50
 bopxrtn  Income Receipts, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopbca  Balance on Current Account, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopbcaa  Balance on Current Account, Bil. of $, NA
+bopbcaa  Balance on Current Account, Bil. of $
 A  1960 - 2009  n = 50
 bopbcan  Balance on Current Account, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopbgs  Balance on Goods and Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopbgsa  Balance on Goods and Services, Bil. of $, NA
+bopbgsa  Balance on Goods and Services, Bil. of $
 A  1960 - 2009  n = 50
 bopbgsn  Balance on Goods and Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopbii  Balance on Investment Income, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopbiia  Balance on Investment Income, Bil. of $, NA
+bopbiia  Balance on Investment Income, Bil. of $
 A  1960 - 2009  n = 50
 bopbiin  Balance on Investment Income, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopbm  Balance on Merchandise Trade, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopbma  Balance on Merchandise Trade, Bil. of $, NA
+bopbma  Balance on Merchandise Trade, Bil. of $
 A  1960 - 2009  n = 50
 bopbmn  Balance on Merchandise Trade, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopbsv  Balance on Services, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopbsva  Balance on Services, Bil. of $, NA
+bopbsva  Balance on Services, Bil. of $
 A  1960 - 2009  n = 50
 bopbsvn  Balance on Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopcat  Capital Account Transactions, Net, Bil. of $, SA
 Q  1989.4 - 2010.2  n = 114
-bopcata  Capital Account Transactions, Net, Bil. of $, NA
+bopcata  Capital Account Transactions, Net, Bil. of $
 A  1989 - 2009  n = 28
 bopcatn  Capital Account Transactions, Net, Bil. of $, NSA
 Q  1989.4 - 2010.2  n = 114
 bopg  Unilateral Transfers, Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopga  Unilateral Transfers, Net, Bil. of $, NA
+bopga  Unilateral Transfers, Net, Bil. of $
 A  1960 - 2009  n = 50
 bopgn  Unilateral Transfers, Net, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1679,41 +1677,41 @@ bopstb  Trade Balance: Services, Balance of Payments Basis, Mil. of $, SA
 M  1992.01 - 2010.07  n = 223
 boperr  Statistical Discrepancy, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-boperra  Statistical Discrepancy, Bil. of $, NA
+boperra  Statistical Discrepancy, Bil. of $
 A  1960 - 2009  n = 50
 boperrn  Statistical Discrepancy, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopi  Foreign Assets in the U.S.: Net, Capital Inflow {+}, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopia  Foreign Assets in the U.S.: Net, Capital Inflow {+}, Bil. of $, NA
+bopia  Foreign Assets in the U.S.: Net, Capital Inflow {+}, Bil. of $
 A  1960 - 2009  n = 50
 bopin  Foreign Assets in the U.S.: Net, Capital Inflow {+}, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopio  Foreign Official Assets in the U.S.: Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopioa  Foreign Official Assets in the U.S.: Net, Bil. of $, NA
+bopioa  Foreign Official Assets in the U.S.: Net, Bil. of $
 A  1960 - 2009  n = 50
 bopiog  Foreign Official Assets in U.S.: U.S. Government Securities, Bil. of $, SA
 Q  1973.1 - 2010.2  n = 150
-bopioga  Foreign Official Assets in U.S.: U.S. Government Securities, Bil. of $, NA
+bopioga  Foreign Official Assets in U.S.: U.S. Government Securities, Bil. of $
 A  1973 - 2009  n = 37
 bopiogn  Foreign Official Assets in U.S.: U.S. Government Securities, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopiogo  Foreign Official Assets: Other U.S. Government Securities, Bil. of $, SA
 Q  1962.2 - 2010.2  n = 193
-bopiogoa  Foreign Official Assets: Other U.S. Government Securities, Bil. of $, NA
+bopiogoa  Foreign Official Assets: Other U.S. Government Securities, Bil. of $
 A  1963 - 2009  n = 47
 bopiogon  Foreign Official Assets: Other U.S. Government Securities, Bil. of $, NSA
 Q  1962.2 - 2010.2  n = 193
 bopiogt  Foreign Official Assets in U.S.: Treasury Securities, Bil. of $, SA
 Q  1973.1 - 2010.2  n = 150
-bopiogta  Foreign Official Assets in U.S.: Treasury Securities, Bil. of $, NA
+bopiogta  Foreign Official Assets in U.S.: Treasury Securities, Bil. of $
 A  1973 - 2009  n = 37
 bopiogtn  Foreign Official Assets in U.S.: Treasury Securities, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopiol  Foreign Official Assets: Other U.S. Government Liabilities, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopiola  Foreign Official Assets: Other U.S. Government Liabilities, Bil. of $, NA
+bopiola  Foreign Official Assets: Other U.S. Government Liabilities, Bil. of $
 A  1960 - 2009  n = 50
 bopioln  Foreign Official Assets: Other U.S. Government Liabilities, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1721,41 +1719,41 @@ bopion  Foreign Official Assets in the U.S.: Net, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopioo  Other Foreign Official Assets, Bil. of $, SA
 Q  1972.3 - 2010.2  n = 152
-bopiooa  Other Foreign Official Assets, Bil. of $, NA
+bopiooa  Other Foreign Official Assets, Bil. of $
 A  1973 - 2009  n = 37
 bopioon  Other Foreign Official Assets, Bil. of $, NSA
 Q  1972.3 - 2010.2  n = 152
 bopiou  Foreign Official Assets: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopioua  Foreign Official Assets: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $, NA
+bopioua  Foreign Official Assets: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $
 A  1960 - 2009  n = 50
 bopioun  Foreign Official Assets: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopip  Other Foreign Assets in the U.S., Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopipa  Other Foreign Assets in the U.S., Net, Bil. of $, NA
+bopipa  Other Foreign Assets in the U.S., Net, Bil. of $
 A  1960 - 2009  n = 50
 bopipc  Financial Derivatives, Net, Bil. of $, SA
 Q  2006.1 - 2010.1  n = 17
-bopipca  Financial Derivatives, Net, Bil. of $, NA
+bopipca  Financial Derivatives, Net, Bil. of $
 A  2006 - 2009  n = 4
 bopipcn  Financial Derivatives, Net, Bil. of $, NSA
 Q  2006.1 - 2010.1  n = 17
 bopipd  Other Foreign Assets in the U.S., Net: Direct Investment, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopipda  Other Foreign Assets in the U.S., Net: Direct Investment, Bil. of $, NA
+bopipda  Other Foreign Assets in the U.S., Net: Direct Investment, Bil. of $
 A  1960 - 2009  n = 50
 bopipdn  Other Foreign Assets in the U.S., Net: Direct Investment, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopipf  U.S. Liabilities to Unaffiliated Foreigners Reported by U.S. Nonbanks, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopipfa  U.S. Liabilities to Unaffiliated Foreigners Reported by U.S. Nonbanks, Bil. of $, NA
+bopipfa  U.S. Liabilities to Unaffiliated Foreigners Reported by U.S. Nonbanks, Bil. of $
 A  1960 - 2009  n = 50
 bopipfn  U.S. Liabilities to Unaffiliated Foreigners Reported by U.S. Nonbanks, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopipg  Other Foreign Assets in U.S., Net: Government Non-Treasury Securities, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopipga  Other Foreign Assets in U.S., Net: Government Non-Treasury Securities, Bil. of $, NA
+bopipga  Other Foreign Assets in U.S., Net: Government Non-Treasury Securities, Bil. of $
 A  1960 - 2009  n = 50
 bopipgn  Other Foreign Assets in U.S., Net: Government Non-Treasury Securities, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1763,57 +1761,57 @@ bopipn  Other Foreign Assets in the U.S., Net, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopipo  Other Foreign Assets in U.S.: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopipoa  Other Foreign Assets in U.S.: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $, NA
+bopipoa  Other Foreign Assets in U.S.: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $
 A  1960 - 2009  n = 50
 bopipon  Other Foreign Assets in U.S.: U.S. Liabilities Reported by U.S. Banks, nie, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopipt  Other Foreign Assets in the U.S., Net: U.S. Treasury Securities, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopipta  Other Foreign Assets in the U.S., Net: U.S. Treasury Securities, Bil. of $, NA
+bopipta  Other Foreign Assets in the U.S., Net: U.S. Treasury Securities, Bil. of $
 A  1960 - 2009  n = 50
 bopiptn  Other Foreign Assets in the U.S., Net: U.S. Treasury Securities, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopipu  Other Foreign Assets in U.S., Net: U.S. Currency, Bil. of $, SA
 Q  1974.1 - 2010.2  n = 146
-bopipua  Other Foreign Assets in U.S., Net: U.S. Currency, Bil. of $, NA
+bopipua  Other Foreign Assets in U.S., Net: U.S. Currency, Bil. of $
 A  1974 - 2009  n = 36
 bopipun  Other Foreign Assets in U.S., Net: U.S. Currency, Bil. of $, NSA
 Q  1974.1 - 2010.2  n = 146
 bopo  U.S. Assets Abroad, Net: Outflow (-), Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopoa  U.S. Assets Abroad, Net: Outflow (-), Bil. of $, NA
+bopoa  U.S. Assets Abroad, Net: Outflow (-), Bil. of $
 A  1960 - 2009  n = 50
 bopof  U.S. Reserves of Foreign Currencies, Bil. of $, SA
 Q  1961.1 - 2010.2  n = 198
-bopofa  U.S. Reserves of Foreign Currencies, Bil. of $, NA
+bopofa  U.S. Reserves of Foreign Currencies, Bil. of $
 A  1961 - 2009  n = 49
 bopofn  U.S. Reserves of Foreign Currencies, Bil. of $, NSA
 Q  1961.1 - 2010.2  n = 198
 bopog  U.S. Government Assets Abroad, Excluding Official Reserves, Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopoga  U.S. Government Assets Abroad, Excluding Official Reserves, Net, Bil. of $, NA
+bopoga  U.S. Government Assets Abroad, Excluding Official Reserves, Net, Bil. of $
 A  1960 - 2009  n = 50
 bopogc  U.S. Government Assets Abroad, Net: Credits & Other Long-Term Assets, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopogca  U.S. Government Assets Abroad, Net: Credits & Other Long-Term Assets, Bil. of $, NA
+bopogca  U.S. Government Assets Abroad, Net: Credits & Other Long-Term Assets, Bil. of $
 A  1960 - 2009  n = 50
 bopogcn  U.S. Government Assets Abroad, Net: Credits & Other Long-Term Assets, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopogcr  Repayments on U.S. Credits & Other Long-Term Assets Abroad, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopogcra  Repayments on U.S. Credits & Other Long-Term Assets Abroad, Bil. of $, NA
+bopogcra  Repayments on U.S. Credits & Other Long-Term Assets Abroad, Bil. of $
 A  1960 - 2009  n = 50
 bopogcrn  Repayments on U.S. Credits & Other Long-Term Assets Abroad, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopogf  U.S. Foreign Currency Holdings & Other Short-Term Assets, Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopogfa  U.S. Foreign Currency Holdings & Other Short-Term Assets, Net, Bil. of $, NA
+bopogfa  U.S. Foreign Currency Holdings & Other Short-Term Assets, Net, Bil. of $
 A  1960 - 2009  n = 50
 bopogfn  U.S. Foreign Currency Holdings & Other Short-Term Assets, Net, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopogld  U.S. Reserve Assets Abroad: Gold, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopoglda  U.S. Reserve Assets Abroad: Gold, Bil. of $, NA
+bopoglda  U.S. Reserve Assets Abroad: Gold, Bil. of $
 A  1960 - 2009  n = 50
 bopogldn  U.S. Reserve Assets Abroad: Gold, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1821,7 +1819,7 @@ bopogn  U.S. Government Assets Abroad, Excluding Official Reserves, Net, Bil. of
 Q  1960.1 - 2010.2  n = 202
 bopoimf  U.S. Reserve Position in the IMF, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopoimfa  U.S. Reserve Position in the IMF, Bil. of $, NA
+bopoimfa  U.S. Reserve Position in the IMF, Bil. of $
 A  1960 - 2009  n = 50
 bopoimfn  U.S. Reserve Position in the IMF, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1829,23 +1827,23 @@ bopon  U.S. Assets Abroad, Net: Outflow (-), Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopoo  U.S. Official Reserve Assets Abroad, Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopooa  U.S. Official Reserve Assets Abroad, Net, Bil. of $, NA
+bopooa  U.S. Official Reserve Assets Abroad, Net, Bil. of $
 A  1960 - 2009  n = 50
 bopoon  U.S. Official Reserve Assets Abroad, Net, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopop  U.S. Private Assets Abroad, Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopopa  U.S. Private Assets Abroad, Net, Bil. of $, NA
+bopopa  U.S. Private Assets Abroad, Net, Bil. of $
 A  1960 - 2009  n = 50
 bopopd  U.S. Private Direct Investment Abroad, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopopda  U.S. Private Direct Investment Abroad, Bil. of $, NA
+bopopda  U.S. Private Direct Investment Abroad, Bil. of $
 A  1960 - 2009  n = 50
 bopopdn  U.S. Private Direct Investment Abroad, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopopf  U.S. Private Assets: Claims on Foreigners Reported by Nonbanks, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopopfa  U.S. Private Assets: Claims on Foreigners Reported by Nonbanks, Bil. of $, NA
+bopopfa  U.S. Private Assets: Claims on Foreigners Reported by Nonbanks, Bil. of $
 A  1960 - 2009  n = 50
 bopopfn  U.S. Private Assets: Claims on Foreigners Reported by Nonbanks, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
@@ -1853,19 +1851,19 @@ bopopn  U.S. Private Assets Abroad, Net, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopopo  U.S. Private Assets: Claims Reported by U.S. Banks, nie, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopopoa  U.S. Private Assets: Claims Reported by U.S. Banks, nie, Bil. of $, NA
+bopopoa  U.S. Private Assets: Claims Reported by U.S. Banks, nie, Bil. of $
 A  1960 - 2009  n = 50
 bopopon  U.S. Private Assets: Claims Reported by U.S. Banks, nie, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopops  U.S. Private Assets: Foreign Securities, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
-bopopsa  U.S. Private Assets: Foreign Securities, Bil. of $, NA
+bopopsa  U.S. Private Assets: Foreign Securities, Bil. of $
 A  1960 - 2009  n = 50
 bopopsn  U.S. Private Assets: Foreign Securities, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 boposdr  U.S. Reserve Assets Abroad: Special Drawing Rights, Bil. of $, SA
 Q  1970.1 - 2010.2  n = 162
-boposdra  U.S. Reserve Assets Abroad: Special Drawing Rights, Bil. of $, NA
+boposdra  U.S. Reserve Assets Abroad: Special Drawing Rights, Bil. of $
 A  1970 - 2009  n = 40
 boposdrn  U.S. Reserve Assets Abroad: Special Drawing Rights, Bil. of $, NSA
 Q  1970.1 - 2010.2  n = 162
@@ -1923,275 +1921,145 @@ iv1422  Services Import Index: Import Air Passenger Fares - Asia, Index 2000=100
 M  1996.12 - 2010.08  n = 133
 iv1424  Services Import Index: Import Air Passenger Fares - Latin America/Caribbean, Index 2000=100, NSA
 M  1988.03 - 2010.08  n = 168
-exauus  Austria / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Austrian Schillings to  1 U.S. $, NA
+exauus  Austria / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Austrian Schillings to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
-exbeus  Belgium / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Belgian Francs to  1 U.S. $, NA
+exbeus  Belgium / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Belgian Francs to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
-exbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $, NA
+exbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $
 M  1995.01 - 2010.08  n = 188
-excaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $, NA
+excaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-exchus  China / U.S. Foreign Exchange Rate, Chinese Yuan to  1 U.S. $, NA
+exchus  China / U.S. Foreign Exchange Rate, Chinese Yuan to  1 U.S. $
 M  1981.01 - 2010.08  n = 356
-exdnus  Denmark / U.S. Foreign Exchange Rate, Danish Kroner to  1 U.S. $, NA
+exdnus  Denmark / U.S. Foreign Exchange Rate, Danish Kroner to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-exfnus  Finland / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Finnish Markkas to  1 U.S. $, NA
+exfnus  Finland / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Finnish Markkas to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
-exfrus  France / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), French Franc to  1 U.S. $, NA
+exfrus  France / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), French Franc to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
-exgeus  Germany / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), German Deutsche Marks to  1 U.S. $, NA
+exgeus  Germany / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), German Deutsche Marks to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
-exgrus  Greece / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Greek Drachmas to  1 U.S. $, NA
+exgrus  Greece / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Greek Drachmas to  1 U.S. $
 M  1981.04 - 2000.12  n = 237
-exhkus  Hong Kong / U.S. Foreign Exchange Rate, Hong Kong $ to  1 U.S. $, NA
+exhkus  Hong Kong / U.S. Foreign Exchange Rate, Hong Kong $ to  1 U.S. $
 M  1981.01 - 2010.08  n = 356
-exinus  India / U.S. Foreign Exchange Rate, Indian Rupees to  1 U.S. $, NA
+exinus  India / U.S. Foreign Exchange Rate, Indian Rupees to  1 U.S. $
 M  1973.01 - 2010.08  n = 452
-exitus  Italy / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Italian Lire to  1 U.S. $, NA
+exitus  Italy / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Italian Lire to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
-exjpus  Japan / U.S. Foreign Exchange Rate, Japanese Yen to  1 U.S. $, NA
+exjpus  Japan / U.S. Foreign Exchange Rate, Japanese Yen to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-exkous  South Korea / U.S. Foreign Exchange Rate, South Korean Won to  1 U.S. $, NA
+exkous  South Korea / U.S. Foreign Exchange Rate, South Korean Won to  1 U.S. $
 M  1981.04 - 2010.08  n = 353
-exmaus  Malaysia / U.S. Foreign Exchange Rate, Malaysian Ringgit to  1 U.S. $, NA
+exmaus  Malaysia / U.S. Foreign Exchange Rate, Malaysian Ringgit to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-exmxus  Mexico / U.S. Foreign Exchange Rate, Mexican New Pesos to  1 U.S. $, NA
+exmxus  Mexico / U.S. Foreign Exchange Rate, Mexican New Pesos to  1 U.S. $
 M  1993.11 - 2010.08  n = 202
-exneus  Netherlands / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Dutch Guilder to  1 U.S. $, NA
+exneus  Netherlands / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Dutch Guilder to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
-exnous  Norway / U.S. Foreign Exchange Rate, Norwegian Kroner to  1 U.S. $, NA
+exnous  Norway / U.S. Foreign Exchange Rate, Norwegian Kroner to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-expous  Portugal / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Portuguese Escudos to  1 U.S. $, NA
+expous  Portugal / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Portuguese Escudos to  1 U.S. $
 M  1973.01 - 2001.12  n = 348
-exsdus  Sweden / U.S. Foreign Exchange Rate, Swedish Kronor to  1 U.S. $, NA
+exsdus  Sweden / U.S. Foreign Exchange Rate, Swedish Kronor to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-exsfus  South Africa / U.S. Foreign Exchange Rate, South African Rand to  1 U.S. $, NA
+exsfus  South Africa / U.S. Foreign Exchange Rate, South African Rand to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-exsius  Singapore / U.S. Foreign Exchange Rate, Singapore $ to  1 U.S. $, NA
+exsius  Singapore / U.S. Foreign Exchange Rate, Singapore $ to  1 U.S. $
 M  1981.01 - 2010.08  n = 356
-exslus  Sri Lanka / U.S. Foreign Exchange Rate, Sri Lankan Rupees to  1 U.S. $, NA
+exslus  Sri Lanka / U.S. Foreign Exchange Rate, Sri Lankan Rupees to  1 U.S. $
 M  1973.01 - 2010.08  n = 452
-exspus  Spain / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Spanish Pesetas to  1 U.S. $, NA
+exspus  Spain / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Spanish Pesetas to  1 U.S. $
 M  1973.01 - 2001.12  n = 348
-exszus  Switzerland / U.S. Foreign Exchange Rate, Swiss Francs to  1 U.S. $, NA
+exszus  Switzerland / U.S. Foreign Exchange Rate, Swiss Francs to  1 U.S. $
 M  1971.01 - 2010.08  n = 476
-extaus  Taiwan / U.S. Foreign Exchange Rate, New Taiwan $ to  1 U.S. $, NA
+extaus  Taiwan / U.S. Foreign Exchange Rate, New Taiwan $ to  1 U.S. $
 M  1983.10 - 2010.08  n = 323
-exthus  Thailand / U.S. Foreign Exchange Rate, Thai Baht to  1 U.S. $, NA
+exthus  Thailand / U.S. Foreign Exchange Rate, Thai Baht to  1 U.S. $
 M  1981.01 - 2010.08  n = 356
-exusal  U.S. / Australia Foreign Exchange Rate, U.S. $ to  1 Australian $, NA
+exusal  U.S. / Australia Foreign Exchange Rate, U.S. $ to  1 Australian $
 M  1971.01 - 2010.08  n = 476
-exusec  Foreign Exchange Rate: Euro Community (DISCONTINUED SERIES), foreign exchange rate, NA
+exusec  Foreign Exchange Rate: Euro Community (DISCONTINUED SERIES), foreign exchange rate
 M  1978.12 - 1998.12  n = 241
-exuseu  U.S. / Euro Foreign Exchange Rate, U.S. $ to  1 Euro, NA
+exuseu  U.S. / Euro Foreign Exchange Rate, U.S. $ to  1 Euro
 M  1999.01 - 2010.08  n = 140
-exusir  U.S. / Ireland Foreign Exchange Rate (DISCONTINUED SERIES), U.S. $ to  1 Irish Pound, NA
+exusir  U.S. / Ireland Foreign Exchange Rate (DISCONTINUED SERIES), U.S. $ to  1 Irish Pound
 M  1971.01 - 2001.12  n = 372
-exusnz  U.S. / New Zealand Foreign Exchange Rate, U.S. $ to  1 New Zealand $, NA
+exusnz  U.S. / New Zealand Foreign Exchange Rate, U.S. $ to  1 New Zealand $
 M  1971.01 - 2010.08  n = 476
-exusuk  U.S. / U.K Foreign Exchange Rate, U.S. $ to  1 British Pound, NA
+exusuk  U.S. / U.K Foreign Exchange Rate, U.S. $ to  1 British Pound
 M  1971.01 - 2010.08  n = 476
-exvzus  Venezuela / U.S. Foreign Exchange Rate, Venezuelan Bolivares to  1 U.S. $, NA
+exvzus  Venezuela / U.S. Foreign Exchange Rate, Venezuelan Bolivares to  1 U.S. $
 M  1995.01 - 2010.08  n = 188
-twexbmth  Trade Weighted Exchange Index: Broad, Index Jan 1997=100, NA
+twexbmth  Trade Weighted Exchange Index: Broad, Index Jan 1997=100
 M  1973.01 - 2010.08  n = 452
-twexmmth  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100, NA
+twexmmth  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100
 M  1973.01 - 2010.08  n = 452
-twexmthy  Trade-Weighted Exchange Value of U.S. Dollar vs G-10 Countries (DISCONTINUED SERIES), foreign exchange rate, NA
+twexmthy  Trade-Weighted Exchange Value of U.S. Dollar vs G-10 Countries (DISCONTINUED SERIES), foreign exchange rate
 M  1971.01 - 1998.12  n = 336
-twexomth  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100, NA
+twexomth  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100
 M  1973.01 - 2010.08  n = 452
-aexbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $, NA
+aexbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $
 A  1995 - 2009  n = 15
-aexcaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $, NA
+aexcaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $
 A  1971 - 2009  n = 39
-aexchus  China / U.S. Foreign Exchange Rate, Chinese Yuan to  1 U.S. $, NA
+aexchus  China / U.S. Foreign Exchange Rate, Chinese Yuan to  1 U.S. $
 A  1981 - 2009  n = 29
-aexdnus  Denmark / U.S. Foreign Exchange Rate, Danish Kroner to  1 U.S. $, NA
+aexdnus  Denmark / U.S. Foreign Exchange Rate, Danish Kroner to  1 U.S. $
 A  1971 - 2009  n = 39
-aexhkus  Hong Kong / U.S. Foreign Exchange Rate, Hong Kong $ to  1 U.S. $, NA
+aexhkus  Hong Kong / U.S. Foreign Exchange Rate, Hong Kong $ to  1 U.S. $
 A  1981 - 2009  n = 29
-aexinus  India / U.S. Foreign Exchange Rate, Indian Rupees to  1 U.S. $, NA
+aexinus  India / U.S. Foreign Exchange Rate, Indian Rupees to  1 U.S. $
 A  1973 - 2009  n = 37
-aexjpus  Japan / U.S. Foreign Exchange Rate, Japanese Yen to  1 U.S. $, NA
+aexjpus  Japan / U.S. Foreign Exchange Rate, Japanese Yen to  1 U.S. $
 A  1971 - 2009  n = 39
-aexkous  South Korea / U.S. Foreign Exchange Rate, South Korean Won to  1 U.S. $, NA
+aexkous  South Korea / U.S. Foreign Exchange Rate, South Korean Won to  1 U.S. $
 A  1981 - 2009  n = 29
-aexmaus  Malaysia / U.S. Foreign Exchange Rate, Malaysian Ringgit to  1 U.S. $, NA
+aexmaus  Malaysia / U.S. Foreign Exchange Rate, Malaysian Ringgit to  1 U.S. $
 A  1971 - 2009  n = 39
-aexmxus  Mexico / U.S. Foreign Exchange Rate, Mexican New Pesos to  1 U.S. $, NA
+aexmxus  Mexico / U.S. Foreign Exchange Rate, Mexican New Pesos to  1 U.S. $
 A  1993 - 2009  n = 17
-aexnous  Norway / U.S. Foreign Exchange Rate, Norwegian Kroner to  1 U.S. $, NA
+aexnous  Norway / U.S. Foreign Exchange Rate, Norwegian Kroner to  1 U.S. $
 A  1971 - 2009  n = 39
-aexsdus  Sweden / U.S. Foreign Exchange Rate, Swedish Kronor to  1 U.S. $, NA
+aexsdus  Sweden / U.S. Foreign Exchange Rate, Swedish Kronor to  1 U.S. $
 A  1971 - 2009  n = 39
-aexsfus  South Africa / U.S. Foreign Exchange Rate, South African Rand to  1 U.S. $, NA
+aexsfus  South Africa / U.S. Foreign Exchange Rate, South African Rand to  1 U.S. $
 A  1971 - 2009  n = 39
-aexsius  Singapore / U.S. Foreign Exchange Rate, Singapore $ to  1 U.S. $, NA
+aexsius  Singapore / U.S. Foreign Exchange Rate, Singapore $ to  1 U.S. $
 A  1981 - 2009  n = 29
-aexslus  Sri Lanka / U.S. Foreign Exchange Rate, Sri Lankan Rupees to  1 U.S. $, NA
+aexslus  Sri Lanka / U.S. Foreign Exchange Rate, Sri Lankan Rupees to  1 U.S. $
 A  1973 - 2009  n = 37
-aexszus  Switzerland / U.S. Foreign Exchange Rate, Swiss Francs to  1 U.S. $, NA
+aexszus  Switzerland / U.S. Foreign Exchange Rate, Swiss Francs to  1 U.S. $
 A  1971 - 2009  n = 39
-aextaus  Taiwan / U.S. Foreign Exchange Rate, New Taiwan $ to  1 U.S. $, NA
+aextaus  Taiwan / U.S. Foreign Exchange Rate, New Taiwan $ to  1 U.S. $
 A  1983 - 2009  n = 27
-aexthus  Thailand / U.S. Foreign Exchange Rate, Thai Baht to  1 U.S. $, NA
+aexthus  Thailand / U.S. Foreign Exchange Rate, Thai Baht to  1 U.S. $
 A  1981 - 2009  n = 29
-aexusal  U.S. / Australia Foreign Exchange Rate, U.S. $ to  1 Australian $, NA
+aexusal  U.S. / Australia Foreign Exchange Rate, U.S. $ to  1 Australian $
 A  1971 - 2009  n = 39
-aexuseu  U.S. / Euro Foreign Exchange Rate, U.S. $ to  1 Euro, NA
+aexuseu  U.S. / Euro Foreign Exchange Rate, U.S. $ to  1 Euro
 A  1999 - 2009  n = 11
-aexusnz  U.S. / New Zealand Foreign Exchange Rate, U.S. $ to  1 New Zealand $, NA
+aexusnz  U.S. / New Zealand Foreign Exchange Rate, U.S. $ to  1 New Zealand $
 A  1971 - 2009  n = 39
-aexusuk  U.S. / U.K Foreign Exchange Rate, U.S. $ to  1 British Pound, NA
+aexusuk  U.S. / U.K Foreign Exchange Rate, U.S. $ to  1 British Pound
 A  1971 - 2009  n = 39
-aexvzus  Venezuela / U.S. Foreign Exchange Rate, Venezuelan Bolivares to  1 U.S. $, NA
+aexvzus  Venezuela / U.S. Foreign Exchange Rate, Venezuelan Bolivares to  1 U.S. $
 A  1995 - 2009  n = 15
-twexbanl  Trade Weighted Exchange Index: Broad, Index 1997=100, NA
+twexbanl  Trade Weighted Exchange Index: Broad, Index 1997=100
 A  1973 - 2009  n = 37
-twexmanl  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100, NA
+twexmanl  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100
 A  1973 - 2009  n = 37
-twexoanl  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100, NA
+twexoanl  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100
 A  1973 - 2009  n = 37
-twexbanl  Trade Weighted Exchange Index: Broad, Index 1997=100, NA
-A  1973 - 2009  n = 37
-twexbmth  Trade Weighted Exchange Index: Broad, Index Jan 1997=100, NA
-M  1973.01 - 2010.08  n = 452
-twexmanl  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100, NA
-A  1973 - 2009  n = 37
-twexmmth  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100, NA
-M  1973.01 - 2010.08  n = 452
-twexmthy  Trade-Weighted Exchange Value of U.S. Dollar vs G-10 Countries (DISCONTINUED SERIES), foreign exchange rate, NA
-M  1971.01 - 1998.12  n = 336
-twexoanl  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100, NA
-A  1973 - 2009  n = 37
-twexomth  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100, NA
-M  1973.01 - 2010.08  n = 452
-aexusal  U.S. / Australia Foreign Exchange Rate, U.S. $ to  1 Australian $, NA
-A  1971 - 2009  n = 39
-exusal  U.S. / Australia Foreign Exchange Rate, U.S. $ to  1 Australian $, NA
-M  1971.01 - 2010.08  n = 476
-exauus  Austria / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Austrian Schillings to  1 U.S. $, NA
-M  1971.01 - 2001.12  n = 372
-exbeus  Belgium / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Belgian Francs to  1 U.S. $, NA
-M  1971.01 - 2001.12  n = 372
-aexbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $, NA
-A  1995 - 2009  n = 15
-exbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $, NA
-M  1995.01 - 2010.08  n = 188
-aexcaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-excaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-aexchus  China / U.S. Foreign Exchange Rate, Chinese Yuan to  1 U.S. $, NA
-A  1981 - 2009  n = 29
-exchus  China / U.S. Foreign Exchange Rate, Chinese Yuan to  1 U.S. $, NA
-M  1981.01 - 2010.08  n = 356
-aexdnus  Denmark / U.S. Foreign Exchange Rate, Danish Kroner to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-exdnus  Denmark / U.S. Foreign Exchange Rate, Danish Kroner to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-aexuseu  U.S. / Euro Foreign Exchange Rate, U.S. $ to  1 Euro, NA
-A  1999 - 2009  n = 11
-exusec  Foreign Exchange Rate: Euro Community (DISCONTINUED SERIES), foreign exchange rate, NA
-M  1978.12 - 1998.12  n = 241
-exuseu  U.S. / Euro Foreign Exchange Rate, U.S. $ to  1 Euro, NA
-M  1999.01 - 2010.08  n = 140
-exfnus  Finland / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Finnish Markkas to  1 U.S. $, NA
-M  1971.01 - 2001.12  n = 372
-exfrus  France / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), French Franc to  1 U.S. $, NA
-M  1971.01 - 2001.12  n = 372
-exgeus  Germany / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), German Deutsche Marks to  1 U.S. $, NA
-M  1971.01 - 2001.12  n = 372
-exgrus  Greece / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Greek Drachmas to  1 U.S. $, NA
-M  1981.04 - 2000.12  n = 237
-aexhkus  Hong Kong / U.S. Foreign Exchange Rate, Hong Kong $ to  1 U.S. $, NA
-A  1981 - 2009  n = 29
-exhkus  Hong Kong / U.S. Foreign Exchange Rate, Hong Kong $ to  1 U.S. $, NA
-M  1981.01 - 2010.08  n = 356
-aexinus  India / U.S. Foreign Exchange Rate, Indian Rupees to  1 U.S. $, NA
-A  1973 - 2009  n = 37
-exinus  India / U.S. Foreign Exchange Rate, Indian Rupees to  1 U.S. $, NA
-M  1973.01 - 2010.08  n = 452
-exusir  U.S. / Ireland Foreign Exchange Rate (DISCONTINUED SERIES), U.S. $ to  1 Irish Pound, NA
-M  1971.01 - 2001.12  n = 372
-exitus  Italy / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Italian Lire to  1 U.S. $, NA
-M  1971.01 - 2001.12  n = 372
-aexjpus  Japan / U.S. Foreign Exchange Rate, Japanese Yen to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-exjpus  Japan / U.S. Foreign Exchange Rate, Japanese Yen to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-aexmaus  Malaysia / U.S. Foreign Exchange Rate, Malaysian Ringgit to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-exmaus  Malaysia / U.S. Foreign Exchange Rate, Malaysian Ringgit to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-aexmxus  Mexico / U.S. Foreign Exchange Rate, Mexican New Pesos to  1 U.S. $, NA
-A  1993 - 2009  n = 17
-exmxus  Mexico / U.S. Foreign Exchange Rate, Mexican New Pesos to  1 U.S. $, NA
-M  1993.11 - 2010.08  n = 202
-exneus  Netherlands / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Dutch Guilder to  1 U.S. $, NA
-M  1971.01 - 2001.12  n = 372
-aexusnz  U.S. / New Zealand Foreign Exchange Rate, U.S. $ to  1 New Zealand $, NA
-A  1971 - 2009  n = 39
-exusnz  U.S. / New Zealand Foreign Exchange Rate, U.S. $ to  1 New Zealand $, NA
-M  1971.01 - 2010.08  n = 476
-aexnous  Norway / U.S. Foreign Exchange Rate, Norwegian Kroner to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-exnous  Norway / U.S. Foreign Exchange Rate, Norwegian Kroner to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-expous  Portugal / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Portuguese Escudos to  1 U.S. $, NA
-M  1973.01 - 2001.12  n = 348
-aexsius  Singapore / U.S. Foreign Exchange Rate, Singapore $ to  1 U.S. $, NA
-A  1981 - 2009  n = 29
-exsius  Singapore / U.S. Foreign Exchange Rate, Singapore $ to  1 U.S. $, NA
-M  1981.01 - 2010.08  n = 356
-aexsfus  South Africa / U.S. Foreign Exchange Rate, South African Rand to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-exsfus  South Africa / U.S. Foreign Exchange Rate, South African Rand to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-aexkous  South Korea / U.S. Foreign Exchange Rate, South Korean Won to  1 U.S. $, NA
-A  1981 - 2009  n = 29
-exkous  South Korea / U.S. Foreign Exchange Rate, South Korean Won to  1 U.S. $, NA
-M  1981.04 - 2010.08  n = 353
-exspus  Spain / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Spanish Pesetas to  1 U.S. $, NA
-M  1973.01 - 2001.12  n = 348
-aexslus  Sri Lanka / U.S. Foreign Exchange Rate, Sri Lankan Rupees to  1 U.S. $, NA
-A  1973 - 2009  n = 37
-exslus  Sri Lanka / U.S. Foreign Exchange Rate, Sri Lankan Rupees to  1 U.S. $, NA
-M  1973.01 - 2010.08  n = 452
-aexsdus  Sweden / U.S. Foreign Exchange Rate, Swedish Kronor to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-exsdus  Sweden / U.S. Foreign Exchange Rate, Swedish Kronor to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-aexszus  Switzerland / U.S. Foreign Exchange Rate, Swiss Francs to  1 U.S. $, NA
-A  1971 - 2009  n = 39
-exszus  Switzerland / U.S. Foreign Exchange Rate, Swiss Francs to  1 U.S. $, NA
-M  1971.01 - 2010.08  n = 476
-aextaus  Taiwan / U.S. Foreign Exchange Rate, New Taiwan $ to  1 U.S. $, NA
-A  1983 - 2009  n = 27
-extaus  Taiwan / U.S. Foreign Exchange Rate, New Taiwan $ to  1 U.S. $, NA
-M  1983.10 - 2010.08  n = 323
-aexthus  Thailand / U.S. Foreign Exchange Rate, Thai Baht to  1 U.S. $, NA
-A  1981 - 2009  n = 29
-exthus  Thailand / U.S. Foreign Exchange Rate, Thai Baht to  1 U.S. $, NA
-M  1981.01 - 2010.08  n = 356
-aexusuk  U.S. / U.K Foreign Exchange Rate, U.S. $ to  1 British Pound, NA
-A  1971 - 2009  n = 39
-exusuk  U.S. / U.K Foreign Exchange Rate, U.S. $ to  1 British Pound, NA
-M  1971.01 - 2010.08  n = 476
-aexvzus  Venezuela / U.S. Foreign Exchange Rate, Venezuelan Bolivares to  1 U.S. $, NA
-A  1995 - 2009  n = 15
-exvzus  Venezuela / U.S. Foreign Exchange Rate, Venezuelan Bolivares to  1 U.S. $, NA
-M  1995.01 - 2010.08  n = 188
 cbi  Change in Private Inventories, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-cbia  Change in Private Inventories, Bil. of $, NA
+cbia  Change in Private Inventories, Bil. of $
 A  1929 - 2009  n = 81
 cbic1  Real Change in Private Inventories, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
 cbic96  Real Change in Private Inventories, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-cbica  Real Change in Private Inventories, Bil. of Chained 2005 $, NA
+cbica  Real Change in Private Inventories, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 finsal  Final Sales of Domestic Product, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
@@ -2199,7 +2067,7 @@ finslc1  Real Final Sales of Domestic Product, 1 Decimal, Bil. of Chained 2005 $
 Q  1947.1 - 2010.2  n = 254
 finslc96  Real Final Sales of Domestic Product, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-finslca  Real Final Sales of Domestic Product, Bil. of Chained 2005 $, NA
+finslca  Real Final Sales of Domestic Product, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 fsdp  Final Sales to Domestic Purchasers, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
@@ -2207,67 +2075,67 @@ gdb  Gross Domestic Purchases, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
 gdp  Gross Domestic Product, 1 Decimal, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-gdpa  Gross Domestic Product, Bil. of $, NA
+gdpa  Gross Domestic Product, Bil. of $
 A  1929 - 2009  n = 81
 gdpc1  Real Gross Domestic Product, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
 gdpc96  Real Gross Domestic Product, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-gdpca  Real Gross Domestic Product, Bil. of Chained 2005 $, NA
+gdpca  Real Gross Domestic Product, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
-gdppot  Real Potential Gross Domestic Product, Bil. of Chained 2005 $, NA
+gdppot  Real Potential Gross Domestic Product, Bil. of Chained 2005 $
 Q  1949.1 - 2020.4  n = 288
 gnp  Gross National Product, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 286
-gnpa  Gross National Product, Bil. of $, NA
+gnpa  Gross National Product, Bil. of $
 A  1929 - 2009  n = 81
 gnpc96  Real Gross National Product, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-gnpca  Real Gross National Product, Bil. of Chained 2005 $, NA
+gnpca  Real Gross National Product, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
-usngsp  U.S. Total Gross Domestic Product by State, Mil. of $, NA
+usngsp  U.S. Total Gross Domestic Product by State, Mil. of $
 A  1997 - 2008  n = 12
-usrgsp  U.S. Total Gross Domestic Product by State, Mil. of Chained 2000 $, NA
+usrgsp  U.S. Total Gross Domestic Product by State, Mil. of Chained 2000 $
 A  1997 - 2008  n = 12
-afdef  NET Federal Government Saving, Bil. of $, NA
+afdef  NET Federal Government Saving, Bil. of $
 A  1929 - 2009  n = 81
-afexpnd  Federal Government: Current Expenditures, Bil. of $, NA
+afexpnd  Federal Government: Current Expenditures, Bil. of $
 A  1929 - 2009  n = 81
-afgsl  Federal Grants-in-Aid to State & Local Governments, Bil. of $, NA
+afgsl  Federal Grants-in-Aid to State & Local Governments, Bil. of $
 A  1929 - 2009  n = 81
-afrecpt  Federal Government: Current Receipts, Bil. of $, NA
+afrecpt  Federal Government: Current Receipts, Bil. of $
 A  1929 - 2009  n = 81
-aslctax  State & Local Government: Tax Receipts on Corporate Income, Bil. of $, NA
+aslctax  State & Local Government: Tax Receipts on Corporate Income, Bil. of $
 A  1929 - 2009  n = 81
-aslexpnd  State & Local Government Current Expenditures, Bil. of $, NA
+aslexpnd  State & Local Government Current Expenditures, Bil. of $
 A  1929 - 2009  n = 81
-aslpitax  State & Local Government: Personal Income Tax Receipts, Bil. of $, NA
+aslpitax  State & Local Government: Personal Income Tax Receipts, Bil. of $
 A  1929 - 2009  n = 81
-aslptax  State & Local Government: Property Taxes, Bil. of $, NA
+aslptax  State & Local Government: Property Taxes, Bil. of $
 A  1929 - 2009  n = 81
-aslrecpt  State & Local Government: Current Receipts, Bil. of $, NA
+aslrecpt  State & Local Government: Current Receipts, Bil. of $
 A  1929 - 2009  n = 81
-aslrsi  State & Local Government Receipts: Contributions for Social Insurance, Bil. of $, NA
+aslrsi  State & Local Government Receipts: Contributions for Social Insurance, Bil. of $
 A  1942 - 2009  n = 81
-aslstax  State & Local Government: Sales Taxes, Bil. of $, NA
+aslstax  State & Local Government: Sales Taxes, Bil. of $
 A  1929 - 2009  n = 81
 dgi  Federal National Defense Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 dgic96  Real National Defense Gross Investment, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
-fctax  Federal Government: Tax Receipts on Corporate Income, Bil. of $, NA
+fctax  Federal Government: Tax Receipts on Corporate Income, Bil. of $
 A  1929 - 2009  n = 81
 fdefx  National Defense Consumption Expenditures & Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
 fgce  Federal Consumption Expenditures & Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-fgcea  Federal Government Consumption & Gross Investment, Bil. of $, NA
+fgcea  Federal Government Consumption & Gross Investment, Bil. of $
 A  1929 - 2009  n = 81
 fgcec1  Real Federal Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
 fgcec96  Real Federal Consumption Expenditures & Gross Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
-fgceca  Real Federal Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $, NA
+fgceca  Real Federal Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $
 A  1995 - 2009  n = 81
 fgdef  Net Federal Government Saving, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
@@ -2279,17 +2147,17 @@ fgsl  Federal Grants-in-Aid to State & Local Governments, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
 fndefx  Nondefense Consumption Expenditures & Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-frsi  Federal Government Receipts: Contributions for Social Insurance, Bil. of $, NA
+frsi  Federal Government Receipts: Contributions for Social Insurance, Bil. of $
 A  1929 - 2009  n = 81
 gce  Government Consumption Expenditures & Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 286
-gcea  Government Consumption Expenditures & Gross Investment, Bil. of $, NA
+gcea  Government Consumption Expenditures & Gross Investment, Bil. of $
 A  1929 - 2009  n = 81
 gcec1  Real Government Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
 gcec96  Real Government Consumption Expenditures & Gross Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-gceca  Real Government Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $, NA
+gceca  Real Government Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 gexpnd  Government Current Expenditures, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
@@ -2301,13 +2169,13 @@ ndgic96  Real Federal Nondefense Gross Investment, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
 slce  State & Local Consumption Expenditures & Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-slcea  State and Local Government Consumption and Gross Investment, Bil. of $, NA
+slcea  State and Local Government Consumption and Gross Investment, Bil. of $
 A  1929 - 2009  n = 81
 slcec1  Real State & Local Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
 slcec96  Real State & Local Consumption Expenditures & Gross Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
-slceca  Real State & Local Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $, NA
+slceca  Real State & Local Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $
 A  1995 - 2009  n = 81
 sldef  Net State and Local Government Saving, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
@@ -2319,71 +2187,71 @@ slinvc96  Real State & Local Government: Gross Investment, Bil. of Chained 2005 
 Q  1995.1 - 2010.2  n = 254
 tgdef  Net Government Saving, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-usalclictax  State Government Tax Collections, Alcoholic Beverages Licenses in the United States, Thous. of $, NA
+usalclictax  State Government Tax Collections, Alcoholic Beverages Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usalcotax  State Government Tax Collections, Alcoholic Beverages - Selective Sales Taxes in the United States, Thous. of $, NA
+usalcotax  State Government Tax Collections, Alcoholic Beverages - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usamslictax  State Government Tax Collections, Amusements Licenses in the United States, Thous. of $, NA
+usamslictax  State Government Tax Collections, Amusements Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usamustax  State Government Tax Collections, Amusements - Selective Sales Taxes in the United States, Thous. of $, NA
+usamustax  State Government Tax Collections, Amusements - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usbuslictax  State Government Tax Collections, Occupation and Business Licenses in the United States, Thous. of $, NA
+usbuslictax  State Government Tax Collections, Occupation and Business Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
-uscorpinctx  State Government Tax Collections, Corporation Net Income Taxes in the United States, Thous. of $, NA
+uscorpinctx  State Government Tax Collections, Corporation Net Income Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-uscorplictax  State Government Tax Collections, Corporations in General Licenses in the United States, Thous. of $, NA
+uscorplictax  State Government Tax Collections, Corporations in General Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usdocutax  State Government Tax Collections, Documentary and Stock Transfer Taxes in the United States, Thous. of $, NA
+usdocutax  State Government Tax Collections, Documentary and Stock Transfer Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usdthgftax  State Government Tax Collections, Death and Gift Taxes in the United States, Thous. of $, NA
+usdthgftax  State Government Tax Collections, Death and Gift Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usfueltax  State Government Tax Collections, Motor Fuels - Selective Sales Taxes in the United States, Thous. of $, NA
+usfueltax  State Government Tax Collections, Motor Fuels - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ushuntlictax  State Government Tax Collections, Hunting and Fishing Licenses in the United States, Thous. of $, NA
+ushuntlictax  State Government Tax Collections, Hunting and Fishing Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usinctax  State Government Tax Collections, Individual Income Taxes in the United States, Thous. of $, NA
+usinctax  State Government Tax Collections, Individual Income Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usinsurtax  State Government Tax Collections, Insurance Premiums - Selective Sales Taxes in the United States, Thous. of $, NA
+usinsurtax  State Government Tax Collections, Insurance Premiums - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usmotolictax  State Government Tax Collections, Motor Vehicle Licenses in the United States, Thous. of $, NA
+usmotolictax  State Government Tax Collections, Motor Vehicle Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usmvopertax  State Government Tax Collections, Motor Vehicle Operators Licenses in the United States, Thous. of $, NA
+usmvopertax  State Government Tax Collections, Motor Vehicle Operators Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usnoclstax  State Government Tax Collections, Taxes Not Elsewhere Classified in the United States, Thous. of $, NA
+usnoclstax  State Government Tax Collections, Taxes Not Elsewhere Classified in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usothlictax  State Government Tax Collections, Other License Taxes in the United States, Thous. of $, NA
+usothlictax  State Government Tax Collections, Other License Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usothslstax  State Government Tax Collections, Other Selective Sales and Gross Receipts Taxes in the United States, Thous. of $, NA
+usothslstax  State Government Tax Collections, Other Selective Sales and Gross Receipts Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usparitax  State Government Tax Collections, Pari-Mutuels - Selective Sales Taxes in the United States, Thous. of $, NA
+usparitax  State Government Tax Collections, Pari-Mutuels - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usproptax  State Government Tax Collections, Property Taxes in the United States, Thous. of $, NA
+usproptax  State Government Tax Collections, Property Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ussalestax  State Government Tax Collections, General Sales and Gross Receipts Taxes in the United States, Thous. of $, NA
+ussalestax  State Government Tax Collections, General Sales and Gross Receipts Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usslgrtax  State Government Tax Collections, Total Sales and Gross Receipts Taxes in the United States, Thous. of $, NA
+usslgrtax  State Government Tax Collections, Total Sales and Gross Receipts Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ussvrnctax  State Government Tax Collections, Severance Taxes in the United States, Thous. of $, NA
+ussvrnctax  State Government Tax Collections, Severance Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ustlinctax  State Government Tax Collections, Total Income Taxes in the United States, Thous. of $, NA
+ustlinctax  State Government Tax Collections, Total Income Taxes in the United States, Thous. of $
 A  2005 - 2009  n = 5
-ustllictax  State Government Tax Collections, Total LicenseTaxes in the United States, Thous. of $, NA
+ustllictax  State Government Tax Collections, Total LicenseTaxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ustlothtax  State Government Tax Collections, Total Other Taxes in the United States, Thous. of $, NA
+ustlothtax  State Government Tax Collections, Total Other Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ustlsltax  State Government Tax Collections, Total Selective Sales Taxes in the United States, Thous. of $, NA
+ustlsltax  State Government Tax Collections, Total Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ustobactax  State Government Tax Collections, Tobacco Products - Selective Sales Taxes in the United States, Thous. of $, NA
+ustobactax  State Government Tax Collections, Tobacco Products - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-ustotltax  State Government Tax Collections, Total Taxes in the United States, Thous. of $, NA
+ustotltax  State Government Tax Collections, Total Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usutilitax  State Government Tax Collections, Public Utilities - Selective Sales Taxes in the United States, Thous. of $, NA
+usutilitax  State Government Tax Collections, Public Utilities - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2009  n = 18
-usutillictax  State Government Tax Collections, Public Utilities Licenses in the United States, Thous. of $, NA
+usutillictax  State Government Tax Collections, Public Utilities Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
 expgs  Exports of Goods & Services, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-expgsa  Exports of Goods and Services, Bil. of $, NA
+expgsa  Exports of Goods and Services, Bil. of $
 A  1929 - 2009  n = 81
 expgsc1  Real Exports of Goods & Services, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
@@ -2391,17 +2259,17 @@ expgsc1n  Real Exports of Goods and Services, GNP-Basis (Discontinued Series), B
 Q  1947.1 - 1991.3  n = 179
 expgsc96  Real Exports of Goods & Services, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-expgsca  Real Exports of Goods & Services, Bil. of Chained 2005 $, NA
+expgsca  Real Exports of Goods & Services, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
-expgscna  Real Exports of Goods & Services, GNP-Basis (Discontinued series), Bil. of 1982 $, NA
+expgscna  Real Exports of Goods & Services, GNP-Basis (Discontinued series), Bil. of 1982 $
 A  1929 - 1990  n = 62
 expgsn  Exports of Goods and Services, GNP-Basis (Discontinued Series), Bil. of $, SAAR
 Q  1946.1 - 1991.3  n = 183
-expgsna  Exports of Goods & Services, GNP-Basis (Discontinued series), Bil. of $, NA
+expgsna  Exports of Goods & Services, GNP-Basis (Discontinued series), Bil. of $
 A  1929 - 1990  n = 62
 impgs  Imports of Goods & Services, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-impgsa  Imports of Goods and Services, Bil. of $, NA
+impgsa  Imports of Goods and Services, Bil. of $
 A  1929 - 2009  n = 81
 impgsc1  Real Imports of Goods & Services, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
@@ -2409,13 +2277,13 @@ impgsc1n  Real Imports of Goods and Services, GNP-Basis (Discontinued Series), B
 Q  1947.1 - 1991.3  n = 179
 impgsc96  Real Imports of Goods & Services, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-impgsca  Real Imports of Goods and Services, Bil. of Chained 2005 $, NA
+impgsca  Real Imports of Goods and Services, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
-impgscna  Real Imports of Goods & Services, GNP-Basis (Discontinued series), Bil. of 1982 $, NA
+impgscna  Real Imports of Goods & Services, GNP-Basis (Discontinued series), Bil. of 1982 $
 A  1929 - 1990  n = 62
 impgsn  Imports of Goods and Services, GNP-Basis (Discontinued Series), Bil. of $, SAAR
 Q  1946.1 - 1991.3  n = 183
-impgsna  Imports of Goods & Services, GNP-Basis (Discontinued series), Bil. of $, NA
+impgsna  Imports of Goods & Services, GNP-Basis (Discontinued series), Bil. of $
 A  1929 - 1990  n = 62
 netexc  Real Net Exports of Goods & Services, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
@@ -2503,11 +2371,11 @@ dspic96  Real Disposable Personal Income, Bil. of Chained 2005 $, SAAR
 M  1959.01 - 2010.07  n = 619
 pcdg  Personal Consumption Expenditures: Durable Goods, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-pcdga  Personal Consumption Expenditures: Durable Goods, Bil. of $, NA
+pcdga  Personal Consumption Expenditures: Durable Goods, Bil. of $
 A  1929 - 2009  n = 81
 pcdgcc96  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
-pcdgcca  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chained 2005 $, NA
+pcdgcca  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chained 2005 $
 A  1995 - 2009  n = 81
 pce  Personal Consumption Expenditures, Bil. of $, SAAR
 M  1959.01 - 2010.07  n = 619
@@ -2515,11 +2383,11 @@ pcec  Personal Consumption Expenditures, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 286
 pcec96  Real Personal Consumption Expenditures, Bil. of Chained 2005 $, SAAR
 M  1995.01 - 2010.07  n = 619
-pceca  Personal Consumption Expenditures, Bil. of $, NA
+pceca  Personal Consumption Expenditures, Bil. of $
 A  1929 - 2009  n = 81
 pcecc96  Real Personal Consumption Expenditures, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-pcecca  Real Personal Consumption Expenditures, Bil. of Chained 2005 $, NA
+pcecca  Real Personal Consumption Expenditures, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 pcedg  Personal Consumption Expenditures: Durable Goods, Bil. of $, SAAR
 M  1959.01 - 2010.07  n = 619
@@ -2535,19 +2403,19 @@ pcesc96  Real Personal Consumption Expenditures: Services, Bil. of Chained 2005 
 M  1995.01 - 2010.07  n = 619
 pcesv  Personal Consumption Expenditures: Services, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-pcesva  Personal Consumption Expenditures: Services, Bil. of $, NA
+pcesva  Personal Consumption Expenditures: Services, Bil. of $
 A  1929 - 2009  n = 81
 pcesvc96  Real Personal Consumption Expenditures: Services, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
-pcesvca  Real Personal Consumption Expenditures: Services, Bil. of Chained 2005 $, NA
+pcesvca  Real Personal Consumption Expenditures: Services, Bil. of Chained 2005 $
 A  1995 - 2009  n = 81
 pcnd  Personal Consumption Expenditures: Nondurable Goods, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-pcnda  Personal Consumption Expenditures: Nondurable Goods, Bil. of $, NA
+pcnda  Personal Consumption Expenditures: Nondurable Goods, Bil. of $
 A  1929 - 2009  n = 81
 pcndgc96  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
-pcndgca  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chained 2005 $, NA
+pcndgca  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chained 2005 $
 A  1995 - 2009  n = 81
 pctr  Personal Current Transfer Receipts, Bil. of $, SAAR
 M  1959.01 - 2010.07  n = 619
@@ -2591,25 +2459,25 @@ pcepilfe  Personal Consumption Expenditures: Chain-Type Price Index Less Food an
 M  1959.01 - 2010.07  n = 619
 fpi  Fixed Private Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-fpia  Private Fixed Investment, Bil. of $, NA
+fpia  Private Fixed Investment, Bil. of $
 A  1929 - 2009  n = 81
 fpic1  Real Private Fixed Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
 fpic96  Real Private Fixed Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
-fpica  Real Private Fixed Investment, Bil. of Chained 2005 $, NA
+fpica  Real Private Fixed Investment, Bil. of Chained 2005 $
 A  1967 - 2009  n = 81
 ggsave  Gross Government Saving, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
 gpdi  Gross Private Domestic Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 286
-gpdia  Gross Private Domestic Investment, Bil. of $, NA
+gpdia  Gross Private Domestic Investment, Bil. of $
 A  1929 - 2009  n = 81
 gpdic1  Real Gross Private Domestic Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
 gpdic96  Real Gross Private Domestic Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1947.1 - 2010.2  n = 254
-gpdica  Real Gross Private Domestic Investment, Bil. of Chained 2005 $, NA
+gpdica  Real Gross Private Domestic Investment, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 gpsave  Gross Private Saving, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
@@ -2619,655 +2487,399 @@ nripdc1  Real Nonresidential Investment: Equipment & Software, 1 Decimal, Bil. o
 Q  1995.1 - 2010.2  n = 254
 nripdc96  Real Nonresidential Investment: Equipment & Software, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
-nripdca  Real Private Nonresidential Investment: Equipment and Software, Bil. of Chained 2005 $, NA
+nripdca  Real Private Nonresidential Investment: Equipment and Software, Bil. of Chained 2005 $
 A  1967 - 2009  n = 81
 pmsave  Personal Saving, Bil. of $, SAAR
 M  1959.01 - 2010.07  n = 619
 pnfi  Private Nonresidential Fixed Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-pnfia  Private Nonresidential Fixed Investment, Bil. of $, NA
+pnfia  Private Nonresidential Fixed Investment, Bil. of $
 A  1929 - 2009  n = 81
 pnfic1  Real Private Nonresidential Fixed Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
 pnfic96  Real Private Nonresidential Fixed Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
-pnfica  Real Private Nonresidential Fixed Investment, Bil. of Chained 2005 $, NA
+pnfica  Real Private Nonresidential Fixed Investment, Bil. of Chained 2005 $
 A  1967 - 2009  n = 81
 prfi  Private Residential Fixed Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 258
-prfia  Private Residential Investment, Bil. of $, NA
+prfia  Private Residential Investment, Bil. of $
 A  1929 - 2009  n = 81
 prfic1  Real Private Residential Fixed Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 254
 prfic96  Real Private Residential Fixed Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
-prfica  Real Private Residential Fixed Investment, Bil. of Chained 2005 $, NA
+prfica  Real Private Residential Fixed Investment, Bil. of Chained 2005 $
 A  1967 - 2009  n = 81
 psave  Personal Saving, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 286
 psavert  Personal Saving Rate, %, SAAR
 M  1959.01 - 2010.07  n = 619
-cd1m  1-Month Certificate of Deposit: Secondary Market Rate, %, NA
+cd1m  1-Month Certificate of Deposit: Secondary Market Rate, %
 M  1965.12 - 2010.08  n = 537
-cd3m  3-Month Certificate of Deposit: Secondary Market Rate, %, NA
+cd3m  3-Month Certificate of Deposit: Secondary Market Rate, %
 M  1964.06 - 2010.08  n = 555
-cd6m  6-Month Certificate of Deposit: Secondary Market Rate, %, NA
+cd6m  6-Month Certificate of Deposit: Secondary Market Rate, %
 M  1964.06 - 2010.08  n = 555
-cp1m  1-Month Commercial Paper Rate (DISCONTINUED SERIES), %, NA
+cp1m  1-Month Commercial Paper Rate (DISCONTINUED SERIES), %
 M  1971.04 - 1997.08  n = 317
-cp3m  3-Month Commercial Paper Rate (DISCONTINUED SERIES), %, NA
+cp3m  3-Month Commercial Paper Rate (DISCONTINUED SERIES), %
 M  1971.04 - 1997.08  n = 317
-cp6m  6-Month Commercial Paper Rate (DISCONTINUED SERIES), %, NA
+cp6m  6-Month Commercial Paper Rate (DISCONTINUED SERIES), %
 M  1970.01 - 1997.08  n = 332
-cpf1m  1-Month AA Financial Commercial Paper Rate, %, NA
+cpf1m  1-Month AA Financial Commercial Paper Rate, %
 M  1997.01 - 2010.08  n = 164
-cpf2m  2-Month AA Financial Commercial Paper Rate, %, NA
+cpf2m  2-Month AA Financial Commercial Paper Rate, %
 M  1997.01 - 2010.08  n = 164
-cpf3m  3-Month AA Financial Commercial Paper Rate, %, NA
+cpf3m  3-Month AA Financial Commercial Paper Rate, %
 M  1997.01 - 2010.08  n = 164
-cpn1m  1-Month AA Nonfinancial Commercial Paper Rate, %, NA
+cpn1m  1-Month AA Nonfinancial Commercial Paper Rate, %
 M  1997.01 - 2010.08  n = 164
-cpn2m  2-Month AA Nonfinancial Commercial Paper Rate, %, NA
+cpn2m  2-Month AA Nonfinancial Commercial Paper Rate, %
 M  1997.01 - 2010.08  n = 164
-cpn3m  3-Month AA Nonfinancial Commercial Paper Rate, %, NA
+cpn3m  3-Month AA Nonfinancial Commercial Paper Rate, %
 M  1997.01 - 2010.08  n = 164
-aaa  Moody's Seasoned Aaa Corporate Bond Yield, %, NA
+aaa  Moody's Seasoned Aaa Corporate Bond Yield, %
 M  1919.01 - 2010.08  n = 1100
-baa  Moody's Seasoned Baa Corporate Bond Yield, %, NA
+baa  Moody's Seasoned Baa Corporate Bond Yield, %
 M  1919.01 - 2010.08  n = 1100
-fedfunds  Effective Federal Funds Rate, %, NA
+fedfunds  Effective Federal Funds Rate, %
 M  1954.07 - 2010.08  n = 674
-mdiscrt  Discount Rate (DISCONTINUED SERIES), %, NA
+mdiscrt  Discount Rate (DISCONTINUED SERIES), %
 M  1950.01 - 2002.12  n = 636
-mpcredit  Primary Credit Rate, %, NA
+mpcredit  Primary Credit Rate, %
 M  2003.02 - 2010.08  n = 91
-mprime  Bank Prime Loan Rate, %, NA
+mprime  Bank Prime Loan Rate, %
 M  1949.01 - 2010.08  n = 740
-tb1ya  1-Year Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %, NA
+tb1ya  1-Year Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %
 M  1959.04 - 2000.06  n = 493
-tb1yr  1-Year Treasury Bill: Secondary Market Rate, %, NA
+tb1yr  1-Year Treasury Bill: Secondary Market Rate, %
 M  1959.07 - 2010.08  n = 614
-tb1ys  1-Year Treasury Bill: Secondary Market Rate (DISCONTINUED SERIES), %, NA
+tb1ys  1-Year Treasury Bill: Secondary Market Rate (DISCONTINUED SERIES), %
 M  1959.07 - 2001.07  n = 505
-tb3ma  3-Month Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %, NA
+tb3ma  3-Month Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %
 M  1941.02 - 2000.06  n = 713
-tb3ms  3-Month Treasury Bill: Secondary Market Rate, %, NA
+tb3ms  3-Month Treasury Bill: Secondary Market Rate, %
 M  1934.01 - 2010.08  n = 920
-tb4wk  4-Week Treasury Bill: Secondary Market Rate, %, NA
+tb4wk  4-Week Treasury Bill: Secondary Market Rate, %
 M  2001.07 - 2010.08  n = 110
-tb6ma  6-Month Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %, NA
+tb6ma  6-Month Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %
 M  1960.01 - 2000.06  n = 486
-tb6ms  6-Month Treasury Bill: Secondary Market Rate, %, NA
+tb6ms  6-Month Treasury Bill: Secondary Market Rate, %
 M  1958.12 - 2010.08  n = 621
-fii10  10-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
+fii10  10-Year Treasury Inflation-Indexed Security, Constant Maturity, %
 M  2003.01 - 2010.08  n = 92
-fii20  20-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
+fii20  20-Year Treasury Inflation-Indexed Security, Constant Maturity, %
 M  2004.07 - 2010.08  n = 74
-fii30  30-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
+fii30  30-Year Treasury Inflation-Indexed Security, Constant Maturity, %
 M  2010.02 - 2010.08  n = 7
-fii5  5-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
+fii5  5-Year Treasury Inflation-Indexed Security, Constant Maturity, %
 M  2003.01 - 2010.08  n = 92
-fii7  7-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
+fii7  7-Year Treasury Inflation-Indexed Security, Constant Maturity, %
 M  2003.01 - 2010.08  n = 92
-gs1  1-Year Treasury Constant Maturity Rate, %, NA
+gs1  1-Year Treasury Constant Maturity Rate, %
 M  1953.04 - 2010.08  n = 689
-gs10  10-Year Treasury Constant Maturity Rate, %, NA
+gs10  10-Year Treasury Constant Maturity Rate, %
 M  1953.04 - 2010.08  n = 689
-gs1m  1-Month Treasury Constant Maturity Rate, %, NA
+gs1m  1-Month Treasury Constant Maturity Rate, %
 M  2001.07 - 2010.08  n = 110
-gs2  2-Year Treasury Constant Maturity Rate, %, NA
+gs2  2-Year Treasury Constant Maturity Rate, %
 M  1976.06 - 2010.08  n = 411
-gs20  20-Year Treasury Constant Maturity Rate, %, NA
+gs20  20-Year Treasury Constant Maturity Rate, %
 M  1953.04 - 2010.08  n = 689
-gs3  3-Year Treasury Constant Maturity Rate, %, NA
+gs3  3-Year Treasury Constant Maturity Rate, %
 M  1953.04 - 2010.08  n = 689
-gs30  30-Year Treasury Constant Maturity Rate, %, NA
+gs30  30-Year Treasury Constant Maturity Rate, %
 M  1977.02 - 2010.08  n = 403
-gs3m  3-Month Treasury Constant Maturity Rate, %, NA
+gs3m  3-Month Treasury Constant Maturity Rate, %
 M  1982.01 - 2010.08  n = 344
-gs5  5-Year Treasury Constant Maturity Rate, %, NA
+gs5  5-Year Treasury Constant Maturity Rate, %
 M  1953.04 - 2010.08  n = 689
-gs6m  6-Month Treasury Constant Maturity Rate, %, NA
+gs6m  6-Month Treasury Constant Maturity Rate, %
 M  1982.01 - 2010.08  n = 344
-gs7  7-Year Treasury Constant Maturity Rate, %, NA
+gs7  7-Year Treasury Constant Maturity Rate, %
 M  1969.07 - 2010.08  n = 494
-fii10  10-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2003.01 - 2010.08  n = 92
-fii20  20-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2004.07 - 2010.08  n = 74
-fii30  30-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2010.02 - 2010.08  n = 7
-fii5  5-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2003.01 - 2010.08  n = 92
-fii7  7-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2003.01 - 2010.08  n = 92
-tp10j07  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2007 (DISCONTINUED SERIES), %, NA
+tp10j07  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2007 (DISCONTINUED SERIES), %
 M  1997.02 - 2006.12  n = 119
-tp10j08  10-Year 3-5/8% Treasury Inflation-Indexed Note, Due 1/15/2008 (DISCONTINUED SERIES), %, NA
+tp10j08  10-Year 3-5/8% Treasury Inflation-Indexed Note, Due 1/15/2008 (DISCONTINUED SERIES), %
 M  1998.02 - 2007.12  n = 119
-tp10j09  10-Year 3-7/8% Treasury Inflation-Indexed Note, Due 1/15/2009 (DISCONTINUED SERIES), %, NA
+tp10j09  10-Year 3-7/8% Treasury Inflation-Indexed Note, Due 1/15/2009 (DISCONTINUED SERIES), %
 M  1999.01 - 2008.12  n = 120
-tp10j10  10-Year 4-1/4% Treasury Inflation-Indexed Note, Due 1/15/2010 (DISCONTINUED SERIES), %, NA
+tp10j10  10-Year 4-1/4% Treasury Inflation-Indexed Note, Due 1/15/2010 (DISCONTINUED SERIES), %
 M  2000.02 - 2009.12  n = 119
-tp10j11  10-Year 3-1/2% Treasury Inflation-Indexed Note, Due 1/15/2011, %, NA
+tp10j11  10-Year 3-1/2% Treasury Inflation-Indexed Note, Due 1/15/2011, %
 M  2001.02 - 2010.08  n = 115
-tp10j12  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2012, %, NA
+tp10j12  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2012, %
 M  2002.02 - 2010.08  n = 103
-tp10j14  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2014, %, NA
+tp10j14  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2014, %
 M  2004.02 - 2010.08  n = 79
-tp10j15  10-Year 1-5/8% Treasury Inflation-Indexed Note, Due 1/15/2015, %, NA
+tp10j15  10-Year 1-5/8% Treasury Inflation-Indexed Note, Due 1/15/2015, %
 M  2005.02 - 2010.08  n = 67
-tp10j16  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2016, %, NA
+tp10j16  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2016, %
 M  2006.02 - 2010.08  n = 55
-tp10j17  10-Year 2-3/8% Treasury Inflation-Indexed Note, Due 1/15/2017, %, NA
+tp10j17  10-Year 2-3/8% Treasury Inflation-Indexed Note, Due 1/15/2017, %
 M  2007.02 - 2010.08  n = 43
-tp10j18  10-Year 1-5/8% Treasury Inflation-Indexed Note, Due 1/15/2018, %, NA
+tp10j18  10-Year 1-5/8% Treasury Inflation-Indexed Note, Due 1/15/2018, %
 M  2008.02 - 2010.08  n = 31
-tp10j19  10-Year 2-1/8% Treasury Inflation-Indexed Note, Due 1/15/2019, %, NA
+tp10j19  10-Year 2-1/8% Treasury Inflation-Indexed Note, Due 1/15/2019, %
 M  2009.01 - 2010.08  n = 20
-tp10j20  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 1/15/2020, %, NA
+tp10j20  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 1/15/2020, %
 M  2010.02 - 2010.08  n = 7
-tp10l12  10-Year 3% Treasury Inflation-Indexed Note, Due 7/15/2012, %, NA
+tp10l12  10-Year 3% Treasury Inflation-Indexed Note, Due 7/15/2012, %
 M  2002.08 - 2010.08  n = 97
-tp10l13  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2013, %, NA
+tp10l13  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2013, %
 M  2003.08 - 2010.08  n = 85
-tp10l14  10-Year 2% Treasury Inflation-Indexed Note, Due 7/15/2014, %, NA
+tp10l14  10-Year 2% Treasury Inflation-Indexed Note, Due 7/15/2014, %
 M  2004.08 - 2010.08  n = 73
-tp10l15  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2015, %, NA
+tp10l15  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2015, %
 M  2005.08 - 2010.08  n = 61
-tp10l16  10-Year 2-1/2% Treasury Inflation-Indexed Note, Due 7/15/2016, %, NA
+tp10l16  10-Year 2-1/2% Treasury Inflation-Indexed Note, Due 7/15/2016, %
 M  2006.08 - 2010.08  n = 49
-tp10l17  10-Year 2-5/8% Treasury Inflation-Indexed Note, Due 7/15/2017, %, NA
+tp10l17  10-Year 2-5/8% Treasury Inflation-Indexed Note, Due 7/15/2017, %
 M  2007.08 - 2010.08  n = 37
-tp10l18  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 7/15/2018, %, NA
+tp10l18  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 7/15/2018, %
 M  2008.08 - 2010.08  n = 25
-tp10l19  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2019, %, NA
+tp10l19  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2019, %
 M  2009.07 - 2010.08  n = 14
-tp10l20  10-Year 1-1/4% Treasury Inflation-Indexed Note, Due 7/15/2020, %, NA
+tp10l20  10-Year 1-1/4% Treasury Inflation-Indexed Note, Due 7/15/2020, %
 M  2010.07 - 2010.08  n = 2
-tp30a28  30-Year 3-5/8% Treasury Inflation-Indexed Bond, Due 4/15/2028, %, NA
+tp30a28  30-Year 3-5/8% Treasury Inflation-Indexed Bond, Due 4/15/2028, %
 M  1998.05 - 2010.08  n = 148
-tp30a29  30-Year 3-7/8% Treasury Inflation-Indexed Bond, Due 4/15/2029, %, NA
+tp30a29  30-Year 3-7/8% Treasury Inflation-Indexed Bond, Due 4/15/2029, %
 M  1999.04 - 2010.08  n = 137
-tp3ha32  30-1/2-Year 3-3/8% Treasury Inflation-Indexed Bond, Due 4/15/2032, %, NA
+tp3ha32  30-1/2-Year 3-3/8% Treasury Inflation-Indexed Bond, Due 4/15/2032, %
 M  2001.11 - 2010.08  n = 106
-tp5a10  5-Year Treasury Inflation-Indexed Note, Due 4/15/2010 (DISCONTINUED SERIES), %, NA
+tp5a10  5-Year Treasury Inflation-Indexed Note, Due 4/15/2010 (DISCONTINUED SERIES), %
 M  2004.11 - 2010.03  n = 65
-tp5a11  5-Year Treasury Inflation-Indexed Note, Due 4/15/2011, %, NA
+tp5a11  5-Year Treasury Inflation-Indexed Note, Due 4/15/2011, %
 M  2006.05 - 2010.08  n = 52
-tp5l02  5-Year Treasury Inflation-Indexed Note, Due 7/15/2002 (DISCONTINUED SERIES), %, NA
+tp5l02  5-Year Treasury Inflation-Indexed Note, Due 7/15/2002 (DISCONTINUED SERIES), %
 M  1997.07 - 2002.01  n = 55
-fha30  30-Year FHA Mortgage Rate: Secondary Market (DISCONTINUED SERIES), %, NA
+fha30  30-Year FHA Mortgage Rate: Secondary Market (DISCONTINUED SERIES), %
 M  1964.01 - 2000.06  n = 438
-mortg  30-Year Conventional Mortgage Rate, %, NA
+mortg  30-Year Conventional Mortgage Rate, %
 M  1971.04 - 2010.08  n = 473
-ba3m  3-Month Bankers' Acceptance Rate (DISCONTINUED SERIES), %, NA
+ba3m  3-Month Bankers' Acceptance Rate (DISCONTINUED SERIES), %
 M  1941.01 - 2000.06  n = 714
-ba6m  6-Month Bankers' Acceptance Rate (DISCONTINUED SERIES), %, NA
+ba6m  6-Month Bankers' Acceptance Rate (DISCONTINUED SERIES), %
 M  1976.01 - 2000.06  n = 294
-lta  Treasury Long-Term Average (25 years and above) (DISCONTINUED SERIES), %, NA
+lta  Treasury Long-Term Average (25 years and above) (DISCONTINUED SERIES), %
 M  2002.02 - 2004.04  n = 27
-ltgovtbd  Long-Term U.S. Government Securities (DISCONTINUED SERIES), %, NA
+ltgovtbd  Long-Term U.S. Government Securities (DISCONTINUED SERIES), %
 M  1925.01 - 2000.06  n = 906
-m2own  M2 Own Rate, %, NA
+m2own  M2 Own Rate, %
 M  1959.04 - 2010.08  n = 617
-mzmown  MZM Own Rate, %, NA
+mzmown  MZM Own Rate, %
 M  1974.01 - 2010.08  n = 440
-eqta  Total Equity / Total Assets, %, NA
+eqta  Total Equity / Total Assets, %
 Q  1988.1 - 2010.2  n = 90
-eqta1  Total Equity / Total Assets, Banks with Total Assets up to $300M, %, NA
+eqta1  Total Equity / Total Assets, Banks with Total Assets up to $300M, %
 Q  1988.1 - 2010.2  n = 90
-eqta2  Total Equity / Total Assets, Banks with Total Assets from $300M to $1B, %, NA
+eqta2  Total Equity / Total Assets, Banks with Total Assets from $300M to $1B, %
 Q  1988.1 - 2010.2  n = 90
-eqta3  Total Equity / Total Assets, Banks with Total Assets from $1B to $10B, %, NA
+eqta3  Total Equity / Total Assets, Banks with Total Assets from $1B to $10B, %
 Q  1988.1 - 2010.2  n = 90
-eqta4  Total Equity / Total Assets, Banks with Total Assets from $10B to $20B, %, NA
+eqta4  Total Equity / Total Assets, Banks with Total Assets from $10B to $20B, %
 Q  1988.1 - 2010.2  n = 90
-eqta5  Total Equity / Total Assets, Banks with Total Assets over $20B, %, NA
+eqta5  Total Equity / Total Assets, Banks with Total Assets over $20B, %
 Q  1988.1 - 2010.2  n = 90
-freq  Banks, Number, NA
+freq  Banks, Number
 Q  1988.1 - 2010.2  n = 90
-freq1  Banks with Total Assets up to $300M, Number, NA
+freq1  Banks with Total Assets up to $300M, Number
 Q  1988.1 - 2010.2  n = 90
-freq2  Banks with Total Assets from $300M to $1B, Number, NA
+freq2  Banks with Total Assets from $300M to $1B, Number
 Q  1988.1 - 2010.2  n = 90
-freq3  Banks with Total Assets from $1B to $10B, Number, NA
+freq3  Banks with Total Assets from $1B to $10B, Number
 Q  1988.1 - 2010.2  n = 90
-freq4  Banks with Total Assets from $10B to $20B, Number, NA
+freq4  Banks with Total Assets from $10B to $20B, Number
 Q  1988.1 - 2010.2  n = 90
-freq5  Banks with Total Assets over $20B, Number, NA
+freq5  Banks with Total Assets over $20B, Number
 Q  1988.1 - 2010.2  n = 90
-llrnpt  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Ratio, NA
+llrnpt  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Ratio
 Q  1988.1 - 2010.2  n = 90
-llrnpt1  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets up to $300M, Ratio, NA
+llrnpt1  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets up to $300M, Ratio
 Q  1988.1 - 2010.2  n = 90
-llrnpt2  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $300M to $1B, Ratio, NA
+llrnpt2  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $300M to $1B, Ratio
 Q  1988.1 - 2010.2  n = 90
-llrnpt3  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $1B to $10B, Ratio, NA
+llrnpt3  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $1B to $10B, Ratio
 Q  1988.1 - 2010.2  n = 90
-llrnpt4  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $10B to $20B, Ratio, NA
+llrnpt4  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $10B to $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-llrnpt5  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets over $20B, Ratio, NA
+llrnpt5  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets over $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncocmc  Commercial Net Loan Charge-offs, Ratio, NA
+ncocmc  Commercial Net Loan Charge-offs, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncocmc1  Commercial Net Loan Charge-offs, Banks with Total Assets up to $300M, Ratio, NA
+ncocmc1  Commercial Net Loan Charge-offs, Banks with Total Assets up to $300M, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncocmc2  Commercial Net Loan Charge-offs, Banks with Total Assets from $300M to $1B, Ratio, NA
+ncocmc2  Commercial Net Loan Charge-offs, Banks with Total Assets from $300M to $1B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncocmc3  Commercial Net Loan Charge-offs, Banks with Total Assets from $1B to $10B, Ratio, NA
+ncocmc3  Commercial Net Loan Charge-offs, Banks with Total Assets from $1B to $10B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncocmc4  Commercial Net Loan Charge-offs, Banks with Total Assets from $10B to $20B, Ratio, NA
+ncocmc4  Commercial Net Loan Charge-offs, Banks with Total Assets from $10B to $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncocmc5  Commercial Net Loan Charge-offs, Banks with Total Assets over $20B, Ratio, NA
+ncocmc5  Commercial Net Loan Charge-offs, Banks with Total Assets over $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncotot  Total Net Loan Charge-offs, Ratio, NA
+ncotot  Total Net Loan Charge-offs, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncotot1  Total Net Loan Charge-offs, Banks with Total Assets up to $300M, Ratio, NA
+ncotot1  Total Net Loan Charge-offs, Banks with Total Assets up to $300M, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncotot2  Total Net Loan Charge-offs, Banks with Total Assets from $300M to $1B, Ratio, NA
+ncotot2  Total Net Loan Charge-offs, Banks with Total Assets from $300M to $1B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncotot3  Total Net Loan Charge-offs, Banks with Total Assets from $1B to $10B, Ratio, NA
+ncotot3  Total Net Loan Charge-offs, Banks with Total Assets from $1B to $10B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncotot4  Total Net Loan Charge-offs, Banks with Total Assets from $10B to $20B, Ratio, NA
+ncotot4  Total Net Loan Charge-offs, Banks with Total Assets from $10B to $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-ncotot5  Total Net Loan Charge-offs, Banks with Total Assets over $20B, Ratio, NA
+ncotot5  Total Net Loan Charge-offs, Banks with Total Assets over $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-npcmcm  Nonperforming Commercial Loans, Ratio, NA
+npcmcm  Nonperforming Commercial Loans, Ratio
 Q  1988.1 - 2010.2  n = 90
-npcmcm1  Nonperforming Commercial Loans, Banks with Total Assets up to $300M, Ratio, NA
+npcmcm1  Nonperforming Commercial Loans, Banks with Total Assets up to $300M, Ratio
 Q  1988.1 - 2010.2  n = 90
-npcmcm2  Nonperforming Commercial Loans, Banks with Total Assets from $300M to $1B, Ratio, NA
+npcmcm2  Nonperforming Commercial Loans, Banks with Total Assets from $300M to $1B, Ratio
 Q  1988.1 - 2010.2  n = 90
-npcmcm3  Nonperforming Commercial Loans, Banks with Total Assets from $1B to $10B, Ratio, NA
+npcmcm3  Nonperforming Commercial Loans, Banks with Total Assets from $1B to $10B, Ratio
 Q  1988.1 - 2010.2  n = 90
-npcmcm4  Nonperforming Commercial Loans, Banks with Total Assets from $10B to $20B, Ratio, NA
+npcmcm4  Nonperforming Commercial Loans, Banks with Total Assets from $10B to $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-npcmcm5  Nonperforming Commercial Loans, Banks with Total Assets over $20B, Ratio, NA
+npcmcm5  Nonperforming Commercial Loans, Banks with Total Assets over $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-nptltl  Nonperforming Total Loans, Ratio, NA
+nptltl  Nonperforming Total Loans, Ratio
 Q  1988.1 - 2010.2  n = 90
-nptltl1  Nonperforming Total Loans, Banks with Total Assets up to $300M, Ratio, NA
+nptltl1  Nonperforming Total Loans, Banks with Total Assets up to $300M, Ratio
 Q  1988.1 - 2010.2  n = 90
-nptltl2  Nonperforming Total Loans, Banks with Total Assets from $300M to $1B, Ratio, NA
+nptltl2  Nonperforming Total Loans, Banks with Total Assets from $300M to $1B, Ratio
 Q  1988.1 - 2010.2  n = 90
-nptltl3  Nonperforming Total Loans, Banks with Total Assets from $1B to $10B, Ratio, NA
+nptltl3  Nonperforming Total Loans, Banks with Total Assets from $1B to $10B, Ratio
 Q  1988.1 - 2010.2  n = 90
-nptltl4  Nonperforming Total Loans, Banks with Total Assets from $10B to $20B, Ratio, NA
+nptltl4  Nonperforming Total Loans, Banks with Total Assets from $10B to $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-nptltl5  Nonperforming Total Loans, Banks with Total Assets over $20B, Ratio, NA
+nptltl5  Nonperforming Total Loans, Banks with Total Assets over $20B, Ratio
 Q  1988.1 - 2010.2  n = 90
-us100llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets under $100M, Ratio, NA
+us100llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets under $100M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us100lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets under $100M, Ratio, NA
+us100lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets under $100M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us100nim  Net Interest Margin for U.S. Banks with average assets under $100M, Ratio, NA
+us100nim  Net Interest Margin for U.S. Banks with average assets under $100M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us100nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets under $100M, Ratio, NA
+us100nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets under $100M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us100num  Commercial Banks in the U.S. with average assets under $100M, Number, NA
+us100num  Commercial Banks in the U.S. with average assets under $100M, Number
 Q  1984.1 - 2010.2  n = 106
-us100roa  Return on Average Assets for U.S. Banks with average assets under $100M, Ratio, NA
+us100roa  Return on Average Assets for U.S. Banks with average assets under $100M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us100roe  Return on Average Equity for U.S. Banks with average assets under $100M, Ratio, NA
+us100roe  Return on Average Equity for U.S. Banks with average assets under $100M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us115llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets between $1B and $15B, Ratio, NA
+us115llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets between $1B and $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us115lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets between $1B and $15B, Ratio, NA
+us115lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets between $1B and $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us115nim  Net Interest Margin for U.S. Banks with average assets between $1B and $15B, Ratio, NA
+us115nim  Net Interest Margin for U.S. Banks with average assets between $1B and $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us115nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets between $1B and $15B, Ratio, NA
+us115nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets between $1B and $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us115num  Commercial Banks in the U.S. with average assets between $1B and $15B, Number, NA
+us115num  Commercial Banks in the U.S. with average assets between $1B and $15B, Number
 Q  1984.1 - 2010.2  n = 106
-us115roa  Return on Average Assets for U.S. Banks with average assets between $1B and $15B, Ratio, NA
+us115roa  Return on Average Assets for U.S. Banks with average assets between $1B and $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us115roe  Return on Average Equity for U.S. Banks with average assets between $1B and $15B, Ratio, NA
+us115roe  Return on Average Equity for U.S. Banks with average assets between $1B and $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us13llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets between $100M and $300M, Ratio, NA
+us13llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets between $100M and $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us13lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets between $100M and $300M, Ratio, NA
+us13lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets between $100M and $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us13nim  Net Interest Margin for U.S. Banks with average assets between $100M and $300M, Ratio, NA
+us13nim  Net Interest Margin for U.S. Banks with average assets between $100M and $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us13nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets between $100M and $300M, Ratio, NA
+us13nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets between $100M and $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us13num  Commercial Banks in the U.S. with average assets between $100M and $300M, Number, NA
+us13num  Commercial Banks in the U.S. with average assets between $100M and $300M, Number
 Q  1984.1 - 2010.2  n = 106
-us13roa  Return on Average Assets for U.S. Banks with average assets between $100M and $300M, Ratio, NA
+us13roa  Return on Average Assets for U.S. Banks with average assets between $100M and $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us13roe  Return on Average Equity for U.S. Banks with average assets between $100M and $300M, Ratio, NA
+us13roe  Return on Average Equity for U.S. Banks with average assets between $100M and $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us1llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets under $1B, Ratio, NA
+us1llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets under $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us1lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets under $1B, Ratio, NA
+us1lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets under $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us1nim  Net Interest Margin for U.S. Banks with average assets under $1B, Ratio, NA
+us1nim  Net Interest Margin for U.S. Banks with average assets under $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us1nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets under $1B, Ratio, NA
+us1nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets under $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us1num  Commercial Banks in the U.S. with average assets under $1B, Number, NA
+us1num  Commercial Banks in the U.S. with average assets under $1B, Number
 Q  1984.1 - 2010.2  n = 106
-us1roa  Return on Average Assets for U.S. Banks with average assets under $1B, Ratio, NA
+us1roa  Return on Average Assets for U.S. Banks with average assets under $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us1roe  Return on Average Equity for U.S. Banks with average assets under $1B, Ratio, NA
+us1roe  Return on Average Equity for U.S. Banks with average assets under $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us300llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets under $300M, Ratio, NA
+us300llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets under $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us300lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets under $300M, Ratio, NA
+us300lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets under $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us300nim  Net Interest Margin for U.S. Banks with average assets under $300M, Ratio, NA
+us300nim  Net Interest Margin for U.S. Banks with average assets under $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us300nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets under $300M, Ratio, NA
+us300nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets under $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us300num  Commercial Banks in the U.S. with average assets under $300M, Number, NA
+us300num  Commercial Banks in the U.S. with average assets under $300M, Number
 Q  1984.1 - 2010.2  n = 106
-us300roa  Return on Average Assets for U.S. Banks with average assets under $300M, Ratio, NA
+us300roa  Return on Average Assets for U.S. Banks with average assets under $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us300roe  Return on Average Equity for U.S. Banks with average assets under $300M, Ratio, NA
+us300roe  Return on Average Equity for U.S. Banks with average assets under $300M, Ratio
 Q  1984.1 - 2010.2  n = 106
-us31llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets between $300M and $1B, Ratio, NA
+us31llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets between $300M and $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us31lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets between $300M and $1B, Ratio, NA
+us31lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets between $300M and $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us31nim  Net Interest Margin for U.S. Banks with average assets between $300M and $1B, Ratio, NA
+us31nim  Net Interest Margin for U.S. Banks with average assets between $300M and $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us31nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets between $300M and $1B, Ratio, NA
+us31nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets between $300M and $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us31num  Commercial Banks in the U.S. with average assets between $300M and $1B, Number, NA
+us31num  Commercial Banks in the U.S. with average assets between $300M and $1B, Number
 Q  1984.1 - 2010.2  n = 106
-us31roa  Return on Average Assets for U.S. Banks with average assets between $300M and $1B, Ratio, NA
+us31roa  Return on Average Assets for U.S. Banks with average assets between $300M and $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-us31roe  Return on Average Equity for U.S. Banks with average assets between $300M and $1B, Ratio, NA
+us31roe  Return on Average Equity for U.S. Banks with average assets between $300M and $1B, Ratio
 Q  1984.1 - 2010.2  n = 106
-usg15llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets greater than $15B, Ratio, NA
+usg15llrtl  Loan Loss Reserve / Total Loans for U.S. Banks with average assets greater than $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-usg15lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets greater than $15B, Ratio, NA
+usg15lstl  Net Loan Losses / Average Total Loans for U.S. Banks with average assets greater than $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-usg15nim  Net Interest Margin for U.S. Banks with average assets greater than $15B, Ratio, NA
+usg15nim  Net Interest Margin for U.S. Banks with average assets greater than $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-usg15nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets greater than $15B, Ratio, NA
+usg15nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Banks with average assets greater than $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-usg15num  Commercial Banks in the U.S. with average assets greater than $15B, Number, NA
+usg15num  Commercial Banks in the U.S. with average assets greater than $15B, Number
 Q  1984.1 - 2010.2  n = 106
-usg15roa  Return on Average Assets for U.S. Banks with average assets greater than $15B, Ratio, NA
+usg15roa  Return on Average Assets for U.S. Banks with average assets greater than $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-usg15roe  Return on Average Equity for U.S. Banks with average assets greater than $15B, Ratio, NA
+usg15roe  Return on Average Equity for U.S. Banks with average assets greater than $15B, Ratio
 Q  1984.1 - 2010.2  n = 106
-usl15llrtl  Loan Loss Reserve / Total Loans for U.S. Peer Banks (with average assets less than $15B), Ratio, NA
+usl15llrtl  Loan Loss Reserve / Total Loans for U.S. Peer Banks (with average assets less than $15B), Ratio
 Q  1984.1 - 2010.2  n = 106
-usl15lstl  Net Loan Losses / Average Total Loans for U.S. Peer Banks (with average assets less than $15B), Ratio, NA
+usl15lstl  Net Loan Losses / Average Total Loans for U.S. Peer Banks (with average assets less than $15B), Ratio
 Q  1984.1 - 2010.2  n = 106
-usl15nim  Net Interest Margin for U.S. Peer Banks (with average assets less than $15B), Ratio, NA
+usl15nim  Net Interest Margin for U.S. Peer Banks (with average assets less than $15B), Ratio
 Q  1984.1 - 2010.2  n = 106
-usl15nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Peer Banks (with average assets less than $15B), Ratio, NA
+usl15nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for U.S. Peer Banks (with average assets less than $15B), Ratio
 Q  1984.1 - 2010.2  n = 106
-usl15num  Commercial Banks as U.S. Peer Banks (with average assets less than $15B), Number, NA
+usl15num  Commercial Banks as U.S. Peer Banks (with average assets less than $15B), Number
 Q  1984.1 - 2010.2  n = 106
-usl15roa  Return on Average Assets for U.S. Peer Banks (with average assets less than $15B), Ratio, NA
+usl15roa  Return on Average Assets for U.S. Peer Banks (with average assets less than $15B), Ratio
 Q  1984.1 - 2010.2  n = 106
-usl15roe  Return on Average Equity for U.S. Peer Banks (with average assets less than $15B), Ratio, NA
+usl15roe  Return on Average Equity for U.S. Peer Banks (with average assets less than $15B), Ratio
 Q  1984.1 - 2010.2  n = 106
-usllrtl  Loan Loss Reserve / Total Loans for all U.S. Banks, Ratio, NA
+usllrtl  Loan Loss Reserve / Total Loans for all U.S. Banks, Ratio
 Q  1984.1 - 2010.2  n = 106
-uslstl  Net Loan Losses / Average Total Loans for all U.S. Banks, Ratio, NA
+uslstl  Net Loan Losses / Average Total Loans for all U.S. Banks, Ratio
 Q  1984.1 - 2010.2  n = 106
-usnim  Net Interest Margin for all U.S. Banks, Ratio, NA
+usnim  Net Interest Margin for all U.S. Banks, Ratio
 Q  1984.1 - 2010.2  n = 106
-usnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for all U.S. Banks, Ratio, NA
+usnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for all U.S. Banks, Ratio
 Q  1984.1 - 2010.2  n = 106
-usnum  Commercial Banks in the U.S., Number, NA
+usnum  Commercial Banks in the U.S., Number
 Q  1984.1 - 2010.2  n = 106
-usroa  Return on Average Assets for all U.S. Banks, Ratio, NA
+usroa  Return on Average Assets for all U.S. Banks, Ratio
 Q  1984.1 - 2010.2  n = 106
-usroe  Return on Average Equity for all U.S. Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-eqta19  Total Equity / Total Assets, Banks with Total Assets up to $300M, Pacific Census Division, %, NA
-Q  1988.1 - 2010.2  n = 90
-eqta29  Total Equity / Total Assets, Banks with Total Assets from $300M to $1B, Pacific Census Division, %, NA
-Q  1988.1 - 2010.2  n = 90
-eqta39  Total Equity / Total Assets, Banks with Total Assets from $1B to $10B, Pacific Census Division, %, NA
-Q  1988.1 - 2010.2  n = 90
-llrnpt19  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets up to $300M, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-llrnpt29  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $300M to $1B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-llrnpt39  Assets at Banks whose ALLL exceeds their Nonperforming Loans, Banks with Total Assets from $1B to $10B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-ncocmc19  Commercial Net Loan Charge-offs, Banks with Total Assets up to $300M, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-ncocmc29  Commercial Net Loan Charge-offs, Banks with Total Assets from $300M to $1B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-ncocmc39  Commercial Net Loan Charge-offs, Banks with Total Assets from $1B to $10B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-ncotot19  Total Net Loan Charge-offs, Banks with Total Assets up to $300M, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-ncotot29  Total Net Loan Charge-offs, Banks with Total Assets from $300M to $1B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-ncotot39  Total Net Loan Charge-offs, Banks with Total Assets from $1B to $10B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-npcmcm19  Nonperforming Commercial Loans, Banks with Total Assets up to $300M, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-npcmcm29  Nonperforming Commercial Loans, Banks with Total Assets from $300M to $1B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-npcmcm39  Nonperforming Commercial Loans, Banks with Total Assets from $1B to $10B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-nptltl19  Nonperforming Total Loans, Banks with Total Assets up to $300M, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-nptltl29  Nonperforming Total Loans, Banks with Total Assets from $300M to $1B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-nptltl39  Nonperforming Total Loans, Banks with Total Assets from $1B to $10B, Pacific Census Division, Ratio, NA
-Q  1988.1 - 2010.2  n = 90
-d8llrtl  Loan Loss Reserve / Total Loans for 8th District Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-d8lstl  Net Loan Losses / Average Total Loans for 8th District Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-d8nim  Net Interest Margin for 8th District Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-d8nptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for 8th District Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-d8num  Commercial Banks in the 8th District, Number, NA
-Q  1984.1 - 2010.2  n = 106
-d8roa  Return on Average Assets for 8th District Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-d8roe  Return on Average Equity for 8th District Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arllrtl  Loan Loss Reserve / Total Loans for Arkansas Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arlstl  Net Loan Losses / Average Total Loans for Arkansas Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arnim  Net Interest Margin for Arkansas Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Arkansas Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arnum  Commercial Banks in Arkansas, Number, NA
-Q  1984.1 - 2010.2  n = 106
-arpllrtl  Loan Loss Reserve / Total Loans for Arkansas Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arplstl  Net Loan Losses / Average Total Loans for Arkansas Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arpnim  Net Interest Margin for Arkansas Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arpnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Arkansas Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arpnum  Commercial Banks in Arkansas (8th District Portion), Number, NA
-Q  1984.1 - 2010.2  n = 106
-arproa  Return on Average Assets for Arkansas Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arproe  Return on Average Equity for Arkansas Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arroa  Return on Average Assets for Arkansas Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-arroe  Return on Average Equity for Arkansas Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-illlrtl  Loan Loss Reserve / Total Loans for Illinois Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-illstl  Net Loan Losses / Average Total Loans for Illinois Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilnim  Net Interest Margin for Illinois Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Illinois Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilnum  Commercial Banks in Illinois, Number, NA
-Q  1984.1 - 2010.2  n = 106
-ilpllrtl  Loan Loss Reserve / Total Loans for Illinois Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilplstl  Net Loan Losses / Average Total Loans for Illinois Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilpnim  Net Interest Margin for Illinois Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilpnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Illinois Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilpnum  Commercial Banks in Illinois (8th District Portion), Number, NA
-Q  1984.1 - 2010.2  n = 106
-ilproa  Return on Average Assets for Illinois Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilproe  Return on Average Equity for Illinois Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilroa  Return on Average Assets for Illinois Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-ilroe  Return on Average Equity for Illinois Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inllrtl  Loan Loss Reserve / Total Loans for Indiana Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inlstl  Net Loan Losses / Average Total Loans for Indiana Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-innim  Net Interest Margin for Indiana Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-innptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Indiana Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-innum  Commercial Banks in Indiana, Number, NA
-Q  1984.1 - 2010.2  n = 106
-inpllrtl  Loan Loss Reserve / Total Loans for Indiana Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inplstl  Net Loan Losses / Average Total Loans for Indiana Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inpnim  Net Interest Margin for Indiana Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inpnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Indiana Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inpnum  Commercial Banks in Indiana (8th District Portion), Number, NA
-Q  1984.1 - 2010.2  n = 106
-inproa  Return on Average Assets for Indiana Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inproe  Return on Average Equity for Indiana Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inroa  Return on Average Assets for Indiana Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-inroe  Return on Average Equity for Indiana Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kyllrtl  Loan Loss Reserve / Total Loans for Kentucky Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kylstl  Net Loan Losses / Average Total Loans for Kentucky Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kynim  Net Interest Margin for Kentucky Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kynptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Kentucky Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kynum  Commercial Banks in Kentucky, Number, NA
-Q  1984.1 - 2010.2  n = 106
-kypllrtl  Loan Loss Reserve / Total Loans for Kentucky Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kyplstl  Net Loan Losses / Average Total Loans for Kentucky Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kypnim  Net Interest Margin for Kentucky Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kypnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Kentucky Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kypnum  Commercial Banks in Kentucky (8th District Portion), Number, NA
-Q  1984.1 - 2010.2  n = 106
-kyproa  Return on Average Assets for Kentucky Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kyproe  Return on Average Equity for Kentucky Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kyroa  Return on Average Assets for Kentucky Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-kyroe  Return on Average Equity for Kentucky Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msllrtl  Loan Loss Reserve / Total Loans for Mississippi Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mslstl  Net Loan Losses / Average Total Loans for Mississippi Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msnim  Net Interest Margin for Mississippi Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Mississippi Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msnum  Commercial Banks in Mississippi, Number, NA
-Q  1984.1 - 2010.2  n = 106
-mspllrtl  Loan Loss Reserve / Total Loans for Mississippi Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msplstl  Net Loan Losses / Average Total Loans for Mississippi Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mspnim  Net Interest Margin for Mississippi Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mspnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Mississippi Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mspnum  Commercial Banks in Mississippi (8th District Portion), Number, NA
-Q  1984.1 - 2010.2  n = 106
-msproa  Return on Average Assets for Mississippi Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msproe  Return on Average Equity for Mississippi Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msroa  Return on Average Assets for Mississippi Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-msroe  Return on Average Equity for Mississippi Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mollrtl  Loan Loss Reserve / Total Loans for Missouri Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-molstl  Net Loan Losses / Average Total Loans for Missouri Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-monim  Net Interest Margin for Missouri Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-monptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Missouri Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-monum  Commercial Banks in Missouri, Number, NA
-Q  1984.1 - 2010.2  n = 106
-mopllrtl  Loan Loss Reserve / Total Loans for Missouri Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-moplstl  Net Loan Losses / Average Total Loans for Missouri Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mopnim  Net Interest Margin for Missouri Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mopnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Missouri Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-mopnum  Commercial Banks in Missouri (8th District Portion), Number, NA
-Q  1984.1 - 2010.2  n = 106
-moproa  Return on Average Assets for Missouri Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-moproe  Return on Average Equity for Missouri Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-moroa  Return on Average Assets for Missouri Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-moroe  Return on Average Equity for Missouri Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnllrtl  Loan Loss Reserve / Total Loans for Tennessee Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnlstl  Net Loan Losses / Average Total Loans for Tennessee Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnnim  Net Interest Margin for Tennessee Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Tennessee Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnnum  Commercial Banks in Tennessee, Number, NA
-Q  1984.1 - 2010.2  n = 106
-tnpllrtl  Loan Loss Reserve / Total Loans for Tennessee Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnplstl  Net Loan Losses / Average Total Loans for Tennessee Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnpnim  Net Interest Margin for Tennessee Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnpnptl  Nonperforming Loans (past due 90+ days plus nonaccrual) / Total Loans for Tennessee Banks (Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnpnum  Commercial Banks in Tennessee (8th District Portion), Number, NA
-Q  1984.1 - 2010.2  n = 106
-tnproa  Return on Average Assets for Tennessee Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnproe  Return on Average Equity for Tennessee Banks (8th District Portion), Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnroa  Return on Average Assets for Tennessee Banks, Ratio, NA
-Q  1984.1 - 2010.2  n = 106
-tnroe  Return on Average Equity for Tennessee Banks, Ratio, NA
+usroe  Return on Average Equity for all U.S. Banks, Ratio
 Q  1984.1 - 2010.2  n = 106
 autons  Total Automobile Credit Outstanding (DISCONTINUED SERIES), Bil. of $, NSA
 M  1943.01 - 1999.04  n = 676
@@ -3345,41 +2957,41 @@ othsec  Other Securities at All Commercial Banks, Bil. of $, SA
 M  1947.01 - 2010.08  n = 764
 usgsec  U.S. Government Securities at All Commercial Banks, Bil. of $, SA
 M  1947.01 - 2010.08  n = 764
-driscflm  Net Percentage of Domestic Respondents Increasing Spreads of Loans Rates over Banks' Cost of Funds Large and Medium Firms, %, NA
+driscflm  Net Percentage of Domestic Respondents Increasing Spreads of Loans Rates over Banks' Cost of Funds Large and Medium Firms, %
 Q  1990.2 - 2010.3  n = 82
-driscfs  Net Percentage of Domestic Respondents Increasing Spreads of Loans Rates over Banks' Cost of Funds Small Firms, %, NA
+driscfs  Net Percentage of Domestic Respondents Increasing Spreads of Loans Rates over Banks' Cost of Funds Small Firms, %
 Q  1990.2 - 2010.3  n = 82
-driwcil  Net Percentage of Domestic Respondents Reporting Increased Willingness to Make Consumer Installment Loans, %, NA
+driwcil  Net Percentage of Domestic Respondents Reporting Increased Willingness to Make Consumer Installment Loans, %
 Q  1990.2 - 2010.3  n = 82
-drsdcilm  Net Percentage of Domestic Respondents Reporting Stronger Demand for Commercial and Industrial Loans Large and Medium Firms, %, NA
+drsdcilm  Net Percentage of Domestic Respondents Reporting Stronger Demand for Commercial and Industrial Loans Large and Medium Firms, %
 Q  1991.4 - 2010.3  n = 76
-drsdcis  Net Percentage of Domestic Respondents Reporting Stronger Demand for Commercial and Industrial Loans Small Firms, %, NA
+drsdcis  Net Percentage of Domestic Respondents Reporting Stronger Demand for Commercial and Industrial Loans Small Firms, %
 Q  1991.4 - 2010.3  n = 76
-drsdcl  Net Percentage of Domestic Respondents Reporting Stronger Demand for Consumer Loans, %, NA
+drsdcl  Net Percentage of Domestic Respondents Reporting Stronger Demand for Consumer Loans, %
 Q  1991.4 - 2010.3  n = 76
-drsdcrel  Net Percentage of Domestic Respondents Reporting Stronger Demand for Commercial Real Estate Loans, %, NA
+drsdcrel  Net Percentage of Domestic Respondents Reporting Stronger Demand for Commercial Real Estate Loans, %
 Q  1995.2 - 2010.3  n = 62
-drsdnt  Net Percentage of Domestic Respondents Reporting Stronger Demand for Nontraditional Mortgage Loans, %, NA
+drsdnt  Net Percentage of Domestic Respondents Reporting Stronger Demand for Nontraditional Mortgage Loans, %
 Q  2007.2 - 2010.3  n = 14
-drsdpm  Net Percentage of Domestic Respondents Reporting Stronger Demand for Prime Mortgage Loans, %, NA
+drsdpm  Net Percentage of Domestic Respondents Reporting Stronger Demand for Prime Mortgage Loans, %
 Q  2007.2 - 2010.3  n = 14
-drsdsp  Net Percentage of Domestic Respondents Reporting Stronger Demand for Subprime Mortgage Loans, %, NA
+drsdsp  Net Percentage of Domestic Respondents Reporting Stronger Demand for Subprime Mortgage Loans, %
 Q  2007.2 - 2010.3  n = 9
-drtscilm  Net Percentage of Domestic Respondents Tightening Standards for Commercial and Industrial Loans Large and Medium Firms, %, NA
+drtscilm  Net Percentage of Domestic Respondents Tightening Standards for Commercial and Industrial Loans Large and Medium Firms, %
 Q  1990.2 - 2010.3  n = 82
-drtscis  Net Percentage of Domestic Respondents Tightening Standards for Commercial and Industrial Loans Small Firms, %, NA
+drtscis  Net Percentage of Domestic Respondents Tightening Standards for Commercial and Industrial Loans Small Firms, %
 Q  1990.2 - 2010.3  n = 82
-drtsclcc  Net Percentage of Domestic Respondents Tightening Standards on Consumer Loans, Credit Cards, %, NA
+drtsclcc  Net Percentage of Domestic Respondents Tightening Standards on Consumer Loans, Credit Cards, %
 Q  1996.1 - 2010.3  n = 59
-drtscocl  Net Percentage of Domestic Respondents Tightening Standards on Other Consumer Loans, %, NA
+drtscocl  Net Percentage of Domestic Respondents Tightening Standards on Other Consumer Loans, %
 Q  1996.1 - 2010.3  n = 59
-drtscrel  Net Percentage of Domestic Respondents Tightening Standards for Commercial Real Estate Loans, %, NA
+drtscrel  Net Percentage of Domestic Respondents Tightening Standards for Commercial Real Estate Loans, %
 Q  1990.3 - 2010.3  n = 81
-drtsnt  Net Percentage of Domestic Respondents Tightening Standards for Nontraditional Mortgage Loans, %, NA
+drtsnt  Net Percentage of Domestic Respondents Tightening Standards for Nontraditional Mortgage Loans, %
 Q  2007.2 - 2010.3  n = 14
-drtspm  Net Percentage of Domestic Respondents Tightening Standards for Prime Mortgage Loans, %, NA
+drtspm  Net Percentage of Domestic Respondents Tightening Standards for Prime Mortgage Loans, %
 Q  2007.2 - 2010.3  n = 14
-drtssp  Net Percentage of Domestic Respondents Tightening Standards for Subprime Mortgage Loans, %, NA
+drtssp  Net Percentage of Domestic Respondents Tightening Standards for Subprime Mortgage Loans, %
 Q  2007.2 - 2010.3  n = 9
 currdd  Currency Component of M1 Plus Demand Deposits, Bil. of $, SA
 M  1959.01 - 2010.08  n = 764
@@ -3421,8 +3033,6 @@ m2asl  M2A Money Supply (M1ASL plus Time Deposits at Commercial Banks other than
 M  1959.01 - 1979.12  n = 252
 m2ns  M2 Money Stock, Bil. of $, NSA
 M  1959.01 - 2010.08  n = 620
-m2own  M2 Own Rate, %, NA
-M  1959.04 - 2010.08  n = 617
 m2sl  M2 Money Stock, Bil. of $, SA
 M  1959.01 - 2010.08  n = 620
 m2tdasl  Time Deposits Adjusted at all Commercial Banks (Discontinued Series), Bil. of $, SA
@@ -3473,7 +3083,7 @@ svstsl  Savings and Small Time Deposits - Total, Bil. of $, SA
 M  1959.01 - 2010.08  n = 620
 m2mns  M2 Minus, Bil. of $, NSA
 M  1959.01 - 2010.08  n = 620
-m2mown  M2 Minus Own Rate, %, NA
+m2mown  M2 Minus Own Rate, %
 M  1959.01 - 2010.08  n = 620
 m2msl  M2 Minus, Bil. of $, SA
 M  1959.01 - 2010.08  n = 620
@@ -3509,8 +3119,6 @@ tottdpns  Total Time and Savings Deposits at all Depository Institutions (DISCON
 M  1959.01 - 2006.02  n = 566
 mzmns  MZM Money Stock, Bil. of $, NSA
 M  1959.01 - 2010.08  n = 620
-mzmown  MZM Own Rate, %, NA
-M  1974.01 - 2010.08  n = 440
 mzmsl  MZM Money Stock, Bil. of $, SA
 M  1959.01 - 2010.08  n = 620
 dddfcbns  Demand Deposits Due to Foreign Commercial Banks, Bil. of $, NSA
@@ -3649,305 +3257,3 @@ treasury  Treasury Deposits with Federal Reserve Banks, Bil. of $, NSA
 M  1986.01 - 2010.08  n = 296
 vault  Vault Cash Used to Satisfy Required Reserves, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
 M  1959.11 - 2010.08  n = 610
-autons  Total Automobile Credit Outstanding (DISCONTINUED SERIES), Bil. of $, NSA
-M  1943.01 - 1999.04  n = 676
-autosl  Total Automobile Credit Outstanding (DISCONTINUED SERIES), Bil. of $, SA
-M  1943.01 - 1999.04  n = 676
-busloans  Commercial and Industrial Loans at All Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-consumer  Consumer (Individual) Loans at All Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-invest  Total Investments at All Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-loaninv  Total Loans and Investments at All Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-loans  Total Loans and Leases at Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-nonrevns  Total Nonrevolving Credit Outstanding, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
-nonrevsl  Total Nonrevolving Credit Outstanding, Bil. of $, SA
-M  1943.01 - 2010.07  n = 811
-otherns  Total Other Credit Outstanding (DISCONTINUED SERIES), Bil. of $, NSA
-M  1943.01 - 1999.04  n = 676
-othersl  Total Other Credit Outstanding (DISCONTINUED SERIES), Bil. of $, SA
-M  1943.01 - 1999.04  n = 676
-othsec  Other Securities at All Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-realln  Real Estate Loans at All Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-revolns  Total Revolving Credit Outstanding, Bil. of $, NSA
-M  1968.01 - 2010.07  n = 511
-revolsl  Total Revolving Credit Outstanding, Bil. of $, SA
-M  1968.01 - 2010.07  n = 511
-totalns  Total Consumer Credit Outstanding, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
-totalsl  Total Consumer Credit Outstanding, Bil. of $, SA
-M  1943.01 - 2010.07  n = 811
-usgsec  U.S. Government Securities at All Commercial Banks, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-twexbmth  Trade Weighted Exchange Index: Broad, Index Jan 1997=100, NA
-M  1973.01 - 2010.08  n = 452
-twexmmth  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100, NA
-M  1973.01 - 2010.08  n = 452
-twexomth  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100, NA
-M  1973.01 - 2010.08  n = 452
-aaa  Moody's Seasoned Aaa Corporate Bond Yield, %, NA
-M  1919.01 - 2010.08  n = 1100
-baa  Moody's Seasoned Baa Corporate Bond Yield, %, NA
-M  1919.01 - 2010.08  n = 1100
-cd1m  1-Month Certificate of Deposit: Secondary Market Rate, %, NA
-M  1965.12 - 2010.08  n = 537
-cd3m  3-Month Certificate of Deposit: Secondary Market Rate, %, NA
-M  1964.06 - 2010.08  n = 555
-cd6m  6-Month Certificate of Deposit: Secondary Market Rate, %, NA
-M  1964.06 - 2010.08  n = 555
-cpf1m  1-Month AA Financial Commercial Paper Rate, %, NA
-M  1997.01 - 2010.08  n = 164
-cpf2m  2-Month AA Financial Commercial Paper Rate, %, NA
-M  1997.01 - 2010.08  n = 164
-cpf3m  3-Month AA Financial Commercial Paper Rate, %, NA
-M  1997.01 - 2010.08  n = 164
-cpn1m  1-Month AA Nonfinancial Commercial Paper Rate, %, NA
-M  1997.01 - 2010.08  n = 164
-cpn2m  2-Month AA Nonfinancial Commercial Paper Rate, %, NA
-M  1997.01 - 2010.08  n = 164
-cpn3m  3-Month AA Nonfinancial Commercial Paper Rate, %, NA
-M  1997.01 - 2010.08  n = 164
-fedfunds  Effective Federal Funds Rate, %, NA
-M  1954.07 - 2010.08  n = 674
-fii10  10-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2003.01 - 2010.08  n = 92
-fii20  20-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2004.07 - 2010.08  n = 74
-fii5  5-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2003.01 - 2010.08  n = 92
-fii7  7-Year Treasury Inflation-Indexed Security, Constant Maturity, %, NA
-M  2003.01 - 2010.08  n = 92
-gs1  1-Year Treasury Constant Maturity Rate, %, NA
-M  1953.04 - 2010.08  n = 689
-gs10  10-Year Treasury Constant Maturity Rate, %, NA
-M  1953.04 - 2010.08  n = 689
-gs1m  1-Month Treasury Constant Maturity Rate, %, NA
-M  2001.07 - 2010.08  n = 110
-gs2  2-Year Treasury Constant Maturity Rate, %, NA
-M  1976.06 - 2010.08  n = 411
-gs20  20-Year Treasury Constant Maturity Rate, %, NA
-M  1953.04 - 2010.08  n = 689
-gs3  3-Year Treasury Constant Maturity Rate, %, NA
-M  1953.04 - 2010.08  n = 689
-gs3m  3-Month Treasury Constant Maturity Rate, %, NA
-M  1982.01 - 2010.08  n = 344
-gs5  5-Year Treasury Constant Maturity Rate, %, NA
-M  1953.04 - 2010.08  n = 689
-gs6m  6-Month Treasury Constant Maturity Rate, %, NA
-M  1982.01 - 2010.08  n = 344
-gs7  7-Year Treasury Constant Maturity Rate, %, NA
-M  1969.07 - 2010.08  n = 494
-lta  Treasury Long-Term Average (25 years and above) (DISCONTINUED SERIES), %, NA
-M  2002.02 - 2004.04  n = 27
-m2own  M2 Own Rate, %, NA
-M  1959.04 - 2010.08  n = 617
-mortg  30-Year Conventional Mortgage Rate, %, NA
-M  1971.04 - 2010.08  n = 473
-mprime  Bank Prime Loan Rate, %, NA
-M  1949.01 - 2010.08  n = 740
-mzmown  MZM Own Rate, %, NA
-M  1974.01 - 2010.08  n = 440
-tb3ms  3-Month Treasury Bill: Secondary Market Rate, %, NA
-M  1934.01 - 2010.08  n = 920
-tb4wk  4-Week Treasury Bill: Secondary Market Rate, %, NA
-M  2001.07 - 2010.08  n = 110
-tb6ms  6-Month Treasury Bill: Secondary Market Rate, %, NA
-M  1958.12 - 2010.08  n = 621
-tp10j14  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2014, %, NA
-M  2004.02 - 2010.08  n = 79
-tp10j15  10-Year 1-5/8% Treasury Inflation-Indexed Note, Due 1/15/2015, %, NA
-M  2005.02 - 2010.08  n = 67
-tp10j16  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2016, %, NA
-M  2006.02 - 2010.08  n = 55
-tp10l15  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2015, %, NA
-M  2005.08 - 2010.08  n = 61
-tp10l19  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2019, %, NA
-M  2009.07 - 2010.08  n = 14
-currdd  Currency Component of M1 Plus Demand Deposits, Bil. of $, SA
-M  1959.01 - 2010.08  n = 764
-currns  Currency Component of M1, Bil. of $, NSA
-M  1947.01 - 2010.08  n = 764
-currsl  Currency Component of M1, Bil. of $, SA
-M  1947.01 - 2010.08  n = 764
-dddfcbns  Demand Deposits Due to Foreign Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 618
-dddfoins  Demand Deposits Due to Foreign Official Institutions, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-demdepns  Demand Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-demdepsl  Demand Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2010.08  n = 764
-eurons  Overnight and Term Eurodollars (DISCONTINUED SERIES), Bil. of $, NSA
-M  1959.01 - 2006.02  n = 566
-imfns  Institutional Money Funds, Bil. of $, NSA
-M  1974.01 - 2010.08  n = 440
-imfsl  Institutional Money Funds, Bil. of $, SA
-M  1974.01 - 2010.08  n = 440
-ira  IRA and Keogh Accounts - Total, Bil. of $, NSA
-M  1962.11 - 2010.08  n = 574
-iracb  IRA and Keogh Accounts at Commercial Banks, Bil. of $, NSA
-M  1967.12 - 2010.08  n = 513
-lgtdcbns  Large Time Deposits at Commercial Banks (DISCONTINUED SERIES), Bil. of $, NSA
-M  1959.01 - 2006.02  n = 566
-lgtdcbsl  Large Time Deposits at Commercial Banks (DISCONTINUED SERIES), Bil. of $, SA
-M  1959.01 - 2006.02  n = 566
-lgtdti  Large Time Deposits at Thrift Institutions (DISCONTINUED SERIES), Bil. of $, SA
-M  1970.02 - 2006.02  n = 433
-ltdns  Large Time Deposits - Total (DISCONTINUED SERIES), Bil. of $, NSA
-M  1959.01 - 2006.02  n = 566
-ltdsl  Large Time Deposits - Total (DISCONTINUED SERIES), Bil. of $, SA
-M  1959.01 - 2006.02  n = 566
-m1ns  M1 Money Stock, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-m1sl  M1 Money Stock, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-m2ns  M2 Money Stock, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-m2own  M2 Own Rate, %, NA
-M  1959.04 - 2010.08  n = 617
-m2sl  M2 Money Stock, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-m3ns  M3 Money Stock (DISCONTINUED SERIES), Bil. of $, NSA
-M  1959.01 - 2006.02  n = 566
-m3sl  M3 Money Stock (DISCONTINUED SERIES), Bil. of $, SA
-M  1959.01 - 2006.02  n = 566
-msim2  Monetary Services Index: M2, Bil. of $, SA
-M  1959.01 - 2006.02  n = 566
-mzmns  MZM Money Stock, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-mzmown  MZM Own Rate, %, NA
-M  1974.01 - 2010.08  n = 440
-mzmsl  MZM Money Stock, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-nbcb  U.S. Government Note Balances at Depository Institutions, Bil. of $, NSA
-M  1978.11 - 2010.08  n = 382
-ocdns  Other Checkable Deposits, Bil. of $, NSA
-M  1963.01 - 2010.08  n = 572
-ocdsl  Other Checkable Deposits, Bil. of $, SA
-M  1963.01 - 2010.08  n = 620
-rmfns  Retail Money Funds, Bil. of $, NSA
-M  1973.11 - 2010.08  n = 442
-rmfsl  Retail Money Funds, Bil. of $, SA
-M  1973.11 - 2010.08  n = 442
-rpns  Overnight and Term RPs (DISCONTINUED SERIES), Bil. of $, NSA
-M  1970.01 - 2006.03  n = 435
-savingns  Savings Deposits - Total, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-savingsl  Savings Deposits - Total, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-stdcbns  Small Time Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-stdcbsl  Small Time Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-stdns  Small Time Deposits - Total, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-stdsl  Small Time Deposits - Total, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-stdti  Small Time Deposits at Thrift Institutions, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-svgcbns  Savings Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-svgcbsl  Savings Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-svgti  Savings Deposits at Thrift Institutions, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-svstcbns  Savings and Small Time Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-svstcbsl  Savings and Small Time Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-svstns  Savings and Small Time Deposits - Total, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-svstsl  Savings and Small Time Deposits - Total, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-tcdns  Total Checkable Deposits, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-tcdsl  Total Checkable Deposits, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-tottcbns  Total Time and Savings Deposits at Commercial Banks (DISCONTINUED SERIES), Bil. of $, NSA
-M  1959.01 - 2006.02  n = 566
-tottcbsl  Total Time and Savings Deposits at Commercial Banks (DISCONTINUED SERIES), Bil. of $, SA
-M  1959.01 - 2006.02  n = 566
-tottdp  Total Time and Savings Deposits at All Depository Institutions (DISCONTINUED SERIES), Bil. of $, SA
-M  1959.01 - 2006.02  n = 566
-tottdpns  Total Time and Savings Deposits at all Depository Institutions (DISCONTINUED SERIES), Bil. of $, NSA
-M  1959.01 - 2006.02  n = 566
-tvcksns  Travelers Checks Outstanding, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-tvckssl  Travelers Checks Outstanding, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-usgdcb  U.S. Government Demand Deposits at Commercial Banks, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-usgvddns  U.S. Government Demand Deposits and Note Balances - Total, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-adjborns  Adjustment Plus Seasonal Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED SERIES), Bil. of $, NSA
-M  1959.01 - 2002.12  n = 528
-adjresns  St. Louis Adjusted Reserves, Bil. of $, NSA
-M  1918.01 - 2010.08  n = 1112
-adjressl  St. Louis Adjusted Reserves, Bil. of $, SA
-M  1918.01 - 2010.08  n = 1112
-ambns  St. Louis Adjusted Monetary Base, Bil. of $, NSA
-M  1918.01 - 2010.08  n = 1112
-ambsl  St. Louis Adjusted Monetary Base, Bil. of $, SA
-M  1918.01 - 2010.08  n = 1112
-bogambns  Board of Governors Monetary Base, Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-bogambsl  Board of Governors Monetary Base, Adjusted for Changes in Reserve Requirements, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-bognonbr  Non-Borrowed Reserves of Depository Institutions, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-bogumbns  Board of Governors Monetary Base, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-borrow  Total Borrowings of Depository Institutions from the Federal Reserve, Bil. of $, NSA
-M  1919.01 - 2010.08  n = 1100
-currcir  Currency in Circulation, Bil. of $, NSA
-M  1917.08 - 2010.08  n = 1117
-dadjresn  St. Louis Adjusted Reserves (DISCONTINUED SERIES), Bil. of $, NSA
-M  1947.01 - 2003.06  n = 678
-dadjress  St. Louis Adjusted Reserves (DISCONTINUED SERIES), Bil. of $, SA
-M  1950.01 - 2003.06  n = 642
-disambns  St. Louis Adjusted Monetary Base (DISCONTINUED SERIES), Bil. of $, NSA
-M  1936.01 - 2003.06  n = 810
-disambsl  St. Louis Adjusted Monetary Base (DISCONTINUED SERIES), Bil. of $, SA
-M  1950.01 - 2003.06  n = 642
-discborr  Discount Window Borrowings of Depository Institutions from the Federal Reserve, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-disram  Reserve Adjustment Magnitude (DISCONTINUED SERIES), Bil. of $, NSA
-M  1980.10 - 2003.06  n = 273
-dsbasen  St. Louis Source Base (DISCONTINUED SERIES), Bil. of $, NSA
-M  1936.01 - 2003.06  n = 810
-excresns  Excess Reserves of Depository Institutions, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-extendns  Extended Credit Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED SERIES), Bil. of $, NSA
-M  1975.05 - 2002.12  n = 356
-nforbres  Net Free or Borrowed Reserves of Depository Institutions, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 980
-ram  Reserve Adjustment Magnitude (RAM), Bil. of $, NSA
-M  1980.10 - 2010.09  n = 360
-reqresns  Required Reserves, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-resbalns  Reserve Balances with Federal Reserve Banks, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1950.01 - 2010.08  n = 728
-rsbkcrns  Reserve Bank Credit, Bil. of $, NSA
-M  1989.04 - 2010.08  n = 257
-sbasens  St. Louis Source Base, Bil. of $, NSA
-M  1918.01 - 2010.08  n = 1112
-seaborr  Seasonal Borrowings of Depository Institutions from the Federal Reserve, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-totresns  Board of Governors Total Reserves, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
-trarr  Board of Governors Total Reserves, Adjusted for Changes in Reserve Requirements, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
-treasury  Treasury Deposits with Federal Reserve Banks, Bil. of $, NSA
-M  1986.01 - 2010.08  n = 296
-vault  Vault Cash Used to Satisfy Required Reserves, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.11 - 2010.08  n = 610
-xrcb  Excess Reserves Plus Required Clearing Balance Contracts of Depository Institutions, Bil. of $, NSA
-M  1990.11 - 2010.08  n = 257
-mdiscrt  Discount Rate (DISCONTINUED SERIES), %, NA
-M  1950.01 - 2002.12  n = 636
