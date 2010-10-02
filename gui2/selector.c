@@ -5530,6 +5530,33 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 }
 
+/* On opening the selector dialog, select (if possible) the
+   first relevant item in the listbox on the left.
+*/
+
+static void selector_set_focus (selector *sr)
+{
+    if (sr->lvars != NULL) {
+	GtkTreeModel *mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars));
+	GtkTreeSelection *sel;
+	GtkTreeIter iter;
+	gboolean do_sel;
+
+	gtk_widget_grab_focus(sr->lvars);
+	do_sel = gtk_tree_model_get_iter_first(mod, &iter);
+	if (do_sel) {
+	    if (!FNPKG_CODE(sr->ci) && list_show_var(0, sr->ci, 0)) {
+		/* don't select the constant */
+		do_sel = gtk_tree_model_iter_next(mod, &iter);
+	    }
+	}
+	if (do_sel) {
+	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
+	    gtk_tree_selection_select_iter(sel, &iter);
+	}
+    }
+}
+
 selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 {
     GtkListStore *store;
@@ -5658,7 +5685,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     build_selector_buttons(sr);
 
     gtk_widget_show_all(sr->dlg);
-    gtk_widget_grab_focus(sr->lvars);
+    selector_set_focus(sr);
 
     return sr;
 }

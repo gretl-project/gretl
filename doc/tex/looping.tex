@@ -110,25 +110,16 @@ can access the integer value of \verb+i+ (see Example
 \dollar{i} (see Example \ref{loop-string-script}).
 
 The starting and ending values for the index can be given in numerical
-form, or by reference to predefined scalar variables.  In the latter
-case the variables are evaluated once, at the start of the loop.  In
-addition, with time series data you can give the starting and ending
-values in the form of dates, as in \cmd{loop i=1950:1..1999:4}.
+form, by reference to predefined scalar variables, or as expressions
+that evaluate to scalars.  In the latter two cases the variables are
+evaluated once, at the start of the loop.  In addition, with time
+series data you can give the starting and ending values in the form of
+dates, as in \cmd{loop i=1950:1..1999:4}.
 
 This form of loop control is intended to be quick and easy, and as
-such it is subject to certain limitations.  You cannot do arithmetic
-within the loop control expression, as in
-\begin{code}
-loop i=k..2*k # won't work
-\end{code}
-But one extension is permitted for convenience: you can inflect a loop
-control variable with a minus sign, as in
-\begin{code}
-loop k=-lag..lag # OK
-\end{code}
-
-Also note that in this sort of loop the index variable is always
-incremented by one at each iteration.  If, for example, you have
+such it is subject to certain limitations. In particular, the index
+variable is always incremented by one at each iteration.  If, for
+example, you have
 \begin{code}
 loop i=m..n
 \end{code}
@@ -148,8 +139,7 @@ out for each value of some discrete variable (see chapter
 open greene22_2
 discrete Z8
 v8 = values(Z8)
-n = rows(v8)
-loop i=1..n
+loop i=1..rows(v8)
   scalar xi = v8[i]
   smpl (Z8=xi) --restrict --replace
   printf "mean(Y | Z8 = %g) = %8.5f, sd(Y | Z8 = %g) = %g\n", \
