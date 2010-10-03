@@ -1,0 +1,11 @@
+# download via browser the zipped XML interest-rate data from the Fed:
+http://www.federalreserve.gov/datadownload/Output.aspx?rel=H15&filetype=zip
+
+# unzip: should produce, inter alia, H15_data.xml (other files can be discarded)
+unzip FRB_H15.zip
+
+# build the processor
+make
+
+# prepare the gretl database: fedbog.idx plus fedbog.bin
+make idx

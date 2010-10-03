@@ -35,9 +35,6 @@
 
 #define FRED_SERVER "http://api.stlouisfed.org/fred"
 
-/* Note: you should get your own key from the St Louis Fed */
-#define API_KEY "64115580d861b4ce5f7b4f5fd59c55ce"
-
 #define DEBUG 0
 
 #define XUC const xmlChar *
@@ -61,6 +58,8 @@ struct FREDbuf_ {
     int *catlist;       /* list of sub-categories */
     int indent;         /* sub-category level */
 };
+
+static char API_KEY[33];
 
 static FREDbuf *fredget (FREDtask task, int catid, const char *sername, 
 			 FILE *fidx, int *err);
@@ -679,6 +678,43 @@ static FREDbuf *fredget (FREDtask task, int catid, const char *sername,
     return fb;
 }
 
+static int get_api_key (const char *keyopt)
+{
+    const char *fname;
+    FILE *fp;
+    int err = 0;
+
+    if (keyopt != NULL) {
+	fname = keyopt + 10;
+    } else {
+	fname = "api.key";
+    }
+
+    fp = fopen(fname, "r");
+
+    if (fp == NULL) {
+	err = 1;
+	fprintf(stderr, "Couldn't open API key file %s\n", fname);
+	if (keyopt == NULL) {
+	    fprintf(stderr, "Perhaps you need to use --keyfile=filename ?\n");
+	}
+	fprintf(stderr, "Note: see http://api.stlouisfed.org/api_key.html\n");
+    } else {
+	char line[64];
+
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    fprintf(stderr, "API key file is empty\n");
+	    err = 1;
+	} else if (sscanf(line, "%32s", API_KEY) != 1) {
+	    fprintf(stderr, "Couldn't read API key\n");
+	    err = 1;
+	}
+	fclose(fp);
+    }
+
+    return err;
+}
+
 /* structure of retrieval:
 
    - start with top-level catgories of interest and find out
@@ -722,12 +758,24 @@ int main (int argc, char **argv)
 	1, 9, 10, 13, 15, 18, 22, 23, 24, 31, 45, 46, -1
     };
     FREDbuf *fb = NULL;
+    const char *keyfile = NULL;
     int cats_only = 0;
     int i, err = 0;
 
     if (argc > 1 && !strcmp(argv[1], "--categories")) {
 	/* just retrieve the FRED categories, don't get the data */
 	cats_only = 1;
+    }
+
+    if (argc == 2 && !strncmp(argv[1], "--keyfile=", 10)) {
+	keyfile = argv[1];
+    } else if (argc == 3 && !strncmp(argv[2], "--keyfile=", 10)) {
+	keyfile = argv[2];
+    }    
+
+    err = get_api_key(keyfile);
+    if (err) {
+	exit(EXIT_FAILURE);
     }
 
     if (!cats_only) {

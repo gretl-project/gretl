@@ -11,7 +11,7 @@ LIBS = $(CURL_LIBS) $(XML_LIBS) -lm
 fred2db: fred2db.c
 	$(CC) $(CFLAGS) -o $@ $< $(LIBS)
 
-fedstl.idx: fred2db
+idx: fred2db
 	./fred2db
 
 clean:
