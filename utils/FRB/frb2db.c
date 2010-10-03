@@ -178,7 +178,6 @@ static void set_frb_series_descrip (frb_series *fs, const char *s)
 	{ "neogtiable",                    "negotiable" },
 	{ " Interest Rate",                "" },
 	{ "^",                             "" },
-	{ "  ",                            " " },
 	{ NULL, NULL }
     };	
     char tmp[256] = {0};
@@ -196,7 +195,7 @@ static void set_frb_series_descrip (frb_series *fs, const char *s)
 		break;
 	    }
 	}
-	if (*s == '\n') {
+	if (*s == '\n' || *s == ' ') {
 	    tmp[n++] = ' ';
 	    s++;
 	    while (*s == ' ') s++;
@@ -352,6 +351,7 @@ static int parse_frb_series (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (!err && fidx != NULL) {
+	/* print the series index entry */
 	fprintf(fidx, "%s  %s\n", fs.name, fs.descrip);
 	fprintf(fidx, "M  %d.%02d - %d.%02d  n = %d\n", fs.startyr, fs.startmon,
 		fs.endyr, fs.endmon, t);
