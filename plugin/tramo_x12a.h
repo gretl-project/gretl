@@ -43,6 +43,7 @@ struct _tx_request {
     gretlopt *popt;
     int logtrans;
     int outliers;
+    int trdays;
     int savevars;
     int pd;
     int seasonal_ok;

@@ -170,6 +170,11 @@ static void toggle_outliers (GtkToggleButton *b, tx_request *request)
     request->outliers = gtk_toggle_button_get_active(b);
 }
 
+static void toggle_trading_days (GtkToggleButton *b, tx_request *request)
+{
+    request->trdays = gtk_toggle_button_get_active(b);
+}
+
 static void set_logtrans (GtkButton *b, tx_request *request)
 {
     gpointer p = g_object_get_data(G_OBJECT(b), "transval");
@@ -182,16 +187,23 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     GtkWidget *tmp, *b[3];
     GSList *group;
 
-    tmp = gtk_label_new(_("Controls"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
-
     tmp = gtk_check_button_new_with_label(_("Detect and correct for outliers"));
     gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->outliers);
     g_signal_connect(GTK_TOGGLE_BUTTON(tmp), "toggled",
 		     G_CALLBACK(toggle_outliers), request);
+
+    tmp = gtk_check_button_new_with_label(_("Correct for trading days effect"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->trdays);
+    g_signal_connect(GTK_TOGGLE_BUTTON(tmp), "toggled",
+		     G_CALLBACK(toggle_trading_days), request);
+
+    tmp = gtk_hseparator_new();
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
     b[0] = gtk_radio_button_new_with_label(NULL, _("Log transformation"));
     gtk_widget_show(b[0]);
@@ -225,25 +237,25 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
 
     tmp = gtk_label_new(_("Save data"));
     gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
 
     tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
     gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TX_SA].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				 (*request->popt & OPT_A)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
     gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TX_TR].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				 (*request->popt & OPT_B)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Irregular"));
     gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TX_IR].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				 (*request->popt & OPT_C)? TRUE : FALSE);
@@ -254,14 +266,14 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     
     tmp = gtk_check_button_new_with_label(_("Generate graph"));
     gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TRIGRAPH].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
 				 (*request->popt & OPT_G)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Show full output"));
     gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TEXTOUT].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
 				 (*request->popt & OPT_Q)? FALSE : TRUE);
@@ -732,13 +744,14 @@ static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
     return err;
 }
 
-static void request_opts_init (tx_request *request)
+static void request_opts_init (tx_request *request, const DATAINFO *pdinfo)
 {
     int i;
 
     request->savevars = 0;
     request->logtrans = 3; /* x12a: automatic logs or not */
     request->outliers = 1; /* x12a: detect outliers */
+    request->trdays = (pdinfo->pd == 12); /* x12a: trading days */
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
@@ -848,7 +861,9 @@ static int write_spc_file (const char *fname, const double *y,
 			   const char *vname,
 			   const DATAINFO *pdinfo, 
 			   const int *savelist,
-			   int logtrans, int outliers) 
+			   int logtrans,
+			   int outliers,
+			   int trdays)
 {
     int startyr, startper;
     char *p, tmp[8];
@@ -905,6 +920,10 @@ static int write_spc_file (const char *fname, const double *y,
 	fputs("transform{function=none}\n", fp);
     } else {
 	fputs("transform{function=auto}\n", fp);
+    }
+
+    if (trdays) {
+	fputs("regression{variables = td}\n", fp);
     }
 
     if (outliers) {
@@ -1118,7 +1137,7 @@ int write_tx_data (char *fname, int varnum,
 	workdir = gretl_x12_arima_dir();
     }	
 	
-    request_opts_init(&request);
+    request_opts_init(&request, pdinfo);
 
     err = check_sample_bound(request.prog, pdinfo, errmsg);
     if (err) {
@@ -1166,7 +1185,7 @@ int write_tx_data (char *fname, int varnum,
 	/* write out the .spc file for x12a */
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
 	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
-		       request.logtrans, request.outliers);
+		       request.logtrans, request.outliers, request.trdays);
     } else { 
 	/* TRAMO, possibly plus SEATS */
 	lower(vname);
@@ -1304,7 +1323,8 @@ int adjust_series (const double *x, double *y, const DATAINFO *pdinfo,
 
     if (prog == X12A) { 
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	write_spc_file(fname, x, vname, pdinfo, savelist, 2, 0);
+	write_spc_file(fname, x, vname, pdinfo, savelist, 2, 0,
+		       pdinfo->pd == 12);
     } else { 
 	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
 	write_tramo_file(fname, x, vname, pdinfo, NULL); 
