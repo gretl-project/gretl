@@ -4492,6 +4492,45 @@ static gchar *maybe_fix_tramo_output (gchar *buf)
     return ret;
 }
 
+/* If we got a non-null warning message from X-12-ARIMA,
+   pull it out of the .err file and display it in a
+   warning dialog box.
+*/
+
+static void display_x12a_warning (const char *fname)
+{
+    char *errfile = gretl_strdup(fname);
+
+    if (errfile != NULL) {
+	char *s, line[128];
+	PRN *prn = NULL;
+	FILE *fp;
+	int n = 0;
+
+	switch_ext(errfile, fname, "err");
+	fp = gretl_fopen(errfile, "r");
+	if (fp != NULL) {
+	    if (bufopen(&prn)) {
+		free(errfile);
+		fclose(fp);
+		return;
+	    }
+	    while (fgets(line, sizeof line, fp)) {
+		if (n++ >= 4 && !string_is_blank(line)) {
+		    tailstrip(line);
+		    s = line + strspn(line, " \t");
+		    pputs(prn, s);
+		    pputc(prn, ' ');
+		}
+	    }
+	    fclose(fp);
+	    warnbox(gretl_print_get_buffer(prn));
+	    gretl_print_destroy(prn);
+	}
+	free(errfile);
+    }
+}
+
 void do_tramo_x12a (GtkAction *action, gpointer p)
 {
     /* save options between invocations */
@@ -4547,7 +4586,10 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	} else {
 	    gui_errmsg(err);
 	}
-    } 
+    } else if (opt & OPT_W) {
+	/* got a warning from x12a */
+	display_x12a_warning(fname);
+    }
 
     datainfo->t1 = save_t1;
     datainfo->t2 = save_t2;

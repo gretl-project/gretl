@@ -167,19 +167,19 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 
 static void toggle_outliers (GtkToggleButton *b, tx_request *request)
 {
-    request->outliers = gtk_toggle_button_get_active(b);
+    request->xopt.outliers = gtk_toggle_button_get_active(b);
 }
 
 static void toggle_trading_days (GtkToggleButton *b, tx_request *request)
 {
-    request->trdays = gtk_toggle_button_get_active(b);
+    request->xopt.trdays = gtk_toggle_button_get_active(b);
 }
 
 static void set_logtrans (GtkButton *b, tx_request *request)
 {
     gpointer p = g_object_get_data(G_OBJECT(b), "transval");
 
-    request->logtrans = GPOINTER_TO_INT(p);
+    request->xopt.logtrans = GPOINTER_TO_INT(p);
 }
 
 static void show_x12a_options (tx_request *request, GtkBox *vbox)
@@ -187,17 +187,21 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     GtkWidget *tmp, *b[3];
     GSList *group;
 
+    tmp = gtk_label_new(_("X-12-ARIMA options"));
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, TRUE, TRUE, 5);
+
     tmp = gtk_check_button_new_with_label(_("Detect and correct for outliers"));
     gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->outliers);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->xopt.outliers);
     g_signal_connect(GTK_TOGGLE_BUTTON(tmp), "toggled",
 		     G_CALLBACK(toggle_outliers), request);
 
     tmp = gtk_check_button_new_with_label(_("Correct for trading days effect"));
     gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->trdays);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->xopt.trdays);
     g_signal_connect(GTK_TOGGLE_BUTTON(tmp), "toggled",
 		     G_CALLBACK(toggle_trading_days), request);
 
@@ -228,7 +232,7 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
 		     G_CALLBACK(set_logtrans), request);
     g_object_set_data(G_OBJECT(b[2]), "transval", GINT_TO_POINTER(3));
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[request->logtrans - 1]), 
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[request->xopt.logtrans - 1]), 
 				 TRUE); 
 
     tmp = gtk_hseparator_new();
@@ -749,9 +753,10 @@ static void request_opts_init (tx_request *request, const DATAINFO *pdinfo)
     int i;
 
     request->savevars = 0;
-    request->logtrans = 3; /* x12a: automatic logs or not */
-    request->outliers = 1; /* x12a: detect outliers */
-    request->trdays = (pdinfo->pd == 12); /* x12a: trading days */
+
+    request->xopt.logtrans = 3; /* x12a: automatic logs or not */
+    request->xopt.outliers = 1; /* x12a: detect outliers */
+    request->xopt.trdays = (pdinfo->pd == 12); /* x12a: trading days */
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
@@ -861,9 +866,7 @@ static int write_spc_file (const char *fname, const double *y,
 			   const char *vname,
 			   const DATAINFO *pdinfo, 
 			   const int *savelist,
-			   int logtrans,
-			   int outliers,
-			   int trdays)
+			   x12a_opts *xopt)
 {
     int startyr, startper;
     char *p, tmp[8];
@@ -914,19 +917,19 @@ static int write_spc_file (const char *fname, const double *y,
     }
     fputs(" )\n}\n", fp);
 
-    if (logtrans == 1) {
+    if (xopt->logtrans == 1) {
 	fputs("transform{function=log}\n", fp);
-    } else if (logtrans == 2) {
+    } else if (xopt->logtrans == 2) {
 	fputs("transform{function=none}\n", fp);
     } else {
 	fputs("transform{function=auto}\n", fp);
     }
 
-    if (trdays) {
+    if (xopt->trdays) {
 	fputs("regression{variables = td}\n", fp);
     }
 
-    if (outliers) {
+    if (xopt->outliers) {
 	fputs("outlier{}\n", fp);
     }
 
@@ -1064,6 +1067,32 @@ static int helper_spawn (const char *path, const char *vname,
 
 #endif
 
+/* The 12a .err file is always produced, but often contains no
+   warning or error messages: in that case it contains 2 lines
+   of boiler-plate text followed by two blank lines. Here we
+   check if we got more than 4 lines of output.
+*/
+
+static int got_x12a_warning (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "r");
+    int ret = 0;
+
+    if (fp != NULL) {
+	char line[128];
+	int n = 0;
+
+	while (fgets(line, sizeof line, fp)) {
+	    n++;
+	}
+
+	fclose(fp);
+	ret = n > 4;
+    }
+
+    return ret;
+}
+
 /* make a default x12a.mdl file if it doesn't already exist */
 
 static int check_x12a_model_file (const char *workdir, char *fname)
@@ -1185,7 +1214,7 @@ int write_tx_data (char *fname, int varnum,
 	/* write out the .spc file for x12a */
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
 	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
-		       request.logtrans, request.outliers, request.trdays);
+		       &request.xopt);
     } else { 
 	/* TRAMO, possibly plus SEATS */
 	lower(vname);
@@ -1230,6 +1259,12 @@ int write_tx_data (char *fname, int varnum,
 	}
     } else {
 	if (request.prog == X12A) {
+	    /* first check the .err file for warnings */
+	    sprintf(fname, "%s%c%s.err", workdir, SLASH, vname);
+	    if (got_x12a_warning(fname)) {
+		*opt |= OPT_W;
+	    }
+	    /* then set the output filename */
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, vname); 
 	} else {
 	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, vname);
@@ -1322,9 +1357,16 @@ int adjust_series (const double *x, double *y, const DATAINFO *pdinfo,
     } 
 
     if (prog == X12A) { 
+	x12a_opts xopt = { 2, /* auto log transformation */
+			   0, /* don't correct for outliers */
+			   0  /* trading days correction */
+	};
+
+	if (pdinfo->pd == 12) {
+	    xopt.trdays = 1;
+	}
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	write_spc_file(fname, x, vname, pdinfo, savelist, 2, 0,
-		       pdinfo->pd == 12);
+	write_spc_file(fname, x, vname, pdinfo, savelist, &xopt);
     } else { 
 	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
 	write_tramo_file(fname, x, vname, pdinfo, NULL); 

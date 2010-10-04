@@ -97,14 +97,14 @@ gui2/fncall.c
 gui2/fnsave.c
 gui2/gpt_control.c
 gui2/gpt_dialog.c
-gui2/graph_page.c
 gui2/graphics.c
+gui2/graph_page.c
 gui2/gretl.c
 gui2/gretlwin32.c
 gui2/gtkfontselhack.c
+gui2/guiprint.c
 gui2/gui_recode.c
 gui2/gui_utils.c
-gui2/guiprint.c
 gui2/helpfiles.c
 gui2/lagpref.c
 gui2/library.c
@@ -174,8 +174,8 @@ plugin/stata_import.c
 plugin/stats_tables.c
 plugin/sysest.c
 plugin/tobit.c
-plugin/tramo-x12a.c
 plugin/tramo_options.c
+plugin/tramo-x12a.c
 plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c
