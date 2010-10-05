@@ -671,7 +671,6 @@ static int push_lag_field (char ***pS, const char *s, int len, int *nf)
     char *chunk = gretl_strndup(s, len);
     int err = 0;
 
-    chunk = gretl_strndup(s, len);
     if (chunk == NULL) {
 	err = E_ALLOC;
     } else {

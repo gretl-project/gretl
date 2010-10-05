@@ -306,7 +306,6 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
     dpd->t1 = pdinfo->t1;             /* start of sample range */
     dpd->T = pdinfo->pd;              /* max obs. per individual */
     dpd->effN = dpd->N = NT / dpd->T; /* included individuals */
-    dpd->k = dpd->p + dpd->nx;        /* # of coeffs on lagged dep var, indep vars */
     dpd->minTi = dpd->maxTi = 0;
     dpd->max_ni = 0;
     dpd->nz = 0;
@@ -321,6 +320,13 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
     dpd->sargan = NADBL;
     dpd->wald[0] = dpd->wald[1] = NADBL;
     dpd->wdf[0] = dpd->wdf[1] = 0;
+
+    /* # of coeffs on lagged dep var, indep vars */
+    if (dpd->laglist != NULL) {
+	dpd->k = dpd->laglist[0] + dpd->nx;
+    } else {
+	dpd->k = dpd->p + dpd->nx;
+    }
 
 #if ADEBUG
     fprintf(stderr, "yno = %d, p = %d, qmax = %d, nx = %d, k = %d\n",
@@ -874,9 +880,15 @@ static int dpd_wald_test (dpdinfo *dpd)
     gretl_matrix *b, *V;
     double x = 0.0;
     int cpos = dpd_const_pos(dpd);
-    int k, kc = dpd->p + dpd->nx;
+    int k, kc;
     int i, j, ri, rj;
     int err;
+
+    if (dpd->laglist != NULL) {
+	kc = dpd->laglist[0] + dpd->nx;
+    } else {
+	kc = dpd->p + dpd->nx;
+    }
 
     /* position of const in coeff vector? */
     if (cpos > 0) {
@@ -1687,10 +1699,19 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     prefix = (dpd->flags & DPD_ORTHDEV)? 'O' : 'D';
 
     j = 0;
-    for (i=0; i<dpd->p; i++) {
-	pmod->params[j][0] = '\0';
-	sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[dpd->yno], i+1);
-	strncat(pmod->params[j++], tmp, 15);
+    if (dpd->laglist != NULL) {
+	for (i=1; i<=dpd->laglist[0]; i++) {
+	    pmod->params[j][0] = '\0';
+	    sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[dpd->yno], 
+		    dpd->laglist[i]);
+	    strncat(pmod->params[j++], tmp, 15);
+	}	
+    } else {
+	for (i=0; i<dpd->p; i++) {
+	    pmod->params[j][0] = '\0';
+	    sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[dpd->yno], i+1);
+	    strncat(pmod->params[j++], tmp, 15);
+	}
     }
 
     for (i=0; i<dpd->nx; i++) {
