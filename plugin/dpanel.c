@@ -1400,9 +1400,10 @@ static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
    option --dpdstyle (OPT_X).
 */
 
-MODEL dpd_estimate (const int *list, const char *ispec, 
-		    const double **Z, const DATAINFO *pdinfo, 
-		    gretlopt opt, PRN *prn)
+MODEL dpd_estimate (const int *list, const int *laglist,
+		    const char *ispec, const double **Z, 
+		    const DATAINFO *pdinfo, gretlopt opt, 
+		    PRN *prn)
 {
     diag_info *d = NULL;
     dpdinfo *dpd = NULL;
@@ -1426,7 +1427,7 @@ MODEL dpd_estimate (const int *list, const char *ispec,
 	}
     }
 
-    dpd = dpdinfo_new(DPANEL, list, Z, pdinfo, opt, d, nzb, &mod.errcode);
+    dpd = dpdinfo_new(DPANEL, list, laglist, Z, pdinfo, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;

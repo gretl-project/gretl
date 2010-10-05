@@ -1166,11 +1166,13 @@ int *gretl_list_from_string (const char *str, int *err)
     while (isspace(*s)) s++;
     tailstrip(s);
 
-    /* strip parentheses, if present */
-    if (*s == '(') {
+    /* strip parentheses or braces, if present */
+    if (*s == '(' || *s == '{') {
+	char close = (*s == '(')? ')' : '}';
+
 	n = strlen(s);
-	if (s[n-1] != ')') {
-	    /* got opening paren but no close */
+	if (s[n-1] != close) {
+	    /* got opening grouping character but no close */
 	    *err = E_PARSE;
 	    return NULL;
 	}
@@ -1178,7 +1180,7 @@ int *gretl_list_from_string (const char *str, int *err)
 	s++;
 	while (isspace(*s)) s++;
 	tailstrip(s);
-    }
+    } 
 
     q = s; /* copy relevant starting point */
 
@@ -1265,6 +1267,36 @@ int *gretl_list_from_string (const char *str, int *err)
     } 
 
     free(p);
+
+    return list;
+}
+
+/**
+ * gretl_list_from_vector:
+ * @v: source vector.
+ *
+ * Returns: a newly allocated gretl list containing the values
+ * in @v, or NULL on failure. Note that it is an error if
+ * @v is NULL, or is not a vector.
+ */
+
+int *gretl_list_from_vector (const gretl_vector *v, int *err)
+{
+    int i, n = gretl_vector_get_length(v);
+    int *list = NULL;
+
+    if (n == 0) {
+	*err = E_DATA;
+    } else {
+	list = gretl_list_new(n);
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<n; i++) {
+		list[i+1] = (int) v->val[i];
+	    }
+	}
+    }
 
     return list;
 }

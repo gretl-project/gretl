@@ -34,6 +34,7 @@ struct CMD_ {
     int *list;                  /* list of variables by ID number */
     char *param;                /* general-purpose parameter to command */
     char *extra;                /* second parameter for some special uses */
+    int *auxlist;               /* auxiliary list for some uses */
     int err;                    /* error code */
     Laginfo *linfo;             /* struct for recording info on automatically
                                    generated lags */

@@ -59,8 +59,10 @@ MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL arbond_model (const int *list, const char *ispec, const double **Z, 
 		    const DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
-MODEL dpd_model (const int *list, const char *ispec, const double **Z, 
-		 const DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+MODEL dpd_model (const int *list, const int *laglist,
+		 const char *ispec, const double **Z, 
+		 const DATAINFO *pdinfo, gretlopt opt, 
+		 PRN *prn);
 
 MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo);
 

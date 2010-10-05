@@ -46,6 +46,8 @@ int *gretl_list_copy_from_pos (const int *src, int pos);
 
 int *gretl_list_from_string (const char *str, int *err);
 
+int *gretl_list_from_vector (const gretl_vector *v, int *err);
+
 char *gretl_list_to_string (const int *list);
 
 char *gretl_list_to_lags_string (const int *list, int *err);

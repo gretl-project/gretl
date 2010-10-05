@@ -138,7 +138,8 @@ struct dpdinfo_ {
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
 
 static void dpanel_residuals (dpdinfo *dpd);
-static int dpd_process_list (dpdinfo *dpd, const int *list);
+static int dpd_process_list (dpdinfo *dpd, const int *list, 
+			     const int *ylags);
 
 static void dpdinfo_free (dpdinfo *dpd)
 {
@@ -250,7 +251,7 @@ static int dpd_flags_from_opt (gretlopt opt)
     return f;
 }
 
-static dpdinfo *dpdinfo_new (int ci, const int *list, 
+static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
 			     const double **Z, const DATAINFO *pdinfo, 
 			     gretlopt opt, diag_info *d, 
 			     int nzb, int *err)
@@ -295,7 +296,7 @@ static dpdinfo *dpdinfo_new (int ci, const int *list,
     dpd->d2 = NULL;
     dpd->nzb2 = 0;
 
-    *err = dpd_process_list(dpd, list);
+    *err = dpd_process_list(dpd, list, ylags);
     if (*err) {
 	goto bailout;
     }
@@ -465,12 +466,21 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 }
 
 static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
-				int seppos)
+				int seppos, const int *ylags)
 {
     int nlags = seppos - 1;
     int i, err = 0;
 
-    if (nlags == 1) {
+    if (nlags != 1) {
+	err = E_INVARG;
+    } else if (ylags != NULL) {
+	dpd->laglist = gretl_list_copy(ylags);
+	if (dpd->laglist == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    nlags = dpd->laglist[0];
+	}
+    } else {
 	/* only got p; make "fake" list 1, ..., p */
 	dpd->p = list[1];
 	if (dpd->p < 1) {
@@ -481,89 +491,53 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
 		err = E_ALLOC;
 	    } 
 	}
-    } else if (nlags == 2 && list[1] == 0) {
-	/* flag for singleton lag (> 0) */
-	nlags = 1;
-	dpd->p = list[2];
-	if (dpd->p < 1) {
-	    err = E_INVARG;
-	} else {
-	    dpd->laglist = gretl_list_new(1);
-	    if (dpd->laglist == NULL) {
-		err = E_ALLOC;
-	    } else {
-		dpd->laglist[1] = dpd->p;
-	    }
-	}	
-    } else {
-	/* multiple lags were specified */
-	dpd->laglist = gretl_list_new(nlags);
-	if (dpd->laglist == NULL) {
-	    err = E_ALLOC;
-	} else {	
-	    for (i=1; i<=nlags; i++) {
-		if (list[i] < 1) {
-		    err = E_INVARG;
-		    break;
-		} else {
-		    dpd->laglist[i] = list[i];
-		}
-	    }
-	}
-    }
+    } 	
 
-    if (nlags > 1 && !err) {
+    if (ylags != NULL && !err) {
 	/* sort lags and check for duplicates */
 	gretl_list_sort(dpd->laglist);
 	dpd->p = dpd->laglist[nlags];
-	for (i=2; i<=nlags; i++) {
-	    if (dpd->laglist[i] == dpd->laglist[i-1]) {
+	for (i=1; i<=nlags; i++) {
+	    if (dpd->laglist[i] <= 0) {
+		err = E_INVARG;
+	    } else if (i > 1 && dpd->laglist[i] == dpd->laglist[i-1]) {
 		err = E_INVARG;
 	    }
 	}
     }
 
+#if ADEBUG
+    printlist(dpd->laglist, "dpd->laglist");
+#endif
+
     return err;
 }
 
 /* Process the incoming list and figure out various parameters
-   including the maximum lag of the dependent variable, dpd->p,
-   and the number of exogenous regressors, dpd->nx.
+   including the maximum lag of the dependent variable, dpd->p, and
+   the number of exogenous regressors, dpd->nx.
 
-   Note that the significance of the first sublist (before the
-   first LISTSEP) differs between arbond and dpanel. 
+   Note that the specification of the first sublist (before the first
+   LISTSEP) differs between arbond and dpanel.
 
-   In arbond this chunk contains either p alone or p plus "qmax", 
-   a limiter for the maximum lag of y to be used as an
-   instrument. 
+   In arbond this chunk contains either p alone or p plus "qmax", a
+   limiter for the maximum lag of y to be used as an instrument.
 
-   In dpanel, it contains either p alone or a list of specific
-   lags of y to use as regressors. Placing a limit on the max 
-   lag of y as instrument is done in dpanel via "GMM(y,min,max)". 
-   (We apply the default pattern of GMM(y,2,99) only if the user
-   says --system but doesn't specify the treatment of y.)
+   In dpanel, it contains either a single integer value for p or a set
+   of specific lags of y to use as regressors (given in the form of
+   integers in braces or as the name of a matrix). In the former case
+   the auxiliary @ylags list will be NULL; in the latter @ylags
+   records the specific lags requested. At the user level, therefore,
 
-   Note, there's a potential ambiguity if the user says, e.g.
-
-   dpanel 2 ; y ...
-
-   Does this mean p = 2 (so use lags 1 and 2, arbond style), or
-   does it mean _just_ use lag 2 (a list with a single member)?  
-   This is debatable, but since the former interpretation
-   seems more natural, that's what it means at present: if
-   the user really wants lag 2 only, she can force the issue
-   with the (admittedly ugly) bodge,
-
-   dpanel 0 2 ; y ...
-
-   where the leading 0 (an invalid lag) is a flag for
-   "read this as a singleton, dammit".
-
-   TODO: borrow from arima and use a matrix "{ ... }" to
-   specify gappy lags.
+   dpanel 2 ; y ...   means use lags 1 and 2
+   dpanel {2} ; y ... means use lag 2 only
+   
+   Note that placing a limit on the max lag of y _as instrument_ is
+   done in dpanel via "GMM(y,min,max)". 
 */
 
-static int dpd_process_list (dpdinfo *dpd, const int *list)
+static int dpd_process_list (dpdinfo *dpd, const int *list,
+			     const int *ylags)
 {
     int seppos = gretl_list_separator_position(list);
     int xpos, err = 0;
@@ -580,8 +554,9 @@ static int dpd_process_list (dpdinfo *dpd, const int *list)
     xpos = seppos + 2;
 
     if (dpd->ci == DPANEL) {
-	/* the first sublist may contain specific y lags */
-	err = dpanel_make_laglist(dpd, list, seppos);
+	/* the auxiliary 'ylags' list may contain specific y lags, 
+	   otherwise there should be just one field */
+	err = dpanel_make_laglist(dpd, list, seppos, ylags);
     } else {
 	dpd->p = list[1];
 	if (seppos == 2) {
@@ -2580,7 +2555,7 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
     }
 
     /* initialize (including some memory allocation) */
-    dpd = dpdinfo_new(ARBOND, list, Z, pdinfo, opt, d, nzb, &mod.errcode);
+    dpd = dpdinfo_new(ARBOND, list, NULL, Z, pdinfo, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;

@@ -4401,11 +4401,14 @@ MODEL arbond_model (const int *list, const char *ispec, const double **Z,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL dpd_model (const int *list, const char *ispec, const double **Z, 
-		 const DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+MODEL dpd_model (const int *list, const int *laglist,
+		 const char *ispec, const double **Z, 
+		 const DATAINFO *pdinfo, gretlopt opt, 
+		 PRN *prn)
 {
     void *handle = NULL;
-    MODEL (*dpd_estimate) (const int *, const char *, const double **, 
+    MODEL (*dpd_estimate) (const int *, const int *,
+			   const char *, const double **, 
 			   const DATAINFO *, gretlopt, PRN *);
     MODEL mod;
 
@@ -4417,7 +4420,7 @@ MODEL dpd_model (const int *list, const char *ispec, const double **Z,
 	return mod;
     }
 
-    mod = (*dpd_estimate)(list, ispec, Z, pdinfo, opt, prn);
+    mod = (*dpd_estimate)(list, laglist, ispec, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 
