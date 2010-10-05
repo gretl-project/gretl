@@ -895,36 +895,45 @@ static int dpd_const_pos (dpdinfo *dpd)
     return cpos;
 }
 
+/* We do either one or two tests here: first we test for the joint
+   significance of all regular regressors (lags of y plus any
+   exogenous variables, except for the constant, if present).  
+   Then, if time dummies are present, we test for their joint
+   significance.
+*/
+
 static int dpd_wald_test (dpdinfo *dpd)
 {
     gretl_matrix *b, *V;
     double x = 0.0;
     int cpos = dpd_const_pos(dpd);
-    int k, k0;
+    int k1, knd;
     int i, j, ri, rj;
     int err;
 
-    /* number of coefficients excluding any time dummies */
-    k0 = dpd->k - dpd->ndum;
+    /* total number of coefficients excluding any time dummies */
+    knd = dpd->k - dpd->ndum;
 
-    /* number of coefficients to be tested (excluding const) */
-    k = (cpos > 0)? (k0 - 1) : k0;
+    /* the number of coefficients to be tested at the first step
+       (we exclude the constant) 
+    */
+    k1 = (cpos > 0)? (knd - 1) : knd;
 
-    b = gretl_matrix_reuse(dpd->kmtmp, k, 1);
-    V = gretl_matrix_reuse(dpd->kktmp, k, k);
+    b = gretl_matrix_reuse(dpd->kmtmp, k1, 1);
+    V = gretl_matrix_reuse(dpd->kktmp, k1, k1);
 
     ri = 0;
-    for (i=0; i<k0; i++) {
+    for (i=0; i<knd; i++) {
 	if (i != cpos) {
 	    b->val[ri++] = dpd->beta->val[i];
 	}
     }
 
     ri = 0;
-    for (i=0; i<k0; i++) {
+    for (i=0; i<knd; i++) {
 	if (i != cpos) {
 	    rj = 0;
-	    for (j=0; j<k0; j++) {
+	    for (j=0; j<knd; j++) {
 		if (j != cpos) {
 		    x = gretl_matrix_get(dpd->vbeta, i, j);
 		    gretl_matrix_set(V, ri, rj++, x);
@@ -942,16 +951,18 @@ static int dpd_wald_test (dpdinfo *dpd)
 
     if (!err) {
 	dpd->wald[0] = x;
-	dpd->wdf[0] = k;
+	dpd->wdf[0] = k1;
     }
 
     if (!err && dpd->ndum > 0) {
-	/* we always put the dummies at the end of the coeff vector */
+	/* time dummies: these are always at the end of the 
+	   coeff vector 
+	*/
 	b = gretl_matrix_reuse(dpd->kmtmp, dpd->ndum, 1);
 	V = gretl_matrix_reuse(dpd->kktmp, dpd->ndum, dpd->ndum);
-	gretl_matrix_extract_matrix(b, dpd->beta, k0, 0,
+	gretl_matrix_extract_matrix(b, dpd->beta, knd, 0,
 				    GRETL_MOD_NONE);
-	gretl_matrix_extract_matrix(V, dpd->vbeta, k0, k0,
+	gretl_matrix_extract_matrix(V, dpd->vbeta, knd, knd,
 				    GRETL_MOD_NONE);
 
 	err = gretl_invert_symmetric_matrix(V);
