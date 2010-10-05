@@ -860,19 +860,39 @@ static int arbond_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
 
 /* end of arbond book-keeping block */
 
+/* Figure the 0-based index of the position of the constant
+   in the coefficient vector (or return -1 if the constant is 
+   not included).
+*/
+
 static int dpd_const_pos (dpdinfo *dpd)
 {
+    int cpos = -1;
+
     if (dpd->xlist != NULL) {
 	int i;
 
 	for (i=1; i<=dpd->xlist[0]; i++) {
 	    if (dpd->xlist[i] == 0) {
-		return i;
+		cpos = i - 1;
+		break;
+	    }
+	}
+
+	if (cpos >= 0) {
+	    /* we have the position in the array of coeffs on 
+	       exogenous vars, but these follow the lagged
+	       values of the dependent variable.
+	    */
+	    if (dpd->laglist != NULL) {
+		cpos += dpd->laglist[0];
+	    } else {
+		cpos += dpd->p;
 	    }
 	}
     }
 
-    return -1;
+    return cpos;
 }
 
 static int dpd_wald_test (dpdinfo *dpd)
@@ -880,39 +900,31 @@ static int dpd_wald_test (dpdinfo *dpd)
     gretl_matrix *b, *V;
     double x = 0.0;
     int cpos = dpd_const_pos(dpd);
-    int k, kc;
+    int k, k0;
     int i, j, ri, rj;
     int err;
 
-    if (dpd->laglist != NULL) {
-	kc = dpd->laglist[0] + dpd->nx;
-    } else {
-	kc = dpd->p + dpd->nx;
-    }
+    /* number of coefficients excluding any time dummies */
+    k0 = dpd->k - dpd->ndum;
 
-    /* position of const in coeff vector? */
-    if (cpos > 0) {
-	k = kc - 1;
-	cpos += dpd->p - 1;
-    } else {
-	k = kc;
-    }
+    /* number of coefficients to be tested (excluding const) */
+    k = (cpos > 0)? (k0 - 1) : k0;
 
     b = gretl_matrix_reuse(dpd->kmtmp, k, 1);
     V = gretl_matrix_reuse(dpd->kktmp, k, k);
 
     ri = 0;
-    for (i=0; i<kc; i++) {
+    for (i=0; i<k0; i++) {
 	if (i != cpos) {
 	    b->val[ri++] = dpd->beta->val[i];
 	}
     }
 
     ri = 0;
-    for (i=0; i<kc; i++) {
+    for (i=0; i<k0; i++) {
 	if (i != cpos) {
 	    rj = 0;
-	    for (j=0; j<kc; j++) {
+	    for (j=0; j<k0; j++) {
 		if (j != cpos) {
 		    x = gretl_matrix_get(dpd->vbeta, i, j);
 		    gretl_matrix_set(V, ri, rj++, x);
@@ -935,13 +947,11 @@ static int dpd_wald_test (dpdinfo *dpd)
 
     if (!err && dpd->ndum > 0) {
 	/* we always put the dummies at the end of the coeff vector */
-	int bmin = dpd->k - dpd->ndum;
-
 	b = gretl_matrix_reuse(dpd->kmtmp, dpd->ndum, 1);
 	V = gretl_matrix_reuse(dpd->kktmp, dpd->ndum, dpd->ndum);
-	gretl_matrix_extract_matrix(b, dpd->beta, bmin, 0,
+	gretl_matrix_extract_matrix(b, dpd->beta, k0, 0,
 				    GRETL_MOD_NONE);
-	gretl_matrix_extract_matrix(V, dpd->vbeta, bmin, bmin,
+	gretl_matrix_extract_matrix(V, dpd->vbeta, k0, k0,
 				    GRETL_MOD_NONE);
 
 	err = gretl_invert_symmetric_matrix(V);

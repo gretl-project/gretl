@@ -2255,7 +2255,7 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv)
     }
 
     tmp = obs_spinbox(rset, 
-		      (b1 != NULL)? NULL : olabel, 
+		      (b1 != NULL)? NULL : _(olabel), 
 		      NULL, NULL, 
 		      tmin, tmax, t, 
 		      0, 0, 0,
