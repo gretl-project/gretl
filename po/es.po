@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-04 16:55-0400\n"
-"PO-Revision-Date: 2010-08-30 12:58+0200\n"
+"PO-Revision-Date: 2010-10-05 11:13+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -1280,24 +1280,22 @@ msgid "Please open a data file first"
 msgstr "Por favor, abra primero un archivo de datos"
 
 #: lib/src/dataset.c:1794 lib/src/dataset.c:1804
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %s"
-msgstr "Borrar"
+msgstr "Borrada %s"
 
 #: lib/src/dataset.c:1796 lib/src/dataset.c:1806
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %d variables"
-msgstr "Elija dos variables"
+msgstr "Se borraron %d variables"
 
 #: lib/src/dataset.c:1802
-#, fuzzy
 msgid "No variables were deleted"
-msgstr "No se leyó ninguna variable\n"
+msgstr "No se borró ninguna variable"
 
 #: lib/src/dataset.c:1808
-#, fuzzy
 msgid "some data were in use"
-msgstr "No se encontraron datos numéricos"
+msgstr "algunos datos estaban en uso"
 
 #: lib/src/dataset.c:1956 gui2/gui_utils.c:4364
 msgid "dataset is subsampled"
@@ -1749,7 +1747,7 @@ msgstr "Quitando %s: el rango muestral no contiene observaciones válidas\n"
 
 #: lib/src/describe.c:4849
 msgid "corr: needs at least two non-constant arguments"
-msgstr ""
+msgstr "corr: necesita al menos dos argumentos no constantes"
 
 #: lib/src/describe.c:4906 lib/src/modelprint.c:3168 lib/src/modelprint.c:3180
 #: lib/src/modelprint.c:3181 lib/src/modelprint.c:3182
@@ -4840,7 +4838,7 @@ msgstr "Estimado usando Mínimos cuadrados"
 
 #: lib/src/modelprint.c:1495
 msgid "= MLE"
-msgstr ""
+msgstr "= MLE"
 
 #: lib/src/modelprint.c:1498
 msgid "Estimated using Kalman filter"
@@ -7882,19 +7880,20 @@ msgid "gretl: display database series"
 msgstr "gretl: mostrar base de datos de series"
 
 #: gui2/database.c:215 gui2/dialogs.c:3280
-#, fuzzy
 msgid "Interpolate higher frequency values"
-msgstr "Valor p interpolado"
+msgstr "Interpolar valores de frecuencia más alta"
 
 #: gui2/database.c:216 gui2/dialogs.c:3281
 msgid "Repeat the lower frequency values"
-msgstr ""
+msgstr "Repetir los valores de baja frecuencia"
 
 #: gui2/database.c:219
 msgid ""
 "Adding a lower frequency series to a\n"
 "higher frequency dataset"
 msgstr ""
+"Añadiendo una serie de baja frequencia a\n"
+"un conjunto de datos de alta frecuencia"
 
 #: gui2/database.c:231
 #, c-format
@@ -8841,9 +8840,8 @@ msgid "gretl: expand data"
 msgstr "gretl: expandir los datos"
 
 #: gui2/dialogs.c:3314
-#, fuzzy
 msgid "Expand annual data to quarterly"
-msgstr "Expandir datos anuales a:"
+msgstr "Expandir datos anuales a trimestrales"
 
 #: gui2/dialogs.c:3316
 msgid "Expand quarterly data to monthly"
@@ -9267,9 +9265,8 @@ msgid "frequency cutoff (degrees):"
 msgstr "frecuencia de cierre (grados):"
 
 #: gui2/filters.c:731
-#, fuzzy
 msgid "show poles"
-msgstr "Mostrar el gráfico"
+msgstr "Mostrar los polos"
 
 #: gui2/filters.c:742
 msgid "Order:"
@@ -9579,14 +9576,12 @@ msgid "Print"
 msgstr "Imprimir"
 
 #: gui2/gpt_control.c:3160
-#, fuzzy
 msgid "roots (real, imaginary, modulus, frequency)"
-msgstr "raíces del VAR (real, imaginaria, módulo, frecuencia)"
+msgstr "raíces (real, imaginaria, módulo, frecuencia)"
 
 #: gui2/gpt_control.c:3197
-#, fuzzy
 msgid "roots"
-msgstr "raíces del VAR"
+msgstr "raíces"
 
 #: gui2/gpt_control.c:3219
 msgid "gretl: boxplot data"
@@ -9659,9 +9654,8 @@ msgid "Numerical values"
 msgstr "Valores numéricos"
 
 #: gui2/gpt_control.c:3353 gui2/gpt_control.c:3429
-#, fuzzy
 msgid "Font"
-msgstr "Nombre de la fuente"
+msgstr "Fuente"
 
 #: gui2/gpt_control.c:3370 gui2/gpt_dialog.c:2628 gui2/graphics.c:257
 #: gui2/graph_page.c:608
@@ -13430,14 +13424,12 @@ msgid "Unrestricted trend"
 msgstr "Tendencia no restringida"
 
 #: gui2/selector.c:5356
-#, fuzzy
 msgid "Enter formula for new variable"
-msgstr "Introduzca la fórmula para la nueva variable:"
+msgstr "Introduzca la fórmula para la nueva variable"
 
 #: gui2/selector.c:5368
-#, fuzzy
 msgid "New variable"
-msgstr "variable índice"
+msgstr "Variable nueva"
 
 #: gui2/selector.c:5398
 msgid "plot with impulses"
@@ -14525,9 +14517,8 @@ msgid "Reformat..."
 msgstr "Reformatear..."
 
 #: gui2/toolbar.c:643
-#, fuzzy
 msgid "Edit values..."
-msgstr "Editar valores"
+msgstr "Editar valores..."
 
 #: gui2/toolbar.c:644
 msgid "Refresh"
@@ -14729,9 +14720,8 @@ msgid "ARMA initialization"
 msgstr "Inicialización del ARMA"
 
 #: plugin/arma.c:1374
-#, fuzzy
 msgid "user-specified values"
-msgstr "valores iniciales proporcionados por el usuario"
+msgstr "valores especificados por el usuario"
 
 #: plugin/arma_common.c:741 plugin/arma_common.c:822
 msgid "Error in arma command"
@@ -14739,12 +14729,11 @@ msgstr "Error en la instrucción ARMA"
 
 #: plugin/arma_init.c:350
 msgid "Hannan-Rissanen method"
-msgstr ""
+msgstr "Método de Hannan-Rissanen"
 
 #: plugin/arma_init.c:1152
-#, fuzzy
 msgid "small MA values"
-msgstr "valores válidos"
+msgstr "valores MA pequeños"
 
 #: plugin/arma_init.c:1230
 msgid "using nonlinear AR model"
@@ -15475,13 +15464,12 @@ msgid "irregular component of %s"
 msgstr "componente irregular de %s"
 
 #: plugin/tramo-x12a.c:190
-#, fuzzy
 msgid "X-12-ARIMA options"
-msgstr "Ver los resultados de ARIMA-X-12"
+msgstr "Opciones de ARIMA-X-12"
 
 #: plugin/tramo-x12a.c:201
 msgid "Correct for trading days effect"
-msgstr ""
+msgstr "Corregir el efecto de los días de comercio"
 
 #: plugin/tramo-x12a.c:278
 msgid "Show full output"
