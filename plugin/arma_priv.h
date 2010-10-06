@@ -41,7 +41,7 @@ struct arma_info_ {
     ArmaFlags flags;    /* specification flags */
     PrivFlags pflags;   /* "private" flags for estimation */
     int *alist;         /* copy of incoming list */
-    const char *pqspec; /* input string with specific AR, MA lags */
+    const int *pqspec;  /* auxiliary list with specific AR, MA lags */
     char *pmask;        /* specific AR lags included */
     char *qmask;        /* specific MA lags included */
     double ll;          /* log-likelihood */

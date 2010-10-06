@@ -28,7 +28,7 @@ real_arima_difference_series (double *dx, const double *x,
 
 static void 
 arma_info_init (arma_info *ainfo, gretlopt opt, 
-		const char *pqspec, const DATAINFO *pdinfo)
+		const int *pqspec, const DATAINFO *pdinfo)
 {
     ainfo->yno = 0;
     ainfo->flags = 0;
@@ -121,11 +121,10 @@ enum {
    lags used.
 */
 
-static char *mask_from_vec (const gretl_vector *v, 
-			    arma_info *ainfo,
-			    int m, int *err)
+static char *mask_from_list (const int *list, 
+			     arma_info *ainfo,
+			     int m, int *err)
 {
-    int vlen = gretl_vector_get_length(v);
     int mlen = (m == AR_MASK)? ainfo->p : ainfo->q;
     int nv = 0, nmax = 0;
     char *mask;
@@ -142,13 +141,13 @@ static char *mask_from_vec (const gretl_vector *v,
     }
     mask[mlen] = '\0';
 
-    for (i=0; i<vlen; i++) {
-	k = v->val[i] - 1; /* convert to zero-based */
-	if (k >= 0 && k < mlen) {
-	    mask[k] = '1'; 
+    for (i=1; i<=list[0]; i++) {
+	k = list[i];
+	if (k > 0) {
+	    mask[k-1] = '1'; 
 	    nv++;
-	    if (k + 1 > nmax) {
-		nmax = k + 1;
+	    if (k > nmax) {
+		nmax = k;
 	    }
 	}
     }
@@ -169,103 +168,35 @@ static char *mask_from_vec (const gretl_vector *v,
     return mask;
 }
 
-/* construct vector of specific lags from string spec */
-
-static gretl_matrix *
-matrix_from_spec (const char *s, int *tmp, int *err)
+static int arma_make_masks (arma_info *ainfo)
 {
-    gretl_matrix *m = NULL;
-    const char *p = s;
-    char *rem;
-    int i, k, n = 0;
+    int *plist = NULL, *qlist = NULL;
+    int err = 0;
 
-    while (*s != '\0' && *s != '}' && n < 20) {
-	strtol(s, &rem, 10);
-	n++;
-	s = rem;
-    }
-
-    m = gretl_vector_alloc(n);
-    if (m == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    s = p;
-    i = 0;
-    while (*s != '\0' && *s != '}' && i < 20) {
-	k = (int) strtol(s, &rem, 10);
-	m->val[i++] = k;
-	s = rem;
-    }
-
-    *tmp = 1;
-
-    return m;
-}
-
-static gretl_matrix *get_arma_pq_vec (arma_info *ainfo,
-				      int t, int *tmp, int *err)
-{
-    gretl_matrix *m = NULL;
-    const char *test = (t == AR_MASK)? "p=" : "q=";
-    const char *s = strstr(ainfo->pqspec, test);
-
-    *tmp = 0;
-
-    if (s != NULL) {
-	s += 2;
-	if (*s == '{') {
-	    m = matrix_from_spec(s + 1, tmp, err);
+    if (ainfo->pqspec != NULL) {
+	if (gretl_list_has_separator(ainfo->pqspec)) {
+	    gretl_list_split_on_separator(ainfo->pqspec, &plist, &qlist);
 	} else {
-	    char *p, mname[VNAMELEN];
-
-	    *mname = '\0';
-	    strncat(mname, s, VNAMELEN - 1);
-	    p = strchr(mname, ',');
-	    if (p != NULL) {
-		*p = '\0';
-	    }
-	    m = get_matrix_by_name(mname);
-	    if (m == NULL) {
-		*err = E_UNKVAR;
-	    }
-	} 
+	    plist = gretl_list_copy(ainfo->pqspec);
+	}
     }
-
-    return m;
-}
-
-static int arma_make_masks (arma_info *ainfo, int *list)
-{
-    gretl_matrix *m;
-    int tmp, err = 0;
 
     if (ainfo->p > 0) {
 	ainfo->np = ainfo->p;
-	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
-	    m = get_arma_pq_vec(ainfo, AR_MASK, &tmp, &err);
-	    if (m != NULL) {
-		ainfo->pmask = mask_from_vec(m, ainfo, AR_MASK, &err);
-		if (tmp) {
-		    gretl_matrix_free(m);
-		}
-	    }
+	if (plist != NULL && plist[0] > 0) {
+	    ainfo->pmask = mask_from_list(plist, ainfo, AR_MASK, &err);
 	}
     }
 
     if (ainfo->q > 0 && !err) {
 	ainfo->nq = ainfo->q;
-	if (ainfo->pqspec != NULL && *ainfo->pqspec != '\0') {
-	    m = get_arma_pq_vec(ainfo, MA_MASK, &tmp, &err);
-	    if (m != NULL) {
-		ainfo->qmask = mask_from_vec(m, ainfo, MA_MASK, &err);
-		if (tmp) {
-		    gretl_matrix_free(m);
-		}
-	    }
+	if (qlist != NULL && qlist[0] > 0) {
+	    ainfo->qmask = mask_from_list(qlist, ainfo, MA_MASK, &err);
 	}
     }
+
+    free(plist);
+    free(qlist);
 
     return err;
 }
@@ -714,7 +645,7 @@ static int check_arma_list (int *list, gretlopt opt,
     /* now that we have p and q we can check for masked lags */
 
     if (!err) {
-	err = arma_make_masks(ainfo, list);
+	err = arma_make_masks(ainfo);
     }
 
     /* If there's an explicit constant in the list here, we'll remove
@@ -795,7 +726,7 @@ static int check_arima_list (int *list, gretlopt opt,
     /* now that we have p and q we can check for masked lags */
 
     if (!err) {
-	err = arma_make_masks(ainfo, list);
+	err = arma_make_masks(ainfo);
     }
 
     /* If there's an explicit constant in the list here, we'll remove

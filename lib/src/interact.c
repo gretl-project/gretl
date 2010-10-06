@@ -629,30 +629,24 @@ static int is_special_lag_field (const char *s)
     }
 }
 
-/* Check that list separator and any "{xxx}" or matrix fields are in
-   appropriate positions; also see if there _are_ any of the latter.
+/* Check that any "{xxx}" or matrix fields are in appropriate 
+   positions; also see if there _are_ any of the latter.
 */
 
-static int gappy_lags_check (char **S, int n, int *specials, int ci)
+static int gappy_lags_check (char **S, int ns, int *specials, int ci)
 {
-    int i, spos = 0;
-    int err = 0;
+    int i, err = 0;
 
-    for (i=0; i<n; i++) {
-	if (S[i][0] == ';') {
-	    spos = i;
-	    break;
-	}
+    if (ci == ARMA && ns != 2 && ns != 3) {
+	err = E_PARSE;
+    } else if (ci == DPANEL && ns != 1) {
+	err = E_PARSE;
     }
 
-    if (ci == ARMA && spos != 2 && spos != 3) {
-	return E_PARSE;
-    }
-
-    for (i=0; i<n && !err; i++) {
+    for (i=0; i<ns && !err; i++) {
 	if (is_special_lag_field(S[i])) {
-	    if (i != 0 && i != spos - 1) {
-		return E_PARSE;
+	    if (i != 0 && i != ns - 1) {
+		err = E_PARSE;
 	    } else if (i == 0) {
 		specials[0] = 1;
 	    } else {
@@ -666,7 +660,7 @@ static int gappy_lags_check (char **S, int n, int *specials, int ci)
 
 /* push onto array *pS a string of length len starting at s */
 
-static int push_lag_field (char ***pS, const char *s, int len, int *nf)
+static int push_lag_field (char ***pS, const char *s, int len, int *ns)
 {
     char *chunk = gretl_strndup(s, len);
     int err = 0;
@@ -674,7 +668,7 @@ static int push_lag_field (char ***pS, const char *s, int len, int *nf)
     if (chunk == NULL) {
 	err = E_ALLOC;
     } else {
-	err = strings_array_add(pS, nf, chunk);
+	err = strings_array_add(pS, ns, chunk);
 	free(chunk);
     }
 
@@ -690,7 +684,7 @@ static int push_lag_field (char ***pS, const char *s, int len, int *nf)
    components.
 */
 
-static char **split_lag_fields (char *s, int *nf, 
+static char **split_lag_fields (char *s, int *ns, 
 				int *specials, CMD *cmd,
 				char **rem)
 {
@@ -700,31 +694,26 @@ static char **split_lag_fields (char *s, int *nf,
 
     while (*p && !cmd->err) {
 	while (*p == ' ') p++;
-	if (*p == '{') {
+	if (*p == ';') {
+	    /* reached the end of the portion of the command line
+	       subject to special treatment */
+	    *rem = p;
+	    break;
+	} else if (*p == '{') {
 	    q = strchr(p, '}');
 	    if (q == NULL) {
 		cmd->err = E_PARSE;
 	    } else {
 		n = strcspn(p, "}");
-		cmd->err = push_lag_field(&S, p, n + 1, nf);
+		cmd->err = push_lag_field(&S, p, n + 1, ns);
 		p = q;
-	    }
-	} else if (*p == ';') {
-	    if (cmd->ci == DPANEL) {
-		/* we've reached the end of the relevant portion of
-		   the command string */
-		*rem = p;
-		break;
-	    } else {
-		/* AR(I)MA: keep going */
-		cmd->err = push_lag_field(&S, p, 1, nf);
 	    }
 	} else {
 	    n = strcspn(p, " {};");
 	    if (n == 0) {
 		cmd->err = E_PARSE;
 	    } else {
-		cmd->err = push_lag_field(&S, p, n, nf);
+		cmd->err = push_lag_field(&S, p, n, ns);
 		p += n - 1;
 	    }
 	}
@@ -732,86 +721,19 @@ static char **split_lag_fields (char *s, int *nf,
     }
 
     if (!cmd->err) {
-	cmd->err = gappy_lags_check(S, *nf, specials, cmd->ci);
+	cmd->err = gappy_lags_check(S, *ns, specials, cmd->ci);
     }
 
     if (cmd->err || no_specials(specials)) {
-	free_strings_array(S, *nf);
+	free_strings_array(S, *ns);
 	S = NULL;
     }
 
     return S;
 }
 
-/* matrix must be vector of integers */
-
-static int max_lag_from_matrix (char *s, int *err)
-{
-    const gretl_matrix *m;
-    int k, kmax = 0, kmin = 99999;
-    int i, n = 0;
-
-    m = get_matrix_by_name(s);
-
-    if (m == NULL) {
-	*err = E_UNKVAR;
-    } else if ((n = gretl_vector_get_length(m)) == 0) {
-	*err = E_NONCONF;
-    }
-
-    for (i=0; i<n && !*err; i++) {
-	k = (int) m->val[i];
-	if (k > kmax) kmax = k;
-	if (k < kmin) kmin = k;
-    }
-
-    if (!*err && kmin < 1) {
-	*err = E_DATA;
-    }
-
-    return kmax;
-}
-
-static int max_lag_from_numerics (char *s, int *err)
-{
-    int k, kmax = 0, kmin = 99999;
-    char *rem;
-
-    while (*s != '\0' && *s != '}') {
-	k = (int) strtol(s, &rem, 10);
-	if (k > kmax) kmax = k;
-	if (k < kmin) kmin = k;
-	s = rem;
-	s += strspn(s, ", ");
-    }
-
-    if (kmin < 1) {
-	*err = E_DATA;
-    }
-
-    return kmax;
-}
-
-/* e.g. "matrix" or "{1 4}" */
-
-static int max_lag_from_field (char *s, int *err)
-{
-    int mat = 1, kmax = 0;
-
-    if (*s == '{') {
-	mat = 0;
-	s++;
-	s += strspn(s, ", ");
-    }
-
-    if (mat) {
-	kmax = max_lag_from_matrix(s, err);
-    } else {
-	kmax = max_lag_from_numerics(s, err);
-    } 
-
-    return kmax;
-}
+/* here we have only one field to worry about, specifying the 
+   lag pattern for the dependent variable */
 
 static void handle_dpanel_lags (CMD *cmd, const char *lspec,
 				char *line, char *rem)
@@ -829,41 +751,153 @@ static void handle_dpanel_lags (CMD *cmd, const char *lspec,
     }
 
     if (!cmd->err) {
-	int i, pmax = cmd->auxlist[1];
-	char *tmp, numstr[16];
-	double p;
+	int lmin = 0, lmax = 0;
 
-	for (i=2; i<=cmd->auxlist[0]; i++) {
-	    p = cmd->auxlist[i];
-	    if (p > pmax) pmax = p;
+	cmd->err = gretl_list_min_max(cmd->auxlist, &lmin, &lmax);
+	if (!cmd->err && lmin < 1) {
+	    cmd->err = E_DATA;
 	}
 
+	if (!cmd->err) {
+	    char *tmp = gretl_strdup(rem);
+	    char numstr[16];
+
+	    if (tmp == NULL) {
+		cmd->err = E_ALLOC;
+	    } else {
+		sprintf(numstr, "%d ", lmax);
+		*line = '\0';
+		strcat(line, numstr);
+		strcat(line, tmp);
+		free(tmp);
+	    }
+	}
+    }
+}
+
+/* we may have a "special" lag spec for the AR term(s) and/or the
+   MA terms
+*/
+
+static void handle_arma_lags (CMD *cmd, char **S,
+			      int ns, int *specials,
+			      char *line, char *rem)
+{
+    int *plist = NULL, *qlist = NULL;
+    const char *lspec;
+    char *tmp = NULL;
+
+    if (specials[0]) {
+	lspec = S[0];
+	if (*lspec == '{') {
+	    plist = gretl_list_from_string(lspec, &cmd->err);
+	} else {
+	    gretl_matrix *m = get_matrix_by_name(lspec);
+
+	    if (m == NULL) {
+		cmd->err = E_UNKVAR;
+	    } else {
+		plist = gretl_list_from_vector(m, &cmd->err);
+	    }
+	}
+    }
+
+    if (specials[1] && !cmd->err) {
+	lspec = S[ns-1];
+	if (*lspec == '{') {
+	    qlist = gretl_list_from_string(lspec, &cmd->err);
+	} else {
+	    gretl_matrix *m = get_matrix_by_name(lspec);
+
+	    if (m == NULL) {
+		cmd->err = E_UNKVAR;
+	    } else {
+		qlist = gretl_list_from_vector(m, &cmd->err);
+	    }
+	}
+    }
+
+    if (!cmd->err) {
+	/* form the full list to pass to arma */
+	if (plist != NULL && qlist == NULL) {
+	    cmd->auxlist = plist;
+	} else if (qlist != NULL) {
+	    cmd->auxlist = gretl_lists_join_with_separator(plist, qlist);
+	    if (cmd->auxlist == NULL) {
+		cmd->err = E_ALLOC;
+	    }	    
+	} 
+    }
+
+    if (!cmd->err) {
 	tmp = gretl_strdup(rem);
 	if (tmp == NULL) {
 	    cmd->err = E_ALLOC;
 	} else {
-	    sprintf(numstr, "%d ", pmax);
 	    *line = '\0';
-	    strcat(line, numstr);
-	    strcat(line, tmp);
-	    free(tmp);
 	}
+    }	
+
+    if (!cmd->err) {
+	int lmin = 0, lmax = 0;
+	char numstr[16];
+
+	if (plist != NULL) {
+	    cmd->err = gretl_list_min_max(plist, &lmin, &lmax);
+	    if (!cmd->err && lmin < 1) {
+		cmd->err = E_DATA;
+	    }
+	    if (!cmd->err) {
+		sprintf(numstr, "%d ", lmax);
+		strcat(line, numstr);
+	    }
+	} else {
+	    sprintf(numstr, "%s ", S[0]);
+	    strcat(line, numstr);
+	}
+
+	if (ns == 3) {
+	    /* ARIMA d spec */
+	    strcat(line, S[1]);
+	}
+
+	if (qlist != NULL) {
+	    cmd->err = gretl_list_min_max(qlist, &lmin, &lmax);
+	    if (!cmd->err && lmin < 1) {
+		cmd->err = E_DATA;
+	    }	    
+	    if (!cmd->err) {
+		sprintf(numstr, "%d ", lmax);
+		strcat(line, numstr);
+	    }
+	} else {
+	    sprintf(numstr, "%s ", S[ns-1]);
+	    strcat(line, numstr);
+	}
+
+	strcat(line, tmp);
     }
+
+    free(tmp);
+
+    if (plist != cmd->auxlist) {
+	free(plist);
+    }
+
+    if (qlist != cmd->auxlist) {
+	free(qlist);
+    }    
 }
 
 static int maybe_rewrite_lags (char *s, CMD *cmd)
 {
     char **S = NULL;
-    char *orig = s, *rem = NULL;
-    char chunk[16];
-    int pq[2] = {0};
-    int i, k, n = 0;
+    char *line = s;   /* save the starting point */
+    char *rem = NULL; /* will point to remainder of line */
+    int specials[2] = {0};
+    int ns = 0;
 
-#if LAGS_DBG
-    fprintf(stderr, "maybe_rewrite_lags: s = '%s'\n", s);
-#endif
-
-    if (!strncmp(s, "arma ", 5)) {
+    if (!strncmp(line, "arma ", 5)) {
 	s += 5;
     } else if (!strncmp(s, "arima ", 6)) {
 	s += 6;
@@ -875,73 +909,33 @@ static int maybe_rewrite_lags (char *s, CMD *cmd)
     fprintf(stderr, "looking at '%s'\n", s);
 #endif
 
-    S = split_lag_fields(s, &n, pq, cmd, &rem);
+    S = split_lag_fields(s, &ns, specials, cmd, &rem);
     if (S == NULL) {
 	return cmd->err;
     }
 
 #if LAGS_DBG
-    for (i=0; i<n; i++) {
+    int i;
+    for (i=0; i<ns; i++) {
 	fprintf(stderr, "S[%d] = '%s'\n", i, S[i]);
     }
 #endif
 
-    /* preserve original command line for echo */
+    /* save original command line for echo, before modifying */
     free(cmd->extra);
-    cmd->extra = gretl_strdup(orig);
+    cmd->extra = gretl_strdup(line);
 
     if (cmd->ci == DPANEL) {
 	handle_dpanel_lags(cmd, S[0], s, rem);
-	free_strings_array(S, n);
-#if LAGS_DBG
-	fprintf(stderr, "dpanel line = '%s'\n", orig);
-#endif
-	return cmd->err;
-    }
-
-    free(cmd->param);
-    cmd->param = malloc(strlen(s) + 1);
-    if (cmd->param == NULL) {
-	cmd->err = E_ALLOC;
     } else {
-	*s = *cmd->param = '\0';
+	handle_arma_lags(cmd, S, ns, specials, s, rem);
     }
 
-    /* re-write the command line, and at the same time write to
-       cmd->param a formalized version of the lag specification
-    */
-
-    for (i=0; i<n && !cmd->err; i++) {
-	if ((i == 0 && pq[0]) || (i > 0 && i == pq[1])) {
-	    k = max_lag_from_field(S[i], &cmd->err);
-	    if (!cmd->err) {
-		sprintf(chunk, "%d", k);
-		strcat(s, chunk);
-		if (i == 0) {
-		    strcat(cmd->param, "p=");
-		    strcat(cmd->param, S[i]);
-		} else {
-		    if (*cmd->param) {
-			strcat(cmd->param, ",");
-		    }
-		    strcat(cmd->param, "q=");
-		    strcat(cmd->param, S[i]);
-		}		    
-	    }
-	} else {
-	    strcat(s, S[i]);
-	}
-	if (i < n - 1) {
-	    strcat(s, " ");
-	}
-    } 
+    free_strings_array(S, ns);
 
 #if LAGS_DBG
-    fprintf(stderr, "new s = '%s'\n", s);
-    fprintf(stderr, "cmd->param = '%s'\n", cmd->param);
+    fprintf(stderr, "revised line = '%s'\n", line);
 #endif
-
-    free_strings_array(S, n);
 
     return cmd->err;
 }
@@ -4101,10 +4095,15 @@ static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
     if (!err) {
 	set_gretl_errno(0);
 	if (!gretl_looping_currently()) {
+	    int havename = *s->cmd->savename != '\0';
+
+	    if (havename) {
+		gretl_model_set_name(pmod, s->cmd->savename);
+	    }
 	    printmodel(pmod, pdinfo, s->cmd->opt, prn);
 	    attach_subsample_to_model(pmod, pdinfo);
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
-	    if (!err && s->callback != NULL && *s->cmd->savename != '\0' && 
+	    if (!err && s->callback != NULL && havename && 
 		gretl_in_gui_mode()) {
 		s->callback(s, s->pmod, GRETL_OBJ_EQN);
 	    }
@@ -4857,7 +4856,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == AR1) {
 	    *models[0] = ar1_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
-	    *models[0] = arma(cmd->list, cmd->param, Z, pdinfo, 
+	    *models[0] = arma(cmd->list, cmd->auxlist, Z, pdinfo, 
 			      cmd->opt, prn);
 	} else {
 	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,

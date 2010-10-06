@@ -4056,7 +4056,7 @@ int get_x12a_maxpd (void)
  * arma:
  * @list: AR and MA orders, dependent variable, and any exogenous
  * regressors.
- * @pqspec: string giving specific non-seasonal AR/MA lags (or NULL).
+ * @pqlags: list giving specific non-seasonal AR/MA lags (or NULL).
  * @Z: data array.
  * @pdinfo: dataset information.
  * @opt: option flags.
@@ -4070,6 +4070,12 @@ int get_x12a_maxpd (void)
  * conditional ML (BHHH algorithm); and OPT_X requests estimation via
  * X-12-ARIMA rather than native code.
  *
+ * If @pqlags is non-NULL it should take the form of two
+ * gretl sub-lists joined by #LISTSEP: the first sub-list holds
+ * a set of AR lags and the second a list of MA lags. If only
+ * AR lags are specified, a single list may be given; if only
+ * MA lags are specified, use #LISTSEP with a null first sub-list.
+ *
  * If the model specification does not include a constant
  * this is added automatically, unless @opt includes OPT_N
  * ("no constant").
@@ -4077,16 +4083,16 @@ int get_x12a_maxpd (void)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arma (const int *list, const char *pqspec, 
+MODEL arma (const int *list, const int *pqlags, 
 	    const double **Z, const DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn)
 {
     MODEL armod;
     void *handle;
-    MODEL (*arma_model) (const int *, const char *,
+    MODEL (*arma_model) (const int *, const int *,
 			 const double **, const DATAINFO *, 
 			 gretlopt, PRN *);
-    MODEL (*arma_x12_model) (const int *, const char *,
+    MODEL (*arma_x12_model) (const int *, const int *,
 			     const double **, const DATAINFO *, 
 			     int, gretlopt, PRN *);
     int plugerr = 0;
@@ -4108,14 +4114,14 @@ MODEL arma (const int *list, const char *pqspec,
 	if (arma_x12_model == NULL) {
 	    plugerr = E_FOPEN;
 	} else {
-	    armod = (*arma_x12_model) (list, pqspec, Z, pdinfo, pdmax, opt, prn);
+	    armod = (*arma_x12_model) (list, pqlags, Z, pdinfo, pdmax, opt, prn);
 	}
     } else {
 	arma_model = get_plugin_function("arma_model", &handle);
 	if (arma_model == NULL) {
 	    plugerr = E_FOPEN;
 	} else {
-	    armod = (*arma_model) (list, pqspec, Z, pdinfo, opt, prn);
+	    armod = (*arma_model) (list, pqlags, Z, pdinfo, opt, prn);
 	}
     }
 

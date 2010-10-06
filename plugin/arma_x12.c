@@ -821,7 +821,7 @@ static void x12a_maybe_allow_missvals (arma_info *ainfo)
     }
 }
 
-MODEL arma_x12_model (const int *list, const char *pqspec,
+MODEL arma_x12_model (const int *list, const int *pqspec,
 		      const double **Z, const DATAINFO *pdinfo,
 		      int pdmax, gretlopt opt, PRN *prn)
 {
@@ -882,7 +882,7 @@ MODEL arma_x12_model (const int *list, const char *pqspec,
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
     write_arma_spc_file(path, Z, pdinfo, ainfo, pdmax, opt);
 
-    /* remove any files from on old run, in case of error */
+    /* remove any files from an old run, in case of error */
     delete_old_files(path);
 
     /* run the program */

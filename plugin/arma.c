@@ -1571,7 +1571,7 @@ static void maybe_allow_missvals (arma_info *ainfo)
     }
 }
 
-MODEL arma_model (const int *list, const char *pqspec,
+MODEL arma_model (const int *list, const int *pqspec,
 		  const double **Z, const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {

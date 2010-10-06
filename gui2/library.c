@@ -3498,7 +3498,7 @@ static int real_do_model (int action)
 	break;
 
     case ARBOND:
-	/* FIXME */
+	/* FIXME, also DPANEL */
 	*pmod = arbond_model(libcmd.list, NULL, (const double **) Z, datainfo, 
 			     libcmd.opt, prn);
 	err = model_output(pmod, prn);
@@ -3550,7 +3550,7 @@ static int real_do_model (int action)
 	break;
 
     case ARMA:
-	*pmod = arma(libcmd.list, libcmd.param,
+	*pmod = arma(libcmd.list, libcmd.auxlist,
 		     (const double **) Z, datainfo,
 		     libcmd.opt, prn);
 	err = model_output(pmod, prn);

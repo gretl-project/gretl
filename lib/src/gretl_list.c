@@ -1558,6 +1558,43 @@ int gretl_list_purge_const (int *list, const double **Z,
     return gotc;
 }
 
+/**
+ * gretl_list_min_max:
+ * @list: gretl list.
+ * @lmin: location to receive minimum value.
+ * @lmax: location to receive maximum value.
+ *
+ * Reads @list from position 1 onward and writes to @lmin
+ * and @lmax the minimum and maximum values among the elements
+ * of the list. Reading stops at the end of the list or when
+ * a list separator is encountered.
+ *
+ * Returns: 0 on successful completion, error code if the
+ * list is NULL or empty.
+ */
+
+int gretl_list_min_max (const int *list, int *lmin, int *lmax)
+{
+    if (list == NULL || list[0] == 0) {
+	return E_DATA;
+    } else {
+	int i;
+
+	*lmin = *lmax = list[1];
+
+	for (i=2; i<=list[0]; i++) {
+	    if (list[i] < *lmin) {
+		*lmin = list[i];
+	    }
+	    if (list[i] > *lmax) {
+		*lmax = list[i];
+	    }
+	}
+
+	return 0;
+    }
+}
+
 static int *real_gretl_list_union (const int *orig, const int *add, 
 				   int *err, int duperr)
 {

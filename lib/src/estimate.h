@@ -41,7 +41,7 @@ MODEL quantreg (const gretl_matrix *tau, const int *list,
 		double **Z, DATAINFO *pdinfo,
 		gretlopt opt, PRN *prn);
 
-MODEL arma (const int *list, const char *pqspec,
+MODEL arma (const int *list, const int *pqlags,
 	    const double **Z, const DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn);
 

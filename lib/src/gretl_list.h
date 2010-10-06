@@ -59,6 +59,8 @@ int gretl_list_delete_at_pos (int *list, int pos);
 int gretl_list_purge_const (int *list, const double **Z,
 			    const DATAINFO *pdinfo);
 
+int gretl_list_min_max (const int *list, int *lmin, int *lmax);
+
 int *gretl_list_add (const int *orig, const int *add, int *err);
 
 int *gretl_list_union (const int *l1, const int *l2, int *err);
