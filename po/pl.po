@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.1cvs
+# Polish translation for gretl-1.9.2
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2010
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2010
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.1\n"
+"Project-Id-Version: gretl-1.9.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-04 16:55-0400\n"
-"PO-Revision-Date: 2010-09-04 17:30-0400\n"
+"PO-Revision-Date: 2010-10-06 03:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -4814,7 +4814,7 @@ msgstr "Estymacja z wykorzystaniem metody najmniejszych kwadratów"
 
 #: lib/src/modelprint.c:1495
 msgid "= MLE"
-msgstr ""
+msgstr "= MLE"
 
 #: lib/src/modelprint.c:1498
 msgid "Estimated using Kalman filter"
@@ -7045,7 +7045,7 @@ msgid "translator_credits"
 msgstr ""
 "Tłumaczenie na język polski: Tadeusz Kufel i Paweł Kufel (UMK Toruń)\n"
 "e-mail: Tadeusz.Kufel@uni.torun.pl; http://www.kufel.torun.pl\n"
-"Linux - pomoc techniczna: Marcin.Blazejowski@wsb.torun.pl"
+"Pomoc techniczna: Marcin.Blazejowski@wsb.torun.pl"
 
 #: gui2/about.c:175
 msgid "License"
@@ -7835,19 +7835,20 @@ msgid "gretl: display database series"
 msgstr "gretl: seria danych"
 
 #: gui2/database.c:215 gui2/dialogs.c:3280
-#, fuzzy
 msgid "Interpolate higher frequency values"
-msgstr "Interpolowana wartość p"
+msgstr "Interpolacja wartości do wyższych częstotliwości"
 
 #: gui2/database.c:216 gui2/dialogs.c:3281
 msgid "Repeat the lower frequency values"
-msgstr ""
+msgstr "Powtórzenie wartości o niskiej częstotliwości"
 
 #: gui2/database.c:219
 msgid ""
 "Adding a lower frequency series to a\n"
 "higher frequency dataset"
 msgstr ""
+"Dodanie szeregu o niższej częstotliwości\n" 
+"do bazy o wyższej częstotliwości"
 
 #: gui2/database.c:231
 #, c-format
@@ -8790,12 +8791,11 @@ msgstr "Agregowanie danych godzinowych do:"
 
 #: gui2/dialogs.c:3311
 msgid "gretl: expand data"
-msgstr "gretl: Rozszerzanie danych"
+msgstr "gretl: Dezagregowanie danych"
 
 #: gui2/dialogs.c:3314
-#, fuzzy
 msgid "Expand annual data to quarterly"
-msgstr "Dezagregacja danych rocznych do:"
+msgstr "Dezagregacja danych rocznych do kwartalnych"
 
 #: gui2/dialogs.c:3316
 msgid "Expand quarterly data to monthly"
@@ -13382,14 +13382,12 @@ msgid "Unrestricted trend"
 msgstr "Nieograniczony trend"
 
 #: gui2/selector.c:5356
-#, fuzzy
 msgid "Enter formula for new variable"
-msgstr "Wprowadź formułę wyliczania nowej zmiennej:"
+msgstr "Wprowadź formułę wyliczania nowej zmiennej"
 
 #: gui2/selector.c:5368
-#, fuzzy
 msgid "New variable"
-msgstr "indeks zmiennej"
+msgstr "Nowa zmienna"
 
 #: gui2/selector.c:5398
 msgid "plot with impulses"
@@ -14472,9 +14470,8 @@ msgid "Reformat..."
 msgstr "Przeformatowanie..."
 
 #: gui2/toolbar.c:643
-#, fuzzy
 msgid "Edit values..."
-msgstr "Edycja wartości"
+msgstr "Edycja wartości..."
 
 #: gui2/toolbar.c:644
 msgid "Refresh"
@@ -14673,9 +14670,8 @@ msgid "ARMA initialization"
 msgstr "inicjalizacja ARMA"
 
 #: plugin/arma.c:1374
-#, fuzzy
 msgid "user-specified values"
-msgstr "Własna wartość początkowa"
+msgstr "Własne-specyficzne wartości"
 
 #: plugin/arma_common.c:741 plugin/arma_common.c:822
 msgid "Error in arma command"
@@ -14683,12 +14679,11 @@ msgstr "Błąd w poleceniu ARMA"
 
 #: plugin/arma_init.c:350
 msgid "Hannan-Rissanen method"
-msgstr ""
+msgstr "Metoda Hannana-Rissanena"
 
 #: plugin/arma_init.c:1152
-#, fuzzy
 msgid "small MA values"
-msgstr "Poprawne wartości"
+msgstr "Małe wartości MA"
 
 #: plugin/arma_init.c:1230
 msgid "using nonlinear AR model"
@@ -15420,13 +15415,12 @@ msgid "irregular component of %s"
 msgstr "Składnik przypadkowy dla %s"
 
 #: plugin/tramo-x12a.c:190
-#, fuzzy
 msgid "X-12-ARIMA options"
-msgstr "Wyniki X-12-ARIMA"
+msgstr "Opcje dla X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:201
 msgid "Correct for trading days effect"
-msgstr ""
+msgstr "Korekta efektu liczby dni roboczych"
 
 #: plugin/tramo-x12a.c:278
 msgid "Show full output"
