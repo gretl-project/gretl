@@ -3614,21 +3614,6 @@ void display_model_data_items (const MODEL *pmod)
     }
 }
 
-static char *copy_missmask (const MODEL *pmod)
-{
-    char *mask;
-    int n = pmod->t2 - pmod->t1 + 1;
-
-    mask = malloc(n);
-    if (mask == NULL) {
-	return NULL;
-    }
-
-    memcpy(mask, pmod->missmask, n);
-
-    return mask;
-}
-
 static int copy_model (MODEL *targ, const MODEL *src)
 {
     int k = src->ncoeff;
@@ -3678,7 +3663,7 @@ static int copy_model (MODEL *targ, const MODEL *src)
     }
 
     if (src->missmask != NULL && 
-	(targ->missmask = copy_missmask(src)) == NULL) { 
+	(targ->missmask = gretl_strdup(src->missmask)) == NULL) { 
 	return 1;
     }
 

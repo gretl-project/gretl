@@ -340,7 +340,7 @@ static char *model_missmask (const int *list, int t1, int t2,
     }
 
     memset(mask, '0', n);
-    mask[n] = 0;
+    mask[n] = 0; /* note NUL-termination */
 
 #if MASKDEBUG
     fprintf(stderr, "model_missmask: using series length %d\n", n);
