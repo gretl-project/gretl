@@ -5107,7 +5107,6 @@
     <function name="unvech" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
-	<fnarg type="scalar">b</fnarg>
       </fnargs>      
       <description>
 	<para>
@@ -5123,6 +5122,7 @@
 	<para>
 	  <seelist>
 	    <fncref targ="mshape"/>
+	    <fncref targ="vech"/>
 	  </seelist>
 	</para>
       </description>
