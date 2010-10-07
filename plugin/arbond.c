@@ -2456,20 +2456,20 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
     }	
 
     if (ci == ARBOND && d->level != 0) {
-	/* only dpanel supports "gmmlevel" */
+	/* only dpanel supports "GMMlevel" */
 	return E_PARSE;
     }
 
     if (sscanf(s, "%15[^, ],%d,%d)", vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
-	int v;
+	int v = current_series_index(pdinfo, vname);
 
-	if (m2 == 0) {
-	    /* flag for unlimited lags */
+	if (ci == ARBOND && m2 == 0) {
+	    /* signal for unlimited lags */
 	    m2 = 99;
 	}
-	v = current_series_index(pdinfo, vname);
+
 	if (v < 0) {
 	    err = E_UNKVAR;
 	} else if (m1 < 0 || m2 < m1) {
