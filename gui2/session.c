@@ -1622,28 +1622,6 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     set_session_log(NULL, logcode);
 }
 
-static int session_overwrite_check (const char *fname)
-{
-    int ret = 0;
-
-    if (strcmp(fname, sessionfile)) {
-	FILE *fp = gretl_fopen(fname, "r");
-
-	if (fp != NULL) {
-	    int resp;
-
-	    fclose(fp);
-	    resp = yes_no_dialog("gretl", _("There is already a session file of this name.\n"
-					    "OK to overwrite it?"), 0);
-	    if (resp == GRETL_NO) {
-		ret = 1;
-	    }
-	}
-    } 
-
-    return ret;
-}
-
 static void relpath_from_fname (char *path, const char *fname)
 {
     const char *p;
@@ -1688,7 +1666,7 @@ static int real_save_session_dataset (const char *dname)
     if (!err) {
 	session_file_make_path(tmpname, dname);
 	write_err = gretl_write_gdt(tmpname, NULL, (const double **) Z, 
-				    datainfo, OPT_NONE, 0);
+				    datainfo, OPT_NONE, 1);
 	fprintf(stderr, "Save session datafile as '%s', err = %d\n",
 		tmpname, write_err);
     }
@@ -1793,9 +1771,7 @@ int save_session (char *fname)
     if (fname == NULL) {
 	/* saving session 'as is' */
 	fname = sessionfile;
-    } else if (session_overwrite_check(fname)) {
-	return 0;
-    }
+    } 
 
     if (!session_dir_ok()) {
 	errbox("Couldn't make session directory");
