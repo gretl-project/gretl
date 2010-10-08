@@ -1545,7 +1545,7 @@ static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
     }   
 
     /* apparatus for handling interior NAs */
-    if (pmod->missmask != NULL) {
+    if (model_has_missing_obs(pmod)) {
 	goodobs = good_observations_array(pmod);
 	if (goodobs == NULL) {
 	    err = E_ALLOC;

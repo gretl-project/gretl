@@ -1083,11 +1083,13 @@ static int got_x12a_warning (const char *fname)
 	int n = 0;
 
 	while (fgets(line, sizeof line, fp)) {
-	    n++;
+	    if (++n > 4 && !string_is_blank(line)) {
+		ret = 1;
+		break;
+	    }
 	}
 
 	fclose(fp);
-	ret = n > 4;
     }
 
     return ret;

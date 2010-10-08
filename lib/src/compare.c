@@ -1562,7 +1562,7 @@ double get_DW_pvalue_for_model (const MODEL *pmod,
     if (pmod == NULL || pmod->list == NULL) {
 	*err = E_DATA;
     } else if ((pmod->ci != OLS && pmod->ci != PANEL) || 
-	       pmod->missmask != NULL || na(pmod->dw)) {
+	       model_has_missing_obs(pmod) || na(pmod->dw)) {
 	*err = E_BADSTAT;
     } else {
 	/* check that relevant vars have not been redefined */
@@ -1878,8 +1878,8 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	return E_NOTIMP;
     }
 
-    if (pmod->missmask != NULL) {
-	return E_DATA;
+    if (model_has_missing_obs(pmod)) {
+	return E_MISSDATA;
     }
 
     /* impose original sample range */
@@ -2031,8 +2031,8 @@ int autocorr_test (MODEL *pmod, int order,
 	return E_NOTIMP;
     }
 
-    if (pmod->missmask != NULL) {
-	return E_DATA;
+    if (model_has_missing_obs(pmod)) {
+	return E_MISSDATA;
     }
 
     if (dataset_is_panel(pdinfo)) {
@@ -2948,8 +2948,8 @@ int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	return 0;
     }
 
-    if (has_missing_obs(pmod)) {
-	return E_DATA;
+    if (model_has_missing_obs(pmod)) {
+	return E_MISSDATA;
     }
 
     /* the number of forecasts */

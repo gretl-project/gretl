@@ -454,6 +454,23 @@ static void dropwt (int *list)
     }
 }
 
+static int model_missval_count (const MODEL *pmod)
+{
+    int mc = 0;
+
+    if (pmod->missmask != NULL) {
+	int t;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (pmod->missmask[t] == '1') {
+		mc++;
+	    }
+	}
+    }
+
+    return mc;
+}
+
 #define SMPL_DEBUG 0
 
 static int 
@@ -1149,7 +1166,7 @@ static MODEL ar1_lsq (const int *list, double **Z, double ***pZ,
 	mdl.nobs = effobs; /* FIXME? */
     } else {
 	mdl.nobs = mdl.t2 - mdl.t1 + 1;
-	if (has_missing_obs(&mdl)) {
+	if (mdl.missmask != NULL) {
 	    mdl.nobs -= model_missval_count(&mdl);
 	}
     }

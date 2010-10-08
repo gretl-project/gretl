@@ -431,7 +431,7 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 
 	elist[1] = vi;
 
-	if (pmod->missmask != NULL) {
+	if (model_has_missing_obs(pmod)) {
 	    set_reference_missmask_from_model(pmod);
 	}
 
@@ -922,7 +922,7 @@ static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
     pmod->criterion[C_BIC] = NADBL;
     pmod->criterion[C_HQC] = NADBL;
     
-    if (dataset_is_time_series(pdinfo) && pmod->missmask == NULL) {
+    if (dataset_is_time_series(pdinfo) && !model_has_missing_obs(pmod)) {
 	/* time series, no missing obs within sample range */
 	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
 	pmod->dw = dwstat(1, pmod, Z);

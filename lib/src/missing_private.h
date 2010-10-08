@@ -21,7 +21,6 @@
 #define MISSING_PRIVATE_H
 
 #define masked(m,t) (m != NULL && m[t] == '1')
-#define has_missing_obs(m)  ((m)->missmask != NULL)
 
 void set_reference_missmask_from_model (const MODEL *pmod);
 

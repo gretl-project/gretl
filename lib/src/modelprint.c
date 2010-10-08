@@ -1571,12 +1571,12 @@ static void maybe_print_T (const MODEL *pmod,
 {
     if (pmod->ci == HECKIT) {
 	return;
-    } else if (pmod->missmask == NULL && !strcmp(start, "1")) {
+    } else if (!strcmp(start, "1") && !model_has_missing_obs(pmod)) {
 	return;
     } else {
 	int xsect = dataset_is_cross_section(pdinfo);
 
-	if (pmod->missmask || !xsect || strcmp(start, "1")) {
+	if (model_has_missing_obs(pmod) || !xsect || strcmp(start, "1")) {
 	    const char *nstrs[] = {
 		/* TRANSLATORS: 'n' denotes sample size */
 		N_("n"),
@@ -1679,6 +1679,7 @@ static void print_model_heading (const MODEL *pmod,
 		startdate, (tex)? "--" : "-", enddate);
 	maybe_print_T(pmod, pdinfo, startdate, prn);
     } else if (!dataset_is_panel(pdinfo)) {
+	int mc, Tmax = pmod->t2 - pmod->t1 + 1;
 	const char *estr = estimator_string(pmod, prn);
 	const char *fmt;
 
@@ -1692,25 +1693,19 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, I_(fmt), I_(estr), startdate, 
 		    (tex)? "--" : "-", enddate);
 	    maybe_print_T(pmod, pdinfo, startdate, prn);
-	}	
+	}
 
-	if (pmod->missmask != NULL) {
-	    int mc;
+	if (pmod->ci == HECKIT) {
+	    mc = Tmax - gretl_model_get_int(pmod, "totobs");
+	} else {
+	    mc = Tmax - pmod->nobs;
+	}
 
-	    if (pmod->ci == HECKIT) {
-		int Tmax = pmod->t2 - pmod->t1 + 1;
-		
-		mc = Tmax - gretl_model_get_int(pmod, "totobs");
-	    } else {
-		mc = model_missval_count(pmod);
-	    }
-
-	    if (mc > 0) {
-		gretl_prn_newline(prn);
-		pprintf(prn, "%s: %d", I_("Missing or incomplete observations dropped"), 
-			mc);
-	    }
-	} 
+	if (mc > 0) {
+	    gretl_prn_newline(prn);
+	    pprintf(prn, "%s: %d", I_("Missing or incomplete observations dropped"), 
+		    mc);
+	}
     } else {
 	/* panel data */
 	int effn = gretl_model_get_int(pmod, "n_included_units");

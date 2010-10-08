@@ -286,28 +286,18 @@ int repack_missing_daily_obs (MODEL *pmod, double **Z,
 #define MASKDEBUG 0
 
 /**
- * model_missval_count:
+ * model_has_missing_obs:
  * @pmod: pointer to model.
  *
- * Returns: a count of the missing values within the sample
- * range over which @pmod was estimated.
+ * Returns: 1 if there are missing observations in the
+ * model's sample range, otherwise 0.
  */
 
-int model_missval_count (const MODEL *pmod)
+int model_has_missing_obs (const MODEL *pmod)
 {
-    int mc = 0;
+    int sample = pmod->t2 - pmod->t1 + 1;
 
-    if (pmod->missmask != NULL) {
-	int t;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (pmod->missmask[t] == '1') {
-		mc++;
-	    }
-	}
-    }
-
-    return mc;
+    return (pmod->nobs < sample);
 }
 
 static int really_missing (int v, int t, const double **Z, int d)
@@ -669,16 +659,38 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 
 static char *refmask;
 
-/* Set the "reference" mask based on a target model */
+static char *build_refmask_from_model (const MODEL *pmod)
+{
+    int t, n = pmod->full_n;
+    char *mask = malloc(n + 1);
+
+    if (mask != NULL) {
+	memset(mask, '0', n);
+	mask[n] = 0; /* NUL-terminate */
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (na(pmod->uhat[t])) {
+		mask[t] = '1';
+	    }
+	}
+    }
+
+    return mask;
+}
+
+/* Set the "reference" mask based on a given model */
 
 void set_reference_missmask_from_model (const MODEL *pmod)
 {
-#if MASKDEBUG
-    fprintf(stderr, "set_reference_missmask: using model = %p, missmask %p\n", 
-	    (void *) pmod, (void *) pmod->missmask);
-#endif
     if (pmod != NULL) {
-	refmask = gretl_strdup(pmod->missmask);
+	if (refmask != NULL) {
+	    free(refmask);
+	    refmask = NULL;
+	}
+	if (pmod->missmask != NULL) {
+	    refmask = gretl_strdup(pmod->missmask);
+	} else if (model_has_missing_obs(pmod)) {
+	    refmask = build_refmask_from_model(pmod);
+	}
     } 
 }
 
@@ -686,6 +698,7 @@ int copy_to_reference_missmask (const char *mask)
 {
     if (refmask != NULL) {
 	free(refmask);
+	refmask = NULL;
     }
 
     refmask = gretl_strdup(mask);
@@ -698,41 +711,6 @@ int copy_to_reference_missmask (const char *mask)
     return (refmask == NULL)? E_ALLOC : 0;
 }
 
-int set_reference_missmask_from_list (const int *list,
-				      const double **Z,
-				      const DATAINFO *pdinfo)
-{
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
-    char *mask;
-    int nmiss = 0;
-    int err = 0;
-
-    mask = model_missmask(list, pdinfo->t1, pdinfo->t2, 
-			  pdinfo->n, Z, 0, &nmiss);
-
-    if (nmiss == T) {
-	return E_DATA;
-    } else if (nmiss == 0 && mask != NULL) {
-	free(mask);
-	mask = NULL;
-    } else if (mask == NULL) {
-	err = E_ALLOC;
-    }
-
-#if MASKDEBUG
-    fprintf(stderr, "set_reference_missmask_from_list\n");
-    printlist(list, "list");
-    fprintf(stderr, "nmiss = %d, mask = %p\n", nmiss, (void *) mask);
-#endif
-
-    if (!err) {
-	free(refmask);
-	refmask = mask;
-    }
-
-    return err;
-}
-
 /* attach the reference missing obs mask to a specified model */
 
 int apply_reference_missmask (MODEL *pmod)
@@ -743,7 +721,7 @@ int apply_reference_missmask (MODEL *pmod)
 		(void *) pmod);
 #endif
 	pmod->missmask = refmask;
-	refmask = NULL;
+	refmask = NULL; /* note: apply it only once */
     }
 
     return 0;

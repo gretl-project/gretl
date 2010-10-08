@@ -39,7 +39,7 @@
 
 #define model_missing(m,t) ((m)->missmask != NULL && (m)->missmask[t] == '1')
 
-int model_missval_count (const MODEL *pmod);
+int model_has_missing_obs (const MODEL *pmod);
 
 int first_missing_index (const double *x, int t1, int t2);
 
@@ -47,9 +47,6 @@ int series_adjust_sample (const double *x, int *t1, int *t2);
 
 int list_adjust_sample (const int *list, int *t1, int *t2, 
 			const double **Z);
-
-int set_reference_missmask_from_list (const int *list, const double **Z,
-				      const DATAINFO *pdinfo);
 
 int set_miss (const int *list, const char *param, double **Z,
 	      DATAINFO *pdinfo, PRN *prn);

@@ -5001,7 +5001,7 @@ int gretl_model_add_y_median (MODEL *pmod, const double *y)
 
     n = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!model_missing(pmod, t)) {
+	if (!na(pmod->uhat[t])) {
 	    sy[n++] = y[t];
 	}
     }
