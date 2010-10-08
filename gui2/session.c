@@ -326,12 +326,6 @@ static SESSION_MODEL *session_model_new (void *ptr, const char *name,
     return mod;
 }
 
-static void free_session_graph (SESSION_GRAPH *graph)
-{
-    /* no allocated members at present */
-    free(graph);
-}
-
 static int session_append_text (const char *tname, char *buf)
 {
     SESSION_TEXT *text;
@@ -415,7 +409,7 @@ static SESSION_GRAPH *session_append_graph (const char *grname,
     graphs = myrealloc(session.graphs, (ng + 1) * sizeof *graphs);
 
     if (graphs == NULL) {
-	free_session_graph(graph);
+	free(graph);
 	return NULL;
     }
 
@@ -1461,7 +1455,7 @@ void free_session (void)
 
     if (session.graphs) {
 	for (i=0; i<session.ngraphs; i++) {
-	    free_session_graph(session.graphs[i]);
+	    free(session.graphs[i]);
 	}
 	free(session.graphs);
 	session.graphs = NULL;
@@ -2115,7 +2109,6 @@ static void remove_session_graph_file (const char *gfname)
 static int real_delete_graph_from_session (SESSION_GRAPH *junk)
 {
     int ng = session.ngraphs;
-    int i, j;
 
     if (ng == 1) {
 	remove_session_graph_file(session.graphs[0]->fname);
@@ -2124,22 +2117,26 @@ static int real_delete_graph_from_session (SESSION_GRAPH *junk)
 	session.graphs = NULL;	
     } else {
 	SESSION_GRAPH **ppgr;
+	int i, j, done = 0;
 
-	ppgr = mymalloc((ng - 1) * sizeof *ppgr);
-	if (ppgr == NULL) {
-	    return 1;
-	}
-	j = 0;
-	for (i=0; i<ng; i++) {
-	    if (!strcmp(session.graphs[i]->name, junk->name)) { 
-		ppgr[j++] = session.graphs[i];
-	    } else {
+	for (i=0; i<ng && !done; i++) {
+	    if (!strcmp(session.graphs[i]->name, junk->name)) {
 		remove_session_graph_file(session.graphs[i]->fname);
 		free(session.graphs[i]);
+		for (j=i; j<ng-1; j++) {
+		    session.graphs[j] = session.graphs[j+1];
+		}
+		done = 1;
 	    }
 	}
-	free(session.graphs);
-	session.graphs = ppgr;
+
+	if (done) {
+	    ppgr = myrealloc(session.graphs, (ng - 1) * sizeof *ppgr);
+	    if (ppgr == NULL) {
+		return 1;
+	    } 	
+	    session.graphs = ppgr;
+	}
     }
 
     session.ngraphs = ng - 1;
