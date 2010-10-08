@@ -280,6 +280,17 @@
       </description>
     </function>
 
+    <function name="$llt" section="access" output="series">
+      <description>
+	<para>
+	  For selected models estimated via Maximum Likelihood,
+	  returns the series of per-observation log-likelihood
+	  values. At present this is supported only for binary logit
+	  and probit, tobit and heckit.
+	</para>
+      </description>
+    </function>
+
     <function name="$lnl" section="access" output="scalar">
       <description>
 	<para>
