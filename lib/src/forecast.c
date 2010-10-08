@@ -273,6 +273,22 @@ static void fit_resid_set_dec_places (FITRESID *fr)
     }
 }
 
+static int special_depvar (const MODEL *pmod) 
+{
+    int ret = 0;
+
+    if (pmod->ci == INTREG) {
+	ret = 1;
+    } else if (pmod->ci == PANEL) {
+	if (pmod->opt & OPT_B) {
+	    /* panel "between" model */
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * get_fit_resid:
  * @pmod: the model for which actual and fitted values
@@ -294,7 +310,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     FITRESID *fr;
     int t, dv = -1;
 
-    if (pmod->ci != INTREG) {
+    if (!special_depvar(pmod)) {
 	dv = gretl_model_get_depvar(pmod);
 	if (dv < 0 || dv >= pdinfo->v) {
 	    *err = E_DATA;
@@ -334,7 +350,11 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 	fr->resid[t] = pmod->uhat[t];
     }
 
-    fit_resid_set_dec_places(fr);
+    if (dv < 0) {
+	fr->pmax = PMAX_NOT_AVAILABLE;
+    } else {
+	fit_resid_set_dec_places(fr);
+    }
     
     if (dv < 0) {
 	strcpy(fr->depvar, "implicit y");
