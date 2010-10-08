@@ -766,8 +766,6 @@ static int bad_write_check (dpdinfo *dpd, int row, int lev)
 
 #endif
 
-#define OLD_IVSTYLE 0 
-
 /* GMM-style instruments in levels for the eqns in differences */
 
 static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x, 
@@ -786,10 +784,7 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 	t2 = goodobs[i+1];
 	col = col0 + t2 - dpd->dcolskip;
 	row = row0 + row_increment(&dpd->d[bnum], t1+1);
-#if OLD_IVSTYLE
-	tmax = t1;
-#endif
-	for (t=0; t<tmax; t++) {
+	for (t=0; t<=tmax; t++) {
 	    /* 2010-09-04: this was: t2 - t >= minlag && t1 - t < maxlag */
 	    if (t1 - t >= minlag - 1 && t1 - t < maxlag) {
 		/* the criterion here needs care */
@@ -826,9 +821,6 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
 	t1 = goodobs[i];
 	col = col0 + t1 - dpd->lcolskip;
 	row = row0 + row_increment(&dpd->d2[bnum], t1);
-#if OLD_IVSTYLE
-	tmax = t1 - 1;
-#endif
 	for (t=1; t<=tmax; t++) {
 	    k = t1 - t;
 	    if (k <= maxlag && k >= minlag) {
