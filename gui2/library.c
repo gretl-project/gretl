@@ -4516,7 +4516,7 @@ static void display_x12a_warning (const char *fname)
 		return;
 	    }
 	    while (fgets(line, sizeof line, fp)) {
-		if (n++ >= 4 && !string_is_blank(line)) {
+		if (++n > 4 && !string_is_blank(line)) {
 		    tailstrip(line);
 		    s = line + strspn(line, " \t");
 		    pputs(prn, s);
