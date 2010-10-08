@@ -260,8 +260,6 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    }
 	}
     } else {
-	double sigma, z;
-
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
 		pmod->yhat[t] = u[t] = NADBL;
@@ -270,17 +268,6 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		u[t] = Z[yvar][t] - yhat->val[i];
 		pmod->ess += u[t] * u[t];
 		i++;
-	    }
-	}
-	
-	sigma = sqrt(pmod->ess / i);
-
-	for (t=0; t<fulln; t++) {
-	    if (na(u[t])) {
-		pmod->llt[t] = NADBL;
-	    } else {
-		z = u[t] / sigma;
-		pmod->llt[t] = -(LN_SQRT_2_PI + log(sigma) + 0.5*z*z);
 	    }
 	}
     }
@@ -824,12 +811,8 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
 	pmod->uhat = malloc(T * sizeof *pmod->uhat);
     }
 
-    if (pmod->llt == NULL) {
-	pmod->llt = malloc(T * sizeof *pmod->llt);
-    }
-
     if (pmod->sderr == NULL || pmod->yhat == NULL || 
-	pmod->uhat == NULL || pmod->llt == NULL) {
+	pmod->uhat == NULL) {
 	return 1;
     }
 

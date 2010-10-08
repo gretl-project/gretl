@@ -722,7 +722,15 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     double lnsig = log(HC->sigma);
     int kb = HC->kmain;
     int kg = HC->ksel;
+    double *llt;
     int i, t, v;
+
+    llt = malloc(pdinfo->n * sizeof *llt);
+    if (llt != NULL) {
+	for (i=0; i<pdinfo->n; i++) {
+	    llt[i] = NADBL;
+	}
+    }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xb = 0.0;
@@ -762,14 +770,24 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    /* censored */
 	    F = normal_cdf(-zg);
 	    hm->uhat[t] = -lam * invmills(zg);
-	    hm->llt[t] = log(F);
+	    if (llt != NULL) {
+		llt[t] = log(F);
+	    }
 	} else if (!na(xb) && Z[HC->selvar][t] == 1) {
 	    /* uncensored */
 	    hm->uhat[t] = u = Z[HC->depvar][t] - xb;
-	    u /= HC->sigma;
-	    x = (zg + rho*u) * rhofunc;
-	    hm->llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + log(normal_cdf(x));
+	    if (llt != NULL) {
+		u /= HC->sigma;
+		x = (zg + rho*u) * rhofunc;
+		llt[t] = -LN_SQRT_2_PI - 0.5*u*u - lnsig + log(normal_cdf(x));
+	    }
 	}
+    }
+
+    if (llt != NULL) {
+	gretl_model_set_data(hm, "llt", llt, 
+			     GRETL_TYPE_DOUBLE_ARRAY,
+			     pdinfo->n * sizeof *llt);
     }
 
 #if 0

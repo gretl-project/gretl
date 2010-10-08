@@ -1836,9 +1836,11 @@ static int add_slopes_to_model (MODEL *pmod, const double **Z)
     return err;
 }
 
-static void binary_model_add_stats (MODEL *pmod, const double *y)
+static void binary_model_add_stats (MODEL *pmod, const double *y,
+				    const DATAINFO *pdinfo)
 {
     int *act_pred;
+    double *llt;
     double F, xx = 0.0;
     int i, t;
 
@@ -1847,6 +1849,13 @@ static void binary_model_add_stats (MODEL *pmod, const double *y)
     if (act_pred != NULL) {
 	for (i=0; i<4; i++) {
 	    act_pred[i] = 0;
+	}
+    }
+
+    llt = malloc(pdinfo->n * sizeof *llt);
+    if (llt != NULL) {
+	for (i=0; i<pdinfo->n; i++) {
+	    llt[i] = NADBL;
 	}
     }
 
@@ -1876,7 +1885,9 @@ static void binary_model_add_stats (MODEL *pmod, const double *y)
 	    pmod->uhat[t] = (yt != 0)? invmills(-xb) : -invmills(xb);
 	}
 
-	pmod->llt[t] = (yt != 0)? log(F) : log(1-F);
+	if (llt != NULL) {
+	    llt[t] = (yt != 0)? log(F) : log(1-F);
+	}
     }
 
     pmod->ybar = xx / pmod->nobs;
@@ -1885,6 +1896,12 @@ static void binary_model_add_stats (MODEL *pmod, const double *y)
 	gretl_model_set_data(pmod, "discrete_act_pred", act_pred, 
 			     GRETL_TYPE_INT_ARRAY, 
 			     4 * sizeof *act_pred);
+    }
+
+    if (llt != NULL) {
+	gretl_model_set_data(pmod, "llt", llt, 
+			     GRETL_TYPE_DOUBLE_ARRAY,
+			     pdinfo->n * sizeof *llt);
     }
 
     mle_criteria(pmod, 0);
@@ -1994,7 +2011,7 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!dmod.errcode) {
-	binary_model_add_stats(&dmod, Z[depvar]);
+	binary_model_add_stats(&dmod, Z[depvar], pdinfo);
 	if (opt & OPT_A) {
 	    dmod.aux = AUX_AUX;
 	} else {

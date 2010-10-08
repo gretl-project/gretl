@@ -258,10 +258,18 @@ static gretl_matrix *tobit_opg_vcv (const tob_container *TC)
     return V;
 }
 
-static double recompute_tobit_ll (const MODEL *pmod, const double *y)
+static double recompute_tobit_ll (MODEL *pmod, const double *y)
 {
+    double *llt;
     double lt, ll = 0.0;
     int t, s = 0;
+
+    llt = malloc(pmod->full_n * sizeof *llt);
+    if (llt != NULL) {
+	for (t=0; t<pmod->full_n; t++) {
+	    llt[t] = NADBL;
+	}
+    }    
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (na(pmod->uhat[t])) {
@@ -272,8 +280,18 @@ static double recompute_tobit_ll (const MODEL *pmod, const double *y)
 	} else {
 	    lt = (1.0 / pmod->sigma) * normal_pdf(pmod->uhat[t] / pmod->sigma);
 	}
-	ll += pmod->llt[t] = log(lt);
+	lt = log(lt);
+	ll += lt;
+	if (llt != NULL) {
+	    llt[t] = lt;
+	}
     }
+
+    if (llt != NULL) {
+	gretl_model_set_data(pmod, "llt", llt, 
+			     GRETL_TYPE_DOUBLE_ARRAY,
+			     pmod->full_n * sizeof *llt);
+    }    
 
     return ll;
 }

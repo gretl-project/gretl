@@ -2187,7 +2187,6 @@ static void gretl_model_init_pointers (MODEL *pmod)
     pmod->sderr = NULL;
     pmod->yhat = NULL;
     pmod->uhat = NULL;
-    pmod->llt = NULL;
     pmod->xpx = NULL;
     pmod->vcv = NULL;
     pmod->arinfo = NULL;
@@ -2426,7 +2425,6 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->sderr = %p\n"
 	    " pmod->yhat = %p\n"
 	    " pmod->uhat = %p\n"
-	    " pmod->llt = %p\n"
 	    " pmod->xpx = %p\n"
 	    " pmod->vcv = %p\n"
 	    " pmod->name = %p\n"
@@ -2439,7 +2437,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    (void *) pmod->submask, (void *) pmod->missmask, 
 	    (void *) pmod->coeff, (void *) pmod->sderr, 
 	    (void *) pmod->yhat, (void *) pmod->uhat, 
-	    (void *) pmod->llt, (void *) pmod->xpx, 
+	    (void *) pmod->xpx, 
 	    (void *) pmod->vcv, (void *) pmod->name, 
 	    (void *) pmod->depvar, (void *) pmod->params, 
 	    (void *) pmod->arinfo, (void *) pmod->tests, 
@@ -2500,7 +2498,6 @@ void clear_model (MODEL *pmod)
 	if (pmod->sderr != NULL) free(pmod->sderr);
 	if (pmod->yhat != NULL) free(pmod->yhat);
 	if (pmod->uhat != NULL) free(pmod->uhat);
-	if (pmod->llt != NULL) free(pmod->llt);
 	if (pmod->xpx != NULL) free(pmod->xpx);
 	if (pmod->vcv != NULL) free(pmod->vcv);
 	if (pmod->name != NULL) free(pmod->name);
@@ -3652,11 +3649,6 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	return 1;
     }
 
-    if (src->llt != NULL && 
-	(targ->llt = copyvec(src->llt, src->full_n)) == NULL) {
-	return 1;
-    }
-
     if (src->submask != NULL && 
 	(targ->submask = copy_subsample_mask(src->submask, &err)) == NULL) { 
 	return 1;
@@ -3784,10 +3776,6 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 
     if (pmod->yhat != NULL) {
 	gretl_xml_put_double_array("yhat", pmod->yhat, pmod->full_n, fp);
-    }
-
-    if (pmod->llt != NULL) {
-	gretl_xml_put_double_array("llt", pmod->llt, pmod->full_n, fp);
     }
 
     if (pmod->submask != NULL) {
@@ -4331,8 +4319,6 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	    pmod->uhat = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "yhat")) {
 	    pmod->yhat = gretl_xml_get_double_array(cur, doc, &n, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "llt")) {
-	    pmod->llt = gretl_xml_get_double_array(cur, doc, &n, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "xpx")) {
 	    /* note: allow this one to fail silently */
 	    pmod->xpx = gretl_xml_get_double_array(cur, doc, &n, NULL);
@@ -5316,7 +5302,7 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
     } else if (idx == M_YHAT) {
 	src = pmod->yhat;
     } else if (idx == M_LLT) {
-	src = pmod->llt;
+	src = gretl_model_get_data(pmod, "llt");
     } else if (idx == M_AHAT) {
 	src = gretl_model_get_data(pmod, "ahat");
     } else if (idx == M_H) {
@@ -5400,7 +5386,7 @@ model_get_hatvec (const MODEL *pmod, int idx, int *err)
     } else if (idx == M_YHAT) {
 	src = pmod->yhat;
     } else if (idx == M_LLT) {
-	src = pmod->llt;
+	src = gretl_model_get_data(pmod, "llt");
     }
 
     if (src == NULL) {
