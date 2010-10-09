@@ -4502,6 +4502,7 @@ static void display_x12a_warning (const char *fname)
     char *errfile = gretl_strdup(fname);
 
     if (errfile != NULL) {
+	const char *wbuf = NULL;
 	char *s, line[128];
 	PRN *prn = NULL;
 	FILE *fp;
@@ -4524,7 +4525,10 @@ static void display_x12a_warning (const char *fname)
 		}
 	    }
 	    fclose(fp);
-	    warnbox(gretl_print_get_buffer(prn));
+	    wbuf = gretl_print_get_buffer(prn);
+	    if (!string_is_blank(wbuf)) {
+		warnbox(wbuf);
+	    }
 	    gretl_print_destroy(prn);
 	}
 	free(errfile);
@@ -4589,6 +4593,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
     } else if (opt & OPT_W) {
 	/* got a warning from x12a */
 	display_x12a_warning(fname);
+	opt &= ~OPT_W;
     }
 
     datainfo->t1 = save_t1;

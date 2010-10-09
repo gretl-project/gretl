@@ -756,7 +756,7 @@ static void request_opts_init (tx_request *request, const DATAINFO *pdinfo)
 
     request->xopt.logtrans = 3; /* x12a: automatic logs or not */
     request->xopt.outliers = 1; /* x12a: detect outliers */
-    request->xopt.trdays = (pdinfo->pd == 12); /* x12a: trading days */
+    request->xopt.trdays = 0;   /* x12a: trading days correction */
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
