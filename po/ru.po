@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-04 16:55-0400\n"
-"PO-Revision-Date: 2010-09-14 00:41+0300\n"
+"PO-Revision-Date: 2010-10-10 13:34+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:288
 msgid "lagged differences"
@@ -175,7 +175,7 @@ msgstr "Объект"
 
 #: lib/src/adf_kpss.c:1166
 msgid "H0: all groups have unit root"
-msgstr ""
+msgstr "Нулевая гипотеза: для всех групп существует единичный корень"
 
 #: lib/src/adf_kpss.c:1452
 msgid "Robust estimate of variance"
@@ -247,7 +247,7 @@ msgstr "Интерполированное p-значение"
 
 #: lib/src/adf_kpss.c:1573
 msgid "H0: all groups are stationary"
-msgstr ""
+msgstr "Нулевая гипотеза: все группы стационарные"
 
 #: lib/src/adf_kpss.c:1844 lib/src/adf_kpss.c:1881
 #, c-format
@@ -793,15 +793,15 @@ msgstr "изменение порядка дат на обратный!\n"
 
 #: lib/src/csvdata.c:733
 msgid "Trying date order YYYYMMDD\n"
-msgstr ""
+msgstr "Подбор формата даты YYYYMMDD\n"
 
 #: lib/src/csvdata.c:741
 msgid "Trying date order DDMMYYYY\n"
-msgstr ""
+msgstr "Подбор формата даты DDMMYYYY\n"
 
 #: lib/src/csvdata.c:749
 msgid "Trying date order MMDDYYYY\n"
-msgstr ""
+msgstr "Подбор формата даты MMDDYYYY\n"
 
 #: lib/src/csvdata.c:768
 #, c-format
@@ -1765,6 +1765,7 @@ msgstr "Исключение %s: выборка не содержит досто
 #: lib/src/describe.c:4849
 msgid "corr: needs at least two non-constant arguments"
 msgstr ""
+"corr: необходимы по-крайней мере два аргумента, не являющиеся константами"
 
 #: lib/src/describe.c:4906 lib/src/modelprint.c:3168 lib/src/modelprint.c:3180
 #: lib/src/modelprint.c:3181 lib/src/modelprint.c:3182
@@ -2781,7 +2782,7 @@ msgstr "Оценок градиента: %d\n"
 
 #: lib/src/gretl_bfgs.c:1739
 msgid "Initial value of objective function is not finite"
-msgstr ""
+msgstr "Начальное значение целевой функции не является конечным"
 
 #: lib/src/gretl_bundle.c:373
 msgid "no such item"
@@ -5502,6 +5503,8 @@ msgstr ""
 #: lib/src/nls.c:2639
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
 msgstr ""
+"Были указаны аналитические производные: строка \"params\" будут "
+"проигнорированы"
 
 #: lib/src/nls.c:2684
 msgid "No parameters have been specified"
@@ -7807,9 +7810,8 @@ msgid "gretl: display database series"
 msgstr "gretl: переменные из базы данных"
 
 #: gui2/database.c:215 gui2/dialogs.c:3280
-#, fuzzy
 msgid "Interpolate higher frequency values"
-msgstr "Интерполированное р-значение"
+msgstr ""
 
 #: gui2/database.c:216 gui2/dialogs.c:3281
 msgid "Repeat the lower frequency values"
@@ -8759,9 +8761,8 @@ msgid "gretl: expand data"
 msgstr "gretl: увеличение частоты ряда"
 
 #: gui2/dialogs.c:3314
-#, fuzzy
 msgid "Expand annual data to quarterly"
-msgstr "Преобразовать годовые данные в:"
+msgstr "Преобразовать годовые данные в квартальные:"
 
 #: gui2/dialogs.c:3316
 msgid "Expand quarterly data to monthly"
@@ -9022,7 +9023,7 @@ msgstr ""
 
 #: gui2/filters.c:101
 msgid "Polynomial trend"
-msgstr ""
+msgstr "Полиномиальный тренд"
 
 #: gui2/filters.c:103
 msgid "Fractional difference"
@@ -9262,7 +9263,7 @@ msgstr "Не указан аргумент %d (%s)"
 #: gui2/fncall.c:356
 #, c-format
 msgid "help on %s"
-msgstr ""
+msgstr "Помощь по %s"
 
 #: gui2/fncall.c:512
 msgid "No name was given for the list"
@@ -9298,7 +9299,7 @@ msgstr "Выбрать из списка (или новая переменная
 
 #: gui2/fncall.c:861
 msgid "close this dialog on \"OK\""
-msgstr ""
+msgstr "Чтобы закрыть диалог, нажмите \"ОК\""
 
 #: gui2/fncall.c:1223
 msgid "Function package is broken"
@@ -10539,7 +10540,7 @@ msgstr "График _временного ряда"
 
 #: gui2/gretl.c:1534
 msgid "_Unit root tests"
-msgstr ""
+msgstr "_Тесты единичного корня"
 
 #: gui2/gretl.c:1535
 msgid "_Augmented Dickey-Fuller test"
@@ -10591,7 +10592,7 @@ msgstr ""
 
 #: gui2/gretl.c:1547
 msgid "_Polynomial trend"
-msgstr ""
+msgstr "_Полиномиальный тренд"
 
 #: gui2/gretl.c:1548
 msgid "_Fractional difference"
@@ -13319,14 +13320,12 @@ msgid "Unrestricted trend"
 msgstr "Неограниченный тренд"
 
 #: gui2/selector.c:5356
-#, fuzzy
 msgid "Enter formula for new variable"
 msgstr "Введите формулу для новой переменной:"
 
 #: gui2/selector.c:5368
-#, fuzzy
 msgid "New variable"
-msgstr "индексная переменная"
+msgstr "Новая переменная"
 
 #: gui2/selector.c:5398
 msgid "plot with impulses"
@@ -14407,9 +14406,8 @@ msgid "Reformat..."
 msgstr "Изменить формат..."
 
 #: gui2/toolbar.c:643
-#, fuzzy
 msgid "Edit values..."
-msgstr "Изменить значения"
+msgstr "Изменить значения..."
 
 #: gui2/toolbar.c:644
 msgid "Refresh"
@@ -14606,7 +14604,6 @@ msgid "ARMA initialization"
 msgstr "Инициализация ARMA"
 
 #: plugin/arma.c:1374
-#, fuzzy
 msgid "user-specified values"
 msgstr "Пользовательские начальные значения"
 
@@ -14619,9 +14616,8 @@ msgid "Hannan-Rissanen method"
 msgstr ""
 
 #: plugin/arma_init.c:1152
-#, fuzzy
 msgid "small MA values"
-msgstr "существующих значений"
+msgstr ""
 
 #: plugin/arma_init.c:1230
 msgid "using nonlinear AR model"
@@ -14730,7 +14726,7 @@ msgstr ""
 
 #: plugin/fractals.c:122
 msgid "log(Size)"
-msgstr ""
+msgstr "log(Размер)"
 
 #: plugin/fractals.c:231
 msgid "There were missing data values"
@@ -14814,7 +14810,7 @@ msgstr ""
 
 #: plugin/import_common.c:36 plugin/ods_import.c:1221
 msgid "No numeric data were found"
-msgstr ""
+msgstr "Числовые данные не обнаружены"
 
 #: plugin/import_common.c:269 plugin/import_common.c:274
 #, c-format
@@ -15342,9 +15338,8 @@ msgid "irregular component of %s"
 msgstr "нерегулярная составляющая %s"
 
 #: plugin/tramo-x12a.c:190
-#, fuzzy
 msgid "X-12-ARIMA options"
-msgstr "Просмотр вывода для X-12-ARIMA"
+msgstr "Настройки для X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:201
 msgid "Correct for trading days effect"
