@@ -1259,10 +1259,9 @@ static GtkWidget *make_main_window (void)
     gtk_window_set_title(GTK_WINDOW(mdata->main), "gretl");
     gtk_window_set_default_size(GTK_WINDOW(mdata->main), 
 				mainwin_width, mainwin_height);
+
 #ifndef G_OS_WIN32
-    g_signal_connect_after(G_OBJECT(mdata->main), "realize", 
-			   G_CALLBACK(set_wm_icon), 
-			   NULL);
+    set_wm_icon(mdata->main);
 #endif
 
     main_vbox = gtk_vbox_new(FALSE, 4);
@@ -2066,13 +2065,11 @@ int gretl_fork (const char *progvar, const char *arg)
 
 #ifndef G_OS_WIN32
 
-void set_wm_icon (GtkWidget *w, gpointer data)
+void set_wm_icon (GtkWidget *w)
 {
-    GdkWindow *window = gtk_widget_get_window(w);
-    GdkPixmap *icon;
+    GdkPixbuf *icon = gdk_pixbuf_new_from_xpm_data(gretl_xpm);
 
-    icon = gdk_pixmap_create_from_xpm_d(window, NULL, NULL, gretl_xpm);
-    gdk_window_set_icon(window, NULL, icon, NULL);
+    gtk_window_set_icon(GTK_WINDOW(w), icon);
 }
 
 #endif

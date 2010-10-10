@@ -1,5 +1,5 @@
 /* XPM */
-static char * gretl_xpm[] = {
+static const char * gretl_xpm[] = {
 "43 48 49 1",
 " 	c None",
 ".	c #1D181B",

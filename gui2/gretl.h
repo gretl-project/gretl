@@ -154,7 +154,7 @@ extern PangoFontDescription *fixed_font;
 
 #ifndef WIN32
 int gretl_fork (const char *progvar, const char *arg);
-void set_wm_icon (GtkWidget *w, gpointer data);
+void set_wm_icon (GtkWidget *w);
 #endif
 
 int mdata_selection_count (void);

@@ -1537,11 +1537,9 @@ static void viewer_box_config (windata_t *vwin)
     gtk_box_set_spacing(GTK_BOX(vwin->vbox), 4);
     gtk_container_set_border_width(GTK_CONTAINER(vwin->vbox), 4);
     gtk_container_add(GTK_CONTAINER(vwin->main), vwin->vbox);
-
+    
 #ifndef G_OS_WIN32
-    g_signal_connect_after(G_OBJECT(vwin->main), "realize", 
-			   G_CALLBACK(set_wm_icon), 
-			   NULL);
+    set_wm_icon(vwin->main);
 #endif
 }
 
