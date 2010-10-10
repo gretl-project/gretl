@@ -138,6 +138,7 @@ struct gretl_option gretl_opts[] = {
     { DPANEL,   OPT_D, "time-dummies", 0 },    
     { DPANEL,   OPT_L, "system", 0 },
     { DPANEL,   OPT_T, "two-step", 0 },
+    { DPANEL,   OPT_V, "verbose", 0 },
     { DPANEL,   OPT_X, "dpdstyle", 0 },
     { DUMMIFY,  OPT_F, "drop-first", 0 },
     { DUMMIFY,  OPT_L, "drop-last", 0 },

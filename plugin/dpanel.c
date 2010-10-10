@@ -1386,6 +1386,28 @@ static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
     return err;
 }
 
+/* we're doing two-step, but print the one-step results for
+   reference */
+
+static int print_step_1 (MODEL *pmod, dpdinfo *dpd,
+			 const int *list, const char *ispec,
+			 const double *y, const DATAINFO *pdinfo,
+			 gretlopt opt, PRN *prn)
+{
+    int err = dpd_finalize_model(pmod, dpd, list, ispec, 
+				 y, pdinfo, opt);
+
+    if (!err) {
+	dpd->flags &= ~DPD_TWOSTEP;
+	pmod->ID = -1;
+	printmodel(pmod, pdinfo, opt, prn);
+	pmod->ID = 0;
+	dpd->flags |= (DPD_TWOSTEP | DPD_REDO);
+    }
+
+    return err;
+}
+
 /* "Secret" public interface for new approach, including system GMM:
    in a script use --system (OPT_L, think "levels") to get
    Blundell-Bond. To build the H matrix as per Ox/DPD use the
@@ -1481,7 +1503,13 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
-	err = dpd_step_2(dpd);
+	if (opt & OPT_V) {
+	    err = print_step_1(&mod, dpd, list, ispec, Z[dpd->yno], 
+			       pdinfo, opt, prn);
+	}
+	if (!err) {
+	    err = dpd_step_2(dpd);
+	}
     }	
 
     if (err && !mod.errcode) {

@@ -29,7 +29,8 @@ enum {
     DPD_TIMEDUM  = 1 << 2,
     DPD_WINCORR  = 1 << 3,
     DPD_SYSTEM   = 1 << 4,
-    DPD_DPDSTYLE = 1 << 5
+    DPD_DPDSTYLE = 1 << 5,
+    DPD_REDO     = 1 << 6
 };
 
 #define use_levels(d) (d->flags & DPD_SYSTEM)
@@ -1685,6 +1686,10 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     int i, j;
     int err = 0;
 
+    if (dpd->flags & DPD_REDO) {
+	goto restart;
+    }
+
     pmod->ci = dpd->ci;
     pmod->t1 = pdinfo->t1;
     pmod->t2 = pdinfo->t2;
@@ -1703,10 +1708,6 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     pmod->ncoeff = dpd->k;
     pmod->nobs = dpd->nobs;
     pmod->full_n = pdinfo->n;
-    pmod->ess = dpd->SSR;
-    if (dpd->s2 >= 0) {
-	pmod->sigma = sqrt(dpd->s2);
-    }
 
     pmod->rsq = pmod->adjrsq = NADBL;
     pmod->fstt = pmod->chisq = NADBL;
@@ -1745,7 +1746,13 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 
     err = gretl_model_allocate_storage(pmod);
 
+ restart:
+
     if (!err) {
+	pmod->ess = dpd->SSR;
+	if (dpd->s2 >= 0) {
+	    pmod->sigma = sqrt(dpd->s2);
+	}
 	for (i=0; i<dpd->k; i++) {
 	    pmod->coeff[i] = dpd->beta->val[i];
 	}
@@ -1791,18 +1798,22 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	    gretl_model_set_int(pmod, "wald_time_df", dpd->wdf[1]);
 	    gretl_model_set_double(pmod, "wald_time", dpd->wald[1]);
 	}
-	if (istr != NULL && *istr != '\0') {
-	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
-	}
-	if (dpd->flags & DPD_TIMEDUM) {
-	    pmod->opt |= OPT_D;
-	}
 	if ((dpd->flags & DPD_TWOSTEP) && !(dpd->flags & DPD_WINCORR)) {
 	    gretl_model_set_int(pmod, "asy", 1);
 	}
 	if (dpd->A != NULL) {
 	    gretl_model_set_int(pmod, "ninst", dpd->A->rows);
 	}
+    }
+
+    if (!err && !(dpd->flags & DPD_REDO)) {
+	/* things that only need to be done once */
+	if (istr != NULL && *istr != '\0') {
+	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
+	}
+	if (dpd->flags & DPD_TIMEDUM) {
+	    pmod->opt |= OPT_D;
+	}	
 	if (pmod->ci == DPANEL) {
 	    if (dpd->flags & DPD_SYSTEM) {
 		pmod->opt |= OPT_L;
@@ -1814,7 +1825,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 		gretl_model_set_int(pmod, "Tmin", dpd->minTi);
 		gretl_model_set_int(pmod, "Tmax", dpd->maxTi);
 	    }
-	}	    
+	}
     }
 
     return err;
