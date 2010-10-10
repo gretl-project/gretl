@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-04 16:55-0400\n"
-"PO-Revision-Date: 2010-10-10 13:34+0300\n"
+"PO-Revision-Date: 2010-10-10 13:59+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -8526,7 +8526,7 @@ msgstr "Выберите именованный список"
 
 #: gui2/dialogs.c:1382
 msgid "gretl: iteration controls"
-msgstr ""
+msgstr "gretl: параметры оптимизационного алгоритма"
 
 #: gui2/dialogs.c:1396
 msgid "BHHH maximizer"
@@ -8534,7 +8534,7 @@ msgstr ""
 
 #: gui2/dialogs.c:1397
 msgid "BFGS maximizer"
-msgstr ""
+msgstr "Алгоритм BFGS"
 
 #: gui2/dialogs.c:1405
 msgid "Maximum iterations:"
@@ -8542,11 +8542,11 @@ msgstr "Максимальное количество итераций:"
 
 #: gui2/dialogs.c:1416
 msgid "Convergence tolerance:"
-msgstr ""
+msgstr "Допуск сходимости"
 
 #: gui2/dialogs.c:1439
 msgid "Use L-BFGS-B, memory size:"
-msgstr ""
+msgstr "Использовать алгоритм L-BFGS-B, размер памяти:"
 
 #: gui2/dialogs.c:1700
 #, c-format
