@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-04 16:55-0400\n"
-"PO-Revision-Date: 2010-10-06 03:00-0400\n"
+"PO-Revision-Date: 2010-10-11 10:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -4413,11 +4413,11 @@ msgstr "Heckit"
 
 #: lib/src/modelprint.c:723 gui2/selector.c:3344
 msgid "Poisson"
-msgstr "Poissona"
+msgstr "Regresja Poissona"
 
 #: lib/src/modelprint.c:724 lib/src/modelprint.c:839
 msgid "Negative Binomial"
-msgstr "Ujemna Dwumianowa"
+msgstr "Regresja Ujemna Dwumianowa"
 
 #: lib/src/modelprint.c:725
 msgid "Duration"
@@ -4545,15 +4545,15 @@ msgstr "1-step GMM"
 
 #: lib/src/modelprint.c:805 gui2/selector.c:3200
 msgid "Ordered Logit"
-msgstr "Uporządkowany Logit"
+msgstr "Wielomianowy Uporządkowany Logit"
 
 #: lib/src/modelprint.c:807 gui2/selector.c:3202
 msgid "Multinomial Logit"
-msgstr "Wielomianowy Logit"
+msgstr "Wielomianowy Nieuporządkowany Logit"
 
 #: lib/src/modelprint.c:813 gui2/selector.c:3206
 msgid "Ordered Probit"
-msgstr "Uporządkowany Probit"
+msgstr "Wielomianowy Uporządkowany Probit"
 
 #: lib/src/modelprint.c:819
 msgid "Two-step Heckit"
@@ -10796,11 +10796,11 @@ msgstr "_dwumianowy..."
 
 #: gui2/gretl.c:1595 gui2/gretl.c:1599
 msgid "_Ordered..."
-msgstr "_uporządkowany..."
+msgstr "wielomianowy _uporządkowany..."
 
 #: gui2/gretl.c:1596
 msgid "_Multinomial..."
-msgstr "_wielomianowy..."
+msgstr "wielomianowy _nieuporządkowany..."
 
 #: gui2/gretl.c:1597
 msgid "_Probit"
@@ -14068,11 +14068,11 @@ msgstr "wykorzystaj bieżący folder powłoki shell"
 
 #: gui2/settings.c:2355
 msgid "The file selection dialog should:"
-msgstr "The file selection dialog should:"
+msgstr "Wybór pliku z okna dialogowego:"
 
 #: gui2/settings.c:2362
 msgid "remember the last-opened folder"
-msgstr "remember the last-opened folder"
+msgstr "ostatnio wykorzystywanego katalogu"
 
 #: gui2/settings.c:2371
 msgid "always start in the working directory"
