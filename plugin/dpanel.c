@@ -459,6 +459,10 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     /* figure number of time dummies, if wanted */
     if (dpd->flags & DPD_TIMEDUM) {
 	dpd->ndum = dpd->t2max - dpd->t1min;
+	if (dpd->ifc == 0) {
+	    dpd->ndum += 1;
+	}
+	fprintf(stderr, "dpd: ndum = %d\n", dpd->ndum);
 	dpd->k += dpd->ndum;
 	dpd->nz += dpd->ndum;
     }
@@ -571,7 +575,14 @@ static void make_dpdstyle_H (gretl_matrix *H, int nd)
 #endif
 }
 
-#define timedum_level(d,j,t) ((t == j + 1 + d->t1min)? 1 : 0)
+static int timedum_level (dpdinfo *dpd, int j, int t)
+{
+    if (dpd->ifc) {
+	return (t == j + 1 + dpd->t1min)? 1 : 0;
+    } else {
+	return (t == j + dpd->t1min)? 1 : 0;
+    }
+}
 
 static double timedum_diff (dpdinfo *dpd, int j, int t)
 {
@@ -1231,6 +1242,7 @@ static void maybe_prune_const (dpdinfo *dpd)
 		}
 		dpd->nx -= 1;
 		dpd->k -= 1;
+		dpd->ifc = 0;
 		break;
 	    }
 	}

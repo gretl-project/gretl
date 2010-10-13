@@ -99,9 +99,9 @@ static int GLS_demean_detrend (double *y, int T, int test)
 
     c = (test == UR_CONST)? (1.0 - 7.0/T) : (1.0 - 13.5/T);
 
-    gretl_vector_set(ya, 0, y[0]);
+    gretl_vector_set(ya, 0, y[0] /* (1 - c) * y[0] ?? */);
     for (t=1; t<T; t++) {
-	gretl_vector_set(ya, t, y[t] - y[t-1] * c);
+	gretl_vector_set(ya, t, y[t] - c * y[t-1]);
     }
 
     gretl_matrix_set(Za, 0, 0, 1);

@@ -68,6 +68,7 @@ struct dpdinfo_ {
     int p;                /* lag order for dependent variable */
     int qmax;             /* longest lag of y used as instrument (arbond) */
     int nx;               /* number of independent variables */
+    int ifc;              /* model includes a constant */
     int nzr;              /* number of regular instruments */
     int nzb;              /* number of block-diagonal instruments (other than y) */
     int nz;               /* total columns in instrument matrix */
@@ -292,6 +293,7 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
     dpd->nzlev = 0;
     dpd->t1min = dpd->t2max = 0;
     dpd->ndum = 0;
+    dpd->ifc = 0;
 
     /* "system"-specific */
     dpd->d2 = NULL;
@@ -359,19 +361,12 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
 
 static int maybe_add_const_to_ilist (dpdinfo *dpd)
 {
-    int i, addc = 0;
+    int i, addc = dpd->ifc;
     int err = 0;
 
     if (dpd->xlist == NULL || (dpd->nzr == 0 && dpd->nzb == 0)) {
 	/* no x's, or all x's treated as exogenous already */
 	return 0;
-    }
-
-    for (i=1; i<=dpd->xlist[0]; i++) {
-	if (dpd->xlist[i] == 0) {
-	    addc = 1;
-	    break;
-	}
     }
 
     if (addc && dpd->ilist != NULL) {
@@ -432,6 +427,9 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
 	} else {
 	    for (i=0; i<dpd->nx; i++) {
 		dpd->xlist[i+1] = list[xpos + i];
+		if (dpd->xlist[i+1] == 0) {
+		    dpd->ifc = 1;
+		}
 	    }
 #if ADEBUG
 	    printlist(dpd->xlist, "dpd->xlist");
@@ -1741,7 +1739,11 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     }
 
     for (i=0; i<dpd->ndum; i++) {
-	sprintf(pmod->params[j++], "T%d", dpd->t1min + i + 2);
+	if (dpd->ifc) {
+	    sprintf(pmod->params[j++], "T%d", dpd->t1min + i + 2);
+	} else {
+	    sprintf(pmod->params[j++], "T%d", dpd->t1min + i + 1);
+	}
     }
 
     err = gretl_model_allocate_storage(pmod);
