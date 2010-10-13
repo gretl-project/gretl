@@ -1,8 +1,8 @@
 # St Louis Fed (various series, large)
 eciben  Employment Cost Index: Benefits: Private Industry Workers, Index: Dec 2005=100, SA
-Q  2001.1 - 2010.2  n = 122
+Q  2001.1 - 2010.2  n = 38
 ecicom  Employment Cost Index: Compensation: Private Industry Workers, Index: Dec 2005=100, SA
-Q  2001.1 - 2010.2  n = 122
+Q  2001.1 - 2010.2  n = 38
 eciconcom  Employment Cost Index: Compensation: Private Industry Workers: Construction, Index: Dec 2005=100, SA
 Q  2001.1 - 2010.2  n = 38
 eciconwag  Employment Cost Index: Wages and Salaries: Private Industry Workers: Construction, Index: Dec 2005=100, SA
@@ -26,7 +26,7 @@ Q  2002.1 - 2010.2  n = 34
 ecisrvwag  Employment Cost Index: Wages and Salaries: Private Industry Workers: Service Occupations, Index: Dec 2005=100, NSA
 Q  2001.1 - 2010.2  n = 38
 eciwag  Employment Cost Index: Wages & Salaries: Private Industry Workers, Index: Dec 2005=100, SA
-Q  2001.1 - 2010.2  n = 122
+Q  2001.1 - 2010.2  n = 38
 fyfr  Federal Receipts, Mil. of $
 A  1901 - 2009  n = 109
 fyfsd  Federal Surplus or Deficit [-], Mil. of $
@@ -216,11 +216,11 @@ M  1972.01 - 2010.08  n = 464
 tcu  Capacity Utilization: Total Industry, % of Capacity, SA
 M  1967.01 - 2010.08  n = 524
 compms  Manufacturing Sector: Compensation Per Hour, Index 2005=100, SA
-Q  1987.1 - 2010.2  n = 246
+Q  1987.1 - 2010.2  n = 94
 compnfb  Nonfarm Business Sector: Compensation Per Hour, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 comprms  Manufacturing Sector: Real Compensation Per Hour, Index 2005=100, SA
-Q  1987.1 - 2010.2  n = 246
+Q  1987.1 - 2010.2  n = 94
 comprnfb  Nonfarm Business Sector: Real Compensation Per Hour, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 hcompbs  Business Sector: Compensation Per Hour, Index 2005=100, SA
@@ -228,7 +228,7 @@ Q  1947.1 - 2010.2  n = 254
 hoabs  Business Sector: Hours of All Persons, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 hoams  Manufacturing Sector: Hours of All Persons, Index 2005=100, SA
-Q  1987.1 - 2010.2  n = 246
+Q  1987.1 - 2010.2  n = 94
 hoanbs  Nonfarm Business Sector: Hours of All Persons, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 ipdbs  Business Sector: Implicit Price Deflator, Index 2005=100, SA
@@ -236,11 +236,11 @@ Q  1947.1 - 2010.2  n = 254
 ipdnbs  Nonfarm Business Sector: Implicit Price Deflator, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 mfgoph  Manufacturing: Output Per Hour of All Persons, Index 2000=100
-A  1987 - 2007  n = 59
+A  1987 - 2007  n = 21
 mfgprod  Manufacturing: Multifactor Productivity, Index 2000=100
-A  1987 - 2007  n = 59
+A  1987 - 2007  n = 21
 ophmfg  Manufacturing Sector: Output Per Hour of All Persons, Index 2005=100, SA
-Q  1987.1 - 2010.2  n = 246
+Q  1987.1 - 2010.2  n = 94
 ophnfb  Nonfarm Business Sector: Output Per Hour of All Persons, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 ophpbs  Business Sector: Output Per Hour of All Persons, Index 2005=100, SA
@@ -248,7 +248,7 @@ Q  1947.1 - 2010.2  n = 254
 outbs  Business Sector: Output, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 outms  Manufacturing Sector: Output, Index 2005=100, SA
-Q  1987.1 - 2010.2  n = 246
+Q  1987.1 - 2010.2  n = 94
 outnfb  Nonfarm Business Sector: Output, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 rcphbs  Business Sector: Real Compensation Per Hour, Index 2005=100, SA
@@ -256,7 +256,7 @@ Q  1947.1 - 2010.2  n = 254
 ulcbs  Business Sector: Unit Labor Cost, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 ulcmfg  Manufacturing Sector: Unit Labor Cost, Index 2005=100, SA
-Q  1987.1 - 2010.2  n = 246
+Q  1987.1 - 2010.2  n = 94
 ulcnfb  Nonfarm Business Sector: Unit Labor Cost, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 unlpbs  Business Sector: Unit Nonlabor Payments, Index 2005=100, SA
@@ -284,55 +284,55 @@ M  1992.01 - 2010.08  n = 224
 rsxfs  Retail Sales: Total (Excluding Food Services), Mil. of $, SA
 M  1992.01 - 2010.08  n = 224
 altsales  Light Weight Vehicle Sales: Autos & Light Trucks, Mil. of Units, SAAR
-M  1976.01 - 2010.08  n = 416
+M  1976.01 - 2010.09  n = 417
 businv  Inventories: Total Business, Mil. of $, End of Period, SA
-M  1992.01 - 2010.07  n = 356
+M  1992.01 - 2010.07  n = 223
 dgorder  Manufacturers' New Orders: Durable Goods, Mil. of $, SA
-M  1992.02 - 2010.08  n = 631
+M  1992.02 - 2010.08  n = 223
 gasprice  Natural Gas Price: Henry Hub, LA, $ Per Mil. BTU
-M  1993.11 - 2010.08  n = 202
+M  1993.11 - 2010.09  n = 203
 isratio  Inventory to Sales Ratio: Total Business, Ratio, SA
-M  1992.01 - 2010.07  n = 751
+M  1992.01 - 2010.07  n = 223
 mich  University of Michigan Inflation Expectation, %
 M  1978.01 - 2010.08  n = 392
 napm  ISM Manufacturing: PMI Composite Index, Index, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 napmbi  ISM Manufacturing: Backlog of Orders Index, Index, NSA
-M  1993.01 - 2010.08  n = 212
+M  1993.01 - 2010.09  n = 213
 napmci  ISM Manufacturing: Customer Inventories Index, Index, NSA
-M  1997.01 - 2010.08  n = 164
+M  1997.01 - 2010.09  n = 165
 napmei  ISM Manufacturing: Employment Index, Index, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 napmexi  ISM Manufacturing: New Export Orders Index, Index, SA
-M  1988.01 - 2010.08  n = 272
+M  1988.01 - 2010.09  n = 273
 napmii  ISM Manufacturing: Inventories Index, Index, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 napmimp  ISM Manufacturing: Imports Index, Index, SA
-M  1989.10 - 2010.08  n = 251
+M  1989.10 - 2010.09  n = 252
 napmnoi  ISM Manufacturing: New Orders Index, Index, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 napmpi  ISM Manufacturing: Production Index, Index, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 napmpri  ISM Manufacturing: Prices Index, Index, NSA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 napmsdi  ISM Manufacturing: Supplier Deliveries Index, Index, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 neworder  Manufacturers' New Orders: Nondefense Capital Goods Excluding Aircraft, Mil. of $, SA
-M  1992.02 - 2010.08  n = 511
+M  1992.02 - 2010.08  n = 223
 nmfbai  ISM Nonmanufacturing: Business Activity Index, Index, SA
-M  1997.07 - 2010.08  n = 158
+M  1997.07 - 2010.09  n = 159
 nmfci  ISM Nonmanufacturing: NMI Composite Index, Index, SA
-M  2008.01 - 2010.08  n = 32
+M  2008.01 - 2010.09  n = 33
 nmfei  ISM Nonmanufacturing: Employment Index, Index, SA
-M  1997.07 - 2010.08  n = 158
+M  1997.07 - 2010.09  n = 159
 nmfnoi  ISM Nonmanufacturing: New Orders Index, Index, SA
-M  1997.07 - 2010.08  n = 158
+M  1997.07 - 2010.09  n = 159
 nmfsdi  ISM Nonmanufacturing: Supplier Deliveries Index, Index, SA
-M  1997.07 - 2010.08  n = 158
+M  1997.07 - 2010.09  n = 159
 oilprice  Spot Oil Price: West Texas Intermediate, $ per Barrel
-M  1946.01 - 2010.08  n = 776
+M  1946.01 - 2010.09  n = 777
 umcsent  University of Michigan: Consumer Sentiment, Index 1st Qtr. 1966=100, NSA
-M  1978.01 - 2010.08  n = 484
+M  1978.01 - 2010.08  n = 392
 ushown  Home Ownership Rate for the United States, %
 A  1984 - 2008  n = 25
 ushvac  Home vacancy Rate for the United States, %
@@ -396,975 +396,975 @@ M  1935.03 - 2010.08  n = 906
 cpiulfsl  Consumer Price Index for All Urban Consumers: All Items Less Food, Index 1982-84=100, SA
 M  1947.01 - 2010.08  n = 764
 ahecons  Average Hourly Earnings: Construction, $ per Hour, NSA
-M  1947.01 - 2010.08  n = 764
+M  1947.01 - 2010.09  n = 765
 aheman  Average Hourly Earnings: Manufacturing, $ per Hour, NSA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 ahetpi  Average Hourly Earnings: Total Private Industries, $ per Hour, SA
-M  1964.01 - 2010.08  n = 560
+M  1964.01 - 2010.09  n = 561
 awhaecon  Average Weekly Hours Of All Employees: Construction, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaedg  Average Weekly Hours Of All Employees: Durable Goods, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaeehs  Average Weekly Hours Of All Employees: Education and Health Services, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaefa  Average Weekly Hours Of All Employees: Financial Activities, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaegp  Average Weekly Hours Of All Employees: Goods Producing, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaeinfo  Average Weekly Hours Of All Employees: Information, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaelah  Average Weekly Hours Of All Employees: Leisure and Hospitality, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaemal  Average Weekly Hours Of All Employees: Mining and Logging, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaeman  Average Weekly Hours Of All Employees: Manufacturing, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaendg  Average Weekly Hours Of All Employees: Nondurable Goods, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaeos  Average Weekly Hours Of All Employees: Other Services, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaepbs  Average Weekly Hours Of All Employees: Professional and Business Services, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaepsp  Average Weekly Hours Of All Employees: Private service-providing, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaert  Average Weekly Hours Of All Employees: Retail Trade, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaetaw  Average Weekly Hours Of All Employees: Transportation and Warehousing, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaetp  Average Weekly Hours Of All Employees: Total Private, Hours, SAAR
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaettu  Average Weekly Hours Of All Employees: Trade, Transportation and Utilites, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaeutil  Average Weekly Hours Of All Employees: Utilities, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhaewt  Average Weekly Hours Of All Employees: Wholesale Trade, Hours, SA
-M  2006.03 - 2010.08  n = 54
+M  2006.03 - 2010.09  n = 55
 awhi  Aggregate Weekly Hours Index: Total Private Industries, Index 2002=100, SA
-M  1964.01 - 2010.08  n = 560
+M  1964.01 - 2010.09  n = 561
 awhman  Average Weekly Hours of Production and Nonsupervisory Employees: Manufacturing, Hours, SA
-M  1939.01 - 2010.08  n = 944
+M  1939.01 - 2010.09  n = 861
 awhnonag  Average Weekly Hours: Production and Nonsupervisory Employees: Total Private Industries, Hours, SA
-M  1964.01 - 2010.08  n = 560
+M  1964.01 - 2010.09  n = 561
 awotman  Average Weekly Hours: Overtime: Manufacturing, Hours, SA
-M  1956.01 - 2010.08  n = 656
+M  1956.01 - 2010.09  n = 657
 dmanemp  All Employees: Durable Goods Manufacturing, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 manemp  Employees on Nonfarm Payrolls: Manufacturing, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 ndmanemp  All Employees: Nondurable Goods Manufacturing, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 payems  Total Nonfarm Payrolls: All Employees, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 paynsa  Total Nonfarm Payrolls: All Employees, Thous., NSA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 srvprd  All Employees: Service-Providing Industries, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 uscons  All Employees: Construction, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 usehs  All Employees: Education & Health Services, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 usfire  All Employees: Financial Activities, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 usgood  All Employees: Goods-Producing Industries, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 usgovt  All Employees: Government, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 usinfo  All Employees: Information Services, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 uslah  All Employees: Leisure & Hospitality, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 usmine  All Employees: Natural Resources & Mining, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 uspbs  All Employees: Professional & Business Services, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 uspriv  All Employees: Total Private Industries, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 usserv  All Employees: Other Services, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 ustpu  All Employees: Trade, Transportation & Utilities, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 ustrade  All Employees: Retail Trade, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 uswtrade  All Employees: Wholesale Trade, Thous., SA
-M  1939.01 - 2010.08  n = 860
+M  1939.01 - 2010.09  n = 861
 ce16ov  Civilian Employment, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 civpart  Civilian Participation Rate, %, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 clf16ov  Civilian Labor Force, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 cnp16ov  Civilian Noninstitutional Population, Thous., NSA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 emratio  Civilian Employment-Population Ratio, %, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 uemp15ov  Civilians Unemployed - 15 Weeks & Over, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 uemp15t26  Civilians Unemployed for 15-26 Weeks, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 uemp27ov  Civilians Unemployed for 27 Weeks and Over, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 uemp5to14  Civilians Unemployed for 5-14 Weeks, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 uemplt5  Civilians Unemployed - Less Than 5 Weeks, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 uempmean  Average (Mean) Duration of Unemployment, Weeks, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 uempmed  Median Duration of Unemployment, Weeks, SA
-M  1967.07 - 2010.08  n = 518
+M  1967.07 - 2010.09  n = 519
 unemploy  Unemployed, Thous., SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 unrate  Civilian Unemployment Rate, %, SA
-M  1948.01 - 2010.08  n = 752
+M  1948.01 - 2010.09  n = 753
 pop  Total Population: All Ages including Armed Forces Overseas, Thous.
-M  1952.01 - 2010.08  n = 704
+M  1952.01 - 2010.09  n = 705
 popthm  Population: Mid-Month, Thous.
-M  1959.01 - 2010.07  n = 619
-jts1000jol  Job Openings: Total Private, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  1959.01 - 2010.08  n = 620
+jts1000jol  Job Openings: Total Private, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts1000jor  Job Openings: Total Private, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts2300jol  Job Openings: Construction, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts2300jol  Job Openings: Construction, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts2300jor  Job Openings: Construction, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts3000jol  Job Openings: Manufacturing, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts3000jol  Job Openings: Manufacturing, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts3000jor  Job Openings: Manufacturing, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4000jol  Job Openings: Trade, Transportaion and Utilites, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4000jol  Job Openings: Trade, Transportaion and Utilites, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4000jor  Job Openings: Trade, Transportaion and Utilites, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4400jol  Job Openings: Retail Trade, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4400jol  Job Openings: Retail Trade, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4400jor  Job Openings: Retail Trade, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts540099jol  Job Openings: Professional and Business Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts540099jol  Job Openings: Professional and Business Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts540099jor  Job Openings: Professional and Business Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts6000jol  Job Openings: Education and Health Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts6000jol  Job Openings: Education and Health Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts6000jor  Job Openings: Education and Health Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7000jol  Job Openings: Leisure and Hospitality, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7000jol  Job Openings: Leisure and Hospitality, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7000jor  Job Openings: Leisure and Hospitality, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7100jol  Job Openings: Arts, Entertainment and Recreation, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7100jol  Job Openings: Arts, Entertainment and Recreation, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7100jor  Job Openings: Arts, Entertainment and Recreation, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7200jol  Job Openings: Accommodation and Food Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7200jol  Job Openings: Accommodation and Food Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7200jor  Job Openings: Accommodation and Food Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9000jol  Job Openings: Government, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9000jol  Job Openings: Government, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9000jor  Job Openings: Government, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9200jol  Job Openings: State and Local, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9200jol  Job Openings: State and Local, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9200jor  Job Openings: State and Local, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtsjol  Job Openings: Total Nonfarm, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtsjol  Job Openings: Total Nonfarm, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jtsjor  Job Openings: Total Nonfarm, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtu1000jol  Job Openings: Total Private, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu1000jol  Job Openings: Total Private, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu1000jor  Job Openings: Total Private, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu110099jol  Job Openings: Mining and Logging, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu110099jol  Job Openings: Mining and Logging, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu110099jor  Job Openings: Mining and Logging, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu2300jol  Job Openings: Construction, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu2300jol  Job Openings: Construction, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu2300jor  Job Openings: Construction, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3000jol  Job Openings: Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3000jol  Job Openings: Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3000jor  Job Openings: Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3200jol  Job Openings: Durable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3200jol  Job Openings: Durable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3200jor  Job Openings: Durable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3400jol  Job Openings: Nondurable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3400jol  Job Openings: Nondurable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3400jor  Job Openings: Nondurable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4000jol  Job Openings: Trade, Transportaion and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4000jol  Job Openings: Trade, Transportaion and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4000jor  Job Openings: Trade, Transportaion and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4200jol  Job Openings: Wholesale Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4200jol  Job Openings: Wholesale Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4200jor  Job Openings: Wholesale Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4400jol  Job Openings: Retail Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4400jol  Job Openings: Retail Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4400jor  Job Openings: Retail Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu480099jol  Job Openings: Transportation, Warehousing and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu480099jol  Job Openings: Transportation, Warehousing and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu480099jor  Job Openings: Transportation, Warehousing and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu510099jol  Job Openings: Financial Activities, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu510099jol  Job Openings: Financial Activities, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu510099jor  Job Openings: Financial Activities, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5100jol  Job Openings: Information, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5100jol  Job Openings: Information, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5100jor  Job Openings: Information, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5200jol  Job Openings: Finance and Insurance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5200jol  Job Openings: Finance and Insurance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5200jor  Job Openings: Finance and Insurance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5300jol  Job Openings: Real Estate and Rental and Leasing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5300jol  Job Openings: Real Estate and Rental and Leasing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5300jor  Job Openings: Real Estate and Rental and Leasing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu540099jol  Job Openings: Professional and Business Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu540099jol  Job Openings: Professional and Business Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu540099jor  Job Openings: Professional and Business Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6000jol  Job Openings: Education and Health Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6000jol  Job Openings: Education and Health Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6000jor  Job Openings: Education and Health Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6100jol  Job Openings: Education Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6100jol  Job Openings: Education Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6100jor  Job Openings: Education Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6200jol  Job Openings: Health Care and Social Assistance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6200jol  Job Openings: Health Care and Social Assistance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6200jor  Job Openings: Health Care and Social Assistance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7000jol  Job Openings: Leisure and Hospitality, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7000jol  Job Openings: Leisure and Hospitality, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7000jor  Job Openings: Leisure and Hospitality, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7100jol  Job Openings: Arts, Entertainment and Recreation, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7100jol  Job Openings: Arts, Entertainment and Recreation, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7100jor  Job Openings: Arts, Entertainment and Recreation, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7200jol  Job Openings: Accommodation and Food Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7200jol  Job Openings: Accommodation and Food Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7200jor  Job Openings: Accommodation and Food Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu8100jol  Job Openings: Other Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu8100jol  Job Openings: Other Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu8100jor  Job Openings: Other Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9000jol  Job Openings: Government, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9000jol  Job Openings: Government, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9000jor  Job Openings: Government, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9100jol  Job Openings: Federal, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9100jol  Job Openings: Federal, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9100jor  Job Openings: Federal, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9200jol  Job Openings: State and Local, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9200jol  Job Openings: State and Local, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9200jor  Job Openings: State and Local, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtujol  Job Openings: Total Nonfarm, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtujol  Job Openings: Total Nonfarm, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtujor  Job Openings: Total Nonfarm, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jts1000hil  Hires: Total Private, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts1000hil  Hires: Total Private, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts1000hir  Hires: Total Private, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts2300hil  Hires: Construction, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts2300hil  Hires: Construction, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts2300hir  Hires: Construction, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts3000hil  Hires: Manufacturing, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts3000hil  Hires: Manufacturing, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts3000hir  Hires: Manufacturing, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4000hil  Hires: Trade, Transportaion and Utilites, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4000hil  Hires: Trade, Transportaion and Utilites, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4000hir  Hires: Trade, Transportaion and Utilites, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4400hil  Hires: Retail Trade, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4400hil  Hires: Retail Trade, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4400hir  Hires: Retail Trade, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts540099hil  Hires: Professional and Business Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts540099hil  Hires: Professional and Business Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts540099hir  Hires: Professional and Business Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts6000hil  Hires: Education and Health Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts6000hil  Hires: Education and Health Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts6000hir  Hires: Education and Health Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7000hil  Hires: Leisure and Hospitality, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7000hil  Hires: Leisure and Hospitality, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7000hir  Hires: Leisure and Hospitality, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7100hil  Hires: Arts, Entertainment and Recreation, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7100hil  Hires: Arts, Entertainment and Recreation, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7100hir  Hires: Arts, Entertainment and Recreation, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7200hil  Hires: Accommodation and Food Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7200hil  Hires: Accommodation and Food Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7200hir  Hires: Accommodation and Food Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9000hil  Hires: Government, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9000hil  Hires: Government, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9000hir  Hires: Government, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9200hil  Hires: State and Local, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9200hil  Hires: State and Local, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9200hir  Hires: State and Local, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtshil  Hires: Total Nonfarm, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtshil  Hires: Total Nonfarm, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jtshir  Hires: Total Nonfarm, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtu1000hil  Hires: Total Private, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu1000hil  Hires: Total Private, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu1000hir  Hires: Total Private, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu110099hil  Hires: Mining and Logging, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu110099hil  Hires: Mining and Logging, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu110099hir  Hires: Mining and Logging, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu2300hil  Hires: Construction, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu2300hil  Hires: Construction, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu2300hir  Hires: Construction, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3000hil  Hires: Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3000hil  Hires: Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3000hir  Hires: Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3200hil  Hires: Durable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3200hil  Hires: Durable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3200hir  Hires: Durable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3400hil  Hires: Nondurable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3400hil  Hires: Nondurable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3400hir  Hires: Nondurable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4000hil  Hires: Trade, Transportaion and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4000hil  Hires: Trade, Transportaion and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4000hir  Hires: Trade, Transportaion and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4200hil  Hires: Wholesale Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4200hil  Hires: Wholesale Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4200hir  Hires: Wholesale Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4400hil  Hires: Retail Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4400hil  Hires: Retail Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4400hir  Hires: Retail Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu480099hil  Hires: Transportation, Warehousing and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu480099hil  Hires: Transportation, Warehousing and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu480099hir  Hires: Transportation, Warehousing and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu510099hil  Hires: Financial Activities, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu510099hil  Hires: Financial Activities, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu510099hir  Hires: Financial Activities, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5100hil  Hires: Information, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5100hil  Hires: Information, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5100hir  Hires: Information, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5200hil  Hires: Finance and Insurance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5200hil  Hires: Finance and Insurance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5200hir  Hires: Finance and Insurance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5300hil  Hires: Real Estate and Rental and Leasing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5300hil  Hires: Real Estate and Rental and Leasing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5300hir  Hires: Real Estate and Rental and Leasing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu540099hil  Hires: Professional and Business Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu540099hil  Hires: Professional and Business Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu540099hir  Hires: Professional and Business Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6000hil  Hires: Education and Health Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6000hil  Hires: Education and Health Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6000hir  Hires: Education and Health Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6100hil  Hires: Education Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6100hil  Hires: Education Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6100hir  Hires: Education Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6200hil  Hires: Health Care and Social Assistance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6200hil  Hires: Health Care and Social Assistance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6200hir  Hires: Health Care and Social Assistance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7000hil  Hires: Leisure and Hospitality, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7000hil  Hires: Leisure and Hospitality, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7000hir  Hires: Leisure and Hospitality, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7100hil  Hires: Arts, Entertainment and Recreation, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7100hil  Hires: Arts, Entertainment and Recreation, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7100hir  Hires: Arts, Entertainment and Recreation, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7200hil  Hires: Accommodation and Food Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7200hil  Hires: Accommodation and Food Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7200hir  Hires: Accommodation and Food Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu8100hil  Hires: Other Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu8100hil  Hires: Other Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu8100hir  Hires: Other Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9000hil  Hires: Government, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9000hil  Hires: Government, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9000hir  Hires: Government, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9100hil  Hires: Federal, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9100hil  Hires: Federal, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9100hir  Hires: Federal, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9200hil  Hires: State and Local, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9200hil  Hires: State and Local, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9200hir  Hires: State and Local, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtuhil  Hires: Total Nonfarm, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtuhil  Hires: Total Nonfarm, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtuhir  Hires: Total Nonfarm, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jts1000tsl  Total Separations: Total Private, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts1000tsl  Total Separations: Total Private, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts1000tsr  Total Separations: Total Private, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts2300tsl  Total Separations: Construction, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts2300tsl  Total Separations: Construction, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts2300tsr  Total Separations: Construction, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts3000tsl  Total Separations: Manufacturing, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts3000tsl  Total Separations: Manufacturing, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts3000tsr  Total Separations: Manufacturing, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4000tsl  Total Separations: Trade, Transportaion and Utilites, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4000tsl  Total Separations: Trade, Transportaion and Utilites, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4000tsr  Total Separations: Trade, Transportaion and Utilites, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4400tsl  Total Separations: Retail Trade, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4400tsl  Total Separations: Retail Trade, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4400tsr  Total Separations: Retail Trade, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts540099tsl  Total Separations: Professional and Business Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts540099tsl  Total Separations: Professional and Business Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts540099tsr  Total Separations: Professional and Business Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts6000tsl  Total Separations: Education and Health Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts6000tsl  Total Separations: Education and Health Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts6000tsr  Total Separations: Education and Health Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7000tsl  Total Separations: Leisure and Hospitality, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7000tsl  Total Separations: Leisure and Hospitality, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7000tsr  Total Separations: Leisure and Hospitality, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7100tsl  Total Separations: Arts, Entertainment and Recreation, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7100tsl  Total Separations: Arts, Entertainment and Recreation, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7100tsr  Total Separations: Arts, Entertainment and Recreation, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7200tsl  Total Separations: Accommodation and Food Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7200tsl  Total Separations: Accommodation and Food Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7200tsr  Total Separations: Accommodation and Food Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9000tsl  Total Separations: Government, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9000tsl  Total Separations: Government, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9000tsr  Total Separations: Government, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9200tsl  Total Separations: State and Local, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9200tsl  Total Separations: State and Local, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9200tsr  Total Separations: State and Local, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtstsl  Total Separations: Total Nonfarm, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtstsl  Total Separations: Total Nonfarm, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jtstsr  Total Separations: Total Nonfarm, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtu1000tsl  Total Separations: Total Private, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu1000tsl  Total Separations: Total Private, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu1000tsr  Total Separations: Total Private, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu110099tsl  Total Separations: Mining and Logging, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu110099tsl  Total Separations: Mining and Logging, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu110099tsr  Total Separations: Mining and Logging, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu2300tsl  Total Separations: Construction, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu2300tsl  Total Separations: Construction, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu2300tsr  Total Separations: Construction, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3000tsl  Total Separations: Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3000tsl  Total Separations: Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3000tsr  Total Separations: Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3200tsl  Total Separations: Durable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3200tsl  Total Separations: Durable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3200tsr  Total Separations: Durable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3400tsl  Total Separations: Nondurable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3400tsl  Total Separations: Nondurable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3400tsr  Total Separations: Nondurable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4000tsl  Total Separations: Trade, Transportaion and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4000tsl  Total Separations: Trade, Transportaion and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4000tsr  Total Separations: Trade, Transportaion and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4200tsl  Total Separations: Wholesale Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4200tsl  Total Separations: Wholesale Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4200tsr  Total Separations: Wholesale Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4400tsl  Total Separations: Retail Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4400tsl  Total Separations: Retail Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4400tsr  Total Separations: Retail Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu480099tsl  Total Separations: Transportation, Warehousing and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu480099tsl  Total Separations: Transportation, Warehousing and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu480099tsr  Total Separations: Transportation, Warehousing and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu510099tsl  Total Separations: Financial Activities, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu510099tsl  Total Separations: Financial Activities, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu510099tsr  Total Separations: Financial Activities, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5100tsl  Total Separations: Information, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5100tsl  Total Separations: Information, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5100tsr  Total Separations: Information, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5200tsl  Total Separations: Finance and Insurance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5200tsl  Total Separations: Finance and Insurance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5200tsr  Total Separations: Finance and Insurance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5300tsl  Total Separations: Real Estate and Rental and Leasing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5300tsl  Total Separations: Real Estate and Rental and Leasing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5300tsr  Total Separations: Real Estate and Rental and Leasing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu540099tsl  Total Separations: Professional and Business Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu540099tsl  Total Separations: Professional and Business Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu540099tsr  Total Separations: Professional and Business Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6000tsl  Total Separations: Education and Health Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6000tsl  Total Separations: Education and Health Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6000tsr  Total Separations: Education and Health Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6100tsl  Total Separations: Education Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6100tsl  Total Separations: Education Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6100tsr  Total Separations: Education Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6200tsl  Total Separations: Health Care and Social Assistance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6200tsl  Total Separations: Health Care and Social Assistance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6200tsr  Total Separations: Health Care and Social Assistance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7000tsl  Total Separations: Leisure and Hospitality, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7000tsl  Total Separations: Leisure and Hospitality, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7000tsr  Total Separations: Leisure and Hospitality, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7100tsl  Total Separations: Arts, Entertainment and Recreation, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7100tsl  Total Separations: Arts, Entertainment and Recreation, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7100tsr  Total Separations: Arts, Entertainment and Recreation, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7200tsl  Total Separations: Accommodation and Food Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7200tsl  Total Separations: Accommodation and Food Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7200tsr  Total Separations: Accommodation and Food Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu8100tsl  Total Separations: Other Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu8100tsl  Total Separations: Other Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu8100tsr  Total Separations: Other Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9000tsl  Total Separations: Government, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9000tsl  Total Separations: Government, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9000tsr  Total Separations: Government, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9100tsl  Total Separations: Federal, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9100tsl  Total Separations: Federal, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9100tsr  Total Separations: Federal, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9200tsl  Total Separations: State and Local, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9200tsl  Total Separations: State and Local, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9200tsr  Total Separations: State and Local, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtutsl  Total Separations: Total Nonfarm, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtutsl  Total Separations: Total Nonfarm, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtutsr  Total Separations: Total Nonfarm, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jts1000qul  Quits: Total Private, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts1000qul  Quits: Total Private, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts1000qur  Quits: Total Private, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts2300qul  Quits: Construction, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts2300qul  Quits: Construction, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts2300qur  Quits: Construction, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts3000qul  Quits: Manufacturing, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts3000qul  Quits: Manufacturing, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts3000qur  Quits: Manufacturing, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4000qul  Quits: Trade, Transportaion and Utilites, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4000qul  Quits: Trade, Transportaion and Utilites, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4000qur  Quits: Trade, Transportaion and Utilites, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts4400qul  Quits: Retail Trade, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts4400qul  Quits: Retail Trade, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts4400qur  Quits: Retail Trade, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts540099qul  Quits: Professional and Business Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts540099qul  Quits: Professional and Business Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts540099qur  Quits: Professional and Business Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts6000qul  Quits: Education and Health Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts6000qul  Quits: Education and Health Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts6000qur  Quits: Education and Health Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7000qul  Quits: Leisure and Hospitality, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7000qul  Quits: Leisure and Hospitality, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7000qur  Quits: Leisure and Hospitality, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7100qul  Quits: Arts, Entertainment and Recreation, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7100qul  Quits: Arts, Entertainment and Recreation, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7100qur  Quits: Arts, Entertainment and Recreation, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts7200qul  Quits: Accommodation and Food Services, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts7200qul  Quits: Accommodation and Food Services, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts7200qur  Quits: Accommodation and Food Services, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9000qul  Quits: Government, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9000qul  Quits: Government, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9000qur  Quits: Government, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9200qul  Quits: State and Local, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9200qul  Quits: State and Local, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9200qur  Quits: State and Local, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtsqul  Quits: Total Nonfarm, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtsqul  Quits: Total Nonfarm, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jtsqur  Quits: Total Nonfarm, Rate, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
 jtu00wequr  Quits: Total Nonfarm in West Census Region, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu1000qul  Quits: Total Private, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu1000qul  Quits: Total Private, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu1000qur  Quits: Total Private, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu110099qul  Quits: Mining and Logging, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu110099qul  Quits: Mining and Logging, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu110099qur  Quits: Mining and Logging, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu2300qul  Quits: Construction, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu2300qul  Quits: Construction, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu2300qur  Quits: Construction, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3000qul  Quits: Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3000qul  Quits: Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3000qur  Quits: Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3200qul  Quits: Durable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3200qul  Quits: Durable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3200qur  Quits: Durable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3400qul  Quits: Nondurable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3400qul  Quits: Nondurable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3400qur  Quits: Nondurable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4000qul  Quits: Trade, Transportaion and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4000qul  Quits: Trade, Transportaion and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4000qur  Quits: Trade, Transportaion and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4200qul  Quits: Wholesale Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4200qul  Quits: Wholesale Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4200qur  Quits: Wholesale Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4400qul  Quits: Retail Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4400qul  Quits: Retail Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4400qur  Quits: Retail Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu480099qul  Quits: Transportation, Warehousing and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu480099qul  Quits: Transportation, Warehousing and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu480099qur  Quits: Transportation, Warehousing and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu510099qul  Quits: Financial Activities, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu510099qul  Quits: Financial Activities, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu510099qur  Quits: Financial Activities, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5100qul  Quits: Information, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5100qul  Quits: Information, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5100qur  Quits: Information, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5200qul  Quits: Finance and Insurance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5200qul  Quits: Finance and Insurance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5200qur  Quits: Finance and Insurance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5300qul  Quits: Real Estate and Rental and Leasing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5300qul  Quits: Real Estate and Rental and Leasing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5300qur  Quits: Real Estate and Rental and Leasing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
 jtu540099qur  Quits: Professional and Business Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu540099ul  Quits: Professional and Business Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6000qul  Quits: Education and Health Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu540099ul  Quits: Professional and Business Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
+jtu6000qul  Quits: Education and Health Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6000qur  Quits: Education and Health Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6100qul  Quits: Education Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6100qul  Quits: Education Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6100qur  Quits: Education Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6200qul  Quits: Health Care and Social Assistance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6200qul  Quits: Health Care and Social Assistance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6200qur  Quits: Health Care and Social Assistance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7000qul  Quits: Leisure and Hospitality, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7000qul  Quits: Leisure and Hospitality, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7000qur  Quits: Leisure and Hospitality, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7100qul  Quits: Arts, Entertainment and Recreation, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7100qul  Quits: Arts, Entertainment and Recreation, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7100qur  Quits: Arts, Entertainment and Recreation, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7200qul  Quits: Accommodation and Food Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7200qul  Quits: Accommodation and Food Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7200qur  Quits: Accommodation and Food Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu8100qul  Quits: Other Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu8100qul  Quits: Other Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu8100qur  Quits: Other Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9000qul  Quits: Government, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9000qul  Quits: Government, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9000qur  Quits: Government, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9100qul  Quits: Federal, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9100qul  Quits: Federal, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9100qur  Quits: Federal, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9200qul  Quits: State and Local, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9200qul  Quits: State and Local, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9200qur  Quits: State and Local, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtuqul  Quits: Total Nonfarm, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtuqul  Quits: Total Nonfarm, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtuqur  Quits: Total Nonfarm, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jts1000ldl  Layoffs and Discharges: Total Private, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts1000ldl  Layoffs and Discharges: Total Private, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts1000ldr  Layoffs and Discharges: Total Private, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jts9000ldl  Layoffs and Discharges: Government, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jts9000ldl  Layoffs and Discharges: Government, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jts9000ldr  Layoffs and Discharges: Government, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtsldl  Layoffs and Discharges: Total Nonfarm, Level, SA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtsldl  Layoffs and Discharges: Total Nonfarm, Level in Thous., SA
+M  2000.12 - 2010.08  n = 117
 jtsldr  Layoffs and Discharges: Total Nonfarm, Rate, SA
-M  2000.12 - 2010.07  n = 116
-jtu1000ldl  Layoffs and Discharges: Total Private, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu1000ldl  Layoffs and Discharges: Total Private, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu1000ldr  Layoffs and Discharges: Total Private, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu110099ldl  Layoffs and Discharges: Mining and Logging, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu110099ldl  Layoffs and Discharges: Mining and Logging, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu110099ldr  Layoffs and Discharges: Mining and Logging, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu2300ldl  Layoffs and Discharges: Construction, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu2300ldl  Layoffs and Discharges: Construction, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu2300ldr  Layoffs and Discharges: Construction, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3000ldl  Layoffs and Discharges: Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3000ldl  Layoffs and Discharges: Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3000ldr  Layoffs and Discharges: Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3200ldl  Layoffs and Discharges: Durable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3200ldl  Layoffs and Discharges: Durable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3200ldr  Layoffs and Discharges: Durable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3400ldl  Layoffs and Discharges: Nondurable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3400ldl  Layoffs and Discharges: Nondurable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3400ldr  Layoffs and Discharges: Nondurable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4000ldl  Layoffs and Discharges: Trade, Transportaion and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4000ldl  Layoffs and Discharges: Trade, Transportaion and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4000ldr  Layoffs and Discharges: Trade, Transportaion and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4200ldl  Layoffs and Discharges: Wholesale Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4200ldl  Layoffs and Discharges: Wholesale Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4200ldr  Layoffs and Discharges: Wholesale Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4400ldl  Layoffs and Discharges: Retail Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4400ldl  Layoffs and Discharges: Retail Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4400ldr  Layoffs and Discharges: Retail Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu480099ldl  Layoffs and Discharges: Transportation, Warehousing and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu480099ldl  Layoffs and Discharges: Transportation, Warehousing and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu480099ldr  Layoffs and Discharges: Transportation, Warehousing and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu510099ldl  Layoffs and Discharges: Financial Activities, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu510099ldl  Layoffs and Discharges: Financial Activities, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu510099ldr  Layoffs and Discharges: Financial Activities, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5100ldl  Layoffs and Discharges: Information, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5100ldl  Layoffs and Discharges: Information, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5100ldr  Layoffs and Discharges: Information, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5200ldl  Layoffs and Discharges: Finance and Insurance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5200ldl  Layoffs and Discharges: Finance and Insurance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5200ldr  Layoffs and Discharges: Finance and Insurance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5300ldl  Layoffs and Discharges: Real Estate and Rental and Leasing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5300ldl  Layoffs and Discharges: Real Estate and Rental and Leasing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5300ldr  Layoffs and Discharges: Real Estate and Rental and Leasing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu540099ldl  Layoffs and Discharges: Professional and Business Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu540099ldl  Layoffs and Discharges: Professional and Business Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu540099ldr  Layoffs and Discharges: Professional and Business Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6000ldl  Layoffs and Discharges: Education and Health Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6000ldl  Layoffs and Discharges: Education and Health Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6000ldr  Layoffs and Discharges: Education and Health Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6100ldl  Layoffs and Discharges: Education Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6100ldl  Layoffs and Discharges: Education Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6100ldr  Layoffs and Discharges: Education Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6200ldl  Layoffs and Discharges: Health Care and Social Assistance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6200ldl  Layoffs and Discharges: Health Care and Social Assistance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6200ldr  Layoffs and Discharges: Health Care and Social Assistance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7000ldl  Layoffs and Discharges: Leisure and Hospitality, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7000ldl  Layoffs and Discharges: Leisure and Hospitality, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7000ldr  Layoffs and Discharges: Leisure and Hospitality, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7100ldl  Layoffs and Discharges: Arts, Entertainment and Recreation, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7100ldl  Layoffs and Discharges: Arts, Entertainment and Recreation, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7100ldr  Layoffs and Discharges: Arts, Entertainment and Recreation, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7200ldl  Layoffs and Discharges: Accommodation and Food Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7200ldl  Layoffs and Discharges: Accommodation and Food Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7200ldr  Layoffs and Discharges: Accommodation and Food Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu8100ldl  Layoffs and Discharges: Other Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu8100ldl  Layoffs and Discharges: Other Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu8100ldr  Layoffs and Discharges: Other Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9000ldl  Layoffs and Discharges: Government, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9000ldl  Layoffs and Discharges: Government, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9000ldr  Layoffs and Discharges: Government, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9100ldl  Layoffs and Discharges: Federal, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9100ldl  Layoffs and Discharges: Federal, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9100ldr  Layoffs and Discharges: Federal, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9200ldl  Layoffs and Discharges: State and Local, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9200ldl  Layoffs and Discharges: State and Local, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9200ldr  Layoffs and Discharges: State and Local, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtuldl  Layoffs and Discharges: Total Nonfarm, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtuldl  Layoffs and Discharges: Total Nonfarm, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtuldr  Layoffs and Discharges: Total Nonfarm, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu1000osl  Other Separations: Total Private, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu1000osl  Other Separations: Total Private, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu1000osr  Other Separations: Total Private, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu110099osl  Other Separations: Mining and Logging, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu110099osl  Other Separations: Mining and Logging, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu110099osr  Other Separations: Mining and Logging, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu2300osl  Other Separations: Construction, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu2300osl  Other Separations: Construction, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu2300osr  Other Separations: Construction, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3000osl  Other Separations: Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3000osl  Other Separations: Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3000osr  Other Separations: Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3200osl  Other Separations: Durable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3200osl  Other Separations: Durable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3200osr  Other Separations: Durable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu3400osl  Other Separations: Nondurable Goods Manufacturing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu3400osl  Other Separations: Nondurable Goods Manufacturing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu3400osr  Other Separations: Nondurable Goods Manufacturing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4000osl  Other Separations: Trade, Transportaion and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4000osl  Other Separations: Trade, Transportaion and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4000osr  Other Separations: Trade, Transportaion and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4200osl  Other Separations: Wholesale Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4200osl  Other Separations: Wholesale Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4200osr  Other Separations: Wholesale Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu4400osl  Other Separations: Retail Trade, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu4400osl  Other Separations: Retail Trade, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu4400osr  Other Separations: Retail Trade, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu480099osl  Other Separations: Transportation, Warehousing and Utilites, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu480099osl  Other Separations: Transportation, Warehousing and Utilites, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu480099osr  Other Separations: Transportation, Warehousing and Utilites, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu510099osl  Other Separations: Financial Activities, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu510099osl  Other Separations: Financial Activities, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu510099osr  Other Separations: Financial Activities, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5100osl  Other Separations: Information, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5100osl  Other Separations: Information, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5100osr  Other Separations: Information, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5200osl  Other Separations: Finance and Insurance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5200osl  Other Separations: Finance and Insurance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5200osr  Other Separations: Finance and Insurance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu5300osl  Other Separations: Real Estate and Rental and Leasing, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu5300osl  Other Separations: Real Estate and Rental and Leasing, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu5300osr  Other Separations: Real Estate and Rental and Leasing, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu540099sl  Other Separations: Professional and Business Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu540099sl  Other Separations: Professional and Business Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu540099sr  Other Separations: Professional and Business Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6000osl  Other Separations: Education and Health Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6000osl  Other Separations: Education and Health Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6000osr  Other Separations: Education and Health Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6100osl  Other Separations: Education Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6100osl  Other Separations: Education Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6100osr  Other Separations: Education Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu6200osl  Other Separations: Health Care and Social Assistance, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu6200osl  Other Separations: Health Care and Social Assistance, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu6200osr  Other Separations: Health Care and Social Assistance, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7000osl  Other Separations: Leisure and Hospitality, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7000osl  Other Separations: Leisure and Hospitality, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7000osr  Other Separations: Leisure and Hospitality, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7100osl  Other Separations: Arts, Entertainment and Recreation, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7100osl  Other Separations: Arts, Entertainment and Recreation, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7100osr  Other Separations: Arts, Entertainment and Recreation, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu7200osl  Other Separations: Accommodation and Food Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu7200osl  Other Separations: Accommodation and Food Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu7200osr  Other Separations: Accommodation and Food Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu8100osl  Other Separations: Other Services, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu8100osl  Other Separations: Other Services, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu8100osr  Other Separations: Other Services, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9000osl  Other Separations: Government, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9000osl  Other Separations: Government, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9000osr  Other Separations: Government, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9100osl  Other Separations: Federal, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9100osl  Other Separations: Federal, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9100osr  Other Separations: Federal, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtu9200osl  Other Separations: State and Local, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtu9200osl  Other Separations: State and Local, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtu9200osr  Other Separations: State and Local, Rate, NSA
-M  2000.12 - 2010.07  n = 116
-jtuosl  Other Separations: Total Nonfarm, Level, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
+jtuosl  Other Separations: Total Nonfarm, Level in Thous., NSA
+M  2000.12 - 2010.08  n = 117
 jtuosr  Other Separations: Total Nonfarm, Rate, NSA
-M  2000.12 - 2010.07  n = 116
+M  2000.12 - 2010.08  n = 117
 bopgexp  Exports of Goods, Balance of Payments Basis, Mil. of $, SA
 M  1992.01 - 2010.07  n = 223
 bopsexp  Exports of Services, Balance of Payments Basis, Mil. of $, SA
@@ -1658,11 +1658,11 @@ A  1960 - 2009  n = 50
 bopbsvn  Balance on Services, Bil. of $, NSA
 Q  1960.1 - 2010.2  n = 202
 bopcat  Capital Account Transactions, Net, Bil. of $, SA
-Q  1989.4 - 2010.2  n = 114
+Q  1989.4 - 2010.2  n = 83
 bopcata  Capital Account Transactions, Net, Bil. of $
-A  1989 - 2009  n = 28
+A  1989 - 2009  n = 21
 bopcatn  Capital Account Transactions, Net, Bil. of $, NSA
-Q  1989.4 - 2010.2  n = 114
+Q  1989.4 - 2010.2  n = 83
 bopg  Unilateral Transfers, Net, Bil. of $, SA
 Q  1960.1 - 2010.2  n = 202
 bopga  Unilateral Transfers, Net, Bil. of $
@@ -1868,71 +1868,71 @@ A  1970 - 2009  n = 40
 boposdrn  U.S. Reserve Assets Abroad: Special Drawing Rights, Bil. of $, NSA
 Q  1970.1 - 2010.2  n = 162
 ic131  Services Inbound Index: Inbound Air Freight, Index 2000=100, NSA
-M  1990.09 - 2010.08  n = 118
+M  1990.09 - 2010.09  n = 119
 ic1311  Services Inbound Index: Europe, Index Dec 2003=100, NSA
-M  2003.12 - 2010.08  n = 65
+M  2003.12 - 2010.09  n = 66
 ic1312  Services Inbound Index: Asia, Index 2000=100, NSA
-M  1990.09 - 2010.08  n = 118
+M  1990.09 - 2010.09  n = 119
 ic13121  Services Inbound Index: Japan, Index Dec 2006=100, NSA
-M  2006.12 - 2010.08  n = 45
+M  2006.12 - 2010.09  n = 46
 ih142  Services Export Index: Export Air Passenger Fares, Index 2000=100, NSA
-M  1986.09 - 2010.08  n = 174
+M  1986.09 - 2010.09  n = 175
 ih1421  Services Export Index: Export Air Passenger Fares - Europe, Index 2000=100, NSA
-M  1994.03 - 2010.08  n = 144
+M  1994.03 - 2010.09  n = 145
 ih14211  Services Export Index: Export Air Passenger Fares - United Kingdom, Index Dec 2002=100, NSA
-M  2002.12 - 2010.08  n = 93
+M  2002.12 - 2010.09  n = 94
 ih14212  Services Export Index: Export Air Passenger Fares - Other Europe, Index Dec 2002=100, NSA
-M  2002.12 - 2010.08  n = 93
+M  2002.12 - 2010.09  n = 94
 ih1422  Services Export Index: Export Air Passenger Fares - Asia, Index 2000=100, NSA
-M  1994.03 - 2010.08  n = 144
+M  1994.03 - 2010.09  n = 145
 ih14221  Services Export Index: Export Air Passenger Fares - Japan, Index 2000=100, NSA
-M  1994.03 - 2010.08  n = 144
+M  1994.03 - 2010.09  n = 145
 ih14222  Services Export Index: Export Air Passenger Fares - Other Asia, Index Dec 2009=100, NSA
-M  2009.12 - 2010.08  n = 9
+M  2009.12 - 2010.09  n = 10
 ih1424  Services Export Index: Export Air Passenger Fares - Latin America/Caribbean, Index 2000=100, NSA
-M  1986.09 - 2010.08  n = 174
+M  1986.09 - 2010.09  n = 175
 ih14243  Services Export Index: Export Air Passenger Fares - Central/South America, Index Dec 2009=100, NSA
-M  2009.12 - 2010.08  n = 9
+M  2009.12 - 2010.09  n = 10
 ih231  Services Export Index: Export Air Freight, Index 2000=100, NSA
-M  1996.12 - 2010.08  n = 93
+M  1996.12 - 2010.09  n = 94
 ih2311  Services Export Index: Europe, Index Dec 2006=100, NSA
-M  2006.12 - 2010.08  n = 45
+M  2006.12 - 2010.09  n = 46
 is231  Services Outbound Index: Outbound Air Freight, Index 2000=100, NSA
-M  1992.09 - 2010.08  n = 110
+M  1992.09 - 2010.09  n = 111
 is2311  Services Outbound Index: Europe, Index Dec 2003=100, NSA
-M  2003.12 - 2010.08  n = 65
+M  2003.12 - 2010.09  n = 66
 is2312  Services Outbound Index: Asia, Index 2000=100, NSA
-M  1992.09 - 2010.08  n = 110
+M  1992.09 - 2010.09  n = 111
 iv131  Services Import Index: Import Air Freight, Index 2000=100, NSA
-M  1990.09 - 2010.08  n = 118
+M  1990.09 - 2010.09  n = 119
 iv1311  Services Import Index: Import Air Freight - Europe, Index Dec 2003=100, NSA
-M  2003.12 - 2010.08  n = 65
+M  2003.12 - 2010.09  n = 66
 iv1312  Services Import Index: Import Air Freight - Asia, Index 2000=100, NSA
-M  1990.09 - 2010.08  n = 118
+M  1990.09 - 2010.09  n = 119
 iv142  Services Import Index: Import Air Passenger Fares, Index 2000=100, NSA
-M  1988.03 - 2010.08  n = 168
+M  1988.03 - 2010.09  n = 169
 iv1421  Services Import Index: Import Air Passenger Fares - Europe, Index 2000=100, NSA
-M  1996.12 - 2010.08  n = 133
+M  1996.12 - 2010.09  n = 134
 iv14211  Services Import Index: Import Air Passenger Fares - United Kingdom, Index Dec 2002=100, NSA
-M  2002.12 - 2010.08  n = 93
+M  2002.12 - 2010.09  n = 94
 iv14212  Services Import Index: Import Air Passenger Fares - Other Europe, Index Dec 2002=100, NSA
-M  2002.12 - 2010.08  n = 93
+M  2002.12 - 2010.09  n = 94
 iv1422  Services Import Index: Import Air Passenger Fares - Asia, Index 2000=100, NSA
-M  1996.12 - 2010.08  n = 133
+M  1996.12 - 2010.09  n = 134
 iv1424  Services Import Index: Import Air Passenger Fares - Latin America/Caribbean, Index 2000=100, NSA
-M  1988.03 - 2010.08  n = 168
+M  1988.03 - 2010.09  n = 169
 exauus  Austria / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Austrian Schillings to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
 exbeus  Belgium / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Belgian Francs to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
 exbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $
-M  1995.01 - 2010.08  n = 188
+M  1995.01 - 2010.09  n = 189
 excaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exchus  China / U.S. Foreign Exchange Rate, Chinese Yuan to  1 U.S. $
-M  1981.01 - 2010.08  n = 356
+M  1981.01 - 2010.09  n = 357
 exdnus  Denmark / U.S. Foreign Exchange Rate, Danish Kroner to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exfnus  Finland / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Finnish Markkas to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
 exfrus  France / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), French Franc to  1 U.S. $
@@ -1942,63 +1942,63 @@ M  1971.01 - 2001.12  n = 372
 exgrus  Greece / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Greek Drachmas to  1 U.S. $
 M  1981.04 - 2000.12  n = 237
 exhkus  Hong Kong / U.S. Foreign Exchange Rate, Hong Kong $ to  1 U.S. $
-M  1981.01 - 2010.08  n = 356
+M  1981.01 - 2010.09  n = 357
 exinus  India / U.S. Foreign Exchange Rate, Indian Rupees to  1 U.S. $
-M  1973.01 - 2010.08  n = 452
+M  1973.01 - 2010.09  n = 453
 exitus  Italy / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Italian Lire to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
 exjpus  Japan / U.S. Foreign Exchange Rate, Japanese Yen to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exkous  South Korea / U.S. Foreign Exchange Rate, South Korean Won to  1 U.S. $
-M  1981.04 - 2010.08  n = 353
+M  1981.04 - 2010.09  n = 354
 exmaus  Malaysia / U.S. Foreign Exchange Rate, Malaysian Ringgit to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exmxus  Mexico / U.S. Foreign Exchange Rate, Mexican New Pesos to  1 U.S. $
-M  1993.11 - 2010.08  n = 202
+M  1993.11 - 2010.09  n = 203
 exneus  Netherlands / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Dutch Guilder to  1 U.S. $
 M  1971.01 - 2001.12  n = 372
 exnous  Norway / U.S. Foreign Exchange Rate, Norwegian Kroner to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 expous  Portugal / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Portuguese Escudos to  1 U.S. $
 M  1973.01 - 2001.12  n = 348
 exsdus  Sweden / U.S. Foreign Exchange Rate, Swedish Kronor to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exsfus  South Africa / U.S. Foreign Exchange Rate, South African Rand to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exsius  Singapore / U.S. Foreign Exchange Rate, Singapore $ to  1 U.S. $
-M  1981.01 - 2010.08  n = 356
+M  1981.01 - 2010.09  n = 357
 exslus  Sri Lanka / U.S. Foreign Exchange Rate, Sri Lankan Rupees to  1 U.S. $
-M  1973.01 - 2010.08  n = 452
+M  1973.01 - 2010.09  n = 453
 exspus  Spain / U.S. Foreign Exchange Rate (DISCONTINUED SERIES), Spanish Pesetas to  1 U.S. $
 M  1973.01 - 2001.12  n = 348
 exszus  Switzerland / U.S. Foreign Exchange Rate, Swiss Francs to  1 U.S. $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 extaus  Taiwan / U.S. Foreign Exchange Rate, New Taiwan $ to  1 U.S. $
-M  1983.10 - 2010.08  n = 323
+M  1983.10 - 2010.09  n = 324
 exthus  Thailand / U.S. Foreign Exchange Rate, Thai Baht to  1 U.S. $
-M  1981.01 - 2010.08  n = 356
+M  1981.01 - 2010.09  n = 357
 exusal  U.S. / Australia Foreign Exchange Rate, U.S. $ to  1 Australian $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exusec  Foreign Exchange Rate: Euro Community (DISCONTINUED SERIES), foreign exchange rate
 M  1978.12 - 1998.12  n = 241
 exuseu  U.S. / Euro Foreign Exchange Rate, U.S. $ to  1 Euro
-M  1999.01 - 2010.08  n = 140
+M  1999.01 - 2010.09  n = 141
 exusir  U.S. / Ireland Foreign Exchange Rate (DISCONTINUED SERIES), U.S. $ to  1 Irish Pound
 M  1971.01 - 2001.12  n = 372
 exusnz  U.S. / New Zealand Foreign Exchange Rate, U.S. $ to  1 New Zealand $
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exusuk  U.S. / U.K Foreign Exchange Rate, U.S. $ to  1 British Pound
-M  1971.01 - 2010.08  n = 476
+M  1971.01 - 2010.09  n = 477
 exvzus  Venezuela / U.S. Foreign Exchange Rate, Venezuelan Bolivares to  1 U.S. $
-M  1995.01 - 2010.08  n = 188
+M  1995.01 - 2010.09  n = 189
 twexbmth  Trade Weighted Exchange Index: Broad, Index Jan 1997=100
-M  1973.01 - 2010.08  n = 452
+M  1973.01 - 2010.09  n = 453
 twexmmth  Trade Weighted Exchange Index: Major Currencies, Index Mar 1973=100
-M  1973.01 - 2010.08  n = 452
+M  1973.01 - 2010.09  n = 453
 twexmthy  Trade-Weighted Exchange Value of U.S. Dollar vs G-10 Countries (DISCONTINUED SERIES), foreign exchange rate
 M  1971.01 - 1998.12  n = 336
 twexomth  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100
-M  1973.01 - 2010.08  n = 452
+M  1973.01 - 2010.09  n = 453
 aexbzus  Brazil / U.S. Foreign Exchange Rate, Brazilian Reals to  1 U.S. $
 A  1995 - 2009  n = 15
 aexcaus  Canada / U.S. Foreign Exchange Rate, Canadian $ to  1 U.S. $
@@ -2052,7 +2052,7 @@ A  1973 - 2009  n = 37
 twexoanl  Trade Weighted Exchange Index: Other Important Trading Partners, Index Jan 1997=100
 A  1973 - 2009  n = 37
 cbi  Change in Private Inventories, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 cbia  Change in Private Inventories, Bil. of $
 A  1929 - 2009  n = 81
 cbic1  Real Change in Private Inventories, 1 Decimal, Bil. of Chained 2005 $, SAAR
@@ -2070,11 +2070,11 @@ Q  1947.1 - 2010.2  n = 254
 finslca  Real Final Sales of Domestic Product, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 fsdp  Final Sales to Domestic Purchasers, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 gdb  Gross Domestic Purchases, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 gdp  Gross Domestic Product, 1 Decimal, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 gdpa  Gross Domestic Product, Bil. of $
 A  1929 - 2009  n = 81
 gdpc1  Real Gross Domestic Product, 1 Decimal, Bil. of Chained 2005 $, SAAR
@@ -2086,7 +2086,7 @@ A  1929 - 2009  n = 81
 gdppot  Real Potential Gross Domestic Product, Bil. of Chained 2005 $
 Q  1949.1 - 2020.4  n = 288
 gnp  Gross National Product, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 286
+Q  1947.1 - 2010.2  n = 254
 gnpa  Gross National Product, Bil. of $
 A  1929 - 2009  n = 81
 gnpc96  Real Gross National Product, Bil. of Chained 2005 $, SAAR
@@ -2116,41 +2116,41 @@ A  1929 - 2009  n = 81
 aslrecpt  State & Local Government: Current Receipts, Bil. of $
 A  1929 - 2009  n = 81
 aslrsi  State & Local Government Receipts: Contributions for Social Insurance, Bil. of $
-A  1942 - 2009  n = 81
+A  1942 - 2009  n = 68
 aslstax  State & Local Government: Sales Taxes, Bil. of $
 A  1929 - 2009  n = 81
 dgi  Federal National Defense Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 dgic96  Real National Defense Gross Investment, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 fctax  Federal Government: Tax Receipts on Corporate Income, Bil. of $
 A  1929 - 2009  n = 81
 fdefx  National Defense Consumption Expenditures & Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 fgce  Federal Consumption Expenditures & Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 fgcea  Federal Government Consumption & Gross Investment, Bil. of $
 A  1929 - 2009  n = 81
 fgcec1  Real Federal Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 fgcec96  Real Federal Consumption Expenditures & Gross Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
 fgceca  Real Federal Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $
-A  1995 - 2009  n = 81
+A  1995 - 2009  n = 15
 fgdef  Net Federal Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 fgexpnd  Federal Government: Current Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 fgrecpt  Federal Government Current Receipts, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 fgsl  Federal Grants-in-Aid to State & Local Governments, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 fndefx  Nondefense Consumption Expenditures & Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 frsi  Federal Government Receipts: Contributions for Social Insurance, Bil. of $
 A  1929 - 2009  n = 81
 gce  Government Consumption Expenditures & Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 286
+Q  1947.1 - 2010.2  n = 254
 gcea  Government Consumption Expenditures & Gross Investment, Bil. of $
 A  1929 - 2009  n = 81
 gcec1  Real Government Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
@@ -2160,33 +2160,33 @@ Q  1947.1 - 2010.2  n = 254
 gceca  Real Government Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 gexpnd  Government Current Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 grecpt  Government Current Receipts, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 ndgi  Federal Nondefense Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 ndgic96  Real Federal Nondefense Gross Investment, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 slce  State & Local Consumption Expenditures & Gross Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 slcea  State and Local Government Consumption and Gross Investment, Bil. of $
 A  1929 - 2009  n = 81
 slcec1  Real State & Local Consumption Expenditures & Gross Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 slcec96  Real State & Local Consumption Expenditures & Gross Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
 slceca  Real State & Local Consumption Expenditures & Gross Investment, Bil. of Chained 2005 $
-A  1995 - 2009  n = 81
+A  1995 - 2009  n = 15
 sldef  Net State and Local Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 slexpnd  State & Local Government Current Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 slinv  State & Local Government Gross Investment, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 slinvc96  Real State & Local Government: Gross Investment, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 tgdef  Net Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 usalclictax  State Government Tax Collections, Alcoholic Beverages Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
 usalcotax  State Government Tax Collections, Alcoholic Beverages - Selective Sales Taxes in the United States, Thous. of $
@@ -2250,7 +2250,7 @@ A  1992 - 2009  n = 18
 usutillictax  State Government Tax Collections, Public Utilities Licenses in the United States, Thous. of $
 A  1992 - 2009  n = 18
 expgs  Exports of Goods & Services, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 expgsa  Exports of Goods and Services, Bil. of $
 A  1929 - 2009  n = 81
 expgsc1  Real Exports of Goods & Services, 1 Decimal, Bil. of Chained 2005 $, SAAR
@@ -2268,7 +2268,7 @@ Q  1946.1 - 1991.3  n = 183
 expgsna  Exports of Goods & Services, GNP-Basis (Discontinued series), Bil. of $
 A  1929 - 1990  n = 62
 impgs  Imports of Goods & Services, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 impgsa  Imports of Goods and Services, Bil. of $
 A  1929 - 2009  n = 81
 impgsc1  Real Imports of Goods & Services, 1 Decimal, Bil. of Chained 2005 $, SAAR
@@ -2286,103 +2286,103 @@ Q  1946.1 - 1991.3  n = 183
 impgsna  Imports of Goods & Services, GNP-Basis (Discontinued series), Bil. of $
 A  1929 - 1990  n = 62
 netexc  Real Net Exports of Goods & Services, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 netexc96  Real Net Exports of Goods & Services, 3 Decimal, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 82
+Q  1995.1 - 2010.2  n = 62
 netexp  Net Exports of Goods & Services, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 netfi  Balance on Current Account, NIPA's, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 ccfc  Corporate: Consumption of Fixed Capital, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 civa  Corporate Inventory Valuation Adjustment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 cncf  Corporate Net Cash Flow, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 coe  National Income: Compensation of Employees, Paid, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 cofc  Gross National Product: Consumption of Fixed Capital, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 cp  Corporate Profits After Tax, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 cpatax  Corporate Profits After Tax with Inventory Valuation Adjustment (IVA) and Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 cprofit  Corporate Profits with Inventory Valuation Adjustment (IVA) and Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 dcbcca  Corporate Business Capital Consumption Adjustment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 dividend  Net Corporate Dividends, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 nfcpatax  Nonfinancial Corporate Business: Profits After Tax, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 nicur  National Income, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 propinc  Proprietors' Income with Inventory Valuation Adjustment(IVA) and Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 rentin  Rental Income of Persons with Capital Consumption Adjustment (CCAdj), Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 wascur  Compensation of Employees: Wages & Salary Accruals, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 a038rc1  Supplements to wages and salaries, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a041rc1  Proprietors' income with inventory valuation and capital consumption adjustments, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a045rc1  Proprietors' income with inventory valuation and capital consumption adjustments: Nonfarm, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a048rc1  Rental income of persons with capital consumption adjustment, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a061rc1  Contributions for government social insurance, domestic, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a063rc1  Government social benefits to persons, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a068rc1  Personal outlays, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a132rc1  Private industries, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a229rc0  Dispoable Personal Income: Per capita: Current dollars, $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a229rx0  Dispoable Personal Income: Per capita: Chained (2005) Dollars, Chained 2005 $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 a576rc1  Wage and salary disbursements, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 b042rc1  Proprietors' income with inventory valuation and capital consumption adjustments: Farm, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 b069rc1  Personal interest payments, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 b202rc1  Government, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 b222rc1  Old-age, survivors, disability, and health insurance benefits, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 b223rc1  Government unemployment insurance benefits, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 b931rc1  Other current transfer receipts, from business (net), Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 dgdsrc1  Personal Consumption Expenditures: Goods, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 dgdsrx1  Personal Consumption Expenditures: Goods, Bil. of Chained 2005 $, SAAR
-M  1995.01 - 2010.07  n = 187
+M  1995.01 - 2010.08  n = 188
 dpi  Disposable Personal Income, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 286
+Q  1947.1 - 2010.2  n = 254
 dpic96  Real Disposable Personal Income, Bil. of Chained 2005 $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 dspi  Disposable Personal Income, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 dspic96  Real Disposable Personal Income, Bil. of Chained 2005 $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pcdg  Personal Consumption Expenditures: Durable Goods, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 pcdga  Personal Consumption Expenditures: Durable Goods, Bil. of $
 A  1929 - 2009  n = 81
 pcdgcc96  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 pcdgcca  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chained 2005 $
-A  1995 - 2009  n = 81
+A  1995 - 2009  n = 15
 pce  Personal Consumption Expenditures, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pcec  Personal Consumption Expenditures, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 286
+Q  1947.1 - 2010.2  n = 254
 pcec96  Real Personal Consumption Expenditures, Bil. of Chained 2005 $, SAAR
-M  1995.01 - 2010.07  n = 619
+M  1995.01 - 2010.08  n = 188
 pceca  Personal Consumption Expenditures, Bil. of $
 A  1929 - 2009  n = 81
 pcecc96  Real Personal Consumption Expenditures, Bil. of Chained 2005 $, SAAR
@@ -2390,55 +2390,55 @@ Q  1947.1 - 2010.2  n = 254
 pcecca  Real Personal Consumption Expenditures, Bil. of Chained 2005 $
 A  1929 - 2009  n = 81
 pcedg  Personal Consumption Expenditures: Durable Goods, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pcedgc96  Real Personal Consumption Expenditures: Durable Goods, Bil. of Chained 2005 $, SAAR
-M  1995.01 - 2010.07  n = 619
+M  1995.01 - 2010.08  n = 188
 pcend  Personal Consumption Expenditures: Nondurable Goods, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pcendc96  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chained 2005 $, SAAR
-M  1995.01 - 2010.07  n = 619
+M  1995.01 - 2010.08  n = 188
 pces  Personal Consumption Expenditures: Services, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pcesc96  Real Personal Consumption Expenditures: Services, Bil. of Chained 2005 $, SAAR
-M  1995.01 - 2010.07  n = 619
+M  1995.01 - 2010.08  n = 188
 pcesv  Personal Consumption Expenditures: Services, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 pcesva  Personal Consumption Expenditures: Services, Bil. of $
 A  1929 - 2009  n = 81
 pcesvc96  Real Personal Consumption Expenditures: Services, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 pcesvca  Real Personal Consumption Expenditures: Services, Bil. of Chained 2005 $
-A  1995 - 2009  n = 81
+A  1995 - 2009  n = 15
 pcnd  Personal Consumption Expenditures: Nondurable Goods, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 pcnda  Personal Consumption Expenditures: Nondurable Goods, Bil. of $
 A  1929 - 2009  n = 81
 pcndgc96  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 pcndgca  Real Personal Consumption Expenditures: Nondurable Goods, Bil. of Chained 2005 $
-A  1995 - 2009  n = 81
+A  1995 - 2009  n = 15
 pctr  Personal Current Transfer Receipts, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pdi  Personal Dividend Income, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pi  Personal Income, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 775
+M  1959.01 - 2010.08  n = 620
 pii  Personal Interest Income, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pincome  Personal Income, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 286
+Q  1947.1 - 2010.2  n = 254
 piroa  Personal Income Receipts on Assets, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 w055rc1  Personal current taxes, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 w209rc1  Compensation of employees, received, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 w211rc1  Personal current transfer payments, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 w236rc1  Other, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 w875rx1  Personal income excluding current transfer receipts (Billions of Chained 2005 Dollars), Bil. of Chained 2005 $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 gdpctpi  Gross Domestic Product: Chain-type Price Index, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 gdpdef  Gross Domestic Product: Implicit Price Deflator, Index 2005=100, SA
@@ -2454,23 +2454,23 @@ Q  1959.1 - 2010.2  n = 206
 pcectpi  Personal Consumption Expenditures: Chain-type Price Index, Index 2005=100, SA
 Q  1947.1 - 2010.2  n = 254
 pcepi  Personal Consumption Expenditures: Chain-type Price Index, Index 2005=100, SA
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pcepilfe  Personal Consumption Expenditures: Chain-Type Price Index Less Food and Energy, Index 2005=100, SA
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 fpi  Fixed Private Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 fpia  Private Fixed Investment, Bil. of $
 A  1929 - 2009  n = 81
 fpic1  Real Private Fixed Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 fpic96  Real Private Fixed Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
 fpica  Real Private Fixed Investment, Bil. of Chained 2005 $
-A  1967 - 2009  n = 81
+A  1967 - 2009  n = 43
 ggsave  Gross Government Saving, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 gpdi  Gross Private Domestic Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 286
+Q  1947.1 - 2010.2  n = 254
 gpdia  Gross Private Domestic Investment, Bil. of $
 A  1929 - 2009  n = 81
 gpdic1  Real Gross Private Domestic Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
@@ -2482,45 +2482,45 @@ A  1929 - 2009  n = 81
 gpsave  Gross Private Saving, Bil. of $, SAAR
 Q  1947.1 - 2010.2  n = 254
 gsave  Gross Saving, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 nripdc1  Real Nonresidential Investment: Equipment & Software, 1 Decimal, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 nripdc96  Real Nonresidential Investment: Equipment & Software, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
 nripdca  Real Private Nonresidential Investment: Equipment and Software, Bil. of Chained 2005 $
-A  1967 - 2009  n = 81
+A  1967 - 2009  n = 43
 pmsave  Personal Saving, Bil. of $, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 pnfi  Private Nonresidential Fixed Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 pnfia  Private Nonresidential Fixed Investment, Bil. of $
 A  1929 - 2009  n = 81
 pnfic1  Real Private Nonresidential Fixed Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 pnfic96  Real Private Nonresidential Fixed Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
 pnfica  Real Private Nonresidential Fixed Investment, Bil. of Chained 2005 $
-A  1967 - 2009  n = 81
+A  1967 - 2009  n = 43
 prfi  Private Residential Fixed Investment, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 258
+Q  1947.1 - 2010.2  n = 254
 prfia  Private Residential Investment, Bil. of $
 A  1929 - 2009  n = 81
 prfic1  Real Private Residential Fixed Investment, 1 Decimal, Bil. of Chained 2005 $, SAAR
-Q  1995.1 - 2010.2  n = 254
+Q  1995.1 - 2010.2  n = 62
 prfic96  Real Private Residential Fixed Investment, 3 Decimal, Bil. of Chained 2005 $, SAAR
 Q  1995.1 - 2010.2  n = 62
 prfica  Real Private Residential Fixed Investment, Bil. of Chained 2005 $
-A  1967 - 2009  n = 81
+A  1967 - 2009  n = 43
 psave  Personal Saving, Bil. of $, SAAR
-Q  1947.1 - 2010.2  n = 286
+Q  1947.1 - 2010.2  n = 254
 psavert  Personal Saving Rate, %, SAAR
-M  1959.01 - 2010.07  n = 619
+M  1959.01 - 2010.08  n = 620
 cd1m  1-Month Certificate of Deposit: Secondary Market Rate, %
-M  1965.12 - 2010.08  n = 537
+M  1965.12 - 2010.09  n = 538
 cd3m  3-Month Certificate of Deposit: Secondary Market Rate, %
-M  1964.06 - 2010.08  n = 555
+M  1964.06 - 2010.09  n = 556
 cd6m  6-Month Certificate of Deposit: Secondary Market Rate, %
-M  1964.06 - 2010.08  n = 555
+M  1964.06 - 2010.09  n = 556
 cp1m  1-Month Commercial Paper Rate (DISCONTINUED SERIES), %
 M  1971.04 - 1997.08  n = 317
 cp3m  3-Month Commercial Paper Rate (DISCONTINUED SERIES), %
@@ -2528,77 +2528,77 @@ M  1971.04 - 1997.08  n = 317
 cp6m  6-Month Commercial Paper Rate (DISCONTINUED SERIES), %
 M  1970.01 - 1997.08  n = 332
 cpf1m  1-Month AA Financial Commercial Paper Rate, %
-M  1997.01 - 2010.08  n = 164
+M  1997.01 - 2010.09  n = 165
 cpf2m  2-Month AA Financial Commercial Paper Rate, %
-M  1997.01 - 2010.08  n = 164
+M  1997.01 - 2010.09  n = 165
 cpf3m  3-Month AA Financial Commercial Paper Rate, %
-M  1997.01 - 2010.08  n = 164
+M  1997.01 - 2010.09  n = 165
 cpn1m  1-Month AA Nonfinancial Commercial Paper Rate, %
-M  1997.01 - 2010.08  n = 164
+M  1997.01 - 2010.09  n = 165
 cpn2m  2-Month AA Nonfinancial Commercial Paper Rate, %
-M  1997.01 - 2010.08  n = 164
+M  1997.01 - 2010.09  n = 165
 cpn3m  3-Month AA Nonfinancial Commercial Paper Rate, %
-M  1997.01 - 2010.08  n = 164
+M  1997.01 - 2010.09  n = 165
 aaa  Moody's Seasoned Aaa Corporate Bond Yield, %
-M  1919.01 - 2010.08  n = 1100
+M  1919.01 - 2010.09  n = 1101
 baa  Moody's Seasoned Baa Corporate Bond Yield, %
-M  1919.01 - 2010.08  n = 1100
+M  1919.01 - 2010.09  n = 1101
 fedfunds  Effective Federal Funds Rate, %
-M  1954.07 - 2010.08  n = 674
+M  1954.07 - 2010.09  n = 675
 mdiscrt  Discount Rate (DISCONTINUED SERIES), %
 M  1950.01 - 2002.12  n = 636
 mpcredit  Primary Credit Rate, %
-M  2003.02 - 2010.08  n = 91
+M  2003.02 - 2010.09  n = 92
 mprime  Bank Prime Loan Rate, %
-M  1949.01 - 2010.08  n = 740
+M  1949.01 - 2010.09  n = 741
 tb1ya  1-Year Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %
 M  1959.04 - 2000.06  n = 493
 tb1yr  1-Year Treasury Bill: Secondary Market Rate, %
-M  1959.07 - 2010.08  n = 614
+M  1959.07 - 2010.09  n = 615
 tb1ys  1-Year Treasury Bill: Secondary Market Rate (DISCONTINUED SERIES), %
 M  1959.07 - 2001.07  n = 505
 tb3ma  3-Month Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %
 M  1941.02 - 2000.06  n = 713
 tb3ms  3-Month Treasury Bill: Secondary Market Rate, %
-M  1934.01 - 2010.08  n = 920
+M  1934.01 - 2010.09  n = 921
 tb4wk  4-Week Treasury Bill: Secondary Market Rate, %
-M  2001.07 - 2010.08  n = 110
+M  2001.07 - 2010.09  n = 111
 tb6ma  6-Month Treasury Bill Rate: Auction Average (DISCONTINUED SERIES), %
 M  1960.01 - 2000.06  n = 486
 tb6ms  6-Month Treasury Bill: Secondary Market Rate, %
-M  1958.12 - 2010.08  n = 621
+M  1958.12 - 2010.09  n = 622
 fii10  10-Year Treasury Inflation-Indexed Security, Constant Maturity, %
-M  2003.01 - 2010.08  n = 92
+M  2003.01 - 2010.09  n = 93
 fii20  20-Year Treasury Inflation-Indexed Security, Constant Maturity, %
-M  2004.07 - 2010.08  n = 74
+M  2004.07 - 2010.09  n = 75
 fii30  30-Year Treasury Inflation-Indexed Security, Constant Maturity, %
-M  2010.02 - 2010.08  n = 7
+M  2010.02 - 2010.09  n = 8
 fii5  5-Year Treasury Inflation-Indexed Security, Constant Maturity, %
-M  2003.01 - 2010.08  n = 92
+M  2003.01 - 2010.09  n = 93
 fii7  7-Year Treasury Inflation-Indexed Security, Constant Maturity, %
-M  2003.01 - 2010.08  n = 92
+M  2003.01 - 2010.09  n = 93
 gs1  1-Year Treasury Constant Maturity Rate, %
-M  1953.04 - 2010.08  n = 689
+M  1953.04 - 2010.09  n = 690
 gs10  10-Year Treasury Constant Maturity Rate, %
-M  1953.04 - 2010.08  n = 689
+M  1953.04 - 2010.09  n = 690
 gs1m  1-Month Treasury Constant Maturity Rate, %
-M  2001.07 - 2010.08  n = 110
+M  2001.07 - 2010.09  n = 111
 gs2  2-Year Treasury Constant Maturity Rate, %
-M  1976.06 - 2010.08  n = 411
+M  1976.06 - 2010.09  n = 412
 gs20  20-Year Treasury Constant Maturity Rate, %
-M  1953.04 - 2010.08  n = 689
+M  1953.04 - 2010.09  n = 690
 gs3  3-Year Treasury Constant Maturity Rate, %
-M  1953.04 - 2010.08  n = 689
+M  1953.04 - 2010.09  n = 690
 gs30  30-Year Treasury Constant Maturity Rate, %
-M  1977.02 - 2010.08  n = 403
+M  1977.02 - 2010.09  n = 404
 gs3m  3-Month Treasury Constant Maturity Rate, %
-M  1982.01 - 2010.08  n = 344
+M  1982.01 - 2010.09  n = 345
 gs5  5-Year Treasury Constant Maturity Rate, %
-M  1953.04 - 2010.08  n = 689
+M  1953.04 - 2010.09  n = 690
 gs6m  6-Month Treasury Constant Maturity Rate, %
-M  1982.01 - 2010.08  n = 344
+M  1982.01 - 2010.09  n = 345
 gs7  7-Year Treasury Constant Maturity Rate, %
-M  1969.07 - 2010.08  n = 494
+M  1969.07 - 2010.09  n = 495
 tp10j07  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2007 (DISCONTINUED SERIES), %
 M  1997.02 - 2006.12  n = 119
 tp10j08  10-Year 3-5/8% Treasury Inflation-Indexed Note, Due 1/15/2008 (DISCONTINUED SERIES), %
@@ -2608,57 +2608,57 @@ M  1999.01 - 2008.12  n = 120
 tp10j10  10-Year 4-1/4% Treasury Inflation-Indexed Note, Due 1/15/2010 (DISCONTINUED SERIES), %
 M  2000.02 - 2009.12  n = 119
 tp10j11  10-Year 3-1/2% Treasury Inflation-Indexed Note, Due 1/15/2011, %
-M  2001.02 - 2010.08  n = 115
+M  2001.02 - 2010.09  n = 116
 tp10j12  10-Year 3-3/8% Treasury Inflation-Indexed Note, Due 1/15/2012, %
-M  2002.02 - 2010.08  n = 103
+M  2002.02 - 2010.09  n = 104
 tp10j14  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2014, %
-M  2004.02 - 2010.08  n = 79
+M  2004.02 - 2010.09  n = 80
 tp10j15  10-Year 1-5/8% Treasury Inflation-Indexed Note, Due 1/15/2015, %
-M  2005.02 - 2010.08  n = 67
+M  2005.02 - 2010.09  n = 68
 tp10j16  10-Year 2% Treasury Inflation-Indexed Note, Due 1/15/2016, %
-M  2006.02 - 2010.08  n = 55
+M  2006.02 - 2010.09  n = 56
 tp10j17  10-Year 2-3/8% Treasury Inflation-Indexed Note, Due 1/15/2017, %
-M  2007.02 - 2010.08  n = 43
+M  2007.02 - 2010.09  n = 44
 tp10j18  10-Year 1-5/8% Treasury Inflation-Indexed Note, Due 1/15/2018, %
-M  2008.02 - 2010.08  n = 31
+M  2008.02 - 2010.09  n = 32
 tp10j19  10-Year 2-1/8% Treasury Inflation-Indexed Note, Due 1/15/2019, %
-M  2009.01 - 2010.08  n = 20
+M  2009.01 - 2010.09  n = 21
 tp10j20  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 1/15/2020, %
-M  2010.02 - 2010.08  n = 7
+M  2010.02 - 2010.09  n = 8
 tp10l12  10-Year 3% Treasury Inflation-Indexed Note, Due 7/15/2012, %
-M  2002.08 - 2010.08  n = 97
+M  2002.08 - 2010.09  n = 98
 tp10l13  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2013, %
-M  2003.08 - 2010.08  n = 85
+M  2003.08 - 2010.09  n = 86
 tp10l14  10-Year 2% Treasury Inflation-Indexed Note, Due 7/15/2014, %
-M  2004.08 - 2010.08  n = 73
+M  2004.08 - 2010.09  n = 74
 tp10l15  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2015, %
-M  2005.08 - 2010.08  n = 61
+M  2005.08 - 2010.09  n = 62
 tp10l16  10-Year 2-1/2% Treasury Inflation-Indexed Note, Due 7/15/2016, %
-M  2006.08 - 2010.08  n = 49
+M  2006.08 - 2010.09  n = 50
 tp10l17  10-Year 2-5/8% Treasury Inflation-Indexed Note, Due 7/15/2017, %
-M  2007.08 - 2010.08  n = 37
+M  2007.08 - 2010.09  n = 38
 tp10l18  10-Year 1-3/8% Treasury Inflation-Indexed Note, Due 7/15/2018, %
-M  2008.08 - 2010.08  n = 25
+M  2008.08 - 2010.09  n = 26
 tp10l19  10-Year 1-7/8% Treasury Inflation-Indexed Note, Due 7/15/2019, %
-M  2009.07 - 2010.08  n = 14
+M  2009.07 - 2010.09  n = 15
 tp10l20  10-Year 1-1/4% Treasury Inflation-Indexed Note, Due 7/15/2020, %
-M  2010.07 - 2010.08  n = 2
+M  2010.07 - 2010.09  n = 3
 tp30a28  30-Year 3-5/8% Treasury Inflation-Indexed Bond, Due 4/15/2028, %
-M  1998.05 - 2010.08  n = 148
+M  1998.05 - 2010.09  n = 149
 tp30a29  30-Year 3-7/8% Treasury Inflation-Indexed Bond, Due 4/15/2029, %
-M  1999.04 - 2010.08  n = 137
+M  1999.04 - 2010.09  n = 138
 tp3ha32  30-1/2-Year 3-3/8% Treasury Inflation-Indexed Bond, Due 4/15/2032, %
-M  2001.11 - 2010.08  n = 106
+M  2001.11 - 2010.09  n = 107
 tp5a10  5-Year Treasury Inflation-Indexed Note, Due 4/15/2010 (DISCONTINUED SERIES), %
 M  2004.11 - 2010.03  n = 65
 tp5a11  5-Year Treasury Inflation-Indexed Note, Due 4/15/2011, %
-M  2006.05 - 2010.08  n = 52
+M  2006.05 - 2010.09  n = 53
 tp5l02  5-Year Treasury Inflation-Indexed Note, Due 7/15/2002 (DISCONTINUED SERIES), %
 M  1997.07 - 2002.01  n = 55
 fha30  30-Year FHA Mortgage Rate: Secondary Market (DISCONTINUED SERIES), %
 M  1964.01 - 2000.06  n = 438
 mortg  30-Year Conventional Mortgage Rate, %
-M  1971.04 - 2010.08  n = 473
+M  1971.04 - 2010.09  n = 474
 ba3m  3-Month Bankers' Acceptance Rate (DISCONTINUED SERIES), %
 M  1941.01 - 2000.06  n = 714
 ba6m  6-Month Bankers' Acceptance Rate (DISCONTINUED SERIES), %
@@ -2886,61 +2886,61 @@ M  1943.01 - 1999.04  n = 676
 autosl  Total Automobile Credit Outstanding (DISCONTINUED SERIES), Bil. of $, SA
 M  1943.01 - 1999.04  n = 676
 nonrevns  Total Nonrevolving Credit Outstanding, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 nonrevsl  Total Nonrevolving Credit Outstanding, Bil. of $, SA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 nrevncb  Nonrevolving Consumer Loans owned by Commercial Banks, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 nrevncu  Nonrevolving Consumer Loans owned by Credit Unions, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 nrevnfc  Nonrevolving Consumer Loans owned by Finance Companies, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 nrevngov  Nonrevolving Consumer Loans the Federal Government and Sallie Mae, Bil. of $, NSA
-M  1977.01 - 2010.07  n = 403
+M  1977.01 - 2010.08  n = 404
 nrevnnfc  Nonrevolving Consumer Loans owned by Nonfinancial Businesses, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 nrevnsav  Nonrevolving Consumer Loans owned by Savings Institutions, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 nrevnsec  Securitized Consumer Nonrevolving Credit, Bil. of $, NSA
-M  1945.12 - 2010.07  n = 776
+M  1945.12 - 2010.08  n = 777
 otherns  Total Other Credit Outstanding (DISCONTINUED SERIES), Bil. of $, NSA
 M  1943.01 - 1999.04  n = 676
 othersl  Total Other Credit Outstanding (DISCONTINUED SERIES), Bil. of $, SA
 M  1943.01 - 1999.04  n = 676
 revolncb  Consumer Revolving Credit Owned by Commercial Banks, Bil. of $, NSA
-M  1968.01 - 2010.07  n = 511
+M  1968.01 - 2010.08  n = 512
 revolncu  Consumer Revolving Credit Owned by Credit Unions, Bil. of $, NSA
-M  1984.01 - 2010.07  n = 319
+M  1984.01 - 2010.08  n = 320
 revolnfc  Consumer Revolving Credit Owned by Finance Companies, Bil. of $, NSA
-M  1984.12 - 2010.07  n = 308
+M  1984.12 - 2010.08  n = 309
 revolnnfc  Consumer Revolving Credit Owned by Nonfinancial Businesses, Bil. of $, NSA
-M  1970.01 - 2010.07  n = 487
+M  1970.01 - 2010.08  n = 488
 revolns  Total Revolving Credit Outstanding, Bil. of $, NSA
-M  1968.01 - 2010.07  n = 511
+M  1968.01 - 2010.08  n = 512
 revolnsav  Consumer Revolving Credit Owned by Savings Institutions, Bil. of $, NSA
-M  1981.01 - 2010.07  n = 355
+M  1981.01 - 2010.08  n = 356
 revolnsec  Securitized Consumer Revolving Credit, Bil. of $, NSA
-M  1989.01 - 2010.07  n = 259
+M  1989.01 - 2010.08  n = 260
 revolsl  Total Revolving Credit Outstanding, Bil. of $, SA
-M  1968.01 - 2010.07  n = 511
+M  1968.01 - 2010.08  n = 512
 totalcb  Total Consumer Loans Owned by Commercial Banks, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 totalfc  Total Consumer Loans Owned by Finance Companies, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 totalgov  Total Consumer Loans Owned by Federal Government and Sallie Mae, Bil. of $, NSA
-M  1977.01 - 2010.07  n = 403
+M  1977.01 - 2010.08  n = 404
 totalnfc  Total Consumer Loans Owned by Nonfinancial Businesses, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 totalns  Total Consumer Credit Outstanding, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 totalsav  Total Consumer Loans Owned by Savings Institutions, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 totalsec  Securitized Total Consumer Loans, Bil. of $, NSA
-M  1945.12 - 2010.07  n = 776
+M  1945.12 - 2010.08  n = 777
 totalsl  Total Consumer Credit Outstanding, Bil. of $, SA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 totaltcu  Total Consumer Loans Owned by Credit Unions, Bil. of $, NSA
-M  1943.01 - 2010.07  n = 811
+M  1943.01 - 2010.08  n = 812
 busloans  Commercial and Industrial Loans at All Commercial Banks, Bil. of $, SA
 M  1947.01 - 2010.08  n = 764
 consumer  Consumer (Individual) Loans at All Commercial Banks, Bil. of $, SA
@@ -2994,7 +2994,7 @@ Q  2007.2 - 2010.3  n = 14
 drtssp  Net Percentage of Domestic Respondents Tightening Standards for Subprime Mortgage Loans, %
 Q  2007.2 - 2010.3  n = 9
 currdd  Currency Component of M1 Plus Demand Deposits, Bil. of $, SA
-M  1959.01 - 2010.08  n = 764
+M  1959.01 - 2010.08  n = 620
 currns  Currency Component of M1, Bil. of $, NSA
 M  1947.01 - 2010.08  n = 764
 currsl  Currency Component of M1, Bil. of $, SA
@@ -3002,9 +3002,9 @@ M  1947.01 - 2010.08  n = 764
 demdepns  Demand Deposits at Commercial Banks, Bil. of $, NSA
 M  1959.01 - 2010.08  n = 620
 demdepsl  Demand Deposits at Commercial Banks, Bil. of $, SA
-M  1959.01 - 2010.08  n = 764
+M  1959.01 - 2010.08  n = 620
 m1asl  M1A Money Supply (Currency plus Demand Deposits) (Discontinued Series), Bil. of $, SA
-M  1959.01 - 1981.11  n = 419
+M  1959.01 - 1981.11  n = 275
 m1ns  M1 Money Stock, Bil. of $, NSA
 M  1959.01 - 2010.08  n = 620
 m1sl  M1 Money Stock, Bil. of $, SA
@@ -3016,7 +3016,7 @@ M  1959.01 - 2010.08  n = 620
 ocdns  Other Checkable Deposits, Bil. of $, NSA
 M  1963.01 - 2010.08  n = 572
 ocdsl  Other Checkable Deposits, Bil. of $, SA
-M  1963.01 - 2010.08  n = 620
+M  1963.01 - 2010.08  n = 572
 ocdtin  Other Checkable Deposits at Thrift Institutions, Bil. of $, NSA
 M  1959.01 - 2010.08  n = 620
 ocdtis  Other Checkable Deposits at Thrift Institutions, Bil. of $, SA
@@ -3192,25 +3192,25 @@ M  1974.01 - 2010.08  n = 440
 adjborns  Adjustment Plus Seasonal Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED SERIES), Bil. of $, NSA
 M  1959.01 - 2002.12  n = 528
 borrow  Total Borrowings of Depository Institutions from the Federal Reserve, Bil. of $, NSA
-M  1919.01 - 2010.08  n = 1100
+M  1919.01 - 2010.09  n = 1101
 discborr  Discount Window Borrowings of Depository Institutions from the Federal Reserve, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 extendns  Extended Credit Borrowings of Depository Institutions from the Federal Reserve (DISCONTINUED SERIES), Bil. of $, NSA
-M  1975.05 - 2002.12  n = 356
+M  1975.05 - 2002.12  n = 332
 seaborr  Seasonal Borrowings of Depository Institutions from the Federal Reserve, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 termauc  Term Auction Credit, Bil. of $, NSA
-M  2007.12 - 2010.08  n = 33
+M  2007.12 - 2010.09  n = 34
 ambns  St. Louis Adjusted Monetary Base, Bil. of $, NSA
-M  1918.01 - 2010.08  n = 1112
+M  1918.01 - 2010.09  n = 1113
 ambsl  St. Louis Adjusted Monetary Base, Bil. of $, SA
-M  1918.01 - 2010.08  n = 1112
+M  1918.01 - 2010.09  n = 1113
 bogambns  Board of Governors Monetary Base, Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 bogambsl  Board of Governors Monetary Base, Adjusted for Changes in Reserve Requirements, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 bogumbns  Board of Governors Monetary Base, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 disambns  St. Louis Adjusted Monetary Base (DISCONTINUED SERIES), Bil. of $, NSA
 M  1936.01 - 2003.06  n = 810
 disambsl  St. Louis Adjusted Monetary Base (DISCONTINUED SERIES), Bil. of $, SA
@@ -3222,38 +3222,38 @@ M  1936.01 - 2003.06  n = 810
 ram  Reserve Adjustment Magnitude (RAM), Bil. of $, NSA
 M  1980.10 - 2010.09  n = 360
 sbasens  St. Louis Source Base, Bil. of $, NSA
-M  1918.01 - 2010.08  n = 1112
+M  1918.01 - 2010.09  n = 1113
 adjresns  St. Louis Adjusted Reserves, Bil. of $, NSA
 M  1918.01 - 2010.08  n = 1112
 adjressl  St. Louis Adjusted Reserves, Bil. of $, SA
 M  1918.01 - 2010.08  n = 1112
 bognonbr  Non-Borrowed Reserves of Depository Institutions, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 dadjresn  St. Louis Adjusted Reserves (DISCONTINUED SERIES), Bil. of $, NSA
 M  1947.01 - 2003.06  n = 678
 dadjress  St. Louis Adjusted Reserves (DISCONTINUED SERIES), Bil. of $, SA
 M  1950.01 - 2003.06  n = 642
 excresns  Excess Reserves of Depository Institutions, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 nforbres  Net Free or Borrowed Reserves of Depository Institutions, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 980
+M  1959.01 - 2010.09  n = 621
 nonbortaf  Non-Borrowed Reserves of Depository Institutions Plus Term Auction Credit, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 reqresns  Required Reserves, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 resbalns  Reserve Balances with Federal Reserve Banks, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1950.01 - 2010.08  n = 728
+M  1950.01 - 2010.09  n = 729
 totresns  Board of Governors Total Reserves, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 trarr  Board of Governors Total Reserves, Adjusted for Changes in Reserve Requirements, Bil. of $, SA
-M  1959.01 - 2010.08  n = 620
+M  1959.01 - 2010.09  n = 621
 xrcb  Excess Reserves Plus Required Clearing Balance Contracts of Depository Institutions, Bil. of $, NSA
-M  1990.11 - 2010.08  n = 257
+M  1990.11 - 2010.09  n = 239
 currcir  Currency in Circulation, Bil. of $, NSA
-M  1917.08 - 2010.08  n = 1117
+M  1917.08 - 2010.09  n = 1118
 rsbkcrns  Reserve Bank Credit, Bil. of $, NSA
-M  1989.04 - 2010.08  n = 257
+M  1989.04 - 2010.09  n = 258
 treasury  Treasury Deposits with Federal Reserve Banks, Bil. of $, NSA
-M  1986.01 - 2010.08  n = 296
+M  1986.01 - 2010.09  n = 297
 vault  Vault Cash Used to Satisfy Required Reserves, Not Adjusted for Changes in Reserve Requirements, Bil. of $, NSA
-M  1959.11 - 2010.08  n = 610
+M  1959.11 - 2010.09  n = 611

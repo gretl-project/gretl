@@ -462,7 +462,6 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	if (dpd->ifc == 0) {
 	    dpd->ndum += 1;
 	}
-	fprintf(stderr, "dpd: ndum = %d\n", dpd->ndum);
 	dpd->k += dpd->ndum;
 	dpd->nz += dpd->ndum;
     }

@@ -46,6 +46,9 @@ typedef enum {
     FRED_MAX
 } FREDtask;
 
+#define MAXNAME 32
+#define OBSLEN 16
+
 typedef struct FREDbuf_ FREDbuf;
 
 struct FREDbuf_ {
@@ -57,6 +60,8 @@ struct FREDbuf_ {
     int nobs;           /* number of observations for series */
     int *catlist;       /* list of sub-categories */
     int indent;         /* sub-category level */
+    char sername[MAXNAME]; /* current series name, if applicable */
+    char stobs[OBSLEN];    /* current starting obs, if applicable */
 };
 
 static char API_KEY[33];
@@ -115,6 +120,8 @@ static FREDbuf *FREDbuf_new (FREDtask task, int catid)
 	fb->nobs = 0;
 	fb->catlist = NULL;
 	fb->indent = 0;
+	fb->sername[0] = '\0';
+	fb->stobs[0] = '\0';
     }
 
     return fb;
@@ -134,7 +141,8 @@ static void FREDbuf_free (FREDbuf *fb)
    or monthly data.
 */
 
-static int ymd_to_db_date (char *targ, const char *src, int pd)
+static int ymd_to_db_date (char *targ, const char *src, int pd,
+			   const char *sername)
 {
     int y, m, d;
 
@@ -155,7 +163,38 @@ static int ymd_to_db_date (char *targ, const char *src, int pd)
 	return 1;
     }
 
+    if (y > 2012) {
+	fprintf(stderr, "%s: pd=%d, src='%s', y=%d\n",
+		sername, pd, src, y);
+	return 1;
+    }
+
     return 0;
+}
+
+static int pre_start_obs (FREDbuf *fb, const char *date, int *err)
+{
+    int y0, m0, d0;
+    int y, m, d;
+    int ret = 0;
+
+    if (sscanf(date, "%d-%d-%d", &y, &m, &d) != 3) {
+	*err = 1;
+	return 1;
+    } else if (sscanf(fb->stobs, "%d-%d-%d", &y0, &m0, &d0) != 3) {
+	*err = 1;
+	return 1;
+    }
+
+    if (y < y0) {
+	ret = 1;
+    } else if (y == y0 && m < m0) {
+	ret = 1;
+    } else if (y == y0 && m == m0 && d < d0) {
+	ret = 1;
+    }
+
+    return ret;
 }
 
 /* Get the "count" property of an "observations" record, then
@@ -193,6 +232,8 @@ static int get_observations_info (xmlNodePtr n, FREDbuf *fb,
 	    val = xmlGetProp(n, (XUC) "value");
 	    if (date == NULL || val == NULL) {
 		err = 1;
+	    } else if (pre_start_obs(fb, (const char *) date, &err)) {
+		fb->nobs -= 1; /* skip */
 	    } else {
 		if (!strcmp((const char *) val, ".")) {
 		    /* missing value code */
@@ -201,7 +242,8 @@ static int get_observations_info (xmlNodePtr n, FREDbuf *fb,
 		    fx = (float) atof((const char *) val);
 		}
 #if DEBUG
-		ymd_to_db_date(obs, (const char *) date, fb->pd);
+		printf(" date='%s', val='%s'\n", (const char *) date, (const char *) val);
+		ymd_to_db_date(obs, (const char *) date, fb->pd, fb->sername);
 		printf(" %s %g\n", obs, (double) fx);
 #endif
 		fwrite(&fx, sizeof fx, 1, fbin);
@@ -327,6 +369,8 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	fb = fredget(FRED_OBS, 0, (const char *) idstr, fidx, &err);
 	if (!err) {
 	    fb->pd = pd;
+	    strncat(fb->sername, (const char *) idstr, MAXNAME - 1);
+	    strncat(fb->stobs, (const char *) start, OBSLEN - 1);
 	    err = parse_fred_xml(fb, fidx, fbin);
 	    FREDbuf_free(fb);
 	}
@@ -335,8 +379,8 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	    char stobs[16], endobs[16], sername[32];
 
 	    lower(sername, (const char *) idstr);
-	    ymd_to_db_date(stobs, (const char *) start, pd);
-	    ymd_to_db_date(endobs, (const char *) stop, pd);
+	    ymd_to_db_date(stobs, (const char *) start, pd, sername);
+	    ymd_to_db_date(endobs, (const char *) stop, pd, sername);
 
 	    fprintf(fidx, "%s  %s, %s", sername, title, units);
 	    if (adj != NULL && strcmp((const char *) adj, "NA")) {
@@ -754,9 +798,15 @@ static int get_api_key (const char *keyopt)
 int main (int argc, char **argv)
 {
     FILE *fidx = NULL, *fbin = NULL;
+#if 0 /* testing: just personal income, expenditure */
+    int topcats[] = {
+	110, -1
+    };
+#else
     int topcats[] = {
 	1, 9, 10, 13, 15, 18, 22, 23, 24, 31, 45, 46, -1
     };
+#endif
     FREDbuf *fb = NULL;
     const char *keyfile = NULL;
     int cats_only = 0;
