@@ -177,6 +177,9 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 		    offset = t+1;
 		}
 	    }
+	    if (offset < pdinfo->t1 - order) {
+		offset = pdinfo->t1 - order;
+	    }
 	    T = pdinfo->t2 - offset + 1;
 	    err = GLS_demean_detrend((*pZ)[v] + offset, T, test);
 	}
