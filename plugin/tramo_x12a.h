@@ -18,9 +18,9 @@
  */
 
 enum tx_objects {
-    TX_SA,    /* seasonally adjusted series */
-    TX_TR,    /* trend/cycle */
-    TX_IR,    /* irregular component */
+    TX_SA,    /* save seasonally adjusted series */
+    TX_TR,    /* save trend/cycle */
+    TX_IR,    /* save irregular component */
     TRIGRAPH, /* graph showing all of the above */
     TEXTOUT,  /* for full text output */
     TX_MAXOPT

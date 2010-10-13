@@ -767,16 +767,16 @@ static void request_opts_init (tx_request *request, const DATAINFO *pdinfo)
 
 static void set_opts (tx_request *request)
 {
+    GtkWidget *w;
     int i;
 
     request->savevars = 0;
 
-    *request->popt &= ~(OPT_A | OPT_B | OPT_C);
+    *request->popt &= ~(OPT_A | OPT_B | OPT_C | OPT_G);
 
     for (i=0; i<TX_MAXOPT; i++) {
-	if (request->opts[i].check != NULL && 
-	    gtk_toggle_button_get_active
-	    (GTK_TOGGLE_BUTTON(request->opts[i].check))) {
+	w = request->opts[i].check;
+	if (w != NULL && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
 	    request->opts[i].save = 1;
 	    if (i < TRIGRAPH) {
 		request->savevars++;
@@ -787,6 +787,8 @@ static void set_opts (tx_request *request)
 		} else if (i == 2) {
 		    *request->popt |= OPT_C;
 		}
+	    } else if (i == TRIGRAPH) {
+		*request->popt |= OPT_G;
 	    }
 	} else {
 	    request->opts[i].save = 0;
