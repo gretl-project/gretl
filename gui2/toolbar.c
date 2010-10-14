@@ -68,6 +68,7 @@
 #include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.func.xpm"
+#include "../pixmaps/mini.db.xpm"
 
 enum {
     SAVE_ITEM = 1,
@@ -126,7 +127,8 @@ void gretl_stock_icons_init (void)
 	mini_split_h_xpm,
 	mini_split_v_xpm,
 	mini_compass_xpm,
-	mini_spreadsheet_xpm
+	mini_spreadsheet_xpm,
+	mini_db_xpm
     };
     const char *stocks[] = {
 #if NO_INFO_ICON
@@ -154,7 +156,8 @@ void gretl_stock_icons_init (void)
 	GRETL_STOCK_SPLIT_H,
 	GRETL_STOCK_SPLIT_V,
 	GRETL_STOCK_COMPASS,
-	GRETL_STOCK_SHEET
+	GRETL_STOCK_SHEET,
+	GRETL_STOCK_DB
     };
     int n = G_N_ELEMENTS(stocks);
 
@@ -1059,6 +1062,7 @@ static GretlToolItem mainbar_items[] = {
     { N_("command reference"),  GTK_STOCK_HELP,      G_CALLBACK(tbar_command_ref), 0 },
     { N_("X-Y graph"),          GRETL_STOCK_SCATTER, G_CALLBACK(tbar_xy_graph), 0 },
     { N_("OLS model"),          GRETL_STOCK_MODEL,   G_CALLBACK(tbar_model), 0 },
+    { N_("gretl database"),     GRETL_STOCK_DB,      G_CALLBACK(show_native_dbs), 0 },
     { N_("open dataset"),       GTK_STOCK_OPEN,      G_CALLBACK(tbar_open_data), 0 }
 };
 

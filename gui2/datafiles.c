@@ -1585,6 +1585,11 @@ void show_files (GtkAction *action, gpointer p)
     display_files(code, p);
 }
 
+void show_native_dbs (void)
+{
+    display_files(NATIVE_DB, NULL);
+}
+
 static int get_func_info (const char *path, char **pdesc, 
 			  char **pver)
 {

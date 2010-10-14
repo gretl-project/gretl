@@ -47,6 +47,8 @@ void show_files (GtkAction *action, gpointer p);
 
 void display_files (int code, gpointer p);
 
+void show_native_dbs (void);
+
 gint populate_filelist (windata_t *fdata, gpointer p);
 
 char *strip_extension (char *s);
