@@ -536,8 +536,12 @@ void gretl_callback (GtkAction *action, gpointer data)
     switch (cmd) {
     case GENR:
 	title = N_("gretl: add var");
-	query = N_("Enter formula for new variable\n"
-		   "(or just a name, to enter data manually)");
+	if (datainfo->n > 5000) {
+	    query = N_("Enter formula for new variable");
+	} else {
+	    query = N_("Enter formula for new variable\n"
+		       "(or just a name, to enter data manually)");
+	}
 	okfunc = do_genr;
 	varclick = VARCLICK_INSERT_NAME;
 	break;
@@ -664,9 +668,16 @@ void revise_system_model (void *ptr)
 
 void genr_callback (void)
 {
-    edit_dialog(_("gretl: add var"), 
-		_("Enter formula for new variable\n"
-		  "(or just a name, to enter data manually)"),
+    const char *msg;
+
+    if (datainfo->n > 5000) {
+	msg = N_("Enter formula for new variable");
+    } else {
+	msg = N_("Enter formula for new variable\n"
+		 "(or just a name, to enter data manually)");
+    }
+
+    edit_dialog(_("gretl: add var"), _(msg),
 		NULL, do_genr, NULL, 
 		GENR, VARCLICK_INSERT_NAME, NULL);   
 }
@@ -689,7 +700,7 @@ void newdata_callback (void)
 
     resp = spin_dialog(_("gretl: create data set"), NULL, &n, 
 		       _("Number of observations:"), 
-		       2, 100000, 0);
+		       2, 1000000, 0);
 
     if (resp < 0) {
 	/* canceled */
