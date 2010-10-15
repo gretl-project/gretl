@@ -31,6 +31,8 @@ version 1.9.2, in progress
 - GUI interface to X-12-ARIMA: add more options to control
   the program's behavior
 - GUI model specification dialog: add a "genr" button
+- GUI, main window toolbar: add a button for direct access to
+  native gretl databases
 - Fix for multinomial logit: correct bias in favor of the
   base case in the reported fitted values ($yhat)
 - Fix bug 3021540 (sorting dataset)
@@ -41,6 +43,8 @@ version 1.9.2, in progress
 - Fix bug 3082926 (crash or bad session file when saving a 
   session containing models with missing observations)
 - Fix crashing bug in Wilcoxon signed rank test
+- Fix bug: adf test with --gls option: don't use too many
+  pre-sample values for the detrending regression
 - Fix bug: crash in GUI when estimation of a restricted VECM
   was not successfully completed
 - Fix for OS X: we now support Ctrl-click as equivalent to
