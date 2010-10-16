@@ -445,7 +445,9 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 	    /* and for seasonal MA */
 	    j += ainfo->Q;
 	}
-	b[j++] = pmod->coeff[i];
+	if (j < ainfo->nc) {
+	    b[j++] = pmod->coeff[i];
+	}
     }
 
     if (arma_xdiff(ainfo) && ainfo->ifc) {
