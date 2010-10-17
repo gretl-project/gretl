@@ -506,36 +506,35 @@ has_real_exog_regressors (MODEL *pmod, const int *dvlags,
 static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 			     const double **Z)
 {
+    int p = t - lag;
     double ldv;
 
     /* initialize to actual lagged value, if available */
-    if (t - lag < 0) {
+    if (p < 0) {
 	ldv = NADBL;
     } else {
-	ldv = Z[i][t-lag];
+	ldv = Z[i][p];
     }
 
 #if AR_DEBUG
     fprintf(stderr, "fcast_get_ldv: i=%d, t=%d, lag=%d; "
-	    "initial ldv = Z[%d][%d] = %g\n", i, t, lag, i, t-lag, ldv);
+	    "initial ldv = Z[%d][%d] = %g\n", i, t, lag, i, p, ldv);
 #endif
 
     if (fc->method != FC_STATIC) {
-	int yht = t - lag;
-
 #if AR_DEBUG
-	fprintf(stderr, "fcast_get_ldv (non-static): yht = %d\n", yht);
+	fprintf(stderr, "fcast_get_ldv (non-static): p = %d\n", p);
 #endif
-	if (fc->method == FC_DYNAMIC && yht >= 0) {
-	    if (!na(fc->yhat[yht])) {
-		ldv = fc->yhat[yht];
+	if (fc->method == FC_DYNAMIC && p >= 0) {
+	    if (!na(fc->yhat[p])) {
+		ldv = fc->yhat[p];
 	    }
-	} else if (fc->method == FC_AUTO && yht >= 0) {
+	} else if (fc->method == FC_AUTO && p >= 0) {
 	    if (t > fc->model_t2 + lag || na(ldv)) {
-		ldv = fc->yhat[yht];
+		ldv = fc->yhat[p];
 #if AR_DEBUG
-		fprintf(stderr, "fcast_get_ldv: reset ldv = yhat[%d] = %g\n",
-			yht, ldv);
+		fprintf(stderr, "fcast_get_ldv (FC_AUTO): "
+			"reset ldv = yhat[%d] = %g\n", p, ldv);
 #endif
 	    } 
 	}
