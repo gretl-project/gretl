@@ -918,7 +918,7 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
     const MODEL *pmod;
     double fti, xti, xtid;
     int tdyn, nf = t2 - t1 + 1;
-    int i, j, k, s, t;
+    int i, j, k, s, t, p;
     int lag, vj, m = 0;
     int fcols;
 
@@ -941,7 +941,7 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
     /* start of dynamic portion of forecast? */
     tdyn = VAR_get_tdyn(var, t1, t2, opt);
 
-#if 0
+#if VDEBUG
     fprintf(stderr, "var fcast: t1=%d, tdyn=%d, t2=%d\n", t1, tdyn, t2);
 #endif
 
@@ -965,18 +965,19 @@ VAR_add_forecast (GRETL_VAR *var, int t1, int t2,
 		    if (!lag_wanted(var, lag)) {
 			continue;
 		    }
+		    p = t - lag;
 		    xtid = NADBL;
-		    if (t < tdyn || s - lag < 0) {
-			/* pre-forecast value */
-			if (t - lag < 0) {
+		    if (p < tdyn || s - lag < 0) { 
+			/* use actual data if possible */
+			if (p < 0) {
 			    xti = NADBL;
 			} else {
-			    xti = Z[vj][t-lag];
+			    xti = Z[vj][p];
 			}
 		    } else {
 			/* prior forecast value preferred */
-			if (t - lag >= 0) {
-			    xtid = Z[vj][t-lag];
+			if (p >= 0) {
+			    xtid = Z[vj][p];
 			}
 			xti = gretl_matrix_get(var->F, s-lag, j);
 		    }

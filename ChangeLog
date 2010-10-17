@@ -35,6 +35,8 @@ version 1.9.2, in progress
   native gretl databases
 - Fix for multinomial logit: correct bias in favor of the
   base case in the reported fitted values ($yhat)
+- Fix VAR forecasts: ensure consistency in exactly where
+  a dynamic forecast starts
 - Fix bug 3021540 (sorting dataset)
 - Fix bug 3021854 (spreadsheet import with no numeric data)
 - Fix bug 3050710 (build process: LDFLAGS not respected)
