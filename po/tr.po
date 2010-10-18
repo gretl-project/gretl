@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-04 16:55-0400\n"
-"PO-Revision-Date: 2010-08-09 10:51+0300\n"
+"PO-Revision-Date: 2010-10-18 13:35+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -140,37 +140,32 @@ msgid "%s is a constant"
 msgstr "%s bir sabit"
 
 #: lib/src/adf_kpss.c:1054
-#, fuzzy
 msgid "Choi meta-tests:"
-msgstr "_Chow sınaması"
+msgstr "Chow üst-sınamaları:"
 
 #: lib/src/adf_kpss.c:1055
-#, fuzzy
 msgid "Inverse chi-square"
-msgstr "ki-kare"
+msgstr "Evrik ki-kare"
 
 #: lib/src/adf_kpss.c:1057
-#, fuzzy
 msgid "Inverse normal test"
-msgstr "normallik sınaması"
+msgstr "Evrik normallik sınaması"
 
 #: lib/src/adf_kpss.c:1059
-#, fuzzy
 msgid "Logit test"
-msgstr "logbirim"
+msgstr "Logbirim sınaması"
 
 #: lib/src/adf_kpss.c:1129
-#, fuzzy
 msgid "Unit"
-msgstr "birim"
+msgstr "Birim"
 
 #: lib/src/adf_kpss.c:1166
 msgid "H0: all groups have unit root"
-msgstr ""
+msgstr "H0: tüm kümelerin birim kökü var"
 
 #: lib/src/adf_kpss.c:1452
 msgid "Robust estimate of variance"
-msgstr "Sağlam varyans tahmini"
+msgstr "Varyansın sağlam tahmini"
 
 #: lib/src/adf_kpss.c:1453
 msgid "Sum of squares of cumulated residuals"
@@ -218,12 +213,11 @@ msgid "P-value"
 msgstr "P-değeri"
 
 #: lib/src/adf_kpss.c:1479
-#, fuzzy
 msgid "Interpolated p-value"
-msgstr "Çift-kuyruk p-değeri"
+msgstr "İçdeğerlemeli p-değeri"
 
 #: lib/src/adf_kpss.c:1511
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s %s\n"
@@ -232,13 +226,12 @@ msgstr ""
 "%s %s için KPSS sınaması\n"
 
 #: lib/src/adf_kpss.c:1533
-#, fuzzy
 msgid "interpolated p-value"
-msgstr "_Yakıştırılan değerler"
+msgstr "içdeğerlemeli p-değeri"
 
 #: lib/src/adf_kpss.c:1573
 msgid "H0: all groups are stationary"
-msgstr ""
+msgstr "H0: tüm kümeler durağan"
 
 #: lib/src/adf_kpss.c:1844 lib/src/adf_kpss.c:1881
 #, c-format
@@ -1278,24 +1271,22 @@ msgid "Please open a data file first"
 msgstr "Lütfen önce bir veri dosyası açınız"
 
 #: lib/src/dataset.c:1794 lib/src/dataset.c:1804
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %s"
-msgstr "Sil"
+msgstr "%s silindi"
 
 #: lib/src/dataset.c:1796 lib/src/dataset.c:1806
-#, fuzzy, c-format
+#, c-format
 msgid "Deleted %d variables"
-msgstr "İki değişken seçiniz"
+msgstr "%d değişken silindi"
 
 #: lib/src/dataset.c:1802
-#, fuzzy
 msgid "No variables were deleted"
-msgstr "Okunan değişken yok\n"
+msgstr "Silinen değişken yok"
 
 #: lib/src/dataset.c:1808
-#, fuzzy
 msgid "some data were in use"
-msgstr "Bulunan sayısal veriler yok"
+msgstr "Bazı veriler kullanımda"
 
 #: lib/src/dataset.c:1956 gui2/gui_utils.c:4364
 msgid "dataset is subsampled"
@@ -1469,7 +1460,7 @@ msgstr "%s yazmak için açılamadı"
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
 msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunmakta idi"
+"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunuyor"
 
 #: lib/src/describe.c:1108
 msgid "Insufficient data"
@@ -1578,14 +1569,12 @@ msgid "periods"
 msgstr "dönemler"
 
 #: lib/src/describe.c:3697
-#, fuzzy
 msgid "radians"
-msgstr "Düşümler:  "
+msgstr "düşümler"
 
 #: lib/src/describe.c:3699
-#, fuzzy
 msgid "degrees"
-msgstr "seri"
+msgstr "dereceler"
 
 #: lib/src/describe.c:3701
 msgid "scaled frequency"
@@ -1749,7 +1738,7 @@ msgstr "%s çıkarılıyor: örneklem aralığı geçerli gözlem içermiyor\n"
 
 #: lib/src/describe.c:4849
 msgid "corr: needs at least two non-constant arguments"
-msgstr ""
+msgstr "corr: sabit olmayan en az iki argüman gerekli"
 
 #: lib/src/describe.c:4906 lib/src/modelprint.c:3168 lib/src/modelprint.c:3180
 #: lib/src/modelprint.c:3181 lib/src/modelprint.c:3182
@@ -2461,7 +2450,7 @@ msgstr "Dönemsel kukla değişkenler oluşturuldu.\n"
 
 #: lib/src/genmain.c:480
 msgid "Periodic dummy variables already present.\n"
-msgstr "Dönemsel kukla değişkenler zaten bulunmakta.\n"
+msgstr "Dönemsel kukla değişkenler zaten bulunuyor.\n"
 
 #: lib/src/genmain.c:486 lib/src/genmain.c:491
 msgid "Panel dummy variables generated.\n"
@@ -2770,7 +2759,7 @@ msgstr "Hedef işlev başlangıç değeri sonlu değil"
 
 #: lib/src/gretl_bundle.c:373
 msgid "no such item"
-msgstr ""
+msgstr "böyle bir kalem yok"
 
 #: lib/src/gretl_bundle.c:956
 #, c-format
@@ -2855,7 +2844,7 @@ msgstr "Eklenen yeni bağımsız değişken yok"
 
 #: lib/src/gretl_errors.c:59
 msgid "One or more \"added\" vars were already present"
-msgstr "\"Eklenen\" değişkenlerden bir veya birden çoğu zaten bulunmakta"
+msgstr "\"Eklenen\" değişkenlerden bir veya birden çoğu zaten bulunuyor"
 
 #: lib/src/gretl_errors.c:60
 msgid "Error generating logarithms"
@@ -3087,7 +3076,7 @@ msgstr "%s. dereceden ÖBKF (ARCH) sınaması"
 
 #: lib/src/gretl_model.c:2929
 msgid "no ARCH effect is present"
-msgstr "ÖBKF (ARCH) etkisi bulunmamaktadır"
+msgstr "ÖBKF (ARCH) etkisi bulunmuyor"
 
 #: lib/src/gretl_model.c:2931
 #, c-format
@@ -3946,9 +3935,9 @@ msgid "command '%s' not recognized"
 msgstr "'%s' komutu tanınamadı"
 
 #: lib/src/interact.c:2712 plugin/arbond.c:2538
-#, fuzzy, c-format
+#, c-format
 msgid "variable %d duplicated in the command list."
-msgstr "%d nolu değişken, komut listesinde tekrarlı"
+msgstr "değişken %d komut listesinde tekrarlı"
 
 #: lib/src/interact.c:2780 lib/src/interact.c:3006
 #, c-format
@@ -4117,7 +4106,7 @@ msgstr "kalman: gerekli bir dizey eksik"
 
 #: lib/src/kalman.c:473
 msgid "No Kalman filter is defined"
-msgstr "Tanımlı bir Kalman süzgeci yok"
+msgstr "Tanımlı bir Kalman süzgeçi yok"
 
 #: lib/src/kalman.c:2052 lib/src/kalman.c:2536 lib/src/libset.c:909
 #: lib/src/usermat.c:1496 lib/src/usermat.c:1556 lib/src/usermat.c:1565
@@ -4255,9 +4244,8 @@ msgid "Wald (joint) test"
 msgstr "Wald (ortak) sınaması"
 
 #: lib/src/modelprint.c:329 lib/src/modelprint.c:336
-#, fuzzy
 msgid "Wald (time dummies)"
-msgstr "Zaman kuklaları ekle"
+msgstr "Wald (zaman kuklaları)"
 
 #: lib/src/modelprint.c:330 lib/src/modelprint.c:337
 msgid "J test"
@@ -4277,9 +4265,9 @@ msgid "GMM criterion"
 msgstr "GBY ölçütü"
 
 #: lib/src/modelprint.c:437 lib/src/modelprint.c:439
-#, fuzzy, c-format
+#, c-format
 msgid "Number of instruments = %d"
-msgstr "Farklılık sayısı: n = %d\n"
+msgstr "Araç sayısı = %d"
 
 #: lib/src/modelprint.c:506
 msgid "Warning: solution is probably not unique"
@@ -4808,7 +4796,7 @@ msgstr "En küçük kareler kullanılarak tahmin edildi"
 
 #: lib/src/modelprint.c:1495
 msgid "= MLE"
-msgstr ""
+msgstr "= MLE"
 
 #: lib/src/modelprint.c:1498
 msgid "Estimated using Kalman filter"
@@ -5028,10 +5016,10 @@ msgid ""
 "This behavior may change in future versions, so you may want to adjust your\n"
 "scripts accordingly.\n"
 msgstr ""
-"UYARI: Sabit terim bağlayanlar arasında vardı ama araçlar arasında\n"
-"bulunmuyordu; bu yüzden araç listesine kendiliğinden eklendi.\n"
-"Bu davranış gelecekteki sürümlerde değişebilir. Bu yüzden betiklerinizi\n"
-"buna uygun şekilde ayarlamak isteyebilirsiniz.\n"
+"UYARI: Sabit terim bağlayanlar arasında bulunuyordu ama araçlar\n"
+"arasında değildi; bu yüzden araç listesine kendiliğinden eklendi.\n"
+"Bu davranış gelecekteki sürümlerde değişebilir. Bu nedenle\n"
+"betiklerinizi uygun doğrultuda ayarlamak isteyebilirsiniz.\n"
 
 #: lib/src/modelprint.c:2149
 msgid "Statistics based on the original data"
@@ -6616,9 +6604,8 @@ msgid "dummify: no suitable variables were found"
 msgstr "dummify: bulunan uygun değişken yok"
 
 #: lib/src/tsls.c:1405 gui2/selector.c:2665
-#, fuzzy
 msgid "You can't use the dependent variable as an instrument"
-msgstr "Bu bağlamda değişken silemezsiniz\n"
+msgstr "Bağımlı değişkeni bir araç olarak kullanamazsınız"
 
 #: lib/src/tsls.c:1415 lib/src/tsls.c:1549
 #, c-format
@@ -6849,15 +6836,14 @@ msgid "VAR system, maximum lag order %d"
 msgstr "YÖB sistemi, ençok gecikme derecesi %d"
 
 #: lib/src/vartest.c:225
-#, fuzzy
 msgid ""
 "The asterisks below indicate the best (that is, minimized) values\n"
 "of the respective information criteria, AIC = Akaike criterion,\n"
 "BIC = Schwarz Bayesian criterion and HQC = Hannan-Quinn criterion."
 msgstr ""
 "Aşağıdaki yıldız imleri, bağlı oldukları bilgi ölçütüne ait en iyi (yani\n"
-"enazlamalı) değerleri göstermektedir. ABÖ = Akaike bilgi ölçütü,\n"
-"BBÖ = Schwartz Bayesçi bilgi ölçütü, HQÖ = Hannan-Quinn ölçütü."
+"enaz olan) değerleri göstermektedir. ABÖ = Akaike ölçütü,\n"
+"BBÖ = Schwarz Bayesçi ölçüt, HQÖ = Hannan-Quinn ölçütü."
 
 #: lib/src/vartest.c:230
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
@@ -6951,7 +6937,8 @@ msgstr "Bir veri seti açmak için \"open <dosyaadı>\" giriniz\n"
 #: cli/gretlcli.c:725
 #, c-format
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
-msgstr "Yeni bir veri dosyası açmak var olanı kapatır. Devam edilsin mi? (y/n)"
+msgstr ""
+"Yeni bir veri dosyası açmak şu ankini kapatır. Devam edilsin mi? (y/n) "
 
 #: cli/gretlcli.c:729
 msgid "OK, staying with current data set\n"
@@ -7638,7 +7625,7 @@ msgstr "her iki yığınsal"
 
 #: gui2/callbacks.c:278
 msgid "Sorry, this item not yet implemented!"
-msgstr "Üzgünüm, bu madde daha eklenmedi!"
+msgstr "Üzgünüm, bu kalem daha eklenmedi!"
 
 #: gui2/callbacks.c:386 gui2/callbacks.c:538 gui2/callbacks.c:667
 #: gui2/selector.c:5355
@@ -7821,19 +7808,20 @@ msgid "gretl: display database series"
 msgstr "gretl: veritabanı serisini göster"
 
 #: gui2/database.c:215 gui2/dialogs.c:3280
-#, fuzzy
 msgid "Interpolate higher frequency values"
-msgstr "Çift-kuyruk p-değeri"
+msgstr "Yüksek sıklıklı değerleri içdeğerle"
 
 #: gui2/database.c:216 gui2/dialogs.c:3281
 msgid "Repeat the lower frequency values"
-msgstr ""
+msgstr "Düşük sıklıklı değerleri tekrarla"
 
 #: gui2/database.c:219
 msgid ""
 "Adding a lower frequency series to a\n"
 "higher frequency dataset"
 msgstr ""
+"Düşük sıklıklı bir seriyi yüksek sıklıklı\n"
+"bir veri setine eklemek"
 
 #: gui2/database.c:231
 #, c-format
@@ -8779,9 +8767,8 @@ msgid "gretl: expand data"
 msgstr "gretl: veri setini genişlet"
 
 #: gui2/dialogs.c:3314
-#, fuzzy
 msgid "Expand annual data to quarterly"
-msgstr "Yıllık verileri genişlet:"
+msgstr "Yıllık verileri üç aylığa genişlet"
 
 #: gui2/dialogs.c:3316
 msgid "Expand quarterly data to monthly"
@@ -8816,9 +8803,8 @@ msgid "Bartlett window, bandwidth:"
 msgstr "Bartlett penceresi, uzunluk:"
 
 #: gui2/dialogs.c:3890
-#, fuzzy
 msgid "frequency axis scale:"
-msgstr "sıklık %d desteklenmiyor"
+msgstr "sıklık eksen ölçeği:"
 
 #: gui2/dialogs.c:4053
 msgid "Number of bins:"
@@ -8982,7 +8968,6 @@ msgid "(Please refer to Help for guidance)"
 msgstr "(Bilgi için lütfen Yardım'a başvurunuz)"
 
 #: gui2/fileselect.c:463 gui2/library.c:7194
-#, fuzzy
 msgid ""
 "There is already a file of this name.\n"
 "OK to overwrite it?"
@@ -9040,11 +9025,11 @@ msgstr "Baxter-King kuşak-geçiş süzgeçi"
 
 #: gui2/filters.c:99
 msgid "Butterworth filter"
-msgstr ""
+msgstr "Butterworth süzgeçi"
 
 #: gui2/filters.c:101
 msgid "Polynomial trend"
-msgstr ""
+msgstr "Çokterimli eğilim"
 
 #: gui2/filters.c:103
 msgid "Fractional difference"
@@ -9078,12 +9063,12 @@ msgstr "%s üstel HO kalıntıları (şu anki ağırlık %g)"
 #: gui2/filters.c:224
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott trend (lambda = %g)"
-msgstr "Süzmeli %s: Hodrick-Prescott eğilimi (lambda = %g)"
+msgstr "Süzmeli %s: Hodrick-Prescott eğilimi (lamda = %g)"
 
 #: gui2/filters.c:227
 #, c-format
 msgid "Filtered %s: Hodrick-Prescott cycle (lambda = %g)"
-msgstr "Süzmeli %s: Hodrick-Prescott çevrimi (lambda = %g)"
+msgstr "Süzmeli %s: Hodrick-Prescott çevrimi (lamda = %g)"
 
 #: gui2/filters.c:231
 #, c-format
@@ -9093,22 +9078,22 @@ msgstr "Süzmeli %s: Baxter-King, sıklık %d ile %d"
 #: gui2/filters.c:235
 #, c-format
 msgid "Filtered %s: Butterworth low-pass (n=%d, cutoff=%d)"
-msgstr ""
+msgstr "Süzmeli %s: Butterworth düşük-geçiş (n=%d, kesme=%d)"
 
 #: gui2/filters.c:238
 #, c-format
 msgid "Filtered %s: Butterworth high-pass (n=%d, cutoff=%d)"
-msgstr ""
+msgstr "Süzmeli %s: Butterworth yüksek-geçiş (n=%d, kesme=%d)"
 
 #: gui2/filters.c:243
 #, c-format
 msgid "Filtered %s: polynomial of order %d"
-msgstr ""
+msgstr "Süzmeli %s: %d. derece çokterimli"
 
 #: gui2/filters.c:246
-#, fuzzy, c-format
+#, c-format
 msgid "Filtered %s: residual from polynomial of order %d"
-msgstr "model %d kalıntı kareleri"
+msgstr "Süzmeli %s: %d. derece çokterimliden kalıntılar"
 
 #: gui2/filters.c:290
 msgid "Variable name is missing"
@@ -9151,33 +9136,28 @@ msgid "the mean of the whole series"
 msgstr "tüm serinin ortalaması"
 
 #: gui2/filters.c:479
-#, fuzzy
 msgid "quadratic"
-msgstr "çeyrekler"
+msgstr "kareli"
 
 #: gui2/filters.c:480
 msgid "cosine-bell"
-msgstr ""
+msgstr "cosine-bell"
 
 #: gui2/filters.c:487
-#, fuzzy
 msgid "Weights:"
-msgstr "yükseklik"
+msgstr "Ağırlıklar:"
 
 #: gui2/filters.c:497
-#, fuzzy
 msgid "with maximum:"
-msgstr "ençok"
+msgstr "ençok:"
 
 #: gui2/filters.c:507
-#, fuzzy
 msgid "Central fraction:"
-msgstr "gretl: bilgi"
+msgstr "Merkezi kesir:"
 
 #: gui2/filters.c:513
-#, fuzzy
 msgid "Show weights"
-msgstr "Ayrıntıları göster"
+msgstr "Ağırlıkları göster"
 
 #: gui2/filters.c:628
 msgid "gretl: time-series filter"
@@ -9197,30 +9177,27 @@ msgstr "Şu anki gözlemin ağırlığı:"
 
 #: gui2/filters.c:684
 msgid "lambda (higher values -> smoother trend):"
-msgstr "lambda (yüksek değerler -> daha düzgün eğilim):"
+msgstr "lamda (yüksek değerler -> daha düzgün eğilim):"
 
 #: gui2/filters.c:695
 msgid "k (higher values -> better approximation):"
 msgstr "k (yüksek değerler -> daha iyi yaklaştırma):"
 
 #: gui2/filters.c:708
-#, fuzzy
 msgid "n (higher values -> better approximation):"
-msgstr "k (yüksek değerler -> daha iyi yaklaştırma):"
+msgstr "n (yüksek değerler -> daha iyi yaklaştırma):"
 
 #: gui2/filters.c:720
 msgid "frequency cutoff (degrees):"
-msgstr ""
+msgstr "sıklık kesme noktası (derece):"
 
 #: gui2/filters.c:731
-#, fuzzy
 msgid "show poles"
-msgstr "çizimi göster"
+msgstr "kutupları göster"
 
 #: gui2/filters.c:742
-#, fuzzy
 msgid "Order:"
-msgstr "ÖB derecesi:"
+msgstr "Derece:"
 
 #: gui2/filters.c:756
 msgid "differencing parameter:"
@@ -9247,9 +9224,8 @@ msgid "Graph residual or cycle series"
 msgstr "Kalıntı veya çevrim serilerini çiz"
 
 #: gui2/filters.c:798
-#, fuzzy
 msgid "Graph frequency response"
-msgstr "Farkı alınan seriyi çiz"
+msgstr "Sıklık tepkisini çiz"
 
 #: gui2/filters.c:911 gui2/filters.c:937
 #, c-format
@@ -9273,16 +9249,16 @@ msgstr "Baxter-King Bileşeni, Değişken: %s (sıklık %d ve %d arası)"
 
 #: gui2/filters.c:1108
 msgid "Gain for Butterworth filter"
-msgstr ""
+msgstr "Butterworth süzgeçi kazanımı"
 
 #: gui2/filters.c:1109
 msgid "nominal cutoff"
-msgstr ""
+msgstr "nominal kesme noktası"
 
 #: gui2/filters.c:1112
 #, c-format
 msgid "Gain for H-P filter (lambda = %g)"
-msgstr ""
+msgstr "H-P süzgeçi kazanımı (lamda = %g)"
 
 #: gui2/fncall.c:177
 #, c-format
@@ -9292,7 +9268,7 @@ msgstr "Argüman %d (%s) eksik"
 #: gui2/fncall.c:356
 #, c-format
 msgid "help on %s"
-msgstr ""
+msgstr "%s üzerine yardım"
 
 #: gui2/fncall.c:512
 msgid "No name was given for the list"
@@ -9328,7 +9304,7 @@ msgstr "seçim (veya yeni değişken)"
 
 #: gui2/fncall.c:861
 msgid "close this dialog on \"OK\""
-msgstr ""
+msgstr "\"Tamam\" üzerine bu iletiyi kapat"
 
 #: gui2/fncall.c:1223
 msgid "Function package is broken"
@@ -9526,14 +9502,12 @@ msgid "Print"
 msgstr "Yazdır"
 
 #: gui2/gpt_control.c:3160
-#, fuzzy
 msgid "roots (real, imaginary, modulus, frequency)"
-msgstr "YÖB kökleri (reel, sanal, ölçke, sıklık)"
+msgstr "kökler (reel, sanal, ölçke, sıklık)"
 
 #: gui2/gpt_control.c:3197
-#, fuzzy
 msgid "roots"
-msgstr "YÖB kökleri"
+msgstr "kökler"
 
 #: gui2/gpt_control.c:3219
 msgid "gretl: boxplot data"
@@ -9606,9 +9580,8 @@ msgid "Numerical values"
 msgstr "Sayısal değerler"
 
 #: gui2/gpt_control.c:3353 gui2/gpt_control.c:3429
-#, fuzzy
 msgid "Font"
-msgstr "Yazı tipi adı"
+msgstr "Yazı tipi"
 
 #: gui2/gpt_control.c:3370 gui2/gpt_dialog.c:2628 gui2/graphics.c:257
 #: gui2/graph_page.c:608
@@ -9625,7 +9598,7 @@ msgstr "gretl: çizit"
 
 #: gui2/gpt_control.c:4542
 msgid " Click on graph for pop-up menu"
-msgstr "seçenekler için çizite tıklayınız"
+msgstr "Açılır menü için çizite tıklayınız"
 
 #: gui2/gpt_dialog.c:121
 msgid "linear: y = a + b*x"
@@ -10297,7 +10270,7 @@ msgstr "_Liste tanımla veya düzenle..."
 
 #: gui2/gretl.c:1446
 msgid "_Set selection from list..."
-msgstr ""
+msgstr "Seçimi listeden _sapta..."
 
 #: gui2/gretl.c:1447 gui2/gretl.c:1525
 msgid "_Display values"
@@ -10542,7 +10515,7 @@ msgstr "_Yerine koyarak yeniden örnekle"
 
 #: gui2/gretl.c:1519
 msgid "Drop all obs with _missing values"
-msgstr "Eksik değer içeren gözlemleri _çıkar"
+msgstr "Eksik değerli tüm gözlemleri _çıkar"
 
 #: gui2/gretl.c:1521
 msgid "_Count missing values"
@@ -10582,7 +10555,7 @@ msgstr "_Zaman serisi çizimi"
 
 #: gui2/gretl.c:1534
 msgid "_Unit root tests"
-msgstr ""
+msgstr "_Birim kök sınamaları"
 
 #: gui2/gretl.c:1535
 msgid "_Augmented Dickey-Fuller test"
@@ -10630,11 +10603,11 @@ msgstr "_Baxter-King"
 
 #: gui2/gretl.c:1546
 msgid "_Butterworth"
-msgstr ""
+msgstr "_Butterworth"
 
 #: gui2/gretl.c:1547
 msgid "_Polynomial trend"
-msgstr ""
+msgstr "_Çokterimli eğilim"
 
 #: gui2/gretl.c:1548
 msgid "_Fractional difference"
@@ -11442,7 +11415,7 @@ msgstr "gretl uçbirimi"
 
 #: gui2/gui_utils.c:2335 gui2/gui_utils.c:2348
 msgid "Outcome probabilities"
-msgstr ""
+msgstr "Sonuç olasılıkları"
 
 #: gui2/gui_utils.c:2415
 msgid "_Fitted values"
@@ -11943,7 +11916,7 @@ msgstr "değişkenin birinci farkını kullan"
 
 #: gui2/library.c:974 gui2/library.c:985
 msgid "show individual test results"
-msgstr ""
+msgstr "her bir sınama sonucunu göster"
 
 #: gui2/library.c:977 gui2/library.c:983
 msgid "include a trend"
@@ -13369,14 +13342,12 @@ msgid "Unrestricted trend"
 msgstr "Sınırlamasız eğilim"
 
 #: gui2/selector.c:5356
-#, fuzzy
 msgid "Enter formula for new variable"
-msgstr "Yeni değişken için formül giriniz:"
+msgstr "Yeni değişken için formül giriniz"
 
 #: gui2/selector.c:5368
-#, fuzzy
 msgid "New variable"
-msgstr "endeks değişkeni"
+msgstr "Yeni değişken"
 
 #: gui2/selector.c:5398
 msgid "plot with impulses"
@@ -14059,7 +14030,7 @@ msgstr "kabuk tarafından belirli şu anki dizin"
 
 #: gui2/settings.c:2355
 msgid "The file selection dialog should:"
-msgstr "Dosya seçim penceresi:"
+msgstr "Dosya seçimi iletisi:"
 
 #: gui2/settings.c:2362
 msgid "remember the last-opened folder"
@@ -14268,9 +14239,8 @@ msgid "Couldn't open '%s'"
 msgstr "'%s' açılamadı"
 
 #: gui2/ssheet.c:3496
-#, fuzzy
 msgid "The dataset cannot be modified at present"
-msgstr "Bu veri seti bir panel olarak yorumlanamıyor"
+msgstr "Veri seti şu an kiplenemiyor (modify)"
 
 #: gui2/textbuf.c:281 gui2/textbuf.c:289
 msgid "No undo information available"
@@ -14462,9 +14432,8 @@ msgid "Reformat..."
 msgstr "Yeniden biçimlendir..."
 
 #: gui2/toolbar.c:643
-#, fuzzy
 msgid "Edit values..."
-msgstr "Değerleri düzenle"
+msgstr "Değerleri düzenle..."
 
 #: gui2/toolbar.c:644
 msgid "Refresh"
@@ -14663,9 +14632,8 @@ msgid "ARMA initialization"
 msgstr "ÖBHO ilklendirmesi"
 
 #: plugin/arma.c:1374
-#, fuzzy
 msgid "user-specified values"
-msgstr "kullanıcının sağladığı başlangıç değerleri"
+msgstr "kullanıcı-belirtimli değerler"
 
 #: plugin/arma_common.c:741 plugin/arma_common.c:822
 msgid "Error in arma command"
@@ -14673,12 +14641,11 @@ msgstr "arma komut hatası"
 
 #: plugin/arma_init.c:350
 msgid "Hannan-Rissanen method"
-msgstr ""
+msgstr "Hannan-Rissanen yöntemi"
 
 #: plugin/arma_init.c:1152
-#, fuzzy
 msgid "small MA values"
-msgstr "geçerli değerler"
+msgstr "küçük HO değerleri"
 
 #: plugin/arma_init.c:1230
 msgid "using nonlinear AR model"
@@ -14991,9 +14958,8 @@ msgid "P(Chi-Square(%d) > %g) = %g\n"
 msgstr "P(Ki-Kare(%d) > %g) = %g\n"
 
 #: plugin/jrestrict.c:1249
-#, fuzzy
 msgid "Switching algorithm: failed"
-msgstr "Değiştirilen çözüm yolu: %d yineleme"
+msgstr "Değiştirilen çözüm yolu: başarısız"
 
 #: plugin/jrestrict.c:1252
 #, c-format
@@ -15410,13 +15376,12 @@ msgid "irregular component of %s"
 msgstr "%s düzensiz bileşeni"
 
 #: plugin/tramo-x12a.c:190
-#, fuzzy
 msgid "X-12-ARIMA options"
-msgstr "X-12-ARIMA çıktılarını göster"
+msgstr "X-12-ARIMA seçenekleri"
 
 #: plugin/tramo-x12a.c:201
 msgid "Correct for trading days effect"
-msgstr ""
+msgstr "İşlem günleri etkisi için düzeltme yap"
 
 #: plugin/tramo-x12a.c:278
 msgid "Show full output"
