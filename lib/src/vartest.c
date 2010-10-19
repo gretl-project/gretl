@@ -113,18 +113,15 @@ form_C0j (const GRETL_VAR *var, gretl_matrix *C0j,
 
 int VAR_portmanteau_test (GRETL_VAR *var)
 {
-    gretl_matrix *C00 = NULL;
-    gretl_matrix *C0j = NULL;
-    gretl_matrix *et = NULL;
-    gretl_matrix *ej = NULL;
-    gretl_matrix *L = NULL;
-    gretl_matrix *R = NULL;
-    gretl_matrix *Tmp = NULL;
-    int n = var->neqns;
+    gretl_matrix_block *B;
+    gretl_matrix *C00, *C0j;
+    gretl_matrix *et, *ej;
+    gretl_matrix *L, *R, *Tmp;
+    int k, n = var->neqns;
     double trj, LB = 0.0;
     int s, j, err = 0;
 
-    /* we'll do this just for unrestricted VARs */
+    /* we'll do this only for unrestricted VARs */
     if (var->ci == VECM && jrank(var) < var->neqns) {
 	return 0;
     }
@@ -133,23 +130,27 @@ int VAR_portmanteau_test (GRETL_VAR *var)
     s = var->T / 4;
     if (s > 48) s = 48;
 
-    clear_gretl_matrix_err();
+    k = var->order + (var->ci == VECM);
+    if (s - k <= 0) {
+	/* no degrees of freedom */
+	return 0;
+    }
 
-    C00 = gretl_matrix_alloc(n, n);
-    C0j = gretl_matrix_alloc(n, n);
-    et = gretl_matrix_alloc(1, n);
-    ej = gretl_matrix_alloc(1, n);
-    L = gretl_matrix_alloc(n, n);
-    R = gretl_matrix_alloc(n, n);
-    Tmp = gretl_matrix_alloc(n, n);
+    B = gretl_matrix_block_new(&C00, n, n,
+			       &C0j, n, n,
+			       &et,  1, n,
+			       &ej,  1, n,
+			       &L,   n, n,
+			       &R,   n, n,
+			       &Tmp, n, n,
+			       NULL);
 
-    err = get_gretl_matrix_err();
+    if (B == NULL) {
+	return E_ALLOC;
+    }
 
     form_C0j(var, C00, et, ej, 0);
-
-    if (!err) {
-	err = gretl_invert_symmetric_matrix(C00);
-    }
+    err = gretl_invert_symmetric_matrix(C00);
 
     for (j=1; j<=s && !err; j++) {
 	form_C0j(var, C0j, et, ej, j);
@@ -171,13 +172,7 @@ int VAR_portmanteau_test (GRETL_VAR *var)
 	var->LBs = 0;
     }
 
-    gretl_matrix_free(C00);
-    gretl_matrix_free(C0j);
-    gretl_matrix_free(et);
-    gretl_matrix_free(ej);
-    gretl_matrix_free(L);
-    gretl_matrix_free(R);
-    gretl_matrix_free(Tmp);
+    gretl_matrix_block_destroy(B);
 
     return err;
 }

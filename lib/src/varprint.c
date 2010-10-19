@@ -946,6 +946,10 @@ static void VAR_print_LB_stat (const GRETL_VAR *var, PRN *prn)
     int df = var->neqns * var->neqns * (var->LBs - k);
     double pv = chisq_cdf_comp(df, var->LB);
 
+    if (df <= 0) {
+	return;
+    }
+
     if (tex_format(prn)) {
 	pprintf(prn, "\\noindent\n%s: LB(%d) = %g, %s = %d [%.4f]\\par\n",
 		I_("Portmanteau test"), var->LBs, var->LB,
