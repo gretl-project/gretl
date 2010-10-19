@@ -121,6 +121,9 @@ int VAR_portmanteau_test (GRETL_VAR *var)
     double trj, LB = 0.0;
     int s, j, err = 0;
 
+    var->LB = NADBL;
+    var->LBs = 0;
+
     /* we'll do this only for unrestricted VARs */
     if (var->ci == VECM && jrank(var) < var->neqns) {
 	return 0;
@@ -167,9 +170,6 @@ int VAR_portmanteau_test (GRETL_VAR *var)
 	LB *= var->T * (var->T + 2);
 	var->LB = LB;
 	var->LBs = s;
-    } else {
-	var->LB = NADBL;
-	var->LBs = 0;
     }
 
     gretl_matrix_block_destroy(B);
