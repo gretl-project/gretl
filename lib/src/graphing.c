@@ -1031,7 +1031,7 @@ int write_plot_type_string (PlotType ptype, FILE *fp)
     return ret;
 }
 
-#define PDF_CAIRO_STRING "set term pdfcairo font \"sans,5\""
+#define PDF_CAIRO_STRING "set term pdfcairo font \"sans,10\""
 
 static void print_term_string (int tt, FILE *fp)
 {
