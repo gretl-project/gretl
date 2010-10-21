@@ -3790,21 +3790,51 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
     return TRUE;
 }
 
+#ifdef USE_CAIRO
+
+# if 0 /* not yet, GTK 3 */
+
 static 
-void plot_expose (GtkWidget *widget, GdkEventExpose *event,
+void plot_draw (GtkWidget *widget, GdkRectangle *rect, 
+		gpointer data)
+{
+    GdkWindow *window = gtk_widget_get_window(widget);
+    png_plot *plot = data;
+
+    plot->cr = gdk_cairo_create(window);
+    gdk_cairo_set_source_pixmap(plot->cr, plot->pixmap, 0, 0);
+    gdk_cairo_rectangle(plot->cr, rect);
+    cairo_fill(plot->cr);
+    cairo_destroy(plot->cr);
+}
+
+# else /* transitional use of cairo */
+
+static 
+void plot_expose (GtkWidget *widget, GdkEventExpose *event, 
 		  gpointer data)
 {
     GdkWindow *window = gtk_widget_get_window(widget);
     png_plot *plot = data;
 
-#ifdef USE_CAIRO
     plot->cr = gdk_cairo_create(window);
     gdk_cairo_set_source_pixmap(plot->cr, plot->pixmap, 0, 0);
     gdk_cairo_rectangle(plot->cr, &event->area);
     cairo_fill(plot->cr);
     cairo_destroy(plot->cr);
+}
+
+# endif
+
 #else
+
+static 
+void plot_expose (GtkWidget *widget, GdkEventExpose *event,
+		  gpointer data)
+{
+    GdkWindow *window = gtk_widget_get_window(widget);
     GtkStyle *style = gtk_widget_get_style(widget);
+    png_plot *plot = data;
 
     /* Don't repaint entire window on each exposure */
     gdk_window_set_back_pixmap(window, NULL, FALSE);
@@ -3817,8 +3847,9 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 		      event->area.x, event->area.y,
 		      event->area.x, event->area.y,
 		      event->area.width, event->area.height);
-#endif
 }
+
+#endif
 
 static void plot_area_updated (GdkPixbufLoader *loader, gint x, gint y,
 			       gint width, gint height, gpointer p)
@@ -4586,8 +4617,19 @@ static int gnuplot_show_png (const char *fname, const char *name,
     plot->pixmap = gdk_pixmap_new(gtk_widget_get_window(plot->shell), 
 				  plot->pixel_width, plot->pixel_height, 
 				  -1);
+
+#if 0 /* not yet, GTK 3 */
+    plot->cs = gdk_window_create_similar_surface(gtk_widget_get_window(plot->shell),
+						 CAIRO_CONTENT_COLOR_ALPHA, /* ? */
+						 plot->pixel_width, 
+						 plot->pixel_height);
+
+    g_signal_connect(G_OBJECT(plot->canvas), "draw",
+		     G_CALLBACK(plot_draw), plot);
+#else
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
 		     G_CALLBACK(plot_expose), plot);
+#endif
 
     err = render_pngfile(plot, PNG_START);
     if (err) {
