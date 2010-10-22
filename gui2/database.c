@@ -274,11 +274,54 @@ static int pd_convert_check (SERIESINFO *sinfo)
     return err;
 }
 
+static const char *compact_method_string (CompactMethod method)
+{
+    if (method == COMPACT_SUM) {
+	return "sum";
+    } else if (method == COMPACT_SOP) {
+	return "first";
+    } else if (method == COMPACT_EOP) {
+	return "last";
+    } else {
+	return NULL;
+    }
+}
+
+static void record_db_open_command (dbwrapper *dw)
+{
+    if (dw->fname != NULL) {
+	gchar *cmdline;
+
+	if (dw->dbtype == GRETL_PCGIVE_DB) {
+	    cmdline = g_strdup_printf("open %s.bn7", dw->fname);
+	} else if (dw->dbtype == GRETL_NATIVE_DB) {
+	    const char *tmp = gretl_binbase();
+	    int n = strlen(tmp);
+
+	    if (!strncmp(dw->fname, tmp, n)) {
+		tmp = dw->fname + n;
+		if (*tmp == SLASH) tmp++;
+		cmdline = g_strdup_printf("open %s.bin", tmp);
+	    } else {
+		cmdline = g_strdup_printf("open %s.bin", dw->fname);
+	    }
+	} else if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
+	    cmdline = g_strdup_printf("open %s --www", dw->fname);
+	} else {
+	    cmdline = g_strdup_printf("open %s", dw->fname);
+	}
+
+	record_command_verbatim(cmdline);
+	g_free(cmdline);
+    }
+}
+
 static int 
 add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw) 
 {
     SERIESINFO *sinfo;
     CompactMethod method = COMPACT_AVG;
+    gchar *cmdline = NULL;
     int resp, warned = 0, chosen = 0;
     int i, t, err = 0;
 
@@ -286,11 +329,15 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	return 1;
     }
 
+    record_db_open_command(dw);
+
     for (i=0; i<dw->nv && !err; i++) {
 	int overwrite = 0;
 	double x, *xvec = NULL;
+	const char *cstr = NULL;
 	int v, dbv, start, stop;
 	int pad1 = 0, pad2 = 0;
+	int expand = 0, compact = 0;
 	int interpol = 0;
 
 	sinfo = &dw->sinfo[i];
@@ -332,8 +379,12 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	}
 
 	if (sinfo->pd < datainfo->pd) {
+	    /* the series needs to be expanded */
+	    expand = 1;
 	    xvec = expand_db_series(dbZ[v], sinfo, datainfo->pd, interpol);
 	} else if (sinfo->pd > datainfo->pd) {
+	    /* the series needs to be compacted */
+	    compact = 1;
 	    if (!chosen) {
 		data_compact_dialog(vwin->main, sinfo->pd, &datainfo->pd, NULL, 
 				    &method, NULL);
@@ -348,7 +399,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    xvec = compact_db_series(dbZ[v], sinfo, datainfo->pd, 
 				     method);
 	} else {  
-	    /* series does not need compacting */
+	    /* the frequency does not need adjustment */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
 	    if (xvec != NULL) {
 		for (t=0; t<sinfo->nobs; t++) {
@@ -364,6 +415,18 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	    }
 	    return 1;
 	}
+
+	/* record successful importation in command log */
+	if (compact && (cstr = compact_method_string(method)) != NULL) {
+	    cmdline = g_strdup_printf("data (compact=%s) %s", cstr,
+				      sinfo->varname);
+	} else {
+	    /* FIXME: handle expand/interpolate option */
+	    cmdline = g_strdup_printf("data %s", sinfo->varname);
+	}
+
+	record_command_verbatim(cmdline);
+	g_free(cmdline);
 
 	/* common stuff for adding a var */
 	strcpy(datainfo->varname[dbv], sinfo->varname);
@@ -417,11 +480,15 @@ add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
 	add_db_series_to_dataset(vwin, dbZ, dw);
     } else {  
 	/* no data open: start new data set from db */
+	gchar *cmdline;
+
 	destroy_dataset(Z, datainfo);
 
 	Z = dbZ;
 	datainfo = dbinfo;
 	*freeit = 0;
+
+	record_db_open_command(dw);
 
 	for (i=1; i<=dw->nv && !err; i++) {
 	    sinfo = &dw->sinfo[i-1];
@@ -432,6 +499,10 @@ add_dbdata (windata_t *vwin, double **dbZ, DATAINFO *dbinfo,
 	    
 	    strcpy(datainfo->varname[i], sinfo->varname);
 	    strcpy(VARLABEL(datainfo, i), sinfo->descrip);
+	    
+	    cmdline = g_strdup_printf("data %s", sinfo->varname);
+	    record_command_verbatim(cmdline);
+	    g_free(cmdline);
 	}
 	
 	data_status |= (GUI_DATA | MODIFIED_DATA);
@@ -1259,7 +1330,7 @@ static int add_rats_db_series_list (windata_t *vwin)
     }
 
     /* extract catalog from RATS file */
-    dw = read_rats_db(fp);
+    dw = read_rats_db(vwin->fname, fp);
     fclose(fp);
 
     if (dw == NULL) {
@@ -1291,7 +1362,7 @@ static int add_pcgive_db_series_list (windata_t *vwin)
     }
 
     /* extract catalog from PcGive file */
-    dw = read_pcgive_db(fp);
+    dw = read_pcgive_db(vwin->fname, fp);
     fclose(fp);
 
     if (dw == NULL) {
@@ -1380,6 +1451,19 @@ static int *db_get_selection_list (windata_t *vwin)
     return list;
 }
 
+static int db_role_to_dbtype (int role)
+{
+    if (role == PCGIVE_SERIES) { 
+	return GRETL_PCGIVE_DB;
+    } else if (role == REMOTE_SERIES) {
+	return GRETL_NATIVE_DB_WWW;
+    } else if (role == RATS_SERIES) {
+	return GRETL_RATS_DB;
+    } else {
+	return GRETL_NATIVE_DB;
+    }
+}
+
 static dbwrapper *get_series_info (windata_t *vwin, int action)
 {
     GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
@@ -1397,7 +1481,7 @@ static dbwrapper *get_series_info (windata_t *vwin, int action)
 
     sc = rowlist[0];
 
-    dw = dbwrapper_new(sc);
+    dw = dbwrapper_new(sc, vwin->fname, db_role_to_dbtype(vwin->role));
     if (dw == NULL) {
 	free(rowlist);
 	return NULL;

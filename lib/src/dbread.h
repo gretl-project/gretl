@@ -76,6 +76,8 @@ typedef struct SERIESINFO_ {
 } SERIESINFO;
 
 typedef struct dbwrapper_ {
+    char *fname;
+    int dbtype;
     int nv;
     int nalloc;
     SERIESINFO *sinfo;
@@ -116,11 +118,11 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 
 int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z);
 
-dbwrapper *read_rats_db (FILE *fp);
+dbwrapper *read_rats_db (const char *fname, FILE *fp);
 
-dbwrapper *read_pcgive_db (FILE *fp);
+dbwrapper *read_pcgive_db (const char *fname, FILE *fp);
 
-dbwrapper *dbwrapper_new (int n);
+dbwrapper *dbwrapper_new (int n, const char *fname, int dbtype);
 
 void dbwrapper_destroy (dbwrapper *dw);
 

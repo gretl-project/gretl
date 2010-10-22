@@ -397,6 +397,11 @@ int record_command_line (const char *s)
     return cmd_init(s, 0);
 }
 
+int record_command_verbatim (const char *s)
+{
+    return add_command_to_stack(s);
+}
+
 static int lib_cmd_init (void)
 {
     return cmd_init(cmdline, 0);

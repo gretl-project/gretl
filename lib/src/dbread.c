@@ -957,6 +957,7 @@ static void series_info_init (SERIESINFO *sinfo)
 void dbwrapper_destroy (dbwrapper *dw)
 {
     if (dw != NULL) {
+	free(dw->fname);
 	free(dw->sinfo);
 	free(dw);
     }
@@ -964,12 +965,14 @@ void dbwrapper_destroy (dbwrapper *dw)
 
 /**
  * dbwrapper_new:
- * @n:
+ * @n: initial number of series.
+ * @fname: database filename.
+ * @dbtype: database type code.
  *
  * Returns: an allocated database series wrapper.
  */
 
-dbwrapper *dbwrapper_new (int n)
+dbwrapper *dbwrapper_new (int n, const char *fname, int dbtype)
 {
     dbwrapper *dw;
     int i;
@@ -982,6 +985,9 @@ dbwrapper *dbwrapper_new (int n)
     if (dw == NULL) {
 	return NULL;
     }
+
+    dw->fname = gretl_strdup(fname);
+    dw->dbtype = dbtype;
 
     dw->sinfo = malloc(n * sizeof *dw->sinfo);
     if (dw->sinfo == NULL) {
@@ -1105,6 +1111,7 @@ static int count_in7_series (FILE *fp, int *err)
 
 /**
  * read_pcgive_db:
+ * @fname: name of database file.
  * @fp: pre-opened stream (caller to close it)
  *
  * Read the series info from a PcGive database, .in7 file
@@ -1113,7 +1120,7 @@ static int count_in7_series (FILE *fp, int *err)
  * or NULL in case of failure.
  */
 
-dbwrapper *read_pcgive_db (FILE *fp) 
+dbwrapper *read_pcgive_db (const char *fname, FILE *fp) 
 {
     dbwrapper *dw;
     int ns, err = 0;
@@ -1133,7 +1140,7 @@ dbwrapper *read_pcgive_db (FILE *fp)
 #endif
     
     /* allocate table for series rows */
-    dw = dbwrapper_new(ns);
+    dw = dbwrapper_new(ns, fname, GRETL_PCGIVE_DB);
     if (dw == NULL) {
 	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;
@@ -1154,6 +1161,7 @@ dbwrapper *read_pcgive_db (FILE *fp)
 
 /**
  * read_rats_db:
+ * @fname: database filename.
  * @fp: pre-opened stream (caller to close it)
  *
  * Read the series info from a RATS 4.0 database: read the base 
@@ -1164,7 +1172,7 @@ dbwrapper *read_pcgive_db (FILE *fp)
  * or NULL in case of failure.
  */
 
-dbwrapper *read_rats_db (FILE *fp) 
+dbwrapper *read_rats_db (const char *fname, FILE *fp) 
 {
     dbwrapper *dw;
     long forward;
@@ -1185,7 +1193,7 @@ dbwrapper *read_rats_db (FILE *fp)
     }
 
     /* allocate table for series rows */
-    dw = dbwrapper_new(0);
+    dw = dbwrapper_new(0, fname, GRETL_RATS_DB);
     if (dw == NULL) {
 	gretl_errmsg_set(_("Out of memory!"));
 	return NULL;

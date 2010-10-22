@@ -3009,6 +3009,8 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 
 		mod.errcode);
 	goto bailout;
+    } else {
+	pan.ifc = mod.ifc;
     }
 
     free(olslist);
