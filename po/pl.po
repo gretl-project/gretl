@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-22 09:30-0400\n"
-"PO-Revision-Date: 2010-10-11 10:00-0400\n"
+"PO-Revision-Date: 2010-10-23 00:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -4778,7 +4778,7 @@ msgstr "Asymptotyczne błędy standardowe (IID errors)"
 
 #: lib/src/modelprint.c:1392
 msgid "Omitted because all values were zero:"
-msgstr "Opuszczono, ponieważ wszystkie obserwacje są zerami:"
+msgstr "Wszystkie obserwacje równe zero, dlatego pominięto zmienną:"
 
 #: lib/src/modelprint.c:1406
 msgid "Omitted due to exact collinearity:"
@@ -6067,7 +6067,7 @@ msgstr "Miary dokładności prognoz ex post"
 #: lib/src/printout.c:2447
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr ""
-"Objaśnienie: * oznacza resztę przekraczajacą 2.5 razy błąd standardowy "
+"Objaśnienie: * oznacza resztę przekraczającą 2.5 razy błąd standardowy "
 "reszt\n"
 
 #: lib/src/printout.c:2504
@@ -13031,7 +13031,7 @@ msgstr "Zmienna - wagi"
 
 #: gui2/selector.c:3269
 msgid "Offset variable"
-msgstr "Zmiena - Offset"
+msgstr "Zmienna - Offset"
 
 #: gui2/selector.c:3271
 msgid "Censoring variable"
@@ -14511,7 +14511,7 @@ msgstr "okno ikon sesji"
 
 #: gui2/toolbar.c:1060
 msgid "function packages"
-msgstr "pakiet funkcji"
+msgstr "okno pakietów funkcji"
 
 #: gui2/toolbar.c:1061
 msgid "user's guide"
@@ -14530,9 +14530,8 @@ msgid "OLS model"
 msgstr "okno specyfikacji modelu KMNK"
 
 #: gui2/toolbar.c:1065
-#, fuzzy
 msgid "gretl database"
-msgstr "gretl: bazy danych na %s"
+msgstr "okno baz danych"
 
 #: gui2/toolbar.c:1066
 msgid "open dataset"
@@ -14605,14 +14604,12 @@ msgid "last observation"
 msgstr "ostatnia obserwacja"
 
 #: gui2/varinfo.c:683
-#, fuzzy
 msgid "Previous series"
-msgstr "Lista zmiennych"
+msgstr "Poprzednia zmienna"
 
 #: gui2/varinfo.c:689
-#, fuzzy
 msgid "Next series"
-msgstr "Lista zmiennych"
+msgstr "Następna zmienna"
 
 #: gui2/varinfo.c:701
 msgid "ID number:"
@@ -15515,19 +15512,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid ""
-#~ "There is already a session file of this name.\n"
-#~ "OK to overwrite it?"
-#~ msgstr ""
-#~ "Plik sesji o tej nazwie już istnieje.\n"
-#~ "Czy nadpisać istniejący plik?"
-
-#~ msgid "Undefined variable '%s' in loop condition."
-#~ msgstr "Niezdefiniowana zmienna '%s' w opcjach polecenia pętli (loop)"
-
-#~ msgid "Adding %s series to %s dataset"
-#~ msgstr "Dodawanie %s serii danych do %s bazy danych"
-
-#~ msgid "Edit..."
-#~ msgstr "Edycja..."
