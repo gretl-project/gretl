@@ -65,7 +65,7 @@ static void dpanel_residuals (dpdinfo *dpd)
 	}
     }
 
-    if (use_levels(dpd)) {
+    if (gmm_sys(dpd)) {
 	/* we could attach these to the final model */
 #if 0
 	fprintf(stderr, "nobs (diffs) = %d\n", dpd->ndiff);
@@ -143,7 +143,7 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 	    goodobs[goodobs[0]] = t;
 	    if (goodobs[0] > 1) {
 		dpd->used[big_t] = 1;
-	    } else if (use_levels(dpd)) {
+	    } else if (gmm_sys(dpd)) {
 		dpd->used[big_t] = LEVEL_ONLY;
 	    }
 	}
@@ -375,7 +375,7 @@ static int block_instrument_count (dpdinfo *dpd, int t1lev, int t2pen)
 	    dpd->nzdiff, dpd->nz);
 #endif
 
-    if (use_levels(dpd)) {
+    if (gmm_sys(dpd)) {
 	nrows = lev_iv_accounts(dpd, dpd->t1min, dpd->t2max);
 	dpd->nzlev = nrows;
 	dpd->nz += dpd->nzlev;
@@ -430,7 +430,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	if (Ti > 0) {
 	    dpd->effN += 1;
 	    dpd->ndiff += Ti;
-	    if (use_levels(dpd)) {
+	    if (gmm_sys(dpd)) {
 		dpd->nlev += Ti + 1;
 	    }
 	    if (Ti > dpd->maxTi) {
@@ -454,7 +454,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	}
     }
 
-    dpd->t1min = (use_levels(dpd))? t1lev : t1dif;
+    dpd->t1min = (gmm_sys(dpd))? t1lev : t1dif;
 
     /* figure number of time dummies, if wanted */
     if (dpd->flags & DPD_TIMEDUM) {
@@ -530,7 +530,7 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
     }
 
     /* levels */
-    if (use_levels(dpd)) {
+    if (gmm_sys(dpd)) {
 	for (i=1; i<=goodobs[0]; i++) {
 	    i1 = goodobs[i];
 	    j = i1 + dpd->lcol0;
@@ -623,7 +623,7 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	}
     }
     
-    if (use_levels(dpd)) {
+    if (gmm_sys(dpd)) {
 	/* levels */
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
@@ -683,7 +683,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	       here, but if dpdstyle is not in force the
 	       constant will have been removed already.
 	    */
-	    if (!use_levels(dpd) && dpd->xlist[j] == 0) {
+	    if (!gmm_sys(dpd) && dpd->xlist[j] == 0) {
 		dx = 1.0;
 	    } else {
 		xj = Z[dpd->xlist[j]];
@@ -694,7 +694,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 
 	if (dpd->ndum > 0) {
 	    for (j=0; j<dpd->ndum; j++) {
-		if (use_levels(dpd)) {
+		if (gmm_sys(dpd)) {
 		    dx = timedum_diff(dpd, j, i1);
 		} else if (dpd_style(dpd)) {
 		    /* as per DPD: leave dummies in levels */
@@ -708,7 +708,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	}
     }
     
-    if (use_levels(dpd)) {
+    if (gmm_sys(dpd)) {
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
 	    t1 = t + i1;
@@ -931,7 +931,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 		   dpdstyle is in force it will have been
 		   dropped by this point
 		*/
-		if (!use_levels(dpd) && dpd->ilist[j+1] == 0) {
+		if (!gmm_sys(dpd) && dpd->ilist[j+1] == 0) {
 		    dx = 1.0;
 		} else {
 		    x = Z[dpd->ilist[j+1]];
@@ -943,7 +943,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 
     /* equations in differences: time dummies */
-    if (dpd->ndum > 0 && !use_levels(dpd)) {
+    if (dpd->ndum > 0 && !gmm_sys(dpd)) {
 	for (i=0; i<usable; i++) {
 	    i1 = goodobs[i+2];
 	    col = i1 - dpd->dcolskip;
@@ -954,7 +954,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 	}	
     }
 
-    if (use_levels(dpd)) {
+    if (gmm_sys(dpd)) {
 	/* equations in levels: levels of exog vars */
 	if (dpd->nzr > 0) {
 	    for (i=0; i<=usable; i++) {
@@ -1084,7 +1084,7 @@ static void stack_unit_data (dpdinfo *dpd,
     /* record the number of differenced obs */
     unit->nobs = (goodobs[0] > 0)? (goodobs[0] - 1) : 0;
 
-    if (use_levels(dpd)) {
+    if (gmm_sys(dpd)) {
 	for (i=1; i<=goodobs[0]; i++) {
 	    k = goodobs[i] + dpd->lcol0;
 	    if (k >= Yi->cols) {
@@ -1150,7 +1150,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	/* the H matrix will not vary by unit */
 	int tau = dpd->t2max - dpd->t1min + 1;
 
-	if (use_levels(dpd)) {
+	if (gmm_sys(dpd)) {
 	    /* t1min is actually "levels-only" */
 	    tau--;
 	}
@@ -1268,7 +1268,7 @@ static void maybe_prune_const (dpdinfo *dpd)
    default version, with unlimited lags 
 */
 
-static int insert_default_ydiff_spec (dpdinfo *dpd)
+static int add_default_ydiff_spec (dpdinfo *dpd)
 {
     diag_info *d;
 
@@ -1289,6 +1289,7 @@ static int insert_default_ydiff_spec (dpdinfo *dpd)
 
 	d = &dpd->d[0];
 	d->v = dpd->yno;
+	d->depvar = 1;
 	d->minlag = 2;
 	d->maxlag = 99;
 	d->level = 0;
@@ -1305,7 +1306,7 @@ static int insert_default_ydiff_spec (dpdinfo *dpd)
    we set up the default version, with 1 lag 
 */
 
-static int insert_default_ylev_spec (dpdinfo *dpd)
+static int add_default_ylev_spec (dpdinfo *dpd)
 {
     diag_info *d;
 
@@ -1314,17 +1315,18 @@ static int insert_default_ylev_spec (dpdinfo *dpd)
     if (d == NULL) {
 	return E_ALLOC;
     } else {
-	/* append the y level spec to the diff specs */
 	dpd->d = d;
+
 	d = &dpd->d[dpd->nzb];
 	d->v = dpd->yno;
+	d->depvar = 1;
 	d->minlag = 1;
 	d->maxlag = 1;
 	d->level = 1;
 	d->rows = 0;
 
 	dpd->nzb += 1;
-	dpd->nzb2 = 1;
+	dpd->nzb2 += 1;
     }
 
     return 0;
@@ -1334,8 +1336,13 @@ static int compare_gmm_specs (const void *a, const void *b)
 {
     const diag_info *da = a;
     const diag_info *db = b;
+    int ret = da->level - db->level;
 
-    return (da->level - db->level);
+    if (ret == 0) {
+	ret = db->depvar - da->depvar;
+    }
+
+    return ret;
 }
 
 /* Given the info on instrument specification returned by the
@@ -1345,46 +1352,51 @@ static int compare_gmm_specs (const void *a, const void *b)
 
 static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
 {
-    int have_yspec = 0;
+    int have_ydiff_spec = 0;
+    int have_ylev_spec = 0;
+    int nzb1 = 0;
     int i, err = 0;
 
-    /* has the user given a GMM-style spec for the 
-       dependent variable? */
+    /* check whether we have:
+       - a GMM-style spec for the dep var, differenced equations
+       - any block-diagonal specs for levels eqns
+       - a GMM-style spec for dep var, levels equations
+    */       
 
     for (i=0; i<dpd->nzb; i++) {
-	if (dpd->d[i].v == dpd->yno && dpd->d[i].level == 0) {
-	    have_yspec = 1;
-	    break;
+	if (dpd->d[i].level == 0) {
+	    nzb1++;
+	    if (dpd->d[i].v == dpd->yno) {
+		dpd->d[i].depvar = 1;
+		have_ydiff_spec = 1;
+	    }
+	} else {
+	    dpd->nzb2 += 1;
+	    if (dpd->d[i].v == dpd->yno) {
+		dpd->d[i].depvar = 1;
+		have_ylev_spec = 1;
+	    }
 	}
-    }
+    }	    
 
-    if (!have_yspec) {
-	/* hmm, should we be doing this? */
-	err = insert_default_ydiff_spec(dpd);
+    if (!have_ydiff_spec) {
+	err = add_default_ydiff_spec(dpd);
 	if (err) {
 	    return err;
 	}
     }
 
-    /* do we have any block-diagonal specs for levels eqns? */
-    for (i=0; i<dpd->nzb; i++) {
-	if (dpd->d[i].level) {
-	    dpd->nzb2 += 1;
+    if (gmm_sys(dpd) && !have_ylev_spec) {
+	err = add_default_ylev_spec(dpd);
+	if (err) {
+	    return err;
 	}
-    }
+    }    
 
     if (dpd->nzb2 > 0 && dpd->nzb2 < dpd->nzb) {
 	/* ensure the levels-equations specs come last */
 	qsort(dpd->d, dpd->nzb, sizeof *dpd->d, compare_gmm_specs);
     }
-
-    if (dpd->nzb2 == 0 && use_levels(dpd)) {
-	/* add default GMM-level spec for y */
-	err = insert_default_ylev_spec(dpd);
-	if (err) {
-	    return err;
-	}	
-    }    
 
     if (dpd->nzb2 > 0) {
 	/* henceforth dpd->nzb refers to the number of specs in
@@ -1419,10 +1431,41 @@ static int print_step_1 (MODEL *pmod, dpdinfo *dpd,
     return err;
 }
 
-/* "Secret" public interface for new approach, including system GMM:
+#if DPDEBUG
+
+static void debug_print_specs (dpdinfo *dpd, const char *ispec,
+			       const DATAINFO *pdinfo)
+{
+    int i;
+
+    if (ispec != NULL) {
+	fprintf(stderr, "user's ispec = '%s'\n", ispec);
+    } 
+
+    fprintf(stderr, "nzb = %d, nzb2 = %d\n", dpd->nzb, dpd->nzb2); 
+    fprintf(stderr, "nzr = %d\n", dpd->nzr); 
+
+    for (i=0; i<dpd->nzb; i++) {
+	fprintf(stderr, "var %d (%s): lags %d to %d (GMM)\n", 
+		dpd->d[i].v, pdinfo->varname[dpd->d[i].v], 
+		dpd->d[i].minlag, dpd->d[i].maxlag); 
+    }
+
+    for (i=0; i<dpd->nzb2; i++) {
+	fprintf(stderr, "var %d (%s): lags %d to %d (GMMlevel)\n", 
+		dpd->d2[i].v, pdinfo->varname[dpd->d[i].v], 
+		dpd->d2[i].minlag, dpd->d2[i].maxlag); 
+    }
+
+    printlist(dpd->ilist, "ilist (regular instruments)");
+}
+
+#endif
+
+/* Public interface for new approach, including system GMM: 
    in a script use --system (OPT_L, think "levels") to get
-   Blundell-Bond. To build the H matrix as per Ox/DPD use the
-   option --dpdstyle (OPT_X).
+   Blundell-Bond. To build the H matrix as per Ox/DPD use 
+   the option --dpdstyle (OPT_X).  
 */
 
 MODEL dpd_estimate (const int *list, const int *laglist,
@@ -1460,30 +1503,13 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     dpanel_adjust_GMM_spec(dpd);
 
-    if (!dpd_style(dpd) && !use_levels(dpd)) { 
+    if (!dpd_style(dpd) && !gmm_sys(dpd)) { 
 	maybe_prune_const(dpd);
     }
 
 #if DPDEBUG
     if (dpd->nzb > 0 || dpd->nzb2 > 0) {
-	int i;
-
-	if (ispec != NULL) {
-	    fprintf(stderr, "user's ispec = '%s'\n", ispec);
-	} 
-	fprintf(stderr, "nzb = %d, nzb2 = %d\n", dpd->nzb, dpd->nzb2); 
-	fprintf(stderr, "nzr = %d\n", dpd->nzr); 
-	for (i=0; i<dpd->nzb; i++) {
-	    fprintf(stderr, "var %d (%s): lags %d to %d (GMM)\n", 
-		    dpd->d[i].v, pdinfo->varname[dpd->d[i].v], 
-		    dpd->d[i].minlag, dpd->d[i].maxlag); 
-	}
-	for (i=0; i<dpd->nzb2; i++) {
-	    fprintf(stderr, "var %d (%s): lags %d to %d (GMMlevel)\n", 
-		    dpd->d2[i].v, pdinfo->varname[dpd->d[i].v], 
-		    dpd->d2[i].minlag, dpd->d2[i].maxlag); 
-	}
-	printlist(dpd->ilist, "ilist (regular instruments)");
+	debug_print_specs(dpd, ispec, pdinfo);
     }
 #endif
 

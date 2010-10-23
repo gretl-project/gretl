@@ -33,7 +33,7 @@ enum {
     DPD_REDO     = 1 << 6
 };
 
-#define use_levels(d) (d->flags & DPD_SYSTEM)
+#define gmm_sys(d) (d->flags & DPD_SYSTEM)
 #define dpd_style(d) (d->flags & DPD_DPDSTYLE)
 
 #define LEVEL_ONLY 2
@@ -53,10 +53,11 @@ struct unit_info_ {
 
 struct diag_info_ {
     int v;       /* ID number of variable */
+    int depvar;  /* is the target variable the dependent variable (1/0) */
     int minlag;  /* minimum lag order */
     int maxlag;  /* maximum lag order */
     int level;   /* instrument spec is for levels */
-    int rows;    /* max rows occupied in Zi (for dpanel) */
+    int rows;    /* max rows occupied in Zi (for dpanel only) */
     int tbase;   /* first obs with potentially available instruments */
 };
 
@@ -1116,7 +1117,7 @@ static int dpd_ar_test (dpdinfo *dpd)
 
     /* The required size of the workspace matrix ZU depends on 
        whether or not we're in the system case */
-    ZU_cols = (use_levels(dpd))? 1 : T;
+    ZU_cols = (gmm_sys(dpd))? 1 : T;
 
     B = gretl_matrix_block_new(&ui,  T, 1,
 			       &wi,  T, 1,
@@ -1165,7 +1166,7 @@ static int dpd_ar_test (dpdinfo *dpd)
 	    gretl_matrix_reuse(Hi, Ti, Ti);
 	}
 
-	if (!use_levels(dpd)) {
+	if (!gmm_sys(dpd)) {
 	    gretl_matrix_reuse(ZU, -1, Ti);
 	}
 
@@ -1239,7 +1240,7 @@ static int dpd_ar_test (dpdinfo *dpd)
 				  Xi, GRETL_MOD_NONE,
 				  wX, GRETL_MOD_CUMULATE);
 
-	if (use_levels(dpd)) {
+	if (gmm_sys(dpd)) {
 	    /* Here we need (Z_i^f' u_i^f) * (u_i' w_i), which
 	       mixes full series and differences.
 	    */
@@ -2449,8 +2450,8 @@ static int dpd_step_1 (dpdinfo *dpd)
 
 /* Parse a particular entry in the (optional) incoming array 
    of "GMM(foo,m1,m2)" specifications.  We check that foo
-   exists and that m1 and m2 have sane values (allowing that
-   an m2 value of 0 means use all available lags).
+   exists and that m1 and m2 have sane values (allowing that,
+   for arbond, an m2 value of 0 means use all available lags).
 */
 
 static int parse_diag_info (int ci, const char *s, diag_info *d,
@@ -2459,6 +2460,8 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
     char vname[VNAMELEN];
     int m1, m2;
     int err = 0;
+
+    d->depvar = 0;
 
     if (!strncmp(s, "GMM(", 4)) {
 	d->level = 0;
