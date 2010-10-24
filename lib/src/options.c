@@ -245,6 +245,7 @@ struct gretl_option gretl_opts[] = {
     { LOGIT,    OPT_V, "verbose", 0 },
     { LOOP,     OPT_P, "progressive", 0 },
     { LOOP,     OPT_V, "verbose", 0 },
+    { MAHAL,    OPT_Q, "quiet", 0 },
     { MAHAL,    OPT_S, "save", 0 },
     { MAHAL,    OPT_V, "vcv", 0 },
     { MEANTEST, OPT_O, "unequal-vars", 0 },

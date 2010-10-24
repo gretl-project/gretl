@@ -5392,8 +5392,8 @@ int mahalanobis_distance (const int *list, double ***pZ,
 			  DATAINFO *pdinfo, gretlopt opt, 
 			  PRN *prn)
 {
-    return real_mahalanobis_distance(list, pZ, pdinfo, opt, 
-				     NULL, prn);
+    return real_mahalanobis_distance(list, pZ, pdinfo, opt, NULL, 
+				     (opt & OPT_Q) ? NULL : prn);
 }
 
 MahalDist *get_mahal_distances (const int *list, double ***pZ,
