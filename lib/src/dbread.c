@@ -2826,10 +2826,14 @@ static double *compact_series (const double *src, int i, int n, int oldn,
 	    }
 	} else if (method == COMPACT_SUM || method == COMPACT_AVG) {
 	    int j, st, den = compfac;
+	    int n_ok = 0;
 
-	    if (idx + compfac - 1 > oldn - 1) break;
+	    if (idx + compfac - 1 > oldn - 1) {
+		break;
+	    }
 
 	    x[t] = 0.0;
+
 	    for (j=0; j<compfac; j++) {
 		st = idx + j;
 		if (na(src[st])) {
@@ -2840,9 +2844,16 @@ static double *compact_series (const double *src, int i, int n, int oldn,
 			break;
 		    }
 		} else {
+		    /* got a valid observation */
+		    n_ok++;
 		    x[t] += src[st];
 		}
 	    }
+
+	    if (n_ok == 0) {
+		x[t] = NADBL;
+	    }
+
 	    if (method == COMPACT_AVG && !na(x[t])) {
 		if (den > 0) {
 		    x[t] /= den;
@@ -2951,19 +2962,30 @@ daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i,
 	} else if (method == COMPACT_SUM ||
 		   method == COMPACT_AVG) {
 	    int j, dayt, den = mdays;
+	    int n_ok = 0;
 
 	    x[t] = 0.0;
+
 	    for (j=0; j<mdays; j++) {
 		dayt = sopt + j;
 		if (dayt >= pdinfo->n) {
 		    x[t] = NADBL;
 		    break;
-		} else if (na(z[dayt]) && method == COMPACT_AVG) {
-		    den--;
-		} else if (!na(z[dayt])) {
+		} else if (na(z[dayt])) {
+		    if (method == COMPACT_AVG) {
+			den--;
+		    }
+		} else {
+		    /* got a valid observation */
 		    x[t] += z[dayt];
+		    n_ok++;
 		}
 	    }
+
+	    if (n_ok == 0) {
+		x[t] = NADBL;
+	    } 
+
 	    if (method == COMPACT_AVG && !na(x[t])) {
 		if (den > 0) {
 		    x[t] /= (double) den;
