@@ -4394,6 +4394,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+	</option>
+	<option>
 	  <flag>--robust</flag>
 	  <effect>QML standard errors</effect>
         </option>
