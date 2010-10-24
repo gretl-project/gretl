@@ -797,10 +797,11 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
  * 
  * Given a "current" date string, a periodicity, and a starting
  * date string, returns the observation number corresponding to
- * the current date string, counting from zero.
+ * the current date string, counting from zero. It is an error
+ * if @date represents an observation that lies outside of the
+ * full data range specified in @pdinfo.
  * 
- * Returns: integer observation number.
- *
+ * Returns: integer observation number, or -1 on error.
  */
 
 int dateton (const char *date, const DATAINFO *pdinfo)
@@ -808,10 +809,21 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     return real_dateton(date, pdinfo, 0);
 }
 
-/* special for appending data: allow the date to be outside of
-   the range of the current dataset */
+/**
+ * merge_dateton:
+ * @date: string representation of date for processing.
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Works just as dateton(), except that for this function it
+ * is not an error if @date represents an observation that
+ * lies beyond the data range specified in @pdinfo. This is 
+ * inended for use when merging data, or when creating a new
+ * dataset.
+ * 
+ * Returns: integer observation number, or -1 on error.
+ */
 
-static int merge_dateton (const char *date, const DATAINFO *pdinfo)
+int merge_dateton (const char *date, const DATAINFO *pdinfo)
 {
     return real_dateton(date, pdinfo, 1);
 }

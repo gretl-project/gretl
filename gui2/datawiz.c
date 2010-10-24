@@ -246,13 +246,17 @@ static void maybe_unrestrict_dataset (void)
 static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 			      GtkWidget *dlg)
 {
-    char setline[32];
+    char setline[64];
     char record[128];
     gretlopt opt = OPT_NONE;
     int create = (opts->flags & DW_CREATE);
     int delmiss = (opts->flags & DW_DROPMISS);
     int delete_markers = 0;
     int err = 0;
+
+#if DWDEBUG
+    fprintf(stderr, "dwiz_make_changes: create = %d\n", create);
+#endif
 
     *record = '\0';
 
@@ -335,7 +339,7 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
     err = set_obs(setline, &Z, datainfo, opt);
 
 #if DWDEBUG
-    fprintf(stderr, "setline = '%s', opt = %ld; set_obs returned %d\n", 
+    fprintf(stderr, "setline = '%s', opt = %d; set_obs returned %d\n", 
 	    setline, opt, err);
 #endif
 
@@ -357,6 +361,8 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 	    maybe_start_editing();
 	} else {
 	    register_data(NULLDATA_STARTED);
+	    sprintf(setline, "nulldata %d", datainfo->n);
+	    record_command_verbatim(setline);
 	}
     } else {
 	if (delete_markers) {
@@ -366,7 +372,7 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
     }
 
     if (!err && *record != '\0') {
-	record_command_line(record);
+	record_command_verbatim(record);
     }
 
 #if DWDEBUG
@@ -1082,6 +1088,7 @@ static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
     dwinfo->t1 = (int) gtk_adjustment_get_value(GTK_ADJUSTMENT(w));
 #if DWDEBUG
     fprintf(stderr, "dw_set_t1: set dwinfo->t1 = %d\n", dwinfo->t1);
+    fprintf(stderr, "(memo: dwinfo->n = %d)\n", dwinfo->n);
 #endif
 }
 
@@ -1103,6 +1110,7 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
 	compute_default_ts_info(dwinfo, 0);
 	spinmin = 0;
 	spinmax = dwinfo->n - 1;
+	spinmax = INT_MAX; /* new, FIXME */
 	spinstart = dwinfo->t1;
     } else {
 	/* custom time-series frequency */
@@ -1118,7 +1126,7 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
     if (step == DW_STARTING_OBS) {
 	g_signal_connect(G_OBJECT(adj), "value-changed", 
 			 G_CALLBACK(dw_set_t1), dwinfo);
-	spin = obs_button_new(GTK_ADJUSTMENT(adj), dwinfo);
+	spin = data_start_button(GTK_ADJUSTMENT(adj), dwinfo);
     } else {	
 	g_signal_connect(G_OBJECT(adj), "value-changed", 
 			 G_CALLBACK(dw_set_custom_frequency), dwinfo);

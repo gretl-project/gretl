@@ -80,6 +80,8 @@ typedef enum {
 
 int dateton (const char *date, const DATAINFO *pdinfo);
 
+int merge_dateton (const char *date, const DATAINFO *pdinfo);
+
 char *ntodate (char *datestr, int t, const DATAINFO *pdinfo);
 
 int get_subperiod (int t, const DATAINFO *pdinfo, int *err);

@@ -20,7 +20,9 @@
 #ifndef OBS_BUTTON_H__
 #define OBS_BUTTON_H__
 
-GtkWidget* obs_button_new (GtkAdjustment *adjustment, DATAINFO *pdinfo);
+GtkWidget *obs_button_new (GtkAdjustment *adjustment, DATAINFO *pdinfo);
+
+GtkWidget *data_start_button (GtkAdjustment *adj, DATAINFO *pdinfo);
 
 int obs_button_get_value (GtkWidget *button);
 

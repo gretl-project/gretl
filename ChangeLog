@@ -55,6 +55,8 @@ version 1.9.2, in progress
 - Fix for finding user's customized LaTeX preamble file
 - Fix: more rigorous detection of whether TeX output is PDF
   rather than DVI
+- Fix: when compacting a dataset, some values that should be
+  missing were appearing as zero
 - Traditional Chinese locale: encode text to CP950 for EMF
   files via gnuplot
 - Drag-and-drop onto gretl main window: support database files
