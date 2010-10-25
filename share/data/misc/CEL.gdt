@@ -7,8 +7,30 @@ dataset of 1994, which is available from the NBER website
 http://www.nber.org/ftp/pub/barro.lee (accessed October,
 2010). 
 
-Something close to this dataset was used in a 1996 paper
-by Francesco Caselli, Gerardo Esquivel and Fernando Lefort
+The variables are constructed as follows (note that the Barro-
+Lee series each take the form of an international cross-section
+for a given year):
+
+y: taken from the series gdpsh550 gdpsh555 gdpsh560 gdpsh565 
+   gdpsh570 gdpsh575 gdpsh580 and gdpsh585, from the Barro-Lee
+   file gdpsh5.prn; original source, version 5.5 of the Penn
+   World Table. Real GDP per capita (1985 international prices).
+
+s: taken from the series invsh51 invsh52 invsh53 invsh54 and
+   invsh55, from the Barro-Lee file gdpsh5.prn; original source
+   as above. Ratio of real domestic investment (private plus 
+   public) to real GDP.
+
+n: taken from the series gpop1 gpop2 gpop3 gpop4 gpop5, from the
+   Barro-Lee file fert.prn; original source, version 5.0 of the
+   Penn World Table. Growth rate of population.
+
+All of the source series are screened using the variable smpl97,
+from Barro-Lee file codes.prn, to restrict the sample to the 97
+&quot;better data&quot; countries.
+
+Something close to this dataset was used in a 1996 paper by 
+Francesco Caselli, Gerardo Esquivel and Fernando Lefort
 (&quot;Reopening the Convergence Debate: A New Look at Cross-Country 
 Growth Empirics&quot;, Journal of Economic Growth), available at
 http://personal.lse.ac.uk/casellif/papers/reopeni4.pdf
