@@ -5193,9 +5193,17 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt);
 	}
 	if (!err) {
+	    int gui_mode = gretl_in_gui_mode();
+
 	    if (graph_written_to_file()) {
-		report_plot_written(prn);
-	    } else if (gretl_in_gui_mode()) {
+		if (gui_mode && *cmd->savename != '\0' &&
+		    get_current_gp_term() == GP_TERM_PLT) {
+		    /* got plotname <- gnuplot ... in GUI */
+		    schedule_callback(s);
+		} else {
+		    report_plot_written(prn);
+		}
+	    } else if (gui_mode) {
 		schedule_callback(s);
 	    }
 	} 

@@ -177,6 +177,8 @@ int gnuplot_make_graph (void);
 
 int graph_written_to_file (void);
 
+int get_current_gp_term (void);
+
 void reset_plot_count (void);
 
 int matrix_plot (gretl_matrix *m, const int *list, const char *literal, 

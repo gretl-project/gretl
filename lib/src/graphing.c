@@ -1369,10 +1369,19 @@ void gnuplot_cleanup (void)
 }
 
 static int graph_file_written;
+static int current_gp_term;
 
 int graph_written_to_file (void)
 {
     return graph_file_written;
+}
+
+int get_current_gp_term (void)
+{
+    int ret = current_gp_term;
+
+    current_gp_term = GP_TERM_NONE;
+    return ret;
 }
 
 static void remove_old_png (char *buf)
@@ -1403,7 +1412,7 @@ int gnuplot_make_graph (void)
 
     graph_file_written = 0;
 
-    fmt = specified_gp_output_format();
+    current_gp_term = fmt = specified_gp_output_format();
 
     if (fmt == GP_TERM_PLT) {
 	/* no-op: just the plot commands are wanted */
