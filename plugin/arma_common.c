@@ -320,7 +320,7 @@ static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
     }
 }
 
-#define USE_ARIMA_INTEGRATE
+#define USE_ARIMA_INTEGRATE 1
 
 /* write the various statistics from ARMA estimation into
    a gretl MODEL struct */
