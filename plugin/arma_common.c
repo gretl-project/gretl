@@ -320,6 +320,8 @@ static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
     }
 }
 
+#define USE_ARIMA_INTEGRATE
+
 /* write the various statistics from ARMA estimation into
    a gretl MODEL struct */
 
@@ -346,16 +348,24 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(ainfo->y[t]) && !na(pmod->uhat[t])) {
+#if !USE_ARIMA_INTEGRATE
+	    if (arma_is_arima(ainfo) && arima_ydiff(ainfo)) {
+		pmod->yhat[t] = Z[ainfo->yno][t] - pmod->uhat[t];
+	    }
+#else
 	    pmod->yhat[t] = ainfo->y[t] - pmod->uhat[t];
+#endif
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    mean_error += pmod->uhat[t];
 	} 
     }
 
+#if USE_ARIMA_INTEGRATE
     if (arma_is_arima(ainfo) && arima_ydiff(ainfo)) {
 	arima_integrate(pmod->yhat, Z[ainfo->yno], pmod->t1, pmod->t2, 
 			ainfo->d, ainfo->D, ainfo->pd);
     }
+#endif
 
     mean_error /= pmod->nobs;
     gretl_model_set_double(pmod, "mean_error", mean_error);
