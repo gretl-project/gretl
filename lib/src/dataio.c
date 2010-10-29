@@ -2273,6 +2273,7 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 		       double **addZ, DATAINFO *addinfo,
 		       gretlopt opt, PRN *prn)
 {
+    int dayspecial = 0;
     int addsimple = 0;
     int addpanel = 0;
     int addvars = 0;
@@ -2284,6 +2285,11 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
     addvars = count_new_vars(pdinfo, addinfo, prn);
     if (addvars < 0) {
 	return 1;
+    }
+
+    if (dated_daily_data(pdinfo) && dated_daily_data(addinfo)) {
+	fprintf(stderr, "special: merging daily data\n");
+	dayspecial = 1;
     }
 
     /* below: had additional condition: simple_structure(pdinfo)
@@ -2398,11 +2404,26 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 		copy_varinfo(pdinfo->varinfo[v], addinfo->varinfo[i]);
 	    } 
 
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t >= offset && t - offset < addinfo->n) {
-		    (*pZ)[v][t] = addZ[i][t - offset];
-		} else if (newvar) {
-		    (*pZ)[v][t] = NADBL;
+	    if (dayspecial) {
+		char obs[OBSLEN];
+		int s;
+
+		for (t=0; t<pdinfo->n; t++) {
+		    ntodate(obs, t, pdinfo);
+		    s = dateton(obs, addinfo);
+		    if (s >= 0 && s < addinfo->n) {
+			(*pZ)[v][t] = addZ[i][s];
+		    } else {
+			(*pZ)[v][t] = NADBL;
+		    }
+		}
+	    } else {
+		for (t=0; t<pdinfo->n; t++) {
+		    if (t >= offset && t - offset < addinfo->n) {
+			(*pZ)[v][t] = addZ[i][t - offset];
+		    } else if (newvar) {
+			(*pZ)[v][t] = NADBL;
+		    }
 		}
 	    }
 	}
