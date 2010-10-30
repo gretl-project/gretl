@@ -348,7 +348,7 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(ainfo->y[t]) && !na(pmod->uhat[t])) {
-#if !USE_ARIMA_INTEGRATE
+#if USE_ARIMA_INTEGRATE == 0
 	    if (arma_is_arima(ainfo) && arima_ydiff(ainfo)) {
 		pmod->yhat[t] = Z[ainfo->yno][t] - pmod->uhat[t];
 	    }
