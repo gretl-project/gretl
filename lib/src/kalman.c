@@ -3159,67 +3159,44 @@ gretl_matrix *kalman_arma_smooth (kalman *K, int *err)
 }
 
 /**
- * user_kalman_smooth:
- * @Pname: name of matrix in which to retrieve the MSE of the
+ * kalman_smooth:
+ * @K: pointer to kalman struct.
+ * @pP: pointer to matrix in which to retrieve the MSE of the
  * smoothed state (or NULL if this is not required).
- * @Uname: name of matrix in which to retrieve the smoothed
+ * @pU: pointer to matrix in which to retrieve the smoothed
  * disturbances (or NULL if this is not required).
  * @err: location to receive error code.
  * 
- * If a user-defined Kalman filter is found, runs a filtering
- * pass followed by a backward, smoothing pass.  At present
- * the @Uname argument is experimental and a bodge: it will 
+ * Runs a filtering pass followed by a backward, smoothing pass. 
+ * At present the @Uname argument is experimental and a bodge: it will 
  * not actually do anything unless @Pname is left null.
  *
  * Returns: matrix containing the smoothed estimate of the
  * state, or NULL on error.
  */
 
-gretl_matrix *user_kalman_smooth (const char *Pname, 
-				  const char *Uname,
-				  int *err)
+gretl_matrix *kalman_smooth (kalman *K,
+			     gretl_matrix **pP,
+			     gretl_matrix **pU,
+			     int *err)
 {
-    user_kalman *u = get_user_kalman(-1);
     gretl_matrix *E, *S, *P = NULL;
     gretl_matrix *G, *V, *U = NULL;
-    kalman *K;
-    int nr, nn, user_P = 0;
+    int nr, nn;
 
-    if (u == NULL) {
-	*err = missing_kalman_error();
-	return NULL;
-    }
-
-    K = u->K;
-
-    /* optional accessor for MSE of smoothed state estimate */
-    if (Pname != NULL && strcmp(Pname, "null")) {
-	P = get_matrix_by_name(Pname);
-	if (P == NULL) {
-	    *err = E_UNKVAR;
-	} else {
-	    user_P = 1;
-	}
-    }
-
-    if (!user_P && !*err) {
+    if (pP == NULL && pU != NULL) {
 	/* optional accessor for smoothed disturbances a la Koopman:
-	   experimental, and avilable only if @Pname is not given
+	   experimental, and avilable only if @pP is not given
 	*/
-	if (Uname != NULL && strcmp(Uname, "null")) {
-	    U = get_matrix_by_name(Uname);
-	    if (U == NULL) {
-		*err = E_UNKVAR;
-	    } else {
-		int Ucols = K->r;
+	int Ucols = K->r;
 
-		if (K->R != NULL) {
-		    Ucols += K->n;
-		}
-		if (U->rows != K->T || U->cols != Ucols) {
-		    *err = gretl_matrix_realloc(U, K->T, Ucols);
-		}
-	    }
+	if (K->R != NULL) {
+	    Ucols += K->n;
+	}
+
+	U = gretl_matrix_alloc(K->T, Ucols);
+	if (U == NULL) {
+	    * err = E_ALLOC;
 	}
     }
 
@@ -3240,11 +3217,7 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
     V = gretl_matrix_alloc(K->T, nn);
     G = gretl_matrix_alloc(K->T, K->r * K->n);
     S = gretl_matrix_alloc(K->T, K->r);
-
-    if (P == NULL) {
-	/* the user didn't give P on input */
-	P = gretl_matrix_alloc(K->T, nr);
-    }
+    P = gretl_matrix_alloc(K->T, nr);
 
     if (E == NULL || V == NULL || G == NULL || 
 	S == NULL || P == NULL) {
@@ -3267,8 +3240,10 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
     K->S = S;
     K->P = P;
 
+#if 0
     /* and recheck dimensions */
-    *err = user_kalman_recheck_matrices(u);
+    *err = user_kalman_recheck_matrices(K, fnlevel);
+#endif
 
     if (!*err) {
 	K->flags |= KALMAN_SMOOTH;
@@ -3303,13 +3278,88 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
     gretl_matrix_free(V);
     gretl_matrix_free(G);
 
-    if (!user_P) {
+    if (!*err && pP != NULL) {
+	*pP = P;
+    } else {
 	gretl_matrix_free(P);
     }
+
+    if (!*err && pU != NULL) {
+	*pU = U;
+    } else {
+	gretl_matrix_free(U);
+    }    
 
     if (*err) {
 	gretl_matrix_free(S);
 	S = NULL;
+    }
+
+    return S;
+}
+
+/**
+ * user_kalman_smooth:
+ * @Pname: name of matrix in which to retrieve the MSE of the
+ * smoothed state (or NULL if this is not required).
+ * @Uname: name of matrix in which to retrieve the smoothed
+ * disturbances (or NULL if this is not required).
+ * @err: location to receive error code.
+ * 
+ * If a user-defined Kalman filter is found, runs a filtering
+ * pass followed by a backward, smoothing pass.  At present
+ * the @Uname argument is experimental and a bodge: it will 
+ * not actually do anything unless @Pname is left null.
+ *
+ * Returns: matrix containing the smoothed estimate of the
+ * state, or NULL on error.
+ */
+
+gretl_matrix *user_kalman_smooth (const char *Pname, 
+				  const char *Uname,
+				  int *err)
+{
+    user_kalman *u = get_user_kalman(-1);
+    gretl_matrix *S = NULL;
+
+    if (u == NULL) {
+	*err = missing_kalman_error();
+    } else {
+	gretl_matrix **pP = NULL, **pU = NULL;
+	gretl_matrix *UP = NULL, *UU = NULL;
+	gretl_matrix *P = NULL, *U = NULL;
+
+	if (Pname != NULL && strcmp(Pname, "null")) {
+	    UP = get_matrix_by_name(Pname);
+	    if (UP == NULL) {
+		*err = E_UNKVAR;
+	    } else {
+		pP = &P;
+	    }
+	} else if (Uname != NULL && strcmp(Uname, "null")) {
+	    UU = get_matrix_by_name(Uname);
+	    if (UU == NULL) {
+		*err = E_UNKVAR;
+	    } else {
+		pU = &U;
+	    }	
+	}
+
+	if (!*err) {
+	    *err = user_kalman_recheck_matrices(u);
+	}
+
+	if (!*err) {
+	    S = kalman_smooth(u->K, pP, pU, err);
+	}
+
+	if (!*err && P != NULL) {
+	    user_matrix_replace_matrix_by_name(Pname, P);
+	}
+
+	if (!*err && U != NULL) {
+	    user_matrix_replace_matrix_by_name(Uname, U);
+	}	
     }
 
     return S;

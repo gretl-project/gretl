@@ -1060,6 +1060,29 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	}
     }
 
+#if 0 /* experimental */
+    if (!err) {
+	gretl_matrix *S;
+	int t;
+
+	S = kalman_smooth(K, NULL, NULL, &err);
+
+	gretl_matrix_print(S, "S");
+
+	i = 0;
+	for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	    double u = gretl_matrix_get(S, i, 0);
+
+	    /* note: specific to ARMA(1,1) with no constant */
+	    u -= b[0] * gretl_matrix_get(S, i, 1);
+	    fprintf(stderr, "%g\n", u);
+	    i++;
+	}
+
+	gretl_matrix_free(S);
+    }
+#endif
+
 #if 0 /* not ready yet */
     if (!err && arma_missvals(ainfo)) {
 	gretl_matrix *ys = kalman_arma_smooth(K, &err);

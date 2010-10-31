@@ -58,6 +58,11 @@ double kalman_get_arma_variance (const kalman *K);
 
 gretl_matrix *kalman_arma_smooth (kalman *K, int *err);
 
+gretl_matrix *kalman_smooth (kalman *K,
+			     gretl_matrix **pP,
+			     gretl_matrix **pU,
+			     int *err);
+
 int kalman_set_initial_state_vector (kalman *K, const gretl_matrix *S);
 
 int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);
