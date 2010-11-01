@@ -1184,8 +1184,15 @@ static int kalman_arma_iter_1 (kalman *K, int missobs)
 
     /* form e = y - A'x - H'S */
     K->e->val[0] -= K->Ax->val[0];
+#if 0
+    fprintf(stderr, "t=%d, e=%.7g\n", K->t, K->e->val[0]);
+#endif
     for (i=0; i<K->r; i++) {
 	K->e->val[0] -= K->H->val[i] * K->S0->val[i];
+#if 0
+	fprintf(stderr, " subtract %g * %g; e = %.7g\n", 
+		K->H->val[i], K->S0->val[i], K->e->val[0]);
+#endif
     }
 
     /* form FPH */

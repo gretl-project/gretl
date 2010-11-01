@@ -2648,9 +2648,17 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    OPT_F
 	};
 	static combo_opts ci_opts;
-	int deflt;
+	int deflt, fixit = 0;
 
-	deflt = (*optp & OPT_L)? 1 : (*optp & OPT_F)? 2 : 0;
+	if (*t2 - *t1 < 1) {
+	    /* one observation: can only do error bar */
+	    deflt = 0;
+	    fixit = 1;
+	    *optp &= ~OPT_L;
+	    *optp &= ~OPT_F;
+	} else {
+	    deflt = (*optp & OPT_L)? 1 : (*optp & OPT_F)? 2 : 0;
+	}
 
 	ci_opts.strs = strs;
 	ci_opts.vals = opts;
@@ -2665,6 +2673,10 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	tmp = gretl_opts_combo(&ci_opts, deflt);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
+
+	if (fixit) {
+	    gtk_widget_set_sensitive(tmp, FALSE);
+	}
 
 	if (conf != NULL) {
 	    dialog_add_confidence_selector(rset->dlg, conf, NULL);
