@@ -1184,16 +1184,15 @@ static int kalman_arma_iter_1 (kalman *K, int missobs)
 
     /* form e = y - A'x - H'S */
     K->e->val[0] -= K->Ax->val[0];
-#if 0
-    fprintf(stderr, "t=%d, e=%.7g\n", K->t, K->e->val[0]);
-#endif
     for (i=0; i<K->r; i++) {
 	K->e->val[0] -= K->H->val[i] * K->S0->val[i];
-#if 0
-	fprintf(stderr, " subtract %g * %g; e = %.7g\n", 
-		K->H->val[i], K->S0->val[i], K->e->val[0]);
-#endif
     }
+
+#if 0
+    fprintf(stderr, "t=%d:\n", K->t);
+    gretl_matrix_print(K->H, "K->H");
+    gretl_matrix_print(K->S0, "K->S0");
+#endif
 
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
@@ -1509,13 +1508,15 @@ static int kalman_refresh_matrices (kalman *K, PRN *prn)
 int kalman_forecast (kalman *K, PRN *prn)
 {
     double ldet;
-    int update_P = 1;
+    int smoothing, update_P = 1;
     int Tmiss = 0;
     int i, err = 0;
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: T = %d\n", K->T);
-#endif  
+#endif 
+
+    smoothing = (K->flags & KALMAN_SMOOTH)? 1 : 0;
 
     if (K->nonshift < 0) {
 	K->nonshift = count_nonshifts(K->F);
@@ -1617,12 +1618,12 @@ int kalman_forecast (kalman *K, PRN *prn)
 	if (K->V != NULL) {
 	    /* record MSE for estimate of observables */
 	    if (missobs) {
-		if (K->flags & KALMAN_SMOOTH) {
+		if (smoothing) {
 		    set_row(K->V, K->t, 0.0); 
 		} else {
 		    set_row(K->V, K->t, 1.0/0.0); 
 		}
-	    } else if (K->flags & KALMAN_SMOOTH) {
+	    } else if (smoothing) {
 		/* record inverse */
 		load_to_vech(K->V, K->Vt, K->n, K->t);
 	    } else {
@@ -1632,7 +1633,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	}
 
 	/* first stage of dual iteration */
-	if (arma_ll(K)) {
+	if (arma_ll(K) && !smoothing) {
 	    err = kalman_arma_iter_1(K, missobs);
 	} else {
 	    err = kalman_iter_1(K, missobs, &llt);
@@ -1648,7 +1649,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 	
 	/* record forecast errors if wanted */
 	if (!err && K->E != NULL) {
-	    if (missobs && (K->flags & KALMAN_SMOOTH)) {
+	    if (missobs && smoothing) {
 		/* should that be || instead of &&? */
 		set_row(K->E, K->t, 0.0);
 	    } else {
@@ -1668,7 +1669,7 @@ int kalman_forecast (kalman *K, PRN *prn)
 
 	if (!err) {
 	    /* update MSE matrix, if needed */
-	    if (arma_ll(K) && update_P && K->t > 20) {
+	    if (arma_ll(K) && !smoothing && update_P && K->t > 20) {
 		if (!matrix_diff(K->P1, K->P0)) {
 		    K->P0->val[0] += 1.0;
 		    update_P = 0;
@@ -3203,7 +3204,7 @@ gretl_matrix *kalman_smooth (kalman *K,
 
 	U = gretl_matrix_alloc(K->T, Ucols);
 	if (U == NULL) {
-	    * err = E_ALLOC;
+	    *err = E_ALLOC;
 	}
     }
 
@@ -3253,6 +3254,7 @@ gretl_matrix *kalman_smooth (kalman *K,
 #endif
 
     if (!*err) {
+	/* forward pass */
 	K->flags |= KALMAN_SMOOTH;
 	*err = kalman_forecast(K, NULL);
 	K->flags &= ~KALMAN_SMOOTH;
