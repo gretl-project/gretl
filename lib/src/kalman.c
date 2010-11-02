@@ -1188,20 +1188,6 @@ static int kalman_arma_iter_1 (kalman *K, int missobs)
 	K->e->val[0] -= K->H->val[i] * K->S0->val[i];
     }
 
-#if 0
-    if (K->t > 0) {
-	double f00 = gretl_matrix_get(K->F, 0, 0); /* phi */
-	double ehat = K->Ax->val[0];
-
-	for (i=0; i<K->r; i++) {
-	    ehat += K->H->val[i] * K->S0->val[i];
-	}
-	ehat -= f00 * K->y->val[K->t - 1]; /* phi y_{t-1} */
-	ehat /= K->H->val[1]; /* theta */
-	fprintf(stderr, "%03d: %#15.10g\n", K->t, ehat);
-    }
-#endif
-
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
    
@@ -1217,6 +1203,10 @@ static int kalman_arma_iter_1 (kalman *K, int missobs)
     if (!err) {
 	/* scalar quadratic form */
 	K->SSRw += Ve * K->e->val[0];
+    }
+
+    if (K->flags & KALMAN_ETT) {
+	K->e->val[0] = Ve;
     }
 
     return err;
@@ -1658,7 +1648,6 @@ int kalman_forecast (kalman *K, PRN *prn)
 	/* record forecast errors if wanted */
 	if (!err && K->E != NULL) {
 	    if (missobs && smoothing) {
-		/* should that be || instead of &&? */
 		set_row(K->E, K->t, 0.0);
 	    } else {
 		load_to_row(K->E, K->e, K->t);

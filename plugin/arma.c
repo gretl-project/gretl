@@ -682,7 +682,7 @@ static int write_kalman_matrices (khelper *kh,
     gretl_matrix_print(kh->F, "F");
     gretl_matrix_print(kh->H, "H");
     gretl_matrix_print(kh->P, "P");
-#endif    
+#endif 
 
     /* See Hamilton, Time Series Analysis, ch 13, p. 375 */
 
@@ -797,22 +797,6 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
     return err;
 }
 
-/* add covariance matrix and standard errors based on numerical
-   approximation to the Hessian
-*/
-
-static int arma_hessian_vcv (MODEL *pmod, gretl_matrix *Hinv,
-			     const gretl_matrix *E)
-{
-    int t, i = 0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->uhat[t] = gretl_vector_get(E, i++);
-    }
-
-    return gretl_model_write_vcv(pmod, Hinv);
-}
-
 static const double *kalman_arma_llt_callback (const double *b, int i, 
 					       void *data)
 {
@@ -839,16 +823,10 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 			 double s2, int k, int T,
 			 PRN *prn)
 {
-    khelper *kh = kalman_get_data(K);
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
     double rcond;
-    int s, t;
     int err = 0;
-
-    for (t=pmod->t1, s=0; t<=pmod->t2; t++, s++) {
-	pmod->uhat[t] = gretl_vector_get(kh->E, s);
-    }
 
     G = build_score_matrix(b, k, T, kalman_arma_llt_callback, 
 			   K, &err);
@@ -979,7 +957,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 {
     khelper *kh = kalman_get_data(K);
     int do_hess = arma_use_hessian(opt);
-    int kopt, i, k = ainfo->nc;
+    int kopt, i, t, k = ainfo->nc;
     double s2;
     int err;
 
@@ -1002,6 +980,11 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	pmod->coeff[i] = b[i];
     }
 
+    i = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->uhat[t] = gretl_vector_get(kh->E, i++);
+    }
+
     s2 = kalman_get_arma_variance(K);
     pmod->sigma = sqrt(s2);
 
@@ -1011,6 +994,18 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     /* rescale if we're using average loglikelihood */
     if (kopt & KALMAN_AVG_LL) {
 	pmod->lnL *= ainfo->T;
+    }
+
+    if (opt & OPT_E) {
+	gretl_matrix *ehat;
+
+	kalman_set_options(K, KALMAN_ETT);
+	rewrite_kalman_matrices(K, b, KALMAN_ALL);
+	kalman_forecast(K, NULL);
+	ehat = gretl_matrix_copy(kh->E);
+	if (ehat != NULL) {
+	    gretl_model_set_matrix_as_data(pmod, "ehat", ehat);
+	}
     }
 
 #if ARMA_DEBUG
@@ -1040,7 +1035,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    if (kopt & KALMAN_AVG_LL) {
 		gretl_matrix_divide_by_scalar(Hinv, ainfo->T);
 	    }
-	    err = arma_hessian_vcv(pmod, Hinv, kh->E);
+	    err = gretl_model_write_vcv(pmod, Hinv);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
 	    }

@@ -2619,7 +2619,7 @@ static void print_iter_val (double x, int i, int k, PRN *prn)
     if (na(x)) {
 	pprintf(prn, "%-12s", "NA");
     } else {
-	pprintf(prn, "%#12.5g", x);
+	pprintf(prn, "%#12.6g", x);
     }
     if (i && i % 6 == 5 && i < k-1) {
 	pprintf(prn, "\n%12s", " ");

@@ -28,7 +28,8 @@ enum {
     KALMAN_FORWARD = 1 << 4, /* running forward filtering pass */
     KALMAN_SMOOTH  = 1 << 5, /* preparing for smoothing pass */
     KALMAN_SIM     = 1 << 6, /* running simulation */
-    KALMAN_CROSS   = 1 << 7  /* cross-correlated disturbances */ 
+    KALMAN_CROSS   = 1 << 7, /* cross-correlated disturbances */
+    KALMAN_ETT     = 1 << 8  /* ARMA: producing \epsilon{t|t} estimates */
 };
 
 typedef struct kalman_ kalman;

@@ -5429,6 +5429,12 @@ model_get_special_vec (const MODEL *pmod, ModelDataIndex idx, int *err)
 	mdata = gretl_model_get_data(pmod, "ahat");
     } else if (idx == M_H) {
 	mdata = gretl_model_get_data(pmod, "garch_h");
+    } else if (idx == M_EHAT) {
+	gretl_matrix *eh = gretl_model_get_data(pmod, "ehat");
+
+	if (eh != NULL) {
+	    mdata = eh->val;
+	}
     }
 
     if (mdata == NULL) {
@@ -5440,8 +5446,10 @@ model_get_special_vec (const MODEL *pmod, ModelDataIndex idx, int *err)
     if (v == NULL) {
 	*err = E_ALLOC;
     } else {
+	v->t1 = pmod->t1;
+	v->t2 = pmod->t2;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    /* FIXME: is indexation right? */
+	    /* FIXME: is indexation always right? */
 	    gretl_vector_set(v, t - pmod->t1, mdata[t]);
 	}
     }
@@ -5600,7 +5608,14 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	break;	
     case M_SARGAN:	
 	M = model_get_special_test(pmod, GRETL_TEST_SARGAN, err);
-	break;	
+	break;
+    case M_EHAT:
+	if (gretl_model_get_data(pmod, "ehat") == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = model_get_special_vec(pmod, M_EHAT, err);
+	}
+	break;
     default:
 	fprintf(stderr, "gretl_model_get_matrix: got to default\n");
 	*err = E_BADSTAT;

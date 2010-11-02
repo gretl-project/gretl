@@ -2541,6 +2541,11 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
     envstr = getenv("GRETL_MATRIX_DEBUG");
     if (envstr != NULL && atoi(envstr) > 0) {
 	fmt = "%#24.15g ";
+    } else {
+	envstr = getenv("GRETL_MATRIX_PRINT6");
+	if (envstr != NULL && atoi(envstr) > 0) {
+	    fmt = "%#12.6g ";
+	}
     }
 
     if (msg != NULL && *msg != '\0') {

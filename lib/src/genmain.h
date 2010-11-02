@@ -103,6 +103,7 @@ typedef enum {
     M_COEFF_CI,   /* (asymmetric) confidence intervals for coeffs */
     M_KLLT,       /* Kalman log-likelihood, per time-step */
     M_KUHAT,      /* Kalman: current prediction error */
+    M_EHAT,       /* ARMA: vector of estimated innovations */
     M_MATRIX_MAX, /* -- SEPARATOR, matrices/matrix-builders -- */
     M_MNLPROBS,   /* case probabilities for multinomial logit */
     M_MBUILD_MAX, /* -- SEPARATOR, matrix-builders/lists -- */
