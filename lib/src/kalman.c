@@ -1189,9 +1189,17 @@ static int kalman_arma_iter_1 (kalman *K, int missobs)
     }
 
 #if 0
-    fprintf(stderr, "t=%d:\n", K->t);
-    gretl_matrix_print(K->H, "K->H");
-    gretl_matrix_print(K->S0, "K->S0");
+    if (K->t > 0) {
+	double f00 = gretl_matrix_get(K->F, 0, 0); /* phi */
+	double ehat = K->Ax->val[0];
+
+	for (i=0; i<K->r; i++) {
+	    ehat += K->H->val[i] * K->S0->val[i];
+	}
+	ehat -= f00 * K->y->val[K->t - 1]; /* phi y_{t-1} */
+	ehat /= K->H->val[1]; /* theta */
+	fprintf(stderr, "%03d: %#15.10g\n", K->t, ehat);
+    }
 #endif
 
     /* form FPH */
