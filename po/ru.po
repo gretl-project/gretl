@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-22 09:30-0400\n"
-"PO-Revision-Date: 2010-10-10 13:59+0300\n"
+"PO-Revision-Date: 2010-11-02 04:27+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:291
 msgid "lagged differences"
@@ -811,7 +811,7 @@ msgstr "Должно быть %s - %s\n"
 #: lib/src/csvdata.c:793
 #, c-format
 msgid "'%s' and '%s': couldn't get dates\n"
-msgstr ""
+msgstr "'%s' и '%s': невозможно получить даты\n"
 
 #: lib/src/csvdata.c:811
 #, c-format
@@ -1299,7 +1299,7 @@ msgstr "Пожалуйста, сначала откройте файл с дан
 #: lib/src/dataset.c:1794 lib/src/dataset.c:1804
 #, c-format
 msgid "Deleted %s"
-msgstr ""
+msgstr "Удалено %s"
 
 #: lib/src/dataset.c:1796 lib/src/dataset.c:1806
 #, c-format
@@ -1312,7 +1312,7 @@ msgstr "Не удалено ни одной переменной"
 
 #: lib/src/dataset.c:1808
 msgid "some data were in use"
-msgstr ""
+msgstr "Была использована часть данных"
 
 #: lib/src/dataset.c:1956 gui2/gui_utils.c:4362
 msgid "dataset is subsampled"
@@ -1352,7 +1352,7 @@ msgstr "Идентификатор %d недоступен"
 #: lib/src/dataset.c:3263
 #, c-format
 msgid "Renumbered %s as variable %d\n"
-msgstr ""
+msgstr "Изменена нумерация %s, новый номер - %d\n"
 
 #: lib/src/dataset.c:3309
 msgid "The 'dataset' command is not available within functions"
@@ -2692,7 +2692,7 @@ msgstr "Отклик %s на шок в %s"
 #: lib/src/graphing.c:4353
 #, c-format
 msgid "%g percent confidence band"
-msgstr ""
+msgstr "%g-процентная доверительная граница"
 
 #: lib/src/graphing.c:4359 lib/src/graphing.c:4362
 msgid "point estimate"
@@ -2786,7 +2786,7 @@ msgstr "Начальное значение целевой функции не �
 
 #: lib/src/gretl_bundle.c:373
 msgid "no such item"
-msgstr ""
+msgstr "Такой элемент отсутствует"
 
 #: lib/src/gretl_bundle.c:956
 #, c-format
@@ -12381,7 +12381,7 @@ msgstr "Несколько графиков (вертикально)"
 
 #: gui2/library.c:6036
 msgid "Panel time-series graph"
-msgstr ""
+msgstr "График панельных временных рядов"
 
 #: gui2/library.c:6175
 msgid ""
@@ -13193,7 +13193,7 @@ msgstr "Оценивать матрицу ковариаций с помощью
 
 #: gui2/selector.c:4662
 msgid "Difference the independent variables"
-msgstr ""
+msgstr "Разность для независимых переменных"
 
 #: gui2/selector.c:4666
 msgid "Use X-12-ARIMA"
@@ -14466,9 +14466,8 @@ msgid "OLS model"
 msgstr "Модель МНК"
 
 #: gui2/toolbar.c:1065
-#, fuzzy
 msgid "gretl database"
-msgstr "gretl: базы данных на %s"
+msgstr "Базы данных gretl"
 
 #: gui2/toolbar.c:1066
 msgid "open dataset"
@@ -14483,6 +14482,11 @@ msgid ""
 "Would you like to exit from gretl and update your installation now?\n"
 "(You can run gretl_updater.exe later if you prefer.)"
 msgstr ""
+"Новые файлы доступны на сайте gretl.\n"
+"Их общий размер %u байт.\n"
+"\n"
+"Хотите выйти из gretl и инсталлировать их прямо сейчас?\n"
+"(При желании, Вы можете запустить gretl_updater.exe позже.)"
 
 #: gui2/update.c:138
 msgid ""
@@ -14537,18 +14541,16 @@ msgid "last observation"
 msgstr "последнее наблюдение"
 
 #: gui2/varinfo.c:683
-#, fuzzy
 msgid "Previous series"
-msgstr "Показать переменные"
+msgstr "Предыдущие переменные"
 
 #: gui2/varinfo.c:689
-#, fuzzy
 msgid "Next series"
-msgstr "Показать переменные"
+msgstr "Следующие переменные"
 
 #: gui2/varinfo.c:701
 msgid "ID number:"
-msgstr ""
+msgstr "Номер ID:"
 
 #: gui2/varinfo.c:717 gui2/varinfo.c:967
 msgid "gretl: variable attributes"
@@ -14620,7 +14622,7 @@ msgstr "Ошибка в команде arma"
 
 #: plugin/arma_init.c:350
 msgid "Hannan-Rissanen method"
-msgstr ""
+msgstr "Метод Хеннана-Риссанена (Hannan-Rissanen)"
 
 #: plugin/arma_init.c:1154
 msgid "small MA values"
@@ -14898,6 +14900,8 @@ msgid ""
 "Note: in general, the test statistics above are valid only in the\n"
 "absence of additional regressors."
 msgstr ""
+"ВНИМАНИЕ: тестовая статистика, приведенная выше является\n"
+"валидной только в случае отсутствия дополнительных регрессоров."
 
 #: plugin/johansen.c:1454
 msgid "Failed to find eigenvalues\n"
