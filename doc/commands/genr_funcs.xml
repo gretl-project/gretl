@@ -5322,8 +5322,8 @@
 	<para>
 	  <seelist> 
 	    <fncref targ="$compan"/>
-	    <fncref targ="var"/>
-	    <fncref targ="vecm"/>
+	    <cmdref targ="var"/>
+	    <cmdref targ="vecm"/>
 	  </seelist>
 	</para>
 
