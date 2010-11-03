@@ -950,6 +950,27 @@ static int arma_use_hessian (gretlopt opt)
     return ret;
 }
 
+static void arma_add_ehat (MODEL *pmod, arma_info *ainfo,
+			   kalman *K, double *b)
+{
+    int err;
+
+    kalman_set_options(K, KALMAN_ETT);
+    rewrite_kalman_matrices(K, b, KALMAN_ALL);
+    err = kalman_forecast(K, NULL);
+
+    if (!err) {
+	khelper *kh = kalman_get_data(K);
+	gretl_matrix *ehat = gretl_matrix_copy(kh->E);
+
+	if (ehat != NULL) {
+	    ehat->t1 = pmod->t1;
+	    ehat->t2 = pmod->t2;
+	    gretl_model_set_matrix_as_data(pmod, "ehat", ehat);
+	}
+    }
+}
+
 static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       kalman *K, double *b, 
@@ -997,15 +1018,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     }
 
     if (opt & OPT_E) {
-	gretl_matrix *ehat;
-
-	kalman_set_options(K, KALMAN_ETT);
-	rewrite_kalman_matrices(K, b, KALMAN_ALL);
-	kalman_forecast(K, NULL);
-	ehat = gretl_matrix_copy(kh->E);
-	if (ehat != NULL) {
-	    gretl_model_set_matrix_as_data(pmod, "ehat", ehat);
-	}
+	arma_add_ehat(pmod, ainfo, K, b);
     }
 
 #if ARMA_DEBUG
