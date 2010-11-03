@@ -802,7 +802,8 @@ static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
     if (!err) {
 	const char *fname;
 
-	if (!button_is_active(ed->axis_range[1].isauto)) {
+	if (ed->axis_range[1].isauto != NULL &&
+	    !button_is_active(ed->axis_range[1].isauto)) {
 	    /* we have a manual y-axis setting that may override the
 	       current (ymin, ymax) as read from the plot */
 	    ymin = spec->range[1][0];
@@ -877,7 +878,9 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	}
     }
 
-    if (spec->code == PLOT_REGULAR || spec->code == PLOT_CURVE) {
+    if (spec->code == PLOT_REGULAR || 
+	spec->code == PLOT_CURVE ||
+	spec->code == PLOT_MANY_TS) {
 	k = (spec->flags & GPT_Y2AXIS)? 3 : 2;
 	for (i=0; i<k; i++) {
 	    if (ed->axis_range[i].isauto != NULL) {
@@ -2884,7 +2887,9 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 	}
     } 
 
-    if (spec->code != PLOT_REGULAR && spec->code != PLOT_CURVE) {
+    if (spec->code != PLOT_REGULAR && 
+	spec->code != PLOT_CURVE &&
+	spec->code != PLOT_MANY_TS) {
 	return;
     }
 
