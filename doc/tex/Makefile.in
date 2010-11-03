@@ -24,6 +24,7 @@ TEXSRC = cli.tex \
 	datafiles.tex \
 	robust_vcv.tex \
 	panel.tex \
+	dpanel.tex \
 	genr.tex \
 	biblio.tex \
 	mle.tex \
