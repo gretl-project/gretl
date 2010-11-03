@@ -793,6 +793,10 @@
 	  <flag>--y-diff-only</flag>
 	  <effect>ARIMAX special, see below</effect>
 	</option>
+	<option>
+	  <flag>--save-ehat</flag>
+	  <effect>see below</effect>
+	</option>
       </options>
       <examples>
         <example>arima 1 0 2 ; y</example>
@@ -905,6 +909,16 @@
 	difference both the dependent variable and the regressors, but when
 	this option is specified only the dependent variable is differenced,
 	the regressors remaining in level form.
+      </para>
+
+      <para context="cli">
+	The option <opt>--save-ehat</opt> is applicable only when
+	using native exact ML estimation. The effect is to make
+	available a vector holding the optimal estimate as of period
+	<math>t</math> of the <math>t</math>-dated disturbance or
+	innovation: this can be retrieved via the accessor <lit>$ehat</lit>.
+	These values differ from the residual series (<lit>$uhat</lit>),
+	which holds the one-step ahead forecast errors.
       </para>
 
       <para>The AIC value given in connection with ARIMA models is
