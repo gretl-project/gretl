@@ -1,4 +1,4 @@
-version 1.9.2, in progress
+2010-11-03 version 1.9.2
 - New command "fractint" (fractional integration test)
 - The "pergm" command no longer does fractional integration
   testing as a side-effect

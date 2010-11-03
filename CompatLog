@@ -1,4 +1,4 @@
-version 1.9.2, in progress
+2010-11-03 version 1.9.2
 
 Testing for fractional integration is now factored out of
 the "pergm" command and has its own, more functional,
@@ -14,11 +14,11 @@ now have the option of interpolating rather than repeating
 the lower-frequency values (for annual to quarterly or 
 quarterly to monthly expansion). 
 
-2010-06-24 1.9.1
+2010-06-24 version 1.9.1
 
 The old genpois function is now removed.
 
-2010-05-02 1.9.0
+2010-05-02 version 1.9.0
 
 Many old (and now undocumented) aliasas are now officially 
 deprecated and will be removed before long, including the 
