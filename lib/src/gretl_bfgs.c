@@ -199,25 +199,19 @@ static void hess_h_reduce (double *h, double v, int n)
     }
 }
 
-static void hess_b_adjust_i (double *c, double *b, double *h, int n, 
+static void hess_b_adjust_i (double *c, const double *b, double *h, int n, 
 			     int i, double sgn)
 {
-    int k;
-
-    for (k=0; k<n; k++) {
-	c[k] = b[k] + (k == i) * sgn * h[i];
-    }
+    memcpy(c, b, n * sizeof *b);
+    c[i] += sgn * h[i];
 }
 
-static void hess_b_adjust_ij (double *c, double *b, double *h, int n, 
+static void hess_b_adjust_ij (double *c, const double *b, double *h, int n, 
 			      int i, int j, double sgn)
 {
-    int k;
-
-    for (k=0; k<n; k++) {
-	c[k] = b[k] + (k == i) * sgn * h[i] +
-	    (k == j) * sgn * h[j];
-    }
+    memcpy(c, b, n * sizeof *b);
+    c[i] += sgn * h[i];
+    c[j] += sgn * h[j];
 }
 
 #define RSTEPS 4
@@ -237,7 +231,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
     gretl_matrix *H = NULL;
     double Dx[RSTEPS];
     double Hx[RSTEPS];
-    double *bcpy, *wspace;
+    double *wspace;
     double *c, *h0, *h, *Hd, *D;
     /* numerical parameters */
     int r = RSTEPS;      /* number of Richardson steps */
@@ -250,15 +244,8 @@ gretl_matrix *numerical_hessian (const double *b, int n,
     int dn = vn + n;
     int i, j, k, m, u;
 
-    bcpy = copyvec(b, n);
-    if (bcpy == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }	
-
     wspace = malloc((4 * n + dn) * sizeof *wspace);
     if (wspace == NULL) {
-	free(bcpy);
 	*err = E_ALLOC;
 	return NULL;
     }
@@ -286,7 +273,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
     for (i=0; i<n; i++) {
 	hess_h_init(h, h0, n);
 	for (k=0; k<r; k++) {
-	    hess_b_adjust_i(c, bcpy, h, n, i, 1);
+	    hess_b_adjust_i(c, b, h, n, i, 1);
 	    f1 = func(c, data);
 	    if (na(f1)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
@@ -294,7 +281,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 		*err = E_NAN;
 		goto bailout;
 	    }
-	    hess_b_adjust_i(c, bcpy, h, n, i, -1);
+	    hess_b_adjust_i(c, b, h, n, i, -1);
 	    f2 = func(c, data);
 	    if (na(f2)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
@@ -330,7 +317,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 	    } else {
 		hess_h_init(h, h0, n);
 		for (k=0; k<r; k++) {
-		    hess_b_adjust_ij(c, bcpy, h, n, i, j, 1);
+		    hess_b_adjust_ij(c, b, h, n, i, j, 1);
 		    f1 = func(c, data);
 		    if (na(f1)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
@@ -338,7 +325,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 			*err = E_NAN;
 			goto bailout;
 		    }
-		    hess_b_adjust_ij(c, bcpy, h, n, i, j, -1);
+		    hess_b_adjust_ij(c, b, h, n, i, j, -1);
 		    f2 = func(c, data);
 		    if (na(f2)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
@@ -383,7 +370,6 @@ gretl_matrix *numerical_hessian (const double *b, int n,
     }
 
     free(wspace);
-    free(bcpy);
 
     return H;
 }

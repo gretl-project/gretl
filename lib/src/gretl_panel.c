@@ -52,7 +52,6 @@ struct panelmod_t_ {
     int Tmin;             /* shortest usable times-series */
     double Tbar;          /* harmonic mean of per-units time-series lengths */
     int NT;               /* total observations used (based on pooled model) */
-    int ifc;              /* flag for whether the model contains a constant */
     int ntdum;            /* number of time dummies added */
     int *unit_obs;        /* array of number of observations per x-sect unit */
     char *varying;        /* array to record properties of pooled-model regressors */
@@ -149,7 +148,6 @@ static void panelmod_init (panelmod_t *pan)
     pan->Tmin = 0;
     pan->Tbar = 0;
     pan->NT = 0;
-    pan->ifc = 0;
     pan->ntdum = 0;
     pan->unit_obs = NULL;
     pan->varying = NULL;
@@ -1073,7 +1071,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    nv = pan->vlist[0] + (pan->ifc == 0);
+    nv = pan->vlist[0];
 
 #if PDEBUG
     fprintf(stderr, "within_groups dataset: nvars=%d, nobs=%d\n", 
@@ -1731,7 +1729,7 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
     fmod->ybar = pan->pooled->ybar;
     fmod->sdy = pan->pooled->sdy;
     fmod->tss = pan->pooled->tss;
-    fmod->ifc = pan->ifc;
+    fmod->ifc = 1;
 
     gretl_model_set_double(fmod, "rsq_within", fmod->rsq);
     fmod->fstt = (fmod->rsq / (1.0 - fmod->rsq)) * 
@@ -1967,22 +1965,15 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
     } 
 
     felist[1] = 1;
-
-    if (pan->ifc) {
-	felist[2] = 0;
-	for (i=3; i<=felist[0]; i++) {
-	    felist[i] = i - 1;
-	}
-    } else {
-	for (i=2; i<=felist[0]; i++) {
-	    felist[i] = i;
-	}
-    }	
+    felist[2] = 0;
+    for (i=3; i<=felist[0]; i++) {
+	felist[i] = i - 1;
+    }
 
     femod = lsq(felist, wZ, winfo, OLS, lsqopt);
 
     if (femod.errcode) {
-	; /* pass on */
+	fprintf(stderr, "femod.errcode = %d\n", femod.errcode);
     } else if (femod.list[0] < felist[0]) {
 	/* one or more variables were dropped, because they were
 	   all zero -- this is a symptom of collinearity */
@@ -2886,24 +2877,17 @@ add_dummies_to_list (const int *list, DATAINFO *pdinfo,
     return err;
 }
 
-#define REQUIRE_CONST 1
-
 static int panel_check_for_const (const int *list, panelmod_t *pan)
 {
     int i;
 
     for (i=2; i<=list[0]; i++) {
 	if (list[i] == 0) {
-	    pan->ifc = 1;
-	    return 0;
+	    return 0; /* OK */
 	}
     }
 
-#if REQUIRE_CONST
     return E_NOCONST;
-#else
-    return 0;
-#endif
 }
 
 static int get_ntdum (const int *orig, const int *new)
@@ -3009,9 +2993,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 
 		mod.errcode);
 	goto bailout;
-    } else {
-	pan.ifc = mod.ifc;
-    }
+    } 
 
     free(olslist);
 

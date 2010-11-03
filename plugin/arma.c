@@ -1068,7 +1068,9 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	}
     }
 
-#if 0 /* experimental */
+#if 0 /* experimental: run the Koopman-style disturbance smoother
+	 after ARMA estimation
+      */
     if (!err) {
 	gretl_matrix *S, *U, *smu;
 	int t;
@@ -1108,7 +1110,10 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     }
 #endif
 
-#if 0 /* not ready yet */
+#if 0 /* not ready yet: after estimation of ARMA with missing
+         values, use the Kalman smoother to estimate the
+	 missing data
+      */
     if (!err && arma_missvals(ainfo)) {
 	gretl_matrix *ys = kalman_arma_smooth(K, &err);
 	int t;
@@ -1619,6 +1624,26 @@ static void maybe_allow_missvals (arma_info *ainfo)
     }
 }
 
+static int check_arma_options (gretlopt opt)
+{
+    int err;
+
+    /* you can't specify LBFGS with conditional ML */
+    err = incompatible_options(opt, OPT_C | OPT_L);
+
+    if (!err) {
+	/* nor --save-ehat with conditional ML */
+	err = incompatible_options(opt, OPT_E | OPT_C);
+    }
+
+    if (!err) {
+	/* nor --save-ehat with X-12-ARIMA */
+	err = incompatible_options(opt, OPT_E | OPT_X);
+    }      
+
+    return err;
+}
+
 MODEL arma_model (const int *list, const int *pqspec,
 		  const double **Z, const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
@@ -1634,9 +1659,9 @@ MODEL arma_model (const int *list, const int *pqspec,
     arma_info_init(ainfo, opt, pqspec, pdinfo);
     ainfo->prn = set_up_verbose_printer(opt, prn);
 
-    gretl_model_init(&armod); 
+    gretl_model_init(&armod);
 
-    err = incompatible_options(opt, OPT_C | OPT_L);
+    err = check_arma_options(opt);
 
     if (!err) {
 	ainfo->alist = gretl_list_copy(list);
