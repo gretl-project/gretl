@@ -1,3 +1,6 @@
+version 1.9.3, in progress
+- New command "biprobit" (bivariate probit)
+
 2010-11-03 version 1.9.2
 - New command "fractint" (fractional integration test)
 - The "pergm" command no longer does fractional integration

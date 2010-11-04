@@ -69,91 +69,93 @@ struct bp_container_ {
 /* container-bookkeeping functions                                        */
 /* ---------------------------------------------------------------------- */
 
-static void bp_container_destroy (bp_container *BPC)
+static void bp_container_destroy (bp_container *bp)
 {
-    if (BPC == NULL) {
+    if (bp == NULL) {
 	return;
     }
 
-    free(BPC->mask);
+    free(bp->mask);
 
-    free(BPC->X1list);
-    free(BPC->X2list);
+    free(bp->X1list);
+    free(bp->X2list);
 
-    free(BPC->s1);
-    free(BPC->s2);
-    gretl_matrix_free(BPC->reg1);
-    gretl_matrix_free(BPC->reg2);
-    gretl_vector_free(BPC->fitted1);
-    gretl_vector_free(BPC->fitted2);
-    gretl_vector_free(BPC->u1);
-    gretl_vector_free(BPC->u2);
-    gretl_matrix_free(BPC->score);
-    gretl_vector_free(BPC->sscore);
+    free(bp->s1);
+    free(bp->s2);
 
-    gretl_vector_free(BPC->beta);
-    gretl_vector_free(BPC->gama);
+    gretl_matrix_free(bp->reg1);
+    gretl_matrix_free(bp->reg2);
+    gretl_vector_free(bp->fitted1);
+    gretl_vector_free(bp->fitted2);
+    gretl_vector_free(bp->u1);
+    gretl_vector_free(bp->u2);
+    gretl_matrix_free(bp->score);
+    gretl_vector_free(bp->sscore);
 
-    gretl_matrix_free(BPC->vcv);
+    gretl_vector_free(bp->beta);
+    gretl_vector_free(bp->gama);
 
-    gretl_matrix_free(BPC->H11);
-    gretl_matrix_free(BPC->H12);
-    gretl_matrix_free(BPC->H13);
-    gretl_matrix_free(BPC->H22);
-    gretl_matrix_free(BPC->H23);
+    gretl_matrix_free(bp->vcv);
 
-    free(BPC);
+    gretl_matrix_free(bp->H11);
+    gretl_matrix_free(bp->H12);
+    gretl_matrix_free(bp->H13);
+    gretl_matrix_free(bp->H22);
+    gretl_matrix_free(bp->H23);
+
+    free(bp);
 }
 
 static bp_container *bp_container_new (const int *list)
 {
-    bp_container *BPC = malloc(sizeof *BPC);
+    bp_container *bp = malloc(sizeof *bp);
 
-    if (BPC == NULL) {
+    if (bp == NULL) {
 	return NULL;
     }
 
-    BPC->mask = NULL;
+    bp->mask = NULL;
 
-    BPC->list = list;
-    BPC->t1 = BPC->t2 = 0;
-    BPC->ll = NADBL;
+    bp->list = list;
+    bp->t1 = bp->t2 = 0;
+    bp->ll = NADBL;
 
-    BPC->X1list = NULL;
-    BPC->X2list = NULL;
+    bp->X1list = NULL;
+    bp->X2list = NULL;
 
-    BPC->reg1 = NULL;
-    BPC->reg2 = NULL;
-    BPC->fitted1 = NULL;
-    BPC->fitted2 = NULL;
-    BPC->u1 = NULL;
-    BPC->u2 = NULL;
-    BPC->score = NULL;
-    BPC->sscore = NULL;
+    bp->reg1 = NULL;
+    bp->reg2 = NULL;
+    bp->fitted1 = NULL;
+    bp->fitted2 = NULL;
+    bp->u1 = NULL;
+    bp->u2 = NULL;
+    bp->score = NULL;
+    bp->sscore = NULL;
 
-    BPC->beta = NULL;
-    BPC->gama = NULL;
-    BPC->arho = 0;
+    bp->beta = NULL;
+    bp->gama = NULL;
+    bp->arho = 0;
 
-    BPC->vcv = NULL;
+    bp->vcv = NULL;
 
-    return BPC;
+    return bp;
 }
 
 /* ---------------------------------------------------------------------- */
 /* Initialization-related functions                                       */
 /* ---------------------------------------------------------------------- */
 
-static int bp_cont_fill_data (bp_container *BPC, const double **Z)
+static int bp_cont_fill_data (bp_container *bp, const double **Z)
 {
+    char *mask = bp->mask;
+    int *s1, *s2;
+    int t1 = bp->t1;
+    int t2 = bp->t2;
+    int nmissing = 0;
     int i, T, err = 0;
-    char *mask = BPC->mask;
-    int t1 = BPC->t1;
-    int t2 = BPC->t2;
 
     T = t2 - t1 + 1;
 
-    int nmissing = 0;
     if (mask != NULL) {
 	for (i=0; i<T; i++) {
 	    if (mask[i]) nmissing++;
@@ -164,39 +166,40 @@ static int bp_cont_fill_data (bp_container *BPC, const double **Z)
 	return E_DATA;
     }
 
-    BPC->ntot = T - nmissing;
+    bp->ntot = T - nmissing;
 
-    int *s1;
-    int *s2;
-    s1 = malloc(BPC->ntot * sizeof *s1);
-    s2 = malloc(BPC->ntot * sizeof *s2);
+    s1 = malloc(bp->ntot * sizeof *s1);
+    s2 = malloc(bp->ntot * sizeof *s2);
 
-    if (s1==NULL || s2==NULL) {
+    if (s1 == NULL || s2 == NULL) {
+	free(s1);
+	free(s2);
 	return E_ALLOC;
     }
 
     if (nmissing == 0) {
 	for (i=t1; i<=t2; i++) {
-	    s1[i] = (Z[BPC->depvar1][i] == 1.0);
-	    s2[i] = (Z[BPC->depvar2][i] == 1.0);
+	    s1[i] = (Z[bp->depvar1][i] == 1.0);
+	    s2[i] = (Z[bp->depvar2][i] == 1.0);
 	}
     } else {
 	int k = 0;
+
 	for (i=t1; i<=t2; i++) {
 	    if (!mask[i]) {
-		s1[k] = (Z[BPC->depvar1][i] == 1.0);
-		s2[k] = (Z[BPC->depvar2][i] == 1.0);
+		s1[k] = (Z[bp->depvar1][i] == 1.0);
+		s2[k] = (Z[bp->depvar2][i] == 1.0);
 		k++;
 	    }
 	}
     } 
 
-    BPC->s1 = s1;
-    BPC->s2 = s2;
-    BPC->reg1 = gretl_matrix_data_subset_masked(BPC->X1list, Z, t1, t2, 
-						mask, &err);
-    BPC->reg2 = gretl_matrix_data_subset_masked(BPC->X2list, Z, t1, t2, 
-						mask, &err);
+    bp->s1 = s1;
+    bp->s2 = s2;
+    bp->reg1 = gretl_matrix_data_subset_masked(bp->X1list, Z, t1, t2, 
+					       mask, &err);
+    bp->reg2 = gretl_matrix_data_subset_masked(bp->X2list, Z, t1, t2, 
+					       mask, &err);
     return err;
 }
 
@@ -208,61 +211,57 @@ static int bp_cont_fill_data (bp_container *BPC, const double **Z)
   * the number of parameters
 */
 
-static int bp_base_info (bp_container *BPC, const double **Z, DATAINFO *pdinfo)
+static int bp_base_info (bp_container *bp, const double **Z, DATAINFO *pdinfo)
 {
-    int t1, t2, T, i, err = 0;
+    int t1, t2, i, seppos;
+    int nelem = bp->list[0];
+    int err = 0;
 
-    t1 = BPC->t1 = pdinfo->t1;
-    t2 = BPC->t2 = pdinfo->t2;
+    t1 = bp->t1 = pdinfo->t1;
+    t2 = bp->t2 = pdinfo->t2;
 
-    int nelem = BPC->list[0];
     if (nelem < 3) {
 	/* we need at least two dep. vars plus one regressor! */
 	return E_PARSE;
     }
 
-    BPC->depvar1 = BPC->list[1];
-    BPC->depvar2 = BPC->list[2];
+    bp->depvar1 = bp->list[1];
+    bp->depvar2 = bp->list[2];
 
-    int seppos = gretl_list_separator_position(BPC->list);
+    seppos = gretl_list_separator_position(bp->list);
+
     if (seppos == 0) {
 	/* same regressors for both equations */
-	BPC->k1 = BPC->k2 = nelem - 2;
-	BPC->X1list = gretl_list_new(BPC->k1);
-	BPC->X2list = gretl_list_new(BPC->k2);
-	for (i=1; i<=BPC->k1; i++) {
-	    BPC->X1list[i] = BPC->X2list[i] = BPC->list[i+2];
+	bp->k1 = bp->k2 = nelem - 2;
+	bp->X1list = gretl_list_new(bp->k1);
+	bp->X2list = gretl_list_new(bp->k2);
+	for (i=1; i<=bp->k1; i++) {
+	    bp->X1list[i] = bp->X2list[i] = bp->list[i+2];
 	}
     } else {
-	BPC->k1 = seppos - 3;
-	BPC->k2 = nelem - seppos;
-	BPC->X1list = gretl_list_new(BPC->k1);
-	BPC->X2list = gretl_list_new(BPC->k2);
-	for (i=1; i<=BPC->k1; i++) {
-	    BPC->X1list[i] = BPC->list[i+2];
+	bp->k1 = seppos - 3;
+	bp->k2 = nelem - seppos;
+	bp->X1list = gretl_list_new(bp->k1);
+	bp->X2list = gretl_list_new(bp->k2);
+	for (i=1; i<=bp->k1; i++) {
+	    bp->X1list[i] = bp->list[i+2];
 	}
-	for (i=1; i<=BPC->k2; i++) {
-	    BPC->X2list[i] = BPC->list[i+seppos];
+	for (i=1; i<=bp->k2; i++) {
+	    bp->X2list[i] = bp->list[i+seppos];
 	}
     }
 
-    int k1, k2;
-    k1 = BPC->k1;
-    k2 = BPC->k2;
-
-    BPC->npar = k1 + k2 + 1;
+    bp->npar = bp->k1 + bp->k2 + 1;
 
     return err;
 }
 
 static double match_residuals(int T, double *u1, double *u2, char *mask)
 {
+    double u1t, u2t, v1, v2, cv, rho;
     int t;
-    double u1t, u2t, v1, v2, cv;
 
-    v1 = 0;
-    v2 = 0;
-    cv = 0;
+    v1 = v2 = cv = 0;
 
     for (t=0; t<T; t++) {
 	u1t = u1[t];
@@ -275,11 +274,11 @@ static double match_residuals(int T, double *u1, double *u2, char *mask)
 	}
     }
 
-    double rho = cv / sqrt(v1 * v2);
+    rho = cv / sqrt(v1 * v2);
 
-    if (rho>0.99) {
+    if (rho > 0.99) {
 	rho = 0.99;
-    } else if (rho<-0.99) {
+    } else if (rho < -0.99) {
 	rho = -0.99;
     }
 
@@ -298,28 +297,25 @@ static double match_residuals(int T, double *u1, double *u2, char *mask)
       for one)
    4) the missing values mask is computed by ANDing the residuals;
       they should match anyway because of the preliminary OLS done 
-      in run_preliminary_ols(), but hey, checking is always good.
+      in bp_preliminary_ols(), but hey, checking is always good.
 
 */
 
-static int biprobit_first_pass(bp_container *BPC, MODEL *olsmod, 
-			       double ***pZ, DATAINFO *pdinfo)
+static int biprobit_first_pass (bp_container *bp, MODEL *olsmod, 
+				double ***pZ, DATAINFO *pdinfo)
 {
 #if BIPDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 #endif
-
     MODEL probmod;
-    int *list1 = NULL;
-    int *list2 = NULL;
-    int t1, t2, T, i, err = 0;
-    int k1, k2;
-
-    t1 = pdinfo->t1;
-    t2 = pdinfo->t2;
-
-    k1 = BPC->k1;
-    k2 = BPC->k2;
+    double rho;
+    double *u1 = NULL, *u2 = NULL;
+    int *list1 = NULL, *list2 = NULL;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int k1 = bp->k1;
+    int k2 = bp->k2;
+    int T, i, err = 0;
 
     T = t2 - t1 + 1;
 
@@ -331,29 +327,33 @@ static int biprobit_first_pass(bp_container *BPC, MODEL *olsmod,
     set_reference_missmask_from_model(olsmod);
 
     list1 = gretl_list_new(k1 + 1);
-    list1[1] = BPC->depvar1;
+    list1[1] = bp->depvar1;
     for (i=1; i<=k1; i++) {
-	list1[i+1] = BPC->X1list[i];
+	list1[i+1] = bp->X1list[i];
     }
 
     probmod = binary_probit(list1, pZ, pdinfo, OPT_A, NULL);
     if (probmod.errcode) {
 	goto bailout;
     }
+
 #if BIPDEBUG
     printmodel(&probmod, pdinfo, OPT_NONE, prn);
 #endif
 
-    BPC->ll0 = probmod.lnL;
-    BPC->beta = gretl_vector_alloc(k1);
+    bp->ll0 = probmod.lnL;
+    bp->beta = gretl_vector_alloc(k1);
     for (i=0; i<k1; i++) {
-	gretl_vector_set(BPC->beta, i, probmod.coeff[i]);
+	gretl_vector_set(bp->beta, i, probmod.coeff[i]);
     }
 
-    double *u1;
     u1 = malloc(T * sizeof *u1);
-    for (i=0; i<T; i++) {
-	u1[i] = probmod.uhat[i];
+    if (u1 == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (i=0; i<T; i++) {
+	    u1[i] = probmod.uhat[i];
+	}
     }
 
     /* Initial probit for the second eq. */
@@ -361,34 +361,34 @@ static int biprobit_first_pass(bp_container *BPC, MODEL *olsmod,
     set_reference_missmask_from_model(&probmod);
 
     list2 = gretl_list_new(k2 + 1);
-    list2[1] = BPC->depvar2;
+    list2[1] = bp->depvar2;
     for (i=1; i<=k2; i++) {
-	list2[i+1] = BPC->X2list[i];
+	list2[i+1] = bp->X2list[i];
     }
 
     probmod = binary_probit(list2, pZ, pdinfo, OPT_A, NULL);
     if (probmod.errcode) {
 	goto bailout;
     }
+
 #if BIPDEBUG
     printmodel(&probmod, pdinfo, OPT_NONE, prn);
 #endif
 
-    BPC->ll0 += probmod.lnL;
-    BPC->gama = gretl_vector_alloc(k2);
+    bp->ll0 += probmod.lnL;
+    bp->gama = gretl_vector_alloc(k2);
     for (i=0; i<k2; i++) {
-	gretl_vector_set(BPC->gama, i, probmod.coeff[i]);
+	gretl_vector_set(bp->gama, i, probmod.coeff[i]);
     }
 
-    double *u2;
     u2 = malloc(T * sizeof *u2);
     for (i=0; i<T; i++) {
 	u2[i] = probmod.uhat[i];
     }
 
-    BPC->mask = calloc(T, 1);
-    double rho = match_residuals(T, u1, u2, BPC->mask);
-    BPC->arho = atanh(rho);
+    bp->mask = calloc(T, 1);
+    rho = match_residuals(T, u1, u2, bp->mask);
+    bp->arho = atanh(rho);
     
  bailout:
 
@@ -400,59 +400,56 @@ static int biprobit_first_pass(bp_container *BPC, MODEL *olsmod,
     free(u2);
 
     return err;
-
 }
 
 /*
   This function fills up the container: first some base info, 
   then the output from the separate univariate probit models, 
-  then the rest (matrices etc)
+  then the rest (matrices, etc.)
 */
 
-static int bp_container_fill (bp_container *BPC, MODEL *olsmod, 
-			       double ***pZ, DATAINFO *pdinfo)
+static int bp_container_fill (bp_container *bp, MODEL *olsmod, 
+			      double ***pZ, DATAINFO *pdinfo)
 {
-    int t1, t2, T, i, err = 0;
-    const double **Z;
+    const double **Z = (const double **) *pZ;
+    int err;
 
-    Z = (const double **) *pZ;
-
-    err = bp_base_info(BPC, Z, pdinfo);
+    err = bp_base_info(bp, Z, pdinfo);
 
     if (!err) {
-	err = biprobit_first_pass(BPC, olsmod, pZ, pdinfo);
+	err = biprobit_first_pass(bp, olsmod, pZ, pdinfo);
     }
 
     if (!err) {
-	err = bp_cont_fill_data(BPC, Z);
+	err = bp_cont_fill_data(bp, Z);
     }
 
     if (!err) {
-	BPC->fitted1 = gretl_vector_alloc(BPC->ntot);
-	BPC->fitted2 = gretl_vector_alloc(BPC->ntot);
+	bp->fitted1 = gretl_vector_alloc(bp->ntot);
+	bp->fitted2 = gretl_vector_alloc(bp->ntot);
 
-	BPC->score = gretl_matrix_alloc(BPC->ntot, BPC->npar);
-	BPC->sscore = gretl_vector_alloc(BPC->npar);
+	bp->score = gretl_matrix_alloc(bp->ntot, bp->npar);
+	bp->sscore = gretl_vector_alloc(bp->npar);
 
-	if (BPC->fitted1 == NULL || BPC->fitted1 == NULL ||
-	    BPC->score == NULL || BPC->sscore == NULL) {
+	if (bp->fitted1 == NULL || bp->fitted1 == NULL ||
+	    bp->score == NULL || bp->sscore == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
-	int k1 = BPC->k1;
-	int k2 = BPC->k2;
+	int k1 = bp->k1;
+	int k2 = bp->k2;
 
-	BPC->H11 = gretl_matrix_alloc(k1, k1);
-	BPC->H12 = gretl_matrix_alloc(k1, k2);
-	BPC->H13 = gretl_matrix_alloc(k1, 1);
-	BPC->H22 = gretl_matrix_alloc(k2, k2);
-	BPC->H23 = gretl_matrix_alloc(k2, 1);
+	bp->H11 = gretl_matrix_alloc(k1, k1);
+	bp->H12 = gretl_matrix_alloc(k1, k2);
+	bp->H13 = gretl_matrix_alloc(k1, 1);
+	bp->H22 = gretl_matrix_alloc(k2, k2);
+	bp->H23 = gretl_matrix_alloc(k2, 1);
 
-	if (BPC->H11 == NULL || BPC->H12 == NULL ||
-	    BPC->H13 == NULL || BPC->H22 == NULL || 
-	    BPC->H23 == NULL) {
+	if (bp->H11 == NULL || bp->H12 == NULL ||
+	    bp->H13 == NULL || bp->H22 == NULL || 
+	    bp->H23 == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -460,26 +457,25 @@ static int bp_container_fill (bp_container *BPC, MODEL *olsmod,
     return err;
 }
 
-static int biprobit_init (bp_container *BPC, double ***pZ, DATAINFO *pdinfo, 
+static int biprobit_init (bp_container *bp, double ***pZ, DATAINFO *pdinfo, 
 			  PRN *prn)
 {
     MODEL probmod;
     int *list1 = NULL;
     int *list2 = NULL;
+    int k1 = bp->k1;
+    int k2 = bp->k2;
     int i, err = 0;
-    int k1, k2;
-
-    k1 = BPC->k1;
-    k2 = BPC->k2;
 
     /* Initial probit for the first eq. */
 
     gretl_model_init(&probmod);
 
     list1 = gretl_list_new(k1 + 1);
-    list1[1] = BPC->depvar1;
+    list1[1] = bp->depvar1;
+
     for (i=1; i<=k1; i++) {
-	list1[i+1] = BPC->X1list[i];
+	list1[i+1] = bp->X1list[i];
     }
 
     probmod = binary_probit(list1, pZ, pdinfo, OPT_A, NULL);
@@ -487,10 +483,10 @@ static int biprobit_init (bp_container *BPC, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    BPC->ll0 = probmod.lnL;
-    BPC->beta = gretl_vector_alloc(k1);
+    bp->ll0 = probmod.lnL;
+    bp->beta = gretl_vector_alloc(k1);
     for (i=0; i<k1; i++) {
-	gretl_vector_set(BPC->beta, i, probmod.coeff[i]);
+	gretl_vector_set(bp->beta, i, probmod.coeff[i]);
     }
 
     clear_model(&probmod);
@@ -500,9 +496,9 @@ static int biprobit_init (bp_container *BPC, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&probmod);
 
     list2 = gretl_list_new(k2 + 1);
-    list2[1] = BPC->depvar2;
+    list2[1] = bp->depvar2;
     for (i=1; i<=k2; i++) {
-	list2[i+1] = BPC->X2list[i];
+	list2[i+1] = bp->X2list[i];
     }
 
     probmod = binary_probit(list2, pZ, pdinfo, OPT_A, NULL);
@@ -510,10 +506,10 @@ static int biprobit_init (bp_container *BPC, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    BPC->ll0 += probmod.lnL;
-    BPC->gama = gretl_vector_alloc(k2);
+    bp->ll0 += probmod.lnL;
+    bp->gama = gretl_vector_alloc(k2);
     for (i=0; i<k2; i++) {
-	gretl_vector_set(BPC->gama, i, probmod.coeff[i]);
+	gretl_vector_set(bp->gama, i, probmod.coeff[i]);
     }
 
  bailout:
@@ -526,21 +522,26 @@ static int biprobit_init (bp_container *BPC, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-int *prelim_list(const int *list)
+static int *prelim_list (const int *list)
 {
     int i, j, n, m;
     int *invalid;
+    int *ret;
+
     n = m = list[0];
 
     invalid = malloc(n * sizeof *invalid);
+    if (invalid == NULL) {
+	return NULL;
+    }
     
-    for(i=1; i<=n; i++) {
-	if(list[i] == LISTSEP) {
+    for (i=1; i<=n; i++) {
+	if (list[i] == LISTSEP) {
 	    invalid[i-1] = 1;
 	    m--;
 	} else {
 	    invalid[i-1] = 0;
-	    for(j=2; j<i; j++) {
+	    for (j=2; j<i; j++) {
 		if (list[i] == list[j]) {
 		    invalid[i-1] = 1;
 		    m--;
@@ -550,39 +551,49 @@ int *prelim_list(const int *list)
 	}
     }
 
-    int *ret;
     ret = gretl_list_new(m);
 
-    j = 1;
-    for(i=1; i<=n; i++) {
-	if (!invalid[i-1]) {
-	    ret[j++] = list[i];
+    if (ret != NULL) {
+	j = 1;
+	for (i=1; i<=n; i++) {
+	    if (!invalid[i-1]) {
+		ret[j++] = list[i];
+	    }
 	}
     }
 
     free(invalid);
+
     return ret;
 }
 
-MODEL run_preliminary_ols (const int *list, double ***pZ, DATAINFO *pdinfo) 
+MODEL bp_preliminary_ols (const int *list, double ***pZ, DATAINFO *pdinfo) 
 {
 #if BIPDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 #endif
-
     MODEL mod;
     int *tmplist;
-    gretl_model_init(&mod);
 
     tmplist = prelim_list(list);
 
+    if (tmplist == NULL) {
+	gretl_model_init(&mod);
+	mod.errcode = E_ALLOC;
+	return mod;
+    }
+
     mod = lsq(tmplist, (double **) *pZ, pdinfo, OLS, OPT_A);
+
 #if BIPDEBUG
     printmodel(&mod, pdinfo, OPT_NONE, prn);
 #endif
-    set_reference_missmask_from_model(&mod);
 
-    mod.ci = BIPROBIT;
+    if (!mod.errcode) {
+	set_reference_missmask_from_model(&mod);
+	mod.ci = BIPROBIT;
+    }
+
     return mod;
 }
 
@@ -590,20 +601,21 @@ MODEL run_preliminary_ols (const int *list, double ***pZ, DATAINFO *pdinfo)
 /* likelihood-related functions                                           */
 /* ---------------------------------------------------------------------- */
 
-static int biprob_prelim(const double *param, bp_container *bp)
+static int biprob_prelim (const double *param, bp_container *bp)
 {
+    double rho;
     int k1 = bp->k1;
     int k2 = bp->k2;
     int npar = k1 + k2 + 1;
-    int err = 0;
+    int i, err = 0;
 
     bp->arho = param[npar-1];
+
     if (fabs(bp->arho) > 16) {
-	return 1;
+	return 1; /* suitable error code? */
     }
 
-    double rho = tanh(bp->arho);
-    int i;
+    rho = tanh(bp->arho);
 
     for (i=0; i<k1; i++) {
 	gretl_vector_set(bp->beta, i, param[i]);
@@ -618,24 +630,22 @@ static int biprob_prelim(const double *param, bp_container *bp)
 				    bp->fitted1, GRETL_MOD_NONE);
 
     if (!err) {
-    err = gretl_matrix_multiply_mod(bp->gama, GRETL_MOD_NONE, 
-				    bp->reg2, GRETL_MOD_TRANSPOSE, 
-				    bp->fitted2, GRETL_MOD_NONE);
+	err = gretl_matrix_multiply_mod(bp->gama, GRETL_MOD_NONE, 
+					bp->reg2, GRETL_MOD_TRANSPOSE, 
+					bp->fitted2, GRETL_MOD_NONE);
 
     }
 
     return err;
-
 }
 
 static double biprob_loglik (const double *param, void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
-    int k1 = bp->k1;
-    int k2 = bp->k2;
-    int npar = k1 + k2 + 1;
-    int i, err;
+    double rho, llt, a, b, P;
+    int i, eqt;
     double ll = NADBL;
+    int err;
 
     err = biprob_prelim(param, bp);
 
@@ -644,8 +654,6 @@ static double biprob_loglik (const double *param, void *ptr)
     }
 
     ll = 0.0;
-    int eqt;
-    double rho, llt, a, b, P;
     rho = tanh(bp->arho);
     
     for (i=0; i<bp->ntot; i++) {
@@ -662,6 +670,7 @@ static double biprob_loglik (const double *param, void *ptr)
     }
 
     bp->ll = ll;
+
     return ll;
 }
 
@@ -669,8 +678,9 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 			 void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
-    int k1 = bp->k1;
-    int k2 = bp->k2;
+    double ca, sa, ssa;
+    double a, b, P, f, d1, d2, da, tmp, u_ab, u_ba;
+    int i, j, eqt;
     int err;
 
     err = biprob_prelim(theta, bp);
@@ -679,14 +689,9 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	return 0;
     }
 
-    double ca, sa, ssa;
-
     ca = cosh(bp->arho);
     sa = sinh(bp->arho);
     gretl_matrix_zero(bp->sscore);
-
-    int i, j, eqt;
-    double a, b, P, f, d1, d2, da, tmp, u_ab, u_ba;
 
     for (i=0; i<bp->ntot; i++) {
 	a = gretl_vector_get(bp->fitted1, i);
@@ -710,7 +715,7 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	da = f / (P*ca*ca);
 	da = eqt ? da : -da;
 
-	for(j=0; j<bp->k1; j++) {
+	for (j=0; j<bp->k1; j++) {
 	    if (bp->s1[i]) {
 		tmp = gretl_matrix_get(bp->reg1, i, j) * d1;
 	    } else {
@@ -722,7 +727,7 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	    gretl_vector_set(bp->sscore, j, tmp);
 	}
 	
-	for(j=0; j<bp->k2; j++) {
+	for (j=0; j<bp->k2; j++) {
 	    if (bp->s2[i]) {
 		tmp = gretl_matrix_get(bp->reg2, i, j) * d2;
 	    } else {
@@ -752,8 +757,11 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
+    double a, b, P, f, d1, d2, da, tmp, u_ab, u_ba;
+    double ca, sa, ssa, x;
     int k1 = bp->k1;
     int k2 = bp->k2;
+    int t, i, j, eqt;
     int err;
 
     err = biprob_prelim(theta, bp);
@@ -762,14 +770,10 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	return 0;
     }
 
-    double ca, sa, ssa;
-
     ca = cosh(bp->arho);
     sa = sinh(bp->arho);
     gretl_matrix_zero(bp->sscore);
 
-    int t, i, j, eqt;
-    double a, b, P, f, d1, d2, da, tmp, u_ab, u_ba;
 
     double h11 = 0;
     double h12 = 0;
@@ -800,7 +804,6 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 				    bp->score, GRETL_MOD_NONE,
 				    H, GRETL_MOD_NONE);
 
-    double x;
     for (t=0; t<bp->ntot; t++) {
 	a = gretl_vector_get(bp->fitted1, t);
 	b = gretl_vector_get(bp->fitted2, t);
@@ -840,18 +843,17 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	tmp = (eqt ? u_ba*u_ab : -u_ba*u_ab);
 	h33 += da * (ca * tmp - sa);
 
-
-	for(i=0; i<bp->k1; i++) {
+	for (i=0; i<bp->k1; i++) {
 	    x = gretl_matrix_get(bp->reg1, t, i);
 
-	    for(j=i; j<bp->k1; j++) {
+	    for (j=i; j<bp->k1; j++) {
 		tmp = gretl_matrix_get(H11, i, j);
 		tmp += h11 * x * gretl_matrix_get(bp->reg1, t, j);
 		gretl_matrix_set(H11, i, j, tmp);
 		gretl_matrix_set(H11, j, i, tmp);
 	    }
 
-	    for(j=0; j<bp->k2; j++) {
+	    for (j=0; j<bp->k2; j++) {
 		tmp = gretl_matrix_get(H12, i, j);
 		tmp += h12 * x * gretl_matrix_get(bp->reg2, t, j);
 		gretl_matrix_set(H12, i, j, tmp);
@@ -862,10 +864,10 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	    gretl_matrix_set(H13, i, 0, tmp);
 	}
 
-	for(i=0; i<bp->k2; i++) {
+	for (i=0; i<bp->k2; i++) {
 	    x = gretl_matrix_get(bp->reg2, t, i);
 
-	    for(j=i; j<bp->k2; j++) {
+	    for (j=i; j<bp->k2; j++) {
 		tmp = gretl_matrix_get(H22, i, j);
 		tmp += h22 * x * gretl_matrix_get(bp->reg2, t, j);
 		gretl_matrix_set(H22, i, j, tmp);
@@ -878,6 +880,7 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	}
 
     }
+
 #if 0
     gretl_matrix_print(H11, "H11");
     gretl_matrix_print(H12, "H12");
@@ -888,15 +891,15 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     gretl_matrix_print(H, "OPG");
 #endif
 
-    for(i=0; i<bp->k1; i++) {
-	for(j=i; j<bp->k1; j++) {
+    for (i=0; i<bp->k1; i++) {
+	for (j=i; j<bp->k1; j++) {
 	    tmp = gretl_matrix_get(H, i, j) - 
 		gretl_matrix_get(H11, i, j);
 	    gretl_matrix_set(H, i, j, tmp);
 	    gretl_matrix_set(H, j, i, tmp);
 	}
 	
-	for(j=0; j<bp->k2; j++) {
+	for (j=0; j<bp->k2; j++) {
 	    tmp = gretl_matrix_get(H, i, j+k1) - 
 		gretl_matrix_get(H12, i, j);
 	    gretl_matrix_set(H, i, j+k1, tmp);
@@ -909,8 +912,8 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	gretl_matrix_set(H, k1+k2, i, tmp);
     }
 
-    for(i=0; i<bp->k2; i++) {
-	for(j=i; j<bp->k2; j++) {
+    for (i=0; i<bp->k2; i++) {
+	for (j=i; j<bp->k2; j++) {
 	    tmp = gretl_matrix_get(H, i+k1, j+k1) - 
 		gretl_matrix_get(H22, i, j);
 	    gretl_matrix_set(H, i+k1, j+k1, tmp);
@@ -927,7 +930,6 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     gretl_matrix_set(H, k1+k2, k1+k2, tmp);
     gretl_invert_symmetric_matrix(H);
 
-
     return 0;
 }
 
@@ -939,12 +941,12 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 
 int biprobit_nhessian (double *b, gretl_matrix *H, void *ptr)
 {
-    bp_container *bpc = (bp_container *) ptr;
+    bp_container *bp = (bp_container *) ptr;
     double x, eps = 1.0e-06;
     gretl_matrix *splus = NULL;
     gretl_matrix *sminus = NULL;
     double *theta;
-    int n = bpc->npar;
+    int n = bp->npar;
     int m = n*(n+1)/2;
     int i, j, k, err = 0;
     
@@ -966,16 +968,16 @@ int biprobit_nhessian (double *b, gretl_matrix *H, void *ptr)
     for (i=0; i<n; i++) {
 	theta[i] += eps;
 
-	biprob_score(theta, NULL, n, NULL, bpc);
+	biprob_score(theta, NULL, n, NULL, bp);
 	for (j=0; j<n; j++) {
-	    x = gretl_vector_get(bpc->sscore, j);
+	    x = gretl_vector_get(bp->sscore, j);
 	    gretl_vector_set(splus, j, x);
 	}
 
 	theta[i] -= 2*eps;
-	biprob_score(theta, NULL, n, NULL, bpc);
+	biprob_score(theta, NULL, n, NULL, bp);
 	for (j=0; j<n; j++) {
-	    x = gretl_vector_get(bpc->sscore, j);
+	    x = gretl_vector_get(bp->sscore, j);
 	    gretl_vector_set(sminus, j, x);
 	}
 
@@ -1002,90 +1004,103 @@ int biprobit_nhessian (double *b, gretl_matrix *H, void *ptr)
 
 #endif
 
+static double *make_bp_theta (bp_container *bp, int *err)
+{
+    double *theta = malloc(bp->npar * sizeof *theta);
+    int i;
+
+    if (theta == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<bp->k1; i++) {
+	theta[i] = gretl_vector_get(bp->beta, i);
+    }
+
+    for (i=0; i<bp->k2; i++) {
+	theta[bp->k1 + i] = gretl_vector_get(bp->gama, i);
+    }
+
+    theta[bp->k1 + bp->k2] = bp->arho;
+
+    return theta;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Actual likelihood maximization and post-estimation                     */
 /* ---------------------------------------------------------------------- */
 
 #define USE_NEWTON 1
 
-static int do_maxlik(bp_container *bp, gretlopt opt, PRN *prn)
+static int do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 {
-    int fncount, grcount;
-    int np = bp->npar;
-    int err = 0;
-
-    /* prova */
-    double *theta;
-    theta = malloc(np * sizeof *theta);
-    int i;
-    int k1 = bp->k1;
-    int k2 = bp->k2;
-    int maxit = 1000;
-
-    for (i=0; i<k1; i++) {
-	theta[i] = gretl_vector_get(bp->beta, i);
-    }
-    for (i=0; i<k2; i++) {
-	theta[k1 + i] = gretl_vector_get(bp->gama, i);
-    }
-    theta[k1 + k2] = bp->arho;
-
-#if USE_NEWTON
     double crittol = 1.0e-06;
     double gradtol = 1.0e-03;
-    err = newton_raphson_max (theta, np, maxit, crittol, gradtol,
-			      &fncount, C_LOGLIK, biprob_loglik, 
-			      biprob_score, biprobit_ahessian,
-			      bp, opt & OPT_V, prn);
+    int fncount, maxit = 1000;
+    double *theta;
+    int err = 0;
+
+    theta = make_bp_theta(bp, &err);
+    if (err) {
+	return err;
+    }
+
+#if USE_NEWTON
+    err = newton_raphson_max(theta, bp->npar, maxit, crittol, gradtol,
+			     &fncount, C_LOGLIK, biprob_loglik, 
+			     biprob_score, biprobit_ahessian,
+			     bp, opt & OPT_V, prn);
 #else
-    double toler = 1.0e-11;
-    err = BFGS_max(theta, np, maxit, toler, &fncount, 
+    int grcount;
+
+    crittol = 1.0e-11;
+    err = BFGS_max(theta, bp->npar, maxit, crittol, &fncount, 
 		   &grcount, biprob_loglik, C_LOGLIK,
 		   biprob_score, bp, NULL,
 		   opt & OPT_V, prn);
 #endif
 
     free(theta);
+
     return err;
 }
 
-static int biprobit_vcv(bp_container *bp, gretl_matrix **V, gretlopt opt)
+static int biprobit_vcv (bp_container *bp, gretl_matrix **V, gretlopt opt)
 {
-    int err;
     int do_hessian = (opt & OPT_R) || (opt & OPT_H);
     int do_opg = !(opt & OPT_H);
     gretl_matrix *Hess = NULL;
     gretl_matrix *OPG = NULL;
+    int err = 0;
 
     if (do_hessian) {
 	double *theta;
-	int i, np = bp->npar;
-	int k1 = bp->k1;
-	int k2 = bp->k2;
 
-	theta = malloc(np * sizeof *theta);
+	theta = make_bp_theta(bp, &err);
 
-	for (i=0; i<k1; i++) {
-	    theta[i] = gretl_vector_get(bp->beta, i);
+	if (!err) {
+	    Hess = gretl_matrix_alloc(bp->npar, bp->npar);
+	    if (Hess == NULL) {
+		err = E_ALLOC;
+	    }
 	}
 
-	for (i=0; i<k2; i++) {
-	    theta[k1 + i] = gretl_vector_get(bp->gama, i);
+	if (!err) {
+	    err = biprobit_ahessian(theta, Hess, bp);
+	    
 	}
-	theta[k1 + k2] = bp->arho;
-
-	int nh = np * (np + 1) / 2;
-	Hess   = gretl_matrix_alloc(np, np);
-
-	err = biprobit_ahessian(theta, Hess, bp);
 #if 0
 	gretl_matrix_print(Hess, "iHess");
 #endif
 	free(theta);
     }
 
-    if (do_opg) {
+    if (!err && do_opg) {
 	OPG = gretl_matrix_XTX_new(bp->score);
+	if (OPG == NULL) {
+	    err = E_ALLOC;
+	}
 #if 0
 	gretl_matrix_print(OPG, "OPG");
 #endif
@@ -1114,29 +1129,31 @@ static int add_indep_LR_test (MODEL *pmod, double LR)
     ModelTest *test = model_test_new(GRETL_TEST_INDEP);
     int err = 0;
 
-    if (test != NULL) {
+    if (test == NULL) {
+	err = E_ALLOC;
+    } else {
         model_test_set_teststat(test, GRETL_STAT_LR);
         model_test_set_dfn(test, 1);
         model_test_set_value(test, LR);
         model_test_set_pvalue(test, chisq_cdf_comp(1, LR));
         maybe_add_test_to_model(pmod, test);
-    } else {
-        err = 1;
-    }
+    } 
 
     return err;
 }
 
-static int biprobit_fill_model(MODEL *m, bp_container *b, DATAINFO *pdinfo,
-			       gretlopt opt)
+static int biprobit_fill_model (MODEL *m, bp_container *b, DATAINFO *pdinfo,
+				gretlopt opt)
 {
+    gretl_matrix *V;
     double *fullcoeff;
     double *se;
     double x;
     int k1 = b->k1;
     int k2 = b->k2;
     int npar = b->npar - 1;
-    int i, j, nvc, err = 0;
+    int i, j, k, nvc;
+    int err = 0;
 
     nvc = (npar * npar + npar) / 2;
 
@@ -1180,17 +1197,16 @@ static int biprobit_fill_model(MODEL *m, bp_container *b, DATAINFO *pdinfo,
     m->nobs = b->ntot;
     gretl_model_set_coeff_separator(m, pdinfo->varname[b->depvar2], k1);
 
-    gretl_matrix *V;
     V = gretl_matrix_alloc(npar+1, npar+1);
     err = biprobit_vcv(b, &V, opt);
 
-    int k = 0;
+    k = 0;
 
     for (i=0; i<npar; i++) {
 	for (j=i; j<npar; j++) {
 	    x = gretl_matrix_get(V, i, j);
 	    m->vcv[k++] = x;
-	    if (i==j) {
+	    if (i == j) {
 		se[i] = sqrt(x);
 	    }
 	}
@@ -1215,33 +1231,33 @@ static int biprobit_fill_model(MODEL *m, bp_container *b, DATAINFO *pdinfo,
 MODEL biprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn) 
 {
-    int err;
-    bp_container *bpc;
+    bp_container *bp;
     MODEL mod;
 
-    bpc = bp_container_new(list);
-
-    mod = run_preliminary_ols(list, pZ, pdinfo);
-
-    if (err) {
-	mod.errcode = err;
+    bp = bp_container_new(list);
+    if (bp == NULL) {
+	gretl_model_init(&mod);
+	mod.errcode = E_ALLOC;
 	return mod;
-    } 
-
-    err = bp_container_fill(bpc, &mod, pZ, pdinfo);
-
-    if (err) {
-	mod.errcode = err;
-	return mod;
-    } 
-
-    mod.errcode = do_maxlik(bpc, opt, prn);
-
-    if (!mod.errcode) {
-	biprobit_fill_model(&mod, bpc, pdinfo, opt);
     }
 
-    bp_container_destroy(bpc);
+    mod = bp_preliminary_ols(list, pZ, pdinfo);
+    if (mod.errcode) {
+	return mod;
+    } 
+
+    mod.errcode = bp_container_fill(bp, &mod, pZ, pdinfo);
+    if (mod.errcode) {
+	return mod;
+    } 
+
+    mod.errcode = do_maxlik(bp, opt, prn);
+
+    if (!mod.errcode) {
+	biprobit_fill_model(&mod, bp, pdinfo, opt);
+    }
+
+    bp_container_destroy(bp);
     
     return mod;
 }
