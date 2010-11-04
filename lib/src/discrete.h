@@ -35,6 +35,9 @@ MODEL ordered_probit (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL multinomial_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
+MODEL biprobit_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn);
+
 MODEL logistic_model (const int *list, double lmax,
 		      double ***pZ, DATAINFO *pdinfo);
 

@@ -86,7 +86,8 @@ enum {
     P_INTREG,
     P_ANOVA,
     P_DURATION,
-    P_INTERPOLATE
+    P_INTERPOLATE,
+    P_BIPROBIT
 } plugin_codes;
 
 struct plugin_info {
@@ -138,7 +139,8 @@ struct plugin_info plugins[] = {
     { P_INTREG,          "interval" },
     { P_ANOVA,           "anova" },
     { P_DURATION,        "duration" },
-    { P_INTERPOLATE,     "interpolate" }
+    { P_INTERPOLATE,     "interpolate" },
+    { P_BIPROBIT,        "biprobit" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -209,6 +211,7 @@ struct plugin_function plugin_functions[] = {
     { "count_data_estimate", P_POISSON },
     { "heckit_estimate",   P_HECKIT },
     { "interval_estimate", P_INTREG },
+    { "biprobit_estimate", P_BIPROBIT },
 
     /* audio graphs etc */
     { "midi_play_graph",   P_AUDIO },

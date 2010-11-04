@@ -31,6 +31,7 @@ typedef enum {
     ARBOND,
     ARCH,
     ARMA,
+    BIPROBIT,
     BREAK,
     BXPLOT,
     CHOW,

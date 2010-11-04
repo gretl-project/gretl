@@ -2827,6 +2827,50 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
+ * biprobit_model:
+ * @list: binary dependent variable 1, binary dependent variable 2,
+ * list of regressors for y1. If @list ends here, it is assumed that the
+ * explanatory variables for y2 are the same as y1. Otherwise, the list 
+ * must include a separator and the list of regressors for y2.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: none for now.
+ * @prn: printing struct.
+ *
+ * Computes estimates of bivariate probit model specified by @list,
+ * using maximum likelihood via Newton-Raphson.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL biprobit_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+		gretlopt opt, PRN *prn)
+{
+    MODEL bpmod;
+    void *handle;
+    MODEL (* biprobit_estimate) (const int *, double ***, DATAINFO *, 
+				 gretlopt, PRN *);
+
+    gretl_error_clear();
+
+    biprobit_estimate = get_plugin_function("biprobit_estimate", &handle);
+    if (biprobit_estimate == NULL) {
+	gretl_model_init(&bpmod);
+	bpmod.errcode = E_FOPEN;
+	return bpmod;
+    }
+
+    bpmod = (*biprobit_estimate) (list, pZ, pdinfo, opt, prn);
+
+    close_plugin(handle);
+
+    set_model_id(&bpmod);
+
+    return bpmod;
+}
+
+
+/**
  * binary_logit:
  * @list: binary dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.

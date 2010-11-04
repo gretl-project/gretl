@@ -2502,6 +2502,23 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 	    }
 	}
 	multi = 1;
+    } else if (ci == BIPROBIT) {
+	multi = 1;
+	if (list[1] == list[2]) {
+	    ret = 1;
+	} 
+	if (ret == -1) {
+	    for (i=3; i<list[0]; i++) {
+		if (list[i] == LISTSEP) {
+		    start = i+1;
+		    break;
+		}
+	    }
+	    ret = real_list_dup(list, start, list[0]);
+	    if (ret == -1) {
+		ret = real_list_dup(list, 3, start - 2);
+	    }
+	}
     } 
 
     if (!multi) {

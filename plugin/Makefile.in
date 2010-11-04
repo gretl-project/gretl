@@ -111,7 +111,8 @@ SRCS = excel_import.c \
 	odbc_import.c \
 	quantreg.c \
 	interval.c \
-	anova.c
+	anova.c \
+	biprobit.c
 
 ZIPSRC = zfileio.c \
 	zsystem.c \
@@ -146,7 +147,8 @@ PLUGINS = arbond.la \
 	interval.la \
 	anova.la \
 	mp_ols.la \
-	interpolate.la
+	interpolate.la \
+	biprobit.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -269,6 +271,9 @@ duration.la: duration.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
 heckit.la: heckit.lo
+	$(LINK) -o $@ $< $(GRETLLIB) 
+
+biprobit.la: biprobit.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
 garch.la: garch.lo fcp.lo mod_garch.lo

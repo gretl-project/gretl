@@ -725,7 +725,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	} else if (NONLIST_MODEL(pmod->ci) ||
 		   pmod->ci == ARMA || pmod->ci == PANEL || 
 		   pmod->ci == ARBOND || pmod->ci == DPANEL ||
-		   pmod->ci == GARCH) {
+		   pmod->ci == GARCH || pmod->ci == BIPROBIT) {
 	    k = i;
 	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
 	    k = i;
@@ -2987,6 +2987,9 @@ static struct test_strings tstrings[] = {
     { GRETL_TEST_COMFAC,
       N_("Test of common factor restriction"),
       N_("restriction is acceptable") },
+    { GRETL_TEST_INDEP,
+      N_("Test of independence"),
+      N_("rho = 0") },
     { GRETL_TEST_MAX, NULL, NULL }
 }; 
 

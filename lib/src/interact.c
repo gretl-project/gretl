@@ -432,6 +432,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define USES_LISTSEP(c) (c == AR || \
                          c == ARBOND || \
                          c == ARMA || \
+                         c == BIPROBIT || \
                          c == COINT2 || \
 			 c == DPANEL ||	\
                          c == EQUATION || \
@@ -4887,6 +4888,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case QUANTREG:
     case TOBIT:
     case DURATION:
+    case BIPROBIT:
 	clear_model(models[0]);
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
 	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, prn);
@@ -4921,6 +4923,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				   Z, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
 	    *models[0] = interval_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	} else if (cmd->ci == BIPROBIT) {
+	    *models[0] = biprobit_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;

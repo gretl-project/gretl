@@ -730,6 +730,7 @@ static const char *simple_estimator_string (int ci, PRN *prn)
     else if (ci == GARCH) return N_("GARCH");
     else if (ci == INTREG) return N_("Interval estimates");
     else if (ci == DPANEL) return N_("Dynamic panel");
+    else if (ci == BIPROBIT) return N_("Bivariate probit");
     else if (ci == ARBOND) {
 	if (tex_format(prn)) return N_("Arellano--Bond");
 	else return N_("Arellano-Bond");
@@ -2760,6 +2761,12 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	val[2] = val[3] = NADBL;
 	val[6] = val[7] = NADBL;
 	val[12] = val[13] = NADBL;
+    } else if (pmod->ci == BIPROBIT) {
+	val[2] = val[3] = NADBL;
+	key[6] = (tex)? "$\\hat{\\rho}$" : N_("rho");
+	val[6] = pmod->rho;
+	val[7] = NADBL;
+	val[12] = NADBL;
     } else if (pmod->ci == TOBIT) {
 	key[2] = N_("Censored obs"); /* 22: Number of censored observations */
 	val[2] = gretl_model_get_int(pmod, "censobs");
@@ -3042,7 +3049,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != HECKIT && 
 	pmod->ci != ARBOND && pmod->ci != DPANEL && pmod->ci != GARCH && 
 	pmod->ci != DURATION && !ordered_model(pmod) && !multinomial_model(pmod) && 
-	!COUNT_MODEL(pmod->ci) && !pmod->aux) {
+	!COUNT_MODEL(pmod->ci) && pmod->ci != BIPROBIT && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 

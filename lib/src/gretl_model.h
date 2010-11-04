@@ -162,7 +162,8 @@ struct VCVInfo_ {
 			     c == NEGBIN || \
                              c == POISSON || \
                              c == PROBIT || \
-                             c == TOBIT)
+                             c == TOBIT || \
+                             c == BIPROBIT)
 
 /* model where the specification is not based on a list
    of variables */
@@ -209,6 +210,7 @@ typedef enum {
     GRETL_TEST_BP,
     GRETL_TEST_CHOWDUM,
     GRETL_TEST_COMFAC,
+    GRETL_TEST_INDEP,
     GRETL_TEST_MAX
 } ModelTestType;
 
