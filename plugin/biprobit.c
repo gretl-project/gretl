@@ -354,7 +354,7 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 	return err;
     }
 
-    T = olsmod->t2 - olsmod->t1 + 1;
+    T = bp->t2 - bp->t1 + 1;
 
     err = bp_add_coeff_vecs_and_mask(bp, T);
     if (err) {
@@ -469,14 +469,11 @@ static int bp_container_fill (bp_container *bp, MODEL *olsmod,
     }
 
     if (!err) {
-	int k1 = bp->k1;
-	int k2 = bp->k2;
-
-	bp->B = gretl_matrix_block_new(&bp->H11, k1, k1,
-				       &bp->H12, k1, k2,
-				       &bp->H13, k1, 1,
-				       &bp->H22, k2, k2,
-				       &bp->H23, k2, 1,
+	bp->B = gretl_matrix_block_new(&bp->H11, bp->k1, bp->k1,
+				       &bp->H12, bp->k1, bp->k2,
+				       &bp->H13, bp->k1, 1,
+				       &bp->H22, bp->k2, bp->k2,
+				       &bp->H23, bp->k2, 1,
 				       NULL);
 
 	if (bp->B == NULL) {
@@ -721,6 +718,8 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
+/* analytical hessian */
+
 int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
@@ -888,9 +887,10 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 }
 
 #if 0
+
 /* 
-   shouldn't be needed anymore, but let's keep it around, 
-   just in case
+   numerical hessian: shouldn't be needed anymore, but let's keep it
+   around, just in case 
 */
 
 int biprobit_nhessian (double *b, gretl_matrix *H, void *ptr)
