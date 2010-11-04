@@ -21,7 +21,7 @@ you'll probably want to specify the hour as 20 periods.
 setobs 20 9:1 --special
 \end{code}
 
-\emph{Comment:} Now functions like \texttt{sdiff()} (``seasonal''
+\emph{Comment:} Now functions like \cmd{sdiff()} (``seasonal''
 difference) or estimation methods like seasonal ARIMA will work as
 expected.
 
@@ -41,7 +41,7 @@ setobs 1 1950 --time-series
 
 \emph{Comment:} The first line is required only if the data currently
 have a time series interpretation: it removes that interpretation,
-because (for fairly obvious reasons) the \texttt{dataset sortby}
+because (for fairly obvious reasons) the \cmd{dataset sortby}
 operation is not allowed for time series data.  The following two
 lines reverse the data, using the negative of the built-in index
 variable \texttt{obs}.  The last line is just illustrative: it
@@ -66,13 +66,19 @@ missing observations for the variables \texttt{x1}, \texttt{x2} and
 \emph{Solution:}
 \begin{code}
 list X = x1 x2 x3
-genr sel = ok(X)
-smpl sel --restrict
+smpl --no missing X
 \end{code}
 \end{samepage}
 
-\emph{Comment:} You can now save the file via a \texttt{store} command
-to preserve a subsampled version of the dataset.
+\emph{Comment:} You can now save the file via a \cmd{store} command
+to preserve a subsampled version of the dataset. Alternative solution
+based on the \cmd{ok} function, such as
+\begin{code}
+list X = x1 x2 x3
+genr sel = ok(X)
+smpl sel --restrict
+\end{code}
+are perhaps less obviuous, but more flexible. Pick your poison.
 
 \subsection{``By'' operations}
 
@@ -94,7 +100,9 @@ smpl --full
 
 \emph{Comment:} The main ingredient here is a loop.  You can have
 \app{gretl} perform as many instructions as you want for each value of
-\texttt{d}, as long as they are allowed inside a loop.
+\texttt{d}, as long as they are allowed inside a loop. Note, however,
+that if all you want is descriptive statistics, the \cmd{summary}
+command does have a \option{by} option.
 
 \subsection{Adding a time series to a panel}
 
@@ -128,10 +136,10 @@ append cpi.txt
 \emph{Comment:} If the length of the time series is the same as the
 length of the time dimension in the panel (3 in this example), gretl
 will perform the stacking automatically.  Rather than using the
-\texttt{append} command you could use the ``Append data'' item under
+\cmd{append} command you could use the ``Append data'' item under
 the \textsf{File} menu in the GUI program.  For this to work, your
 main dataset must be recognized as a panel.  This can be arranged via
-the \texttt{setobs} command or the ``Dataset structure'' item under
+the \cmd{setobs} command or the ``Dataset structure'' item under
 the \textsf{Data} menu.
 
 
@@ -166,7 +174,14 @@ same purpose, with the same syntax.
 \emph{Problem:} Generate $y_t = 0.9 y_{t-1} + \varepsilon_t - 0.5
 \varepsilon_{t-1}$, with $\varepsilon_t \sim N\!I\!I\!D(0,1)$.
 
-\emph{Solution:}
+\emph{Recommended solution:}
+\begin{code}
+alpha = 0.9
+theta = -0.5
+series y = filter(normal(), {1, theta}, alpha)
+\end{code}
+
+\emph{``Bread and butter'' solution:}
 \begin{code}
 alpha = 0.9
 theta = -0.5
@@ -175,7 +190,13 @@ series y = 0
 series y = alpha * y(-1) + e + theta * e(-1)
 \end{code}
 
-\emph{Comment:} The statement \texttt{series y = 0} is necessary
+\emph{Comment:} The \cmd{filter} function is specifically designed for
+this purpose so in most cases you'll want to take advantage of its
+speed and flexibility. That said, in some cases you may want to
+generate the series in a manner which is more transparent (maybe for
+teaching purposes). 
+
+In the second solution, the statement \cmd{series y = 0} is necessary
 because the next statement evaluates \texttt{y} recursively, so
 \texttt{y[1]} must be set.  Note that you must use the keyword
 \texttt{series} here instead of writing \texttt{genr y = 0} or simply
@@ -297,7 +318,7 @@ store foo rv
 \emph{Comment:} Here we trick \app{gretl} into thinking that our
 dataset is a panel dataset, where the minutes are the ``units'' and
 the seconds are the ``time''; this way, we can take advantage of the
-special function \texttt{psd()}, panel standard deviation.  Then we
+special function \cmd{psd()}, panel standard deviation.  Then we
 simply drop all observations but one per minute and save the resulting
 data (\texttt{store foo rv} translates as ``store in the \app{gretl}
 datafile \texttt{foo.gdt} the series \texttt{rv}'').
