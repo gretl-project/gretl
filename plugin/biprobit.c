@@ -213,14 +213,6 @@ static int bp_base_info (bp_container *bp, const double **Z, DATAINFO *pdinfo)
     int i, seppos;
     int err = 0;
 
-    bp->t1 = pdinfo->t1;
-    bp->t2 = pdinfo->t2;
-
-    if (nelem < 3) {
-	/* we need at least two dep. vars plus one regressor! */
-	return E_PARSE;
-    }
-
     bp->depvar1 = bp->list[1];
     bp->depvar2 = bp->list[2];
 
@@ -450,6 +442,9 @@ static int bp_container_fill (bp_container *bp, MODEL *olsmod,
     const double **Z = (const double **) *pZ;
     int err;
 
+    bp->t1 = olsmod->t1;
+    bp->t2 = olsmod->t2;
+
     err = bp_base_info(bp, Z, pdinfo);
 
     if (!err) {
@@ -581,28 +576,22 @@ MODEL bp_preliminary_ols (const int *list, double **Z, DATAINFO *pdinfo)
 /* likelihood-related functions                                           */
 /* ---------------------------------------------------------------------- */
 
-static int biprob_prelim (const double *param, bp_container *bp)
+static int biprob_prelim (const double *theta, bp_container *bp)
 {
-    double rho;
-    int k1 = bp->k1;
-    int k2 = bp->k2;
-    int npar = k1 + k2 + 1;
     int i, err = 0;
 
-    bp->arho = param[npar-1];
+    bp->arho = theta[bp->npar - 1];
 
     if (fabs(bp->arho) > 16) {
 	return 1; /* suitable error code? */
     }
 
-    rho = tanh(bp->arho);
-
-    for (i=0; i<k1; i++) {
-	gretl_vector_set(bp->beta, i, param[i]);
+    for (i=0; i<bp->k1; i++) {
+	gretl_vector_set(bp->beta, i, theta[i]);
     }
 
-    for (i=0; i<k2; i++) {
-	gretl_vector_set(bp->gama, i, param[k1+i]);
+    for (i=0; i<bp->k2; i++) {
+	gretl_vector_set(bp->gama, i, theta[bp->k1+i]);
     }
 
     err = gretl_matrix_multiply_mod(bp->beta, GRETL_MOD_NONE, 
@@ -613,20 +602,19 @@ static int biprob_prelim (const double *param, bp_container *bp)
 	err = gretl_matrix_multiply_mod(bp->gama, GRETL_MOD_NONE, 
 					bp->reg2, GRETL_MOD_TRANSPOSE, 
 					bp->fitted2, GRETL_MOD_NONE);
-
     }
 
     return err;
 }
 
-static double biprob_loglik (const double *param, void *ptr)
+static double biprob_loglik (const double *theta, void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
     double rho, llt, a, b, P;
     double ll = NADBL;
     int i, eqt, err;
 
-    err = biprob_prelim(param, bp);
+    err = biprob_prelim(theta, bp);
 
     if (err) {
 	return ll;
@@ -1208,11 +1196,21 @@ MODEL biprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 {
     bp_container *bp;
     MODEL mod;
+    int err = 0;
 
-    bp = bp_container_new(list);
-    if (bp == NULL) {
+    if (list[0] < 3) {
+	/* we need at least two dep. vars plus one regressor! */
+	err = E_PARSE;
+    } else {
+	bp = bp_container_new(list);
+	if (bp == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
 	gretl_model_init(&mod);
-	mod.errcode = E_ALLOC;
+	mod.errcode = err;
 	return mod;
     }
 
