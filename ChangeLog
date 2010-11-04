@@ -198,7 +198,7 @@
 - Fix bugs: miscellaneous small GUI bugs
 - Fix bugs 2918790, 2918783, 2918775, 2917053
 
-2008-11-25 version 1.8.6
+2009-11-25 version 1.8.6
 - Fix bug: the "print" command for series fails after
   exiting a loop with the --progressive option set
 - ARIMAX models: follow the practice of most software
