@@ -529,6 +529,16 @@ MODEL bp_preliminary_ols (const int *list, double **Z, DATAINFO *pdinfo)
     }
 
     mod = lsq(tmplist, Z, pdinfo, OLS, OPT_A);
+    /* some regressors from different equations may turn out 
+       to be collinear; this is not a problem for biprobit, so
+       we should zap the droplist to avoid spurious warnings in 
+       the output; using 
+
+       gretl_model_destroy_data_item (&mod, "droplist");
+
+       is no good, cause it produces a segfault later
+    */
+
     free(tmplist);
 
 #if BIPDEBUG
@@ -1092,9 +1102,13 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 	gretl_matrix_free(Yh);
 	err = E_ALLOC;
     } else {
-	double rho = pmod->rho;
-	double a, b, im;
+	double rho, ca, sa, ssa;
+	double a, b, u_ab, u_ba, P, im;
 	int t, i = 0;
+
+	ca = cosh(bp->arho);
+	sa = sinh(bp->arho);
+	rho = sa/ca;
 
 	for (t=0; t<T; t++) {
 
@@ -1113,14 +1127,6 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 	    a = gretl_vector_get(bp->fitted1, i);
 	    b = gretl_vector_get(bp->fitted2, i);
 
-	    /* FIXME Uh !? */
-
-	    im = bp->s1[i] ? invmills(-a) : -invmills(a);
-	    gretl_matrix_set(Uh, t, 0, im);
-
-	    im = bp->s2[i] ? invmills(-b) : -invmills(b);
-	    gretl_matrix_set(Uh, t, 1, im);
-
 	    if (opt & OPT_X) {
 		/* Yh should contain the index function values --
 		   corresponds to the flag --save-xbeta */
@@ -1131,11 +1137,53 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 		   of the outcomes (1,1), (1,0), (0,1) and (0,0)
 		   respectively.
 		*/
-		gretl_matrix_set(Yh, t, 0, bvnorm_cdf( rho,  a,  b));
-		gretl_matrix_set(Yh, t, 1, bvnorm_cdf(-rho,  a, -b));
-		gretl_matrix_set(Yh, t, 2, bvnorm_cdf(-rho, -a,  b));
-		gretl_matrix_set(Yh, t, 3, bvnorm_cdf( rho, -a, -b));
+		im = bvnorm_cdf( rho,  a,  b);
+		gretl_matrix_set(Yh, t, 0, im);
+		if (bp->s1[i] && bp->s2[i]) {
+		    P = im;
+		}
+
+		im = bvnorm_cdf(-rho,  a, -b);
+		gretl_matrix_set(Yh, t, 1, im);
+		if (bp->s1[i] && !(bp->s2[i])) {
+		    P = im;
+		}
+
+		im = bvnorm_cdf(-rho, -a,  b);
+		gretl_matrix_set(Yh, t, 2, im);
+		if (!(bp->s1[i]) && bp->s2[i]) {
+		    P = im;
+		}
+
+		im = bvnorm_cdf( rho, -a, -b);
+		gretl_matrix_set(Yh, t, 3, im);
+		if (!(bp->s1[i]) && !(bp->s2[i])) {
+		    P = im;
+		}
 	    }
+
+
+	    /* Put the generalized residuals into uhat;
+	       The generalized residuals are defined as
+
+	       E(u_1| y_1, y_2, x_1, x_2)
+	       E(u_2| y_1, y_2, x_1, x_2)
+
+	       They should be equal to the score for the constant
+	       (if any)
+	    */
+
+	    a = bp->s1[t] ? a : -a;
+	    b = bp->s2[t] ? b : -b;
+	    ssa = (bp->s1[i] == bp->s2[i]) ? sa : -sa;
+	    u_ba = (ca*b - ssa*a);
+	    u_ab = (ca*a - ssa*b);
+
+	    im = exp(-0.5*a*a) * normal_cdf(u_ba) / (P * SQRT_2_PI);
+	    gretl_matrix_set(Uh, t, 0, bp->s1[t] ? im : -im);
+
+	    im = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);
+	    gretl_matrix_set(Uh, t, 1, bp->s2[t] ? im : -im);
 	    
 	    i++;
 	}
