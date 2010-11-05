@@ -2555,6 +2555,9 @@
 	<example>dpanel 2 ; y x1 x2 --system</example>
         <example>dpanel {2 3} ; y x1 x2 ; x1</example>
 	<example>dpanel 1 ; y x1 x2 ; x1 GMM(x2,2,3)</example>
+	<demos>
+	  <demo>bbond98.inp</demo>
+	</demos>
       </examples>
     </usage>
 
