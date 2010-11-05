@@ -566,7 +566,7 @@
 
   </command>
 
-  <command name="arbond" section="Estimation" label="Dynamic panel models">
+  <command name="arbond" section="Estimation" label="Arellano-Bond">
 
     <usage>
       <arguments>
@@ -1017,6 +1017,56 @@
 	L-BFGS-B is selected, you have the option of setting the number of
 	corrections used in the limited memory matrix (between 3 and 20, with
 	a default of 8).
+      </para>
+    </description>
+  </command>
+
+  <command name="biprobit" section="Estimation" label="Bivariate probit"
+    context="cli">
+    <usage>
+      <arguments>
+        <argument>depvar1</argument>
+	<argument>depvar2</argument>
+        <argument>indepvars1</argument>
+	<argument separated="true" optional="true">indepvars2</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print extra information</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>biprobit y1 y2 0 x1 x2</example>
+	<example>biprobit y1 y2 0 x11 x12 ; 0 x21 x22</example>
+      </examples>
+    </usage>
+    <description>
+      <para>
+	Estimates a bivariate probit model using the
+	Newton&ndash;Raphson method to maximize the likelihood.
+      </para>
+      <para>
+	The argument list starts with the two dependent variables,
+	followed by a list of regressors. If a second list is given,
+	separated by a semicolon, this is interpreted as a set of
+	regressors specific to the second equation, with
+	<repl>indepvars1</repl> being specific to the first equation;
+	otherwise <repl>indepvars1</repl> is taken to represent a
+	common set of regressors.
+      </para>
+      <para>
+	The output includes a likelihood ratio test of the null
+	hypothesis that the disturbances in the two equations are
+	uncorrelated.
       </para>
     </description>
   </command>
@@ -2454,6 +2504,136 @@
     <gui-access>
       <menu-path>/Variable/Edit attributes</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="dpanel" section="Estimation" label="Dynamic panel models">
+
+    <usage>
+      <arguments>
+	<argument>p</argument>
+	<argblock separated="true">
+	  <argument>depvar</argument>
+	  <argument>indepvars</argument>
+	</argblock>
+	<argblock optional="true" separated="true">
+	  <argument>instruments</argument>
+	</argblock>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't show estimated model</effect>
+	</option>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
+        <option>
+	  <flag>--two-step</flag>
+	  <effect>perform 2-step GMM estimation</effect>
+        </option>
+        <option>
+	  <flag>--system</flag>
+	  <effect>add equations in levels</effect>
+        </option>
+        <option>
+	  <flag>--time-dummies</flag>
+	  <effect>add time dummy variables</effect>
+        </option>
+        <option>
+	  <flag>--dpdstyle</flag>
+	  <effect>emulate DPD package for Ox</effect>
+        </option>
+        <option>
+	  <flag>--asymptotic</flag>
+	  <effect>uncorrected asymptotic standard errors</effect>
+        </option>
+      </options>
+      <examples>
+        <example>dpanel 2 ; y x1 x2</example>
+	<example>dpanel 2 ; y x1 x2 --system</example>
+        <example>dpanel {2 3} ; y x1 x2 ; x1</example>
+	<example>dpanel 1 ; y x1 x2 ; x1 GMM(x2,2,3)</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Carries out estimation of dynamic panel data models (that is,
+	panel models including one or more lags of the dependent
+	variable) using either the GMM-DIF or GMM-SYS method.
+      </para>
+      <para context="cli">
+	The parameter <repl>p</repl> represents the order of the
+	autoregression for the dependent variable. In the simplest
+	case this is a scalar value, but a pre-defined matrix may be
+	given for this argument, to specify a set of (possibly
+	non-contiguous) lags to be used.
+      </para>
+      <para>
+	The dependent variable and regressors should be given in
+	levels form; they will be differenced automatically (since
+	this estimator uses differencing to cancel out the individual
+	effects).
+      </para>
+      <para context="cli">
+	The last (optional) field in the command is for specifying
+	instruments.  If no instruments are given, it is assumed that all
+	the independent variables are strictly exogenous.  If you specify
+	any instruments, you should include in the list any strictly
+	exogenous independent variables.  For predetermined regressors,
+	you can use the <lit>GMM</lit> function to include a specified
+	range of lags in block-diagonal fashion.  This is illustrated in
+	the third example above.  The first argument to <lit>GMM</lit> is
+	the name of the variable in question, the second is the minimum
+	lag to be used as an instrument, and the third is the maximum lag.
+	The same syntax can be used with the <lit>GMMlevel</lit>
+	function to specify GMM-type instruments for the equations
+	in levels.
+      </para>
+      <para context="gui">
+	The <quote>Maximum lag</quote> button sets the greatest lag of the
+	level of the dependent variable to be used as an instrument.
+	Please note that using an excessive number of lags will slow the
+	analysis substantially and may jeopardize its validity.
+      </para>
+      <para context="gui">
+	As regards the handling of instruments, please see the
+	documentation for the script version of this command.  Currently
+	you cannot specify instruments explicitly in the GUI: all the
+	independent variables are taken to be strictly exogenous.
+      </para>
+      <para>
+	By default the results of 1-step estimation are reported (with
+	robust standard errors).  You may select 2-step estimation as an
+	option.  In both cases tests for autocorrelation of orders 1 and 2
+	are provided, as well as the Sargan overidentification test and a
+	Wald test for the joint significance of the regressors.  Note that
+	in this differenced model first-order autocorrelation is not a
+	threat to the validity of the model, but second-order
+	autocorrelation violates the maintained statistical assumptions.
+      </para>
+      <para context="cli">
+	In the case of 2-step estimation, standard errors are by default
+	computed using the finite-sample correction suggested by <cite
+	key="windmeijer05">Windmeijer (2005)</cite>.  The standard
+	asymptotic standard errors associated with the 2-step estimator
+	are generally reckoned to be an unreliable guide to inference, but
+	if for some reason you want to see them you can use the
+	<opt>--asymptotic</opt> option to turn off the Windmeijer
+	correction.
+      </para>
+      <para context="cli">
+	If the <opt>--time-dummies</opt> option is given, a set of
+	time dummy variables is added to the specified regressors.  
+	The number of dummies is one less than the maximum number of
+	periods used in estimation, to avoid perfect collinearity with
+	the constant.  The dummies are entered in differenced form unless
+	the <lit>--dpdstyle</lit> option is given, in which case they
+	are entered in levels.
+      </para>
+    </description>
 
   </command>
 
