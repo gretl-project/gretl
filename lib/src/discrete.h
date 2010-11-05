@@ -20,10 +20,10 @@
 #ifndef DISCRETE_H
 #define DISCRETE_H
 
-MODEL binary_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL binary_logit (int *list, double **Z, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn);
 
-MODEL binary_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL binary_probit (int *list, double **Z, DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn);
 
 MODEL ordered_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
@@ -35,7 +35,7 @@ MODEL ordered_probit (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL multinomial_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
-MODEL biprobit_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL biprobit_model (int *list, double **Z, DATAINFO *pdinfo, 
 		      gretlopt opt, PRN *prn);
 
 MODEL logistic_model (const int *list, double lmax,
@@ -47,7 +47,7 @@ MODEL interval_model (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn);
 
-MODEL duration_model (const int *list, double ***pZ, 
+MODEL duration_model (const int *list, double **Z, 
 		      DATAINFO *pdinfo, gretlopt opt, 
 		      PRN *prn);
 

@@ -3549,7 +3549,7 @@ static int real_do_model (int action)
 	break;
 
     case DURATION:
-	*pmod = duration_model(libcmd.list, &Z, datainfo, libcmd.opt,
+	*pmod = duration_model(libcmd.list, Z, datainfo, libcmd.opt,
 			       prn);
 	err = model_output(pmod, prn);
 	break;

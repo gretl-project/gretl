@@ -6913,9 +6913,12 @@ static GretlType object_var_type (int idx, const char *oname,
 
     if (idx == M_UHAT || idx == M_YHAT || idx == M_SIGMA) {
 	/* could be a matrix */
-	GretlObjType otype = gretl_model_get_type_and_ci(oname, NULL);
+	int ci = 0;
+	GretlObjType otype = gretl_model_get_type_and_ci(oname, &ci);
 
 	if (otype != GRETL_OBJ_EQN) {
+	    vtype = GRETL_TYPE_MATRIX;
+	} else if ((idx == M_UHAT || idx == M_YHAT) && ci == BIPROBIT) {
 	    vtype = GRETL_TYPE_MATRIX;
 	}
     } 

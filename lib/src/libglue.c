@@ -273,9 +273,9 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo,
 	return multinomial_logit(list, pZ, pdinfo, opt, prn);
     } else if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[yv])) {
 	if (ci == LOGIT) {
-	    return binary_logit(list, pZ, pdinfo, opt, prn);
+	    return binary_logit(list, *pZ, pdinfo, opt, prn);
 	} else {
-	    return binary_probit(list, pZ, pdinfo, opt, prn);
+	    return binary_probit(list, *pZ, pdinfo, opt, prn);
 	}
     } else {
 	if (ci == LOGIT) {

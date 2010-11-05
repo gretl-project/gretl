@@ -796,7 +796,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep = count_model(list, orig->ci, pZ, pdinfo, myopt, NULL);
 	break;
     case DURATION:
-	rep = duration_model(list, pZ, pdinfo, myopt, NULL);
+	rep = duration_model(list, *pZ, pdinfo, myopt, NULL);
 	break;
     case HECKIT:
 	rep = heckit_model(list, pZ, pdinfo, myopt, NULL);

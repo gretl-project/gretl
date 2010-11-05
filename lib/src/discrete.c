@@ -1908,7 +1908,7 @@ static void binary_model_add_stats (MODEL *pmod, const double *y,
 }
 
 static MODEL 
-binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo, 
+binary_logit_probit (const int *inlist, double **Z, DATAINFO *pdinfo, 
 		     int ci, gretlopt opt, PRN *prn)
 {
     int oldt1 = pdinfo->t1;
@@ -1916,7 +1916,6 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     int *list = NULL;
     char *mask = NULL;
     double *beta = NULL;
-    const double **Z;
     MODEL dmod;
     int i, depvar, nx;
 
@@ -1926,7 +1925,6 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&dmod);
 
     depvar = inlist[1];
-    Z = (const double **) *pZ;
 
     if (!gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[depvar])) {
 	gretl_errmsg_sprintf(_("'%s' is not a binary variable"), 
@@ -1942,9 +1940,9 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* FIXME should the return value be ignored here? */
-    list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
+    list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, (const double **) Z);
 
-    mask = classifier_check(list, Z, pdinfo, opt, prn,
+    mask = classifier_check(list, (const double **) Z, pdinfo, opt, prn,
 			    &dmod.errcode);
     if (dmod.errcode) {
 	goto bailout;
@@ -1958,14 +1956,11 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!dmod.errcode) {
-	dmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
+	dmod = lsq(list, Z, pdinfo, OLS, OPT_A);
 	if (dmod.errcode == 0 && dmod.ncoeff != nx) {
 	    dmod.errcode = E_DATA;
 	}
     }
-
-    /* re-attach */
-    Z = (const double **) *pZ;
 
     if (dmod.errcode) {
 	goto bailout;
@@ -1980,7 +1975,8 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     if (beta == NULL) {
 	dmod.errcode = E_ALLOC;
     } else {
-	dmod.errcode = do_BRMR(dmod.list, &dmod, ci, beta, Z, pdinfo, 
+	dmod.errcode = do_BRMR(dmod.list, &dmod, ci, beta, 
+			       (const double **) Z, pdinfo, 
 			       (opt & OPT_V)? prn : NULL);
     }
 
@@ -1994,19 +1990,19 @@ binary_logit_probit (const int *inlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     dmod.lnL = logit_probit_loglik(Z[depvar], &dmod, ci);
-    Lr_chisq(&dmod, Z);
+    Lr_chisq(&dmod, (const double **) Z);
     dmod.ci = ci;
 
     /* calculate standard errors etc */
-    dmod.errcode = logit_probit_vcv(&dmod, opt, Z);
+    dmod.errcode = logit_probit_vcv(&dmod, opt, (const double **) Z);
 
     if (!dmod.errcode) {
 	if (opt & OPT_P) {
 	    /* showing p-values, not slopes */
 	    dmod.opt |= OPT_P;
-	    dmod.sdy = binary_fXb(&dmod, Z);
+	    dmod.sdy = binary_fXb(&dmod, (const double **) Z);
 	} else {
-	    dmod.errcode = add_slopes_to_model(&dmod, Z);
+	    dmod.errcode = add_slopes_to_model(&dmod, (const double **) Z);
 	}
     }
 
@@ -2832,10 +2828,11 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
  * list of regressors for y1. If @list ends here, it is assumed that the
  * explanatory variables for y2 are the same as y1. Otherwise, the list 
  * must include a separator and the list of regressors for y2.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: can contain OPT_Q for quiet operation, OPT_V for verbose 
- * operation, OPT_R for robust covariance matrix, OPT_H?.
+ * operation, OPT_R for robust covariance matrix, OPT_G for covariance
+ * matrix based on Outer Product of Gradient.
  * @prn: printing struct.
  *
  * Computes estimates of the bivariate probit model specified by @list,
@@ -2844,12 +2841,12 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL biprobit_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL biprobit_model (int *list, double **Z, DATAINFO *pdinfo, 
 		      gretlopt opt, PRN *prn)
 {
     MODEL bpmod;
     void *handle;
-    MODEL (* biprobit_estimate) (const int *, double ***, DATAINFO *, 
+    MODEL (* biprobit_estimate) (const int *, double **, DATAINFO *, 
 				 gretlopt, PRN *);
 
     gretl_error_clear();
@@ -2862,7 +2859,7 @@ MODEL biprobit_model (int *list, double ***pZ, DATAINFO *pdinfo,
 	return bpmod;
     }
 
-    bpmod = (*biprobit_estimate) (list, pZ, pdinfo, opt, prn);
+    bpmod = (*biprobit_estimate) (list, Z, pdinfo, opt, prn);
 
     close_plugin(handle);
 
@@ -2874,7 +2871,7 @@ MODEL biprobit_model (int *list, double ***pZ, DATAINFO *pdinfo,
 /**
  * binary_logit:
  * @list: binary dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: if includes OPT_R form robust (QML) estimates of standard
  * errors and covariance matrix; if OPT_P arrange for
@@ -2890,16 +2887,16 @@ MODEL biprobit_model (int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL binary_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL binary_logit (int *list, double **Z, DATAINFO *pdinfo, 
 		    gretlopt opt, PRN *prn)
 {
-    return binary_logit_probit(list, pZ, pdinfo, LOGIT, opt, prn);
+    return binary_logit_probit(list, Z, pdinfo, LOGIT, opt, prn);
 }
 
 /**
  * binary_probit:
  * @list: binary dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: if includes OPT_R form robust (QML) estimates of standard
  * errors and covariance matrix; if OPT_P arrange for
@@ -2915,10 +2912,10 @@ MODEL binary_logit (int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL binary_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL binary_probit (int *list, double **Z, DATAINFO *pdinfo, 
 		     gretlopt opt, PRN *prn)
 {
-    return binary_logit_probit(list, pZ, pdinfo, PROBIT, opt, prn);
+    return binary_logit_probit(list, Z, pdinfo, PROBIT, opt, prn);
 }
 
 /**
@@ -3477,18 +3474,17 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo,
    the business
 */
 
-static int duration_precheck (const int *list, double ***pZ,
+static int duration_precheck (const int *list, double **Z,
 			      DATAINFO *pdinfo, MODEL *pmod,
 			      int *pcensvar)
 {
-    const double **Z = (const double **) *pZ;
     int *olslist = NULL;
     int seppos, censvar = 0;
     int l0 = list[0];
     int err = 0;
 
     /* such models must contain a constant */
-    if (!gretl_list_const_pos(list, 2, Z, pdinfo)) {
+    if (!gretl_list_const_pos(list, 2, (const double **) Z, pdinfo)) {
 	return E_NOCONST;
     }
 
@@ -3524,7 +3520,7 @@ static int duration_precheck (const int *list, double ***pZ,
 	   coefficients etc.
 	*/	
 	if (olslist != NULL) {
-	    *pmod = lsq(olslist, *pZ, pdinfo, OLS, OPT_A);
+	    *pmod = lsq(olslist, Z, pdinfo, OLS, OPT_A);
 	    if (!pmod->errcode) {
 		/* remove reference to censoring var */
 		pmod->list[0] -= 1;
@@ -3534,7 +3530,7 @@ static int duration_precheck (const int *list, double ***pZ,
 	    }
 	    free(olslist);
 	} else {
-	    *pmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
+	    *pmod = lsq(list, Z, pdinfo, OLS, OPT_A);
 	}
 	err = pmod->errcode;
 	*pcensvar = censvar;
@@ -3544,7 +3540,7 @@ static int duration_precheck (const int *list, double ***pZ,
 	int t, yno = pmod->list[1];
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (!na(pmod->uhat[t]) && (*pZ)[yno][t] <= 0) {
+	    if (!na(pmod->uhat[t]) && Z[yno][t] <= 0) {
 		gretl_errmsg_set(_("Durations must be positive"));
 		err = E_DATA;
 	    }
@@ -3557,7 +3553,7 @@ static int duration_precheck (const int *list, double ***pZ,
 /**
  * duration_model:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data array.
+ * @Z: data array.
  * @pdinfo: dataset information.
  * @opt: may include OPT_R for robust covariance matrix.
  * @prn: printing struct for iteration info (or NULL is this is not
@@ -3568,7 +3564,7 @@ static int duration_precheck (const int *list, double ***pZ,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL duration_model (const int *list, double ***pZ, 
+MODEL duration_model (const int *list, double **Z, 
 		      DATAINFO *pdinfo, gretlopt opt, 
 		      PRN *prn)
 {
@@ -3582,7 +3578,7 @@ MODEL duration_model (const int *list, double ***pZ,
     gretl_error_clear();
     gretl_model_init(&dmod);
 
-    dmod.errcode = duration_precheck(list, pZ, pdinfo, &dmod,
+    dmod.errcode = duration_precheck(list, Z, pdinfo, &dmod,
 				     &censvar);
     if (dmod.errcode) {
         return dmod;
@@ -3596,7 +3592,7 @@ MODEL duration_model (const int *list, double ***pZ,
 	return dmod;
     }
 
-    (*duration_estimate) (&dmod, censvar, (const double **) *pZ, pdinfo, 
+    (*duration_estimate) (&dmod, censvar, (const double **) Z, pdinfo, 
 			  opt, prn);
 
     close_plugin(handle);

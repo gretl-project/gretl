@@ -5571,6 +5571,27 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 
     if (*err) return M;
 
+    if ((idx == M_UHAT || idx == M_YHAT) && pmod->ci == BIPROBIT) {
+	/* special: matrices with 2 columns */
+	gretl_matrix *P;
+
+	if (idx == M_UHAT) {
+	    P = gretl_model_get_data(pmod, "bp_uhat");
+	} else {
+	    P = gretl_model_get_data(pmod, "bp_yhat");
+	}
+
+	if (P == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = gretl_matrix_copy(P);
+	    if (M == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	return M;
+    }
+
     switch (idx) {  
     case M_UHAT:
     case M_YHAT:

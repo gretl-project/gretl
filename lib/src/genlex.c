@@ -921,7 +921,7 @@ static void look_up_word (const char *s, parser *p)
 
 #define could_be_matrix(t) (model_data_matrix(t) || \
 			    model_data_matrix_builder(t) || \
-			    t == M_UHAT)
+			    t == M_UHAT || t == M_YHAT)
 
 static void word_check_next_char (const char *s, parser *p)
 {

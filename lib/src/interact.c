@@ -4910,7 +4910,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    *models[0] = quantreg_driver(cmd->param, cmd->list, pZ, pdinfo,
 					 cmd->opt, prn);
 	} else if (cmd->ci == DURATION) {
-	    *models[0] = duration_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = duration_model(cmd->list, *pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == GARCH) {
 	    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == PANEL) {
@@ -4924,7 +4924,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == INTREG) {
 	    *models[0] = interval_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == BIPROBIT) {
-	    *models[0] = biprobit_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = biprobit_model(cmd->list, *pZ, pdinfo, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;

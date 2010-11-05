@@ -1256,7 +1256,7 @@ static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* run initial auxiliary probit */
-    probmod = binary_probit(sellist, pZ, pdinfo, OPT_A, NULL);
+    probmod = binary_probit(sellist, *pZ, pdinfo, OPT_A, NULL);
     if (probmod.errcode) {
 	hm.errcode = probmod.errcode;
 	goto bailout;
