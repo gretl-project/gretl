@@ -34,7 +34,7 @@ struct bp_container_ {
     gretl_matrix *score;     /* score matrix */
     gretl_vector *sscore;    /* score vector (sum) */
 
-    int ntot; 	             /* total obs */
+    int nobs; 	             /* number of usable observations */
     int k1, k2;              /* number of regressors for each eq. */
     int npar;                /* number of parameters */
     char *mask;              /* mask for missing values */
@@ -142,52 +142,40 @@ static bp_container *bp_container_new (const int *list)
 
 static int bp_cont_fill_data (bp_container *bp, const double **Z)
 {
-    int t1 = bp->t1;
-    int t2 = bp->t2;
     int nmissing = 0;
-    int i, T, err = 0;
+    int i, t, T, err = 0;
 
-    T = t2 - t1 + 1;
+    T = bp->t2 - bp->t1 + 1;
 
-    if (bp->mask != NULL) {
-	for (i=0; i<T; i++) {
-	    if (bp->mask[i]) nmissing++;
-	}
-    } 
+    for (i=0; i<T; i++) {
+	if (bp->mask[i]) nmissing++;
+    }
 
     if (T == nmissing) {
 	return E_DATA;
     }
 
-    bp->ntot = T - nmissing;
+    bp->nobs = T - nmissing;
 
-    bp->s1 = malloc(bp->ntot * sizeof *bp->s1);
-    bp->s2 = malloc(bp->ntot * sizeof *bp->s2);
+    bp->s1 = malloc(bp->nobs * sizeof *bp->s1);
+    bp->s2 = malloc(bp->nobs * sizeof *bp->s2);
 
     if (bp->s1 == NULL || bp->s2 == NULL) {
 	return E_ALLOC;
     }
 
-    if (nmissing == 0) {
-	for (i=t1; i<=t2; i++) {
-	    bp->s1[i] = (Z[bp->depvar1][i] == 1.0);
-	    bp->s2[i] = (Z[bp->depvar2][i] == 1.0);
+    i = 0;
+    for (t=bp->t1; t<=bp->t2; t++) {
+	if (!bp->mask[t - bp->t1]) {
+	    bp->s1[i] = (Z[bp->depvar1][t] == 1.0);
+	    bp->s2[i] = (Z[bp->depvar2][t] == 1.0);
+	    i++;
 	}
-    } else {
-	int k = 0;
+    }	    
 
-	for (i=t1; i<=t2; i++) {
-	    if (!bp->mask[i]) {
-		bp->s1[k] = (Z[bp->depvar1][i] == 1.0);
-		bp->s2[k] = (Z[bp->depvar2][i] == 1.0);
-		k++;
-	    }
-	}
-    } 
-
-    bp->reg1 = gretl_matrix_data_subset_masked(bp->X1list, Z, t1, t2, 
+    bp->reg1 = gretl_matrix_data_subset_masked(bp->X1list, Z, bp->t1, bp->t2, 
 					       bp->mask, &err);
-    bp->reg2 = gretl_matrix_data_subset_masked(bp->X2list, Z, t1, t2, 
+    bp->reg2 = gretl_matrix_data_subset_masked(bp->X2list, Z, bp->t1, bp->t2, 
 					       bp->mask, &err);
 
     return err;
@@ -457,10 +445,10 @@ static int bp_container_fill (bp_container *bp, MODEL *olsmod,
     }
 
     if (!err) {
-	bp->fitted1 = gretl_vector_alloc(bp->ntot);
-	bp->fitted2 = gretl_vector_alloc(bp->ntot);
+	bp->fitted1 = gretl_vector_alloc(bp->nobs);
+	bp->fitted2 = gretl_vector_alloc(bp->nobs);
 
-	bp->score = gretl_matrix_alloc(bp->ntot, bp->npar);
+	bp->score = gretl_matrix_alloc(bp->nobs, bp->npar);
 	bp->sscore = gretl_vector_alloc(bp->npar);
 
 	if (bp->fitted1 == NULL || bp->fitted1 == NULL ||
@@ -606,7 +594,7 @@ static double biprob_loglik (const double *theta, void *ptr)
     ll = 0.0;
     rho = tanh(bp->arho);
     
-    for (i=0; i<bp->ntot; i++) {
+    for (i=0; i<bp->nobs; i++) {
 	a = gretl_vector_get(bp->fitted1, i);
 	b = gretl_vector_get(bp->fitted2, i);
 	
@@ -643,7 +631,7 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     sa = sinh(bp->arho);
     gretl_matrix_zero(bp->sscore);
 
-    for (i=0; i<bp->ntot; i++) {
+    for (i=0; i<bp->nobs; i++) {
 	a = gretl_vector_get(bp->fitted1, i);
 	b = gretl_vector_get(bp->fitted2, i);
 	
@@ -740,7 +728,7 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	return err;
     }
 
-    for (t=0; t<bp->ntot; t++) {
+    for (t=0; t<bp->nobs; t++) {
 	a = gretl_vector_get(bp->fitted1, t);
 	b = gretl_vector_get(bp->fitted2, t);
 	
@@ -1139,6 +1127,9 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp)
 	    i++;
 	}
 
+	Uh->t1 = Yh->t1 = bp->t1;
+	Uh->t2 = Yh->t2 = bp->t2;
+
 	gretl_model_set_matrix_as_data(pmod, "bp_uhat", Uh);
 	gretl_model_set_matrix_as_data(pmod, "bp_yhat", Yh);
     }
@@ -1192,6 +1183,9 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
     pmod->ybar = pmod->sdy = NADBL;
     pmod->fstt = pmod->sigma = NADBL;
 
+    free(pmod->yhat);
+    pmod->yhat = NULL;
+
     pmod->lnL = bp->ll;
     mle_criteria(pmod, 1); /* allow for estimation of rho */
     pmod->rho = tanh(bp->arho);
@@ -1201,7 +1195,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
 
     pmod->t1 = bp->t1;
     pmod->t2 = bp->t2;
-    pmod->nobs = bp->ntot;
+    pmod->nobs = bp->nobs;
 
     gretl_model_set_coeff_separator(pmod, pdinfo->varname[bp->depvar2], bp->k1);
 
