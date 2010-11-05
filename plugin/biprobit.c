@@ -1076,21 +1076,23 @@ static int add_indep_LR_test (MODEL *pmod, double LR)
     return err;
 }
 
-static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp)
+static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
+				gretlopt opt)
 {
     gretl_matrix *Uh, *Yh;
     int T = bp->t2 - bp->t1 + 1;
+    int Yhcols = (opt & OPT_X)? 2: 4;
     int err = 0;
 
-    Uh = gretl_matrix_alloc(T, 2);
-    Yh = gretl_matrix_alloc(T, 4);
+    Uh = gretl_matrix_alloc(T, 2); /* ?? */
+    Yh = gretl_matrix_alloc(T, Yhcols);
 
     if (Uh == NULL || Yh == NULL) {
 	gretl_matrix_free(Uh);
 	gretl_matrix_free(Yh);
 	err = E_ALLOC;
     } else {
-	double rho = tanh(bp->arho);
+	double rho = pmod->rho;
 	double a, b, im;
 	int t, i = 0;
 
@@ -1101,6 +1103,10 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp)
 		gretl_matrix_set(Uh, t, 1, M_NA);
 		gretl_matrix_set(Yh, t, 0, M_NA);
 		gretl_matrix_set(Yh, t, 1, M_NA);
+		if (Yhcols == 4) {
+		    gretl_matrix_set(Yh, t, 2, M_NA);
+		    gretl_matrix_set(Yh, t, 3, M_NA);
+		}		    
 		continue;
 	    }
 
@@ -1115,14 +1121,20 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp)
 	    im = bp->s2[i] ? invmills(-b) : -invmills(b);
 	    gretl_matrix_set(Uh, t, 1, im);
 
-	    /* Let the columns of Yh hold the estimated probabilities
-	       of the outcomes (1,1), (1,0), (0,1) and (0,0)
-	       respectively
-	    */
-	    gretl_matrix_set(Yh, t, 0, bvnorm_cdf( rho,  a,  b));
-	    gretl_matrix_set(Yh, t, 1, bvnorm_cdf(-rho,  a, -b));
-	    gretl_matrix_set(Yh, t, 2, bvnorm_cdf(-rho, -a,  b));
-	    gretl_matrix_set(Yh, t, 3, bvnorm_cdf( rho, -a, -b));
+	    if (opt & OPT_X) {
+		/* Yh should contain the index function values */
+		gretl_matrix_set(Yh, t, 0, a);
+		gretl_matrix_set(Yh, t, 1, b);
+	    } else {
+		/* Let the columns of Yh hold the estimated probabilities
+		   of the outcomes (1,1), (1,0), (0,1) and (0,0)
+		   respectively.
+		*/
+		gretl_matrix_set(Yh, t, 0, bvnorm_cdf( rho,  a,  b));
+		gretl_matrix_set(Yh, t, 1, bvnorm_cdf(-rho,  a, -b));
+		gretl_matrix_set(Yh, t, 2, bvnorm_cdf(-rho, -a,  b));
+		gretl_matrix_set(Yh, t, 3, bvnorm_cdf( rho, -a, -b));
+	    }
 	    
 	    i++;
 	}
@@ -1230,7 +1242,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
     gretl_matrix_free(V);
 
     if (!err) {
-	err = bp_add_hat_matrices(pmod, bp);
+	err = bp_add_hat_matrices(pmod, bp, opt);
     }
 
     if (!err) {

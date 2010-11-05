@@ -9116,6 +9116,7 @@ static void gen_check_errvals (parser *p)
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
 #if SERIES_ENSURE_FINITE
+		n->v.xvec[t] = NADBL;
 		set_gretl_warning(W_GENMISS);
 #else
 		set_gretl_warning(W_GENNAN);
@@ -9583,7 +9584,7 @@ static int gen_allocate_storage (parser *p)
 
 #if SERIES_ENSURE_FINITE
 
-static void series_ensure_finite (double *x, int n)
+static void series_make_finite (double *x, int n)
 {
     int i;
 
@@ -9595,6 +9596,7 @@ static void series_ensure_finite (double *x, int n)
     for (i=0; i<n; i++) {
 	if (xna(x[i])) {
 	    x[i] = NADBL;
+	    set_gretl_warning(W_GENMISS);
 	}
     }
 }
@@ -9717,7 +9719,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
 #if SERIES_ENSURE_FINITE
 	if (!p->err) {
-	    series_ensure_finite(Z[v], p->dinfo->n);
+	    series_make_finite(Z[v], p->dinfo->n);
 	}
 #endif
 	strcpy(p->dinfo->varname[v], p->lh.name);
