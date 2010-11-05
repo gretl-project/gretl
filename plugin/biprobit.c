@@ -1095,13 +1095,14 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp)
     int err = 0;
 
     Uh = gretl_matrix_alloc(T, 2);
-    Yh = gretl_matrix_alloc(T, 2);
+    Yh = gretl_matrix_alloc(T, 4);
 
     if (Uh == NULL || Yh == NULL) {
 	gretl_matrix_free(Uh);
 	gretl_matrix_free(Yh);
 	err = E_ALLOC;
     } else {
+	double rho = tanh(bp->arho);
 	double a, b, im;
 	int t, i = 0;
 
@@ -1115,19 +1116,25 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp)
 		continue;
 	    }
 
-	    /* FIXME factor in rho? */
-
 	    a = gretl_vector_get(bp->fitted1, i);
 	    b = gretl_vector_get(bp->fitted2, i);
+
+	    /* FIXME Uh ! */
 
 	    im = bp->s1[i] ? invmills(-a) : -invmills(a);
 	    gretl_matrix_set(Uh, t, 0, im);
 
 	    im = bp->s2[i] ? invmills(-b) : -invmills(b);
 	    gretl_matrix_set(Uh, t, 1, im);
-	
-	    gretl_matrix_set(Yh, t, 0, normal_cdf(a));
-	    gretl_matrix_set(Yh, t, 1, normal_cdf(b));
+
+	    /* Let the columns of Yh hold the estimated probabilities
+	       of the outcomes (1,1), (1,0), (0,1) and (0,0)
+	       respectively
+	    */
+	    gretl_matrix_set(Yh, t, 0, bvnorm_cdf( rho,  a,  b));
+	    gretl_matrix_set(Yh, t, 1, bvnorm_cdf(-rho,  a, -b));
+	    gretl_matrix_set(Yh, t, 2, bvnorm_cdf(-rho, -a,  b));
+	    gretl_matrix_set(Yh, t, 3, bvnorm_cdf( rho, -a, -b));
 	    
 	    i++;
 	}
