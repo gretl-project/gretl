@@ -1113,7 +1113,7 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 	    a = gretl_vector_get(bp->fitted1, i);
 	    b = gretl_vector_get(bp->fitted2, i);
 
-	    /* FIXME Uh ! */
+	    /* FIXME Uh !? */
 
 	    im = bp->s1[i] ? invmills(-a) : -invmills(a);
 	    gretl_matrix_set(Uh, t, 0, im);
@@ -1122,7 +1122,8 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 	    gretl_matrix_set(Uh, t, 1, im);
 
 	    if (opt & OPT_X) {
-		/* Yh should contain the index function values */
+		/* Yh should contain the index function values --
+		   corresponds to the flag --save-xbeta */
 		gretl_matrix_set(Yh, t, 0, a);
 		gretl_matrix_set(Yh, t, 1, b);
 	    } else {
