@@ -217,6 +217,8 @@ gretl_matrix *gretl_matrix_replace (gretl_matrix **pa,
 
 void gretl_matrix_block_destroy (gretl_matrix_block *B);
 
+void gretl_matrix_block_zero (gretl_matrix_block *B);
+
 gretl_matrix_block *gretl_matrix_block_new (gretl_matrix **pm, ...);
 
 gretl_matrix *gretl_identity_matrix_new (int n);

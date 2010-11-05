@@ -2555,6 +2555,34 @@ int gretl_lists_share_members (const int *list1, const int *list2)
 }
 
 /**
+ * gretl_list_n_distinct_members:
+ * @list: list to test.
+ *
+ * Returns: the count of distinct elements in list from position
+ * 1 onward, not counting #LISTSEP if present.
+ */
+
+int gretl_list_n_distinct_members (const int *list)
+{
+    int i, j, n = list[0];
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    n--;
+	} else {
+	    for (j=2; j<i; j++) {
+		if (list[i] == list[j]) {
+		    n--;
+		    break;
+		}
+	    }
+	}
+    }
+
+    return n;
+}
+
+/**
  * full_var_list:
  * @pdinfo: dataset information.
  * @nvars: location for return of number of elements in full list.

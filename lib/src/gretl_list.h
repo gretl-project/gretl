@@ -110,6 +110,8 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci);
 
 int gretl_lists_share_members (const int *list1, const int *list2);
 
+int gretl_list_n_distinct_members (const int *list);
+
 int *full_var_list (const DATAINFO *pdinfo, int *nvars);
 
 int n_saved_lists (void);

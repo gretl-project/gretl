@@ -224,6 +224,17 @@ void gretl_matrix_block_destroy (gretl_matrix_block *B)
     free(B);
 }
 
+void gretl_matrix_block_zero (gretl_matrix_block *B)
+{
+    if (B != NULL && B->matrix != NULL) {
+	int i;
+
+	for (i=0; i<B->n; i++) {
+	    gretl_matrix_zero(B->matrix[i]);
+	}
+    }
+}
+
 /* Create an array of n matrices.  The "..." should be filled with (at
    minimum) the number of rows and columns for the first matrix to
    create, which will be written to the location given by @pm.
