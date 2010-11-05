@@ -144,6 +144,7 @@ struct png_plot_t {
 
 static int render_pngfile (png_plot *plot, int view);
 static int repaint_png (png_plot *plot, int view);
+static int zoom_replaces_plot (png_plot *plot);
 static int get_plot_ranges (png_plot *plot);
 static void graph_display_pdf (GPT_SPEC *spec);
 #ifdef G_OS_WIN32
@@ -3332,6 +3333,8 @@ static gint plot_popup_activated (GtkMenuItem *item, gpointer data)
 	prepare_for_zoom(plot);
     } else if (!strcmp(item_string, _("Restore full view"))) { 
 	repaint_png(plot, PNG_UNZOOM);
+    } else if (!strcmp(item_string, _("Replace full view"))) {
+	zoom_replaces_plot(plot);
     }
 #ifdef GTK_PRINTING
     else if (!strcmp(item_string, _("Print..."))) { 
@@ -3433,6 +3436,7 @@ static void build_plot_menu (png_plot *plot)
     };
     const char *zoomed_items[] = {
 	N_("Restore full view"),
+	N_("Replace full view"),
 	N_("Close"),
 	NULL
     };
@@ -3612,9 +3616,9 @@ int redisplay_edited_plot (png_plot *plot)
 
 static int repaint_png (png_plot *plot, int view)
 {
-    int err = 0;
     char zoomname[MAXLEN];
     gchar *plotcmd = NULL;
+    int err = 0;
 
     if (view == PNG_ZOOM) {
 	FILE *fpin, *fpout;
@@ -3673,6 +3677,59 @@ static int repaint_png (png_plot *plot, int view)
     }
 
     return render_pngfile(plot, view);
+}
+
+static int zoom_replaces_plot (png_plot *plot)
+{
+    FILE *fpin, *fpout;
+    char temp[MAXLEN], line[MAXLEN];
+    int err = 0;
+
+    fpin = gretl_fopen(plot->spec->fname, "r");
+    if (fpin == NULL) {
+	return 1;
+    }
+
+    sprintf(temp, "%szoomtmp", gretl_dotdir());
+    fpout = gretl_tempfile_open(temp);
+    if (fpout == NULL) {
+	fclose(fpin);
+	return 1;
+    }
+
+    /* write zoomed range into temporary file */
+
+    gretl_push_c_numeric_locale();
+    fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom_xmin,
+	    plot->zoom_xmax);
+    fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom_ymin,
+	    plot->zoom_ymax);
+    gretl_pop_c_numeric_locale();
+
+    while (fgets(line, MAXLEN-1, fpin)) {
+	if (strncmp(line, "set xrange", 10) &&
+	    strncmp(line, "set yrange", 10)) {
+	    fputs(line, fpout);
+	}
+    }
+
+    fclose(fpout);
+    fclose(fpin);
+
+    /* and copy over original graph source file */
+
+    err = gretl_copy_file(temp, plot->spec->fname);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	plot->status ^= PLOT_ZOOMED;
+	plot->zoom_xmin = plot->zoom_xmax = 0.0;
+	plot->zoom_ymin = plot->zoom_ymax = 0.0;
+    }
+
+    gretl_remove(temp);
+
+    return err;
 }
 
 static gint plot_button_release (GtkWidget *widget, GdkEventButton *event, 
