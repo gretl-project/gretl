@@ -1,0 +1,15 @@
+open abdata.gdt
+
+# Partial replication of results in Blundell and Bond, Journal
+# of Econometrics, 1998. Please see the Gretl User's Guide for
+# a detailed discussion.
+
+# compose list of regressors
+list X = w w(-1) k k(-1)
+
+# Blundell and Bond, Table 4: 1976-86 GMM-DIF
+dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) --time --two-step --dpd
+
+# Blundell and Bond, Table 4: 1976-86 GMM-SYS
+dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) \
+  GMMlevel(w,1,1) GMMlevel(k,1,1) --time --two-step --dpd --system

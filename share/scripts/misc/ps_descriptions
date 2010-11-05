@@ -1,6 +1,7 @@
 # Gretl: various sample scripts
-"arbond91","Dynamic panel model","UK employment data"
+"arbond91","Dynamic panel model (GMM-DIF)","UK employment data"
 "armaloop","ARMA using command loop","artificial data"
+"bbond98","Dynamic panel model (GMM-SYS)","UK employment data"
 "bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"
 "camtriv","Ordered Probit (Cameron and Trivedi)","doctor visits"
 "convolve","Fast Fourier Transform","artificial data"
