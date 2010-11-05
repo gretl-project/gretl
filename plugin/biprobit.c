@@ -338,15 +338,13 @@ static int bp_add_coeff_vecs_and_mask (bp_container *bp, int T)
 */
 
 static int biprobit_first_pass (bp_container *bp, MODEL *olsmod, 
-				double ***pZ, DATAINFO *pdinfo)
+				double ***pZ, DATAINFO *pdinfo,
+				PRN *prn)
 {
-#if BIPDEBUG
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
-#endif
     MODEL probmod;
-    double rho;
     double *u2, *u1 = NULL;
     int *list1 = NULL, *list2 = NULL;
+    gretlopt popt = OPT_A | OPT_P;
     int T, i, err;
 
     err = bp_make_lists(bp, &list1, &list2);
@@ -355,6 +353,8 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
     }
 
     T = bp->t2 - bp->t1 + 1;
+
+    gretl_model_init(&probmod); /* in case of failure below */
 
     err = bp_add_coeff_vecs_and_mask(bp, T);
     if (err) {
@@ -369,18 +369,24 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 	u2 = u1 + T;
     }
 
-    /* Initial probit for the first eq. */
+    if (prn != NULL) {
+	popt |= OPT_V;
+	pputc(prn, '\n');
+    }
+
+    /* Initial probit for the first equation */
 
     set_reference_missmask_from_model(olsmod);
 
-    probmod = binary_probit(list1, pZ, pdinfo, OPT_A, NULL);
+    probmod = binary_probit(list1, pZ, pdinfo, popt, prn);
     if (probmod.errcode) {
 	goto bailout;
     }
 
-#if BIPDEBUG
-    printmodel(&probmod, pdinfo, OPT_NONE, prn);
-#endif
+    if (prn != NULL) {
+	probmod.aux = AUX_BIPROB;
+	printmodel(&probmod, pdinfo, OPT_NONE, prn);
+    }
 
     bp->ll0 = probmod.lnL;
 
@@ -392,19 +398,20 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 	u1[i] = probmod.uhat[probmod.t1 + i];
     }
 
-    /* Initial probit for the second eq. */
+    /* Initial probit for the second equation */
 
     set_reference_missmask_from_model(&probmod);
 
     clear_model(&probmod);
-    probmod = binary_probit(list2, pZ, pdinfo, OPT_A, NULL);
+    probmod = binary_probit(list2, pZ, pdinfo, popt, prn);
     if (probmod.errcode) {
 	goto bailout;
     }
 
-#if BIPDEBUG
-    printmodel(&probmod, pdinfo, OPT_NONE, prn);
-#endif
+    if (prn != NULL) {
+	probmod.aux = AUX_BIPROB;
+	printmodel(&probmod, pdinfo, OPT_NONE, prn);
+    }
 
     bp->ll0 += probmod.lnL;
 
@@ -416,8 +423,8 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 	u2[i] = probmod.uhat[probmod.t1 + i];
     }
 
-    rho = match_residuals(T, u1, u2, bp->mask);
-    bp->arho = atanh(rho);
+    bp->arho = match_residuals(T, u1, u2, bp->mask);
+    bp->arho = atanh(bp->arho);
     
  bailout:
 
@@ -437,7 +444,8 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 */
 
 static int bp_container_fill (bp_container *bp, MODEL *olsmod, 
-			      double ***pZ, DATAINFO *pdinfo)
+			      double ***pZ, DATAINFO *pdinfo,
+			      PRN *prn)
 {
     const double **Z = (const double **) *pZ;
     int err;
@@ -448,7 +456,7 @@ static int bp_container_fill (bp_container *bp, MODEL *olsmod,
     err = bp_base_info(bp, Z, pdinfo);
 
     if (!err) {
-	err = biprobit_first_pass(bp, olsmod, pZ, pdinfo);
+	err = biprobit_first_pass(bp, olsmod, pZ, pdinfo, prn);
     }
 
     if (!err) {
@@ -1146,6 +1154,10 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
 	pmod->coeff[i + bp->k1] = gretl_vector_get(bp->gama, i);
     }
 
+    pmod->rsq = pmod->adjrsq = NADBL;
+    pmod->ybar = pmod->sdy = NADBL;
+    pmod->fstt = NADBL;
+
     pmod->lnL = bp->ll;
     mle_criteria(pmod, 0); /* FIXME? */
     pmod->rho = tanh(bp->arho);
@@ -1183,23 +1195,20 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
     return err;
 }
 
-/* ---------------------------------------------------------------------- 
+/* 
    The driver function for the plugin.
-
-   The function biprobit_init estimates the two probit equations 
-   separately. Then, bp_do_maxlik performs the estimation of the full
-   model.
-   ---------------------------------------------------------------------- */
+*/
 
 MODEL biprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn) 
 {
+    PRN *vprn = NULL;
     bp_container *bp;
     MODEL mod;
     int err = 0;
 
     if (list[0] < 3) {
-	/* we need at least two dep. vars plus one regressor! */
+	/* we need at least two dep. vars plus one regressor */
 	err = E_PARSE;
     } else {
 	bp = bp_container_new(list);
@@ -1219,7 +1228,11 @@ MODEL biprobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mod;
     } 
 
-    mod.errcode = bp_container_fill(bp, &mod, pZ, pdinfo);
+    if (opt & OPT_V) {
+	vprn = prn;
+    }
+
+    mod.errcode = bp_container_fill(bp, &mod, pZ, pdinfo, vprn);
     if (mod.errcode) {
 	return mod;
     } 

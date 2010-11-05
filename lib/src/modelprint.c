@@ -500,6 +500,18 @@ static void print_duration_alpha (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_biprobit_rho (const MODEL *pmod, PRN *prn)
+{
+    ensure_vsep(prn);
+
+    if (tex_format(prn)) {
+	pprintf(prn, "$\\hat{\\rho}$ = %g\n", pmod->rho);
+    } else {
+	pprintf(prn, "rho = %g\n", pmod->rho);
+	gretl_prn_newline(prn);
+    }	
+}
+
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
 {
     if (gretl_model_get_int(pmod, "nonunique")) {
@@ -692,6 +704,10 @@ static void print_aux_string (const MODEL *pmod, PRN *prn)
 	pputs(prn, tr(N_("Groupwise heteroskedasticity")));
     } else if (aux == AUX_COMFAC) {
 	pputs(prn, tr(N_("Augmented regression for common factor test")));
+    } else if (aux == AUX_BIPROB) {
+	pputs(prn, tr(N_("Initial")));
+	pputc(prn, ' ');
+	close = 0;
     } else {
 	close = 0;
     }
@@ -1626,6 +1642,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_RESET:
     case AUX_GROUPWISE:
     case AUX_COMFAC:
+    case AUX_BIPROB:
 	print_aux_string(pmod, prn);
 	break;
     case AUX_AR:
@@ -2763,10 +2780,8 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	val[12] = val[13] = NADBL;
     } else if (pmod->ci == BIPROBIT) {
 	val[2] = val[3] = NADBL;
-	key[6] = (tex)? "$\\hat{\\rho}$" : N_("rho");
-	val[6] = pmod->rho;
-	val[7] = NADBL;
-	val[12] = NADBL;
+	val[6] = val[7] = NADBL;
+	val[12] = val[13] = NADBL;
     } else if (pmod->ci == TOBIT) {
 	key[2] = N_("Censored obs"); /* 22: Number of censored observations */
 	val[2] = gretl_model_get_int(pmod, "censobs");
@@ -3025,7 +3040,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     } else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
 	print_DPD_stats(pmod, prn);
     } else if (logit_probit_model(pmod)) {
-	logit_probit_stats(pmod, pdinfo, prn);
+	if (!pmod->aux) {
+	    logit_probit_stats(pmod, pdinfo, prn);
+	}
     } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
     } else if (pmod->ci == INTREG) {
@@ -3034,6 +3051,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_overdisp_test(pmod, prn);
     } else if (pmod->ci == DURATION) {
 	print_duration_alpha(pmod, prn);
+    } else if (pmod->ci == BIPROBIT) {
+	print_biprobit_rho(pmod, prn);
     }
 
     /* FIXME alternate R^2 measures (within, centered) */

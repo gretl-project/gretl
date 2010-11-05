@@ -56,6 +56,7 @@ typedef enum {
  * @AUX_BP: Breusch-Pagan heteroskedastcity test 
  * @AUX_AUX: auxiliary regression not otherwise specified
  * @AUX_COMFAC: common factor test
+ * @AUX_BIPROB: biprobit initializer
  *
  * Symbolic names to keep track of auxiliary regression models,
  * which are estimated either for the purpose of carrying out
@@ -86,7 +87,8 @@ typedef enum {
     AUX_HET_1,
     AUX_BP,
     AUX_AUX,
-    AUX_COMFAC
+    AUX_COMFAC,
+    AUX_BIPROB
 } ModelAuxCode;
 
 double wald_omit_F (const int *list, MODEL *pmod);
