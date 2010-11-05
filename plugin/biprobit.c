@@ -1098,6 +1098,8 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp)
     Yh = gretl_matrix_alloc(T, 2);
 
     if (Uh == NULL || Yh == NULL) {
+	gretl_matrix_free(Uh);
+	gretl_matrix_free(Yh);
 	err = E_ALLOC;
     } else {
 	double a, b, im;
@@ -1144,11 +1146,6 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
     double *coeff, *sderr, *vcv;
     int nvc, npar = bp->npar - 1;
     int i, j, err = 0;
-
-    /* FIXME: we need to do something with uhat, yhat and sigma (at
-       least) here, or else the final model will just contain the
-       (irrelevant) preliminary OLS results for these quantities
-    */
 
     nvc = (npar * npar + npar) / 2;
 
@@ -1254,7 +1251,7 @@ MODEL biprobit_estimate (const int *list, double **Z, DATAINFO *pdinfo,
     MODEL mod;
     int err = 0;
 
-    if (list[0] < 3 || (gretl_list_has_separator(list) && list[0] < 4)) {
+    if (list[0] < 3 || (gretl_list_has_separator(list) && list[0] < 5)) {
 	/* we need at least two dep. vars plus one regressor */
 	err = E_ARGS;
     } else {
