@@ -1803,6 +1803,8 @@ static void print_model_heading (const MODEL *pmod,
 	print_arma_depvar(pmod, pdinfo, prn);
     } else if (pmod->ci == INTREG) {
 	print_intreg_depvar(pmod, pdinfo, prn);
+    } else if (pmod->ci == BIPROBIT) {
+	dvnl = 0;
     } else { 
 	const char *dvname = 
 	    gretl_model_get_depvar_name(pmod, pdinfo);
@@ -3345,6 +3347,22 @@ static void print_coeff_separator (const char *s, int n, PRN *prn)
     }
 }
 
+static void print_coeff_left_string (const char *s, PRN *prn)
+{
+    if (plain_format(prn)) {
+	pprintf(prn, " %s:\n", s);
+    } else if (tex_format(prn)) {
+	pputs(prn, "\\\\ [-8pt]\n");
+	pprintf(prn, "%s \\\\[1ex]\n", s);
+    } else if (rtf_format(prn)) {
+	pputs(prn, RTF_MULTICOL);
+	pprintf(prn, "\\ql %s", s);
+	pputs(prn, "\\cell\\intbl\\row\n");
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\n\"%s\"\n", s);
+    }
+}
+
 static int 
 print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
@@ -4261,12 +4279,23 @@ static int plain_print_coeffs (const MODEL *pmod,
     /* separator row */
     dotlen = print_sep_row(namelen, ncols, w, colsep, prn);
 
+    /* biprobit special: name of first dependent variable */
+    if (pmod->ci == BIPROBIT) {
+	print_coeff_left_string(gretl_model_get_depvar_name(pmod, pdinfo), 
+				prn);
+    }
+
     /* print row values */
 
     k = 0;
     for (i=0; i<nc; i++) {
 	if (i == seppos) {
-	    print_coeff_separator(sepstr, dotlen, prn);
+	    if (pmod->ci == BIPROBIT) {
+		pputc(prn, '\n');
+		print_coeff_left_string(sepstr, prn);
+	    } else {
+		print_coeff_separator(sepstr, dotlen, prn);
+	    }
 	} else if (cblock > 0 && i % cblock == 0) {
 	    char mnlsep[32];
 

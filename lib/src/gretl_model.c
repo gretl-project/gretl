@@ -4480,6 +4480,11 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	return 1;
     }
 
+    if (mci == BIPROBIT) {
+	/* can we support anything else? */
+	return test_ci == RESTRICT;
+    }
+
     if (NONLIST_MODEL(mci)) {
 	return (test_ci == RESTRICT ||
 		test_ci == TABPRINT ||
@@ -5298,7 +5303,12 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 	       _("Can't retrieve series: data set has changed"));
 	*err = E_BADSTAT;
 	return NULL;
-    }   
+    }
+
+    if (pmod->ci == BIPROBIT && (idx == M_UHAT || idx == M_YHAT)) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
 
     if (idx == M_UHAT) {
 	src = pmod->uhat;

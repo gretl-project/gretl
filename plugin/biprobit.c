@@ -1099,7 +1099,7 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
 
     /* FIXME: we need to do something with uhat, yhat and sigma (at
        least) here, or else the final model will just contain the
-       preliminary OLS results for these quantities
+       (irrelevant) preliminary OLS results for these quantities
     */
 
     nvc = (npar * npar + npar) / 2;
