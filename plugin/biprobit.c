@@ -1006,8 +1006,8 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 
 static gretl_matrix *biprobit_vcv (bp_container *bp, gretlopt opt, int *err)
 {
-    int do_hessian = (opt & OPT_R) || (opt & OPT_H);
-    int do_opg = !(opt & OPT_H);
+    int do_hessian = !(opt & OPT_G);
+    int do_opg = (opt & OPT_R) || (opt & OPT_G);
     gretl_matrix *Hess = NULL;
     gretl_matrix *OPG = NULL;
     gretl_matrix *V = NULL;
@@ -1042,9 +1042,12 @@ static gretl_matrix *biprobit_vcv (bp_container *bp, gretlopt opt, int *err)
     }
 
     if (!*err) {
-	if (opt & OPT_H) {
-	    V = Hess;
-	    Hess = NULL;
+	if (opt & OPT_G) {
+	    *err = gretl_invert_symmetric_matrix(OPG);
+	    if (!*err) {
+		V = OPG;
+		OPG = NULL;
+	    }
 	} else if (opt & OPT_R) {
 	    V = gretl_matrix_alloc(bp->npar, bp->npar);
 	    if (V == NULL) {
@@ -1057,11 +1060,8 @@ static gretl_matrix *biprobit_vcv (bp_container *bp, gretlopt opt, int *err)
 	    gretl_matrix_print(V, "V");
 #endif
 	} else {
-	    *err = gretl_invert_symmetric_matrix(OPG);
-	    if (!*err) {
-		V = OPG;
-		OPG = NULL;
-	    }
+	    V = Hess;
+	    Hess = NULL;
 	}
     }
 
@@ -1174,10 +1174,10 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
 
 	if (opt & OPT_R) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
-	} else if (opt & OPT_H) {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
-	} else {
+	} else if (opt & OPT_G) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
+	} else {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
 	}
     }
 
