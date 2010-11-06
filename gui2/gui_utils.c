@@ -2394,7 +2394,8 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ui, "/menubar/Analysis/ConfEllipse", FALSE);
     }
 
-    if (pmod->ci == ARBOND || (pmod->ci == PANEL && !(pmod->opt & OPT_P))) {
+    if (pmod->ci == ARBOND || pmod->ci == DPANEL ||
+	(pmod->ci == PANEL && !(pmod->opt & OPT_P))) {
 	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
     } else if (pmod->ci == GARCH) {
 	flip(vwin->ui, "/menubar/Tests/Hsk", FALSE);
@@ -3014,7 +3015,8 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && 
 	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
-	pmod->ci != PANEL && pmod->ci != ARBOND) {
+	pmod->ci != PANEL && pmod->ci != ARBOND &&
+	pmod->ci != DPANEL) {
 	add_dummies_to_plot_menu(vwin);
     }
 

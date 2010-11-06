@@ -1153,11 +1153,11 @@ print_ivreg_instruments (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 static void dpd_asy_vcv_line (const MODEL *pmod, PRN *prn)
 {
     if (csv_format(prn)) {
-	pprintf(prn, "\"%s\"", I_("Asymptotic standard errors (unreliable)"));
+	pprintf(prn, "\"%s\"", I_("Asymptotic standard errors"));
     } else if (plain_format(prn)) {
-	pputs(prn, _("Asymptotic standard errors (unreliable)"));
+	pputs(prn, _("Asymptotic standard errors"));
     } else {
-	pputs(prn, I_("Asymptotic standard errors (unreliable)"));
+	pputs(prn, I_("Asymptotic standard errors"));
     } 
 
     pputc(prn, '\n');

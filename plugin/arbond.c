@@ -1676,8 +1676,9 @@ static int dpanel_adjust_uhat (dpdinfo *dpd,
 }
 
 static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
-			       const int *list, const char *istr,
-			       const double *y, const DATAINFO *pdinfo,
+			       const int *list, const int *ylags,
+			       const char *istr, const double *y, 
+			       const DATAINFO *pdinfo,
 			       gretlopt opt)
 {
     char tmp[32];
@@ -1783,6 +1784,9 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 
     if (!err) {
 	gretl_model_set_int(pmod, "step", dpd->step);
+	if (dpd->step == 2) {
+	    pmod->opt |= OPT_T;
+	}
 	if (!na(dpd->AR1)) {
 	    gretl_model_set_double(pmod, "AR1", dpd->AR1);
 	}
@@ -1801,8 +1805,9 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	    gretl_model_set_int(pmod, "wald_time_df", dpd->wdf[1]);
 	    gretl_model_set_double(pmod, "wald_time", dpd->wald[1]);
 	}
-	if ((dpd->flags & DPD_TWOSTEP) && !(dpd->flags & DPD_WINCORR)) {
+	if (!(dpd->flags & DPD_WINCORR)) {
 	    gretl_model_set_int(pmod, "asy", 1);
+	    pmod->opt |= OPT_A;
 	}
 	if (dpd->A != NULL) {
 	    gretl_model_set_int(pmod, "ninst", dpd->A->rows);
@@ -1813,6 +1818,9 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	/* things that only need to be done once */
 	if (istr != NULL && *istr != '\0') {
 	    gretl_model_set_string_as_data(pmod, "istr", gretl_strdup(istr));
+	}
+	if (ylags != NULL) {
+	    gretl_model_set_list_as_data(pmod, "ylags", gretl_list_copy(ylags));
 	}
 	if (dpd->flags & DPD_TIMEDUM) {
 	    pmod->opt |= OPT_D;
@@ -2661,7 +2669,7 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, ispec, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, NULL, ispec, 
 					 Z[dpd->yno], pdinfo, opt);
     }
 

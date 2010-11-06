@@ -3503,9 +3503,16 @@ static int real_do_model (int action)
 	break;
 
     case ARBOND:
-	/* FIXME, also DPANEL */
-	*pmod = arbond_model(libcmd.list, NULL, (const double **) Z, datainfo, 
-			     libcmd.opt, prn);
+	/* FIXME instrument spec */
+	*pmod = arbond_model(libcmd.list, NULL, (const double **) Z, 
+			     datainfo, libcmd.opt, prn);
+	err = model_output(pmod, prn);
+	break;
+
+    case DPANEL:
+	/* FIXME ylags, instrument spec */
+	*pmod = dpd_model(libcmd.list, NULL, NULL, (const double **) Z, 
+			  datainfo, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 

@@ -4396,6 +4396,8 @@ MODEL arbond_model (const int *list, const char *ispec, const double **Z,
 /**
  * dpd_model:
  * @list: regression list.
+ * @laglist: list of specific lags of the dependent variable, or
+ * NULL.
  * @ispec: may contain additional instrument specification.
  * @Z: data array.
  * @pdinfo: dataset information.

@@ -282,7 +282,7 @@
 	<menuitem action="panel"/>
 	<menuitem action="PANEL_WLS"/>
 	<menuitem action="PANEL_B"/>
-	<menuitem action="arbond"/>
+	<menuitem action="dpanel"/>
       </menu>
       <menu action="RobustModels">
 	<menuitem action="lad"/>

@@ -2853,8 +2853,8 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     int t1, t2, k = -1;
     int err;
 
-    if (pmod->ci == ARBOND || pmod->ci == HECKIT ||
-	pmod->ci == DURATION) {
+    if (pmod->ci == ARBOND || pmod->ci == DPANEL ||
+	pmod->ci == HECKIT || pmod->ci == DURATION) {
 	/* FIXME */
 	return E_NOTIMP;
     }

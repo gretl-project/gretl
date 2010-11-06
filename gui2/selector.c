@@ -114,6 +114,7 @@ struct _selector {
 #define FNPKG_CODE(c) (c == SAVE_FUNCTIONS || c == EDIT_FUNCTIONS)
 
 #define WANT_TOGGLES(c) (c == ARBOND || \
+	                 c == DPANEL || \
                          c == ARMA || \
                          c == COINT || \
                          c == COINT2 || \
@@ -174,7 +175,8 @@ struct _selector {
 
 #define select_lags_primary(c) (MODEL_CODE(c))
 
-#define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && c != ARBOND) 
+#define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && \
+			       c != ARBOND && c != DPANEL)
 
 /* Should we have a lags button associated with auxiliary
    variable selector? */
@@ -215,6 +217,10 @@ static int lovar;
 static int hivar;
 static int wtvar;
 static char lp_pvals;
+
+static char dpd_2step;
+static char dpd_asy;
+static char dpd_p;
 
 static int y_x_lags_enabled;
 static int y_w_lags_enabled;
@@ -266,7 +272,7 @@ static int want_radios (selector *sr)
     if (c == PANEL || c == SCATTERS || c == ARBOND || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN || c == PCA ||
-	c == QUANTREG) {
+	c == QUANTREG || c == DPANEL) {
 	return 1;
     } else if (c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
@@ -375,6 +381,9 @@ void clear_selector (void)
     vartrend = 0;
     varconst = 1;
     lovar = hivar = 0;
+
+    dpd_asy = dpd_2step = 0;
+    dpd_p = 1;
 
     arma_p = 1;
     arima_d = 0;
@@ -653,6 +662,24 @@ void selector_from_model (void *ptr, int ci)
 	    if (pmod->opt & OPT_D) {
 		model_opt |= OPT_D;
 	    }
+	} else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+	    if (pmod->opt & OPT_A) {
+		model_opt |= OPT_A;
+	    }
+	    if (pmod->opt & OPT_D) {
+		model_opt |= OPT_D;
+	    }
+	    if (pmod->opt & OPT_T) {
+		model_opt |= OPT_T;
+	    }
+	    if (pmod->ci == DPANEL) {
+		if (pmod->opt & OPT_L) {
+		    model_opt |= OPT_L;
+		}
+		if (pmod->opt & OPT_X) {
+		    model_opt |= OPT_X;
+		}
+	    }		
 	} else if (pmod->ci == LAD) {
 	    if (gretl_model_get_int(pmod, "rq")) {
 		sel_ci = QUANTREG;
@@ -2288,10 +2315,13 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
 	garch_q = spinner_get_int(sr->extra[1]);
 	sprintf(s, "%d %d ; ", garch_p, garch_q);
     } else if (sr->ci == ARBOND) {
-	int p = spinner_get_int(sr->extra[0]);
 	int q = spinner_get_int(sr->extra[1]);
 
-	sprintf(s, "%d %d ; ", p, q);
+	dpd_p = spinner_get_int(sr->extra[0]);
+	sprintf(s, "%d %d ; ", dpd_p, q);
+    } else if (sr->ci == DPANEL) {
+	dpd_p = spinner_get_int(sr->extra[0]);
+	sprintf(s, "%d ; ", dpd_p);
     } else if (sr->ci == ARCH) {
 	int p = spinner_get_int(sr->extra[0]);
 
@@ -3007,7 +3037,8 @@ static void compose_cmdlist (selector *sr)
 	arma_spec_to_cmdlist(sr);
     } else if (sr->ci == ARCH || 
 	       sr->ci == GARCH || 
-	       sr->ci == ARBOND) {
+	       sr->ci == ARBOND ||
+	       sr->ci == DPANEL) {
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->ci)) {
 	vec_get_spinner_data(sr, &order, &dvlags);
@@ -3151,7 +3182,18 @@ static void compose_cmdlist (selector *sr)
 	    }
 	} else if (sr->ci == LOGIT || sr->ci == PROBIT) {
 	    lp_pvals = (sr->opts & OPT_P)? 1 : 0;
+	} else if (sr->ci == DPANEL) {
+	    dpd_2step = (sr->opts & OPT_T)? 1 : 0;
+	    dpd_asy = (sr->opts & OPT_A)? 1 : 0;
 	}
+
+	/* FIXME: for now we'll make dpanel backward compatible
+	   with arbond (but this should be a settable option)
+	*/
+	if (sr->ci == DPANEL) {
+	    sr->opts |= OPT_X;
+	}
+
 	verbose = (sr->opts & OPT_V)? 1 : 0;
     }
 
@@ -3221,6 +3263,7 @@ static char *est_str (int cmdnum)
     case PANEL_B:
 	return N_("Between-groups model");
     case ARBOND:
+    case DPANEL:
 	return N_("Dynamic panel model");
     case WLS:
 	return N_("Weighted least squares");
@@ -3601,7 +3644,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 				     default_y >= 0);
     } 
 
-    if (sr->ci != ARBOND) {
+    if (sr->ci != ARBOND && sr->ci != DPANEL) {
 	vbox_add_hsep(right_vbox);
     }
 
@@ -3726,9 +3769,9 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 	val = datainfo->pd;
 	maxlag = 2 * datainfo->pd;
     } else {
-	/* arbond */
+	/* arbond/dpanel */
 	tmp = gtk_label_new(_("AR order:"));
-	val = 1;
+	val = dpd_p;
 	maxlag = 10;
 	if (maxlag < datainfo->pd - 2) {
 	    maxlag = datainfo->pd - 2;
@@ -4018,7 +4061,9 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	primary_rhs_varlist(sr, right_vbox);
     } else if (VEC_CODE(sr->ci)) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
-    } else if (sr->ci == ARBOND || sr->ci == ARCH) {
+    } else if (sr->ci == ARBOND || 
+	       sr->ci == DPANEL || 
+	       sr->ci == ARCH) {
 	AR_order_spin(sr, right_vbox);
     }
     
@@ -4644,6 +4689,11 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == PANEL || sr->ci == ARBOND) {
 	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
 	pack_switch(tmp, sr, (model_opt & OPT_D), FALSE, OPT_D, 0);
+    } else if (sr->ci == DPANEL) {
+	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
+	pack_switch(tmp, sr, (model_opt & OPT_D), FALSE, OPT_D, 0);
+	tmp = gtk_check_button_new_with_label(_("Asymptotic standard errors"));
+	pack_switch(tmp, sr, (dpd_asy || (model_opt & OPT_A)), FALSE, OPT_A, 0);
     } else if (sr->ci == XTAB) {
 	tmp = gtk_check_button_new_with_label(_("Show zeros explicitly"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_Z, 0);
@@ -5006,17 +5056,22 @@ static void build_panel_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
-static void build_arbond_radios (selector *sr)
+static void build_dpanel_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
     GSList *group;
+    gboolean twostep = FALSE;
+
+    if (dpd_2step || (model_opt & OPT_T)) {
+	twostep = TRUE;
+    }  
 
     b1 = gtk_radio_button_new_with_label(NULL, _("One-step estimation"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+    pack_switch(b1, sr, !twostep, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Two-step estimation"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_T, 0);
+    pack_switch(b2, sr, twostep, FALSE, OPT_T, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
@@ -5186,8 +5241,8 @@ static void build_selector_radios (selector *sr)
 {
     if (sr->ci == PANEL) {
 	build_panel_radios(sr);
-    } else if (sr->ci == ARBOND) {
-	build_arbond_radios(sr);
+    } else if (sr->ci == ARBOND || sr->ci == DPANEL) {
+	build_dpanel_radios(sr);
     } else if (sr->ci == SCATTERS) {
 	build_scatters_radios(sr);
     } else if (sr->ci == OMIT) {
@@ -5623,7 +5678,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == COUNTMOD || ci == DURATION || 
 	ci == ARBOND || ci == QUANTREG || ci == INTREG || 
-	THREE_VARS_CODE(ci)) {
+	ci == DPANEL || THREE_VARS_CODE(ci)) {
 	build_mid_section(sr, right_vbox);
     }
     
@@ -7018,7 +7073,7 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 
     if (sr->ci != ARMA && sr->ci != VAR &&
 	sr->ci != VECM && sr->ci != VLAGSEL &&
-	sr->ci != ARBOND) { 
+	sr->ci != ARBOND && sr->ci != DPANEL) { 
 	ynum = selector_get_depvar_number(sr);
     }
 

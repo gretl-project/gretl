@@ -1413,11 +1413,12 @@ static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
    reference */
 
 static int print_step_1 (MODEL *pmod, dpdinfo *dpd,
-			 const int *list, const char *ispec,
-			 const double *y, const DATAINFO *pdinfo,
+			 const int *list, const int *ylags,
+			 const char *ispec, const double *y, 
+			 const DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn)
 {
-    int err = dpd_finalize_model(pmod, dpd, list, ispec, 
+    int err = dpd_finalize_model(pmod, dpd, list, ylags, ispec, 
 				 y, pdinfo, opt);
 
     if (!err) {
@@ -1541,8 +1542,8 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     if (!err && (opt & OPT_T)) {
 	/* second step, if wanted */
 	if (opt & OPT_V) {
-	    err = print_step_1(&mod, dpd, list, ispec, Z[dpd->yno], 
-			       pdinfo, opt, prn);
+	    err = print_step_1(&mod, dpd, list, laglist, ispec, 
+			       Z[dpd->yno], pdinfo, opt, prn);
 	}
 	if (!err) {
 	    err = dpd_step_2(dpd);
@@ -1555,7 +1556,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     if (!mod.errcode) {
 	/* write estimation info into model struct */
-	mod.errcode = dpd_finalize_model(&mod, dpd, list, ispec, 
+	mod.errcode = dpd_finalize_model(&mod, dpd, list, laglist, ispec, 
 					 Z[dpd->yno], pdinfo, opt);
     }
 
