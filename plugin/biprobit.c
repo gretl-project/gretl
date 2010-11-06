@@ -529,16 +529,9 @@ MODEL bp_preliminary_ols (const int *list, double **Z, DATAINFO *pdinfo)
     }
 
     mod = lsq(tmplist, Z, pdinfo, OLS, OPT_A);
-    /* some regressors from different equations may turn out 
-       to be collinear; this is not a problem for biprobit, so
-       we should zap the droplist to avoid spurious warnings in 
-       the output; using 
-
-       gretl_model_destroy_data_item (&mod, "droplist");
-
-       is no good, cause it produces a segfault later
-    */
-
+    if (gretl_model_get_data(&mod, "droplist")) {
+	gretl_model_destroy_data_item(&mod, "droplist");
+    }
     free(tmplist);
 
 #if BIPDEBUG
@@ -1094,7 +1087,7 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
     int Yhcols = (opt & OPT_X)? 2: 4;
     int err = 0;
 
-    Uh = gretl_matrix_alloc(T, 2); /* ?? */
+    Uh = gretl_matrix_alloc(T, 2);
     Yh = gretl_matrix_alloc(T, Yhcols);
 
     if (Uh == NULL || Yh == NULL) {
@@ -1161,7 +1154,6 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 		    P = im;
 		}
 	    }
-
 
 	    /* Put the generalized residuals into uhat;
 	       The generalized residuals are defined as

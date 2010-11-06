@@ -2022,13 +2022,17 @@ static int discard_model_data_item (MODEL *pmod, const char *key,
 	model_data_item **items;
 	int n_items = pmod->n_data_items - 1;
 
-	for (i=targ; i<n_items; i++) {
-	    pmod->data_items[i] = pmod->data_items[i+1];
-	}
-
-	items = realloc(pmod->data_items, n_items * sizeof *items);
-	if (items != NULL) {
-	    pmod->data_items = items;
+	if (n_items == 0) {
+	    free(pmod->data_items);
+	    pmod->data_items = NULL;
+	} else {
+	    for (i=targ; i<n_items; i++) {
+		pmod->data_items[i] = pmod->data_items[i+1];
+	    }
+	    items = realloc(pmod->data_items, n_items * sizeof *items);
+	    if (items != NULL) {
+		pmod->data_items = items;
+	    }
 	}
 
 	pmod->n_data_items -= 1;
