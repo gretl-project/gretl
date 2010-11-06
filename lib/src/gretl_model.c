@@ -2019,13 +2019,14 @@ static int discard_model_data_item (MODEL *pmod, const char *key,
     if (junk == NULL) {
 	err = 1;
     } else {
-	model_data_item **items;
 	int n_items = pmod->n_data_items - 1;
 
 	if (n_items == 0) {
 	    free(pmod->data_items);
 	    pmod->data_items = NULL;
 	} else {
+	    model_data_item **items;
+
 	    for (i=targ; i<n_items; i++) {
 		pmod->data_items[i] = pmod->data_items[i+1];
 	    }
