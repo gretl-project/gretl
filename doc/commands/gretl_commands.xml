@@ -1040,6 +1040,14 @@
 	  <effect>robust standard errors</effect>
         </option>
 	<option>
+	  <flag>--opg</flag>
+	  <effect>see below</effect>
+        </option>
+	<option>
+	  <flag>--save-xbeta</flag>
+	  <effect>see below</effect>
+        </option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>print extra information</effect>
         </option>
@@ -1051,17 +1059,39 @@
     </usage>
     <description>
       <para>
-	Estimates a bivariate probit model using the
+	Estimates a bivariate probit model, using the
 	Newton&ndash;Raphson method to maximize the likelihood.
       </para>
       <para>
-	The argument list starts with the two dependent variables,
-	followed by a list of regressors. If a second list is given,
-	separated by a semicolon, this is interpreted as a set of
-	regressors specific to the second equation, with
+	The argument list starts with the two (binary) dependent
+	variables, followed by a list of regressors. If a second list
+	is given, separated by a semicolon, this is interpreted as a
+	set of regressors specific to the second equation, with
 	<repl>indepvars1</repl> being specific to the first equation;
 	otherwise <repl>indepvars1</repl> is taken to represent a
 	common set of regressors.
+      </para>
+      <para>
+	By default, standard errors are computed using a numerical
+	approximation to the Hessian at convergence.  But if the
+	<opt>--opg</opt> option is given the covariance matrix is based on
+	the Outer Product of the Gradient (OPG), or if the
+	<opt>--robust</opt> option is given QML standard errors are
+	calculated, using a <quote>sandwich</quote> of the inverse of the
+	Hessian and the OPG.
+      </para>
+      <para>
+	After successful estimation, the accessor <lit>$uhat</lit>
+	retrieves a matrix with two columns holding the generalized
+	residuals for the two equations; that is, the expected values
+	of the disturbances conditional on the observed outcomes and
+	covariates.  By default <lit>$yhat</lit> retrieves a matrix
+	with four columns, holding the estimated probabilities of the
+	four possible joint outcomes for (<math>y</math><sub>1</sub>,
+	<math>y</math><sub>2</sub>), in the order (1,1), (1,0), (0,1),
+	(0,0). Alternatively, if the option <lit>--save-xbeta</lit> is
+	given, <lit>$yhat</lit> has two columns and holds the values
+	of the index functions for the respective equations.
       </para>
       <para>
 	The output includes a likelihood ratio test of the null
@@ -2635,6 +2665,10 @@
 	the constant.  The dummies are entered in differenced form unless
 	the <lit>--dpdstyle</lit> option is given, in which case they
 	are entered in levels.
+      </para>
+      <para>
+	For further details and examples, please see <guideref
+	targ="chap-dpanel"/>.
       </para>
     </description>
 

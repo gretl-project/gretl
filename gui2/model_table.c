@@ -188,17 +188,19 @@ static int model_table_precheck (MODEL *pmod, int add_mode)
 	return 1;
     }    
 
-    /* NLS, MLE and GMM models won't work, nor INTREG, IVREG */
+    /* various sorts of models that will not work */
     if (pmod->ci == NLS || pmod->ci == MLE || pmod->ci == GMM ||
-	pmod->ci == ARBOND || pmod->ci == INTREG || pmod->ci == IVREG) {
+	pmod->ci == ARBOND || pmod->ci == DPANEL ||
+	pmod->ci == INTREG || pmod->ci == IVREG ||
+	pmod->ci == BIPROBIT) {
 	mtable_errmsg(_("Sorry, this model can't be put in the model table"),
 		      gui);
 	return 1;
     }
 
-    /* nor will ARMA */
+    /* nor will ARMA, GARCH */
     if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	mtable_errmsg(_("Sorry, ARMA models can't be put in the model table"),
+	mtable_errmsg(_("Sorry, this model can't be put in the model table"),
 		      gui);
 	return 1;
     }

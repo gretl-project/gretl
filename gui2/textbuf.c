@@ -726,6 +726,14 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 "size", 8 * PANGO_SCALE,
 		 NULL);
     gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("subscript-numeral");
+    g_object_set(tag, "family", "sans",
+		 "style", PANGO_STYLE_NORMAL,
+		 "rise", -3 * PANGO_SCALE,
+		 "size", 8 * PANGO_SCALE,
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
 		 
     tag = gtk_text_tag_new("literal");
     g_object_set(tag, "family", "monospace", NULL);
@@ -2570,7 +2578,11 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	ftag = "superscript";
 	break;
     case INSERT_SUB:
-	ftag = "subscript";
+	if (integer_string(s)) {
+	    ftag = "subscript-numeral";
+	} else {
+	    ftag = "subscript";
+	}
 	break;
     case INSERT_BOLD:
 	ftag = "heading";
