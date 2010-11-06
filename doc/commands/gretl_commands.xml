@@ -1448,12 +1448,13 @@
 
     <description>
       <para context="cli">
-	The Engle&ndash;Granger cointegration test.  The default procedure
-	is: (1) carry out Dickey&ndash;Fuller tests on the null
-	hypothesis that each of the variables listed has a unit root; (2)
-	estimate the cointegrating regression; and (3) run a DF test
-	on the residuals from the cointegrating regression.  If the
-	<opt>--skip-df</opt> flag is given, step (1) is omitted.
+	The <cite key="engle-granger87">Engle&ndash;Granger (1987)</cite>
+	cointegration test.  The default procedure is: (1) carry out
+	Dickey&ndash;Fuller tests on the null hypothesis that each of the
+	variables listed has a unit root; (2) estimate the cointegrating
+	regression; and (3) run a DF test on the residuals from the
+	cointegrating regression.  If the <opt>--skip-df</opt> flag is
+	given, step (1) is omitted.
       </para>
       <para context="cli">
 	If the specified lag order is positive all the Dickey&ndash;Fuller
