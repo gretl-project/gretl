@@ -1097,6 +1097,7 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
     } else {
 	double rho, ca, sa, ssa;
 	double a, b, u_ab, u_ba, P, im;
+	double p11, p10, p01, p00;
 	int t, i = 0;
 
 	ca = cosh(bp->arho);
@@ -1125,34 +1126,22 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 		   corresponds to the flag --save-xbeta */
 		gretl_matrix_set(Yh, t, 0, a);
 		gretl_matrix_set(Yh, t, 1, b);
-	    } else {
+	    } 
+
+	    p11 = bvnorm_cdf( rho,  a,  b);
+	    p10 = bvnorm_cdf(-rho,  a, -b);
+	    p01 = bvnorm_cdf(-rho, -a,  b);
+	    p00 = bvnorm_cdf( rho, -a, -b);
+
+	    if (!(opt & OPT_X)) {
 		/* Let the columns of Yh hold the estimated probabilities
 		   of the outcomes (1,1), (1,0), (0,1) and (0,0)
 		   respectively.
 		*/
-		im = bvnorm_cdf( rho,  a,  b);
-		gretl_matrix_set(Yh, t, 0, im);
-		if (bp->s1[i] && bp->s2[i]) {
-		    P = im;
-		}
-
-		im = bvnorm_cdf(-rho,  a, -b);
-		gretl_matrix_set(Yh, t, 1, im);
-		if (bp->s1[i] && !(bp->s2[i])) {
-		    P = im;
-		}
-
-		im = bvnorm_cdf(-rho, -a,  b);
-		gretl_matrix_set(Yh, t, 2, im);
-		if (!(bp->s1[i]) && bp->s2[i]) {
-		    P = im;
-		}
-
-		im = bvnorm_cdf( rho, -a, -b);
-		gretl_matrix_set(Yh, t, 3, im);
-		if (!(bp->s1[i]) && !(bp->s2[i])) {
-		    P = im;
-		}
+		gretl_matrix_set(Yh, t, 0, p11);
+		gretl_matrix_set(Yh, t, 1, p10);
+		gretl_matrix_set(Yh, t, 2, p01);
+		gretl_matrix_set(Yh, t, 3, p00);
 	    }
 
 	    /* Put the generalized residuals into uhat;
@@ -1165,17 +1154,27 @@ static int bp_add_hat_matrices (MODEL *pmod, bp_container *bp,
 	       (if any)
 	    */
 
-	    a = bp->s1[t] ? a : -a;
-	    b = bp->s2[t] ? b : -b;
+	    if (bp->s1[i] && bp->s2[i]) {
+		P = p11;
+	    } else if (bp->s1[i] && !bp->s2[i]) {
+		P = p10;
+	    } else if (!bp->s1[i] && bp->s2[i]) {
+		P = p01;
+	    } else {
+		P = p00;
+	    }
+
+	    a = bp->s1[i] ? a : -a;
+	    b = bp->s2[i] ? b : -b;
 	    ssa = (bp->s1[i] == bp->s2[i]) ? sa : -sa;
 	    u_ba = (ca*b - ssa*a);
 	    u_ab = (ca*a - ssa*b);
 
 	    im = exp(-0.5*a*a) * normal_cdf(u_ba) / (P * SQRT_2_PI);
-	    gretl_matrix_set(Uh, t, 0, bp->s1[t] ? im : -im);
+	    gretl_matrix_set(Uh, t, 0, bp->s1[i] ? im : -im);
 
 	    im = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);
-	    gretl_matrix_set(Uh, t, 1, bp->s2[t] ? im : -im);
+	    gretl_matrix_set(Uh, t, 1, bp->s2[i] ? im : -im);
 	    
 	    i++;
 	}
