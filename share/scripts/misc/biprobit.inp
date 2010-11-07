@@ -1,0 +1,23 @@
+# A simplified version of the bivariate probit model estimated
+# by William Greene in his working paper "Marginal Effects in the 
+# Bivariate Probit Model" (EC-96-11, June 1996)
+#
+# The dependent variable in the first equation is equal to 1 if the
+# respondent has had any major derogatory credit reports, otherwise
+# 0; and in the second equation the dependent variable is 1 if the
+# respondent's application for a credit card was accepted, otherwise
+# 0. 
+#
+# The estimates show a strong negative correlation of the disturbance
+# across the two equations, which makes sense: unobserved factors
+# making a derogatory report more likely also make a successful
+# credit-card application less likely.
+
+open greene25_1.gdt
+series y1 = majordrg > 0
+# regressors for first equation
+list x1 = const age avgexp
+# regressors for second equation
+list x2 = const age income ownrent selfempl
+biprobit y1 cardhldr x1 ; x2
+
