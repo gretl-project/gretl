@@ -1055,6 +1055,9 @@
       <examples>
         <example>biprobit y1 y2 0 x1 x2</example>
 	<example>biprobit y1 y2 0 x11 x12 ; 0 x21 x22</example>
+	<demos>
+	  <demo>biprobit.inp</demo>
+	</demos>
       </examples>
     </usage>
     <description>
