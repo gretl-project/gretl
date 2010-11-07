@@ -296,6 +296,12 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	va_start(ap, fmt);
 	vsnprintf(gretl_errmsg, ERRLEN, fmt, ap);
 	va_end(ap);
+    } else if (strstr(gretl_errmsg, "*** error in fun") &&
+	       strstr(fmt, "*** error in fun")) {
+	/* don't print more than one "error in function" 
+	   message, as this gets confusing 
+	*/
+	return;
     } else {
 	int n = ERRLEN - strlen(gretl_errmsg) - 2;
 

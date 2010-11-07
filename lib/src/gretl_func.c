@@ -5361,6 +5361,24 @@ static int debug_command_loop (ExecState *state,
     return 1 + debug_next(state->cmd);
 }
 
+static void set_function_error_message (ufunc *u, const char *line)
+{
+    gretl_errmsg_sprintf("*** error in function %s\n> %s", u->name, line);
+
+    if (gretl_function_depth() > 1) {
+	GList *tmp = g_list_last(callstack);
+
+	if (tmp != NULL) {
+	    tmp = g_list_previous(tmp);
+	    if (tmp != NULL) {
+		fncall *call = tmp->data;
+
+		gretl_errmsg_sprintf(" called by function %s", call->fun->name);
+	    }
+	}
+    }
+}
+
 #define void_function(f) (f->rettype == 0 || f->rettype == GRETL_TYPE_VOID)
 
 static int handle_return_statement (fncall *call,
@@ -5400,7 +5418,9 @@ static int handle_return_statement (fncall *call,
 	    
 	    sprintf(formula, "%s $retval=%s", typestr, s);
 	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
-	    if (!err) {
+	    if (err) {
+		set_function_error_message(fun, s);
+	    } else {
 		call->retname = gretl_strdup("$retval");
 	    }
 	}
@@ -5575,10 +5595,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (err) {
-	    gretl_errmsg_sprintf("error in function %s\n> %s", u->name, line);
-	    pprintf(prn, "error in function %s\n> %s\n", u->name, line);
+	    set_function_error_message(u, line);
+#if 0
 	    fprintf(stderr, "error %d on line %d of function %s\n", err, i+1, u->name);
 	    fprintf(stderr, "> %s\n", line);
+#endif
 	}
 
 	if (state.funcerr) {
