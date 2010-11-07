@@ -896,8 +896,8 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
 #if GDEBUG
-    fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s'\n", 
-	    (void *) p, p->lh.name);
+    fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p\n", 
+	    (void *) p, p->lh.name, (void *) *pZ);
 #endif
 
     realgen(NULL, p, pZ, pdinfo, prn, P_EXEC);

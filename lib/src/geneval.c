@@ -6272,7 +6272,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 /* Create a matrix using selected series, or a mixture of series and
    lists, or more than one list.  We proceed by setting up a "dummy"
    dataset and constructing a list that indexes into it.  (We can't
-   use a regular list, in the generl case, since some of the series
+   use a regular list, in the general case, since some of the series
    may be temporary variables that are not part of the "real"
    dataset.)
 */
@@ -6397,27 +6397,22 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 #endif
 
     for (i=0; i<m && !p->err; i++) {
-	n = nn->v.bn.n[i];
+	n = eval(nn->v.bn.n[i], p);
+	if (n == NULL && !p->err) {
+	    p->err = E_UNSPEC; /* "can't happen" */
+	}
+	if (p->err) {
+	    break;
+	}
 	if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
+	    if (nntmp == NULL) {
+		free_tree(nn->v.bn.n[i], p, "MatDef");
+	    }
 	    nn->v.bn.n[i] = n;
 	} else {
-	    n = eval(n, p);
-	    if (n == NULL && !p->err) {
-		p->err = E_UNSPEC; /* "can't happen" */
-	    }
-	    if (p->err) {
-		break;
-	    }
-	    if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
-		if (nntmp == NULL) {
-		    free_tree(nn->v.bn.n[i], p, "MatDef");
-		}
-		nn->v.bn.n[i] = n;
-	    } else {
-		fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
-		p->err = E_TYPES;
-		break;
-	    }
+	    fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
+	    p->err = E_TYPES;
+	    break;
 	}
 	if (n->t == NUM || scalar_matrix_node(n)) {
 	    nnum++;
