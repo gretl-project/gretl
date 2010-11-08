@@ -1,8 +1,14 @@
 version 1.9.3, in progress
-- New command "biprobit" (bivariate probit)
+- New estimation command "biprobit" (bivariate probit)
 - Add help text for "dpanel"
 - GUI graphs: allow option of replacing the original graph
   with a zoomed view
+- Fix bug: ensure that the main window gets updated when
+  series are deleted via the console
+- Fix bug: don't show an excessively long list of series in
+  the dialog box for confirming deletion of series
+- Fix bug: creation of matrices from data series in a loop
+  which changes the sub-sample via --restrict
 
 2010-11-03 version 1.9.2
 - New command "fractint" (fractional integration test)

@@ -768,8 +768,66 @@ void do_nistcheck (GtkAction *action)
 
 #if defined (ENABLE_MAILER) && !defined(G_OS_WIN32)
 
+#if 0
+
+static gchar *my_url_encode (gchar const *text, int type)
+{
+    char const *good;
+    static char const hex[16] = "0123456789ABCDEF";
+    GString* result;
+
+    g_return_val_if_fail(text != NULL, NULL);
+    g_return_val_if_fail(*text != '\0', NULL);
+
+    switch (type) {
+    case 0: /* mailto: */
+	good = ".-_@";
+	break;
+    case 1: /* file: or http: */
+	good = "!$&'()*+,-./:=@_";
+	break;
+    default:
+	return NULL;
+    }
+
+    result = g_string_new(NULL);
+
+    while (*text) {
+	unsigned char c = *text++;
+	if (g_ascii_isalnum(c) || strchr(good, c))
+	    g_string_append_c(result, c);
+	else {
+	    g_string_append_c(result, '%');
+	    g_string_append_c(result, hex[c >> 4]);
+	    g_string_append_c(result, hex[c & 0xf]);
+	}
+    }
+
+    return g_string_free(result, FALSE);
+}
+
+#endif
+
 void send_file (char *fullname)
 {
+#if 0 /* if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 14 */
+    GError *error = NULL;
+    gchar *uri, *tmp;
+
+    tmp = my_url_encode(fullname, 0);
+    /* this idea is from gnumeric, but it doesn't work with thunderbird */
+    uri = g_strdup_printf("mailto:?subject=gretl data file&"
+			  "body=Attached&attachment=%s", tmp);
+    fprintf(stderr, "uri: '%s'\n", uri);
+    g_free(tmp);
+
+    gtk_show_uri(NULL, uri, GDK_CURRENT_TIME, &error);
+    if (error != NULL) {
+        errbox(error->message);
+        g_error_free(error);
+    }
+    g_free(uri);
+# else
     int (*email_file) (const char *, const char *);
     void *handle;
 
@@ -780,6 +838,7 @@ void send_file (char *fullname)
     
     email_file(fullname, gretl_dotdir());
     close_plugin(handle);
+# endif
 }
 
 #endif
