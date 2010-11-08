@@ -1854,6 +1854,7 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
 				   int *renumber,
 				   PRN *prn)
 {
+    int oldv = pdinfo->v;
     int *dlist = NULL;
     int free_dlist = 0;
     int lastvar[2];
@@ -1902,6 +1903,8 @@ int dataset_drop_listed_variables (int *list, double ***pZ,
 
     if (free_dlist) {
 	free(dlist);
+    } else if (pdinfo->v != oldv) {
+	set_dataset_is_changed();
     }
 
     return err;

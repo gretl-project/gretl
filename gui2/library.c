@@ -5947,8 +5947,11 @@ static void real_delete_vars (int id, int *dlist)
 	liststr = main_window_selection_as_string();
 	if (liststr == NULL) {
 	    return;
+	} else if (vwin_selection_count(mdata, NULL) > 8) {
+	    msg = g_strdup(_("Really delete the selected variables?"));
+	} else {
+	    msg = g_strdup_printf(_("Really delete %s?"), liststr);
 	}
-	msg = g_strdup_printf(_("Really delete %s?"), liststr);
     } else {
 	/* delete vars in dlist */
 	liststr = gretl_list_to_string(dlist);

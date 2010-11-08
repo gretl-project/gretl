@@ -81,18 +81,14 @@
 static void parser_init (parser *p, const char *str, 
 			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
-
 static void parser_reinit (parser *p, double ***pZ, 
 			   DATAINFO *dinfo, PRN *prn);
-
 static void printnode (NODE *t, parser *p);
-
 static NODE *eval (NODE *t, parser *p);
-
 static void node_type_error (int ntype, int argnum, int goodt, 
 			     NODE *bad, parser *p);
-
 static int *node_get_list (NODE *n, parser *p);
+static void reattach_data_series (NODE *n, parser *p);
 
 static const char *typestr (int t)
 {
@@ -6286,6 +6282,10 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
     int *dumlist;
     int i, j, k = 0;
 
+#if EDEBUG
+    fprintf(stderr, "assemble_matrix...\n");
+#endif
+
     /* how many columns will we need? */
     for (i=0; i<nnodes; i++) {
 	n = nn->v.bn.n[i];
@@ -6310,6 +6310,10 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	return NULL;
     }
 
+#if EDEBUG
+    fprintf(stderr, " got %d columns, X at %p\n", k, (void *) X);
+#endif
+
     /* and a list associated with X */
     dumlist = gretl_consecutive_list_new(0, k-1);
     if (dumlist == NULL) {
@@ -6333,6 +6337,9 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 		X[k++] = (*p->Z)[list[j]];
 	    }	    
 	} else if (n->t == VEC) {
+	    if (useries_node(n) && (p->flags & P_EXEC)) {
+		reattach_data_series(n, p);
+	    } 
 	    X[k++] = n->v.xvec;
 	}
     }
@@ -6397,22 +6404,27 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 #endif
 
     for (i=0; i<m && !p->err; i++) {
-	n = eval(nn->v.bn.n[i], p);
-	if (n == NULL && !p->err) {
-	    p->err = E_UNSPEC; /* "can't happen" */
-	}
-	if (p->err) {
-	    break;
-	}
+	n = nn->v.bn.n[i];
 	if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
-	    if (nntmp == NULL) {
-		free_tree(nn->v.bn.n[i], p, "MatDef");
-	    }
 	    nn->v.bn.n[i] = n;
 	} else {
-	    fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
-	    p->err = E_TYPES;
-	    break;
+	    n = eval(n, p);
+	    if (n == NULL && !p->err) {
+		p->err = E_UNSPEC; /* "can't happen" */
+	    }
+	    if (p->err) {
+		break;
+	    }
+	    if (ok_matdef_sym(n->t) || scalar_matrix_node(n)) {
+		if (nntmp == NULL) {
+		    free_tree(nn->v.bn.n[i], p, "MatDef");
+		}
+		nn->v.bn.n[i] = n;
+	    } else {
+		fprintf(stderr, "matrix_def_node: node type %d: not OK\n", n->t);
+		p->err = E_TYPES;
+		break;
+	    }
 	}
 	if (n->t == NUM || scalar_matrix_node(n)) {
 	    nnum++;
@@ -7290,9 +7302,9 @@ static NODE *eval (NODE *t, parser *p)
     case ABSENT:
     case U_ADDR:
     case LVEC:
-	if (t->t == NUM && t->vnum > 0) { 
+	if (uscalar_node(t)) { 
 	    t->v.xval = gretl_scalar_get_value_by_index(t->vnum);
-	} else if (t->t == VEC && t->vnum > 0 && (p->flags & P_EXEC)) {
+	} else if (useries_node(t) && (p->flags & P_EXEC)) {
 	    reattach_data_series(t, p);
 	} 
 	/* otherwise, terminal symbol: pass on through */
