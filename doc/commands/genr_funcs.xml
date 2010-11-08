@@ -2821,7 +2821,7 @@
 
     <function name="lrvar" section="filters" output="scalar">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
 	<fnarg type="scalar">k</fnarg>
       </fnargs>
       <description>

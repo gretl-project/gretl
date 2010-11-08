@@ -4156,9 +4156,10 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	gretl_matrix *tmp = NULL;
 	double rval = node_get_scalar(r, p);
 	const double *xvec;
+	int t1 = p->dinfo->t1;
+	int t2 = p->dinfo->t2;
 	int pd = 1;
 
 	if (l->t == MAT) {
@@ -4169,14 +4170,20 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 		}
 		return ret;
 	    } else {
-		cast_to_series(l, f, &tmp, p);
-		if (p->err) {
+		int n = gretl_vector_get_length(l->v.m);
+
+		if (n == 0) {
+		    p->err = E_TYPES;
 		    return NULL;
 		}
+		t1 = 0;
+		t2 = n - 1;
+		xvec = l->v.m->val;
 	    }
 	} else {
 	    /* got a series on the left */
 	    pd = p->dinfo->pd;
+	    xvec = l->v.xvec;
 	}
 
 	ret = aux_scalar_node(p);
@@ -4184,28 +4191,20 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    return ret;
 	}
 
-	xvec = l->v.xvec;
-
 	switch (f) {
 	case F_LRVAR:
-	    ret->v.xval = gretl_long_run_variance(p->dinfo->t1, p->dinfo->t2, 
-						  xvec, (int) rval);
+	    ret->v.xval = gretl_long_run_variance(t1, t2, xvec, (int) rval);
 	    break;
 	case F_QUANTILE:
-	    ret->v.xval = gretl_quantile(p->dinfo->t1, p->dinfo->t2, xvec, 
-					 rval, &p->err);
+	    ret->v.xval = gretl_quantile(t1, t2, xvec, rval, &p->err);
 	    break;
 	case F_NPV:
-	    ret->v.xval = gretl_npv(p->dinfo->t1, p->dinfo->t2, xvec, 
-				    rval, pd, &p->err);
+	    ret->v.xval = gretl_npv(t1, t2, xvec, rval, pd, &p->err);
 	    break;
 	default:
 	    break;
 	}
 
-	if (l->t == MAT) {
-	    l->v.m = tmp;
-	}
     } else {
 	ret = aux_any_node(p);
     }
