@@ -4,12 +4,16 @@ version 1.9.3, in progress
 - GUI graphs: allow option of replacing the original graph
   with a zoomed view
 - lrvar function: allow vector argument in place of series
+- Iterated GMM: raise default maximum iterations to 250, and
+  add a new "set" variable, "gmm_maxiter"
 - Fix bug: ensure that the main window gets updated when
   series are deleted via the console
 - Fix bug: don't show an excessively long list of series in
   the dialog box for confirming deletion of series
 - Fix bug: creation of matrices from data series in a loop
   which changes the sub-sample via --restrict
+- Fix bug: setting "halt_on_error" off should not suppress
+  printing of error messages
 
 2010-11-03 version 1.9.2
 - New command "fractint" (fractional integration test)

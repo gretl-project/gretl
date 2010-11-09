@@ -115,6 +115,7 @@ struct VCVInfo_ {
                           c == PANEL || \
                           c == POISSON || \
                           c == PROBIT || \
+                          c == BIPROBIT || \
                           c == QUANTREG || \
                           c == TOBIT || \
                           c == WLS)

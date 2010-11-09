@@ -113,14 +113,14 @@ struct _selector {
 
 #define FNPKG_CODE(c) (c == SAVE_FUNCTIONS || c == EDIT_FUNCTIONS)
 
-#define WANT_TOGGLES(c) (c == ARBOND || \
-	                 c == DPANEL || \
+#define WANT_TOGGLES(c) (c == DPANEL || \
                          c == ARMA || \
                          c == COINT || \
                          c == COINT2 || \
 			 c == CORR || \
                          c == GARCH || \
                          c == HECKIT || \
+                         c == BIPROBIT || \
                          c == HILU || \
                          c == INTREG || \
                          c == IVREG || \
@@ -154,6 +154,7 @@ struct _selector {
                      c == IV_LIML || \
                      c == IV_GMM || \
                      c == HECKIT || \
+                     c == BIPROBIT || \
                      c == VAR || \
                      c == VLAGSEL || \
                      c == VECM || \
@@ -161,7 +162,8 @@ struct _selector {
                      c == SAVE_FUNCTIONS || \
 		     c == EDIT_FUNCTIONS)
 
-#define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM || c == HECKIT)
+#define USE_ZLIST(c) (c == IVREG || c == IV_LIML || c == IV_GMM || \
+                      c == HECKIT || c == BIPROBIT)
 
 #define RHS_PREFILL(c) (c == CORR || \
 	                c == MAHAL || \
@@ -176,14 +178,14 @@ struct _selector {
 #define select_lags_primary(c) (MODEL_CODE(c))
 
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA && \
-			       c != ARBOND && c != DPANEL)
+			       c != DPANEL)
 
 /* Should we have a lags button associated with auxiliary
    variable selector? */
 
 #define select_lags_aux(c) (c == VAR || c == VLAGSEL || c == VECM || \
                             c == IVREG || c == IV_LIML || c == IV_GMM || \
-                            c == HECKIT)
+                            c == HECKIT || c == BIPROBIT)
 
 #define list_lag_special(i) (i < -1)
 
@@ -269,7 +271,7 @@ static int want_radios (selector *sr)
 {
     int c = sr->ci;
 
-    if (c == PANEL || c == SCATTERS || c == ARBOND || 
+    if (c == PANEL || c == SCATTERS || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN || c == PCA ||
 	c == QUANTREG || c == DPANEL) {
@@ -574,6 +576,11 @@ void selector_from_model (void *ptr, int ci)
 {
     model_opt = OPT_NONE;
 
+    if (ci == ARBOND) {
+	/* handle old session models */
+	ci = DPANEL;
+    }
+
     if (ci == VIEW_MODEL) {
 	/* single-equation model */
 	MODEL *pmod = (MODEL *) ptr;
@@ -662,7 +669,7 @@ void selector_from_model (void *ptr, int ci)
 	    if (pmod->opt & OPT_D) {
 		model_opt |= OPT_D;
 	    }
-	} else if (pmod->ci == ARBOND || pmod->ci == DPANEL) {
+	} else if (pmod->ci == DPANEL) {
 	    if (pmod->opt & OPT_A) {
 		model_opt |= OPT_A;
 	    }
@@ -672,14 +679,12 @@ void selector_from_model (void *ptr, int ci)
 	    if (pmod->opt & OPT_T) {
 		model_opt |= OPT_T;
 	    }
-	    if (pmod->ci == DPANEL) {
-		if (pmod->opt & OPT_L) {
-		    model_opt |= OPT_L;
-		}
-		if (pmod->opt & OPT_X) {
-		    model_opt |= OPT_X;
-		}
-	    }		
+	    if (pmod->opt & OPT_L) {
+		model_opt |= OPT_L;
+	    }
+	    if (pmod->opt & OPT_X) {
+		model_opt |= OPT_X;
+	    }
 	} else if (pmod->ci == LAD) {
 	    if (gretl_model_get_int(pmod, "rq")) {
 		sel_ci = QUANTREG;
@@ -1110,6 +1115,16 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     return view;
 }
 
+static int non_binary_var_check (int vnum, const char *vname)
+{
+    if (!gretl_isdummy(datainfo->t1, datainfo->t2, Z[vnum])) {
+	errbox(_("The variable '%s' is not a 0/1 variable."), vname);
+	return 1;
+    }
+
+    return 0;
+}
+
 /* add to "extra" var slot the current selection from sr->lvars */
 
 static void real_set_extra_var (GtkTreeModel *model, GtkTreePath *path,
@@ -1120,9 +1135,8 @@ static void real_set_extra_var (GtkTreeModel *model, GtkTreePath *path,
 
     gtk_tree_model_get(model, iter, 0, &vnum, 2, &vname, -1);
 
-    if (sr->ci == HECKIT) {
-	if (!gretl_isdummy(datainfo->t1, datainfo->t2, Z[vnum])) {
-	    errbox(_("The variable '%s' is not a 0/1 variable."), vname);
+    if (sr->ci == HECKIT || sr->ci == BIPROBIT) {
+	if (non_binary_var_check(vnum, vname)) {
 	    return;
 	}
     }
@@ -1331,12 +1345,19 @@ static void dependent_var_cleanup (selector *sr, int newy)
     }
 }
 
-static void set_dependent_var_from_active (selector *sr)
+static int set_dependent_var_from_active (selector *sr)
 {
-    gint v = sr->active_var;
+    gint vnum = sr->active_var;
+    char *vname = datainfo->varname[vnum];
 
     if (sr->depvar == NULL) {
-	return;
+	return 1;
+    }
+
+    if (sr->ci == PROBIT || sr->ci == BIPROBIT) {
+	if (non_binary_var_check(vnum, vname)) {
+	    return 1;
+	}
     }
 
     /* models: if we select foo as regressand, remove it from the list
@@ -1344,32 +1365,40 @@ static void set_dependent_var_from_active (selector *sr)
        previous dependent var, if any.
     */
     if (MODEL_CODE(sr->ci)) {
-	dependent_var_cleanup(sr, v);
+	dependent_var_cleanup(sr, vnum);
     }
 
-    gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[v]);
+    gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
 
     if (select_lags_depvar(sr->ci)) {
-	maybe_insert_depvar_lags(sr, v, 0);
+	maybe_insert_depvar_lags(sr, vnum, 0);
     }
+
+    return 0;
 }
 
 static void real_set_dependent_var (GtkTreeModel *model, GtkTreePath *path,
 				    GtkTreeIter *iter, selector *sr)
 {
     gchar *vname;
-    gint v;
+    gint vnum;
 
-    gtk_tree_model_get(model, iter, 0, &v, 2, &vname, -1);
+    gtk_tree_model_get(model, iter, 0, &vnum, 2, &vname, -1);
+
+    if (sr->ci == PROBIT || sr->ci == BIPROBIT) {
+	if (non_binary_var_check(vnum, vname)) {
+	    return;
+	}
+    }
 
     if (MODEL_CODE(sr->ci)) {
-	dependent_var_cleanup(sr, v);
+	dependent_var_cleanup(sr, vnum);
     }
 
     gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
 
     if (select_lags_depvar(sr->ci)) {
-	maybe_insert_depvar_lags(sr, v, 0);
+	maybe_insert_depvar_lags(sr, vnum, 0);
     }
 }
 
@@ -1770,8 +1799,9 @@ dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, selector *sr)
 {
     if (sr->depvar != NULL && event != NULL && 
 	event->type == GDK_2BUTTON_PRESS) {
-	set_dependent_var_from_active(sr);
-	if (sr->default_check != NULL) {
+	int err = set_dependent_var_from_active(sr);
+
+	if (!err && sr->default_check != NULL) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
 					 TRUE);
 	}
@@ -2314,11 +2344,6 @@ static void add_pdq_vals_to_cmdlist (selector *sr)
 	garch_p = spinner_get_int(sr->extra[0]);
 	garch_q = spinner_get_int(sr->extra[1]);
 	sprintf(s, "%d %d ; ", garch_p, garch_q);
-    } else if (sr->ci == ARBOND) {
-	int q = spinner_get_int(sr->extra[1]);
-
-	dpd_p = spinner_get_int(sr->extra[0]);
-	sprintf(s, "%d %d ; ", dpd_p, q);
     } else if (sr->ci == DPANEL) {
 	dpd_p = spinner_get_int(sr->extra[0]);
 	sprintf(s, "%d ; ", dpd_p);
@@ -2769,6 +2794,7 @@ static void read_omit_cutoff (selector *sr)
 }
 
 #define extra_widget_get_int(c) (c == HECKIT ||		\
+	                         c == BIPROBIT ||       \
                                  c == INTREG ||		\
                                  c == COUNTMOD ||	\
 				 c == DURATION ||	\
@@ -2797,7 +2823,7 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     }
 
     if (sr->ci == WLS || sr->ci == COUNTMOD || sr->ci == DURATION ||
-	sr->ci == AR || sr->ci == HECKIT ||
+	sr->ci == AR || sr->ci == HECKIT || sr->ci == BIPROBIT ||
 	sr->ci == INTREG || THREE_VARS_CODE(sr->ci)) {
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 	if (txt == NULL || *txt == '\0') {
@@ -2809,6 +2835,9 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 		sr->error = 1;
 	    } else if (sr->ci == HECKIT) {
 		warnbox(_("You must specify a selection variable"));
+		sr->error = 1;
+	    } else if (sr->ci == BIPROBIT) {
+		warnbox(_("You must specify a second dependent variable"));
 		sr->error = 1;
 	    } else if (sr->ci == INTREG) {
 		warnbox(_("You must specify an upper bound variable"));
@@ -2856,6 +2885,8 @@ static void parse_extra_widgets (selector *sr, char *endbit)
     } else if (sr->ci == HECKIT) {
 	sprintf(endbit, " %d", k);
 	selvar = k;
+    } else if (sr->ci == BIPROBIT) {
+	sprintf(endbit, " %d", k);
     } else if (sr->ci == AR) {
 	free(arlags);
 	arlags = gretl_strdup(txt);
@@ -2924,6 +2955,11 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 
 	if (sr->ci == GR_XY || sr->ci == GR_IMP) {
 	    sprintf(endbit, " %d", ynum);
+	} else if (sr->ci == BIPROBIT) {
+	    sprintf(numstr, "%d", ynum);
+	    add_to_cmdlist(sr, numstr);
+	    add_to_cmdlist(sr, endbit);
+	    *endbit = '\0';
 	} else {
 	    sprintf(numstr, "%d", ynum);
 	    add_to_cmdlist(sr, numstr);
@@ -3037,7 +3073,6 @@ static void compose_cmdlist (selector *sr)
 	arma_spec_to_cmdlist(sr);
     } else if (sr->ci == ARCH || 
 	       sr->ci == GARCH || 
-	       sr->ci == ARBOND ||
 	       sr->ci == DPANEL) {
 	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->ci)) {
@@ -3250,6 +3285,8 @@ static char *est_str (int cmdnum)
 	return N_("Tobit");
     case HECKIT:
 	return N_("Heckit");
+    case BIPROBIT:
+	return N_("Bivariate probit");
     case LOGISTIC:
 	return N_("Logistic");
     case COUNTMOD:
@@ -3262,7 +3299,6 @@ static char *est_str (int cmdnum)
 	return N_("Groupwise WLS");
     case PANEL_B:
 	return N_("Between-groups model");
-    case ARBOND:
     case DPANEL:
 	return N_("Dynamic panel model");
     case WLS:
@@ -3314,6 +3350,8 @@ static char *extra_string (int ci)
 	return N_("Censoring variable");
     case HECKIT:
 	return N_("Selection variable");
+    case BIPROBIT:
+	return N_("Second dependent variable");
     case AR:
 	return N_("List of AR lags");
     case QUANTREG:
@@ -3610,6 +3648,8 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 	tmp = gtk_label_new(_("Lower bound variable"));
     } else if (sr->ci == ANOVA) {
 	tmp = gtk_label_new(_("Response variable"));
+    } else if (sr->ci == BIPROBIT) {
+	tmp = gtk_label_new(_("First dependent variable"));
     } else {
 	tmp = gtk_label_new(_("Dependent variable"));
     }
@@ -3620,8 +3660,8 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 
     tmp = choose_button();
     gtk_box_pack_start(GTK_BOX(depvar_hbox), tmp, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
-                      G_CALLBACK(set_dependent_var_callback), sr);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(set_dependent_var_callback), sr);
 
     sr->depvar = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN - 1);
@@ -3637,14 +3677,14 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(right_vbox), depvar_hbox, FALSE, FALSE, 0);
 
-    if (sr->ci != INTREG) {
+    if (sr->ci != INTREG && sr->ci != BIPROBIT) {
 	sr->default_check = gtk_check_button_new_with_label(_("Set as default"));
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
 				     default_y >= 0);
     } 
 
-    if (sr->ci != ARBOND && sr->ci != DPANEL) {
+    if (sr->ci != DPANEL && sr->ci != BIPROBIT) {
 	vbox_add_hsep(right_vbox);
     }
 
@@ -3737,25 +3777,6 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
     }
 }
 
-/* ensure that the max lag of the level of y as instrument ('maxlag')
-   is at least one greater than the lag order for y ('arlag')
-*/
-
-static void arbond_cross_connect (GtkSpinButton *spin,
-				  selector *sr)
-{
-    GtkSpinButton *s0 = GTK_SPIN_BUTTON(sr->extra[0]);
-    GtkSpinButton *s1 = GTK_SPIN_BUTTON(sr->extra[1]);
-    gint p = gtk_spin_button_get_value_as_int(s0);
-    gint qmax = gtk_spin_button_get_value_as_int(s1);
-
-    if (qmax < p + 1) {
-	/* needs fixing */
-	qmax = p + 1;
-	gtk_spin_button_set_value(s1, qmax);
-    }
-}
-
 static void AR_order_spin (selector *sr, GtkWidget *vbox)
 {
     GtkWidget *tmp, *hbox;
@@ -3769,7 +3790,7 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 	val = datainfo->pd;
 	maxlag = 2 * datainfo->pd;
     } else {
-	/* arbond/dpanel */
+	/* dpanel */
 	tmp = gtk_label_new(_("AR order:"));
 	val = dpd_p;
 	maxlag = 10;
@@ -3790,23 +3811,6 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-
-    if (sr->ci == ARBOND) {
-	int maxinst = datainfo->pd - 1;
-	int defmax = (maxinst > 6)? 6 : maxinst;
-
-	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_label_new(_("Maximum lag:"));
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
-	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-	adj = gtk_adjustment_new(defmax, 2, maxinst, 1, 1, 0);
-	sr->extra[1] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[1], FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
-
-	g_signal_connect(G_OBJECT(sr->extra[0]), "value-changed",
-			 G_CALLBACK(arbond_cross_connect), sr);
-    }
 }
 
 static void third_var_box (selector *sr, GtkWidget *vbox)
@@ -3927,6 +3931,8 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("Instruments"));
     } else if (sr->ci == HECKIT) {
 	tmp = gtk_label_new(_("Selection equation regressors"));
+    } else if (sr->ci == BIPROBIT) {
+	tmp = gtk_label_new(_("Second equation regressors"));
     } else if (FNPKG_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Helper functions"));
     }
@@ -4023,7 +4029,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     }	
 
-    if (sr->ci == HECKIT) {
+    if (sr->ci == HECKIT || sr->ci == BIPROBIT) {
 	extra_var_box(sr, right_vbox);
 	vbox_add_hsep(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
@@ -4061,9 +4067,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	primary_rhs_varlist(sr, right_vbox);
     } else if (VEC_CODE(sr->ci)) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
-    } else if (sr->ci == ARBOND || 
-	       sr->ci == DPANEL || 
-	       sr->ci == ARCH) {
+    } else if (sr->ci == DPANEL || sr->ci == ARCH) {
 	AR_order_spin(sr, right_vbox);
     }
     
@@ -4095,6 +4099,8 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 30;
     } else if (ci == HECKIT) {
 	dlgy += 80;
+    } else if (ci == BIPROBIT) {
+	dlgy += 110;
     } else if (IV_MODEL(ci)) {
 	dlgy += 60;
     } else if (ci == ANOVA) {
@@ -4135,6 +4141,11 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	    /* lag selector button at foot */
 	    dlgy += 30;
 	}
+    }
+
+    if (ci == DPANEL) {
+	/* lots of option buttons */
+	dlgy += 50;
     }
 
     sr->lvars = NULL;
@@ -4589,7 +4600,8 @@ static GtkWidget *mpols_bits_selector (void)
                         c != OLOGIT && c != OPROBIT &&	\
                         c != QUANTREG && c != INTREG && \
                         c != MLOGIT && c != COUNTMOD && \
-                        c != DURATION && c != HECKIT)
+                        c != DURATION && c != HECKIT && \
+			c != BIPROBIT)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -4600,7 +4612,7 @@ static void build_selector_switches (selector *sr)
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == MLOGIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == COUNTMOD ||
 	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG || 
-	sr->ci == HECKIT) {
+	sr->ci == HECKIT || sr->ci == BIPROBIT) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? */
@@ -4649,7 +4661,8 @@ static void build_selector_switches (selector *sr)
 
     if (sr->ci == TOBIT || sr->ci == ARMA || sr->ci == GARCH ||
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == HECKIT ||
-	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT) {
+	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT ||
+	sr->ci == BIPROBIT) {
 	if (sr->ci == ARMA) {
 	    vbox_add_hsep(sr->vbox);
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
@@ -4686,12 +4699,14 @@ static void build_selector_switches (selector *sr)
     } else if (sr->ci == PANEL_WLS) {
 	tmp = gtk_check_button_new_with_label(_("Iterated weighted least squares"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_T, 0);
-    } else if (sr->ci == PANEL || sr->ci == ARBOND) {
+    } else if (sr->ci == PANEL) {
 	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
 	pack_switch(tmp, sr, (model_opt & OPT_D), FALSE, OPT_D, 0);
     } else if (sr->ci == DPANEL) {
 	tmp = gtk_check_button_new_with_label(_("Include time dummies"));
 	pack_switch(tmp, sr, (model_opt & OPT_D), FALSE, OPT_D, 0);
+	tmp = gtk_check_button_new_with_label(_("Include levels equations (GMM-SYS)"));
+	pack_switch(tmp, sr, (model_opt & OPT_L), FALSE, OPT_L, 0);
 	tmp = gtk_check_button_new_with_label(_("Asymptotic standard errors"));
 	pack_switch(tmp, sr, (dpd_asy || (model_opt & OPT_A)), FALSE, OPT_A, 0);
     } else if (sr->ci == XTAB) {
@@ -5241,7 +5256,7 @@ static void build_selector_radios (selector *sr)
 {
     if (sr->ci == PANEL) {
 	build_panel_radios(sr);
-    } else if (sr->ci == ARBOND || sr->ci == DPANEL) {
+    } else if (sr->ci == DPANEL) {
 	build_dpanel_radios(sr);
     } else if (sr->ci == SCATTERS) {
 	build_scatters_radios(sr);
@@ -5499,6 +5514,8 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	tmp = gtk_label_new(_("Variables to test"));
     } else if (VEC_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Endogenous variables"));
+    } else if (sr->ci == BIPROBIT) {
+	tmp = gtk_label_new(_("First equation regressors"));
     } else if (MODEL_CODE(sr->ci)) {
 	tmp = gtk_label_new(_("Independent variables"));
     } else if (sr->ci == GR_XY || sr->ci == GR_IMP) {
@@ -5677,7 +5694,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == COUNTMOD || ci == DURATION || 
-	ci == ARBOND || ci == QUANTREG || ci == INTREG || 
+	ci == QUANTREG || ci == INTREG || 
 	ci == DPANEL || THREE_VARS_CODE(ci)) {
 	build_mid_section(sr, right_vbox);
     }
@@ -7073,7 +7090,7 @@ static int *sr_get_stoch_list (selector *sr, int *pnset, int *pcontext)
 
     if (sr->ci != ARMA && sr->ci != VAR &&
 	sr->ci != VECM && sr->ci != VLAGSEL &&
-	sr->ci != ARBOND && sr->ci != DPANEL) { 
+	sr->ci != DPANEL) { 
 	ynum = selector_get_depvar_number(sr);
     }
 

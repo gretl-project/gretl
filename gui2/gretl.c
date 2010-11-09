@@ -1597,6 +1597,7 @@ GtkActionEntry main_entries[] = {
     { "probit", NULL, N_("_Probit"), NULL, NULL, NULL }, 
     { "bprobit", NULL, N_("_Binary..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "oprobit", NULL, N_("_Ordered..."), NULL, NULL, G_CALLBACK(model_callback) }, 
+    { "biprobit", NULL, N_("Bi_variate..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "tobit", NULL, N_("To_bit..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "heckit", NULL, N_("_Heckit..."), NULL, NULL, G_CALLBACK(model_callback) }, 
     { "countmod", NULL, N_("_Count data..."), NULL, NULL, G_CALLBACK(model_callback) }, 

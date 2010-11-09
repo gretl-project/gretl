@@ -2366,13 +2366,13 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ui, "/menubar/Save", FALSE);
 	flip(vwin->ui, "/menubar/Analysis", FALSE);
 	return;
-    }
+    } 
 
     if (intervals_model(pmod)) {
 	rq_coeff_intervals_mod(vwin);
     }
 
-    if (pmod->ci == MLE || pmod->ci == GMM) {
+    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == BIPROBIT) {
 	/* can we relax some of this later? */
 	flip(vwin->ui, "/menubar/Analysis/DisplayAFR", FALSE);
 	flip(vwin->ui, "/menubar/Analysis/Forecasts", FALSE);
@@ -2385,7 +2385,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	arma_x12_menu_mod(vwin);
     } 
 
-    if (pmod->ci == GMM) {
+    if (pmod->ci == GMM || pmod->ci == BIPROBIT) {
 	/* FIXME? */
 	flip(vwin->ui, "/menubar/Save", FALSE);
     }
@@ -2968,7 +2968,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	g_error_free(err);
     }
 
-    if (pmod->ci != MLE && pmod->ci != GMM) {
+    if (pmod->ci != MLE && pmod->ci != GMM && pmod->ci != BIPROBIT) {
 	if (RQ_SPECIAL_MODEL(pmod)) {
 	    add_tau_plot_menu(vwin);
 	} else {
@@ -3016,7 +3016,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
     if (pmod->ci != ARMA && pmod->ci != GARCH && 
 	pmod->ci != NLS && pmod->ci != MLE && pmod->ci != GMM &&
 	pmod->ci != PANEL && pmod->ci != ARBOND &&
-	pmod->ci != DPANEL) {
+	pmod->ci != DPANEL && pmod->ci != BIPROBIT) {
 	add_dummies_to_plot_menu(vwin);
     }
 
@@ -4301,7 +4301,8 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (pmod->ci == MLE || pmod->ci == GMM || pmod->ci == MPOLS) {
+    if (pmod->ci == MLE || pmod->ci == GMM || 
+	pmod->ci == MPOLS || pmod->ci == BIPROBIT) {
 	return FALSE;
     }
 

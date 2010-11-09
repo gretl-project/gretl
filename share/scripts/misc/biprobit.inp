@@ -14,10 +14,9 @@
 # credit-card application less likely.
 
 open greene25_1.gdt
-series y1 = majordrg > 0
 # regressors for first equation
 list x1 = const age avgexp
 # regressors for second equation
 list x2 = const age income ownrent selfempl
-biprobit y1 cardhldr x1 ; x2
+biprobit anydrg cardhldr x1 ; x2
 
