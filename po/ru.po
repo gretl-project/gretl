@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-22 09:30-0400\n"
-"PO-Revision-Date: 2010-11-02 04:27+0200\n"
+"PO-Revision-Date: 2010-11-09 03:36+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -4424,7 +4424,7 @@ msgstr ""
 
 #: lib/src/modelprint.c:725
 msgid "Duration"
-msgstr ""
+msgstr "Время жизни"
 
 #: lib/src/modelprint.c:726
 msgid "NLS"
@@ -4584,19 +4584,19 @@ msgstr ""
 
 #: lib/src/modelprint.c:843
 msgid "Duration (exponential)"
-msgstr ""
+msgstr "Время жизни (экспоненциальное)"
 
 #: lib/src/modelprint.c:845
 msgid "Duration (log-logistic)"
-msgstr ""
+msgstr "Время жизни (логлогистическое)"
 
 #: lib/src/modelprint.c:847
 msgid "Duration (log-normal)"
-msgstr ""
+msgstr "Время жизни (логнормальное)"
 
 #: lib/src/modelprint.c:849
 msgid "Duration (Weibull)"
-msgstr ""
+msgstr "Время жизни (распределение Вейбулла)"
 
 #: lib/src/modelprint.c:900
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -10780,7 +10780,7 @@ msgstr "_Счетная модель..."
 
 #: gui2/gretl.c:1602
 msgid "_Duration data..."
-msgstr ""
+msgstr "Модель \"_времени жизни\""
 
 #: gui2/gretl.c:1603
 msgid "Lo_gistic..."
@@ -12905,7 +12905,7 @@ msgstr "Счетная модель"
 
 #: gui2/selector.c:3216
 msgid "Duration model"
-msgstr ""
+msgstr "Модель \"времени жизни\""
 
 #: gui2/selector.c:3218
 msgid "Panel model"
@@ -13025,11 +13025,11 @@ msgstr "Экспоненциальное"
 
 #: gui2/selector.c:3399
 msgid "Log-logistic"
-msgstr "Лог-логистическое"
+msgstr "Логлогистическое"
 
 #: gui2/selector.c:3400
 msgid "Log-normal"
-msgstr "Лог-нормальное"
+msgstr "Логнормальное"
 
 #: gui2/selector.c:3479
 msgid "Choose"
