@@ -2890,6 +2890,9 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	err = mle_calculate(spec, prn);
     } else if (spec->ci == GMM) {
 	err = gmm_calculate(spec, prn);
+	if (err) {
+	    fprintf(stderr, "gmm_calculate returned %d\n", err);
+	}	
     } else {
 	/* NLS: invoke the appropriate minpack driver function */
 	if (numeric_mode(spec)) {
@@ -2922,12 +2925,8 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	    make_nl_model(&nlmod, spec, pdinfo);
 	}
     } else if (nlmod.errcode == 0) { 
-	/* error code missing: supply one */
-	if (spec->generr != 0) {
-	    nlmod.errcode = spec->generr;
-	} else {
-	    nlmod.errcode = E_NOCONV;
-	}
+	/* model error code missing */
+	nlmod.errcode = err;
     }
 
     /* ensure that the canonical parameter values get back 

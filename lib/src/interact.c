@@ -4092,7 +4092,7 @@ static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
 			     PRN *prn, ExecState *s)
 {
     int err = pmod->errcode;
-    
+
     if (!err) {
 	set_gretl_errno(0);
 	if (!gretl_looping_currently()) {
@@ -5247,15 +5247,16 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
  bailout:
 
+    if (err && !s->funcerr) {
+	errmsg(err, prn);
+    }
+
     err = process_command_error(cmd, err);
 
     if (err) {
 	gretl_cmd_destroy_context(cmd);
-	if (!s->funcerr) {
-	    errmsg(err, prn);
-	}
     } else {
-	/* no-op if there's no warning */
+	/* this is a no-op if there's no warning */
 	warnmsg(prn);
     }
 

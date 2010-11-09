@@ -1641,7 +1641,7 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	if (oldcoeff == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    outer_max = 200; /* arbitrary! */
+	    outer_max = libset_get_int(GMM_MAXITER);
 	}
     } else if (s->opt & OPT_T) {
 	/* two-step */
@@ -1690,8 +1690,7 @@ int gmm_calculate (nlspec *s, PRN *prn)
 	if (err) {
 	    fprintf(stderr, "Breaking on err = %d\n", err);
 	} else if (!converged) {
-	    outer_iters++;
-	    if (outer_iters == outer_max) {
+	    if (++outer_iters == outer_max) {
 		if (outer_max > 2) {
 		    fprintf(stderr, "Breaking on max outer iter\n");
 		    err = E_NOCONV;

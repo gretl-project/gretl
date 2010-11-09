@@ -97,6 +97,7 @@ struct set_vars_ {
     int garch_robust_vcv;       /* GARCH vcv variant, robust estimation */
     int arma_vcv;               /* ARMA vcv variant */
     int rq_maxiter;             /* max iterations for quantreg, simplex */
+    int gmm_maxiter;            /* max iterations for iterated GMM */
     gretl_matrix *initvals;     /* parameter initializer */
     struct robust_opts ropts;   /* robust standard error options */
     char shelldir[MAXLEN];      /* working dir for shell commands */
@@ -139,6 +140,7 @@ struct set_vars_ {
 #define libset_int(s) (!strcmp(s, BFGS_MAXITER) || \
 		       !strcmp(s, BFGS_VERBSKIP) || \
 		       !strcmp(s, BHHH_MAXITER) || \
+		       !strcmp(s, GMM_MAXITER) || \
 		       !strcmp(s, LBFGS_MEM) || \
 		       !strcmp(s, BOOTREP) || \
 		       !strcmp(s, HAC_KERNEL) || \
@@ -349,6 +351,7 @@ static void state_vars_copy (set_vars *sv)
     sv->bootrep = state->bootrep;
     sv->loop_maxiter = state->loop_maxiter;
     sv->rq_maxiter = state->rq_maxiter;
+    sv->gmm_maxiter = state->gmm_maxiter;
     sv->nls_toler = state->nls_toler;
     sv->delim = state->delim; 
     sv->vecm_norm = state->vecm_norm;
@@ -382,6 +385,7 @@ static void state_vars_init (set_vars *sv)
     sv->nls_toler = NADBL;
     sv->loop_maxiter = 250;
     sv->rq_maxiter = 1000;
+    sv->gmm_maxiter = 250;
     sv->delim = UNSET_INT;
     sv->vecm_norm = NORM_PHILLIPS;
     sv->initvals = NULL;
@@ -1224,6 +1228,7 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_int(BHHH_MAXITER, prn, opt);
     libset_print_double(BHHH_TOLER, prn, opt);
     libset_print_int(RQ_MAXITER, prn, opt);
+    libset_print_int(GMM_MAXITER, prn, opt);
     print_initvals(state->initvals, prn, opt);
     libset_print_bool(BFGS_RSTEP, prn, opt);
     libset_print_bool(USE_LBFGS, prn, opt);
@@ -1590,6 +1595,8 @@ int libset_get_int (const char *key)
 	return state->bhhh_maxiter;
     } else if (!strcmp(key, RQ_MAXITER)) {
 	return state->rq_maxiter;
+    } else if (!strcmp(key, GMM_MAXITER)) {
+	return state->gmm_maxiter;
     } else if (!strcmp(key, LBFGS_MEM)) {
 	return state->lbfgs_mem;
     } else if (!strcmp(key, BOOTREP)) {
@@ -1640,6 +1647,9 @@ static int intvar_min_max (const char *s, int *min, int *max,
     } else if (!strcmp(s, RQ_MAXITER)) {
 	*min = 1;
 	*var = &state->rq_maxiter;
+    } else if (!strcmp(s, GMM_MAXITER)) {
+	*min = 1;
+	*var = &state->gmm_maxiter;
     } else if (!strcmp(s, LBFGS_MEM)) {
 	*min = 3;
 	*max = 20;

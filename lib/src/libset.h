@@ -68,6 +68,7 @@ typedef enum {
 #define R_LIB            "R_lib"
 #define NORMAL_RAND      "normal_rand"
 #define DPDSTYLE         "dpdstyle"
+#define GMM_MAXITER      "gmm_maxiter"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
