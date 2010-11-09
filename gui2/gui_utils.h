@@ -136,6 +136,9 @@ void verbose_gerror_report (GError *gerr, const char *src);
 
 int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size);
 
+int gretl_binary_file_get_contents (const gchar *fname, guchar **contents, 
+				    gsize *size);
+
 void start_R (const char *buf, int send_data, int interactive);
 
 void run_ox_script (gchar *buf);

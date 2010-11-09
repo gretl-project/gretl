@@ -3928,13 +3928,13 @@ static int is_png (const guchar *buf, gsize length)
 static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 {
     GdkPixbuf *pbuf = NULL;
-    gchar *cbuf = NULL;
+    guchar *cbuf = NULL;
     gsize length = 0;
     int err;
 
-    err = gretl_file_get_contents(fname, &cbuf, &length);
+    err = gretl_binary_file_get_contents(fname, &cbuf, &length);
 
-    if (!err && !is_png((const guchar *) cbuf, length)) {
+    if (!err && !is_png(cbuf, length)) {
 	errbox("'%s' is not a PNG file", fname);
 	err = 1;
     }
@@ -3993,7 +3993,9 @@ static int render_pngfile (png_plot *plot, int view)
     pbuf = gretl_pixbuf_new_from_file(pngname);
 
     if (pbuf == NULL) {
+#if 0 /* testing */
 	gretl_remove(pngname);
+#endif
 	return 1;
     }
 

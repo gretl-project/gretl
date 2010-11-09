@@ -1250,8 +1250,7 @@ int adf_test (int order, const int *list, double ***pZ,
 	int i, v, vlist[2] = {1, 0};
 
 	for (i=1; i<=list[0] && !err; i++) {
-	    v = list[i];
-	    vlist[1] = v;
+	    vlist[1] = v = list[i];
 	    err = list_adjust_sample(vlist, &pdinfo->t1, &pdinfo->t2, 
 				     (const double **) *pZ);
 	    if (!err) {

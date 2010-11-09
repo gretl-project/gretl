@@ -3133,7 +3133,11 @@ static void gretl_test_print_h_0 (const ModelTest *test, int heading,
 	pputs(prn, _(H0));
     } else if (tex_format(prn)) {
 	pprintf(prn, "\\\\\n\\quad %s: ", I_("Null hypothesis"));
-	pputs(prn, I_(H0));
+	if (!strcmp(H0, "rho = 0")) {
+	    pputs(prn, "$\\rho = 0$");
+	} else {
+	    pputs(prn, I_(H0));
+	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, "\\par\n %s: ", I_("Null hypothesis"));
 	pputs(prn, I_(H0));

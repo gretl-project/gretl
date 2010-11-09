@@ -505,11 +505,18 @@ static void print_biprobit_rho (const MODEL *pmod, PRN *prn)
     ensure_vsep(prn);
 
     if (tex_format(prn)) {
-	pprintf(prn, "$\\hat{\\rho}$ = %g\n", pmod->rho);
+	double r = pmod->rho;
+
+	if (r < 0) {
+	    pprintf(prn, "$\\hat{\\rho}$ = $-$%.5f\n", fabs(r));
+	} else {
+	    pprintf(prn, "$\\hat{\\rho}$ = %.5f\n", r);
+	}	    
     } else {
 	pprintf(prn, "rho = %g\n", pmod->rho);
-	gretl_prn_newline(prn);
     }	
+
+    gretl_prn_newline(prn);
 }
 
 static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
@@ -3352,8 +3359,12 @@ static void print_coeff_left_string (const char *s, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, " %s:\n", s);
     } else if (tex_format(prn)) {
+	char tmp[32];
+
+	tex_escape(tmp, s);
 	pputs(prn, "\\\\ [-8pt]\n");
-	pprintf(prn, "%s \\\\[1ex]\n", s);
+	
+	pprintf(prn, "%s \\\\[1ex]\n", tmp);
     } else if (rtf_format(prn)) {
 	pputs(prn, RTF_MULTICOL);
 	pprintf(prn, "\\ql %s", s);
@@ -4443,13 +4454,22 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	adfnum = gretl_model_get_int(pmod, "dfnum");
     }
 
+    if (pmod->ci == BIPROBIT) {
+	print_coeff_left_string(gretl_model_get_depvar_name(pmod, pdinfo), 
+				prn);
+    }
+
     for (i=0; i<nc; i++) {
 
 	err = prepare_model_coeff(pmod, pdinfo, i, adfnum, &mc, prn);
 	if (err) gotnan = 1;
 
 	if (i == seppos) {
-	    print_coeff_separator(sepstr, cols, prn);
+	    if (pmod->ci == BIPROBIT) {
+		print_coeff_left_string(sepstr, prn);
+	    } else {		
+		print_coeff_separator(sepstr, cols, prn);
+	    }
 	}
 
 	if (intervals != NULL) {
