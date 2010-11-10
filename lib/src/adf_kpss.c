@@ -1184,6 +1184,236 @@ static int panel_DF_test (int v, int order,
     return err;
 }
 
+static int get_LLC_corrections (int T, int k, double *mu, double *sigma)
+{
+    int (*LLC_corrections) (int, int, double *, double *);
+    void *handle;
+
+    LLC_corrections = get_plugin_function("LLC_corrections", &handle);
+
+    if (LLC_corrections == NULL) {
+	fputs(I_("Couldn't load plugin function\n"), stderr);
+	return E_FOPEN;
+    }
+
+    (*LLC_corrections) (T, k, mu, sigma);
+    close_plugin(handle);
+
+    return 0;
+}
+
+static int LLC_panel_test (int vnum, int order, 
+			   double **Z, DATAINFO *pdinfo, 
+			   gretlopt opt, PRN *prn)
+{
+    int u0 = pdinfo->t1 / pdinfo->pd;
+    int uN = pdinfo->t2 / pdinfo->pd;
+    gretl_matrix_block *B;
+    gretl_matrix *y, *ysum, *b;
+    gretl_matrix *dy, *X, *ui;
+    gretl_matrix *e, *ei, *v, *vi;
+    gretl_matrix *eps;
+    double SN = 0;
+    int t, t1, t2, T;
+    int s, pt1, pt2;
+    int i, k, K, N, NT;
+    int err;
+
+    err = panel_adjust_ADF_opt(&opt);
+    if (err) {
+	return err;
+    }
+
+    /* number of units in sample range */
+    N = uN - u0 + 1;
+    
+    /* check that we have a useable common sample */
+    
+    for (i=u0; i<=uN && !err; i++) {
+	int t1i, t2i;
+
+	pdinfo->t1 = i * pdinfo->pd;
+	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
+	err = series_adjust_sample(Z[vnum], &pdinfo->t1, &pdinfo->t2);
+	t1i = pdinfo->t1 - i * pdinfo->pd;
+	t2i = pdinfo->t2 - i * pdinfo->pd;
+	if (i == u0) {
+	    t1 = t1i;
+	    t2 = t2i;
+	} else if (t1i != t1 || t2i != t2) {
+	    err = E_MISSDATA;
+	    break;
+	}
+    }
+
+    if (!err) {
+	int minT = 3 + ((order > 0)? order : 0);
+
+	if (minT < 8) {
+	    /* arbitrary? */
+	    minT = 8;
+	}
+
+	T = t2 - t1 + 1;
+	if (T < minT) {
+	    err = E_DATA;
+	}
+    }
+
+    pprintf(prn, "Got common T = %d (%d to %d)\n", T, t1, t2);
+
+    /* henceforth 'T' will denote the usable series length */
+    T -= 1; /* FIXME ADF order */
+
+    if (!err) {
+	NT = N * T;
+	k = 2; /* FIXME */
+
+	B = gretl_matrix_block_new(&y, T, 1,
+				   &ysum, T+1, 1,
+				   &dy, T, 1,
+				   &X, T, k,
+				   &b, k, 1,
+				   &ui, T, 1,
+				   &ei, T, 1,
+				   &vi, T, 1,
+				   &e, NT, 1,
+				   &v, NT, 1,
+				   &eps, NT, 1,
+				   NULL);
+	if (B == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
+	return err;
+    }
+
+    for (t=0; t<T; t++) {
+	gretl_matrix_set(X, t, 0, 1.0);
+    }
+
+    gretl_matrix_zero(ysum);
+
+    /* compute period sums of y for time-demeaning */
+
+    for (i=u0; i<=uN && !err; i++) {
+	double x, yt;
+
+	pt1 = t1 + i * pdinfo->pd;
+	pt2 = t2 + i * pdinfo->pd;
+
+	s = 0;
+	for (t=pt1; t<=pt2; t++) {
+	    yt = Z[vnum][t];
+	    x = gretl_vector_get(ysum, s);
+	    x += yt;
+	    gretl_vector_set(ysum, s, x);
+	    s++;
+	}
+    }
+
+    gretl_matrix_divide_by_scalar(ysum, N);
+
+    for (i=u0; i<=uN && !err; i++) {
+	double yti, yti_1, s2ui, s2yi;
+
+	pt1 = t1 + i * pdinfo->pd;
+	pt2 = t2 + i * pdinfo->pd;
+
+	/* build \delta y_t in dy, y_{t-1} in y */
+
+	s = 0;
+	for (t=pt1+1; t<=pt2; t++) {
+	    yti = Z[vnum][t] - gretl_vector_get(ysum, s+1);
+	    yti_1 = Z[vnum][t-1] - gretl_vector_get(ysum, s);
+	    gretl_vector_set(y, s, yti_1);
+	    gretl_vector_set(dy, s, yti - yti_1);
+	    s++;
+	}
+
+	/* set first difference as first regressor */
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(X, t, 1, y->val[t]);
+	}
+
+	/* run (A)DF regression */
+	err = gretl_matrix_ols(dy, X, b, NULL, ui, &s2ui);
+#if 0
+	gretl_matrix_print_to_prn(y, "y", prn);
+	gretl_matrix_print_to_prn(X, "X", prn);
+	gretl_matrix_print_to_prn(b, "b", prn);
+#endif
+
+	/* reduced regressor matrix for aux regressions */
+	gretl_matrix_reuse(X, T, k-1);
+	gretl_matrix_reuse(b, k-1, 1);
+
+	if (!err) {
+	    err = gretl_matrix_ols(dy, X, b, NULL, ei, NULL);
+	}
+
+	if (!err) {
+	    err = gretl_matrix_ols(y, X, b, NULL, vi, NULL);
+	}
+
+	if (!err) {
+	    double sui = sqrt(s2ui);
+	    int row = (i - u0) * T;
+
+	    gretl_matrix_divide_by_scalar(ei, sui);
+	    gretl_matrix_divide_by_scalar(vi, sui);
+	    gretl_matrix_inscribe_matrix(e, ei, row, 0, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(v, vi, row, 0, GRETL_MOD_NONE);
+
+	    s2yi = gretl_long_run_variance(0, T-1, y->val, K);
+	    /* ratio of LR std dev to innovation std dev */
+	    SN += sqrt(s2yi) / sui;
+	}	    
+
+	gretl_matrix_reuse(X, T, k);
+	gretl_matrix_reuse(b, k, 1);
+    }
+
+    if (!err) {
+	double ee = 0, vv = 0;
+	double delta, s2e, STD, z;
+	double mstar, sstar;
+
+	gretl_matrix_reuse(b, 1, 1);
+	err = gretl_matrix_ols(e, v, b, NULL, eps, NULL);
+
+	if (!err) {
+	    for (t=0; t<NT; t++) {
+		ee += eps->val[t] * eps->val[t];
+		vv += v->val[t] * v->val[t];
+	    }
+	    SN /= N;
+	    delta = b->val[0];
+	    s2e = ee / NT;
+	    STD = sqrt(s2e) / sqrt(vv);
+	    z = delta / STD;
+
+	    pprintf(prn, "delta = %g, STD = %g, t-value = %g\n",
+		    delta, STD, z);
+
+	    err = get_LLC_corrections(T, 2, &mstar, &sstar);
+	}
+
+	if (!err) {
+	    pprintf(prn, "SN=%g, se=%g\n", SN, sqrt(s2e));
+	    z = (z - NT * (SN / s2e) * STD * mstar) / sstar;
+	    pprintf(prn, "mu-star = %g, sigma-star = %g\n", mstar, sstar);
+	    pprintf(prn, "t-star = %g [%.4f]\n", z, normal_cdf(z));
+	}
+    }
+
+    gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
 static int multi_unit_panel_sample (const DATAINFO *pdinfo)
 {
     int ret = 0;
@@ -1230,6 +1460,7 @@ int adf_test (int order, const int *list, double ***pZ,
 {
     int save_t1 = pdinfo->t1;
     int save_t2 = pdinfo->t2;
+    int panelmode;
     int err;
 
     /* GLS incompatible with no const, quadratic trend or seasonals */
@@ -1243,8 +1474,21 @@ int adf_test (int order, const int *list, double ***pZ,
 	err = incompatible_options(opt, OPT_C | OPT_T);
     }
 
-    if (multi_unit_panel_sample(pdinfo)) {
-	err = panel_DF_test(list[1], order, pZ, pdinfo, opt, prn);
+    panelmode = multi_unit_panel_sample(pdinfo);
+
+    if (!err && (opt & OPT_L)) {
+	/* Levin-Lin-Chu */
+	if (!panelmode || (opt & (OPT_D | OPT_R))) {
+	    err = E_BADOPT;
+	}
+    }
+
+    if (panelmode) {
+	if (opt & OPT_L) {
+	    err = LLC_panel_test(list[1], order, *pZ, pdinfo, opt, prn);
+	} else {
+	    err = panel_DF_test(list[1], order, pZ, pdinfo, opt, prn);
+	}
     } else {
 	/* regular time series case */
 	int i, v, vlist[2] = {1, 0};

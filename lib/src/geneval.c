@@ -1404,12 +1404,14 @@ static NODE *string_offset (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *strings_are_equal (NODE *l, NODE *r, parser *p)
+static NODE *compare_strings (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.xval = (strcmp(l->v.str, r->v.str) == 0);
+	int s = strcmp(l->v.str, r->v.str);
+
+	ret->v.xval = (f == B_EQ)? (s == 0) : (s != 0);
     }
 
     return ret;
@@ -7349,8 +7351,8 @@ static NODE *eval (NODE *t, parser *p)
 	*/
 	if (t->t == B_ADD && l->t == STR && r->t == NUM) {
 	    ret = string_offset(l, r, p);
-	} else if (t->t == B_EQ && l->t == STR && r->t == STR) {
-	    ret = strings_are_equal(l, r, p);
+	} else if ((t->t == B_EQ || t->t == B_NEQ) && l->t == STR && r->t == STR) {
+	    ret = compare_strings(l, r, t->t, p);
 	} else if (l->t == NUM && r->t == NUM) {
 	    ret = scalar_calc(l, r, t->t, p);
 	} else if (l->t == BUNDLE && r->t == BUNDLE) {

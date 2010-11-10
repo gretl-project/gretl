@@ -883,4 +883,62 @@ int IPS_tbar_rho_moments (int p, int T, int trend, double *Etbar, double *Vtbar)
     return err;
 }
 
+/* Levin, Lin and Chu (Journal of Econometrics, 2002), Table 2:
+   correction factors for mean (mu) and standard deviation (s)
+   in context of panel unit-root statistic.
+
+   T = sample size
+
+   k = 1: no constant
+   k = 2: constant included
+   k = 3: constant plus trend
+
+*/
+
+int LLC_corrections (int T, int k, double *mu, double *sigma)
+{   
+    const double LLCfac[] = {
+      /*  T    mu1     s1     mu2     s2     mu3     s3 */
+	 25, 0.004, 1.049, -0.554, 0.919, -0.703, 1.003,
+	 30, 0.003, 1.035, -0.546, 0.889, -0.674, 0.949,
+	 35, 0.002, 1.027, -0.541, 0.867, -0.653, 0.906,
+	 40, 0.002, 1.021, -0.537, 0.850, -0.637, 0.871,
+	 45, 0.001, 1.017, -0.533, 0.837, -0.624, 0.842,
+	 50, 0.001, 1.014, -0.531, 0.826, -0.614, 0.818,
+	 60, 0.001, 1.011, -0.527, 0.810, -0.598, 0.780,
+	 70, 0.000, 1.008, -0.524, 0.798, -0.587, 0.751,
+	 80, 0.000, 1.007, -0.521, 0.789, -0.578, 0.728,
+	 90, 0.000, 1.006, -0.520, 0.782, -0.571, 0.710,
+	100, 0.000, 1.005, -0.518, 0.776, -0.566, 0.695,
+	250, 0.000, 1.001, -0.509, 0.742, -0.533, 0.603,
+	  0, 0.000, 1.000, -0.500, 0.707, -0.500, 0.500 /* infty */
+    };
+    int c = 0, err = 0;
+
+    if (k == 1) {
+	c = 1;
+    } else if (k == 2) {
+	c = 3;
+    } else if (k == 3) {
+	c = 5;
+    } else {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	int i, r = 12;
+
+	for (i=0; i<12; i++) {
+	    if (T <= LLCfac[7*i]) {
+		r = i;
+		break;
+	    }
+	}
+	*mu = LLCfac[7*r+c];
+	*sigma = LLCfac[7*r+c+1];
+    }
+
+    return err;
+}
+
 

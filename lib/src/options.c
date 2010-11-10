@@ -90,6 +90,7 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_F, "difference", 0 },
     { ADF,      OPT_E, "test-down", 0 },
     { ADF,      OPT_G, "gls", 0 },
+    { ADF,      OPT_L, "llc", 0 },
     { AR1,      OPT_B, "no-corc", 0 },
     { AR1,      OPT_H, "hilu", 0 },
     { AR1,      OPT_P, "pwe", 0 },
