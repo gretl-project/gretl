@@ -566,7 +566,8 @@
 
   </command>
 
-  <command name="arbond" section="Estimation" label="Arellano-Bond">
+  <command name="arbond" section="Estimation" label="Arellano-Bond"
+	   context="cli">
 
     <usage>
       <arguments>
@@ -618,10 +619,13 @@
       <para>
 	Carries out estimation of dynamic panel data models (that is,
 	panel models including one or more lags of the dependent
-	variable) using the GMM method set out by <cite
+	variable) using the GMM-DIF method set out by <cite
 	key="arellano-bond91">Arellano and Bond (1991)</cite>.
+	Please see <cmdref targ="dpanel"/> for an updated and
+	more flexible version of this command which handles GMM-SYS
+	as well as GMM-DIF.
       </para>
-      <para context="cli">
+      <para>
 	The parameter <repl>p</repl> represents the order of the
 	autoregression for the dependent variable.  The optional parameter
 	<repl>q</repl> indicates the maximum lag of the level of the
@@ -638,7 +642,7 @@
 	should create the differences first then specify these as the
 	regressors. 
       </para>
-      <para context="cli">
+      <para>
 	The last (optional) field in the command is for specifying
 	instruments.  If no instruments are given, it is assumed that all
 	the independent variables are strictly exogenous.  If you specify
@@ -651,18 +655,6 @@
 	lag to be used as an instrument, and the third is the maximum lag.
 	If the third argument is given as 0, all available lags are used.
       </para>
-      <para context="gui">
-	The <quote>Maximum lag</quote> button sets the greatest lag of the
-	level of the dependent variable to be used as an instrument.
-	Please note that using an excessive number of lags will slow the
-	analysis substantially and may jeopardize its validity.
-      </para>
-      <para context="gui">
-	As regards the handling of instruments, please see the
-	documentation for the script version of this command.  Currently
-	you cannot specify instruments explicitly in the GUI: all the
-	independent variables are taken to be strictly exogenous.
-      </para>
       <para>
 	By default the results of 1-step estimation are reported (with
 	robust standard errors).  You may select 2-step estimation as an
@@ -673,7 +665,7 @@
 	threat to the validity of the model, but second-order
 	autocorrelation violates the maintained statistical assumptions.
       </para>
-      <para context="cli">
+      <para>
 	In the case of 2-step estimation, standard errors are by default
 	computed using the finite-sample correction suggested by <cite
 	key="windmeijer05">Windmeijer (2005)</cite>.  The standard
@@ -683,7 +675,7 @@
 	<opt>--asymptotic</opt> option to turn off the Windmeijer
 	correction.
       </para>
-      <para context="cli">
+      <para>
 	If the <opt>--time-dummies</opt> option is given, a set of
 	time dummy variables is added to the specified regressors.  
 	The number of dummies is one less than the maximum number of
@@ -693,10 +685,6 @@
 	to define and add these variables manually.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/Model/Panel</menu-path>
-    </gui-access>
 
   </command>
 
@@ -2669,6 +2657,10 @@
 	targ="chap-dpanel"/>.
       </para>
     </description>
+
+    <gui-access>
+      <menu-path>/Model/Panel/Dynamic panel model</menu-path>
+    </gui-access>
 
   </command>
 

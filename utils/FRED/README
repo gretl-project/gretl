@@ -1,0 +1,17 @@
+# program to make a gretl database from FRED via their XML-delivering API
+
+# make the program
+make
+
+# Note that to run the program you will need an API key from the
+# St Louis fed: see http://api.stlouisfed.org/api_key.html.
+# This should be placed in a file named api.key in the same
+# directory as the program fred2db.
+
+# make the gretl db (fedstl.idx plus fedstl.bin)
+make fedstl.idx
+
+
+
+
+
