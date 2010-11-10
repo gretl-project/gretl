@@ -1184,7 +1184,7 @@ static int panel_DF_test (int v, int order,
     return err;
 }
 
-static int get_LLC_corrections (int T, int k, double *mu, double *sigma)
+static int get_LLC_corrections (int T, int m, double *mu, double *sigma)
 {
     int (*LLC_corrections) (int, int, double *, double *);
     void *handle;
@@ -1196,11 +1196,17 @@ static int get_LLC_corrections (int T, int k, double *mu, double *sigma)
 	return E_FOPEN;
     }
 
-    (*LLC_corrections) (T, k, mu, sigma);
+    (*LLC_corrections) (T, m, mu, sigma);
     close_plugin(handle);
 
     return 0;
 }
+
+/* Levin-Lin-Chu panel unit-root test. FIXME: right now 
+   it only handles the case with a constant included (no
+   trend), and it doesn't handle augmentation with lagged
+   differences.
+*/
 
 static int LLC_panel_test (int vnum, int order, 
 			   double **Z, DATAINFO *pdinfo, 
@@ -1214,9 +1220,9 @@ static int LLC_panel_test (int vnum, int order,
     gretl_matrix *e, *ei, *v, *vi;
     gretl_matrix *eps;
     double SN = 0;
-    int t, t1, t2, T;
+    int t, t1, t2, T, NT;
     int s, pt1, pt2;
-    int i, k, K, N, NT;
+    int i, k, K, N, m;
     int err;
 
     err = panel_adjust_ADF_opt(&opt);
@@ -1265,9 +1271,16 @@ static int LLC_panel_test (int vnum, int order,
     /* henceforth 'T' will denote the usable series length */
     T -= 1; /* FIXME ADF order */
 
+    /* case 2, constant (only) */
+    m = 2;
+
+    /* Bartlett lag truncation (Andrews) */
+    K = (int) floor(3.21 * pow(T, 1.0/3));
+    pprintf(prn, "using K = %d\n", K);
+
     if (!err) {
 	NT = N * T;
-	k = 2; /* FIXME */
+	k = 2; /* FIXME, should depend on m and order */
 
 	B = gretl_matrix_block_new(&y, T, 1,
 				   &ysum, T+1, 1,
@@ -1317,7 +1330,7 @@ static int LLC_panel_test (int vnum, int order,
     gretl_matrix_divide_by_scalar(ysum, N);
 
     for (i=u0; i<=uN && !err; i++) {
-	double yti, yti_1, s2ui, s2yi;
+	double yti, yti_1;
 
 	pt1 = t1 + i * pdinfo->pd;
 	pt2 = t2 + i * pdinfo->pd;
@@ -1339,7 +1352,7 @@ static int LLC_panel_test (int vnum, int order,
 	}
 
 	/* run (A)DF regression */
-	err = gretl_matrix_ols(dy, X, b, NULL, ui, &s2ui);
+	err = gretl_matrix_ols(dy, X, b, NULL, ui, NULL);
 #if 0
 	gretl_matrix_print_to_prn(y, "y", prn);
 	gretl_matrix_print_to_prn(X, "X", prn);
@@ -1359,15 +1372,24 @@ static int LLC_panel_test (int vnum, int order,
 	}
 
 	if (!err) {
-	    double sui = sqrt(s2ui);
+	    double sui, s2yi, s2ui = 0.0;
 	    int row = (i - u0) * T;
 
+	    for (t=0; t<T; t++) {
+		s2ui += ui->val[t] * ui->val[t];
+	    }
+
+	    s2ui /= (T-k+1);
+	    sui = sqrt(s2ui);
+
+	    /* write normalized per-unit ei and vi into big matrices */
 	    gretl_matrix_divide_by_scalar(ei, sui);
 	    gretl_matrix_divide_by_scalar(vi, sui);
 	    gretl_matrix_inscribe_matrix(e, ei, row, 0, GRETL_MOD_NONE);
 	    gretl_matrix_inscribe_matrix(v, vi, row, 0, GRETL_MOD_NONE);
 
-	    s2yi = gretl_long_run_variance(0, T-1, y->val, K);
+	    s2yi = gretl_long_run_variance(0, T-1, dy->val, K);
+	    pprintf(prn, "s2ui = %g, s2yi = %.8f\n", s2ui, s2yi);
 	    /* ratio of LR std dev to innovation std dev */
 	    SN += sqrt(s2yi) / sui;
 	}	    

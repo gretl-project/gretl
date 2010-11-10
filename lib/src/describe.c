@@ -775,9 +775,9 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 	}
     }
 
-    for (i=0; i<order; i++) {
-	wt = 1.0 - ((double) (i + 1)) / (order + 1.0);
-	s2 += 2.0 * wt * autocov[i];
+    for (i=1; i<=order; i++) {
+	wt = 1.0 - ((double) i) / (order + 1.0);
+	s2 += 2.0 * wt * autocov[i-1];
     }
 
     free(autocov);
