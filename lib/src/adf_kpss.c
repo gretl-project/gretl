@@ -1285,7 +1285,9 @@ static double LLC_lrvar (gretl_matrix *vdy, int K, int m, int *err)
 
 #define LLC_DEBUG 0
 
-/* Levin-Lin-Chu panel unit-root test: p (>= 0) = ADF order */
+/* Levin-Lin-Chu panel unit-root test: p (>= 0) = ADF order.
+   TODO: make it possible for p to differ by individual?
+*/
 
 static int LLC_panel_test (int vnum, int p, 
 			   double **Z, DATAINFO *pdinfo, 
