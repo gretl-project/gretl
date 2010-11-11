@@ -1202,13 +1202,53 @@ static int get_LLC_corrections (int T, int m, double *mu, double *sigma)
     return 0;
 }
 
+/* we could use gretl_long_run_variance() here, except that it
+   would have to be generalized, to cover the cases (m == 1)
+   where we're _not_ subtracting the mean (on the maintained
+   hypothesis that the mean = 0) and (m == 3) where we have to
+   subtract a linear trend before computing the variance.
+   Although the (m == 3) case is not actually handled yet.
+*/
+
+static double LLC_lrvar (double *dy, int T, int K, int m)
+{
+    double w, s21 = 0, s22 = 0;
+    int t, j;
+
+    if (m == 2) {
+	/* subtract the mean */
+	double dybar = 0;
+
+	for (t=0; t<T; t++) {
+	    dybar += dy[t];
+	}
+	dybar /= T;
+	for (t=0; t<T; t++) {
+	    dy[t] -= dybar;
+	}
+    }	
+
+    for (t=0; t<T; t++) {
+	s21 += dy[t] * dy[t];
+    }
+
+    for (j=1; j<=K; j++) {
+	w = 1.0 - j /((double) K + 1);
+	for (t=j; t<T; t++) {
+	    s22 += w * dy[t] * dy[t-j];
+	}
+    }
+
+    return (s21 + 2 * s22) / T;
+}
+
 /* Levin-Lin-Chu panel unit-root test. FIXME: right now 
    it only handles the case with a constant included (no
    trend), and it doesn't handle augmentation with lagged
    differences.
 */
 
-static int LLC_panel_test (int vnum, int order, 
+static int LLC_panel_test (int vnum, int p, 
 			   double **Z, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn)
 {
@@ -1232,6 +1272,18 @@ static int LLC_panel_test (int vnum, int order,
 
     /* number of units in sample range */
     N = uN - u0 + 1;
+
+    /* the 'case' (1 = no const, 2 = const, 3 = const + trend */
+    m = 2; /* the default */
+    if (opt & OPT_N) {
+	m = 1;
+    } else if (opt & OPT_T) {
+	m = 3;
+    }
+
+    /* the max number of regressors */
+    p = 0; /* FIXME ! augmented variant */
+    k = m + p;
     
     /* check that we have a useable common sample */
     
@@ -1253,7 +1305,7 @@ static int LLC_panel_test (int vnum, int order,
     }
 
     if (!err) {
-	int minT = 3 + ((order > 0)? order : 0);
+	int minT = 3 + p;
 
 	if (minT < 8) {
 	    /* arbitrary? */
@@ -1269,21 +1321,17 @@ static int LLC_panel_test (int vnum, int order,
     pprintf(prn, "Got common T = %d (%d to %d)\n", T, t1, t2);
 
     /* henceforth 'T' will denote the usable series length */
-    T -= 1; /* FIXME ADF order */
-
-    /* case 2, constant (only) */
-    m = 2;
+    T -= (1 + p);
+    NT = N * T;
 
     /* Bartlett lag truncation (Andrews) */
     K = (int) floor(3.21 * pow(T, 1.0/3));
     pprintf(prn, "using K = %d\n", K);
+    pprintf(prn, "X cols: k = %d\n", k);
 
     if (!err) {
-	NT = N * T;
-	k = 2; /* FIXME, should depend on m and order */
-
 	B = gretl_matrix_block_new(&y, T, 1,
-				   &ysum, T+1, 1,
+				   &ysum, T+(1+p), 1,
 				   &dy, T, 1,
 				   &X, T, k,
 				   &b, k, 1,
@@ -1303,9 +1351,19 @@ static int LLC_panel_test (int vnum, int order,
 	return err;
     }
 
-    for (t=0; t<T; t++) {
-	gretl_matrix_set(X, t, 0, 1.0);
+    if (m > 1) {
+	/* constant in first column, if wanted */
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(X, t, 0, 1.0);
+	}
     }
+
+    if (m == 3) {
+	/* trend in second column, if wanted */
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(X, t, 1, t+1);
+	}
+    }    
 
     gretl_matrix_zero(ysum);
 
@@ -1346,29 +1404,45 @@ static int LLC_panel_test (int vnum, int order,
 	    s++;
 	}
 
-	/* set first difference as first regressor */
+	/* FIXME set lags of dy if p > 0 */
+
+	/* set first lag of y as (next) regressor */
 	for (t=0; t<T; t++) {
-	    gretl_matrix_set(X, t, 1, y->val[t]);
+	    gretl_matrix_set(X, t, m-1, y->val[t]);
 	}
 
 	/* run (A)DF regression */
 	err = gretl_matrix_ols(dy, X, b, NULL, ui, NULL);
+	if (err) {
+	    break;
+	}
+
 #if 0
 	gretl_matrix_print_to_prn(y, "y", prn);
 	gretl_matrix_print_to_prn(X, "X", prn);
 	gretl_matrix_print_to_prn(b, "b", prn);
 #endif
 
-	/* reduced regressor matrix for aux regressions */
-	gretl_matrix_reuse(X, T, k-1);
-	gretl_matrix_reuse(b, k-1, 1);
+	/* reduced regressor matrix for auxiliary regressions: we omit
+	   the lagged level of y, retaining the deterministic terms
+	   (if any) and the lagged differences (if any)
+	*/
+	if (k - 1 > 0) {
+	    gretl_matrix_reuse(X, T, k-1);
+	    gretl_matrix_reuse(b, k-1, 1);
 
-	if (!err) {
 	    err = gretl_matrix_ols(dy, X, b, NULL, ei, NULL);
-	}
 
-	if (!err) {
-	    err = gretl_matrix_ols(y, X, b, NULL, vi, NULL);
+	    if (!err) {
+		err = gretl_matrix_ols(y, X, b, NULL, vi, NULL);
+	    }
+
+	    gretl_matrix_reuse(X, T, k);
+	    gretl_matrix_reuse(b, k, 1);
+	} else {
+	    /* no regressions need to be done */
+	    gretl_matrix_copy_values(ei, dy);
+	    gretl_matrix_copy_values(vi, y);
 	}
 
 	if (!err) {
@@ -1388,14 +1462,11 @@ static int LLC_panel_test (int vnum, int order,
 	    gretl_matrix_inscribe_matrix(e, ei, row, 0, GRETL_MOD_NONE);
 	    gretl_matrix_inscribe_matrix(v, vi, row, 0, GRETL_MOD_NONE);
 
-	    s2yi = gretl_long_run_variance(0, T-1, dy->val, K);
+	    s2yi = LLC_lrvar(dy->val, T, K, m);
 	    pprintf(prn, "s2ui = %g, s2yi = %.8f\n", s2ui, s2yi);
 	    /* ratio of LR std dev to innovation std dev */
 	    SN += sqrt(s2yi) / sui;
 	}	    
-
-	gretl_matrix_reuse(X, T, k);
-	gretl_matrix_reuse(b, k, 1);
     }
 
     if (!err) {
@@ -1420,13 +1491,13 @@ static int LLC_panel_test (int vnum, int order,
 	    pprintf(prn, "delta = %g, STD = %g, t-value = %g\n",
 		    delta, STD, z);
 
-	    err = get_LLC_corrections(T, 2, &mstar, &sstar);
+	    err = get_LLC_corrections(T, m, &mstar, &sstar);
 	}
 
 	if (!err) {
 	    pprintf(prn, "SN=%g, se=%g\n", SN, sqrt(s2e));
 	    z = (z - NT * (SN / s2e) * STD * mstar) / sstar;
-	    pprintf(prn, "mu-star = %g, sigma-star = %g\n", mstar, sstar);
+	    pprintf(prn, "(mu-star = %g, sigma-star = %g)\n", mstar, sstar);
 	    pprintf(prn, "t-star = %g [%.4f]\n", z, normal_cdf(z));
 	}
     }

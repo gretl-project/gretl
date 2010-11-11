@@ -748,8 +748,6 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 	return NADBL;
     }
 
-    xbar = gretl_mean(t1, t2, x);
-
     if (m < 0) {
 	order = (int) exp(log(n) / 3.0);
     } else {
@@ -760,6 +758,12 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
     if (autocov == NULL) {
 	return NADBL;
     }
+
+    xbar = 0.0;
+    for (t=t1; t<=t2; t++) {
+	xbar += x[t];
+    }
+    xbar /= n;
   
     for (i=0; i<order; i++) {
 	autocov[i] = 0.0;
@@ -770,7 +774,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 	s2 += zt * zt;
 	for (i=1; i<=order; i++) {
 	    if (t - i >= t1) {
-		autocov[i-1] += zt * (x[t - i] - xbar);
+		autocov[i-1] += zt * (x[t-i] - xbar);
 	    }
 	}
     }
