@@ -1430,6 +1430,7 @@ static int LLC_panel_test (int vnum, int p,
 	double yti, yti_1;
 	int pt0, ss;
 
+	/* indices into Z */
 	pt1 = t1 + i * pdinfo->pd;
 	pt2 = t2 + i * pdinfo->pd;
 	pt0 = pt1 + 1 + p;
@@ -1485,10 +1486,10 @@ static int LLC_panel_test (int vnum, int p,
 	    break;
 	}
 
-	/* reduced regressor matrix for auxiliary regressions: omit
-	   the last column containing the lagged level of y
-	*/
 	if (k > 1) {
+	    /* reduced regressor matrix for auxiliary regressions:
+	       omit the last column containing the lagged level of y
+	    */
 	    gretl_matrix_reuse(X, T, k-1);
 	    gretl_matrix_reuse(b, k-1, 1);
 
