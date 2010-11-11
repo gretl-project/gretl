@@ -1202,20 +1202,61 @@ static int get_LLC_corrections (int T, int m, double *mu, double *sigma)
     return 0;
 }
 
-/* we could use gretl_long_run_variance() here, except that it
-   would have to be generalized, to cover the cases (m == 1)
+/* detrend \delta y for Levin-Lin-Chu case 3 */
+
+static int LLC_detrend (gretl_matrix *dy)
+{
+    gretl_matrix *X, *b;
+    int t, T = dy->rows;
+    int err;
+
+    X = gretl_matrix_alloc(T, 2);
+    b = gretl_matrix_alloc(2, 1);
+
+    if (X == NULL || b == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(X, t, 0, 1.0);
+	    gretl_matrix_set(X, t, 1, t+1);
+	}
+	err = gretl_matrix_ols(dy, X, b, NULL, NULL, NULL);
+    }
+
+    if (!err) {
+	for (t=0; t<T; t++) {
+	    /* replace with detrended values */
+	    dy->val[t] -= (b->val[0] + b->val[1] * (t+1));
+	}
+    }
+
+    gretl_matrix_free(X);
+    gretl_matrix_free(b);
+
+    return err;
+}
+
+/* We could use gretl_long_run_variance() here, except that it
+   would have to be generalized to cover the cases (m == 1)
    where we're _not_ subtracting the mean (on the maintained
    hypothesis that the mean = 0) and (m == 3) where we have to
    subtract a linear trend before computing the variance.
-   Although the (m == 3) case is not actually handled yet.
 */
 
-static double LLC_lrvar (double *dy, int T, int K, int m)
+static double LLC_lrvar (gretl_matrix *vdy, int K, int m, int *err)
 {
     double w, s21 = 0, s22 = 0;
+    double *dy = vdy->val;
+    int T = vdy->rows;
     int t, j;
 
-    if (m == 2) {
+    if (m == 3) {
+	/* subtract linear trend */
+	*err = LLC_detrend(vdy);
+	if (*err) {
+	    return NADBL;
+	}
+    } else if (m == 2) {
 	/* subtract the mean */
 	double dybar = 0;
 
@@ -1242,11 +1283,9 @@ static double LLC_lrvar (double *dy, int T, int K, int m)
     return (s21 + 2 * s22) / T;
 }
 
-/* Levin-Lin-Chu panel unit-root test. FIXME: right now 
-   it only handles the case with a constant included (no
-   trend), and it doesn't handle augmentation with lagged
-   differences.
-*/
+#define LLC_DEBUG 0
+
+/* Levin-Lin-Chu panel unit-root test: p (>= 0) = ADF order */
 
 static int LLC_panel_test (int vnum, int p, 
 			   double **Z, DATAINFO *pdinfo, 
@@ -1255,15 +1294,19 @@ static int LLC_panel_test (int vnum, int p,
     int u0 = pdinfo->t1 / pdinfo->pd;
     int uN = pdinfo->t2 / pdinfo->pd;
     gretl_matrix_block *B;
-    gretl_matrix *y, *ysum, *b;
+    gretl_matrix *y, *yavg, *b;
     gretl_matrix *dy, *X, *ui;
     gretl_matrix *e, *ei, *v, *vi;
     gretl_matrix *eps;
     double SN = 0;
     int t, t1, t2, T, NT;
-    int s, pt1, pt2;
-    int i, k, K, N, m;
+    int s, pt1, pt2, dyT;
+    int i, j, k, K, N, m;
     int err;
+
+    if (p < 0) {
+	return E_DATA;
+    }
 
     err = panel_adjust_ADF_opt(&opt);
     if (err) {
@@ -1276,13 +1319,14 @@ static int LLC_panel_test (int vnum, int p,
     /* the 'case' (1 = no const, 2 = const, 3 = const + trend */
     m = 2; /* the default */
     if (opt & OPT_N) {
+	/* --nc */
 	m = 1;
     } else if (opt & OPT_T) {
+	/* --ct */
 	m = 3;
     }
 
     /* the max number of regressors */
-    p = 0; /* FIXME ! augmented variant */
     k = m + p;
     
     /* check that we have a useable common sample */
@@ -1318,21 +1362,21 @@ static int LLC_panel_test (int vnum, int p,
 	}
     }
 
-    pprintf(prn, "Got common T = %d (%d to %d)\n", T, t1, t2);
-
-    /* henceforth 'T' will denote the usable series length */
+    /* henceforth 'T' will denote the usable series length, after
+       accounting for required lags */
     T -= (1 + p);
     NT = N * T;
 
     /* Bartlett lag truncation (Andrews) */
     K = (int) floor(3.21 * pow(T, 1.0/3));
-    pprintf(prn, "using K = %d\n", K);
-    pprintf(prn, "X cols: k = %d\n", k);
+
+    /* full length of dy vector */
+    dyT = T + p;
 
     if (!err) {
 	B = gretl_matrix_block_new(&y, T, 1,
-				   &ysum, T+(1+p), 1,
-				   &dy, T, 1,
+				   &yavg, T+1+p, 1,
+				   &dy, dyT, 1,
 				   &X, T, k,
 				   &b, k, 1,
 				   &ui, T, 1,
@@ -1365,50 +1409,72 @@ static int LLC_panel_test (int vnum, int p,
 	}
     }    
 
-    gretl_matrix_zero(ysum);
+    gretl_matrix_zero(yavg);
 
     /* compute period sums of y for time-demeaning */
 
-    for (i=u0; i<=uN && !err; i++) {
-	double x, yt;
-
+    for (i=u0; i<=uN; i++) {
 	pt1 = t1 + i * pdinfo->pd;
 	pt2 = t2 + i * pdinfo->pd;
-
 	s = 0;
 	for (t=pt1; t<=pt2; t++) {
-	    yt = Z[vnum][t];
-	    x = gretl_vector_get(ysum, s);
-	    x += yt;
-	    gretl_vector_set(ysum, s, x);
-	    s++;
+	    yavg->val[s++] += Z[vnum][t];
 	}
     }
 
-    gretl_matrix_divide_by_scalar(ysum, N);
+    gretl_matrix_divide_by_scalar(yavg, N);
 
     for (i=u0; i<=uN && !err; i++) {
 	double yti, yti_1;
+	int pt0, ss;
 
 	pt1 = t1 + i * pdinfo->pd;
 	pt2 = t2 + i * pdinfo->pd;
+	pt0 = pt1 + 1 + p;
 
-	/* build \delta y_t in dy, y_{t-1} in y */
-
+	/* build (full length) \delta y_t in dy */
 	s = 0;
 	for (t=pt1+1; t<=pt2; t++) {
-	    yti = Z[vnum][t] - gretl_vector_get(ysum, s+1);
-	    yti_1 = Z[vnum][t-1] - gretl_vector_get(ysum, s);
-	    gretl_vector_set(y, s, yti_1);
-	    gretl_vector_set(dy, s, yti - yti_1);
-	    s++;
+	    ss = t - pt1;
+	    yti = Z[vnum][t] - gretl_vector_get(yavg, ss);
+	    yti_1 = Z[vnum][t-1] - gretl_vector_get(yavg, ss-1);
+	    gretl_vector_set(dy, s++, yti - yti_1);
 	}
 
-	/* FIXME set lags of dy if p > 0 */
+	/* build y_{t-1} in y */
+	s = 0;
+	for (t=pt0; t<=pt2; t++) {
+	    yti_1 = Z[vnum][t-1] - gretl_vector_get(yavg, t - pt1 - 1);
+	    gretl_vector_set(y, s++, yti_1);
+	}	
 
-	/* set first lag of y as (next) regressor */
+	/* augmented case: write lags of dy into X */
+	for (j=1; j<=p; j++) {
+	    int col = m + j - 2;
+	    double dylag;
+
+	    s = 0;
+	    for (t=pt0; t<=pt2; t++) {
+		dylag = gretl_vector_get(dy, t - pt1 - 1 - j);
+		gretl_matrix_set(X, s++, col, dylag);
+	    }
+	}
+
+	/* set lagged y as last regressor */
 	for (t=0; t<T; t++) {
-	    gretl_matrix_set(X, t, m-1, y->val[t]);
+	    gretl_matrix_set(X, t, k-1, y->val[t]);
+	}
+
+#if LLC_DEBUG > 1
+	gretl_matrix_print(dy, "dy");
+	gretl_matrix_print(y, "y1");
+	gretl_matrix_print(X, "X");
+#endif
+
+	if (p > 0) {
+	    /* "virtual trimming" of dy for regressions */
+	    dy->val += p;
+	    dy->rows -= p;
 	}
 
 	/* run (A)DF regression */
@@ -1417,22 +1483,14 @@ static int LLC_panel_test (int vnum, int p,
 	    break;
 	}
 
-#if 0
-	gretl_matrix_print_to_prn(y, "y", prn);
-	gretl_matrix_print_to_prn(X, "X", prn);
-	gretl_matrix_print_to_prn(b, "b", prn);
-#endif
-
-	/* reduced regressor matrix for auxiliary regressions: we omit
-	   the lagged level of y, retaining the deterministic terms
-	   (if any) and the lagged differences (if any)
+	/* reduced regressor matrix for auxiliary regressions: omit
+	   the last column containing the lagged level of y
 	*/
-	if (k - 1 > 0) {
+	if (k > 1) {
 	    gretl_matrix_reuse(X, T, k-1);
 	    gretl_matrix_reuse(b, k-1, 1);
 
 	    err = gretl_matrix_ols(dy, X, b, NULL, ei, NULL);
-
 	    if (!err) {
 		err = gretl_matrix_ols(y, X, b, NULL, vi, NULL);
 	    }
@@ -1440,20 +1498,28 @@ static int LLC_panel_test (int vnum, int p,
 	    gretl_matrix_reuse(X, T, k);
 	    gretl_matrix_reuse(b, k, 1);
 	} else {
-	    /* no regressions need to be done */
+	    /* no aux regressions required */
 	    gretl_matrix_copy_values(ei, dy);
 	    gretl_matrix_copy_values(vi, y);
 	}
 
+	if (p > 0) {
+	    /* restore dy to full length */
+	    dy->val -= p;
+	    dy->rows += p;
+	}
+
 	if (!err) {
 	    double sui, s2yi, s2ui = 0.0;
-	    int row = (i - u0) * T;
+	    int df, row = (i - u0) * T;
 
 	    for (t=0; t<T; t++) {
 		s2ui += ui->val[t] * ui->val[t];
 	    }
 
-	    s2ui /= (T-k+1);
+	    /* df = T - k + (m > 1); */
+	    df = T - 1; /* Stata-compatible */
+	    s2ui /= df;
 	    sui = sqrt(s2ui);
 
 	    /* write normalized per-unit ei and vi into big matrices */
@@ -1462,16 +1528,22 @@ static int LLC_panel_test (int vnum, int p,
 	    gretl_matrix_inscribe_matrix(e, ei, row, 0, GRETL_MOD_NONE);
 	    gretl_matrix_inscribe_matrix(v, vi, row, 0, GRETL_MOD_NONE);
 
-	    s2yi = LLC_lrvar(dy->val, T, K, m);
-	    pprintf(prn, "s2ui = %g, s2yi = %.8f\n", s2ui, s2yi);
-	    /* ratio of LR std dev to innovation std dev */
-	    SN += sqrt(s2yi) / sui;
+	    s2yi = LLC_lrvar(dy, K, m, &err);
+	    if (!err) {
+		/* cumulate ratio of LR std dev to innovation std dev */
+		SN += sqrt(s2yi) / sui;
+	    }
+
+#if LLC_DEBUG
+	    pprintf(prn, "s2ui = %.8f, s2yi = %.8f\n", s2ui, s2yi);
+#endif
 	}	    
     }
 
     if (!err) {
+	/* the final step: full-length regression of e on v */
 	double ee = 0, vv = 0;
-	double delta, s2e, STD, z;
+	double delta, s2e, STD, td, z;
 	double mstar, sstar;
 
 	gretl_matrix_reuse(b, 1, 1);
@@ -1482,23 +1554,36 @@ static int LLC_panel_test (int vnum, int p,
 		ee += eps->val[t] * eps->val[t];
 		vv += v->val[t] * v->val[t];
 	    }
+
 	    SN /= N;
 	    delta = b->val[0];
 	    s2e = ee / NT;
 	    STD = sqrt(s2e) / sqrt(vv);
-	    z = delta / STD;
+	    td = delta / STD;
 
-	    pprintf(prn, "delta = %g, STD = %g, t-value = %g\n",
-		    delta, STD, z);
-
+	    /* fetch the Levin-Lin-Chu corrections factors */
 	    err = get_LLC_corrections(T, m, &mstar, &sstar);
 	}
 
 	if (!err) {
-	    pprintf(prn, "SN=%g, se=%g\n", SN, sqrt(s2e));
-	    z = (z - NT * (SN / s2e) * STD * mstar) / sstar;
-	    pprintf(prn, "(mu-star = %g, sigma-star = %g)\n", mstar, sstar);
-	    pprintf(prn, "t-star = %g [%.4f]\n", z, normal_cdf(z));
+	    double pval;
+
+	    /* FIXME try to reuse some translatable strings here */
+
+#if LLC_DEBUG
+	    pprintf(prn, "mustar = %g, sigstar = %g\n", mstar, sstar);
+	    pprintf(prn, "SN = %g, se = %g, STD = %g\n", SN, sqrt(s2e), STD);
+#endif
+	    z = (td - NT * (SN / s2e) * STD * mstar) / sstar;
+	    pval = normal_cdf(z);
+	    pprintf(prn, "\nLevin-Lin-Chu pooled ADF test (%s)\n", DF_test_string(m-1));
+	    pprintf(prn, "Augmented by %d lags, Bartlett truncation at %d lags\n",
+		    p, K);
+	    pprintf(prn, "(N,T) = (%d,%d), observations used = %d\n", N, T+p+1, NT);
+	    pprintf(prn, "\ncoefficient    t-ratio      z-score\n");
+	    pprintf(prn, "%11.5g %10.3f %12.6g [%.4f]\n\n", delta, td, z, pval);
+
+	    record_test_result(z, pval, "Levin-Lin-Chu");
 	}
     }
 

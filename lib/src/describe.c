@@ -734,8 +734,7 @@ double gretl_restricted_stddev (int t1, int t2, const double *x,
 
 double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 {
-    double zt, wt, xbar, s2 = 0.0;
-    double *autocov;
+    double zt, wi, xbar, s2 = 0.0;
     int i, t, n, order;
 
     if (series_adjust_sample(x, &t1, &t2) != 0) {
@@ -754,37 +753,24 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 	order = m;
     }
 
-    autocov = malloc(order * sizeof *autocov);
-    if (autocov == NULL) {
-	return NADBL;
-    }
-
     xbar = 0.0;
     for (t=t1; t<=t2; t++) {
 	xbar += x[t];
     }
     xbar /= n;
-  
-    for (i=0; i<order; i++) {
-	autocov[i] = 0.0;
-    }
 
     for (t=t1; t<=t2; t++) {
 	zt = x[t] - xbar;
 	s2 += zt * zt;
-	for (i=1; i<=order; i++) {
-	    if (t - i >= t1) {
-		autocov[i-1] += zt * (x[t-i] - xbar);
-	    }
-	}
     }
 
     for (i=1; i<=order; i++) {
-	wt = 1.0 - ((double) i) / (order + 1.0);
-	s2 += 2.0 * wt * autocov[i-1];
+	wi = 1.0 - i /((double) order + 1);
+	for (t=t1+i; t<=t2; t++) {
+	    zt = x[t] - xbar;
+	    s2 += 2 * wi * zt * (x[t-i] - xbar);
+	}
     }
-
-    free(autocov);
 
     return s2 / n;
 }
