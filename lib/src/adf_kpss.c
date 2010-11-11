@@ -1351,29 +1351,30 @@ static int LLC_panel_test (int vnum, int p,
     }
 
     if (!err) {
-	int minT = 3 + p;
+	int minT = k + 1; /* ensure df > 0 */
 
-	if (minT < 8) {
-	    /* arbitrary? */
-	    minT = 8;
+	if (minT < 4) {
+	    minT = 4;
 	}
 
-	T = t2 - t1 + 1;
+	/* T denotes the usable series length, after
+	   accounting for required lags */
+	T = t2 - t1 + 1 - (1 + p);
 	if (T < minT) {
 	    err = E_DATA;
 	}
     }
 
-    /* henceforth 'T' will denote the usable series length, after
-       accounting for required lags */
-    T -= (1 + p);
     NT = N * T;
-
-    /* Bartlett lag truncation (Andrews) */
-    K = (int) floor(3.21 * pow(T, 1.0/3));
 
     /* full length of dy vector */
     dyT = T + p;
+
+    /* Bartlett lag truncation (Andrews, 1991) */
+    K = (int) floor(3.21 * pow(dyT, 1.0/3));
+    if (K > dyT - 3) {
+	K = dyT - 3;
+    }
 
     if (!err) {
 	B = gretl_matrix_block_new(&y, T, 1,
