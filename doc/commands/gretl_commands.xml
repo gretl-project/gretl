@@ -5473,8 +5473,8 @@
 	Carries out the panel unit-root test described by <cite
 	key="LLC2002">Levin, Lin and Chu (2002)</cite>. The null
 	hypothesis is that all of the individual time series exhibit a
-	unit, and the alternative is that none of the series has a
-	unit unit. (That is, a common AR(1) coefficient is assumed,
+	unit root, and the alternative is that none of the series has a
+	unit root. (That is, a common AR(1) coefficient is assumed,
 	although in other respects the statistical properties of the
 	series are allowed to vary across individuals.)
       </para>
