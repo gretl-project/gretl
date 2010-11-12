@@ -211,10 +211,11 @@
       <separator/>
       <menuitem action="VarTSPlot"/>
       <menu action="URTests">
-	<menuitem action="ADF"/>
-	<menuitem action="DFGLS"/>
-	<menuitem action="KPSS"/>
-	<menuitem action="FractInt"/>
+	<menuitem action="adf"/>
+	<menuitem action="dfgls"/>
+	<menuitem action="kpss"/>
+	<menuitem action="levinlin"/>
+	<menuitem action="fractint"/>
       </menu>
       <menuitem action="corrgm"/>
       <menuitem action="pergm"/>

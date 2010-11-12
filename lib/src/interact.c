@@ -372,6 +372,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                            c == COINT || \
                            c == COINT2 || \
                            c == KPSS || \
+			   c == LEVINLIN || \
                            c == VAR || \
                            c == VECM)
 
@@ -1927,7 +1928,7 @@ static int capture_param (const char *s, CMD *cmd)
 	    cmd->ci == DELEET || cmd->ci == HELP) {
 	    /* grab the whole remainder of line */
 	    cmd_param_grab_string(cmd, s);
-	} else if (cmd->ci == QUANTREG) {
+	} else if (cmd->ci == QUANTREG || cmd->ci == LEVINLIN) {
 	    param_grab_braced(cmd, s);
 	} else {
 	    /* grab one 'word' */
@@ -1937,7 +1938,7 @@ static int capture_param (const char *s, CMD *cmd)
 	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
 		s, cmd->param);
 #endif
-	if (REQUIRES_ORDER(cmd->ci)) {
+	if (REQUIRES_ORDER(cmd->ci) && cmd->ci != LEVINLIN) {
 	    cmd->order = gretl_int_from_string(cmd->param, &cmd->err);
 	    if (cmd->err) {
 		gretl_errmsg_sprintf(_("%s: expected an integer order"),
@@ -4499,6 +4500,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case KPSS:
 	err = kpss_test(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
+	break;
+
+    case LEVINLIN:
+	err = llc_test_driver(cmd->param, cmd->list, pZ, pdinfo, 
+			      cmd->opt, prn);
 	break;
 
     case COINT:

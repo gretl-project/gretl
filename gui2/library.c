@@ -968,12 +968,15 @@ void unit_root_test (int ci)
 	N_("include seasonal dummies"),
 	N_("show regression results"),
 	N_("test down from maximum lag order"),
+	/* non-panel: radio items */
 	N_("use level of variable"),
 	N_("use first difference of variable")
     };
     const char *panel_adf_opts[] = {
+	/* radio items */
 	N_("with constant"),
 	N_("with constant and trend"),
+	/* check items */
 	N_("test down from maximum lag order"),
 	N_("use first difference of variable"),
 	N_("show individual test results")
@@ -981,6 +984,7 @@ void unit_root_test (int ci)
     const char *alt_opts[] = {
 	N_("include a trend"),
 	N_("show regression results"),
+	/* radio items */
 	N_("use level of variable"),
 	N_("use first difference of variable")
     };
@@ -993,6 +997,7 @@ void unit_root_test (int ci)
     const char *adf_title = N_("gretl: ADF test");
     const char *dfgls_title = N_("gretl: ADF-GLS test");
     const char *kpss_title = N_("gretl: KPSS test");
+    const char *llc_title = N_("gretl: Levin-Lin-Chu test");
     const char *adf_spintext = N_("Lag order for ADF test:");
     const char *kpss_spintext = N_("Lag order for KPSS test:");
     const char *title, *spintext, **opts;
@@ -1004,14 +1009,16 @@ void unit_root_test (int ci)
     static int panel_alt_active[] = { 0, 0, 1 };
     static int ts_order = 1;
     static int panel_order = 0;
+    static int llc_case = 1;
 
-    int difference = 0, *pdiff = NULL;
+    gretlopt opt = 0;
+    int pantrend = 0, difference = 0, *rvar = NULL;
     int panel = dataset_is_panel(datainfo);
     int order, omax, okT, v = mdata_active_var();
     int *active = NULL;
     int nchecks, nradios;
     int helpcode = 0;
-    int verbose = 0;
+    int vlist[2] = {1, v};
     int err;
 
     if (panel) {
@@ -1039,7 +1046,7 @@ void unit_root_test (int ci)
 	nchecks = (panel)? 3 : 2;
 	active = (panel)? panel_alt_active : alt_active;
 	nradios = (panel)? 0 : 2;
-    } else {
+    } else if (ci == KPSS) {
 	title = kpss_title;
 	spintext = kpss_spintext;
 	opts = (panel)? panel_alt_opts : alt_opts;
@@ -1047,108 +1054,131 @@ void unit_root_test (int ci)
 	active = (panel)? panel_alt_active : alt_active;
 	nradios = (panel)? 0 : 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
-    }
+    } else {
+	/* levinlin */
+	title = llc_title;
+	spintext = adf_spintext;
+	opts = adf_opts;
+	nchecks = 0;
+	nradios = 3;
+	rvar = &llc_case;
+	helpcode = ci;
+    }	
 
     if (order > omax) {
 	order = omax;
     }  
 
     if (ci == ADF && datainfo->pd == 1) {
+	/* disallow seasonal dummies option */
 	adf_active[4] = -1;
     }
 
     if (!panel) {
-	pdiff = &difference;
+	/* levels / differences radio */
+	rvar = &difference;
+    } else if (ci == ADF) {
+	rvar = &pantrend;
     }
 
     err = checks_dialog(_(title), NULL, opts, nchecks, active,
-			nradios, pdiff, &order, _(spintext),
+			nradios, rvar, &order, _(spintext),
 			0, omax, helpcode);
     if (err < 0) {
 	return;
     }
 
     if (ci == ADF && !panel) {
-	/* no models selected */
 	if (active[0] == 0 &&
 	    active[1] == 0 &&
 	    active[2] == 0 &&
 	    active[3] == 0) {
+	    /* no models selected */
 	    return;
 	}
     }
 
-    gretl_command_sprintf("%s %d %s", (ci == KPSS)? "kpss" : "adf", order, 
-			  selected_varname());
-
-    if (ci == ADF) {
+    if (ci == LEVINLIN) {
+	if (llc_case == 0) opt |= OPT_N; /* no const */
+	if (llc_case == 2) opt |= OPT_T; /* trend */
+    } else if (ci == ADF) {
 	if (panel) {
-	    if (active[0]) gretl_command_strcat(" --test-down");
+	    if (active[0]) opt |= OPT_E; /* test down */
+	    if (pantrend) opt |= OPT_T;
 	} else {
-	    if (active[0]) gretl_command_strcat(" --nc");
-	    if (active[1]) gretl_command_strcat(" --c");
-	    if (active[2]) gretl_command_strcat(" --ct");
-	    if (active[3]) gretl_command_strcat(" --ctt");
-	    if (active[4] > 0) gretl_command_strcat(" --seasonals");
-	    if (active[6]) gretl_command_strcat(" --test-down");
-	    verbose = active[5];
+	    if (active[0]) opt |= OPT_N;
+	    if (active[1]) opt |= OPT_C;
+	    if (active[2]) opt |= OPT_T;
+	    if (active[3]) opt |= OPT_R; /* quad trend */
+	    if (active[4] > 0) opt |= OPT_D;
+	    if (active[5]) opt |= OPT_V;
+	    if (active[6]) opt |= OPT_E;
 	}
     } else if (ci == DFGLS) {
-	if (active[0]) gretl_command_strcat(" --ct --gls");
-	else gretl_command_strcat(" --c --gls");
-	if (!panel) {
-	    verbose = active[1];
+	opt |= OPT_G;
+	if (active[0]) {
+	    opt |= OPT_T;
+	} else {
+	    opt |= OPT_C;
 	}
+	if (!panel && active[1]) opt |= OPT_V;
     } else {
-	if (active[0]) gretl_command_strcat(" --trend");
-	if (!panel) {
-	    verbose = active[1];
-	}
+	/* KPSS */
+	if (active[0]) opt |= OPT_T;
+	if (!panel && active[1]) opt |= OPT_V;
     } 
 
-    if (panel) {
-	difference = active[1];
-	verbose = active[2];
+    if (panel && ci != LEVINLIN) {
+	if (active[1]) opt |= OPT_F; /* difference */
+	if (active[2]) opt |= OPT_V; /* verbose */
     }
 
     if (difference) {
-	gretl_command_strcat(" --difference");
+	opt |= OPT_F;
     }
 
-    if (verbose) {
-	gretl_command_strcat(" --verbose");
-    }    
-
-    if (check_and_record_command() || bufopen(&prn)) {
+    if (bufopen(&prn)) {
 	return;
     }
 
     if (ci == ADF || ci == DFGLS) {
-	err = adf_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	err = adf_test(order, vlist, &Z, datainfo, opt, prn);
+    } else if (ci == KPSS) {
+	err = kpss_test(order, vlist, &Z, datainfo, opt, prn);
     } else {
-	err = kpss_test(order, libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	int plist[2] = {1, order};
+
+	err = levin_lin_test(vlist[1], plist, Z, datainfo, opt, prn);
     }
 
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
+	int rci = (ci == DFGLS)? ADF : ci;
+
+	gretl_command_sprintf("%s %d %s%s", gretl_command_word(rci), 
+			      order, datainfo->varname[v],
+			      print_flags(opt, rci));
+	record_command_verbatim(cmdline);
+
 	if (panel) {
 	    panel_order = order;
 	} else {
 	    ts_order = order;
 	}
+
 	view_buffer(prn, 78, 350, title, ci, NULL);
     }    
 }
 
 static int ur_code (const gchar *s)
 {
-    if (!strcmp(s, "DFGLS")) 
+    if (!strcmp(s, "dfgls")) { 
 	return DFGLS;
-    if (!strcmp(s, "KPSS")) 
-	return KPSS;
-    return ADF;
+    } else {
+	return gretl_command_number(s);
+    }
 }
 
 void ur_callback (GtkAction *action)

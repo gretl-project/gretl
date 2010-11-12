@@ -95,6 +95,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { LAGS,     "lags" },    
     { LDIFF,    "ldiff" },
     { LEVERAGE, "leverage" },
+    { LEVINLIN, "levinlin" },
     { LOGISTIC, "logistic" },
     { LOGIT,    "logit" },
     { LOGS,     "logs" },

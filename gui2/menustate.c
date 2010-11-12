@@ -194,13 +194,14 @@ void window_list_state (gboolean s)
 void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(datainfo);
+    gboolean panel = dataset_is_panel(datainfo);
     gboolean ur = s;
 
     if (mdata->ui == NULL) {
 	return;
     }
 
-    if (dataset_is_panel(datainfo)) {
+    if (panel) {
 	ur = datainfo->pd > 5;
     }
 
@@ -215,7 +216,10 @@ void time_series_menu_state (gboolean s)
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur); 
     if (ur && !s) {
-	flip(mdata->ui, "/menubar/Variable/URTests/FractInt", s);
+	flip(mdata->ui, "/menubar/Variable/URTests/fractint", s);
+    }
+    if (ur && !panel) {
+	flip(mdata->ui, "/menubar/Variable/URTests/levinlin", panel);
     }
     flip(mdata->ui, "/menubar/Variable/corrgm", s);
     flip(mdata->ui, "/menubar/Variable/pergm", s);

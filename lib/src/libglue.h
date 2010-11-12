@@ -27,6 +27,10 @@ int model_test_driver (const char *param,
 int chow_test_driver (const char *line, MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
+int llc_test_driver (const char *parm, const int *list, 
+		     double ***pZ, DATAINFO *pdinfo,
+		     gretlopt opt, PRN *prn);
+
 MODEL quantreg_driver (const char *parm, const int *list, 
 		       double ***pZ, DATAINFO *pdinfo,
 		       gretlopt opt, PRN *prn);

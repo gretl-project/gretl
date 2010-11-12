@@ -85,6 +85,7 @@ typedef enum {
     LAGS,    
     LDIFF,
     LEVERAGE,
+    LEVINLIN,
     LOGISTIC,
     LOGIT,
     LOGS,
@@ -178,6 +179,7 @@ typedef enum {
                         c == HAUSMAN || \
                         c == KPSS || \
                         c == LEVERAGE || \
+                        c == LEVINLIN || \
                         c == MODTEST || \
                         c == MEANTEST || \
                         c == MPOLS || \

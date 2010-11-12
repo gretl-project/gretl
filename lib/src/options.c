@@ -43,6 +43,7 @@
 			 c == FREQ ||		\
 			 c == KPSS ||		\
 			 c == MODTEST ||	\
+                         c == LEVINLIN ||       \
 			 c == LOOP ||		\
 			 c == NORMTEST ||	\
 			 c == OLS ||		\
@@ -90,7 +91,6 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_F, "difference", 0 },
     { ADF,      OPT_E, "test-down", 0 },
     { ADF,      OPT_G, "gls", 0 },
-    { ADF,      OPT_L, "llc", 0 },
     { AR1,      OPT_B, "no-corc", 0 },
     { AR1,      OPT_H, "hilu", 0 },
     { AR1,      OPT_P, "pwe", 0 },
@@ -233,6 +233,8 @@ struct gretl_option gretl_opts[] = {
     { KPSS,     OPT_V, "verbose", 0 },
     { KPSS,     OPT_F, "difference", 0 },
     { LEVERAGE, OPT_S, "save", 0 },
+    { LEVINLIN, OPT_N, "nc", 0 },
+    { LEVINLIN, OPT_T, "ct", 0 },
     { MODTEST,  OPT_A, "autocorr", 0 },
     { MODTEST,  OPT_B, "breusch-pagan", 0 },
     { MODTEST,  OPT_C, "comfac", 0 },

@@ -1283,40 +1283,106 @@ static double LLC_lrvar (gretl_matrix *vdy, int K, int m, int *err)
     return (s21 + 2 * s22) / T;
 }
 
-#define LLC_DEBUG 0
-
-/* Levin-Lin-Chu panel unit-root test: p (>= 0) = ADF order.
-   TODO: make it possible for p to differ by individual?
+/* In case we got a list of individual-specific ADF order terms,
+   check that it makes sense and do some basic accounting.
 */
 
-static int LLC_panel_test (int vnum, int p, 
+static int LLC_check_plist (const int *list, int N, int *pmax, int *pmin,
+			    double *pbar)
+{
+    int err = 0;
+
+    if (list == NULL || list[0] == 0) {
+	err = E_DATA;
+    } else if (list[0] > 1 && list[0] != N) {
+	err = E_DATA;
+    } else {
+	int i;
+
+	*pmax = *pmin = *pbar = 0;
+
+	for (i=1; i<=list[0]; i++) {
+	    if (list[i] < 0) {
+		err = E_DATA;
+		break;
+	    } 
+	    if (list[i] > *pmax) {
+		*pmax = list[i];
+	    }
+	    if (i == 1 || list[i] < *pmin) {
+		*pmin = list[i];
+	    }
+	    *pbar += list[i];
+	}
+
+	if (list[0] > 1) {
+	    *pbar /= N;
+	}
+    }
+
+    return err;
+}
+
+static int LLC_sample_check (int N, int t1, int t2, int m,
+			     const int *plist, int *NT)
+{
+    int i, p, minT, T;
+    int err = 0;
+
+    *NT = 0;
+
+    for (i=1; i<=plist[0] && !err; i++) {
+	p = plist[i];
+	minT = m + p + 1; /* ensure df > 0 */
+
+	if (minT < 4) {
+	    minT = 4;
+	}
+
+	/* T_i denotes the regression-usable series length, after
+	   accounting for required lags */
+	T = t2 - t1 + 1 - (1 + p);
+	if (T < minT) {
+	    err = E_DATA;
+	} else if (plist[0] == 1) {
+	    *NT = N * T;
+	} else {
+	    *NT += T;
+	}
+    }
+
+    return err;
+}
+
+#define LLC_DEBUG 0
+
+/* Levin-Lin-Chu panel unit-root test */
+
+static int real_levin_lin (int vnum, const int *plist,
 			   double **Z, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn)
 {
     int u0 = pdinfo->t1 / pdinfo->pd;
     int uN = pdinfo->t2 / pdinfo->pd;
+    int N = uN - u0 + 1; /* units in sample range */
     gretl_matrix_block *B;
     gretl_matrix *y, *yavg, *b;
     gretl_matrix *dy, *X, *ui;
     gretl_matrix *e, *ei, *v, *vi;
     gretl_matrix *eps;
-    double SN = 0;
+    double pbar, SN = 0;
     int t, t1, t2, T, NT;
     int s, pt1, pt2, dyT;
-    int i, j, k, K, N, m;
+    int i, j, k, K, m;
+    int p, pmax, pmin;
+    int bigrow, p_varies = 0;
     int err;
+    
+    err = LLC_check_plist(plist, N, &pmax, &pmin, &pbar);
 
-    if (p < 0) {
-	return E_DATA;
-    }
-
-    err = panel_adjust_ADF_opt(&opt);
     if (err) {
 	return err;
     }
-
-    /* number of units in sample range */
-    N = uN - u0 + 1;
 
     /* the 'case' (1 = no const, 2 = const, 3 = const + trend */
     m = 2; /* the default */
@@ -1328,19 +1394,26 @@ static int LLC_panel_test (int vnum, int p,
 	m = 3;
     }
 
+    /* does p vary by individual? */
+    if (pmax > pmin) {
+	p_varies = 1;
+    }
+    p = pmax;
+
     /* the max number of regressors */
-    k = m + p;
+    k = m + pmax;
     
     /* check that we have a useable common sample */
     
-    for (i=u0; i<=uN && !err; i++) {
+    for (i=0; i<N && !err; i++) {
+	int pt1 = (i + u0) * pdinfo->pd;
 	int t1i, t2i;
 
-	pdinfo->t1 = i * pdinfo->pd;
+	pdinfo->t1 = pt1;
 	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
 	err = series_adjust_sample(Z[vnum], &pdinfo->t1, &pdinfo->t2);
-	t1i = pdinfo->t1 - i * pdinfo->pd;
-	t2i = pdinfo->t2 - i * pdinfo->pd;
+	t1i = pdinfo->t1 - pt1;
+	t2i = pdinfo->t2 - pt1;
 	if (i == u0) {
 	    t1 = t1i;
 	    t2 = t2i;
@@ -1351,32 +1424,24 @@ static int LLC_panel_test (int vnum, int p,
     }
 
     if (!err) {
-	int minT = k + 1; /* ensure df > 0 */
-
-	if (minT < 4) {
-	    minT = 4;
-	}
-
-	/* T denotes the usable series length, after
-	   accounting for required lags */
-	T = t2 - t1 + 1 - (1 + p);
-	if (T < minT) {
-	    err = E_DATA;
-	}
-    }
-
-    NT = N * T;
-
-    /* full length of dy vector */
-    dyT = T + p;
-
-    /* Bartlett lag truncation (Andrews, 1991) */
-    K = (int) floor(3.21 * pow(dyT, 1.0/3));
-    if (K > dyT - 3) {
-	K = dyT - 3;
-    }
+	err = LLC_sample_check(N, t1, t2, m, plist, &NT);
+    } 
 
     if (!err) {
+	int Tbar = NT / N;
+
+	/* the biggest T we'll need for regressions */
+	T = t2 - t1 + 1 - (1 + pmin);
+
+	/* Bartlett lag truncation (Andrews, 1991) */
+	K = (int) floor(3.21 * pow(Tbar, 1.0/3));
+	if (K > Tbar - 3) {
+	    K = Tbar - 3;
+	}	
+
+	/* full length of dy vector */
+	dyT = t2 - t1;
+
 	B = gretl_matrix_block_new(&y, T, 1,
 				   &yavg, T+1+p, 1,
 				   &dy, dyT, 1,
@@ -1416,9 +1481,9 @@ static int LLC_panel_test (int vnum, int p,
 
     /* compute period sums of y for time-demeaning */
 
-    for (i=u0; i<=uN; i++) {
-	pt1 = t1 + i * pdinfo->pd;
-	pt2 = t2 + i * pdinfo->pd;
+    for (i=0; i<N; i++) {
+	pt1 = t1 + (i + u0) * pdinfo->pd;
+	pt2 = t2 + (i + u0) * pdinfo->pd;
 	s = 0;
 	for (t=pt1; t<=pt2; t++) {
 	    yavg->val[s++] += Z[vnum][t];
@@ -1426,15 +1491,32 @@ static int LLC_panel_test (int vnum, int p,
     }
 
     gretl_matrix_divide_by_scalar(yavg, N);
+    bigrow = 0;
 
-    for (i=u0; i<=uN && !err; i++) {
+    for (i=0; i<N && !err; i++) {
 	double yti, yti_1;
+	int p_i, T_i, k_i;
 	int pt0, ss;
 
+	if (p_varies) {
+	    p_i = plist[i+1];
+	    T_i = t2 - t1 + 1 - (1 + p_i);
+	    k_i = m + p_i;
+	    gretl_matrix_reuse(y, T_i, 1);
+	    gretl_matrix_reuse(X, T_i, k_i);
+	    gretl_matrix_reuse(b, k_i, 1);
+	    gretl_matrix_reuse(ei, T_i, 1);
+	    gretl_matrix_reuse(vi, T_i, 1);
+	} else {
+	    p_i = p;
+	    T_i = T;
+	    k_i = k;
+	}
+
 	/* indices into Z */
-	pt1 = t1 + i * pdinfo->pd;
-	pt2 = t2 + i * pdinfo->pd;
-	pt0 = pt1 + 1 + p;
+	pt1 = t1 + (i + u0) * pdinfo->pd;
+	pt2 = t2 + (i + u0) * pdinfo->pd;
+	pt0 = pt1 + 1 + p_i;
 
 	/* build (full length) \delta y_t in dy */
 	s = 0;
@@ -1453,7 +1535,7 @@ static int LLC_panel_test (int vnum, int p,
 	}	
 
 	/* augmented case: write lags of dy into X */
-	for (j=1; j<=p; j++) {
+	for (j=1; j<=p_i; j++) {
 	    int col = m + j - 2;
 	    double dylag;
 
@@ -1465,8 +1547,8 @@ static int LLC_panel_test (int vnum, int p,
 	}
 
 	/* set lagged y as last regressor */
-	for (t=0; t<T; t++) {
-	    gretl_matrix_set(X, t, k-1, y->val[t]);
+	for (t=0; t<T_i; t++) {
+	    gretl_matrix_set(X, t, k_i - 1, y->val[t]);
 	}
 
 #if LLC_DEBUG > 1
@@ -1475,10 +1557,10 @@ static int LLC_panel_test (int vnum, int p,
 	gretl_matrix_print(X, "X");
 #endif
 
-	if (p > 0) {
+	if (p_i > 0) {
 	    /* "virtual trimming" of dy for regressions */
-	    dy->val += p;
-	    dy->rows -= p;
+	    dy->val += p_i;
+	    dy->rows -= p_i;
 	}
 
 	/* run (A)DF regression */
@@ -1487,12 +1569,12 @@ static int LLC_panel_test (int vnum, int p,
 	    break;
 	}
 
-	if (k > 1) {
+	if (k_i > 1) {
 	    /* reduced regressor matrix for auxiliary regressions:
 	       omit the last column containing the lagged level of y
 	    */
-	    gretl_matrix_reuse(X, T, k-1);
-	    gretl_matrix_reuse(b, k-1, 1);
+	    gretl_matrix_reuse(X, T_i, k_i - 1);
+	    gretl_matrix_reuse(b, k_i - 1, 1);
 
 	    err = gretl_matrix_ols(dy, X, b, NULL, ei, NULL);
 	    if (!err) {
@@ -1507,30 +1589,31 @@ static int LLC_panel_test (int vnum, int p,
 	    gretl_matrix_copy_values(vi, y);
 	}
 
-	if (p > 0) {
+	if (p_i > 0) {
 	    /* restore dy to full length */
-	    dy->val -= p;
-	    dy->rows += p;
+	    dy->val -= p_i;
+	    dy->rows += p_i;
 	}
 
 	if (!err) {
 	    double sui, s2yi, s2ui = 0.0;
-	    int df, row = (i - u0) * T;
+	    int df;
 
-	    for (t=0; t<T; t++) {
+	    for (t=0; t<T_i; t++) {
 		s2ui += ui->val[t] * ui->val[t];
 	    }
 
 	    /* df = T - k + (m > 1); */
-	    df = T - 1; /* Stata-compatible */
+	    df = T_i - 1; /* Stata-compatible */
 	    s2ui /= df;
 	    sui = sqrt(s2ui);
 
 	    /* write normalized per-unit ei and vi into big matrices */
 	    gretl_matrix_divide_by_scalar(ei, sui);
 	    gretl_matrix_divide_by_scalar(vi, sui);
-	    gretl_matrix_inscribe_matrix(e, ei, row, 0, GRETL_MOD_NONE);
-	    gretl_matrix_inscribe_matrix(v, vi, row, 0, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(e, ei, bigrow, 0, GRETL_MOD_NONE);
+	    gretl_matrix_inscribe_matrix(v, vi, bigrow, 0, GRETL_MOD_NONE);
+	    bigrow += T_i;
 
 	    s2yi = LLC_lrvar(dy, K, m, &err);
 	    if (!err) {
@@ -1541,13 +1624,21 @@ static int LLC_panel_test (int vnum, int p,
 #if LLC_DEBUG
 	    pprintf(prn, "s2ui = %.8f, s2yi = %.8f\n", s2ui, s2yi);
 #endif
+	}
+
+	if (p_varies) {
+	    gretl_matrix_reuse(y, T, 1);
+	    gretl_matrix_reuse(X, T, k);
+	    gretl_matrix_reuse(b, k, 1);
+	    gretl_matrix_reuse(ei, T, 1);
+	    gretl_matrix_reuse(vi, T, 1);
 	}	    
     }
 
     if (!err) {
 	/* the final step: full-length regression of e on v */
 	double ee = 0, vv = 0;
-	double delta, s2e, STD, td, z;
+	double delta, s2e, STD, td;
 	double mstar, sstar;
 
 	gretl_matrix_reuse(b, 1, 1);
@@ -1570,7 +1661,8 @@ static int LLC_panel_test (int vnum, int p,
 	}
 
 	if (!err) {
-	    double pval;
+	    double z = (td - NT * (SN / s2e) * STD * mstar) / sstar;
+	    double pval = normal_cdf(z);
 
 	    /* FIXME try to reuse some translatable strings here */
 
@@ -1578,14 +1670,19 @@ static int LLC_panel_test (int vnum, int p,
 	    pprintf(prn, "mustar = %g, sigstar = %g\n", mstar, sstar);
 	    pprintf(prn, "SN = %g, se = %g, STD = %g\n", SN, sqrt(s2e), STD);
 #endif
-	    z = (td - NT * (SN / s2e) * STD * mstar) / sstar;
-	    pval = normal_cdf(z);
-	    pprintf(prn, "\nLevin-Lin-Chu pooled ADF test (%s)\n", DF_test_string(m-1));
-	    pprintf(prn, "Augmented by %d lags, Bartlett truncation at %d lags\n",
-		    p, K);
-	    pprintf(prn, "(N,T) = (%d,%d), observations used = %d\n", N, T+p+1, NT);
-	    pprintf(prn, "\ncoefficient    t-ratio      z-score\n");
-	    pprintf(prn, "%11.5g %10.3f %12.6g [%.4f]\n\n", delta, td, z, pval);
+
+	    if (!(opt & OPT_Q)) {
+		pprintf(prn, "\nLevin-Lin-Chu pooled ADF test (%s)\n", DF_test_string(m-1));
+		if (p_varies) {
+		    pprintf(prn, "Augmented by %.2f lags (average), ", pbar);
+		} else {
+		    pprintf(prn, "Augmented by %d lags, ", p);
+		} 
+		pprintf(prn, "Bartlett truncation at %d lags\n", K);
+		pprintf(prn, "(N,T) = (%d,%d), observations used = %d\n", N, dyT+1, NT);
+		pprintf(prn, "\ncoefficient    t-ratio      z-score\n");
+		pprintf(prn, "%11.5g %10.3f %12.6g [%.4f]\n\n", delta, td, z, pval);
+	    }
 
 	    record_test_result(z, pval, "Levin-Lin-Chu");
 	}
@@ -1605,6 +1702,56 @@ static int multi_unit_panel_sample (const DATAINFO *pdinfo)
     }
 
     return ret;
+}
+
+/**
+ * levin_lin_test:
+ * @vnum: ID number of variable to test.
+ * @plist: list of ADF lag orders.
+ * @Z: data array.
+ * @pdinfo: data information struct.
+ * @opt: option flags.
+ * @prn: gretl printing struct.
+ *
+ * Carries out and prints the results of the Levin-Lin-Chu test
+ * for a unit root in panel data. 
+ *
+ * The list @plist should contain either a single lag order
+ * to be applied to all units, or a set of unit-specific
+ * orders; in the latter case the length of the list must
+ * equal the number of panel units in the current sample
+ * range. (This is a gretl list: the first element holds
+ * a count of the number of elements following.)
+ *
+ * By default a test with constant is performed, but the
+ * (mutually exclusive) options OPT_N and OPT_T in @opt switch to
+ * the case of no constant or constant plus trend respectively.
+ * The OPT_Q flag may be used to suppress printed output.
+ *
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int levin_lin_test (int vnum, const int *plist,
+		    double **Z, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
+{
+    int save_t1 = pdinfo->t1;
+    int save_t2 = pdinfo->t2;
+    int panelmode;
+    int err;
+
+    panelmode = multi_unit_panel_sample(pdinfo);
+
+    if (!panelmode || incompatible_options(opt, OPT_N | OPT_T)) {
+	return E_BADOPT;
+    }
+
+    err = real_levin_lin(vnum, plist, Z, pdinfo, opt, prn);
+
+    pdinfo->t1 = save_t1;
+    pdinfo->t2 = save_t2;
+
+    return err;
 }
 
 /**
@@ -1658,19 +1805,8 @@ int adf_test (int order, const int *list, double ***pZ,
 
     panelmode = multi_unit_panel_sample(pdinfo);
 
-    if (!err && (opt & OPT_L)) {
-	/* Levin-Lin-Chu */
-	if (!panelmode || (opt & (OPT_D | OPT_R))) {
-	    err = E_BADOPT;
-	}
-    }
-
     if (panelmode) {
-	if (opt & OPT_L) {
-	    err = LLC_panel_test(list[1], order, *pZ, pdinfo, opt, prn);
-	} else {
-	    err = panel_DF_test(list[1], order, pZ, pdinfo, opt, prn);
-	}
+	err = panel_DF_test(list[1], order, pZ, pdinfo, opt, prn);
     } else {
 	/* regular time series case */
 	int i, v, vlist[2] = {1, 0};

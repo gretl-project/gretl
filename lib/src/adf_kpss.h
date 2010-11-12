@@ -26,6 +26,10 @@ int adf_test (int order, const int *list, double ***pZ,
 int kpss_test (int order, const int *list, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
+int levin_lin_test (int vnum, const int *plist,
+		    double **Z, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn);
+
 int engle_granger_test (int order, const int *list, double ***pZ, 
 			DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 

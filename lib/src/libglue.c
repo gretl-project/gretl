@@ -28,6 +28,7 @@
 #include "system.h"
 #include "gretl_panel.h"
 #include "usermat.h"
+#include "gretl_scalar.h"
 #include "gretl_string_table.h"
 #include "libglue.h"
 
@@ -224,6 +225,51 @@ int chow_test_driver (const char *line, MODEL *pmod, double ***pZ,
 	    err = chow_test_from_dummy(chowparm, pmod, pZ, pdinfo, opt, prn);
 	} else {
 	    err = chow_test(chowparm, pmod, pZ, pdinfo, opt, prn);
+	}
+    }
+
+    return err;
+}
+
+/* The @parm here may contain a scalar or a matrix: in either case,
+   convert to a list of lag-orders before handing off to the real
+   Levin-Lin-Chu code.
+*/
+
+int llc_test_driver (const char *parm, const int *list, 
+		     double ***pZ, DATAINFO *pdinfo,
+		     gretlopt opt, PRN *prn)
+{
+    gretl_matrix *m = NULL;
+    int *plist = NULL;
+    int p0 = -1;
+    int err = 0;
+
+    if (*parm == '{') {
+	m = generate_matrix(parm, pZ, pdinfo, &err);
+	if (!err) {
+	    plist = gretl_list_from_vector(m, &err);
+	}
+	gretl_matrix_free(m);
+    } else if (gretl_is_matrix(parm)) {
+	m = get_matrix_by_name(parm);
+	plist = gretl_list_from_vector(m, &err);
+    } else if (integer_string(parm)) {
+	p0 = atoi(parm);
+    } else if (gretl_is_scalar(parm)) {
+	p0 = gretl_scalar_get_value(parm);
+    } else {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	if (plist != NULL) {
+	    err = levin_lin_test(list[1], plist, *pZ, pdinfo, opt, prn);
+	    free(plist);
+	} else {
+	    int tmplist[2] = {1, p0};
+
+	    err = levin_lin_test(list[1], tmplist, *pZ, pdinfo, opt, prn);
 	}
     }
 

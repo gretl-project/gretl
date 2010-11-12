@@ -5440,6 +5440,74 @@
 
   </command>
 
+  <command name="levinlin" section="Tests" label="Levin-Lin-Chu test">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>series</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>test without a constant</effect>
+	</option>
+	<option>
+	  <flag>--ct</flag>
+	  <effect>with constant and trend</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+	</option>
+      </options>
+      <examples>
+	<example>levinlin 0 y</example>
+        <example>levinlin 2 y --ct</example>
+        <example>levinlin {2,2,3,3,4,4} y</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Carries out the panel unit-root test described by <cite
+	key="LLC2002">Levin, Lin and Chu (2002)</cite>. The null
+	hypothesis is that all of the individual time series exhibit a
+	unit, and the alternative is that none of the series has a
+	unit unit. (That is, a common AR(1) coefficient is assumed,
+	although in other respects the statistical properties of the
+	series are allowed to vary across individuals.)
+      </para>
+	
+      <para context="cli">
+	By default the test ADF regressions include a constant;
+	to suppress the constant use the <lit>--nc</lit> option, or
+	to add a linear trend use the <lit>--ct</lit> option.
+	(See the <cmdref targ="adf"/> command for explanation of
+	ADF regressions.)
+      </para>
+
+      <para context="cli">
+	The (non-negative) <repl>order</repl> for the test (governing
+	the number of lags of the dependent variable to include in the
+	ADF regressions) may be given in either of two forms. If a
+	scalar value is given, this is applied to all the individuals
+	in the panel.  The alternative is to provide a matrix
+	containing a specific lag order for each individual; this must
+	be a vector with as many elements as there are individuals in
+	the current sample range. Such a matrix can be specified by
+	name, or constructed using braces as illustrated in the
+	last example above.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Unit root tests/Levin-Lin-Chu test</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="logistic" section="Estimation" label="Logistic regression">
 
     <usage>
