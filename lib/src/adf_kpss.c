@@ -1664,22 +1664,27 @@ static int real_levin_lin (int vnum, const int *plist,
 	    double z = (td - NT * (SN / s2e) * STD * mstar) / sstar;
 	    double pval = normal_cdf(z);
 
-	    /* FIXME try to reuse some translatable strings here */
-
 #if LLC_DEBUG
 	    pprintf(prn, "mustar = %g, sigstar = %g\n", mstar, sstar);
 	    pprintf(prn, "SN = %g, se = %g, STD = %g\n", SN, sqrt(s2e), STD);
 #endif
 
 	    if (!(opt & OPT_Q)) {
-		pprintf(prn, "\nLevin-Lin-Chu pooled ADF test (%s)\n", DF_test_string(m-1));
+		const char *s = pdinfo->varname[vnum];
+ 
+		pputc(prn, '\n');
+		pprintf(prn, _("Levin-Lin-Chu pooled ADF test for %s\n"), s);
+		pprintf(prn, "%s ", _(DF_test_string(m-1)));
 		if (p_varies) {
-		    pprintf(prn, "Augmented by %.2f lags (average), ", pbar);
+		    pprintf(prn, _("including %.2f lags of (1-L)%s (average)"), pbar, s);
+		} else if (p == 1) {
+		    pprintf(prn, _("including one lag of (1-L)%s"), s);
 		} else {
-		    pprintf(prn, "Augmented by %d lags, ", p);
-		} 
-		pprintf(prn, "Bartlett truncation at %d lags\n", K);
-		pprintf(prn, "(N,T) = (%d,%d), observations used = %d\n", N, dyT+1, NT);
+		    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
+		}
+		pputc(prn, '\n');
+		pprintf(prn, _("Bartlett truncation at %d lags\n"), K);
+		pprintf(prn, "N,T = (%d,%d), observations used = %d\n", N, dyT+1, NT);
 		pprintf(prn, "\ncoefficient    t-ratio      z-score\n");
 		pprintf(prn, "%11.5g %10.3f %12.6g [%.4f]\n\n", delta, td, z, pval);
 	    }
