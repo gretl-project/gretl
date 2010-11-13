@@ -488,7 +488,7 @@ static void add_poly_weights_options (GtkWidget *vbox, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     combo = gtk_combo_box_new_text();
     for (i=0; i<4; i++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), wstrs[i]);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _(wstrs[i]));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     g_signal_connect(GTK_COMBO_BOX(combo), "changed",
@@ -732,7 +732,7 @@ static void filter_dialog (filter_info *finfo)
 	g_signal_connect(G_OBJECT(w), "clicked",
 			 G_CALLBACK(butterworth_poles_graph), finfo);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	finfo->label = w = gtk_label_new("filter may be numerically unstable");
+	finfo->label = w = gtk_label_new(_("filter may be numerically unstable"));
 	gtk_widget_set_sensitive(w, FALSE);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -972,6 +972,8 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
 static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
 {
+    const char *fmt = N_("Butterworth poles (n = %d, cutoff = %d degrees)");
+    gchar *title;
     FILE *fp;
     double cut, theta, delta; 
     double x, y, px, py;
@@ -987,8 +989,9 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
     cut = finfo->cutoff * M_PI / 180;
     cut = tan(cut / 2);
 
-    fprintf(fp, "set title \"Butterworth poles (n = %d, cutoff = %d degrees)\"\n", 
-	    finfo->order, finfo->cutoff);
+    title = g_strdup_printf(_(fmt), finfo->order, finfo->cutoff);
+    fprintf(fp, "set title \"%s\"\n", title);
+    g_free(title);
 
     fputs("unset border\n", fp);
     fputs("unset key\n", fp);
