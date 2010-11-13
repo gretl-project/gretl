@@ -1032,6 +1032,11 @@ void unit_root_test (int ci)
 
     omax = okT / 2;
 
+    /* note: making nradios < 0 places the radio
+       buttons before the check boxes in the
+       dialog box produced bu checks_dialog()
+    */
+
     if (ci == ADF) {
 	title = adf_title;
 	spintext = adf_spintext;
@@ -1115,7 +1120,7 @@ void unit_root_test (int ci)
 	    if (active[6]) opt |= OPT_E;
 	}
     } else if (ci == DFGLS) {
-	opt |= OPT_G;
+	opt |= OPT_G; /* --gls */
 	if (active[0]) {
 	    opt |= OPT_T;
 	} else {
