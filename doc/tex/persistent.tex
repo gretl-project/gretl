@@ -51,7 +51,7 @@ list xlist = x1 x2 x3 x4
 ols y 0 xlist
 \end{code}
 
-To get rid of a list, you can use the following syntax:
+To get rid of a list, you use the following syntax:
 \begin{code}
   list xlist delete
 \end{code}
@@ -60,6 +60,14 @@ in the list, so it implies data loss (which may not be what you want).
 On the other hand, \texttt{list xlist delete} will simply ``undefine''
 the \texttt{xlist} identifier and the variables themselves will not be
 affected.
+
+Similarly, to print the names of the variables in a list you have to
+invert the usual print command, as in
+\begin{code}
+  list xlist print
+\end{code}
+If you just say \texttt{print xlist} the list will be expanded and
+the values of all the member variables will be printed.
 
 Lists can be modified in two ways.  To \textit{redefine} an existing
 list altogether, use the same syntax as for creating a list.  For
@@ -165,19 +173,6 @@ nl = nelem(xlist)
 The (scalar) variable \texttt{nl} will be assigned a value of 3 since
 \texttt{xlist} contains 3 members.
 
-You can display the membership of a named list just by giving its name,
-as illustrated in this interactive session:
-%
-\begin{code}
-? list xlist = x1 x2 x3
-Added list 'xlist'
-? xlist
- x1 x2 x3
-\end{code}
-%
-Note that \texttt{print xlist} will do something different, namely
-print the values of all the variables in \texttt{xlist} (as should be
-expected).
 
 \subsection{Generating lists of transformed variables}
 
