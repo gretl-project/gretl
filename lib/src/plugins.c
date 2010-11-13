@@ -87,7 +87,8 @@ enum {
     P_ANOVA,
     P_DURATION,
     P_INTERPOLATE,
-    P_BIPROBIT
+    P_BIPROBIT,
+    P_PANURC
 } plugin_codes;
 
 struct plugin_info {
@@ -140,7 +141,8 @@ struct plugin_info plugins[] = {
     { P_ANOVA,           "anova" },
     { P_DURATION,        "duration" },
     { P_INTERPOLATE,     "interpolate" },
-    { P_BIPROBIT,        "biprobit" }
+    { P_BIPROBIT,        "biprobit" },
+    { P_PANURC,          "panurc" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -192,7 +194,6 @@ struct plugin_function plugin_functions[] = {
     { "get_IPS_critvals",     P_STATS_TABLES },
     { "IPS_tbar_moments",     P_STATS_TABLES },
     { "IPS_tbar_rho_moments", P_STATS_TABLES },
-    { "LLC_corrections",      P_STATS_TABLES },
 
     /* SUR, 3SLS, FIML */
     { "system_estimate", P_SYSEST },
@@ -257,6 +258,9 @@ struct plugin_function plugin_functions[] = {
 
     /* data interpolation */
     { "chow_lin_interpolate", P_INTERPOLATE},
+
+    /* panel unit roots/cointegration */
+    { "real_levin_lin", P_PANURC},
 
     /* sentinel */
     { NULL, 0 }

@@ -152,7 +152,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/interval.dll \
 	plugins/anova.dll \
 	plugins/interpolate.dll \
-	plugins/biprobit.dll
+	plugins/biprobit.dll \
+	plugins/panurc.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -504,6 +505,10 @@ plugins/interpolate.dll: interpolate.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/biprobit.dll: biprobit.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/panurc.dll: panurc.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 

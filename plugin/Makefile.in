@@ -148,7 +148,8 @@ PLUGINS = arbond.la \
 	anova.la \
 	mp_ols.la \
 	interpolate.la \
-	biprobit.la
+	biprobit.la \
+	panurc.la
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
@@ -298,6 +299,9 @@ anova.la: anova.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 interpolate.la: interpolate.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+panurc.la: panurc.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 # plugins that require GTK+
