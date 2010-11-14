@@ -72,7 +72,7 @@
 #define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
 
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
-			    t == VEC || t == BUNDLE) 
+			    t == VEC || t == BUNDLE || t == U_ADDR) 
 
 #define lhscalar(p) (p->flags & P_LHSCAL)
 #define lhlist(p) (p->flags & P_LHLIST)
@@ -3338,11 +3338,6 @@ static NODE *bundle_op (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* Getting an object from within a bundle: on the left is the
-   bundle reference, on the right should be a string -- the
-   key to look up to get content.
-*/
-
 /* in case we switched the LHS and RHS in a boolean comparison */
 
 static int reversed_comp (int f)
@@ -5241,7 +5236,8 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 		p->err = E_ALLOC;
 	    }
 	}
-    } else if (type == GRETL_TYPE_MATRIX) {
+    } else if (type == GRETL_TYPE_MATRIX ||
+	       type == GRETL_TYPE_MATRIX_REF) {
 	ret = matrix_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
@@ -5333,6 +5329,19 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	case MAT:
 	    ptr = n->v.m;
 	    type = GRETL_TYPE_MATRIX;
+	    break;
+	case U_ADDR:
+	    n = n->v.b1.b;
+	    if (n->t == UMAT) {
+		ptr = get_matrix_by_name(n->v.str);
+		if (ptr == NULL) {
+		    err = E_DATA;
+		} else {
+		    type = GRETL_TYPE_MATRIX_REF;
+		}
+	    } else {
+		err = E_TYPES;
+	    }	 
 	    break;
 	case VEC:
 	    ptr = n->v.xvec;
@@ -9472,7 +9481,8 @@ static int edit_list (parser *p)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
 			   t == LIST || t == LVEC || t == DUM || \
-			   t == EMPTY || t == STR || t == BUNDLE)
+			   t == EMPTY || t == STR || t == BUNDLE || \
+                           t == U_ADDR)
 
 static int gen_check_return_type (parser *p)
 {
@@ -9491,7 +9501,7 @@ static int gen_check_return_type (parser *p)
     if ((p->dinfo == NULL || p->dinfo->n == 0) && 
 	r->t != MAT && r->t != NUM && 
 	r->t != STR && r->t != BUNDLE &&
-	r->t != EMPTY) {
+	r->t != U_ADDR && r->t != EMPTY) {
 	no_data_error(p);
 	return p->err;
     }

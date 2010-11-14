@@ -1186,6 +1186,7 @@ int gretl_R_function_add_scalar (double x)
 {
     current_arg = R_CDR(current_arg);
     R_SETCAR(current_arg, R_ScalarReal(x));
+
     return 0;
 }
 
@@ -1205,6 +1206,7 @@ int gretl_R_function_add_vector (const double *x, int t1, int t2)
     }
     
     R_SETCAR(current_arg, res);
+
     return 0;
 }
 

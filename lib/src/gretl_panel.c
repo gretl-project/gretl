@@ -4650,6 +4650,46 @@ int balanced_panel (const DATAINFO *pdinfo)
     return ret;
 }
 
+int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo)
+{
+    const char *tnames[] = {
+	"year",
+	"Year",
+	"period",
+	"Period",
+	NULL
+    };
+    int i, t, v;
+    int ret = -1;
+
+    for (i=0; tnames[i] != NULL && ret < 0; i++) {
+	v = series_index(pdinfo, tnames[i]);
+	if (v < pdinfo->v) {
+	    const double *x = Z[v];
+	    int val0 = x[0];
+	    int incr0 = x[1] - x[0];
+	    int ok = 1;
+
+	    for (t=0; t<pdinfo->n && ok; t++) {
+		if (na(x[t]) || x[t] < 0) {
+		    ok = 0;
+		} else if ((t+1) % pdinfo->pd == 0) {
+		    if (x[t] != val0) {
+			ok = 0;
+		    }
+		} else if (t > 1 && x[t] - x[t-1] != incr0) {
+		    ok = 0;
+		}
+	    }
+	    if (ok) {
+		ret = v;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 /* FIXME: this does not yet handle the dropping of instruments */
 
 static int *arbond_list_omit (const MODEL *orig, const int *drop, int *err)

@@ -130,6 +130,9 @@ static bundled_item *bundled_item_new (GretlType type, void *ptr,
 	case GRETL_TYPE_MATRIX:
 	    item->data = gretl_matrix_copy((gretl_matrix *) ptr);
 	    break;
+	case GRETL_TYPE_MATRIX_REF:
+	    item->data = ptr;
+	    break;
 	case GRETL_TYPE_SERIES:
 	    item->data = copyvec((const double *) ptr, size);
 	    item->size = size;
@@ -170,6 +173,9 @@ static void bundled_item_destroy (gpointer data)
 	break;
     case GRETL_TYPE_MATRIX:
 	gretl_matrix_free((gretl_matrix *) item->data);
+	break;
+    case GRETL_TYPE_MATRIX_REF:
+	item->data = NULL;
 	break;
     case GRETL_TYPE_BUNDLE:
 	gretl_bundle_destroy((gretl_bundle *) item->data);
