@@ -4214,7 +4214,7 @@ static int panel_overlay_ts_plot (const int vnum, const double **Z,
 
     if (panvar > 0) {
 	/* time variable for x-axis */
-	strcpy(gdinfo->varname[nv-1], "year");
+	strcpy(gdinfo->varname[nv-1], pdinfo->varname[panvar]);
 	for (t=0; t<T; t++) {
 	    gZ[nv-1][t] = Z[panvar][t];
 	}
