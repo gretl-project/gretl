@@ -2159,6 +2159,11 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 	gi->flags |= GPT_TS; /* may be renounced later */
     }
 
+    if (t2 - t1 + 1 <= 0) {
+	/* null sample range */
+	return E_DATA;
+    }
+
     gi->t1 = t1;
     gi->t2 = t2;
     gi->xrange = 0.0;
@@ -2725,6 +2730,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
 #if GP_DEBUG
     printlist(plotlist, "gnuplot: plotlist");
+    fprintf(stderr, "incoming plot range: obs %d to %d\n", pdinfo->t1, pdinfo->t2);
 #endif
 
     err = gpinfo_init(&gi, opt, plotlist, literal, 

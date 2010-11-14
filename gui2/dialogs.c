@@ -1758,17 +1758,6 @@ static struct range_setting *rset_new (guint code, gpointer p,
     return rset;
 }
 
-static void panel_unit_spin_callback (GtkSpinButton *spin, gpointer p)
-{
-    struct range_setting *rset = p;
-
-    if (spin == GTK_SPIN_BUTTON(rset->startspin)) {
-	*rset->t1 = gtk_spin_button_get_value_as_int(spin);
-    } else {
-	*rset->t2 = gtk_spin_button_get_value_as_int(spin);
-    }
-}
-
 /* Special sample range selector for panel datasets: express the
    choice as a matter of which units/groups to include 
 */
@@ -1832,14 +1821,6 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     /* inter-connect the two spinners */
     g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
     g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
-
-    /* and set callback if wanted */
-    if (nmax > 0) {
-	g_signal_connect(G_OBJECT(rset->startspin), "value-changed",
-			 G_CALLBACK(panel_unit_spin_callback), rset);
-	g_signal_connect(G_OBJECT(rset->endspin), "value-changed",
-			 G_CALLBACK(panel_unit_spin_callback), rset);
-    }	
 
     return hbox;
 }
@@ -2060,6 +2041,14 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     gtk_widget_show_all(rset->dlg);
 }
 
+static void panel_units_finalize (GtkButton *b, struct range_setting *rset)
+{
+    *rset->t1 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->startspin));
+    *rset->t2 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->endspin));
+
+    gtk_widget_destroy(rset->dlg);
+}
+
 int panel_units_selector (int *t1, int *t2, int nmax)
 {
     struct range_setting *rset = NULL;
@@ -2087,8 +2076,8 @@ int panel_units_selector (int *t1, int *t2, int nmax)
     cancel_delete_button(hbox, rset->dlg, &ret);
 
     w = ok_button(hbox);
-    g_signal_connect_swapped(G_OBJECT(w), "clicked",
-			     G_CALLBACK(gtk_widget_destroy), rset->dlg);
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(panel_units_finalize), rset);
     gtk_widget_grab_default(w);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 

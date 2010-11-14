@@ -6057,7 +6057,7 @@ void delete_selected_vars (void)
     real_delete_vars(0, NULL);
 }
 
-static int select_fewer_units (int *nunits, int nmax)
+static int select_fewer_units (int nmax)
 {
     int t1 = datainfo->t1 / datainfo->pd;
     int t2 = t1 + nmax - 1;
@@ -6071,8 +6071,7 @@ static int select_fewer_units (int *nunits, int nmax)
 	    ret = 1;
 	} else {
 	    datainfo->t1 = datainfo->pd * t1;
-	    datainfo->t2 = datainfo->pd * t2;
-	    *nunits = n;
+	    datainfo->t2 = datainfo->t1 + n * datainfo->pd - 1;
 	}	    
     }
 
@@ -6098,10 +6097,19 @@ static int regular_ts_plot (int vnum)
 
 void do_graph_var (int varnum)
 {
+    int save_t1 = datainfo->t1;
+    int save_t2 = datainfo->t2;
     int canceled = 0;
     int err = 0;
 
     if (varnum <= 0) return;
+
+    if (panel_sample_size(datainfo) > 80) {
+	err = select_fewer_units(80);
+	if (err) {
+	    return;
+	} 
+    }
 
     if (dataset_is_cross_section(datainfo)) {
 	do_freq_dist();
@@ -6114,16 +6122,7 @@ void do_graph_var (int varnum)
 	    N_("multiple plots arranged vertically"),
 	};
 	int nunits = panel_sample_size(datainfo);
-	int save_t1 = datainfo->t1;
-	int save_t2 = datainfo->t2;
-	int ret, ns = 2;
-
-	if (nunits > 80) {
-	    err = select_fewer_units(&nunits, 80);
-	    if (err) {
-		return;
-	    }
-	}
+	int sel, ns = 2;
 
 	if (nunits <= 6) {
 	    /* allow both multiplot options */
@@ -6133,34 +6132,33 @@ void do_graph_var (int varnum)
 	    ns = 3;
 	}
 
-	ret = radio_dialog(_("gretl: define graph"), 
+	sel = radio_dialog(_("gretl: define graph"), 
 			   _("Panel time-series graph"), 
 			   strs, ns, 0, 0);
 
-	if (ret < 0) {
+	if (sel < 0) {
 	    canceled = 1;
-	} else if (ret == 0) {
+	} else if (sel == 0) {
 	    /* overlay */
 	    err = gretl_panel_ts_plot(varnum, (const double **) Z, 
 				      datainfo, OPT_G);
-	} else if (ret == 1) {
+	} else if (sel == 1) {
 	    /* sequential by unit */
 	    err = regular_ts_plot(varnum);
 	} else {
 	    /* small multiples: OPT_V for vertical */
-	    gretlopt opt = (ret == 3)? OPT_V : OPT_NONE;
+	    gretlopt opt = (sel == 3)? OPT_V : OPT_NONE;
 
 	    err = gretl_panel_ts_plot(varnum, (const double **) Z, 
 				      datainfo, opt | OPT_S);
 	} 
-
-	/* restore sample */
-	datainfo->t1 = save_t1;
-	datainfo->t2 = save_t2;
     } else {
 	/* time series case */
 	err = regular_ts_plot(varnum);
     }
+
+    datainfo->t1 = save_t1;
+    datainfo->t2 = save_t2;
 
     if (!canceled) {
 	gui_graph_handler(err);
