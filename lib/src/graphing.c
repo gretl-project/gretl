@@ -4257,9 +4257,9 @@ static int panel_sequence_ts_plot (int vnum, const double **Z,
     int w, xnum, ynum;
     float xfrac, yfrac;
     float yorig, xorig = 0.0;
-    const double *y;
+    const double *y, *x = NULL;
     const char *vname;
-    double yt, ymin, ymax, incr;
+    double xt, yt, ymin, ymax, incr;
     int u0, nunits, T = pdinfo->pd;
     int err = 0;
 
@@ -4267,6 +4267,11 @@ static int panel_sequence_ts_plot (int vnum, const double **Z,
     u0 = pdinfo->t1 / pdinfo->pd;
 
     if (opt & OPT_V) {
+	int xvar = plausible_panel_time_var(Z, pdinfo);
+
+	if (xvar > 0) {
+	    x = Z[xvar];
+	}
 	xnum = 1;
 	ynum = nunits;
     } else {
@@ -4335,11 +4340,16 @@ static int panel_sequence_ts_plot (int vnum, const double **Z,
 	    fputs("plot \\\n'-' using 1:($2) notitle w lines\n", fp);
 
 	    for (t=0; t<T; t++) {
+		if (x != NULL) {
+		    xt = x[t+t0];
+		} else {
+		    xt = t + 1;
+		}
 		yt = y[t+t0];
 		if (na(yt)) {
-		    fprintf(fp, "%d ?\n", t+1);
+		    fprintf(fp, "%g ?\n", xt);
 		} else {
-		    fprintf(fp, "%d %.10g\n", t+1, yt);
+		    fprintf(fp, "%g %.10g\n", xt, yt);
 		}
 	    }
 	    fputs("e\n", fp);
