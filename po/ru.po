@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-10-22 09:30-0400\n"
-"PO-Revision-Date: 2010-11-09 03:36+0200\n"
+"PO-Revision-Date: 2010-11-15 01:12+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -10780,7 +10780,7 @@ msgstr "_Счетная модель..."
 
 #: gui2/gretl.c:1602
 msgid "_Duration data..."
-msgstr "Модель \"_времени жизни\""
+msgstr "Модель \"_времени жизни\"..."
 
 #: gui2/gretl.c:1603
 msgid "Lo_gistic..."
