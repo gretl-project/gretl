@@ -286,6 +286,8 @@ void free_Z (double **Z, const DATAINFO *pdinfo);
 
 DATAINFO *datainfo_new (void);
 
+void datainfo_init (DATAINFO *pdinfo);
+
 DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 			      int nvar,     /* number of variables */
 			      int nobs,     /* observations per variable */
@@ -420,6 +422,10 @@ int modify_dataset (int op, const int *list, const char *s,
 		    PRN *prn);
 
 int dataset_get_structure (const DATAINFO *pdinfo);
+
+int panel_sample_size (const DATAINFO *pdinfo);
+
+int multi_unit_panel_sample (const DATAINFO *pdinfo);
 
 int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo);
 

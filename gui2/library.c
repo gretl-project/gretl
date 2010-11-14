@@ -6057,71 +6057,114 @@ void delete_selected_vars (void)
     real_delete_vars(0, NULL);
 }
 
-static void do_stacked_ts_plot (int v, gretlopt opt)
+static int select_fewer_units (int *nunits, int nmax)
 {
-    int list[2] = { 1, v };
-    int err;
-    
-    err = gretl_panel_ts_plot(list, (const double **) Z, datainfo,
-			      opt);
+    int t1 = datainfo->t1 / datainfo->pd;
+    int t2 = t1 + nmax - 1;
+    int ret = panel_units_selector(&t1, &t2, nmax);
 
-    gui_graph_handler(err);
+    if (ret >= 0) {
+	int n = t2 - t1 + 1;
+
+	if (n > nmax) {
+	    warnbox(_("Too many units selected"));
+	    ret = 1;
+	} else {
+	    datainfo->t1 = datainfo->pd * t1;
+	    datainfo->t2 = datainfo->pd * t2;
+	    *nunits = n;
+	}	    
+    }
+
+    return ret;
+}
+
+static int regular_ts_plot (int vnum)
+{
+    int list[2] = {1, vnum};
+    int err;
+
+    err = gnuplot(list, NULL, (const double **) Z, 
+		  datainfo, OPT_G | OPT_O | OPT_T);
+
+    if (!err) {
+	gretl_command_sprintf("gnuplot %s --time-series --with-lines", 
+			      datainfo->varname[vnum]);
+	record_command_verbatim(cmdline);
+    }
+
+    return err;
 }
 
 void do_graph_var (int varnum)
 {
-    int err;
+    int canceled = 0;
+    int err = 0;
 
     if (varnum <= 0) return;
 
-    if (datainfo->structure == STACKED_TIME_SERIES) {
-	int nunits = datainfo->paninfo->unit[datainfo->t2] -
-	    datainfo->paninfo->unit[datainfo->t1] + 1;
+    if (dataset_is_cross_section(datainfo)) {
+	do_freq_dist();
+	return;
+    } else if (multi_unit_panel_sample(datainfo)) {
+	const char *strs[] = {
+	    N_("single graph: units overlaid"),
+	    N_("single graph: units in sequence"),
+	    N_("multiple plots in grid"),
+	    N_("multiple plots arranged vertically"),
+	};
+	int nunits = panel_sample_size(datainfo);
+	int save_t1 = datainfo->t1;
+	int save_t2 = datainfo->t2;
+	int ret, ns = 2;
 
-	if (nunits == 1) {
-	    goto tsplot;
-	} else if (nunits < 10) {
-	    const char *strs[] = {
-		N_("use a single graph"),
-		N_("multiple plots in grid"),
-		N_("multiple plots arranged vertically"),
-	    };
-	    int ret, ns = (nunits <= 5)? 3 : 2;
-
-	    ret = radio_dialog(_("gretl: define graph"), _("Panel time-series graph"), 
-			       strs, ns, 0, 0);
-	    if (ret < 0) {
-		/* canceled */
-		return;
-	    } else if (ret > 0) {
-		/* multiples */
-		gretlopt opt = (ret == 2)? OPT_V : OPT_NONE;
-
-		do_stacked_ts_plot(varnum, opt);
+	if (nunits > 80) {
+	    err = select_fewer_units(&nunits, 80);
+	    if (err) {
 		return;
 	    }
 	}
+
+	if (nunits <= 6) {
+	    /* allow both multiplot options */
+	    ns = 4;
+	} else if (nunits < 10) {
+	    /* allow gridded multiplot option */
+	    ns = 3;
+	}
+
+	ret = radio_dialog(_("gretl: define graph"), 
+			   _("Panel time-series graph"), 
+			   strs, ns, 0, 0);
+
+	if (ret < 0) {
+	    canceled = 1;
+	} else if (ret == 0) {
+	    /* overlay */
+	    err = gretl_panel_ts_plot(varnum, (const double **) Z, 
+				      datainfo, OPT_G);
+	} else if (ret == 1) {
+	    /* sequential by unit */
+	    err = regular_ts_plot(varnum);
+	} else {
+	    /* small multiples: OPT_V for vertical */
+	    gretlopt opt = (ret == 3)? OPT_V : OPT_NONE;
+
+	    err = gretl_panel_ts_plot(varnum, (const double **) Z, 
+				      datainfo, opt | OPT_S);
+	} 
+
+	/* restore sample */
+	datainfo->t1 = save_t1;
+	datainfo->t2 = save_t2;
+    } else {
+	/* time series case */
+	err = regular_ts_plot(varnum);
     }
 
-    if (!dataset_is_time_series(datainfo) &&
-	datainfo->structure != STACKED_TIME_SERIES) {
-	do_freq_dist();
-	return;
+    if (!canceled) {
+	gui_graph_handler(err);
     }
-
- tsplot:
-
-    gretl_command_sprintf("gnuplot %s --time-series --with-lines", 
-			  datainfo->varname[varnum]);
-
-    if (check_and_record_command()) {
-	return;
-    }
-
-    err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, OPT_G | OPT_O | OPT_T);
-
-    gui_graph_handler(err);
 }
 
 void ts_plot_callback (void)

@@ -1479,13 +1479,14 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 
 struct range_setting {
     gretlopt opt;
-    GtkWidget *dlg;
-    GtkWidget *obslabel;
-    GtkObject *adj1;
-    GtkWidget *startspin;
-    GtkObject *adj2;
-    GtkWidget *endspin;
-    GtkWidget *combo;
+    DATAINFO dinfo;       /* auxiliary data info structure */
+    GtkWidget *dlg;       /* dialog box */
+    GtkWidget *obslabel;  /* label for showing number of selected obs */
+    GtkObject *adj1;      /* adjustment for start spinner */
+    GtkWidget *startspin; /* start-of-range spinner */
+    GtkObject *adj2;      /* adjustment for end spinner */
+    GtkWidget *endspin;   /* end-of-range spinner */
+    GtkWidget *combo;     /* multi-purpose selector */
     GtkWidget *entry;
     gpointer p;
     MODEL *pmod;
@@ -1747,6 +1748,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
     rset->startspin = rset->endspin = NULL;
     rset->obslabel = NULL;
 
+    datainfo_init(&rset->dinfo);
     rset->p = p;
     rset->pmod = pmod;
 
@@ -1756,25 +1758,54 @@ static struct range_setting *rset_new (guint code, gpointer p,
     return rset;
 }
 
+static void panel_unit_spin_callback (GtkSpinButton *spin, gpointer p)
+{
+    struct range_setting *rset = p;
+
+    if (spin == GTK_SPIN_BUTTON(rset->startspin)) {
+	*rset->t1 = gtk_spin_button_get_value_as_int(spin);
+    } else {
+	*rset->t2 = gtk_spin_button_get_value_as_int(spin);
+    }
+}
+
 /* Special sample range selector for panel datasets: express the
    choice as a matter of which units/groups to include 
 */
 
-static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
+static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
+					int nmax)
 {
-    DATAINFO dinfo = {0};
     GtkWidget *lbl;
     GtkWidget *vbox;
     GtkWidget *hbox;
 
-    dinfo.n = datainfo->n / datainfo->pd;
-    dinfo.t1 = datainfo->paninfo->unit[datainfo->t1];
-    dinfo.t2 = datainfo->paninfo->unit[datainfo->t2];
-    dataset_obs_info_default(&dinfo);
+    rset->dinfo.n = datainfo->n / datainfo->pd;
 
-    lbl = gtk_label_new(_("Panel groups"));
+    if (nmax > 0) {
+	rset->dinfo.t1 = *rset->t1;
+	rset->dinfo.t2 = *rset->t2;
+    } else {
+	rset->dinfo.t1 = datainfo->paninfo->unit[datainfo->t1];
+	rset->dinfo.t2 = datainfo->paninfo->unit[datainfo->t2];
+    }
+
+    dataset_obs_info_default(&rset->dinfo);
+
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
-    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 5);
+
+    if (nmax > 0) {
+	gchar *txt = g_strdup_printf(_("Panel groups to graph (max %d)"), nmax);
+
+	lbl = gtk_label_new(txt);
+	hbox = gtk_hbox_new(TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	g_free(txt);
+    } else {
+	lbl = gtk_label_new(_("Panel groups"));
+	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 5);
+    }
 
     hbox = gtk_hbox_new(TRUE, 5);
 
@@ -1782,8 +1813,8 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
     vbox = gtk_vbox_new(FALSE, 5);
     lbl = gtk_label_new(_("Start:"));
     gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
-    rset->adj1 = gtk_adjustment_new(dinfo.t1, 0, dinfo.n - 1, 1, 1, 0);
-    rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &dinfo);
+    rset->adj1 = gtk_adjustment_new(rset->dinfo.t1, 0, rset->dinfo.n - 1, 1, 1, 0);
+    rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &rset->dinfo);
     gtk_entry_set_activates_default(GTK_ENTRY(rset->startspin), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1792,8 +1823,8 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
     vbox = gtk_vbox_new(FALSE, 5);
     lbl = gtk_label_new(_("End:"));
     gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
-    rset->adj2 = gtk_adjustment_new(dinfo.t2, 0, dinfo.n - 1, 1, 1, 0);
-    rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &dinfo);
+    rset->adj2 = gtk_adjustment_new(rset->dinfo.t2, 0, rset->dinfo.n - 1, 1, 1, 0);
+    rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &rset->dinfo);
     gtk_entry_set_activates_default(GTK_ENTRY(rset->endspin), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1801,6 +1832,14 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset)
     /* inter-connect the two spinners */
     g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
     g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
+
+    /* and set callback if wanted */
+    if (nmax > 0) {
+	g_signal_connect(G_OBJECT(rset->startspin), "value-changed",
+			 G_CALLBACK(panel_unit_spin_callback), rset);
+	g_signal_connect(G_OBJECT(rset->endspin), "value-changed",
+			 G_CALLBACK(panel_unit_spin_callback), rset);
+    }	
 
     return hbox;
 }
@@ -1979,7 +2018,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     } else if (u == SMPL && dataset_is_panel(datainfo)) {
-	hbox = panel_sample_spinbox(rset);
+	hbox = panel_sample_spinbox(rset, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	rset->opt = OPT_P;
     } else { 
@@ -2019,6 +2058,46 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 
     gretl_dialog_keep_above(rset->dlg);
     gtk_widget_show_all(rset->dlg);
+}
+
+int panel_units_selector (int *t1, int *t2, int nmax)
+{
+    struct range_setting *rset = NULL;
+    GtkWidget *w, *vbox, *hbox;
+    int ret = 0;
+
+    rset = rset_new(SMPL, NULL, NULL, t1, t2, _("gretl: set sample"));
+    if (rset == NULL) {
+	return - 1;
+    }
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
+    hbox = panel_sample_spinbox(rset, nmax);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    
+    /* label to show the number of units */
+    rset->obslabel = gtk_label_new("");
+    gtk_box_pack_start(GTK_BOX(vbox), rset->obslabel, FALSE, FALSE, 5);
+
+    g_object_set_data(G_OBJECT(rset->startspin), "rset", rset);
+    g_object_set_data(G_OBJECT(rset->endspin), "rset", rset);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
+
+    cancel_delete_button(hbox, rset->dlg, &ret);
+
+    w = ok_button(hbox);
+    g_signal_connect_swapped(G_OBJECT(w), "clicked",
+			     G_CALLBACK(gtk_widget_destroy), rset->dlg);
+    gtk_widget_grab_default(w);
+
+    g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
+		     G_CALLBACK(free_rsetting), rset);
+
+    gretl_dialog_keep_above(rset->dlg);
+    gtk_widget_show_all(rset->dlg);
+
+    return ret;
 }
 
 static void toggle_rset_use_dummy (GtkToggleButton *b,

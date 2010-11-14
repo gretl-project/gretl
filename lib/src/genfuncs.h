@@ -101,7 +101,7 @@ int gen_wkday (double ***pZ, DATAINFO *pdinfo);
 
 int plotvar_code (const DATAINFO *pdinfo);
 
-const double *gretl_plotx (const DATAINFO *pdinfo);
+const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo);
 
 double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, 
 			  ModelDataIndex idx, char *vname, 

@@ -4650,22 +4650,39 @@ int balanced_panel (const DATAINFO *pdinfo)
     return ret;
 }
 
+static int may_be_time_name (const char *vname)
+{
+    char test[VNAMELEN];
+
+    strcpy(test, vname);
+    lower(test);
+    
+    return strcmp(test, "year") == 0 ||
+	strcmp(test, "period") == 0;
+}
+
+/* See if the panel dataset contains a variable that plausibly represents
+   the year of the observations. We look for series labeled "year" or
+   "period" (in a case insensitive comparison) and, if found, check
+   that the series has the same sequence of values for each individual,
+   and the same increment between successive time-series observations.
+   (The increment does not have to be 1, to accommodate, e.g.,
+   quinquennial or decennial observations.)
+
+   Return the ID number of a suitable variable, or 0 if there's nothing
+   suitable.
+
+   This may be used in setting the x-axis tic marks in a panel time-
+   series plot.
+*/
+
 int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo)
 {
-    const char *tnames[] = {
-	"year",
-	"Year",
-	"period",
-	"Period",
-	NULL
-    };
-    int i, t, v;
-    int ret = -1;
+    int i, t, ret = 0;
 
-    for (i=0; tnames[i] != NULL && ret < 0; i++) {
-	v = series_index(pdinfo, tnames[i]);
-	if (v < pdinfo->v) {
-	    const double *x = Z[v];
+    for (i=1; i<pdinfo->v && ret==0; i++) {
+	if (may_be_time_name(pdinfo->varname[i])) {
+	    const double *x = Z[i];
 	    int val0 = x[0];
 	    int incr0 = x[1] - x[0];
 	    int ok = 1;
@@ -4673,7 +4690,7 @@ int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo)
 	    for (t=0; t<pdinfo->n && ok; t++) {
 		if (na(x[t]) || x[t] < 0) {
 		    ok = 0;
-		} else if ((t+1) % pdinfo->pd == 0) {
+		} else if (t > 0 && t % pdinfo->pd == 0) {
 		    if (x[t] != val0) {
 			ok = 0;
 		    }
@@ -4682,7 +4699,7 @@ int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo)
 		}
 	    }
 	    if (ok) {
-		ret = v;
+		ret = i;
 	    }
 	}
     }

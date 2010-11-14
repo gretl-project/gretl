@@ -1708,7 +1708,7 @@ void libgretl_session_cleanup (int mode)
     gretl_saved_objects_cleanup();
     gretl_transforms_cleanup();
     gretl_lists_cleanup();
-    gretl_plotx(NULL);
+    gretl_plotx(NULL, NULL);
 
     if (mode != SESSION_PRESERVE_MATRICES) {
 	destroy_user_scalars();

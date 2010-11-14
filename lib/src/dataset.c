@@ -598,6 +598,42 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
 }
 
 /**
+ * datainfo_init:
+ * @pdinfo: pointer to DATAINFO struct.
+ *
+ * Zeros all members of @pdinfo and sets it as a plain cross-section. 
+ * Designed for use with a DATAINFO structure that has not been 
+ * obtained via datainfo_new().
+ */
+
+void datainfo_init (DATAINFO *pdinfo)
+{
+    pdinfo->v = 0;
+    pdinfo->n = 0;
+    pdinfo->pd = 1;
+    pdinfo->sd0 = 1.0;
+    pdinfo->t1 = 0;
+    pdinfo->t2 = 0;
+    pdinfo->stobs[0] = '\0';
+    pdinfo->endobs[0] = '\0';
+
+    pdinfo->varname = NULL;
+    pdinfo->varinfo = NULL;    
+    pdinfo->paninfo = NULL;
+
+    pdinfo->markers = NO_MARKERS;  
+    pdinfo->delim = ',';
+    pdinfo->decpoint = '.';
+
+    pdinfo->S = NULL;
+    pdinfo->descrip = NULL;
+    pdinfo->submask = NULL;
+    pdinfo->restriction = NULL;
+
+    pdinfo->structure = CROSS_SECTION;
+}
+
+/**
  * datainfo_new:
  *
  * Creates a new data information struct pointer from scratch,
@@ -608,38 +644,13 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
 
 DATAINFO *datainfo_new (void)
 {
-    DATAINFO *dinfo;
+    DATAINFO *pdinfo = malloc(sizeof *pdinfo);
 
-    dinfo = malloc(sizeof *dinfo);
-    if (dinfo == NULL) {
-	return NULL;
+    if (pdinfo != NULL) {
+	datainfo_init(pdinfo);
     }
 
-    dinfo->v = 0;
-    dinfo->n = 0;
-    dinfo->pd = 1;
-    dinfo->sd0 = 1.0;
-    dinfo->t1 = 0;
-    dinfo->t2 = 0;
-    dinfo->stobs[0] = '\0';
-    dinfo->endobs[0] = '\0';
-
-    dinfo->varname = NULL;
-    dinfo->varinfo = NULL;    
-    dinfo->paninfo = NULL;
-
-    dinfo->markers = NO_MARKERS;  
-    dinfo->delim = ',';
-    dinfo->decpoint = '.';
-
-    dinfo->S = NULL;
-    dinfo->descrip = NULL;
-    dinfo->submask = NULL;
-    dinfo->restriction = NULL;
-
-    dinfo->structure = CROSS_SECTION;
-
-    return dinfo;
+    return pdinfo;
 }
 
 /**
@@ -3407,6 +3418,49 @@ int dataset_get_structure (const DATAINFO *pdinfo)
     } else {
 	return DATA_XSECT;
     }
+}
+
+/**
+ * panel_sample_size:
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Returns: the numbers of units/individuals in the current
+ * sample range, or 0 if the dataset is not a panel.
+ */
+
+int panel_sample_size (const DATAINFO *pdinfo)
+{
+    int ret = 0;
+
+    if (dataset_is_panel(pdinfo)) {
+	if (pdinfo->paninfo != NULL) {
+	    ret = pdinfo->paninfo->unit[pdinfo->t2] -
+		pdinfo->paninfo->unit[pdinfo->t1] + 1;
+	} else {
+	    ret = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
+	}
+    }
+
+    return ret;
+}
+
+/**
+ * multi_unit_panel_sample:
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Returns: 1 if the dataset is a panel and the current sample
+ * range includes two or more individuals, otherwise 0.
+ */
+
+int multi_unit_panel_sample (const DATAINFO *pdinfo)
+{
+    int ret = 0;
+
+    if (dataset_is_panel(pdinfo)) {
+	ret = (pdinfo->t2 - pdinfo->t1 + 1 > pdinfo->pd);
+    }
+
+    return ret;
 }
 
 /**

@@ -857,7 +857,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     char title[128];
     int v, err = 0;
 
-    obs = gretl_plotx(datainfo);
+    obs = gretl_plotx(NULL, datainfo);
     if (obs == NULL) {
 	return E_ALLOC;
     }

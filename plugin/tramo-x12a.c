@@ -379,7 +379,7 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
     char title[32];
     int t, err = 0;
 
-    obs = gretl_plotx(pdinfo);
+    obs = gretl_plotx(NULL, pdinfo);
     if (obs == NULL) {
 	return E_ALLOC;
     }

@@ -211,9 +211,8 @@ int qq_plot (const int *list, const double **Z,
 int theil_forecast_plot (const int *plotlist, const double **Z, 
 			 const DATAINFO *pdinfo, gretlopt opt);
 
-int 
-gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
-		     gretlopt opt);
+int gretl_panel_ts_plot (int vnum, const double **Z, DATAINFO *pdinfo,
+			 gretlopt opt);
 
 int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 		     const DATAINFO *pdinfo, gretlopt opt);

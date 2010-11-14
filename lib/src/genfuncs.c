@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "monte_carlo.h"
 #include "gretl_string_table.h"
+#include "gretl_panel.h"
 #include "gretl_fft.h"
 #include "estim_private.h"
 #include "../../cephes/cephes.h"
@@ -2519,7 +2520,7 @@ int gen_wkday (double ***pZ, DATAINFO *pdinfo)
 }
 
 typedef enum {
-    PLOTVAR_INDEX,
+    PLOTVAR_INDEX = 1,
     PLOTVAR_TIME,
     PLOTVAR_ANNUAL,
     PLOTVAR_QUARTERS,
@@ -2527,6 +2528,7 @@ typedef enum {
     PLOTVAR_CALENDAR,
     PLOTVAR_DECADES,
     PLOTVAR_HOURLY,
+    PLOTVAR_PANEL,
     PLOTVAR_MAX
 } plotvar_type; 
 
@@ -2564,15 +2566,15 @@ int plotvar_code (const DATAINFO *pdinfo)
  * Returns: pointer to plot x-variable, or NULL on failure.
  */
 
-const double *gretl_plotx (const DATAINFO *pdinfo)
+const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
 {
     static double *x;
     static int ptype;
     static int Tbak;
     static double sd0bak;
-
     int t, y1, T;
-    int new_ptype;
+    int new_ptype = 0;
+    int panvar = 0;
     double sd0;
     float rm;
 
@@ -2586,7 +2588,19 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    new_ptype = plotvar_code(pdinfo);
+    if (dataset_is_panel(pdinfo) && 
+	sample_size(pdinfo) == pdinfo->pd && Z != NULL) {
+	/* handle the case of a time-series plot for a single panel unit */
+	panvar = plausible_panel_time_var(Z, pdinfo);
+	if (panvar > 0) {
+	    new_ptype = PLOTVAR_PANEL;
+	}
+    }
+
+    if (new_ptype == 0) {
+	new_ptype = plotvar_code(pdinfo);
+    }
+
     T = pdinfo->n;
     sd0 = pdinfo->sd0;
 
@@ -2599,9 +2613,14 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
 	free(x);
     }
 
-    x = malloc(T * sizeof *x);
-    if (x == NULL) {
-	return NULL;
+    if (new_ptype == PLOTVAR_PANEL) {
+	x = copyvec(Z[panvar], pdinfo->n);
+    } else {
+	x = malloc(T * sizeof *x);
+    }
+
+    if (x == NULL || new_ptype == PLOTVAR_PANEL) {
+	return x;
     }
 
     Tbak = T;

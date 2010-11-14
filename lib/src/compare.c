@@ -2308,7 +2308,7 @@ static double QLR_get_critval (double Fmax, int dfn, int *a, int *approx)
 static int QLR_graph (const double *Ft, int t1, int t2, 
 		      int tmax, int dfn, const DATAINFO *pdinfo)
 {
-    const double *x = gretl_plotx(pdinfo);
+    const double *x = gretl_plotx(NULL, pdinfo);
     FILE *fp;
     int t, err = 0;
 
@@ -2848,7 +2848,7 @@ static int cusum_do_graph (double a, double b, const double *W,
     if (dataset_is_time_series(pdinfo) && okfreq(pdinfo->pd)) {
 	b *= pdinfo->pd;
 	frac /= pdinfo->pd;
-        obs = gretl_plotx(pdinfo);
+        obs = gretl_plotx(NULL, pdinfo);
 	if (obs != NULL) {
 	    x0 = obs[t1 + k];
 	}

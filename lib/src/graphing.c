@@ -27,6 +27,7 @@
 #include "forecast.h"
 #include "plotspec.h"
 #include "usermat.h"
+#include "gretl_panel.h"
 #include "missing_private.h"
 
 #include <unistd.h>
@@ -2362,7 +2363,8 @@ static void graph_list_adjust_sample (int *list,
     ginfo->t2 = t2max;
 }
 
-static int maybe_add_plotx (gnuplot_info *gi, 
+static int maybe_add_plotx (gnuplot_info *gi,
+			    const double **Z,
 			    const DATAINFO *pdinfo)
 {
     int k = gi->list[0];
@@ -2379,7 +2381,7 @@ static int maybe_add_plotx (gnuplot_info *gi,
 	return 0;
     }
 
-    gi->x = gretl_plotx(pdinfo);
+    gi->x = gretl_plotx(Z, pdinfo);
     if (gi->x == NULL) {
 	return E_ALLOC;
     }
@@ -2731,7 +2733,7 @@ int gnuplot (const int *plotlist, const char *literal,
 	goto bailout;
     }
 
-    err = maybe_add_plotx(&gi, pdinfo);
+    err = maybe_add_plotx(&gi, Z, pdinfo);
     if (err) {
 	goto bailout;
     }
@@ -3082,7 +3084,7 @@ int multi_scatters (const int *list, const double **Z,
 
     if (pos == 0) {
 	/* plot against time or index */
-	obs = gretl_plotx(pdinfo);
+	obs = gretl_plotx(Z, pdinfo);
 	if (obs == NULL) {
 	    return E_ALLOC;
 	}
@@ -3741,7 +3743,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	return 1;
     }
 
-    obs = gretl_plotx(pdinfo);
+    obs = gretl_plotx(NULL, pdinfo);
     if (obs == NULL) {
 	return E_ALLOC;
     }
@@ -4033,7 +4035,7 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
 	return E_DATA;
     }
 
-    obs = gretl_plotx(pdinfo);
+    obs = gretl_plotx(NULL, pdinfo);
     if (obs == NULL) {
 	return E_ALLOC;
     }
@@ -4154,29 +4156,110 @@ static int panel_ytic_width (double ymin, double ymax)
     return (n1 > n2)? n1 : n2;
 }
 
+/* Panel: plot one series using separate lines for each
+   cross-sectional unit. The individuals' series are overlaid, in the
+   same manner as a plot of several distinct time series. To do
+   this we construct on the fly a notional time-series dataset.
+*/
+
+static int panel_overlay_ts_plot (const int vnum, const double **Z, 
+				  const DATAINFO *pdinfo,
+				  gretlopt opt)
+{
+    double **gZ = NULL;
+    DATAINFO *gdinfo;
+    int u0, nunits, T = pdinfo->pd;
+    int *list = NULL;
+    char *literal = NULL;
+    int nv, panvar = 0;
+    int i, t, s, s0;
+    int err = 0;
+
+    nunits = panel_sample_size(pdinfo);
+    nv = nunits + 1;
+    u0 = pdinfo->t1 / T;
+
+    panvar = plausible_panel_time_var(Z, pdinfo);
+    if (panvar > 0) {
+	/* extra column for x-axis */
+	nv++;
+    }
+
+    gdinfo = create_auxiliary_dataset(&gZ, nv, T);
+    if (gdinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    list = gretl_consecutive_list_new(1, nv - 1);
+    if (list == NULL) {
+	destroy_dataset(gZ, gdinfo);
+	return E_ALLOC;
+    }
+
+    s0 = pdinfo->t1 * pdinfo->pd;
+
+    for (i=0; i<nunits; i++) {
+	sprintf(gdinfo->varname[i+1], "unit %d", u0+i+1);
+	s = s0 + i * pdinfo->pd;
+	for (t=0; t<T; t++) {
+	    gZ[i+1][t] = Z[vnum][s++];
+	}
+    }
+
+    if (panvar > 0) {
+	/* time variable for x-axis */
+	strcpy(gdinfo->varname[nv-1], "year");
+	for (t=0; t<T; t++) {
+	    gZ[nv-1][t] = Z[panvar][t];
+	}
+    }
+
+    opt |= OPT_O; /* use lines */
+    if (!panvar) {
+	opt |= OPT_T;
+    }
+
+    if (panvar) {
+	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", 
+				  var_get_graph_name(pdinfo, vnum));
+    } else {
+	literal = g_strdup_printf("set title \"%s\" ;", 
+				  var_get_graph_name(pdinfo, vnum));
+    }
+
+    err = gnuplot(list, literal, (const double **) gZ, gdinfo, opt);
+
+    g_free(literal);
+    destroy_dataset(gZ, gdinfo);
+    free(list);
+
+    return err;
+}
+
 /* Panel: plot one variable as a time series, with separate plots for
    each cross-sectional unit.  By default we arrange the plots in a
    grid, but if OPT_V is given we make each plot full width and
    stack the plots vertically on the "page".
 */
 
-int 
-gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
-		     gretlopt opt) 
+static int panel_sequence_ts_plot (int vnum, const double **Z, 
+				   DATAINFO *pdinfo,
+				   gretlopt opt) 
 {
     FILE *fp = NULL;
-    int i, j, k, v, t, t0;
+    int i, j, k, t, t0;
     int w, xnum, ynum;
     float xfrac, yfrac;
     float yorig, xorig = 0.0;
     const double *y;
+    const char *vname;
     double yt, ymin, ymax, incr;
-    int nunits, T = pdinfo->pd;
+    int u0, nunits, T = pdinfo->pd;
     int err = 0;
 
-    nunits = pdinfo->paninfo->unit[pdinfo->t2] -
-	pdinfo->paninfo->unit[pdinfo->t1] + 1;
-    
+    nunits = panel_sample_size(pdinfo);
+    u0 = pdinfo->t1 / pdinfo->pd;
+
     if (opt & OPT_V) {
 	xnum = 1;
 	ynum = nunits;
@@ -4195,8 +4278,8 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
 	return err;
     }
 
-    v = list[1];
-    y = Z[v];
+    vname = pdinfo->varname[vnum];
+    y = Z[vnum];
     gretl_minmax(pdinfo->t1, pdinfo->t2, y, &ymin, &ymax);
     w = panel_ytic_width(ymin, ymax);
 
@@ -4229,20 +4312,18 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
     t0 = pdinfo->t1;
 
     for (i=0; i<xnum && k<nunits; i++) {
-
 	yorig = 1.0 - yfrac;
 
 	for (j=0; j<ynum && k<nunits; j++, k++) {
-
 	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
 
 	    if (opt & OPT_V) {
 		gretl_minmax(t0, t0 + T - 1, y, &ymin, &ymax);
 		incr = (ymax - ymin) / 2.0;
 		fprintf(fp, "set ytics %g\n", incr);
-		fprintf(fp, "set ylabel '%s (%d)'\n", pdinfo->varname[v], k+1);
+		fprintf(fp, "set ylabel '%s (%d)'\n", vname, u0+k+1);
 	    } else {
-		fprintf(fp, "set title '%s (%d)'\n", pdinfo->varname[v], k+1);
+		fprintf(fp, "set title '%s (%d)'\n", vname, u0+k+1);
 	    }
 
 	    fputs("plot \\\n'-' using 1:($2) notitle w lines\n", fp);
@@ -4274,6 +4355,17 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo,
     fclose(fp);
 
     return gnuplot_make_graph();
+}
+
+int gretl_panel_ts_plot (int vnum, const double **Z, DATAINFO *pdinfo,
+			 gretlopt opt)
+{
+    if (opt & OPT_S) {
+	/* sequence */
+	return panel_sequence_ts_plot(vnum, Z, pdinfo, opt);
+    } else {
+	return panel_overlay_ts_plot(vnum, Z, pdinfo, opt);
+    }
 }
 
 static int data_straddle_zero (const gretl_matrix *m)
@@ -4562,7 +4654,7 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
 	return err;
     }
 
-    obs = gretl_plotx(pdinfo);
+    obs = gretl_plotx(NULL, pdinfo);
 
     nvars = gretl_matrix_cols(E);
     nobs = gretl_matrix_rows(E);
@@ -4643,7 +4735,7 @@ int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo)
 	return 1;
     }
 
-    obs = gretl_plotx(pdinfo);
+    obs = gretl_plotx(NULL, pdinfo);
     if (obs == NULL) {
 	return E_ALLOC;
     }

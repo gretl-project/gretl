@@ -215,7 +215,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     }
 
     if (dataset_is_time_series(pdinfo)) { 
-	obs = gretl_plotx(pdinfo);
+	obs = gretl_plotx(NULL, pdinfo);
 	if (obs == NULL) {
 	    if (fp != NULL) {
 		fclose(fp);

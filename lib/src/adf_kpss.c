@@ -1184,17 +1184,6 @@ static int panel_DF_test (int v, int order,
     return err;
 }
 
-static int multi_unit_panel_sample (const DATAINFO *pdinfo)
-{
-    int ret = 0;
-
-    if (dataset_is_panel(pdinfo)) {
-	ret = (pdinfo->t2 - pdinfo->t1 + 1 > pdinfo->pd);
-    }
-
-    return ret;
-}
-
 /**
  * levin_lin_test:
  * @vnum: ID number of variable to test.
