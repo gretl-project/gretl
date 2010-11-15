@@ -9606,13 +9606,13 @@ static void series_make_finite (double *x, int n)
 {
     int i;
 
-    /* this may be questionable, but is necessary for
-       backward compatibility (e.g. when taking logs
-       of a series that contains zeros)
+    /* This may be questionable (converting NaNs and infinities to
+       NA), but is necessary for backward compatibility (e.g. when
+       taking logs of a series that contains zeros).
     */
 
     for (i=0; i<n; i++) {
-	if (xna(x[i])) {
+	if (!isfinite(x[i])) {
 	    x[i] = NADBL;
 	    set_gretl_warning(W_GENMISS);
 	}
