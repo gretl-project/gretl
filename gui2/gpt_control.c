@@ -3918,11 +3918,22 @@ static void plot_area_updated (GdkPixbufLoader *loader, gint x, gint y,
 
 static int is_png (const guchar *buf, gsize length)
 {
-    return length > 8 &&
+    int ok = length > 8 &&
 	buf[0] == 0x89 && buf[1] == 0x50 &&
 	buf[2] == 0x4E && buf[3] == 0x47 &&
 	buf[4] == 0x0D && buf[5] == 0x0A &&
 	buf[6] == 0x1A && buf[7] == 0x0A;
+
+    if (!ok) {
+	int i;
+
+	fprintf(stderr, "*** is_png: length = %d\n", (int) length);
+	for (i=0; i<length && i<8; i++) {
+	    fprintf(stderr, " byte[%d] = 0x%02x\n", i, buf[i]);
+	}
+    }
+
+    return ok;
 }
 
 static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
