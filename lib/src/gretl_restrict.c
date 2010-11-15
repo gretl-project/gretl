@@ -1890,6 +1890,43 @@ static int rset_expand_R (gretl_restriction *rset, int k)
     return 0;
 }
 
+#if 0 /* not ready */
+
+static int save_restricted_model (MODEL *pmod,
+				  const DATAINFO *pdinfo,
+				  const gretl_matrix *b,
+				  const gretl_matrix *S,
+				  const gretl_matrix *u)
+{
+    MODEL rmod;
+    int i, j, err = 0;
+
+    gretl_model_init(&rmod);
+    rmod.ncoeff = gretl_vector_get_length(b);
+    rmod.full_n = pdinfo->n;
+
+    err = gretl_model_allocate_storage(&rmod);
+    
+    if (!err) {
+	for (i=0; i<rmod.ncoeff; i++) {
+	    rmod.coeff[i] = b->val[i];
+	}
+	err = gretl_model_write_vcv(&rmod, S);
+    }
+
+    if (!err) {
+	err = gretl_model_allocate_params(&rmod, rmod.ncoeff);
+    }
+
+    if (!err) {
+	;
+    }
+
+    return err;
+}
+
+#endif
+
 /* generate full restricted estimates: this function is used
    only for single-equation models, estimated via OLS */
 
