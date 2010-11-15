@@ -136,6 +136,7 @@ plugin/arma_init.c
 plugin/arma_x12.c
 plugin/audio.c
 plugin/audioprint.c
+plugin/biprobit.c
 plugin/dpanel.c
 plugin/duration.c
 plugin/eviews_import.c
@@ -163,6 +164,7 @@ plugin/mod_garch.c
 plugin/mp_ols.c
 plugin/odbc_import.c
 plugin/ods_import.c
+plugin/panurc.c
 plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
