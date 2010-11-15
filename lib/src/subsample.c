@@ -757,7 +757,7 @@ count_panel_units (const char *mask, const DATAINFO *pdinfo)
 
     for (i=0; i<pdinfo->n; i++) {
 	if (mask[i]) {
-	    u = pdinfo->paninfo->unit[i];
+	    u = i / pdinfo->pd;
 	    if (u != ubak) {
 		n++;
 		ubak = u;

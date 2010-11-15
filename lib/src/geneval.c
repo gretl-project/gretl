@@ -2011,12 +2011,12 @@ static void lag_calc (double *y, const double *x,
 		}
 	    }
 	} else if (p->dinfo->structure == STACKED_TIME_SERIES) {
-	    if (s >= 0 && s < p->dinfo->n && 
-		p->dinfo->paninfo->unit[s] != 
-		p->dinfo->paninfo->unit[t]) {
+	    if (s / p->dinfo->pd != t / p->dinfo->pd) {
+		/* s and t pertain to different units */
 		s = -1;
 	    }
 	}
+
 	if (s >= 0 && s < p->dinfo->n) {
 	    if (op == B_ASN && mul == 1.0) {
 		y[t] = x[s];
@@ -6830,11 +6830,11 @@ static double *dvar_get_series (int i, parser *p)
 	}
 	break;
     case R_PUNIT:
-	if (p->dinfo->paninfo != NULL) {
+	if (!dataset_is_panel(p->dinfo)) {
 	    x = malloc(p->dinfo->n * sizeof *x);
 	    if (x != NULL) {
 		for (t=0; t<p->dinfo->n; t++) {
-		    x[t] = p->dinfo->paninfo->unit[t] + 1;
+		    x[t] = t / p->dinfo->pd + 1;
 		}
 	    } else {
 		p->err = E_ALLOC;

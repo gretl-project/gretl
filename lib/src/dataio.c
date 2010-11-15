@@ -828,8 +828,12 @@ int merge_dateton (const char *date, const DATAINFO *pdinfo)
     return real_dateton(date, pdinfo, 1);
 }
 
-static char *
-out_of_range_panel_obs (char *s, int t, const DATAINFO *pdinfo)
+static int panel_group_digits (const DATAINFO *pdinfo)
+{
+    return ceil(log10(pdinfo->pd));
+}
+
+static char *panel_obs (char *s, int t, const DATAINFO *pdinfo)
 {
     int i = t / pdinfo->pd + 1;
     int j = (t + 1) % pdinfo->pd;
@@ -838,7 +842,8 @@ out_of_range_panel_obs (char *s, int t, const DATAINFO *pdinfo)
 	j = pdinfo->pd;
     }
 
-    sprintf(s, "%d:%0*d", i, pdinfo->paninfo->olen, j);
+    sprintf(s, "%d:%0*d", i, panel_group_digits(pdinfo), j);
+
     return s;
 }
 
@@ -881,14 +886,8 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 	x = pdinfo->sd0 + 10 * t;
 	sprintf(datestr, "%d", (int) x);
 	return datestr;
-    } else if (pdinfo->paninfo != NULL) {
-	/* indexed panel data */
-	if (t < 0 || t >= pdinfo->n) {
-	    return out_of_range_panel_obs(datestr, t, pdinfo);
-	}
-	sprintf(datestr, "%d:%0*d", pdinfo->paninfo->unit[t] + 1,
-		pdinfo->paninfo->olen,
-		pdinfo->paninfo->period[t] + 1);
+    } else if (dataset_is_panel(pdinfo)) {
+	panel_obs(datestr, t, pdinfo);
 	return datestr;
     }
 
@@ -2135,8 +2134,8 @@ static int compare_ranges (const DATAINFO *targ,
 static int panel_expand_ok (DATAINFO *pdinfo, DATAINFO *addinfo,
 			    gretlopt opt)
 {
-    int n = pdinfo->paninfo->nunits;
-    int T = pdinfo->paninfo->Tmax;
+    int n = pdinfo->n / pdinfo->pd;
+    int T = pdinfo->pd;
     int ok = 0;
 
     if (addinfo->n == T) {
@@ -2158,8 +2157,8 @@ static int panel_append_special (int addvars,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    int n = pdinfo->paninfo->nunits;
-    int T = pdinfo->paninfo->Tmax;
+    int n = pdinfo->n / pdinfo->pd;
+    int T = pdinfo->pd;
     int k = pdinfo->v;
     int tsdata;
     int i, j, s, p, t;

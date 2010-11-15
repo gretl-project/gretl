@@ -329,7 +329,6 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
 
     pan->nunits = 0;
     pan->Tmin = pan->Tmax = 0;
-    pan->olen = 0;
 
     pdinfo->paninfo = pan;
 
@@ -406,8 +405,6 @@ int dataset_add_default_panel_indices (DATAINFO *pdinfo)
     err = dataset_allocate_panel_info(pdinfo);
 
     if (!err) {
-	char test[32];
-
 	T = pdinfo->pd;
 	nunits = pdinfo->n / pdinfo->pd;
 	s = 0;
@@ -421,9 +418,6 @@ int dataset_add_default_panel_indices (DATAINFO *pdinfo)
 	pdinfo->paninfo->nunits = nunits;
 	pdinfo->paninfo->Tmin = T;
 	pdinfo->paninfo->Tmax = T;
-
-	sprintf(test, "%d", T);
-	pdinfo->paninfo->olen = strlen(test);
     }
 
     return err;
@@ -447,9 +441,8 @@ int dataset_add_default_panel_indices (DATAINFO *pdinfo)
 int dataset_finalize_panel_indices (DATAINFO *pdinfo)
 {
     PANINFO *pan = pdinfo->paninfo;
-    char test[32];
     int u0, ubak;
-    int i, Ti, len;
+    int i, Ti;
 
     if (pan == NULL) {
 	return E_DATA;
@@ -458,7 +451,6 @@ int dataset_finalize_panel_indices (DATAINFO *pdinfo)
     pan->nunits = 1;
     pan->Tmax = 0;
     pan->Tmin = 999999;
-    pan->olen = 0;
 
     u0 = ubak = pan->unit[0];
     Ti = 0;
@@ -468,11 +460,6 @@ int dataset_finalize_panel_indices (DATAINFO *pdinfo)
 	if (pan->unit[i] < 0 || pan->period[i] < 0) {
 	    gretl_errmsg_set("Panel index information is corrupted");
 	    return E_DATA;
-	}
-	sprintf(test, "%d", pan->period[i] + 1);
-	len = strlen(test);
-	if (len > pan->olen) {
-	    pan->olen = len;
 	}
     }
 
@@ -500,8 +487,8 @@ int dataset_finalize_panel_indices (DATAINFO *pdinfo)
 
 #if DDEBUG
     fprintf(stderr, "dataset_finalize_panel_indices:\n "
-	    "nunits=%d, Tmin=%d, Tmax=%d, olen=%d\n", pan->nunits,
-	    pan->Tmin, pan->Tmax, pan->olen);
+	    "nunits=%d, Tmin=%d, Tmax=%d\n", pan->nunits,
+	    pan->Tmin, pan->Tmax);
 #endif
 
     return 0;

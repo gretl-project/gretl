@@ -1502,28 +1502,12 @@ static void free_rsetting (GtkWidget *w, struct range_setting *rset)
 
 static int unit_get_first_obs (int u)
 {
-    int t;
-
-    for (t=0; t<datainfo->n; t++) {
-	if (datainfo->paninfo->unit[t] == u) {
-	    return t;
-	}
-    }
-
-    return 0;
+    return u * datainfo->pd;
 }
 
 static int unit_get_last_obs (int u)
 {
-    int t;
-
-    for (t=1; t<datainfo->n; t++) {
-	if (datainfo->paninfo->unit[t] == u + 1) {
-	    return t - 1;
-	}
-    }
-
-    return datainfo->n - 1;
+    return (u+1) * datainfo->pd - 1;
 }
 
 static gboolean
@@ -1775,8 +1759,8 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
 	rset->dinfo.t1 = *rset->t1;
 	rset->dinfo.t2 = *rset->t2;
     } else {
-	rset->dinfo.t1 = datainfo->paninfo->unit[datainfo->t1];
-	rset->dinfo.t2 = datainfo->paninfo->unit[datainfo->t2];
+	rset->dinfo.t1 = datainfo->t1 / datainfo->pd;
+	rset->dinfo.t2 = datainfo->t2 / datainfo->pd;
     }
 
     dataset_obs_info_default(&rset->dinfo);

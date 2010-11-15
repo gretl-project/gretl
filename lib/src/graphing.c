@@ -2496,6 +2496,11 @@ static void make_named_month_tics (const gnuplot_info *gi, double yrs,
     pputs(prn, ")\n");
 }
 
+static int continues_unit (const DATAINFO *pdinfo, int t)
+{
+    return t / pdinfo->pd == (t-1) / pdinfo->pd;
+}
+
 /* Below: we're making a combined time series plot for panel data.
    That is, time series for unit 1, followed by time series for unit
    2, etc.  We'd like to show tic marks to represent the start of each
@@ -2520,8 +2525,7 @@ static void make_panel_unit_tics (const DATAINFO *pdinfo,
     gretl_push_c_numeric_locale();
 
     /* how many panel units are included in the plot? */
-    maxtics = pdinfo->paninfo->unit[gi->t2] - 
-	pdinfo->paninfo->unit[gi->t1] + 1;
+    maxtics = gi->t2 / pdinfo->pd - gi->t1 / pdinfo->pd + 1;
 
     ntics = maxtics;
     while (ntics > 20) {
@@ -2536,11 +2540,13 @@ static void make_panel_unit_tics (const DATAINFO *pdinfo,
     }
 
     n = printed = 0;
+    u = gi->t1 / pdinfo->pd;
+
     for (t=gi->t1; t<=gi->t2 && printed<ntics; t++) {
-	u = pdinfo->paninfo->unit[t];
-	if (t == gi->t1 || u != pdinfo->paninfo->unit[t-1]) {
+	if (t == gi->t1 || !continues_unit(pdinfo, t)) {
+	    u++;
 	    if (n % ticskip == 0) {
-		pprintf(prn, "\"%d\" %.10g", u + 1, gi->x[t]);
+		pprintf(prn, "\"%d\" %.10g", u, gi->x[t]);
 		if (++printed < ntics) {
 		    pputs(prn, ", ");
 		}
@@ -2552,19 +2558,6 @@ static void make_panel_unit_tics (const DATAINFO *pdinfo,
     gretl_pop_c_numeric_locale();
 
     pputs(prn, ")\n");
-}
-
-/* panel plot includes two or more time series, end-to-end */
-
-static int panel_plot (const DATAINFO *pdinfo, int t1, int t2)
-{
-    if (dataset_is_panel(pdinfo)) {
-	if (pdinfo->paninfo->unit[t2] != pdinfo->paninfo->unit[t1]) {
-	    return 1;
-	}
-    }
-
-    return 0;
 }
 
 static void make_calendar_tics (const DATAINFO *pdinfo,
@@ -2593,6 +2586,17 @@ static void make_calendar_tics (const DATAINFO *pdinfo,
 	    pputs(prn, "set mxtics 4\n");
 	}
     }
+}
+
+static int panel_plot (const DATAINFO *pdinfo, int t1, int t2)
+{
+    int ret = 0;
+
+    if (dataset_is_panel(pdinfo)) {
+	ret = (t2 / pdinfo->pd > t1 / pdinfo->pd);
+    }
+
+    return ret;
 }
 
 /* special tics for time series plots */

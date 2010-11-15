@@ -748,8 +748,7 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
 	for (i=-k1; i<=k2; i++) {
 	    s = t + i;
 	    if (pdinfo->structure == STACKED_TIME_SERIES) {
-		if (pdinfo->paninfo->unit[s] != 
-		    pdinfo->paninfo->unit[t]) {
+		if (s / pdinfo->pd != t / pdinfo->pd) {
 		    s = -1;
 		}
 	    }
@@ -844,26 +843,28 @@ int seasonally_adjust_series (const double *x, double *y,
     return err;
 }
 
+static int new_unit (const DATAINFO *pdinfo, int t)
+{
+    return t > 0 && (t / pdinfo->pd != (t-1) / pdinfo->pd);
+}
+
 int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
 		     int k)
 {
-    const int *unit;
     double ret = NADBL;
     double xbar = NADBL;
     double aux = NADBL;
     int smin = 0;
     int s, t, Ti = 0;
 
-    if (pdinfo->paninfo == NULL) {
+    if (!dataset_is_panel(pdinfo)) {
 	return E_DATA;
     }
-
-    unit = pdinfo->paninfo->unit;
 
     switch (k) {
     case F_PNOBS:
 	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
 		for (s=smin; s<t; s++) {
 		    y[s] = Ti;
 		}
@@ -880,7 +881,7 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	break;
     case F_PMIN:
 	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
 		for (s=smin; s<t; s++) {
 		    y[s] = aux;
 		}
@@ -899,7 +900,7 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	break;
     case F_PMAX:
 	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
 		for (s=smin; s<t; s++) {
 		    y[s] = aux;
 		}
@@ -918,7 +919,7 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	break;
     case F_PMEAN:
 	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
 		if (!na(xbar)) {
 		    xbar /= Ti;
 		}
@@ -946,7 +947,7 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	break;
     case F_PSD:
 	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || (t > 0 && unit[t] != unit[t-1])) {
+	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
 		if (na(xbar)) {
 		    ret = NADBL;
 		} else if (Ti == 1) {
