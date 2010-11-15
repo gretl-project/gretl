@@ -4099,43 +4099,6 @@ static int compare_obs (const void *a, const void *b)
     return ret;
 }
 
-static int compose_panel_indices (DATAINFO *pdinfo, int T,
-				  char *mask)
-{
-    int i, u, t;
-    int err;
-
-    err = dataset_allocate_panel_info(pdinfo);
-    if (err) {
-	return err;
-    }
-    
-    pdinfo->paninfo->padmask = mask;
-
-    u = t = 0;
-    for (i=0; i<pdinfo->n; i++) {
-	if (i > 0 && i % T == 0) {
-	    t = 0;
-	    u++;
-	} 
-	pdinfo->paninfo->unit[i] = u;
-	pdinfo->paninfo->period[i] = t++;
-    }
-
-#if PDEBUG
-    fprintf(stderr, "transcribe_panel_indices:\n");
-    for (i=0; i<pdinfo->n; i++) {
-	fprintf(stderr, " i=%d, unit=%d, period=%d\n", i, 
-		pdinfo->paninfo->unit[i],
-		pdinfo->paninfo->period[i]);
-    }
-#endif
-
-    err = dataset_finalize_panel_indices(pdinfo);
-
-    return err;
-}
-
 static int check_indices (sorter *s, int n)
 {
     int i;
@@ -4547,10 +4510,6 @@ int set_panel_structure_from_vars (int uv, int tv,
     }
 
     if (!err) {
-	err = compose_panel_indices(pdinfo, nperiods, mask);
-    }
-
-    if (!err) {
 	finalize_panel_datainfo(pdinfo, nperiods);
     }
 
@@ -4558,6 +4517,7 @@ int set_panel_structure_from_vars (int uv, int tv,
 
     free(uid);
     free(tid);
+    free(mask);
 
     return err;
 }
@@ -4900,7 +4860,7 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
     int n, T, nT, Ti;
     int i, t, s;
     
-    if (pdinfo->paninfo == NULL) {
+    if (!dataset_is_panel(pdinfo)) {
 	return E_PDWRONG;
     }
 
@@ -4966,78 +4926,3 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
     return 0;
 }   
 
-int panel_obs_info (const int *list, const double **Z, const DATAINFO *pdinfo,
-		    PRN *prn)
-{
-    int *uobs = NULL;
-    const int *unit;
-    int minTi, maxTi;
-    int jmax, vj;
-    int n, Ti, ok;
-    int i, j, t;
-    
-    if (pdinfo->paninfo == NULL) {
-	return E_PDWRONG;
-    }
-
-    n = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
-
-    uobs = malloc(n * sizeof *uobs);
-    if (uobs == NULL) {
-	return E_ALLOC;
-    }
-
-    unit = pdinfo->paninfo->unit;
-
-    jmax = (list != NULL)? list[0] : pdinfo->v - 1;
-
-    maxTi = 0;
-    minTi = pdinfo->pd;
-    Ti = 0;
-    i = 0;
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (t > pdinfo->t1 && unit[t] != unit[t-1]) {
-	    if (Ti < minTi) {
-		minTi = Ti;
-	    } else if (Ti > maxTi) {
-		maxTi = Ti;
-	    }
-	    uobs[i] = Ti;
-	    Ti = 0;
-	    i++;
-	}
-	ok = 1;
-	for (j=1; j<=jmax; j++) {
-	    vj = (list != NULL)? list[j] : j;
-	    if (na(Z[vj][t])) {
-		ok = 0;
-		break;
-	    }
-	}
-	Ti += ok;
-	if (t == pdinfo->t2) {
-	    if (Ti < minTi) {
-		minTi = Ti;
-	    } else if (Ti > maxTi) {
-		maxTi = Ti;
-	    }
-	    uobs[i] = Ti;
-	}
-    }
-
-    pprintf(prn, "Panel observations info\n");
-
-    if (minTi == maxTi) {
-	pprintf(prn, "%d units, each with %d observations\n", n, maxTi);
-    } else {
-	for (i=0; i<n; i++) {
-	    pprintf(prn, "unit %d: %d observations\n", i+1, uobs[i]);
-	}
-	/* do a frequency distribution */
-    }
-
-    free(uobs);
-
-    return 0;
-}   

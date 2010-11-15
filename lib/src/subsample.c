@@ -284,7 +284,8 @@ static void sync_datainfo_members (const DATAINFO *pdinfo)
 #if FULLDEBUG
 	fprintf(stderr, "*** sync_datainfo_members: fullinfo->v = %d but pdinfo->v = %d\n",
 		fullinfo->v, pdinfo->v);
-	fprintf(stderr, " deleting the last %d element(s) of fullZ\n", fullinfo->v - pdinfo->v);
+	fprintf(stderr, " deleting the last %d element(s) of fullZ\n", 
+		fullinfo->v - pdinfo->v);
 #endif
 	for (i=pdinfo->v; i<fullinfo->v; i++) {
 	    free(fullZ[i]);
@@ -292,6 +293,7 @@ static void sync_datainfo_members (const DATAINFO *pdinfo)
 	}
 	fullinfo->v = pdinfo->v;
     }
+
     fullinfo->varname = pdinfo->varname;
     fullinfo->varinfo = pdinfo->varinfo;
     fullinfo->descrip = pdinfo->descrip;
@@ -1044,8 +1046,8 @@ static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
     int i, u, ubak = -1;
     int ret = 1;
 
-    T0 = gretl_list_new(pdinfo->paninfo->Tmax);
-    Ti = gretl_list_new(pdinfo->paninfo->Tmax);
+    T0 = gretl_list_new(pdinfo->pd);
+    Ti = gretl_list_new(pdinfo->pd);
 
     if (T0 == NULL || Ti == NULL) {
 	free(T0);
@@ -1057,7 +1059,7 @@ static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
 
     for (i=0; i<pdinfo->n && ret; i++) {
 	if (mask[i]) {
-	    u = pdinfo->paninfo->unit[i];
+	    u = i / pdinfo->pd;
 	    if (u != ubak) {
 		if (Ti[0] > 0) {
 		    if (T0[0] == 0) {
@@ -1069,10 +1071,10 @@ static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
 		    }
 		}
 		Ti[0] = 1;
-		Ti[1] = pdinfo->paninfo->period[i];
+		Ti[1] = i % pdinfo->pd;
 	    } else {
 		Ti[0] += 1;
-		Ti[Ti[0]] = pdinfo->paninfo->period[i];
+		Ti[Ti[0]] = i % pdinfo->pd;
 	    }
 	    ubak = u;
 	}
@@ -1087,17 +1089,19 @@ static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
 static int 
 make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
 {
+    int T = pdinfo->pd;
+    int N = pdinfo->n / T;
     char *umask = NULL;
     char *pmask = NULL;
     int i, np = 0;
 
-    umask = calloc(pdinfo->paninfo->nunits, 1);
+    umask = calloc(N, 1);
     if (umask == NULL) {
 	*err = E_ALLOC;
 	return 0;
     }
 
-    pmask = calloc(pdinfo->paninfo->Tmax, 1);
+    pmask = calloc(T, 1);
     if (pmask == NULL) {
 	free(umask);
 	*err = E_ALLOC;
@@ -1106,15 +1110,15 @@ make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
 
     for (i=0; i<pdinfo->n; i++) {
 	if (mask[i]) {
-	    umask[pdinfo->paninfo->unit[i]] = 1;
-	    pmask[pdinfo->paninfo->period[i]] = 1;
+	    umask[i / pdinfo->pd] = 1;
+	    pmask[i % pdinfo->pd] = 1;
 	}
     }
 
     for (i=0; i<pdinfo->n; i++) {
 	if (!mask[i]) {
-	    if (umask[pdinfo->paninfo->unit[i]] &&
-		pmask[pdinfo->paninfo->period[i]]) {
+	    if (umask[i / pdinfo->pd] &&
+		pmask[i % pdinfo->pd]) {
 		mask[i] = 'p'; /* mark as padding row */
 		np++;
 	    }
@@ -1285,19 +1289,6 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
     subinfo->varname = pdinfo->varname;
     subinfo->varinfo = pdinfo->varinfo;
     subinfo->descrip = pdinfo->descrip;
-
-    if (subinfo->structure == STACKED_TIME_SERIES) {
-#if SUBDEBUG
-	fprintf(stderr, "panel subset: nT = %d, pd = %d\n", 
-		subinfo->n, subinfo->pd);
-#endif
-	err = dataset_add_default_panel_indices(subinfo);
-	if (err) {
-	    free_Z(subZ, subinfo);
-	    free(subinfo);
-	    return E_ALLOC;
-	}
-    }
 
     /* set up case markers? */
     if (pdinfo->markers) {
@@ -1647,11 +1638,11 @@ enum {
 static int panel_round (const DATAINFO *pdinfo, int t, int code)
 {
     if (code == SMPL_T1) {
-	while ((t + 1) % pdinfo->paninfo->Tmax != 1) {
+	while ((t + 1) % pdinfo->pd != 1) {
 	    t++;
 	}
     } else {
-	while ((t + 1) % pdinfo->paninfo->Tmax != 0) {
+	while ((t + 1) % pdinfo->pd != 0) {
 	    t--;
 	}
     }
@@ -1690,7 +1681,7 @@ static int get_sample_limit (char *s, double ***pZ, DATAINFO *pdinfo,
 		incr = -incr;
 	    }
 	    if (dataset_is_panel(pdinfo)) {
-		incr *= pdinfo->paninfo->Tmax;
+		incr *= pdinfo->pd;
 	    }
 	    if (code == SMPL_T1) {
 		ret = pdinfo->t1 + incr;

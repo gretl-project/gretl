@@ -309,14 +309,6 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo);
 
 void dataset_destroy_obs_markers (DATAINFO *pdinfo);
 
-int dataset_allocate_panel_info (DATAINFO *pdinfo);
-
-void dataset_destroy_panel_info (DATAINFO *pdinfo);
-
-int dataset_add_default_panel_indices (DATAINFO *pdinfo);
-
-int dataset_finalize_panel_indices (DATAINFO *pdinfo);
-
 void dataset_obs_info_default (DATAINFO *pdinfo);
 
 void copy_dataset_obs_info (DATAINFO *targ, const DATAINFO *src);

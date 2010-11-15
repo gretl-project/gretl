@@ -1324,66 +1324,6 @@ void gretl_xml_header (FILE *fp)
     fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
 }
 
-static int real_balanced_panel (const DATAINFO *pdinfo)
-{
-    const PANINFO *pan = pdinfo->paninfo;
-    int *test;
-    int i, s, t, T;
-    int bal = 1;
-
-    if (pan->Tmin != pan->Tmax) {
-	return 0;
-    }
-
-    T = pan->Tmin;
-	
-    test = malloc(T * sizeof *test);
-    if (test == NULL) {
-	return 0;
-    }
-
-    for (i=0; i<T; i++) {
-	test[i] = pan->period[i];
-    }
-
-    s = T;
-    for (i=1; i<pan->nunits && bal; i++) {
-	for (t=0; t<T && bal; t++) {
-	    if (pan->period[s++] != test[t]) {
-		bal = 0;
-	    }
-	}
-    }
-	
-    free(test);
-
-#if 0
-    fprintf(stderr, "full balance test: bal = %d\n", bal);
-#endif
-
-    return bal;
-}
-
-/* should we print unit and period info for each observation
-   in a panel dataset? */
-
-static int query_print_panel_obs (const DATAINFO *pdinfo)
-{
-    int bal;
-
-    if (pdinfo->paninfo == NULL ||
-	pdinfo->paninfo->unit == NULL ||
-	pdinfo->paninfo->period == NULL) {
-	return 0;
-    }
-
-    /* printing panel obs info is redundant if the panel
-       is perfectly balanced */
-    bal = real_balanced_panel(pdinfo);
-
-    return !bal;
-}
-
 /**
  * gretl_write_matrix_as_gdt:
  * @fname: name of file to write.
@@ -1521,7 +1461,6 @@ int gretl_write_gdt (const char *fname, const int *list,
     gzFile *fz = Z_NULL;
     int gz = (opt & OPT_Z);
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
-    int panelobs = 0;
     int *pmax = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
@@ -1728,7 +1667,6 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     alt_puts("</variables>\n", fp, fz);
 
-    panelobs = query_print_panel_obs(pdinfo);
     have_markers = dataset_has_markers(pdinfo);
 
     /* then listing of observations */
@@ -1739,9 +1677,6 @@ int gretl_write_gdt (const char *fname, const int *list,
     } else {
 	fprintf(fp, "count=\"%d\" labels=\"%s\"",
 		tsamp, (have_markers)? "true" : "false");
-    }
-    if (panelobs) {
-	alt_puts(" panel-info=\"true\"", fp, fz);
     }
     alt_puts(">\n", fp, fz);
 
@@ -1757,17 +1692,6 @@ int gretl_write_gdt (const char *fname, const int *list,
 		}
 	    }
 	} 
-	if (panelobs) {
-	    if (gz) {
-		gzprintf(fz, " unit=\"%d\" period=\"%d\"", 
-			 pdinfo->paninfo->unit[t], 
-			 pdinfo->paninfo->period[t]);
-	    } else {
-		fprintf(fp, " unit=\"%d\" period=\"%d\"", 
-			pdinfo->paninfo->unit[t], 
-			pdinfo->paninfo->period[t]);
-	    }	    
-	}
 	alt_puts(">", fp, fz);
 	for (i=1; i<=nvars; i++) {
 	    v = savenum(list, i);
@@ -1991,7 +1915,6 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 {
     xmlNodePtr cur;
     xmlChar *tmp;
-    int panelobs = 0;
     int n, i, t;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
@@ -2033,18 +1956,6 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     } else {
 	return E_DATA;
     }
-
-    tmp = xmlGetProp(node, (XUC) "panel-info");
-    if (tmp) {
-	if (!strcmp((char *) tmp, "true")) {
-	    err = dataset_allocate_panel_info(pdinfo);
-	    if (err) {
-		return err;
-	    }
-	    panelobs = 1;
-	} 
-	free(tmp);
-    } 
 
     if (pdinfo->endobs[0] == '\0') {
 	sprintf(pdinfo->endobs, "%d", pdinfo->n);
@@ -2095,27 +2006,6 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    gretl_errmsg_sprintf(_("Case marker missing at obs %d"), t+1);
 		    return E_DATA;
 		}
-	    }
-
-	    if (panelobs) {
-		int j, s, ok = 0;
-
-		tmp = xmlGetProp(cur, (XUC) "unit");
-		if (tmp) {
-		    ok += sscanf((char *) tmp, "%d", &j);
-		    free(tmp);
-		} 
-		tmp = xmlGetProp(cur, (XUC) "period");
-		if (tmp) {
-		    ok += sscanf((char *) tmp, "%d", &s);
-		    free(tmp);
-		} 
-		if (ok < 2) {
-		    gretl_errmsg_sprintf("Panel index missing at obs %d", t+1);
-		    return E_DATA;
-		}
-		pdinfo->paninfo->unit[t] = j;
-		pdinfo->paninfo->period[t] = s;
 	    }
 
 	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
@@ -2580,14 +2470,6 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
     */
     if (!err && pdinfo->structure == STACKED_CROSS_SECTION) {
 	err = switch_panel_orientation(*pZ, pdinfo);
-    }
-
-    if (!err && pdinfo->structure == STACKED_TIME_SERIES) {
-	if (pdinfo->paninfo == NULL) {
-	    err = dataset_add_default_panel_indices(pdinfo);
-	} else {
-	    err = dataset_finalize_panel_indices(pdinfo);
-	}
     }
 
     if (!err && pdinfo->v == 1) {

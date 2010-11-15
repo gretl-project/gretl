@@ -103,28 +103,6 @@ void dataset_destroy_obs_markers (DATAINFO *pdinfo)
     } 
 }
 
-/**
- * dataset_destroy_panel_info:
- * @pdinfo: data information struct.
- *
- * If @pdinfo currently represents a panel dataset, it will have
- * some special information recorded. This function frees 
- * the resources associated with that special information.
- * This function should never be called if the dataset is to
- * remain a penel.
- */
-
-void dataset_destroy_panel_info (DATAINFO *pdinfo)
-{
-    if (pdinfo->paninfo != NULL) {
-	free(pdinfo->paninfo->unit);
-	free(pdinfo->paninfo->period);
-	free(pdinfo->paninfo->padmask);
-	free(pdinfo->paninfo);
-	pdinfo->paninfo = NULL;
-    }
-}
-
 static void free_varinfo (DATAINFO *pdinfo, int v)
 {
     free(pdinfo->varinfo[v]);
@@ -159,11 +137,8 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	pdinfo->restriction = NULL;
     }	
 
-    if (pdinfo->paninfo != NULL) {
-	dataset_destroy_panel_info(pdinfo);
-    }    
-
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
+
     if (code == CLEAR_FULL) {
 	if (pdinfo->varname != NULL) {
 	    for (i=0; i<pdinfo->v; i++) {
@@ -281,219 +256,6 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo)
     return err;
 }
 
-/**
- * dataset_allocate_panel_info:
- * @pdinfo: dataset information struct
- *
- * Allocates space in @pdinfo for two indices representing
- * the unit or group and time-period, respectively, of each 
- * observation in a panel data set.
- *
- * Returns: 0 on success, E_ALLOC on error.
- */
-
-int dataset_allocate_panel_info (DATAINFO *pdinfo)
-{
-    PANINFO *pan;
-    int i;
-
-#if DDEBUG
-    fprintf(stderr, "dataset_allocate_panel_info: pdinfo at %p\n",
-	    (void *) pdinfo);
-#endif
-
-    /* just in case, clean out any previous stuff */
-    dataset_destroy_panel_info(pdinfo);  
-
-    pan = malloc(sizeof *pan);
-    if (pan == NULL) {
-	return E_ALLOC;
-    }
-
-    pan->unit = pan->period = NULL;
-    pan->padmask = NULL;
-
-    pan->unit = malloc(pdinfo->n * sizeof *pan->unit);
-    pan->period = malloc(pdinfo->n * sizeof *pan->period);
-
-    if (pan->unit == NULL || pan->period == NULL) {
-	free(pan->unit);
-	free(pan->period);
-	free(pan);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<pdinfo->n; i++) {
-	pan->unit[i] = pan->period[i] = -1; /* deliberately invalid */
-    }
-
-    pan->nunits = 0;
-    pan->Tmin = pan->Tmax = 0;
-
-    pdinfo->paninfo = pan;
-
-    return 0;
-}
-
-static int resize_panel_info (DATAINFO *pdinfo, int n)
-{
-    PANINFO *pan = pdinfo->paninfo;
-    int *unit, *period;
-    int err = 0;
-
-    unit = realloc(pan->unit, n * sizeof *unit);
-    if (unit == NULL) {
-	return E_ALLOC;
-    }
-    pan->unit = unit;
-
-    period = realloc(pan->period, n * sizeof *period);
-    if (period == NULL) {
-	return E_ALLOC;
-    }
-    pan->period = period;
-
-    if (n > pdinfo->n) {
-	int uadd = (n - pdinfo->n) / pdinfo->pd;
-	int i, t, j = pdinfo->paninfo->nunits;
-	int s = pdinfo->n;
-
-	for (i=0; i<uadd && !err; i++) {
-	    for (t=0; t<pdinfo->pd && !err; t++) {
-		if (s+i >= n) {
-		    err = E_DATA;
-		    fprintf(stderr, "panel info out of bounds\n");
-		} else {
-		    pan->unit[s+i] = j;
-		    pan->period[s+i] = t;
-		    s++;
-		}
-	    }
-	    j++;
-	}
-    }
-
-    pdinfo->paninfo->nunits = n / pdinfo->pd;
-
-    return err;
-}
-
-/**
- * dataset_add_default_panel_indices:
- * @pdinfo: dataset information struct.
- *
- * Adds a pair of indices for panel unit and panel period.
- * The default is that both are zero-based and increase
- * consecutively, per unit and per period respectively.
- * This function assumes a balanced panel.
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int dataset_add_default_panel_indices (DATAINFO *pdinfo)
-{
-    int nunits, T;
-    int i, s, t, err;
-
-    if (pdinfo->n % pdinfo->pd != 0) {
-	fprintf(stderr, "dataset_add_default_panel_indices: "
-		"error: pdinfo->n %% pdinfo->pd = %d\n", 
-		pdinfo->n % pdinfo->pd);	
-	return E_DATA;
-    }
-
-    err = dataset_allocate_panel_info(pdinfo);
-
-    if (!err) {
-	T = pdinfo->pd;
-	nunits = pdinfo->n / pdinfo->pd;
-	s = 0;
-	for (i=0; i<nunits; i++) {
-	    for (t=0; t<T; t++) {
-		pdinfo->paninfo->unit[s] = i;
-		pdinfo->paninfo->period[s] = t;
-		s++;
-	    }
-	}
-	pdinfo->paninfo->nunits = nunits;
-	pdinfo->paninfo->Tmin = T;
-	pdinfo->paninfo->Tmax = T;
-    }
-
-    return err;
-}
-
-/**
- * dataset_finalize_panel_indices:
- * @pdinfo: dataset information struct.
- *
- * Having already added a pair of indices for panel unit 
- * and panel period, check these for consistency and
- * calculate the number of panel units and the minimum
- * and maximum observations per unit.  If it turns out
- * there's only one unit, or only one period, in the
- * dataset, then it's not really a panel: we destroy
- * the panel info and return E_PDWRONG.
- *
- * Returns: 0 on success, non-zero code on error.
- */
-
-int dataset_finalize_panel_indices (DATAINFO *pdinfo)
-{
-    PANINFO *pan = pdinfo->paninfo;
-    int u0, ubak;
-    int i, Ti;
-
-    if (pan == NULL) {
-	return E_DATA;
-    }
-
-    pan->nunits = 1;
-    pan->Tmax = 0;
-    pan->Tmin = 999999;
-
-    u0 = ubak = pan->unit[0];
-    Ti = 0;
-
-    /* basic validity check */
-    for (i=0; i<pdinfo->n; i++) {
-	if (pan->unit[i] < 0 || pan->period[i] < 0) {
-	    gretl_errmsg_set("Panel index information is corrupted");
-	    return E_DATA;
-	}
-    }
-
-    for (i=0; i<pdinfo->n; i++) {
-	if (pan->unit[i] == ubak) {
-	    Ti++;
-	} else {
-	    pan->nunits += 1;
-	    if (Ti > pan->Tmax) {
-		pan->Tmax = Ti;
-	    }
-	    if (Ti < pan->Tmin) {
-		pan->Tmin = Ti;
-	    }	    
-	    Ti = 1;
-	    ubak = pan->unit[i];
-	}
-    }
-
-    if (pan->nunits == 1 || pan->Tmax < 2) {
-	dataset_destroy_panel_info(pdinfo);
-	pdinfo->structure = CROSS_SECTION;
-	return E_PDWRONG;
-    }
-
-#if DDEBUG
-    fprintf(stderr, "dataset_finalize_panel_indices:\n "
-	    "nunits=%d, Tmin=%d, Tmax=%d\n", pan->nunits,
-	    pan->Tmin, pan->Tmax);
-#endif
-
-    return 0;
-}
-
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
     vinfo->label[0] = '\0';
@@ -606,7 +368,6 @@ void datainfo_init (DATAINFO *pdinfo)
 
     pdinfo->varname = NULL;
     pdinfo->varinfo = NULL;    
-    pdinfo->paninfo = NULL;
 
     pdinfo->markers = NO_MARKERS;  
     pdinfo->delim = ',';
@@ -775,7 +536,6 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->markers = NO_MARKERS;
     pdinfo->delim = ',';
     pdinfo->descrip = NULL;
-    pdinfo->paninfo = NULL;
     pdinfo->submask = NULL;
     pdinfo->restriction = NULL;
     
@@ -1084,13 +844,6 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (pdinfo->paninfo != NULL) {
-	err = resize_panel_info(pdinfo, bign);
-	if (err) {
-	    return err;
-	}
-    }
-    
     if (pdinfo->t2 == pdinfo->n - 1) {
 	pdinfo->t2 = bign - 1;
     }
@@ -1189,12 +942,6 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (pdinfo->paninfo != NULL) {
-	if (resize_panel_info(pdinfo, newn)) {
-	    return E_ALLOC;
-	}
-    }    
-
     if (pdinfo->t2 > newn - 1) {
 	pdinfo->t2 = newn - 1;
     }
@@ -1242,20 +989,14 @@ int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo)
 	    memmove(pdinfo->S, pdinfo->S + head, mvsize);
 	}
 
-	if (pdinfo->paninfo != NULL) {
-	    mvsize = rem * sizeof *pdinfo->paninfo->unit;
-	    memmove(pdinfo->paninfo->unit, pdinfo->paninfo->unit + head, mvsize);
-	    memmove(pdinfo->paninfo->period, pdinfo->paninfo->period + head, mvsize);
-	}
-
-	/* FIXME panel data */
-
 	if (pdinfo->structure == CROSS_SECTION) {
 	    ntodate(pdinfo->stobs, 0, pdinfo);
 	} else {
+	    /* FIXME panel? */
 	    ntodate(pdinfo->stobs, pdinfo->t1, pdinfo);
 	    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
 	}
+
 	pdinfo->t1 = 0;
 	pdinfo->t2 -= head;
 	pdinfo->n -= head;
@@ -3420,12 +3161,7 @@ int panel_sample_size (const DATAINFO *pdinfo)
     int ret = 0;
 
     if (dataset_is_panel(pdinfo)) {
-	if (pdinfo->paninfo != NULL) {
-	    ret = pdinfo->paninfo->unit[pdinfo->t2] -
-		pdinfo->paninfo->unit[pdinfo->t1] + 1;
-	} else {
-	    ret = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
-	}
+	ret = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
     }
 
     return ret;
@@ -3444,7 +3180,7 @@ int multi_unit_panel_sample (const DATAINFO *pdinfo)
     int ret = 0;
 
     if (dataset_is_panel(pdinfo)) {
-	ret = (pdinfo->t2 - pdinfo->t1 + 1 > pdinfo->pd);
+	ret = (pdinfo->t2 - pdinfo->t1 + 1) > pdinfo->pd;
     }
 
     return ret;

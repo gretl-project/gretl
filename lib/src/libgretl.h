@@ -261,16 +261,6 @@ typedef struct VARINFO_ {
     char line_width;
 } VARINFO;
 
-/* panel indexing information */
-typedef struct PANINFO_ {
-    int nunits;    /* number of cross-sectional units */
-    int Tmin;      /* min. number of time-series observations per unit */
-    int Tmax;      /* max. number of time-series observations per unit */
-    int *unit;     /* index array, cross-sectional units */
-    int *period;   /* index array, time periods */
-    char *padmask; /* mask recording padding, when subsampled */
-} PANINFO;
-
 /* information on data set */
 typedef struct DATAINFO_ { 
     int v;              /* number of variables */
@@ -283,7 +273,6 @@ typedef struct DATAINFO_ {
     char endobs[OBSLEN]; /* string representation of ending obs */
     char **varname;     /* array of names of variables */
     VARINFO **varinfo;  /* array of specific info on vars */
-    PANINFO *paninfo;   /* additional info for panel data */
     char markers;       /* NO_MARKERS (0), REGULAR MARKERS or DAILY_DATE_STRINGS */
     char delim;         /* default delimiter for "CSV" files */
     char decpoint;      /* character used to represent decimal point */

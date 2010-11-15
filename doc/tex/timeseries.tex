@@ -737,24 +737,25 @@ of equations:
   u_t &  = & \sigma_t \varepsilon_t \\
   \label{eq:garch-vareq}
   \sigma^2_t & = & \alpha_0 + \sum_{i=1}^q \alpha_i u^2_{t-i} +
-	  \sum_{j=1}^p \delta_i \sigma^2_{t-j}
+	  \sum_{j=1}^p \delta_j \sigma^2_{t-j}
 \end{eqnarray}
 As above, $\varepsilon_t$ is an iid sequence with unit variance.
 $X_t$ is a matrix of regressors (or in the simplest case,
 just a vector of 1s allowing for a non-zero mean of $y_t$).  Note that
 if $p=0$, GARCH collapses to ARCH($q$): the generalization is embodied
-in the $\delta_i$ terms that multiply previous values of the error
+in the $\delta_j$ terms that multiply previous values of the error
 variance.
 
 In principle the underlying innovation, $\varepsilon_t$, could follow
 any suitable probability distribution, and besides the obvious
-candidate of the normal or Gaussian distribution the $t$ distribution
-has been used in this context.  Currently \app{gretl} only handles the
-case where $\varepsilon_t$ is assumed to be Gaussian.  However, when
-the \option{robust} option to the \cmd{garch} command is given, the
-estimator \app{gretl} uses for the covariance matrix can be considered
-Quasi-Maximum Likelihood even with non-normal disturbances.  See below
-for more on the options regarding the GARCH covariance matrix.
+candidate of the normal or Gaussian distribution the Student's $t$
+distribution has been used in this context.  Currently \app{gretl}
+only handles the case where $\varepsilon_t$ is assumed to be Gaussian.
+However, when the \option{robust} option to the \cmd{garch} command is
+given, the estimator \app{gretl} uses for the covariance matrix can be
+considered Quasi-Maximum Likelihood even with non-normal disturbances.
+See below for more on the options regarding the GARCH covariance
+matrix.
 
 Example:
 \begin{code}

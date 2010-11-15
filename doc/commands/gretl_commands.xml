@@ -9692,6 +9692,10 @@
 	  <effect>restrict to valid observations</effect>
         </option>
         <option>
+	  <flag>--contiguous</flag>
+	  <effect>see below</effect>
+        </option>
+        <option>
 	  <flag>--random</flag>
 	  <effect>form random sub-sample</effect>
         </option>

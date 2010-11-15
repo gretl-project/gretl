@@ -386,6 +386,40 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 }
 
 /**
+ * gretl_bundle_get_type:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err:location to receive error code.
+ *
+ * Returns: the data type associated with @key in the
+ * specified @bundle, or 0 on failure.
+ */
+
+GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
+				 int *err)
+{
+    GretlType ret = GRETL_TYPE_NONE;
+
+    if (bundle == NULL) {
+	*err = E_DATA;
+    } else {
+	gpointer p = g_hash_table_lookup(bundle->ht, key);
+
+	if (p != NULL) {
+	    bundled_item *item = p;
+	    
+	    ret = item->type;
+	} else {
+	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
+	    *err = E_DATA;
+	}
+				 
+    }
+
+    return ret;
+}
+
+/**
  * gretl_bundle_get_note:
  * @bundle: bundle to access.
  * @key: name of key to access.

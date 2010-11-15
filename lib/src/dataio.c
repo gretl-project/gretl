@@ -828,21 +828,17 @@ int merge_dateton (const char *date, const DATAINFO *pdinfo)
     return real_dateton(date, pdinfo, 1);
 }
 
-static int panel_group_digits (const DATAINFO *pdinfo)
-{
-    return ceil(log10(pdinfo->pd));
-}
-
 static char *panel_obs (char *s, int t, const DATAINFO *pdinfo)
 {
     int i = t / pdinfo->pd + 1;
     int j = (t + 1) % pdinfo->pd;
+    int d = 1 + floor(log10(pdinfo->pd));
 
     if (j == 0) {
 	j = pdinfo->pd;
     }
 
-    sprintf(s, "%d:%0*d", i, panel_group_digits(pdinfo), j);
+    sprintf(s, "%d:%0*d", i, d, j);
 
     return s;
 }
@@ -1263,6 +1259,7 @@ int write_data (const char *fname, int *list,
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     int tsamp = sample_size(pdinfo);
     int n = pdinfo->n;
+    int pop_locale = 0;
     char delim = 0;
     FILE *fp = NULL;
     int *pmax = NULL;
@@ -1363,6 +1360,7 @@ int write_data (const char *fname, int *list,
 
     if (fmt != GRETL_FMT_CSV || pdinfo->decpoint != ',') {
 	gretl_push_c_numeric_locale();
+	pop_locale = 1;
     }
 
     if (fmt == GRETL_FMT_TRAD) { 
@@ -1542,7 +1540,7 @@ int write_data (const char *fname, int *list,
 	}
     }
 
-    if (fmt != GRETL_FMT_CSV || pdinfo->decpoint != ',') {
+    if (pop_locale) {
 	gretl_pop_c_numeric_locale();
     }
 
@@ -1896,10 +1894,6 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 
     if (tmpdinfo->structure == STACKED_CROSS_SECTION) {
 	err = switch_panel_orientation(tmpZ, tmpdinfo);
-    }
-
-    if (!err && tmpdinfo->structure == STACKED_TIME_SERIES) {
-	err = dataset_add_default_panel_indices(tmpdinfo);
     }
 
     if (err) goto bailout;

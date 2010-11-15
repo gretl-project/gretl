@@ -998,14 +998,6 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     pdinfo->structure = structure;
     pdinfo->sd0 = sd0;
 
-    if (pdinfo->structure != STACKED_TIME_SERIES &&
-	pdinfo->structure != STACKED_CROSS_SECTION &&
-	pdinfo->paninfo != NULL) {
-	/* This could be a problem in some cases, like
-	   if the dataset is subsampled? */
-	dataset_destroy_panel_info(pdinfo);
-    }
-
     ntodate(pdinfo->stobs, 0, pdinfo); 
     ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 
@@ -1019,10 +1011,6 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    err = switch_panel_orientation(*pZ, pdinfo);
 	}
     }	
-
-    if (!err && pdinfo->structure == STACKED_TIME_SERIES) {
-	err = dataset_add_default_panel_indices(pdinfo);
-    }
 
     return err;
 }

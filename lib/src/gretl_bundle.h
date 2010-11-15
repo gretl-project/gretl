@@ -32,6 +32,9 @@ void *gretl_bundle_get_content (gretl_bundle *bundle);
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size, int *err);
 
+GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
+				 int *err);
+
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
 void *bundled_item_get_data (bundled_item *item, GretlType *type,

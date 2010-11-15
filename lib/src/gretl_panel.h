@@ -58,9 +58,6 @@ int *panel_list_add (const MODEL *orig, const int *add, int *err);
 int panel_variance_info (const double *x, const DATAINFO *pdinfo,
 			 double xbar, double *psw, double *psb);
 
-int panel_obs_info (const int *list, const double **Z, const DATAINFO *pdinfo,
-		    PRN *prn);
-
 int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo);
 
 #endif /* GRETL_PANEL_H_ */
