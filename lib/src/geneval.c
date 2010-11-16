@@ -8876,6 +8876,7 @@ static void pre_process (parser *p, int flags)
 	p->targ = MAT;
 	p->flags |= P_LHPTR;
 	s += 8;
+	s += strspn(s, " ");
     } else if (!strncmp(s, "matrix ", 7)) {
 	p->targ = MAT;
 	s += 7;
@@ -8888,7 +8889,7 @@ static void pre_process (parser *p, int flags)
     } else if (!strncmp(s, "bundle ", 7)) {
 	p->targ = BUNDLE;
 	s += 7;
-    }	
+    }
 
     if (p->targ == VEC && p->dinfo->n == 0) {
 	no_data_error(p);

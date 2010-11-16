@@ -1160,16 +1160,23 @@ static char *get_literal_or_stringvar (const char **src, int *err)
     char *ret = NULL;
     char *tmp = NULL;
     int literal = 0;
+    int svar = 0;
     int n = 0;
 
     if (*s == '"') {
 	literal = 1;
 	s++;
 	n = get_literal_length(s);
-    } else {
-	if (*s == '@') s++;
+    } else if (*s == '@') {
+	svar = 1;
+	s++;
 	n = gretl_namechar_spn(s);
-    } 
+    } else {
+	n = charpos(',', s);
+	if (n == gretl_namechar_spn(s)) {
+	    svar = 1;
+	}
+    }
 
     if (n == 0) {
 	/* nothing there */
@@ -1186,18 +1193,20 @@ static char *get_literal_or_stringvar (const char **src, int *err)
     if (literal) {
 	ret = tmp;
 	s++;
-    } else {
-	char *svar = get_string_by_name(tmp);
+    } else if (svar) {
+	char *p = get_string_by_name(tmp);
 
-	if (svar == NULL) {
+	if (p == NULL) {
 	    *err = E_UNKVAR;
 	} else {
-	    ret = gretl_strdup(svar);
+	    ret = gretl_strdup(p);
 	    if (ret == NULL) {
 		*err = E_ALLOC;
 	    }
 	}
 	free(tmp);
+    } else {
+	ret = generate_string(tmp, NULL, NULL, err);
     }
 
     /* advance the caller's pointer */

@@ -3024,11 +3024,87 @@ static void matrix_grab_content (gretl_matrix *targ, gretl_matrix *src)
     src->t1 = src->t2 = 0;
 }
 
+#if 0 /* not used at present: alternative to QR solve */
+
+static int SVD_solve (gretl_matrix *a, gretl_matrix *b,
+		      integer m, integer n, integer nrhs,
+		      integer ldb)
+{
+    integer info;
+    integer lda = m;
+    integer slen = min(m,n);
+    integer lwork = -1;
+    integer isize = 0;
+    integer rank = 0;
+    double rcond = -1;
+    integer *iwork;
+    double *work, *S;
+    int err = 0;
+
+    if (m > n && is_block_matrix(b)) {
+	matrix_block_error("svd solve");
+	return E_DATA;
+    }
+
+    work = lapack_malloc(sizeof *work);
+    if (work == NULL) {
+	return E_ALLOC;
+    } 
+
+    dgelsd_(&m, &n, &nrhs, a->val, &lda, b->val, &ldb, work,
+	    &rcond, &rank, work, &lwork, &isize, &info);
+    if (info != 0) {
+	err = wspace_fail(info, work[0]);
+    } else {
+	lwork = (integer) work[0];
+    }
+
+    if (!err) {
+	work = lapack_realloc(work, (lwork + slen) * sizeof *work);
+	if (work == NULL) {
+	    err = E_ALLOC;
+	}
+    } 
+
+    if (!err) {
+	S = work + lwork;
+	iwork = malloc(isize * sizeof *iwork);
+	if (iwork == NULL) {
+	    err = E_ALLOC;
+	}
+    }	
+
+    dgelsd_(&m, &n, &nrhs, a->val, &lda, b->val, &ldb, S,
+	    &rcond, &rank, work, &lwork, iwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "svd_solve: dgelsd gave info = %d\n", 
+		(int) info);
+	err = E_DATA;
+    } 
+
+    if (!err && m > n) {
+	gretl_matrix *c;
+
+	c = gretl_matrix_trim_rows(b, 0, m - n, &err);
+	if (!err) {
+	    matrix_grab_content(b, c);
+	    gretl_matrix_free(c);
+	}
+    }
+
+    lapack_free(work);
+    free(iwork);
+
+    return err;
+}
+
+#endif /* unused */
+
 /* least squares solution using QR */
 
-static int overdet_solve (gretl_matrix *a, gretl_matrix *b,
-			  integer m, integer n, integer nrhs,
-			  integer ldb)
+static int QR_solve (gretl_matrix *a, gretl_matrix *b,
+		     integer m, integer n, integer nrhs,
+		     integer ldb)
 {
     char trans = 'N';
     integer info;
@@ -3037,8 +3113,8 @@ static int overdet_solve (gretl_matrix *a, gretl_matrix *b,
     double *work;
     int err = 0;
 
-    if (is_block_matrix(b)) {
-	matrix_block_error("overdet solve");
+    if (m > n && is_block_matrix(b)) {
+	matrix_block_error("QR solve");
 	return E_DATA;
     }
 
@@ -3050,7 +3126,7 @@ static int overdet_solve (gretl_matrix *a, gretl_matrix *b,
     dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb, 
 	   work, &lwork, &info);
     if (info != 0) {
-	err = wspace_fail(info, work[0]);
+	return wspace_fail(info, work[0]);
     }
 
     lwork = (integer) work[0];
@@ -3063,7 +3139,7 @@ static int overdet_solve (gretl_matrix *a, gretl_matrix *b,
     dgels_(&trans, &m, &n, &nrhs, a->val, &lda, b->val, &ldb, 
 	   work, &lwork, &info);
     if (info != 0) {
-	fprintf(stderr, "overdet_solve: dgels gave info = %d\n", 
+	fprintf(stderr, "QR_solve: dgels gave info = %d\n", 
 		(int) info);
 	err = E_DATA;
     } 
@@ -3072,7 +3148,7 @@ static int overdet_solve (gretl_matrix *a, gretl_matrix *b,
        b on output if we wanted to.  But for now we'll trim
        b to contain just the solution. */
 
-    if (!err) {
+    if (!err && m > n) {
 	gretl_matrix *c;
 
 	c = gretl_matrix_trim_rows(b, 0, m - n, &err);
@@ -3125,7 +3201,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_matrix *b)
     }
 
     if (m > n) {
-	return overdet_solve(a, b, m, n, nrhs, ldb);
+	return QR_solve(a, b, m, n, nrhs, ldb);
     } else if (m < n) {
 	return E_DATA;
     }
@@ -9535,7 +9611,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (!err) {
-	err = gretl_LU_solve(W, V); /* FIXME ? */
+	err = gretl_LU_solve(W, V);
     }
 
     if (!err) {
