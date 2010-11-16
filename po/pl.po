@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-11-14 21:23-0500\n"
-"PO-Revision-Date: 2010-11-16 09:01-0500\n"
+"PO-Revision-Date: 2010-11-16 22:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -6071,7 +6071,7 @@ msgstr "Udział obciążoności predykc. I1^2/I^2 ="
 
 #: lib/src/printout.c:2326
 msgid "Regression proportion, UR"
-msgstr "Udział niedost.elastyczność  I2^2/I^2 ="
+msgstr "Udział niedost.elastyczności I2^2/I^2 ="
 
 #: lib/src/printout.c:2327
 msgid "Disturbance proportion, UD"
@@ -11512,7 +11512,7 @@ msgstr "_Kwadraty reszt"
 
 #: gui2/gui_utils.c:2423
 msgid "_Error sum of squares"
-msgstr "_Wariancję resztową"
+msgstr "_Suma kwadratów reszt"
 
 #: gui2/gui_utils.c:2425
 msgid "_Standard error of the regression"
@@ -15232,7 +15232,7 @@ msgstr "wlączono %.2f opóźnień dla procesu (1-L)%s (średniej)"
 #: plugin/panurc.c:574
 #, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Parametr \\\"Bartlett truncation\\\" dla opóźnienia rzędu = %d\n"
+msgstr "Parametr \"Bartlett truncation\" dla opóźnienia rzędu = %d\n"
 
 #: plugin/pca.c:108
 msgid "Components with eigenvalues > mean"
