@@ -1909,8 +1909,8 @@ static void rmod_check_ifc (MODEL *rmod, const gretl_matrix *y)
 }
 
 /* respond to the --full option in case of a restriction on
-   a model estimated via OLS: replace the "last model"
-   with the restricted OLS estimates (and print the model
+   a model estimated via OLS: arrange to replace the "last model"
+   with the restricted OLS estimates (and to print the model
    if wanted)
 */
 

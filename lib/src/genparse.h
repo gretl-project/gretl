@@ -461,7 +461,8 @@ union val {
 enum {
     AUX_NODE    = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE    = 1 << 1, /* temporary: free content on exit */
-    TRANSP_NODE = 1 << 2  /* matrix node: should be transposed */
+    TRANSP_NODE = 1 << 2, /* matrix node: should be transposed */
+    PTR_NODE    = 1 << 3  /* node is compatible with P_LHPTR */
 };
 
 struct node {
@@ -496,7 +497,8 @@ enum {
     P_QUIET   = 1 << 21, /* don't print any messages or labels */
     P_GETSTR  = 1 << 22, /* state: flag acceptance of plain strings */
     P_LOOP    = 1 << 23, /* executing pre-built genr in loop context */
-    P_SLAVE   = 1 << 24  /* running as "slave" of NLS/MLE/GMM */
+    P_SLAVE   = 1 << 24, /* running as "slave" of NLS/MLE/GMM */
+    P_LHPTR   = 1 << 25  /* left-hand side: pointer type wanted */
 };
 
 struct lhinfo {

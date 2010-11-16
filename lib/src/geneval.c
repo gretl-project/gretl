@@ -5236,11 +5236,16 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 		p->err = E_ALLOC;
 	    }
 	}
-    } else if (type == GRETL_TYPE_MATRIX ||
-	       type == GRETL_TYPE_MATRIX_REF) {
+    } else if (type == GRETL_TYPE_MATRIX) {
 	ret = matrix_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
+	}
+    } else if (type == GRETL_TYPE_MATRIX_REF) {
+	ret = matrix_pointer_node(p);
+	if (ret != NULL) {
+	    ret->v.m = (gretl_matrix *) val;
+	    ret->flags |= PTR_NODE;
 	}
     } else if (type == GRETL_TYPE_BUNDLE) {
 	ret = aux_bundle_node(p);
@@ -8867,6 +8872,10 @@ static void pre_process (parser *p, int flags)
     } else if (!strncmp(s, "series ", 7)) {
 	p->targ = VEC;
 	s += 7;
+    } else if (!strncmp(s, "matrix *", 8)) {
+	p->targ = MAT;
+	p->flags |= P_LHPTR;
+	s += 8;
     } else if (!strncmp(s, "matrix ", 7)) {
 	p->targ = MAT;
 	s += 7;
@@ -9223,14 +9232,24 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	m = r->v.m;
 	r->v.m = NULL; /* avoid double-freeing */
     } else if (r->t == MAT) {
-	/* r->v.m is an existing user matrix, copy it */
+	/* r->v.m is an existing user matrix (or bundled matrix) */
+	if (p->flags & P_LHPTR) {
+	    if (r->flags & PTR_NODE) {
+		/* OK, we'll share the matrix pointer */
+		m = r->v.m;
+	    } else {
+		p->err = E_TYPES;
+	    }
+	} else {
+	    /* must make a copy to keep pointers distinct */
 #if EDEBUG
-	fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
-		(void *) r->v.m);
+	    fprintf(stderr, "matrix result (%p) is pre-existing, copying it\n",
+		    (void *) r->v.m);
 #endif
-	m = gretl_matrix_copy(r->v.m);
-	if (m == NULL) {
-	    p->err = E_ALLOC;
+	    m = gretl_matrix_copy(r->v.m);
+	    if (m == NULL) {
+		p->err = E_ALLOC;
+	    }
 	}
     } else if (r->t == LIST) {
 	m = list_to_matrix(r->v.str, &p->err);
@@ -9804,7 +9823,8 @@ static void parser_reinit (parser *p, double ***pZ,
     /* flags that should be reinstated if they were
        present at compile time */
     int repflags[] = { P_PRINT, P_NATEST, P_AUTOREG,
-		       P_LOOP, P_SLAVE, P_SLICE, P_UFUN, 0 };
+		       P_LOOP, P_SLAVE, P_SLICE, P_UFUN, 
+		       P_LHPTR, 0 };
     int i, saveflags = p->flags;
 
     /* P_LHSCAL, P_LHLIST, P_LHSTR ? */
