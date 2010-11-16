@@ -8317,7 +8317,7 @@
 	</option>
 	<option>
 	  <flag>--full</flag>
-	  <effect>VECM-only option, see below</effect>
+	  <effect>OLS and VECMs only, see below</effect>
 	</option>
       </options>
     </usage>    
@@ -8454,13 +8454,14 @@
 	test statistic and its p-value.
       </para>
       <para>
-	Note that some special considerations apply in the case of testing
-	restrictions on Vector Error Correction Models. Please see <guideref
-	targ="chap:vecm"/> for details. When testing restrictions on a
-	VECM (only) the <opt>--full</opt> option can be used to set the
-	restricted system as the <quote>last model</quote> for the
-	purposes of further testing or the use of accessors such
-	as <lit>$coeff</lit>.
+	When testing restrictions on a single-equation model estimated
+	via OLS, or on a VECM, the <opt>--full</opt> option can be
+	used to set the restricted estimates as the <quote>last
+	model</quote> for the purposes of further testing or the use
+	of accessors such as <lit>$coeff</lit> and <lit>$vcv</lit>.
+	Note that some special considerations apply in the case of
+	testing restrictions on Vector Error Correction Models. Please
+	see <guideref targ="chap:vecm"/> for details.
       </para>
     </description>
 

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-11-14 21:23-0500\n"
-"PO-Revision-Date: 2010-10-23 00:30-0400\n"
+"PO-Revision-Date: 2010-11-16 09:01-0500\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -3208,13 +3208,12 @@ msgid "restriction is acceptable"
 msgstr "Restrykcje zaakceptowane"
 
 #: lib/src/gretl_model.c:2996
-#, fuzzy
 msgid "Test of independence"
-msgstr "do średnich niezależnych zmiennych"
+msgstr "Test niezależności"
 
 #: lib/src/gretl_model.c:2997
 msgid "rho = 0"
-msgstr ""
+msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3015
 msgid "robust variant"
@@ -4377,7 +4376,7 @@ msgstr "Pomocnicze równanie regresji dla testu COMFAC"
 
 #: lib/src/modelprint.c:715
 msgid "Initial"
-msgstr ""
+msgstr "Początkowy"
 
 #: lib/src/modelprint.c:735 lib/src/system.c:93 lib/src/varprint.c:1069
 #: lib/src/varprint.c:1078 lib/src/varprint.c:1086 gui2/selector.c:3265
@@ -4467,7 +4466,7 @@ msgstr "Dynamiczny panel"
 
 #: lib/src/modelprint.c:756 gui2/selector.c:3289
 msgid "Bivariate probit"
-msgstr ""
+msgstr "Probit dwuzmienny"
 
 #: lib/src/modelprint.c:758
 msgid "Arellano--Bond"
@@ -4697,9 +4696,8 @@ msgstr "Instrumenty"
 
 #: lib/src/modelprint.c:1163 lib/src/modelprint.c:1165
 #: lib/src/modelprint.c:1167 gui2/selector.c:4710
-#, fuzzy
 msgid "Asymptotic standard errors"
-msgstr "Asymptotyczne błędy standardowe (niepewne)"
+msgstr "Asymptotyczne błędy standardowe"
 
 #: lib/src/modelprint.c:1177 lib/src/modelprint.c:1179
 #: lib/src/modelprint.c:1181
@@ -6069,15 +6067,15 @@ msgstr "Współczynnik Theila (w procentach)  I ="
 
 #: lib/src/printout.c:2325
 msgid "Bias proportion, UM"
-msgstr "Udział obciążoność predykcji     I1^2 ="
+msgstr "Udział obciążoności predykc. I1^2/I^2 ="
 
 #: lib/src/printout.c:2326
 msgid "Regression proportion, UR"
-msgstr "Udział niedostat. elastyczność   I2^2 ="
+msgstr "Udział niedost.elastyczność  I2^2/I^2 ="
 
 #: lib/src/printout.c:2327
 msgid "Disturbance proportion, UD"
-msgstr "Udział niezgodność kierunku      I3^2 ="
+msgstr "Udział niezgodności kierunku I3^2/I^2 ="
 
 #: lib/src/printout.c:2365 gui2/guiprint.c:1276
 msgid "Forecast evaluation statistics"
@@ -8617,7 +8615,7 @@ msgstr "Liczba obserwacji: %d"
 #: gui2/dialogs.c:1771
 #, c-format
 msgid "Panel groups to graph (max %d)"
-msgstr ""
+msgstr "Wykres grup panelu (max %d)"
 
 #: gui2/dialogs.c:1779
 msgid "Panel groups"
@@ -8883,7 +8881,7 @@ msgstr "Test zgodności z rozkładem normalnym"
 
 #: gui2/dialogs.c:4125
 msgid "Test against gamma distribution"
-msgstr "Test zgodności z rozkładem gama"
+msgstr "Test zgodności z rozkładem gamma"
 
 #: gui2/dialogs.c:4237
 msgid "show plot"
@@ -9253,9 +9251,8 @@ msgid "show poles"
 msgstr "Wykres 'Butterwortha poles'"
 
 #: gui2/filters.c:735
-#, fuzzy
 msgid "filter may be numerically unstable"
-msgstr "Wprowadź wartość numeryczną"
+msgstr "filtr może być niestabilny"
 
 #: gui2/filters.c:742
 msgid "Order:"
@@ -9310,10 +9307,9 @@ msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "Składnik filtru Baxtera-Kinga dla %s o częstościach od %d do %d"
 
 #: gui2/filters.c:975
-#, fuzzy, c-format
+#, c-format
 msgid "Butterworth poles (n = %d, cutoff = %d degrees)"
-msgstr ""
-"Przefiltrowany %s: dolnoprzepustowy filtrem Butterwortha (n=%d, odcięcie=%d)"
+msgstr "Odcięcie 'Butterworth poles' (n=%d, odcięcie=%d stopni)"
 
 #: gui2/filters.c:1111
 msgid "Gain for Butterworth filter"
@@ -9629,12 +9625,11 @@ msgstr "Powiększanie..."
 
 #: gui2/gpt_control.c:3334 gui2/gpt_control.c:3438
 msgid "Restore full view"
-msgstr "Przywróc pełny zakres"
+msgstr "Przywróć pełny zakres"
 
 #: gui2/gpt_control.c:3336 gui2/gpt_control.c:3439
-#, fuzzy
 msgid "Replace full view"
-msgstr "Przywróc pełny zakres"
+msgstr "Zamień zakres wykresu"
 
 #: gui2/gpt_control.c:3340 gui2/gpt_control.c:3423 gui2/toolbar.c:629
 msgid "Print..."
@@ -10644,7 +10639,7 @@ msgstr "Test _KPSS..."
 
 #: gui2/gretl.c:1537
 msgid "_Levin-Lin-Chu test"
-msgstr ""
+msgstr "Test _Levin-Lin-Chu"
 
 #: gui2/gretl.c:1538
 msgid "_Fractional integration"
@@ -10827,9 +10822,8 @@ msgid "_Between model..."
 msgstr "_Między-grupowy model..."
 
 #: gui2/gretl.c:1591
-#, fuzzy
 msgid "_Dynamic panel model..."
-msgstr "Dynamiczny model panelowy"
+msgstr "_Dynamiczny model panelowy..."
 
 #: gui2/gretl.c:1593
 msgid "_Nonlinear models"
@@ -10856,9 +10850,8 @@ msgid "_Probit"
 msgstr "Model _Probitowy"
 
 #: gui2/gretl.c:1601
-#, fuzzy
 msgid "Bi_variate..."
-msgstr "_Znajdź zmienną..."
+msgstr "_Dwóch zmiennych zależnych..."
 
 #: gui2/gretl.c:1602
 msgid "To_bit..."
@@ -11094,7 +11087,7 @@ msgstr "Niedostateczna elastyczność predykcji, $I2^2$"
 
 #: gui2/guiprint.c:1256
 msgid "Disturbance proportion, $U^D$"
-msgstr "Niezgodnoć kierunku predykcji, $I3^2$"
+msgstr "Niezgodność kierunku predykcji, $I3^2$"
 
 #: gui2/guiprint.c:1311 gui2/guiprint.c:1329
 msgid "Model estimation range:"
@@ -11155,7 +11148,7 @@ msgstr "Dla %g%% przedziału ufności, t(%d, %g) = %.3f"
 #: gui2/guiprint.c:1657
 #, c-format
 msgid "%g%% interval"
-msgstr "%g%% przedział)"
+msgstr "%g%% przedział"
 
 #: gui2/guiprint.c:1752 gui2/guiprint.c:1799
 #, c-format
@@ -11226,11 +11219,11 @@ msgstr "_Wykresy"
 
 #: gui2/gui_utils.c:207
 msgid "_Residual plot"
-msgstr "wykres reszt modelu"
+msgstr "Wykres reszt modelu"
 
 #: gui2/gui_utils.c:208
 msgid "_Fitted, actual plot"
-msgstr "wykres empirycznych i wyrównanych"
+msgstr "Wykres empirycznych i wyrównanych"
 
 #: gui2/gui_utils.c:209 gui2/gui_utils.c:335
 msgid "_Analysis"
@@ -11242,7 +11235,7 @@ msgstr "Pokaż empiryczne, wyrównane i reszty"
 
 #: gui2/gui_utils.c:212
 msgid "_Forecasts..."
-msgstr "Prognoza..."
+msgstr "_Prognoza..."
 
 #: gui2/gui_utils.c:213
 msgid "_Confidence intervals for coefficients"
@@ -11584,7 +11577,7 @@ msgstr "Periodogram-spektrum procesu resztowego"
 
 #: gui2/gui_utils.c:2695
 msgid "Residual _Q-Q plot"
-msgstr "wykres reszt _Q-Q (kwantyl-kwantyl)"
+msgstr "Wykres reszt _Q-Q (kwantyl-kwantyl)"
 
 #: gui2/gui_utils.c:2715
 #, c-format
@@ -12023,9 +12016,8 @@ msgid "gretl: KPSS test"
 msgstr "gretl: test KPSS (Kwiatkowski, Phillips, Schmidt i Shin)"
 
 #: gui2/library.c:1000
-#, fuzzy
 msgid "gretl: Levin-Lin-Chu test"
-msgstr "gretl: test stabilności Chowa"
+msgstr "gretl: test Levin-Lin-Chu"
 
 #: gui2/library.c:1001
 msgid "Lag order for ADF test:"
@@ -12408,7 +12400,7 @@ msgstr "gretl: tworzenie zmiennych 0-1"
 
 #: gui2/library.c:5195
 msgid "Encoding variables as dummies"
-msgstr "Kodowanie zmiennych dyskretnych jako zbiór zmiennych 0-1"
+msgstr "Kodowanie zmiennych dyskretnych jako zestawu zmiennych 0-1"
 
 #: gui2/library.c:5218
 msgid "gretl: generate lags"
@@ -12473,9 +12465,8 @@ msgid "Really delete %s?"
 msgstr "Czy na pewno usunąć: %s?"
 
 #: gui2/library.c:5991
-#, fuzzy
 msgid "Really delete the selected variables?"
-msgstr "Niemożliwe usunięcie wykorzystywanych zmiennych"
+msgstr "Na pewno usunąć wybrane zmienne?"
 
 #: gui2/library.c:6001 gui2/session.c:2187
 msgid "gretl: delete"
@@ -12490,17 +12481,16 @@ msgid "Cannot delete all of the specified variables"
 msgstr "Niemożliwe usunięcie wszystkich specyfikowanych zmiennych"
 
 #: gui2/library.c:6070
-#, fuzzy
 msgid "Too many units selected"
-msgstr "Za dużo wybranych pozycji"
+msgstr "Za dużo wybranych jednostek"
 
 #: gui2/library.c:6119
 msgid "single graph: units overlaid"
-msgstr ""
+msgstr "wykres jednostek względem czasu"
 
 #: gui2/library.c:6120
 msgid "single graph: units in sequence"
-msgstr ""
+msgstr "wykres jednostek w sekwencji"
 
 #: gui2/library.c:6121
 msgid "multiple plots in grid"
@@ -12987,9 +12977,8 @@ msgid "You must specify a selection variable"
 msgstr "Należy wyspecyfikować zmienne - instrumenty"
 
 #: gui2/selector.c:2840
-#, fuzzy
 msgid "You must specify a second dependent variable"
-msgstr "Należy wybrać zmienną zależną (Y)"
+msgstr "Należy wybrać drugą zmienną zależną (Y)"
 
 #: gui2/selector.c:2843
 msgid "You must specify an upper bound variable"
@@ -13013,7 +13002,7 @@ msgstr "Należy wyspecyfikować zmienną - kontrolną"
 
 #: gui2/selector.c:3116
 msgid "You must select two or more endogenous variables"
-msgstr "Należy wybrać dwie lub więcej zmienne endogenczne"
+msgstr "Należy wybrać dwie lub więcej zmiennych endogencznych"
 
 #: gui2/selector.c:3124
 msgid "You must specify a public interface"
@@ -13108,9 +13097,8 @@ msgid "Censoring variable"
 msgstr "Zmienna - cenzorowana"
 
 #: gui2/selector.c:3354
-#, fuzzy
 msgid "Second dependent variable"
-msgstr "Zmienne niezależne (X):"
+msgstr "Druga zmienna zależna"
 
 #: gui2/selector.c:3356
 msgid "List of AR lags"
@@ -13181,9 +13169,8 @@ msgid "Response variable"
 msgstr "Zmienna - odpowiedź"
 
 #: gui2/selector.c:3652
-#, fuzzy
 msgid "First dependent variable"
-msgstr "Zmienna zależna"
+msgstr "Pierwsza zmienna zależna"
 
 #: gui2/selector.c:3722
 msgid "lag order:"
@@ -13234,9 +13221,8 @@ msgid "Selection equation regressors"
 msgstr "Regresory równania selekcji"
 
 #: gui2/selector.c:3935
-#, fuzzy
 msgid "Second equation regressors"
-msgstr "Regresory równania selekcji"
+msgstr "Regresory drugiego równania"
 
 #: gui2/selector.c:3937
 msgid "Helper functions"
@@ -13324,7 +13310,7 @@ msgstr "Włącz zmienne 0-1 jednostek czasu"
 
 #: gui2/selector.c:4708
 msgid "Include levels equations (GMM-SYS)"
-msgstr ""
+msgstr "Włącz poziomy równań (GMM-SYS)"
 
 #: gui2/selector.c:4713
 msgid "Show zeros explicitly"
@@ -13511,9 +13497,8 @@ msgid "Endogenous variables"
 msgstr "Zmienne endogeniczne"
 
 #: gui2/selector.c:5518
-#, fuzzy
 msgid "First equation regressors"
-msgstr "Regresory równania selekcji"
+msgstr "Regresory pierwszego równania"
 
 #: gui2/selector.c:5520
 msgid "Independent variables"
@@ -15237,17 +15222,17 @@ msgstr "oczekiwane %s, lecz znaleziono %s"
 #: plugin/panurc.c:564
 #, c-format
 msgid "Levin-Lin-Chu pooled ADF test for %s\n"
-msgstr ""
+msgstr "Test Levin-Lin-Chu dla panelowego ADF dla %s\n"
 
 #: plugin/panurc.c:567
-#, fuzzy, c-format
+#, c-format
 msgid "including %.2f lags of (1-L)%s (average)"
-msgstr "dla opóźnienia rzędu %d procesu (1-L)%s"
+msgstr "wlączono %.2f opóźnień dla procesu (1-L)%s (średniej)"
 
 #: plugin/panurc.c:574
-#, fuzzy, c-format
+#, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Parametr rzędu opóźnienia (lag truncation) = %d\n"
+msgstr "Parametr \\\"Bartlett truncation\\\" dla opóźnienia rzędu = %d\n"
 
 #: plugin/pca.c:108
 msgid "Components with eigenvalues > mean"

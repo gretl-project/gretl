@@ -45,6 +45,14 @@ gretl_restriction_finalize (gretl_restriction *rset,
 			    const double **Z, const DATAINFO *pdinfo,
 			    gretlopt opt, PRN *prn);
 
+int
+gretl_restriction_finalize_full (ExecState *state,
+				 gretl_restriction *rset, 
+				 const double **Z,
+				 const DATAINFO *pdinfo,
+				 gretlopt opt,
+				 PRN *prn);
+
 GRETL_VAR *
 gretl_restricted_vecm (gretl_restriction *rset, 
 		       const double **Z,
@@ -63,23 +71,21 @@ void destroy_restriction_set (gretl_restriction *rset);
 int gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
 		    PRN *prn);
 
-const gretl_matrix *
-rset_get_R_matrix (const gretl_restriction *rset);
+const gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset);
 
-const gretl_matrix *
-rset_get_q_matrix (const gretl_restriction *rset);
+const gretl_matrix *rset_get_q_matrix (const gretl_restriction *rset);
 
-const gretl_matrix *
-rset_get_Ra_matrix (const gretl_restriction *rset);
+const gretl_matrix *rset_get_Ra_matrix (const gretl_restriction *rset);
 
-const gretl_matrix *
-rset_get_qa_matrix (const gretl_restriction *rset);
+const gretl_matrix *rset_get_qa_matrix (const gretl_restriction *rset);
 
 int gretl_restriction_set_boot_params (int B, gretlopt opt);
 
 void gretl_restriction_get_boot_params (int *pB, gretlopt *popt);
 
 gretlopt gretl_restriction_get_options (const gretl_restriction *rset);
+
+GretlObjType gretl_restriction_get_type (const gretl_restriction *rset);
 
 int rset_VECM_bcols (const gretl_restriction *rset);
 

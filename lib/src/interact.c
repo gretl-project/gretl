@@ -4090,7 +4090,8 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 */
 
 static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
-			     PRN *prn, ExecState *s)
+			     gretlopt opt, PRN *prn, 
+			     ExecState *s)
 {
     int err = pmod->errcode;
 
@@ -4102,7 +4103,7 @@ static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
 	    if (havename) {
 		gretl_model_set_name(pmod, s->cmd->savename);
 	    }
-	    printmodel(pmod, pdinfo, s->cmd->opt, prn);
+	    printmodel(pmod, pdinfo, opt, prn);
 	    attach_subsample_to_model(pmod, pdinfo);
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
 	    if (!err && s->callback != NULL && havename && 
@@ -4267,21 +4268,35 @@ static void callback_exec (ExecState *s, int err)
 
 static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
+    const double **Z = (const double **) *pZ;
+    GretlObjType otype = gretl_restriction_get_type(s->rset);
     gretlopt ropt = gretl_restriction_get_options(s->rset);
-    CMD *cmd = s->cmd;
-    PRN *prn = s->prn;
+    gretlopt opt = s->cmd->opt | ropt;
     int err = 0;
 
-    if ((cmd->opt & OPT_F) || (ropt & OPT_F)) {
-	/* FIXME non-vecm VAR case? */
-	s->var = gretl_restricted_vecm(s->rset, (const double **) *pZ, 
-				       pdinfo, cmd->opt, prn, &err);
-	if (!err && s->var != NULL) {
-	    save_var_vecm(s);
+    if (opt & OPT_F) {
+	/* restrict --full */
+	if (otype == GRETL_OBJ_VAR) {
+	    s->var = gretl_restricted_vecm(s->rset, Z, pdinfo, 
+					   opt, s->prn, &err);
+	    if (!err && s->var != NULL) {
+		save_var_vecm(s);
+	    }
+	} else if (otype == GRETL_OBJ_EQN) {
+	    err = gretl_restriction_finalize_full(s, s->rset, Z, pdinfo, 
+						  opt, s->prn);
+	    if (!err) {
+		gretlopt printopt = OPT_NONE;
+
+		if (opt & (OPT_Q | OPT_S)) {
+		    printopt = OPT_Q;
+		}
+		print_save_model(s->pmod, pdinfo, printopt, s->prn, s);
+	    }
 	}
     } else {
-	err = gretl_restriction_finalize(s->rset, (const double **) *pZ, 
-					 pdinfo, cmd->opt, prn);
+	err = gretl_restriction_finalize(s->rset, Z, pdinfo, 
+					 opt, s->prn);
     }
 
     s->rset = NULL;
@@ -4844,13 +4859,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case WLS:
 	clear_model(models[0]);
 	*models[0] = lsq(cmd->list, *pZ, pdinfo, cmd->ci, cmd->opt);
-	err = print_save_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
 	break;
 	
     case MPOLS:
 	clear_model(models[0]);
 	*models[0] = mp_ols(cmd->list, Z, pdinfo);
-	err = print_save_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
 	break;
 
     case AR:
@@ -4869,7 +4884,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
 				    cmd->opt, prn);
 	}
-	err = print_save_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
 	break;
 
     case ARBOND:
@@ -4936,7 +4951,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 1;
 	    break;
 	}
-	err = print_save_model(models[0], pdinfo, prn, s);
+	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
 	break;
 
     case GMM:
@@ -5108,7 +5123,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(models[0]);
 	    *models[0] = nl_model(pZ, pdinfo, cmd->opt, prn);
-	    err = print_save_model(models[0], pdinfo, prn, s);
+	    err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, pZ, pdinfo);
 	} else if (!strcmp(cmd->param, "foreign")) {
@@ -5673,6 +5688,11 @@ void gretl_exec_state_uncomment (ExecState *s)
 void gretl_exec_state_transcribe_flags (ExecState *s, CMD *cmd)
 {
     s->in_comment = (cmd_ignore(cmd))? 1 : 0;
+}
+
+void gretl_exec_state_set_model (ExecState *s, MODEL *pmod)
+{
+    s->pmod = pmod;
 }
 
 int process_command_error (CMD *cmd, int err)

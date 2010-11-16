@@ -28,6 +28,7 @@
 #include "gretl_scalar.h"
 #include "gretl_func.h"
 #include "gretl_bfgs.h"
+#include "cmd_private.h"
 
 #define RDEBUG 0
 
@@ -1890,54 +1891,145 @@ static int rset_expand_R (gretl_restriction *rset, int k)
     return 0;
 }
 
-#if 0 /* not ready */
+static void rmod_check_ifc (MODEL *rmod, const gretl_matrix *y)
+{
+    double x1 = 0.0, x2 = 0.0;
+    double reldiff;
+    int t, s = 0;
 
-static int save_restricted_model (MODEL *pmod,
+    for (t=rmod->t1; t<=rmod->t2; t++) {
+	if (!na(rmod->yhat[t])) {
+	    x1 += rmod->yhat[t];
+	    x2 += y->val[s++];
+	}
+    }
+
+    reldiff = fabs((x1 - x2) / x2);
+    rmod->ifc = reldiff < 9.0e-16;
+}
+
+/* respond to the --full option in case of a restriction on
+   a model estimated via OLS: replace the "last model"
+   with the restricted OLS estimates (and print the model
+   if wanted)
+*/
+
+static int save_restricted_model (ExecState *state,
+				  MODEL *pmod,
 				  const DATAINFO *pdinfo,
+				  const gretl_matrix *y,
 				  const gretl_matrix *b,
 				  const gretl_matrix *S,
-				  const gretl_matrix *u)
+				  const gretl_matrix *u,
+				  double s2,
+				  gretl_restriction *rset,
+				  PRN *prn)
 {
-    MODEL rmod;
-    int i, j, err = 0;
+    MODEL *rmod;
+    int i, err = 0;
 
-    gretl_model_init(&rmod);
-    rmod.ncoeff = gretl_vector_get_length(b);
-    rmod.full_n = pdinfo->n;
+    if (state == NULL) {
+	return E_DATA;
+    }
 
-    err = gretl_model_allocate_storage(&rmod);
+    rmod = gretl_model_new();
+    if (rmod == NULL) {
+	return E_ALLOC;
+    }    
+
+    rmod->ci = OLS;
+    rmod->ncoeff = gretl_vector_get_length(b);
+    rmod->nobs = gretl_vector_get_length(y);
+    rmod->full_n = pdinfo->n;
+    rmod->t1 = pmod->t1;
+    rmod->t2 = pmod->t2;
+
+    rmod->dfn = pmod->dfn - rset->g;
+    rmod->dfd = pmod->dfd + rset->g;
+    rmod->ybar = pmod->ybar;
+    rmod->sdy = pmod->sdy;
+    rmod->tss = pmod->tss;
+
+    gretl_model_smpl_init(rmod, pdinfo);
+
+    err = gretl_model_allocate_storage(rmod);
     
     if (!err) {
-	for (i=0; i<rmod.ncoeff; i++) {
-	    rmod.coeff[i] = b->val[i];
+	for (i=0; i<rmod->ncoeff; i++) {
+	    rmod->coeff[i] = b->val[i];
 	}
-	err = gretl_model_write_vcv(&rmod, S);
+	err = gretl_model_write_vcv(rmod, S);
     }
 
     if (!err) {
-	err = gretl_model_allocate_params(&rmod, rmod.ncoeff);
+	rmod->list = gretl_list_copy(pmod->list);
+	if (rmod->list == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
     if (!err) {
-	;
+	double yt, ut;
+	int t, s = 0;
+
+	rmod->sigma = sqrt(s2);
+	rmod->ess = 0.0;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!na(pmod->uhat[t])) {
+		yt = gretl_vector_get(y, s);
+		ut = gretl_vector_get(u, s);
+		rmod->uhat[t] = ut;
+		rmod->yhat[t] = yt - ut;
+		rmod->ess += ut * ut;
+		s++;
+	    }
+	}
+
+	rmod_check_ifc(rmod, y); /* FIXME? */
+
+	if (rmod->ifc) {
+	    double tmp;
+
+	    rmod->rsq = 1.0 - (rmod->ess / rmod->tss);
+	    tmp = rmod->tss * rmod->dfd;
+	    rmod->adjrsq = 1 - (rmod->ess * (rmod->nobs - 1) / tmp);
+	    tmp = rmod->dfd / (double) rmod->dfn;
+	    rmod->fstt = tmp * (rmod->tss - rmod->ess) / rmod->ess;
+	    if (rmod->fstt < 0) {
+		rmod->fstt = NADBL;
+	    }
+	}
+
+	rmod->ncoeff -= rset->g;
+	ls_criteria(rmod);
+	rmod->ncoeff += rset->g;
     }
+
+    if (err) {
+	gretl_model_free(rmod);
+    } else {
+	set_model_id(rmod);
+	gretl_model_set_int(rmod, "restricted", 1);
+	gretl_exec_state_set_model(state, rmod);
+    } 
 
     return err;
 }
 
-#endif
-
 /* generate full restricted estimates: this function is used
    only for single-equation models, estimated via OLS */
 
-static int 
-do_restricted_estimates (gretl_restriction *rset,
-			 const double **Z, const DATAINFO *pdinfo,
-			 PRN *prn)
+static int do_restricted_estimates (ExecState *state,
+				    gretl_restriction *rset,
+				    const double **Z, 
+				    const DATAINFO *pdinfo,
+				    PRN *prn)
 {
     MODEL *pmod = rset->obj;
     gretl_matrix_block *B;
     gretl_matrix *X, *y, *b, *S;
+    gretl_matrix *u = NULL;
     int *xlist = NULL;
     double s2 = 0.0;
     int T = pmod->nobs;
@@ -1969,6 +2061,15 @@ do_restricted_estimates (gretl_restriction *rset,
 	goto bailout;
     }
 
+    if (rset->opt & OPT_F) {
+	/* full save wanted */
+	u = gretl_matrix_alloc(T, 1);
+	if (u == NULL) {
+	    err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (na(pmod->uhat[t])) {
@@ -1987,27 +2088,34 @@ do_restricted_estimates (gretl_restriction *rset,
 #endif
 
     err = gretl_matrix_restricted_ols(y, X, rset->R, rset->q, 
-				      b, S, NULL, &s2);
+				      b, S, u, &s2);
 
     if (!err) {
-	print_restricted_estimates(pmod, pdinfo, b, S, s2,
-				   k, rset->g, prn);
+	if (rset->opt & OPT_F) {
+	    err = save_restricted_model(state, pmod, pdinfo, y, b, S,
+					u, s2, rset, prn);
+	} else {
+	    print_restricted_estimates(pmod, pdinfo, b, S, s2,
+				       k, rset->g, prn);
+	}
     }
 
  bailout:
     
     gretl_matrix_block_destroy(B);
+    gretl_matrix_free(u);
     free(xlist);
 
     return err;
 }
 
-/* print result, single equation */
+/* print or save restricted estimates, single equation */
 
-static void 
-restriction_set_print_result (gretl_restriction *rset, 
-			      const double **Z, const DATAINFO *pdinfo,
-			      PRN *prn)
+static void print_or_save_result (ExecState *state,
+				  gretl_restriction *rset, 
+				  const double **Z, 
+				  const DATAINFO *pdinfo,
+				  PRN *prn)
 {
     MODEL *pmod = rset->obj;
     int robust, asym = 0;
@@ -2051,9 +2159,11 @@ restriction_set_print_result (gretl_restriction *rset,
 	record_test_result(rset->test, rset->pval, _("restriction"));
     }
 
-    if (pmod != NULL && Z != NULL && !(quiet || silent)
-	&& pmod->ci == OLS) {
-	do_restricted_estimates(rset, Z, pdinfo, prn);
+    if (pmod != NULL && pmod->ci == OLS && Z != NULL) {
+	if ((rset->opt & OPT_F) || !(quiet || silent)) {
+	    /* print and/or save restricted estimates */
+	    do_restricted_estimates(state, rset, Z, pdinfo, prn);
+	}
     }
 }
 
@@ -2227,7 +2337,8 @@ static int is_simple_zero_restriction (gretl_restriction *rset)
     }
 }
 
-static int do_single_equation_test (gretl_restriction *rset,
+static int do_single_equation_test (ExecState *state,
+				    gretl_restriction *rset,
 				    const double **Z,
 				    const DATAINFO *pdinfo,
 				    PRN *prn)
@@ -2267,20 +2378,19 @@ static int do_single_equation_test (gretl_restriction *rset,
     } else {
 	err = test_restriction_set(rset, prn);
 	if (!err) {
-	    restriction_set_print_result(rset, Z, pdinfo, prn);
+	    print_or_save_result(state, rset, Z, pdinfo, prn);
 	}
     }
 
     return err;
 }
 
-GRETL_VAR *
-gretl_restricted_vecm (gretl_restriction *rset, 
-		       const double **Z,
-		       const DATAINFO *pdinfo,
-		       gretlopt opt,
-		       PRN *prn,
-		       int *err)
+GRETL_VAR *gretl_restricted_vecm (gretl_restriction *rset, 
+				  const double **Z,
+				  const DATAINFO *pdinfo,
+				  gretlopt opt,
+				  PRN *prn,
+				  int *err)
 {
     GRETL_VAR *jvar = NULL;
 
@@ -2407,7 +2517,7 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
     }
 
     if (!err) {
-	restriction_set_print_result(rset, NULL, NULL, prn);
+	print_or_save_result(NULL, rset, NULL, NULL, prn);
     }
 
     gretl_matrix_free(vcv);
@@ -2431,14 +2541,14 @@ static int nonlinear_wald_test (gretl_restriction *rset, gretlopt opt,
 */
 
 int
-gretl_restriction_finalize (gretl_restriction *rset, 
-			    const double **Z,
-			    const DATAINFO *pdinfo,
-			    gretlopt opt,
-			    PRN *prn)
+gretl_restriction_finalize_full (ExecState *state,
+				 gretl_restriction *rset, 
+				 const double **Z,
+				 const DATAINFO *pdinfo,
+				 gretlopt opt,
+				 PRN *prn)
 {
-    int t = rset->otype;
-    int silent = (rset->opt | opt) & OPT_S;
+    int silent, t = rset->otype;
     int err = 0;
 
 #if RDEBUG
@@ -2450,6 +2560,16 @@ gretl_restriction_finalize (gretl_restriction *rset,
     }
 
     rset->opt |= opt;
+    silent = (rset->opt & OPT_S);
+
+    if (t == GRETL_OBJ_EQN && (opt & OPT_F)) {
+	/* --full option is for OLS only */
+	MODEL *pmod = rset->obj;
+
+	if (pmod->ci != OLS) {
+	    return E_BADOPT;
+	}
+    }
 
     if (rset->rfunc != NULL) {
 	err = nonlinear_wald_test(rset, opt, prn);
@@ -2477,7 +2597,7 @@ gretl_restriction_finalize (gretl_restriction *rset,
 	rset->q = NULL;
     } else {
 	/* single-equation model */
-	err = do_single_equation_test(rset, Z, pdinfo, prn);
+	err = do_single_equation_test(state, rset, Z, pdinfo, prn);
     }
 
     if (!(rset->opt & OPT_C)) {
@@ -2485,6 +2605,16 @@ gretl_restriction_finalize (gretl_restriction *rset,
     }
 
     return err;
+}
+
+int gretl_restriction_finalize (gretl_restriction *rset, 
+				const double **Z,
+				const DATAINFO *pdinfo,
+				gretlopt opt,
+				PRN *prn)
+{
+    return gretl_restriction_finalize_full(NULL, rset, Z,
+					   pdinfo, opt, prn);
 }
 
 /**
@@ -2624,6 +2754,11 @@ void gretl_restriction_get_boot_params (int *pB, gretlopt *popt)
 gretlopt gretl_restriction_get_options (const gretl_restriction *rset)
 {
     return (rset != NULL)? rset->opt : OPT_NONE;
+}
+
+GretlObjType gretl_restriction_get_type (const gretl_restriction *rset)
+{
+    return (rset != NULL)? rset->otype : GRETL_OBJ_NULL;
 }
 
 const gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset)

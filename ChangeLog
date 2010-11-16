@@ -2,6 +2,9 @@ version 1.9.3, in progress
 - New estimation command "biprobit" (bivariate probit)
 - New panel unit-root command "levinlin"
 - Add help text for "dpanel"
+- "restrict" command: enable the --full option for single-
+  equation models estimated via OLS (makes the restricted
+  estimates available as the "last model")
 - GUI graphs: allow option of replacing the original graph
   with a zoomed view
 - Panel time-series graphs in GUI: add another format option

@@ -871,7 +871,10 @@ const char *estimator_string (const MODEL *pmod, PRN *prn)
 	    return N_("Duration (log-normal)");
 	} else {
 	    return N_("Duration (Weibull)");
-	}	
+	}
+    } else if (pmod->ci == OLS && 
+	       gretl_model_get_int(pmod, "restricted")) {
+	return N_("Restricted OLS");
     } else {
 	return simple_estimator_string(pmod->ci, prn);
     }
@@ -3001,7 +3004,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (opt & OPT_S) {
 	/* --simple-print */
-	if (pmod->ci == OLS && plain_format(prn)) {
+	if (pmod->ci == OLS && !na(pmod->rsq) && plain_format(prn)) {
 	    pprintf(prn, "%s = %f\n\n", _("R-squared"), pmod->rsq);
 	}
 	goto close_format;
