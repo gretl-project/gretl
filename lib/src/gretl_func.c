@@ -5562,11 +5562,12 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	    double *px;
 
 	    if (arg->type == GRETL_TYPE_USERIES) {
-		px = (*pZ)[arg->val.idnum] + pdinfo->t1;
+		px = (*pZ)[arg->val.idnum];
 	    } else {
 		px = arg->val.px;
 	    }
-	    err = gretl_bundle_set_data(b, key, px, GRETL_TYPE_SERIES, size);
+	    err = gretl_bundle_set_data(b, key, px + pdinfo->t1, 
+					GRETL_TYPE_SERIES, size);
 	} else {
 	    /* FIXME strings and maybe other types */
 	    err = E_TYPES;
