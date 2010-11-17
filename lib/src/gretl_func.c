@@ -1437,7 +1437,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     gretl_xml_get_prop_as_int(node, "private", &fun->private);
-    gretl_xml_get_prop_as_int(node, "plugin", &fun->plugin);
+    gretl_xml_get_prop_as_int(node, "plugin-wrapper", &fun->plugin);
 
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d\n"
@@ -1593,7 +1593,7 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\" private=\"%d\"", 
 	    fun->name, gretl_arg_type_name(rtype), fun->private);
     if (fun->plugin) {
-	fputs(" plugin=\"1\"", fp);
+	fputs(" plugin-wrapper=\"1\"", fp);
     }
     fputs(">\n", fp);
 
@@ -1797,6 +1797,19 @@ static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
     return NULL;
 }
 
+static int has_plugin_special_comment (ufunc *fun)
+{
+    int i;
+
+    for (i=0; i<fun->n_lines; i++) {
+	if (strstr(fun->lines[i], "## plugin-wrapper ##")) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* Given an array of @n function names in @names, set up a
    corresponding array of pointers to the named functions in @pkg,
    Flag an error if any of the function names are bad, or if
@@ -1848,6 +1861,9 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
 	fun = get_uf_array_member(names[i], NULL);
 	fun->pkg = pkg;
 	fun->private = priv;
+	if (has_plugin_special_comment(fun)) {
+	    fun->plugin = 1;
+	}
 	uf[i] = fun;
     }
 
@@ -5475,15 +5491,13 @@ static int do_debugging (ExecState *s)
 */
 
 static int handle_plugin_call (ufunc *u, fnargs *args,
-			       double ***Z,
+			       double ***pZ,
 			       DATAINFO *pdinfo,
 			       void *retval)
 {
     int (*cfunc) (gretl_bundle *);
     void *handle;
     gretl_bundle *b;
-    GretlType type;
-    int size;
     int i, err = 0;
 
 #if CDEBUG
@@ -5507,47 +5521,57 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     }
 
     for (i=0; i<args->argc && !err; i++) {
-	const char *key = u->params[i].name;
+	fn_param *fp = &u->params[i];
+	const char *key = fp->name;
 	struct fnarg *arg = args->arg[i];
-	void *ptr;
 
-	type = arg->type;
-	size = 0;
-
-	/* FIXME REF types, USCALAR etc */
-
-	switch (type) {
-	case GRETL_TYPE_USCALAR:
-	    ptr = &arg->val.x; /* FIXME */
-	    break;
-	case GRETL_TYPE_DOUBLE:
-	    ptr = &arg->val.x;
-	    break;
-	case GRETL_TYPE_STRING:
-	    ptr = arg->val.str;
-	    break;
-	case GRETL_TYPE_MATRIX:
-	    ptr = arg->val.m;
-	    break;
-	case GRETL_TYPE_MATRIX_REF:
-	    ptr = arg->val.m;
-	    break;
-	case GRETL_TYPE_SERIES: /* FIXME */
-	    ptr = arg->val.px;
-	    size = 1;
-	    break;
-	default:
+	if (!type_can_be_bundled(fp->type)) {
+	    fprintf(stderr, "type %d: cannot be bundled\n", fp->type);
 	    err = E_TYPES;
 	    break;
 	}
 
-	if (!err) {
-	    err = gretl_bundle_set_data(b, key, ptr, type, size);
+	if (gretl_scalar_type(fp->type)) {
+	    double x;
+
+	    if (arg->type == GRETL_TYPE_USCALAR) {
+		x = gretl_scalar_get_value_by_index(arg->val.idnum);
+	    } else if (arg->type == GRETL_TYPE_NONE) {
+		x = fp->deflt;
+	    } else if (arg->type == GRETL_TYPE_MATRIX) {
+		x = arg->val.m->val[0];
+	    } else {
+		x = arg->val.x;
+	    }
+	    if (fp->type == GRETL_TYPE_INT) {
+		x = (int) x;
+	    } else if (fp->type == GRETL_TYPE_BOOL) {
+		x = (x != 0.0);
+	    }
+	    err = gretl_bundle_set_data(b, key, &x, GRETL_TYPE_DOUBLE, 0);
+	} else if (fp->type == GRETL_TYPE_MATRIX ||
+		   fp->type == GRETL_TYPE_MATRIX_REF) {
+	    gretl_matrix *m = arg->val.m;
+	    
+	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
+	} else if (fp->type == GRETL_TYPE_SERIES) {
+	    int size = pdinfo->n;
+	    double *px;
+
+	    if (arg->type == GRETL_TYPE_USERIES) {
+		px = (*pZ)[arg->val.idnum];
+	    } else {
+		px = arg->val.px;
+	    }
+	    err = gretl_bundle_set_data(b, key, px, GRETL_TYPE_SERIES, size);
+	} else {
+	    /* FIXME strings and maybe other types */
+	    err = E_TYPES;
 	}
 
 #if CDEBUG
 	fprintf(stderr, "arg[%d] (\"%s\") type = %d, err = %d\n", 
-		i, key, type, err);
+		i, key, fp->type, err);
 #endif
     }
 
@@ -5558,7 +5582,11 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     close_plugin(handle);
 
     if (!err && u->rettype != GRETL_TYPE_VOID) {
-	void *ptr = gretl_bundle_get_data(b, "retval", &type, &size, &err);
+	GretlType type;
+	int size;
+	void *ptr;
+
+	ptr = gretl_bundle_get_data(b, "retval", &type, &size, &err);
 
 	if (!err) {
 #if CDEBUG
@@ -5569,12 +5597,23 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 		err = E_TYPES;
 	    }
 	}
-	if (!err && type == GRETL_TYPE_MATRIX) {
-	    gretl_matrix *m = ptr;
+	if (!err) {
+	    if (type == GRETL_TYPE_DOUBLE) {
+		double *px = ptr;
+		
+		*(double *) retval = *px;
+	    } else if (type == GRETL_TYPE_MATRIX) {
+		gretl_matrix *m = ptr;
 
-	    /* FIXME when to copy, when not to */
-
-	    *(gretl_matrix **) retval = gretl_matrix_copy(m);
+		/* FIXME when to copy, when not to */
+		*(gretl_matrix **) retval = gretl_matrix_copy(m);
+		if (*(gretl_matrix **) retval == NULL) {
+		    err = E_ALLOC;
+		}
+	    } else if (type == GRETL_TYPE_MATRIX_REF) {
+		/* is this always right? ever right? */
+		*(gretl_matrix **) retval = ptr;
+	    }
 	}
     }
 

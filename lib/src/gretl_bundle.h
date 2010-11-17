@@ -27,6 +27,8 @@ gretl_bundle *gretl_bundle_new (void);
 
 int gretl_is_bundle (const char *name);
 
+int type_can_be_bundled (GretlType type);
+
 gretl_bundle *get_gretl_bundle_by_name (const char *name);
 
 void *gretl_bundle_get_content (gretl_bundle *bundle);
@@ -36,6 +38,14 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 
 GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
 				 int *err);
+
+gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
+				       const char *key,
+				       int *err);
+
+double gretl_bundle_get_scalar (gretl_bundle *bundle,
+				const char *key,
+				int *err);
 
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 

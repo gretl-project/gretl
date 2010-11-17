@@ -99,6 +99,21 @@ static int bundle_index_by_name (const char *name, int level)
     return get_bundle_index(get_bundle_pointer(name, level));
 }
 
+int type_can_be_bundled (GretlType type)
+{
+    if (type == GRETL_TYPE_INT ||
+	type == GRETL_TYPE_BOOL) {
+	type = GRETL_TYPE_DOUBLE;
+    }
+
+    return (type == GRETL_TYPE_DOUBLE ||
+	    type == GRETL_TYPE_STRING ||
+	    type == GRETL_TYPE_MATRIX ||
+	    type == GRETL_TYPE_MATRIX_REF ||
+	    type == GRETL_TYPE_SERIES ||
+	    type == GRETL_TYPE_BUNDLE);
+}
+
 /* allocate and fill out a 'value' (type plus data pointer) that will
    be inserted into a bundle's hash table */
 
@@ -419,6 +434,69 @@ GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
     }
 
     return ret;
+}
+
+/**
+ * gretl_bundle_get_matrix:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err: location to receive error code.
+ *
+ * Returns: the matrix associated with @key in the
+ * specified @bundle, if any; otherwise NULL.
+ */
+
+gretl_matrix *gretl_bundle_get_matrix (gretl_bundle *bundle,
+				       const char *key,
+				       int *err)
+{
+    gretl_matrix *m = NULL;
+    GretlType type;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    if (!*err && type != GRETL_TYPE_MATRIX && 
+	type != GRETL_TYPE_MATRIX_REF) {
+	*err = E_TYPES;
+    }
+
+    if (!*err) {
+	m = (gretl_matrix *) ptr;
+    }
+
+    return m;
+}
+
+/**
+ * gretl_bundle_get_scalar:
+ * @bundle: bundle to access.
+ * @key: name of key to access.
+ * @err: location to receive error code.
+ *
+ * Returns: the scalar value associated with @key in the
+ * specified @bundle, if any; otherwise #NADBL.
+ */
+
+double gretl_bundle_get_scalar (gretl_bundle *bundle,
+				const char *key,
+				int *err)
+{
+    double x = NADBL;
+    GretlType type;
+    void *ptr;
+
+    ptr = gretl_bundle_get_data(bundle, key, &type, NULL, err);
+    if (!*err && type != GRETL_TYPE_DOUBLE) {
+	*err = E_TYPES;
+    }
+
+    if (!*err) {
+	double *px = (double *) ptr;
+
+	x = *px;
+    }
+
+    return x;
 }
 
 /**
