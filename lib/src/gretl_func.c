@@ -5558,11 +5558,11 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 
 	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
 	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    int size = pdinfo->n;
+	    int size = sample_size(pdinfo);
 	    double *px;
 
 	    if (arg->type == GRETL_TYPE_USERIES) {
-		px = (*pZ)[arg->val.idnum];
+		px = (*pZ)[arg->val.idnum] + pdinfo->t1;
 	    } else {
 		px = arg->val.px;
 	    }
