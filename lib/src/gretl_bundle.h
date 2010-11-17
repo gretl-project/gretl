@@ -23,6 +23,8 @@
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 
+gretl_bundle *gretl_bundle_new (void);
+
 int gretl_is_bundle (const char *name);
 
 gretl_bundle *get_gretl_bundle_by_name (const char *name);

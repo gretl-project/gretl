@@ -205,13 +205,13 @@ void gretl_bundle_destroy (gretl_bundle *bundle)
     }
 }
 
-/*
+/**
  * gretl_bundle_new:
  *
- * Returns: a newly allocated, empty bundle.
+ * Returns: a newly allocated, empty gretl bundle.
  */
 
-static gretl_bundle *gretl_bundle_new (void)
+gretl_bundle *gretl_bundle_new (void)
 {
     gretl_bundle *b = malloc(sizeof *b);
 

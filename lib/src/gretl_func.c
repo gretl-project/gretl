@@ -86,6 +86,7 @@ struct ufunc_ {
     char name[FN_NAMELEN]; /* identifier */
     fnpkg *pkg;            /* pointer to parent package, or NULL */
     int private;           /* is this function a private one? */
+    int plugin;            /* does in live in a C plugin? */
     int n_lines;           /* number of lines of code */
     char **lines;          /* array of lines of code */
     int n_params;          /* number of parameters */
@@ -868,6 +869,7 @@ static ufunc *ufunc_new (void)
     fun->name[0] = '\0';
     fun->pkg = NULL;
     fun->private = 0;
+    fun->plugin = 0;
 
     fun->n_lines = 0;
     fun->lines = NULL;
@@ -1435,10 +1437,12 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     gretl_xml_get_prop_as_int(node, "private", &fun->private);
+    gretl_xml_get_prop_as_int(node, "plugin", &fun->plugin);
 
 #if PKG_DEBUG
-    fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d, private = %d\n",
-	    fun->name, fun->rettype, fun->private);
+    fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d\n"
+	    " private = %d, plugin = %d\n", fun->name, fun->rettype, 
+	    fun->private, fun->plugin);
 #endif
 
     cur = node->xmlChildrenNode;
@@ -1580,8 +1584,12 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	rtype = GRETL_TYPE_VOID;
     }
 
-    fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\" private=\"%d\">\n", 
+    fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\" private=\"%d\"", 
 	    fun->name, gretl_arg_type_name(rtype), fun->private);
+    if (fun->plugin) {
+	fputs(" plugin=\"1\"", fp);
+    }
+    fputs(">\n", fp);
 
     if (fun->n_params > 0) {
 
@@ -5453,6 +5461,78 @@ static int do_debugging (ExecState *s)
 	!gretl_compiling_loop();
 }
 
+/* construct bundle of arguments to send to C function,
+   load plugin, and send arguments.
+*/
+
+static int handle_plugin_call (ufunc *u, fnargs *args)
+{
+    int (*cfunc) (gretl_bundle *);
+    void *handle;
+    gretl_bundle *b;
+    int i, err = 0;
+
+    fprintf(stderr, "handle_plugin_call for '%s'\n", u->name);
+
+    if (u->pkg == NULL) {
+	return E_DATA;
+    }
+
+    cfunc = get_packaged_C_function(u->pkg->name, u->name, &handle);
+
+    if (cfunc == NULL) {
+	fputs(I_("Couldn't load plugin function\n"), stderr);
+	return E_FOPEN;
+    }    
+
+    b = gretl_bundle_new();
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<args->argc && !err; i++) {
+	const char *key = u->params[i].name;
+	struct fnarg *arg = args->arg[i];
+	GretlType t = arg->type;
+	size_t size = 0;
+	void *ptr;
+
+	switch (t) {
+	case GRETL_TYPE_DOUBLE:
+	    ptr = &arg->val.x;
+	    break;
+	case GRETL_TYPE_STRING:
+	    ptr = arg->val.str;
+	    break;
+	case GRETL_TYPE_MATRIX:
+	    ptr = arg->val.m;
+	    break;
+	case GRETL_TYPE_SERIES:
+	    ptr = arg->val.px;
+	    size = 1;
+	    break;
+	default:
+	    err = E_TYPES;
+	    break;
+	}
+
+	if (!err) {
+	    err = gretl_bundle_set_data(b, key, ptr, t, size);
+	    fprintf(stderr, "arg[%d] (\"%s\") type = %d, err = %d\n", 
+		    i, key, t, err);
+	} 
+    }
+
+    if (!err) {
+	err = (*cfunc) (b);
+    }
+
+    close_plugin(handle);
+    gretl_bundle_destroy(b);
+
+    return err;
+}
+
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 			 double ***pZ, DATAINFO *pdinfo,
 			 void *ret, char **descrip, 
@@ -5468,7 +5548,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int orig_v = 0;
     int orig_t1 = 0;
     int orig_t2 = 0;
-    int indent0, started = 0;
+    int indent0 = 0, started = 0;
     int retline = -1;
     int debugging = u->debug;
     int i, err = 0;
@@ -5482,6 +5562,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     err = maybe_check_function_needs(pdinfo, u);
     if (err) {
 	return err;
+    }
+
+    if (u->plugin) {
+	goto check_args;
     }
 
     if (pdinfo != NULL) {
@@ -5504,8 +5588,18 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	return E_ALLOC;
     }
 
+ check_args:
+
     err = check_function_args(u, args, (pZ != NULL)? (const double **) *pZ : NULL,
 			      pdinfo, prn);
+
+    if (u->plugin) {
+	if (err) {
+	    return err;
+	} else {
+	    return handle_plugin_call(u, args);
+	}
+    }
 
     if (!err) {
 	call->args = args;

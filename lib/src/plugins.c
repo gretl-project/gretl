@@ -413,6 +413,41 @@ void *get_plugin_function (const char *funcname, void **handle)
     return funp;
 }
 
+void *get_packaged_C_function (const char *pkgname,
+			       const char *funcname, 
+			       void **handle)
+{
+    void *funp;
+
+    *handle = get_plugin_handle(pkgname);
+    if (*handle == NULL) {
+	return NULL;
+    }
+
+#ifdef WIN32
+    funp = GetProcAddress(*handle, funcname);
+#else
+    funp = dlsym(*handle, funcname);
+    if (funp == NULL) {
+	char munged[64];
+
+	sprintf(munged, "_%s", funcname);
+	funp = dlsym(*handle, munged);
+	if (funp == NULL) {
+	    fprintf(stderr, "%s\n", dlerror());
+	}
+    }
+#endif   
+
+    if (funp == NULL) {
+	gretl_errmsg_set(_("Couldn't load plugin function"));
+	close_plugin(*handle);
+	*handle = NULL;
+    }
+
+    return funp;
+}
+
 /**
  * close_plugin:
  * @handle: pointer obtained via the handle argument to

@@ -794,7 +794,8 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 	N_("No special requirement"),
 	N_("Time-series data"),
 	N_("Quarterly or monthly data"),
-	N_("Panel data")
+	N_("Panel data"),
+	N_("No dataset needed")
     };
     GtkWidget *datamenu, *tmp;
     int j;
@@ -805,7 +806,7 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
     gtk_widget_show(tmp);
 
     datamenu = gtk_combo_box_new_text();
-    for (j=0; j<=FN_NEEDS_PANEL; j++) {
+    for (j=0; j<=FN_NODATA_OK; j++) {
 	gtk_combo_box_append_text(GTK_COMBO_BOX(datamenu), _(datareq[j]));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(datamenu), finfo->dreq);
