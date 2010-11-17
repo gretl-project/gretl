@@ -352,7 +352,7 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * @key: name of key to access.
  * @type: location to receive data type.
  * @size: location to receive size of data (= series
- * length for GRETL_TYPE_SERIES, otherwise 0).
+ * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
  * @err:location to receive error code.
  *
  * Returns: the data pointer associated with @key in the
@@ -374,7 +374,9 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 	    
 	    *type = item->type;
 	    ret = item->data;
-	    *size = item->size;
+	    if (size != NULL) {
+		*size = item->size;
+	    }
 	} else {
 	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
 	    *err = E_DATA;
