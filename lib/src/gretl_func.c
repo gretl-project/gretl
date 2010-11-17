@@ -5549,10 +5549,13 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 		x = (x != 0.0);
 	    }
 	    err = gretl_bundle_set_data(b, key, &x, GRETL_TYPE_DOUBLE, 0);
-	} else if (fp->type == GRETL_TYPE_MATRIX ||
-		   fp->type == GRETL_TYPE_MATRIX_REF) {
+	} else if (fp->type == GRETL_TYPE_MATRIX) {
 	    gretl_matrix *m = arg->val.m;
 	    
+	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
+	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
+	    gretl_matrix *m = user_matrix_get_matrix(arg->val.um);
+
 	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    int size = pdinfo->n;
