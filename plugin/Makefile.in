@@ -302,7 +302,7 @@ interpolate.la: interpolate.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 panurc.la: panurc.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
+	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 # plugins that require GTK+
 

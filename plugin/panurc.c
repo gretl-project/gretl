@@ -19,6 +19,8 @@
 
 #include "libgretl.h"
 
+#include <glib.h>
+
 /* Levin, Lin and Chu (Journal of Econometrics, 2002), Table 2:
    correction factors for mean (mu) and standard deviation (s)
    in context of panel unit-root statistic.
@@ -234,7 +236,7 @@ static const char *DF_test_spec (int m)
     };
 
     if (m > 0 && m < 4) {
-	return tests[m+1];
+	return tests[m-1];
     } else {
 	return "";
     }
@@ -401,7 +403,7 @@ int real_levin_lin (int vnum, const int *plist,
 	    k_i = k;
 	}
 
-	/* indices into Z */
+	/* indices into Z array */
 	pt1 = t1 + (i + u0) * pdinfo->pd;
 	pt2 = t2 + (i + u0) * pdinfo->pd;
 	pt0 = pt1 + 1 + p_i;
@@ -472,7 +474,7 @@ int real_levin_lin (int vnum, const int *plist,
 	    gretl_matrix_reuse(X, T, k);
 	    gretl_matrix_reuse(b, k, 1);
 	} else {
-	    /* no aux regressions required */
+	    /* no auxiliary regressions required */
 	    gretl_matrix_copy_values(ei, dy);
 	    gretl_matrix_copy_values(vi, y);
 	}
@@ -558,11 +560,20 @@ int real_levin_lin (int vnum, const int *plist,
 #endif
 
 	    if (!(opt & OPT_Q)) {
+		const char *heads[] = {
+		    N_("coefficient"),
+		    N_("t-ratio"),
+		    N_("z-score")
+		};
 		const char *s = pdinfo->varname[vnum];
+		char NTstr[32];
+		int sp[3] = {0, 3, 5};
+		int w[3] = {4, 6, 0};
  
 		pputc(prn, '\n');
 		pprintf(prn, _("Levin-Lin-Chu pooled ADF test for %s\n"), s);
 		pprintf(prn, "%s ", _(DF_test_spec(m)));
+
 		if (p_varies) {
 		    pprintf(prn, _("including %.2f lags of (1-L)%s (average)"), pbar, s);
 		} else if (p == 1) {
@@ -571,10 +582,21 @@ int real_levin_lin (int vnum, const int *plist,
 		    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
 		}
 		pputc(prn, '\n');
+
 		pprintf(prn, _("Bartlett truncation at %d lags\n"), K);
-		pprintf(prn, "N,T = (%d,%d), observations used = %d\n", N, dyT+1, NT);
-		pprintf(prn, "\ncoefficient    t-ratio      z-score\n");
-		pprintf(prn, "%11.5g %10.3f %12.6g [%.4f]\n\n", delta, td, z, pval);
+		sprintf(NTstr, "N,T = (%d,%d)", N, dyT + 1);
+		pprintf(prn, _("%s, using %d observations"), NTstr, NT);
+
+		pputs(prn, "\n\n");
+		for (i=0; i<3; i++) {
+		    pputs(prn, _(heads[i]));
+		    bufspace(w[i], prn);
+		    w[i] = sp[i] + g_utf8_strlen(_(heads[i]), -1);
+		}
+		pputc(prn, '\n');
+
+		pprintf(prn, "%*.5g %*.3f %*.6g [%.4f]\n\n", 
+			w[0], delta, w[1], td, w[2], z, pval);
 	    }
 
 	    record_test_result(z, pval, "Levin-Lin-Chu");

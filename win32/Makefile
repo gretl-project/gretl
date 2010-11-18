@@ -510,7 +510,7 @@ plugins/biprobit.dll: biprobit.o dllinit.o
 
 plugins/panurc.dll: panurc.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GLIBLIB)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
