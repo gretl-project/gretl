@@ -520,11 +520,11 @@ The Augmented Dickey--Fuller (ADF) test is, as implemented in
 
 This test statistic is probably the best-known and most widely used
 unit root test. It is a one-sided test whose null hypothesis is
-$\varphi = 0$ versus the alternative $\varphi < 0$. Under the null,
-$y_t$ must be differenced at least once to achieve stationarity;
-under the alternative, $y_t$ is already stationary and no differencing
-is required. Hence, large negative values of the test statistic lead
-to the rejection of the null.
+$\varphi = 0$ versus the alternative $\varphi < 0$ (and hence large
+negative values of the test statistic lead to the rejection of the
+null).  Under the null, $y_t$ must be differenced at least once to
+achieve stationarity; under the alternative, $y_t$ is already
+stationary and no differencing is required.
 
 One peculiar aspect of this test is that its limit distribution is
 non-standard under the null hypothesis: moreover, the shape of the
@@ -549,17 +549,17 @@ alternatives:
   \end{tabular}
 \end{center}
 
-These options are not mutually exclusive; when they are used together
-the statistic will be reported separately for each case.  By default,
-\app{gretl} uses by default the combination \verb|--c --ct --ctt|. For
-each case, approximate p-values are calculated by means of the
+These option flags are not mutually exclusive; when they are used
+together the statistic will be reported separately for each selected
+case.  By default, \app{gretl} uses the combination \verb|--c --ct|.
+For each case, approximate p-values are calculated by means of the
 algorithm developed in \cite{mackinnon96}.
 
 The \app{gretl} command used to perform the test is \cmd{adf}; for example
 \begin{code}
-adf 4 x1 --c --ct
+adf 4 x1
 \end{code}
-would compute the test statistic as the t-statistic for $\varphi$ in
+would compute the test statistic as the $t$-statistic for $\varphi$ in
 equation \ref{eq:ADFtest} with $p=4$ in the two cases $\mu_t = \mu_0$
 and $\mu_t = \mu_0 + \mu_1 t$.
 
@@ -567,11 +567,32 @@ The number of lags ($p$ in equation \ref{eq:ADFtest}) should be chosen
 as to ensure that (\ref{eq:ADFtest}) is a parametrization flexible
 enough to represent adequately the short-run persistence of $\Delta
 y_t$. Setting $p$ too low results in size distortions in the test,
-whereas setting $p$ too high would lead to low power. As a convenience
+whereas setting $p$ too high leads to low power. As a convenience
 to the user, the parameter $p$ can be automatically determined.
 Setting $p$ to a negative number triggers a sequential procedure that
 starts with $p$ lags and decrements $p$ until the $t$-statistic for
 the parameter $\gamma_p$ exceeds 1.645 in absolute value.
+
+\subsection{The ADF-GLS test}
+\label{sec:ADF-GLS}
+
+\cite{ERS96} proposed a variant of the ADF test which involves an
+alternative method of handling the parameters pertaining to the
+deterministic term $\mu_t$: these are estimated first via Generalized
+Least Squares, and in a second stage an ADF regression is performed
+using the GLS residuals. This variant offers greater power than the
+regular ADF test for the cases $\mu_t = \mu_0$ and $\mu_t = \mu_0 +
+\mu_1 t$. 
+
+The ADF-GLS test is available in \app{gretl} via the \verb|--gls|
+option to the \texttt{adf} command. When this option is selected the
+\verb|--nc| and \verb|--ctt| options become unavailable, and only one
+case can be selected at a time; by default the constant-only model is
+used but a trend can be added using the \verb|--ct| flag.  When a
+trend is present in this test MacKinnon-type p-values are not
+available; instead we show critical values from Table 1 in
+\cite{ERS96}.
+
 
 \subsection{The KPSS test}
 \label{sec:KPSStest}
@@ -584,7 +605,7 @@ is $I(1)$.
 The basic intuition behind this test statistic is very simple: if
 $y_t$ can be written as $y_t = \mu + u_t$, where $u_t$ is some
 zero-mean stationary process, then not only does the sample average of
-the $y_t$'s provide a consistent estimator of $\mu$, but the long-run
+the $y_t$s provide a consistent estimator of $\mu$, but the long-run
 variance of $u_t$ is a well-defined, finite number. Neither of these
 properties hold under the alternative.
 
@@ -601,8 +622,10 @@ simulation. Under the alternative, the statistic diverges.
 
 As a consequence, it is possible to construct a one-sided test based
 on $\eta$, where $H_0$ is rejected if $\eta$ is bigger than the
-appropriate critical value; \app{gretl} provides the 90\%, 95\%,
-97.5\% and 99\% quantiles.
+appropriate critical value; \app{gretl} provides the 90\%, 95\%
+99\% quantiles. The critical values are computed via the method
+presented by \cite{sephton95}, which offers greater accuracy than
+the values tabulated in \citep{KPSS92}.
 
 Usage example:
 \begin{code}
@@ -617,8 +640,9 @@ The $\hat{\gamma}_i$ terms denote the empirical autocovariances of
 $e_t$ from order $-m$ through $m$.  For this estimator to be
 consistent, $m$ must be large enough to accommodate the short-run
 persistence of $e_t$, but not too large compared to the sample size
-$T$.  In the GUI interface of \app{gretl}, this value defaults to the
-integer part of $4 \left( \frac{T}{100} \right)^{1/4}$.
+$T$.  If the supplied \verb|m| is non-positive a default value is
+computed, namely the integer part of $4 \left( \frac{T}{100}
+\right)^{1/4}$.
 
 The above concept can be generalized to the case where $y_t$ is
 thought to be stationary around a deterministic trend. In this case,
@@ -634,10 +658,49 @@ different and the critical values reported by \app{gretl} differ
 accordingly.
 
 
+\subsection{Panel unit root tests}
+\label{sec:panel-uroot}
+
+The most commonly used unit root tests for panel data involve a
+generalization of the ADF procedure, in which the joint null
+hypothesis is that a given times series is non-stationary for all
+individuals in the panel.
+
+In this context the ADF regression (\ref{eq:ADFtest}) can be rewritten
+as
+
+\begin{equation}
+  \label{eq:panelADF}
+  \Delta y_{it} = \mu_{it} + \varphi_i y_{i,t-1} + \sum_{j=1}^{p_i} \gamma_{ij} \Delta
+  y_{i,t-j} + \epsilon_{it}
+\end{equation}
+
+The model (\ref{eq:panelADF}) allows for maximal heterogeneity across
+the individuals in the panel: the parameters of the deterministic
+term, the autoregressive coefficient $\varphi$, and the lag order $p$
+are all specific to the individual, indexed by $i$.
+
+One possible modification of this model is to impose the assumption
+that $\varphi_i = \varphi$ for all $i$; that is, the individual time
+series share a common autoregressive root (although they may differ in
+respect of other statistical properties). The choice of whether or not
+to impose this assumption has an important bearing on the hypotheses
+under test. Under model (\ref{eq:panelADF}) the joint null is
+$\varphi_i = 0$ for all $i$, meaning that all the individual time
+series are non-stationary, and the alternative (simply the negation of
+the null) is that \emph{at least one} individual time series is
+stationary.  When a common $\varphi$ is assumed, the null is that
+$\varphi = 0$ and the alternative is that $\varphi < 0$. While the
+null still says that all the individual series are non-stationary, the
+alternative now says that they are \emph{all} stationary.
+
+TODO: finish this discussion and tie in with the gretl commands.
+
+
 \subsection{Cointegration tests}
 \label{sec:coint-test}
 
-FIXME discuss Engle---Granger here, and refer forward to
+TODO: discuss Engle---Granger here, and refer forward to
 the next chapter for the Johansen tests.
 
 

@@ -725,7 +725,7 @@ static int real_adf_test (int varno, int order, int niv,
 	if (opt & OPT_G) {
 	    opt |= OPT_C;
 	} else {
-	    opt |= (OPT_C | OPT_T | OPT_R);
+	    opt |= (OPT_C | OPT_T);
 	}
     }
 
@@ -1401,7 +1401,7 @@ real_kpss_test (int order, int varno, double ***pZ,
     int i, t;
 
     /* sanity check */
-    if (order < 0 || varno <= 0 || varno >= pdinfo->v) {
+    if (varno <= 0 || varno >= pdinfo->v) {
 	return E_DATA;
     }
 
@@ -1443,6 +1443,10 @@ real_kpss_test (int order, int varno, double ***pZ,
     t1 = KPSSmod.t1;
     t2 = KPSSmod.t2;
     T = KPSSmod.nobs;
+
+    if (order <= 0) {
+	order = 4.0 * pow(T / 100.0, 0.25);
+    }
 
     if (kinfo == NULL && (opt & OPT_V)) {
 	KPSSmod.aux = AUX_KPSS;
