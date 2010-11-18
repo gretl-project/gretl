@@ -19,6 +19,8 @@
 
 #include "gretl.h"
 
+#include <glib/gstdio.h>
+
 static int seven_bit_string (const unsigned char *s)
 {
     while (*s) {
@@ -26,6 +28,52 @@ static int seven_bit_string (const unsigned char *s)
 	s++;
     }
     return 1;
+}
+
+/* See if @fname works as an argument to g_fopen in read mode. If so,
+   return 0 and ignore the @fconv argument. If not, try re-encoding
+   into @fconv and if that works then return 0. If we can't get
+   g_fopen to work either way, display an error message and return
+   E_FOPEN.
+*/
+
+int validate_filename_for_glib (const gchar *fname, gchar **fconv)
+{
+    FILE *fp = g_fopen(fname, "r");
+    int err = 0;
+
+    if (fp == NULL) {
+	gsize bytes;
+
+	*fconv = NULL;
+
+#ifdef G_OS_WIN32
+	if (!g_utf8_validate(fname, -1, NULL)) {
+	    /* The Glib filename encoding is UTF-8 on Windows */
+	    *fconv = g_locale_to_utf8(fname, -1, NULL, &bytes, NULL);
+	}
+#else
+	if (g_utf8_validate(fname, -1, NULL)) {
+	    /* *nix: maybe we shouldn't be using UTF-8? */
+	    *fconv = g_filename_from_utf8(fname, -1, NULL, &bytes, NULL);
+	}
+#endif
+	if (*fconv != NULL) {
+	    fp = g_fopen(*fconv, "r");
+	    if (fp == NULL) {
+		g_free(*fconv);
+	    }
+	}
+    }
+
+    if (fp != NULL) {
+	fclose(fp);
+    } else {
+	err = E_FOPEN;
+	errbox(_("Can't open %s for reading"), fname);
+    }
+
+    return err;
 }
 
 /* This is used for converting the UTF-8 datafile name

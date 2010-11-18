@@ -29,7 +29,6 @@
 #include "guiprint.h"
 #include "textbuf.h"
 #include "graphics.h"
-
 #include "boxplots.h"
 
 #define GPDEBUG 0
@@ -3883,7 +3882,7 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 
 # endif
 
-#else
+#else /* !USE_CAIRO */
 
 static 
 void plot_expose (GtkWidget *widget, GdkEventExpose *event,
@@ -3906,7 +3905,38 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 		      event->area.width, event->area.height);
 }
 
-#endif
+#endif /* USE_CAIRO or not */
+
+#if 1
+
+static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
+{
+    GdkPixbuf *pbuf = NULL;
+    gchar *trfname = NULL;
+    int err;
+
+    err = validate_filename_for_glib(fname, &trfname);
+
+    if (!err) {
+	GError *gerr = NULL;
+
+	if (trfname != NULL) {
+	    pbuf = gdk_pixbuf_new_from_file(trfname, &gerr);
+	    g_free(trfname);
+	} else {
+	    pbuf = gdk_pixbuf_new_from_file(fname, &gerr);
+	}
+
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	}
+    }    
+
+    return pbuf;
+}
+
+#else
 
 static void plot_area_updated (GdkPixbufLoader *loader, gint x, gint y,
 			       gint width, gint height, gpointer p)
@@ -3984,6 +4014,8 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
     return pbuf;
 }
 
+#endif
+
 /* The last step in displaying a graph (or redisplaying after some
    change has been made): grab the gnuplot-generated PNG file, make a
    pixbuf out of it, and draw the pixbuf onto the canvas of the plot
@@ -4004,9 +4036,7 @@ static int render_pngfile (png_plot *plot, int view)
     pbuf = gretl_pixbuf_new_from_file(pngname);
 
     if (pbuf == NULL) {
-#if 0 /* testing */
 	gretl_remove(pngname);
-#endif
 	return 1;
     }
 
@@ -4702,6 +4732,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
 #endif
 
     err = render_pngfile(plot, PNG_START);
+
     if (err) {
 	gtk_widget_destroy(plot->shell);
 	plot = NULL;

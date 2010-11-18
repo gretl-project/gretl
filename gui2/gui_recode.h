@@ -1,6 +1,8 @@
 #ifndef GUI_RECODE_H
 #define GUI_RECODE_H
 
+int validate_filename_for_glib (const gchar *fname, gchar **fconv);
+
 gchar *my_filename_from_utf8 (char *fname);
 
 gchar *my_locale_from_utf8 (const gchar *src);
