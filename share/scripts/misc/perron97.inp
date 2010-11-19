@@ -107,7 +107,7 @@ end function
 # Open Nelson-Plosser data (supplied with gretl)
 open np.gdt
 
-# Select the variable to test (here, the natural of of real GNP)
+# Select the variable to test (here, the natural log of real GNP)
 genr y = log(rgnp)
 
 # Maximum lag to try for the first difference of y

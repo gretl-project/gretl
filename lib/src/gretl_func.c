@@ -3423,7 +3423,30 @@ static int comma_count (const char *s)
     return nc;
 }
 
-static int read_min_max_deflt (char **ps, fn_param *param)
+static int check_parm_min_max (fn_param *p, const char *name)
+{
+    if (!na(p->min) && !na(p->max)) {
+	if (p->min > p->max) {
+	    gretl_errmsg_sprintf("%s: min > max", name);
+	    return E_DATA;
+	}
+    }
+
+    if (!na(p->deflt)) {
+	if (!na(p->min) && p->deflt < p->min) {
+	    gretl_errmsg_sprintf("%s: default value out of bounds", name);
+	    return E_DATA;
+	} 
+	if (!na(p->max) && p->deflt > p->max) {
+	    gretl_errmsg_sprintf("%s: default value out of bounds", name);
+	    return E_DATA;
+	}
+    } 
+
+    return 0;
+}
+
+static int read_min_max_deflt (char **ps, fn_param *param, const char *name)
 {
     char *p = *ps;
     double x, y, z;
@@ -3455,6 +3478,10 @@ static int read_min_max_deflt (char **ps, fn_param *param)
 	    param->deflt = x;
 	} else {
 	    err = E_PARSE;
+	}
+
+	if (!err) {
+	    err = check_parm_min_max(param, name);
 	}
     }
 
@@ -3595,7 +3622,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
     if (gretl_scalar_type(type)) {
 	if (*s == '[') { 
-	    err = read_min_max_deflt(&s, param);
+	    err = read_min_max_deflt(&s, param, name);
 	}
     }
 
