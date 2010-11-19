@@ -622,10 +622,10 @@ simulation. Under the alternative, the statistic diverges.
 
 As a consequence, it is possible to construct a one-sided test based
 on $\eta$, where $H_0$ is rejected if $\eta$ is bigger than the
-appropriate critical value; \app{gretl} provides the 90\%, 95\%
-99\% quantiles. The critical values are computed via the method
-presented by \cite{sephton95}, which offers greater accuracy than
-the values tabulated in \citep{KPSS92}.
+appropriate critical value; \app{gretl} provides the 90, 95 and 99
+percent quantiles. The critical values are computed via the method
+presented by \cite{sephton95}, which offers greater accuracy than the
+values tabulated in \cite{KPSS92}.
 
 Usage example:
 \begin{code}
@@ -690,18 +690,110 @@ $\varphi_i = 0$ for all $i$, meaning that all the individual time
 series are non-stationary, and the alternative (simply the negation of
 the null) is that \emph{at least one} individual time series is
 stationary.  When a common $\varphi$ is assumed, the null is that
-$\varphi = 0$ and the alternative is that $\varphi < 0$. While the
-null still says that all the individual series are non-stationary, the
-alternative now says that they are \emph{all} stationary.
+$\varphi = 0$ and the alternative is that $\varphi < 0$. The null
+still says that all the individual series are non-stationary, but the
+alternative now says that they are \emph{all} stationary.  The choice
+of model should take this point into account, as well as the gain in
+power from forming a pooled estimate of $\varphi$ and, of course, the
+plausibility of assuming a common AR(1) coefficient.\footnote{If the
+  assumption of a common $\varphi$ seems excessively restrictive, bear
+  in mind that we routinely assume common slope coefficients when
+  estimating panel models, even if this is unlikely to be literally
+  true.}
 
-TODO: finish this discussion and tie in with the gretl commands.
+In \app{gretl}, the formulation (\ref{eq:panelADF}) is used
+automatically when the \texttt{adf} command is used on panel data. The
+joint test statistic is formed using the method of \cite{IPS03}. In
+this context the behavior of \texttt{adf} differs from regular
+time-series data: only one case of the deterministic term is handled
+per invocation of the command; the default is that $\mu_{it}$ includes
+just a constant but the \verb|--nc| and \verb|--ct| flags can be used
+to suppress the constant or to include a trend, respectively; and the
+quadratic trend option \verb|--ctt| is not available.
+
+The alternative that imposes a common value of $\varphi$ is
+implemented via the \texttt{levinlin} command. The test statistic is
+computed as per \cite{LLC2002}.  As with the \texttt{adf} command, the
+first argument is the lag order and the second is the name of the
+series to test; and the default case for the deterministic component
+is a constant only. The options \verb|--nc| and \verb|--ct| have the
+same effect as with \texttt{adf}. One refinement is that the lag order
+may be given in either of two forms: if a scalar is given, this is
+taken to represent a common value of $p$ for all individuals, but you
+may instead provide a vector holding a set of $p_i$ values, hence
+allowing the order of autocorrelation of the series to differ by
+individual. So, for example, given
+\begin{code}
+levinlin 2 y
+levinlin {2,2,3,3,4,4} y
+\end{code}
+the first command runs a joint ADF test with a common lag order of 2,
+while the second (which assumes a panel with six individuals) allows
+for differing short-run dynamics. The first argument to
+\texttt{levinlin} can be given as a set of comma-separated integers
+enclosed in braces, as shown above, or as the name of an appropriately
+dimensioned pre-defined matrix (see chapter~\ref{chap:matrices}).
+
+Besides variants of the ADF test, the KPSS test also can be used with
+panel data via the \texttt{kpss} command. In this case the test (of
+the null hypothesis that the given time series is \emph{stationary}
+for all individuals) is implemented using the method of
+\cite{choi01}. This is an application of \emph{meta-analysis}, the
+statistical technique whereby an overall or composite p-value for the
+test of a given null hypothesis can be computed from the p-values of a
+set of separate tests. Unfortunately, in the case of the KPSS test we
+are limited by the unavailability of precise p-values, although if an
+individual test statistic falls between the 10 percent and 1 percent
+critical values we are able to interpolate with a fair degree of
+confidence. This gives rise to four cases.
+
+\begin{enumerate}
+\item All the individual KPSS test statistics fall between the 10
+  percent and 1 percent critical values: the Choi method gives us
+  a plausible composite p-value.
+\item Some of the KPSS test statistics exceed the 1 percent value and
+  none fall short of the 10 percent value: we can give an upper bound
+  for the composite p-value by setting the unknown p-values to 0.01.
+\item Some of the KPSS test statistics fall short of the 10 percent
+  critical value but none exceed the 1 percent value: we can give a
+  lower bound to the composite p-value by setting the unknown p-values
+  to 0.10.
+\item None of the above conditions are satisfied: the Choi method
+  fails to produce any result for the composite KPSS test.
+\end{enumerate}
 
 
-\subsection{Cointegration tests}
+\section{Cointegration tests}
 \label{sec:coint-test}
 
-TODO: discuss Engle---Granger here, and refer forward to
-the next chapter for the Johansen tests.
+The generally recommended test for cointegration is the Johansen test,
+which is discussed in detail in chapter~\ref{chap:vecm}. In this
+context we offer a few remarks on the cointegration test of
+\cite{engle-granger87}, which builds on the ADF test discussed above
+(section~\ref{sec:ADFtest}).
+
+For the Engle--Granger test, the procedure is:
+\begin{enumerate}
+\item Test each series for a unit root using an ADF test.
+\item Run a ``cointegrating regression'' via OLS. For this we select
+  one of the potentially cointegrated variables as dependent, and
+  include the other potentially cointegrated variables as regressors.
+\item Perform an ADF test on the residuals from the cointegrating
+  regression.
+\end{enumerate}
+
+The idea is that cointegration is supported if (a) the null of
+non-stationarity is \emph{not} rejected for each of the series
+individually, in step 1, while (b) the null \emph{is} rejected for the
+residuals at step 3. That is, each of the individual series is $I(1)$
+but some linear combination of the series is $I(0)$.  
+
+This test is implemented in \app{gretl} by the \texttt{coint} command,
+which requires an integer lag order (for the ADF tests) followed by a
+list of variables to be tested (the first of which will be taken as
+dependent in the cointegrating regression). Please see the online help
+for \texttt{coint}, or the \textit{Gretl Command Reference}, for
+further details.
 
 
 \section{ARCH and GARCH}
