@@ -113,7 +113,7 @@ instruments) with data in levels (using lagged differences as
 instruments). The system estimator relies on an extra orthogonality
 condition which has to do with the earliest value of the dependent
 variable $y_{i,1}$. The interested reader is referred to
-\cite[pp.\ 124--125]{blundell-bond98} for details, but here it suffices
+\citet[pp.\ 124--125]{blundell-bond98} for details, but here it suffices
 to say that this condition is satisfied in mean-stationary models and
 brings about efficiency that may be substantial in many cases.
 
@@ -319,7 +319,7 @@ Stata's \texttt{xtabond2}, is to drop the constant (since differencing
 reduces it to nothing but zeros). However, for compatibility with the
 DPD package for Ox, you can give the option \verb|--dpdstyle|, in
 which case the constant is retained (equivalent to including a linear
-trend in equation (\ref{eq:dpd-def})).  A similar point applies to the
+trend in equation~\ref{eq:dpd-def}).  A similar point applies to the
 period-specific dummy variables which can be added in \texttt{dpanel}
 via the \verb|--time-dummies| option: in the differences-only case
 these dummies are entered in differenced form by default, but when the
@@ -453,7 +453,7 @@ versus
 
 In this section we show how to replicate the results of some of the
 pioneering work with dynamic panel-data estimators by Arellano, Bond
-and Blundell.  As the DPD manual \citep{DPDmanual} explains, it is
+and Blundell.  As the DPD manual \citep*{DPDmanual} explains, it is
 difficult to replicate the original published results exactly, for two
 main reasons: not all of the data used in those studies are publicly
 available; and some of the choices made in the original software
@@ -667,7 +667,7 @@ numerous missing values.  Details of the provenance of the data can be
 found by opening the dataset information window in the gretl GUI
 (\textsf{Data} menu, \textsf{Dataset info} item). This is a subset of
 the Barro--Lee 138-country panel dataset, an approximation to which is
-used in \cite{CEL96} and \cite{Bond2001}.\footnote{We say an
+used in \citet*{CEL96} and \citet*{Bond2001}.\footnote{We say an
   ``approximation'' because we have not been able to replicate exactly
   the OLS results reported in the papers cited, though it seems from
   the description of the data in \cite{CEL96} that we ought to be able

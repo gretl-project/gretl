@@ -358,6 +358,7 @@ FUNCTION {bibinfo.warn}
     }
   if$
 }
+
 FUNCTION {format.url}
 { url empty$
     { "" }
@@ -366,7 +367,6 @@ FUNCTION {format.url}
 }
 
 INTEGERS { nameptr namesleft numnames }
-
 
 STRINGS  { bibinfo}
 
@@ -416,6 +416,7 @@ FUNCTION {format.names}
   while$
   } if$
 }
+
 FUNCTION {format.names.ed}
 {
   'bibinfo :=

@@ -576,7 +576,7 @@ the parameter $\gamma_p$ exceeds 1.645 in absolute value.
 \subsection{The ADF-GLS test}
 \label{sec:ADF-GLS}
 
-\cite{ERS96} proposed a variant of the ADF test which involves an
+\citet*{ERS96} proposed a variant of the ADF test which involves an
 alternative method of handling the parameters pertaining to the
 deterministic term $\mu_t$: these are estimated first via Generalized
 Least Squares, and in a second stage an ADF regression is performed
@@ -597,7 +597,7 @@ available; instead we show critical values from Table 1 in
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
-The KPSS test \citep{KPSS92} is a unit root test in which the null
+The KPSS test \citep*{KPSS92} is a unit root test in which the null
 hypothesis is opposite to that in the ADF test: under the null, the
 series in question is stationary; the alternative is that the series
 is $I(1)$.
@@ -703,7 +703,7 @@ plausibility of assuming a common AR(1) coefficient.\footnote{If the
 
 In \app{gretl}, the formulation (\ref{eq:panelADF}) is used
 automatically when the \texttt{adf} command is used on panel data. The
-joint test statistic is formed using the method of \cite{IPS03}. In
+joint test statistic is formed using the method of \citet*{IPS03}. In
 this context the behavior of \texttt{adf} differs from regular
 time-series data: only one case of the deterministic term is handled
 per invocation of the command; the default is that $\mu_{it}$ includes
@@ -713,7 +713,7 @@ quadratic trend option \verb|--ctt| is not available.
 
 The alternative that imposes a common value of $\varphi$ is
 implemented via the \texttt{levinlin} command. The test statistic is
-computed as per \cite{LLC2002}.  As with the \texttt{adf} command, the
+computed as per \citet*{LLC2002}.  As with the \texttt{adf} command, the
 first argument is the lag order and the second is the name of the
 series to test; and the default case for the deterministic component
 is a constant only. The options \verb|--nc| and \verb|--ct| have the
@@ -790,8 +790,8 @@ but some linear combination of the series is $I(0)$.
 
 This test is implemented in \app{gretl} by the \texttt{coint} command,
 which requires an integer lag order (for the ADF tests) followed by a
-list of variables to be tested (the first of which will be taken as
-dependent in the cointegrating regression). Please see the online help
+list of variables to be tested, the first of which will be taken as
+dependent in the cointegrating regression. Please see the online help
 for \texttt{coint}, or the \textit{Gretl Command Reference}, for
 further details.
 

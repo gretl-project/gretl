@@ -487,15 +487,12 @@ int real_levin_lin (int vnum, const int *plist,
 
 	if (!err) {
 	    double sui, s2yi, s2ui = 0.0;
-	    int df;
 
 	    for (t=0; t<T_i; t++) {
 		s2ui += ui->val[t] * ui->val[t];
 	    }
 
-	    /* df = T - k + (m > 1); */
-	    df = T_i - 1; /* Stata-compatible */
-	    s2ui /= df;
+	    s2ui /= (T_i - 1);
 	    sui = sqrt(s2ui);
 
 	    /* write normalized per-unit ei and vi into big matrices */
