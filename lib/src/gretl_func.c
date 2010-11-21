@@ -5520,9 +5520,10 @@ static int do_debugging (ExecState *s)
 static int handle_plugin_call (ufunc *u, fnargs *args,
 			       double ***pZ,
 			       DATAINFO *pdinfo,
-			       void *retval)
+			       void *retval,
+			       PRN *prn)
 {
-    int (*cfunc) (gretl_bundle *);
+    int (*cfunc) (gretl_bundle *, PRN *);
     void *handle;
     gretl_bundle *b;
     int i, err = 0;
@@ -5543,7 +5544,9 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     }    
 
     b = gretl_bundle_new();
+
     if (b == NULL) {
+	close_plugin(handle);
 	return E_ALLOC;
     }
 
@@ -5607,7 +5610,7 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
     }
 
     if (!err) {
-	err = (*cfunc) (b);
+	err = (*cfunc) (b, prn);
     }
 
     close_plugin(handle);
@@ -5710,7 +5713,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     if (u->plugin) {
 	if (!err) {
-	    err = handle_plugin_call(u, args, pZ, pdinfo, ret);
+	    err = handle_plugin_call(u, args, pZ, pdinfo, ret, prn);
 	}
 	return err;
     }
