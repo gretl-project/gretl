@@ -3907,8 +3907,6 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 
 #endif /* USE_CAIRO or not */
 
-#if 1
-
 static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 {
     GdkPixbuf *pbuf = NULL;
@@ -3935,86 +3933,6 @@ static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
 
     return pbuf;
 }
-
-#else
-
-static void plot_area_updated (GdkPixbufLoader *loader, gint x, gint y,
-			       gint width, gint height, gpointer p)
-{
-    int *gotit = (int *) p;
-    
-    *gotit = 1;
-}
-
-static int is_png (const guchar *buf, gsize length)
-{
-    int ok = length > 8 &&
-	buf[0] == 0x89 && buf[1] == 0x50 &&
-	buf[2] == 0x4E && buf[3] == 0x47 &&
-	buf[4] == 0x0D && buf[5] == 0x0A &&
-	buf[6] == 0x1A && buf[7] == 0x0A;
-
-    if (!ok) {
-	int i;
-
-	fprintf(stderr, "*** is_png: length = %d\n", (int) length);
-	for (i=0; i<length && i<8; i++) {
-	    fprintf(stderr, " byte[%d] = 0x%02x\n", i, buf[i]);
-	}
-    }
-
-    return ok;
-}
-
-static GdkPixbuf *gretl_pixbuf_new_from_file (const gchar *fname)
-{
-    GdkPixbuf *pbuf = NULL;
-    guchar *cbuf = NULL;
-    gsize length = 0;
-    int err;
-
-    err = gretl_binary_file_get_contents(fname, &cbuf, &length);
-
-    if (!err && !is_png(cbuf, length)) {
-	errbox("'%s' is not a PNG file", fname);
-	err = 1;
-    }
-	
-    if (!err) {
-	GdkPixbufLoader *loader;
-	GError *gerr = NULL;
-	int gotit = 0;
-
-	loader = gdk_pixbuf_loader_new_with_type("png", &gerr);
-
-	if (gerr == NULL) {
-	    g_signal_connect(loader, "area-updated", 
-			     G_CALLBACK(plot_area_updated), &gotit);
-	    gdk_pixbuf_loader_write(loader, (const guchar *) cbuf, length, &gerr);
-	    while (!gotit) {
-		if (gtk_events_pending()) {
-		    gtk_main_iteration();
-		}
-	    }
-	    pbuf = gdk_pixbuf_loader_get_pixbuf(loader);
-	    if (pbuf != NULL) {
-		g_object_ref(pbuf);
-	    }
-	    gdk_pixbuf_loader_close(loader, &gerr);
-	} 
-
-	if (gerr != NULL) {
-	    errbox(gerr->message);
-	    g_error_free(gerr);
-	}
-
-	g_free(cbuf);
-    }
-
-    return pbuf;
-}
-
-#endif
 
 /* The last step in displaying a graph (or redisplaying after some
    change has been made): grab the gnuplot-generated PNG file, make a

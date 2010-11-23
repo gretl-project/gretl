@@ -856,16 +856,33 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
 
-	resp = radio_dialog("gretl", NULL, opts, 2, 0, 0);
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	read_fn_files_in_dir(dir, path, store, NULL, &nfn, &maxlen);
+
+	if (nfn == nfn0) {
+	    warnbox(_("No additional function files were found"));
+	    closedir(dir);
+	    return;
+	} 
+
+	resp = radio_dialog("gretl", "function packages", opts, 2, 0, 0);
+
 	if (resp < 0) {
+	    /* canceled */
+	    closedir(dir);
 	    return;
 	} else if (resp > 0) {
 	    gtk_list_store_clear(store);
 	    nfn = nfn0 = 0;
+	} else {
+	    nfn = nfn0;
 	}
+
+	rewinddir(dir);
 
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	read_fn_files_in_dir(dir, path, store, &iter, &nfn, &maxlen);
+
 	if (nfn > nfn0) {
 	    infobox(_("Found %d function file(s)"), nfn - nfn0);
 	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
@@ -1640,6 +1657,11 @@ static int fn_file_is_duplicate (const char *fname,
     return ret;
 }
 
+/* Read (or just count) the .gfn files in a given directory.
+   The signal to count rather than read is that the @iter
+   argument is NULL.
+*/
+
 static void
 read_fn_files_in_dir (DIR *dir, const char *path, 
 		      GtkListStore *store, GtkTreeIter *iter,
@@ -1647,7 +1669,6 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 {
     struct dirent *dirent;
     char fullname[MAXLEN];
-    gchar *fname;
     int n, imax = *nfn;
     int err;
 
@@ -1656,6 +1677,7 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	    !strcmp(dirent->d_name, "..")) {
 	    continue;
 	}
+
 	if (has_suffix(dirent->d_name, ".gfn")) {
 	    char *descrip = NULL, *version = NULL;
 
@@ -1663,21 +1685,24 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 	    err = get_func_info(fullname, &descrip, &version);
 
 	    if (!err && !fn_file_is_duplicate(dirent->d_name, version, store, imax)) {
-		gtk_list_store_append(store, iter);
-		fname = g_strdup(dirent->d_name);
-		n = strlen(fname) - 4;
-		fname[n] = '\0';
-		if (n > *maxlen) {
-		    *maxlen = n;
+		if (iter != NULL) {
+		    gchar *fname = g_strdup(dirent->d_name);
+
+		    gtk_list_store_append(store, iter);
+		    n = strlen(fname) - 4;
+		    fname[n] = '\0';
+		    if (n > *maxlen) {
+			*maxlen = n;
+		    }
+		    gtk_list_store_set(store, iter, 
+				       0, fname, 
+				       1, version,
+				       2, descrip, 
+				       3, function_package_is_loaded(fullname), 
+				       4, path, -1);
+		    g_free(fname);
 		}
-		gtk_list_store_set(store, iter, 
-				   0, fname, 
-				   1, version,
-				   2, descrip, 
-				   3, function_package_is_loaded(fullname), 
-				   4, path, -1);
 		*nfn += 1;
-		g_free(fname);
 	    }
 	    free(descrip);
 	    free(version);
