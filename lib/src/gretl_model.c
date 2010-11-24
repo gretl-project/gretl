@@ -5008,7 +5008,7 @@ int gretl_model_add_y_median (MODEL *pmod, const double *y)
 {
     int T = pmod->t2 - pmod->t1 + 1;
     double *sy, m;
-    int t, n, n2p;
+    int t, n, ok, n2p;
 
     sy = malloc(T * sizeof *sy);
 
@@ -5018,7 +5018,12 @@ int gretl_model_add_y_median (MODEL *pmod, const double *y)
 
     n = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->uhat[t])) {
+	if (pmod->uhat != NULL) {
+	    ok = !na(pmod->uhat[t]);
+	} else {
+	    ok = !model_missing(pmod, t);
+	}
+	if (ok) {
 	    sy[n++] = y[t];
 	}
     }
