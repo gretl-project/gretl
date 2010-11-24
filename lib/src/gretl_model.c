@@ -5004,6 +5004,18 @@ void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames)
     pmod->params = vnames;
 }
 
+/**
+ * gretl_model_add_y_median:
+ * @pmod: pointer to target model.
+ * @y: array containing the dependent variable.
+ * 
+ * Calculates the median of @y using the valid observations
+ * with the model's sample range and attaches the median
+ * to the model as data under the key %ymedian.
+ *
+ * Returns: 0 on success or error code on error.
+ */
+
 int gretl_model_add_y_median (MODEL *pmod, const double *y)
 {
     int T = pmod->t2 - pmod->t1 + 1;
@@ -5167,6 +5179,21 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     return ret;
 }
 
+/**
+ * gretl_model_set_name:
+ * @pmod: pointer to target model.
+ * @name: the name to give the model.
+ * 
+ * Sets the name of the given model; this is used in
+ * printing the model and in displaying it in the
+ * gretl GUI. Note that a model's name must be no more
+ * than #MAXSAVENAME bytes in length, including the 
+ * terminating NUL byte; @name is truncated if it is
+ * too long.
+ * 
+ * Returns: 0 on success or error code on error.
+ */
+
 void gretl_model_set_name (MODEL *pmod, const char *name)
 {
     if (name == pmod->name) {
@@ -5182,6 +5209,14 @@ void gretl_model_set_name (MODEL *pmod, const char *name)
 	strncat(pmod->name, name, MAXSAVENAME - 1);
     }
 }
+
+/**
+ * gretl_model_get_name:
+ * @pmod: pointer to gretl model.
+ * 
+ * Returns: the name that has been set for @pmod, if any.
+ * Note that the value returned may be %NULL.
+ */
 
 const char *gretl_model_get_name (const MODEL *pmod)
 {
