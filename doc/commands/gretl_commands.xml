@@ -7108,6 +7108,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--preserve</flag>
+	  <effect>preserve any matrices and scalars</effect>
+	</option>
+	<option>
 	  <flag>--www</flag>
 	  <effect>use a database on the gretl server</effect>
 	</option>
@@ -7137,6 +7141,12 @@
 	If the <repl>filename</repl> argument takes the form of a
 	URI starting with <lit>http://</lit>, then gretl will attempt
 	to download the indicated data file before opening it.
+      </para>
+      <para>
+	By default, opening a new data file clears the current gretl
+	session, which includes deletion of any named matrices and
+	scalars. If you wish to keep any currently defined matrices
+	and scalars, use the <lit>--preserve</lit> option.
       </para>
       <para>
 	The <lit>open</lit> command can also be used to open a database
