@@ -644,7 +644,7 @@ static int real_adf_test (int varno, int order, int niv,
 {
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
-    gretlopt df_mod_opt = OPT_A;
+    gretlopt df_mod_opt = OPT_A | OPT_Z;
     int orig_nvars = pdinfo->v;
     int blurb_done = 0;
     int auto_order = 0;
@@ -1129,7 +1129,8 @@ static int panel_DF_test (int v, int order,
 	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
 				ADF_PANEL, &ainfo, prn);
 	    if (!err && verbose) {
-		pprintf(prn, "%s %d, T = %d\n", _("Unit"), i + 1, ainfo.T);
+		pprintf(prn, "%s %d, T = %d, %s = %d\n", _("Unit"), i + 1, 
+			ainfo.T, _("lag order"), ainfo.order);
 		pprintf(prn, "   %s: %g\n"
 			"   %s = %g", 
 			_("estimated value of (a - 1)"), ainfo.b,
