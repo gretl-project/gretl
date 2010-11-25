@@ -632,9 +632,14 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     } 
 
 #if HTDBG
-    pprintf(dbgprn, "Hausman: unrestricted model\n");
+    pprintf(dbgprn, "Hausman: unrestricted model (df = %d)\n", hmod.dfd);
     printmodel(&hmod, pdinfo, OPT_NONE, dbgprn);
 #endif
+
+    if (hmod.dfd == 0) {
+	/* perfect fit, can't do test */
+	goto bailout;
+    }
 
     URSS = hmod.ess;
     nobs1 = hmod.nobs;
