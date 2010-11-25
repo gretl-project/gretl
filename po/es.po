@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-11-24 14:31-0500\n"
-"PO-Revision-Date: 2010-10-05 11:13+0200\n"
+"PO-Revision-Date: 2010-11-25 14:00+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -3218,13 +3218,12 @@ msgid "restriction is acceptable"
 msgstr "La restricción es aceptable"
 
 #: lib/src/gretl_model.c:2996
-#, fuzzy
 msgid "Test of independence"
-msgstr "en la media de las variables independientes"
+msgstr "Contraste de independencia"
 
 #: lib/src/gretl_model.c:2997
 msgid "rho = 0"
-msgstr ""
+msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3015
 msgid "robust variant"
@@ -4401,7 +4400,7 @@ msgstr "Regresión aumentada para el contraste de factor común"
 
 #: lib/src/modelprint.c:715
 msgid "Initial"
-msgstr ""
+msgstr "Inicial"
 
 #: lib/src/modelprint.c:735 lib/src/system.c:93 lib/src/varprint.c:1069
 #: lib/src/varprint.c:1078 lib/src/varprint.c:1086 gui2/selector.c:3265
@@ -4491,7 +4490,7 @@ msgstr "Panel dinámico"
 
 #: lib/src/modelprint.c:756 gui2/selector.c:3289
 msgid "Bivariate probit"
-msgstr ""
+msgstr "Probit bivariante"
 
 #: lib/src/modelprint.c:758
 msgid "Arellano--Bond"
@@ -4638,9 +4637,8 @@ msgid "Duration (Weibull)"
 msgstr "Duración (Weibull)"
 
 #: lib/src/modelprint.c:877
-#, fuzzy
 msgid "Restricted OLS"
-msgstr "Restringido"
+msgstr "MCO restringidos"
 
 #: lib/src/modelprint.c:927
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -4726,9 +4724,8 @@ msgstr "Instrumentos"
 
 #: lib/src/modelprint.c:1166 lib/src/modelprint.c:1168
 #: lib/src/modelprint.c:1170 gui2/selector.c:4710
-#, fuzzy
 msgid "Asymptotic standard errors"
-msgstr "Desviaciones típicas asintóticas (no fiables)"
+msgstr "Desviaciones típicas asintóticas"
 
 #: lib/src/modelprint.c:1180 lib/src/modelprint.c:1182
 #: lib/src/modelprint.c:1184
@@ -8104,9 +8101,8 @@ msgid "Replace functions shown"
 msgstr "Reemplazar las funciones mostradas"
 
 #: gui2/datafiles.c:863
-#, fuzzy
 msgid "No additional function files were found"
-msgstr "No se han encontrado archivos de función"
+msgstr "No se han encontrado más archivos de función"
 
 #: gui2/datafiles.c:887
 #, c-format
@@ -8674,7 +8670,7 @@ msgstr "Observaciones: %d"
 #: gui2/dialogs.c:1771
 #, c-format
 msgid "Panel groups to graph (max %d)"
-msgstr ""
+msgstr "Grupos de panel a representar (máximo %d)"
 
 #: gui2/dialogs.c:1779
 msgid "Panel groups"
@@ -9308,9 +9304,8 @@ msgid "show poles"
 msgstr "Mostrar los polos"
 
 #: gui2/filters.c:735
-#, fuzzy
 msgid "filter may be numerically unstable"
-msgstr "Introducir un valor numérico"
+msgstr "Es posible que el filtro sea numéricamente inestable"
 
 #: gui2/filters.c:742
 msgid "Order:"
@@ -9365,9 +9360,9 @@ msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "Componente de Baxter-King de %s en frecuencias %d a %d"
 
 #: gui2/filters.c:975
-#, fuzzy, c-format
+#, c-format
 msgid "Butterworth poles (n = %d, cutoff = %d degrees)"
-msgstr "%s filtrada: Butterworth de paso bajo (n=%d, cierre=%d)"
+msgstr "Polos Butterworth (n = %d, corte = %d grados)"
 
 #: gui2/filters.c:1111
 msgid "Gain for Butterworth filter"
@@ -9474,9 +9469,8 @@ msgid "Panel data"
 msgstr "Datos de panel"
 
 #: gui2/fnsave.c:798
-#, fuzzy
 msgid "No dataset needed"
-msgstr "No se han recibido datos"
+msgstr "No se necesita un conjunto de datos"
 
 #: gui2/fnsave.c:803
 msgid "Data requirement"
@@ -9692,9 +9686,8 @@ msgid "Restore full view"
 msgstr "Recuperar vista completa"
 
 #: gui2/gpt_control.c:3335 gui2/gpt_control.c:3438
-#, fuzzy
 msgid "Replace full view"
-msgstr "Recuperar vista completa"
+msgstr "Reemplazar la vista completa"
 
 #: gui2/gpt_control.c:3339 gui2/gpt_control.c:3422 gui2/toolbar.c:629
 msgid "Print..."
@@ -10705,7 +10698,7 @@ msgstr "Contraste KPSS"
 
 #: gui2/gretl.c:1537
 msgid "_Levin-Lin-Chu test"
-msgstr ""
+msgstr "Contraste _Levin-Lin-Chu"
 
 #: gui2/gretl.c:1538
 msgid "_Fractional integration"
@@ -10888,9 +10881,8 @@ msgid "_Between model..."
 msgstr "Modelo \"entre\" (Between Model)..."
 
 #: gui2/gretl.c:1591
-#, fuzzy
 msgid "_Dynamic panel model..."
-msgstr "Modelo de panel dinámico"
+msgstr "Modelo de panel _dinámico..."
 
 #: gui2/gretl.c:1593
 msgid "_Nonlinear models"
@@ -10917,9 +10909,8 @@ msgid "_Probit"
 msgstr "_Probit"
 
 #: gui2/gretl.c:1601
-#, fuzzy
 msgid "Bi_variate..."
-msgstr "_Buscar variable..."
+msgstr "Bi_variante..."
 
 #: gui2/gretl.c:1602
 msgid "To_bit..."
@@ -12080,9 +12071,8 @@ msgid "gretl: KPSS test"
 msgstr "gretl: Contraste KPSS"
 
 #: gui2/library.c:1000
-#, fuzzy
 msgid "gretl: Levin-Lin-Chu test"
-msgstr "gretl: Contraste de Chow"
+msgstr "gretl: contraste Levin-Lin-Chu"
 
 #: gui2/library.c:1001
 msgid "Lag order for ADF test:"
@@ -12533,9 +12523,8 @@ msgid "Really delete %s?"
 msgstr "¿seguro que desea borrar %s?"
 
 #: gui2/library.c:5991
-#, fuzzy
 msgid "Really delete the selected variables?"
-msgstr "No se pueden borrar las variables especificadas"
+msgstr "¿Borrar realmente las variables seleccionadas?"
 
 #: gui2/library.c:6001 gui2/session.c:2187
 msgid "gretl: delete"
@@ -12550,17 +12539,16 @@ msgid "Cannot delete all of the specified variables"
 msgstr "No se pueden borrar todas las variables especificadas"
 
 #: gui2/library.c:6070
-#, fuzzy
 msgid "Too many units selected"
-msgstr "Se seleccionaron demasiadas cosas"
+msgstr "Se han seleccionado demasiadas unidades"
 
 #: gui2/library.c:6119
 msgid "single graph: units overlaid"
-msgstr ""
+msgstr "gráfico sencillo: unidades superpuestas"
 
 #: gui2/library.c:6120
 msgid "single graph: units in sequence"
-msgstr ""
+msgstr "gráfico sencillo: unidades en secuencia"
 
 #: gui2/library.c:6121
 msgid "multiple plots in grid"
@@ -13043,9 +13031,8 @@ msgid "You must specify a selection variable"
 msgstr "Se debe especificar una variable de selección"
 
 #: gui2/selector.c:2840
-#, fuzzy
 msgid "You must specify a second dependent variable"
-msgstr "Se debe elegir una variable dependiente"
+msgstr "Debe Vd. especificar una segunda variable dependiente"
 
 #: gui2/selector.c:2843
 msgid "You must specify an upper bound variable"
@@ -13164,9 +13151,8 @@ msgid "Censoring variable"
 msgstr "Variable de censura"
 
 #: gui2/selector.c:3354
-#, fuzzy
 msgid "Second dependent variable"
-msgstr "Variables independientes"
+msgstr "Segunda variable dependiente"
 
 #: gui2/selector.c:3356
 msgid "List of AR lags"
@@ -13237,9 +13223,8 @@ msgid "Response variable"
 msgstr "Variable de respuesta"
 
 #: gui2/selector.c:3652
-#, fuzzy
 msgid "First dependent variable"
-msgstr "Variable dependiente"
+msgstr "Primera variable dependiente"
 
 #: gui2/selector.c:3722
 msgid "lag order:"
@@ -13290,9 +13275,8 @@ msgid "Selection equation regressors"
 msgstr "Regresores de la ecuación de selección"
 
 #: gui2/selector.c:3935
-#, fuzzy
 msgid "Second equation regressors"
-msgstr "Regresores de la ecuación de selección"
+msgstr "Regresores de la segunda ecuación"
 
 #: gui2/selector.c:3937
 msgid "Helper functions"
@@ -13380,7 +13364,7 @@ msgstr "Incluir variables ficticias temporales"
 
 #: gui2/selector.c:4708
 msgid "Include levels equations (GMM-SYS)"
-msgstr ""
+msgstr "Incluir las ecuaciones en niveles (GMM-SYS)"
 
 #: gui2/selector.c:4713
 msgid "Show zeros explicitly"
@@ -13567,9 +13551,8 @@ msgid "Endogenous variables"
 msgstr "Variables endógenas"
 
 #: gui2/selector.c:5518
-#, fuzzy
 msgid "First equation regressors"
-msgstr "Regresores de la ecuación de selección"
+msgstr "Regresores de la primera ecuación"
 
 #: gui2/selector.c:5520
 msgid "Independent variables"
@@ -14685,9 +14668,8 @@ msgid "OLS model"
 msgstr "MCO"
 
 #: gui2/toolbar.c:1065
-#, fuzzy
 msgid "gretl database"
-msgstr "gretl: abrir base de datos"
+msgstr "base de datos de gretl"
 
 #: gui2/toolbar.c:1066
 msgid "open dataset"
@@ -14763,14 +14745,12 @@ msgid "last observation"
 msgstr "última observación"
 
 #: gui2/varinfo.c:683
-#, fuzzy
 msgid "Previous series"
-msgstr "Listar las series"
+msgstr "Serie anterior"
 
 #: gui2/varinfo.c:689
-#, fuzzy
 msgid "Next series"
-msgstr "Listar las series"
+msgstr "Serie siguiente"
 
 #: gui2/varinfo.c:701
 msgid "ID number:"
@@ -15302,22 +15282,22 @@ msgstr "se esperaba %s pero se encontró %s"
 
 #: plugin/panurc.c:563
 msgid "z-score"
-msgstr ""
+msgstr "estadístico z"
 
 #: plugin/panurc.c:571
 #, c-format
 msgid "Levin-Lin-Chu pooled ADF test for %s\n"
-msgstr ""
+msgstr "Contraste combinado ADF de Levin-Lin-Chu para %s\n"
 
 #: plugin/panurc.c:575
-#, fuzzy, c-format
+#, c-format
 msgid "including %.2f lags of (1-L)%s (average)"
-msgstr "incluyendo %d retardos de (1-L)%s"
+msgstr "incluyendo %.2f retardos de (1-L)%s (promedio)"
 
 #: plugin/panurc.c:583
-#, fuzzy, c-format
+#, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Parámetro de truncamiento de los retardos = %d\n"
+msgstr "Truncamiento de Bartlett en %d retardos\n"
 
 #: plugin/pca.c:108
 msgid "Components with eigenvalues > mean"
