@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-11-24 14:31-0500\n"
-"PO-Revision-Date: 2010-11-15 01:12+0200\n"
+"PO-Revision-Date: 2010-11-26 01:26+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:291
 msgid "lagged differences"
@@ -2769,7 +2769,7 @@ msgstr "выполнено %d итераций\n"
 #: lib/src/gretl_bfgs.c:932
 #, c-format
 msgid "norm of gradient = %g"
-msgstr ""
+msgstr "Норма градиента = %g"
 
 #: lib/src/gretl_bfgs.c:1445 lib/src/modelprint.c:2913
 #, c-format
@@ -3225,9 +3225,8 @@ msgid "restriction is acceptable"
 msgstr "ограничение допустимо"
 
 #: lib/src/gretl_model.c:2996
-#, fuzzy
 msgid "Test of independence"
-msgstr "для среднего значения независимых переменных"
+msgstr "Тест на независимость"
 
 #: lib/src/gretl_model.c:2997
 msgid "rho = 0"
@@ -4617,9 +4616,8 @@ msgid "Duration (Weibull)"
 msgstr "Время жизни (распределение Вейбулла)"
 
 #: lib/src/modelprint.c:877
-#, fuzzy
 msgid "Restricted OLS"
-msgstr "Ограниченная"
+msgstr "Ограниченный МНК"
 
 #: lib/src/modelprint.c:927
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -4704,9 +4702,8 @@ msgstr "Инструменты"
 
 #: lib/src/modelprint.c:1166 lib/src/modelprint.c:1168
 #: lib/src/modelprint.c:1170 gui2/selector.c:4710
-#, fuzzy
 msgid "Asymptotic standard errors"
-msgstr "Асимптотические стандартные ошибки (ненадежные)"
+msgstr "Асимптотические стандартные ошибки"
 
 #: lib/src/modelprint.c:1180 lib/src/modelprint.c:1182
 #: lib/src/modelprint.c:1184
@@ -8026,9 +8023,8 @@ msgid "Replace functions shown"
 msgstr ""
 
 #: gui2/datafiles.c:863
-#, fuzzy
 msgid "No additional function files were found"
-msgstr "Файлы для пакетов функций не обнаружены"
+msgstr "Дополнительные пакеты функции не обнаружены"
 
 #: gui2/datafiles.c:887
 #, c-format
@@ -9230,9 +9226,8 @@ msgid "show poles"
 msgstr ""
 
 #: gui2/filters.c:735
-#, fuzzy
 msgid "filter may be numerically unstable"
-msgstr "Введите численное значение"
+msgstr ""
 
 #: gui2/filters.c:742
 msgid "Order:"
@@ -9397,9 +9392,8 @@ msgid "Panel data"
 msgstr "Панельные данные"
 
 #: gui2/fnsave.c:798
-#, fuzzy
 msgid "No dataset needed"
-msgstr "Данные не были получены"
+msgstr ""
 
 #: gui2/fnsave.c:803
 msgid "Data requirement"
@@ -9607,9 +9601,8 @@ msgid "Restore full view"
 msgstr "Восстановить исходный масштаб"
 
 #: gui2/gpt_control.c:3335 gui2/gpt_control.c:3438
-#, fuzzy
 msgid "Replace full view"
-msgstr "Восстановить исходный масштаб"
+msgstr ""
 
 #: gui2/gpt_control.c:3339 gui2/gpt_control.c:3422 gui2/toolbar.c:629
 msgid "Print..."
@@ -10798,9 +10791,8 @@ msgid "_Between model..."
 msgstr "_Межгрупповая модель..."
 
 #: gui2/gretl.c:1591
-#, fuzzy
 msgid "_Dynamic panel model..."
-msgstr "Динамическая панельная модель"
+msgstr "_Динамическая панельная модель..."
 
 #: gui2/gretl.c:1593
 msgid "_Nonlinear models"
@@ -10827,9 +10819,8 @@ msgid "_Probit"
 msgstr "_Пробит"
 
 #: gui2/gretl.c:1601
-#, fuzzy
 msgid "Bi_variate..."
-msgstr "_Найти переменную..."
+msgstr ""
 
 #: gui2/gretl.c:1602
 msgid "To_bit..."
@@ -11983,9 +11974,8 @@ msgid "gretl: KPSS test"
 msgstr "gretl: KPSS тест"
 
 #: gui2/library.c:1000
-#, fuzzy
 msgid "gretl: Levin-Lin-Chu test"
-msgstr "gretl: тест Чоу"
+msgstr "gretl: тест Левина-Лин-Чу"
 
 #: gui2/library.c:1001
 msgid "Lag order for ADF test:"
@@ -12426,9 +12416,8 @@ msgid "Really delete %s?"
 msgstr "Вы действительно хотите удалить %s?"
 
 #: gui2/library.c:5991
-#, fuzzy
 msgid "Really delete the selected variables?"
-msgstr "Невозможно удалить указанные переменные"
+msgstr "Удалить указанные переменные?"
 
 #: gui2/library.c:6001 gui2/session.c:2187
 msgid "gretl: delete"
@@ -12443,7 +12432,6 @@ msgid "Cannot delete all of the specified variables"
 msgstr "Невозможно удалить все указанные переменные"
 
 #: gui2/library.c:6070
-#, fuzzy
 msgid "Too many units selected"
 msgstr "Выбрано слишком много элементов"
 
@@ -12940,9 +12928,8 @@ msgid "You must specify a selection variable"
 msgstr ""
 
 #: gui2/selector.c:2840
-#, fuzzy
 msgid "You must specify a second dependent variable"
-msgstr "Необходимо выбрать зависимую переменную"
+msgstr "Необходимо выбрать вторую зависимую переменную"
 
 #: gui2/selector.c:2843
 msgid "You must specify an upper bound variable"
@@ -13061,9 +13048,8 @@ msgid "Censoring variable"
 msgstr "Цензурированная переменная"
 
 #: gui2/selector.c:3354
-#, fuzzy
 msgid "Second dependent variable"
-msgstr "Независимые переменные"
+msgstr "Вторая зависимая переменная"
 
 #: gui2/selector.c:3356
 msgid "List of AR lags"
@@ -13134,9 +13120,8 @@ msgid "Response variable"
 msgstr "Переменная отклика (response)"
 
 #: gui2/selector.c:3652
-#, fuzzy
 msgid "First dependent variable"
-msgstr "Зависимая переменная"
+msgstr "Первая зависимая переменная"
 
 #: gui2/selector.c:3722
 msgid "lag order:"
@@ -13187,9 +13172,8 @@ msgid "Selection equation regressors"
 msgstr ""
 
 #: gui2/selector.c:3935
-#, fuzzy
 msgid "Second equation regressors"
-msgstr "Показать отчет о регрессии"
+msgstr "Второе уравнение регрессии"
 
 #: gui2/selector.c:3937
 msgid "Helper functions"
@@ -13464,9 +13448,8 @@ msgid "Endogenous variables"
 msgstr "Эндогенные переменные"
 
 #: gui2/selector.c:5518
-#, fuzzy
 msgid "First equation regressors"
-msgstr "Коинтеграционная регрессия - "
+msgstr "Первое уравнение регрессии"
 
 #: gui2/selector.c:5520
 msgid "Independent variables"
@@ -15183,7 +15166,7 @@ msgstr "ожидалось %s, но найдено %s"
 
 #: plugin/panurc.c:563
 msgid "z-score"
-msgstr ""
+msgstr "z-метрика"
 
 #: plugin/panurc.c:571
 #, c-format
@@ -15191,14 +15174,14 @@ msgid "Levin-Lin-Chu pooled ADF test for %s\n"
 msgstr ""
 
 #: plugin/panurc.c:575
-#, fuzzy, c-format
+#, c-format
 msgid "including %.2f lags of (1-L)%s (average)"
-msgstr "включая %d лага(-ов) для (1-L)%s"
+msgstr "включая %.2f лагов (1-L)%s (среднее)"
 
 #: plugin/panurc.c:583
-#, fuzzy, c-format
+#, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Параметр для усечения лагов = %d\n"
+msgstr "Усечение Бартлетта для %d лагов\n"
 
 #: plugin/pca.c:108
 msgid "Components with eigenvalues > mean"
