@@ -727,6 +727,12 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 
     k = gretl_matrix_cols(Q);
 
+    if (k > Q->rows) {
+	/* can't do QR decomp! */
+	*err = E_DF;
+	goto bailout;
+    }
+
     R = gretl_matrix_alloc(k, k);
     if (R == NULL) {
 	*err = E_ALLOC;

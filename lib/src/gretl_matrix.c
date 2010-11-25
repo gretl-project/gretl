@@ -5884,6 +5884,10 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     lda = m = M->rows;
     n = M->cols;
 
+    if (n > m) {
+	return E_NONCONF;
+    }
+
     if (R != NULL && (R->rows != n || R->cols != n)) {
 	return E_NONCONF;
     }

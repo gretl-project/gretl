@@ -68,8 +68,8 @@ int ms_biff_query_next (BiffQuery *bq)
     }
 
     if (bq->data_malloced) {
-	g_free (bq->data);
-	bq->data = 0;
+	g_free(bq->data);
+	bq->data = NULL;
 	bq->data_malloced = 0;
     }
 
@@ -85,7 +85,7 @@ int ms_biff_query_next (BiffQuery *bq)
 
     if (bq->length > 0 &&
 	!(bq->data = bq->pos->read_ptr(bq->pos, bq->length))) {
-	bq->data = g_new0 (guint8, bq->length);
+	bq->data = g_new0(guint8, bq->length);
 	if (!bq->pos->read_copy(bq->pos, bq->data, bq->length)) {
 	    ans = 0;
 	    g_free(bq->data);
@@ -96,8 +96,8 @@ int ms_biff_query_next (BiffQuery *bq)
 	}
     }
 
-    if (!bq->length) {
-	bq->data = 0;
+    if (bq->length == 0) {
+	bq->data = NULL;
 	return 1;
     }
 
@@ -109,7 +109,7 @@ void ms_biff_query_destroy (BiffQuery *bq)
     if (bq != NULL) {
 	if (bq->data_malloced) {
 	    g_free(bq->data);
-	    bq->data = 0;
+	    bq->data = NULL;
 	    bq->data_malloced = 0;
 	}
 	g_free(bq);
@@ -236,7 +236,7 @@ biff_get_text (guint8 const *pos, guint32 length, guint32 *byte_length)
 	return 0;
     }
 
-    header = biff_string_get_flags (pos, &high_byte, &ext_str, &rich_str);
+    header = biff_string_get_flags(pos, &high_byte, &ext_str, &rich_str);
     if (header) {
 	ptr = pos + 1;
 	(*byte_length)++;
@@ -244,7 +244,7 @@ biff_get_text (guint8 const *pos, guint32 length, guint32 *byte_length)
 	ptr = pos;
     }
 
-    get_xtn_lens (&pre_len, &end_len, ptr, ext_str, rich_str);
+    get_xtn_lens(&pre_len, &end_len, ptr, ext_str, rich_str);
     ptr += pre_len;
     (*byte_length) += pre_len + end_len;
 
@@ -279,8 +279,8 @@ biff_boundsheet_data_new (BiffQuery *q, MsBiffVersion ver)
 	((MS_OLE_GET_GUINT8(q->data + 5)) & 0x3) == 0) { /* worksheet, visible */
 	ans = g_malloc(sizeof *ans);
 	ans->streamStartPos = startpos;
-	ans->name = biff_get_text (q->data + 7, 
-				   MS_OLE_GET_GUINT8(q->data + 6), NULL);
+	ans->name = biff_get_text(q->data + 7, 
+				  MS_OLE_GET_GUINT8(q->data + 6), NULL);
     }
 
     return ans; 
