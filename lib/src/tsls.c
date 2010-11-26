@@ -734,6 +734,9 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 
     if (k > Q->rows) {
 	/* can't do QR decomp! */
+	gretl_errmsg_sprintf(_("Number of instruments (%d) exceeds the "
+			       "number of observations (%d)"),
+			     k, Q->rows);
 	*err = E_DF;
 	goto bailout;
     }

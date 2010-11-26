@@ -12,7 +12,9 @@ version 1.9.3, in progress
 - lrvar function: allow vector argument in place of series
 - Iterated GMM: raise default maximum iterations to 250, and
   add a new "set" variable, "gmm_maxiter"
-- Fix bug 3105271 
+- Fix bug 3105271
+- Fix bug: crash in lapack in case the number of instruments
+  exceeds the number of observations in tsls
 - Fix bug: recent breakage in quantreg command for the case
   of multiple tau values
 - Fix bug: ensure that the main window gets updated when
