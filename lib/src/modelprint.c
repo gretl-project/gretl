@@ -711,10 +711,6 @@ static void print_aux_string (const MODEL *pmod, PRN *prn)
 	pputs(prn, tr(N_("Groupwise heteroskedasticity")));
     } else if (aux == AUX_COMFAC) {
 	pputs(prn, tr(N_("Augmented regression for common factor test")));
-    } else if (aux == AUX_BIPROB) {
-	pputs(prn, tr(N_("Initial")));
-	pputc(prn, ' ');
-	close = 0;
     } else {
 	close = 0;
     }

@@ -2689,7 +2689,10 @@ print_iter_info (int iter, double crit, int type, int k,
 	x += fabs(b[i] * g[i]);
 	print_iter_val(g[i], i, k, prn);
     }
-    pprintf(prn, " (norm %.2e)\n\n", sqrt(x/k));
+    pprintf(prn, " (norm %.2e)\n", sqrt(x/k));
+    if (iter >= 0) {
+	pputc(prn, '\n');
+    }
 
     if (iter < 0 || (iter % 20 == 0)) {
 	/* experimental */
