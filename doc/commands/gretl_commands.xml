@@ -7108,6 +7108,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print list of series</effect>
+	</option>
+	<option>
 	  <flag>--preserve</flag>
 	  <effect>preserve any matrices and scalars</effect>
 	</option>
@@ -7129,13 +7133,16 @@
     <description>
       <para>
 	Opens a data file.  If a data file is already open, it is replaced
-	by the newly opened one.  If a full path is not given, the program
-	will search some relevant paths to try to find the file.  If no
-	filename suffix is given (as in the first example above), gretl
-	assumes a native datafile with suffix <lit>.gdt</lit>.  Based on
-	the name of the file and various heuristics, gretl will try to
-	detect the format of the data file (native, plain text, CSV, MS
-	Excel, Stata, SPSS, etc.).
+	by the newly opened one. To add data to the current dataset, see
+	<cmdref targ="append"/>.
+      </para>
+      <para>
+	If a full path is not given, the program will search some relevant
+	paths to try to find the file.  If no filename suffix is given (as
+	in the first example above), gretl assumes a native datafile with
+	suffix <lit>.gdt</lit>.  Based on the name of the file and various
+	heuristics, gretl will try to detect the format of the data file
+	(native, plain text, CSV, MS Excel, Stata, SPSS, etc.).
       </para>
       <para>
 	If the <repl>filename</repl> argument takes the form of a
