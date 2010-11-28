@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.2
+# Polish translation for gretl-1.9.3
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2010
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2010
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.2\n"
+"Project-Id-Version: gretl-1.9.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-11-24 14:31-0500\n"
-"PO-Revision-Date: 2010-11-16 22:30-0400\n"
+"PO-Revision-Date: 2010-11-27 22:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -4613,9 +4613,8 @@ msgid "Duration (Weibull)"
 msgstr "Duration (Weibull)"
 
 #: lib/src/modelprint.c:877
-#, fuzzy
 msgid "Restricted OLS"
-msgstr "Ograniczony"
+msgstr "Restrykcje dla KMNK"
 
 #: lib/src/modelprint.c:927
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -8057,9 +8056,8 @@ msgid "Replace functions shown"
 msgstr "Pokaż zamienione funkcje"
 
 #: gui2/datafiles.c:863
-#, fuzzy
 msgid "No additional function files were found"
-msgstr "Nie znaleziono plików z funkcjami"
+msgstr "Nie znaleziono dodatkowych plików z funkcjami"
 
 #: gui2/datafiles.c:887
 #, c-format
@@ -9427,9 +9425,8 @@ msgid "Panel data"
 msgstr "Dane panelowe"
 
 #: gui2/fnsave.c:798
-#, fuzzy
 msgid "No dataset needed"
-msgstr "Nie odebrano danych"
+msgstr "Nie wymaga zbioru danych"
 
 #: gui2/fnsave.c:803
 msgid "Data requirement"
@@ -15237,7 +15234,7 @@ msgstr "oczekiwane %s, lecz znaleziono %s"
 
 #: plugin/panurc.c:563
 msgid "z-score"
-msgstr ""
+msgstr "z-score"
 
 #: plugin/panurc.c:571
 #, c-format
