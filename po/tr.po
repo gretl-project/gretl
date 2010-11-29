@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-11-24 14:31-0500\n"
-"PO-Revision-Date: 2010-10-18 13:35+0300\n"
+"PO-Revision-Date: 2010-11-29 17:44+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -548,7 +548,7 @@ msgstr "Almaşık istatistik"
 #: lib/src/compare.c:2217
 #, c-format
 msgid "The model already contains %s"
-msgstr "Model zaten %s içeriyor"
+msgstr "Model %s içeriyor bile"
 
 #: lib/src/compare.c:2248
 msgid "dummy variable for Chow test"
@@ -687,7 +687,7 @@ msgstr "ortak çarpan sınırlaması"
 
 #: lib/src/compare.c:3260
 msgid "This test is only relevant for pooled models\n"
-msgstr "Bu sınama yalnızca havuzlamalı modeller için uygundur\n"
+msgstr "Bu sınama yalnızca havuzlu modeller için uygundur\n"
 
 #: lib/src/compare.c:3265
 msgid "This test requires that the model contains a constant\n"
@@ -1465,8 +1465,7 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:607
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr ""
-"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunuyor"
+msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında bulunuyor bile"
 
 #: lib/src/describe.c:1098
 msgid "Insufficient data"
@@ -2451,7 +2450,7 @@ msgstr "Dönemsel kukla değişkenler oluşturuldu.\n"
 
 #: lib/src/genmain.c:480
 msgid "Periodic dummy variables already present.\n"
-msgstr "Dönemsel kukla değişkenler zaten bulunuyor.\n"
+msgstr "Dönemsel kukla değişkenler bulunuyor bile.\n"
 
 #: lib/src/genmain.c:486 lib/src/genmain.c:491
 msgid "Panel dummy variables generated.\n"
@@ -2487,7 +2486,7 @@ msgstr "Ağırlıklar, dikeysellik koşullarından sonra gelmelidir"
 
 #: lib/src/gmm.c:791
 msgid "Weights are already defined"
-msgstr "Ağırlıklar zaten tanımlı"
+msgstr "Ağırlıklar tanımlı bile"
 
 #: lib/src/gmm.c:812
 #, c-format
@@ -2732,7 +2731,7 @@ msgstr ""
 
 #: lib/src/gretl_bfgs.c:723
 msgid "BFGS: initial value of objective function is not finite"
-msgstr "BFGS: Hedef işlev başlangıç değeri sonlu değil"
+msgstr "BFGS: Hedef işlev ilk değeri sonlu değil"
 
 #: lib/src/gretl_bfgs.c:926
 #, c-format
@@ -2756,7 +2755,7 @@ msgstr "Düşüm değerlendirmeleri: %d\n"
 
 #: lib/src/gretl_bfgs.c:1725
 msgid "Initial value of objective function is not finite"
-msgstr "Hedef işlev başlangıç değeri sonlu değil"
+msgstr "Hedef işlev ilk değeri sonlu değil"
 
 #: lib/src/gretl_bundle.c:396 lib/src/gretl_bundle.c:430
 msgid "no such item"
@@ -2845,7 +2844,7 @@ msgstr "Eklenen yeni bağımsız değişken yok"
 
 #: lib/src/gretl_errors.c:59
 msgid "One or more \"added\" vars were already present"
-msgstr "\"Eklenen\" değişkenlerden bir veya birden çoğu zaten bulunuyor"
+msgstr "\"Eklenen\" değişkenlerden bir veya birden çoğu bulunuyor bile"
 
 #: lib/src/gretl_errors.c:60
 msgid "Error generating logarithms"
@@ -3194,13 +3193,12 @@ msgid "restriction is acceptable"
 msgstr "sınırlama kabul edilebilir"
 
 #: lib/src/gretl_model.c:2996
-#, fuzzy
 msgid "Test of independence"
-msgstr "bağımsız değişken ortalamalarında"
+msgstr "Bağımsızlık sınaması"
 
 #: lib/src/gretl_model.c:2997
 msgid "rho = 0"
-msgstr ""
+msgstr "ro = 0"
 
 #: lib/src/gretl_model.c:3015
 msgid "robust variant"
@@ -3292,7 +3290,7 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
-"(Düşük bir p-değeri, havuzlamalı OLS modelinin yeterliliği sıfır önsavına\n"
+"(Düşük bir p-değeri, havuzlu OLS modelinin yeterliliği sıfır önsavına\n"
 "karşı olup, sabit etkiler almaşık önsavını desteklemektedir.)\n"
 "\n"
 
@@ -3348,7 +3346,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Yatay-kesit birimleri için havuzlamalı SEK kalıntı ortalamaları:\n"
+"Yatay-kesit birimleri için havuzlu SEK kalıntı ortalamaları:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2456
@@ -3373,7 +3371,7 @@ msgid ""
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
-"(Düşük bir p-değeri, havuzlamalı OLS modelinin yeterliliği sıfır önsavına\n"
+"(Düşük bir p-değeri, havuzlu OLS modelinin yeterliliği sıfır önsavına\n"
 "karşı olup, rastsal etkiler almaşık önsavını desteklemektedir.)\n"
 "\n"
 
@@ -3897,7 +3895,7 @@ msgstr "gecikme değişkeni oluşturma başarısız"
 #: lib/src/interact.c:1529 gui2/gui_utils.c:4376 gui2/library.c:4278
 #, c-format
 msgid "A series named %s already exists"
-msgstr "%s adında bir seri zaten var"
+msgstr "%s adında bir seri var bile"
 
 #: lib/src/interact.c:1669
 #, c-format
@@ -4028,7 +4026,7 @@ msgstr "Çıktı dosyası '%s' kapatıldı\n"
 #: lib/src/interact.c:3980
 #, c-format
 msgid "Output is already diverted to '%s'\n"
-msgstr "Çıktılar '%s' dosyasına zaten yönlendirilmiş\n"
+msgstr "Çıktılar '%s' dosyasına yönlendirilmiş bile\n"
 
 #: lib/src/interact.c:3987
 msgid "Now discarding output\n"
@@ -4359,7 +4357,7 @@ msgstr "Ortak çarpan sınaması için genişletmeli bağlanım"
 
 #: lib/src/modelprint.c:715
 msgid "Initial"
-msgstr ""
+msgstr "İlk"
 
 #: lib/src/modelprint.c:735 lib/src/system.c:93 lib/src/varprint.c:1069
 #: lib/src/varprint.c:1078 lib/src/varprint.c:1086 gui2/selector.c:3265
@@ -4449,7 +4447,7 @@ msgstr "Devingen panel"
 
 #: lib/src/modelprint.c:756 gui2/selector.c:3289
 msgid "Bivariate probit"
-msgstr ""
+msgstr "İkideğişkenli olabirim"
 
 #: lib/src/modelprint.c:758
 msgid "Arellano--Bond"
@@ -4497,7 +4495,7 @@ msgstr "ÖBHO (ARMA)"
 
 #: lib/src/modelprint.c:788
 msgid "Pooled OLS"
-msgstr "havuzlamalı SEK"
+msgstr "havuzlu SEK"
 
 #: lib/src/modelprint.c:791
 msgid "Fixed-effects"
@@ -4596,9 +4594,8 @@ msgid "Duration (Weibull)"
 msgstr "Süre (Weibull)"
 
 #: lib/src/modelprint.c:877
-#, fuzzy
 msgid "Restricted OLS"
-msgstr "Sınırlamalı"
+msgstr "Sınırlamalı SEK"
 
 #: lib/src/modelprint.c:927
 msgid "Critical values for TSLS bias relative to OLS:\n"
@@ -4684,9 +4681,8 @@ msgstr "Araçlar"
 
 #: lib/src/modelprint.c:1166 lib/src/modelprint.c:1168
 #: lib/src/modelprint.c:1170 gui2/selector.c:4710
-#, fuzzy
 msgid "Asymptotic standard errors"
-msgstr "Kavuşmazsal ölçünlü hatalar (güvenilir değil)"
+msgstr "Kavuşmazsal ölçünlü hatalar"
 
 #: lib/src/modelprint.c:1180 lib/src/modelprint.c:1182
 #: lib/src/modelprint.c:1184
@@ -4900,7 +4896,7 @@ msgstr "%2$d gözlem kullanılarak bulunan %1$s"
 #: lib/src/modelprint.c:1747
 #, c-format
 msgid "Included %d cross-sectional units"
-msgstr "%d yatay-kesit birimi kapsandı"
+msgstr "%d yatay-kesit birimi eklenildi"
 
 #: lib/src/modelprint.c:1752
 #, c-format
@@ -7862,8 +7858,8 @@ msgid ""
 "repeating each value %d times.  In general, this is\n"
 "not a valid thing to do."
 msgstr ""
-"Yüksek sıklıklı bir veri setine, düşük sıklıklı bir seri\n"
-"eklemek istediğinize emin misiniz?\n"
+"Yüksek sıklıklı bir veri setine düşük sıklıklı bir seri\n"
+"eklemeyi gerçekten istiyor musunuz?\n"
 "\n"
 "Eğer 'evet' derseniz, kaynak veriler, tüm değerlerin ,\n"
 "%d kez tekrarlanması yolu ile genişletilecek.\n"
@@ -7878,7 +7874,7 @@ msgid ""
 "There is already a variable of this name\n"
 "in the dataset.  OK to overwrite it?"
 msgstr ""
-"Bu adda bir değişken veri setinde zaten var.\n"
+"Bu adda bir değişken veri setinde var bile.\n"
 "Üzerine yazılsın mı?"
 
 #: gui2/database.c:558
@@ -7887,7 +7883,7 @@ msgid ""
 "Really delete the selected series\n"
 "from the database '%s'?"
 msgstr ""
-"Seçili seri, '%s' veri tabanından \n"
+"Seçili seri, '%s' veri tabanından\n"
 "gerçekten silinsin mi?"
 
 #: gui2/database.c:720
@@ -8032,9 +8028,8 @@ msgid "Replace functions shown"
 msgstr "Gösterilen işlevleri değiştir"
 
 #: gui2/datafiles.c:863
-#, fuzzy
 msgid "No additional function files were found"
-msgstr "Bulunan işlev dosyası yok"
+msgstr "Ek olarak bulunan işlev dosyası yok"
 
 #: gui2/datafiles.c:887
 #, c-format
@@ -8591,7 +8586,7 @@ msgstr "L-BFGS-B kullan, bellek boyutu:"
 #: gui2/dialogs.c:1685
 #, c-format
 msgid "Included groups: %d"
-msgstr "kapsanılan kümeler: %d"
+msgstr "İçerilen kümeler: %d"
 
 #: gui2/dialogs.c:1687
 #, c-format
@@ -8601,7 +8596,7 @@ msgstr "Gözlem: %d"
 #: gui2/dialogs.c:1771
 #, c-format
 msgid "Panel groups to graph (max %d)"
-msgstr ""
+msgstr "Çizilecek panel kümeleri (ençok %d)"
 
 #: gui2/dialogs.c:1779
 msgid "Panel groups"
@@ -9011,7 +9006,7 @@ msgid ""
 "There is already a file of this name.\n"
 "OK to overwrite it?"
 msgstr ""
-"Bu adda bir veri dosyası zaten var.\n"
+"Bu adda bir veri dosyası var bile.\n"
 "Üzerine yazılsın mı?"
 
 #: gui2/fileselect.c:715
@@ -9235,9 +9230,8 @@ msgid "show poles"
 msgstr "kutupları göster"
 
 #: gui2/filters.c:735
-#, fuzzy
 msgid "filter may be numerically unstable"
-msgstr "Sayısal bir değer giriniz"
+msgstr "süzgeç sayısal olarak kararsız olabilir"
 
 #: gui2/filters.c:742
 msgid "Order:"
@@ -9292,9 +9286,9 @@ msgid "Baxter-King component of %s at frequency %d to %d"
 msgstr "Baxter-King Bileşeni, Değişken: %s (sıklık %d ve %d arası)"
 
 #: gui2/filters.c:975
-#, fuzzy, c-format
+#, c-format
 msgid "Butterworth poles (n = %d, cutoff = %d degrees)"
-msgstr "Süzmeli %s: Butterworth düşük-geçiş (n=%d, kesme=%d)"
+msgstr "Butterworth kutupları (n=%d, kesme=%d derece)"
 
 #: gui2/filters.c:1111
 msgid "Gain for Butterworth filter"
@@ -9401,9 +9395,8 @@ msgid "Panel data"
 msgstr "Panel verileri"
 
 #: gui2/fnsave.c:798
-#, fuzzy
 msgid "No dataset needed"
-msgstr "alınan veri yok"
+msgstr "Veri seti gerekli değil"
 
 #: gui2/fnsave.c:803
 msgid "Data requirement"
@@ -9618,9 +9611,8 @@ msgid "Restore full view"
 msgstr "Tam görüntüyü geri getir"
 
 #: gui2/gpt_control.c:3335 gui2/gpt_control.c:3438
-#, fuzzy
 msgid "Replace full view"
-msgstr "Tam görüntüyü geri getir"
+msgstr "Tam görüntüyü değiştir"
 
 #: gui2/gpt_control.c:3339 gui2/gpt_control.c:3422 gui2/toolbar.c:629
 msgid "Print..."
@@ -9657,7 +9649,7 @@ msgstr "gretl: çizit"
 
 #: gui2/gpt_control.c:4591
 msgid " Click on graph for pop-up menu"
-msgstr "Açılır menü için çizite tıklayınız"
+msgstr " Açılır menü için çizite tıklayınız"
 
 #: gui2/gpt_dialog.c:121
 msgid "linear: y = a + b*x"
@@ -10570,7 +10562,7 @@ msgstr "_Rastsal altörnekle..."
 
 #: gui2/gretl.c:1516
 msgid "_Resample with replacement..."
-msgstr "_Yerine koyarak yeniden örnekle"
+msgstr "_Yerine koyarak yeniden örnekle..."
 
 #: gui2/gretl.c:1518
 msgid "Drop all obs with _missing values"
@@ -10630,7 +10622,7 @@ msgstr "_KPSS sınaması"
 
 #: gui2/gretl.c:1537
 msgid "_Levin-Lin-Chu test"
-msgstr ""
+msgstr "_Levin-Lin-Chu sınaması"
 
 #: gui2/gretl.c:1538
 msgid "_Fractional integration"
@@ -10813,9 +10805,8 @@ msgid "_Between model..."
 msgstr "_Kümeler-arası model..."
 
 #: gui2/gretl.c:1591
-#, fuzzy
 msgid "_Dynamic panel model..."
-msgstr "Devingen panel modeli"
+msgstr "Devingen panel modeli..."
 
 #: gui2/gretl.c:1593
 msgid "_Nonlinear models"
@@ -10842,9 +10833,8 @@ msgid "_Probit"
 msgstr "_Olabirim"
 
 #: gui2/gretl.c:1601
-#, fuzzy
 msgid "Bi_variate..."
-msgstr "Değişken _bul..."
+msgstr "_İkideğişkenli..."
 
 #: gui2/gretl.c:1602
 msgid "To_bit..."
@@ -11717,22 +11707,22 @@ msgstr ""
 #: gui2/gui_utils.c:4378
 #, c-format
 msgid "A matrix named %s already exists"
-msgstr "%s adında bir dizey zaten var"
+msgstr "%s adında bir dizey var bile"
 
 #: gui2/gui_utils.c:4380
 #, c-format
 msgid "A scalar named %s already exists"
-msgstr "%s adında bir dizey zaten var"
+msgstr "%s adında bir dizey var bile"
 
 #: gui2/gui_utils.c:4382
 #, c-format
 msgid "A list named %s already exists"
-msgstr "%s adında bir liste zaten var"
+msgstr "%s adında bir liste var bile"
 
 #: gui2/gui_utils.c:4384
 #, c-format
 msgid "A string named %s already exists"
-msgstr "%s adında bir dizgi zaten var"
+msgstr "%s adında bir dizgi var bile"
 
 #: gui2/gui_utils.c:4393
 msgid "OK to overwrite it?"
@@ -12004,9 +11994,8 @@ msgid "gretl: KPSS test"
 msgstr "gretl: KPSS sınaması"
 
 #: gui2/library.c:1000
-#, fuzzy
 msgid "gretl: Levin-Lin-Chu test"
-msgstr "gretl: Chow sınaması"
+msgstr "gretl: Levin-Lin-Chu sınaması"
 
 #: gui2/library.c:1001
 msgid "Lag order for ADF test:"
@@ -12046,7 +12035,7 @@ msgstr "Belirlenemeyen hata"
 
 #: gui2/library.c:1376
 msgid "Sample now includes only complete observations"
-msgstr "Örneklem şimdi yalnızca tam gözlemlerden oluşuyor"
+msgstr "Örneklem şimdi yalnızca tam gözlemler içeriyor"
 
 #: gui2/library.c:1421
 msgid "Show count of missing values at each observation"
@@ -12454,9 +12443,8 @@ msgid "Really delete %s?"
 msgstr "%s gerçekten silinsin mi?"
 
 #: gui2/library.c:5991
-#, fuzzy
 msgid "Really delete the selected variables?"
-msgstr "Belirtilen değişkenler silinemiyor"
+msgstr "Seçili değişkenler gerçekten silinsin mi?"
 
 #: gui2/library.c:6001 gui2/session.c:2187
 msgid "gretl: delete"
@@ -12471,17 +12459,16 @@ msgid "Cannot delete all of the specified variables"
 msgstr "Belirtilen değişkenlerin tümü silinemiyor"
 
 #: gui2/library.c:6070
-#, fuzzy
 msgid "Too many units selected"
-msgstr "Seçili kalemler aşırı sayıda"
+msgstr "Seçili birimler aşırı sayıda"
 
 #: gui2/library.c:6119
 msgid "single graph: units overlaid"
-msgstr ""
+msgstr "tekli çizim: birimler üst üste"
 
 #: gui2/library.c:6120
 msgid "single graph: units in sequence"
-msgstr ""
+msgstr "tekli çizim: birimler dizili"
 
 #: gui2/library.c:6121
 msgid "multiple plots in grid"
@@ -12780,7 +12767,7 @@ msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:220
 msgid "Model is already included in the table"
-msgstr "Model çizelge içinde zaten bulunuyor"
+msgstr "Model çizelgede içeriliyor bile"
 
 #: gui2/model_table.c:275 gui2/model_table.c:277
 msgid "Model added to table"
@@ -12962,9 +12949,8 @@ msgid "You must specify a selection variable"
 msgstr "Bir seçim değişkeni belirtmelisiniz"
 
 #: gui2/selector.c:2840
-#, fuzzy
 msgid "You must specify a second dependent variable"
-msgstr "Bir bağımlı değişken seçmelisiniz"
+msgstr "İkinci bir bağımlı değişken belirtmelisiniz"
 
 #: gui2/selector.c:2843
 msgid "You must specify an upper bound variable"
@@ -13083,9 +13069,8 @@ msgid "Censoring variable"
 msgstr "Sansürleme değişkeni"
 
 #: gui2/selector.c:3354
-#, fuzzy
 msgid "Second dependent variable"
-msgstr "Bağımsız değişkenler"
+msgstr "İkinci bağımlı değişken"
 
 #: gui2/selector.c:3356
 msgid "List of AR lags"
@@ -13156,9 +13141,8 @@ msgid "Response variable"
 msgstr "Tepki değişkeni"
 
 #: gui2/selector.c:3652
-#, fuzzy
 msgid "First dependent variable"
-msgstr "Bağımlı değişken"
+msgstr "Birinci bağımlı değişken"
 
 #: gui2/selector.c:3722
 msgid "lag order:"
@@ -13209,9 +13193,8 @@ msgid "Selection equation regressors"
 msgstr "Seçim denklemi bağımlı değişkenleri"
 
 #: gui2/selector.c:3935
-#, fuzzy
 msgid "Second equation regressors"
-msgstr "Seçim denklemi bağımlı değişkenleri"
+msgstr "İkinci denklem bağlayanları"
 
 #: gui2/selector.c:3937
 msgid "Helper functions"
@@ -13287,7 +13270,7 @@ msgstr "Ençok gecikme derecesinden geriye sınama"
 
 #: gui2/selector.c:4697
 msgid "Skip initial DF tests"
-msgstr "Baştaki DF sınamaları atlansın"
+msgstr "İlk DF sınamaları atlansın"
 
 #: gui2/selector.c:4700
 msgid "Iterated weighted least squares"
@@ -13299,7 +13282,7 @@ msgstr "Zaman kuklaları ekle"
 
 #: gui2/selector.c:4708
 msgid "Include levels equations (GMM-SYS)"
-msgstr ""
+msgstr "Düzey denklemleri ekle (GMM-SYS)"
 
 #: gui2/selector.c:4713
 msgid "Show zeros explicitly"
@@ -13486,9 +13469,8 @@ msgid "Endogenous variables"
 msgstr "İçtürel değişkenler"
 
 #: gui2/selector.c:5518
-#, fuzzy
 msgid "First equation regressors"
-msgstr "Seçim denklemi bağımlı değişkenleri"
+msgstr "Birinci denklem bağlayanları"
 
 #: gui2/selector.c:5520
 msgid "Independent variables"
@@ -13707,7 +13689,7 @@ msgstr "Çizit dosyasını kopyalama başarısız"
 
 #: gui2/session.c:1050
 msgid "Model is already saved"
-msgstr "Model zaten kayıtlı"
+msgstr "Model kayıtlı bile"
 
 #: gui2/session.c:1258
 #, c-format
@@ -13741,7 +13723,7 @@ msgstr "Lütfen önce bu nesnenin penceresini kapatınız"
 #: gui2/session.c:2301
 #, c-format
 msgid "'%s': there is already an object of this name"
-msgstr "'%s': Bu adda bir nesne zaten var"
+msgstr "'%s': Bu adda bir nesne var bile"
 
 #: gui2/session.c:2337
 msgid "gretl: rename object"
@@ -14324,7 +14306,7 @@ msgstr "Sütun sayısı:"
 
 #: gui2/ssheet.c:3204
 msgid "Initial fill value:"
-msgstr "Başlangıç dolgu değeri:"
+msgstr "İlk dolgu değeri:"
 
 #: gui2/ssheet.c:3227
 msgid "Build from formula"
@@ -14601,9 +14583,8 @@ msgid "OLS model"
 msgstr "SEK modeli"
 
 #: gui2/toolbar.c:1065
-#, fuzzy
 msgid "gretl database"
-msgstr "gretl: veritabanı aç"
+msgstr "gretl veritabanı"
 
 #: gui2/toolbar.c:1066
 msgid "open dataset"
@@ -14676,14 +14657,12 @@ msgid "last observation"
 msgstr "son gözlem"
 
 #: gui2/varinfo.c:683
-#, fuzzy
 msgid "Previous series"
-msgstr "Seriyi listele"
+msgstr "Önceki seriler"
 
 #: gui2/varinfo.c:689
-#, fuzzy
 msgid "Next series"
-msgstr "Seriyi listele"
+msgstr "Sonraki seriler"
 
 #: gui2/varinfo.c:701
 msgid "ID number:"
@@ -15084,7 +15063,7 @@ msgstr "Değiştirilen çözüm yolu: %d yineleme"
 
 #: plugin/jrestrict.c:1255
 msgid "user-supplied initial values"
-msgstr "kullanıcının sağladığı başlangıç değerleri"
+msgstr "kullanıcının sağladığı ilk değerler"
 
 #: plugin/jrestrict.c:1856
 #, c-format
@@ -15215,22 +15194,22 @@ msgstr "%s beklenirken %s bulundu"
 
 #: plugin/panurc.c:563
 msgid "z-score"
-msgstr ""
+msgstr "z-değeri"
 
 #: plugin/panurc.c:571
 #, c-format
 msgid "Levin-Lin-Chu pooled ADF test for %s\n"
-msgstr ""
+msgstr "%s için Levin-Lin-Chu havuzlu ADF sınaması\n"
 
 #: plugin/panurc.c:575
-#, fuzzy, c-format
+#, c-format
 msgid "including %.2f lags of (1-L)%s (average)"
-msgstr "(1-L)%2$s için %1$d gecikme eklendi"
+msgstr "(1-L)%2$s için %1$.2f gecikme eklendi"
 
 #: plugin/panurc.c:583
-#, fuzzy, c-format
+#, c-format
 msgid "Bartlett truncation at %d lags\n"
-msgstr "Gecikme budama değiştirgesi = %d\n"
+msgstr "Bartlett budaması %d. gecikmede\n"
 
 #: plugin/pca.c:108
 msgid "Components with eigenvalues > mean"
