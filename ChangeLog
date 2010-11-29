@@ -5,6 +5,9 @@ version 1.9.3, in progress
 - "restrict" command: enable the --full option for single-
   equation models estimated via OLS (makes the restricted
   estimates available as the "last model")
+- "restrict" and "estimate" for equation systems: don't
+  insist on a system-name argument, but allow a default of
+  the last model (provided it was a system) 
 - GUI graphs: allow option of replacing the original graph
   with a zoomed view
 - Panel time-series graphs in GUI: add another format option

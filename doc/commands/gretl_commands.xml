@@ -2917,8 +2917,8 @@
 
     <usage>
       <arguments>
-        <argument>systemname</argument>
-        <argument>estimator</argument>
+        <argument optional="true">systemname</argument>
+        <argument optional="true">estimator</argument>
       </arguments>
       <options>
 	<option>
@@ -2954,9 +2954,13 @@
 	estimator, which must be one of <cmd>ols</cmd>,
 	<cmd>tsls</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
 	<cmd>fiml</cmd> or <cmd>liml</cmd>, is preceded by the string
-	<lit>method=</lit>.
+	<lit>method=</lit>. These arguments are optional if the
+	system in question has already been estimated and occupies the
+	place of the <quote>last model</quote>; in that case the
+	estimator defaults to the previously used value.
       </para>
-      <para>If the system in question has had a set of restrictions
+      <para>
+	If the system in question has had a set of restrictions
 	applied (see the <cmdref targ="restrict"/> command),
 	estimation will be subject to the specified restrictions.
       </para>
@@ -2970,14 +2974,16 @@
 	The <opt>--iterate</opt> flag is ignored for other methods of
 	estimation.  
       </para>
-      <para>If the equation-by-equation estimators <cmd>ols</cmd> or
+      <para>
+	If the equation-by-equation estimators <cmd>ols</cmd> or
 	<cmd>tsls</cmd> are chosen, the default is to apply a degrees
 	of freedom correction when calculating standard errors. This
 	can be suppressed using the <opt>--no-df-corr</opt> flag. This
 	flag has no effect with the other estimators; no degrees of
 	freedom correction is applied in any case.
       </para>
-      <para>By default, the formula used in calculating the
+      <para>
+	By default, the formula used in calculating the
 	elements of the cross-equation covariance matrix is
 	<equation status="display"
 	tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]"
@@ -8348,13 +8354,18 @@
 	  restrict</quote>.
       </para>
       <para>
-	In the single equation case the restrictions are implicitly to be
-	applied to the last model, and they are evaluated as soon as the
-	<lit>restrict</lit> block is closed. In the case of a system of
-	equations the initial <quote>restrict</quote> must be followed by the
-	name of a previously defined system of equations (see <cmdref
-	  targ="system"/>).  The restrictions are evaluated when the system 
-	is next estimated, using the <cmdref targ="estimate"/> command.
+	In the single equation case the restrictions are always
+	implicitly to be applied to the last model, and they are
+	evaluated as soon as the <lit>restrict</lit> block is closed.
+      </para>
+      <para>
+	In the case of a system of equations (defined via the <cmdref
+	targ="system"/> command), the initial <quote>restrict</quote>
+	may be followed by the name of a previously defined system of
+	equations. If this is omitted and the last model was a system
+	then the restrictions are applied to the last model. The
+	restrictions are evaluated when the system is next estimated,
+	using the <cmdref targ="estimate"/> command.
       </para>
       <para>
 	Depending on the context, the restrictions to be tested may be

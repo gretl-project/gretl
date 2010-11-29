@@ -120,7 +120,8 @@ equation_system_estimate (equation_system *sys,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, PRN *prn);
 
-int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
+int estimate_named_system (const char *line, 
+			   double ***pZ, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn);
 
 void equation_system_destroy (equation_system *sys);

@@ -1486,35 +1486,64 @@ int equation_system_finalize (equation_system *sys,
     return err;
 }
 
-/* Implement the "estimate" command, which must give the name of a pre-defined
-   equation system and an estimation method, as in:
+/* Implement the "estimate" command. The full form of the
+   command line is
 
-             estimate "Klein Model 1" method=FIML 
+   estimate <sysname> method=<method>
+
+   where <sysname> is the name of a previously defined 
+   equation system and <method> is a reognized estimation
+   method.
+
+   However, if the "last model" is an equation system, we
+   can accept just
+
+   estimate method=<method>
+
+   where the system is not named but is implicitly the
+   last model.
+
+   The method=<method> field is optional, provided that the
+   (named or last-model) system already has a specified 
+   estimation method; so the minimal form of the command
+   line is simply "estimate". 
 */
 
-int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
+int estimate_named_system (const char *line, 
+			   double ***pZ, DATAINFO *pdinfo, 
 			   gretlopt opt, PRN *prn)
 {
-    equation_system *sys;
-    char *sysname;
+    equation_system *sys = NULL;
+    char *sysname = NULL;
     int method;
 
-    if (strlen(line) < 12) {
-	gretl_errmsg_set("estimate: no system name was provided");
-	return E_DATA;
-    }
-
     sysname = get_system_name_from_line(line, SYSNAME_EST);
-    if (sysname == NULL) {
-	gretl_errmsg_set("estimate: no system name was provided");
-	return E_DATA;
+
+    if (sysname == NULL || !strncmp(sysname, "method=", 7)) {
+	/* no name: try for an anonymous system */
+	GretlObjType type = GRETL_OBJ_NULL;
+	void *ptr;
+
+	ptr = get_last_model(&type);
+	if (type == GRETL_OBJ_SYS) {
+	    sys = (equation_system *) ptr;
+	} else {
+	    return E_DATA;
+	}
     }
 
-    sys = get_equation_system_by_name(sysname);
     if (sys == NULL) {
-	gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
-	free(sysname);
-	return E_UNKVAR;
+	/* we really need a valid sysname */
+	if (sysname != NULL) {
+	    sys = get_equation_system_by_name(sysname);
+	    if (sys == NULL) {
+		gretl_errmsg_sprintf(_("'%s': unrecognized name"), sysname);
+		free(sysname);
+		return E_DATA;
+	    }
+	} else {
+	    return E_DATA;
+	}
     }
 
     free(sysname);
