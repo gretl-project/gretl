@@ -19,7 +19,11 @@
 
 #include "gretl.h"
 
-#include <glib/gstdio.h>
+#if (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 6)
+# define g_fopen(f,m) fopen(f,m)
+#else
+# include <glib/gstdio.h>
+#endif
 
 static int seven_bit_string (const unsigned char *s)
 {
@@ -39,7 +43,7 @@ static int seven_bit_string (const unsigned char *s)
 
 int validate_filename_for_glib (const gchar *fname, gchar **fconv)
 {
-    FILE *fp = g_fopen(fname, "r");
+    FILE *fp = fopen(fname, "r");
     int err = 0;
 
     if (fp == NULL) {
