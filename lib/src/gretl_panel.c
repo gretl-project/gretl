@@ -3580,7 +3580,7 @@ static void print_wald_test (double W, int df, double pval,
     pprintf(prn, "%s = %g\n\n", _("with p-value"), pval);
 
     if (pan->nunits <= 30) {
-	pprintf(prn, "Pooled error variance = %g\n\n", s2);
+	pprintf(prn, "%s = %g\n\n", _("Pooled error variance"), s2);
 	print_unit_variances(pan, uvar, prn);
     }
 }
