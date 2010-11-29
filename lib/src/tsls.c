@@ -1156,6 +1156,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	double rc = gretl_symmetric_matrix_rcond(S, &err);
 
 	if (!err && (na(rc) || rc < 1.0e-6)) {
+	    fprintf(stderr, "Stock-Yogo: rcond(S) = %g\n", rc);
 	    err = E_SINGULAR;
 	}
     }

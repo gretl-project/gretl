@@ -2916,31 +2916,38 @@ int gnuplot (const int *plotlist, const char *literal,
     /* now print the 'plot' lines */
     fputs("plot \\\n", fp);
     if (gi.flags & GPT_Y2AXIS) {
+	/* using two y axes */
 	for (i=1; i<list[0]; i++) {
 	    set_lwstr(pdinfo, list[i], lwstr);
+	    if (!use_impulses(&gi)) { 
+		set_withstr(gi.flags, withstr);
+	    }	    
 	    fprintf(fp, "'-' using 1:($2) axes %s title \"%s (%s)\" %s%s%s",
 		    (i == oddman)? "x1y2" : "x1y1",
 		    var_get_graph_name(pdinfo, list[i]), 
 		    (i == oddman)? _("right") : _("left"),
-		    (use_impulses(&gi))? "w impulses" : 
-		    (gi.flags & GPT_TS)? "w lines" : "w points",
+		    withstr,
 		    lwstr,
 		    (i == list[0] - 1)? "\n" : ", \\\n");
 	}
     } else if (gi.flags & GPT_DUMMY) { 
+	/* plot shows separation by dummy variable */
 	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 
 	       var_get_graph_name(pdinfo, list[1]));
 	strcpy(s2, var_get_graph_name(pdinfo, list[3]));
 	fprintf(fp, " '-' using 1:($2) title \"%s (%s=1)\", \\\n", s1, s2);
 	fprintf(fp, " '-' using 1:($2) title \"%s (%s=0)\"\n", s1, s2);
     } else if (gi.yformula != NULL) {
+	/* we have a formula to plot, not just data */
 	fprintf(fp, " '-' using 1:($2) title \"%s\" w points , \\\n", _("actual"));	
 	fprintf(fp, "%s title '%s' w lines\n", gi.yformula, _("fitted"));
     } else if (gi.flags & GPT_FA) {
+	/* this is a fitted vs actual plot */
 	set_withstr(gi.flags, withstr);
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 2, \\\n", _("fitted"), withstr);
 	fprintf(fp, " '-' using 1:($2) title \"%s\" %s lt 1\n", _("actual"), withstr);	
     } else {
+	/* all other cases */
 	for (i=1; i<list[0]; i++)  {
 	    set_lwstr(pdinfo, list[i], lwstr);
 	    if (list[0] == 2) {

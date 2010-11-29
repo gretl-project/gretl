@@ -757,7 +757,8 @@ char *format_obs (char *obs, int maj, int min, int pd)
     return real_format_obs(obs, maj, min, pd, ':');
 }
 
-static int get_stobs_maj_min (char *stobs, int *maj, int *min)
+static int get_stobs_maj_min (char *stobs, int structure,
+			      int *maj, int *min)
 {
     int dotc = 0;
     char *p = stobs;
@@ -791,7 +792,7 @@ static int get_stobs_maj_min (char *stobs, int *maj, int *min)
 	    }
 	} else {
 	    sscanf(stobs, "%d", maj);
-	    if (*maj <= 0) {
+	    if (*maj <= 0 && structure != SPECIAL_TIME_SERIES) {
 		err = 1;
 	    }
 	}
@@ -959,7 +960,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     } else {
 	int maj = 0, min = 0;
 
-	if (get_stobs_maj_min(stobs, &maj, &min)) {
+	if (get_stobs_maj_min(stobs, structure, &maj, &min)) {
 	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
