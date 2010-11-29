@@ -1,4 +1,4 @@
-version 1.9.3, in progress
+2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)
 - New panel unit-root command "levinlin"
 - Add help text for "dpanel"
