@@ -6770,33 +6770,41 @@ static int get_version_as_scalar (void)
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
 #define dvar_series(i) (i > R_SCALAR_MAX && i < R_MAX)
 
-static double dvar_get_scalar (int i, parser *p)
+#define no_data(p) (p == NULL || p->n == 0)
+
+double dvar_get_scalar (int i, const DATAINFO *pdinfo,
+			char *label)
 {
+    int ival;
+
     switch (i) {
     case R_NOBS:
-	return sample_size(p->dinfo);
+	return (no_data(pdinfo))? NADBL : sample_size(pdinfo);
     case R_NVARS:
-	return p->dinfo->v;
+	return (no_data(pdinfo))? NADBL : pdinfo->v;
     case R_PD:
-	return p->dinfo->pd;
+	return (no_data(pdinfo))? NADBL : pdinfo->pd;
     case R_T1:
-	return p->dinfo->t1 + 1;
+	return (no_data(pdinfo))? NADBL : pdinfo->t1 + 1;
     case R_T2:
-	return p->dinfo->t2 + 1;
+	return (no_data(pdinfo))? NADBL : pdinfo->t2 + 1;
     case R_DATATYPE:
-	return dataset_get_structure(p->dinfo);
+	return (no_data(pdinfo))? NADBL : 
+	dataset_get_structure(pdinfo);
     case R_TEST_PVAL:
-	return get_last_pvalue(p->lh.label);
+	return get_last_pvalue(label);
     case R_TEST_STAT:
-	return get_last_test_statistic(p->lh.label);
+	return get_last_test_statistic(label);
     case R_TEST_LNL:
-	return get_last_lnl(p->lh.label);
+	return get_last_lnl(label);
     case R_KLNL:
 	return user_kalman_get_loglik();
     case R_KS2:
 	return user_kalman_get_s2();
     case R_KSTEP:
-	return user_kalman_get_time_step();
+	ival = user_kalman_get_time_step();
+
+	return (ival < 0)? NADBL : (double) ival;
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_NSCAN:
@@ -6818,38 +6826,39 @@ static double dvar_get_scalar (int i, parser *p)
     }
 }
 
-static double *dvar_get_series (int i, parser *p)
+double *dvar_get_series (int i, const DATAINFO *pdinfo, 
+			 int *err)
 {
     double *x = NULL;
     int t;
 
     switch (i) {
     case R_INDEX:
-	x = malloc(p->dinfo->n * sizeof *x);
+	x = malloc(pdinfo->n * sizeof *x);
 	if (x != NULL) {
-	    for (t=0; t<p->dinfo->n; t++) {
+	    for (t=0; t<pdinfo->n; t++) {
 		x[t] = t + 1;
 	    }
 	} else {
-	    p->err = E_ALLOC;
+	    *err = E_ALLOC;
 	}
 	break;
     case R_PUNIT:
-	if (!dataset_is_panel(p->dinfo)) {
-	    x = malloc(p->dinfo->n * sizeof *x);
+	if (dataset_is_panel(pdinfo)) {
+	    x = malloc(pdinfo->n * sizeof *x);
 	    if (x != NULL) {
-		for (t=0; t<p->dinfo->n; t++) {
-		    x[t] = t / p->dinfo->pd + 1;
+		for (t=0; t<pdinfo->n; t++) {
+		    x[t] = t / pdinfo->pd + 1;
 		}
 	    } else {
-		p->err = E_ALLOC;
+		*err = E_ALLOC;
 	    }
 	} else {
-	    p->err = E_PDWRONG;
+	    *err = E_PDWRONG;
 	}
 	break;
     default:
-	p->err = E_DATA;
+	*err = E_DATA;
 	break;
     }
 
@@ -6864,12 +6873,14 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	if (dvar_scalar(t->v.idnum)) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL && starting(p)) {
-		ret->v.xval = dvar_get_scalar(t->v.idnum, p);
+		ret->v.xval = dvar_get_scalar(t->v.idnum, p->dinfo, 
+					      p->lh.label);
 	    }
 	} else if (dvar_series(t->v.idnum)) {
 	    ret = aux_vec_node(p, 0);
 	    if (ret != NULL && starting(p)) {
-		ret->v.xvec = dvar_get_series(t->v.idnum, p);
+		ret->v.xvec = dvar_get_series(t->v.idnum, p->dinfo,
+					      &p->err);
 	    }
 	}
     } else {

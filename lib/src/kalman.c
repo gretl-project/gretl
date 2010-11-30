@@ -3711,7 +3711,7 @@ double user_kalman_get_s2 (void)
  * Retrieves the time step, t, from the current run of a
  * kalman forecast, if applicable.
  * 
- * Returns: scale value, or #NADBL on failure.
+ * Returns: time-step value, or -1 on failure.
  */
 
 int user_kalman_get_time_step (void)
@@ -3719,7 +3719,7 @@ int user_kalman_get_time_step (void)
     user_kalman *u = get_user_kalman(-1);
 
     if (u == NULL || u->K == NULL || !kalman_is_running(u->K)) {
-	return 0;
+	return -1;
     } else {
 	return (int) u->K->t + 1;
     }

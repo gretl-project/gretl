@@ -1,3 +1,8 @@
+version 1.9.4, in progress
+- Add an --accessors option to the "varlist" command, to
+  expose the list of currently available accessor ("dollar")
+  variables
+  
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)
 - New panel unit-root command "levinlin"

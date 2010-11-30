@@ -5249,7 +5249,6 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
     double x = NADBL;
 
     if (pmod == NULL) {
-	fprintf(stderr, "model get scalar: model is NULL\n");
 	*err = E_BADSTAT;
 	return x;
     }
@@ -5310,7 +5309,6 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
     }
 
     if (na(x)) {
-	fprintf(stderr, "model get scalar: x is NA\n");
 	*err = E_BADSTAT;
     }
 
@@ -5613,7 +5611,6 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
     gretl_matrix *M = NULL;
 
     if (pmod == NULL) {
-	fprintf(stderr, "gretl_model_get_matrix: pmod is NULL\n");
 	*err = E_BADSTAT;
 	return M;
     }
@@ -5699,7 +5696,6 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	}
 	break;
     default:
-	fprintf(stderr, "gretl_model_get_matrix: got to default\n");
 	*err = E_BADSTAT;
 	break;
     }

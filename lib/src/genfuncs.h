@@ -152,4 +152,6 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, int *err);
 
+int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn);
+
 #endif /* GENFUNCS_H */

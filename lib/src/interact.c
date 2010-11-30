@@ -4731,6 +4731,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case VARLIST:
 	if (cmd->opt & OPT_S) {
 	    print_scalars(prn);
+	} else if (cmd->opt & OPT_A) {
+	    list_ok_dollar_vars(pZ, pdinfo, prn);
 	} else {
 	    varlist(pdinfo, prn);
 	}

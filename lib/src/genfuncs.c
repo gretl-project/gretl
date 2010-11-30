@@ -4249,3 +4249,95 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     
     return ret;
 }
+
+int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    int nm = 0;
+    int i;
+
+    pprintf(prn, "\n%s\n", _("model-related"));
+
+    for (i=R_MAX+1; i<M_MAX; i++) {
+	GretlType type = GRETL_TYPE_NONE;
+	double x = NADBL;
+	double *px = NULL;
+	gretl_matrix *m = NULL;
+	int *list = NULL;
+	int err = 0;
+
+	if (i < M_SCALAR_MAX) {
+	    x = saved_object_get_scalar(NULL, i, pZ, pdinfo, &err);
+	    if (!na(x)) {
+		type = GRETL_TYPE_DOUBLE;
+	    }
+	} else if (i > M_SCALAR_MAX && i < M_SERIES_MAX) {
+	    type = GRETL_TYPE_SERIES;
+	    px = saved_object_get_series(NULL, i, pdinfo, &err);
+	    if (err) {
+		if (i == M_UHAT || i == M_YHAT || i == M_SIGMA) {
+		    /* maybe the result is a matrix? */
+		    int ci = 0;
+		    GretlObjType otype = gretl_model_get_type_and_ci(NULL, &ci);
+
+		    if (otype != GRETL_OBJ_EQN) {
+			type = GRETL_TYPE_MATRIX;
+		    } else if ((i == M_UHAT || i == M_YHAT) && ci == BIPROBIT) {
+			type = GRETL_TYPE_MATRIX;
+		    }
+		    if (type == GRETL_TYPE_MATRIX) {
+			m = saved_object_get_matrix(NULL, i, &err);
+		    }
+		}
+	    }
+	} else if (i > M_SERIES_MAX && i < M_MATRIX_MAX) {
+	    type = GRETL_TYPE_MATRIX;
+	    m = saved_object_get_matrix(NULL, i, &err);
+	} else if (i > M_MATRIX_MAX && i < M_MBUILD_MAX) {
+	    type = GRETL_TYPE_MATRIX;
+	    m = saved_object_build_matrix(NULL, i,
+					  (const double **) *pZ,
+					  pdinfo, &err);
+	} else {
+	    type = GRETL_TYPE_LIST;
+	    list = saved_object_get_list(NULL, i, &err);
+	}
+
+	if (!err && type != GRETL_TYPE_NONE) {
+	    pprintf(prn, " %s (%s)\n", mvarname(i), gretl_arg_type_name(type));
+	    free(px);
+	    gretl_matrix_free(m);
+	    free(list);
+	    nm++;
+	}
+    }
+
+    if (nm == 0) {
+	pprintf(prn, " %s\n", _("none"));
+    }
+
+    pprintf(prn, "\n%s\n", _("other"));
+
+    for (i=1; i<R_MAX; i++) {
+	double x, *px;
+	int err = 0;
+
+	if (i < R_SCALAR_MAX) {
+	    x = dvar_get_scalar(i, pdinfo, NULL);
+	    if (!na(x)) {
+		pprintf(prn, " %s (%s)\n", dvarname(i), 
+			gretl_arg_type_name(GRETL_TYPE_DOUBLE));
+	    }
+	} else if (i > R_SCALAR_MAX) {
+	    px = dvar_get_series(i, pdinfo, &err);
+	    if (!err) {
+		pprintf(prn, " %s (%s)\n", dvarname(i), 
+			gretl_arg_type_name(GRETL_TYPE_SERIES));
+		free(px);
+	    }
+	}	    
+    }
+
+    pputc(prn, '\n');
+
+    return 0;
+}

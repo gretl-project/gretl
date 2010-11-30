@@ -1571,7 +1571,9 @@ double get_DW_pvalue_for_model (const MODEL *pmod,
     int *list = NULL;
     double pv = NADBL;
 
-    if (pmod == NULL || pmod->list == NULL) {
+    if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	*err = E_NODATA;
+    } else if (pmod == NULL || pmod->list == NULL) {
 	*err = E_DATA;
     } else if ((pmod->ci != OLS && pmod->ci != PANEL) || 
 	       model_has_missing_obs(pmod) || na(pmod->dw)) {

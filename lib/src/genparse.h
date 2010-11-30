@@ -592,6 +592,12 @@ int x_sectional_weighted_stat (double *x, const int *list,
 			       const DATAINFO *pdinfo,
 			       int f);
 
+/* in geneval.c, used only internally */
+double dvar_get_scalar (int i, const DATAINFO *pdinfo,
+			char *label);
+double *dvar_get_series (int i, const DATAINFO *pdinfo, 
+			 int *err);
+
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
 const char *gen_func_name (int i);
