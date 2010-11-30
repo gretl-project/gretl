@@ -10808,7 +10808,7 @@
 	available.  <cmd>list</cmd> and <cmd>ls</cmd> are synonyms.
       </para>
       <para>
-	If the <opt>--scalars</opt> opton is given, prints a listing
+	If the <opt>--scalars</opt> option is given, prints a listing
 	of any currently defined scalar variables and their
 	values. Otherwise, if the <opt>--accessors</opt> option is
 	given, prints a list of the internal variables currently
