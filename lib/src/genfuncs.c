@@ -4303,7 +4303,13 @@ int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	}
 
 	if (!err && type != GRETL_TYPE_NONE) {
-	    pprintf(prn, " %s (%s)\n", mvarname(i), gretl_arg_type_name(type));
+	    const char *typestr = gretl_arg_type_name(type);
+
+	    if (!na(x)) {
+		pprintf(prn, " %s (%s: %g)\n", mvarname(i), typestr, x);
+	    } else {
+		pprintf(prn, " %s (%s)\n", mvarname(i), typestr);
+	    }
 	    free(px);
 	    gretl_matrix_free(m);
 	    free(list);
@@ -4317,24 +4323,13 @@ int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     pprintf(prn, "\n%s\n", _("other"));
 
-    for (i=1; i<R_MAX; i++) {
-	double x, *px;
-	int err = 0;
+    for (i=1; i<R_SCALAR_MAX; i++) {
+	double x;
 
-	if (i < R_SCALAR_MAX) {
-	    x = dvar_get_scalar(i, pdinfo, NULL);
-	    if (!na(x)) {
-		pprintf(prn, " %s (%s)\n", dvarname(i), 
-			gretl_arg_type_name(GRETL_TYPE_DOUBLE));
-	    }
-	} else if (i > R_SCALAR_MAX) {
-	    px = dvar_get_series(i, pdinfo, &err);
-	    if (!err) {
-		pprintf(prn, " %s (%s)\n", dvarname(i), 
-			gretl_arg_type_name(GRETL_TYPE_SERIES));
-		free(px);
-	    }
-	}	    
+	x = dvar_get_scalar(i, pdinfo, NULL);
+	if (!na(x)) {
+	    pprintf(prn, " %s (scalar: %g)\n", dvarname(i), x);
+	}
     }
 
     pputc(prn, '\n');

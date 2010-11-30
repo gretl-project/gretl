@@ -6779,9 +6779,10 @@ double dvar_get_scalar (int i, const DATAINFO *pdinfo,
 
     switch (i) {
     case R_NOBS:
-	return (no_data(pdinfo))? NADBL : sample_size(pdinfo);
+	return (pdinfo == NULL) ? NADBL : 
+	(pdinfo->n == 0 ? 0 : sample_size(pdinfo));
     case R_NVARS:
-	return (no_data(pdinfo))? NADBL : pdinfo->v;
+	return (pdinfo == NULL)? NADBL : pdinfo->v;
     case R_PD:
 	return (no_data(pdinfo))? NADBL : pdinfo->pd;
     case R_T1:
@@ -6789,8 +6790,7 @@ double dvar_get_scalar (int i, const DATAINFO *pdinfo,
     case R_T2:
 	return (no_data(pdinfo))? NADBL : pdinfo->t2 + 1;
     case R_DATATYPE:
-	return (no_data(pdinfo))? NADBL : 
-	dataset_get_structure(pdinfo);
+	return (no_data(pdinfo))? NADBL : dataset_get_structure(pdinfo);
     case R_TEST_PVAL:
 	return get_last_pvalue(label);
     case R_TEST_STAT:
@@ -6826,11 +6826,16 @@ double dvar_get_scalar (int i, const DATAINFO *pdinfo,
     }
 }
 
-double *dvar_get_series (int i, const DATAINFO *pdinfo, 
-			 int *err)
+static double *dvar_get_series (int i, const DATAINFO *pdinfo, 
+				int *err)
 {
     double *x = NULL;
     int t;
+
+    if (pdinfo == NULL || pdinfo->n == 0) {
+	*err = E_NODATA;
+	return NULL;
+    }
 
     switch (i) {
     case R_INDEX:
