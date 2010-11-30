@@ -4326,6 +4326,11 @@ int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     for (i=1; i<R_SCALAR_MAX; i++) {
 	double x;
 
+	if (i == R_NSCAN) {
+	    /* this will be trashed before long */
+	    continue;
+	}
+
 	x = dvar_get_scalar(i, pdinfo, NULL);
 	if (!na(x)) {
 	    pprintf(prn, " %s (scalar: %g)\n", dvarname(i), x);
