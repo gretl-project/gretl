@@ -442,7 +442,7 @@ void series_view_graph (GtkWidget *w, windata_t *vwin)
     if (dataset_is_time_series(datainfo)) {
 	do_graph_var(sview->varnum);
     } else {
-	do_boxplot_var(sview->varnum);
+	do_boxplot_var(sview->varnum, OPT_NONE);
     }
 }
 

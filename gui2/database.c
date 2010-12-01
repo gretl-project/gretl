@@ -176,7 +176,7 @@ static void display_dbdata (const double **dbZ, DATAINFO *dbinfo)
 		NULL); 
 }
 
-static void graph_dbdata (double ***dbZ, DATAINFO *dbinfo)
+static void graph_dbdata (const double **dbZ, DATAINFO *dbinfo)
 {
     int *list;
     int err;
@@ -190,7 +190,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbinfo)
     if (dbinfo->structure == CROSS_SECTION) {
 	err = boxplots(list, dbZ, dbinfo, OPT_NONE);
     } else {
-	err = gnuplot(list, NULL, (const double **) *dbZ, dbinfo,
+	err = gnuplot(list, NULL, dbZ, dbinfo,
 		      OPT_G | OPT_O | OPT_T);
     }
 
@@ -732,7 +732,7 @@ static void gui_get_db_series (windata_t *vwin, int cmd)
     if (cmd == DB_DISPLAY) {
 	display_dbdata((const double **) dbZ, dbinfo);
     } else if (cmd == DB_GRAPH) {
-	graph_dbdata(&dbZ, dbinfo);
+	graph_dbdata((const double **) dbZ, dbinfo);
     } else if (cmd == DB_IMPORT) { 
 	add_dbdata(vwin, dbZ, dbinfo, dw, &freeit);
     }

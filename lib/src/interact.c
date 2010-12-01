@@ -5217,7 +5217,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd_nolist(cmd)) { 
 	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt);
 	} else {
-	    err = boxplots(cmd->list, pZ, pdinfo, cmd->opt);
+	    err = boxplots(cmd->list, Z, pdinfo, cmd->opt);
 	}
 	if (!err) {
 	    int gui_mode = gretl_in_gui_mode();

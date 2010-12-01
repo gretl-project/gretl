@@ -342,7 +342,9 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Frequency distribution"))) 
 	do_freq_dist();
     else if (!strcmp(item, _("Boxplot")))
-	do_boxplot_var(v);
+	do_boxplot_var(v, OPT_NONE);
+    else if (!strcmp(item, _("Boxplots by group (N <= 150)")))
+	do_boxplot_var(v, OPT_P);
     else if (!strcmp(item, _("Gini coefficient")))
 	do_gini();
     else if (!strcmp(item, _("Correlogram")))
@@ -429,6 +431,7 @@ GtkWidget *build_var_popup (void)
 	N_("Time series plot"),
 	N_("Frequency distribution"),
 	N_("Boxplot"),
+	N_("Boxplots by group (N <= 150)"),
 	N_("Correlogram"),
 	N_("Periodogram"),
 	N_("Edit attributes"),
@@ -451,16 +454,22 @@ GtkWidget *build_var_popup (void)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	    continue;
 	}
-	if ((i == 5 || i == 6) && !dataset_is_time_series(datainfo)) {
+	if ((i == 6 || i == 7) && !dataset_is_time_series(datainfo)) {
 	    continue;
 	}
 	if (i == 2 && !extended_ts(datainfo)) {
 	    continue;
 	}
+	if (i == 5 && !multi_unit_panel_sample(datainfo)) {
+	    continue;
+	}	
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(var_popup_click),
 			 _(items[i]));
+	if (i == 5 && panel_sample_size(datainfo) > 150) {
+	    gtk_widget_set_sensitive(item, FALSE);
+	}
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }

@@ -20,7 +20,7 @@
 #ifndef BOXPLOTS_H
 #define BOXPLOTS_H
 
-int boxplots (int *list, double ***pZ, const DATAINFO *pdinfo, 
+int boxplots (int *list, const double **Z, const DATAINFO *pdinfo, 
 	      gretlopt opt);
 
 int boolean_boxplots (const char *str, double ***pZ, 

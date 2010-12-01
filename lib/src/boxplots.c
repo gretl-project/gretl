@@ -44,6 +44,7 @@ typedef struct {
 
 typedef struct {
     int nplots;
+    char *title;
     int show_mean;
     int do_notches;
     int show_outliers;
@@ -310,6 +311,7 @@ static void destroy_boxplots (PLOTGROUP *grp)
 	free(grp->plots[i].bool);
     }
 
+    free(grp->title);
     free(grp->plots);
     free(grp->numbers);
     free(grp);
@@ -347,6 +349,7 @@ static PLOTGROUP *plotgroup_new (int nplots)
 	    boxplot_init(&grp->plots[i]);
 	}
 	grp->nplots = nplots;
+	grp->title = NULL;
 	grp->numbers = NULL;
 	grp->show_mean = 0;
 	grp->do_notches = 0;
@@ -399,6 +402,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     double lpos, h, gyrange;
     double ymin, ymax;
     int anybool = test_for_bool(grp);
+    int lwidth = 2;
     int fmt = 0;
     int qtype = 2;
     int i, err = 0;
@@ -439,22 +443,32 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     six_numbers(grp, fp);
 #endif
 
+    if (grp->title != NULL) {
+	fprintf(fp, "set title \"%s\"\n", grp->title);
+    }
+
     gretl_push_c_numeric_locale();
 
     fprintf(fp, "set xrange [0:%d]\n", n + 1);
     fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
-    fputs("set ytics nomirror\n"
-	  "set noxtics\n"
-	  "set border 2\n", fp);
-    fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3); 
 
-    for (i=0; i<n; i++) {
-	fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-		grp->plots[i].varname, i+1, lpos);
-	if (grp->plots[i].bool != NULL) {
-	    /* FIXME positioning? */
+    if (n > 30) {
+	lwidth = 1;
+    } else {
+	fputs("set ytics nomirror\n"
+	      "set noxtics\n"
+	      "set border 2\n", fp);
+
+	fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3); 
+
+	for (i=0; i<n; i++) {
 	    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-		    grp->plots[i].bool, i+1, lpos - .8 * h);
+		    grp->plots[i].varname, i+1, lpos);
+	    if (grp->plots[i].bool != NULL) {
+		/* FIXME positioning? */
+		fprintf(fp, "set label \"%s\" at %d,%g center\n", 
+			grp->plots[i].bool, i+1, lpos - .8 * h);
+	    }
 	}
     }
 
@@ -462,8 +476,8 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
     fputs("plot \\\n", fp);
     /* the quartiles and extrema */
-    fprintf(fp, "'-' using 1:3:2:5:4 w candlesticks lt %d lw 2 "
-	    "notitle whiskerbars 0.5, \\\n", qtype);
+    fprintf(fp, "'-' using 1:3:2:5:4 w candlesticks lt %d lw %d "
+	    "notitle whiskerbars 0.5, \\\n", qtype, lwidth);
     /* the median */
     fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
 
@@ -538,7 +552,9 @@ static int gnuplot_do_boxplot (PLOTGROUP *grp, gretlopt opt)
 }
 
 static int real_boxplots (int *list, char **bools, 
-			  double ***pZ, const DATAINFO *pdinfo, 
+			  const double **Z, 
+			  const DATAINFO *pdinfo,
+			  const char *title,
 			  gretlopt opt)
 {
     int i, j, n = sample_size(pdinfo);
@@ -557,6 +573,10 @@ static int real_boxplots (int *list, char **bools,
 	return E_ALLOC;
     }
 
+    if (title != NULL) {
+	grp->title = gretl_strdup(title);
+    }
+
     if (opt & OPT_O) {
 	grp->do_notches = 1;
     }
@@ -565,7 +585,7 @@ static int real_boxplots (int *list, char **bools,
 	BOXPLOT *plot = &grp->plots[i];
 	int vi = list[i+1];
 
-	n = transcribe_array(x, (*pZ)[vi], pdinfo);
+	n = transcribe_array(x, Z[vi], pdinfo);
 
 	if (n < 2) {
 	    gretl_list_delete_at_pos(list, i+1);
@@ -627,10 +647,66 @@ static int real_boxplots (int *list, char **bools,
     return err;
 }
 
-int boxplots (int *list, double ***pZ, const DATAINFO *pdinfo, 
+/* boxplots using a single selected series, by panel group */
+
+static int panel_group_boxplots (int vnum, const double **Z, 
+				 const DATAINFO *pdinfo,
+				 gretlopt opt)
+{
+    double **gZ = NULL;
+    DATAINFO *gdinfo;
+    int nunits, T = pdinfo->pd;
+    int *list = NULL;
+    char *title = NULL;
+    int nv, u0, i, t, s, s0;
+    int err = 0;
+
+    nunits = panel_sample_size(pdinfo);
+    nv = nunits + 1;
+    u0 = pdinfo->t1 / T;
+
+    gdinfo = create_auxiliary_dataset(&gZ, nv, T);
+    if (gdinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    list = gretl_consecutive_list_new(1, nv - 1);
+    if (list == NULL) {
+	destroy_dataset(gZ, gdinfo);
+	return E_ALLOC;
+    }
+
+    s0 = pdinfo->t1 * pdinfo->pd;
+
+    for (i=0; i<nunits; i++) {
+	sprintf(gdinfo->varname[i+1], "%d", u0+i+1);
+	s = s0 + i * T;
+	for (t=0; t<T; t++) {
+	    gZ[i+1][t] = Z[vnum][s++];
+	}
+    }
+
+    title = gretl_strdup_printf("%s by group", 
+				var_get_graph_name(pdinfo, vnum));
+
+    err = real_boxplots(list, NULL, (const double **) gZ, gdinfo, 
+			title, opt);
+
+    free(title);
+    destroy_dataset(gZ, gdinfo);
+    free(list);
+
+    return err;
+}
+
+int boxplots (int *list, const double **Z, const DATAINFO *pdinfo, 
 	      gretlopt opt)
 {
-    return real_boxplots(list, NULL, pZ, pdinfo, opt);
+    if (opt & OPT_P) {
+	return panel_group_boxplots(list[1], Z, pdinfo, opt);
+    } else {
+	return real_boxplots(list, NULL, Z, pdinfo, NULL, opt);
+    }
 }
 
 /* remove extra spaces around operators in boxplots line */
@@ -796,7 +872,8 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = real_boxplots(list, bools, pZ, pdinfo, opt);
+	err = real_boxplots(list, bools, (const double **) *pZ, 
+			    pdinfo, NULL, opt);
     } 
     
     free(list);

@@ -1768,9 +1768,11 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
 
     if (nmax > 0) {
-	gchar *txt = g_strdup_printf(_("Panel groups to graph (max %d)"), nmax);
+	gchar *txt = g_strdup_printf(_("For more graphing options choose\n"
+				       "at most %d groups"), nmax);
 
 	lbl = gtk_label_new(txt);
+	gtk_label_set_justify(GTK_LABEL(lbl), GTK_JUSTIFY_CENTER);
 	hbox = gtk_hbox_new(TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -2048,7 +2050,8 @@ int panel_units_selector (int *t1, int *t2, int nmax)
     hbox = panel_sample_spinbox(rset, nmax);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     
-    /* label to show the number of units */
+    /* label to show the number of groups */
+    rset->opt = OPT_P;
     rset->obslabel = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(vbox), rset->obslabel, FALSE, FALSE, 5);
 

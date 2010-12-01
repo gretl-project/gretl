@@ -264,7 +264,7 @@ void display_fit_resid (GtkAction *action, gpointer p);
 
 void do_graph_var (int varnum);
 
-void do_boxplot_var (int varnum);
+void do_boxplot_var (int varnum, gretlopt opt);
 
 void ts_plot_callback (void);
 

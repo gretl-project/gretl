@@ -4173,6 +4173,97 @@ static int panel_ytic_width (double ymin, double ymax)
     return (n1 > n2)? n1 : n2;
 }
 
+/* Panel: produce a time-series plot for the group mean of the
+   series in question.
+*/
+
+static int panel_means_ts_plot (const int vnum, const double **Z, 
+				const DATAINFO *pdinfo,
+				gretlopt opt)
+{
+    double **gZ = NULL;
+    DATAINFO *gdinfo;
+    int nunits, T = pdinfo->pd;
+    int list[3] = {1, 1, 2};
+    gchar *literal = NULL;
+    gchar *title = NULL;
+    int nv, panvar = 0;
+    int i, t, s, s0;
+    int err = 0;
+
+    nunits = panel_sample_size(pdinfo);
+    nv = 2;
+
+    panvar = plausible_panel_time_var(Z, pdinfo);
+    if (panvar > 0) {
+	/* extra column for x-axis */
+	nv++;
+    }
+
+    gdinfo = create_auxiliary_dataset(&gZ, nv, T);
+    if (gdinfo == NULL) {
+	return E_ALLOC;
+    }
+
+    list[0] = nv - 1;
+
+    strcpy(gdinfo->varname[1], pdinfo->varname[vnum]);
+    strcpy(DISPLAYNAME(gdinfo, 1), DISPLAYNAME(pdinfo, vnum));
+
+    s0 = pdinfo->t1 * pdinfo->pd;
+
+    for (t=0; t<T; t++) {
+	double xit, xsum = 0.0;
+	int n = 0;
+
+	for (i=0; i<nunits; i++) {
+	    s = s0 + i * T + t;
+	    xit = Z[vnum][s];
+	    if (!na(xit)) {
+		xsum += xit;
+		n++;
+	    }
+	}
+	if (n == 0) {
+	    gZ[1][t] = NADBL;
+	} else {
+	    gZ[1][t] = xsum / n;
+	}
+    }
+
+    if (panvar > 0) {
+	/* time variable for x-axis */
+	strcpy(gdinfo->varname[2], pdinfo->varname[panvar]);
+	strcpy(DISPLAYNAME(gdinfo, 2), DISPLAYNAME(pdinfo, panvar));
+	for (t=0; t<T; t++) {
+	    gZ[2][t] = Z[panvar][t];
+	}
+    }
+
+    opt |= OPT_O; /* use lines */
+    if (!panvar) {
+	opt |= OPT_T;
+    }
+    
+    title = g_strdup_printf(_("mean %s"), 
+			    var_get_graph_name(pdinfo, vnum));
+
+    if (panvar) {
+	literal = g_strdup_printf("set ylabel \"%s\" ; set xlabel ;", 
+				  title);
+    } else {
+	literal = g_strdup_printf("set ylabel \"%s\" ;", title);
+    } 
+
+    err = gnuplot(list, literal, (const double **) gZ, gdinfo, opt);
+
+    g_free(title);
+    g_free(literal);
+    destroy_dataset(gZ, gdinfo);
+
+    return err;
+}
+
 /* Panel: plot one series using separate lines for each
    cross-sectional unit. The individuals' series are overlaid, in the
    same manner as a plot of several distinct time series. To do
@@ -4187,7 +4278,8 @@ static int panel_overlay_ts_plot (const int vnum, const double **Z,
     DATAINFO *gdinfo;
     int u0, nunits, T = pdinfo->pd;
     int *list = NULL;
-    char *literal = NULL;
+    gchar *literal = NULL;
+    gchar *title = NULL;
     int nv, panvar = 0;
     int i, t, s, s0;
     int err = 0;
@@ -4216,8 +4308,8 @@ static int panel_overlay_ts_plot (const int vnum, const double **Z,
     s0 = pdinfo->t1 * pdinfo->pd;
 
     for (i=0; i<nunits; i++) {
-	sprintf(gdinfo->varname[i+1], "unit %d", u0+i+1);
-	s = s0 + i * pdinfo->pd;
+	sprintf(gdinfo->varname[i+1], "%d", u0+i+1);
+	s = s0 + i * T;
 	for (t=0; t<T; t++) {
 	    gZ[i+1][t] = Z[vnum][s++];
 	}
@@ -4236,16 +4328,17 @@ static int panel_overlay_ts_plot (const int vnum, const double **Z,
 	opt |= OPT_T;
     }
 
+    title = g_strdup_printf("%s by group", var_get_graph_name(pdinfo, vnum));
+
     if (panvar) {
-	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", 
-				  var_get_graph_name(pdinfo, vnum));
+	literal = g_strdup_printf("set title \"%s\" ; set xlabel ;", title);
     } else {
-	literal = g_strdup_printf("set title \"%s\" ;", 
-				  var_get_graph_name(pdinfo, vnum));
+	literal = g_strdup_printf("set title \"%s\" ;", title);
     }
 
     err = gnuplot(list, literal, (const double **) gZ, gdinfo, opt);
 
+    g_free(title);
     g_free(literal);
     destroy_dataset(gZ, gdinfo);
     free(list);
@@ -4390,6 +4483,11 @@ int gretl_panel_ts_plot (int vnum, const double **Z, DATAINFO *pdinfo,
     if (opt & OPT_S) {
 	/* sequence */
 	return panel_sequence_ts_plot(vnum, Z, pdinfo, opt);
+    } else if (opt & OPT_M) {
+	/* group means */
+	opt &= ~OPT_M;
+	opt |= OPT_S;
+	return panel_means_ts_plot(vnum, Z, pdinfo, opt);
     } else {
 	return panel_overlay_ts_plot(vnum, Z, pdinfo, opt);
     }

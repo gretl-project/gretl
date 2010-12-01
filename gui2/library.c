@@ -6057,27 +6057,6 @@ void delete_selected_vars (void)
     real_delete_vars(0, NULL);
 }
 
-static int select_fewer_units (int nmax)
-{
-    int t1 = datainfo->t1 / datainfo->pd;
-    int t2 = t1 + nmax - 1;
-    int ret = panel_units_selector(&t1, &t2, nmax);
-
-    if (ret >= 0) {
-	int n = t2 - t1 + 1;
-
-	if (n > nmax) {
-	    warnbox(_("Too many units selected"));
-	    ret = 1;
-	} else {
-	    datainfo->t1 = datainfo->pd * t1;
-	    datainfo->t2 = datainfo->t1 + n * datainfo->pd - 1;
-	}	    
-    }
-
-    return ret;
-}
-
 static int regular_ts_plot (int vnum)
 {
     int list[2] = {1, vnum};
@@ -6095,67 +6074,87 @@ static int regular_ts_plot (int vnum)
     return err;
 }
 
-void do_graph_var (int varnum)
+static int select_fewer_units (int nmax)
+{
+    int t1 = datainfo->t1 / datainfo->pd;
+    // int t2 = t1 + nmax - 1;
+    int t2 = datainfo->t2 / datainfo->pd;
+    int ret = panel_units_selector(&t1, &t2, nmax);
+
+    if (ret >= 0) {
+	int n = t2 - t1 + 1;
+
+	datainfo->t1 = datainfo->pd * t1;
+	datainfo->t2 = datainfo->t1 + n * datainfo->pd - 1;
+    }
+
+    return ret;
+}
+
+static void do_panel_plot (int varnum)
 {
     int save_t1 = datainfo->t1;
     int save_t2 = datainfo->t2;
+    const char *strs[] = {
+	N_("single graph: groups overlaid"),
+	N_("single graph: group means"),
+	N_("single graph: groups in sequence"),
+	N_("multiple plots in grid"),
+	N_("multiple plots arranged vertically"),
+    };
+    int nunits = panel_sample_size(datainfo);
+    int sel, ns = 3;
     int canceled = 0;
     int err = 0;
 
-    if (varnum <= 0) return;
-
     if (panel_sample_size(datainfo) > 80) {
-	err = select_fewer_units(80);
-	if (err) {
+	canceled = select_fewer_units(80);
+	if (canceled) {
 	    return;
 	} 
     }
-
-    if (dataset_is_cross_section(datainfo)) {
-	do_freq_dist();
-	return;
-    } else if (multi_unit_panel_sample(datainfo)) {
-	const char *strs[] = {
-	    N_("single graph: units overlaid"),
-	    N_("single graph: units in sequence"),
-	    N_("multiple plots in grid"),
-	    N_("multiple plots arranged vertically"),
-	};
-	int nunits = panel_sample_size(datainfo);
-	int sel, ns = 2;
-
-	if (nunits <= 6) {
-	    /* allow both multiplot options */
-	    ns = 4;
-	} else if (nunits < 10) {
-	    /* allow gridded multiplot option */
-	    ns = 3;
-	}
-
-	sel = radio_dialog(_("gretl: define graph"), 
-			   _("Panel time-series graph"), 
-			   strs, ns, 0, 0);
-
-	if (sel < 0) {
-	    canceled = 1;
-	} else if (sel == 0) {
-	    /* overlay */
-	    err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				      datainfo, OPT_G);
-	} else if (sel == 1) {
-	    /* sequential by unit */
-	    err = regular_ts_plot(varnum);
-	} else {
-	    /* small multiples: OPT_V for vertical */
-	    gretlopt opt = (sel == 3)? OPT_V : OPT_NONE;
-
-	    err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				      datainfo, opt | OPT_S);
-	} 
-    } else {
-	/* time series case */
-	err = regular_ts_plot(varnum);
+	    
+    if (panel_sample_size(datainfo) > 80) {
+	/* can only do group means plot */
+	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
+				  datainfo, OPT_G | OPT_M);
+	goto finish;
     }
+
+    if (nunits <= 6) {
+	/* allow both multiplot options */
+	ns = 5;
+    } else if (nunits < 10) {
+	/* allow gridded multiplot option */
+	ns = 4;
+    }
+
+    sel = radio_dialog(_("gretl: define graph"), 
+		       _("Panel time-series graph"), 
+		       strs, ns, 0, 0);
+
+    if (sel < 0) {
+	canceled = 1;
+    } else if (sel == 0) {
+	/* overlay */
+	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
+				  datainfo, OPT_G);
+    } else if (sel == 1) {
+	/* use group means */
+	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
+				  datainfo, OPT_G | OPT_M);
+    } else if (sel == 2) {
+	/* sequential by unit */
+	err = regular_ts_plot(varnum);
+    } else {
+	/* small multiples: OPT_V for vertical */
+	gretlopt opt = (sel == 3)? OPT_V : OPT_NONE;
+
+	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
+				  datainfo, opt | OPT_S);
+    } 
+
+ finish:
 
     datainfo->t1 = save_t1;
     datainfo->t2 = save_t2;
@@ -6165,12 +6164,30 @@ void do_graph_var (int varnum)
     }
 }
 
+/* time-series plot if appropriate, else frequency
+   plot */
+
+void do_graph_var (int varnum)
+{
+    if (varnum <= 0) return;
+
+    if (dataset_is_cross_section(datainfo)) {
+	do_freq_dist();
+    } else if (multi_unit_panel_sample(datainfo)) {
+	do_panel_plot(varnum);
+    } else {
+	int err = regular_ts_plot(varnum);
+    
+	gui_graph_handler(err);
+    }
+}
+
 void ts_plot_callback (void)
 {
     do_graph_var(mdata_active_var());
 }
 
-void do_boxplot_var (int varnum)
+void do_boxplot_var (int varnum, gretlopt opt)
 {
     int err = 0;
 
@@ -6183,14 +6200,16 @@ void do_boxplot_var (int varnum)
     if (check_and_record_command()) {
 	return;
     }
-    
-    err = boxplots(libcmd.list, &Z, datainfo, OPT_NONE);
 
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
+#if 1
+    if (multi_unit_panel_sample(datainfo)) {
+	opt = OPT_P;
     }
+#endif
+
+    err = boxplots(libcmd.list, (const double **) Z, datainfo, opt);
+
+    gui_graph_handler(err);
 }
 
 int do_scatters (selector *sr)
@@ -6240,7 +6259,7 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
 	if (check_and_record_command()) {
 	    return;
 	}
-	err = boxplots(libcmd.list, &Z, datainfo, opt);
+	err = boxplots(libcmd.list, (const double **) Z, datainfo, opt);
     }
 
     if (err) {
