@@ -473,7 +473,7 @@ static void record_filearg (char *targ, const char *src)
 #endif
 
 /* callback from within potentially lengthy libgretl
-   operations: try to avoid haveing the GUI become
+   operations: try to avoid having the GUI become
    totally unresponsive
 */
 
