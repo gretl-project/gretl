@@ -854,7 +854,9 @@ int options_dialog (int page, const char *varname, GtkWidget *parent)
     }
 
     dialog = gretl_dialog_new(_("gretl: options"), parent, GRETL_DLG_BLOCK);
+#if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
+#endif
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gtk_box_set_spacing(GTK_BOX(vbox), 2);
 

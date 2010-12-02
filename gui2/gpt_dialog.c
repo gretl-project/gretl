@@ -1477,7 +1477,9 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 					  NULL);
 
 	gretl_dialog_add_message(dlg, _(msg));
+#if GTK_MAJOR_VERSION < 3
 	gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
+#endif
 	gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);  
 	ret = gtk_dialog_run(GTK_DIALOG(dlg));
 	gtk_widget_destroy(dlg);
@@ -3285,7 +3287,9 @@ GtkWidget *plot_add_editor (png_plot *plot)
 			      GRETL_DLG_RESIZE);
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gtk_box_set_spacing(GTK_BOX(vbox), 2);
+#if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
+#endif
     
     if (plot != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), 

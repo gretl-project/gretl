@@ -117,7 +117,9 @@ gint yes_no_dialog (const char *title, const char *msg, int cancel)
 
     gretl_dialog_add_message(dlg, msg);
 
+#if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
+#endif
     gtk_window_set_keep_above(GTK_WINDOW(dlg), TRUE);  
     ret = gtk_dialog_run(GTK_DIALOG(dlg));
 					  
@@ -4107,7 +4109,9 @@ int yes_no_help_dialog (const char *msg, int hcode)
     int ret = GRETL_NO;
 
     dlg = gretl_dialog_new("gretl", NULL, GRETL_DLG_BLOCK);
+#if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator(GTK_DIALOG(dlg), FALSE);
+#endif
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 

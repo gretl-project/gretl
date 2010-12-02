@@ -1531,9 +1531,9 @@ gtk_fontsel_hack_dialog_init (GtkFontselHackDialog *fontseldiag)
     gtk_widget_grab_default (fontseldiag->ok_button);
   
     gtk_window_set_title (GTK_WINDOW (fontseldiag), _("Font Selection"));
-
+#if GTK_MAJOR_VERSION < 3
     gtk_dialog_set_has_separator (GTK_DIALOG (dialog), FALSE);
-  
+#endif  
     gtk_widget_pop_composite_child ();
 }
 
