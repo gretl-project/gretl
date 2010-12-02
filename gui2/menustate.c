@@ -195,6 +195,7 @@ void time_series_menu_state (gboolean s)
 {
     gboolean sx = extended_ts(datainfo);
     gboolean panel = dataset_is_panel(datainfo);
+    gboolean realpan = multi_unit_panel_sample(datainfo);
     gboolean ur = s;
 
     if (mdata->ui == NULL) {
@@ -211,7 +212,8 @@ void time_series_menu_state (gboolean s)
     /* Plots */
     flip(mdata->ui, "/menubar/View/GraphVars/TSPlot", sx);
     flip(mdata->ui, "/menubar/View/MultiPlots/MultiTS", sx);
-    flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx);
+    flip(mdata->ui, "/menubar/Variable/VarTSPlot", sx && !realpan);
+    flip(mdata->ui, "/menubar/Variable/PanPlot", realpan);
 
     /* Variable menu */
     flip(mdata->ui, "/menubar/Variable/URTests", ur); 
@@ -339,12 +341,12 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
 	do_menu_op(VAR_SUMMARY, NULL, OPT_NONE);
     else if (!strcmp(item, _("Time series plot"))) 
 	do_graph_var(v);
+    else if (!strcmp(item, _("Panel plot..."))) 
+	do_graph_var(v);
     else if (!strcmp(item, _("Frequency distribution"))) 
 	do_freq_dist();
     else if (!strcmp(item, _("Boxplot")))
 	do_boxplot_var(v, OPT_NONE);
-    else if (!strcmp(item, _("Boxplots by group (N <= 150)")))
-	do_boxplot_var(v, OPT_P);
     else if (!strcmp(item, _("Gini coefficient")))
 	do_gini();
     else if (!strcmp(item, _("Correlogram")))
@@ -429,9 +431,9 @@ GtkWidget *build_var_popup (void)
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Time series plot"),
+	N_("Panel plot..."),
 	N_("Frequency distribution"),
 	N_("Boxplot"),
-	N_("Boxplots by group (N <= 150)"),
 	N_("Correlogram"),
 	N_("Periodogram"),
 	N_("Edit attributes"),
@@ -444,6 +446,7 @@ GtkWidget *build_var_popup (void)
     GtkWidget *menu;
     GtkWidget *item;
     int i, n = G_N_ELEMENTS(items);
+    int real_panel = multi_unit_panel_sample(datainfo);
 
     menu = gtk_menu_new();
 
@@ -454,22 +457,24 @@ GtkWidget *build_var_popup (void)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	    continue;
 	}
+	if (real_panel && (i == 2 || i == 5)) {
+	    /* don't offer regular ts or boxplot */
+	    continue;
+	}
+	if (!real_panel && i == 3) {
+	    /* don't offer panel plot */
+	    continue;
+	}	
 	if ((i == 6 || i == 7) && !dataset_is_time_series(datainfo)) {
 	    continue;
 	}
 	if (i == 2 && !extended_ts(datainfo)) {
 	    continue;
 	}
-	if (i == 5 && !multi_unit_panel_sample(datainfo)) {
-	    continue;
-	}	
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(var_popup_click),
 			 _(items[i]));
-	if (i == 5 && panel_sample_size(datainfo) > 150) {
-	    gtk_widget_set_sensitive(item, FALSE);
-	}
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     }

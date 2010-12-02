@@ -1483,9 +1483,9 @@ struct range_setting {
     GtkWidget *dlg;       /* dialog box */
     GtkWidget *obslabel;  /* label for showing number of selected obs */
     GtkObject *adj1;      /* adjustment for start spinner */
-    GtkWidget *startspin; /* start-of-range spinner */
+    GtkWidget *spin1;     /* start-of-range spinner */
     GtkObject *adj2;      /* adjustment for end spinner */
-    GtkWidget *endspin;   /* end-of-range spinner */
+    GtkWidget *spin2;     /* end-of-range spinner */
     GtkWidget *combo;     /* multi-purpose selector */
     GtkWidget *entry;
     gpointer p;
@@ -1552,7 +1552,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	/* random subsample */
 	int subn;
 
-	subn = obs_button_get_value(rset->startspin);
+	subn = obs_button_get_value(rset->spin1);
 	gretl_command_sprintf("smpl %d --random", subn);
 	if (check_and_record_command()) {
 	    return TRUE;
@@ -1567,11 +1567,11 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	char s1[OBSLEN], s2[OBSLEN];
 	int t1, t2;	
 
-	button = GTK_SPIN_BUTTON(rset->startspin);
+	button = GTK_SPIN_BUTTON(rset->spin1);
 	strcpy(s1, gtk_entry_get_text(GTK_ENTRY(button)));
 	t1 = gtk_spin_button_get_value_as_int(button);
 
-	button = GTK_SPIN_BUTTON(rset->endspin);
+	button = GTK_SPIN_BUTTON(rset->spin2);
 	strcpy(s2, gtk_entry_get_text(GTK_ENTRY(button)));
 	t2 = gtk_spin_button_get_value_as_int(button); 
 
@@ -1619,14 +1619,14 @@ set_obs_from_dialog (GtkWidget *w, struct range_setting *rset)
     GtkSpinButton *button;
     const gchar *s;
 
-    if (rset->startspin != NULL && rset->t1 != NULL) {
-	button = GTK_SPIN_BUTTON(rset->startspin);
+    if (rset->spin1 != NULL && rset->t1 != NULL) {
+	button = GTK_SPIN_BUTTON(rset->spin1);
 	s = gtk_entry_get_text(GTK_ENTRY(button));
 	*rset->t1 = gtk_spin_button_get_value_as_int(button);
     }
 
-    if (rset->endspin != NULL && rset->t2 != NULL) {
-	button = GTK_SPIN_BUTTON(rset->endspin);
+    if (rset->spin2 != NULL && rset->t2 != NULL) {
+	button = GTK_SPIN_BUTTON(rset->spin2);
 	s = gtk_entry_get_text(GTK_ENTRY(button));
 	*rset->t2 = gtk_spin_button_get_value_as_int(button); 
     }
@@ -1672,8 +1672,8 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	    g_free(vname);
 	}
     } else {
-	int t1 = obs_button_get_value(rset->startspin);
-	int t2 = obs_button_get_value(rset->endspin);
+	int t1 = obs_button_get_value(rset->spin1);
+	int t2 = obs_button_get_value(rset->spin2);
 
 	n = t2 - t1 + 1;  
     }
@@ -1681,7 +1681,9 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
     if (n > 0) {
 	gchar *obstr = NULL;
 
-	if (rset->opt == OPT_P) {
+	if (rset->opt == OPT_G) {
+	    obstr = g_strdup_printf(_("groups (N = %d)"), n);
+	} else if (rset->opt == OPT_P) {
 	    obstr = g_strdup_printf(_("Included groups: %d"), n);
 	} else {
 	    obstr = g_strdup_printf(_("Observations: %d"), n);  
@@ -1729,7 +1731,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
     rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
     rset->combo = rset->entry = NULL;
     rset->adj1 = rset->adj2 = NULL;
-    rset->startspin = rset->endspin = NULL;
+    rset->spin1 = rset->spin2 = NULL;
     rset->obslabel = NULL;
 
     datainfo_init(&rset->dinfo);
@@ -1743,11 +1745,13 @@ static struct range_setting *rset_new (guint code, gpointer p,
 }
 
 /* Special sample range selector for panel datasets: express the
-   choice as a matter of which units/groups to include 
+   choice as a matter of which units/groups to include. The
+   @temp argument is non-zero if we're just setting the panel sample
+   temporarily for the purpose of doing a panel plot.
 */
 
 static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
-					int nmax)
+					int temp)
 {
     GtkWidget *lbl;
     GtkWidget *vbox;
@@ -1755,7 +1759,7 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
 
     rset->dinfo.n = datainfo->n / datainfo->pd;
 
-    if (nmax > 0) {
+    if (temp) {
 	rset->dinfo.t1 = *rset->t1;
 	rset->dinfo.t2 = *rset->t2;
     } else {
@@ -1767,46 +1771,51 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
 
-    if (nmax > 0) {
-	gchar *txt = g_strdup_printf(_("For more graphing options choose\n"
-				       "at most %d groups"), nmax);
-
-	lbl = gtk_label_new(txt);
-	gtk_label_set_justify(GTK_LABEL(lbl), GTK_JUSTIFY_CENTER);
-	hbox = gtk_hbox_new(TRUE, 5);
-	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-	g_free(txt);
+    if (temp) {
+	hbox = gtk_hbox_new(FALSE, 5);
     } else {
 	lbl = gtk_label_new(_("Panel groups"));
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 5);
+	hbox = gtk_hbox_new(TRUE, 5);
     }
 
-    hbox = gtk_hbox_new(TRUE, 5);
-
     /* spinner for u1 */
-    vbox = gtk_vbox_new(FALSE, 5);
+
     lbl = gtk_label_new(_("Start:"));
-    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     rset->adj1 = gtk_adjustment_new(rset->dinfo.t1, 0, rset->dinfo.n - 1, 1, 1, 0);
-    rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &rset->dinfo);
-    gtk_entry_set_activates_default(GTK_ENTRY(rset->startspin), TRUE);
-    gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+    rset->spin1 = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &rset->dinfo);
+
+    if (temp) {
+	gtk_box_pack_start(GTK_BOX(hbox), gtk_label_new(" "), FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), rset->spin1, FALSE, FALSE, 0);
+    } else {
+	vbox = gtk_vbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
+	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
+	gtk_box_pack_start(GTK_BOX(vbox), rset->spin1, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+    }
 
     /* spinner for u2 */
-    vbox = gtk_vbox_new(FALSE, 5);
     lbl = gtk_label_new(_("End:"));
-    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     rset->adj2 = gtk_adjustment_new(rset->dinfo.t2, 0, rset->dinfo.n - 1, 1, 1, 0);
-    rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &rset->dinfo);
-    gtk_entry_set_activates_default(GTK_ENTRY(rset->endspin), TRUE);
-    gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+    rset->spin2 = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &rset->dinfo);
+
+    if (temp) {
+	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), rset->spin2, FALSE, FALSE, 0);
+    } else {    
+	vbox = gtk_vbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
+	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin2), TRUE);
+	gtk_box_pack_start(GTK_BOX(vbox), rset->spin2, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+    }
 
     /* inter-connect the two spinners */
-    g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
-    g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
+    g_object_set_data(G_OBJECT(rset->spin1), "spin2", rset->spin2);
+    g_object_set_data(G_OBJECT(rset->spin2), "spin1", rset->spin1);
 
     return hbox;
 }
@@ -1870,9 +1879,9 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     }
     rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, smin, smaj, 0);
-    rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), datainfo);
-    gtk_entry_set_activates_default(GTK_ENTRY(rset->startspin), TRUE);
-    gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
+    rset->spin1 = obs_button_new(GTK_ADJUSTMENT(rset->adj1), datainfo);
+    gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
+    gtk_box_pack_start(GTK_BOX(vbox), rset->spin1, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
     /* spinner for t2, if wanted */
@@ -1883,21 +1892,21 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	}
 	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, smin, smaj, 0);
-	rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), datainfo);
-	gtk_entry_set_activates_default(GTK_ENTRY(rset->endspin), TRUE);
-	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
+	rset->spin2 = obs_button_new(GTK_ADJUSTMENT(rset->adj2), datainfo);
+	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin2), TRUE);
+	gtk_box_pack_start(GTK_BOX(vbox), rset->spin2, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
 
 	/* inter-connect the two spinners */
-	g_object_set_data(G_OBJECT(rset->startspin), "endspin", rset->endspin);
-	g_object_set_data(G_OBJECT(rset->endspin), "startspin", rset->startspin);
+	g_object_set_data(G_OBJECT(rset->spin1), "spin2", rset->spin2);
+	g_object_set_data(G_OBJECT(rset->spin2), "spin1", rset->spin1);
 
 	if (dataset_is_panel(datainfo)) {
 	    /* ensure that minimum separation of the spinners represents
 	       full time-series length */
-	    g_object_set_data(G_OBJECT(rset->startspin), "minsep", 
+	    g_object_set_data(G_OBJECT(rset->spin1), "minsep", 
 			      GINT_TO_POINTER(datainfo->pd - 1));
-	    g_object_set_data(G_OBJECT(rset->endspin), "minsep", 
+	    g_object_set_data(G_OBJECT(rset->spin2), "minsep", 
 			      GINT_TO_POINTER(datainfo->pd - 1));
 	}
     }
@@ -1979,9 +1988,9 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	adj = gtk_adjustment_new(default_randsize(), 
 				 1, datainfo->n - 1,
 				 1, 1, 0);
-	rset->startspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-	gtk_entry_set_activates_default(GTK_ENTRY(rset->startspin), TRUE);
-	gtk_box_pack_start(GTK_BOX(hbox), rset->startspin, FALSE, FALSE, 5);
+	rset->spin1 = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
+	gtk_box_pack_start(GTK_BOX(hbox), rset->spin1, FALSE, FALSE, 5);
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     } else if (u == SMPL && dataset_is_panel(datainfo)) {
@@ -2005,8 +2014,8 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     }
 
     if (u == SMPL || u == CREATE_DATASET) {
-	g_object_set_data(G_OBJECT(rset->startspin), "rset", rset);
-	g_object_set_data(G_OBJECT(rset->endspin), "rset", rset);
+	g_object_set_data(G_OBJECT(rset->spin1), "rset", rset);
+	g_object_set_data(G_OBJECT(rset->spin2), "rset", rset);
     }
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
@@ -2029,34 +2038,134 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 
 static void panel_units_finalize (GtkButton *b, struct range_setting *rset)
 {
-    *rset->t1 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->startspin));
-    *rset->t2 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->endspin));
+    *rset->t1 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin1));
+    *rset->t2 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin2));
 
     gtk_widget_destroy(rset->dlg);
 }
 
-int panel_units_selector (int *t1, int *t2, int nmax)
+static void sensitize_panel_options (GtkSpinButton *spin,
+				     GSList *group)
 {
-    struct range_setting *rset = NULL;
-    GtkWidget *w, *vbox, *hbox;
-    int ret = 0;
+    struct range_setting *rset = 
+	g_object_get_data(G_OBJECT(spin), "rset");
+    int ng = g_slist_length(group);
+    GtkWidget *w, *w0 = NULL;
+    int i, j, t1, t2, N;
+    int fixit = 0;
 
-    rset = rset_new(SMPL, NULL, NULL, t1, t2, _("gretl: set sample"));
-    if (rset == NULL) {
-	return - 1;
+    t1 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin1));
+    t2 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin2));
+    N = t2 - t1 + 1;
+
+    for (i=0; i<ng; i++) {
+	w = g_slist_nth_data(group, i);
+	j = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+	if (j == 0) {
+	    w0 = w;
+	} else if (j == 1 || j == 2) {
+	    gtk_widget_set_sensitive(w, N <= 80);
+	} else if (j == 3) {
+	    gtk_widget_set_sensitive(w, N <= 9);
+	} else if (j == 4) {
+	    gtk_widget_set_sensitive(w, N <= 6);
+	} else if (j == 5) {
+	    gtk_widget_set_sensitive(w, N <= 150);
+	}
+	if (button_is_active(w) && !gtk_widget_is_sensitive(w)) {
+	    fixit = 1;
+	}
     }
 
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
-    hbox = panel_sample_spinbox(rset, nmax);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    
-    /* label to show the number of groups */
-    rset->opt = OPT_P;
-    rset->obslabel = gtk_label_new("");
-    gtk_box_pack_start(GTK_BOX(vbox), rset->obslabel, FALSE, FALSE, 5);
+    if (fixit && w0 != NULL) {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w0), TRUE);
+    }
+}
 
-    g_object_set_data(G_OBJECT(rset->startspin), "rset", rset);
-    g_object_set_data(G_OBJECT(rset->endspin), "rset", rset);
+int panel_graph_dialog (int *t1, int *t2)
+{
+    const char *opts[] = {
+	N_("single graph: group means"),
+	N_("single graph: groups overlaid (N <= 80)"),
+	N_("single graph: groups in sequence (N <= 80"),
+	N_("multiple plots in grid (N <= 9)"),
+	N_("multiple plots arranged vertically (N <= 6)"),
+	N_("boxplots by group (N <= 150)"),
+	N_("single boxplot")
+    };
+    struct range_setting *rset = NULL;
+    GSList *group = NULL;
+    GtkWidget *w, *vbox, *hbox;
+    GtkWidget *button;
+    gchar *title;
+    int nunits = panel_sample_size(datainfo);
+    int i, deflt, nopts = 7;
+    int ret = 0;
+
+    title = g_strdup_printf("gretl: %s", _("panel plot"));
+
+    rset = rset_new(SMPL, NULL, NULL, t1, t2, title);
+    g_free(title);
+
+    if (rset == NULL) {
+	return -1;
+    }
+
+    rset->opt = OPT_G; /* sampling for graphing only */
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
+    w = gtk_label_new(_("panel plot"));
+    gtk_box_pack_start(GTK_BOX(vbox), w, FALSE, FALSE, 5);
+
+    deflt = (nunits <= 80)? 1 : 0;
+
+    for (i=0; i<nopts; i++) {
+	button = gtk_radio_button_new_with_label(group, _(opts[i]));
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	if (i == deflt) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	    ret = i;
+	}
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), &ret);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(i));
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	if ((i == 1 || i == 2) && nunits > 80) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	}
+	if (i == 3 && nunits > 9) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	}	
+	if (i == 4 && nunits > 6) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	}	    
+	if (i == 5 && nunits > 150) {
+	    gtk_widget_set_sensitive(button, FALSE);
+	} 
+	if (i == 4) {
+	    vbox_add_hsep(vbox);
+	}
+    }   
+
+    vbox_add_hsep(vbox);
+    hbox = panel_sample_spinbox(rset, 1);
+    rset->obslabel = gtk_label_new("");
+    w = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(w), rset->obslabel, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    vbox_add_hsep(vbox);
+
+    g_object_set_data(G_OBJECT(rset->spin1), "rset", rset);
+    g_object_set_data(G_OBJECT(rset->spin2), "rset", rset);
+
+    g_signal_connect(G_OBJECT(rset->spin1), "value-changed",
+		     G_CALLBACK(sensitize_panel_options),
+		     group);
+    g_signal_connect(G_OBJECT(rset->spin2), "value-changed",
+		     G_CALLBACK(sensitize_panel_options),
+		     group);
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(rset->dlg));
 
@@ -2231,9 +2340,9 @@ int get_obs_dialog (const char *title, const char *text,
     }
 
     tmp = obs_spinbox(rset, text, t1str, t2str, 
-			  t1min, t1max, t1, 
-			  t2min, t2max, t2,
-			  SPIN_LABEL_ABOVE);
+		      t1min, t1max, t1, 
+		      t2min, t2max, t2,
+		      SPIN_LABEL_ABOVE);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(rset->dlg));
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
@@ -2270,7 +2379,7 @@ static void configure_chow_dlg (GtkToggleButton *b, struct range_setting *rset)
 {
     gboolean s = gtk_toggle_button_get_active(b);
 
-    gtk_widget_set_sensitive(rset->startspin, !s);
+    gtk_widget_set_sensitive(rset->spin1, !s);
 
     if (s) {
 	gtk_widget_set_sensitive(rset->combo, TRUE);
@@ -2351,7 +2460,7 @@ int chow_dialog (int tmin, int tmax, int *t, int *dumv)
 static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
 {
     if (rset->p != NULL) {
-	int t1 = obs_button_get_value(rset->startspin);
+	int t1 = obs_button_get_value(rset->spin1);
 	GtkAdjustment *adj = GTK_ADJUSTMENT(rset->p);
 
 	if (gtk_adjustment_get_upper(adj) != t1) {
@@ -2367,7 +2476,7 @@ static void sync_pre_forecast (GtkWidget *w, struct range_setting *rset)
 
 static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
 {
-    int t1 = obs_button_get_value(rset->startspin);
+    int t1 = obs_button_get_value(rset->spin1);
     int i = widget_get_int(w, "action");
 
     if (rset->pmod == NULL) {
@@ -2378,7 +2487,7 @@ static void adjust_fcast_t1 (GtkWidget *w, struct range_setting *rset)
 	int t1min = rset->pmod->t1 + rset->pmod->ncoeff;
 
 	if (t1 < t1min) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rset->startspin), 
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(rset->spin1), 
 				      (gdouble) t1min);
 	    g_object_set(rset->adj1, "lower", (gdouble) t1min, NULL);
 	}

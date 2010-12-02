@@ -6074,92 +6074,60 @@ static int regular_ts_plot (int vnum)
     return err;
 }
 
-static int select_fewer_units (int nmax)
+static void do_panel_plot (int varnum)
 {
     int t1 = datainfo->t1 / datainfo->pd;
-    // int t2 = t1 + nmax - 1;
     int t2 = datainfo->t2 / datainfo->pd;
-    int ret = panel_units_selector(&t1, &t2, nmax);
+    int save_t1 = datainfo->t1;
+    int save_t2 = datainfo->t2;
+    int handled = 0;
+    int sel, err = 0;
+    
+    sel = panel_graph_dialog(&t1, &t2);
 
-    if (ret >= 0) {
+    if (sel < 0) {
+	/* canceled */
+	return;
+    } else {
 	int n = t2 - t1 + 1;
 
 	datainfo->t1 = datainfo->pd * t1;
 	datainfo->t2 = datainfo->t1 + n * datainfo->pd - 1;
     }
 
-    return ret;
-}
-
-static void do_panel_plot (int varnum)
-{
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
-    const char *strs[] = {
-	N_("single graph: groups overlaid"),
-	N_("single graph: group means"),
-	N_("single graph: groups in sequence"),
-	N_("multiple plots in grid"),
-	N_("multiple plots arranged vertically"),
-    };
-    int nunits = panel_sample_size(datainfo);
-    int sel, ns = 3;
-    int canceled = 0;
-    int err = 0;
-
-    if (panel_sample_size(datainfo) > 80) {
-	canceled = select_fewer_units(80);
-	if (canceled) {
-	    return;
-	} 
-    }
-	    
-    if (panel_sample_size(datainfo) > 80) {
-	/* can only do group means plot */
+    if (sel == 0) {
+	/* group means time series */
 	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
 				  datainfo, OPT_G | OPT_M);
-	goto finish;
-    }
-
-    if (nunits <= 6) {
-	/* allow both multiplot options */
-	ns = 5;
-    } else if (nunits < 10) {
-	/* allow gridded multiplot option */
-	ns = 4;
-    }
-
-    sel = radio_dialog(_("gretl: define graph"), 
-		       _("Panel time-series graph"), 
-		       strs, ns, 0, 0);
-
-    if (sel < 0) {
-	canceled = 1;
-    } else if (sel == 0) {
-	/* overlay */
+    } else if (sel == 1) {
+	/* time-series overlay */
 	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
 				  datainfo, OPT_G);
-    } else if (sel == 1) {
-	/* use group means */
-	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				  datainfo, OPT_G | OPT_M);
     } else if (sel == 2) {
 	/* sequential by unit */
 	err = regular_ts_plot(varnum);
-    } else {
-	/* small multiples: OPT_V for vertical */
-	gretlopt opt = (sel == 3)? OPT_V : OPT_NONE;
-
+    } else if (sel == 3) {
+	/* small multiples in grid */
 	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				  datainfo, opt | OPT_S);
-    } 
-
- finish:
+				  datainfo, OPT_S);
+    } else if (sel == 4) {
+	/* small multiples stacked vertically */
+	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
+				  datainfo, OPT_S | OPT_V);
+    } else if (sel == 5) {
+	/* boxplots by group */
+	do_boxplot_var(varnum, OPT_P);
+	handled = 1;
+    } else {
+	/* single boxplot */
+	do_boxplot_var(varnum, OPT_NONE);
+	handled = 1;
+    }
 
     datainfo->t1 = save_t1;
     datainfo->t2 = save_t2;
 
-    if (!canceled) {
+    if (!handled) {
 	gui_graph_handler(err);
     }
 }

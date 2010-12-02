@@ -79,9 +79,9 @@ void sample_range_dialog (GtkAction *action, gpointer p);
 
 void sample_restrict_dialog (GtkAction *action, gpointer p);
 
-int panel_units_selector (int *t1, int *t2, int nmax);
-
 void panel_structure_dialog (DATAINFO *pdinfo);
+
+int panel_graph_dialog (int *t1, int *t2);
 
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
 			  int *mon_start, CompactMethod *method,

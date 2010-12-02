@@ -210,6 +210,7 @@
       <menuitem action="rmplot"/>
       <separator/>
       <menuitem action="VarTSPlot"/>
+      <menuitem action="PanPlot"/>
       <menu action="URTests">
 	<menuitem action="adf"/>
 	<menuitem action="dfgls"/>

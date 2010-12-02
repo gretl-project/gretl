@@ -1530,6 +1530,7 @@ GtkActionEntry main_entries[] = {
     { "Gini", NULL, N_("_Gini coefficient"), NULL, NULL, G_CALLBACK(do_gini) },
     { "rmplot", NULL, N_("_Range-mean graph"), NULL, NULL, G_CALLBACK(do_range_mean) },
     { "VarTSPlot", NULL, N_("_Time series plot"), NULL, NULL, G_CALLBACK(ts_plot_callback) },
+    { "PanPlot", NULL, N_("_Panel plot..."), NULL, NULL, G_CALLBACK(ts_plot_callback) },
     { "URTests", NULL, N_("_Unit root tests"), NULL, NULL, NULL },
     { "adf", NULL, N_("_Augmented Dickey-Fuller test"), NULL, NULL, G_CALLBACK(ur_callback) },
     { "dfgls", NULL, N_("ADF-GLS test"), NULL, NULL, G_CALLBACK(ur_callback) },
