@@ -710,12 +710,77 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     return err;
 }
 
+static void 
+panel_demean_series (double **Z, DATAINFO *pdinfo, int v0, int v1,
+		     const char *mask)
+{
+    int t, t0, u, j, T;
+    double xbar;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xbar = 0.0;
+	u = t / pdinfo->pd;
+	t0 = t;
+	T = 0;
+	while (1) {
+	    if (mask == NULL || !mask[t - pdinfo->t1]) {
+		xbar += Z[v0][t];
+		T++;
+	    }
+	    if ((t + 1) / pdinfo->pd == u) {
+		t++;
+	    } else {
+		break;
+	    }
+	}
+	xbar /= T;
+	for (j=0; j<T; j++) {
+	    Z[v1][t0+j] = Z[v0][t0+j] - xbar;
+	}
+    }
+}
+
+static void 
+panel_demean_data_matrix (gretl_matrix *X, int t1, int t2,
+			  int pd, const char *mask)
+{
+    int s, s0, t, u, i, j, T;
+    double xti, xbar;
+
+    for (i=0; i<X->cols; i++) {
+	s = 0;
+	for (t=t1; t<=t2; t++) {
+	    xbar = 0.0;
+	    u = t / pd;
+	    s0 = s;
+	    T = 0;
+	    while (1) {
+		if (mask == NULL || !mask[t - t1]) {
+		    xbar += gretl_matrix_get(X, s++, i);
+		    T++;
+		}
+		if ((t + 1) / pd == u) {
+		    t++;
+		} else {
+		    break;
+		}
+	    }
+	    xbar /= T;
+	    for (j=0; j<T; j++) {
+		xti = gretl_matrix_get(X, s0+j, i);
+		xti -= xbar;
+		gretl_matrix_set(X, s0+j, i, xti);
+	    }
+	}
+    }
+}
+
 /* form matrix of instruments and perform QR decomposition
    of this matrix; return Q */
 
 static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 			     const double **Z, const DATAINFO *pdinfo, 
-			     char *mask, int *err)
+			     char *mask, gretlopt opt, int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -745,7 +810,12 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
     if (R == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
-    }    
+    } 
+
+    if (opt & OPT_F) {
+	panel_demean_data_matrix(Q, pdinfo->t1, pdinfo->t2, pdinfo->pd,
+				 mask);
+    }
 
     *err = gretl_matrix_QR_decomp(Q, R);
     if (*err) {
@@ -1285,9 +1355,36 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
     return err;
 }
 
+/* adding fixed effects: mask out singleton observations */
+
+static void mask_panel_singletons (char *mask, int t1, int t2, int pd,
+				   int *missobs)
+{
+    int u, s, t, T;
+
+    for (t=t1; t<=t2; t++) {
+	u = t / pd;
+	s = t;
+	T = 0;
+	while (s / pd == u) {
+	    if (!mask[s - t1]) {
+		T++;
+	    }
+	    s++;
+	}
+	t = s;
+	fprintf(stderr, "unit %d: T = %d\n", u, T);
+	if (T == 1) {
+	    mask[t - t1] = 1;
+	    *missobs += 1;
+	}
+    }
+}
+
 static int 
 tsls_adjust_sample (const int *list, int *t1, int *t2, 
-		    const double **Z, char **pmask)
+		    const double **Z, const DATAINFO *pdinfo,
+		    gretlopt opt, char **pmask)
 {
     int i, t, t1min = *t1, t2max = *t2;
     char *mask = NULL;
@@ -1314,6 +1411,14 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 	}
     }
 
+    if (opt & OPT_F) {
+	/* singleton panel obs at start? */
+	if (t1min < pdinfo->n - 1 &&
+	    (t1min + 1) / pdinfo->pd != t1min / pdinfo->pd) {
+	    t1min++;
+	}
+    }
+
     /* retard end of sample range to skip missing obs? */
     for (t=t2max; t>t1min; t--) {
 	missobs = 0;
@@ -1333,6 +1438,14 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 	    break;
 	}	
     }
+
+    if (opt & OPT_F) {
+	/* singleton panel obs at end? */
+	if (t2max > 0 &&
+	    (t2max - 1) / pdinfo->pd != t2max / pdinfo->pd) {
+	    t2max--;
+	}
+    }    
 
     /* count missing values in mid-range of data */
     missobs = 0;
@@ -1368,6 +1481,13 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 			mask[t - t1min] = 1;
 			break;
 		    }
+		}
+	    }
+	    if (opt & OPT_F) {
+		mask_panel_singletons(mask, t1min, t2max, pdinfo->pd,
+				      &missobs);
+		if (missobs == T) {
+		    err = E_MISSDATA;
 		}
 	    }
 	}
@@ -1444,6 +1564,8 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     return err;
 }
 
+#define TSLS_FE 1 /* experimental */
+
 /**
  * tsls:
  * @list: dependent variable plus list of regressors.
@@ -1498,7 +1620,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* adjust sample range for missing observations */
     err = tsls_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-			     (const double **) *pZ, &missmask); 
+			     (const double **) *pZ, pdinfo, 
+			     opt, &missmask);
 
     if (!err) {
 	/* allocate second stage regression list */
@@ -1549,7 +1672,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	Q = tsls_Q(instlist, reglist, &droplist,
 		   (const double **) *pZ, pdinfo,
-		   missmask, &err);
+		   missmask, opt, &err);
     }
 
     if (err) {
@@ -1575,6 +1698,15 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
+#if TSLS_FE
+    if (opt & OPT_F) {
+	err = dataset_add_series(reglist[0], pZ, pdinfo);
+	if (err) {
+	    goto bailout;
+	}
+    }
+#endif
+
     /* prepare for first-stage F-test, if just one endogenous regressor */
     if (nendo == 1) {
 	ev = endolist[1];
@@ -1598,8 +1730,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    goto bailout;
 	}
 
-	/* give the fitted series the same name as the original */
-	strcpy(pdinfo->varname[v1], pdinfo->varname[v0]);
+	/* name the fitted series according to the original */
 	strcpy(pdinfo->varname[v1], "h_");
 	strncat(pdinfo->varname[v1], pdinfo->varname[v0], VNAMELEN - 3);
 
@@ -1610,6 +1741,19 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	/* update hatlist */
 	hatlist[i+1] = v1;
     }
+
+#if TSLS_FE
+    if (opt & OPT_F) {
+	for (i=0; i<reglist[0]; i++) {
+	    int v0 = reglist[i+1];
+	    int v1 = orig_nvar + nendo + i;
+
+	    panel_demean_series(*pZ, pdinfo, v0, v1, missmask);
+	    strcpy(pdinfo->varname[v1], pdinfo->varname[v0]);
+	    replace_list_element(s2list, v0, v1);
+	}
+    }
+#endif
 
     /* second-stage regression */
     tsls = lsq(s2list, *pZ, pdinfo, OLS, (sysest)? OPT_Z : OPT_NONE);
