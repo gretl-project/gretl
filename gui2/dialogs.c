@@ -2089,7 +2089,7 @@ int panel_graph_dialog (int *t1, int *t2)
     const char *opts[] = {
 	N_("single graph: group means"),
 	N_("single graph: groups overlaid (N <= 80)"),
-	N_("single graph: groups in sequence (N <= 80"),
+	N_("single graph: groups in sequence (N <= 80)"),
 	N_("multiple plots in grid (N <= 9)"),
 	N_("multiple plots arranged vertically (N <= 6)"),
 	N_("boxplots by group (N <= 150)"),
