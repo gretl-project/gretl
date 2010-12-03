@@ -403,7 +403,7 @@ int *tsls_make_endolist (const int *reglist, int **instlist,
 
 static int fill_E_matrix (gretl_matrix *E, MODEL *pmod, 
 			  const int *reglist, const int *instlist,
-			  double ***pZ, DATAINFO *pdinfo)
+			  double **Z, DATAINFO *pdinfo)
 {
     MODEL emod;
     int *elist;
@@ -436,7 +436,7 @@ static int fill_E_matrix (gretl_matrix *E, MODEL *pmod,
 	}
 
 	/* regress the given endogenous var on all the instruments */
-	emod = lsq(elist, *pZ, pdinfo, OLS, OPT_A);
+	emod = lsq(elist, Z, pdinfo, OLS, OPT_A);
 	if ((err = emod.errcode)) {
 	    clear_model(&emod);
 	    break;
@@ -477,7 +477,7 @@ static int tsls_loglik (MODEL *pmod,
 			int nendo,
 			const int *reglist,
 			const int *instlist,
-			double ***pZ, 
+			double **Z, 
 			DATAINFO *pdinfo)
 {
     gretl_matrix *E, *W;
@@ -495,7 +495,7 @@ static int tsls_loglik (MODEL *pmod,
     }
 
     if (!err) {
-	err = fill_E_matrix(E, pmod, reglist, instlist, pZ, pdinfo);
+	err = fill_E_matrix(E, pmod, reglist, instlist, Z, pdinfo);
     }
 
     if (!err) {
@@ -710,9 +710,9 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     return err;
 }
 
-static void 
-panel_demean_series (double **Z, DATAINFO *pdinfo, int v0, int v1,
-		     const char *mask)
+static void panel_demean_series (double *targ, double *src, 
+				 const DATAINFO *pdinfo, 
+				 const char *mask)
 {
     int t, t0, u, j, T;
     double xbar;
@@ -724,8 +724,10 @@ panel_demean_series (double **Z, DATAINFO *pdinfo, int v0, int v1,
 	T = 0;
 	while (1) {
 	    if (mask == NULL || !mask[t - pdinfo->t1]) {
-		xbar += Z[v0][t];
-		T++;
+		if (!na(src[t])) {
+		    xbar += src[t];
+		    T++;
+		}
 	    }
 	    if ((t + 1) / pdinfo->pd == u) {
 		t++;
@@ -735,7 +737,7 @@ panel_demean_series (double **Z, DATAINFO *pdinfo, int v0, int v1,
 	}
 	xbar /= T;
 	for (j=0; j<T; j++) {
-	    Z[v1][t0+j] = Z[v0][t0+j] - xbar;
+	    targ[t0+j] = src[t0+j] - xbar;
 	}
     }
 }
@@ -932,13 +934,31 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
     return 0;
 }
 
-static void tsls_residuals (MODEL *pmod, const int *reglist,
-			    const double **Z, gretlopt opt)
+static void fe_adjust_df (MODEL *pmod, const DATAINFO *pdinfo)
 {
-    int den = (opt & OPT_N)? pmod->nobs : pmod->dfd;
-    int yno = pmod->list[1];
+    int t, u, N = 0, ubak = -1;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!model_missing(pmod, t)) {
+	    u = t / pdinfo->pd;
+	    if (u != ubak) {
+		N++;
+	    } 
+	    ubak = u;
+	}
+    }
+
+    pmod->dfn += N - 1;
+    pmod->dfd -= N;
+}
+
+static void tsls_residuals (MODEL *pmod, const int *reglist, 
+			    const double **Z, const DATAINFO *pdinfo,
+			    gretlopt opt)
+{
+    int yno = reglist[1];
     double sigma0 = pmod->sigma;
-    double yh;
+    double yh, usum = 0.0, ysum = 0.0;
     int i, t;
 
     pmod->ess = 0.0;
@@ -951,14 +971,39 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
 	for (i=0; i<pmod->ncoeff; i++) {
 	    yh += pmod->coeff[i] * Z[reglist[i+2]][t];
 	}
+	if (opt & OPT_F) {
+	    usum += Z[yno][t] - yh;
+	    ysum += Z[yno][t];
+	}
 	pmod->yhat[t] = yh; 
 	pmod->uhat[t] = Z[yno][t] - yh;
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
+    if (opt & OPT_F) {
+	double x;
+
+	fprintf(stderr, "ubar = %g\n", usum / pmod->nobs);
+	fe_adjust_df(pmod, pdinfo);
+	panel_demean_series(pmod->uhat, pmod->uhat, pdinfo, NULL);
+	pmod->ess = pmod->tss = 0;
+	pmod->ybar = ysum / pmod->nobs;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!model_missing(pmod, t)) {
+		pmod->yhat[t] = Z[yno][t] - pmod->uhat[t];
+		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		x = Z[yno][t] - pmod->ybar;
+		pmod->tss += x * x;
+	    }
+	}
+	pmod->sdy = sqrt(pmod->tss / (pmod->nobs - 1));
+    }
+
     if (pmod->ess <= 0.0) {
 	pmod->sigma = 0.0;
     } else {
+	int den = (opt & OPT_N)? pmod->nobs : pmod->dfd;
+
 	pmod->sigma = sqrt(pmod->ess / den);
     }
 
@@ -973,14 +1018,13 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
 
 #define TSLS_CORR_RSQ 1
 
-static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
+static void tsls_extra_stats (MODEL *pmod, int yno, int overid, 
+			      const double **Z,
 			      const DATAINFO *pdinfo)
 {
     double r;
 
 #if TSLS_CORR_RSQ
-    int yno = pmod->list[1];
-
     pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, Z[yno], pmod->yhat);
 #else
     pmod->rsq = 1 - pmod->ess / pmod->tss;
@@ -999,7 +1043,7 @@ static void tsls_extra_stats (MODEL *pmod, int overid, const double **Z,
 	}
     } 
 
-    /* tsls is not a ML estimator unless it's exactly identified, 
+    /* tsls is not an ML estimator unless it's exactly identified, 
        and in that case we require a special calculation */
     pmod->lnL = NADBL;
     pmod->criterion[C_AIC] = NADBL;
@@ -1034,7 +1078,7 @@ static void replace_list_element (int *list, int targ, int repl)
 {
     int i;
 
-    for (i=2; i<=list[0]; i++) {
+    for (i=1; i<=list[0]; i++) {
 	if (list[i] == targ) {
 	    list[i] = repl;
 	    break;
@@ -1594,7 +1638,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     int *hatlist = NULL, *s2list = NULL;
     int *exolist = NULL, *endolist = NULL;
     int *droplist = NULL;
-    int addconst = 0;
+    int addconst = 0, addvars = 0;
     int orig_nvar = pdinfo->v;
     int sysest = (opt & OPT_E);
     int nendo, ev = 0;
@@ -1690,22 +1734,19 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* allocate storage for fitted vars, if needed */
-    if (nendo > 0) {
-	err = dataset_add_series(nendo, pZ, pdinfo);
+    /* allocate storage for fitted vars (etc.), if needed */
+    addvars = nendo;
+#if TSLS_FE
+    if (opt & OPT_F) {
+	addvars += reglist[0];
+    }
+#endif
+    if (addvars > 0) {
+	err = dataset_add_series(addvars, pZ, pdinfo);
 	if (err) {
 	    goto bailout;
 	}
     } 
-
-#if TSLS_FE
-    if (opt & OPT_F) {
-	err = dataset_add_series(reglist[0], pZ, pdinfo);
-	if (err) {
-	    goto bailout;
-	}
-    }
-#endif
 
     /* prepare for first-stage F-test, if just one endogenous regressor */
     if (nendo == 1) {
@@ -1743,14 +1784,29 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
 #if TSLS_FE
+    /* Take the means out of the dependent variable and the exogenous
+       regressors
+    */
     if (opt & OPT_F) {
+	int k = 0;
+
 	for (i=0; i<reglist[0]; i++) {
 	    int v0 = reglist[i+1];
-	    int v1 = orig_nvar + nendo + i;
 
-	    panel_demean_series(*pZ, pdinfo, v0, v1, missmask);
-	    strcpy(pdinfo->varname[v1], pdinfo->varname[v0]);
-	    replace_list_element(s2list, v0, v1);
+	    if (!in_gretl_list(endolist, v0)) {
+		int v1 = orig_nvar + nendo + k++;
+		double *x = (*pZ)[v0];
+		double *y = (*pZ)[v1];
+
+#if 0
+		fprintf(stderr, "demeaning %d (%s) into %d\n",
+			v0, pdinfo->varname[v0], v1);
+#endif
+
+		panel_demean_series(y, x, pdinfo, missmask);
+		strcpy(pdinfo->varname[v1], pdinfo->varname[v0]);
+		replace_list_element(s2list, v0, v1);
+	    } 
 	}
     }
 #endif
@@ -1782,7 +1838,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (nendo > 0) {
 	/* special: we need to use the original RHS vars to compute
 	   residuals and associated statistics */
-	tsls_residuals(&tsls, reglist, (const double **) *pZ, opt);
+	tsls_residuals(&tsls, reglist, (const double **) *pZ, 
+		       pdinfo, opt);
     }
 
     if (opt & OPT_R) {
@@ -1795,7 +1852,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (nendo > 0) {
 	/* compute additional statistics (R^2, F, etc.) */
-	tsls_extra_stats(&tsls, OverIdRank, (const double **) *pZ, pdinfo);
+	tsls_extra_stats(&tsls, reglist[1], OverIdRank, 
+			 (const double **) *pZ, pdinfo);
     }
 
     if (!sysest && nendo > 0) {
@@ -1804,8 +1862,8 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 	if (OverIdRank > 0) {
 	    ivreg_sargan_test(&tsls, OverIdRank, instlist, pZ, pdinfo);
-	} else {
-	    tsls_loglik(&tsls, nendo, reglist, instlist, pZ, pdinfo);
+	} else if (!(opt & OPT_F)) {
+	    tsls_loglik(&tsls, nendo, reglist, instlist, *pZ, pdinfo);
 	}
     }
 
