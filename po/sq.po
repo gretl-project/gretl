@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-12-02 14:59-0500\n"
+"POT-Creation-Date: 2010-12-03 09:35-0500\n"
 "PO-Revision-Date: 2010-10-25 09:55+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -71,7 +71,7 @@ msgstr "me konstante dhe prirje kohore kuadratike"
 #: lib/src/modelprint.c:2058 lib/src/modelprint.c:2078
 #: lib/src/modelprint.c:2722 lib/src/modelprint.c:3792
 #: lib/src/modelprint.c:4107 lib/src/modelprint.c:4981
-#: lib/src/modelprint.c:4983 gui2/dialogs.c:4914 gui2/library.c:2840
+#: lib/src/modelprint.c:4983 gui2/dialogs.c:4918 gui2/library.c:2840
 #: plugin/anova.c:151 plugin/anova.c:153 plugin/johansen.c:1361
 #: plugin/johansen.c:1362
 msgid "p-value"
@@ -215,7 +215,7 @@ msgstr "Rendi i vonesës = %d\n"
 msgid "Test statistic"
 msgstr "Statistika e testit"
 
-#: lib/src/adf_kpss.c:1534 lib/src/adf_kpss.c:1537 gui2/dialogs.c:1027
+#: lib/src/adf_kpss.c:1534 lib/src/adf_kpss.c:1537 gui2/dialogs.c:1029
 msgid "P-value"
 msgstr "P. kritik"
 
@@ -320,14 +320,14 @@ msgid "Numerical summary"
 msgstr "Statistika përmbledhëse"
 
 #: lib/src/boxplots.c:164 lib/src/gmm.c:1542 gui2/calculator.c:1967
-#: gui2/calculator.c:1992 gui2/calculator.c:2590 gui2/gpt_dialog.c:2191
+#: gui2/calculator.c:1992 gui2/calculator.c:2590 gui2/gpt_dialog.c:2193
 #: plugin/anova.c:193 plugin/anova.c:202 plugin/range-mean.c:69
 #: plugin/range-mean.c:160
 msgid "mean"
 msgstr "mesatarja"
 
 #: lib/src/boxplots.c:165 lib/src/boxplots.c:168 lib/src/boxplots.c:180
-#: gui2/gpt_dialog.c:2189
+#: gui2/gpt_dialog.c:2191
 msgid "median"
 msgstr "mediana"
 
@@ -1440,7 +1440,7 @@ msgid "Series imported OK"
 msgstr "Seritë u importuan me sukses"
 
 #: lib/src/dbread.c:2406 lib/src/gretl_func.c:1994 lib/src/gretl_utils.c:1516
-#: lib/src/interact.c:4188 gui2/dialogs.c:4645 plugin/tramo-x12a.c:604
+#: lib/src/interact.c:4188 gui2/dialogs.c:4649 plugin/tramo-x12a.c:604
 #, c-format
 msgid "Couldn't open %s"
 msgstr "E pamundur të hap %s"
@@ -1618,7 +1618,7 @@ msgstr "Spektri i  %s"
 msgid "Bartlett window, length %d"
 msgstr "Dritarja e Bartlett, madhësia %d"
 
-#: lib/src/describe.c:3715 gui2/dialogs.c:4060
+#: lib/src/describe.c:3715 gui2/dialogs.c:4062
 msgid "log scale"
 msgstr "shkallë logaritmike"
 
@@ -2604,12 +2604,12 @@ msgid "time series by group"
 msgstr "seri kohore të grupuara"
 
 #: lib/src/graphing.c:2928 lib/src/plotspec.c:574 lib/src/plotspec.c:1144
-#: gui2/gpt_dialog.c:871 gui2/gpt_dialog.c:1290 gui2/gpt_dialog.c:2596
+#: gui2/gpt_dialog.c:871 gui2/gpt_dialog.c:1290 gui2/gpt_dialog.c:2598
 msgid "right"
 msgstr "djathtas"
 
 #: lib/src/graphing.c:2928 lib/src/plotspec.c:570 lib/src/plotspec.c:576
-#: lib/src/plotspec.c:1142 gui2/gpt_dialog.c:1285 gui2/gpt_dialog.c:2595
+#: lib/src/plotspec.c:1142 gui2/gpt_dialog.c:1285 gui2/gpt_dialog.c:2597
 msgid "left"
 msgstr "majtas"
 
@@ -3618,7 +3618,7 @@ msgid "Sum of coefficients"
 msgstr "Shuma e koefiçientëve"
 
 #: lib/src/gretl_restrict.c:2700 lib/src/gretl_restrict.c:2709
-#: gui2/dialogs.c:4912
+#: gui2/dialogs.c:4916
 msgid "Standard error"
 msgstr "Gabimi standart"
 
@@ -3756,7 +3756,7 @@ msgstr "vrojtimi i parë « %s » është i pavlefshëm"
 msgid "Command failed"
 msgstr "Komanda dështoi"
 
-#: lib/src/gretl_utils.c:1521 gui2/dialogs.c:4659
+#: lib/src/gretl_utils.c:1521 gui2/dialogs.c:4663
 #, c-format
 msgid "Couldn't write to %s"
 msgstr "Nuk mund të shkruhet në %s"
@@ -5007,7 +5007,7 @@ msgid "$t$-ratio"
 msgstr "$t$-Student"
 
 #: lib/src/modelprint.c:2015 lib/src/modelprint.c:3394
-#: lib/src/modelprint.c:3791 lib/src/modelprint.c:4106 gui2/dialogs.c:4913
+#: lib/src/modelprint.c:3791 lib/src/modelprint.c:4106 gui2/dialogs.c:4917
 #: plugin/panurc.c:562
 msgid "t-ratio"
 msgstr "t-Student"
@@ -5053,7 +5053,7 @@ msgstr "i sipërm"
 msgid "Estimate"
 msgstr "Vlerësimi"
 
-#: lib/src/modelprint.c:2065 gui2/dialogs.c:989 gui2/dialogs.c:4911
+#: lib/src/modelprint.c:2065 gui2/dialogs.c:991 gui2/dialogs.c:4915
 #: gui2/guiprint.c:1757 gui2/guiprint.c:1807
 msgid "Coefficient"
 msgstr "Koefiçienti"
@@ -5796,17 +5796,17 @@ msgstr ""
 "E pamundur të bëhet: Modeli referencë është vlerësuar mbi një\n"
 "kampion të ndryshëm nga ai në përdorim.\n"
 
-#: lib/src/options.c:1029
+#: lib/src/options.c:1030
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "Zgjedhje e pavlefshme '--%s'"
 
-#: lib/src/options.c:1047
+#: lib/src/options.c:1048
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Zgjedhja '--%s' duhet shoqëruar nga një parametër"
 
-#: lib/src/options.c:1310
+#: lib/src/options.c:1311
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Kujdes: %s nuk mund të trajtohet veçse në një llogaritje \"loop\""
@@ -5839,7 +5839,7 @@ msgstr "hapa"
 msgid "boxes"
 msgstr "kuti"
 
-#: lib/src/plotspec.c:186 gui2/dialogs.c:2549 gui2/dialogs.c:2804
+#: lib/src/plotspec.c:186 gui2/dialogs.c:2551 gui2/dialogs.c:2806
 msgid "error bars"
 msgstr "kufijtë e gabimit"
 
@@ -6403,11 +6403,11 @@ msgstr "të dhëna të padatuara"
 msgid "special"
 msgstr "e veçantë"
 
-#: lib/src/subsample.c:2142 gui2/dialogs.c:3356
+#: lib/src/subsample.c:2142 gui2/dialogs.c:3358
 msgid "quarterly"
 msgstr "tremujore"
 
-#: lib/src/subsample.c:2144 gui2/dialogs.c:3356
+#: lib/src/subsample.c:2144 gui2/dialogs.c:3358
 msgid "monthly"
 msgstr "mujore"
 
@@ -6696,18 +6696,18 @@ msgstr "ndryshore treguese për %s = %g"
 msgid "dummify: no suitable variables were found"
 msgstr "ndryshore treguese: asnjë ndryshore e përshtatshme"
 
-#: lib/src/tsls.c:737
+#: lib/src/tsls.c:804
 #, fuzzy, c-format
 msgid "Number of instruments (%d) exceeds the number of observations (%d)"
 msgstr ""
 "Le nombre d'assignations (%d) excède le nombre de valeurs retournées\n"
 "par %s (%d)"
 
-#: lib/src/tsls.c:1420 gui2/selector.c:2720
+#: lib/src/tsls.c:1584 gui2/selector.c:2720
 msgid "You can't use the dependent variable as an instrument"
 msgstr "Ndryshorja e varur nuk mund të përdoret si instrument"
 
-#: lib/src/tsls.c:1430 lib/src/tsls.c:1564
+#: lib/src/tsls.c:1594 lib/src/tsls.c:1731
 #, c-format
 msgid ""
 "The order condition for identification is not satisfied.\n"
@@ -7186,7 +7186,7 @@ msgstr "komanda GnuPlot dështoi"
 msgid "Incomplete entry"
 msgstr "Hyrje e paplotë"
 
-#: gui2/calculator.c:1009 gui2/dialogs.c:907
+#: gui2/calculator.c:1009 gui2/dialogs.c:909
 msgid "Invalid entry"
 msgstr "Hyrje e pavlefshme"
 
@@ -7433,11 +7433,11 @@ msgstr "weibull"
 msgid " DW "
 msgstr " DW "
 
-#: gui2/calculator.c:1961 gui2/gpt_dialog.c:2929
+#: gui2/calculator.c:1961 gui2/gpt_dialog.c:2931
 msgid "minimum"
 msgstr "minimum"
 
-#: gui2/calculator.c:1963 gui2/gpt_dialog.c:2946
+#: gui2/calculator.c:1963 gui2/gpt_dialog.c:2948
 msgid "maximum"
 msgstr "maksimum"
 
@@ -7457,7 +7457,7 @@ msgstr "shl 2"
 msgid "shape"
 msgstr "forma"
 
-#: gui2/calculator.c:1985 gui2/gpt_dialog.c:2574
+#: gui2/calculator.c:1985 gui2/gpt_dialog.c:2576
 msgid "scale"
 msgstr "shkalla"
 
@@ -7649,7 +7649,7 @@ msgstr "frekuenca, kampioni 2"
 msgid "H0: Difference of proportions = 0"
 msgstr "H0: Diferenca e frekuencave = 0"
 
-#: gui2/calculator.c:2701 gui2/dialogs.c:1074
+#: gui2/calculator.c:2701 gui2/dialogs.c:1076
 msgid "Show graph of sampling distribution"
 msgstr "Shfaq grafikun e shpërndarjes"
 
@@ -7685,7 +7685,7 @@ msgstr "Nuk gjendet asnjë ndryshore e përshtatshme"
 msgid "gretl: plot a curve"
 msgstr "gretl: vizato një grafik"
 
-#: gui2/calculator.c:3179 gui2/gpt_dialog.c:1908 gui2/gpt_dialog.c:2460
+#: gui2/calculator.c:3179 gui2/gpt_dialog.c:1910 gui2/gpt_dialog.c:2462
 msgid "formula"
 msgstr "formulë"
 
@@ -7909,11 +7909,11 @@ msgstr "Po tërheq të dhënat..."
 msgid "gretl: display database series"
 msgstr "gretl: shfaq seritë e bazës së të dhënave"
 
-#: gui2/database.c:215 gui2/dialogs.c:3456
+#: gui2/database.c:215 gui2/dialogs.c:3458
 msgid "Interpolate higher frequency values"
 msgstr ""
 
-#: gui2/database.c:216 gui2/dialogs.c:3457
+#: gui2/database.c:216 gui2/dialogs.c:3459
 msgid "Repeat the lower frequency values"
 msgstr "Përsërit frekuencën më të vogël"
 
@@ -8302,7 +8302,7 @@ msgstr "Ndryshoret treguese të panelit"
 msgid "Confirm dataset structure"
 msgstr "Pranimi i strukturës së të dhënave"
 
-#: gui2/datawiz.c:168 gui2/dialogs.c:4765 gui2/ssheet.c:844
+#: gui2/datawiz.c:168 gui2/dialogs.c:4769 gui2/ssheet.c:844
 msgid "gretl: name variable"
 msgstr "gretl: emri i ndryshores"
 
@@ -8318,31 +8318,31 @@ msgstr ""
 msgid "No changes were made"
 msgstr "Asnjë ndryshim nuk u bë"
 
-#: gui2/datawiz.c:394 gui2/dialogs.c:3140 gui2/menustate.c:578
+#: gui2/datawiz.c:394 gui2/dialogs.c:3142 gui2/menustate.c:578
 msgid "Annual"
 msgstr "Të dhëna vjetore"
 
-#: gui2/datawiz.c:395 gui2/dialogs.c:3139 gui2/menustate.c:580
+#: gui2/datawiz.c:395 gui2/dialogs.c:3141 gui2/menustate.c:580
 msgid "Quarterly"
 msgstr "Të dhëna tremujore"
 
-#: gui2/datawiz.c:396 gui2/dialogs.c:3145 gui2/menustate.c:582
+#: gui2/datawiz.c:396 gui2/dialogs.c:3147 gui2/menustate.c:582
 msgid "Monthly"
 msgstr "Të dhëna mujore"
 
-#: gui2/datawiz.c:397 gui2/dialogs.c:3144 gui2/menustate.c:586
+#: gui2/datawiz.c:397 gui2/dialogs.c:3146 gui2/menustate.c:586
 msgid "Weekly"
 msgstr "Të dhëna javore"
 
-#: gui2/datawiz.c:398 gui2/dialogs.c:3151
+#: gui2/datawiz.c:398 gui2/dialogs.c:3153
 msgid "Daily (5 days)"
 msgstr "Të dhëna të përditshme (5 ditë në javë)"
 
-#: gui2/datawiz.c:399 gui2/dialogs.c:3152
+#: gui2/datawiz.c:399 gui2/dialogs.c:3154
 msgid "Daily (6 days)"
 msgstr "Të dhëna të përditshme (6 ditë në javë))"
 
-#: gui2/datawiz.c:400 gui2/dialogs.c:3150
+#: gui2/datawiz.c:400 gui2/dialogs.c:3152
 msgid "Daily (7 days)"
 msgstr "Të dhëna të përditshme (7 ditë në javë)"
 
@@ -8382,31 +8382,31 @@ msgstr "Të dhëna individuale"
 msgid "Panel"
 msgstr "Panel"
 
-#: gui2/datawiz.c:500 gui2/dialogs.c:3206
+#: gui2/datawiz.c:500 gui2/dialogs.c:3208
 msgid "Monday"
 msgstr "E hënë"
 
-#: gui2/datawiz.c:501 gui2/dialogs.c:3207
+#: gui2/datawiz.c:501 gui2/dialogs.c:3209
 msgid "Tuesday"
 msgstr "E martë"
 
-#: gui2/datawiz.c:502 gui2/dialogs.c:3208
+#: gui2/datawiz.c:502 gui2/dialogs.c:3210
 msgid "Wednesday"
 msgstr "E mërkurë"
 
-#: gui2/datawiz.c:503 gui2/dialogs.c:3209
+#: gui2/datawiz.c:503 gui2/dialogs.c:3211
 msgid "Thursday"
 msgstr "E enjte"
 
-#: gui2/datawiz.c:504 gui2/dialogs.c:3210
+#: gui2/datawiz.c:504 gui2/dialogs.c:3212
 msgid "Friday"
 msgstr "E premte"
 
-#: gui2/datawiz.c:505 gui2/dialogs.c:3211
+#: gui2/datawiz.c:505 gui2/dialogs.c:3213
 msgid "Saturday"
 msgstr "E shtunë"
 
-#: gui2/datawiz.c:506 gui2/dialogs.c:3205
+#: gui2/datawiz.c:506 gui2/dialogs.c:3207
 msgid "Sunday"
 msgstr "E dielë"
 
@@ -8485,27 +8485,27 @@ msgstr "fillo menjëherë hyrjen e të dhënave"
 msgid "Data structure wizard"
 msgstr "Përcaktimi i strukturës së të dhënave"
 
-#: gui2/dialogs.c:149
+#: gui2/dialogs.c:151
 msgid "Do you want to save this gretl session?"
 msgstr "A doni ta ruani këtë sesion?"
 
-#: gui2/dialogs.c:151
+#: gui2/dialogs.c:153
 msgid "Save a record of the commands you executed?"
 msgstr "A doni t'i ruani komandat që ekzekutuat?"
 
-#: gui2/dialogs.c:153
+#: gui2/dialogs.c:155
 msgid "Always prompt if there are unsaved changes"
 msgstr "Paralajmëro gjithmonë për ndryshime të paruajtura"
 
-#: gui2/dialogs.c:160
+#: gui2/dialogs.c:162
 msgid "save session"
 msgstr "ruaj sesionin"
 
-#: gui2/dialogs.c:160
+#: gui2/dialogs.c:162
 msgid "save commands"
 msgstr "ruaj komandat"
 
-#: gui2/dialogs.c:228
+#: gui2/dialogs.c:230
 msgid ""
 "Do you want to save the changes you made\n"
 "to this session?"
@@ -8513,7 +8513,7 @@ msgstr ""
 "A doni t'i ruani ndryshimet e bëra gjatë këtij\n"
 "sesioni?"
 
-#: gui2/dialogs.c:277 gui2/ssheet.c:2553
+#: gui2/dialogs.c:279 gui2/ssheet.c:2553
 msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
@@ -8521,530 +8521,531 @@ msgstr ""
 "A doni t'i ruani ndryshimet e bëra\n"
 "të dhënave?"
 
-#: gui2/dialogs.c:353
+#: gui2/dialogs.c:355
 msgid "Print missing values as:"
 msgstr "Shfaq vlerat që mungojnë si:"
 
-#: gui2/dialogs.c:454
+#: gui2/dialogs.c:456
 msgid "gretl: data delimiter"
 msgstr "gretl: ndarja e të dhënave"
 
-#: gui2/dialogs.c:461
+#: gui2/dialogs.c:463
 msgid "separator for data columns:"
 msgstr "ndarja e shtyllave të të dhënave"
 
-#: gui2/dialogs.c:465 gui2/dialogs.c:542
+#: gui2/dialogs.c:467 gui2/dialogs.c:544
 msgid "comma (,)"
 msgstr "presja (,)"
 
-#: gui2/dialogs.c:476
+#: gui2/dialogs.c:478
 msgid "space"
 msgstr "hapësirë"
 
-#: gui2/dialogs.c:488
+#: gui2/dialogs.c:490
 msgid "tab"
 msgstr "tabulim"
 
-#: gui2/dialogs.c:500
+#: gui2/dialogs.c:502
 msgid "semicolon"
 msgstr "pikëpresja"
 
-#: gui2/dialogs.c:513
+#: gui2/dialogs.c:515
 msgid "auto-detect"
 msgstr "lër gretl-in të vendosë"
 
-#: gui2/dialogs.c:525
+#: gui2/dialogs.c:527
 msgid "decimal point character:"
 msgstr "karakteri për presjen dhjetore:"
 
-#: gui2/dialogs.c:529
+#: gui2/dialogs.c:531
 msgid "period (.)"
 msgstr "pika (.)"
 
-#: gui2/dialogs.c:556
+#: gui2/dialogs.c:558
 msgid "include observations column"
 msgstr "përshij një shtyllë për vrojtimet"
 
-#: gui2/dialogs.c:707
+#: gui2/dialogs.c:709
 msgid "Tab separated"
 msgstr "Ndarje me tabulime"
 
-#: gui2/dialogs.c:726
+#: gui2/dialogs.c:728
 msgid "Comma separated"
 msgstr "Ndarje me presje"
 
-#: gui2/dialogs.c:745
+#: gui2/dialogs.c:747
 msgid "plain text"
 msgstr "tekst bruto"
 
-#: gui2/dialogs.c:778
+#: gui2/dialogs.c:780
 msgid "gretl: select format"
 msgstr "gretl: zgjidhni llojin"
 
-#: gui2/dialogs.c:794
+#: gui2/dialogs.c:796
 msgid "Copy as:"
 msgstr "Kopjo si:"
 
-#: gui2/dialogs.c:794
+#: gui2/dialogs.c:796
 msgid "Save as"
 msgstr "Ruaj si"
 
-#: gui2/dialogs.c:983 gui2/library.c:1810
+#: gui2/dialogs.c:985 gui2/library.c:1810
 msgid "gretl: bootstrap analysis"
 msgstr "gretl: analizë bootstrap"
 
-#: gui2/dialogs.c:1011
+#: gui2/dialogs.c:1013
 msgid "Confidence interval"
 msgstr "Intervali i besimit"
 
-#: gui2/dialogs.c:1019
+#: gui2/dialogs.c:1021
 msgid "Studentized confidence interval"
 msgstr "Intervali i besimit parametrik (Student)"
 
-#: gui2/dialogs.c:1040
+#: gui2/dialogs.c:1042
 msgid "Resample residuals"
 msgstr "Zgjidh rastësisht mbetjet"
 
-#: gui2/dialogs.c:1048
+#: gui2/dialogs.c:1050
 msgid "Simulate normal errors"
 msgstr "Përdor gabime normalë"
 
-#: gui2/dialogs.c:1060
+#: gui2/dialogs.c:1062
 msgid "Number of replications:"
 msgstr "Numri i njehsimeve:"
 
-#: gui2/dialogs.c:1081
+#: gui2/dialogs.c:1083
 msgid "Save bootstrap data to file"
 msgstr "Ruaj në një skedë të dhënat e boostrap-it"
 
-#: gui2/dialogs.c:1153
+#: gui2/dialogs.c:1155
 msgid "gretl: database description"
 msgstr "gretl: përshkrimi i bazës së të dhënave"
 
-#: gui2/dialogs.c:1157
+#: gui2/dialogs.c:1159
 msgid "description:"
 msgstr "përshkrimi:"
 
-#: gui2/dialogs.c:1218
+#: gui2/dialogs.c:1220
 msgid "gretl: seed for random numbers"
 msgstr "gretl: vlera fillestare për numrat e rastit"
 
-#: gui2/dialogs.c:1222
+#: gui2/dialogs.c:1224
 msgid "Seed for generator:"
 msgstr "Vlera fillestare:"
 
-#: gui2/dialogs.c:1287
+#: gui2/dialogs.c:1289
 msgid "Choose named list"
 msgstr "Zgjidhni listën"
 
-#: gui2/dialogs.c:1382
+#: gui2/dialogs.c:1384
 msgid "gretl: iteration controls"
 msgstr "gretl: hollësi mbi llogaritjet"
 
-#: gui2/dialogs.c:1396
+#: gui2/dialogs.c:1398
 msgid "BHHH maximizer"
 msgstr "maksimizuesi BHHH"
 
-#: gui2/dialogs.c:1397
+#: gui2/dialogs.c:1399
 msgid "BFGS maximizer"
 msgstr "maksimizuesi BFGHS"
 
-#: gui2/dialogs.c:1405
+#: gui2/dialogs.c:1407
 msgid "Maximum iterations:"
 msgstr "Maksimumi i hapava të llogaritjes:"
 
-#: gui2/dialogs.c:1416
+#: gui2/dialogs.c:1418
 msgid "Convergence tolerance:"
 msgstr "Toleranca në konvergjencë:"
 
-#: gui2/dialogs.c:1439
+#: gui2/dialogs.c:1441
 msgid "Use L-BFGS-B, memory size:"
 msgstr "Përdor L-BFGS-B, kujtesa e kompjuterit:"
 
-#: gui2/dialogs.c:1685
+#: gui2/dialogs.c:1687
 #, fuzzy, c-format
 msgid "groups (N = %d)"
 msgstr "%s (n = %d, %s)"
 
-#: gui2/dialogs.c:1687
+#: gui2/dialogs.c:1689
 #, c-format
 msgid "Included groups: %d"
 msgstr "Numri i individëve të përfshirë: %d"
 
-#: gui2/dialogs.c:1689
+#: gui2/dialogs.c:1691
 #, c-format
 msgid "Observations: %d"
 msgstr "Vrojtimet: %d"
 
-#: gui2/dialogs.c:1777
+#: gui2/dialogs.c:1779
 msgid "Panel groups"
 msgstr "Grupet e panelit"
 
-#: gui2/dialogs.c:1784 gui2/dialogs.c:2003
+#: gui2/dialogs.c:1786 gui2/dialogs.c:2005
 msgid "Start:"
 msgstr "Fillimi:"
 
-#: gui2/dialogs.c:1801 gui2/dialogs.c:2003
+#: gui2/dialogs.c:1803 gui2/dialogs.c:2005
 msgid "End:"
 msgstr "Fundi:"
 
-#: gui2/dialogs.c:1971
+#: gui2/dialogs.c:1973
 msgid "gretl: set sample"
 msgstr "gretl: zgjedhja e kampionit"
 
-#: gui2/dialogs.c:1982
+#: gui2/dialogs.c:1984
 #, c-format
 msgid "Number of observations to select (max %d)"
 msgstr "Numri i vrojtimeve të zgjedhura (maks. %d)"
 
-#: gui2/dialogs.c:2002
+#: gui2/dialogs.c:2004
 msgid "Set sample range"
 msgstr "Përcakto kufijtë e kampionit"
 
-#: gui2/dialogs.c:2088
+#: gui2/dialogs.c:2090
 #, fuzzy
 msgid "single graph: group means"
 msgstr " Kliko mbi grafik për të shfaqur mënunë e grafikut"
 
-#: gui2/dialogs.c:2089
+#: gui2/dialogs.c:2091
 msgid "single graph: groups overlaid (N <= 80)"
 msgstr ""
 
-#: gui2/dialogs.c:2090
-msgid "single graph: groups in sequence (N <= 80"
-msgstr ""
+#: gui2/dialogs.c:2092
+#, fuzzy
+msgid "single graph: groups in sequence (N <= 80)"
+msgstr " Kliko mbi grafik për të shfaqur mënunë e grafikut"
 
-#: gui2/dialogs.c:2091
+#: gui2/dialogs.c:2093
 #, fuzzy
 msgid "multiple plots in grid (N <= 9)"
 msgstr "grafikë të shumtë të renditur horizantalisht"
 
-#: gui2/dialogs.c:2092
+#: gui2/dialogs.c:2094
 #, fuzzy
 msgid "multiple plots arranged vertically (N <= 6)"
 msgstr "grafikë të shumtë të renditur vertikalisht"
 
-#: gui2/dialogs.c:2093
+#: gui2/dialogs.c:2095
 msgid "boxplots by group (N <= 150)"
 msgstr ""
 
-#: gui2/dialogs.c:2094
+#: gui2/dialogs.c:2096
 #, fuzzy
 msgid "single boxplot"
 msgstr "gretl: boxplots"
 
-#: gui2/dialogs.c:2105 gui2/dialogs.c:2117
+#: gui2/dialogs.c:2107 gui2/dialogs.c:2119
 #, fuzzy
 msgid "panel plot"
 msgstr "panel"
 
-#: gui2/dialogs.c:2220
+#: gui2/dialogs.c:2222
 msgid "Enter boolean condition for selecting cases:"
 msgstr "Jepni një kusht bolean për të zgjedhur vrojtimet:"
 
-#: gui2/dialogs.c:2227
+#: gui2/dialogs.c:2229
 msgid "gretl: restrict sample"
 msgstr "gretl: kufizimi i kampionit"
 
-#: gui2/dialogs.c:2264
+#: gui2/dialogs.c:2266
 msgid "Use dummy variable:"
 msgstr "Përdor ndryshore treguese:"
 
-#: gui2/dialogs.c:2282
+#: gui2/dialogs.c:2284
 msgid "add to current restriction"
 msgstr "i shtohet kushtit të mëparshëm"
 
-#: gui2/dialogs.c:2290
+#: gui2/dialogs.c:2292
 msgid "replace current restriction"
 msgstr "zëvendëson kushtin e mëparshëm"
 
-#: gui2/dialogs.c:2394
+#: gui2/dialogs.c:2396
 msgid "Observation at which to split the sample:"
 msgstr "Vrojtimi ku kampioni ndahet më dysh:"
 
-#: gui2/dialogs.c:2395
+#: gui2/dialogs.c:2397
 msgid "Name of dummy variable to use:"
 msgstr "Ndryshorja treguese që do të përdoret:"
 
-#: gui2/dialogs.c:2405
+#: gui2/dialogs.c:2407
 msgid "gretl: Chow test"
 msgstr "gretl: testi Chow"
 
-#: gui2/dialogs.c:2543 gui2/dialogs.c:2806
+#: gui2/dialogs.c:2545 gui2/dialogs.c:2808
 msgid "shaded area"
 msgstr "zonë të mbushur"
 
-#: gui2/dialogs.c:2606
+#: gui2/dialogs.c:2608
 msgid "Produce forecast for"
 msgstr "Parashikimi për"
 
-#: gui2/dialogs.c:2657
+#: gui2/dialogs.c:2659
 msgid "Number of pre-forecast observations to graph"
 msgstr "Vizato edhe \"k\" vrojtime para parashikimit: k ="
 
-#: gui2/dialogs.c:2660
+#: gui2/dialogs.c:2662
 msgid "automatic forecast (dynamic out of sample)"
 msgstr "parashikim automatik (dinamik përtej kampionit)"
 
-#: gui2/dialogs.c:2661
+#: gui2/dialogs.c:2663
 msgid "dynamic forecast"
 msgstr "parashikim dinamik"
 
-#: gui2/dialogs.c:2662
+#: gui2/dialogs.c:2664
 msgid "static forecast"
 msgstr "parashikim statik"
 
-#: gui2/dialogs.c:2663
+#: gui2/dialogs.c:2665
 msgid "rolling k-step ahead forecasts: k = "
 msgstr "parashikimi përsëritës mbi k periudha të ardhme: k ="
 
-#: gui2/dialogs.c:2675
+#: gui2/dialogs.c:2677
 msgid "gretl: forecast"
 msgstr "gretl: parashikimi"
 
-#: gui2/dialogs.c:2682
+#: gui2/dialogs.c:2684
 msgid "Forecast range:"
 msgstr "Intervali i parashikimit:"
 
-#: gui2/dialogs.c:2683
+#: gui2/dialogs.c:2685
 msgid "Start"
 msgstr "Fillimi"
 
-#: gui2/dialogs.c:2683
+#: gui2/dialogs.c:2685
 msgid "End"
 msgstr "Fundi"
 
-#: gui2/dialogs.c:2792
+#: gui2/dialogs.c:2794
 msgid "Show fitted values for pre-forecast range"
 msgstr "Vizato përafrimin edhe për \"k\" vrojtimet para parashikimit"
 
-#: gui2/dialogs.c:2805
+#: gui2/dialogs.c:2807
 msgid "low and high lines"
 msgstr "vija të poshtme dhe të sipërme"
 
-#: gui2/dialogs.c:2835
+#: gui2/dialogs.c:2837
 msgid "Plot confidence interval using"
 msgstr "Vizato intervalin e besimit duke përdorur"
 
-#: gui2/dialogs.c:2903
+#: gui2/dialogs.c:2905
 msgid "Add observations"
 msgstr "Shto vrojtime të tjera"
 
-#: gui2/dialogs.c:2916
+#: gui2/dialogs.c:2918
 msgid "Number of observations to add:"
 msgstr "Numri i vrojtimeve për t'u shtuar:"
 
-#: gui2/dialogs.c:3004
+#: gui2/dialogs.c:3006
 msgid "select variable"
 msgstr "zgjidh një ndryshore"
 
-#: gui2/dialogs.c:3183
+#: gui2/dialogs.c:3185
 msgid "Week starts on Monday"
 msgstr "Java fillon të hënën"
 
-#: gui2/dialogs.c:3194
+#: gui2/dialogs.c:3196
 msgid "Week starts on Sunday"
 msgstr "Java fillon të dielën"
 
-#: gui2/dialogs.c:3234
+#: gui2/dialogs.c:3236
 msgid "Compact by averaging"
 msgstr "Përdor mesataren e vlerave"
 
-#: gui2/dialogs.c:3235
+#: gui2/dialogs.c:3237
 msgid "Compact by summing"
 msgstr "Përdor shumën e vlerave "
 
-#: gui2/dialogs.c:3236
+#: gui2/dialogs.c:3238
 msgid "Use end-of-period values"
 msgstr "Përdor vlerat e periudhës së fundit"
 
-#: gui2/dialogs.c:3237
+#: gui2/dialogs.c:3239
 msgid "Use start-of-period values"
 msgstr "Përdor vlerat e periudhës së parë"
 
-#: gui2/dialogs.c:3255
+#: gui2/dialogs.c:3257
 msgid "Default method:"
 msgstr "Metoda a priori:"
 
-#: gui2/dialogs.c:3278
+#: gui2/dialogs.c:3280
 msgid "Use representative day"
 msgstr "Përdor një format për ditën"
 
-#: gui2/dialogs.c:3341
+#: gui2/dialogs.c:3343
 msgid "gretl: compact data"
 msgstr "gretl: ngjeshja e të dhënave"
 
-#: gui2/dialogs.c:3355
+#: gui2/dialogs.c:3357
 #, c-format
 msgid "You are adding a %s series to %s dataset"
 msgstr "Një seri %s po u shtohet të dhënave %s"
 
-#: gui2/dialogs.c:3357
+#: gui2/dialogs.c:3359
 msgid "a quarterly"
 msgstr "tremujore"
 
-#: gui2/dialogs.c:3357
+#: gui2/dialogs.c:3359
 msgid "an annual"
 msgstr "vjetore"
 
-#: gui2/dialogs.c:3362
+#: gui2/dialogs.c:3364
 msgid "Compact quarterly data to annual"
 msgstr "Ngjesh të dhënat tremujore në të dhëna vjetore"
 
-#: gui2/dialogs.c:3365
+#: gui2/dialogs.c:3367
 msgid "Compact monthly data to:"
 msgstr "Ngjesh të dhënat mujore :"
 
-#: gui2/dialogs.c:3371
+#: gui2/dialogs.c:3373
 msgid "Compact daily data to:"
 msgstr "Ngjesh të dhënat ditore :"
 
-#: gui2/dialogs.c:3374
+#: gui2/dialogs.c:3376
 msgid "Compact daily data to weekly"
 msgstr "Ngjesh të dhënat ditore në të dhëna javore"
 
-#: gui2/dialogs.c:3381
+#: gui2/dialogs.c:3383
 msgid "Compact weekly data to monthly"
 msgstr "Ngjesh të dhënat javore në të dhëna mujore"
 
-#: gui2/dialogs.c:3384
+#: gui2/dialogs.c:3386
 msgid "Compact hourly data to:"
 msgstr "Ngjesh të dhënat orare në :"
 
-#: gui2/dialogs.c:3487
+#: gui2/dialogs.c:3489
 msgid "gretl: expand data"
 msgstr "gretl: zgjerimi i të dhënave"
 
-#: gui2/dialogs.c:3490
+#: gui2/dialogs.c:3492
 msgid "Expand annual data to quarterly"
 msgstr "Zgjero të dhënat vjetore në mujore:"
 
-#: gui2/dialogs.c:3492
+#: gui2/dialogs.c:3494
 msgid "Expand quarterly data to monthly"
 msgstr "Zgjero të dhënat tremujore në mujore"
 
-#: gui2/dialogs.c:3651
+#: gui2/dialogs.c:3653
 msgid "density estimation options"
 msgstr "mundësi për përafrimin e densitetit"
 
-#: gui2/dialogs.c:3658 plugin/kernel.c:106
+#: gui2/dialogs.c:3660 plugin/kernel.c:106
 msgid "Gaussian kernel"
 msgstr "kernel Gosjan"
 
-#: gui2/dialogs.c:3668 plugin/kernel.c:107
+#: gui2/dialogs.c:3670 plugin/kernel.c:107
 msgid "Epanechnikov kernel"
 msgstr "kernel Epanechnikov"
 
-#: gui2/dialogs.c:3683
+#: gui2/dialogs.c:3685
 msgid "bandwidth adjustment factor:"
 msgstr "faktori i korrigjimit të intervalit:"
 
-#: gui2/dialogs.c:4035 gui2/library.c:4868
+#: gui2/dialogs.c:4037 gui2/library.c:4868
 msgid "gretl: periodogram"
 msgstr "gretl: periodogram"
 
-#: gui2/dialogs.c:4040
+#: gui2/dialogs.c:4042
 msgid "Sample periodogram"
 msgstr "Periodogrami i kampionit"
 
-#: gui2/dialogs.c:4045
+#: gui2/dialogs.c:4047
 msgid "Bartlett window, bandwidth:"
 msgstr "Dritarja e Bartlett, gjerësia %d"
 
-#: gui2/dialogs.c:4067
+#: gui2/dialogs.c:4069
 msgid "frequency axis scale:"
 msgstr "shkalla e boshtit të frekuencave:"
 
-#: gui2/dialogs.c:4230
+#: gui2/dialogs.c:4234
 msgid "Number of bins:"
 msgstr "Numri i klasave:"
 
-#: gui2/dialogs.c:4231
+#: gui2/dialogs.c:4235
 msgid "Minimum value, left bin:"
 msgstr "Vlera më e vogël, klasa e majtë:"
 
-#: gui2/dialogs.c:4232
+#: gui2/dialogs.c:4236
 msgid "Bin width:"
 msgstr "Gjerësia e klasës:"
 
-#: gui2/dialogs.c:4235
+#: gui2/dialogs.c:4239
 msgid "Show data only"
 msgstr "Vetëm shfaq të dhënat"
 
-#: gui2/dialogs.c:4236
+#: gui2/dialogs.c:4240
 msgid "Test against normal distribution"
 msgstr "Test kundrejt shpërndarjes normale"
 
-#: gui2/dialogs.c:4237
+#: gui2/dialogs.c:4241
 msgid "Test against gamma distribution"
 msgstr "Test kundrejt shpërndarjes gamma"
 
-#: gui2/dialogs.c:4349
+#: gui2/dialogs.c:4353
 msgid "show plot"
 msgstr "shfaq grafikun"
 
-#: gui2/dialogs.c:4418
+#: gui2/dialogs.c:4422
 msgid "Use model names"
 msgstr "Përdor emrat e modeleve"
 
-#: gui2/dialogs.c:4421
+#: gui2/dialogs.c:4425
 msgid "Show standard errors in parentheses"
 msgstr "Shfaq në kllapa gabimin standart"
 
-#: gui2/dialogs.c:4422
+#: gui2/dialogs.c:4426
 msgid "Show t-statistics in parentheses"
 msgstr "Shfaq në kllapa t-Student"
 
-#: gui2/dialogs.c:4440
+#: gui2/dialogs.c:4444
 msgid "model table options"
 msgstr "mundësi zgjedhjeje për tabelën e modeleve"
 
-#: gui2/dialogs.c:4447
+#: gui2/dialogs.c:4451
 msgid "column headings"
 msgstr "titujt e shtyllave"
 
-#: gui2/dialogs.c:4488 gui2/selector.c:4936
+#: gui2/dialogs.c:4492 gui2/selector.c:4936
 msgid "Show p-values"
 msgstr "Shfaq p. kritik"
 
-#: gui2/dialogs.c:4495
+#: gui2/dialogs.c:4499
 msgid "Show significance asterisks"
 msgstr "Trego shkallën e domethënies"
 
-#: gui2/dialogs.c:4504 gui2/dialogs.c:4979 gui2/series_view.c:649
+#: gui2/dialogs.c:4508 gui2/dialogs.c:4983 gui2/series_view.c:649
 msgid "Show"
 msgstr "Shfaq"
 
-#: gui2/dialogs.c:4512 gui2/dialogs.c:4990 gui2/series_view.c:664
+#: gui2/dialogs.c:4516 gui2/dialogs.c:4994 gui2/series_view.c:664
 msgid "significant figures"
 msgstr "vlerat domethënëse"
 
-#: gui2/dialogs.c:4513 gui2/dialogs.c:4987 gui2/series_view.c:665
+#: gui2/dialogs.c:4517 gui2/dialogs.c:4991 gui2/series_view.c:665
 msgid "decimal places"
 msgstr "shifra pas presjes dhjetore"
 
-#: gui2/dialogs.c:4546
+#: gui2/dialogs.c:4550
 msgid "gretl: error"
 msgstr "gretl: gabim"
 
-#: gui2/dialogs.c:4547
+#: gui2/dialogs.c:4551
 msgid "gretl: warning"
 msgstr "gretl: kujdes"
 
-#: gui2/dialogs.c:4548
+#: gui2/dialogs.c:4552
 msgid "gretl: information"
 msgstr "gretl: hollësi"
 
-#: gui2/dialogs.c:4681
+#: gui2/dialogs.c:4685
 #, c-format
 msgid "The maximum must be greater than %g"
 msgstr "Maksimumi duhet të jetë më i madh se %g"
 
-#: gui2/dialogs.c:4702
+#: gui2/dialogs.c:4706
 msgid "Logistic model"
 msgstr "Model logjistik"
 
-#: gui2/dialogs.c:4710
+#: gui2/dialogs.c:4714
 msgid ""
 "Maximum (asymptote) for the\n"
 "dependent variable"
@@ -9052,15 +9053,15 @@ msgstr ""
 "Maksimumi (asimptotë) i\n"
 "ndryshores së varur"
 
-#: gui2/dialogs.c:4930
+#: gui2/dialogs.c:4934
 msgid "gretl: TeX tabular format"
 msgstr "gretl: lloji i tabelës TeX"
 
-#: gui2/dialogs.c:4937 gui2/series_view.c:640
+#: gui2/dialogs.c:4941 gui2/series_view.c:640
 msgid "Standard format"
 msgstr "Format standart"
 
-#: gui2/dialogs.c:4940
+#: gui2/dialogs.c:4944
 msgid "Custom format"
 msgstr "Format vetjak"
 
@@ -9759,7 +9760,7 @@ msgstr "Vlerat numerike"
 msgid "Font"
 msgstr "Fonte"
 
-#: gui2/gpt_control.c:3372 gui2/gpt_dialog.c:2631 gui2/graphics.c:257
+#: gui2/gpt_control.c:3372 gui2/gpt_dialog.c:2633 gui2/graphics.c:257
 #: gui2/graph_page.c:608
 msgid "color"
 msgstr "me ngjyra"
@@ -9804,7 +9805,7 @@ msgstr "Zgjidh ngjyrën"
 msgid "Invalid label position, must be X Y"
 msgstr "Pozicion i pavlefshëm për të vënë një etiketë"
 
-#: gui2/gpt_dialog.c:1094 gui2/gpt_dialog.c:1129 gui2/gpt_dialog.c:1826
+#: gui2/gpt_dialog.c:1094 gui2/gpt_dialog.c:1129 gui2/gpt_dialog.c:1828
 #: gui2/graphics.c:432
 #, c-format
 msgid "font: %s"
@@ -9827,7 +9828,7 @@ msgstr "Ngjyra %d"
 msgid "Reset to default"
 msgstr "Rikthe vlerat e zakonshme"
 
-#: gui2/gpt_dialog.c:1445 gui2/gpt_dialog.c:1801
+#: gui2/gpt_dialog.c:1445 gui2/gpt_dialog.c:1803
 msgid "other..."
 msgstr "të tjera..."
 
@@ -9843,165 +9844,165 @@ msgstr ""
 msgid "See example"
 msgstr "Shiko shembujt"
 
-#: gui2/gpt_dialog.c:1564 gui2/gpt_dialog.c:1566
+#: gui2/gpt_dialog.c:1566 gui2/gpt_dialog.c:1568
 msgid "None"
 msgstr "ASnjë"
 
-#: gui2/gpt_dialog.c:1571
+#: gui2/gpt_dialog.c:1573
 msgid "TrueType font"
 msgstr "shkrimi TrueType"
 
-#: gui2/gpt_dialog.c:1628
+#: gui2/gpt_dialog.c:1630
 msgid "Main"
 msgstr "Faqja kryesore"
 
-#: gui2/gpt_dialog.c:1666
+#: gui2/gpt_dialog.c:1668
 msgid "key position"
 msgstr "Legjenda"
 
-#: gui2/gpt_dialog.c:1692
+#: gui2/gpt_dialog.c:1694
 msgid "fitted line"
 msgstr "vija e përafrimit"
 
-#: gui2/gpt_dialog.c:1729
+#: gui2/gpt_dialog.c:1731
 msgid "Use only one y axis"
 msgstr "Përdor vetëm një bosht y"
 
-#: gui2/gpt_dialog.c:1742
+#: gui2/gpt_dialog.c:1744
 msgid "Show full border"
 msgstr "Shfaq kufijtë e grafikut"
 
-#: gui2/gpt_dialog.c:1754
+#: gui2/gpt_dialog.c:1756
 msgid "Show grid"
 msgstr "Shfaq rrjetën e grafikut"
 
-#: gui2/gpt_dialog.c:1772
+#: gui2/gpt_dialog.c:1774
 msgid "Allow anti-aliasing of lines"
 msgstr "Lejo anti-aliasing për vijat"
 
-#: gui2/gpt_dialog.c:1790
+#: gui2/gpt_dialog.c:1792
 msgid "Show bars"
 msgstr "Shfaq zona me dritëhije"
 
-#: gui2/gpt_dialog.c:1799
+#: gui2/gpt_dialog.c:1801
 msgid "NBER recessions"
 msgstr "Reçesionet sipas NBER"
 
-#: gui2/gpt_dialog.c:1843 gui2/selector.c:3681
+#: gui2/gpt_dialog.c:1845 gui2/selector.c:3681
 msgid "Set as default"
 msgstr "Kujto gjithmonë këtë zgjedhje"
 
-#: gui2/gpt_dialog.c:1901 gui2/gpt_dialog.c:2198
+#: gui2/gpt_dialog.c:1903 gui2/gpt_dialog.c:2200
 #, c-format
 msgid "line %d: "
 msgstr "vija %d : "
 
-#: gui2/gpt_dialog.c:2050
+#: gui2/gpt_dialog.c:2052
 msgid "No formula was given"
 msgstr "Asnjë formulë nuk u dha"
 
-#: gui2/gpt_dialog.c:2170 gui2/selector.c:3913
+#: gui2/gpt_dialog.c:2172 gui2/selector.c:3913
 msgid "Remove"
 msgstr "Hiq"
 
-#: gui2/gpt_dialog.c:2187
+#: gui2/gpt_dialog.c:2189
 msgid "quartiles"
 msgstr "kuartilet"
 
-#: gui2/gpt_dialog.c:2193
+#: gui2/gpt_dialog.c:2195
 msgid "lower bound"
 msgstr "kufiri i poshtëm"
 
-#: gui2/gpt_dialog.c:2195
+#: gui2/gpt_dialog.c:2197
 msgid "upper bound"
 msgstr "kufiri i sipërm"
 
-#: gui2/gpt_dialog.c:2214
+#: gui2/gpt_dialog.c:2216
 #, c-format
 msgid "label %d: "
 msgstr "përshkrimi %d : "
 
-#: gui2/gpt_dialog.c:2424
+#: gui2/gpt_dialog.c:2426
 msgid "Lines"
 msgstr "Vijat"
 
-#: gui2/gpt_dialog.c:2491
+#: gui2/gpt_dialog.c:2493
 msgid "legend"
 msgstr "legjenda"
 
-#: gui2/gpt_dialog.c:2517
+#: gui2/gpt_dialog.c:2519
 msgid "type"
 msgstr "lloji"
 
-#: gui2/gpt_dialog.c:2549
+#: gui2/gpt_dialog.c:2551
 msgid "point"
 msgstr "pika"
 
-#: gui2/gpt_dialog.c:2590
+#: gui2/gpt_dialog.c:2592
 msgid "y axis"
 msgstr "boshti y"
 
-#: gui2/gpt_dialog.c:2607
+#: gui2/gpt_dialog.c:2609
 msgid "line width"
 msgstr "trashësia e vijës"
 
-#: gui2/gpt_dialog.c:2681
+#: gui2/gpt_dialog.c:2683
 msgid "Add line..."
 msgstr "Shto një vijë..."
 
-#: gui2/gpt_dialog.c:2717
+#: gui2/gpt_dialog.c:2719
 msgid "Labels"
 msgstr "Përshkrimet"
 
-#: gui2/gpt_dialog.c:2748
+#: gui2/gpt_dialog.c:2750
 msgid "text"
 msgstr "tekst"
 
-#: gui2/gpt_dialog.c:2765
+#: gui2/gpt_dialog.c:2767
 msgid "position (X Y)"
 msgstr "vendndodhja (X Y)"
 
-#: gui2/gpt_dialog.c:2802
+#: gui2/gpt_dialog.c:2804
 msgid "justification"
 msgstr "organizimi i shkrimit"
 
-#: gui2/gpt_dialog.c:2832 gui2/ssheet.c:124
+#: gui2/gpt_dialog.c:2834 gui2/ssheet.c:124
 msgid "Add..."
 msgstr "Shto..."
 
-#: gui2/gpt_dialog.c:2852
+#: gui2/gpt_dialog.c:2854
 msgid "X-axis"
 msgstr "boshti X"
 
-#: gui2/gpt_dialog.c:2854
+#: gui2/gpt_dialog.c:2856
 msgid "Y-axis"
 msgstr "boshti Y"
 
-#: gui2/gpt_dialog.c:2856
+#: gui2/gpt_dialog.c:2858
 msgid "Y2-axis"
 msgstr "boshti Y dytësor"
 
-#: gui2/gpt_dialog.c:2906
+#: gui2/gpt_dialog.c:2908
 msgid "auto axis range"
 msgstr "shtrirje automatike e boshteve"
 
-#: gui2/gpt_dialog.c:2919
+#: gui2/gpt_dialog.c:2921
 msgid "manual range:"
 msgstr "shtrirje manuale :"
 
-#: gui2/gpt_dialog.c:2994
+#: gui2/gpt_dialog.c:2996
 msgid "linear scale"
 msgstr "shkallë lineare"
 
-#: gui2/gpt_dialog.c:3002
+#: gui2/gpt_dialog.c:3004
 msgid "logarithmic scale, base:"
 msgstr "shkallë logaritmike me bazë :"
 
-#: gui2/gpt_dialog.c:3038
+#: gui2/gpt_dialog.c:3040
 msgid "Palette"
 msgstr "Ngjyrat"
 
-#: gui2/gpt_dialog.c:3041
+#: gui2/gpt_dialog.c:3043
 msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
@@ -10009,15 +10010,15 @@ msgstr ""
 "Këto ngjyra do të përdoren automatikisht për aq kohë sa\n"
 "nuk do të ndryshohen enkas për grafikun në përdorim \n"
 
-#: gui2/gpt_dialog.c:3258
+#: gui2/gpt_dialog.c:3260
 msgid "Title of plot"
 msgstr "Titulli i grafikut"
 
-#: gui2/gpt_dialog.c:3259
+#: gui2/gpt_dialog.c:3261
 msgid "Title for axis"
 msgstr "Titulli i boshtit"
 
-#: gui2/gpt_dialog.c:3284
+#: gui2/gpt_dialog.c:3286
 msgid "gretl plot controls"
 msgstr "kontrolle për grafikun e gretl"
 
@@ -14165,99 +14166,99 @@ msgstr ""
 msgid "gretl: options"
 msgstr "gretl: mundësi zgjedhjeje"
 
-#: gui2/settings.c:957 gui2/settings.c:2322
+#: gui2/settings.c:959 gui2/settings.c:2324
 msgid "Browse..."
 msgstr "Kërko..."
 
-#: gui2/settings.c:995
+#: gui2/settings.c:997
 msgid "English (US letter paper)"
 msgstr "English (fletë format US)"
 
-#: gui2/settings.c:996
+#: gui2/settings.c:998
 msgid "English (A4 paper)"
 msgstr "English (fletë format A4)"
 
-#: gui2/settings.c:997
+#: gui2/settings.c:999
 msgid "Italian"
 msgstr "Italiano"
 
-#: gui2/settings.c:998
+#: gui2/settings.c:1000
 msgid "Spanish"
 msgstr "Espagnol"
 
-#: gui2/settings.c:1099 plugin/tramo_options.c:346
+#: gui2/settings.c:1101 plugin/tramo_options.c:346
 msgid "General"
 msgstr "Të përgjithshme"
 
-#: gui2/settings.c:1101
+#: gui2/settings.c:1103
 msgid "Databases"
 msgstr "Bazat e të dhënave"
 
-#: gui2/settings.c:1103
+#: gui2/settings.c:1105
 msgid "Programs"
 msgstr "Programet"
 
-#: gui2/settings.c:1105
+#: gui2/settings.c:1107
 msgid "HCCME"
 msgstr "Metoda për korrigjim të HC"
 
-#: gui2/settings.c:1107
+#: gui2/settings.c:1109
 msgid "Manuals"
 msgstr "Manualet"
 
-#: gui2/settings.c:1415
+#: gui2/settings.c:1417
 msgid "Fixed font..."
 msgstr "Shkrimi fiks..."
 
-#: gui2/settings.c:1429
+#: gui2/settings.c:1431
 msgid "Menu font..."
 msgstr "Shkrimi i menusë..."
 
-#: gui2/settings.c:1443
+#: gui2/settings.c:1445
 msgid "Working directory..."
 msgstr "Skedari i punës..."
 
-#: gui2/settings.c:1599
+#: gui2/settings.c:1601
 msgid "This change will take effect when you restart gretl"
 msgstr "Ndryshimi vihet në jetë pas mbylljes së gretl"
 
-#: gui2/settings.c:2136
+#: gui2/settings.c:2138
 msgid "Font for gretl output windows"
 msgstr "Shkrimi për dritaren e rezultatit të gretl"
 
-#: gui2/settings.c:2140
+#: gui2/settings.c:2142
 msgid "Font for menus and labels"
 msgstr "Shkrimi për menutë dhe etiketat"
 
-#: gui2/settings.c:2307
+#: gui2/settings.c:2309
 msgid "Working directory:"
 msgstr "Skedari i punës:"
 
-#: gui2/settings.c:2331
+#: gui2/settings.c:2333
 msgid "On start-up, gretl should use:"
 msgstr "Kur hapet, gretl-i duhet të përdorë:"
 
-#: gui2/settings.c:2338
+#: gui2/settings.c:2340
 msgid "the directory selected above"
 msgstr "skedarin e zgjedhur më sipër"
 
-#: gui2/settings.c:2345
+#: gui2/settings.c:2347
 msgid "the current directory as determined via the shell"
 msgstr "skedarin në përdorim të përcaktuar nëpërmjet konsolës"
 
-#: gui2/settings.c:2355
+#: gui2/settings.c:2357
 msgid "The file selection dialog should:"
 msgstr "Dritarja për zgjedhjen e skedës duhet të tregojë:"
 
-#: gui2/settings.c:2362
+#: gui2/settings.c:2364
 msgid "remember the last-opened folder"
 msgstr "skedarin e fundit të hapur "
 
-#: gui2/settings.c:2371
+#: gui2/settings.c:2373
 msgid "always start in the working directory"
 msgstr "skedarin e zakonshëm të gretl-it "
 
-#: gui2/settings.c:2425
+#: gui2/settings.c:2427
 msgid "gretl: working directory"
 msgstr "gretl: skedari i punës"
 
