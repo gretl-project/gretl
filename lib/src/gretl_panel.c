@@ -1091,6 +1091,10 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	gxbar = 0.0;
 	s = 0;
 
+#if PDEBUG
+	strcpy(winfo->varname[j], pdinfo->varname[vj]);
+#endif
+
 	for (i=0; i<pan->nunits; i++) {
 	    int Ti = pan->unit_obs[i];
 	    int got = 0;
@@ -1915,6 +1919,7 @@ static void verbose_femod_print (MODEL *femod, double **wZ,
 {
     int i, j;
 
+    pprintf(prn, "*** initial FE model (on within data)\n");
     printmodel(femod, winfo, OPT_O, prn);
 
     fprintf(stderr, "femod: data series length = %d\n", winfo->n);
@@ -2998,6 +3003,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     free(olslist);
 
 #if PDEBUG
+    pprintf(prn, "*** initial baseline OLS\n");
     printmodel(&mod, pdinfo, OPT_NONE, prn);
 #endif
 

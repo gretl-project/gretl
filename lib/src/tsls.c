@@ -710,34 +710,56 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     return err;
 }
 
+static int obs_is_ok (const char *mask, int t, int t1, const double *y)
+{
+    return (mask == NULL || !mask[t - t1]) && !na(y[t]);
+}
+
 static void panel_demean_series (double *targ, double *src, 
 				 const DATAINFO *pdinfo, 
 				 const char *mask)
 {
-    int t, t0, u, j, T;
-    double xbar;
+    int t, t0, u, j, T, okT, NT = 0;
+    double xbar, gxbar = 0.0;
+
+    /* remove the group means */
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xbar = 0.0;
 	u = t / pdinfo->pd;
 	t0 = t;
-	T = 0;
+	okT = 0;
+	T = 1;
 	while (1) {
-	    if (mask == NULL || !mask[t - pdinfo->t1]) {
-		if (!na(src[t])) {
-		    xbar += src[t];
-		    T++;
-		}
-	    }
+	    if (obs_is_ok(mask, t, pdinfo->t1, src)) {
+		xbar += src[t];
+		okT++;
+	    } 
 	    if ((t + 1) / pdinfo->pd == u) {
+		T++;
 		t++;
 	    } else {
 		break;
 	    }
 	}
-	xbar /= T;
+	gxbar += xbar;
+	NT += okT;
+	xbar /= okT;
 	for (j=0; j<T; j++) {
-	    targ[t0+j] = src[t0+j] - xbar;
+	    if (obs_is_ok(mask, t, pdinfo->t1, src)) {
+		targ[t0+j] = src[t0+j] - xbar;
+	    } else {
+		targ[t0+j] = NADBL;
+	    }
+	}
+    }
+
+    /* add back the grand mean */
+
+    gxbar /= NT;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(targ[t])) {
+	    targ[t] += gxbar;
 	}
     }
 }
@@ -748,6 +770,8 @@ panel_demean_data_matrix (gretl_matrix *X, int t1, int t2,
 {
     int s, s0, t, u, i, j, T;
     double xti, xbar;
+
+    /* FIXME this is not right! */
 
     for (i=0; i<X->cols; i++) {
 	s = 0;
@@ -790,6 +814,10 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
     int *droplist = NULL;
     double test;
     int i, j, k;
+
+    if (opt & OPT_F) {
+	gretl_list_purge_const(instlist, Z, pdinfo);
+    }
 
     Q = gretl_matrix_data_subset_masked(instlist, Z, pdinfo->t1, pdinfo->t2, 
 					mask, err);
@@ -934,27 +962,9 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
     return 0;
 }
 
-static void fe_adjust_df (MODEL *pmod, const DATAINFO *pdinfo)
-{
-    int t, u, N = 0, ubak = -1;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!model_missing(pmod, t)) {
-	    u = t / pdinfo->pd;
-	    if (u != ubak) {
-		N++;
-	    } 
-	    ubak = u;
-	}
-    }
-
-    pmod->dfn += N - 1;
-    pmod->dfd -= N;
-}
-
 static void tsls_residuals (MODEL *pmod, const int *reglist, 
 			    const double **Z, const DATAINFO *pdinfo,
-			    gretlopt opt)
+			    int panel_N, gretlopt opt)
 {
     int yno = reglist[1];
     double sigma0 = pmod->sigma;
@@ -981,17 +991,26 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
     }
 
     if (opt & OPT_F) {
-	double x;
+	double x, ubar = usum / pmod->nobs;
 
-	fprintf(stderr, "ubar = %g\n", usum / pmod->nobs);
-	fe_adjust_df(pmod, pdinfo);
-	panel_demean_series(pmod->uhat, pmod->uhat, pdinfo, NULL);
-	pmod->ess = pmod->tss = 0;
+	fprintf(stderr, "ubar = %g\n", ubar);
+	fprintf(stderr, "ybar = %g\n", pmod->ybar);
+	fprintf(stderr, "sdy = %g\n", pmod->sdy);
+
+	yno = reglist[1];
+	
+	// pmod->coeff[0] = x;
+	pmod->dfn += panel_N - 1;
+	pmod->dfd -= panel_N - 1;
+	// panel_demean_series(pmod->uhat, pmod->uhat, pdinfo, NULL); /* ?? */
+	// pmod->ess = pmod->tss = 0;
+	pmod->tss = 0;
 	pmod->ybar = ysum / pmod->nobs;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!model_missing(pmod, t)) {
-		pmod->yhat[t] = Z[yno][t] - pmod->uhat[t];
-		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		// pmod->uhat[t] -= ubar;
+		// pmod->yhat[t] = Z[yno][t] - pmod->uhat[t];
+		// pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 		x = Z[yno][t] - pmod->ybar;
 		pmod->tss += x * x;
 	    }
@@ -1425,12 +1444,30 @@ static void mask_panel_singletons (char *mask, int t1, int t2, int pd,
     }
 }
 
-static int 
-tsls_adjust_sample (const int *list, int *t1, int *t2, 
-		    const double **Z, const DATAINFO *pdinfo,
-		    gretlopt opt, char **pmask)
+static int get_panel_N (const DATAINFO *pdinfo, const char *mask)
 {
-    int i, t, t1min = *t1, t2max = *t2;
+    int t, u, ubak = -1;
+    int N = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (mask == NULL || !mask[t - pdinfo->t1]) {
+	    u = t / pdinfo->pd;
+	    if (u != ubak) {
+		N++;
+	    } 
+	    ubak = u;
+	}
+    }
+
+    return N;
+}
+
+static int tsls_adjust_sample (const int *list, 
+			       const double **Z, DATAINFO *pdinfo,
+			       gretlopt opt, char **pmask,
+			       int *panel_N)
+{
+    int i, t, t1min = pdinfo->t1, t2max = pdinfo->t2;
     char *mask = NULL;
     int T, vi, missobs;
     int err = 0;
@@ -1542,8 +1579,14 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 	    t1min, t2max, missobs, t2max - t1min + 1 - missobs);
 #endif
 
-    *t1 = t1min; 
-    *t2 = t2max;
+    if (!err) {
+	pdinfo->t1 = t1min; 
+	pdinfo->t2 = t2max;
+	if (opt & OPT_F) {
+	    *panel_N = get_panel_N(pdinfo, mask);
+	}
+    }
+
     *pmask = mask;
 
     return err;
@@ -1608,6 +1651,19 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
     return err;
 }
 
+static int reglist_has_const (const int *list)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 #define TSLS_FE 1 /* experimental */
 
 /**
@@ -1633,12 +1689,14 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     MODEL tsls;
     gretl_matrix *Q = NULL;
     char *missmask = NULL;
+    int panel_N = 0;
     int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
     int *reglist = NULL, *instlist = NULL;
     int *hatlist = NULL, *s2list = NULL;
     int *exolist = NULL, *endolist = NULL;
     int *droplist = NULL;
     int addconst = 0, addvars = 0;
+    int ninst = 0, nreg = 0;
     int orig_nvar = pdinfo->v;
     int sysest = (opt & OPT_E);
     int nendo, ev = 0;
@@ -1662,10 +1720,15 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return tsls;
     }
 
+    if ((opt & OPT_F) && !reglist_has_const(reglist)) {
+	gretl_errmsg_set("Panel models must include an intercept");
+	tsls.errcode = E_DATA;
+	return tsls;
+    }
+
     /* adjust sample range for missing observations */
-    err = tsls_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-			     (const double **) *pZ, pdinfo, 
-			     opt, &missmask);
+    err = tsls_adjust_sample(list, (const double **) *pZ, pdinfo, 
+			     opt, &missmask, &panel_N);
 
     if (!err) {
 	/* allocate second stage regression list */
@@ -1726,7 +1789,13 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* check (again) for order condition: we do this after tsls_Q in case
        any vars get dropped at that stage
     */
-    OverIdRank = instlist[0] - reglist[0] + 1;
+    ninst = instlist[0];
+    nreg = reglist[0] - 1;
+    if (opt & OPT_F) {
+	ninst += panel_N;
+	nreg += panel_N - 1;
+    }    
+    OverIdRank = ninst - nreg;
     if (OverIdRank < 0) {
         gretl_errmsg_sprintf(_("The order condition for identification is not satisfied.\n"
 			       "At least %d more instruments are needed."), -OverIdRank);
@@ -1738,7 +1807,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
     addvars = nendo;
 #if TSLS_FE
     if (opt & OPT_F) {
-	addvars += reglist[0];
+	addvars += reglist[0] - 1;
     }
 #endif
     if (addvars > 0) {
@@ -1793,7 +1862,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<reglist[0]; i++) {
 	    int v0 = reglist[i+1];
 
-	    if (!in_gretl_list(endolist, v0)) {
+	    if (v0 != 0 && !in_gretl_list(endolist, v0)) {
 		int v1 = orig_nvar + nendo + k++;
 		double *x = (*pZ)[v0];
 		double *y = (*pZ)[v1];
@@ -1839,7 +1908,7 @@ MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
 	/* special: we need to use the original RHS vars to compute
 	   residuals and associated statistics */
 	tsls_residuals(&tsls, reglist, (const double **) *pZ, 
-		       pdinfo, opt);
+		       pdinfo, panel_N, opt);
     }
 
     if (opt & OPT_R) {
