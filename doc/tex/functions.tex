@@ -555,17 +555,18 @@ returns 1 when given the name of a string variable, 0 otherwise.
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
-they can return a single variable --- a scalar, series, list, matrix
-or string.  The return value, if any, is specified via a statement
-within the function body beginning with the keyword \texttt{return},
-followed by either the name of a variable (which must be of the type
-announced on the first line of the function definition) or an
-expression which produces a value of the correct type.
+they can return a single variable --- a scalar, series, list, matrix,
+string, or bundle (see section~\ref{sec:Bundles}).  The return value,
+if any, is specified via a statement within the function body
+beginning with the keyword \texttt{return}, followed by either the
+name of a variable (which must be of the type announced on the first
+line of the function definition) or an expression which produces a
+value of the correct type.
 
-Having a function return a list is one way of permitting the
-``return'' of more than one variable.  That is, you can define several
-variable inside a function and package them as a list; in this case
-they are not destroyed when the function exits.  Here is a simple
+Having a function return a list or bundle is a way of permitting the
+``return'' of more than one variable.  For example, you can define
+several series inside a function and package them as a list; in this
+case they are not destroyed when the function exits.  Here is a simple
 example, which also illustrates the possibility of setting the
 descriptive labels for variables generated in a function.
 %    
