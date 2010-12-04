@@ -5,6 +5,9 @@ version 1.9.4, in progress
 - Add more panel data graphing options -- time-series of
   group means and boxplots by group -- and redesign the
   GUI for panel plots
+- Fix bug: estimates getting out of order for some
+  equation systems if the constant was not given in first
+  place among the regressors
   
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)

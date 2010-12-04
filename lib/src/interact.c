@@ -3397,7 +3397,10 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 	if (is_first_lag(i, cmd->list, gotsep, cmd->linfo, &src)) {
 	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, 
 					  gotsep, prn);
-	} 
+	} else if (cmd->ci == EQUATION && i == 1) {
+	    pputc(prn, ' ');
+	    bytes += 1 + pputs(prn, pdinfo->varname[v]);
+	}
     } else {
 	pputc(prn, ' ');
 	bytes += 1 + pputs(prn, pdinfo->varname[v]);
@@ -3700,7 +3703,11 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    llen += pputs(prn, s);
 	}
     } else {
-	llen += pprintf(prn, "%s", cmd->word);
+	if (cmd->ci == EQUATION) {
+	    llen += pprintf(prn, " %s", cmd->word);
+	} else {
+	    llen += pprintf(prn, "%s", cmd->word);
+	}
 	cmd_print_list(cmd, pdinfo, &llen, prn);
     } 
 

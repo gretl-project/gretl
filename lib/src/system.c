@@ -497,9 +497,9 @@ void equation_system_destroy (equation_system *sys)
     free(sys);
 }
 
-static void sur_rearrange_lists (equation_system *sys,
-				 const double **Z,
-				 const DATAINFO *pdinfo)
+static void sys_rearrange_eqn_lists (equation_system *sys,
+				     const double **Z,
+				     const DATAINFO *pdinfo)
 {
     int i;
 
@@ -519,8 +519,7 @@ static void sur_rearrange_lists (equation_system *sys,
  * @sys is destroyed.
  */
 
-int equation_system_append (equation_system *sys, 
-			    const int *list)
+int equation_system_append (equation_system *sys, const int *list)
 {
     int n;
 
@@ -1079,9 +1078,10 @@ equation_system_estimate (equation_system *sys,
     /* in case we're re-estimating */
     system_clear_results(sys);
 
-    if (sys->method == SYS_METHOD_SUR) {
-	sur_rearrange_lists(sys, (const double **) *pZ, pdinfo);
-    }
+    /* AC 2010-12-04; we were doing the following only for SUR,
+       but it seems we have to do it generally.
+    */
+    sys_rearrange_eqn_lists(sys, (const double **) *pZ, pdinfo);
 
     system_est = get_plugin_function("system_estimate", &handle);
 

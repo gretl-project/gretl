@@ -103,8 +103,7 @@ equation_system *equation_system_start (const char *line,
 
 char *get_system_name_from_line (const char *s, int context);
 
-int equation_system_append (equation_system *sys, 
-			    const int *list);
+int equation_system_append (equation_system *sys, const int *list);
 
 int system_parse_line (equation_system *sys,
 		       const char *line,
