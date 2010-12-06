@@ -220,7 +220,6 @@ struct gretl_option gretl_opts[] = {
     { HELP,     OPT_F, "func", 0 },
     { INTREG,   OPT_R, "robust", 0 },
     { INTREG,   OPT_V, "verbose", 0 },
-    { IVREG,    OPT_F, "fixed-effects", 0 },    
     { IVREG,    OPT_G, "gmm", 0 },
     { IVREG,    OPT_I, "iterate", 0 },
     { IVREG,    OPT_L, "liml", 0 },
