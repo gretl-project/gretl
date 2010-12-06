@@ -8,6 +8,8 @@ version 1.9.4, in progress
 - Fix bug: estimates getting out of order for some
   equation systems if the constant was not given in first
   place among the regressors
+- Fix bug: the "diff" command applied to a lead of a series
+  could produce spurious values with panel data
   
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)

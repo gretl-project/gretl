@@ -354,51 +354,39 @@ void gretl_transforms_cleanup (void)
     testvec(0);
 }
 
-/* write lagged values of variable v into lagvec */
+/* write lagged values of variable v into xlag */
 
-static int get_lag (int v, int lag, double *lagvec, 
+static int get_lag (int v, int lag, double *xlag, 
 		    const double **Z, const DATAINFO *pdinfo)
 {
+    const double *x = Z[v];
     int t1 = (lag > 0)? lag : 0;
     int t2 = pdinfo->n - 1;
-    int t, lt, miss;
+    int t, s, miss;
 
     for (t=0; t<pdinfo->n; t++) {
-	lagvec[t] = NADBL;
+	xlag[t] = NADBL;
     }
 
     if (dated_daily_data(pdinfo)) {
 	for (t=t1; t<=t2; t++) {
-	    lt = t - lag;
+	    s = t - lag;
 	    miss = 0;
-	    while (na(Z[v][lt]) && lt > 0 && miss < 6) {
-		lt--;
+	    while (na(x[s]) && s > 0 && miss < 6) {
+		s--;
 		miss++;
 	    }
-	    lagvec[t] = Z[v][lt];
+	    xlag[t] = x[s];
 	}
     } else { 
-	/* the "standard" time-series case */
 	for (t=t1; t<=t2; t++) {
-	    lt = t - lag;
-	    if (lt < 0 || lt >= pdinfo->n) {
+	    s = t - lag;
+	    if (pdinfo->structure == STACKED_TIME_SERIES &&
+		t / pdinfo->pd != s / pdinfo->pd) {
 		continue;
-	    }
-	    lagvec[t] = Z[v][lt];
-	}
-    }
-
-    /* post-process missing panel values */
-    if (pdinfo->structure == STACKED_TIME_SERIES) {
-	char *p, obs[OBSLEN];
-	int j;
-
-	for (t=t1; t<=t2; t++) {
-	    ntodate(obs, t, pdinfo);
-	    p = strchr(obs, ':');
-	    j = atoi(p + 1);
-	    if (j <= lag) {
-		lagvec[t] = NADBL;
+	    }	    
+	    if (s >= 0 && s < pdinfo->n) {
+		xlag[t] = x[s];
 	    }
 	}
     }
