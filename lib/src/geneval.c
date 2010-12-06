@@ -3882,36 +3882,15 @@ static NODE *list_to_string_func (NODE *n, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
 
-	if (list == NULL) {
-	    p->err = E_ALLOC;
+	if (p->err) {
 	    return ret;
 	}
 
 	if (f == F_VARNAME) {
-	    if (list[0] == 0) {
-		/* empty list -> empty string */
-		ret->v.str = gretl_strdup("");
-	    } else {
-		int i, vi;
-		char *s = NULL;
-
-		for (i=1; i<=list[0]; i++) {
-		    vi = list[i];
-		    if (vi >= 0 && vi < p->dinfo->v) {
-			s = gretl_str_expand(&s, p->dinfo->varname[vi], ",");
-			if (s == NULL) {
-			    break;
-			}
-		    }
-		}
-		ret->v.str = s;
-	    }
+	    ret->v.str = gretl_list_get_names(list, p->dinfo,
+					      &p->err);
 	} else {
 	    p->err = E_DATA;
-	}
-
-	if (!p->err && ret->v.str == NULL) {
-	    p->err = E_ALLOC;
 	}
 
 	free(list);

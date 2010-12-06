@@ -1353,6 +1353,67 @@ char *gretl_list_to_string (const int *list)
 }
 
 /**
+ * gretl_list_get_names:
+ * @list: array of integers.
+ * @pdinfo: dataset information.
+ * @err: location to receive error code.
+ * 
+ * Prints the names of the members of @list of integers into 
+ * a newly allocated string, separated by single spaces.
+ *
+ * Returns: The string representation of the list on success,
+ * or NULL on failure.
+ */
+
+char *gretl_list_get_names (const int *list, const DATAINFO *pdinfo,
+			    int *err)
+{
+    char *buf = NULL;
+    int len = 0;
+    int i, vi;
+
+    if (list == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (list[0] == 0) {
+	return gretl_strdup("");
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi < 0 || vi >= pdinfo->v) {
+	    len += strlen("unknown") + 1;
+	} else {
+	    len += strlen(pdinfo->varname[vi]) + 1;
+	}
+    }
+
+    buf = malloc(len);
+    if (buf == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    *buf = '\0';
+
+    for (i=1; i<=list[0]; i++) {
+	vi = list[i];
+	if (vi < 0 || vi >= pdinfo->v) {
+	    strncat(buf, "unknown", strlen("unknown"));
+	} else {
+	    strncat(buf, pdinfo->varname[vi], strlen(pdinfo->varname[vi]));
+	}
+	if (i < list[0]) {
+	    strncat(buf, ",", 1);
+	}
+    }    
+	
+    return buf;
+}
+
+/**
  * gretl_list_to_lags_string:
  * @list: array of integers.
  * @err: location to receive error code.

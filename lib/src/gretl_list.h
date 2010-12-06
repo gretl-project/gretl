@@ -52,6 +52,9 @@ char *gretl_list_to_string (const int *list);
 
 char *gretl_list_to_lags_string (const int *list, int *err);
 
+char *gretl_list_get_names (const int *list, const DATAINFO *pdinfo,
+			    int *err);
+
 int in_gretl_list (const int *list, int k);
 
 int gretl_list_delete_at_pos (int *list, int pos);
