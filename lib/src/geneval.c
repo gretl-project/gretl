@@ -2255,7 +2255,7 @@ static NODE *matrix_colnames (NODE *l, NODE *r, parser *p)
 	if (r->t == STR) {
 	    ret->v.xval = umatrix_set_colnames_from_string(m, r->v.str);
 	} else {
-	    int * list = node_get_list(r, p);
+	    int *list = node_get_list(r, p);
 
 	    if (p->err) {
 		ret->v.xval = 1;
@@ -3697,14 +3697,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_is_series(s, p->dinfo);
 	} else if (f == F_ISSCALAR) {
 	    ret->v.xval = gretl_is_scalar(s);
-	} else if (f == F_ISLIST || f == F_LISTLEN) {
-	    int *list = get_list_by_name(s);
-
-	    if (list != NULL) {
-		ret->v.xval = (f == F_ISLIST)? 1.0 : list[0];
-	    } else if (f == F_ISLIST) {
-		ret->v.xval = 0;
-	    }
+	} else if (f == F_ISLIST) {
+	    ret->v.xval = get_list_by_name(s) != NULL;
 	} else if (f == F_ISSTRING) {
 	    ret->v.xval = gretl_is_string(s);
 	} else if (f == F_ISNULL) {
@@ -3731,6 +3725,32 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_SSCANF) {
 	    p->err = do_sscanf(s, p->Z, p->dinfo, NULL);
 	    ret->v.xval = (p->err)? NADBL : n_scanned_items();
+	}
+    }
+
+    return ret;
+}
+
+static NODE *list_length_node (NODE *n, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	if (n->t == STR) {
+	    int *list = get_list_by_name(n->v.str);
+
+	    if (list != NULL) {
+		ret->v.xval = list[0];
+	    } else {
+		node_type_error(F_LISTLEN, 1, LIST, n, p);
+	    }
+	} else {
+	    int *list = node_get_list(n, p);
+
+	    if (list != NULL) {
+		ret->v.xval = list[0];
+		free(list);
+	    }
 	}
     }
 
@@ -8014,13 +8034,19 @@ static NODE *eval (NODE *t, parser *p)
     case F_ISLIST:
     case F_ISSTRING:
     case F_ISNULL:
-    case F_LISTLEN:
     case F_STRLEN:
     case F_SSCANF:
 	if (l->t == STR) {
 	    ret = object_status(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 1, STR, l, p);
+	}
+	break;
+    case F_LISTLEN:
+	if (ok_list_node(l) || l->t == STR) {
+	    ret = list_length_node(l, p);
+	} else {
+	    node_type_error(t->t, 1, LIST, l, p);
 	}
 	break;
     case F_PDF:
