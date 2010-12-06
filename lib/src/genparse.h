@@ -305,6 +305,7 @@ enum {
     F_DSUM,
     F_POLYFIT,
     F_STRSPLIT,
+    F_INLIST,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,

@@ -2224,6 +2224,22 @@
       </description>
     </function>
 
+    <function name="inlist" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="list">L</fnarg>
+	<fnarg type="series">y</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns the (1-based) position of <argname>y</argname> in
+	  list <argname>L</argname>, or 0 if <argname>y</argname>
+	  is not present in <argname>L</argname>. The second
+	  argument may be given as the name of a series or
+	  alternatively as an integer ID number.
+	</para>
+      </description>
+    </function>
+
     <function name="int" section="math" output="asinput">
       <fnargs>
 	<fnarg type="anyfloat">x</fnarg>
@@ -3531,7 +3547,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the number of items in list <argname>L</argname>.
+	  Returns the number of members in list <argname>L</argname>.
 	</para>
       </description>
     </function>

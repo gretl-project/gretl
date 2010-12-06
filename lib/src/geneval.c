@@ -3731,6 +3731,10 @@ static NODE *object_status (NODE *n, int f, parser *p)
     return ret;
 }
 
+/* return scalar node holding the length of the list associated
+   with node @n
+*/
+
 static NODE *list_length_node (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
@@ -3753,6 +3757,44 @@ static NODE *list_length_node (NODE *n, parser *p)
 	    }
 	}
     }
+
+    return ret;
+}
+
+/* return scalar node holding the position of the series
+   associated with node @r in the list associated with node
+   @l, or zero if the series is not present in the list
+*/
+
+static NODE *in_list_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_scalar_node(p);
+
+    if (p->err == 0 && (p->dinfo == NULL || p->dinfo->v == 0)) {
+	p->err = E_NODATA;
+    }
+
+    if (ret != NULL && starting(p)) {
+	int *list = node_get_list(l, p);
+
+	if (list != NULL) {
+	    int k = -1;
+
+	    if (useries_node(r)) {
+		k = r->vnum;
+	    } else if (r->t == NUM) {
+		if (r->v.xval >= 0 && r->v.xval < p->dinfo->v) {
+		    k = (int) r->v.xval;
+		}
+	    } else {
+		node_type_error(F_INLIST, 2, VEC, r, p);
+	    }
+
+	    if (k >= 0) {
+		ret->v.xval = in_gretl_list(list, k);
+	    }	
+	}
+    }	
 
     return ret;
 }
@@ -8049,6 +8091,13 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, LIST, l, p);
 	}
 	break;
+    case F_INLIST:
+	if (ok_list_node(l)) {
+	    ret = in_list_node(l, r, p);
+	} else {
+	    node_type_error(t->t, 1, LIST, l, p);
+	}
+	break;	
     case F_PDF:
     case F_CDF:
     case F_INVCDF:

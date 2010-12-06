@@ -5,6 +5,8 @@ version 1.9.4, in progress
 - Add more panel data graphing options -- time-series of
   group means and boxplots by group -- and redesign the
   GUI for panel plots
+- New function, inlist(): gives the position of a series
+  within a named list or zero if the series is not present
 - Fix bug: estimates getting out of order for some
   equation systems if the constant was not given in first
   place among the regressors

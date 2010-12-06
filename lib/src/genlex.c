@@ -352,6 +352,7 @@ struct str_table funcs[] = {
     { F_CHOWLIN,  "chowlin" },
     { F_VARSIMUL, "varsimul" },
     { F_STRSPLIT, "strsplit" },
+    { F_INLIST,   "inlist" },
     { 0,          NULL }
 };
 
