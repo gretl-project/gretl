@@ -667,6 +667,8 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     hmod = lsq(HT_list, *pZ, pdinfo, OLS, OPT_A);
 
 #if HTDBG
+    strcpy(pdinfo->varname[pdinfo->v - 1], "Ufitvals");
+    pprintf(dbgprn, "Hausman: aux regression\n", hmod.dfd);
     printmodel(&hmod, pdinfo, OPT_NONE, dbgprn);
     pprintf(dbgprn, "smpl1 = %d, smpl2 = %d\n", nobs1, hmod.nobs);
     pprintf(dbgprn, "k1 = %d, k2 = %d\n", hmod.ncoeff, ku);
@@ -686,6 +688,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
 #if HTDBG
 	pprintf(dbgprn, "(RRSS - URSS) = %g, URSS = %g\n", DRSS, URSS);
+	pprintf(dbgprn, "Htest = %g [%.4f]\n", HTest, chisq_cdf_comp(df, HTest));
 #endif
 
 	if (test != NULL) {
