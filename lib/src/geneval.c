@@ -8479,7 +8479,6 @@ static void printnode (NODE *t, parser *p)
                          o == B_VCAT)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_string_op(o) (o == B_ASN || o == B_ADD || o == B_HCAT) 
-#define matrix_only_op(o) (o == B_HCAT || o == B_VCAT)
 
 struct mod_assign {
     int c;
@@ -9539,17 +9538,47 @@ static int edit_string (parser *p)
 {
     const char *src = NULL;
 
+    if (p->ret->t == NUM && p->op != B_ADD) {
+	p->err = E_TYPES;
+	return p->err;
+    }
+
     if (p->ret->t == EMPTY) {
 	src = "";
     } else {
 	src = p->ret->v.str;
     }
 
-    if (src == NULL) {
+    if (p->ret->t == NUM) {
+	const char *orig = get_string_by_name(p->lh.name);
+
+	if (orig == NULL) {
+	    p->err = E_DATA;
+	} else {
+	    int len = strlen(orig);
+	    int adj = p->ret->v.xval;
+		
+	    if (adj < 0) {
+		p->err = E_DATA;
+	    } else if (adj == 0) {
+		; /* no-op */
+	    } else {
+		const char *src = (adj < len)? (orig + adj) : "";
+		char *repl = gretl_strdup(src);
+
+		if (repl == NULL) {
+		    p->err = E_ALLOC;
+		} else {
+		    p->err = save_named_string(p->lh.name, repl, NULL);
+		    free(repl);
+		}
+	    }
+	}
+    } else if (src == NULL) {
 	; /* no-op -- e.g. argname() didn't get anything */
     } else if (p->op == B_ASN) {
 	p->err = save_named_string(p->lh.name, src, NULL);
-    } else if (p->op == B_ADD) {
+    } else if (p->op == B_HCAT || p->op == B_ADD) {
 	const char *orig = get_string_by_name(p->lh.name);
 
 	if (orig == NULL) {
@@ -9663,7 +9692,7 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_TYPES;
 	} 
     } else if (p->targ == STR) {
-	if (r->t != EMPTY && r->t != STR) {
+	if (r->t != EMPTY && r->t != STR && r->t != NUM) {
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == BUNDLE) {
