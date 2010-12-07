@@ -3620,16 +3620,43 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
-/* functions taking two series as arguments and returning a scalar
-   or matrix result */
+/* Functions taking two series as arguments and returning a scalar
+   or matrix result. We also accept as arguments two matrices if 
+   they are vectors of the same length.
+*/
 
 static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
     if (starting(p)) {
-	const double *x = l->v.xvec;
-	const double *y = r->v.xvec;
+	const double *x = NULL, *y = NULL;
+	int t1, t2;
+
+	if (l->t == VEC && r->t == VEC) {
+	    /* two series */
+	    x = l->v.xvec;
+	    y = r->v.xvec;
+	    t1 = p->dinfo->t1;
+	    t2 = p->dinfo->t1;
+	} else {
+	    /* two matrices */
+	    int n1 = gretl_vector_get_length(l->v.m);
+	    int n2 = gretl_vector_get_length(r->v.m);
+
+	    if (n1 == 0 || n1 != n2) {
+		p->err = E_TYPES;
+	    } else {
+		x = l->v.m->val;
+		y = r->v.m->val;
+		t1 = 0;
+		t2 = n1 - 1;
+	    }
+	}
+
+	if (p->err) {
+	    return ret;
+	}
 
 	if (f == F_FCSTATS) {
 	    ret = aux_matrix_node(p);
@@ -3643,14 +3670,13 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_COR:
-	    ret->v.xval = gretl_corr(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
+	    ret->v.xval = gretl_corr(t1, t2, x, y, NULL);
 	    break;
 	case F_COV:
-	    ret->v.xval = gretl_covar(p->dinfo->t1, p->dinfo->t2, x, y, NULL);
+	    ret->v.xval = gretl_covar(t1, t2, x, y, NULL);
 	    break;
 	case F_FCSTATS:
-	    ret->v.m = forecast_stats(x, y, p->dinfo->t1, p->dinfo->t2, 
-				      OPT_D, &p->err);
+	    ret->v.m = forecast_stats(x, y, t1, t2, OPT_D, &p->err);
 	    break;
 	default:
 	    break;
@@ -7811,8 +7837,10 @@ static NODE *eval (NODE *t, parser *p)
     case F_COR:
     case F_COV:
     case F_FCSTATS:
-	/* functions taking two series as args */
+	/* functions taking two series/vectors as args */
 	if (l->t == VEC && r->t == VEC) {
+	    ret = series_2_func(l, r, t->t, p);
+	} else if (l->t == MAT && r->t == MAT) {
 	    ret = series_2_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == VEC)? 2 : 1,

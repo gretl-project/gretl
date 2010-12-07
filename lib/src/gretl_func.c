@@ -5960,6 +5960,36 @@ int object_is_const (const char *name)
 }
 
 /**
+ * object_is_function_arg:
+ * @name: name of object (e.g. matrix).
+ *
+ * Checks whether the named object has been made available
+ * as a function argument.
+ *
+ * Returns: 1 if the object has arg status, 0 otherwise.
+ */
+
+int object_is_function_arg (const char *name)
+{
+    fncall *call = current_function_call();
+
+    if (call != NULL && call->args != NULL) {
+	fnargs *args = call->args;
+	int i, n = args->argc;
+
+	for (i=0; i<n; i++) {
+	    const char *aname = args->arg[i]->name;
+
+	    if (aname != NULL && !strcmp(name, aname)) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
  * sample_range_get_extrema:
  * @pdinfo: dataset info.
  * @t1: location to receive earliest possible starting observation.

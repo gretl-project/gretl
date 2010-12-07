@@ -1572,6 +1572,15 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
 {
     int err = 0;
 
+    if (s == NULL || *s == '\0') {
+	return E_PARSE;
+    }
+
+    if (object_is_function_arg(s)) {
+	gretl_errmsg_sprintf("The variable %s is read-only", s);
+	return E_DATA;
+    }
+
     if (!strcmp(s, "kalman")) {
 	err = delete_kalman(prn);	
     } else if (gretl_is_scalar(s)) {
