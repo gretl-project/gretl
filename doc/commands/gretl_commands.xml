@@ -9130,14 +9130,33 @@
 	  only print iterations 3, 6, 9 and so on.
 	  </para>
 	</li>
+	<li>
+	  <para><lit>skip_missing</lit>: <lit>on</lit> (the default)
+	  or <lit>off</lit>. Controls gretl's behavior when
+	  contructing a matrix from data series: the default is to
+	  skip data rows that contain one or more missing values but
+	  if <lit>skip_missing</lit> is set <lit>off</lit> missing
+	  values are converted to NaNs.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>matrix_mask</lit>: the name of a series, or the
+	  keyword <lit>null</lit>. Offers greater control than 
+	  <lit>skip_missing</lit> when constructing matrices from
+	  series: the data rows selected for matrices are those
+	  with non-zero (and non-missing) values in the specified
+	  series. The selected mask remains in force until it is 
+	  replaced, or removed via the <lit>null</lit> keyword.
+	  </para>
+	</li>
       </ilist>
 
       <para>
 	<emphasis>Numerical methods</emphasis>
       </para>
       <para>
-	These settings are used for controlling
-	the numerical algorithms that gretl uses for estimation.
+	These settings are used for controlling the numerical
+	algorithms that gretl uses for estimation.
       </para>
       <ilist>
 	<li>	

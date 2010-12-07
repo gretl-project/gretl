@@ -99,6 +99,7 @@ struct set_vars_ {
     int rq_maxiter;             /* max iterations for quantreg, simplex */
     int gmm_maxiter;            /* max iterations for iterated GMM */
     gretl_matrix *initvals;     /* parameter initializer */
+    gretl_matrix *matmask;      /* mask for series -> matrix conversion */
     struct robust_opts ropts;   /* robust standard error options */
     char shelldir[MAXLEN];      /* working dir for shell commands */
     char csv_na[8];             /* representation of NA in CSV output */
@@ -366,6 +367,7 @@ static void state_vars_copy (set_vars *sv)
     sv->garch_robust_vcv = state->garch_robust_vcv;
 
     sv->initvals = gretl_matrix_copy(state->initvals);
+    sv->matmask = gretl_matrix_copy(state->matmask);
     strcpy(sv->shelldir, state->shelldir);
     strcpy(sv->csv_na, state->csv_na);
 
@@ -389,6 +391,7 @@ static void state_vars_init (set_vars *sv)
     sv->delim = UNSET_INT;
     sv->vecm_norm = NORM_PHILLIPS;
     sv->initvals = NULL;
+    sv->matmask = NULL;
 
     sv->bfgs_maxiter = -1;
     sv->bfgs_toler = NADBL;
@@ -534,6 +537,12 @@ int n_init_vals (void)
     } else {
 	return 0;
     }
+}
+
+const gretl_matrix *get_matrix_mask (void)
+{
+    check_for_state();
+    return state->matmask;
 }
 
 char *get_shelldir (void)
@@ -914,9 +923,48 @@ static int set_initvals (const char *s, PRN *prn)
 	    pputc(prn, '\n');
 	    err = E_DATA;
 	} else {
+	    if (state->initvals != NULL) {
+		gretl_matrix_free(state->initvals);
+	    }
 	    state->initvals = gretl_matrix_copy(m);
 	    if (state->initvals == NULL) {
 		err = E_ALLOC;
+	    }
+	}
+    }
+
+    return err;
+}
+
+static int set_matmask (const char *s, const double **Z,
+			const DATAINFO *pdinfo,
+			PRN *prn)
+{
+    char vname[VNAMELEN];
+    int err = 0;
+
+    /* skip past "set matrix_mask" */
+    s += 15;
+
+    if (sscanf(s, "%15s", vname) != 1 || !strcmp(vname, "null")) {
+	gretl_matrix_free(state->matmask);
+	state->matmask = NULL;
+    } else {
+	int t, v = current_series_index(pdinfo, vname);
+
+	if (v < 0) {
+	    err = E_UNKVAR;
+	} else {
+	    if (state->matmask != NULL) {
+		gretl_matrix_free(state->matmask);
+	    }
+	    state->matmask = gretl_column_vector_alloc(pdinfo->n);
+	    if (state->matmask == NULL) {
+		err = E_ALLOC;
+	    } else {
+		for (t=0; t<pdinfo->n; t++) {
+		    state->matmask->val[t] = Z[v][t];
+		}
 	    }
 	}
     }
@@ -1306,6 +1354,13 @@ static int libset_query_settings (const char *s, PRN *prn)
 	} else {
 	    pprintf(prn, "%s: matrix, currently null\n", s);
 	}
+    } else if (!strcmp(s, "matrix_mask")) {
+	if (state->matmask != NULL) {
+	    pprintf(prn, "%s: matrix, currently\n", s);
+	    gretl_matrix_print_to_prn(state->matmask, NULL, prn);
+	} else {
+	    pprintf(prn, "%s: matrix, currently null\n", s);
+	}
     } else if (!strcmp(s, "seed")) {
 	pprintf(prn, "%s: unsigned int, currently %u\n",
 		s, state->seed ? state->seed : gretl_rand_get_seed());
@@ -1371,8 +1426,9 @@ static int write_or_read_settings (gretlopt opt, PRN *prn)
     return err;
 }
 
-int execute_set_line (const char *line, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn)
+int execute_set_line (const char *line, const double **Z,
+		      DATAINFO *pdinfo, gretlopt opt, 
+		      PRN *prn)
 {
     char setobj[32], setarg[32], setarg2[32];
     int k, nw, err = E_PARSE;
@@ -1396,6 +1452,8 @@ int execute_set_line (const char *line, DATAINFO *pdinfo,
     if (nw > 1) {
 	if (!strcmp(setobj, "initvals")) {
 	    return set_initvals(line, prn);
+	} else if (!strcmp(setobj, "matrix_mask")) {
+	    return set_matmask(line, Z, pdinfo, prn);
 	} else if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);
 	} else if (!strcmp(setobj, "codevars")) {
@@ -1953,9 +2011,8 @@ int push_program_state (void)
 
 static void free_state (set_vars *sv)
 {
-    if (sv->initvals != NULL) {
-	gretl_matrix_free(sv->initvals);
-    }
+    gretl_matrix_free(sv->initvals);
+    gretl_matrix_free(sv->matmask);
 
     free(sv);
 }
@@ -2335,7 +2392,7 @@ static int real_libset_read_script (const char *fname,
 		continue;
 	    }
 	    tailstrip(line);
-	    err = execute_set_line(line, NULL, OPT_NONE, prn);
+	    err = execute_set_line(line, NULL, NULL, OPT_NONE, prn);
 	    if (err && prn != NULL) {
 		break;
 	    }

@@ -63,6 +63,12 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
 					int t1, int t2, int missop, 
 					int *err);
 
+gretl_matrix *
+gretl_matrix_data_subset_special (const int *list, const double **Z,
+				  const DATAINFO *pdinfo,
+				  const gretl_matrix *mmask,
+				  int *err);
+
 DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
 				     double ***pZ, int *err);
 

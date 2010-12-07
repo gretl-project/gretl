@@ -615,6 +615,89 @@ gretl_matrix_data_subset_masked (const int *list, const double **Z,
 					 M_MISSING_ERROR, err);
 }
 
+static int mmask_row_count (const gretl_matrix *mmask, int n)
+{
+    int i, m = 0;
+
+    for (i=0; i<n; i++) {
+	if (mmask->val[i] != 0 && !na(mmask->val[i])) {
+	    m++;
+	}
+    }
+
+    return m;
+}
+
+/**
+ * gretl_matrix_data_subset_special:
+ * @list: list of variable to process.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @mmask: matrix holding desired observations mask.
+ * @err: location to receive error code.
+ *
+ * Creates a gretl matrix holding the subset of variables from
+ * @Z specified by @list, using the observations (data rows)
+ * selected by non-zero elements in @mmask. This is designed
+ * to support the gretl "libset" variable %matrix_mask.
+ *
+ * The length of the vector @mmask should equal the number of
+ * observations in the dataset, the member %n of @pdinfo.
+ *
+ * Returns: allocated matrix or NULL on failure. 
+ */
+
+gretl_matrix *
+gretl_matrix_data_subset_special (const int *list, const double **Z,
+				  const DATAINFO *pdinfo,
+				  const gretl_matrix *mmask,
+				  int *err)
+{
+    int n = gretl_vector_get_length(mmask);
+    gretl_matrix *X = NULL;
+
+    if (list == NULL || n != pdinfo->n) {
+	*err = E_DATA;
+    } else if (list[0] == 0) {
+	X = gretl_null_matrix_new();
+    } else {
+	int T = mmask_row_count(mmask, n);
+	int k = list[0];
+
+	if (T == 0) {
+	    X = gretl_null_matrix_new();
+	} else {
+	    X = gretl_matrix_alloc(T, k);
+	}
+	
+	if (X != NULL && T > 0) {
+	    const double *xi;
+	    double xti;
+	    int i, s, t;
+
+	    for (i=0; i<k; i++) {
+		xi = Z[list[i+1]];
+		t = 0;
+		for (s=0; s<pdinfo->n; s++) {
+		    if (mmask->val[s] != 0 && !na(mmask->val[i])) {
+			xti = xi[s];
+			if (na(xti)) {
+			    xti = M_NA;
+			}
+			gretl_matrix_set(X, t++, i, xti);
+		    }
+		}
+	    }
+	}
+    }
+
+    if (X == NULL && *err == 0) {
+	*err = E_ALLOC;
+    }
+
+    return X;
+}
+
 /**
  * gretl_dataset_from_matrix:
  * @m: source matrix.

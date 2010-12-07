@@ -4851,11 +4851,18 @@ static gretl_matrix *real_matrix_from_list (const int *list,
     if (list != NULL && list[0] == 0) {
 	M = gretl_null_matrix_new();
     } else {
-	int missop = (libset_get_bool(SKIP_MISSING))? M_MISSING_SKIP :
-	    M_MISSING_OK;
+	const gretl_matrix *mmask = get_matrix_mask();
 
-	M = gretl_matrix_data_subset(list, X, p->dinfo->t1, p->dinfo->t2, 
-				     missop, &p->err);
+	if (mmask != NULL) {
+	    M = gretl_matrix_data_subset_special(list, X, p->dinfo, 
+						 mmask, &p->err);
+	} else {
+	    int missop = (libset_get_bool(SKIP_MISSING))? M_MISSING_SKIP :
+		M_MISSING_OK;
+
+	    M = gretl_matrix_data_subset(list, X, p->dinfo->t1, p->dinfo->t2, 
+					 missop, &p->err);
+	}
     }
 
     return M;

@@ -116,6 +116,8 @@ const gretl_matrix *get_init_vals (void);
 int n_init_vals (void);
 void free_init_vals (void);
 
+const gretl_matrix *get_matrix_mask (void);
+
 void set_loop_on (int quiet, int progressive);
 void set_loop_off (void);
 int gretl_looping (void);
@@ -149,8 +151,9 @@ void set_csv_na_string (const char *s);
 const char *get_include_path (void);
 void set_include_path (const char *s);
 
-int execute_set_line (const char *line, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn);
+int execute_set_line (const char *line, const double **Z,
+		      DATAINFO *pdinfo, gretlopt opt, 
+		      PRN *prn);
 
 void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);
