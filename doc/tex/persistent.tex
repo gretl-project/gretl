@@ -1,7 +1,6 @@
 \chapter{Named lists and strings}
 \label{chap-persist}
 
-%%% Should this chapter deal with saving models too?
 
 \section{Named lists}
 \label{named-lists}
@@ -25,7 +24,7 @@ list reglist = income price
 \end{code}
 
 Note that the variables in question must be of the series type: you
-can't include scalars in a named list.
+cannot include scalars in a named list.
 
 Two special forms are available:
 \begin{itemize}
@@ -42,9 +41,10 @@ length of the name is 15 characters; list names cannot contain
 spaces.  
 
 Once a named list has been created, it will be ``remembered'' for the
-duration of the \app{gretl} session, and can be used in the context of
-any \app{gretl} command where a list of variables is expected.  One
-simple example is the specification of a list of regressors:
+duration of the \app{gretl} session (unless you delete it), and can be
+used in the context of any \app{gretl} command where a list of
+variables is expected.  One simple example is the specification of a
+list of regressors:
 %
 \begin{code}
 list xlist = x1 x2 x3 x4
@@ -69,7 +69,7 @@ invert the usual print command, as in
 If you just say \texttt{print xlist} the list will be expanded and
 the values of all the member variables will be printed.
 
-Lists can be modified in two ways.  To \textit{redefine} an existing
+Lists can be modified in various ways.  To \textit{redefine} an existing
 list altogether, use the same syntax as for creating a list.  For
 example
 %
@@ -128,6 +128,15 @@ list L3 = L1 && L2
 Here \texttt{L3} contains all the elements that are present in both
 \texttt{L1} and \texttt{L2}.
 
+You can also subtract one list from another:
+%
+\begin{code}
+list L3 = L1 - L2
+\end{code}
+%
+The result contains all the elements of \texttt{L1} that are not 
+present in \texttt{L2}.
+
 
 \subsection{Lists and matrices}
 
@@ -173,6 +182,17 @@ nl = nelem(xlist)
 The (scalar) variable \texttt{nl} will be assigned a value of 3 since
 \texttt{xlist} contains 3 members.
 
+You can determine whether a given series is a member of a specified
+list using the function \texttt{inlist()}, as in
+%
+\begin{code}
+scalar k = inlist(L, y)
+\end{code}
+%
+where \texttt{L} is a list and \texttt{y} a series. The series may
+be specified by name or ID number. The return value is the (1-based)
+position of the series in the list, or zero if the series is not
+present in the list. 
 
 \subsection{Generating lists of transformed variables}
 

@@ -62,13 +62,6 @@ case: if you want the series arranged in rows, append the transpose
 symbol.  The range of data values included in the matrix depends on
 the current setting of the sample range.
 
-\tip{By default, when you build a matrix from series that include
-  missing values the data rows that contain \texttt{NA}s are skipped.
-  But you can modify this behavior via the command
-  \texttt{set skip\_missing off}.  In that case \texttt{NA}s are
-  converted to NaN (``Not a Number'').  In the IEEE floating-point
-  standard, arithmetic operations involving NaN always produce NaN.}
-
 Instead of giving an explicit list of variables, you may instead
 provide the \textit{name of a saved list} (see
 Chapter~\ref{chap-persist}), as in
@@ -100,15 +93,23 @@ matrix A = {const}~{dataset}
 \end{code}
 %
 
-The syntax 
+By default, when you build a matrix from series that include missing
+values the data rows that contain \texttt{NA}s are skipped.  But you
+can modify this behavior via the command \texttt{set skip\_missing
+  off}.  In that case \texttt{NA}s are converted to NaN (``Not a
+Number'').  In the IEEE floating-point standard, arithmetic operations
+involving NaN always produce NaN. Alternatively, you can take greater
+control over the observations (data rows) that are included in 
+the matrix using the ``set'' variable \texttt{matrix\_mask}, as in
 %
 \begin{code}
-matrix A = {}
+set matrix_mask msk
 \end{code}
 %
-creates an empty matrix --- a matrix with zero rows and zero columns.
-See section \ref{sec:emptymatrix} for a discussion of this
-object.
+where \texttt{msk} is the name of a series.  Subsequent commands that
+form matrices from series or lists will include only observations
+for which \texttt{msk} has non-zero (and non-missing) values. You
+can remove this mask via the command \texttt{set matrix\_mask null}.
 
 \tip{Names of matrices must satisfy the same requirements as names of
   gretl variables in general: the name can be no longer than 15
@@ -117,6 +118,14 @@ object.
 
 \section{Empty matrices}
 \label{sec:emptymatrix}
+
+The syntax 
+%
+\begin{code}
+matrix A = {}
+\end{code}
+%
+creates an empty matrix --- a matrix with zero rows and zero columns.
 
 The main purpose of the concept of an empty matrix is to enable the
 user to define a starting point for subsequent concatenation
