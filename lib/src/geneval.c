@@ -9550,6 +9550,7 @@ static int edit_string (parser *p)
     }
 
     if (p->ret->t == NUM) {
+	/* taking an offset into an existing string */
 	const char *orig = get_string_by_name(p->lh.name);
 
 	if (orig == NULL) {
@@ -9577,8 +9578,10 @@ static int edit_string (parser *p)
     } else if (src == NULL) {
 	; /* no-op -- e.g. argname() didn't get anything */
     } else if (p->op == B_ASN) {
+	/* simple assignment */
 	p->err = save_named_string(p->lh.name, src, NULL);
     } else if (p->op == B_HCAT || p->op == B_ADD) {
+	/* string concatenation */
 	const char *orig = get_string_by_name(p->lh.name);
 
 	if (orig == NULL) {
