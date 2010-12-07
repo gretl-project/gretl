@@ -10,7 +10,10 @@ version 1.9.4, in progress
 - New "set" variable, matrix_mask, which can be used to
   control the included observations when constructing
   matrices from series
-- Fix bug: estimates getting out of order for some
+- Functions corr(), cov() and fcstats(): accept two vector
+  arguments in place of two series
+- Allow deletion of locale matrices within functions
+- Fix bug: estimates could get out of order for some
   equation systems if the constant was not given in first
   place among the regressors
 - Fix bug: the "diff" command applied to a lead of a series

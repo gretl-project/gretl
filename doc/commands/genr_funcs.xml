@@ -1233,13 +1233,14 @@
 
     <function name="corr" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y1</fnarg>
-	<fnarg type="series">y2</fnarg>
+	<fnarg type="series-or-vec">y1</fnarg>
+	<fnarg type="series-or-vec">y2</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Computes the correlation coefficient between <argname>y1</argname>
-	  and <argname>y2</argname>. 
+	  and <argname>y2</argname>. The arguments should be either 
+	  two series, or two vectors of the same length.
 	  <seelist> 
 	    <fncref targ="cov"/>
 	    <fncref targ="mcov"/>
@@ -1315,13 +1316,14 @@
 
     <function name="cov" section="stats" output="scalar">
       <fnargs>
-	<fnarg type="series">y1</fnarg>
-	<fnarg type="series">y2</fnarg>
+	<fnarg type="series-or-vec">y1</fnarg>
+	<fnarg type="series-or-vec">y2</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the covariance between <argname>y1</argname> and
-	  <argname>y2</argname>. 
+	  <argname>y2</argname>. The arguments should be either 
+	  two series, or two vectors of the same length.
 	  <seelist> 
 	    <fncref targ="corr"/> 
 	    <fncref targ="mcov"/>
@@ -1745,15 +1747,19 @@
 
     <function name="fcstats" section="stats" output="matrix">
       <fnargs>
-	<fnarg type="series">y</fnarg>
-	<fnarg type="series">f</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
+	<fnarg type="series-or-vec">f</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Produces a column vector holding several statistics which may be
 	  used for evaluating the series <argname>f</argname> as a
 	  forecast of the series <argname>y</argname> over the current
-	  sample range.  The layout of the returned vector is as follows:
+	  sample range. Two vectors of the same length may be given in
+	  place of two series arguments.
+	</para>
+	<para>
+	  The layout of the returned vector is as follows:
 	</para>
 	<code>
 	  1  Mean Error (ME)
