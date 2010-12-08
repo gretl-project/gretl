@@ -42,6 +42,8 @@
 # include <glib.h>
 #endif
 
+static void gretl_tests_cleanup (void);
+
 /**
  * date:
  * @nt: observation number (zero-based).
@@ -1706,6 +1708,7 @@ void libgretl_session_cleanup (int mode)
     gretl_saved_objects_cleanup();
     gretl_transforms_cleanup();
     gretl_lists_cleanup();
+    gretl_tests_cleanup();
     gretl_plotx(NULL, NULL);
 
     if (mode != SESSION_PRESERVE_MATRICES) {
@@ -1742,11 +1745,14 @@ enum {
     SET_TEST_STAT,
     GET_TEST_STAT,
     GET_TEST_PVAL,
-    GET_TEST_LNL
+    GET_TEST_LNL,
+    TESTS_CLEANUP
 };
 
 #define getcode(c) (c == GET_TEST_STAT || c == GET_TEST_PVAL || \
                     c == GET_TEST_LNL)
+
+static GretlType last_test_type;
 
 static double
 record_or_get_test_result (double teststat, double pval, double lnl,
@@ -1756,10 +1762,10 @@ record_or_get_test_result (double teststat, double pval, double lnl,
     static double val = NADBL;
     static double pv = NADBL;
     static double ll = NADBL;
-
     double ret = NADBL;
 
     if (code == SET_TEST_STAT) {
+	last_test_type = GRETL_TYPE_DOUBLE;
 	val = teststat;
 	pv = pval;
 	ll = lnl;
@@ -1767,7 +1773,7 @@ record_or_get_test_result (double teststat, double pval, double lnl,
 	if (instr != NULL) {
 	    strncat(savestr, instr, MAXLABEL - 1);
 	} 
-    } else if (getcode(code)) {
+    } else if (getcode(code) && last_test_type == GRETL_TYPE_DOUBLE) {
 	if (instr != NULL) {
 	    if (code == GET_TEST_STAT) {
 		sprintf(instr, _("%s test"), savestr);
@@ -1789,6 +1795,59 @@ record_or_get_test_result (double teststat, double pval, double lnl,
     return ret;
 }
 
+static gretl_matrix *
+record_or_get_test_matrix (gretl_matrix *tests, 
+			   gretl_matrix *pvals, 
+			   int code, int *err)
+{
+    static gretl_matrix *vals = NULL;
+    static gretl_matrix *pvs = NULL;
+    gretl_matrix *ret = NULL;
+
+    if (code == TESTS_CLEANUP) {
+	gretl_matrix_free(vals);
+	gretl_matrix_free(pvs);
+	vals = pvs = NULL;
+	last_test_type = GRETL_TYPE_NONE;
+	return NULL;
+    }
+
+    if (code == SET_TEST_STAT) {
+	last_test_type = GRETL_TYPE_MATRIX;
+	gretl_matrix_free(vals);
+	vals = tests;
+	gretl_matrix_free(pvs);
+	pvs = pvals;
+    } else if (getcode(code)) {
+	gretl_matrix *src = (code == GET_TEST_STAT)? vals : pvs;
+
+	if (src != NULL) {
+	    ret = gretl_matrix_copy(src);
+	    if (ret == NULL) {
+		*err = E_ALLOC;
+	    }
+	} else {
+	    *err = E_BADSTAT;
+	}
+    } 
+	
+    return ret;
+}
+
+static void gretl_tests_cleanup (void)
+{
+    record_or_get_test_matrix(NULL, NULL, TESTS_CLEANUP, NULL);
+}
+
+/* Returns the type (scalar, matrix or none) of the last recorded
+   test statistic/p-value pair.
+*/
+
+int get_last_test_type (void)
+{
+    return last_test_type;
+}
+
 void record_test_result (double teststat, double pval, char *blurb)
 {
     record_or_get_test_result(teststat, pval, NADBL, blurb, SET_TEST_STAT);
@@ -1798,6 +1857,17 @@ void record_LR_test_result (double teststat, double pval, double lnl,
 			    char *blurb)
 {
     record_or_get_test_result(teststat, pval, lnl, blurb, SET_TEST_STAT);
+}
+
+/* Note: the hypothesis-test recorder "takes ownership" of the
+   two input matrices, @tests and @pvals, which should therefore 
+   NOT be freed by the caller.
+*/
+
+void record_matrix_test_result (gretl_matrix *tests, 
+				gretl_matrix *pvals)
+{
+    record_or_get_test_matrix(tests, pvals, SET_TEST_STAT, NULL);
 }
 
 double get_last_test_statistic (char *blurb)
@@ -1813,6 +1883,16 @@ double get_last_pvalue (char *blurb)
 double get_last_lnl (char *blurb)
 {
     return record_or_get_test_result(0, 0, 0, blurb, GET_TEST_LNL);
+}
+
+gretl_matrix *get_last_test_matrix (int *err)
+{
+    return record_or_get_test_matrix(NULL, NULL, GET_TEST_STAT, err);
+}
+
+gretl_matrix *get_last_pvals_matrix (int *err)
+{
+    return record_or_get_test_matrix(NULL, NULL, GET_TEST_PVAL, err);
 }
 
 

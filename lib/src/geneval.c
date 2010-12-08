@@ -6842,7 +6842,8 @@ static int get_version_as_scalar (void)
 }
 
 #define dvar_scalar(i) (i > 0 && i < R_SCALAR_MAX)
-#define dvar_series(i) (i > R_SCALAR_MAX && i < R_MAX)
+#define dvar_series(i) (i > R_SCALAR_MAX && i < R_SERIES_MAX)
+#define dvar_variant(i) (i > R_SERIES_MAX && i < R_MAX)
 
 #define no_data(p) (p == NULL || p->n == 0)
 
@@ -6944,6 +6945,25 @@ static double *dvar_get_series (int i, const DATAINFO *pdinfo,
     return x;
 }
 
+static gretl_matrix *dvar_get_matrix (int i, int *err)
+{
+    gretl_matrix *m = NULL;
+
+    switch (i) {
+    case R_TEST_STAT:
+	m = get_last_test_matrix(err);
+	break;
+    case R_TEST_PVAL:
+	m = get_last_pvals_matrix(err);
+	break;
+    default:
+	*err = E_DATA;
+	break;
+    }
+
+    return m;
+}
+
 static NODE *dollar_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
@@ -6961,7 +6981,23 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 		ret->v.xvec = dvar_get_series(t->v.idnum, p->dinfo,
 					      &p->err);
 	    }
-	}
+	} else if (dvar_variant(t->v.idnum)) {
+	    GretlType type = get_last_test_type();
+
+	    if (type == GRETL_TYPE_MATRIX) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL && starting(p)) {
+		    ret->v.m = dvar_get_matrix(t->v.idnum, &p->err);
+		}		
+	    } else {
+		/* scalar or none */
+		ret = aux_scalar_node(p);
+		if (ret != NULL && starting(p)) {
+		    ret->v.xval = dvar_get_scalar(t->v.idnum, p->dinfo, 
+						  p->lh.label);
+		}
+	    } 
+	}	    
     } else {
 	ret = aux_any_node(p);
     }

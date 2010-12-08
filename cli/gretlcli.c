@@ -835,7 +835,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     gretl_exec_state_transcribe_flags(s, cmd);
 
     /* if in batch mode, echo comments from input */
-    if (batch && !runit && cmd->ci == CMD_COMMENT && gretl_echo_on()) {
+    if (batch && runit < 2 && cmd->ci == CMD_COMMENT && gretl_echo_on()) {
 	printline(linebak);
     }
 
@@ -988,7 +988,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	}
-	if (cmd->ci == RUN && gretl_messages_on()) {
+	if (gretl_messages_on()) {
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {

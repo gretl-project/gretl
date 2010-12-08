@@ -1324,28 +1324,30 @@ static int
 compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, 
 		    const DATAINFO *pdinfo, PRN *prn)
 {
+    gretl_matrix *tests;
+    gretl_matrix *pvals;
     int T = jvar->T;
     int n = jvar->neqns;
     int nexo = 0;
+    double trace, lmax;
     double cumeig = 0.0;
-    double *lmax = NULL;
-    double *trace = NULL;
-    double pvals[2];
     int i;
 
-    trace = malloc(n * sizeof *trace);
-    lmax = malloc(n * sizeof *lmax);
+    tests = gretl_matrix_alloc(n, 2);
+    pvals = gretl_matrix_alloc(n, 2);
 
-    if (trace == NULL || lmax == NULL) {
-	free(trace);
-	free(lmax);
+    if (tests == NULL || pvals == NULL) {
+	gretl_matrix_free(tests);
+	gretl_matrix_free(pvals);
 	return E_ALLOC;
     }
 
     for (i=n-1; i>=0; i--){
-	lmax[i] = -T * log(1.0 - evals->val[i]); 
-	cumeig += lmax[i];
-	trace[i] = cumeig; 
+	lmax = -T * log(1.0 - evals->val[i]); 
+	cumeig += lmax;
+	trace = cumeig; 
+	gretl_matrix_set(tests, i, 0, trace);
+	gretl_matrix_set(tests, i, 1, lmax);
     }
 
     if (jvar->xlist != NULL) {
@@ -1362,9 +1364,15 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	    _("Lmax test"), _("p-value"));	
 
     for (i=0; i<n; i++) {
-	gamma_par_asymp(trace[i], lmax[i], jcode(jvar), n - i, pvals);
+	double pv[2];
+
+	trace = gretl_matrix_get(tests, i, 0);
+	lmax = gretl_matrix_get(tests, i, 1);
+	gamma_par_asymp(trace, lmax, jcode(jvar), n - i, pv);
 	pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
-		i, evals->val[i], trace[i], pvals[0], lmax[i], pvals[1]);
+		i, evals->val[i], trace, pv[0], lmax, pv[1]);
+	gretl_matrix_set(pvals, i, 0, pv[0]);
+	gretl_matrix_set(pvals, i, 1, pv[1]);
     }
     pputc(prn, '\n');
 
@@ -1375,8 +1383,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	pputs(prn, "\n\n");
     }
 
-    free(lmax);
-    free(trace);
+    record_matrix_test_result(tests, pvals);
 
     return 0;
 }

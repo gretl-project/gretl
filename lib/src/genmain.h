@@ -34,8 +34,6 @@ typedef enum {
     R_ERRNO,      /* internal gretl error code */
     R_SWITCH,     /* integer switch set via "--switch=" on command line */
     R_DSET_MAX,   /* separator */
-    R_TEST_STAT,  /* test statistic from last explicit test performed */
-    R_TEST_PVAL,  /* p-value from last explicit test performed */
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_KLNL,       /* log-likelihood from Kalman filter (if applicable) */
     R_KS2,        /* variance estimate from Kalman filter (if applicable) */
@@ -45,6 +43,9 @@ typedef enum {
     R_SCALAR_MAX, /* separator: scalars vs series */
     R_INDEX,      /* consecutive observations index */
     R_PUNIT,      /* 1-based panel unit index */
+    R_SERIES_MAX, /* separator: series vs matrices */
+    R_TEST_STAT,  /* last test statistic(s) (scalar or matrix) */
+    R_TEST_PVAL,  /* last test p-value(s) (scalar or matrix) */
     R_MAX
 } RetrievalIndex;
 

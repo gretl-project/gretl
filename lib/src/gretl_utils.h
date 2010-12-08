@@ -140,7 +140,12 @@ int ls_criteria (MODEL *pmod);
 
 /* hypothesis tests mechanism */
 
+int get_last_test_type (void);
+
 void record_test_result (double teststat, double pval, char *blurb);
+
+void record_matrix_test_result (gretl_matrix *tests, 
+				gretl_matrix *pvals);
 
 void record_LR_test_result (double teststat, double pval, double lnl,
 			    char *blurb);
@@ -150,6 +155,10 @@ double get_last_test_statistic (char *blurb);
 double get_last_pvalue (char *blurb);
 
 double get_last_lnl (char *blurb);
+
+gretl_matrix *get_last_test_matrix (int *err);
+
+gretl_matrix *get_last_pvals_matrix (int *err);
 
 /* timer */
 
