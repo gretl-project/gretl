@@ -8323,7 +8323,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    errmsg(err, prn);
 	    break;
 	}
-	if (gretl_messages_on()) {
+	if (cmd->ci == RUN && gretl_messages_on()) {
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {

@@ -4184,9 +4184,11 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
 
 static int run_script (const char *fname, ExecState *s, 
 		       double ***pZ, DATAINFO *pdinfo,
-		       PRN *prn)
+		       gretlopt opt, PRN *prn)
 {
     int indent = gretl_if_state_record();
+    int echo = gretl_echo_on();
+    int messages = gretl_messages_on();
     FILE *fp;
     int iferr, err = 0;
 
@@ -4197,6 +4199,11 @@ static int run_script (const char *fname, ExecState *s,
     }
 
     strcpy(s->runfile, fname);
+
+    if (opt & OPT_Q) {
+	set_gretl_echo(0);
+	set_gretl_messages(0);
+    }
 
     if (gretl_echo_on()) {
 	pprintf(prn, "run \"%s\"\n", fname);
@@ -4210,6 +4217,11 @@ static int run_script (const char *fname, ExecState *s,
     }
 
     fclose(fp);
+
+    if (opt & OPT_Q) {
+	set_gretl_echo(echo);
+	set_gretl_messages(messages);
+    }    
 
     iferr = gretl_if_state_check(indent);
     if (iferr && !err) {
@@ -5168,11 +5180,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = getopenfile(line, runfile, OPT_S);
 	} else {
 	    err = getopenfile(line, runfile, OPT_I);
+	    cmd->opt |= OPT_Q;
 	}
 	if (err) { 
 	    break;
 	} 
-	if (gretl_messages_on()) {
+	if (cmd->ci == RUN && gretl_messages_on()) {
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
@@ -5184,7 +5197,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 1;
 	    break;
 	}
-	err = run_script(runfile, s, pZ, pdinfo, prn);
+	err = run_script(runfile, s, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case FUNCERR:
