@@ -352,6 +352,7 @@ struct str_table funcs[] = {
     { F_VARSIMUL, "varsimul" },
     { F_STRSPLIT, "strsplit" },
     { F_INLIST,   "inlist" },
+    { F_ERRMSG,   "errmsg" },
     { 0,          NULL }
 };
 

@@ -138,8 +138,17 @@
 	  Returns the program's internal error code, which will be non-zero in
 	  case an error has occurred but has been trapped using
 	  <cmdref targ="catch"/>. Note that using this accessor causes the
-	  internal error code to be reset to zero.
+	  internal error code to be reset to zero. See also 
+	  <fncref targ="errmsg"/>. If you want to get the error message
+	  associated with a given <lit>$error</lit> you need to
+	  store the value in a temporary variable, as in
 	</para>
+	<code>
+	  errval = $error
+	  if (errval) 
+	    printf "Got error %d (%s)\n", errval, errmsg(errval);
+	  endif
+	</code>
       </description>
     </function>
 
@@ -1745,6 +1754,19 @@
 	  Returns the number of the day in the current epoch specified by
 	  year, month and day (which equals 1 for the first of January in
 	  the year 1 AD).
+	</para>
+      </description>
+    </function>
+
+    <function name="errmsg" section="strings" output="string">
+      <fnargs>
+	<fnarg type="scalar">errno</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retrieves the gretl error message associated with
+	  <argname>errno</argname>. See also <fncref
+	  targ="$error"/>.
 	</para>
       </description>
     </function>

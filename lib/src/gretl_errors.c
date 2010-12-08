@@ -98,6 +98,8 @@ static const char *look_up_errmsg (int err)
 {
     if (err > 0 && err < E_MAX) {
 	return gretl_error_messages[err];
+    } else if (err == 0) {
+	return "";
     } else {
 	fprintf(stderr, "look_up_errmsg: out of bounds code %d\n", err);
 	return "missing error message!";

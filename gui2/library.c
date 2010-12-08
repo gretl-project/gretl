@@ -8153,9 +8153,15 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     if (err) {
+	int catch = 0;
+
 	gretl_exec_state_uncomment(s);
+	if (err != E_ALLOC && (cmd->flags |= CMD_CATCH)) {
+	    set_gretl_errno(err);
+	    catch = 1;
+	}	
         errmsg(err, prn);
-        return 1;
+	return (catch)? 0 : err;
     }
 
     gretl_exec_state_transcribe_flags(s, cmd);
@@ -8321,7 +8327,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    errmsg(err, prn);
 	    break;
 	}
-	if (cmd->ci == RUN && gretl_messages_on()) {
+	if (gretl_messages_on()) {
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {

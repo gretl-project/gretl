@@ -827,9 +827,15 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (err) {
+	int catch = 0;
+
 	gretl_exec_state_uncomment(s);
-	errmsg(err, prn);
-	return err;
+	if (err != E_ALLOC && (cmd->flags |= CMD_CATCH)) {
+	    set_gretl_errno(err);
+	    catch = 1;
+	}	
+        errmsg(err, prn);
+	return (catch)? 0 : err;
     }
 
     gretl_exec_state_transcribe_flags(s, cmd);
@@ -877,8 +883,12 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (gretl_echo_on()) {
 	/* visual feedback, not recording */
-	eflag = (batch || runit)? CMD_BATCH_MODE : CMD_CLI;
-	echo_cmd(cmd, pdinfo, line, eflag, prn);
+	if (cmd->ci == FUNC && runit > 1) {
+	    ; /* don't echo */
+	} else {
+	    eflag = (batch || runit)? CMD_BATCH_MODE : CMD_CLI;
+	    echo_cmd(cmd, pdinfo, line, eflag, prn);
+	}
     }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);

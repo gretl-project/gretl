@@ -4078,6 +4078,37 @@ static NODE *gretl_strsplit (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *errmsg_node (NODE *l, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *src = NULL;
+
+	if (l->t == NUM) {
+	    int errval = l->v.xval;
+
+	    if (errval < 0 || errval >= E_MAX) {
+		p->err = E_DATA;
+	    } else {
+		src = errmsg_get_with_default(errval);
+	    }
+	} else {
+	    /* empty input node */
+	    src = gretl_errmsg_get();
+	}
+
+	if (src != NULL) {
+	    ret->v.str = gretl_strdup(src);
+	    if (ret->v.str == NULL) {
+		p->err = E_ALLOC;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static int series_get_nobs (int t1, int t2, const double *x)
 {
     int t, n = 0;
@@ -8270,7 +8301,14 @@ static NODE *eval (NODE *t, parser *p)
 			    (l->t == STR)? NUM : STR,
 			    (l->t == STR)? r : l, p);
 	}
-	break;	
+	break;
+    case F_ERRMSG:
+	if (l->t == NUM || l->t == EMPTY) {
+	    ret = errmsg_node(l, p);
+	} else {
+	    node_type_error(t->t, 0, NUM, l, p);
+	}
+	break;
     default: 
 	printf("EVAL: weird node %s (t->t = %d)\n", getsymb(t->t, NULL),
 	       t->t);

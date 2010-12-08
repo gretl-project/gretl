@@ -2099,7 +2099,7 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
     } 
 
     if (!ints_ok && !poly && v >= pdinfo->v) {
-	cmd->err = 1;
+	cmd->err = E_UNKVAR;
 	gretl_errmsg_sprintf(_("%d is not a valid variable number"), v);
     } else {
 	cmd->list[*k] = v;
