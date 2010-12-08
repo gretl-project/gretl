@@ -62,7 +62,6 @@ typedef enum {
 #define USE_FCP          "fcp"
 #define VECM_NORM        "vecm_norm"
 #define ARMA_VCV         "arma_vcv"
-#define VERBOSE_INCLUDE  "verbose_include"
 #define SKIP_MISSING     "skip_missing"
 #define R_FUNCTIONS      "R_functions"
 #define R_LIB            "R_lib"
@@ -170,9 +169,6 @@ void set_debug_output_func (DEBUG_OUTPUT dout);
 DEBUG_OUTPUT get_debug_output_func (void);
 
 void set_workdir_callback (int (*callback)());
-
-void set_script_switch (int s);
-int get_script_switch (void);
 
 int libset_write_script (const char *fname);
 int libset_read_script (const char *fname);

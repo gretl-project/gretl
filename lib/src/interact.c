@@ -227,25 +227,6 @@ static void deprecate_alias (const char *targ, const char *repl)
 			  targ, repl);
 }
 
-static void accommodate_obsolete_commands (char *line, CMD *cmd)
-{
-    if (!strcmp(cmd->word, "noecho")) {
-	strcpy(cmd->word, "set");
-	strcpy(line, "set echo off");
-	deprecate_alias("noecho", "set echo off");
-    } else if (!strcmp(cmd->word, "seed")) {
-	char seedstr[16];
-
-	strcpy(cmd->word, "set");
-	if (sscanf(line, "%*s %15s", seedstr)) {
-	    sprintf(line, "set seed %s", seedstr);
-	} else {
-	    strcpy(line, "set seed");
-	}
-	deprecate_alias("seed", "set seed");
-    } 
-}
-
 /* catch aliased command words and assign ci; return
    ci if alias caught, else 0. */
 
@@ -254,8 +235,6 @@ static int catch_command_alias (char *line, CMD *cmd)
     char *s = cmd->word;
 
     cmd->ci = 0;
-
-    accommodate_obsolete_commands(line, cmd);
 
     if (!strcmp(line, "exit")) {
 	strcpy(s, "quit");
@@ -3159,8 +3138,6 @@ int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname)
 	    opt |= OPT_QUIET;
 	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
 	    opt |= OPT_MAKEPKG;
-	} else if (!strncmp(s, "--switch=", 9)) {
-	    set_script_switch(atoi(s + 9));
 	} else if (*s == '-') {
 	    /* not a valid option */
 	    err = E_DATA;
@@ -5185,7 +5162,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (err) { 
 	    break;
 	} 
-	if (cmd->ci == RUN && gretl_messages_on()) {
+	if (gretl_messages_on()) {
 	    pprintf(prn, " %s\n", runfile);
 	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {

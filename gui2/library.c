@@ -7831,9 +7831,7 @@ static int execute_script (const char *runfile, const char *buf,
 	    }
 
 	    if (!exec_err) {
-		if (!strncmp(line, "noecho", 6)) {
-		    set_gretl_echo(0);
-		} else if (!strncmp(line, "(* saved objects:", 17)) { 
+		if (!strncmp(line, "(* saved objects:", 17)) { 
 		    strcpy(line, "quit"); 
 		} else if (gretl_echo_on() && !including) {
 		    /* FIXME move this? */
@@ -8343,9 +8341,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    s->flags = SCRIPT_EXEC;
 
 	    if (cmd->ci == INCLUDE) {
-		if (libset_get_bool(VERBOSE_INCLUDE)) {
-		    pprintf(prn, _("%s opened OK\n"), runfile);
-		}
 		s->flags |= INCLUDE_EXEC;
 	    }
 

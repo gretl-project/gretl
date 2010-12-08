@@ -98,9 +98,6 @@ mdata_handle_drag  (GtkWidget          *widget,
 
 static char *optrun, *optdb, *optwebdb, *optpkg;
 static int opteng, optbasque, optdump, optver;
-#ifndef OLD_GTK
-static int optswitch;
-#endif
 #ifdef G_OS_WIN32
 static int optdebug;
 #endif
@@ -209,8 +206,6 @@ static GOptionEntry options[] = {
 #endif
     { "version", 'v', 0, G_OPTION_ARG_NONE, &optver, 
       N_("print version information"), NULL }, 
-    { "switch", 's', 0, G_OPTION_ARG_INT, &optswitch,
-      N_("pass integer value to script"), "value" },
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
 
@@ -521,9 +516,6 @@ int main (int argc, char **argv)
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
-    }
-    if (optswitch) {
-	set_script_switch(optswitch);
     }
 #endif
 

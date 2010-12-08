@@ -53,14 +53,13 @@ enum {
     STATE_MAX_VERBOSE     = 1 << 11, /* verbose output from maximizer? */
     STATE_USE_FCP         = 1 << 12, /* use FCP garch code */
     STATE_WARN_ON         = 1 << 13, /* print numerical warning messages */
-    STATE_VERBOSE_INCLUDE = 1 << 14, /* verbose include */
-    STATE_SKIP_MISSING    = 1 << 15, /* skip NAs when building matrix from series */
-    STATE_LOOPING         = 1 << 16, /* loop is in progress at this level */
-    STATE_LOOP_QUIET      = 1 << 17, /* loop commands should be quiet */
-    STATE_LOOP_PROG       = 1 << 18, /* progressive loop is in progress */
-    STATE_BFGS_RSTEP      = 1 << 19, /* use Richardson method in BFGS numerical
+    STATE_SKIP_MISSING    = 1 << 14, /* skip NAs when building matrix from series */
+    STATE_LOOPING         = 1 << 15, /* loop is in progress at this level */
+    STATE_LOOP_QUIET      = 1 << 16, /* loop commands should be quiet */
+    STATE_LOOP_PROG       = 1 << 17, /* progressive loop is in progress */
+    STATE_BFGS_RSTEP      = 1 << 18, /* use Richardson method in BFGS numerical
 					gradient */
-    STATE_DPDSTYLE_ON     = 1 << 20, /* emulate dpd in dynamic panel data models */
+    STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
 };    
 
 /* for values that really want a non-negative integer */
@@ -125,7 +124,6 @@ struct set_vars_ {
 			   !strcmp(s, SHELL_OK) || \
 			   !strcmp(s, USE_CWD) || \
 			   !strcmp(s, USE_FCP) || \
-                           !strcmp(s, VERBOSE_INCLUDE) || \
                            !strcmp(s, SKIP_MISSING) || \
 			   !strcmp(s, R_FUNCTIONS) || \
 			   !strcmp(s, R_LIB) || \
@@ -1252,7 +1250,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     } 
 
     libset_print_bool(USE_CWD, prn, opt);
-    libset_print_bool(VERBOSE_INCLUDE, prn, opt);
     libset_print_bool(SKIP_MISSING, prn, opt);
 
     libset_print_bool(R_LIB, prn, opt);
@@ -1803,8 +1800,6 @@ static int boolvar_get_flag (const char *s)
 	return STATE_PREWHITEN;
     } else if (!strcmp(s, PCSE)) {
 	return STATE_USE_PCSE;
-    } else if (!strcmp(s, VERBOSE_INCLUDE)) {
-	return STATE_VERBOSE_INCLUDE;
     } else if (!strcmp(s, SKIP_MISSING)) {
 	return STATE_SKIP_MISSING;
     } else if (!strcmp(s, BFGS_RSTEP)) {
@@ -2271,22 +2266,6 @@ void set_debug_output_func (DEBUG_OUTPUT dout)
 DEBUG_OUTPUT get_debug_output_func (void) 
 {
     return dbg_output;
-}
-
-/* mechanism for passing an integer parameter to
-   a gretl script, accessible via $switch
-*/
-
-static int script_switch;
-
-void set_script_switch (int s)
-{
-    script_switch = s;
-}
-
-int get_script_switch (void)
-{
-    return script_switch;
 }
 
 /* for setting what we print for NAs on CSV output */

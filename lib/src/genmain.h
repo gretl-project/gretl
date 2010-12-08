@@ -32,7 +32,6 @@ typedef enum {
     R_WINDOWS,    /* running on MS Windows (1) or not (0) */
     R_VERSION,    /* gretl version number */
     R_ERRNO,      /* internal gretl error code */
-    R_SWITCH,     /* integer switch set via "--switch=" on command line */
     R_DSET_MAX,   /* separator */
     R_TEST_LNL,   /* log-likelihood from last test (if applicable) */
     R_KLNL,       /* log-likelihood from Kalman filter (if applicable) */

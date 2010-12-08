@@ -1,5 +1,8 @@
 version 1.9.4, in progress
 
+The old, deprecated aliases "noecho" (use "set echo off") and
+"seed" (use "set seed") have been removed.
+
 The "sscanf" command is deprecated in favor of the function
 of the same name.
 

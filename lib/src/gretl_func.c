@@ -3363,10 +3363,6 @@ static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
 #if FN_DEBUG
 		fprintf(stderr, "'%s': found an existing function of this name\n", fname);
 #endif
-		if (libset_get_bool(VERBOSE_INCLUDE)) {
-		    pprintf(prn, _("Redefining function '%s'"), fname);
-		    pputc(prn, '\n');
-		}
 		if (pfun != NULL) {
 		    clear_ufunc_data(ufuns[i]);
 		    *pfun = ufuns[i];

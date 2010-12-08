@@ -6894,8 +6894,6 @@ double dvar_get_scalar (int i, const DATAINFO *pdinfo,
 	return get_version_as_scalar();
     case R_ERRNO:
 	return get_gretl_errno();
-    case R_SWITCH:
-	return get_script_switch();
     default:
 	return NADBL;
     }
