@@ -52,6 +52,7 @@
 			 c == RESET ||		\
 			 c == RESTRICT ||	\
 			 c == RMPLOT ||		\
+			 c == SYSTEM ||		\
 			 c == VAR ||		\
 			 c == VECM ||		\
 			 c == XCORRGM)
@@ -167,6 +168,7 @@ struct gretl_option gretl_opts[] = {
 #if 0 /* not yet */
     { TABPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
 #endif
+    { EQUATION, OPT_M, "multi", 0 },
     { ESTIMATE, OPT_I, "iterate", 0 },
     { ESTIMATE, OPT_M, "geomean", 0 },
     { ESTIMATE, OPT_N, "no-df-corr", 0 },
@@ -1112,6 +1114,8 @@ static int end_block_ci (const char *s)
 	    return KALMAN;
 	} else if (!strcmp(word, "foreign")) {
 	    return FOREIGN;
+	} else if (!strcmp(word, "system")) {
+	    return SYSTEM;
 	}
     }
 

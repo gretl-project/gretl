@@ -7,6 +7,8 @@ version 1.9.4, in progress
   GUI for panel plots
 - New function, inlist(): gives the position of a series
   within a named list or zero if the series is not present
+- "estimate" command: document the --quiet flag; and also
+  enable the --quiet option for "system"
 - New function, errmsg(): returns the gretl error message
   associated with a given integer error code
 - New "set" variable, matrix_mask, which can be used to

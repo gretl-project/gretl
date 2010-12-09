@@ -261,6 +261,9 @@ static int catch_command_alias (char *line, CMD *cmd)
 	deprecate_alias("testuhat", "modtest");
 	cmd->ci = MODTEST;
 	cmd->opt |= OPT_N;
+    } else if (!strcmp(s, "equations")) {
+	cmd->ci = EQUATION;
+	cmd->opt |= OPT_M;
     } else if (!strcmp(s, "graph")) {
 	cmd->ci = PLOT;
     } else if (!strcmp(s, "plot")) {
@@ -333,6 +336,22 @@ static int catch_command_alias (char *line, CMD *cmd)
     } else if (!strcmp(s, "undebug")) {
 	cmd->ci = FUNDEBUG;
 	cmd->opt |= OPT_Q;
+    }
+
+    return cmd->ci;
+}
+
+static int catch_system_alias (char *line, CMD *cmd)
+{
+    char *s = cmd->word;
+
+    cmd->ci = 0;
+    
+    if (!strcmp(s, "equation")) {
+	cmd->ci = EQUATION;
+    } else if (!strcmp(s, "equations")) {
+	cmd->ci = EQUATION;
+	cmd->opt |= OPT_M;
     }
 
     return cmd->ci;
@@ -2344,6 +2363,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (!cmd->context) {
 	/* replace simple aliases and a few specials */
 	catch_command_alias(line, cmd);
+    } else if (cmd->context == SYSTEM) {
+	catch_system_alias(line, cmd);
     }
 
     /* list <listname> delete */
@@ -2355,9 +2376,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
 	cmd->context = 0;
-    } else if (cmd->context && strcmp(cmd->word, "equation")) {
+    } else if (cmd->context && cmd->ci != EQUATION) {
 	/* "equation" occurs in the SYSTEM context, but it is
-	   a command in its own right */
+	   a command in its own right, so don't overwrite 
+	   cmd->ci with cmd->context
+	*/
 	cmd->ci = cmd->context;
     }
 
@@ -2423,7 +2446,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } 
 
     /* commands that never take a list of variables */
-    if (NO_VARLIST(cmd->ci) || (cmd->ci == DELEET && (cmd->opt & OPT_D))) { 
+    if (NO_VARLIST(cmd->ci) || 
+	(cmd->ci == DELEET && (cmd->opt & OPT_D)) ||
+	(cmd->ci == EQUATION && (cmd->opt & OPT_M))) { 
 	cmd_set_nolist(cmd);
 	if (cmd->ci != GENR) {
 	    capture_param(line, cmd);
@@ -2744,7 +2769,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
 	if (dupv >= 0) {
 	    printlist(cmd->list, "cmd->list with duplicate(s)");
-	    cmd->err = E_UNSPEC;
+	    cmd->err = E_DATA;
 	    gretl_errmsg_sprintf(_("variable %d duplicated in the "
 				   "command list."), dupv);
 	} 
@@ -5102,7 +5127,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case EQUATION:
-	err = equation_system_append(s->sys, cmd->list);
+	if (cmd->opt & OPT_M) {
+	    err = equation_system_append_multi(s->sys, cmd->param, pdinfo);
+	} else {
+	    err = equation_system_append(s->sys, cmd->list);
+	}
 	if (err) {
 	    s->sys = NULL;
 	}

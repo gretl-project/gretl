@@ -24,6 +24,7 @@
 #include "libgretl.h"
 #include "system.h"
 #include "objstack.h"
+#include "usermat.h"
 #include "gretl_xml.h"
 #include "tsls.h"
 
@@ -508,12 +509,144 @@ static void sys_rearrange_eqn_lists (equation_system *sys,
     }
 }
 
+/* Form a list from row @i of matrix @m, ignoring trailing
+   zero elements. We check that series ID numbers are in
+   bounds, and also that the list does not contain
+   duplicated elements.
+*/
+
+static int *matrix_row_to_list (const gretl_matrix *m, int i, 
+				const DATAINFO *pdinfo,
+				int *err)
+{
+    int *list = NULL;
+    int j, k, n = m->cols;
+
+    /* figure how many elements to read */
+    for (j=m->cols-1; j>=0; j--) {
+	if (gretl_matrix_get(m, i, j) == 0) {
+	    n--;
+	} else {
+	    break;
+	}
+    }
+
+    if (n == 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    /* check for out-of-bounds values */
+    for (j=0; j<n; j++) {
+	k = gretl_matrix_get(m, i, j);
+	if (k < 0 || k >= pdinfo->v) {
+	    *err = E_UNKVAR;
+	    return NULL;
+	} 
+    }
+
+    /* construct the list */
+    list = gretl_list_new(n);
+    if (list == NULL) {
+	*err = E_ALLOC;
+    } else {
+	k = 1;
+	for (j=0; j<n; j++) {
+	    list[k++] = (int) gretl_matrix_get(m, i, j);
+	}
+    }	    
+
+    if (!*err) {
+	k = gretl_list_duplicates(list, EQUATION);
+	if (k >= 0) {
+	    gretl_errmsg_sprintf(_("variable %d duplicated in the "
+				   "command list."), k);
+	    *err = E_DATA;
+	    free(list);
+	    list = NULL;
+	}
+    }
+
+    return list;
+}
+
+static int add_equations_from_matrix (equation_system *sys,
+				      const gretl_matrix *m,
+				      const DATAINFO *pdinfo)
+{
+    int *list;
+    int n = sys->neqns;
+    int i, err = 0;
+
+    sys->lists = realloc(sys->lists, (n + m->rows) * sizeof *sys->lists);
+    if (sys->lists == NULL) {
+	return E_ALLOC;
+    }    
+
+    for (i=0; i<m->rows && !err; i++) {
+	list = matrix_row_to_list(m, i, pdinfo, &err);
+	if (!err) {
+	    sys->lists[n++] = list;
+	}
+    }
+
+    if (!err) {
+	sys->neqns += m->rows;
+    }
+
+    return err;
+}
+
+/**
+ * equation_system_append_multi:
+ * @sys: initialized equation system.
+ * @mname: the name of a pre-defined matrix.
+ * @pdinfo: dataset information.
+ * 
+ * Adds one or more equations to @sys by interpreting the rows 
+ * of the specified matrix as lists. Lists of differing length
+ * can be accommodated by padding unused trailing elements of 
+ * short rows with zeros.
+ * 
+ * Returns: 0 on success, non-zero on failure, in which case
+ * @sys is destroyed.
+ */
+
+int equation_system_append_multi (equation_system *sys, 
+				  const char *mname, 
+				  const DATAINFO *pdinfo)
+{
+    const gretl_matrix *m;
+    int err = 0;
+
+    if (sys == NULL) {
+	gretl_errmsg_set(_(nosystem));
+	return E_DATA;
+    }
+
+    m = get_matrix_by_name(mname);
+
+    if (m == NULL) {
+	err = E_UNKVAR;
+    } else if (m->rows == 0 || m->cols == 0) {
+	err = E_DATA;
+    } else {
+	err = add_equations_from_matrix(sys, m, pdinfo);
+    }
+
+    if (err) {
+	equation_system_destroy(sys);
+    }
+
+    return err;
+}
+
 /**
  * equation_system_append:
  * @sys: initialized equation system.
  * @list: list containing dependent variable and regressors.
  * 
- * Adds an equation (as represented by @list) to @sys.
+ * Adds an equation, as represented by @list, to @sys. 
  * 
  * Returns: 0 on success, non-zero on failure, in which case
  * @sys is destroyed.
@@ -521,30 +654,34 @@ static void sys_rearrange_eqn_lists (equation_system *sys,
 
 int equation_system_append (equation_system *sys, const int *list)
 {
-    int n;
+    int err = 0;
 
     if (sys == NULL) {
 	gretl_errmsg_set(_(nosystem));
-	return E_DATA;
+	err = E_DATA;
+    } else {
+	int n = sys->neqns;
+	int **lists;
+
+	lists = realloc(sys->lists, (n + 1) * sizeof *sys->lists);
+	if (lists == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    sys->lists = lists;
+	    sys->lists[n] = gretl_list_copy(list);
+	    if (sys->lists[n] == NULL) {
+		err = E_ALLOC;
+	    } else {
+		sys->neqns += 1;
+	    }
+	}
+
+	if (err) {
+	    equation_system_destroy(sys);
+	}
     }
 
-    n = sys->neqns;
-
-    sys->lists = realloc(sys->lists, (n + 1) * sizeof *sys->lists);
-    if (sys->lists == NULL) {
-	return E_ALLOC;
-    }
-
-    sys->lists[n] = gretl_list_copy(list);
-
-    if (sys->lists[n] == NULL) {
-	equation_system_destroy(sys);
-	return E_ALLOC;
-    }
-
-    sys->neqns += 1;
-
-    return 0;
+    return err;
 }
 
 /* retrieve the name -- possibly quoted with embedded spaces -- for
@@ -691,7 +828,7 @@ equation_system *equation_system_start (const char *line,
 	/* "foo <- system" */
 	sysname = gretl_strdup(name);
     } else {
-	/* "system name=foo" (maybe) */
+	/* "system name=foo" (old-style, maybe) */
 	sysname = get_system_name_from_line(line, SYSNAME_NEW);
     }
 
@@ -710,12 +847,18 @@ equation_system *equation_system_start (const char *line,
 	sys = equation_system_new(method, sysname, err);
     }
 
-    if (sys != NULL && (opt & OPT_I)) {
-	sys->flags |= SYSTEM_ITERATE;
+    if (sys != NULL) {
+	if (opt & OPT_I) {
+	    sys->flags |= SYSTEM_ITERATE;
+	}
+	if (opt & OPT_Q) {
+	    sys->flags |= SYSTEM_QUIET;
+	}	
     }
 
 #if SYSDEBUG > 1
-    fprintf(stderr, "new system '%s' at %p\n", sysname, (void *) sys);
+    fprintf(stderr, "new system '%s' at %p, flags = %d\n", sysname, 
+	    (void *) sys, sys->flags);
 #endif
 
     if (sysname != NULL) {
@@ -745,11 +888,11 @@ static int system_get_dfu (const equation_system *sys)
    (1/J) * (Rb-q)' * [R*Var(b)*R']^{-1} * (Rb-q) 
 */
 
-static void 
-system_print_F_test (const equation_system *sys,
-		     const gretl_matrix *b, 
-		     const gretl_matrix *vcv,
-		     PRN *prn)
+static int system_do_F_test (const equation_system *sys,
+			     const gretl_matrix *b, 
+			     const gretl_matrix *vcv,
+			     gretlopt opt,
+			     PRN *prn)
 {
     const gretl_matrix *R = sys->R;
     const gretl_matrix *q = sys->q;
@@ -761,7 +904,7 @@ system_print_F_test (const equation_system *sys,
 
     if (R == NULL || q == NULL || b == NULL || vcv == NULL) {
 	pputs(prn, "Missing matrix in system F test!\n");
-	return;
+	return E_DATA;
     }
 
     Rrows = gretl_matrix_rows(R);
@@ -772,62 +915,64 @@ system_print_F_test (const equation_system *sys,
     RvR = gretl_matrix_alloc(Rrows, Rrows);
 
     if (Rbq == NULL || RvR == NULL) {
-	pputs(prn, "Out of memory!\n");
-	goto bailout;
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_multiply(R, b, Rbq);
+	gretl_matrix_subtract_from(Rbq, q);
+	gretl_matrix_qform(R, GRETL_MOD_NONE, vcv,
+			   RvR, GRETL_MOD_NONE);
+	err = gretl_invert_symmetric_matrix(RvR);
     }
 
-    gretl_matrix_multiply(R, b, Rbq);
-    gretl_matrix_subtract_from(Rbq, q);
-
-    gretl_matrix_qform(R, GRETL_MOD_NONE, vcv,
-		       RvR, GRETL_MOD_NONE);
-
-    err = gretl_invert_symmetric_matrix(RvR);
-    if (err) {
-	pputs(prn, "Matrix inversion failed in F test\n");
-	goto bailout;
+    if (!err) {
+	F = gretl_scalar_qform(Rbq, RvR, &err);
     }
 
-    F = gretl_scalar_qform(Rbq, RvR, &err);
-    if (err) {
-	pputs(prn, "Matrix multiplication failed in F test\n");
-	goto bailout;
+    if (!err) {
+	double pval;
+
+	F /= dfn;
+	pval = snedecor_cdf_comp(dfn, dfu, F);
+	record_test_result(F, pval, _("restriction"));
+
+	if (!(opt & OPT_Q)) {
+	    pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
+	    pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfu, F, pval);
+	    pputc(prn, '\n'); 
+	}
     }
-
-    F /= dfn;
-
-    pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
-    pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfu, F,
-	    snedecor_cdf_comp(dfn, dfu, F));
-    pputc(prn, '\n');    
-
- bailout:
     
     gretl_matrix_free(Rbq);
     gretl_matrix_free(RvR);
+
+    return err;
 }
 
-static void 
-system_print_LR_test (const equation_system *sys,
-		      double llu, PRN *prn)
+static int system_do_LR_test (const equation_system *sys,
+			      double llu, gretlopt opt,
+			      PRN *prn)
 {
-    double llr = sys->ll;
+    double X2, pval, llr = sys->ll;
     int df = gretl_matrix_rows(sys->R);
-    double X2;
+    int err = 0;
 
     if (na(llr) || na(llu) || llr == 0.0 || llu == 0.0 || df <= 0) {
 	fputs("bad or missing data in system LR test\n", stderr);
-	return;
+	return E_DATA;
     }
 
     X2 = 2.0 * (llu - llr);
+    pval = chisq_cdf_comp(df, X2);
 
-    pprintf(prn, "%s:\n", _("LR test for the specified restrictions"));
-    pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), llr);
-    pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
-    pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
-	    df, X2, chisq_cdf_comp(df, X2));
-    pputc(prn, '\n');    
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, "%s:\n", _("LR test for the specified restrictions"));
+	pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), llr);
+	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
+	pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"), df, X2, pval);
+	pputc(prn, '\n');
+    }
+
+    return err;
 }
 
 static int sys_test_type (equation_system *sys)
@@ -902,8 +1047,8 @@ static int shrink_b_and_vcv (const gretl_matrix *b,
 
 static int estimate_with_test (equation_system *sys, 
 			       double ***pZ, DATAINFO *pdinfo, 
-			       gretlopt opt, int stest, 
-			       int (*system_est)(), PRN *prn)
+			       int stest, int (*system_est)(), 
+			       gretlopt opt, PRN *prn)
 {
     gretl_matrix *vcv = NULL;
     gretl_matrix *b = NULL;
@@ -941,11 +1086,11 @@ static int estimate_with_test (equation_system *sys,
 
     if (!err) {
 	if (stest == SYS_TEST_LR) {
-	    system_print_LR_test(sys, llu, prn);
+	    err = system_do_LR_test(sys, llu, opt, prn);
 	} else if (stest == SYS_TEST_F) {
-	    system_print_F_test(sys, b, vcv, prn);
+	    err = system_do_F_test(sys, b, vcv, opt, prn);
 	}
-	err = shrink_b_and_vcv(b, sys);
+	shrink_b_and_vcv(b, sys);
     }
 
  bailout:
@@ -1020,6 +1165,10 @@ set_sys_flags_from_opt (equation_system *sys, gretlopt opt)
     if (opt & OPT_M) {
 	sys->flags |= SYSTEM_VCV_GEOMEAN;
     } 
+
+    if (opt & OPT_Q) {
+	sys->flags |= SYSTEM_QUIET;
+    }     
 
     if (opt & OPT_S) {
 	/* estimating single equation */
@@ -1097,8 +1246,8 @@ equation_system_estimate (equation_system *sys,
 	pputc(prn, '\n');
 	err = 1;
     } else if (stest != SYS_TEST_NONE) {
-	err = estimate_with_test(sys, pZ, pdinfo, opt, stest, 
-				 system_est, prn);
+	err = estimate_with_test(sys, pZ, pdinfo, stest, 
+				 system_est, opt, prn);
     } else {
 	err = (*system_est) (sys, pZ, pdinfo, opt, prn);
     }
@@ -1473,13 +1622,16 @@ int equation_system_finalize (equation_system *sys,
     err = sys_check_lists(sys, (const double **) *pZ, pdinfo);
 
     if (!err && !(opt & OPT_S) && sys->name != NULL && *sys->name != '\0') {
-	/* save the system for subsequent estimation: note that we
+	/* save the system for subsequent estimation: but note that we
 	   should not do this if given OPT_S, for single-equation
 	   LIML */
 	err = gretl_stack_object_as(sys, GRETL_OBJ_SYS, sys->name);
     }
 
     if (!err && sys->method >= 0) {
+	if (sys->flags & SYSTEM_QUIET) {
+	    opt |= OPT_Q;
+	}
 	err = equation_system_estimate(sys, pZ, pdinfo, opt, prn);
     }
 
@@ -2508,7 +2660,7 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc,
     got = 0;
     got += gretl_xml_get_prop_as_int(node, "n_equations", &sys->neqns);
     got += gretl_xml_get_prop_as_int(node, "nidents", &sys->nidents);
-    got += gretl_xml_get_prop_as_char(node, "flags", &sys->flags);
+    got += gretl_xml_get_prop_as_int(node, "flags", &sys->flags);
 
     if (got < 3) {
 	*err = E_DATA;
@@ -2588,7 +2740,7 @@ int equation_system_serialize (equation_system *sys,
 	    (sys->name != NULL)? sys->name : "none", flags, sys->method);
 
     fprintf(fp, "n_equations=\"%d\" nidents=\"%d\" flags=\"%d\" order=\"%d\">\n",
-	    sys->neqns, sys->nidents, (int) sys->flags, sys->order);
+	    sys->neqns, sys->nidents, sys->flags, sys->order);
 
     for (i=0; i<sys->neqns; i++) {
 	gretl_xml_put_tagged_list("eqnlist", sys->lists[i], fp);

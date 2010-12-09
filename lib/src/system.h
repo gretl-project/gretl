@@ -32,13 +32,16 @@ typedef enum {
 } GretlSystemMethods;
 
 enum {
-    /* leave as is: allow for obsoleted flags in saved sessions */
+    /* note: allow for obsoleted flags in saved sessions --
+       treat this enumeration as append-only 
+    */
     SYSTEM_DFCORR      = 1 << 2,
     SYSTEM_VCV_GEOMEAN = 1 << 3,
     SYSTEM_RESTRICT    = 1 << 4,
     SYSTEM_ITERATE     = 1 << 5,
     SYSTEM_SAVEIT      = 1 << 6,
-    SYSTEM_SINGLE      = 1 << 7
+    SYSTEM_SINGLE      = 1 << 7,
+    SYSTEM_QUIET       = 1 << 8
 };
 
 enum {
@@ -64,7 +67,7 @@ struct equation_system_ {
     int nidents;                /* number of identities */
     int order;                  /* max lag of endogenous variable */
     int iters;                  /* number of iterations taken */
-    char flags;                 /* to record options (e.g. save residuals) */
+    int flags;                  /* to record options */
     double ll;                  /* log-likelihood (restricted) */
     double llu;                 /* unrestricted log-likelihood */
     double X2;                  /* chi-square test value */
@@ -104,6 +107,10 @@ equation_system *equation_system_start (const char *line,
 char *get_system_name_from_line (const char *s, int context);
 
 int equation_system_append (equation_system *sys, const int *list);
+
+int equation_system_append_multi (equation_system *sys, 
+				  const char *mname, 
+				  const DATAINFO *pdinfo);
 
 int system_parse_line (equation_system *sys,
 		       const char *line,

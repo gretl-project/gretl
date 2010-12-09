@@ -2934,6 +2934,10 @@
 	  <effect>see below</effect>
 	</option>
 	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print results</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
