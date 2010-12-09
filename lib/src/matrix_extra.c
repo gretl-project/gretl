@@ -713,11 +713,13 @@ gretl_matrix_data_subset_special (const int *list, const double **Z,
  * or NULL on failure.
  */
 
-DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
+DATAINFO *gretl_dataset_from_matrix (const gretl_matrix *m, 
+				     const int *list,
 				     double ***pZ, int *err)
 {
     DATAINFO *dinfo = NULL;
     const char **names;
+    double x;
     int i, t, col, nv, T;
 
     if (gretl_is_null_matrix(m)) {
@@ -756,7 +758,8 @@ DATAINFO *gretl_dataset_from_matrix (gretl_matrix *m, const int *list,
     for (i=1; i<=nv; i++) {
 	col = (list != NULL)? list[i] - 1 : i - 1;
 	for (t=0; t<T; t++) {
-	    (*pZ)[i][t] = gretl_matrix_get(m, t, col);
+	    x = gretl_matrix_get(m, t, col);
+	    (*pZ)[i][t] = x;
 	}
 	if (names != NULL) {
 	    strcpy(dinfo->varname[i], names[col]);

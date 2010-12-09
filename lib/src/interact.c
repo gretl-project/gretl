@@ -2448,9 +2448,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci) || 
 	(cmd->ci == DELEET && (cmd->opt & OPT_D)) ||
+	(cmd->ci == SUMMARY && (cmd->opt & OPT_M)) ||
 	(cmd->ci == EQUATION && (cmd->opt & OPT_M))) { 
 	cmd_set_nolist(cmd);
-	if (cmd->ci != GENR) {
+	if (cmd->ci != GENR && cmd->ci != SUMMARY) {
 	    capture_param(line, cmd);
 	}
 	return cmd->err;
@@ -4783,6 +4784,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case SUMMARY:
 	if (cmd->opt & OPT_B) {
 	    err = do_command_by(cmd, pZ, pdinfo, prn);
+	} else if (cmd->opt & OPT_M) {
+	    err = print_matrix_summary(cmd->opt, prn);
 	} else {
 	    err = list_summary(cmd->list, Z, pdinfo, cmd->opt, prn);
 	}

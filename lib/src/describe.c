@@ -4442,7 +4442,7 @@ static Summary *summary_new (const int *list, gretlopt opt)
 /**
  * get_summary:
  * @list: list of variables to process.
- * @Z: data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: may include OPT_S for "simple" version.
  * @prn: gretl printing struct.
@@ -4537,6 +4537,19 @@ Summary *get_summary (const int *list, const double **Z,
     return s;
 }
 
+/**
+ * list_summary:
+ * @list: list of series to process.
+ * @Z: data array.
+ * @pdinfo: information on the data set.
+ * @opt: may include %OPT_S for "simple" version.
+ * @prn: gretl printing struct.
+ *
+ * Prints descriptive statistics for the listed variables.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
 int list_summary (const int *list, const double **Z, 
 		  const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
@@ -4554,6 +4567,63 @@ int list_summary (const int *list, const double **Z,
 	print_summary(summ, pdinfo, prn);
 	free_summary(summ);
     }
+
+    return err;
+}
+
+/**
+ * print_matrix_summary:
+ * @opt: may include %OPT_S for "simple" version.
+ * @prn: gretl printing struct.
+ *
+ * Prints descriptive statistics for the columns in
+ * a named matrix: the name is supplied via the
+ * --matrix=matname option to the %summary command.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int print_matrix_summary (gretlopt opt, PRN *prn)
+{
+    const char *mname;
+    const gretl_matrix *m;
+    double **Z = NULL;
+    DATAINFO *dinfo = NULL;
+    int *list = NULL;
+    int err = 0;
+
+    mname = get_optval_string(SUMMARY, OPT_M);
+    
+    if (mname == NULL) {
+	err = E_DATA;
+    } else {
+	m = get_matrix_by_name(mname);
+	if (m == NULL) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	dinfo = gretl_dataset_from_matrix(m, NULL, &Z, &err);
+    }
+
+    if (err) {
+	return err;
+    }
+
+    list = gretl_consecutive_list_new(1, dinfo->v - 1);
+    if (list == NULL) {
+	err = E_ALLOC;
+    } 
+
+    if (!err) {
+	opt &= ~OPT_M;
+	err = list_summary(list, (const double **) Z, dinfo, 
+			   opt, prn);
+    }
+
+    destroy_dataset(Z, dinfo);   
+    free(list);
 
     return err;
 }

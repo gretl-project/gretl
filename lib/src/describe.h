@@ -197,6 +197,8 @@ int list_summary (const int *list, const double **Z,
 		  const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn);
 
+int print_matrix_summary (gretlopt opt, PRN *prn);
+
 void print_summary (const Summary *summ,
 		    const DATAINFO *pdinfo,
 		    PRN *prn); 

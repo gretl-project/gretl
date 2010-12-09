@@ -896,9 +896,8 @@ static int system_do_F_test (const equation_system *sys,
 {
     const gretl_matrix *R = sys->R;
     const gretl_matrix *q = sys->q;
+    gretl_matrix *Rbq, *RvR;
     int Rrows, dfu, dfn;
-    gretl_matrix *Rbq = NULL;
-    gretl_matrix *RvR = NULL;
     double F = NADBL;
     int err = 0;
 

@@ -5205,9 +5205,9 @@
 
     <usage>
       <altforms>
-	<altform>labels <lit>[</lit> <repl>varlist</repl> <lit>]</lit></altform>	
-	<altform>labels <lit>--to-file=</lit><repl>filename</repl></altform>
-	<altform>labels <lit>--from-file=</lit><repl>filename</repl></altform>
+	<altform><lit>labels [</lit> <repl>varlist</repl> <lit>]</lit></altform>	
+	<altform><lit>labels --to-file=</lit><repl>filename</repl></altform>
+	<altform><lit>labels --from-file=</lit><repl>filename</repl></altform>
       </altforms>
     </usage>
 
@@ -9539,8 +9539,8 @@
 
     <usage>
       <altforms>
-        <altform>setobs <repl>periodicity</repl> <repl>startobs</repl></altform>
-	<altform>setobs <repl>unitvar</repl> <repl>timevar</repl></altform>
+        <altform><lit>setobs</lit> <repl>periodicity</repl> <repl>startobs</repl></altform>
+	<altform><lit>setobs</lit> <repl>unitvar</repl> <repl>timevar</repl></altform>
       </altforms>
       <options>
         <option>
@@ -10107,9 +10107,10 @@
     label="Descriptive statistics" context="cli">
 
     <usage>
-      <arguments>
-        <argument optional="true">varlist</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>summary [</lit> <repl>varlist</repl> ]</altform>
+	<altform><lit>summary --matrix=</lit><repl>matname</repl></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--simple</flag>
@@ -10125,13 +10126,14 @@
 
     <description>
       <para>
-	Prints summary statistics for the variables in <repl>varlist</repl>, or
-	for all the variables in the data set if <repl>varlist</repl> is
-	omitted.  By default, output consists of the mean, standard deviation
-	(sd), coefficient of variation (= sd/mean), median, minimum, maximum,
-	skewness coefficient, and excess kurtosis.  If the <opt>--simple</opt>
-	option is given, output is restricted to the mean, minimum, maximum
-	and standard deviation.
+	In its first form, this command prints summary statistics for
+	the variables in <repl>varlist</repl>, or for all the
+	variables in the data set if <repl>varlist</repl> is omitted.
+	By default, output consists of the mean, standard deviation
+	(sd), coefficient of variation (= sd/mean), median, minimum,
+	maximum, skewness coefficient, and excess kurtosis.  If the
+	<opt>--simple</opt> option is given, output is restricted to
+	the mean, minimum, maximum and standard deviation.
       </para>
       <para>
 	If the <opt>--by</opt> option is given (in which case the parameter
@@ -10141,6 +10143,11 @@
 	<repl>byvar</repl> is a (binary) dummy variable, statistics are
 	given for the cases <lit>byvar = 0</lit> and <lit>byvar = 1</lit>.
       </para>
+      <para>
+	If the alternative form is given, using a named matrix, then
+	summary statistics are printed for each column of the matrix.
+	The <opt>--by</opt> option is not available in this case.
+      </para>      
     </description>
 
     <gui-access>
