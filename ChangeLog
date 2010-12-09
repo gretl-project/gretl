@@ -9,13 +9,17 @@ version 1.9.4, in progress
   within a named list or zero if the series is not present
 - "estimate" command: document the --quiet flag; and also
   enable the --quiet option for "system"
+- "summary" command: add an option to print summary stats
+  for the columns of a named matrix
 - New function, errmsg(): returns the gretl error message
   associated with a given integer error code
 - New "set" variable, matrix_mask, which can be used to
   control the included observations when constructing
   matrices from series
 - Accessors $test and $pvalue: generalize to allow matrix
-  values (e.g. from the coint2 command)
+  values (e.g. from the coint2 command); also ensure that
+  these values get recorded when using "restrict" in
+  connection with a system estimator such as SUR
 - "catch" modifier for commands: make this catch a wider
   range of errors
 - Functions corr(), cov() and fcstats(): accept two vector
