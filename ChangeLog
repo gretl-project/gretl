@@ -13,6 +13,8 @@ version 1.9.4, in progress
   for the columns of a named matrix
 - New function, errmsg(): returns the gretl error message
   associated with a given integer error code
+- New function, rownames(): complements the colnames()
+  function for matrices
 - New "set" variable, matrix_mask, which can be used to
   control the included observations when constructing
   matrices from series

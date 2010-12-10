@@ -1197,7 +1197,8 @@ void gretl_matrix_print_with_col_heads (const gretl_matrix *m,
 static void maybe_print_col_heads (const gretl_matrix *m, 
 				   const char *fmt,
 				   int wid, int prec,
-				   int icast, PRN *prn)
+				   int icast, int llen,
+				   PRN *prn)
 {
     const char **heads;
 
@@ -1228,6 +1229,10 @@ static void maybe_print_col_heads (const gretl_matrix *m,
 	    } else {
 		snprintf(wtest, 32, fmt, x);
 	    }
+	}
+
+	if (llen > 0) {
+	    bufspace(llen + 1, prn);
 	}
 
 	n = strlen(wtest);
@@ -1268,7 +1273,8 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
     if (gretl_is_null_matrix(m) || fmt == NULL || *fmt == '\0') {
 	real_matrix_print_to_prn(m, NULL, 0, 0, 1, NULL, prn);
     } else {
-	int intcast = 0;
+	const char **rownames = NULL;
+	int llen = 0, intcast = 0;
 	double x;
 	int i, j, c;
 
@@ -1277,9 +1283,17 @@ void gretl_matrix_print_with_format (const gretl_matrix *m,
 	    intcast = 1;
 	}
 
-	maybe_print_col_heads(m, fmt, wid, prec, intcast, prn);
+	rownames = user_matrix_get_names(m, 1);
+	if (rownames != NULL) {
+	    llen = max_label_length(rownames, m->rows);
+	}
+
+	maybe_print_col_heads(m, fmt, wid, prec, intcast, llen, prn);
 
 	for (i=0; i<m->rows; i++) {
+	    if (rownames != NULL) {
+		pprintf(prn, "%*s ", llen, rownames[i]);
+	    }
 	    for (j=0; j<m->cols; j++) {
 		x = gretl_matrix_get(m, i, j);
 		if (intcast) {

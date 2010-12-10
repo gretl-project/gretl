@@ -1235,7 +1235,7 @@
 	  must have <math>k</math> members. If <argname>s</argname> is a
 	  string, it should contain <math>k</math> space-separated
 	  sub-strings.  The return value is 0 on successful completion,
-	  non-zero on error.
+	  non-zero on error. See also <fncref targ="rownames"/>.
 	</para>
       </description>
     </function>
@@ -4571,6 +4571,24 @@
 	    <fncref targ="floor"/>
 	    <fncref targ="int"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="rownames" section="matbuild" output="scalar">
+      <fnargs>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="list-or-string">s</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Attaches names to the rows of the <by r="m" c="n"/> matrix
+	  <argname>M</argname>. If <argname>s</argname> is a named list, the
+	  row names are copied from the names of the variables; the list
+	  must have <math>m</math> members. If <argname>s</argname> is a
+	  string, it should contain <math>m</math> space-separated
+	  sub-strings.  The return value is 0 on successful completion,
+	  non-zero on error. See also <fncref targ="colnames"/>.
 	</para>
       </description>
     </function>
