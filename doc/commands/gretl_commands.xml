@@ -8339,6 +8339,10 @@
 	  <effect>don't print anything</effect>
 	</option>
 	<option>
+	  <flag>--wald</flag>
+	  <effect>system estimators only &ndash; see below</effect>
+	</option>
+	<option>
 	  <flag>--bootstrap</flag>
 	  <effect>bootstrap the test if possible</effect>
 	</option>
@@ -8351,11 +8355,12 @@
 
     <description>
       <para>
-	Imposes a set of (usually linear) restrictions on either (a) the model
-	last estimated or (b) a system of equations previously defined and
-	named. In all cases the set of restrictions should be started with the
-	keyword <quote>restrict</quote> and terminated with <quote>end
-	  restrict</quote>.
+	Imposes a set of (usually linear) restrictions on either (a)
+	the model last estimated or (b) a system of equations
+	previously defined and named. In all cases the set of
+	restrictions should be started with the keyword
+	<quote>restrict</quote> and terminated with <quote>end
+	restrict</quote>.
       </para>
       <para>
 	In the single equation case the restrictions are always
@@ -8367,9 +8372,13 @@
 	targ="system"/> command), the initial <quote>restrict</quote>
 	may be followed by the name of a previously defined system of
 	equations. If this is omitted and the last model was a system
-	then the restrictions are applied to the last model. The
-	restrictions are evaluated when the system is next estimated,
-	using the <cmdref targ="estimate"/> command.
+	then the restrictions are applied to the last model. By
+	default the restrictions are evaluated when the system is next
+	estimated, using the <cmdref targ="estimate"/> command. But if
+	the <opt>--wald</opt> option is given the restriction is
+	tested right away, via a Wald chi-square test on the
+	covariance matrix. Note that this option will produce an error
+	if a system has been defined but not yet estimated.
       </para>
       <para>
 	Depending on the context, the restrictions to be tested may be
