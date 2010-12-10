@@ -2245,22 +2245,24 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-static NODE *matrix_colnames (NODE *l, NODE *r, parser *p)
+static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
 	const gretl_matrix *m = l->v.m;
+	int byrow = (f == F_ROWNAMES);
 
 	if (r->t == STR) {
-	    ret->v.xval = umatrix_set_colnames_from_string(m, r->v.str);
+	    ret->v.xval = umatrix_set_names_from_string(m, r->v.str, byrow);
 	} else {
 	    int *list = node_get_list(r, p);
 
 	    if (p->err) {
 		ret->v.xval = 1;
 	    } else {
-		ret->v.xval = umatrix_set_colnames_from_list(m, list, p->dinfo);
+		ret->v.xval = umatrix_set_names_from_list(m, list, p->dinfo,
+							  byrow);
 	    }
 	}
     }
@@ -8057,9 +8059,10 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;
     case F_COLNAMES:
+    case F_ROWNAMES:
 	/* matrix, list or string as second arg */
 	if (l->t == MAT && (ok_list_node(r) || r->t == STR)) {
-	    ret = matrix_colnames(l, r, p);
+	    ret = matrix_add_names(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	} 

@@ -1135,7 +1135,8 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
  * xml_get_user_matrix:
  * @node: XML node pointer.
  * @doc: XML document pointer.
- * @colnames: location to receive column strings, if present.
+ * @colnames: location to receive column labels, if present.
+ * @rownames: location to receive row labels, if present.
  * @err: location to receive error code.
  * 
  * Returns: allocated gretl matrix read from @node, or %NULL 
@@ -1143,7 +1144,8 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
  */
 
 static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc, 
-					  char **colnames, int *err)
+					  char **colnames, char **rownames,
+					  int *err)
 {
     gretl_matrix *m = NULL;
     xmlChar *tmp;
@@ -1200,6 +1202,10 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 
     if (colnames != NULL) {
 	*colnames = (char *) xmlGetProp(node, (XUC) "colnames");
+    }
+
+    if (rownames != NULL) {
+	*rownames = (char *) xmlGetProp(node, (XUC) "rownames");
     }
 
     m = gretl_matrix_alloc(rows, cols);
@@ -1261,7 +1267,7 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
 gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
 				    int *err)
 {
-    return xml_get_user_matrix(node, doc, NULL, err);
+    return xml_get_user_matrix(node, doc, NULL, NULL, err);
 }
 
 /**
@@ -2585,6 +2591,7 @@ int load_user_matrix_file (const char *fname)
     xmlNodePtr cur = NULL;
     gretl_matrix *m;
     char *colnames;
+    char *rownames;
     char *name;
     int err = 0;
 
@@ -2602,15 +2609,20 @@ int load_user_matrix_file (const char *fname)
 	    if (name == NULL) {
 		err = 1;
 	    } else {
-		colnames = NULL;
-		m = xml_get_user_matrix(cur, doc, &colnames, &err);
+		colnames = rownames = NULL;
+		m = xml_get_user_matrix(cur, doc, &colnames, 
+					&rownames, &err);
 		if (m != NULL) {
 		    err = user_matrix_add(m, name);
 		    if (!err && colnames != NULL) {
-			umatrix_set_colnames_from_string(m, colnames);
+			umatrix_set_names_from_string(m, colnames, 0);
 		    }
+		    if (!err && rownames != NULL) {
+			umatrix_set_names_from_string(m, rownames, 1);
+		    }		    
 		}
 		free(colnames);
+		free(rownames);
 		free(name);
 	    }
 	}

@@ -388,7 +388,7 @@ static void maybe_update_column_names (Spreadsheet *sheet)
 		}
 	    }
 	    if (!err) {
-		umatrix_set_colnames_from_string(M, cnames);
+		umatrix_set_names_from_string(M, cnames, 0);
 	    }
 	    free(cnames);
 	}
@@ -3397,7 +3397,7 @@ static void edit_matrix (gretl_matrix *m, const char *name,
 	free(sheet);
 	sheet = NULL;
     } else {
-	sheet->colnames = user_matrix_get_column_names(m);
+	sheet->colnames = user_matrix_get_names(m, 0);
 	sheet->datarows = gretl_matrix_rows(sheet->matrix);
 	sheet->datacols = gretl_matrix_cols(sheet->matrix);
 	real_show_spreadsheet(&sheet, SHEET_EDIT_MATRIX, block);

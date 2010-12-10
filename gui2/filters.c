@@ -1045,7 +1045,7 @@ static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
 	err = private_matrix_add(W, "$Weights");
 
 	if (!err) {
-	    err = umatrix_set_colnames_from_string(W, "weight t");
+	    err = umatrix_set_names_from_string(W, "weight t", 0);
 	}
 
 	if (!err) {

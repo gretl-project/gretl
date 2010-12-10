@@ -886,23 +886,33 @@ static int system_get_dfu (const equation_system *sys)
 /* Asymptotic F-test, as in Greene:
 
    (1/J) * (Rb-q)' * [R*Var(b)*R']^{-1} * (Rb-q) 
+
+   or chi-squared version if given OPT_W
 */
 
-static int system_do_F_test (const equation_system *sys,
-			     const gretl_matrix *b, 
-			     const gretl_matrix *vcv,
-			     gretlopt opt,
-			     PRN *prn)
+static int real_system_wald_test (const equation_system *sys,
+				  const gretl_matrix *b, 
+				  const gretl_matrix *vcv,
+				  const gretl_matrix *R,
+				  const gretl_matrix *q,
+				  gretlopt opt,
+				  PRN *prn)
 {
-    const gretl_matrix *R = sys->R;
-    const gretl_matrix *q = sys->q;
     gretl_matrix *Rbq, *RvR;
     int Rrows, dfu, dfn;
-    double F = NADBL;
+    double test = NADBL;
     int err = 0;
 
+    if (R == NULL) {
+	R = sys->R;
+    }
+
+    if (q == NULL) {
+	q = sys->q;
+    }
+
     if (R == NULL || q == NULL || b == NULL || vcv == NULL) {
-	pputs(prn, "Missing matrix in system F test!\n");
+	pputs(prn, "Missing matrix in system Wald test!\n");
 	return E_DATA;
     }
 
@@ -924,19 +934,30 @@ static int system_do_F_test (const equation_system *sys,
     }
 
     if (!err) {
-	F = gretl_scalar_qform(Rbq, RvR, &err);
+	test = gretl_scalar_qform(Rbq, RvR, &err);
     }
 
     if (!err) {
 	double pval;
 
-	F /= dfn;
-	pval = snedecor_cdf_comp(dfn, dfu, F);
-	record_test_result(F, pval, _("restriction"));
+	if (opt & OPT_W) {
+	    pval = chisq_cdf_comp(dfn, test);
+	} else {
+	    test /= dfn;
+	    pval = snedecor_cdf_comp(dfn, dfu, test);
+	}
+
+	record_test_result(test, pval, _("restriction"));
 
 	if (!(opt & OPT_Q)) {
-	    pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
-	    pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfu, F, pval);
+	    if (opt & OPT_W) {
+		pprintf(prn, "%s:\n", _("Wald test for the specified restrictions"));
+		pprintf(prn, "  %s(%d) = %g [%.4f]\n", _("Chi-square"),
+			dfn, test, pval);
+	    } else {
+		pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
+		pprintf(prn, "  F(%d,%d) = %g [%.4f]\n", dfn, dfu, test, pval);
+	    }
 	    pputc(prn, '\n'); 
 	}
     }
@@ -945,6 +966,23 @@ static int system_do_F_test (const equation_system *sys,
     gretl_matrix_free(RvR);
 
     return err;
+}
+
+int system_wald_test (const equation_system *sys, 
+		      const gretl_matrix *R,
+		      const gretl_matrix *q,
+		      gretlopt opt,
+		      PRN *prn)
+{
+    const gretl_matrix *b = sys->b;
+    const gretl_matrix *V = sys->vcv;
+
+    if (b == NULL || V == NULL) {
+	gretl_errmsg_set("restrict: no estimates are available");
+	return E_DATA;
+    }
+    
+    return real_system_wald_test(sys, b, V, R, q, opt, prn);
 }
 
 static int system_do_LR_test (const equation_system *sys,
@@ -1087,7 +1125,8 @@ static int estimate_with_test (equation_system *sys,
 	if (stest == SYS_TEST_LR) {
 	    err = system_do_LR_test(sys, llu, opt, prn);
 	} else if (stest == SYS_TEST_F) {
-	    err = system_do_F_test(sys, b, vcv, opt, prn);
+	    err = real_system_wald_test(sys, b, vcv, NULL, NULL,
+					opt, prn);
 	}
 	shrink_b_and_vcv(b, sys);
     }

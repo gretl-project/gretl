@@ -97,14 +97,17 @@ int copy_named_matrix_as (const char *orig, const char *newname);
 
 int copy_matrix_as (const gretl_matrix *m, const char *newname);
 
-int umatrix_set_colnames_from_string (const gretl_matrix *M, 
-				      const char *s);
+int umatrix_set_names_from_string (const gretl_matrix *M, 
+				   const char *s,
+				   int byrow);
 
-int umatrix_set_colnames_from_list (const gretl_matrix *M, 
-				    const int *list,
-				    const DATAINFO *pdinfo);
+int umatrix_set_names_from_list (const gretl_matrix *M, 
+				 const int *list,
+				 const DATAINFO *pdinfo,
+				 int byrow);
 
-const char **user_matrix_get_column_names (const gretl_matrix *M);
+const char **user_matrix_get_names (const gretl_matrix *M,
+				    int byrow);
 
 void destroy_user_matrices (void);
 

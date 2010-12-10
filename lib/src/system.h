@@ -188,6 +188,12 @@ system_set_restriction_matrices (equation_system *sys,
 int 
 system_normality_test (const equation_system *sys, PRN *prn);
 
+int system_wald_test (const equation_system *sys, 
+		      const gretl_matrix *R,
+		      const gretl_matrix *q,
+		      gretlopt opt,
+		      PRN *prn);
+
 double *system_get_resid_series (equation_system *sys, int eqnum,
 				 DATAINFO *pdinfo, int *err);
 

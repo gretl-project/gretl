@@ -290,6 +290,7 @@ enum {
     F_WSD,
     F_STRSTR,
     F_COLNAMES,
+    F_ROWNAMES,
     F_LJUNGBOX,
     F_MSORTBY,
     F_LINCOMB,

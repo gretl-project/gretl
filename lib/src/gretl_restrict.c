@@ -2548,8 +2548,7 @@ gretl_restriction_finalize_full (ExecState *state,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    int silent, t = rset->otype;
-    int err = 0;
+    int silent, err = 0;
 
 #if RDEBUG
     fprintf(stderr, "gretl_restriction_finalize: starting\n");
@@ -2562,7 +2561,7 @@ gretl_restriction_finalize_full (ExecState *state,
     rset->opt |= opt;
     silent = (rset->opt & OPT_S);
 
-    if (t == GRETL_OBJ_EQN && (opt & OPT_F)) {
+    if (rset->otype == GRETL_OBJ_EQN && (opt & OPT_F)) {
 	/* --full option is for OLS only */
 	MODEL *pmod = rset->obj;
 
@@ -2577,7 +2576,7 @@ gretl_restriction_finalize_full (ExecState *state,
 	return err;
     }
 
-    if (t != GRETL_OBJ_EQN) {
+    if (rset->otype != GRETL_OBJ_EQN) {
 	err = restriction_set_form_matrices(rset);
 	if (err) {
 	    destroy_restriction_set(rset);
@@ -2585,16 +2584,20 @@ gretl_restriction_finalize_full (ExecState *state,
 	}
     }
 
-    if ((rset->rows != NULL) && !silent) {
+    if (!silent && rset->rows != NULL) {
 	print_restriction_set(rset, pdinfo, prn);
     }
 
-    if (t == GRETL_OBJ_VAR) {
+    if (rset->otype == GRETL_OBJ_VAR) {
 	err = gretl_VECM_test(rset->obj, rset, pdinfo, rset->opt, prn);
-    } else if (t == GRETL_OBJ_SYS) {
-	system_set_restriction_matrices(rset->obj, rset->R, rset->q);
-	rset->R = NULL;
-	rset->q = NULL;
+    } else if (rset->otype == GRETL_OBJ_SYS) {
+	if (rset->opt & OPT_W) {
+	    err = system_wald_test(rset->obj, rset->R, rset->q, opt, prn);
+	} else {
+	    system_set_restriction_matrices(rset->obj, rset->R, rset->q);
+	    rset->R = NULL;
+	    rset->q = NULL;
+	}
     } else {
 	/* single-equation model */
 	err = do_single_equation_test(state, rset, Z, pdinfo, prn);
