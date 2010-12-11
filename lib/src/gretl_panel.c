@@ -3986,6 +3986,75 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
     return 0;
 }
 
+/**
+ * panel_isconst:
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ * @pd: panel time-series length.
+ * @x: data series to examine.
+ * @bygroup: use 1 to check for constancy across groups,
+ * 0 for constancy across time.
+ * 
+ * Check whether series @x is constant (either over time or
+ * across groups) in a panel dataset. Missing values are
+ * ignored.
+ *
+ * Returns: 1 if the variable is constant, otherwise 0.
+ */
+
+int panel_isconst (int t1, int t2, int pd, const double *x,
+		   int bygroup)
+{
+    double x0 = NADBL;
+    int t, ret = 1;
+
+    if (bygroup) {
+	/* check for variation across groups */
+	int tref;
+
+	for (t=t1; t<=t2 && ret; t++) {
+	    if (na(x[t])) {
+		continue;
+	    }
+	    tref = t - pd;
+	    while (tref >= t1) {
+		/* check last obs for the same period */
+		x0 = x[t-pd];
+		if (na(x0)) {
+		    tref -= pd;
+		} else {
+		    if (x[t] != x0) {
+			ret = 0;
+		    }
+		    break;
+		}
+	    } 
+	}
+    } else {
+	/* check for time-variation */
+	int u, ubak = -1;
+
+	for (t=t1; t<=t2 && ret; t++) {
+	    if (na(x[t])) {
+		continue;
+	    }
+	    u = t / pd;
+	    if (u == ubak) {
+		/* same group */
+		if (!na(x0) && x[t] != x0) {
+		    ret = 0;
+		}
+	    } else {
+		/* starting a new group */
+		x0 = x[t];
+		ubak = u;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static int 
 varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 		   panelmod_t *pan)

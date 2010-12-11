@@ -255,7 +255,6 @@ enum {
     F_LOGISTIC,
     F_INVMILLS,
     F_ERRMSG,
-    F_ISCONST,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
@@ -309,6 +308,7 @@ enum {
     F_POLYFIT,
     F_STRSPLIT,
     F_INLIST,
+    F_ISCONST,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,

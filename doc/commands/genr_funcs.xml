@@ -2471,14 +2471,27 @@
     <function name="isconst" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">y</fnarg>
+	<fnarg type="scalar" optional="true">panel-code</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns 1 if <argname>y</argname> has a constant value
-	  over the current sample range (or over its entire length
-	  if <argname>y</argname> is a vector), otherwise 0.
+	  Without the optional second argument, returns 1 if
+	  <argname>y</argname> has a constant value over the current
+	  sample range (or over its entire length if
+	  <argname>y</argname> is a vector), otherwise 0.
+	</para>
+	<para>
+	  The second argument is accepted only if the current dataset
+	  is a panel and <argname>y</argname> is a series.  In that
+	  case a <argname>panel-code</argname> value of 0 calls for a
+	  check for time-invariance, while a value of 1 means check
+	  for cross-sectional invariance (that is, in each time period
+	  the value of <argname>y</argname> is the same for all
+	  groups).
+	</para>
+	<para>
 	  If <argname>y</argname> is a series, missing values are
-	  ignored.
+	  ignored in checking for constancy.
 	</para>
       </description>
     </function>

@@ -8,7 +8,9 @@ version 1.9.4, in progress
 - New function, inlist(): gives the position of a series
   within a named list or zero if the series is not present
 - New function, isconst(): determines whether a series or
-  vector has a constant value
+  vector has a constant value, and optionally tests for
+  either time-invariance or cross-sectional invariance for
+  panel-data series
 - "estimate" command: document the --quiet flag; and also
   enable the --quiet option for "system"
 - "summary" command: add an option to print summary stats

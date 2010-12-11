@@ -26,6 +26,7 @@
 #include "usermat.h"
 #include "gretl_bfgs.h"
 #include "gretl_fft.h"
+#include "gretl_panel.h"
 #include "kalman.h"
 #include "libset.h"
 #include "version.h"
@@ -4314,6 +4315,9 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	case F_NPV:
 	    ret->v.xval = gretl_npv(t1, t2, xvec, rval, pd, &p->err);
 	    break;
+	case F_ISCONST:
+	    ret->v.xval = panel_isconst(t1, t2, pd, xvec, (int) rval);
+	    break;
 	default:
 	    break;
 	}
@@ -4323,6 +4327,21 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
     }
 
     return ret;
+}
+
+static NODE *isconst_node (NODE *l, NODE *r, parser *p)
+{
+    if (r->t == EMPTY) {
+	return series_scalar_func(l, F_ISCONST, p);
+    } else if (l->t == MAT) {
+	node_type_error(F_ISCONST, 1, VEC, l, p);
+	return NULL;
+    } else if (!dataset_is_panel(p->dinfo)) {
+	p->err = E_PDWRONG;
+	return NULL;
+    } else {
+	return series_scalar_scalar_func(l, r, F_ISCONST, p);
+    }
 }
 
 /* series on left, scalar or string on right */
@@ -7878,7 +7897,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_NOBS:
     case F_T1:
     case F_T2:
-    case F_ISCONST:
 	/* functions taking series arg, returning scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_scalar_func(l, t->t, p);
@@ -7895,9 +7913,12 @@ static NODE *eval (NODE *t, parser *p)
     case F_LRVAR:
     case F_QUANTILE:
     case F_NPV:
+    case F_ISCONST:
 	/* takes series and scalar arg, returns scalar */
 	if (l->t == VEC || l->t == MAT) {
-	    if (scalar_node(r)) {
+	    if (t->t == F_ISCONST) {
+		ret = isconst_node(l, r, p);
+	    } else if (scalar_node(r)) {
 		ret = series_scalar_scalar_func(l, r, t->t, p);
 	    } else {
 		node_type_error(t->t, 2, NUM, r, p);

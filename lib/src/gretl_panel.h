@@ -60,4 +60,7 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
 
 int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo);
 
+int panel_isconst (int t1, int t2, int pd, const double *x,
+		   int bygroup);
+
 #endif /* GRETL_PANEL_H_ */
