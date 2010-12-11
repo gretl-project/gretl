@@ -7,6 +7,8 @@ version 1.9.4, in progress
   GUI for panel plots
 - New function, inlist(): gives the position of a series
   within a named list or zero if the series is not present
+- New function, isconst(): determines whether a series or
+  vector has a constant value
 - "estimate" command: document the --quiet flag; and also
   enable the --quiet option for "system"
 - "summary" command: add an option to print summary stats

@@ -354,6 +354,7 @@ struct str_table funcs[] = {
     { F_STRSPLIT, "strsplit" },
     { F_INLIST,   "inlist" },
     { F_ERRMSG,   "errmsg" },
+    { F_ISCONST,  "isconst" },
     { 0,          NULL }
 };
 

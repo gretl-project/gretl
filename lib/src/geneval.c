@@ -4150,22 +4150,29 @@ static int series_get_end (int n, const double *x)
 
 #define series_cast_optional(f) (f == F_SD) 
 
-static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, parser *p)
+static void cast_to_series (NODE *n, int f, gretl_matrix **tmp, 
+			    int *t1, int *t2, parser *p)
 {
     gretl_matrix *m = n->v.m;
+    int len = gretl_vector_get_length(m);
 
     if (gretl_is_null_matrix(m)) {
 	p->err = E_DATA;
-    } else if (gretl_vector_get_length(m) != p->dinfo->n) {
+    } else if (len == p->dinfo->n) {
+	*tmp = m;
+	n->v.xvec = m->val;
+    } else {
 	if (series_cast_optional(f)) {
-	    p->err = E_TYPES;
+	    p->err = E_TYPES; /* temporary error flag */
+	} else if (len > 0 && t1 != NULL && t2 != NULL) {
+	    *tmp = m;
+	    n->v.xvec = m->val;
+	    *t1 = 0;
+	    *t2 = len - 1;
 	} else {
 	    node_type_error(f, 1, VEC, n, p);
 	}
-    } else {
-	*tmp = m;
-	n->v.xvec = m->val;
-    }
+    } 
 }
 
 /* functions taking a series as argument and returning a scalar */
@@ -4177,10 +4184,16 @@ series_scalar_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *tmp = NULL;
+	int t1 = p->dinfo->t1;
+	int t2 = p->dinfo->t2;
 	const double *x;
 
 	if (n->t == MAT) {
-	    cast_to_series(n, f, &tmp, p);
+	    if (f == F_T1 || f == F_T2) {
+		cast_to_series(n, f, &tmp, NULL, NULL, p);
+	    } else {
+		cast_to_series(n, f, &tmp, &t1, &t2, p);
+	    }
 	    if (p->err) {
 		if (f == F_SD) {
 		    /* offer column s.d. instead */
@@ -4196,34 +4209,37 @@ series_scalar_func (NODE *n, int f, parser *p)
 
 	switch (f) {
 	case F_SUM:
-	    ret->v.xval = gretl_sum(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_sum(t1, t2, x);
 	    break;
 	case F_MEAN:
-	    ret->v.xval = gretl_mean(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_mean(t1, t2, x);
 	    break;
 	case F_SD:
-	    ret->v.xval = gretl_stddev(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_stddev(t1, t2, x);
 	    break;
 	case F_VCE:
-	    ret->v.xval = gretl_variance(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_variance(t1, t2, x);
 	    break;
 	case F_SST:
-	    ret->v.xval = gretl_sst(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_sst(t1, t2, x);
 	    break;
 	case F_MIN:
-	    ret->v.xval = gretl_min(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_min(t1, t2, x);
 	    break;
 	case F_MAX: 
-	    ret->v.xval = gretl_max(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_max(t1, t2, x);
 	    break;
 	case F_MEDIAN:
-	    ret->v.xval = gretl_median(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_median(t1, t2, x);
 	    break;
 	case F_GINI:
-	    ret->v.xval = gretl_gini(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = gretl_gini(t1, t2, x);
 	    break;
 	case F_NOBS:
-	    ret->v.xval = series_get_nobs(p->dinfo->t1, p->dinfo->t2, x);
+	    ret->v.xval = series_get_nobs(t1, t2, x);
+	    break;
+	case F_ISCONST:
+	    ret->v.xval = gretl_isconst(t1, t2, x);
 	    break;
 	case F_T1:
 	    ret->v.xval = series_get_start(p->dinfo->n, x);
@@ -4622,7 +4638,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	double *y;
 
 	if (l->t == MAT) {
-	    cast_to_series(l, f, &tmp, p);
+	    cast_to_series(l, f, &tmp, NULL, NULL, p);
 	}
 
 	if (!p->err && f != F_DESEAS && 
@@ -5799,7 +5815,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 	if (l->t != VEC) {
 	    if (l->t == MAT) {
-		cast_to_series(l, f, &tmp, p);
+		cast_to_series(l, f, &tmp, NULL, NULL, p);
 	    } else {
 		node_type_error(f, 1, VEC, l, p);
 	    }
@@ -7862,6 +7878,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_NOBS:
     case F_T1:
     case F_T2:
+    case F_ISCONST:
 	/* functions taking series arg, returning scalar */
 	if (l->t == VEC || l->t == MAT) {
 	    ret = series_scalar_func(l, t->t, p);

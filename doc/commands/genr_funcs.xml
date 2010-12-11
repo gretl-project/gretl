@@ -2468,6 +2468,21 @@
       </description>
     </function>
 
+    <function name="isconst" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="series-or-vec">y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns 1 if <argname>y</argname> has a constant value
+	  over the current sample range (or over its entire length
+	  if <argname>y</argname> is a vector), otherwise 0.
+	  If <argname>y</argname> is a series, missing values are
+	  ignored.
+	</para>
+      </description>
+    </function>
+
     <function name="islist" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
