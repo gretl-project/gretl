@@ -615,12 +615,16 @@ gretl_matrix_data_subset_masked (const int *list, const double **Z,
 					 M_MISSING_ERROR, err);
 }
 
-static int mmask_row_count (const gretl_matrix *mmask, int n)
-{
-    int i, m = 0;
+/* count the number of selected rows in the current
+   sample range */
 
-    for (i=0; i<n; i++) {
-	if (mmask->val[i] != 0 && !na(mmask->val[i])) {
+static int mmask_row_count (const gretl_matrix *mask, 
+			    const DATAINFO *pdinfo)
+{
+    int t, m = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (mask->val[t] != 0) {
 	    m++;
 	}
     }
@@ -630,7 +634,7 @@ static int mmask_row_count (const gretl_matrix *mmask, int n)
 
 /**
  * gretl_matrix_data_subset_special:
- * @list: list of variable to process.
+ * @list: list of variables to process.
  * @Z: data array.
  * @pdinfo: dataset information.
  * @mmask: matrix holding desired observations mask.
@@ -641,7 +645,7 @@ static int mmask_row_count (const gretl_matrix *mmask, int n)
  * selected by non-zero elements in @mmask. This is designed
  * to support the gretl "libset" variable %matrix_mask.
  *
- * The length of the vector @mmask should equal the number of
+ * The length of the vector @mmask must equal the number of
  * observations in the dataset, the member %n of @pdinfo.
  *
  * Returns: allocated matrix or NULL on failure. 
@@ -661,7 +665,7 @@ gretl_matrix_data_subset_special (const int *list, const double **Z,
     } else if (list[0] == 0) {
 	X = gretl_null_matrix_new();
     } else {
-	int T = mmask_row_count(mmask, n);
+	int T = mmask_row_count(mmask, pdinfo);
 	int k = list[0];
 
 	if (T == 0) {
@@ -677,14 +681,19 @@ gretl_matrix_data_subset_special (const int *list, const double **Z,
 
 	    for (i=0; i<k; i++) {
 		xi = Z[list[i+1]];
-		t = 0;
-		for (s=0; s<pdinfo->n; s++) {
-		    if (mmask->val[s] != 0 && !na(mmask->val[i])) {
-			xti = xi[s];
+		s = 0;
+		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		    if (mmask->val[t] != 0) {
+			xti = xi[t];
 			if (na(xti)) {
 			    xti = M_NA;
 			}
-			gretl_matrix_set(X, t++, i, xti);
+			if (s == 0) {
+			    X->t1 = t;
+			} else if (s == T - 1) {
+			    X->t2 = t;
+			}
+			gretl_matrix_set(X, s++, i, xti);
 		    }
 		}
 	    }

@@ -31,10 +31,14 @@ int type_can_be_bundled (GretlType type);
 
 gretl_bundle *get_gretl_bundle_by_name (const char *name);
 
+gretl_bundle *get_bundle_by_index (int idx);
+
 void *gretl_bundle_get_content (gretl_bundle *bundle);
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size, int *err);
+
+const char *gretl_bundle_get_name (gretl_bundle *bundle);
 
 GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
 				 int *err);
@@ -62,6 +66,8 @@ int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 
 int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key);
 
+void set_bundle_add_callback (void (*callback));
+
 int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name);
 
 int save_named_bundle (const char *name);
@@ -72,9 +78,13 @@ gretl_bundle *gretl_bundle_copy (gretl_bundle *bundle, int *err);
 
 int gretl_bundle_delete_by_name (const char *name, PRN *prn);
 
+int gretl_bundle_set_name (gretl_bundle *b, const char *name);
+
 int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);
 
 int data_is_bundled (void *ptr);
+
+int gretl_bundle_is_stacked (gretl_bundle *b);
 
 gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 					    int *err);
@@ -94,6 +104,12 @@ void gretl_bundle_destroy (gretl_bundle *bundle);
 int destroy_saved_bundles_at_level (int level);
 
 void destroy_user_bundles (void);
+
+int n_user_bundles (void);
+
+void write_bundles_to_file (FILE *fp);
+
+int load_bundle_from_xml (void *p1, void *p2, const char *name);
 
 #endif /* GRETL_BUNDLE_H_ */
 

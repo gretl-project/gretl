@@ -8249,8 +8249,9 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 
 	if (c == NULL) {
 	    *err = E_ALLOC;
-	}
+	} 
     }
+
     return c;
 }
 

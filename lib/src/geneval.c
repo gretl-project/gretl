@@ -1705,6 +1705,17 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	break;
     } 
 
+    if (!*err) {
+	/* preserve data-row info? */
+	if (C->rows == A->rows && A->t1 >= 0 && A->t2 > A->t1) {
+	    C->t1 = A->t1;
+	    C->t2 = A->t2;
+	} else if (C->rows == B->rows && B->t1 >= 0 && B->t2 > B->t1) {
+	    C->t1 = B->t1;
+	    C->t2 = B->t2;
+	}
+    }
+
     if (*err && C != NULL) {
 	gretl_matrix_free(C);
 	C = NULL;
@@ -9318,14 +9329,48 @@ static int non_scalar_matrix (const NODE *r)
     return r->t == MAT && (r->v.m->rows != 1 || r->v.m->cols != 1);
 }
 
-static int series_compatible (const gretl_matrix *m,
-			      const DATAINFO *pdinfo)
+static int matrix_may_be_masked (const gretl_matrix *m, int n,
+				 parser *p)
+{
+    int fullrows = m->t2 - m->t1 + 1;
+    int nobs = get_matrix_mask_nobs();
+
+    if (n == nobs && fullrows > n) {
+	p->flags |= P_MMASK;
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/* check whether a matrix result can be assigned to a series 
+   on return */
+
+static int series_compatible (const gretl_matrix *m, parser *p)
 {
     int n = gretl_vector_get_length(m);
-    int T = sample_size(pdinfo);
+    int T = sample_size(p->dinfo);
+    int ok = 0;
 
-    return n == T || n == pdinfo->n || n == 1 || 
-	(m->t1 > 0 && m->t1 + n <= pdinfo->n);
+    if (m->t2 > 0) {
+	if (n == m->t2 - m->t1 + 1) {
+	    /* sample is recorded on matrix */
+	    ok = 1;
+	} else if (matrix_may_be_masked(m, n, p)) {
+	    ok = 1;
+	}
+    } else if (n == T) {
+	/* length matches current sample */
+	ok = 1;
+    } else if (n == p->dinfo->n) {
+	/* length matches full series length */
+	ok = 1;
+    } else if (n == 1) {
+	/* scalar: can be expanded */
+	ok = 1;
+    } 
+
+    return ok;
 }
 
 /* below: note that node we're checking is p->ret, which may differ in
@@ -9795,7 +9840,7 @@ static int gen_check_return_type (parser *p)
 	if (r->t == NUM || r->t == VEC) {
 	    ; /* OK */
 	} else if (r->t == MAT) {
-	    if (!series_compatible(r->v.m, p->dinfo)) {
+	    if (!series_compatible(r->v.m, p)) {
 		p->err = E_TYPES;
 	    }
 	} else {
@@ -9891,6 +9936,27 @@ static void series_make_finite (double *x, int n)
 
 #endif
 
+static void align_matrix_to_series (double *y, const gretl_matrix *m,
+				    parser *p)
+{
+    const gretl_matrix *mask = get_matrix_mask();
+    int t, s = 0;
+
+    if (mask == NULL || mask->rows != p->dinfo->n) {
+	p->err = E_DATA;
+	return;
+    }
+
+    for (t=0; t<p->dinfo->n; t++) {
+	if (mask->val[t] != 0.0) {
+	    if (t >= p->dinfo->t1 && t <= p->dinfo->t2) {
+		y[t] = xy_calc(y[t], m->val[s], p->op, VEC, p);
+	    }
+	    s++;
+	}
+    }
+}
+
 static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
@@ -9981,7 +10047,10 @@ static int save_generated_var (parser *p, PRN *prn)
 	    const gretl_matrix *m = r->v.m;
 	    int s, k = gretl_vector_get_length(m);
 
-	    if (k == 1) {
+	    if (p->flags & P_MMASK) {
+		/* result needs special alignment */
+		align_matrix_to_series(Z[v], m, p);
+	    } else if (k == 1) {
 		/* result is effectively a scalar */
 		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[0], p->op, VEC, p);

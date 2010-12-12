@@ -518,7 +518,11 @@ static int gen_special (const char *s, const char *line,
 	p->err = 0;
 	p->prn = prn;
 	gen_write_message(p, orig_v, prn);
-    }	    
+    }
+
+    if (pdinfo->v > orig_v) {
+	set_dataset_is_changed();
+    }
 
     return err;
 }

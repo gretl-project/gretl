@@ -57,6 +57,18 @@ void set_dataset_is_changed (void)
     dataset_changed = 1;
 }
 
+static void dataset_set_nobs (DATAINFO *pdinfo, int n)
+{
+    if (n != pdinfo->n) {
+	/* if the total number of observations in the dataset
+	   has changed, the current "matrix_mask", if present
+	   (see libset.c), will now be invalid 
+	*/
+	destroy_matrix_mask();
+	pdinfo->n = n;
+    }
+}
+
 /**
  * free_Z:
  * @Z: data matrix.
@@ -848,7 +860,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
 	pdinfo->t2 = bign - 1;
     }
 
-    pdinfo->n = bign;
+    dataset_set_nobs(pdinfo, bign);
 
     if (opt & OPT_A) {
 	maybe_extend_trends(*pZ, pdinfo, oldn);
@@ -895,7 +907,7 @@ real_insert_observation (int pos, double ***pZ, DATAINFO *pdinfo)
 	pdinfo->t2 = n - 1;
     }
 
-    pdinfo->n = n;
+    dataset_set_nobs(pdinfo, n);
     ntodate(pdinfo->endobs, n - 1, pdinfo);
 
     return err;
@@ -946,7 +958,7 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
 	pdinfo->t2 = newn - 1;
     }
 
-    pdinfo->n = newn;
+    dataset_set_nobs(pdinfo, newn);
 
     /* does daily data need special handling? */
     ntodate(pdinfo->endobs, newn - 1, pdinfo);
@@ -3289,7 +3301,7 @@ int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo)
 	}
     }
 
-    pdinfo->n = new_n;
+    dataset_set_nobs(pdinfo, new_n);
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
 

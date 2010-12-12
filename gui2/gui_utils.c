@@ -1401,7 +1401,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_EN) {
 	    free(vwin->data); /* help file text */
 	} else if (vwin->role == VIEW_BUNDLE) {
-	    gretl_bundle_destroy(vwin->data);
+	    if (!gretl_bundle_is_stacked(vwin->data)) {
+		gretl_bundle_destroy(vwin->data);
+	    }
 	}
 
 	if (window_delete_filename(vwin)) {

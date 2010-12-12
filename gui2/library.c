@@ -48,6 +48,7 @@
 #include "matrix_extra.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
+#include "gretl_bundle.h"
 #include "gretl_www.h"
 #include "texprint.h"
 #include "bootstrap.h"
@@ -8232,6 +8233,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    } 
 	    break;
 	}
+	if (gretl_is_bundle(cmd->param)) {
+	    err = session_bundle_destroy_by_name(cmd->param, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}	
 	if (*cmd->param != '\0') {
 	    err = gretl_delete_var_by_name(cmd->param, prn);
 	    if (err) {

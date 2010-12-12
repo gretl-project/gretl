@@ -82,6 +82,8 @@ void *get_session_object_by_name (const char *name, GretlObjType *type);
 
 int session_matrix_destroy_by_name (const char *name, PRN *prn);
 
+int session_bundle_destroy_by_name (const char *name, PRN *prn);
+
 void delete_text_from_session (void *p);
 
 void display_saved_text (void *p);

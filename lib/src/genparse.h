@@ -501,7 +501,8 @@ enum {
     P_GETSTR  = 1 << 22, /* state: flag acceptance of plain strings */
     P_LOOP    = 1 << 23, /* executing pre-built genr in loop context */
     P_SLAVE   = 1 << 24, /* running as "slave" of NLS/MLE/GMM */
-    P_LHPTR   = 1 << 25  /* left-hand side: pointer type wanted */
+    P_LHPTR   = 1 << 25, /* left-hand side: pointer type wanted */
+    P_MMASK   = 1 << 26  /* genr result is masked matrix */
 };
 
 struct lhinfo {

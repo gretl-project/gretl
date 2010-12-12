@@ -543,6 +543,25 @@ const gretl_matrix *get_matrix_mask (void)
     return state->matmask;
 }
 
+int get_matrix_mask_nobs (void)
+{
+    int n = 0;
+
+    check_for_state();
+
+    if (state->matmask != NULL) {
+	int i;
+
+	for (i=0; i<state->matmask->rows; i++) {
+	    if (state->matmask->val[i] != 0.0) {
+		n++;
+	    }
+	}
+    }
+
+    return n;
+}
+
 char *get_shelldir (void)
 {
     check_for_state();
@@ -968,6 +987,13 @@ static int set_matmask (const char *s, const double **Z,
     }
 
     return err;
+}
+
+void destroy_matrix_mask (void)
+{
+    check_for_state();
+    gretl_matrix_free(state->matmask);
+    state->matmask = NULL;
 }
 
 void shelldir_init (const char *s)

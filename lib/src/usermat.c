@@ -874,7 +874,10 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     }
 
     if (S != NULL && S->rows == M->rows) {
-	S->t1 = M->t1;
+	if (M->t1 >= 0 && M->t2 > M->t1) {
+	    S->t1 = M->t1;
+	    S->t2 = M->t2;
+	}
     }
 
     free(rslice);

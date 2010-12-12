@@ -116,6 +116,8 @@ int n_init_vals (void);
 void free_init_vals (void);
 
 const gretl_matrix *get_matrix_mask (void);
+int get_matrix_mask_nobs (void);
+void destroy_matrix_mask (void);
 
 void set_loop_on (int quiet, int progressive);
 void set_loop_off (void);

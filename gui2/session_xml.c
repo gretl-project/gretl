@@ -507,6 +507,21 @@ static int maybe_read_matrix_file (const char *fname)
     return load_user_matrix_file(fname);
 }
 
+static int maybe_read_bundles_file (const char *fname) 
+{
+    FILE *fp;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	/* nothing to be read */
+	return 0;
+    }
+
+    fclose(fp);
+
+    return load_user_bundle_file(fname);
+}
+
 static int maybe_read_scalars_file (const char *fname) 
 {
     FILE *fp;
@@ -619,6 +634,26 @@ static int maybe_write_matrix_file (char *fullname)
     }
 
     write_matrices_to_file(fp);
+    fclose(fp);
+
+    return 0;
+}
+
+static int maybe_write_bundle_file (char *fullname)
+{
+    FILE *fp;
+
+    if (n_user_bundles() == 0) {
+	return 0;
+    }
+
+    session_file_make_path(fullname, "bundles.xml");
+    fp = gretl_fopen(fullname, "w");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    write_bundles_to_file(fp);
     fclose(fp);
 
     return 0;
@@ -864,6 +899,7 @@ static int write_session_xml (const char *datname)
     fclose(fp);
 
     maybe_write_matrix_file(tmpname);
+    maybe_write_bundle_file(tmpname);
     maybe_write_scalars_file(tmpname);
     maybe_write_function_file(tmpname);
     maybe_write_lists_file(tmpname);

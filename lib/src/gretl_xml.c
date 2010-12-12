@@ -25,6 +25,7 @@
 #include "gretl_func.h"
 #include "usermat.h"
 #include "gretl_scalar.h"
+#include "gretl_bundle.h"
 #include "dbread.h"
 
 #include <sys/types.h>
@@ -2623,6 +2624,42 @@ int load_user_matrix_file (const char *fname)
 		}
 		free(colnames);
 		free(rownames);
+		free(name);
+	    }
+	}
+	cur = cur->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return err;
+}
+
+int load_user_bundle_file (const char *fname)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    char *name;
+    int err = 0;
+
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-bundles", &doc, &cur);
+    if (err) {
+	return err;
+    }
+
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-bundle")) {
+	    name = (char *) xmlGetProp(cur, (XUC) "name");
+	    if (name == NULL) {
+		err = 1;
+	    } else {
+		err = load_bundle_from_xml(cur, doc, name);
 		free(name);
 	    }
 	}
