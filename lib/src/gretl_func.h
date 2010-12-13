@@ -163,6 +163,8 @@ int user_function_help (const char *fnname, gretlopt opt, PRN *prn);
 
 int user_function_has_PDF_doc (const char *fnname, char **pdfname);
 
+int function_is_bundle_printer (const char *fnname);
+
 void gretl_functions_cleanup (void);
 
 const char *gretl_arg_type_name (GretlType type);

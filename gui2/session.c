@@ -2035,13 +2035,25 @@ static void open_matrix (gui_obj *obj)
 static void open_bundle (gui_obj *obj)
 {
     gretl_bundle *b = (gretl_bundle *) obj->data;
-    const char *name = gretl_bundle_get_name(b);
     PRN *prn;
+    int err = 0;
 
-    /* FIXME this is just a temporary bodge */
+    if (bufopen(&prn)) {
+	return;
+    }
 
-    if (bufopen(&prn) == 0) {
-	gretl_bundle_print(b, prn);
+    if (gretl_bundle_get_print_function(b) != NULL) {
+	err = exec_bundle_print_function(b, prn);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+ 	err = gretl_bundle_print(b, prn);
+    }
+
+    if (!err) {
+	const char *name = gretl_bundle_get_name(b);
+
 	view_buffer(prn, 80, 400, name, VIEW_BUNDLE, b);
     }
 }

@@ -1179,6 +1179,8 @@ static void select_interface (call_info *cinfo)
 	funname = user_function_name_by_index(cinfo->publist[i]);
 	if (funname == NULL) {
 	    err = E_DATA;
+	} else if (function_is_bundle_printer(funname)) {
+	    continue;
 	} else if (radios) {
 	    err = strings_array_add(&opts, &nopts, funname);
 	} else {
@@ -1252,6 +1254,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 			    int *loaderr)
 {
     int minver = 0;
+    int printer = 0;
     call_info *cinfo;
     fnpkg *pkg;
     int err = 0;
@@ -1277,6 +1280,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 					  "publist", &cinfo->publist,
 					  "data-requirement", &cinfo->dreq,
 					  "min-version", &minver,
+					  "has-printer", &printer,
 					  NULL);
 
     if (err) {
@@ -1296,7 +1300,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     }
 
     if (!err) {
-	if (cinfo->publist[0] > 1) {
+	if (cinfo->publist[0] - printer > 1) {
 	    select_interface(cinfo);
 	    if (cinfo->iface < 0) {
 		/* failed, or cancelled */
@@ -1304,7 +1308,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 		return; /* note: handled */
 	    }
 	} else {
-	    /* only one interface available */
+	    /* only one (non-printer) interface available */
 	    cinfo->iface = cinfo->publist[1];
 	}
     }
@@ -1342,6 +1346,24 @@ void function_call_cleanup (void)
     if (open_fncall_dlg != NULL) {
 	gtk_widget_destroy(open_fncall_dlg);
     }
+}
+
+int exec_bundle_print_function (void *ptr, PRN *prn)
+{
+    gretl_bundle *b = ptr;
+    const char *pfunc = gretl_bundle_get_print_function(b);
+    const char *name = gretl_bundle_get_name(b);
+    char fnline[MAXLINE];
+    ExecState state;
+    int err;
+
+    sprintf(fnline, "%s(&%s)", pfunc, name);
+    gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
+			  NULL, prn);
+    state.line = fnline;
+    err = gui_exec_line(&state, &Z, datainfo);
+
+    return err;
 }
 
 #if 1

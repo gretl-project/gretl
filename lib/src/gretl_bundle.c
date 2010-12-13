@@ -594,6 +594,21 @@ const char *gretl_bundle_get_note (gretl_bundle *bundle,
     return ret;
 }
 
+const char *gretl_bundle_get_print_function (gretl_bundle *bundle)
+{
+    const char *ret;
+    GretlType type;
+    int err = 0;
+
+    ret = gretl_bundle_get_data(bundle, "print-function",
+				&type, NULL, &err);
+    if (type != GRETL_TYPE_STRING) {
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 /**
  * bundled_item_get_data:
  * @item: bundled item to access.
@@ -978,29 +993,30 @@ static void bundle_count (gpointer key, gpointer value, gpointer p)
 static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *item = value;
+    const gchar *kstr = key;
     gretl_matrix *m;
     PRN *prn = p;
 
     switch (item->type) {
     case GRETL_TYPE_DOUBLE:
-	pprintf(prn, " %s (%s: %g)", (const char *) key, 
+	pprintf(prn, " %s (%s: %g)", kstr, 
 		gretl_arg_type_name(item->type),
 		*(double *) item->data);
 	break;
     case GRETL_TYPE_STRING:
     case GRETL_TYPE_BUNDLE:
-	pprintf(prn, " %s (%s)", (const char *) key, 
+	pprintf(prn, " %s (%s)", kstr, 
 		gretl_arg_type_name(item->type));
 	break;
     case GRETL_TYPE_MATRIX:
     case GRETL_TYPE_MATRIX_REF:
 	m = item->data;
-	pprintf(prn, " %s (%s: %d x %d)", (const char *) key, 
+	pprintf(prn, " %s (%s: %d x %d)", kstr, 
 		gretl_arg_type_name(item->type), 
 		m->rows, m->cols);
 	break;
     case GRETL_TYPE_SERIES:
-	pprintf(prn, " %s (%s: length %d)", (const char *) key, 
+	pprintf(prn, " %s (%s: length %d)", kstr, 
 		gretl_arg_type_name(item->type), item->size);
 	break;
     default:

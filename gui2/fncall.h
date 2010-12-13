@@ -27,6 +27,8 @@ void function_call_cleanup (void);
 
 void gui_define_list (void);
 
+int exec_bundle_print_function (void *ptr, PRN *prn);
+
 void maybe_add_packages_to_menus (windata_t *vwin);
 
 #endif /* FNCALL_H */
