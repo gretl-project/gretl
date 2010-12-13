@@ -200,7 +200,7 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt,
 static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
 {
     int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
+    int i = widget_get_int(w, "argnum");
 
     g_free(cinfo->args[i]);
     cinfo->args[i] = g_strdup_printf("%d", val);
@@ -210,7 +210,7 @@ static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
 
 static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
 {
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
+    int i = widget_get_int(w, "argnum");
 
     g_free(cinfo->args[i]);
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
@@ -251,7 +251,7 @@ static gchar *combo_box_get_trimmed_text (GtkComboBox *combo)
 static gboolean update_arg (GtkComboBox *combo, 
 			    call_info *cinfo)
 {
-    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(combo), "argnum"));
+    int i = widget_get_int(combo, "argnum");
     char *s;
 
     g_free(cinfo->args[i]);
@@ -273,6 +273,22 @@ static gboolean update_return (GtkComboBox *combo,
     cinfo->ret = combo_box_get_trimmed_text(combo);
 
     return FALSE;
+}
+
+static int probably_stochastic (int v)
+{
+    int ret = 1;
+
+    if (sample_size(datainfo) >= 3) {
+	double d1 = Z[v][datainfo->t1 + 1] - Z[v][datainfo->t1];
+	double d2 = Z[v][datainfo->t1 + 2] - Z[v][datainfo->t1 + 1];
+
+	if (d1 == floor(d1) && d2 == d1) {
+	    ret = 0;
+	}
+    }
+
+    return ret;
 }
 
 static GList *get_selection_list (call_info *cinfo, int i, int type,
@@ -627,6 +643,72 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
     return spin;
 }
 
+static int already_set_as_default (call_info *cinfo,
+				   const char *name)
+{
+    GList *slist = g_list_first(cinfo->lsels);
+    GtkComboBox *sel;
+    gchar *s;
+    int ret = 0;
+
+    while (slist != NULL && !ret) {
+	sel = GTK_COMBO_BOX(slist->data);
+	s = gtk_combo_box_get_active_text(sel);
+	if (!strcmp(s, name)) {
+	    ret = 1;
+	} else {
+	    slist = g_list_next(slist);
+	}
+	g_free(s);
+    }
+
+    return ret;
+}
+
+/* Try to be somewhat clever in selecting the default values to show
+   in function-argument drop-down "combo" selectors.
+
+   Heuristics: (a) when a series is wanted, it's probably going to be
+   a stochastic series rather than (e.g.) a time trend or panel group
+   variable, so we try to avoid those; and (b) it's unlikely that the
+   user wants to select the same named variable (be it a series,
+   matrix, list or whatever) as the argument in more than one slot,
+   so we try to avoid duplicate defaults.
+*/
+
+static void arg_combo_set_default (call_info *cinfo,
+				   GtkComboBox *combo, 
+				   GList *list,
+				   int ptype)
+{
+    GList *mylist = g_list_first(list);
+    int i, k = 0;
+
+    for (i=0; mylist != NULL; i++) {
+	gchar *name = mylist->data;
+	int ok = 0;
+
+	if (ptype == GRETL_TYPE_SERIES) {
+	    int v = current_series_index(datainfo, name);
+
+	    if (v > 0 && probably_stochastic(v)) {
+		ok = !already_set_as_default(cinfo, name);
+	    }
+	} else {
+	    ok = !already_set_as_default(cinfo, name);
+	}
+
+	if (ok) {
+	    k = i;
+	    break;
+	} else {
+	    mylist = g_list_next(mylist);
+	}
+    }
+ 
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
+}
+
 static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 {
     GList *list = NULL;
@@ -648,11 +730,10 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     list = get_selection_list(cinfo, i, ptype, 1);
     if (list != NULL) {
 	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
+	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo), 
+			      list, ptype);
 	g_list_free(list);
-	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     } 
-
-    /* FIXME bool etc */
 
     if (ptype == GRETL_TYPE_INT || ptype == GRETL_TYPE_DOUBLE) {
 	double x = fn_param_default(cinfo->func, i);

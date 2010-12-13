@@ -7916,7 +7916,10 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	add_model_to_session_callback(ptr, type);
     } else if (ci == FREQ && (s->flags & CONSOLE_EXEC)) {
 	register_graph(NULL);
-    } else if (ci == SETOBS || ci == SMPL) {
+    } else if (ci == SETOBS) {
+	set_sample_label(datainfo);
+	mark_dataset_as_modified();
+    } else if (ci == SMPL) {
 	set_sample_label(datainfo);
     } else if (ci == DATAMOD) {
 	mark_dataset_as_modified();
@@ -8219,57 +8222,40 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case DELEET:
 	if (cmd->opt & OPT_D) {
 	    err = db_delete_series_by_name(cmd->param, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    } else {
+	    if (!err) {
 		sync_db_windows();
 	    }
-	    break;
-	}
-	if (get_matrix_by_name(cmd->param)) {
-	    err = session_matrix_destroy_by_name(cmd->param, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
-	}
-	if (gretl_is_bundle(cmd->param)) {
-	    err = session_bundle_destroy_by_name(cmd->param, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
-	}	
-	if (*cmd->param != '\0') {
-	    err = gretl_delete_var_by_name(cmd->param, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
-	}	    
-	if (get_list_by_name(cmd->extra)) {
+	} else if (*cmd->param != '\0') {
+	    if (get_matrix_by_name(cmd->param)) {
+		err = session_matrix_destroy_by_name(cmd->param, prn);
+	    } else if (gretl_is_bundle(cmd->param)) {
+		err = session_bundle_destroy_by_name(cmd->param, prn);
+	    } else {
+		err = gretl_delete_var_by_name(cmd->param, prn);
+	    }
+	} else if (get_list_by_name(cmd->extra)) {
 	    err = delete_list_by_name(cmd->extra);
-	    if (err) {
-		errmsg(err, prn);
-	    } 
-	    break;
+	} else {
+	    /* deleting series */
+	    if (dataset_locked()) {
+		/* error message handled */
+		break;
+	    }
+	    maybe_prune_delete_list(cmd->list);
+	    err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
+						&k, prn);
+	    if (!err) {
+		if (k) {
+		    pputs(prn, _("Take note: variables have been renumbered"));
+		    pputc(prn, '\n');
+		    maybe_list_vars(pdinfo, prn);
+		}
+		maybe_clear_selector(cmd->list);
+	    }
 	}
-	if (dataset_locked()) {
-	    break;
-	}
-	maybe_prune_delete_list(cmd->list);
-	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
-					    &k, prn);
 	if (err) {
 	    errmsg(err, prn);
-	} else {
-	    if (k) {
-		pputs(prn, _("Take note: variables have been renumbered"));
-		pputc(prn, '\n');
-		maybe_list_vars(pdinfo, prn);
-	    }
-	    maybe_clear_selector(cmd->list);
-	}
+	} 
 	break;
 
     case QQPLOT:
