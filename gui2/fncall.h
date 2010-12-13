@@ -27,6 +27,8 @@ void function_call_cleanup (void);
 
 void gui_define_list (void);
 
+void fncall_register_genr (int addv, gpointer p);
+
 int try_exec_bundle_print_function (void *ptr, PRN *prn);
 
 void maybe_add_packages_to_menus (windata_t *vwin);

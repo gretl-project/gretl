@@ -32,6 +32,7 @@
 #include "guiprint.h"
 #include "ssheet.h"
 #include "datafiles.h"
+#include "toolbar.h"
 
 #define FCDEBUG 0
 
@@ -296,12 +297,65 @@ static int probably_stochastic (int v)
     return ret;
 }
 
+static GList *add_list_names (GList *list)
+{
+    int i, n = n_saved_lists();
+    const char *name;
+
+    for (i=0; i<n; i++) {
+	name = get_list_name_by_index(i);
+	list = g_list_append(list, (gpointer) name);
+    }
+
+    return list;
+}
+
+static GList *add_matrix_names (GList *list)
+{
+    int i, n = n_user_matrices();
+    const char *name;
+
+    for (i=0; i<n; i++) {
+	name = get_matrix_name_by_index(i);
+	list = g_list_append(list, (gpointer) name);
+    }
+
+    return list;
+}
+
+static GList *add_series_names (GList *list)
+{
+    int i;
+
+    for (i=1; i<datainfo->v; i++) {
+	if (!var_is_hidden(datainfo, i)) {
+	    list = g_list_append(list, (gpointer) datainfo->varname[i]);
+	} 
+    }
+
+    list = g_list_append(list, (gpointer) datainfo->varname[0]);
+
+    return list;
+}
+
+static GList *add_scalar_names (GList *list)
+{
+    int i, n = n_saved_scalars();
+    const char *name;
+
+    for (i=0; i<n; i++) {
+	name = gretl_scalar_get_name(i);
+	list = g_list_append(list, (gpointer) name);
+    }
+
+    return list;
+}
+
 static GList *get_selection_list (call_info *cinfo, int i, int type,
 				  int set_default)
 {
     GList *list = NULL;
-    const char *name;
-    int n, optional = 0;
+    int optional = 0;
 
     if (i >= 0) {
 	optional = fn_param_optional(cinfo->func, i);
@@ -312,38 +366,16 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
     }
 
     if (scalar_arg(type)) {
-	n = n_saved_scalars();
-	for (i=0; i<n; i++) {
-	    name = gretl_scalar_get_name(i);
-	    list = g_list_append(list, (gpointer) name);
-	}	
+	list = add_scalar_names(list);
     } else if (series_arg(type)) {
-	for (i=1; i<datainfo->v; i++) {
-	    if (!var_is_hidden(datainfo, i)) {
-		list = g_list_append(list, (gpointer) datainfo->varname[i]);
-	    } 
-	}
-	list = g_list_append(list, (gpointer) datainfo->varname[0]);
+	list = add_series_names(list);
     } else if (type == GRETL_TYPE_LIST) {
-	n = n_saved_lists();
-
-	if (optional) {
-	    list = g_list_append(list, "null");
-	}
-
-	for (i=0; i<n; i++) {
-	    name = get_list_name_by_index(i);
-	    list = g_list_append(list, (gpointer) name);
-	}
+	list = add_list_names(list);
     } else if (matrix_arg(type)) {
-	n = n_user_matrices();
-	for (i=0; i<n; i++) {
-	    name = get_matrix_name_by_index(i);
-	    list = g_list_append(list, (gpointer) name);
-	}	
+	list = add_matrix_names(list);
     } 
 
-    if (optional && type != GRETL_TYPE_LIST) {
+    if (optional) {
 	list = g_list_append(list, "null");
     }
 
@@ -412,35 +444,61 @@ static int combo_list_index (const gchar *s, GList *list)
     return -1;
 }
 
+/* FIXME updates: a newly defined variable should be 
+   entered as the current selection in the combo
+   that launched the new-object dialog
+*/
+
 static void update_matrix_selectors (call_info *cinfo)
 {
     GList *slist = cinfo->msels;
-    GList *mlist = NULL;
+    GList *newlist = NULL;
     GtkComboBox *sel;
-    const char *mname;
     gchar *saved;
-    int nm = n_user_matrices();
-    int i, old;
+    int old;
 
-    for (i=0; i<nm; i++) {
-	mname = get_matrix_name_by_index(i);
-	mlist = g_list_append(mlist, (gpointer) mname);
-    }
+    newlist = add_matrix_names(newlist);
 
     while (slist != NULL) {
 	sel = GTK_COMBO_BOX(slist->data);
 	saved = gtk_combo_box_get_active_text(sel);
 	depopulate_combo_box(sel);
-	set_combo_box_strings_from_list(sel, mlist);
+	set_combo_box_strings_from_list(sel, newlist);
 	if (saved != NULL) {
-	    old = combo_list_index(saved, mlist);
+	    old = combo_list_index(saved, newlist);
 	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
 	    g_free(saved);
 	}
 	slist = slist->next;
     }
 
-    g_list_free(mlist);
+    g_list_free(newlist);
+}
+
+static void update_series_selectors (call_info *cinfo)
+{
+    GList *slist = cinfo->vsels;
+    GList *newlist = NULL;
+    GtkComboBox *sel;
+    gchar *saved;
+    int old;
+
+    newlist = add_series_names(newlist);
+
+    while (slist != NULL) {
+	sel = GTK_COMBO_BOX(slist->data);
+	saved = gtk_combo_box_get_active_text(sel);
+	depopulate_combo_box(sel);
+	set_combo_box_strings_from_list(sel, newlist);
+	if (saved != NULL) {
+	    old = combo_list_index(saved, newlist);
+	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
+	    g_free(saved);
+	}
+	slist = slist->next;
+    }
+
+    g_list_free(newlist);
 }
 
 static int combo_accepts_null (GtkComboBox *c)
@@ -599,6 +657,25 @@ static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)
     }
 
     gtk_window_present(GTK_WINDOW(cinfo->dlg));
+}
+
+void fncall_register_genr (int addv, gpointer p)
+{
+    call_info *cinfo = p;
+
+    if (addv > 0) {
+	update_series_selectors(cinfo);
+    }
+
+    gtk_window_present(GTK_WINDOW(cinfo->dlg));
+}
+
+static void launch_series_maker (GtkWidget *w, call_info *cinfo)
+{
+    edit_dialog(_("gretl: add var"), 
+		_("Enter formula for new series"),
+		NULL, do_fncall_genr, cinfo, 
+		GENR, VARCLICK_INSERT_NAME, NULL);  
 }
 
 static int spinner_arg (call_info *cinfo, int i)
@@ -787,6 +864,25 @@ static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
 		     GTK_FILL, GTK_FILL, 5, 3);
 }
 
+static GtkWidget *add_object_button (int ptype)
+{
+    GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, 
+					      GTK_ICON_SIZE_MENU);
+    GtkWidget *button = gtk_button_new();
+
+    gtk_container_add(GTK_CONTAINER(button), img);
+
+    if (ptype == GRETL_TYPE_SERIES) {
+	gretl_tooltips_add(button, _("New variable"));
+    } else if (ptype == GRETL_TYPE_LIST) {
+	gretl_tooltips_add(button, _("Define list"));
+    } else if (ptype == GRETL_TYPE_MATRIX) {
+	gretl_tooltips_add(button, _("Define matrix"));
+    }
+
+    return button;
+}
+
 static void set_close_on_OK (GtkWidget *b, gpointer p)
 {
     close_on_OK = button_is_active(b);
@@ -879,11 +975,16 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (ptype == GRETL_TYPE_SERIES) {
 	    cinfo->vsels = g_list_append(cinfo->vsels, sel);
+	    button = add_object_button(ptype);
+	    add_table_cell(tbl, button, 2, 3, row);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(launch_series_maker), 
+			     cinfo);
 	} else if (ptype == GRETL_TYPE_LIST) {
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
 	    
 	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
-	    button = gtk_button_new_with_label(_("More..."));
+	    button = add_object_button(ptype);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    widget_set_int(entry, "argnum", i+1);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
@@ -891,7 +992,7 @@ static void function_call_dialog (call_info *cinfo)
 			     entry);
 	} else if (ptype == GRETL_TYPE_MATRIX) {
 	    cinfo->msels = g_list_append(cinfo->msels, sel);
-	    button = gtk_button_new_with_label(_("New..."));
+	    button = add_object_button(ptype);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_matrix_maker), 

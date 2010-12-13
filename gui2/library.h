@@ -195,6 +195,8 @@ void do_model_genr (GtkWidget *w, dialog_t *dlg);
 
 void do_selector_genr (GtkWidget *w, dialog_t *dlg);
 
+void do_fncall_genr (GtkWidget *w, dialog_t *dlg);
+
 void do_global_setmiss (GtkWidget *w, dialog_t *dlg);
 
 void do_variable_setmiss (GtkWidget *w, dialog_t *dlg);
