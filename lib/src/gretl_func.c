@@ -2503,14 +2503,16 @@ int function_package_set_properties (fnpkg *pkg, ...)
 /* From a function package get a list of either its public or its
    private functions, in the form of a simple gretl list.  The
    elements of this list are just the positions of these functions in
-   the current recorder array for user-functions.  This is fine for
-   immediate use, but it should _not_ be assumed that the indentifiers
-   will remain valid.
+   the current recorder array for user-functions.  This is fine if
+   the information is to be used right away (as in the GUI function
+   call dialog), but it should _not_ be assumed that the identifiers
+   will remain valid indefinitely.
 */
 
 static int *function_package_get_list (fnpkg *pkg, int n, int priv)
 {
     int *list = NULL;
+    int ppos = 0; /* print-function position */
 
     if (n > 0) {
  	list = gretl_list_new(n);
@@ -2519,10 +2521,21 @@ static int *function_package_get_list (fnpkg *pkg, int n, int priv)
 
 	    for (i=0; i<n_ufuns; i++) {
 		if (ufuns[i]->pkg == pkg && ufuns[i]->private == priv) {
+		    if (!priv && ufuns[i]->printer) {
+			ppos = j;
+		    }
 		    list[j++] = i;
 		}
 	    }	    
 	} 
+    }
+
+    if (ppos > 0 && ppos < n) {
+	/* move bundle-printer function to last place */
+	int tmp = list[n];
+
+	list[n] = list[ppos];
+	list[ppos] = tmp;
     }
 
     return list;

@@ -362,6 +362,7 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
     }
 
     if (!set_default) {
+	/* selector for return value */
 	list = g_list_append(list, "");
     }
 
@@ -431,124 +432,94 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 static int combo_list_index (const gchar *s, GList *list)
 {
     GList *mylist = list;
-    int i = 0;
+    int i;
 
-    while (mylist != NULL) {
+    for (i=0; mylist != NULL; i++) {
 	if (!strcmp(s, (gchar *) mylist->data)) {
 	    return i;
 	}
 	mylist = mylist->next;
-	i++;
     }
     
     return -1;
 }
 
-/* FIXME updates: a newly defined variable should be 
-   entered as the current selection in the combo
-   that launched the new-object dialog
+/* Update the argument selector(s) for series, matrices
+   or lists after defining a new variable of one of these
+   types.
 */
 
-static void update_matrix_selectors (call_info *cinfo)
+static void update_combo_selectors (call_info *cinfo, 
+				    GtkWidget *refsel,
+				    int ptype)
 {
-    GList *slist = cinfo->msels;
-    GList *newlist = NULL;
-    GtkComboBox *sel;
-    gchar *saved;
-    int old;
+    GList *sellist = NULL, *newlist = NULL;
+    int llen;
 
-    newlist = add_matrix_names(newlist);
+    /* get the list of relevant selectors and the
+       list of relevant variables to put into the
+       selectors
+    */
 
-    while (slist != NULL) {
-	sel = GTK_COMBO_BOX(slist->data);
-	saved = gtk_combo_box_get_active_text(sel);
+    if (ptype == GRETL_TYPE_MATRIX) {
+	sellist = cinfo->msels;
+	newlist = add_matrix_names(newlist);
+    } else if (ptype == GRETL_TYPE_LIST) {
+	sellist = cinfo->lsels;
+	newlist = add_list_names(newlist);
+    } else {
+	sellist = cinfo->vsels;
+	newlist = add_series_names(newlist);
+    }
+
+    llen = g_list_length(newlist);
+
+    while (sellist != NULL) {
+	/* iterate over the affected selectors */
+	GtkComboBox *sel = GTK_COMBO_BOX(sellist->data);
+	gchar *saved = NULL;
+	int old, null_OK;
+
+	/* sel == refsel means that we're looking at the
+	   selector whose button was clicked to add a
+	   variable: for this selector the newly added
+	   variable should be marked as selected;
+	   otherwise we modify the list of choices but
+	   preserve the previous selection.
+	*/
+
+	if (GTK_WIDGET(sel) != refsel) {
+	    /* keep a record of the old selected item */
+	    saved = gtk_combo_box_get_active_text(sel);
+	}
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(sel, newlist);
+	null_OK = widget_get_int(sel, "null_OK");
+	if (null_OK) {
+	    gtk_combo_box_append_text(sel, "null");
+	}
 	if (saved != NULL) {
+	    /* reinstate the previous selection */
 	    old = combo_list_index(saved, newlist);
 	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
 	    g_free(saved);
-	}
-	slist = slist->next;
+	} else {
+	    /* select the newly added var, which will be at the 
+	       end, or thereabouts */
+	    int addpos = llen - 1;
+
+	    if (ptype == GRETL_TYPE_SERIES) {
+		addpos--; /* the const is always in last place */
+	    } 
+	    if (null_OK) {
+		addpos--; /* the "null" option was appended */
+	    }
+	    gtk_combo_box_set_active(sel, addpos);
+	} 
+	sellist = sellist->next;
     }
 
     g_list_free(newlist);
-}
-
-static void update_series_selectors (call_info *cinfo)
-{
-    GList *slist = cinfo->vsels;
-    GList *newlist = NULL;
-    GtkComboBox *sel;
-    gchar *saved;
-    int old;
-
-    newlist = add_series_names(newlist);
-
-    while (slist != NULL) {
-	sel = GTK_COMBO_BOX(slist->data);
-	saved = gtk_combo_box_get_active_text(sel);
-	depopulate_combo_box(sel);
-	set_combo_box_strings_from_list(sel, newlist);
-	if (saved != NULL) {
-	    old = combo_list_index(saved, newlist);
-	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
-	    g_free(saved);
-	}
-	slist = slist->next;
-    }
-
-    g_list_free(newlist);
-}
-
-static int combo_accepts_null (GtkComboBox *c)
-{
-    gpointer p = g_object_get_data(G_OBJECT(c), "null_OK");
-
-    return (p != NULL);
-}
-
-static void update_list_selectors (call_info *cinfo)
-{
-    GList *slist = cinfo->lsels;
-    GList *llist1 = NULL;
-    GList *llist2 = NULL;
-    GtkComboBox *sel;
-    const char *lname;
-    gchar *saved;
-    int nl = n_saved_lists();
-    int null_OK;
-    int i, old;
-
-    llist2 = g_list_append(llist2, "null");
-
-    for (i=0; i<nl; i++) {
-	lname = get_list_name_by_index(i);
-	llist1 = g_list_append(llist1, (gpointer) lname);
-	llist2 = g_list_append(llist2, (gpointer) lname);
-    }
-
-    while (slist != NULL) {
-	GList *llist;
-
-	sel = GTK_COMBO_BOX(slist->data);
-	null_OK = combo_accepts_null(sel);
-	llist = (null_OK)? llist2 : llist1; 
-	saved = gtk_combo_box_get_active_text(sel);
-	depopulate_combo_box(sel);
-	set_combo_box_strings_from_list(sel, llist);
-	if (saved != NULL) {
-	    old = combo_list_index(saved, llist);
-	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
-	    g_free(saved);
-	} else if (null_OK) {
-	    gtk_combo_box_set_active(sel, 0);
-	}
-	slist = slist->next;
-    }
-
-    g_list_free(llist1);
-    g_list_free(llist2);
 }
 
 int do_make_list (selector *sr)
@@ -557,15 +528,17 @@ int do_make_list (selector *sr)
     const char *lname = selector_entry_text(sr);
     gpointer data = selector_get_data(sr);
     call_info *cinfo = NULL;
+    GtkWidget *aux = NULL;
     const char *msg = NULL;
     PRN *prn = NULL;
     int *list = NULL;
     int err = 0;
 
     if (data != NULL) {
-	GtkWidget *w = GTK_WIDGET(data);
-	
-	cinfo = g_object_get_data(G_OBJECT(w), "cinfo");
+	GtkWidget *entry = GTK_WIDGET(data);
+
+	cinfo = g_object_get_data(G_OBJECT(entry), "cinfo");
+	aux = gtk_widget_get_parent(entry);
     }
 
     if (lname == NULL || *lname == 0) {
@@ -615,7 +588,7 @@ int do_make_list (selector *sr)
     if (!err) {
 	gtk_widget_hide(selector_get_window(sr));
 	if (cinfo != NULL) {
-	    update_list_selectors(cinfo);
+	    update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST);
 	} else {
 	    infobox(msg);
 	}
@@ -629,6 +602,10 @@ int do_make_list (selector *sr)
 
     return err;
 } 
+
+/* FIXME list maker: should have a choice of modifying an existing
+   list argument or creating a new list from scratch (two buttons?)
+*/
 
 static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 {
@@ -646,14 +623,16 @@ void gui_define_list (void)
     launch_list_maker(NULL, NULL);
 }
 
-static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)
+static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
 {
     int n = n_user_matrices();
 
     gui_new_matrix();
 
     if (n_user_matrices() > n) {
-	update_matrix_selectors(cinfo);
+	GtkWidget *sel = g_object_get_data(G_OBJECT(button), "combo");
+
+	update_combo_selectors(cinfo, sel, GRETL_TYPE_MATRIX);
     }
 
     gtk_window_present(GTK_WINDOW(cinfo->dlg));
@@ -661,20 +640,24 @@ static void launch_matrix_maker (GtkWidget *w, call_info *cinfo)
 
 void fncall_register_genr (int addv, gpointer p)
 {
-    call_info *cinfo = p;
+    GtkWidget *combo = p;
+    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(combo));
+    call_info *cinfo = g_object_get_data(G_OBJECT(entry), "cinfo");
 
     if (addv > 0) {
-	update_series_selectors(cinfo);
+	update_combo_selectors(cinfo, combo, GRETL_TYPE_SERIES);
     }
 
     gtk_window_present(GTK_WINDOW(cinfo->dlg));
 }
 
-static void launch_series_maker (GtkWidget *w, call_info *cinfo)
+static void launch_series_maker (GtkWidget *button, call_info *cinfo)
 {
+    GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
+
     edit_dialog(_("gretl: add var"), 
 		_("Enter formula for new series"),
-		NULL, do_fncall_genr, cinfo, 
+		NULL, do_fncall_genr, combo, 
 		GENR, VARCLICK_INSERT_NAME, NULL);  
 }
 
@@ -864,13 +847,14 @@ static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
 		     GTK_FILL, GTK_FILL, 5, 3);
 }
 
-static GtkWidget *add_object_button (int ptype)
+static GtkWidget *add_object_button (int ptype, GtkWidget *combo)
 {
     GtkWidget *img = gtk_image_new_from_stock(GTK_STOCK_ADD, 
 					      GTK_ICON_SIZE_MENU);
     GtkWidget *button = gtk_button_new();
 
     gtk_container_add(GTK_CONTAINER(button), img);
+    g_object_set_data(G_OBJECT(button), "combo", combo);
 
     if (ptype == GRETL_TYPE_SERIES) {
 	gretl_tooltips_add(button, _("New variable"));
@@ -975,7 +959,7 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (ptype == GRETL_TYPE_SERIES) {
 	    cinfo->vsels = g_list_append(cinfo->vsels, sel);
-	    button = add_object_button(ptype);
+	    button = add_object_button(ptype, sel);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_series_maker), 
@@ -984,7 +968,7 @@ static void function_call_dialog (call_info *cinfo)
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
 	    
 	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
-	    button = add_object_button(ptype);
+	    button = add_object_button(ptype, sel);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    widget_set_int(entry, "argnum", i+1);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
@@ -992,7 +976,7 @@ static void function_call_dialog (call_info *cinfo)
 			     entry);
 	} else if (ptype == GRETL_TYPE_MATRIX) {
 	    cinfo->msels = g_list_append(cinfo->msels, sel);
-	    button = add_object_button(ptype);
+	    button = add_object_button(ptype, sel);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_matrix_maker), 
@@ -1287,12 +1271,11 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
    list.
 */
 
-static void select_interface (call_info *cinfo)
+static void select_interface (call_info *cinfo, int npub)
 {
     const char *funname;
     char **opts = NULL;
     GList *ilist = NULL;
-    int npub = cinfo->publist[0];
     int radios = (npub < 5);
     int i, nopts = 0;
     int resp, err = 0;
@@ -1301,8 +1284,6 @@ static void select_interface (call_info *cinfo)
 	funname = user_function_name_by_index(cinfo->publist[i]);
 	if (funname == NULL) {
 	    err = E_DATA;
-	} else if (function_is_bundle_printer(funname)) {
-	    continue;
 	} else if (radios) {
 	    err = strings_array_add(&opts, &nopts, funname);
 	} else {
@@ -1422,8 +1403,10 @@ void call_function_package (const char *fname, GtkWidget *w,
     }
 
     if (!err) {
-	if (cinfo->publist[0] - printer > 1) {
-	    select_interface(cinfo);
+	int n = cinfo->publist[0] - printer;
+
+	if (n > 1) {
+	    select_interface(cinfo, n);
 	    if (cinfo->iface < 0) {
 		/* failed, or cancelled */
 		cinfo_free(cinfo);
