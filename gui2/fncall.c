@@ -40,9 +40,9 @@ typedef struct call_info_ call_info;
 struct call_info_ {
     GtkWidget *dlg;      /* main dialog */
     GtkWidget *top_hbox; /* upper hbox in dialog */
+    GList *vsels;        /* series argument selectors */
     GList *lsels;        /* list argument selectors */
     GList *msels;        /* matrix arg selectors */
-    GList *ssels;        /* string arg selectors */
     int *publist;        /* list of public interfaces */
     int iface;           /* selected interface */
     int extracol;
@@ -93,6 +93,7 @@ static call_info *cinfo_new (void)
     cinfo->publist = NULL;
     cinfo->iface = -1;
 
+    cinfo->vsels = NULL;
     cinfo->lsels = NULL;
     cinfo->msels = NULL;
 
@@ -134,6 +135,9 @@ static void cinfo_free (call_info *cinfo)
     }
     if (cinfo->ret != NULL) {
 	g_free(cinfo->ret);
+    }
+    if (cinfo->vsels != NULL) {
+	g_list_free(cinfo->vsels);
     }
     if (cinfo->lsels != NULL) {
 	g_list_free(cinfo->lsels);
@@ -280,8 +284,9 @@ static int probably_stochastic (int v)
     int ret = 1;
 
     if (sample_size(datainfo) >= 3) {
-	double d1 = Z[v][datainfo->t1 + 1] - Z[v][datainfo->t1];
-	double d2 = Z[v][datainfo->t1 + 2] - Z[v][datainfo->t1 + 1];
+	int t = datainfo->t1;
+	double d1 = Z[v][t+1] - Z[v][t];
+	double d2 = Z[v][t+2] - Z[v][t+1];
 
 	if (d1 == floor(d1) && d2 == d1) {
 	    ret = 0;
@@ -611,7 +616,7 @@ static GtkWidget *bool_arg_selector (call_info *cinfo, int i)
     GtkWidget *button;
 
     button = gtk_check_button_new();
-    g_object_set_data(G_OBJECT(button), "argnum", GINT_TO_POINTER(i));
+    widget_set_int(button, "argnum", i);
     g_object_set_data(G_OBJECT(button), "cinfo", cinfo);
     g_signal_connect(G_OBJECT(button), "toggled",
 		     G_CALLBACK(update_bool_arg), cinfo);
@@ -632,7 +637,7 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
 
     adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 0);
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-    g_object_set_data(G_OBJECT(spin), "argnum", GINT_TO_POINTER(i));
+    widget_set_int(spin, "argnum", i);
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
     g_signal_connect(G_OBJECT(spin), "value-changed", 
 		     G_CALLBACK(update_int_arg), cinfo);
@@ -643,17 +648,32 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
     return spin;
 }
 
+/* see if the variable named @name of type @ptype
+   has already been set as the default argument in
+   a combo argument selector
+*/
+
 static int already_set_as_default (call_info *cinfo,
-				   const char *name)
+				   const char *name,
+				   int ptype)
 {
-    GList *slist = g_list_first(cinfo->lsels);
-    GtkComboBox *sel;
-    gchar *s;
+    GList *slist;
     int ret = 0;
 
+    if (ptype == GRETL_TYPE_SERIES) {
+	slist = g_list_first(cinfo->vsels);
+    } else if (ptype == GRETL_TYPE_LIST) {
+	slist = g_list_first(cinfo->lsels);
+    } else if (	ptype == GRETL_TYPE_MATRIX) {
+	slist = g_list_first(cinfo->msels);
+    } else {
+	return 0;
+    }
+
     while (slist != NULL && !ret) {
-	sel = GTK_COMBO_BOX(slist->data);
-	s = gtk_combo_box_get_active_text(sel);
+	GtkComboBox *sel = GTK_COMBO_BOX(slist->data);
+	gchar *s = gtk_combo_box_get_active_text(sel);
+
 	if (!strcmp(s, name)) {
 	    ret = 1;
 	} else {
@@ -668,12 +688,12 @@ static int already_set_as_default (call_info *cinfo,
 /* Try to be somewhat clever in selecting the default values to show
    in function-argument drop-down "combo" selectors.
 
-   Heuristics: (a) when a series is wanted, it's probably going to be
-   a stochastic series rather than (e.g.) a time trend or panel group
-   variable, so we try to avoid those; and (b) it's unlikely that the
-   user wants to select the same named variable (be it a series,
-   matrix, list or whatever) as the argument in more than one slot,
-   so we try to avoid duplicate defaults.
+   Heuristics: (a) when a series is wanted, it's more likely to be a
+   stochastic series rather than (e.g.) a time trend or panel group
+   variable, so we try to avoid the latter as defaults; and (b) it's
+   unlikely that the user wants to select the same named variable in
+   more than one argument slot, so we try to avoid setting duplicate
+   defaults.
 */
 
 static void arg_combo_set_default (call_info *cinfo,
@@ -692,10 +712,10 @@ static void arg_combo_set_default (call_info *cinfo,
 	    int v = current_series_index(datainfo, name);
 
 	    if (v > 0 && probably_stochastic(v)) {
-		ok = !already_set_as_default(cinfo, name);
+		ok = !already_set_as_default(cinfo, name, ptype);
 	    }
 	} else {
-	    ok = !already_set_as_default(cinfo, name);
+	    ok = !already_set_as_default(cinfo, name, ptype);
 	}
 
 	if (ok) {
@@ -718,13 +738,13 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     combo = gtk_combo_box_entry_new_text();
     entry = gtk_bin_get_child(GTK_BIN(combo));
     g_object_set_data(G_OBJECT(entry), "cinfo", cinfo);
-    g_object_set_data(G_OBJECT(combo), "argnum", GINT_TO_POINTER(i));
+    widget_set_int(combo, "argnum", i);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_arg), cinfo);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
     if (i >= 0 && fn_param_optional(cinfo->func, i)) {
-	g_object_set_data(G_OBJECT(combo), "null_OK", GINT_TO_POINTER(1));
+	widget_set_int(combo, "null_OK", 1);
     }
 
     list = get_selection_list(cinfo, i, ptype, 1);
@@ -857,14 +877,15 @@ static void function_call_dialog (call_info *cinfo)
 
 	add_table_cell(tbl, sel, 1, 2, row);
 
-	if (ptype == GRETL_TYPE_LIST) {
+	if (ptype == GRETL_TYPE_SERIES) {
+	    cinfo->vsels = g_list_append(cinfo->vsels, sel);
+	} else if (ptype == GRETL_TYPE_LIST) {
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
 	    
 	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
 	    button = gtk_button_new_with_label(_("More..."));
 	    add_table_cell(tbl, button, 2, 3, row);
-	    g_object_set_data(G_OBJECT(entry), "argnum", 
-			      GINT_TO_POINTER(i+1));
+	    widget_set_int(entry, "argnum", i+1);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_list_maker),
 			     entry);
