@@ -2729,7 +2729,7 @@ int load_user_XML_file (const char *fname)
     rootname = gretl_xml_get_doc_type(fname, &err);
 
     if (!strcmp(rootname, "gretl-functions")) {
-	err = load_function_package_from_file(fname);
+	err = load_function_package_by_filename(fname);
     } else if (!strcmp(rootname, "gretl-matrices")) {
 	err = load_user_matrix_file(fname);
     } else if (!strcmp(rootname, "gretl-scalars")) {

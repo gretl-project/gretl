@@ -1134,7 +1134,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
 	if (attach_bundle) {
 	    bundle = gretl_bundle_pull_from_stack(AUTO_BUNDLE, &err);
-	    if (gretl_bundle_n_keys(bundle) == 0) {
+	    if (gretl_bundle_get_n_keys(bundle) == 0) {
 		gretl_bundle_destroy(bundle);
 		bundle = NULL;
 	    }
@@ -1348,22 +1348,85 @@ void function_call_cleanup (void)
     }
 }
 
-int exec_bundle_print_function (void *ptr, PRN *prn)
+/* Given a "path" of the form pkgname/function-name,
+   check whether the named function package is
+   already loaded, or can be loaded, and if so
+   return a copy of the function-name part of the
+   path (otherwise return NULL).
+*/
+
+static char *find_printer_function (gretl_bundle *b)
+{
+    const char *path = gretl_bundle_get_print_function(b);
+    char *pfunc = NULL;
+
+    if (path != NULL) {
+	const char *p = strchr(path, '/');
+	int ok = 0;
+	
+	if (p != NULL) {
+	    gchar *pkgname = g_strndup(path, p - path);
+	    gchar *fname = NULL;
+
+	    if (pkgname != NULL && *pkgname != '\0') {
+		fname = gretl_function_package_get_path(pkgname);
+		if (fname != NULL) {
+		    if (function_package_is_loaded(fname)) {
+			ok = 1;
+		    } else {
+			ok = load_function_package_by_filename(fname) == 0;
+		    }
+		    g_free(fname);
+		}
+	    }
+	    g_free(pkgname);
+	}
+
+	if (ok) {
+	    pfunc = gretl_strdup(p + 1);
+	}
+    }
+
+    return pfunc;
+}
+
+/* See if we can find a "native" printing function for a
+   gretl bundle. This may be recorded in string form under
+   the key "print-function". If so, it will take the form
+   [pkgname/]function-name. If we can find this, try
+   executing it.
+
+   Notice that this function returns 1 on success, 0 on
+   failure.
+*/
+
+int try_exec_bundle_print_function (void *ptr, PRN *prn)
 {
     gretl_bundle *b = ptr;
-    const char *pfunc = gretl_bundle_get_print_function(b);
-    const char *name = gretl_bundle_get_name(b);
-    char fnline[MAXLINE];
-    ExecState state;
-    int err;
+    char *pfunc = find_printer_function(b);
+    int ret = 0;
 
-    sprintf(fnline, "%s(&%s)", pfunc, name);
-    gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
-			  NULL, prn);
-    state.line = fnline;
-    err = gui_exec_line(&state, &Z, datainfo);
+    if (pfunc != NULL) {
+	const char *name = gretl_bundle_get_name(b);
+	char fnline[MAXLINE];
+	ExecState state;
+	int err;
 
-    return err;
+	sprintf(fnline, "%s(&%s)", pfunc, name);
+	free(pfunc);
+	gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
+			      NULL, prn);
+	state.line = fnline;
+	err = gui_exec_line(&state, &Z, datainfo);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    ret = 1;
+	}
+    }
+
+    return ret;
 }
 
 #if 1

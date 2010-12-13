@@ -140,7 +140,7 @@ int read_session_functions_file (const char *fname);
 
 fnpkg *get_function_package_by_filename (const char *fname, int *err);
 
-int load_function_package_from_file (const char *fname);
+int load_function_package_by_filename (const char *fname);
 
 int function_package_is_loaded (const char *fname);
 

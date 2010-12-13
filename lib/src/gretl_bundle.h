@@ -33,7 +33,7 @@ int type_can_be_bundled (GretlType type);
 
 gretl_bundle *get_gretl_bundle_by_name (const char *name);
 
-gretl_bundle *get_bundle_by_index (int idx);
+gretl_bundle *get_gretl_bundle_by_index (int idx);
 
 void *gretl_bundle_get_content (gretl_bundle *bundle);
 
@@ -90,7 +90,7 @@ int data_is_bundled (void *ptr);
 
 int gretl_bundle_is_stacked (gretl_bundle *b);
 
-int gretl_bundle_n_keys (gretl_bundle *b);
+int gretl_bundle_get_n_keys (gretl_bundle *b);
 
 gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 					    int *err);

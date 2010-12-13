@@ -3182,7 +3182,7 @@ int function_package_is_loaded (const char *fname)
 }
 
 /** 
- * load_function_package_from_file:
+ * load_function_package_by_filename:
  * @fname: full path to gfn file.
  *
  * Loads the function package located by @fname into
@@ -3192,7 +3192,7 @@ int function_package_is_loaded (const char *fname)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int load_function_package_from_file (const char *fname)
+int load_function_package_by_filename (const char *fname)
 {
     int err = 0;
 

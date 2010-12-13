@@ -4241,7 +4241,7 @@ static void add_bundled_item_to_menu (gpointer key,
 static void add_bundle_menu_items (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
-    int n = gretl_bundle_n_keys(bundle);
+    int n = gretl_bundle_get_n_keys(bundle);
 
     if (n > 0) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);

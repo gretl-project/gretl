@@ -2035,27 +2035,21 @@ static void open_matrix (gui_obj *obj)
 static void open_bundle (gui_obj *obj)
 {
     gretl_bundle *b = (gretl_bundle *) obj->data;
-    PRN *prn;
-    int err = 0;
+    const char *name = gretl_bundle_get_name(b);
+    PRN *prn = NULL;
+    int done = 0;
 
     if (bufopen(&prn)) {
 	return;
     }
 
-    if (gretl_bundle_get_print_function(b) != NULL) {
-	err = exec_bundle_print_function(b, prn);
+    done = try_exec_bundle_print_function(b, prn);
+
+    if (!done) {
+ 	gretl_bundle_print(b, prn);
     }
 
-    if (err) {
-	gui_errmsg(err);
- 	err = gretl_bundle_print(b, prn);
-    }
-
-    if (!err) {
-	const char *name = gretl_bundle_get_name(b);
-
-	view_buffer(prn, 80, 400, name, VIEW_BUNDLE, b);
-    }
+    view_buffer(prn, 80, 400, name, VIEW_BUNDLE, b);
 }
 
 static void open_gui_text (gui_obj *obj)
@@ -2614,7 +2608,7 @@ static void add_bundle_callback (void)
 	int n = n_user_bundles();
 
 	if (n > 0) {
-	    session_add_icon(get_bundle_by_index(n-1), GRETL_OBJ_BUNDLE, 
+	    session_add_icon(get_gretl_bundle_by_index(n-1), GRETL_OBJ_BUNDLE, 
 			     ICON_ADD_SINGLE);
 	}
     } else if (autoicon_on()) {
@@ -2677,7 +2671,7 @@ static void add_all_icons (void)
 
     n = n_user_bundles();
     for (i=0; i<n; i++) {
-	session_add_icon(get_bundle_by_index(i), GRETL_OBJ_BUNDLE, 
+	session_add_icon(get_gretl_bundle_by_index(i), GRETL_OBJ_BUNDLE, 
 			 ICON_ADD_BATCH);
     }    
 

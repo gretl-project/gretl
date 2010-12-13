@@ -24,7 +24,7 @@
 #include "libset.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
-#include "gretl_xml.h"
+#include "gretl_xml.h" // ??
 #include "gretl_bundle.h"
 
 #include <glib.h>
@@ -137,7 +137,7 @@ int gretl_bundle_is_stacked (gretl_bundle *b)
     return 0;
 }
 
-int gretl_bundle_n_keys (gretl_bundle *b)
+int gretl_bundle_get_n_keys (gretl_bundle *b)
 {
     int n_items = 0;
 
@@ -413,7 +413,16 @@ gretl_bundle *get_gretl_bundle_by_name (const char *name)
     }
 }
 
-gretl_bundle *get_bundle_by_index (int idx)
+/**
+ * get_gretl_bundle_by_index:
+ * @idx: index number to look up.
+ *
+ * Designed for use in GUI session management.
+ *
+ * Returns: pointer to a saved gretl bundle, if found, else NULL.
+ */
+
+gretl_bundle *get_gretl_bundle_by_index (int idx)
 {
     if (idx >= 0 && idx < n_saved_bundles) {
 	return bundles[idx];
@@ -594,6 +603,20 @@ const char *gretl_bundle_get_note (gretl_bundle *bundle,
     return ret;
 }
 
+/**
+ * gretl_bundle_get_print_function:
+ * @bundle: bundle to access.
+ *
+ * Checks @bundle for the presence of a special key named
+ * "print-function" and, if this is found, checks that
+ * the associated data item is a string (which should
+ * provide the "path" to a bundle-printing function on
+ * the pattern pkgname/function-name).
+ *
+ * Returns: the printer-function path, if it seems OK,
+ * otherwise NULL.
+ */
+
 const char *gretl_bundle_get_print_function (gretl_bundle *bundle)
 {
     const char *ret;
@@ -602,7 +625,7 @@ const char *gretl_bundle_get_print_function (gretl_bundle *bundle)
 
     ret = gretl_bundle_get_data(bundle, "print-function",
 				&type, NULL, &err);
-    if (type != GRETL_TYPE_STRING) {
+    if (type != GRETL_TYPE_STRING || strchr(ret, '/') == NULL) {
 	ret = NULL;
     }
 
@@ -1275,6 +1298,8 @@ void destroy_user_bundles (void)
     set_n_saved_bundles(0);
 }
 
+/* serialize a gretl bundled item as XML */
+
 static void xml_put_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *item = value;
@@ -1324,6 +1349,12 @@ static void xml_put_bundle (gretl_bundle *b, FILE *fp)
     fputs("</gretl-bundle>\n", fp); 
 }
 
+/**
+ * write_bundles_to_file:
+ *
+ * Serializes all saved bundles as XML, writing to @fp.
+ */
+
 void write_bundles_to_file (FILE *fp)
 {
     int i;
@@ -1343,6 +1374,13 @@ void write_bundles_to_file (FILE *fp)
 
     fputs("</gretl-bundles>\n", fp);
 }
+
+/* For internal use only, called from gretl_xml.c: @p1 should be of
+   type xmlNodePtr and @p2 should be an xmlDocPtr. We suppress the
+   actual pointer types in the prototype so that it's possible for a
+   module to include gretl_bundle.h without including the full libxml
+   headers.  
+*/
 
 int load_bundle_from_xml (void *p1, void *p2, const char *name)
 {
