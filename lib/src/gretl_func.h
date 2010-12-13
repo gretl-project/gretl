@@ -167,6 +167,8 @@ void gretl_functions_cleanup (void);
 
 const char *gretl_arg_type_name (GretlType type);
 
+GretlType gretl_type_from_string (const char *s);
+
 fnargs *fn_args_new (void);
 
 void fn_args_free (fnargs *args);

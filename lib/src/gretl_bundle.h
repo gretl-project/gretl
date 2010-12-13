@@ -23,6 +23,8 @@
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 
+#define AUTO_BUNDLE "BUNDLE_RET__"
+
 gretl_bundle *gretl_bundle_new (void);
 
 int gretl_is_bundle (const char *name);
@@ -85,6 +87,8 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);
 int data_is_bundled (void *ptr);
 
 int gretl_bundle_is_stacked (gretl_bundle *b);
+
+int gretl_bundle_n_keys (gretl_bundle *b);
 
 gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 					    int *err);

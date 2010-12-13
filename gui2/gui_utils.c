@@ -372,7 +372,8 @@ static const gchar *sys_ui =
 
 static GtkActionEntry bundle_items[] = {
     { "File", NULL, N_("_File"), NULL, NULL, NULL },  
-    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },      
+    { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save text as..."), NULL, NULL, 
+      G_CALLBACK(model_output_save) },      
 #ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
@@ -4168,6 +4169,28 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     }
 }
 
+static void save_bundle_call (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    gretl_bundle *bundle = vwin->data;
+    int nb = n_user_bundles();
+    char vname[VNAMELEN];
+    const char *blurb;
+    int cancel = 0;
+
+    sprintf(vname, "bundle%d", nb + 1);
+    blurb = "Save bundle\nName (max. 15 characters):";
+    object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, blurb, &cancel);
+
+    if (!cancel) {    
+	int err = gretl_bundle_add_or_replace(bundle, vname);
+
+	if (err) {
+	    gui_errmsg(err);
+	} 
+    }   
+}
+
 static void add_bundled_item_to_menu (gpointer key, 
 				      gpointer value, 
 				      gpointer data)
@@ -4187,7 +4210,7 @@ static void add_bundled_item_to_menu (gpointer key,
 	return;
     }
 
-    if (type == GRETL_TYPE_STRING) {
+    if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_MATRIX_REF) {
 	/* not very useful in GUI? */
 	return;
     }
@@ -4218,9 +4241,24 @@ static void add_bundled_item_to_menu (gpointer key,
 static void add_bundle_menu_items (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
-    GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
- 
-    g_hash_table_foreach(ht, add_bundled_item_to_menu, vwin);
+    int n = gretl_bundle_n_keys(bundle);
+
+    if (n > 0) {
+	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
+
+	if (!gretl_bundle_is_stacked(bundle)) {
+	    GtkActionEntry item;
+    
+	    action_entry_init(&item);    
+	    item.name = "bundle";
+	    item.label = _("Save entire bundle");
+	    item.callback = G_CALLBACK(save_bundle_call);
+	    vwin_menu_add_item(vwin, "/menubar/Save", &item);
+	    vwin_menu_add_separator(vwin, "/menubar/Save");
+	}
+
+	g_hash_table_foreach(ht, add_bundled_item_to_menu, vwin);
+    }
 }
 
 static int set_sample_from_model (MODEL *pmod)

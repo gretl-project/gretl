@@ -2652,6 +2652,8 @@ int load_user_bundle_file (const char *fname)
 	return err;
     }
 
+    gretl_push_c_numeric_locale();
+
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "gretl-bundle")) {
@@ -2665,6 +2667,8 @@ int load_user_bundle_file (const char *fname)
 	}
 	cur = cur->next;
     }
+
+    gretl_pop_c_numeric_locale();
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);

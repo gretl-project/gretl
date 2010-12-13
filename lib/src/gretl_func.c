@@ -1015,7 +1015,7 @@ static const char *arg_type_xml_string (int t)
     }
 }
 
-static int arg_type_from_string (const char *s)
+GretlType gretl_type_from_string (const char *s)
 {
     if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
     if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
@@ -1048,7 +1048,7 @@ static int return_type_from_string (const char *s)
 	/* not OK as arg type, but OK as return */
 	t = GRETL_TYPE_VOID;
     } else {
-	t = arg_type_from_string(s);
+	t = gretl_type_from_string(s);
     }
 
     return (ok_function_return_type(t))? t : 0;
@@ -1085,7 +1085,7 @@ static int param_field_to_type (const char *s)
 	/* backward compat */
 	return arg_type_from_int(s);
     } else {
-	return arg_type_from_string(s);
+	return gretl_type_from_string(s);
     }
 }    
 
@@ -3576,7 +3576,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	    gretl_errmsg_set("Expected a type identifier");
 	    err = E_PARSE;
 	} else {
-	    type = arg_type_from_string(tstr);
+	    type = gretl_type_from_string(tstr);
 	    if (type == 0) {
 		gretl_errmsg_sprintf("Unrecognized data type '%s'", tstr);
 		err = E_PARSE;
@@ -4137,7 +4137,7 @@ static int extract_funcname (char *name, const char *s)
     if (!strcmp(word, "void")) {
 	type = GRETL_TYPE_VOID;
     } else {
-	type = arg_type_from_string(word);
+	type = gretl_type_from_string(word);
     }
 
     if (type == 0) {

@@ -60,6 +60,8 @@ struct bundled_item_ {
 static gretl_bundle **bundles;
 static int n_saved_bundles;
 
+static void bundle_count (gpointer key, gpointer value, gpointer p);
+
 /* given a bundle pointer, return its 0-based stack position
    or -1 if it's not on the stack */
 
@@ -133,6 +135,17 @@ int gretl_bundle_is_stacked (gretl_bundle *b)
     }
 
     return 0;
+}
+
+int gretl_bundle_n_keys (gretl_bundle *b)
+{
+    int n_items = 0;
+
+    if (b != NULL) {
+	g_hash_table_foreach(b->ht, bundle_count, &n_items);
+    }
+
+    return n_items;
 }
 
 int n_user_bundles (void)
@@ -814,7 +827,8 @@ int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name)
     } else {
 	err = gretl_bundle_push(bundle);
 
-	if (bundle_add_callback != NULL && 
+	if (strcmp(bundle->name, AUTO_BUNDLE) &&
+	    bundle_add_callback != NULL && 
 	    gretl_function_depth() == 0) {
 	    (*bundle_add_callback)();
 	}
@@ -964,10 +978,34 @@ static void bundle_count (gpointer key, gpointer value, gpointer p)
 static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 {
     bundled_item *item = value;
+    gretl_matrix *m;
     PRN *prn = p;
 
-    pprintf(prn, " %s (%s)", (const char *) key, 
-	    gretl_arg_type_name(item->type));
+    switch (item->type) {
+    case GRETL_TYPE_DOUBLE:
+	pprintf(prn, " %s (%s: %g)", (const char *) key, 
+		gretl_arg_type_name(item->type),
+		*(double *) item->data);
+	break;
+    case GRETL_TYPE_STRING:
+    case GRETL_TYPE_BUNDLE:
+	pprintf(prn, " %s (%s)", (const char *) key, 
+		gretl_arg_type_name(item->type));
+	break;
+    case GRETL_TYPE_MATRIX:
+    case GRETL_TYPE_MATRIX_REF:
+	m = item->data;
+	pprintf(prn, " %s (%s: %d x %d)", (const char *) key, 
+		gretl_arg_type_name(item->type), 
+		m->rows, m->cols);
+	break;
+    case GRETL_TYPE_SERIES:
+	pprintf(prn, " %s (%s: length %d)", (const char *) key, 
+		gretl_arg_type_name(item->type), item->size);
+	break;
+    default:
+	break;
+    }
 
     if (item->note != NULL) {
 	pprintf(prn, " %s\n", item->note);
@@ -1290,21 +1328,6 @@ void write_bundles_to_file (FILE *fp)
     fputs("</gretl-bundles>\n", fp);
 }
 
-static int bundled_type_from_string (const char *s)
-{
-    if (!strcmp(s, "scalar")) {
-	return GRETL_TYPE_DOUBLE;
-    } else if (!strcmp(s, "string")) {
-	return GRETL_TYPE_STRING;
-    } else if (!strcmp(s, "series")) {
-	return GRETL_TYPE_SERIES;
-    } else if (!strcmp(s, "matrix")) {
-	return GRETL_TYPE_MATRIX;
-    } else {
-	return GRETL_TYPE_NONE;
-    }
-}
-
 int load_bundle_from_xml (void *p1, void *p2, const char *name)
 {
     xmlNodePtr node = (xmlNodePtr) p1;
@@ -1329,7 +1352,7 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name)
 	    if (key == NULL || typename == NULL) {
 		err = E_DATA;
 	    } else {
-		int type = bundled_type_from_string(typename);
+		int type = gretl_type_from_string(typename);
 		int size = 0;
 
 		if (type == GRETL_TYPE_DOUBLE) {

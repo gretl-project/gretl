@@ -146,25 +146,6 @@ static void cinfo_free (call_info *cinfo)
     free(cinfo);
 }
 
-static const char *arg_type_string (int t)
-{
-    if (t == GRETL_TYPE_BOOL)   return "boolean";
-    if (t == GRETL_TYPE_INT)    return "int";
-    if (t == GRETL_TYPE_LIST)   return "list";
-    if (t == GRETL_TYPE_DOUBLE) return "scalar";
-    if (t == GRETL_TYPE_SERIES) return "series";
-    if (t == GRETL_TYPE_MATRIX) return "matrix";
-    if (t == GRETL_TYPE_STRING) return "string";
-    if (t == GRETL_TYPE_BUNDLE) return "bundle";
-    
-    if (t == GRETL_TYPE_SCALAR_REF) return "scalar *";
-    if (t == GRETL_TYPE_SERIES_REF) return "series *";
-    if (t == GRETL_TYPE_MATRIX_REF) return "matrix *";
-    if (t == GRETL_TYPE_BUNDLE_REF) return "bundle *";
-
-    return "";
-}
-
 static int check_args (call_info *cinfo)
 {
     int i;
@@ -713,10 +694,6 @@ static void set_close_on_OK (GtkWidget *b, gpointer p)
 #define cinfo_has_return(c) (c->rettype != GRETL_TYPE_NONE && \
 			     c->rettype != GRETL_TYPE_VOID)
 
-#define cinfo_offer_return(c) (c->rettype != GRETL_TYPE_NONE && \
-			       c->rettype != GRETL_TYPE_VOID && \
-			       c->rettype != GRETL_TYPE_BUNDLE)
-
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
@@ -755,10 +732,10 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->n_params > 0) {
 	tcols = (cinfo->extracol)? 3 : 2;
 	trows = cinfo->n_params + 1;
-	if (cinfo_offer_return(cinfo)) { 
+	if (cinfo_has_return(cinfo)) { 
 	    trows += 4;
 	}
-    } else if (cinfo_offer_return(cinfo)) {
+    } else if (cinfo_has_return(cinfo)) {
 	tcols = 2;
 	trows = 3;
     }
@@ -780,7 +757,7 @@ static void function_call_dialog (call_info *cinfo)
 	} else {
 	    txt = g_strdup_printf("%s (%s)",
 				  fn_param_name(cinfo->func, i), 
-				  arg_type_string(ptype));
+				  gretl_arg_type_name(ptype));
 	    label = gtk_label_new(txt);
 	    g_free(txt);			     
 	}
@@ -820,7 +797,7 @@ static void function_call_dialog (call_info *cinfo)
 	} 
     }
 	
-    if (cinfo_offer_return(cinfo)) {
+    if (cinfo_has_return(cinfo)) {
 	GtkWidget *child;
 	GList *list = NULL;
 
@@ -835,7 +812,7 @@ static void function_call_dialog (call_info *cinfo)
 	add_table_cell(tbl, label, 1, 2, row);
 	row++;
 
-	label = gtk_label_new(arg_type_string(cinfo->rettype));
+	label = gtk_label_new(gretl_arg_type_name(cinfo->rettype));
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, row);
 
@@ -1014,8 +991,6 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
     return err;
 }
 
-#define AUTO_BUNDLE "BUNDLE_RET__"
-
 static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
     ExecState state;
@@ -1075,8 +1050,16 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     /* destroy any "ARG" vars or matrices that were created? */
 
-    if (!err && attach_bundle) {
-	bundle = gretl_bundle_pull_from_stack(AUTO_BUNDLE, &err);
+    if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
+	if (attach_bundle) {
+	    bundle = gretl_bundle_pull_from_stack(AUTO_BUNDLE, &err);
+	    if (gretl_bundle_n_keys(bundle) == 0) {
+		gretl_bundle_destroy(bundle);
+		bundle = NULL;
+	    }
+	} else if (cinfo->ret != NULL) {
+	    bundle = get_gretl_bundle_by_name(cinfo->ret);
+	}
     }
 
     view_buffer(prn, 80, 400, funname, 
@@ -1087,7 +1070,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	gui_errmsg(err);
     } 
 
-    if (datainfo->v > orig_v) {
+    if (datainfo->v != orig_v) {
 	mark_dataset_as_modified();
 	populate_varlist();
     }
