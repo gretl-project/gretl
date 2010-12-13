@@ -2932,20 +2932,6 @@
       </description>
     </function>
 
-    <function name="makemask" section="matbuild" output="cvec">
-      <fnargs>
-	<fnarg type="series">y</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Produces a column vector containing the observation numbers
-	  corresponding to the non-zero entries in the series
-	  <argname>y</argname>. This function is typically useful for
-	  filtering out rows of a matrix built from data series.
-	</para>
-      </description>
-    </function>
-
     <function name="max" section="stats" output="scalar-or-series">
       <fnargs>
 	<fnarg type="series-or-list">y</fnarg>

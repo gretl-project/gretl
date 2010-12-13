@@ -774,49 +774,6 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
     return err;
 }
 
-/* make a column vector containing the 1-based observation numbers
-   corresponding to the non-zero entries in the series under node n
-*/
-
-static NODE *make_series_mask (NODE *n, parser *p)
-{
-    NODE *ret = aux_matrix_node(p);
-
-    if (ret != NULL && starting(p)) {
-	const double *x = n->v.xvec;
-	gretl_matrix *v;
-	int t, s, T = 0;
-
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    if (x[t] != 0) {
-		T++;
-	    }
-	}
-
-	if (T == 0) {
-	    p->err = E_DATA;
-	    return NULL;
-	}
-
-	v = gretl_column_vector_alloc(T);
-	if (v == NULL) {
-	    p->err = E_ALLOC;
-	    return NULL;
-	}
-
-	s = 0;
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    if (x[t] != 0) {
-		gretl_vector_set(v, s++, t + 1);
-	    }
-	}
-	
-	ret->v.m = v;
-    }
-
-    return ret;
-}
-
 static double scalar_pdist (int t, char d, const double *parm,
 			    int np, double arg, parser *p)
 {
@@ -7762,14 +7719,6 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = apply_scalar_func(l, t->t, p);
 	} else if (ok_list_node(l)) {
 	    ret = list_ok_func(l, t->t, p);
-	} else {
-	    node_type_error(t->t, 0, VEC, l, p);
-	}
-	break;
-    case F_MAKEMASK:
-	/* one series argument needed: vector output */
-	if (l->t == VEC) {
-	    ret = make_series_mask(l, p);
 	} else {
 	    node_type_error(t->t, 0, VEC, l, p);
 	}
