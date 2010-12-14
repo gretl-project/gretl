@@ -181,22 +181,20 @@ static void fncall_close (GtkWidget *w, call_info *cinfo)
     gtk_widget_destroy(cinfo->dlg);
 }
 
-static GtkWidget *label_hbox (GtkWidget *w, const char *txt, 
-			      int vspace, int center)
+static GtkWidget *label_hbox (GtkWidget *w, const char *txt) 
 {
     GtkWidget *hbox, *label;
+    gchar *buf;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, vspace);
+    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
 
-    label = gtk_label_new(txt);
+    buf = g_markup_printf_escaped("<span weight=\"bold\">%s()</span>", txt);
+    label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(label), buf);
+    g_free(buf);
 
-    if (center) {
-	gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
-    } else {
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    }
-
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     gtk_widget_show(label);
 
     return hbox;
@@ -280,6 +278,10 @@ static gboolean update_return (GtkComboBox *combo,
     return FALSE;
 }
 
+/* simple heuristic for whether or not a series 
+   probably represents a stochastic variable
+*/
+
 static int probably_stochastic (int v)
 {
     int ret = 1;
@@ -351,20 +353,9 @@ static GList *add_scalar_names (GList *list)
     return list;
 }
 
-static GList *get_selection_list (call_info *cinfo, int i, int type,
-				  int set_default)
+static GList *get_selection_list (int type)
 {
     GList *list = NULL;
-    int optional = 0;
-
-    if (i >= 0) {
-	optional = fn_param_optional(cinfo->func, i);
-    }
-
-    if (!set_default) {
-	/* selector for return value */
-	list = g_list_append(list, "");
-    }
 
     if (scalar_arg(type)) {
 	list = add_scalar_names(list);
@@ -375,10 +366,6 @@ static GList *get_selection_list (call_info *cinfo, int i, int type,
     } else if (matrix_arg(type)) {
 	list = add_matrix_names(list);
     } 
-
-    if (optional) {
-	list = g_list_append(list, "null");
-    }
 
     return list;
 }
@@ -453,7 +440,7 @@ static void update_combo_selectors (call_info *cinfo,
 				    GtkWidget *refsel,
 				    int ptype)
 {
-    GList *sellist = NULL, *newlist = NULL;
+    GList *sellist, *newlist;
     int llen;
 
     /* get the list of relevant selectors and the
@@ -463,20 +450,19 @@ static void update_combo_selectors (call_info *cinfo,
 
     if (ptype == GRETL_TYPE_MATRIX) {
 	sellist = cinfo->msels;
-	newlist = add_matrix_names(newlist);
     } else if (ptype == GRETL_TYPE_LIST) {
 	sellist = cinfo->lsels;
-	newlist = add_list_names(newlist);
     } else {
 	sellist = cinfo->vsels;
-	newlist = add_series_names(newlist);
     }
 
+    newlist = get_selection_list(ptype);
     llen = g_list_length(newlist);
 
     while (sellist != NULL) {
 	/* iterate over the affected selectors */
 	GtkComboBox *sel = GTK_COMBO_BOX(sellist->data);
+	int target = GTK_WIDGET(sel) == refsel;
 	gchar *saved = NULL;
 	int old, null_OK;
 
@@ -488,27 +474,35 @@ static void update_combo_selectors (call_info *cinfo,
 	   preserve the previous selection.
 	*/
 
-	if (GTK_WIDGET(sel) != refsel) {
-	    /* keep a record of the old selected item */
+	if (!target) {
+	    /* make a record of the old selected item */
 	    saved = gtk_combo_box_get_active_text(sel);
-	}
+	} 
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(sel, newlist);
 	null_OK = widget_get_int(sel, "null_OK");
 	if (null_OK) {
 	    gtk_combo_box_append_text(sel, "null");
 	}
-	if (saved != NULL) {
-	    /* reinstate the previous selection */
-	    old = combo_list_index(saved, newlist);
-	    gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
-	    g_free(saved);
+	if (!target) {
+	    if (saved != NULL) {
+		/* reinstate the previous selection */
+		old = combo_list_index(saved, newlist);
+		if (*saved == '\0' && old < 0) {
+		    gtk_combo_box_prepend_text(sel, "");
+		}  
+		gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
+		g_free(saved);
+	    } else {
+		/* reinstate empty selection */
+		gtk_combo_box_set_active(sel, -1);
+	    }
 	} else {
 	    /* select the newly added var, which will be at the 
 	       end, or thereabouts */
 	    int addpos = llen - 1;
 
-	    if (ptype == GRETL_TYPE_SERIES) {
+	    if (series_arg(ptype)) {
 		addpos--; /* the const is always in last place */
 	    } 
 	    if (null_OK) {
@@ -532,7 +526,7 @@ int do_make_list (selector *sr)
     const char *msg = NULL;
     PRN *prn = NULL;
     int *list = NULL;
-    int err = 0;
+    int nl, err = 0;
 
     if (data != NULL) {
 	GtkWidget *entry = GTK_WIDGET(data);
@@ -544,7 +538,9 @@ int do_make_list (selector *sr)
     if (lname == NULL || *lname == 0) {
 	errbox(_("No name was given for the list"));
 	return 1;
-    }   
+    } 
+
+    nl = n_saved_lists();
 
     if (buf == NULL || *buf == '\0') {
 	int resp;
@@ -556,6 +552,7 @@ int do_make_list (selector *sr)
 		err = E_ALLOC;
 	    }
 	} else {
+	    /* canceled */
 	    return 0;
 	}
     } else {
@@ -588,7 +585,9 @@ int do_make_list (selector *sr)
     if (!err) {
 	gtk_widget_hide(selector_get_window(sr));
 	if (cinfo != NULL) {
-	    update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST);
+	    if (n_saved_lists() > nl) {
+		update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST);
+	    }
 	} else {
 	    infobox(msg);
 	}
@@ -602,10 +601,6 @@ int do_make_list (selector *sr)
 
     return err;
 } 
-
-/* FIXME list maker: should have a choice of modifying an existing
-   list argument or creating a new list from scratch (two buttons?)
-*/
 
 static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 {
@@ -720,12 +715,12 @@ static int already_set_as_default (call_info *cinfo,
     GList *slist;
     int ret = 0;
 
-    if (ptype == GRETL_TYPE_SERIES) {
+    if (series_arg(ptype)) {
 	slist = g_list_first(cinfo->vsels);
+    } else if (matrix_arg(ptype)) {
+	slist = g_list_first(cinfo->msels);
     } else if (ptype == GRETL_TYPE_LIST) {
 	slist = g_list_first(cinfo->lsels);
-    } else if (	ptype == GRETL_TYPE_MATRIX) {
-	slist = g_list_first(cinfo->msels);
     } else {
 	return 0;
     }
@@ -768,7 +763,7 @@ static void arg_combo_set_default (call_info *cinfo,
 	gchar *name = mylist->data;
 	int ok = 0;
 
-	if (ptype == GRETL_TYPE_SERIES) {
+	if (series_arg(ptype)) {
 	    int v = current_series_index(datainfo, name);
 
 	    if (v > 0 && probably_stochastic(v)) {
@@ -794,6 +789,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     GList *list = NULL;
     GtkWidget *combo;
     GtkWidget *entry;
+    int null_OK = 0;
 
     combo = gtk_combo_box_entry_new_text();
     entry = gtk_bin_get_child(GTK_BIN(combo));
@@ -803,13 +799,17 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 		     G_CALLBACK(update_arg), cinfo);
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
-    if (i >= 0 && fn_param_optional(cinfo->func, i)) {
+    if (fn_param_optional(cinfo->func, i)) {
+	null_OK = 1;
 	widget_set_int(combo, "null_OK", 1);
     }
 
-    list = get_selection_list(cinfo, i, ptype, 1);
+    list = get_selection_list(ptype);
     if (list != NULL) {
 	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
+	if (null_OK) {
+	    gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "null");	    
+	}
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo), 
 			      list, ptype);
 	g_list_free(list);
@@ -830,14 +830,14 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 }
 
 static void add_table_header (GtkWidget *tbl, gchar *txt,
-			      int cols, int r0)
+			      int cols, int r0, int ypad)
 {
     GtkWidget *label = gtk_label_new(txt);
     GtkWidget *align = gtk_alignment_new(0.0, 0.5, 0.0, 0.0);
 
     gtk_container_add(GTK_CONTAINER(align), label);
     gtk_table_attach(GTK_TABLE(tbl), align, 0, cols, r0, r0 + 1,
-		     GTK_FILL, GTK_FILL, 5, 5);
+		     GTK_FILL, GTK_FILL, 5, ypad);
 }
 
 static void add_table_cell (GtkWidget *tbl, GtkWidget *w,
@@ -856,13 +856,13 @@ static GtkWidget *add_object_button (int ptype, GtkWidget *combo)
     gtk_container_add(GTK_CONTAINER(button), img);
     g_object_set_data(G_OBJECT(button), "combo", combo);
 
-    if (ptype == GRETL_TYPE_SERIES) {
+    if (series_arg(ptype)) {
 	gretl_tooltips_add(button, _("New variable"));
+    } else if (matrix_arg(ptype)) {
+	gretl_tooltips_add(button, _("Define matrix"));
     } else if (ptype == GRETL_TYPE_LIST) {
 	gretl_tooltips_add(button, _("Define list"));
-    } else if (ptype == GRETL_TYPE_MATRIX) {
-	gretl_tooltips_add(button, _("Define matrix"));
-    }
+    } 
 
     return button;
 }
@@ -883,7 +883,7 @@ static void function_call_dialog (call_info *cinfo)
     gchar *txt;
     const char *fnname;
     int trows = 0, tcols = 0;
-    int i, row = 0;
+    int i, row;
     int err;
 
     if (open_fncall_dlg != NULL) {
@@ -908,7 +908,8 @@ static void function_call_dialog (call_info *cinfo)
     g_signal_connect(G_OBJECT(cinfo->dlg), "destroy",
 		     G_CALLBACK(fncall_dialog_destruction), cinfo);
 
-    cinfo->top_hbox = hbox = label_hbox(vbox, fnname, 5, 0);
+    /* above table: name of function being called */
+    cinfo->top_hbox = hbox = label_hbox(vbox, fnname);
 
     if (cinfo->n_params > 0) {
 	tcols = (cinfo->extracol)? 3 : 2;
@@ -925,13 +926,17 @@ static void function_call_dialog (call_info *cinfo)
 	tbl = gtk_table_new(trows, tcols, FALSE);
     }
 
-    if (cinfo->n_params > 0) {
-	add_table_header(tbl, _("Select arguments:"), tcols, row);
-    }
+    row = 0; /* initialize writing row */
 
     for (i=0; i<cinfo->n_params; i++) {
 	const char *desc = fn_param_descrip(cinfo->func, i);
 	int ptype = fn_param_type(cinfo->func, i);
+
+	if (i == 0) {
+	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
+	}
+
+	row++;
 
 	if (desc != NULL) {
 	    label = gtk_label_new(desc);
@@ -943,7 +948,6 @@ static void function_call_dialog (call_info *cinfo)
 	    g_free(txt);			     
 	}
 
-	row++;
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, row);
 
@@ -957,12 +961,19 @@ static void function_call_dialog (call_info *cinfo)
 
 	add_table_cell(tbl, sel, 1, 2, row);
 
-	if (ptype == GRETL_TYPE_SERIES) {
+	if (series_arg(ptype)) {
 	    cinfo->vsels = g_list_append(cinfo->vsels, sel);
 	    button = add_object_button(ptype, sel);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_series_maker), 
+			     cinfo);
+	} else if (matrix_arg(ptype)) {
+	    cinfo->msels = g_list_append(cinfo->msels, sel);
+	    button = add_object_button(ptype, sel);
+	    add_table_cell(tbl, button, 2, 3, row);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(launch_matrix_maker), 
 			     cinfo);
 	} else if (ptype == GRETL_TYPE_LIST) {
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
@@ -974,49 +985,48 @@ static void function_call_dialog (call_info *cinfo)
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_list_maker),
 			     entry);
-	} else if (ptype == GRETL_TYPE_MATRIX) {
-	    cinfo->msels = g_list_append(cinfo->msels, sel);
-	    button = add_object_button(ptype, sel);
-	    add_table_cell(tbl, button, 2, 3, row);
-	    g_signal_connect(G_OBJECT(button), "clicked", 
-			     G_CALLBACK(launch_matrix_maker), 
-			     cinfo);
 	} 
     }
 	
     if (cinfo_has_return(cinfo)) {
+	/* selector/entry for return value */
 	GtkWidget *child;
 	GList *list = NULL;
 
 	if (cinfo->n_params > 0) {
-	    row++;
+	    /* separator row */
+	    add_table_header(tbl, "", tcols, ++row, 0);
 	}	    
 
-	add_table_header(tbl, _("Assign return value (optional):"), tcols, row);
-	row++;
+	add_table_header(tbl, _("Assign return value (optional):"), 
+			 tcols, ++row, 5);
 
 	label = gtk_label_new(_("selection (or new variable)"));
-	add_table_cell(tbl, label, 1, 2, row);
-	row++;
+	add_table_cell(tbl, label, 1, 2, ++row);
 
 	label = gtk_label_new(gretl_arg_type_name(cinfo->rettype));
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
-	add_table_cell(tbl, label, 0, 1, row);
+	add_table_cell(tbl, label, 0, 1, ++row);
 
 	sel = gtk_combo_box_entry_new_text();
 	g_signal_connect(G_OBJECT(sel), "changed",
 			 G_CALLBACK(update_return), cinfo);
-	list = get_selection_list(cinfo, -1, cinfo->rettype, 0);
+	list = get_selection_list(cinfo->rettype);
 	if (list != NULL) {
 	    set_combo_box_strings_from_list(GTK_COMBO_BOX(sel), list);
 	    g_list_free(list);
 	}
+
+	/* prepend blank option and select it */
+	gtk_combo_box_prepend_text(GTK_COMBO_BOX(sel), "");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(sel), 0);
 	child = gtk_bin_get_child(GTK_BIN(sel));
 	gtk_entry_set_activates_default(GTK_ENTRY(child), TRUE);
-	add_table_cell(tbl, sel, 1, 2, row);
+	add_table_cell(tbl, sel, 1, 2, row); /* same row as above */
     }
 
     if (tbl != NULL) {
+	/* the table is complete: pack it now */
 	gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     }
 
