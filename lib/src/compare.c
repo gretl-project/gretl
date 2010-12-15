@@ -919,8 +919,8 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	}
 
 	pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);
-	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %g\n\n"), 
-		df, trsq, pval);
+	pprintf(prn, "%s = P(%s(%d) > %g) = %g\n\n", 
+		_("with p-value"), _("Chi-square"), df, trsq, pval);
 
 	if (opt & OPT_S) {
 	    ModelTest *test;

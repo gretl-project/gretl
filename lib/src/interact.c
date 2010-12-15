@@ -5659,9 +5659,11 @@ void gretl_exec_state_init (ExecState *s,
 	    gretl_object_ref(s->prev_model, s->prev_type);
 	    set_as_last_model(NULL, GRETL_OBJ_NULL);
 	}
+	s->prev_model_count = get_model_count();
     } else {
 	s->prev_model = NULL;
 	s->prev_type = GRETL_OBJ_NULL;
+	s->prev_model_count = -1;
     }
 
     s->submask = NULL;
@@ -5703,12 +5705,17 @@ void gretl_exec_state_clear (ExecState *s)
 	if (s->prev_model != NULL) {
 	    gretl_object_unref(s->prev_model, s->prev_type);
 	}
+	/* restore the previous model count */
+	if (s->prev_model_count >= 0) {
+	    set_model_count(s->prev_model_count);
+	}
     }
 
     destroy_working_models(s->models, 2);
 
     s->prev_model = NULL;
     s->prev_type = GRETL_OBJ_NULL;
+    s->prev_model_count = -1;
 
     free_subsample_mask(s->submask);
     s->funcerr = 0;

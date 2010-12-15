@@ -1580,7 +1580,7 @@ static void session_clear_data (double ***pZ, DATAINFO *pdinfo)
     clear_model(models[2]);
 
     free_command_stack(); 
-    reset_model_count();
+    set_model_count(0);
     lib_cmd_destroy_context();
 }
 
@@ -1627,7 +1627,6 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     }
 
     session_graph_count = 0;
-
     reset_plot_count();
 
     set_session_log(NULL, logcode);

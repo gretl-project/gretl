@@ -3415,11 +3415,15 @@ int gnuplot_3d (int *list, const char *literal,
     return 0;
 }
 
-static void print_freq_test_label (char *s, const char *format, 
+static void print_freq_test_label (char *s, int teststat, 
 				   double v, double pv)
 {
     gretl_pop_c_numeric_locale();
-    sprintf(s, format, v, pv);
+    if (teststat == GRETL_STAT_Z) {
+	sprintf(s, "z = %.3f [%.4f]", v, pv);
+    } else if (teststat == GRETL_STAT_NORMAL_CHISQ) {
+	sprintf(s, "%s(2) = %.3f [%.4f]", _("Chi-square"), v, pv);
+    }
     gretl_push_c_numeric_locale();
 }
 
@@ -3572,8 +3576,8 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label \"%s:\" at graph .03, graph .97 front\n",
 			_("Test statistic for normality"));
-		print_freq_test_label(label, _("Chi-squared(2) = %.3f pvalue = %.5f"), 
-				      freq->test, chisq_cdf_comp(2, freq->test));
+		print_freq_test_label(label, GRETL_STAT_NORMAL_CHISQ, freq->test, 
+				      chisq_cdf_comp(2, freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n", 
 			label);
 	    }	
@@ -3594,8 +3598,8 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    if (!na(freq->test)) {
 		fprintf(fp, "set label '%s:' at graph .03, graph .97 front\n",
 			_("Test statistic for gamma"));
-		print_freq_test_label(label, _("z = %.3f pvalue = %.5f"), 
-				      freq->test, normal_pvalue_2(freq->test));
+		print_freq_test_label(label, GRETL_STAT_Z, freq->test, 
+				      normal_pvalue_2(freq->test));
 		fprintf(fp, "set label '%s' at graph .03, graph .93 front\n", 
 			label);
 	    }	

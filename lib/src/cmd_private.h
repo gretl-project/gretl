@@ -55,6 +55,7 @@ struct ExecState_ {
     GRETL_VAR *var;
     void *prev_model;
     GretlObjType prev_type;
+    int prev_model_count;
     char *submask;        /* record of incoming sub-sample for functions */
     int in_comment;
     int funcerr;

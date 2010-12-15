@@ -1546,7 +1546,7 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
 	    if (jvar->jinfo->lrdf > 0) {
 		pprintf(prn, _("Allowing for prior restriction, df = %d\n"), df);
 	    }
-	    pprintf(prn, _("P(Chi-Square(%d) > %g) = %g\n"), df, x, pv);
+	    pprintf(prn, "P(%s(%d) > %g) = %g\n", _("Chi-square"), df, x, pv);
 	    rset_add_results(rset, x, pv, llr);
 	}
     }

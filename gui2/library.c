@@ -4090,8 +4090,8 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 {
     const gchar *s = edit_dialog_get_text(dlg);
     gpointer p = edit_dialog_get_data(dlg);
-    int scalargen = 0;
-    int oldv, type, err;
+    int scalargen = 0, oldv = -1;
+    int type, err;
 
     if (s == NULL) {
 	return;
@@ -4127,7 +4127,7 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
     if (!err) {
 	int newv = (scalargen)? n_saved_scalars(): datainfo->v;
 
-	if (newv > oldv) {
+	if (oldv >= 0 && newv > oldv) {
 	    fncall_register_genr(newv - oldv, p);
 	}
     }

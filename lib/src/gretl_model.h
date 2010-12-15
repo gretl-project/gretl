@@ -363,7 +363,7 @@ int get_next_model_stat (const char **word, const char **desc);
 
 int get_model_count (void);
 
-void reset_model_count (void);
+void set_model_count (int c);
 
 int model_count_plus (void);
 

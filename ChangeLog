@@ -32,6 +32,7 @@ version 1.9.4, in progress
   arguments in place of two series
 - Allow deletion of locale matrices within functions
 - Remove deprecated aliases "noecho" and "seed"
+- Fix: reset model count on exit from user-defined functions
 - Fix bug: estimates could get out of order for some
   equation systems if the constant was not given in first
   place among the regressors

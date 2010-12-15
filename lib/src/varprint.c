@@ -850,11 +850,11 @@ static void print_LR_stat (double x, int df, PRN *prn)
     } else if (rtf_format(prn)) {
 	pprintf(prn, "2 * (lu - lr) = %g", x);
 	gretl_prn_newline(prn);
-	pprintf(prn, I_("P(Chi-Square(%d) > %g) = %g"), df, x, pv);
+	pprintf(prn, "P(%s(%d) > %g) = %g", I_("Chi-square"), df, x, pv);
     } else {
 	pprintf(prn, "2 * (lu - lr) = %g", x);
 	gretl_prn_newline(prn);
-	pprintf(prn, _("P(Chi-Square(%d) > %g) = %g"), df, x, pv);
+	pprintf(prn, "P(%s(%d) > %g) = %g", _("Chi-square"), df, x, pv);
     }
 }
 

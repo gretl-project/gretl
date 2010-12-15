@@ -43,7 +43,7 @@ static int seven_bit_string (const unsigned char *s)
 
 int validate_filename_for_glib (const gchar *fname, gchar **fconv)
 {
-    FILE *fp = fopen(fname, "r");
+    FILE *fp = g_fopen(fname, "r");
     int err = 0;
 
     if (fp == NULL) {

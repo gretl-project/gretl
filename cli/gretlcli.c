@@ -196,7 +196,7 @@ static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 	libgretl_session_cleanup(SESSION_CLEAR_FULL);
     }
 
-    reset_model_count();
+    set_model_count(0);
     gretl_cmd_destroy_context(cmd);
 
     return err;

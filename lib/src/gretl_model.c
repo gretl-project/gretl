@@ -3229,7 +3229,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     case GRETL_STAT_LM:
 	if (tex) sprintf(str, "$P$($\\chi^2(%d) >$ %g) = %g", 
 			 test->dfn, test->value, test->pvalue);
-	else sprintf(str, "P(Chi-Square(%d) > %g) = %g", 
+	else sprintf(str, "P(%s(%d) > %g) = %g", _("Chi-square"),
 		     test->dfn, test->value, test->pvalue);
 	break;
     case GRETL_STAT_F:
@@ -4664,9 +4664,9 @@ int get_model_count (void)
     return gretl_model_count;
 }
 
-void reset_model_count (void)
+void set_model_count (int c)
 {
-    gretl_model_count = 0;
+    gretl_model_count = c;
 }
 
 int model_count_plus (void)

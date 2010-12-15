@@ -605,7 +605,7 @@ double student_cdf_inverse (double df, double a)
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
  * 
- * Returns: the integral from 0 to @x of the chi-squared
+ * Returns: the integral from 0 to @x of the chi-square
  * distribution with @df degrees of freedom, or #NADBL
  * on failure.
  */
@@ -629,7 +629,7 @@ double chisq_cdf (int df, double x)
  * @df: degrees of freedom.
  * @x: the cutoff point in the distribution.
  * 
- * Returns: the integral from @x to infinity of the chi-squared
+ * Returns: the integral from @x to infinity of the chi-square
  * distribution with @df degrees of freedom, or #NADBL
  * on failure.
  */
@@ -1781,7 +1781,7 @@ void print_critval (char st, const double *parm, double a, double c, PRN *prn)
 	pprintf(prn, "t(%g)", parm[0]);
 	break;
     case 'X':
-	pprintf(prn, _("Chi-square(%g)"), parm[0]);
+	pprintf(prn, "%s(%g)", _("Chi-square"), parm[0]);
 	break;
     case 'F':
 	pprintf(prn, "F(%g, %g)", parm[0], parm[1]);

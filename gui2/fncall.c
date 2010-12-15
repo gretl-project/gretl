@@ -696,13 +696,18 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
     double dminv = fn_param_minval(cinfo->func, i);
     double dmaxv = fn_param_maxval(cinfo->func, i);
     double deflt = fn_param_default(cinfo->func, i);
-    int minv, maxv, initv;
+    int minv, maxv, initv = 0;
     GtkObject *adj;
     GtkWidget *spin;
 
-    minv = (na(dminv))? 0 : (int) dminv;
+    minv = (na(dminv))? INT_MIN : (int) dminv;
     maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
-    initv = (na(deflt))? minv : (int) deflt;
+
+    if (!na(deflt)) {
+	initv = (int) deflt;
+    } else if (!na(dminv)) {
+	initv = (int) dminv;
+    } 
 
     adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 0);
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
