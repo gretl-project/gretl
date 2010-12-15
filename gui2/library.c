@@ -4082,11 +4082,16 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
     }
 }
 
+/* callback for defining new series or scalar variable
+   from the GUI function-call dialog
+*/
+
 void do_fncall_genr (GtkWidget *w, dialog_t *dlg) 
 {
     const gchar *s = edit_dialog_get_text(dlg);
     gpointer p = edit_dialog_get_data(dlg);
-    int err, oldv = datainfo->v;
+    int scalargen = 0;
+    int oldv, type, err;
 
     if (s == NULL) {
 	return;
@@ -4094,10 +4099,23 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 
     while (isspace((unsigned char) *s)) s++;
 
-    if (!strncmp(s, "series", 6)) {
-	gretl_command_strcpy(s);
-    } else {
-	gretl_command_sprintf("series %s", s);
+    type = widget_get_int(p, "ptype");
+
+    if (type == GRETL_TYPE_SERIES) {
+	if (!strncmp(s, "series", 6)) {
+	    gretl_command_strcpy(s);
+	} else {
+	    gretl_command_sprintf("series %s", s);
+	}
+	oldv = datainfo->v;
+    } else if (type == GRETL_TYPE_DOUBLE) {
+	if (!strncmp(s, "scalar", 6)) {
+	    gretl_command_strcpy(s);
+	} else {
+	    gretl_command_sprintf("scalar %s", s);
+	}
+	oldv = n_saved_scalars();
+	scalargen = 1;
     }
 
     if (check_and_record_command()) {
@@ -4106,8 +4124,12 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 
     err = finish_genr(NULL, dlg);
 
-    if (!err && datainfo->v > oldv) {
-	fncall_register_genr(datainfo->v - oldv, p);
+    if (!err) {
+	int newv = (scalargen)? n_saved_scalars(): datainfo->v;
+
+	if (newv > oldv) {
+	    fncall_register_genr(newv - oldv, p);
+	}
     }
 }
 

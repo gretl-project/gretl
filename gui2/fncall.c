@@ -44,9 +44,9 @@ struct call_info_ {
     GList *vsels;        /* series argument selectors */
     GList *lsels;        /* list argument selectors */
     GList *msels;        /* matrix arg selectors */
+    GList *ssels;        /* scalar arg selectors */    
     int *publist;        /* list of public interfaces */
     int iface;           /* selected interface */
-    int extracol;
     const ufunc *func;
     FuncDataReq dreq;
     int n_params;
@@ -97,6 +97,7 @@ static call_info *cinfo_new (void)
     cinfo->vsels = NULL;
     cinfo->lsels = NULL;
     cinfo->msels = NULL;
+    cinfo->ssels = NULL;
 
     cinfo->func = NULL;
     cinfo->n_params = 0;
@@ -106,7 +107,6 @@ static call_info *cinfo_new (void)
     cinfo->args = NULL;
     cinfo->ret = NULL;
 
-    cinfo->extracol = 0;
     cinfo->dreq = 0;
 
     return cinfo;
@@ -146,6 +146,9 @@ static void cinfo_free (call_info *cinfo)
     if (cinfo->msels != NULL) {
 	g_list_free(cinfo->msels);
     }
+    if (cinfo->ssels != NULL) {
+	g_list_free(cinfo->ssels);
+    }
     
     free(cinfo->publist);
     free(cinfo);
@@ -155,14 +158,16 @@ static int check_args (call_info *cinfo)
 {
     int i;
 
-    /* FIXME optional args? */
-
     if (cinfo->args != NULL) {
 	for (i=0; i<cinfo->n_params; i++) {
 	    if (cinfo->args[i] == NULL) {
-		errbox(_("Argument %d (%s) is missing"), i + 1,
-		       fn_param_name(cinfo->func, i));
-		return 1;
+		if (fn_param_optional(cinfo->func, i)) {
+		    cinfo->args[i] = g_strdup("null");
+		} else {
+		    errbox(_("Argument %d (%s) is missing"), i + 1,
+			   fn_param_name(cinfo->func, i));
+		    return 1;
+		}
 	    }
 	}
     }
@@ -278,8 +283,8 @@ static gboolean update_return (GtkComboBox *combo,
     return FALSE;
 }
 
-/* simple heuristic for whether or not a series 
-   probably represents a stochastic variable
+/* simple heuristic for whether or not a series probably 
+   represents a stochastic variable
 */
 
 static int probably_stochastic (int v)
@@ -389,7 +394,7 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     PRN *prn;
     int err;
 
-    /* FIXME incorpoate this into markup */
+    /* FIXME incorporate this into markup */
     if (user_function_has_PDF_doc(fnname, &pdfname)) {
 	err = display_gfn_help(pdfname);
 	free(pdfname);
@@ -452,6 +457,8 @@ static void update_combo_selectors (call_info *cinfo,
 	sellist = cinfo->msels;
     } else if (ptype == GRETL_TYPE_LIST) {
 	sellist = cinfo->lsels;
+    } else if (ptype == GRETL_TYPE_DOUBLE) {
+	sellist = cinfo->ssels;
     } else {
 	sellist = cinfo->vsels;
     }
@@ -638,9 +645,10 @@ void fncall_register_genr (int addv, gpointer p)
     GtkWidget *combo = p;
     GtkWidget *entry = gtk_bin_get_child(GTK_BIN(combo));
     call_info *cinfo = g_object_get_data(G_OBJECT(entry), "cinfo");
+    int ptype = widget_get_int(combo, "ptype");
 
     if (addv > 0) {
-	update_combo_selectors(cinfo, combo, GRETL_TYPE_SERIES);
+	update_combo_selectors(cinfo, combo, ptype);
     }
 
     gtk_window_present(GTK_WINDOW(cinfo->dlg));
@@ -650,18 +658,20 @@ static void launch_series_maker (GtkWidget *button, call_info *cinfo)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    edit_dialog(_("gretl: add var"), 
-		_("Enter formula for new series"),
+    edit_dialog(_("gretl: add series"), 
+		_("Enter name=formula for new series"),
 		NULL, do_fncall_genr, combo, 
 		GENR, VARCLICK_INSERT_NAME, NULL);  
 }
 
-static int spinner_arg (call_info *cinfo, int i)
+static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
 {
-    double x = fn_param_minval(cinfo->func, i);
-    double y = fn_param_maxval(cinfo->func, i);
+    GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    return !na(x) && !na(y);
+    edit_dialog(_("gretl: add scalar"), 
+		_("Enter name=formula for new scalar"),
+		NULL, do_fncall_genr, combo, 
+		GENR, VARCLICK_INSERT_NAME, NULL);  
 }
 
 static GtkWidget *bool_arg_selector (call_info *cinfo, int i)
@@ -683,12 +693,16 @@ static GtkWidget *bool_arg_selector (call_info *cinfo, int i)
 
 static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
 {
-    int minv = (int) fn_param_minval(cinfo->func, i);
-    int maxv = (int) fn_param_maxval(cinfo->func, i);
+    double dminv = fn_param_minval(cinfo->func, i);
+    double dmaxv = fn_param_maxval(cinfo->func, i);
     double deflt = fn_param_default(cinfo->func, i);
-    int initv = (na(deflt))? minv : (int) deflt;
+    int minv, maxv, initv;
     GtkObject *adj;
     GtkWidget *spin;
+
+    minv = (na(dminv))? 0 : (int) dminv;
+    maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
+    initv = (na(deflt))? minv : (int) deflt;
 
     adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 0);
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
@@ -697,8 +711,7 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
     g_signal_connect(G_OBJECT(spin), "value-changed", 
 		     G_CALLBACK(update_int_arg), cinfo);
 
-    cinfo->args[i] = g_strdup_printf("%d", (na(deflt))? minv : 
-				     (int) deflt);
+    cinfo->args[i] = g_strdup_printf("%d", initv);
 
     return spin;
 }
@@ -719,6 +732,8 @@ static int already_set_as_default (call_info *cinfo,
 	slist = g_list_first(cinfo->vsels);
     } else if (matrix_arg(ptype)) {
 	slist = g_list_first(cinfo->msels);
+    } else if (scalar_arg(ptype)) {
+	slist = g_list_first(cinfo->ssels);
     } else if (ptype == GRETL_TYPE_LIST) {
 	slist = g_list_first(cinfo->lsels);
     } else {
@@ -912,7 +927,7 @@ static void function_call_dialog (call_info *cinfo)
     cinfo->top_hbox = hbox = label_hbox(vbox, fnname);
 
     if (cinfo->n_params > 0) {
-	tcols = (cinfo->extracol)? 3 : 2;
+	tcols = 3;
 	trows = cinfo->n_params + 1;
 	if (cinfo_has_return(cinfo)) { 
 	    trows += 4;
@@ -953,7 +968,7 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i);
-	} else if (ptype == GRETL_TYPE_INT && spinner_arg(cinfo, i)) {
+	} else if (ptype == GRETL_TYPE_INT) {
 	    sel = spin_arg_selector(cinfo, i);
 	} else {
 	    sel = combo_arg_selector(cinfo, ptype, i);
@@ -963,6 +978,7 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (series_arg(ptype)) {
 	    cinfo->vsels = g_list_append(cinfo->vsels, sel);
+	    widget_set_int(sel, "ptype", GRETL_TYPE_SERIES);
 	    button = add_object_button(ptype, sel);
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
@@ -975,6 +991,14 @@ static void function_call_dialog (call_info *cinfo)
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_matrix_maker), 
 			     cinfo);
+	} else if (scalar_arg(ptype)) {
+	    cinfo->ssels = g_list_append(cinfo->ssels, sel);
+	    widget_set_int(sel, "ptype", GRETL_TYPE_DOUBLE);
+	    button = add_object_button(ptype, sel);
+	    add_table_cell(tbl, button, 2, 3, row);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(launch_scalar_maker), 
+			     cinfo);	    
 	} else if (ptype == GRETL_TYPE_LIST) {
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
 	    
@@ -1080,11 +1104,6 @@ static int function_data_check (call_info *cinfo)
 		err = 1;
 		break;
 	    }
-	}
-	if (type == GRETL_TYPE_LIST) {
-	    cinfo->extracol = 1;
-	} else if (type == GRETL_TYPE_MATRIX || type == GRETL_TYPE_MATRIX_REF) {
-	    cinfo->extracol = 1;
 	}
     }
 
