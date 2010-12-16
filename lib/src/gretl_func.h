@@ -34,6 +34,8 @@ typedef enum {
 #define NEEDS_PANEL "needs-panel-data"
 #define NO_DATA_OK  "no-data-ok"
 
+#define BUNDLE_PRINTER "bundle_print"
+
 #define FN_NAMELEN 32
 
 #define ok_function_return_type(r) (r == GRETL_TYPE_DOUBLE || \
@@ -162,8 +164,6 @@ int update_function_from_script (const char *funname, const char *path,
 int user_function_help (const char *fnname, gretlopt opt, PRN *prn);
 
 int user_function_has_PDF_doc (const char *fnname, char **pdfname);
-
-int function_is_bundle_printer (const char *fnname);
 
 void gretl_functions_cleanup (void);
 

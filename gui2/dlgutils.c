@@ -563,7 +563,14 @@ dialog_data_new (gpointer p, gint code, const char *title,
 	d->blocking = 0;
     }
 
-    gtk_window_set_title(GTK_WINDOW(d->dialog), title);
+    if (!strncmp(title, "gretl", 5)) {
+	gtk_window_set_title(GTK_WINDOW(d->dialog), title);
+    } else {
+	gchar *tmp = g_strdup_printf("gretl: %s", title);
+
+	gtk_window_set_title(GTK_WINDOW(d->dialog), tmp);
+	g_free(tmp);
+    }
 
     aa = gtk_dialog_get_action_area(GTK_DIALOG(d->dialog));
     gtk_box_set_homogeneous(GTK_BOX(aa), TRUE); 

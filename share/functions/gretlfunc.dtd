@@ -35,7 +35,6 @@
    name CDATA #REQUIRED
    type (void | scalar | series | matrix | list | string | bundle) 'void'
    private (0|1) '0'
-   bundle-printer (0|1) '0'
    plugin-wrapper (0|1) '0'
 >
 

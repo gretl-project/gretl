@@ -436,9 +436,9 @@ static int combo_list_index (const gchar *s, GList *list)
     return -1;
 }
 
-/* Update the argument selector(s) for series, matrices
-   or lists after defining a new variable of one of these
-   types.
+/* Update the combo argument selector(s) for series, matrices
+   lists or scalars after defining a new variable of one of 
+   these types.
 */
 
 static void update_combo_selectors (call_info *cinfo, 
@@ -473,7 +473,7 @@ static void update_combo_selectors (call_info *cinfo,
 	gchar *saved = NULL;
 	int old, null_OK;
 
-	/* sel == refsel means that we're looking at the
+	/* target == 1 means that we're looking at the
 	   selector whose button was clicked to add a
 	   variable: for this selector the newly added
 	   variable should be marked as selected;
@@ -640,6 +640,9 @@ static void launch_matrix_maker (GtkWidget *button, call_info *cinfo)
     gtk_window_present(GTK_WINDOW(cinfo->dlg));
 }
 
+/* callback after invoking "genr" via the "+" button
+   beside a combo argument selector */
+
 void fncall_register_genr (int addv, gpointer p)
 {
     GtkWidget *combo = p;
@@ -658,7 +661,7 @@ static void launch_series_maker (GtkWidget *button, call_info *cinfo)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    edit_dialog(_("gretl: add series"), 
+    edit_dialog(_("add series"), 
 		_("Enter name=formula for new series"),
 		NULL, do_fncall_genr, combo, 
 		GENR, VARCLICK_INSERT_NAME, NULL);  
@@ -668,7 +671,7 @@ static void launch_scalar_maker (GtkWidget *button, call_info *cinfo)
 {
     GtkWidget *combo = g_object_get_data(G_OBJECT(button), "combo");
 
-    edit_dialog(_("gretl: add scalar"), 
+    edit_dialog(_("add scalar"), 
 		_("Enter name=formula for new scalar"),
 		NULL, do_fncall_genr, combo, 
 		GENR, VARCLICK_INSERT_NAME, NULL);  
@@ -723,7 +726,7 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
 
 /* see if the variable named @name of type @ptype
    has already been set as the default argument in
-   a combo argument selector
+   an "upstream" combo argument selector
 */
 
 static int already_set_as_default (call_info *cinfo,
@@ -803,6 +806,11 @@ static void arg_combo_set_default (call_info *cinfo,
  
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);
 }
+
+/* create an argument selector widget in the form of a
+   GtkComboBox, with an entry field plus a drop-down
+   list (which may initally be empty)
+*/
 
 static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 {
@@ -932,7 +940,7 @@ static void function_call_dialog (call_info *cinfo)
     cinfo->top_hbox = hbox = label_hbox(vbox, fnname);
 
     if (cinfo->n_params > 0) {
-	tcols = 3;
+	tcols = 3; /* label, selector, add-button */
 	trows = cinfo->n_params + 1;
 	if (cinfo_has_return(cinfo)) { 
 	    trows += 4;
@@ -989,13 +997,6 @@ static void function_call_dialog (call_info *cinfo)
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_series_maker), 
 			     cinfo);
-	} else if (matrix_arg(ptype)) {
-	    cinfo->msels = g_list_append(cinfo->msels, sel);
-	    button = add_object_button(ptype, sel);
-	    add_table_cell(tbl, button, 2, 3, row);
-	    g_signal_connect(G_OBJECT(button), "clicked", 
-			     G_CALLBACK(launch_matrix_maker), 
-			     cinfo);
 	} else if (scalar_arg(ptype)) {
 	    cinfo->ssels = g_list_append(cinfo->ssels, sel);
 	    widget_set_int(sel, "ptype", GRETL_TYPE_DOUBLE);
@@ -1003,7 +1004,14 @@ static void function_call_dialog (call_info *cinfo)
 	    add_table_cell(tbl, button, 2, 3, row);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_scalar_maker), 
-			     cinfo);	    
+			     cinfo);
+	} else if (matrix_arg(ptype)) {
+	    cinfo->msels = g_list_append(cinfo->msels, sel);
+	    button = add_object_button(ptype, sel);
+	    add_table_cell(tbl, button, 2, 3, row);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(launch_matrix_maker), 
+			     cinfo);
 	} else if (ptype == GRETL_TYPE_LIST) {
 	    GtkWidget *entry = gtk_bin_get_child(GTK_BIN(sel));
 	    
@@ -1145,8 +1153,10 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	return 0;
     }
 
+    /* handle cases where an "indirect return" variable 
+       does not yet exist */
+
     if (t == GRETL_TYPE_MATRIX_REF) {
-	/* handle case where indirect return matrix does not yet exist */
 	if (get_matrix_by_name(s) == NULL) {
 	    gretl_matrix *m = gretl_null_matrix_new();
 
@@ -1159,7 +1169,17 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 		pprintf(prn, "? matrix %s\n", s);
 	    }
 	}
-    } 
+    } else if (t == GRETL_TYPE_SERIES_REF) {
+	if (current_series_index(datainfo, s) < 0) {
+	    char cmd[32];
+
+	    sprintf(cmd, "series %s", s);
+	    err = generate(cmd, &Z, datainfo, OPT_Q, NULL);
+	    if (!err) {
+		pprintf(prn, "? %s\n", cmd);
+	    }
+	}
+    }	
 
     if (!err) {
 	*add = 1;
@@ -1391,7 +1411,6 @@ void call_function_package (const char *fname, GtkWidget *w,
 			    int *loaderr)
 {
     int minver = 0;
-    int printer = 0;
     call_info *cinfo;
     fnpkg *pkg;
     int err = 0;
@@ -1414,10 +1433,9 @@ void call_function_package (const char *fname, GtkWidget *w,
     /* get the interface list and other info for package */
 
     err = function_package_get_properties(pkg,
-					  "publist", &cinfo->publist,
+					  "gui-publist", &cinfo->publist,
 					  "data-requirement", &cinfo->dreq,
 					  "min-version", &minver,
-					  "has-printer", &printer,
 					  NULL);
 
     if (err) {
@@ -1437,7 +1455,7 @@ void call_function_package (const char *fname, GtkWidget *w,
     }
 
     if (!err) {
-	int n = cinfo->publist[0] - printer;
+	int n = cinfo->publist[0];
 
 	if (n > 1) {
 	    select_interface(cinfo, n);
@@ -1487,46 +1505,40 @@ void function_call_cleanup (void)
     }
 }
 
-/* Given a "path" of the form pkgname/function-name,
-   check whether the named function package is
-   already loaded, or can be loaded, and if so
-   return a copy of the function-name part of the
-   path (otherwise return NULL).
+/* See if a bundle has the named of a "creator" function package
+   recorded on it. If so, see whether that package is already loaded,
+   or can be loaded.  And if that works, see if the package has a
+   default bundle-printing function: if so, it will be named
+   BUNDLE_PRINT (a macro defined in gretl_func.h).
 */
 
-static char *find_printer_function (gretl_bundle *b)
+static int bundle_has_print_function (gretl_bundle *b)
 {
-    const char *path = gretl_bundle_get_print_function(b);
-    char *pfunc = NULL;
+    const char *pkgname = gretl_bundle_get_creator(b);
+    int ret = 0;
 
-    if (path != NULL) {
-	const char *p = strchr(path, '/');
-	int ok = 0;
-	
-	if (p != NULL) {
-	    gchar *pkgname = g_strndup(path, p - path);
-	    gchar *fname = NULL;
+    if (pkgname != NULL && *pkgname != '\0') {
+	fnpkg *pkg;
+	gchar *fname;
+	int err = 0;
 
-	    if (pkgname != NULL && *pkgname != '\0') {
-		fname = gretl_function_package_get_path(pkgname);
-		if (fname != NULL) {
-		    if (function_package_is_loaded(fname)) {
-			ok = 1;
-		    } else {
-			ok = load_function_package_by_filename(fname) == 0;
-		    }
-		    g_free(fname);
-		}
-	    }
-	    g_free(pkgname);
+	fname = gretl_function_package_get_path(pkgname);
+	if (fname == NULL) {
+	    err = 1;
+	} else {
+	    pkg = get_function_package_by_filename(fname, &err);
+	    g_free(fname);
 	}
 
-	if (ok) {
-	    pfunc = gretl_strdup(p + 1);
+	if (!err) {
+	    function_package_get_properties(pkg,
+					    "has-printer",
+					    &ret,
+					    NULL);
 	}
     }
 
-    return pfunc;
+    return ret;
 }
 
 /* See if we can find a "native" printing function for a
@@ -1542,17 +1554,15 @@ static char *find_printer_function (gretl_bundle *b)
 int try_exec_bundle_print_function (void *ptr, PRN *prn)
 {
     gretl_bundle *b = ptr;
-    char *pfunc = find_printer_function(b);
     int ret = 0;
 
-    if (pfunc != NULL) {
+    if (bundle_has_print_function(b)) {
 	const char *name = gretl_bundle_get_name(b);
 	char fnline[MAXLINE];
 	ExecState state;
 	int err;
 
-	sprintf(fnline, "%s(&%s)", pfunc, name);
-	free(pfunc);
+	sprintf(fnline, "%s(&%s)", BUNDLE_PRINTER, name);
 	gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
 			      NULL, prn);
 	state.line = fnline;
@@ -1734,6 +1744,7 @@ static void maybe_add_package_to_menu (const char *pkgname,
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
     maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
+    maybe_add_package_to_menu("ivpanel", "/menubar/Model/PanelModels", vwin);
 #if 0
     maybe_add_package_to_menu("olsbundle", "/menubar/Model", vwin);
 #endif

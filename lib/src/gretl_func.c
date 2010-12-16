@@ -86,7 +86,6 @@ struct ufunc_ {
     char name[FN_NAMELEN]; /* identifier */
     fnpkg *pkg;            /* pointer to parent package, or NULL */
     int private;           /* is this function a private one? */
-    int printer;           /* is this function a bundle-printer */
     int plugin;            /* does in live in a C plugin? */
     int n_lines;           /* number of lines of code */
     char **lines;          /* array of lines of code */
@@ -870,7 +869,6 @@ static ufunc *ufunc_new (void)
     fun->name[0] = '\0';
     fun->pkg = NULL;
     fun->private = 0;
-    fun->printer = 0;
     fun->plugin = 0;
 
     fun->n_lines = 0;
@@ -1439,13 +1437,12 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     }
 
     gretl_xml_get_prop_as_int(node, "private", &fun->private);
-    gretl_xml_get_prop_as_int(node, "bundle-printer", &fun->printer);
     gretl_xml_get_prop_as_int(node, "plugin-wrapper", &fun->plugin);
 
 #if PKG_DEBUG
     fprintf(stderr, "read_ufunc_from_xml: name '%s', type %d\n"
-	    " private = %d, printer = %d, plugin = %d\n", fun->name, fun->rettype, 
-	    fun->private, fun->printer, fun->plugin);
+	    " private = %d, plugin = %d\n", fun->name, fun->rettype, 
+	    fun->private, fun->plugin);
 #endif
 
     if (pkg == NULL && (fun->private || fun->plugin)) {
@@ -1595,9 +1592,6 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 
     fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\" private=\"%d\"", 
 	    fun->name, gretl_arg_type_name(rtype), fun->private);
-    if (fun->printer) {
-	fputs(" bundle-printer=\"1\"", fp);
-    }    
     if (fun->plugin) {
 	fputs(" plugin-wrapper=\"1\"", fp);
     }
@@ -2229,9 +2223,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
     } else {
 	char **pubnames = NULL;
 	char **privnames = NULL;
-	char prnname[FN_NAMELEN] = {0};
 	int npub = 0, npriv = 0;
-	int got_printer = 0;
 	ufunc *uf;
 	int i;
 
@@ -2250,9 +2242,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 		if (npub == 0) {
 		    *err = E_DATA;
 		}
-	    } else if (!strncmp(line, "bundle-printer =", 16)) {
-		sscanf(line + 16, "%31s", prnname);
-	    }
+	    } 
 	}
 
 	if (!*err) {
@@ -2264,24 +2254,8 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 		    pputs(prn, ": *** not found");
 		    gretl_errmsg_sprintf("'%s': no such function", pubnames[i]);
 		    *err = E_DATA;
-		} else if (!strcmp(pubnames[i], prnname)) {
-		    got_printer = 1;
-		    uf->printer = 1;
-		    pputs(prn, " (bundle-printer)");
-		}
+		} 
 		pputc(prn, '\n');
-	    }
-	}
-
-	if (!*err && *prnname != '\0' && !got_printer) {
-	    uf = get_user_function_by_name(prnname);
-	    if (uf == NULL) {
-		pprintf(prn, " %s: *** not found\n", prnname);
-		*err = E_DATA;
-	    } else {
-		uf->printer = 1;
-		/* the function marked as printer cannot be private */
-		*err = strings_array_add(&pubnames, &npub, prnname);
 	    }
 	}
 
@@ -2500,6 +2474,12 @@ int function_package_set_properties (fnpkg *pkg, ...)
     return err;
 }
 
+enum {
+    PUBLIST,
+    GUILIST,
+    PRIVLIST
+};
+
 /* From a function package get a list of either its public or its
    private functions, in the form of a simple gretl list.  The
    elements of this list are just the positions of these functions in
@@ -2509,10 +2489,10 @@ int function_package_set_properties (fnpkg *pkg, ...)
    will remain valid indefinitely.
 */
 
-static int *function_package_get_list (fnpkg *pkg, int n, int priv)
+static int *function_package_get_list (fnpkg *pkg, int code, int n)
 {
     int *list = NULL;
-    int ppos = 0; /* print-function position */
+    int subtract = 0;
 
     if (n > 0) {
  	list = gretl_list_new(n);
@@ -2520,33 +2500,41 @@ static int *function_package_get_list (fnpkg *pkg, int n, int priv)
 	    int i, j = 1;
 
 	    for (i=0; i<n_ufuns; i++) {
-		if (ufuns[i]->pkg == pkg && ufuns[i]->private == priv) {
-		    if (!priv && ufuns[i]->printer) {
-			ppos = j;
+		if (ufuns[i]->pkg == pkg) {
+		    if (code == PRIVLIST && ufuns[i]->private) {
+			list[j++] = i;
+		    } else if (code == PUBLIST && !ufuns[i]->private) {
+			list[j++] = i;
+		    } else if (code == GUILIST && !ufuns[i]->private) {
+			if (strcmp(ufuns[i]->name, BUNDLE_PRINTER)) {
+			    list[j++] = i;
+			} else {
+			    subtract = 1;
+			}
 		    }
-		    list[j++] = i;
 		}
 	    }	    
 	} 
     }
 
-    if (ppos > 0 && ppos < n) {
-	/* move bundle-printer function to last place */
-	int tmp = list[n];
-
-	list[n] = list[ppos];
-	list[ppos] = tmp;
+    if (list != NULL && subtract) {
+	list[0] -= 1;
+	if (list[0] == 0) {
+	    free(list);
+	    list = NULL;
+	}
     }
 
     return list;
 }
 
-static int function_package_has_printer (fnpkg *pkg)
+static int package_has_bundle_printer (fnpkg *pkg)
 {
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg && ufuns[i]->printer) {
+	if (ufuns[i]->pkg == pkg && 
+	    !strcmp(ufuns[i]->name, BUNDLE_PRINTER)) {
 	    return 1;
 	}
     }	    
@@ -2624,13 +2612,16 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	    *pi = pkg->minver;
 	} else if (!strcmp(key, "publist")) {
 	    plist = (int **) ptr;
-	    *plist = function_package_get_list(pkg, npub, 0);
+	    *plist = function_package_get_list(pkg, PUBLIST, npub);
+	} else if (!strcmp(key, "gui-publist")) {
+	    plist = (int **) ptr;
+	    *plist = function_package_get_list(pkg, GUILIST, npub);
 	} else if (!strcmp(key, "privlist")) {
 	    plist = (int **) ptr;
-	    *plist = function_package_get_list(pkg, npriv, 1);
+	    *plist = function_package_get_list(pkg, PRIVLIST, npriv);
 	} else if (!strcmp(key, "has-printer")) {
 	    pi = (int *) ptr;
-	    *pi = function_package_has_printer(pkg);
+	    *pi = package_has_bundle_printer(pkg);
 	}
     }
 
@@ -6266,14 +6257,4 @@ int user_function_has_PDF_doc (const char *fnname, char **pdfname)
     return ret;
 }
 
-int function_is_bundle_printer (const char *fnname)
-{
-    ufunc *fun = get_user_function_by_name(fnname);
-    int ret = 0;
 
-    if (fun != NULL) {
-	ret = fun->printer;
-    }
-
-    return ret;
-}

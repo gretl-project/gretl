@@ -57,8 +57,6 @@ const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
 const char *gretl_bundle_get_creator (gretl_bundle *bundle);
 
-const char *gretl_bundle_get_print_function (gretl_bundle *bundle);
-
 void *bundled_item_get_data (bundled_item *item, GretlType *type,
 			     int *size);
 

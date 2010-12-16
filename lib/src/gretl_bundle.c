@@ -604,35 +604,6 @@ const char *gretl_bundle_get_note (gretl_bundle *bundle,
 }
 
 /**
- * gretl_bundle_get_print_function:
- * @bundle: bundle to access.
- *
- * Checks @bundle for the presence of a special key named
- * "print-function" and, if this is found, checks that
- * the associated data item is a string (which should
- * provide the "path" to a bundle-printing function on
- * the pattern pkgname/function-name).
- *
- * Returns: the printer-function path, if it seems OK,
- * otherwise NULL.
- */
-
-const char *gretl_bundle_get_print_function (gretl_bundle *bundle)
-{
-    const char *ret;
-    GretlType type;
-    int err = 0;
-
-    ret = gretl_bundle_get_data(bundle, "print-function",
-				&type, NULL, &err);
-    if (type != GRETL_TYPE_STRING || strchr(ret, '/') == NULL) {
-	ret = NULL;
-    }
-
-    return ret;
-}
-
-/**
  * gretl_bundle_get_creator:
  * @bundle: bundle to access.
  *

@@ -5597,7 +5597,7 @@ void add_model_stat (MODEL *pmod, int which)
 			    "Name (max. 15 characters):",
 			    pmod->ID, descrip, val);
 
-    edit_dialog(_("gretl: add scalar"),
+    edit_dialog(_("add scalar"),
 		blurb, vname, set_scalar_name, vname, 
 		0, VARCLICK_NONE, &cancel);
 
