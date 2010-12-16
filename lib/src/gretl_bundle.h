@@ -55,6 +55,8 @@ double gretl_bundle_get_scalar (gretl_bundle *bundle,
 
 const char *gretl_bundle_get_note (gretl_bundle *bundle, const char *key);
 
+const char *gretl_bundle_get_creator (gretl_bundle *bundle);
+
 const char *gretl_bundle_get_print_function (gretl_bundle *bundle);
 
 void *bundled_item_get_data (bundled_item *item, GretlType *type,
@@ -83,6 +85,8 @@ gretl_bundle *gretl_bundle_copy (gretl_bundle *bundle, int *err);
 int gretl_bundle_delete_by_name (const char *name, PRN *prn);
 
 int gretl_bundle_set_name (gretl_bundle *b, const char *name);
+
+int gretl_bundle_set_creator (gretl_bundle *b, const char *name);
 
 int gretl_bundle_print (gretl_bundle *bundle, PRN *prn);
 

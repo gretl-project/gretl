@@ -633,6 +633,32 @@ const char *gretl_bundle_get_print_function (gretl_bundle *bundle)
 }
 
 /**
+ * gretl_bundle_get_creator:
+ * @bundle: bundle to access.
+ *
+ * Checks @bundle for the presence of a special key named
+ * "creator" and, if this is found, return the string
+ * value associated with that key.
+ *
+ * Returns: the creator name if found, otherwise NULL.
+ */
+
+const char *gretl_bundle_get_creator (gretl_bundle *bundle)
+{
+    const char *ret;
+    GretlType type;
+    int err = 0;
+
+    ret = gretl_bundle_get_data(bundle, "creator",
+				&type, NULL, &err);
+    if (type != GRETL_TYPE_STRING) {
+	ret = NULL;
+    }
+
+    return ret;
+}
+
+/**
  * bundled_item_get_data:
  * @item: bundled item to access.
  * @type: location to receive data type.
@@ -785,6 +811,38 @@ int gretl_bundle_set_note (gretl_bundle *bundle, const char *key,
 
 	    free(item->note);
 	    item->note = gretl_strdup(note);
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_bundle_set_creator:
+ * @bundle: target bundle.
+ * @name: name of function package that built the bundle.
+ * 
+ * Adds an element to @bundle under the key "creator" with
+ * content @name. This is called automatically when a bundle
+ * is returned to top-lavel userspace by a packaged function.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int gretl_bundle_set_creator (gretl_bundle *bundle, const char *name)
+{
+    int err = 0;
+
+    if (bundle == NULL) {
+	err = E_UNKVAR;
+    } else {
+	gpointer p = g_hash_table_lookup(bundle->ht, "creator");
+
+	if (p == NULL) {
+	    err = gretl_bundle_set_data(bundle, "creator", 
+					(void *) name, 
+					GRETL_TYPE_STRING,
+					0);
 	}
     }
 
@@ -1018,6 +1076,7 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
     bundled_item *item = value;
     const gchar *kstr = key;
     gretl_matrix *m;
+    int silent = 0;
     PRN *prn = p;
 
     switch (item->type) {
@@ -1027,6 +1086,13 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 		*(double *) item->data);
 	break;
     case GRETL_TYPE_STRING:
+	if (strcmp(kstr, "creator")) {
+	    pprintf(prn, " %s (%s)", kstr, 
+		    gretl_arg_type_name(item->type));
+	} else {
+	    silent = 1;
+	}
+	break;
     case GRETL_TYPE_BUNDLE:
 	pprintf(prn, " %s (%s)", kstr, 
 		gretl_arg_type_name(item->type));
@@ -1046,10 +1112,12 @@ static void print_bundled_item (gpointer key, gpointer value, gpointer p)
 	break;
     }
 
-    if (item->note != NULL) {
-	pprintf(prn, " %s\n", item->note);
-    } else {
-	pputc(prn, '\n');
+    if (!silent) {
+	if (item->note != NULL) {
+	    pprintf(prn, " %s\n", item->note);
+	} else {
+	    pputc(prn, '\n');
+	}
     }
 }
 
@@ -1075,7 +1143,14 @@ int gretl_bundle_print (gretl_bundle *bundle, PRN *prn)
 	if (n_items == 0) {
 	    pprintf(prn, "bundle %s: empty\n", bundle->name);
 	} else {
-	    pprintf(prn, "bundle %s:\n", bundle->name);
+	    const char *creator = gretl_bundle_get_creator(bundle);
+
+	    if (creator != NULL) {
+		pprintf(prn, "bundle %s, created by %s:\n", 
+			bundle->name, creator);
+	    } else {
+		pprintf(prn, "bundle %s:\n", bundle->name);
+	    }
 	    g_hash_table_foreach(bundle->ht, print_bundled_item, prn);
 	    pputc(prn, '\n');
 	}

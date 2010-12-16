@@ -4812,8 +4812,9 @@ static gretl_matrix *get_matrix_return (const char *name, int copy, int *err)
     return ret;
 }
 
-static gretl_bundle *get_bundle_return (const char *name, int copy, int *err)
+static gretl_bundle *get_bundle_return (fncall *call, int copy, int *err)
 {
+    const char *name = call->retname;
     gretl_bundle *ret = NULL;
 
     if (copy) {
@@ -4824,6 +4825,11 @@ static gretl_bundle *get_bundle_return (const char *name, int copy, int *err)
 	} 
     } else {
 	ret = gretl_bundle_pull_from_stack(name, err);
+    }
+
+    if (ret != NULL && call->fun->pkg != NULL &&
+	gretl_function_depth() == 1) {
+	gretl_bundle_set_creator(ret, call->fun->pkg->name);
     }
 
     return ret;
@@ -5007,7 +5013,8 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 
     if (*perr == 0) {
 	/* first we work on the value directly returned by the
-	   function (but only if there's no error) */
+	   function (but only if there's no error) 
+	*/
 	if (needs_datainfo(rtype) && pdinfo == NULL) {
 	    /* "can't happen" */
 	    err = E_DATA;
@@ -5029,8 +5036,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    err = unlocalize_list(call->retname, LIST_DIRECT_RETURN, Z, pdinfo);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    copy = is_pointer_arg(call, args, rtype);
-	    *(gretl_bundle **) ret = get_bundle_return(call->retname, 
-						       copy, &err);
+	    *(gretl_bundle **) ret = get_bundle_return(call, copy, &err);
 	} else if (rtype == GRETL_TYPE_STRING) {
 	    *(char **) ret = get_string_return(call->retname, Z, pdinfo, &err);
 	} 
