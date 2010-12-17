@@ -4562,10 +4562,15 @@ static void boolify_local_var (const char *vname)
 
 static void maybe_set_arg_const (struct fnarg *arg, fn_param *fp)
 {
-    if ((fp->flags & ARG_CONST) || object_is_const(fp->name)) {
+    if (fp->flags & ARG_CONST) {
+	/* param is marked CONST directly */
 	arg->name = fp->name;
 	arg->flags |= ARG_CONST;
-    }
+    } else if (object_is_const(arg->upname)) {
+	/* param is CONST by inheritance */
+	arg->name = fp->name;
+	arg->flags |= ARG_CONST;
+    }	
 }
 
 static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
@@ -6134,8 +6139,8 @@ char *gretl_func_get_arg_name (const char *argvar, int *err)
  * @name: name of object (e.g. matrix).
  *
  * Checks whether the named object currently has 'const' status,
- * by virtue of it's being made available as a const argument
- * to a user function.
+ * by virtue of its being made available as a const argument
+ * to a user-defined function.
  *
  * Returns: non-zero if the object is const, 0 if it is not.
  */

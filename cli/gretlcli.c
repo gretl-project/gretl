@@ -998,14 +998,14 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	}
-	if (gretl_messages_on()) {
-	    pprintf(prn, " %s\n", runfile);
-	}
 	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_user_XML_file(runfile);
 	    if (err) {
 		pprintf(prn, _("Error reading %s\n"), runfile);
 	    } else {
+		if (gretl_messages_on()) {
+		    pprintf(prn, " %s\n", runfile);
+		}
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    }
 	    break;
@@ -1019,9 +1019,13 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    push_input_file(fb);
 	}
 	if ((fb = fopen(runfile, "r")) == NULL) {
-	    fprintf(stderr, _("Couldn't open script \"%s\"\n"), runfile);
+	    pprintf(prn, _("Error reading %s\n"), runfile);
+	    err = 1;
 	    fb = pop_input_file();
 	} else {
+	    if (gretl_messages_on()) {
+		pprintf(prn, " %s\n", runfile);
+	    }	    
 	    gretl_set_current_dir(runfile);
 	    strcpy(s->runfile, runfile);
 	    if (cmd->ci == INCLUDE) {
