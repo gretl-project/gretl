@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-12-03 09:35-0500\n"
-"PO-Revision-Date: 2010-11-29 17:44+0200\n"
+"PO-Revision-Date: 2010-12-17 08:45+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -142,7 +142,7 @@ msgstr "%s bir sabit"
 
 #: lib/src/adf_kpss.c:1057
 msgid "Choi meta-tests:"
-msgstr "Chow üst-sınamaları:"
+msgstr "Choi üst-sınamaları:"
 
 #: lib/src/adf_kpss.c:1058
 msgid "Inverse chi-square"
@@ -691,7 +691,7 @@ msgstr "ortak çarpan sınırlaması"
 
 #: lib/src/compare.c:3262
 msgid "This test is only relevant for pooled models\n"
-msgstr "Bu sınama yalnızca havuzlu modeller için uygundur\n"
+msgstr "Bu sınama yalnızca havuzlamalı modeller için uygundur\n"
 
 #: lib/src/compare.c:3267
 msgid "This test requires that the model contains a constant\n"
@@ -2358,7 +2358,7 @@ msgstr "Geçersiz bildiri"
 
 #: lib/src/genfuncs.c:4258
 msgid "model-related"
-msgstr ""
+msgstr "model ile ilgili"
 
 #: lib/src/genfuncs.c:4321 lib/src/gretl_scalar.c:601 lib/src/plotspec.c:276
 #: lib/src/plotspec.c:290 gui2/gpt_dialog.c:120 gui2/gui_utils.c:2786
@@ -2366,9 +2366,8 @@ msgid "none"
 msgstr "hiçbiri"
 
 #: lib/src/genfuncs.c:4324
-#, fuzzy
 msgid "other"
-msgstr "Diğer"
+msgstr "diğer"
 
 #: lib/src/genlex.c:646 lib/src/gretl_restrict.c:2444
 #, c-format
@@ -2666,9 +2665,9 @@ msgid "+- sqrt(h(t))"
 msgstr "+- karekök(h(t))"
 
 #: lib/src/graphing.c:4248
-#, fuzzy, c-format
+#, c-format
 msgid "mean %s"
-msgstr "ortalama"
+msgstr "%s ortalaması"
 
 #: lib/src/graphing.c:4414
 msgid "time"
@@ -3313,7 +3312,7 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
-"(Düşük bir p-değeri, havuzlu OLS modelinin yeterliliği sıfır önsavına\n"
+"(Düşük bir p-değeri, havuzlamalı OLS modelinin yeterliliği sıfır önsavına\n"
 "karşı olup, sabit etkiler almaşık önsavını desteklemektedir.)\n"
 "\n"
 
@@ -3369,7 +3368,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Yatay-kesit birimleri için havuzlu SEK kalıntı ortalamaları:\n"
+"Yatay-kesit birimleri için havuzlamalı SEK kalıntı ortalamaları:\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2456
@@ -3394,7 +3393,7 @@ msgid ""
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
-"(Düşük bir p-değeri, havuzlu OLS modelinin yeterliliği sıfır önsavına\n"
+"(Düşük bir p-değeri, havuzlamalı OLS modelinin yeterliliği sıfır önsavına\n"
 "karşı olup, rastsal etkiler almaşık önsavını desteklemektedir.)\n"
 "\n"
 
@@ -3426,9 +3425,8 @@ msgid "iteration"
 msgstr "yineleme"
 
 #: lib/src/gretl_panel.c:3583
-#, fuzzy
 msgid "Pooled error variance"
-msgstr "_Kestirilen hata varyansı"
+msgstr "Havuzlamalı hata varyansı"
 
 #: lib/src/gretl_panel.c:3657
 msgid "groupwise heteroskedasticity"
@@ -4514,7 +4512,7 @@ msgstr "ÖBHO (ARMA)"
 
 #: lib/src/modelprint.c:784
 msgid "Pooled OLS"
-msgstr "havuzlu SEK"
+msgstr "havuzlamalı SEK"
 
 #: lib/src/modelprint.c:787
 msgid "Fixed-effects"
@@ -6644,11 +6642,9 @@ msgid "dummify: no suitable variables were found"
 msgstr "dummify: bulunan uygun değişken yok"
 
 #: lib/src/tsls.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "Number of instruments (%d) exceeds the number of observations (%d)"
-msgstr ""
-"Argüman sayısı (%d), %s işlevi için gerekli değiştirge\n"
-"sayısı (%d) ile uyuşmuyor"
+msgstr "Araç sayısı (%d), gözlem sayısını (%d) aşıyor"
 
 #: lib/src/tsls.c:1584 gui2/selector.c:2720
 msgid "You can't use the dependent variable as an instrument"
@@ -8610,9 +8606,9 @@ msgid "Use L-BFGS-B, memory size:"
 msgstr "L-BFGS-B kullan, bellek boyutu:"
 
 #: gui2/dialogs.c:1687
-#, fuzzy, c-format
+#, c-format
 msgid "groups (N = %d)"
-msgstr "%s (n = %d, %s)"
+msgstr "kümeler (N = %d)"
 
 #: gui2/dialogs.c:1689
 #, c-format
@@ -8650,43 +8646,36 @@ msgid "Set sample range"
 msgstr "Örneklem aralığı"
 
 #: gui2/dialogs.c:2090
-#, fuzzy
 msgid "single graph: group means"
-msgstr "tekli çizim: birimler üst üste"
+msgstr "tekli çizim: küme ortalamaları"
 
 #: gui2/dialogs.c:2091
-#, fuzzy
 msgid "single graph: groups overlaid (N <= 80)"
-msgstr "tekli çizim: birimler üst üste"
+msgstr "tekli çizim: kümeler üst üste (N <=80)"
 
 #: gui2/dialogs.c:2092
-#, fuzzy
 msgid "single graph: groups in sequence (N <= 80)"
-msgstr "tekli çizim: birimler dizili"
+msgstr "tekli çizim: kümeler dizili (N <= 80)"
 
 #: gui2/dialogs.c:2093
-#, fuzzy
 msgid "multiple plots in grid (N <= 9)"
-msgstr "ızgara düzeninde çoklu çizimler"
+msgstr "ızgara düzeninde çoklu çizimler (N <= 9)"
 
 #: gui2/dialogs.c:2094
-#, fuzzy
 msgid "multiple plots arranged vertically (N <= 6)"
-msgstr "çoklu çizimler dikey düzende"
+msgstr "çoklu çizimler dikey düzende (N <= 6)"
 
 #: gui2/dialogs.c:2095
 msgid "boxplots by group (N <= 150)"
-msgstr ""
+msgstr "kümeli kutu çizimleri (N <= 150)"
 
 #: gui2/dialogs.c:2096
-#, fuzzy
 msgid "single boxplot"
-msgstr "gretl: kutu çizimleri"
+msgstr "tekli kutu çizimi"
 
 #: gui2/dialogs.c:2107 gui2/dialogs.c:2119
-#, fuzzy
 msgid "panel plot"
-msgstr "panel"
+msgstr "panel çizimi"
 
 #: gui2/dialogs.c:2222
 msgid "Enter boolean condition for selecting cases:"
@@ -10670,9 +10659,8 @@ msgid "_Time series plot"
 msgstr "_Zaman serisi çizimi"
 
 #: gui2/gretl.c:1533
-#, fuzzy
 msgid "_Panel plot..."
-msgstr "_3B çizimi..."
+msgstr "_Panel çizimi..."
 
 #: gui2/gretl.c:1534
 msgid "_Unit root tests"
@@ -12707,9 +12695,8 @@ msgid "Time series plot"
 msgstr "Zaman serisi çizimi"
 
 #: gui2/menustate.c:344 gui2/menustate.c:434
-#, fuzzy
 msgid "Panel plot..."
-msgstr "_3B çizimi..."
+msgstr "Panel çizimi..."
 
 #: gui2/menustate.c:346 gui2/menustate.c:435
 msgid "Frequency distribution"
@@ -15246,7 +15233,7 @@ msgstr "z-değeri"
 #: plugin/panurc.c:571
 #, c-format
 msgid "Levin-Lin-Chu pooled ADF test for %s\n"
-msgstr "%s için Levin-Lin-Chu havuzlu ADF sınaması\n"
+msgstr "%s için Levin-Lin-Chu havuzlamalı ADF sınaması\n"
 
 #: plugin/panurc.c:575
 #, c-format
