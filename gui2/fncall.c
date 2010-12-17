@@ -959,6 +959,7 @@ static void function_call_dialog (call_info *cinfo)
     for (i=0; i<cinfo->n_params; i++) {
 	const char *desc = fn_param_descrip(cinfo->func, i);
 	int ptype = fn_param_type(cinfo->func, i);
+	gchar *argtxt;
 
 	if (i == 0) {
 	    add_table_header(tbl, _("Select arguments:"), tcols, row, 5);
@@ -966,18 +967,22 @@ static void function_call_dialog (call_info *cinfo)
 
 	row++;
 
+	/* label for name and type of argument, with tooltip
+	   showing its descriptive string, if any */
+
+	argtxt = g_strdup_printf("%s (%s)",
+				 fn_param_name(cinfo->func, i),
+				 gretl_arg_type_name(ptype));
+	label = gtk_label_new(argtxt);
+	g_free(argtxt);
 	if (desc != NULL) {
-	    label = gtk_label_new(desc);
-	} else {
-	    txt = g_strdup_printf("%s (%s)",
-				  fn_param_name(cinfo->func, i), 
-				  gretl_arg_type_name(ptype));
-	    label = gtk_label_new(txt);
-	    g_free(txt);			     
+	    gretl_tooltips_add(label, desc);
 	}
 
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, row);
+
+	/* make the appropriate type of selector widget */
 
 	if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i);
@@ -988,6 +993,11 @@ static void function_call_dialog (call_info *cinfo)
 	}
 
 	add_table_cell(tbl, sel, 1, 2, row);
+
+	/* hook up signals and "+" add buttons for the
+	   selectors for most types of arguments (though
+	   not for bool and spinner-type args)
+	*/
 
 	if (series_arg(ptype)) {
 	    cinfo->vsels = g_list_append(cinfo->vsels, sel);
