@@ -273,6 +273,28 @@ void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
 }
 
 /**
+ * gretl_xml_put_strings_array_quoted:
+ * @tag: name to give array.
+ * @strs: array of strings to put.
+ * @n: number of strings in @strs.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_strings_array_quoted (const char *tag, 
+					 const char **strs, int n,
+					 FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<%s count=\"%d\">\n", tag, n);
+    for (i=0; i<n; i++) {
+	fprintf(fp, "\"%s\" ", strs[i]);
+    }
+    fprintf(fp, "</%s>\n", tag); 
+}
+
+/**
  * gretl_xml_put_tagged_string:
  * @tag: name to give string.
  * @str: string to put.
@@ -823,6 +845,7 @@ int gretl_xml_child_get_string (xmlNodePtr node, xmlDocPtr doc,
     return ret;
 }
 
+
 #define SMALLVAL(x) (x > -1e-40 && x < 1e-40)
 
 static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
@@ -1039,15 +1062,23 @@ static char *chunk_strdup (const char *src, const char **ptr, int *err)
 	const char *p;
 	int len = 0;
 
-	while (*src && isspace(*src)) {
-	    src++;
-	}
-
+	src += strspn(src, " \n");
 	p = src;
 
-	while (*src && !isspace(*src)) {
-	    len++;
-	    src++;
+	if (*src == '"') {
+	    p = ++src;
+	    while (*src && *src != '"') {
+		len++;
+		src++;
+	    }	
+	    if (*src == '"') {
+		src++;
+	    }
+	} else {
+	    while (*src && !isspace(*src)) {
+		len++;
+		src++;
+	    }
 	}
 
 	if (ptr != NULL) {
@@ -1130,6 +1161,39 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
     }
 
     return S;
+}
+
+/**
+ * gretl_xml_child_get_strings_array:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @name: name of child node.
+ * @pstrs: location to receive strings array.
+ * @nelem: location to receive number of strings.
+ * 
+ * Returns: 1 if an array of strings is found and read successfully,
+ * 0 otherwise.
+ */
+
+int gretl_xml_child_get_strings_array (xmlNodePtr node, xmlDocPtr doc, 
+				       const char *name, char ***pstrs,
+				       int *nstrs)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    int ret = 0;
+
+    while (cur != NULL) {
+	if (!xmlStrcmp(cur->name, (XUC) name)) {
+	    int err = 0;
+
+	    *pstrs = gretl_xml_get_strings_array(cur, doc, nstrs, 0, &err);
+	    ret = !err;
+	    break;
+	}
+	cur = cur->next;
+    }
+
+    return ret;
 }
 
 /**

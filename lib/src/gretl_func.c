@@ -50,8 +50,10 @@ typedef struct fncall_ fncall;
 
 struct fn_param_ {
     char *name;     /* the name of the parameter */
-    char *descrip;  /* its description */
     char type;      /* its type */
+    char *descrip;  /* its description */
+    char **labels;  /* value labels, if applicable */
+    int nlabels;    /* number of value labels */
     char flags;     /* additional information (e.g. "const" flag) */
     double deflt;   /* default value */
     double min;     /* minimum value (scalar parameters only) */
@@ -537,6 +539,28 @@ const char *fn_param_descrip (const ufunc *fun, int i)
 }
 
 /**
+ * fn_param_value_labels:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * @n: location to receive number of labels.
+ * 
+ * Returns: the value-labels associated with parameter @i 
+ * of function @fun (if any), otherwise %NULL.
+ */
+
+const char **fn_param_value_labels (const ufunc *fun, int i, 
+				    int *n)
+{
+    if (i >= 0 && i < fun->n_params) {
+	*n = fun->params[i].nlabels;
+	return (const char **) fun->params[i].labels;
+    } else {
+	*n = 0;
+	return NULL;
+    }
+}
+
+/**
  * fn_param_default:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
@@ -847,8 +871,10 @@ static fn_param *allocate_params (int n)
 
     for (i=0; i<n; i++) {
 	params[i].name = NULL;
-	params[i].descrip = NULL;
 	params[i].type = 0;
+	params[i].descrip = NULL;
+	params[i].labels = NULL;
+	params[i].nlabels = 0;
 	params[i].flags = 0;
 	params[i].deflt = NADBL;
 	params[i].min = NADBL;
@@ -893,6 +919,7 @@ static void free_params_array (fn_param *params, int n)
     for (i=0; i<n; i++) {
 	free(params[i].name);
 	free(params[i].descrip);
+	free_strings_array(params[i].labels, params[i].nlabels);
     }
     free(params);
 }
@@ -1121,38 +1148,40 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "param")) {
+	    fn_param *param = &fun->params[n++];
+
 	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
-		fun->params[n].name = field;
+		param->name = field;
 	    } else {
 		err = E_DATA;
 		break;
 	    }
 	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
-		fun->params[n].type = param_field_to_type(field);
+		param->type = param_field_to_type(field);
 		free(field);
-		if (gretl_scalar_type(fun->params[n].type)) {
+		if (gretl_scalar_type(param->type)) {
 		    gretl_xml_get_prop_as_double(cur, "default", 
-						 &fun->params[n].deflt);
-		    if (fun->params[n].type != GRETL_TYPE_BOOL) {
-			gretl_xml_get_prop_as_double(cur, "min", 
-						     &fun->params[n].min);
-			gretl_xml_get_prop_as_double(cur, "max", 
-						     &fun->params[n].max);
+						 &param->deflt);
+		    if (param->type != GRETL_TYPE_BOOL) {
+			gretl_xml_get_prop_as_double(cur, "min", &param->min);
+			gretl_xml_get_prop_as_double(cur, "max", &param->max);
 		    }
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "optional")) {
-		    fun->params[n].flags |= ARG_OPTIONAL;
+		    param->flags |= ARG_OPTIONAL;
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "const")) {
-		    fun->params[n].flags |= ARG_CONST;
+		    param->flags |= ARG_CONST;
 		}
 	    } else {
 		err = E_DATA;
 		break;
 	    }
 	    gretl_xml_child_get_string(cur, doc, "description", 
-				       &fun->params[n].descrip);
-	    n++;
+				       &param->descrip);
+	    gretl_xml_child_get_strings_array(cur, doc, "labels",
+					      &param->labels,
+					      &param->nlabels);
 	}	    
 	cur = cur->next;
     }
@@ -1576,6 +1605,8 @@ static void maybe_correct_line (char *line)
     }
 }
 
+#define parm_has_children(p) (p->descrip != NULL || p->nlabels > 0)
+
 /* write out a single user-defined function as XML, according to
    gretlfunc.dtd */
 
@@ -1603,32 +1634,40 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 
 	fprintf(fp, " <params count=\"%d\">\n", fun->n_params);
 	for (i=0; i<fun->n_params; i++) {
+	    fn_param *param = &fun->params[i];
+
 	    fprintf(fp, "  <param name=\"%s\" type=\"%s\"",
-		    fun->params[i].name, 
-		    arg_type_xml_string(fun->params[i].type));
-	    if (!na(fun->params[i].min)) {
-		fprintf(fp, " min=\"%g\"", fun->params[i].min);
+		    param->name, arg_type_xml_string(param->type));
+	    if (!na(param->min)) {
+		fprintf(fp, " min=\"%g\"", param->min);
 	    }
-	    if (!na(fun->params[i].max)) {
-		fprintf(fp, " max=\"%g\"", fun->params[i].max);
+	    if (!na(param->max)) {
+		fprintf(fp, " max=\"%g\"", param->max);
 	    }
-	    if (!na(fun->params[i].deflt)) {
-		fprintf(fp, " default=\"%g\"", fun->params[i].deflt);
+	    if (!na(param->deflt)) {
+		fprintf(fp, " default=\"%g\"", param->deflt);
 	    }
-	    if (fun->params[i].flags & ARG_OPTIONAL) {
+	    if (param->flags & ARG_OPTIONAL) {
 		fputs(" optional=\"true\"", fp);
 	    }
-	    if (fun->params[i].flags & ARG_CONST) {
+	    if (param->flags & ARG_CONST) {
 		fputs(" const=\"true\"", fp);
 	    }
-	    if (fun->params[i].descrip != NULL) {
-		fputs(">\n", fp);
-		gretl_xml_put_tagged_string("description", 
-					    fun->params[i].descrip,
-					    fp);
+	    if (parm_has_children(param)) {
+		fputs(">\n", fp); /* terminate opening tag */
+		if (param->descrip != NULL) {
+		    gretl_xml_put_tagged_string("description", 
+						param->descrip,
+						fp);
+		} 
+		if (param->nlabels > 0) {
+		    gretl_xml_put_strings_array_quoted("labels", 
+						       (const char **) param->labels, 
+						       param->nlabels, fp);
+		}
 		fputs("  </param>\n", fp);
 	    } else {
-		fputs("/>\n", fp);
+		fputs("/>\n", fp); /* terminate opening tag */
 	    }
 	}
 	fputs(" </params>\n", fp);
@@ -3457,12 +3496,20 @@ static int maybe_delete_function (const char *fname, PRN *prn)
 static int comma_count (const char *s)
 {
     int quoted = 0;
+    int braced = 0;
     int nc = 0;
 
     while (*s) {
+	if (!quoted) {
+	    if (*s == '{') {
+		braced++;
+	    } else if (*s == '}') {
+		braced--;
+	    }
+	}
 	if (*s == '"') {
 	    quoted = !quoted;
-	} else if (!quoted && *s == ',') {
+	} else if (!quoted && !braced && *s == ',') {
 	    nc++;
 	}
 	s++;
@@ -3471,13 +3518,14 @@ static int comma_count (const char *s)
     return nc;
 }
 
-static int check_parm_min_max (fn_param *p, const char *name)
+static int check_parm_min_max (fn_param *p, const char *name, int *nvals)
 {
     if (!na(p->min) && !na(p->max)) {
 	if (p->min > p->max) {
 	    gretl_errmsg_sprintf("%s: min > max", name);
 	    return E_DATA;
 	}
+	*nvals = (int) p->max - (int) p->min + 1;
     }
 
     if (!na(p->deflt)) {
@@ -3494,7 +3542,8 @@ static int check_parm_min_max (fn_param *p, const char *name)
     return 0;
 }
 
-static int read_min_max_deflt (char **ps, fn_param *param, const char *name)
+static int read_min_max_deflt (char **ps, fn_param *param, const char *name,
+			       int *nvals)
 {
     char *p = *ps;
     double x, y, z;
@@ -3529,7 +3578,7 @@ static int read_min_max_deflt (char **ps, fn_param *param, const char *name)
 	}
 
 	if (!err) {
-	    err = check_parm_min_max(param, name);
+	    err = check_parm_min_max(param, name, nvals);
 	}
     }
 
@@ -3564,14 +3613,17 @@ static int read_param_option (char **ps, fn_param *param)
     return err;
 }
 
-static int read_param_comment (char **ps, fn_param *param)
+/* get the descriptive string for a function parameter */
+
+static int read_param_descrip (char **ps, fn_param *param)
 {
-    char *p = *ps + 1;
+    char *p = *ps + 1; /* skip opening quote */
     int len = 0;
     int err = E_PARSE;
 
     while (*p) {
 	if (*p == '"') {
+	    /* OK, found closing quote */
 	    err = 0;
 	    break;
 	}
@@ -3592,11 +3644,67 @@ static int read_param_comment (char **ps, fn_param *param)
     return err;
 }
 
+/* get the value labels for a function parameter */
+
+static int read_param_labels (char **ps, fn_param *param, 
+			      const char *name, int nvals)
+{
+    char *p = *ps + 1; /* skip opening '{' */
+    int len = 0;
+    int err = E_PARSE;
+
+    while (*p) {
+	if (*p == '}') {
+	    /* OK, found closing brace */
+	    err = 0;
+	    break;
+	}
+	len++;
+	p++;
+    }
+
+    if (!err && len > 0) {
+	char *tmp;
+
+	p = *ps + 1;
+	tmp = gretl_strndup(p, len);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    *ps = p + len + 1;
+	    param->labels = gretl_string_split_quoted(tmp, &param->nlabels,
+						      &err);
+	    free(tmp);
+	    if (!err && param->nlabels != nvals) {
+		gretl_errmsg_sprintf("%s: found %d values but %d value-labels",
+				     name, nvals, param->nlabels);
+		err = E_DATA;
+	    }
+	}
+    }
+
+    return err;
+}
+
+static void trash_param_info (char *name, fn_param *param)
+{
+    free(name);
+    free(param->descrip);
+    param->descrip = NULL;
+    if (param->nlabels > 0) {
+	free_strings_array(param->labels, param->nlabels);
+	param->labels = NULL;
+	param->nlabels = 0;
+    }
+}
+
 static int parse_function_param (char *s, fn_param *param, int i)
 {
     char tstr[22] = {0};
     char *name;
     int type, len;
+    int nvals = 0;
     int err = 0;
 
 #if FNPARSE_DEBUG
@@ -3605,13 +3713,15 @@ static int parse_function_param (char *s, fn_param *param, int i)
 
     while (isspace(*s)) s++;
 
+    /* pick up the "const" flag if present */
+
     if (!strncmp(s, "const ", 6)) {
 	param->flags |= ARG_CONST;
 	s += 6;
 	while (isspace(*s)) s++;
     }
 
-    /* get parameter type */
+    /* get parameter type -- required */
 
     len = gretl_namechar_spn(s);
     if (len > 21) {
@@ -3642,6 +3752,8 @@ static int parse_function_param (char *s, fn_param *param, int i)
     if (err) {
 	return err;
     }
+
+    /* now get the parameter name -- required */
     
     while (isspace(*s)) s++;
     len = gretl_namechar_spn(s);
@@ -3668,25 +3780,46 @@ static int parse_function_param (char *s, fn_param *param, int i)
     s += len;
     s += strspn(s, " ");
 
-    if (gretl_scalar_type(type)) {
-	if (*s == '[') { 
-	    err = read_min_max_deflt(&s, param, name);
-	}
-    }
+    /* now scan for various optional extras: first we may have
+       a [min:max:default] specification, or a [null] spec
+       to allow no argument for "pointer"-type arguments
+    */
 
-    if (gretl_ref_type(type) || 
-	type == GRETL_TYPE_LIST ||
-	type == GRETL_TYPE_STRING) {
-	if (*s == '[') { 
+    if (*s == '[') { 
+	if (gretl_scalar_type(type)) {
+	    err = read_min_max_deflt(&s, param, name, &nvals);
+	} else if (gretl_ref_type(type) || 
+		   type == GRETL_TYPE_LIST ||
+		   type == GRETL_TYPE_STRING) {
 	    err = read_param_option(&s, param);
+	} else {
+	    err = E_PARSE;
 	}
+	s += strspn(s, " ");
     } 
 
-    s += strspn(s, " ");
+    /* then we may have a double-quoted descriptive string
+       for the parameter */
 
-    if (*s == '"') {
-	err = read_param_comment(&s, param);
+    if (!err && *s == '"') {
+	err = read_param_descrip(&s, param);
+	s += strspn(s, " ");
     } 
+
+    /* and finally we may have a set of value-labels enclosed
+       in braces, but this is valid only if we have been able
+       to determine a definite number of admissible values
+       for the parameter
+    */
+
+    if (!err && *s == '{') {
+	if (nvals == 0) {
+	    err = E_PARSE;
+	} else {
+	    err = read_param_labels(&s, param, name, nvals);
+	}
+	s += strspn(s, " ");
+    }    
 
     if (!err && *s != '\0') {
 	/* got trailing unparseable stuff */
@@ -3696,9 +3829,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     if (!err) {
 	param->name = name;
     } else {
-	free(name);
-	free(param->descrip);
-	param->descrip = NULL;
+	trash_param_info(name, param);
     }
 
 #if FNPARSE_DEBUG
@@ -3707,7 +3838,12 @@ static int parse_function_param (char *s, fn_param *param, int i)
 		i, name, type);
 	fprintf(stderr, "  min=%g, max=%g, deflt=%g\n", 
 		param->min, param->max, param->deflt);
-	fprintf(stderr, "  comment = '%s'\n", param->descrip); 
+	if (param->descrip != NULL) {
+	    fprintf(stderr, "  comment = '%s'\n", param->descrip);
+	}
+	if (param->nlabels > 0) {
+	    fprintf(stderr, "  value labels: %d\n", param->nlabels);
+	}	
     }
 #endif
 
@@ -3839,17 +3975,28 @@ static int parse_fn_definition (char *fname,
 
     if (!err) {
 	int quoted = 0;
+	int braced = 0;
 
 	p = s;
 	while (*p) {
+	    if (!quoted) {
+		if (*p == '{') {
+		    braced++;
+		} else if (*p == '}') {
+		    braced--;
+		}
+	    }
 	    if (*p == '"') {
 		quoted = !quoted;
-	    } else if (!quoted && *p == ',') {
+	    } else if (!quoted && !braced && *p == ',') {
 		*p = '\0';
 	    }
 	    p++;
 	}
 	p = s;
+	if (braced != 0) {
+	    err = E_PARSE;
+	}
 	for (i=0; i<np && !err; i++) {
 	    err = parse_function_param(p, &params[i], i);
 	    p += strlen(p) + 1;

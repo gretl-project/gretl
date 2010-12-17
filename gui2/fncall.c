@@ -694,23 +694,43 @@ static GtkWidget *bool_arg_selector (call_info *cinfo, int i)
     return button;
 }
 
-static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
+static void update_enum_arg (GtkComboBox *combo, call_info *cinfo)
 {
-    double dminv = fn_param_minval(cinfo->func, i);
-    double dmaxv = fn_param_maxval(cinfo->func, i);
-    double deflt = fn_param_default(cinfo->func, i);
-    int minv, maxv, initv = 0;
+    int val = gtk_combo_box_get_active(combo);
+    int i = widget_get_int(combo, "argnum");
+    
+    val += widget_get_int(combo, "minv");
+    g_free(cinfo->args[i]);
+    cinfo->args[i] = g_strdup_printf("%d", val);
+}
+
+static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
+				     const char **S, int nvals,
+				     int minv, int initv)
+{
+    GtkWidget *combo;
+    int j;
+
+    combo = gtk_combo_box_new_text();
+    widget_set_int(combo, "argnum", i);
+    widget_set_int(combo, "minv", minv);
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(update_enum_arg), cinfo);
+    for (j=0; j<nvals; j++) {
+	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), 
+				  (const char *) S[j]);
+    }
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), initv - minv);    
+
+    return combo;
+}
+
+static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
+				     int minv, int maxv,
+				     int initv)
+{
     GtkObject *adj;
     GtkWidget *spin;
-
-    minv = (na(dminv))? INT_MIN : (int) dminv;
-    maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
-
-    if (!na(deflt)) {
-	initv = (int) deflt;
-    } else if (!na(dminv)) {
-	initv = (int) dminv;
-    } 
 
     adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 0);
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
@@ -722,6 +742,35 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
     cinfo->args[i] = g_strdup_printf("%d", initv);
 
     return spin;
+}
+
+static GtkWidget *int_arg_selector (call_info *cinfo, int i)
+{
+    double dminv = fn_param_minval(cinfo->func, i);
+    double dmaxv = fn_param_maxval(cinfo->func, i);
+    double deflt = fn_param_default(cinfo->func, i);
+    int minv, maxv, initv = 0;
+
+    minv = (na(dminv))? INT_MIN : (int) dminv;
+    maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
+
+    if (!na(deflt)) {
+	initv = (int) deflt;
+    } else if (!na(dminv)) {
+	initv = (int) dminv;
+    } 
+
+    if (!na(dminv) && !na(dmaxv)) {
+	const char **S;
+	int nvals;
+
+	S = fn_param_value_labels(cinfo->func, i, &nvals);
+	if (S != NULL) {
+	    return enum_arg_selector(cinfo, i, S, nvals, minv, initv);
+	}
+    }
+
+    return spin_arg_selector(cinfo, i, minv, maxv, initv);
 }
 
 /* see if the variable named @name of type @ptype
@@ -987,7 +1036,7 @@ static void function_call_dialog (call_info *cinfo)
 	if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i);
 	} else if (ptype == GRETL_TYPE_INT) {
-	    sel = spin_arg_selector(cinfo, i);
+	    sel = int_arg_selector(cinfo, i);
 	} else {
 	    sel = combo_arg_selector(cinfo, ptype, i);
 	}

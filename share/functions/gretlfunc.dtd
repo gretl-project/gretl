@@ -45,7 +45,12 @@
    count CDATA #REQUIRED
 >
 
-<!ELEMENT param (description?)>
+<!ELEMENT labels (#PCDATA)>
+<!ATTLIST labels
+   count CDATA #REQUIRED
+>
+
+<!ELEMENT param (description?, labels?)>
 <!ATTLIST param
    name    CDATA #REQUIRED
    default CDATA #IMPLIED

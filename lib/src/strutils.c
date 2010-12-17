@@ -789,6 +789,74 @@ char **gretl_string_split (const char *s, int *n)
 }
 
 /**
+ * gretl_string_split_quoted:
+ * @s: the source string.
+ * @n: location to receive the number of substrings.
+ * @err: location to receive error code.
+ *
+ * Similar to gretl_string_split(), except that for this
+ * function the sub-strings are assumed to be delimited by
+ * ASCII double-quote characters, and may therefore
+ * contain embedded spaces. The quotes are removed in the
+ * members of the returned array. Note that this function
+ * is not fully general in that it doesn't handle escaped
+ * double-quotes.
+ *
+ * Returns: allocated array of substrings or NULL in case of failure.
+ */
+
+char **gretl_string_split_quoted (const char *s, int *n, int *err)
+{
+    const char *p = s;
+    int i, len, m = 0;
+    char *substr;
+    char **S;
+
+    *n = 0;
+
+    while (*p) {
+	if (*p == '"') m++;
+	p++;
+    }
+
+    if (m % 2 != 0) {
+	/* unbalanced quotes */
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    if (m == 0) {
+	return NULL;
+    }
+
+    m /= 2;
+
+    S = strings_array_new(m);
+    if (S == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<m; i++) {
+	s = strchr(s, '"') + 1;
+	p = strchr(s, '"');
+	len = p - s;
+	substr = gretl_strndup(s, len);
+	if (substr == NULL) {
+	    *err = E_ALLOC;
+	    free_strings_array(S, m);
+	    return NULL;
+	}
+	S[i] = substr;
+	s = p + 1;
+    }
+
+    *n = m;
+
+    return S;
+}
+
+/**
  * gretl_trunc:
  * @str: the string to truncate.
  * @n: the desired length of the truncated string.
