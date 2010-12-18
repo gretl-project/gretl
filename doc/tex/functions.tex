@@ -82,15 +82,42 @@ C programming language.
 \subsection{Function parameters: optional refinements}
 
 Besides the required elements mentioned above, the specification of a
-function parameter may include some additional fields.
+function parameter may include some additional fields, as follows:
+\begin{itemize}
+\item The \texttt{const} modifier.
+\item For \texttt{scalar} or \texttt{int} parameters: minimum, maximum
+  and default values; or for \texttt{bool} parameters, just a default
+  value.
+\item For all parameters, a descriptive string.
+\item For \texttt{int} parameters with minimum and maximum values
+  specified, a set of strings to associate with the allowed numerical
+  values (value labels).
+\end{itemize}
 
-For a parameter of type \texttt{scalar} or \texttt{int}, a
-\textsl{minimum}, \textsl{maximum} and \textsl{default} value may be
-specified.  These values should directly follow the name of the
-parameter, enclosed in square brackets and with the individual
-elements separated by colons.  For example, suppose we have an integer
-parameter \texttt{order} for which we wish to specify a minimum of 1,
-a maximum of 12, and a default of 4.  We can write
+The first two of these options may be useful in many contexts; the
+last two may be helpful if a function is to be packaged for use in
+the \app{gretl} GUI (but probably not otherwise). We now expand on
+each of the options.
+
+\begin{itemize}
+
+\item The \texttt{const} modifier: must be given as a prefix to the
+  basic parameter specification, as in
+%    
+\begin{code}
+const matrix M
+\end{code} 
+%
+This constitutes a promise that the corresponding argument will not be
+modified within the function; \app{gretl} will flag an error if
+the function attempts to modify the argument.
+
+\item Minimum, maximum and default values for \texttt{scalar} or
+  \texttt{int} types: These values should directly follow the name of
+  the parameter, enclosed in square brackets and with the individual
+  elements separated by colons.  For example, suppose we have an
+  integer parameter \texttt{order} for which we wish to specify a
+  minimum of 1, a maximum of 12, and a default of 4.  We can write
 %    
 \begin{code}
 int order[1:12:4]
@@ -101,33 +128,63 @@ corresponding field empty.  For example \texttt{[1::4]} would specify
 a minimum of 1 and a default of 4 while leaving the maximum
 unlimited.  
 
-For a parameter of type \texttt{bool}, you can specify a default of
-1 (true) or 0 (false), as in
+For a parameter of type \texttt{bool} (whose values are just zero or
+non-zero), you can specify a default of 1 (true) or 0 (false), as in
 %    
 \begin{code}
 bool verbose[0]
 \end{code} 
 
-In addition, a parameter may be prefixed by the keyword
-\texttt{const}.  This constitutes a promise that the corresponding
-argument will not be modified within the function.  This qualifier is
-allowed for all parameters, but is in fact only meaningful if the
-argument is such that it \textit{could} be modified in the function.
-See section~\ref{func-details} for details.
-
-Finally, for a parameter of any type you can append a short
-\textsl{descriptive string}.  This will show up as an aid to the user
-if the function is packaged (see section~\ref{sec:func-packages}
-below) and called via \app{gretl}'s graphical interface.  The string
-should be enclosed in double quotes, and inserted before the comma
-that precedes the following parameter (or the closing right
-parenthesis of the function definition, in the case of the last
-parameter), as illustrated in the following example.
-
+\item Descriptive string: This will show up as an aid to the user if
+  the function is packaged (see section~\ref{sec:func-packages} below)
+  and called via \app{gretl}'s graphical interface.  The string should
+  be enclosed in double quotes and separated from the preceding
+  elements of the parameter specification with a space, as in
+%
 \begin{code}
-function scalar myfun (series y "dependent variable", 
-                       series x "independent variable")
+series y "dependent variable"
 \end{code} 
+
+\item Value labels: These may be used only with \texttt{int}
+  parameters for which minimum and maximum values have been specified,
+  so there is a fixed number of admissible values, and the number of
+  labels must match the number of values. They will show up in the
+  graphical interface in the form of a drop-down list, making the
+  function writer's intent clearer when an integer argument represents
+  a categorical selection. A set of value labels must be enclosed in
+  braces, and the individual labels must be enclosed in double quotes
+  and separated by commas or spaces.  For example:
+%
+\begin{code}
+int case[1:3:1] {"Fixed effects", "Between model", "Random effects"}
+\end{code} 
+
+\end{itemize}
+
+If two or more of the trailing optional fields are given in a
+parameter specification, they must be given in the order shown above:
+min--max--default, description, value labels. Note that there is no
+facility for ``escaping'' characters within descriptive strings or
+value labels; these may contain spaces but they cannot contain the
+double-quote character.  
+
+Here is an example of a well-formed function specification using all
+the elements mentioned above:
+%
+\begin{code}
+function matrix myfunc (series y "dependent variable",
+                        list X "regressors",
+                        int p[0::1] "lag order",
+                        int c[1:2:1] "criterion" {"AIC", "BIC"},
+                        bool quiet[0])
+\end{code} 
+
+One advantage of specifying default values for parameters, where
+applicable, is that in script or command-line mode users may omit
+trailing arguments that have defaults. For example, \texttt{myfunc}
+above could be invoked with just two arguments, corresponding to
+\texttt{y} and \texttt{X}; implicitly \texttt{p} = 1, \texttt{c} = 1
+and \texttt{quiet} is false.
 
 \subsection{Functions taking no parameters}
 
