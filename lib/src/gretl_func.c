@@ -3881,6 +3881,17 @@ static int parse_fn_definition (char *fname,
     int i, len, np = 0;
     int err = 0;
 
+#if FNPARSE_DEBUG > 1
+    fprintf(stderr, "parse_fn_definition:\n '%s'\n", str);
+#endif
+
+    len = strlen(str);
+    if (str[len-1] != ')') {
+	/* somehow we didn't get a properly terminated 
+	   param list */
+	return E_PARSE;
+    }
+
     /* skip to next word */
     while (isspace(*str)) str++;
 
@@ -3967,6 +3978,11 @@ static int parse_fn_definition (char *fname,
 	free(s);
 	return 0;
     }
+
+#if FNPARSE_DEBUG
+    fprintf(stderr, "function %s: looking for %d parameters\n",
+	    fname, np);
+#endif
 
     params = allocate_params(np);
     if (params == NULL) {
@@ -4055,6 +4071,9 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     *fname = '\0';
     err = parse_fn_definition(fname, &params, &n_params, &rettype,
 			      line + 8, &fun, prn);
+    if (err) {
+	pprintf(prn, "> %s\n", line);
+    }
 
     if (!err && fun == NULL) {
 	fun = add_ufunc(fname);
