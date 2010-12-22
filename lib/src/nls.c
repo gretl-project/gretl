@@ -551,17 +551,20 @@ static int nlspec_push_param (nlspec *s, const char *name, char *deriv)
 
 static int check_param_name (const char *name)
 {
+    int err = 0;
+
     if (gretl_is_scalar(name)) {
-	return 0;
+	; /* OK */
     } else {
 	gretl_matrix *m = get_matrix_by_name(name);
 
-	if (gretl_vector_get_length(m) == 0) {
-	    return E_DATATYPE;
-	} else {
-	    return 0;
-	}
+	if (m == NULL || gretl_vector_get_length(m) == 0) {
+	    gretl_errmsg_sprintf(_("'%s': expected a scalar or vector"), name);
+	    err = E_DATATYPE;
+	} 
     }
+
+    return err;
 }
 
 /* For case where analytical derivatives are not given, the user
