@@ -532,8 +532,7 @@ static void maybe_set_catch_flag (char *s, CMD *cmd)
 
 /* grab a filename, possibly prepending userdir */
 
-static int filename_to_param (CMD *cmd, char *s, int *len,
-			      int *quoted, int *nsp)
+static int filename_to_param (CMD *cmd, char *s, int *len, int *quoted)
 {
     char *fname;
 
@@ -562,16 +561,6 @@ static int filename_to_param (CMD *cmd, char *s, int *len,
 	return E_ALLOC;
     }
 
-    if (nsp != NULL) {
-	/* count spaces in supplied filename */
-	int i;
-
-	*nsp = 0;
-	for (i=0; i<*len; i++) {
-	    if (fname[i] == ' ') *nsp += 1;
-	}
-    }
-
     if (libset_get_bool(USE_CWD) || fname_has_path(fname)) {
 	cmd->param = fname;
     } else if (cmd->ci == OUTFILE && !strcmp(fname, "null")) {
@@ -592,15 +581,10 @@ get_maybe_quoted_filename (CMD *cmd, char *s, int *nf)
 {
     int err, len = 0;
     int quoted = 0;
-    int nsp = 0;
 
-    err = filename_to_param(cmd, s, &len, &quoted, &nsp);
+    err = filename_to_param(cmd, s, &len, &quoted);
     if (err) {
 	return err;
-    }
-
-    if (nsp) {
-	*nf -= nsp;
     }
 
     shift_string_left(s, len + 2 * quoted);
@@ -1565,7 +1549,7 @@ static void parse_outfile_cmd (char *s, CMD *cmd)
     }
 
     if (*s) {
-	cmd->err = filename_to_param(cmd, s, &len, &quoted, NULL);
+	cmd->err = filename_to_param(cmd, s, &len, &quoted);
     }
 }
 
@@ -2012,6 +1996,7 @@ static int resize_command_list (CMD *cmd, int nf)
 
 int count_free_fields (const char *s)
 {
+    const char *p = s;
     int inparen = 0;
     int nf = 0;
 
@@ -2019,30 +2004,16 @@ int count_free_fields (const char *s)
     fprintf(stderr, "count_free_fields: looking at '%s'\n", s);
 #endif
 
-    if (s != NULL && *s != '\0') {
-	/* step past any leading spaces */
-	while (*s == ' ') {
-	    s++;
-	}
-
-	if (*s) {
-	    s++;
-	    nf++;
-	}
-
+    if (s != NULL) {
 	while (*s) {
+	    if (!inparen && *s != ' ' && (s == p || *(s-1) == ' ')) {
+		/* non-space preceded by space, or at start */
+		nf++;
+	    }
 	    if (*s == '(') {
 		inparen++;
 	    } else if (*s == ')') {
 		inparen--;
-	    } 
-	    if (!inparen && *s == ' ') {
-		while (*s == ' ') s++;
-		if (*s) {
-		    nf++;
-		} else {
-		    break;
-		}
 	    }
 	    s++;
 	}
@@ -2367,7 +2338,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	catch_system_alias(line, cmd);
     }
 
-    /* list <listname> delete */
+    /* special: list <listname> delete */
     if (cmd->ci == DELEET && *cmd->extra != '\0') {
 	cmd_set_nolist(cmd);
 	return cmd->err;
@@ -2386,7 +2357,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == 0) {
 	if (cnext != '(') {
-	    /* must be function call, not regular command */
+	    /* regular command, not a function call */
 	    cmd->ci = gretl_command_number(cmd->word);
 	}
 	if (cmd->ci == 0) {
@@ -2516,7 +2487,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } else if (cmd->ci == ARMA || cmd->ci == DPANEL) {
 	/* allow for specific "gappy" lags */
 	maybe_rewrite_lags(line, cmd);
-    }
+    } 
 
     /* fix lines that contain a semicolon stuck to another element */
     linelen = fix_semicolon_separation(line, cmd);
@@ -2532,7 +2503,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->err) {
 	    return cmd->err;
 	}
-    }
+    } 
 
     /* find the number of space-separated fields remaining in
        line, record our reading position, and make a copy of the
@@ -2583,11 +2554,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
+	    strcpy(line, rem);
+	    nf = count_free_fields(line);
 	    pos = 0;
-	    if (--nf > 0) {
-		strcpy(line, rem);	
-		linelen = strlen(line);
-	    } 
 	}
     }
 
