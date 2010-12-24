@@ -1016,6 +1016,16 @@ static void function_call_dialog (call_info *cinfo)
 
 	row++;
 
+#if 1
+	/* label for name and type of argument, using
+	   descriptive string if available */
+	argtxt = g_strdup_printf("%s (%s)",
+				 (desc != NULL)? desc :
+				 fn_param_name(cinfo->func, i),
+				 gretl_arg_type_name(ptype));
+	label = gtk_label_new(argtxt);
+	g_free(argtxt);
+#else
 	/* label for name and type of argument, with tooltip
 	   showing its descriptive string, if any */
 
@@ -1027,6 +1037,7 @@ static void function_call_dialog (call_info *cinfo)
 	if (desc != NULL) {
 	    gretl_tooltips_add(label, desc);
 	}
+#endif
 
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, row);
