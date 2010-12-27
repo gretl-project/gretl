@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2010-12-23 23:36+0800\n"
+"PO-Revision-Date: 2010-12-27 22:56+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -210,7 +210,7 @@ msgstr "H0: 所有的變數皆有單根 (all groups have unit root)"
 #: lib/src/genfuncs.c:1711
 #: lib/src/gretl_func.c:5542
 msgid "Couldn't load plugin function\n"
-msgstr ""
+msgstr "無法載入 plugin 函數\n"
 
 #: lib/src/adf_kpss.c:1513
 msgid "Robust estimate of variance"
@@ -707,7 +707,7 @@ msgstr "殘差"
 
 #: lib/src/compare.c:1934
 msgid "lagging uhat failed"
-msgstr ""
+msgstr "uhat 取落後期失敗"
 
 #: lib/src/compare.c:1980
 #: lib/src/compare.c:2166
@@ -728,7 +728,7 @@ msgstr "這個 model 已經包含 %s"
 
 #: lib/src/compare.c:2250
 msgid "dummy variable for Chow test"
-msgstr ""
+msgstr "虛擬變數 for Chow 檢定"
 
 #: lib/src/compare.c:2328
 #, fuzzy
@@ -15080,7 +15080,7 @@ msgstr "輸入特定落後期"
 
 #: gui2/selector.c:6872
 msgid "Lags of dependent variable"
-msgstr "自變數取落後期"
+msgstr "應變數取落後期"
 
 #: gui2/selector.c:6883
 msgid "default"
