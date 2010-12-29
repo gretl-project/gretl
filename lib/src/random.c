@@ -17,18 +17,17 @@
  * 
  */
 
-/* random.c for gretl: RNGs based on GLib */
+/* random.c for gretl: RNGs */
 
 #include "libgretl.h"
 #include <time.h>
 #include <glib.h>
 
-#undef NEW_MT
+#define USE_SFMT
 
-#ifdef NEW_MT
-# define MEXP 19937
-# define HAVE_SSE2
-# include "SFMT.c"
+#ifdef USE_SFMT
+/* # define HAVE_SSE2 */
+# include "../../rng/SFMT.c"
 #endif
 
 /**
@@ -50,7 +49,7 @@
  * global libgretl function libgretl_cleanup().
  */
 
-#ifndef NEW_MT
+#ifndef USE_SFMT
 static GRand *gretl_rand;
 #endif
 static unsigned int useed;
@@ -66,7 +65,7 @@ static guint32 gretl_rand_octet (guint32 *sign);
 void gretl_rand_init (void)
 {
     useed = time(NULL);
-#ifdef NEW_MT
+#ifdef USE_SFMT
     init_gen_rand(useed);
 #else
     if (gretl_rand == NULL) {
@@ -84,7 +83,7 @@ void gretl_rand_init (void)
 
 void gretl_rand_free (void)
 {
-#ifndef NEW_MT
+#ifndef USE_SFMT
     g_rand_free(gretl_rand);
     gretl_rand = NULL;
 #endif
@@ -114,7 +113,7 @@ unsigned int gretl_rand_get_seed (void)
 void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
-#ifdef NEW_MT
+#ifdef USE_SFMT
     init_gen_rand(useed); 
 #else
     g_rand_set_seed(gretl_rand, useed);
@@ -122,9 +121,13 @@ void gretl_rand_set_seed (unsigned int seed)
     gretl_rand_octet(NULL);
 }
 
+/* Returns the next random double, equally distributed over 
+   the range [0..1)
+*/
+
 static double gretl_rand_01 (void)
 {
-#ifdef NEW_MT
+#ifdef USE_SFMT
     return genrand_real2();
 #else
     return g_rand_double(gretl_rand);
@@ -138,12 +141,12 @@ static double gretl_rand_01 (void)
    The code is based on Jochen Voss's gauss.c, written for use with
    the Gnu Scientific Library -- see http://seehuhn.de/pages/ziggurat.
    It was modified for gretl in two main ways: (a) we use the Mersenne
-   Twister uniform RNG from GLib, and (b) we use a 30-bit unsigned
-   random integer for conversion via the Ziggurat where Voss uses
-   a 24-bit value.  This sacrifices a little speed in exchange for
-   better coverage of the real line: we get over 10^9 distinct 
-   normal values as opposed to around 30 million values from the
-   24-bit input.
+   Twister uniform RNG, and (b) we use a 30-bit unsigned random integer 
+   for conversion via the Ziggurat where Voss uses a 24-bit value.  
+
+   This sacrifices a little speed in exchange for better coverage of the 
+   real line: we get over 10^9 distinct normal values as opposed to around 
+   30 million values from the 24-bit input.
 
    See also Jurgen Doornik's discussion of Ziggurat:
    http://www.doornik.com/research/ziggurat.pdf
@@ -273,7 +276,7 @@ union wraprand {
     gchar c[4];
 };
 
-/* Split a 32-bit random value from GLib into 4 octets: each octet
+/* Split a 32-bit random value into 4 octets: each octet
    provides a 7-bit value for indexing into the Ziggurat plus a
    sign bit.  Load a new guint32 when the material is exhausted.
 
@@ -294,7 +297,7 @@ static guint32 gretl_rand_octet (guint32 *sign)
     }
 
     if (i == 0) {
-#ifdef NEW_MT
+#ifdef USE_SFMT
 	wr.u = gen_rand32();
 #else
 	wr.u = g_rand_int(gretl_rand);
@@ -313,7 +316,7 @@ static double ran_normal_ziggurat (void)
     double x, y;
 
     while (1) {
-#ifdef NEW_MT
+#ifdef USE_SFMT
 	j = gen_rand32();
 #else
 	j = g_rand_int(gretl_rand);
@@ -516,7 +519,7 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
     return 0;
 }
 
-#ifdef NEW_MT
+#ifdef USE_SFMT
 
 static guint32 gretl_int_range (guint32 begin, guint32 end)
 {
@@ -578,7 +581,7 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
-#ifdef NEW_MT
+#ifdef USE_SFMT
 	/* FIXME use native array functionality */
 	a[t] = genrand_real2() * (max - min) + min;
 #else
@@ -616,7 +619,7 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
     /* note: in g_rand_int_range the upper bound is open */
 
     for (i=0; i<n; i++) {
-#ifdef NEW_MT
+#ifdef USE_SFMT
 	a[i] = gretl_int_range(min, max + 1);
 #else
 	a[i] = g_rand_int_range(gretl_rand, min, max + 1);
@@ -1051,7 +1054,7 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
-#ifdef NEW_MT
+#ifdef USE_SFMT
     return gretl_int_range(0, max);
 #else
     return g_rand_int_range(gretl_rand, 0, max);
@@ -1067,7 +1070,7 @@ unsigned int gretl_rand_int_max (unsigned int max)
 
 unsigned int gretl_rand_int (void)
 {
-#ifdef NEW_MT
+#ifdef USE_SFMT
     return gen_rand32();
 #else
     return g_rand_int(gretl_rand);
