@@ -6930,6 +6930,8 @@ double dvar_get_scalar (int i, const DATAINFO *pdinfo,
 	return get_version_as_scalar();
     case R_ERRNO:
 	return get_gretl_errno();
+    case R_SEED:
+	return gretl_rand_get_seed();
     default:
 	return NADBL;
     }

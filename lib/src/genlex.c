@@ -87,6 +87,7 @@ struct str_table dvars[] = {
     { R_WINDOWS,   "$windows" },
     { R_VERSION,   "$version" },
     { R_ERRNO,     "$error" },
+    { R_SEED,      "$seed" },
     { 0,           NULL },
 };
 

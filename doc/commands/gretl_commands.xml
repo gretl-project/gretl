@@ -3215,16 +3215,17 @@
       </para>
 
       <para context="cli">
-	The <opt>--plot</opt> option calls for a plot file to be produced,
-	containing a graphical representation of the forecast.  When no
-	<repl>filename</repl> parameter is given, gretl writes a gnuplot
-	command file with a name on the pattern <lit>gpttmp01.plt</lit> to the
-	user's gretl working directory (with the number incremented for
-	successive plots).  If a <repl>filename</repl> is appended, its
-	extension is used to determine the type of file to be written
-	(<lit>.eps</lit> for EPS, <lit>.pdf</lit> for PDF, or <lit>.png</lit>
-	for PNG; any other extension gives a gnuplot command file).  
-	For example,
+	The <opt>--plot</opt> option (available only in the case of
+	single-equation estimation) calls for a plot file to be
+	produced, containing a graphical representation of the
+	forecast.  When no <repl>filename</repl> parameter is given,
+	gretl writes a gnuplot command file with a name on the pattern
+	<lit>gpttmp01.plt</lit> to the user's gretl working directory
+	(with the number incremented for successive plots).  If a
+	<repl>filename</repl> is appended, its extension is used to
+	determine the type of file to be written (<lit>.eps</lit> for
+	EPS, <lit>.pdf</lit> for PDF, or <lit>.png</lit> for PNG; any
+	other extension gives a gnuplot command file).  For example,
       </para>
       <code>
 	fcast --plot=fc.pdf

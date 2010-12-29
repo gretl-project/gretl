@@ -3137,9 +3137,9 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 	return E_BADSTAT;
     }
 
-    if ((opt & (OPT_R | OPT_I)) && type != GRETL_OBJ_EQN) {
-	/* "rolling" or "integrate": single equations only */
-	err = E_NOTIMP;
+    if ((opt & (OPT_R | OPT_I | OPT_U)) && type != GRETL_OBJ_EQN) {
+	/* "rolling", "integrate", plot option: single equations only */
+	err = E_BADOPT;
     } else if (type == GRETL_OBJ_EQN) {
 	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
     } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {

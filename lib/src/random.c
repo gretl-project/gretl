@@ -23,6 +23,14 @@
 #include <time.h>
 #include <glib.h>
 
+#undef NEW_MT
+
+#ifdef NEW_MT
+# define MEXP 19937
+# define HAVE_SSE2
+# include "SFMT.c"
+#endif
+
 /**
  * SECTION:random
  * @short_description: generate pseudo-random values
@@ -42,7 +50,9 @@
  * global libgretl function libgretl_cleanup().
  */
 
+#ifndef NEW_MT
 static GRand *gretl_rand;
+#endif
 static unsigned int useed;
 
 static guint32 gretl_rand_octet (guint32 *sign);
@@ -56,10 +66,14 @@ static guint32 gretl_rand_octet (guint32 *sign);
 void gretl_rand_init (void)
 {
     useed = time(NULL);
+#ifdef NEW_MT
+    init_gen_rand(useed);
+#else
     if (gretl_rand == NULL) {
 	gretl_rand = g_rand_new();
     }
     gretl_rand_set_seed((guint32) useed);
+#endif
 }
 
 /**
@@ -70,8 +84,10 @@ void gretl_rand_init (void)
 
 void gretl_rand_free (void)
 {
+#ifndef NEW_MT
     g_rand_free(gretl_rand);
     gretl_rand = NULL;
+#endif
 }
 
 /**
@@ -98,13 +114,21 @@ unsigned int gretl_rand_get_seed (void)
 void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
+#ifdef NEW_MT
+    init_gen_rand(useed); 
+#else
     g_rand_set_seed(gretl_rand, useed);
+#endif
     gretl_rand_octet(NULL);
 }
 
 static double gretl_rand_01 (void)
 {
+#ifdef NEW_MT
+    return genrand_real2();
+#else
     return g_rand_double(gretl_rand);
+#endif
 }
 
 /* Below: an implementation of the Marsaglia/Tsang Ziggurat method for
@@ -270,7 +294,11 @@ static guint32 gretl_rand_octet (guint32 *sign)
     }
 
     if (i == 0) {
+#ifdef NEW_MT
+	wr.u = gen_rand32();
+#else
 	wr.u = g_rand_int(gretl_rand);
+#endif
 	i = 4;
     }
 
@@ -285,7 +313,11 @@ static double ran_normal_ziggurat (void)
     double x, y;
 
     while (1) {
+#ifdef NEW_MT
+	j = gen_rand32();
+#else
 	j = g_rand_int(gretl_rand);
+#endif
 	i = gretl_rand_octet(&sign);
 	j = j >> 2;
 
@@ -484,6 +516,40 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
     return 0;
 }
 
+#ifdef NEW_MT
+
+static guint32 gretl_int_range (guint32 begin, guint32 end)
+{
+    guint32 dist = end - begin;
+    guint32 rval = 0;
+
+    if (dist > 0) {
+	/* maxval is set to the predecessor of the greatest
+	 * multiple of dist less or equal 2^32. */
+	guint32 maxval;
+
+	if (dist <= 0x80000000u) { /* 2^31 */
+	    /* maxval = 2^32 - 1 - (2^32 % dist) */
+	    guint32 rem = (0x80000000u % dist) * 2;
+
+	    if (rem >= dist) rem -= dist;
+	    maxval = 0xffffffffu - rem;
+	} else {
+	    maxval = dist - 1;
+	}
+	  
+	do {
+	    rval = gen_rand32();
+	} while (rval > maxval);
+	  
+	rval %= dist;
+    }
+ 
+    return begin + rval;
+}
+
+#endif
+
 /**
  * gretl_rand_uniform_minmax:
  * @a: target array.
@@ -512,11 +578,18 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
+#ifdef NEW_MT
+	/* FIXME use native array functionality */
+	a[t] = genrand_real2() * (max - min) + min;
+#else
 	a[t] = g_rand_double_range(gretl_rand, min, max);
+#endif
     }
 
     return 0;
 }
+
+
 
 /**
  * gretl_rand_int_minmax:
@@ -543,7 +616,11 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
     /* note: in g_rand_int_range the upper bound is open */
 
     for (i=0; i<n; i++) {
+#ifdef NEW_MT
+	a[i] = gretl_int_range(min, max + 1);
+#else
 	a[i] = g_rand_int_range(gretl_rand, min, max + 1);
+#endif
     }
 
     return 0;
@@ -974,7 +1051,11 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
+#ifdef NEW_MT
+    return gretl_int_range(0, max);
+#else
     return g_rand_int_range(gretl_rand, 0, max);
+#endif
 }
 
 /**
@@ -986,7 +1067,10 @@ unsigned int gretl_rand_int_max (unsigned int max)
 
 unsigned int gretl_rand_int (void)
 {
+#ifdef NEW_MT
+    return gen_rand32();
+#else
     return g_rand_int(gretl_rand);
+#endif
 }
-
 
