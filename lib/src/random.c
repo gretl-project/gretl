@@ -26,7 +26,9 @@
 #define USE_SFMT
 
 #ifdef USE_SFMT
-/* # define HAVE_SSE2 */
+# ifdef USE_SSE2
+#  define HAVE_SSE2
+# endif
 # include "../../rng/SFMT.c"
 #endif
 
@@ -117,6 +119,31 @@ void gretl_rand_set_seed (unsigned int seed)
     init_gen_rand(useed); 
 #else
     g_rand_set_seed(gretl_rand, useed);
+#endif
+    gretl_rand_octet(NULL);
+}
+
+/**
+ * gretl_rand_set_multi_seed:
+ * @seed: the chosen seed values.
+ *
+ * Set a specific (and hence reproducible) set of seed values for gretl's 
+ * PRNG, in the form of a matrix containing an array of 4 32-bit values.
+ */
+
+void gretl_rand_set_multi_seed (const gretl_matrix *seed)
+{
+    guint32 useeds[4];
+    int i;
+
+    for (i=0; i<4; i++) {
+	useeds[i] = seed->val[i];
+    }
+
+#ifdef USE_SFMT
+    init_by_array(useeds, 4);
+#else
+    g_rand_set_seed_array(gretl_rand, useeds, 4);
 #endif
     gretl_rand_octet(NULL);
 }

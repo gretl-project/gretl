@@ -106,6 +106,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Define if you have the <string.h> header file.  */
 #undef HAVE_STRING_H
 
+/* Define to use SSE2 instrinsics. */
+#undef USE_SSE2
+
 /* Enable audio graphs */
 #undef HAVE_AUDIO
 

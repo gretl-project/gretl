@@ -604,6 +604,7 @@ ac_includes_default="\
 gt_needs=
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+USE_SSE2
 RLIB
 quiet_build
 build_docs
@@ -15525,6 +15526,56 @@ if test "$darwin_build" = "yes" ; then
 
 fi
 
+if test "x$SSE2_CFLAGS" = "x" ; then
+   if test "x$SUNCC" = "xyes"; then
+      # SSE2 is enabled by default in the Sun Studio 64-bit environment
+      if test "$AMD64_ABI" = "no" ; then
+         SSE2_CFLAGS="-xarch=sse2"
+      fi
+   else
+      SSE2_CFLAGS="-msse2"
+   fi
+fi
+
+have_sse2_intrinsics=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSE2 intrinsics" >&5
+$as_echo_n "checking for SSE2 intrinsics... " >&6; }
+save_CFLAGS=$CFLAGS
+CFLAGS="$SSE2_CFLAGS $CFLAGS"
+
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+#   if !defined(__amd64__) && !defined(__x86_64__)
+#      error "Need GCC >= 4.2 for SSE2 intrinsics on x86"
+#   endif
+#endif
+#include <mmintrin.h>
+#include <xmmintrin.h>
+#include <emmintrin.h>
+int main () {
+    __m128i a = _mm_set1_epi32 (0), b = _mm_set1_epi32 (0), c;
+	c = _mm_xor_si128 (a, b);
+    return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  have_sse2_intrinsics=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+if test "$have_sse2_intrinsics" = "yes" ; then
+   $as_echo "#define USE_SSE2 1" >>confdefs.h
+
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+   CFLAGS="$save_CFLAGS"
+fi
+
 if test "$have_audio" = "yes" ; then
 
 # Check whether --with-flite-prefix was given.
@@ -17131,6 +17182,7 @@ if test "${build_docs}" = "yes" ; then
       echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
    fi
 fi
+
 
 
 
