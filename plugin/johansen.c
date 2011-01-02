@@ -511,6 +511,7 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
     if (estimate_alpha(flags)) {
 	xc += jrank(v);
     } else if (xc == 0) {
+	/* nothing to be done */
 	return 0;
     }
 
@@ -754,6 +755,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     gretl_matrix **G = NULL;
     int order = v->order;
     int xc, n = v->neqns;
+    int use_XTX = 0;
     int i, err;
 
 #if JDEBUG
@@ -805,6 +807,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 		    gretl_matrix_replace(&v->XTX, NULL);
 		}
 		err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &v->XTX);
+		use_XTX = 1; /* is this right? */
 	    }
 	} else {
 	    /* nothing to estimate, with alpha already in hand */
@@ -863,7 +866,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     if (!err && !bootstrap(flags)) {
 	const gretl_matrix *XTX = NULL;
 
-	if (estimate_alpha(flags)) {
+	if (use_XTX || estimate_alpha(flags)) {
 	    XTX = v->XTX;
 	}
 	transcribe_VAR_models(v, Z, pdinfo, XTX);
@@ -1672,7 +1675,6 @@ static int j_general_restrict (GRETL_VAR *jvar,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       PRN *prn)
 {
-    const gretl_matrix *R, *q;
     int acols = rset_VECM_acols(rset);
     int bcols = rset_VECM_bcols(rset);
     int err;
@@ -1700,11 +1702,18 @@ static int j_general_restrict (GRETL_VAR *jvar,
     }
 
     if (!err && bcols > 0) {
-	R = rset_get_R_matrix(rset);
-	q = rset_get_q_matrix(rset);
+	const gretl_matrix *R = rset_get_R_matrix(rset);
+	const gretl_matrix *q = rset_get_q_matrix(rset);
 
-	gretl_matrix_replace(&jvar->jinfo->R, gretl_matrix_copy(R));
-	gretl_matrix_replace(&jvar->jinfo->q, gretl_matrix_copy(q));
+	gretl_matrix_free(jvar->jinfo->R);
+	jvar->jinfo->R = gretl_matrix_copy(R);
+
+	gretl_matrix_free(jvar->jinfo->q);
+	if (q != NULL) {
+	    jvar->jinfo->q = gretl_matrix_copy(q);
+	} else {
+	    jvar->jinfo->q = NULL;
+	}
 
 	if (jvar->jinfo->R == NULL || 
 	    (q != NULL && jvar->jinfo->q == NULL)) {
@@ -1713,14 +1722,22 @@ static int j_general_restrict (GRETL_VAR *jvar,
     }
 
     if (!err && acols > 0) {
-	R = rset_get_Ra_matrix(rset);
-        q = rset_get_qa_matrix(rset);
+	const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
+        const gretl_matrix *qa = rset_get_qa_matrix(rset);
 
-	gretl_matrix_replace(&jvar->jinfo->Ra, gretl_matrix_copy(R));
-	gretl_matrix_replace(&jvar->jinfo->qa, gretl_matrix_copy(q));
+	gretl_matrix_free(jvar->jinfo->Ra);
+	jvar->jinfo->Ra = gretl_matrix_copy(Ra);
+
+	gretl_matrix_free(jvar->jinfo->qa);
+	jvar->jinfo->qa = NULL;
+	if (qa != NULL) {
+	    jvar->jinfo->qa = gretl_matrix_copy(qa);
+	} else {
+	    jvar->jinfo->qa = NULL;
+	}
 
 	if (jvar->jinfo->Ra == NULL || 
-	    (q != NULL && jvar->jinfo->qa == NULL)) {
+	    (qa != NULL && jvar->jinfo->qa == NULL)) {
 	    err = E_ALLOC;
 	}
     }

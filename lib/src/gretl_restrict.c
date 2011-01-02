@@ -121,7 +121,7 @@ static int augment_vecm_restriction (gretl_restriction *rset,
 {
     GRETL_VAR *vecm = rset->obj;
     const gretl_matrix *R0, *q0;
-    gretl_matrix *R2, *q2;
+    gretl_matrix *R2 = NULL, *q2 = NULL;
     int err = 0;
 
     if (letter == 'b') {
@@ -179,31 +179,31 @@ static int add_old_vecm_restriction (gretl_restriction *rset,
 				     char letter)
 {
     GRETL_VAR *vecm = rset->obj; 
-    const gretl_matrix *R;
-    const gretl_matrix *q;
     int err = 0;
 
     if (letter == 'b') {
-	R = gretl_VECM_R_matrix(vecm);
-	q = gretl_VECM_q_matrix(vecm);
+	const gretl_matrix *R = gretl_VECM_R_matrix(vecm);
+	const gretl_matrix *q = gretl_VECM_q_matrix(vecm);
+
 	rset->R = gretl_matrix_copy(R);
 	if (rset->R == NULL) {
 	    err = E_ALLOC;
-	} else {
+	} else if (q != NULL) {	
 	    rset->q = gretl_matrix_copy(q);
-	    if (q != NULL && rset->q == NULL) {
+	    if (rset->q == NULL) {
 		err = E_ALLOC;
 	    }
 	}
     } else {
-	R = gretl_VECM_Ra_matrix(vecm);
-	q = gretl_VECM_qa_matrix(vecm);
-	rset->Ra = gretl_matrix_copy(R);
+	const gretl_matrix *Ra = gretl_VECM_Ra_matrix(vecm);
+	const gretl_matrix *qa = gretl_VECM_qa_matrix(vecm);
+
+	rset->Ra = gretl_matrix_copy(Ra);
 	if (rset->Ra == NULL) {
 	    err = E_ALLOC;
-	} else {
-	    rset->qa = gretl_matrix_copy(q);
-	    if (q != NULL && rset->qa == NULL) {
+	} else if (qa != NULL) {	
+	    rset->qa = gretl_matrix_copy(qa);
+	    if (rset->qa == NULL) {
 		err = E_ALLOC;
 	    }
 	}
@@ -1046,6 +1046,8 @@ void destroy_restriction_set (gretl_restriction *rset)
 #if RDEBUG
     fprintf(stderr, "destroy_restriction_set: R at %p, q at %p\n",
 	    (void *) rset->R, (void *) rset->q);
+    fprintf(stderr, " Ra at %p, qa at %p\n",
+	    (void *) rset->Ra, (void *) rset->qa);
 #endif
     
     gretl_matrix_free(rset->R);

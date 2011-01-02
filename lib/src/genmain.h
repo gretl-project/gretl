@@ -93,7 +93,6 @@ typedef enum {
     M_JS00,       /* VECM residual covariance matrix (1st differences) */
     M_JS11,       /* VECM residual covariance matrix (levels) */
     M_JS01,       /* VECM residual cross-product matrix */
-    M_EC,         /* VECM error-correction terms */
     M_HAUSMAN,    /* Hausman test after tsls or fixed effects */
     M_SARGAN,     /* Sargan over-identification test after tsls */
     M_SYSGAM,     /* Parameter matrix Gamma (simultaneous systems) */
@@ -106,6 +105,7 @@ typedef enum {
     M_KUHAT,      /* Kalman: current prediction error */
     M_EHAT,       /* ARMA: vector of estimated innovations */
     M_MATRIX_MAX, /* -- SEPARATOR, matrices/matrix-builders -- */
+    M_EC,         /* VECM error-correction terms */
     M_MNLPROBS,   /* case probabilities for multinomial logit */
     M_MBUILD_MAX, /* -- SEPARATOR, matrix-builders/lists -- */
     M_XLIST,      /* list of regressors */

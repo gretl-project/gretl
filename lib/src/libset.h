@@ -66,6 +66,7 @@ typedef enum {
 #define R_FUNCTIONS      "R_functions"
 #define R_LIB            "R_lib"
 #define NORMAL_RAND      "normal_rand"
+#define RNG              "RNG"
 #define DPDSTYLE         "dpdstyle"
 #define GMM_MAXITER      "gmm_maxiter"
 

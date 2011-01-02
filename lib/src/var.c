@@ -3259,38 +3259,22 @@ int restricted_VECM (const GRETL_VAR *vecm)
 
 const gretl_matrix *gretl_VECM_R_matrix (const GRETL_VAR *vecm)
 {
-    if (vecm->jinfo != NULL && vecm->jinfo->R != NULL) {
-	return vecm->jinfo->R;
-    }
-
-    return NULL;
+    return (vecm->jinfo != NULL)? vecm->jinfo->R : NULL; 
 }
 
 const gretl_matrix *gretl_VECM_q_matrix (const GRETL_VAR *vecm)
 {
-    if (vecm->jinfo != NULL && vecm->jinfo->q != NULL) {
-	return vecm->jinfo->q;
-    }
-
-    return NULL;
+    return (vecm->jinfo != NULL)? vecm->jinfo->q : NULL;
 }   
 
 const gretl_matrix *gretl_VECM_Ra_matrix (const GRETL_VAR *vecm)
 {
-    if (vecm->jinfo != NULL && vecm->jinfo->Ra != NULL) {
-	return vecm->jinfo->Ra;
-    }
-
-    return NULL;
+    return (vecm->jinfo != NULL)? vecm->jinfo->Ra : NULL;    
 }
 
 const gretl_matrix *gretl_VECM_qa_matrix (const GRETL_VAR *vecm)
 {
-    if (vecm->jinfo != NULL && vecm->jinfo->qa != NULL) {
-	return vecm->jinfo->qa;
-    }
-
-    return NULL;
+    return (vecm->jinfo != NULL)? vecm->jinfo->qa : NULL;
 }   
 
 double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo, 
@@ -3368,20 +3352,115 @@ VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
     return m;
 }
 
-static gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v, int *err)
+static gretl_matrix *alt_VECM_get_EC_matrix (const GRETL_VAR *vecm,
+					     const double **Z, 
+					     const DATAINFO *pdinfo, 
+					     int *err)
+{
+    const gretl_matrix *B = vecm->jinfo->Beta;
+    int r = jrank(vecm);
+    gretl_matrix *EC = NULL;
+    double xti, xj;
+    int s, t, T;
+    int i, j, k;
+
+    if (Z == NULL || pdinfo == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    }	
+
+    for (i=1; i<=vecm->ylist[0]; i++) {
+	if (vecm->ylist[i] >= pdinfo->v) {
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
+
+    T = vecm->t2 - vecm->t1 + 1;
+
+    EC = gretl_matrix_alloc(T, r);
+    if (EC == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    s = 0;
+
+    for (t=vecm->t1; t<=vecm->t2; t++) {
+	for (j=0; j<r; j++) { 
+	    xj = 0.0;
+	    /* beta * X(t-1) */
+	    k = 0;
+	    for (i=0; i<vecm->neqns; i++) {
+		xti = Z[vecm->ylist[i+1]][t-1];
+		if (na(xti)) {
+		    xj = NADBL;
+		    break;
+		}
+		xj += xti * gretl_matrix_get(B, k++, j);
+	    }
+
+	    /* restricted const or trend */
+	    if (auto_restr(vecm) && !na(xj)) {
+		xti = gretl_matrix_get(B, k++, j);
+		if (jcode(vecm) == J_REST_TREND) {
+		    xti *= t;
+		}
+		xj += xti;
+	    }
+
+	    /* restricted exog vars */
+	    if (vecm->rlist != NULL && !na(xj)) {
+		for (i=0; i<vecm->rlist[0]; i++) {
+		    xti = Z[vecm->rlist[i+1]][t-1];
+		    if (na(xti)) {
+			xj = NADBL;
+			break;
+		    }
+		    xj += xti * gretl_matrix_get(B, k++, j);
+		}
+	    }
+
+	    if (na(xj)) {
+		gretl_matrix_set(EC, s, j, M_NA);
+	    } else {
+		gretl_matrix_set(EC, s, j, xj);
+	    }
+	}
+	s++;
+    }
+
+    gretl_matrix_set_t1(EC, vecm->t1);
+    gretl_matrix_set_t2(EC, vecm->t2);
+	
+    return EC;
+}
+
+gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v, 
+				  const double **Z, 
+				  const DATAINFO *pdinfo, 
+				  int *err)
 {
     gretl_matrix *EC = NULL;
     double x;
     int rank, k, k0;
     int j, t, T;
 
+    rank = jrank(v);
+    if (rank == 0) {
+	*err = E_BADSTAT;
+	return NULL;
+    }	
+
     if (v->X == NULL) {
 	fprintf(stderr, "VECM_get_EC_matrix: v->X is NULL\n");
 	*err = E_BADSTAT;
 	return NULL;
-    }
+    } else if (v->X->cols < v->ncoeff) {
+	fprintf(stderr, "VECM_get_EC_matrix: v->X is short of cols\n");
+	return alt_VECM_get_EC_matrix(v, Z, pdinfo, err);
+    }	
 
-    rank = jrank(v);
     T = v->X->rows;
 
     EC = gretl_matrix_alloc(T, rank);
@@ -3457,7 +3536,7 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 		src = var->jinfo->S01;
 		break;
 	    case M_EC:
-		M = VECM_get_EC_matrix(var, err);
+		M = VECM_get_EC_matrix(var, NULL, NULL, err);
 		copy = 0;
 		break;
 	    }
@@ -3542,7 +3621,7 @@ double *gretl_VECM_get_EC (GRETL_VAR *vecm, int j, const double **Z,
 	}
 
 	/* restricted exog vars */
-	if (vecm->rlist != NULL) {
+	if (vecm->rlist != NULL && !na(x[t])) {
 	    for (i=0; i<vecm->rlist[0]; i++) {
 		xti = Z[vecm->rlist[i+1]][t-1];
 		if (na(xti)) {

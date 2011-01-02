@@ -1670,6 +1670,8 @@ int gretl_model_allocate_storage (MODEL *pmod)
     int T = pmod->full_n;
 
     if (k > 0) {
+	int i;
+
 	pmod->coeff = malloc(k * sizeof *pmod->coeff);
 	if (pmod->coeff == NULL) {
 	    return E_ALLOC;
@@ -1678,6 +1680,9 @@ int gretl_model_allocate_storage (MODEL *pmod)
 	if (pmod->sderr == NULL) {
 	    return E_ALLOC;
 	}
+	for (i=0; i<k; i++) {
+	    pmod->coeff[i] = pmod->sderr[i] = NADBL;
+	}	
     }
 
     if (T > 0) {

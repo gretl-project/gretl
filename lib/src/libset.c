@@ -231,6 +231,12 @@ static const char *normal_rand_strs[] = {
     NULL
 };
 
+static const char *RNG_strs[] = {
+    "glib",
+    "sfmt",
+    NULL
+};
+
 static const char **libset_option_strings (const char *s)
 {
     if (!strcmp(s, GARCH_VCV)) {
@@ -245,6 +251,8 @@ static const char **libset_option_strings (const char *s)
 	return vecm_norm_strs;
     } else if (!strcmp(s, NORMAL_RAND)) {
 	return normal_rand_strs;
+    } else if (!strcmp(s, RNG)) {
+	return RNG_strs;
     } else if (!strcmp(s, "csv_delim")) {
 	return csv_delim_args;
     } else {
@@ -293,6 +301,8 @@ static const char *libset_option_string (const char *s)
 	return vecm_norm_strs[state->vecm_norm];
     } else if (!strcmp(s, NORMAL_RAND)) {
 	return normal_rand_strs[gretl_rand_get_box_muller()];
+    } else if (!strcmp(s, RNG)) {
+	return RNG_strs[gretl_rand_get_sfmt()];
     } else {
 	return "?";
     }
@@ -811,7 +821,14 @@ static int parse_libset_int_code (const char *key,
 		err = 0;
 	    }
 	}
-    }
+    } else if (!strcmp(key, RNG)) {
+	for (i=0; RNG_strs[i] != NULL; i++) {
+	    if (!strcmp(val, RNG_strs[i])) {
+		gretl_rand_set_sfmt(i);
+		err = 0;
+	    }
+	}
+    }	
 
     if (err) {
 	gretl_errmsg_sprintf("%s: invalid value '%s'\n", key, val);
@@ -1167,7 +1184,8 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, HAC_KERNEL) || \
                          !strcmp(s, HC_VERSION) || \
 			 !strcmp(s, VECM_NORM) || \
-			 !strcmp(s, NORMAL_RAND))
+			 !strcmp(s, NORMAL_RAND) || \
+                         !strcmp(s, RNG))
 
 const char *intvar_code_string (const char *s)
 {
@@ -1314,9 +1332,11 @@ static int print_settings (PRN *prn, gretlopt opt)
     if (opt & OPT_D) {
 	pprintf(prn, " seed = %u\n", gretl_rand_get_seed());
 	pprintf(prn, " normal_rand = %s\n", libset_option_string(NORMAL_RAND));
+	pprintf(prn, " RNG = %s\n", libset_option_string(RNG));
     } else {
 	pprintf(prn, "set seed %u\n", gretl_rand_get_seed());
 	pprintf(prn, "set normal_rand %s\n", libset_option_string(NORMAL_RAND));
+	pprintf(prn, "set RNG %s\n", libset_option_string(RNG));
     }
 
     libset_header(N_("Robust estimation"), prn, opt);

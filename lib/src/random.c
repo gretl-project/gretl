@@ -23,14 +23,10 @@
 #include <time.h>
 #include <glib.h>
 
-#define USE_SFMT
-
-#ifdef USE_SFMT
-# ifdef USE_SSE2
-#  define HAVE_SSE2
-# endif
-# include "../../rng/SFMT.c"
+#ifdef USE_SSE2
+# define HAVE_SSE2
 #endif
+#include "../../rng/SFMT.c"
 
 /**
  * SECTION:random
@@ -51,10 +47,9 @@
  * global libgretl function libgretl_cleanup().
  */
 
-#ifndef USE_SFMT
 static GRand *gretl_rand;
-#endif
 static unsigned int useed;
+static int use_sfmt;
 
 static guint32 gretl_rand_octet (guint32 *sign);
 
@@ -67,14 +62,11 @@ static guint32 gretl_rand_octet (guint32 *sign);
 void gretl_rand_init (void)
 {
     useed = time(NULL);
-#ifdef USE_SFMT
     init_gen_rand(useed);
-#else
     if (gretl_rand == NULL) {
 	gretl_rand = g_rand_new();
     }
     gretl_rand_set_seed((guint32) useed);
-#endif
 }
 
 /**
@@ -85,10 +77,8 @@ void gretl_rand_init (void)
 
 void gretl_rand_free (void)
 {
-#ifndef USE_SFMT
     g_rand_free(gretl_rand);
     gretl_rand = NULL;
-#endif
 }
 
 /**
@@ -115,11 +105,8 @@ unsigned int gretl_rand_get_seed (void)
 void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
-#ifdef USE_SFMT
     init_gen_rand(useed); 
-#else
     g_rand_set_seed(gretl_rand, useed);
-#endif
     gretl_rand_octet(NULL);
 }
 
@@ -140,12 +127,34 @@ void gretl_rand_set_multi_seed (const gretl_matrix *seed)
 	useeds[i] = seed->val[i];
     }
 
-#ifdef USE_SFMT
     init_by_array(useeds, 4);
-#else
     g_rand_set_seed_array(gretl_rand, useeds, 4);
-#endif
     gretl_rand_octet(NULL);
+}
+
+/**
+ * gretl_rand_set_sfmt:
+ * @s: 1 or 0.
+ *
+ * If @s is non-zero, set libgretl's generator for uniform
+ * variates to use SFMT, as opposed to GLib's implementation
+ * of the Mersenne Twister.
+ */
+
+void gretl_rand_set_sfmt (int s)
+{
+    use_sfmt = s;
+}
+
+/**
+ * gretl_rand_get_sfmt:
+ *
+ * Returns: non-zero if libgretl is using the SFMT RNG.
+ */
+
+int gretl_rand_get_sfmt (void)
+{
+    return use_sfmt;
 }
 
 /* Returns the next random double, equally distributed over 
@@ -154,11 +163,11 @@ void gretl_rand_set_multi_seed (const gretl_matrix *seed)
 
 static double gretl_rand_01 (void)
 {
-#ifdef USE_SFMT
-    return genrand_real2();
-#else
-    return g_rand_double(gretl_rand);
-#endif
+    if (use_sfmt) {
+	return genrand_real2();
+    } else {
+	return g_rand_double(gretl_rand);
+    }
 }
 
 /* Below: an implementation of the Marsaglia/Tsang Ziggurat method for
@@ -324,11 +333,11 @@ static guint32 gretl_rand_octet (guint32 *sign)
     }
 
     if (i == 0) {
-#ifdef USE_SFMT
-	wr.u = gen_rand32();
-#else
-	wr.u = g_rand_int(gretl_rand);
-#endif
+	if (use_sfmt) {
+	    wr.u = gen_rand32();
+	} else {
+	    wr.u = g_rand_int(gretl_rand);
+	}
 	i = 4;
     }
 
@@ -343,11 +352,11 @@ static double ran_normal_ziggurat (void)
     double x, y;
 
     while (1) {
-#ifdef USE_SFMT
-	j = gen_rand32();
-#else
-	j = g_rand_int(gretl_rand);
-#endif
+	if (use_sfmt) {
+	    j = gen_rand32();
+	} else {
+	    j = g_rand_int(gretl_rand);
+	}
 	i = gretl_rand_octet(&sign);
 	j = j >> 2;
 
@@ -546,9 +555,7 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
     return 0;
 }
 
-#ifdef USE_SFMT
-
-static guint32 gretl_int_range (guint32 begin, guint32 end)
+static guint32 sfmt_int_range (guint32 begin, guint32 end)
 {
     guint32 dist = end - begin;
     guint32 rval = 0;
@@ -578,8 +585,6 @@ static guint32 gretl_int_range (guint32 begin, guint32 end)
     return begin + rval;
 }
 
-#endif
-
 /**
  * gretl_rand_uniform_minmax:
  * @a: target array.
@@ -608,12 +613,12 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
-#ifdef USE_SFMT
-	/* FIXME use native array functionality */
-	a[t] = genrand_real2() * (max - min) + min;
-#else
-	a[t] = g_rand_double_range(gretl_rand, min, max);
-#endif
+	if (use_sfmt) {
+	    /* FIXME use native array functionality? */
+	    a[t] = genrand_real2() * (max - min) + min;
+	} else {
+	    a[t] = g_rand_double_range(gretl_rand, min, max);
+	}
     }
 
     return 0;
@@ -646,11 +651,11 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
     /* note: in g_rand_int_range the upper bound is open */
 
     for (i=0; i<n; i++) {
-#ifdef USE_SFMT
-	a[i] = gretl_int_range(min, max + 1);
-#else
-	a[i] = g_rand_int_range(gretl_rand, min, max + 1);
-#endif
+	if (use_sfmt) {
+	    a[i] = sfmt_int_range(min, max + 1);
+	} else {
+	    a[i] = g_rand_int_range(gretl_rand, min, max + 1);
+	} 
     }
 
     return 0;
@@ -1081,11 +1086,11 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
-#ifdef USE_SFMT
-    return gretl_int_range(0, max);
-#else
-    return g_rand_int_range(gretl_rand, 0, max);
-#endif
+    if (use_sfmt) {
+	return sfmt_int_range(0, max);
+    } else {
+	return g_rand_int_range(gretl_rand, 0, max);
+    }
 }
 
 /**
@@ -1097,10 +1102,10 @@ unsigned int gretl_rand_int_max (unsigned int max)
 
 unsigned int gretl_rand_int (void)
 {
-#ifdef USE_SFMT
-    return gen_rand32();
-#else
-    return g_rand_int(gretl_rand);
-#endif
+    if (use_sfmt) {
+	return gen_rand32();
+    } else {
+	return g_rand_int(gretl_rand);
+    }
 }
 
