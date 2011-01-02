@@ -3858,6 +3858,21 @@ static void VAR_roots_plot_call (GtkAction *action, gpointer p)
     }
 }
 
+static void combined_EC_plot_call (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int err;
+
+    err = gretl_VECM_combined_EC_plot(var, (const double **) Z, datainfo);
+    
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
+    }
+}
+
 static int sys_ci_from_action (GtkAction *action)
 {
     const gchar *s = gtk_action_get_name(action);
@@ -4013,13 +4028,29 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	vwin_menu_add_item(vwin, graphs, &item);
     }
 
-    /* combined residual plot */
     if (neqns > 1) {
+	/* combined residual plot */
 	sprintf(min, "comboresid %s", cmdword);
 	item.name = min;
 	item.label = N_("Combined residual plot");
 	item.callback = G_CALLBACK(system_resid_plot_call);
 	vwin_menu_add_item(vwin, graphs, &item);
+    }
+
+    if (ci == VECM) {
+	int r = gretl_VECM_rank(var);
+
+	if (r == 1) {
+	    item.name = "ecplot";
+	    item.label = N_("EC plot");
+	    item.callback = G_CALLBACK(combined_EC_plot_call);
+	    vwin_menu_add_item(vwin, graphs, &item);
+	} else {
+	    item.name = "ecplot";
+	    item.label = N_("Combined EC plot");
+	    item.callback = G_CALLBACK(combined_EC_plot_call);
+	    vwin_menu_add_item(vwin, graphs, &item);	    
+	}
     }
 
     if (ci != SYSTEM) {

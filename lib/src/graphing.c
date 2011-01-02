@@ -4834,6 +4834,78 @@ int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo)
     return gnuplot_make_graph();
 }
 
+int gretl_VECM_combined_EC_plot (GRETL_VAR *var, const double **Z, 
+				 const DATAINFO *pdinfo)
+{
+    const gretl_matrix *EC = NULL;
+    FILE *fp = NULL;
+    const double *obs;
+    int nvars, nobs;
+    int i, t, t1;
+    int err = 0;
+
+    EC = VECM_get_EC_matrix(var, Z, pdinfo, &err);
+    if (err) {
+	return err;
+    }
+
+    t1 = EC->t1;
+
+    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    if (err) {
+	return err;
+    }
+
+    obs = gretl_plotx(NULL, pdinfo);
+
+    nvars = gretl_matrix_cols(EC);
+    nobs = gretl_matrix_rows(EC);
+
+    fputs("# VECM EC plot\n", fp);
+    fputs("set key left top\n", fp);
+    fputs("set xzeroaxis\n", fp);
+    if (nvars > 1) {
+	fprintf(fp, "set title '%s'\n", _("EC terms"));
+    } else {
+	fprintf(fp, "set title '%s'\n", _("EC term"));
+    }
+
+    fputs("plot \\\n", fp);
+    for (i=0; i<nvars; i++) {
+	if (nvars > 1) {
+	    fprintf(fp, "'-' using 1:2 title 'EC %d' w lines", i + 1);
+	} else {
+	    fprintf(fp, "'-' using 1:2 notitle w lines");
+	}	    
+	if (i == nvars - 1) {
+	    fputc('\n', fp);
+	} else {
+	    fputs(", \\\n", fp); 
+	}
+    }
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<nvars; i++) {
+	for (t=0; t<nobs; t++) {
+	    double eti = gretl_matrix_get(EC, t, i);
+
+	    if (obs != NULL) {
+		fprintf(fp, "%g %.10g\n", obs[t+t1], eti);
+	    } else {
+		fprintf(fp, "%d %.10g\n", t+1, eti);
+	    }
+	}
+	fputs("e\n", fp);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
 int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo) 
 {
     const gretl_matrix *E = NULL;
