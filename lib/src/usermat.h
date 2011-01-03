@@ -141,6 +141,14 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 			       gretlopt opt,
 			       int *err);
 
+gretl_matrix *user_matrix_rls (const gretl_matrix *Y, 
+			       const gretl_matrix *X,
+			       const gretl_matrix *R,
+			       const gretl_matrix *Q,
+			       const char *Uname, 
+			       const char *Vname, 
+			       int *err);
+
 gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 			    int *err);

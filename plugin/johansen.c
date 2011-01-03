@@ -1728,6 +1728,9 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	gretl_matrix_free(jvar->jinfo->Ra);
 	jvar->jinfo->Ra = gretl_matrix_copy(Ra);
 
+	gretl_matrix_print(Ra, "Ra");
+	gretl_matrix_print(qa, "qa");
+
 	gretl_matrix_free(jvar->jinfo->qa);
 	jvar->jinfo->qa = NULL;
 	if (qa != NULL) {

@@ -294,6 +294,7 @@ struct str_table funcs[] = {
     { F_SVD,      "svd" },
     { F_MOLS,     "mols" },
     { F_MPOLS,    "mpols" },
+    { F_MRLS,     "mrls" },
     { F_MREAD,    "mread" },
     { F_MWRITE,   "mwrite" },
     { F_MCSEL,    "selifc" },

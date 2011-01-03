@@ -23,6 +23,8 @@ version 1.9.4, in progress
   associated with a given integer error code
 - New function, rownames(): complements the colnames()
   function for matrices
+- New function mrls(); implements restricted least squares
+  estimation for data in matrix form
 - New "set" variable, matrix_mask, which can be used to
   control the included observations when constructing
   matrices from series
@@ -38,6 +40,9 @@ version 1.9.4, in progress
 - Remove deprecated aliases "noecho" and "seed"
 - Remove redundant function "makemask"
 - Fix: reset model count on exit from user-defined functions
+- Fix bug: the $ec accessor for Error Correction terms 
+  produced bad results for VECMs where the loadings ("alpha")
+  terms were estimated subject to restrictions
 - Fix bug: estimates could get out of order for some
   equation systems if the constant was not given in first
   place among the regressors

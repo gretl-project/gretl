@@ -3332,6 +3332,12 @@
 	  <argname>X</argname> are highly collinear.  The use of SVD
 	  can be forced via the command <lit>set svd on</lit>.
 	</para>
+	<para>
+	  <seelist> 
+	    <fncref targ="mpols"/>
+	    <fncref targ="mrls"/>
+	  </seelist>
+	</para>
       </description>
     </function>
 
@@ -3477,7 +3483,39 @@
 	  matrix Y = mreverse(X')'
 	</code>
       </description>
-    </function>    
+    </function>  
+
+    <function name="mrls" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">R</fnarg>
+	<fnarg type="matrix">Q</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Restricted least squares: returns a <by r="k" c="n"/> matrix
+	  of parameter estimates obtained by least-squares regression
+	  of the <by r="T" c="n"/> matrix <argname>Y</argname> on the
+	  <by r="T" c="k"/> matrix <argname>X</argname> subject to
+	  the linear restriction <math>RB</math> = <math>Q</math>,
+	  where <math>B</math> denotes the coefficient matrix.
+	</para>
+	<para>
+	  If the fifth argument is not <lit>null</lit>, the <by r="T"
+	  c="n"/> matrix <argname>U</argname> will contain the
+	  residuals. If the final argument is given and is not
+	  <lit>null</lit> then the <by r="k" c="k"/> matrix
+	  <argname>V</argname> will hold the restricted counterpart to
+	  the matrix <math>X'X</math><sup>-1</sup>. The variance
+	  matrix of the estimates for equation <math>i</math> can be
+	  constructed by multiplying <argname>V</argname> by the
+	  estimated error variance for that equation.
+	</para>
+      </description>
+    </function>  
 
     <function name="mshape" section="matshape" output="matrix">
       <fnargs>

@@ -1638,16 +1638,13 @@ static gretl_matrix *get_ols_matrix (const char *mname,
     if (m == NULL) {
 	gretl_errmsg_sprintf(_("'%s': no such matrix"), mname);
 	*err = E_UNKVAR;
-	return NULL;
-    } 
-
-    if (newmat != NULL && (m->rows != r || m->cols != c)) {
+    } else if (newmat != NULL && (m->rows != r || m->cols != c)) {
 	m = gretl_matrix_alloc(r, c);
 	if (m == NULL) {
 	    *err = E_ALLOC;
-	    return NULL;
+	} else {
+	    *newmat = 1;
 	}
-	*newmat = 1;
     }
 
     return m;
@@ -1734,6 +1731,78 @@ gretl_matrix *user_matrix_ols (const gretl_matrix *Y,
 	    } else {
 		*err = gretl_matrix_multi_ols(Y, X, B, U, NULL);
 	    }
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(B);
+	B = NULL;
+	if (newU) gretl_matrix_free(U);
+	if (newV) gretl_matrix_free(V);
+    } else {
+	if (newU) {
+	    user_matrix_replace_matrix_by_name(Uname, U);
+	}
+	if (newV) {
+	    user_matrix_replace_matrix_by_name(Vname, V);
+	}	
+    }
+
+    return B;
+}
+
+gretl_matrix *user_matrix_rls (const gretl_matrix *Y, 
+			       const gretl_matrix *X,
+			       const gretl_matrix *R,
+			       const gretl_matrix *Q,
+			       const char *Uname, 
+			       const char *Vname, 
+			       int *err)
+{
+    gretl_matrix *B = NULL;
+    gretl_matrix *U = NULL;
+    gretl_matrix *V = NULL;
+    int newU = 0, newV = 0;
+    int g, k, T;
+
+    if (gretl_is_null_matrix(Y) || gretl_is_null_matrix(X)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    T = Y->rows;
+    k = X->cols;
+    g = Y->cols;
+
+    if (X->rows != T) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (!nullarg(Uname)) {
+	U = get_ols_matrix(Uname, T, g, &newU, err);
+	if (*err) {
+	    return NULL;
+	}
+    } 
+
+    if (!nullarg(Vname)) {
+	V = get_ols_matrix(Vname, k, k, &newV, err);
+    }
+
+    if (!*err) {
+	B = gretl_matrix_alloc(k, g);
+	if (B == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	if (newV) {
+	    /* note: "V" will actually be M (X'X)^{-1} M' */
+	    *err = gretl_matrix_restricted_multi_ols(Y, X, R, Q, B, U, V);
+	} else {
+	    *err = gretl_matrix_restricted_multi_ols(Y, X, R, Q, B, U, NULL);
 	}
     }
 

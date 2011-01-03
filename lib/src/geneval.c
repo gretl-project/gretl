@@ -6385,6 +6385,55 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	if (freeY) gretl_matrix_free(Y);
 	if (freeX) gretl_matrix_free(X);
+    } else if (t->t == F_MRLS) {
+	gretl_matrix *Y = NULL;
+	gretl_matrix *X = NULL;
+	gretl_matrix *R = NULL;
+	gretl_matrix *Q = NULL;
+	const char *SU = NULL;
+	const char *SV = NULL;
+
+	if (k < 4 || k > 6) {
+	    n_args_error(k, 1, "mrls", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (i < 4) {
+		if (e->t != MAT) {
+		    node_type_error(t->t, i+1, MAT, e, p);
+		} else if (i == 0) {
+		    Y = e->v.m;
+		} else if (i == 1) {
+		    X = e->v.m;
+		} else if (i == 2) {
+		    R = e->v.m;
+		} else if (i == 3) {
+		    Q = e->v.m;
+		}
+	    } else {
+		if (e->t == EMPTY) {
+		    ; /* OK */
+		} else if (e->t != U_ADDR) {
+		    node_type_error(t->t, i+1, U_ADDR, e, p);
+		} else if (i == 4) {
+		    SU = ptr_node_get_name(e, p);
+		} else {
+		    SV = ptr_node_get_name(e, p);
+		}
+	    } 
+	}
+
+	if (!p->err) {
+	    ret = aux_matrix_node(p);
+	}
+
+	if (!p->err) {
+	    if (ret->v.m != NULL) {
+		gretl_matrix_free(ret->v.m);
+	    }	
+	    ret->v.m = user_matrix_rls(Y, X, R, Q, SU, SV, &p->err);
+	}
     }
 
     return ret;
@@ -8115,6 +8164,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BKFILT:
     case F_MOLS:
     case F_MPOLS:
+    case F_MRLS:
     case F_FILTER:	
     case F_MCOVG:
     case F_KFILTER:
