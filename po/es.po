@@ -2,13 +2,13 @@
 # Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
 #
-# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009, 2010.
+# Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-12-03 09:35-0500\n"
-"PO-Revision-Date: 2010-11-25 14:00+0100\n"
+"PO-Revision-Date: 2011-01-04 11:05+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -2368,7 +2368,7 @@ msgstr "Declaración no válida"
 
 #: lib/src/genfuncs.c:4258
 msgid "model-related"
-msgstr ""
+msgstr "relativo al modelo"
 
 #: lib/src/genfuncs.c:4321 lib/src/gretl_scalar.c:601 lib/src/plotspec.c:276
 #: lib/src/plotspec.c:290 gui2/gpt_dialog.c:120 gui2/gui_utils.c:2786
@@ -2376,7 +2376,6 @@ msgid "none"
 msgstr "ninguno"
 
 #: lib/src/genfuncs.c:4324
-#, fuzzy
 msgid "other"
 msgstr "Otro"
 
@@ -2681,9 +2680,9 @@ msgid "+- sqrt(h(t))"
 msgstr "+- raíz(h(t))"
 
 #: lib/src/graphing.c:4248
-#, fuzzy, c-format
+#, c-format
 msgid "mean %s"
-msgstr "media"
+msgstr "media %s"
 
 #: lib/src/graphing.c:4414
 msgid "time"
@@ -3455,9 +3454,8 @@ msgid "iteration"
 msgstr "iteración"
 
 #: lib/src/gretl_panel.c:3583
-#, fuzzy
 msgid "Pooled error variance"
-msgstr "Varianza del error de _predicción"
+msgstr "Varianza del error combinada"
 
 #: lib/src/gretl_panel.c:3657
 msgid "groupwise heteroskedasticity"
@@ -6713,11 +6711,10 @@ msgid "dummify: no suitable variables were found"
 msgstr "dummify: no se han encontrado variables adecuadas"
 
 #: lib/src/tsls.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "Number of instruments (%d) exceeds the number of observations (%d)"
 msgstr ""
-"El número de argumentos (%d) no casa con el número de \n"
-" parámetros para la función %s (%d)"
+"El número de instrumentos (%d) es mayor que el número de observaciones (%d)"
 
 #: lib/src/tsls.c:1584 gui2/selector.c:2720
 msgid "You can't use the dependent variable as an instrument"
@@ -8684,9 +8681,9 @@ msgid "Use L-BFGS-B, memory size:"
 msgstr "Utilización de L-BFGS-B,  cantidad de memoria:"
 
 #: gui2/dialogs.c:1687
-#, fuzzy, c-format
+#, c-format
 msgid "groups (N = %d)"
-msgstr "%s (n = %d, %s)"
+msgstr "grupos (N = %d)"
 
 #: gui2/dialogs.c:1689
 #, c-format
@@ -8724,43 +8721,36 @@ msgid "Set sample range"
 msgstr "Establecer rango muestral"
 
 #: gui2/dialogs.c:2090
-#, fuzzy
 msgid "single graph: group means"
-msgstr "gráfico sencillo: unidades superpuestas"
+msgstr "gráfico sencillo: medias de grupos"
 
 #: gui2/dialogs.c:2091
-#, fuzzy
 msgid "single graph: groups overlaid (N <= 80)"
-msgstr "gráfico sencillo: unidades superpuestas"
+msgstr "gráfico sencillo: grupos superpuestos (N <= 80)"
 
 #: gui2/dialogs.c:2092
-#, fuzzy
 msgid "single graph: groups in sequence (N <= 80)"
-msgstr "gráfico sencillo: unidades en secuencia"
+msgstr "gráfico sencillo: grupos en secuencia (N <= 80)"
 
 #: gui2/dialogs.c:2093
-#, fuzzy
 msgid "multiple plots in grid (N <= 9)"
-msgstr "gráficos múltiples en cuadrícula"
+msgstr "gráficos múltiples en cuadrícula (N <= 9)"
 
 #: gui2/dialogs.c:2094
-#, fuzzy
 msgid "multiple plots arranged vertically (N <= 6)"
-msgstr "gráficos múltiples organizados verticalmente"
+msgstr "gráficos múltiples organizados verticalmente (N <=6)"
 
 #: gui2/dialogs.c:2095
 msgid "boxplots by group (N <= 150)"
-msgstr ""
+msgstr "gráficos de caja por grupo (N <= 150)"
 
 #: gui2/dialogs.c:2096
-#, fuzzy
 msgid "single boxplot"
-msgstr "gretl: gráficos de caja (boxplots)"
+msgstr "gráfico de caja individual"
 
 #: gui2/dialogs.c:2107 gui2/dialogs.c:2119
-#, fuzzy
 msgid "panel plot"
-msgstr "panel"
+msgstr "gráfico de panel"
 
 #: gui2/dialogs.c:2222
 msgid "Enter boolean condition for selecting cases:"
@@ -10746,9 +10736,8 @@ msgid "_Time series plot"
 msgstr "Gráfico de _series temporales"
 
 #: gui2/gretl.c:1533
-#, fuzzy
 msgid "_Panel plot..."
-msgstr "Gráfico en _3D..."
+msgstr "Gráfico de _panel..."
 
 #: gui2/gretl.c:1534
 msgid "_Unit root tests"
@@ -12787,9 +12776,8 @@ msgid "Time series plot"
 msgstr "Gráfico de series temporales"
 
 #: gui2/menustate.c:344 gui2/menustate.c:434
-#, fuzzy
 msgid "Panel plot..."
-msgstr "Gráfico en _3D..."
+msgstr "Gráfico de panel..."
 
 #: gui2/menustate.c:346 gui2/menustate.c:435
 msgid "Frequency distribution"
