@@ -11138,7 +11138,7 @@
 	dependent variable on the weighted constant alone.
       </para>
 
-      <para>
+      <para context="cli">
 	If <repl>wtvar</repl> is a dummy variable, WLS estimation is
 	equivalent to eliminating all observations with value zero for
 	<repl>wtvar</repl>.
