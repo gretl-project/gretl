@@ -8212,7 +8212,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	int catch = 0;
 
 	gretl_exec_state_uncomment(s);
-	if (err != E_ALLOC && (cmd->flags |= CMD_CATCH)) {
+	if (err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
 	    set_gretl_errno(err);
 	    catch = 1;
 	}	
