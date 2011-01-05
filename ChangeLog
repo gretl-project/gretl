@@ -40,6 +40,8 @@ version 1.9.4, in progress
 - Remove deprecated aliases "noecho" and "seed"
 - Remove redundant function "makemask"
 - Fix: reset model count on exit from user-defined functions
+- Fix bug: incorrect parsing of command line containing a 
+  filename that includes left and/or right parentheses
 - Fix bug: the $ec accessor for Error Correction terms 
   produced bad results for VECMs where the loadings ("alpha")
   terms were estimated subject to restrictions
