@@ -3609,7 +3609,7 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    x = l->v.xvec;
 	    y = r->v.xvec;
 	    t1 = p->dinfo->t1;
-	    t2 = p->dinfo->t1;
+	    t2 = p->dinfo->t2;
 	} else {
 	    /* two matrices */
 	    int n1 = gretl_vector_get_length(l->v.m);

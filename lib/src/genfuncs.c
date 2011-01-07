@@ -3886,7 +3886,11 @@ static int theil_decomp (double *m, double MSE,
     return err;
 }
 
-/* cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
+/* 
+  Forecast evaluation statistics: @y is the data series, @f the
+  forecast.
+
+   cf. http://www.economicsnetwork.ac.uk/showcase/cook_forecast
    by Steven Cook of Swansea University <s.cook@Swansea.ac.uk>
 
    OPT_D indicates that we should include the Theil decomposition.
@@ -3899,6 +3903,7 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
     gretl_matrix *m = NULL;
     double ME, MSE, MAE, MPE, MAPE, U;
     double x, u[2];
+    int nstats = (opt & OPT_D)? 9 : 6;
     int t, T = t2 - t1 + 1;
 
     for (t=t1; t<=t2; t++) {
@@ -3906,6 +3911,12 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 	    *err = E_MISSDATA;
 	    return NULL;
 	}
+    }
+
+    m = gretl_column_vector_alloc(nstats);
+    if (m == NULL) {
+	*err = E_ALLOC;
+	return NULL;
     }
 
     ME = MSE = MAE = MPE = MAPE = U = 0.0;
@@ -3944,17 +3955,6 @@ gretl_matrix *forecast_stats (const double *y, const double *f,
 
     if (!isnan(U) && u[1] > 0.0) {
 	U = sqrt(u[0] / T) / sqrt(u[1] / T);
-    }
-
-    if (opt & OPT_D) {
-	m = gretl_column_vector_alloc(9);
-    } else {
-	m = gretl_column_vector_alloc(6);
-    }
-    
-    if (m == NULL) {
-	*err = E_ALLOC;
-	return NULL;
     }
 
     gretl_vector_set(m, 0, ME);
