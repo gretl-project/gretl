@@ -7653,7 +7653,6 @@ static NODE *eval (NODE *t, parser *p)
 			    MAT, (l->t == MAT)? r : l, p);
 	}
 	break;
-    case B_KRON:
     case B_HCAT:
     case B_VCAT:
     case F_QFORM:
@@ -7670,6 +7669,15 @@ static NODE *eval (NODE *t, parser *p)
 	} else if (t->t == B_HCAT && l->t == STR && r->t == STR) {
 	    /* exception: string concatenation */
 	    ret = two_string_func(l, r, t->t, p);
+	} else {
+	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
+			    MAT, (l->t == MAT)? r : l, p);
+	}
+	break;
+    case B_KRON:
+	/* Kronecker product ("**"): insist on matrices only */
+	if (l->t == MAT && r->t == MAT) {
+	    ret = matrix_matrix_calc(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
 			    MAT, (l->t == MAT)? r : l, p);

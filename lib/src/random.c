@@ -157,11 +157,14 @@ int gretl_rand_get_sfmt (void)
     return use_sfmt;
 }
 
-/* Returns the next random double, equally distributed over 
-   the range [0..1)
-*/
+/**
+ * gretl_rand_01:
+ *
+ * Returns: the next random double, equally distributed over
+ * the range [0..1).
+ */
 
-static double gretl_rand_01 (void)
+double gretl_rand_01 (void)
 {
     if (use_sfmt) {
 	return genrand_real2();
