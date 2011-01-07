@@ -6059,7 +6059,7 @@ static void selector_add_top_entry (selector *sr)
 	    gtk_entry_set_text(GTK_ENTRY(entry), lname);
 	} else {
 	    int argnum = widget_get_int(src, "argnum");
-	    gchar *tmp = g_strdup_printf("arg%d", argnum);
+	    gchar *tmp = g_strdup_printf("arg%d", argnum + 1);
 
 	    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
 	    g_free(tmp);

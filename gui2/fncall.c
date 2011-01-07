@@ -454,13 +454,13 @@ static void update_combo_selectors (call_info *cinfo,
     */
 
     if (ptype == GRETL_TYPE_MATRIX) {
-	sellist = cinfo->msels;
+	sellist = g_list_first(cinfo->msels);
     } else if (ptype == GRETL_TYPE_LIST) {
-	sellist = cinfo->lsels;
+	sellist = g_list_first(cinfo->lsels);
     } else if (ptype == GRETL_TYPE_DOUBLE) {
-	sellist = cinfo->ssels;
+	sellist = g_list_first(cinfo->ssels);
     } else {
-	sellist = cinfo->vsels;
+	sellist = g_list_first(cinfo->vsels);
     }
 
     newlist = get_selection_list(ptype);
@@ -485,13 +485,24 @@ static void update_combo_selectors (call_info *cinfo,
 	    /* make a record of the old selected item */
 	    saved = gtk_combo_box_get_active_text(sel);
 	} 
+
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(sel, newlist);
 	null_OK = widget_get_int(sel, "null_OK");
 	if (null_OK) {
 	    gtk_combo_box_append_text(sel, "null");
 	}
-	if (!target) {
+
+	if (target) {
+	    /* select the newly added var, which will be at the 
+	       end, or thereabouts */
+	    int addpos = llen - 1;
+
+	    if (series_arg(ptype)) {
+		addpos--; /* the const is always in last place */
+	    } 
+	    gtk_combo_box_set_active(sel, addpos);
+	} else {	    
 	    if (saved != NULL) {
 		/* reinstate the previous selection */
 		old = combo_list_index(saved, newlist);
@@ -504,19 +515,8 @@ static void update_combo_selectors (call_info *cinfo,
 		/* reinstate empty selection */
 		gtk_combo_box_set_active(sel, -1);
 	    }
-	} else {
-	    /* select the newly added var, which will be at the 
-	       end, or thereabouts */
-	    int addpos = llen - 1;
-
-	    if (series_arg(ptype)) {
-		addpos--; /* the const is always in last place */
-	    } 
-	    if (null_OK) {
-		addpos--; /* the "null" option was appended */
-	    }
-	    gtk_combo_box_set_active(sel, addpos);
 	} 
+
 	sellist = sellist->next;
     }
 
@@ -594,7 +594,7 @@ int do_make_list (selector *sr)
 	if (cinfo != NULL) {
 	    if (n_saved_lists() > nl) {
 		update_combo_selectors(cinfo, aux, GRETL_TYPE_LIST);
-	    }
+	    } 
 	} else {
 	    infobox(msg);
 	}
@@ -1016,29 +1016,21 @@ static void function_call_dialog (call_info *cinfo)
 
 	row++;
 
-#if 1
-	/* label for name and type of argument, using
+	/* label for name (and maybe type) of argument, using
 	   descriptive string if available */
-	argtxt = g_strdup_printf("%s (%s)",
-				 (desc != NULL)? desc :
-				 fn_param_name(cinfo->func, i),
-				 gretl_arg_type_name(ptype));
-	label = gtk_label_new(argtxt);
-	g_free(argtxt);
-#else
-	/* label for name and type of argument, with tooltip
-	   showing its descriptive string, if any */
-
-	argtxt = g_strdup_printf("%s (%s)",
-				 fn_param_name(cinfo->func, i),
-				 gretl_arg_type_name(ptype));
-	label = gtk_label_new(argtxt);
-	g_free(argtxt);
-	if (desc != NULL) {
-	    gretl_tooltips_add(label, desc);
+	if (ptype == GRETL_TYPE_INT) {
+	    argtxt = g_strdup_printf("%s",
+				     (desc != NULL)? desc :
+				     fn_param_name(cinfo->func, i));
+	} else {
+	    argtxt = g_strdup_printf("%s (%s)",
+				     (desc != NULL)? desc :
+				     fn_param_name(cinfo->func, i),
+				     gretl_arg_type_name(ptype));
 	}
-#endif
 
+	label = gtk_label_new(argtxt);
+	g_free(argtxt);
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, row);
 
@@ -1088,7 +1080,7 @@ static void function_call_dialog (call_info *cinfo)
 	    cinfo->lsels = g_list_append(cinfo->lsels, sel);
 	    button = add_object_button(ptype, sel);
 	    add_table_cell(tbl, button, 2, 3, row);
-	    widget_set_int(entry, "argnum", i+1);
+	    widget_set_int(entry, "argnum", i);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_list_maker),
 			     entry);
