@@ -1787,7 +1787,10 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
     } 
 
     if (!nullarg(Vname)) {
-	V = get_ols_matrix(Vname, k, k, &newV, err);
+	get_ols_matrix(Vname, 0, 0, NULL, err);
+	if (!*err) {
+	    newV = 1;
+	}
     }
 
     if (!*err) {
@@ -1800,7 +1803,7 @@ gretl_matrix *user_matrix_rls (const gretl_matrix *Y,
     if (!*err) {
 	if (newV) {
 	    /* note: "V" will actually be M (X'X)^{-1} M' */
-	    *err = gretl_matrix_restricted_multi_ols(Y, X, R, Q, B, U, V);
+	    *err = gretl_matrix_restricted_multi_ols(Y, X, R, Q, B, U, &V);
 	} else {
 	    *err = gretl_matrix_restricted_multi_ols(Y, X, R, Q, B, U, NULL);
 	}

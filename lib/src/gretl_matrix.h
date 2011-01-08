@@ -608,7 +608,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 				   const gretl_matrix *Q,
 				   gretl_matrix *B, 
 				   gretl_matrix *U,
-				   gretl_matrix *V);
+				   gretl_matrix **Wi);
 
 int gretl_matrix_SVD_ols (const gretl_vector *y, const gretl_matrix *X,
 			  gretl_vector *b, gretl_matrix *vcv,

@@ -1186,7 +1186,7 @@ static void print_restriction (const gretl_restriction *rset,
 
 static void print_restriction_set (const gretl_restriction *rset, 
 				   const DATAINFO *pdinfo, 
-				   PRN *prn)
+				   gretlopt opt, PRN *prn)
 {
     int i;
 
@@ -1205,6 +1205,25 @@ static void print_restriction_set (const gretl_restriction *rset,
 	}
 	print_restriction(rset, i, pdinfo, prn);
     }
+
+    if (opt & OPT_V) {
+	if (rset->R != NULL || rset->q != NULL ||
+	    rset->Ra != NULL || rset->qa != NULL) {
+	    pputc(prn, '\n');
+	}
+	if (rset->R != NULL) {
+	    gretl_matrix_print_to_prn(rset->R, "R", prn);
+	}
+	if (rset->q != NULL) {
+	    gretl_matrix_print_to_prn(rset->q, "q", prn);
+	}
+	if (rset->Ra != NULL) {
+	    gretl_matrix_print_to_prn(rset->Ra, "R(alpha)", prn);
+	}
+	if (rset->qa != NULL) {
+	    gretl_matrix_print_to_prn(rset->qa, "q(alpha)", prn);
+	}
+    }	
 }
 
 void print_restriction_from_matrices (const gretl_matrix *R,
@@ -2410,7 +2429,7 @@ GRETL_VAR *gretl_restricted_vecm (gretl_restriction *rset,
     *err = restriction_set_form_matrices(rset);
 
     if (rset->rows != NULL) {
-	print_restriction_set(rset, pdinfo, prn);
+	print_restriction_set(rset, pdinfo, opt, prn);
     } 
 
     if (!*err) {
@@ -2587,7 +2606,7 @@ gretl_restriction_finalize_full (ExecState *state,
     }
 
     if (!silent && rset->rows != NULL) {
-	print_restriction_set(rset, pdinfo, prn);
+	print_restriction_set(rset, pdinfo, opt, prn);
     }
 
     if (rset->otype == GRETL_OBJ_VAR) {

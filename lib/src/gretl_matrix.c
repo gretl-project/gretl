@@ -9660,10 +9660,10 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
  * @Q: right-hand restriction matrix.
  * @B: matrix to hold coefficient estimates, k x g.
  * @U: matrix to hold residuals (T x g), if wanted.
- * @V: matrix to hold the restricted-LS counterpart to
+ * @Wi: matrix to hold the restricted-LS counterpart to
  * (X'X)^{-1}, if wanted.
  *
- * Computes LS estimates restricted by R and Q, putting the
+ * Computes LS estimates restricted by @R and @Q, putting the
  * coefficient estimates into @B.
  * 
  * Returns: 0 on success, non-zero error code on failure.
@@ -9676,7 +9676,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 				   const gretl_matrix *Q,
 				   gretl_matrix *B,
 				   gretl_matrix *U,
-				   gretl_matrix *V)
+				   gretl_matrix **Wi)
 {
     gretl_matrix *XTXi = NULL;
     gretl_matrix_block *M;
@@ -9705,6 +9705,10 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 	return err;
     }
 
+#if 0
+    gretl_matrix_print(B, "B (unrestricted)");
+#endif
+
     M = gretl_matrix_block_new(&M1, k, nr,
 			       &M2, nr, nr,
 			       &XTY, k, g,
@@ -9729,6 +9733,9 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 				 M2, GRETL_MOD_NONE);
 	if (!err) {
 	    err = gretl_invert_symmetric_matrix(M2);
+	    if (err) {
+		fprintf(stderr, "restricted_multi_ols: invert M2: err = %d\n", err);
+	    }
 	}
     }
 
@@ -9770,12 +9777,12 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 					U, GRETL_MOD_DECREMENT);
     }
 
-    if (!err && U != NULL && V != NULL) {
+    if (!err && Wi != NULL) {
 	/* 
 	   Mc = I - (X'X)^{-1} * R' * (R*(X'X)^{-1}*R')^{-1} * R 
               = I - XTXi * (R'*M2*R)
 
-           and "V" = Mc * (X'X)^{-1} * Mc',
+           and "Wi" = Mc * (X'X)^{-1} * Mc',
 
 	   which is the rls counterpart to (X'X)^{-1}
 	*/
@@ -9798,10 +9805,15 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 
 	if (!err) {
 	    err = gretl_matrix_qform(Mc, GRETL_MOD_NONE, XTXi, 
-				     V, GRETL_MOD_NONE);
+				     RXR, GRETL_MOD_NONE);
 	}
 
-	gretl_matrix_free(RXR);
+	if (err) {
+	    gretl_matrix_free(RXR);
+	} else {
+	    *Wi = RXR;
+	}
+
 	gretl_matrix_free(Mc);
     }    
 
