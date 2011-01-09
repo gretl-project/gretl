@@ -269,39 +269,6 @@ liml_scale_vcv (equation_system *sys, gretl_matrix *vcv)
     }		
 }
 
-/* calculate the standard error of the residuals for the system as a
-   whole and use this for scaling the covariance matrix */
-
-static void 
-single_eq_common_sigma_scale_vcv (equation_system *sys, gretl_matrix *vcv)
-{
-    double s, ess = 0.0;
-    int nr = 0, dfc = 0;
-    int den = 0;
-    int i;
-
-    if (system_want_df_corr(sys)) {
-	nr = system_n_restrictions(sys);
-	dfc = 1;
-    }
-
-    /* is this right? */
-
-    for (i=0; i<sys->neqns; i++) {
-	ess += sys->models[i]->ess;
-	den += sys->models[i]->nobs;
-	if (dfc) {
-	    den -= sys->models[i]->ncoeff;
-	}
-    }
-
-    den += nr;
-
-    s = sqrt(ess / den);
-
-    gretl_matrix_multiply_by_scalar(vcv, s * s);
-}
-
 /* use the per-equation residual standard deviations for scaling
    the covariance matrix, block by diagonal block
 */
@@ -398,18 +365,9 @@ calculate_sys_coeffs (equation_system *sys,
 	sys->bdiff = sqrt(bnum / bden);
     }
 
-    /* simple single-equation methods: need to multiply by an estimate
-       of sigma.  Should this really be the system sigma, and not
-       equation-specific?
-    */
-
     if (sys->method == SYS_METHOD_OLS || 
 	sys->method == SYS_METHOD_TSLS) {
-	if (nr > 0) {
-	    single_eq_common_sigma_scale_vcv(sys, vcv);
-	} else {
-	    single_eq_scale_vcv(sys, vcv);
-	}
+	single_eq_scale_vcv(sys, vcv);
     } else if (sys->method == SYS_METHOD_LIML) {
 	liml_scale_vcv(sys, vcv);
     }
@@ -1155,7 +1113,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	augment_y_with_restrictions(y, mk, nr, sys);
     }
 
-#if SDEBUG > 1
+#if SDEBUG
     gretl_matrix_print(X, "sys X");
     gretl_matrix_print(y, "sys y");
 #endif    
