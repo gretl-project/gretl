@@ -185,7 +185,6 @@ enum {
     F_SUMC,
     F_MEANR,	 
     F_MEANC,
-    F_SDC,
     F_MCOV,
     F_MCORR,
     F_CDEMEAN,
@@ -257,6 +256,7 @@ enum {
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
+    F_SDC,
     F_DUMIFY,
     F_SORTBY,
     F_RUNIFORM,

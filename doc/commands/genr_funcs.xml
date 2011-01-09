@@ -3490,7 +3490,7 @@
 	<fnarg type="matrix">Y</fnarg>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="matrix">R</fnarg>
-	<fnarg type="matrix">Q</fnarg>
+	<fnarg type="cvec">q</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
 	<fnarg type="matrixref" optional="true">&amp;V</fnarg>
       </fnargs>
@@ -3499,9 +3499,13 @@
 	  Restricted least squares: returns a <by r="k" c="n"/> matrix
 	  of parameter estimates obtained by least-squares regression
 	  of the <by r="T" c="n"/> matrix <argname>Y</argname> on the
-	  <by r="T" c="k"/> matrix <argname>X</argname> subject to
-	  the linear restriction <math>RB</math> = <math>Q</math>,
-	  where <math>B</math> denotes the coefficient matrix.
+	  <by r="T" c="k"/> matrix <argname>X</argname> subject to the
+	  linear restriction <math>RB</math> = <math>q</math>, where
+	  <math>B</math> denotes the stacked coefficient vector.
+	  <argname>R</argname> must have <math>k</math> *
+	  <math>n</math> columns; each row of this matrix represents a
+	  linear restriction. The number of rows in <argname>q</argname>
+	  must match the number of rows in <argname>R</argname>.
 	</para>
 	<para>
 	  If the fifth argument is not <lit>null</lit>, the <by r="T"
@@ -3511,8 +3515,9 @@
 	  <argname>V</argname> will hold the restricted counterpart to
 	  the matrix <math>X'X</math><sup>-1</sup>. The variance
 	  matrix of the estimates for equation <math>i</math> can be
-	  constructed by multiplying <argname>V</argname> by the
-	  estimated error variance for that equation.
+	  constructed by multiplying the appropriate sub-matrix of
+	  <argname>V</argname> by an estimate of the error variance
+	  for that equation.
 	</para>
       </description>
     </function>  
@@ -4690,11 +4695,16 @@
     <function name="sdc" section="stats" output="rvec">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
+	<fnarg type="scalar" optional="true">df</fnarg>
       </fnargs>
       <description>
 	<para>
 	  Returns the standard deviations of the columns of
-	  <argname>X</argname> (with no degrees of freedom correction). 
+	  <argname>X</argname>. If <argname>df</argname> is positive
+	  it is used as the divisor for the column variances,
+	  otherwise the divisor is the number of rows in
+	  <argname>X</argname> (that is, no degrees of freedom
+	  correction is applied).
 	  <seelist>
 	    <fncref targ="meanc"/>
 	    <fncref targ="sumc"/>

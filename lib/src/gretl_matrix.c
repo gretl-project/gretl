@@ -5142,16 +5142,20 @@ gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m, int *err)
 }
 
 /**
- * gretl_matrix_column_sd:
+ * gretl_matrix_column_sd2:
  * @m: source matrix.
+ * @df: degrees of freedom for standard deviations.
  * @err: location to receive error code.
  *
  * Returns: a row vector containing the standard deviations of
- * the columns of @m (without a degrees of freedom correction), 
- * or NULL on failure.
+ * the columns of @m, or NULL on failure. If @df is positive 
+ * it is used as the divisor when calculating the column
+ * variance, otherwise the divisor is the number of rows in
+ * @m.
  */
 
-gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
+gretl_matrix *gretl_matrix_column_sd2 (const gretl_matrix *m, 
+				       int df, int *err)
 {
     gretl_matrix *s;
     int i, j;
@@ -5168,6 +5172,10 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
 	return NULL;
     }
 
+    if (df <= 0) {
+	df = m->rows;
+    }
+
     for (j=0; j<m->cols; j++) {
 	double dev, v = 0.0, xbar = 0.0;
 
@@ -5182,12 +5190,27 @@ gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
 	    v += dev * dev;
 	}
 
-	v /= m->rows;
+	v /= df;
 
 	s->val[j] = sqrt(v);
     }
 
     return s;
+}
+
+/**
+ * gretl_matrix_column_sd:
+ * @m: source matrix.
+ * @err: location to receive error code.
+ *
+ * Returns: a row vector containing the standard deviations of
+ * the columns of @m (without a degrees of freedom correction), 
+ * or NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_column_sd (const gretl_matrix *m, int *err)
+{
+    return gretl_matrix_column_sd2(m, 0, err);
 }
 
 /**
@@ -9660,8 +9683,8 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
  * @q: right-hand restriction matrix.
  * @B: matrix to hold coefficient estimates, k x g.
  * @U: matrix to hold residuals (T x g), if wanted.
- * @W: matrix to hold the restricted-LS counterpart to
- * (X'X)^{-1}, if wanted.
+ * @W: matrix to hold the RLS counterpart to (X'X)^{-1},
+ * if wanted.
  *
  * Computes LS estimates restricted by @R and @q, putting the
  * coefficient estimates into @B. The @R matrix must have
@@ -9696,7 +9719,11 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 
     if (X->rows != T) {
 	return E_NONCONF;
-    }      
+    } 
+
+    if (B->rows != k || B->cols != g) {
+	return E_NONCONF;
+    }
 
     if (R->cols != nc || q->rows != nr || q->cols != 1) {
 	return E_NONCONF;
@@ -9750,6 +9777,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
     gretl_matrix_inscribe_matrix(XYq, q, nc, 0, GRETL_MOD_NONE);
 
     if (W != NULL) {
+	/* keep a copy for inversion */
 	V = gretl_matrix_copy(RXR);
 	if (V == NULL) {
 	    err = E_ALLOC;
@@ -9760,7 +9788,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
 	/* solve for stacked coeff vector in XYq */
 	err = gretl_LU_solve(RXR, XYq);
 	if (!err) {
-	    /* and transcribe to B */
+	    /* transcribe to B */
 	    dsize = nc * sizeof(double);
 	    memcpy(B->val, XYq->val, dsize);
 	}
@@ -9775,7 +9803,7 @@ gretl_matrix_restricted_multi_ols (const gretl_matrix *Y,
     }
 
     if (!err && W != NULL) {
-	/* compute "W" */
+	/* compute variance-related matrix */
 	err = gretl_invert_general_matrix(V);
 	if (!err) {
 	    *W = gretl_matrix_alloc(nc, nc);

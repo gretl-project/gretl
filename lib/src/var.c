@@ -2220,8 +2220,15 @@ int transcribe_VAR_models (GRETL_VAR *var,
 	    for (j=0; j<jmax; j++) {
 		pmod->coeff[j] = gretl_matrix_get(var->B, j, i);
 		if (XTX != NULL) {
-		    x = gretl_matrix_get(XTX, j, j);
-		    pmod->sderr[j] = pmod->sigma * sqrt(x);
+		    if (XTX->rows <= var->ncoeff) {
+			x = gretl_matrix_get(XTX, j, j);
+			pmod->sderr[j] = pmod->sigma * sqrt(x);
+		    } else {
+			int jj = i * var->ncoeff + j;
+
+			x = gretl_matrix_get(XTX, jj, jj);
+			pmod->sderr[j] = pmod->sigma * sqrt(x);
+		    }
 		}
 	    }
 	}

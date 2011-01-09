@@ -2289,7 +2289,7 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    goto finalize;
 	}
 
-	if (f == F_RESAMPLE || f == F_MREVERSE) {
+	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC) {
 	    /* the r node may be absent, but if present it should
 	       hold a scalar */
 	    if (!empty_or_num(r)) {
@@ -2314,8 +2314,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    ret->v.m = gretl_matrix_row_mean(m, &p->err);
 	    break;
 	case F_SD:
-	case F_SDC:
 	    ret->v.m = gretl_matrix_column_sd(m, &p->err);
+	    break;
+	case F_SDC:
+	    if (r != NULL && r->t == NUM) {
+		ret->v.m = gretl_matrix_column_sd2(m, r->v.xval, &p->err);
+	    } else {
+		ret->v.m = gretl_matrix_column_sd(m, &p->err);
+	    }
 	    break;
 	case F_MCOV:
 	    ret->v.m = gretl_covariance_matrix(m, 0, &p->err);

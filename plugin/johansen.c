@@ -469,7 +469,7 @@ static void transcribe_alpha (GRETL_VAR *v)
     MODEL *pmod;
     double aij, sij = NADBL;
     int r = jrank(v);
-    int k = (v->B != NULL)? v->B->rows : 0;
+    int k = v->ncoeff - r;
     int i, j;
 
     for (i=0; i<v->neqns; i++) {
@@ -511,12 +511,12 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
     v->ncoeff += jrank(v);
 
 #if TRY_RLS
-    if (xc == 0) {
+    if (1 || estimate_alpha(flags)) {
+	xc += jrank(v);
+    } else if (xc == 0) {
 	/* nothing to be done */
 	return 0;
-    } else {
-	xc += jrank(v);
-    }
+    }    
 #else
     if (estimate_alpha(flags)) {
 	xc += jrank(v);
@@ -630,7 +630,7 @@ static int add_EC_terms_to_X (GRETL_VAR *v, gretl_matrix *X,
    appropriate dependent variable matrix, Y */
 
 static int make_vecm_Y (GRETL_VAR *v, const double **Z, 
-			gretl_matrix *Pi, int flags)
+			const gretl_matrix *Pi, int flags)
 {
     int i, s, t, vi, vj;
     double pij, yti, xti;
@@ -649,8 +649,6 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
     } else {
 	/* netting out \alpha: "Y" = DY_t - \Pi Y*_t */
 	int j, k, wexo, p1 = v->jinfo->Beta->rows;
-
-	form_Pi(v, Pi);
 
 	for (i=0; i<v->neqns; i++) {
 	    wexo = 1;
@@ -753,19 +751,26 @@ static void fill_residuals_matrix (GRETL_VAR *v)
 
 #if TRY_RLS
 
-static int make_full_size_R_q (GRETL_VAR *v, const gretl_restriction *rset)
+static int make_full_R_q (GRETL_VAR *v, const gretl_restriction *rset)
 {
-    const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
-    const gretl_matrix *qa = rset_get_qa_matrix(rset);
     gretl_matrix *R, *q;
-    double x;
-    int j;
+    int rank = jrank(v);
+    int k = v->ncoeff;
+    int r = v->neqns * rank;
+    int p = v->neqns * k;
+    int i, j, j0;
 
-    gretl_matrix_print(Ra, "Ra, in make_full");
-    gretl_matrix_print(qa, "qa, in make_full");
+    /* Here we build restriction matrices that impose the
+       precomputed \alpha values on OLS estimation
+    */
 
-    R = gretl_zero_matrix_new(v->neqns, v->ncoeff);
-    q = gretl_zero_matrix_new(v->neqns, v->neqns);
+#if 1
+    gretl_matrix_print(v->jinfo->Alpha, "pre-computed alpha");
+    gretl_matrix_print(v->jinfo->Ase, "pre-computed alpha std errs");
+#endif
+
+    R = gretl_zero_matrix_new(r, p);
+    q = gretl_matrix_alloc(r, 1);
 
     if (R == NULL || q == NULL) {
 	gretl_matrix_free(R);
@@ -773,18 +778,27 @@ static int make_full_size_R_q (GRETL_VAR *v, const gretl_restriction *rset)
 	return E_ALLOC;
     }
 
-    /* FIXME generalize */
-
-    for (j=0; j<Ra->cols; j++) {
-	x = gretl_matrix_get(Ra, 0, j);
-	gretl_matrix_set(R, j, v->ncoeff - 1, x);
+    j = k - rank;
+    j0 = 0;
+    for (i=0; i<r; i++) {
+	gretl_matrix_set(R, i, j, 1.0);
+	if (j0 < rank - 1) {
+	    j++;
+	    j0++;
+	} else {
+	    j += k - rank + 1;
+	    j0 = 0;
+	}
     }
 
-    x = gretl_matrix_get(qa, 0, 0);
-    gretl_matrix_set(q, v->neqns - 1, v->neqns - 1, x);
+    for (i=0; i<r; i++) {
+	q->val[i] = v->jinfo->Alpha->val[i];
+    }
 
+#if 1
     gretl_matrix_print(R, "R (a->full)");
     gretl_matrix_print(q, "q (a->full)");
+#endif
 
     v->jinfo->Ra = R;
     v->jinfo->qa = q;
@@ -857,17 +871,28 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     if (alpha_restricted(flags)) {
 	fprintf(stderr, "Trying RLS\n");
 	if (!err) {
-	    err = make_vecm_Y(v, Z, Pi, 0);
+	    form_Pi(v, Pi);
+	    err = make_vecm_Y(v, Z, NULL, 0);
+	}
+	if (!err) {
+	    err = make_full_R_q(v, rset);
 	}
 	if (!err) {
 	    err = add_EC_terms_to_X(v, v->X, Z);
 	}
+    } else {
 	if (!err) {
-	    err = make_full_size_R_q(v, rset);
+	    err = make_vecm_Y(v, Z, Pi, flags);
+	}    
+	if (!err && estimate_alpha(flags)) {
+	    err = add_EC_terms_to_X(v, v->X, Z);
 	}
-    } 
+    }	
 #else
     if (!err) {
+	if (alpha_restricted(flags)) {
+	    form_Pi(v, Pi);
+	}
 	err = make_vecm_Y(v, Z, Pi, flags);
     }    
     if (!err && estimate_alpha(flags)) {
