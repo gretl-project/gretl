@@ -527,23 +527,13 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 #endif
 
     if (v->X == NULL) {
-#if JDEBUG
-	fprintf(stderr, " allocating v->X at %d x %d\n", v->T, xc);
-#endif
 	v->X = gretl_matrix_alloc(v->T, xc);
 	if (v->X == NULL) {
 	    err = E_ALLOC;
 	}
     } else if (v->X->cols < xc) {
-#if JDEBUG
-	fprintf(stderr, " expanding v->X to %d x %d\n", v->T, xc);
-#endif
 	err = gretl_matrix_realloc(v->X, v->T, xc);
-    } else {
-#if JDEBUG
-	fprintf(stderr, " v->X is already %d x %d\n", v->X->rows, v->X->cols);
-#endif
-    }
+    } 
 
     if (err) {
 	return err;
@@ -922,10 +912,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 #else
 		err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &v->XTX);
 #endif
-		use_XTX = 1; /* is this right? */
-#if JDEBUG
-		gretl_matrix_print(v->B, "v->B in estimate_full");
-#endif
+		use_XTX = 1; 
 	    }
 	} else {
 	    /* nothing to estimate, with alpha already in hand */
