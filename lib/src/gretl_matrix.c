@@ -9656,15 +9656,18 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
  * gretl_matrix_restricted_multi_ols:
  * @Y: dependent variable matrix, T x g.
  * @X: matrix of independent variables, T x k.
- * @R: left-hand restriction matrix, as in RB = Q.
- * @Q: right-hand restriction matrix.
+ * @R: left-hand restriction matrix, as in RB = q.
+ * @q: right-hand restriction matrix.
  * @B: matrix to hold coefficient estimates, k x g.
  * @U: matrix to hold residuals (T x g), if wanted.
- * @Wi: matrix to hold the restricted-LS counterpart to
+ * @W: matrix to hold the restricted-LS counterpart to
  * (X'X)^{-1}, if wanted.
  *
- * Computes LS estimates restricted by @R and @Q, putting the
- * coefficient estimates into @B.
+ * Computes LS estimates restricted by @R and @q, putting the
+ * coefficient estimates into @B. The @R matrix must have
+ * g*k columns; each row represents a linear restriction;
+ * @q must be a column vector of length equal to the
+ * number of rows of @R.
  * 
  * Returns: 0 on success, non-zero error code on failure.
  */
@@ -9673,152 +9676,127 @@ int
 gretl_matrix_restricted_multi_ols (const gretl_matrix *Y, 
 				   const gretl_matrix *X,
 				   const gretl_matrix *R, 
-				   const gretl_matrix *Q,
+				   const gretl_matrix *q,
 				   gretl_matrix *B,
 				   gretl_matrix *U,
-				   gretl_matrix **Wi)
+				   gretl_matrix **W)
 {
-    gretl_matrix *XTXi = NULL;
     gretl_matrix_block *M;
-    gretl_matrix *M1, *M2, *M3;
-    gretl_matrix *XTY, *M4, *M5;
-    int T = Y->rows;
-    int k = X->cols;
-    int g = Y->cols;
-    int nr = R->rows;
-    int err = 0;
+    gretl_matrix *XTX, *RXR, *XYq;
+    gretl_matrix *Yi, *XYi;
+    gretl_matrix *V = NULL;
+    int T = Y->rows;  /* sample length */
+    int k = X->cols;  /* number of regressors */
+    int g = Y->cols;  /* number of dependent vars */
+    int nc = g * k;   /* total coefficients */
+    int nr = R->rows; /* number of restrictions */
+    int p = nc + nr;  /* coeffs plus restrictions */
+    int dsize, offset;
+    int i, r, err = 0;
 
     if (X->rows != T) {
 	return E_NONCONF;
     }      
 
-    if (R->cols != k || Q->rows != nr || Q->cols != g) {
+    if (R->cols != nc || q->rows != nr || q->cols != 1) {
 	return E_NONCONF;
     }
 
     if (U != NULL && (U->rows != T || U->cols != g)) {
 	return E_NONCONF;
-    } 
-
-    err = gretl_matrix_multi_ols(Y, X, B, U, &XTXi);
-    if (err) {
-	return err;
     }
 
-#if 0
-    gretl_matrix_print(B, "B (unrestricted)");
-#endif
-
-    M = gretl_matrix_block_new(&M1, k, nr,
-			       &M2, nr, nr,
-			       &XTY, k, g,
-			       &M3, k, g,
-			       &M4, nr, g,
-			       &M5, nr, g,
-			       NULL);
+    M = gretl_matrix_block_new(&XTX, k, k,
+			       &RXR, p, p,
+			       &XYq, p, 1,
+			       &Yi,  T, 1,
+			       &XYi, k, 1,
+			       NULL);  
     if (M == NULL) {
 	return E_ALLOC;
     }
 
-    /* B_{rls} = B_{ols} + (XTXi*R') * (R*XTXi*R')^{-1} * (Q - R*XTXi*X'Y) */
+    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+			      X, GRETL_MOD_NONE,
+			      XTX, GRETL_MOD_NONE);
 
-    /* M1 = (XTX)^{-1} * R' */
-    err = gretl_matrix_multiply_mod(XTXi, GRETL_MOD_NONE,
-				    R, GRETL_MOD_TRANSPOSE,
-				    M1, GRETL_MOD_NONE);
+    gretl_matrix_zero(RXR);
+
+    dsize = T * sizeof(double);
+    offset = r = 0;
+
+    /* Form the "big" X'X and X'y matrices, bordered by the
+       restriction:
+
+       "RXR" = [(I_g ** X'X) ~ R'] | (R ~ 0)
+       "XYq" = vec(X'Y) | q
+    */
+
+    for (i=0; i<g; i++) {
+	gretl_matrix_inscribe_matrix(RXR, XTX, r, r,
+				     GRETL_MOD_NONE);
+	memcpy(Yi->val, Y->val + offset, dsize);
+	gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+				  Yi, GRETL_MOD_NONE,
+				  XYi, GRETL_MOD_NONE);
+	gretl_matrix_inscribe_matrix(XYq, XYi, r, 0, 
+				     GRETL_MOD_NONE);
+	r += k;
+	offset += T;
+    }
+
+    gretl_matrix_inscribe_matrix(RXR, R, r, 0, GRETL_MOD_NONE);
+    gretl_matrix_inscribe_matrix(RXR, R, 0, nc, GRETL_MOD_TRANSPOSE);
+    gretl_matrix_inscribe_matrix(XYq, q, nc, 0, GRETL_MOD_NONE);
+
+    if (W != NULL) {
+	V = gretl_matrix_copy(RXR);
+	if (V == NULL) {
+	    err = E_ALLOC;
+	}
+    }
 
     if (!err) {
-	/* M2 = (R * (XTX)^{-1} * R')^{-1} */
-	err = gretl_matrix_qform(R, GRETL_MOD_NONE, XTXi, 
-				 M2, GRETL_MOD_NONE);
+	/* solve for stacked coeff vector in XYq */
+	err = gretl_LU_solve(RXR, XYq);
 	if (!err) {
-	    err = gretl_invert_symmetric_matrix(M2);
-	    if (err) {
-		fprintf(stderr, "restricted_multi_ols: invert M2: err = %d\n", err);
+	    /* and transcribe to B */
+	    dsize = nc * sizeof(double);
+	    memcpy(B->val, XYq->val, dsize);
+	}
+    }    
+
+    if (!err && U != NULL) {
+	/* compute residuals */
+	gretl_matrix_copy_values(U, Y);
+	gretl_matrix_multiply_mod(X, GRETL_MOD_NONE,
+				  B, GRETL_MOD_NONE,
+				  U, GRETL_MOD_DECREMENT);
+    }
+
+    if (!err && W != NULL) {
+	/* compute "W" */
+	err = gretl_invert_general_matrix(V);
+	if (!err) {
+	    *W = gretl_matrix_alloc(nc, nc);
+	    if (*W == NULL) {
+		err = E_ALLOC;
+	    } else {
+		double wij;
+		int j;
+
+		for (j=0; j<nc; j++) {
+		    for (i=0; i<nc; i++) {
+			wij = gretl_matrix_get(V, i, j);
+			gretl_matrix_set(*W, i, j, wij);
+		    }
+		}
 	    }
 	}
     }
 
-    if (!err) {
-	/* M3 = (XTX)^{-1} * X'Y */
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-					Y, GRETL_MOD_NONE,
-					XTY, GRETL_MOD_NONE);
-	if (!err) {
-	    err = gretl_matrix_multiply(XTXi, XTY, M3);
-	}
-    }
-
-    if (!err) {
-	/* M4 = Q - R * (XTX)^{-1} * X'Y */
-	gretl_matrix_copy_values(M4, Q);
-	err = gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
-					M3, GRETL_MOD_NONE,
-					M4, GRETL_MOD_DECREMENT);
-    }
-
-    if (!err) {
-	/* M5 = (R*XTXi*R')^{-1} * (Q - R*XTXi*X'Y) */
-	err = gretl_matrix_multiply(M2, M4, M5);
-    } 
-
-    if (!err) {
-	/* B_{rls} */
-	err = gretl_matrix_multiply_mod(M1, GRETL_MOD_NONE,
-					M5, GRETL_MOD_NONE,
-					B, GRETL_MOD_CUMULATE);
-    }  
-
-    if (!err && U != NULL) {
-	/* U = Y - X*B */
-	gretl_matrix_copy_values(U, Y);
-	err = gretl_matrix_multiply_mod(X, GRETL_MOD_NONE,
-					B, GRETL_MOD_NONE,
-					U, GRETL_MOD_DECREMENT);
-    }
-
-    if (!err && Wi != NULL) {
-	/* 
-	   Mc = I - (X'X)^{-1} * R' * (R*(X'X)^{-1}*R')^{-1} * R 
-              = I - XTXi * (R'*M2*R)
-
-           and "Wi" = Mc * (X'X)^{-1} * Mc',
-
-	   which is the rls counterpart to (X'X)^{-1}
-	*/
-	gretl_matrix *RXR = gretl_matrix_alloc(k, k);
-	gretl_matrix *Mc = gretl_matrix_alloc(k, k);
-
-	if (RXR == NULL || Mc == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = gretl_matrix_qform(R, GRETL_MOD_TRANSPOSE,
-				     M2, RXR, GRETL_MOD_NONE);
-	}
-
-	if (!err) {
-	    gretl_matrix_inscribe_I(Mc, 0, 0, k);
-	    err = gretl_matrix_multiply_mod(XTXi, GRETL_MOD_NONE,
-					    RXR, GRETL_MOD_NONE,
-					    Mc, GRETL_MOD_DECREMENT);
-	}
-
-	if (!err) {
-	    err = gretl_matrix_qform(Mc, GRETL_MOD_NONE, XTXi, 
-				     RXR, GRETL_MOD_NONE);
-	}
-
-	if (err) {
-	    gretl_matrix_free(RXR);
-	} else {
-	    *Wi = RXR;
-	}
-
-	gretl_matrix_free(Mc);
-    }    
-
-    gretl_matrix_free(XTXi);
     gretl_matrix_block_destroy(M);
+    gretl_matrix_free(V);
 
     return err;
 }
