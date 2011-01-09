@@ -2,13 +2,13 @@
 # #-#-#-#-#  ru.po (ru)  #-#-#-#-#
 # Alexander B. Gedranovich <gedranovich@gmail.com>, 2008, 2009.
 # moradan, 2008.
-# Alexander Gedranovich, 2009, 2010.
+# Alexander Gedranovich, 2009, 2010, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-12-03 09:35-0500\n"
-"PO-Revision-Date: 2010-11-26 01:26+0200\n"
+"PO-Revision-Date: 2011-01-09 16:47+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:291
 msgid "lagged differences"
@@ -2394,9 +2394,8 @@ msgid "none"
 msgstr "Нет"
 
 #: lib/src/genfuncs.c:4324
-#, fuzzy
 msgid "other"
-msgstr "Другая"
+msgstr ""
 
 #: lib/src/genlex.c:646 lib/src/gretl_restrict.c:2444
 #, c-format
@@ -2695,9 +2694,9 @@ msgid "+- sqrt(h(t))"
 msgstr "+- КОРЕНЬ(h(t))"
 
 #: lib/src/graphing.c:4248
-#, fuzzy, c-format
+#, c-format
 msgid "mean %s"
-msgstr "Среднее"
+msgstr "Среднее %s"
 
 #: lib/src/graphing.c:4414
 msgid "time"
@@ -3452,9 +3451,8 @@ msgid "iteration"
 msgstr "Итерация"
 
 #: lib/src/gretl_panel.c:3583
-#, fuzzy
 msgid "Pooled error variance"
-msgstr "_Предсказанная дисперсия ошибок"
+msgstr ""
 
 #: lib/src/gretl_panel.c:3657
 msgid "groupwise heteroskedasticity"
@@ -6667,11 +6665,9 @@ msgid "dummify: no suitable variables were found"
 msgstr ""
 
 #: lib/src/tsls.c:804
-#, fuzzy, c-format
+#, c-format
 msgid "Number of instruments (%d) exceeds the number of observations (%d)"
-msgstr ""
-"Число аргументов (%d) не соответствует числу\n"
-"параметров для функции %s (%d)"
+msgstr "Число инструментов (%d) превышает число параметров (%d)"
 
 #: lib/src/tsls.c:1584 gui2/selector.c:2720
 msgid "You can't use the dependent variable as an instrument"
@@ -8605,9 +8601,9 @@ msgid "Use L-BFGS-B, memory size:"
 msgstr "Использовать алгоритм L-BFGS-B, размер памяти:"
 
 #: gui2/dialogs.c:1687
-#, fuzzy, c-format
+#, c-format
 msgid "groups (N = %d)"
-msgstr "%s (n = %d, %s)"
+msgstr "Группы (N = %d)"
 
 #: gui2/dialogs.c:1689
 #, c-format
@@ -8645,42 +8641,36 @@ msgid "Set sample range"
 msgstr "Установить диапазон"
 
 #: gui2/dialogs.c:2090
-#, fuzzy
 msgid "single graph: group means"
-msgstr " Нажмите кнопку мыши на графике для вызова меню"
+msgstr "Простой график: групповое среднее"
 
 #: gui2/dialogs.c:2091
 msgid "single graph: groups overlaid (N <= 80)"
-msgstr ""
+msgstr "Простой график: групповое перекрытие (N <= 80)"
 
 #: gui2/dialogs.c:2092
-#, fuzzy
 msgid "single graph: groups in sequence (N <= 80)"
-msgstr " Нажмите кнопку мыши на графике для вызова меню"
+msgstr "Простой график: последовательные группы (N <= 80)"
 
 #: gui2/dialogs.c:2093
-#, fuzzy
 msgid "multiple plots in grid (N <= 9)"
-msgstr "Несколько графиков"
+msgstr "Несколько графиков (сетка, N <= 9)"
 
 #: gui2/dialogs.c:2094
-#, fuzzy
 msgid "multiple plots arranged vertically (N <= 6)"
-msgstr "Несколько графиков (вертикально)"
+msgstr "Несколько графиков (вертикально, N <= 6)"
 
 #: gui2/dialogs.c:2095
 msgid "boxplots by group (N <= 150)"
-msgstr ""
+msgstr "Коробчатые диаграммы по группам (N <= 150)"
 
 #: gui2/dialogs.c:2096
-#, fuzzy
 msgid "single boxplot"
-msgstr "gretl: коробчатая диаграмма"
+msgstr "Простая коробчатая диаграмма"
 
 #: gui2/dialogs.c:2107 gui2/dialogs.c:2119
-#, fuzzy
 msgid "panel plot"
-msgstr "панельные данные"
+msgstr ""
 
 #: gui2/dialogs.c:2222
 msgid "Enter boolean condition for selecting cases:"
@@ -10655,9 +10645,8 @@ msgid "_Time series plot"
 msgstr "График _временного ряда"
 
 #: gui2/gretl.c:1533
-#, fuzzy
 msgid "_Panel plot..."
-msgstr "_3D график..."
+msgstr ""
 
 #: gui2/gretl.c:1534
 msgid "_Unit root tests"
@@ -12679,9 +12668,8 @@ msgid "Time series plot"
 msgstr "График временного ряда"
 
 #: gui2/menustate.c:344 gui2/menustate.c:434
-#, fuzzy
 msgid "Panel plot..."
-msgstr "_3D график..."
+msgstr ""
 
 #: gui2/menustate.c:346 gui2/menustate.c:435
 msgid "Frequency distribution"
