@@ -25,6 +25,8 @@ version 1.9.4, in progress
   function for matrices
 - New function mrls(); implements restricted least squares
   estimation for data in matrix form
+- The sdc() function (column standard deviations): add an
+  optional second argument to control the divisor
 - New "set" variable, matrix_mask, which can be used to
   control the included observations when constructing
   matrices from series
