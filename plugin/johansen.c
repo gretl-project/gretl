@@ -340,10 +340,9 @@ static int compute_omega (GRETL_VAR *vecm)
 {
     if (vecm->S == NULL) {
 	vecm->S = gretl_matrix_alloc(vecm->neqns, vecm->neqns);
-    }
-
-    if (vecm->S == NULL) {
-	return E_ALLOC;
+	if (vecm->S == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     gretl_matrix_multiply_mod(vecm->E, GRETL_MOD_TRANSPOSE,
@@ -485,8 +484,6 @@ static void transcribe_alpha (GRETL_VAR *v)
     }
 }
 
-#define TRY_RLS 0 /* not ready yet */
-
 /* The X (data) and B (coefficient) matrices may need expanding
    to take account of the EC terms */
 
@@ -500,6 +497,7 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	   be fully allocated */
 	v->X->cols = v->ncoeff;
 	v->B->rows = v->ncoeff;
+	/* FIXME v->Y cols, v->B cols? */
 	return 0;
     }
 
@@ -510,34 +508,37 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 
     v->ncoeff += jrank(v);
 
-#if TRY_RLS
-    if (1 || estimate_alpha(flags)) {
-	xc += jrank(v);
-    } else if (xc == 0) {
-	/* nothing to be done */
-	return 0;
-    }    
-#else
     if (estimate_alpha(flags)) {
 	xc += jrank(v);
-    } else if (xc == 0) {
+    } 
+
+    if (xc == 0) {
 	/* nothing to be done */
 	return 0;
-    }
-#endif
+    }	
 
     if (v->X == NULL) {
 	v->X = gretl_matrix_alloc(v->T, xc);
 	if (v->X == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    /* record allocated size */
+	    v->xcols = xc;
 	}
     } else if (v->X->cols < xc) {
-	err = gretl_matrix_realloc(v->X, v->T, xc);
+	if (v->xcols == xc) {
+	    gretl_matrix_reuse(v->X, -1, xc);
+	} else {
+	    err = gretl_matrix_realloc(v->X, v->T, xc);
+	    if (!err) {
+		v->xcols = xc;
+	    }
+	}
     } 
 
     if (err) {
 	return err;
-    }
+    } 
 
     if (v->B == NULL) {
 	v->B = gretl_matrix_alloc(xc, v->neqns);
@@ -545,25 +546,21 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	    err = E_ALLOC;
 	}	
     } else if (v->B->rows < xc) {
-	/* B may have extra cols for restricted terms */
-	int nr = nrestr(v);
-	int n = v->neqns + nr;
-
-	err = gretl_matrix_realloc(v->B, xc, n);
-	if (!err && nr > 0) {
+	/* B may have extra cols for restricted terms; the
+	   true number of allocated columns is recorded
+	   in v->ycols
+	*/
+	err = gretl_matrix_realloc(v->B, xc, v->ycols);
+	if (!err && v->ycols > v->neqns) {
 	    v->B->cols = v->neqns;
 	}
     }
 
-    if (err) {
-	return err;
-    }
-
-    if (v->Y->cols > v->neqns) {
+    if (!err && v->Y->cols > v->neqns) {
 	gretl_matrix_reuse(v->Y, -1, v->neqns);
     }
 
-    return 0;
+    return err;
 }
 
 /* For estimating both alpha and Gamma: add the EC terms into
@@ -620,13 +617,13 @@ static int add_EC_terms_to_X (GRETL_VAR *v, gretl_matrix *X,
    appropriate dependent variable matrix, Y */
 
 static int make_vecm_Y (GRETL_VAR *v, const double **Z, 
-			const gretl_matrix *Pi, int flags)
+			const gretl_matrix *Pi)
 {
     int i, s, t, vi, vj;
     double pij, yti, xti;
     int err = 0;
 
-    if (estimate_alpha(flags)) {
+    if (Pi == NULL) {
 	/* "Y" is composed of plain DYt */
 	for (i=0; i<v->neqns; i++) {
 	    vi = v->ylist[i+1];
@@ -637,7 +634,7 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 	    }
 	}
     } else {
-	/* netting out \alpha: "Y" = DY_t - \Pi Y*_t */
+	/* net out \alpha: "Y" = DY_t - \Pi Y*_t */
 	int j, k, wexo, p1 = v->jinfo->Beta->rows;
 
 	for (i=0; i<v->neqns; i++) {
@@ -739,63 +736,6 @@ static void fill_residuals_matrix (GRETL_VAR *v)
     }
 }
 
-#if TRY_RLS
-
-static int make_full_R_q (GRETL_VAR *v, const gretl_restriction *rset)
-{
-    gretl_matrix *R, *q;
-    int rank = jrank(v);
-    int k = v->ncoeff;
-    int r = v->neqns * rank;
-    int p = v->neqns * k;
-    int i, j, j0, eq;
-
-    /* Here we build restriction matrices that impose the
-       precomputed \alpha values on OLS estimation
-    */
-
-#if 1
-    gretl_matrix_print(v->jinfo->Alpha, "pre-computed alpha");
-    gretl_matrix_print(v->jinfo->Ase, "pre-computed alpha std errs");
-#endif
-
-    R = gretl_zero_matrix_new(r, p);
-    q = gretl_matrix_alloc(r, 1);
-
-    if (R == NULL || q == NULL) {
-	gretl_matrix_free(R);
-	gretl_matrix_free(q);
-	return E_ALLOC;
-    }
-
-    i = 0;
-    for (eq=1; eq<=v->neqns; eq++) {
-	j0 = eq * k - rank;
-	for (j=0; j<rank; j++) {
-	    gretl_matrix_set(R, i++, j0+j, 1.0);
-	}
-    }
-
-    i = 0;
-    for (eq=0; eq<v->neqns; eq++) {
-	for (j=0; j<rank; j++) {
-	    q->val[i++] = gretl_matrix_get(v->jinfo->Alpha, eq, j);
-	}
-    }
-
-#if 1
-    gretl_matrix_print(R, "R (a->full)");
-    gretl_matrix_print(q, "q (a->full)");
-#endif
-
-    gretl_matrix_replace(&v->jinfo->Ra, R);
-    gretl_matrix_replace(&v->jinfo->qa, q);
-
-    return 0;
-}
-
-#endif
-
 /* The following is designed to accommodate the case where alpha is
    restricted, in which case we can't just run OLS conditional on
    beta.
@@ -856,36 +796,19 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	}	
     }  
 
-#if TRY_RLS
-    if (alpha_restricted(flags)) {
-	fprintf(stderr, "Using RLS\n");
-	if (!err) {
-	    form_Pi(v, Pi);
-	    err = make_vecm_Y(v, Z, NULL, 0);
-	}
-	if (!err) {
-	    err = make_full_R_q(v, rset);
-	}
-    } else {
-	if (!err) {
-	    err = make_vecm_Y(v, Z, Pi, flags);
-	}    
-    }
-    if (!err) {
-	err = add_EC_terms_to_X(v, v->X, Z);
-    }    
-#else
     if (!err) {
 	if (alpha_restricted(flags)) {
 	    form_Pi(v, Pi);
 	    fix_Y = 1;
+	    err = make_vecm_Y(v, Z, Pi);
+	} else {
+	    err = make_vecm_Y(v, Z, NULL);
 	}
-	err = make_vecm_Y(v, Z, Pi, flags);
-    }    
+    }   
+ 
     if (!err && estimate_alpha(flags)) {
 	err = add_EC_terms_to_X(v, v->X, Z);
     }
-#endif
 
     if (!err) {
 	if (xc > 0) {
@@ -896,20 +819,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 		if (v->XTX != NULL) {
 		    gretl_matrix_replace(&v->XTX, NULL);
 		}
-#if TRY_RLS
-		if (alpha_restricted(flags)) {
-		    err = gretl_matrix_restricted_multi_ols(v->Y, v->X,
-							    v->jinfo->Ra,
-							    v->jinfo->qa,
-							    v->B, v->E, 
-							    &v->XTX);
-		    gretl_matrix_print(v->B, "restricted v->B");
-		} else {
-		    err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &v->XTX);
-		}
-#else
 		err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &v->XTX);
-#endif
 		use_XTX = 1; 
 	    }
 	} else {
@@ -975,7 +885,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 
 	if (fix_Y) {
 	    /* ensure "Y" holds plain differences */
-	    make_vecm_Y(v, Z, NULL, 0);
+	    make_vecm_Y(v, Z, NULL);
 	}
 
 	transcribe_VAR_models(v, Z, pdinfo, XTX);
@@ -1184,7 +1094,7 @@ static int restricted_beta_variance (GRETL_VAR *vecm,
     gretl_matrix *Vphi = NULL;
     int r = jrank(vecm);
     int p = vecm->neqns;
-    int p1 = p + nrestr(vecm);
+    int p1 = p + n_restricted_terms(vecm);
     int nb = r * p1;
     int freeH = 0;
     int err = 0;
@@ -1729,7 +1639,7 @@ static int simple_restriction (const GRETL_VAR *jvar,
     int ret = 1;
 
     if (rset_VECM_bcols(rset) > 0) {
-	rcols += nrestr(jvar);
+	rcols += n_restricted_terms(jvar);
 	R = rset_get_R_matrix(rset);
 	q = rset_get_q_matrix(rset);
     } else {
@@ -2186,8 +2096,7 @@ static int j_estimate_general (GRETL_VAR *jvar,
 
 /* Public entry point for VECM estimation, restricted or not */
 
-int johansen_estimate (GRETL_VAR *jvar, 
-		       gretl_restriction *rset,
+int johansen_estimate (GRETL_VAR *jvar, gretl_restriction *rset,
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
@@ -2220,9 +2129,8 @@ int johansen_estimate (GRETL_VAR *jvar,
    generate the VAR representation.
 */
 
-int 
-johansen_boot_round (GRETL_VAR *jvar, const double **Z, 
-		     const DATAINFO *pdinfo)
+int johansen_boot_round (GRETL_VAR *jvar, const double **Z, 
+			 const DATAINFO *pdinfo)
 {
     gretl_matrix *M = NULL;
     gretl_matrix *evals = NULL;

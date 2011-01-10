@@ -67,7 +67,7 @@ struct JohansenInfo_ {
                         v->jinfo->code == J_REST_TREND))
 
 /* number of extra terms confined to the cointegrating space */
-int nrestr (const GRETL_VAR *v);
+int n_restricted_terms (const GRETL_VAR *v);
 
 void print_Johansen_test_case (JohansenCode jcode, PRN *prn);
 

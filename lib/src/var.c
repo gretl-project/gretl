@@ -153,7 +153,7 @@ static int VAR_add_XTX_matrix (GRETL_VAR *var)
     return err;
 }
 
-int nrestr (const GRETL_VAR *v) 
+int n_restricted_terms (const GRETL_VAR *v) 
 {
     int n = 0;
 
@@ -181,7 +181,8 @@ void gretl_VAR_clear (GRETL_VAR *var)
     var->detflags = 0;
     var->robust = 0;
     var->LBs = 0;
-    var->k = 0;
+    var->ycols = 0;
+    var->xcols = 0;
 
     var->lags = NULL;
     var->ylist = NULL;
@@ -611,14 +612,16 @@ static int VAR_add_basic_matrices (GRETL_VAR *v, gretlopt opt)
     } 
     
     /* record max. cols of Y matrix */
-    v->k = k;
+    v->ycols = k;
 
     if (v->ncoeff > 0) {
 	v->X = gretl_matrix_alloc(v->T, v->ncoeff);
 	v->B = gretl_matrix_alloc(v->ncoeff, k);
 	if (v->X == NULL || v->B == NULL) { 
 	    return E_ALLOC;
-	}  
+	}
+	/* record max. cols of X matrix */
+	v->xcols = v->ncoeff;
     }
 
     return 0;
@@ -2482,7 +2485,7 @@ static int
 allocate_johansen_residual_matrices (GRETL_VAR *v)
 {
     int p = v->neqns;
-    int p1 = p + nrestr(v);
+    int p1 = p + n_restricted_terms(v);
 
     clear_gretl_matrix_err();
 
@@ -2546,82 +2549,81 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
    Then compute S00, S11, S01.
 */
 
-int johansen_stage_1 (GRETL_VAR *jvar, const double **Z, 
+int johansen_stage_1 (GRETL_VAR *v, const double **Z, 
 		      const DATAINFO *pdinfo)
 {
-    int nr = nrestr(jvar);
     int err;
 
-    err = allocate_johansen_residual_matrices(jvar); 
+    err = allocate_johansen_residual_matrices(v); 
     if (err) {
 	return err;
     }
 
-    if (jvar->ncoeff == 0) {
+    if (v->ncoeff == 0) {
 	/* nothing to concentrate out */
-	johansen_degenerate_stage_1(jvar, Z);
+	johansen_degenerate_stage_1(v, Z);
 	goto finish;
     }
 
-    if (nr > 0) {
+    if (v->Y->cols > v->neqns) {
 	/* shrink to size */
-	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns);
-	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
+	gretl_matrix_reuse(v->Y, -1, v->neqns);
+	gretl_matrix_reuse(v->B, -1, v->neqns);
     }
 
-    VAR_fill_Y(jvar, DIFF, Z);
+    VAR_fill_Y(v, DIFF, Z);
 
     /* (1) VAR in first differences */
 
 #if JVAR_USE_SVD
-    err = gretl_matrix_multi_SVD_ols(jvar->Y, jvar->X, jvar->B, 
-				     jvar->jinfo->R0, NULL);
+    err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, 
+				     v->jinfo->R0, NULL);
 #else
-    err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
-				 jvar->jinfo->R0, NULL);
+    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, 
+				 v->jinfo->R0, NULL);
 #endif
 
-    if (nr > 0) {
+    if (v->ycols > v->Y->cols) {
 	/* re-expand to full size */
-	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns + nr);
-	gretl_matrix_reuse(jvar->B, -1, jvar->neqns + nr);
+	gretl_matrix_reuse(v->Y, -1, v->ycols);
+	gretl_matrix_reuse(v->B, -1, v->ycols);
     }
 
     /* (2) System with lagged levels on LHS (may include
-       restricted const or trend in last column)
+       restricted terms in trailing columns)
     */
 
-    VAR_fill_Y(jvar, LAGS, Z);
+    VAR_fill_Y(v, LAGS, Z);
 
 #if JVAR_USE_SVD
-    err = gretl_matrix_multi_SVD_ols(jvar->Y, jvar->X, jvar->B, 
-				     jvar->jinfo->R1, NULL);
+    err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, 
+				     v->jinfo->R1, NULL);
 #else
-    err = gretl_matrix_multi_ols(jvar->Y, jvar->X, jvar->B, 
-				 jvar->jinfo->R1, NULL);
+    err = gretl_matrix_multi_ols(v->Y, v->X, v->B, 
+				 v->jinfo->R1, NULL);
 #endif 
 
-    if (nr > 0) {
+    if (v->Y->cols > v->neqns) {
 	/* shrink to "final" size */
-	gretl_matrix_reuse(jvar->Y, -1, jvar->neqns);
-	gretl_matrix_reuse(jvar->B, -1, jvar->neqns);
+	gretl_matrix_reuse(v->Y, -1, v->neqns);
+	gretl_matrix_reuse(v->B, -1, v->neqns);
     }
 
  finish:
 
-    gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
-			      jvar->jinfo->R0, GRETL_MOD_NONE,
-			      jvar->jinfo->S00, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(jvar->jinfo->R1, GRETL_MOD_TRANSPOSE,
-			      jvar->jinfo->R1, GRETL_MOD_NONE,
-			      jvar->jinfo->S11, GRETL_MOD_NONE);
-    gretl_matrix_multiply_mod(jvar->jinfo->R0, GRETL_MOD_TRANSPOSE,
-			      jvar->jinfo->R1, GRETL_MOD_NONE,
-			      jvar->jinfo->S01, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R0, GRETL_MOD_NONE,
+			      v->jinfo->S00, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(v->jinfo->R1, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R1, GRETL_MOD_NONE,
+			      v->jinfo->S11, GRETL_MOD_NONE);
+    gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
+			      v->jinfo->R1, GRETL_MOD_NONE,
+			      v->jinfo->S01, GRETL_MOD_NONE);
 
-    gretl_matrix_divide_by_scalar(jvar->jinfo->S00, jvar->T);
-    gretl_matrix_divide_by_scalar(jvar->jinfo->S11, jvar->T);
-    gretl_matrix_divide_by_scalar(jvar->jinfo->S01, jvar->T);
+    gretl_matrix_divide_by_scalar(v->jinfo->S00, v->T);
+    gretl_matrix_divide_by_scalar(v->jinfo->S11, v->T);
+    gretl_matrix_divide_by_scalar(v->jinfo->S01, v->T);
 
 #if VDEBUG
     fprintf(stderr, "johansen_stage_1: returning err = %d\n", err);

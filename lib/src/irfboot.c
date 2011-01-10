@@ -131,7 +131,7 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 
     if (var->jinfo != NULL) {
 	b->ncoeff = var->ncoeff + (var->neqns - jrank(var)) + 
-	    nrestr(var); /* FIXME? */
+	    n_restricted_terms(var); /* FIXME? */
     } else {
 	b->ncoeff = var->ncoeff;
     }
@@ -191,7 +191,6 @@ recalculate_impulse_responses (irfboot *b, GRETL_VAR *v,
 static void maybe_resize_vecm_matrices (GRETL_VAR *v)
 {
     int nc0 = v->ifc + v->order * v->neqns + v->jinfo->seasonals;
-    int nr = nrestr(v);
 
     if (v->xlist != NULL) {
 	nc0 += v->xlist[0];
@@ -207,10 +206,10 @@ static void maybe_resize_vecm_matrices (GRETL_VAR *v)
 	gretl_matrix_reuse(v->B, nc0, -1);
     }
 
-    if (nr > 0) {
+    if (v->ycols > v->Y->cols) {
 	/* add back column(s) for extra restricted terms */
-	gretl_matrix_reuse(v->Y, -1, v->neqns + nr);
-	gretl_matrix_reuse(v->B, -1, v->neqns + nr);
+	gretl_matrix_reuse(v->Y, -1, v->ycols);
+	gretl_matrix_reuse(v->B, -1, v->ycols);
     }    
 }
 
@@ -312,7 +311,7 @@ static gretl_matrix *make_restricted_coeff_matrix (const GRETL_VAR *v)
     gretl_matrix *b = NULL;
     gretl_matrix *rbeta = NULL;
     int rank = v->jinfo->rank;
-    int nr = nrestr(v);
+    int nr = n_restricted_terms(v);
     double x;
     int j, k, err = 0;
 
@@ -364,7 +363,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
     int nexo = (var->xlist != NULL)? var->xlist[0] : 0;
     int ndelta = var->order * var->neqns;
     int nseas = var->jinfo->seasonals;
-    int nr = nrestr(var);
+    int nr = n_restricted_terms(var);
     int ncoeff;
     int X0, S0, T0;
     double aij;
@@ -730,12 +729,12 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
        than the current cols setting.
     */
 
-    if (v->k > v->Y->cols) {
+    if (v->ycols > v->Y->cols) {
 	int save_k = v->Y->cols;
 
 	/* re-expand these matrices */
-	gretl_matrix_reuse(v->Y, -1, v->k);
-	gretl_matrix_reuse(v->B, -1, v->k);
+	gretl_matrix_reuse(v->Y, -1, v->ycols);
+	gretl_matrix_reuse(v->B, -1, v->ycols);
 
 	/* and copy at full size */
 	vbak->Y = gretl_matrix_copy(v->Y);
@@ -754,7 +753,17 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 	vbak->B = gretl_matrix_copy(v->B);
     }
 
-    vbak->X = gretl_matrix_copy(v->X);
+    if (v->xcols > v->X->cols) {
+	int save_k = v->X->cols;
+
+	gretl_matrix_reuse(v->X, -1, v->xcols);
+	vbak->X = gretl_matrix_copy(v->X);
+	gretl_matrix_reuse(vbak->X, -1, save_k);
+	gretl_matrix_reuse(v->X, -1, save_k);
+    } else {
+	vbak->X = gretl_matrix_copy(v->X);
+    }
+
     vbak->XTX = gretl_matrix_copy(v->XTX);
     vbak->A = gretl_matrix_copy(v->A);
     vbak->E = gretl_matrix_copy(v->E);
