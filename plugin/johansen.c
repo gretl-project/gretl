@@ -679,7 +679,7 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 
 /* As in PcGive: df = T - c, where c is the "average number of
    estimated parameters per equation, rounded towards zero".
-   Note that this function is _not_invoked in the case of
+   Note that this function is _not_ invoked in the case of
    "general" restriction on alpha/beta; in that case the df
    calculation is handled specially.
 */
@@ -748,7 +748,7 @@ static int make_full_R_q (GRETL_VAR *v, const gretl_restriction *rset)
     int k = v->ncoeff;
     int r = v->neqns * rank;
     int p = v->neqns * k;
-    int i, j, j0;
+    int i, j, j0, eq;
 
     /* Here we build restriction matrices that impose the
        precomputed \alpha values on OLS estimation
@@ -768,16 +768,11 @@ static int make_full_R_q (GRETL_VAR *v, const gretl_restriction *rset)
 	return E_ALLOC;
     }
 
-    j = k - rank;
-    j0 = 0;
-    for (i=0; i<r; i++) {
-	gretl_matrix_set(R, i, j, 1.0);
-	if (j0 < rank - 1) {
-	    j++;
-	    j0++;
-	} else {
-	    j += k - rank + 1;
-	    j0 = 0;
+    i = 0;
+    for (eq=1; eq<=v->neqns; eq++) {
+	j0 = eq * k - rank;
+	for (j=0; j<rank; j++) {
+	    gretl_matrix_set(R, i++, j0+j, 1.0);
 	}
     }
 
@@ -824,6 +819,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     int order = v->order;
     int xc, n = v->neqns;
     int use_XTX = 0;
+    int fix_Y = 0;
     int i, err;
 
 #if JDEBUG
@@ -859,7 +855,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 
 #if TRY_RLS
     if (alpha_restricted(flags)) {
-	fprintf(stderr, "Trying RLS\n");
+	fprintf(stderr, "Using RLS\n");
 	if (!err) {
 	    form_Pi(v, Pi);
 	    err = make_vecm_Y(v, Z, NULL, 0);
@@ -867,21 +863,19 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	if (!err) {
 	    err = make_full_R_q(v, rset);
 	}
-	if (!err) {
-	    err = add_EC_terms_to_X(v, v->X, Z);
-	}
     } else {
 	if (!err) {
 	    err = make_vecm_Y(v, Z, Pi, flags);
 	}    
-	if (!err && estimate_alpha(flags)) {
-	    err = add_EC_terms_to_X(v, v->X, Z);
-	}
-    }	
+    }
+    if (!err) {
+	err = add_EC_terms_to_X(v, v->X, Z);
+    }    
 #else
     if (!err) {
 	if (alpha_restricted(flags)) {
 	    form_Pi(v, Pi);
+	    fix_Y = 1;
 	}
 	err = make_vecm_Y(v, Z, Pi, flags);
     }    
@@ -974,6 +968,12 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	if (use_XTX || estimate_alpha(flags)) {
 	    XTX = v->XTX;
 	}
+
+	if (fix_Y) {
+	    /* ensure "Y" holds plain differences */
+	    make_vecm_Y(v, Z, NULL, 0);
+	}
+
 	transcribe_VAR_models(v, Z, pdinfo, XTX);
 	if (alpha_restricted(flags)) {
 	    transcribe_alpha(v);

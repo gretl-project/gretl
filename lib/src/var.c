@@ -2099,6 +2099,8 @@ void gretl_VAR_param_names (GRETL_VAR *v, char **params,
     }
 }
 
+/* public because called from irfboot.c */
+
 void VAR_write_A_matrix (GRETL_VAR *v)
 {
     int i, ii, j, k, lag;
