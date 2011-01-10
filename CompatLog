@@ -8,6 +8,10 @@ The old, deprecated aliases "noecho" (use "set echo off") and
 The "sscanf" command is deprecated in favor of the function
 of the same name.
 
+The interpretation of "a[i,j]" in the context of a VECM
+restriction on the alpha matrix is corrected (reversed):
+now "i" specifies the equation and "j" the EC term.
+
 2010-11-29 version 1.9.3
 
 No intentional backward-incompatible changes

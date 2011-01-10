@@ -417,7 +417,7 @@ static void form_Pi (GRETL_VAR *v, gretl_matrix *Pi)
    matrix.
 */
 
-static int copy_to_alpha (GRETL_VAR *v)
+static int OLS_to_alpha (GRETL_VAR *v)
 {
     int rank = v->jinfo->rank;
     int pos = v->ncoeff - rank;
@@ -776,8 +776,11 @@ static int make_full_R_q (GRETL_VAR *v, const gretl_restriction *rset)
 	}
     }
 
-    for (i=0; i<r; i++) {
-	q->val[i] = v->jinfo->Alpha->val[i];
+    i = 0;
+    for (eq=0; eq<v->neqns; eq++) {
+	for (j=0; j<rank; j++) {
+	    q->val[i++] = gretl_matrix_get(v->jinfo->Alpha, eq, j);
+	}
     }
 
 #if 1
@@ -785,8 +788,8 @@ static int make_full_R_q (GRETL_VAR *v, const gretl_restriction *rset)
     gretl_matrix_print(q, "q (a->full)");
 #endif
 
-    v->jinfo->Ra = R;
-    v->jinfo->qa = q;
+    gretl_matrix_replace(&v->jinfo->Ra, R);
+    gretl_matrix_replace(&v->jinfo->qa, q);
 
     return 0;
 }
@@ -900,6 +903,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 							    v->jinfo->qa,
 							    v->B, v->E, 
 							    &v->XTX);
+		    gretl_matrix_print(v->B, "restricted v->B");
 		} else {
 		    err = gretl_matrix_multi_SVD_ols(v->Y, v->X, v->B, v->E, &v->XTX);
 		}
@@ -919,7 +923,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
     }
 
     if (!err && estimate_alpha(flags)) {
-	err = copy_to_alpha(v);
+	err = OLS_to_alpha(v);
 	if (!err) {
 	    form_Pi(v, Pi);
 	}

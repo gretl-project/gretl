@@ -32,7 +32,7 @@
 
 #define RDEBUG 0
 
-#define EQN_UNSPEC -9
+#define R_UNSPEC -9
 
 enum {
     VECM_NONE = 0,
@@ -77,9 +77,9 @@ struct gretl_restriction_ {
     int code;
 };
 
-#define eqn_specified(r,i,j,c) (((c=='b' && r->bmulti) || (c=='a' && r->amulti)) \
-                                && r->rows[i]->eq != NULL \
-                                && r->rows[i]->eq[j] != EQN_UNSPEC)
+#define targ_specified(r,i,j,c) (((c=='b' && r->bmulti) || (c=='a' && r->amulti)) \
+				 && r->rows[i]->eq != NULL		\
+				 && r->rows[i]->eq[j] != R_UNSPEC)
 
 /* @R is putatively the matrix in R \beta -q = 0.  Check that it makes
    sense in that role, i.e., that RR' is non-singular. */
@@ -87,26 +87,26 @@ struct gretl_restriction_ {
 static int check_R_matrix (const gretl_matrix *R)
 {
     gretl_matrix *m;
-    int g = gretl_matrix_rows(R);
     int err = 0;
 
-    m = gretl_matrix_alloc(g, g);
+    m = gretl_matrix_alloc(R->rows, R->rows);
+
     if (m == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
+				  R, GRETL_MOD_TRANSPOSE,
+				  m, GRETL_MOD_NONE);
+
+	err = gretl_invert_general_matrix(m);
+
+	if (err == E_SINGULAR) {
+	    gretl_errmsg_set(_("Matrix inversion failed: restrictions may be "
+			       "inconsistent or redundant"));
+	}
+
+	gretl_matrix_free(m);
     }
-
-    gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
-			      R, GRETL_MOD_TRANSPOSE,
-			      m, GRETL_MOD_NONE);
-
-    err = gretl_invert_general_matrix(m);
-
-    if (err == E_SINGULAR) {
-	gretl_errmsg_set(_("Matrix inversion failed: restrictions may be "
-			   "inconsistent or redundant"));
-    }
-    
-    gretl_matrix_free(m);
 
     return err;
 }
@@ -229,9 +229,13 @@ static int get_R_vecm_column (const gretl_restriction *rset,
 	    col += r->eq[j] * gretl_VECM_n_beta(var);
 	}
     } else if (letter == 'a') {
-	col = r->bnum[j];
-	if (rset->amulti) {
-	    col += r->eq[j] * gretl_VECM_n_alpha(var);
+	if (r->eq == NULL || r->eq[j] == R_UNSPEC) {
+	    col = r->bnum[j];
+	} else {
+	    col = r->eq[j];
+	    if (rset->amulti) {
+		col += r->bnum[j] * gretl_VECM_rank(var);
+	    }
 	} 
     }
 
@@ -258,17 +262,15 @@ static int get_R_sys_column (const gretl_restriction *rset,
 
 static double get_restriction_param (const rrow *r, int k)
 {
-    double x = 0.0;
     int i;    
 
     for (i=0; i<r->nterms; i++) {
 	if (r->bnum[i] == k) {
-	    x = r->mult[i];
-	    break;
+	    return r->mult[i];
 	}
     }
 
-    return x;
+    return 0.0;
 }
 
 static void vecm_cross_error (void)
@@ -282,14 +284,13 @@ static void vecm_cross_error (void)
 
 static int vecm_ab_check (gretl_restriction *rset)
 {
-    rrow *r;
     int atotal = 0, btotal = 0;
     int i, j, err = 0;
 
     for (i=0; i<rset->g && !err; i++) {
+	rrow *r = rset->rows[i];
 	int a = 0, b = 0;
 
-	r = rset->rows[i];
 	for (j=0; j<r->nterms && !err; j++) {
 	    if (r->letter[j] == 'a') {
 		a++;
@@ -322,21 +323,23 @@ static int vecm_ab_check (gretl_restriction *rset)
 
 static int vecm_x_check (gretl_restriction *rset, char letter)
 {
-    rrow *r;
     int *multi = (letter == 'a')? &rset->amulti : &rset->bmulti;
     int *ki = (letter == 'a')? &rset->ga : &rset->gb;
     int unspec = 0, anyspec = 0;
     int i, j, err = 0;
 
     for (i=0; i<rset->g && !err; i++) {
-	r = rset->rows[i];
+	rrow *r = rset->rows[i];
+
 	if (r->letter[0] != letter) {
 	    continue;
 	}
+
 	*ki += 1;
+
 	for (j=0; j<r->nterms && !err; j++) {
 	    if (r->eq != NULL) {
-		if (r->eq[j] == EQN_UNSPEC) {
+		if (r->eq[j] == R_UNSPEC) {
 		    unspec = 1;
 		} else if (r->eq[j] >= 0) {
 		    anyspec = 1;
@@ -436,8 +439,6 @@ static int rset_allocate_R_q (gretl_restriction *rset, int nc)
 static int equation_form_matrices (gretl_restriction *rset)
 {
     MODEL *pmod = rset->obj;
-    rrow *r;
-    double x;
     int nc = 0;
     int col, i, j;
 
@@ -456,7 +457,9 @@ static int equation_form_matrices (gretl_restriction *rset)
     }
 
     for (i=0; i<rset->g; i++) { 
-	r = rset->rows[i];
+	rrow *r = rset->rows[i];
+	double x;
+
 	col = 0;
 	for (j=0; j<pmod->ncoeff; j++) {
 	    if (rset->mask[j]) {
@@ -475,23 +478,20 @@ static int equation_form_matrices (gretl_restriction *rset)
 
 static int sys_form_matrices (gretl_restriction *rset)
 {
-    rrow *r;
-    double x;
-    int nc, col, i, j;
+    int nc = system_n_indep_vars(rset->obj);
+    int col, i, j;
     int err = 0;
-
-    nc = system_n_indep_vars(rset->obj);
 
     if (rset_allocate_R_q(rset, nc)) {
 	return E_ALLOC;
     }
 
     for (i=0; i<rset->g; i++) { 
-	r = rset->rows[i];
+	rrow *r = rset->rows[i];
+
 	for (j=0; j<r->nterms; j++) {
 	    col = get_R_sys_column(rset, i, j);
-	    x = r->mult[j];
-	    gretl_matrix_set(rset->R, i, col, x);
+	    gretl_matrix_set(rset->R, i, col, r->mult[j]);
 	}
 	gretl_vector_set(rset->q, i, r->rhs);
     } 
@@ -533,8 +533,6 @@ static int vecm_form_matrices (gretl_restriction *rset)
        (if both are given) */
 
     for (m=0; m<2; m++) {
-	rrow *r;
-	double x;
 	gretl_matrix *R = (m == 0)? rset->R : rset->Ra;
 	gretl_matrix *q = (m == 0)? rset->q : rset->qa;
 	char letter = (m == 0)? 'b' : 'a';
@@ -546,18 +544,24 @@ static int vecm_form_matrices (gretl_restriction *rset)
 	}
 
 	for (i=0; i<rset->g; i++) { 
-	    r = rset->rows[i];
-	    if (r->letter[0] != letter) {
-		continue;
+	    rrow *r = rset->rows[i];
+
+	    if (r->letter[0] == letter) {
+		for (j=0; j<r->nterms; j++) {
+		    col = get_R_vecm_column(rset, i, j, letter);
+		    gretl_matrix_set(R, row, col, r->mult[j]);
+		}
+		gretl_vector_set(q, row, r->rhs);
+		row++;
 	    }
-	    for (j=0; j<r->nterms; j++) {
-		col = get_R_vecm_column(rset, i, j, letter);
-		x = r->mult[j];
-		gretl_matrix_set(R, row, col, x);
-	    }
-	    gretl_vector_set(q, row, r->rhs);
-	    row++;
 	}
+
+#if RDEBUG
+	if (letter == 'a') {
+	    gretl_matrix_print(R, "Ra, constructed");
+	    gretl_matrix_print(q, "qa, constructed");
+	}
+#endif
     }
 
     /* cumulate prior restrictions if needed */
@@ -817,7 +821,7 @@ static int pick_apart (gretl_restriction *r, const char *s,
 	}
     } else {
 	/* only one field: [bnum] */
-	*eq = EQN_UNSPEC;
+	*eq = R_UNSPEC;
 	if (isdigit(*s1)) {
 	    *bnum = positive_int_from_string(s1);
 	} else {
@@ -863,7 +867,7 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 	    return err;
 	}
 	if (r->otype == GRETL_OBJ_VAR) {
-	    *eq = EQN_UNSPEC;
+	    *eq = R_UNSPEC;
 	}
 	err = 0;
     } else if (*s == '[') {
@@ -880,14 +884,14 @@ static int parse_b_bit (gretl_restriction *r, const char *s,
 	*bnum -= 1; /* convert to zero base */
     }
 
-    if (*eq == EQN_UNSPEC) {
-	/* didn't get an equation number */
+    if (*eq == R_UNSPEC) {
+	/* didn't get a specific equation number */
 	if (r->otype == GRETL_OBJ_EQN) {
 	    *eq = 0;
 	} else if (r->otype != GRETL_OBJ_VAR) {
 	    err = E_PARSE;
 	}
-    } else if (*eq < 1 && *eq >= 0) {
+    } else if (*eq == 0) {
 	gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
 			     *eq);
 	err = 1;
@@ -1161,7 +1165,7 @@ static void print_restriction (const gretl_restriction *rset,
 	letter = (r->letter != NULL)? r->letter[j] : 'b';
 	k = r->bnum[j];
 	print_mult(r->mult[j], j == 0, prn);
-	if (eqn_specified(rset, i, j, letter)) {
+	if (targ_specified(rset, i, j, letter)) {
 	    pprintf(prn, "%c[%d,%d]", letter, r->eq[j] + 1, k + 1);
 	} else if (rset->otype == GRETL_OBJ_VAR) {
 	    pprintf(prn, "%c[%d]", letter, k + 1);
@@ -1269,7 +1273,13 @@ void print_restriction_from_matrices (const gretl_matrix *R,
 		    }
 		}
 		if (eqn > 0) {
-		    pprintf(prn, "%c[%d,%d]", letter, eqn, coeff);
+		    if (letter == 'a') {
+			/* VECM \alpha: the restriction is transposed
+			   for internal use */
+			pprintf(prn, "%c[%d,%d]", letter, coeff, eqn);
+		    } else {
+			pprintf(prn, "%c[%d,%d]", letter, eqn, coeff);
+		    }
 		} else {
 		    pprintf(prn, "%c%d", letter, coeff);
 		}
@@ -1391,11 +1401,14 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
     if (rset->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = rset->obj;
 
-	if (i >= gretl_VECM_rank(var)) {
+	if ((letter == 'b' && i >= gretl_VECM_rank(var)) ||
+	    (letter == 'a' && i >= var->neqns)) {
 	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
 				 i + 1);
-	} else if ((letter == 'b' && j >= gretl_VECM_n_beta(var)) ||
-		   (letter == 'a' && j >= gretl_VECM_n_alpha(var))) {
+	} else if (letter == 'b' && j >= gretl_VECM_n_beta(var)) {
+	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
+				 j + 1);
+	} else if (letter == 'a' && i != R_UNSPEC && j >= gretl_VECM_rank(var)) {
 	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
 				 j + 1);
 	} else {

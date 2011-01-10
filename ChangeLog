@@ -52,6 +52,8 @@ version 1.9.4, in progress
   place among the regressors
 - Fix bug: the "diff" command applied to a lead of a series
   could produce spurious values with panel data
+- Fix bug: correct the transposition of row and column indices
+  in the interpretation of restrictions on VECM \alpha terms
   
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)
