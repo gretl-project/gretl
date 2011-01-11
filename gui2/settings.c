@@ -1963,7 +1963,7 @@ int read_win32_config (int debug)
     int i, err = 0;
 
     if (chinese_locale()) {
-	strcpy(fixedfontname, "MS Gothic 10");
+	strcpy(fixedfontname, "NSimSun 10");
     }
 
     appdata = appdata_path();
