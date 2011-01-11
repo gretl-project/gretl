@@ -351,7 +351,7 @@ struct gretl_option gretl_opts[] = {
     { RESET,    OPT_R, "squares-only", 0 },
     { RESTRICT, OPT_B, "bootstrap", 0 },
     { RESTRICT, OPT_F, "full", 0 },
-#if 1 /* testing */
+#if 0 /* for testing */
     { RESTRICT, OPT_I, "impulse-responses", 0 },
 #endif
     { RESTRICT, OPT_J, "jitter", 0 },

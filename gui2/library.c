@@ -4640,81 +4640,18 @@ static void display_x12a_warning (const char *fname)
     }
 }
 
-void do_tramo_x12a (GtkAction *action, gpointer p)
+static void display_tx_output (const char *fname, int graph_ok,
+			       int tramo, int oldv, gretlopt opt)
 {
-    /* save options between invocations */
-    static gretlopt opt = OPT_G;
-    int v = mdata_active_var();
-    int oldv = datainfo->v;
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
-    gchar *databuf;
-    void *handle;
-    int (*write_tx_data) (char *, int, double ***, DATAINFO *,
-			  gretlopt *, int, int *, char *);
-    PRN *prn;
-    char fname[MAXLEN] = {0};
-    char errtext[MAXLEN];
-    const gchar *code;
-    int tramo = 0;
-    int graph_ok = 1;
-    int err = 0;
-
-    code = gtk_action_get_name(action);
-
-    if (!strcmp(code, "Tramo")) {
-	tramo = 1;
-    } 
-
-    if (!tramo) {
-	/* we'll let tramo handle annual data */
-	if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
-	    errbox(_("Input must be a monthly or quarterly time series"));
-	    return;
-	}
-    }
-
-    write_tx_data = gui_get_plugin_function("write_tx_data", 
-					    &handle);
-    if (write_tx_data == NULL) {
-	return;
-    }
-
-    *errtext = 0;
-
-    series_adjust_sample(Z[v], &datainfo->t1, &datainfo->t2);
-
-    err = write_tx_data(fname, v, &Z, datainfo, &opt, tramo, 
-			&graph_ok, errtext);
-    
-    close_plugin(handle);
-
-    if (err) {
-	if (*errtext != 0) {
-	    errbox(errtext);
-	} else {
-	    gui_errmsg(err);
-	}
-    } else if (opt & OPT_W) {
-	/* got a warning from x12a */
-	display_x12a_warning(fname);
-	opt &= ~OPT_W;
-    }
-
-    datainfo->t1 = save_t1;
-    datainfo->t2 = save_t2;
-
-    if (*fname == '\0') {
-	return;
-    }
-
     if (opt & OPT_Q) {
 	/* text output suppressed */
 	remove(fname);
     } else {
 	/* note that in some error cases this file might
 	   be informative */
+	gchar *databuf = NULL;
 	int ferr = gretl_file_get_contents(fname, &databuf, NULL);
+	PRN *prn;
 
 	if (ferr) {
 	    remove(fname);
@@ -4737,7 +4674,7 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 		    (tramo)? TRAMO : X12A, NULL);
     }
 
-    if (!err && graph_ok && (opt & OPT_G)) {
+    if (graph_ok && (opt & OPT_G)) {
 	make_and_display_graph();
     }
 
@@ -4745,6 +4682,97 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	populate_varlist();
 	mark_dataset_as_modified();
     }
+}
+
+static void real_do_tramo_x12a (int v, int tramo,
+				const char *scriptname)
+{
+    /* save options between invocations */
+    static gretlopt opt = OPT_G;
+    int oldv = datainfo->v;
+    int save_t1 = datainfo->t1;
+    int save_t2 = datainfo->t2;
+    void *handle;
+    int (*write_tx_data) (char *, const char *, int, double ***, DATAINFO *,
+			  gretlopt *, int, int *, char *);
+    char fname[MAXLEN] = {0};
+    char errtext[MAXLEN];
+    int graph_ok = 1;
+    int err = 0;
+
+    if (v >= datainfo->v) {
+	return;
+    }
+
+    if (!tramo) {
+	/* we'll let tramo handle annual data, but not x12a */
+	if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
+	    errbox(_("Input must be a monthly or quarterly time series"));
+	    return;
+	}
+    }
+
+    write_tx_data = gui_get_plugin_function("write_tx_data", 
+					    &handle);
+    if (write_tx_data == NULL) {
+	return;
+    }
+
+    *errtext = 0;
+
+    series_adjust_sample(Z[v], &datainfo->t1, &datainfo->t2);
+
+    err = write_tx_data(fname, scriptname, v, &Z, datainfo, &opt, 
+			tramo, &graph_ok, errtext);
+
+    close_plugin(handle);
+
+    datainfo->t1 = save_t1;
+    datainfo->t2 = save_t2;
+
+    if (err) {
+	if (*errtext != 0) {
+	    errbox(errtext);
+	} else {
+	    gui_errmsg(err);
+	}
+	graph_ok = 0;
+    } else if (opt & OPT_W) {
+	/* got a warning from x12a */
+	display_x12a_warning(fname);
+	opt &= ~OPT_W;
+    } else if (opt & OPT_S) {
+	windata_t *vwin = view_file(fname, 1, 0, 78, 370, EDIT_X12A);
+
+	widget_set_int(vwin->main, "varnum", v);
+	opt &= ~OPT_S;
+	return;
+    }
+
+    if (*fname != '\0') {
+	display_tx_output(fname, graph_ok, tramo, oldv, opt);
+	return;
+    }
+}
+
+static void run_x12a_script (windata_t *vwin)
+{
+    int v = widget_get_int(vwin->main, "varnum");
+
+    real_do_tramo_x12a(v, 0, vwin->fname);   
+}
+
+void do_tramo_x12a (GtkAction *action, gpointer p)
+{
+    const gchar *code = gtk_action_get_name(action);
+    int v = mdata_active_var();
+    int tramo = 0;
+
+    if (!strcmp(code, "Tramo")) {
+	tramo = 1;
+    }
+
+    real_do_tramo_x12a(v, tramo, NULL);
 }
 
 #endif /* HAVE_TRAMO || HAVE_X12A */
@@ -6846,7 +6874,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     if (vwin->role == EDIT_GP || 
 	vwin->role == EDIT_R || 
 	vwin->role == EDIT_OX ||
-	vwin->role == EDIT_OCTAVE) {
+	vwin->role == EDIT_OCTAVE ||
+	vwin->role == EDIT_X12A) {
 	buf = textview_get_text(vwin->text);
     } else if (vwin->role == EDIT_PKG_SAMPLE) {
 	buf = package_sample_get_script(vwin);
@@ -6874,6 +6903,8 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
 	run_ox_script(buf);
     } else if (vwin->role == EDIT_OCTAVE) {
 	run_octave_script(buf);
+    } else if (vwin->role == EDIT_X12A) {
+	run_x12a_script(vwin);
     } else {
 	run_native_script(vwin, buf, sel);
     }

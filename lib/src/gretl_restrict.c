@@ -2470,9 +2470,9 @@ GRETL_VAR *gretl_restricted_vecm (gretl_restriction *rset,
 
     destroy_restriction_set(rset);
 
-#if 1
+#if 0
     if (!*err && (opt & OPT_I)) {
-	/* testing */
+	/* just for testing */
 	int periods = default_VAR_horizon(pdinfo);
 	int targ = 1, shock = 0;
 	gretl_matrix *resp;

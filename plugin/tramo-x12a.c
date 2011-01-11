@@ -182,6 +182,15 @@ static void set_logtrans (GtkButton *b, tx_request *request)
     request->xopt.logtrans = GPOINTER_TO_INT(p);
 }
 
+static void toggle_edit_script (GtkToggleButton *b, tx_request *request)
+{
+    if (gtk_toggle_button_get_active(b)) {
+	*request->popt |= OPT_S;
+    } else {
+	*request->popt &= ~OPT_S;
+    }
+}
+
 static void show_x12a_options (tx_request *request, GtkBox *vbox)
 {
     GtkWidget *tmp, *b[3];
@@ -281,6 +290,25 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     request->opts[TEXTOUT].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
 				 (*request->popt & OPT_Q)? FALSE : TRUE);
+
+#if 0 /* not ready */
+    tmp = gtk_hseparator_new();
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
+
+    b[0] = gtk_radio_button_new_with_label(NULL, _("Execute X-12-ARIMA directly"));
+    gtk_widget_show(b[0]);
+    gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
+    b[1] = gtk_radio_button_new_with_label(group, _("View/edit X-12-ARIMA commands"));
+    gtk_widget_show(b[1]);
+    gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
+    g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
+		     G_CALLBACK(toggle_edit_script), request);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE); 
+#endif
 }
 
 static int tx_dialog (tx_request *request)
@@ -1069,7 +1097,7 @@ static int helper_spawn (const char *path, const char *vname,
 
 #endif
 
-/* The 12a .err file is always produced, but often contains no
+/* The x12a .err file is always produced, but often contains no
    warning or error messages: in that case it contains 2 lines
    of boiler-plate text followed by two blank lines. Here we
    check if we got more than 4 lines of output.
@@ -1099,12 +1127,13 @@ static int got_x12a_warning (const char *fname)
 
 /* make a default x12a.mdl file if it doesn't already exist */
 
-static int check_x12a_model_file (const char *workdir, char *fname)
+static int check_x12a_model_file (const char *workdir)
 {
+    gchar *fname;
     FILE *fp;
     int err = 0;
 
-    sprintf(fname, "%s%cx12a.mdl", workdir, SLASH);
+    fname = g_strdup_printf("%s%cx12a.mdl", workdir, SLASH);
     fp = gretl_fopen(fname, "r");
 
     if (fp != NULL) {
@@ -1118,6 +1147,8 @@ static int check_x12a_model_file (const char *workdir, char *fname)
 	    fclose(fp);
 	}
     } 
+
+    g_free(fname);
 
     return err;
 }
@@ -1144,7 +1175,7 @@ static int check_sample_bound (int prog, const DATAINFO *pdinfo,
     return 0;
 }
 
-int write_tx_data (char *fname, int varnum, 
+int write_tx_data (char *fname, const char *scriptname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, gretlopt *opt, 
 		   int tramo, int *graph_ok, char *errmsg)
 {
@@ -1153,8 +1184,10 @@ int write_tx_data (char *fname, int varnum,
     char vname[VNAMELEN];
     int savelist[4];
     tx_request request;
-    double **tmpZ;
-    DATAINFO *tmpinfo;
+    double **tmpZ = NULL;
+    DATAINFO *tmpinfo = NULL;
+    int savescript = 0;
+    int gotscript = 0;
     int i, doit;
     int err = 0;
 
@@ -1180,14 +1213,22 @@ int write_tx_data (char *fname, int varnum,
     request.pd = pdinfo->pd;
     request.popt = opt;
 
-    /* show dialog and get option settings */
-    doit = tx_dialog(&request); 
-    if (!doit) {
+    if (scriptname != NULL) {
+	/* running a pre-existing x12a script */
+	gotscript = 1;
+	if (*opt & OPT_G) {
+	    request.opts[TRIGRAPH].save = 1;
+	}
+    } else {
+	/* show dialog and get option settings */
+	doit = tx_dialog(&request); 
+	if (!doit) {
+	    gtk_widget_destroy(request.dialog);
+	    return 0;
+	}
+	set_opts(&request);
 	gtk_widget_destroy(request.dialog);
-	return 0;
     }
-    set_opts(&request);
-    gtk_widget_destroy(request.dialog);
 
 #if 0
     if (request.prog == TRAMO_SEATS) {
@@ -1196,18 +1237,22 @@ int write_tx_data (char *fname, int varnum,
     }
 #endif
 
-    /* create little temporary dataset */
-    tmpinfo = create_auxiliary_dataset(&tmpZ, 4, pdinfo->n);
-    if (tmpinfo == NULL) {
-	return E_ALLOC;
-    }
+    if (*opt & OPT_S) {
+	savescript = 1;
+    } else {
+	/* create little temporary dataset */
+	tmpinfo = create_auxiliary_dataset(&tmpZ, 4, pdinfo->n);
+	if (tmpinfo == NULL) {
+	    return E_ALLOC;
+	}
 
-    copy_basic_data_info(tmpinfo, pdinfo);
+	copy_basic_data_info(tmpinfo, pdinfo);
 
-    if (request.prog == X12A) { 
-	err = check_x12a_model_file(workdir, fname);
-	if (err) {
-	    goto bailout;
+	if (request.prog == X12A) { 
+	    err = check_x12a_model_file(workdir);
+	    if (err) {
+		goto bailout;
+	    }
 	}
     } 
 
@@ -1215,10 +1260,12 @@ int write_tx_data (char *fname, int varnum,
     form_savelist(savelist, &request);
 
     if (request.prog == X12A) { 
-	/* write out the .spc file for x12a */
-	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
-		       &request.xopt);
+	if (!gotscript) {
+	    /* write out the .spc file for x12a */
+	    sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
+	    write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
+			   &request.xopt);
+	}
     } else { 
 	/* TRAMO, possibly plus SEATS */
 	lower(vname);
@@ -1231,6 +1278,10 @@ int write_tx_data (char *fname, int varnum,
 	    cancel_savevars(&request); /* FIXME later */
 	    savelist[0] = 0;
 	}
+    }
+
+    if (savescript) {
+	return 0;
     }
 
     /* now run the program(s): we try to ensure that any
@@ -1354,7 +1405,7 @@ int adjust_series (const double *x, double *y, const DATAINFO *pdinfo,
     }    
 
     if (prog == X12A) { 
-	err = check_x12a_model_file(workdir, fname);
+	err = check_x12a_model_file(workdir);
 	if (err) {
 	    return err;
 	}

@@ -58,6 +58,7 @@ enum extra_cmds {
     EDIT_R,
     EDIT_OX,
     EDIT_OCTAVE,
+    EDIT_X12A,
     CLI_HELP,
     GUI_HELP,
     CLI_HELP_EN,
