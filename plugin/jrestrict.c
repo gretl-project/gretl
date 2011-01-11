@@ -1841,7 +1841,8 @@ static int check_jacobian (Jwrap *J)
 
 /* Doornik's approach to checking identification */
 
-static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
+static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar, 
+			  gretlopt opt, PRN *prn)
 {
     int npar = J->alen + J->blen;
     int err = 0;
@@ -1871,11 +1872,13 @@ static int vecm_id_check (Jwrap *J, GRETL_VAR *jvar, PRN *prn)
 	fprintf(stderr, "Jacobian: got df = %d\n", J->df);
 #endif
 
-	/* system was subject to a prior restriction? */
-	if (jvar->jinfo->lrdf > 0) {
-	    J->df -= jvar->jinfo->lrdf;
-	    pprintf(prn, _("Allowing for prior restriction, df = %d\n"), 
-		    J->df);
+	if (!(opt & OPT_B)) {
+	    /* system was subject to a prior restriction? */
+	    if (jvar->jinfo->lrdf > 0) {
+		J->df -= jvar->jinfo->lrdf;
+		pprintf(prn, _("Allowing for prior restriction, df = %d\n"), 
+			J->df);
+	    }
 	}
     }
 
@@ -3087,9 +3090,11 @@ static int make_theta (Jwrap *J)
 static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar,
 				gretlopt opt)
 {
-    jvar->jinfo->ll0 = jvar->ll;
-    jvar->ll = J->ll;
-    jvar->jinfo->lrdf += J->df; /* ? */
+    if (!(opt & OPT_B)) {
+	jvar->jinfo->ll0 = jvar->ll;
+	jvar->ll = J->ll;
+	jvar->jinfo->lrdf += J->df; /* ? */
+    }
 
     gretl_matrix_replace(&jvar->S, J->Omega);
     J->Omega = NULL;
@@ -3101,6 +3106,7 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar,
     J->alpha = NULL;
 
     if (opt & OPT_B) {
+	/* bootstrapping: we don't need the variances */
 	return;
     }
 
@@ -3111,7 +3117,7 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar,
     J->bse = NULL;
 
     gretl_matrix_replace(&jvar->jinfo->Ase, J->ase);
-    J->ase = NULL;    
+    J->ase = NULL; 
 }
 
 static int do_bfgs (Jwrap *J, gretlopt opt, PRN *prn)
@@ -3174,7 +3180,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
     }   
 
     if (!err) {
-	err = vecm_id_check(J, jvar, prn);
+	err = vecm_id_check(J, jvar, opt, prn);
 	if (J->df == 0) {
 	    fprintf(stderr, "warning: test df = 0\n");
 	    J->flags &= ~J_USE_LBFGS;
@@ -3223,7 +3229,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
  skipest:
 
-    if (!err) {
+    if (!err && !(opt & OPT_B)) {
 	err = variance_from_info_matrix(J, jvar);
     }
 

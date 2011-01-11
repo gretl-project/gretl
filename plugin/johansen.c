@@ -497,18 +497,17 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
 	/* We're re-visiting this function: v->ncoeff will
 	   already be full-size, as will the v->X matrix.
 	*/
-	v->X->cols = v->ncoeff;
-	v->B->rows = v->ncoeff;
 	if (alpha_restricted(flags)) {
 	    int r = gretl_VECM_rank(v);
 
-	    v->X->cols -= r;
-	    v->B->rows -= r;
+	    v->X->cols = v->ncoeff - r;
+	    v->B->rows = v->ncoeff - r;
+	} else {
+	    v->X->cols = v->ncoeff;
+	    v->B->rows = v->ncoeff;
 	}
-#if 1
 	v->Y->cols = v->neqns;
 	v->B->cols = v->neqns;
-#endif
 	return 0;
     }
 
@@ -675,10 +674,11 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 		}
 		gretl_matrix_set(v->Y, s++, i, yti);
 	    }
-
+#if JDEBUG
 	    if (wexo) {
 		fprintf(stderr, "make_vecm_Y: var %d is weakly exogenous\n", i);
 	    }
+#endif
 	}
     } 
 
@@ -739,7 +739,7 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 
    DY_t = \Pi Y*_{t-1} + \sum_{i=1}^{k-1}\Gamma_i DY_{t-1} + ...
 
-   Subtract \Pi Y*_t from both sides, call DY_t - \Pi Y*_t "Yt",
+   Subtract \Pi Y*_t from both sides, call DY_t - \Pi Y*_t "Y",
    and call the lagged DYs "X".  Regress "Y" on "X" to find
    estimates of the \Gammas, etc.  
 
@@ -1407,13 +1407,12 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     return 0;
 }
 
-static
-int johansen_get_eigenvalues (gretl_matrix *S00,
-			      const gretl_matrix *S01,
-			      const gretl_matrix *S11,
-			      gretl_matrix **M,
-			      gretl_matrix **evals,
-			      int rank)
+static int johansen_get_eigenvalues (gretl_matrix *S00,
+				     const gretl_matrix *S01,
+				     const gretl_matrix *S11,
+				     gretl_matrix **M,
+				     gretl_matrix **evals,
+				     int rank)
 {
     gretl_matrix *Tmp = NULL;
     int n = S11->cols;
@@ -1622,51 +1621,31 @@ static int prep_beta_restriction (const GRETL_VAR *jvar,
     return err;
 }
 
-/* test for presence of a homogeneous restriction, either for a rank-1
-   system or in common across the columns of beta (or alpha),
-   having already screened for the case where both beta and alpha
-   are restricted.
-*/
-
-static int simple_restriction (const GRETL_VAR *jvar,
-			       const gretl_restriction *rset)
-{
-    const gretl_matrix *R, *q;
-    int rcols = jvar->neqns;
-    int ret = 1;
-
-    if (rset_VECM_bcols(rset) > 0) {
-	rcols += n_restricted_terms(jvar);
-	R = rset_get_R_matrix(rset);
-	q = rset_get_q_matrix(rset);
-    } else {
-	R = rset_get_Ra_matrix(rset);
-	q = rset_get_qa_matrix(rset);
-    }
-
-    if (!gretl_is_zero_matrix(q)) {
-	/* non-homogeneous */
-	ret = 0;
-    } else if (R->cols > rcols) {
-	/* not common to all columns */
-	ret = 0;
-    }
-
-    return ret;
-}
-
 /* check whether the restriction on @jvar in @rset is
    a simple restriction on \beta */
 
 static int simple_beta_restriction (const GRETL_VAR *jvar,
 				    const gretl_restriction *rset)
 {
-    if (rset_VECM_acols(rset) > 0) {
-	/* not so if alpha is restricted */
-	return 0;
-    } else {
-	return simple_restriction(jvar, rset);
+    int ret = 0;
+
+    if (rset_VECM_acols(rset) == 0) {
+	const gretl_matrix *R = rset_get_R_matrix(rset);
+	const gretl_matrix *q = rset_get_q_matrix(rset);
+	int rcols = jvar->neqns + n_restricted_terms(jvar);
+
+	ret = 1;
+
+	if (!gretl_is_zero_matrix(q)) {
+	    /* non-homogeneous */
+	    ret = 0;
+	} else if (R->cols > rcols) {
+	    /* not common to all columns */
+	    ret = 0;
+	}
     }
+
+    return ret;
 }
 
 /* check whether the restriction on @jvar in @rset is
@@ -1675,37 +1654,42 @@ static int simple_beta_restriction (const GRETL_VAR *jvar,
 static int simple_alpha_restriction (const GRETL_VAR *jvar,
 				     const gretl_restriction *rset)
 {
-    if (rset_VECM_bcols(rset) > 0) {
-	/* not so if beta is restricted */
-	return 0;
-    } else {
-	return simple_restriction(jvar, rset);
+    int ret = 0;
+
+    if (rset_VECM_bcols(rset) == 0) {
+	const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
+	const gretl_matrix *qa = rset_get_qa_matrix(rset);
+	
+	ret = 1;
+
+	if (!gretl_is_zero_matrix(qa)) {
+	    /* non-homogeneous */
+	    ret = 0;
+	} else if (Ra->cols > jvar->neqns) {
+	    /* not common to all columns */
+	    ret = 0;
+	}
     }
+
+    return ret;
 }
 
 static int 
 transcribe_restriction_matrices (const GRETL_VAR *jvar,
-				 const gretl_restriction *rset,
-				 int acols, int bcols)
+				 const gretl_restriction *rset)
 {
     int err = 0;
 
-    if (bcols > 0) {
+    if (rset_VECM_bcols(rset) > 0) {
 	const gretl_matrix *R = rset_get_R_matrix(rset);
 	const gretl_matrix *q = rset_get_q_matrix(rset);
 
 	if (R != jvar->jinfo->R) {
-	    gretl_matrix_free(jvar->jinfo->R);
-	    jvar->jinfo->R = gretl_matrix_copy(R);
+	    gretl_matrix_replace(&jvar->jinfo->R, gretl_matrix_copy(R));
 	}
 
 	if (q != jvar->jinfo->q) {
-	    gretl_matrix_free(jvar->jinfo->q);
-	    if (q != NULL) {
-		jvar->jinfo->q = gretl_matrix_copy(q);
-	    } else {
-		jvar->jinfo->q = NULL;
-	    }
+	    gretl_matrix_replace(&jvar->jinfo->q, gretl_matrix_copy(q));
 	}
 
 	if (jvar->jinfo->R == NULL || 
@@ -1714,23 +1698,16 @@ transcribe_restriction_matrices (const GRETL_VAR *jvar,
 	}
     }
 
-    if (!err && acols > 0) {
+    if (!err && rset_VECM_acols(rset) > 0) {
 	const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
         const gretl_matrix *qa = rset_get_qa_matrix(rset);
 
 	if (Ra != jvar->jinfo->Ra) {
-	    gretl_matrix_free(jvar->jinfo->Ra);
-	    jvar->jinfo->Ra = gretl_matrix_copy(Ra);
+	    gretl_matrix_replace(&jvar->jinfo->Ra, gretl_matrix_copy(Ra));
 	}
 
 	if (qa != jvar->jinfo->qa) {
-	    gretl_matrix_free(jvar->jinfo->qa);
-	    jvar->jinfo->qa = NULL;
-	    if (qa != NULL) {
-		jvar->jinfo->qa = gretl_matrix_copy(qa);
-	    } else {
-		jvar->jinfo->qa = NULL;
-	    }
+	    gretl_matrix_replace(&jvar->jinfo->qa, gretl_matrix_copy(qa));
 	}
 
 #if JDEBUG
@@ -1754,8 +1731,6 @@ static int j_general_restrict (GRETL_VAR *jvar, gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       int flags, PRN *prn)
 {
-    int acols = rset_VECM_acols(rset);
-    int bcols = rset_VECM_bcols(rset);
     int err;
 
 #if JDEBUG
@@ -1769,7 +1744,7 @@ static int j_general_restrict (GRETL_VAR *jvar, gretl_restriction *rset,
 #endif
 
     if (!err) {
-	if (acols > 0) {
+	if (rset_VECM_acols(rset) > 0) {
 	    flags |= ALPHA_RESTRICTED;
 	}
 	err = VECM_estimate_full(jvar, rset, Z, pdinfo, flags);
@@ -1785,7 +1760,7 @@ static int j_general_restrict (GRETL_VAR *jvar, gretl_restriction *rset,
     }
 
     if (!err && !bootstrap(flags)) {
-	err = transcribe_restriction_matrices(jvar, rset, acols, bcols);
+	err = transcribe_restriction_matrices(jvar, rset);
     }
 
 #if JDEBUG
@@ -1938,11 +1913,8 @@ est_simple_alpha_restr (GRETL_VAR *jvar, gretl_restriction *rset,
 			    flags | ALPHA_RESTRICTED);
     }
 
-    if (!err && jvar->jinfo->Ra != Ra) {
-	jvar->jinfo->Ra = gretl_matrix_copy(Ra);
-	if (jvar->jinfo->Ra == NULL) {
-	    err = E_ALLOC;
-	}
+    if (!err && !bootstrap(flags)) {
+	err = transcribe_restriction_matrices(jvar, rset);
     }	
 
     return err;
@@ -2011,8 +1983,8 @@ est_simple_beta_restr (GRETL_VAR *jvar, const gretl_restriction *rset,
 	err = vecm_finalize(jvar, H, NULL, Z, pdinfo, flags);
     }
 
-    if (!err && jvar->jinfo->R != R) {
-	jvar->jinfo->R = gretl_matrix_copy(R);
+    if (!err && !bootstrap(flags)) {
+	err = transcribe_restriction_matrices(jvar, rset);
     }	
 
     gretl_matrix_free(H);
@@ -2027,9 +1999,9 @@ est_simple_beta_restr (GRETL_VAR *jvar, const gretl_restriction *rset,
 
 /* "unrestricted" VECM estimation */
 
-static int 
-j_estimate_unrestr (GRETL_VAR *jvar, 
-		    const double **Z, const DATAINFO *pdinfo)
+static int j_estimate_unrestr (GRETL_VAR *jvar, 
+			       const double **Z, 
+			       const DATAINFO *pdinfo)
 {
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
@@ -2081,6 +2053,7 @@ static int j_estimate_general (GRETL_VAR *jvar, gretl_restriction *rset,
 {
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
+    gretl_matrix *M = NULL;
     int r = jrank(jvar);
     int err = 0;
 
@@ -2097,8 +2070,16 @@ static int j_estimate_general (GRETL_VAR *jvar, gretl_restriction *rset,
 	err = johansen_get_eigenvalues(S00, 
 				       jvar->jinfo->S01, 
 				       jvar->jinfo->S11, 
-				       &jvar->jinfo->Beta, 
-				       &evals, r);
+				       &M, &evals, r);
+    }
+
+    if (bootstrap(flags)) {
+	if (M != NULL) {
+	    gretl_matrix_copy_values(jvar->jinfo->Beta, M);
+	    gretl_matrix_free(M);
+	}
+    } else {	    
+	jvar->jinfo->Beta = M;
     }
 
 #if JDEBUG

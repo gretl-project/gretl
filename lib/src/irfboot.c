@@ -723,7 +723,7 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 
     clear_gretl_matrix_err();
 
-    /* Note: v->k is a record of the column size at
+    /* Note: v->ycols is a record of the column size at
        which v->Y and v->B were originally allocated;
        see VAR_add_basic_matrices(). This may be greater
        than the current cols setting.
@@ -816,40 +816,23 @@ static GRETL_VAR *back_up_VAR (const GRETL_VAR *v)
 
 static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 {
-    gretl_matrix_free(v->Y);
-    gretl_matrix_free(v->X);
-    gretl_matrix_free(v->B);
-    gretl_matrix_free(v->XTX);
-    gretl_matrix_free(v->A);
-    gretl_matrix_free(v->E);
-    gretl_matrix_free(v->C);
-    gretl_matrix_free(v->S);
-
-    v->Y = vbak->Y;
-    v->X = vbak->X;
-    v->B = vbak->B;
-    v->XTX = vbak->XTX;
-    v->A = vbak->A;
-    v->E = vbak->E;
-    v->C = vbak->C;
-    v->S = vbak->S;
+    gretl_matrix_replace(&v->Y, vbak->Y);
+    gretl_matrix_replace(&v->X, vbak->X);
+    gretl_matrix_replace(&v->B, vbak->B);
+    gretl_matrix_replace(&v->XTX, vbak->XTX);
+    gretl_matrix_replace(&v->A, vbak->A);
+    gretl_matrix_replace(&v->E, vbak->E);
+    gretl_matrix_replace(&v->C, vbak->C);
+    gretl_matrix_replace(&v->S, vbak->S);
 
     if (v->jinfo != NULL) {
-	gretl_matrix_free(v->jinfo->R0);
-	gretl_matrix_free(v->jinfo->R1);
-	gretl_matrix_free(v->jinfo->S00);
-	gretl_matrix_free(v->jinfo->S11);
-	gretl_matrix_free(v->jinfo->S01);
-	gretl_matrix_free(v->jinfo->Beta);
-	gretl_matrix_free(v->jinfo->Alpha);
-
-	v->jinfo->R0 = vbak->jinfo->R0;
-	v->jinfo->R1 = vbak->jinfo->R1;
-	v->jinfo->S00 = vbak->jinfo->S00;
-	v->jinfo->S11 = vbak->jinfo->S11;
-	v->jinfo->S01 = vbak->jinfo->S01;
-	v->jinfo->Beta = vbak->jinfo->Beta;
-	v->jinfo->Alpha = vbak->jinfo->Alpha;
+	gretl_matrix_replace(&v->jinfo->R0, vbak->jinfo->R0);
+	gretl_matrix_replace(&v->jinfo->R1, vbak->jinfo->R1);
+	gretl_matrix_replace(&v->jinfo->S00, vbak->jinfo->S00);
+	gretl_matrix_replace(&v->jinfo->S11, vbak->jinfo->S11);
+	gretl_matrix_replace(&v->jinfo->S01, vbak->jinfo->S01);
+	gretl_matrix_replace(&v->jinfo->Beta, vbak->jinfo->Beta);
+	gretl_matrix_replace(&v->jinfo->Alpha, vbak->jinfo->Alpha);
 
 	free(v->ylist);
 	v->ylist = vbak->ylist;
@@ -878,12 +861,6 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
     irfboot *boot = NULL;
     int scount = 0;
     int iter, err = 0;
-
-    if (var->jinfo != NULL && var->jinfo->lrdf > 0) {
-	/* FIXME add support for restricted vecms */
-	gretl_errmsg_set("IRF bootstrap not yet available");
-	return NULL;
-    }
 
     if (var->X == NULL || var->Y == NULL) {
 	gretl_errmsg_set("X and/or Y matrix missing, can't do this");

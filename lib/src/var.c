@@ -2457,8 +2457,7 @@ johansen_test_complete (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 }
 
 static int 
-johansen_estimate_complete (GRETL_VAR *jvar, 
-			    gretl_restriction *rset,
+johansen_estimate_complete (GRETL_VAR *jvar, gretl_restriction *rset,
 			    const double **Z, const DATAINFO *pdinfo, 
 			    PRN *prn)
 {
@@ -2468,7 +2467,7 @@ johansen_estimate_complete (GRETL_VAR *jvar,
     int err = 0;
 
     gretl_error_clear();
-    
+
     jfun = get_plugin_function("johansen_estimate", &handle);
 
     if (jfun == NULL) {
