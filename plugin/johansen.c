@@ -1689,8 +1689,7 @@ static int simple_alpha_restriction (const GRETL_VAR *jvar,
 /* driver for VECM estimation subject to "general" restrictions
    on beta and/or alpha */
 
-static int j_general_restrict (GRETL_VAR *jvar, 
-			       gretl_restriction *rset,
+static int j_general_restrict (GRETL_VAR *jvar, gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       PRN *prn)
 {
@@ -1747,15 +1746,19 @@ static int j_general_restrict (GRETL_VAR *jvar,
 	const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
         const gretl_matrix *qa = rset_get_qa_matrix(rset);
 
-	gretl_matrix_free(jvar->jinfo->Ra);
-	jvar->jinfo->Ra = gretl_matrix_copy(Ra);
+	if (Ra != jvar->jinfo->Ra) {
+	    gretl_matrix_free(jvar->jinfo->Ra);
+	    jvar->jinfo->Ra = gretl_matrix_copy(Ra);
+	}
 
-	gretl_matrix_free(jvar->jinfo->qa);
-	jvar->jinfo->qa = NULL;
-	if (qa != NULL) {
-	    jvar->jinfo->qa = gretl_matrix_copy(qa);
-	} else {
+	if (qa != jvar->jinfo->qa) {
+	    gretl_matrix_free(jvar->jinfo->qa);
 	    jvar->jinfo->qa = NULL;
+	    if (qa != NULL) {
+		jvar->jinfo->qa = gretl_matrix_copy(qa);
+	    } else {
+		jvar->jinfo->qa = NULL;
+	    }
 	}
 
 #if JDEBUG
@@ -1889,12 +1892,11 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 /* estimation subject to "simple" restriction on alpha */
 
 static int 
-est_simple_alpha_restr (GRETL_VAR *jvar, 
-			gretl_restriction *rset,
+est_simple_alpha_restr (GRETL_VAR *jvar, gretl_restriction *rset,
 			const double **Z, const DATAINFO *pdinfo,
 			PRN *prn)
 {
-    const gretl_matrix *R = rset_get_Ra_matrix(rset);
+    const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
     gretlopt opt = OPT_F;
     int err;
 
@@ -1909,11 +1911,11 @@ est_simple_alpha_restr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, R, Z, pdinfo);
+	err = vecm_finalize(jvar, NULL, Ra, Z, pdinfo);
     }
 
-    if (!err) {
-	jvar->jinfo->Ra = gretl_matrix_copy(R);
+    if (!err && jvar->jinfo->Ra != Ra) {
+	jvar->jinfo->Ra = gretl_matrix_copy(Ra);
 	if (jvar->jinfo->Ra == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1925,8 +1927,7 @@ est_simple_alpha_restr (GRETL_VAR *jvar,
 /* full estimation subject to "simple" restriction on beta */
 
 static int 
-est_simple_beta_restr (GRETL_VAR *jvar, 
-		       const gretl_restriction *rset,
+est_simple_beta_restr (GRETL_VAR *jvar, const gretl_restriction *rset,
 		       const double **Z, const DATAINFO *pdinfo)
 {
     const gretl_matrix *R = NULL;
@@ -2042,8 +2043,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
 /* Here we prep the system with the initial eigen-analysis, then
    basically hand over to jrestrict.c */
 
-static int j_estimate_general (GRETL_VAR *jvar, 
-			       gretl_restriction *rset,
+static int j_estimate_general (GRETL_VAR *jvar, gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
 			       PRN *prn)
 {
@@ -2132,6 +2132,7 @@ int johansen_estimate (GRETL_VAR *jvar, gretl_restriction *rset,
 int johansen_boot_round (GRETL_VAR *jvar, const double **Z, 
 			 const DATAINFO *pdinfo)
 {
+    gretl_restriction *rset;
     gretl_matrix *M = NULL;
     gretl_matrix *evals = NULL;
     int err = 0;
@@ -2140,9 +2141,14 @@ int johansen_boot_round (GRETL_VAR *jvar, const double **Z,
     fprintf(stderr, "\n*** starting johansen_bootstrap_round()\n\n");
 #endif
 
-    if (jvar->jinfo->R != NULL || jvar->jinfo->q != NULL ||
-	jvar->jinfo->Ra != NULL || jvar->jinfo->qa != NULL) {
+    rset = rset_from_VECM(jvar, &err);
+    if (err) {
+	return err;
+    }
+
+    if (rset != NULL) {
 	fprintf(stderr, "FIXME IRFs for restricted VECMs\n");
+	free(rset);
 	return E_NOTIMP;
     }
 
@@ -2170,6 +2176,7 @@ int johansen_boot_round (GRETL_VAR *jvar, const double **Z,
 
     gretl_matrix_free(M);
     gretl_matrix_free(evals);
+    free(rset);
 
     return err;
 }

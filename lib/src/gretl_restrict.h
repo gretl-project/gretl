@@ -36,6 +36,8 @@ eqn_restriction_set_start (const char *line, MODEL *pmod,
 			   const DATAINFO *pdinfo,
 			   gretlopt opt);
 
+gretl_restriction *rset_from_VECM (GRETL_VAR *var, int *err);
+
 int 
 restriction_set_parse_line (gretl_restriction *rset, const char *line,
 			    const DATAINFO *pdinfo);

@@ -1389,6 +1389,36 @@ static gretl_restriction *restriction_set_new (void *ptr,
     return rset;
 }
 
+gretl_restriction *rset_from_VECM (GRETL_VAR *var, int *err)
+{
+    const gretl_matrix *R = gretl_VECM_R_matrix(var);
+    const gretl_matrix *q = gretl_VECM_q_matrix(var);
+    const gretl_matrix *Ra = gretl_VECM_Ra_matrix(var);
+    const gretl_matrix *qa = gretl_VECM_qa_matrix(var);
+    gretl_restriction *rset;
+
+    if (R == NULL && q == NULL && Ra == NULL && qa == NULL) {
+	/* no restriction in place */
+	return NULL;
+    }
+
+    rset = calloc(1, sizeof *rset);
+    if (rset == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    rset->obj = var;
+    rset->otype = GRETL_OBJ_VAR;
+
+    rset->R = (gretl_matrix *) R;
+    rset->q = (gretl_matrix *) q;
+    rset->Ra = (gretl_matrix *) Ra;
+    rset->qa = (gretl_matrix *) qa;
+
+    return rset;
+}
+
 /* check that the coefficients referenced in a restriction are
    within bounds, relative to the equation or system that is
    to be restricted */
