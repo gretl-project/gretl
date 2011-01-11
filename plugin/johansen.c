@@ -396,6 +396,7 @@ static void copy_coeffs_to_Gamma (GRETL_VAR *vecm, gretl_matrix **G)
 #if JDEBUG > 1
     for (k=0; k<vecm->order; k++) {
 	char msg[32];
+
 	sprintf(msg, "Gamma matrix, lag %d", k+1);
 	gretl_matrix_print(G[k], msg);
     }
@@ -493,11 +494,21 @@ static int vecm_check_size (GRETL_VAR *v, int flags)
     int err = 0;
 
     if (bootstrap(flags)) {
-	/* in this case the matrices will already
-	   be fully allocated */
+	/* We're re-visiting this function: v->ncoeff will
+	   already be full-size, as will the v->X matrix.
+	*/
 	v->X->cols = v->ncoeff;
 	v->B->rows = v->ncoeff;
-	/* FIXME v->Y cols, v->B cols? */
+	if (alpha_restricted(flags)) {
+	    int r = gretl_VECM_rank(v);
+
+	    v->X->cols -= r;
+	    v->B->rows -= r;
+	}
+#if 1
+	v->Y->cols = v->neqns;
+	v->B->cols = v->neqns;
+#endif
 	return 0;
     }
 
@@ -722,20 +733,6 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
 #endif
 }
 
-static void fill_residuals_matrix (GRETL_VAR *v)
-{
-    double x;
-    int T = v->Y->rows;
-    int i, t;
-
-    for (i=0; i<v->neqns; i++) {
-	for (t=0; t<T; t++) {
-	    x = gretl_matrix_get(v->Y, t, i);
-	    gretl_matrix_set(v->E, t, i, x);
-	}
-    }
-}
-
 /* The following is designed to accommodate the case where alpha is
    restricted, in which case we can't just run OLS conditional on
    beta.
@@ -824,7 +821,7 @@ VECM_estimate_full (GRETL_VAR *v, const gretl_restriction *rset,
 	    }
 	} else {
 	    /* nothing to estimate, with alpha already in hand */
-	    fill_residuals_matrix(v);
+	    gretl_matrix_copy_values(v->E, v->Y);
 	}
     }
 
@@ -1686,54 +1683,29 @@ static int simple_alpha_restriction (const GRETL_VAR *jvar,
     }
 }
 
-/* driver for VECM estimation subject to "general" restrictions
-   on beta and/or alpha */
-
-static int j_general_restrict (GRETL_VAR *jvar, gretl_restriction *rset,
-			       const double **Z, const DATAINFO *pdinfo, 
-			       PRN *prn)
+static int 
+transcribe_restriction_matrices (const GRETL_VAR *jvar,
+				 const gretl_restriction *rset,
+				 int acols, int bcols)
 {
-    int acols = rset_VECM_acols(rset);
-    int bcols = rset_VECM_bcols(rset);
-    int err;
+    int err = 0;
 
-#if JDEBUG
-    fprintf(stderr, "j_general_restrict: starting\n");
-#endif
-
-    err = general_vecm_analysis(jvar, rset, pdinfo, prn);
-
-#if JDEBUG
-    fprintf(stderr, " done general_vecm_analysis, err = %d\n", err);
-#endif
-
-    if (!err) {
-	int flags = (acols > 0)? ALPHA_RESTRICTED : 0;
-
-	err = VECM_estimate_full(jvar, rset, Z, pdinfo, flags);
-    }
-
-    if (!err) {
-	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C, NULL);
-    }
-
-    if (!err) {
-	/* FIXME 'k' for AIC etc? */
-	err = vecm_ll_stats(jvar);
-    }
-
-    if (!err && bcols > 0) {
+    if (bcols > 0) {
 	const gretl_matrix *R = rset_get_R_matrix(rset);
 	const gretl_matrix *q = rset_get_q_matrix(rset);
 
-	gretl_matrix_free(jvar->jinfo->R);
-	jvar->jinfo->R = gretl_matrix_copy(R);
+	if (R != jvar->jinfo->R) {
+	    gretl_matrix_free(jvar->jinfo->R);
+	    jvar->jinfo->R = gretl_matrix_copy(R);
+	}
 
-	gretl_matrix_free(jvar->jinfo->q);
-	if (q != NULL) {
-	    jvar->jinfo->q = gretl_matrix_copy(q);
-	} else {
-	    jvar->jinfo->q = NULL;
+	if (q != jvar->jinfo->q) {
+	    gretl_matrix_free(jvar->jinfo->q);
+	    if (q != NULL) {
+		jvar->jinfo->q = gretl_matrix_copy(q);
+	    } else {
+		jvar->jinfo->q = NULL;
+	    }
 	}
 
 	if (jvar->jinfo->R == NULL || 
@@ -1770,6 +1742,50 @@ static int j_general_restrict (GRETL_VAR *jvar, gretl_restriction *rset,
 	    (qa != NULL && jvar->jinfo->qa == NULL)) {
 	    err = E_ALLOC;
 	}
+    }
+
+    return err;
+}
+
+/* driver for VECM estimation subject to "general" restrictions
+   on beta and/or alpha */
+
+static int j_general_restrict (GRETL_VAR *jvar, gretl_restriction *rset,
+			       const double **Z, const DATAINFO *pdinfo, 
+			       int flags, PRN *prn)
+{
+    int acols = rset_VECM_acols(rset);
+    int bcols = rset_VECM_bcols(rset);
+    int err;
+
+#if JDEBUG
+    fprintf(stderr, "j_general_restrict: starting\n");
+#endif
+
+    err = general_vecm_analysis(jvar, rset, pdinfo, prn);
+
+#if JDEBUG
+    fprintf(stderr, " done general_vecm_analysis, err = %d\n", err);
+#endif
+
+    if (!err) {
+	if (acols > 0) {
+	    flags |= ALPHA_RESTRICTED;
+	}
+	err = VECM_estimate_full(jvar, rset, Z, pdinfo, flags);
+    }
+
+    if (!err) {
+	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C, NULL);
+    }
+
+    if (!err && !bootstrap(flags)) {
+	/* FIXME 'k' for AIC etc? */
+	err = vecm_ll_stats(jvar);
+    }
+
+    if (!err && !bootstrap(flags)) {
+	err = transcribe_restriction_matrices(jvar, rset, acols, bcols);
     }
 
 #if JDEBUG
@@ -1847,7 +1863,8 @@ static int get_unrestricted_ll (GRETL_VAR *jvar)
 
 static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H, 
 			  const gretl_matrix *Ra,
-			  const double **Z, const DATAINFO *pdinfo)
+			  const double **Z, const DATAINFO *pdinfo,
+			  int flags)
 {
     int do_stderrs = jrank(jvar) < jvar->neqns;
     int err = 0;
@@ -1860,9 +1877,11 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
     }
 
     if (!err) {
-	int flags = (Ra != NULL)? ALPHA_RESTRICTED : 0;
-
-	vecm_set_df(jvar, H, Ra);
+	if (bootstrap(flags)) {
+	    do_stderrs = 0;
+	} else {
+	    vecm_set_df(jvar, H, Ra);
+	}
 	err = VECM_estimate_full(jvar, NULL, Z, pdinfo, flags);
     }
 
@@ -1882,7 +1901,7 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 	err = gretl_VAR_do_error_decomp(jvar->S, jvar->C, NULL);
     }
 
-    if (!err) {
+    if (!err && !bootstrap(flags)) {
 	err = vecm_ll_stats(jvar);
     }
 
@@ -1894,7 +1913,7 @@ static int vecm_finalize (GRETL_VAR *jvar, gretl_matrix *H,
 static int 
 est_simple_alpha_restr (GRETL_VAR *jvar, gretl_restriction *rset,
 			const double **Z, const DATAINFO *pdinfo,
-			PRN *prn)
+			int flags, PRN *prn)
 {
     const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
     gretlopt opt = OPT_F;
@@ -1902,16 +1921,21 @@ est_simple_alpha_restr (GRETL_VAR *jvar, gretl_restriction *rset,
 
 #if JDEBUG
     fprintf(stderr, "\n*** starting est_simple_alpha_restr\n\n");
-#endif    
+#endif 
 
-    err = get_unrestricted_ll(jvar);
+    if (bootstrap(flags)) {
+	opt |= OPT_B;
+    } else {
+	err = get_unrestricted_ll(jvar);
+    }
     
     if (!err) {
 	err = vecm_alpha_test(jvar, rset, pdinfo, opt, prn);
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, Ra, Z, pdinfo);
+	err = vecm_finalize(jvar, NULL, Ra, Z, pdinfo,
+			    flags | ALPHA_RESTRICTED);
     }
 
     if (!err && jvar->jinfo->Ra != Ra) {
@@ -1928,7 +1952,8 @@ est_simple_alpha_restr (GRETL_VAR *jvar, gretl_restriction *rset,
 
 static int 
 est_simple_beta_restr (GRETL_VAR *jvar, const gretl_restriction *rset,
-		       const double **Z, const DATAINFO *pdinfo)
+		       const double **Z, const DATAINFO *pdinfo,
+		       int flags)
 {
     const gretl_matrix *R = NULL;
     gretl_matrix *H = NULL;
@@ -1944,7 +1969,9 @@ est_simple_beta_restr (GRETL_VAR *jvar, const gretl_restriction *rset,
     fprintf(stderr, "\n*** starting est_simple_beta_restr\n\n");
 #endif
 
-    err = get_unrestricted_ll(jvar);
+    if (!bootstrap(flags)) {
+	err = get_unrestricted_ll(jvar);
+    }
     
     if (!err) {
 	R = rset_get_R_matrix(rset);
@@ -1968,19 +1995,23 @@ est_simple_beta_restr (GRETL_VAR *jvar, const gretl_restriction *rset,
 #endif
 
     if (!err) {
-	jvar->jinfo->Beta = gretl_matrix_multiply_new(H, M, &err);
+	if (jvar->jinfo->Beta == NULL) {
+	    jvar->jinfo->Beta = gretl_matrix_multiply_new(H, M, &err);
+	} else {
+	    err = gretl_matrix_multiply(H, M, jvar->jinfo->Beta);
+	}
     } 
 
-    if (!err) {
+    if (!err && !bootstrap(flags)) {
 	set_beta_test_df(jvar, H);
 	err = johansen_ll_calc(jvar, evals);
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, H, NULL, Z, pdinfo);
+	err = vecm_finalize(jvar, H, NULL, Z, pdinfo, flags);
     }
 
-    if (!err) {
+    if (!err && jvar->jinfo->R != R) {
 	jvar->jinfo->R = gretl_matrix_copy(R);
     }	
 
@@ -2031,7 +2062,7 @@ j_estimate_unrestr (GRETL_VAR *jvar,
     }
 
     if (!err) {
-	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo);
+	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo, 0);
     }
 
     gretl_matrix_free(S00);
@@ -2041,11 +2072,12 @@ j_estimate_unrestr (GRETL_VAR *jvar,
 }
 
 /* Here we prep the system with the initial eigen-analysis, then
-   basically hand over to jrestrict.c */
+   basically hand over to jrestrict.c 
+*/
 
 static int j_estimate_general (GRETL_VAR *jvar, gretl_restriction *rset,
 			       const double **Z, const DATAINFO *pdinfo, 
-			       PRN *prn)
+			       int flags, PRN *prn)
 {
     gretl_matrix *S00 = NULL;
     gretl_matrix *evals = NULL;
@@ -2073,7 +2105,7 @@ static int j_estimate_general (GRETL_VAR *jvar, gretl_restriction *rset,
     gretl_matrix_print(jvar->jinfo->Beta, "raw eigenvector(s)");
 #endif
 
-    if (!err) {
+    if (!err && !bootstrap(flags)) {
 	err = johansen_ll_calc(jvar, evals);
     }
 
@@ -2084,11 +2116,41 @@ static int j_estimate_general (GRETL_VAR *jvar, gretl_restriction *rset,
 #if JDEBUG
 	fprintf(stderr, "j_estimate_general: calling j_general_restrict\n");
 #endif
-	err = j_general_restrict(jvar, rset, Z, pdinfo, prn);
+	err = j_general_restrict(jvar, rset, Z, pdinfo, flags, prn);
     }
 
 #if JDEBUG
     fprintf(stderr, "j_estimate_general: returning %d\n", err);
+#endif
+
+    return err;
+}
+
+static int real_johansen_estimate (GRETL_VAR *jvar, 
+				   gretl_restriction *rset,
+				   const double **Z, 
+				   const DATAINFO *pdinfo, 
+				   int flags,
+				   PRN *prn)
+{
+    int err = 0;
+
+#if JDEBUG
+    fprintf(stderr, "johansen_estimate: starting\n");
+#endif
+
+    if (rset == NULL) {
+	err = j_estimate_unrestr(jvar, Z, pdinfo);
+    } else if (simple_beta_restriction(jvar, rset)) {
+	err = est_simple_beta_restr(jvar, rset, Z, pdinfo, flags);
+    } else if (simple_alpha_restriction(jvar, rset)) {
+	err = est_simple_alpha_restr(jvar, rset, Z, pdinfo, flags, prn);
+    } else {
+	err = j_estimate_general(jvar, rset, Z, pdinfo, flags, prn);
+    }
+
+#if JDEBUG
+    fprintf(stderr, "johansen_estimate: returning %d\n", err);
 #endif
 
     return err;
@@ -2100,59 +2162,19 @@ int johansen_estimate (GRETL_VAR *jvar, gretl_restriction *rset,
 		       const double **Z, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
-    int err = 0;
-
-#if JDEBUG
-    fprintf(stderr, "johansen_estimate: starting\n");
-#endif
-
-    if (rset == NULL) {
-	err = j_estimate_unrestr(jvar, Z, pdinfo);
-    } else if (simple_beta_restriction(jvar, rset)) {
-	err = est_simple_beta_restr(jvar, rset, Z, pdinfo);
-    } else if (simple_alpha_restriction(jvar, rset)) {
-	err = est_simple_alpha_restr(jvar, rset, Z, pdinfo, prn);
-    } else {
-	err = j_estimate_general(jvar, rset, Z, pdinfo, prn);
-    }
-
-#if JDEBUG
-    fprintf(stderr, "johansen_estimate: returning %d\n", err);
-#endif
-
-    return err;
+    return real_johansen_estimate(jvar, rset, Z, pdinfo, 0, prn);
 }
 
-/* Simplified version of the Johansen procedure, to be called in
-   the process of computing bootstrap confidence intervals for
-   impulse response functions.  We just have to do enough to
-   generate the VAR representation.
+/* bootstrap round for "unrestricted" VECM: take some
+   shortcuts
 */
 
-int johansen_boot_round (GRETL_VAR *jvar, const double **Z, 
-			 const DATAINFO *pdinfo)
+static int boot_round_simple (GRETL_VAR *jvar, const double **Z, 
+			      const DATAINFO *pdinfo)
 {
-    gretl_restriction *rset;
     gretl_matrix *M = NULL;
     gretl_matrix *evals = NULL;
-    int err = 0;
-
-#if JDEBUG
-    fprintf(stderr, "\n*** starting johansen_bootstrap_round()\n\n");
-#endif
-
-    rset = rset_from_VECM(jvar, &err);
-    if (err) {
-	return err;
-    }
-
-    if (rset != NULL) {
-	fprintf(stderr, "FIXME IRFs for restricted VECMs\n");
-	free(rset);
-	return E_NOTIMP;
-    }
-
-    /* FIXME: OK to use jvar->jinfo->S00, or not? */
+    int err;
 
     err = johansen_get_eigenvalues(jvar->jinfo->S00, jvar->jinfo->S01, 
 				   jvar->jinfo->S11, &M, &evals, 
@@ -2172,11 +2194,43 @@ int johansen_boot_round (GRETL_VAR *jvar, const double **Z,
 	if (!err) {
 	    err = compute_omega(jvar);
 	}
-    } 
-
+    }
+	
     gretl_matrix_free(M);
     gretl_matrix_free(evals);
-    free(rset);
+
+    return err;
+}
+
+/* Simplified version of the Johansen procedure, to be called in
+   the process of computing bootstrap confidence intervals for
+   impulse response functions.  We just have to do enough to
+   generate the VAR representation.
+*/
+
+int johansen_boot_round (GRETL_VAR *jvar, const double **Z, 
+			 const DATAINFO *pdinfo)
+{
+    gretl_restriction *rset;
+    int err = 0;
+
+#if JDEBUG
+    fprintf(stderr, "\n*** starting johansen_bootstrap_round()\n\n");
+#endif
+
+    rset = rset_from_VECM(jvar, &err);
+    if (err) {
+	return err;
+    }
+
+    if (rset != NULL) {
+	/* experimental */
+	err = real_johansen_estimate(jvar, rset, Z, pdinfo, 
+				     BOOTSTRAPPING, NULL);
+	free(rset);
+    } else {
+	err = boot_round_simple(jvar, Z, pdinfo);
+    } 
 
     return err;
 }

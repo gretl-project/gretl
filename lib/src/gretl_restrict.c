@@ -229,13 +229,9 @@ static int get_R_vecm_column (const gretl_restriction *rset,
 	    col += r->eq[j] * gretl_VECM_n_beta(var);
 	}
     } else if (letter == 'a') {
-	if (r->eq == NULL || r->eq[j] == R_UNSPEC) {
-	    col = r->bnum[j];
-	} else {
-	    col = r->eq[j];
-	    if (rset->amulti) {
-		col += r->bnum[j] * gretl_VECM_rank(var);
-	    }
+	col = r->bnum[j];
+	if (rset->amulti) {
+	    col += r->eq[j] * gretl_VECM_n_alpha(var);
 	} 
     }
 
@@ -1273,13 +1269,7 @@ void print_restriction_from_matrices (const gretl_matrix *R,
 		    }
 		}
 		if (eqn > 0) {
-		    if (letter == 'a') {
-			/* VECM \alpha: the restriction is transposed
-			   for internal use */
-			pprintf(prn, "%c[%d,%d]", letter, coeff, eqn);
-		    } else {
-			pprintf(prn, "%c[%d,%d]", letter, eqn, coeff);
-		    }
+		    pprintf(prn, "%c[%d,%d]", letter, eqn, coeff);
 		} else {
 		    pprintf(prn, "%c%d", letter, coeff);
 		}
@@ -1410,6 +1400,7 @@ gretl_restriction *rset_from_VECM (GRETL_VAR *var, int *err)
 
     rset->obj = var;
     rset->otype = GRETL_OBJ_VAR;
+    rset->opt = OPT_B;
 
     rset->R = (gretl_matrix *) R;
     rset->q = (gretl_matrix *) q;
@@ -1431,15 +1422,12 @@ static int bnum_out_of_bounds (const gretl_restriction *rset,
     if (rset->otype == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = rset->obj;
 
-	if ((letter == 'b' && i >= gretl_VECM_rank(var)) ||
-	    (letter == 'a' && i >= var->neqns)) {
-	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
+	if (i >= gretl_VECM_rank(var)) {
+	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
 				 i + 1);
-	} else if (letter == 'b' && j >= gretl_VECM_n_beta(var)) {
-	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
-				 j + 1);
-	} else if (letter == 'a' && i != R_UNSPEC && j >= gretl_VECM_rank(var)) {
-	    gretl_errmsg_sprintf(_("Coefficient number (%d) is out of range"), 
+	} else if ((letter == 'b' && j >= gretl_VECM_n_beta(var)) ||
+		   (letter == 'a' && j >= gretl_VECM_n_alpha(var))) {
+	    gretl_errmsg_sprintf(_("Equation number (%d) is out of range"), 
 				 j + 1);
 	} else {
 	    ret = 0;

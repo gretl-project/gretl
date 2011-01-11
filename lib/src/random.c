@@ -355,11 +355,7 @@ static double ran_normal_ziggurat (void)
     double x, y;
 
     while (1) {
-	if (use_sfmt) {
-	    j = gen_rand32();
-	} else {
-	    j = g_rand_int(gretl_rand);
-	}
+	j = use_sfmt ? gen_rand32() : g_rand_int(gretl_rand);
 	i = gretl_rand_octet(&sign);
 	j = j >> 2;
 

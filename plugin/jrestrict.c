@@ -3084,7 +3084,8 @@ static int make_theta (Jwrap *J)
 /* write info from the temporary Jwrap structure into
    the "permanent" GRETL_VAR structure */
 
-static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
+static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar,
+				gretlopt opt)
 {
     jvar->jinfo->ll0 = jvar->ll;
     jvar->ll = J->ll;
@@ -3098,6 +3099,10 @@ static void transcribe_to_jvar (Jwrap *J, GRETL_VAR *jvar)
 
     gretl_matrix_replace(&jvar->jinfo->Alpha, J->alpha);
     J->alpha = NULL;
+
+    if (opt & OPT_B) {
+	return;
+    }
 
     gretl_matrix_replace(&jvar->jinfo->Bvar, J->Vb);
     J->Vb = NULL;
@@ -3133,6 +3138,7 @@ static int do_bfgs (Jwrap *J, gretlopt opt, PRN *prn)
    OPT_F: doing full estimation of restricted system, not just 
           testing the restriction.
    OPT_J: ("jitter") use simulated annealing in initialization.
+   OPT_B: bootstrapping impulse response
 */
 
 int general_vecm_analysis (GRETL_VAR *jvar, 
@@ -3223,7 +3229,9 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 
     if (!err) {
 	if (full) {
-	    transcribe_to_jvar(J, jvar);
+	    transcribe_to_jvar(J, jvar, OPT_F);
+	} else if (opt & OPT_B) {
+	    transcribe_to_jvar(J, jvar, OPT_B);
 	} else {
 	    printres(J, jvar, rset, pdinfo, prn);
 	}

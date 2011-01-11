@@ -671,8 +671,8 @@ you are able to carry out cumulative tests, as in Chapter 7 of
 \subsection{Syntax}
 \label{sec:vecm-restr-syntax}
 
-The full syntax for specifying the restriction is an extension of the
-one exemplified in the previous section. Inside a
+The full syntax for specifying the restriction is an extension of
+that exemplified in the previous section. Inside a
 \texttt{restrict}\ldots\texttt{end restrict} block, valid statements
 are of the form
 \begin{center}
@@ -691,10 +691,10 @@ restrictions:
   a[1,1] - a[1,2] = 0
 \end{code}
 
-A special syntax is reserved for the case when a certain constraint
-should be applied to all columns of $\beta$: in this case, one index is
-given for each \texttt{b} term, and the square brackets are dropped.
-Hence, the following syntax
+Special syntax is used when a certain constraint should be applied to
+all columns of $\beta$: in this case, one index is given for each
+\texttt{b} term, and the square brackets are dropped.  Hence, the
+following syntax
 \begin{code}
 restrict
   b1 + b2 = 0
@@ -725,7 +725,10 @@ end restrict
 \end{code}
 %
 specifies that variables 3 and 4 do not respond to the deviation from
-equilibrium in the previous period.  
+equilibrium in the previous period. Note that when two indices are
+given in a restriction on $\alpha$ the indexation is consistent with
+that for $\beta$ restrictions: the leading index denotes the
+cointegrating vector and the trailing index the equation number.
 
 Finally, a short-cut is available for setting up complex restrictions (but
 currently only in relation to $\beta$): you can specify $R_b$ and $q$,

@@ -374,7 +374,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 	    if (opt & OPT_F) {
 		johansen_ll_calc(jvar, evals);
 		jvar->jinfo->lrdf = r * (p - A->cols);
-	    } else {
+	    } else if (!(opt & OPT_B)) {
 		err = johansen_LR_calc(jvar, evals, A, rset, V_ALPHA, prn);
 	    }
 	} 
