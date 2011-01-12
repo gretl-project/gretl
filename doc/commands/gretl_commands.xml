@@ -11211,6 +11211,36 @@
 
   </command>
 
+  <command name="x12a" section="Utilities" context="gui"
+    label="X-12-ARIMA">
+
+    <description>
+      <para>
+	There are two procedural options here, controlled by the 
+	lower set of radio-buttons.
+      </para>
+      <para>
+	If you select <quote>Execute X-12-ARIMA directly</quote> then
+	gretl writes a command file for X-12-ARIMA and calls the
+	x12a program to execute the commands. In this case you have the
+	option of producing a graph and/or saving selected output series
+	to the gretl dataset.
+      </para>
+      <para>
+	If you select <quote>Make X-12-ARIMA command file</quote>
+	gretl writes a command file for X-12-ARIMA, as above, but then
+	opens this file in an editor window. In that window you are
+	able to make changes and to save the file under a chosen
+	name. You are also able to send the file for execution by x12a
+	(by clicking the <quote>Run</quote> button on the editor
+	window toolbar) and view the output. But in this case you do
+	not have the option of saving data as gretl series or
+	producing a gretl graph.
+      </para>
+    </description>
+
+  </command>
+
   <command name="xcorrgm" section="Statistics" label="Cross-correlogram">
 
     <usage>

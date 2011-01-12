@@ -308,7 +308,7 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
-    b[1] = gtk_radio_button_new_with_label(group, _("Edit X-12-ARIMA commands"));
+    b[1] = gtk_radio_button_new_with_label(group, _("Make X-12-ARIMA command file"));
     gtk_widget_show(b[1]);
     gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
     g_object_set_data(G_OBJECT(b[1]), "checks", chk);
@@ -318,8 +318,38 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE); 
 }
 
+static GtkWidget *x12a_help_button (GtkWidget *hbox, tx_request *request)
+{
+    GtkWidget *button;
+
+    button = gtk_button_new_from_stock(GTK_STOCK_HELP);
+    gtk_widget_set_can_default(button, TRUE);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
+				       button, TRUE);
+    gtk_widget_show(button);
+
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(request->helpfunc), 
+		     NULL);
+    
+    return button;
+}
+
+static void tx_dialog_callback (GtkDialog *dlg, gint id, int *ret)
+{
+    if (id == GTK_RESPONSE_REJECT || id == GTK_RESPONSE_ACCEPT) {
+	*ret = id;
+    } else if (id == GTK_RESPONSE_DELETE_EVENT) {
+	*ret = GTK_RESPONSE_REJECT;
+    }
+
+    gtk_main_quit();
+} 
+
 static int tx_dialog (tx_request *request)
 {
+    GtkDialogFlags dflags = GTK_DIALOG_DESTROY_WITH_PARENT;
     GtkWidget *hbox, *vbox;
     gint i, ret = 0;
 
@@ -327,12 +357,14 @@ static int tx_dialog (tx_request *request)
 	request->opts[i].check = NULL;
     }
 
+    if (request->prog != X12A) {
+	dflags |= GTK_DIALOG_MODAL;
+    }
+
     request->dialog = 
 	gtk_dialog_new_with_buttons ((request->prog == TRAMO_SEATS)?
 				     "TRAMO/SEATS" : "X-12-ARIMA",
-				     NULL,
-				     GTK_DIALOG_MODAL | 
-				     GTK_DIALOG_DESTROY_WITH_PARENT,
+				     NULL, dflags,
 				     GTK_STOCK_CANCEL,
 				     GTK_RESPONSE_REJECT,
 				     GTK_STOCK_OK,
@@ -356,7 +388,16 @@ static int tx_dialog (tx_request *request)
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(request->dialog));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    ret = gtk_dialog_run(GTK_DIALOG(request->dialog));
+    if (request->prog == X12A) {
+	hbox = gtk_dialog_get_action_area(GTK_DIALOG(request->dialog));
+	x12a_help_button(hbox, request);
+	g_signal_connect(G_OBJECT(request->dialog), "response", 
+			 G_CALLBACK(tx_dialog_callback), &ret);
+	gtk_widget_show_all(request->dialog);
+	gtk_main(); /* block */
+    } else {
+	ret = gtk_dialog_run(GTK_DIALOG(request->dialog));
+    }
 
     return (ret == GTK_RESPONSE_ACCEPT)? 1 : 0;
 }
@@ -577,8 +618,7 @@ static void clear_x12a_files (const char *path, const char *vname)
 
 static int add_series_from_file (const char *path, int src,
 				 double **Z, DATAINFO *pdinfo,
-				 int targv, tx_request *request,
-				 char *errmsg)
+				 int targv, tx_request *request)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN];
@@ -635,8 +675,7 @@ static int add_series_from_file (const char *path, int src,
 	}
 
 	if (!gotit) {
-	    fprintf(stderr, "Couldn't open %s\n", sfname);
-	    sprintf(errmsg, _("Couldn't open %s"), sfname);
+	    gretl_errmsg_sprintf(_("Couldn't open %s"), sfname);
 	    return 1;
 	}
     }
@@ -783,11 +822,13 @@ static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
     return err;
 }
 
-static void request_opts_init (tx_request *request, const DATAINFO *pdinfo)
+static void request_opts_init (tx_request *request, const DATAINFO *pdinfo,
+			       void (*helpfunc))
 {
     int i;
 
     request->savevars = 0;
+    request->helpfunc = helpfunc;
 
     request->xopt.logtrans = 3; /* x12a: automatic logs or not */
     request->xopt.outliers = 1; /* x12a: detect outliers */
@@ -1021,8 +1062,7 @@ static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
 
 static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				 double **tmpZ, DATAINFO *tmpinfo,
-				 int *varlist, tx_request *request,
-				 char *errmsg)
+				 int *varlist, tx_request *request)
 {
     int i, v, j, addvars = 0;
 
@@ -1160,27 +1200,31 @@ static int check_x12a_model_file (const char *workdir)
     return err;
 }
 
-static int check_sample_bound (int prog, const DATAINFO *pdinfo,
-			       char *errmsg)
+static int check_sample_bound (int prog, const DATAINFO *pdinfo)
 {
     int T = pdinfo->t2 - pdinfo->t1 + 1;
 
     if (prog == TRAMO_SEATS && T > 600) {
-	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
+	gretl_errmsg_set(_("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
 	return E_EXTERNAL;
     } else if (prog == X12A) {
 	int pdmax = get_x12a_maxpd();
 
 	if (T > 50 * pdmax) {
-	    sprintf(errmsg, _("X-12-ARIMA can't handle more than %d observations.\n"
-			      "Please select a smaller sample."), 50 * pdmax);
+	    gretl_errmsg_sprintf(_("X-12-ARIMA can't handle more than %d observations.\n"
+				   "Please select a smaller sample."), 50 * pdmax);
 	    return E_EXTERNAL;
 	}
     }
 
     return 0;
 }
+
+/* Callback for the "Run" button in a gretl editor window displaying
+   an x12a command file: run the commands (which are provided in @buf),
+   and fill out @outname with the name of the x12a output file.
+*/
 
 int exec_tx_script (char *outname, const gchar *buf)
 {
@@ -1222,9 +1266,27 @@ int exec_tx_script (char *outname, const gchar *buf)
     return err;
 }
 
+/* Driver for access to TRAMO/SEATS (if @tramo is non-zero) or
+   X-12-ARIMA, for analysis of the series with ID number @varnum. The
+   @opt pointer is filled out based on selections from a dialog box.
+
+   The @fname argument is filled out to tell the caller the name of
+   the output file from the third-party program, if available; it will
+   be an empty string if the user cancels, or if we fail to execute
+   the program in question.
+
+   At present the @help_func argument is used only for X-12-ARIMA,
+   for which we offer a special option, namely writing a spec file
+   for display in an editor window rather than directly executing
+   x12a commands. If that option is selected we signal the caller
+   by putting OPT_S into @opt, and we return the name of the gretl-
+   generated command file in @fname.
+*/
+
 int write_tx_data (char *fname, int varnum, 
-		   double ***pZ, DATAINFO *pdinfo, gretlopt *opt, 
-		   int tramo, int *graph_ok, char *errmsg)
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt *opt, int tramo,
+		   void (*help_func))
 {
     const char *exepath;
     const char *workdir;
@@ -1237,8 +1299,6 @@ int write_tx_data (char *fname, int varnum,
     int i, doit;
     int err = 0;
 
-    *errmsg = '\0';
-
     if (tramo) {
 	request.prog = TRAMO_SEATS;
 	exepath = gretl_tramo();
@@ -1249,9 +1309,9 @@ int write_tx_data (char *fname, int varnum,
 	workdir = gretl_x12_arima_dir();
     }	
 	
-    request_opts_init(&request, pdinfo);
+    request_opts_init(&request, pdinfo, help_func);
 
-    err = check_sample_bound(request.prog, pdinfo, errmsg);
+    err = check_sample_bound(request.prog, pdinfo);
     if (err) {
 	return err;
     }
@@ -1263,6 +1323,7 @@ int write_tx_data (char *fname, int varnum,
     doit = tx_dialog(&request); 
     if (!doit) {
 	gtk_widget_destroy(request.dialog);
+	*fname = '\0';
 	return 0;
     }
     set_opts(&request);
@@ -1317,6 +1378,7 @@ int write_tx_data (char *fname, int varnum,
     }
 
     if (savescript) {
+	/* x12a file written; we're done */
 	return 0;
     }
 
@@ -1362,7 +1424,7 @@ int write_tx_data (char *fname, int varnum,
 	    if (request.prog == TRAMO_ONLY) {
 		/* no graph offered */
 		request.opts[TRIGRAPH].save = 0;
-		*graph_ok = 0;
+		*opt |= OPT_T;
 	    }
 	} 
 
@@ -1374,7 +1436,7 @@ int write_tx_data (char *fname, int varnum,
 
 	    for (i=1; i<=savelist[0]; i++) {
 		err = add_series_from_file(path, savelist[i], tmpZ, tmpinfo,
-					   i, &request, errmsg);
+					   i, &request);
 		if (err) {
 		    fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
 		    if (request.prog == X12A) {
@@ -1410,7 +1472,7 @@ int write_tx_data (char *fname, int varnum,
 	/* now save the local vars to main dataset, if wanted */
 	if (!err && request.savevars > 0) {
 	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, savelist, 
-				       &request, errmsg);
+				       &request);
 	}
     }
 

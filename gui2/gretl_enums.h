@@ -109,6 +109,7 @@ enum extra_cmds {
     COUNTMOD,
     BWFILTER,
     POLYWEIGHTS,
+    X12AHELP,
     GUI_CMD_MAX
 };
 

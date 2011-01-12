@@ -4689,6 +4689,11 @@ static void display_tx_output (const char *fname, int graph_ok,
     }
 }
 
+static void x12a_help (void)
+{
+    context_help(NULL, GINT_TO_POINTER(X12AHELP));
+}
+
 static void real_do_tramo_x12a (int v, int tramo)
 {
     /* save options between invocations */
@@ -4698,9 +4703,8 @@ static void real_do_tramo_x12a (int v, int tramo)
     int save_t2 = datainfo->t2;
     void *handle;
     int (*write_tx_data) (char *, int, double ***, DATAINFO *, 
-			  gretlopt *, int, int *, char *);
+			  gretlopt *, int, void *);
     char outfile[MAXLEN] = {0};
-    char errtext[MAXLEN];
     int graph_ok = 1;
     int err = 0;
 
@@ -4718,12 +4722,10 @@ static void real_do_tramo_x12a (int v, int tramo)
 	return;
     }
 
-    *errtext = 0;
-
     series_adjust_sample(Z[v], &datainfo->t1, &datainfo->t2);
 
-    err = write_tx_data(outfile, v, &Z, datainfo, &opt, tramo, 
-			&graph_ok, errtext);
+    err = write_tx_data(outfile, v, &Z, datainfo, &opt, tramo,
+			x12a_help); 
 
     close_plugin(handle);
 
@@ -4731,22 +4733,21 @@ static void real_do_tramo_x12a (int v, int tramo)
     datainfo->t2 = save_t2;
 
     if (err) {
-	if (*errtext != 0) {
-	    errbox(errtext);
-	} else {
-	    gui_errmsg(err);
-	}
+	gui_errmsg(err);
 	graph_ok = 0;
     } else if (opt & OPT_W) {
 	/* got a warning from x12a */
 	display_x12a_warning(outfile);
 	opt &= ~OPT_W;
     } else if (opt & OPT_S) {
-	windata_t *vwin = view_file(outfile, 1, 0, 78, 370, EDIT_X12A);
-
-	widget_set_int(vwin->main, "varnum", v);
+	/* created x12a spec file for editing */
+	view_file(outfile, 1, 0, 78, 370, EDIT_X12A);
 	opt &= ~OPT_S;
 	return;
+    } else if (opt & OPT_T) {
+	/* selected TRAMO only: no graph */
+	graph_ok = 0;
+	opt &= ~OPT_T;
     }
 
     if (*outfile != '\0') {

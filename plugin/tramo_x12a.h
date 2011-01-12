@@ -45,6 +45,7 @@ struct _x12a_opts {
 struct _tx_request {
     int prog;          /* tramo vs x12arima */
     GtkWidget *dialog;
+    void (*helpfunc);
     common_opt_info opts[TX_MAXOPT];
     void *gui;
     gretlopt *popt;
