@@ -9,6 +9,8 @@ version 1.9.4, in progress
   saved "bundles"
 - GUI dialog for calling user-defined functions: several
   improvements
+- GUI access to X-12-ARIMA: give option of writing and
+  editing x12a .spc file
 - New function, inlist(): gives the position of a series
   within a named list or zero if the series is not present
 - New function, isconst(): determines whether a series or
