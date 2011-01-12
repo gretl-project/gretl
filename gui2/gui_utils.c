@@ -1399,13 +1399,13 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_object_unref(vwin->data, GRETL_OBJ_SYS);
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_series_view(vwin->data);
-	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_EN) {
-	    free(vwin->data); /* help file text */
+	} else if (HELP_ROLE(vwin->role)) {
+	    g_free(vwin->data); /* help file text */
 	} else if (vwin->role == VIEW_BUNDLE) {
 	    if (!gretl_bundle_is_stacked(vwin->data)) {
 		gretl_bundle_destroy(vwin->data);
 	    }
-	}
+	} 
 
 	if (window_delete_filename(vwin)) {
 	    /* there's a temporary file associated */
@@ -1737,9 +1737,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 				   role, data);
 } 
 
-#define view_file_use_sourceview(r) (vwin_editing_script(r) || \
-                                     r == VIEW_SCRIPT || \
-                                     r == VIEW_LOG)
+#define view_file_use_sourceview(r) (r != EDIT_X12A &&		\
+				     (vwin_editing_script(r) ||	\
+				      r == VIEW_SCRIPT ||	\
+				      r == VIEW_LOG))
 
 #define record_on_winstack(r) (!vwin_editing_script(r) && \
                                r != VIEW_LOG && \
@@ -1914,11 +1915,11 @@ windata_t *view_help_file (const char *filename, int role)
 
     create_text(vwin, hsize, vsize, 0, FALSE);
 
-    if (role != GUI_HELP && role != GUI_HELP_EN) {
-	help_panes_setup(vwin, vwin->text);
-    } else {
+    if (role == GUI_HELP || role == GUI_HELP_EN) {
 	text_table_setup(vwin->vbox, vwin->text);
-    }
+    } else {
+	help_panes_setup(vwin, vwin->text);
+    } 
 
     g_signal_connect(G_OBJECT(vwin->text), "key-press-event", 
 		     G_CALLBACK(catch_viewer_key), vwin);

@@ -1357,7 +1357,7 @@ static int validate_package_file (const char *fname, int verbose)
 
 static void do_upload (const char *fname)
 {
-    char *buf = NULL;
+    gchar *buf = NULL;
     char *retbuf = NULL;
     login_info linfo;
     GdkDisplay *disp;
@@ -1413,7 +1413,7 @@ static void do_upload (const char *fname)
 	infobox(retbuf);
     }
 
-    free(buf);
+    g_free(buf);
     free(retbuf);
 
     linfo_free(&linfo);

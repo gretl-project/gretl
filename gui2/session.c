@@ -1877,6 +1877,7 @@ int save_session_commands (char *fname)
 	    gui_errmsg(err);
 	} else {
 	    fputs(s, fp);
+	    g_free(s);
 	}
 
 	fclose(fp);

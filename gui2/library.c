@@ -4649,8 +4649,9 @@ static void display_tx_output (const char *fname, int graph_ok,
     } else {
 	/* note that in some error cases this file might
 	   be informative */
-	gchar *databuf = NULL;
-	int ferr = gretl_file_get_contents(fname, &databuf, NULL);
+	gchar *gbuf = NULL;
+	char *buf;
+	int ferr = gretl_file_get_contents(fname, &gbuf, NULL);
 	PRN *prn;
 
 	if (ferr) {
@@ -4659,14 +4660,18 @@ static void display_tx_output (const char *fname, int graph_ok,
 	}
 
 	if (tramo) {
-	    databuf = maybe_fix_tramo_output(databuf);
-	    if (databuf == NULL) {
+	    gbuf = maybe_fix_tramo_output(gbuf);
+	    if (gbuf == NULL) {
 		remove(fname);
 		return;
 	    } 
 	}
 
-	prn = gretl_print_new_with_buffer(databuf);
+	/* ensure correct "free" behaviour */
+	buf = gretl_strdup(gbuf);
+	g_free(gbuf);
+
+	prn = gretl_print_new_with_buffer(buf);
 
 	view_buffer(prn, (tramo)? 106 : 84, 500, 
 		    (tramo)? _("gretl: TRAMO analysis") :
@@ -4678,14 +4683,13 @@ static void display_tx_output (const char *fname, int graph_ok,
 	make_and_display_graph();
     }
 
-    if (datainfo->v > oldv) {
+    if (oldv > 0 && datainfo->v > oldv) {
 	populate_varlist();
 	mark_dataset_as_modified();
     }
 }
 
-static void real_do_tramo_x12a (int v, int tramo,
-				const char *scriptname)
+static void real_do_tramo_x12a (int v, int tramo)
 {
     /* save options between invocations */
     static gretlopt opt = OPT_G;
@@ -4693,16 +4697,12 @@ static void real_do_tramo_x12a (int v, int tramo,
     int save_t1 = datainfo->t1;
     int save_t2 = datainfo->t2;
     void *handle;
-    int (*write_tx_data) (char *, const char *, int, double ***, DATAINFO *,
+    int (*write_tx_data) (char *, int, double ***, DATAINFO *, 
 			  gretlopt *, int, int *, char *);
-    char fname[MAXLEN] = {0};
+    char outfile[MAXLEN] = {0};
     char errtext[MAXLEN];
     int graph_ok = 1;
     int err = 0;
-
-    if (v >= datainfo->v) {
-	return;
-    }
 
     if (!tramo) {
 	/* we'll let tramo handle annual data, but not x12a */
@@ -4722,8 +4722,8 @@ static void real_do_tramo_x12a (int v, int tramo,
 
     series_adjust_sample(Z[v], &datainfo->t1, &datainfo->t2);
 
-    err = write_tx_data(fname, scriptname, v, &Z, datainfo, &opt, 
-			tramo, &graph_ok, errtext);
+    err = write_tx_data(outfile, v, &Z, datainfo, &opt, tramo, 
+			&graph_ok, errtext);
 
     close_plugin(handle);
 
@@ -4739,27 +4739,19 @@ static void real_do_tramo_x12a (int v, int tramo,
 	graph_ok = 0;
     } else if (opt & OPT_W) {
 	/* got a warning from x12a */
-	display_x12a_warning(fname);
+	display_x12a_warning(outfile);
 	opt &= ~OPT_W;
     } else if (opt & OPT_S) {
-	windata_t *vwin = view_file(fname, 1, 0, 78, 370, EDIT_X12A);
+	windata_t *vwin = view_file(outfile, 1, 0, 78, 370, EDIT_X12A);
 
 	widget_set_int(vwin->main, "varnum", v);
 	opt &= ~OPT_S;
 	return;
     }
 
-    if (*fname != '\0') {
-	display_tx_output(fname, graph_ok, tramo, oldv, opt);
-	return;
+    if (*outfile != '\0') {
+	display_tx_output(outfile, graph_ok, tramo, oldv, opt);
     }
-}
-
-static void run_x12a_script (windata_t *vwin)
-{
-    int v = widget_get_int(vwin->main, "varnum");
-
-    real_do_tramo_x12a(v, 0, vwin->fname);   
 }
 
 void do_tramo_x12a (GtkAction *action, gpointer p)
@@ -4772,7 +4764,32 @@ void do_tramo_x12a (GtkAction *action, gpointer p)
 	tramo = 1;
     }
 
-    real_do_tramo_x12a(v, tramo, NULL);
+    real_do_tramo_x12a(v, tramo);
+}
+
+static void run_x12a_script (const gchar *buf)
+{
+    void *handle;
+    int (*func) (char *, const gchar *);
+    char outfile[MAXLEN] = {0};
+    int err = 0;
+
+    func = gui_get_plugin_function("exec_tx_script", 
+				   &handle);
+    if (func == NULL) {
+	return;
+    }
+
+    err = func(outfile, buf);
+    close_plugin(handle);
+
+    if (err) {
+	gui_errmsg(err);
+    } 
+
+    if (*outfile != '\0') {
+	display_tx_output(outfile, 0, 0, 0, OPT_NONE);
+    }
 }
 
 #endif /* HAVE_TRAMO || HAVE_X12A */
@@ -6904,7 +6921,7 @@ void do_run_script (GtkWidget *w, windata_t *vwin)
     } else if (vwin->role == EDIT_OCTAVE) {
 	run_octave_script(buf);
     } else if (vwin->role == EDIT_X12A) {
-	run_x12a_script(vwin);
+	run_x12a_script(buf);
     } else {
 	run_native_script(vwin, buf, sel);
     }

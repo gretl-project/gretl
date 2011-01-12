@@ -309,7 +309,9 @@ int model_command_init (int model_ID)
 
 /* Called in response to the refresh/reload button in the viewer
    window for the command log: retrieve the updated log content.
-   Display of any error messages is handled by the caller.
+   Display of any error messages is handled by the caller, which
+   is also responsible for freeing the value returned by this
+   function.
 */
 
 gchar *get_logfile_content (int *err)

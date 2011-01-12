@@ -184,16 +184,24 @@ static void set_logtrans (GtkButton *b, tx_request *request)
 
 static void toggle_edit_script (GtkToggleButton *b, tx_request *request)
 {
-    if (gtk_toggle_button_get_active(b)) {
+    GtkWidget **chk = g_object_get_data(G_OBJECT(b), "checks");
+    gboolean s = gtk_toggle_button_get_active(b);
+    int i;
+
+    if (s) {
 	*request->popt |= OPT_S;
     } else {
 	*request->popt &= ~OPT_S;
+    }
+
+    for (i=0; i<4; i++) {
+	gtk_widget_set_sensitive(chk[i], !s);
     }
 }
 
 static void show_x12a_options (tx_request *request, GtkBox *vbox)
 {
-    GtkWidget *tmp, *b[3];
+    GtkWidget *tmp, *b[3], *chk[4];
     GSList *group;
 
     tmp = gtk_label_new(_("X-12-ARIMA options"));
@@ -252,36 +260,36 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
 
-    tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
-    request->opts[TX_SA].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+    chk[0] = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
+    gtk_widget_show(chk[0]);
+    gtk_box_pack_start(vbox, chk[0], FALSE, FALSE, 0);
+    request->opts[TX_SA].check = chk[0];
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[0]), 
 				 (*request->popt & OPT_A)? TRUE : FALSE);
 
-    tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
-    request->opts[TX_TR].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+    chk[1] = gtk_check_button_new_with_label(_("Trend/cycle"));
+    gtk_widget_show(chk[1]);
+    gtk_box_pack_start(vbox, chk[1], FALSE, FALSE, 0);
+    request->opts[TX_TR].check = chk[1];
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[1]), 
 				 (*request->popt & OPT_B)? TRUE : FALSE);
 
-    tmp = gtk_check_button_new_with_label(_("Irregular"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
-    request->opts[TX_IR].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+    chk[2] = gtk_check_button_new_with_label(_("Irregular"));
+    gtk_widget_show(chk[2]);
+    gtk_box_pack_start(vbox, chk[2], FALSE, FALSE, 0);
+    request->opts[TX_IR].check = chk[2];
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[2]), 
 				 (*request->popt & OPT_C)? TRUE : FALSE);
 
     tmp = gtk_hseparator_new();
     gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
     
-    tmp = gtk_check_button_new_with_label(_("Generate graph"));
-    gtk_widget_show(tmp);
-    gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
-    request->opts[TRIGRAPH].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), 
+    chk[3] = gtk_check_button_new_with_label(_("Generate graph"));
+    gtk_widget_show(chk[3]);
+    gtk_box_pack_start(vbox, chk[3], FALSE, FALSE, 0);
+    request->opts[TRIGRAPH].check = chk[3];
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[3]), 
 				 (*request->popt & OPT_G)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Show full output"));
@@ -291,7 +299,6 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
 				 (*request->popt & OPT_Q)? FALSE : TRUE);
 
-#if 0 /* not ready */
     tmp = gtk_hseparator_new();
     gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
@@ -301,14 +308,14 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
     gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
-    b[1] = gtk_radio_button_new_with_label(group, _("View/edit X-12-ARIMA commands"));
+    b[1] = gtk_radio_button_new_with_label(group, _("Edit X-12-ARIMA commands"));
     gtk_widget_show(b[1]);
     gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
+    g_object_set_data(G_OBJECT(b[1]), "checks", chk);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
 		     G_CALLBACK(toggle_edit_script), request);
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b[0]), TRUE); 
-#endif
 }
 
 static int tx_dialog (tx_request *request)
@@ -1175,7 +1182,47 @@ static int check_sample_bound (int prog, const DATAINFO *pdinfo,
     return 0;
 }
 
-int write_tx_data (char *fname, const char *scriptname, int varnum, 
+int exec_tx_script (char *outname, const gchar *buf)
+{
+    const char *exepath;
+    const char *workdir = NULL;
+    const char *tmpname = "x12atmp";
+    gchar *tmppath;
+    FILE *fp;
+    int err = 0;
+
+    *outname = '\0';
+
+    exepath = gretl_x12_arima();
+    workdir = gretl_x12_arima_dir();
+
+    tmppath = g_strdup_printf("%s%c%s.spc", workdir, SLASH, tmpname);
+    fp = gretl_fopen(tmppath, "w");
+    if (fp == NULL) {
+	g_free(tmppath);
+	return E_FOPEN;
+    }
+
+    fputs(buf, fp);
+    fclose(fp);
+    g_free(tmppath);
+	
+    clear_x12a_files(workdir, tmpname);
+    err = helper_spawn(exepath, tmpname, workdir, X12A);
+
+    if (err == E_EXTERNAL) {
+	; /* fatal: couldn't run program */
+    } else if (err) {
+	sprintf(outname, "%s%c%s.err", workdir, SLASH, tmpname);
+    } else {
+	/* set the output filename */
+	sprintf(outname, "%s%c%s.out", workdir, SLASH, tmpname); 
+    }
+
+    return err;
+}
+
+int write_tx_data (char *fname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, gretlopt *opt, 
 		   int tramo, int *graph_ok, char *errmsg)
 {
@@ -1187,7 +1234,6 @@ int write_tx_data (char *fname, const char *scriptname, int varnum,
     double **tmpZ = NULL;
     DATAINFO *tmpinfo = NULL;
     int savescript = 0;
-    int gotscript = 0;
     int i, doit;
     int err = 0;
 
@@ -1213,22 +1259,14 @@ int write_tx_data (char *fname, const char *scriptname, int varnum,
     request.pd = pdinfo->pd;
     request.popt = opt;
 
-    if (scriptname != NULL) {
-	/* running a pre-existing x12a script */
-	gotscript = 1;
-	if (*opt & OPT_G) {
-	    request.opts[TRIGRAPH].save = 1;
-	}
-    } else {
-	/* show dialog and get option settings */
-	doit = tx_dialog(&request); 
-	if (!doit) {
-	    gtk_widget_destroy(request.dialog);
-	    return 0;
-	}
-	set_opts(&request);
+    /* show dialog and get option settings */
+    doit = tx_dialog(&request); 
+    if (!doit) {
 	gtk_widget_destroy(request.dialog);
+	return 0;
     }
+    set_opts(&request);
+    gtk_widget_destroy(request.dialog);
 
 #if 0
     if (request.prog == TRAMO_SEATS) {
@@ -1260,12 +1298,10 @@ int write_tx_data (char *fname, const char *scriptname, int varnum,
     form_savelist(savelist, &request);
 
     if (request.prog == X12A) { 
-	if (!gotscript) {
-	    /* write out the .spc file for x12a */
-	    sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	    write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
-			   &request.xopt);
-	}
+	/* write out the .spc file for x12a */
+	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
+	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
+		       &request.xopt);
     } else { 
 	/* TRAMO, possibly plus SEATS */
 	lower(vname);

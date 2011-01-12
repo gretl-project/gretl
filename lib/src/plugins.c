@@ -199,8 +199,9 @@ struct plugin_function plugin_functions[] = {
     { "system_estimate", P_SYSEST },
 
     /* TRAMO/SEATS and X12A */
-    { "write_tx_data", P_TRAMO_X12A },
-    { "adjust_series", P_TRAMO_X12A },
+    { "write_tx_data",  P_TRAMO_X12A },
+    { "exec_tx_script", P_TRAMO_X12A },
+    { "adjust_series",  P_TRAMO_X12A },
 
     /* NIST test suite */
     { "run_nist_tests", P_NISTCHECK },    
