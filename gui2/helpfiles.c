@@ -1902,7 +1902,8 @@ enum {
     GRETL_GUIDE = 1,
     GRETL_REF,
     GNUPLOT_REF,
-    GFN_DOC
+    GFN_DOC,
+    X12A_REF
 };
 
 static int get_writable_path (char *path, const char *fname, int code)
@@ -1967,6 +1968,35 @@ static int get_writable_path (char *path, const char *fname, int code)
     return err;
 }
 
+static int get_x12a_doc_path (char *path, const char *fname)
+{
+    const char *x12a = gretl_x12_arima();
+    int ret = 0;
+
+    *path = '\0';
+
+    if (x12a != NULL && *x12a != '\0') {
+	char *p;
+
+	strcpy(path, x12a);
+	p = strrchr(path, SLASH);
+	if (p != NULL) {
+	    sprintf(p + 1, "docs%c%s", SLASH, fname);
+	    ret = 1;
+	}
+
+#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
+	if (!ret) {
+	    /* using gretl x12a package? */
+	    sprintf(path, "/opt/x12arima/docs/%s", fname);
+	    ret = 1;
+	}
+#endif
+    }
+
+    return ret;
+}
+
 static int find_or_download_pdf (int code, int i, char *fullpath)
 {
     const char *guide_files[] = {
@@ -1997,6 +2027,8 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = ref_files[i];
     } else if (code == GNUPLOT_REF) {
 	fname = "gnuplot.pdf";
+    } else if (code == X12A_REF) {
+	fname = "x12adocV03.pdf";
     } else if (code == GFN_DOC) {
 	tmp = gretl_strdup(fullpath);
 	fname = tmp;
@@ -2011,11 +2043,23 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     } else {
 	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
     }
+
     fp = gretl_fopen(fullpath, "r");
     if (fp != NULL) {
 	fclose(fp);
 	gotit = 1;
     }
+
+    if (!gotit && code == X12A_REF) {
+	get_x12a_doc_path(fullpath, fname);
+	if (*fullpath != '\0') {
+	    fp = gretl_fopen(fullpath, "r");
+	    if (fp != NULL) {
+		fclose(fp);
+		gotit = 1;
+	    }
+	}
+    }	
 
     if (!gotit) {
 	/* or maybe in user dir? */
@@ -2092,6 +2136,18 @@ void display_gnuplot_help (void)
     int err;
 
     err = find_or_download_pdf(GNUPLOT_REF, 0, fname);
+
+    if (!err) {
+	show_pdf(fname);
+    }
+}
+
+void display_x12a_help (void)
+{
+    char fname[FILENAME_MAX];
+    int err;
+
+    err = find_or_download_pdf(X12A_REF, 0, fname);
 
     if (!err) {
 	show_pdf(fname);

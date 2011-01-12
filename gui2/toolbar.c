@@ -84,6 +84,7 @@ enum {
     HELP_ITEM,
     CMD_HELP_ITEM,
     GP_HELP_ITEM,
+    X12A_HELP_ITEM,
     SORT_ITEM,
     SORT_BY_ITEM,
     FORMAT_ITEM,
@@ -653,6 +654,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Help on command"), GTK_STOCK_HELP, G_CALLBACK(activate_script_help), CMD_HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(window_help), HELP_ITEM },
     { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_gnuplot_help), GP_HELP_ITEM },
+    { N_("Help"), GTK_STOCK_HELP, G_CALLBACK(display_x12a_help), X12A_HELP_ITEM },
     { N_("Windows"), GRETL_STOCK_COMPASS, G_CALLBACK(compass_callback), 0 },
     { N_("Close"), GTK_STOCK_CLOSE, G_CALLBACK(delete_file_viewer), 0 }
 };
@@ -751,6 +753,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (r != VIEW_LOG && r != VIEW_SERIES && f == REFRESH_ITEM) {
 	return NULL;
     } else if (r != EDIT_GP && f == GP_HELP_ITEM) {
+	return NULL;
+    } else if (r != EDIT_X12A && f == X12A_HELP_ITEM) {
 	return NULL;
     } else if (f == SAVE_ITEM && !save_ok) {
 	return NULL;
