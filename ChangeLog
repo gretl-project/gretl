@@ -43,6 +43,7 @@ version 1.9.4, in progress
 - Allow deletion of locale matrices within functions
 - Remove deprecated aliases "noecho" and "seed"
 - Remove redundant function "makemask"
+- Fix some memory leaks in the gretl GUI
 - Fix: reset model count on exit from user-defined functions
 - Fix bug: incorrect parsing of command line containing a 
   filename that includes left and/or right parentheses
