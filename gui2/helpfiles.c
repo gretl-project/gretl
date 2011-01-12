@@ -1983,6 +1983,8 @@ static int get_x12a_doc_path (char *path, const char *fname)
 	if (p != NULL) {
 	    sprintf(p + 1, "docs%c%s", SLASH, fname);
 	    ret = 1;
+	} else {
+	    *path = '\0';
 	}
 
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
