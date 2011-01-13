@@ -1711,8 +1711,8 @@ transcribe_restriction_matrices (const GRETL_VAR *jvar,
 	}
 
 #if JDEBUG
-	gretl_matrix_print(jvar->jinfo->Ra, "jinfo->Ra in general_restrict");
-	gretl_matrix_print(jvar->jinfo->qa, "jinfo->qa in general_restrict");
+	gretl_matrix_print(jvar->jinfo->Ra, "jinfo->Ra, transcribed");
+	gretl_matrix_print(jvar->jinfo->qa, "jinfo->qa, transcribed");
 #endif
 
 	if (jvar->jinfo->Ra == NULL || 
