@@ -5823,7 +5823,23 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 
 	    A = matrix_chowlin(l->v.m, X, m->v.xval, &p->err);
 	}
-    }
+    } else if (f == F_IRF) {
+	if (l->t != NUM) {
+	    node_type_error(f, 1, NUM, l, p);
+	} else if (m->t != NUM) {
+	    node_type_error(f, 2, NUM, m, p);
+	} else if (r->t != NUM && r->t != EMPTY) {
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    double alpha = (r->t == NUM)? r->v.xval : 0.0;
+	    int targ = (int) l->v.xval - 1;
+	    int shock = (int) m->v.xval - 1;
+
+	    A = last_model_get_irf_matrix(targ, shock, alpha,
+					  (const double **) *p->Z, p->dinfo,
+					  &p->err);
+	}
+    }	
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
@@ -6424,7 +6440,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	
 	    ret->v.m = user_matrix_rls(Y, X, R, Q, SU, SV, &p->err);
 	}
-    }
+    } 
 
     return ret;
 }
@@ -8139,6 +8155,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_BWFILT:
     case F_CHOWLIN:
     case F_VARSIMUL:
+    case F_IRF:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

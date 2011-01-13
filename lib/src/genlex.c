@@ -356,6 +356,7 @@ struct str_table funcs[] = {
     { F_INLIST,   "inlist" },
     { F_ERRMSG,   "errmsg" },
     { F_ISCONST,  "isconst" },
+    { F_IRF,      "irf" },
     { 0,          NULL }
 };
 

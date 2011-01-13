@@ -139,8 +139,8 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
 #if BDEBUG
     fprintf(stderr, "boot: t1=%d, t2=%d, ncoeff=%d, horizon=%d\n",
 	    var->t1, var->t2, b->ncoeff, b->horizon);
-    fprintf(stderr, " T=%d, neqns=%d, order=%d, ecm=%d, ifc=%d\n",
-	    var->T, var->neqns, var->order, var->ecm, var->ifc);
+    fprintf(stderr, " T=%d, neqns=%d, order=%d, rank=%d, ifc=%d\n",
+	    var->T, var->neqns, var->order, jrank(var), var->ifc); 
 #endif
 
     err = boot_allocate(b, var);
@@ -253,7 +253,9 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
 
 #if BDEBUG
     gretl_matrix_print(v->jinfo->Beta, "var->jinfo->Beta");
+    gretl_matrix_print(v->jinfo->Alpha, "var->jinfo->Alpha");
     gretl_matrix_print(v->S, "var->S (Omega)");
+    gretl_matrix_print(v->B, "var->B");
 #endif
 
     if (!err) {   
@@ -564,7 +566,7 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 		}
 	    }
 
-	    /* set level of Y(t, i) to fitted + re-sampled error */
+	    /* set level of Y(t, i) to fitted value + re-sampled error */
 	    eti = gretl_matrix_get(b->rE, s, i);
 	    b->Z[i+1][t] = bti + eti;
 	}
@@ -599,73 +601,84 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 }
 
 /* (Re-)fill the bootstrap dataset with artificial data, based on the
-   re-sampled residuals from the original VAR (simple VAR, not VECM).
+   re-sampled residuals from the original VAR (case of simple VAR, not
+   VECM).
 */
 
-static void compute_VAR_dataset (irfboot *b, GRETL_VAR *v,
+static void compute_VAR_dataset (irfboot *b, GRETL_VAR *var,
 				 const GRETL_VAR *vbak)
 {
     double x;
     int i, j, k, t;
-    int nl = var_n_lags(v);
+    int nl = var_n_lags(var);
 
-    for (t=0; t<v->T; t++) {
-	/* extract "X" at t */
-	gretl_matrix_extract_matrix(b->Xt, v->X, t, 0, GRETL_MOD_NONE);
+#if BDEBUG
+    gretl_matrix_print(var->Y, "var->Y before resampling");
+    gretl_matrix_print(var->X, "var->X before resampling");
+#endif
 
-	/* multiply into original coeff matrix */
+    for (t=0; t<var->T; t++) {
+	/* extract row of var->X at t */
+	gretl_matrix_extract_matrix(b->Xt, var->X, t, 0, GRETL_MOD_NONE);
+
+	/* multiply Xt into original coeff matrix, forming Yt */
 	gretl_matrix_multiply(b->Xt, vbak->B, b->Yt);
 
-	/* get resampled residuals at t */
+	/* extract resampled residuals at t */
 	gretl_matrix_extract_matrix(b->Et, b->rE, t, 0, GRETL_MOD_NONE);
 
-	/* add resampled residual */
+	/* add resampled residual to Yt */
 	gretl_matrix_add_to(b->Yt, b->Et);
 
-	/* write into Y */
-	gretl_matrix_inscribe_matrix(v->Y, b->Yt, t, 0, GRETL_MOD_NONE);
+	/* write into big Y matrix */
+	gretl_matrix_inscribe_matrix(var->Y, b->Yt, t, 0, GRETL_MOD_NONE);
 
 	/* revise lagged Y columns in X */
-	k = v->ifc;
-	for (i=0; i<v->neqns; i++) {
+	k = var->ifc;
+	for (i=0; i<var->neqns; i++) {
 	    x = b->Yt->val[i];
-	    for (j=1; j<=nl && t+j < v->T; j++) {
-		gretl_matrix_set(v->X, t+j, k++, x);
+	    for (j=1; j<=nl && t+j < var->T; j++) {
+		gretl_matrix_set(var->X, t+j, k++, x);
 	    }
 	}
     }
 
 #if BDEBUG > 1
-    gretl_matrix_print(v->Y, "var->Y after resampling");
-    gretl_matrix_print(v->X, "var->X after resampling");
+    gretl_matrix_print(var->Y, "var->Y after resampling");
+    gretl_matrix_print(var->X, "var->X after resampling");
 #endif
 }
 
-/* Resample the original VAR or VECM residuals.  Note the option to
-   "resample" _without_ actually changing the order, if BDEBUG > 1.
-   This is useful for checking that the IRF bootstrap rounds are
-   idempotent: we should then get exactly the same set of responses as
-   in the original estimation of the VAR/VECM.
+/* Resample the original VAR or VECM residuals, stored in
+   vbak->E, writing the new sample into b->rE.
+
+   Note the option to "resample" _without_ actually changing the
+   order, if BDEBUG > 1.  This is useful for checking that the IRF
+   bootstrap rounds are idempotent: we should then get exactly the
+   same set of responses as in the original estimation of the
+   VAR/VECM.
 */
 
-static void resample_resids (irfboot *b, const GRETL_VAR *vbak)
+static void irf_resample_resids (irfboot *b, const GRETL_VAR *vbak)
 {
     double eti;
     int i, t;
 
     /* construct sampling array */
+
     for (t=0; t<vbak->T; t++) {
 #if BDEBUG > 1
-	b->sample[t] = t;
+	b->sample[t] = t; /* fake it */
 #else
 	b->sample[t] = gretl_rand_int_max(vbak->T);
 #endif
-#if BDEBUG
+#if 0
 	fprintf(stderr, "boot->sample[%d] = %d\n", t, b->sample[t]);
 #endif
     }
 
     /* draw from the original residuals */
+
     for (t=0; t<vbak->T; t++) {
 	for (i=0; i<vbak->neqns; i++) {
 	    eti = gretl_matrix_get(vbak->E, b->sample[t], i);
@@ -699,6 +712,10 @@ static int irf_boot_quantiles (irfboot *b, gretl_matrix *R, double alpha)
 	gretl_matrix_set(R, k, 1, rk[ilo-1]);
 	gretl_matrix_set(R, k, 2, rk[ihi-1]);
     }
+
+#if BDEBUG
+    gretl_matrix_print(R, "Resp");
+#endif
 
     free(rk);
 
@@ -854,16 +871,18 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 			     int targ, int shock, 
 			     int periods, double alpha,
 			     const double **Z, 
-			     const DATAINFO *pdinfo)
+			     const DATAINFO *pdinfo,
+			     int *err)
 {
     gretl_matrix *R = NULL; /* the return value */
     GRETL_VAR *vbak = NULL;
     irfboot *boot = NULL;
     int scount = 0;
-    int iter, err = 0;
+    int iter;
 
     if (var->X == NULL || var->Y == NULL) {
 	gretl_errmsg_set("X and/or Y matrix missing, can't do this");
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -873,56 +892,58 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 
     R = gretl_zero_matrix_new(periods, 3);
     if (R == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }    
 
     vbak = back_up_VAR(var);
     if (vbak == NULL) {
+	*err = E_ALLOC;
 	gretl_matrix_free(R);
 	return NULL;
     }
 
     boot = irf_boot_new(var, periods);
     if (boot == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto bailout;
     }
 
     if (var->ci == VECM) {
 	boot->C0 = VAR_coeff_matrix_from_VECM(var);
 	if (boot->C0 == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	} else {
-	    err = init_VECM_dataset(boot, var, Z, pdinfo);
+	    *err = init_VECM_dataset(boot, var, Z, pdinfo);
 	}
     }
 
-    for (iter=0; iter<BOOT_ITERS && !err; iter++) {
+    for (iter=0; iter<BOOT_ITERS && !*err; iter++) {
 #if BDEBUG
 	fprintf(stderr, "starting iteration %d\n", iter);
 #endif
-	resample_resids(boot, vbak);
+	irf_resample_resids(boot, vbak);
 	if (var->ci == VECM) {
 	    compute_VECM_dataset(boot, var, iter);
-	    err = re_estimate_VECM(boot, var, targ, shock, iter, scount);
+	    *err = re_estimate_VECM(boot, var, targ, shock, iter, scount);
 	} else {
 	    compute_VAR_dataset(boot, var, vbak);
-	    err = re_estimate_VAR(boot, var, targ, shock, iter);
+	    *err = re_estimate_VAR(boot, var, targ, shock, iter);
 	}
-	if (err && !VAR_FATAL(err, iter, scount)) {
+	if (*err && !VAR_FATAL(*err, iter, scount)) {
 	    /* excessive collinearity: try again, unless this is becoming a habit */
 	    scount++;
 	    iter--;
-	    err = 0;
+	    *err = 0;
 	}
     }
 
-    if (err && scount == MAXSING) {
+    if (*err && scount == MAXSING) {
 	gretl_errmsg_set("Excessive collinearity in resampled datasets");
     }
 
-    if (!err) {
-	err = irf_boot_quantiles(boot, R, alpha);
+    if (!*err) {
+	*err = irf_boot_quantiles(boot, R, alpha);
     }
 
     irf_boot_free(boot);
@@ -931,7 +952,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 
     restore_VAR_data(var, vbak);
 
-    if (err) {
+    if (*err) {
 	gretl_matrix_free(R);
 	R = NULL;
     }

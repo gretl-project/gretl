@@ -143,7 +143,8 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 				int targ, int shock,
 				int periods, double alpha,
 				const double **Z,
-				const DATAINFO *pdinfo);
+				const DATAINFO *pdinfo,
+				int *err);
 
 void gretl_VAR_set_name (GRETL_VAR *var, const char *name);
 

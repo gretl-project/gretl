@@ -3362,12 +3362,6 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
     double conf = 1 - *alpha;
     int resp = 0;
 
-#if 0
-    if (restricted_VECM(var)) {
-	active[0] = -1;
-    }
-#endif
-
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
     dlg = build_checks_dialog(title, NULL,

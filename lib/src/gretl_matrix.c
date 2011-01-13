@@ -3389,9 +3389,7 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 	    fprintf(stderr, "gretl_cholesky_decomp_solve: rcond = %g (info = %d)\n",
 		    rcond, (int) info);
 	    err = E_SINGULAR;
-	} else if (rcond < 1.0e-4) {
-	    fprintf(stderr, "gretl_cholesky_decomp_solve: rcond = %g\n", rcond);
-	}
+	} 
     }
 
     if (!err) {

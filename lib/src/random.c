@@ -34,11 +34,10 @@
  * @title: PRNG
  * @include: libgretl.h
  *
- * Libgretl uses the GLib PRNG as its underlying engine
+ * Libgretl uses the Mersenne Twister as its underlying engine
  * for uniform random values, but offers added value in 
  * the form of generators for several distributions commonly 
- * used in econometrics. GLib uses the Mersenne Twister,
- * originally developed by Makoto Matsumoto and Takuji Nishimura.
+ * used in econometrics. 
  *
  * Note that before using the libgretl PRNG you must call
  * either libgretl_init() or the specific initialization
@@ -622,8 +621,6 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 
     return 0;
 }
-
-
 
 /**
  * gretl_rand_int_minmax:

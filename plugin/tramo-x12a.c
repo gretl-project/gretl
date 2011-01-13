@@ -1223,7 +1223,7 @@ static int check_sample_bound (int prog, const DATAINFO *pdinfo)
 
 /* Callback for the "Run" button in a gretl editor window displaying
    an x12a command file: run the commands (which are provided in @buf),
-   and fill out @outname with the name of the x12a output file.
+   and fill @outname with the name of the x12a output file.
 */
 
 int exec_tx_script (char *outname, const gchar *buf)

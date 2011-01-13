@@ -1500,7 +1500,7 @@ gretl_matrix *reorder_responses (GRETL_VAR *var, int *err)
 
 static gretl_matrix *
 gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
-			       int periods) 
+			       int periods, int *err) 
 {
     int rows = var->neqns * effective_order(var);
     gretl_matrix *rtmp = NULL;
@@ -1508,26 +1508,29 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     gretl_matrix *resp = NULL;
     gretl_matrix *C = var->C;
     double x;
-    int t, err = 0;
+    int t;
 
     if (shock >= var->neqns) {
 	fprintf(stderr, "Shock variable out of bounds\n");
+	*err = E_DATA;
 	return NULL;
     }  
 
     if (targ >= var->neqns) {
 	fprintf(stderr, "Target variable out of bounds\n");
+	*err = E_DATA;
 	return NULL;
     } 
 
     if (periods <= 0) {
 	fprintf(stderr, "Invalid number of periods\n");
+	*err = E_DATA;
 	return NULL;
     }
 
     if (var->ord != NULL) {
-	C = reorder_responses(var, &err);
-	if (err) {
+	C = reorder_responses(var, err);
+	if (*err) {
 	    return NULL;
 	}
     } 
@@ -1537,7 +1540,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
     ctmp = gretl_matrix_alloc(rows, var->neqns);
 
     if (resp == NULL || rtmp == NULL || ctmp == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto bailout;
     }
 
@@ -1563,7 +1566,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
 	gretl_matrix_free(C);
     }
 
-    if (err && resp != NULL) {
+    if (*err && resp != NULL) {
 	gretl_matrix_free(resp);
 	resp = NULL;
     }
@@ -1606,21 +1609,36 @@ gretl_VAR_get_impulse_response (GRETL_VAR *var,
 				int targ, int shock, 
 				int periods, double alpha,
 				const double **Z,
-				const DATAINFO *pdinfo)
+				const DATAINFO *pdinfo,
+				int *err)
 {
     gretl_matrix *point = NULL;
     gretl_matrix *full = NULL;
     gretl_matrix *ret = NULL;
     int i;
 
-    point = gretl_VAR_get_point_responses(var, targ, shock, periods);
+    if (periods == 0) {
+	if (pdinfo != NULL) {
+	    periods = default_VAR_horizon(pdinfo);
+	} else {
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
 
-    if (Z == NULL) {
-	/* no data matrix provided: just return point estimate */
+    if (alpha != 0 && (alpha < 0.01 || alpha > 0.6)) {
+	*err = E_DATA;
+    }
+
+    point = gretl_VAR_get_point_responses(var, targ, shock, periods, err);
+
+    if (Z == NULL || alpha == 0.0) {
+	/* no data matrix provided, or no alpha given: 
+	   just return point estimate */
 	ret = point;
     } else if (point != NULL) {
 	full = irf_bootstrap(var, targ, shock, periods, 
-			     alpha, Z, pdinfo);
+			     alpha, Z, pdinfo, err);
 	if (full != NULL) {
 	    double p;
 

@@ -1246,6 +1246,24 @@ saved_object_build_matrix (const char *oname, int idx,
     return M;
 }
 
+gretl_matrix *
+last_model_get_irf_matrix (int targ, int shock, double alpha, 
+			   const double **Z, const DATAINFO *pdinfo,
+			   int *err)
+{
+    stacker *smatch = find_smatch(NULL);
+    gretl_matrix *M = NULL;
+
+    if (smatch == NULL || smatch->type != GRETL_OBJ_VAR) {
+	*err = E_BADSTAT;
+    } else {
+	M = gretl_VAR_get_impulse_response(smatch->ptr, targ, shock, 0,
+					   alpha, Z, pdinfo, err);
+    }
+
+    return M;
+}
+
 static int namechar_spn_with_space (const char *s)
 {
     const char *ok = "abcdefghijklmnopqrstuvwxyz"

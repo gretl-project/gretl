@@ -2470,20 +2470,6 @@ GRETL_VAR *gretl_restricted_vecm (gretl_restriction *rset,
 
     destroy_restriction_set(rset);
 
-#if 0
-    if (!*err && (opt & OPT_I)) {
-	/* just for testing */
-	int periods = default_VAR_horizon(pdinfo);
-	int targ = 1, shock = 0;
-	gretl_matrix *resp;
-
-	resp = gretl_VAR_get_impulse_response(jvar, targ, shock, periods,
-					      0.10, Z, pdinfo);
-	gretl_matrix_print_to_prn(resp, "resp", prn);
-	gretl_matrix_free(resp);
-    }
-#endif
-
     if (jvar != NULL && *err != 0) {
 	gretl_VAR_free(jvar);
 	jvar = NULL;
