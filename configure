@@ -787,6 +787,7 @@ enable_rpath
 with_libiconv_prefix
 with_libintl_prefix
 enable_gui
+enable_sse2
 enable_build_doc
 enable_quiet_build
 enable_gnuplot_checks
@@ -1468,6 +1469,7 @@ Optional Features:
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
   --enable-gui		  Enable gui [default=yes]
+  --enable-sse2           Enable sse2 [default=auto]
   --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-quiet-build    Enable quiet building
   --disable-gnuplot-checks do not run checks for gnuplot
@@ -2662,6 +2664,7 @@ try_odbc="no"
 have_odbc="no"
 try_libR="yes"
 have_libR="no"
+try_sse2="yes"
 check_gnuplot="yes"
 darwin_build="no"
 quiet_build="no"
@@ -6030,6 +6033,17 @@ then
   build_gui=yes
 else
   build_gui=no
+fi
+fi
+
+
+# Check whether --enable-sse2 was given.
+if test "${enable_sse2+set}" = set; then :
+  enableval=$enable_sse2; if test "$enableval" = "yes"
+then
+  try_sse2=yes
+else
+  try_sse2=no
 fi
 fi
 
@@ -15526,54 +15540,56 @@ if test "$darwin_build" = "yes" ; then
 
 fi
 
-if test "x$SSE2_CFLAGS" = "x" ; then
-   if test "x$SUNCC" = "xyes"; then
+if test "$try_sse2" = "yes" ; then
+  if test "x$SSE2_CFLAGS" = "x" ; then
+    if test "x$SUNCC" = "xyes"; then
       # SSE2 is enabled by default in the Sun Studio 64-bit environment
       if test "$AMD64_ABI" = "no" ; then
          SSE2_CFLAGS="-xarch=sse2"
       fi
-   else
+    else
       SSE2_CFLAGS="-msse2"
-   fi
-fi
+    fi
+  fi
 
-have_sse2_intrinsics=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSE2 intrinsics" >&5
+    have_sse2_intrinsics=no
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSE2 intrinsics" >&5
 $as_echo_n "checking for SSE2 intrinsics... " >&6; }
-save_CFLAGS=$CFLAGS
-CFLAGS="$SSE2_CFLAGS $CFLAGS"
+  save_CFLAGS=$CFLAGS
+  CFLAGS="$SSE2_CFLAGS $CFLAGS"
 
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
-#   if !defined(__amd64__) && !defined(__x86_64__)
-#      error "Need GCC >= 4.2 for SSE2 intrinsics on x86"
-#   endif
-#endif
-#include <mmintrin.h>
-#include <xmmintrin.h>
-#include <emmintrin.h>
-int main () {
-    __m128i a = _mm_set1_epi32 (0), b = _mm_set1_epi32 (0), c;
-	c = _mm_xor_si128 (a, b);
-    return 0;
-}
+  #if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
+  #   if !defined(__amd64__) && !defined(__x86_64__)
+  #      error "Need GCC >= 4.2 for SSE2 intrinsics on x86"
+  #   endif
+  #endif
+  #include <mmintrin.h>
+  #include <xmmintrin.h>
+  #include <emmintrin.h>
+  int main () {
+      __m128i a = _mm_set1_epi32 (0), b = _mm_set1_epi32 (0), c;
+	  c = _mm_xor_si128 (a, b);
+      return 0;
+  }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   have_sse2_intrinsics=yes
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-if test "$have_sse2_intrinsics" = "yes" ; then
-   $as_echo "#define USE_SSE2 1" >>confdefs.h
+  if test "$have_sse2_intrinsics" = "yes" ; then
+     $as_echo "#define USE_SSE2 1" >>confdefs.h
 
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-else
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+  else
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-   CFLAGS="$save_CFLAGS"
+     CFLAGS="$save_CFLAGS"
+  fi
 fi
 
 if test "$have_audio" = "yes" ; then

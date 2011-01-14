@@ -730,11 +730,29 @@ static int update_phi (Jwrap *J, switcher *s)
 	gretl_matrix_copy_values(s->TmpL, s->K2);
     }
 
+#if 0 /* just testing */
+    gretl_matrix *Tmp1 = gretl_matrix_copy(J->I11);
+    gretl_matrix *Tmp2 = gretl_matrix_copy(s->TmpL);
+
+    err = gretl_cholesky_decomp_solve(J->I11, s->TmpL);
+    if (err) {
+	fprintf(stderr, "cholesky decomp failed in update_phi\n");
+	gretl_matrix_copy_values(J->I11, Tmp1);
+	gretl_matrix_copy_values(s->TmpL, Tmp2);
+	err = gretl_LU_solve(J->I11, s->TmpL);
+	if (err) {
+	    fprintf(stderr, " and LU_solve failed too\n");
+	}
+    } 
+    gretl_matrix_free(Tmp1);
+    gretl_matrix_free(Tmp2);
+#else
     /* combine first and second chunks */
     err = gretl_cholesky_decomp_solve(J->I11, s->TmpL);
     if (err) {
 	fprintf(stderr, "cholesky decomp failed in update_phi\n");
     }
+#endif
 
     if (!err) {
 	/* right-hand chunk */

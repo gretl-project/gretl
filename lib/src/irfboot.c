@@ -213,12 +213,12 @@ static void maybe_resize_vecm_matrices (GRETL_VAR *v)
     }    
 }
 
-/* In re-estimation of VAR or VECM we'll tolerate at most 4 cases of
+/* In re-estimation of VAR or VECM we'll tolerate at most 9 cases of
    near-perfect collinearity (which can arise by chance): maybe this
    should be more flexible? 
 */
 
-#define MAXSING 5
+#define MAXSING 10
 #define VAR_FATAL(e,i,s) (e && (e != E_SINGULAR || i == 0 || s >= MAXSING))
 
 static int 
