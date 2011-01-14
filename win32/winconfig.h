@@ -8,6 +8,9 @@
 /* Extra floating-point GMP routines? */
 #define HAVE_MPFR 1
 
+/* sse2: let's assume so */
+#define USE_SSE2 1
+
 /* X-12-ARIMA support? */
 #define HAVE_X12A 1
 

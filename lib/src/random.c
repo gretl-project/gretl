@@ -48,7 +48,7 @@
 
 static GRand *gretl_rand;
 static unsigned int useed;
-static int use_sfmt;
+static int use_sfmt = 1;
 
 static guint32 gretl_rand_octet (guint32 *sign);
 

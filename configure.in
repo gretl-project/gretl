@@ -62,6 +62,7 @@ have_odbc="no"
 try_libR="yes"
 have_libR="no"
 try_sse2="yes"
+use_sse2="no"
 check_gnuplot="yes"
 darwin_build="no"
 quiet_build="no"
@@ -455,6 +456,7 @@ if test "$try_sse2" = "yes" ; then
   if test "$have_sse2_intrinsics" = "yes" ; then
      AC_DEFINE(USE_SSE2)
      AC_MSG_RESULT(yes)
+     use_sse2="yes"
   else
      AC_MSG_RESULT(no) 
      CFLAGS="$save_CFLAGS"  
@@ -849,6 +851,7 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use LaTeX for typesetting output:       ${have_latex}
   MPFR support:                           ${have_mpfr}
+  sse2 support for RNG:                   ${use_sse2}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${have_gtk}
   Use GTK printing apparatus:             ${have_gtkprint}

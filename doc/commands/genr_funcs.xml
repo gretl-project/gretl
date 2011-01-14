@@ -5321,8 +5321,9 @@
 	  Generates a series of uniform pseudo-random variates in the
 	  interval (<argname>a</argname>, <argname>b</argname>), or,
 	  if no arguments are supplied, in the interval (0,1). The
-	  algorithm used is the Mersenne Twister by <cite
-	  key="matsumoto98">Matsumoto and Nishimura (1998)</cite>.
+	  algorithm used by default is the SIMD-oriented Fast Mersenne
+	  Twister developed by <cite key="saito_matsumoto08">Saito and
+	  Matsumoto (2008)</cite>.
 	</para>
 	<para>
 	  <seelist>

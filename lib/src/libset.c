@@ -232,8 +232,8 @@ static const char *normal_rand_strs[] = {
 };
 
 static const char *RNG_strs[] = {
-    "glib",
-    "sfmt",
+    "MT",
+    "SFMT",
     NULL
 };
 
@@ -778,52 +778,52 @@ static int parse_libset_int_code (const char *key,
 {
     int i, err = E_DATA;
 
-    if (!strcmp(key, HC_VERSION)) {
+    if (!g_ascii_strcasecmp(key, HC_VERSION)) {
 	err = parse_hc_variant(val);
-    } else if (!strcmp(key, HAC_LAG)) {
+    } else if (!g_ascii_strcasecmp(key, HAC_LAG)) {
 	err = parse_hac_lag_variant(val);
-    } else if (!strcmp(key, GARCH_VCV)) {
+    } else if (!g_ascii_strcasecmp(key, GARCH_VCV)) {
 	for (i=0; i<VCV_MAX; i++) {
-	    if (!strcmp(val, garch_vcv_strs[i])) {
+	    if (!g_ascii_strcasecmp(val, garch_vcv_strs[i])) {
 		state->garch_vcv = i;
 		err = 0;
 		break;
 	    }
 	}
-    } else if (!strcmp(key, ARMA_VCV)) {
-	if (!strcmp(val, "op")) {
+    } else if (!g_ascii_strcasecmp(key, ARMA_VCV)) {
+	if (!g_ascii_strcasecmp(val, "op")) {
 	    state->arma_vcv = VCV_OP;
 	    err = 0;
-	} else if (!strcmp(val, "hessian")) {
+	} else if (!g_ascii_strcasecmp(val, "hessian")) {
 	    state->arma_vcv = VCV_HESSIAN;
 	    err = 0;
 	}
-    } else if (!strcmp(key, HAC_KERNEL)) {
+    } else if (!g_ascii_strcasecmp(key, HAC_KERNEL)) {
 	for (i=0; i<KERNEL_MAX; i++) {
-	    if (!strcmp(val, hac_kernel_strs[i])) {
+	    if (!g_ascii_strcasecmp(val, hac_kernel_strs[i])) {
 		state->ropts.hkern = i;
 		err = 0;
 		break;
 	    }
 	}
-    } else if (!strcmp(key, VECM_NORM)) {
+    } else if (!g_ascii_strcasecmp(key, VECM_NORM)) {
 	for (i=0; i<NORM_MAX; i++) {
-	    if (!strcmp(val, vecm_norm_strs[i])) {
+	    if (!g_ascii_strcasecmp(val, vecm_norm_strs[i])) {
 		state->vecm_norm = i;
 		err = 0;
 		break;
 	    }
 	}
-    } else if (!strcmp(key, NORMAL_RAND)) {
+    } else if (!g_ascii_strcasecmp(key, NORMAL_RAND)) {
 	for (i=0; normal_rand_strs[i] != NULL; i++) {
-	    if (!strcmp(val, normal_rand_strs[i])) {
+	    if (!g_ascii_strcasecmp(val, normal_rand_strs[i])) {
 		gretl_rand_set_box_muller(i);
 		err = 0;
 	    }
 	}
-    } else if (!strcmp(key, RNG)) {
+    } else if (!g_ascii_strcasecmp(key, RNG)) {
 	for (i=0; RNG_strs[i] != NULL; i++) {
-	    if (!strcmp(val, RNG_strs[i])) {
+	    if (!g_ascii_strcasecmp(val, RNG_strs[i])) {
 		gretl_rand_set_sfmt(i);
 		err = 0;
 	    }

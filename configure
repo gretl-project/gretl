@@ -2665,6 +2665,7 @@ have_odbc="no"
 try_libR="yes"
 have_libR="no"
 try_sse2="yes"
+use_sse2="no"
 check_gnuplot="yes"
 darwin_build="no"
 quiet_build="no"
@@ -15585,6 +15586,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
+     use_sse2="yes"
   else
      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -21969,6 +21971,7 @@ Configuration:
   Use gnuplot for graphs:                 ${have_gnuplot}
   Use LaTeX for typesetting output:       ${have_latex}
   MPFR support:                           ${have_mpfr}
+  sse2 support for RNG:                   ${use_sse2}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${have_gtk}
   Use GTK printing apparatus:             ${have_gtkprint}
