@@ -2027,9 +2027,10 @@ void session_model_callback (void *ptr, int action)
 
 static void open_matrix (gui_obj *obj)
 {
-    user_matrix *um = (user_matrix *) obj->data;
+    user_matrix *u = (user_matrix *) obj->data;
+    const char *name = user_matrix_get_name(u);
 
-    edit_user_matrix_by_name(user_matrix_get_name(um));
+    edit_user_matrix_by_name(name);
 }
 
 static void open_bundle (gui_obj *obj)

@@ -4759,12 +4759,29 @@ static void name_entry_finalize (GtkWidget *w, GtkWidget *dlg)
     }
 }
 
-void object_name_entry_dialog (char *name, GretlType type,
-			       const char *labeltxt,
-			       int *cancel)
+static void activate_show (GtkToggleButton *b, int *show)
+{
+    *show = button_is_active(b);
+}
+
+static int do_show_check (int *show, GretlType type)
+{
+    int ret = (show != NULL);
+
+    if (ret && autoicon_on() && type != GRETL_TYPE_DOUBLE) {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+int object_name_entry_dialog (char *name, GretlType type,
+			      const char *labeltxt,
+			      int *show)
 {
     GtkWidget *dlg, *tmp, *vbox, *hbox;
     GtkWidget *entry;
+    int ret = 0;
 
     dlg = gretl_dialog_new(_("gretl: name variable"), NULL, GRETL_DLG_BLOCK);
 
@@ -4789,10 +4806,23 @@ void object_name_entry_dialog (char *name, GretlType type,
     gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
+    if (do_show_check(show, type)) {
+	const char *label = (type == GRETL_TYPE_DOUBLE)?
+	    N_("show scalars window") :
+	    N_("show icons window");
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_check_button_new_with_label(_(label));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(tmp), "toggled",
+			 G_CALLBACK(activate_show), show);
+    }
+
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(dlg));
 
     /* Cancel button */
-    tmp = cancel_delete_button(hbox, dlg, cancel);
+    tmp = cancel_delete_button(hbox, dlg, &ret);
 
     g_object_set_data(G_OBJECT(dlg), "entry", entry);
     g_object_set_data(G_OBJECT(dlg), "name", name);
@@ -4806,6 +4836,8 @@ void object_name_entry_dialog (char *name, GretlType type,
 
     gretl_dialog_keep_above(dlg);
     gtk_widget_show_all(dlg);
+
+    return ret;
 }
 
 /* apparatus for setting custom format for TeX tabular model output */

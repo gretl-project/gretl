@@ -4160,41 +4160,59 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     } else {
 	char vname[VNAMELEN];
 	gchar *blurb;
-	int cancel = 0;
+	int resp, show = 0;
 
-	strcpy(vname, key);
+	*vname = '\0';
+	strncat(vname, key, VNAMELEN - 1);
+
 	blurb = g_strdup_printf("%s (%s) from bundle\n"
 				"Name (max. 15 characters):",
 				key, gretl_arg_type_name(type));
-	object_name_entry_dialog(vname, type, blurb, &cancel);
+	resp = object_name_entry_dialog(vname, type, blurb, &show);
 	g_free(blurb);
 
-	if (!cancel) {
-	    if (type == GRETL_TYPE_DOUBLE) {
-		double x = *(double *) val;
+	if (resp < 0) {
+	    /* canceled */
+	    return;
+	}
+
+	if (type == GRETL_TYPE_DOUBLE) {
+	    double x = *(double *) val;
 		
-		err = gretl_scalar_add(vname, x);
-	    } else if (type == GRETL_TYPE_MATRIX) {
-		gretl_matrix *m = (gretl_matrix *) val;
+	    err = gretl_scalar_add(vname, x);
+	} else if (type == GRETL_TYPE_MATRIX) {
+	    gretl_matrix *orig = (gretl_matrix *) val;
+	    gretl_matrix *m = gretl_matrix_copy(orig);
 
-		err = user_matrix_add(gretl_matrix_copy(m), vname);
-	    } else if (type == GRETL_TYPE_SERIES) {
-		double *x = (double *) val;
-		gretl_matrix *m;
-
-		m = gretl_vector_from_array(x, size, GRETL_MOD_NONE);
+	    if (m == NULL) {
+		err = E_ALLOC;
+	    } else {
 		err = user_matrix_add(m, vname);
-	    } else if (type == GRETL_TYPE_STRING) {
-		char *s = (char *) val;
+	    }
+	} else if (type == GRETL_TYPE_SERIES) {
+	    double *x = (double *) val;
+	    gretl_matrix *m;
 
-		err = save_named_string(vname, s, NULL);
+	    m = gretl_vector_from_array(x, size, GRETL_MOD_NONE);
+	    err = user_matrix_add(m, vname);
+	} else if (type == GRETL_TYPE_STRING) {
+	    char *s = (char *) val;
+
+	    err = save_named_string(vname, s, NULL);
+	}
+
+	if (show && !err) {
+	    if (type == GRETL_TYPE_DOUBLE) {
+		edit_scalars();
+	    } else {
+		view_session(NULL);
 	    }
 	}
     }
 
     if (err) {
 	gui_errmsg(err);
-    }
+    } 
 }
 
 static void save_bundle_call (GtkAction *action, gpointer p)
@@ -4204,13 +4222,13 @@ static void save_bundle_call (GtkAction *action, gpointer p)
     int nb = n_user_bundles();
     char vname[VNAMELEN];
     const char *blurb;
-    int cancel = 0;
+    int resp, show = 0;
 
     sprintf(vname, "bundle%d", nb + 1);
     blurb = "Save bundle\nName (max. 15 characters):";
-    object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, blurb, &cancel);
+    resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, blurb, &show);
 
-    if (!cancel) {    
+    if (resp >= 0) {    
 	int err = gretl_bundle_add_or_replace(bundle, vname);
 
 	if (err) {
@@ -4242,6 +4260,14 @@ static void add_bundled_item_to_menu (gpointer key,
     if (type == GRETL_TYPE_STRING || type == GRETL_TYPE_MATRIX_REF) {
 	/* not very useful in GUI? */
 	return;
+    }
+
+    if (type == GRETL_TYPE_MATRIX) {
+	gretl_matrix *m = (gretl_matrix *) val;
+
+	if (gretl_is_null_matrix(m)) {
+	    return;
+	}
     }
 
     if (type == GRETL_TYPE_SERIES && size != datainfo->n) {
