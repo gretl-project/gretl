@@ -5384,6 +5384,27 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
+static NODE *test_bundle_key (NODE *l, NODE *r, parser *p)
+{
+    gretl_bundle *bundle = node_get_bundle(l, p);
+    const char *key = r->v.str;
+    void *val = NULL;
+    NODE *ret = NULL;
+
+    if (!p->err) {
+	val = gretl_bundle_get_data(bundle, key, NULL, NULL, &p->err);
+    }
+
+    if (!p->err) {
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
+	    ret->v.xval = (val != NULL);
+	}
+    }
+
+    return ret;
+}
+
 /* Setting an object in a bundle under a given key string. We get here
    only if p->lh.substr is non-NULL. That "substr" may be a string
    literal, or it may be the name of a string variable. In the latter
@@ -7846,6 +7867,15 @@ static NODE *eval (NODE *t, parser *p)
     case BOBJ:
 	/* name of bundle plus key */
 	ret = get_named_bundle_value(l, r, p);
+	break;
+    case F_BUNDLEHAS:
+	if (l->t == BUNDLE && r->t == STR) {
+	    ret = test_bundle_key(l, r, p);
+	} else if (l->t == BUNDLE) {
+	    node_type_error(t->t, 1, STR, r, p);
+	} else {
+	    node_type_error(t->t, 0, BUNDLE, l, p);
+	}
 	break;
     case F_LDIFF:
     case F_SDIFF:

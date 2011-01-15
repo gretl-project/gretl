@@ -28,6 +28,7 @@
  <gentext key="anyfloat-or-list" text="scalar, series, matrix or list"/>
  <gentext key="list-or-string" text="named list or string"/>
  <gentext key="asinput"       text="same type as input"/>
+ <gentext key="bundle"        text="bundle"/> 
  <gentext key="scalar"        text="scalar"/>
  <gentext key="pscalar"       text="scalar between 0 and 1"/>
  <gentext key="series"        text="series"/>

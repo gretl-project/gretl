@@ -26,6 +26,7 @@
  <gentext key="list-or-string" text="lista ou texto"/>
  <gentext key="asinput"       text="o mesmo tipo que o argumento"/>
  <gentext key="scalar"        text="escalar"/>
+ <gentext key="bundle"        text="bundle"/>
  <gentext key="pscalar"       text="escalar entre 0 e 1"/>
  <gentext key="séries"        text="série"/>
  <gentext key="vector"        text="vector"/>

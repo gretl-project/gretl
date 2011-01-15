@@ -442,13 +442,18 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * gretl_bundle_get_data:
  * @bundle: bundle to access.
  * @key: name of key to access.
- * @type: location to receive data type.
+ * @type: location to receive data type, or NULL (see below).
  * @size: location to receive size of data (= series
  * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
  * @err:location to receive error code.
  *
  * Returns: the data pointer associated with @key in the
- * specified @bundle, or NULL on failure.
+ * specified @bundle, or NULL on failure. If @type is non-NULL
+ * (the usual case) the content of @err is set to a non-zero
+ * value if @bundle contains no data-item with key @key. But
+ * if @type is NULL the call is understood as a query as to
+ * whether @bundle contains the specified data-item, and 
+ * @err is not set if @key is not present.
  */
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
@@ -463,13 +468,15 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 
 	if (p != NULL) {
 	    bundled_item *item = p;
-	    
-	    *type = item->type;
+
 	    ret = item->data;
+	    if (type != NULL) {
+		*type = item->type;
+	    }
 	    if (size != NULL) {
 		*size = item->size;
 	    }
-	} else {
+	} else if (type != NULL) {
 	    gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
 	    *err = E_DATA;
 	}

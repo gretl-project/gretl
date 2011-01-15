@@ -358,6 +358,7 @@ struct str_table funcs[] = {
     { F_ERRMSG,   "errmsg" },
     { F_ISCONST,  "isconst" },
     { F_IRF,      "irf" },
+    { F_BUNDLEHAS, "bundlehas" },
     { 0,          NULL }
 };
 

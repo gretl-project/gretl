@@ -938,6 +938,19 @@
       </description>
     </function>
 
+    <function name="bundlehas" section="data-utils" output="scalar">
+      <fnargs>
+	<fnarg type="bundle">b</fnarg>
+	<fnarg type="string">key</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  Returns 1 if bundle <argname>b</argname> contains a data-item
+	  with name <argname>key</argname>, otherwise 0.
+	</para>	  
+      </description>
+    </function>   
+
     <function name="bwfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
