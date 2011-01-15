@@ -1424,7 +1424,7 @@ gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
 	goto bailout;
     }  
 
-    /* compose first row of VMA = vec(I(n)' */
+    /* compose first row of VMA = vec(I(n))' */
     for (i=0; i<n2; i+=n+1) {
 	gretl_matrix_set(VMA, 0, i, 1.0);
     }
