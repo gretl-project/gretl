@@ -1121,7 +1121,7 @@ static int writehdr (const char *hdrfile, const int *list,
 int get_precision (const double *x, int n, int placemax)
 {
     int t, p, pmax = 0;
-    char *s, numstr[48];
+    char *s, numstr[64];
     int n_ok = 0;
     double z;
 

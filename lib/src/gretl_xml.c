@@ -1591,7 +1591,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     for (i=1; i<=nvars; i++) {
 	v = savenum(list, i);
-	pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
+	pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 16);
     }
 
     ntodate(startdate, pdinfo->t1, pdinfo);
@@ -1769,7 +1769,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    if (na(Z[v][t])) {
 		strcpy(numstr, "NA ");
 	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		sprintf(numstr, "%.12g ", Z[v][t]);
+		sprintf(numstr, "%.15g ", Z[v][t]);
 	    } else {
 		sprintf(numstr, "%.*f ", pmax[i-1], Z[v][t]);
 	    }
