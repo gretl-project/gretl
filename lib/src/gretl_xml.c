@@ -1508,6 +1508,8 @@ int gretl_write_matrix_as_gdt (const char *fname,
     return err;
 }
 
+#define GDT_DIGITS 17
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -1589,9 +1591,16 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
 
-    for (i=1; i<=nvars; i++) {
-	v = savenum(list, i);
-	pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 16);
+    for (i=0; i<nvars; i++) {
+	int prec;
+
+	v = savenum(list, i+1);
+	prec = get_precision(&Z[v][pdinfo->t1], tsamp, GDT_DIGITS);
+	if (prec < GDT_DIGITS) {
+	    pmax[i] = prec;
+	} else {
+	    pmax[i] = PMAX_NOT_AVAILABLE;
+	}
     }
 
     ntodate(startdate, pdinfo->t1, pdinfo);
@@ -1769,7 +1778,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    if (na(Z[v][t])) {
 		strcpy(numstr, "NA ");
 	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		sprintf(numstr, "%.15g ", Z[v][t]);
+		sprintf(numstr, "%.*g ", GDT_DIGITS, Z[v][t]);
 	    } else {
 		sprintf(numstr, "%.*f ", pmax[i-1], Z[v][t]);
 	    }
