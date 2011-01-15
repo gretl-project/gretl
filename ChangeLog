@@ -1,4 +1,7 @@
 version 1.9.4, in progress
+- Change the default random number generator from GLib's
+  implementation of the Mersenne Twister to the SIMD-oriented
+  Fast Mersenne Twister
 - Add an --accessors option to the "varlist" command, to
   expose the list of currently available accessor ("dollar")
   variables

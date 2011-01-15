@@ -1,5 +1,11 @@
 version 1.9.4, in progress
 
+The default random number generator has been changed from 
+GLib's implementation of the Mersenne Twister to the 
+SIMD-oriented Fast Mersenne Twister. For purposes of
+replication you can revert to the previous generator
+via the command "set RNG MT".
+
 The redundant function makemask() has been removed.
 
 The old, deprecated aliases "noecho" (use "set echo off") and

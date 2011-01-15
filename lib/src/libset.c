@@ -30,6 +30,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <glib.h>
+
 #define PDEBUG 0
 
 enum {
