@@ -648,6 +648,17 @@
       </description>
     </function>
 
+    <function name="$vma" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the estimation of a VAR or a VECM; returns a
+	  matrix containing the VMA representation up to the order
+	  specified via the <lit>set horizon</lit> command. See
+	  <guideref targ="sec:var-estim"/> for details.
+	</para>
+      </description>
+    </function>
+
     <function name="$windows" section="access" output="scalar">
       <description>
 	<para>

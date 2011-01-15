@@ -1,0 +1,220 @@
+\chapter{Multivariate time series models}
+\label{chap:var}
+
+\app{Gretl} provides a standard set of procedures for dealing with the
+multivariate time-series models known as VARs (\emph{Vector
+  AutoRegression}). More general models, such as VARMAs, nonlinear
+models or multivariate GARCH models, are not provided as of now,
+although it is entirely possible to estimate them by writing custom
+procedures in the \app{gretl} scripting language. In this chapter, we
+will briefly review \app{gretl}'s VAR toolbox.
+
+\section{Notation}
+\label{sec:var-def}
+
+A VAR of order $p$ is a structure whose aim is to model the time
+persistence of a vector of $n$ time series via a multivariate
+autoregression, as in
+\begin{equation}
+  \label{eq:VAR}
+  y_t = A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
+  B x_t + \epsilon_t 
+\end{equation}
+The number of lags $p$ is called the \emph{order} of the VAR; the
+vector $x_t$ typically contains a vector of exogenous variables:
+typical choices are a constant, possibly with a time trend and
+seasonal dummies. The vector $\epsilon_t$ is typically assumed to be a
+vector white noise, with covariance matrix $\Sigma$.
+
+Equation \eqref{eq:VAR} can be written more compactly as
+\begin{equation}
+  \label{eq:VARpoly}
+  A(L) y_t = B x_t + \epsilon_t ,
+\end{equation}
+where $A(L)$ is a matrix polynomial in the lag operator, or as
+\begin{equation}
+  \label{eq:VARcompan}
+  \left[\begin{array}{c} y_t \\ y_{t-1} \\ \cdots \\ y_{t-p-1} 
+    \end{array} \right] = 
+  \mathbf{A}
+  \left[\begin{array}{c} y_{t-1} \\ y_{t-2} \\ \cdots \\ y_{t-p} 
+    \end{array} \right] +
+  \left[\begin{array}{c} B \\ 0 \\ \cdots \\ 0
+    \end{array} \right] x_t +
+  \left[\begin{array}{c} \epsilon_t \\ 0 \\ \cdots \\ 0 
+    \end{array} \right]
+\end{equation}
+where the matrix $\mathbf{A}$ is called ``companion matrix'' and equals
+\[
+\mathbf{A} =
+  \left[\begin{array}{ccccc} 
+      A_1 & A_2 & \cdots & A_p \\ 
+      I & 0 & \cdots & 0 \\ 
+      0 & I & \cdots & 0 \\ 
+      \vdots & \vdots & \ddots & \vdots
+    \end{array} \right] ;
+\]
+equation \eqref{eq:VARcompan} is known as the ``companion form'' of
+the VAR.
+
+Another representation of interest is the so-called ``VMA
+representation'', which is written in terms of a (typically infinite)
+series of matrices $C_i$ defined as
+\begin{equation}
+  \label{eq:VMA}
+  C_i = \frac{\partial y_t}{\partial \epsilon_{t-i}}
+\end{equation}
+The $C_i$ matrices may be derived by recursive substitution in
+equation \eqref{eq:VAR}: for example, assuming for simplicity that
+$B=0$ and $p=1$, equation \eqref{eq:VAR} would become
+\[
+  y_t = A y_{t-1} + \epsilon_t ,
+\]
+which could be rewritten as
+\[
+  y_t = A^{n+1} y_{t-n-1} + \epsilon_t + A \epsilon_{t-1} + A^2
+  \epsilon_{t-2} + \cdots + A^n \epsilon_{t-n} ;
+\]
+so in this case $C_i = A^i$. In general, it is possible to compute
+$C_i$ as the $n \times n$ north-west block of the $i$-th power of the
+companion matrix $\mathbf{A}$ (so $C_0$ is always an identity matrix).
+
+The VAR is said to be \emph{stable} if all the eigenvalues of the
+companion matrix $\mathbf{A}$ are smaller than 1 in absolute value, or
+equivalently, if the matrix polynomial $A(L)$ in equation
+\eqref{eq:VARpoly} is such that $|A(z)| = 0$ implies $|z|>1$. If this
+is the case, $\lim_{n \to \infty} C_n = 0$ and the vector $y_t$ is
+stationary; as a consequence, the equation
+\begin{equation}
+  \label{eq:VMArep}
+  y_t - E(y_t) = \sum_{i=0}^{\infty} C_i \epsilon_{t-i}
+\end{equation}
+is a legitimate Wold representation. 
+
+If the VAR is not stable, then the inferential procedures that are
+called for become somewhat more specialized except for some simple
+cases. In particular, if the number of eigenvalues of $\mathbf{A}$
+with modulus 1 is between 1 and $n-1$, the canonical tool to deal with
+these models is the cointegrated VAR model, for which you ought to
+refer to chapter \ref{chap:vecm}.
+
+\section{Estimation}
+\label{sec:var-estim}
+
+\begin{script}[htbp]
+  \caption{Estimation of a VAR via OLS}
+  \label{script:var-ols}
+Input:
+\begin{scodebit}
+open sw_ch14.gdt
+genr infl = 400*sdiff(log(PUNEW))
+
+scalar p = 2
+list X = LHUR infl
+list Xlag = lags(p,X)
+
+loop foreach i X
+    ols $i const Xlag
+end loop
+
+var p X
+\end{scodebit}
+%$
+Output (selected portions):
+\begin{scodebit}
+Model 1: OLS, using observations 1960:3-1999:4 (T = 158)
+Dependent variable: LHUR
+
+             coefficient   std. error   t-ratio   p-value 
+  --------------------------------------------------------
+  const       0.113673     0.0875210     1.299    0.1960  
+  LHUR_1      1.54297      0.0680518    22.67     8.78e-51 ***
+  LHUR_2     -0.583104     0.0645879    -9.028    7.00e-16 ***
+  infl_1      0.0219040    0.00874581    2.505    0.0133   **
+  infl_2     -0.0148408    0.00920536   -1.612    0.1090  
+
+Mean dependent var   6.019198   S.D. dependent var   1.502549
+Sum squared resid    8.654176   S.E. of regression   0.237830
+
+...
+
+
+VAR system, lag order 2
+OLS estimates, observations 1960:3-1999:4 (T = 158)
+Log-likelihood = -322.73663
+Determinant of covariance matrix = 0.20382769
+AIC = 4.2119
+BIC = 4.4057
+HQC = 4.2906
+Portmanteau test: LB(39) = 226.984, df = 148 [0.0000]
+
+Equation 1: LHUR
+
+             coefficient   std. error   t-ratio   p-value 
+  --------------------------------------------------------
+  const       0.113673     0.0875210     1.299    0.1960  
+  LHUR_1      1.54297      0.0680518    22.67     8.78e-51 ***
+  LHUR_2     -0.583104     0.0645879    -9.028    7.00e-16 ***
+  infl_1      0.0219040    0.00874581    2.505    0.0133   **
+  infl_2     -0.0148408    0.00920536   -1.612    0.1090  
+
+Mean dependent var   6.019198   S.D. dependent var   1.502549
+Sum squared resid    8.654176   S.E. of regression   0.237830
+\end{scodebit}
+\end{script}
+
+The \app{gretl} command for estimating a VAR is \cmd{var}. The
+parameters in eq. \eqref{eq:VAR} are typically free from restrictions,
+which implies that multivariate OLS provides a consistent and
+asymptotically efficient estimator of all the parameters.\footnote{In
+  fact, under normality of $\epsilon_t$ OLS is indeed the conditional
+  ML estimator. You may want to use other methods if you need to
+  estimate a VAR in which some parameters are constrained.}
+
+Given the simplicity of OLS, this is what \app{gretl}
+uses: example script \ref{script:var-ols} exemplifies the fact that
+the \cmd{var} command gives you exactly the output you would have from
+a battery of OLS regressions. The advantage of using the dedicated
+command is that it makes it much easier to access quantities and
+manage tasks that you normally want to, after estimation is done. For
+example, the \dollar{coeff} returns the estimated coefficients as a
+matrix with $n$ columns. In addition, two accessors become available
+for the companion matrix (\dollar{compan}) and the VMA
+representation (\dollar{vma}). 
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{rl}
+    \hline
+    Periodicity & horizon \\
+    \hline
+    Quarterly & 20 (5 years) \\
+    Monthly & 24 (2 years) \\
+    Daily & 3 weeks \\
+    All other cases & 10 \\
+    \hline
+  \end{tabular}
+  \caption{VMA horizon as a function of the dataset periodicity}
+  \label{tab:var-horizon}
+\end{table}
+
+The latter deserves a detailed
+description: since the VMA representation \eqref{eq:VMArep} is of
+infinite order, \app{gretl} defines a \emph{horizon} up to which the
+$C_i$ matrices are computed automatically. By default, this is a
+function of the periodicity of the data (see table
+\ref{tab:var-horizon}), but it can be set by the user to any desired
+value via the \cmd{set horizon} command. Calling the horizon $h$, the
+\dollar{vma} accessor returns an $(h+1) \times n^2$ matrix, in which
+the $(i+1)$-th row is the vectorized form of $C_i$.
+
+
+\section{Structural VARs}
+\label{sec:svar}
+
+To be written. 
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
