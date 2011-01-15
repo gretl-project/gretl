@@ -1239,6 +1239,8 @@ saved_object_build_matrix (const char *oname, int idx,
 	M = mn_logit_probabilities(smatch->ptr, Z, pdinfo, err);
     } else if (idx == M_EC && smatch->type == GRETL_OBJ_VAR) {
 	M = VECM_get_EC_matrix(smatch->ptr, Z, pdinfo, err);
+    } else if (idx == M_VMA && smatch->type == GRETL_OBJ_VAR) {
+	M = gretl_VAR_get_vma_matrix(smatch->ptr, pdinfo, err);
     } else {
 	*err = E_BADSTAT;
     }

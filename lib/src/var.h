@@ -103,6 +103,10 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
 			    int *errp);
 
 gretl_matrix *
+gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
+			  int *err);
+
+gretl_matrix *
 VECM_get_EC_matrix (const GRETL_VAR *v, 
 		    const double **Z, 
 		    const DATAINFO *pdinfo, 

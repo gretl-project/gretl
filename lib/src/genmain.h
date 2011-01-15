@@ -106,6 +106,7 @@ typedef enum {
     M_EHAT,       /* ARMA: vector of estimated innovations */
     M_MATRIX_MAX, /* -- SEPARATOR, matrices/matrix-builders -- */
     M_EC,         /* VECM error-correction terms */
+    M_VMA,        /* VARs, VECMs: vector moving average representation */
     M_MNLPROBS,   /* case probabilities for multinomial logit */
     M_MBUILD_MAX, /* -- SEPARATOR, matrix-builders/lists -- */
     M_XLIST,      /* list of regressors */

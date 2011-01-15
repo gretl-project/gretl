@@ -1391,6 +1391,68 @@ gretl_VAR_get_fitted_matrix (const GRETL_VAR *var)
     return Yh;
 }
 
+gretl_matrix *
+gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
+			  int *err)
+{
+    int h = default_VAR_horizon(pdinfo);
+    int ar, n = var->neqns;
+    int n2 = n * n;
+    gretl_matrix *VMA = NULL;
+    gretl_matrix *Tmp1, *Tmp2;
+    double x;
+    int i, j, ii, jj;
+
+    if (var->A == NULL) {
+	/* companion matrix is absent */
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    ar = var->A->rows;
+
+    Tmp1 = gretl_identity_matrix_new(ar);
+    Tmp2 = gretl_matrix_alloc(ar, ar);
+    if (Tmp1 == NULL || Tmp2 == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    VMA = gretl_zero_matrix_new(h, n2);
+    if (VMA == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }  
+
+    /* compose first row of VMA = vec(I(n)' */
+    for (i=0; i<n2; i+=n+1) {
+	gretl_matrix_set(VMA, 0, i, 1.0);
+    }
+
+    for (i=1; i<h; i++) {
+	/* Tmp <-  A * Tmp */
+	gretl_matrix_multiply(var->A, Tmp1, Tmp2);
+	gretl_matrix_copy_values(Tmp1, Tmp2);
+	/* VMA |= vec(Tmp[1:n,1:n])' */
+	ii = jj = 0;
+	for (j=0; j<n2; j++) {
+	    x = gretl_matrix_get(Tmp1, ii++, jj);
+	    gretl_matrix_set(VMA, i, j, x);
+	    if (ii == n) {
+		jj++;
+		ii = 0;
+	    }
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(Tmp1);
+    gretl_matrix_free(Tmp2);
+
+    return VMA;
+}
+
 int gretl_VAR_get_variable_number (const GRETL_VAR *var, int k)
 {
     int vnum = 0;
