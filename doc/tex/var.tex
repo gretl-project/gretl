@@ -171,16 +171,16 @@ asymptotically efficient estimator of all the parameters.\footnote{In
   ML estimator. You may want to use other methods if you need to
   estimate a VAR in which some parameters are constrained.}
 
-Given the simplicity of OLS, this is what \app{gretl}
-uses: example script \ref{script:var-ols} exemplifies the fact that
-the \cmd{var} command gives you exactly the output you would have from
-a battery of OLS regressions. The advantage of using the dedicated
-command is that it makes it much easier to access quantities and
-manage tasks that you normally want to, after estimation is done. For
-example, the \dollar{coeff} returns the estimated coefficients as a
-matrix with $n$ columns. In addition, two accessors become available
-for the companion matrix (\dollar{compan}) and the VMA
-representation (\dollar{vma}). 
+Given the simplicity of OLS, this is what every software package,
+including \app{gretl}, uses: example script \ref{script:var-ols}
+exemplifies the fact that the \cmd{var} command gives you exactly the
+output you would have from a battery of OLS regressions. The advantage
+of using the dedicated command is that it makes it much easier to
+access quantities and manage tasks that you normally want to, after
+estimation is done. For example, the \dollar{coeff} accessor returns
+the estimated coefficients as a matrix with $n$ columns and
+\dollar{sigma} returns an estimate of the matrix $\Sigma$, the
+covariance matrix of $\epsilon_t$.
 
 \begin{table}[htbp]
   \centering
@@ -198,7 +198,9 @@ representation (\dollar{vma}).
   \label{tab:var-horizon}
 \end{table}
 
-The latter deserves a detailed
+In addition, two accessors become available for the
+companion matrix (\dollar{compan}) and the VMA representation
+(\dollar{vma}). The latter deserves a detailed
 description: since the VMA representation \eqref{eq:VMArep} is of
 infinite order, \app{gretl} defines a \emph{horizon} up to which the
 $C_i$ matrices are computed automatically. By default, this is a

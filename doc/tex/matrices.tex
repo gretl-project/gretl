@@ -839,6 +839,7 @@ These are set out in Table~\ref{tab:matrix-accessors}.
   \dollar{stderr} & matrix of estimated standard errors \\
   \dollar{uhat}   & matrix of residuals \\
   \dollar{vcv}    & covariance matrix of parameter estimates \\
+  \dollar{vma}    & VMA matrices in stacked form --- see section \ref{sec:var-estim} (after VAR or VECM estimation) \\
   \dollar{yhat}   & matrix of fitted values 
 \end{tabular}
 \caption{Matrix accessors for model data}
@@ -883,12 +884,12 @@ grabs the coefficient vector from model \texttt{m1}; and the third
 (which uses the mechanism of sub-matrix selection described above)
 grabs a portion of the covariance matrix from model \texttt{m1}.
 
-If the model in question a VAR or VECM (only) \dollar{compan} returns
-the companion matrix.
-
-After a vector error correction model is estimated via Johansen's
-procedure, the matrices \dollar{jalpha} and \dollar{jbeta} are
-also available. These have a number of columns equal to the chosen
+If the model in question a VAR or VECM (only) \dollar{compan} and
+\dollar{vma} return the companion matrix and the VMA matrices in
+stacked form, respectively (see section \ref{sec:var-estim} for
+details).  After a vector error correction model is estimated via
+Johansen's procedure, the matrices \dollar{jalpha} and \dollar{jbeta}
+are also available. These have a number of columns equal to the chosen
 cointegration rank; therefore, the product
 \begin{code}
 matrix Pi = $jalpha * $jbeta'
