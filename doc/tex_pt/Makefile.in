@@ -38,7 +38,8 @@ TEXSRC = cli.tex \
 	optarg.tex \
 	quantreg.tex \
 	odbc.tex \
-	gretlR.tex
+	gretlR.tex \
+	var.tex
 
 WEBDIR = /home/helio/gretl/website
 

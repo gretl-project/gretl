@@ -22,7 +22,8 @@ TEXSRC = appendices.tex \
 	trouble.tex \
 	vecm.tex \
 	cmdref.tex \
-	optarg.tex 
+	optarg.tex \
+	var.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
 

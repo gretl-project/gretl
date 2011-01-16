@@ -34,7 +34,8 @@ TEXSRC = cli.tex \
 	reftables.tex \
 	cmdref.tex \
 	funcref.tex \
-	optarg.tex
+	optarg.tex \
+	var.tex
 
 WEBDIR = /home/cottrell/stats/esl/website
 
