@@ -3,8 +3,8 @@
 
 \app{Gretl} provides a standard set of procedures for dealing with the
 multivariate time-series models known as VARs (\emph{Vector
-  AutoRegression}). More general models, such as VARMAs, nonlinear
-models or multivariate GARCH models, are not provided as of now,
+  AutoRegression}). More general models --- such as VARMAs, nonlinear
+models or multivariate GARCH models --- are not provided as of now,
 although it is entirely possible to estimate them by writing custom
 procedures in the \app{gretl} scripting language. In this chapter, we
 will briefly review \app{gretl}'s VAR toolbox.
@@ -12,24 +12,24 @@ will briefly review \app{gretl}'s VAR toolbox.
 \section{Notation}
 \label{sec:var-def}
 
-A VAR of order $p$ is a structure whose aim is to model the time
-persistence of a vector of $n$ time series via a multivariate
-autoregression, as in
+A VAR is a structure whose aim is to model the time persistence of a
+vector of $n$ time series, $y_t$, via a multivariate autoregression,
+as in
 \begin{equation}
   \label{eq:VAR}
   y_t = A_1 y_{t-1} + A_2 y_{t-2} + \cdots + A_p y_{t-p} +
   B x_t + \epsilon_t 
 \end{equation}
-The number of lags $p$ is called the \emph{order} of the VAR; the
-vector $x_t$ typically contains a vector of exogenous variables:
-typical choices are a constant, possibly with a time trend and
+The number of lags $p$ is called the \emph{order} of the VAR. The
+vector $x_t$, if present, typically contains a set of exogenous
+variables, often including a constant, possibly with a time trend and
 seasonal dummies. The vector $\epsilon_t$ is typically assumed to be a
 vector white noise, with covariance matrix $\Sigma$.
 
 Equation \eqref{eq:VAR} can be written more compactly as
 \begin{equation}
   \label{eq:VARpoly}
-  A(L) y_t = B x_t + \epsilon_t ,
+  A(L) y_t = B x_t + \epsilon_t
 \end{equation}
 where $A(L)$ is a matrix polynomial in the lag operator, or as
 \begin{equation}
@@ -44,7 +44,7 @@ where $A(L)$ is a matrix polynomial in the lag operator, or as
   \left[\begin{array}{c} \epsilon_t \\ 0 \\ \cdots \\ 0 
     \end{array} \right]
 \end{equation}
-where the matrix $\mathbf{A}$ is called ``companion matrix'' and equals
+The matrix $\mathbf{A}$ is known as the ``companion matrix'' and equals
 \[
 \mathbf{A} =
   \left[\begin{array}{ccccc} 
@@ -52,9 +52,9 @@ where the matrix $\mathbf{A}$ is called ``companion matrix'' and equals
       I & 0 & \cdots & 0 \\ 
       0 & I & \cdots & 0 \\ 
       \vdots & \vdots & \ddots & \vdots
-    \end{array} \right] ;
+    \end{array} \right]
 \]
-equation \eqref{eq:VARcompan} is known as the ``companion form'' of
+Equation \eqref{eq:VARcompan} is known as the ``companion form'' of
 the VAR.
 
 Another representation of interest is the so-called ``VMA
@@ -68,14 +68,14 @@ The $\Theta_i$ matrices may be derived by recursive substitution in
 equation \eqref{eq:VAR}: for example, assuming for simplicity that
 $B=0$ and $p=1$, equation \eqref{eq:VAR} would become
 \[
-  y_t = A y_{t-1} + \epsilon_t ,
+  y_t = A y_{t-1} + \epsilon_t
 \]
 which could be rewritten as
 \[
   y_t = A^{n+1} y_{t-n-1} + \epsilon_t + A \epsilon_{t-1} + A^2
-  \epsilon_{t-2} + \cdots + A^n \epsilon_{t-n} ;
+  \epsilon_{t-2} + \cdots + A^n \epsilon_{t-n}
 \]
-so in this case $\Theta_i = A^i$. In general, it is possible to compute
+In this case $\Theta_i = A^i$. In general, it is possible to compute
 $\Theta_i$ as the $n \times n$ north-west block of the $i$-th power of the
 companion matrix $\mathbf{A}$ (so $\Theta_0$ is always an identity matrix).
 
@@ -92,11 +92,11 @@ stationary; as a consequence, the equation
 is a legitimate Wold representation. 
 
 If the VAR is not stable, then the inferential procedures that are
-called for become somewhat more specialized except for some simple
+called for become somewhat more specialized, except for some simple
 cases. In particular, if the number of eigenvalues of $\mathbf{A}$
 with modulus 1 is between 1 and $n-1$, the canonical tool to deal with
-these models is the cointegrated VAR model, for which you ought to
-refer to chapter \ref{chap:vecm}.
+these models is the cointegrated VAR model, discussed in chapter
+\ref{chap:vecm}.
 
 \section{Estimation}
 \label{sec:var-estim}
@@ -198,17 +198,21 @@ $\epsilon_t$.
   \label{tab:var-horizon}
 \end{table}
 
-In addition, two accessors become available for the
-companion matrix (\dollar{compan}) and the VMA representation
-(\dollar{vma}). The latter deserves a detailed
-description: since the VMA representation \eqref{eq:VMArep} is of
-infinite order, \app{gretl} defines a \emph{horizon} up to which the
-$\Theta_i$ matrices are computed automatically. By default, this is a
-function of the periodicity of the data (see table
-\ref{tab:var-horizon}), but it can be set by the user to any desired
-value via the \cmd{set horizon} command. Calling the horizon $h$, the
-\dollar{vma} accessor returns an $(h+1) \times n^2$ matrix, in which
-the $(i+1)$-th row is the vectorized form of $\Theta_i$.
+In addition, two accessors become available for the companion matrix
+(\dollar{compan}) and the VMA representation (\dollar{vma}). The
+latter deserves a detailed description: since the VMA representation
+\eqref{eq:VMArep} is of infinite order, \app{gretl} defines a
+\emph{horizon} up to which the $\Theta_i$ matrices are computed
+automatically. By default, this is a function of the periodicity of
+the data (see table \ref{tab:var-horizon}), but it can be set by the
+user to any desired value via the \cmd{set} command with the
+\cmd{horizon} parameter, as in
+\begin{code}
+set horizon 30
+\end{code}
+Calling the horizon $h$, the \dollar{vma} accessor returns an $(h+1)
+\times n^2$ matrix, in which the $(i+1)$-th row is the vectorized form
+of $\Theta_i$.
 
 
 \section{Structural VARs}
