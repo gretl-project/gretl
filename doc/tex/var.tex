@@ -59,12 +59,12 @@ the VAR.
 
 Another representation of interest is the so-called ``VMA
 representation'', which is written in terms of a (typically infinite)
-series of matrices $C_i$ defined as
+series of matrices $\Theta_i$ defined as
 \begin{equation}
   \label{eq:VMA}
-  C_i = \frac{\partial y_t}{\partial \epsilon_{t-i}}
+  \Theta_i = \frac{\partial y_t}{\partial \epsilon_{t-i}}
 \end{equation}
-The $C_i$ matrices may be derived by recursive substitution in
+The $\Theta_i$ matrices may be derived by recursive substitution in
 equation \eqref{eq:VAR}: for example, assuming for simplicity that
 $B=0$ and $p=1$, equation \eqref{eq:VAR} would become
 \[
@@ -75,19 +75,19 @@ which could be rewritten as
   y_t = A^{n+1} y_{t-n-1} + \epsilon_t + A \epsilon_{t-1} + A^2
   \epsilon_{t-2} + \cdots + A^n \epsilon_{t-n} ;
 \]
-so in this case $C_i = A^i$. In general, it is possible to compute
-$C_i$ as the $n \times n$ north-west block of the $i$-th power of the
-companion matrix $\mathbf{A}$ (so $C_0$ is always an identity matrix).
+so in this case $\Theta_i = A^i$. In general, it is possible to compute
+$\Theta_i$ as the $n \times n$ north-west block of the $i$-th power of the
+companion matrix $\mathbf{A}$ (so $\Theta_0$ is always an identity matrix).
 
 The VAR is said to be \emph{stable} if all the eigenvalues of the
 companion matrix $\mathbf{A}$ are smaller than 1 in absolute value, or
 equivalently, if the matrix polynomial $A(L)$ in equation
 \eqref{eq:VARpoly} is such that $|A(z)| = 0$ implies $|z|>1$. If this
-is the case, $\lim_{n \to \infty} C_n = 0$ and the vector $y_t$ is
+is the case, $\lim_{n \to \infty} \Theta_n = 0$ and the vector $y_t$ is
 stationary; as a consequence, the equation
 \begin{equation}
   \label{eq:VMArep}
-  y_t - E(y_t) = \sum_{i=0}^{\infty} C_i \epsilon_{t-i}
+  y_t - E(y_t) = \sum_{i=0}^{\infty} \Theta_i \epsilon_{t-i}
 \end{equation}
 is a legitimate Wold representation. 
 
@@ -175,12 +175,12 @@ Given the simplicity of OLS, this is what every software package,
 including \app{gretl}, uses: example script \ref{script:var-ols}
 exemplifies the fact that the \cmd{var} command gives you exactly the
 output you would have from a battery of OLS regressions. The advantage
-of using the dedicated command is that it makes it much easier to
-access quantities and manage tasks that you normally want to, after
-estimation is done. For example, the \dollar{coeff} accessor returns
-the estimated coefficients as a matrix with $n$ columns and
-\dollar{sigma} returns an estimate of the matrix $\Sigma$, the
-covariance matrix of $\epsilon_t$.
+of using the dedicated command is that, after estimation is done, it
+makes it much easier to access certain quantities and manage certain
+tasks. For example, the \dollar{coeff} accessor returns the estimated
+coefficients as a matrix with $n$ columns and \dollar{sigma} returns
+an estimate of the matrix $\Sigma$, the covariance matrix of
+$\epsilon_t$.
 
 \begin{table}[htbp]
   \centering
@@ -203,18 +203,71 @@ companion matrix (\dollar{compan}) and the VMA representation
 (\dollar{vma}). The latter deserves a detailed
 description: since the VMA representation \eqref{eq:VMArep} is of
 infinite order, \app{gretl} defines a \emph{horizon} up to which the
-$C_i$ matrices are computed automatically. By default, this is a
+$\Theta_i$ matrices are computed automatically. By default, this is a
 function of the periodicity of the data (see table
 \ref{tab:var-horizon}), but it can be set by the user to any desired
 value via the \cmd{set horizon} command. Calling the horizon $h$, the
 \dollar{vma} accessor returns an $(h+1) \times n^2$ matrix, in which
-the $(i+1)$-th row is the vectorized form of $C_i$.
+the $(i+1)$-th row is the vectorized form of $\Theta_i$.
 
 
 \section{Structural VARs}
 \label{sec:svar}
 
-To be written. 
+As of today, \app{Gretl} does not provide a native implementation for
+the class of models known as ``Structural VARs''; however, it does
+provide an implementation of the most classic, and certainly most
+popular, version. 
+
+Assume that the disturbance in equation \eqref{eq:VAR} can be thought
+of as a linear function of a vector of \emph{structural shocks} $u_t$,
+which are assumed to have unit variance and to be incorrelated between
+one another, so $V(u_t) = I$. If $\epsilon_t = K u_t$, it follows that
+$\Sigma = V(\epsilon_t) = KK'$.
+
+The main object of interest in this setting the sequence of matrices
+\begin{equation}
+  \label{eq:svma}
+  C_k = \frac{\partial y_t}{\partial u_{t-i}} = \Theta_k K, 
+\end{equation}
+known as the structural VMA representation. From the $C_k$ matrices
+defined in equation \eqref{eq:svma} two quantities of interest may be
+derived: the \textbf{Impulse Response Function} (IRF) and the
+\textbf{Forecast Error Variance Decomposition} (FEVD).
+
+The IRF of variable $i$ to shock $j$ is simply the sequence of the
+elements in row $i$ and column $j$ of the $C_k$ matrices. In formulae:
+\[
+  \mathcal{I}_{i,j,k} = \pder{y_{i,t}}{u_{j, t-k}}
+\]
+
+\hrulefill FIXME \hrulefill
+
+Another quantity of interest that may be computed from the structural
+VMA representation is the Forecast Error Variance Decomposition
+(FEVD). The forecast error variance after $h$ steps is given by
+\[
+  \Omega_h = \sum_{k=0}^h C_k C_k'
+\]
+hence the variance for variable $i$ is
+\[
+  \omega^2_i = \left[ \Omega_h \right]_{i,i} = \sum_{k=0}^h e_i' C_k C_k' e_i =
+  \sum_{k=0}^h \sum_{l=1}^n ({}_kc_{i.l})^2 
+\]
+where ${}_kc_{i.l}$ is, trivially, the $i,l$ element of $C_k$. As a
+consequence, the share of uncertainty on variable $i$ that can be
+attributed to the $j$-th shock after $h$ periods equals
+\[
+  \mathcal{VD}_{i,j,h} =
+  \frac{\sum_{k=0}^h ({}_kc_{i.j})^2 }{  \sum_{k=0}^h \sum_{l=1}^n
+    ({}_kc_{i.l})^2 } .
+\]
+
+
+The most popular choice dates back to \cite{sims80} \ldots Cholesky
+$\to$ ``most exogenous first'' mantra \ldots
+
+\hrulefill
 
 %%% Local Variables: 
 %%% mode: latex
