@@ -238,7 +238,7 @@ of $\Theta_i$.
 
 \hrulefill FIXME: todo \hrulefill
 \begin{flushleft}
-    \texttt{var \emph{p} \emph{Ylist} [; \emph{Xlist}] - -lagselect}
+    \texttt{var \emph{p} \emph{Ylist} [; \emph{Xlist}]} \option{lagselect}
 \end{flushleft}
 
 Here \texttt{p} is the \emph{maximum} lag.
@@ -280,15 +280,15 @@ elements in row $i$ and column $j$ of the $C_k$ matrices. In formulae:
 \]
 As a rule, Impulse Response Functions are plotted as a function of
 $k$, and are interpreted as the effect that a shock has on an
-observable variable through time. Of course, what we observed are the
+observable variable through time. Of course, what we observe are the
 estimated IRFs, so it is natural to endow them with confidence
 intervals: following common practice among econometric software
-\app{gretl} computes the by using the bootstrap\footnote{It is
-  possible, in principle, to compute analytical confidence intervals
-  via an asymptotic approximation, but this is not a very popular
-  choice: asymptotic formulae are known to often give a very poor
-  approximation of the finite-sample properties.}; details are in the
-next subsection.
+\app{gretl} computes the confidence intervals by using the
+bootstrap\footnote{It is possible, in principle, to compute analytical
+  confidence intervals via an asymptotic approximation, but this is
+  not a very popular choice: asymptotic formulae are known to often
+  give a very poor approximation of the finite-sample properties.};
+details are later in this section.
 
 Another quantity of interest that may be computed from the structural
 VMA representation is the Forecast Error Variance Decomposition
@@ -298,7 +298,8 @@ VMA representation is the Forecast Error Variance Decomposition
 \]
 hence the variance for variable $i$ is
 \[
-  \omega^2_i = \left[ \Omega_h \right]_{i,i} = \sum_{k=0}^h e_i' C_k C_k' e_i =
+  \omega^2_i = \left[ \Omega_h \right]_{i,i} = \sum_{k=0}^h
+  \mathrm{diag}(C_k C_k')_i =
   \sum_{k=0}^h \sum_{l=1}^n ({}_kc_{i.l})^2 
 \]
 where ${}_kc_{i.l}$ is, trivially, the $i,l$ element of $C_k$. As a
