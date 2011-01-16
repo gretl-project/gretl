@@ -7868,7 +7868,7 @@ static NODE *eval (NODE *t, parser *p)
 	/* name of bundle plus key */
 	ret = get_named_bundle_value(l, r, p);
 	break;
-    case F_BUNDLEHAS:
+    case F_INBUNDLE:
 	if (l->t == BUNDLE && r->t == STR) {
 	    ret = test_bundle_key(l, r, p);
 	} else if (l->t == BUNDLE) {
