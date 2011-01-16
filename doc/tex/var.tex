@@ -163,24 +163,43 @@ Sum squared resid    8.654176   S.E. of regression   0.237830
 \end{scodebit}
 \end{script}
 
-The \app{gretl} command for estimating a VAR is \cmd{var}. The
-parameters in eq. \eqref{eq:VAR} are typically free from restrictions,
-which implies that multivariate OLS provides a consistent and
-asymptotically efficient estimator of all the parameters.\footnote{In
-  fact, under normality of $\epsilon_t$ OLS is indeed the conditional
-  ML estimator. You may want to use other methods if you need to
-  estimate a VAR in which some parameters are constrained.}
+The \app{gretl} command for estimating a VAR is \cmd{var} which, in
+the command line interface, is invoked in the following manner:
+\begin{flushleft}
+    \texttt{[ \emph{modelname} \textless - ] var \emph{p} \emph{Ylist} [;
+    \emph{Xlist}]}
+\end{flushleft}
+where \texttt{p} is a scalar (the VAR order) and \texttt{Ylist} is a
+list of variables describing the content of $y_t$. If the list
+\texttt{Xlist} is absent, the vector $x_t$ is understood to contain a
+constant only; if present, must be separated from \texttt{Ylist} by a
+semi-colon and contains the other exogenous variables. Note, however,
+that a few common choices can be obtained in a simpler way via
+options: the options \app{gretl} provides are \option{trend},
+\option{seasonals} and \option{nc} (no constant). Either
+\texttt{Ylist} and \texttt{Xlist} may be named lists (see section
+\ref{named-lists}). The ``\texttt{\textless -}'' construct can be used
+to store the model under a name (see section
+\ref{sect-script-objects}), if so desired. To estimate a VAR using the
+graphical interface, choose ``Time Series, Vector Autoregression'',
+under the Model menu.
 
-Given the simplicity of OLS, this is what every software package,
-including \app{gretl}, uses: example script \ref{script:var-ols}
-exemplifies the fact that the \cmd{var} command gives you exactly the
-output you would have from a battery of OLS regressions. The advantage
-of using the dedicated command is that, after estimation is done, it
-makes it much easier to access certain quantities and manage certain
-tasks. For example, the \dollar{coeff} accessor returns the estimated
-coefficients as a matrix with $n$ columns and \dollar{sigma} returns
-an estimate of the matrix $\Sigma$, the covariance matrix of
-$\epsilon_t$.
+The parameters in eq. \eqref{eq:VAR} are typically free from
+restrictions, which implies that multivariate OLS provides a
+consistent and asymptotically efficient estimator of all the
+parameters.\footnote{In fact, under normality of $\epsilon_t$ OLS is
+  indeed the conditional ML estimator. You may want to use other
+  methods if you need to estimate a VAR in which some parameters are
+  constrained.}  Given the simplicity of OLS, this is what every
+software package, including \app{gretl}, uses: example script
+\ref{script:var-ols} exemplifies the fact that the \cmd{var} command
+gives you exactly the output you would have from a battery of OLS
+regressions. The advantage of using the dedicated command is that,
+after estimation is done, it makes it much easier to access certain
+quantities and manage certain tasks. For example, the \dollar{coeff}
+accessor returns the estimated coefficients as a matrix with $n$
+columns and \dollar{sigma} returns an estimate of the matrix $\Sigma$,
+the covariance matrix of $\epsilon_t$.
 
 \begin{table}[htbp]
   \centering
@@ -214,6 +233,19 @@ Calling the horizon $h$, the \dollar{vma} accessor returns an $(h+1)
 \times n^2$ matrix, in which the $(i+1)$-th row is the vectorized form
 of $\Theta_i$.
 
+\section{VAR order selection}
+\label{sec:lagselect}
+
+\hrulefill FIXME: todo \hrulefill
+\begin{flushleft}
+    \texttt{var \emph{p} \emph{Ylist} [; \emph{Xlist}] - -lagselect}
+\end{flushleft}
+
+Here \texttt{p} is the \emph{maximum} lag.
+
+Information crieria (see chapter \ref{select-criteria})
+
+\hrulefill
 
 \section{Structural VARs}
 \label{sec:svar}
@@ -222,6 +254,8 @@ As of today, \app{Gretl} does not provide a native implementation for
 the class of models known as ``Structural VARs''; however, it does
 provide an implementation of the most classic, and certainly most
 popular, version. 
+
+\subsection{IRF and FEVD}
 
 Assume that the disturbance in equation \eqref{eq:VAR} can be thought
 of as a linear function of a vector of \emph{structural shocks} $u_t$,
@@ -244,8 +278,17 @@ elements in row $i$ and column $j$ of the $C_k$ matrices. In formulae:
 \[
   \mathcal{I}_{i,j,k} = \pder{y_{i,t}}{u_{j, t-k}}
 \]
-
-\hrulefill FIXME \hrulefill
+As a rule, Impulse Response Functions are plotted as a function of
+$k$, and are interpreted as the effect that a shock has on an
+observable variable through time. Of course, what we observed are the
+estimated IRFs, so it is natural to endow them with confidence
+intervals: following common practice among econometric software
+\app{gretl} computes the by using the bootstrap\footnote{It is
+  possible, in principle, to compute analytical confidence intervals
+  via an asymptotic approximation, but this is not a very popular
+  choice: asymptotic formulae are known to often give a very poor
+  approximation of the finite-sample properties.}; details are in the
+next subsection.
 
 Another quantity of interest that may be computed from the structural
 VMA representation is the Forecast Error Variance Decomposition
@@ -266,12 +309,28 @@ attributed to the $j$-th shock after $h$ periods equals
   \frac{\sum_{k=0}^h ({}_kc_{i.j})^2 }{  \sum_{k=0}^h \sum_{l=1}^n
     ({}_kc_{i.l})^2 } .
 \]
+This makes it possible to quantify which shocks are most important to
+determine a certain variable in the short and/or in the long run.
 
+\subsection{Triangularization}
 
-The most popular choice dates back to \cite{sims80} \ldots Cholesky
-$\to$ ``most exogenous first'' mantra \ldots
+The formula \ref{eq:svma} takes $K$ as known, while of course it has
+to be estimated. The estimation problem has been the subject of an
+enormous body of literature we will not even attempt to summarize
+here: see for example \cite[chapter 9]{LKBook05}.
 
-\hrulefill
+Suffice it to say that the most popular choice dates back to
+\cite{sims80}, and consists in assuming that $K$ is lower triangular,
+so its estimate is simply the Cholesky deconposition of the estimate of
+$\Sigma$.
+
+ \ldots Cholesky $\to$ ``most exogenous first'' mantra
+\ldots
+
+\subsection{IRF bootstrap}
+
+FIXME: todo 
+
 
 %%% Local Variables: 
 %%% mode: latex
