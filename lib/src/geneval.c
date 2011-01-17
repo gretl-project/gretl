@@ -10120,6 +10120,7 @@ static int save_generated_var (parser *p, PRN *prn)
 		}
 	    }
 	}
+
 #if SERIES_ENSURE_FINITE
 	if (!p->err) {
 	    series_make_finite(Z[v], p->dinfo->n);
@@ -10241,7 +10242,12 @@ static void parser_reinit (parser *p, double ***pZ,
 	if (*p->lh.name != '\0' && get_list_by_name(p->lh.name)) {
 	    p->flags |= P_LHLIST;
 	}
-    } 
+    } else if (p->targ == VEC) {
+	if (p->lh.v >= p->dinfo->v) {
+	    /* recorded series ID is no longer valid */
+	    p->lh.v = 0;
+	}
+    }
 
     /* LHS matrix subspec: re-evaluate */
     if (p->subp != NULL) {

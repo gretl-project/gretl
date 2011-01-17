@@ -1307,20 +1307,28 @@ static void loop_model_free (LOOP_MODEL *lmod)
 
 /* Reset the loop model */
 
-static void loop_model_zero (LOOP_MODEL *lmod)
+static void loop_model_zero (LOOP_MODEL *lmod, int started)
 {
-    int i;
+    int i, bnc = 4 * lmod->nc;
 
-    lmod->n = 0;
+#if LOOP_DEBUG
+    fprintf(stderr, "loop_model_zero: %p\n", (void *) lmod);
+#endif
+
+    for (i=0; i<bnc; i++) {
+	if (started) {
+	    mpf_set_d(lmod->bigarray[i], 0.0);
+	} else {
+	    mpf_init(lmod->bigarray[i]);
+	}
+    }
 
     for (i=0; i<lmod->nc; i++) {
-	mpf_init(lmod->sum_coeff[i]);
-	mpf_init(lmod->ssq_coeff[i]);
-	mpf_init(lmod->sum_sderr[i]);
-	mpf_init(lmod->ssq_sderr[i]);
 	lmod->cbak[i] = lmod->sbak[i] = NADBL;
 	lmod->cdiff[i] = lmod->sdiff[i] = 0;
     }
+
+    lmod->n = 0;
 }
 
 /* Set everything in lmod to 0/null in case of failure */
@@ -1381,7 +1389,7 @@ static int loop_model_start (LOOP_MODEL *lmod, const MODEL *pmod)
     }
 
     if (!err) {
-	loop_model_zero(lmod);
+	loop_model_zero(lmod, 0);
 #if LOOP_DEBUG
 	fprintf(stderr, " model copied to %p, returning 0\n", 
 		(void *) lmod->model0);
@@ -2238,7 +2246,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	if (loop_is_progressive(loop)) {
 	    if (plain_model_ci(loop->ci[i]) && !(opt & OPT_Q)) {
 		loop_model_print(&loop->lmodels[j], pdinfo, prn);
-		loop_model_zero(&loop->lmodels[j]);
+		loop_model_zero(&loop->lmodels[j], 1);
 		j++;
 	    } else if (loop->ci[i] == PRINT) {
 		loop_print_print(&loop->prns[k], pdinfo, prn);

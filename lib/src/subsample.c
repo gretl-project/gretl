@@ -333,16 +333,43 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     return err;
 }
 
-static int resample_trim_dataset (double ***RZ, DATAINFO *pdinfo)
+/* If series have been added to a resampled dataset, we can't
+   bring these back to the "full" dataset, which may have a
+   longer or shorter series length, and from which there is
+   no definite mapping by row. So we just delete them.
+*/
+
+static int resample_trim_dataset (double ***pZ, DATAINFO *pdinfo)
 {
-    int drop = pdinfo->v - fullinfo->v;
     int err = 0;
 
-    if (drop > 0) {
+    if (pdinfo->v > fullinfo->v) {
+	char **varname;
+	VARINFO **varinfo;
+	int i, nv = fullinfo->v;
+
+	for (i=fullinfo->v; i<pdinfo->v; i++) {
+	    free(pdinfo->varname[i]);
+	    free(pdinfo->varinfo[i]);
+	}
+
+	varname = realloc(pdinfo->varname, nv * sizeof *varname);
+	if (varname == NULL) {
+	    return E_ALLOC;
+	}
+	fullinfo->varname = pdinfo->varname = varname;
+
+	varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
+	if (varinfo == NULL) {
+	    return E_ALLOC;
+	}
+	fullinfo->varinfo = pdinfo->varinfo = varinfo;
+
 #if SUBDEBUG
-	fprintf(stderr, "resample_trim_dataset: dropping %d series\n", drop);
+	fprintf(stderr, "resample_trim_dataset: drop = %d, pZ=%p, Z=%p\n", 
+		pdinfo->v - fullinfo->v, (void *) pZ, (void *) *pZ);
 #endif
-	err = dataset_drop_last_variables(drop, RZ, pdinfo);
+
     }
 
     return err;
@@ -573,14 +600,10 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
        subsampled, e.g., by some boolean criterion 
     */
 
-    /* reattach malloc'd elements of subsampled dataset,
-       which may have moved */
-    sync_datainfo_members(pdinfo);
-
     if (pdinfo->submask == RESAMPLED) {
-	/* not regular subsample but resampled dataset */
 	resample_trim_dataset(pZ, pdinfo);
     } else {
+	sync_datainfo_members(pdinfo);
 	err = sync_data_to_full(pZ, pdinfo);
     }
 
@@ -590,7 +613,8 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 
     /* destroy sub-sampled data array */
 #if SUBDEBUG
-    fprintf(stderr, "restore_full_sample: freeing Z at %p\n", (void *) *pZ);
+    fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d)\n", 
+	    (void *) *pZ, pdinfo->v);
 #endif
     free_Z(*pZ, pdinfo);
 
