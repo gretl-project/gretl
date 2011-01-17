@@ -134,7 +134,6 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo,
 
     if (nsamp < 16) {
 	pputs(prn, _("Sample is too small for range-mean graph\n"));
-	errmsg(err, prn);
 	return E_DATA;
     } 	
 
