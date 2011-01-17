@@ -341,8 +341,6 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 
 static int resample_trim_dataset (double ***pZ, DATAINFO *pdinfo)
 {
-    int err = 0;
-
     if (pdinfo->v > fullinfo->v) {
 	char **varname;
 	VARINFO **varinfo;
@@ -357,13 +355,13 @@ static int resample_trim_dataset (double ***pZ, DATAINFO *pdinfo)
 	if (varname == NULL) {
 	    return E_ALLOC;
 	}
-	fullinfo->varname = pdinfo->varname = varname;
+	pdinfo->varname = varname;
 
 	varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
 	if (varinfo == NULL) {
 	    return E_ALLOC;
 	}
-	fullinfo->varinfo = pdinfo->varinfo = varinfo;
+	pdinfo->varinfo = varinfo;
 
 #if SUBDEBUG
 	fprintf(stderr, "resample_trim_dataset: drop = %d, pZ=%p, Z=%p\n", 
@@ -372,7 +370,11 @@ static int resample_trim_dataset (double ***pZ, DATAINFO *pdinfo)
 
     }
 
-    return err;
+    /* sync */
+    fullinfo->varname = pdinfo->varname;
+    fullinfo->varinfo = pdinfo->varinfo;
+
+    return 0;
 }
 
 /* Apparatus for updating full dataset when restoring full sample
@@ -601,7 +603,7 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
     */
 
     if (pdinfo->submask == RESAMPLED) {
-	resample_trim_dataset(pZ, pdinfo);
+	err = resample_trim_dataset(pZ, pdinfo);
     } else {
 	sync_datainfo_members(pdinfo);
 	err = sync_data_to_full(pZ, pdinfo);
@@ -609,6 +611,10 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 
     if (err == E_NOMERGE) {
         gretl_errmsg_set(_("Missing sub-sample information; can't merge data\n"));
+    }
+
+    if (err) {
+	return err;
     }
 
     /* destroy sub-sampled data array */
@@ -626,7 +632,7 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 
     relink_to_full_dataset(pZ, pdinfo);
 
-    if (!err && state != NULL) {
+    if (state != NULL) {
 	/* "full" really means, relative to the original state */
 	if (state->submask != NULL) {
 	    err = restrict_sample_from_mask(state->submask, pZ, pdinfo,
