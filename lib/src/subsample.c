@@ -339,7 +339,7 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
    no definite mapping by row. So we just delete them.
 */
 
-static int resample_trim_dataset (double ***pZ, DATAINFO *pdinfo)
+static int resample_sync_dataset (double ***pZ, DATAINFO *pdinfo)
 {
     if (pdinfo->v > fullinfo->v) {
 	char **varname;
@@ -373,6 +373,7 @@ static int resample_trim_dataset (double ***pZ, DATAINFO *pdinfo)
     /* sync */
     fullinfo->varname = pdinfo->varname;
     fullinfo->varinfo = pdinfo->varinfo;
+    fullinfo->descrip = pdinfo->descrip;
 
     return 0;
 }
@@ -603,7 +604,7 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
     */
 
     if (pdinfo->submask == RESAMPLED) {
-	err = resample_trim_dataset(pZ, pdinfo);
+	err = resample_sync_dataset(pZ, pdinfo);
     } else {
 	sync_datainfo_members(pdinfo);
 	err = sync_data_to_full(pZ, pdinfo);
@@ -619,15 +620,10 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 
     /* destroy sub-sampled data array */
 #if SUBDEBUG
-    fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d)\n", 
-	    (void *) *pZ, pdinfo->v);
+    fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d)\n"
+	    "and clearing pdinfo at %p\n", (void *) *pZ, pdinfo->v, (void *) pdinfo);
 #endif
     free_Z(*pZ, pdinfo);
-
-#if SUBDEBUG
-    fprintf(stderr, "restore_full_sample: clearing pdinfo at %p\n", 
-	    (void *) pdinfo);
-#endif
     clear_datainfo(pdinfo, CLEAR_SUBSAMPLE);
 
     relink_to_full_dataset(pZ, pdinfo);
