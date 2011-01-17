@@ -21,10 +21,10 @@ as in
   B x_t + \epsilon_t 
 \end{equation}
 The number of lags $p$ is called the \emph{order} of the VAR. The
-vector $x_t$, if present, typically contains a set of exogenous
-variables, often including a constant, possibly with a time trend and
-seasonal dummies. The vector $\epsilon_t$ is typically assumed to be a
-vector white noise, with covariance matrix $\Sigma$.
+vector $x_t$, if present, contains a set of exogenous variables, often
+including a constant, possibly with a time trend and seasonal
+dummies. The vector $\epsilon_t$ is typically assumed to be a vector
+white noise, with covariance matrix $\Sigma$.
 
 Equation \eqref{eq:VAR} can be written more compactly as
 \begin{equation}
@@ -58,8 +58,8 @@ Equation \eqref{eq:VARcompan} is known as the ``companion form'' of
 the VAR.
 
 Another representation of interest is the so-called ``VMA
-representation'', which is written in terms of a (typically infinite)
-series of matrices $\Theta_i$ defined as
+representation'', which is written in terms of an infinite series of
+matrices $\Theta_i$ defined as
 \begin{equation}
   \label{eq:VMA}
   \Theta_i = \frac{\partial y_t}{\partial \epsilon_{t-i}}
@@ -300,16 +300,16 @@ lags        loglik    p(LR)       AIC          BIC          HQC
 
 Warning: in finite samples the choice of $p$ may affect the outcome of
 the procedure. \textbf{This is not a bug}, but rather a nasty but
-unavoidable side effect of the way these comparison should be made: if
-your sample contains $T$ observations, the lag selection procedure, if
-invoked with parameter $p$, examines all VARs of order ranging form 1
-to $p$, estimated on a sample of $T-p$ observations. In other words,
+unavoidable side effect of the way these comparisons should be made:
+if your sample contains $T$ observations, the lag selection procedure,
+if invoked with parameter $p$, examines all VARs of order ranging form
+1 to $p$, estimated on a sample of $T-p$ observations. In other words,
 the comparison procedure does not use all the data available when
 estimating VARs of order less than $p$ to make sure that all the
 models compared are estimated on the same data range. Under these
 circumstances, choosing a different value of $p$ may alter the
 results, although this is unlikely to happen if your sample size is
-reasonably large. 
+reasonably large.
 
 An example of this unpleasant phenomenon is given in example script
 \ref{script:var-lagselect}. As can be seen, according to the
@@ -321,9 +321,9 @@ maximum tested order is 6.
 \label{sec:svar}
 
 As of today, \app{gretl} does not provide a native implementation for
-the class of models known as ``Structural VARs''; however, it does
-provide an implementation of the most classic, and certainly most
-popular, version. 
+the class of models known as ``Structural VARs''; however, it provides
+an implementation of the Cholesky deconposition-based approach, which
+is the most classic, and certainly most popular SVAR version.
 
 \subsection{IRF and FEVD}
 
@@ -352,7 +352,7 @@ As a rule, Impulse Response Functions are plotted as a function of
 $k$, and are interpreted as the effect that a shock has on an
 observable variable through time. Of course, what we observe are the
 estimated IRFs, so it is natural to endow them with confidence
-intervals: following common practice among econometric software
+intervals: following common practice among econometric software,
 \app{gretl} computes the confidence intervals by using the
 bootstrap\footnote{It is possible, in principle, to compute analytical
   confidence intervals via an asymptotic approximation, but this is
@@ -392,22 +392,23 @@ here: see for example \cite[chapter 9]{LKBook05}.
 
 Suffice it to say that the most popular choice dates back to
 \cite{sims80}, and consists in assuming that $K$ is lower triangular,
-so its estimate is simply the Cholesky deconposition of the estimate of
-$\Sigma$. The main consequence of this choice is that the ordering of
-variables within the vector $y_t$ becomes meaningful: since $K$ is
+so its estimate is simply the Cholesky deconposition of the estimate
+of $\Sigma$. The main consequence of this choice is that the ordering
+of variables within the vector $y_t$ becomes meaningful: since $K$ is
 also the matrix of Impulse Response Functions at lag 0, the
 triangularity assumption means that the first variable in the ordering
 responds instantaneously only to shock number 1, the second one only
-to shocks 1 and two, and so forth. For this reason, each variable is
-thought to ``own'' one shock: variable 1 owns shock number 1 etcetera.
+to shocks 1 and 2, and so forth. For this reason, each variable is
+thought to ``own'' one shock: variable 1 owns shock number 1,
+etcetera.
 
 This is the reason why in this sort of exercises the ordering of the
 variables is important and the applied literature has developed the
-``most exogenous first'' mantra. Where of course, in this setting,
-``exogenous'' really means ``instantaneously insensitive to structural
+``most exogenous first'' mantra. Where, in this setting, ``exogenous''
+really means ``instantaneously insensitive to structural
 shocks''\footnote{The word ``exogenous'' has caught on in this
   context, but it's a rather unfortunate choice: for a start, each
-  variable impacts on everything after 1 lag, so nothing is really
+  shock impacts on every variable after one lag, so nothing is really
   exogenous here. A much better choice of words would probably have
   been something like ``sturdy'', but it's too late now.}. To put it
 differently, if variable \texttt{foo} comes before variable
@@ -420,7 +421,7 @@ command line interface by using the \option{impulse-response} and
 \option{variance-decomp} options, respectively. If you need to store
 them into matrices, you can compute the structural VMA and proceed
 from there. For example, the following code snippet shows you how to
-compute the IRFs:
+compute a matrix containing the IRFs:
 \begin{code}
 open denmark
 list Y = 1 2 3 4
