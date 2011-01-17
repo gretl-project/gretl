@@ -336,7 +336,9 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 /* If series have been added to a resampled dataset, we can't
    bring these back to the "full" dataset, which may have a
    longer or shorter series length, and from which there is
-   no definite mapping by row. So we just delete them.
+   no definite mapping by row. So we just delete them. In
+   this function we destroy their varnames and varinfo
+   structures; the numerical arrays get deleted later.
 */
 
 static int resample_sync_dataset (double ***pZ, DATAINFO *pdinfo)
