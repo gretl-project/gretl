@@ -339,6 +339,9 @@ static int resample_trim_dataset (double ***RZ, DATAINFO *pdinfo)
     int err = 0;
 
     if (drop > 0) {
+#if SUBDEBUG
+	fprintf(stderr, "resample_trim_dataset: dropping %d series\n", drop);
+#endif
 	err = dataset_drop_last_variables(drop, RZ, pdinfo);
     }
 
@@ -861,6 +864,9 @@ static int make_random_mask (const char *s, const char *oldmask,
 
 int backup_full_dataset (double **Z, DATAINFO *pdinfo)
 {
+#if SUBDEBUG
+    int newfull = 0;
+#endif
     fullZ = Z;
 
     if (fullinfo == NULL) {
@@ -868,6 +874,9 @@ int backup_full_dataset (double **Z, DATAINFO *pdinfo)
 	if (fullinfo == NULL) {
 	    return E_ALLOC;
 	}
+#if SUBDEBUG
+	newfull = 1;
+#endif
     }
 
     if (pdinfo != NULL) {
@@ -876,8 +885,8 @@ int backup_full_dataset (double **Z, DATAINFO *pdinfo)
     } 
 
 #if SUBDEBUG
-    fprintf(stderr, "backup_full_dataset: fullZ = %p, fullinfo = %p\n",
-	    (void *) fullZ, (void *) fullinfo);
+    fprintf(stderr, "backup_full_dataset: fullZ = %p, fullinfo = %p (%s)\n",
+	    (void *) fullZ, (void *) fullinfo, newfull ? "new" : "old");
 #endif
 
     return 0;
