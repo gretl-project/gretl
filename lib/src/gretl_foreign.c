@@ -50,6 +50,7 @@ static gchar *gretl_dot_dir;
 static gchar *gretl_Rprofile;
 static gchar *gretl_Rsrc;
 static gchar *gretl_Rout;
+static gchar *gretl_Rmsg;
 static gchar *gretl_Oxprog;
 static gchar *gretl_octave_prog;
 
@@ -120,6 +121,7 @@ static void make_gretl_R_names (void)
 	gretl_Rprofile = g_strdup_printf("%sgretl.Rprofile", gretl_dot_dir);
 	gretl_Rsrc = g_strdup_printf("%sRsrc", gretl_dot_dir);
 	gretl_Rout = g_strdup_printf("%sR.out", gretl_dot_dir);
+	gretl_Rmsg = g_strdup_printf("%sR.msg", gretl_dot_dir);
 	done = 1;
     }
 }
@@ -136,18 +138,21 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 
     err = win_run_sync(cmd, NULL);
 
-    if (!err && !(opt & OPT_Q)) {
-	FILE *fp = gretl_fopen(gretl_Rout, "r");
+    if (!(opt & OPT_Q)) {
+	const gchar *outname;
+	FILE *fp;
 
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	} else {
+	outname = (err)? gretl_Rmsg : gretl_Rout;
+	fp = gretl_fopen(outname, "r");
+	
+	if (fp != NULL) {
 	    char line[1024];
 
 	    while (fgets(line, sizeof line, fp)) {
 		pputs(prn, line);
 	    }
 	    fclose(fp);
+	    gretl_remove(outname);
 	}
     }
 
@@ -668,7 +673,9 @@ static int write_R_source_file (const char *buf,
 #ifdef G_OS_WIN32
 	if (!(opt & (OPT_I | OPT_L))) {
 	    /* non-interactive, but not using Rlib */
-	    fprintf(fp, "sink(\"%s\")\n", gretl_Rout);
+	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
+	    fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
+	    fputs("sink(errout, type=\"message\")\n", fp);
 	}
 #endif
 
@@ -683,7 +690,11 @@ static int write_R_source_file (const char *buf,
 		put_R_startup_content(fp);
 		startup_done = 1;
 	    }
-	    fprintf(fp, "sink(\"%s\")\n", gretl_Rout);
+	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
+	    if (!(opt & OPT_I)) {
+		fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
+		fputs("sink(errout, type=\"message\")\n", fp);
+	    }
 #ifdef G_OS_WIN32
 	    /* can this go in the "startup content"? */
 	    maybe_print_R_path_addition(fp);
@@ -1078,9 +1089,13 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 	R_unprotect(2);
     }
 
-    if (!err && prn != NULL) {
-	FILE *fp = gretl_fopen(gretl_Rout, "r");
+    if (prn != NULL) {
+	const gchar *outname;
+	FILE *fp;
 
+	outname = (err)? gretl_Rmsg : gretl_Rout;
+	fp = gretl_fopen(outname, "r");
+	
 	if (fp != NULL) {
 	    char line[512];
 
@@ -1088,7 +1103,7 @@ static int lib_run_Rlib_sync (gretlopt opt, PRN *prn)
 		pputs(prn, line);
 	    }
 	    fclose(fp);
-	    gretl_remove(gretl_Rout);
+	    gretl_remove(outname);
 	}
     }
 
