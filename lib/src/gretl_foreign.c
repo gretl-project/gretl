@@ -524,6 +524,7 @@ static int write_data_for_R (const double **Z,
 
     err = write_data(Rdata, NULL, Z, pdinfo, OPT_R, 0);
     if (err) {
+	gretl_errmsg_sprintf("write_data_for_R: failed with err = %d\n", err);
 	g_free(Rdata);
 	return err;
     }
@@ -548,7 +549,7 @@ static int write_data_for_R (const double **Z,
 	fputs("attach(gretldata)\n", fp);
     }
 
-    if (!err && (opt & OPT_I)) {
+    if (opt & OPT_I) {
 	/* let the (interactive) user see that this worked */
 	if (ts) {
 	    fputs("gretlmsg <- \"current data loaded as ts object \\\"gretldata\\\"\\n\"\n", fp);
@@ -704,6 +705,10 @@ static int write_R_source_file (const char *buf,
 	if (opt & OPT_D) {
 	    /* send data */
 	    err = write_data_for_R(Z, pdinfo, opt, fp);
+	    if (err) {
+		fclose(fp);
+		return err;
+	    }
 	}
 
 	if (buf != NULL) {
