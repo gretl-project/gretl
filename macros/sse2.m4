@@ -4,6 +4,11 @@
 # compiler, and if so then also check that it's supported by the CPU.
 # Some systems may have a cc that's "more advanced" than the CPU, and
 # and in that case one could end up with a non-functional binary.
+#
+# If we are cross-compiling, however, we assume that if the (cross-)
+# compiler supports sse2 then so will the target CPU. If that 
+# assumption is invalid, it will be necessary to pass the option
+# --disable-sse2 to the configure script explicitly.
 # -----------
 AC_DEFUN([AC_C_SSE2],
 [
