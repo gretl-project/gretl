@@ -1409,7 +1409,7 @@ int write_data (const char *fname, int *list,
 	}
 
 	if (fmt == GRETL_FMT_CSV && (opt & OPT_N)) {
-	    ;/* no header */
+	    ; /* no header */
 	} else {
 	    /* header: variable names */
 	    if (fmt == GRETL_FMT_CSV && print_obs && 
