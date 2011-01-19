@@ -61,7 +61,7 @@ int main (void)
 	return 1;
     }
 }
-      ], sse2_result=yes,)
+      ], sse2_result=yes, sse2_result=no, sse2_result=yes)
     fi
  
     if test "$sse2_result" = "yes" ; then      
