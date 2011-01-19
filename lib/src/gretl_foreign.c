@@ -530,6 +530,7 @@ static int write_data_for_R (const double **Z,
     }
 
     fputs("# load data from gretl\n", fp);
+
     fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
     g_free(Rdata);
 
@@ -703,7 +704,7 @@ static int write_R_source_file (const char *buf,
 	}
 
 	if (opt & OPT_D) {
-	    /* send data */
+	    /* --send-data */
 	    err = write_data_for_R(Z, pdinfo, opt, fp);
 	    if (err) {
 		fclose(fp);

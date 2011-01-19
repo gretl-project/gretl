@@ -3265,7 +3265,7 @@
       <options>
 	<option>
 	  <flag>--send-data</flag>
-	  <effect>pre-load the current dataset</effect>
+	  <effect>pre-load the current dataset, R only</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -3284,9 +3284,12 @@
 	At present three <quote>foreign</quote> programs are supported in this
 	way, GNU R (<lit>language=R</lit>), Jurgen Doornik's Ox
 	(<lit>language=Ox</lit>) and GNU Octave (<lit>language=Octave</lit>).
-	(Language names are recognized on a case-insensitive basis.)  Note
-	that the <opt>--send-data</opt> is only available in connection with
-	R.
+	Language names are recognized on a case-insensitive basis.
+      </para>
+      <para>
+	The <opt>--send-data</opt> option, which is valid only in
+	connection with R, has the effect of making the entire 
+	current gretl dataset available within R.
       </para>
       <para>
 	See <guideref targ="chap:gretlR"/> for details and examples.
