@@ -1,3 +1,10 @@
+# AC_C_SSE2
+# -----------
+# Run a double check for sse2: first check that it's supported by the
+# compiler, and if so then also check that it's supported by the CPU.
+# Some systems may have a cc that's "more advanced" than the CPU, and
+# and in that case one could end up with a non-functional binary.
+# -----------
 AC_DEFUN([AC_C_SSE2],
 [
   AC_MSG_CHECKING([whether to use SSE2])

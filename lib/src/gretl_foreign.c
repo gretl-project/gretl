@@ -672,12 +672,15 @@ static int write_R_source_file (const char *buf,
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
+	int sunk = 0;
+
 #ifdef G_OS_WIN32
 	if (!(opt & (OPT_I | OPT_L))) {
 	    /* non-interactive, but not using Rlib */
 	    fprintf(fp, "sink(\"%s\", type=\"output\")\n", gretl_Rout);
 	    fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
 	    fputs("sink(errout, type=\"message\")\n", fp);
+	    sunk = 1;
 	}
 #endif
 
@@ -697,6 +700,7 @@ static int write_R_source_file (const char *buf,
 		fprintf(fp, "errout <- file(\"%s\", open=\"wt\")\n", gretl_Rmsg);
 		fputs("sink(errout, type=\"message\")\n", fp);
 	    }
+	    sunk = 1;
 #ifdef G_OS_WIN32
 	    /* can this go in the "startup content"? */
 	    maybe_print_R_path_addition(fp);
@@ -723,7 +727,7 @@ static int write_R_source_file (const char *buf,
 	    }
 	}
 
-	if (opt & OPT_L) {
+	if (sunk) {
 	    fputs("sink()\n", fp);
 	}
 

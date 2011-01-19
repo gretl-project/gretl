@@ -8,6 +8,7 @@
 # supports OpenMP. It also is careful to not pass options to compilers that
 # misinterpret them; for example, most compilers accept "-openmp" and create
 # an output file called 'penmp' rather than activating OpenMP support.
+# -----------
 AC_DEFUN([AC_C_OPENMP],
 [
   AC_MSG_CHECKING([whether to use OpenMP])
