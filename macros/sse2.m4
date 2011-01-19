@@ -2,11 +2,11 @@ AC_DEFUN([AC_C_SSE2],
 [
   AC_MSG_CHECKING([whether to use SSE2])
   AC_ARG_ENABLE(sse2,
-    [AS_HELP_STRING([--enable-sse2], [use sse2 if available])],
+    [AS_HELP_STRING([--enable-sse2], [use sse2 if available [default=auto]])],
     [enable_sse2=$enableval]
   )
   sse2_result=no
-  if test "$enable_sse2" = yes; then
+  if test ! "$enable_sse2" = no; then
     if test "x$SSE2_CFLAGS" = "x" ; then
       if test "x$SUNCC" = "xyes"; then
         # SSE2 is enabled by default in the Sun Studio 64-bit environment
@@ -59,12 +59,10 @@ int main (void)
  
     if test "$sse2_result" = "yes" ; then      
        AC_DEFINE(USE_SSE2)
-       AC_MSG_RESULT(yes)
-       use_sse2="yes"
     else
-       AC_MSG_RESULT(no) 
        CFLAGS="$save_CFLAGS"  
     fi      
   fi
+  AC_MSG_RESULT([$sse2_result])
 ])
 
