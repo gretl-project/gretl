@@ -821,6 +821,17 @@ static int try_for_R_path (HKEY tree, char *s)
     return err;
 }
 
+static void append_R_filename (char *s, int which)
+{
+    if (which == RGUI) {
+	strcat(s, "Rgui.exe");
+    } else if (which == RTERM) {
+	strcat(s, "Rterm.exe");
+    } else if (which == RLIB) {
+	strcat(s, "R.dll");
+    }
+}
+
 /* See if we can get the R installation path from the Windows
    registry. This is not a sure thing, since at least as of R
    2.11.1 recording the path in the registry on installation
@@ -844,16 +855,27 @@ int R_path_from_registry (char *s, int which)
 	err = try_for_R_path(HKEY_CURRENT_USER, s);
     }
 
-    if (!err) {
-	if (which != RBASE) {
-	    strcat(s, "\\bin\\");
-	    if (which == RGUI) {
-		strcat(s, "Rgui.exe");
-	    } else if (which == RTERM) {
-		strcat(s, "Rterm.exe");
-	    } else if (which == RLIB) {
-		strcat(s, "R.dll");
-	    } 
+    if (!err && which != RBASE) {
+	FILE *fp;
+
+	strcat(s, "\\bin\\");
+	append_R_filename(s, which);
+
+	fp = fopen(s, "r");
+	if (fp != NULL) {
+	    fclose(fp);
+	} else {
+	    char *p = strrchr(s, 'R');
+
+	    *p = '\0';
+	    strcat(s, "i386\\");
+	    append_R_filename(s, which);
+	    fp = fopen(s, "r");
+	    if (fp != NULL) {
+		fclose(fp);
+	    } else {
+		err = E_FOPEN;
+	    }
 	}
     }
 
