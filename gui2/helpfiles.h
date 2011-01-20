@@ -37,13 +37,13 @@ void genr_funcs_ref (GtkAction *action);
 gint interactive_script_help (GtkWidget *widget, GdkEventButton *b,
 			      windata_t *vwin);
 
+void gretl_show_pdf (const char *fname);
+
 void display_pdf_help (GtkAction *action);
 
 void display_gnuplot_help (void);
 
 void display_x12a_help (void);
-
-int display_gfn_help (const char *pdfname);
 
 void listbox_find (gpointer unused, gpointer data);
 

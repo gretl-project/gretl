@@ -166,7 +166,7 @@ int update_function_from_script (const char *funname, const char *path,
 
 int user_function_help (const char *fnname, gretlopt opt, PRN *prn);
 
-int user_function_has_PDF_doc (const char *fnname, char **pdfname);
+int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname);
 
 void gretl_functions_cleanup (void);
 

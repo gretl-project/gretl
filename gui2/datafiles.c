@@ -1632,7 +1632,7 @@ static int fn_file_is_duplicate (const char *fname,
 
     model = GTK_TREE_MODEL(store);
 
-    if (!gtk_tree_model_get_iter_first(model, &iter)) {
+    if (imax == 0 || !gtk_tree_model_get_iter_first(model, &iter)) {
 	return 0;
     }
 
@@ -1657,6 +1657,53 @@ static int fn_file_is_duplicate (const char *fname,
     return ret;
 }
 
+static int is_functions_dir (const char *path)
+{
+    int n = strlen(path) - 9;
+
+    return n > 0 && !strcmp(path + n, "functions");
+}
+
+static int ok_gfn_path (const char *fullname, 
+			const char *shortname,
+			const char *dirname,
+			GtkListStore *store, 
+			GtkTreeIter *iter,
+			int imax, 
+			int *maxlen)
+{
+    char *descrip = NULL, *version = NULL;
+    int err, ok = 0;
+
+    err = get_func_info(fullname, &descrip, &version);
+
+    if (!err && !fn_file_is_duplicate(shortname, version, store, imax)) {
+	if (iter != NULL) {
+	    gchar *fname = g_strdup(shortname);
+	    int n = strlen(fname) - 4;
+
+	    fname[n] = '\0'; /* chop off ".gfn" */
+	    if (n > *maxlen) {
+		*maxlen = n;
+	    }
+	    gtk_list_store_append(store, iter);
+	    gtk_list_store_set(store, iter, 
+			       0, fname, 
+			       1, version,
+			       2, descrip, 
+			       3, function_package_is_loaded(fullname), 
+			       4, dirname, -1);
+	    g_free(fname);
+	}
+	ok = 1;
+    }
+
+    free(descrip);
+    free(version);
+
+    return ok;
+}
+
 /* Read (or just count) the .gfn files in a given directory.
    The signal to count rather than read is that the @iter
    argument is NULL.
@@ -1669,43 +1716,62 @@ read_fn_files_in_dir (DIR *dir, const char *path,
 {
     struct dirent *dirent;
     char fullname[MAXLEN];
-    int n, imax = *nfn;
-    int err;
+    int imax = *nfn;
+
+    /* look first for the new-style setup: gfn file in its own
+       subdir, e.g. functions/gig/gig.gfn 
+    */
+
+    if (is_functions_dir(path)) {
+	while ((dirent = readdir(dir)) != NULL) {
+	    const char *basename = dirent->d_name;
+	
+	    if (!strcmp(basename, ".") ||
+		!strcmp(basename, "..")) {
+		continue;
+	    }
+
+	    build_path(fullname, path, basename, NULL);
+	    if (gretl_isdir(fullname)) {
+		gchar *realbase, *realpath;
+		FILE *fp;
+
+		strcat(fullname, SLASHSTR);
+		strcat(fullname, basename);
+		strcat(fullname, ".gfn");
+		fp = gretl_fopen(fullname, "r");
+		if (fp != NULL) {
+		    fclose(fp);
+		    realbase = g_strdup_printf("%s.gfn", basename);
+		    realpath = g_strdup_printf("%s%c%s", path, SLASH, basename);
+		    *nfn += ok_gfn_path(fullname, realbase, realpath,
+					store, iter, imax, maxlen);
+		    g_free(realbase);
+		    g_free(realpath);
+		} else {
+		    gretl_error_clear();
+		}	
+	    }
+	}
+    
+	imax = *nfn;
+	rewinddir(dir);
+    }
+
+    /* then look for "plain" .gfn files */
 
     while ((dirent = readdir(dir)) != NULL) {
-	if (!strcmp(dirent->d_name, ".") ||
-	    !strcmp(dirent->d_name, "..")) {
+	const char *basename = dirent->d_name;
+
+	if (!strcmp(basename, ".") ||
+	    !strcmp(basename, "..")) {
 	    continue;
 	}
 
-	if (has_suffix(dirent->d_name, ".gfn")) {
-	    char *descrip = NULL, *version = NULL;
-
-	    build_path(fullname, path, dirent->d_name, NULL);
-	    err = get_func_info(fullname, &descrip, &version);
-
-	    if (!err && !fn_file_is_duplicate(dirent->d_name, version, store, imax)) {
-		if (iter != NULL) {
-		    gchar *fname = g_strdup(dirent->d_name);
-
-		    gtk_list_store_append(store, iter);
-		    n = strlen(fname) - 4;
-		    fname[n] = '\0';
-		    if (n > *maxlen) {
-			*maxlen = n;
-		    }
-		    gtk_list_store_set(store, iter, 
-				       0, fname, 
-				       1, version,
-				       2, descrip, 
-				       3, function_package_is_loaded(fullname), 
-				       4, path, -1);
-		    g_free(fname);
-		}
-		*nfn += 1;
-	    }
-	    free(descrip);
-	    free(version);
+	if (has_suffix(basename, ".gfn")) {
+	    build_path(fullname, path, basename, NULL);
+	    *nfn += ok_gfn_path(fullname, basename, path,
+				store, iter, imax, maxlen);
 	}
     }
 }

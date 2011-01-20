@@ -44,7 +44,8 @@ struct call_info_ {
     GList *vsels;        /* series argument selectors */
     GList *lsels;        /* list argument selectors */
     GList *msels;        /* matrix arg selectors */
-    GList *ssels;        /* scalar arg selectors */    
+    GList *ssels;        /* scalar arg selectors */
+    fnpkg *pkg;          /* the active function package */
     int *publist;        /* list of public interfaces */
     int iface;           /* selected interface */
     const ufunc *func;
@@ -83,7 +84,7 @@ static void glib_str_array_free (gchar **S, int n)
     }
 }
 
-static call_info *cinfo_new (void)
+static call_info *cinfo_new (fnpkg *pkg)
 {
     call_info *cinfo = mymalloc(sizeof *cinfo);
 
@@ -91,6 +92,7 @@ static call_info *cinfo_new (void)
 	return NULL;
     }
 
+    cinfo->pkg = pkg;
     cinfo->publist = NULL;
     cinfo->iface = -1;
 
@@ -389,35 +391,39 @@ static windata_t *make_help_viewer (const char *fnname, char *buf)
 
 static void fncall_help (GtkWidget *w, call_info *cinfo)
 {
-    const char *fnname = user_function_name_by_index(cinfo->iface);
     char *pdfname = NULL;
-    PRN *prn;
-    int err;
 
-    /* FIXME incorporate this into markup */
-    if (user_function_has_PDF_doc(fnname, &pdfname)) {
-	err = display_gfn_help(pdfname);
-	free(pdfname);
-	if (!err) {
+    if (function_package_has_PDF_doc(cinfo->pkg, &pdfname)) {
+	FILE *fp;
+
+	fp = gretl_fopen(pdfname, "r");
+	if (fp != NULL) {
+	    fclose(fp);
+	    gretl_show_pdf(pdfname);
+	} else {
+	    gui_errmsg(E_FOPEN);
+	}
+    } else {
+	const char *fnname = user_function_name_by_index(cinfo->iface);
+	PRN *prn;
+	int err;
+
+	if (bufopen(&prn)) {
 	    return;
 	}
-    }
 
-    if (bufopen(&prn)) {
-	return;
-    }
-    
-    err = user_function_help(fnname, OPT_M, prn);
+	err = user_function_help(fnname, OPT_M, prn);
 
-    if (err) {
-	gretl_print_destroy(prn);
-	errbox("Couldn't find any help");
-    } else {
-	char *buf = gretl_print_steal_buffer(prn);
+	if (err) {
+	    gretl_print_destroy(prn);
+	    errbox("Couldn't find any help");
+	} else {
+	    char *buf = gretl_print_steal_buffer(prn);
 
-	make_help_viewer(fnname, buf);
-	free(buf);
-	gretl_print_destroy(prn);
+	    make_help_viewer(fnname, buf);
+	    free(buf);
+	    gretl_print_destroy(prn);
+	}
     }
 }
 
@@ -1487,7 +1493,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 	return;
     }
 
-    cinfo = cinfo_new();
+    cinfo = cinfo_new(pkg);
     if (cinfo == NULL) {
 	return;
     }

@@ -6394,32 +6394,34 @@ int user_function_help (const char *fnname, gretlopt opt, PRN *prn)
 }
 
 /**
- * user_function_has_PDF_doc:
- * @fnname: name of function.
+ * function_package_has_PDF_doc:
+ * @pkg: function-package pointer.
  * @pdfname: location to receive basename of PDF file,
  * if applicable (or NULL if this is not wanted).
  * 
- * Looks for a function named @fnname and checks whether
- * it is documented in the form of a PDF file.
+ * Checks whether @pkg is documented in the form of a PDF file.
  *
- * Returns: 1 if the named user function exists, and is documented in the 
- * form of a PDF file (in which case the name of that file is
+ * Returns: 1 if so (in which case the name of that file is
  * returned via @pdfname), 0 otherwise.
  */
 
-int user_function_has_PDF_doc (const char *fnname, char **pdfname)
+int function_package_has_PDF_doc (fnpkg *pkg, char **pdfname)
 {
-    ufunc *fun = get_user_function_by_name(fnname);
     int ret = 0;
 
-    if (fun != NULL) {
-	fnpkg *pkg = fun->pkg;
+    if (pkg->help != NULL && !strncmp(pkg->help, "pdfdoc:", 7)) {
+	ret = 1;
+	if (pdfname != NULL) {
+	    char *p = strrchr(pkg->fname, '.');
 
-	if (pkg != NULL && pkg->help != NULL) {
-	    if (!strncmp(pkg->help, "pdfdoc:", 7)) {
-		ret = 1;
-		if (pdfname != NULL) {
-		    *pdfname = gretl_strdup(pkg->help + 7);
+	    if (p != NULL) {
+		*pdfname = gretl_strdup(pkg->fname);
+		if (*pdfname != NULL) {
+		    p = strrchr(*pdfname, '.');
+		    *p = '\0';
+		    strcat(p, ".pdf");
+		} else {
+		    ret = 0;
 		}
 	    }
 	}

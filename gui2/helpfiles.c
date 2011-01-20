@@ -2102,7 +2102,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
     return err;
 }
 
-static void show_pdf (const char *fname)
+void gretl_show_pdf (const char *fname)
 {
 #if defined(G_OS_WIN32)
     win32_open_file(fname);
@@ -2128,7 +2128,7 @@ void display_pdf_help (GtkAction *action)
     err = find_or_download_pdf(code, get_manpref(), fname);
 
     if (!err) {
-	show_pdf(fname);
+	gretl_show_pdf(fname);
     }
 }
 
@@ -2140,7 +2140,7 @@ void display_gnuplot_help (void)
     err = find_or_download_pdf(GNUPLOT_REF, 0, fname);
 
     if (!err) {
-	show_pdf(fname);
+	gretl_show_pdf(fname);
     }
 }
 
@@ -2152,21 +2152,7 @@ void display_x12a_help (void)
     err = find_or_download_pdf(X12A_REF, 0, fname);
 
     if (!err) {
-	show_pdf(fname);
+	gretl_show_pdf(fname);
     }
 }
 
-int display_gfn_help (const char *pdfname)
-{
-    char fname[FILENAME_MAX];
-    int err;
-
-    strcpy(fname, pdfname);
-    err = find_or_download_pdf(GFN_DOC, 0, fname);
-
-    if (!err) {
-	show_pdf(fname);
-    }
-
-    return err;
-}

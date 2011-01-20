@@ -136,6 +136,10 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
     cmd = g_strdup_printf("\"%s\" --no-save --no-init-file --no-restore-data "
 			  "--slave", gretl_rbin_path());
 
+#if FDEBUG
+    fprintf(stderr, "Running R binary, '%s'\n", gretl_rbin_path());
+#endif
+
     err = win_run_sync(cmd, NULL);
 
     if (!(opt & OPT_Q)) {
@@ -155,6 +159,10 @@ static int lib_run_R_sync (gretlopt opt, PRN *prn)
 	    gretl_remove(outname);
 	}
     }
+
+#if FDEBUG
+    fprintf(stderr, "win_run_sync: err = %d\n", err);
+#endif
 
     g_free(cmd);
 
@@ -905,7 +913,7 @@ static int load_R_symbols (void)
     int err = 0;
 
 #if FDEBUG
-    printf("Loading libR symbols\n");
+    printf("Loading libR symbols from '%s'\n", libpath);
 #endif
 
     Rhandle = gretl_dlopen(libpath, 1);
