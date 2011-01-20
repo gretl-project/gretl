@@ -2584,6 +2584,10 @@ gint populate_remote_func_list (windata_t *vwin)
 	return err;
     }
 
+#if 0
+    fprintf(stderr, "getbuf: '%s'\n", getbuf);
+#endif
+
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
 			   (GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
