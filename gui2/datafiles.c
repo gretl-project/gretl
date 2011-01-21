@@ -924,7 +924,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	strcpy(path, pkgname);
     }
 
-#if 0
+#if 1
     fprintf(stderr, "browser_functions_handler: path='%s'\n", path);
 #endif
 
@@ -1942,30 +1942,60 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 gchar *gretl_function_package_get_path (const char *name)
 {
     gchar *path = NULL;
-    char dirname[FILENAME_MAX];
+    char fndir[FILENAME_MAX];
     DIR *dir;
     int i, found = 0;
 
-    for (i=0; i<3 && !found; i++) {
-	if (i == 0) {
-	    build_path(dirname, gretl_home(), "functions", NULL);
-	} else if (i == 1) {
-	    strcpy(dirname, gretl_workdir());
-	} else if (i == 2) {
-	    build_path(dirname, gretl_workdir(), "functions", NULL);
-	} 
+    for (i=0; i<5 && !found; i++) {
+	*fndir = '\0';
 
-	if ((dir = opendir(dirname)) != NULL) {
+	if (i == 0) {
+	    build_path(fndir, gretl_home(), "functions", NULL);
+	} else if (i == 1) {
+	    strcpy(fndir, gretl_workdir());
+	} else if (i == 2) {
+	    build_path(fndir, gretl_workdir(), "functions", NULL);
+	} else if (i == 3) {
+	    build_path(fndir, gretl_dotdir(), "functions", NULL);
+	} else if (i == 4) {
+	    const char *wdir = gretl_default_workdir();
+
+	    if (wdir != NULL) {
+		build_path(fndir, wdir, "functions", NULL);
+	    } 
+	}
+
+	if (*fndir == '\0') {
+	    continue;
+	}
+
+	if ((dir = opendir(fndir)) != NULL) {
 	    struct dirent *dirent;
+	    const char *dname;
 	    char *p, test[NAME_MAX+1];
 
 	    while ((dirent = readdir(dir)) != NULL && !found) {
-		if (has_suffix(dirent->d_name, ".gfn")) {
-		    strcpy(test, dirent->d_name);
+		dname = dirent->d_name;
+		if (!strcmp(dname, name)) {
+		    /* gfn in subdir? */
+		    FILE *fp;
+
+		    path = g_strdup_printf("%s%c%s%c%s.gfn", fndir, SLASH, 
+					   dname, SLASH, dname);
+		    fp = gretl_fopen(path, "r");
+		    if (fp != NULL) {
+			fclose(fp);
+			found = 1;
+		    } else {
+			g_free(path);
+			path = NULL;
+		    }
+		} else if (has_suffix(dname, ".gfn")) {
+		    strcpy(test, dname);
 		    p = strrchr(test, '.');
 		    *p = '\0';
 		    if (!strcmp(test, name)) {
-			path = g_strdup_printf("%s%c%s", dirname, SLASH, dirent->d_name);
+			path = g_strdup_printf("%s%c%s", fndir, SLASH, dname);
 			found = 1;
 		    }
 		}
@@ -2097,18 +2127,19 @@ static GtkWidget *files_window (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING
     };
-    GType types_4[] = {
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_STRING,
-	G_TYPE_STRING
-    };
-    GType types_5[] = {
+    GType types_5s[] = {
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN,
-	G_TYPE_STRING
+	G_TYPE_STRING   /* hidden string: directory */
+    };
+    GType types_5b[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
     };
 
     const char **titles = data_titles;
@@ -2147,15 +2178,16 @@ static GtkWidget *files_window (windata_t *vwin)
     case FUNC_FILES:
 	titles = func_titles;
 	cols = 5;
-	types = types_5;
+	types = types_5s;
 	hidden_col = TRUE;
 	full_width = 560;
 	file_height = 320;
 	break;
     case REMOTE_FUNC_FILES:
 	titles = remote_func_titles;
-	cols = 4;
-	types = types_4;
+	cols = 5;
+	types = types_5b;
+	hidden_col = TRUE;
 	full_width = 580;
 	break;
     default:

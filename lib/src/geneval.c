@@ -5003,7 +5003,6 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* make an arguments array */
     args = fn_args_new();
     if (args == NULL) {
-	fprintf(stderr, "%s: invalid return type %d\n", funname, rtype);
 	p->err = E_ALLOC;
 	return NULL;
     }

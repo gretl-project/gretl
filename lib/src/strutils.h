@@ -99,7 +99,9 @@ void clear (char *str, int len);
 
 char *chopstr (char *str);
 
-char *switch_ext (char *targ, const char *src, char *ext);
+char *switch_ext (char *targ, const char *src, const char *ext);
+
+char *switch_ext_new (const char *src, const char *ext);
 
 int get_base (char *targ, const char *src, char c);
 

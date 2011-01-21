@@ -97,8 +97,11 @@ int gretl_bundle_get_n_keys (gretl_bundle *b);
 gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 					    int *err);
 
-int gretl_bundle_localize (const char *origname,
+int gretl_bundle_localize (gretl_bundle *bundle,
 			   const char *localname);
+
+int gretl_bundle_localize_by_name (const char *origname,
+				   const char *localname);
 
 int gretl_bundle_unlocalize (const char *localname,
 			     const char *origname);

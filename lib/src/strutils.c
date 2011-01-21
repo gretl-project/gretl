@@ -1019,7 +1019,7 @@ char *chopstr (char *str)
  * Returns: the output string, @targ.
  */
 
-char *switch_ext (char *targ, const char *src, char *ext)
+char *switch_ext (char *targ, const char *src, const char *ext)
 {
     int i = dotpos(src);
 
@@ -1032,6 +1032,43 @@ char *switch_ext (char *targ, const char *src, char *ext)
     strcat(targ, ext);
 
     return targ;
+}
+
+/**
+ * switch_ext_new:
+ * @src: the original string.
+ * @ext: the extension or suffix to attach (without leading '.').
+ *
+ * For processing filenames: creates a copy of @src in which
+ * any existing dot-extension is removed and @ext is appended
+ * (with a dot automatically inserted).
+ *
+ * Returns: the newly allocated string.
+ */
+
+char *switch_ext_new (const char *src, const char *ext)
+{
+    int len = strlen(src) + strlen(ext) + 2;
+    const char *p = strrchr(src, '.');
+    char *ret = NULL;
+
+    if (p != NULL) {
+	len -= strlen(p);
+    } 
+
+    ret = calloc(len, 1);
+
+    if (ret != NULL) {
+	if (p != NULL) {
+	    strncat(ret, src, p - src);
+	} else {
+	    strcat(ret, src);
+	}
+	strcat(ret, ".");
+	strcat(ret, ext);
+    }
+
+    return ret;
 }
 
 /**

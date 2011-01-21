@@ -1573,34 +1573,94 @@ void function_call_cleanup (void)
     }
 }
 
+gchar *get_bundle_plot_function (void *ptr)
+{
+    const char *pkgname = gretl_bundle_get_creator((gretl_bundle *) ptr);
+    gchar *ret = NULL;
+
+    if (pkgname != NULL && *pkgname != '\0') {
+	fnpkg *pkg = get_function_package_by_name(pkgname);
+
+	if (pkg == NULL) {
+	    gchar *fname = gretl_function_package_get_path(pkgname);
+	    int err = 0;
+
+	    if (fname != NULL) {
+		pkg = get_function_package_by_filename(fname, &err);
+		g_free(fname);
+	    }
+	}
+
+	if (pkg != NULL) {
+	    function_package_get_properties(pkg, "bundle-plot",
+					    &ret, NULL);
+	}
+    }
+
+    return ret;
+}
+
+int exec_bundle_plot_function (void *ptr, const char *funname)
+{
+    gretl_bundle *b = ptr;
+    ufunc *func;
+    fnargs *args = NULL;
+    int err;
+
+    func = get_user_function_by_name(funname);
+
+    if (func == NULL) {
+	err = E_UNKVAR;
+    } else {
+	args = fn_args_new();
+	if (args == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = push_fn_arg(args, GRETL_TYPE_BUNDLE, b);
+	}
+    }
+
+    if (!err) {
+	err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
+				  NULL, NULL, NULL, NULL, NULL);
+    }
+
+    fn_args_free(args);
+
+    if (err) {
+	gui_errmsg(err);
+    } 
+
+    return err;
+}
+
 /* See if a bundle has the named of a "creator" function package
    recorded on it. If so, see whether that package is already loaded,
    or can be loaded.  And if that works, see if the package has a
-   default bundle-printing function: if so, it will be named
-   BUNDLE_PRINT (a macro defined in gretl_func.h).
+   default bundle-printing function.
 */
 
-static int bundle_has_print_function (gretl_bundle *b)
+static gchar *get_bundle_print_function (gretl_bundle *b)
 {
     const char *pkgname = gretl_bundle_get_creator(b);
-    int ret = 0;
+    gchar *ret = NULL;
 
     if (pkgname != NULL && *pkgname != '\0') {
-	fnpkg *pkg;
-	gchar *fname;
-	int err = 0;
+	fnpkg *pkg = get_function_package_by_name(pkgname);
 
-	fname = gretl_function_package_get_path(pkgname);
-	if (fname == NULL) {
-	    err = 1;
-	} else {
-	    pkg = get_function_package_by_filename(fname, &err);
-	    g_free(fname);
+	if (pkg == NULL) {
+	    gchar *fname = gretl_function_package_get_path(pkgname);
+	    int err = 0;
+
+	    if (fname != NULL) {
+		pkg = get_function_package_by_filename(fname, &err);
+		g_free(fname);
+	    }
 	}
 
-	if (!err) {
+	if (pkg != NULL) {
 	    function_package_get_properties(pkg,
-					    "has-printer",
+					    "bundle-print",
 					    &ret,
 					    NULL);
 	}
@@ -1622,15 +1682,19 @@ static int bundle_has_print_function (gretl_bundle *b)
 int try_exec_bundle_print_function (void *ptr, PRN *prn)
 {
     gretl_bundle *b = ptr;
+    gchar *funname;
     int ret = 0;
 
-    if (bundle_has_print_function(b)) {
+    funname = get_bundle_print_function(b);
+
+    if (funname != NULL) {
 	const char *name = gretl_bundle_get_name(b);
 	char fnline[MAXLINE];
 	ExecState state;
 	int err;
 
-	sprintf(fnline, "%s(&%s)", BUNDLE_PRINTER, name);
+	sprintf(fnline, "%s(&%s)", funname, name);
+	g_free(funname);
 	gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
 			      NULL, prn);
 	state.line = fnline;

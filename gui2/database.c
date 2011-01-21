@@ -1885,7 +1885,8 @@ enum {
    data files, or function package 
 */
 
-static char *get_writable_target (int code, int op, char *objname)
+static char *get_writable_target (int code, int op, char *objname,
+				  gboolean zipfile)
 {
     const char *ext;
     FILE *fp;
@@ -1900,7 +1901,7 @@ static char *get_writable_target (int code, int op, char *objname)
     if (code == REMOTE_DB) {
 	ext = ".ggz";
     } else if (code == REMOTE_FUNC_FILES) {
-	ext = ".gfn";
+	ext = zipfile ? ".zip" : ".gfn";
     } else {
 	ext = ".tar.gz";
     }
@@ -1988,6 +1989,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 {
     gchar *objname = NULL;
     char *path = NULL;
+    gboolean zipfile = FALSE;
     int err = 0;
 
     if (vwin->role == REMOTE_DB) {
@@ -2003,14 +2005,18 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	/* remote datafiles or function package */
 	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			     vwin->active_var, 0, &objname);
+	if (vwin->role == REMOTE_FUNC_FILES) {
+	    tree_view_get_bool(GTK_TREE_VIEW(vwin->listbox), 
+			       vwin->active_var, 4, &zipfile);
+	}
     }
 
     if (objname == NULL || *objname == '\0') {
 	g_free(objname);
 	return;
-    }    
+    } 
 
-    path = get_writable_target(vwin->role, REAL_INSTALL, objname);
+    path = get_writable_target(vwin->role, REAL_INSTALL, objname, zipfile);
     if (path == NULL) {
 	g_free(objname);
 	return;
@@ -2082,7 +2088,7 @@ void pkg_info_from_server (GtkWidget *w, windata_t *vwin)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &objname);
 
-    path = get_writable_target(vwin->role, TMP_INSTALL, objname);
+    path = get_writable_target(vwin->role, TMP_INSTALL, objname, FALSE);
     if (path == NULL) {
 	g_free(objname);
 	return;
@@ -2572,8 +2578,6 @@ gint populate_remote_func_list (windata_t *vwin)
     char fname[32];
     const char *status;
     char *basename;
-    char *descrip;
-    char *version;
     time_t remtime;
     int n, err = 0;
 
@@ -2597,8 +2601,9 @@ gint populate_remote_func_list (windata_t *vwin)
     bufgets_init(getbuf);
 
     while (bufgets(line, sizeof line, getbuf)) {
-	descrip = NULL;
-	version = NULL;
+	char *descrip = NULL;
+	char *version = NULL;
+	gboolean zipfile;
 
 	if (read_remote_filetime(line, fname, &remtime, NULL)) {
 	    continue;
@@ -2606,6 +2611,7 @@ gint populate_remote_func_list (windata_t *vwin)
 
 	status = "";
 	get_local_object_status(fname, vwin->role, &status, remtime);
+	zipfile = has_suffix(fname, ".zip");
 	basename = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
@@ -2630,6 +2636,7 @@ gint populate_remote_func_list (windata_t *vwin)
 			   1, version,
 			   2, descrip, 
 			   3, _(status),
+			   4, zipfile,
 			   -1);
 
 	free(descrip);

@@ -1200,7 +1200,7 @@ gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 }
 
 /**
- * gretl_bundle_localize:
+ * gretl_bundle_localize_by_name:
  * @origname: name of bundle at caller level.
  * @localname: name to be used within function.
  *
@@ -1211,8 +1211,8 @@ gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_bundle_localize (const char *origname,
-			   const char *localname)
+int gretl_bundle_localize_by_name (const char *origname,
+				   const char *localname)
 {
     gretl_bundle *b;
     int err = 0;
@@ -1224,6 +1224,31 @@ int gretl_bundle_localize (const char *origname,
     } else {
 	strcpy(b->name, localname);
 	b->level += 1;
+    }
+
+    return err;
+}
+
+/**
+ * gretl_bundle_localize:
+ * @b: pointer to bundle.
+ * @localname: name to be used within function.
+ *
+ * On entry to a function, gives @bundle a name and sets 
+ * its level so that is is accessible within the function.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_bundle_localize (gretl_bundle *bundle, const char *localname)
+{
+    int err = 0;
+
+    if (bundle == NULL) {
+	err = E_DATA;
+    } else {
+	strcpy(bundle->name, localname);
+	bundle->level += 1;
     }
 
     return err;
@@ -1251,7 +1276,11 @@ int gretl_bundle_unlocalize (const char *localname,
     if (b == NULL) {
 	err = E_DATA;
     } else {
-	strcpy(b->name, origname);
+	if (origname != NULL) {
+	    strcpy(b->name, origname);
+	} else {
+	    *b->name = '\0';
+	}
 	b->level -= 1;
     }
 

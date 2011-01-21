@@ -29,6 +29,10 @@ void gui_define_list (void);
 
 void fncall_register_genr (int addv, gpointer p);
 
+gchar *get_bundle_plot_function (void *ptr);
+
+int exec_bundle_plot_function (void *ptr, const char *funname);
+
 int try_exec_bundle_print_function (void *ptr, PRN *prn);
 
 void maybe_add_packages_to_menus (windata_t *vwin);

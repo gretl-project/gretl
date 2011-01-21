@@ -582,6 +582,19 @@ void set_main_colheads_clickable (gboolean s)
     }
 }
 
+void tree_view_get_bool (GtkTreeView *view, int row, int col, gboolean *val)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gchar *path;
+
+    model = gtk_tree_view_get_model(view);
+    path = g_strdup_printf("%d", row);
+    gtk_tree_model_get_iter_from_string(model, &iter, path);
+    gtk_tree_model_get(model, &iter, col, val, -1);
+    g_free(path);
+}
+
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
 {
     GtkTreeModel *model;

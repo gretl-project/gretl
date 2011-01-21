@@ -36,6 +36,9 @@
    type (void | scalar | series | matrix | list | string | bundle) 'void'
    private (0|1) '0'
    plugin-wrapper (0|1) '0'
+   bundle-print (0|1) '0'
+   bundle-plot (0|1) '0'
+   gui-main (0|1) '0'
 >
 
 <!ELEMENT help (#PCDATA)>

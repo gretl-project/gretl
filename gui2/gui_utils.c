@@ -56,6 +56,7 @@
 #include "datawiz.h"
 #include "selector.h"
 #include "guiprint.h"
+#include "fncall.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -378,7 +379,8 @@ static GtkActionEntry bundle_items[] = {
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
-    { "Save", NULL, N_("_Save"), NULL, NULL, NULL },    
+    { "Save", NULL, N_("_Save"), NULL, NULL, NULL }, 
+    { "Graph", NULL, N_("_Graph"), NULL, NULL, NULL }, 
 };
 
 static gint n_bundle_items = G_N_ELEMENTS(bundle_items);
@@ -394,6 +396,7 @@ static const gchar *bundle_ui =
     "      <menuitem action='Close'/>"
     "    </menu>"
     "    <menu action='Save'/>"
+    "    <menu action='Graph'/>"
     "  </menubar>"
     "</ui>";
 
@@ -4215,6 +4218,14 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
     } 
 }
 
+static void bundle_plot_call (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    gretl_bundle *bundle = vwin->data;
+
+    exec_bundle_plot_function(bundle, gtk_action_get_name(action));
+}
+
 static void save_bundle_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
@@ -4298,6 +4309,7 @@ static void add_bundle_menu_items (windata_t *vwin)
 {
     gretl_bundle *bundle = vwin->data;
     int n = gretl_bundle_get_n_keys(bundle);
+    gchar *plotfunc;
 
     if (n > 0) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
@@ -4314,6 +4326,20 @@ static void add_bundle_menu_items (windata_t *vwin)
 	}
 
 	g_hash_table_foreach(ht, add_bundled_item_to_menu, vwin);
+    }
+
+    plotfunc = get_bundle_plot_function(bundle);
+
+    if (plotfunc != NULL) {
+	GtkActionEntry item;
+
+	item.name = plotfunc;
+	item.label = plotfunc;
+	item.callback = G_CALLBACK(bundle_plot_call);
+	vwin_menu_add_item(vwin, "/menubar/Graph", &item);
+	g_free(plotfunc);
+    } else {
+	flip(vwin->ui, "/menubar/Graph", FALSE);
     }
 }
 

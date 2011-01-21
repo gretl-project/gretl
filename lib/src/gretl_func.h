@@ -34,8 +34,6 @@ typedef enum {
 #define NEEDS_PANEL "needs-panel-data"
 #define NO_DATA_OK  "no-data-ok"
 
-#define BUNDLE_PRINTER "bundle_print"
-
 #define FN_NAMELEN 32
 
 #define ok_function_return_type(r) (r == GRETL_TYPE_DOUBLE || \
@@ -142,6 +140,8 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 int write_session_functions_file (const char *fname);
 
 int read_session_functions_file (const char *fname);
+
+fnpkg *get_function_package_by_name (const char *pkgname);
 
 fnpkg *get_function_package_by_filename (const char *fname, int *err);
 
