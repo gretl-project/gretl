@@ -1114,7 +1114,141 @@ static int shelldir_open_dotfile (char *fname, char *orig)
 }
 
 /**
- * addpath:
+ * get_plausible_functions_dir:
+ * @fndir: location to receive directory name; should be of
+ * length FILENAME_MAX or more.
+ * @i: call index; should be zero on the first call.
+ * 
+ * This function can be called repeatedly, with the call index
+ * incremented each time -- so long as the return value is non-zero.
+ * The @fndir argument will be filled out with the name of the "next"
+ * directory that may plausibly contain gretl gfn files. If the call
+ * index is out of bounds 0 is returned and @fndir is set to an
+ * empty string.
+ *
+ * Returns: 1 if there are any more directories available, otherwise
+ * zero.
+ */
+
+int get_plausible_functions_dir (char *fndir, int i)
+{
+    int ret = 1;
+
+    *fndir = '\0';
+    
+    if (i == 0) {
+	/* pick up any function files in system dir */
+	build_path(fndir, gretl_home(), "functions", NULL);
+    } else if (i == 1) {
+	/* or any function files in the user's working dir... */
+	strcpy(fndir, gretl_workdir());
+    } else if (i == 2) {
+	/* or in any "functions" subdir thereof */
+	build_path(fndir, gretl_workdir(), "functions", NULL);
+    } else if (i == 3) {
+	/* or any in the user's dotdir */
+	build_path(fndir, gretl_dotdir(), "functions", NULL);
+    } else if (i == 4) {
+	/* or any in the default working dir, if not already searched */
+	const char *wdir = gretl_default_workdir();
+
+	if (wdir != NULL) {
+	    build_path(fndir, wdir, "functions", NULL);
+	} 
+    } else {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+/* it's a dirent thing */
+#ifndef NAME_MAX
+# define NAME_MAX 255
+#endif
+
+/**
+ * gretl_function_package_get_path:
+ * @name: the name of the package to find, without the .gfn extension.
+ * 
+ * Searches a list of directories in which we might expect to find
+ * function packages, and, if the package in question is found,
+ * returns a newly allocated string holding the full path to
+ * the package's gfn file. Public (system) directories are
+ * searched first, then directories in the user's filespace.
+ *
+ * Returns: allocated path on success, otherwise NULL.
+ */
+
+char *gretl_function_package_get_path (const char *name)
+{
+    char *ret = NULL;
+    char fndir[FILENAME_MAX];
+    char path[FILENAME_MAX];
+    int found = 0;
+    int i = 0;
+
+    *path = '\0';
+
+    while (get_plausible_functions_dir(fndir, i++) && !found) {
+	struct dirent *dirent;
+	const char *dname;
+	char *p, test[NAME_MAX+1];
+	DIR *dir;
+	
+	if (*fndir == '\0' || (dir = opendir(fndir)) == NULL) {
+	    continue;
+	}
+
+	while ((dirent = readdir(dir)) != NULL && !found) {
+	    dname = dirent->d_name;
+	    if (!strcmp(dname, name)) {
+		FILE *fp;
+
+		sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
+			dname, SLASH, dname);
+		fp = gretl_fopen(path, "r");
+		if (fp != NULL) {
+		    fclose(fp);
+		    found = 1;
+		} else {
+		    *path = '\0';
+		}
+	    }
+	}
+
+	if (found) {
+	    closedir(dir);
+	    break;
+	} else {
+	    rewinddir(dir);
+	}
+
+	while ((dirent = readdir(dir)) != NULL && !found) {
+	    dname = dirent->d_name;
+	    if (has_suffix(dname, ".gfn")) {
+		strcpy(test, dname);
+		p = strrchr(test, '.');
+		*p = '\0';
+		if (!strcmp(test, name)) {
+		    sprintf(path, "%s%c%s", fndir, SLASH, dname);
+		    found = 1;
+		}
+	    }
+	}
+
+	closedir(dir);
+    }
+
+    if (*path != '\0') {
+	ret = gretl_strdup(path);
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_addpath:
  * @fname: initially given file name.
  * @script: if non-zero, suppose the file is a command script.
  * 
@@ -1125,7 +1259,7 @@ static int shelldir_open_dotfile (char *fname, char *orig)
  * file could be found.
  */
 
-char *addpath (char *fname, int script)
+char *gretl_addpath (char *fname, int script)
 {
     char orig[MAXLEN];
     char *tmp = fname;
@@ -1136,16 +1270,6 @@ char *addpath (char *fname, int script)
     if (dotpath(fname) && shelldir_open_dotfile(fname, orig)) {
 	return fname;
     }  
-
-    if (!g_path_is_absolute(orig) && has_suffix(orig, ".gfn")) {
-	/* new as of 2009-08-27, AC */
-	const char *gfnpath = get_include_path();
-
-	if (gfnpath != NULL) {
-	    sprintf(fname, "%s%s", gfnpath, orig);
-	    return fname;
-	}
-    }
 
     /* try opening filename as given */
     test = gretl_fopen(fname, "r");
@@ -1299,6 +1423,30 @@ static int substitute_homedir (char *fname)
     return err;
 }
 
+static int get_gfn_special (char *fname)
+{
+    int ok = 0;
+
+    if (!strchr(fname, '/') && !strchr(fname, '\\')) {
+	char *p, pkgname[64];
+	char *pkgpath;
+
+	*pkgname = '\0';
+	strncat(pkgname, fname, 63);
+	p = strstr(pkgname, ".gfn");
+	*p = '\0';
+	pkgpath = gretl_function_package_get_path(pkgname);
+
+	if (pkgpath != NULL) {
+	    strcpy(fname, pkgpath);
+	    free(pkgpath);
+	    ok = 1;
+	}
+    }
+
+    return ok;
+}
+
 /**
  * getopenfile:
  * @line: command line (e.g. "open foo").
@@ -1344,8 +1492,12 @@ int getopenfile (const char *line, char *fname, gretlopt opt)
 	return 0;
     }
 
+    if (has_suffix(fname, ".gfn") && get_gfn_special(fname)) {
+	return 0;
+    }
+
     /* try a basic path search on this filename */
-    fullname = addpath(fname, script);
+    fullname = gretl_addpath(fname, script);
 
     if (fullname != NULL && (opt & OPT_S)) {
 	int spos = slashpos(fname);

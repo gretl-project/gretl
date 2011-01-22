@@ -159,7 +159,6 @@ static int gretl_debug;
 static int user_mp_bits;
 static int R_functions;
 static int R_lib = 1;
-static char include_path[MAXLEN];
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
@@ -1301,16 +1300,6 @@ static int print_settings (PRN *prn, gretlopt opt)
     libset_print_bool(R_LIB, prn, opt);
     libset_print_bool(R_FUNCTIONS, prn, opt);
 
-    if (opt & OPT_D) {
-	if (*include_path) {
-	    pprintf(prn, " include_path = '%s'\n", include_path);
-	} else {
-	    pputs(prn, " include_path = unset\n");
-	}
-    } else if (*include_path) {
-	pprintf(prn, "set include_path \"%s\"\n", include_path);
-    }
-
     libset_header(N_("Numerical methods"), prn, opt);
 
     libset_print_int(BFGS_MAXITER, prn, opt);
@@ -1419,9 +1408,6 @@ static int libset_query_settings (const char *s, PRN *prn)
     } else if (!strcmp(s, "workdir")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		gretl_workdir());
-    } else if (!strcmp(s, "include_path")) {
-	pprintf(prn, "%s: string, currently \"%s\"\n", s,
-		include_path);
     } else if (!strcmp(s, "csv_na")) {
 	pprintf(prn, "%s: string, currently \"%s\"\n", s,
 		state->csv_na);
@@ -1505,10 +1491,7 @@ int execute_set_line (const char *line, const double **Z,
 	    return set_codevars(line);
 	} else if (!strcmp(setobj, "workdir")) {
 	    return set_workdir(line);
-	} else if (!strcmp(setobj, "include_path")) {
-	    set_include_path(line);
-	    return 0;
-	}
+	} 
     }
 
     if (nw == 1) {
@@ -2337,40 +2320,6 @@ void set_csv_na_string (const char *s)
     strncat(state->csv_na, s, 7);
 }
 
-void set_include_path (const char *s)
-{
-    if (gretl_function_depth() > 0) {
-	gretl_errmsg_set("set include_path: cannot be done inside a function");
-	return;
-    }
-
-    /* skip past "include_path" and space */
-    s += 16;
-    s += strspn(s, " ");
-
-    if (*s != '\0') {
-	char tmp[MAXLEN];
-	int n = 0;
-
-	if (*s == '"') {
-	    n = sscanf(s+1, "%511[^\"]", tmp);
-	} else {
-	    n = sscanf(s, "%511s", tmp);
-	}
-
-	if (n > 0) {
-	    *include_path = '\0';
-	    strncat(include_path, tmp, MAXLEN - 2);
-	    slash_terminate(include_path);
-	}
-    }
-}
-
-const char *get_include_path (void)
-{
-    return (*include_path == '\0')? NULL : include_path;
-}
-
 int libset_write_script (const char *fname)
 {
     PRN *prn;
@@ -2404,7 +2353,7 @@ static int real_libset_read_script (const char *fname,
 	char fullname[FILENAME_MAX];
 
 	strcpy(fullname, fname);
-	addpath(fullname, 0);
+	gretl_addpath(fullname, 0);
 	fp = gretl_fopen(fname, "r");
 	if (fp == NULL) {
 	    err = E_FOPEN;

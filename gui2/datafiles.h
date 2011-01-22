@@ -65,6 +65,4 @@ windata_t *get_local_viewer (int remote_role);
 
 void listbox_select_first (windata_t *vwin);
 
-gchar *gretl_function_package_get_path (const char *name);
-
 #endif /* DATAFILES_H */

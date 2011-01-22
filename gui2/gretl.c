@@ -318,7 +318,7 @@ static void get_runfile (char *fname)
     strncat(tryfile, fname, MAXLEN - 1);
 #endif
 
-    if (addpath(tryfile, 1) == NULL) {
+    if (gretl_addpath(tryfile, 1) == NULL) {
 	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
 	exit(EXIT_FAILURE);
     } else {

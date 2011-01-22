@@ -103,7 +103,7 @@ int gretl_is_xml_file (const char *fname);
 
 int gretl_isdir (const char *path);
 
-char *addpath (char *fname, int script);
+char *gretl_addpath (char *fname, int script);
 
 int getopenfile (const char *line, char *fname, gretlopt opt);
 
@@ -116,6 +116,10 @@ void show_paths (void);
 int gretl_set_paths (ConfigPaths *paths, gretlopt opt);
 
 int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
+
+int get_plausible_functions_dir (char *fndir, int i);
+
+char *gretl_function_package_get_path (const char *name);
 
 const char *helpfile_path (int id);
 

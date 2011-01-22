@@ -1822,40 +1822,6 @@ static int dirname_done (char **dnames, int ndirs, char *dirname)
     return 0;
 }
 
-static int get_possible_functions_dir (char *fndir, int *ip)
-{
-    int i = *ip, ret = 1;
-
-    *fndir = '\0';
-    
-    if (i == 0) {
-	/* pick up any function files in system dir */
-	build_path(fndir, gretl_home(), "functions", NULL);
-    } else if (i == 1) {
-	/* or any function files in the user's working dir... */
-	strcpy(fndir, gretl_workdir());
-    } else if (i == 2) {
-	/* or in any "functions" subdir thereof */
-	build_path(fndir, gretl_workdir(), "functions", NULL);
-    } else if (i == 3) {
-	/* or any in the user's dotdir */
-	build_path(fndir, gretl_dotdir(), "functions", NULL);
-    } else if (i == 4) {
-	/* or any in the default working dir, if not already searched */
-	const char *wdir = gretl_default_workdir();
-
-	if (wdir != NULL) {
-	    build_path(fndir, wdir, "functions", NULL);
-	} 
-    } else {
-	ret = 0;
-    }
-
-    *ip += 1;
-
-    return ret;
-}
-
 gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 {
     GtkListStore *store;
@@ -1906,7 +1872,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	char fndir[FILENAME_MAX];
 	int i = 0;
 
-	while (get_possible_functions_dir(fndir, &i)) {
+	while (get_plausible_functions_dir(fndir, i++)) {
 	    if (*fndir != '\0') {
 		dir = opendir(fndir);
 		if (dir != NULL) {
@@ -1939,79 +1905,6 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     }
 
     return 0;
-}
-
-#ifndef NAME_MAX
-# define NAME_MAX 255
-#endif
-
-/* Given the name of a package (its internal name, not a path, e.g.
-   "gig"), search some plausible directories and see if we can
-   find the corresponding gfn file. If so, return an allocated copy 
-   of the absolute path, otherwise return NULL.
-*/
-
-gchar *gretl_function_package_get_path (const char *name)
-{
-    gchar *path = NULL;
-    char fndir[FILENAME_MAX];
-    DIR *dir;
-    int found = 0;
-    int i = 0;
-
-    while (get_possible_functions_dir(fndir, &i) && !found) {
-	if (*fndir == '\0') {
-	    continue;
-	}
-
-	if ((dir = opendir(fndir)) != NULL) {
-	    struct dirent *dirent;
-	    const char *dname;
-	    char *p, test[NAME_MAX+1];
-
-	    while ((dirent = readdir(dir)) != NULL && !found) {
-		dname = dirent->d_name;
-		if (!strcmp(dname, name)) {
-		    FILE *fp;
-
-		    path = g_strdup_printf("%s%c%s%c%s.gfn", fndir, SLASH, 
-					   dname, SLASH, dname);
-		    fp = gretl_fopen(path, "r");
-		    if (fp != NULL) {
-			fclose(fp);
-			found = 1;
-		    } else {
-			g_free(path);
-			path = NULL;
-		    }
-		}
-	    }
-
-	    if (found) {
-		closedir(dir);
-		break;
-	    } else {
-		rewinddir(dir);
-	    }
-
-	    while ((dirent = readdir(dir)) != NULL && !found) {
-		dname = dirent->d_name;
-		if (has_suffix(dname, ".gfn")) {
-		    strcpy(test, dname);
-		    p = strrchr(test, '.');
-		    *p = '\0';
-		    if (!strcmp(test, name)) {
-			path = g_strdup_printf("%s%c%s", fndir, SLASH, dname);
-			found = 1;
-		    }
-		}
-	    }
-
-	    closedir(dir);
-	}
-    }
-
-    return path;
 }
 
 static void revise_loaded_status (GtkWidget *lbox)

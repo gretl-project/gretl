@@ -1786,7 +1786,7 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 	gzsuff = has_suffix(fname, ".gz");
     }
 
-    if (addpath(fname, 0) == NULL) { 
+    if (gretl_addpath(fname, 0) == NULL) { 
 	/* not found yet */
 	char tryfile[MAXLEN];
 	int found = 0;
@@ -1796,7 +1796,7 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 	    *tryfile = '\0';
 	    strncat(tryfile, fname, MAXLEN-1);
 	    try_gdt(tryfile); 
-	    found = (addpath(tryfile, 0) != NULL);
+	    found = (gretl_addpath(tryfile, 0) != NULL);
 	    if (found) {
 		gdtsuff = 1;
 	    }
@@ -1807,7 +1807,7 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 	*/
 	if (!found && !gzsuff) { 
 	    sprintf(tryfile, "%s.gz", fname);
-	    if (addpath(tryfile, 0) != NULL) {
+	    if (gretl_addpath(tryfile, 0) != NULL) {
 		gzsuff = 1;
 		found = 1;
 	    }
@@ -3223,7 +3223,7 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 	return GRETL_PCGIVE_DB;
 
     if (opt & OPT_P) {
-	addpath(fname, 0); 
+	gretl_addpath(fname, 0); 
     }
 
     if (gretl_is_xml_file(fname)) {

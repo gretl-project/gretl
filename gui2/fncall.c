@@ -1611,12 +1611,12 @@ gchar *get_bundle_plot_function (void *ptr)
 	fnpkg *pkg = get_function_package_by_name(pkgname);
 
 	if (pkg == NULL) {
-	    gchar *fname = gretl_function_package_get_path(pkgname);
+	    char *fname = gretl_function_package_get_path(pkgname);
 	    int err = 0;
 
 	    if (fname != NULL) {
 		pkg = get_function_package_by_filename(fname, &err);
-		g_free(fname);
+		free(fname);
 	    }
 	}
 
@@ -1744,12 +1744,12 @@ static gchar *get_bundle_print_function (gretl_bundle *b)
 	fnpkg *pkg = get_function_package_by_name(pkgname);
 
 	if (pkg == NULL) {
-	    gchar *fname = gretl_function_package_get_path(pkgname);
+	    char *fname = gretl_function_package_get_path(pkgname);
 	    int err = 0;
 
 	    if (fname != NULL) {
 		pkg = get_function_package_by_filename(fname, &err);
-		g_free(fname);
+		free(fname);
 	    }
 	}
 
@@ -1818,7 +1818,7 @@ static int ols_bundle_callback (selector *sr)
 {
     const char *funname = "ols_pack";
     const char *pkgname = "olsbundle";
-    gchar *path = NULL;
+    char *path = NULL;
     ufunc *uf = NULL;
     fnargs *args = NULL;
     int yno, err = 0;
@@ -1844,7 +1844,7 @@ static int ols_bundle_callback (selector *sr)
 	    gretl_errmsg_sprintf("Couldn't find function '%s'", funname);
 	    err = E_DATA;
 	}
-	g_free(path);
+	free(path);
     }
 
     if (err) {
@@ -1918,7 +1918,7 @@ static int ols_bundle_callback (selector *sr)
 static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 {
     const gchar *name = gtk_action_get_name(action);
-    gchar *path;
+    char *path;
 
     path = gretl_function_package_get_path(name);
 
@@ -1930,7 +1930,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 			 ols_bundle_callback, OLS);
     } else {
 	call_function_package(path, vwin->main, NULL);
-	g_free(path);
+	free(path);
     }
 }
 
