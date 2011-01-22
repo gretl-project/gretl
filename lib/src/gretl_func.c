@@ -4781,27 +4781,7 @@ static int localize_bundle_ref (struct fnarg *arg, fn_param *fp)
     if (arg->upname == NULL) {
 	err = E_ALLOC;
     } else {
-	err = gretl_bundle_localize_by_name(arg->upname, fp->name);
-    }
-
-    return err;
-}
-
-static int localize_bundle (struct fnarg *arg, fn_param *fp)
-{
-    gretl_bundle *b = arg->val.b;
-    const char *bname = gretl_bundle_get_name(b);
-    int err = 0;
-
-    if (bname != NULL) {
-	arg->upname = gretl_strdup(bname);
-	if (arg->upname == NULL) {
-	    return E_ALLOC;
-	} else {
-	    err = gretl_bundle_localize_by_name(arg->upname, fp->name);
-	}
-    } else {
-	err = gretl_bundle_localize(arg->val.b, fp->name);
+	err = gretl_bundle_localize(arg->upname, fp->name);
     }
 
     return err;
@@ -4933,6 +4913,8 @@ static int allocate_function_args (fncall *call,
 	    } else {
 		err = copy_matrix_as(arg->val.m, fp->name);
 	    }
+	} else if (fp->type == GRETL_TYPE_BUNDLE) {
+	    err = copy_bundle_arg_as(arg->val.b, fp->name);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    if (arg->type == GRETL_TYPE_NONE) {
 		err = create_named_null_list(fp->name);
@@ -4958,16 +4940,10 @@ static int allocate_function_args (fncall *call,
 		err = localize_matrix_ref(arg, fp);
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE_REF) {
-	    if (arg->type == fp->type) {
-		err = localize_bundle_ref(arg, fp);
-	    } else if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_bundle(arg, fp);
-	    }
-	} else if (fp->type == GRETL_TYPE_BUNDLE) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_bundle(arg, fp);
+		err = localize_bundle_ref(arg, fp);
 	    }
-	}	    
+	} 
 
 	if (!err) {
 	    if (arg->type == GRETL_TYPE_USERIES && fp->type != GRETL_TYPE_LIST) {
@@ -5428,10 +5404,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    } else {
 		unlocalize_list(fp->name, LIST_WAS_TEMP, Z, pdinfo);
 	    }
-	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    /* FIXME ? */
-	    gretl_bundle_unlocalize(fp->name, arg->upname);
-	}
+	} 
     }
 
 #if UDEBUG
@@ -5584,7 +5557,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     /* if the function defined a Kalman filter, clean that up */
     delete_kalman(NULL);
 
-    /* if any bundles were defined bu not returned, clean up */
+    /* if any bundles were defined but not returned, clean up */
     destroy_saved_bundles_at_level(d);
 
     pop_program_state();
@@ -5695,10 +5668,8 @@ static int check_function_args (ufunc *u, fnargs *args,
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK */
-	} else if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->type == GRETL_TYPE_BUNDLE) {
-	    ; /* OK */
 	} else if (fp->type != arg->type) {
-	    /* FIXME case where list is wanted and the arg is a series */
+	    /* FIXME case where list is wanted and the arg is a series? */
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
 		    u->name, i + 1, gretl_arg_type_name(arg->type), 
 		    gretl_arg_type_name(fp->type));

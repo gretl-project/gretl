@@ -74,11 +74,15 @@ void set_bundle_add_callback (void (*callback));
 
 int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name);
 
+int gretl_bundle_stack_as (gretl_bundle *bundle, const char *name);
+
 int save_named_bundle (const char *name);
 
 int gretl_bundle_copy_as (const char *name, const char *copyname);
 
-gretl_bundle *gretl_bundle_copy (gretl_bundle *bundle, int *err);
+gretl_bundle *gretl_bundle_copy (const gretl_bundle *bundle, int *err);
+
+int copy_bundle_arg_as (const gretl_bundle *b, const char *newname);
 
 int gretl_bundle_delete_by_name (const char *name, PRN *prn);
 
@@ -97,11 +101,8 @@ int gretl_bundle_get_n_keys (gretl_bundle *b);
 gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 					    int *err);
 
-int gretl_bundle_localize (gretl_bundle *bundle,
+int gretl_bundle_localize (const char *origname,
 			   const char *localname);
-
-int gretl_bundle_localize_by_name (const char *origname,
-				   const char *localname);
 
 int gretl_bundle_unlocalize (const char *localname,
 			     const char *origname);

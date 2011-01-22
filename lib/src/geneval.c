@@ -117,6 +117,15 @@ static const char *typestr (int t)
     }
 }
 
+static int bundle_node_free_name (NODE *t)
+{
+    /* if a bundle node is a TMP_NODE it will have an
+       actual bundle pointer attached, and not the name
+       of a saved bundle
+    */
+    return t->t == BUNDLE && !(t->flags & TMP_NODE);
+}
+
 static void free_tree (NODE *t, parser *p, const char *msg)
 {
     if (t == NULL) {
@@ -169,7 +178,7 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 	}
     }
 
-    if (freestr(t->t)) {
+    if (freestr(t->t) || bundle_node_free_name(t)) {
 	free(t->v.str);
     }
 
@@ -4953,7 +4962,7 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
                          s == LIST || s == U_ADDR || s == DUM || \
-                         s == STR || s == EMPTY)
+                         s == STR || s == EMPTY || s == BUNDLE)
 
 /* evaluate a user-defined function */
 
@@ -5082,7 +5091,13 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.str);
 	} else if (n->t == STR) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
-	} 
+	} else if (n->t == BUNDLE) {
+	    gretl_bundle *b = node_get_bundle(n, p);
+
+	    if (!p->err) {
+		p->err = push_fn_arg(args, GRETL_TYPE_BUNDLE, b);
+	    }
+	}
 
 	if (p->err) {
 	    fprintf(stderr, "eval_ufunc: error evaluating arg %d\n", i);

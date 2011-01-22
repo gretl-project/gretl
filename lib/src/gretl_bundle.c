@@ -323,15 +323,18 @@ static int resize_bundle_stack (int n)
     }
 }
 
-/* push a bundle onto the saved stack: note that if this
-   fails we destroy the bundle and return non-zero */
+/* Push a bundle onto the saved stack. Note that if this
+   fails we destroy the bundle, unless @preserve is 
+   non-zero */
 
-static int gretl_bundle_push (gretl_bundle *b)
+static int gretl_bundle_push (gretl_bundle *b, int preserve)
 {
     int n = n_saved_bundles + 1;
 
     if (resize_bundle_stack(n)) {
-	gretl_bundle_destroy(b);
+	if (!preserve) {
+	    gretl_bundle_destroy(b);
+	}
 	return E_ALLOC;
     }
 
@@ -853,7 +856,7 @@ int save_named_bundle (const char *name)
 	} else {
 	    strcpy(b->name, name);
 	    b->level = level;
-	    err = gretl_bundle_push(b);
+	    err = gretl_bundle_push(b, 0);
 	}
     }
 
@@ -899,7 +902,7 @@ int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name)
 	gretl_bundle_destroy(bundles[b0idx]);
 	bundles[b0idx] = bundle;
     } else {
-	err = gretl_bundle_push(bundle);
+	err = gretl_bundle_push(bundle, 0);
 
 	if (strcmp(bundle->name, AUTO_BUNDLE) &&
 	    bundle_add_callback != NULL && 
@@ -909,6 +912,18 @@ int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name)
     }
 
     return err;
+}
+
+/* called from GUI to place an anonymous bundle on the saved
+   stack temporarily -- we call gretl_bundle_push with a non-
+   zero second argument so that we don't destroy the bundle
+   in case the "push" fails
+*/
+
+int gretl_bundle_stack_as (gretl_bundle *bundle, const char *name)
+{
+    strcpy(bundle->name, name);
+    return gretl_bundle_push(bundle, 1);
 }
 
 /* replicate on a target bundle a bundled_item from some other
@@ -1002,7 +1017,7 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
 	    strcpy(b1->name, copyname);
 	    b1->ht = NULL;
 	    b1->level = level;
-	    err = gretl_bundle_push(b1);
+	    err = gretl_bundle_push(b1, 0);
 	}
     }
 
@@ -1024,7 +1039,7 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
  * are themselves copied), or NULL on failure.
  */
 
-gretl_bundle *gretl_bundle_copy (gretl_bundle *bundle, int *err)
+gretl_bundle *gretl_bundle_copy (const gretl_bundle *bundle, int *err)
 {
     gretl_bundle *bcpy = NULL;
 
@@ -1200,7 +1215,36 @@ gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
 }
 
 /**
- * gretl_bundle_localize_by_name:
+ * copy_bundle_arg_as:
+ * @b: the original bundle.
+ * @newname: the name to be given to the copy.
+ *
+ * A copy of bundle @b is added to the stack of saved bundles
+ * under the name @newname.  This is intended for use when a bundle
+ * is given as the argument to a user-defined function: it is copied
+ * under the name assigned by the function's parameter list.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int copy_bundle_arg_as (const gretl_bundle *b, const char *newname)
+{
+    gretl_bundle *b2;
+    int err = 0;
+
+    b2 = gretl_bundle_copy(b, &err);
+
+    if (!err) {
+	strcpy(b2->name, newname);
+	b2->level += 1;
+	err = gretl_bundle_push(b2, 0);
+    }
+
+    return err;
+}
+
+/**
+ * gretl_bundle_localize:
  * @origname: name of bundle at caller level.
  * @localname: name to be used within function.
  *
@@ -1211,8 +1255,8 @@ gretl_bundle *gretl_bundle_pull_from_stack (const char *name,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_bundle_localize_by_name (const char *origname,
-				   const char *localname)
+int gretl_bundle_localize (const char *origname,
+			   const char *localname)
 {
     gretl_bundle *b;
     int err = 0;
@@ -1227,43 +1271,6 @@ int gretl_bundle_localize_by_name (const char *origname,
     }
 
      return err;
-}
-
-/**
- * gretl_bundle_localize:
- * @b: pointer to bundle.
- * @localname: name to be used within function.
- *
- * On entry to a function, gives @bundle a name and sets 
- * its level so that is is accessible within the function.
- * This function should only be used on anonymous bundles.
- * 
- * Returns: 0 on success, non-zero on error.
- */
-
-int gretl_bundle_localize (gretl_bundle *bundle, const char *localname)
-{
-    int err = 0;
-
-    if (bundle == NULL) {
-	err = E_DATA;
-    } else {
-	int idx = get_bundle_index(bundle);
-
-	strcpy(bundle->name, localname);
-	bundle->level += 1;
-	if (idx < 0) {
-	    fprintf(stderr, "bundle not on stack, stacking now\n");
-	    err = gretl_bundle_push(bundle);
-	}
-    }
-
-#if 0
-    fprintf(stderr, "gretl_bundle_localize: '%s' (%p) at level %d, err = %d\n",
-	    bundle->name, (void *) bundle, bundle->level, err);
-#endif
-
-    return err;
 }
 
 /**
@@ -1288,19 +1295,9 @@ int gretl_bundle_unlocalize (const char *localname,
     if (b == NULL) {
 	err = E_DATA;
     } else {
-	if (origname != NULL) {
-	    strcpy(b->name, origname);
-	    b->level -= 1;
-	} else {
-	    fprintf(stderr, "unlocalize: no name, unstacking\n");
-	    real_unstack_bundle(get_bundle_index(b), UNSTACK_ONLY);
-	}
+	strcpy(b->name, origname);
+	b->level -= 1;
     }
-
-#if 0
-    fprintf(stderr, "gretl_bundle_unlocalize: '%s' (%p) at level %d, err = %d\n",
-	    b->name, (void *) b, b->level, err);
-#endif
 
     return err;
 }
@@ -1567,7 +1564,7 @@ int load_bundle_from_xml (void *p1, void *p2, const char *name)
     }
 
     if (!err) {
-	err = gretl_bundle_push(b);
+	err = gretl_bundle_push(b, 0);
     } else {
 	gretl_bundle_destroy(b);
     }

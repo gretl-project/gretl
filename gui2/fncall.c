@@ -1629,18 +1629,38 @@ gchar *get_bundle_plot_function (void *ptr)
     return ret;
 }
 
+/* Execute the plotting function made available by the function
+   package that produced the bundle represented by @ptr, possibly
+   inflected by an integer option -- if an option is present it's
+   packed into @aname. 
+
+   If the bundle is already saved by name when this function is
+   called, we can pass a reference to the bundle by name. Otherwise
+   (i.e. the bundle is anonymous and is saved only insofar as it's
+   attached to an output window) then we'll have to save it by name
+   temporarily. We can't pass the bundle pointer directly, because the
+   signature of the designated plotting function demands a named
+   reference (and besides, we don't want to be copying a possibly
+   large bundle as a function argument, as we would have to it it were
+   not passed in "pointerized" form).
+*/
+
 int exec_bundle_plot_function (void *ptr, const char *aname)
 {
     gretl_bundle *b = ptr;
     ufunc *func;
     fnargs *args = NULL;
-    char funname[32];
-    int ival = -1;
+    char funname[32], tmpname[32];
+    int plotopt = -1;
     int err;
 
+    *tmpname = '\0';
+
     if (strchr(aname, ':') != NULL) {
-	sscanf(aname, "%31[^:]:%d", funname, &ival);
+	/* extract plotting option */
+	sscanf(aname, "%31[^:]:%d", funname, &plotopt);
     } else {
+	/* no option present */
 	strcpy(funname, aname);
     }
 
@@ -1655,31 +1675,34 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
 	} else {
 	    const char *bname = gretl_bundle_get_name(b);
 
-	    if (bname != NULL) {
-		/* if the bundle is saved (and so has a name) already, we
-		   should pass a reference by name */
-		err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
-	    } else {
-		/* bundle is not saved, try passing it directly: this
-		   doesn't work yet, flaky: FIXME */
-		err = push_fn_arg(args, GRETL_TYPE_BUNDLE, b);
+	    if (bname == NULL) {
+		/* the bundle is not saved by name, more work needed */
+		strcpy(tmpname, "bundle_arg__");
+		bname = tmpname;
+		err = gretl_bundle_stack_as(b, bname);
 	    }
 
-	    if (!err && ival >= 0) {
+	    if (!err) {
+		err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
+	    }
+
+	    if (!err && plotopt >= 0) {
 		double minv = fn_param_minval(func, 1);
 
 		if (!na(minv)) {
-		    ival += (int) minv;
-		    err = push_fn_arg(args, GRETL_TYPE_INT, &ival);
+		    plotopt += (int) minv;
+		    err = push_fn_arg(args, GRETL_TYPE_INT, &plotopt);
 		}
 	    }
 	}
     }
 
     if (!err) {
+	/* note that the function may need a non-NULL prn for
+	   use with printing redirection; also we may want to
+	   see error output if something goes amiss
+	*/
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-
-	/* for now, let's try to see what's happening */
 
 	err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
 				  &Z, datainfo, NULL, NULL, prn);
@@ -1687,6 +1710,10 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     }
 
     fn_args_free(args);
+
+    if (*tmpname != '\0') {
+	gretl_bundle_pull_from_stack(tmpname, &err);
+    }
 
     if (err) {
 	gui_errmsg(err);
