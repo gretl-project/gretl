@@ -224,27 +224,6 @@ int function_from_string (const char *s)
     return 0;
 }
 
-/**
- * is_gretl_function_call:
- * @s: the string to check.
- *
- * Returns: 1 if @s starts with the name of a built-in 
- * gretl function, otherwise 0.
- */
-
-int is_gretl_function_call (const char *s)
-{
-    char c, word[12];
-
-    sscanf(s, "%10[^ (]", word);
-    c = s[strlen(word)];
-    if (c == ' ' || c == '(') {
-	return function_lookup(word);
-    } else {
-	return 0;
-    }
-}
-
 static const char *reswords[] = {
     /* constants */
     "const",

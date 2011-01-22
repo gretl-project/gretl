@@ -2363,10 +2363,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->ci == 0) {
 	    if (plausible_genr_start(line, pdinfo)) {
 		cmd->ci = GENR;
-	    } else if (get_user_function_by_name(cmd->word)) {
+	    } else if (function_lookup(cmd->word)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
-	    } else if (is_gretl_function_call(line)) {
+	    } else if (get_user_function_by_name(cmd->word)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
 	    } else if (gretl_if_state_false()) {

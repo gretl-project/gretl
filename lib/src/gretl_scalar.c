@@ -285,8 +285,10 @@ int gretl_scalar_add (const char *name, double val)
 
     s = get_scalar_pointer(name, level);
     if (s != NULL) {
+#if SDEBUG
 	fprintf(stderr, "*** gretl_scalar_add: there's already a '%s' at level %d (%.15g)\n", 
 		name, s->level, s->val);
+#endif
 	s->val = val;
 	return 0;
     }

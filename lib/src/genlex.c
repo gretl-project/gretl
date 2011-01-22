@@ -422,8 +422,7 @@ static int real_function_lookup (const char *s, int a)
 {
     static GHashTable *fht;
     gpointer p;
-    int ret = 0;
-
+ 
     if (s == NULL) {
 	/* cleanup signal */
 	if (fht != NULL) {
@@ -439,10 +438,10 @@ static int real_function_lookup (const char *s, int a)
     
     p = g_hash_table_lookup(fht, s);
     if (p != NULL) {
-	ret = GPOINTER_TO_INT(p);
+	return GPOINTER_TO_INT(p);
     }
 
-    if (ret == 0 && a == ALLOW_ALIAS) {
+    if (a == ALLOW_ALIAS) {
 	int i;
 
 	for (i=0; func_alias[i].id != 0; i++) {
@@ -452,7 +451,7 @@ static int real_function_lookup (const char *s, int a)
 	} 
     }   
 
-    return ret;
+    return 0;
 }
 
 void gretl_function_hash_cleanup (void)

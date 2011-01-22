@@ -196,8 +196,6 @@ int genr_get_series_max (GENERATOR *genr);
 
 int function_from_string (const char *s);
 
-int is_gretl_function_call (const char *s);
-
 int function_lookup (const char *s);
 
 int const_lookup (const char *s);
