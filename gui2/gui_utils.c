@@ -4331,12 +4331,36 @@ static void add_bundle_menu_items (windata_t *vwin)
     plotfunc = get_bundle_plot_function(bundle);
 
     if (plotfunc != NULL) {
+	ufunc *fun = get_user_function_by_name(plotfunc);
+	const char **S = NULL;
+	int ng = 0;
 	GtkActionEntry item;
 
-	item.name = plotfunc;
-	item.label = plotfunc;
-	item.callback = G_CALLBACK(bundle_plot_call);
-	vwin_menu_add_item(vwin, "/menubar/Graph", &item);
+	if (fun != NULL) {
+	    S = fn_param_value_labels(fun, 1, &ng);
+	}
+
+	action_entry_init(&item);
+	
+	if (S != NULL) {
+	    gchar *aname;
+	    int i;
+
+	    for (i=0; i<ng; i++) {
+		aname = g_strdup_printf("%s:%d", plotfunc, i);
+		item.name = aname;
+		item.label = S[i];
+		item.callback = G_CALLBACK(bundle_plot_call);
+		vwin_menu_add_item(vwin, "/menubar/Graph", &item);
+		g_free(aname);
+	    }		
+	} else {
+	    item.name = plotfunc;
+	    item.label = plotfunc;
+	    item.callback = G_CALLBACK(bundle_plot_call);
+	    vwin_menu_add_item(vwin, "/menubar/Graph", &item);
+	}
+
 	g_free(plotfunc);
     } else {
 	flip(vwin->ui, "/menubar/Graph", FALSE);

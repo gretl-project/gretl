@@ -1226,7 +1226,7 @@ int gretl_bundle_localize_by_name (const char *origname,
 	b->level += 1;
     }
 
-    return err;
+     return err;
 }
 
 /**
@@ -1236,6 +1236,7 @@ int gretl_bundle_localize_by_name (const char *origname,
  *
  * On entry to a function, gives @bundle a name and sets 
  * its level so that is is accessible within the function.
+ * This function should only be used on anonymous bundles.
  * 
  * Returns: 0 on success, non-zero on error.
  */
@@ -1247,9 +1248,20 @@ int gretl_bundle_localize (gretl_bundle *bundle, const char *localname)
     if (bundle == NULL) {
 	err = E_DATA;
     } else {
+	int idx = get_bundle_index(bundle);
+
 	strcpy(bundle->name, localname);
 	bundle->level += 1;
+	if (idx < 0) {
+	    fprintf(stderr, "bundle not on stack, stacking now\n");
+	    err = gretl_bundle_push(bundle);
+	}
     }
+
+#if 0
+    fprintf(stderr, "gretl_bundle_localize: '%s' (%p) at level %d, err = %d\n",
+	    bundle->name, (void *) bundle, bundle->level, err);
+#endif
 
     return err;
 }
@@ -1278,11 +1290,17 @@ int gretl_bundle_unlocalize (const char *localname,
     } else {
 	if (origname != NULL) {
 	    strcpy(b->name, origname);
+	    b->level -= 1;
 	} else {
-	    *b->name = '\0';
+	    fprintf(stderr, "unlocalize: no name, unstacking\n");
+	    real_unstack_bundle(get_bundle_index(b), UNSTACK_ONLY);
 	}
-	b->level -= 1;
     }
+
+#if 0
+    fprintf(stderr, "gretl_bundle_unlocalize: '%s' (%p) at level %d, err = %d\n",
+	    b->name, (void *) b, b->level, err);
+#endif
 
     return err;
 }

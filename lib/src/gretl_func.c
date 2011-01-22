@@ -258,6 +258,8 @@ struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
 	arg->val.x = 0;
     } else if (type == GRETL_TYPE_DOUBLE) {
 	arg->val.x = *(double *) p;
+    } else if (type == GRETL_TYPE_INT) {
+	arg->val.x = *(int *) p;
     } else if (type == GRETL_TYPE_SERIES) {
 	arg->val.px = (double *) p;
     } else if (type == GRETL_TYPE_MATRIX) {
@@ -4773,21 +4775,36 @@ static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
 
 static int localize_bundle_ref (struct fnarg *arg, fn_param *fp)
 {
+    int err = 0;
+
     arg->upname = gretl_strdup(arg->val.str);
     if (arg->upname == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	err = gretl_bundle_localize_by_name(arg->upname, fp->name);
     }
 
-    gretl_bundle_localize_by_name(arg->upname, fp->name);
-
-    return 0;
+    return err;
 }
 
 static int localize_bundle (struct fnarg *arg, fn_param *fp)
 {
-    gretl_bundle_localize(arg->val.b, fp->name);
+    gretl_bundle *b = arg->val.b;
+    const char *bname = gretl_bundle_get_name(b);
+    int err = 0;
 
-    return 0;
+    if (bname != NULL) {
+	arg->upname = gretl_strdup(bname);
+	if (arg->upname == NULL) {
+	    return E_ALLOC;
+	} else {
+	    err = gretl_bundle_localize_by_name(arg->upname, fp->name);
+	}
+    } else {
+	err = gretl_bundle_localize(arg->val.b, fp->name);
+    }
+
+    return err;
 }
 
 static int localize_scalar_ref (fncall *call, struct fnarg *arg, 
@@ -4941,8 +4958,10 @@ static int allocate_function_args (fncall *call,
 		err = localize_matrix_ref(arg, fp);
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE_REF) {
-	    if (arg->type != GRETL_TYPE_NONE) {
+	    if (arg->type == fp->type) {
 		err = localize_bundle_ref(arg, fp);
+	    } else if (arg->type != GRETL_TYPE_NONE) {
+		err = localize_bundle(arg, fp);
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -5410,7 +5429,8 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 		unlocalize_list(fp->name, LIST_WAS_TEMP, Z, pdinfo);
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
-	    gretl_bundle_unlocalize(fp->name, NULL);
+	    /* FIXME ? */
+	    gretl_bundle_unlocalize(fp->name, arg->upname);
 	}
     }
 
@@ -5674,6 +5694,8 @@ static int check_function_args (ufunc *u, fnargs *args,
 		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
+	    ; /* OK */
+	} else if (fp->type == GRETL_TYPE_BUNDLE_REF && arg->type == GRETL_TYPE_BUNDLE) {
 	    ; /* OK */
 	} else if (fp->type != arg->type) {
 	    /* FIXME case where list is wanted and the arg is a series */

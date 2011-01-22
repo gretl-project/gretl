@@ -1472,6 +1472,21 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
     }
 }
 
+static void maybe_set_gui_interface (const char *gname,
+				     call_info *cinfo)
+{
+    const char *iface;
+    int i;
+
+    for (i=1; i<=cinfo->publist[0]; i++) {
+	iface = user_function_name_by_index(cinfo->publist[i]);
+	if (iface != NULL && !strcmp(iface, gname)) {
+	    cinfo->iface = cinfo->publist[i];
+	    break;
+	}
+    }
+}
+
 /* call to execute a function from the specified package: we do
    this only for locally installed packages */
 
@@ -1522,7 +1537,21 @@ void call_function_package (const char *fname, GtkWidget *w,
 	}
     }
 
-    if (!err) {
+    if (!err && loaderr == NULL && cinfo->publist[0] > 0) {
+	/* coming off a menu: is there a GUI default we should
+	   show instead of an interface menu? 
+	*/
+	gchar *gmain = NULL;
+
+	function_package_get_properties(pkg, "gui-main",
+					&gmain, NULL);
+	if (gmain != NULL) {
+	    maybe_set_gui_interface(gmain, cinfo);
+	    free(gmain);
+	}
+    }
+
+    if (!err && cinfo->iface < 0) {
 	int n = cinfo->publist[0];
 
 	if (n > 1) {
@@ -1600,12 +1629,20 @@ gchar *get_bundle_plot_function (void *ptr)
     return ret;
 }
 
-int exec_bundle_plot_function (void *ptr, const char *funname)
+int exec_bundle_plot_function (void *ptr, const char *aname)
 {
     gretl_bundle *b = ptr;
     ufunc *func;
     fnargs *args = NULL;
+    char funname[32];
+    int ival = -1;
     int err;
+
+    if (strchr(aname, ':') != NULL) {
+	sscanf(aname, "%31[^:]:%d", funname, &ival);
+    } else {
+	strcpy(funname, aname);
+    }
 
     func = get_user_function_by_name(funname);
 
@@ -1616,13 +1653,37 @@ int exec_bundle_plot_function (void *ptr, const char *funname)
 	if (args == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = push_fn_arg(args, GRETL_TYPE_BUNDLE, b);
+	    const char *bname = gretl_bundle_get_name(b);
+
+	    if (bname != NULL) {
+		/* if the bundle is saved (and so has a name) already, we
+		   should pass a reference by name */
+		err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
+	    } else {
+		/* bundle is not saved, try passing it directly: this
+		   doesn't work yet, flaky: FIXME */
+		err = push_fn_arg(args, GRETL_TYPE_BUNDLE, b);
+	    }
+
+	    if (!err && ival >= 0) {
+		double minv = fn_param_minval(func, 1);
+
+		if (!na(minv)) {
+		    ival += (int) minv;
+		    err = push_fn_arg(args, GRETL_TYPE_INT, &ival);
+		}
+	    }
 	}
     }
 
     if (!err) {
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+
+	/* for now, let's try to see what's happening */
+
 	err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
-				  NULL, NULL, NULL, NULL, NULL);
+				  &Z, datainfo, NULL, NULL, prn);
+	gretl_print_destroy(prn);
     }
 
     fn_args_free(args);

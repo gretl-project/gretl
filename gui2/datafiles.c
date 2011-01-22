@@ -1822,6 +1822,40 @@ static int dirname_done (char **dnames, int ndirs, char *dirname)
     return 0;
 }
 
+static int get_possible_functions_dir (char *fndir, int *ip)
+{
+    int i = *ip, ret = 1;
+
+    *fndir = '\0';
+    
+    if (i == 0) {
+	/* pick up any function files in system dir */
+	build_path(fndir, gretl_home(), "functions", NULL);
+    } else if (i == 1) {
+	/* or any function files in the user's working dir... */
+	strcpy(fndir, gretl_workdir());
+    } else if (i == 2) {
+	/* or in any "functions" subdir thereof */
+	build_path(fndir, gretl_workdir(), "functions", NULL);
+    } else if (i == 3) {
+	/* or any in the user's dotdir */
+	build_path(fndir, gretl_dotdir(), "functions", NULL);
+    } else if (i == 4) {
+	/* or any in the default working dir, if not already searched */
+	const char *wdir = gretl_default_workdir();
+
+	if (wdir != NULL) {
+	    build_path(fndir, wdir, "functions", NULL);
+	} 
+    } else {
+	ret = 0;
+    }
+
+    *ip += 1;
+
+    return ret;
+}
+
 gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 {
     GtkListStore *store;
@@ -1870,31 +1904,9 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	free_strings_array(dnames, ndirs);
     } else {
 	char fndir[FILENAME_MAX];
+	int i = 0;
 
-	for (i=0; i<5; i++) {
-	    *fndir = '\0';
-
-	    if (i == 0) {
-		/* pick up any function files in system dir */
-		build_path(fndir, gretl_home(), "functions", NULL);
-	    } else if (i == 1) {
-		/* plus any function files in the user's working dir... */
-		strcpy(fndir, gretl_workdir());
-	    } else if (i == 2) {
-		/* and in any "functions" subdir thereof */
-		build_path(fndir, gretl_workdir(), "functions", NULL);
-	    } else if (i == 3) {
-		/* plus any in the user's dotdir */
-		build_path(fndir, gretl_dotdir(), "functions", NULL);
-	    } else if (i == 4) {
-		/* plus any in the default working dir, if not already searched */
-		const char *wdir = gretl_default_workdir();
-
-		if (wdir != NULL) {
-		    build_path(fndir, wdir, "functions", NULL);
-		} 
-	    }
-
+	while (get_possible_functions_dir(fndir, &i)) {
 	    if (*fndir != '\0') {
 		dir = opendir(fndir);
 		if (dir != NULL) {
@@ -1944,27 +1956,10 @@ gchar *gretl_function_package_get_path (const char *name)
     gchar *path = NULL;
     char fndir[FILENAME_MAX];
     DIR *dir;
-    int i, found = 0;
+    int found = 0;
+    int i = 0;
 
-    for (i=0; i<5 && !found; i++) {
-	*fndir = '\0';
-
-	if (i == 0) {
-	    build_path(fndir, gretl_home(), "functions", NULL);
-	} else if (i == 1) {
-	    strcpy(fndir, gretl_workdir());
-	} else if (i == 2) {
-	    build_path(fndir, gretl_workdir(), "functions", NULL);
-	} else if (i == 3) {
-	    build_path(fndir, gretl_dotdir(), "functions", NULL);
-	} else if (i == 4) {
-	    const char *wdir = gretl_default_workdir();
-
-	    if (wdir != NULL) {
-		build_path(fndir, wdir, "functions", NULL);
-	    } 
-	}
-
+    while (get_possible_functions_dir(fndir, &i) && !found) {
 	if (*fndir == '\0') {
 	    continue;
 	}
@@ -1977,7 +1972,6 @@ gchar *gretl_function_package_get_path (const char *name)
 	    while ((dirent = readdir(dir)) != NULL && !found) {
 		dname = dirent->d_name;
 		if (!strcmp(dname, name)) {
-		    /* gfn in subdir? */
 		    FILE *fp;
 
 		    path = g_strdup_printf("%s%c%s%c%s.gfn", fndir, SLASH, 
@@ -1990,7 +1984,19 @@ gchar *gretl_function_package_get_path (const char *name)
 			g_free(path);
 			path = NULL;
 		    }
-		} else if (has_suffix(dname, ".gfn")) {
+		}
+	    }
+
+	    if (found) {
+		closedir(dir);
+		break;
+	    } else {
+		rewinddir(dir);
+	    }
+
+	    while ((dirent = readdir(dir)) != NULL && !found) {
+		dname = dirent->d_name;
+		if (has_suffix(dname, ".gfn")) {
 		    strcpy(test, dname);
 		    p = strrchr(test, '.');
 		    *p = '\0';
@@ -2000,6 +2006,7 @@ gchar *gretl_function_package_get_path (const char *name)
 		    }
 		}
 	    }
+
 	    closedir(dir);
 	}
     }
