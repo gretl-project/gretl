@@ -4208,7 +4208,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 	    if (type == GRETL_TYPE_DOUBLE) {
 		edit_scalars();
 	    } else {
-		view_session(NULL);
+		view_session();
 	    }
 	}
     }
@@ -4244,7 +4244,11 @@ static void save_bundle_call (GtkAction *action, gpointer p)
 
 	if (err) {
 	    gui_errmsg(err);
-	} 
+	} else if (show) {
+	    view_session();
+	}
+
+	flip(vwin->ui, "/menubar/Save/bundle", FALSE);
     }   
 }
 

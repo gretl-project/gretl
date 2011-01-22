@@ -4223,7 +4223,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	    }
 	} else if (gentype == GRETL_TYPE_MATRIX) {
 	    if (autoicon_on()) {
-		view_session(NULL);
+		view_session();
 	    } else {
 		n = n_user_matrices();
 		name = get_matrix_name_by_index(n-1);

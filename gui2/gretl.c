@@ -1324,7 +1324,7 @@ static GtkWidget *make_main_window (void)
 
 static void iconview_callback (void)
 {
-    view_session(NULL);
+    view_session();
 }
 
 GtkActionEntry main_entries[] = {

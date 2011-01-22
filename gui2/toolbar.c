@@ -1034,7 +1034,7 @@ static void tbar_model (void)
 static void tbar_iconview (void)
 {
     if (data_status) {
-	view_session(NULL);
+	view_session();
     } else {
 	warnbox(_("Please open a data file first"));
     }

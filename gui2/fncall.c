@@ -1652,7 +1652,7 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     fnargs *args = NULL;
     char funname[32], tmpname[32];
     int plotopt = -1;
-    int err;
+    int err = 0;
 
     *tmpname = '\0';
 
@@ -1682,11 +1682,17 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
 		err = gretl_bundle_stack_as(b, bname);
 	    }
 
+#if 0
+	    fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
+		    (void *) b, bname);
+#endif
+
 	    if (!err) {
 		err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
 	    }
 
 	    if (!err && plotopt >= 0) {
+		/* add plot option to args */
 		double minv = fn_param_minval(func, 1);
 
 		if (!na(minv)) {
@@ -1712,6 +1718,7 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     fn_args_free(args);
 
     if (*tmpname != '\0') {
+	/* we stacked the bundle temporarily; now unstack it */
 	gretl_bundle_pull_from_stack(tmpname, &err);
     }
 

@@ -107,7 +107,7 @@ int highest_numbered_variable_in_session (void);
 
 int is_session_model (void *p);
 
-void view_session (GtkWidget *parent);
+void view_session (void);
 
 void save_session_callback (GtkAction *action);
 

@@ -693,7 +693,7 @@ void save_output_as_text_icon (windata_t *vwin)
 
 	    session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
-	view_session(NULL);
+	view_session();
     }
 }
 
@@ -715,7 +715,7 @@ static int add_model_to_session (void *ptr, const char *name,
     } else if (iconlist != NULL) {
 	session_add_icon(mod, type, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
-	view_session(NULL);
+	view_session();
     }
 
     return 0;
@@ -756,7 +756,7 @@ real_add_graph_to_session (const char *fname, const char *grname,
     if (iconlist != NULL) {
 	session_add_icon(graph, type, ICON_ADD_SINGLE);
     } else if (autoicon_on()) {
-	view_session(NULL);
+	view_session();
     }
 
     return ADD_OBJECT_OK;
@@ -1398,7 +1398,7 @@ void do_open_session (void)
 	/* sync gui with session */
 	session_menu_state(TRUE);
 
-	view_session(NULL);
+	view_session();
 	mark_session_saved();
 	session_switch_log_location(LOG_OPEN);
     }
@@ -2597,7 +2597,7 @@ static void add_user_matrix_callback (void)
 			     ICON_ADD_SINGLE);
 	}
     } else if (autoicon_on()) {
-	view_session(NULL);
+	view_session();
     }
 
     mark_session_changed();
@@ -2613,7 +2613,7 @@ static void add_bundle_callback (void)
 			     ICON_ADD_SINGLE);
 	}
     } else if (autoicon_on()) {
-	view_session(NULL);
+	view_session();
     }
 
     mark_session_changed();
@@ -3402,13 +3402,7 @@ static void iconview_connect_signals (GtkWidget *iconview)
 		     G_CALLBACK(iconview_resize_callback), NULL);
 }
 
-/* @parent: this should be non-NULL only if want to embed the "icon
-   view" of a session inside another widget, which is something that
-   I've experimented with, briefly, but is not an active option as of
-   this writing. AC, 2009-05-02
-*/
-
-void view_session (GtkWidget *parent)
+void view_session (void)
 {
     GtkWidget *hbox, *scroller;
     gchar *title;

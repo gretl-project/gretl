@@ -4768,6 +4768,13 @@ static int do_show_check (int *show, GretlType type)
 {
     int ret = (show != NULL);
 
+    /* don't display the "show" checkbox if the relevant
+       window will be shown anyway: i.e. "autoicon" is
+       on and we're not saving a scalar (scalars have
+       their own window, not auto-shown when "autoicon"
+       is on)
+    */
+
     if (ret && autoicon_on() && type != GRETL_TYPE_DOUBLE) {
 	ret = 0;
     }
