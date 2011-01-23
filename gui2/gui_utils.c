@@ -4291,6 +4291,7 @@ static void add_bundle_menu_items (windata_t *vwin)
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
 
 	if (gretl_bundle_is_temp(bundle)) {
+	    /* bundle is not already saved by name */
 	    GtkActionEntry item;
     
 	    action_entry_init(&item);    
@@ -4319,6 +4320,7 @@ static void add_bundle_menu_items (windata_t *vwin)
 	action_entry_init(&item);
 	
 	if (S != NULL) {
+	    /* the plotfunc has some options available */
 	    gchar *aname;
 	    int i;
 
@@ -4331,6 +4333,7 @@ static void add_bundle_menu_items (windata_t *vwin)
 		g_free(aname);
 	    }		
 	} else {
+	    /* no plotting options to show */
 	    item.name = plotfunc;
 	    item.label = plotfunc;
 	    item.callback = G_CALLBACK(bundle_plot_call);
