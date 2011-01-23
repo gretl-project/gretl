@@ -377,6 +377,7 @@ static int catch_system_alias (char *line, CMD *cmd)
 #define NO_VARLIST(c) (c == APPEND || \
                        c == BREAK || \
                        c == CHOW || \
+		       c == CLEAR || \
 	               c == CUSUM || \
                        c == DATA || \
                        c == END || \

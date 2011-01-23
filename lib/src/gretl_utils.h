@@ -33,8 +33,9 @@
 #define ok_int(x) (x <= (double) INT_MAX && x >= (double) INT_MIN)
 
 enum {
-    SESSION_CLEAR_FULL,
-    SESSION_PRESERVE_MATRICES
+    SESSION_CLEAR_ALL,
+    SESSION_CLEAR_DATASET,
+    SESSION_CLEAR_OTHER
 };
 
 void libgretl_init (void);

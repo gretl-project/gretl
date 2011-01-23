@@ -1264,7 +1264,7 @@ void do_open_session (void)
     }
 
     /* close existing session, if any, and initialize */
-    close_session(NULL, &Z, datainfo, OPT_NONE);
+    close_session(OPT_NONE);
 
     fprintf(stderr, I_("\nReading session file %s\n"), tryfile);
 
@@ -1417,7 +1417,7 @@ void verify_clear_data (void)
 	return;
     }
 
-    close_session(NULL, &Z, datainfo, OPT_NONE); /* FIXME opt */
+    close_session(OPT_NONE); /* FIXME opt */
 }
 
 static void remove_session_dir (void)
@@ -1584,8 +1584,7 @@ static void session_clear_data (double ***pZ, DATAINFO *pdinfo)
     lib_cmd_destroy_context();
 }
 
-void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
-		    gretlopt opt)
+void close_session (gretlopt opt)
 {
     int logcode = LOG_NULL;
 
@@ -1593,9 +1592,9 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
 
-    if (pdinfo != NULL && pdinfo->v > 0) {
+    if (datainfo != NULL && datainfo->v > 0) {
 	logcode = LOG_CLOSE;
-	session_clear_data(pZ, pdinfo); 
+	session_clear_data(&Z, datainfo); 
     }
 
     free_session();
@@ -1621,9 +1620,9 @@ void close_session (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     edit_dialog_special_get_text(NULL);
 
     if (opt & OPT_P) {
-	libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
+	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
     } else {
-	libgretl_session_cleanup(SESSION_CLEAR_FULL);
+	libgretl_session_cleanup(SESSION_CLEAR_ALL);
     }
 
     session_graph_count = 0;

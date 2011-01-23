@@ -8142,7 +8142,7 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (!dbdata && cmd->ci != APPEND) {
-	close_session(s, pZ, pdinfo, cmd->opt);
+	close_session(cmd->opt);
     }
 
     if (ftype == GRETL_CSV) {
@@ -8398,7 +8398,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    break;
 	}
-	close_session(s, pZ, pdinfo, cmd->opt);
+	close_session(cmd->opt);
 	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
 	    errmsg(err, prn);
@@ -8471,9 +8471,19 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
   	}
   	break;
 
+    case CLEAR:
+	if (cmd->opt & OPT_O) {
+	    err = E_NOTIMP;
+	} else if (cmd->opt & OPT_D) {
+	    close_session(OPT_P);
+	} else {
+	    close_session(OPT_NONE);
+	}
+	break;
+
     case DATAMOD:
 	if (cmd->aux == DS_CLEAR) {
-	    close_session(s, pZ, pdinfo, cmd->opt);
+	    close_session(cmd->opt);
 	    break;
 	} else if (cmd->aux == DS_RENUMBER) {
 	    err = script_renumber_series(cmd->param, *pZ, pdinfo, prn);

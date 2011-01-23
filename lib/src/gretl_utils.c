@@ -1706,21 +1706,27 @@ void libgretl_init (void)
 void libgretl_session_cleanup (int mode)
 {
     gretl_saved_objects_cleanup();
-    gretl_transforms_cleanup();
-    gretl_lists_cleanup();
-    gretl_tests_cleanup();
-    gretl_plotx(NULL, NULL);
 
-    if (mode != SESSION_PRESERVE_MATRICES) {
+    if (mode != SESSION_CLEAR_OTHER) {
+	/* trash dataset-related items */
+	gretl_transforms_cleanup();
+	gretl_lists_cleanup();
+	gretl_tests_cleanup();
+	gretl_plotx(NULL, NULL);
+    }
+
+    if (mode != SESSION_CLEAR_DATASET) {
+	/* trash non-dataset items */
 	destroy_user_scalars();
 	destroy_user_matrices();
 	destroy_user_bundles();
+	destroy_user_strings();
     }
 }
 
 void libgretl_cleanup (void)
 {
-    libgretl_session_cleanup(SESSION_CLEAR_FULL);
+    libgretl_session_cleanup(SESSION_CLEAR_ALL);
 
     gretl_rand_free();
     gretl_functions_cleanup();

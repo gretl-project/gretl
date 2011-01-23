@@ -45,6 +45,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { BREAK,    "break" },
     { BXPLOT,   "boxplot" },
     { CHOW,     "chow" },     
+    { CLEAR,    "clear" },
     { COEFFSUM, "coeffsum" },
     { COINT,    "coint" },
     { COINT2,   "coint2" },

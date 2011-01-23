@@ -673,6 +673,21 @@ void saved_strings_cleanup (void)
     clean_up_codevars();
 }
 
+void destroy_user_strings (void)
+{
+    int i;
+
+    for (i=0; i<n_saved_strings; i++) {
+	free(saved_strings[i].s);
+    }
+
+    free(saved_strings);
+    saved_strings = NULL;
+    n_saved_strings = 0;
+
+    clean_up_codevars();
+}
+
 /* called on exiting a user-defined function to clean
    up any strings defined therein */
 

@@ -173,27 +173,44 @@ static void nls_init (void)
 static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 			   MODEL **models)
 {
+    gretlopt clearopt = 0;
     int err = 0;
 
-    *datafile = 0;
-
-    if (pZ != NULL && *pZ != NULL) {
-	err = restore_full_sample(pZ, pdinfo, NULL); 
-	free_Z(*pZ, pdinfo); 
-	*pZ = NULL;
+    if (cmd->ci == CLEAR) {
+	clearopt = cmd->opt;
+    } else {
+	if (cmd->opt & OPT_P) {
+	    /* --preserve: clear dataset only */
+	    clearopt = OPT_D;
+	}
     }
 
-    clear_datainfo(pdinfo, CLEAR_FULL);
+    if (!(clearopt & OPT_O)) {
+	/* OPT_O means "other", i.e. don't scrub the dataset */
+	*datafile = 0;
 
-    data_status = 0;
+	if (pZ != NULL && *pZ != NULL) {
+	    err = restore_full_sample(pZ, pdinfo, NULL); 
+	    free_Z(*pZ, pdinfo); 
+	    *pZ = NULL;
+	}
+
+	clear_datainfo(pdinfo, CLEAR_FULL);
+	data_status = 0;
+    }
 
     clear_model(models[0]);
     clear_model(models[1]);
 
-    if (cmd->opt & OPT_P) {
-	libgretl_session_cleanup(SESSION_PRESERVE_MATRICES);
+    if (clearopt & OPT_D) {
+	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
+    } else if (clearopt & OPT_O) {
+	/* only supported by the "clear" command:
+	   clear stuff _other than_ the dataset
+	*/
+	libgretl_session_cleanup(SESSION_CLEAR_OTHER);
     } else {
-	libgretl_session_cleanup(SESSION_CLEAR_FULL);
+	libgretl_session_cleanup(SESSION_CLEAR_ALL);
     }
 
     set_model_count(0);
@@ -1035,6 +1052,10 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 	    runit++;
 	}
+	break;
+
+    case CLEAR:
+	err = cli_clear_data(cmd, pZ, pdinfo, models);
 	break;
 
     case DATAMOD:

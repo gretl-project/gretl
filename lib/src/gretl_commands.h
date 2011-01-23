@@ -35,6 +35,7 @@ typedef enum {
     BREAK,
     BXPLOT,
     CHOW,
+    CLEAR,
     COEFFSUM,
     COINT,
     COINT2,

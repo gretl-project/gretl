@@ -1096,7 +1096,7 @@ void do_open_data (windata_t *fwin, int code)
 
     /* destroy the current data set, etc., unless we're explicitly appending */
     if (!append) {
-	close_session(NULL, &Z, datainfo, OPT_NONE); /* FIXME opt? */
+	close_session(OPT_NONE); /* FIXME opt? */
     }
 
     if (ftype == GRETL_CSV || ftype == GRETL_OCTAVE) {
