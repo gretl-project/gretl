@@ -24,7 +24,7 @@
 #include "libset.h"
 #include "gretl_scalar.h"
 #include "gretl_string_table.h"
-#include "gretl_xml.h" // ??
+#include "gretl_xml.h"
 #include "gretl_bundle.h"
 
 #include <glib.h>
@@ -387,6 +387,73 @@ static int real_unstack_bundle (int i, int mode)
     }
 
     return err;
+}
+
+char *get_bundle_temp_name (void)
+{
+    char tmpname[VNAMELEN];
+
+    sprintf(tmpname, "btmp___%d", n_saved_bundles);
+    return gretl_strdup(tmpname);
+}
+
+static int bundle_name_is_temp (const char *name)
+{
+    return !strncmp(name, "btmp___", 7) && isdigit(name[7]);
+}
+
+char *get_bundle_default_name (void)
+{
+    char name[VNAMELEN];
+    int i, n = 0;
+
+    for (i=0; i<n_saved_bundles; i++) {
+	if (!bundle_name_is_temp(bundles[i]->name)) {
+	    n++;
+	}
+    } 
+
+    sprintf(name, "bundle%d", n + 1);
+    return gretl_strdup(name);
+}
+
+int gretl_bundle_is_temp (gretl_bundle *bundle)
+{
+    int ret = 0;
+
+    if (bundle != NULL) {
+	if (get_bundle_index(bundle) < 0) {
+	    ret = 1;
+	} else if (bundle_name_is_temp(bundle->name)) {
+	    ret = 1;
+	}
+    }  
+
+    return ret;
+}
+
+/**
+ * gretl_bundle_destroy_if_temp:
+ * @bundle: bundle to destroy, conditionally.
+ *
+ * Frees all contents of @bundle as well as the pointer itself,
+ * if the bundle in question has not been saved on the stack of
+ * named bundles.
+ */
+
+void gretl_bundle_destroy_if_temp (gretl_bundle *bundle)
+{
+    if (bundle != NULL) {
+	int idx = get_bundle_index(bundle);
+
+	if (idx < 0) {
+	    /* not on named stack */
+	    gretl_bundle_destroy(bundle);
+	} else if (bundle_name_is_temp(bundle->name)) {
+	    /* on stack, but with stylized temp name */
+	    real_unstack_bundle(idx, UNSTACK_AND_FREE);
+	}
+    }    
 }
 
 /* Determine whether @name is the name of a saved bundle. */
@@ -904,26 +971,14 @@ int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name)
     } else {
 	err = gretl_bundle_push(bundle, 0);
 
-	if (strcmp(bundle->name, AUTO_BUNDLE) &&
-	    bundle_add_callback != NULL && 
+	if (bundle_add_callback != NULL && 
+	    !bundle_name_is_temp(bundle->name) &&
 	    gretl_function_depth() == 0) {
 	    (*bundle_add_callback)();
 	}
     }
 
     return err;
-}
-
-/* called from GUI to place an anonymous bundle on the saved
-   stack temporarily -- we call gretl_bundle_push with a non-
-   zero second argument so that we don't destroy the bundle
-   in case the "push" fails
-*/
-
-int gretl_bundle_stack_as (gretl_bundle *bundle, const char *name)
-{
-    strcpy(bundle->name, name);
-    return gretl_bundle_push(bundle, 1);
 }
 
 /* replicate on a target bundle a bundled_item from some other

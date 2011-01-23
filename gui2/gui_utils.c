@@ -1405,9 +1405,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (HELP_ROLE(vwin->role)) {
 	    g_free(vwin->data); /* help file text */
 	} else if (vwin->role == VIEW_BUNDLE) {
-	    if (!gretl_bundle_is_stacked(vwin->data)) {
-		gretl_bundle_destroy(vwin->data);
-	    }
+	    gretl_bundle_destroy_if_temp(vwin->data);
 	} 
 
 	if (window_delete_filename(vwin)) {
@@ -4226,32 +4224,6 @@ static void bundle_plot_call (GtkAction *action, gpointer p)
     exec_bundle_plot_function(bundle, gtk_action_get_name(action));
 }
 
-static void save_bundle_call (GtkAction *action, gpointer p)
-{
-    windata_t *vwin = (windata_t *) p;
-    gretl_bundle *bundle = vwin->data;
-    int nb = n_user_bundles();
-    char vname[VNAMELEN];
-    const char *blurb;
-    int resp, show = 0;
-
-    sprintf(vname, "bundle%d", nb + 1);
-    blurb = "Save bundle\nName (max. 15 characters):";
-    resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, blurb, &show);
-
-    if (resp >= 0) {    
-	int err = gretl_bundle_add_or_replace(bundle, vname);
-
-	if (err) {
-	    gui_errmsg(err);
-	} else if (show) {
-	    view_session();
-	}
-
-	flip(vwin->ui, "/menubar/Save/bundle", FALSE);
-    }   
-}
-
 static void add_bundled_item_to_menu (gpointer key, 
 				      gpointer value, 
 				      gpointer data)
@@ -4318,13 +4290,13 @@ static void add_bundle_menu_items (windata_t *vwin)
     if (n > 0) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
 
-	if (!gretl_bundle_is_stacked(bundle)) {
+	if (gretl_bundle_is_temp(bundle)) {
 	    GtkActionEntry item;
     
 	    action_entry_init(&item);    
 	    item.name = "bundle";
 	    item.label = _("Save entire bundle");
-	    item.callback = G_CALLBACK(save_bundle_call);
+	    item.callback = G_CALLBACK(bundle_add_as_icon);
 	    vwin_menu_add_item(vwin, "/menubar/Save", &item);
 	    vwin_menu_add_separator(vwin, "/menubar/Save");
 	}

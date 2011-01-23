@@ -23,8 +23,6 @@
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 
-#define AUTO_BUNDLE "BUNDLE_RET__"
-
 gretl_bundle *gretl_bundle_new (void);
 
 int gretl_is_bundle (const char *name);
@@ -41,6 +39,10 @@ void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,
 			     GretlType *type, int *size, int *err);
 
 const char *gretl_bundle_get_name (gretl_bundle *bundle);
+
+char *get_bundle_temp_name (void);
+
+char *get_bundle_default_name (void);
 
 GretlType gretl_bundle_get_type (gretl_bundle *bundle, const char *key,
 				 int *err);
@@ -73,8 +75,6 @@ int gretl_bundle_delete_data (gretl_bundle *bundle, const char *key);
 void set_bundle_add_callback (void (*callback));
 
 int gretl_bundle_add_or_replace (gretl_bundle *bundle, const char *name);
-
-int gretl_bundle_stack_as (gretl_bundle *bundle, const char *name);
 
 int save_named_bundle (const char *name);
 
@@ -112,6 +112,10 @@ gretl_bundle *gretl_bundle_union (const gretl_bundle *bundle1,
 				  int *err);
 
 void gretl_bundle_destroy (gretl_bundle *bundle);
+
+void gretl_bundle_destroy_if_temp (gretl_bundle *bundle);
+
+int gretl_bundle_is_temp (gretl_bundle *bundle);
 
 int destroy_saved_bundles_at_level (int level);
 

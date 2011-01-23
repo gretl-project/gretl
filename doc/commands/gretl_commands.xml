@@ -1364,31 +1364,21 @@
 	  <flag>--dataset</flag>
 	  <effect>clear dataset only</effect>
 	</option>
-	<option>
-	  <flag>--other</flag>
-	  <effect>see below</effect>
-	</option>
       </options>
     </usage>
 
     <description>
       <para>
-	With no options, clears all saved objects, including the current
-	dataset, out of memory. Note that opening a new dataset, or using
-	the <cmd>nulldata</cmd> command to create an empty dataset, also
-	has this effect, so use of <cmd>clear</cmd> is not usually
-	necessary.
+	With no options, clears all saved objects, including the
+	current dataset if any, out of memory. Note that opening a new
+	dataset, or using the <cmd>nulldata</cmd> command to create an
+	empty dataset, also has this effect, so use of
+	<cmd>clear</cmd> is not usually necessary.
       </para>
       <para>
 	If the <lit>--dataset</lit> option is given, then only the dataset
 	is cleared; other saved objects such as named matrices and scalars
 	are preserved.
-      </para>
-      <para>
-	The <lit>--other</lit> option has the opposite effect of
-	<lit>--dataset</lit>; that is, the current dataset remains in
-	place but all other saved objects are cleared. This option is only
-	available in the command-line program.
       </para>
     </description>
   </command>

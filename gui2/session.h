@@ -78,6 +78,8 @@ int add_model_to_session_callback (void *ptr, GretlObjType type);
 
 void session_model_callback (void *ptr, int action);
 
+void bundle_add_as_icon (GtkAction *action, gpointer p);
+
 void *get_session_object_by_name (const char *name, GretlObjType *type);
 
 int session_matrix_destroy_by_name (const char *name, PRN *prn);

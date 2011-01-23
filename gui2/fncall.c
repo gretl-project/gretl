@@ -1304,6 +1304,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
     ExecState state;
     char fnline[MAXLINE];
+    char *tmpname = NULL;
     const char *funname;
     gretl_bundle *bundle = NULL;
     int attach_bundle = 0;
@@ -1319,7 +1320,11 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	strcat(fnline, cinfo->ret);
 	strcat(fnline, " = ");
     } else if (cinfo->rettype == GRETL_TYPE_BUNDLE) {
-	strcat(fnline, AUTO_BUNDLE);
+	/* make a special arrangement to grab the returned
+	   bundle for GUI purposes 
+	*/
+	tmpname = get_bundle_temp_name();
+	strcat(fnline, tmpname);
 	strcat(fnline, " = ");
 	attach_bundle = 1;
     }	
@@ -1361,11 +1366,14 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 
     if (!err && cinfo->rettype == GRETL_TYPE_BUNDLE) {
 	if (attach_bundle) {
-	    bundle = gretl_bundle_pull_from_stack(AUTO_BUNDLE, &err);
-	    if (gretl_bundle_get_n_keys(bundle) == 0) {
+	    bundle = get_gretl_bundle_by_name(tmpname);
+	    if (bundle != NULL && gretl_bundle_get_n_keys(bundle) == 0) {
+		/* got a useless empty bundle */
+		gretl_bundle_pull_from_stack(tmpname, &err);
 		gretl_bundle_destroy(bundle);
 		bundle = NULL;
 	    }
+	    free(tmpname);
 	} else if (cinfo->ret != NULL) {
 	    bundle = get_gretl_bundle_by_name(cinfo->ret);
 	}
@@ -1633,16 +1641,6 @@ gchar *get_bundle_plot_function (void *ptr)
    package that produced the bundle represented by @ptr, possibly
    inflected by an integer option -- if an option is present it's
    packed into @aname. 
-
-   If the bundle is already saved by name when this function is
-   called, we can pass a reference to the bundle by name. Otherwise
-   (i.e. the bundle is anonymous and is saved only insofar as it's
-   attached to an output window) then we'll have to save it by name
-   temporarily. We can't pass the bundle pointer directly, because the
-   signature of the designated plotting function demands a named
-   reference (and besides, we don't want to be copying a possibly
-   large bundle as a function argument, as we would have to it it were
-   not passed in "pointerized" form).
 */
 
 int exec_bundle_plot_function (void *ptr, const char *aname)
@@ -1650,11 +1648,10 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     gretl_bundle *b = ptr;
     ufunc *func;
     fnargs *args = NULL;
-    char funname[32], tmpname[32];
+    const char *bname;
+    char funname[32];
     int plotopt = -1;
     int err = 0;
-
-    *tmpname = '\0';
 
     if (strchr(aname, ':') != NULL) {
 	/* extract plotting option */
@@ -1665,40 +1662,31 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     }
 
     func = get_user_function_by_name(funname);
+    bname = gretl_bundle_get_name(b);
 
-    if (func == NULL) {
-	err = E_UNKVAR;
+    if (func == NULL || bname == NULL) {
+	err = E_DATA;
     } else {
 	args = fn_args_new();
 	if (args == NULL) {
 	    err = E_ALLOC;
-	} else {
-	    const char *bname = gretl_bundle_get_name(b);
+	}
+    }
 
-	    if (bname == NULL) {
-		/* the bundle is not saved by name, more work needed */
-		strcpy(tmpname, "bundle_arg__");
-		bname = tmpname;
-		err = gretl_bundle_stack_as(b, bname);
-	    }
-
-#if 0
-	    fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
-		    (void *) b, bname);
+    if (!err) {
+#if 1
+	fprintf(stderr, "bundle plot: using bundle %p (%s)\n",
+		(void *) b, bname);
 #endif
+	err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
 
-	    if (!err) {
-		err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
-	    }
+	if (!err && plotopt >= 0) {
+	    /* add plot option to args */
+	    double minv = fn_param_minval(func, 1);
 
-	    if (!err && plotopt >= 0) {
-		/* add plot option to args */
-		double minv = fn_param_minval(func, 1);
-
-		if (!na(minv)) {
-		    plotopt += (int) minv;
-		    err = push_fn_arg(args, GRETL_TYPE_INT, &plotopt);
-		}
+	    if (!na(minv)) {
+		plotopt += (int) minv;
+		err = push_fn_arg(args, GRETL_TYPE_INT, &plotopt);
 	    }
 	}
     }
@@ -1716,11 +1704,6 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     }
 
     fn_args_free(args);
-
-    if (*tmpname != '\0') {
-	/* we stacked the bundle temporarily; now unstack it */
-	gretl_bundle_pull_from_stack(tmpname, &err);
-    }
 
     if (err) {
 	gui_errmsg(err);

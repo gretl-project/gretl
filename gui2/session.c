@@ -1088,6 +1088,41 @@ void model_add_as_icon (GtkAction *action, gpointer p)
     } 	
 }
 
+void bundle_add_as_icon (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    gretl_bundle *bundle = vwin->data;
+    char vname[VNAMELEN];
+    char *defname;
+    const char *blurb;
+    int *pshow, show = 0;
+    int resp;
+
+    defname = get_bundle_default_name();
+    strcpy(vname, defname);
+    free(defname);
+    blurb = "Save bundle\nName (max. 15 characters):";
+    pshow = (iconlist == NULL)? &show : NULL;
+    resp = object_name_entry_dialog(vname, GRETL_TYPE_BUNDLE, blurb, pshow);
+
+    if (resp >= 0) {    
+	int err = gretl_bundle_set_name(bundle, vname);
+
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    if (iconlist != NULL) {
+		session_add_icon(bundle, GRETL_OBJ_BUNDLE, ICON_ADD_SINGLE);
+	    } else if (autoicon_on() || show) {
+		view_session();
+	    }
+	    mark_session_changed();
+	}
+
+	flip(vwin->ui, "/menubar/Save/bundle", FALSE);
+    }   
+}
+
 static void
 session_name_from_session_file (char *sname, const char *fname)
 {
