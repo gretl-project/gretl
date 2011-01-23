@@ -1013,39 +1013,43 @@ int maybe_print_R_path_addition (FILE *fp)
 static void *aligned_offset_malloc (size_t size, size_t alignment, 
 				    size_t offset)
 {
-     void *p0, *p;
+    void *p0, *p;
 
-     if (NOT_POWER_OF_TWO(alignment)) {
-	  errno = EINVAL;
-	  return((void*) 0);
-     }
+    if (NOT_POWER_OF_TWO(alignment)) {
+	errno = EINVAL;
+	return NULL;
+    }
 
-     if (size == 0)
-	  return((void*) 0);
-     if (alignment < sizeof(void *))
-	  alignment = sizeof(void *);
+    if (size == 0)
+	return NULL;
 
-     /* including the extra sizeof(void*) is overkill on a 32-bit
-	machine, since malloc is already 8-byte aligned, as long
-	as we enforce alignment >= 8 ...but oh well */
+    if (alignment < sizeof(void *))
+	alignment = sizeof(void *);
 
-     p0 = malloc(size + (alignment + sizeof(void*)));
-     if (!p0)
-	  return((void*) 0);
-     p = PTR_ALIGN(p0, alignment, offset);
-     ORIG_PTR(p) = p0;
+    /* including the extra sizeof(void*) is overkill on a 32-bit
+       machine, since malloc is already 8-byte aligned, as long
+       as we enforce alignment >= 8 ...but oh well */
 
-     return p;
+    p0 = malloc(size + (alignment + sizeof(void *)));
+    if (!p0) {
+	return NULL;
+    }
+
+    p = PTR_ALIGN(p0, alignment, offset);
+    ORIG_PTR(p) = p0;
+
+    return p;
 }
 
 void *win32_memalign (size_t size, size_t alignment)
 {
-     return aligned_offset_malloc_(size, alignment, 0);
+    return aligned_offset_malloc(size, alignment, 0);
 }
 
 void win32_aligned_free (void *mem)
 {
-     if (memblock)
-	  free(ORIG_PTR(mem));
+    if (mem) {
+	free(ORIG_PTR(mem));
+    }
 }
 
