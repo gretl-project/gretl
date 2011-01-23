@@ -38,6 +38,9 @@
 /* Do we have paths.h? */
 /* #define HAVE_PATHS_H 1 */
 
+/* Do we have stdint.h? */
+#define HAVE_STDINT_H 1 
+
 /* Do we have unistd.h? */
 #define HAVE_UNISTD_H 1 
 

@@ -77,6 +77,10 @@ int R_path_from_registry (char *s, int which);
 
 int maybe_print_R_path_addition (FILE *fp);
 
+void *win32_memalign (size_t size, size_t alignment);
+
+void win32_aligned_free (void *mem);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

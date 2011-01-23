@@ -56,6 +56,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Does unistd.h have getdomainname? */
 #undef GETDOMAINNAME
 
+/* Do we have stdint.h */
+#undef HAVE_STDINT_H
+
 /* Do we have unistd.h */
 #undef HAVE_UNISTD_H
 
@@ -79,6 +82,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /* Do we have vasprintf */
 #undef HAVE_VASPRINTF
+
+/* Do we have posix_memalign */
+#undef HAVE_POSIX_MEMALIGN
 
 /* Do we have the stuff needed for SMTP? */
 #undef HAVE_SYS_SOCKET_H
