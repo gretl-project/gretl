@@ -54,6 +54,8 @@ version 1.9.4, in progress
   spurious values with panel data
 - Fix bug: segfault with nested loops when the outer loop resamples the
   dataset and the inner one generates a series
+- Fix bug: the function isnull() got broken when the argument is the
+  name of a string variable
 
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)

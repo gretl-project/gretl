@@ -2657,7 +2657,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     LOOP_MODEL *lmod;
     LOOP_PRINT *lprn;
     char errline[MAXLINE];
-    int indent0, subst, lrefresh;
+    int indent0, lrefresh;
     int show_activity = 0;
     int j, err = 0;
 
@@ -2701,11 +2701,11 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	while (!err && loop_next_command(line, loop, &j)) {
+	    int subst = 0;
 #if LOOP_DEBUG
 	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
 #endif
 	    strcpy(errline, line);
-	    subst = 0;
 
 	    if (!gretl_if_state_false() && is_compiled_genr(loop, j)) {
 		/* if the current line already has "compiled genr" status,

@@ -620,7 +620,7 @@ double gretl_one_snormal (void)
 {
     if (!env_checked) {
 	box_muller_env_check();
-    }    
+    } 
 
     if (use_box_muller) {
 	return ran_normal_box_muller();

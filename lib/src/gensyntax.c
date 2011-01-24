@@ -634,7 +634,7 @@ static NODE *get_final_string_arg (parser *p, int sym, int eat_last)
 
     if (wrapped) {
 	unwrap_string_arg(p);
-    } else if (sym != F_ISSTRING) {
+    } else if (sym != F_ISSTRING && sym != F_ISNULL) {
 	/* not quoted: give priority to string variables */
 	const char *s = get_string_by_name(p->idstr);
 

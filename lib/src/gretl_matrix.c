@@ -4730,6 +4730,8 @@ gretl_matrix *gretl_matrix_dot_op (const gretl_matrix *a,
 
     if (conftype == CONF_NONE) {
 	fputs("gretl_matrix_dot_op: matrices not conformable\n", stderr);
+	fprintf(stderr, " op = '%c', A is %d x %d, B is %d x %d\n",
+		(char) op, a->rows, a->cols, b->rows, b->cols);
 	*err = E_NONCONF;
 	return NULL;
     }	

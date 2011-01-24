@@ -3709,6 +3709,8 @@ static NODE *object_status (NODE *n, int f, parser *p)
 		ret->v.xval = 0.0;
 	    } else if (get_string_by_name(s)) {
 		ret->v.xval = 0.0;
+	    } else if (get_gretl_bundle_by_name(s)) {
+		ret->v.xval = 0.0;
 	    }
 	} else if (f == F_OBSNUM) {
 	    int t = get_observation_number(s, p->dinfo);
