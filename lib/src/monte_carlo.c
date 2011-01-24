@@ -147,6 +147,7 @@ struct LOOPSET_ {
 
     /* subsidiary objects */
     char **lines;
+    char *genlines;
     int *ci;
     char **eachstrs;
     GENERATOR **genrs;
@@ -422,6 +423,7 @@ static void gretl_loop_init (LOOPSET *loop)
 
     loop->lines = NULL;
     loop->ci = NULL;
+    loop->genlines = NULL;
     loop->model_lines = NULL;
 
     loop->eachstrs = NULL;
@@ -485,21 +487,14 @@ static void gretl_loop_destroy (LOOPSET *loop)
 	free(loop->lines);
     }
 
-    if (loop->ci != NULL) { 
-	free(loop->ci);
-    }
-
-    if (loop->model_lines != NULL) { 
-	free(loop->model_lines);
-    }    
+    free(loop->ci);
+    free(loop->model_lines);
+    free(loop->models);
+    free(loop->genlines);
 
     if (loop->eachstrs != NULL) {
 	free_strings_array(loop->eachstrs, loop->itermax);
     }
-
-    if (loop->models != NULL) {
-	free(loop->models);
-    } 
 
     if (loop->lmodels != NULL) {
 	for (i=0; i<loop->n_loop_models; i++) {
@@ -2542,6 +2537,7 @@ static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
     loop->genrs[n] = genr;
     loop->n_genrs = n + 1;
     genr_set_loopline(genr, lno);
+    loop->genlines[lno] = 1;
 
     return 0;
 }
@@ -2553,6 +2549,14 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
 {
     GENERATOR *genr;
     int i, ll;
+
+    if (loop->genlines == NULL) {
+	loop->genlines = calloc(loop->n_cmds, 1);
+	if (loop->genlines == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    }
 
     for (i=0; i<loop->n_genrs; i++) {
 	ll = genr_get_loopline(loop->genrs[i]);
@@ -2615,6 +2619,18 @@ static int next_command (char *targ, LOOPSET *loop, int *pj)
 
     return ret;
 }
+
+static int loop_process_error (int err, PRN *prn)
+{
+    if (libset_get_bool(HALT_ON_ERR) == 0) {
+	errmsg(err, prn);
+	err = 0;
+    }
+
+    return err;
+}
+
+#define is_compiled_genr(l,j) (l->genlines != NULL && l->genlines[j])
 
 static int block_model (CMD *cmd)
 {
@@ -2689,6 +2705,31 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #endif
 	    strcpy(errline, line);
 
+	    if (is_compiled_genr(loop, j)) {
+		/* if the current line already has "compiled genr" status,
+		   we should be able to skip several steps that are
+		   potentially quite time-comsuming 
+		*/
+		if (gretl_echo_on() && !loop_is_quiet(loop)) {
+		    pprintf(prn, "? %s\n", line);
+		}
+		genr = get_loop_genr_by_line(loop, j, line, pZ, pdinfo, &err);
+		if (!err) {
+		    err = execute_genr(genr, pZ, pdinfo, OPT_L, prn);
+		}
+		if (err) {
+		    err = loop_process_error(err, prn);
+		} else if (is_list_loop(loop) && 
+			   maybe_refresh_list(cmd, loop, line)) {
+		    loop_list_refresh(loop, pdinfo);
+		}
+		if (err) {
+		    break;
+		} else {
+		    continue;
+		}
+	    }
+
 	    if (strchr(line, '$')) {
 		err = make_dollar_substitutions(line, loop, 
 						(const double **) *pZ,
@@ -2712,12 +2753,10 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    if (cmd->ci < 0) {
 		continue;
 	    } else if (err) {
-		if (libset_get_bool(HALT_ON_ERR)) {
+		err = loop_process_error(err, prn);
+		if (err) {
 		    break;
 		} else {
-		    /* try soldiering on */
-		    errmsg(err, prn);
-		    err = 0;
 		    continue;
 		}
 	    } else {
@@ -2811,13 +2850,13 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				     cmd->word);
 		err = 1;
 	    } else if (cmd->ci == GENR) {
-		if (!loop_is_verbose(loop)) {
-		    cmd->opt |= OPT_Q;
-		}
 		if (subst || (cmd->opt & OPT_U)) {
 		    /* can't use a "compiled" genr if string substitution
 		       has been done, since the genr expression will not
 		       be constant */
+		    if (!loop_is_verbose(loop)) {
+			cmd->opt |= OPT_Q;
+		    }
 		    err = generate(line, pZ, pdinfo, cmd->opt, prn);
 		} else {
 		    genr = get_loop_genr_by_line(loop, j, line, pZ, pdinfo, &err);
