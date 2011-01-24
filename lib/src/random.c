@@ -29,7 +29,7 @@
 #include "../../rng/SFMT.c"
 
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OSX_BUILD) || defined(WIN32)
-# define USE_SFMT_ARRAYS 1 /* needs more testing first */
+# define USE_SFMT_ARRAYS 0 /* faster, but needs more testing */
 #else
 # define USE_SFMT_ARRAYS 0
 #endif
