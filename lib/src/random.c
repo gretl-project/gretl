@@ -29,7 +29,7 @@
 #include "../../rng/SFMT.c"
 
 #if defined(HAVE_POSIX_MEMALIGN) || defined(OSX_BUILD) || defined(WIN32)
-# define USE_SFMT_ARRAYS 0 /* needs more testing first */
+# define USE_SFMT_ARRAYS 1 /* needs more testing first */
 #else
 # define USE_SFMT_ARRAYS 0
 #endif
@@ -54,7 +54,6 @@
 
 static GRand *gretl_rand;
 static guint32 useed;
-static int gen_rand_called;
 static int use_sfmt = 1;
 
 static guint32 gretl_rand_octet (guint32 *sign);
@@ -90,6 +89,35 @@ static void *gretl_memalign (size_t size, int *err)
 
 #define RSIZE (MEXP / 128 + 1) * 4
 
+static guint32 *rbuf;
+static int r_i;
+
+static int sfmt_array_setup (void)
+{
+    int err = 0;
+
+    if (rbuf == NULL) {
+	rbuf = gretl_memalign(RSIZE * sizeof *rbuf, &err);
+	if (!err) {
+	    fprintf(stderr, "doing sfmt_array_setup, RSIZE=%d\n", RSIZE);
+	    fill_array32(rbuf, RSIZE);
+	    r_i = 0;
+	}
+    }
+
+    return err;
+}
+
+static void sfmt_array_cleanup (void)
+{
+#if defined(WIN32) && !defined(HAVE_POSIX_MEMALIGN)
+    win32_aligned_free(rbuf);
+#else
+    free(rbuf);
+#endif
+    rbuf = NULL;
+}
+
 static int sfmt_fill_U01_array (double *a, int t1, int t2, int n)
 {
     guint32 *buf;
@@ -104,13 +132,6 @@ static int sfmt_fill_U01_array (double *a, int t1, int t2, int n)
     buf = gretl_memalign(n * sizeof *buf, &err);
     if (err) {
 	return err;
-    }
-
-    if (gen_rand_called) {
-	guint32 r = gen_rand32();
-
-	init_gen_rand(r);
-	gen_rand_called = 0;
     }
 
     fill_array32(buf, n);
@@ -131,7 +152,12 @@ static int sfmt_fill_U01_array (double *a, int t1, int t2, int n)
 
 static inline guint32 sfmt_rand32 (void)
 {
-    return gen_rand_called = 1, gen_rand32();
+    if (r_i == RSIZE) {
+	fill_array32(rbuf, RSIZE);
+	r_i = 0;
+    }
+
+    return rbuf[r_i++];
 }
 
 #else
@@ -150,7 +176,9 @@ void gretl_rand_init (void)
 {
     useed = time(NULL);
     init_gen_rand(useed);
-    gen_rand_called = 0;
+#if USE_SFMT_ARRAYS
+    sfmt_array_setup();
+#endif
     if (gretl_rand == NULL) {
 	gretl_rand = g_rand_new();
     }
@@ -165,6 +193,9 @@ void gretl_rand_init (void)
 
 void gretl_rand_free (void)
 {
+#if USE_SFMT_ARRAYS
+    sfmt_array_cleanup();
+#endif
     g_rand_free(gretl_rand);
     gretl_rand = NULL;
 }

@@ -2690,7 +2690,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #if LOOP_DEBUG
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
-	j = lrefresh = subst = 0;
+	j = lrefresh = 0;
 
 	pmod = NULL;
 	lmod = NULL;
