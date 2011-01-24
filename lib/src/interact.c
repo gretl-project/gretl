@@ -3968,6 +3968,12 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 	}
 	print_start_redirection(prn, NULL);
 	strcpy(outname, fname);
+    } else if (!strcmp(fname, "stderr")) {
+	if (gretl_messages_on()) {
+	   pputs(prn, _("Now writing output to stderr\n"));
+	}
+	print_start_redirection(prn, stderr);
+	*outname = '\0';
     } else {
 	FILE *fp;
 

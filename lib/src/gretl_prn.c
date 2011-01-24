@@ -1110,7 +1110,9 @@ int print_end_redirection (PRN *prn)
 	if (prn->fixed) {
 	    prn->fixed = 0;
 	} else if (prn->fp != NULL) {
-	    fclose(prn->fp);
+	    if (prn->fp != stdout && prn->fp != stderr) {
+		fclose(prn->fp);
+	    }
 	    prn->fp = prn->fpaux;
 	    prn->fpaux = NULL;
 	}
