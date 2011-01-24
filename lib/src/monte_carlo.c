@@ -2537,7 +2537,7 @@ static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
     loop->genrs[n] = genr;
     loop->n_genrs = n + 1;
     genr_set_loopline(genr, lno);
-    loop->genlines[lno] = 1;
+    loop->genlines[lno-1] = 1;
 
     return 0;
 }
@@ -2606,7 +2606,7 @@ static int loop_print_save_model (MODEL *pmod, DATAINFO *pdinfo,
    stack of loop commands.
 */
 
-static int next_command (char *targ, LOOPSET *loop, int *pj)
+static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
 {
     int ret = 1, j = *pj;
 
@@ -2630,7 +2630,8 @@ static int loop_process_error (int err, PRN *prn)
     return err;
 }
 
-#define is_compiled_genr(l,j) (l->genlines != NULL && l->genlines[j])
+/* note: j is a 1-based line index */
+#define is_compiled_genr(l,j) (l->genlines != NULL && l->genlines[j-1])
 
 static int block_model (CMD *cmd)
 {
@@ -2699,11 +2700,12 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    print_loop_progress(loop, pdinfo, prn);
 	}
 
-	while (!err && next_command(line, loop, &j)) {
+	while (!err && loop_next_command(line, loop, &j)) {
 #if LOOP_DEBUG
 	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
 #endif
 	    strcpy(errline, line);
+	    subst = 0;
 
 	    if (is_compiled_genr(loop, j)) {
 		/* if the current line already has "compiled genr" status,
