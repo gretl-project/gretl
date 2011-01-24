@@ -2570,11 +2570,11 @@ static GENERATOR *get_loop_genr_by_line (LOOPSET *loop, int lno,
 
     genr = genr_compile(line, pZ, pdinfo, OPT_NONE, err);
 
-#if LOOP_DEBUG > 1
-    fprintf(stderr, "compiled loop genr, err = %d\n", *err);
-#endif
-
     if (!*err) {
+#if LOOP_DEBUG > 1
+	fprintf(stderr, "compiled genr on line %d of loop %p:\n"
+		" '%s'\n", lno, (void *) loop, line);
+#endif
 	*err = add_loop_genr(loop, genr, lno);
     }
 
@@ -2707,17 +2707,17 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    strcpy(errline, line);
 	    subst = 0;
 
-	    if (is_compiled_genr(loop, j)) {
+	    if (!gretl_if_state_false() && is_compiled_genr(loop, j)) {
 		/* if the current line already has "compiled genr" status,
 		   we should be able to skip several steps that are
-		   potentially quite time-comsuming 
+		   potentially quite time-consuming 
 		*/
 		if (gretl_echo_on() && !loop_is_quiet(loop)) {
 		    pprintf(prn, "? %s\n", line);
 		}
 		genr = get_loop_genr_by_line(loop, j, line, pZ, pdinfo, &err);
 		if (!err) {
-		    err = execute_genr(genr, pZ, pdinfo, OPT_L, prn);
+		    err = execute_genr(genr, pZ, pdinfo, prn);
 		}
 		if (err) {
 		    err = loop_process_error(err, prn);
@@ -2863,7 +2863,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		} else {
 		    genr = get_loop_genr_by_line(loop, j, line, pZ, pdinfo, &err);
 		    if (!err) {
-			err = execute_genr(genr, pZ, pdinfo, OPT_L, prn);
+			err = execute_genr(genr, pZ, pdinfo, prn);
 		    }
 		}
 	    } else {

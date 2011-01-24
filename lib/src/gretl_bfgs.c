@@ -1257,7 +1257,7 @@ static double user_get_criterion (const double *b, void *p)
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gf, u->Z, u->dinfo, OPT_S, u->prn); 
+    err = execute_genr(u->gf, u->Z, u->dinfo, u->prn); 
 
     if (err) {
 	return NADBL;
@@ -1297,7 +1297,7 @@ static int user_get_gradient (double *b, double *g, int k,
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gg, u->Z, u->dinfo, OPT_S, u->prn); 
+    err = execute_genr(u->gg, u->Z, u->dinfo, u->prn); 
 
     if (err) {
 	return err;
@@ -1368,7 +1368,7 @@ static int user_gen_setup (umax *u,
 
     if (!err) {
 	/* see if the formula actually works */
-	err = execute_genr(u->gf, pZ, pdinfo, OPT_S, u->prn);
+	err = execute_genr(u->gf, pZ, pdinfo, u->prn);
     }
 
     if (!err && gradcall != NULL) {
@@ -1377,7 +1377,7 @@ static int user_gen_setup (umax *u,
 	if (!err) {
 	    u->gg = genr_compile(gradcall, pZ, pdinfo, OPT_P | OPT_U, &err);
 	    if (!err) {
-		err = execute_genr(u->gg, pZ, pdinfo, OPT_S, u->prn);
+		err = execute_genr(u->gg, pZ, pdinfo, u->prn);
 	    } 
 	}
     }
@@ -1474,7 +1474,7 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
     gretl_matrix_print(u->b, "user_calc_fvec: u->b");
 #endif
 
-    err = execute_genr(u->gf, u->Z, u->dinfo, OPT_S, u->prn); 
+    err = execute_genr(u->gf, u->Z, u->dinfo, u->prn); 
     if (err) {
 	fprintf(stderr, "execute_genr: err = %d\n", err); 
     }

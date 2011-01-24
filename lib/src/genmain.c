@@ -876,7 +876,7 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 /* run a previously compiled generator */
 
 int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt, PRN *prn)
+		  PRN *prn)
 {
 #if GDEBUG
     fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p\n", 

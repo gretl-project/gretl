@@ -271,7 +271,7 @@ static int nls_genr_setup (nlspec *s)
 	   while we're at it
 	*/
 	genr_set_na_check(genrs[i]);
-	err = execute_genr(genrs[i], s->Z, s->dinfo, OPT_S, s->prn);
+	err = execute_genr(genrs[i], s->Z, s->dinfo, s->prn);
 	genr_unset_na_check(genrs[i]);
 
 	if (err) {
@@ -372,7 +372,7 @@ static int nls_auto_genr (nlspec *s, int i)
 #if NLS_DEBUG
 	fprintf(stderr, " generating aux var %d:\n %s\n", j, s->aux[j]);
 #endif
-	s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
+	s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
 	if (s->generr) {
 	    return s->generr;
 	} 
@@ -389,7 +389,7 @@ static int nls_auto_genr (nlspec *s, int i)
 	    s->naux, i, j, j, (void *) s->genrs[j]);
     fprintf(stderr, " Z[%d] = %p\n", s->dinfo->v-1, (void *) (*s->Z)[s->dinfo->v-1]);
 #endif
-    s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, OPT_S, s->prn);
+    s->generr = execute_genr(s->genrs[j], s->Z, s->dinfo, s->prn);
 
     /* make sure we have a correct pointer to matrix deriv */
     if (!s->generr && i > 0 && matrix_deriv(s, i-1)) {

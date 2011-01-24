@@ -129,7 +129,7 @@ GENERATOR *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, int *err);
 
 int execute_genr (GENERATOR *genr, double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt, PRN *prn);
+		  PRN *prn);
 
 void destroy_genr (GENERATOR *genr);
 
