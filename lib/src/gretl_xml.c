@@ -2637,16 +2637,16 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
 
     if (doc == NULL) {
 	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
-	*err = 1;
+	*err = E_DATA;
     } else {
 	node = xmlDocGetRootElement(doc);
 	if (node == NULL) {
 	    gretl_errmsg_sprintf(_("%s: empty document"), fname);
-	    *err = 1;
+	    *err = E_DATA;
 	} else {
 	    ret = gretl_strdup((char *) node->name);
 	    if (ret == NULL) {
-		*err = 1;
+		*err = E_ALLOC;
 	    }
 	}
     }
@@ -2800,6 +2800,9 @@ int load_user_XML_file (const char *fname)
     int err = 0;
 
     rootname = gretl_xml_get_doc_type(fname, &err);
+    if (err) {
+	return err;
+    }
 
     if (!strcmp(rootname, "gretl-functions")) {
 	err = load_function_package_by_filename(fname);

@@ -3376,7 +3376,7 @@ int load_function_package_by_filename (const char *fname)
     }
 
     if (err) {
-	fprintf(stderr, "load_function_package_from_file: failed on %s\n", fname);
+	fprintf(stderr, "load function package: failed on %s\n", fname);
     }
 
     return err;
