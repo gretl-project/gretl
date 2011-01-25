@@ -183,6 +183,10 @@ void gretl_rand_init (void)
 	gretl_rand = g_rand_new();
     }
     gretl_rand_set_seed((guint32) useed);
+
+    if (getenv("GRETL_RAND_GLIB")) {
+	use_sfmt = 0;
+    }
 }
 
 /**
