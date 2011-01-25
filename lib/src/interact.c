@@ -3948,7 +3948,7 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 	    return 1;
 	} else {
 	    print_end_redirection(prn);
-	    if (gretl_messages_on()) {
+	    if (gretl_messages_on() && *outname != '\0') {
 		pprintf(prn, _("Closed output file '%s'\n"), outname);
 	    }
 	    return 0;
@@ -3967,12 +3967,12 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
 	   pputs(prn, _("Now discarding output\n")); 
 	}
 	print_start_redirection(prn, NULL);
-	strcpy(outname, fname);
+	*outname = '\0';
     } else if (!strcmp(fname, "stderr")) {
-	if (gretl_messages_on()) {
-	   pputs(prn, _("Now writing output to stderr\n"));
-	}
 	print_start_redirection(prn, stderr);
+	*outname = '\0';
+    } else if (!strcmp(fname, "stdout")) {
+	print_start_redirection(prn, stdout);
 	*outname = '\0';
     } else {
 	FILE *fp;

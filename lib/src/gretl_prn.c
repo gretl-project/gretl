@@ -1081,7 +1081,9 @@ int print_start_redirection (PRN *prn, FILE *fp)
 	    /* disable printing */
 	    prn->fixed = 1;
 	} else {
-	    /* hook output to specified file */
+	    /* record current stream in fpaux, and
+	       hook output to specified stream
+	    */
 	    prn->fpaux = prn->fp;
 	    prn->fp = fp;
 	}

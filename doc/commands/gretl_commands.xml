@@ -7336,10 +7336,13 @@
 	go to <filename>regress.txt</filename> rather than the screen.
       </para>
       <para>
-	In a variant on the above, if you give the keyword <lit>null</lit>
-	in place of a real filename along with the <opt>--write</opt>
-	option, the effect is to suppress all printed output until
-	the next <lit>outfile --close</lit>.
+	Three special variants on the above are available. If you give the
+	keyword <lit>null</lit> in place of a real filename along with the
+	<opt>--write</opt> option, the effect is to suppress all printed
+	output until the next <lit>outfile --close</lit>. In addition if
+	the keywords <lit>stdout</lit> or <lit>stderr</lit> are given in
+	place of a regular filename the effect is to redirect output to
+	standard output or standard error output respectively.
       </para>
     </description>
 
