@@ -2606,7 +2606,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /* arbond special: if there's a block-diagonal instruments
        portion to the command, grab that in literal form for
-       later processing */
+       later processing. Note that this modifies @line, cutting
+       out the special GMM() bits and storing them in cmd->param.
+    */
     if ((cmd->ci == ARBOND || cmd->ci == DPANEL) && get_sepcount(line) == 2) {
 	grab_arbond_diag(line, cmd);
 	if (cmd->err) {
@@ -2712,7 +2714,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->err) {
 	cmd->context = 0;
-	/* FIXME respond to CATCH flag here? */
     }
 
 #if CMD_DEBUG
