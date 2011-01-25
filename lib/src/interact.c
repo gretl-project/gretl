@@ -68,6 +68,8 @@ typedef struct {
 
 #define cmd_set_nolist(c) (c->flags |= CMD_NOLIST)
 #define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
+#define cmd_set_foreign(c) (c->flags |= CMD_FOREIGN)
+#define cmd_unset_foreign(c) (c->flags &= ~CMD_FOREIGN)
 
 static void get_optional_filename_etc (const char *s, CMD *cmd);
 
@@ -1936,6 +1938,7 @@ static int gretl_cmd_clear (CMD *cmd)
     cmd->opt = OPT_NONE;
 
     cmd_unset_nolist(cmd);
+    cmd_unset_foreign(cmd);
 
     if (cmd->list == NULL || cmd->param == NULL || cmd->extra == NULL) {
 	cmd->err = E_ALLOC;
@@ -2380,29 +2383,30 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     gretl_error_clear();
 
-    cmd->err = substitute_named_strings(line, &subst);
-    if (cmd->err) {
-	return cmd->err;
-    }
+#if CMD_DEBUG
+    fprintf(stderr, "parse_command_line: '%s'\n", line);
+#endif
 
-    if (subst) {
-	/* record the fact that substitution has been done */
-	cmd->flags |= CMD_SUBST;
-    } else {
-	cmd->flags &= ~CMD_SUBST;
+    if (!cmd_loop(cmd)) {
+	cmd->err = substitute_named_strings(line, &subst);
+	if (cmd->err) {
+	    return cmd->err;
+	} else if (subst) {
+	    /* record the fact that substitution has been done */
+	    cmd->flags |= CMD_SUBST;
+	} else {
+	    cmd->flags &= ~CMD_SUBST;
+	}
     }
 
     if (cmd->context == FOREIGN && !end_foreign(line)) {
 	cmd_set_nolist(cmd);
+	cmd_set_foreign(cmd);
 	cmd->ci = FOREIGN;
 	return 0;
     }
 
     compress_spaces(line);
-
-#if CMD_DEBUG
-    fprintf(stderr, "parsing: '%s'\n", line);
-#endif
 
     /* trap lines that are nothing but comments */
     if (filter_comments(line, cmd)) {
@@ -2441,12 +2445,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } else if (cmd->context == SYSTEM) {
 	catch_system_alias(line, cmd);
     }
-
-    /* special: list <listname> delete */
-    if (cmd->ci == DELEET && *cmd->extra != '\0') {
-	cmd_set_nolist(cmd);
-	return cmd->err;
-    }	
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
     if (!strcmp(cmd->word, "end")) {
@@ -2494,6 +2492,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (flow_control(line, pZ, pdinfo, cmd)) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
+	return cmd->err;
+    }
+
+    /* special: list <listname> delete */
+    if (cmd->ci == DELEET && *cmd->extra != '\0') {
+	cmd_set_nolist(cmd);
 	return cmd->err;
     }
 
@@ -2614,6 +2618,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->err) {
 	    return cmd->err;
 	}
+	cmd->flags |= CMD_SUBST;
     } 
 
     /* find the number of space-separated fields remaining
