@@ -20,6 +20,7 @@ version 1.9.4, in progress
   --quiet option for "system"
 - "summary" command: add an option to print summary stats for the columns 
   of a named matrix
+- "outfile" command: add facility to redirect output to stderr or stdout
 - New function, errmsg(): returns the gretl error message associated with 
   a given integer error code
 - New function, rownames(): complements the colnames() function for 
