@@ -56,7 +56,7 @@ enum loop_types {
 			 l->type == EACH_LOOP)
 
 typedef struct {
-    int linenum;   /* location: line number in loop */
+    int lineno;    /* location: line number in loop */
     int n;         /* number of repetitions */
     int *list;     /* list of vars to print */
     bigval *sum;   /* running sum of values */
@@ -69,7 +69,7 @@ typedef struct {
 /* below: used only in "progressive" loops */ 
 
 typedef struct {
-    int linenum;            /* location: line number in loop */
+    int lineno;             /* location: line number in loop */
     int n;                  /* number of repetitions */
     int nc;                 /* number of coefficients */
     MODEL *model0;          /* copy of initial model */
@@ -85,7 +85,7 @@ typedef struct {
 } LOOP_MODEL;
 
 typedef struct {
-    int linenum;      /* location: line number in loop */ 
+    int lineno;       /* location: line number in loop */ 
     int n;            /* number of observations */
     char *fname;      /* filename for output */
     gretlopt opt;     /* formatting option */
@@ -112,10 +112,7 @@ typedef struct controller_ controller;
 enum loop_command_codes {
     LOOP_CMD_GEN     = 1 << 0, /* compiled genr */
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
-    LOOP_CMD_NOSUB   = 1 << 2, /* no @-string substitution this line */
-    LOOP_CMD_NODOL   = 1 << 3, /* no $-string substitution this line */
-    LOOP_CMD_CATCH   = 1 << 4, /* "catch" facility is applied */
-    LOOP_CMD_FOREIGN = 1 << 5  /* foreign, no parsing wanted */
+    LOOP_CMD_NODOL   = 1 << 2  /* no $-string substitution this line */
 };
 
 struct loop_command_ {
@@ -383,7 +380,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     loop->children = children;
     loop->children[nc] = child;
     child->parent = loop;
-    child->parent_line = loop->n_cmds + 1;
+    child->parent_line = loop->n_cmds;
     child->level = loop->level + 1;
 
 #if LOOP_DEBUG
@@ -398,7 +395,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
 
 static void loop_store_init (LOOP_STORE *lstore)
 {
-    lstore->linenum = -1;
+    lstore->lineno = -1;
     lstore->n = 0;
     lstore->fname = NULL;
     lstore->opt = OPT_NONE;
@@ -1352,7 +1349,7 @@ static void loop_model_zero (LOOP_MODEL *lmod, int started)
 
 static void loop_model_init (LOOP_MODEL *lmod, int lno)
 {
-    lmod->linenum = lno;
+    lmod->lineno = lno;
     lmod->nc = 0;
     lmod->model0 = NULL;
     lmod->bigarray = NULL;
@@ -1439,15 +1436,20 @@ static void loop_print_free (LOOP_PRINT *lprn)
     free(lprn->na);
 }
 
-static void loop_print_zero (LOOP_PRINT *lprn)
+static void loop_print_zero (LOOP_PRINT *lprn, int started)
 {
     int i;
 
     lprn->n = 0;
 
     for (i=0; i<lprn->list[0]; i++) { 
-	mpf_init(lprn->sum[i]);
-	mpf_init(lprn->ssq[i]);
+	if (started) {
+	    mpf_set_d(lprn->sum[i], 0.0);
+	    mpf_set_d(lprn->ssq[i], 0.0);
+	} else {
+	    mpf_init(lprn->sum[i]);
+	    mpf_init(lprn->ssq[i]);
+	}
 	lprn->xbak[i] = NADBL;
 	lprn->diff[i] = 0;
 	lprn->na[i] = 0;
@@ -1456,7 +1458,7 @@ static void loop_print_zero (LOOP_PRINT *lprn)
 
 static void loop_print_init (LOOP_PRINT *lprn, int lno)
 {
-    lprn->linenum = lno;
+    lprn->lineno = lno;
     lprn->list = NULL;
     lprn->sum = NULL;
     lprn->ssq = NULL;
@@ -1490,7 +1492,7 @@ static int loop_print_start (LOOP_PRINT *lprn, const int *list)
     lprn->na = malloc(k);
     if (lprn->na == NULL) goto cleanup;
 
-    loop_print_zero(lprn);
+    loop_print_zero(lprn, 0);
 
     return 0;
 
@@ -1512,7 +1514,7 @@ static LOOP_PRINT *get_loop_print_by_line (LOOPSET *loop, int lno, int *err)
     int i, np = loop->n_prints;
 
     for (i=0; i<np; i++) {
-	if (loop->prns[i].linenum == lno) {
+	if (loop->prns[i].lineno == lno) {
 	    return &loop->prns[i];
 	}
     }
@@ -1539,7 +1541,7 @@ static void loop_store_free (LOOP_STORE *lstore)
     free(lstore->fname);
     lstore->fname = NULL;
 
-    lstore->linenum = -1;
+    lstore->lineno = -1;
     lstore->n = 0;
     lstore->opt = OPT_NONE;
 }
@@ -1615,7 +1617,7 @@ static int loop_store_update (LOOPSET *loop, int lno,
 {
     int i, t, err = 0;
 
-    if (loop->store.linenum >= 0 && loop->store.linenum != lno) {
+    if (loop->store.lineno >= 0 && loop->store.lineno != lno) {
 	gretl_errmsg_set("Only one 'store' command is allowed in a "
 			 "progressive loop");
 	return E_DATA;
@@ -1629,7 +1631,7 @@ static int loop_store_update (LOOPSET *loop, int lno,
 	}
     }
 
-    loop->store.linenum = lno;
+    loop->store.lineno = lno;
     t = loop->store.n;
 
     if (t >= loop->store.dinfo->n) {
@@ -1656,16 +1658,16 @@ static MODEL *get_model_record_by_line (LOOPSET *loop, int lno, int *err)
 {
     MODEL **models, *pmod;
     int *modlines;
-    int nm = loop->n_models;
+    int n = loop->n_models;
     int i;
 
-    for (i=0; i<nm; i++) {
+    for (i=0; i<n; i++) {
 	if (lno == loop->model_lines[i]) {
 	    return loop->models[i];
 	}
     }
 
-    modlines = realloc(loop->model_lines, (nm + 1) * sizeof *modlines);
+    modlines = realloc(loop->model_lines, (n + 1) * sizeof *modlines);
     if (modlines == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1673,7 +1675,7 @@ static MODEL *get_model_record_by_line (LOOPSET *loop, int lno, int *err)
 	loop->model_lines = modlines;
     }
 
-    models = realloc(loop->models, (nm + 1) * sizeof *models);
+    models = realloc(loop->models, (n + 1) * sizeof *models);
     if (models == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -1687,9 +1689,9 @@ static MODEL *get_model_record_by_line (LOOPSET *loop, int lno, int *err)
 	return NULL;
     }
 
-    loop->model_lines[nm] = lno;
-    pmod->ID = nm + 1;
-    loop->models[nm] = pmod;
+    loop->model_lines[n] = lno;
+    pmod->ID = n + 1;
+    loop->models[n] = pmod;
     loop->n_models += 1;
 
     return pmod;
@@ -1721,7 +1723,7 @@ static LOOP_MODEL *
 get_loop_model_by_line (LOOPSET *loop, int lno, int *err)
 {
     LOOP_MODEL *lmods;
-    int nlm = loop->n_loop_models;
+    int n = loop->n_loop_models;
     int i;
 
 #if LOOP_DEBUG
@@ -1729,23 +1731,23 @@ get_loop_model_by_line (LOOPSET *loop, int lno, int *err)
 	    loop->n_loop_models);
 #endif
 
-    for (i=0; i<nlm; i++) {
-	if (loop->lmodels[i].linenum == lno) {
+    for (i=0; i<n; i++) {
+	if (loop->lmodels[i].lineno == lno) {
 	    return &loop->lmodels[i];
 	}
     }
 
-    lmods = realloc(loop->lmodels, (nlm + 1) * sizeof *loop->lmodels);
+    lmods = realloc(loop->lmodels, (n + 1) * sizeof *loop->lmodels);
     if (lmods == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
     loop->lmodels = lmods;
-    loop_model_init(&loop->lmodels[nlm], lno);
+    loop_model_init(&loop->lmodels[n], lno);
     loop->n_loop_models += 1;
 
-    return &loop->lmodels[nlm];
+    return &loop->lmodels[n];
 }
 
 #define realdiff(x,y) (fabs((x)-(y)) > 2.0e-13)
@@ -1883,14 +1885,14 @@ static int add_more_loop_commands (LOOPSET *loop)
 static int real_append_line (ExecState *s, LOOPSET *loop)
 {
     const char *flagstr = NULL;
-    int nc = loop->n_cmds;
+    int n = loop->n_cmds;
     int len, err = 0;
 
 #if LOOP_DEBUG
     fprintf(stderr, "real_append_line: s->line = '%s'\n", s->line);
 #endif
 
-    if ((nc + 1) % LOOP_BLOCK == 0) {
+    if ((n + 1) % LOOP_BLOCK == 0) {
 	if (add_more_loop_commands(loop)) {
 	    return E_ALLOC;
 	}
@@ -1909,30 +1911,30 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 
     if (!err) {
 	if (flagstr != NULL) {
-	    loop->cmds[nc].line = malloc(len + 1);
+	    loop->cmds[n].line = malloc(len + 1);
 	} else {
-	    loop->cmds[nc].line = gretl_strdup(s->line);
+	    loop->cmds[n].line = gretl_strdup(s->line);
 	}
-	if (loop->cmds[nc].line == NULL) {
+	if (loop->cmds[n].line == NULL) {
 	    err = E_ALLOC;
 	} else if (flagstr != NULL) {
-	    sprintf(loop->cmds[nc].line, "%s%s", s->line, flagstr);
+	    sprintf(loop->cmds[n].line, "%s%s", s->line, flagstr);
 	}
     }
 
     if (!err) {
 	if (s->cmd->ci == PRINT && (!loop_is_progressive(loop) || strchr(s->line, '"'))) {
 	    /* printing a literal string, not a variable's value */
-	    loop->cmds[nc].flags |= LOOP_CMD_LIT;
+	    loop->cmds[n].flags |= LOOP_CMD_LIT;
 	} 
-	loop->cmds[nc].ci = s->cmd->ci;
+	loop->cmds[n].ci = s->cmd->ci;
 	loop->n_cmds += 1;
     }
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop %p: n_cmds=%d, line[%d]='%s', ci=%d\n",
-	    (void *) loop, loop->n_cmds, nc, loop->cmds[n].line,
-	    loop->cmds[nc].ci);
+	    (void *) loop, loop->n_cmds, n, loop->cmds[n].line,
+	    loop->cmds[n].ci);
 #endif
 
     return err;
@@ -2229,7 +2231,6 @@ static int loop_store_save (LOOP_STORE *lstore, PRN *prn)
 static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
 				PRN *prn)
 {
-    char linecpy[MAXLINE];
     int iters = loop->iter;
     int i, j = 0, k = 0;
 
@@ -2242,11 +2243,13 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	int ci = loop->cmds[i].ci;
 
 #if LOOP_DEBUG
-	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
-		i+1, i, loop->cmds[i].line);
+	fprintf(stderr, "print_loop_results: loop command %d: %s\n", 
+		i, loop->cmds[i].line);
 #endif
 
 	if (plain_model_ci(ci)) {
+	    char linecpy[MAXLINE];
+
 	    strcpy(linecpy, loop->cmds[i].line);
 	    opt = get_gretl_options(linecpy, NULL);
 	}	    
@@ -2267,7 +2270,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 		j++;
 	    } else if (ci == PRINT && !loop_literal(loop, i)) {
 		loop_print_print(&loop->prns[k], pdinfo, prn);
-		loop_print_zero(&loop->prns[k]);
+		loop_print_zero(&loop->prns[k], 1);
 		k++;
 	    } else if (ci == STORE) {
 		loop_store_save(&loop->store, prn);
@@ -2559,7 +2562,7 @@ static int add_loop_genr (LOOPSET *loop, GENERATOR *genr, int lno)
     loop->genrs[n] = genr;
     loop->n_genrs = n + 1;
     genr_set_loopline(genr, lno);
-    loop->cmds[lno-1].flags |= LOOP_CMD_GEN;
+    loop->cmds[lno].flags |= LOOP_CMD_GEN;
 
     return 0;
 }
@@ -2622,10 +2625,10 @@ static int loop_print_save_model (MODEL *pmod, DATAINFO *pdinfo,
 
 static int loop_next_command (char *targ, LOOPSET *loop, int *pj)
 {
-    int ret = 1, j = *pj;
+    int ret = 1, j = *pj + 1;
 
     if (j < loop->n_cmds) {
-	strcpy(targ, loop->cmds[j++].line);
+	strcpy(targ, loop->cmds[j].line);
 	*pj = j;
     } else {
 	ret = 0;
@@ -2644,10 +2647,8 @@ static int loop_process_error (int err, PRN *prn)
     return err;
 }
 
-/* note: j is a 1-based line index */
-#define is_compiled_genr(l,j) (l->cmds[j-1].flags & LOOP_CMD_GEN)
-#define loop_cmd_nosub(l,j) (l->cmds[j-1].flags & LOOP_CMD_NOSUB)
-#define loop_cmd_nodol(l,j) (l->cmds[j-1].flags & LOOP_CMD_NODOL)
+#define is_compiled_genr(l,j) (l->cmds[j].flags & LOOP_CMD_GEN)
+#define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 
 static int block_model (CMD *cmd)
 {
@@ -2661,60 +2662,6 @@ static int block_model (CMD *cmd)
 			       c == NLS ||  \
 			       c == MLE ||  \
 			       c == GMM)
-
-static void cmd_info_to_loop (LOOPSET *loop, int j, CMD *cmd)
-{
-    int i = j - 1;
-
-    loop->cmds[i].flags |= LOOP_CMD_NOSUB;
-
-    if (cmd_catch(cmd)) {
-	loop->cmds[i].flags |= LOOP_CMD_CATCH;
-    }
-
-    if (cmd_foreign(cmd)) {
-	loop->cmds[i].flags |= LOOP_CMD_FOREIGN;
-    }
-
-    /* Extension: we could record the cmd options here, and also the
-       parsed version of the command line, plus the cmd "savename" if
-       any; then we'd be able to beef up the action of CMD_LOOP in
-       skipping the repetition of several tasks within
-       parse_command_line() in interact.c. It remains to be seen how
-       much speed-up that would produce.
-    */
-
-#if 0
-    if (cmd->opt || *cmd->savename != '\0') {
-	loop->cmds[i].opt = cmd->opt;
-	free(loop->cmds[i].line);
-	loop->cmds[i].line = gretl_strdup(line);
-	if (*cmd->savename != '\0') {
-	    loop->cmds[i].savename = gretl_strdup(cmd->savename);
-	}
-    }
-#endif
-}
-
-static void cmd_flags_from_loop (LOOPSET *loop, int j, CMD *cmd)
-{
-    if (loop_is_progressive(loop)) {
-	cmd->flags |= CMD_PROG;
-    } else {
-	cmd->flags &= ~CMD_PROG;
-    }
-
-    if (loop_cmd_nosub(loop, j)) {
-	/* tell parser not to bother with @-subst */
-	cmd->flags |= CMD_LOOP;
-	if (loop->cmds[j-1].flags & LOOP_CMD_CATCH) {
-	    /* still to be activated */
-	    cmd->flags |= CMD_CATCH;
-	} 
-    } else {
-	cmd->flags &= ~CMD_LOOP;
-    }
-}
 
 int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo) 
 {
@@ -2760,7 +2707,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #if LOOP_DEBUG
 	fprintf(stderr, "top of loop: iter = %d\n", loop->iter);
 #endif
-	j = lrefresh = 0;
+	lrefresh = 0;
+	j = -1;
 
 	pmod = NULL;
 	lmod = NULL;
@@ -2809,13 +2757,16 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 						pdinfo, &subst);
 		if (err) {
 		    break;
-		}
-		if (!subst) {
-		    loop->cmds[j-1].flags |= LOOP_CMD_NODOL;
+		} else if (!subst) {
+		    loop->cmds[j].flags |= LOOP_CMD_NODOL;
 		}
 	    }
 
-	    cmd_flags_from_loop(loop, j, cmd);
+	    if (loop_is_progressive(loop)) {
+		cmd->flags |= CMD_PROG;
+	    } else {
+		cmd->flags &= ~CMD_PROG;
+	    }	    
 
 	    /* We already have the "ci" index recorded, but here
 	       we do some further parsing. 
@@ -2823,7 +2774,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = parse_command_line(line, cmd, pZ, pdinfo);
 
 #if LOOP_DEBUG
-	    fprintf(stderr, "    after: '%s'\n", line);
+	    fprintf(stderr, "    after: '%s' (subst=%d,%d)\n", line, subst, cmd_subst(cmd));
 #endif
 
 	    if (cmd->ci < 0) {
@@ -2839,11 +2790,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		gretl_exec_state_transcribe_flags(s, cmd);
 	    }
 
-	    if (cmd_subst(cmd)) {
+	    if (!subst && cmd_subst(cmd)) {
 		subst = 1;
-	    } else {
-		cmd_info_to_loop(loop, j, cmd);
-	    }
+	    } 
 
 	    if (is_list_loop(loop) && maybe_refresh_list(cmd, loop, line)) {
 		lrefresh = 1;
@@ -2905,7 +2854,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			set_as_last_model(s->models[0], GRETL_OBJ_EQN);
 		    } else if (model_print_deferred(cmd->opt)) {
 			swap_models(s->models[0], pmod);
-			pmod->ID = j;
+			pmod->ID = j + 1;
 			set_as_last_model(pmod, GRETL_OBJ_EQN);
 			model_count_minus();
 		    } else {

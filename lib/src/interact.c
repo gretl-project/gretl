@@ -68,8 +68,6 @@ typedef struct {
 
 #define cmd_set_nolist(c) (c->flags |= CMD_NOLIST)
 #define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
-#define cmd_set_foreign(c) (c->flags |= CMD_FOREIGN)
-#define cmd_unset_foreign(c) (c->flags &= ~CMD_FOREIGN)
 
 static void get_optional_filename_etc (const char *s, CMD *cmd);
 
@@ -1935,10 +1933,8 @@ static int gretl_cmd_clear (CMD *cmd)
     cmd->ci = 0;
     cmd->err = 0;
     *cmd->word = '\0';
-    cmd->opt = OPT_NONE;
 
     cmd_unset_nolist(cmd);
-    cmd_unset_foreign(cmd);
 
     if (cmd->list == NULL || cmd->param == NULL || cmd->extra == NULL) {
 	cmd->err = E_ALLOC;
@@ -2387,21 +2383,18 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "parse_command_line: '%s'\n", line);
 #endif
 
-    if (!cmd_loop(cmd)) {
-	cmd->err = substitute_named_strings(line, &subst);
-	if (cmd->err) {
-	    return cmd->err;
-	} else if (subst) {
-	    /* record the fact that substitution has been done */
-	    cmd->flags |= CMD_SUBST;
-	} else {
-	    cmd->flags &= ~CMD_SUBST;
-	}
+    cmd->err = substitute_named_strings(line, &subst);
+    if (cmd->err) {
+	return cmd->err;
+    } else if (subst) {
+	/* record the fact that substitution has been done */
+	cmd->flags |= CMD_SUBST;
+    } else {
+	cmd->flags &= ~CMD_SUBST;
     }
-
+ 
     if (cmd->context == FOREIGN && !end_foreign(line)) {
 	cmd_set_nolist(cmd);
-	cmd_set_foreign(cmd);
 	cmd->ci = FOREIGN;
 	return 0;
     }
