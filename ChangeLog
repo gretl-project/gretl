@@ -1588,6 +1588,7 @@ version 1.9.4, in progress
 - add mechanism for customizing gretl's tex preamble
 
 2004-07-23 version 1.2.9
+- note: 1.2.8 was just a test release
 - fixes for LaTeX printing of autoregressive models
 - correct Spanish help strings
 - fix font problem for some objects in session window
@@ -1630,7 +1631,6 @@ version 1.9.4, in progress
   shortcut of the form "x(-1 to -4)"
 - fix some subtle genr bugs, and some breakage in the nls command 
   following earlier changes in genr
-version 1.2.8: a "test-only" version, with some of the features of 1.2.9, depending on the date of the build.- small configure fix: try harder to find libpng if wanted
 
 2004-06-13 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)
@@ -2726,7 +2726,6 @@ version 1.2.8: a "test-only" version, with some of the features of 1.2.9, depend
 - change default user dir to $HOME/.gretl
 - fixes to icon file selector
 - basic link to GNU R
-version 0.60pre- further updates to manual
 - revise PDF manual
 - revise "scatters" command (multiple scatterplots) and add to gui
 - add read/write of gzip-compressed data files (see store command)
@@ -2737,8 +2736,10 @@ version 0.60pre- further updates to manual
 - add installer program for win32
 - fix context help bug
 - renaming of various components (library is now libgretl, cli 
-  program is now gretlcli, some directories have been renamed) (note: 
-  version 0.50 was a Windows-only one, and was not really released)
+  program is now gretlcli, some directories have been renamed) 
+
+2000-11-24 version 0.50
+- MS Windows-only, was not really released
 
 2000-11-18 version 0.40
 - add critical value to printout of correlation matrix
@@ -2949,3 +2950,5 @@ version 0.60pre- further updates to manual
 - Improvements to loop mode (Monte Carlo simulations)
 
 2000-01-31 version 0.1r
+- Initial public release
+
