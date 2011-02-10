@@ -22,7 +22,7 @@ ifeq ($(HOSTCC),)
   HOSTCC = $(CC)
 endif
 
-ifeq ($(have_gtk),2.0)
+ifeq ($(have_gtk),yes)
   GUIDIR = gui2
 endif
 

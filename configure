@@ -787,6 +787,7 @@ enable_rpath
 with_libiconv_prefix
 with_libintl_prefix
 enable_gui
+enable_gtk3
 enable_build_doc
 enable_quiet_build
 enable_gnuplot_checks
@@ -1468,7 +1469,8 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
-  --enable-gui		  Enable gui [default=yes]
+  --enable-gui            Enable gui [default=yes]
+  --enable-gtk3           Enable GTK-3.0 (testing) [default=no]
   --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-quiet-build    Enable quiet building
   --disable-gnuplot-checks do not run checks for gnuplot
@@ -2635,6 +2637,7 @@ _ACEOF
 echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 build_gui="yes"
+try_gtk3="no"
 build_docs="no"
 use_lucida="no"
 build_po="no"
@@ -2643,6 +2646,7 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 have_gtk="no"
+gtk_version="none"
 have_gtkprint="no"
 have_gnome="no"
 have_gmp="no"
@@ -6148,6 +6152,17 @@ then
   build_gui=yes
 else
   build_gui=no
+fi
+fi
+
+
+# Check whether --enable-gtk3 was given.
+if test "${enable_gtk3+set}" = set; then :
+  enableval=$enable_gtk3; if test "$enableval" = "yes"
+then
+  try_gtk3=yes
+else
+  try_gtk3=no
 fi
 fi
 
@@ -16419,7 +16434,84 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$build_gui" = "yes" ; then
+if test "$try_gtk3" = "yes" ; then
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK" >&5
+$as_echo_n "checking for GTK... " >&6; }
+
+if test -n "$GTK_CFLAGS"; then
+    pkg_cv_GTK_CFLAGS="$GTK_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.0.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.0.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "gtk+-3.0 >= 3.0.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$GTK_LIBS"; then
+    pkg_cv_GTK_LIBS="$GTK_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtk+-3.0 >= 3.0.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtk+-3.0 >= 3.0.0") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "gtk+-3.0 >= 3.0.0" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtk+-3.0 >= 3.0.0" 2>&1`
+        else
+	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtk+-3.0 >= 3.0.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$GTK_PKG_ERRORS" >&5
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+                build_gui="no"
+      echo "GTK 3 not found"
+
+elif test $pkg_failed = untried; then
+	build_gui="no"
+      echo "GTK 3 not found"
+
+else
+	GTK_CFLAGS=$pkg_cv_GTK_CFLAGS
+	GTK_LIBS=$pkg_cv_GTK_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	CFLAGS="$CFLAGS $GTK_CFLAGS"
+      LIBS="$LIBS $GTK_LIBS"
+      have_gtk="yes"
+      gtk_version="3.0"
+      have_gtkprint="yes"
+      fake_gtkspinner="no"
+fi
+elif test "$build_gui" = "yes" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK" >&5
@@ -16477,13 +16569,11 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                have_gtk="no"
-      build_gui="no"
+                build_gui="no"
       echo "GTK not found"
 
 elif test $pkg_failed = untried; then
-	have_gtk="no"
-      build_gui="no"
+	build_gui="no"
       echo "GTK not found"
 
 else
@@ -16493,11 +16583,12 @@ else
 $as_echo "yes" >&6; }
 	CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
-      have_gtk="2.0"
+      have_gtk="yes"
+      gtk_version="2.0"
 fi
 fi
 
-if test "$have_gtk" = "2.0" ; then
+if test "$gtk_version" = "2.0" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSPINNER" >&5
@@ -16568,7 +16659,7 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$have_gtk" = "2.0" && test "$have_gtkprint" = "no" ; then
+if test "$gtk_version" = "2.0" && test "$have_gtkprint" = "no" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKPRINT" >&5
@@ -16640,7 +16731,7 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$have_gtk" = "2.0" && test "$have_gtkprint" = "no" ; then
+if test "$gtk_version" = "2.0" && test "$have_gtkprint" = "no" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKCAIRO" >&5
@@ -16712,7 +16803,7 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$have_gtk" = "2.0" && test "$try_sourceview" = "yes" ; then
+if test "$have_gtk" = "yes" && test "$try_sourceview" = "yes" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSOURCEVIEW" >&5
@@ -16895,7 +16986,7 @@ fi
 
 
 
-if test ${have_gtk} = "2.0" ; then
+if test ${have_gtk} = "yes" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GDK_PIXBUF" >&5
@@ -17050,7 +17141,7 @@ fi
 
 fi
 
-if test "$have_gtk" = "2.0" ; then
+if test "$have_gtk" = "yes" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XML" >&5
@@ -22127,7 +22218,7 @@ Configuration:
   MPFR support:                           ${have_mpfr}
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
-  Build with GTK version:                 ${have_gtk}
+  Build with GTK version:                 ${gtk_version}
   Use GTK printing apparatus:             ${have_gtkprint}
   Use installed gtksourceview:            ${have_sourceview}
   Build with gnome support:               ${have_gnome}

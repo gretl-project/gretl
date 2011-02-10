@@ -29,7 +29,6 @@ CURRENT=@LIBGRETL_CURRENT@
 REVISION=@LIBGRETL_REVISION@
 AGE=@LIBGRETL_AGE@
 
-have_gtk = @have_gtk@
 quiet_build = @quiet_build@
 
 ifeq ($(DARWIN_RPATH),)
