@@ -1644,8 +1644,11 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 	    i = book->col_offset;
 	    for (t=0; t<newinfo->n; t++) {
 		int ts = t + 1 + book->row_offset;
+		char *src = rows[ts].cells[i];
 
-		strncat(newinfo->S[t], rows[ts].cells[i] + 1, OBSLEN - 1);
+		if (src != NULL) {
+		    strncat(newinfo->S[t], src + 1, OBSLEN - 1);
+		}
 	    }
 	}
     }

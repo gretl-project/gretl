@@ -98,23 +98,24 @@ All Gretl abbrevs start with a grave accent (`).")
 
 (defvar gretl-command-words
  '("add" "adf" "anova" "append" "ar" "ar1" "arbond" "arch"
-   "arima" "break" "boxplot" "chow" "coeffsum" "coint" "coint2" "corr"
-   "corrgm" "cusum" "data" "dataset" "delete" "diff" "difftest" "discrete"
-   "dummify" "duration" "elif" "else" "end" "endif" "endloop" "eqnprint"
-   "equation" "estimate" "fcast" "foreign" "freq" "function" "funcerr" "garch"
-   "genr" "gmm" "gnuplot" "graphpg" "hausman" "heckit" "help" "hsk"
-   "hurst" "if" "include" "info" "intreg" "kalman" "kpss" "labels"
-   "lad" "lags" "ldiff" "leverage" "logistic" "logit" "logs" "loop"
-   "mahal" "meantest" "mle" "modeltab" "modprint" "modtest" "mpols" "negbin"
-   "nls" "normtest" "nulldata" "ols" "omit" "open" "orthdev" "outfile"
-   "panel" "pca" "pergm" "textplot" "poisson" "print" "printf" "probit"
-   "pvalue" "quantreg" "qlrtest" "qqplot" "quit" "rename" "reset" "restrict"
-   "rmplot" "run" "runs" "scatters" "sdiff" "set" "setinfo" "setobs"
-   "setmiss" "shell" "smpl" "spearman" "sprintf" "square" "sscanf" "store"
-   "summary" "system" "tabprint" "tobit" "tsls" "var" "varlist" "vartest"
-   "vecm" "vif" "wls" "xcorrgm" "xtab" "debug" "return" "catch"
-   "for" "foreach" "funcerr" "return" "while" "elif" "const" "3sls"
-   "liml" "fiml" "sur" "params" "deriv" "orthog" "weights")
+   "arima" "biprobit" "break" "boxplot" "chow" "clear" "coeffsum" "coint"
+   "coint2" "corr" "corrgm" "cusum" "data" "dataset" "delete" "diff"
+   "difftest" "discrete" "dpanel" "dummify" "duration" "elif" "else" "end"
+   "endif" "endloop" "eqnprint" "equation" "estimate" "fcast" "foreign" "fractint"
+   "freq" "function" "funcerr" "garch" "genr" "gmm" "gnuplot" "graphpg"
+   "hausman" "heckit" "help" "hsk" "hurst" "if" "include" "info"
+   "intreg" "kalman" "kpss" "labels" "lad" "lags" "ldiff" "leverage"
+   "levinlin" "logistic" "logit" "logs" "loop" "mahal" "makepkg" "meantest"
+   "mle" "modeltab" "modprint" "modtest" "mpols" "negbin" "nls" "normtest"
+   "nulldata" "ols" "omit" "open" "orthdev" "outfile" "panel" "pca"
+   "pergm" "textplot" "poisson" "print" "printf" "probit" "pvalue" "quantreg"
+   "qlrtest" "qqplot" "quit" "rename" "reset" "restrict" "rmplot" "run"
+   "runs" "scatters" "sdiff" "set" "setinfo" "setobs" "setmiss" "shell"
+   "smpl" "spearman" "sprintf" "square" "sscanf" "store" "summary" "system"
+   "tabprint" "tobit" "tsls" "var" "varlist" "vartest" "vecm" "vif"
+   "wls" "xcorrgm" "xtab" "debug" "return" "catch" "for" "foreach"
+   "funcerr" "return" "while" "elif" "const" "3sls" "liml" "fiml"
+   "sur" "params" "deriv" "orthog" "weights")
   "Commands in Gretl (these names are also reserved).")
 
 (defvar gretl-genr-functions
@@ -122,11 +123,11 @@ All Gretl abbrevs start with a grave accent (`).")
    "cosh" "tanh" "asinh" "acosh" "atanh" "log" "ln" "log10"
    "log2" "exp" "sqrt" "diff" "ldiff" "sdiff" "lags" "int"
    "round" "ceil" "floor" "sort" "dsort" "sortby" "ranking" "orthdev"
-   "nobs" "firstobs" "lastobs" "uniform" "normal" "genpois" "cum" "missing"
-   "ok" "misszero" "lrvar" "quantile" "median" "gini" "zeromiss" "sum"
-   "mean" "min" "max" "sd" "var" "sst" "cnorm" "dnorm"
-   "qnorm" "gammafun" "lngamma" "digamma" "resample" "pnobs" "pmin" "pmax"
-   "pmean" "psd" "hpfilt" "bkfilt" "fracdiff" "boxcox" "cov" "corr"
+   "nobs" "firstobs" "lastobs" "uniform" "normal" "cum" "missing" "ok"
+   "misszero" "lrvar" "quantile" "median" "gini" "zeromiss" "sum" "mean"
+   "min" "max" "sd" "var" "sst" "cnorm" "dnorm" "qnorm"
+   "gammafun" "lngamma" "digamma" "resample" "pnobs" "pmin" "pmax" "pmean"
+   "psd" "hpfilt" "bkfilt" "bwfilt" "fracdiff" "boxcox" "cov" "corr"
    "movavg" "I" "zeros" "ones" "seq" "replace" "muniform" "mnormal"
    "sumc" "sumr" "meanc" "meanr" "sdc" "minc" "maxc" "minr"
    "maxr" "iminc" "imaxc" "iminr" "imaxr" "fft" "ffti" "cmult"
@@ -136,78 +137,83 @@ All Gretl abbrevs start with a grave accent (`).")
    "rcond" "rank" "qform" "mlag" "qrdecomp" "eigensym" "eigengen" "nullspace"
    "princomp" "mexp" "fdjac" "BFGSmax" "obsnum" "isseries" "isscalar" "islist"
    "isstring" "isnull" "nelem" "pdf" "cdf" "invcdf" "pvalue" "critical"
-   "randgen" "urcpval" "makemask" "values" "mshape" "svd" "mols" "mpols"
+   "randgen" "urcpval" "values" "mshape" "svd" "mols" "mpols" "mrls"
    "mread" "mwrite" "selifc" "selifr" "polroots" "dummify" "wmean" "wvar"
    "wsd" "xpx" "filter" "kfilter" "ksmooth" "ksimul" "trimr" "getenv"
    "argname" "obslabel" "readfile" "grab" "strstr" "strncmp" "strlen" "sscanf"
-   "varname" "varnum" "tolower" "colnames" "ljungbox" "msortby" "lincomb" "imhof"
-   "toepsolv" "xmin" "xmax" "corrgm" "mcovg" "fcstats" "bessel" "fraclag"
-   "mreverse" "deseas" "pergm" "irr" "npv" "logistic" "weekday" "kdensity")
+   "varname" "varnum" "tolower" "colnames" "rownames" "ljungbox" "msortby" "lincomb"
+   "imhof" "toepsolv" "diagcat" "xmin" "xmax" "corrgm" "mcovg" "fcstats"
+   "bessel" "fraclag" "mreverse" "deseas" "pergm" "irr" "npv" "logistic"
+   "weekday" "kdensity" "monthlen" "epochday" "setnote" "invmills" "polyfit" "chowlin"
+   "varsimul" "strsplit" "inlist" "errmsg" "isconst" "irf" "inbundle")
   "Builtin functions for Gretl's genr command.")
 
 (defvar gretl-option-flags
- '("anova" "append" "arch" "arma-init"
-   "asymptotic" "auto" "autocorr" "auxiliary"
-   "balanced" "bartlett" "between" "bootstrap"
-   "both" "breusch-pagan" "by" "byobs"
-   "c" "close" "coded" "cols"
-   "column" "comfac" "complete" "conditional"
-   "contiguous" "continue" "continuous" "control"
-   "covariance" "cross" "cross-section" "crt"
-   "csv" "ct" "ctt" "cubes-only"
-   "dat" "database" "db" "dhansen"
-   "difference" "diffuse" "discrete" "drop-empty"
-   "drop-first" "drop-last" "dummy" "dynamic"
-   "equal" "exit" "exponential" "fcp"
-   "fixed-effects" "from-file" "full" "func"
-   "gamma" "geomean" "gls" "gmm"
-   "gnu-R" "gnu-octave" "gzipped" "hausman-reg"
-   "hessian" "hilu" "impulse-responses" "input"
-   "inst" "integrate" "intervals" "inverse-fit"
-   "iterate" "jackknife" "jbera" "jitter"
-   "jmulti" "kendall" "lags" "lagselect"
-   "lbfgs" "lillie" "liml" "linear-fit"
-   "loess-fit" "log" "loglogistic" "lognormal"
-   "logs" "matrix" "matrix-diff" "medians"
-   "ml" "model1" "multinomial" "nc"
+ '("addstats" "all" "anova" "append"
+   "arch" "arma-init" "asymptotic" "auto"
+   "autocorr" "auxiliary" "balanced" "bartlett"
+   "between" "bootstrap" "both" "breusch-pagan"
+   "by" "byobs" "c" "close"
+   "coded" "cols" "column" "comfac"
+   "complete" "conditional" "contiguous" "continue"
+   "continuous" "control" "covariance" "cross"
+   "cross-section" "crt" "csv" "ct"
+   "ctt" "cubes-only" "dat" "database"
+   "dataset" "db" "degrees" "dhansen"
+   "difference" "diffuse" "discrete" "dpdstyle"
+   "drop-empty" "drop-first" "drop-last" "dummy"
+   "dynamic" "equal" "exit" "exponential"
+   "fcp" "fixed-effects" "from-file" "full"
+   "func" "gamma" "geomean" "gls"
+   "gmm" "gnu-R" "gnu-octave" "gph"
+   "gzipped" "hausman-reg" "hessian" "hilu"
+   "impulse-responses" "input" "inst" "integrate"
+   "intervals" "inverse-fit" "iterate" "jackknife"
+   "jbera" "jitter" "jmulti" "kendall"
+   "lags" "lagselect" "lbfgs" "lillie"
+   "liml" "linear-fit" "list" "loess-fit"
+   "log" "loglogistic" "lognormal" "logs"
+   "matrix" "matrix-diff" "medians" "ml"
+   "model1" "multi" "multinomial" "nc"
    "next" "no-corc" "no-dates" "no-df-corr"
    "no-gradient-check" "no-header" "no-missing" "no-scaling"
    "no-stats" "normal" "normality" "notches"
    "numerical" "odbc" "omit-obs" "one-scale"
-   "opg" "orthdev" "out-of-sample" "output"
-   "overwrite" "p-values" "panel" "panel-vars"
-   "plot" "pooled" "preserve" "print-final"
-   "progress-bar" "progressive" "pwe" "quadratic-fit"
-   "quiet" "quit" "random" "random-effects"
-   "rank-sum" "raw" "rc" "replace"
-   "restrict" "restructure" "reverse" "robust"
-   "rolling" "row" "rtf" "save"
-   "save-all" "scalars" "seasonals" "send-data"
+   "opg" "orthdev" "other" "out-of-sample"
+   "output" "overwrite" "p-values" "panel"
+   "panel-vars" "plot" "pooled" "preserve"
+   "print-final" "progress-bar" "progressive" "pwe"
+   "quadratic-fit" "quiet" "quit" "radians"
+   "random" "random-effects" "rank-sum" "raw"
+   "rc" "replace" "restrict" "restructure"
+   "reverse" "robust" "rolling" "row"
+   "rtf" "save" "save-all" "save-ehat"
+   "save-xbeta" "scalars" "seasonals" "send-data"
    "sign" "signed-rank" "silent" "simple"
    "simple-print" "single-yaxis" "skip-df" "spearman"
    "special-time-series" "squares" "squares-only" "stacked-cross-section"
    "stacked-time-series" "static" "stdresid" "suppress-fitted"
-   "swilk" "t-ratios" "tall" "test-down"
-   "tex" "time-dummies" "time-series" "to-file"
-   "traditional" "trend" "two-step" "unequal-vars"
-   "uniform" "unit-weights" "variance-decomp" "vcv"
-   "verbose" "wald" "weibull" "weights"
-   "white" "white-nocross" "with-impulses" "with-lines"
-   "write" "www" "x-12-arima" "y-diff-only"
-   "z-scores" "zeros")
+   "swilk" "system" "t-ratios" "tall"
+   "test-down" "tex" "time-dummies" "time-series"
+   "to-file" "to_file" "traditional" "trend"
+   "two-step" "unequal-vars" "uniform" "unit-weights"
+   "variance-decomp" "vcv" "verbose" "wald"
+   "weibull" "weights" "white" "white-nocross"
+   "with-impulses" "with-lines" "write" "www"
+   "x-12-arima" "y-diff-only" "z-scores" "zeros")
   "Gretl option flags.")
 
 (defvar gretl-internal-vars
  '("Fstat" "T" "ahat" "aic" "bic" "chisq" "coeff_ci"
-   "coeff" "compan" "datatype" "df" "dwpval" "ec" "error"
-   "ess" "fcast" "fcerr" "gmmcrit" "hausman" "hqc" "h"
-   "jalpha" "jbeta" "jvbeta" "kalman_llt" "kalman_lnl" "kalman_s2" "kalman_t"
-   "kalman_uhat" "llt" "lnl" "ncoeff" "nobs" "nscan" "nvars"
-   "obs" "pd" "pvalue" "rho" "rlnl" "rsq" "s00"
-   "s01" "s11" "sample" "sargan" "sigma" "stderr" "stopwatch"
-   "sysA" "sysB" "sysGamma" "t1" "t2" "test" "trsq"
-   "uhat" "unit" "vcv" "version" "windows" "xlist" "xtxinv"
-   "yhat" )
+   "coeff" "compan" "datatype" "df" "dwpval" "ec" "ehat"
+   "error" "ess" "fcast" "fcerr" "gmmcrit" "hausman" "hqc"
+   "h" "jalpha" "jbeta" "jvbeta" "kalman_llt" "kalman_lnl" "kalman_s2"
+   "kalman_t" "kalman_uhat" "llt" "lnl" "mnlprobs" "ncoeff" "nobs"
+   "nscan" "nvars" "obs" "pd" "pvalue" "rho" "rlnl"
+   "rsq" "s00" "s01" "s11" "sample" "sargan" "sigma"
+   "stderr" "stopwatch" "sysA" "sysB" "sysGamma" "t1" "t2"
+   "test" "trsq" "uhat" "unit" "vcv" "version" "vma"
+   "windows" "xlist" "xtxinv" "yhat" )
   "Model- and dataset-related variables.")
 
 (defvar gretl-function-header-regexp
@@ -1287,9 +1293,9 @@ variables."
 			  (eq (window-buffer (posn-window (event-start
 							   first)))
 			      (get-buffer "*Completions*"))
-			  (eq (key-binding key) 'mouse-choose-completion)))
+			  (eq (key-binding key) 'choose-completion)))
 		   (progn
-		     (mouse-choose-completion first)
+		     (choose-completion first)
 		     (set-window-configuration conf))
 		 (if (eq first ?\ )
 		     (set-window-configuration conf)
@@ -1333,7 +1339,7 @@ Insert a newline if `gretl-auto-newline' is non-nil."
 Maybe expand abbrevs and blink matching block open keywords.
 Reindent the line of `gretl-auto-indent' is non-nil."
   (interactive)
-  (setq last-command-char ? )
+  (setq last-command-event ? )
   (if (not (gretl-not-in-string-or-comment-p))
       (progn
 	(indent-according-to-mode)
@@ -1358,7 +1364,7 @@ Note that all Gretl mode abbrevs start with a grave accent."
   (if (not abbrev-mode)
       (self-insert-command 1)
     (let (c)
-      (insert last-command-char)
+      (insert last-command-event)
       (if (if gretl-xemacs-p
 	      (or (eq (event-to-character (setq c (next-event))) ??)
 		  (eq (event-to-character c) help-char))

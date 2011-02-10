@@ -416,12 +416,32 @@ void set_app_font (const char *fontname)
     }
 }
 
+static int write_OK (gchar *dirname)
+{
+    int ok = 0;
+
+    if (gretl_mkdir(dirname) == 0) {
+	gchar  *target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
+
+	if (target != NULL) {
+	    FILE *fp = gretl_try_fopen(target, "w");
+
+	    if (fp != NULL) {
+		ok = 1;
+		fclose(fp);
+		gretl_remove(target);
+	    }
+	    g_free(target);
+	}
+    }
+
+    return ok;
+}
+
 static void get_pkg_dir (char *dirname, int action)
 {
     const char *subdir = NULL;
-    char *target = NULL;
-    FILE *fp;
-    int err, ok = 0;
+    int ok = 0;
 
     if (action == SAVE_FUNCTIONS) {
 	subdir = "functions";
@@ -434,49 +454,23 @@ static void get_pkg_dir (char *dirname, int action)
     /* try 'system' location first */
 
     sprintf(dirname, "%s%s", gretl_home(), subdir);
-    err = gretl_mkdir(dirname);
-    if (!err) {
-	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
-	if (target != NULL) {
-	    fp = gretl_fopen(target, "w");
-	    if (fp != NULL) {
-		ok = 1;
-		fclose(fp);
-		gretl_remove(target);
-	    }
-	    free(target);
-	}
-    } 
-    
-    if (ok) return;
+    ok = write_OK(dirname);
 
-    /* try user's directory */
+    if (!ok) {
+	/* try user's filespace */
+	const char *wdir = gretl_default_workdir();
 
-    if (action == SAVE_DATA_PKG) {
-	strcpy(dirname, gretl_workdir());
-	target = g_strdup_printf("%s%s", dirname, "wtest");
-    } else {
-	/* should we really use dotdir here? */
-	sprintf(dirname, "%s%s", gretl_dotdir(), subdir);
-	err = gretl_mkdir(dirname);
-	if (!err) {
-	    target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
+	if (wdir == NULL) {
+	    wdir = gretl_workdir();
 	}
-    } 
 
-    if (target != NULL) {
-	fp = gretl_fopen(target, "w");
-	if (fp != NULL) {
-	    ok = 1;
-	    fclose(fp);
-	    gretl_remove(target);
-	}
-	free(target);
+	sprintf(dirname, "%s%s", wdir, subdir);
+	ok = write_OK(dirname);
     }
 
-    if (ok) return;
-
-    *dirname = '\0';
+    if (!ok) {
+	*dirname = '\0';
+    }
 }
 
 void set_gretl_startdir (void)

@@ -4551,6 +4551,7 @@ int set_panel_structure_from_vars (int uv, int tv,
 	nunits == n || nperiods == n ||
 	n > nunits * nperiods) {
 	fprintf(stderr, "Dataset does not have a panel structure\n");
+	fprintf(stderr, " (nunits=%d, nperiods=%d, n=%d)\n", nunits, nperiods, n);
 	err = E_DATA;
 	goto bailout;
     }

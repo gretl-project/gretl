@@ -488,6 +488,10 @@ static void maybe_extract_savename (char *s, CMD *cmd)
 {
     *cmd->savename = 0;
 
+#if 0
+    fprintf(stderr, "** testing for savename: '%s'\n", s);
+#endif
+
     if (strncmp(s, "genr ", 5) && strstr(s, "<-")) {
 	int n, len, quoted;
 
@@ -513,7 +517,7 @@ static void maybe_extract_savename (char *s, CMD *cmd)
     }
 }
 
-static void maybe_set_catch_flag (char *s, CMD *cmd)
+static inline void maybe_set_catch_flag (char *s, CMD *cmd)
 {
     if (strncmp(s, "catch ", 6) == 0) {
 	cmd->flags |= CMD_CATCH;
@@ -753,8 +757,8 @@ static void handle_dpanel_lags (CMD *cmd, const char *lspec,
     }
 }
 
-/* we may have a "special" lag spec for the AR term(s) and/or the
-   MA terms
+/* we may have a "special" (gappy) lag spec for the AR term(s) 
+   and/or the MA terms
 */
 
 static void handle_arma_lags (CMD *cmd, char **S,
@@ -836,7 +840,8 @@ static void handle_arma_lags (CMD *cmd, char **S,
 
 	if (ns == 3) {
 	    /* ARIMA d spec */
-	    strcat(line, S[1]);
+	    sprintf(numstr, "%s ", S[1]);
+	    strcat(line, numstr);
 	}
 
 	if (qlist != NULL) {
@@ -2383,14 +2388,16 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "parse_command_line: '%s'\n", line);
 #endif
 
-    cmd->err = substitute_named_strings(line, &subst);
-    if (cmd->err) {
-	return cmd->err;
-    } else if (subst) {
-	/* record the fact that substitution has been done */
-	cmd->flags |= CMD_SUBST;
-    } else {
-	cmd->flags &= ~CMD_SUBST;
+    if (!cmd_nosub(cmd)) {
+	cmd->err = substitute_named_strings(line, &subst);
+	if (cmd->err) {
+	    return cmd->err;
+	} else if (subst) {
+	    /* record the fact that substitution has been done */
+	    cmd->flags |= CMD_SUBST;
+	} else {
+	    cmd->flags &= ~CMD_SUBST;
+	}
     }
  
     if (cmd->context == FOREIGN && !end_foreign(line)) {
@@ -2399,30 +2406,37 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return 0;
     }
 
-    compress_spaces(line);
+    if (!gretl_looping_currently()) {
+	/* normalize line spaces */
+	compress_spaces(line);
+	
+	/* trap lines that are nothing but comments */
+	if (filter_comments(line, cmd)) {
+	    return 0;
+	}
 
-    /* trap lines that are nothing but comments */
-    if (filter_comments(line, cmd)) {
-	return 0;
-    }
-
-    /* catch errors associated with comment syntax */
-    if (cmd->err) {
-	return cmd->err;
+	/* catch errors associated with comment syntax */
+	if (cmd->err) {
+	    return cmd->err;
+	}
     }
 
     /* check for "catch" */
     maybe_set_catch_flag(line, cmd);
 
-    /* extract any options */
-    cmd->opt = get_gretl_options(line, &cmd->err);
-    if (cmd->err) {
-	return cmd->err;
-    }  
+    if (!cmd_noopt(cmd)) {
+	/* extract any options */
+	cmd->opt = get_gretl_options(line, &cmd->err);
+	if (cmd->err) {
+	    return cmd->err;
+	}
+    } 
 
-    if (!cmd->context && gretl_function_depth() == 0) {
-	/* extract "savename" for storing an object? */
-	maybe_extract_savename(line, cmd);
+    if (!cmd_nosave(cmd)) {
+	if (!cmd->context && gretl_function_depth() == 0) {
+	    /* extract "savename" for storing an object? */
+	    maybe_extract_savename(line, cmd);
+	}
     } 
 
     /* no command here? */
@@ -2534,44 +2548,46 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->err;
     } 
 
-    /* now for a few commands which may or may not take a list */
+    /* now for some commands which may or may not take a list:
+       we can return early in the no-list cases 
+    */
 
-    if (cmd->ci == PRINT && strstr(line, "\"")) {
+    if (cmd->ci == PRINT) {
 	/* no list in string literal variant */
-	cmd_set_nolist(cmd);
-	capture_param(cmd, rem);
-	return cmd->err;
-    }
-
-    /* SMPL can take a list, but only in case of OPT_M,
-       "--no-missing", or OPT_C, "--contiguous" */
-    if (cmd->ci == SMPL && !(cmd->opt & (OPT_M | OPT_C))) {
-	cmd_set_nolist(cmd);
-	return cmd->err;
-    }	
-
-    /* boxplots take a list, but if there are Boolean conditions
-       embedded, the line has to be parsed specially */
-    if (cmd->ci == BXPLOT && strchr(line, '(')) {
-	cmd_set_nolist(cmd);
-	return cmd->err;
-    }
-
-    /* OMIT typically takes a list, but can be given without args
-       to omit the last variable */
-    if (cmd->ci == OMIT && string_is_blank(line + 4)) {
-	cmd_set_nolist(cmd);
-	return cmd->err;
-    } 
-
-    /* XTAB generally takes a list, but not with the --matrix option */
-    if (cmd->ci == XTAB && (cmd->opt & OPT_M)) {
-	cmd_set_nolist(cmd);
-	return cmd->err;
-    }     
-
-    /* dataset-modifying commands */
-    if (cmd->ci == DATAMOD) {
+	if (strstr(line, "\"")) {
+	    cmd_set_nolist(cmd);
+	    capture_param(cmd, rem);
+	    return cmd->err;
+	}
+    } else if (cmd->ci == SMPL) {
+	/* SMPL may take a list, but only in case of OPT_M,
+	   "--no-missing", or OPT_C, "--contiguous" */
+	if (!(cmd->opt & (OPT_M | OPT_C))) {
+	    cmd_set_nolist(cmd);
+	    return cmd->err;
+	}
+    } else if (cmd->ci == BXPLOT) {
+	/* boxplots take a list, but if there are Boolean conditions
+	   embedded, the line has to be parsed specially */
+	if (strchr(line, '(')) {
+	    cmd_set_nolist(cmd);
+	    return cmd->err;
+	}
+    } else if (cmd->ci == OMIT) {
+	/* OMIT typically takes a list, but can be given without args
+	   to omit the last variable */
+	if (string_is_blank(line + 4)) {
+	    cmd_set_nolist(cmd);
+	    return cmd->err;
+	} 
+    } else if (cmd->ci == XTAB) {
+	/* XTAB generally takes a list, but not with the --matrix option */
+	if (cmd->opt & OPT_M) {
+	    cmd_set_nolist(cmd);
+	    return cmd->err;
+	} 
+    } else if (cmd->ci == DATAMOD) {
+	/* dataset-modifying commands */
 	capture_param(cmd, rem);
 	if (cmd->aux != DS_SORTBY && 
 	    cmd->aux != DS_DSORTBY) {
@@ -2581,7 +2597,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* OK, now we're definitely doing a list-oriented command;
-	we begin by taking care of a few specials */
+	we begin by taking care of a few specials 
+    */
 
     if (cmd->ci == GNUPLOT) {
 	/* we may have a block of stuff to pass literally
@@ -2611,7 +2628,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->err) {
 	    return cmd->err;
 	}
-	cmd->flags |= CMD_SUBST;
     } 
 
     /* find the number of space-separated fields remaining
@@ -4756,13 +4772,20 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case SETOBS:
-	err = set_obs(line, pZ, pdinfo, cmd->opt);
-	if (!err) {
-	    if (pdinfo->n > 0) {
-		print_smpl(pdinfo, 0, prn);
+	if (cmd->opt & OPT_M) {
+	    err = script_add_obs_markers(pdinfo);
+	    if (!err) {
 		schedule_callback(s);
-	    } else {
-		pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
+	    }
+	} else {
+	    err = set_obs(line, pZ, pdinfo, cmd->opt);
+	    if (!err) {
+		if (pdinfo->n > 0) {
+		    print_smpl(pdinfo, 0, prn);
+		    schedule_callback(s);
+		} else {
+		    pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
+		}
 	    }
 	}
 	break;
@@ -5143,7 +5166,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				 gretl_command_word(cmd->ci));
 	    err = 1;
 	} else if (cmd->ci == FUNCERR) {
-	    err = s->funcerr = 1;
+	    err = 1;
+	    s->funcerr = FNERR_FLAGGED;
 	} 
 	break;
 
@@ -5230,7 +5254,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
  bailout:
 
-    if (err && !s->funcerr) {
+    if (err && gretl_function_depth() == 0) {
 	errmsg(err, prn);
     }
 
@@ -5287,7 +5311,8 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     s->pmod = NULL; /* be on the safe side */
 
     if (s->cmd->ci == FUNCERR) {
-	s->funcerr = err = 1;
+	err = 1;
+	s->funcerr = FNERR_FLAGGED;
     } else {
 	/* note: error messages may be printed to s->prn */
 	err = gretl_cmd_exec(s, pZ, pdinfo);
@@ -5567,7 +5592,7 @@ void gretl_exec_state_init (ExecState *s,
     s->rset = NULL;
     s->var = NULL;
     s->in_comment = 0;
-    s->funcerr = 0;
+    s->funcerr = FNERR_NONE;
 
     if (flags == FUNCTION_EXEC) {
 	/* On entry to function execution we check if there's
@@ -5645,7 +5670,7 @@ void gretl_exec_state_clear (ExecState *s)
     s->prev_model_count = -1;
 
     free_subsample_mask(s->submask);
-    s->funcerr = 0;
+    s->funcerr = FNERR_NONE;
 }
 
 void gretl_exec_state_uncomment (ExecState *s)

@@ -37,6 +37,7 @@ struct nlspec_ {
     int dv;             /* ID number of dependent variable (NLS) */
     int lhtype;         /* type of the LHS variable */
     char lhname[VNAMELEN]; /* name of LHS var in criterion function */
+    char *parnames;     /* user-set names for parameters */
     int lhv;            /* ID number of LHS series in function being
 			   minimized or maximized... */
     gretl_matrix *lvec; /* or LHS vector */

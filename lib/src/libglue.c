@@ -467,3 +467,18 @@ int do_modprint (const char *line, gretlopt opt, PRN *prn)
 
     return err;
 }
+
+int script_add_obs_markers (DATAINFO *pdinfo)
+{
+    const char *fname = get_optval_string(SETOBS, OPT_M);
+    int err;
+
+    if (fname == NULL) {
+	err = E_PARSE;
+    } else {
+	fname = gretl_maybe_switch_dir(fname);
+	err = add_obs_markers_from_file(pdinfo, fname);
+    }
+
+    return err;
+}

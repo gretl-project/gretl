@@ -246,6 +246,39 @@ FILE *gretl_fopen (const char *fname, const char *mode)
 }
 
 /**
+ * gretl_try_fopen:
+ * @fname: name of file to be opened.
+ * @mode: mode in which to open the file.
+ *
+ * basically the same as gretl_fopen(), except that no
+ * error message is logged if @fname cannot be opened.
+ *
+ * Returns: file pointer, or %NULL on failure.
+ */
+
+FILE *gretl_try_fopen (const char *fname, const char *mode)
+{
+    gchar *fconv = NULL;
+    FILE *fp = NULL;
+    int err;
+
+    gretl_error_clear();
+
+    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+
+    if (!err) {
+	if (fconv != NULL) {
+	    fp = fopen(fconv, mode);
+	    g_free(fconv);
+	} else {
+	    fp = fopen(fname, mode);
+	}
+    }
+
+    return fp;
+}
+
+/**
  * gretl_open:
  * @pathname: name of file to be opened.
  * @flags: flags to pass to the system open().
@@ -448,6 +481,28 @@ gzFile gretl_gzopen (const char *fname, const char *mode)
 
     if (errno != 0) {
 	gretl_errmsg_set_from_errno("gzopen");
+    }
+
+    return fz;
+}
+
+static gzFile gretl_try_gzopen (const char *fname, const char *mode)
+{
+    gchar *fconv = NULL;
+    gzFile fz = NULL;
+    int err;
+
+    gretl_error_clear();
+
+    err = maybe_recode_path(fname, stdio_use_utf8, &fconv);
+
+    if (!err) {
+	if (fconv != NULL) {
+	    fz = gzopen(fconv, mode);
+	    g_free(fconv);
+	} else {
+	    fz = gzopen(fname, mode);
+	}
     }
 
     return fz;
@@ -760,7 +815,7 @@ int gretl_is_xml_file (const char *fname)
     char test[6];
     int ret = 0;
 
-    fz = gretl_gzopen(fname, "rb");
+    fz = gretl_try_gzopen(fname, "rb");
     if (fz != Z_NULL) {
 	if (gzread(fz, test, 5)) {
 	    test[5] = '\0';
@@ -824,10 +879,10 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, "\\");
     strcat(tmp, targ);
 
-    fp = gretl_fopen(tmp, "r");
+    fp = gretl_try_fopen(tmp, "r");
     if (fp == NULL && code == DATA_SEARCH) {
 	if (add_suffix(tmp, ".gdt")) {
-	    fp = gretl_fopen(tmp, "r");
+	    fp = gretl_try_fopen(tmp, "r");
 	}
     }
 
@@ -916,10 +971,10 @@ static int try_open_file (char *targ, const char *finddir,
     strcat(tmp, "/");
     strcat(tmp, targ);
 
-    fp = gretl_fopen(tmp, "r");
+    fp = gretl_try_fopen(tmp, "r");
     if (fp == NULL && code == DATA_SEARCH) {
 	if (add_suffix(tmp, ".gdt")) {
-	    fp = gretl_fopen(tmp, "r");
+	    fp = gretl_try_fopen(tmp, "r");
 	}
     }
 
@@ -996,19 +1051,19 @@ static char *search_dir (char *fname, const char *topdir, int code)
     strcpy(orig, fname);
 
     if (gretl_path_prepend(fname, topdir) == 0) {
-	test = gretl_fopen(fname, "r");
+	test = gretl_try_fopen(fname, "r");
 	if (test != NULL) {
 	    fclose(test);
 	    return fname;
 	}
 	if (code == DATA_SEARCH && add_suffix(fname, ".gdt")) {
-	    test = gretl_fopen(fname, "r");
+	    test = gretl_try_fopen(fname, "r");
 	    if (test != NULL) {
 		fclose(test);
 		return fname;
 	    }
 	} else if (code == FUNCS_SEARCH && add_suffix(fname, ".gfn")) {
-	    test = gretl_fopen(fname, "r");
+	    test = gretl_try_fopen(fname, "r");
 	    if (test != NULL) {
 		fclose(test);
 		return fname;
@@ -1170,6 +1225,8 @@ int get_plausible_functions_dir (char *fndir, int i)
 /**
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
+ * @type: %PKG_REGULAR for a standard gfn package or %PKG_ADDON for
+ * a reognized gretl "addon".
  * 
  * Searches a list of directories in which we might expect to find
  * function packages, and, if the package in question is found,
@@ -1180,7 +1237,8 @@ int get_plausible_functions_dir (char *fndir, int i)
  * Returns: allocated path on success, otherwise NULL.
  */
 
-char *gretl_function_package_get_path (const char *name)
+char *gretl_function_package_get_path (const char *name,
+				       PkgType type)
 {
     char *ret = NULL;
     char fndir[FILENAME_MAX];
@@ -1200,6 +1258,9 @@ char *gretl_function_package_get_path (const char *name)
 	    continue;
 	}
 
+	/* look preferentially for .gfn files in their own
+	   subdirectories */
+
 	while ((dirent = readdir(dir)) != NULL && !found) {
 	    dname = dirent->d_name;
 	    if (!strcmp(dname, name)) {
@@ -1207,7 +1268,7 @@ char *gretl_function_package_get_path (const char *name)
 
 		sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
 			dname, SLASH, dname);
-		fp = gretl_fopen(path, "r");
+		fp = gretl_try_fopen(path, "r");
 		if (fp != NULL) {
 		    fclose(fp);
 		    found = 1;
@@ -1217,22 +1278,20 @@ char *gretl_function_package_get_path (const char *name)
 	    }
 	}
 
-	if (found) {
-	    closedir(dir);
-	    break;
-	} else {
+	if (!found && type != PKG_ADDON) {
+	    /* look for .gfn files in the top-level functions
+	       directory */
 	    rewinddir(dir);
-	}
-
-	while ((dirent = readdir(dir)) != NULL && !found) {
-	    dname = dirent->d_name;
-	    if (has_suffix(dname, ".gfn")) {
-		strcpy(test, dname);
-		p = strrchr(test, '.');
-		*p = '\0';
-		if (!strcmp(test, name)) {
-		    sprintf(path, "%s%c%s", fndir, SLASH, dname);
-		    found = 1;
+	    while ((dirent = readdir(dir)) != NULL && !found) {
+		dname = dirent->d_name;
+		if (has_suffix(dname, ".gfn")) {
+		    strcpy(test, dname);
+		    p = strrchr(test, '.');
+		    *p = '\0';
+		    if (!strcmp(test, name)) {
+			sprintf(path, "%s%c%s", fndir, SLASH, dname);
+			found = 1;
+		    }
 		}
 	    }
 	}
@@ -1272,7 +1331,7 @@ char *gretl_addpath (char *fname, int script)
     }  
 
     /* try opening filename as given */
-    test = gretl_fopen(fname, "r");
+    test = gretl_try_fopen(fname, "r");
 
     if (test != NULL) { 
 	/* fine, got it */
@@ -1435,7 +1494,7 @@ static int get_gfn_special (char *fname)
 	strncat(pkgname, fname, 63);
 	p = strstr(pkgname, ".gfn");
 	*p = '\0';
-	pkgpath = gretl_function_package_get_path(pkgname);
+	pkgpath = gretl_function_package_get_path(pkgname, PKG_ALL);
 
 	if (pkgpath != NULL) {
 	    strcpy(fname, pkgpath);
@@ -1796,22 +1855,19 @@ static int validate_writedir (const char *dirname)
 
     if (!err) {
 	/* ensure the directory is writable */
-	char *testname;
+	char testname[FILENAME_MAX];
 	FILE *fp;
 
-	testname = g_strdup_printf("%s%cwrite.chk", dirname, SLASH);
-	if (testname != NULL) {
-	    fp = gretl_fopen(testname, "w");
-	    if (fp == NULL) {
-		gretl_errmsg_sprintf(_("Couldn't write to '%s': "
-				       "gretl will not work properly!"), 
-				     dirname);
-		err = E_FOPEN;
-	    } else {
-		fclose(fp);
-		gretl_remove(testname);
-	    }
-	    g_free(testname);
+	build_path(testname, dirname, "write.chk", NULL);
+	fp = gretl_fopen(testname, "w");
+	if (fp == NULL) {
+	    gretl_errmsg_sprintf(_("Couldn't write to '%s': "
+				   "gretl will not work properly!"), 
+				 dirname);
+	    err = E_FOPEN;
+	} else {
+	    fclose(fp);
+	    gretl_remove(testname);
 	}
     }
 
@@ -2468,7 +2524,11 @@ static void load_default_path (char *targ)
 #ifdef OSX_BUILD
 	strcpy(targ, "Sans 9");
 #else
-	strcpy(targ, "Vera 9");
+	if (chinese_locale()) {
+	    strcpy(targ, "NSimSun 10");
+	} else {
+	    strcpy(targ, "Vera 9");
+	}
 #endif /* OSX_BUILD */	
     }
 }

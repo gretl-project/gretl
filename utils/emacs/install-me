@@ -6,5 +6,5 @@ SITELISP=`echo $EPREFIX | sed s+bin+share+`/emacs/site-lisp
 
 emacs -batch -f batch-byte-compile gretl.el &&
 echo "Installing to $SITELISP"
-install -m 644 gretl.elc $SITELISP
+sudo install -m 644 gretl.elc $SITELISP
 

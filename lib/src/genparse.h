@@ -239,7 +239,6 @@ enum {
     F_MREAD,
     F_POLROOTS,
     F_XPX,
-    F_GETENV,
     F_ARGNAME,
     F_OBSLABEL,
     F_READFILE,
@@ -254,6 +253,7 @@ enum {
     F_INVMILLS,
     F_ERRMSG,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
+    F_GETENV,
     F_COR,
     F_COV,
     F_SDC,
@@ -330,6 +330,7 @@ enum {
     F_CHOWLIN,
     F_VARSIMUL,
     F_IRF,
+    F_STRSUB,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
@@ -565,6 +566,7 @@ NODE *newdbl (double x);
 NODE *obs_node (parser *p);
 NODE *msl_node_direct (parser *p);
 void context_error (int c, parser *p);
+void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t, const parser *p);
 
 int realgen (const char *s, parser *p, double ***Z, 

@@ -20,6 +20,13 @@
 #ifndef GRETL_BUNDLE_H_
 #define GRETL_BUNDLE_H_
 
+#define BUNDLE_PRINT "bundle-print"
+#define BUNDLE_PLOT  "bundle-plot"
+#define BUNDLE_TEST  "bundle-test"
+#define BUNDLE_FCAST "bundle-fcast"
+#define BUNDLE_EXTRA "bundle-extra"
+#define GUI_MAIN     "gui-main"
+
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;
 

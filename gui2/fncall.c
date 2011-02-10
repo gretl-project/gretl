@@ -33,8 +33,13 @@
 #include "ssheet.h"
 #include "datafiles.h"
 #include "toolbar.h"
+#include "obsbutton.h"
 
 #define FCDEBUG 0
+
+enum {
+    SHOW_GUI_MAIN = 1
+};
 
 typedef struct call_info_ call_info;
 
@@ -48,12 +53,13 @@ struct call_info_ {
     fnpkg *pkg;          /* the active function package */
     int *publist;        /* list of public interfaces */
     int iface;           /* selected interface */
-    const ufunc *func;
-    FuncDataReq dreq;
-    int n_params;
-    char rettype;
-    gchar **args;
-    gchar *ret;
+    int flags;           /* misc. info on package */
+    const ufunc *func;   /* the function we're calling */
+    FuncDataReq dreq;    /* the function's data requirement */
+    int n_params;        /* its number of parameters */
+    char rettype;        /* its return type */
+    gchar **args;        /* its arguments */
+    gchar *ret;          /* return assignment name */
 };
 
 #define scalar_arg(t) (t == GRETL_TYPE_DOUBLE || t == GRETL_TYPE_SCALAR_REF)
@@ -95,6 +101,7 @@ static call_info *cinfo_new (fnpkg *pkg)
     cinfo->pkg = pkg;
     cinfo->publist = NULL;
     cinfo->iface = -1;
+    cinfo->flags = 0;
 
     cinfo->vsels = NULL;
     cinfo->lsels = NULL;
@@ -732,14 +739,18 @@ static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
 }
 
 static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
-				     int minv, int maxv,
-				     int initv)
+				     int minv, int maxv, int initv, 
+				     GretlType type)
 {
     GtkObject *adj;
     GtkWidget *spin;
 
     adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 0);
-    spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    if (type == GRETL_TYPE_OBS) {
+	spin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
+    } else {
+	spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    }
     widget_set_int(spin, "argnum", i);
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
     g_signal_connect(G_OBJECT(spin), "value-changed", 
@@ -750,15 +761,23 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
     return spin;
 }
 
-static GtkWidget *int_arg_selector (call_info *cinfo, int i)
+static GtkWidget *int_arg_selector (call_info *cinfo, int i,
+				    GretlType type)
 {
     double dminv = fn_param_minval(cinfo->func, i);
     double dmaxv = fn_param_maxval(cinfo->func, i);
     double deflt = fn_param_default(cinfo->func, i);
     int minv, maxv, initv = 0;
 
-    minv = (na(dminv))? INT_MIN : (int) dminv;
-    maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
+    if (type == GRETL_TYPE_OBS) {
+	/* the incoming vals will be 1-based */
+	minv = (na(dminv) || dminv < 1)? 0 : (int) dminv - 1;
+	maxv = (na(dmaxv) || dmaxv > datainfo->n)? 
+	    (datainfo->n - 1) : (int) dmaxv - 1;
+    } else {
+	minv = (na(dminv))? INT_MIN : (int) dminv;
+	maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
+    }
 
     if (!na(deflt)) {
 	initv = (int) deflt;
@@ -766,7 +785,7 @@ static GtkWidget *int_arg_selector (call_info *cinfo, int i)
 	initv = (int) dminv;
     } 
 
-    if (!na(dminv) && !na(dmaxv)) {
+    if (type == GRETL_TYPE_INT && !na(dminv) && !na(dmaxv)) {
 	const char **S;
 	int nvals;
 
@@ -776,7 +795,7 @@ static GtkWidget *int_arg_selector (call_info *cinfo, int i)
 	}
     }
 
-    return spin_arg_selector(cinfo, i, minv, maxv, initv);
+    return spin_arg_selector(cinfo, i, minv, maxv, initv, type);
 }
 
 /* see if the variable named @name of type @ptype
@@ -955,8 +974,18 @@ static void set_close_on_OK (GtkWidget *b, gpointer p)
     close_on_OK = button_is_active(b);
 }
 
-#define cinfo_has_return(c) (c->rettype != GRETL_TYPE_NONE && \
-			     c->rettype != GRETL_TYPE_VOID)
+static int cinfo_show_return (call_info *c)
+{
+    if (c->rettype == GRETL_TYPE_NONE ||
+	c->rettype == GRETL_TYPE_VOID) {
+	return 0;
+    } else if (c->rettype == GRETL_TYPE_BUNDLE &&
+	       (c->flags & SHOW_GUI_MAIN)) {
+	return 0;
+    } else {
+	return 1;
+    }
+}
 
 static void function_call_dialog (call_info *cinfo)
 {
@@ -966,6 +995,7 @@ static void function_call_dialog (call_info *cinfo)
     gchar *txt;
     const char *fnname;
     int trows = 0, tcols = 0;
+    int show_ret;
     int i, row;
     int err;
 
@@ -994,13 +1024,15 @@ static void function_call_dialog (call_info *cinfo)
     /* above table: name of function being called */
     cinfo->top_hbox = hbox = label_hbox(vbox, fnname);
 
+    show_ret = cinfo_show_return(cinfo);
+
     if (cinfo->n_params > 0) {
 	tcols = 3; /* label, selector, add-button */
 	trows = cinfo->n_params + 1;
-	if (cinfo_has_return(cinfo)) { 
+	if (show_ret) { 
 	    trows += 4;
 	}
-    } else if (cinfo_has_return(cinfo)) {
+    } else if (show_ret) {
 	tcols = 2;
 	trows = 3;
     }
@@ -1024,7 +1056,9 @@ static void function_call_dialog (call_info *cinfo)
 
 	/* label for name (and maybe type) of argument, using
 	   descriptive string if available */
-	if (ptype == GRETL_TYPE_INT) {
+	if (ptype == GRETL_TYPE_INT ||
+	    ptype == GRETL_TYPE_BOOL ||
+	    ptype == GRETL_TYPE_OBS) {
 	    argtxt = g_strdup_printf("%s",
 				     (desc != NULL)? desc :
 				     fn_param_name(cinfo->func, i));
@@ -1044,8 +1078,9 @@ static void function_call_dialog (call_info *cinfo)
 
 	if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i);
-	} else if (ptype == GRETL_TYPE_INT) {
-	    sel = int_arg_selector(cinfo, i);
+	} else if (ptype == GRETL_TYPE_INT ||
+		   ptype == GRETL_TYPE_OBS) {
+	    sel = int_arg_selector(cinfo, i, ptype);
 	} else {
 	    sel = combo_arg_selector(cinfo, ptype, i);
 	}
@@ -1093,7 +1128,7 @@ static void function_call_dialog (call_info *cinfo)
 	} 
     }
 	
-    if (cinfo_has_return(cinfo)) {
+    if (show_ret) {
 	/* selector/entry for return value */
 	GtkWidget *child;
 	GList *list = NULL;
@@ -1294,7 +1329,14 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
 	    sprintf(auxname, "\"%s\"", cinfo->args[i]);
 	    g_free(cinfo->args[i]);
 	    cinfo->args[i] = g_strdup(auxname);
-	}	
+	}
+	if (fn_param_type(cinfo->func, i) == GRETL_TYPE_OBS) {
+	    /* convert integer value from 0- to 1-based */
+	    int val = atoi(cinfo->args[i]) + 1;
+
+	    g_free(cinfo->args[i]);
+	    cinfo->args[i] = g_strdup_printf("%d", val);
+	}
     }
 
     return err;
@@ -1490,6 +1532,7 @@ static void maybe_set_gui_interface (const char *gname,
 	iface = user_function_name_by_index(cinfo->publist[i]);
 	if (iface != NULL && !strcmp(iface, gname)) {
 	    cinfo->iface = cinfo->publist[i];
+	    cinfo->flags |= SHOW_GUI_MAIN;
 	    break;
 	}
     }
@@ -1610,37 +1653,10 @@ void function_call_cleanup (void)
     }
 }
 
-gchar *get_bundle_plot_function (void *ptr)
-{
-    const char *pkgname = gretl_bundle_get_creator((gretl_bundle *) ptr);
-    gchar *ret = NULL;
-
-    if (pkgname != NULL && *pkgname != '\0') {
-	fnpkg *pkg = get_function_package_by_name(pkgname);
-
-	if (pkg == NULL) {
-	    char *fname = gretl_function_package_get_path(pkgname);
-	    int err = 0;
-
-	    if (fname != NULL) {
-		pkg = get_function_package_by_filename(fname, &err);
-		free(fname);
-	    }
-	}
-
-	if (pkg != NULL) {
-	    function_package_get_properties(pkg, "bundle-plot",
-					    &ret, NULL);
-	}
-    }
-
-    return ret;
-}
-
 /* Execute the plotting function made available by the function
    package that produced the bundle represented by @ptr, possibly
    inflected by an integer option -- if an option is present it's
-   packed into @aname. 
+   packed into @aname, after a colon. 
 */
 
 int exec_bundle_plot_function (void *ptr, const char *aname)
@@ -1650,12 +1666,12 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     fnargs *args = NULL;
     const char *bname;
     char funname[32];
-    int plotopt = -1;
+    int iopt = -1;
     int err = 0;
 
     if (strchr(aname, ':') != NULL) {
-	/* extract plotting option */
-	sscanf(aname, "%31[^:]:%d", funname, &plotopt);
+	/* extract option */
+	sscanf(aname, "%31[^:]:%d", funname, &iopt);
     } else {
 	/* no option present */
 	strcpy(funname, aname);
@@ -1680,13 +1696,13 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
 #endif
 	err = push_fn_arg(args, GRETL_TYPE_BUNDLE_REF, (void *) bname);
 
-	if (!err && plotopt >= 0) {
-	    /* add plot option to args */
+	if (!err && iopt >= 0) {
+	    /* add option flag to args */
 	    double minv = fn_param_minval(func, 1);
 
 	    if (!na(minv)) {
-		plotopt += (int) minv;
-		err = push_fn_arg(args, GRETL_TYPE_INT, &plotopt);
+		iopt += (int) minv;
+		err = push_fn_arg(args, GRETL_TYPE_INT, &iopt);
 	    }
 	}
     }
@@ -1712,13 +1728,14 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
     return err;
 }
 
-/* See if a bundle has the named of a "creator" function package
+/* See if a bundle has the name of a "creator" function package
    recorded on it. If so, see whether that package is already loaded,
    or can be loaded.  And if that works, see if the package has a
-   default bundle-printing function.
+   default function for @task (e.g. BUNDLE_PRINT).
 */
 
-static gchar *get_bundle_print_function (gretl_bundle *b)
+static gchar *get_bundle_special_function (gretl_bundle *b,
+					   const char *task)
 {
     const char *pkgname = gretl_bundle_get_creator(b);
     gchar *ret = NULL;
@@ -1727,7 +1744,8 @@ static gchar *get_bundle_print_function (gretl_bundle *b)
 	fnpkg *pkg = get_function_package_by_name(pkgname);
 
 	if (pkg == NULL) {
-	    char *fname = gretl_function_package_get_path(pkgname);
+	    char *fname = 
+		gretl_function_package_get_path(pkgname, PKG_ALL);
 	    int err = 0;
 
 	    if (fname != NULL) {
@@ -1737,33 +1755,31 @@ static gchar *get_bundle_print_function (gretl_bundle *b)
 	}
 
 	if (pkg != NULL) {
-	    function_package_get_properties(pkg,
-					    "bundle-print",
-					    &ret,
-					    NULL);
+	    function_package_get_properties(pkg, task, &ret, NULL);
 	}
     }
 
     return ret;
 }
 
+gchar *get_bundle_plot_function (gretl_bundle *b)
+{
+    return get_bundle_special_function(b, BUNDLE_PLOT);
+}
+
 /* See if we can find a "native" printing function for a
-   gretl bundle. This may be recorded in string form under
-   the key "print-function". If so, it will take the form
-   [pkgname/]function-name. If we can find this, try
-   executing it.
+   gretl bundle. If we can find this, try executing it.
 
    Notice that this function returns 1 on success, 0 on
    failure.
 */
 
-int try_exec_bundle_print_function (void *ptr, PRN *prn)
+int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
 {
-    gretl_bundle *b = ptr;
     gchar *funname;
     int ret = 0;
 
-    funname = get_bundle_print_function(b);
+    funname = get_bundle_special_function(b, BUNDLE_PRINT);
 
     if (funname != NULL) {
 	const char *name = gretl_bundle_get_name(b);
@@ -1788,7 +1804,9 @@ int try_exec_bundle_print_function (void *ptr, PRN *prn)
     return ret;
 }
 
-#if 1
+#define OLS_BUNDLE_DEMO 0
+
+#if OLS_BUNDLE_DEMO
 
 /* This is quite complicated, because we're bypassing the "standard"
    mechanism for a function call, and instead using output from the
@@ -1813,7 +1831,7 @@ static int ols_bundle_callback (selector *sr)
     /* get path to package; load package if not already loaded;
        get specific function from package */
 
-    path = gretl_function_package_get_path(pkgname);
+    path = gretl_function_package_get_path(pkgname, PKG_ALL);
     if (path == NULL) {
 	gretl_errmsg_sprintf("Couldn't find package '%s'", pkgname);
 	err = E_DATA;
@@ -1890,34 +1908,90 @@ static int ols_bundle_callback (selector *sr)
     return err;
 }
 
+#endif /* OLS_BUNDLE_DEMO */
+
+static char *download_addon_path (const char *pkgname)
+{
+    const char *SFdir = "http://downloads.sourceforge.net/project/gretl/addons/";
+    char path[FILENAME_MAX];
+    char *ret = NULL;
+
+    get_default_dir(path, SAVE_FUNCTIONS);
+
+    if (*path == '\0') {
+	file_write_errbox(pkgname);
+    } else {
+	gchar *uri = g_strdup_printf("%s%s.zip", SFdir, pkgname);
+	gchar *fname = g_strdup_printf("%s%s.zip", path, pkgname);
+	int err;
+
+#if 1
+	fprintf(stderr, "uri   = '%s'\n", uri);
+	fprintf(stderr, "fname = '%s'\n", fname);
 #endif
 
-/* Callback for a menu item representing a function package, whose
-   name (e.g. "gig") is attached to @action. We first see if we can
-   find the full path to the corresponding gfn file; if so we
+	err = retrieve_public_file(uri, fname);
+	fprintf(stderr, "retrieve_public_file: err = %d\n", err);
+	if (!err) {
+	    err = unzip_package_file(fname, path);
+	    fprintf(stderr, "unzip_package_file: err = %d\n", err);
+	}
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    strcat(path, pkgname);
+	    strcat(path, SLASHSTR);
+	    strcat(path, pkgname);
+	    strcat(path, ".gfn");
+	    ret = gretl_strdup(path);
+	}
+	g_free(uri);
+	g_free(fname);
+    }
+
+    return ret;
+}
+
+/* Callback for a menu item representing a "addon" function package, 
+   whose name (e.g. "gig") is attached to @action. We first see if 
+   we can find the full path to the corresponding gfn file; if so we
    initiate a GUI call to the package.
 */
 
 static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 {
-    const gchar *name = gtk_action_get_name(action);
+    const gchar *pkgname = gtk_action_get_name(action);
     char *path;
 
-    path = gretl_function_package_get_path(name);
-
-    if (path == NULL) {
-	errbox("Couldn't find package %s\n", name);
-    } else if (!strcmp(name, "olsbundle")) {
-	/* see if we can get cosy with olsbundle */
+#if OLS_BUNDLE_DEMO
+    if (!strcmp(pkgname, "olsbundle")) {
 	selection_dialog(_("gretl: specify model"), 
 			 ols_bundle_callback, OLS);
-    } else {
+	return;
+    }
+#endif
+
+    path = gretl_function_package_get_path(pkgname, PKG_ADDON);
+
+    if (path == NULL) {
+	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
+				       "up to date.\nWould you like to try "
+				       "downloading it now?"), pkgname);
+	int resp = yes_no_dialog(NULL, msg, 0);
+
+	g_free(msg);
+	if (resp == GRETL_YES) {
+	    path = download_addon_path(pkgname);
+	}
+    }
+
+    if (path != NULL) {
 	call_function_package(path, vwin->main, NULL);
 	free(path);
     }
 }
 
-/* For "privileged" function packages: given the internal
+/* For recognized "addon" function packages: given the internal
    package name (e.g. "gig") and a menu path where we'd like
    it to appear (e.g. "/menubar/Model/TSModels" -- see the
    ui definition file gui2/gretlmain.xml), construct the
@@ -1951,12 +2025,13 @@ static void maybe_add_package_to_menu (const char *pkgname,
     g_free(label);
 }
 
+/* put the recognized gretl addons into the appropriate menus */
+
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
     maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
     maybe_add_package_to_menu("ivpanel", "/menubar/Model/PanelModels", vwin);
-#if 0
+#if OLS_BUNDLE_DEMO
     maybe_add_package_to_menu("olsbundle", "/menubar/Model", vwin);
 #endif
 }
-

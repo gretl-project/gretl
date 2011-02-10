@@ -64,7 +64,6 @@ static char gretlhost[DBHLEN]   = "ricardo.ecn.wfu.edu";
 static char datacgi[DBHLEN]     = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN]   = "/gretl/cgi-bin/gretl_update.cgi";
 static char manual_path[DBHLEN] = "/pub/gretl/manual/PDF/";
-static char gfndoc_path[DBHLEN] = "/pub/gretl/gfndoc/";
 
 typedef enum {
     SAVE_NONE,
@@ -382,6 +381,33 @@ static int get_host_ip (urlinfo *u, const char *h_name)
     return 0;
 }
 
+/* on getting a redirect we'd better check that we're still
+   calling up the right host
+*/
+
+static int maybe_reset_host (urlinfo *u)
+{
+    int err = 0;
+
+    if (!strncmp(u->path, "http://", 7)) {
+	char *s = u->path + 7;
+	char *p = strchr(s, '/');
+
+	if (p != NULL) {
+	    char *host = gretl_strndup(s, p - s);
+
+	    if (host != NULL) {
+		if (strcmp(host, u->hostname)) {
+		    err = get_host_ip(u, host);
+		}
+		free(host);
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* http header functions -- based on Wget */
 
 static int rbuf_peek (struct rbuf *rbuf, char *store)
@@ -406,8 +432,7 @@ static int rbuf_peek (struct rbuf *rbuf, char *store)
 static int header_get (struct rbuf *rbuf, char **hdr, 
 		       enum header_get_flags flags)
 {
-    int i;
-    int bufsize = 80;
+    int i, bufsize = 80;
 
     *hdr = malloc(bufsize);
     if (*hdr == NULL) {
@@ -415,6 +440,7 @@ static int header_get (struct rbuf *rbuf, char **hdr,
     }
 
     for (i=0; 1; i++) {
+	char *h;
 	int res;
 
 	if (i > bufsize - 1) {
@@ -424,18 +450,20 @@ static int header_get (struct rbuf *rbuf, char **hdr,
 	    }
 	}
 
-	res = RBUF_READCHAR(rbuf, *hdr + i);
+	h = *hdr;
+	res = RBUF_READCHAR(rbuf, h + i);
 
 	if (res == 1) {
-	    if ((*hdr)[i] == '\n') {
+	    if (h[i] == '\n') {
 		if (!((flags & HG_NO_CONTINUATIONS)
 		      || i == 0
-		      || (i == 1 && (*hdr)[0] == '\r'))) {
+		      || (i == 1 && h[0] == '\r'))) {
 		    char next = 0;
 
 		    /* If the header is non-empty, we need to check if
 		       it continues on to the other line.  We do that by
-		       peeking at the next character. */
+		       peeking at the next character 
+		    */
 		    res = rbuf_peek(rbuf, &next);
 		    if (res == 0) {
 			return HG_EOF;
@@ -448,10 +476,10 @@ static int header_get (struct rbuf *rbuf, char **hdr,
 		    }
 		}
 		/* The header ends */
-		(*hdr)[i] = '\0';
+		h[i] = '\0';
 		/* Get rid of '\r' */
-		if (i > 0 && (*hdr)[i - 1] == '\r') {
-		    (*hdr)[i - 1] = '\0';
+		if (i > 0 && h[i-1] == '\r') {
+		    h[i-1] = '\0';
 		}
 		break;
 	    }
@@ -689,13 +717,16 @@ static int http_process_type (const char *hdr, void *arg)
     return 1;
 }
 
-#define FREEHSTAT(x) do				\
-{						\
-  free((x).newloc);				\
-  free((x).remote_time);			\
-  free((x).error);				\
-  (x).newloc = (x).remote_time = (x).error = NULL;	\
-} while (0)
+static void free_hstat (struct http_stat *hstat)
+{
+    free(hstat->newloc);
+    free(hstat->remote_time);
+    free(hstat->error);
+
+    hstat->newloc = NULL;
+    hstat->remote_time = NULL;
+    hstat->error = NULL;
+}
 
 #if 0
 static int numdigit (long a)
@@ -1230,46 +1261,41 @@ static uerr_t try_http (urlinfo *u)
 	case HERR: case HEOF: case CONSOCKERR: case CONCLOSED:
 	case CONERROR: case READERR: case WRITEFAILED:
 	case RANGEERR:
-	    FREEHSTAT(hstat);
+	    free_hstat(&hstat);
 	    continue;
 	    break;
 	case HOSTERR: case CONREFUSED: case PROXERR: case AUTHFAILED:
 	case FWRITEERR: case FOPENERR: case RETRCANCELED:
-	    FREEHSTAT(hstat);
+	    free_hstat(&hstat);
 	    return err;
 	case RETRFINISHED:
 	    break;
-	case NEWLOCATION: /* ?? */
-	    if (redirs == 0 && hstat.newloc != NULL) {
-		char *p;
-
+	case NEWLOCATION:
+	    if (redirs < 3 && hstat.newloc != NULL) {
 		free(u->path);
 		u->path = hstat.newloc;
-		p = strchr(u->path, '?');
-		if (p != NULL) {
-		    *p = '\0';
-		}
+		maybe_reset_host(u);
 		hstat.newloc = NULL;
 		got_newloc = 1;
 		redirs++;
-	    }
+	    } 
 	    break;
 	default:
-	    FREEHSTAT(hstat);
+	    free_hstat(&hstat);
 	    return err;
 	}
 
 	if (got_newloc) {
-	    FREEHSTAT(hstat);
+	    free_hstat(&hstat);
 	    break;
 	}
 
 	if (!(dt & RETROKF)) {
-	    FREEHSTAT(hstat);
+	    free_hstat(&hstat);
 	    return WRONGCODE;
 	}
 
-	FREEHSTAT(hstat);
+	free_hstat(&hstat);
 
 	if (hstat.len == hstat.contlen) {
 	    return RETROK;
@@ -1321,11 +1347,7 @@ static int getbuf_init (urlinfo *u)
 {
     u->getbuf = calloc(WBUFSIZE, 1);
 
-    if (u->getbuf == NULL) {
-	return 1;
-    } else {
-	return 0;
-    }
+    return (u->getbuf == NULL)? 1 : 0;
 }
 
 static void url_init (urlinfo *u)
@@ -1359,11 +1381,9 @@ static urlinfo *urlinfo_new (void)
 {
     urlinfo *u = malloc(sizeof *u);
 
-    if (u == NULL) {
-	return NULL;
+    if (u != NULL) {
+	url_init(u);
     }
-
-    url_init(u);
     
     return u;
 }
@@ -1628,7 +1648,7 @@ urlinfo_set_params (urlinfo *u, CGIOpt opt, const char *fname,
     return (u->params != NULL);
 }
 
-#define BINTYPE(t) (t == GRAB_PKG || t == GRAB_PDF || t == GRAB_GFNDOC)
+#define BINTYPE(t) (t == GRAB_PKG || t == GRAB_PDF)
 
 /* when we're expecting binary data, check that we didn't get
    text/plain instead, which presumably in fact means we got
@@ -1663,7 +1683,6 @@ static void maybe_revise_www_paths (void)
 	strcpy(datacgi, "/~cottrell/gretl/gretldata.cgi");
 	strcpy(updatecgi, "/~cottrell/gretl/gretl_update.cgi");
 	strcpy(manual_path, "/~cottrell/gretl/manual/");
-	strcpy(gfndoc_path, "/~cottrell/gretl/gfndoc/");
     }
 }
 
@@ -1698,8 +1717,6 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	urlinfo_set_dl_path(u, NULL, fname);
     } else if (opt == GRAB_PDF) {
 	urlinfo_set_dl_path(u, manual_path, fname);
-    } else if (opt == GRAB_GFNDOC) {
-	urlinfo_set_dl_path(u, gfndoc_path, fname);
     } else if (opt == GRAB_FILE) {
 	urlinfo_set_cgi_path(u, updatecgi);
     } else {
@@ -1711,7 +1728,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return 1;
     }
 
-    if (opt != GRAB_PDF && opt != GRAB_GFNDOC && opt != GRAB_FOREIGN) {
+    if (opt != GRAB_PDF && opt != GRAB_FOREIGN) {
 	urlinfo_set_params(u, opt, fname, dbseries);
 	if (u->params == NULL) {
 	    urlinfo_destroy(u, 0);
@@ -2113,24 +2130,6 @@ int retrieve_manfile (const char *fname, const char *localname)
 }
 
 /**
- * retrieve_gfndoc:
- * @fname: name of PDF file to retrieve.
- * @localname: full path to which the file should be written
- * on the local machine.
- *
- * Retrieves the specified gfn documentation in PDF format from the 
- * gretl data server.
- *
- * Returns: 0 on success, non-zero on failure.
- */
-
-int retrieve_gfndoc (const char *fname, const char *localname)
-{
-    return retrieve_url (gretlhost, GRAB_GFNDOC, fname, NULL, SAVE_TO_FILE,
-			 localname, NULL);
-}
-
-/**
  * retrieve_public_file:
  * @uri: full URI for file to grab: host and path.
  * @localname: full path to which the file should be written
@@ -2184,6 +2183,15 @@ int retrieve_public_file (const char *uri, char *localname)
 	    err = retrieve_url(host, GRAB_FOREIGN, path, NULL, SAVE_TO_FILE,
 			       localname, NULL);
 	    free(host);
+	}
+    }
+
+    if (err) {
+	const char *s = gretl_errmsg_get();
+
+	if (*s == '\0') {
+	    /* no error message in place */
+	    gretl_errmsg_sprintf("%s\ndownload failed", uri);
 	}
     }
 

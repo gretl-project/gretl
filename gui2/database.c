@@ -1980,6 +1980,48 @@ static int unpack_book_data (const char *fname)
     return err;
 }
 
+int unzip_package_file (const char *zipname, const char *path)
+{
+    char *p, dirname[FILENAME_MAX];
+    int (*gretl_unzip_file) (const char *, GError **);
+    void *handle = NULL;
+    GError *gerr = NULL;
+    int err = 0;
+
+    strcpy(dirname, path);
+    p = strrchr(dirname, SLASH);
+    if (p != NULL) {
+	*p = '\0';
+    }
+
+    err = gretl_chdir(dirname);
+    if (err) {
+	return err;
+    }
+
+    gretl_unzip_file = gui_get_plugin_function("gretl_unzip_file", 
+					       &handle);
+    if (gretl_unzip_file == NULL) {
+        return 1;
+    }
+
+    err = (*gretl_unzip_file)(zipname, &gerr);
+    if (gerr != NULL) {
+	fprintf(stderr, "gretl_unzip_file: '%s'\n", gerr->message);
+	if (!err) {
+	    err = 1;
+	}
+	g_error_free(gerr);
+    } else if (err) {
+	fprintf(stderr, "gretl_unzip_file: err = %d\n", err);
+    }
+
+    close_plugin(handle);
+    gretl_remove(zipname);
+
+    return err;
+}
+
 /* note : 'vwin' here is the source viewer window displaying the
    remote file (database or datafiles package or function package)
    that is being installed onto the local machine.
@@ -2023,7 +2065,17 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
     }
 
     if (vwin->role == REMOTE_FUNC_FILES) {
-	err = retrieve_remote_function_package(objname, path);
+	if (zipfile) {
+	    gchar *zipname = g_strdup_printf("%s.zip", objname);
+
+	    err = retrieve_remote_function_package(zipname, path);
+	    if (!err) {
+		err = unzip_package_file(zipname, path);
+	    }
+	    g_free(zipname);
+	} else {
+	    err = retrieve_remote_function_package(objname, path);
+	}
     } else if (vwin->role == REMOTE_DATA_PKGS) {
 	err = retrieve_remote_datafiles_package(objname, path);
     } else {

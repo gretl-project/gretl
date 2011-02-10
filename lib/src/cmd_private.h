@@ -14,12 +14,18 @@ typedef enum {
     CMD_NULLIST = 1 << 2, /* command has been given a null list on input */
     CMD_SUBST   = 1 << 3, /* string substitution has been done on command */
     CMD_PROG    = 1 << 4, /* command is in context of progressive loop */
-    CMD_CATCH   = 1 << 5  /* error from command should be "caught" */
+    CMD_CATCH   = 1 << 5, /* error from command should be "caught" */
+    CMD_NOSUB   = 1 << 6, /* no @-substitution wanted (pre-checked) */
+    CMD_NOOPT   = 1 << 7, /* no options present (pre-checked) */
+    CMD_NOSAVE  = 1 << 8  /* no "savename" present (pre-checked) */
 } CmdFlags;
 
-#define cmd_nolist(c)    (c->flags & CMD_NOLIST)
-#define cmd_ignore(c)    (c->flags & CMD_IGNORE)
-#define cmd_subst(c)     (c->flags & CMD_SUBST)
+#define cmd_nolist(c)  (c->flags & CMD_NOLIST)
+#define cmd_ignore(c)  (c->flags & CMD_IGNORE)
+#define cmd_subst(c)   (c->flags & CMD_SUBST)
+#define cmd_nosub(c)   (c->flags & CMD_NOSUB)
+#define cmd_noopt(c)   (c->flags & CMD_NOOPT)
+#define cmd_nosave(c)  (c->flags & CMD_NOSAVE)
 
 struct CMD_ {
     char word[FN_NAMELEN];      /* command word */
@@ -40,6 +46,12 @@ struct CMD_ {
 };
 
 typedef void (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
+
+enum {
+    FNERR_NONE,
+    FNERR_FLAGGED,
+    FNERR_AUTO
+};
 
 struct ExecState_ {
     ExecFlags flags;

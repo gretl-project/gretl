@@ -2058,15 +2058,24 @@
       </description>
     </function>
 
-    <function name="getenv" section="strings" output="string">
+    <function name="getenv" section="strings" output="seebelow">
       <fnargs>
 	<fnarg type="string">s</fnarg>
+	<fnarg type="scalar" optional="true">asnum</fnarg>
       </fnargs>    
       <description>
 	<para>
-	  If an environment variable by the name of <argname>s</argname>
-	  is defined, returns the value of that variable, otherwise
-	  returns an empty string.
+	  If the second argument is omitted, or given as zero: if an
+	  environment variable by the name of <argname>s</argname> is
+	  defined, returns the string value of that variable,
+	  otherwise returns an empty string.
+	</para>
+	<para>
+	  If <argname>asnum</argname> is non-zero: if an environment
+	  variable named <argname>s</argname> is defined and its value
+	  is interpretable as a number, returns a scalar value
+	  obtained via the C function <lit>sscanf</lit>, otherwise
+	  returns <lit>NA</lit>.
 	</para>
       </description>
     </function>
@@ -5107,6 +5116,21 @@
 	  <argname>s2</argname>.  If a match is found, returns a copy of the
 	  portion of <argname>s1</argname> that starts with
 	  <argname>s2</argname>, otherwise returns an empty string.
+	</para>
+      </description>
+    </function>
+
+    <function name="strsub" section="strings" output="string">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+	<fnarg type="string">find</fnarg>
+	<fnarg type="string">subst</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  Returns a copy of <argname>s</argname> in which all
+	  occurrences of <argname>find</argname> are replaced by
+	  <argname>subst</argname>.
 	</para>
       </description>
     </function>

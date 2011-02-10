@@ -43,4 +43,6 @@ MODEL logistic_driver (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
+int script_add_obs_markers (DATAINFO *pdinfo);
+
 #endif /* LIBGLUE_H */

@@ -539,9 +539,6 @@ static int write_data_for_R (const double **Z,
 
     fputs("# load data from gretl\n", fp);
 
-    fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
-    g_free(Rdata);
-
     if (ts) {
 	char *p, datestr[OBSLEN];
 	int subper = 1;
@@ -551,12 +548,16 @@ static int write_data_for_R (const double **Z,
 	if (p != NULL) {
 	    subper = atoi(p + 1);
 	}
-	    
+
+	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
 		atoi(datestr), subper, pdinfo->pd);
-    } else {
+    } else {	
+	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	fputs("attach(gretldata)\n", fp);
     }
+
+    g_free(Rdata);
 
     if (opt & OPT_I) {
 	/* let the (interactive) user see that this worked */

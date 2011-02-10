@@ -108,16 +108,20 @@ int radio_dialog_with_check (const char *title, const char *label,
 
 GtkWidget *
 build_checks_dialog (const char *title, const char *blurb,
-		     const char **opts, int nopts,
-		     int *active, int nradios, int *rvar, int *spinvar, 
-		     const char *spintxt, int spinmin, int spinmax, 
+		     const char **opts, 
+		     int nopts, int *active, int need_check,
+		     int nradios, int *rvar, 
+		     int *spinvar, const char *spintxt, 
+		     int spinmin, int spinmax, 
 		     int hcode, int *ret);
 
 int checks_dialog (const char *title, const char *blurb,
-		   const char **opts, int nopts, 
-		   int *active, int nradios, int *rvar,
+		   const char **opts, 
+		   int nopts, int *active, int need_check, 
+		   int nradios, int *rvar,
 		   int *spinvar, const char *spintxt, 
-		   int spinmin, int spinmax, int helpcode);
+		   int spinmin, int spinmax, 
+		   int hcode);
 
 int checks_only_dialog (const char *title, const char *blurb,
 			const char **opts, int nopts,

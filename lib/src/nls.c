@@ -31,6 +31,7 @@
 #include "cmd_private.h"
 #include "estim_private.h"
 #include "gretl_scalar.h"
+#include "gretl_string_table.h"
 #include "gretl_bfgs.h"
 #include "tsls.h"
 
@@ -563,6 +564,39 @@ static int check_param_name (const char *name)
 	    err = E_DATATYPE;
 	} 
     }
+
+    return err;
+}
+
+static int nlspec_add_param_names (nlspec *spec, const char *s)
+{
+    char sname[VNAMELEN];
+    int n, err = 0;
+
+    s += strspn(s, " ");
+    n = gretl_namechar_spn(s);
+
+    if (n == 0 || n >= VNAMELEN) {
+	err = E_PARSE;
+    } else {
+	*sname = '\0';
+	strncat(sname, s, n);
+	if (!is_user_string(sname)) {
+	    err = E_UNKVAR;
+	} else {
+	    const char *names = get_string_by_name(sname);
+
+	    if (names == NULL || *names == '\0') {
+		err = E_DATA;
+	    } else {
+		free(spec->parnames);
+		spec->parnames = gretl_strdup(names);
+		if (spec->parnames == NULL) {
+		    err = E_ALLOC;
+		}
+	    }
+	} 
+    } 
 
     return err;
 }
@@ -1476,6 +1510,43 @@ static int nl_model_add_spec_info (MODEL *pmod, nlspec *spec)
     return 0;
 }
 
+static int copy_user_parnames (MODEL *pmod, nlspec *spec)
+{
+    const char *sep = ",";
+    const char *pname;
+    char *tmp;
+    int i, err = 0;
+
+    /* copy the user-defined string before applying strtok */
+    tmp = gretl_strdup(spec->parnames);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    if (strchr(tmp, ',') == NULL) {
+	sep = " ";
+    }
+
+    for (i=0; i<pmod->ncoeff && !err; i++) {
+	pname = strtok((i == 0)? tmp : NULL, sep);
+	if (pname == NULL) {
+	    fprintf(stderr, "copy_user_parnames: too few strings\n");
+	    gretl_errmsg_sprintf(_("modprint: expected %d names"), 
+				 pmod->ncoeff);
+	    err = E_DATA;
+	} else {
+	    pmod->params[i] = gretl_strdup(pname);
+	    if (pmod->params[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+    }
+
+    free(tmp);
+
+    return err;
+}
+
 /* Called for all of NLS, MLE, GMM: attach to the model struct
    the names of the parameters and some other string info
 */
@@ -1515,25 +1586,44 @@ add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATAINFO *pdinfo)
     if (err) {
 	free(pmod->params);
 	return err;
-    }    
+    }  
 
-    i = 0;
-    for (j=0; j<spec->nparam; j++) {
-	if (scalar_param(spec, j)) {
-	    pmod->params[i++] = gretl_strdup(spec->params[j].name);
-	} else {
-	    m = spec->params[j].nc;
-	    sprintf(pname, "%d", m + 1);
-	    n = VNAMELEN - strlen(pname) - 3;
-	    for (k=0; k<m; k++) {
-		sprintf(pname, "%.*s[%d]", n, spec->params[j].name, k + 1);
-		pmod->params[i++] = gretl_strdup(pname);
+    if (spec->parnames != NULL) {
+	/* handle the case where the user has given a "parnames"
+	   string */
+	err = copy_user_parnames(pmod, spec);
+    } else {
+	/* compose automatic parameter names */
+	i = 0;
+	for (j=0; j<spec->nparam && !err; j++) {
+	    if (scalar_param(spec, j)) {
+		pmod->params[i] = gretl_strdup(spec->params[j].name);
+		if (pmod->params[i] == NULL) {
+		    err = E_ALLOC;
+		}
+		i++;
+	    } else {
+		m = spec->params[j].nc;
+		sprintf(pname, "%d", m + 1);
+		n = VNAMELEN - strlen(pname) - 3;
+		for (k=0; k<m && !err; k++) {
+		    sprintf(pname, "%.*s[%d]", n, spec->params[j].name, k + 1);
+		    pmod->params[i] = gretl_strdup(pname);
+		    if (pmod->params[i] == NULL) {
+			err = E_ALLOC;
+		    }
+		    i++;
+		}
 	    }
 	}
     }
 
-    if (spec->ci == NLS || gretl_in_gui_mode()) {
+    if (!err && (spec->ci == NLS || gretl_in_gui_mode())) {
 	err = nl_model_add_spec_info(pmod, spec);
+    }
+
+    if (err && !pmod->errcode) {
+	pmod->errcode = err;
     }
 
     return err;
@@ -1896,6 +1986,9 @@ static void clear_nlspec (nlspec *spec)
     if (spec == NULL) {
 	return;
     }
+
+    free(spec->parnames);
+    spec->parnames = NULL;
 
     if (spec->params != NULL) {
 	for (i=0; i<spec->nparam; i++) {
@@ -2574,6 +2667,8 @@ void nlspec_set_t1_t2 (nlspec *spec, int t1, int t2)
     }
 }
 
+#define parnames_line(s) (!strncmp(s, "param_names ", 12))
+
 #define param_line(s) (!strncmp(s, "deriv ", 6) || \
                        !strncmp(s, "params ", 7) || \
                        !strncmp(s, "orthog ", 7) || \
@@ -2649,6 +2744,8 @@ int nl_parse_line (int ci, const char *line, const double **Z,
 		err = nlspec_add_weights(s, line + 7);
 	    }
 	}
+    } else if (parnames_line(line)) {
+	err = nlspec_add_param_names(s, line + 12);
     } else {
 	err = nlspec_add_aux(s, line, pdinfo);
     }
@@ -3064,6 +3161,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->dv = 0;
     spec->lhtype = GRETL_TYPE_NONE;
     *spec->lhname = '\0';
+    spec->parnames = NULL;
     spec->lhv = 0;
     spec->lvec = NULL;
 

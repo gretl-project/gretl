@@ -9592,6 +9592,7 @@
       <altforms>
         <altform><lit>setobs</lit> <repl>periodicity</repl> <repl>startobs</repl></altform>
 	<altform><lit>setobs</lit> <repl>unitvar</repl> <repl>timevar</repl></altform>
+	<altform><lit>setobs --labels=</lit><repl>filename</repl></altform>
       </altforms>
       <options>
         <option>
@@ -9612,7 +9613,7 @@
         </option>
         <option>
 	  <flag>--panel-vars</flag>
-	  <effect>use index variables (see below)</effect>
+	  <effect>use index variables, see below</effect>
         </option>
       </options>
       <examples>
@@ -9626,8 +9627,10 @@
 
     <description>
       <para>
-	Force the program to interpret the current data set as having
-	a specified structure.  
+	In its primary use, this command forces the program to
+	interpret the current data set as having a specified
+	structure. A secondary use, with the <opt>--labels</opt> flag,
+	is to add observation labels to a dataset.
       </para>
       <para>
 	In the first form of the command the <repl>periodicity</repl>,
@@ -9663,10 +9666,19 @@
 	of the data the program will attempt to guess the structure
 	from the information given.
       </para>
+      <para>
+	In the third form of the comman, with the <opt>--labels</opt>
+	flag, the effect is not to set the interpretation of the data
+	structure, but rather to add labels for the observations. The
+	required <repl>filename</repl> parameter must give the name of
+	a plain text file that contains one label per line, with
+	enough lines to label all the observations.
+      </para>
     </description> 
 
     <gui-access>
       <menu-path>/Data/Dataset structure</menu-path>
+      <menu-path>/Data/Observation markers</menu-path>
     </gui-access>
       
   </command>

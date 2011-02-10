@@ -12,8 +12,7 @@ program's graphical interface.
 The syntax for defining a function looks like this:\footnote{The
   syntax given here differs from the standard prior to \app{gretl}
   version 1.8.4.  For reasons of backward compatibility the old syntax
-  is still supported; an account of the changes can be found in
-  section~\ref{sec:old-func} below.}
+  is still supported; see section~\ref{sec:old-func} for details.}
 
 \begin{raggedright}
 \texttt{function} \textsl{return-type} \textsl{function-name}
@@ -42,7 +41,11 @@ strict order:
   into the function name, or separated by white space as shown.
 \end{enumerate}
 
-Function parameters can be of any of the types shown below.
+Function parameters can be of any of the types shown
+below.\footnote{An additional parameter type is available for GUI use,
+  namely \texttt{obs}; this is equivalent to \texttt{int} except for
+  the way it is represented in the graphical interface for calling a
+  function.}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -727,48 +730,6 @@ and the printing of messages, this is equivalent to setting
 \verb|max_verbose| (which produces verbose output from the BFGS
 maximizer) at all levels of function execution.
 
-\section{Old-style function syntax}
-\label{sec:old-func}
-
-Prior to \app{gretl} 1.8.4 different rules were in force for defining
-functions.  As mentioned above, the old syntax is still supported for
-reasons of backward compatibility.  The differences in relation to the
-currently recommended syntax concern the way in which a function's
-return type is specified, and the syntax and semantics of the
-\texttt{return} statement.
-
-\begin{itemize}
-\item In the old version there was no place for specifying a
-  function's return type in the first line of its definition.  You had
-  to give the type as part of the \texttt{return} statement, as in
-  \texttt{return scalar x}.
-\item The final element in the \texttt{return} statement could not be
-  an expression; it had to be the name of a pre-defined variable.
-\item There could be only one \texttt{return} statement in a given
-  function.
-\item The \texttt{return} statement did not actually cause the
-  function to exit, it just announced the variable available for
-  assignment by the caller (although usually such a statement
-  would occur at the end of the function anyway).
-\end{itemize}
-
-Here is a comparison of the old and the new syntax for a trivial
-example:
-%
-\begin{code}
-# old style
-function triple (series x)
-  y = 3*x
-  return series y
-end function
-
-# new style  
-function series triple (series x)
-  return 3*x
-end function
-\end{code}
-
-
 \section{Function packages}
 \label{sec:func-packages}
 
@@ -826,7 +787,7 @@ may proceed to the next stage.
 
 We first present the mechanism for creating a function package via
 \app{gretl}'s graphical interface. This can also be done via the
-command line; an explanation is given at the end of this chapter.
+command line; an explanation is given later in this section.
 
 Start the GUI program and take a look at the ``File, Function files'' menu.
 This menu contains four items: ``On local machine'', ``On server'', ``Edit
@@ -947,11 +908,10 @@ in figure \ref{fig:function_call} will appear.  Notice that the
 description string ``Series to process'', supplied with the function
 definition, appears to the left of the top series chooser.
 
-Click ``Ok'' and the
-series \texttt{foo} will be generated (see figure \ref{fig:iprod_pc}).
-You may have to go to ``Data, Refresh data'' in order to have your new
-variable show up in the main window variable list (or just press the
-``r'' key).
+Click ``Ok'' and the series \texttt{foo} will be generated (see figure
+\ref{fig:iprod_pc}).  You may have to go to ``Data, Refresh data'' in
+order to have your new variable show up in the main window variable
+list (or just press the ``r'' key).
 
 \begin{figure}[htbp]
   \centering
@@ -1079,6 +1039,47 @@ above. Also please note that any other functions in memory at this
 time are assumed to be private ``helper'' functions that should also
 be made part of the package: the listing of private functions is
 implicit.
+
+\section{Memo: updating old-style functions}
+\label{sec:old-func}
+
+As mentioned at the start of this chapter, different rules were in
+force for defining functions prior to \app{gretl} 1.8.4. While the old
+syntax is still supported to date, this may not always be the
+case. But it is straightforward to convert a function to the new
+style. The only thing that must be changed for compatibility with the
+new syntax is the declaration of the function's return
+type. Previously this was placed inline in the \texttt{return}
+statement, whereas now it is placed right after the \texttt{function}
+keyword. For example:
+%
+\begin{code}
+# old style
+function triple (series x)
+  y = 3*x
+  return series y # note the "series" here
+end function
+
+# new style
+function series triple (series x)
+  y = 3*x
+  return y
+end function
+\end{code}
+
+Note also that the role of the \texttt{return} statement has changed
+(and its use has become more flexible):
+
+\begin{itemize}
+\item The \texttt{return} statement now causes the function to return
+  directly, and you can have more than one such statement, wrapped in
+  conditionals. Before there could only be one \texttt{return}
+  statement, and its role was just to specify the type available for
+  assignment by the caller.
+\item The final element in the \texttt{return} statement can now be an
+  expression that evaluates to a value of the advertised return type;
+  before, it had to be the name of a pre-defined variable.
+\end{itemize}
 
 
 %%% Local Variables: 

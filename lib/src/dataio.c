@@ -3346,6 +3346,21 @@ int check_atoi (const char *numstr)
     return 1;
 }
 
+static int transpose_varname_used (const char *vname, 
+				   DATAINFO *dinfo,
+				   int imax)
+{
+    int i;
+
+    for (i=0; i<imax; i++) {
+	if (!strcmp(vname, dinfo->varname[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * transpose_data:
  * @pZ: pointer to data array.
@@ -3379,11 +3394,24 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
     }
 
     for (t=0; t<pdinfo->n; t++) {
+	int k = t + 1;
+	char *targ = tinfo->varname[k];
+
 	if (pdinfo->S != NULL && pdinfo->S[t][0] != '\0') {
-	    tinfo->varname[t+1][0] = '\0';
-	    strncat(tinfo->varname[t+1], pdinfo->S[t], VNAMELEN - 1);
+	    int err;
+
+	    *targ = '\0';
+	    strncat(targ, pdinfo->S[t], VNAMELEN - 1);
+	    charsub(targ, ' ', '_');
+	    err = check_varname(targ);
+	    if (err) {
+		sprintf(targ, "v%d", k);
+		gretl_error_clear();
+	    } else if (transpose_varname_used(targ, tinfo, k)) {
+		sprintf(targ, "v%d", k);
+	    }
 	} else {
-	    sprintf(tinfo->varname[t+1], "v%d", t+1);
+	    sprintf(targ, "v%d", k);
 	}
     }
 

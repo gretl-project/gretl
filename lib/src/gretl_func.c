@@ -84,17 +84,25 @@ struct fncall_ {
 
 enum {
     UFUN_PRIVATE      = 1 << 0,
-    UFUN_PLUGIN       = 1 << 1,
-    UFUN_BUNDLE_PRINT = 1 << 2,
-    UFUN_BUNDLE_PLOT  = 1 << 3,
-    UFUN_GUI_MAIN     = 1 << 4
+    UFUN_PLUGIN       = 1 << 1
 };
+
+enum {
+    UFUN_BUNDLE_PRINT = 1,
+    UFUN_BUNDLE_PLOT,
+    UFUN_BUNDLE_TEST,
+    UFUN_BUNDLE_FCAST,
+    UFUN_BUNDLE_EXTRA,
+    UFUN_GUI_MAIN,
+    UFUN_BUNDLE_MAX
+};    
 
 /* structure representing a user-defined function */
 
 struct ufunc_ {
     char name[FN_NAMELEN]; /* identifier */
     fnpkg *pkg;            /* pointer to parent package, or NULL */
+    int pkg_role;          /* printer, plotter, etc. */
     int flags;             /* private, plugin, etc. */
     int n_lines;           /* number of lines of code */
     char **lines;          /* array of lines of code */
@@ -128,6 +136,7 @@ struct fnpkg_ {
 
 #define ok_function_arg_type(t) (t == GRETL_TYPE_BOOL ||	\
 				 t == GRETL_TYPE_INT ||		\
+				 t == GRETL_TYPE_OBS ||		\
 				 t == GRETL_TYPE_DOUBLE ||	\
 				 t == GRETL_TYPE_SERIES ||	\
 				 t == GRETL_TYPE_LIST ||	\
@@ -169,7 +178,7 @@ struct fnargs_ {
 
 static int n_ufuns;         /* number of user-defined functions in memory */
 static ufunc **ufuns;       /* array of pointers to user-defined functions */
-static ufunc *current_ufun; /* pointer to currently executing function */
+static ufunc *current_fdef; /* pointer to function currently being defined */
 static GList *callstack;    /* stack of function calls */
 static int n_pkgs;          /* number of loaded function packages */
 static fnpkg **pkgs;        /* array of pointers to loaded packages */
@@ -185,9 +194,50 @@ static int fn_executing; /* depth of function call stack */
 
 #define function_is_private(f) (f->flags & UFUN_PRIVATE)
 #define function_is_plugin(f) (f->flags & UFUN_PLUGIN)
-#define function_is_bundle_print(f) (f->flags & UFUN_BUNDLE_PRINT)
-#define function_is_bundle_plot(f) (f->flags & UFUN_BUNDLE_PLOT)
-#define function_is_gui_main(f) (f->flags & UFUN_GUI_MAIN)
+
+#define null_return(t) (t == 0 || t == GRETL_TYPE_VOID)
+
+struct flag_and_key {
+    int flag;
+    const char *key;
+};
+
+static struct flag_and_key pkg_lookups[] = {
+    { UFUN_BUNDLE_PRINT, BUNDLE_PRINT },
+    { UFUN_BUNDLE_PLOT,  BUNDLE_PLOT },
+    { UFUN_BUNDLE_TEST,  BUNDLE_TEST },
+    { UFUN_BUNDLE_FCAST, BUNDLE_FCAST },
+    { UFUN_BUNDLE_EXTRA, BUNDLE_EXTRA },
+    { UFUN_GUI_MAIN,     GUI_MAIN },
+    { UFUN_BUNDLE_PRINT, BUNDLE_PRINT },
+    { -1,                NULL }
+};
+
+static int pkg_key_get_role (const char *key)
+{
+    int i;
+
+    for (i=0; pkg_lookups[i].flag > 0; i++) {
+	if (!strcmp(key, pkg_lookups[i].key)) {
+	    return pkg_lookups[i].flag;
+	}
+    }
+    
+    return 0;
+}
+
+static const char *pkg_role_get_key (int flag)
+{
+    int i;
+
+    for (i=0; pkg_lookups[i].flag > 0; i++) {
+	if (flag == pkg_lookups[i].flag) {
+	    return pkg_lookups[i].key;
+	}
+    }
+    
+    return NULL;
+}
 
 static void set_function_private (ufunc *u, gboolean s)
 {
@@ -258,7 +308,7 @@ struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
 	arg->val.x = 0;
     } else if (type == GRETL_TYPE_DOUBLE) {
 	arg->val.x = *(double *) p;
-    } else if (type == GRETL_TYPE_INT) {
+    } else if (type == GRETL_TYPE_INT || type == GRETL_TYPE_OBS) {
 	arg->val.x = *(int *) p;
     } else if (type == GRETL_TYPE_SERIES) {
 	arg->val.px = (double *) p;
@@ -934,6 +984,7 @@ static ufunc *ufunc_new (void)
     fun->name[0] = '\0';
     fun->pkg = NULL;
     fun->flags = 0;
+    fun->pkg_role = 0;
 
     fun->n_lines = 0;
     fun->lines = NULL;
@@ -1039,6 +1090,7 @@ const char *gretl_arg_type_name (GretlType type)
     switch (type) {
     case GRETL_TYPE_BOOL:       return "bool";
     case GRETL_TYPE_INT:        return "int";
+    case GRETL_TYPE_OBS:        return "obs";
     case GRETL_TYPE_DOUBLE:     return "scalar";
     case GRETL_TYPE_SERIES:     return "series";
     case GRETL_TYPE_USERIES:    return "series";
@@ -1085,6 +1137,7 @@ GretlType gretl_type_from_string (const char *s)
     if (!strcmp(s, "bool"))     return GRETL_TYPE_BOOL;
     if (!strcmp(s, "boolean"))  return GRETL_TYPE_BOOL;
     if (!strcmp(s, "int"))      return GRETL_TYPE_INT;
+    if (!strcmp(s, "obs"))      return GRETL_TYPE_OBS;
     if (!strcmp(s, "scalar"))   return GRETL_TYPE_DOUBLE;
     if (!strcmp(s, "series"))   return GRETL_TYPE_SERIES;
     if (!strcmp(s, "matrix"))   return GRETL_TYPE_MATRIX;
@@ -1506,17 +1559,14 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
     if (gretl_xml_get_prop_as_bool(node, "private")) {
 	fun->flags |= UFUN_PRIVATE;
     }
+
     if (gretl_xml_get_prop_as_bool(node, "plugin-wrapper")) {
 	fun->flags |= UFUN_PLUGIN;
     }
-    if (gretl_xml_get_prop_as_bool(node, "bundle-print")) {
-	fun->flags |= UFUN_BUNDLE_PRINT;
-    }
-    if (gretl_xml_get_prop_as_bool(node, "bundle-plot")) {
-	fun->flags |= UFUN_BUNDLE_PLOT;
-    }
-    if (gretl_xml_get_prop_as_bool(node, "gui-main")) {
-	fun->flags |= UFUN_GUI_MAIN;
+
+    if (gretl_xml_get_prop_as_string(node, "pkg-role", &tmp)) {
+	fun->pkg_role = pkg_key_get_role(tmp);
+	free(tmp);
     }
 
 #if PKG_DEBUG
@@ -1680,15 +1730,11 @@ static int write_function_xml (ufunc *fun, FILE *fp)
     if (function_is_plugin(fun)) {
 	fputs(" plugin-wrapper=\"1\"", fp);
     }
-    if (function_is_bundle_print(fun)) {
-	fputs(" bundle-print=\"1\"", fp);
+
+    if (fun->pkg_role) {
+	fprintf(fp, " pkg-role=\"%s\"", pkg_role_get_key(fun->pkg_role));
     }
-    if (function_is_bundle_plot(fun)) {
-	fputs(" bundle-plot=\"1\"", fp);
-    }
-    if (function_is_gui_main(fun)) {
-	fputs(" gui-main=\"1\"", fp);
-    }
+
     fputs(">\n", fp);
 
     if (fun->n_params > 0) {
@@ -2233,23 +2279,56 @@ static int pkg_set_dreq (fnpkg *pkg, const char *s)
     return err;
 }
 
-static int function_set_attribute (const char *name, fnpkg *pkg,
-				   const char *attr)
+static int function_set_pkg_role (const char *name, fnpkg *pkg,
+				  const char *attr, PRN *prn)
 {
     int i;
 
+    /* check that the function in question satisfies the
+       requirements for its role, and if so, hook it up 
+    */
+
     for (i=0; i<pkg->n_pub; i++) {
 	if (!strcmp(name, pkg->pub[i]->name)) {
-	    if (!strcmp(attr, "bundle-print")) {
-		pkg->pub[i]->flags |= UFUN_BUNDLE_PRINT;
-	    } else if (!strcmp(attr, "bundle-plot")) {
-		pkg->pub[i]->flags |= UFUN_BUNDLE_PLOT;
-	    } else if (!strcmp(attr, "gui-main")) {
-		pkg->pub[i]->flags |= UFUN_GUI_MAIN;
+	    int role = pkg_key_get_role(attr);
+	    ufunc *u = pkg->pub[i];
+	    int j, err = 0;
+
+	    if (u->n_params == 0) {
+		/* void functions can't be right */
+		err = E_TYPES;
+	    } else if (role == UFUN_GUI_MAIN) {
+		if (u->rettype != GRETL_TYPE_BUNDLE) {
+		    pprintf(prn, "%s: must return a bundle\n", attr);
+		    err = E_TYPES;
+		}
+	    } else {
+		/* bundle-print, bundle-plot, etc. */
+		for (j=0; j<u->n_params && !err; j++) {
+		    if (j == 0 && u->params[j].type != GRETL_TYPE_BUNDLE_REF) {
+			pprintf(prn, "%s: first param type must be %s\n",
+				attr, gretl_arg_type_name(GRETL_TYPE_BUNDLE_REF));
+			err = E_TYPES;
+		    } else if (j == 1 && u->params[j].type != GRETL_TYPE_INT) {
+			pprintf(prn, "%s: second param type must be %s\n",
+				attr, gretl_arg_type_name(GRETL_TYPE_INT));
+			err = E_TYPES;
+		    } else if (j > 1 && !fn_param_optional(u, j) &&
+			       na(fn_param_default(u, j))) {
+			pprintf(prn, "%s: params beyond the second must be optional\n",
+				attr);
+			err = E_TYPES;
+		    }
+		}
 	    }
-	    return 0;
+	    if (!err) {
+		u->pkg_role = role;
+	    }
+	    return err;
 	}
     }
+
+    pprintf(prn, "%s: %s: no such public function\n", attr, name);
 
     return E_DATA;
 }
@@ -2261,12 +2340,6 @@ static int function_set_attribute (const char *name, fnpkg *pkg,
 
 static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 {
-    const char *special_funcs[] = {
-	"bundle-print",
-	"bundle-plot",
-	"gui-main",
-	NULL
-    };
     char *p, line[1024];
     gchar *tmp;
     int got = 0;
@@ -2322,17 +2395,15 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		pkg->minver = version_number_from_string(p);
 		got++;
 	    } else {
-		int i, n;
+		const char *key;
+		int i;
 
-		for (i=0; special_funcs[i] != NULL; i++) {
-		    n = strlen(special_funcs[i]);
-		    if (!strncmp(line, special_funcs[i], n)) {
-			err = function_set_attribute(p, pkg, special_funcs[i]);
-			if (err) {
-			    pprintf(prn, "%s function: %s: no such public function\n",
-				    special_funcs[i], p);
-			} else {
-			    pprintf(prn, "%s function is %s, OK\n", special_funcs[i], p);
+		for (i=0; pkg_lookups[i].key != NULL; i++) {
+		    key = pkg_lookups[i].key;
+		    if (!strncmp(line, key, strlen(key))) {
+			err = function_set_pkg_role(p, pkg, key, prn);
+			if (!err) {
+			    pprintf(prn, "%s function is %s, OK\n", key, p);
 			}
 			break;
 		    }
@@ -2411,7 +2482,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
 	    }
 	}
 
-	/* any other functions currently loaded are assumed to be
+	/* note: any other functions currently loaded are assumed to be
 	   private functions for this package */
 
 	if (!*err) {
@@ -2516,7 +2587,7 @@ static int cli_validate_package_file (const char *fname, PRN *prn)
  * @prn: printer struct for feedback.
  *
  * Create a package based on the functions currently loaded, and
- * write it out as an XML file.
+ * write it out as an XML file. Responds to the makepkg command.
  *
  * Returns: 0 on success, non-zero on error.
  */
@@ -2551,7 +2622,7 @@ int create_and_write_function_package (const char *fname, PRN *prn)
 
 const char *function_package_get_name (fnpkg *pkg)
 {
-    return pkg->name;
+    return (pkg != NULL)? pkg->name : NULL;
 }
 
 static int maybe_replace_string_var (char **svar, const char *src)
@@ -2663,10 +2734,10 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
 		    } else if (code == PUBLIST && !priv) {
 			list[j++] = i;
 		    } else if (code == GUILIST && !priv) {
-			if (!function_is_bundle_print(ufuns[i])) {
-			    list[j++] = i;
-			} else {
+			if (ufuns[i]->pkg_role == UFUN_BUNDLE_PRINT) {
 			    subtract = 1;
+			} else {
+			    list[j++] = i;
 			}
 		    }
 		}
@@ -2685,12 +2756,12 @@ static int *function_package_get_list (fnpkg *pkg, int code, int n)
     return list;
 }
 
-static char *pkg_get_special_func (fnpkg *pkg, int code)
+static char *pkg_get_special_func (fnpkg *pkg, int role)
 {
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (ufuns[i]->pkg == pkg && (ufuns[i]->flags & code)) {
+	if (ufuns[i]->pkg == pkg && ufuns[i]->pkg_role == role) {
 	    return g_strdup(ufuns[i]->name);
 	}
     }	    
@@ -2775,13 +2846,22 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "privlist")) {
 	    plist = (int **) ptr;
 	    *plist = function_package_get_list(pkg, PRIVLIST, npriv);
-	} else if (!strcmp(key, "bundle-print")) {
+	} else if (!strcmp(key, BUNDLE_PRINT)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_PRINT);
-	} else if (!strcmp(key, "bundle-plot")) {
+	} else if (!strcmp(key, BUNDLE_PLOT)) {
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_PLOT);
-	} else if (!strcmp(key, "gui-main")) {	
+	} else if (!strcmp(key, BUNDLE_TEST)) {
+	    ps = (char **) ptr;
+	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_TEST);
+	} else if (!strcmp(key, BUNDLE_FCAST)) {
+	    ps = (char **) ptr;
+	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_FCAST);
+	} else if (!strcmp(key, BUNDLE_EXTRA)) {
+	    ps = (char **) ptr;
+	    *ps = pkg_get_special_func(pkg, UFUN_BUNDLE_EXTRA);
+	} else if (!strcmp(key, GUI_MAIN)) {	
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_GUI_MAIN);
 	}	    
@@ -4225,10 +4305,10 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	fun->params = params;
 	fun->n_params = n_params;
 	fun->rettype = rettype;
-	current_ufun = fun;
+	current_fdef = fun;
 	set_compiling_on();
     } else {
-	current_ufun = NULL;
+	current_fdef = NULL;
     }
     
     return err;
@@ -4392,7 +4472,7 @@ static int check_function_structure (ufunc *fun)
 
 /* Note: the input @fun may be NULL; in that case the assumption is
    that we're appending to a function-in-progress that is
-   represented by the internal variable 'current_ufun'.  If
+   represented by the internal variable 'current_fdef'.  If
    the @fun argument is non-NULL that means we're editing an
    existing function.
 */
@@ -4403,7 +4483,7 @@ static int real_function_append_line (const char *line, ufunc *fun)
     int err = 0;
 
     if (fun == NULL) {
-	fun = current_ufun;
+	fun = current_fdef;
 	editing = 0;
     } 
 
@@ -4843,7 +4923,9 @@ static int add_scalar_arg_default (fn_param *param)
 	return E_DATA;
     }
 
-    if (param->type == GRETL_TYPE_BOOL || param->type == GRETL_TYPE_INT) {
+    if (param->type == GRETL_TYPE_BOOL || 
+	param->type == GRETL_TYPE_INT ||
+	param->type == GRETL_TYPE_OBS) {
 	x = floor(param->deflt);
     } else {
 	x = param->deflt;
@@ -5328,6 +5410,13 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    rtype, call->retname);
 #endif
 
+    /* check for missing return value */
+    if (*perr == 0 && !null_return(rtype) && call->retname == NULL) {
+	gretl_errmsg_sprintf("Function %s did not provide the specified return value",
+			     u->name);
+	*perr = err = E_UNKVAR;
+    }
+
     if (*perr == 0) {
 	/* first we work on the value directly returned by the
 	   function (but only if there's no error) 
@@ -5603,15 +5692,6 @@ const char *get_funcerr_message (void)
     return funcerr_msg;
 }
 
-static void set_funcerr_message (ufunc *u, const char *s)
-{
-    int n;
-
-    sprintf(funcerr_msg, _("Error message from %s:\n"), u->name);
-    n = strlen(funcerr_msg);
-    strncat(funcerr_msg, s, 255 - n);
-}
-
 static void func_exec_callback (ExecState *s, void *ptr,
 				GretlObjType type)
 {
@@ -5796,19 +5876,34 @@ static int debug_command_loop (ExecState *state,
     return 1 + debug_next(state->cmd);
 }
 
-static void set_function_error_message (ufunc *u, const char *line)
+void set_function_error_message (ufunc *u, ExecState *state,
+				 const char *line)
 {
-    gretl_errmsg_sprintf("*** error in function %s\n> %s", u->name, line);
+    if (state->funcerr == FNERR_FLAGGED) {
+	/* let the function writer do the message */
+	int n;
 
-    if (gretl_function_depth() > 1) {
-	GList *tmp = g_list_last(callstack);
+	sprintf(funcerr_msg, _("Error message from %s:\n"), u->name);
+	n = strlen(funcerr_msg);
+	strncat(funcerr_msg, state->cmd->param, 255 - n);
+    } else {
+	/* we'll handle this ourselves */
+	if (*line != '\0') {
+	    gretl_errmsg_sprintf("*** error in function %s\n> %s", u->name, line);
+	} else {
+	    gretl_errmsg_sprintf("*** error in function %s\n", u->name);
+	}
 
-	if (tmp != NULL) {
-	    tmp = g_list_previous(tmp);
+	if (gretl_function_depth() > 1) {
+	    GList *tmp = g_list_last(callstack);
+
 	    if (tmp != NULL) {
-		fncall *call = tmp->data;
+		tmp = g_list_previous(tmp);
+		if (tmp != NULL) {
+		    fncall *call = tmp->data;
 
-		gretl_errmsg_sprintf(" called by function %s", call->fun->name);
+		    gretl_errmsg_sprintf(" called by function %s", call->fun->name);
+		}
 	    }
 	}
     }
@@ -5854,7 +5949,7 @@ static int handle_return_statement (fncall *call,
 	    sprintf(formula, "%s $retval=%s", typestr, s);
 	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
 	    if (err) {
-		set_function_error_message(fun, s);
+		set_function_error_message(fun, state, s);
 	    } else {
 		call->retname = gretl_strdup("$retval");
 	    }
@@ -5951,7 +6046,7 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 	    } else {
 		x = arg->val.x;
 	    }
-	    if (fp->type == GRETL_TYPE_INT) {
+	    if (fp->type == GRETL_TYPE_INT || fp->type == GRETL_TYPE_OBS) {
 		x = (int) x;
 	    } else if (fp->type == GRETL_TYPE_BOOL) {
 		x = (x != 0.0);
@@ -6183,17 +6278,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 					   &err);
 	}
 
-	if (err) {
-	    set_function_error_message(u, line);
-#if 0
-	    fprintf(stderr, "error %d on line %d of function %s\n", err, i+1, u->name);
-	    fprintf(stderr, "> %s\n", line);
-#endif
-	}
-
-	if (state.funcerr) {
-	    pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
-	    set_funcerr_message(u, state.cmd->param);
+	if (err || state.funcerr) {
+	    set_function_error_message(u, &state, line);
+	    break;
 	}
 
 	if (state.cmd->ci == SETOBS) {
@@ -6202,28 +6289,17 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (gretl_execute_loop()) { 
-#if EXEC_DEBUG
-	    fprintf(stderr, "gretl_function_exec: calling gretl_loop_exec\n");
-#endif
 	    err = gretl_loop_exec(&state, pZ, pdinfo);
-	    if (state.funcerr) {
-		pprintf(prn, "%s: %s\n", u->name, state.cmd->param);
-		set_funcerr_message(u, state.cmd->param);
+	    if (err || state.funcerr) {
+		set_function_error_message(u, &state, state.line);
 	    }
-	    if (err) {
-		fprintf(stderr, "function_exec: breaking on error %d in loop\n", err);
-		fprintf(stderr, "error on line %d of function %s\n", i+1, u->name);
-		break;
-	    }
-#if EXEC_DEBUG
-	    fprintf(stderr, "gretl_function_exec: gretl_loop_exec done, err = %d\n", err);
-#endif
 	}
     }
 
 #if EXEC_DEBUG
-    fprintf(stderr, "gretl_function_exec: %s: finished main exec, err = %d, pdinfo->v = %d\n", 
-	    u->name, err, (pdinfo != NULL)? pdinfo->v : 0);
+    fprintf(stderr, "gretl_function_exec: %s: finished main exec, "
+	    "err = %d, pdinfo->v = %d\n", u->name, err, 
+	    (pdinfo != NULL)? pdinfo->v : 0);
 #endif
 
     if (pdinfo != NULL) {
@@ -6480,7 +6556,8 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 
     if (pkg != NULL && pkg->help != NULL) {
 	if (markup) {
-	    pputs(prn, "<@hd1=\"Help text\">:\n");
+	    pputs(prn, "<@hd1=\"Help text\">:\n\n");
+	    pputs(prn, "<mono>\n");
 	} else {
 	    pputs(prn, "Help text:\n");
 	}   	
@@ -6499,7 +6576,10 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	} else {	
 	    pputs(prn, pkg->help);
 	}
-	pprintf(prn, "\n\n");
+	if (markup) {
+	    pputs(prn, "\n</mono>");
+	}
+	pputs(prn, "\n\n");
     }
 
     if (pkg != NULL && pkg->sample != NULL) {

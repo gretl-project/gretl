@@ -1697,7 +1697,7 @@ static void ODBC_info_clear_read (void)
     gretl_odinfo.nvars = 0;
 }
 
-void ODBC_info_clear_all (void)
+static void ODBC_info_clear_all (void)
 {
     free(gretl_odinfo.dsn);
     gretl_odinfo.dsn = NULL;

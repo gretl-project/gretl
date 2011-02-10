@@ -1019,6 +1019,7 @@ void unit_root_test (int ci)
     int order, omax, okT, v = mdata_active_var();
     int *active = NULL;
     int nchecks, nradios;
+    int need_check = 0;
     int helpcode = 0;
     int vlist[2] = {1, v};
     int err;
@@ -1044,6 +1045,7 @@ void unit_root_test (int ci)
 	spintext = adf_spintext;
 	opts = (panel)? panel_adf_opts : adf_opts;
 	nchecks = (panel)? 3 : 7;
+	need_check = (panel)? 0 : 4;
 	active = (panel)? panel_adf_active : adf_active;
 	nradios = (panel)? -2 : 2;
     } else if (ci == DFGLS) {
@@ -1088,21 +1090,13 @@ void unit_root_test (int ci)
 	rvar = &pantrend;
     }
 
-    err = checks_dialog(_(title), NULL, opts, nchecks, active,
-			nradios, rvar, &order, _(spintext),
-			0, omax, helpcode);
+    err = checks_dialog(_(title), NULL, 
+			opts, nchecks, active, need_check,
+			nradios, rvar, 
+			&order, _(spintext), 0, omax, 
+			helpcode);
     if (err < 0) {
 	return;
-    }
-
-    if (ci == ADF && !panel) {
-	if (active[0] == 0 &&
-	    active[1] == 0 &&
-	    active[2] == 0 &&
-	    active[3] == 0) {
-	    /* no models selected */
-	    return;
-	}
     }
 
     if (ci == LEVINLIN) {
@@ -1436,7 +1430,7 @@ void count_missing (void)
     active = (datainfo->n < 1000);
 
     resp = checks_dialog(_("gretl: missing values info"), NULL,
-			 opts, 1, &active, 0,
+			 opts, 1, &active, 0, 0,
 			 NULL, NULL, NULL, 0, 0, 0);
 
     if (resp < 0 || bufopen(&prn)) {

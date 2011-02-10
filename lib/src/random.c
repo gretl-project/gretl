@@ -98,11 +98,12 @@ static int sfmt_array_setup (void)
 
     if (rbuf == NULL) {
 	rbuf = gretl_memalign(RSIZE * sizeof *rbuf, &err);
-	if (!err) {
-	    fprintf(stderr, "doing sfmt_array_setup, RSIZE=%d\n", RSIZE);
-	    fill_array32(rbuf, RSIZE);
-	    r_i = 0;
-	}
+    }
+
+    if (!err) {
+	fprintf(stderr, "doing sfmt_array_setup, RSIZE=%d\n", RSIZE);
+	fill_array32(rbuf, RSIZE);
+	r_i = 0;
     }
 
     return err;
@@ -182,11 +183,13 @@ void gretl_rand_init (void)
     if (gretl_rand == NULL) {
 	gretl_rand = g_rand_new();
     }
-    gretl_rand_set_seed((guint32) useed);
+    g_rand_set_seed(gretl_rand, useed);
 
     if (getenv("GRETL_RAND_GLIB")) {
 	use_sfmt = 0;
     }
+
+    gretl_rand_octet(NULL);
 }
 
 /**
@@ -229,6 +232,9 @@ void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
     init_gen_rand(useed); 
+#if USE_SFMT_ARRAYS
+    sfmt_array_setup();
+#endif
     g_rand_set_seed(gretl_rand, useed);
     gretl_rand_octet(NULL);
 }
@@ -289,7 +295,11 @@ int gretl_rand_get_sfmt (void)
 
 double gretl_rand_01 (void)
 {
-    return (use_sfmt)? to_real2(sfmt_rand32()) : g_rand_double(gretl_rand);
+    if (use_sfmt) {
+	return to_real2(sfmt_rand32());
+    } else {
+	return g_rand_double(gretl_rand);
+    }
 }
 
 /* Below: an implementation of the Marsaglia/Tsang Ziggurat method for

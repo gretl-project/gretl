@@ -940,12 +940,12 @@ static NODE *DW_node (NODE *r, parser *p)
 
     for (i=0; i<2 && !p->err; i++) {
 	s = r->v.bn.n[i+1];
-	if (s->t == NUM || scalar_matrix_node(s)) {
+	if (scalar_node(s)) {
 	    parm[i] = node_get_int(s, p);
 	} else {
 	    e = eval(s, p);
 	    if (!p->err) {
-		if (e->t == NUM || scalar_matrix_node(e)) {
+		if (scalar_node(e)) {
 		    parm[i] = node_get_int(e, p);
 		} else {
 		    p->err = E_INVARG;
@@ -985,7 +985,7 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 
 	for (i=0; i<4 && !p->err; i++) {
 	    s = r->v.bn.n[i];
-	    if (s->t == NUM || scalar_matrix_node(s)) {
+	    if (scalar_node(s)) {
 		if (i == 0) {
 		    x[i] = node_get_scalar(s, p);
 		} else {
@@ -994,7 +994,7 @@ static NODE *eval_urcpval (NODE *n, parser *p)
 	    } else {
 		e = eval(s, p);
 		if (!p->err) {
-		    if (e->t == NUM || scalar_matrix_node(e)) {
+		    if (scalar_node(e)) {
 			if (i == 0) {
 			    x[i] = node_get_scalar(e, p);
 			} else {
@@ -1071,7 +1071,7 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 	    if (p->err) {
 		break;
 	    } 
-	    if (e->t == NUM || scalar_matrix_node(e)) {
+	    if (scalar_node(e)) {
 		if (i == 0) {
 		    rho = node_get_scalar(e, p);
 		} else {
@@ -1228,7 +1228,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 		goto disterr;
 	    }	    
 
-	    if (e->t == NUM || scalar_matrix_node(e)) {
+	    if (scalar_node(e)) {
 		/* scalars always acceptable */
 		if (i == k && argc > 0) {
 		    argval = node_get_scalar(e, p);
@@ -2721,12 +2721,12 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     NODE *ret = NULL;
 
     if (starting(p)) {
-	if (l->t == NUM && (r->t == NUM || r->t == EMPTY)) {
+	if (scalar_node(l) && (scalar_node(r) || r->t == EMPTY)) {
 	    ret = aux_ivec_node(p, 2);
 	    if (ret != NULL) {
-		ret->v.ivec[0] = (int) l->v.xval;
-		ret->v.ivec[1] = (r->t == NUM)? 
-		    (int) r->v.xval : MSEL_MAX;
+		ret->v.ivec[0] = node_get_int(l, p);
+		ret->v.ivec[1] = (r->t == EMPTY)? 
+		    MSEL_MAX : node_get_int(r, p);
 	    }
 	} else {
 	    p->err = E_TYPES;
@@ -3844,10 +3844,8 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	int i;
 
-	if (n->t == NUM) {
-	    i = n->v.xval;
-	} else if (scalar_matrix_node(n)) {
-	    i = n->v.m->val[0];
+	if (scalar_node(n)) {
+	    i = node_get_int(n, p);
 	} else {
 	    node_type_error(f, 0, NUM, n, p);
 	    return NULL;
@@ -3897,6 +3895,26 @@ static NODE *list_to_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static NODE *do_getenv (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = (r->t == EMPTY)? aux_string_node(p) :
+	aux_scalar_node(p);
+
+    if (ret != NULL && starting(p)) {
+	const char *s = l->v.str;
+	char *estr = gretl_getenv(s, &p->err);
+
+	if (r->t == EMPTY) {
+	    ret->v.str = estr;
+	} else {
+	    sscanf(estr, "%lf", &ret->v.xval);
+	    free(estr);
+	}
+    }
+
+    return ret;
+}
+
 static NODE *single_string_func (NODE *n, int f, parser *p)
 {
     NODE *ret = aux_string_node(p);
@@ -3904,9 +3922,7 @@ static NODE *single_string_func (NODE *n, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *s = n->v.str;
 
-	if (f == F_GETENV) {
-	    ret->v.str = gretl_getenv(s, &p->err);
-	} else if (f == F_ARGNAME) {
+	if (f == F_ARGNAME) {
 	    ret->v.str = gretl_func_get_arg_name(s, &p->err);
 	} else if (f == F_READFILE) {
 	    ret->v.str = retrieve_file_content(s, &p->err);
@@ -5971,6 +5987,79 @@ static double subst_val (double x, const double *x0, int n0,
     return x;
 }
 
+/* String search and replace: return a node containing a copy
+   of the string on node @src in which all occurrences of
+   the string on @n0 are replaced by the string on @n1.
+*/
+
+static NODE *string_replace (NODE *src, NODE *n0, NODE *n1, parser *p)
+{
+    if (!starting(p)) {
+	return aux_string_node(p);
+    } else {
+	NODE *ret = NULL;
+	NODE *n[3] = {src, n0, n1};
+	char *S[3];
+	const char *q, *r;
+	int i, len1, nrep = 0;
+	
+	for (i=0; i<3; i++) {
+	    /* all nodes must be of string type */
+	    if (n[i]->t != STR) {
+		node_type_error(F_STRSUB, i, STR, n[i], p);
+		return NULL;
+	    } else {
+		S[i] = n[i]->v.str;
+	    }
+	}
+
+	ret = aux_string_node(p);
+	if (p->err) {
+	    return NULL;
+	}
+
+	len1 = strlen(S[1]);
+
+	if (len1 > 0) {
+	    /* count the occurrences of the string to be replaced */
+	    q = S[0];
+	    while ((r = strstr(q, S[1])) != NULL) {
+		nrep++;
+		q = r + len1;
+	    }
+	}
+
+	if (nrep == 0) {
+	    /* no replacement needed */
+	    ret->v.str = gretl_strdup(S[0]);
+	} else {
+	    int len2 = strlen(S[2]);
+	    int ldiff = nrep * (len2 - len1);
+	    char *s = malloc(strlen(S[0]) + ldiff + 1);
+
+	    if (s != NULL) {
+		q = S[0];
+		*s = '\0';
+		while ((r = strstr(q, S[1])) != NULL) {
+		    strncat(s, q, r - q);
+		    strncat(s, S[2], len2);
+		    q = r + len1;
+		}
+		if (*q) {
+		    strncat(s, q, strlen(q));
+		}
+	    }
+	    ret->v.str = s;
+	}
+
+	if (!p->err && ret->v.str == NULL) {
+	    p->err = E_ALLOC;
+	}
+	
+	return ret;
+    }
+}
+
 /* replace_value: non-interactive search-and-replace for series and
    matrices.  @src holds the series or matrix of which we want a
    modified copy; @n0 holds the value (or vector of values) to be
@@ -6643,7 +6732,7 @@ static NODE *matrix_def_node (NODE *nn, parser *p)
 		break;
 	    }
 	}
-	if (n->t == NUM || scalar_matrix_node(n)) {
+	if (scalar_node(n)) {
 	    nnum++;
 	} else if (n->t == VEC) {
 	    nvec++;
@@ -7421,7 +7510,7 @@ static int series_calc_nodes (NODE *l, NODE *r)
     if (l->t == VEC) {
 	ret = (r->t == VEC || r->t == NUM || scalar_matrix_node(r));
     } else if (r->t == VEC) {
-	ret = (l->t == NUM || scalar_matrix_node(l));
+	ret = scalar_node(l);
     }
 
     return ret;
@@ -8202,9 +8291,12 @@ static NODE *eval (NODE *t, parser *p)
     case F_CHOWLIN:
     case F_VARSIMUL:
     case F_IRF:
+    case F_STRSUB:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
+	} else if (t->t == F_STRSUB) {
+	    ret = string_replace(l, m, r, p);
 	} else {
 	    ret = eval_3args_func(l, m, r, t->t, p);
 	}
@@ -8359,7 +8451,6 @@ static NODE *eval (NODE *t, parser *p)
 	    p->err = E_TYPES;
 	}
 	break;	
-    case F_GETENV:
     case F_ARGNAME:
     case F_READFILE:
     case F_BACKTICK:
@@ -8370,6 +8461,15 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
 	}
+	break;
+    case F_GETENV:
+	if (l->t == STR && (r->t == EMPTY || r->t == NUM)) {
+	    ret = do_getenv(l, r, p);
+	} else if (l->t == STR) {
+	    node_type_error(t->t, 1, NUM, r, p);
+	} else {
+	    node_type_error(t->t, 0, STR, l, p);
+	} 
 	break;
     case F_OBSLABEL:
 	if (l->t == NUM || l->t == MAT) {
@@ -8886,11 +8986,11 @@ static void process_lhs_substr (const char *lname, parser *p)
 	; /* should be key string; handled later */
     } else if (p->lh.t == UNK) {
 	if (lname != NULL) {
-	    gretl_errmsg_sprintf("%s: unknown variable\n", lname);
+	    undefined_symbol_error(lname, p);
 	}
 	p->err = E_UNKVAR;
     } else {
-	gretl_errmsg_sprintf( _("The symbol '%c' is not valid in this context\n"), '[');
+	gretl_errmsg_sprintf(_("The symbol '%c' is not valid in this context\n"), '[');
 	p->err = E_DATA;
     }	
 }
@@ -10069,10 +10169,14 @@ static int save_generated_var (parser *p, PRN *prn)
 	    x = gretl_scalar_get_value(p->lh.name);
 	    if (r->t == NUM) {
 		x = xy_calc(x, r->v.xval, p->op, NUM, p);
-	    } else {
+	    } else if (scalar_matrix_node(r)) {
 		x = xy_calc(x, r->v.m->val[0], p->op, NUM, p);
+	    } else {
+		p->err = E_TYPES;
 	    }
-	    gretl_scalar_set_value(p->lh.name, x);
+	    if (!p->err) {
+		gretl_scalar_set_value(p->lh.name, x);
+	    }
 	} else {
 	    /* a new scalar */
 	    x = (r->t == MAT)? r->v.m->val[0] : r->v.xval;
@@ -10477,7 +10581,9 @@ int realgen (const char *s, parser *p, double ***pZ,
     } else {
 	parser_init(p, s, pZ, pdinfo, prn, flags);
 	if (p->err) {
-	    errmsg(p->err, prn);
+	    if (gretl_function_depth() == 0) {
+		errmsg(p->err, prn);
+	    }
 	    return p->err;
 	}
     }

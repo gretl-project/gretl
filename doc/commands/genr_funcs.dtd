@@ -60,7 +60,7 @@
                series-or-mat | list | coeffname | string | char | sslist | 
                series-or-list | smlist | pscalar | seebelow | fncall |
                anyfloat-or-list | list-or-string| scalar-or-vec |
-               scalar-or-list | varargs) "series"
+               scalar-or-list | bundle | varargs) "series"
     optional  (true | false) "false"
 >
 

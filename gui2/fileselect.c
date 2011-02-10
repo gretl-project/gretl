@@ -100,6 +100,7 @@ static struct extmap action_map[] = {
     { SAVE_FUNCTIONS,    ".gfn" },
     { SAVE_MARKERS,      ".txt" },
     { SAVE_LABELS,       ".txt" },
+    { SAVE_GFN_SPEC,     ".spec" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
     { OPEN_OCTAVE,       ".m" },
@@ -561,6 +562,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	err = save_function_package(fname, data);
     } else if (action == SAVE_FUNCTIONS_AS) {
 	err = save_function_package_as_script(fname, data);
+    } else if (action == SAVE_GFN_SPEC) {
+	err = save_function_package_spec(fname, data);
     } else if (action == SAVE_BOOT_DATA) {
 	bootstrap_save_callback(fname);
     } else if (action == SAVE_MARKERS) {
@@ -683,7 +686,9 @@ static void filesel_maybe_set_current_name (GtkFileChooser *filesel,
 	} else if (action == SET_PROG) {
 	    set_default_progs_path(filesel);
 	}	    
-    } else if (action == SAVE_FUNCTIONS || action == SAVE_FUNCTIONS_AS) {
+    } else if (action == SAVE_FUNCTIONS || 
+	       action == SAVE_FUNCTIONS_AS ||
+	       action == SAVE_GFN_SPEC) {
 	char fname[MAXLEN];
 
 	*fname = '\0';
@@ -768,7 +773,9 @@ static void gtk_file_selector (int action, FselDataSrc src,
     } else {
 	fa = GTK_FILE_CHOOSER_ACTION_SAVE;
 	okstr = GTK_STOCK_SAVE;
-	if (action == SAVE_FUNCTIONS || action == SAVE_DATA_PKG) {
+	if (action == SAVE_FUNCTIONS || 
+	    action == SAVE_DATA_PKG ||
+	    action == SAVE_GFN_SPEC) {
 	    remember = 0;
 	}
     }

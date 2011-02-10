@@ -359,6 +359,7 @@ struct str_table funcs[] = {
     { F_ISCONST,  "isconst" },
     { F_IRF,      "irf" },
     { F_INBUNDLE, "inbundle" },
+    { F_STRSUB,   "strsub" },
     { 0,          NULL }
 };
 
@@ -642,14 +643,14 @@ int genr_function_word (const char *s)
     return ret;
 }
 
-static void undefined_symbol_error (const char *s, parser *p)
+void undefined_symbol_error (const char *s, parser *p)
 {
     parser_print_input(p);
 
     if (p->ch == '.') {
-	gretl_errmsg_sprintf(_("%s: no such object\n"), s);
+	gretl_errmsg_sprintf(_("%s: no such object"), s);
     } else {
-	gretl_errmsg_sprintf(_("The symbol '%s' is undefined\n"), s);
+	gretl_errmsg_sprintf(_("The symbol '%s' is undefined"), s);
     }
 
     p->err = E_UNKVAR;
@@ -659,8 +660,9 @@ static void function_noargs_error (const char *s, parser *p)
 {
     parser_print_input(p);
 
-    pprintf(p->prn, _("'%s': no argument was given\n"), s);
-    gretl_errmsg_sprintf(_("'%s': no argument was given\n"), s);
+    pprintf(p->prn, _("'%s': no argument was given"), s);
+    pputc(p->prn, '\n');
+    gretl_errmsg_sprintf(_("'%s': no argument was given"), s);
 
     p->err = E_ARGS;
 }

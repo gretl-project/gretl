@@ -24,6 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_xml.h"
 #include "libset.h"
+#include "gretl_bundle.h"
 
 #include "treeutils.h"
 #include "ssheet.h"
@@ -1664,10 +1665,7 @@ static void add_conditional_items (windata_t *vwin)
 			      FALSE);
     }
 
-    /* not public yet */
-    if (getenv("GRETL_TEST_GFN") != NULL) {
-	maybe_add_packages_to_menus(vwin);
-    }
+    maybe_add_packages_to_menus(vwin);
 }
 
 /* retrieve the XML description of the main window menus */

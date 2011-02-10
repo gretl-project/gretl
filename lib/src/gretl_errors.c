@@ -219,7 +219,7 @@ void warnmsg (PRN *prn)
     } else {
 	const char *s = look_up_warnmsg(gretl_warnnum);
 
-	pprintf(prn, "%s: %s\n", _("Warning"), s);
+	pprintf(prn, "%s: %s\n", _("Warning"), _(s));
     }
 
     gretl_warnnum = 0;
@@ -303,21 +303,23 @@ void gretl_errmsg_sprintf (const char *fmt, ...)
 	/* don't print more than one "error in function" 
 	   message, as this gets confusing 
 	*/
-	return;
+	;
     } else {
+	/* the number of characters left */
 	int n = ERRLEN - strlen(gretl_errmsg) - 2;
 
 	if (n > 31) {
-	    char msg[ERRLEN];
+	    char tmp[ERRLEN];
 	    va_list ap;
 
+	    *tmp = '\0';
 	    va_start(ap, fmt);
-	    vsnprintf(msg, n, fmt, ap);
+	    vsnprintf(tmp, n, fmt, ap);
 	    va_end(ap);
 
-	    strcat(gretl_errmsg, "\n");
-	    strcat(gretl_errmsg, msg);
-	}
+	    strncat(gretl_errmsg, "\n", 1);
+	    strncat(gretl_errmsg, tmp, strlen(tmp));
+	} 
     }
 }
 

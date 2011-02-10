@@ -729,17 +729,12 @@ int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc,
 		break;
 	    }
 	}
-	if (len == strlen(tmp)) {
-	    *pstr = tmp;
+	*pstr = gretl_strndup(s, len);
+	if (*pstr != NULL) {
 	    ret = 1;
-	} else if (len > 0) {
-	    *pstr = gretl_strndup(s, len);
-	    if (*pstr != NULL) {
-		ret = 1;
-	    }
-	    free(tmp);
 	}
-    }
+	free(tmp);	
+    } 
 
     return ret;
 }
@@ -863,7 +858,11 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
     *nelem = 0;
 
     if (tmp == NULL) {
-	fprintf(stderr, "gretl_xml_get_array: failed\n");
+	tmp = xmlGetProp(node, (XUC) "size");
+    }
+
+    if (tmp == NULL) {
+	fprintf(stderr, "gretl_xml_get_array: didn't find count\n");
 	*err = E_DATA;
 	return NULL;
     }
@@ -1247,6 +1246,15 @@ static gretl_matrix *xml_get_user_matrix (xmlNodePtr node, xmlDocPtr doc,
     }
 
     free(tmp);
+
+    if (rows == 0 && cols == 0) {
+	/* allow case of empty matrix */
+	m = gretl_null_matrix_new();
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	}
+	return m;
+    }	
 
     if (rows <= 0 || cols <= 0) {
 	*err = E_DATA;

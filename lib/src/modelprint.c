@@ -5037,6 +5037,7 @@ int print_model_from_matrices (const gretl_matrix *cs,
 	names[i] = strtok((i == 0)? tmp : NULL, sep);
 	if (names[i] == NULL) {
 	    free(names);
+	    free(tmp);
 	    gretl_errmsg_sprintf(_("modprint: expected %d names"), ntot);
 	    return E_DATA;
 	}

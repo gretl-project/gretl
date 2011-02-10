@@ -536,12 +536,9 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
     clog = fopen(src, "r");
 
     fputs("<table>\n", clogh);
-    fputs("<colgroup span=\"2\">\n", clogh);
-    fputs("<col width=\"150\"></col>\n", clogh);
-    fputs("</colgroup>\n", clogh);
 
     fputs("<a name=\"top\">\n", clogh);
-    fputs("<tr>\n<td valign=\"top\">\n<pre>", clogh);
+    fputs("<tr>\n<td valign=\"top\">\n<pre>\n&nbsp;\n", clogh);
 
     for (i=0; i<nv; i++) {
 	M = gv[i].major;
@@ -549,7 +546,11 @@ void write_changelog (char *src, char *targ, gretl_version *gv, int nv)
 	r = gv[i].rev;
 
 	fprintf(clogh, "<a href=\"#v%d-%d-%d\">", M, m, r);
-	fprintf(clogh, "Version %d.%d.%d</a>\n", M, m, r);
+	if (i == 0) {
+	    fprintf(clogh, "Version %d.%d.%d</a>&nbsp&nbsp;\n", M, m, r);
+        } else {
+	    fprintf(clogh, "Version %d.%d.%d</a>\n", M, m, r);
+        }
     }
 
     fputs("</pre>\n</td>\n<td valign=\"top\">\n<pre>\n", clogh);

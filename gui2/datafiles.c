@@ -28,6 +28,7 @@
 #include "gretl_www.h"
 #include "menustate.h"
 #include "fnsave.h"
+#include "gretl_bundle.h"
 #include "fncall.h"
 #include "treeutils.h"
 #include "selector.h"
@@ -590,7 +591,7 @@ char *strip_extension (char *s)
 	if (p != NULL && 
 	    (!strcmp(p, ".gdt") || !strcmp(p, ".inp") ||
 	     !strcmp(p, ".bin") || !strcmp(p, ".gfn") ||
-	     !strcmp(p, ".bn7"))) {
+	     !strcmp(p, ".bn7") || !strcmp(p, ".zip"))) {
 	    *p = '\0';
 	}
     }

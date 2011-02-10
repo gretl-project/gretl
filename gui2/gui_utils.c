@@ -3366,7 +3366,7 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
     dlg = build_checks_dialog(title, NULL,
-			      impulse_opts, 1, active, /* check */
+			      impulse_opts, 1, active, 0, /* check */
 			      0, NULL, /* no radios */
 			      &h, _("forecast horizon (periods):"),
 			      2, datainfo->n / 2, IRF_BOOT,
@@ -3572,11 +3572,12 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 			    (code == VAR_IRF)? _("impulse responses") :
 			    _("variance decompositions"));
 
-    dlg = build_checks_dialog(title, NULL, NULL, 0, 
-			      NULL, 0, NULL,
+    dlg = build_checks_dialog(title, NULL, 
+			      NULL, 0, NULL, 0, /* no check-buttons */
+			      0, NULL,          /* no radios */
 			      &h, _("forecast horizon (periods):"),
-			      2, datainfo->n / 2, 0,
-			      &resp);
+			      2, datainfo->n / 2, 
+			      0, &resp);
 
     if (dlg == NULL) {
 	goto bailout;

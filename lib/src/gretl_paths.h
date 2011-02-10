@@ -36,6 +36,11 @@ typedef enum {
     GRETL_CLI_HELPFILE
 } HelpPaths;
 
+typedef enum {
+    PKG_ALL,
+    PKG_ADDON
+} PkgType;
+
 typedef struct ConfigPaths_ ConfigPaths;
 
 /* these are all the gretl paths which are recorded in
@@ -76,6 +81,8 @@ int get_stdio_use_utf8 (void);
 int string_is_utf8 (const unsigned char *s);
 
 FILE *gretl_fopen (const char *fname, const char *mode);
+
+FILE *gretl_try_fopen (const char *fname, const char *mode);
 
 FILE *gretl_read_user_file (const char *fname);
 
@@ -119,7 +126,8 @@ int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
 
 int get_plausible_functions_dir (char *fndir, int i);
 
-char *gretl_function_package_get_path (const char *name);
+char *gretl_function_package_get_path (const char *name,
+				       PkgType type);
 
 const char *helpfile_path (int id);
 

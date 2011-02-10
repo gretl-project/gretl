@@ -1159,7 +1159,7 @@ void set_gretl_tex_preamble (void)
     /* localized preamble file in working dir? */
     if (*local != '\0') {
 	sprintf(test, "%s%s", wdir, local);
-	fp = gretl_fopen(test, "r");
+	fp = gretl_try_fopen(test, "r");
 	if (fp != NULL) {
 	    strcpy(tex_preamble_file, test);
 	    fclose(fp);
@@ -1170,7 +1170,7 @@ void set_gretl_tex_preamble (void)
     if (!gotit) {
 	/* regular preamble file in working dir? */
 	sprintf(test, "%sgretlpre.tex", wdir);
-	fp = gretl_fopen(test, "r");
+	fp = gretl_try_fopen(test, "r");
 	if (fp != NULL) {
 	    strcpy(tex_preamble_file, test);
 	    fclose(fp);
@@ -1185,7 +1185,7 @@ void set_gretl_tex_preamble (void)
 	    /* localized preamble file in standard working dir? */
 	    if (*local != '\0') {
 		sprintf(test, "%s%s", ddir, local);
-		fp = gretl_fopen(test, "r");
+		fp = gretl_try_fopen(test, "r");
 		if (fp != NULL) {
 		    strcpy(tex_preamble_file, test);
 		    fclose(fp);
@@ -1196,7 +1196,7 @@ void set_gretl_tex_preamble (void)
 	    if (!gotit) {
 		/* regular preamble file in standard working dir */
 		sprintf(test, "%sgretlpre.tex", ddir);
-		fp = gretl_fopen(test, "r");
+		fp = gretl_try_fopen(test, "r");
 		if (fp != NULL) {
 		    strcpy(tex_preamble_file, test);
 		    fclose(fp);

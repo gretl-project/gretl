@@ -1902,7 +1902,6 @@ enum {
     GRETL_GUIDE = 1,
     GRETL_REF,
     GNUPLOT_REF,
-    GFN_DOC,
     X12A_REF
 };
 
@@ -1916,11 +1915,7 @@ static int get_writable_path (char *path, const char *fname, int code)
     int err = 0;
 
     if (sysdoc_writable == 1) {
-	if (code == GFN_DOC) {
-	    sprintf(path, "%sfunctions%cdocs%c%s", gretldir, SLASH, SLASH, fname);
-	} else {
-	    sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
-	}
+	sprintf(path, "%sdoc%c%s", gretldir, SLASH, fname);
 	return 0;
     } else if (userdoc_writable == 1) {
 	sprintf(path, "%sdoc%c%s", dotdir, SLASH, fname);
@@ -1929,11 +1924,7 @@ static int get_writable_path (char *path, const char *fname, int code)
 
     if (sysdoc_writable < 0) {
 	sysdoc_writable = 0;
-	if (code == GFN_DOC) {
-	    sprintf(path, "%sfunctions%cdocs", gretldir, SLASH);
-	} else {
-	    sprintf(path, "%sdoc", gretldir);
-	}
+	sprintf(path, "%sdoc", gretldir);
 	if (gretl_mkdir(path) == 0) {
 	    strcat(path, SLASHSTR);
 	    strcat(path, fname);
@@ -2031,20 +2022,12 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 	fname = "gnuplot.pdf";
     } else if (code == X12A_REF) {
 	fname = "x12adocV03.pdf";
-    } else if (code == GFN_DOC) {
-	tmp = gretl_strdup(fullpath);
-	fname = tmp;
     } else {
 	return E_DATA;
     }
 
     /* is the file available in public dir? */
-    if (code == GFN_DOC) {
-	sprintf(fullpath, "%sfunctions%cdocs%c%s", gretl_home(), SLASH, 
-		SLASH, fname);
-    } else {
-	sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
-    }
+    sprintf(fullpath, "%sdoc%c%s", gretl_home(), SLASH, fname);
 
     fp = gretl_fopen(fullpath, "r");
     if (fp != NULL) {
@@ -2079,11 +2062,7 @@ static int find_or_download_pdf (int code, int i, char *fullpath)
 
 	/* do actual download */
 	if (!err) {
-	    if (code == GFN_DOC) {
-		err = retrieve_gfndoc(fname, fullpath);
-	    } else {
-		err = retrieve_manfile(fname, fullpath);
-	    }
+	    err = retrieve_manfile(fname, fullpath);
 	}
 
 	if (err) {

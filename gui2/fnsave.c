@@ -237,19 +237,30 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
     gtk_widget_destroy(linfo->dlg);
 }
 
-/* Used by the File, Save dialog when saving a package de novo:
-   we construct a name bsed on the (first) public interface
-   in the package; the user is free to change this.
+/* Used by the File, Save dialog when saving a package,
+   or saving packaged functions as a script, or writing
+   a .spec file based on a package.
 */
 
 void get_default_package_name (char *fname, gpointer p, int mode)
 {
     function_info *finfo = (function_info *) p;
+    const char *pkgname;
 
-    strcpy(fname, finfo->pubnames[0]);
+    pkgname = function_package_get_name(finfo->pkg);
+
+    if (pkgname != NULL && *pkgname != '\0') {
+	strcpy(fname, pkgname);
+    } else if (finfo->n_pub > 0) {
+	strcpy(fname, finfo->pubnames[0]);
+    } else {
+	strcpy(fname, "pkg");
+    }
 
     if (mode == SAVE_FUNCTIONS_AS) {
 	strcat(fname, ".inp");
+    } else if (mode == SAVE_GFN_SPEC) {
+	strcat(fname, ".spec");
     } else {
 	strcat(fname, ".gfn");
     }	
@@ -630,6 +641,12 @@ static void gfn_to_script_callback (GtkWidget *w, function_info *finfo)
     }
 
     file_selector_with_parent(SAVE_FUNCTIONS_AS, FSEL_DATA_MISC, 
+			      finfo, finfo->dlg);
+}
+
+static void gfn_to_spec_callback (GtkWidget *w, function_info *finfo)
+{
+    file_selector_with_parent(SAVE_GFN_SPEC, FSEL_DATA_MISC, 
 			      finfo, finfo->dlg);
 }
 
@@ -1124,6 +1141,7 @@ static void finfo_dialog (function_info *finfo)
 			 G_CALLBACK(update_active_func), finfo);
     } 
 
+    /* save package as script button */
     button = gtk_button_new_with_label(_("Save as script"));
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
@@ -1142,6 +1160,12 @@ static void finfo_dialog (function_info *finfo)
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(add_remove_callback), finfo);
+
+    /* write spec file button */
+    button = gtk_button_new_with_label(_("Write spec file"));
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(gfn_to_spec_callback), finfo);
 
     /* check box for upload option */
     button = button_in_hbox(vbox, CHECK_BUTTON, 
@@ -1608,6 +1632,84 @@ int save_function_package_as_script (const char *fname, gpointer p)
 	    pputc(prn, '\n');
 	}
     }
+
+    gretl_print_destroy(prn);
+
+    return 0;
+}
+
+static void maybe_print (PRN *prn, const char *key, 
+			       const char *arg)
+{
+    if (arg != NULL) {
+	pprintf(prn, "%s = %s\n", key, arg);
+    } else {
+	pprintf(prn, "%s = \n", key);
+    }
+}
+
+int save_function_package_spec (const char *fname, gpointer p)
+{
+    function_info *finfo = p;
+    PRN *prn;
+    const char *reqstr = NULL;
+    int v, v1, v2, v3;
+    int i, len;
+    int err = 0;
+
+    prn = gretl_print_new_with_filename(fname, &err);
+    if (err) {
+	file_write_errbox(fname);
+	return err;
+    }
+
+    maybe_print(prn, "author", finfo->author);
+    maybe_print(prn, "version", finfo->version);
+    maybe_print(prn, "date", finfo->date);
+    maybe_print(prn, "description", finfo->pkgdesc);
+
+    v = finfo->minver;
+    v1 = v / 10000;
+    v2 = (v - v1 * 10000) / 100;
+    v3 = v % 100;
+    pprintf(prn,"min-version = %d.%d.%d\n", v1, v2, v3); 
+
+    if (finfo->dreq == FN_NEEDS_TS) {
+	reqstr = NEEDS_TS;
+    } else if (finfo->dreq == FN_NEEDS_QM) {
+	reqstr = NEEDS_QM;
+    } else if (finfo->dreq == FN_NEEDS_PANEL) {
+	reqstr = NEEDS_PANEL;
+    } else if (finfo->dreq == FN_NODATA_OK) {
+	reqstr = NO_DATA_OK;
+    } 
+
+    if (reqstr != NULL) {
+	pprintf(prn, "data-requirement = %s\n", reqstr);
+    }
+
+    /* public interface names */
+    pputs(prn, "public = ");
+    len = 9;
+    for (i=0; i<finfo->n_pub; i++) {
+	const char *s = finfo->pubnames[i];
+	int n = strlen(s);
+
+	len += n;
+	if (len > 72) {
+	    pputs(prn, "\\\n");
+	    pprintf(prn, "  %s ", s);
+	    len = n + 3;
+	} else {
+	    pprintf(prn, "%s ", s);
+	    len++;
+	}
+    }
+    pputc(prn, '\n');	
+
+    pputs(prn, "# filenames needed below\n");
+    pputs(prn, "help = \n");
+    pputs(prn, "sample-script = \n");
 
     gretl_print_destroy(prn);
 

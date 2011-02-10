@@ -1158,7 +1158,7 @@ int top_n_tail (char *str, size_t maxlen, int *err)
 	}
 
 	/* does this line start a comment? */
-	if (strchr(str, '#') || !strncmp(str, "/*", 2)) {
+	if (*str == '#' || !strncmp(str, "/*", 2)) {
 	    ; /* leave well alone */
 	} else {
 	    /* replace backslash, if present */

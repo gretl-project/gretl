@@ -17,7 +17,7 @@
  * 
  */
 
-/*  monte_carlo.c - loop procedures */
+/* monte_carlo.c - loop procedures */
 
 #include "libgretl.h" 
 #include "monte_carlo.h"
@@ -112,7 +112,10 @@ typedef struct controller_ controller;
 enum loop_command_codes {
     LOOP_CMD_GEN     = 1 << 0, /* compiled genr */
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
-    LOOP_CMD_NODOL   = 1 << 2  /* no $-string substitution this line */
+    LOOP_CMD_NODOL   = 1 << 2, /* no $-substitution this line */
+    LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
+    LOOP_CMD_NOOPT   = 1 << 4, /* no option flags in this line */
+    LOOP_CMD_NOSAVE  = 1 << 5  /* no "foo <- cmd" in this line */
 };
 
 struct loop_command_ {
@@ -1064,7 +1067,8 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
     }  
 
     if (!err && (sc != 2 || s != q)) {
-	/* must have two semi-colons; must have reached rightmost ')' */
+	/* we've reached the reached rightmost ')' but have not
+	   found two semi-colons */
 	err = E_PARSE;
     }
 
@@ -1236,12 +1240,9 @@ loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, int *err)
 	if (loop->iter < loop->itermax) {
 	    ok = 1;
 	}
-    } else {
+    } else if (!loop_count_too_high(loop)) {
 	/* more complex forms of control (for, while) */
-	if (loop_count_too_high(loop)) {
-	    /* safeguard against infinite loops */
-	    ok = 0;
-	} else if (loop->type == FOR_LOOP) {
+	if (loop->type == FOR_LOOP) {
 	    if (loop->iter > 0) {
 		loop_delta(loop, pZ, pdinfo, err);
 	    }
@@ -1917,8 +1918,11 @@ static int real_append_line (ExecState *s, LOOPSET *loop)
 	}
 	if (loop->cmds[n].line == NULL) {
 	    err = E_ALLOC;
-	} else if (flagstr != NULL) {
-	    sprintf(loop->cmds[n].line, "%s%s", s->line, flagstr);
+	} else {
+	    if (flagstr != NULL) {
+		sprintf(loop->cmds[n].line, "%s%s", s->line, flagstr);
+	    }
+	    compress_spaces(loop->cmds[n].line);
 	}
     }
 
@@ -2501,38 +2505,31 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
     return err;
 }
 
-/* Try to determine if a "list" command within a loop modifies the
-   list that is controlling the loop: if so, we'll have to arrange to
-   have the list of variable names refreshed at the top of the loop.
+/* Check for the name of the list that's defining the loop
+   appearing on the left-hand side of a genr-type expression:
+   if so, we'd better refresh the loop-controller.
 */
 
-static int modifies_loop_list (const LOOPSET *loop, const char *s)
+static inline int maybe_refresh_list (CMD *cmd, const LOOPSET *loop,
+				      const char *line)
 {
-    int ret = 0;
-
-    if (!strncmp(s, "list", 4)) {
-	char lname[VNAMELEN];
-
-	s += 4;
-	s += strspn(s, " ");
-	*lname = '\0';
-	sscanf(s, "%15[^ +=-]", lname);
-	ret = !strcmp(lname, loop->listname);
-    }
-
-    return ret;
-}
-
-static int maybe_refresh_list (CMD *cmd, const LOOPSET *loop,
-			       const char *line)
-{
-    int ret = 0;
-
     if (cmd->ci == GENR) {
-	ret = modifies_loop_list(loop, line);
+	char *p = strstr(line, loop->listname);
+
+	if (p != NULL) {
+	    int n = strlen(loop->listname);
+
+	    if (n == gretl_namechar_spn(p)) {
+		char *q = strchr(line, '=');
+		
+		if (q != NULL && q - p > 0) {
+		    return 1;
+		}
+	    }
+	}
     }
 
-    return ret;
+    return 0;
 }
 
 static LOOPSET *get_child_loop_by_line (LOOPSET *loop, int lno)
@@ -2647,8 +2644,108 @@ static int loop_process_error (int err, PRN *prn)
     return err;
 }
 
-#define is_compiled_genr(l,j) (l->cmds[j].flags & LOOP_CMD_GEN)
+#define genr_compiled(l,j) (l->cmds[j].flags & LOOP_CMD_GEN)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
+#define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
+#define loop_cmd_noopt(l,j) (l->cmds[j].flags & LOOP_CMD_NOOPT)
+#define loop_cmd_nosave(l,j) (l->cmds[j].flags & LOOP_CMD_NOSAVE)
+
+/* based on the stored flags in the loop-line record, set
+   or unset some flags for the command parser: this can 
+   reduce the amount of work the parser has to do on each
+   iteration of a loop
+*/
+
+static inline void loop_info_to_cmd (LOOPSET *loop, int j,
+				     CMD *cmd)
+{
+    if (loop_is_progressive(loop)) {
+	cmd->flags |= CMD_PROG;
+    } else {
+	cmd->flags &= ~CMD_PROG;
+    }
+
+    if (loop_cmd_nosub(loop, j)) {
+	/* tell parser not to try for @-substitution */
+	cmd->flags |= CMD_NOSUB;
+    } else {
+	cmd->flags &= ~CMD_NOSUB;
+    }
+    
+    if (loop_cmd_noopt(loop, j)) {
+	/* tell parser not to try for option flags */
+	cmd->flags |= CMD_NOOPT;
+	/* since the cmd->opt is (or can be) persistent, we
+	   should zero it */
+	cmd->opt = OPT_NONE;
+    } else {
+	cmd->flags &= ~CMD_NOOPT;
+    }
+
+    if (loop_cmd_nosave(loop, j)) {
+	/* tell parser not to try for a "savename" */
+	cmd->flags |= CMD_NOSAVE;
+	*cmd->savename = '\0';
+    } else {
+	cmd->flags &= ~CMD_NOSAVE;
+    }
+}
+
+/* based on the parsed info in @cmd, maybe write some flags to
+   the current loop-line record
+*/
+
+static inline void cmd_info_to_loop (LOOPSET *loop, int j,
+				     CMD *cmd, int *subst)
+{
+    if (!loop_cmd_nosub(loop, j)) {
+	if (cmd_subst(cmd)) {
+	    *subst = 1;
+	} else {
+	    /* record: no @-substitution in this line */
+	    loop->cmds[j].flags |= LOOP_CMD_NOSUB;
+	}
+    }
+
+    if (loop_cmd_nosub(loop, j)) {
+	if (cmd->opt == OPT_NONE) {
+	    /* record: no options are present on this line */
+	    loop->cmds[j].flags |= LOOP_CMD_NOOPT;
+	} 
+	if (*cmd->savename == '\0') {
+	    /* record: no savename on this line */
+	    loop->cmds[j].flags |= LOOP_CMD_NOSAVE;
+	}
+    }
+}
+
+static int loop_report_error (LOOPSET *loop, int err, 
+			      const char *errline,
+			      ExecState *state,
+			      PRN *prn)
+{
+    int fd = gretl_function_depth();
+
+    if (err) {
+	if (fd == 0) {
+	    errmsg(err, prn);
+	    if (*errline != '\0') {
+		pprintf(prn, ">> %s\n", errline);
+	    }
+	}
+    } else if (loop->err) {
+	if (fd == 0) {
+	    errmsg(loop->err, prn);
+	}
+	err = loop->err;
+    }
+
+    if (fd > 0 && err && *errline != '\0') {
+	strcpy(state->line, errline);
+    }
+
+    return err;
+}	
 
 static int block_model (CMD *cmd)
 {
@@ -2726,7 +2823,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 #endif
 	    strcpy(errline, line);
 
-	    if (!gretl_if_state_false() && is_compiled_genr(loop, j)) {
+	    if (!gretl_if_state_false() && genr_compiled(loop, j)) {
 		/* if the current line already has "compiled genr" status,
 		   we should be able to skip several steps that are
 		   potentially quite time-consuming 
@@ -2762,11 +2859,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		}
 	    }
 
-	    if (loop_is_progressive(loop)) {
-		cmd->flags |= CMD_PROG;
-	    } else {
-		cmd->flags &= ~CMD_PROG;
-	    }	    
+	    /* transcribe loop -> cmd */
+	    loop_info_to_cmd(loop, j, cmd);
 
 	    /* We already have the "ci" index recorded, but here
 	       we do some further parsing. 
@@ -2774,7 +2868,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = parse_command_line(line, cmd, pZ, pdinfo);
 
 #if LOOP_DEBUG
-	    fprintf(stderr, "    after: '%s' (subst=%d,%d)\n", line, subst, cmd_subst(cmd));
+	    fprintf(stderr, "    after: '%s'\n", line);
+	    fprintf(stderr, "    cmd->savename = '%s'\n", cmd->savename);
 #endif
 
 	    if (cmd->ci < 0) {
@@ -2788,11 +2883,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		}
 	    } else {
 		gretl_exec_state_transcribe_flags(s, cmd);
+		cmd_info_to_loop(loop, j, cmd, &subst);
 	    }
-
-	    if (!subst && cmd_subst(cmd)) {
-		subst = 1;
-	    } 
 
 	    if (is_list_loop(loop) && maybe_refresh_list(cmd, loop, line)) {
 		lrefresh = 1;
@@ -2926,7 +3018,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		loop->idxval += 1;
 		gretl_scalar_set_value(loop->idxname, loop->idxval);
 	    } else if (lrefresh) {
-		/* added 2008-01-11, AC */
 		loop_list_refresh(loop, pdinfo);
 	    }
 	    if (show_activity && (loop->iter % 10 == 0)) {
@@ -2936,21 +3027,17 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     } /* end iterations of loop */
 
+    cmd->flags &= ~CMD_NOSUB;
+    cmd->flags &= ~CMD_NOOPT;
+    cmd->flags &= ~CMD_NOSAVE;
+
     if (loop->brk) {
 	/* turn off break flag */
 	loop->brk = 0;
     }
 
-    if (err) {
-	if (!s->funcerr) {
-	    errmsg(err, prn);
-	    if (*errline != '\0') {
-		pprintf(prn, ">> %s\n", errline);
-	    }
-	}
-    } else if (loop->err) {
-	errmsg(loop->err, prn);
-	err = loop->err;
+    if (err || loop->err) {
+	err = loop_report_error(loop, err, errline, s, prn);
     }
 
     if (!err && loop->iter > 0) {
@@ -2972,10 +3059,13 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (line != NULL) {
+    if (err && gretl_function_depth() > 0) {
+	; /* leave 'line' alone */
+    } else if (line != NULL) {
 	*line = '\0';
     } 
 
+    /* be sure to clear some loop-special parser flags */
     cmd->flags &= ~CMD_PROG;
 
     if (loop->parent == NULL) {
@@ -2987,6 +3077,3 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     return process_command_error(cmd, err);
 }
-
-
-
