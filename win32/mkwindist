@@ -70,6 +70,8 @@ mkdir -p windist/gretl/data/greene
 mkdir -p windist/gretl/data/nist
 mkdir -p windist/gretl/data/plotbars
 mkdir -p windist/gretl/functions
+mkdir -p windist/gretl/functions/gig
+mkdir -p windist/gretl/functions/ivpanel
 mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/scripts/misc
 mkdir -p windist/gretl/db
@@ -259,6 +261,13 @@ if [ ! -f ${WINFILES}/gtk-runtime.tar.gz ] ; then
   exit 1
 else 
   process_tarball ${WINFILES}/gtk-runtime.tar.gz
+fi
+
+if [ ! -f ${WINFILES}/gretl-addons.tar.gz ] ; then
+  echo "Couldn't find gretl-addons.tar.gz"
+  exit 1
+else 
+  process_tarball ${WINFILES}/gretl-addons.tar.gz
 fi
 
 # replacement builds

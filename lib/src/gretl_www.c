@@ -381,6 +381,8 @@ static int get_host_ip (urlinfo *u, const char *h_name)
     return 0;
 }
 
+#ifndef STANDALONE
+
 /* on getting a redirect we'd better check that we're still
    calling up the right host
 */
@@ -407,6 +409,8 @@ static int maybe_reset_host (urlinfo *u)
 
     return err;
 }
+
+#endif /* !STANDALONE */
 
 /* http header functions -- based on Wget */
 
@@ -1274,7 +1278,9 @@ static uerr_t try_http (urlinfo *u)
 	    if (redirs < 3 && hstat.newloc != NULL) {
 		free(u->path);
 		u->path = hstat.newloc;
+#ifndef STANDALONE
 		maybe_reset_host(u);
+#endif
 		hstat.newloc = NULL;
 		got_newloc = 1;
 		redirs++;
