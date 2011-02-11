@@ -56,14 +56,19 @@
 # include <arpa/inet.h>
 #endif /* WIN32 */
 
-#define DBHLEN     64
+#define DBHLEN 64
 
 static int wproxy;
 static char dbhost[DBHLEN]      = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]   = "ricardo.ecn.wfu.edu";
+static char sfhost[DBHLEN]      = "downloads.sourceforge.net";
 static char datacgi[DBHLEN]     = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN]   = "/gretl/cgi-bin/gretl_update.cgi";
-static char manual_path[DBHLEN] = "/pub/gretl/manual/PDF/";
+static char manual_path[DBHLEN] = "/project/gretl/manual/";
+
+/* note: alternative manual d/l uses gretlhost and
+   manual_path = "/pub/gretl/manual/PDF/";
+*/
 
 typedef enum {
     SAVE_NONE,
@@ -2071,8 +2076,8 @@ int check_remote_db (const char *dbname)
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname)
 {
-    return retrieve_url (gretlhost, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
-			 localname, NULL);
+    return retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
+			localname, NULL);
 }
 
 /**
@@ -2090,8 +2095,8 @@ int retrieve_remote_function_package (const char *pkgname,
 int retrieve_remote_datafiles_package (const char *pkgname, 
 				       const char *localname)
 {
-    return retrieve_url (gretlhost, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
-			 localname, NULL);
+    return retrieve_url(gretlhost, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
+			localname, NULL);
 }
 
 /**
@@ -2113,8 +2118,8 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
-    return retrieve_url (dbhost, opt, dbname, varname, SAVE_TO_BUFFER, 
-			 NULL, getbuf);
+    return retrieve_url(dbhost, opt, dbname, varname, SAVE_TO_BUFFER, 
+			NULL, getbuf);
 }
 
 /**
@@ -2124,15 +2129,15 @@ int retrieve_remote_db_data (const char *dbname,
  * on the local machine.
  *
  * Retrieves the specified manual file in PDF format from the 
- * gretl data server.
+ * gretl server.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
 int retrieve_manfile (const char *fname, const char *localname)
 {
-    return retrieve_url (gretlhost, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
-			 localname, NULL);
+    return retrieve_url(sfhost, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
+			localname, NULL);
 }
 
 /**
