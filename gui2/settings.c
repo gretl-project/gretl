@@ -969,7 +969,7 @@ static gboolean try_switch_locale (GtkComboBox *box, gpointer p)
 	return FALSE;
     }
 
-    langstr = gtk_combo_box_get_active_text(box);
+    langstr = combo_box_get_active_text(box);
     err = test_locale(langstr);
     g_free(langstr);
 
@@ -1319,7 +1319,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    } 
 	    gtk_widget_show(w);
 
-	    rc->widget = gtk_combo_box_new_text();
+	    rc->widget = gtk_combo_box_text_new();
 	    gtk_table_attach(GTK_TABLE(l_table), rc->widget, 
 			     1, 2, l_len - 1, l_len,
 			     0, 0, 0, 0);
@@ -1329,7 +1329,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 		for (j=LANG_AUTO; j<LANG_MAX; j++) {
 		    str = lang_string_from_id(j);
-		    gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), str);
+		    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rc->widget), 
+						   str);
 		    if (!strcmp(str, strvar)) {
 			active = j;
 		    }
@@ -1341,8 +1342,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		
 		strs = get_list_setting_strings(rc->var, &nopt);
 		for (j=0; j<nopt; j++) {
-		    gtk_combo_box_append_text(GTK_COMBO_BOX(rc->widget), 
-					      strs[j]);
+		    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rc->widget), 
+						   strs[j]);
 		    if (!strcmp(strs[j], strvar)) {
 			active = j;
 		    }
@@ -1582,7 +1583,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 		    rcvar_set_int(rcvar, ival, &changed);
 		} else {
-		    gchar *str = gtk_combo_box_get_active_text(box);
+		    gchar *str = combo_box_get_active_text(box);
 
 		    rcvar_set_string(rcvar, str, &changed);
 		    g_free(str);
@@ -2380,7 +2381,7 @@ apply_wdir_changes (GtkWidget *w, struct wdir_setter *wset)
     gchar *str;
     int err;
 
-    str = gtk_combo_box_get_active_text(GTK_COMBO_BOX(wset->wdir_combo));
+    str = combo_box_get_active_text(GTK_COMBO_BOX(wset->wdir_combo));
     *tmp = '\0';
     if (str != NULL) {
 	strncat(tmp, str, MAXLEN - 2);

@@ -2112,7 +2112,7 @@ static GtkWidget *files_window (windata_t *vwin)
 }
 
 static void 
-switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
+switch_file_page_callback (GtkNotebook *notebook, GtkWidget *page,
 			   guint page_num, windata_t *vwin)
 {
     gpointer p = g_object_get_data(G_OBJECT(notebook), "browse_ptr");

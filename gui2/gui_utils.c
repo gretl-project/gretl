@@ -516,7 +516,8 @@ void stop_talking (void)
 
 void audio_render_window (windata_t *vwin, int key)
 {
-    int (*read_window_text) (windata_t *, const DATAINFO *, int (*)());
+    int (*read_window_text) (GtkWidget *, GtkWidget *, int, gpointer,
+			     const DATAINFO *, int (*)());
     void *handle;
 
     if (vwin == NULL) {
@@ -533,9 +534,11 @@ void audio_render_window (windata_t *vwin, int key)
     set_or_get_audio_stop(1, 0);
 
     if (key == AUDIO_LISTBOX) {
-	(*read_window_text) (vwin, NULL, &should_stop_talking);
+	(*read_window_text) (vwin->listbox, vwin->text, vwin->role, 
+			     vwin->data, NULL, &should_stop_talking);
     } else {
-	(*read_window_text) (vwin, datainfo, &should_stop_talking);
+	(*read_window_text) (vwin->listbox, vwin->text, vwin->role, 
+			     vwin->data, datainfo, &should_stop_talking);
     }
 
     close_plugin(handle);
@@ -4755,7 +4758,7 @@ int browser_open (const char *url)
     gchar *urlcmd;
     int err;
 
-#  if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION >= 14
+#  if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 14
     if (getenv("ALTSHOW") != NULL) {
 	return alt_show(url);
     }

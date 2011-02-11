@@ -592,9 +592,9 @@ if test "$gtk_version" = "2.0" && test "$have_gtkprint" = "no" ; then
 fi
 
 dnl
-dnl Check for installed gtksourceview?
+dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
-if test "$have_gtk" = "yes" && test "$try_sourceview" = "yes" ; then
+if test "$gtk_version" = "2.0" && test "$try_sourceview" = "yes" ; then
     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0,
       AC_DEFINE(USE_GTKSOURCEVIEW_2)
       have_sourceview="2.0",
@@ -608,12 +608,22 @@ if test "$have_gtk" = "yes" && test "$try_sourceview" = "yes" ; then
        )
     fi      
 fi
-
-dnl Test regex availability for bundled gtksourceview
+dnl fallback: test regex availability for bundled gtksourceview
 if test "$bundled_sourceview" = "yes" ; then
      AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
      have_gnu_regex="yes",
      have_gnu_regex="no")
+fi
+
+dnl
+dnl Check for installed gtksourceview (GTK 3 variant)
+dnl
+if test "$gtk_version" = "3.0" ; then
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-3.0,
+      AC_DEFINE(USE_GTKSOURCEVIEW_3)
+      have_sourceview="3.0",
+      echo "version 3.0 not found"
+    )
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -809,6 +819,12 @@ elif test "${have_glib2}" = "no" ; then
 echo "
 Please install glib-2.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
+"
+
+elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
+echo "
+Please install gtksourceview-3.0 and then reconfigure gretl.
+gtksourceview-3.0 is available from http://www.gnome.org/
 "
 
 else

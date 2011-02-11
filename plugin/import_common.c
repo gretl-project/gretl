@@ -422,7 +422,7 @@ static void wsheet_menu (wbook *book, int multisheet)
 {
     GtkWidget *w, *tmp, *label;
     GtkWidget *vbox, *hbox;
-    GtkObject *c_adj, *r_adj;
+    GtkAdjustment *c_adj, *r_adj;
     int offmin;
 
     w = gtk_dialog_new();
@@ -448,8 +448,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     /* starting column spinner */
     tmp = gtk_label_new(_("column:"));
     offmin = book->col_offset + 1;
-    c_adj = gtk_adjustment_new(offmin, offmin, 256, 1, 1, 0);
-    book->colspin = gtk_spin_button_new(GTK_ADJUSTMENT(c_adj), 1, 0);
+    c_adj = (GtkAdjustment *) gtk_adjustment_new(offmin, offmin, 256, 1, 1, 0);
+    book->colspin = gtk_spin_button_new(c_adj, 1, 0);
     g_signal_connect(c_adj, "value_changed",
 		     G_CALLBACK(wbook_set_col_offset), book);
     gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->colspin),
@@ -460,8 +460,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     /* starting row spinner */
     tmp = gtk_label_new(_("row:"));
     offmin = book->row_offset + 1;
-    r_adj = gtk_adjustment_new(offmin, offmin, 256, 1, 1, 0);
-    book->rowspin = gtk_spin_button_new(GTK_ADJUSTMENT(r_adj), 1, 0);
+    r_adj = (GtkAdjustment *) gtk_adjustment_new(offmin, offmin, 256, 1, 1, 0);
+    book->rowspin = gtk_spin_button_new(r_adj, 1, 0);
     g_signal_connect(r_adj, "value_changed",
 		     G_CALLBACK(wbook_set_row_offset), book);
     gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->rowspin),

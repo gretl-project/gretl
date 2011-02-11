@@ -881,7 +881,7 @@ edit_dialog_popup_handler (GtkWidget *w, GdkEventButton *event, dialog_t *d)
 
 static void set_sys_method (GtkComboBox *box, dialog_t *d)
 {
-    gchar *str = gtk_combo_box_get_active_text(box);
+    gchar *str = combo_box_get_active_text(box);
     char *s, mstr[8] = {0};
 
     s = strrchr(str, '(');
@@ -959,7 +959,7 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 
 static void combo_opt_changed (GtkComboBox *box, combo_opts *opts)
 {
-    gchar *s = gtk_combo_box_get_active_text(box);
+    gchar *s = combo_box_get_active_text(box);
     int i;
 
     for (i=0; opts->strs[i] != NULL; i++) {
@@ -982,9 +982,10 @@ GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt,
 
     *opts->optp |= opts->vals[deflt];
 
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
     for (i=0; opts->strs[i] != NULL; i++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _(opts->strs[i]));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
+				       _(opts->strs[i]));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
     g_signal_connect(G_OBJECT(combo), "changed",
@@ -1008,7 +1009,7 @@ void depopulate_combo_box (GtkComboBox *box)
     GtkTreeIter iter;
 
     while (gtk_tree_model_get_iter_first(model, &iter)) {
-	gtk_combo_box_remove_text(box, 0);
+	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(box), 0);
     }
 }
 
@@ -1139,12 +1140,12 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     gtk_widget_show(w);
 
-    w = gtk_combo_box_new_text();
+    w = gtk_combo_box_text_new();
 
     for (i=SYS_METHOD_SUR; i<SYS_METHOD_MAX; i++) {
 	str = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
 			      system_method_short_string(i));
-	gtk_combo_box_append_text(GTK_COMBO_BOX(w), str);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), str);
 	g_free(str);
 	if (sys != NULL && sys->method == i) {
 	    method = i;
@@ -1499,7 +1500,8 @@ void set_combo_box_strings_from_list (GtkComboBox *box, GList *list)
     GList *mylist = list;
 
     while (mylist != NULL) {
-	gtk_combo_box_append_text(box, mylist->data);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
+				       mylist->data);
 	mylist = mylist->next;
     }
 }
@@ -1511,11 +1513,10 @@ void set_combo_box_default_text (GtkComboBox *box, const char *s)
     gtk_entry_set_text(GTK_ENTRY(entry), s);
 }
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-
-gchar *gtk_combo_box_get_active_text (GtkComboBox *box)
+gchar *combo_box_get_active_text (gpointer p)
 {
-    GtkWidget *w = gtk_bin_get_child(GTK_BIN(box));
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+    GtkWidget *w = gtk_bin_get_child(GTK_BIN(p));
     gchar *ret = NULL;
 
     if (GTK_IS_ENTRY(w)) {
@@ -1525,6 +1526,7 @@ gchar *gtk_combo_box_get_active_text (GtkComboBox *box)
 	    ret = g_strdup(s);
 	}
     } else {
+	GtkComboBox *box = GTK_COMBO_BOX(p)
 	GtkTreeModel *model = gtk_combo_box_get_model(box);
 	GtkTreeIter iter;
 
@@ -1533,9 +1535,12 @@ gchar *gtk_combo_box_get_active_text (GtkComboBox *box)
     }
 
     return ret;
-}
-
+#elif GTK_MAJOR_VERSION >= 3
+    return gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p)); 
+#else
+    return gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
 #endif
+}
 
 GdkModifierType widget_get_pointer_mask (GtkWidget *w)
 {

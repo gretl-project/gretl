@@ -2138,7 +2138,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	return;
     } 
 
-    buf = gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
+    buf = combo_box_get_active_text(p);
     if (buf == NULL || *buf == '\0') {
 	g_free(buf);
 	return;
@@ -2240,13 +2240,14 @@ static int var_is_ok (int i, int code)
     return ret;
 }
 
-static void add_vars_to_combo (GtkWidget *w, int code, int pos)
+static void add_vars_to_combo (GtkWidget *box, int code, int pos)
 {
     int i, vmin = (pos > 0)? 2 : 1;
 
     for (i=vmin; i<datainfo->v; i++) {
 	if (var_is_ok(i, code)) {
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(w), datainfo->varname[i]);
+	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
+					   datainfo->varname[i]);
 	}
     }
 
@@ -2254,13 +2255,14 @@ static void add_vars_to_combo (GtkWidget *w, int code, int pos)
 	/* add first variable at the end of the list */
 	for (i=1; i<datainfo->v; i++) {
 	    if (var_is_ok(i, code)) {
-		gtk_combo_box_append_text(GTK_COMBO_BOX(w), datainfo->varname[i]);
+		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
+					       datainfo->varname[i]);
 		break;
 	    }
 	}
     }
 
-    gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(box), 0);
 }
 
 static void toggle_combo_ok (GtkWidget *toggle, gpointer p)
@@ -3155,7 +3157,7 @@ static void plot_curve (void)
     static struct curve_plotter plotter;
     GtkWidget *dialog, *hbox, *vbox;
     GtkWidget *button, *tmp;
-    GtkObject *adj;
+    GtkAdjustment *adj;
 
     if (plotter.dlg != NULL) {
 	gtk_window_present(GTK_WINDOW(plotter.dlg));
@@ -3191,8 +3193,8 @@ static void plot_curve (void)
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("x minimum"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    adj = gtk_adjustment_new(plotter.xmin, -100, 100, 1, 0, 0);
-    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(plotter.xmin, -100, 100, 1, 0, 0);
+    tmp = gtk_spin_button_new(adj, 1, 0);
     g_signal_connect(tmp, "value-changed", 
 		     G_CALLBACK(set_double_from_spinner), &plotter.xmin);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
@@ -3200,8 +3202,8 @@ static void plot_curve (void)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     tmp = gtk_label_new(_("x range"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    adj = gtk_adjustment_new(plotter.xrange, 1, 1000, 1, 0, 0);
-    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(plotter.xrange, 1, 1000, 1, 0, 0);
+    tmp = gtk_spin_button_new(adj, 1, 0);
     g_signal_connect(tmp, "value-changed", 
 		     G_CALLBACK(set_double_from_spinner), &plotter.xrange);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0); 

@@ -117,7 +117,12 @@ struct png_plot_t {
     GtkWidget *cursor_label;
     GtkWidget *labelpos_entry;
     GtkWidget *editor;
+#if GTK_MAJOR_VERSION >= 3
+    GdkPixbuf *pixbuf;
+    cairo_surface_t *cs;
+#else
     GdkPixmap *pixmap;
+#endif
 #ifdef USE_CAIRO
     cairo_t *cr;
     GdkPixbuf *savebuf;
@@ -2585,14 +2590,21 @@ static void copy_state_to_pixbuf (png_plot *plot)
 {
     if (plot->savebuf != NULL) {
 	g_object_unref(plot->savebuf);
-    }    
+    } 
 
+# if GTK_MAJOR_VERSION >= 3
+    plot->savebuf = gdk_pixbuf_get_from_surface(plot->cs,
+						0, 0,
+						plot->pixel_width,
+						plot->pixel_height);
+# else   
     plot->savebuf = gdk_pixbuf_get_from_drawable(NULL,
 						 plot->pixmap,
 						 NULL,
 						 0, 0, 0, 0,
 						 plot->pixel_width,
 						 plot->pixel_height);
+# endif
 }
 
 #else
@@ -2637,7 +2649,11 @@ static void draw_selection_box (png_plot *plot, int x, int y)
     r.height = abs(y - plot->screen_y0);
 
 #ifdef USE_CAIRO
+# if GTK_MAJOR_VERSION >= 3
+    plot->cr = gdk_cairo_create(gtk_widget_get_window(plot->canvas));
+# else
     plot->cr = gdk_cairo_create(plot->pixmap);
+# endif
     if (plot->savebuf != NULL) {
 	/* restore state prior to zoom start */
 	gdk_cairo_set_source_pixbuf(plot->cr, plot->savebuf, 0, 0);
@@ -2716,7 +2732,11 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     /* draw the label, then show the modified pixmap */
 
 #ifdef USE_CAIRO
+# if GTK_MAJOR_VERSION >= 3
+    plot->cr = gdk_cairo_create(gtk_widget_get_window(plot->canvas));
+# else
     plot->cr = gdk_cairo_create(plot->pixmap);
+# endif
     cairo_move_to(plot->cr, x, y);
     pango_cairo_show_layout(plot->cr, pl);
     cairo_fill(plot->cr);
@@ -3848,7 +3868,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 
 #ifdef USE_CAIRO
 
-# if 0 /* not yet, GTK 3 */
+# if GTK_MAJOR_VERSION >= 3
 
 static 
 void plot_draw (GtkWidget *widget, GdkRectangle *rect, 
@@ -3858,7 +3878,9 @@ void plot_draw (GtkWidget *widget, GdkRectangle *rect,
     png_plot *plot = data;
 
     plot->cr = gdk_cairo_create(window);
+#if 0 /* FIXME!! */
     gdk_cairo_set_source_pixmap(plot->cr, plot->pixmap, 0, 0);
+#endif
     gdk_cairo_rectangle(plot->cr, rect);
     cairo_fill(plot->cr);
     cairo_destroy(plot->cr);
@@ -3979,7 +4001,11 @@ static int render_pngfile (png_plot *plot, int view)
     }
 
 #ifdef USE_CAIRO
+# if GTK_MAJOR_VERSION >= 3
+    plot->cr = gdk_cairo_create(gtk_widget_get_window(plot->canvas));
+# else
     plot->cr = gdk_cairo_create(plot->pixmap);
+# endif
     gdk_cairo_set_source_pixbuf(plot->cr, pbuf, 0, 0);
     cairo_paint(plot->cr);
     cairo_destroy(plot->cr);
@@ -4395,7 +4421,12 @@ static png_plot *png_plot_new (void)
     plot->statusarea = NULL;    
     plot->statusbar = NULL;
     plot->cursor_label = NULL;
+#if GTK_MAJOR_VERSION >= 3
+    plot->pixbuf = NULL;
+    plot->cs = NULL;    
+#else
     plot->pixmap = NULL;
+#endif
 #ifdef USE_CAIRO
     plot->cr = NULL;
     plot->savebuf = NULL;
@@ -4579,7 +4610,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
     plot->statusbar = gtk_statusbar_new();
 
     gtk_widget_set_size_request(plot->statusbar, 1, -1);
+
+#if GTK_MAJOR_VERSION < 3
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
+#endif
 
     gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
 				  GTK_RESIZE_QUEUE);
@@ -4617,8 +4651,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gtk_widget_show(plot->statusarea);
 
     gtk_widget_realize(plot->canvas);
+#if GTK_MAJOR_VERSION < 3
     gdk_window_set_back_pixmap(gtk_widget_get_window(plot->canvas),
 			       NULL, FALSE);
+#endif
 
     if (plot_has_xrange(plot)) {
 	gtk_widget_realize(plot->cursor_label);
@@ -4632,11 +4668,7 @@ static int gnuplot_show_png (const char *fname, const char *name,
     /* set the focus to the canvas area */
     gtk_widget_grab_focus(plot->canvas);  
 
-    plot->pixmap = gdk_pixmap_new(gtk_widget_get_window(plot->shell), 
-				  plot->pixel_width, plot->pixel_height, 
-				  -1);
-
-#if 0 /* not yet, GTK 3 */
+#if GTK_MAJOR_VERSION >= 3
     plot->cs = gdk_window_create_similar_surface(gtk_widget_get_window(plot->shell),
 						 CAIRO_CONTENT_COLOR_ALPHA, /* ? */
 						 plot->pixel_width, 
@@ -4645,6 +4677,9 @@ static int gnuplot_show_png (const char *fname, const char *name,
     g_signal_connect(G_OBJECT(plot->canvas), "draw",
 		     G_CALLBACK(plot_draw), plot);
 #else
+    plot->pixmap = gdk_pixmap_new(gtk_widget_get_window(plot->shell), 
+				  plot->pixel_width, plot->pixel_height, 
+				  -1);
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
 		     G_CALLBACK(plot_expose), plot);
 #endif

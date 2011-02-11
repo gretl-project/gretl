@@ -2,7 +2,6 @@
    text-to-speech
 */
 
-#include "gretltypes.h"
 #include "gretl_enums.h"
 
 static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
@@ -354,7 +353,7 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
     return 0;
 }
 
-static int read_listbox_content (windata_t *vwin, int (*should_stop)())
+static int read_listbox_content (GtkWidget *listbox, int (*should_stop)())
 {
     GtkTreeModel *model;
     GtkTreeIter iter;
@@ -362,7 +361,7 @@ static int read_listbox_content (windata_t *vwin, int (*should_stop)())
     gchar *tmpstr[3];
     int i, err = 0;
 
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(listbox));
     gtk_tree_model_get_iter_first(model, &iter);
 
     err = speak_line("Contents of list box.\n");
@@ -407,28 +406,32 @@ static int read_listbox_content (windata_t *vwin, int (*should_stop)())
     return err;
 }
 
-int read_window_text (windata_t *vwin, const DATAINFO *pdinfo,
+int read_window_text (GtkWidget *listbox, 
+		      GtkWidget *text, 
+		      int role,
+		      gpointer data,
+		      const DATAINFO *pdinfo,
 		      int (*should_stop)())
 {
     int err = 0;
 
     if (pdinfo == NULL) {
-	return read_listbox_content(vwin, should_stop);
+	return read_listbox_content(listbox, should_stop);
     }
 
-    if (vwin->role == SUMMARY ||
-	vwin->role == VAR_SUMMARY ||
-	vwin->role == CORR ||
-	vwin->role == COVAR ||
-	vwin->role == COEFFINT ||
-	vwin->role == VIEW_MODEL) {
-	err = audio_print_special(vwin->role, vwin->data, pdinfo, should_stop);
+    if (role == SUMMARY ||
+	role == VAR_SUMMARY ||
+	role == CORR ||
+	role == COVAR ||
+	role == COEFFINT ||
+	role == VIEW_MODEL) {
+	err = audio_print_special(role, data, pdinfo, should_stop);
     } else {
 	GtkTextBuffer *tbuf;
 	GtkTextIter start, end;
 	gchar *window_text;
 
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text));
 	gtk_text_buffer_get_start_iter(tbuf, &start);
 	gtk_text_buffer_get_end_iter(tbuf, &end);
 	window_text = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);

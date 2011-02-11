@@ -336,7 +336,7 @@ static GtkWidget *hboxit (GtkWidget *w, GtkWidget *vbox)
 
 static void csv_na_callback (GtkComboBox *box, gpointer p)
 {
-    char *s = gtk_combo_box_get_active_text(box);
+    char *s = combo_box_get_active_text(box);
 
     set_csv_na_string(s);
 }
@@ -355,18 +355,19 @@ static GtkWidget *csv_na_combo (void)
     label = gtk_label_new(_("Print missing values as:"));
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
 
     for (i=0; i<n; i++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), na_strs[i]);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
+				       na_strs[i]);
 	if (!strcmp(setna, na_strs[i])) {
 	    matched = 1;
 	}
     }
 
     if (!matched) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), setna);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), setna);
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), i);
     } else {
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
@@ -899,7 +900,7 @@ struct replic_set {
 
 static void set_bs_replics (GtkWidget *w, struct replic_set *rs)
 {
-    char *s = gtk_combo_box_get_active_text(GTK_COMBO_BOX(rs->w));
+    char *s = combo_box_get_active_text(GTK_COMBO_BOX(rs->w));
     char *test = NULL;
     unsigned long u;
     
@@ -917,10 +918,10 @@ static void set_bs_replics (GtkWidget *w, struct replic_set *rs)
 
 static void make_replics_list (GtkWidget *w)
 {
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "100");
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "1000");
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "10000");
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "100000");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "100");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "1000");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "10000");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "100000");
 
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
 }
@@ -936,11 +937,12 @@ static GtkWidget *bs_coeff_popdown (MODEL *pmod, int *pp)
 	return NULL;
     }
 
-    w = gtk_combo_box_new_text();
+    w = gtk_combo_box_text_new();
 
     for (i=1; i<=xlist[0]; i++) {
 	vi = xlist[i];
-	gtk_combo_box_append_text(GTK_COMBO_BOX(w), datainfo->varname[vi]);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), 
+				       datainfo->varname[vi]);
     }
 
     if (pmod->ifc && pmod->ncoeff > 1) {
@@ -1211,7 +1213,7 @@ void rand_seed_dialog (void)
     guint32 dseed;
     GtkWidget *dlg;
     GtkWidget *tmp, *hbox, *vbox;
-    GtkObject *adj;
+    GtkAdjustment *adj;
 
     if (maybe_raise_dialog()) {
 	return;
@@ -1225,12 +1227,13 @@ void rand_seed_dialog (void)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     dseed = gretl_rand_get_seed();
-    adj = gtk_adjustment_new((gdouble) dseed, 1, (gdouble) UINT_MAX, 
-			     1, 1000, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new((gdouble) dseed, 1, 
+					       (gdouble) UINT_MAX, 
+					       1, 1000, 0);
     g_signal_connect(G_OBJECT(adj), "value-changed",
 		     G_CALLBACK(record_seed), &dseed);
     
-    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    tmp = gtk_spin_button_new(adj, 1, 0);
     gtk_entry_set_activates_default(GTK_ENTRY(tmp), TRUE);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
@@ -1259,7 +1262,7 @@ void rand_seed_dialog (void)
 static void set_listname (GtkComboBox *combo,
 			  char *listname)
 {
-    gchar *active = gtk_combo_box_get_active_text(combo);
+    gchar *active = combo_box_get_active_text(combo);
 
     strcpy(listname, active);
     g_free(active);
@@ -1292,7 +1295,7 @@ void select_list_dialog (char *listname, int *cancel)
 
     /* selector */
     hbox = gtk_hbox_new(FALSE, 5);
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
     set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), llist);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     g_signal_connect(G_OBJECT(combo), "changed",
@@ -1336,7 +1339,7 @@ int combo_selector_dialog (GList *list, const char *msg,
 
     /* selector */
     hbox = gtk_hbox_new(FALSE, 5);
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
     set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
     g_signal_connect(G_OBJECT(combo), "changed",
@@ -1484,9 +1487,9 @@ struct range_setting {
     DATAINFO dinfo;       /* auxiliary data info structure */
     GtkWidget *dlg;       /* dialog box */
     GtkWidget *obslabel;  /* label for showing number of selected obs */
-    GtkObject *adj1;      /* adjustment for start spinner */
+    GtkAdjustment *adj1;  /* adjustment for start spinner */
+    GtkAdjustment *adj2;  /* adjustment for end spinner */
     GtkWidget *spin1;     /* start-of-range spinner */
-    GtkObject *adj2;      /* adjustment for end spinner */
     GtkWidget *spin2;     /* end-of-range spinner */
     GtkWidget *combo;     /* multi-purpose selector */
     GtkWidget *entry;
@@ -1538,7 +1541,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	/* sampling using a dummy var */
 	gchar *dumv;
 
-	dumv = gtk_combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
+	dumv = combo_box_get_active_text(GTK_COMBO_BOX(rset->combo));
 	gretl_command_sprintf("smpl %s --dummy%s", dumv, replace);
 	g_free(dumv);
 
@@ -1663,7 +1666,7 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
     int n = 0;
 
     if (box != NULL) {
-	gchar *vname = gtk_combo_box_get_active_text(box);
+	gchar *vname = combo_box_get_active_text(box);
 
 	if (vname != NULL) {
 	    int v = series_index(datainfo, vname);
@@ -1784,8 +1787,10 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     /* spinner for u1 */
 
     lbl = gtk_label_new(_("Start:"));
-    rset->adj1 = gtk_adjustment_new(rset->dinfo.t1, 0, rset->dinfo.n - 1, 1, 1, 0);
-    rset->spin1 = obs_button_new(GTK_ADJUSTMENT(rset->adj1), &rset->dinfo);
+    rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(rset->dinfo.t1, 0, 
+						      rset->dinfo.n - 1, 
+						      1, 1, 0);
+    rset->spin1 = obs_button_new(rset->adj1, &rset->dinfo);
 
     if (temp) {
 	gtk_box_pack_start(GTK_BOX(hbox), gtk_label_new(" "), FALSE, FALSE, 0);
@@ -1801,8 +1806,10 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
 
     /* spinner for u2 */
     lbl = gtk_label_new(_("End:"));
-    rset->adj2 = gtk_adjustment_new(rset->dinfo.t2, 0, rset->dinfo.n - 1, 1, 1, 0);
-    rset->spin2 = obs_button_new(GTK_ADJUSTMENT(rset->adj2), &rset->dinfo);
+    rset->adj2 = (GtkAdjustment *) gtk_adjustment_new(rset->dinfo.t2, 0, 
+						      rset->dinfo.n - 1, 
+						      1, 1, 0);
+    rset->spin2 = obs_button_new(rset->adj2, &rset->dinfo);
 
     if (temp) {
 	gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
@@ -1880,8 +1887,9 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	lbl = gtk_label_new(t1str);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     }
-    rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, smin, smaj, 0);
-    rset->spin1 = obs_button_new(GTK_ADJUSTMENT(rset->adj1), datainfo);
+    rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(*t1, t1min, t1max, 
+						      smin, smaj, 0);
+    rset->spin1 = obs_button_new(rset->adj1, datainfo);
     gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->spin1, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1893,8 +1901,9 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	    lbl = gtk_label_new(t2str);
 	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	}
-	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, smin, smaj, 0);
-	rset->spin2 = obs_button_new(GTK_ADJUSTMENT(rset->adj2), datainfo);
+	rset->adj2 = (GtkAdjustment *) gtk_adjustment_new(*t2, t2min, t2max, 
+							  smin, smaj, 0);
+	rset->spin2 = obs_button_new(rset->adj2, datainfo);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin2), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->spin2, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1926,11 +1935,12 @@ static int sample_range_code (GtkAction *action)
 static GtkWidget *build_dummies_combo (GList *dumlist, 
 				       int thisdum)
 {
-    GtkWidget *combo = gtk_combo_box_new_text();
+    GtkWidget *combo = gtk_combo_box_text_new();
     GList *dlist = dumlist;
 
     while (dlist != NULL) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), dlist->data);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
+				       dlist->data);
 	dlist = dlist->next;
     }
 
@@ -1977,7 +1987,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 
     if (u == SMPLRAND) {
 	gchar *labtxt;
-	GtkObject *adj;
+	GtkAdjustment *adj;
 
 	hbox = gtk_hbox_new(FALSE, 5);
 
@@ -1987,10 +1997,10 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	/* spinner for number of obs */
 	w = gtk_label_new(labtxt);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-	adj = gtk_adjustment_new(default_randsize(), 
-				 1, datainfo->n - 1,
-				 1, 1, 0);
-	rset->spin1 = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	adj = (GtkAdjustment *) gtk_adjustment_new(default_randsize(), 
+						   1, datainfo->n - 1,
+						   1, 1, 0);
+	rset->spin1 = gtk_spin_button_new(adj, 1, 0);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->spin1, FALSE, FALSE, 5);
 
@@ -2371,7 +2381,7 @@ int get_obs_dialog (const char *title, const char *text,
 
 static void chow_dumv_callback (GtkComboBox *box, int *dumv)
 {
-    gchar *vname = gtk_combo_box_get_active_text(box);
+    gchar *vname = combo_box_get_active_text(box);
 
     *dumv = series_index(datainfo, vname);
     g_free(vname);
@@ -2523,13 +2533,14 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
     GtkWidget *spin, *lbl, *cb;
     GtkWidget *vbox, *hbox;
     GtkWidget *hbox1 = NULL, *hbox2 = NULL;
-    GtkObject *adj;
+    GtkAdjustment *adj;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
 
     lbl = gtk_label_new("1 - α =");
-    adj = gtk_adjustment_new(*conf, 0.60, 0.99, 0.01, 0.1, 0);
-    spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+    adj = (GtkAdjustment *) gtk_adjustment_new(*conf, 0.60, 0.99, 
+					       0.01, 0.1, 0);
+    spin = gtk_spin_button_new(adj, 1, 2);
     g_signal_connect(GTK_SPIN_BUTTON(spin), "value-changed",
 		     G_CALLBACK(set_double_from_spinner), conf);
 
@@ -2946,7 +2957,7 @@ static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
     int *selvar = g_object_get_data(G_OBJECT(dlg), "selvar");
     gchar *vname;
 
-    vname = gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
+    vname = combo_box_get_active_text(GTK_COMBO_BOX(combo));
     *selvar = series_index(datainfo, vname);
     g_free(vname);
 }
@@ -3016,10 +3027,10 @@ int select_var_from_list_with_opt (const int *list,
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
     for (i=1; i<=list[0]; i++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), 
-				  datainfo->varname[list[i]]);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
+				       datainfo->varname[list[i]]);
     }
 
     /* select last entry in list */
@@ -3285,13 +3296,14 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 			  GINT_TO_POINTER(COMPACT_WDAY));
 	cinfo->wkday_opt = button;
 
-	daymenu = gtk_combo_box_new_text();
+	daymenu = gtk_combo_box_text_new();
 	for (i=0; i<7; i++) {
 	    if ((i == 0 && datainfo->pd != 7) ||
 		(i == 6 && datainfo->pd == 5)) {
 		continue;
 	    }
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(daymenu), _(weekdays[i])); 
+	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(daymenu), 
+					   _(weekdays[i])); 
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), 0);
 	gtk_box_pack_start(GTK_BOX(hbox), daymenu, FALSE, FALSE, 5);
@@ -3738,7 +3750,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     GtkWidget *hbox;
     GtkWidget *label;
     GtkWidget *button;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     int step = (ci == FREQ)? 2 : 1;
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3746,8 +3758,9 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
     label = gtk_label_new(spintxt);
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    adj = gtk_adjustment_new(*spinvar, spinmin, spinmax, step, step, 0);
-    button = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(*spinvar, spinmin, spinmax, 
+					       step, step, 0);
+    button = gtk_spin_button_new(adj, 1, 0);
     gtk_entry_set_activates_default(GTK_ENTRY(button), TRUE);
     gtk_widget_show(button);
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
@@ -3756,7 +3769,7 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 		     G_CALLBACK(option_spin_set), spinvar);
 
     if (p != NULL) {
-	GtkObject **pobj = (GtkObject **) p;
+	GtkAdjustment **pobj = (GtkAdjustment **) p;
 
 	*pobj = adj;
     }
@@ -4134,10 +4147,10 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     hbox = gtk_hbox_new(FALSE, 5);
     w = gtk_label_new(_("frequency axis scale:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
-    w = gtk_combo_box_new_text();
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "data-based");
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "radians");
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), "degrees");
+    w = gtk_combo_box_text_new();
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "data-based");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "radians");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "degrees");
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     g_signal_connect(G_OBJECT(w), "changed",
 		     G_CALLBACK(pergm_set_axis), opt);
@@ -4310,7 +4323,7 @@ int freq_dialog (const char *title, const char *blurb,
     GtkWidget *dialog, *rad;
     GtkWidget *vbox, *hbox;
     GtkWidget *tmp, *okb, *tbl;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     GSList *group = NULL;
     double f0min, f0max, f0step;
     double wmin, wmax, wstep;
@@ -4371,15 +4384,18 @@ int freq_dialog (const char *title, const char *blurb,
 	}
 
 	if (i == 0) {
-	    adj = gtk_adjustment_new(*nbins, 3, nbmax, 2, 2, 0);
+	    adj = (GtkAdjustment *) gtk_adjustment_new(*nbins, 3, nbmax, 
+						       2, 2, 0);
 	    dig = 0;
 	} else if (i == 1) {
-	    adj = gtk_adjustment_new(*f0, f0min, f0max, f0step, 10.0 * f0step, 0);
+	    adj = (GtkAdjustment *) gtk_adjustment_new(*f0, f0min, f0max, 
+						       f0step, 10.0 * f0step, 0);
 	} else {
-	    adj = gtk_adjustment_new(*fwid, wmin, wmax, wstep, 10.0 * wstep, 0);
+	    adj = (GtkAdjustment *) gtk_adjustment_new(*fwid, wmin, wmax, 
+						       wstep, 10.0 * wstep, 0);
 	}
 	
-	finfo.spin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, dig);
+	finfo.spin[i] = gtk_spin_button_new(adj, 1, dig);
 	gtk_entry_set_activates_default(GTK_ENTRY(finfo.spin[i]), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), finfo.spin[i], 1, 2, i, i+1);
 	g_object_set_data(G_OBJECT(finfo.spin[i]), "snum",
@@ -4578,9 +4594,9 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
     g_signal_connect(G_OBJECT(GTK_SPIN_BUTTON(spin)), "value-changed",
 		     G_CALLBACK(model_table_set_figs), figs);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);    
-    tmp = gtk_combo_box_new_text();
-    gtk_combo_box_append_text(GTK_COMBO_BOX(tmp), _("significant figures"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(tmp), _("decimal places"));
+    tmp = gtk_combo_box_text_new();
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tmp), _("significant figures"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tmp), _("decimal places"));
     if (*fmt == 'g') {
 	gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
     } else {
@@ -4922,7 +4938,7 @@ struct rbin {
 struct tex_formatter {
     GtkWidget *custom;
     GtkWidget *show[3];
-    GtkObject *adj[4];
+    GtkAdjustment *adj[4];
     GtkWidget *spin[4];
     struct rbin radio[4];
 };
@@ -5086,8 +5102,8 @@ void tex_format_dialog (void)
 	/* spinner for precision */
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new(_("Show"));
-	tf.adj[i] = gtk_adjustment_new(p, 0, 15, 1, 1, 0);
-	tf.spin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(tf.adj[i]), 1, 0);
+	tf.adj[i] = (GtkAdjustment *) gtk_adjustment_new(p, 0, 15, 1, 1, 0);
+	tf.spin[i] = gtk_spin_button_new(tf.adj[i], 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), tf.spin[i], FALSE, FALSE, 5);
 

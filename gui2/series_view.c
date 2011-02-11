@@ -660,9 +660,11 @@ static void real_view_format_dialog (GtkWidget *src, windata_t *vwin,
     gtk_box_pack_start(GTK_BOX(hbox), vt.spin, FALSE, FALSE, 0);
 
     /* and selector for digits / decimal places */
-    vt.combo = gtk_combo_box_new_text();
-    gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("significant figures"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(vt.combo), _("decimal places"));
+    vt.combo = gtk_combo_box_text_new();
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(vt.combo), 
+				   _("significant figures"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(vt.combo), 
+				   _("decimal places"));
     if (sview->format == 'g') {
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vt.combo), 0);
     } else {

@@ -241,7 +241,7 @@ static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
 
 static gchar *combo_box_get_trimmed_text (GtkComboBox *combo)
 {
-    gchar *s = gtk_combo_box_get_active_text(combo);
+    gchar *s = combo_box_get_active_text(combo);
     gchar *ret = NULL;
 
     if (s != NULL && *s != '\0') {
@@ -496,14 +496,15 @@ static void update_combo_selectors (call_info *cinfo,
 
 	if (!target) {
 	    /* make a record of the old selected item */
-	    saved = gtk_combo_box_get_active_text(sel);
+	    saved = combo_box_get_active_text(sel);
 	} 
 
 	depopulate_combo_box(sel);
 	set_combo_box_strings_from_list(sel, newlist);
 	null_OK = widget_get_int(sel, "null_OK");
 	if (null_OK) {
-	    gtk_combo_box_append_text(sel, "null");
+	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(sel), 
+					   "null");
 	}
 
 	if (target) {
@@ -520,7 +521,7 @@ static void update_combo_selectors (call_info *cinfo,
 		/* reinstate the previous selection */
 		old = combo_list_index(saved, newlist);
 		if (*saved == '\0' && old < 0) {
-		    gtk_combo_box_prepend_text(sel, "");
+		    gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(sel), "");
 		}  
 		gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
 		g_free(saved);
@@ -724,14 +725,14 @@ static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
     GtkWidget *combo;
     int j;
 
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
     widget_set_int(combo, "argnum", i);
     widget_set_int(combo, "minv", minv);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_enum_arg), cinfo);
     for (j=0; j<nvals; j++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), 
-				  (const char *) S[j]);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
+				       (const char *) S[j]);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), initv - minv);    
 
@@ -742,14 +743,15 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
 				     int minv, int maxv, int initv, 
 				     GretlType type)
 {
-    GtkObject *adj;
+    GtkAdjustment *adj;
     GtkWidget *spin;
 
-    adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(initv, minv, maxv, 
+					       1, 1, 0);
     if (type == GRETL_TYPE_OBS) {
-	spin = obs_button_new(GTK_ADJUSTMENT(adj), datainfo);
+	spin = obs_button_new(adj, datainfo);
     } else {
-	spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	spin = gtk_spin_button_new(adj, 1, 0);
     }
     widget_set_int(spin, "argnum", i);
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
@@ -824,7 +826,7 @@ static int already_set_as_default (call_info *cinfo,
 
     while (slist != NULL && !ret) {
 	GtkComboBox *sel = GTK_COMBO_BOX(slist->data);
-	gchar *s = gtk_combo_box_get_active_text(sel);
+	gchar *s = combo_box_get_active_text(sel);
 
 	if (!strcmp(s, name)) {
 	    ret = 1;
@@ -910,7 +912,8 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     if (list != NULL) {
 	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
 	if (null_OK) {
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(combo), "null");	    
+	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
+					   "null");	    
 	}
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo), 
 			      list, ptype);
@@ -1158,7 +1161,7 @@ static void function_call_dialog (call_info *cinfo)
 	}
 
 	/* prepend blank option and select it */
-	gtk_combo_box_prepend_text(GTK_COMBO_BOX(sel), "");
+	gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(sel), "");
 	gtk_combo_box_set_active(GTK_COMBO_BOX(sel), 0);
 	child = gtk_bin_get_child(GTK_BIN(sel));
 	gtk_entry_set_activates_default(GTK_ENTRY(child), TRUE);

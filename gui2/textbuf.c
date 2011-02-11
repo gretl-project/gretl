@@ -23,9 +23,13 @@
 #include "toolbar.h"
 #include "dlgutils.h"
 
+#if defined(USE_GTKSOURCEVIEW_2) || defined(USE_GTKSOURCEVIEW_3)
+# define NEWER_SOURCEVIEW
+#endif
+
 #include <gtksourceview/gtksourceview.h>
 #include <gtksourceview/gtksourcelanguage.h>
-#ifdef USE_GTKSOURCEVIEW_2
+#ifdef NEWER_SOURCEVIEW
 # include <gtksourceview/gtksourcelanguagemanager.h>
 #else
 # include <gtksourceview/gtksourcelanguagesmanager.h>
@@ -407,7 +411,7 @@ static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
     return 0;
 }
 
-#ifdef USE_GTKSOURCEVIEW_2
+#ifdef NEWER_SOURCEVIEW
 
 static void sourceview_apply_language (windata_t *vwin)
 {
@@ -582,7 +586,7 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 void create_source (windata_t *vwin, int hsize, int vsize, 
 		    gboolean editable)
 {
-#ifdef USE_GTKSOURCEVIEW_2
+#ifdef NEWER_SOURCEVIEW
     GtkSourceLanguageManager *lm = gtk_source_language_manager_new();
 #else
     GtkSourceLanguagesManager *lm = gtk_source_languages_manager_new();
@@ -597,7 +601,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 			   lm, (GDestroyNotify) g_object_unref); 
     g_object_unref(lm); 
 
-#ifdef USE_GTKSOURCEVIEW_2
+#ifdef NEWER_SOURCEVIEW
     gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
 #else
     gtk_source_buffer_set_check_brackets(sbuf, TRUE);

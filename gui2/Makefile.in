@@ -45,6 +45,14 @@ ifeq ($(have_sourceview),no)
   query_install_extra_lang = install-extra-lang
 endif
 
+ifeq ($(have_sourceview),3.0)
+  svprefix = $(shell pkg-config --variable=prefix gtksourceview-3.0)
+  langdir = $(svprefix)/share/gtksourceview-3.0/language-specs
+  LANGOPT = --lang2
+  GRETL_LANG = gretl.lang.2
+  GNUPLOT_LANG = gnuplot.lang.2
+endif
+
 ifeq ($(have_sourceview),2.0)
   svprefix = $(shell pkg-config --variable=prefix gtksourceview-2.0)
   langdir = $(svprefix)/share/gtksourceview-2.0/language-specs

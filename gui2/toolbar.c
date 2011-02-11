@@ -467,7 +467,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     GtkWidget *dialog, *tmp, *hbox;
     GtkWidget *vbox, *b, *hb2;
     GSList *group = NULL;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     gchar txt[16];
     double x = 1.0 - cf->alpha;
     gboolean defset = FALSE;
@@ -521,7 +521,7 @@ static void coeffint_set_alpha (GtkWidget *w, windata_t *vwin)
     b = gtk_radio_button_new_with_label(group, _("Other"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), !defset);
     gtk_box_pack_start(GTK_BOX(hb2), b, FALSE, FALSE, 0);
-    adj = gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(x, 0.60, 0.99, 0.01, 0, 0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.01, 2);
     g_signal_connect(tmp, "value-changed", 
 		     G_CALLBACK(set_double_from_spinner), &x);

@@ -1054,11 +1054,12 @@ static GtkWidget *dwiz_combo (GList *vlist, dw_opts *opts)
 	gtk_misc_set_alignment(GTK_MISC(w), 1.0, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(table), w, 0, 1, i, i+1);
 
-	combo[i] = gtk_combo_box_new_text();
+	combo[i] = gtk_combo_box_text_new();
 	gtk_table_attach_defaults(GTK_TABLE(table), combo[i], 1, 2, i, i+1);
 
 	while (list != NULL) {
-	    gtk_combo_box_append_text(GTK_COMBO_BOX(combo[i]), list->data);
+	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo[i]), 
+					   list->data);
 	    list = list->next;
 	}
 
@@ -1097,7 +1098,7 @@ static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
 
 static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
 {
-    GtkObject *adj;
+    GtkAdjustment *adj;
     GtkWidget *spin;
     int spinmin, spinmax, spinstart;
 
@@ -1120,17 +1121,17 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
     } 
 
     /* appropriate step size? */
-    adj = gtk_adjustment_new(spinstart, spinmin, spinmax,
-			     1, 10, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(spinstart, spinmin, spinmax,
+					       1, 10, 0);
 
     if (step == DW_STARTING_OBS) {
 	g_signal_connect(G_OBJECT(adj), "value-changed", 
 			 G_CALLBACK(dw_set_t1), dwinfo);
-	spin = data_start_button(GTK_ADJUSTMENT(adj), dwinfo);
+	spin = data_start_button(adj, dwinfo);
     } else {	
 	g_signal_connect(G_OBJECT(adj), "value-changed", 
 			 G_CALLBACK(dw_set_custom_frequency), dwinfo);
-	spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	spin = gtk_spin_button_new(adj, 1, 0);
     } 
 
     gtk_entry_set_activates_default(GTK_ENTRY(spin), TRUE);
@@ -1237,7 +1238,7 @@ static void dwiz_make_panel_spinners (dw_opts *opts,
     };
     GtkWidget *label;
     GtkWidget *table;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     GtkWidget *pspin[2];
     int spinmin, spinmax, spinstart;
     int i;
@@ -1259,8 +1260,9 @@ static void dwiz_make_panel_spinners (dw_opts *opts,
 	    spinstart = datainfo->n / spinstart;
 	}
 
-	adj = gtk_adjustment_new(spinstart, spinmin, spinmax, 1, 10, 0);
-	pspin[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	adj = (GtkAdjustment *) gtk_adjustment_new(spinstart, spinmin, spinmax, 
+						   1, 10, 0);
+	pspin[i] = gtk_spin_button_new(adj, 1, 0);
 	g_object_set_data(G_OBJECT(pspin[i]), "idx", GINT_TO_POINTER(i));
 	g_object_set_data(G_OBJECT(pspin[i]), "plf", GINT_TO_POINTER(opts->plf));
 	g_signal_connect(G_OBJECT(pspin[i]), "value-changed", 

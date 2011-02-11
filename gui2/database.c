@@ -916,7 +916,12 @@ maybe_adjust_descrip_column (windata_t *vwin)
     w1 = gtk_tree_view_column_get_width(col);
 
     window = gtk_widget_get_window(vwin->listbox);
+
+#if GTK_MAJOR_VERSION >= 3
+    lw = gdk_window_get_width(window);
+#else
     gdk_drawable_get_size(window, &lw, NULL);
+#endif
 
     w1max = lw - w0 - 140;
 

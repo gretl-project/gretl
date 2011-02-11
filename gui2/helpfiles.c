@@ -959,10 +959,10 @@ static void toggle_search_all_help (GtkComboBox *box, GtkWidget *entry)
 
 static void finder_add_options (GtkWidget *hbox, GtkWidget *entry)
 {
-    GtkWidget *combo = gtk_combo_box_new_text();
+    GtkWidget *combo = gtk_combo_box_text_new();
 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("this page"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(combo), _("all pages"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), _("this page"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), _("all pages"));
     gtk_box_pack_end(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 

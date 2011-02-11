@@ -3384,10 +3384,10 @@ static gint flip_multiplot_axis (GtkComboBox *box, gpointer p)
 
 static GtkWidget *multiplot_popdown (int ci)
 {
-    GtkWidget *w = gtk_combo_box_new_text();
+    GtkWidget *w = gtk_combo_box_text_new();
 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Y-axis variable"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("X-axis variable"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Y-axis variable"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("X-axis variable"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
@@ -3419,12 +3419,12 @@ static gint set_count_data_option (GtkComboBox *box, selector *sr)
 
 static void build_count_data_popdown (selector *sr)
 {
-    GtkWidget *w = gtk_combo_box_new_text();
+    GtkWidget *w = gtk_combo_box_text_new();
     GtkWidget *hbox, *label;
 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Poisson"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("NegBin 2"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("NegBin 1"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Poisson"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("NegBin 2"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("NegBin 1"));
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_count_data_option), sr);
@@ -3472,13 +3472,13 @@ static gint set_duration_option (GtkComboBox *box, selector *sr)
 
 static void build_duration_popdown (selector *sr)
 {
-    GtkWidget *w = gtk_combo_box_new_text();
+    GtkWidget *w = gtk_combo_box_text_new();
     GtkWidget *hbox, *label;
 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Weibull"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Exponential"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Log-logistic"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Log-normal"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Weibull"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Exponential"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Log-logistic"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Log-normal"));
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_duration_option), sr);
@@ -3523,12 +3523,12 @@ static gint set_gmm_est_option (GtkComboBox *box, selector *sr)
 
 static void build_gmm_popdown (selector *sr)
 {
-    GtkWidget *w = gtk_combo_box_new_text();
+    GtkWidget *w = gtk_combo_box_text_new();
     GtkWidget *hbox;
 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("One-step estimation"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Two-step estimation"));
-    gtk_combo_box_append_text(GTK_COMBO_BOX(w), _("Iterated estimation"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("One-step estimation"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Two-step estimation"));
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Iterated estimation"));
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_gmm_est_option), sr);
@@ -3714,7 +3714,7 @@ enum {
 static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 {
     GtkWidget *tmp, *hbox;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     gdouble lag; 
     gdouble minlag;
     gdouble maxlag;
@@ -3755,13 +3755,15 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 	
 	if (i == 0) {
 	    /* lag order */
-	    adj = gtk_adjustment_new(lag, minlag, maxlag, 1, 1, 0);
+	    adj = (GtkAdjustment *) gtk_adjustment_new(lag, minlag, maxlag, 
+						       1, 1, 0);
 	} else {
 	    /* rank */
-	    adj = gtk_adjustment_new(jrank, 1, 10, 1, 1, 0);
+	    adj = (GtkAdjustment *) gtk_adjustment_new(jrank, 1, 10, 
+						       1, 1, 0);
 	}
 
-	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	sr->extra[i] = gtk_spin_button_new(adj, 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
 
 	if (i == 0) {
@@ -3780,7 +3782,7 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
 static void AR_order_spin (selector *sr, GtkWidget *vbox)
 {
     GtkWidget *tmp, *hbox;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     gdouble val, maxlag;
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -3805,9 +3807,8 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-    adj = gtk_adjustment_new(val, 1, maxlag, 1, 1, 0);
-
-    sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(val, 1, maxlag, 1, 1, 0);
+    sr->extra[0] = gtk_spin_button_new(adj, 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra[0], FALSE, FALSE, 5);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
@@ -4002,11 +4003,11 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
 static void make_tau_list (GtkWidget *w)
 {
-    GtkComboBox *box = GTK_COMBO_BOX(w);
+    GtkComboBoxText *box = GTK_COMBO_BOX_TEXT(w);
 
-    gtk_combo_box_append_text(box, "0.25 0.50 0.75");
-    gtk_combo_box_append_text(box, ".05, .25 .50 .75, .95");
-    gtk_combo_box_append_text(box, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
+    gtk_combo_box_text_append_text(box, "0.25 0.50 0.75");
+    gtk_combo_box_text_append_text(box, ".05, .25 .50 .75, .95");
+    gtk_combo_box_text_append_text(box, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
 } 
 
 static int maybe_set_entry_text (GtkWidget *w, const char *s)
@@ -4263,7 +4264,7 @@ static void garch_spin_check (GtkSpinButton *b, selector *sr)
 static void build_garch_spinners (selector *sr)
 {
     GtkWidget *tmp, *hbox;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     gdouble val;
     const char *strs[] = {
 	N_("GARCH p:"),
@@ -4277,8 +4278,8 @@ static void build_garch_spinners (selector *sr)
 	tmp = gtk_label_new(_(strs[i]));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	val = (i==0)? garch_p : garch_q;
-	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 0);
-	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	adj = (GtkAdjustment *) gtk_adjustment_new(val, 0, 4, 1, 1, 0);
+	sr->extra[i] = gtk_spin_button_new(adj, 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
 	g_signal_connect(GTK_SPIN_BUTTON(sr->extra[i]), "value-changed",
 			 G_CALLBACK(garch_spin_check), sr);
@@ -4335,7 +4336,7 @@ static void build_arma_spinners (selector *sr)
 {
     GtkWidget *lbl, *chk, *tab;
     GtkWidget *hbox;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     gdouble vmax, val;
     gboolean freeform;
     const char *strs[] = {
@@ -4358,8 +4359,8 @@ static void build_arma_spinners (selector *sr)
     /* AR lags */
     lbl = gtk_label_new(_(strs[0]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 0, 1);
-    adj = gtk_adjustment_new(arma_p, 0, 10, 1, 1, 0);
-    sr->extra[0] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(arma_p, 0, 10, 1, 1, 0);
+    sr->extra[0] = gtk_spin_button_new(adj, 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[0], 1, 2, 0, 1);
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_p), sr);
@@ -4378,8 +4379,8 @@ static void build_arma_spinners (selector *sr)
     /* order for differencing */
     lbl = gtk_label_new(_(strs[1]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 1, 2);
-    adj = gtk_adjustment_new(arima_d, 0, 2, 1, 1, 0);
-    sr->extra[2] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(arima_d, 0, 2, 1, 1, 0);
+    sr->extra[2] = gtk_spin_button_new(adj, 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[2], 1, 2, 1, 2);
     g_signal_connect(G_OBJECT(sr->extra[2]), "value-changed",
 		     G_CALLBACK(arima_callback), sr);
@@ -4387,8 +4388,8 @@ static void build_arma_spinners (selector *sr)
     /* MA lags */
     lbl = gtk_label_new(_(strs[2]));
     gtk_table_attach_defaults(GTK_TABLE(tab), lbl, 0, 1, 2, 3);
-    adj = gtk_adjustment_new(arma_q, 0, 10, 1, 1, 0);
-    sr->extra[3] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(arma_q, 0, 10, 1, 1, 0);
+    sr->extra[3] = gtk_spin_button_new(adj, 1, 0);
     gtk_table_attach_defaults(GTK_TABLE(tab), sr->extra[3], 1, 2, 2, 3);
     chk = gtk_check_button_new_with_label(_("or specific lags"));
     g_signal_connect(G_OBJECT(chk), "clicked", G_CALLBACK(toggle_q), sr);
@@ -4418,8 +4419,8 @@ static void build_arma_spinners (selector *sr)
 	    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 0);
 	    val = (i==0)? arma_P : (i==1)? arima_D : arma_Q;
 	    vmax = (i == 1)? 2 : 4;
-	    adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 0);
-	    sr->extra[j] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	    adj = (GtkAdjustment *) gtk_adjustment_new(val, 0, vmax, 1, 1, 0);
+	    sr->extra[j] = gtk_spin_button_new(adj, 1, 0);
 	    if (i == 1) {
 		g_signal_connect(G_OBJECT(sr->extra[j]), "value-changed",
 				 G_CALLBACK(arima_callback), sr);
@@ -4576,12 +4577,12 @@ static GtkWidget *mpols_bits_selector (void)
     w = gtk_label_new(_("Bits per floating-point value"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
 
     i = 0;
     for (b=256; b<=4096; b*=2) {
 	sprintf(bstr, "%d", b);
-	gtk_combo_box_append_text(GTK_COMBO_BOX(combo), bstr);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), bstr);
 	if (b == bits) {
 	    deflt = i;
 	}
@@ -4844,10 +4845,11 @@ static void pack_switch_with_extra (GtkWidget *b, selector *sr,
 
 static GtkWidget *alpha_spinner (double deflt, double minval)
 {
-    GtkObject *adj;
+    GtkAdjustment *adj;
     
-    adj = gtk_adjustment_new(deflt, minval, 0.99, 0.01, 0.1, 0);
-    return gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+    adj = (GtkAdjustment *) gtk_adjustment_new(deflt, minval, 0.99, 
+					       0.01, 0.1, 0);
+    return gtk_spin_button_new(adj, 1, 2);
 }
 
 static void build_quantreg_radios (selector *sr)
@@ -5140,7 +5142,7 @@ static gboolean arma_estimator_switch (GtkComboBox *box, selector *sr)
 	GtkWidget *xb = sr->x12a_button;
 
 	if (xb == NULL || !gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(xb))) {
-	    gchar *s = gtk_combo_box_get_active_text(box);
+	    gchar *s = combo_box_get_active_text(box);
 
 	    gtk_widget_set_sensitive(sr->hess_button, 
 				     !strcmp(s, _("Exact Maximum Likelihood")));

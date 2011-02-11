@@ -44,11 +44,16 @@ struct combo_opts_ {
 #define widget_get_int(w,s) GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), s))
 #define widget_set_int(w,s,i) g_object_set_data(G_OBJECT(w), s, GINT_TO_POINTER(i))
 
-/* and a remedial function */
+/* variant functions for incompatible GTK versions */
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
+gchar *combo_box_get_active_text (gpointer p);
 
-gchar *gtk_combo_box_get_active_text (GtkComboBox *box);
+#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24
+
+#define gtk_combo_box_text_new gtk_combo_box_new_text
+#define gtk_combo_box_text_append_text gtk_combo_box_append_text
+#define gtk_combo_box_text_prepend_text gtk_combo_box_prepend_text
+#define gtk_combo_box_text_remove gtk_combo_box_remove_text
 
 #endif
 

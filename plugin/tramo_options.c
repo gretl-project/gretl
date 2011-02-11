@@ -584,7 +584,7 @@ static void get_va_value (GtkSpinButton *sb, tramo_options *opts)
 static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
 {
     GtkWidget *tbl, *tmp;
-    GtkObject *adj;
+    GtkAdjustment *adj;
     int tbl_len = 9, row = 0;
 
     tbl = make_notebook_page_table(notebook, _("Outliers"), tbl_len, 2);
@@ -677,9 +677,9 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
 		     opts);
 
     /* spinner for manual critical value */
-    adj = gtk_adjustment_new((opts->va == 0.0)? 3.3 : opts->va, 
-			     2.1, 6.0, 0.1, 1.0, 0);
-    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.1, 1);
+    adj = (GtkAdjustment *) gtk_adjustment_new((opts->va == 0.0)? 3.3 : opts->va, 
+					       2.1, 6.0, 0.1, 1.0, 0);
+    tmp = gtk_spin_button_new(adj, 0.1, 1);
     opts->va_spinner = tmp;
     gtk_table_attach(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1,
 		     0, 0, 0, 0);
@@ -701,7 +701,7 @@ static GtkWidget *arima_spinner (const gchar *label,
 				 gint imax, gint *var)
 {
     GtkWidget *w;
-    GtkObject *adj;
+    GtkAdjustment *adj;
 
     w = gtk_label_new(label);
     gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_RIGHT);
@@ -709,8 +709,8 @@ static GtkWidget *arima_spinner (const gchar *label,
 		     0, 0, 0, 0);
     gtk_widget_show(w);
 
-    adj = gtk_adjustment_new(*var, 0, imax, 1, 1, 0);
-    w = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(*var, 0, imax, 1, 1, 0);
+    w = gtk_spin_button_new(adj, 1, 0);
     gtk_table_attach(GTK_TABLE(tbl), w, 1, 2, row, row + 1,
 		     0, 0, 0, 0);
     g_signal_connect(G_OBJECT(w), "value-changed",

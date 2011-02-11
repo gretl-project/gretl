@@ -774,13 +774,14 @@ static void func_selector_set_strings (function_info *finfo,
     int i;
 
     for (i=0; i<finfo->n_pub; i++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), finfo->pubnames[i]);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ifmenu), 
+				       finfo->pubnames[i]);
     }
 
     for (i=0; i<finfo->n_priv; i++) {
 	gchar *s = g_strdup_printf("%s (%s)", finfo->privnames[i], _("private"));
 
-	gtk_combo_box_append_text(GTK_COMBO_BOX(ifmenu), s);
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ifmenu), s);
 	g_free(s);
     }
 
@@ -791,7 +792,7 @@ static GtkWidget *active_func_selector (function_info *finfo)
 {
     GtkWidget *ifmenu;
 
-    ifmenu = gtk_combo_box_new_text();
+    ifmenu = gtk_combo_box_text_new();
     func_selector_set_strings(finfo, ifmenu);
     gtk_widget_show_all(ifmenu);
 
@@ -822,9 +823,10 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
     gtk_widget_show(tmp);
 
-    datamenu = gtk_combo_box_new_text();
+    datamenu = gtk_combo_box_text_new();
     for (j=0; j<=FN_NODATA_OK; j++) {
-	gtk_combo_box_append_text(GTK_COMBO_BOX(datamenu), _(datareq[j]));
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(datamenu), 
+				       _(datareq[j]));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(datamenu), finfo->dreq);
 

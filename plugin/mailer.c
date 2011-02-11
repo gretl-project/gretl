@@ -307,8 +307,10 @@ static void finalize_mail_settings (GtkWidget *w, struct mail_dialog *md)
     /* recipient */
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
     recip = my_combo_box_get_active_text(GTK_COMBO_BOX(md->recip_combo));
-#else
+#elif GTK_MAJOR_VERSION < 3
     recip = gtk_combo_box_get_active_text(GTK_COMBO_BOX(md->recip_combo));
+#else
+    recip = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(md->recip_combo));    
 #endif
 
     if (recip != NULL && *recip != '\0') {

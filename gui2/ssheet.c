@@ -1908,7 +1908,7 @@ catch_sheet_edit_key (GtkWidget *view, GdkEventKey *key,
     return FALSE;
 }
 
-static void nullify_sheet_entry (GtkObject *o, Spreadsheet *sheet)
+static void nullify_sheet_entry (gpointer p, Spreadsheet *sheet)
 {
 #if CELLDEBUG
     fprintf(stderr, "editing entry destroyed\n");
@@ -1928,7 +1928,7 @@ static void cell_edit_start (GtkCellRenderer *r,
 	sheet->entry = GTK_WIDGET(ed);
 	g_signal_connect(G_OBJECT(ed), "key-press-event",
 			 G_CALLBACK(catch_sheet_edit_key), sheet);
-	g_signal_connect(GTK_OBJECT(ed), "destroy",
+	g_signal_connect(G_OBJECT(ed), "destroy",
 			 G_CALLBACK(nullify_sheet_entry), sheet);
     }
 }
@@ -2680,7 +2680,9 @@ static void series_sheet_add_locator (Spreadsheet *sheet,
 
     sheet->locator = gtk_statusbar_new(); 
     gtk_widget_set_size_request(sheet->locator, 2 * w, 20);
+#if GTK_MAJOR_VERSION < 3
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(sheet->locator), FALSE);
+#endif
     sheet->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(sheet->locator), 
 					      "current row and column");
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
@@ -2749,7 +2751,9 @@ static void sheet_add_matrix_locator (Spreadsheet *sheet, GtkWidget *vbox)
 
     sheet->locator = gtk_statusbar_new(); 
     gtk_widget_set_size_request(sheet->locator, 2 * w, 20);
+#if GTK_MAJOR_VERSION < 3
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(sheet->locator), FALSE);
+#endif
     sheet->cid = gtk_statusbar_get_context_id(GTK_STATUSBAR(sheet->locator), 
 					      "current row and column");
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);

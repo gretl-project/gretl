@@ -2532,6 +2532,19 @@ static void session_delete_icon (gui_obj *obj)
 
 /* apparatus for getting a white background */
 
+#if GTK_MAJOR_VERSION >= 3
+
+static void white_bg_style (GtkWidget *widget, gpointer data)
+{
+    GdkRGBA rgb = {1, 1, 1, 1};
+
+    gtk_widget_override_background_color(widget,
+					 GTK_STATE_NORMAL,
+					 &rgb);
+}
+
+#else
+
 static GdkColor *get_white (void)
 {
     GdkColormap *cmap;
@@ -2557,6 +2570,8 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
 
     gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, white);
 }
+
+#endif
 
 static void real_pack_icon (gui_obj *obj, int row, int col)
 {
