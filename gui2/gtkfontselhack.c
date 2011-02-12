@@ -1225,19 +1225,24 @@ gtk_fontsel_hack_get_font_description (GtkFontselHack *fontsel)
 static void
 gtk_fontsel_hack_update_preview (GtkFontselHack *fontsel)
 {
+#if GTK_MAJOR_VERSION < 3
     GtkRcStyle *rc_style;
+#endif
     gint new_height;
     GtkRequisition req, old_requisition;
     GtkWidget *preview_entry = fontsel->preview_entry;
     const gchar *text;
 
     gtk_widget_get_child_requisition(preview_entry, &old_requisition);
-  
+
+#if GTK_MAJOR_VERSION >= 3
+    gtk_widget_modify_font(preview_entry, gtk_fontsel_hack_get_font_description(fontsel));
+#else  
     rc_style = gtk_rc_style_new();
     rc_style->font_desc = gtk_fontsel_hack_get_font_description(fontsel);
-  
     gtk_widget_modify_style(preview_entry, rc_style);
     g_object_unref(rc_style);
+#endif
 
     gtk_widget_size_request(preview_entry, NULL);
 
@@ -1309,21 +1314,20 @@ gtk_fontsel_hack_set_font_name (GtkFontselHack *fontsel,
     model = gtk_tree_view_get_model (GTK_TREE_VIEW (fontsel->family_list));
     for (valid = gtk_tree_model_get_iter_first (model, &iter);
 	 valid;
-	 valid = gtk_tree_model_iter_next (model, &iter))
-	{
-	    PangoFontFamily *family;
+	 valid = gtk_tree_model_iter_next (model, &iter)) {
+	PangoFontFamily *family;
       
-	    gtk_tree_model_get (model, &iter, FAMILY_COLUMN, &family, -1);
+	gtk_tree_model_get (model, &iter, FAMILY_COLUMN, &family, -1);
       
-	    if (g_ascii_strcasecmp (pango_font_family_get_name (family),
-				    pango_font_description_get_family (new_desc)) == 0)
-		new_family = family;
+	if (g_ascii_strcasecmp (pango_font_family_get_name (family),
+				pango_font_description_get_family (new_desc)) == 0)
+	    new_family = family;
       
-	    g_object_unref (family);
+	g_object_unref (family);
       
-	    if (new_family)
-		break;
-	}
+	if (new_family)
+	    break;
+    }
 
     if (!new_family)
 	return FALSE;
