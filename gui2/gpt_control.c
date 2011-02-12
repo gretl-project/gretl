@@ -4418,10 +4418,7 @@ static png_plot *png_plot_new (void)
     plot->statusarea = NULL;    
     plot->statusbar = NULL;
     plot->cursor_label = NULL;
-#if GTK_MAJOR_VERSION >= 3
-    plot->pixbuf = NULL;
-    plot->cs = NULL;    
-#else
+#if GTK_MAJOR_VERSION == 2
     plot->pixmap = NULL;
 #endif
 #ifdef USE_CAIRO
@@ -4666,10 +4663,12 @@ static int gnuplot_show_png (const char *fname, const char *name,
     gtk_widget_grab_focus(plot->canvas);  
 
 #if GTK_MAJOR_VERSION >= 3
+#if 0
     plot->cs = gdk_window_create_similar_surface(gtk_widget_get_window(plot->shell),
 						 CAIRO_CONTENT_COLOR_ALPHA, /* ? */
 						 plot->pixel_width, 
 						 plot->pixel_height);
+#endif
 
     g_signal_connect(G_OBJECT(plot->canvas), "draw",
 		     G_CALLBACK(plot_draw), plot);
