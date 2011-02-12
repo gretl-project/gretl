@@ -119,6 +119,8 @@ struct png_plot_t {
     GtkWidget *editor;
 #if GTK_MAJOR_VERSION == 2
     GdkPixmap *pixmap;
+#else
+    GdkPixbuf *pixbuf;    
 #endif
 #ifdef USE_CAIRO
     cairo_t *cr;
@@ -3868,19 +3870,12 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 # if GTK_MAJOR_VERSION >= 3
 
 static 
-void plot_draw (GtkWidget *widget, GdkRectangle *rect, 
-		gpointer data)
+void plot_draw (GtkWidget *widget, cairo_t *cr, gpointer data)
 {
-    GdkWindow *window = gtk_widget_get_window(widget);
     png_plot *plot = data;
 
-    plot->cr = gdk_cairo_create(window);
-#if 0 /* FIXME!! */
-    gdk_cairo_set_source_pixmap(plot->cr, plot->pixmap, 0, 0);
-#endif
-    gdk_cairo_rectangle(plot->cr, rect);
-    cairo_fill(plot->cr);
-    cairo_destroy(plot->cr);
+    gdk_cairo_set_source_pixbuf(cr, plot->pixbuf, 0, 0);
+    cairo_paint(cr);
 }
 
 # else /* transitional use of cairo */
@@ -4018,7 +4013,12 @@ static int render_pngfile (png_plot *plot, int view)
 		    GDK_RGB_DITHER_NONE, 0, 0);
 #endif
 
+#if GTK_MAJOR_VERSION >= 3
+    plot->pixbuf = pbuf;
+#else
     g_object_unref(pbuf);
+#endif
+
     gretl_remove(pngname);
    
     if (view != PNG_START) { 
@@ -4079,6 +4079,11 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
     plotspec_destroy(plot->spec);
 
 #ifdef USE_CAIRO
+# if GTK_MAJOR_VERSION >= 3
+    if (plot->pixbuf != NULL) {
+	g_object_unref(plot->pixbuf);
+    }
+# endif
     if (plot->savebuf != NULL) {
 	g_object_unref(plot->savebuf);
     }
@@ -4420,6 +4425,8 @@ static png_plot *png_plot_new (void)
     plot->cursor_label = NULL;
 #if GTK_MAJOR_VERSION == 2
     plot->pixmap = NULL;
+#else
+    plot->pixbuf = NULL;
 #endif
 #ifdef USE_CAIRO
     plot->cr = NULL;
@@ -4664,16 +4671,15 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
 #if GTK_MAJOR_VERSION >= 3
 #if 0
-    plot->cs = gdk_window_create_similar_surface(gtk_widget_get_window(plot->shell),
+    plot->cs = gdk_window_create_similar_surface(gtk_widget_get_window(plot->canvas),
 						 CAIRO_CONTENT_COLOR_ALPHA, /* ? */
 						 plot->pixel_width, 
 						 plot->pixel_height);
 #endif
-
     g_signal_connect(G_OBJECT(plot->canvas), "draw",
 		     G_CALLBACK(plot_draw), plot);
 #else
-    plot->pixmap = gdk_pixmap_new(gtk_widget_get_window(plot->shell), 
+    plot->pixmap = gdk_pixmap_new(gtk_widget_get_window(plot->canvas), 
 				  plot->pixel_width, plot->pixel_height, 
 				  -1);
     g_signal_connect(G_OBJECT(plot->canvas), "expose-event",
