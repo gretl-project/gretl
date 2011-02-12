@@ -4001,13 +4001,14 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
 }
 
-static void make_tau_list (GtkWidget *w)
+static void make_tau_list (GtkWidget *box)
 {
-    GtkComboBoxText *box = GTK_COMBO_BOX_TEXT(w);
-
-    gtk_combo_box_text_append_text(box, "0.25 0.50 0.75");
-    gtk_combo_box_text_append_text(box, ".05, .25 .50 .75, .95");
-    gtk_combo_box_text_append_text(box, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
+				   "0.25 0.50 0.75");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
+				   ".05, .25 .50 .75, .95");
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
+				   ".1 .2 .3 .4 .5 .6 .7 .8 .9");
 } 
 
 static int maybe_set_entry_text (GtkWidget *w, const char *s)
