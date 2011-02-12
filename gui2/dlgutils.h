@@ -48,6 +48,8 @@ struct combo_opts_ {
 
 gchar *combo_box_get_active_text (gpointer p);
 
+void combo_box_append_text (gpointer p, const gchar *s);
+
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24
 
 #define GTK_COMBO_BOX_TEXT GTK_COMBO_BOX

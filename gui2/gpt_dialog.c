@@ -783,7 +783,7 @@ static gboolean maybe_append_user_bars_file (GtkComboBox *combo,
 	const char *p = strrchr(ed->barsfile, SLASH);
 	const char *show = (p != NULL)? (p+1) : ed->barsfile;
 
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), show);
+	combo_box_append_text(combo, show);
 	return TRUE;
     } else {
 	return FALSE;
@@ -1441,8 +1441,8 @@ void set_plotbars_filename (const char *fname, gpointer data)
 	g_free(ed->barsfile);
 	ed->barsfile = g_strdup(fname);
 	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(box), 1);
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), show);
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), _("other..."));
+	combo_box_append_text(box, show);
+	combo_box_append_text(box, _("other..."));
 	gtk_combo_box_set_active(box, 1);
     }
 }
@@ -1679,8 +1679,7 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	if (kp == NULL) {
 	    break;
 	}
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ed->keycombo), 
-				       _(kp->str));
+	combo_box_append_text(ed->keycombo, _(kp->str));
 	if (kp->id == spec->keyspec) {
 	    kactive = i;
 	}
@@ -1710,13 +1709,11 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 		}
 		strcpy(tmp, _(fittype_strings[i]));
 		charsub(tmp, 'x', 't');
-		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ed->fitcombo), 
-					       tmp);
+		combo_box_append_text(ed->fitcombo, tmp);
 	    }	    
 	} else {
 	    for (i=0; fittype_strings[i] != NULL; i++) {
-		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ed->fitcombo), 
-					       _(fittype_strings[i]));
+		combo_box_append_text(ed->fitcombo, _(fittype_strings[i]));
 	    }
 	}
 
@@ -1800,10 +1797,9 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 
 	/* plus combo selector */
 	ed->barscombo = combo = gtk_combo_box_text_new();
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-				       _("NBER recessions"));
+	combo_box_append_text(combo, _("NBER recessions"));
 	userbars = maybe_append_user_bars_file(GTK_COMBO_BOX(combo), ed);
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), _("other..."));
+	combo_box_append_text(combo, _("other..."));
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), userbars ? 1 : 0);
 	gtk_widget_set_sensitive(combo, spec->nbars > 0);
 	g_signal_connect(G_OBJECT(combo), "changed", 
@@ -2374,8 +2370,7 @@ void set_combo_box_strings_from_stylist (GtkComboBox *box, GList *list)
 
     while (mylist != NULL) {
 	spec = (gp_style_spec *) mylist->data;
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
-				       _(spec->trname));
+	combo_box_append_text(box, _(spec->trname));
 	mylist = mylist->next;
     }
 }
@@ -2598,10 +2593,8 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    ed->yaxiscombo[i] = gtk_combo_box_text_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      ed->yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ed->yaxiscombo[i]), 
-					   _("left"));
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ed->yaxiscombo[i]), 
-					   _("right"));
+	    combo_box_append_text(ed->yaxiscombo[i], _("left"));
+	    combo_box_append_text(ed->yaxiscombo[i], _("right"));
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->yaxiscombo[i]), 
 				     (line->yaxis == 1)? 0 : 1);
 	    gtk_widget_show(ed->yaxiscombo[i]);
@@ -2811,8 +2804,8 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	ed->labeljust[i] = gtk_combo_box_text_new();
 	for (j=0; j<3; j++) {
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ed->labeljust[i]),
-					   _(gp_justification_string(j)));
+	    combo_box_append_text(ed->labeljust[i],
+				  _(gp_justification_string(j)));
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(ed->labeljust[i]), 
 				 spec->labels[i].just);

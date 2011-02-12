@@ -1542,6 +1542,15 @@ gchar *combo_box_get_active_text (gpointer p)
 #endif
 }
 
+void combo_box_append_text (gpointer p, const gchar *s)
+{
+#if GTK_MAJOR_VERSION >= 3
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(p), s);
+#else
+    gtk_combo_box_append_text(GTK_COMBO_BOX(p), s);
+#endif			   
+}
+
 GdkModifierType widget_get_pointer_mask (GtkWidget *w)
 {
     GdkWindow *window = gtk_widget_get_window(w);

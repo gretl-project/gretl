@@ -3386,8 +3386,8 @@ static GtkWidget *multiplot_popdown (int ci)
 {
     GtkWidget *w = gtk_combo_box_text_new();
 
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Y-axis variable"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("X-axis variable"));
+    combo_box_append_text(w, _("Y-axis variable"));
+    combo_box_append_text(w, _("X-axis variable"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
@@ -3422,9 +3422,9 @@ static void build_count_data_popdown (selector *sr)
     GtkWidget *w = gtk_combo_box_text_new();
     GtkWidget *hbox, *label;
 
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Poisson"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("NegBin 2"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("NegBin 1"));
+    combo_box_append_text(w, _("Poisson"));
+    combo_box_append_text(w, _("NegBin 2"));
+    combo_box_append_text(w, _("NegBin 1"));
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_count_data_option), sr);
@@ -3475,10 +3475,10 @@ static void build_duration_popdown (selector *sr)
     GtkWidget *w = gtk_combo_box_text_new();
     GtkWidget *hbox, *label;
 
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Weibull"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Exponential"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Log-logistic"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Log-normal"));
+    combo_box_append_text(w, _("Weibull"));
+    combo_box_append_text(w, _("Exponential"));
+    combo_box_append_text(w, _("Log-logistic"));
+    combo_box_append_text(w, _("Log-normal"));
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_duration_option), sr);
@@ -3526,9 +3526,9 @@ static void build_gmm_popdown (selector *sr)
     GtkWidget *w = gtk_combo_box_text_new();
     GtkWidget *hbox;
 
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("One-step estimation"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Two-step estimation"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), _("Iterated estimation"));
+    combo_box_append_text(w, _("One-step estimation"));
+    combo_box_append_text(w, _("Two-step estimation"));
+    combo_box_append_text(w, _("Iterated estimation"));
 
     g_signal_connect(G_OBJECT(GTK_COMBO_BOX(w)), "changed",
 		     G_CALLBACK(set_gmm_est_option), sr);
@@ -4003,12 +4003,9 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
 static void make_tau_list (GtkWidget *box)
 {
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
-				   "0.25 0.50 0.75");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
-				   ".05, .25 .50 .75, .95");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
-				   ".1 .2 .3 .4 .5 .6 .7 .8 .9");
+    combo_box_append_text(box, "0.25 0.50 0.75");
+    combo_box_append_text(box, ".05, .25 .50 .75, .95");
+    combo_box_append_text(box, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
 } 
 
 static int maybe_set_entry_text (GtkWidget *w, const char *s)
@@ -4583,7 +4580,7 @@ static GtkWidget *mpols_bits_selector (void)
     i = 0;
     for (b=256; b<=4096; b*=2) {
 	sprintf(bstr, "%d", b);
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), bstr);
+	combo_box_append_text(combo, bstr);
 	if (b == bits) {
 	    deflt = i;
 	}

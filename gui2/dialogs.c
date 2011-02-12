@@ -359,15 +359,14 @@ static GtkWidget *csv_na_combo (void)
     gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
 
     for (i=0; i<n; i++) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-				       na_strs[i]);
+	combo_box_append_text(combo, na_strs[i]);
 	if (!strcmp(setna, na_strs[i])) {
 	    matched = 1;
 	}
     }
 
     if (!matched) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), setna);
+	combo_box_append_text(combo, setna);
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), i);
     } else {
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
@@ -918,10 +917,10 @@ static void set_bs_replics (GtkWidget *w, struct replic_set *rs)
 
 static void make_replics_list (GtkWidget *w)
 {
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "100");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "1000");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "10000");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "100000");
+    combo_box_append_text(w, "100");
+    combo_box_append_text(w, "1000");
+    combo_box_append_text(w, "10000");
+    combo_box_append_text(w, "100000");
 
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 1);
 }
@@ -941,8 +940,7 @@ static GtkWidget *bs_coeff_popdown (MODEL *pmod, int *pp)
 
     for (i=1; i<=xlist[0]; i++) {
 	vi = xlist[i];
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), 
-				       datainfo->varname[vi]);
+	combo_box_append_text(w, datainfo->varname[vi]);
     }
 
     if (pmod->ifc && pmod->ncoeff > 1) {
@@ -1939,8 +1937,7 @@ static GtkWidget *build_dummies_combo (GList *dumlist,
     GList *dlist = dumlist;
 
     while (dlist != NULL) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-				       dlist->data);
+	combo_box_append_text(combo, dlist->data);
 	dlist = dlist->next;
     }
 
@@ -3029,8 +3026,7 @@ int select_var_from_list_with_opt (const int *list,
 
     combo = gtk_combo_box_text_new();
     for (i=1; i<=list[0]; i++) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-				       datainfo->varname[list[i]]);
+	combo_box_append_text(combo, datainfo->varname[list[i]]);
     }
 
     /* select last entry in list */
@@ -3302,8 +3298,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 		(i == 6 && datainfo->pd == 5)) {
 		continue;
 	    }
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(daymenu), 
-					   _(weekdays[i])); 
+	    combo_box_append_text(daymenu, _(weekdays[i])); 
 	}
 	gtk_combo_box_set_active(GTK_COMBO_BOX(daymenu), 0);
 	gtk_box_pack_start(GTK_BOX(hbox), daymenu, FALSE, FALSE, 5);
@@ -4148,9 +4143,9 @@ void pergm_dialog (gretlopt *opt, int *spinval, int spinmin, int spinmax,
     w = gtk_label_new(_("frequency axis scale:"));
     gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
     w = gtk_combo_box_text_new();
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "data-based");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "radians");
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), "degrees");
+    combo_box_append_text(w, "data-based");
+    combo_box_append_text(w, "radians");
+    combo_box_append_text(w, "degrees");
     gtk_combo_box_set_active(GTK_COMBO_BOX(w), 0);
     g_signal_connect(G_OBJECT(w), "changed",
 		     G_CALLBACK(pergm_set_axis), opt);
@@ -4595,8 +4590,8 @@ int model_table_dialog (int *colhead_opt, int *se_opt, int *pv_opt,
 		     G_CALLBACK(model_table_set_figs), figs);
     gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 0);    
     tmp = gtk_combo_box_text_new();
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tmp), _("significant figures"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tmp), _("decimal places"));
+    combo_box_append_text(tmp, _("significant figures"));
+    combo_box_append_text(tmp, _("decimal places"));
     if (*fmt == 'g') {
 	gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
     } else {
