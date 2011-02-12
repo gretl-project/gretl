@@ -50,6 +50,8 @@ gchar *combo_box_get_active_text (gpointer p);
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24
 
+#define GTK_COMBO_BOX_TEXT GTK_COMBO_BOX
+#define GtkComboBoxText GtkComboBox
 #define gtk_combo_box_text_new gtk_combo_box_new_text
 #define gtk_combo_box_text_append_text gtk_combo_box_append_text
 #define gtk_combo_box_text_prepend_text gtk_combo_box_prepend_text
