@@ -1329,8 +1329,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 		for (j=LANG_AUTO; j<LANG_MAX; j++) {
 		    str = lang_string_from_id(j);
-		    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rc->widget), 
-						   str);
+		    combo_box_append_text(rc->widget, str);
 		    if (!strcmp(str, strvar)) {
 			active = j;
 		    }
@@ -1342,8 +1341,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		
 		strs = get_list_setting_strings(rc->var, &nopt);
 		for (j=0; j<nopt; j++) {
-		    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(rc->widget), 
-						   strs[j]);
+		    combo_box_append_text(rc->widget, strs[j]);
 		    if (!strcmp(strs[j], strvar)) {
 			active = j;
 		    }

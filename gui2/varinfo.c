@@ -791,8 +791,8 @@ void varinfo_dialog (int varnum)
     /* descriptive string, or genr formula */
     hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_combo_box_text_new();
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tmp), _("Description:"));
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(tmp), _("Formula:"));
+    combo_box_append_text(tmp, _("Description:"));
+    combo_box_append_text(tmp, _("Formula:"));
     gtk_combo_box_set_active(GTK_COMBO_BOX(tmp), 0);
     g_signal_connect(G_OBJECT(tmp), "changed", 
 		     G_CALLBACK(vset_toggle_formula), vset);
@@ -863,8 +863,8 @@ void varinfo_dialog (int varnum)
 	vset->compaction_menu = gtk_combo_box_text_new();
 
 	for (i=COMPACT_NONE; i<COMPACT_WDAY; i++) {
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(vset->compaction_menu), 
-					   _(comp_int_to_string(i)));
+	    combo_box_append_text(vset->compaction_menu, 
+				  _(comp_int_to_string(i)));
 	}
 	
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 

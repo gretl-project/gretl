@@ -2246,8 +2246,7 @@ static void add_vars_to_combo (GtkWidget *box, int code, int pos)
 
     for (i=vmin; i<datainfo->v; i++) {
 	if (var_is_ok(i, code)) {
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
-					   datainfo->varname[i]);
+	    combo_box_append_text(box, datainfo->varname[i]);
 	}
     }
 
@@ -2255,8 +2254,7 @@ static void add_vars_to_combo (GtkWidget *box, int code, int pos)
 	/* add first variable at the end of the list */
 	for (i=1; i<datainfo->v; i++) {
 	    if (var_is_ok(i, code)) {
-		gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
-					       datainfo->varname[i]);
+		combo_box_append_text(box, datainfo->varname[i]);
 		break;
 	    }
 	}

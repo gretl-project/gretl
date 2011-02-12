@@ -503,8 +503,7 @@ static void update_combo_selectors (call_info *cinfo,
 	set_combo_box_strings_from_list(sel, newlist);
 	null_OK = widget_get_int(sel, "null_OK");
 	if (null_OK) {
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(sel), 
-					   "null");
+	    combo_box_append_text(sel, "null");
 	}
 
 	if (target) {
@@ -731,8 +730,7 @@ static GtkWidget *enum_arg_selector (call_info *cinfo, int i,
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_enum_arg), cinfo);
     for (j=0; j<nvals; j++) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-				       (const char *) S[j]);
+	combo_box_append_text(combo, (const char *) S[j]);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), initv - minv);    
 
@@ -912,8 +910,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     if (list != NULL) {
 	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
 	if (null_OK) {
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-					   "null");	    
+	    combo_box_append_text(combo, "null");	    
 	}
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo), 
 			      list, ptype);

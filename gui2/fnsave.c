@@ -774,14 +774,13 @@ static void func_selector_set_strings (function_info *finfo,
     int i;
 
     for (i=0; i<finfo->n_pub; i++) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ifmenu), 
-				       finfo->pubnames[i]);
+	combo_box_append_text(ifmenu, finfo->pubnames[i]);
     }
 
     for (i=0; i<finfo->n_priv; i++) {
 	gchar *s = g_strdup_printf("%s (%s)", finfo->privnames[i], _("private"));
 
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(ifmenu), s);
+	combo_box_append_text(ifmenu, s);
 	g_free(s);
     }
 
@@ -825,8 +824,7 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
 
     datamenu = gtk_combo_box_text_new();
     for (j=0; j<=FN_NODATA_OK; j++) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(datamenu), 
-				       _(datareq[j]));
+	combo_box_append_text(datamenu, _(datareq[j]));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(datamenu), finfo->dreq);
 

@@ -984,8 +984,7 @@ GtkWidget *gretl_opts_combo_full (combo_opts *opts, int deflt,
 
     combo = gtk_combo_box_text_new();
     for (i=0; opts->strs[i] != NULL; i++) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-				       _(opts->strs[i]));
+	combo_box_append_text(combo, _(opts->strs[i]));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
     g_signal_connect(G_OBJECT(combo), "changed",
@@ -1145,7 +1144,7 @@ static void system_estimator_list (GtkWidget *vbox, dialog_t *d,
     for (i=SYS_METHOD_SUR; i<SYS_METHOD_MAX; i++) {
 	str = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
 			      system_method_short_string(i));
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(w), str);
+	combo_box_append_text(w, str);
 	g_free(str);
 	if (sys != NULL && sys->method == i) {
 	    method = i;
@@ -1500,8 +1499,7 @@ void set_combo_box_strings_from_list (GtkComboBox *box, GList *list)
     GList *mylist = list;
 
     while (mylist != NULL) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
-				       mylist->data);
+	combo_box_append_text(box, mylist->data);
 	mylist = mylist->next;
     }
 }

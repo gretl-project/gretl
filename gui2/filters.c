@@ -488,8 +488,7 @@ static void add_poly_weights_options (GtkWidget *vbox, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     combo = gtk_combo_box_text_new();
     for (i=0; i<4; i++) {
-	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo), 
-				       _(wstrs[i]));
+	combo_box_append_text(combo, _(wstrs[i]));
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     g_signal_connect(GTK_COMBO_BOX(combo), "changed",

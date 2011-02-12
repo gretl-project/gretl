@@ -1058,8 +1058,7 @@ static GtkWidget *dwiz_combo (GList *vlist, dw_opts *opts)
 	gtk_table_attach_defaults(GTK_TABLE(table), combo[i], 1, 2, i, i+1);
 
 	while (list != NULL) {
-	    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(combo[i]), 
-					   list->data);
+	    combo_box_append_text(combo[i], list->data);
 	    list = list->next;
 	}
 
