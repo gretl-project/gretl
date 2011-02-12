@@ -117,10 +117,7 @@ struct png_plot_t {
     GtkWidget *cursor_label;
     GtkWidget *labelpos_entry;
     GtkWidget *editor;
-#if GTK_MAJOR_VERSION >= 3
-    GdkPixbuf *pixbuf;
-    cairo_surface_t *cs;
-#else
+#if GTK_MAJOR_VERSION == 2
     GdkPixmap *pixmap;
 #endif
 #ifdef USE_CAIRO
@@ -2593,10 +2590,10 @@ static void copy_state_to_pixbuf (png_plot *plot)
     } 
 
 # if GTK_MAJOR_VERSION >= 3
-    plot->savebuf = gdk_pixbuf_get_from_surface(plot->cs,
-						0, 0,
-						plot->pixel_width,
-						plot->pixel_height);
+    plot->savebuf = gdk_pixbuf_get_from_window(gtk_widget_get_window(plot->canvas),
+					       0, 0,
+					       plot->pixel_width,
+					       plot->pixel_height);
 # else   
     plot->savebuf = gdk_pixbuf_get_from_drawable(NULL,
 						 plot->pixmap,
@@ -2607,7 +2604,7 @@ static void copy_state_to_pixbuf (png_plot *plot)
 # endif
 }
 
-#else
+#else /* !USE_CAIRO */
 
 static void ensure_selection_gc (png_plot *plot)
 {
@@ -2631,7 +2628,7 @@ static void redraw_plot_full (png_plot *plot)
 		      plot->pixel_width, plot->pixel_height);
 }
 
-#endif
+#endif /* USE_CAIRO switch */
 
 /* Note that the screen coordinates as of the last mouse
    button press are recorded in plot->screen_x0 and
@@ -2666,7 +2663,7 @@ static void draw_selection_box (png_plot *plot, int x, int y)
     cairo_set_source_rgba(plot->cr, 0.3, 0.3, 0.3, 0.3);
     cairo_selection_rectangle(plot, &r);
     redraw_plot_full(plot);
-#else
+#else /* !USE_CAIRO */
     /* draw one time to make the rectangle appear */
     gdk_draw_rectangle(plot->pixmap,
 		       plot->invert_gc,
@@ -2681,7 +2678,7 @@ static void draw_selection_box (png_plot *plot, int x, int y)
 		       plot->invert_gc,
 		       FALSE,
 		       r.x, r.y, r.width, r.height);
-#endif
+#endif /* CAIRO switch */
 }
 
 static int make_alt_label (gchar *alt, const gchar *label)
