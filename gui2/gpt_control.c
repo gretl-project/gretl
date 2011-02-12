@@ -3870,9 +3870,15 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 # if GTK_MAJOR_VERSION >= 3
 
 static 
-void plot_draw (GtkWidget *widget, cairo_t *cr, gpointer data)
+void plot_draw (GtkWidget *canvas, cairo_t *cr, gpointer data)
 {
     png_plot *plot = data;
+
+#if 0 /* ?? */
+    if (plot_is_zooming(plot)) {
+	return;
+    }
+#endif
 
     gdk_cairo_set_source_pixbuf(cr, plot->pixbuf, 0, 0);
     cairo_paint(cr);
@@ -3881,10 +3887,10 @@ void plot_draw (GtkWidget *widget, cairo_t *cr, gpointer data)
 # else /* transitional use of cairo */
 
 static 
-void plot_expose (GtkWidget *widget, GdkEventExpose *event, 
+void plot_expose (GtkWidget *canvas, GdkEventExpose *event, 
 		  gpointer data)
 {
-    GdkWindow *window = gtk_widget_get_window(widget);
+    GdkWindow *window = gtk_widget_get_window(canvas);
     png_plot *plot = data;
 
     plot->cr = gdk_cairo_create(window);

@@ -32,13 +32,6 @@
 #define __GTK_FONTSELHACK_H__
 
 #include <gdk/gdk.h>
-#if 1
-# include <gtk/gtk.h>
-#else
-# include <gtk/gtkdialog.h>
-# include <gtk/gtkvbox.h>
-#endif
-
 #include <glib-object.h>
 
 #define GTK_TYPE_FONTSEL_HACK_DIALOG  (gtk_fontsel_hack_dialog_get_type ())

@@ -103,14 +103,24 @@ static void get_char_width_and_height (GtkWidget *widget,
 				       int *width,
 				       int *height)
 {
+#if GTK_MAJOR_VERSION >= 3
+    GtkStyleContext *style;
+#else
+    GtkRcStyle *style;
+#endif
     PangoLayout *pl;
     PangoContext *pc;
-    GtkRcStyle *style;
     int w = 0, h = 0;
 
     pc = gtk_widget_get_pango_context(widget);
+
+#if GTK_MAJOR_VERSION >= 3
+    style = gtk_widget_get_style_context(widget);
+    pango_context_set_font_description(pc, gtk_style_context_get_font(style, 0));
+#else
     style = gtk_widget_get_modifier_style(widget);
     pango_context_set_font_description(pc, style->font_desc);
+#endif
 
     pl = pango_layout_new(pc);
     pango_layout_set_text(pl, "X", -1);
