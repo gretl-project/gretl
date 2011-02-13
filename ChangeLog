@@ -50,7 +50,7 @@ version 1.9.4, in progress
   errors
 - Functions corr(), cov() and fcstats(): accept two vector arguments 
   in place of two series
-- Allow deletion of locale matrices within functions
+- Allow deletion of local matrices within functions
 - Remove deprecated aliases "noecho" and "seed"
 - Remove redundant function "makemask"
 - Fix some memory leaks in the gretl GUI
