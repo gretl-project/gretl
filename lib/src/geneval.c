@@ -7096,7 +7096,7 @@ double dvar_get_scalar (int i, const DATAINFO *pdinfo,
     case R_KSTEP:
 	ival = user_kalman_get_time_step();
 
-	return (ival < 0)? NADBL : (double) ival;
+	return (double) ival;
     case R_STOPWATCH:
 	return gretl_stopwatch();
     case R_NSCAN:

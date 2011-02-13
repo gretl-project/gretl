@@ -149,6 +149,7 @@ struct kalman_ {
 #define set_kalman_stopped(K) (K->flags &= ~KALMAN_FORWARD)
 #define kalman_is_running(K)  (K->flags & KALMAN_FORWARD)
 #define kalman_simulating(K)  (K->flags & KALMAN_SIM)
+#define kalman_checking(K)    (K->flags & KALMAN_CHECK)
 
 /* the matrix in question is not an external named user-matrix,
    and is "owned" by the Kalman struct */
@@ -1431,7 +1432,10 @@ static gretl_matrix *kalman_update_matrix (kalman *K, int i,
 
     *err = generate(K->matcalls[i], NULL, NULL, OPT_U, prn);
 
-    if (!*err) {
+    if (*err) {
+	fprintf(stderr, "kalman_update_matrix: call='%s', err=%d\n", 
+		K->matcalls[i], *err);
+    } else {
 	m = get_matrix_by_name(K->mnames[i]);
 	if (m == NULL) {
 	    *err = E_DATA;
@@ -2150,7 +2154,7 @@ static int update_scalar_matrix (gretl_matrix *m, const char *name)
    re-initialize the state and variance.
 */
 
-static int user_kalman_recheck_matrices (user_kalman *u)
+static int user_kalman_recheck_matrices (user_kalman *u, PRN *prn)
 {
     int cfd = gretl_function_depth();
     kalman *K = u->K;
@@ -2167,15 +2171,19 @@ static int user_kalman_recheck_matrices (user_kalman *u)
 	}
     }
 
+    K->flags |= KALMAN_CHECK;
+
     for (i=0; i<K_MMAX && !err; i++) {
 	if (i <= K_m && matrix_is_varying(K, i)) {
-	    *cptr[i] = kalman_update_matrix(K, i, NULL, &err);
+	    *cptr[i] = kalman_update_matrix(K, i, prn, &err);
 	} else if (kalman_owns_matrix(K, i)) {
 	    err = update_scalar_matrix(*(gretl_matrix **) cptr[i], K->mnames[i]);
 	} else {
 	    *cptr[i] = kalman_retrieve_matrix(K->mnames[i], u->fnlevel, cfd);
 	}
     }
+
+    K->flags ^= KALMAN_CHECK;
 
     if (err) {
 	return err;
@@ -2637,7 +2645,7 @@ int user_kalman_run (const char *E, const char *V,
     }
 
     if (!err) {
-	err = user_kalman_recheck_matrices(u);
+	err = user_kalman_recheck_matrices(u, prn);
     }
 
     if (!err) {
@@ -3247,7 +3255,7 @@ gretl_matrix *kalman_smooth (kalman *K,
 
 #if 0
     /* and recheck dimensions */
-    *err = user_kalman_recheck_matrices(K, fnlevel);
+    *err = user_kalman_recheck_matrices(K, prn);
 #endif
 
     if (!*err) {
@@ -3352,7 +3360,7 @@ gretl_matrix *user_kalman_smooth (const char *Pname,
 	}
 
 	if (!*err) {
-	    *err = user_kalman_recheck_matrices(u);
+	    *err = user_kalman_recheck_matrices(u, NULL);
 	}
 
 	if (!*err) {
@@ -3589,7 +3597,7 @@ gretl_matrix *user_kalman_simulate (const gretl_matrix *V,
     /* now, are the other needed matrices in place? */
     K->flags |= KALMAN_SIM;
     K->T = T;
-    *err = user_kalman_recheck_matrices(u);
+    *err = user_kalman_recheck_matrices(u, prn);
 
     /* optional accessor for simulated state */
     if (!*err && Sname != NULL && strcmp(Sname, "null")) {
@@ -3711,15 +3719,17 @@ double user_kalman_get_s2 (void)
  * Retrieves the time step, t, from the current run of a
  * kalman forecast, if applicable.
  * 
- * Returns: time-step value, or -1 on failure.
+ * Returns: time-step value (>= 1), or 0 on failure.
  */
 
 int user_kalman_get_time_step (void)
 {
     user_kalman *u = get_user_kalman(-1);
 
-    if (u == NULL || u->K == NULL || !kalman_is_running(u->K)) {
-	return -1;
+    if (u == NULL || u->K == NULL) {
+	return 0;
+    } else if (!kalman_is_running(u->K)) {
+	return kalman_checking(u->K) ? 1 : 0;
     } else {
 	return (int) u->K->t + 1;
     }

@@ -6,6 +6,8 @@ version 1.9.4, in progress
   list of currently available accessor ("dollar") variables
 - Add more panel data graphing options -- time-series of group means 
   and boxplots by group -- and redesign the GUI for panel plots
+- GUI code: modify to allow building against gtk3 (but this is not 
+  yet recommended other than for testing)
 - GUI icon view: provide a graphical representation for saved 
   "bundles"
 - GUI dialog for calling user-defined functions: several improvements
@@ -71,6 +73,8 @@ version 1.9.4, in progress
 - Fix bug: incorrect parsing of ARIMA command with "gappy" AR lags 
   specification, e.g. "arima {1 4 5} 1 1 ; y"
 - Fix bug: the $unit accessor for panel data got broken
+- Fix bug: the $kalman_t accessor was not working correctly for the
+  case of a filter that employs time-varying matrices
 
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)
