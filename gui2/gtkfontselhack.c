@@ -537,9 +537,9 @@ static void
 gtk_fontsel_hack_display_fonts (GtkFontselHack *fontsel)
 {
     /* Insert the (possibly revised) list of fonts. */
-    gtk_fontsel_hack_show_available_fonts (fontsel, HACK_REGULAR);
-    gtk_fontsel_hack_show_available_styles (fontsel);
-    gtk_fontsel_hack_show_available_sizes (fontsel, TRUE);
+    gtk_fontsel_hack_show_available_fonts(fontsel, HACK_REGULAR);
+    gtk_fontsel_hack_show_available_styles(fontsel);
+    gtk_fontsel_hack_show_available_sizes(fontsel, TRUE);
 }
 
 GtkWidget *
@@ -570,10 +570,10 @@ gtk_fontsel_hack_screen_changed (GtkWidget *widget,
 {
     GtkFontselHack *fontsel = GTK_FNTHACK(widget);
 
-    if (gtk_widget_has_screen (GTK_WIDGET (fontsel))) {
-	gtk_fontsel_hack_show_available_fonts (fontsel, HACK_INIT);
-	gtk_fontsel_hack_show_available_sizes (fontsel, TRUE);
-	gtk_fontsel_hack_show_available_styles (fontsel);
+    if (gtk_widget_has_screen(GTK_WIDGET(fontsel))) {
+	gtk_fontsel_hack_show_available_fonts(fontsel, HACK_INIT);
+	gtk_fontsel_hack_show_available_sizes(fontsel, TRUE);
+	gtk_fontsel_hack_show_available_styles(fontsel);
     }
 }
 
@@ -695,7 +695,7 @@ static int create_font_test_rig (void)
 static void destroy_font_test_rig (void)
 {
     g_object_unref(G_OBJECT(font_test_context));
-    gtk_widget_destroy(font_test_widget);    
+    gtk_widget_destroy(font_test_widget); 
 }
 
 enum {

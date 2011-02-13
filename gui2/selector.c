@@ -1099,9 +1099,9 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     } 
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scroller),
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
 					GTK_SHADOW_IN);    
     gtk_container_add(GTK_CONTAINER(scroller), view);
 
@@ -1110,6 +1110,12 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     width *= gui_scale;
     gtk_widget_set_size_request(view, width, height);
     gtk_widget_show(view);
+
+#if GTK_MAJOR_VERSION >= 3
+    gtk_scrolled_window_set_min_content_width(GTK_SCROLLED_WINDOW(scroller),
+					      width);
+#endif
+
     gtk_widget_show(scroller);
 
     return view;

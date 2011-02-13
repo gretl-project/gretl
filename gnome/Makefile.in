@@ -6,7 +6,6 @@ docdir = $(topsrc)/doc
 INSTALL = @INSTALL@
 prefix = @prefix@
 gnome_prefix = @gnome_prefix@
-have_gnome = @have_gnome@
 
 ifeq ($(gnome_prefix),NA)
   gnome_prefix = $(prefix)
