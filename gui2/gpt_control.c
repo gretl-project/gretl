@@ -2714,23 +2714,26 @@ static int make_alt_label (gchar *alt, const gchar *label)
 static void add_label_to_pixbuf (png_plot *plot, PangoLayout *pl,
 				 int x, int y)
 {
+    guchar *pixels;
     cairo_surface_t *surface;
-    GdkRectangle r;
+    GdkRectangle r = {x, y, 0, 0};
+    int stride;
 
-    surface = gdk_window_create_similar_surface(plot->window,
-						CAIRO_CONTENT_COLOR_ALPHA,
-						plot->pixel_width, 
-						plot->pixel_height);
+    pixels = gdk_pixbuf_get_pixels(plot->pixbuf);
+    stride = gdk_pixbuf_get_rowstride(plot->pixbuf);
+    surface = cairo_image_surface_create_for_data(pixels,
+						  CAIRO_CONTENT_COLOR_ALPHA,
+						  plot->pixel_width,
+						  plot->pixel_height,
+						  stride);
     plot->cr = cairo_create(surface);
-    gdk_cairo_set_source_pixbuf(plot->cr, plot->pixbuf, 0, 0);
     // cairo_paint(plot->cr);
     
     /* now scribble ... */
     cairo_move_to(plot->cr, x, y);
     pango_cairo_show_layout(plot->cr, pl);
     cairo_fill(plot->cr);
-    r.x = x;
-    r.y = y;
+    cairo_surface_flush();
     pango_layout_get_pixel_size(pl, &r.width, &r.height);
 
     g_object_unref(plot->pixbuf);
@@ -2777,10 +2780,8 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 
 #ifdef USE_CAIRO
 # if GTK_MAJOR_VERSION >= 3
-    plot->cr = gdk_cairo_create(plot->window);
+    add_label_to_pixbuf(plot, pl, x, y);
 # else
-    plot->cr = gdk_cairo_create(plot->pixmap);
-# endif
     cairo_move_to(plot->cr, x, y);
     pango_cairo_show_layout(plot->cr, pl);
     cairo_fill(plot->cr);
@@ -2789,6 +2790,7 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     pango_layout_get_pixel_size(pl, &r.width, &r.height);
     redraw_plot_rectangle(plot, &r);
     cairo_destroy(plot->cr);
+# endif
 #else /* !CAIRO */
     ensure_selection_gc(plot);
     gdk_draw_layout(plot->pixmap, plot->invert_gc, x, y, pl);
