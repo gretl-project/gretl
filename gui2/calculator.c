@@ -2323,7 +2323,7 @@ static void add_test_var_selector (GtkWidget *tbl, gint *row,
 			      label, 0, 1, *row - 1, *row);
     gtk_widget_show(label);
 
-    tmp = gtk_combo_box_entry_new_text();
+    tmp = combo_box_text_new_with_entry();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tmp, 1, 2, *row - 1, *row);
     gtk_widget_show(tmp);
@@ -2361,7 +2361,7 @@ static void add_test_combo (GtkWidget *tbl, gint *rows,
 			      button, 0, 1, *rows - 1, *rows);
     gtk_widget_show(button);
 
-    tmp = gtk_combo_box_entry_new_text();
+    tmp = combo_box_text_new_with_entry();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tmp, 1, 2, *rows - 1, *rows);
     gtk_widget_show(tmp);

@@ -500,7 +500,7 @@ static void update_combo_selectors (call_info *cinfo,
 	} 
 
 	depopulate_combo_box(sel);
-	set_combo_box_strings_from_list(sel, newlist);
+	set_combo_box_strings_from_list(GTK_WIDGET(sel), newlist);
 	null_OK = widget_get_int(sel, "null_OK");
 	if (null_OK) {
 	    combo_box_append_text(sel, "null");
@@ -520,7 +520,7 @@ static void update_combo_selectors (call_info *cinfo,
 		/* reinstate the previous selection */
 		old = combo_list_index(saved, newlist);
 		if (*saved == '\0' && old < 0) {
-		    gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(sel), "");
+		    combo_box_prepend_text(sel, "");
 		}  
 		gtk_combo_box_set_active(sel, (old >= 0)? old : 0);
 		g_free(saved);
@@ -893,7 +893,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     GtkWidget *entry;
     int null_OK = 0;
 
-    combo = gtk_combo_box_entry_new_text();
+    combo = combo_box_text_new_with_entry();
     entry = gtk_bin_get_child(GTK_BIN(combo));
     g_object_set_data(G_OBJECT(entry), "cinfo", cinfo);
     widget_set_int(combo, "argnum", i);
@@ -908,7 +908,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 
     list = get_selection_list(ptype);
     if (list != NULL) {
-	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
+	set_combo_box_strings_from_list(combo, list);
 	if (null_OK) {
 	    combo_box_append_text(combo, "null");	    
 	}
@@ -1148,17 +1148,17 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_misc_set_alignment(GTK_MISC(label), 1.0, 0.5);
 	add_table_cell(tbl, label, 0, 1, ++row);
 
-	sel = gtk_combo_box_entry_new_text();
+	sel = combo_box_text_new_with_entry();
 	g_signal_connect(G_OBJECT(sel), "changed",
 			 G_CALLBACK(update_return), cinfo);
 	list = get_selection_list(cinfo->rettype);
 	if (list != NULL) {
-	    set_combo_box_strings_from_list(GTK_COMBO_BOX(sel), list);
+	    set_combo_box_strings_from_list(sel, list);
 	    g_list_free(list);
 	}
 
 	/* prepend blank option and select it */
-	gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(sel), "");
+	combo_box_prepend_text(sel, "");
 	gtk_combo_box_set_active(GTK_COMBO_BOX(sel), 0);
 	child = gtk_bin_get_child(GTK_BIN(sel));
 	gtk_entry_set_activates_default(GTK_ENTRY(child), TRUE);
@@ -1588,9 +1588,9 @@ void call_function_package (const char *fname, GtkWidget *w,
 	}
     }
 
-    if (!err && loaderr == NULL && cinfo->publist[0] > 0) {
-	/* coming off a menu: is there a GUI default we should
-	   show instead of an interface menu? 
+    if (!err && cinfo->publist[0] > 0) {
+	/* is there a GUI default we should show instead of 
+	   an interface menu? 
 	*/
 	gchar *gmain = NULL;
 

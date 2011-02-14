@@ -2306,9 +2306,9 @@ add_wdir_content (GtkWidget *dialog, struct wdir_setter *wset)
     trim_slash(tmp);
  
     /* combo + browse button for current working dir */
-    w = gtk_combo_box_entry_new_text();
+    w = combo_box_text_new_with_entry();
     gtk_container_add(GTK_CONTAINER(hbox), w);
-    set_combo_box_strings_from_list(GTK_COMBO_BOX(w), list);
+    set_combo_box_strings_from_list(w, list);
     set_combo_box_default_text(GTK_COMBO_BOX(w), tmp);
     entry = gtk_bin_get_child(GTK_BIN(w));
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 32);

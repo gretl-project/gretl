@@ -1063,7 +1063,7 @@ void bootstrap_dialog (windata_t *vwin, int *pp, int *pB,
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 
     rs.B = pB;
-    rs.w = gtk_combo_box_entry_new_text();
+    rs.w = combo_box_text_new_with_entry();
     make_replics_list(rs.w);
     tmp = gtk_bin_get_child(GTK_BIN(rs.w));
     gtk_entry_set_width_chars(GTK_ENTRY(tmp), 7);
@@ -1294,7 +1294,7 @@ void select_list_dialog (char *listname, int *cancel)
     /* selector */
     hbox = gtk_hbox_new(FALSE, 5);
     combo = gtk_combo_box_text_new();
-    set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), llist);
+    set_combo_box_strings_from_list(combo, llist);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(set_listname), listname);
@@ -1338,7 +1338,7 @@ int combo_selector_dialog (GList *list, const char *msg,
     /* selector */
     hbox = gtk_hbox_new(FALSE, 5);
     combo = gtk_combo_box_text_new();
-    set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), list);
+    set_combo_box_strings_from_list(combo, list);
     gtk_combo_box_set_active(GTK_COMBO_BOX(combo), deflt);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(combo_set_retval), &ret);

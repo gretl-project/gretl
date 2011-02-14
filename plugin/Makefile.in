@@ -32,6 +32,8 @@ HAVE_AUDIO = @HAVE_AUDIO@
 FLITE_CFLAGS = @FLITE_CFLAGS@
 FLITE_LIBS = @FLITE_LIBS@
 
+plugindir = $(libdir)/gretl-gtk2
+
 ifeq ($(CC),)
   CC = gcc
 endif
@@ -63,7 +65,6 @@ endif
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
 
-plugindir = $(libdir)/gretl-gtk2
 GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(GLIB_CFLAGS)
 GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(GLIB_CFLAGS)
 GRETL_ZIP_LIBS := $(GLIB_LIBS) -lz

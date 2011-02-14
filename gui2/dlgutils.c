@@ -1008,7 +1008,7 @@ void depopulate_combo_box (GtkComboBox *box)
     GtkTreeIter iter;
 
     while (gtk_tree_model_get_iter_first(model, &iter)) {
-	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(box), 0);
+	combo_box_remove(box, 0);
     }
 }
 
@@ -1494,7 +1494,7 @@ GList *get_list_of_listnames (void)
     return llist;
 }
 
-void set_combo_box_strings_from_list (GtkComboBox *box, GList *list)
+void set_combo_box_strings_from_list (GtkWidget *box, GList *list)
 {
     GList *mylist = list;
 
@@ -1511,11 +1511,21 @@ void set_combo_box_default_text (GtkComboBox *box, const char *s)
     gtk_entry_set_text(GTK_ENTRY(entry), s);
 }
 
+GtkWidget *combo_box_text_new_with_entry (void)
+{
+#if GTK_MAJOR_VERSION >= 3
+    return gtk_combo_box_text_new_with_entry();
+#else
+    return gtk_combo_box_entry_new_text();
+#endif
+}
+
 gchar *combo_box_get_active_text (gpointer p)
 {
+    gchar *ret = NULL;
+    
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
     GtkWidget *w = gtk_bin_get_child(GTK_BIN(p));
-    gchar *ret = NULL;
 
     if (GTK_IS_ENTRY(w)) {
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
@@ -1524,20 +1534,30 @@ gchar *combo_box_get_active_text (gpointer p)
 	    ret = g_strdup(s);
 	}
     } else {
-	GtkComboBox *box = GTK_COMBO_BOX(p)
+	GtkComboBox *box = GTK_COMBO_BOX(p);
 	GtkTreeModel *model = gtk_combo_box_get_model(box);
 	GtkTreeIter iter;
 
 	gtk_combo_box_get_active_iter(box, &iter);
 	gtk_tree_model_get(model, &iter, 0, &ret, -1);
     }
+#elif GTK_MAJOR_VERSION >= 3
+    GtkWidget *w = gtk_bin_get_child(GTK_BIN(p));
+
+    if (GTK_IS_ENTRY(w)) {
+	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+
+	if (s != NULL) {
+	    ret = g_strdup(s);
+	}
+    } else {
+	ret = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p)); 
+    }
+#else /* gtk 2 >= 2.6 */
+    ret = gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
+#endif
 
     return ret;
-#elif GTK_MAJOR_VERSION >= 3
-    return gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p)); 
-#else
-    return gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
-#endif
 }
 
 void combo_box_append_text (gpointer p, const gchar *s)
@@ -1546,6 +1566,24 @@ void combo_box_append_text (gpointer p, const gchar *s)
     gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(p), s);
 #else
     gtk_combo_box_append_text(GTK_COMBO_BOX(p), s);
+#endif			   
+}
+
+void combo_box_prepend_text (gpointer p, const gchar *s)
+{
+#if GTK_MAJOR_VERSION >= 3
+    gtk_combo_box_text_prepend_text(GTK_COMBO_BOX_TEXT(p), s);
+#else
+    gtk_combo_box_prepend_text(GTK_COMBO_BOX(p), s);
+#endif			   
+}
+
+void combo_box_remove (gpointer p, int pos)
+{
+#if GTK_MAJOR_VERSION >= 3
+    gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(p), pos);
+#else
+    gtk_combo_box_remove_text(GTK_COMBO_BOX(p), pos);
 #endif			   
 }
 

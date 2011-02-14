@@ -46,17 +46,15 @@ struct combo_opts_ {
 
 /* variant functions for incompatible GTK versions */
 
+GtkWidget *combo_box_text_new_with_entry (void);
 gchar *combo_box_get_active_text (gpointer p);
-
 void combo_box_append_text (gpointer p, const gchar *s);
+void combo_box_prepend_text (gpointer p, const gchar *s);
+void combo_box_remove (gpointer p, int pos);
 
 #if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 24
 
-#define GTK_COMBO_BOX_TEXT GTK_COMBO_BOX
 #define gtk_combo_box_text_new gtk_combo_box_new_text
-#define gtk_combo_box_text_append_text gtk_combo_box_append_text
-#define gtk_combo_box_text_prepend_text gtk_combo_box_prepend_text
-#define gtk_combo_box_text_remove gtk_combo_box_remove_text
 
 #endif
 
@@ -159,7 +157,7 @@ dialog_opts *dialog_opts_new (int n, int type,
 
 void dialog_opts_free (dialog_opts *opts);
 
-void set_combo_box_strings_from_list (GtkComboBox *box, GList *list);
+void set_combo_box_strings_from_list (GtkWidget *box, GList *list);
 
 void set_combo_box_default_text (GtkComboBox *box, const char *s);
 

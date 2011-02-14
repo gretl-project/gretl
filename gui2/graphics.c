@@ -277,10 +277,10 @@ static GtkWidget *ps_font_selector (struct pdf_ps_saver *s)
 
     hbox = gtk_hbox_new(FALSE, 5);
 
-    s->combo = gtk_combo_box_entry_new_text();
+    s->combo = combo_box_text_new_with_entry();
     entry = gtk_bin_get_child(GTK_BIN(s->combo));
     gtk_entry_set_max_length(GTK_ENTRY(entry), 48);
-    set_combo_box_strings_from_list(GTK_COMBO_BOX(s->combo), fontlist); 
+    set_combo_box_strings_from_list(s->combo, fontlist); 
     gtk_entry_set_text(GTK_ENTRY(entry), s->psfont);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 20);
     gtk_box_pack_start(GTK_BOX(hbox), s->combo, FALSE, FALSE, 5);

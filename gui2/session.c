@@ -1108,6 +1108,7 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 
     if (resp >= 0) {    
 	int err = gretl_bundle_set_name(bundle, vname);
+	int flipit = 1;
 
 	if (err) {
 	    gui_errmsg(err);
@@ -1118,9 +1119,16 @@ void bundle_add_as_icon (GtkAction *action, gpointer p)
 		view_session();
 	    }
 	    mark_session_changed();
+	    if (close_on_add(action) && !window_is_busy(vwin)) {
+		gtk_widget_destroy(vwin->main);
+		flipit = 0;
+	    }
 	}
 
-	flip(vwin->ui, "/menubar/Save/bundle", FALSE);
+	if (flipit) {
+	    flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
+	    flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
+	}
     }   
 }
 

@@ -1440,7 +1440,7 @@ void set_plotbars_filename (const char *fname, gpointer data)
 
 	g_free(ed->barsfile);
 	ed->barsfile = g_strdup(fname);
-	gtk_combo_box_text_remove(GTK_COMBO_BOX_TEXT(box), 1);
+	combo_box_remove(box, 1);
 	combo_box_append_text(box, show);
 	combo_box_append_text(box, _("other..."));
 	gtk_combo_box_set_active(box, 1);
@@ -1579,12 +1579,12 @@ static void add_gd_font_selector (plot_editor *ed, GtkWidget *tbl, int *rows)
 
     /* FIXME max length of font name? */
 
-    ed->ttfcombo = gtk_combo_box_entry_new_text();
+    ed->ttfcombo = combo_box_text_new_with_entry();
     entry = gtk_bin_get_child(GTK_BIN(ed->ttfcombo));
     gtk_entry_set_max_length(GTK_ENTRY(entry), 15);
     gtk_table_attach_defaults(GTK_TABLE(tbl), ed->ttfcombo, 1, 2, 
 			      *rows-1, *rows);
-    set_combo_box_strings_from_list(GTK_COMBO_BOX(ed->ttfcombo), fontnames); 
+    set_combo_box_strings_from_list(ed->ttfcombo, fontnames); 
     gtk_entry_set_text(GTK_ENTRY(entry), default_font);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), 15);
     g_signal_connect(G_OBJECT(entry), "activate", 
@@ -2363,7 +2363,8 @@ static int gp_style_index (int sty, GList *list)
     return 0;
 }
 
-void set_combo_box_strings_from_stylist (GtkComboBox *box, GList *list)
+static void set_combo_box_strings_from_stylist (GtkWidget *box, 
+						GList *list)
 {
     gp_style_spec *spec;
     GList *mylist = list;
@@ -2533,8 +2534,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	    altsty = add_style_spec(altsty, GP_STYLE_ERRORBARS); 
 	    altsty = add_style_spec(altsty, GP_STYLE_FILLEDCURVE);
-	    set_combo_box_strings_from_stylist(GTK_COMBO_BOX(ed->stylecombo[i]), 
-					       altsty);
+	    set_combo_box_strings_from_stylist(ed->stylecombo[i], altsty);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]),
 				     gp_style_index(line->style, altsty));
 	    g_list_free(altsty);
@@ -2543,8 +2543,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    int lt = gp_style_index(line->style, stylist);
 	    int hp, pt = line_get_point_style(line, i);
 
-	    set_combo_box_strings_from_stylist(GTK_COMBO_BOX(ed->stylecombo[i]), 
-					       stylist);
+	    set_combo_box_strings_from_stylist(ed->stylecombo[i], stylist);
 	    gtk_combo_box_set_active(GTK_COMBO_BOX(ed->stylecombo[i]), lt);
 	    hp = has_point(line->style);
 	    label = gtk_label_new(_("point"));
@@ -3005,8 +3004,8 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 				  tbl_len-1, tbl_len);
 	gtk_widget_show(b2);    
 
-	combo = gtk_combo_box_entry_new_text();
-	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), strs);
+	combo = combo_box_text_new_with_entry();
+	set_combo_box_strings_from_list(combo, strs);
 	g_list_free(strs);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), combo, 1, 2, 
 				  tbl_len-1, tbl_len);

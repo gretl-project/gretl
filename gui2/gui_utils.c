@@ -374,7 +374,11 @@ static const gchar *sys_ui =
 static GtkActionEntry bundle_items[] = {
     { "File", NULL, N_("_File"), NULL, NULL, NULL },  
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save text as..."), NULL, NULL, 
-      G_CALLBACK(model_output_save) },      
+      G_CALLBACK(model_output_save) }, 
+    { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, 
+      G_CALLBACK(bundle_add_as_icon) },
+    { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, 
+      G_CALLBACK(bundle_add_as_icon) },
 #ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
 #endif
@@ -390,6 +394,8 @@ static const gchar *bundle_ui =
     "  <menubar>"
     "    <menu action='File'>"
     "      <menuitem action='SaveAs'/>"
+    "      <menuitem action='SaveAsIcon'/>"
+    "      <menuitem action='SaveAndClose'/>"
 #ifdef NATIVE_PRINTING
     "      <menuitem action='Print'/>"
 #endif
@@ -4294,16 +4300,10 @@ static void add_bundle_menu_items (windata_t *vwin)
     if (n > 0) {
 	GHashTable *ht = (GHashTable *) gretl_bundle_get_content(bundle);
 
-	if (gretl_bundle_is_temp(bundle)) {
-	    /* bundle is not already saved by name */
-	    GtkActionEntry item;
-    
-	    action_entry_init(&item);    
-	    item.name = "bundle";
-	    item.label = _("Save entire bundle");
-	    item.callback = G_CALLBACK(bundle_add_as_icon);
-	    vwin_menu_add_item(vwin, "/menubar/Save", &item);
-	    vwin_menu_add_separator(vwin, "/menubar/Save");
+	if (!gretl_bundle_is_temp(bundle)) {
+	    /* bundle is already saved by name */
+	    flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
+	    flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
 	}
 
 	g_hash_table_foreach(ht, add_bundled_item_to_menu, vwin);

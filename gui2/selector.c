@@ -4052,7 +4052,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     } else if (sr->ci == QUANTREG) {
 	GtkWidget *child;
 
-	sr->extra[0] = gtk_combo_box_entry_new_text();
+	sr->extra[0] = combo_box_text_new_with_entry();
 	make_tau_list(sr->extra[0]);
 	child = gtk_bin_get_child(GTK_BIN(sr->extra[0]));
 	gtk_entry_set_text(GTK_ENTRY(child), "0.5");
@@ -6046,8 +6046,8 @@ static void selector_add_top_entry (selector *sr)
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 
     if (lnames != NULL) {
-	combo = gtk_combo_box_entry_new_text();
-	set_combo_box_strings_from_list(GTK_COMBO_BOX(combo), lnames);
+	combo = combo_box_text_new_with_entry();
+	set_combo_box_strings_from_list(combo, lnames);
 	entry = gtk_bin_get_child(GTK_BIN(combo));
 	g_signal_connect(G_OBJECT(combo), "changed",
 			 G_CALLBACK(listdef_vars_callback), sr);
