@@ -528,6 +528,7 @@ static void set_executing_off (fncall *call, DATAINFO *pdinfo)
     } else {
 	g_list_free(callstack);
 	callstack = NULL;
+	gretl_insert_builtin_string("pkgdir", NULL);
     }
 
     if (pdinfo != NULL) {
@@ -5660,6 +5661,18 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
     return err;
 }
 
+static void set_pkgdir (fnpkg *pkg)
+{
+    const char *p = strrchr(pkg->fname, SLASH);
+
+    if (p != NULL) {
+	char *pkgdir = gretl_strndup(pkg->fname, p - pkg->fname);
+
+	gretl_insert_builtin_string("pkgdir", pkgdir);
+	free(pkgdir);
+    }
+}
+
 static int start_fncall (fncall *call, DATAINFO *pdinfo, PRN *prn)
 {
     fn_executing++;
@@ -5681,6 +5694,10 @@ static int start_fncall (fncall *call, DATAINFO *pdinfo, PRN *prn)
 	set_gretl_echo(0);
 	set_gretl_messages(0);
     }
+
+    if (fn_executing == 1 && call->fun->pkg != NULL) {
+	set_pkgdir(call->fun->pkg);
+    } 
 
     return 0;
 }

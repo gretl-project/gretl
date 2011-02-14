@@ -416,6 +416,7 @@ static saved_string built_ins[] = {
     { "shelldir", 0, NULL },
     { "Rbin",     0, NULL },
     { "Rlib",     0, NULL },
+    { "pkgdir",   0, NULL }
 };
 
 #ifdef WIN32
@@ -441,12 +442,16 @@ void gretl_insert_builtin_string (const char *name, const char *s)
     for (i=0; i<n; i++) {
 	if (!strcmp(name, built_ins[i].name)) {
 	    free(built_ins[i].s);
-	    m = strlen(s);
-	    if (s[m-1] == SLASH) {
-		/* drop trailing dir separator for paths */
-		built_ins[i].s = gretl_strndup(s, m - 1);
+	    if (s == NULL) {
+		built_ins[i].s = NULL;
 	    } else {
-		built_ins[i].s = gretl_strdup(s);
+		m = strlen(s);
+		if (s[m-1] == SLASH) {
+		    /* drop trailing dir separator for paths */
+		    built_ins[i].s = gretl_strndup(s, m - 1);
+		} else {
+		    built_ins[i].s = gretl_strdup(s);
+		}
 	    }
 	    return;
 	}
