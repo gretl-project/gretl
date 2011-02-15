@@ -40,7 +40,7 @@
 #endif
 
 #if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 8
-/* don't use deprecated GdkGC apparatus */
+/* don't use old GdkGC apparatus */
 # define USE_CAIRO
 #endif
 
@@ -120,12 +120,14 @@ struct png_plot_t {
     GdkWindow *window;
 #if GTK_MAJOR_VERSION == 2
     GdkPixmap *pixmap;
-#else
-    GdkPixbuf *pixbuf;    
 #endif
 #ifdef USE_CAIRO
     cairo_t *cr;
+# if GTK_MAJOR_VERSION >= 3
+    cairo_surface_t *cs;
+# else
     GdkPixbuf *savebuf;
+# endif
 #else
     GdkGC *invert_gc;
 #endif
@@ -2574,8 +2576,8 @@ static void redraw_plot_rectangle (png_plot *plot, GdkRectangle *r)
     }  
 }
 
-static void cairo_selection_rectangle (png_plot *plot,
-				       GdkRectangle *r)
+static void make_cairo_rectangle (png_plot *plot,
+				  GdkRectangle *r)
 {
     cairo_move_to(plot->cr, r->x, r->y);
     cairo_line_to(plot->cr, r->x, r->y + r->height);
@@ -2585,26 +2587,23 @@ static void cairo_selection_rectangle (png_plot *plot,
     cairo_stroke(plot->cr);
 }
 
+# if GTK_MAJOR_VERSION == 2
+
 static void copy_state_to_pixbuf (png_plot *plot)
 {
     if (plot->savebuf != NULL) {
 	g_object_unref(plot->savebuf);
     } 
 
-# if GTK_MAJOR_VERSION >= 3
-    plot->savebuf = gdk_pixbuf_get_from_window(plot->window,
-					       0, 0,
-					       plot->pixel_width,
-					       plot->pixel_height);
-# else   
     plot->savebuf = gdk_pixbuf_get_from_drawable(NULL,
 						 plot->pixmap,
 						 NULL,
 						 0, 0, 0, 0,
 						 plot->pixel_width,
 						 plot->pixel_height);
-# endif
 }
+
+# endif
 
 #else /* !USE_CAIRO */
 
@@ -2648,9 +2647,12 @@ static void draw_selection_box (png_plot *plot, int x, int y)
 #ifdef USE_CAIRO
 # if GTK_MAJOR_VERSION >= 3
     plot->cr = gdk_cairo_create(plot->window);
+    cairo_set_source_rgba(plot->cr, 0.3, 0.3, 0.3, 0.3);
+    make_cairo_rectangle(plot, &r);
+    redraw_plot_rectangle(plot, &r);
+    cairo_destroy(plot->cr);
 # else
     plot->cr = gdk_cairo_create(plot->pixmap);
-# endif
     if (plot->savebuf != NULL) {
 	/* restore state prior to zoom start */
 	gdk_cairo_set_source_pixbuf(plot->cr, plot->savebuf, 0, 0);
@@ -2658,14 +2660,10 @@ static void draw_selection_box (png_plot *plot, int x, int y)
     } else {
 	copy_state_to_pixbuf(plot);
     }
-
-    /* draw the new temporary box */
     cairo_set_source_rgba(plot->cr, 0.3, 0.3, 0.3, 0.3);
-    cairo_selection_rectangle(plot, &r);
-# if GTK_MAJOR_VERSION >= 3
-    redraw_plot_rectangle(plot, &r);
-# else
+    make_cairo_rectangle(plot, &r);
     redraw_plot_rectangle(plot, NULL);
+    cairo_destroy(plot->cr);
 # endif
 #else /* !USE_CAIRO */
     /* draw one time to make the rectangle appear */
@@ -2709,54 +2707,83 @@ static int make_alt_label (gchar *alt, const gchar *label)
     return err;
 }
 
-#if 0 /* not ready, not correct? */
+#if GTK_MAJOR_VERSION >= 3
 
-static void add_label_to_pixbuf (png_plot *plot, PangoLayout *pl,
-				 int x, int y)
+/* given a GdkPixbuf read from file, create a corresponding cairo
+   surface, attached to @plot as plot->cs. This will be used as
+   the "backing store" for re-draws of the plot.
+*/
+
+static int copy_pixbuf_to_surface (png_plot *plot,
+				   GdkPixbuf *pixbuf)
 {
-    guchar *pixels;
-    cairo_surface_t *surface;
-    GdkRectangle r = {x, y, 0, 0};
-    int stride;
+    cairo_format_t  format;
+    guchar *p_data, *s_data;
+    int nc, ps, ss;
+    int width, height;
+    int i, j;
 
-    pixels = gdk_pixbuf_get_pixels(plot->pixbuf);
-    stride = gdk_pixbuf_get_rowstride(plot->pixbuf);
-    surface = cairo_image_surface_create_for_data(pixels,
-						  CAIRO_CONTENT_COLOR_ALPHA,
-						  plot->pixel_width,
-						  plot->pixel_height,
-						  stride);
-    plot->cr = cairo_create(surface);
-    // cairo_paint(plot->cr);
-    
-    /* now scribble ... */
-    cairo_move_to(plot->cr, x, y);
-    pango_cairo_show_layout(plot->cr, pl);
-    cairo_fill(plot->cr);
-    cairo_surface_flush();
-    pango_layout_get_pixel_size(pl, &r.width, &r.height);
+    width = gdk_pixbuf_get_width(pixbuf);
+    height = gdk_pixbuf_get_height(pixbuf);
+    nc = gdk_pixbuf_get_n_channels(pixbuf);
+    ps = gdk_pixbuf_get_rowstride(pixbuf);
+    format = (nc == 3)? CAIRO_FORMAT_RGB24 : CAIRO_FORMAT_ARGB32;
 
-    g_object_unref(plot->pixbuf);
-    plot->pixbuf = gdk_pixbuf_get_from_surface(surface, 0, 0, 
-					       plot->pixel_width, 
-					       plot->pixel_height);
+    if (plot->cs != NULL) {
+	cairo_surface_destroy(plot->cs);
+    }
 
-    redraw_plot_rectangle(plot, &r);
-    cairo_destroy(plot->cr);
-    cairo_surface_destroy(surface); 
+    plot->cs = cairo_image_surface_create(format, width, height);
+
+    if (plot->cs == NULL || 
+	cairo_surface_status(plot->cs) != CAIRO_STATUS_SUCCESS) {
+	fprintf(stderr, "copy_pixbuf_to_surface: failed\n");
+	return 1;
+    }
+
+    ss = cairo_image_surface_get_stride(plot->cs);
+    p_data = gdk_pixbuf_get_pixels(pixbuf);
+    s_data = cairo_image_surface_get_data(plot->cs);
+
+    for (j=0; j<height; j++) {
+        guchar *p_iter = p_data + j * ps,
+               *s_iter = s_data + j * ss;
+
+        for (i=0; i<width; i++) {
+#if G_BYTE_ORDER == G_LITTLE_ENDIAN
+            /* BGR(A) -> RGB(A) */
+            s_iter[0] = p_iter[2];
+            s_iter[1] = p_iter[1];
+            s_iter[2] = p_iter[0];
+            if (nc == 4) {
+                s_iter[3] = p_iter[3];
+	    }
+#else
+            /* (A)RGB -> RGB(A) */
+            if (nc == 4) {
+                s_iter[0] = p_iter[3];
+	    }
+            s_iter[1] = p_iter[0];
+            s_iter[2] = p_iter[1];
+            s_iter[3] = p_iter[2];
+#endif
+            p_iter += nc;
+            s_iter += 4;
+        }
+    }
+
+    return 0;
 }
 
 #endif
 
-/* implements "brushing-in" of data-point labels with the mouse:
-   FIXME gtk3: the labels are not appearing
-*/
+/* implements "brushing-in" of data-point labels with the mouse */
 
 static void
 write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 {
 #ifdef USE_CAIRO
-    GdkRectangle r;
+    GdkRectangle r = {x, y, 0, 0};
 #endif
     const gchar *label = plot->spec->markers[i];
     PangoContext *context;
@@ -2780,17 +2807,16 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 
 #ifdef USE_CAIRO
 # if GTK_MAJOR_VERSION >= 3
-    add_label_to_pixbuf(plot, pl, x, y);
+    plot->cr = cairo_create(plot->cs);
 # else
+    plot->cr = gdk_cairo_create(plot->pixmap);
+# endif
     cairo_move_to(plot->cr, x, y);
     pango_cairo_show_layout(plot->cr, pl);
     cairo_fill(plot->cr);
-    r.x = x;
-    r.y = y;
     pango_layout_get_pixel_size(pl, &r.width, &r.height);
     redraw_plot_rectangle(plot, &r);
     cairo_destroy(plot->cr);
-# endif
 #else /* !CAIRO */
     ensure_selection_gc(plot);
     gdk_draw_layout(plot->pixmap, plot->invert_gc, x, y, pl);
@@ -3921,7 +3947,7 @@ void plot_draw (GtkWidget *canvas, cairo_t *cr, gpointer data)
 {
     png_plot *plot = data;
 
-    gdk_cairo_set_source_pixbuf(cr, plot->pixbuf, 0, 0);
+    cairo_set_source_surface(cr, plot->cs, 0, 0);
     cairo_paint(cr);
 }
 
@@ -4039,10 +4065,9 @@ static int render_pngfile (png_plot *plot, int view)
 
 #ifdef USE_CAIRO
 # if GTK_MAJOR_VERSION >= 3
-    plot->cr = gdk_cairo_create(plot->window);
+    copy_pixbuf_to_surface(plot, pbuf);
 # else
     plot->cr = gdk_cairo_create(plot->pixmap);
-# endif
     gdk_cairo_set_source_pixbuf(plot->cr, pbuf, 0, 0);
     cairo_paint(plot->cr);
     cairo_destroy(plot->cr);
@@ -4050,6 +4075,7 @@ static int render_pngfile (png_plot *plot, int view)
 	g_object_unref(plot->savebuf);
 	plot->savebuf = NULL;
     }
+# endif
 #else
     style = gtk_widget_get_style(plot->canvas);
     gdk_draw_pixbuf(plot->pixmap, 
@@ -4058,12 +4084,7 @@ static int render_pngfile (png_plot *plot, int view)
 		    GDK_RGB_DITHER_NONE, 0, 0);
 #endif
 
-#if GTK_MAJOR_VERSION >= 3
-    plot->pixbuf = pbuf;
-#else
     g_object_unref(pbuf);
-#endif
-
     gretl_remove(pngname);
    
     if (view != PNG_START) { 
@@ -4125,13 +4146,14 @@ static void destroy_png_plot (GtkWidget *w, png_plot *plot)
 
 #ifdef USE_CAIRO
 # if GTK_MAJOR_VERSION >= 3
-    if (plot->pixbuf != NULL) {
-	g_object_unref(plot->pixbuf);
+    if (plot->cs != NULL) {
+	cairo_surface_destroy(plot->cs);
     }
-# endif
+# else
     if (plot->savebuf != NULL) {
 	g_object_unref(plot->savebuf);
     }
+# endif
 #else
     if (plot->invert_gc != NULL) {
 	g_object_unref(plot->invert_gc);
@@ -4470,12 +4492,14 @@ static png_plot *png_plot_new (void)
     plot->cursor_label = NULL;
 #if GTK_MAJOR_VERSION == 2
     plot->pixmap = NULL;
-#else
-    plot->pixbuf = NULL;
 #endif
 #ifdef USE_CAIRO
     plot->cr = NULL;
+# if GTK_MAJOR_VERSION >= 3
+    plot->cs = NULL;
+# else
     plot->savebuf = NULL;
+# endif
 #else
     plot->invert_gc = NULL;
 #endif
