@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2010-12-03 09:35-0500\n"
-"PO-Revision-Date: 2011-02-11 18:42+0100\n"
+"PO-Revision-Date: 2011-02-15 11:50+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -11146,7 +11146,7 @@ msgstr "%s página %d de %d"
 #: gui2/guiprint.c:703
 #, c-format
 msgid "Summary Statistics, using the observations %s - %s"
-msgstr "Estadístico principales, usando las observaciones %s - %s"
+msgstr "Estadísticos principales, usando las observaciones %s - %s"
 
 #: gui2/guiprint.c:709 gui2/guiprint.c:923
 #, c-format
