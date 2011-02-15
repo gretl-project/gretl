@@ -248,7 +248,7 @@ void panel_menu_state (gboolean s)
 	flip(mdata->ui, "/menubar/Add/TimeDums", s);
 	flip(mdata->ui, "/menubar/Model/PanelModels", s);
 	if (s && datainfo->pd <= 2) {
-	    flip(mdata->ui, "/menubar/Model/PanelModels/arbond", 0);
+	    flip(mdata->ui, "/menubar/Model/PanelModels/dpanel", 0);
 	}
     }
 }
