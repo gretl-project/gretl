@@ -32,7 +32,7 @@ AGE=@LIBGRETL_AGE@
 quiet_build = @quiet_build@
 
 ifeq ($(DARWIN_RPATH),)
-  RPATH = $(prefix)/lib
+  RPATH = $(libdir)
 else
   RPATH = $(DARWIN_RPATH)
 endif
