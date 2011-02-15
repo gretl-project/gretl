@@ -256,6 +256,14 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 
 #define spinner_get_int(b) (gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b)))
 
+static void vbox_add_vwedge (GtkWidget *vbox)
+{
+    GtkWidget *h = gtk_hbox_new(FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 2);
+    gtk_widget_show(h);
+}
+
 static int want_combo (selector *sr)
 {
     return (sr->ci == ARMA ||
@@ -3602,7 +3610,7 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
 
     if (label_active || label_string != NULL) {
 	if (clickfunc != set_third_var_callback) {
-	    vbox_add_hsep(vbox);
+	    vbox_add_vwedge(vbox);
 	}
     }
 
@@ -3691,7 +3699,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     } 
 
     if (sr->ci != DPANEL && sr->ci != BIPROBIT) {
-	vbox_add_hsep(right_vbox);
+	vbox_add_vwedge(right_vbox);
     }
 
     return defvar;
@@ -4036,7 +4044,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 
     if (sr->ci == HECKIT || sr->ci == BIPROBIT) {
 	extra_var_box(sr, right_vbox);
-	vbox_add_hsep(right_vbox);
+	vbox_add_vwedge(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->ci == WLS || sr->ci == INTREG || 
 	       sr->ci == COUNTMOD || sr->ci == DURATION ||
@@ -4060,15 +4068,15 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 			   FALSE, TRUE, 0);
     } else if (sr->ci == VAR || sr->ci == VLAGSEL) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
-	vbox_add_hsep(right_vbox);
+	vbox_add_vwedge(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->ci == VECM) {
 	lag_order_spin(sr, right_vbox, LAG_AND_RANK);
-	vbox_add_hsep(right_vbox);
+	vbox_add_vwedge(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->ci == COINT2) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
-	vbox_add_hsep(right_vbox);
+	vbox_add_vwedge(right_vbox);
 	primary_rhs_varlist(sr, right_vbox);
     } else if (VEC_CODE(sr->ci)) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
@@ -4076,7 +4084,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	AR_order_spin(sr, right_vbox);
     }
     
-    vbox_add_hsep(right_vbox);
+    vbox_add_vwedge(right_vbox);
 }
 
 static void selector_init (selector *sr, guint ci, const char *title,
@@ -4351,6 +4359,7 @@ static void build_arma_spinners (selector *sr)
     int i, j;
 
     if (datainfo->pd > 1) {
+	vbox_add_vwedge(sr->vbox);
 	lbl = arma_aux_label(0);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
     }
@@ -4412,7 +4421,7 @@ static void build_arma_spinners (selector *sr)
     j = 5;
 
     if (datainfo->pd > 1) {
-	vbox_add_hsep(sr->vbox);
+	vbox_add_vwedge(sr->vbox);
 
 	lbl = arma_aux_label(1);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
@@ -4601,6 +4610,14 @@ static GtkWidget *mpols_bits_selector (void)
     return hbox;
 }
 
+void vbox_add_hwedge (GtkWidget *vbox)
+{
+    GtkWidget *h = gtk_hbox_new(FALSE, 0);
+    
+    gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 2);
+    gtk_widget_show(h);
+}
+
 #define robust_conf(c) (c != LOGIT && c != PROBIT &&	\
                         c != OLOGIT && c != OPROBIT &&	\
                         c != QUANTREG && c != INTREG && \
@@ -4622,7 +4639,7 @@ static void build_selector_switches (selector *sr)
 
 	/* FIXME arma robust variant? */
 
-	vbox_add_hsep(sr->vbox);
+	vbox_add_hwedge(sr->vbox);
 
 	if (sr->ci == QUANTREG) {
 	    b1 = gtk_check_button_new_with_label(_("Robust standard errors/intervals"));
@@ -4669,7 +4686,7 @@ static void build_selector_switches (selector *sr)
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == MLOGIT ||
 	sr->ci == BIPROBIT) {
 	if (sr->ci == ARMA) {
-	    vbox_add_hsep(sr->vbox);
+	    vbox_add_vwedge(sr->vbox);
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, arma_const, TRUE, OPT_N, 0);
 	}
@@ -4774,7 +4791,7 @@ static void unhide_lags_switch (selector *sr)
     GtkWidget *hbox;
     GtkWidget *b;
 
-    vbox_add_hsep(sr->vbox);
+    vbox_add_vwedge(sr->vbox);
 
     b = gtk_check_button_new_with_label(_("Show lagged variables"));
     g_signal_connect(G_OBJECT(b), "toggled",
@@ -4801,7 +4818,7 @@ static void test_boot_switch (selector *sr)
     GtkWidget *hbox;
     GtkWidget *b;
 
-    vbox_add_hsep(sr->vbox);
+    vbox_add_vwedge(sr->vbox);
 
     b = gtk_check_button_new_with_label(_("Use bootstrap"));
     g_signal_connect(G_OBJECT(b), "toggled",
@@ -4881,7 +4898,7 @@ static void build_ellipse_spinner (selector *sr)
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
     GtkWidget *label;
 
-    vbox_add_hsep(sr->vbox);
+    vbox_add_vwedge(sr->vbox);
 
     label = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, TRUE, 0);
@@ -5019,7 +5036,7 @@ static void build_omit_test_radios (selector *sr)
     GtkWidget *b1, *b2, *b3;
     GSList *group;
 
-    vbox_add_hsep(sr->vbox);
+    vbox_add_vwedge(sr->vbox);
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Estimate reduced model"));
     pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
