@@ -55,6 +55,8 @@ int win_run_sync (char *cmdline, const char *currdir);
 
 int gretl_spawn (char *cmdline);
 
+int gretl_spawn_with_fixup (char *prog, char *arg);
+
 int gretl_shell (const char *arg, PRN *prn);
 
 int gretl_win32_grab_output (const char *cmdline, char **sout);

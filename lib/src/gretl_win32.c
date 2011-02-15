@@ -386,6 +386,21 @@ int gretl_spawn (char *cmdline)
     return real_win_run_sync(cmdline, NULL, 0);
 }
 
+int gretl_spawn_with_fixup (char *prog, char *arg)
+{
+    char shortpath[FILENAME_MAX];
+    gchar *cmdline;
+    int err;
+
+    *shortpath = '\0';
+    GetShortPathName(arg, shortpath, FILENAME_MAX);
+    cmdline = g_strdup_printf("\"%s\" \"%s\"", prog, shortpath);
+    err = real_win_run_sync(cmdline, NULL, 0);
+    g_free(cmdline);
+
+    return err;
+}
+
 /* Retrieve various special paths from the bowels of MS
    Windows.  Note that these paths will be in the locale
    encoding, not UTF-8 */

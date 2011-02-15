@@ -1435,10 +1435,12 @@ int gnuplot_make_graph (void)
     }
 
 #ifdef WIN32
-    sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
-    gretl_stopwatch();
-    err = gretl_spawn(buf);
-    fprintf(stderr, "wgnuplot.exe: took %g seconds\n", gretl_stopwatch());
+    if (strchr(fname, '\'') != NULL) {
+	err = gretl_spawn_with_fixup(gretl_gnuplot_path(), fname);
+    } else {
+	sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
+	err = gretl_spawn(buf);
+    }
 #else /* !WIN32 */
     if (gui || fmt) {
 	sprintf(buf, "%s \"%s\"", gretl_gnuplot_path(), fname);
