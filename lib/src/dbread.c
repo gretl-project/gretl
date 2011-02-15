@@ -2794,8 +2794,8 @@ static double *compact_series (const double *src, int i, int n, int oldn,
     double *x;
 
 #if DB_DEBUG
-    printf("compact_series: startskip=%d, min_startskip=%d, compfac=%d "
-	   "lead=%d\n", startskip, min_startskip, compfac, lead);
+    fprintf(stderr, "compact_series: startskip=%d, min_startskip=%d, compfac=%d "
+	    "lead=%d\n", startskip, min_startskip, compfac, lead);
 #endif
 
     x = malloc(n * sizeof *x);
@@ -3017,28 +3017,31 @@ get_startskip_etc (int compfac, int startmin, int endmin,
 		   int oldn, CompactMethod method, 
 		   int *startskip, int *newn) 
 {
-    int ss = compfac - (startmin % compfac) + 1;
-    int es, n;
-
-    ss = ss % compfac;
+    int ss, es, n;
 
     if (method == COMPACT_EOP) {
-	if (ss > 0) {
-	    ss--;
-	} else {
-	    /* move to end of initial period */
-	    ss = compfac - 1;
+	int unused;
+
+	ss = (compfac - (startmin % compfac)) % compfac;
+	n = oldn / compfac;
+	unused = oldn - 1 - ss - (n-1) * compfac;
+	if (unused >= compfac) {
+	    n++;
 	}
-    }
+    } else if (method == COMPACT_SOP) {
+	int unused;
 
-    es = endmin % compfac;
-    if (method == COMPACT_SOP && es > 1) {
-	es--;
+	ss = (compfac - (startmin % compfac) + 1) % compfac;
+	n = oldn / compfac;
+	unused = oldn - 1 - ss - (n-1) * compfac;
+	if (unused >= compfac) {
+	    n++;
+	}
+    } else {
+	ss = (compfac - (startmin % compfac) + 1) % compfac;
+	es = endmin % compfac;
+	n = (oldn - ss - es) / compfac;
     }
-
-    n = (oldn - ss - es) / compfac;
-    if (ss && method == COMPACT_EOP) n++;
-    if (es && method == COMPACT_SOP) n++;
 
     *startskip = ss;
     *newn = n;
@@ -3116,7 +3119,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
 		} else {
 		    n_not_eop++;
 		}
-	    }
+	    } 
 	}
 	if (startskip < *min_startskip) {
 	    *min_startskip = startskip;

@@ -75,6 +75,8 @@ version 1.9.4, in progress
 - Fix bug: the $unit accessor for panel data got broken
 - Fix bug: the $kalman_t accessor was not working correctly for the
   case of a filter that employs time-varying matrices
+- Fix bug: when compacting a dataset using the end-of-period option,
+  one potential observation may be discarded
 
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)
