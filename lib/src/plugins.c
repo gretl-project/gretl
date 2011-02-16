@@ -353,6 +353,7 @@ static void *get_plugin_handle (const char *plugin)
 #endif
     strcat(pluginpath, plugin);
     strcat(pluginpath, PLUGIN_EXT);
+    fprintf(stderr, "pluginpath='%s'\n", pluginpath);
 
     return gretl_dlopen(pluginpath, 0);
 }

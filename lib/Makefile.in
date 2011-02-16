@@ -33,6 +33,7 @@ quiet_build = @quiet_build@
 
 ifeq ($(DARWIN_RPATH),)
   RPATH = $(libdir)
+  LIBDEF = -DLIBDIR=\"$(libdir)\"  
 else
   RPATH = $(DARWIN_RPATH)
 endif
@@ -240,7 +241,7 @@ AUX_LOBJ = $(CEPHES_SRC:.c=.lo) $(MINPACK_SRC:.c=.lo)
 LIBTOOL = ../libtool
 
 override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) \
-	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H
+	$(GMP_CFLAGS) $(FFTW_CFLAGS) $(RLIB_CFLAGS) -DHAVE_CONFIG_H $(LIBDEF)
 
 COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS) 
 

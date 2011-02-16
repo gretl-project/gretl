@@ -1358,6 +1358,24 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     return err;
 }
 
+static int run_R_lib (const double **Z, const DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
+{
+    int err;
+
+    /* we don't want gretl.Rprofile in the way */
+    gretl_remove(gretl_Rprofile);
+
+    /* by passing OPT_L below we indicate that we're
+       using the library */
+    err = write_R_source_file(NULL, Z, pdinfo, opt | OPT_L);
+    if (!err) {
+	err = lib_run_Rlib_sync(opt, prn);
+    }
+
+    return err;
+}
+
 #endif /* USE_RLIB */
 
 static int foreign_block_init (const char *line, gretlopt opt, PRN *prn)
@@ -1449,24 +1467,6 @@ static int run_R_binary (const double **Z, const DATAINFO *pdinfo,
     return err;
 }
 
-static int run_R_lib (const double **Z, const DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn)
-{
-    int err;
-
-    /* we don't want gretl.Rprofile in the way */
-    gretl_remove(gretl_Rprofile);
-
-    /* by passing OPT_L below we indicate that we're
-       using the library */
-    err = write_R_source_file(NULL, Z, pdinfo, opt | OPT_L);
-    if (!err) {
-	err = lib_run_Rlib_sync(opt, prn);
-    }
-
-    return err;
-}
-
 /**
  * foreign_execute:
  * @Z: data array.
@@ -1499,15 +1499,15 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
     foreign_opt |= opt;
 
     if (foreign_lang == LANG_R) {
-#ifndef USE_RLIB
-	err = run_R_binary(Z, pdinfo, foreign_opt, prn);	
-#else
+#ifdef USE_RLIB
 	if (gretl_use_Rlib()) {
 	    err = run_R_lib(Z, pdinfo, foreign_opt, prn);
 	} else {
 	    err = run_R_binary(Z, pdinfo, foreign_opt, prn);
 	}
-#endif	    
+#else
+	err = run_R_binary(Z, pdinfo, foreign_opt, prn);
+#endif
     } else if (foreign_lang == LANG_OX) {
 	err = write_gretl_ox_file(NULL, foreign_opt, NULL);
 	if (err) {

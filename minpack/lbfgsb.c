@@ -2066,7 +2066,7 @@ static int mainlb_(int *n, int *m, double *x,
 
     /* Local variables */
     int i, k;
-    double gd, dr, rr, dtd;
+    double gd, dr, rr, dtd = 0;
     int col;
     double tol;
     int wrk;

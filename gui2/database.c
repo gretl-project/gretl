@@ -1696,8 +1696,8 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 
 #define INFOLEN 100
 
-static int parse_db_header (const char *buf, size_t *idxlen, 
-			    size_t *datalen, size_t *cblen)
+static int parse_db_header (const char *buf, unsigned *idxlen, 
+			    unsigned *datalen, unsigned *cblen)
 {
     char *p;
     int err = 0;
@@ -1738,8 +1738,8 @@ static int ggz_extract (char *ggzname)
 {
     gzFile fgz = NULL;
     FILE *fidx = NULL, *fbin = NULL, *fcbk = NULL;
-    size_t idxlen, datalen, bytesleft, bgot;
-    size_t cblen = 0;
+    unsigned idxlen, datalen, cblen = 0;
+    int bgot, bytesleft;
     char idxname[MAXLEN], binname[MAXLEN], cbname[MAXLEN];
     char gzbuf[GRETL_BUFSIZE];
 #if G_BYTE_ORDER == G_BIG_ENDIAN

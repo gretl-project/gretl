@@ -1604,19 +1604,24 @@ static void set_gretl_libpath (const char *path)
 #ifdef WIN32
     strcpy(paths.libpath, path);
 #else
-    const char *sfx = "-gtk2/";
+# ifdef LIBDIR
+    /* respect the libdir set at compile time, e.g. /usr/lib or
+       /usr/lib64 
+    */
+    build_path(paths.libpath, LIBDIR, "gretl-gtk2/", NULL);
+# else
     char *p = strstr(path, "/share");
-
+    
     if (p) {
 	size_t len = p - path;
 
 	*paths.libpath = '\0';
 	strncat(paths.libpath, path, len);
-	strcat(paths.libpath, "/lib/gretl");
-	strcat(paths.libpath, sfx);
+	strcat(paths.libpath, "/lib/gretl-gtk2/");
     } else {
-	sprintf(paths.libpath, "%s/lib/gretl%s", path, sfx);
+	sprintf(paths.libpath, "%s/lib/gretl-gtk2/", path);
     }
+# endif /* !LIBDIR */
 #endif /* !WIN32 */
 }
 
