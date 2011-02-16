@@ -1467,8 +1467,10 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tmp);
 
-    /* Help button */
-    context_help_button(hbox, BFGS_CONFIG);
+    if (*optim == BFGS_MAX) {
+	/* Help button */
+	context_help_button(hbox, BFGS_CONFIG);
+    }
 
     gtk_widget_show_all(dlg);
 
