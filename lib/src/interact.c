@@ -2402,6 +2402,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
  
     if (cmd->context == FOREIGN && !end_foreign(line)) {
 	cmd_set_nolist(cmd);
+	cmd->opt = OPT_NONE;
 	cmd->ci = FOREIGN;
 	return 0;
     }
@@ -3560,12 +3561,13 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	    line, cmd->param, cmd->extra);
     fprintf(stderr, " cmd->opt=%d, batch=%d, recording=%d, nolist=%d\n",
 	    cmd->opt, batch, recording, cmd_nolist(cmd));
-    fprintf(stderr, " prn=%p\n", (void *) prn);
-    fprintf(stderr, " cmd->word='%s'\n", cmd->word);
-    fprintf(stderr, " cmd->savename='%s'\n", cmd->savename);
+    fprintf(stderr, " cmd->word = '%s'\n", cmd->word);
+    fprintf(stderr, " cmd->ci = %d, context = %d\n", cmd->ci, cmd->context);
+    fprintf(stderr, " cmd->savename = '%s'\n", cmd->savename);
     if (!cmd_nolist(cmd)) {
 	printlist(cmd->list, "cmd->list");
     }
+    fprintf(stderr, " prn = %p\n", (void *) prn);
 #endif
 
     /* certain things don't get echoed at all, if not recording */

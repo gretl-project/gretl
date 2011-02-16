@@ -77,7 +77,7 @@ version 1.9.4, in progress
   case of a filter that employs time-varying matrices
 - Fix bug: when compacting a dataset using the end-of-period option,
   one usable observation might be discarded
-- Fix bug 3180774 (64-bit build problem)
+- Fix bugs 3180774 and 3183721 (64-bit build issues)
 
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)
