@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-02-16 12:15-0500\n"
-"PO-Revision-Date: 2011-01-09 16:47+0200\n"
+"PO-Revision-Date: 2011-02-16 23:19+0200\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:291
 msgid "lagged differences"
@@ -2393,19 +2393,19 @@ msgid "other"
 msgstr ""
 
 #: lib/src/genlex.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no such object"
-msgstr "%s: нет такого объекта\n"
+msgstr "%s: нет такого объекта"
 
 #: lib/src/genlex.c:653
-#, fuzzy, c-format
+#, c-format
 msgid "The symbol '%s' is undefined"
-msgstr "Символ '%s' не определен\n"
+msgstr "Символ '%s' не определен"
 
 #: lib/src/genlex.c:663 lib/src/genlex.c:665
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no argument was given"
-msgstr "'%s': не были указаны аргументы\n"
+msgstr "'%s': не были указаны аргументы"
 
 #: lib/src/genlex.c:676
 msgid "(for logical AND, use '&&')\n"
@@ -5471,9 +5471,9 @@ msgstr ""
 " получился скалярный результат"
 
 #: lib/src/nls.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or vector"
-msgstr "%s: ожидался целочисленный порядок"
+msgstr "'%s': ожидалось скалярное значение или вектор"
 
 #: lib/src/nls.c:995
 #, c-format
@@ -6516,9 +6516,8 @@ msgid "Exogenous variables:"
 msgstr "Экзогенные переменные:"
 
 #: lib/src/system.c:954
-#, fuzzy
 msgid "Wald test for the specified restrictions"
-msgstr "F-тест для указанных ограничений"
+msgstr "Тест Вальда для указанных ограничений"
 
 #: lib/src/system.c:958
 msgid "F test for the specified restrictions"
@@ -8863,7 +8862,6 @@ msgid "bandwidth adjustment factor:"
 msgstr "Фактор коррекции ширины окна:"
 
 #: gui2/dialogs.c:3899
-#, fuzzy
 msgid "No model is specified"
 msgstr "Модели недоступны"
 
@@ -8985,9 +8983,8 @@ msgid "show scalars window"
 msgstr ""
 
 #: gui2/dialogs.c:4898
-#, fuzzy
 msgid "show icons window"
-msgstr "Главное окно"
+msgstr "Показать главное окно"
 
 #: gui2/dialogs.c:5052
 msgid "gretl: TeX tabular format"
@@ -9379,24 +9376,20 @@ msgid "Define list"
 msgstr "Создать список"
 
 #: gui2/fncall.c:677
-#, fuzzy
 msgid "add series"
-msgstr "ряды"
+msgstr "Добавить ряды"
 
 #: gui2/fncall.c:678
-#, fuzzy
 msgid "Enter name=formula for new series"
-msgstr "Введите формулу для новой переменной:"
+msgstr "Введите формулу для новой переменной (имя=формула):"
 
 #: gui2/fncall.c:687 gui2/library.c:5640
-#, fuzzy
 msgid "add scalar"
-msgstr "gretl: добавить скалярную величину"
+msgstr "Добавить скалярную величину"
 
 #: gui2/fncall.c:688
-#, fuzzy
 msgid "Enter name=formula for new scalar"
-msgstr "Введите формулу для новой переменной:"
+msgstr "Введите формулу для новой скалярной переменной (имя=формула):"
 
 #: gui2/fncall.c:962 gui2/selector.c:5461
 msgid "New variable"
@@ -9533,9 +9526,8 @@ msgid "Add/remove functions"
 msgstr "Добавить/удалить функции"
 
 #: gui2/fnsave.c:1165
-#, fuzzy
 msgid "Write spec file"
-msgstr "Сохранение файла меток завершено с ошибкой"
+msgstr "Сохранение файла спецификации"
 
 #: gui2/fnsave.c:1172
 msgid "Upload package to server on save"
@@ -11450,12 +11442,10 @@ msgid "_Forecasts"
 msgstr "_Прогнозы"
 
 #: gui2/gui_utils.c:376
-#, fuzzy
 msgid "_Save text as..."
-msgstr "_Сохранить как..."
+msgstr "_Сохранить текст как..."
 
 #: gui2/gui_utils.c:387
-#, fuzzy
 msgid "_Graph"
 msgstr "_Графики"
 
@@ -11753,14 +11743,12 @@ msgid "Combined residual plot"
 msgstr "Общий график остатков"
 
 #: gui2/gui_utils.c:4053
-#, fuzzy
 msgid "EC plot"
-msgstr "3D график"
+msgstr "EC график"
 
 #: gui2/gui_utils.c:4058
-#, fuzzy
 msgid "Combined EC plot"
-msgstr "Общий график остатков"
+msgstr "Комбинированный EC-график"
 
 #: gui2/gui_utils.c:4067
 msgid "VAR inverse roots"
@@ -13779,13 +13767,13 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': объект с таким именем уже существует"
 
 #: gui2/session.c:2451
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter new name\n"
 "(max. %d characters)"
 msgstr ""
 "Введите новое название\n"
-"(максимум 31 символ)"
+"(максимум %d символов)"
 
 #: gui2/session.c:2453
 msgid "gretl: rename object"
@@ -15531,20 +15519,19 @@ msgstr "Настройки для X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:218
 msgid "Correct for trading days effect"
-msgstr ""
+msgstr "Учитывать торговые (рабочие) дни"
 
 #: plugin/tramo-x12a.c:295
 msgid "Show full output"
 msgstr "Показывать подробный вывод"
 
 #: plugin/tramo-x12a.c:306
-#, fuzzy
 msgid "Execute X-12-ARIMA directly"
-msgstr "gretl: X-12-ARIMA анализ"
+msgstr "Непосредственно выполнять X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:311
 msgid "Make X-12-ARIMA command file"
-msgstr ""
+msgstr "Создать скрипт для X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:505 plugin/tramo-x12a.c:507
 msgid "irregular"
