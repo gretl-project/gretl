@@ -1912,7 +1912,8 @@ static int ols_bundle_callback (selector *sr)
 
 static char *download_addon_path (const char *pkgname)
 {
-    const char *SFdir = "http://downloads.sourceforge.net/project/gretl/addons/";
+    const char *SFdir = "http://downloads.sourceforge.net/"
+	"project/gretl/addons/1.9.4/";
     char path[FILENAME_MAX];
     char *ret = NULL;
 
