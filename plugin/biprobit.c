@@ -964,7 +964,7 @@ static double *make_bp_theta (bp_container *bp, int *err)
 static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 {
     double crittol = 1.0e-06;
-    double gradtol = 1.0e-03;
+    double gradtol = 1.0e-05;
     int fncount, maxit = 1000;
     double *theta;
     int err = 0;
