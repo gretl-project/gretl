@@ -1,15 +1,15 @@
-# Polish translation for gretl-1.9.3
+# Polish translation for gretl-1.9.4
 # Copyright (C) 2004 Free Software Foundation, Inc.
-# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2010
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2010
-# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2010
+# Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2011
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2011
+# Marcin Blazejowski <marcin.blazejowski@wsb.torun.pl>, 2008 - 2011
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.9.3\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-02-16 12:15-0500\n"
-"PO-Revision-Date: 2010-12-07 02:30-0400\n"
+"PO-Revision-Date: 2011-02-17 01:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -2380,19 +2380,19 @@ msgid "other"
 msgstr "Inne"
 
 #: lib/src/genlex.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no such object"
-msgstr "%s: nie jest takim obiektem\n"
+msgstr "%s: nie jest takim obiektem"
 
 #: lib/src/genlex.c:653
-#, fuzzy, c-format
+#, c-format
 msgid "The symbol '%s' is undefined"
-msgstr "Symbol '%s' nie jest zdefiniowany\n"
+msgstr "Symbol '%s' nie jest zdefiniowany"
 
 #: lib/src/genlex.c:663 lib/src/genlex.c:665
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no argument was given"
-msgstr "'%s': brak argumentu\n"
+msgstr "'%s': brak argumentu"
 
 #: lib/src/genlex.c:676
 msgid "(for logical AND, use '&&')\n"
@@ -2711,9 +2711,8 @@ msgid "System residuals"
 msgstr "System reszt"
 
 #: lib/src/graphing.c:4870
-#, fuzzy
 msgid "EC terms"
-msgstr "proces EC"
+msgstr "procesy EC"
 
 #: lib/src/graphing.c:4872 gui2/gui_utils.c:4131
 msgid "EC term"
@@ -5471,9 +5470,9 @@ msgstr ""
 " wynik jest skalarem"
 
 #: lib/src/nls.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or vector"
-msgstr "%s: oczekiwano całkowitej wartości"
+msgstr "'%s': oczekiwano skalara lub wektor"
 
 #: lib/src/nls.c:995
 #, c-format
@@ -6520,9 +6519,8 @@ msgid "Exogenous variables:"
 msgstr "Zmienne egzogeniczne:"
 
 #: lib/src/system.c:954
-#, fuzzy
 msgid "Wald test for the specified restrictions"
-msgstr "Test F dla wyspecyfikowanych restrykcji"
+msgstr "Test Walda dla wyspecyfikowanych restrykcji"
 
 #: lib/src/system.c:958
 msgid "F test for the specified restrictions"
@@ -8897,7 +8895,6 @@ msgid "bandwidth adjustment factor:"
 msgstr "szerokość funkcji bazowej:"
 
 #: gui2/dialogs.c:3899
-#, fuzzy
 msgid "No model is specified"
 msgstr "Model nie jest dostępny"
 
@@ -9019,9 +9016,8 @@ msgid "show scalars window"
 msgstr ""
 
 #: gui2/dialogs.c:4898
-#, fuzzy
 msgid "show icons window"
-msgstr "Okno główne"
+msgstr "Pokaż okno ikon"
 
 #: gui2/dialogs.c:5052
 msgid "gretl: TeX tabular format"
@@ -9414,24 +9410,22 @@ msgid "Define list"
 msgstr "Definiowanie listy"
 
 #: gui2/fncall.c:677
-#, fuzzy
 msgid "add series"
-msgstr "Serie danych"
+msgstr "Dodaj serie danych"
 
 #: gui2/fncall.c:678
-#, fuzzy
 msgid "Enter name=formula for new series"
-msgstr "Wprowadź formułę wyliczania nowej zmiennej"
+msgstr "Wprowadź nazwę i formułę wyliczania nowej zmiennej"
 
 #: gui2/fncall.c:687 gui2/library.c:5640
 #, fuzzy
 msgid "add scalar"
-msgstr "gretl: definiowanie nowej zmiennej"
+msgstr "Dodaj skalar"
 
 #: gui2/fncall.c:688
 #, fuzzy
 msgid "Enter name=formula for new scalar"
-msgstr "Wprowadź formułę wyliczania nowej zmiennej"
+msgstr "Wprowadź nazwę i formułę wyliczania nowego skalara"
 
 #: gui2/fncall.c:962 gui2/selector.c:5461
 msgid "New variable"
@@ -9475,6 +9469,8 @@ msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
+"The %s package was not found, or is not up to date.\n"
+"Would you like to try downloading it now?"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -11498,14 +11494,12 @@ msgid "_Forecasts"
 msgstr "_Prognozy"
 
 #: gui2/gui_utils.c:376
-#, fuzzy
 msgid "_Save text as..."
-msgstr "_Zapisz jako..."
+msgstr "_Zapisz tekst jako..."
 
 #: gui2/gui_utils.c:387
-#, fuzzy
 msgid "_Graph"
-msgstr "_Wykresy"
+msgstr "_Wykres"
 
 #: gui2/gui_utils.c:850 gui2/gui_utils.c:1131 gui2/library.c:8126
 msgid "gretl: open data"
@@ -11804,14 +11798,12 @@ msgid "Combined residual plot"
 msgstr "wspólny wykres reszt modelu"
 
 #: gui2/gui_utils.c:4053
-#, fuzzy
 msgid "EC plot"
-msgstr "Wykres 3D"
+msgstr "Wykres procesu EC"
 
 #: gui2/gui_utils.c:4058
-#, fuzzy
 msgid "Combined EC plot"
-msgstr "wspólny wykres reszt modelu"
+msgstr "wspólny wykres procesów EC"
 
 #: gui2/gui_utils.c:4067
 msgid "VAR inverse roots"
@@ -13842,13 +13834,13 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': jest już nazwą obiektu"
 
 #: gui2/session.c:2451
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter new name\n"
 "(max. %d characters)"
 msgstr ""
 "Wprowadź nową nazwę\n"
-"(maksymalnie 31 znaków)"
+"(maksymalnie %d znaków)"
 
 #: gui2/session.c:2453
 msgid "gretl: rename object"
@@ -15609,13 +15601,12 @@ msgid "Show full output"
 msgstr "Pokaż pełne wyniki"
 
 #: plugin/tramo-x12a.c:306
-#, fuzzy
 msgid "Execute X-12-ARIMA directly"
-msgstr "gretl: analiza X-12-ARIMA"
+msgstr "Bezpośrednie wykonanie X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:311
 msgid "Make X-12-ARIMA command file"
-msgstr ""
+msgstr "Wykorzystaj X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:505 plugin/tramo-x12a.c:507
 msgid "irregular"
@@ -15699,43 +15690,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid ""
-#~ "with p-value = prob(Chi-square(%d) > %g) = %g\n"
-#~ "\n"
-#~ msgstr ""
-#~ "z wartością p = prob(Chi-kwadrat(%d) > %g) = %g\n"
-#~ "\n"
-
-#~ msgid "Chi-squared(2) = %.3f pvalue = %.5f"
-#~ msgstr "Chi-kwadrat(2) = %.3f, wartość p = %.5f"
-
-#~ msgid "z = %.3f pvalue = %.5f"
-#~ msgstr "z = %.3f, wartość p = %.5f"
-
-#~ msgid "Redefining function '%s'"
-#~ msgstr "Przedefiniowano funkcję '%s'"
-
-#~ msgid "Chi-square(%g)"
-#~ msgstr "Chi-kwadrat(%g)"
-
-#~ msgid "P(Chi-Square(%d) > %g) = %g"
-#~ msgstr "wartość p = prob(Chi-kwadrat(%d) > %g) = %g"
-
-#~ msgid "Couldn't open script \"%s\"\n"
-#~ msgstr "Niemożliwe otwarcie pliku skryptu \"%s\"\n"
-
-#~ msgid "%s opened OK\n"
-#~ msgstr "Plik %s poprawnie otwarty\n"
-
-#~ msgid "More..."
-#~ msgstr "Więcej..."
-
-#~ msgid "New..."
-#~ msgstr "Nowy..."
-
-#~ msgid "pass integer value to script"
-#~ msgstr "pass integer value to script"
-
-#~ msgid "P(Chi-Square(%d) > %g) = %g\n"
-#~ msgstr "z wartością p = P(Chi-kwadrat(%d) > %g) = %g\n"
