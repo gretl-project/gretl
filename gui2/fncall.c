@@ -34,6 +34,7 @@
 #include "datafiles.h"
 #include "toolbar.h"
 #include "obsbutton.h"
+#include "version.h"
 
 #define FCDEBUG 0
 
@@ -1910,21 +1911,71 @@ static int ols_bundle_callback (selector *sr)
 
 #endif /* OLS_BUNDLE_DEMO */
 
-static char *download_addon_path (const char *pkgname)
+static int query_addons_dir (const char *pkgname, char *sfdir)
 {
-    const char *SFdir = "http://downloads.sourceforge.net/"
-	"project/gretl/addons/1.9.4/";
+    gchar *query;
+    char *buf = NULL;
+    int v1, v2, v3;
+    int err = 0;
+
+    *sfdir = '\0';
+
+    sscanf(GRETL_VERSION, "%d.%d.%d", &v1, &v2, &v3);
+    if (strstr(GRETL_VERSION, "cvs")) {
+	/* benefit of the doubt */
+	v3++;
+    }
+    
+    query = g_strdup_printf("/addons-data/pkgdir.php?gretl_version=%d.%d.%d"
+			    "&pkg=%s", v1, v2, v3, pkgname);
+    err = query_sourceforge(query, &buf);
+    g_free(query);
+
+    if (!err && buf == NULL) {
+	/* shouldn't happen */
+	err = E_DATA;
+    }
+
+    if (!err) {
+	char *p = strchr(buf, ':');
+
+	if (p == NULL || 
+	    sscanf(p + 2, "%15s", sfdir) != 1 ||
+	    strcmp(sfdir, "none") == 0) {
+	    err = E_DATA;
+	}
+    }
+
+    free(buf);
+
+    if (err) {
+	errbox("Couldn't find %s for gretl %d.%d.%d",
+	       pkgname, v1, v2, v3);
+    } 
+
+    return err;
+}
+
+static int download_addon (const char *pkgname, char **local_path)
+{
+    const char *SF = "http://downloads.sourceforge.net/"
+	"project/gretl/addons";
     char path[FILENAME_MAX];
-    char *ret = NULL;
+    char pkgdir[16];
+    int err;
+
+    err = query_addons_dir(pkgname, pkgdir);
+    if (err) {
+	return err;
+    }
 
     get_default_dir(path, SAVE_FUNCTIONS);
 
     if (*path == '\0') {
 	file_write_errbox(pkgname);
     } else {
-	gchar *uri = g_strdup_printf("%s%s.zip", SFdir, pkgname);
+	gchar *uri = g_strdup_printf("%s/%s/%s.zip", SF, pkgdir, pkgname);
 	gchar *fname = g_strdup_printf("%s%s.zip", path, pkgname);
-	int err;
 
 #if 1
 	fprintf(stderr, "uri   = '%s'\n", uri);
@@ -1944,13 +1995,16 @@ static char *download_addon_path (const char *pkgname)
 	    strcat(path, SLASHSTR);
 	    strcat(path, pkgname);
 	    strcat(path, ".gfn");
-	    ret = gretl_strdup(path);
+	    *local_path = gretl_strdup(path);
+	    if (*local_path == NULL) {
+		err = E_ALLOC;
+	    }
 	}
 	g_free(uri);
 	g_free(fname);
     }
 
-    return ret;
+    return err;
 }
 
 /* Callback for a menu item representing a "addon" function package, 
@@ -1962,7 +2016,7 @@ static char *download_addon_path (const char *pkgname)
 static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 {
     const gchar *pkgname = gtk_action_get_name(action);
-    char *path;
+    char *path = NULL;
 
 #if OLS_BUNDLE_DEMO
     if (!strcmp(pkgname, "olsbundle")) {
@@ -1982,7 +2036,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
 	g_free(msg);
 	if (resp == GRETL_YES) {
-	    path = download_addon_path(pkgname);
+	    download_addon(pkgname, &path);
 	}
     }
 

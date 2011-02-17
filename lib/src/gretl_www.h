@@ -36,7 +36,8 @@ typedef enum {
     UPLOAD,
     LIST_PKGS,
     GRAB_PKG,
-    GRAB_FOREIGN
+    GRAB_FOREIGN,
+    QUERY_SF
 } CGIOpt;
 
 typedef enum {
@@ -80,5 +81,7 @@ int upload_function_package (const char *login, const char *pass,
 			     char **retbuf);
 
 int retrieve_public_file (const char *uri, char *localname);
+
+int query_sourceforge (const char *query, char **getbuf);
 
 #endif /* GRETL_WWW_H */

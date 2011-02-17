@@ -61,10 +61,14 @@
 static int wproxy;
 static char dbhost[DBHLEN]      = "ricardo.ecn.wfu.edu";
 static char gretlhost[DBHLEN]   = "ricardo.ecn.wfu.edu";
-static char sfhost[DBHLEN]      = "downloads.sourceforge.net";
 static char datacgi[DBHLEN]     = "/gretl/cgi-bin/gretldata.cgi";
 static char updatecgi[DBHLEN]   = "/gretl/cgi-bin/gretl_update.cgi";
 static char manual_path[DBHLEN] = "/project/gretl/manual/";
+
+#ifndef STANDALONE
+static char sffiles[DBHLEN] = "downloads.sourceforge.net";
+static char sfweb[DBHLEN]   = "gretl.sourceforge.net";
+#endif
 
 /* note: alternative manual d/l uses gretlhost and
    manual_path = "/pub/gretl/manual/PDF/";
@@ -1723,7 +1727,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return E_ALLOC;
     }
 
-    if (opt == GRAB_FOREIGN) {
+    if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
 	/* note: not using the gretl server */
 	urlinfo_set_dl_path(u, NULL, fname);
     } else if (opt == GRAB_PDF) {
@@ -1739,7 +1743,7 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return 1;
     }
 
-    if (opt != GRAB_PDF && opt != GRAB_FOREIGN) {
+    if (opt != GRAB_PDF && opt != GRAB_FOREIGN && opt != QUERY_SF) {
 	urlinfo_set_params(u, opt, fname, dbseries);
 	if (u->params == NULL) {
 	    urlinfo_destroy(u, 0);
@@ -2021,6 +2025,12 @@ int list_remote_function_packages (char **getbuf)
 			 NULL, getbuf);
 }
 
+int query_sourceforge (const char *query, char **getbuf)
+{
+    return retrieve_url (sfweb, QUERY_SF, query, NULL, SAVE_TO_BUFFER, 
+			 NULL, getbuf);
+}
+
 int list_remote_data_packages (char **getbuf)
 {
     return retrieve_url (gretlhost, LIST_PKGS, NULL, NULL, SAVE_TO_BUFFER, 
@@ -2136,7 +2146,7 @@ int retrieve_remote_db_data (const char *dbname,
 
 int retrieve_manfile (const char *fname, const char *localname)
 {
-    return retrieve_url(sfhost, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
+    return retrieve_url(sffiles, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
 			localname, NULL);
 }
 
