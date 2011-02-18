@@ -506,10 +506,10 @@ static int h_container_fill (h_container *HC, const int *Xl,
 				       &HC->H13, HC->kmain + HC->ksel, 2,
 				       &HC->H22, HC->ksel, HC->ksel,
 				       NULL);
-	gretl_matrix_block_zero(HC->B);
-
 	if (HC->B == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    gretl_matrix_block_zero(HC->B);
 	}
     }
     return err;
@@ -539,18 +539,17 @@ static int h_common_setup (h_container *HC, const double *param,
 			   double *ca, double *sa)
 {
     int kmax = HC->kmain + HC->ksel;
-    int i, j, err = 0;
+    int i, j = 0, err = 0;
 
-    for (i=0; i<HC->kmain; i++) {
-	gretl_vector_set(HC->beta, i, param[i]);
+    for (i=0; i<=kmax; i++) {
+	if (i < HC->kmain) {
+	    gretl_vector_set(HC->beta, i, param[i]);
+	} else if (i < kmax) {
+	    gretl_vector_set(HC->gama, j++, param[i]);
+	} else {
+	    HC->sigma = param[i];
+	}
     }
-
-    j = 0;
-    for (i=HC->kmain; i<kmax; i++) {
-	gretl_vector_set(HC->gama, j++, param[i]);
-    }
-
-    HC->sigma = param[kmax];
 
     if (HC->sigma <= 0) {
 	err = E_NAN;
@@ -680,24 +679,17 @@ static int heckit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
+#define h(i,j) h[4*(i-1)+j-1]
+
 /* analytical Hessian */
 
 int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
-    double mills, dmills, x, z = NADBL;
+    double mills, dmills, x, z;
     double ca, sa, sa2, ca2, invs, invs2;
     double ndxt, ut, tmp = 0;
-    double h11 = 0;
-    double h12 = 0;
-    double h13 = 0;
-    double h14 = 0;
-    double h22 = 0;
-    double h23 = 0;
-    double h24 = 0;
-    double h33 = 0;
-    double h34 = 0;
-    double h44 = 0;
+    double h[16] = {0.0};
     double c33 = 0;
     double c34 = 0;
     double c44 = 0;
@@ -728,39 +720,32 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	ndxt = gretl_vector_get(HC->ndx, i);
 	if (sel) {
 	    ut = gretl_vector_get(HC->u, j);
-	    x = ca *ndxt + sa*ut ;
-	    z = sa*ndxt + ca*ut ;
+	    x = ca *ndxt + sa*ut;
+	    z = sa*ndxt + ca*ut;
 	    mills = invmills(-x);
 	    dmills = -mills*(x + mills);
 
-	    h11 = invs2 * (sa2*dmills - 1);	   
-	    h13 = ut*h11 - invs2*(ut - sa*mills); 
-	    h14 = -invs * (ca*mills + sa*dmills*z) ;
-	    h12 = -ca * sa * invs * dmills;
-	    h22 = dmills * ca2 ;
+	    h(1,1) = invs2 * (sa2*dmills - 1);	   
+	    h(1,3) = ut*h(1,1) - invs2*(ut - sa*mills); 
+	    h(1,4) = -invs * (ca*mills + sa*dmills*z);
+	    h(1,2) = -ca * sa * invs * dmills;
+	    h(2,2) = dmills * ca2;
 
 	    /* h23 = -invs * ca * sa * dmills * ut; */
-	    h23 = h12 * ut;
-	    h24 = (dmills*ca*z + mills*sa);
-	    h33 = invs2 * (-3*ut*ut + 2*ut*sa*mills +sa2*ut*ut*dmills +1);
+	    h(2,3) = h(1,2) * ut;
+	    h(2,4) = (dmills*ca*z + mills*sa);
+	    h(3,3) = invs2 * (-3*ut*ut + 2*ut*sa*mills + sa2*ut*ut*dmills +1);
 
 	    /* h34 = -invs*ut*(ca*mills + sa*dmills*z); */
-	    h34 = h14 * ut;
-	    h44 = dmills*z*z + mills*x;
+	    h(3,4) = h(1,4) * ut;
+	    h(4,4) = dmills*z*z + mills*x;
 	} else {	
 	    mills = -invmills(ndxt);
-	    dmills = -mills*(ndxt + mills);	
-
-	    h11 = 0;
-	    h12 = 0;
-	    h13 = 0;
-	    h14 = 0;
-	    h22 = dmills;
-	    h23 = 0;
-	    h24 = 0;
-	    h33 = 0;
-	    h34 = 0;
-	    h44 = 0;
+	    dmills = -mills*(ndxt + mills);
+	    for (ii=0; ii<16; ii++) {
+		h[ii] = 0.0;
+	    }
+	    h(2,2) = dmills;
 	}
 
 	if (sel) {
@@ -769,23 +754,23 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 		    
 		for (k=0; k<=m; k++) {
 		    tmp = gretl_matrix_get(HC->H11, m, k); 
-		    tmp += h11 * x * gretl_matrix_get(HC->reg, j, k);
+		    tmp += h(1,1) * x * gretl_matrix_get(HC->reg, j, k);
 		    gretl_matrix_set(HC->H11, m, k, tmp);
 		    gretl_matrix_set(HC->H11, k, m, tmp);
 		}
 	      
 		for (k=0; k<HC->ksel; k++) {
 		    tmp = gretl_matrix_get(HC->H12, m, k);
-		    tmp += h12 * x * gretl_matrix_get(HC->selreg, i, k);
+		    tmp += h(1,2) * x * gretl_matrix_get(HC->selreg, i, k);
 		    gretl_matrix_set(HC->H12, m, k, tmp);
 		}
 
 		tmp = gretl_matrix_get(HC->H13, m, 0);
-		tmp += h13 * x;
+		tmp += h(1,3) * x;
 		gretl_matrix_set(HC->H13, m, 0, tmp);
 		    
 		tmp = gretl_matrix_get(HC->H13, m, 1);
-		tmp += h14 * x;
+		tmp += h(1,4) * x;
 		gretl_matrix_set(HC->H13, m, 1, tmp);
 	    }
 	}
@@ -795,7 +780,7 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 		
 	    for (k=0; k<=m; k++) {
 		tmp = gretl_matrix_get(HC->H22, m, k);
-		tmp += h22 * x * gretl_matrix_get(HC->selreg, i, k);
+		tmp += h(2,2) * x * gretl_matrix_get(HC->selreg, i, k);
 		gretl_matrix_set(HC->H22, m, k, tmp);
 		gretl_matrix_set(HC->H22, k, m, tmp);
 	    }
@@ -803,20 +788,19 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	    if (sel) {
 		ii = HC->kmain + m;
 		tmp = gretl_matrix_get(HC->H13, ii, 0);
-		tmp += h23 * x;
+		tmp += h(2,3) * x;
 		gretl_matrix_set(HC->H13, ii, 0, tmp);
 		
 		tmp = gretl_matrix_get(HC->H13, ii, 1);
-		tmp += h24 * x;
+		tmp += h(2,4) * x;
 		gretl_matrix_set(HC->H13, ii, 1, tmp);
 	    }
 	}
-
 	    
 	if (sel) { 
-	    c33 += h33;
-	    c34 += h34;
-	    c44 += h44;
+	    c33 += h(3,3);
+	    c34 += h(3,4);
+	    c44 += h(4,4);
 	    j++;
 	}
     }
@@ -866,15 +850,20 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 	}	    
     }
 
-    gretl_matrix_set(H, npar-2, npar-2, -c33);
-    gretl_matrix_set(H, npar-2, npar-1, -c34);
-    gretl_matrix_set(H, npar-1, npar-2, -c34);
-    gretl_matrix_set(H, npar-1, npar-1, -c44);
+    ii = npar - 2;
+    jj = npar - 1;
+
+    gretl_matrix_set(H, ii, ii, -c33);
+    gretl_matrix_set(H, ii, jj, -c34);
+    gretl_matrix_set(H, jj, ii, -c34);
+    gretl_matrix_set(H, jj, jj, -c44);
 
     err = gretl_invert_symmetric_matrix(H);
 
     return err;
 }
+
+#undef h
  
 double *heckit_nhessian (const double *b, int n, BFGS_CRIT_FUNC func, 
 			h_container *HC, int *err)

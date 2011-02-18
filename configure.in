@@ -93,7 +93,7 @@ else
 fi])
 
 AC_ARG_ENABLE(gtk3,
-[  --enable-gtk3           Enable GTK-3.0 (testing) [[default=no]]],
+[  --enable-gtk3           Enable use of GTK+ 3.0 [[default=no]]],
 [if test "$enableval" = "yes"
 then
   try_gtk3=yes

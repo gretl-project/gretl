@@ -1470,7 +1470,7 @@ Optional Features:
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
   --enable-gui            Enable gui [default=yes]
-  --enable-gtk3           Enable GTK-3.0 (testing) [default=no]
+  --enable-gtk3           Enable use of GTK+ 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-quiet-build    Enable quiet building
   --disable-gnuplot-checks do not run checks for gnuplot

@@ -1542,9 +1542,8 @@ gchar *combo_box_get_active_text (gpointer p)
 	gtk_tree_model_get(model, &iter, 0, &ret, -1);
     }
 #elif GTK_MAJOR_VERSION >= 3
-    GtkWidget *w = gtk_bin_get_child(GTK_BIN(p));
-
-    if (GTK_IS_ENTRY(w)) {
+    if (gtk_combo_box_get_has_entry(GTK_COMBO_BOX(p))) {
+	GtkWidget *w = gtk_bin_get_child(GTK_BIN(p));
 	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
 
 	if (s != NULL) {
