@@ -787,7 +787,8 @@ may proceed to the next stage.
 
 We first present the mechanism for creating a function package via
 \app{gretl}'s graphical interface. This can also be done via the
-command line; an explanation is given later in this section.
+command line, which offers some additional functionality for package
+authors; an explanation is given later in this section.
 
 Start the GUI program and take a look at the ``File, Function files'' menu.
 This menu contains four items: ``On local machine'', ``On server'', ``Edit
@@ -936,90 +937,85 @@ hierarchy of private functions. To facilitate the building of such
 packages \app{gretl} offers the \texttt{makepkg} command.
 
 To use \texttt{makepkg} you create three files: a driver script that
-loads all the function you want to package and invokes
+loads all the functions you want to package and invokes
 \texttt{makepkg}; a small, plain-text specification file that contains
-the required package details (author, version, etc.); and a plain text
-help file.  You run the driver script and \app{gretl} writes the
-package (\texttt{.gfn}) file.
+the required package details (author, version, etc.); and (in the
+simplest case) a plain text help file.  You run the driver script and
+\app{gretl} writes the package (\texttt{.gfn}) file.
 
-We will illustrate this using the \app{gig} (GARCH-in-gretl) package.
-The driver script for \app{gig}, called \texttt{makepkg.inp}, looks
-like this:
+We first illustrate with a simple notional package. We have a gretl
+script file named \texttt{foo.inp} that contains a function,
+\texttt{foo}, that we want to package. Our driver script would then
+look like this
 %
 \begin{code}
-set echo off
-set messages off
-run gig.inp
-makepkg gig.gfn
-\end{code}
-
-The job of \texttt{gig.inp} is to include all the relevant functions,
-both public and private. Here is a trimmed version:
-%
-\begin{code}
-string basedir = "/home/jack/Lavori/gig-2.0"
-
-# GENERAL AUXILIARY FUNCTIONS
-include @basedir/library/functions.inp
-include @basedir/library/init.inp
-include @basedir/library/printout.inp
-include @basedir/library/getresults.inp
-
-# MLE AUXILIARY FUNCTIONS
-include @basedir/mle/library/functions.inp
+include foo.inp
+makepkg foo.gfn
 \end{code}
 %
-These commands could be included in the top-level script,
-\texttt{makepkg.inp}, but we have chosen to use a separate file.
-
 Note that the \texttt{makepkg} command takes one argument, the name of
 the package file to be created. The package \emph{specification file}
 should have the same basename but the extension \texttt{.spec}. In
-this case \app{gretl} will therefore look for \texttt{gig.spec}. The
-content of this file is as follows:
+this case \app{gretl} will therefore look for \texttt{foo.spec}. It
+should look something like this:
 %
 \begin{code}
-# gig.spec
-author = Stefano Balietti and Riccardo "Jack" Lucchetti
-version = 1.1
-date = 2010-06-05
-description = An assortment of univariate GARCH models
-public = garchFit gjrFit aparchFit egarchFit \
-    garchTFit gjrTFit aparchTFit egarchTFit \
-    garchGEDFit gjrGEDFit aparchGEDFit egarchGEDFit \
-    garchSkTFit gjrSkTFit aparchSkTFit egarchSkTFit \
-    garchmle \
-    gig_getScalar gig_getMatrix gig_getSeries gig_getInfo \
-    gig_print gig_plot
-
-help = gig.help
-sample-script = examples/code/example1.inp
-min-version = 1.9.0
+# foo.spec
+author = A. U. Thor
+version = 1.0
+date = 2011-02-01
+description = Does something with time series
+public = foo 
+help = foohelp.txt
+sample-script = example.inp
+min-version = 1.9.3
 data-requirement = needs-time-series-data
 \end{code}
 
 As you can see, the format of each line in this file is \texttt{key =
   value}, with two qualifications: blank lines are permitted (and
-ignored, as are comment lines that start with \verb|#|), and backslash
-continuation can be used for the elements of the \texttt{public}
-listing (the listing of functions that are to be made available to
-users).  
+ignored, as are comment lines that start with \verb|#|). 
 
-With the expception of \texttt{data-requirement}, all of the fields
-shown above (\texttt{author}, \texttt{version} and so on) are
-required, though the order is immaterial. The date must be given in
-ISO 8601 format: YYYY-MM-DD. The \texttt{help} and
-\texttt{sample-script} fields must contain paths to a help file and a
-sample script which illustrates the functionality of the package,
-respectively; \texttt{min-version} specifies the minimum version of
-\app{gretl} that is required for the package to work correctly.  
+All the fields included in the above example are required, with the
+exception of \texttt{data-requirement}, though the order in which they
+appear is immaterial. Here's a run-down of the basic fields:
+
+\begin{itemize}
+\item \texttt{author}: the name(s) of the author(s). Accented or other
+  non-ASCII characters should be given as UTF-8.
+\item \texttt{version}: the version number of the package, which should
+  be limited to two integers separated by a period.
+\item \texttt{date}: the release date of the current verson of the
+  package, in ISO 8601 format: YYYY-MM-DD.
+\item \texttt{description}: a brief description of the functionality
+  offered by the package. This will be displayed in the GUI function
+  packages window so it should be just one short line.
+\item \texttt{public}: the listing of public functions.
+\item \texttt{help}: the name of a plain text (UTF-8) file containing
+  help; all packages must provide help.
+\item \texttt{sample-script}: the name of a sample script that
+ illustrates use of the package; all packages must supply a
+ sample script.
+\item \texttt{min-version}: the minimum version of gretl required
+ for the package to work correctly. If you're unsure about this,
+ the conservative thing is to give the current \app{gretl} version.
+\end{itemize}
+
+The \texttt{public} field indicates which function or functions are to
+be made directly available to users (as opposed to private ``helper''
+functions).  In the example above there is just one public
+function. Note that any functions in memory when \texttt{makepkg} is
+invoked, other than those designated as public, are assumed to be
+private functions that should also be included in the package. That
+is, the list of private functions (if any) is implicit.
 
 The \texttt{data-requirement} field should be specified if the package
-requires time-series or panel data, or if no dataset is required.
-(The default assumption is that a dataset of some sort must be in
-place, but if the packaged functions do not use any series or lists
-this requirement can be relaxed.)  In that case the value must be one
-of the following standard strings:
+requires time-series or panel data, or alternatively if no dataset is
+required.  If the \texttt{data-requirement} field is omitted, the
+assumption is that the package needs a dataset in place, but it
+doesn't matter what kind; if the packaged functions do not use any
+series or lists this requirement can be explicitly relaxed.  Valid
+values for this field are:
 
 \begin{center}
 \begin{tabular}{ll}
@@ -1030,15 +1026,111 @@ of the following standard strings:
 \end{tabular}
 \end{center}
 
-A further comment is required on the \texttt{public} listing. As
-mentioned above, this specifies the public interfaces that are
-available to users. All of the functions listed must be loaded in
-\app{gretl} at the point when the package is created --- that is
-achieved by the call \texttt{run gig.inp} in \texttt{makepkg.inp}
-above. Also please note that any other functions in memory at this
-time are assumed to be private ``helper'' functions that should also
-be made part of the package: the listing of private functions is
-implicit.
+For a more complex example, let's look at the \app{gig}
+(GARCH-in-gretl) package.  The driver script for building \app{gig}
+looks something like this:
+%
+\begin{code}
+set echo off
+set messages off
+include gig_mle.inp
+include gig_setup.inp
+include gig_estimate.inp
+include gig_printout.inp
+include gig_plot.inp
+makepkg gig.gfn
+\end{code}
+
+In this case the functions to be packaged (of which there are many)
+are distributed across several script files, each of which is the
+target of an \texttt{include} command.  The \texttt{set} commands at
+the top are included to cut down on the verbosity of the output.
+
+The content of \texttt{gig.spec} is as follows:
+%
+\begin{code}
+author = Riccardo "Jack" Lucchetti and Stefano Balietti
+version = 2.0
+date = 2010-12-21
+description = An assortment of univariate GARCH models
+public = GUI_gig \
+    gig_setup gig_set_dist gig_set_pq gig_set_vQR \
+    gig_print gig_estimate \
+    gig_plot gig_dplot \
+    gig_bundle_print GUI_gig_plot
+
+gui-main = GUI_gig
+bundle-print = gig_bundle_print
+bundle-plot = GUI_gig_plot
+help = gig.pdf
+sample-script = examples/example1.inp
+min-version = 1.9.3
+data-requirement = needs-time-series-data
+\end{code}
+
+Note that backslash continuation can be used for the elements of the
+\texttt{public} function listing.
+
+In addition to the fields shown in the simple example above,
+\texttt{gig.spec} includes three optional fields: \texttt{gui-main},
+\texttt{bundle-print} and \texttt{bundle-plot}. These keywords are
+used to designate certain functions as playing a special role in the
+\app{gretl} graphical interface. A function picked out in this way
+must be in the \texttt{public} list and must satisfy certain
+further requirements.  
+%
+\begin{itemize}
+\item \texttt{gui-main}: this specifies a function as the one which
+  will be presented automatically to GUI users (instead of users'
+  being faced with a choice of interfaces). This makes sense only for
+  packages that have multiple public functions. In addition, the
+  \texttt{gui-main} function must return a \texttt{bundle} (see
+  section~\ref{sec:Bundles}).
+\item \texttt{bundle-print}: this picks out a function that should be
+  used to print the contents of a bundle returned by the
+  \texttt{gui-main} function. It must take a pointer-to-bundle as its
+  first argument. The second argument, if present, should be an
+  \texttt{int} switch, with two or more valid values, that controls the
+  printing in some way. Any further arguments must have default values
+  specified so that they can be omitted.
+\item \texttt{bundle-plot}: selects a function for the role of
+  producing a plot or graph based on the contents of a returned
+  bundle. The requirements on this function are as for 
+  \texttt{bundle-print}.
+\end{itemize}
+
+The ``GUI special'' tags support a user-friendly mode of operation.
+On a successful call to \texttt{gui-main}, \app{gretl} opens a 
+window displaying the contents of the returned bundle (formatted
+via \texttt{bundle-print}). Menus in this window give the user the
+option of saving the entire bundle (in which case it's represented
+as an icon in the ``icon view'' window) or of extracting specific
+elements from the bundle (series or matrices, for example). 
+
+If the package has a \texttt{bundle-plot} function, the bundle window
+also has a \textsf{Graph} menu. In \app{gig}, for example, the
+\texttt{bundle-plot} function has this signature:
+%
+\begin{code}
+function void GUI_gig_plot(bundle *model, int ptype[0:1:0] \
+                           "Plot type" {"Time series", "Density"})
+\end{code}
+
+The \texttt{ptype} switch is used to choose between a time-series plot
+of the residual and its conditional variance, and a kernel density
+plot of the innovation against the theoretical distribution it is
+supposed to follow. The use of the value-labels \texttt{Time series}
+and \texttt{Density} means that the \textsf{Graph} menu will display
+these two choices.
+
+One other feature of the \app{gig} spec file is noteworthy: the
+\texttt{help} field specifies \texttt{gig.pdf}, documentation in PDF
+format. Unlike plain-text help, this cannot be rolled into the
+\texttt{gfn} (XML) file produced by the \texttt{makepkg} command;
+rather, both \texttt{gig.gfn} and \texttt{gig.pdf} are packaged into a
+zip archive for distribution. This represents a form of package
+which is new in \app{gretl} 1.9.4. More details will be made
+available before long. 
 
 \section{Memo: updating old-style functions}
 \label{sec:old-func}
