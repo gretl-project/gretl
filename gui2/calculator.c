@@ -255,7 +255,7 @@ enum {
 #define F_NORM   "normal(x,mu,s)=1/(s*sqrt(2*pi))*exp(-(x-mu)**2/(2*s*s))"
 #define F_BINV   "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))"
 #define F_CHI    "chi(x,m)=x<0?0.0/0.0:x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)"
-#define F_ALTCHI "bigchi(x,m)=x<0?0.0/0.0:exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log(2.0))"
+#define F_ALTCHI "bigchi(x,m)=x<0?0.0/0.0:exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-m*0.5*log(2.0))"
 #define F_F      "f(x,m,n)=x<0?0.0/0.0:Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*" \
                  "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
 #define F_STUD   "stud(x,m)=Binv(0.5*m,0.5)/sqrt(m)*(1.0+(x*x)/m)**(-0.5*(m+1.0))"
@@ -1527,7 +1527,7 @@ static void do_h_test (test_t *test, double *x, int n1, int n2)
 	pprintf(prn, _("Test statistic: chi-square(%d) = %d * %g/%g = %g\n"), 
 		n1-1, n1-1, x[0], x[1], ts);
 
-	if (x[0] > x[1]) {
+	if (x[0] >= x[1]) {
 	    pv = chisq_cdf_comp(n1 - 1, ts);
 	} else {
 	    pv = chisq_cdf(n1 - 1, ts);
