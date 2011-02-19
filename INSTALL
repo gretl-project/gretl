@@ -9,8 +9,7 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
   available.  
 
 * By default the installation goes under /usr/local.  To install
-  elsewhere use "./configure --prefix=/your/prefix".  See also the
-  notes on gnome below.
+  elsewhere use "./configure --prefix=/your/prefix". 
 
 * On systems where GNU make is not the default you may need to use the
   "--with-gmake" option to ./configure.

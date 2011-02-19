@@ -6,8 +6,7 @@ version 1.9.4, in progress
   list of currently available accessor ("dollar") variables
 - Add more panel data graphing options -- time-series of group means 
   and boxplots by group -- and redesign the GUI for panel plots
-- GUI code: modify to allow building against gtk3 (but this is not 
-  yet recommended other than for testing)
+- GUI code: modify to allow building against gtk3
 - GUI icon view: provide a graphical representation for saved 
   "bundles"
 - GUI dialog for calling user-defined functions: several improvements
@@ -30,6 +29,8 @@ version 1.9.4, in progress
   stdout
 - "setobs" command: add option to attach observation labels from a 
   named file
+- "heckit" command: switch to use of analytical Hessian for the
+  covariance matrix
 - New function, errmsg(): returns the gretl error message associated 
   with a given integer error code
 - New function, rownames(): complements the colnames() function for 
@@ -78,6 +79,7 @@ version 1.9.4, in progress
 - Fix bug: when compacting a dataset using the end-of-period option,
   one usable observation might be discarded
 - Fix bugs 3180774 and 3183721 (64-bit build issues)
+- MS Windows: update GTK stack and gnuplot
 
 2010-11-29 version 1.9.3
 - New estimation command "biprobit" (bivariate probit)

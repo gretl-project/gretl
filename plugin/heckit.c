@@ -549,11 +549,12 @@ static int h_common_setup (h_container *HC, const double *param,
 	    gretl_vector_set(HC->gama, j++, param[i]);
 	} else {
 	    HC->sigma = param[i];
-	    arho = param[kmax+1];
 	}
     }
 
-    if ((HC->sigma <= 0) || (fabs(arho) > 3.5)) {
+    arho = param[kmax+1];
+
+    if (HC->sigma <= 0 || fabs(arho) > 3.5) {
 	err = E_NAN;
     } else {
 	HC->rho = tanh(arho);
