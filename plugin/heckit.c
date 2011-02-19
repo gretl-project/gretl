@@ -540,6 +540,7 @@ static int h_common_setup (h_container *HC, const double *param,
 {
     int kmax = HC->kmain + HC->ksel;
     int i, j = 0, err = 0;
+    double arho;
 
     for (i=0; i<=kmax; i++) {
 	if (i < HC->kmain) {
@@ -548,23 +549,19 @@ static int h_common_setup (h_container *HC, const double *param,
 	    gretl_vector_set(HC->gama, j++, param[i]);
 	} else {
 	    HC->sigma = param[i];
+	    arho = param[kmax+1];
 	}
     }
 
-    if (HC->sigma <= 0) {
+    if ((HC->sigma <= 0) || (fabs(arho) > 3.5)) {
 	err = E_NAN;
     } else {
-	err = setup_ndx_functions(HC);
-    }
-
-    if (!err) {
-	double arho = param[kmax+1];
-
 	HC->rho = tanh(arho);
 	*ca = cosh(arho);
 	*sa = sinh(arho);
+	err = setup_ndx_functions(HC);
     }
-    
+
     return err;
 }
 
@@ -1351,8 +1348,8 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     theta[np-2] = HC->sigma;
     rho = HC->rho;
 
-    if (fabs(rho) > 0.999) {
-	rho = (rho > 0)? 0.999 : -0.999;
+    if (fabs(rho) > 0.99) {
+	rho = (rho > 0)? 0.99 : -0.99;
     }
 
     theta[np-1] = atanh(rho);
@@ -1413,7 +1410,9 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 #if USE_AHESS
 	gretl_matrix_copy_values(HC->vcv, H);
 #else
-	k = 0;
+	int k = 0;
+	double hij;
+
 	for (i=0; i<np; i++) {
 	    for (j=i; j<np; j++) {
 		hij = hess[k++];
