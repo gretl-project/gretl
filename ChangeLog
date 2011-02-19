@@ -12,6 +12,7 @@ version 1.9.4, in progress
 - GUI dialog for calling user-defined functions: several improvements
 - GUI access to X-12-ARIMA: give option of writing and editing x12a 
   .spc file
+- GUI test-statistic calculator: fix a bug in the one-variance test
 - New accessor, $vma: retrieves the vector moving average form of a 
   VAR or VECM
 - New function, inlist(): gives the position of a series within a 
