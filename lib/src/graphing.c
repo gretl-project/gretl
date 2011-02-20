@@ -1435,12 +1435,17 @@ int gnuplot_make_graph (void)
     }
 
 #ifdef WIN32
+# if 0 /* experiment */
     if (strchr(fname, '\'') != NULL) {
 	err = gretl_spawn_with_fixup(gretl_gnuplot_path(), fname);
     } else {
 	sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
 	err = gretl_spawn(buf);
     }
+# else
+    sprintf(buf, "\"%s\" \"%s\"", gretl_gnuplot_path(), fname);
+    err = gretl_spawn(buf);
+# endif
 #else /* !WIN32 */
     if (gui || fmt) {
 	sprintf(buf, "%s \"%s\"", gretl_gnuplot_path(), fname);
