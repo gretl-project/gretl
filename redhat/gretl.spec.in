@@ -1,6 +1,6 @@
-%define name	gretl
+%define name gretl
 %define ver @VERSION@
-%define rel     1
+%define rel 1
 %define prefix /usr
 
 Summary: econometrics package
@@ -9,7 +9,7 @@ Version: %{ver}
 Release: %{rel}
 License: GPL
 Group: Applications/Math
-Source: ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl-%{ver}.tar.bz2
+Source: http://sourceforge.net/projects/gretl/files/gretl/%{ver}/%{name}-%{ver}.tar.bz2
 Buildroot: %{_tmppath}/%{name}-%{ver}-%{rel}-root
 Packager: Allin Cottrell <cottrell@wfu.edu>
 URL: http://gretl.sourceforge.net/
