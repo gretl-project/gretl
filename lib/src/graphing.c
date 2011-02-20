@@ -3683,17 +3683,27 @@ int plot_freq (FreqDist *freq, DistCode dist)
 }
 
 static void print_y_data (const double *x, const double *y,
-			  int t1, int t2, FILE *fp)
+			  const int *order, int t1, int t2, 
+			  FILE *fp)
 {
-    int t;
+    int i, t, n = t2 - t1 + 1;
+    double xt;
 
-    for (t=t1; t<=t2; t++) {
-	if (na(y[t])) {
-	    fprintf(fp, "%.10g ?\n", x[t]);
+    for (i=0; i<n; i++) {
+	if (order != NULL) {
+	    t = order[i];
+	    xt = i + 1;
 	} else {
-	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+	    t = t1 + i;
+	    xt = x[t];
+	}	
+	if (na(y[t])) {
+	    fprintf(fp, "%.10g ?\n", xt);
+	} else {
+	    fprintf(fp, "%.10g %.10g\n", xt, y[t]);
 	}
     }
+
     fputs("e\n", fp);
 }
 
@@ -3705,25 +3715,82 @@ enum {
 };
 
 static void print_confband_data (const double *x, const double *y,
-				 const double *e, int t1, int t2, 
-				 int mode, FILE *fp)
+				 const double *e, const int *order,
+				 int t1, int t2, int mode, FILE *fp)
 {
-    int t;
+    int i, t, n = t2 - t1 + 1;
+    double xt;
 
-    for (t=t1; t<=t2; t++) {
-	if (na(y[t]) || na(e[t])) {
-	    fprintf(fp, "%.10g ? ?\n", x[t]);
-	} else if (mode == CONF_FILL) {
-	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], y[t] - e[t], y[t] + e[t]);
-	} else if (mode == CONF_LOW) {
-	    fprintf(fp, "%.10g %.10g\n", x[t], y[t] - e[t]);
-	} else if (mode == CONF_HIGH) {
-	    fprintf(fp, "%.10g %.10g\n", x[t], y[t] + e[t]);
+    for (i=0; i<n; i++) {
+	if (order != NULL) {
+	    t = order[i];
+	    xt = i + 1;
 	} else {
-	    fprintf(fp, "%.10g %.10g %.10g\n", x[t], y[t], e[t]);
+	    t = t1 + i;
+	    xt = x[t];
+	}
+	if (na(y[t]) || na(e[t])) {
+	    fprintf(fp, "%.10g ? ?\n", xt);
+	} else if (mode == CONF_FILL) {
+	    fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t] - e[t], y[t] + e[t]);
+	} else if (mode == CONF_LOW) {
+	    fprintf(fp, "%.10g %.10g\n", xt, y[t] - e[t]);
+	} else if (mode == CONF_HIGH) {
+	    fprintf(fp, "%.10g %.10g\n", xt, y[t] + e[t]);
+	} else {
+	    fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t], e[t]);
 	} 
     }
+
     fputs("e\n", fp);
+}
+
+struct fsorter {
+    int obs;
+    double y;
+};
+
+static int compare_fs (const void *a, const void *b)
+{
+    const struct fsorter *fa = a;
+    const struct fsorter *fb = b;
+
+    return (fa->y > fb->y) - (fa->y < fb->y);
+}
+
+static int *get_sorted_fcast_order (const FITRESID *fr, 
+				    int t1, int t2)
+{
+    int *order = NULL;
+    struct fsorter *fs;
+    int n = t2 - t1 + 1;
+    int i, t;
+
+    fs = malloc(n * sizeof *fs);
+    if (fs == NULL) {
+	return NULL;
+    }
+
+    order = malloc(n * sizeof *order);
+    if (order == NULL) {
+	free(fs);
+	return NULL;
+    }
+
+    for (i=0, t=t1; t<=t2; t++, i++) {
+	fs[i].obs = t;
+	fs[i].y = fr->actual[t];
+    }
+
+    qsort(fs, n, sizeof *fs, compare_fs);
+
+    for (i=0; i<n; i++) {
+	order[i] = fs[i].obs;
+    }  
+
+    free(fs);
+
+    return order;
 }
 
 int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
@@ -3731,6 +3798,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 {
     FILE *fp = NULL;
     const double *obs = NULL;
+    int *order = NULL;
     GptFlags flags = 0;
     double xmin, xmax, xrange;
     int depvar_present = 0;
@@ -3810,8 +3878,19 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     if (dataset_is_time_series(pdinfo)) {
 	fprintf(fp, "# timeseries %d\n", pdinfo->pd);
-    } else if (n < 33) {
-	fputs("set xtics 1\n", fp);
+    } else if (dataset_is_cross_section(pdinfo) && yhmin == t1) {
+	order = get_sorted_fcast_order(fr, t1, t2);
+    } 
+
+    if (!dataset_is_time_series(pdinfo)) {
+	if (order != NULL) {
+	    gchar *text = g_strdup_printf(_("observations sorted by %s"),
+					  fr->depvar);
+	    fputs("unset xtics\n", fp);
+	    fprintf(fp, "set xlabel \"%s\"\n", text);
+	} else if (n < 33) {
+	    fputs("set xtics 1\n", fp);
+	}
     }
 
     if (do_errs && !use_fill && !use_lines && n > 150) {
@@ -3871,28 +3950,36 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 
     if (use_fill) {
 	if (do_errs) {
-	    print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_FILL, fp);
+	    print_confband_data(obs, fr->fitted, maxerr, order,
+				yhmin, t2, CONF_FILL, fp);
 	}
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, t1, t2, fp);
+	    print_y_data(obs, fr->actual, order, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, order, yhmin, t2, fp);
     } else {
 	if (depvar_present) {
-	    print_y_data(obs, fr->actual, t1, t2, fp);
+	    print_y_data(obs, fr->actual, order, t1, t2, fp);
 	}
-	print_y_data(obs, fr->fitted, yhmin, t2, fp);
+	print_y_data(obs, fr->fitted, order, yhmin, t2, fp);
 	if (do_errs) {
 	    if (use_lines) {
-		print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_LOW, fp);
-		print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_HIGH, fp);
+		print_confband_data(obs, fr->fitted, maxerr, order,
+				    yhmin, t2, CONF_LOW, fp);
+		print_confband_data(obs, fr->fitted, maxerr, order,
+				    yhmin, t2, CONF_HIGH, fp);
 	    } else {
-		print_confband_data(obs, fr->fitted, maxerr, yhmin, t2, CONF_BARS, fp);
+		print_confband_data(obs, fr->fitted, maxerr, order,
+				    yhmin, t2, CONF_BARS, fp);
 	    }
 	}	
     }
 
     gretl_pop_c_numeric_locale();
+
+    if (order != NULL) {
+	free(order);
+    }
 
     fclose(fp);
 
