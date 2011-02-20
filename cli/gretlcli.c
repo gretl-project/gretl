@@ -575,6 +575,9 @@ int main (int argc, char *argv[])
     if (batch || runit) {
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
+	if (makepkg) {
+	    set_gretl_echo(0);
+	} 
 	sprintf(line, "run %s\n", runfile);
 	err = exec_line(&state, &Z, datainfo);
     }
