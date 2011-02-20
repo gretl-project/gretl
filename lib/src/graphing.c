@@ -3758,13 +3758,39 @@ static int compare_fs (const void *a, const void *b)
     return (fa->y > fb->y) - (fa->y < fb->y);
 }
 
+/* To get a somewhat more meangingful plot of actual and fitted
+   with error bars for cross-sectional data, we consider
+   ordering the observations by increasing value of the
+   dependent variable. We first check to see if the data are
+   already in sort-order; if not, we produce an array of
+   ints that specifies the sorted order -- and if there are
+   NAs for the dependent variable within the forecast range,
+   we adjust the end-point so as to omit the useless
+   observations.
+*/
+
 static int *get_sorted_fcast_order (const FITRESID *fr, 
-				    int t1, int t2)
+				    int t1, int *pt2)
 {
     int *order = NULL;
     struct fsorter *fs;
+    int nmiss = 0, sorted = 1;
+    int t2 = *pt2;
     int n = t2 - t1 + 1;
     int i, t;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(fr->actual[t])) {
+	    nmiss++;
+	} else if (t < t2 && fr->actual[t] > fr->actual[t+1]) {
+	    sorted = 0;
+	}
+    }
+
+    if (sorted) {
+	/* OK, leave well alone */
+	return NULL;
+    }
 
     fs = malloc(n * sizeof *fs);
     if (fs == NULL) {
@@ -3789,6 +3815,11 @@ static int *get_sorted_fcast_order (const FITRESID *fr,
     }  
 
     free(fs);
+
+    if (nmiss > 0) {
+	/* chop off trailing NAs */
+	*pt2 = (n - nmiss) + t1 - 1;
+    }
 
     return order;
 }
@@ -3879,7 +3910,7 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
     if (dataset_is_time_series(pdinfo)) {
 	fprintf(fp, "# timeseries %d\n", pdinfo->pd);
     } else if (dataset_is_cross_section(pdinfo) && yhmin == t1) {
-	order = get_sorted_fcast_order(fr, t1, t2);
+	order = get_sorted_fcast_order(fr, t1, &t2);
     } 
 
     if (!dataset_is_time_series(pdinfo)) {
