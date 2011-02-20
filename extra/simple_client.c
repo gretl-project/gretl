@@ -100,7 +100,7 @@ int main (void)
     model = gretl_model_new();
     if (model == NULL) noalloc();
     *model = lsq(list,     /* regressand and regressors */
-		 &Z,       /* data array */
+		 Z,        /* data array */
 		 datainfo, /* data information */
 		 OLS,      /* use Ordinary Least Squares */
 		 OPT_NONE  /* no special options */
