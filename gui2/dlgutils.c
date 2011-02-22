@@ -1542,16 +1542,7 @@ gchar *combo_box_get_active_text (gpointer p)
 	gtk_tree_model_get(model, &iter, 0, &ret, -1);
     }
 #elif GTK_MAJOR_VERSION >= 3
-    if (gtk_combo_box_get_has_entry(GTK_COMBO_BOX(p))) {
-	GtkWidget *w = gtk_bin_get_child(GTK_BIN(p));
-	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
-
-	if (s != NULL) {
-	    ret = g_strdup(s);
-	}
-    } else {
-	ret = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p)); 
-    }
+    ret = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p)); 
 #else /* gtk 2 >= 2.6 */
     ret = gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));
 #endif

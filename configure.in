@@ -538,7 +538,7 @@ dnl
 dnl Check for GTK 3.0?  Or for GTK 2.0
 dnl
 if test "$try_gtk3" = "yes" ; then
-    PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.0.0,
+    PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.0.1,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="yes"
