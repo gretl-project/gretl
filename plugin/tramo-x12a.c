@@ -374,7 +374,9 @@ static int tx_dialog (tx_request *request)
     vbox = gtk_vbox_new(FALSE, 0);    
 
     if (request->prog == TRAMO_SEATS) {
+#if GTK_MAJOR_VERSION < 3    
 	gtk_dialog_set_has_separator(GTK_DIALOG(request->dialog), FALSE);
+#endif	
 	show_tramo_options(request, vbox);
     } else {
 	show_x12a_options(request, GTK_BOX(vbox));

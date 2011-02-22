@@ -602,7 +602,9 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 
     gtk_window_set_title(GTK_WINDOW(md.dlg), _("gretl: send mail"));
     set_dialog_border_widths(md.dlg);
+#if GTK_MAJOR_VERSION < 3    
     gtk_dialog_set_has_separator(GTK_DIALOG(md.dlg), FALSE);
+#endif    
     gtk_window_set_position(GTK_WINDOW(md.dlg), GTK_WIN_POS_MOUSE);
 
     nb = gtk_notebook_new();
