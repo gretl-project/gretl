@@ -9729,7 +9729,8 @@ static int LHS_matrix_reusable (parser *p)
     } else if (p->ret->t == MAT) {
 	gretl_matrix *rm = p->ret->v.m;
 
-	ok = (m->rows == rm->rows && m->cols == rm->cols);
+	ok = (rm != NULL && m->rows == rm->rows && 
+	      m->cols == rm->cols);
     }
 
     return ok;
