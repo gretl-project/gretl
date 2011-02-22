@@ -564,7 +564,12 @@ static void set_combo_strings_from_list (GtkComboBox *box, GList *list)
     GList *mylist = list;
 
     while (mylist != NULL) {
+#if GTK_MAJOR_VERSION >= 3
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(box), 
+				       mylist->data);
+#else
 	gtk_combo_box_append_text(box, mylist->data);
+#endif
 	mylist = mylist->next;
     }
 }
@@ -640,7 +645,11 @@ mail_to_dialog (const char *fname, struct mail_info *minfo,
 	gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, i, i+1, GTK_FILL, GTK_FILL, 0, 0);
 
 	if (i == 0) {
+#if GTK_MAJOR_VERSION >= 3
+	    w = gtk_combo_box_text_new_with_entry();
+#else
 	    w = gtk_combo_box_entry_new_text();
+#endif
 	    if (minfo->addrs != NULL) {
 		set_combo_strings_from_list(GTK_COMBO_BOX(w), minfo->addrs);
 	    } 
