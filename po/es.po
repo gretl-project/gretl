@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-02-16 12:15-0500\n"
-"PO-Revision-Date: 2011-02-15 11:50+0100\n"
+"PO-Revision-Date: 2011-02-23 15:45+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -2375,19 +2375,19 @@ msgid "other"
 msgstr "Otro"
 
 #: lib/src/genlex.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no such object"
-msgstr "%s: no existe ese objeto\n"
+msgstr "%s: no existe ese objeto"
 
 #: lib/src/genlex.c:653
-#, fuzzy, c-format
+#, c-format
 msgid "The symbol '%s' is undefined"
-msgstr "El símbolo '%s' no está definido\n"
+msgstr "No está definido el símbolo '%s' "
 
 #: lib/src/genlex.c:663 lib/src/genlex.c:665
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no argument was given"
-msgstr "'%s': no se ha proporcionado argumento\n"
+msgstr "'%s': no se ha proporcionado ningún argumento"
 
 #: lib/src/genlex.c:676
 msgid "(for logical AND, use '&&')\n"
@@ -2711,9 +2711,8 @@ msgid "System residuals"
 msgstr "Residuos del sistema"
 
 #: lib/src/graphing.c:4870
-#, fuzzy
 msgid "EC terms"
-msgstr "Término de CE"
+msgstr "Términos de CE"
 
 #: lib/src/graphing.c:4872 gui2/gui_utils.c:4131
 msgid "EC term"
@@ -5501,9 +5500,9 @@ msgstr ""
 "ha producido un resultado escalar"
 
 #: lib/src/nls.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or vector"
-msgstr "%s: se esperaba un orden entero"
+msgstr "%s: se esperaba un escalar o un vector"
 
 #: lib/src/nls.c:995
 #, c-format
@@ -6560,9 +6559,8 @@ msgid "Exogenous variables:"
 msgstr "Variables exógenas:"
 
 #: lib/src/system.c:954
-#, fuzzy
 msgid "Wald test for the specified restrictions"
-msgstr "Contraste F de las restricciones especificadas"
+msgstr "Contraste de Wald de las restricciones especificadas"
 
 #: lib/src/system.c:958
 msgid "F test for the specified restrictions"
@@ -8944,9 +8942,8 @@ msgid "bandwidth adjustment factor:"
 msgstr "factor de ajuste del ancho de banda:"
 
 #: gui2/dialogs.c:3899
-#, fuzzy
 msgid "No model is specified"
-msgstr "No hay disponible ningún modelo"
+msgstr "No se ha especificado ningún modelo"
 
 #: gui2/dialogs.c:4113 gui2/library.c:4961
 msgid "gretl: periodogram"
@@ -9063,12 +9060,11 @@ msgstr ""
 
 #: gui2/dialogs.c:4897
 msgid "show scalars window"
-msgstr ""
+msgstr "mostrar la ventana de escalares"
 
 #: gui2/dialogs.c:4898
-#, fuzzy
 msgid "show icons window"
-msgstr "Ventana principal"
+msgstr "mostrar la ventana de iconos"
 
 #: gui2/dialogs.c:5052
 msgid "gretl: TeX tabular format"
@@ -9459,24 +9455,20 @@ msgid "Define list"
 msgstr "Definir lista"
 
 #: gui2/fncall.c:677
-#, fuzzy
 msgid "add series"
-msgstr "serie"
+msgstr "añadir una serie"
 
 #: gui2/fncall.c:678
-#, fuzzy
 msgid "Enter name=formula for new series"
-msgstr "Introduzca la fórmula para la nueva variable"
+msgstr "Introduzca una expresión nombre=fórmula para la nueva serie"
 
 #: gui2/fncall.c:687 gui2/library.c:5640
-#, fuzzy
 msgid "add scalar"
-msgstr "gretl: añadir escalar"
+msgstr "añadir un escalar"
 
 #: gui2/fncall.c:688
-#, fuzzy
 msgid "Enter name=formula for new scalar"
-msgstr "Introduzca la fórmula para la nueva variable"
+msgstr "Introduzca una expresión nombre=fórmula para el nuevo escalar"
 
 #: gui2/fncall.c:962 gui2/selector.c:5461
 msgid "New variable"
@@ -9520,6 +9512,8 @@ msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
+"El paquete %s no se ha encontrado o no está actualizado.\n"
+"¿Desea intentar descargarlo ahora?"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -9612,9 +9606,8 @@ msgid "Add/remove functions"
 msgstr "Añadir/borrar funciones"
 
 #: gui2/fnsave.c:1165
-#, fuzzy
 msgid "Write spec file"
-msgstr "Falló la escritura del fichero de etiquetas"
+msgstr "Escribir archivo spec"
 
 #: gui2/fnsave.c:1172
 msgid "Upload package to server on save"
@@ -11541,9 +11534,8 @@ msgid "_Forecasts"
 msgstr "_Predicciones"
 
 #: gui2/gui_utils.c:376
-#, fuzzy
 msgid "_Save text as..."
-msgstr "_Guardar como..."
+msgstr "_Guardar el texto como..."
 
 #: gui2/gui_utils.c:387
 msgid "_Graph"
@@ -11846,14 +11838,12 @@ msgid "Combined residual plot"
 msgstr "Gráfico de los residuos conjunto"
 
 #: gui2/gui_utils.c:4053
-#, fuzzy
 msgid "EC plot"
-msgstr "Gráfico 3D"
+msgstr "Gráfico de CE"
 
 #: gui2/gui_utils.c:4058
-#, fuzzy
 msgid "Combined EC plot"
-msgstr "Gráfico de los residuos conjunto"
+msgstr "Gráfico de CE combinado"
 
 #: gui2/gui_utils.c:4067
 msgid "VAR inverse roots"
@@ -13883,13 +13873,13 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': ya hay un objeto con este nombre"
 
 #: gui2/session.c:2451
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter new name\n"
 "(max. %d characters)"
 msgstr ""
 "Introduzca el nuevo nombre\n"
-"(máx. 31 caracteres)"
+"(máx. %d caracteres)"
 
 #: gui2/session.c:2453
 msgid "gretl: rename object"
@@ -15657,13 +15647,12 @@ msgid "Show full output"
 msgstr "Mostrar todos los resultados"
 
 #: plugin/tramo-x12a.c:306
-#, fuzzy
 msgid "Execute X-12-ARIMA directly"
-msgstr "gretl: Análisis ARIMA X-12"
+msgstr "Ejecutar X-12-ARIMA directamente"
 
 #: plugin/tramo-x12a.c:311
 msgid "Make X-12-ARIMA command file"
-msgstr ""
+msgstr "Preparar un archivo de instrucciones de X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:505 plugin/tramo-x12a.c:507
 msgid "irregular"
