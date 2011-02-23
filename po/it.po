@@ -6,10 +6,10 @@
 # Stefano Fachin for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.9.3\n"
+"Project-Id-Version: gretl 1.9.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-02-16 12:15-0500\n"
-"PO-Revision-Date: 2010-11-26 10:26+0100\n"
+"PO-Revision-Date: 2011-02-23 12:11+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -2372,7 +2372,7 @@ msgstr "Dichiarazione non valida"
 
 #: lib/src/genfuncs.c:4258
 msgid "model-related"
-msgstr ""
+msgstr "modello"
 
 #: lib/src/genfuncs.c:4321 lib/src/gretl_scalar.c:603 lib/src/plotspec.c:276
 #: lib/src/plotspec.c:290 gui2/gpt_dialog.c:120 gui2/gui_utils.c:2800
@@ -2380,24 +2380,23 @@ msgid "none"
 msgstr "nessuno"
 
 #: lib/src/genfuncs.c:4324
-#, fuzzy
 msgid "other"
-msgstr "Altra frequenza"
+msgstr "altro"
 
 #: lib/src/genlex.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no such object"
-msgstr "%s: nessun oggetto\n"
+msgstr "%s: nessun oggetto"
 
 #: lib/src/genlex.c:653
-#, fuzzy, c-format
+#, c-format
 msgid "The symbol '%s' is undefined"
-msgstr "Il simbolo \"%s\" non è definito\n"
+msgstr "Il simbolo \"%s\" non è definito"
 
 #: lib/src/genlex.c:663 lib/src/genlex.c:665
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no argument was given"
-msgstr "\"%s\": non è stato fornito alcun argomento\n"
+msgstr "\"%s\": non è stato fornito alcun argomento"
 
 #: lib/src/genlex.c:676
 msgid "(for logical AND, use '&&')\n"
@@ -2675,9 +2674,9 @@ msgid "+- sqrt(h(t))"
 msgstr "+- sqrt(h(t))"
 
 #: lib/src/graphing.c:4254
-#, fuzzy, c-format
+#, c-format
 msgid "mean %s"
-msgstr "Media"
+msgstr "%s media"
 
 #: lib/src/graphing.c:4420
 msgid "time"
@@ -2717,9 +2716,8 @@ msgid "System residuals"
 msgstr "Residui del sistema"
 
 #: lib/src/graphing.c:4870
-#, fuzzy
 msgid "EC terms"
-msgstr "Termine EC"
+msgstr "Termini EC"
 
 #: lib/src/graphing.c:4872 gui2/gui_utils.c:4131
 msgid "EC term"
@@ -3446,9 +3444,8 @@ msgid "iteration"
 msgstr "iterazione"
 
 #: lib/src/gretl_panel.c:3589
-#, fuzzy
 msgid "Pooled error variance"
-msgstr "_Varianza degli errori stimata"
+msgstr "Varianza degli errori pooled"
 
 #: lib/src/gretl_panel.c:3663
 msgid "groupwise heteroskedasticity"
@@ -5494,9 +5491,9 @@ msgstr ""
 " ha prodotto un risultato scalare"
 
 #: lib/src/nls.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or vector"
-msgstr "%s: deve essere un ordine intero"
+msgstr "%s: era atteso uno scalare o un vettore"
 
 #: lib/src/nls.c:995
 #, c-format
@@ -6545,9 +6542,8 @@ msgid "Exogenous variables:"
 msgstr "Variabili esogene:"
 
 #: lib/src/system.c:954
-#, fuzzy
 msgid "Wald test for the specified restrictions"
-msgstr "Test F per i vincoli specificati"
+msgstr "Test di Wald per i vincoli specificati"
 
 #: lib/src/system.c:958
 msgid "F test for the specified restrictions"
@@ -6697,11 +6693,9 @@ msgid "dummify: no suitable variables were found"
 msgstr "dummify: non sono state trovate variabili rilevanti"
 
 #: lib/src/tsls.c:740
-#, fuzzy, c-format
+#, c-format
 msgid "Number of instruments (%d) exceeds the number of observations (%d)"
-msgstr ""
-"Il numero delle assegnazioni (%d) eccede il numero dei valori restituiti da\n"
-"%s (%d)"
+msgstr "Il numero degli strumenti (%d) eccede il numero delle osservazioni (%d)"
 
 #: lib/src/tsls.c:1427 gui2/selector.c:2734
 msgid "You can't use the dependent variable as an instrument"
@@ -8653,9 +8647,9 @@ msgid "Use L-BFGS-B, memory size:"
 msgstr "Usa L-BFGS-B, dimensione della memoria:"
 
 #: gui2/dialogs.c:1690
-#, fuzzy, c-format
+#, c-format
 msgid "groups (N = %d)"
-msgstr "%s (n = %d, %s)"
+msgstr "gruppi (N = %d)"
 
 #: gui2/dialogs.c:1692
 #, c-format
@@ -8693,43 +8687,36 @@ msgid "Set sample range"
 msgstr "Impostare un intervallo per il campione:"
 
 #: gui2/dialogs.c:2099
-#, fuzzy
 msgid "single graph: group means"
-msgstr "grafico singolo: unità sovrapposte"
+msgstr "grafico singolo: medie di gruppo"
 
 #: gui2/dialogs.c:2100
-#, fuzzy
 msgid "single graph: groups overlaid (N <= 80)"
-msgstr "grafico singolo: unità sovrapposte"
+msgstr "grafico singolo: gruppi sovrapposti (N <= 80)"
 
 #: gui2/dialogs.c:2101
-#, fuzzy
 msgid "single graph: groups in sequence (N <= 80)"
-msgstr "grafico singolo: unità in sequenza"
+msgstr "grafico singolo: gruppi in sequenza (N <= 80)"
 
 #: gui2/dialogs.c:2102
-#, fuzzy
 msgid "multiple plots in grid (N <= 9)"
-msgstr "Grafici multipli disposti a griglia"
+msgstr "grafici multipli disposti a griglia (N <= 9)"
 
 #: gui2/dialogs.c:2103
-#, fuzzy
 msgid "multiple plots arranged vertically (N <= 6)"
-msgstr "grafici multipli disposti in verticale"
+msgstr "grafici multipli disposti in verticale (N <= 6)"
 
 #: gui2/dialogs.c:2104
 msgid "boxplots by group (N <= 150)"
-msgstr ""
+msgstr "boxplot per gruppo (N <= 150)"
 
 #: gui2/dialogs.c:2105
-#, fuzzy
 msgid "single boxplot"
-msgstr "gretl: boxplot"
+msgstr "boxplot singolo"
 
 #: gui2/dialogs.c:2116 gui2/dialogs.c:2128
-#, fuzzy
 msgid "panel plot"
-msgstr "panel"
+msgstr "grafico panel"
 
 #: gui2/dialogs.c:2231
 msgid "Enter boolean condition for selecting cases:"
@@ -8934,9 +8921,8 @@ msgid "bandwidth adjustment factor:"
 msgstr "Fattore di aggiustamento della banda:"
 
 #: gui2/dialogs.c:3899
-#, fuzzy
 msgid "No model is specified"
-msgstr "Non è disponibile alcun modello"
+msgstr "Nessun modello specificato"
 
 #: gui2/dialogs.c:4113 gui2/library.c:4961
 msgid "gretl: periodogram"
@@ -9053,12 +9039,11 @@ msgstr ""
 
 #: gui2/dialogs.c:4897
 msgid "show scalars window"
-msgstr ""
+msgstr "mostra finestra scalari"
 
 #: gui2/dialogs.c:4898
-#, fuzzy
 msgid "show icons window"
-msgstr "Nella finestra"
+msgstr "mostra finestra icone"
 
 #: gui2/dialogs.c:5052
 msgid "gretl: TeX tabular format"
@@ -9451,24 +9436,20 @@ msgid "Define list"
 msgstr "Definisci lista"
 
 #: gui2/fncall.c:677
-#, fuzzy
 msgid "add series"
-msgstr "serie"
+msgstr "aggiungi serie"
 
 #: gui2/fncall.c:678
-#, fuzzy
 msgid "Enter name=formula for new series"
-msgstr "Inserire la formula per la nuova variabile"
+msgstr "Inserire nome=formula per la nuova serie"
 
 #: gui2/fncall.c:687 gui2/library.c:5640
-#, fuzzy
 msgid "add scalar"
-msgstr "lo scalare"
+msgstr "aggiungi scalare"
 
 #: gui2/fncall.c:688
-#, fuzzy
 msgid "Enter name=formula for new scalar"
-msgstr "Inserire la formula per la nuova variabile"
+msgstr "Inserire nome=formula per il nuovo scalare"
 
 #: gui2/fncall.c:962 gui2/selector.c:5461
 msgid "New variable"
@@ -9512,6 +9493,8 @@ msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
+"Il pacchetto %s non è stato trovato, o non è aggiornato.\n"
+"Si desidera provare a scaricarlo ora?"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -9604,9 +9587,8 @@ msgid "Add/remove functions"
 msgstr "Aggiungi/rimuovi funzioni"
 
 #: gui2/fnsave.c:1165
-#, fuzzy
 msgid "Write spec file"
-msgstr "Scrittura del file delle etichette fallita"
+msgstr "Scrivi file spec"
 
 #: gui2/fnsave.c:1172
 msgid "Upload package to server on save"
@@ -10760,9 +10742,8 @@ msgid "_Time series plot"
 msgstr "Grafico _serie storica"
 
 #: gui2/gretl.c:1526
-#, fuzzy
 msgid "_Panel plot..."
-msgstr "_3D..."
+msgstr "Grafico _panel..."
 
 #: gui2/gretl.c:1527
 msgid "_Unit root tests"
@@ -11538,9 +11519,8 @@ msgid "_Forecasts"
 msgstr "_Previsioni"
 
 #: gui2/gui_utils.c:376
-#, fuzzy
 msgid "_Save text as..."
-msgstr "Sa_lva come..."
+msgstr "Salva _testo come..."
 
 #: gui2/gui_utils.c:387
 msgid "_Graph"
@@ -11844,14 +11824,12 @@ msgid "Combined residual plot"
 msgstr "Grafico dei residui combinato"
 
 #: gui2/gui_utils.c:4053
-#, fuzzy
 msgid "EC plot"
-msgstr "Grafico 3D"
+msgstr "Grafico EC"
 
 #: gui2/gui_utils.c:4058
-#, fuzzy
 msgid "Combined EC plot"
-msgstr "Grafico dei residui combinato"
+msgstr "Grafico EC combinato"
 
 #: gui2/gui_utils.c:4067
 msgid "VAR inverse roots"
@@ -12820,9 +12798,8 @@ msgid "Time series plot"
 msgstr "Grafico serie storica"
 
 #: gui2/menustate.c:344 gui2/menustate.c:434
-#, fuzzy
 msgid "Panel plot..."
-msgstr "_3D..."
+msgstr "Grafico panel..."
 
 #: gui2/menustate.c:346 gui2/menustate.c:435
 msgid "Frequency distribution"
@@ -13894,13 +13871,13 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': c'è già un oggetto con questo nome"
 
 #: gui2/session.c:2451
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter new name\n"
 "(max. %d characters)"
 msgstr ""
 "Inserire il nuovo nome\n"
-"(max. 31 caratteri)"
+"(max. %d caratteri)"
 
 #: gui2/session.c:2453
 msgid "gretl: rename object"
@@ -15664,14 +15641,12 @@ msgid "Show full output"
 msgstr "Mostra risultati completi"
 
 #: plugin/tramo-x12a.c:306
-#, fuzzy
 msgid "Execute X-12-ARIMA directly"
-msgstr "directory di lavoro di X-12-ARIMA"
+msgstr "Esegui X-12-ARIMA direttamente"
 
 #: plugin/tramo-x12a.c:311
-#, fuzzy
 msgid "Make X-12-ARIMA command file"
-msgstr "Comando X-12-ARIMA fallito"
+msgstr "Scrivi file di comandi X-12-ARIMA"
 
 #: plugin/tramo-x12a.c:505 plugin/tramo-x12a.c:507
 msgid "irregular"
