@@ -1,12 +1,15 @@
-version 1.9.4, in progress
+2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 
   implementation of the Mersenne Twister to the SIMD-oriented Fast 
   Mersenne Twister
+- Introduce "addons": approved function packages that are represented
+  in the GUI menus
 - Add an --accessors option to the "varlist" command, to expose the 
   list of currently available accessor ("dollar") variables
 - Add more panel data graphing options -- time-series of group means 
   and boxplots by group -- and redesign the GUI for panel plots
-- GUI code: modify to allow building against gtk3
+- GUI code: modify to allow building against gtk3, with a configure
+  option --enable-gtk3
 - GUI icon view: provide a graphical representation for saved 
   "bundles"
 - GUI dialog for calling user-defined functions: several improvements
@@ -42,8 +45,6 @@ version 1.9.4, in progress
   for data in matrix form
 - The sdc() function (column standard deviations): add an optional 
   second argument to control the divisor
-- The getenv() function: add a second, optional parameter to get the 
-  numerical rather than the string value of an environment variable
 - New "set" variable, matrix_mask, which can be used to control the 
   included observations when constructing matrices from series
 - Accessors $test and $pvalue: generalize to allow matrix values 

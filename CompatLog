@@ -1,4 +1,4 @@
-version 1.9.4, in progress
+2011-02-24 version 1.9.4
 
 The default random number generator has been changed from 
 GLib's implementation of the Mersenne Twister to the 
