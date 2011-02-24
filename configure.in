@@ -541,6 +541,7 @@ if test "$try_gtk3" = "yes" ; then
     PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.0.1,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
+      AC_DEFINE(USE_GTK3)
       have_gtk="yes"
       gtk_version="3.0"
       have_gtkprint="yes"
@@ -635,6 +636,7 @@ fi
 dnl record the results of the above tests
 AC_SUBST(build_gui)
 AC_SUBST(have_gtk)
+AC_SUBST(gtk_version)
 AC_SUBST(have_mpfr)
 AC_SUBST(have_sourceview)
 AC_SUBST(fake_gtkspinner)

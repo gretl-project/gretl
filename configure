@@ -629,6 +629,7 @@ have_gnu_regex
 fake_gtkspinner
 have_sourceview
 have_mpfr
+gtk_version
 have_gtk
 build_gui
 GTKSOURCEVIEW_LIBS
@@ -16506,6 +16507,8 @@ else
 $as_echo "yes" >&6; }
 	CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
+      $as_echo "#define USE_GTK3 1" >>confdefs.h
+
       have_gtk="yes"
       gtk_version="3.0"
       have_gtkprint="yes"
@@ -17045,6 +17048,7 @@ if test x"${MSGFMT}" != x ; then
 else
    echo "*** msgfmt not found, can't build message catalogs"
 fi
+
 
 
 

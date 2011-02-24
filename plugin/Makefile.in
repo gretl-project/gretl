@@ -16,6 +16,7 @@ build_gui = @build_gui@
 build_mailer = @build_mailer@
 have_odbc = @have_odbc@
 quiet_build = @quiet_build@
+gtk_version = @gtk_version@
 
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
@@ -32,7 +33,11 @@ HAVE_AUDIO = @HAVE_AUDIO@
 FLITE_CFLAGS = @FLITE_CFLAGS@
 FLITE_LIBS = @FLITE_LIBS@
 
-plugindir = $(libdir)/gretl-gtk2
+ifeq ($(gtk_version),3.0)
+  plugindir = $(libdir)/gretl-gtk3
+else
+  plugindir = $(libdir)/gretl-gtk2
+endif
 
 ifeq ($(CC),)
   CC = gcc

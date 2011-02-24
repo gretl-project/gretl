@@ -50,6 +50,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Is LaTeX available? */
 #undef HAVE_LATEX
 
+/* using gtk+ 3 */
+#undef USE_GTK3
+
 /* Using gtksourceview-2.0? */
 #undef USE_GTKSOURCEVIEW_2
 

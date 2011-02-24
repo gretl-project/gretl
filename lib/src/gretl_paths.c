@@ -42,7 +42,15 @@
 #include <glib.h>
 
 #if (GLIB_MAJOR_VERSION > 2 || GLIB_MINOR_VERSION >= 6)
-#include <glib/gstdio.h>
+# include <glib/gstdio.h>
+#endif
+
+#ifndef WIN32
+# ifdef USE_GTK3
+#  define PLUGIN_SFX "gretl-gtk3/"
+# else
+#  define PLUGIN_SFX "gretl-gtk2/"
+# endif
 #endif
 
 struct INTERNAL_PATHS {
@@ -1608,7 +1616,7 @@ static void set_gretl_libpath (const char *path)
     /* respect the libdir set at compile time, e.g. /usr/lib or
        /usr/lib64 
     */
-    build_path(paths.libpath, LIBDIR, "gretl-gtk2/", NULL);
+    build_path(paths.libpath, LIBDIR, PLUGIN_SFX, NULL);
 # else
     char *p = strstr(path, "/share");
     
@@ -1617,9 +1625,10 @@ static void set_gretl_libpath (const char *path)
 
 	*paths.libpath = '\0';
 	strncat(paths.libpath, path, len);
-	strcat(paths.libpath, "/lib/gretl-gtk2/");
+	strcat(paths.libpath, "/lib/");
+	strcat(paths.libpath, PLUGIN_SFX);
     } else {
-	sprintf(paths.libpath, "%s/lib/gretl-gtk2/", path);
+	sprintf(paths.libpath, "%s/lib/%s", path, PLUGIN_SFX);
     }
 # endif /* !LIBDIR */
 #endif /* !WIN32 */

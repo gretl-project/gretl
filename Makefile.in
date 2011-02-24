@@ -11,6 +11,7 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 HOSTCC = @HOSTCC@
 have_gtk = @have_gtk@
+gtk_version = @gtk_version@
 build_po = @build_po@
 build_doc = @build_docs@
 
