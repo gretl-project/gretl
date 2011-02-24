@@ -4,13 +4,13 @@
 # This file is distributed under the same license as the PACKAGE package.
 #
 # A. Talha YALTA <yalta@etu.edu.tr>, 2008, 2009, 2010.
-# A. Talha Yalta, 2010.
+# A. Talha Yalta, 2010, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-02-16 12:15-0500\n"
-"PO-Revision-Date: 2010-12-17 08:45+0200\n"
+"PO-Revision-Date: 2011-02-24 10:51+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -2365,19 +2365,19 @@ msgid "other"
 msgstr "diğer"
 
 #: lib/src/genlex.c:651
-#, fuzzy, c-format
+#, c-format
 msgid "%s: no such object"
-msgstr "%s: böyle bir nesne yok\n"
+msgstr "%s: böyle bir nesne yok"
 
 #: lib/src/genlex.c:653
-#, fuzzy, c-format
+#, c-format
 msgid "The symbol '%s' is undefined"
-msgstr "'%s' simgesi tanımsız\n"
+msgstr "'%s' simgesi tanımsız"
 
 #: lib/src/genlex.c:663 lib/src/genlex.c:665
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no argument was given"
-msgstr "'%s': verili bir argüman yok\n"
+msgstr "'%s': verili bir argüman yok"
 
 #: lib/src/genlex.c:676
 msgid "(for logical AND, use '&&')\n"
@@ -2697,9 +2697,8 @@ msgid "System residuals"
 msgstr "Sistem kalıntıları"
 
 #: lib/src/graphing.c:4870
-#, fuzzy
 msgid "EC terms"
-msgstr "EC terimi"
+msgstr "EC terimleri"
 
 #: lib/src/graphing.c:4872 gui2/gui_utils.c:4131
 msgid "EC term"
@@ -2817,7 +2816,7 @@ msgstr "Üzgünüm, bu komut bu tahminci için bulunmuyor"
 
 #: lib/src/gretl_errors.c:45
 msgid "Unspecified error -- FIXME"
-msgstr "Belirtmesiz hata - DÜZELTİLECEK"
+msgstr "Belirlenemeyen hata - DÜZELTİLECEK"
 
 #: lib/src/gretl_errors.c:46
 msgid "Syntax error in genr formula"
@@ -3071,7 +3070,7 @@ msgstr "Uyarı: Ad, %d simge uzunluğuna budandı\n"
 #: lib/src/gretl_list.c:1879
 #, c-format
 msgid "Variable %d was not in the original list"
-msgstr "%d değişkeni özgün listede bulunmuyordu"
+msgstr "%d değişkeni özgün listede bulunmuyor"
 
 #: lib/src/gretl_list.c:2232
 msgid "Can't do this: some vars in original model have been redefined"
@@ -3939,7 +3938,7 @@ msgstr "%s: gerekli değiştirge eksik"
 #: lib/src/interact.c:1916
 #, c-format
 msgid "%s: expected an integer order"
-msgstr "%s: tamsayı bir derece bekleniyordu"
+msgstr "%s: tamsayı bir derece bekleniyor"
 
 #: lib/src/interact.c:2069
 #, c-format
@@ -4050,7 +4049,7 @@ msgstr "Çıktılar '%s' dosyasına yönlendirilmiş bile\n"
 
 #: lib/src/interact.c:3936
 msgid "Now discarding output\n"
-msgstr "Şimdi çıktılar atılıyor\n"
+msgstr "Çıktılar şimdi atılıyor\n"
 
 #: lib/src/interact.c:3958
 #, c-format
@@ -4060,12 +4059,12 @@ msgstr "%s yazmak için açılamadı\n"
 #: lib/src/interact.c:3964
 #, c-format
 msgid "Now writing output to '%s'\n"
-msgstr "Şimdi çıktılar '%s' dosyasına yazılıyor\n"
+msgstr "Çıktılar şimdi '%s' dosyasına yazılıyor\n"
 
 #: lib/src/interact.c:3966
 #, c-format
 msgid "Now appending output to '%s'\n"
-msgstr "Şimdi çıktılar '%s' dosyasına iliştiriliyor\n"
+msgstr "Çıktılar şimdi '%s' dosyasına iliştiriliyor\n"
 
 #: lib/src/interact.c:4030
 msgid "No data information is available.\n"
@@ -5361,7 +5360,7 @@ msgstr "Toplam"
 #: lib/src/modelprint.c:5041 lib/src/nls.c:1534
 #, c-format
 msgid "modprint: expected %d names"
-msgstr "modprint: %d ad bekleniyordu"
+msgstr "modprint: %d sayıda ad bekleniyor"
 
 #: lib/src/monte_carlo.c:232 lib/src/monte_carlo.c:612
 #, c-format
@@ -5451,9 +5450,9 @@ msgstr ""
 "bir sayıl üretti"
 
 #: lib/src/nls.c:563
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': expected a scalar or vector"
-msgstr "%s: tamsayı bir derece bekleniyordu"
+msgstr "'%s': bir sayıl ya da yöney bekleniyor"
 
 #: lib/src/nls.c:995
 #, c-format
@@ -6494,9 +6493,8 @@ msgid "Exogenous variables:"
 msgstr "Dıştürel değişkenler:"
 
 #: lib/src/system.c:954
-#, fuzzy
 msgid "Wald test for the specified restrictions"
-msgstr "Belirtilen sınırlamalar için F sınaması"
+msgstr "Belirtilen sınırlamalar için Wald sınaması"
 
 #: lib/src/system.c:958
 msgid "F test for the specified restrictions"
@@ -8869,9 +8867,8 @@ msgid "bandwidth adjustment factor:"
 msgstr "kuşakgenişliği ayarlama çarpanı:"
 
 #: gui2/dialogs.c:3899
-#, fuzzy
 msgid "No model is specified"
-msgstr "Elde model yok"
+msgstr "Belirtilmiş bir model yok"
 
 #: gui2/dialogs.c:4113 gui2/library.c:4961
 msgid "gretl: periodogram"
@@ -8988,12 +8985,11 @@ msgstr ""
 
 #: gui2/dialogs.c:4897
 msgid "show scalars window"
-msgstr ""
+msgstr "sayıllar penceresini göster"
 
 #: gui2/dialogs.c:4898
-#, fuzzy
 msgid "show icons window"
-msgstr "Ana pencere"
+msgstr "simgeler penceresini göster"
 
 #: gui2/dialogs.c:5052
 msgid "gretl: TeX tabular format"
@@ -9384,24 +9380,20 @@ msgid "Define list"
 msgstr "Liste tanımla"
 
 #: gui2/fncall.c:677
-#, fuzzy
 msgid "add series"
-msgstr "seri"
+msgstr "seri ekle"
 
 #: gui2/fncall.c:678
-#, fuzzy
 msgid "Enter name=formula for new series"
-msgstr "Yeni değişken için formül giriniz"
+msgstr "Yeni seri için ad=formül giriniz"
 
 #: gui2/fncall.c:687 gui2/library.c:5640
-#, fuzzy
 msgid "add scalar"
-msgstr "gretl: sayıl ekle"
+msgstr "sayıl ekle"
 
 #: gui2/fncall.c:688
-#, fuzzy
 msgid "Enter name=formula for new scalar"
-msgstr "Yeni değişken için formül giriniz"
+msgstr "Yeni sayıl için ad=formül giriniz"
 
 #: gui2/fncall.c:962 gui2/selector.c:5461
 msgid "New variable"
@@ -9445,6 +9437,8 @@ msgid ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 msgstr ""
+"%s paketi bulunamadı, ya da güncel değil.\n"
+"Şimdi indirmeyi denemek istiyor musunuz?"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -9537,9 +9531,8 @@ msgid "Add/remove functions"
 msgstr "İşlev ekle/çıkar"
 
 #: gui2/fnsave.c:1165
-#, fuzzy
 msgid "Write spec file"
-msgstr "Etiketler dosyasına yazma başarısız"
+msgstr "Spec dosyası yaz"
 
 #: gui2/fnsave.c:1172
 msgid "Upload package to server on save"
@@ -9597,7 +9590,7 @@ msgid ""
 "Do you want to write a function now?"
 msgstr ""
 "Şu an elde paketlemek için işlev yok.\n"
-"Şimdi bir işlev yazmak ister misiniz?"
+"Şimdi bir işlev yazmak istiyor musunuz?"
 
 #: gui2/gpt_control.c:291
 msgid " Click to set label position"
@@ -10488,7 +10481,7 @@ msgstr "_Pencereler"
 
 #: gui2/gretl.c:1460
 msgid "_Graph specified vars"
-msgstr "_Değişkenleri çiz"
+msgstr "_Belirtilen değişkenleri çiz"
 
 #: gui2/gretl.c:1461
 msgid "_Time series plot..."
@@ -11464,9 +11457,8 @@ msgid "_Forecasts"
 msgstr "_Yordamalar"
 
 #: gui2/gui_utils.c:376
-#, fuzzy
 msgid "_Save text as..."
-msgstr "_Farklı kaydet..."
+msgstr "_Metni farklı kaydet..."
 
 #: gui2/gui_utils.c:387
 msgid "_Graph"
@@ -11768,14 +11760,12 @@ msgid "Combined residual plot"
 msgstr "Birleşik kalıntı çizimi"
 
 #: gui2/gui_utils.c:4053
-#, fuzzy
 msgid "EC plot"
-msgstr "3B çizimi"
+msgstr "EC çizimi"
 
 #: gui2/gui_utils.c:4058
-#, fuzzy
 msgid "Combined EC plot"
-msgstr "Birleşik kalıntı çizimi"
+msgstr "Birleşik EC çizimi"
 
 #: gui2/gui_utils.c:4067
 msgid "VAR inverse roots"
@@ -12124,7 +12114,7 @@ msgid ""
 "Would you like to add some now?"
 msgstr ""
 "Veri dosyası bilgilendirici bir yorum içermiyor.\n"
-"Şimdi eklemek ister misiniz?"
+"Şimdi eklemek istiyor musunuz?"
 
 #: gui2/library.c:1303 gui2/library.c:1315
 msgid "gretl: edit data info"
@@ -12632,7 +12622,7 @@ msgid ""
 msgstr ""
 "Veri seti şu an altörneklemeli durumda.\n"
 "Daraltmadan önce tam aralığı geri getirmelisiniz.\n"
-"Tam aralığı şimdi geri getirmek ister misiniz?"
+"Tam aralık geri getirilsin mi?"
 
 #: gui2/library.c:7070
 msgid "gretl: Expand data"
@@ -12646,7 +12636,7 @@ msgid ""
 msgstr ""
 "Veri seti şu an altörneklemeli durumda.\n"
 "Genişletmeden önce tam aralığı geri getirmelisiniz.\n"
-"Tam aralığı şimdi geri getirmek ister misiniz?"
+"Tam aralık geri getirilsin mi?"
 
 #: gui2/library.c:7090
 msgid "gretl: transpose data"
@@ -13800,13 +13790,13 @@ msgid "'%s': there is already an object of this name"
 msgstr "'%s': Bu adda bir nesne var bile"
 
 #: gui2/session.c:2451
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Enter new name\n"
 "(max. %d characters)"
 msgstr ""
-"Yeni bir ad giriniz\n"
-"(ençok 31 harf)"
+"Yeni ad giriniz\n"
+"(ençok %d harf)"
 
 #: gui2/session.c:2453
 msgid "gretl: rename object"
@@ -14673,7 +14663,7 @@ msgstr ""
 "Gretl web sayfasında yeni dosyalar bulunuyor.\n"
 "Bu dosyaların toplam büyüklüğü %u bayt.\n"
 "\n"
-"Şimdi gretl'dan çıkmak ve kurulumunuzu güncellemek ister misiniz?\n"
+"Şimdi gretl'dan çıkmak ve kurulumunuzu güncellemek istiyor musunuz?\n"
 "(İsterseniz, gretl_updater.exe'yi daha sonra çalıştırabilirsiniz.)"
 
 #: gui2/update.c:138
@@ -15568,13 +15558,12 @@ msgid "Show full output"
 msgstr "Tam çıktıyı göster"
 
 #: plugin/tramo-x12a.c:306
-#, fuzzy
 msgid "Execute X-12-ARIMA directly"
-msgstr "gretl: X-12-ARIMA çözümlemesi"
+msgstr "X-12-ARIMA'yı doğrudan çalıştır"
 
 #: plugin/tramo-x12a.c:311
 msgid "Make X-12-ARIMA command file"
-msgstr ""
+msgstr "X-12-ARIMA komut dosyası oluştur"
 
 #: plugin/tramo-x12a.c:505 plugin/tramo-x12a.c:507
 msgid "irregular"
