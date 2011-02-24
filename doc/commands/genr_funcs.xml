@@ -3688,10 +3688,8 @@
 	<para>
 	  If an environment variable by the name of
 	  <argname>s</argname> is defined and has a numerical value,
-	  returns that value. Otherwise this function
-	  <quote>degrades</quote> to a boolean, returning 1 if
-	  <argname>s</argname> is defined in the environment and 0 if
-	  not. See also <fncref targ="getenv"/>.
+	  returns that value; otherwise returns NA.  See also <fncref
+	  targ="getenv"/>.
 	</para>
       </description>
     </function>

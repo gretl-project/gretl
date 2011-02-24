@@ -3915,16 +3915,15 @@ static NODE *do_getenv (NODE *l, int f, parser *p)
 	} else {
 	    /* ngetenv */
 	    if (defined) {
+		char *test = NULL;
 		double x;
 
-		if (sscanf(estr, "%lf", &x) == 1) {
+		errno = 0;
+		x = strtod(estr, &test);
+		if (*test == '\0' && errno == 0) {
 		    ret->v.xval = x;
-		} else {
-		    ret->v.xval = 1;
-		}
-	    } else {
-		ret->v.xval = 0;
-	    }
+		}		
+	    } 
 	    free(estr);
 	}
     }
