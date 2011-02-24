@@ -810,14 +810,16 @@ char *gretl_backtick (const char *arg, int *err)
     return val;
 }
 
-char *gretl_getenv (const char *key, int *err)
+char *gretl_getenv (const char *key, int *defined, int *err)
 {
     char *test = getenv(key);
     char *val = NULL;
 
     if (test == NULL) {
+	*defined = 0;
 	val = gretl_strdup("");
     } else {
+	*defined = 1;
 	val = gretl_strdup(test);
     }
 

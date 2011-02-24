@@ -22,6 +22,8 @@ version 1.9.4, in progress
   or cross-sectional invariance for panel-data series
 - New function, strsub(): substitutes a specified replacement for a 
   specified sub-string in its first (string) argument
+- New function, ngetenv(): gets the numerical value of variable in
+  the environment
 - "estimate" command: document the --quiet flag; and also enable the 
   --quiet option for "system"
 - "summary" command: add an option to print summary stats for the 

@@ -3895,19 +3895,36 @@ static NODE *list_to_string_func (NODE *n, int f, parser *p)
     return ret;
 }
 
-static NODE *do_getenv (NODE *l, NODE *r, parser *p)
+/* handles both getenv (string value of variable) and
+   ngetenv (numerical value of variable)
+*/
+
+static NODE *do_getenv (NODE *l, int f, parser *p)
 {
-    NODE *ret = (r->t == EMPTY)? aux_string_node(p) :
+    NODE *ret = (f == F_GETENV)? aux_string_node(p) :
 	aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	const char *s = l->v.str;
-	char *estr = gretl_getenv(s, &p->err);
+	int defined = 0;
+	char *estr;
 
-	if (r->t == EMPTY) {
+	estr = gretl_getenv(l->v.str, &defined, &p->err);
+
+	if (f == F_GETENV) {
 	    ret->v.str = estr;
 	} else {
-	    sscanf(estr, "%lf", &ret->v.xval);
+	    /* ngetenv */
+	    if (defined) {
+		double x;
+
+		if (sscanf(estr, "%lf", &x) == 1) {
+		    ret->v.xval = x;
+		} else {
+		    ret->v.xval = 1;
+		}
+	    } else {
+		ret->v.xval = 0;
+	    }
 	    free(estr);
 	}
     }
@@ -8463,10 +8480,9 @@ static NODE *eval (NODE *t, parser *p)
 	}
 	break;
     case F_GETENV:
-	if (l->t == STR && (r->t == EMPTY || r->t == NUM)) {
-	    ret = do_getenv(l, r, p);
-	} else if (l->t == STR) {
-	    node_type_error(t->t, 1, NUM, r, p);
+    case F_NGETENV:
+	if (l->t == STR) {
+	    ret = do_getenv(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, STR, l, p);
 	} 

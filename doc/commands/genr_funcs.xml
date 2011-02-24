@@ -2058,24 +2058,16 @@
       </description>
     </function>
 
-    <function name="getenv" section="strings" output="seebelow">
+    <function name="getenv" section="strings" output="string">
       <fnargs>
 	<fnarg type="string">s</fnarg>
-	<fnarg type="scalar" optional="true">asnum</fnarg>
       </fnargs>    
       <description>
 	<para>
-	  If the second argument is omitted, or given as zero: if an
-	  environment variable by the name of <argname>s</argname> is
-	  defined, returns the string value of that variable,
-	  otherwise returns an empty string.
-	</para>
-	<para>
-	  If <argname>asnum</argname> is non-zero: if an environment
-	  variable named <argname>s</argname> is defined and its value
-	  is interpretable as a number, returns a scalar value
-	  obtained via the C function <lit>sscanf</lit>, otherwise
-	  returns <lit>NA</lit>.
+	  If an environment variable by the name of
+	  <argname>s</argname> is defined, returns the string value of
+	  that variable, otherwise returns an empty string.
+	  See also <fncref targ="ngetenv"/>.
 	</para>
       </description>
     </function>
@@ -3684,6 +3676,22 @@
       <description>
 	<para>
 	  Returns the number of members in list <argname>L</argname>.
+	</para>
+      </description>
+    </function>
+
+    <function name="ngetenv" section="strings" output="scalar">
+      <fnargs>
+	<fnarg type="string">s</fnarg>
+      </fnargs>    
+      <description>
+	<para>
+	  If an environment variable by the name of
+	  <argname>s</argname> is defined and has a numerical value,
+	  returns that value. Otherwise this function
+	  <quote>degrades</quote> to a boolean, returning 1 if
+	  <argname>s</argname> is defined in the environment and 0 if
+	  not. See also <fncref targ="getenv"/>.
 	</para>
       </description>
     </function>

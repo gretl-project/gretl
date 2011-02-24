@@ -312,6 +312,7 @@ struct str_table funcs[] = {
     { F_KSIMUL,   "ksimul" },
     { F_TRIMR,    "trimr" },
     { F_GETENV,   "getenv" },
+    { F_NGETENV,  "ngetenv" },
     { F_ARGNAME,  "argname" },
     { F_OBSLABEL, "obslabel" },
     { F_READFILE, "readfile" },

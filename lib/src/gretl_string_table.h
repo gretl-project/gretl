@@ -69,7 +69,7 @@ int is_codevar (const char *s);
 
 int set_codevars (const char *s);
 
-char *gretl_getenv (const char *key, int *err);
+char *gretl_getenv (const char *key, int *defined, int *err);
 
 char *retrieve_date_string (int t, const DATAINFO *pdinfo, int *err);
 

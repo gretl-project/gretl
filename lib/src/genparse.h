@@ -252,8 +252,9 @@ enum {
     F_LOGISTIC,
     F_INVMILLS,
     F_ERRMSG,
-    F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_GETENV,
+    F_NGETENV,
+    F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,
     F_SDC,
