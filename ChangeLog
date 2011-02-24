@@ -1,3 +1,6 @@
+version 1.9.5, in progress
+- When building against gtk3, put the plugins into LIBDIR/gretl-gtk3
+
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 
   implementation of the Mersenne Twister to the SIMD-oriented Fast 
