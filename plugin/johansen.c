@@ -1395,6 +1395,8 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     }
     pputc(prn, '\n');
 
+    pprintf(prn, "%s = %g\n\n", _("Log-likelihood"), jvar->ll);
+
     if (nexo > 0) {
 	pputs(prn, _("Note: in general, the test statistics above "
 		     "are valid only in the\nabsence of additional "

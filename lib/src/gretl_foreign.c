@@ -476,7 +476,35 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
     return 0;
 }
 
-int write_gretl_octave_file (const char *buf, gretlopt opt, const char **pfname)
+/* write out current dataset as an octave matrix, and, if this succeeds,
+   write appropriate octave commands to @fp to source the data
+*/
+
+static int write_data_for_octave (const double **Z, 
+				  const DATAINFO *pdinfo,
+				  FILE *fp)
+{
+    gchar *mdata;
+    int err;
+
+    mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
+    err = write_data(mdata, NULL, Z, pdinfo, OPT_M | OPT_F, 0);
+ 
+    if (err) {
+	gretl_errmsg_sprintf("write_data_for_octave: failed with err = %d\n", err);
+    } else {
+	fputs("% load data from gretl\n", fp);
+	fprintf(fp, "load '%s'\n", mdata);
+    }
+
+    g_free(mdata);
+
+    return err;
+}
+
+int write_gretl_octave_file (const char *buf, gretlopt opt, 
+			     const double **Z, const DATAINFO *pdinfo,
+			     const char **pfname)
 {
     const gchar *fname = gretl_octave_filename();
     FILE *fp = gretl_fopen(fname, "w");
@@ -489,6 +517,17 @@ int write_gretl_octave_file (const char *buf, gretlopt opt, const char **pfname)
 	if (!err) {
 	    add_gretl_include(fp);
 	}
+
+	if (opt & OPT_D) {
+	    /* --send-data */
+	    fprintf(stderr, "*** writing data for octave\n");
+	    err = write_data_for_octave(Z, pdinfo, fp);
+	    if (err) {
+		fclose(fp);
+		return err;
+	    }
+	}
+
 	if (buf != NULL) {
 	    /* pass on the material supplied in the 'buf' argument */
 	    char line[1024];
@@ -1516,7 +1555,8 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	    err = lib_run_other_sync(foreign_opt, prn);
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
-	err = write_gretl_octave_file(NULL, foreign_opt, NULL);
+	err = write_gretl_octave_file(NULL, foreign_opt, 
+				      Z, pdinfo, NULL);
 	if (err) {
 	    delete_gretl_octave_file();
 	} else {

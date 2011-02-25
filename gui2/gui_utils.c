@@ -4689,7 +4689,9 @@ static void run_ox_or_octave (gchar *buf, int ox)
     if (ox) {
 	err = write_gretl_ox_file(buf, OPT_G, &fname);
     } else {
-	err = write_gretl_octave_file(buf, OPT_G, &fname);
+	err = write_gretl_octave_file(buf, OPT_G, 
+				      Z, datainfo,
+				      &fname);
     }
 
     if (err) {
@@ -4921,7 +4923,9 @@ void run_octave_script (gchar *buf)
     const char *fname;
     int err;
 
-    err = write_gretl_octave_file(buf, OPT_G, &fname);
+    err = write_gretl_octave_file(buf, OPT_G, 
+				  (const double **) Z, datainfo,
+				  &fname);
 
     if (err) {
 	gui_errmsg(err);

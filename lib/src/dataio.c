@@ -1455,13 +1455,15 @@ int write_data (const char *fname, int *list,
 	}
     } else if (fmt == GRETL_FMT_OCTAVE) { 
 	/* GNU Octave: write out data as a matrix */
-	fprintf(fp, "# name: X\n# type: matrix\n# rows: %d\n# columns: %d\n", 
-		n, list[0]);
+	const char *matname = (opt & OPT_F)? "gretldata" : "X";
+
+	fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: %d\n", 
+		matname, n, list[0]);
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=1; i<=list[0]; i++) {
 		v = list[i];
 		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.12g ", Z[v][t]);
+		    fprintf(fp, "%.15g ", Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]); 
 		}
