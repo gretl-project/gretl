@@ -49,11 +49,11 @@ const double s_mTrace_m_coef[5][6] = {
 };
 
 const double s_mTrace_v_coef[5][6] = {
-  {3,  -0.33,  -0.55,      0,        0,     0},
-  {3,    3.6,   0.75,   -0.4,     -0.3,     0},
-  {3,    1.8,      0,   -2.8,     -1.1,     0},
-  {3,    5.7,    3.2,   -1.3,     -0.5,     0},
-  {3,    4.0,    0.8,   -5.8,    -2.66,     0}
+  {3, -0.33, -0.55,     0,      0,   0},
+  {3,   3.6,  0.75,  -0.4,   -0.3,   0},
+  {3,   1.8,     0,  -2.8,   -1.1,   0},
+  {3,   5.7,   3.2,  -1.3,   -0.5,   0},
+  {3,   4.0,   0.8,  -5.8,  -2.66,   0}
 };
 
 const double s_mTrace_m_time[5][7] = {
@@ -85,11 +85,11 @@ const double s_mMaxev_m_coef[5][5] = {
 }; 
 
 const double s_mMaxev_v_coef[5][5] = {
-  {1.8806,     -15.499,      1.1136,    0.070508,      14.714},  
-  {2.2231,     -7.9064,     0.58592,   -0.034324,      12.058},  
-  {2.0785,     -9.7846,     -3.3680,    -0.24528,      13.074},  
-  {1.9955,     -5.5428,      1.2425,     0.41949,      12.841},  
-  {2.0899,     -5.3303,     -7.1523,    -0.25260,      12.393}
+  {1.8806, -15.499,  1.1136,  0.070508, 14.714},  
+  {2.2231, -7.9064, 0.58592, -0.034324, 12.058},  
+  {2.0785, -9.7846, -3.3680, -0.245280, 13.074},  
+  {1.9955, -5.5428,  1.2425,  0.419490, 12.841},  
+  {2.0899, -5.3303, -7.1523, -0.252600, 12.393}
 }; 
 
 static int
@@ -1330,15 +1330,25 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     return 0;
 }
 
-static void coint_test_print_exog (const int *list, const DATAINFO *pdinfo,
+static void coint_test_print_exog (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 				   PRN *prn)
 {
     int i, vi;
 
-    pprintf(prn, "\n%s: ", _("Exogenous regressor(s)"));
-    for (i=1; i<=list[0]; i++) {
-	vi = list[i];
-	pprintf(prn, "%s ", pdinfo->varname[vi]);
+    if (jvar->rlist != NULL && jvar->rlist[0] > 0) {
+	pprintf(prn, "\n%s: ", _("Restricted exogenous term(s)"));
+	for (i=1; i<=jvar->rlist[0]; i++) {
+	    vi = jvar->rlist[i];
+	    pprintf(prn, "%s ", pdinfo->varname[vi]);
+	}
+    }
+
+    if (jvar->xlist != NULL && jvar->xlist[0] > 0) {
+	pprintf(prn, "\n%s: ", _("Exogenous regressor(s)"));
+	for (i=1; i<=jvar->xlist[0]; i++) {
+	    vi = jvar->xlist[i];
+	    pprintf(prn, "%s ", pdinfo->varname[vi]);
+	}
     }
 }
 
@@ -1377,8 +1387,8 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     }
 
     print_Johansen_test_case(jcode(jvar), prn);
-    if (nexo > 0) {
-	coint_test_print_exog(jvar->xlist, pdinfo, prn);
+    if (nexo > 0 || jvar->rlist != NULL) {
+	coint_test_print_exog(jvar, pdinfo, prn);
     }
     pputc(prn, '\n');
 

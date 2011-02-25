@@ -4690,7 +4690,8 @@ static void run_ox_or_octave (gchar *buf, int ox)
 	err = write_gretl_ox_file(buf, OPT_G, &fname);
     } else {
 	err = write_gretl_octave_file(buf, OPT_G, 
-				      Z, datainfo,
+				      (const double **) Z, 
+				      datainfo,
 				      &fname);
     }
 
