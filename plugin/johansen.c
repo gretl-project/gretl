@@ -1351,7 +1351,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     int T = jvar->T;
     int n = jvar->neqns;
     int nexo = 0;
-    double trace, lmax;
+    double llc, trace, lmax;
     double cumeig = 0.0;
     int i;
 
@@ -1381,6 +1381,13 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	coint_test_print_exog(jvar->xlist, pdinfo, prn);
     }
     pputc(prn, '\n');
+
+#if 1
+    llc = (1.0 + LN_2_PI) * jvar->T;
+    pprintf(prn, "\n%s = %g (including c: %g)\n", _("Log-likelihood"), 
+	    jvar->ll + llc, jvar->ll);
+#endif
+
     pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
 	    _("Trace test"), _("p-value"),
 	    _("Lmax test"), _("p-value"));	
@@ -1397,8 +1404,6 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	gretl_matrix_set(pvals, i, 1, pv[1]);
     }
     pputc(prn, '\n');
-
-    pprintf(prn, "%s = %g\n\n", _("Log-likelihood"), jvar->ll);
 
     if (nexo > 0) {
 	pputs(prn, _("Note: in general, the test statistics above "

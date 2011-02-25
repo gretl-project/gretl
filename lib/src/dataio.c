@@ -1845,6 +1845,7 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
+	free(tmpdinfo);
 	return import_csv(fname, pZ, pdinfo, OPT_NONE, prn);
     } else if (err) {
 	return err;
