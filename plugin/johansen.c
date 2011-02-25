@@ -31,7 +31,10 @@
 
 /* 
    Critical values for Johansen's likelihood ratio tests
-   are computed using J. Doornik's gamma approximation
+   are computed using J. Doornik's gamma approximation --
+   see "Approximations to the Asymptotic Distributions of
+   Cointegration Tests", Journal of Economic Surveys, 
+   Volume 12, Issue 5, 1998, pp. 573-593.
 */
 
 /* Matrices for the trace test */
