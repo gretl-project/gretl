@@ -29,119 +29,93 @@
 
 #define JDEBUG 0
 
-/* 
-   Critical values for Johansen's likelihood ratio tests
-   are computed using J. Doornik's gamma approximation --
+/* coefficient matrices for the trace test */
+
+const double trace_m_coef[5][6] = {
+ /* n^2    n        1    n==1    n==2  n^1/2 */
+    {2, -1.00,   0.07,   0.07,      0,     0},
+    {2,  2.01,      0,   0.06,   0.05,     0},
+    {2,  1.05,  -1.55,  -0.50,  -0.23,     0},
+    {2,  4.05,   0.50,  -0.23,  -0.07,     0},
+    {2,  2.85,  -5.10,  -0.10,  -0.06,  1.35}
+};
+
+const double trace_v_coef[5][6] = {
+    {3, -0.33, -0.55,     0,      0,  0},
+    {3,   3.6,  0.75,  -0.4,   -0.3,  0},
+    {3,   1.8,     0,  -2.8,   -1.1,  0},
+    {3,   5.7,   3.2,  -1.3,   -0.5,  0},
+    {3,   4.0,   0.8,  -5.8,  -2.66,  0}
+};
+
+/* coefficient matrices for the lambdamax test */
+
+const double maxev_m_coef[5][5] = {
+    /*  n         1         n==1       n==2       n^1/2 */
+    {6.0019,  -2.7558,    0.67185,    0.11490,   -2.7764},  
+    {5.9498,   0.43402,   0.048360,   0.018198,  -2.3669},  
+    {5.8271,  -1.6487,   -1.6118,    -0.25949,   -1.5666},  
+    {5.8658,   2.5595,   -0.34443,   -0.077991,  -1.7552},  
+    {5.6364,  -0.90531,  -3.5166,    -0.47966,   -0.21447}
+}; 
+
+const double maxev_v_coef[5][5] = {
+    {1.8806, -15.499,  1.1136,  0.070508, 14.714},  
+    {2.2231, -7.9064, 0.58592, -0.034324, 12.058},  
+    {2.0785, -9.7846, -3.3680, -0.245280, 13.074},  
+    {1.9955, -5.5428,  1.2425,  0.419490, 12.841},  
+    {2.0899, -5.3303, -7.1523, -0.252600, 12.393}
+}; 
+
+/*
+   Asymptotic p-values for Johansen's likelihood ratio tests
+   computed using J. Doornik's gamma approximation --
    see "Approximations to the Asymptotic Distributions of
    Cointegration Tests", Journal of Economic Surveys, 
-   Volume 12, Issue 5, 1998, pp. 573-593.
-*/
+   12/5, 1998, pp. 573-593.
 
-/* Matrices for the trace test */
-
-const double s_mTrace_m_coef[5][6] = {
-/*  n^2     n        1    n==1     n==2  n^1/2 */
-  {2,  -1.00,    0.07,   0.07,       0,     0},
-  {2,   2.01,       0,   0.06,    0.05,     0},
-  {2,   1.05,   -1.55,  -0.50,   -0.23,     0},
-  {2,   4.05,    0.50,  -0.23,   -0.07,     0},
-  {2,   2.85,   -5.10,  -0.10,   -0.06,  1.35}
-};
-
-const double s_mTrace_v_coef[5][6] = {
-  {3, -0.33, -0.55,     0,      0,   0},
-  {3,   3.6,  0.75,  -0.4,   -0.3,   0},
-  {3,   1.8,     0,  -2.8,   -1.1,   0},
-  {3,   5.7,   3.2,  -1.3,   -0.5,   0},
-  {3,   4.0,   0.8,  -5.8,  -2.66,   0}
-};
-
-const double s_mTrace_m_time[5][7] = {
-/* sqrt(n)/T   n/T  n^2/T^2   n==1/T     n==1     n==2     n==3 */
-  {-0.101,   0.499,   0.896,  -0.562, 0.00229, 0.00662,       0}, 
-  {     0,   0.465,   0.984,  -0.273,-0.00244,       0,       0}, 
-  { 0.134,   0.422,    1.02,    2.17,-0.00182,       0,-0.00321}, 
-  {0.0252,   0.448,    1.09,  -0.353,       0,       0,       0}, 
-  {-0.819,   0.615,   0.896,    2.43, 0.00149,       0,       0}
-};
-
-const double s_mTrace_v_time[5][7] = {
-  {-0.204,   0.980,    3.11,   -2.14,    0.0499, -0.01030,  -0.00902}, 
-  { 0.224,   0.863,    3.38,   -0.807,        0,        0,  -0.0091}, 
-  { 0.422,   0.734,    3.76,    4.320, -0.00606,        0,  -0.00718}, 
-  { 0.000,   0.836,    3.99,   -1.330, -0.00298, -0.00139,  -0.00268}, 
-  { -1.29,   1.010,    3.92,    4.670,  0.00484, -0.00127,  -0.0199}
-};
-
-/* Matrices for the lambdamax test */
-
-const double s_mMaxev_m_coef[5][5] = {
-/*   n            1         n==1       n==2        n^1/2 */
-  {6.0019,  -2.7558,    0.67185,    0.11490,    -2.7764},  
-  {5.9498,   0.43402,   0.048360,   0.018198,   -2.3669},  
-  {5.8271,  -1.6487,   -1.6118,    -0.25949,    -1.5666},  
-  {5.8658,   2.5595,   -0.34443,   -0.077991,   -1.7552},  
-  {5.6364,  -0.90531,  -3.5166,    -0.47966,    -0.21447}
-}; 
-
-const double s_mMaxev_v_coef[5][5] = {
-  {1.8806, -15.499,  1.1136,  0.070508, 14.714},  
-  {2.2231, -7.9064, 0.58592, -0.034324, 12.058},  
-  {2.0785, -9.7846, -3.3680, -0.245280, 13.074},  
-  {1.9955, -5.5428,  1.2425,  0.419490, 12.841},  
-  {2.0899, -5.3303, -7.1523, -0.252600, 12.393}
-}; 
-
-static int
-gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det, 
-		 int N, double *pval)
-{
-    /*
-      Asymptotic critical values for Johansen's LR tests via gamma approximation
-
-      params:
-      tracetest, lmaxtest: trace and lambdamax est. statistics
-      det: index of setup of deterministic regressors 
+   trace, lmax: trace and lambdamax statistics
+   det: index of setup of deterministic regressors 
         J_NO_CONST     = no constant
         J_REST_CONST   = restricted constant
         J_UNREST_CONST = unrestricted constant
         J_REST_TREND   = restricted trend
         J_UNREST_TREND = unrestricted trend
-      N: cointegration rank under H0;
-      pval: on output, array of pvalues for the two tests
-    */
-    
-    double mt, vt, ml, vl;
-    const double *tracem, *tracev, *lmaxm, *lmaxv;
-    double x[7];
+   r0: cointegration rank under H0
+   pval: on output, array of p-values for the two tests
+*/
+
+static int
+gamma_LR_pvals (double trace, double lmax, JohansenCode det, 
+		int r0, double *pval)
+{
+    const double *tracem = trace_m_coef[det];
+    const double *tracev = trace_v_coef[det];
+    const double *maxevm = maxev_m_coef[det];
+    const double *maxevv = maxev_v_coef[det];
+    double mt = 0, vt = 0;
+    double ml = 0, vl = 0;
+    double x[6];
     int i;
 
-    tracem = s_mTrace_m_coef[det];
-    tracev = s_mTrace_v_coef[det];
-    lmaxm = s_mMaxev_m_coef[det];
-    lmaxv = s_mMaxev_v_coef[det];
-
-    mt = vt = 0.0;
-    ml = vl = 0.0;
-
-    x[0] = N * N;
-    x[1] = N;
+    x[0] = r0 * r0;
+    x[1] = r0;
     x[2] = 1.0;
-    x[3] = (N == 1)? 1.0 : 0.0;
-    x[4] = (N == 2)? 1.0 : 0.0;
-    x[5] = sqrt((double) N);
+    x[3] = (r0 == 1)? 1.0 : 0.0;
+    x[4] = (r0 == 2)? 1.0 : 0.0;
+    x[5] = sqrt((double) r0);
 
     for (i=0; i<6; i++) {
 	mt += x[i] * tracem[i];
 	vt += x[i] * tracev[i];
 	if (i > 0) {
-	    ml += x[i] * lmaxm[i-1];
-	    vl += x[i] * lmaxv[i-1];
+	    ml += x[i] * maxevm[i-1];
+	    vl += x[i] * maxevv[i-1];
 	}
     }
 
-    pval[0] = gamma_cdf_comp(mt, vt, tracetest, 2);
-    pval[1] = gamma_cdf_comp(ml, vl, lmaxtest, 2);
+    pval[0] = gamma_cdf_comp(mt, vt, trace, 2);
+    pval[1] = gamma_cdf_comp(ml, vl, lmax, 2);
 
     return 0;
 }
@@ -1404,7 +1378,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 
 	trace = gretl_matrix_get(tests, i, 0);
 	lmax = gretl_matrix_get(tests, i, 1);
-	gamma_par_asymp(trace, lmax, jcode(jvar), n - i, pv);
+	gamma_LR_pvals(trace, lmax, jcode(jvar), n - i, pv);
 	pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
 		i, evals->val[i], trace, pv[0], lmax, pv[1]);
 	gretl_matrix_set(pvals, i, 0, pv[0]);

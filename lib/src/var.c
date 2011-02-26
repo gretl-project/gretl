@@ -306,6 +306,66 @@ void VAR_fill_X (GRETL_VAR *v, int p, const double **Z,
 #endif
 }
 
+/* Check to see if the set of restricted exogenous regressors
+   in a VECM effectively comprises a linear trend: we do
+   this by regressing a trend on the columns of X and
+   examining the R-squared.
+*/
+
+static int test_for_trend (GRETL_VAR *v, const double **Z)
+{
+    gretl_matrix_block *B;
+    gretl_matrix *X, *y;
+    gretl_matrix *b, *u;
+    int T = v->t2 - v->t1 + 1;
+    int k = v->rlist[0] + 1;
+    int i, vi, s, t;
+    int err = 0;
+
+    B = gretl_matrix_block_new(&X, T, k,
+			       &y, T, 1,
+			       &b, k, 1,
+			       &u, T, 1,
+			       NULL);
+    if (B == NULL) {
+	return E_ALLOC;
+    }
+
+    for (s=0; s<T; s++) {
+	gretl_matrix_set(X, s, 0, 1.0);
+	gretl_matrix_set(y, s, 0, s+1);
+    }
+
+    for (i=0; i<v->rlist[0]; i++) {
+	vi = v->rlist[i+1];
+	s = 0;
+	for (t=v->t1; t<=v->t2; t++) {
+	    gretl_matrix_set(X, s++, i+1, Z[vi][t]);
+	}
+    } 
+	
+    err = gretl_matrix_ols(y, X, b, NULL, u, NULL);
+
+    if (!err) {
+	double ydev, ybar = (T + 1.0) / 2.0;
+	double R2, SSR = 0, SST = 0;
+
+	for (s=0; s<T; s++) {
+	    SSR += u->val[s] * u->val[s];
+	    ydev = y->val[s] - ybar;
+	    SST += ydev * ydev;
+	}
+
+	R2 = 1 - SSR / SST;
+	fprintf(stderr, "Test for trend in restricted X: "
+		"R-squared = %g\n", R2);
+    }
+  
+    gretl_matrix_block_destroy(B);
+
+    return err;
+}
+
 /* construct the matrix of dependent variables for VAR or
    VECM estimation */
 
@@ -2620,6 +2680,19 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
     }    
 }
 
+static int do_test_for_trend (GRETL_VAR *v)
+{
+    if (v->rlist == NULL || v->rlist[0] == 0) {
+	return 0;
+    } else if (jcode(v) > J_UNREST_CONST) {
+	return 0;
+    } else if (jcode(v) == J_NO_CONST) {
+	return 0;
+    }
+
+    return 1;
+}
+
 #define JVAR_USE_SVD 1
 
 /* For Johansen analysis: estimate VAR in differences along with the
@@ -2687,6 +2760,12 @@ int johansen_stage_1 (GRETL_VAR *v, const double **Z,
 	gretl_matrix_reuse(v->Y, -1, v->neqns);
 	gretl_matrix_reuse(v->B, -1, v->neqns);
     }
+
+#if 1
+    if (do_test_for_trend(v)) {
+	test_for_trend(v, Z);
+    }
+#endif    
 
  finish:
 
