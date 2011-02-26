@@ -317,10 +317,19 @@ static int test_for_trend (GRETL_VAR *v, const double **Z)
     gretl_matrix_block *B;
     gretl_matrix *X, *y;
     gretl_matrix *b, *u;
+    double R2crit = 0.95;
     int T = v->t2 - v->t1 + 1;
-    int k = v->rlist[0] + 1;
-    int i, vi, s, t;
+    const int *list;
+    int i, vi, k, s, t;
     int err = 0;
+
+    if (jcode(v) == J_REST_TREND) {
+	list = v->xlist;
+    } else {
+	list = v->rlist;
+    }
+
+    k = list[0] + 1;
 
     B = gretl_matrix_block_new(&X, T, k,
 			       &y, T, 1,
@@ -336,8 +345,8 @@ static int test_for_trend (GRETL_VAR *v, const double **Z)
 	gretl_matrix_set(y, s, 0, s+1);
     }
 
-    for (i=0; i<v->rlist[0]; i++) {
-	vi = v->rlist[i+1];
+    for (i=0; i<list[0]; i++) {
+	vi = list[i+1];
 	s = 0;
 	for (t=v->t1; t<=v->t2; t++) {
 	    gretl_matrix_set(X, s++, i+1, Z[vi][t]);
@@ -357,8 +366,15 @@ static int test_for_trend (GRETL_VAR *v, const double **Z)
 	}
 
 	R2 = 1 - SSR / SST;
-	fprintf(stderr, "Test for trend in restricted X: "
-		"R-squared = %g\n", R2);
+	if (R2 >= R2crit) {
+	    if (jcode(v) == J_REST_TREND) {
+		v->jinfo->pvcode = J_UNREST_TREND;
+	    } else {
+		v->jinfo->pvcode = J_REST_TREND;
+	    }
+	    fprintf(stderr, "Test for trend in X: "
+		    "R-squared = %g\n", R2);
+	}
     }
   
     gretl_matrix_block_destroy(B);
@@ -2682,15 +2698,18 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
 
 static int do_test_for_trend (GRETL_VAR *v)
 {
-    if (v->rlist == NULL || v->rlist[0] == 0) {
-	return 0;
-    } else if (jcode(v) > J_UNREST_CONST) {
-	return 0;
-    } else if (jcode(v) == J_NO_CONST) {
+    if (v->jinfo->rank == 0 && 
+	v->rlist != NULL && v->rlist[0] > 0 &&
+	(jcode(v) == J_REST_CONST ||
+	 jcode(v) == J_UNREST_CONST)) { 
+	return 1;
+    } else if (v->jinfo->rank == 0 && 
+	       v->xlist != NULL && v->xlist[0] > 0 &&
+	       jcode(v) == J_REST_TREND) {
+	return 1;
+    } else {
 	return 0;
     }
-
-    return 1;
 }
 
 #define JVAR_USE_SVD 1
@@ -2835,6 +2854,7 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 
     jv->ID = 0;
     jv->code = jcode_from_opt(opt);
+    jv->pvcode = 0;
     jv->rank = rank;
     jv->seasonals = 0;
 

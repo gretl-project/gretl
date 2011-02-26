@@ -1841,11 +1841,14 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 	gz_switch_ext(lblfile, fname, "lbl");
     }
 
-    /* read data header file */
+    /* try reading data header file */
     err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
+    if (err) {
+	free(tmpdinfo);
+    }
+
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
-	free(tmpdinfo);
 	return import_csv(fname, pZ, pdinfo, OPT_NONE, prn);
     } else if (err) {
 	return err;
@@ -3219,6 +3222,8 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
     if (has_suffix(fname, ".csv"))
 	return GRETL_CSV;
     if (has_suffix(fname, ".txt"))
+	return GRETL_CSV;
+    if (has_suffix(fname, ".asc"))
 	return GRETL_CSV;
     if (has_suffix(fname, ".m"))
 	return GRETL_OCTAVE;

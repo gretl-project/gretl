@@ -32,39 +32,39 @@
 /* coefficient matrices for the trace test */
 
 const double trace_m_coef[5][6] = {
- /* n^2    n        1    n==1    n==2  n^1/2 */
-    {2, -1.00,   0.07,   0.07,      0,     0},
-    {2,  2.01,      0,   0.06,   0.05,     0},
-    {2,  1.05,  -1.55,  -0.50,  -0.23,     0},
-    {2,  4.05,   0.50,  -0.23,  -0.07,     0},
-    {2,  2.85,  -5.10,  -0.10,  -0.06,  1.35}
+ /* n^2    n       1   n==1   n==2  n^1/2 */
+    {2, -1.00,  0.07,  0.07,     0,     0},
+    {2,  2.01,  0.00,  0.06,  0.05,     0},
+    {2,  1.05, -1.55, -0.50, -0.23,     0},
+    {2,  4.05,  0.50, -0.23, -0.07,     0},
+    {2,  2.85, -5.10, -0.10, -0.06,  1.35}
 };
 
 const double trace_v_coef[5][6] = {
-    {3, -0.33, -0.55,     0,      0,  0},
-    {3,   3.6,  0.75,  -0.4,   -0.3,  0},
-    {3,   1.8,     0,  -2.8,   -1.1,  0},
-    {3,   5.7,   3.2,  -1.3,   -0.5,  0},
-    {3,   4.0,   0.8,  -5.8,  -2.66,  0}
+    {3, -0.33, -0.55,  0.0,  0.00,  0},
+    {3,  3.60,  0.75, -0.4, -0.30,  0},
+    {3,  1.80,  0.00, -2.8, -1.10,  0},
+    {3,  5.70,  3.20, -1.3, -0.50,  0},
+    {3,  4.00,  0.80, -5.8, -2.66,  0}
 };
 
 /* coefficient matrices for the lambdamax test */
 
 const double maxev_m_coef[5][5] = {
-    /*  n         1         n==1       n==2       n^1/2 */
-    {6.0019,  -2.7558,    0.67185,    0.11490,   -2.7764},  
-    {5.9498,   0.43402,   0.048360,   0.018198,  -2.3669},  
-    {5.8271,  -1.6487,   -1.6118,    -0.25949,   -1.5666},  
-    {5.8658,   2.5595,   -0.34443,   -0.077991,  -1.7552},  
-    {5.6364,  -0.90531,  -3.5166,    -0.47966,   -0.21447}
+    /*  n        1        n==1       n==2     n^1/2 */
+    {6.0019, -2.75580,  0.67185,  0.114900, -2.77640},  
+    {5.9498,  0.43402,  0.04836,  0.018198, -2.36690},  
+    {5.8271, -1.64870, -1.61180, -0.259490, -1.56660},  
+    {5.8658,  2.55950, -0.34443, -0.077991, -1.75520},  
+    {5.6364, -0.90531, -3.51660, -0.479660, -0.21447}
 }; 
 
 const double maxev_v_coef[5][5] = {
-    {1.8806, -15.499,  1.1136,  0.070508, 14.714},  
-    {2.2231, -7.9064, 0.58592, -0.034324, 12.058},  
-    {2.0785, -9.7846, -3.3680, -0.245280, 13.074},  
-    {1.9955, -5.5428,  1.2425,  0.419490, 12.841},  
-    {2.0899, -5.3303, -7.1523, -0.252600, 12.393}
+    {1.8806, -15.499,  1.11360,  0.070508, 14.714},  
+    {2.2231, -7.9064,  0.58592, -0.034324, 12.058},  
+    {2.0785, -9.7846, -3.36800, -0.245280, 13.074},  
+    {1.9955, -5.5428,  1.24250,  0.419490, 12.841},  
+    {2.0899, -5.3303, -7.15230, -0.252600, 12.393}
 }; 
 
 /*
@@ -1301,18 +1301,11 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
     return 0;
 }
 
-static void coint_test_print_exog (GRETL_VAR *jvar, const DATAINFO *pdinfo,
+static void coint_test_print_exog (GRETL_VAR *jvar, 
+				   const DATAINFO *pdinfo,
 				   PRN *prn)
 {
     int i, vi;
-
-    if (jvar->rlist != NULL && jvar->rlist[0] > 0) {
-	pprintf(prn, "\n%s: ", _("Restricted exogenous term(s)"));
-	for (i=1; i<=jvar->rlist[0]; i++) {
-	    vi = jvar->rlist[i];
-	    pprintf(prn, "%s ", pdinfo->varname[vi]);
-	}
-    }
 
     if (jvar->xlist != NULL && jvar->xlist[0] > 0) {
 	pprintf(prn, "\n%s: ", _("Exogenous regressor(s)"));
@@ -1331,7 +1324,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     gretl_matrix *pvals;
     int T = jvar->T;
     int n = jvar->neqns;
-    int nexo = 0;
+    int pvcode, nexo = 0, nrexo = 0;
     double llc, trace, lmax;
     double cumeig = 0.0;
     int i;
@@ -1357,28 +1350,36 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	nexo = jvar->xlist[0];
     }
 
+    if (jvar->rlist != NULL) {
+	nrexo = jvar->rlist[0];
+    }
+
     print_Johansen_test_case(jcode(jvar), prn);
-    if (nexo > 0 || jvar->rlist != NULL) {
+    if (nexo > 0) {
 	coint_test_print_exog(jvar, pdinfo, prn);
     }
     pputc(prn, '\n');
 
-#if 1
     llc = (1.0 + LN_2_PI) * jvar->T;
     pprintf(prn, "\n%s = %g (including c: %g)\n", _("Log-likelihood"), 
 	    jvar->ll + llc, jvar->ll);
-#endif
 
     pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
 	    _("Trace test"), _("p-value"),
-	    _("Lmax test"), _("p-value"));	
+	    _("Lmax test"), _("p-value"));
+
+    if (jvar->jinfo->pvcode > 0) {
+	pvcode = jvar->jinfo->pvcode;
+    } else {
+	pvcode = jcode(jvar);
+    }
 
     for (i=0; i<n; i++) {
 	double pv[2];
 
 	trace = gretl_matrix_get(tests, i, 0);
 	lmax = gretl_matrix_get(tests, i, 1);
-	gamma_LR_pvals(trace, lmax, jcode(jvar), n - i, pv);
+	gamma_LR_pvals(trace, lmax, pvcode, n - i, pv);
 	pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
 		i, evals->val[i], trace, pv[0], lmax, pv[1]);
 	gretl_matrix_set(pvals, i, 0, pv[0]);
@@ -1386,10 +1387,18 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     }
     pputc(prn, '\n');
 
-    if (nexo > 0) {
-	pputs(prn, _("Note: in general, the test statistics above "
-		     "are valid only in the\nabsence of additional "
-		     "regressors."));
+    if (nexo > 0 || nrexo > 0) {
+	if (jvar->jinfo->pvcode == J_REST_TREND) {
+	    pputs(prn, _("Note: p-values are as for the case of a "
+			 "restricted trend."));
+	} else if (jvar->jinfo->pvcode == J_UNREST_TREND) {
+	    pputs(prn, _("Note: p-values are as for the case of an "
+			 "unrestricted trend."));
+	} else {
+	    pputs(prn, _("Note: in general, the test statistics above "
+			 "are valid only in the\nabsence of additional "
+			 "regressors."));
+	}
 	pputs(prn, "\n\n");
     }
 

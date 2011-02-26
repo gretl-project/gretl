@@ -33,6 +33,7 @@ typedef enum {
 struct JohansenInfo_ {
     int ID;               /* for identifying saved vars */
     JohansenCode code;    /* see enumeration above */
+    JohansenCode pvcode;  /* see enumeration above */
     int rank;             /* if specified, chosen cointegration rank, else 0 */
     int seasonals;        /* number of seasonal dummies included */
     gretl_matrix *R0;     /* residuals, VAR in differences */
