@@ -171,9 +171,6 @@ const char *beta_vname (const GRETL_VAR *v,
     } else if (v->rlist != NULL) {
 	int k = i - v->ylist[0] - auto_restr(v) + 1;
 
-#if 0
-	fprintf(stderr, "beta_vname: i=%d, k=%d\n", i, k);
-#endif
 	return pdinfo->varname[v->rlist[k]];
     } 
 
@@ -308,9 +305,9 @@ static int print_long_run_matrix (const GRETL_VAR *jvar,
 
     pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
 
-    pprintf(prn, "%22s", pdinfo->varname[jvar->ylist[1]]); /* N.B. */
+    pprintf(prn, "%22s", pdinfo->varname[jvar->ylist[1]]); 
 
-    for (j=1; j<=jvar->ylist[0]; j++) {
+    for (j=1; j<Pi->cols; j++) {
 	pprintf(prn, "%13s", beta_vname(jvar, pdinfo, j));
     }
 
