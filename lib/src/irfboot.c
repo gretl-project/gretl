@@ -244,7 +244,8 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
        expected by johansen_stage_1() */
     maybe_resize_vecm_matrices(v);
 
-    err = johansen_stage_1(v, (const double **) b->Z, b->dinfo);
+    err = johansen_stage_1(v, (const double **) b->Z, b->dinfo,
+			   OPT_NONE, NULL);
 
     if (!err) {
 	/* call the plugin function */

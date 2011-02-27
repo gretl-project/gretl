@@ -27,6 +27,7 @@
 #include "libset.h"
 #include "transforms.h"
 #include "gretl_xml.h"
+#include "matrix_extra.h"
 
 #define VDEBUG 0
 
@@ -2531,9 +2532,9 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
 {
     int i, j;
 
-    pprintf(prn, "\n%s\n\n", _("Sample variance-covariance matrices for residuals"));
+    pprintf(prn, "%s\n\n", _("Sample variance-covariance matrices for residuals"));
 
-    pprintf(prn, " %s\n\n", _("VAR system in first differences"));
+    pprintf(prn, " %s (S00)\n\n", _("VAR system in first differences"));
     for (i=0; i<jv->S00->rows; i++) {
 	for (j=0; j<jv->S00->rows; j++) {
 	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->S00, i, j));
@@ -2541,7 +2542,7 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, "\n %s\n\n", _("System with levels as dependent variable"));
+    pprintf(prn, "\n %s (S11)\n\n", _("System with levels as dependent variable"));
     for (i=0; i<jv->S11->rows; i++) {
 	for (j=0; j<jv->S11->rows; j++) {
 	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->S11, i, j));
@@ -2549,13 +2550,15 @@ print_johansen_sigmas (const JohansenInfo *jv, PRN *prn)
 	pputc(prn, '\n');
     } 
     
-    pprintf(prn, "\n %s\n\n", _("Cross-products"));
+    pprintf(prn, "\n %s (S01)\n\n", _("Cross-products"));
     for (i=0; i<jv->S01->rows; i++) {
 	for (j=0; j<jv->S01->cols; j++) {
 	    pprintf(prn, "%#12.5g", gretl_matrix_get(jv->S01, i, j));
 	}
 	pputc(prn, '\n');
-    }     
+    }
+
+    pputc(prn, '\n');
 }
 
 /* called from gretl_restriction_finalize() if the target
@@ -2721,7 +2724,8 @@ static int do_test_for_trend (GRETL_VAR *v)
 */
 
 int johansen_stage_1 (GRETL_VAR *v, const double **Z, 
-		      const DATAINFO *pdinfo)
+		      const DATAINFO *pdinfo, 
+		      gretlopt opt, PRN *prn)
 {
     int err;
 
@@ -2732,6 +2736,9 @@ int johansen_stage_1 (GRETL_VAR *v, const double **Z,
 
     if (v->ncoeff == 0) {
 	/* nothing to concentrate out */
+	if (opt & OPT_V) {
+	    pputs(prn, "\nNo initial VAR estimation is required\n\n");
+	}
 	johansen_degenerate_stage_1(v, Z);
 	goto finish;
     }
@@ -2754,6 +2761,11 @@ int johansen_stage_1 (GRETL_VAR *v, const double **Z,
 				 v->jinfo->R0, NULL);
 #endif
 
+    if (!err && (opt & OPT_V)) {
+	gretl_matrix_print_to_prn(v->B, "\nCoefficients, VAR in differences", 
+				  prn);
+    }
+
     if (v->ycols > v->Y->cols) {
 	/* re-expand to full size */
 	gretl_matrix_reuse(v->Y, -1, v->ycols);
@@ -2773,6 +2785,11 @@ int johansen_stage_1 (GRETL_VAR *v, const double **Z,
     err = gretl_matrix_multi_ols(v->Y, v->X, v->B, 
 				 v->jinfo->R1, NULL);
 #endif 
+
+    if (!err && (opt & OPT_V)) {
+	gretl_matrix_print_to_prn(v->B, "Coefficients, eqns in lagged levels", 
+				  prn);
+    }
 
     if (v->Y->cols > v->neqns) {
 	/* shrink to "final" size */
@@ -2893,7 +2910,7 @@ static void coint_test_header (const GRETL_VAR *v,
 {
     char stobs[OBSLEN], endobs[OBSLEN];
 
-    pprintf(prn, "%s:\n", _("Johansen test"));
+    pprintf(prn, "\n%s:\n", _("Johansen test"));
     pprintf(prn, "%s = %d\n", _("Number of equations"), v->neqns);
     pprintf(prn, "%s = %d\n", _("Lag order"), v->order + 1);
     pprintf(prn, "%s: %s - %s (T = %d)\n", _("Estimation period"),
@@ -2930,15 +2947,15 @@ johansen_driver (GRETL_VAR *jvar,
 		 gretlopt opt, PRN *prn)
 {
     int r = jrank(jvar);
-    
-    jvar->err = johansen_stage_1(jvar, Z, pdinfo); 
-    if (jvar->err) {
-	return jvar->err;
-    }
 
     if (r == 0) {
 	/* doing cointegration test */
 	coint_test_header(jvar, pdinfo, prn);
+    }
+    
+    jvar->err = johansen_stage_1(jvar, Z, pdinfo, opt, prn); 
+    if (jvar->err) {
+	return jvar->err;
     }
 
     if (opt & OPT_V) {
