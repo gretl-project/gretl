@@ -5495,6 +5495,102 @@ gretl_matrix *gretl_matrix_multiply_new (const gretl_matrix *a,
 }
 
 /**
+ * gretl_matrix_divide:
+ * @a: left-hand matrix.
+ * @b: right-hand matrix.
+ * @mod: %GRETL_MOD_NONE for left division, or
+ * %GRETL_MOD_TRANSPOSE for right division.
+ * @err: location to receive error code.
+ * 
+ * Follows the semantics of Matlab/Octave for left and right
+ * matrix "division". In left division, A \ B is in principle
+ * equivalent to A^{-1} * B, and in right division A / B is
+ * in principle equivalent to A * B^{-1}, but the result is
+ * obtained without explicit computation of the inverse.
+ * 
+ * In left division @a and @b must have the same number of 
+ * rows; in right division they must have the same number
+ * of columns.
+ *
+ * Returns: the "quotient" matrix, or NULL on failure.
+  */
+
+gretl_matrix *gretl_matrix_divide (const gretl_matrix *a, 
+				   const gretl_matrix *b,
+				   GretlMatrixMod mod,
+				   int *err)
+{
+    gretl_matrix *Q = NULL;
+    gretl_matrix *AT = NULL, *BT = NULL; 
+    gretl_matrix *Tmp;
+    int a_scalar = 0;
+
+    if (gretl_is_null_matrix(a) || 
+	gretl_is_null_matrix(b)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (mod == GRETL_MOD_TRANSPOSE) {
+	AT = gretl_matrix_copy_transpose(b);
+	BT = gretl_matrix_copy_transpose(a);
+	if (AT == NULL || BT == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    a = AT;
+	    b = BT;
+	}
+    } 
+
+    if (mod == GRETL_MOD_NONE) {
+	a_scalar = gretl_matrix_is_scalar(a);
+    }
+
+    if (a->rows != b->rows && !a_scalar) {
+	*err = E_NONCONF;
+	goto bailout;
+    }
+
+    Q = gretl_matrix_copy(b);
+    if (Q == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (a_scalar) {
+	*err = gretl_matrix_divide_by_scalar(Q, a->val[0]);
+    } else {
+	Tmp = gretl_matrix_copy(a);
+	if (Tmp == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = gretl_LU_solve(Tmp, Q);
+	    gretl_matrix_free(Tmp);
+	}
+    }
+
+ bailout:
+
+    if (mod == GRETL_MOD_TRANSPOSE && *err == 0) {
+	gretl_matrix_free(AT);
+	gretl_matrix_free(BT);
+	Tmp = Q;
+	Q = gretl_matrix_copy_transpose(Tmp);
+	if (Q == NULL) {
+	    *err = E_ALLOC;
+	} 
+	gretl_matrix_free(Tmp);
+    }
+
+    if (*err && Q != NULL) {
+	gretl_matrix_free(Q);
+	Q = NULL;
+    }
+
+    return Q;
+}
+
+/**
  * gretl_general_matrix_rcond:
  * @m: matrix to examine.
  * @err: location to receive error code.

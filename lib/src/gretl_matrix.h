@@ -295,6 +295,11 @@ gretl_matrix *gretl_matrix_complex_multiply (const gretl_matrix *a,
 					     const gretl_matrix *b,
 					     int *err);
 
+gretl_matrix *gretl_matrix_divide (const gretl_matrix *a, 
+				   const gretl_matrix *b,
+				   GretlMatrixMod mod,
+				   int *err);
+
 gretl_matrix *gretl_matrix_complex_divide (const gretl_matrix *a, 
 					   const gretl_matrix *b,
 					   int *err);

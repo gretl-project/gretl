@@ -255,7 +255,8 @@ The following binary operators are available for matrices:
 \texttt{-}  & subtraction \\
 \texttt{*}  & ordinary matrix multiplication \\
 \texttt{'}  & pre-multiplication by transpose \\
-\texttt{/}  & matrix ``division'' (see below) \\
+\verb|\|    & matrix ``left division'' (see below) \\
+\texttt{/}  & matrix ``right division'' (see below) \\
 \verb+~+    & column-wise concatenation \\
 \verb+|+    & row-wise concatenation \\
 \texttt{**} & Kronecker product \\
@@ -302,19 +303,22 @@ produces the product of $X$-transpose and $Y$.  In effect,
 the expression \texttt{X'Y} is shorthand for \texttt{X'*Y}
 (which is also valid).
 
-In matrix ``division'', the statement 
+In matrix ``left division'', the statement 
 %
 \begin{code}
-matrix C = A/B
+matrix X = A \ B
 \end{code}
 %
-is interpreted as a request to find the matrix $C$ that solves $BC=A$.
-If $B$ is a square matrix, this is treated as equivalent to $B^{-1}A$,
-which fails if $B$ is singular; the numerical method employed here is
-the LU decomposition.  If $B$ is a $T \times k$ matrix with
-$T > k$, then $C$ is the least-squares solution, $C = (B'B)^{-1}B'A$,
-which fails if $B'B$ is singular; the numerical method employed here is
+is interpreted as a request to find the matrix $X$ that solves $AX=B$.
+If $B$ is a square matrix, this is in principle equivalent to $A^{-1}B$,
+which fails if $A$ is singular; the numerical method employed here is
+the LU decomposition.  If $A$ is a $T \times k$ matrix with
+$T > k$, then $X$ is the least-squares solution, $X = (A'A)^{-1}A'B$,
+which fails if $A'A$ is singular; the numerical method employed here is
 the QR decomposition.  Otherwise, the operation necessarily fails.
+
+For matrix ``right division'', as in \texttt{X = A / B}, $X$ is the
+matrix that solves $XB = A$, in principle equivalent to $AB^{-1}$.
 
 In ``dot'' operations a binary operation is applied element by
 element; the result of this operation is obvious if the matrices are

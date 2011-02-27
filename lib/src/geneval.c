@@ -1504,7 +1504,6 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 				       int op, int *err) 
 {
     gretl_matrix *C = NULL;
-    gretl_matrix *D = NULL;
     int ra, ca;
     int rb, cb;
     int r, c;
@@ -1597,27 +1596,14 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	}
 	break;
     case B_DIV:
-	/* matrix "division" */
-	rb = gretl_matrix_rows(B);
-	cb = gretl_matrix_cols(B);
-
-	C = gretl_matrix_copy(A);
-	if (C == NULL) {
-	    *err = E_ALLOC;
+    case B_LDIV:
+	/* matrix right or left "division" */
+	if (op == B_LDIV) {
+	    C = gretl_matrix_divide(A, B, GRETL_MOD_NONE, err);
 	} else {
-	    if (rb == 1 && cb == 1) {
-		*err = gretl_matrix_divide_by_scalar(C, B->val[0]);
-	    } else {
-		D = gretl_matrix_copy(B);
-		if (D == NULL) {
-		    gretl_matrix_free(C);
-		    C = NULL;
-		    *err = E_ALLOC;
-		} else {	
-		    *err = gretl_LU_solve(D, C);
-		    gretl_matrix_free(D);
-		}
-	    }
+	    /* A/B = (B'\A')' */
+	    C = gretl_matrix_divide(A, B, GRETL_MOD_TRANSPOSE, err);
+	    fprintf(stderr, "*** C = %p, err = %d\n", (void *) C, *err);
 	}
 	break;
     case B_DOTMULT:
@@ -7788,6 +7774,7 @@ static NODE *eval (NODE *t, parser *p)
     case B_DOTEQ:
     case B_DOTGT:
     case B_DOTLT:
+    case B_LDIV:
 	/* matrix-matrix or matrix-scalar binary operators */
 	if ((l->t == MAT && r->t == MAT) ||
 	    (l->t == MAT && r->t == NUM) ||

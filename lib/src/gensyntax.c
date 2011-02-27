@@ -1346,8 +1346,9 @@ static NODE *term (parser *p)
     }
 
     while (!p->err && (p->sym == B_MUL || p->sym == B_DIV || 
-		       p->sym == B_MOD || p->sym == B_DOTMULT || 
-		       p->sym == B_DOTDIV || p->sym == B_KRON)) {
+		       p->sym == B_LDIV || p->sym == B_MOD || 
+		       p->sym == B_DOTMULT || p->sym == B_DOTDIV || 
+		       p->sym == B_KRON)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

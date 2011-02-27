@@ -1252,6 +1252,10 @@ void lex (parser *p)
 	    p->sym = B_DIV;
 	    parser_getc(p);
 	    return;
+        case '\\': 
+	    p->sym = B_LDIV;
+	    parser_getc(p);
+	    return;
         case '%': 
 	    p->sym = B_MOD;
 	    parser_getc(p);
@@ -1522,6 +1526,8 @@ const char *getsymb (int t, const parser *p)
 	return "'";
     case B_DIV: 
 	return "/";
+    case B_LDIV:
+	return "\\";
     case B_MOD: 
 	return "%";
     case B_POW: 

@@ -6,6 +6,8 @@ version 1.9.5, in progress
 - "coint2" (Johansen test): print the log-likelihood, plus fix the
   printing of the Pi matrix when exogenous regressors are present
 - Fix a small memory leak when opening an *.asc data file
+- Matrix "division": give the operators "\" and "/" the same semantics
+  as in Octave/Matlab (left and right division)
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 
