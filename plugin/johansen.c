@@ -124,6 +124,8 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     return 0;
 }
 
+/* public function accessible via gretl's plugin apparatus */
+
 double trace_pvalue (double trace, int N, int det)
 {
     if (det < J_NO_CONST || det > J_UNREST_TREND || N < 1) {
@@ -1479,6 +1481,54 @@ static int johansen_get_eigenvalues (gretl_matrix *S00,
     return err;
 }
 
+#define OLD_STYLE 0
+
+#if OLD_STYLE
+
+int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, 
+			 gretlopt opt, PRN *prn)
+{
+    gretl_matrix *S00 = NULL;
+    gretl_matrix *evals = NULL;
+    int n = jvar->neqns;
+    int err = 0;
+
+    S00 = gretl_matrix_copy(jvar->jinfo->S00);
+    if (S00 == NULL) {
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	err = johansen_get_eigenvalues(S00, 
+				       jvar->jinfo->S01, 
+				       jvar->jinfo->S11,
+				       &jvar->jinfo->Beta,
+				       &evals, 0);
+    }
+
+    if (err) {
+	pputs(prn, _("Failed to find eigenvalues\n"));
+    } else {
+	johansen_ll_calc(jvar, evals);
+	compute_coint_test(jvar, evals, pdinfo, prn);
+
+	if (!(opt & OPT_Q)) {
+	    err = compute_alpha(jvar->jinfo);
+	    if (!err) {
+		print_beta_and_alpha(jvar, evals, n, pdinfo, prn);
+		print_long_run_matrix(jvar, pdinfo, prn);
+	    }
+	}
+    }
+
+    gretl_matrix_free(S00);
+    gretl_matrix_free(evals);
+
+    return err;
+}
+
+#else
+
 /* Public entry point for cointegration test */
 
 int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, 
@@ -1522,6 +1572,8 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 
     return err;
 }
+
+#endif
 
 static void set_beta_test_df (GRETL_VAR *jvar, const gretl_matrix *H)
 {
