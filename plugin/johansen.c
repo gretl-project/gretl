@@ -32,7 +32,7 @@
 /* coefficient matrices for the trace test */
 
 const double trace_m_coef[5][6] = {
- /* n^2    n       1   n==1   n==2  n^1/2 */
+ /* N^2    N       1   N==1   N==2  N^1/2 */
     {2, -1.00,  0.07,  0.07,     0,     0},
     {2,  2.01,  0.00,  0.06,  0.05,     0},
     {2,  1.05, -1.55, -0.50, -0.23,     0},
@@ -51,7 +51,7 @@ const double trace_v_coef[5][6] = {
 /* coefficient matrices for the lambdamax test */
 
 const double maxev_m_coef[5][5] = {
-    /*  n        1        n==1       n==2     n^1/2 */
+    /*  N        1        N==1       N==2     N^1/2 */
     {6.0019, -2.75580,  0.67185,  0.114900, -2.77640},  
     {5.9498,  0.43402,  0.04836,  0.018198, -2.36690},  
     {5.8271, -1.64870, -1.61180, -0.259490, -1.56660},  
@@ -75,19 +75,23 @@ const double maxev_v_coef[5][5] = {
    12/5, 1998, pp. 573-593.
 
    trace, lmax: trace and lambdamax statistics
+
    det: index of setup of deterministic regressors 
         J_NO_CONST     = no constant
         J_REST_CONST   = restricted constant
         J_UNREST_CONST = unrestricted constant
         J_REST_TREND   = restricted trend
         J_UNREST_TREND = unrestricted trend
-   r0: cointegration rank under H0
+
+   N: (>= 1), the number of potentially cointegrated
+   variables minus the cointegration rank under the null
+
    pval: on output, array of p-values for the two tests
 */
 
 static int
 gamma_LR_pvals (double trace, double lmax, JohansenCode det, 
-		int r0, double *pval)
+		int N, double *pval)
 {
     const double *tracem = trace_m_coef[det];
     const double *tracev = trace_v_coef[det];
@@ -98,12 +102,12 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     double x[6];
     int i;
 
-    x[0] = r0 * r0;
-    x[1] = r0;
+    x[0] = N * N;
+    x[1] = N;
     x[2] = 1.0;
-    x[3] = (r0 == 1)? 1.0 : 0.0;
-    x[4] = (r0 == 2)? 1.0 : 0.0;
-    x[5] = sqrt((double) r0);
+    x[3] = (N == 1)? 1.0 : 0.0;
+    x[4] = (N == 2)? 1.0 : 0.0;
+    x[5] = sqrt((double) N);
 
     for (i=0; i<6; i++) {
 	mt += x[i] * tracem[i];
@@ -118,6 +122,33 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     pval[1] = gamma_cdf_comp(ml, vl, lmax, 2);
 
     return 0;
+}
+
+double trace_pvalue (double trace, int N, int det)
+{
+    if (det < J_NO_CONST || det > J_UNREST_TREND || N < 1) {
+	return NADBL;
+    } else {
+	const double *tracem = trace_m_coef[det];
+	const double *tracev = trace_v_coef[det];
+	double mt = 0, vt = 0;
+	double x[6];
+	int i;
+
+	x[0] = N * N;
+	x[1] = N;
+	x[2] = 1.0;
+	x[3] = (N == 1)? 1.0 : 0.0;
+	x[4] = (N == 2)? 1.0 : 0.0;
+	x[5] = sqrt((double) N);
+
+	for (i=0; i<6; i++) {
+	    mt += x[i] * tracem[i];
+	    vt += x[i] * tracev[i];
+	}
+
+	return gamma_cdf_comp(mt, vt, trace, 2);
+    }
 }
 
 /* Remove a possible excess zero from the end of a floating point

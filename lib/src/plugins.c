@@ -161,6 +161,7 @@ struct plugin_function plugin_functions[] = {
     { "johansen_estimate",     P_JOHANSEN },
     { "johansen_boot_round",   P_JOHANSEN },
     { "vecm_test_restriction", P_JOHANSEN },
+    { "trace_pvalue",          P_JOHANSEN },
 
     /* influential observations */
     { "model_leverage",       P_LEVERAGE },

@@ -772,6 +772,13 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	} else {
 	    err = E_INVARG;
 	}
+    } else if (*s == 'J') {
+	/* Johansen trace test: only p-value */
+	if (f == F_PVAL) {
+	    *np = 2;
+	} else {
+	    err = E_INVARG;
+	}
     } else {
 	err = E_INVARG;
     }
@@ -1219,7 +1226,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	} else if (d == 'D') {
 	    /* special: bivariate normal */
 	    return bvnorm_node(r, p);
-	}
+	} 
 
 	for (i=1; i<=k && !p->err; i++) {
 	    s = r->v.bn.n[i];
