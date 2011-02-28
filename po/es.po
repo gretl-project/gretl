@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-02-16 12:15-0500\n"
-"PO-Revision-Date: 2011-02-23 15:45+0100\n"
+"PO-Revision-Date: 2011-02-28 17:44+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -4150,7 +4150,7 @@ msgstr "Modelo impreso en %s\n"
 
 #: lib/src/interact.c:5157 cli/gretlcli.c:1031 gui2/library.c:8430
 msgid "Infinite loop detected in script\n"
-msgstr "Se ha detectado un bucle infinito en el guión\n"
+msgstr "Se ha detectado un bucle infinito en el guion\n"
 
 #: lib/src/interact.c:5178
 msgid "You cannot delete variables in this context\n"
@@ -7025,7 +7025,7 @@ msgid ""
 "gretlcli: error executing script: halting\n"
 msgstr ""
 "\n"
-"gretlcli: error ejecutando guión: parando\n"
+"gretlcli: error ejecutando guion: parando\n"
 
 #: cli/gretlcli.c:553
 #, c-format
@@ -7887,7 +7887,7 @@ msgid ""
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
 "# Registro de las instrucciones de la sesión.  Por favor, tenga en\n"
-"# cuenta que probablemente necesitará editar este guión antes\n"
+"# cuenta que probablemente necesitará editar este guion antes\n"
 "# de ejecutarlo.\n"
 
 #: gui2/cmdstack.c:339
@@ -8246,7 +8246,7 @@ msgstr "Fecha"
 
 #: gui2/datafiles.c:1996
 msgid "Script"
-msgstr "Guión"
+msgstr "Guion"
 
 #: gui2/datafiles.c:1997
 msgid "Topic"
@@ -9517,7 +9517,7 @@ msgstr ""
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
-msgstr "Por favor, añada un guión de ejemplo para este paquete de funciones"
+msgstr "Por favor, añada un guion de ejemplo para este paquete de funciones"
 
 #: gui2/fnsave.c:341
 msgid "Invalid version string: use numbers and '.' only"
@@ -9595,11 +9595,11 @@ msgstr "Editar código de función"
 
 #: gui2/fnsave.c:1145
 msgid "Save as script"
-msgstr "Guardar como guión de instrucciones"
+msgstr "Guardar como guion de instrucciones"
 
 #: gui2/fnsave.c:1153
 msgid "Edit sample script"
-msgstr "Editar guión de ejemplo"
+msgstr "Editar guion de ejemplo"
 
 #: gui2/fnsave.c:1159
 msgid "Add/remove functions"
@@ -10126,7 +10126,7 @@ msgstr ""
 
 #: gui2/gretl.c:119 gui2/gretl.c:191
 msgid "open a script file on startup"
-msgstr "Abrir fichero de guión al iniciar"
+msgstr "Abrir fichero de guion al iniciar"
 
 #: gui2/gretl.c:120 gui2/gretl.c:193
 msgid "open a database on startup"
@@ -10163,7 +10163,7 @@ msgstr "enviar la información de depurado a la consola"
 #: gui2/gretl.c:323
 #, c-format
 msgid "Couldn't find script '%s'\n"
-msgstr "No se pudo encontrar el guión '%s'\n"
+msgstr "No se pudo encontrar el guion '%s'\n"
 
 #: gui2/gretl.c:326
 #, c-format
@@ -10301,7 +10301,7 @@ msgstr "_Directorio de trabajo..."
 
 #: gui2/gretl.c:1379
 msgid "_Script files"
-msgstr "Archivo_s de guión"
+msgstr "Archivo_s de guion"
 
 #: gui2/gretl.c:1381
 msgid "_Practice file..."
@@ -10309,23 +10309,23 @@ msgstr "Archivo de _práctica..."
 
 #: gui2/gretl.c:1382
 msgid "_New script"
-msgstr "_Nuevo guión"
+msgstr "_Nuevo guion"
 
 #: gui2/gretl.c:1383
 msgid "gretl script"
-msgstr "Guión de Gretl"
+msgstr "Guion de Gretl"
 
 #: gui2/gretl.c:1384
 msgid "gnuplot script"
-msgstr "Guión de Gnuplot"
+msgstr "Guion de Gnuplot"
 
 #: gui2/gretl.c:1385
 msgid "R script"
-msgstr "Guión de R"
+msgstr "Guion de R"
 
 #: gui2/gretl.c:1386
 msgid "Octave script"
-msgstr "Guión de Octave"
+msgstr "Guion de Octave"
 
 #: gui2/gretl.c:1387 gui2/gretl.c:1662
 msgid "Ox program"
@@ -11100,7 +11100,7 @@ msgstr "Por favor, busque el archivo de datos Gretl %s adjunto."
 #: gui2/gretlwin32.c:508 plugin/mailer.c:662
 #, c-format
 msgid "Please find the gretl script %s attached."
-msgstr "Por favor, busque el guión de Gretl %s adjunto."
+msgstr "Por favor, busque el guion de Gretl %s adjunto."
 
 #: gui2/gtkfontselhack.c:119
 msgid "abcdefghijk ABCDEFGHIJK"
@@ -11606,7 +11606,7 @@ msgstr "gretl: historial de instrucciones"
 
 #: gui2/gui_utils.c:1507
 msgid "gretl: command script"
-msgstr "gretl: guión de instrucciones"
+msgstr "gretl: guion de instrucciones"
 
 #: gui2/gui_utils.c:1513 gui2/session.c:508
 msgid "gretl: session notes"
@@ -11626,11 +11626,11 @@ msgstr "gretl: editar programa Ox"
 
 #: gui2/gui_utils.c:1521
 msgid "gretl: edit Octave script"
-msgstr "gretl: editar un guión de Octave"
+msgstr "gretl: editar un guion de Octave"
 
 #: gui2/gui_utils.c:1523 gui2/gui_utils.c:4716 gui2/gui_utils.c:4878
 msgid "gretl: script output"
-msgstr "gretl: resultados de guión"
+msgstr "gretl: resultados de guion"
 
 #: gui2/gui_utils.c:1525 gui2/library.c:5956 gui2/library.c:5992
 #: gui2/library.c:5996
@@ -12783,15 +12783,15 @@ msgid ""
 "Error executing script: halting\n"
 msgstr ""
 "\n"
-"Error al ejecutar guión: parando\n"
+"Error al ejecutar guion: parando\n"
 
 #: gui2/library.c:7980
 msgid "Unterminated comment in script"
-msgstr "En el guión hay un comentario sin terminar"
+msgstr "En el guion hay un comentario sin terminar"
 
 #: gui2/library.c:8405
 msgid "Script done\n"
-msgstr "Se ha ejecutado el guión\n"
+msgstr "Se ha ejecutado el guion\n"
 
 #: gui2/menustate.c:56
 #, c-format
@@ -14538,7 +14538,7 @@ msgstr "Dessangrar la región"
 
 #: gui2/textbuf.c:2465
 msgid "Auto-indent script"
-msgstr "Sangrar automáticamente el guión"
+msgstr "Sangrar automáticamente el guion"
 
 #: gui2/textbuf.c:2476
 msgid "Toggle line numbers"
@@ -14599,11 +14599,11 @@ msgstr "Matriz guardada como %s"
 
 #: gui2/toolbar.c:561
 msgid "Running a script replaces text"
-msgstr "Ejecutar un guión reemplaza texto"
+msgstr "Ejecutar un guion reemplaza texto"
 
 #: gui2/toolbar.c:562
 msgid "Running a script adds to text"
-msgstr "Ejecutar un guión añade texto"
+msgstr "Ejecutar un guion añade texto"
 
 #: gui2/toolbar.c:625
 msgid "New window"
@@ -14699,7 +14699,7 @@ msgstr "Lanzar calculadora"
 
 #: gui2/toolbar.c:1058 gui2/toolbar.c:1060
 msgid "new script"
-msgstr "guión nuevo"
+msgstr "guion nuevo"
 
 #: gui2/toolbar.c:1062
 msgid "open gretl console"
