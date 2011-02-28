@@ -520,6 +520,11 @@ int main (int argc, char **argv)
     }
 #endif
 
+#ifdef G_OS_WIN32
+    /* let's call this before doing libgretl_init */
+    gretl_win32_debug_init(optdebug);
+#endif
+
     libgretl_init();
 
 #ifdef G_OS_WIN32

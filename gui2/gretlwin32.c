@@ -228,27 +228,40 @@ static void dummy_output_handler (const gchar *log_domain,
 				  const gchar *message,
 				  gpointer user_data)
 {
+    fprintf(stderr, "%s : %s\n", log_domain, message);
+}
+
+static void stderr_output_handler (const gchar *log_domain,
+				   GLogLevelFlags log_level,
+				   const gchar *message,
+				   gpointer user_data)
+{
     return;
 }
 
-static void hush_warnings (void)
+static void set_g_warnings (int debug)
 {
-    g_log_set_handler ("Gtk",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
-    g_log_set_handler ("Gdk",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
-    g_log_set_handler ("GLib",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
-    g_log_set_handler ("Pango",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
+    void (*handler) (const gchar *, GLogLevelFlags,
+		     const gchar *, gpointer);
+
+    if (debug) {
+	handler = stderr_output_handler;
+    } else {
+	handler = dummy_output_handler;
+    }
+
+    g_log_set_handler("Gtk",
+		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
+		      (GLogFunc) handler, NULL);
+    g_log_set_handler("Gdk",
+		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
+		      (GLogFunc) handler, NULL);
+    g_log_set_handler("GLib",
+		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
+		      (GLogFunc) handler, NULL);
+    g_log_set_handler("Pango",
+		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
+		      (GLogFunc) handler, NULL);
 }
 
 char *default_windows_menu_fontspec (void)
@@ -344,21 +357,24 @@ void set_up_windows_look (void)
     }
 }
 
-/* carry out some Windows-specific start-up tasks, and
-   call read_rc to get configuration info */
-
-void gretl_win32_init (const char *progname, int debug)
+void gretl_win32_debug_init (int debug)
 {
     if (debug) {
         redirect_io_to_console();
     }
 
-    set_gretlnet_filename(progname);
+    set_g_warnings(debug);
+}
 
+/* carry out some Windows-specific start-up tasks, and
+   call read_rc to get configuration info */
+
+void gretl_win32_init (const char *progname, int debug)
+{
+    set_gretlnet_filename(progname);
     wimp_init();
     read_win32_config(debug);
     set_gretl_startdir();
-    hush_warnings();
     ws_startup(); 
 }
 

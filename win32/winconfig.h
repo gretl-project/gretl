@@ -8,6 +8,9 @@
 /* Extra floating-point GMP routines? */
 #define HAVE_MPFR 1
 
+/* disable SFMT RNG? */
+/* #undef NO_SFMT */
+
 /* sse2: assume this is OK */
 #define USE_SSE2 1
 

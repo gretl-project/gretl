@@ -40,6 +40,8 @@ int filename_to_win32 (char *targ, const char *src);
 
 void set_up_windows_look (void);
 
+void gretl_win32_debug_init (int debug);
+
 void gretl_win32_init (const char *progname, int debug);
 
 int prn_to_clipboard (PRN *prn, int copycode);

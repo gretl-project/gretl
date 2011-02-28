@@ -3,7 +3,7 @@ version 1.9.5, in progress
 - "foreign" command: enable the --send-data option for Octave, in
   which case the gretl dataset is pre-loaded as a matrix named
   "gretldata"
-- "coint2" (Johansen test): print the log-likelihood, plus fix the
+- "coint2" (Johansen test): print the log-likelihood, plus improve the
   printing of the Pi matrix when exogenous regressors are present
 - Fix a small memory leak when opening an *.asc data file
 - Matrix "division": give the operators "\" and "/" the same semantics

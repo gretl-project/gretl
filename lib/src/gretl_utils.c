@@ -1699,7 +1699,15 @@ double gretl_stopwatch (void)
 void libgretl_init (void)
 {
     libset_init();
+
+#ifdef WIN32
+    fprintf(stderr, "libgretl_init: initializing RNG\n");
+#endif
     gretl_rand_init();
+#ifdef WIN32
+    fprintf(stderr, " RNG ready\n");
+#endif
+
     gretl_stopwatch_init();
 }
 
