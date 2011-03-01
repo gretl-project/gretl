@@ -1357,7 +1357,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     gretl_matrix *pvals;
     int T = jvar->T;
     int n = jvar->neqns;
-    int pvcode, nexo = 0, nrexo = 0;
+    int nexo = 0, nrexo = 0;
     double llc, trace, lmax;
     double cumeig = 0.0;
     int i;
@@ -1401,18 +1401,12 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	    _("Trace test"), _("p-value"),
 	    _("Lmax test"), _("p-value"));
 
-    if (jvar->jinfo->pvcode > 0) {
-	pvcode = jvar->jinfo->pvcode;
-    } else {
-	pvcode = jcode(jvar);
-    }
-
     for (i=0; i<n; i++) {
 	double pv[2];
 
 	trace = gretl_matrix_get(tests, i, 0);
 	lmax = gretl_matrix_get(tests, i, 1);
-	gamma_LR_pvals(trace, lmax, pvcode, n - i, pv);
+	gamma_LR_pvals(trace, lmax, jcode(jvar), n - i, pv);
 	pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
 		i, evals->val[i], trace, pv[0], lmax, pv[1]);
 	gretl_matrix_set(pvals, i, 0, pv[0]);
@@ -1421,17 +1415,9 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     pputc(prn, '\n');
 
     if (nexo > 0 || nrexo > 0) {
-	if (jvar->jinfo->pvcode == J_REST_TREND) {
-	    pputs(prn, _("Note: p-values are as for the case of a "
-			 "restricted trend."));
-	} else if (jvar->jinfo->pvcode == J_UNREST_TREND) {
-	    pputs(prn, _("Note: p-values are as for the case of an "
-			 "unrestricted trend."));
-	} else {
-	    pputs(prn, _("Note: in general, the test statistics above "
-			 "are valid only in the\nabsence of additional "
-			 "regressors."));
-	}
+	pputs(prn, _("Note: in general, the test statistics above "
+		     "are valid only in the\nabsence of additional "
+		     "regressors."));
 	pputs(prn, "\n\n");
     }
 

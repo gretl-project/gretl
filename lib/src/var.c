@@ -307,82 +307,6 @@ void VAR_fill_X (GRETL_VAR *v, int p, const double **Z,
 #endif
 }
 
-/* Check to see if the set of restricted exogenous regressors
-   in a VECM effectively comprises a linear trend: we do
-   this by regressing a trend on the columns of X and
-   examining the R-squared.
-*/
-
-static int test_for_trend (GRETL_VAR *v, const double **Z)
-{
-    gretl_matrix_block *B;
-    gretl_matrix *X, *y;
-    gretl_matrix *b, *u;
-    double R2crit = 0.95;
-    int T = v->t2 - v->t1 + 1;
-    const int *list;
-    int i, vi, k, s, t;
-    int err = 0;
-
-    if (jcode(v) == J_REST_TREND) {
-	list = v->xlist;
-    } else {
-	list = v->rlist;
-    }
-
-    k = list[0] + 1;
-
-    B = gretl_matrix_block_new(&X, T, k,
-			       &y, T, 1,
-			       &b, k, 1,
-			       &u, T, 1,
-			       NULL);
-    if (B == NULL) {
-	return E_ALLOC;
-    }
-
-    for (s=0; s<T; s++) {
-	gretl_matrix_set(X, s, 0, 1.0);
-	gretl_matrix_set(y, s, 0, s+1);
-    }
-
-    for (i=0; i<list[0]; i++) {
-	vi = list[i+1];
-	s = 0;
-	for (t=v->t1; t<=v->t2; t++) {
-	    gretl_matrix_set(X, s++, i+1, Z[vi][t]);
-	}
-    } 
-	
-    err = gretl_matrix_ols(y, X, b, NULL, u, NULL);
-
-    if (!err) {
-	double ydev, ybar = (T + 1.0) / 2.0;
-	double R2, SSR = 0, SST = 0;
-
-	for (s=0; s<T; s++) {
-	    SSR += u->val[s] * u->val[s];
-	    ydev = y->val[s] - ybar;
-	    SST += ydev * ydev;
-	}
-
-	R2 = 1 - SSR / SST;
-	if (R2 >= R2crit) {
-	    if (jcode(v) == J_REST_TREND) {
-		v->jinfo->pvcode = J_UNREST_TREND;
-	    } else {
-		v->jinfo->pvcode = J_REST_TREND;
-	    }
-	    fprintf(stderr, "Test for trend in X: "
-		    "R-squared = %g\n", R2);
-	}
-    }
-  
-    gretl_matrix_block_destroy(B);
-
-    return err;
-}
-
 /* construct the matrix of dependent variables for VAR or
    VECM estimation */
 
@@ -2699,22 +2623,6 @@ static void johansen_degenerate_stage_1 (GRETL_VAR *v,
     }    
 }
 
-static int do_test_for_trend (GRETL_VAR *v)
-{
-    if (v->jinfo->rank == 0 && 
-	v->rlist != NULL && v->rlist[0] > 0 &&
-	(jcode(v) == J_REST_CONST ||
-	 jcode(v) == J_UNREST_CONST)) { 
-	return 1;
-    } else if (v->jinfo->rank == 0 && 
-	       v->xlist != NULL && v->xlist[0] > 0 &&
-	       jcode(v) == J_REST_TREND) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
 #define JVAR_USE_SVD 1
 
 /* For Johansen analysis: estimate VAR in differences along with the
@@ -2797,12 +2705,6 @@ int johansen_stage_1 (GRETL_VAR *v, const double **Z,
 	gretl_matrix_reuse(v->B, -1, v->neqns);
     }
 
-#if 1
-    if (do_test_for_trend(v)) {
-	test_for_trend(v, Z);
-    }
-#endif    
-
  finish:
 
     gretl_matrix_multiply_mod(v->jinfo->R0, GRETL_MOD_TRANSPOSE,
@@ -2871,7 +2773,6 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
 
     jv->ID = 0;
     jv->code = jcode_from_opt(opt);
-    jv->pvcode = 0;
     jv->rank = rank;
     jv->seasonals = 0;
 
