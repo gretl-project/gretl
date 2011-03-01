@@ -1898,7 +1898,7 @@
       <para>
 	The partial autocorrelations (calculated using the
 	Durbin&ndash;Levinson algorithm) are also shown: these are net of the
-	effects of intervening lags.  In addition the Box&ndash;Pierce
+	effects of intervening lags.  In addition the Ljung&ndash;Box
 	<math>Q</math> statistic is printed.  This may be used to test the
 	null hypothesis that the series is <quote>white noise</quote>; it is
 	asymptotically distributed as chi-square with degrees of freedom equal

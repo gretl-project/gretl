@@ -711,7 +711,7 @@
       También se presentan las autocorrelaciones parciales, siendo éstas
       los coeficientes una vez descontado el efecto de los demás retardos 
       intervinientes. Esta instrucción también representa el correlograma
-      y muestra el estadístico <math>Q</math> de Box&ndash;Pierce
+      y muestra el estadístico <math>Q</math> de Ljung&ndash;Box
       para el contraste de la hipótesis nula de que la serie es 
       <quote>ruido blanco</quote>. Este se distribuye asintóticamente como 
       una chi-cuadrado con grados de libertad igual al número de retardos 

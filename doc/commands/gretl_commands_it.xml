@@ -1476,7 +1476,7 @@
         l'algoritmo di Durbin&ndash;Levinson), ossia al
 	netto dell'effetto dei ritardi intermedi. Il comando produce anche
         un grafico del correlogramma e mostra la statistica
-        <math>Q</math> di Box&ndash;Pierce per testare l'ipotesi nulla
+        <math>Q</math> di Ljung&ndash;Box per testare l'ipotesi nulla
         che la serie sia <quote>white noise</quote> (priva di
         autocorrelazione). La statistica si distribuisce asintoticamente come
         chi-quadro con gradi di libertà pari al numero di ritardi specificati.
