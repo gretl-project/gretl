@@ -59,11 +59,12 @@
 #include "laginfo.c"
 
 typedef struct {
-    int v;
-    char vname[VNAMELEN];
-    int lmin;
-    int lmax;
-    int *laglist;
+    int v;                /* ID number of series */
+    int *vlist;           /* or list of series */
+    char name[VNAMELEN];  /* name of series of list */
+    int lmin;             /* minimum lag */
+    int lmax;             /* maximum lag */
+    int *laglist;         /* list of specific lags */
 } LAGVAR;
 
 #define cmd_set_nolist(c) (c->flags |= CMD_NOLIST)
@@ -1047,25 +1048,31 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
     int i, err = 1;
 
     lv->v = 0;
-    *lv->vname = 0;
+    lv->vlist = NULL;
+    *lv->name = '\0';
     lv->lmin = 0;
     lv->lmax = 0;
     lv->laglist = NULL;
 
-    if (sscanf(s, "%15[^(](%15s", lv->vname, l1str) != 2) {
+    if (sscanf(s, "%15[^(](%15s", lv->name, l1str) != 2) {
 	return err;
     }
 
 #if LAG_DEBUG
-    fprintf(stderr, "parse_lagvar: vname = '%s'\n", lv->vname);
+    fprintf(stderr, "parse_lagvar: name = '%s'\n", lv->name);
 #endif
 
-    lv->v = current_series_index(pdinfo, lv->vname);
+    lv->v = current_series_index(pdinfo, lv->name);
     if (lv->v <= 0) {
-	return err;
+	lv->vlist = get_list_by_name(lv->name);
+	if (lv->vlist == NULL) {
+	    return err;
+	} else {
+	    lv->v = 0;
+	}
     }
 
-    if (sscanf(s, "%15[^(](%15s to %15[^)])", lv->vname, 
+    if (sscanf(s, "%15[^(](%15s to %15[^)])", lv->name, 
 	       l1str, l2str) == 3) {
 	err = get_contiguous_lags(lv, l1str, l2str, Z, pdinfo);
     } else if (strchr(l1str, ',') != NULL) {
@@ -1077,7 +1084,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	    err = 0;
 	}
     } else {
-	sscanf(s, "%15[^(](%15[^ )]", lv->vname, l1str);
+	sscanf(s, "%15[^(](%15[^ )]", lv->name, l1str);
 	lv->lmin = lv->lmax = lag_from_lstr(l1str, Z, pdinfo, &err);
     }
 
@@ -1172,14 +1179,18 @@ static int get_n_lags (LAGVAR *lv, int *incr)
 }
 
 /* see if we have a valid specification for automatically adding
-   lags of a given variable to the command list */
+   lags of a given series (or named list of series) to the 
+   command list 
+*/
 
 int auto_lag_ok (const char *s, int *lpos,
 		 double ***pZ, DATAINFO *pdinfo,
 		 CMD *cmd)
 {
     LAGVAR lagvar;
-    int nlags, i;
+    int i, j, nlags;
+    int *vlist = NULL;
+    int unilist[2] = {1, 0};
     int llen = *lpos;
     int lincr = 1;
     int ok = 1;
@@ -1189,6 +1200,21 @@ int auto_lag_ok (const char *s, int *lpos,
 	goto bailout;
     }
 
+    if (lagvar.vlist != NULL) {
+	/* we got a list of series to process */
+	if (lagvar.vlist[0] <= 0) {
+	    cmd->err = E_DATA;
+	    ok = 0;
+	    goto bailout;
+	} 
+	vlist = lagvar.vlist;
+    } else {
+	/* we got a single series */
+	unilist[1] = lagvar.v;
+	vlist = unilist;
+    }
+
+    /* number of lags per series */
     nlags = get_n_lags(&lagvar, &lincr);
 
 #if LAG_DEBUG
@@ -1203,44 +1229,48 @@ int auto_lag_ok (const char *s, int *lpos,
     if (nlags <= 0) {
 	cmd->err = E_PARSE;
 	ok = 0;
-	goto bailout;
-    }
+    } else {
+	int totlags = vlist[0] * nlags;
 
-    if (nlags > 1 && expand_command_list(cmd, nlags)) {
-	ok = 0;
-	goto bailout;
-    }
-
-    for (i=0; i<nlags && ok; i++) {
-	int order, lv;
-
-	if (lagvar.laglist != NULL) {
-	    order = lagvar.laglist[i+1];
-	} else {
-	    order = lagvar.lmin + i * lincr;
+	if (totlags > 1 && expand_command_list(cmd, totlags)) {
+	    ok = 0;
 	}
+    }
 
-	lv = laggenr(lagvar.v, order, pZ, pdinfo);
+    for (j=1; j<=vlist[0] && ok; j++) {
+	int vj = vlist[j];
+
+	for (i=0; i<nlags && ok; i++) {
+	    int order, lv;
+
+	    if (lagvar.laglist != NULL) {
+		order = lagvar.laglist[i+1];
+	    } else {
+		order = lagvar.lmin + i * lincr;
+	    }
+
+	    lv = laggenr(vj, order, pZ, pdinfo);
 
 #if LAG_DEBUG
-	fprintf(stderr, "laggenr for var %d (%s), lag %d, gave lv = %d\n",
-		lagvar.v, pdinfo->varname[lagvar.v], order, lv);
+	    fprintf(stderr, "laggenr for var %d (%s), lag %d, gave lv = %d\n",
+		    vj, pdinfo->varname[vj], order, lv);
 #endif
-	if (lv < 0) {
-	    cmd->err = 1;
-	    gretl_errmsg_set(_("generation of lag variable failed"));
-	    ok = 0;
-	} else {
-	    /* Record info regarding the auto-generation of lags
-	       so that we'll be able to echo the command properly --
-	       see the echo_cmd() function.  Note: 'lagvar.v' is the
-	       "source" variable; 'lv' is the ID number of the
-	       generated lag.
-	    */
-	    cmd->list[llen++] = lv;
-	    cmd->err = list_lag_info_add(lagvar.v, order, lv, llen - 1, cmd);
-	    if (cmd->err) {
+	    if (lv < 0) {
+		cmd->err = 1;
+		gretl_errmsg_set(_("generation of lag variable failed"));
 		ok = 0;
+	    } else {
+		/* Record info regarding the auto-generation of lags
+		   so that we'll be able to echo the command properly --
+		   see the echo_cmd() function.  Note: 'lagvar.v' is the
+		   "source" variable; 'lv' is the ID number of the
+		   generated lag.
+		*/
+		cmd->list[llen++] = lv;
+		cmd->err = list_lag_info_add(vj, order, lv, llen - 1, cmd);
+		if (cmd->err) {
+		    ok = 0;
+		}
 	    }
 	}
     }

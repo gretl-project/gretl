@@ -7780,7 +7780,6 @@ static NODE *eval (NODE *t, parser *p)
     case B_DOTEQ:
     case B_DOTGT:
     case B_DOTLT:
-    case B_LDIV:
 	/* matrix-matrix or matrix-scalar binary operators */
 	if ((l->t == MAT && r->t == MAT) ||
 	    (l->t == MAT && r->t == NUM) ||
@@ -7803,6 +7802,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_MCSEL:
     case F_MLAG:
     case F_DSUM:
+    case B_LDIV:	
 	/* matrix-only binary operators (but promote scalars) */
 	if ((l->t == MAT || l->t == NUM) && 
 	    (r->t == MAT || r->t == NUM)) {
@@ -8571,7 +8571,9 @@ int parser_getc (parser *p)
     }
 
 #if EDEBUG > 1
-    fprintf(stderr, "parser_getc: returning '%c'\n", p->ch);
+    if (p->ch) {
+	fprintf(stderr, "parser_getc: returning '%c'\n", p->ch);
+    }
 #endif    
 
     return p->ch;

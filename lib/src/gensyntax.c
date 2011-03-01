@@ -934,7 +934,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
     int i = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_args: k = %d...\n", k);
+    fprintf(stderr, "get_args: f = %d, k = %d...\n", f, k);
 #endif    
 
     if (p->sym != G_LPR) {
@@ -997,7 +997,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    }
 	    lex(p);
 	    if (p->sym == G_LBR) {
-		*next = G_LBR;
+		*next = '[';
 	    }
 	}
     }
@@ -1238,7 +1238,9 @@ static NODE *powterm (parser *p)
 	t = base(p, NULL);
     }
 
-    if (next == G_LBR) {
+    
+
+    if (next == '[') {
 	/* support func(args)[slice] */
 	t = newb2(MSL, t, NULL);
 	if (t != NULL) {
