@@ -2919,6 +2919,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	    }
 	} 
 
+	/* Ljung-Box Q */
 	box += (T * (T + 2.0)) * acf[k] * acf[k] / (T - (k + 1));
 	pprintf(prn, "%12.4f", box);
 	if (k >= nparam) {
