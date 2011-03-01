@@ -5523,7 +5523,7 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
     gretl_matrix *Q = NULL;
     gretl_matrix *AT = NULL, *BT = NULL; 
     gretl_matrix *Tmp;
-    int a_scalar = 0;
+    int den_scalar = 0;
 
     if (gretl_is_null_matrix(a) || 
 	gretl_is_null_matrix(b)) {
@@ -5531,34 +5531,51 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	return NULL;
     }
 
+    if (mod == GRETL_MOD_NONE) {
+	den_scalar = gretl_matrix_is_scalar(a);
+	if (a->rows != b->rows && !den_scalar) {
+	    *err = E_NONCONF;
+	} else if (den_scalar) {
+	    Q = gretl_matrix_copy(b);
+	    if (Q == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		gretl_matrix_divide_by_scalar(Q, a->val[0]);
+	    }
+	}
+    } else {
+	den_scalar = gretl_matrix_is_scalar(b);
+	if (a->cols != b->cols && !den_scalar) {
+	    *err = E_NONCONF;
+	} else if (den_scalar) {	
+	    Q = gretl_matrix_copy(a);
+	    if (Q == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		gretl_matrix_divide_by_scalar(Q, b->val[0]);
+	    }
+	}    
+    }
+
+    if (*err || den_scalar) {
+	return Q;
+    }
+
     if (mod == GRETL_MOD_TRANSPOSE) {
 	AT = gretl_matrix_copy_transpose(b);
 	BT = gretl_matrix_copy_transpose(a);
 	if (AT == NULL || BT == NULL) {
 	    *err = E_ALLOC;
+	    goto bailout;
 	} else {
 	    a = AT;
 	    b = BT;
 	}
     } 
 
-    if (mod == GRETL_MOD_NONE) {
-	a_scalar = gretl_matrix_is_scalar(a);
-    }
-
-    if (a->rows != b->rows && !a_scalar) {
-	*err = E_NONCONF;
-	goto bailout;
-    }
-
     Q = gretl_matrix_copy(b);
     if (Q == NULL) {
 	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    if (a_scalar) {
-	*err = gretl_matrix_divide_by_scalar(Q, a->val[0]);
     } else {
 	Tmp = gretl_matrix_copy(a);
 	if (Tmp == NULL) {
@@ -5569,17 +5586,20 @@ gretl_matrix *gretl_matrix_divide (const gretl_matrix *a,
 	}
     }
 
- bailout:
-
     if (mod == GRETL_MOD_TRANSPOSE && *err == 0) {
-	gretl_matrix_free(AT);
-	gretl_matrix_free(BT);
 	Tmp = Q;
 	Q = gretl_matrix_copy_transpose(Tmp);
 	if (Q == NULL) {
 	    *err = E_ALLOC;
 	} 
 	gretl_matrix_free(Tmp);
+    }
+
+ bailout:
+
+    if (mod == GRETL_MOD_TRANSPOSE) {
+	gretl_matrix_free(AT);
+	gretl_matrix_free(BT);
     }
 
     if (*err && Q != NULL) {

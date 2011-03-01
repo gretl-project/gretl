@@ -1610,7 +1610,6 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	} else {
 	    /* A/B = (B'\A')' */
 	    C = gretl_matrix_divide(A, B, GRETL_MOD_TRANSPOSE, err);
-	    fprintf(stderr, "*** C = %p, err = %d\n", (void *) C, *err);
 	}
 	break;
     case B_DOTMULT:
