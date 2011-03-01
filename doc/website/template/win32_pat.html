@@ -16,20 +16,26 @@ HREF="../css-gretl.html">
 <h2>MS Windows version</h2>
 </center>
 
-<h2>Download</h2>
+<h2>System requirements</h2>
 
-<h3>You have some administrative rights on your Windows system</h3>
+<p>Please note that as of version 1.9.4, 
+gretl requires Windows XP or higher
+and a processor that supports the SSE2 instruction set. SSE2 support
+is found in all modern processors; it is absent in AMD CPUs prior to
+the Athlon 64, and in Intel CPUs prior to the Pentium 4.
+For versions of gretl that will run on older systems, 
+<a href="#old-windows">see below</a>.</p>
+
+<h2>You have some administrative rights on your Windows system</h2>
 
 <p>
 That means you're a "power-user" or better. In that case you'll probably 
 want to use the self-extracting executable,
 <a
 href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
-(SHORTDATE, about 12MB). Just download and run this: you will be
+(SHORTDATE, about 13MB). Just download and run this: you will be
 prompted for the location to install the program (the default is
-<kbd>c:\Program Files\gretl</kbd>).  The program has been tested on 
-Windows XP and Vista; it should work OK on all NT-based versions of Windows 
-(that is, NT4, 2000, XP, Vista or Windows 7; but <i>not</i> Win9X or Windows ME).</p>
+<kbd>c:\Program Files\gretl</kbd>).</p>
 
 <p>The link above is to the latest official release.  Another possibilility
 is to download the current "snapshot" of gretl:
@@ -40,7 +46,7 @@ Translations into languages other than English are likely to be
 incomplete.  What's new in the snapshot?  Take a look at the 
 <a href="../ChangeLog.html">Change log</a> (the "in progress" entry).</p>
 
-<h3>You have no administrative rights on Windows</h3>
+<h2>You have no administrative rights on Windows</h2>
 
 <p>Then you can't use the self-installer. But you can install gretl from a zip
 archive: either the latest release,
@@ -55,14 +61,7 @@ named <kbd>c:\userdata</kbd>, the gretl GUI program will be at
 <kbd>c:\userdata\gretl\gretlw32.exe</kbd>.
 </p>
 
-<h3>You run a truly ancient version of MS Windows</h3>
-
-<p>If you want to run gretl on older versions of Windows you can
-use 
-<a href="http://sourceforge.net/projects/gretl/files/gretl/gretl-1.6.5.exe/download">version 1.6.5</a> 
-of the program (requires Windows 98 or higher).</p>
-
-<h3>Optional extras you may wish to install</h3>
+<h2>Optional extras you may wish to install</h2>
 
 <center>
 <table cellpadding="4">
@@ -138,6 +137,14 @@ href="http://www.mingw.org/">mingw32</a> and <a
 href="http://www.gtk.org/download-windows.html">GTK for
 Windows</a> (thanks Tor Lillqvist!). The free installer program is courtesy of <a
 href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+
+<h2><a name="old-windows">gretl for older systems</a></h2>
+
+<p>For older systems, 
+<a href="http://sourceforge.net/projects/gretl/files/gretl/1.9.3/gretl-1.9.3.exe/download">gretl 
+1.9.3</a> runs on Windows 2000 (and does not require SSE2), and 
+<a href="http://sourceforge.net/projects/gretl/files/gretl/1.6.5/gretl-1.6.5.exe/download">gretl 
+1.6.5</a> is the most recent version that will run on Windows 98.</p>
 
 <h2>Support for multiple languages</h2>
 
