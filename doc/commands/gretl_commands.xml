@@ -703,6 +703,13 @@
 
     <description>
       <para>
+	This command is retained at present for backward
+	compatibility, but you are better off using the maximum
+	likelihood estimator offered by the <cmdref targ="garch"/>
+	command; for a plain ARCH model, set the first GARCH
+	parameter to 0.
+      </para>
+      <para>
 	Estimates the given model specification allowing for ARCH
 	(Autoregressive Conditional Heteroskedasticity). The model is
 	first estimated via OLS, then an auxiliary regression is run, in

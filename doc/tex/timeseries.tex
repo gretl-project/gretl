@@ -854,20 +854,20 @@ way:
   of ARCH($q$).
 \end{enumerate}
 
-This test is implemented in \app{gretl} via the \cmd{arch} command.
-This command may be issued following the estimation of a time-series
-model by OLS, or by selection from the ``Tests'' menu in the model
-window (again, following OLS estimation).  The result of the test is
-reported and if the $TR^2$ from the auxiliary regression has a p-value
-less than 0.10, ARCH estimates are also reported.  These estimates
-take the form of Generalized Least Squares (GLS), specifically
-weighted least squares, using weights that are inversely proportional
-to the predicted variances of the disturbances, $\hat{\sigma}_t$,
-derived from the auxiliary regression.
+This test is implemented in \app{gretl} via the \cmd{modtest} command
+with the \option{arch} option, which must follow estimation of a
+time-series model by OLS (either a single-equation model or a
+VAR). For example,
+%
+\begin{code}
+ols y 0 x
+modtest 4 --arch
+\end{code}
 
-In addition, the ARCH test is available after estimating a vector
-autoregression (VAR).  In this case, however, there is no provision to
-re-estimate the model via GLS.
+This example specifies an ARCH order of $q=4$; if the order argument
+is omitted, $q$ is set equal to the periodicity of the data.  In the
+graphical interface, the ARCH test is accessible from the ``Tests''
+menu in the model window (again, for single-equation OLS or VARs).
 
 \subsection{GARCH}
 \label{subsec:garch}

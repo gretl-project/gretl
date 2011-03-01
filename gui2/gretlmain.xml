@@ -271,7 +271,6 @@
 	<menuitem action="PWE"/>
 	<menuitem action="ar"/>
 	<menuitem action="arima"/>
-	<menuitem action="arch"/>
 	<menuitem action="garch"/>
 	<menuitem action="var"/>
 	<menuitem action="VLAGSEL"/>

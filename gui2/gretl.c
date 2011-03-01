@@ -1575,7 +1575,6 @@ GtkActionEntry main_entries[] = {
     { "PWE", NULL, N_("_Prais-Winsten..."), NULL, NULL, G_CALLBACK(model_callback) },
     { "ar", NULL, N_("_Autoregressive estimation..."), NULL, NULL, G_CALLBACK(model_callback) },
     { "arima", NULL, N_("ARI_MA..."), NULL, NULL, G_CALLBACK(model_callback) },
-    { "arch", NULL, N_("_ARCH..."), NULL, NULL, G_CALLBACK(model_callback) },
     { "garch", NULL, N_("_GARCH..."), NULL, NULL, G_CALLBACK(model_callback) },
     { "var", NULL, N_("_Vector Autoregression..."), NULL, NULL, G_CALLBACK(selector_callback) },
     { "VLAGSEL", NULL, N_("VAR _lag selection..."), NULL, NULL, G_CALLBACK(selector_callback) },

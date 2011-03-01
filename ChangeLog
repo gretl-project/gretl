@@ -8,6 +8,8 @@ version 1.9.5, in progress
 - Fix a small memory leak when opening an *.asc data file
 - Matrix "division": give the operators "\" and "/" the same semantics
   as in Octave/Matlab (left and right division)
+- Remove the FGLS "arch" command from the GUI and add a deprecating
+  note to its help text
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 
