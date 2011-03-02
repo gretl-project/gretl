@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-02-16 12:15-0500\n"
-"PO-Revision-Date: 2011-02-24 10:51+0200\n"
+"PO-Revision-Date: 2011-03-02 08:42+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -5105,7 +5105,7 @@ msgstr "Hannan-Quinn Bilgi Ölçütü"
 #.
 #: lib/src/modelprint.c:2624
 msgid "note on model statistics abbreviations here"
-msgstr "Not: Ö.S. ve Ö.H. ölçünlü sapma ve ölçünlü hatayı göstermektedir."
+msgstr "Not: ö.s. ve ö.h. ölçünlü sapma ve ölçünlü hatayı göstermektedir."
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2631
@@ -5115,7 +5115,7 @@ msgstr "Bağımlı değişken ort"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2633
 msgid "S.D. dependent var"
-msgstr "Bağımlı değişken Ö.S."
+msgstr "Bağımlı değişken ö.s."
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2635 lib/src/modelprint.c:2778
@@ -5125,7 +5125,7 @@ msgstr "Kalıntı kareleri top"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2637
 msgid "S.E. of regression"
-msgstr "Bağlanım Ö.H."
+msgstr "Bağlanım ö.h."
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2639 lib/src/modelprint.c:3004 gui2/guiprint.c:857
@@ -5213,7 +5213,7 @@ msgstr "Yeniliklerin ortalaması"
 
 #: lib/src/modelprint.c:2767
 msgid "S.D. of innovations"
-msgstr "Ö.S. yenilikler"
+msgstr "ö.s. yenilikler"
 
 #: lib/src/modelprint.c:2774
 msgid "Median depend. var"
