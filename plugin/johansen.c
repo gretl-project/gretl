@@ -29,42 +29,100 @@
 
 #define JDEBUG 0
 
+/* Critical values from Harbo et al, "Asymptotic Inference
+   on Cointegrating Rank in Partial Systems", Journal of
+   Business and Economic Statistics 16/4, October 1998,
+   pp. 388-399. These pertain to H3, restricted trend.
+   TODO: their use here still needs more checking.
+*/
+
+const double harbo_data[21][6] = {
+    /* p_2 = 1 */
+    /* 80%    90%    95%  97.5%   mean   var */
+    { 11.0,  13.2,  15.2,  17.4,  8.15,  14.6 }, /* N = 1 */
+    { 24.7,  27.8,  30.5,  33.3,  20.1,  33.7 }, /* N = 2 */
+    { 41.9,  45.9,  49.6,  52.4,  35.9,  57.6 }, /* N = 3 */
+    { 63.0,  67.9,  71.7,  75.2,  55.5,  87.6 }, /* N = 4 */
+    { 88.1,  93.5,  98.0,  102,   78.9,  123  }, /* N = 5 */
+    { 116,   123,   127,   132,   106,   161  }, /* N = 6 */
+    /* p_2 = 2 */
+    { 13.3,  15.7,  17.9,  20.2,  10.0,  18.4 }, /* N = 1 */ 
+    { 29.1,  32.5,  35.5,  38.5,  23.9,  42.0 }, /* N = 2 */
+    { 48.4,  52.6,  56.3,  59.3,  41.6,  69.6 }, /* N = 3 */
+    { 71.4,  76.2,  80.9,  84.5,  63.1,  104  }, /* N = 4 */
+    { 98.1,  104,   108,   113,   88.2,  142  }, /* N = 5 */
+    /* p_2 = 3 */
+    { 15.6,  18.2,  20.7,  23.1,  12.0,  22.5 }, /* and so on */
+    { 33.3,  36.9,  39.9,  43.1,  27.7,  48.7 },
+    { 54.6,  59.0,  62.9,  66.6,  47.2,  80.4 },
+    { 79.6,  85.1,  89.2,  93.2,  70.6,  118  },
+    /* p_2 = 4 */
+    { 17.7,  20.5,  22.9,  25.4,  13.8,  24.8 },
+    { 37.4,  41.3,  44.5,  47.5,  31.4,  54.6 },
+    { 60.9,  65.6,  69.7,  73.1,  53.0,  92.2 },
+    /* p_2 = 5 */
+    { 19.9,  22.8,  25.3,  27.7,  15.7,  28.5 }, /* N = 1 */ 
+    { 41.8,  45.8,  49.3,  52.8,  35.3,  63.2 }, /* N = 2 */
+    /* p_2 = 6 */
+    { 22.0,  25.0,  27.7,  30.3,  17.6,  31.6 }  /* N = 1 */ 
+};
+
+static int harbo_critvals (int p2, int N, double *cv)
+{
+    int i, inc = 6, k = N - 1;
+
+    for (i=2; i<=p2; i++) {
+	k += inc--;
+    }
+
+    if (k <= 20) {
+	const double *cv_row = harbo_data[k];
+
+	cv[0] = cv_row[1];
+	cv[1] = cv_row[2];
+	cv[2] = cv_row[3];
+	return 0;
+    }
+
+    return 1;
+}
+
 /* coefficient matrices for the trace test */
 
 const double trace_m_coef[5][6] = {
- /* N^2    N       1   N==1   N==2  N^1/2 */
-    {2, -1.00,  0.07,  0.07,     0,     0},
-    {2,  2.01,  0.00,  0.06,  0.05,     0},
-    {2,  1.05, -1.55, -0.50, -0.23,     0},
-    {2,  4.05,  0.50, -0.23, -0.07,     0},
-    {2,  2.85, -5.10, -0.10, -0.06,  1.35}
+    /* N^2  N       1   N==1   N==2  N^1/2 */
+    { 2, -1.00,  0.07,  0.07,     0,     0 },
+    { 2,  2.01,  0.00,  0.06,  0.05,     0 },
+    { 2,  1.05, -1.55, -0.50, -0.23,     0 },
+    { 2,  4.05,  0.50, -0.23, -0.07,     0 },
+    { 2,  2.85, -5.10, -0.10, -0.06,  1.35 }
 };
 
 const double trace_v_coef[5][6] = {
-    {3, -0.33, -0.55,  0.0,  0.00,  0},
-    {3,  3.60,  0.75, -0.4, -0.30,  0},
-    {3,  1.80,  0.00, -2.8, -1.10,  0},
-    {3,  5.70,  3.20, -1.3, -0.50,  0},
-    {3,  4.00,  0.80, -5.8, -2.66,  0}
+    { 3, -0.33, -0.55,  0.0,  0.00,  0 },
+    { 3,  3.60,  0.75, -0.4, -0.30,  0 },
+    { 3,  1.80,  0.00, -2.8, -1.10,  0 },
+    { 3,  5.70,  3.20, -1.3, -0.50,  0 },
+    { 3,  4.00,  0.80, -5.8, -2.66,  0 }
 };
 
 /* coefficient matrices for the lambdamax test */
 
-const double maxev_m_coef[5][5] = {
-    /*  N        1        N==1       N==2     N^1/2 */
-    {6.0019, -2.75580,  0.67185,  0.114900, -2.77640},  
-    {5.9498,  0.43402,  0.04836,  0.018198, -2.36690},  
-    {5.8271, -1.64870, -1.61180, -0.259490, -1.56660},  
-    {5.8658,  2.55950, -0.34443, -0.077991, -1.75520},  
-    {5.6364, -0.90531, -3.51660, -0.479660, -0.21447}
+const double maxev_m_coef[5][5] = { 
+    /*   N        1        N==1       N==2     N^1/2 */
+    { 6.0019, -2.75580,  0.67185,  0.114900, -2.77640 },  
+    { 5.9498,  0.43402,  0.04836,  0.018198, -2.36690 },  
+    { 5.8271, -1.64870, -1.61180, -0.259490, -1.56660 },  
+    { 5.8658,  2.55950, -0.34443, -0.077991, -1.75520 },  
+    { 5.6364, -0.90531, -3.51660, -0.479660, -0.21447 }
 }; 
 
 const double maxev_v_coef[5][5] = {
-    {1.8806, -15.499,  1.11360,  0.070508, 14.714},  
-    {2.2231, -7.9064,  0.58592, -0.034324, 12.058},  
-    {2.0785, -9.7846, -3.36800, -0.245280, 13.074},  
-    {1.9955, -5.5428,  1.24250,  0.419490, 12.841},  
-    {2.0899, -5.3303, -7.15230, -0.252600, 12.393}
+    { 1.8806, -15.499,  1.11360,  0.070508, 14.714 },  
+    { 2.2231, -7.9064,  0.58592, -0.034324, 12.058 },  
+    { 2.0785, -9.7846, -3.36800, -0.245280, 13.074 },  
+    { 1.9955, -5.5428,  1.24250,  0.419490, 12.841 },  
+    { 2.0899, -5.3303, -7.15230, -0.252600, 12.393 }
 }; 
 
 /*
@@ -1358,6 +1416,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     int T = jvar->T;
     int n = jvar->neqns;
     int nexo = 0, nrexo = 0;
+    int max_nexo, use_harbo = 0;
     double llc, trace, lmax;
     double cumeig = 0.0;
     int i;
@@ -1387,6 +1446,18 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	nrexo = jvar->rlist[0];
     }
 
+    max_nexo = (nrexo > nexo)? nrexo : nexo; /* FIXME? */
+
+    if (max_nexo > 0 && max_nexo < 7) {
+	if (jcode(jvar) == J_REST_TREND) {
+	    /* OK */
+	    use_harbo = 1;
+	} else if (jcode(jvar) == J_UNREST_CONST) {
+	    /* but this is a fudge */
+	    use_harbo = 1;
+	}
+    }
+
     print_Johansen_test_case(jcode(jvar), prn);
     if (nexo > 0) {
 	coint_test_print_exog(jvar, pdinfo, prn);
@@ -1397,28 +1468,53 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     pprintf(prn, "\n%s = %g (including c: %g)\n", _("Log-likelihood"), 
 	    jvar->ll + llc, jvar->ll);
 
-    pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
-	    _("Trace test"), _("p-value"),
-	    _("Lmax test"), _("p-value"));
+    if (use_harbo) {
+	pprintf(prn, "\n%s %s %s    90%%    95%%   97.5%%\n", _("Rank"), 
+		_("Eigenvalue"), _("Trace test"));
+    } else {
+	pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
+		_("Trace test"), _("p-value"),
+		_("Lmax test"), _("p-value"));
+    }
 
     for (i=0; i<n; i++) {
-	double pv[2];
-
 	trace = gretl_matrix_get(tests, i, 0);
-	lmax = gretl_matrix_get(tests, i, 1);
-	gamma_LR_pvals(trace, lmax, jcode(jvar), n - i, pv);
-	pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
-		i, evals->val[i], trace, pv[0], lmax, pv[1]);
-	gretl_matrix_set(pvals, i, 0, pv[0]);
-	gretl_matrix_set(pvals, i, 1, pv[1]);
+	if (use_harbo) {
+	    double cv[3] = {0};
+
+	    harbo_critvals(nexo, n - i, cv);
+	    pprintf(prn, "%4d%#11.5g%#11.5g   %g   %g    %g\n", i,
+		    evals->val[i], trace, cv[0], cv[1], cv[2]);
+	} else {
+	    double pv[2] = {0};
+
+	    lmax = gretl_matrix_get(tests, i, 1);
+	    gamma_LR_pvals(trace, lmax, jcode(jvar), n - i, pv);
+	    pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
+		    i, evals->val[i], trace, pv[0], lmax, pv[1]);
+	    gretl_matrix_set(pvals, i, 0, pv[0]);
+	    gretl_matrix_set(pvals, i, 1, pv[1]);
+	}
     }
+
     pputc(prn, '\n');
 
-    if (nexo > 0 || nrexo > 0) {
-	pputs(prn, _("Note: in general, the test statistics above "
-		     "are valid only in the\nabsence of additional "
-		     "regressors."));
-	pputs(prn, "\n\n");
+    if (max_nexo > 0) {
+	if (use_harbo && jcode(jvar) == J_UNREST_CONST) {
+	    pputs(prn, _("Warning: the critical values shown are for the "
+		  "case of\na restricted trend"));
+	    pputs(prn, "\n\n");
+	} else if (!use_harbo) {
+	    pputs(prn, _("Note: in general, the test statistics above "
+			 "are valid only in the\nabsence of additional "
+			 "regressors."));
+	    pputs(prn, "\n\n");
+	}
+    }
+
+    if (use_harbo) {
+	gretl_matrix_free(pvals);
+	pvals = NULL;
     }
 
     record_matrix_test_result(tests, pvals);
