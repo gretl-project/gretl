@@ -12,6 +12,8 @@ version 1.9.5, in progress
   note to its help text
 - Lag specification for regressors (e.g. "foo(-1 to -2)"): the name of
   a list can now be substituted for the name of a series
+- New function quantc(): returns one or more quantiles of the columns
+  of a matrix
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 

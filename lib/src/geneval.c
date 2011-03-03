@@ -4253,6 +4253,36 @@ series_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+static NODE *matrix_quantiles_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	gretl_matrix *pmat = NULL;
+	int free_pmat = 0;
+
+	if (r->t == MAT) {
+	    pmat = r->v.m;
+	} else {
+	    double x = node_get_scalar(r, p);
+
+	    pmat = gretl_matrix_from_scalar(x);
+	    free_pmat = 1;
+	} 
+
+	ret = aux_matrix_node(p);
+	if (ret != NULL) {
+	    ret->v.m = gretl_matrix_quantiles(l->v.m, pmat, &p->err);
+	}
+
+	if (free_pmat) {
+	    gretl_matrix_free(pmat);
+	}
+    }
+
+    return ret;
+}
+
 /* functions taking a series and a scalar as arguments and returning 
    a scalar
 */
@@ -4270,23 +4300,15 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	int pd = 1;
 
 	if (l->t == MAT) {
-	    if (f == F_QUANTILE) {
-		ret = aux_matrix_node(p);
-		if (ret != NULL) {
-		    ret->v.m = gretl_matrix_quantiles(l->v.m, rval, &p->err);
-		}
-		return ret;
-	    } else {
-		int n = gretl_vector_get_length(l->v.m);
+	    int n = gretl_vector_get_length(l->v.m);
 
-		if (n == 0) {
-		    p->err = E_TYPES;
-		    return NULL;
-		}
-		t1 = 0;
-		t2 = n - 1;
-		xvec = l->v.m->val;
+	    if (n == 0) {
+		p->err = E_TYPES;
+		return NULL;
 	    }
+	    t1 = 0;
+	    t2 = n - 1;
+	    xvec = l->v.m->val;
 	} else {
 	    /* got a series on the left */
 	    pd = p->dinfo->pd;
@@ -8094,6 +8116,17 @@ static NODE *eval (NODE *t, parser *p)
 	    } 
 	} else {
 	    node_type_error(t->t, 1, VEC, l, p);
+	}
+	break;
+    case F_QUANTC:
+	if (l->t == MAT) {
+	    if (r->t == MAT || scalar_node(r)) {
+		ret = matrix_quantiles_node(l, r, p);
+	    } else {
+		node_type_error(t->t, 2, MAT, r, p);
+	    }
+	} else {
+	    node_type_error(t->t, 1, MAT, r, p);
 	}
 	break;
     case F_RUNIFORM:

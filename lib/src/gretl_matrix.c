@@ -5347,28 +5347,43 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
 /**
  * gretl_matrix_quantiles:
  * @m: matrix on which to operate.
- * @p: probability.
+ * @p: vector of desired quantiles.
  * @err: location to receive error code.
  * 
- * Returns: a row vector containing the @p quantiles
+ * Returns: a matrix containing the @p quantiles
  * of the columns of @m, or NULL on failure.
  */
 
 gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
-				      double p, int *err)
+				      const gretl_matrix *p,
+				      int *err)
 {
-    gretl_matrix *q;
+    gretl_matrix *qvals;
     const double *mval;
-    double *a;
-    int j, n;
+    double *a, *q;
+    int i, j, n, plen;
 
-    if (gretl_is_null_matrix(m) || p <= 0 || p >= 1) {
-	*err = E_DATA;
+    if (gretl_is_null_matrix(m)) {
+	*err = E_INVARG;
 	return NULL;
     }
 
-    q = gretl_matrix_alloc(1, m->cols);
-    if (q == NULL) {
+    plen = gretl_vector_get_length(p);
+
+    if (plen == 0) {
+	*err = E_INVARG;
+	return NULL;
+    }    
+
+    for (i=0; i<plen; i++) {
+	if (p->val[i] <= 0 || p->val[i] >= 1) {
+	    *err = E_INVARG;
+	    return NULL;
+	}
+    }
+
+    qvals = gretl_matrix_alloc(plen, m->cols);
+    if (qvals == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
@@ -5376,32 +5391,39 @@ gretl_matrix *gretl_matrix_quantiles (const gretl_matrix *m,
     n = m->rows;
 
     a = malloc(n * sizeof *a);
-    if (a == NULL) {
+    q = malloc(plen * sizeof *q);
+
+    if (a == NULL || q == NULL) {
 	*err = E_ALLOC;
-	gretl_matrix_free(q);
+	gretl_matrix_free(qvals);
+	free(a);
+	free(q);
 	return NULL;
     }
 
     mval = m->val;
 
-    for (j=0; j<m->cols; j++) {
+    for (j=0; j<m->cols && !*err; j++) {
 	memcpy(a, mval, n * sizeof *a);
-	q->val[j] = gretl_array_quantile(a, n, p);
-	if (na(q->val[j])) {
-	    *err = E_DATA;
-	    break;
+	memcpy(q, p->val, plen * sizeof *q);
+	*err = gretl_array_quantiles(a, n, q, plen);
+	if (!*err) {
+	    for (i=0; i<plen; i++) {
+		gretl_matrix_set(qvals, i, j, q[i]);
+	    }
 	}
 	mval += n;
     }
 
     if (*err) {
-	gretl_matrix_free(q);
-	q = NULL;
+	gretl_matrix_free(qvals);
+	qvals = NULL;
     }
 
     free(a);
+    free(q);
 
-    return q;
+    return qvals;
 }
 
 /**

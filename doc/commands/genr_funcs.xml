@@ -4346,6 +4346,22 @@
       </description>
     </function>
 
+    <function name="quantc" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">Y</fnarg>
+	<fnarg type="vector">p</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Calculates one or more quantiles of the columns of
+	  <argname>Y</argname>. The matrix returned is
+	  <by r="m" c="n"/>, where <repl>m</repl> is the number
+	  of elements in <argname>p</argname> and <repl>n</repl>
+	  is the number of columns in <argname>Y</argname>.
+	</para>
+      </description>
+    </function>
+
     <function name="quantile" section="stats" output="scalar" altout="rvec">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
