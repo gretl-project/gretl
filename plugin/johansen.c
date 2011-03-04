@@ -29,50 +29,85 @@
 
 #define JDEBUG 0
 
-/* Critical values from Harbo et al, "Asymptotic Inference
-   on Cointegrating Rank in Partial Systems", Journal of
-   Business and Economic Statistics 16/4, October 1998,
-   pp. 388-399. These pertain to H3, restricted trend.
+/* Critical values of the sort reported by Harbo et al, 
+   "Asymptotic Inference on Cointegrating Rank in Partial 
+   Systems", Journal of Business and Economic Statistics 16/4, 
+   October 1998, pp. 388-399. See also Pesaran, Shin and 
+   Smith, "Structural analysis of vector error correction 
+   models with exogenous I(1) variables", Journal of 
+   Econometrics 97 (2000), pp. 293-343.
 
-   See also Pesaran, Shin and Smith, "Structural analysis 
-   of vector error correction models with exogenous I(1) 
-   variables", Journal of Econometrics 97 (2000), pp.
-   293-343. It may be worth re-simulating this table
-   with some more entries.
+   These values were produced using libgretl, with T = 500
+   and 20,000 repetitions; the RNG was the SFMT.
 */
 
-const double harbo_data[21][3] = {
-    /* p_2 = 1 */
-    /* 90%    95%  97.5% */
-    { 13.2,  15.2,  17.4 }, /* N = 1 */
-    { 27.8,  30.5,  33.3 }, /* N = 2 */
-    { 45.9,  49.6,  52.4 }, /* N = 3 */
-    { 67.9,  71.7,  75.2 }, /* N = 4 */
-    { 93.5,  98.0,  102  }, /* N = 5 */
-    { 123,   127,   132  }, /* N = 6 */
-    /* p_2 = 2 */
-    { 15.7,  17.9,  20.2 }, /* N = 1 */ 
-    { 32.5,  35.5,  38.5 }, /* N = 2 */
-    { 52.6,  56.3,  59.3 }, /* N = 3 */
-    { 76.2,  80.9,  84.5 }, /* N = 4 */
-    { 104,   108,   113  }, /* N = 5 */
-    /* p_2 = 3 */
-    { 18.2,  20.7,  23.1 }, /* and so on */
-    { 36.9,  39.9,  43.1 },
-    { 59.0,  62.9,  66.6 },
-    { 85.1,  89.2,  93.2 },
-    /* p_2 = 4 */
-    { 20.5,  22.9,  25.4 },
-    { 41.3,  44.5,  47.5 },
-    { 65.6,  69.7,  73.1 },
-    /* p_2 = 5 */
-    { 22.8,  25.3,  27.7 }, /* N = 1 */ 
-    { 45.8,  49.3,  52.8 }, /* N = 2 */
-    /* p_2 = 6 */
-    { 25.0,  27.7,  30.3 }  /* N = 1 */ 
+/* Johansen case = 3 */
+
+const double harbo_data_3[21][4] = {
+    /* 80%   90%   95%   99% */
+    /* p2 = 1 */
+    { 11.0, 13.3, 15.3, 19.9 }, /* N = 1 */
+    { 24.9, 27.9, 30.7, 36.5 }, /* N = 2 */
+    { 42.2, 46.1, 49.7, 56.7 }, /* N = 3 */
+    { 63.7, 68.5, 72.6, 80.8 }, /* N = 4 */
+    { 88.6, 94.1, 98.9, 108 },  /* N = 5 */
+    { 117,  123,  129,  138 },  /* N = 6 */
+    /* p2 = 2 */
+    { 13.4, 15.8, 18.1, 22.8 }, /* N = 1 */
+    { 29.3, 32.6, 35.7, 42.2 }, /* N = 2 */
+    { 48.6, 52.8, 56.6, 64.1 }, /* N = 3 */
+    { 71.8, 77.0, 81.3, 90.4 }, /* N = 4 */
+    { 98.9,  105,  110, 120 },  /* N = 5 */
+    /* p2 = 3 */
+    { 15.7, 18.3, 20.7, 25.6 }, /* N = 1 */
+    { 33.7, 37.3, 40.6, 47.2 }, /* N = 2 */
+    { 55.0, 59.6, 63.7, 71.6 }, /* N = 3 */
+    { 80.1, 85.3, 90.1, 99.3 }, /* N = 4 */
+    /* p2 = 4 */
+    { 18.1, 20.8, 23.4, 28.7 }, /* N = 1 */
+    { 37.9, 41.8, 45.3, 52.0 }, /* N = 2 */
+    { 61.4, 66.2, 70.4, 78.4 }, /* N = 3 */
+    /* p2 = 5 */
+    { 20.2, 23.3, 26.0, 31.6 }, /* N = 1 */
+    { 42.0, 46.0, 49.6, 56.7 }, /* N = 2 */
+    /* p2 = 6 */
+    { 22.4, 25.6, 28.4, 34.2 }, /* N = 1 */
 };
 
-static int harbo_critvals (int p2, int N, double *cv)
+/* Johansen case = 1 */
+
+const double harbo_data_1[21][4] = {
+    /* 80%   90%   95%   99% */
+    /* p2 = 1 */
+    { 8.39, 10.4, 12.3, 16.6 }, /* N = 1 */
+    { 19.8, 22.7, 25.3, 30.7 }, /* N = 2 */
+    { 35.4, 39.2, 42.2, 48.7 }, /* N = 3 */
+    { 54.6, 58.9, 62.9, 70.5 }, /* N = 4 */
+    { 77.6, 82.7, 87.2, 96.4 }, /* N = 5 */
+    { 104,  110,  115, 126 },   /* N = 6 */
+    /* p2 = 2 */
+    { 10.9, 13.1, 15.1, 19.6 }, /* N = 1 */
+    { 24.5, 27.7, 30.7, 36.9 }, /* N = 2 */
+    { 41.8, 45.9, 49.5, 56.8 }, /* N = 3 */
+    { 63.2, 67.7, 72.2, 80.9 }, /* N = 4 */
+    { 87.9, 93.5, 98.2, 108 },  /* N = 5 */
+    /* p2 = 3 */
+    { 13.1, 15.6, 17.8, 22.5 }, /* N = 1 */
+    { 29.0, 32.4, 35.3, 41.6 }, /* N = 2 */
+    { 48.3, 52.5, 56.5, 63.6 }, /* N = 3 */
+    { 71.4, 76.6, 81.1, 90.3 }, /* N = 4 */
+    /* p2 = 4 */
+    { 15.5, 18.2, 20.5, 25.6 }, /* N = 1 */
+    { 33.5, 37.0, 40.4, 47.1 }, /* N = 2 */
+    { 54.5, 59.1, 63.3, 71.2 }, /* N = 3 */
+    /* p2 = 5 */
+    { 17.8, 20.6, 23.1, 28.3 }, /* N = 1 */
+    { 37.6, 41.5, 45.0, 51.5 }, /* N = 2 */
+    /* p2 = 6 */
+    { 20.1, 23.0, 25.6, 31.2 }, /* N = 1 */
+};
+
+static int harbo_critvals (int jcase, int p2, int N, double *cv)
 {
     int i, inc = 6, k = N - 1;
 
@@ -81,9 +116,18 @@ static int harbo_critvals (int p2, int N, double *cv)
     }
 
     if (k <= 20) {
-	cv[0] = harbo_data[k][0];
-	cv[1] = harbo_data[k][1];
-	cv[2] = harbo_data[k][2];
+	const double *vals;
+
+	if (jcase == J_UNREST_CONST || jcase == J_REST_TREND) {
+	    vals = harbo_data_3[k];
+	} else if (jcase == J_REST_CONST) {
+	    vals = harbo_data_1[k];
+	}
+
+	cv[0] = vals[0];
+	cv[1] = vals[1];
+	cv[2] = vals[2];
+	cv[3] = vals[3];
 	return 0;
     }
 
@@ -1410,6 +1454,17 @@ static void coint_test_print_exog (GRETL_VAR *jvar,
     }
 }
 
+static void print_cv (double c, PRN *prn)
+{
+    if (c < 10) {
+	printf("   %.2f", c);
+    } else if (c < 100) {
+	printf("   %.1f", c);
+    } else {
+	printf("    %.0f", c);
+    }
+}
+
 static int 
 compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, 
 		    const DATAINFO *pdinfo, PRN *prn)
@@ -1452,7 +1507,8 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     max_nexo = (nrexo > nexo)? nrexo : nexo; /* FIXME? */
 
     if (max_nexo > 0 && max_nexo < 7) {
-	if (jcode(jvar) == J_REST_TREND) {
+	if (jcode(jvar) == J_REST_CONST ||
+	    jcode(jvar) == J_REST_TREND) {
 	    /* OK */
 	    use_harbo = 1;
 	} else if (jcode(jvar) == J_UNREST_CONST) {
@@ -1472,7 +1528,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	    jvar->ll + llc, jvar->ll);
 
     if (use_harbo) {
-	pprintf(prn, "\n%s %s %s    90%%    95%%   97.5%%\n", _("Rank"), 
+	pprintf(prn, "\n%s %s %s    80%%    90%%    95%%    99%%\n", _("Rank"), 
 		_("Eigenvalue"), _("Trace test"));
     } else {
 	pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
@@ -1483,11 +1539,15 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     for (i=0; i<n; i++) {
 	trace = gretl_matrix_get(tests, i, 0);
 	if (use_harbo) {
-	    double cv[3] = {0};
+	    double cv[4] = {0};
+	    int j;
 
-	    harbo_critvals(nexo, n - i, cv);
-	    pprintf(prn, "%4d%#11.5g%#11.5g   %g   %g    %g\n", i,
-		    evals->val[i], trace, cv[0], cv[1], cv[2]);
+	    harbo_critvals(jcode(jvar), nexo, n - i, cv);
+	    pprintf(prn, "%4d%#11.5g%#11.5g", i, evals->val[i], trace);
+	    for (j=0; j<4; j++) {
+		print_cv(cv[j], prn);
+	    }
+	    pputc(prn, '\n');
 	} else {
 	    double pv[2] = {0};
 
