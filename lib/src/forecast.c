@@ -1346,6 +1346,14 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	goto bailout;
     }
 
+#if 1
+    if (theta != NULL) {
+	for (i=0; i<=q; i++) {
+	    fprintf(stderr, "integrated theta[%d] = %g\n", i, theta[i]);
+	}
+    }
+#endif
+
     beta = arma_model_get_x_coeffs(pmod);
 
     if (want_x_beta_prep(pmod, xlist)) {

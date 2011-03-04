@@ -1188,8 +1188,10 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 	pmax = p + s * P;
 	pstar = pmax + d + s * D;
 	qmax = q + s * Q;
+	fprintf(stderr, "qmax = %d\n", qmax);
 	
 	if (pstar > 0) {
+	    /* we have some AR terms */
 	    ac = malloc((pstar + 1) * sizeof *ac);
 	    if (ac == NULL) {
 		err = E_ALLOC;
@@ -1197,6 +1199,7 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 	}
 
 	if (!err && qmax > 0) {
+	    /* we have some MA terms */
 	    mc = malloc((qmax + 1) * sizeof *ac);
 	    if (mc == NULL) {
 		free(ac);
@@ -1236,13 +1239,13 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 		mc[i] = 0.0;
 	    }
 	    for (j=0; j<=Q; j++) {
-		x = (j == 0)? -1 : Theta[j-1];
+		x = (j == 0)? 1 : Theta[j-1];
 		k = 0;
 		for (i=0; i<=q; i++) {
-		    y = (i == 0)? -1 : 
+		    y = (i == 0)? 1 : 
 			(arma_included(qmask, i-1))? theta[k++] : 0;
 		    ii = i + s * j;
-		    mc[ii] -= x * y;
+		    mc[ii] += x * y;
 		}
 	    }
 	}
