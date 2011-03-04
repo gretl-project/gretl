@@ -1346,7 +1346,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	goto bailout;
     }
 
-#if 1
+#if 0
     if (theta != NULL) {
 	for (i=0; i<=q; i++) {
 	    fprintf(stderr, "integrated theta[%d] = %g\n", i, theta[i]);

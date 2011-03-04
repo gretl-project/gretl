@@ -1188,7 +1188,6 @@ int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
 	pmax = p + s * P;
 	pstar = pmax + d + s * D;
 	qmax = q + s * Q;
-	fprintf(stderr, "qmax = %d\n", qmax);
 	
 	if (pstar > 0) {
 	    /* we have some AR terms */
