@@ -409,8 +409,6 @@ version 1.9.5, in progress
   via the random effects estimator
 - add financial functions npv and irr
 
-  2009-09-13- win32: update GTK+ stack to 2.16.6; update gnuplot to CVS as of
-
 2009-08-28 version 1.8.4
 - Fix breakage in GUI interface for calling user-defined functions, 
   plus fixes for GUI function package editor
@@ -1299,7 +1297,6 @@ version 1.9.5, in progress
   variable as order
 - Add "dsort" command for reverse sorting
 - Enhance and robustify script capabilities
-
 
 2005-12-15 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series data
