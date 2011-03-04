@@ -29,16 +29,15 @@
 
 #define JDEBUG 0
 
-/* Critical values of the sort reported by Harbo et al, 
-   "Asymptotic Inference on Cointegrating Rank in Partial 
-   Systems", Journal of Business and Economic Statistics 16/4, 
-   October 1998, pp. 388-399. See also Pesaran, Shin and 
-   Smith, "Structural analysis of vector error correction 
-   models with exogenous I(1) variables", Journal of 
-   Econometrics 97 (2000), pp. 293-343.
+/* Critical values for the trace test of the sort reported by Harbo et
+   al, "Asymptotic Inference on Cointegrating Rank in Partial
+   Systems", Journal of Business and Economic Statistics 16/4, October
+   1998, pp. 388-399. See also Pesaran, Shin and Smith, "Structural
+   analysis of vector error correction models with exogenous I(1)
+   variables", Journal of Econometrics 97 (2000), pp. 293-343.
 
-   These values were produced using libgretl, with T = 500
-   and 20,000 repetitions; the RNG was the SFMT.
+   These values were produced using libgretl, with T = 500 and 20,000
+   repetitions; the RNG was the SFMT. 
 */
 
 /* Johansen case = 3 */
