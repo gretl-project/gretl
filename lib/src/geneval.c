@@ -8110,7 +8110,11 @@ static NODE *eval (NODE *t, parser *p)
 	    if (t->t == F_ISCONST) {
 		ret = isconst_node(l, r, p);
 	    } else if (scalar_node(r)) {
-		ret = series_scalar_scalar_func(l, r, t->t, p);
+		if (t->t == F_QUANTILE && l->t == MAT) {
+		    ret = matrix_quantiles_node(l, r, p);
+		} else {
+		    ret = series_scalar_scalar_func(l, r, t->t, p);
+		}
 	    } else {
 		node_type_error(t->t, 2, NUM, r, p);
 	    } 
