@@ -382,10 +382,10 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 		SQLBindCol(stmt, i+1, SQL_C_LONG, &grabint[j++], 0, 
 			   (SQLLEN *) &colbytes[i]);
 	    } else if (odinfo->coltypes[i] == GRETL_TYPE_STRING) {
-		SQLBindCol(stmt, i+1, SQL_C_CHAR, &grabstr[k++], ODBC_STRSZ, 
+		SQLBindCol(stmt, i+1, SQL_C_CHAR, grabstr[k++], ODBC_STRSZ, 
 			   (SQLLEN *) &colbytes[i]);
 	    } else if (odinfo->coltypes[i] == GRETL_TYPE_DATE) {
-		SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, &grabstr[k++], 10, 
+		SQLBindCol(stmt, i+1, SQL_C_TYPE_DATE, grabstr[k++], 10, 
 			   (SQLLEN *) &colbytes[i]);
 	    } else if (odinfo->coltypes[i] == GRETL_TYPE_DOUBLE) {
 		SQLBindCol(stmt, i+1, SQL_C_DOUBLE, &grabx[p++], sizeof(double), 
