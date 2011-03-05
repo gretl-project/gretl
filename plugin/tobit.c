@@ -329,7 +329,7 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
 	list[i+1] = i;
     }
 
-    cinfo = create_new_dataset(&cZ, nv, pmod->nobs, 0);
+    cinfo = create_auxiliary_dataset(&cZ, nv, pmod->nobs);
     if (cinfo == NULL) {
 	free(list);
 	return E_ALLOC;
