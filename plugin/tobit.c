@@ -110,7 +110,6 @@ static tob_container *tob_container_new (int k, MODEL *pmod, const double **X,
 static double t_loglik (const double *theta, void *ptr)
 {
     double ll = NADBL;
-    
     tob_container *TC = (tob_container *) ptr;
     const double **X = TC->X;
     const double *y = X[1];
@@ -118,7 +117,6 @@ static double t_loglik (const double *theta, void *ptr)
     int n = TC->n;
     int do_score = TC->do_score;
     double siginv = theta[k-1];  /* inverse of variance */
-
     double *e = TC->e;
     double *f = TC->f;
     double *P = TC->P;
@@ -127,9 +125,6 @@ static double t_loglik (const double *theta, void *ptr)
     int i, t;
 
     if (siginv < 0.0) {
-#if 0
-	fprintf(stderr, "t_loglik: got a negative variance\n");
-#endif
 	return NADBL;
     } 
 
@@ -142,10 +137,6 @@ static double t_loglik (const double *theta, void *ptr)
 	e[t] = y[t] * siginv - ystar[t];
 	f[t] = siginv * normal_pdf(e[t]);
 	P[t] = normal_cdf(ystar[t]);
-#if 0
-	fprintf(stderr, "t_loglik: e[%d]=%g, f[%d]=%g, P[%d]=%g\n",
-		t, e[t], t, f[t], t, P[t]);
-#endif
     }
 
     /* compute loglikelihood for each obs, cumulate into ll */
@@ -157,9 +148,6 @@ static double t_loglik (const double *theta, void *ptr)
 	    llt = f[t];
 	}
 	if (llt == 0.0) {
-#if 0
-	    fprintf(stderr, "tobit_ll: L[%d] is zero\n", t);
-#endif
 	    return NADBL;
 	}
 	ll += log(llt);
@@ -168,7 +156,6 @@ static double t_loglik (const double *theta, void *ptr)
     if (do_score) {
 	double *score = TC->g;
 	double **Z = TC->G;
-
 	int i, gi, xi;
 	double den, tail;
 
@@ -227,33 +214,30 @@ static int t_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 1;
 }
 
-static gretl_matrix *tobit_opg_vcv (const tob_container *TC) 
+static gretl_matrix *tobit_opg_vcv (const tob_container *TC, int *err) 
 {
-
-    int n = TC->n;
-    int k = TC->k;
+    gretl_matrix *V;
     double x;
     int i, j, t;
-    double **G = TC->G;
-    gretl_matrix *V;
 
-    V = gretl_matrix_alloc(k,k);
+    V = gretl_matrix_alloc(TC->k, TC->k);
     if (V == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
-    for (i=0; i<k; i++) {
-	for (j=i; j<k; j++) {
+    for (i=0; i<TC->k; i++) {
+	for (j=i; j<TC->k; j++) {
 	    x = 0.0;
-	    for (t=0; t<n; t++) {
-		x += G[i][t] * G[j][t];
+	    for (t=0; t<TC->n; t++) {
+		x += TC->G[i][t] * TC->G[j][t];
 	    }
 	    gretl_matrix_set(V, i, j, x);
 	    gretl_matrix_set(V, j, i, x);
 	}
     }
 
-    gretl_invert_symmetric_matrix(V);
+    *err = gretl_invert_symmetric_matrix(V);
 
     return V;
 }
@@ -331,11 +315,10 @@ static int chesher_irish_test (MODEL *pmod, const double **X)
     double s, s2, e2, li;
     double es, ndxs, ndxs2;
     int *list;
-    int i, t, k, nv, uncens;
+    int k = pmod->ncoeff;
+    int nv = 4 + k;
+    int i, t, uncens;
     int err = 0;
-
-    k = pmod->ncoeff;
-    nv = 4 + k;
 
     list = gretl_list_new(nv);
     if (list == NULL) {
@@ -490,16 +473,8 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	s++;
     }
 
-#if 0
-    if (scale != 1.0) {
-	pmod->lnL = recompute_tobit_ll(pmod, y);
-    } else {
-	pmod->lnL = ll;
-    }
-#else
     /* force recomputation to get llt series */
     pmod->lnL = recompute_tobit_ll(pmod, y);
-#endif
 
     chesher_irish_test(pmod, X);
     pmod->fstt = pmod->adjrsq = NADBL;
@@ -560,18 +535,16 @@ static int transform_tobit_VCV (gretl_matrix *VCV, double sigma,
 
 static int tobit_add_variance (MODEL *pmod, int k)
 {
-    double *b;
+    double *b = realloc(pmod->coeff, k * sizeof *b);
 
-    b = realloc(pmod->coeff, k * sizeof *b);
     if (b == NULL) {
 	return E_ALLOC;
+    } else {
+	/* initialize variance */
+	b[k-1] = 1.0;
+	pmod->coeff = b;
+	return 0;
     }
-
-    /* initialize variance */
-    b[k-1] = 1.0;
-    pmod->coeff = b;
-
-    return 0;
 }
 
 /* Main Tobit function */
@@ -629,11 +602,9 @@ static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
     }
 
     /* get estimate of variance matrix for Olsen parameters */
-    VCV = tobit_opg_vcv(TC);
+    VCV = tobit_opg_vcv(TC, &err);
 
-    if (VCV == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (!err) {
 	/* Do Jacobian thing */
 	err = transform_tobit_VCV(VCV, sigma, TC->theta, k);
     }
