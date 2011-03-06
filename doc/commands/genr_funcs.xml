@@ -4346,36 +4346,30 @@
       </description>
     </function>
 
-    <function name="quantc" section="stats" output="matrix">
-      <fnargs>
-	<fnarg type="matrix">Y</fnarg>
-	<fnarg type="vector">p</fnarg>
-      </fnargs>
-      <description>
-	<para>
-	  Calculates one or more quantiles of the columns of
-	  <argname>Y</argname>. The matrix returned is
-	  <by r="m" c="n"/>, where <repl>m</repl> is the number
-	  of elements in <argname>p</argname> and <repl>n</repl>
-	  is the number of columns in <argname>Y</argname>.
-	</para>
-      </description>
-    </function>
-
-    <function name="quantile" section="stats" output="scalar" altout="rvec">
+    <function name="quantile" section="stats" output="scalar" altout="matrix">
       <fnargs>
 	<fnarg type="series-or-mat">y</fnarg>
 	<fnarg type="pscalar">p</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Given a series argument, returns the
+	  If <argname>y</argname> is a series, returns the
 	  <argname>p</argname>-quantile for the series. For example, when
-	  <math>p</math> = 0.5, the median is returned. Given a
-	  matrix argument, returns a row vector containing the 
-	  <argname>p</argname>-quantiles for the columns of 
-	  <argname>y</argname>; that is, each column is treated
-	  as a series.
+	  <math>p</math> = 0.5, the median is returned.
+	</para>
+	<para>
+	  If <argname>y</argname> is a matrix, returns a row vector
+	  containing the <argname>p</argname>-quantiles for the columns of
+	  <argname>y</argname>; that is, each column is treated as a
+	  series.
+	</para>
+	<para>
+	  In addition, for matrix <argname>y</argname> an alternate form
+	  of the second argument is supported: <argname>p</argname> may be
+	  given as a vector. In that case the return value is an <by r="m"
+	  c="n"/> matrix, where <repl>m</repl> is the number of elements
+	  in <argname>p</argname> and <repl>n</repl> is the number of
+	  columns in <argname>y</argname>.
 	</para>
 	<para context="tex">
 	  For a series of length $n$, the $p$-quantile, $q$, is defined

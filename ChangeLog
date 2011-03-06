@@ -12,8 +12,8 @@ version 1.9.5, in progress
   note to its help text
 - Lag specification for regressors (e.g. "foo(-1 to -2)"): the name of
   a list can now be substituted for the name of a series
-- New function quantc(): returns one or more quantiles of the columns
-  of a matrix
+- quantile() function: allow a vector for the second argument when the 
+  first argument is a matrix
 - Fix bug: wrong out-of-sample forecasts for ARMA models with seasonal
   MA terms
 - Fix bug: wrong handling of string fields in ODBC data import

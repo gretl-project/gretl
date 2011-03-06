@@ -279,7 +279,6 @@ enum {
     F_LRVAR,
     F_PRINCOMP,
     F_QUANTILE,
-    F_QUANTC,
     F_CMULT,	  /* complex multiplication */
     F_CDIV,	  /* complex division */
     F_MXTAB,

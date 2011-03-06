@@ -4253,6 +4253,9 @@ series_scalar_func (NODE *n, int f, parser *p)
     return ret;
 }
 
+/* There must be a matrix in @l; @r may hold a vector or
+   a scalar value */
+
 static NODE *matrix_quantiles_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
@@ -8102,7 +8105,6 @@ static NODE *eval (NODE *t, parser *p)
 	} 
 	break;	
     case F_LRVAR:
-    case F_QUANTILE:
     case F_NPV:
     case F_ISCONST:
 	/* takes series and scalar arg, returns scalar */
@@ -8122,15 +8124,22 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t->t, 1, VEC, l, p);
 	}
 	break;
-    case F_QUANTC:
-	if (l->t == MAT) {
+    case F_QUANTILE:
+	if (l->t == VEC) {
+	    if (scalar_node(r)) {
+		ret = series_scalar_scalar_func(l, r, t->t, p);
+	    } else {
+		node_type_error(t->t, 2, NUM, r, p);
+	    }
+	} else if (l->t == MAT) {
 	    if (r->t == MAT || scalar_node(r)) {
 		ret = matrix_quantiles_node(l, r, p);
 	    } else {
 		node_type_error(t->t, 2, MAT, r, p);
 	    }
 	} else {
-	    node_type_error(t->t, 1, MAT, r, p);
+	    node_type_error(t->t, 1, (r->t == MAT)? MAT : VEC,
+			    l, p);
 	}
 	break;
     case F_RUNIFORM:
