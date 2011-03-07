@@ -248,11 +248,11 @@ static double int_loglik (const double *theta, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
     double x0, x1, z0, z1;
-    double ndx, ll = 0.0;
     double derivs = 0.0, derivb = 0.0;
-    int i, t;
-    int k = IC->k;
-    double sigma = exp(theta[k-1]);
+    double sigma, ndxt, ll = 0.0;
+    int i, t, k = IC->k;
+
+    sigma = exp(theta[k-1]);
 
     for (i=0; i<k; i++) {
 	IC->g[i] = 0;
@@ -262,31 +262,31 @@ static double int_loglik (const double *theta, void *ptr)
 	x0 = IC->lo[t];
 	x1 = IC->hi[t];
 
-	ndx = 0;
+	ndxt = 0.0;
 	for (i=0; i<IC->nx; i++) {
-	    ndx += theta[i] * IC->X[i][t];
+	    ndxt += theta[i] * IC->X[i][t];
 	}
 
-	IC->ndx[t] = ndx;
+	IC->ndx[t] = ndxt;
 
 	switch (IC->obstype[t]) {
 	case INT_LOW:
-	    z1 = (x1 - ndx)/sigma;
+	    z1 = (x1 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf(z1);
 	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
 	    derivb = -IC->f1[t]/sigma;
 	    derivs = -IC->f1[t]*z1;
 	    break;
 	case INT_HIGH:
-	    z0 = (x0 - ndx)/sigma;
+	    z0 = (x0 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf_comp(z0);
 	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
 	    derivb = IC->f0[t]/sigma;
 	    derivs = IC->f0[t]*z0;
 	    break;
 	case INT_MID:
-	    z0 = (x0 - ndx)/sigma;
-	    z1 = (x1 - ndx)/sigma;
+	    z0 = (x0 - ndxt)/sigma;
+	    z1 = (x1 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf(z1) - normal_cdf(z0);
 	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
 	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
@@ -294,7 +294,7 @@ static double int_loglik (const double *theta, void *ptr)
 	    derivs = (IC->f0[t]*z0 - IC->f1[t]*z1);
 	    break;
 	case INT_POINT:
-	    z0 = (x0 - ndx)/sigma;
+	    z0 = (x0 - ndxt)/sigma;
 	    IC->dP[t] = normal_pdf(z0)/sigma;
 	    derivb = z0/sigma;
 	    derivs = z0*z0 - 1;
