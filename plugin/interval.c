@@ -495,13 +495,13 @@ static void int_compute_gresids (int_container *IC)
     }
 } 
 
+/*
+  Wald test for zeroing all coefficient apart from the constant,
+  which is assumed to be the first explanatory variable
+*/
+
 static double chisq_overall_test (int_container *IC)
 {
-    /*
-      Wald test for zeroing all coefficient apart from the constant,
-      which is assumed to be the first explanatory variable
-    */
-
     gretl_vector *b;
     gretl_matrix *V;
     int k = IC->nx - 1;
@@ -539,37 +539,32 @@ static double chisq_overall_test (int_container *IC)
     return ret;
 } 
 
+/* 
+   Here we exploit the following properties of sub-support normal 
+   moments: if x ~ N(0,1) and A = [a,b], then
+
+   E(x^n | x \in A) = (n-1) E(x^{n-2} | x \in A) + 
+   + \frac{a^{n-1}\phi(a) - b^{n-1}\phi(b)}{\Phi(b)-\Phi(a)}
+
+   We have:
+
+   E(x^0 | x \in A) = 1 (trivially) 
+   E(x^1 | x \in A) = f0 - f1
+   E(x^2 | x \in A) = 1 + lo*f0 - hi*f1
+   ...
+
+   Returns the matrix of the orthogonality conditions (conditional
+   moments); the non-zero ones are stored in the two pointers sm3
+   and sm4.
+*/
+
 static gretl_matrix *cond_moments (int_container *IC, double *sm3, 
 				   double *sm4)
 {
-    /* 
-       Here we exploit the following properties of sub-support normal 
-       moments: if x ~ N(0,1) and A = [a,b], then
-
-       E(x^n | x \in A) = (n-1) E(x^{n-2} | x \in A) + 
-       + \frac{a^{n-1}\phi(a) - b^{n-1}\phi(b)}{\Phi(b)-\Phi(a)}
-
-       We have:
-
-       E(x^0 | x \in A) = 1 (trivially) 
-       E(x^1 | x \in A) = f0 - f1
-       E(x^2 | x \in A) = 1 + lo*f0 - hi*f1
-       ...
-
-       Returns the matrix of the orthogonality conditions (conditional
-       moments); the non-zero ones are stored in the two pointers sm3
-       and sm4.
-    */
-
+    gretl_matrix *ret = NULL;
     int n = IC->nobs;  
     int k = IC->k;  
     int noc = k + 2;  
-    double *ndx = IC->ndx;
-    double *lo = IC->lo; 
-    double *hi = IC->hi;
-    double *f0 = IC->f0;
-    double *f1 = IC->f1;
-    gretl_matrix *ret = NULL;
     double a, b, phi0, phi1, m1, m2, u, x, y;
     double m3 = 0.0, m4 = 0.0;
     double sigma = exp(IC->theta[k - 1]);
@@ -586,26 +581,25 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
     for (t=0; t<n; t++) {
 	switch (IC->obstype[t]) {
 	case INT_LOW:
-	    b = (hi[t] - ndx[t])/sigma;
-	    phi1 = y = f1[t];
+	    b = (IC->hi[t] - IC->ndx[t])/sigma;
+	    phi1 = y = IC->f1[t];
 	    m1 = -phi1;
 	    m2 = 1 - (y *= b);
 	    m3 = 2*m1 - (y *= b);
 	    m4 = 3*m2 - (y *= b);
 	    break;
 	case INT_HIGH:
-	    a = (lo[t] - ndx[t])/sigma;
-	    m1 = phi0 = x = f0[t];
+	    a = (IC->lo[t] - IC->ndx[t])/sigma;
+	    m1 = phi0 = x = IC->f0[t];
 	    m2 = 1 + (x *= a);
 	    m3 = 2*m1 + (x *= a);
 	    m4 = 3*m2 + (x *= a);
 	    break;
 	case INT_MID:
-	    a = (lo[t] - ndx[t])/sigma;
-	    b = (hi[t] - ndx[t])/sigma;
-
-	    phi0 = x = f0[t];
-	    phi1 = y = f1[t];
+	    a = (IC->lo[t] - IC->ndx[t])/sigma;
+	    b = (IC->hi[t] - IC->ndx[t])/sigma;
+	    phi0 = x = IC->f0[t];
+	    phi1 = y = IC->f1[t];
 	    m1 = phi0 - phi1;
 	    m2 = 1 + (x *= a) - (y *= b);
 	    m3 = 2*m1 + (x *= a) - (y *= b);
@@ -632,24 +626,24 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
     return ret;
 }
 
+/*
+  Conditional moment test for normality: in practice, a regression
+  where the dep. var is 1 and the matrix of explanatory variables
+  is [ G | sk | ku ], where:
+
+  * G is the by-obs score matrix (should already be in IC by now)
+  * sk[t] is an unbiased estimator of \epsilon_t^3
+  * ku[t] is an unbiased estimator of (\epsilon_t^4 - 3)
+
+  The test statistic is the explained sum of squares.
+*/
+
 static int intreg_normtest (int_container *IC, double *teststat)
 {
-    /*
-      Conditonal moment test for normality: in practice, a regression
-      where the dep. var is 1 and the matrix of explanatory variables
-      is [ G | sk | ku ], where:
-
-      * G is the by-obs score matrix (should already be in IC by now)
-      * sk[t] is an unbiased estimator of \epsilon_t^3
-      * ku[t] is an unbiased estimator of (\epsilon_t^4 - 3)
-
-      The test statistic is the explained sum of squares.
-    */
-
     gretl_matrix *condmom;
-    double skew, kurt;
     gretl_matrix *GG = NULL;
     gretl_matrix *g = NULL;
+    double skew, kurt;
     int noc = IC->k + 2;
     int err = 0;
 
@@ -663,20 +657,17 @@ static int intreg_normtest (int_container *IC, double *teststat)
 
     if (GG == NULL || g == NULL) {
 	err = E_ALLOC;
-	goto bailout;
-    }
-
-    err = gretl_invert_symmetric_matrix(GG);
-    if (!err) {
-	gretl_vector_set(g, noc-2, skew);
-	gretl_vector_set(g, noc-1, kurt);
-	*teststat = gretl_scalar_qform(g, GG, &err);
     } else {
-	gretl_matrix_print(condmom, "conditional moment matrix");
-	*teststat = NADBL;
+	err = gretl_invert_symmetric_matrix(GG);
+	if (!err) {
+	    gretl_vector_set(g, noc-2, skew);
+	    gretl_vector_set(g, noc-1, kurt);
+	    *teststat = gretl_scalar_qform(g, GG, &err);
+	} else {
+	    gretl_matrix_print(condmom, "conditional moment matrix");
+	    *teststat = NADBL;
+	}
     }
-
- bailout:
 
     gretl_matrix_free(condmom);
     gretl_matrix_free(GG);
