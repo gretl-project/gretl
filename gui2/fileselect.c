@@ -166,20 +166,7 @@ static gretlopt save_action_to_opt (int action, gpointer p)
     return opt;
 }
 
-static const char *get_gp_ext (int ttype)
-{
-    if (ttype == GP_TERM_EPS)      return ".eps";
-    else if (ttype == GP_TERM_PDF) return ".pdf";
-    else if (ttype == GP_TERM_FIG) return ".fig";
-    else if (ttype == GP_TERM_TEX) return ".tex";
-    else if (ttype == GP_TERM_PNG) return ".png";
-    else if (ttype == GP_TERM_EMF) return ".emf";
-    else if (ttype == GP_TERM_SVG) return ".svg";
-    else if (ttype == GP_TERM_PLT) return ".plt";
-    else return "*";
-}
-
-static const char *get_ext (int action, gpointer data)
+static const char *get_extension_for_action (int action, gpointer data)
 {
     const char *s = NULL;
 
@@ -188,7 +175,14 @@ static const char *get_ext (int action, gpointer data)
     } else if (action == SAVE_GNUPLOT || action == SAVE_GRAPHIC) {
 	int ttype = gp_term_code(data, action);
 
-	s = get_gp_ext(ttype);
+	if (ttype == GP_TERM_EPS)      s = ".eps";
+	else if (ttype == GP_TERM_PDF) s = ".pdf";
+	else if (ttype == GP_TERM_FIG) s = ".fig";
+	else if (ttype == GP_TERM_TEX) s = ".tex";
+	else if (ttype == GP_TERM_PNG) s = ".png";
+	else if (ttype == GP_TERM_EMF) s = ".emf";
+	else if (ttype == GP_TERM_SVG) s = ".svg";
+	else if (ttype == GP_TERM_PLT) s = ".plt";
     } else {
 	size_t i;
 
@@ -203,34 +197,70 @@ static const char *get_ext (int action, gpointer data)
     return s;
 }
 
-static int check_maybe_add_ext (char *fname, int action, gpointer data)
+static int fname_has_extension (const char *fname)
 {
-    const char *ext = NULL;
+    const char *p;
+    int ret = 0;
+
+#ifdef G_OS_WIN32
+    p = strrchr(fname, '\\');
+    if (p == NULL) {
+	p = strrchr(fname, '/');
+    }
+#else
+    p = strrchr(fname, '/');
+#endif
+
+    if (p == NULL) {
+	p = fname;
+    }
+
+    p = strrchr(p, '.');
+
+    if (p != NULL) {
+	/* got a '.' in the basename: we'll count fname
+	   as having an extension unless the trailing
+	   portion is an integer
+	*/
+	if (!integer_string(p+1)) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+static int post_process_savename (char *fname, int action, gpointer data)
+{
+    int err = 0;
 
     if (fname == NULL) {
-	return 1;
-    }
+	err = 1;
+    } else if (gretl_isdir(fname)) {
+	/* fname is actually a directory */
+	err = !SET_DIR_ACTION(action);
+    } else {
+	/* get the recommended extension for this action */
+	const char *ext = get_extension_for_action(action, data);
 
-    /* don't mess if the fname is really a dir */
-    if (gretl_isdir(fname)) {
-	return !SET_DIR_ACTION(action);
-    }
-
-    /* try getting an appropriate extension */
-    ext = get_ext(action, data);
-
-    if (ext != NULL && strlen(ext) > 1) {
-	/* is the extension already present? */
-	int n = strlen(ext);
-	int m = strlen(fname);
-
-	if (n < m && fname[m-1] != '.' && 
-	    strncmp(fname + m - n, ext, n) != 0) {
-	    strcat(fname, ext);
+	if (ext != NULL && !has_suffix(fname, ext)) {
+	    /* We found a recommended extension, and it's not
+	       already present on fname; so we should probably
+	       append the extension -- unless perhaps we're
+	       looking at an action where there isn't exactly
+	       a canonical extension and fname already has some
+	       sort of extension in place.
+	    */
+	    if (strcmp(ext, ".txt") && strcmp(ext, ".plt")) {
+		/* append canonical extension */
+		strcat(fname, ext);
+	    } else if (!fname_has_extension(fname)) {
+		strcat(fname, ext);
+	    }
 	}
     }    
 
-    return 0;
+    return err;
 }
 
 static void script_window_update (windata_t *vwin, const char *fname)
@@ -531,7 +561,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 
     /* now for the save/export options */
 
-    if (check_maybe_add_ext(fname, action, data)) {
+    if (post_process_savename(fname, action, data)) {
 	return;
     }
 
@@ -593,7 +623,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {
     
-    const char *ext = get_ext(action, data);
+    const char *ext = get_extension_for_action(action, data);
 
     if (ext == NULL) { 
 	strcpy(suffix, "*");
