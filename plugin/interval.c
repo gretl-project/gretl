@@ -244,6 +244,38 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+#define INT_RESCALE 0 /* not ready */
+
+#if INT_RESCALE
+
+static void interval_rescale (int *list, double scale, 
+                              double **Z, DATAINFO *pdinfo,
+                              int cleanup)
+{
+    double *lv = Z[list[1]];
+    double *hv = Z[list[2]];
+    double *mp = NULL;
+    int t;
+
+    if (!cleanup) {
+        mp = Z[list[pdinfo->v-1]];
+    }
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+        if (!na(lv[t])) {
+	    lv[t] *= scale;
+        }
+        if (!na(hv[t])) {
+	    hv[t] *= scale;
+        }
+        if (mp != NULL && !na(mp[t])) {
+	    mp[t] *= scale;
+        }
+    }
+}
+
+#endif
+
 static double int_loglik (const double *theta, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
@@ -842,11 +874,41 @@ static void maybe_reposition_const (int *list, const double **Z,
     }	
 }
 
+#if INT_RESCALE
+
+static double interval_depvar_scale (const MODEL *pmod)
+{
+    double ut, umax = 0.0;
+    double scale = 1.0;
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->uhat[t])) {
+	    ut = fabs(pmod->uhat[t]);
+	    if (ut > umax) {
+		umax = ut;
+	    }
+	}
+    }
+
+    if (umax > 5.0) {
+	/* normal pdf will lose accuracy beyond, say, z = 5 */
+	scale = 5.0 / umax;
+    }
+
+    return scale;
+}
+
+#endif
+
 MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn) 
 {
     MODEL model;
     int *initlist = NULL;
+#if INT_RESCALE
+    double scale = 1.0;
+#endif
 
     gretl_model_init(&model);
     
@@ -870,6 +932,16 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
+#if INT_RESCALE
+    /* handle scale issues */
+    scale = interval_depvar_scale(&model);
+    if (scale != 1.0) {
+        interval_rescale(list, scale, *pZ, pdinfo, 0);
+	clear_model(&model);
+	model = lsq(initlist, *pZ, pdinfo, OLS, OPT_A);
+    }
+#endif
+
 #if INTDEBUG
     pprintf(prn, "interval_estimate: initial OLS\n");
     printmodel(&model, pdinfo, OPT_S, prn);
@@ -883,6 +955,12 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     model.errcode = do_interval(list, *pZ, pdinfo, &model, opt, prn);
 
     clear_model_xpx(&model);
+
+#if INT_RESCALE
+    if (scale != 1.0) {
+        interval_rescale(list, 1.0 / scale, *pZ, pdinfo, 1);
+    }
+#endif
 
     return model;
 }
