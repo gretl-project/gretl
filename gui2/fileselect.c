@@ -216,16 +216,19 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
 	return !SET_DIR_ACTION(action);
     }
 
-    /* don't mess with a filename that already has an extension */
-    if (dotpos(fname) != strlen(fname)) {
-	return 0;
-    }
-    
-    /* otherwise add an appropriate extension */
+    /* try getting an appropriate extension */
     ext = get_ext(action, data);
+
     if (ext != NULL && strlen(ext) > 1) {
-	strcat(fname, ext);
-    }
+	/* is the extension already present? */
+	int n = strlen(ext);
+	int m = strlen(fname);
+
+	if (n < m && fname[m-1] != '.' && 
+	    strncmp(fname + m - n, ext, n) != 0) {
+	    strcat(fname, ext);
+	}
+    }    
 
     return 0;
 }
