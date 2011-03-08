@@ -374,7 +374,7 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     int_container *IC = (int_container *) ptr;
 
     double x, vij, x0, x1, z0, z1;    
-    double mu, lambda, nu, dP, df, f0, f1;
+    double mu, lambda, nu, dP, df, f0, f1, q0, q1, Hss = 0;
     double sigma, ndxt;
     int i, j, t, k = IC->k;
     int err = 0;
@@ -401,20 +401,24 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
 	    z1 = (x1 - ndxt)/sigma;
 	    mu     = -f1/sigma;
 	    lambda = mu * z1;
-	    nu     = mu * (z1*z1 - 1.0);
+	    q1     = (z1*z1 - 1.0);
+	    nu     = mu * q1;
 	    break;
 	case INT_HIGH:
 	    z0 = (x0 - ndxt)/sigma;
 	    mu     = f0/sigma;
 	    lambda = mu * z0;
-	    nu     = mu * (z0*z0 - 1.0);
+	    q0     = (z0*z0 - 1.0);
+	    nu     = mu * q0;
 	    break;
 	case INT_MID:
 	    z0 = (x0 - ndxt)/sigma;
 	    z1 = (x1 - ndxt)/sigma;
 	    mu     = (f0 - f1)/sigma;
 	    lambda = (f0*z0 - f1*z1)/sigma;
-	    nu     = (f0 * (z0*z0 - 1.0) - f1 * (z1*z1 - 1.0))/sigma;
+	    q0     = (z0*z0 - 1.0);
+	    q1     = (z1*z1 - 1.0);
+	    nu     = (f0 * q0 - f1 * q1)/sigma;
 	    break;
 	case INT_POINT:
 	    z0 = (x0 - ndxt)/sigma;
@@ -451,14 +455,14 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
 
 	if (IC->obstype[t] == INT_POINT) {
 	    x = 2 * (z0*z0);
-	    vij = x + gretl_matrix_get(V, k-1, k-1);
+	    Hss += x;
 	} else {
 	    x = lambda*sigma;
-	    vij = gretl_matrix_get(V, k-1, k-1);
-	    vij += x + x*x - (f0 * (z0*z0 - 1.0)*z0 - f1 * (z1*z1 - 1.0)*z1);
+	    Hss += x*(x+1) - (f0 * q0 * z0 - f1 * q1 *z1);
 	}
-	gretl_matrix_set(V, k-1, k-1, vij);
     }
+
+    gretl_matrix_set(V, k-1, k-1, Hss);
 
     for (i=0; i<k; i++) {
 	for (j=i; j<k; j++) {
@@ -916,7 +920,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     return 0;
 }
 
-#define USE_NEWTON 1
+#define USE_NEWTON 0
 
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
