@@ -366,10 +366,115 @@ static int int_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	s[i] = IC->g[i];
     }
 
-    return 1;
+    return 0;
 }
 
-static gretl_matrix *int_hess (int_container *IC, int *err)
+int int_ahess (double *theta, gretl_matrix *V, void *ptr)
+{
+    int_container *IC = (int_container *) ptr;
+
+    double x, vij, x0, x1, z0, z1;    
+    double mu, lambda, nu, dP, df, f0, f1;
+    double sigma, ndxt;
+    int i, j, t, k = IC->k;
+    int err = 0;
+
+    sigma = exp(theta[k-1]);
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<k; j++) {
+	    gretl_matrix_set(V, i, j, 0);
+	}
+    }
+
+    for (t=0; t<IC->nobs; t++) {
+	/* ndx, dP, f0, f1 etc should already be there */
+	x0 = IC->lo[t];
+	x1 = IC->hi[t];
+	ndxt = IC->ndx[t];
+	dP = IC->dP[t];
+	f0 = IC->f0[t];
+	f1 = IC->f1[t];
+
+	switch (IC->obstype[t]) {
+	case INT_LOW:
+	    z1 = (x1 - ndxt)/sigma;
+	    mu     = -f1/sigma;
+	    lambda = mu * z1;
+	    nu     = mu * (z1*z1 - 1.0);
+	    break;
+	case INT_HIGH:
+	    z0 = (x0 - ndxt)/sigma;
+	    mu     = f0/sigma;
+	    lambda = mu * z0;
+	    nu     = mu * (z0*z0 - 1.0);
+	    break;
+	case INT_MID:
+	    z0 = (x0 - ndxt)/sigma;
+	    z1 = (x1 - ndxt)/sigma;
+	    mu     = (f0 - f1)/sigma;
+	    lambda = (f0*z0 - f1*z1)/sigma;
+	    nu     = (f0 * (z0*z0 - 1.0) - f1 * (z1*z1 - 1.0))/sigma;
+	    break;
+	case INT_POINT:
+	    z0 = (x0 - ndxt)/sigma;
+	}
+
+	if (IC->obstype[t] == INT_POINT) {
+	    x = 1.0 / (sigma*sigma);
+	} else {
+	    x = (mu*mu - lambda/sigma);
+	}
+
+	for (i=0; i<IC->nx; i++) {
+	    x0 = IC->X[i][t];
+	    for (j=i; j<IC->nx; j++) {
+		x1 = IC->X[j][t];
+		vij = gretl_matrix_get(V, i, j);
+		vij += x * x0 * x1;
+		gretl_matrix_set(V, i, j, vij);
+	    }
+	}
+
+	if (IC->obstype[t] == INT_POINT) {
+	    x = 2 * z0 / sigma;
+	} else {
+	    x = (mu*lambda*sigma - nu);
+	}
+
+	for (i=0; i<IC->nx; i++) {
+	    x0 = IC->X[i][t];
+	    vij = gretl_matrix_get(V, i, k-1);
+	    vij += x * x0;
+	    gretl_matrix_set(V, i, k-1, vij);
+	}
+
+	if (IC->obstype[t] == INT_POINT) {
+	    x = 2 * (z0*z0);
+	    vij = x + gretl_matrix_get(V, k-1, k-1);
+	} else {
+	    x = lambda*sigma;
+	    vij = gretl_matrix_get(V, k-1, k-1);
+	    vij += x + x*x - (f0 * (z0*z0 - 1.0)*z0 - f1 * (z1*z1 - 1.0)*z1);
+	}
+	gretl_matrix_set(V, k-1, k-1, vij);
+    }
+
+    for (i=0; i<k; i++) {
+	for (j=i; j<k; j++) {
+	    vij = gretl_matrix_get(V, i, j);
+	    gretl_matrix_set(V, j, i, vij);
+	}
+    }
+
+    err = gretl_invert_symmetric_matrix(V);
+
+ bailout:
+
+    return err;
+}
+
+static gretl_matrix *int_nhess (int_container *IC, int *err)
 {
     double x, smal = 1.0e-07;
     gretl_matrix *V = NULL;
@@ -494,7 +599,8 @@ static gretl_matrix *intreg_sandwich (int_container *IC,
 static gretl_matrix *intreg_VCV (int_container *IC, gretlopt opt,
 				 int *err)
 {
-    gretl_matrix *H = int_hess(IC, err);
+
+    gretl_matrix *H = int_nhess(IC, err);
 
     if (!*err && (opt & OPT_R)) {
 	return intreg_sandwich(IC, H, err);
@@ -810,6 +916,8 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     return 0;
 }
 
+#define USE_NEWTON 1
+
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
 {
@@ -826,9 +934,17 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 
     BFGS_defaults(&maxit, &toler, INTREG);
 
+#if USE_NEWTON
+    double crittol = 1.0e-06;
+    double gradtol = 1.0e-06;
+    err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
+			     &fncount, C_LOGLIK, int_loglik, 
+			     int_score, int_ahess, IC, opt & OPT_V, prn);
+#else
     err = BFGS_max(IC->theta, IC->k, maxit, toler, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
 		   int_score, IC, NULL, opt & OPT_V, prn);
+#endif
 
     if (!err) {
 	IC->ll = int_loglik(IC->theta, IC);
