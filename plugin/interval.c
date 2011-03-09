@@ -175,11 +175,14 @@ static int_container *int_container_new (int *list, double **Z,
     }
     IC->theta[i] = log(mod->sigma);
 
-#if INTDEBUG > 1
+#if INTDEBUG > 2
     fprintf(stderr, "nobs = %d\n", IC->nobs);
     fprintf(stderr, "t1-t2 = %d-%d\n", IC->t1, IC->t2);
     fprintf(stderr, "k = %d\n", IC->k);
     fprintf(stderr, "nx = %d\n", IC->nx);
+    for (i=0; i<=IC->nx; i++) {
+	fprintf(stderr, "theta[%2d] = %10.6f\n", i, IC->theta[i]);
+    }
 #endif
 
     return IC;
@@ -276,23 +279,13 @@ static void interval_rescale (int *list, double scale,
 
 #endif
 
-static double int_loglik (const double *theta, void *ptr)
+static void loglik_prelim(const double *theta, int_container *IC)
 {
-    int_container *IC = (int_container *) ptr;
-    double x0, x1, z0, z1;
-    double derivs = 0.0, derivb = 0.0;
-    double sigma, ndxt, ll = 0.0;
     int i, t, k = IC->k;
-
-    sigma = exp(theta[k-1]);
-
-    for (i=0; i<k; i++) {
-	IC->g[i] = 0;
-    }
+    double ndxt, z0, z1, x0, x1;
+    double sigma = exp(theta[k-1]);
 
     for (t=0; t<IC->nobs; t++) {
-	x0 = IC->lo[t];
-	x1 = IC->hi[t];
 
 	ndxt = 0.0;
 	for (i=0; i<IC->nx; i++) {
@@ -301,20 +294,21 @@ static double int_loglik (const double *theta, void *ptr)
 
 	IC->ndx[t] = ndxt;
 
+	x0 = IC->lo[t];
+	x1 = IC->hi[t];
+
 	switch (IC->obstype[t]) {
 	case INT_LOW:
 	    z1 = (x1 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf(z1);
+	    IC->f0[t] = 0;
 	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
-	    derivb = -IC->f1[t]/sigma;
-	    derivs = -IC->f1[t]*z1;
 	    break;
 	case INT_HIGH:
 	    z0 = (x0 - ndxt)/sigma;
 	    IC->dP[t] = normal_cdf_comp(z0);
 	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
-	    derivb = IC->f0[t]/sigma;
-	    derivs = IC->f0[t]*z0;
+	    IC->f1[t] = 0;
 	    break;
 	case INT_MID:
 	    z0 = (x0 - ndxt)/sigma;
@@ -322,12 +316,59 @@ static double int_loglik (const double *theta, void *ptr)
 	    IC->dP[t] = normal_cdf(z1) - normal_cdf(z0);
 	    IC->f0[t] = normal_pdf(z0) / IC->dP[t];
 	    IC->f1[t] = normal_pdf(z1) / IC->dP[t];
+	    break;
+	case INT_POINT:
+	    z0 = (x0 - ndxt)/sigma;
+	    IC->dP[t] = normal_pdf(z0)/sigma;
+	    IC->f0[t] = IC->f1[t] = 0;
+	}
+    }
+}
+
+static double int_loglik (const double *theta, void *ptr)
+{
+    int_container *IC = (int_container *) ptr;
+    double x0, x1, z0, z1;
+    double derivs = 0.0, derivb = 0.0;
+    double sigma, ndxt, ll = 0.0;
+    double dP, f0, f1;
+    int i, t, k = IC->k;
+
+    sigma = exp(theta[k-1]);
+
+    for (i=0; i<k; i++) {
+	IC->g[i] = 0;
+    }
+
+    loglik_prelim(theta, IC);
+
+    for (t=0; t<IC->nobs; t++) {
+	x0 = IC->lo[t];
+	x1 = IC->hi[t];
+	ndxt = IC->ndx[t];
+	dP   = IC->dP[t];
+	f0   = IC->f0[t];
+	f1   = IC->f1[t];
+
+	switch (IC->obstype[t]) {
+	case INT_LOW:
+	    z1 = (x1 - ndxt)/sigma;
+	    derivb = -IC->f1[t]/sigma;
+	    derivs = -IC->f1[t]*z1;
+	    break;
+	case INT_HIGH:
+	    z0 = (x0 - ndxt)/sigma;
+	    derivb = IC->f0[t]/sigma;
+	    derivs = IC->f0[t]*z0;
+	    break;
+	case INT_MID:
+	    z0 = (x0 - ndxt)/sigma;
+	    z1 = (x1 - ndxt)/sigma;
 	    derivb = (IC->f0[t] - IC->f1[t])/sigma;
 	    derivs = (IC->f0[t]*z0 - IC->f1[t]*z1);
 	    break;
 	case INT_POINT:
 	    z0 = (x0 - ndxt)/sigma;
-	    IC->dP[t] = normal_pdf(z0)/sigma;
 	    derivb = z0/sigma;
 	    derivs = z0*z0 - 1;
 	}
@@ -336,12 +377,11 @@ static double int_loglik (const double *theta, void *ptr)
 
 	for (i=0; i<IC->nx; i++) {
 	    IC->G[i][t] = derivb * IC->X[i][t];
-	    IC->g[i] += IC->G[i][t];
+	    IC->g[i] += IC->G[i][t]; 
 	}
 
 	IC->G[k-1][t] = derivs;
-	IC->g[k-1] += IC->G[k-1][t];
-
+	IC->g[k-1] += derivs;
     }
     
 #if INTDEBUG > 1
@@ -380,12 +420,20 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     int err = 0;
 
     sigma = exp(theta[k-1]);
+    loglik_prelim(theta, IC);
 
     for (i=0; i<k; i++) {
 	for (j=0; j<k; j++) {
 	    gretl_matrix_set(V, i, j, 0);
 	}
     }
+
+#if INTDEBUG > 1
+    fprintf(stderr, "int_ahess:\n");
+    for (i=0; i<k; i++) {
+	fprintf(stderr, "theta[%2d] = %20.16f\n", i, theta[i]);
+    }
+#endif
 
     for (t=0; t<IC->nobs; t++) {
 	/* ndx, dP, f0, f1 etc should already be there */
@@ -472,6 +520,9 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     }
 
     err = gretl_invert_symmetric_matrix(V);
+#if INTDEBUG > 1
+    gretl_matrix_print(V, "Inverse Hessian (analytical)");
+#endif
 
  bailout:
 
@@ -920,7 +971,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     return 0;
 }
 
-#define USE_NEWTON 0
+#define USE_NEWTON 1
 
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
@@ -939,8 +990,8 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     BFGS_defaults(&maxit, &toler, INTREG);
 
 #if USE_NEWTON
-    double crittol = 1.0e-06;
-    double gradtol = 1.0e-06;
+    double crittol = 1.0e-07;
+    double gradtol = 1.0e-07;
     err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
 			     &fncount, C_LOGLIK, int_loglik, 
 			     int_score, int_ahess, IC, opt & OPT_V, prn);
