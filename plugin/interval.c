@@ -191,9 +191,8 @@ static int_container *int_container_new (int *list, double **Z,
 static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo, 
 			      int **initlist)
 {
-    int n = list[0];
     int mpy = pdinfo->v;
-    int lv, hv;
+    double *lo, *hi, *mid;
     double x0, x1;
     int i, t, err;
 
@@ -202,24 +201,25 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 	return err;
     }
 
-    lv = list[1];
-    hv = list[2];
+    lo = (*pZ)[list[1]];
+    hi = (*pZ)[list[2]];
+    mid = (*pZ)[mpy];
 
     for (t=pdinfo->t1; t<=pdinfo->t2 && !err; t++) {
-	x0 = (*pZ)[lv][t];
-	x1 = (*pZ)[hv][t];
+	x0 = lo[t];
+	x1 = hi[t];
 
 	if (na(x0)) {
-	    (*pZ)[mpy][t] = x1;
+	    mid[t] = x1;
 	} else if (na(x1)) {
-	    (*pZ)[mpy][t] = x0;
+	    mid[t] = x0;
 	} else if (x0 > x1) {
 	    gretl_errmsg_sprintf(_("Obs %d: lower bound (%g) "
 				   "exceeds upper (%g)"), t + 1,
 				 x0, x1);
 	    err = E_DATA;
 	} else {
-	    (*pZ)[mpy][t] = 0.5 * (x0 + x1);
+	    mid[t] = 0.5 * (x0 + x1);
 	}
     }
 
@@ -227,19 +227,19 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 	return err;
     }
 
-    *initlist = gretl_list_new(n - 1);
+    *initlist = gretl_list_new(list[0] - 1);
 
     if (*initlist == NULL) {
 	err = E_ALLOC;
     } else {
 	(*initlist)[1] = mpy;
-	for (i=3; i<=n; i++) {
+	for (i=3; i<=list[0]; i++) {
 	    (*initlist)[i-1] = list[i];
 	}
 
 #if INTDEBUG > 1
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    fprintf(stderr, "%2d: %g\n", t, (*pZ)[mpy][t]);
+	    fprintf(stderr, "%2d: %g\n", t, mid[t]);
 	}
 #endif
     }
@@ -247,46 +247,13 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-#define INT_RESCALE 0 /* not ready */
-
-#if INT_RESCALE
-
-static void interval_rescale (int *list, double scale, 
-                              double **Z, DATAINFO *pdinfo,
-                              int cleanup)
-{
-    double *lv = Z[list[1]];
-    double *hv = Z[list[2]];
-    double *mp = NULL;
-    int t;
-
-    if (!cleanup) {
-        mp = Z[list[pdinfo->v-1]];
-    }
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-        if (!na(lv[t])) {
-	    lv[t] *= scale;
-        }
-        if (!na(hv[t])) {
-	    hv[t] *= scale;
-        }
-        if (mp != NULL && !na(mp[t])) {
-	    mp[t] *= scale;
-        }
-    }
-}
-
-#endif
-
-static void loglik_prelim(const double *theta, int_container *IC)
+static void loglik_prelim (const double *theta, int_container *IC)
 {
     int i, t, k = IC->k;
     double ndxt, z0, z1, x0, x1;
     double sigma = exp(theta[k-1]);
 
     for (t=0; t<IC->nobs; t++) {
-
 	ndxt = 0.0;
 	for (i=0; i<IC->nx; i++) {
 	    ndxt += theta[i] * IC->X[i][t];
@@ -412,10 +379,11 @@ static int int_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 int int_ahess (double *theta, gretl_matrix *V, void *ptr)
 {
     int_container *IC = (int_container *) ptr;
-
-    double x, vij, x0, x1, z0, z1;    
-    double mu, lambda, nu, dP, df, f0, f1, q0, q1, Hss = 0;
-    double sigma, ndxt;
+    double z0 = 0, z1 = 0, mu = 0;
+    double q0 = 0, q1 = 0, nu = 0;
+    double x, vij, x0, x1;    
+    double dP, f0, f1, Hss = 0;
+    double sigma, ndxt, lambda = 0;
     int i, j, t, k = IC->k;
     int err = 0;
 
@@ -520,11 +488,10 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     }
 
     err = gretl_invert_symmetric_matrix(V);
+
 #if INTDEBUG > 1
     gretl_matrix_print(V, "Inverse Hessian (analytical)");
 #endif
-
- bailout:
 
     return err;
 }
@@ -667,11 +634,9 @@ static gretl_matrix *intreg_VCV (int_container *IC, gretlopt opt,
 static void int_compute_gresids (int_container *IC)
 {
     int t, k = IC->k;
-    double ndx, sigma = exp(IC->theta[k-1]);
+    double sigma = exp(IC->theta[k-1]);
 
     for (t=0; t<IC->nobs; t++) {
-	ndx = IC->ndx[t];
-
 	switch (IC->obstype[t]) {
 	case INT_LOW:
 	    IC->uhat[t] = -sigma * IC->f1[t];
@@ -683,7 +648,7 @@ static void int_compute_gresids (int_container *IC)
 	    IC->uhat[t] = sigma * (IC->f0[t] - IC->f1[t]);
 	    break;
 	case INT_POINT:
-	    IC->uhat[t] = IC->lo[t] - ndx;
+	    IC->uhat[t] = IC->lo[t] - IC->ndx[t];
 	}
     }
 } 
@@ -976,9 +941,15 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
 {
+#if USE_NEWTON
+    double crittol = 1.0e-07;
+    double gradtol = 1.0e-07;
+#else
+    int grcount = 0;
+#endif
     int_container *IC;
     gretl_matrix *V = NULL;
-    int maxit, fncount, grcount;
+    int maxit, fncount;
     double toler, normtest = NADBL;
     int err = 0;
 
@@ -990,8 +961,6 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     BFGS_defaults(&maxit, &toler, INTREG);
 
 #if USE_NEWTON
-    double crittol = 1.0e-07;
-    double gradtol = 1.0e-07;
     err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
 			     &fncount, C_LOGLIK, int_loglik, 
 			     int_score, int_ahess, IC, opt & OPT_V, prn);
@@ -1045,41 +1014,11 @@ static void maybe_reposition_const (int *list, const double **Z,
     }	
 }
 
-#if INT_RESCALE
-
-static double interval_depvar_scale (const MODEL *pmod)
-{
-    double ut, umax = 0.0;
-    double scale = 1.0;
-    int t;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->uhat[t])) {
-	    ut = fabs(pmod->uhat[t]);
-	    if (ut > umax) {
-		umax = ut;
-	    }
-	}
-    }
-
-    if (umax > 5.0) {
-	/* normal pdf will lose accuracy beyond, say, z = 5 */
-	scale = 5.0 / umax;
-    }
-
-    return scale;
-}
-
-#endif
-
 MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn) 
 {
     MODEL model;
     int *initlist = NULL;
-#if INT_RESCALE
-    double scale = 1.0;
-#endif
 
     gretl_model_init(&model);
     
@@ -1103,16 +1042,6 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	return model;
     }
 
-#if INT_RESCALE
-    /* handle scale issues */
-    scale = interval_depvar_scale(&model);
-    if (scale != 1.0) {
-        interval_rescale(list, scale, *pZ, pdinfo, 0);
-	clear_model(&model);
-	model = lsq(initlist, *pZ, pdinfo, OLS, OPT_A);
-    }
-#endif
-
 #if INTDEBUG
     pprintf(prn, "interval_estimate: initial OLS\n");
     printmodel(&model, pdinfo, OPT_S, prn);
@@ -1126,12 +1055,6 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     model.errcode = do_interval(list, *pZ, pdinfo, &model, opt, prn);
 
     clear_model_xpx(&model);
-
-#if INT_RESCALE
-    if (scale != 1.0) {
-        interval_rescale(list, 1.0 / scale, *pZ, pdinfo, 1);
-    }
-#endif
 
     return model;
 }
