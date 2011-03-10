@@ -25,14 +25,6 @@
 
 #define HDEBUG 0
 
-/* 
-   USE_AHESS = 0 -> Numerical Hessian
-   USE_AHESS = 1 -> Analytical Hessian in $vcv, but use BFGS
-   USE_AHESS = 2 -> Analytical Hessian in $vcv, and do Newton-Raphson
-*/
-
-#define USE_AHESS 1
-
 typedef struct h_container_ h_container;
 
 struct h_container_ {
@@ -866,7 +858,7 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
 
     err = gretl_invert_symmetric_matrix(H);
 
-#if 1
+#if 0
     if (err) {
 	/* just in case: let's check vs numerical Hessian */
 	double *nH;
@@ -1343,12 +1335,13 @@ static gretl_matrix *heckit_init_H (double *theta,
 
 int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 {
-#if USE_AHESS
+
+    int do_newton = (opt & OPT_N);
     gretl_matrix *H = NULL;
-#endif
+
     gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
-    double rho, toler;
+    double rho, gradtol = 1.0e-06, toler = 1.0e-8;
     double *hess = NULL;
     double *theta = NULL;
     int i, j, np = HC->kmain + HC->ksel + 2;
@@ -1383,30 +1376,25 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     init_H = heckit_init_H(theta, HC, np);
 #endif
 
-# if USE_AHESS == 2
-    double gradtol = 1.0e-06;
-    toler = 1.0e-8;
-# endif
+    if (do_newton) {
+	err = newton_raphson_max(theta, np, maxit, toler, gradtol,
+				 &fncount, C_LOGLIK, h_loglik, 
+				 heckit_score, heckit_ahessian,
+				 HC, opt & OPT_V, prn);
 
-#if USE_AHESS < 2
-    err = BFGS_max(theta, np, maxit, toler, &fncount, 
-		   &grcount, h_loglik, C_LOGLIK,
-		   heckit_score, HC, init_H,
-		   (prn != NULL)? OPT_V : OPT_NONE, prn);
-#else
-    err = newton_raphson_max(theta, np, maxit, toler, gradtol,
-			     &fncount, C_LOGLIK, h_loglik, 
-			     heckit_score, heckit_ahessian,
-			     HC, opt & OPT_V, prn);
-
-    if (err == E_NOTPD) {
-	pprintf(prn, "Hessian not pd: switching from Newton to BFGS\n");
+	if (err == E_NOTPD) {
+	    pprintf(prn, "Hessian not pd: switching from Newton to BFGS\n");
+	    err = BFGS_max(theta, np, maxit, toler, &fncount, 
+			   &grcount, h_loglik, C_LOGLIK,
+			   heckit_score, HC, init_H,
+			   (prn != NULL)? OPT_V : OPT_NONE, prn);
+	}
+    } else {
 	err = BFGS_max(theta, np, maxit, toler, &fncount, 
 		       &grcount, h_loglik, C_LOGLIK,
 		       heckit_score, HC, init_H,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
     }
-#endif
 
     gretl_matrix_free(init_H);
 
@@ -1415,14 +1403,15 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 	gretl_model_set_int(hm, "fncount", fncount);	
 	gretl_model_set_int(hm, "grcount", grcount);	
 	HC->lambda = HC->sigma * HC->rho;
-#if USE_AHESS
+
 	H = gretl_matrix_alloc(np, np);
+
 	if (H == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    err = heckit_ahessian(theta, H, HC);
 	}
-#else
+#if 0
 	hess = heckit_nhessian(theta, np, h_loglik, HC, &err);
 #endif
     }
@@ -1435,22 +1424,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-#if USE_AHESS
 	gretl_matrix_copy_values(HC->vcv, H);
-#else
-	int k = 0;
-	double hij;
-
-	for (i=0; i<np; i++) {
-	    for (j=i; j<np; j++) {
-		hij = hess[k++];
-		gretl_matrix_set(HC->vcv, i, j, hij);
-		if (i != j) {
-		    gretl_matrix_set(HC->vcv, j, i, hij);
-		}
-	    }
-	}
-#endif
 
 	if (opt & OPT_R) {
 	    gretl_matrix *GG = gretl_matrix_XTX_new(HC->score);
@@ -1474,7 +1448,6 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 #if HDEBUG
 	for (i=0; i<np; i++) {
 	    double hij = gretl_matrix_get(HC->vcv, i, i);
-
 	    fprintf(stderr, "theta[%d] = %12.6f, (%12.6f)\n", i, theta[i], sqrt(hij));
 	}
 #endif
@@ -1482,10 +1455,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 
     free(hess);
     free(theta);
-
-#if USE_AHESS
     gretl_matrix_free(H);
-#endif
 
     return err;
 }
