@@ -2294,6 +2294,10 @@ int dataset_stack_variables (const char *vname, const char *line,
     int oldn, bign, genv;
     int err = 0;
 
+    if (pdinfo == NULL || pdinfo->n == 0) {
+	return E_NODATA;
+    }
+
     /* copy full "stack(...)" spec for later reference */
     scpy = gretl_strdup(line);
     if (scpy == NULL) {

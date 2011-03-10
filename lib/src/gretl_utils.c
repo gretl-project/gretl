@@ -913,7 +913,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	stobs[8] = '\0';
     }
 
-    /* does frequency make sense? */
+    /* does the supplied frequency make sense? */
     if (pd < 1 || (pdinfo->n > 0 && pd > pdinfo->n && opt != OPT_T)) {
 	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;
@@ -967,9 +967,9 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    return 1;
 	}
 
-	/* catch undated daily or weekly data */
 	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52)  
 	    && min == 0 && opt != OPT_X && opt != OPT_S && opt != OPT_C) {
+	    /* catch undated daily or weekly data */
 	    structure = TIME_SERIES;
 	} else {
 	    if (catch_setobs_errors(stobs, pd, pdinfo->n, min, opt)) {
@@ -985,6 +985,10 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 		    }
 		}
 	    } else {
+		if (structure == TIME_SERIES && min > 0 &&
+		    !recognized_ts_frequency(pd)) {
+		    structure = SPECIAL_TIME_SERIES;
+		}
 		real_format_obs(stobs, maj, min, pd, '.');
 		if (structure == STRUCTURE_UNKNOWN && 
 		    recognized_ts_frequency(pd)) {

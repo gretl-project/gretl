@@ -2165,11 +2165,19 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     char vname[VNAMELEN];
     char vlabel[MAXLABEL];
     int vi, t, pp;
-    int ndums = pdinfo->pd, nnew = 0;
-    int di, di0 = pdinfo->v;
+    int ndums, nnew = 0;
+    int di, di0;
     double xx, dx;
 
-    if (ndums == 1 || ndums > 99999) {
+    if (pdinfo == NULL || pdinfo->n == 0) {
+	gretl_errmsg_set(_("No dataset is in place"));
+	return 0;
+    }
+
+    ndums = pdinfo->pd;
+    di0 = pdinfo->v;
+
+    if (ndums < 2 || ndums > 99999) {
 	gretl_errmsg_set(_("This command won't work with the current periodicity"));
 	return 0;
     }

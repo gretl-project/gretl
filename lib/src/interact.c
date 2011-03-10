@@ -4816,7 +4816,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		    print_smpl(pdinfo, 0, prn);
 		    schedule_callback(s);
 		} else {
-		    pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
+		    pprintf(prn, _("data frequency = %d\n"), pdinfo->pd);
 		}
 	    }
 	}

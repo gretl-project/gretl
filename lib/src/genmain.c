@@ -341,52 +341,56 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 int series_index (const DATAINFO *pdinfo, const char *varname)
 {
     const char *s = varname;
-    int i, fd, ret;
+    int fd = 0, ret = -1;
 
-    if (pdinfo == NULL) {
-	return -1;
-    }
+    if (pdinfo != NULL) {
+	int i;
+	
+	ret = pdinfo->v;
 
-    ret = pdinfo->v;
+	if (s == NULL || *s == '\0' || isdigit(*s)) {
+	    goto bailout;
+	}
 
-    if (s == NULL || *s == 0 || isdigit(*s)) {
-	return ret;
-    }
+	if (strcmp(s, "const") == 0) {
+	    ret = 0;
+	    goto bailout;
+	}
 
-    if (!strcmp(s, "const")) {
-	return 0;
-    }
+	if (strchr(s, '.') != NULL) {
+	    ret = try_for_listvar(pdinfo, s);
+	    goto bailout;
+	}
 
-    if (strchr(s, '.')) {
-	return try_for_listvar(pdinfo, s);
-    }
+	fd = gretl_function_depth();
 
-    fd = gretl_function_depth();
-
-    if (fd == 0) {
-	/* not inside a user function: easy */
-	for (i=1; i<pdinfo->v; i++) { 
-	    if (strcmp(pdinfo->varname[i], s) == 0) {
-		ret = i;
-		break;
+	if (fd == 0) {
+	    /* not inside a user function: easy */
+	    for (i=1; i<pdinfo->v; i++) { 
+		if (strcmp(pdinfo->varname[i], s) == 0) {
+		    ret = i;
+		    break;
+		}
+	    }
+	} else {
+	    /* The condition for recognizing a series by name, if we're
+	       inside a user function: it must exist at the current level
+	       of function execution, and its tenure at that level must
+	       not just be the result of its being a member of a list
+	       that was passed as an argument.
+	    */
+	    for (i=1; i<pdinfo->v; i++) { 
+		if (fd == STACK_LEVEL(pdinfo, i) &&
+		    !var_is_listarg(pdinfo, i) && 
+		    strcmp(pdinfo->varname[i], s) == 0) {
+		    ret = i;
+		    break;
+		}
 	    }
 	}
-    } else {
-	/* The condition for recognizing a series by name, if we're
-	   inside a user function: it must exist at the current level
-	   of function execution, and its tenure at that level must
-	   not just be the result of its being a member of a list
-	   that was passed as an argument.
-	*/
-	for (i=1; i<pdinfo->v; i++) { 
-	    if (fd == STACK_LEVEL(pdinfo, i) &&
-		!var_is_listarg(pdinfo, i) && 
-		strcmp(pdinfo->varname[i], s) == 0) {
-		ret = i;
-		break;
-	    }
-	}
     }
+
+ bailout:
 
 #if GEN_LEVEL_DEBUG
     fprintf(stderr, "series_index for '%s', fd = %d: got %d (pdinfo->v = %d)\n", 
@@ -444,6 +448,10 @@ static int gen_special (const char *s, const char *line,
     int orig_v = pdinfo->v;
     int write_label = 0;
     int err = 0;
+
+    if (pdinfo == NULL || pdinfo->n == 0) {
+	return E_NODATA;
+    }
 
     if (!strcmp(s, "markers")) {
 	return generate_obs_markers(line, pZ, pdinfo);
