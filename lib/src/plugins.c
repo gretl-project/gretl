@@ -215,6 +215,7 @@ struct plugin_function plugin_functions[] = {
     { "count_data_estimate", P_POISSON },
     { "heckit_estimate",   P_HECKIT },
     { "interval_estimate", P_INTREG },
+    { "tobit_via_intreg",  P_INTREG },
     { "biprobit_estimate", P_BIPROBIT },
 
     /* audio graphs etc */

@@ -860,7 +860,11 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     int i, j, n, m, k = IC->k, nx = IC->nx;
     int obstype;
 
-    pmod->ci = INTREG;
+    if (opt & OPT_T) {
+	pmod->ci = TOBIT;
+    } else {
+	pmod->ci = INTREG;
+    }
 
     pmod->lnL = IC->ll;
     mle_criteria(pmod, 1);
@@ -900,7 +904,6 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	    IC->typecount[obstype] += 1;
 	    ndx = IC->ndx[j];
 	    u = IC->uhat[j];
-
 	    pmod->uhat[i] = u;
 	    pmod->yhat[i] = ndx;
 	    j++;
@@ -912,12 +915,15 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     pmod->fstt = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
 
-    gretl_model_set_int(pmod, "lovar", IC->lov);
-    gretl_model_set_int(pmod, "hivar", IC->hiv);
     gretl_model_set_int(pmod, "n_left", IC->typecount[0]);
-    gretl_model_set_int(pmod, "n_both", IC->typecount[1]);
     gretl_model_set_int(pmod, "n_right", IC->typecount[2]);
-    gretl_model_set_int(pmod, "n_point", IC->typecount[3]);
+
+    if (!(opt & OPT_T)) {
+	gretl_model_set_int(pmod, "lovar", IC->lov);
+	gretl_model_set_int(pmod, "hivar", IC->hiv);
+	gretl_model_set_int(pmod, "n_both", IC->typecount[1]);
+	gretl_model_set_int(pmod, "n_point", IC->typecount[3]);
+    }
 
     if (opt & OPT_R) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
@@ -930,8 +936,10 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	pmod->chisq = NADBL;
     }
 
-    /* the variable at list[1] will be deleted */
-    pmod->list[1] = 0;
+    if (!(opt & OPT_T)) {
+	/* the variable at list[1] will be deleted */
+	pmod->list[1] = 0;
+    }
 
     return 0;
 }
@@ -1026,8 +1034,8 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 	maybe_reposition_const(list, (const double **) *pZ, pdinfo);
     }
 
-    /* create extra variable for model initialization and
-       corresponding list
+    /* create extra series for model initialization and
+       corresponding regression list
     */
     model.errcode = create_midpoint_y(list, pZ, pdinfo, &initlist);
     if (model.errcode) {
@@ -1055,6 +1063,92 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     model.errcode = do_interval(list, *pZ, pdinfo, &model, opt, prn);
 
     clear_model_xpx(&model);
+
+    return model;
+}
+
+static int tobit_add_lo_hi (MODEL *pmod, double ***pZ,
+			    DATAINFO *pdinfo, int **list)
+{
+    double *y, *lo, *hi;
+    int lv, hv;
+    int i, t, err;
+
+    err = dataset_add_series(2, pZ, pdinfo);
+    if (err) {
+	return err;
+    }
+
+    lv = pdinfo->v - 2;
+    hv = pdinfo->v - 1;
+
+    lo = (*pZ)[lv];
+    hi = (*pZ)[hv];
+    y = (*pZ)[pmod->list[1]];
+
+    for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
+	/* FIXME generalize this */
+	if (na(y[t])) {
+	    lo[t] = hi[t] = NADBL;
+	} else if (y[t] > 0) {
+	    lo[t] = hi[t] = y[t];
+	} else {
+	    lo[t] = NADBL;
+	    hi[t] = 0;
+	}
+    }
+
+    *list = gretl_list_new(pmod->list[0] + 1);
+
+    if (*list == NULL) {
+	err = E_ALLOC;
+    } else {
+	(*list)[1] = lv;
+	(*list)[2] = hv;
+	for (i=3; i<=(*list)[0]; i++) {
+	    (*list)[i] = pmod->list[i-1];
+	}
+    }
+
+    return err;
+}
+
+MODEL tobit_via_intreg (int *list, double ***pZ, DATAINFO *pdinfo,
+			gretlopt opt, PRN *prn) 
+{
+    MODEL model;
+    int *ilist = NULL;
+    int origv = pdinfo->v;
+
+    /* run initial OLS */
+    model = lsq(list, *pZ, pdinfo, OLS, OPT_A);
+    if (model.errcode) {
+	fprintf(stderr, "intreg: initial OLS failed\n");
+	return model;
+    }
+
+#if INTDEBUG
+    pprintf(prn, "tobit_via_intreg: initial OLS\n");
+    printmodel(&model, pdinfo, OPT_S, prn);
+#endif
+
+    model.errcode = tobit_add_lo_hi(&model, pZ, pdinfo, &ilist);
+
+    if (!model.errcode) {
+	/* do the actual analysis */
+	model.errcode = do_interval(ilist, *pZ, pdinfo, &model, 
+				    opt | OPT_T, prn);
+    }
+
+    clear_model_xpx(&model);
+
+    if (!model.errcode) {
+	model.opt |= OPT_I;
+    }
+
+    /* clean up extra data */
+    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+    free(ilist);
 
     return model;
 }
