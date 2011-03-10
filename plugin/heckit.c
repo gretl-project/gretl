@@ -677,6 +677,9 @@ static int heckit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
+double *heckit_nhessian (const double *b, int n, BFGS_CRIT_FUNC func, 
+			 h_container *HC, int *err);
+
 #define h(i,j) h[4*(i-1)+j-1]
 
 /* analytical Hessian */
@@ -712,14 +715,19 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     /* i goes through all obs, while j keeps track of the uncensored
        ones */
 
+    gretl_matrix_fill(HC->H11, 0.0);
+    gretl_matrix_fill(HC->H12, 0.0);
+    gretl_matrix_fill(HC->H13, 0.0);
+    gretl_matrix_fill(HC->H22, 0.0);
+
     j = 0;
     for (i=0; i<HC->ntot; i++) {
 	sel = (gretl_vector_get(HC->d, i) == 1.0);
 	ndxt = gretl_vector_get(HC->ndx, i);
 	if (sel) {
 	    ut = gretl_vector_get(HC->u, j);
-	    x = ca *ndxt + sa*ut;
-	    z = sa*ndxt + ca*ut;
+	    x = ca * ndxt + sa * ut;
+	    z = sa * ndxt + ca * ut;
 	    mills = invmills(-x);
 	    dmills = -mills*(x + mills);
 
@@ -857,6 +865,23 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     gretl_matrix_set(H, jj, jj, -c44);
 
     err = gretl_invert_symmetric_matrix(H);
+
+#if 1
+    if (err) {
+	/* just in case: let's check vs numerical Hessian */
+	double *nH;
+	int err2;
+	k = 0;
+	nH = heckit_nhessian(theta, npar, h_loglik, HC, &err2);
+	for (i=0; i<npar; i++) {
+	    for (j=i; j<npar; j++) {
+		fprintf(stderr, "%16.6f", nH[k++]);
+	    }
+	    fputc('\n', stderr);
+	}
+	free(nH);
+    }
+#endif    
 
     return err;
 }
@@ -1320,9 +1345,6 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 {
 #if USE_AHESS
     gretl_matrix *H = NULL;
-# if USE_AHESS == 2
-    double gradtol = 1.0e-03;
-# endif
 #endif
     gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
@@ -1360,6 +1382,11 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 #if INITH_OPG
     init_H = heckit_init_H(theta, HC, np);
 #endif
+
+# if USE_AHESS == 2
+    double gradtol = 1.0e-06;
+    toler = 1.0e-8;
+# endif
 
 #if USE_AHESS < 2
     err = BFGS_max(theta, np, maxit, toler, &fncount, 
