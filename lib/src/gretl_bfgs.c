@@ -1821,3 +1821,44 @@ int newton_raphson_max (double *b, int n, int maxit,
 
     return err;
 }
+
+/* Start by using BFGS with a sloppy tolerance, then switch to
+   Newton-Raphson. An experimental thing.
+*/
+
+int hybrid_max (double *b, int n, int maxit, 
+		double crittol, double gradtol, 
+		int *itercount, int crittype, 
+		BFGS_CRIT_FUNC cfunc,
+		BFGS_GRAD_FUNC gradfunc, 
+		HESS_FUNC hessfunc,
+		void *data, gretlopt opt, 
+		PRN *prn)
+{
+    double pre_tol = 1.0e-3;
+    double pre_maxit = 100;
+    int fncount = 0;
+    int grcount = 0;
+    int err;
+
+    err = BFGS_max(b, n, pre_maxit, pre_tol, 
+		   &fncount, &grcount, cfunc, crittype,
+		   gradfunc, data, NULL, 
+		   opt & OPT_V, prn);
+
+    fprintf(stderr, "BFGS phase: fncount=%d, grcount=%d, err=%d\n",
+	    fncount, grcount, err);
+
+    if (!err) {
+	err = newton_raphson_max(b, n, maxit, crittol, gradtol,
+				 itercount, crittype, cfunc, 
+				 gradfunc, hessfunc, data, 
+				 opt & OPT_V, prn);
+	fprintf(stderr, "Newton phase: itercount=%d, err=%d\n",
+		*itercount, err);
+    }
+
+    *itercount += grcount;
+
+    return err;
+}
