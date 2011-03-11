@@ -3454,11 +3454,7 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_error_clear();
 
-#if 1
     tobit_estimate = get_plugin_function("tobit_via_intreg", &handle);
-#else
-    tobit_estimate = get_plugin_function("tobit_estimate", &handle);
-#endif
     if (tobit_estimate == NULL) {
 	gretl_model_init(&tmod);
 	tmod.errcode = E_FOPEN;

@@ -3,6 +3,14 @@
 
 #include "gretl_f2c.h"
 #include "minpack.h"
+#include "math.h"
+
+#define log10e 0.43429448190325182765
+
+static double d_log10(doublereal *x)
+{
+    return log10e * log(*x);
+}
 
 /* Table of constant values */
 
@@ -21,9 +29,6 @@ static integer c__1 = 1;
     /* System generated locals */
     integer fjac_dim1, fjac_offset, i__1, i__2;
     doublereal d__1, d__2, d__3, d__4, d__5;
-
-    /* Builtin functions */
-    double sqrt(doublereal), d_lg10(doublereal *);
 
     /* Local variables */
     static integer i__, j;
@@ -151,7 +156,7 @@ L20:
 /*        mode = 2. */
 
     epsf = factor * epsmch;
-    epslog = d_lg10(&eps);
+    epslog = d_log10(&eps);
     i__1 = *m;
     for (i__ = 1; i__ <= i__1; ++i__) {
 	err[i__] = zero;
@@ -182,7 +187,7 @@ L20:
 	}
 	err[i__] = one;
 	if (temp > epsmch && temp < eps) {
-	    err[i__] = (d_lg10(&temp) - epslog) / epslog;
+	    err[i__] = (d_log10(&temp) - epslog) / epslog;
 	}
 	if (temp >= eps) {
 	    err[i__] = zero;

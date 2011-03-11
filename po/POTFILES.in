@@ -175,7 +175,6 @@ plugin/spss_import.c
 plugin/stata_import.c
 plugin/stats_tables.c
 plugin/sysest.c
-plugin/tobit.c
 plugin/tramo_options.c
 plugin/tramo-x12a.c
 plugin/urcdist.c

@@ -10526,8 +10526,22 @@
       </arguments>
       <options>
         <option>
+	  <flag>--llimit</flag>
+	  <optparm>lval</optparm>
+	  <effect>specify left bound</effect>
+        </option>
+        <option>
+	  <flag>--rlimit</flag>
+	  <optparm>rval</optparm>
+	  <effect>specify right bound</effect>
+        </option>
+        <option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
         </option>
         <option>
 	  <flag>--verbose</flag>
@@ -10538,14 +10552,24 @@
 
     <description>
       <para>
-	Estimates a Tobit model.  This model may be appropriate when the
+	Estimates a Tobit model, which may be appropriate when the
 	dependent variable is <quote>censored</quote>.  For example,
 	positive and zero values of purchases of durable goods on the part
 	of individual households are observed, and no negative values, yet
 	decisions on such purchases may be thought of as outcomes of an
 	underlying, unobserved disposition to purchase that may be
-	negative in some cases.  For details see <cite
-	key="greene03">Greene's <book>Econometric Analysis</book></cite>.
+	negative in some cases. 
+      </para>
+      <para>
+	By default it is assumed that the dependent variable is
+	censored at zero on the left and is uncensored on the
+	right. However you can use the options <opt>--llimit</opt>
+	and <opt>--rlimit</opt> to specify a different pattern
+	of censoring. 
+      </para>
+      <para>
+	The Tobit model is a special case of interval regression, which
+	is supported via the <cmdref targ="intreg"/> command.
       </para>
     </description>
 

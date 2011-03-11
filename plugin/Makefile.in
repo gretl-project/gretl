@@ -106,7 +106,6 @@ SRCS = excel_import.c \
 	arma_init.c \
 	arma.c \
 	arma_x12.c \
-	tobit.c \
 	garch.c \
 	urcdist.c \
 	vif.c \
@@ -142,7 +141,6 @@ PLUGINS = arbond.la \
 	range-mean.la \
 	stats_tables.la \
 	sysest.la \
-	tobit.la \
 	urcdist.la \
 	vif.la \
 	poisson.la \
@@ -267,9 +265,6 @@ arbond.la: arbond.lo
 
 arma.la: arma.lo arma_cml.lo arma_init.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
-
-tobit.la: tobit.lo
-	$(LINK) -o $@ $< $(GRETLLIB) 
 
 poisson.la: poisson.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 

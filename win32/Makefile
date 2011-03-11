@@ -31,7 +31,7 @@ CLI_LIBS = -lreadline -lhistory
 GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview -lxml2 -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
-LAPACK_LIBS = -llapack -lblas
+LAPACK_LIBS = -llapack.dll -lblas.dll
 FFTW_LIBS = -lfftw3
 
 # flags/defines
@@ -99,7 +99,6 @@ PLUGINSRC = \
 	arma.c \
         arma_x12.c \
 	workbook.c \
-	tobit.c \
 	mod_garch.c \
 	fcp.c \
 	garch.c \
@@ -140,7 +139,6 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/leverage.dll \
 	plugins/pca.dll \
 	plugins/nistcheck.dll \
-	plugins/tobit.dll \
 	plugins/garch.dll \
         plugins/audio.dll \
 	plugins/vif.dll \
@@ -345,7 +343,7 @@ $(MOFILES):
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lg2c -lm -L$(imports) -lxml2 -lzlib1 -lintl -lprob -lgmp.dll \
+	-o $@ $^ -lm -L$(imports) -lxml2 -lzlib1 -lintl -lprob -lgmp.dll \
 	-lmingwex -lwsock32 $(GLIBLIB) $(LAPACK_LIBS) $(FFTW_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
@@ -462,10 +460,6 @@ plugins/arma.dll: arma.o arma_cml.o arma_init.o dllinit.o
 plugins/arma_x12.dll: arma_x12.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) $(LAPACK_LIBS)
-
-plugins/tobit.dll: tobit.o dllinit.o
-	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/garch.dll: garch.o fcp.o mod_garch.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

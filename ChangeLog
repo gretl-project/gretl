@@ -5,6 +5,8 @@ version 1.9.5, in progress
   "gretldata"
 - "coint2" (Johansen test): print the log-likelihood, plus improve the
   printing of the Pi matrix when exogenous regressors are present
+- "tobit" command: add options to specify left- and/or right-
+  censoring; also add --robust option
 - Fix a small memory leak when opening an *.asc data file
 - Matrix "division": give the operators "\" and "/" the same semantics
   as in Octave/Matlab (left and right division)

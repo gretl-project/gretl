@@ -405,6 +405,9 @@ struct gretl_option gretl_opts[] = {
 #if 0
     { TABPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
 #endif
+    { TOBIT,    OPT_L, "llimit", 2 },
+    { TOBIT,    OPT_M, "rlimit", 2 },
+    { TOBIT,    OPT_R, "robust", 0 },
     { TOBIT,    OPT_V, "verbose", 0 },
     { VAR,      OPT_D, "seasonals", 0 },
     { VAR,      OPT_F, "variance-decomp", 0 },

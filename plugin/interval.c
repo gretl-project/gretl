@@ -853,7 +853,8 @@ static int add_norm_test_to_model (MODEL *pmod, double X2)
 }
 
 static int fill_intreg_model (int_container *IC, gretl_matrix *V,
-			      gretlopt opt, const DATAINFO *pdinfo)
+			      int iters, const DATAINFO *pdinfo,
+			      gretlopt opt)
 {
     MODEL *pmod = IC->pmod;
     double x, ndx, u;
@@ -915,6 +916,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     pmod->fstt = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
 
+    gretl_model_set_int(pmod, "iters", iters);
     gretl_model_set_int(pmod, "n_left", IC->typecount[0]);
     gretl_model_set_int(pmod, "n_right", IC->typecount[2]);
 
@@ -987,7 +989,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = fill_intreg_model(IC, V, opt, pdinfo);
+	err = fill_intreg_model(IC, V, fncount, pdinfo, opt);
     }
 
     if (!err) {
@@ -1067,10 +1069,12 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     return model;
 }
 
-static int tobit_add_lo_hi (MODEL *pmod, double ***pZ,
-			    DATAINFO *pdinfo, int **list)
+static int tobit_add_lo_hi (MODEL *pmod, double llim, double rlim,
+			    double ***pZ, DATAINFO *pdinfo, 
+			    int **plist)
 {
     double *y, *lo, *hi;
+    int *list;
     int lv, hv;
     int i, t, err;
 
@@ -1087,27 +1091,30 @@ static int tobit_add_lo_hi (MODEL *pmod, double ***pZ,
     y = (*pZ)[pmod->list[1]];
 
     for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
-	/* FIXME generalize this */
 	if (na(y[t])) {
 	    lo[t] = hi[t] = NADBL;
-	} else if (y[t] > 0) {
+	} else if (y[t] > llim && y[t] < rlim) {
 	    lo[t] = hi[t] = y[t];
-	} else {
+	} else if (y[t] >= rlim) {
+	    lo[t] = rlim;
+	    hi[t] = NADBL;
+	} else if (y[t] <= llim) {
 	    lo[t] = NADBL;
-	    hi[t] = 0;
-	}
+	    hi[t] = llim;
+	} 
     }
 
-    *list = gretl_list_new(pmod->list[0] + 1);
+    list = gretl_list_new(pmod->list[0] + 1);
 
-    if (*list == NULL) {
+    if (list == NULL) {
 	err = E_ALLOC;
     } else {
-	(*list)[1] = lv;
-	(*list)[2] = hv;
-	for (i=3; i<=(*list)[0]; i++) {
-	    (*list)[i] = pmod->list[i-1];
+	list[1] = lv;
+	list[2] = hv;
+	for (i=3; i<=list[0]; i++) {
+	    list[i] = pmod->list[i-1];
 	}
+	*plist = list;
     }
 
     return err;
@@ -1117,8 +1124,37 @@ MODEL tobit_via_intreg (int *list, double ***pZ, DATAINFO *pdinfo,
 			gretlopt opt, PRN *prn) 
 {
     MODEL model;
+    double llim = -1.0e300;
+    double rlim = NADBL;
     int *ilist = NULL;
     int origv = pdinfo->v;
+
+    gretl_model_init(&model);
+
+    if (opt & OPT_L) {
+	/* should have an explicit lower limit */
+	llim = get_optval_double(TOBIT, OPT_L);
+	if (na(llim)) {
+	    model.errcode = E_BADOPT;
+	} 
+    }
+
+    if (!model.errcode && (opt & OPT_M)) {
+	/* should have an explicit upper limit */
+	rlim = get_optval_double(TOBIT, OPT_M);
+	if (na(rlim) || rlim <= llim) {
+	    model.errcode = E_BADOPT;
+	}	
+    }
+
+    if (model.errcode) {
+	return model;
+    } 
+
+    if (!(opt & (OPT_L | OPT_M))) {
+	/* the default: left-censoring at zero */
+	llim = 0;
+    }    
 
     /* run initial OLS */
     model = lsq(list, *pZ, pdinfo, OLS, OPT_A);
@@ -1132,7 +1168,8 @@ MODEL tobit_via_intreg (int *list, double ***pZ, DATAINFO *pdinfo,
     printmodel(&model, pdinfo, OPT_S, prn);
 #endif
 
-    model.errcode = tobit_add_lo_hi(&model, pZ, pdinfo, &ilist);
+    model.errcode = tobit_add_lo_hi(&model, llim, rlim,
+				    pZ, pdinfo, &ilist);
 
     if (!model.errcode) {
 	/* do the actual analysis */
@@ -1143,7 +1180,14 @@ MODEL tobit_via_intreg (int *list, double ***pZ, DATAINFO *pdinfo,
     clear_model_xpx(&model);
 
     if (!model.errcode) {
-	model.opt |= OPT_I;
+	if (opt & OPT_L) {
+	    model.opt |= OPT_L;
+	    gretl_model_set_double(&model, "llimit", llim);
+	}
+	if (opt & OPT_M) {
+	    model.opt |= OPT_M;
+	    gretl_model_set_double(&model, "rlimit", rlim);
+	}	
     }
 
     /* clean up extra data */

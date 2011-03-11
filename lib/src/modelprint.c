@@ -64,7 +64,7 @@ static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
 #define gmm_model(m) (m->ci == GMM || (m->ci == IVREG && (m->opt & OPT_G)))
 
-#define intreg_model(m) (m->ci == INTREG || (m->ci == TOBIT && (m->opt & OPT_I)))
+#define intreg_model(m) (m->ci == INTREG || m->ci == TOBIT)
 
 void model_coeff_init (model_coeff *mc)
 {
@@ -178,7 +178,9 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void print_intreg_info (const MODEL *pmod, PRN *prn)
+static void print_intreg_info (const MODEL *pmod, 
+			       const DATAINFO *pdinfo,
+			       PRN *prn)
 {
     const char *nstrs[] = {
 	N_("Left-unbounded observations"),
@@ -186,10 +188,11 @@ static void print_intreg_info (const MODEL *pmod, PRN *prn)
 	N_("Bounded observations"),
 	N_("Point observations")
     };
+    gchar *lstr = NULL, *rstr = NULL;
     int nl = gretl_model_get_int(pmod, "n_left");
     int nr = gretl_model_get_int(pmod, "n_right");
-    int nb = -1;
-    int np = -1;
+    int nb = -1, np = -1;
+    double llim = 0, rlim = NADBL;
 
     if (pmod->ci == INTREG) {
 	nb = gretl_model_get_int(pmod, "n_both");
@@ -197,14 +200,26 @@ static void print_intreg_info (const MODEL *pmod, PRN *prn)
     } else {
 	nstrs[0] = N_("Left-censored observations");
 	nstrs[1] = N_("Right-censored observations");
+	if (pmod->opt & OPT_L) {
+	    llim = gretl_model_get_double(pmod, "llimit");
+	    lstr = g_strdup_printf(" (%s <= %g)", 
+				   pdinfo->varname[pmod->list[1]],
+				   llim);
+	}
+	if (pmod->opt & OPT_M) {
+	    rlim = gretl_model_get_double(pmod, "rlimit");
+	    rstr = g_strdup_printf(" (%s >= %g)", 
+				   pdinfo->varname[pmod->list[1]],
+				   rlim);
+	}	
     }
 
     ensure_vsep(prn);
 
     if (plain_format(prn)) {  
 	pprintf(prn, "%s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
-	pprintf(prn, "%s: %d\n", _(nstrs[0]), nl);
-	pprintf(prn, "%s: %d\n", _(nstrs[1]), nr);
+	pprintf(prn, "%s: %d%s\n", _(nstrs[0]), nl, lstr == NULL ? "" : lstr);
+	pprintf(prn, "%s: %d%s\n", _(nstrs[1]), nr, rstr == NULL ? "" : rstr);
 	if (nb >= 0 && np >= 0) {
 	    pprintf(prn, "%s: %d\n", _(nstrs[2]), nb);
 	    pprintf(prn, "%s: %d\n", _(nstrs[3]), np);
@@ -212,16 +227,16 @@ static void print_intreg_info (const MODEL *pmod, PRN *prn)
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
-	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[0]), nl);
-	pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[1]), nr);
+	pprintf(prn, RTFTAB "%s: %d%s\n", I_(nstrs[0]), nl, lstr == NULL ? "" : lstr);
+	pprintf(prn, RTFTAB "%s: %d%s\n", I_(nstrs[1]), nr, rstr == NULL ? "" : rstr);
 	if (nb >= 0 && np >= 0) {
 	    pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[2]), nb);
 	    pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[3]), np);
 	}
     } else if (tex_format(prn)) {
 	pprintf(prn, "$\\hat{\\sigma}$ = %g \\\\\n", pmod->sigma);
-	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[0]), nl);
-	pprintf(prn, "%s: %d \\\\\n", I_(nstrs[1]), nr);
+	pprintf(prn, "%s: %d%s \\\\\n", I_(nstrs[0]), nl, lstr == NULL ? "" : lstr);
+	pprintf(prn, "%s: %d%s \\\\\n", I_(nstrs[1]), nr, rstr == NULL ? "" : rstr);
 	if (nb >= 0 && np >= 0) {
 	    pprintf(prn, "%s: %d \\\\\n", I_(nstrs[2]), nb);
 	    pprintf(prn, "%s: %d \\\\\n", I_(nstrs[3]), np);
@@ -237,6 +252,9 @@ static void print_intreg_info (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "\"%s\"%c%d\n", I_(nstrs[3]), d, np);
 	}
     }
+
+    g_free(lstr);
+    g_free(rstr);
 }
 
 static void rsqline (const MODEL *pmod, PRN *prn)
@@ -2808,14 +2826,6 @@ static void print_middle_table (const MODEL *pmod, PRN *prn, int code)
 	val[2] = val[3] = NADBL;
 	val[6] = val[7] = NADBL;
 	val[12] = val[13] = NADBL;
-    } else if (pmod->ci == TOBIT && !(pmod->opt & OPT_I)) {
-	key[2] = N_("Censored obs"); /* 22: Number of censored observations */
-	val[2] = gretl_model_get_int(pmod, "censobs");
-	mtab.ipos[2] = 1;
-	key[3] = "sigma";
-	for (i=4; i<8; i++) {
-	    val[i] = NADBL;
-	}
     } else if (pmod->ci == HECKIT) {
 	key[2] = (tex)? "$\\hat{\\sigma}$" : N_("sigma");
 	val[2] = pmod->sigma;
@@ -3072,7 +3082,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
     } else if (intreg_model(pmod)) {
-	print_intreg_info(pmod, prn);
+	print_intreg_info(pmod, pdinfo, prn);
     } else if (pmod->ci == POISSON) {
 	print_overdisp_test(pmod, prn);
     } else if (pmod->ci == DURATION) {
@@ -3091,10 +3101,11 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && pmod->ci != GMM &&
-	pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != HECKIT && 
+	pmod->ci != LAD && pmod->ci != HECKIT && 
 	pmod->ci != ARBOND && pmod->ci != DPANEL && pmod->ci != GARCH && 
 	pmod->ci != DURATION && !ordered_model(pmod) && !multinomial_model(pmod) && 
-	!COUNT_MODEL(pmod->ci) && pmod->ci != BIPROBIT && !pmod->aux) {
+	!COUNT_MODEL(pmod->ci) && !intreg_model(pmod) &&
+	pmod->ci != BIPROBIT && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 

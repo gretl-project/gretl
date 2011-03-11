@@ -707,10 +707,10 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     /* i goes through all obs, while j keeps track of the uncensored
        ones */
 
-    gretl_matrix_fill(HC->H11, 0.0);
-    gretl_matrix_fill(HC->H12, 0.0);
-    gretl_matrix_fill(HC->H13, 0.0);
-    gretl_matrix_fill(HC->H22, 0.0);
+    gretl_matrix_zero(HC->H11);
+    gretl_matrix_zero(HC->H12);
+    gretl_matrix_zero(HC->H13);
+    gretl_matrix_zero(HC->H22);
 
     j = 0;
     for (i=0; i<HC->ntot; i++) {
