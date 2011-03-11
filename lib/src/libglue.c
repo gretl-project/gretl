@@ -348,6 +348,48 @@ MODEL logistic_driver (const int *list, double ***pZ, DATAINFO *pdinfo,
     return logistic_model(list, lmax, pZ, pdinfo);
 }
 
+/* assemble the left and right limits for tobit using gretl's
+   option apparatus before calling the real tobit function
+*/
+
+MODEL tobit_driver (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
+{
+    MODEL model;
+    double llim = -1.0e300;
+    double rlim = NADBL;
+    int err = 0;
+
+    if (opt & OPT_L) {
+	/* we should have an explicit lower limit */
+	llim = get_optval_double(TOBIT, OPT_L);
+	if (na(llim)) {
+	    err = E_BADOPT;
+	} 
+    }
+
+    if (!err && (opt & OPT_M)) {
+	/* we should have an explicit upper limit */
+	rlim = get_optval_double(TOBIT, OPT_M);
+	if (na(rlim) || rlim <= llim) {
+	    err = E_BADOPT; 
+	}	
+    }
+
+    if (err) {
+	gretl_model_init(&model);
+	model.errcode = err;
+	return model;
+    }
+
+    if (!(opt & (OPT_L | OPT_M))) {
+	/* the default: left-censoring at zero */
+	llim = 0;
+    }
+
+    return tobit_model(list, llim, rlim, pZ, pdinfo, opt, prn);
+}
+
 /*
  * do_modprint:
  * @line: command line.

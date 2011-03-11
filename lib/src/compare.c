@@ -757,6 +757,19 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	    myopt |= OPT_I;
 	    set_optval_double(QUANTREG, OPT_I, x);
 	}
+    } else if (orig->ci == TOBIT) {
+	double x;
+
+	x = gretl_model_get_double(orig, "llimit");
+	if (!na(x)) {
+	    myopt |= OPT_L;
+	    set_optval_double(TOBIT, OPT_L, x);
+	}	
+	x = gretl_model_get_double(orig, "rlimit");
+	if (!na(x)) {
+	    myopt |= OPT_M;
+	    set_optval_double(TOBIT, OPT_M, x);
+	}
     } else if (orig->ci == IVREG) {
 	transcribe_option_flags(&myopt, orig->opt, OPT_L | OPT_G);
     }
@@ -791,7 +804,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep = logit_probit(list, pZ, pdinfo, orig->ci, myopt, NULL);
 	break;
     case TOBIT:
-	rep = tobit_model(list, pZ, pdinfo, OPT_NONE, NULL);
+	rep = tobit_driver(list, pZ, pdinfo, myopt, NULL);
 	break;
     case LAD:
 	if (gretl_model_get_int(orig, "rq")) {

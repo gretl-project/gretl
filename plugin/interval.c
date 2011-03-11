@@ -1120,41 +1120,13 @@ static int tobit_add_lo_hi (MODEL *pmod, double llim, double rlim,
     return err;
 }
 
-MODEL tobit_via_intreg (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL tobit_via_intreg (int *list, double llim, double rlim,
+			double ***pZ, DATAINFO *pdinfo,
 			gretlopt opt, PRN *prn) 
 {
     MODEL model;
-    double llim = -1.0e300;
-    double rlim = NADBL;
     int *ilist = NULL;
     int origv = pdinfo->v;
-
-    gretl_model_init(&model);
-
-    if (opt & OPT_L) {
-	/* should have an explicit lower limit */
-	llim = get_optval_double(TOBIT, OPT_L);
-	if (na(llim)) {
-	    model.errcode = E_BADOPT;
-	} 
-    }
-
-    if (!model.errcode && (opt & OPT_M)) {
-	/* should have an explicit upper limit */
-	rlim = get_optval_double(TOBIT, OPT_M);
-	if (na(rlim) || rlim <= llim) {
-	    model.errcode = E_BADOPT;
-	}	
-    }
-
-    if (model.errcode) {
-	return model;
-    } 
-
-    if (!(opt & (OPT_L | OPT_M))) {
-	/* the default: left-censoring at zero */
-	llim = 0;
-    }    
 
     /* run initial OLS */
     model = lsq(list, *pZ, pdinfo, OLS, OPT_A);

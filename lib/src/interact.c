@@ -4926,7 +4926,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (cmd->ci == LOGISTIC) {
 	    *models[0] = logistic_driver(cmd->list, pZ, pdinfo, cmd->param);
 	} else if (cmd->ci == TOBIT) {
-	    *models[0] = tobit_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = tobit_driver(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == POISSON || cmd->ci == NEGBIN) {
 	    *models[0] = count_model(cmd->list, cmd->ci, pZ, pdinfo, cmd->opt, prn);
 	} else if (cmd->ci == HECKIT) {

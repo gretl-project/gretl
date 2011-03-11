@@ -4081,18 +4081,20 @@ static void tobit_limits_selector (selector *sr, GtkWidget *vbox)
 	N_("left bound"),
 	N_("right bound")
     };
-    GtkWidget *label, *hbox;
+    GtkWidget *hbox, *entry, *label;
     int i;
 
     for (i=0; i<2; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
-	sr->extra[i] = gtk_entry_new();
-	gtk_entry_set_width_chars(GTK_ENTRY(sr->extra[i]), 4);
-	gtk_entry_set_text(GTK_ENTRY(sr->extra[i]), i == 0 ? "0" : "NA");
-	gtk_box_pack_end(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+	entry = gtk_entry_new();
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 5);
+	gtk_entry_set_text(GTK_ENTRY(entry), i == 0 ? "0" : "NA");
+	gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+	gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
 	label = gtk_label_new(_(bstrs[i]));
 	gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+	sr->extra[i] = entry;
     }
 }
 

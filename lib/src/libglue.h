@@ -41,6 +41,9 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL logistic_driver (const int *list, double ***pZ, DATAINFO *pdinfo,
 		       const char *param); 
 
+MODEL tobit_driver (const int *list, double ***pZ, DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn);
+
 int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
 int script_add_obs_markers (DATAINFO *pdinfo);

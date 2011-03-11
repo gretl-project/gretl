@@ -44,7 +44,8 @@ MODEL logistic_model (const int *list, double lmax,
 MODEL interval_model (int *list, double ***pZ, DATAINFO *pdinfo, 
 		      gretlopt opt, PRN *prn);
 
-MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL tobit_model (const int *list, double llim, double rlim,
+		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn);
 
 MODEL duration_model (const int *list, double **Z, 

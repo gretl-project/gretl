@@ -3433,10 +3433,15 @@ MODEL interval_model (int *list, double ***pZ, DATAINFO *pdinfo,
 /**
  * tobit_model:
  * @list: dependent variable plus list of regressors.
+ * @llim: left bound on dependent variable; use #NADBL for
+ * no left-censoring.
+ * @rlim: right bound on dependent variable; use #NADBL for
+ * no right-censoring.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
- * @opt: may include OPT_V for verbose operation.
- * @prn: printing struct for iteration info (or NULL is this is not
+ * @opt: may include OPT_V for verbose operation, OPT_R for
+ * robust (QML) standard errors.
+ * @prn: printing struct for iteration info (or NULL if this is not
  * wanted).
  *
  * Produce Tobit estimates of the model given in @list.
@@ -3444,13 +3449,15 @@ MODEL interval_model (int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL tobit_model (const int *list, double llim, double rlim,
+		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn)
 {
-    MODEL tmod;
-    void *handle;
-    MODEL (* tobit_estimate) (const int *, double ***, DATAINFO *, 
+    MODEL (* tobit_estimate) (const int *, double, double,
+			      double ***, DATAINFO *, 
 			      gretlopt, PRN *);
+    void *handle;
+    MODEL tmod;    
 
     gretl_error_clear();
 
@@ -3461,7 +3468,7 @@ MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return tmod;
     }
 
-    tmod = (*tobit_estimate) (list, pZ, pdinfo, opt, prn);
+    tmod = (*tobit_estimate) (list, llim, rlim, pZ, pdinfo, opt, prn);
 
     close_plugin(handle);
     set_model_id(&tmod);

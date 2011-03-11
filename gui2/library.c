@@ -3575,7 +3575,7 @@ static int real_do_model (int action)
 	break;
 
     case TOBIT:
-	*pmod = tobit_model(libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	*pmod = tobit_driver(libcmd.list, &Z, datainfo, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
