@@ -10560,12 +10560,20 @@
 	underlying, unobserved disposition to purchase that may be
 	negative in some cases. 
       </para>
-      <para>
+      <para context="cli">
 	By default it is assumed that the dependent variable is
 	censored at zero on the left and is uncensored on the
 	right. However you can use the options <opt>--llimit</opt>
 	and <opt>--rlimit</opt> to specify a different pattern
 	of censoring. 
+      </para>
+      <para context="gui">
+	By default it is assumed that the dependent variable is
+	censored at zero on the left and is uncensored on the
+	right. However you can use the entry boxes marked <quote>left
+	bound</quote> and <quote>right bound</quote> to specify a
+	different pattern of censoring. Enter either a numerical value
+	or <lit>NA</lit> for no censoring.
       </para>
       <para>
 	The Tobit model is a special case of interval regression, which

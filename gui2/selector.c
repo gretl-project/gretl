@@ -2807,6 +2807,54 @@ static void read_omit_cutoff (selector *sr)
     }
 }
 
+#define TOBIT_UNSET -1.0e300
+
+static void read_tobit_limits (selector *sr)
+{
+    double lval = 0, rval = NADBL;
+    const char *s;
+    int err = 0;
+
+    s = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
+    if (*s != '\0') {
+	if (strcmp(s, "NA") == 0) {
+	    lval = TOBIT_UNSET;
+	} else {
+	    err = check_atof(s);
+	    if (err) {
+		warnbox(gretl_errmsg_get());
+		sr->error = 1;
+		return;
+	    } else {
+		lval = atof(s);
+	    }
+	}
+    }
+
+    s = gtk_entry_get_text(GTK_ENTRY(sr->extra[1]));
+    if (*s != '\0' && strcmp(s, "NA")) {
+	err = check_atof(s);
+	if (err) {
+	    warnbox(gretl_errmsg_get());
+	    sr->error = 1;
+	    return;
+	} else {	
+	    rval = atof(s);
+	}
+    }
+
+    if (lval == 0 && na(rval)) {
+	; /* the default, no-op */
+    } else {
+	if (lval != TOBIT_UNSET) {
+	    sr->opts |= OPT_L;
+	    set_optval_double(TOBIT, OPT_L, lval);
+	}
+	sr->opts |= OPT_M;
+	set_optval_double(TOBIT, OPT_M, rval);
+    }
+}
+
 #define extra_widget_get_int(c) (c == HECKIT ||		\
 	                         c == BIPROBIT ||       \
                                  c == INTREG ||		\
@@ -2835,6 +2883,11 @@ static void parse_extra_widgets (selector *sr, char *endbit)
 	read_omit_cutoff(sr);
 	return;
     }
+
+    if (sr->ci == TOBIT) {
+	read_tobit_limits(sr);
+	return;
+    }	
 
     if (sr->ci == WLS || sr->ci == COUNTMOD || sr->ci == DURATION ||
 	sr->ci == AR || sr->ci == HECKIT || sr->ci == BIPROBIT ||
@@ -3698,7 +3751,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 				     default_y >= 0);
     } 
 
-    if (sr->ci != DPANEL && sr->ci != BIPROBIT) {
+    if (sr->ci != DPANEL && sr->ci != BIPROBIT && sr->ci != TOBIT) {
 	vbox_add_vwedge(right_vbox);
     }
 
@@ -4022,6 +4075,27 @@ static void make_tau_list (GtkWidget *box)
     combo_box_append_text(box, ".1 .2 .3 .4 .5 .6 .7 .8 .9");
 } 
 
+static void tobit_limits_selector (selector *sr, GtkWidget *vbox)
+{
+    const char *bstrs[] = {
+	N_("left bound"),
+	N_("right bound")
+    };
+    GtkWidget *label, *hbox;
+    int i;
+
+    for (i=0; i<2; i++) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	sr->extra[i] = gtk_entry_new();
+	gtk_entry_set_width_chars(GTK_ENTRY(sr->extra[i]), 4);
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[i]), i == 0 ? "0" : "NA");
+	gtk_box_pack_end(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+	label = gtk_label_new(_(bstrs[i]));
+	gtk_box_pack_end(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, TRUE, 0);
+    }
+}
+
 static int maybe_set_entry_text (GtkWidget *w, const char *s)
 {
     if (s != NULL && *s != '\0') {
@@ -4050,6 +4124,9 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	       sr->ci == COUNTMOD || sr->ci == DURATION ||
 	       THREE_VARS_CODE(sr->ci)) {
 	extra_var_box(sr, right_vbox);
+    } else if (sr->ci == TOBIT) {
+	tobit_limits_selector(sr, right_vbox);
+	vbox_add_vwedge(right_vbox);
     } else if (USE_ZLIST(sr->ci)) {
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->ci == AR) {
@@ -4082,7 +4159,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
     } else if (sr->ci == DPANEL || sr->ci == ARCH) {
 	AR_order_spin(sr, right_vbox);
-    }
+    } 
     
     vbox_add_vwedge(right_vbox);
 }
@@ -4110,7 +4187,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     } else if (ci == WLS || ci == INTREG || ci == COUNTMOD || 
 	       ci == DURATION || ci == AR) {
 	dlgy += 30;
-    } else if (ci == HECKIT) {
+    } else if (ci == HECKIT || ci == TOBIT) {
 	dlgy += 80;
     } else if (ci == BIPROBIT) {
 	dlgy += 110;
@@ -4623,7 +4700,7 @@ void vbox_add_hwedge (GtkWidget *vbox)
                         c != QUANTREG && c != INTREG && \
                         c != MLOGIT && c != COUNTMOD && \
                         c != DURATION && c != HECKIT && \
-			c != BIPROBIT)
+			c != BIPROBIT && c != TOBIT)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -4634,7 +4711,7 @@ static void build_selector_switches (selector *sr)
 	sr->ci == LOGIT || sr->ci == PROBIT || sr->ci == MLOGIT ||
 	sr->ci == OLOGIT || sr->ci == OPROBIT || sr->ci == COUNTMOD ||
 	sr->ci == DURATION || sr->ci == PANEL || sr->ci == QUANTREG || 
-	sr->ci == HECKIT || sr->ci == BIPROBIT) {
+	sr->ci == HECKIT || sr->ci == BIPROBIT || sr->ci == TOBIT) {
 	GtkWidget *b1;
 
 	/* FIXME arma robust variant? */
@@ -5717,7 +5794,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == ARCH || USE_ZLIST(ci) ||
 	VEC_CODE(ci) || ci == COUNTMOD || ci == DURATION || 
-	ci == QUANTREG || ci == INTREG || 
+	ci == QUANTREG || ci == INTREG || ci == TOBIT ||
 	ci == DPANEL || THREE_VARS_CODE(ci)) {
 	build_mid_section(sr, right_vbox);
     }

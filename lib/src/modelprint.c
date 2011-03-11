@@ -202,15 +202,27 @@ static void print_intreg_info (const MODEL *pmod,
 	nstrs[1] = N_("Right-censored observations");
 	if (pmod->opt & OPT_L) {
 	    llim = gretl_model_get_double(pmod, "llimit");
-	    lstr = g_strdup_printf(" (%s <= %g)", 
-				   pdinfo->varname[pmod->list[1]],
-				   llim);
+	    if (tex_format(prn)) {
+		lstr = g_strdup_printf(" (%s $\\le$ %g)", 
+				       pdinfo->varname[pmod->list[1]],
+				       llim);
+	    } else {
+		lstr = g_strdup_printf(" (%s <= %g)", 
+				       pdinfo->varname[pmod->list[1]],
+				       llim);
+	    }
 	}
 	if (pmod->opt & OPT_M) {
 	    rlim = gretl_model_get_double(pmod, "rlimit");
-	    rstr = g_strdup_printf(" (%s >= %g)", 
-				   pdinfo->varname[pmod->list[1]],
-				   rlim);
+	    if (tex_format(prn)) {
+		rstr = g_strdup_printf(" (%s $\\ge$ %g)", 
+				       pdinfo->varname[pmod->list[1]],
+				       rlim);
+	    } else {
+		rstr = g_strdup_printf(" (%s >= %g)", 
+				       pdinfo->varname[pmod->list[1]],
+				       rlim);
+	    }
 	}	
     }
 
