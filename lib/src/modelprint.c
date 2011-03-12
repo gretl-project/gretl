@@ -212,13 +212,13 @@ static void print_intreg_info (const MODEL *pmod,
 				       llim);
 	    }
 	}
-	if (pmod->opt & OPT_M) {
+	if ((pmod->opt & OPT_M) && nr > 0) {
 	    rlim = gretl_model_get_double(pmod, "rlimit");
-	    if (tex_format(prn)) {
+	    if (!na(rlim) && tex_format(prn)) {
 		rstr = g_strdup_printf(" (%s $\\ge$ %g)", 
 				       pdinfo->varname[pmod->list[1]],
 				       rlim);
-	    } else {
+	    } else if (!na(rlim)) {
 		rstr = g_strdup_printf(" (%s >= %g)", 
 				       pdinfo->varname[pmod->list[1]],
 				       rlim);

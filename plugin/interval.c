@@ -1156,7 +1156,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 	    model.opt |= OPT_L;
 	    gretl_model_set_double(&model, "llimit", llim);
 	}
-	if (opt & OPT_M) {
+	if ((opt & OPT_M) && !na(rlim)) {
 	    model.opt |= OPT_M;
 	    gretl_model_set_double(&model, "rlimit", rlim);
 	}	

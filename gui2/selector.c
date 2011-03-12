@@ -2850,8 +2850,10 @@ static void read_tobit_limits (selector *sr)
 	    sr->opts |= OPT_L;
 	    set_optval_double(TOBIT, OPT_L, lval);
 	}
-	sr->opts |= OPT_M;
-	set_optval_double(TOBIT, OPT_M, rval);
+	if (!na(rval)) {
+	    sr->opts |= OPT_M;
+	    set_optval_double(TOBIT, OPT_M, rval);
+	}
     }
 }
 
