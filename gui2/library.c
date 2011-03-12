@@ -1717,6 +1717,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	gopt &= ~OPT_I;
     }
 
+    if (gopt & OPT_M) {
+	/* and similarly for OPT_M (show interval for mean) */
+	opt |= OPT_M;
+	gopt &= ~OPT_M;
+    }
+
     if (rolling) {
 	fr = rolling_OLS_k_step_fcast(pmod, Z, datainfo,
 				      t1, t2, k, pre_n, &err);

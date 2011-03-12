@@ -2478,6 +2478,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     int do_errs = (fr->sderr != NULL);
     int pmax = fr->pmax;
     int errpmax = fr->pmax;
+    int quiet = (opt & OPT_Q);
     double *maxerr = NULL;
     double conf = 100 * (1 - fr->alpha);
     double tval = 0;
@@ -2490,7 +2491,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	}
     }
 
-    if (!(opt & OPT_Q)) {
+    if (!quiet) {
 	pputc(prn, '\n');
     }
 
@@ -2499,7 +2500,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 
 	tval = (fr->asymp)? normal_critval(a2) : student_critval(fr->df, a2);
 
-	if (!(opt & OPT_Q)) {
+	if (!quiet) {
 	    if (fr->asymp) {
 		pprintf(prn, _(" For %g%% confidence intervals, z(%g) = %.2f\n"), 
 			conf, a2, tval);
@@ -2510,7 +2511,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	}
     }
 
-    if (!(opt & OPT_Q)) {
+    if (!quiet) {
 	pputc(prn, '\n');
     }
 

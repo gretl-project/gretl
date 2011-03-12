@@ -2587,6 +2587,36 @@ void dialog_add_confidence_selector (GtkWidget *dlg, double *conf,
     }    
 }
 
+static void fcast_toggle_scope (GtkComboBox *cb, gretlopt *optp)
+{
+    gint i = gtk_combo_box_get_active(cb);
+
+    if (i == 1) {
+	*optp |= OPT_M;
+    } else {
+	*optp &= ~OPT_M;
+    }
+}
+
+static void confidence_scope_selector (GtkWidget *dlg,
+				       gretlopt *optp)
+{
+    GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    GtkWidget *lbl, *combo;
+
+    lbl = gtk_label_new(_("Show interval for"));
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    combo = gtk_combo_box_text_new();
+    combo_box_append_text(combo, _("actual Y"));
+    combo_box_append_text(combo, _("mean Y"));
+    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(fcast_toggle_scope), optp);
+    gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+}
+
 static void toggle_opt_I (GtkToggleButton *b, gretlopt *optp)
 {
     if (gtk_toggle_button_get_active(b)) {
@@ -2856,6 +2886,9 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
 	if (conf != NULL) {
 	    dialog_add_confidence_selector(rset->dlg, conf, NULL);
+	    if (dataset_is_cross_section(datainfo)) {
+		confidence_scope_selector(rset->dlg, optp);
+	    }
 	}
     }
 

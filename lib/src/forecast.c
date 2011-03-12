@@ -552,7 +552,8 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 
 static int
 static_fcast_with_errs (Forecast *fc, MODEL *pmod, 
-			const double **Z, const DATAINFO *pdinfo) 
+			const double **Z, const DATAINFO *pdinfo,
+			gretlopt opt) 
 {
     gretl_matrix *V = NULL;
     gretl_vector *Xt = NULL;
@@ -612,7 +613,9 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 	if (na(vyh)) {
 	    err = 1;
 	} else {
-	    vyh += s2;
+	    if (!(opt & OPT_M)) {
+		vyh += s2;
+	    }
 	    if (vyh >= 0.0) {
 		fc->sderr[t] = sqrt(vyh);
 	    } else {
@@ -2253,7 +2256,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
 	err = fixed_effects_fcast(&fc, pmod, Z, pdinfo);
     } else if (DM_errs) {
-	err = static_fcast_with_errs(&fc, pmod, Z, pdinfo);
+	err = static_fcast_with_errs(&fc, pmod, Z, pdinfo, opt);
     } else if (pmod->ci == NLS) {
 	err = nls_fcast(&fc, pmod, pZ, pdinfo);
     } else if (SIMPLE_AR_MODEL(pmod->ci) || dummy_AR) {
