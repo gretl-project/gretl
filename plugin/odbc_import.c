@@ -221,7 +221,7 @@ int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 
     ret = SQLFetch(stmt);  
 
-    while (ret != SQL_NO_DATA && !err) {
+    while (ret == SQL_SUCCESS && !err) {
 	j = k = p = v = 0;
 	fprintf(stderr, "SQLFetch, row %d:\n", t);
 
@@ -230,7 +230,7 @@ int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 		/* looking for obs identifier chunk(s) */
 		*obsbit = '\0';
 		if (colbytes[i] == SQL_NULL_DATA) {
-		    fprintf(stderr, " obs col %d: no data\n", i+1);
+		    fprintf(stderr, " obs col %d: null data\n", i+1);
 		    continue; /* error? */
 		}
 		/* got a chunk */
@@ -270,9 +270,13 @@ int odbc_read_rows (ODBC_info *odinfo, SQLHSTMT stmt,
 
 	/* try getting next row */
 	ret = SQLFetch(stmt);
-	if (ret != SQL_NO_DATA && t >= *nrows) {
+	if (ret == SQL_SUCCESS && t >= *nrows) {
 	    err = expand_catchment(odinfo, nrows);
 	}
+    }
+
+    if (ret != SQL_SUCCESS && ret != SQL_NO_DATA && !err) {
+	err = E_DATA;
     }
 
     *obsgot = t;
