@@ -348,7 +348,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
     if (colbytes == NULL) {
 	free(xt);
 	return E_ALLOC;
-    }    
+    }  
 
     grabstr = allocate_string_grabbers(odinfo, &nstrs, &err);
     if (err) {
@@ -380,6 +380,7 @@ int gretl_odbc_get_data (ODBC_info *odinfo)
 
     /* bind all columns */
     for (i=0; i<totcols; i++) {
+	colbytes[i] = 0;
 	if (i < odinfo->obscols) {
 	    /* auxiliary obs columns */
 	    if (odinfo->coltypes[i] == GRETL_TYPE_INT) {
