@@ -355,6 +355,8 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci);
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
 		   const DATAINFO *pdinfo);
 
+int gretl_is_simple_OLS (const MODEL *pmod);
+
 int gretl_is_arima_model (const MODEL *pmod);
 
 int get_first_model_stat (const char **word, const char **desc);

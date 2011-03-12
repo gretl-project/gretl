@@ -1732,7 +1732,7 @@ static struct range_setting *rset_new (guint code, gpointer p,
     } else {
 	rset->opt = OPT_NONE;
     }
-    
+
     rset->dlg = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
     rset->combo = rset->entry = NULL;
     rset->adj1 = rset->adj2 = NULL;
@@ -2598,8 +2598,7 @@ static void fcast_toggle_scope (GtkComboBox *cb, gretlopt *optp)
     }
 }
 
-static void confidence_scope_selector (GtkWidget *dlg,
-				       gretlopt *optp)
+static void confidence_scope_selector (GtkWidget *dlg, gretlopt *optp)
 {
     GtkWidget *vbox = gtk_dialog_get_content_area(GTK_DIALOG(dlg));
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
@@ -2840,8 +2839,8 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     g_signal_connect(GTK_ADJUSTMENT(rset->p), "value-changed",
 		     G_CALLBACK(toggle_activate_fitvals), tmp);
 
-    /* graph style selection */
     if (fcast_errs_ok(pmod)) {
+	/* graph style selection for confidence intervals */
 	static const char *strs[] = {
 	    N_("error bars"),
 	    N_("low and high lines"),
@@ -2854,6 +2853,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	    OPT_F
 	};
 	static combo_opts ci_opts;
+	GtkWidget *combo;
 	int deflt, fixit = 0;
 
 	if (*t2 - *t1 < 1) {
@@ -2876,19 +2876,23 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 	hbox = gtk_hbox_new(FALSE, 0);
 	tmp = gtk_label_new(_("Plot confidence interval using"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	tmp = gretl_opts_combo(&ci_opts, deflt);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	combo = gretl_opts_combo(&ci_opts, deflt);
+	gtk_box_pack_start(GTK_BOX(hbox), combo, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
-
-	if (fixit) {
-	    gtk_widget_set_sensitive(tmp, FALSE);
-	}
 
 	if (conf != NULL) {
 	    dialog_add_confidence_selector(rset->dlg, conf, NULL);
-	    if (dataset_is_cross_section(datainfo)) {
+	    if (!fixit && dataset_is_cross_section(datainfo)) {
 		confidence_scope_selector(rset->dlg, optp);
+		if (gretl_is_simple_OLS(pmod)) {
+		    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 1);
+		    fixit = 1;
+		} 
 	    }
+	}	
+
+	if (fixit) {
+	    gtk_widget_set_sensitive(combo, FALSE);
 	}
     }
 

@@ -937,6 +937,18 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     return cf;
 }
 
+int gretl_is_simple_OLS (const MODEL *pmod)
+{
+    if (pmod->ci == OLS &&
+	pmod->list != NULL &&
+	pmod->list[0] == 3 &&
+	pmod->list[2] == 0) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 int gretl_is_arima_model (const MODEL *pmod)
 {
     int d = gretl_model_get_int(pmod, "arima_d");

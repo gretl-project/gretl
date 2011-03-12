@@ -1718,9 +1718,8 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (gopt & OPT_M) {
-	/* and similarly for OPT_M (show interval for mean) */
+	/* OPT_M (show interval for mean): copy to opt */
 	opt |= OPT_M;
-	gopt &= ~OPT_M;
     }
 
     if (rolling) {
@@ -1750,18 +1749,31 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (!err) {
+	int ols_special = 0;
 	int width = 78;
 
 	if (rolling) {
 	    err = text_print_fit_resid(fr, datainfo, prn);
 	} else {
-	    if (LIMDEP(pmod->ci)) {
+	    if (dataset_is_cross_section(datainfo)) {
+		ols_special = gretl_is_simple_OLS(pmod);
+	    }
+	    if (LIMDEP(pmod->ci) || ols_special) {
+		/* don't generate plot via text_print_forecast() */ 
 		gopt &= ~OPT_P;
 	    } else {
 		gopt |= OPT_P;
 	    }
 	    fr->alpha = 1 - conf;
 	    err = text_print_forecast(fr, datainfo, gopt, prn);
+	}
+
+	if (ols_special) {
+	    err = plot_simple_fcast_bands(pmod, fr, 
+					  (const double **) Z,
+					  datainfo,
+					  gopt);
+	    gopt |= OPT_P;
 	}
 	if (!err && (gopt & OPT_P)) {
 	    register_graph(NULL);

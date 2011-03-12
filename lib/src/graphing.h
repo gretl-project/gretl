@@ -217,6 +217,12 @@ int gretl_panel_ts_plot (int vnum, const double **Z, DATAINFO *pdinfo,
 int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 		     const DATAINFO *pdinfo, gretlopt opt);
 
+int plot_simple_fcast_bands (const MODEL *pmod, 
+			     const FITRESID *fr, 
+			     const double **Z,
+			     const DATAINFO *pdinfo, 
+			     gretlopt opt);
+
 int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
 		       int k);
 

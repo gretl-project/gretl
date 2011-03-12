@@ -3735,7 +3735,11 @@ static void print_confband_data (const double *x, const double *y,
 	    xt = x[t];
 	}
 	if (na(y[t]) || na(e[t])) {
-	    fprintf(fp, "%.10g ? ?\n", xt);
+	    if (mode == CONF_LOW || mode == CONF_HIGH) {
+		fprintf(fp, "%.10g ?\n", xt);
+	    } else {
+		fprintf(fp, "%.10g ? ?\n", xt);
+	    }
 	} else if (mode == CONF_FILL) {
 	    fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t] - e[t], y[t] + e[t]);
 	} else if (mode == CONF_LOW) {
@@ -3745,6 +3749,33 @@ static void print_confband_data (const double *x, const double *y,
 	} else {
 	    fprintf(fp, "%.10g %.10g %.10g\n", xt, y[t], e[t]);
 	} 
+    }
+
+    fputs("e\n", fp);
+}
+
+static void print_x_confband_data (const double *x, const double *y,
+				   const double *se, const int *order,
+				   double tval, int t1, int t2, 
+				   int mode, FILE *fp)
+{
+    int i, t, n = t2 - t1 + 1;
+    double et;
+
+    for (i=0; i<n; i++) {
+	t = order[i];
+	if (na(y[t]) || na(se[t])) {
+	    if (!na(x[t])) {
+		fprintf(fp, "%.10g ?\n", x[t]);
+	    }
+	} else {
+	    et = tval * se[t];
+	    if (mode == CONF_LOW) {
+		fprintf(fp, "%.10g %.10g\n", x[t], y[t] - et);
+	    } else if (mode == CONF_HIGH) {
+		fprintf(fp, "%.10g %.10g\n", x[t], y[t] + et);
+	    } 
+	}
     }
 
     fputs("e\n", fp);
@@ -4017,6 +4048,183 @@ int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
 	free(order);
     }
 
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
+static int *get_x_sorted_order (const FITRESID *fr, 
+				const double *x,
+				int t1, int *pt2)
+{
+    int *order = NULL;
+    struct fsorter *fs;
+    int nmiss = 0;
+    int t2 = *pt2;
+    int n = t2 - t1 + 1;
+    int i, t;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(fr->actual[t])) {
+	    nmiss++;
+	} 
+    }
+
+    fs = malloc(n * sizeof *fs);
+    if (fs == NULL) {
+	return NULL;
+    }
+
+    order = malloc(n * sizeof *order);
+    if (order == NULL) {
+	free(fs);
+	return NULL;
+    }
+
+    for (i=0, t=t1; t<=t2; t++, i++) {
+	fs[i].obs = t;
+	fs[i].y = x[t];
+    }
+
+    qsort(fs, n, sizeof *fs, compare_fs);
+
+    for (i=0; i<n; i++) {
+	order[i] = fs[i].obs;
+    }  
+
+    free(fs);
+
+    if (nmiss > 0) {
+	/* chop off trailing NAs */
+	*pt2 = (n - nmiss) + t1 - 1;
+    }
+
+    return order;
+}
+
+static void print_x_ordered_data (const double *x, const double *y,
+				  const int *order, int t1, int t2, 
+				  FILE *fp)
+{
+    int i, t, n = t2 - t1 + 1;
+
+    for (i=0; i<n; i++) {
+	t = order[i];
+	if (na(x[t])) {
+	    continue;
+	} else if (na(y[t])) {
+	    fprintf(fp, "%.10g ?\n", x[t]);
+	} else {
+	    fprintf(fp, "%.10g %.10g\n", x[t], y[t]);
+	}
+    }
+
+    fputs("e\n", fp);
+}
+
+/* Plotting routine for a simple regression where we want to show
+   actual and forecast y, plus confidence bands, against x.
+   We use lines to indicate the confidence bands.
+*/
+
+int plot_simple_fcast_bands (const MODEL *pmod, 
+			     const FITRESID *fr, 
+			     const double **Z,
+			     const DATAINFO *pdinfo, 
+			     gretlopt opt)
+{
+    FILE *fp = NULL;
+    const double *x = NULL;
+    int *order = NULL;
+    GptFlags flags = 0;
+    double a, xmin, xmax, xrange, tval;
+    int xv = pmod->list[3];
+    gchar *cistr;
+    int t2 = fr->t2;
+    int t1, yhmin;
+    int t, n, err = 0;
+
+    /* note: yhmin is the first obs at which to start plotting y-hat */
+    t1 = fr->t0;
+    yhmin = (opt & OPT_H)? fr->t0 : fr->t1;
+
+    /* don't graph empty trailing portion of forecast */
+    for (t=fr->t2; t>=t1; t--) {
+	if (na(fr->actual[t]) && na(fr->fitted[t])) {
+	    t2--;
+	} else {
+	    break;
+	}
+    }
+
+    n = t2 - t1 + 1;
+
+    if (n < 3) {
+	/* won't draw a graph for 2 data points or less */
+	return 1;
+    }
+
+    x = Z[xv];
+
+    order = get_x_sorted_order(fr, x, t1, &t2);
+    if (order == NULL) {
+	return E_ALLOC;
+    }
+
+    if (opt & OPT_U) {
+	/* respond to command-line --plot=fname option */
+	flags = GPT_BATCH;
+    }
+
+    fp = open_gp_stream(PLOT_FORECAST, flags, &err);
+    if (err) {
+	return err;
+    }    
+
+    gretl_minmax(t1, t2, x, &xmin, &xmax);
+    xrange = xmax - xmin;
+    xmin -= xrange * .025;
+    xmax += xrange * .025;
+
+    gretl_push_c_numeric_locale();
+    fprintf(fp, "set xrange [%.10g:%.10g]\n", xmin, xmax);
+    gretl_pop_c_numeric_locale();
+
+    gnuplot_missval_string(fp);
+
+    fprintf(fp, "set xlabel \"%s\"\n", pdinfo->varname[xv]);
+    fprintf(fp, "set ylabel \"%s\"\n", fr->depvar);
+
+    fputs("set key left top\n", fp);
+    fputs("plot \\\n", fp);
+
+    a = 100 * (1 - fr->alpha);
+    tval = student_critval(fr->df, fr->alpha / 2);
+
+    if (opt & OPT_M) {
+	cistr = g_strdup_printf(_("%g%% interval for mean"), a);
+    } else {
+	cistr = g_strdup_printf(_("%g percent interval"), a);
+    }
+
+    fputs("'-' using 1:2 notitle w points , \\\n", fp);
+    fputs("'-' using 1:2 notitle w lines , \\\n", fp);
+    fprintf(fp, "'-' using 1:2 title '%s' w lines , \\\n", cistr);
+    fputs("'-' using 1:2 notitle '%s' w lines lt 3\n", fp);
+    g_free(cistr);
+
+    gretl_push_c_numeric_locale();
+
+    print_x_ordered_data(x, fr->actual, order, t1, t2, fp);
+    print_x_ordered_data(x, fr->fitted, order, yhmin, t2, fp);
+    print_x_confband_data(x, fr->fitted, fr->sderr, order,
+			  tval, yhmin, t2, CONF_LOW, fp);
+    print_x_confband_data(x, fr->fitted, fr->sderr, order,
+			  tval, yhmin, t2, CONF_HIGH, fp);
+
+    gretl_pop_c_numeric_locale();
+
+    free(order);
     fclose(fp);
 
     return gnuplot_make_graph();
