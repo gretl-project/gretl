@@ -1831,7 +1831,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    break;
 	}
 
-	if (opt & OPT_I) {
+	if (!err && (opt & OPT_I)) {
 	    gretl_matrix_copy_values(H0, H1);
 	    err = NR_invert_hessian(H1, H0);
 	    if (err) {
