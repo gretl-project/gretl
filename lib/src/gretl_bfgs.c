@@ -1730,8 +1730,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     double stepmin = 1.0e-6;
     gretl_matrix_block *B;
     gretl_matrix *H0, *H1;
-    gretl_matrix *g0, *g1;
-    gretl_matrix *a;
+    gretl_matrix *g, *a;
     double *b0, *b1;
     double f0, f1;
     double steplen = 1.0;
@@ -1746,8 +1745,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     
     B = gretl_matrix_block_new(&H0, n, n,
 			       &H1, n, n,
-			       &g0, n, 1,
-			       &g1, n, 1,
+			       &g, n, 1,
 			       &a, n, 1,
 			       NULL);
     if (B == NULL) {
@@ -1765,7 +1763,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     }
 
     if (!err) {
-	err = gradfunc(b, g1->val, n, cfunc, data);
+	err = gradfunc(b, g->val, n, cfunc, data);
     }
 
     /* Note: if we have been passed OPT_I in the @opt
@@ -1788,8 +1786,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 
 	copy_to(b0, b1, n);
 
-	gretl_matrix_copy_values(g0, g1);
-	if (broken_matrix(g0)) {
+	if (broken_matrix(g)) {
 	    fprintf(stderr, "NA in gradient\n");
 	    err = E_NAN;
 	    break;
@@ -1803,7 +1800,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	}
 
 	/* apply quadratic approximation */
-	gretl_matrix_multiply(H0, g0, a);
+	gretl_matrix_multiply(H0, g, a);
 	copy_plus(b1, b0, steplen, a->val, n);
 	f1 = cfunc(b1, data);
 
@@ -1815,12 +1812,12 @@ int newton_raphson_max (double *b, int n, int maxit,
 	}
 
 	if (verbose) {
-	    print_iter_info(iter, f1, crittype, n, b1, g1->val, 
+	    print_iter_info(iter, f1, crittype, n, b1, g->val, 
 			    steplen, prn);
 	}
 
-	err = gradfunc(b1, g1->val, n, cfunc, data);
-	if (err || broken_matrix(g1)) {
+	err = gradfunc(b1, g->val, n, cfunc, data);
+	if (err || broken_matrix(g)) {
 	    err = (err == 0)? E_NAN : err;
 	    break;
 	}	
@@ -1843,7 +1840,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    status = STEPMIN_MET;
 	} else if (iter > maxit) {
 	    err = E_NOCONV;
-	} else if (sqrt(scalar_xpx(g1)) < gradtol) {
+	} else if (sqrt(scalar_xpx(g)) < gradtol) {
 	    status = GRADTOL_MET;
 	} else if (f1 - f0 < crittol) {
 	    status = CRITTOL_MET;
@@ -1851,7 +1848,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     }
 
     if (verbose) {
-	print_iter_info(-1, f1, crittype, n, b1, g1->val, 
+	print_iter_info(-1, f1, crittype, n, b1, g->val, 
 			steplen, prn);
 	pputc(prn, '\n');
     }

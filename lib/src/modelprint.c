@@ -1942,7 +1942,7 @@ static void print_model_heading (const MODEL *pmod,
     /* VCV variants */
     print_model_vcv_info(pmod, prn);
 
-    if ((pmod->opt & OPT_W) && !pmod->aux) {
+    if (pmod->ci == PANEL && (pmod->opt & OPT_W) && !pmod->aux) {
 	/* WLS on panel data */
 	if (tex) {
 	    pputs(prn, "\\\\\n");

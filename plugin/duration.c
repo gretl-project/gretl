@@ -670,7 +670,9 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	pmod->opt |= OPT_L;
     } else if (dinfo->dist == DUR_LOGNORM) {
 	pmod->opt |= OPT_Z;
-    } 
+    } else {
+	pmod->opt |= OPT_W; /* Weibull */
+    }
 
     if (censvar > 0) {
 	gretl_model_set_int(pmod, "cens_var", censvar);
