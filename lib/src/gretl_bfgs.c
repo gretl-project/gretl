@@ -1744,8 +1744,17 @@ int newton_raphson_max (double *b, int n, int maxit,
 	err = gradfunc(b, g1->val, n, cfunc, data);
     }
 
+    /* note: if we have been passed OPT_I in the @opt
+       argument, that means we should take case of
+       inverting the negative Hessian
+       AC 2011-03-13
+    */
+    
     if (!err) {
 	err = hessfunc(b, H1, data);
+	if (!err && (opt & OPT_I)) {
+	    err = gretl_invert_symmetric_matrix(H1);
+	}
     }
 
     while (status == 0 && !err) {
@@ -1796,7 +1805,19 @@ int newton_raphson_max (double *b, int n, int maxit,
 	if (err || broken_matrix(H1)) {
 	    err = (err == 0)? E_NAN : err;
 	    break;
-	}	
+	}
+
+	/* note: if we have been passed OPT_I in the @opt
+	   argument, that means we should take case of
+	   inverting the negative Hessian
+	*/
+	if (opt & OPT_I) {
+	    err = gretl_invert_symmetric_matrix(H1);
+	    if (err) {
+		/* FIXME apply a suitable remedy */
+		break;
+	    }
+	}
 
 	if (steplen < stepmin) {
 	    status = STEPMIN_MET;

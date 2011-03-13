@@ -409,9 +409,21 @@ static int duration_hessian (double *theta,
 	}
     }
 
-    /* fill out upper triangle and invert */
+    /* fill out upper triangle */
     gretl_matrix_mirror(H, 'L');
-    err = gretl_invert_symmetric_matrix(H);
+
+    return err;
+}
+
+static int duration_hessian_inverse (double *theta, 
+				     gretl_matrix *H,
+				     void *data)
+{
+    int err = duration_hessian(theta, H, data);
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(H);
+    }
 
     return err;
 }
@@ -476,7 +488,7 @@ static int duration_robust_vcv (duration_info *dinfo)
 			      dinfo->G, GRETL_MOD_NONE,
 			      GG, GRETL_MOD_NONE);
 
-    err = duration_hessian(dinfo->theta, H, dinfo);
+    err = duration_hessian_inverse(dinfo->theta, H, dinfo);
 
     if (!err) {
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
@@ -523,7 +535,7 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
 				 crittol, gradtol, &iters, 
 				 C_LOGLIK, duration_loglik, 
 				 duration_score, duration_hessian, 
-				 dinfo, OPT_NONE, NULL);
+				 dinfo, OPT_I, NULL);
     }
 #else
     if (!err) {
@@ -700,7 +712,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	    pmod->opt |= OPT_G;
 	    err = duration_OPG_vcv(dinfo);
 	} else {
-	    err = duration_hessian(dinfo->theta, dinfo->V, dinfo);
+	    err = duration_hessian_inverse(dinfo->theta, dinfo->V, dinfo);
 	} 
     }
 
@@ -762,7 +774,7 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 				 crittol, gradtol, &nr_iters,
 				 C_LOGLIK, duration_loglik, 
 				 duration_score, duration_hessian, 
-				 &dinfo, max_opt, dinfo.prn);
+				 &dinfo, max_opt | OPT_I, dinfo.prn);
     }
 #else
     if (!err) {
