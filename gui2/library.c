@@ -1699,6 +1699,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     unset_window_busy(vwin);
 
     if (resp < 0) {
+	/* canceled */
 	return;
     }
 

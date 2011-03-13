@@ -2461,14 +2461,18 @@ int text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
  * text_print_forecast:
  * @fr: pointer to structure containing forecasts.
  * @pdinfo: dataset information.
- * @opt: if includes %OPT_P, make a plot of the forecasts.
- * @prn: printing structure.
+ * @opt: if includes %OPT_P, make a plot of the forecasts;
+ * if includes %OPT_N, skip printing of the forecast
+ * evaluation statistics.
+ * @prn: printing struct.
  *
- * Print the forecasts in @fr to @prn, and also plot the
- * forecasts if %OPT_P is given.  If %OPT_F is given in
- * addition to %OPT_P, use fill style for the confidence
- * bands when plotting a forecast with standard errors.
- *
+ * Prints the forecasts in @fr to @prn, and also plots the
+ * forecasts if %OPT_P is given. If a plot is requested and
+ * @fr includes forecast standard errors, then the options
+ * %OPT_F or %OPT_L may be given to use "fill" style or lines,
+ * respectively, for the confidence bands (the default style
+ * being vertical bars per observation).
+ * 
  * Returns: 0 on success, non-zero error code on error.
  */
 

@@ -2882,7 +2882,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
 	if (conf != NULL) {
 	    dialog_add_confidence_selector(rset->dlg, conf, NULL);
-	    if (!fixit && dataset_is_cross_section(datainfo)) {
+	    if (!fixit && (flags & FC_MEAN_OK)) {
 		confidence_scope_selector(rset->dlg, optp);
 		if (gretl_is_simple_OLS(pmod)) {
 		    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 1);

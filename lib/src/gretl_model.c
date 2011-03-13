@@ -1789,7 +1789,7 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
     n = (k * k + k) / 2; 
 
     /* reallocate vcv in case it's wrongly sized */
-    tmp = realloc(pmod->vcv, n * sizeof *pmod->vcv);
+    tmp = realloc(pmod->vcv, n * sizeof *tmp);
     if (tmp == NULL) {
 	err = E_ALLOC;
     } else {

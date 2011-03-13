@@ -25,6 +25,8 @@
 
 #define DDEBUG 0
 
+#define USE_NEWTON 1
+
 typedef struct duration_info_ duration_info;
 
 enum {
@@ -360,7 +362,7 @@ static int duration_hessian (double *theta,
     if (dinfo->dist == DUR_EXPON) {
 	s2 = s = 1;
     } else {
-	s = dinfo->theta[np - 1];
+	s = theta[np - 1];
 	s2 = s * s;
     }
 
@@ -414,6 +416,8 @@ static int duration_hessian (double *theta,
     return err;
 }
 
+#if USE_NEWTON == 0
+
 /* calculate the OPG matrix at the starting point and use 
    its inverse (if any) as initial curvature matrix for BFGS
 */
@@ -426,7 +430,7 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
     dinfo->flags = DUR_UPDATE_XB;
 
     err = duration_score(dinfo->theta, NULL, dinfo->npar, 
-			     NULL, dinfo);
+			 NULL, dinfo);
     if (!err) {
 	H = gretl_matrix_GG_inverse(dinfo->G, &err);
     }
@@ -435,6 +439,8 @@ static gretl_matrix *duration_init_H (duration_info *dinfo)
 
     return H;
 }
+
+#endif
 
 /* OPG vcv matrix */
 
@@ -470,7 +476,7 @@ static int duration_robust_vcv (duration_info *dinfo)
 			      dinfo->G, GRETL_MOD_NONE,
 			      GG, GRETL_MOD_NONE);
 
-    err = duration_hessian(NULL, H, dinfo);
+    err = duration_hessian(dinfo->theta, H, dinfo);
 
     if (!err) {
 	err = gretl_matrix_qform(H, GRETL_MOD_NONE,
@@ -505,17 +511,31 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
     dinfo->flags |= DUR_CONST_ONLY;
     err = duration_estimates_init(dinfo);
 
+    /* now estimate constant-only model */
+
+#if USE_NEWTON
+    if (!err) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+	int iters = 0, maxit = 100;
+
+	err = newton_raphson_max(dinfo->theta, dinfo->npar, maxit, 
+				 crittol, gradtol, &iters, C_LOGLIK,
+				 duration_loglik, duration_score,
+				 duration_hessian, dinfo, OPT_NONE,
+				 NULL);
+    }
+#else
     if (!err) {
 	int maxit, fncount = 0, grcount = 0;
 	double toler;
-
-	/* estimate constant-only model */
 
 	BFGS_defaults(&maxit, &toler, DURATION); 
 	err = BFGS_max(dinfo->theta, dinfo->npar, maxit, toler, 
 		       &fncount, &grcount, duration_loglik, C_LOGLIK,
 		       duration_score, dinfo, NULL, OPT_NONE, NULL);
     }
+#endif
 
     if (!err && llu > dinfo->ll) {
 	pmod->chisq = 2 * (llu - dinfo->ll);
@@ -624,7 +644,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 static int 
 transcribe_duration_results (MODEL *pmod, duration_info *dinfo, 
 			     const double **Z, const DATAINFO *pdinfo, 
-			     int fncount, int grcount,
+			     int fncount, int grcount, int nr_iters,
 			     int censvar, gretlopt opt)
 {
     int np = dinfo->npar;
@@ -638,16 +658,18 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	pmod->opt |= OPT_L;
     } else if (dinfo->dist == DUR_LOGNORM) {
 	pmod->opt |= OPT_Z;
-    } else {
-	pmod->opt |= OPT_W;
-    }
+    } 
 
     if (censvar > 0) {
 	gretl_model_set_int(pmod, "cens_var", censvar);
     }
 
-    gretl_model_set_int(pmod, "fncount", fncount);
-    gretl_model_set_int(pmod, "grcount", grcount);
+    if (nr_iters > 0) {
+	gretl_model_set_int(pmod, "iters", nr_iters);
+    } else {
+	gretl_model_set_int(pmod, "fncount", fncount);
+	gretl_model_set_int(pmod, "grcount", grcount);
+    }
 
     if (!err) {
 	err = gretl_model_allocate_params(pmod, np);
@@ -678,7 +700,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	    pmod->opt |= OPT_G;
 	    err = duration_OPG_vcv(dinfo);
 	} else {
-	    err = duration_hessian(NULL, dinfo->V, dinfo);
+	    err = duration_hessian(dinfo->theta, dinfo->V, dinfo);
 	} 
     }
 
@@ -701,7 +723,9 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	pmod->rsq = pmod->adjrsq = NADBL;
 	pmod->ess = NADBL;
 	/* but add overall LR test if possible */
-	duration_overall_LR_test(pmod, dinfo);
+	if (np > 1 + (dinfo->dist != DUR_EXPON)) {
+	    duration_overall_LR_test(pmod, dinfo);
+	}
     }
 
     return err;
@@ -713,10 +737,10 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 {
     gretlopt max_opt = (opt & OPT_V)? OPT_V : OPT_NONE;
     duration_info dinfo;
-    double toler;
     int maxit;
     int fncount = 0;
     int grcount = 0;
+    int nr_iters = 0;
     int err = 0;
 
     err = duration_init(&dinfo, pmod, censvar, Z, opt, prn);
@@ -728,9 +752,23 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
     }
 #endif
 
+#if USE_NEWTON
+    if (!err) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+
+	maxit = 200;
+	err = newton_raphson_max(dinfo.theta, dinfo.npar, maxit, 
+				 crittol, gradtol, &nr_iters, C_LOGLIK,
+				 duration_loglik, duration_score,
+				 duration_hessian, &dinfo, max_opt,
+				 dinfo.prn);
+    }
+#else
     if (!err) {
 	/* initialize BFGS curvature */
 	gretl_matrix *H = duration_init_H(&dinfo);
+	double toler;
 
 	BFGS_defaults(&maxit, &toler, DURATION); 
 	err = BFGS_max(dinfo.theta, dinfo.npar, maxit, toler, 
@@ -739,10 +777,11 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 		       dinfo.prn);
 	gretl_matrix_free(H);
     }
+#endif
 
     if (!err) {
 	err = transcribe_duration_results(pmod, &dinfo, Z, pdinfo, 
-					  fncount, grcount, 
+					  fncount, grcount, nr_iters,
 					  censvar, opt);
     }
 

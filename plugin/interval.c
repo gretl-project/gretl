@@ -496,80 +496,6 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     return err;
 }
 
-static gretl_matrix *int_nhess (int_container *IC, int *err)
-{
-    double x, smal = 1.0e-07;
-    gretl_matrix *V = NULL;
-    double *q, *g, *gplus, *gminus, *hss;
-    int k = IC->k;
-    int i, j, n;
-
-    q = malloc(k * sizeof *q); 
-    g = malloc(k * sizeof *g); 
-    gplus = malloc(k * sizeof *gplus); 
-    gminus = malloc(k * sizeof *gminus);
-    hss = malloc(k * k * sizeof *hss);
-
-    if (q == NULL || g == NULL || gplus == NULL ||
-	gminus == NULL || hss == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    V = gretl_matrix_alloc(k, k);
-    if (V == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }	
-
-    for (i=0; i<k; i++) {
-	g[i] = IC->g[i];
-	q[i] = IC->theta[i];
-    }
-
-    n = 0;
-    for (i=0; i<k; i++) {
-	q[i] += smal;
-	int_loglik(q, IC);
-	for (j=0; j<k; j++) {
-	    gplus[j] = IC->g[j];
-	}
-
-	q[i] -= 2 * smal;
-	int_loglik(q, IC);
-	for (j=0; j<k; j++) {
-	    gminus[j] = IC->g[j];
-	}
-
-	for (j=0; j<k; j++) {
-	    hss[n++] = (gplus[j] - gminus[j]) / (2 * smal);
-	}
-    }
-
-    for (i=0; i<k; i++) {
-	for (j=i; j<k; j++) {
-	    x = -0.5 * (hss[i+k*j] + hss[i*k+j]);
-	    gretl_matrix_set(V, i, j, x);
-	    gretl_matrix_set(V, j, i, x);
-	}
-    }
-
-    *err = gretl_invert_symmetric_matrix(V);
-#if INTDEBUG
-    gretl_matrix_print(V, "V = -H^{-1}");
-#endif
-
- bailout:
-
-    free(q);
-    free(g);
-    free(gplus);
-    free(gminus);
-    free(hss);
-
-    return V;
-}
-
 static gretl_matrix *intreg_sandwich (int_container *IC,
 				      gretl_matrix *H,
 				      int *err)
@@ -621,8 +547,13 @@ static gretl_matrix *intreg_sandwich (int_container *IC,
 static gretl_matrix *intreg_VCV (int_container *IC, gretlopt opt,
 				 int *err)
 {
+    gretl_matrix *H = gretl_zero_matrix_new(IC->k, IC->k);
 
-    gretl_matrix *H = int_nhess(IC, err);
+    if (H == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = int_ahess(IC->theta, H, IC);
+    }
 
     if (!*err && (opt & OPT_R)) {
 	return intreg_sandwich(IC, H, err);
@@ -773,7 +704,7 @@ static gretl_matrix *cond_moments (int_container *IC, double *sm3,
 	*sm3 += m3;
 	*sm4 += m4;
 
-	for(i=0; i<k; i++) {
+	for (i=0; i<k; i++) {
 	    gretl_matrix_set(ret, t, i, IC->G[i][t]);
 	}
 
@@ -858,17 +789,13 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 {
     MODEL *pmod = IC->pmod;
     double x, ndx, u;
-    int i, j, n, m, k = IC->k, nx = IC->nx;
-    int obstype;
+    int i, j, n, m, k = IC->k;
+    int obstype, vtype;
 
-    if (opt & OPT_T) {
-	pmod->ci = TOBIT;
-    } else {
-	pmod->ci = INTREG;
-    }
-
+    pmod->ci = (opt & OPT_T)? TOBIT : INTREG;
     pmod->lnL = IC->ll;
     mle_criteria(pmod, 1);
+    pmod->sigma = exp(IC->theta[k-1]);
 
     if (pmod->vcv != NULL) {
 	free(pmod->vcv);
@@ -882,9 +809,9 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     }
 
     n = 0;
-    for (i=0; i<nx; i++) {
+    for (i=0; i<IC->nx; i++) {
 	pmod->coeff[i] = IC->theta[i];
-	for (j=i; j<nx; j++) {
+	for (j=i; j<IC->nx; j++) {
 	    x = gretl_matrix_get(V, i, j);
 	    if (i == j) {
 		pmod->sderr[i] = sqrt(x);
@@ -893,7 +820,13 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	}
     }
 
-    pmod->sigma = exp(IC->theta[k-1]);
+    vtype = (opt & OPT_R)? VCV_QML : VCV_HESSIAN;
+    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
+
+    /* get the s.e. of sigma via the delta method */
+    x = gretl_matrix_get(V, k-1, k-1);
+    x *= pmod->sigma * pmod->sigma;
+    gretl_model_set_double(pmod, "se_sigma", sqrt(x));
 
     int_compute_gresids(IC);
 
@@ -911,6 +844,7 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 	}
     }
 
+    /* mask invalid statistics */
     pmod->ybar = pmod->sdy = NADBL;
     pmod->ess = pmod->tss = NADBL;
     pmod->fstt = NADBL;
@@ -928,7 +862,6 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     }
 
     if (opt & OPT_R) {
-	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
 	pmod->opt |= OPT_R;
     }
 

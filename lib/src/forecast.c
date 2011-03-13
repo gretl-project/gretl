@@ -545,9 +545,12 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 
 /* Get forecasts, plus standard errors for same, for models without
    autoregressive errors and without "special requirements"
-   (e.g. nonlinearity).  The forecast standard errors include both
-   uncertainty over the error process and parameter uncertainty
-   (Davidson and MacKinnon method).
+   (e.g. nonlinearity).  
+
+   The forecast standard errors include both uncertainty over the
+   error process and parameter uncertainty (Davidson and MacKinnon
+   method) -- unless @opt contains OPT_M, in which case the standard
+   errors pertain to prediction of mean Y.
 */
 
 static int
@@ -3326,11 +3329,13 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 
     dv = gretl_model_get_depvar(pmod);
 
-    if (pmod->ci == OLS && is_standard_diff(dv, pdinfo, NULL)) {
-	*flags |= FC_INTEGRATE_OK;
-    }
-
-    if (pmod->ci == NLS) {
+    if (pmod->ci == OLS) {
+	if (is_standard_diff(dv, pdinfo, NULL)) {
+	    *flags |= FC_INTEGRATE_OK;
+	} else {
+	    *flags |= FC_MEAN_OK;
+	}
+    } else if (pmod->ci == NLS) {
 	/* we'll try winging it! */
 	if (gretl_model_get_int(pmod, "dynamic") && pmod->t2 < pdinfo->n - 1) {
 	    *flags |= FC_AUTO_OK;

@@ -193,6 +193,7 @@ static void print_intreg_info (const MODEL *pmod,
     int nr = gretl_model_get_int(pmod, "n_right");
     int nb = -1, np = -1;
     double llim = 0, rlim = NADBL;
+    double se_sigma;
 
     if (pmod->ci == INTREG) {
 	nb = gretl_model_get_int(pmod, "n_both");
@@ -228,8 +229,14 @@ static void print_intreg_info (const MODEL *pmod,
 
     ensure_vsep(prn);
 
+    se_sigma = gretl_model_get_double(pmod, "se_sigma");
+
     if (plain_format(prn)) {  
-	pprintf(prn, "%s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
+	pprintf(prn, "%s = %.*g", _("sigma"), GRETL_DIGITS, pmod->sigma);
+	if (!na(se_sigma)) {
+	    pprintf(prn, " (%g)", se_sigma);
+	}
+	pputc(prn, '\n');
 	pprintf(prn, "%s: %d%s\n", _(nstrs[0]), nl, lstr == NULL ? "" : lstr);
 	pprintf(prn, "%s: %d%s\n", _(nstrs[1]), nr, rstr == NULL ? "" : rstr);
 	if (nb >= 0 && np >= 0) {
@@ -238,7 +245,11 @@ static void print_intreg_info (const MODEL *pmod,
 	}
 	pputc(prn, '\n');
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
+	pprintf(prn, RTFTAB "%s = %g", I_("sigma"), pmod->sigma);
+	if (!na(se_sigma)) {
+	    pprintf(prn, " (%g)", se_sigma);
+	}
+	pputc(prn, '\n');
 	pprintf(prn, RTFTAB "%s: %d%s\n", I_(nstrs[0]), nl, lstr == NULL ? "" : lstr);
 	pprintf(prn, RTFTAB "%s: %d%s\n", I_(nstrs[1]), nr, rstr == NULL ? "" : rstr);
 	if (nb >= 0 && np >= 0) {
@@ -246,7 +257,11 @@ static void print_intreg_info (const MODEL *pmod,
 	    pprintf(prn, RTFTAB "%s: %d\n", I_(nstrs[3]), np);
 	}
     } else if (tex_format(prn)) {
-	pprintf(prn, "$\\hat{\\sigma}$ = %g \\\\\n", pmod->sigma);
+	pprintf(prn, "$\\hat{\\sigma}$ = %g", pmod->sigma);
+	if (!na(se_sigma)) {
+	    pprintf(prn, " (%g)", se_sigma);
+	}
+	pputs(prn, " \\\\\n");
 	pprintf(prn, "%s: %d%s \\\\\n", I_(nstrs[0]), nl, lstr == NULL ? "" : lstr);
 	pprintf(prn, "%s: %d%s \\\\\n", I_(nstrs[1]), nr, rstr == NULL ? "" : rstr);
 	if (nb >= 0 && np >= 0) {

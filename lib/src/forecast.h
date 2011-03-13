@@ -31,7 +31,8 @@ typedef enum {
     FC_AUTO_OK      = 1 << 0,
     FC_DYNAMIC_OK   = 1 << 1,
     FC_ADDOBS_OK    = 1 << 2,
-    FC_INTEGRATE_OK = 1 << 3
+    FC_INTEGRATE_OK = 1 << 3,
+    FC_MEAN_OK      = 1 << 4
 } ForecastFlags;
 
 struct FITRESID_ {
