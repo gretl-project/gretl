@@ -1677,6 +1677,8 @@ NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 	for (j=0; j<maxtry && err; j++) {
 	    gretl_matrix_copy_values(H, Hcpy);
 	    me = gretl_symm_matrix_lambda_max(H);
+	    fprintf(stderr, "newton hessian fixup: j=%d, max eigval=%g\n",
+		    j, me);
 	    lambda = fabs(me) + lamtol;
 	    for (i=0; i<H->rows; i++) {
 		x = gretl_matrix_get(H, i, i);

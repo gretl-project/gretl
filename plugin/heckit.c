@@ -856,24 +856,17 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     gretl_matrix_set(H, jj, ii, -c34);
     gretl_matrix_set(H, jj, jj, -c44);
 
-    err = gretl_invert_symmetric_matrix(H);
+    return err;
+}
 
-#if 0
-    if (err) {
-	/* just in case: let's check vs numerical Hessian */
-	double *nH;
-	int err2;
-	k = 0;
-	nH = heckit_nhessian(theta, npar, h_loglik, HC, &err2);
-	for (i=0; i<npar; i++) {
-	    for (j=i; j<npar; j++) {
-		fprintf(stderr, "%16.6f", nH[k++]);
-	    }
-	    fputc('\n', stderr);
-	}
-	free(nH);
+static int heckit_ahessian_inverse (double *theta, gretl_matrix *H, 
+				    void *ptr)
+{
+    int err = heckit_ahessian(theta, H, ptr);
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(H);
     }
-#endif    
 
     return err;
 }
@@ -1377,13 +1370,15 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 #endif
 
     if (do_newton) {
+	gretlopt nopt = opt & OPT_V;
+
 	err = newton_raphson_max(theta, np, maxit, toler, gradtol,
 				 &fncount, C_LOGLIK, h_loglik, 
 				 heckit_score, heckit_ahessian,
-				 HC, opt & OPT_V, prn);
-
+				 HC, nopt | OPT_I, prn);
 	if (err == E_NOTPD) {
 	    pprintf(prn, "Hessian not pd: switching from Newton to BFGS\n");
+	    do_newton = 0;
 	    err = BFGS_max(theta, np, maxit, toler, &fncount, 
 			   &grcount, h_loglik, C_LOGLIK,
 			   heckit_score, HC, init_H,
@@ -1400,16 +1395,19 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 
     if (!err) {
 	HC->ll = hm->lnL = h_loglik(theta, HC);
-	gretl_model_set_int(hm, "fncount", fncount);	
-	gretl_model_set_int(hm, "grcount", grcount);	
+	if (do_newton) {
+	    gretl_model_set_int(hm, "iters", fncount);
+	} else {
+	    gretl_model_set_int(hm, "fncount", fncount);	
+	    gretl_model_set_int(hm, "grcount", grcount);
+	}	
 	HC->lambda = HC->sigma * HC->rho;
 
 	H = gretl_matrix_alloc(np, np);
-
 	if (H == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = heckit_ahessian(theta, H, HC);
+	    err = heckit_ahessian_inverse(theta, H, HC);
 	}
 #if 0
 	hess = heckit_nhessian(theta, np, h_loglik, HC, &err);
