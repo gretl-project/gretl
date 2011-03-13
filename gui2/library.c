@@ -1700,6 +1700,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 
     if (resp < 0) {
 	/* canceled */
+	gopt = OPT_P | OPT_H;
 	return;
     }
 
@@ -1786,6 +1787,9 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 				_("gretl: forecasts"), 
 				FCAST, fr);
     }
+
+    /* don't remember the "mean" option */
+    gopt &= ~OPT_M;
 }
 
 void do_bootstrap (GtkAction *action, gpointer p) 
