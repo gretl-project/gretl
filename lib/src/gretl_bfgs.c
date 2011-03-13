@@ -1651,6 +1651,20 @@ enum {
     STEPMIN_MET = 1 << 2
 };
 
+static void print_NR_status (int status, double crittol, double gradtol, 
+			     PRN *prn)
+{
+    if (status == GRADTOL_MET) {
+	pprintf(prn, "Gradient < %g; may be a solution\n", gradtol);
+    } else if (status == CRITTOL_MET) {
+	pprintf(prn, "Successive criterion values within tolerance (%g); "
+		"may be a solution\n", crittol);
+    } else if (status == STEPMIN_MET) {
+	pprintf(prn, "Couldn't increase criterion; "
+		"may be near a solution?\n");
+    }
+}
+
 /* Newton-Raphson maximizer, loosely based on R's maxNR(). 
 
    The functions cfunc (computes the criterion, usually a
@@ -1805,14 +1819,8 @@ int newton_raphson_max (double *b, int n, int maxit,
 
     if (!err) {
 	copy_to(b, b1, n);
-	if (status == GRADTOL_MET) {
-	    fprintf(stderr, "Gradient close to zero; may be a solution.\n");
-	} else if (status == CRITTOL_MET) {
-	    fprintf(stderr, "Successive criterion values within tolerance; "
-		    "may be a solution.\n");
-	} else if (status == STEPMIN_MET) {
-	    fprintf(stderr, "Couldn't increase criterion; "
-		    "may be near a solution?\n");
+	if (prn != NULL) {
+	    print_NR_status(status, crittol, gradtol, prn);
 	}
     }
 

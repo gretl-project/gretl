@@ -1335,10 +1335,8 @@ static gretl_matrix *heckit_init_H (double *theta,
 
 int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 {
-
     int do_newton = (opt & OPT_N);
     gretl_matrix *H = NULL;
-
     gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
     double rho, gradtol = 1.0e-06, toler = 1.0e-8;
@@ -1373,7 +1371,9 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     BFGS_defaults(&maxit, &toler, HECKIT);
 
 #if INITH_OPG
-    init_H = heckit_init_H(theta, HC, np);
+    if (!do_newton) {
+	init_H = heckit_init_H(theta, HC, np);
+    }
 #endif
 
     if (do_newton) {

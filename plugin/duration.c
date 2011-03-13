@@ -520,10 +520,10 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
 	int iters = 0, maxit = 100;
 
 	err = newton_raphson_max(dinfo->theta, dinfo->npar, maxit, 
-				 crittol, gradtol, &iters, C_LOGLIK,
-				 duration_loglik, duration_score,
-				 duration_hessian, dinfo, OPT_NONE,
-				 NULL);
+				 crittol, gradtol, &iters, 
+				 C_LOGLIK, duration_loglik, 
+				 duration_score, duration_hessian, 
+				 dinfo, OPT_NONE, NULL);
     }
 #else
     if (!err) {
@@ -759,10 +759,10 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 
 	maxit = 200;
 	err = newton_raphson_max(dinfo.theta, dinfo.npar, maxit, 
-				 crittol, gradtol, &nr_iters, C_LOGLIK,
-				 duration_loglik, duration_score,
-				 duration_hessian, &dinfo, max_opt,
-				 dinfo.prn);
+				 crittol, gradtol, &nr_iters,
+				 C_LOGLIK, duration_loglik, 
+				 duration_score, duration_hessian, 
+				 &dinfo, max_opt, dinfo.prn);
     }
 #else
     if (!err) {
