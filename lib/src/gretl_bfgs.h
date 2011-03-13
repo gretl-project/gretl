@@ -51,15 +51,6 @@ int newton_raphson_max (double *b, int n, int maxit,
 			HESS_FUNC hessfunc,
 			void *data, gretlopt opt, PRN *prn);
 
-int hybrid_max (double *b, int n, int maxit, 
-		double crittol, double gradtol, 
-		int *itercount, int crittype, 
-		BFGS_CRIT_FUNC cfunc,
-		BFGS_GRAD_FUNC gradfunc, 
-		HESS_FUNC hessfunc,
-		void *data, gretlopt opt, 
-		PRN *prn);
-
 int BFGS_numeric_gradient (double *b, double *g, int n,
 			   BFGS_CRIT_FUNC func, void *data);
 

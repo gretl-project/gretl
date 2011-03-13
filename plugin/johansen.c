@@ -1456,11 +1456,11 @@ static void coint_test_print_exog (GRETL_VAR *jvar,
 static void print_cv (double c, PRN *prn)
 {
     if (c < 10) {
-	printf("   %.2f", c);
+	pprintf(prn, "   %.2f", c);
     } else if (c < 100) {
-	printf("   %.1f", c);
+	pprintf(prn, "   %.1f", c);
     } else {
-	printf("    %.0f", c);
+	pprintf(prn, "    %.0f", c);
     }
 }
 

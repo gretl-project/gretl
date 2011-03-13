@@ -1646,9 +1646,9 @@ static double scalar_xpx (const gretl_matrix *m)
 }
 
 enum {
-    GRADTOL_MET = 1 << 0,
-    CRITTOL_MET = 1 << 1,
-    STEPMIN_MET = 1 << 2
+    GRADTOL_MET = 1,
+    CRITTOL_MET,
+    STEPMIN_MET
 };
 
 static void print_NR_status (int status, double crittol, double gradtol, 
@@ -1663,6 +1663,30 @@ static void print_NR_status (int status, double crittol, double gradtol,
 	pprintf(prn, "Couldn't increase criterion; "
 		"may be near a solution?\n");
     }
+}
+
+static int 
+NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
+{
+    int err = gretl_invert_symmetric_matrix(H);
+
+    if (err == E_NOTPD) {
+	double x, me, lambda, lamtol = 1e-6;
+	int j, i, maxtry = 5;
+
+	for (j=0; j<maxtry && err; j++) {
+	    gretl_matrix_copy_values(H, Hcpy);
+	    me = gretl_symm_matrix_lambda_max(H);
+	    lambda = fabs(me) + lamtol;
+	    for (i=0; i<H->rows; i++) {
+		x = gretl_matrix_get(H, i, i);
+		gretl_matrix_set(H, i, i, x - lambda);
+	    }
+	    err = gretl_invert_symmetric_matrix(H);
+	}
+    }
+
+    return err;
 }
 
 /* Newton-Raphson maximizer, loosely based on R's maxNR(). 
@@ -1744,16 +1768,16 @@ int newton_raphson_max (double *b, int n, int maxit,
 	err = gradfunc(b, g1->val, n, cfunc, data);
     }
 
-    /* note: if we have been passed OPT_I in the @opt
+    /* Note: if we have been passed OPT_I in the @opt
        argument, that means we should take case of
-       inverting the negative Hessian
-       AC 2011-03-13
+       inverting the negative Hessian. AC 2011-03-13
     */
     
     if (!err) {
 	err = hessfunc(b, H1, data);
 	if (!err && (opt & OPT_I)) {
-	    err = gretl_invert_symmetric_matrix(H1);
+	    gretl_matrix_copy_values(H0, H1);
+	    err = NR_invert_hessian(H1, H0);
 	}
     }
 
@@ -1807,14 +1831,10 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    break;
 	}
 
-	/* note: if we have been passed OPT_I in the @opt
-	   argument, that means we should take case of
-	   inverting the negative Hessian
-	*/
 	if (opt & OPT_I) {
-	    err = gretl_invert_symmetric_matrix(H1);
+	    gretl_matrix_copy_values(H0, H1);
+	    err = NR_invert_hessian(H1, H0);
 	    if (err) {
-		/* FIXME apply a suitable remedy */
 		break;
 	    }
 	}
@@ -1851,43 +1871,3 @@ int newton_raphson_max (double *b, int n, int maxit,
     return err;
 }
 
-/* Start by using BFGS with a sloppy tolerance, then switch to
-   Newton-Raphson. An experimental thing.
-*/
-
-int hybrid_max (double *b, int n, int maxit, 
-		double crittol, double gradtol, 
-		int *itercount, int crittype, 
-		BFGS_CRIT_FUNC cfunc,
-		BFGS_GRAD_FUNC gradfunc, 
-		HESS_FUNC hessfunc,
-		void *data, gretlopt opt, 
-		PRN *prn)
-{
-    double pre_tol = 1.0e-3;
-    double pre_maxit = 100;
-    int fncount = 0;
-    int grcount = 0;
-    int err;
-
-    err = BFGS_max(b, n, pre_maxit, pre_tol, 
-		   &fncount, &grcount, cfunc, crittype,
-		   gradfunc, data, NULL, 
-		   opt & OPT_V, prn);
-
-    fprintf(stderr, "BFGS phase: fncount=%d, grcount=%d, err=%d\n",
-	    fncount, grcount, err);
-
-    if (!err) {
-	err = newton_raphson_max(b, n, maxit, crittol, gradtol,
-				 itercount, crittype, cfunc, 
-				 gradfunc, hessfunc, data, 
-				 opt & OPT_V, prn);
-	fprintf(stderr, "Newton phase: itercount=%d, err=%d\n",
-		*itercount, err);
-    }
-
-    *itercount += grcount;
-
-    return err;
-}
