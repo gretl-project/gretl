@@ -1428,7 +1428,7 @@ int gmm_add_vcv (MODEL *pmod, nlspec *s)
     }
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, V);
+	err = gretl_model_write_vcv(pmod, V, -1);
     }
 
     if (!err && using_HAC(s)) {

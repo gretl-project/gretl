@@ -2010,7 +2010,7 @@ static int save_restricted_model (ExecState *state,
 	for (i=0; i<rmod->ncoeff; i++) {
 	    rmod->coeff[i] = b->val[i];
 	}
-	err = gretl_model_write_vcv(rmod, S);
+	err = gretl_model_write_vcv(rmod, S, -1);
     }
 
     if (!err) {

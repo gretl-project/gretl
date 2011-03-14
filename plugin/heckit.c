@@ -1441,53 +1441,16 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 #endif
     }
 
+    if (!err) {
+	np = HC->vcv->rows - 2;
+	err = gretl_model_write_vcv(hm, HC->vcv, np);
+    }
+
     free(hess);
     free(theta);
     gretl_matrix_free(H);
 
     return err;
-}
-
-/*
-  This function copies the VCV matrix for the ML estimator into
-  the model struct.  Note that we don't transcribe the variances for
-  sigma and rho into the model.
-*/
-
-static int transcribe_ml_vcv (MODEL *pmod, h_container *HC)
-{
-    int nvc, npar = HC->vcv->rows - 2;
-    int i, j, k = 0;
-    double vij;
-
-    if (pmod->vcv != NULL) {
-	free(pmod->vcv);
-    }
-
-    if (pmod->sderr != NULL) {
-	free(pmod->sderr);
-    }
-    
-    nvc = (npar * npar + npar) / 2;
-
-    pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
-    pmod->sderr = malloc(npar * sizeof *pmod->sderr);
-
-    if (pmod->vcv == NULL || pmod->sderr == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<npar; i++) {
-	for (j=i; j<npar; j++) {
-	    vij = gretl_matrix_get(HC->vcv, i, j);
-	    pmod->vcv[k++] = vij;
-	    if (i == j) {
-		pmod->sderr[i] = sqrt(vij);
-	    }
-	}
-    }
-
-    return 0;
 }
 
 static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
@@ -1628,9 +1591,6 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     } else {
 	/* use MLE */
 	err = heckit_ml(&hm, HC, opt, vprn);
-	if (!err) {
-	    err = transcribe_ml_vcv(&hm, HC);
-	}
     } 
 
     if (err) {

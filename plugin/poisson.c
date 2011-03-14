@@ -431,7 +431,7 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
 		(opt & OPT_R)? VCV_QML : VCV_HESSIAN;
 
 	    gretl_model_set_vcv_info(pmod, VCV_ML, vtype);
-	    err = gretl_model_write_vcv(pmod, nbinfo->V);
+	    err = gretl_model_write_vcv(pmod, nbinfo->V, -1);
 	}
     }
 
@@ -527,7 +527,7 @@ static int poisson_robust_vcv (MODEL *pmod, gretl_matrix *G)
     }
 
     if (!err) {
-	err = gretl_model_write_vcv(pmod, V);
+	err = gretl_model_write_vcv(pmod, V, -1);
     }
 
     if (!err) {

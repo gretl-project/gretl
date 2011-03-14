@@ -856,7 +856,7 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 
     if (!err) {
 	gretl_matrix_multiply_by_scalar(V, s2);
-	err = gretl_model_write_vcv(pmod, V);
+	err = gretl_model_write_vcv(pmod, V, -1);
     }
 
  bailout:
@@ -1048,7 +1048,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    if (kopt & KALMAN_AVG_LL) {
 		gretl_matrix_divide_by_scalar(Hinv, ainfo->T);
 	    }
-	    err = gretl_model_write_vcv(pmod, Hinv);
+	    err = gretl_model_write_vcv(pmod, Hinv, -1);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
 	    }
@@ -1546,7 +1546,7 @@ static int arima_by_ls (const double **Z, const DATAINFO *pdinfo,
 	for (t=0; t<ainfo->T; t++) {
 	    pmod->uhat[t + ainfo->t1] = u->val[t];
 	}	
-	err = gretl_model_write_vcv(pmod, V);
+	err = gretl_model_write_vcv(pmod, V, -1);
     }
 
     if (!err) {

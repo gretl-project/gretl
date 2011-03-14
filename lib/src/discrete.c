@@ -640,7 +640,7 @@ static void fill_op_model (MODEL *pmod, const int *list,
     pmod->ncoeff = npar;
 
     if (V != NULL) {
-	pmod->errcode = gretl_model_write_vcv(pmod, V);
+	pmod->errcode = gretl_model_write_vcv(pmod, V, -1);
 	if (pmod->errcode) {
 	    return;
 	}
@@ -1377,7 +1377,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     gretl_matrix_qform(H, GRETL_MOD_NONE, S,
 		       V, GRETL_MOD_NONE);
 
-    err = gretl_model_write_vcv(pmod, V);
+    err = gretl_model_write_vcv(pmod, V, -1);
 
     if (!err) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
@@ -2305,13 +2305,13 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
 
     if (!err) {
 	if (opt & OPT_R) {
-	    err = gretl_model_write_vcv(pmod, V);
+	    err = gretl_model_write_vcv(pmod, V, -1);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
 		pmod->opt |= OPT_R;
 	    }
 	} else {
-	    err = gretl_model_write_vcv(pmod, H);
+	    err = gretl_model_write_vcv(pmod, H, -1);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
 	    }

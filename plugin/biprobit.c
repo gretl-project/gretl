@@ -1203,26 +1203,17 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
 				gretlopt opt)
 {
     gretl_matrix *V;
-    double *coeff, *sderr, *vcv;
-    int nvc, npar = bp->npar - 1;
-    int i, j, err = 0;
+    double *tmp;
+    int npar = bp->npar - 1;
+    int i, err = 0;
 
-    nvc = (npar * npar + npar) / 2;
+    tmp = realloc(pmod->coeff, npar * sizeof *tmp);
 
-    coeff = realloc(pmod->coeff, npar * sizeof *coeff);
-    sderr = realloc(pmod->sderr, npar * sizeof *sderr);
-    vcv = realloc(pmod->vcv, nvc * sizeof *vcv);
-
-    if (coeff == NULL || sderr == NULL || vcv == NULL) {
+    if (tmp == NULL) {
 	err = E_ALLOC;
     } else {
-	pmod->coeff = coeff;
-	pmod->sderr = sderr;
-	pmod->vcv = vcv;
+	pmod->coeff = tmp;
 	pmod->ncoeff = npar;
-    }
-
-    if (!err) {
 	err = gretl_model_allocate_params(pmod, npar);
     }
 
@@ -1264,22 +1255,10 @@ static int biprobit_fill_model (MODEL *pmod, bp_container *bp, DATAINFO *pdinfo,
     V = biprobit_vcv(bp, opt, &err);
 
     if (!err) {
-	double x;
-	int k = 0;
+	err = gretl_model_write_vcv(pmod, V, npar);
+    }
 
-	/* note that the V matrix is "over-sized", so we can't use
-	   gretl_model_write_vcv() here */
-
-	for (i=0; i<npar; i++) {
-	    for (j=i; j<npar; j++) {
-		x = gretl_matrix_get(V, i, j);
-		pmod->vcv[k++] = x;
-		if (i == j) {
-		    pmod->sderr[i] = sqrt(x);
-		}
-	    }
-	}
-
+    if (!err) {
 	if (opt & OPT_R) {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
 	} else if (opt & OPT_G) {

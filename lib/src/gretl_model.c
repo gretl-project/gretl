@@ -1761,18 +1761,23 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
  * gretl_model_write_vcv:
  * @pmod: pointer to model.
  * @V: full covariance matrix.
+ * @k: the number of parameters to include, or -1 for all.
  * 
  * Write the covariance matrix @V into the model @pmod, using the
  * special packed format that is required by the MODEL struct,
  * and set the standard errors to the square root of the diagonal
- * elements of this matrix.
+ * elements of this matrix. 
+ * 
+ * In case @k is less than the dimension of @V, only the first
+ * @k rows and columns will be used (except that if an @k value
+ * of -1 is given, this says to use all of @V).
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
+int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k)
 {
-    int i, j, k, n, idx;
+    int i, j, n, idx;
     double x, *tmp;
     int err = 0;
 
@@ -1780,15 +1785,21 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
 	return 0; /* no-op */
     }
 
-    k = V->rows;
-
-    if (V->cols != k) {
+    if (V->cols != V->rows) {
 	return E_NONCONF;
+    }
+
+    if (k != -1 && (k < 1 || k > V->rows)) {
+	return E_DATA;
+    }
+
+    if (k == -1) {
+	k = V->rows;
     }
 
     n = (k * k + k) / 2; 
 
-    /* reallocate vcv in case it's wrongly sized */
+    /* reallocate model vcv in case it's wrongly sized */
     tmp = realloc(pmod->vcv, n * sizeof *tmp);
     if (tmp == NULL) {
 	err = E_ALLOC;
@@ -1806,6 +1817,24 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
 	}
     }
 
+#if 1
+    if (!err) {
+	idx = 0;
+	for (i=0; i<k; i++) {
+	    for (j=i; j<k; j++) {
+		x = gretl_matrix_get(V, i, j);
+		pmod->vcv[idx++] = x;
+		if (i == j) {
+		    if (xna(x) || x < 0) {
+			pmod->sderr[i] = NADBL;
+		    } else {
+			pmod->sderr[i] = sqrt(x);
+		    }
+		}
+	    }
+	}
+    }
+#else
     if (!err) {
 	for (i=0; i<k; i++) {
 	    for (j=0; j<=i; j++) {
@@ -1821,7 +1850,8 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V)
 		}
 	    }
 	}	
-    }	
+    }
+#endif	
 
     return err;
 }

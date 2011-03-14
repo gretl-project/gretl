@@ -799,35 +799,22 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 {
     MODEL *pmod = IC->pmod;
     double x, ndx, u;
-    int i, j, n, m, k = IC->k;
+    int i, j, k = IC->k;
     int obstype, vtype;
+    int err = 0;
 
     pmod->ci = (opt & OPT_T)? TOBIT : INTREG;
     pmod->lnL = IC->ll;
     mle_criteria(pmod, 1);
     pmod->sigma = exp(IC->theta[k-1]);
 
-    if (pmod->vcv != NULL) {
-	free(pmod->vcv);
-    }
-
-    m =  k * (k - 1) / 2;
-
-    pmod->vcv = malloc(m * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) {
-	return E_ALLOC;
-    }
-
-    n = 0;
     for (i=0; i<IC->nx; i++) {
 	pmod->coeff[i] = IC->theta[i];
-	for (j=i; j<IC->nx; j++) {
-	    x = gretl_matrix_get(V, i, j);
-	    if (i == j) {
-		pmod->sderr[i] = sqrt(x);
-	    }
-	    pmod->vcv[n++] = x;
-	}
+    }
+
+    err = gretl_model_write_vcv(pmod, V, IC->nx);
+    if (err) {
+	return err;
     }
 
     vtype = (opt & OPT_R)? VCV_QML : VCV_HESSIAN;
