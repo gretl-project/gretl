@@ -1054,22 +1054,22 @@ int gretl_bundle_copy_as (const char *name, const char *copyname)
 
     if (b1 != NULL) {
 	g_hash_table_destroy(b1->ht);
-	b1->ht = NULL;
+	b1->ht = g_hash_table_new_full(g_str_hash, 
+				       g_str_equal, 
+				       g_free, 
+				       bundled_item_destroy);
     } else {
-	b1 = malloc(sizeof *b1);
+	b1 = gretl_bundle_new();
 	if (b1 == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    strcpy(b1->name, copyname);
-	    b1->ht = NULL;
 	    b1->level = level;
 	    err = gretl_bundle_push(b1, 0);
 	}
     }
 
     if (!err) {
-	b1->ht = g_hash_table_new_full(g_str_hash, g_str_equal, 
-				       g_free, bundled_item_destroy);
 	g_hash_table_foreach(b0->ht, copy_bundled_item, b1);
     }
 
