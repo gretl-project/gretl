@@ -1777,7 +1777,7 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 
 int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k)
 {
-    int i, j, n, idx;
+    int i, j, n;
     double x, *tmp;
     int err = 0;
 
@@ -1817,9 +1817,9 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k)
 	}
     }
 
-#if 1
     if (!err) {
-	idx = 0;
+	int idx = 0;
+
 	for (i=0; i<k; i++) {
 	    for (j=i; j<k; j++) {
 		x = gretl_matrix_get(V, i, j);
@@ -1834,24 +1834,6 @@ int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k)
 	    }
 	}
     }
-#else
-    if (!err) {
-	for (i=0; i<k; i++) {
-	    for (j=0; j<=i; j++) {
-		idx = ijton(i, j, k);
-		x = gretl_matrix_get(V, i, j);
-		pmod->vcv[idx] = x;
-		if (i == j) {
-		    if (xna(x) || x < 0) {
-			pmod->sderr[i] = NADBL;
-		    } else {
-			pmod->sderr[i] = sqrt(x);
-		    }
-		}
-	    }
-	}	
-    }
-#endif	
 
     return err;
 }
