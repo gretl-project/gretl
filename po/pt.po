@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-03-11 14:51-0500\n"
-"PO-Revision-Date: 2011-02-20 18:17+0000\n"
+"PO-Revision-Date: 2011-03-14 21:22+0000\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -2649,9 +2649,9 @@ msgid "Relative frequency"
 msgstr "Frequência relativa"
 
 #: lib/src/graphing.c:3923
-#, fuzzy, c-format
+#, c-format
 msgid "observations sorted by %s"
-msgstr "Não restariam nenhumas observações!"
+msgstr "observações ordenadas por %s"
 
 #: lib/src/graphing.c:3944
 #, c-format
@@ -4123,9 +4123,9 @@ msgid "This command requires one variable.\n"
 msgstr "Este comando requer uma variável.\n"
 
 #: lib/src/interact.c:4819
-#, fuzzy, c-format
+#, c-format
 msgid "data frequency = %d\n"
-msgstr "colocando a frequência dos dados = %d\n"
+msgstr " frequência dos dados = %d\n"
 
 #: lib/src/interact.c:4849
 msgid "store: no filename given\n"
@@ -4276,14 +4276,12 @@ msgid "Point observations"
 msgstr "Observações pontuais"
 
 #: lib/src/modelprint.c:201
-#, fuzzy
 msgid "Left-censored observations"
-msgstr "Observações censuradas"
+msgstr "Observações censuradas à esquerda"
 
 #: lib/src/modelprint.c:202
-#, fuzzy
 msgid "Right-censored observations"
-msgstr "Observações não limitadas à direita"
+msgstr "Observações censuradas à direita"
 
 #: lib/src/modelprint.c:220 lib/src/modelprint.c:229 lib/src/modelprint.c:247
 #: lib/src/modelprint.c:2830
@@ -7118,7 +7116,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 20 de Fevereiro de 2011."
+"Tradução de 14 de Março de 2011."
 
 #: gui2/about.c:175
 msgid "License"
@@ -15157,6 +15155,8 @@ msgid ""
 "Warning: the critical values shown are for the case of\n"
 "a restricted trend"
 msgstr ""
+"Atenção: os valores críticos apresentados são para o caso\n"
+"de uma tendência restringida."
 
 #: plugin/johansen.c:1570
 msgid ""
