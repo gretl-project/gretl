@@ -1665,26 +1665,58 @@ static void print_NR_status (int status, double crittol, double gradtol,
     }
 }
 
+/* 
+   The strategy here may be simplistic, but appears to be effective in
+   quite a few cases: If the (negative) Hessian is not pd, we try to
+   nudge it towards positive definiteness without losing too much
+   information on curvature by considering a linear combination of H 
+   with an identity matrix with the same trace. In practice, we feed 
+   Newton-Raphson with
+
+   C = \lambda H + (1-lambda) k I
+
+   where k is chosen in a way such that tr(C) = tr(H) and lambda is
+   reasonably close to 1. Note that, if lambda was 0, a NR iteration
+   would just amount to an iteration of the simple gradient method.
+   Hopefully, a few of those should be able to "tow us away" from the 
+   non-pd region.
+*/
+
 static int 
 NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
     int err = gretl_invert_symmetric_matrix(H);
 
     if (err == E_NOTPD) {
-	double x, me, lambda, lamtol = 1e-6;
-	int j, i, maxtry = 5;
+	double x, target, lambda = 1.0;
+	target = gretl_matrix_trace(H, &err) / H->rows;
+	/* IMO we can safely assume that err = 0 above*/
+	int i, j;
+	int s = 0, max_shrink = 10;
 
-	for (j=0; j<maxtry && err; j++) {
+	while (s<max_shrink) {
+	    lambda *= 0.9;
 	    gretl_matrix_copy_values(H, Hcpy);
-	    me = gretl_symm_matrix_lambda_max(H);
-	    fprintf(stderr, "newton hessian fixup: j=%d, max eigval=%g\n",
-		    j, me);
-	    lambda = fabs(me) + lamtol;
+	    fprintf(stderr, "newton hessian fixup: s = %d, lambda=%g, target=%g\n",
+		    s, lambda, target);
+
 	    for (i=0; i<H->rows; i++) {
-		x = gretl_matrix_get(H, i, i);
-		gretl_matrix_set(H, i, i, x - lambda);
+		for (j=0; j<H->rows; j++) {
+		    x = lambda * gretl_matrix_get(H, i, j);
+		    if (i==j) {
+			x += (1-lambda) * target;
+		    }
+		    gretl_matrix_set(H, i, j, x);
+		}
 	    }
+
+	    gretl_matrix_print(H, "after shrinkage");
 	    err = gretl_invert_symmetric_matrix(H);
+	    if (!err) {
+		break;
+	    } else {
+		s++;
+	    }
 	}
     }
 
@@ -1769,7 +1801,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     }
 
     /* Note: if we have been passed OPT_I in the @opt
-       argument, that means we should take case of
+       argument, that means we should take care of
        inverting the negative Hessian. AC 2011-03-13
     */
     

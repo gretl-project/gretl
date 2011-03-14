@@ -1364,6 +1364,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 				 &fncount, C_LOGLIK, h_loglik, 
 				 heckit_score, heckit_ahessian,
 				 HC, nopt | OPT_I, prn);
+#if 0
 	if (err == E_NOTPD) {
 	    pprintf(prn, "Hessian not pd: switching from Newton to BFGS\n");
 	    do_newton = 0;
@@ -1372,6 +1373,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 			   heckit_score, HC, init_H,
 			   (prn != NULL)? OPT_V : OPT_NONE, prn);
 	}
+#endif
     } else {
 	err = BFGS_max(theta, np, maxit, toler, &fncount, 
 		       &grcount, h_loglik, C_LOGLIK,
