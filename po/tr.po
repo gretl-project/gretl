@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-03-11 14:51-0500\n"
-"PO-Revision-Date: 2011-03-02 08:42+0200\n"
+"PO-Revision-Date: 2011-03-14 10:31+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -549,7 +549,7 @@ msgstr "Almaşık istatistik"
 #: lib/src/compare.c:2219
 #, c-format
 msgid "The model already contains %s"
-msgstr "Model %s içeriyor bile"
+msgstr "Model %s değişkenini zaten içeriyor"
 
 #: lib/src/compare.c:2250
 msgid "dummy variable for Chow test"
@@ -1466,7 +1466,8 @@ msgstr "%s yazmak için açılamadı"
 #: lib/src/dbwrite.c:607
 #, c-format
 msgid "Of the variables to be saved, %d were already present in the database."
-msgstr "Kaydedilecek değişkenler içinde %d tanesi veritabanında bulunuyor bile"
+msgstr ""
+"Kaydedilecek değişkenler içinde %d tanesi veritabanında zaten bulunuyor"
 
 #: lib/src/describe.c:1098
 msgid "Insufficient data"
@@ -2472,7 +2473,7 @@ msgstr "Dönemsel kukla değişkenler oluşturuldu.\n"
 
 #: lib/src/genmain.c:467
 msgid "Periodic dummy variables already present.\n"
-msgstr "Dönemsel kukla değişkenler bulunuyor bile.\n"
+msgstr "Dönemsel kukla değişkenler zaten bulunuyor.\n"
 
 #: lib/src/genmain.c:473 lib/src/genmain.c:478
 msgid "Panel dummy variables generated.\n"
@@ -2508,7 +2509,7 @@ msgstr "Ağırlıklar, dikeysellik koşullarından sonra gelmelidir"
 
 #: lib/src/gmm.c:791
 msgid "Weights are already defined"
-msgstr "Ağırlıklar tanımlı bile"
+msgstr "Ağırlıklar zaten tanımlı"
 
 #: lib/src/gmm.c:812
 #, c-format
@@ -2632,9 +2633,9 @@ msgid "Relative frequency"
 msgstr "Göreli sıklık"
 
 #: lib/src/graphing.c:3923
-#, fuzzy, c-format
+#, c-format
 msgid "observations sorted by %s"
-msgstr "Elde hiç gözlem kalmaz!"
+msgstr "gözlem sıralama ölçütü %s"
 
 #: lib/src/graphing.c:3944
 #, c-format
@@ -2874,7 +2875,7 @@ msgstr "Eklenen yeni bağımsız değişken yok"
 
 #: lib/src/gretl_errors.c:59
 msgid "One or more \"added\" vars were already present"
-msgstr "\"Eklenen\" değişkenlerden bir veya birden çoğu bulunuyor bile"
+msgstr "Bir ya da birden çok \"eklenen\" değişken zaten bulunuyor"
 
 #: lib/src/gretl_errors.c:60
 msgid "Error generating logarithms"
@@ -3920,7 +3921,7 @@ msgstr "gecikme değişkeni oluşturma başarısız"
 #: lib/src/interact.c:1538 gui2/gui_utils.c:4505 gui2/library.c:4325
 #, c-format
 msgid "A series named %s already exists"
-msgstr "%s adında bir seri var bile"
+msgstr "%s adında bir seri zaten var"
 
 #: lib/src/interact.c:1675
 #, c-format
@@ -4051,7 +4052,7 @@ msgstr "Çıktı dosyası '%s' kapatıldı\n"
 #: lib/src/interact.c:3959
 #, c-format
 msgid "Output is already diverted to '%s'\n"
-msgstr "Çıktılar '%s' dosyasına yönlendirilmiş bile\n"
+msgstr "Çıktılar '%s' dosyasına zaten yönlendirili\n"
 
 #: lib/src/interact.c:3966
 msgid "Now discarding output\n"
@@ -4085,9 +4086,9 @@ msgid "This command requires one variable.\n"
 msgstr "Bu komut bir tane değişken gerektirir.\n"
 
 #: lib/src/interact.c:4819
-#, fuzzy, c-format
+#, c-format
 msgid "data frequency = %d\n"
-msgstr "veri sıklığı = %d olarak saptanıyor\n"
+msgstr "veri sıklığı = %d\n"
 
 #: lib/src/interact.c:4849
 msgid "store: no filename given\n"
@@ -4238,14 +4239,12 @@ msgid "Point observations"
 msgstr "Nokta gözlemler"
 
 #: lib/src/modelprint.c:201
-#, fuzzy
 msgid "Left-censored observations"
-msgstr "Sansürlü gözlemler"
+msgstr "Sol-sansürlü gözlemler"
 
 #: lib/src/modelprint.c:202
-#, fuzzy
 msgid "Right-censored observations"
-msgstr "Sağ-sınırlamasız gözlemler"
+msgstr "Sağ-sansürlü gözlemler"
 
 #: lib/src/modelprint.c:220 lib/src/modelprint.c:229 lib/src/modelprint.c:247
 #: lib/src/modelprint.c:2830
@@ -7895,7 +7894,7 @@ msgid ""
 "There is already a variable of this name\n"
 "in the dataset.  OK to overwrite it?"
 msgstr ""
-"Bu adda bir değişken veri setinde var bile.\n"
+"Bu adda bir değişken veri setinde zaten var.\n"
 "Üzerine yazılsın mı?"
 
 #: gui2/database.c:558
@@ -9072,7 +9071,7 @@ msgid ""
 "There is already a file of this name.\n"
 "OK to overwrite it?"
 msgstr ""
-"Bu adda bir veri dosyası var bile.\n"
+"Bu adda bir veri dosyası zaten var.\n"
 "Üzerine yazılsın mı?"
 
 #: gui2/fileselect.c:753
@@ -11810,22 +11809,22 @@ msgstr ""
 #: gui2/gui_utils.c:4507
 #, c-format
 msgid "A matrix named %s already exists"
-msgstr "%s adında bir dizey var bile"
+msgstr "%s adında bir dizey zaten var"
 
 #: gui2/gui_utils.c:4509
 #, c-format
 msgid "A scalar named %s already exists"
-msgstr "%s adında bir dizey var bile"
+msgstr "%s adında bir dizey zaten var"
 
 #: gui2/gui_utils.c:4511
 #, c-format
 msgid "A list named %s already exists"
-msgstr "%s adında bir liste var bile"
+msgstr "%s adında bir liste zaten var"
 
 #: gui2/gui_utils.c:4513
 #, c-format
 msgid "A string named %s already exists"
-msgstr "%s adında bir dizgi var bile"
+msgstr "%s adında bir dizgi zaten var"
 
 #: gui2/gui_utils.c:4522
 msgid "OK to overwrite it?"
@@ -12846,7 +12845,7 @@ msgstr "Model çizelgeye eklenemiyor -- modelin bağımlı değişkeni farklı"
 
 #: gui2/model_table.c:220
 msgid "Model is already included in the table"
-msgstr "Model çizelgede içeriliyor bile"
+msgstr "Çizelge modeli zaten içeriyor"
 
 #: gui2/model_table.c:275 gui2/model_table.c:277
 msgid "Model added to table"
@@ -13761,7 +13760,7 @@ msgstr "Çizit dosyasını kopyalama başarısız"
 
 #: gui2/session.c:1062
 msgid "Model is already saved"
-msgstr "Model kayıtlı bile"
+msgstr "Model zaten kayıtlı"
 
 #: gui2/session.c:1313
 #, c-format
@@ -13795,7 +13794,7 @@ msgstr "Lütfen önce bu nesnenin penceresini kapatınız"
 #: gui2/session.c:2408
 #, c-format
 msgid "'%s': there is already an object of this name"
-msgstr "'%s': Bu adda bir nesne var bile"
+msgstr "'%s': Bu adda bir nesne zaten var"
 
 #: gui2/session.c:2451
 #, c-format
@@ -15089,6 +15088,8 @@ msgid ""
 "Warning: the critical values shown are for the case of\n"
 "a restricted trend"
 msgstr ""
+"Uyarı: Gösterilen kritik değerler sınırlamalı eğilim\n"
+"seçeneği içindir."
 
 #: plugin/johansen.c:1570
 msgid ""
