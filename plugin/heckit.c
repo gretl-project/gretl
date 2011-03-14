@@ -485,12 +485,14 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->score  = gretl_matrix_alloc(HC->ntot, npar); 
 	HC->sscore = gretl_vector_alloc(npar); 
 
-	if (HC->fitted == NULL || HC->u == NULL || HC->ndx == NULL
-	    || HC->score == NULL || HC->sscore == NULL) {
+	if (HC->fitted == NULL || HC->u == NULL || 
+	    HC->ndx == NULL || HC->score == NULL || 
+	    HC->sscore == NULL) {
 	    err = E_ALLOC;
 	}
 		
     }
+
     if (!err){
 	/* workspace for the analytical Hessian */
         HC->B = gretl_matrix_block_new(&HC->H11, HC->kmain, HC->kmain,
@@ -504,6 +506,7 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	    gretl_matrix_block_zero(HC->B);
 	}
     }
+
     return err;
 }
 
