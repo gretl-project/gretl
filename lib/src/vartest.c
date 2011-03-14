@@ -162,7 +162,7 @@ int VAR_portmanteau_test (GRETL_VAR *var)
 				  C00, GRETL_MOD_NONE,
 				  R, GRETL_MOD_NONE);
 	gretl_matrix_multiply(L, R, Tmp);
-	trj = gretl_matrix_trace(Tmp, &err);
+	trj = gretl_matrix_trace(Tmp);
 	LB += (1.0 / (var->T - j)) * trj;
     }
 

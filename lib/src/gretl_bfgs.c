@@ -1652,16 +1652,20 @@ enum {
 };
 
 static void print_NR_status (int status, double crittol, double gradtol, 
-			     PRN *prn)
+			     double sumgrad, PRN *prn)
 {
     if (status == GRADTOL_MET) {
-	pprintf(prn, "Gradient < %g; may be a solution\n", gradtol);
+	pprintf(prn, "Gradient within tolerance (%g)\n", gradtol);
     } else if (status == CRITTOL_MET) {
-	pprintf(prn, "Successive criterion values within tolerance (%g); "
-		"may be a solution\n", crittol);
+	pprintf(prn, "Successive criterion values within tolerance (%g)\n",
+		crittol);
     } else if (status == STEPMIN_MET) {
-	pprintf(prn, "Couldn't increase criterion; "
-		"may be near a solution?\n");
+	if (sumgrad > 0) {
+	    pprintf(prn, "Warning: couldn't improve criterion (gradient = %g)\n",
+		    sumgrad);
+	} else {
+	    pprintf(prn, "Warning: couldn't improve criterion\n");
+	}
     }
 }
 
@@ -1688,35 +1692,28 @@ NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     int err = gretl_invert_symmetric_matrix(H);
 
     if (err == E_NOTPD) {
-	double x, target, lambda = 1.0;
-	target = gretl_matrix_trace(H, &err) / H->rows;
-	/* IMO we can safely assume that err = 0 above*/
-	int i, j;
-	int s = 0, max_shrink = 10;
+	double target = gretl_matrix_trace(Hcpy) / H->rows;
+	double x, lambda = 1.0;
+	int i, j, s, smax = 10;
 
-	while (s<max_shrink) {
+	for (s=0; s<smax && err; s++) {
 	    lambda *= 0.9;
 	    gretl_matrix_copy_values(H, Hcpy);
-	    fprintf(stderr, "newton hessian fixup: s = %d, lambda=%g, target=%g\n",
+	    fprintf(stderr, "newton hessian fixup: round %d, lambda=%g, target=%g\n",
 		    s, lambda, target);
-
 	    for (i=0; i<H->rows; i++) {
 		for (j=0; j<H->rows; j++) {
 		    x = lambda * gretl_matrix_get(H, i, j);
-		    if (i==j) {
-			x += (1-lambda) * target;
+		    if (i == j) {
+			x += (1 - lambda) * target;
 		    }
 		    gretl_matrix_set(H, i, j, x);
 		}
 	    }
-
+#if 0
 	    gretl_matrix_print(H, "after shrinkage");
+#endif
 	    err = gretl_invert_symmetric_matrix(H);
-	    if (!err) {
-		break;
-	    } else {
-		s++;
-	    }
 	}
     }
 
@@ -1730,19 +1727,10 @@ NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
    estimate of the gradient in its second argument) are just as in
    BFGS_max above.
 
-   The precise working of the function hessfunc is debatable.  As
-   things stand below, this function should write into its second
-   argument the negative inverse of the Hessian (or some variant
-   thereof).  This pushes onto hessfunc the problem of what to do if
-   the observed Hessian is not negative definite.  
-
-   The alternative would be to get hessfunc to provide the Hessian
-   itself, negative definite or not, and for newton_raphson_max to
-   take on the task of fixing it up if need be (which is what R's
-   maxNR does). But it seemed to me that the best fix might depend on
-   the particular application.  For example if the full gradient
-   matrix, G, is available one might substitute (GG')^{-1}, hence
-   falling back on BHHH temporarily.
+   The hessfunc callback should compute the negative Hessian,
+   _not_ inverted; newton_raphson_max takes care of the inversion,
+   with a routine for fixing up the matrix if it's not positive
+   definite.
 
    Note that unlike maxNR, there is no provision here for automatic
    substitution of numerical routines for gradfunc or hessfunc if
@@ -1766,7 +1754,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     gretl_matrix *H0, *H1;
     gretl_matrix *g, *a;
     double *b0, *b1;
-    double f0, f1;
+    double f0, f1, sumgrad = 0;
     double steplen = 1.0;
     int status = 0;
     int iter = 0;
@@ -1800,14 +1788,9 @@ int newton_raphson_max (double *b, int n, int maxit,
 	err = gradfunc(b, g->val, n, cfunc, data);
     }
 
-    /* Note: if we have been passed OPT_I in the @opt
-       argument, that means we should take care of
-       inverting the negative Hessian. AC 2011-03-13
-    */
-    
     if (!err) {
 	err = hessfunc(b, H1, data);
-	if (!err && (opt & OPT_I)) {
+	if (!err) {
 	    gretl_matrix_copy_values(H0, H1);
 	    err = NR_invert_hessian(H1, H0);
 	}
@@ -1862,7 +1845,7 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    break;
 	}
 
-	if (!err && (opt & OPT_I)) {
+	if (!err) {
 	    gretl_matrix_copy_values(H0, H1);
 	    err = NR_invert_hessian(H1, H0);
 	    if (err) {
@@ -1870,11 +1853,13 @@ int newton_raphson_max (double *b, int n, int maxit,
 	    }
 	}
 
+	sumgrad = sqrt(scalar_xpx(g));
+
 	if (steplen < stepmin) {
 	    status = STEPMIN_MET;
 	} else if (iter > maxit) {
 	    err = E_NOCONV;
-	} else if (sqrt(scalar_xpx(g)) < gradtol) {
+	} else if (sumgrad < gradtol) {
 	    status = GRADTOL_MET;
 	} else if (f1 - f0 < crittol) {
 	    status = CRITTOL_MET;
@@ -1892,7 +1877,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     if (!err) {
 	copy_to(b, b1, n);
 	if (prn != NULL) {
-	    print_NR_status(status, crittol, gradtol, prn);
+	    print_NR_status(status, crittol, gradtol, sumgrad, prn);
 	}
     }
 

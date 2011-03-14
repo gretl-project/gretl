@@ -535,7 +535,7 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo)
 				 crittol, gradtol, &iters, 
 				 C_LOGLIK, duration_loglik, 
 				 duration_score, duration_hessian, 
-				 dinfo, OPT_I, NULL);
+				 dinfo, OPT_NONE, NULL);
     }
 #else
     if (!err) {
@@ -749,7 +749,7 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 		       const DATAINFO *pdinfo, gretlopt opt, 
 		       PRN *prn)
 {
-    gretlopt max_opt = (opt & OPT_V)? OPT_V : OPT_NONE;
+    gretlopt maxopt = opt & OPT_V;
     duration_info dinfo;
     int maxit;
     int fncount = 0;
@@ -776,7 +776,7 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 				 crittol, gradtol, &nr_iters,
 				 C_LOGLIK, duration_loglik, 
 				 duration_score, duration_hessian, 
-				 &dinfo, max_opt | OPT_I, dinfo.prn);
+				 &dinfo, maxopt, dinfo.prn);
     }
 #else
     if (!err) {
@@ -787,7 +787,7 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 	BFGS_defaults(&maxit, &toler, DURATION); 
 	err = BFGS_max(dinfo.theta, dinfo.npar, maxit, toler, 
 		       &fncount, &grcount, duration_loglik, C_LOGLIK,
-		       duration_score, &dinfo, H, max_opt, 
+		       duration_score, &dinfo, H, maxopt, 
 		       dinfo.prn);
 	gretl_matrix_free(H);
     }

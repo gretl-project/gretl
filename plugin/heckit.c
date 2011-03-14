@@ -672,7 +672,7 @@ double *heckit_nhessian (const double *b, int n, BFGS_CRIT_FUNC func,
 
 /* analytical Hessian */
 
-int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
+int heckit_hessian (double *theta, gretl_matrix *H, void *ptr)
 {
     h_container *HC = (h_container *) ptr;
     double mills, dmills, x, z;
@@ -855,10 +855,10 @@ int heckit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     return err;
 }
 
-static int heckit_ahessian_inverse (double *theta, gretl_matrix *H, 
-				    void *ptr)
+static int heckit_hessian_inverse (double *theta, gretl_matrix *H, 
+				   void *ptr)
 {
-    int err = heckit_ahessian(theta, H, ptr);
+    int err = heckit_hessian(theta, H, ptr);
 
     if (!err) {
 	err = gretl_invert_symmetric_matrix(H);
@@ -1358,12 +1358,12 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 #endif
 
     if (do_newton) {
-	gretlopt nopt = opt & OPT_V;
+	gretlopt maxopt = opt & OPT_V;
 
 	err = newton_raphson_max(theta, np, maxit, toler, gradtol,
 				 &fncount, C_LOGLIK, h_loglik, 
-				 heckit_score, heckit_ahessian,
-				 HC, nopt | OPT_I, prn);
+				 heckit_score, heckit_hessian,
+				 HC, maxopt, prn);
 #if 0
 	if (err == E_NOTPD) {
 	    pprintf(prn, "Hessian not pd: switching from Newton to BFGS\n");
@@ -1397,7 +1397,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 	if (H == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = heckit_ahessian_inverse(theta, H, HC);
+	    err = heckit_hessian_inverse(theta, H, HC);
 	}
 #if 0
 	hess = heckit_nhessian(theta, np, h_loglik, HC, &err);

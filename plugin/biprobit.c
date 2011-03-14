@@ -697,7 +697,7 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 
 /* analytical hessian */
 
-int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
+int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
     double a, b, P, f, d1, d2, da, tmp, u_ab, u_ba;
@@ -855,7 +855,16 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
     tmp = gretl_matrix_get(H, k1+k2, k1+k2) - h33;
     gretl_matrix_set(H, k1+k2, k1+k2, tmp);
 
-    err = gretl_invert_symmetric_matrix(H);
+    return err;
+}
+
+int biprobit_hessian_inverse (double *theta, gretl_matrix *H, void *ptr)
+{
+    int err = biprobit_hessian(theta, H, ptr);
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(H);
+    }
 
     return err;
 }
@@ -867,7 +876,7 @@ int biprobit_ahessian (double *theta, gretl_matrix *H, void *ptr)
    around, just in case 
 */
 
-int biprobit_nhessian (double *b, gretl_matrix *H, void *ptr)
+int biprobit_numerical_hessian (double *b, gretl_matrix *H, void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
     double x, eps = 1.0e-06;
@@ -966,6 +975,7 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     double crittol = 1.0e-06;
     double gradtol = 1.0e-05;
     int fncount, maxit = 1000;
+    gretlopt maxopt = opt & OPT_V;
     double *theta;
     int err = 0;
 
@@ -977,8 +987,8 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 #if USE_NEWTON
     err = newton_raphson_max(theta, bp->npar, maxit, crittol, gradtol,
 			     &fncount, C_LOGLIK, biprob_loglik, 
-			     biprob_score, biprobit_ahessian,
-			     bp, opt & OPT_V, prn);
+			     biprob_score, biprobit_hessian,
+			     bp, maxopt, prn);
 #else
     int grcount;
 
@@ -986,7 +996,7 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
     err = BFGS_max(theta, bp->npar, maxit, crittol, &fncount, 
 		   &grcount, biprob_loglik, C_LOGLIK,
 		   biprob_score, bp, NULL,
-		   opt & OPT_V, prn);
+		   maxopt, prn);
 #endif
 
     free(theta);
@@ -1013,7 +1023,7 @@ static gretl_matrix *biprobit_vcv (bp_container *bp, gretlopt opt, int *err)
 	}
 
 	if (!*err) {
-	    *err = biprobit_ahessian(theta, Hess, bp);
+	    *err = biprobit_hessian_inverse(theta, Hess, bp);
 	}
 #if 0
 	gretl_matrix_print(Hess, "iHess");

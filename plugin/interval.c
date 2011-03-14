@@ -487,11 +487,21 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
 	}
     }
 
-    err = gretl_invert_symmetric_matrix(V);
-
 #if INTDEBUG > 1
-    gretl_matrix_print(V, "Inverse Hessian (analytical)");
+    gretl_matrix_print(V, "Hessian (analytical)");
 #endif
+
+    return err;
+}
+
+static int 
+int_ahess_inverse (double *theta, gretl_matrix *V, void *ptr)
+{
+    int err = int_ahess(theta, V, ptr);
+
+    if (!err) {
+	err = gretl_invert_symmetric_matrix(V);
+    }
 
     return err;
 }
@@ -552,7 +562,7 @@ static gretl_matrix *intreg_VCV (int_container *IC, gretlopt opt,
     if (H == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = int_ahess(IC->theta, H, IC);
+	*err = int_ahess_inverse(IC->theta, H, IC);
     }
 
     if (!*err && (opt & OPT_R)) {
@@ -894,6 +904,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     gretl_matrix *V = NULL;
     int maxit, fncount;
     double toler, normtest = NADBL;
+    gretlopt maxopt = opt & OPT_V;
     int err = 0;
 
     IC = int_container_new(list, Z, pdinfo, mod);
@@ -906,11 +917,11 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 #if USE_NEWTON
     err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
 			     &fncount, C_LOGLIK, int_loglik, 
-			     int_score, int_ahess, IC, opt & OPT_V, prn);
+			     int_score, int_ahess, IC, maxopt, prn);
 #else
     err = BFGS_max(IC->theta, IC->k, maxit, toler, 
 		   &fncount, &grcount, int_loglik, C_LOGLIK,
-		   int_score, IC, NULL, opt & OPT_V, prn);
+		   int_score, IC, NULL, maxopt, prn);
 #endif
 
     if (!err) {

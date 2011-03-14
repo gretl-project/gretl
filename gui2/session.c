@@ -3748,7 +3748,7 @@ view_matrix_properties (const gretl_matrix *m, const char *name)
     if (m->rows == m->cols) {
 	double det;
 
-	print_double_formatted(_("Trace"), gretl_matrix_trace(m, &err), prn);
+	print_double_formatted(_("Trace"), gretl_matrix_trace(m), prn);
 	if (A == NULL) {
 	    A = gretl_matrix_copy(m);
 	} else {

@@ -2159,7 +2159,6 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-
 	switch (f) {
 	case F_ROWS:
 	    ret->v.xval = m->rows;
@@ -2172,7 +2171,7 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = user_matrix_get_determinant(m, f, &p->err);
 	    break;
 	case F_TRACE:
-	    ret->v.xval = gretl_matrix_trace(m, &p->err);
+	    ret->v.xval = gretl_matrix_trace(m);
 	    break;
 	case F_NORM1:
 	    ret->v.xval = gretl_matrix_one_norm(m);

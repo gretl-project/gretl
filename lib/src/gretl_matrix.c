@@ -1049,28 +1049,20 @@ int gretl_matrix_get_row (const gretl_matrix *m, int i, gretl_vector *v)
 /**
  * gretl_matrix_trace:
  * @m: square input matrix.
- * @err: location to receive error code.
  *
  * Returns: the trace (sum of diagonal elements) of @m, if 
  * @m is square, otherwise #NADBL.
  */
 
-double gretl_matrix_trace (const gretl_matrix *m, int *err)
+double gretl_matrix_trace (const gretl_matrix *m)
 {
     double tr = 0.0;
     int i;
 
-    *err = 0;
-    
-    if (gretl_is_null_matrix(m)) {
+    if (gretl_is_null_matrix(m) || m->rows != m->cols) {
 	return NADBL;
     }
     
-    if (m->rows != m->cols) {
-	*err = E_NONCONF;
-	return NADBL;
-    }
-
     for (i=0; i<m->rows; i++) {
 	tr += gretl_matrix_get(m, i, i);
     }
