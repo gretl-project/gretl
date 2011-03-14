@@ -33,9 +33,7 @@ struct h_container_ {
     int kmain;		     /* no. of params in the main eq. */
     int ksel;		     /* no. of params in the selection eq. */
     double ll;		     /* log-likelihood */
-    gretl_matrix *score;     /* score matrix */
-    gretl_matrix *sscore;    /* score vector (sum) */
-    
+   
     int ntot, nunc;	     /* total and uncensored obs */
     int depvar;		     /* location of y in array Z */
     int selvar;		     /* location of selection variable in array Z */
@@ -50,9 +48,13 @@ struct h_container_ {
     gretl_matrix *d;	     /* selection dummy variable */
     gretl_matrix *selreg;    /* selection eq. regressors */ 
     gretl_matrix *selreg_u;  /* selection eq. regressors (subsample d==1) */
+
+    gretl_matrix_block *B;   /* workspace for the follwing */
     gretl_vector *fitted;
     gretl_vector *u;
     gretl_vector *ndx;
+    gretl_matrix *score;     /* score matrix */
+    gretl_matrix *sscore;    /* score vector (sum) */
 
     gretl_vector *beta;	     /* main eq. parameters */
     gretl_vector *gama;	     /* selection eq. parameters */
@@ -67,7 +69,7 @@ struct h_container_ {
     char *fullmask;	     /* mask NAs */
     char *uncmask;	     /* mask NAs and (d==0) */
 
-    gretl_matrix_block *B;   /* workspace for the analytical Hessian */
+    gretl_matrix_block *BH;  /* workspace for the analytical Hessian */
     gretl_matrix *H11; 
     gretl_matrix *H12;
     gretl_matrix *H22;
@@ -90,11 +92,6 @@ static void h_container_destroy (h_container *HC)
     gretl_matrix_free(HC->d);
     gretl_matrix_free(HC->selreg);
     gretl_matrix_free(HC->selreg_u);
-    gretl_vector_free(HC->fitted);
-    gretl_vector_free(HC->u);
-    gretl_vector_free(HC->ndx);
-    gretl_matrix_free(HC->score);
-    gretl_vector_free(HC->sscore);
 
     gretl_vector_free(HC->beta);
     gretl_vector_free(HC->gama);
@@ -107,6 +104,7 @@ static void h_container_destroy (h_container *HC)
     free(HC->uncmask);
 
     gretl_matrix_block_destroy(HC->B);
+    gretl_matrix_block_destroy(HC->BH);
 
     free(HC);
 }
@@ -133,11 +131,6 @@ static h_container *h_container_new (const int *list)
     HC->d = NULL;
     HC->selreg = NULL;
     HC->selreg_u = NULL;
-    HC->fitted = NULL;
-    HC->u = NULL;
-    HC->ndx = NULL;
-    HC->score = NULL;
-    HC->sscore = NULL;
 
     HC->beta = NULL;
     HC->gama = NULL;
@@ -147,7 +140,9 @@ static h_container *h_container_new (const int *list)
 
     HC->vcv = NULL;
     HC->VProbit = NULL;
+
     HC->B = NULL;
+    HC->BH = NULL;
 
     HC->probmask = NULL;
     HC->fullmask = NULL;
@@ -479,15 +474,13 @@ static int h_container_fill (h_container *HC, const int *Xl,
     }
 
     if (!err) {
-	HC->fitted = gretl_matrix_alloc(HC->nunc, 1);
-	HC->u      = gretl_matrix_alloc(HC->nunc, 1);
-	HC->ndx    = gretl_matrix_alloc(HC->ntot, 1);
-	HC->score  = gretl_matrix_alloc(HC->ntot, npar); 
-	HC->sscore = gretl_vector_alloc(npar); 
-
-	if (HC->fitted == NULL || HC->u == NULL || 
-	    HC->ndx == NULL || HC->score == NULL || 
-	    HC->sscore == NULL) {
+	HC->B = gretl_matrix_block_new(&HC->fitted, HC->nunc, 1,
+				       &HC->u,      HC->nunc, 1,
+				       &HC->ndx,    HC->ntot, 1,
+				       &HC->score,  HC->ntot, npar,
+				       &HC->sscore, 1, npar,
+				       NULL);
+	if (HC->B == NULL) {
 	    err = E_ALLOC;
 	}
 		
@@ -495,22 +488,22 @@ static int h_container_fill (h_container *HC, const int *Xl,
 
     if (!err){
 	/* workspace for the analytical Hessian */
-        HC->B = gretl_matrix_block_new(&HC->H11, HC->kmain, HC->kmain,
-				       &HC->H12, HC->kmain, HC->ksel,
-				       &HC->H13, HC->kmain + HC->ksel, 2,
-				       &HC->H22, HC->ksel, HC->ksel,
-				       NULL);
-	if (HC->B == NULL) {
+        HC->BH = gretl_matrix_block_new(&HC->H11, HC->kmain, HC->kmain,
+					&HC->H12, HC->kmain, HC->ksel,
+					&HC->H13, HC->kmain + HC->ksel, 2,
+					&HC->H22, HC->ksel, HC->ksel,
+					NULL);
+	if (HC->BH == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    gretl_matrix_block_zero(HC->B);
+	    gretl_matrix_block_zero(HC->BH);
 	}
     }
 
     return err;
 }
 
-static int setup_ndx_functions(h_container *HC)
+static int setup_ndx_functions (h_container *HC)
 {
     int err = gretl_matrix_multiply(HC->reg, HC->beta, HC->fitted);
 
@@ -951,13 +944,13 @@ double *heckit_nhessian (const double *b, int n, BFGS_CRIT_FUNC func,
 }
 
 /*
-  What we should do here is not entirely clear: we set yhat to the
-  linear predictor, computed over uncensored AND censored
-  observations.  
+   What we should do here is not entirely clear: we set yhat to the
+   linear predictor, computed over uncensored AND censored
+   observations.  
 
-  On the contrary, uhat is defined as 
-  y - yhat	for uncensored observations, and as
-  E(u|d=0)	for censored observations
+   On the contrary, uhat is defined as 
+   y - yhat	for uncensored observations, and as
+   E(u|d=0)	for censored observations
 */
 
 static void heckit_yhat_uhat (MODEL *hm, h_container *HC, 
@@ -1037,14 +1030,6 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 			     GRETL_TYPE_DOUBLE_ARRAY,
 			     pdinfo->n * sizeof *llt);
     }
-
-#if 0
-    /* R-squared based on correlation? */
-    x = gretl_corr(hm->t1, hm->t2, Z[depvar], hm->yhat, NULL);
-    if (!na(x)) {
-	hm->rsq = x * x;
-    }
-#endif
 }
 
 /*
@@ -1085,7 +1070,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
     }
 
     hm->lnL = HC->ll;
-    mle_criteria(hm, 0); /* FIXME? */
+    mle_criteria(hm, 0);
     hm->sigma = HC->sigma;
     hm->rho = HC->rho;
 
@@ -1105,7 +1090,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 }
 
 static int transcribe_2step_vcv (MODEL *pmod, const gretl_matrix *S, 
-				  const gretl_matrix *Vp)
+				 const gretl_matrix *Vp)
 {
     int m = S->rows;
     int n = Vp->rows;
