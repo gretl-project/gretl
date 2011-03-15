@@ -71,6 +71,8 @@ double fn_param_minval (const ufunc *fun, int i);
 
 double fn_param_maxval (const ufunc *fun, int i);
 
+double fn_param_step (const ufunc *fun, int i);
+
 int fn_param_optional (const ufunc *fun, int i);
 
 int user_func_get_return_type (const ufunc *fun);

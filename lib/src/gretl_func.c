@@ -58,6 +58,7 @@ struct fn_param_ {
     double deflt;   /* default value */
     double min;     /* minimum value (scalar parameters only) */
     double max;     /* maximum value (scalar parameters only) */
+    double step;    /* step increment (scalars only) */
 };
 
 /* structure representing sample information at start of
@@ -696,6 +697,21 @@ double fn_param_maxval (const ufunc *fun, int i)
 }
 
 /**
+ * fn_param_step:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: the step value for (scalar) parameter @i of
+ * function @fun (if any), otherwise #NADBL.
+ */
+
+double fn_param_step (const ufunc *fun, int i)
+{
+    return (i < 0 || i >= fun->n_params)? NADBL :
+	fun->params[i].step;
+}
+
+/**
  * fn_param_optional:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
@@ -969,6 +985,7 @@ static fn_param *allocate_params (int n)
 	params[i].deflt = NADBL;
 	params[i].min = NADBL;
 	params[i].max = NADBL;
+	params[i].step = NADBL;
     }
 
     return params;
@@ -1257,6 +1274,7 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		    if (param->type != GRETL_TYPE_BOOL) {
 			gretl_xml_get_prop_as_double(cur, "min", &param->min);
 			gretl_xml_get_prop_as_double(cur, "max", &param->max);
+			gretl_xml_get_prop_as_double(cur, "step", &param->step);
 		    }
 		}
 		if (gretl_xml_get_prop_as_bool(cur, "optional")) {
@@ -1374,6 +1392,8 @@ static void print_min_max_deflt (fn_param *param, PRN *prn)
     if (!na(param->max)) pprintf(prn, "%g", param->max);
     pputc(prn, ':');
     if (!na(param->deflt)) pprintf(prn, "%g", param->deflt);
+    pputc(prn, ':');
+    if (!na(param->step)) pprintf(prn, "%g", param->step);
     pputc(prn, ']');
 }
 
@@ -1756,6 +1776,9 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	    }
 	    if (!na(param->deflt)) {
 		fprintf(fp, " default=\"%g\"", param->deflt);
+	    }
+	    if (!na(param->step)) {
+		fprintf(fp, " step=\"%g\"", param->step);
 	    }
 	    if (param->flags & ARG_OPTIONAL) {
 		fputs(" optional=\"true\"", fp);
@@ -3742,7 +3765,10 @@ static int check_parm_min_max (fn_param *p, const char *name, int *nvals)
 	if (p->min > p->max) {
 	    gretl_errmsg_sprintf("%s: min > max", name);
 	    return E_DATA;
-	}
+	} else if (!na(p->step) && p->step > p->max - p->min) {
+	    gretl_errmsg_sprintf("%s: step > max - min", name);
+	    return E_DATA;
+	}	    
 	*nvals = (int) p->max - (int) p->min + 1;
     }
 
@@ -3764,7 +3790,7 @@ static int read_min_max_deflt (char **ps, fn_param *param, const char *name,
 			       int *nvals)
 {
     char *p = *ps;
-    double x, y, z;
+    double x, y, z, s;
     int err = 0;
 
     gretl_push_c_numeric_locale();
@@ -3776,7 +3802,12 @@ static int read_min_max_deflt (char **ps, fn_param *param, const char *name,
 	    err = E_PARSE;
 	}
     } else {
-	if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
+	if (sscanf(p, "[%lf:%lf:%lf:%lf]", &x, &y, &z, &s) == 4) {
+	    param->min = x;
+	    param->max = y;
+	    param->deflt = z;
+	    param->step = s;
+	} else if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
 	    param->min = x;
 	    param->max = y;
 	    param->deflt = z;

@@ -234,6 +234,17 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
     return hbox;
 }
 
+static gboolean update_double_arg (GtkWidget *w, call_info *cinfo)
+{
+    double val = gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+    int i = widget_get_int(w, "argnum");
+
+    g_free(cinfo->args[i]);
+    cinfo->args[i] = g_strdup_printf("%g", val);
+
+    return FALSE;
+}
+
 static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
 {
     int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
@@ -818,6 +829,39 @@ static GtkWidget *int_arg_selector (call_info *cinfo, int i,
     return spin_arg_selector(cinfo, i, minv, maxv, initv, type);
 }
 
+static GtkWidget *double_arg_selector (call_info *cinfo, int i)
+{
+    double minv  = fn_param_minval(cinfo->func, i);
+    double maxv  = fn_param_maxval(cinfo->func, i);
+    double deflt = fn_param_default(cinfo->func, i);
+    double step  = fn_param_step(cinfo->func, i);
+    GtkAdjustment *adj;
+    GtkWidget *spin;
+    gchar *p, *tmp;
+    int ndec = 0;
+
+    tmp = g_strdup_printf("%g", maxv - step);
+    p = strchr(tmp, '.');
+    if (p == NULL) {
+	p = strchr(tmp, ',');
+    }
+    if (p != NULL) {
+	ndec = strlen(p + 1);
+    }
+    g_free(tmp);
+
+    adj = (GtkAdjustment *) gtk_adjustment_new(deflt, minv, maxv, 
+					       step, step, 0);
+    spin = gtk_spin_button_new(adj, 1, ndec);
+    widget_set_int(spin, "argnum", i);
+    g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
+    g_signal_connect(G_OBJECT(spin), "value-changed", 
+		     G_CALLBACK(update_double_arg), cinfo);
+    cinfo->args[i] = g_strdup_printf("%g", deflt);
+
+    return spin;
+}
+
 /* see if the variable named @name of type @ptype
    has already been set as the default argument in
    an "upstream" combo argument selector
@@ -989,6 +1033,22 @@ static GtkWidget *add_object_button (int ptype, GtkWidget *combo)
     return button;
 }
 
+static int spinnable_scalar_arg (call_info *cinfo, int i)
+{
+    const ufunc *func = cinfo->func;
+
+    if (fn_param_type(func, i) == GRETL_TYPE_DOUBLE) {
+	double mi = fn_param_minval(func, i);
+	double ma = fn_param_maxval(func, i);
+	double df = fn_param_default(func, i);
+	double s = fn_param_step(func, i);
+
+	return !na(mi) && !na(ma) && !na(df) && !na(s);
+    }
+
+    return 0;
+}
+
 static void set_close_on_OK (GtkWidget *b, gpointer p)
 {
     close_on_OK = button_is_active(b);
@@ -1101,6 +1161,8 @@ static void function_call_dialog (call_info *cinfo)
 	} else if (ptype == GRETL_TYPE_INT ||
 		   ptype == GRETL_TYPE_OBS) {
 	    sel = int_arg_selector(cinfo, i, ptype);
+	} else if (spinnable_scalar_arg(cinfo, i)) {
+	    sel = double_arg_selector(cinfo, i);
 	} else {
 	    sel = combo_arg_selector(cinfo, ptype, i);
 	}
