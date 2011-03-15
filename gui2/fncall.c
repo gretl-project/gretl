@@ -1036,17 +1036,12 @@ static GtkWidget *add_object_button (int ptype, GtkWidget *combo)
 static int spinnable_scalar_arg (call_info *cinfo, int i)
 {
     const ufunc *func = cinfo->func;
+    double mi = fn_param_minval(func, i);
+    double ma = fn_param_maxval(func, i);
+    double df = fn_param_default(func, i);
+    double s = fn_param_step(func, i);
 
-    if (fn_param_type(func, i) == GRETL_TYPE_DOUBLE) {
-	double mi = fn_param_minval(func, i);
-	double ma = fn_param_maxval(func, i);
-	double df = fn_param_default(func, i);
-	double s = fn_param_step(func, i);
-
-	return !na(mi) && !na(ma) && !na(df) && !na(s);
-    }
-
-    return 0;
+    return !na(mi) && !na(ma) && !na(df) && !na(s);
 }
 
 static void set_close_on_OK (GtkWidget *b, gpointer p)
@@ -1126,6 +1121,7 @@ static void function_call_dialog (call_info *cinfo)
     for (i=0; i<cinfo->n_params; i++) {
 	const char *desc = fn_param_descrip(cinfo->func, i);
 	int ptype = fn_param_type(cinfo->func, i);
+	int spinnable = 0;
 	gchar *argtxt;
 
 	if (i == 0) {
@@ -1134,11 +1130,16 @@ static void function_call_dialog (call_info *cinfo)
 
 	row++;
 
+	if (ptype == GRETL_TYPE_DOUBLE) {
+	    spinnable = spinnable_scalar_arg(cinfo, i);
+	}
+
 	/* label for name (and maybe type) of argument, using
 	   descriptive string if available */
 	if (ptype == GRETL_TYPE_INT ||
 	    ptype == GRETL_TYPE_BOOL ||
-	    ptype == GRETL_TYPE_OBS) {
+	    ptype == GRETL_TYPE_OBS ||
+	    spinnable) {
 	    argtxt = g_strdup_printf("%s",
 				     (desc != NULL)? desc :
 				     fn_param_name(cinfo->func, i));
@@ -1161,7 +1162,7 @@ static void function_call_dialog (call_info *cinfo)
 	} else if (ptype == GRETL_TYPE_INT ||
 		   ptype == GRETL_TYPE_OBS) {
 	    sel = int_arg_selector(cinfo, i, ptype);
-	} else if (spinnable_scalar_arg(cinfo, i)) {
+	} else if (spinnable) {
 	    sel = double_arg_selector(cinfo, i);
 	} else {
 	    sel = combo_arg_selector(cinfo, ptype, i);
