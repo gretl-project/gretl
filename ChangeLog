@@ -10,6 +10,7 @@ version 1.9.5, in progress
 - GUI forecast dialog, for cross-sectional data: give option of showing
   confidence interval for mean Y rather than actual Y
 - Fix a small memory leak when opening an *.asc data file
+- New function colname(): retrieve a column name from a matrix
 - Matrix "division": give the operators "\" and "/" the same semantics
   as in Octave/Matlab (left and right division)
 - Remove the FGLS "arch" command from the GUI and add a deprecating
