@@ -1233,6 +1233,23 @@
       </description>
     </function>
 
+    <function name="colname" section="strings" output="string">
+      <fnargs>
+	<fnarg type="matrix">M</fnarg>
+	<fnarg type="scalar">col</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Retrieves the name for column <argname>col</argname> of
+	  matrix <argname>M</argname>. If <argname>M</argname> has
+	  no column names attached the value returned is an empty
+	  string; if <argname>col</argname> is out of bounds for
+	  the given matrix an error is flagged. See also
+	  <fncref targ="colnames"/>.
+	</para>
+      </description>
+    </function>
+
     <function name="colnames" section="matbuild" output="scalar">
       <fnargs>
 	<fnarg type="matrix">M</fnarg>

@@ -1248,6 +1248,28 @@ const char **user_matrix_get_names (const gretl_matrix *M,
     }
 }
 
+char *user_matrix_get_column_name (const gretl_matrix *M, int col,
+				   int *err)
+{
+    user_matrix *u = get_user_matrix_by_data(M);
+    char *ret = NULL;
+
+    if (u == NULL || col < 1 || col > M->cols) {
+	*err = E_DATA;
+    } else {
+	if (u->colnames == NULL) {
+	    ret = gretl_strdup("");
+	} else {
+	    ret = gretl_strdup(u->colnames[col-1]);
+	}
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return ret;
+}
+
 double 
 user_matrix_get_determinant (gretl_matrix *m, int f, int *err)
 {

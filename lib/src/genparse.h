@@ -311,6 +311,7 @@ enum {
     F_INLIST,
     F_ISCONST,
     F_INBUNDLE,
+    F_COLNAME,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,

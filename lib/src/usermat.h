@@ -109,6 +109,9 @@ int umatrix_set_names_from_list (const gretl_matrix *M,
 const char **user_matrix_get_names (const gretl_matrix *M,
 				    int byrow);
 
+char *user_matrix_get_column_name (const gretl_matrix *M, int col,
+				   int *err);
+
 void destroy_user_matrices (void);
 
 int destroy_user_matrices_at_level (int level);

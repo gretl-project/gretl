@@ -2223,6 +2223,19 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
     return ret;
 }
 
+static NODE *matrix_get_colname (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_string_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int c = node_get_int(r, p);
+
+	ret->v.str = user_matrix_get_column_name(l->v.m, c, &p->err);
+    }
+
+    return ret;
+}
+
 static NODE *matrix_princomp (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
@@ -8315,6 +8328,14 @@ static NODE *eval (NODE *t, parser *p)
 	/* matrix, list or string as second arg */
 	if (l->t == MAT && (ok_list_node(r) || r->t == STR)) {
 	    ret = matrix_add_names(l, r, t->t, p);
+	} else {
+	    p->err = E_TYPES;
+	} 
+	break;
+    case F_COLNAME:
+	/* matrix, scalar as second arg */
+	if (l->t == MAT && r->t == NUM) {
+	    ret = matrix_get_colname(l, r, p);
 	} else {
 	    p->err = E_TYPES;
 	} 
