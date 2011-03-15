@@ -140,6 +140,9 @@ last_model_get_irf_matrix (int targ, int shock, double alpha,
 
 int *saved_object_get_list (const char *oname, int idx, int *err);
 
+char *saved_object_get_string (const char *oname, int idx, 
+			       const DATAINFO *pdinfo, int *err);
+
 int gretl_object_rename (void *p, GretlObjType type, const char *oname);
 
 int gretl_object_compose_name (void *p, GretlObjType type);

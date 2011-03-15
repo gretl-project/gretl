@@ -39,7 +39,8 @@
 #define FCDEBUG 0
 
 enum {
-    SHOW_GUI_MAIN = 1
+    SHOW_GUI_MAIN = 1 << 0,
+    MODEL_CALL    = 1 << 1
 };
 
 typedef struct call_info_ call_info;
@@ -47,6 +48,7 @@ typedef struct call_info_ call_info;
 struct call_info_ {
     GtkWidget *dlg;      /* main dialog */
     GtkWidget *top_hbox; /* upper hbox in dialog */
+    windata_t *vwin;     /* gretl caller window */
     GList *vsels;        /* series argument selectors */
     GList *lsels;        /* list argument selectors */
     GList *msels;        /* matrix arg selectors */
@@ -91,7 +93,18 @@ static void glib_str_array_free (gchar **S, int n)
     }
 }
 
-static call_info *cinfo_new (fnpkg *pkg)
+static int caller_is_model_window (windata_t *vwin)
+{
+    if (vwin != NULL && vwin->role == VIEW_MODEL &&
+	vwin->data != NULL) {
+	/* FIXME more conditionality required? */
+	return 1;
+    }
+
+    return 0;
+}
+
+static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
 {
     call_info *cinfo = mymalloc(sizeof *cinfo);
 
@@ -100,9 +113,15 @@ static call_info *cinfo_new (fnpkg *pkg)
     }
 
     cinfo->pkg = pkg;
+    cinfo->vwin = vwin;
+
     cinfo->publist = NULL;
     cinfo->iface = -1;
     cinfo->flags = 0;
+
+    if (caller_is_model_window(vwin)) {
+	cinfo->flags |= MODEL_CALL;
+    }
 
     cinfo->vsels = NULL;
     cinfo->lsels = NULL;
@@ -159,7 +178,7 @@ static void cinfo_free (call_info *cinfo)
     if (cinfo->ssels != NULL) {
 	g_list_free(cinfo->ssels);
     }
-    
+
     free(cinfo->publist);
     free(cinfo);
 }
@@ -1197,6 +1216,12 @@ static void function_call_dialog (call_info *cinfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(fncall_help), cinfo);
 
+    if (cinfo->vwin != NULL) {
+	gtk_window_set_transient_for(GTK_WINDOW(cinfo->dlg), 
+				     GTK_WINDOW(cinfo->vwin->main));
+	gtk_window_set_destroy_with_parent(GTK_WINDOW(cinfo->dlg), TRUE);
+    }
+
     gtk_widget_show_all(cinfo->dlg);
 }
 
@@ -1397,6 +1422,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 			  models, prn);
     state.line = fnline;
 
+    if (cinfo->flags & MODEL_CALL) {
+	set_genr_model((MODEL *) cinfo->vwin->data);
+    }
+
 #if USE_GTK_SPINNER
     start_wait_for_output(cinfo->top_hbox, 0); 
 #endif
@@ -1404,6 +1433,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 #if USE_GTK_SPINNER
     stop_wait_for_output(cinfo->top_hbox);
 #endif
+
+    if (cinfo->flags & MODEL_CALL) {
+	unset_genr_model();
+    }
 
     /* destroy any "ARG" vars or matrices that were created? */
 
@@ -1542,7 +1575,7 @@ static void maybe_set_gui_interface (const char *gname,
 /* call to execute a function from the specified package: we do
    this only for locally installed packages */
 
-void call_function_package (const char *fname, GtkWidget *w,
+void call_function_package (const char *fname, windata_t *vwin,
 			    int *loaderr)
 {
     int minver = 0;
@@ -1560,7 +1593,7 @@ void call_function_package (const char *fname, GtkWidget *w,
 	return;
     }
 
-    cinfo = cinfo_new(pkg);
+    cinfo = cinfo_new(pkg, vwin);
     if (cinfo == NULL) {
 	return;
     }
@@ -2041,7 +2074,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 
     if (path != NULL) {
-	call_function_package(path, vwin->main, NULL);
+	call_function_package(path, vwin, NULL);
 	free(path);
     }
 }
@@ -2054,9 +2087,9 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
    which see above.
 */
 
-static void maybe_add_package_to_menu (const char *pkgname, 
-				       const char *menupath,
-				       windata_t *vwin)
+void maybe_add_package_to_menu (const char *pkgname, 
+				const char *menupath,
+				windata_t *vwin)
 {
     static GtkActionEntry pkg_item = {
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)

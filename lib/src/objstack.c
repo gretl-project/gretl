@@ -1058,6 +1058,33 @@ real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
     return list;
 }
 
+static char *
+real_get_obj_string (void *p, GretlObjType type, int idx, 
+		     const DATAINFO *pdinfo, int *err)
+{
+    char *str = NULL;
+
+    if (idx <= 0) {
+	*err = 1;
+	return str;
+    }
+
+    if (type == GRETL_OBJ_EQN && idx == M_COMMAND) {
+	MODEL *pmod = (MODEL *) p;
+
+	str = gretl_strdup(gretl_command_word(pmod->ci));
+    } else if (type == GRETL_OBJ_EQN && idx == M_DEPVAR) {
+	const char *s = gretl_model_get_depvar_name((MODEL *) p, 
+						    pdinfo);
+
+	str = gretl_strdup(s);
+    } else {
+	*err = E_BADSTAT;
+    }
+
+    return str;
+}
+
 static stacker genr_model;
 
 void set_genr_model (MODEL *pmod)
@@ -1143,6 +1170,22 @@ int *saved_object_get_list (const char *oname, int idx, int *err)
 
     if (smatch != NULL) {
 	ret = real_get_obj_list(smatch->ptr, smatch->type, idx, err);
+    }
+
+    return ret;
+}
+
+char *saved_object_get_string (const char *oname, int idx, 
+			       const DATAINFO *pdinfo, int *err)
+{
+    char *ret = NULL;
+    stacker *smatch;
+
+    smatch = find_smatch(oname);
+
+    if (smatch != NULL) {
+	ret = real_get_obj_string(smatch->ptr, smatch->type, idx, 
+				  pdinfo, err);
     }
 
     return ret;

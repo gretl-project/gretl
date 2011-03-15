@@ -79,6 +79,15 @@
       </description>
     </function>
 
+    <function name="$command" section="access" output="string">
+      <description>
+	<para>
+	  Must follow the estimation of a model; returns the command
+	  word, for example <lit>ols</lit> or <lit>probit</lit>.
+	</para>
+      </description>
+    </function>
+
     <function name="$compan" section="access" output="matrix">
       <description>
 	<para>
@@ -94,6 +103,15 @@
 	  Returns an integer value representing the sort of dataset that
 	  is currently loaded: 0 = no data; 1 = cross-sectional (undated)
 	  data; 2 = time-series data; 3 = panel data.
+	</para>
+      </description>
+    </function>
+
+    <function name="$depvar" section="access" output="string">
+      <description>
+	<para>
+	  Must follow the estimation of a single-equation model;
+	  returns the name of the dependent variable.
 	</para>
       </description>
     </function>

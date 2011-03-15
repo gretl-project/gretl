@@ -940,7 +940,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == EDIT_FN_PKG) {
 	edit_function_package(path);
     } else if (task == CALL_FN_PKG) {
-	call_function_package(path, vwin->main, &err);
+	call_function_package(path, vwin, &err);
     }
 
     g_free(pkgname);

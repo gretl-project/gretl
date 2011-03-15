@@ -20,7 +20,7 @@
 #ifndef FNCALL_H
 #define FNCALL_H
 
-void call_function_package (const char *fname, GtkWidget *w,
+void call_function_package (const char *fname, windata_t *vwin,
 			    int *loaderr);
 
 void function_call_cleanup (void);
@@ -34,6 +34,10 @@ gchar *get_bundle_plot_function (gretl_bundle *b);
 int exec_bundle_plot_function (gretl_bundle *b, const char *funname);
 
 int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn);
+
+void maybe_add_package_to_menu (const char *pkgname, 
+				const char *menupath,
+				windata_t *vwin);
 
 void maybe_add_packages_to_menus (windata_t *vwin);
 

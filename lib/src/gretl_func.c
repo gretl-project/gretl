@@ -2299,8 +2299,8 @@ static int function_set_pkg_role (const char *name, fnpkg *pkg,
 		/* void functions can't be right */
 		err = E_TYPES;
 	    } else if (role == UFUN_GUI_MAIN) {
-		if (u->rettype != GRETL_TYPE_BUNDLE) {
-		    pprintf(prn, "%s: must return a bundle\n", attr);
+		if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {
+		    pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
 		    err = E_TYPES;
 		}
 	    } else {

@@ -104,12 +104,15 @@ typedef enum {
     M_KLLT,       /* Kalman log-likelihood, per time-step */
     M_KUHAT,      /* Kalman: current prediction error */
     M_EHAT,       /* ARMA: vector of estimated innovations */
-    M_MATRIX_MAX, /* -- SEPARATOR, matrices/matrix-builders -- */
+    M_MATRIX_MAX, /* -- SEPARATOR, end of matrices -- */
     M_EC,         /* VECM error-correction terms */
     M_VMA,        /* VARs, VECMs: vector moving average representation */
     M_MNLPROBS,   /* case probabilities for multinomial logit */
-    M_MBUILD_MAX, /* -- SEPARATOR, matrix-builders/lists -- */
+    M_MBUILD_MAX, /* -- SEPARATOR, end of matrix-builders -- */
     M_XLIST,      /* list of regressors */
+    M_LIST_MAX,   /* -- SEPARATOR, end of lists -- */
+    M_COMMAND,    /* model command word */
+    M_DEPVAR,     /* name of dependent variable */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 
@@ -118,7 +121,8 @@ typedef enum {
 #define model_data_matrix(i) (i > M_SERIES_MAX && i < M_MATRIX_MAX)
 #define model_data_matrix_builder(i) (i > M_MATRIX_MAX && \
 				      i < M_MBUILD_MAX)
-#define model_data_list(i)   (i > M_MBUILD_MAX && i < M_MAX)
+#define model_data_list(i)   (i > M_MBUILD_MAX && i < M_LIST_MAX)
+#define model_data_string(i) (i > M_LIST_MAX && i < M_MAX)
 
 typedef struct parser_ GENERATOR;
 
