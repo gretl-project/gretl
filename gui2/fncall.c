@@ -1120,6 +1120,7 @@ static void function_call_dialog (call_info *cinfo)
 
     for (i=0; i<cinfo->n_params; i++) {
 	const char *desc = fn_param_descrip(cinfo->func, i);
+	const char *parname = fn_param_name(cinfo->func, i);
 	int ptype = fn_param_type(cinfo->func, i);
 	int spinnable = 0;
 	gchar *argtxt;
@@ -1142,11 +1143,11 @@ static void function_call_dialog (call_info *cinfo)
 	    spinnable) {
 	    argtxt = g_strdup_printf("%s",
 				     (desc != NULL)? desc :
-				     fn_param_name(cinfo->func, i));
+				     parname);
 	} else {
 	    argtxt = g_strdup_printf("%s (%s)",
 				     (desc != NULL)? desc :
-				     fn_param_name(cinfo->func, i),
+				     parname,
 				     gretl_arg_type_name(ptype));
 	}
 
@@ -1156,6 +1157,10 @@ static void function_call_dialog (call_info *cinfo)
 	add_table_cell(tbl, label, 0, 1, row);
 
 	/* make the appropriate type of selector widget */
+
+	if (ptype == GRETL_TYPE_INT && !strcmp(parname, "$xlist")) {
+	    fprintf(stderr, "$xlist special!\n");
+	}
 
 	if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i);
@@ -2150,22 +2155,25 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
    which see above.
 */
 
-void maybe_add_package_to_menu (const char *pkgname, 
-				const char *menupath,
-				windata_t *vwin)
+static void add_package_to_menu (const char *pkgname,
+				 const char *label,
+				 const char *menupath,
+				 windata_t *vwin)
 {
     static GtkActionEntry pkg_item = {
 	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
     };
     GtkActionGroup *actions;
-    gchar *label;
 
     pkg_item.name = pkgname;
-    label = g_strdup_printf("_%s...", pkgname);
-    pkg_item.label = label;
+    if (label == NULL) {
+	pkg_item.label = pkgname;
+    } else {
+	pkg_item.label = label;
+    }
 
     gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
-			  menupath, label, pkgname,
+			  menupath, pkg_item.label, pkgname,
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
 
@@ -2173,16 +2181,111 @@ void maybe_add_package_to_menu (const char *pkgname,
     gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
-    g_free(label);
 }
+
+struct addon_info {
+    const char *pkgname;
+    const char *label;
+    const char *menupath;
+};
 
 /* put the recognized gretl addons into the appropriate menus */
 
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
-    maybe_add_package_to_menu("gig", "/menubar/Model/TSModels", vwin);
-    maybe_add_package_to_menu("ivpanel", "/menubar/Model/PanelModels", vwin);
+    struct addon_info addons[] = {
+	{ "gig", "GARCH variants", "/menubar/Model/TSModels" },
+	{ "ivpanel", "Panel IV model", "/menubar/Model/PanelModels" }
+    };
+    int i, n = sizeof addons / sizeof addons[0];
+
+    for (i=0; i<n; i++) {
+	add_package_to_menu(addons[i].pkgname,
+			    addons[i].label,
+			    addons[i].menupath,
+			    vwin);
+    }
+
 #if OLS_BUNDLE_DEMO
-    maybe_add_package_to_menu("olsbundle", "/menubar/Model", vwin);
+    add_package_to_menu("olsbundle", "OLS bundle",
+			"/menubar/Model", vwin);
 #endif
 }
+
+static int precheck_error (ufunc *func, gpointer p)
+{
+    MODEL *pmod = (MODEL *) p;
+    fnargs *args = fn_args_new();
+    PRN *prn;
+    int err = 0;
+
+    if (args == NULL) {
+	return E_ALLOC;
+    }
+
+    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+    set_genr_model(pmod);
+    err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
+			      &Z, datainfo, NULL, NULL, prn);
+    unset_genr_model();
+    gretl_print_destroy(prn);
+    fn_args_free(args);
+    
+    return err;
+}
+
+void maybe_add_packages_to_model_menus (windata_t *vwin)
+{
+    struct addon_info model_addons[] = {
+	{ "bandplot", "Confidence band plot", "/menubar/Graphs" }
+    };
+    int i, n = sizeof model_addons / sizeof model_addons[0];
+    char *path;
+
+    for (i=0; i<n; i++) {
+	struct addon_info *addon = &model_addons[i];
+	int dreq, minver = 0;
+	gchar *precheck = NULL;
+	fnpkg *pkg;
+	int err = 0;
+
+	path = gretl_function_package_get_path(addon->pkgname, 
+					       PKG_ADDON);
+	
+	if (path == NULL) {
+	    continue;
+	}
+
+	pkg = get_function_package_by_filename(path, &err);
+
+	if (!err) {
+	    err = function_package_get_properties(pkg,
+						  "data-requirement", &dreq,
+						  "min-version", &minver,
+						  "gui-precheck", &precheck,
+						  NULL);
+	}
+
+	if (!err) {
+	    if (precheck != NULL) {
+		ufunc *func = get_function_from_package(precheck, pkg);
+	    
+		if (func == NULL || precheck_error(func, vwin->data)) {
+		    fprintf(stderr, "precheck failed\n");
+		    err = 1;
+		}
+	    } else {
+		err = check_function_needs(datainfo, dreq, minver);
+	    }
+	}
+
+	if (!err) {
+	    add_package_to_menu(addon->pkgname, addon->label, 
+				addon->menupath, vwin);
+	}
+
+	g_free(precheck);
+	free(path);
+    }
+}
+

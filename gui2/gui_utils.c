@@ -3018,7 +3018,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
     } 
 
     if (getenv("MODEL_MENU_TEST")) {
-	maybe_add_package_to_menu("bandplot", "/menubar/Graphs", vwin);
+	maybe_add_packages_to_model_menus(vwin);
     }
 
     if (latex_is_ok() && !pmod->errcode && !RQ_SPECIAL_MODEL(pmod)) {

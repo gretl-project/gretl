@@ -2312,19 +2312,39 @@ static int pkg_set_dreq (fnpkg *pkg, const char *s)
 static int function_set_pkg_role (const char *name, fnpkg *pkg,
 				  const char *attr, PRN *prn)
 {
-    int i;
+    ufunc *u;
+    int role = pkg_key_get_role(attr);
+    int i, j, err = 0;
 
     /* check that the function in question satisfies the
        requirements for its role, and if so, hook it up 
     */
 
+    if (role == UFUN_GUI_PRECHECK) {
+	for (i=0; i<pkg->n_priv; i++) {
+	    if (!strcmp(name, pkg->priv[i]->name)) {
+		u = pkg->priv[i];
+		if (u->rettype != GRETL_TYPE_DOUBLE) {
+		    pprintf(prn, "%s: must return a scalar\n", attr);
+		    err = E_TYPES;
+		} else if (u->n_params > 0) {
+		    pprintf(prn, "%s: no parameters are allowed\n", attr);
+		    err = E_TYPES;
+		}
+		if (!err) {
+		    u->pkg_role = role;
+		}		
+		return err;
+	    }
+	}
+	pprintf(prn, "%s: %s: no such private function\n", attr, name);
+	return E_DATA;
+    }
+
     for (i=0; i<pkg->n_pub; i++) {
 	if (!strcmp(name, pkg->pub[i]->name)) {
-	    int role = pkg_key_get_role(attr);
-	    ufunc *u = pkg->pub[i];
-	    int j, err = 0;
-
-	    if (role != UFUN_GUI_PRECHECK && u->n_params == 0) {
+	    u = pkg->pub[i];
+	    if (u->n_params == 0) {
 		/* void functions can't be right */
 		err = E_TYPES;
 	    } else if (role == UFUN_GUI_MAIN) {
@@ -2332,14 +2352,6 @@ static int function_set_pkg_role (const char *name, fnpkg *pkg,
 		    pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
 		    err = E_TYPES;
 		}
-	    } else if (role == UFUN_GUI_PRECHECK) {
-		if (u->rettype != GRETL_TYPE_INT) {
-		    pprintf(prn, "%s: must return an integer\n", attr);
-		    err = E_TYPES;
-		} else if (u->n_params > 0) {
-		    pprintf(prn, "%s: no parameters are allowed\n", attr);
-		    err = E_TYPES;
-		}		    
 	    } else {
 		/* bundle-print, bundle-plot, etc. */
 		for (j=0; j<u->n_params && !err; j++) {
@@ -2406,6 +2418,8 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 	    } else if (!strncmp(line, "description", 11)) {
 		err = function_package_set_properties(pkg, "description", p, NULL);
 		if (!err) got++;
+	    } else if (!strncmp(line, "label", 5)) {
+		err = function_package_set_properties(pkg, "label", p, NULL);
 	    } else if (!strncmp(line, "help", 4)) {
 		if (has_suffix(p, ".pdf")) {
 		    pprintf(prn, "Recording help reference %s\n", p);
@@ -2477,6 +2491,7 @@ static fnpkg *new_pkg_from_spec_file (const char *gfnname, PRN *prn,
     strcpy(p, ".spec");
 
     fp = gretl_fopen(fname, "r");
+
     if (fp == NULL) {
 	*err = E_FOPEN;
     } else {
@@ -2644,6 +2659,7 @@ int create_and_write_function_package (const char *fname, PRN *prn)
 	    err = function_package_write_file(pkg);
 	    if (!err) {
 		err = cli_validate_package_file(fname, prn);
+		/* should we delete @fname ? */
 	    }
 	}
     }
@@ -2682,6 +2698,7 @@ static int is_string_property (const char *key)
 	!strcmp(key, "version")  ||
 	!strcmp(key, "date")     ||
 	!strcmp(key, "description") ||
+	!strcmp(key, "label") ||
 	!strcmp(key, "help") ||
 	!strcmp(key, "sample-script");
 }
@@ -2717,13 +2734,13 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->version, cval);
 	    } else if (!strcmp(key, "description")) {
 		err = maybe_replace_string_var(&pkg->descrip, cval);
+	    } else if (!strcmp(key, "label")) {
+		err = maybe_replace_string_var(&pkg->label, cval);
 	    } else if (!strcmp(key, "help")) {
 		err = maybe_replace_string_var(&pkg->help, cval);
 	    } else if (!strcmp(key, "sample-script")) {
 		err = maybe_replace_string_var(&pkg->sample, cval);
-	    } else if (!strcmp(key, "label")) {
-		err = maybe_replace_string_var(&pkg->label, cval);
-	    }
+	    } 
 	} else {
 	    int ival = va_arg(ap, int);
 
@@ -4030,7 +4047,12 @@ static int parse_function_param (char *s, fn_param *param, int i)
     /* now get the parameter name -- required */
     
     while (isspace(*s)) s++;
-    len = gretl_namechar_spn(s);
+
+    if (type == GRETL_TYPE_INT && !strncmp(s, "$xlist", 6)) {
+	len = 6;
+    } else {
+	len = gretl_namechar_spn(s);
+    }
 
     if (len == 0) {
 	gretl_errmsg_sprintf("parameter %d: name is missing", i + 1);
