@@ -6672,7 +6672,9 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	err = (info > 0)? E_NOTPD : E_DATA;
 	if (err) {
 	   memcpy(a->val, aval, bytes);
-	   gretl_matrix_print(a, "input matrix");
+	   if (getenv("GRETL_MATRIX_DEBUG")) {
+	       gretl_matrix_print(a, "input matrix");
+	   }
 	}
     } 
 
