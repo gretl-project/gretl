@@ -1183,7 +1183,7 @@ static void function_call_dialog (call_info *cinfo)
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(launch_series_maker), 
 			     cinfo);
-	} else if (scalar_arg(ptype)) {
+	} else if (scalar_arg(ptype) && !spinnable) {
 	    cinfo->ssels = g_list_append(cinfo->ssels, sel);
 	    widget_set_int(sel, "ptype", GRETL_TYPE_DOUBLE);
 	    button = add_object_button(ptype, sel);

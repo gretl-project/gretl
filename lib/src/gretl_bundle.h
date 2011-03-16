@@ -26,6 +26,7 @@
 #define BUNDLE_FCAST "bundle-fcast"
 #define BUNDLE_EXTRA "bundle-extra"
 #define GUI_MAIN     "gui-main"
+#define GUI_PRECHECK "gui-precheck"
 
 typedef struct gretl_bundle_ gretl_bundle;
 typedef struct bundled_item_ bundled_item;

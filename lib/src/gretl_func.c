@@ -95,7 +95,7 @@ enum {
     UFUN_BUNDLE_FCAST,
     UFUN_BUNDLE_EXTRA,
     UFUN_GUI_MAIN,
-    UFUN_BUNDLE_MAX
+    UFUN_GUI_PRECHECK
 };    
 
 /* structure representing a user-defined function */
@@ -125,6 +125,7 @@ struct fnpkg_ {
     char *descrip;    /* package description */
     char *help;       /* package help text */
     char *sample;     /* sample caller script */
+    char *label;      /* for use in GUI menus */
     int minver;       /* minimum required gretl version */
     FuncDataReq dreq; /* data requirement */
     ufunc **pub;      /* pointers to public interfaces */
@@ -210,7 +211,7 @@ static struct flag_and_key pkg_lookups[] = {
     { UFUN_BUNDLE_FCAST, BUNDLE_FCAST },
     { UFUN_BUNDLE_EXTRA, BUNDLE_EXTRA },
     { UFUN_GUI_MAIN,     GUI_MAIN },
-    { UFUN_BUNDLE_PRINT, BUNDLE_PRINT },
+    { UFUN_GUI_PRECHECK, GUI_PRECHECK },
     { -1,                NULL }
 };
 
@@ -471,6 +472,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->descrip = NULL;
     pkg->help = NULL;
     pkg->sample = NULL;
+    pkg->label = NULL;
     pkg->dreq = 0;
     pkg->minver = 0;
     
@@ -2201,6 +2203,10 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
     gretl_xml_put_tagged_string("date",    pkg->date, fp);
     gretl_xml_put_tagged_string("description", pkg->descrip, fp);
 
+    if (pkg->label != NULL) {
+	gretl_xml_put_tagged_string("label", pkg->label, fp);
+    }
+
     if (pkg->help != NULL) {
 	fputs("<help>\n", fp);
 	gretl_xml_put_raw_string(trim_text(pkg->help), fp);
@@ -2318,7 +2324,7 @@ static int function_set_pkg_role (const char *name, fnpkg *pkg,
 	    ufunc *u = pkg->pub[i];
 	    int j, err = 0;
 
-	    if (u->n_params == 0) {
+	    if (role != UFUN_GUI_PRECHECK && u->n_params == 0) {
 		/* void functions can't be right */
 		err = E_TYPES;
 	    } else if (role == UFUN_GUI_MAIN) {
@@ -2326,6 +2332,14 @@ static int function_set_pkg_role (const char *name, fnpkg *pkg,
 		    pprintf(prn, "%s: must return a bundle, or nothing\n", attr);
 		    err = E_TYPES;
 		}
+	    } else if (role == UFUN_GUI_PRECHECK) {
+		if (u->rettype != GRETL_TYPE_INT) {
+		    pprintf(prn, "%s: must return an integer\n", attr);
+		    err = E_TYPES;
+		} else if (u->n_params > 0) {
+		    pprintf(prn, "%s: no parameters are allowed\n", attr);
+		    err = E_TYPES;
+		}		    
 	    } else {
 		/* bundle-print, bundle-plot, etc. */
 		for (j=0; j<u->n_params && !err; j++) {
@@ -2707,6 +2721,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->help, cval);
 	    } else if (!strcmp(key, "sample-script")) {
 		err = maybe_replace_string_var(&pkg->sample, cval);
+	    } else if (!strcmp(key, "label")) {
+		err = maybe_replace_string_var(&pkg->label, cval);
 	    }
 	} else {
 	    int ival = va_arg(ap, int);
@@ -2855,6 +2871,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "sample-script")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->sample);
+	} else if (!strcmp(key, "label")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->label);
 	} else if (!strcmp(key, "data-requirement")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->dreq;
@@ -2888,6 +2907,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, GUI_MAIN)) {	
 	    ps = (char **) ptr;
 	    *ps = pkg_get_special_func(pkg, UFUN_GUI_MAIN);
+	} else if (!strcmp(key, GUI_PRECHECK)) {
+	    ps = (char **) ptr;
+	    *ps = pkg_get_special_func(pkg, UFUN_GUI_PRECHECK);
 	}	    
     }
 
@@ -2986,6 +3008,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->descrip);
 	free(pkg->help);
 	free(pkg->sample);
+	free(pkg->label);
 	free(pkg);
     }
 }
@@ -3320,7 +3343,9 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
-	} 
+	} else if (!xmlStrcmp(cur->name, (XUC) "label")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->label);
+	}
 
 	cur = cur->next;
     }

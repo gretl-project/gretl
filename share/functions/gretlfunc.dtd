@@ -10,7 +10,8 @@
 <!ELEMENT gretl-functions (gretl-function-package?)>
 
 <!ELEMENT gretl-function-package (author, version, date, description, 
-                                  help, gretl-function+, sample-script)>
+                                  help, gretl-function+, label?
+                                  sample-script)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
    ID CDATA #IMPLIED
@@ -26,6 +27,7 @@
 <!ELEMENT version     (#PCDATA)>
 <!ELEMENT date        (#PCDATA)>
 <!ELEMENT description (#PCDATA)>
+<!ELEMENT label       (#PCDATA)>
 <!ATTLIST description
    lang CDATA #IMPLIED
 >
@@ -36,8 +38,8 @@
    type (void | scalar | series | matrix | list | string | bundle) 'void'
    private (0|1) '0'
    plugin-wrapper (0|1) '0'
-   pkg-role (bundle-print | bundle-plot | bundle-test |
-             bundle-fcast | bundle-extra | gui-main | none) 'none'
+   pkg-role (bundle-print | bundle-plot | bundle-test | bundle-fcast |
+             bundle-extra | gui-main | gui-precheck | none) 'none'
 >
 
 <!ELEMENT help (#PCDATA)>
