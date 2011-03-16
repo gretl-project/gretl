@@ -10,7 +10,7 @@
 <!ELEMENT gretl-functions (gretl-function-package?)>
 
 <!ELEMENT gretl-function-package (author, version, date, description, 
-                                  help, gretl-function+, label?
+                                  label?, help, gretl-function+,
                                   sample-script)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
