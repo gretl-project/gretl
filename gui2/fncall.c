@@ -215,21 +215,27 @@ static void fncall_close (GtkWidget *w, call_info *cinfo)
     gtk_widget_destroy(cinfo->dlg);
 }
 
-static GtkWidget *label_hbox (GtkWidget *w, const char *txt) 
+static GtkWidget *label_hbox (call_info *cinfo, GtkWidget *w, 
+			      const char *fallback) 
 {
-    GtkWidget *hbox, *label;
-    gchar *buf;
+    GtkWidget *hbox, *lbl;
+    gchar *label = NULL;
+    gchar *buf = NULL;
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
 
-    buf = g_markup_printf_escaped("<span weight=\"bold\">%s()</span>", txt);
-    label = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(label), buf);
+    function_package_get_properties(cinfo->pkg, "label",
+				    &label, NULL);
+    buf = g_markup_printf_escaped("<span weight=\"bold\">%s</span>", 
+				  (label != NULL)? label : fallback);
+    lbl = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(lbl), buf);
     g_free(buf);
+    g_free(label);
 
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-    gtk_widget_show(label);
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, FALSE, FALSE, 5);
+    gtk_widget_show(lbl);
 
     return hbox;
 }
@@ -450,7 +456,7 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
 	    return;
 	}
 
-	err = user_function_help(fnname, OPT_M, prn);
+	err = user_function_help(fnname, OPT_M | OPT_G, prn);
 
 	if (err) {
 	    gretl_print_destroy(prn);
@@ -1138,8 +1144,8 @@ static void function_call_dialog (call_info *cinfo)
     g_signal_connect(G_OBJECT(cinfo->dlg), "destroy",
 		     G_CALLBACK(fncall_dialog_destruction), cinfo);
 
-    /* above table: name of function being called */
-    cinfo->top_hbox = hbox = label_hbox(vbox, fnname);
+    /* above table: label or name of function being called */
+    cinfo->top_hbox = hbox = label_hbox(cinfo, vbox, fnname);
 
     show_ret = cinfo_show_return(cinfo);
 
@@ -1200,8 +1206,7 @@ static void function_call_dialog (call_info *cinfo)
 
 	/* make the appropriate type of selector widget */
 
-	if (ptype == GRETL_TYPE_INT && 
-	    fn_param_default(cinfo->func, i) == INT_USE_XLIST) {
+	if (fn_param_uses_xlist(cinfo->func, i)) {
 	    sel = xlist_int_selector(cinfo, i);
 	} else if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i);
@@ -1564,9 +1569,13 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	}
     }
 
-    view_buffer(prn, 80, 400, funname, 
-		(bundle == NULL)? PRINT : VIEW_BUNDLE,
-		bundle);
+    if (user_func_is_noprint(cinfo->func) && !err) {
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 80, 400, funname, 
+		    (bundle == NULL)? PRINT : VIEW_BUNDLE,
+		    bundle);
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -2207,10 +2216,10 @@ static void add_package_to_menu (const char *pkgname,
     GtkActionGroup *actions;
 
     pkg_item.name = pkgname;
-    if (label == NULL) {
-	pkg_item.label = pkgname;
-    } else {
+    if (label != NULL) {
 	pkg_item.label = label;
+    } else {
+	pkg_item.label = pkgname;
     }
 
     gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
@@ -2253,11 +2262,17 @@ void maybe_add_packages_to_menus (windata_t *vwin)
 #endif
 }
 
+/* run a package's gui-precheck function to determine if
+   it's OK to add its GUI interface to a gretl
+   model-window menu
+*/
+
 static int precheck_error (ufunc *func, gpointer p)
 {
     MODEL *pmod = (MODEL *) p;
     fnargs *args = fn_args_new();
     PRN *prn;
+    double check_err = 0;
     int err = 0;
 
     if (args == NULL) {
@@ -2266,11 +2281,15 @@ static int precheck_error (ufunc *func, gpointer p)
 
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model(pmod);
-    err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
-			      &Z, datainfo, NULL, NULL, prn);
+    err = gretl_function_exec(func, args, GRETL_TYPE_DOUBLE,
+			      &Z, datainfo, &check_err, NULL, prn);
     unset_genr_model();
     gretl_print_destroy(prn);
     fn_args_free(args);
+
+    if (err == 0 && check_err != 0) {
+	err = 1;
+    }
     
     return err;
 }

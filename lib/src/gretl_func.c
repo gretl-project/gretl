@@ -42,6 +42,8 @@
 #define FN_DEBUG 0      /* miscellaneous debugging */
 #define DDEBUG 0        /* debug the debugger */
 
+#define INT_USE_XLIST (-999)
+
 typedef struct fn_param_ fn_param;
 typedef struct obsinfo_ obsinfo;
 typedef struct fncall_ fncall;
@@ -84,8 +86,9 @@ struct fncall_ {
 };
 
 enum {
-    UFUN_PRIVATE      = 1 << 0,
-    UFUN_PLUGIN       = 1 << 1
+    UFUN_PRIVATE  = 1 << 0,
+    UFUN_PLUGIN   = 1 << 1,
+    UFUN_NOPRINT  = 1 << 2  
 };
 
 enum {
@@ -124,6 +127,7 @@ struct fnpkg_ {
     char *date;       /* last revision date */
     char *descrip;    /* package description */
     char *help;       /* package help text */
+    char *gui_help;   /* GUI-specific help (optional) */
     char *sample;     /* sample caller script */
     char *label;      /* for use in GUI menus */
     int minver;       /* minimum required gretl version */
@@ -195,7 +199,8 @@ static int compiling;    /* boolean: are we compiling a function currently? */
 static int fn_executing; /* depth of function call stack */
 
 #define function_is_private(f) (f->flags & UFUN_PRIVATE)
-#define function_is_plugin(f) (f->flags & UFUN_PLUGIN)
+#define function_is_plugin(f)  (f->flags & UFUN_PLUGIN)
+#define function_is_noprint(f) (f->flags & UFUN_NOPRINT)
 
 #define null_return(t) (t == 0 || t == GRETL_TYPE_VOID)
 
@@ -247,15 +252,6 @@ static void set_function_private (ufunc *u, gboolean s)
 	u->flags |= UFUN_PRIVATE;
     } else {
 	u->flags &= ~UFUN_PRIVATE;
-    }
-}
-
-static void set_function_plugin (ufunc *u, gboolean s)
-{
-    if (s) {
-	u->flags |= UFUN_PLUGIN;
-    } else {
-	u->flags &= ~UFUN_PLUGIN;
     }
 }
 
@@ -471,6 +467,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->date = NULL;
     pkg->descrip = NULL;
     pkg->help = NULL;
+    pkg->gui_help = NULL;
     pkg->sample = NULL;
     pkg->label = NULL;
     pkg->dreq = 0;
@@ -739,6 +736,26 @@ int fn_param_optional (const ufunc *fun, int i)
 }
 
 /**
+ * fn_param_uses_xlist:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: 1 if parameter @i of function @fun is
+ * designed to select an integer based on a gretl
+ * model's list of regressors, otherwise 0.
+ */
+
+int fn_param_uses_xlist (const ufunc *fun, int i)
+{
+    if (i < 0 || i >= fun->n_params) {
+	return 0;
+    }
+
+    return (fun->params[i].type == GRETL_TYPE_INT &&
+	    fun->params[i].deflt == INT_USE_XLIST);
+}
+
+/**
  * user_func_get_return_type:
  * @fun: pointer to user-function.
  * 
@@ -751,6 +768,22 @@ int user_func_get_return_type (const ufunc *fun)
 	return GRETL_TYPE_NONE;
     } else {
 	return fun->rettype;
+    }
+}
+
+/**
+ * user_func_is_noprint:
+ * @fun: pointer to user-function.
+ * 
+ * Returns: 1 if the function is not designed to print anything.
+ */
+
+int user_func_is_noprint (const ufunc *fun)
+{
+    if (fun == NULL) {
+	return 0;
+    } else {
+	return function_is_noprint(fun);
     }
 }
 
@@ -1587,6 +1620,10 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg)
 	fun->flags |= UFUN_PLUGIN;
     }
 
+    if (gretl_xml_get_prop_as_bool(node, "no-print")) {
+	fun->flags |= UFUN_NOPRINT;
+    }
+
     if (gretl_xml_get_prop_as_string(node, "pkg-role", &tmp)) {
 	fun->pkg_role = pkg_key_get_role(tmp);
 	free(tmp);
@@ -1747,11 +1784,15 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 
     fprintf(fp, "<gretl-function name=\"%s\" type=\"%s\"", 
 	    fun->name, gretl_arg_type_name(rtype));
+
     if (function_is_private(fun)) {
 	fputs(" private=\"1\"", fp);
     }    
     if (function_is_plugin(fun)) {
 	fputs(" plugin-wrapper=\"1\"", fp);
+    }
+    if (function_is_noprint(fun)) {
+	fputs(" no-print=\"1\"", fp);
     }
 
     if (fun->pkg_role) {
@@ -1971,24 +2012,24 @@ static ufunc *get_uf_array_member (const char *name, fnpkg *pkg)
     return NULL;
 }
 
-static int has_plugin_special_comment (ufunc *fun)
+static void check_special_comments (ufunc *fun)
 {
     int i;
 
     for (i=0; i<fun->n_lines; i++) {
 	if (strstr(fun->lines[i], "## plugin-wrapper ##")) {
-	    return 1;
+	    fun->flags |= UFUN_PLUGIN;
+	} else if (strstr(fun->lines[i], "## no-print ##")) {
+	    fun->flags |= UFUN_NOPRINT;
 	}
     }
-
-    return 0;
 }
 
 /* Given an array of @n function names in @names, set up a
    corresponding array of pointers to the named functions in @pkg,
    Flag an error if any of the function names are bad, or if
    allocation fails.  If we're revising an existing function package
-   we start by unconnecting the currently connected functions.  
+   we start by disconnecting the currently connected functions.  
 */
 
 static int set_uf_array_from_names (fnpkg *pkg, char **names, 
@@ -2035,9 +2076,7 @@ static int set_uf_array_from_names (fnpkg *pkg, char **names,
 	fun = get_uf_array_member(names[i], NULL);
 	fun->pkg = pkg;
 	set_function_private(fun, priv);
-	if (has_plugin_special_comment(fun)) {
-	    set_function_plugin(fun, TRUE);
-	}
+	check_special_comments(fun);
 	uf[i] = fun;
     }
 
@@ -2211,7 +2250,13 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	fputs("<help>\n", fp);
 	gretl_xml_put_raw_string(trim_text(pkg->help), fp);
 	fputs("\n</help>\n", fp);
-    }  
+    } 
+
+    if (pkg->gui_help != NULL) {
+	fputs("<gui-help>\n", fp);
+	gretl_xml_put_raw_string(trim_text(pkg->gui_help), fp);
+	fputs("\n</gui-help>\n", fp);
+    }     
 
     if (pkg->pub != NULL) {
 	for (i=0; i<pkg->n_pub; i++) {
@@ -2433,6 +2478,13 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		    if (!err) got++;
 		    g_free(tmp);
 		}
+	    } else if (!strncmp(line, "gui-help", 8)) {
+		pprintf(prn, "Looking for GUI help text in %s\n", p);
+		tmp = pkg_aux_content(p, &err);
+		if (!err) {
+		    err = function_package_set_properties(pkg, "gui-help", tmp, NULL);
+		    g_free(tmp);
+		}
 	    } else if (!strncmp(line, "sample-script", 13)) {
 		pprintf(prn, "Looking for sample script in %s\n", p);
 		tmp = pkg_aux_content(p, &err);
@@ -2618,6 +2670,8 @@ static int cli_validate_package_file (const char *fname, PRN *prn)
 	cvp->error    = (xmlValidityErrorFunc) pprintf;
 	cvp->warning  = (xmlValidityWarningFunc) pprintf;
 
+	pprintf(prn, "Checking against %s\n", dtdname);
+
 	if (!xmlValidateDtd(cvp, doc, dtd)) {
 	    err = 1;
 	} else {
@@ -2700,6 +2754,7 @@ static int is_string_property (const char *key)
 	!strcmp(key, "description") ||
 	!strcmp(key, "label") ||
 	!strcmp(key, "help") ||
+	!strcmp(key, "gui-help") ||
 	!strcmp(key, "sample-script");
 }
 
@@ -2738,6 +2793,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 		err = maybe_replace_string_var(&pkg->label, cval);
 	    } else if (!strcmp(key, "help")) {
 		err = maybe_replace_string_var(&pkg->help, cval);
+	    } else if (!strcmp(key, "gui-help")) {
+		err = maybe_replace_string_var(&pkg->gui_help, cval);
 	    } else if (!strcmp(key, "sample-script")) {
 		err = maybe_replace_string_var(&pkg->sample, cval);
 	    } 
@@ -2885,6 +2942,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "help")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->help);
+	} else if (!strcmp(key, "gui-help")) {
+	    ps = (char **) ptr;
+	    *ps = g_strdup(pkg->gui_help);
 	} else if (!strcmp(key, "sample-script")) {
 	    ps = (char **) ptr;
 	    *ps = g_strdup(pkg->sample);
@@ -3024,6 +3084,7 @@ static void real_function_package_free (fnpkg *pkg, int full)
 	free(pkg->date);
 	free(pkg->descrip);
 	free(pkg->help);
+	free(pkg->gui_help);
 	free(pkg->sample);
 	free(pkg->label);
 	free(pkg);
@@ -3358,6 +3419,8 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->descrip);
 	} else if (!xmlStrcmp(cur->name, (XUC) "help")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->help);
+	} else if (!xmlStrcmp(cur->name, (XUC) "gui-help")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->gui_help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "sample-script")) {
 	    gretl_xml_node_get_trimmed_string(cur, doc, &pkg->sample);
 	} else if (!xmlStrcmp(cur->name, (XUC) "label")) {
@@ -6591,7 +6654,7 @@ void gretl_functions_cleanup (void)
 
 /* generate help output for a packaged function, either for
    display on the console, or with markup for display in a
-   GtkTextView window in the GUI (opt == OPT_M)
+   GtkTextView window in the GUI (opt & OPT_M)
 */
 
 static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
@@ -6616,6 +6679,22 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 	    pprintf(prn, "Version: %s (%s)\n\n", pkg->version? pkg->version : "unknown",
 		    pkg->date? pkg->date : "unknown");
 	}
+    }
+
+    if ((opt & OPT_G) && pkg != NULL && pkg->gui_help != NULL) {
+	/* GUI-specific help is preferred, and is available */
+	if (markup) {
+	    pputs(prn, "<@hd1=\"Help text\">:\n\n");
+	    pputs(prn, "<mono>\n");
+	} else {
+	    pputs(prn, "Help text:\n");
+	}   	
+	pputs(prn, pkg->gui_help);
+	if (markup) {
+	    pputs(prn, "\n</mono>");
+	}
+	pputs(prn, "\n\n");
+	return;
     }
 
     if (markup) {
@@ -6694,7 +6773,8 @@ static void real_user_function_help (ufunc *fun, gretlopt opt, PRN *prn)
 /**
  * user_function_help:
  * @fnname: name of function.
- * @opt: may include OPT_M for adding markup.
+ * @opt: may include OPT_M for adding markup, OPT_G
+ * for preferring GUI-specific help, if available.
  * @prn: printing struct.
  * 
  * Looks for a function named @fnname and prints

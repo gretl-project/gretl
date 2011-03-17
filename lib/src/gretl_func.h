@@ -36,8 +36,6 @@ typedef enum {
 
 #define FN_NAMELEN 32
 
-#define INT_USE_XLIST (-999)
-
 #define ok_function_return_type(r) (r == GRETL_TYPE_DOUBLE || \
 				    r == GRETL_TYPE_SERIES || \
 				    r == GRETL_TYPE_MATRIX || \
@@ -77,7 +75,11 @@ double fn_param_step (const ufunc *fun, int i);
 
 int fn_param_optional (const ufunc *fun, int i);
 
+int fn_param_uses_xlist (const ufunc *fun, int i);
+
 int user_func_get_return_type (const ufunc *fun);
+
+int user_func_is_noprint (const ufunc *fun);
 
 const char *user_function_name_by_index (int i);
 
