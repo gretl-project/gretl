@@ -2189,6 +2189,52 @@ static char *trim_text (char *s)
     return tailstrip(s);
 }
 
+static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
+{
+    char **S = NULL;
+    int i, n = 0;
+
+    if (pkg->pub != NULL) {
+	int j, k;
+
+	for (i=0; i<pkg->n_pub; i++) {
+	    ufunc *fun = pkg->pub[i];
+
+	    for (j=0; j<fun->n_params; j++) {
+		fn_param *param = &fun->params[j];
+
+		if (param->descrip != NULL) {
+		    strings_array_add(&S, &n, param->descrip);
+		}
+		for (k=0; k<param->nlabels; k++) {
+		    strings_array_add(&S, &n, param->labels[k]);
+		}
+	    }
+	}
+    }
+
+    if (pkg->label != NULL || S != NULL) {
+	pprintf(prn, "const char *%s_translations[] = {\n", pkg->name);
+	if (pkg->label != NULL) {
+	    pprintf(prn, "    N_(\"%s\"),\n", pkg->label);
+	}	
+	if (S != NULL) {
+	    strings_array_sort(&S, &n, OPT_U);
+	    for (i=0; i<n; i++) {
+		pprintf(prn, "    N_(\"%s\")", S[i]);
+		if (i < n-1) {
+		    pputc(prn, ',');
+		}
+		pputc(prn, '\n');
+	    }
+	    free_strings_array(S, n);
+	}
+	pputs(prn, "};\n");
+    }
+
+    return 0;
+}
+
 /* Write out a function package as XML. If @fp is NULL, then we write
    this as a package file in its own right, using the filename given
    in the package (the 'standalone' case), otherwise we're writing it
@@ -2714,6 +2760,9 @@ int create_and_write_function_package (const char *fname, PRN *prn)
 	    if (!err) {
 		err = cli_validate_package_file(fname, prn);
 		/* should we delete @fname ? */
+	    }
+	    if (!err) {
+		package_write_translatable_strings(pkg, prn);
 	    }
 	}
     }

@@ -438,21 +438,13 @@ struct gretl_option gretl_opts[] = {
     { 0,        0L,    NULL, 0 }
 };
 
-static int compare_strings (const void *a, const void *b)
-{
-    const char **sa = (const char **) a;
-    const char **sb = (const char **) b;
-     
-    return strcmp(*sa, *sb);
-}
-
 /* this function is used in compiling the gretl reference
    manual */
 
 char **get_all_option_strings (int *pn)
 {
     char **optstrs;
-    int i, j, m, n = 0;
+    int i, n = 0;
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
 	n++;
@@ -472,23 +464,8 @@ char **get_all_option_strings (int *pn)
     }
 
     if (optstrs != NULL) {
-	qsort(optstrs, n, sizeof *optstrs, compare_strings);
-	m = n;
-	for (i=0; i<m-1; i++) {
-	    if (!strcmp(optstrs[i], optstrs[i+1])) {
-		free(optstrs[i+1]);
-		for (j=i+1; j<m-1; j++) {
-		    optstrs[j] = optstrs[j+1];
-		}
-		optstrs[m-1] = NULL;
-		i--;
-		m--;
-	    }
-	}
-	if (m < n) {
-	    optstrs = realloc(optstrs, m * sizeof *optstrs);
-	}
-	*pn = m;
+	strings_array_sort(&optstrs, &n, OPT_U);
+	*pn = n;
     }
     
     return optstrs;

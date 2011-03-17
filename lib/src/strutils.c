@@ -1587,6 +1587,62 @@ char **strings_array_dup (char **strs, int n)
     return S;
 }
 
+static int compare_strings (const void *a, const void *b)
+{
+    const char **sa = (const char **) a;
+    const char **sb = (const char **) b;
+     
+    return strcmp(*sa, *sb);
+}
+
+/**
+ * strings_array_sort:
+ * @pS: location of array of strings.
+ * @n: location of the number of strings in the array.
+ * @opt: may contain %OPT_U to trim the sorted array
+ * so that it contains only unique entries.
+ *
+ * Sorts an array of strings in ascending lexicographical
+ * order. If %OPT_U is given, @n holds the number of unique
+ * strings on exit. It is assumed that storage for the
+ * strings array was obtained via strings_array_new() or
+ * a similar libgretl function.
+ */
+
+int strings_array_sort (char ***pS, int *n, gretlopt opt)
+{
+    char **S = *pS;
+    int ns = *n;
+
+    qsort(S, ns, sizeof *S, compare_strings);
+
+    if (opt & OPT_U) {
+	int i, j, m = ns;
+
+	for (i=0; i<m-1; i++) {
+	    if (!strcmp(S[i], S[i+1])) {
+		free(S[i+1]);
+		for (j=i+1; j<m-1; j++) {
+		    S[j] = S[j+1];
+		}
+		S[m-1] = NULL;
+		i--;
+		m--;
+	    }
+	}
+	if (m < ns) {
+	    char **tmp = realloc(S, m * sizeof *S);
+
+	    if (tmp != NULL) {
+		*pS = tmp;
+	    }
+	    *n = m;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * strings_array_cmp:
  * @strs1: first array of strings.
