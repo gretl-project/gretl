@@ -6475,8 +6475,11 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     }
 
     if (err) {
-	/* FIXME E_NAN? */
-	gretl_if_state_clear();
+	if (gretl_function_depth() == 1) {
+	    gretl_if_state_clear();
+	} else {
+	    gretl_if_state_reset(indent0);
+	}
     } else if (retline >= 0) {
 	/* we returned prior to the end of the function */
 	gretl_if_state_reset(indent0);
