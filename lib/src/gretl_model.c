@@ -1621,7 +1621,8 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		   pmod->ci == PANEL) {
 	    /* models in which the array of coefficients
 	       is (or may be) longer than the list of
-	       regressors */
+	       regressors 
+	    */
 	    nx = pmod->list[0] - 1;
 	} else {
 	    nx = pmod->ncoeff;

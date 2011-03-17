@@ -3843,6 +3843,8 @@ static int read_min_max_deflt (char **ps, fn_param *param, const char *name,
 	} else {
 	    err = E_PARSE;
 	}
+    } else if (!strncmp(p, "[$xlist]", 8)) {
+	param->deflt = INT_USE_XLIST;
     } else {
 	if (sscanf(p, "[%lf:%lf:%lf:%lf]", &x, &y, &z, &s) == 4) {
 	    param->min = x;
@@ -4048,11 +4050,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
     
     while (isspace(*s)) s++;
 
-    if (type == GRETL_TYPE_INT && !strncmp(s, "$xlist", 6)) {
-	len = 6;
-    } else {
-	len = gretl_namechar_spn(s);
-    }
+    len = gretl_namechar_spn(s);
 
     if (len == 0) {
 	gretl_errmsg_sprintf("parameter %d: name is missing", i + 1);

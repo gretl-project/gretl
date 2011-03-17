@@ -738,6 +738,48 @@ static GtkWidget *bool_arg_selector (call_info *cinfo, int i)
     return button;
 }
 
+static void update_xlist_arg (GtkComboBox *combo,
+			      call_info *cinfo)
+{
+    MODEL *pmod = cinfo->vwin->data;
+    int i = widget_get_int(combo, "argnum");
+    int k = gtk_combo_box_get_active(combo);
+
+    g_free(cinfo->args[i]);
+    cinfo->args[i] = g_strdup_printf("%d", k + 1 + pmod->ifc);
+}
+
+static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
+{
+    MODEL *pmod = cinfo->vwin->data;
+    int *xlist = NULL;
+    GtkWidget *combo;
+
+    combo = gtk_combo_box_new_text();
+    widget_set_int(combo, "argnum", i);
+    g_signal_connect(G_OBJECT(combo), "changed",
+		     G_CALLBACK(update_xlist_arg), cinfo);
+
+    xlist = gretl_model_get_x_list(pmod);
+
+    if (xlist != NULL) {
+	const char *s;
+	int i, vi;
+
+	for (i=1; i<=xlist[0]; i++) {
+	    vi = xlist[i];
+	    if (vi > 0) {
+		s = datainfo->varname[xlist[i]];
+		combo_box_append_text(combo, s);
+	    }
+	}
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
+	free(xlist);
+    } 
+
+    return combo;
+}
+
 static void update_enum_arg (GtkComboBox *combo, call_info *cinfo)
 {
     int val = gtk_combo_box_get_active(combo);
@@ -1158,11 +1200,10 @@ static void function_call_dialog (call_info *cinfo)
 
 	/* make the appropriate type of selector widget */
 
-	if (ptype == GRETL_TYPE_INT && !strcmp(parname, "$xlist")) {
-	    fprintf(stderr, "$xlist special!\n");
-	}
-
-	if (ptype == GRETL_TYPE_BOOL) {
+	if (ptype == GRETL_TYPE_INT && 
+	    fn_param_default(cinfo->func, i) == INT_USE_XLIST) {
+	    sel = xlist_int_selector(cinfo, i);
+	} else if (ptype == GRETL_TYPE_BOOL) {
 	    sel = bool_arg_selector(cinfo, i);
 	} else if (ptype == GRETL_TYPE_INT ||
 		   ptype == GRETL_TYPE_OBS) {

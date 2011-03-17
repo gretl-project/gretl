@@ -36,6 +36,8 @@ typedef enum {
 
 #define FN_NAMELEN 32
 
+#define INT_USE_XLIST (-999)
+
 #define ok_function_return_type(r) (r == GRETL_TYPE_DOUBLE || \
 				    r == GRETL_TYPE_SERIES || \
 				    r == GRETL_TYPE_MATRIX || \
