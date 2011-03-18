@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.3\n"
+"Project-Id-Version: gretl-1.9.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-03-11 14:51-0500\n"
-"PO-Revision-Date: 2011-02-17 01:30-0400\n"
+"PO-Revision-Date: 2011-03-17 14:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -2647,9 +2647,9 @@ msgid "Relative frequency"
 msgstr "Względna częstości"
 
 #: lib/src/graphing.c:3923
-#, fuzzy, c-format
+#, c-format
 msgid "observations sorted by %s"
-msgstr "Żadna obserwacja nie będzie pominięta!"
+msgstr "obserwacje posortowane według zm. %s"
 
 #: lib/src/graphing.c:3944
 #, c-format
@@ -4102,7 +4102,7 @@ msgid "This command requires one variable.\n"
 msgstr "To polecenie wymaga jednej zmiennej.\n"
 
 #: lib/src/interact.c:4819
-#, fuzzy, c-format
+#, c-format
 msgid "data frequency = %d\n"
 msgstr "parametr okresowość danych = %d\n"
 
@@ -4255,14 +4255,12 @@ msgid "Point observations"
 msgstr "Punktowe obserwacje"
 
 #: lib/src/modelprint.c:201
-#, fuzzy
 msgid "Left-censored observations"
-msgstr "Cenzurowane obserwacje"
+msgstr "Lewostronie  cenzurowane obserwacje"
 
 #: lib/src/modelprint.c:202
-#, fuzzy
 msgid "Right-censored observations"
-msgstr "Prawostronie nieograniczone obserwacje"
+msgstr "Prawostronie cenzurowane obserwacje"
 
 #: lib/src/modelprint.c:220 lib/src/modelprint.c:229 lib/src/modelprint.c:247
 #: lib/src/modelprint.c:2830
@@ -9025,7 +9023,7 @@ msgstr ""
 
 #: gui2/dialogs.c:4897
 msgid "show scalars window"
-msgstr ""
+msgstr "Pokaż okno skalarów"
 
 #: gui2/dialogs.c:4898
 msgid "show icons window"
@@ -9430,12 +9428,10 @@ msgid "Enter name=formula for new series"
 msgstr "Wprowadź nazwę i formułę wyliczania nowej zmiennej"
 
 #: gui2/fncall.c:688 gui2/library.c:5640
-#, fuzzy
 msgid "add scalar"
 msgstr "Dodaj skalar"
 
 #: gui2/fncall.c:689
-#, fuzzy
 msgid "Enter name=formula for new scalar"
 msgstr "Wprowadź nazwę i formułę wyliczania nowego skalara"
 
@@ -9575,9 +9571,8 @@ msgid "Add/remove functions"
 msgstr "Dodaj/Zamień funkcje"
 
 #: gui2/fnsave.c:1165
-#, fuzzy
 msgid "Write spec file"
-msgstr "Błąd w zapisie etykiet pliku"
+msgstr "Zapisz plik spec"
 
 #: gui2/fnsave.c:1172
 msgid "Upload package to server on save"
@@ -15704,9 +15699,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "Censored obs"
-#~ msgstr "Cenzurowane obserwacje"
-
-#~ msgid "_ARCH..."
-#~ msgstr "model _ARCH..."
