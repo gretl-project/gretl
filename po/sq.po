@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-03-11 14:51-0500\n"
-"PO-Revision-Date: 2011-03-18 12:51+0100\n"
+"PO-Revision-Date: 2011-03-18 12:59+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -10544,7 +10544,7 @@ msgstr "Shto / hiq funksione"
 
 #: gui2/fnsave.c:1165
 msgid "Write spec file"
-msgstr ""
+msgstr "Shkruaj skedën spec"
 
 #: gui2/fnsave.c:1172
 msgid "Upload package to server on save"
