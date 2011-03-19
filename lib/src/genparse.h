@@ -271,7 +271,6 @@ enum {
     F_MUNIF,
     F_MNORM,
     F_QFORM,
-    F_MLAG,
     F_QR,
     F_EIGSYM,	 
     F_EIGGEN,
@@ -334,6 +333,7 @@ enum {
     F_VARSIMUL,
     F_IRF,
     F_STRSUB,
+    F_MLAG,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,

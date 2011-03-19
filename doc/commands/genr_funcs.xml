@@ -3308,17 +3308,19 @@
       <fnargs>
 	<fnarg type="matrix">X</fnarg>
 	<fnarg type="scalar-or-vec">p</fnarg>
+	<fnarg type="scalar" optional="true">m</fnarg>
       </fnargs>
       <description>
 	<para context="notex">
-	  Shifts up or down the rows of <argname>X</argname>. 
-	  If <argname>p</argname> is a positive scalar, returns a
-	  matrix in which the columns of <argname>X</argname> are
-	  shifted down by <argname>p</argname> rows and the first
+	  Shifts up or down the rows of <argname>X</argname>.  If
+	  <argname>p</argname> is a positive scalar, returns a matrix
+	  in which the columns of <argname>X</argname> are shifted
+	  down by <argname>p</argname> rows and the first
 	  <argname>p</argname> rows are filled with zeros. If
 	  <argname>p</argname> is a negative number,
 	  <argname>X</argname> is shifted up and the last rows are
-	  filled with zeros.
+	  filled with the value <argname>m</argname> if present, zero
+	  otherwise.
 	</para>
 	<para context="tex">
 	  Shifts up or down the rows of <argname>X</argname>. If $p$
@@ -3329,7 +3331,8 @@
 	  <argname>p</argname> rows and the first <argname>p</argname>
 	  rows are filled with zeros. If <argname>p</argname> is a
 	  negative number, <argname>X</argname> is shifted up and the
-	  last rows are filled with zeros.
+	  last rows are filled with the value <argname>m</argname> if
+	  present, zero otherwise.
 	</para>
 	<para context="notex">
 	  If <argname>p</argname> is a vector, the above operation is

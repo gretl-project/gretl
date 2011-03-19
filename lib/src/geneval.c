@@ -1639,9 +1639,6 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     case F_MCSEL:
 	C = gretl_matrix_bool_sel(A, B, 0, err);
 	break;
-    case F_MLAG:
-	C = gretl_matrix_lag(A, B, 0);
-	break;
     default:
 	*err = E_TYPES;
 	break;
@@ -5937,6 +5934,26 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 					  (const double **) *p->Z, p->dinfo,
 					  &p->err);
 	}
+    } else if (f == F_MLAG) {
+	if (l->t != MAT) {
+	    node_type_error(f, 1, MAT, l, p);
+	} else if (m->t != MAT && m->t != NUM) {
+	    /* scalar or vector */
+	    node_type_error(f, 2, MAT, m, p);
+	} else if (r->t != NUM && r->t != EMPTY) {
+	    /* opt scalar */
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    gretl_matrix *mm;
+	    if (m->t == NUM) {
+		/* promote arg2 if scalar */
+		mm = make_scalar_matrix(m->v.xval);
+	    } else {
+		mm = m->v.m;
+	    }
+	    double misval = (r->t != EMPTY) ? r->v.xval : 0.0;
+	    A = gretl_matrix_lag(l->v.m, mm, misval);
+	}
     }	
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
@@ -7844,7 +7861,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_CDIV:
     case F_MRSEL:
     case F_MCSEL:
-    case F_MLAG:
     case F_DSUM:
     case B_LDIV:	
 	/* matrix-only binary operators (but promote scalars) */
@@ -8374,6 +8390,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_VARSIMUL:
     case F_IRF:
     case F_STRSUB:
+    case F_MLAG:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);
