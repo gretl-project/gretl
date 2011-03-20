@@ -2942,8 +2942,8 @@ int gnuplot (const int *plotlist, const char *literal,
 	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 
 	       var_get_graph_name(pdinfo, list[1]));
 	strcpy(s2, var_get_graph_name(pdinfo, list[3]));
-	fprintf(fp, " '-' using 1:($2) title \"%s (%s=1)\", \\\n", s1, s2);
-	fprintf(fp, " '-' using 1:($2) title \"%s (%s=0)\"\n", s1, s2);
+	fprintf(fp, " '-' using 1:($2) title \"%s (%s=1)\" w points, \\\n", s1, s2);
+	fprintf(fp, " '-' using 1:($2) title \"%s (%s=0)\" w points\n", s1, s2);
     } else if (gi.yformula != NULL) {
 	/* we have a formula to plot, not just data */
 	fprintf(fp, " '-' using 1:($2) title \"%s\" w points , \\\n", _("actual"));	
