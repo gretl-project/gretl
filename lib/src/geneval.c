@@ -5941,18 +5941,22 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    /* scalar or vector */
 	    node_type_error(f, 2, MAT, m, p);
 	} else if (r->t != NUM && r->t != EMPTY) {
-	    /* opt scalar */
+	    /* optional scalar */
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
+	    double missval = (r->t == NUM)? r->v.xval : 0.0;
 	    gretl_matrix *mm;
+
 	    if (m->t == NUM) {
 		/* promote arg2 if scalar */
 		mm = make_scalar_matrix(m->v.xval);
 	    } else {
 		mm = m->v.m;
 	    }
-	    double misval = (r->t != EMPTY) ? r->v.xval : 0.0;
-	    A = gretl_matrix_lag(l->v.m, mm, misval);
+	    A = gretl_matrix_lag(l->v.m, mm, missval);
+	    if (m->t == NUM && mm != NULL) {
+		gretl_matrix_free(mm);
+	    }
 	}
     }	
 
