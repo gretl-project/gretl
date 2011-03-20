@@ -411,10 +411,11 @@ int gretl_isdiscrete (int t1, int t2, const double *x)
 	n = few_vals(t1, t2, x, &r);
 	if (n > FEWVALS) {
 	    d = 0;
-	} else if (r > 0.9) {
+	} else if (r > 0.9 && n > 20) {
 	    /* somewhat arbitrary: but if r (= ratio of distinct
-	       values to number of cases) is "too high", perhaps we
-	       should not take the var as discrete
+	       values to number of cases) is "too high", and the
+	       number of observations is not tiny, perhaps we should
+	       not take the var as discrete
 	    */
 	    d = 0;
 	} else if (n < 5) {
