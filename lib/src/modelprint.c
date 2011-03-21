@@ -2967,6 +2967,28 @@ static void print_model_iter_info (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void aux_print_info_criteria (const MODEL *pmod, PRN *prn)
+{
+    const char *istrs[] = {
+	N_("AIC"), N_("BIC"), N_("HQC")
+    };
+    int i, n = 0;
+
+    for (i=0; i<C_MAX; i++) {
+	if (!na(pmod->criterion[i])) {
+	    if (n > 0) {
+		pputc(prn, ' ');
+	    }	
+	    pprintf(prn, "  %s: %g", _(istrs[i]), pmod->criterion[i]);
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	pputs(prn, "\n\n");
+    }
+}
+
 static void set_csv_delim (PRN *prn)
 {
     char test[4];
@@ -3023,9 +3045,13 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     print_coeff_table_end(pmod, prn);
 
-    if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
-	pmod->aux == AUX_RESET || pmod->aux == AUX_DF || 
+    if (pmod->aux == AUX_DF || pmod->aux == AUX_ADF || 
 	pmod->aux == AUX_KPSS) {
+	aux_print_info_criteria(pmod, prn);
+	goto close_format;
+    }
+
+    if (pmod->aux == AUX_ARCH || pmod->aux == AUX_RESET) {
 	goto close_format;
     }
 
