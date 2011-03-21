@@ -112,6 +112,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_BI_GRAPH,       "double time-series plot" },
     { PLOT_MANY_TS,        "multiple timeseries" },
     { PLOT_RQ_TAU,         "tau sequence plot" },
+    { PLOT_FACTORIZED,     "factorized scatter" },
     { PLOT_BOXPLOTS,       "boxplots" },
     { PLOT_CURVE,          "curve" },
     { PLOT_QQ,             "QQ plot" },
@@ -2719,6 +2720,7 @@ int gnuplot (const int *plotlist, const char *literal,
     char fit_line[128] = {0};
     int oddman = 0;
     int many = 0;
+    PlotType ptype;
     gnuplot_info gi;
     int i, err = 0;
 
@@ -2810,12 +2812,15 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } 
 
+    ptype = PLOT_REGULAR;
+
     /* separation by dummy: create special vars */
     if (gi.flags & GPT_DUMMY) { 
 	err = factorized_vars(&gi, Z);
 	if (err) {
 	    goto bailout;
 	}
+	ptype = PLOT_FACTORIZED;
     } 
 
     /* special tics for time series plots */
@@ -2826,7 +2831,7 @@ int gnuplot (const int *plotlist, const char *literal,
     /* open file and dump the prn into it: we delay writing
        the file header till we know a bit more about the plot
     */
-    fp = open_gp_stream(PLOT_REGULAR, gi.flags, &err);
+    fp = open_gp_stream(ptype, gi.flags, &err);
     if (err) {
 	gretl_print_destroy(prn);
 	goto bailout;

@@ -96,6 +96,7 @@ typedef enum {
     PLOT_BI_GRAPH,
     PLOT_MANY_TS,
     PLOT_RQ_TAU,
+    PLOT_FACTORIZED,
     PLOT_BOXPLOTS,
     PLOT_CURVE,
     PLOT_QQ,
