@@ -61,142 +61,6 @@ static double eval_crit (double *b, int model, int nreg, int nobs)
     return cval;
 }
 
-static double ddnor (double ystar)
-{
-    double c[5] = { 3209.377589138469472562,
-		    377.4852376853020208137,
-		    113.8641541510501556495,
-		    3.161123743870565596947,
-		    .185777706184603152673 
-    };
-
-    double d[4] = { 2844.236833439170622273,
-		    1282.616526077372275645,
-		    244.0246379344441733056,
-		    23.60129095234412093499 
-    };
-
-    double orpi = .5641895835477562869483;
-
-    double root2 = .70710678118654752440083;
-
-    double p[6] = { -6.58749161529837803157e-4,
-		    -.0160837851487422766278,
-		    -.125781726111229246204,
-		    -.360344899949804439429,
-		    -.305326634961232344035,
-		    -.0163153871373020978498 
-    };
-
-    double q[5] = { .00233520497626869185443,
-		    .0605183413124413191178,
-		    .527905102951428412248,
-		    1.87295284992346047209,
-		    2.56852019228982242072 
-    };
-
-    double a[9] = { 1230.33935479799725272,
-		    2051.07837782607146532,
-		    1712.04761263407058314,
-		    881.952221241769090411,
-		    298.635138197400131132,
-		    66.1191906371416294775,
-		    8.88314979438837594118,
-		    .56418849698867008918,
-		    2.15311535474403846343e-8 
-    };
-
-    double b[8] = { 1230.33935480374942043,
-		    3439.36767414372163696,
-		    4362.6190901432471582,
-		    3290.79923573345962678,
-		    1621.38957456669018874,
-		    537.181101862009857509,
-		    117.693950891312499305,
-		    15.7449261107098347253 
-    };
-
-    double x, x2, x3, x4, x5, x6, x7, x8, xm2, xm4, xm6, xm8;
-    double erf, bot, xm10;
-    double top, erfc, crap;
-    double y = ystar;
-    int isw = 1;
-
-    /* Copyright (c) James G. MacKinnon, 1993.  Routine to evaluate
-       cumulative normal distribution Written originally in late
-       1970s -- modified 1993 to avoid changing the argument.
-
-       This subroutine uses Cody's method to evaluate the cumulative
-       normal distribution. It is probably accurate to 19 or 20
-       significant digits. It was written in 1977, based on the Cody
-       article referred to in the documentation for IMSL subroutine
-       mdnor.
-    */
-
-    if (ystar < -16.) {
-	y = -16.;
-    } else if (ystar > 16.) {
-	y = 16.;
-    }
-
-    x = -y * root2;
-
-    if (x == 0.0) {
-	return .5;
-    } else if (x < 0.0) {
-	x = -x;
-	isw = -1;
-    }
-
-    if (x > 4.0) {
-	x2 = x * x;
-	xm2 = 1.0 / x2;
-	xm4 = xm2 * xm2;
-	xm6 = xm4 * xm2;
-	xm8 = xm4 * xm4;
-	xm10 = xm6 * xm4;
-	top = p[0] + p[1] * xm2 + p[2] * xm4 + p[3] * xm6 + p[4] * xm8 + p[5] * 
-	    xm10;
-	bot = q[0] + q[1] * xm2 + q[2] * xm4 + q[3] * xm6 + q[4] * xm8 + xm10;
-	crap = orpi + top / (bot * x2);
-	erfc = exp(-x2) * crap / x;
-
-	if (isw == -1) {
-	    erfc = 2. - erfc;
-	}
-    } else if (x > 0.477) {
-	x2 = x * x;
-	x3 = x2 * x;
-	x4 = x2 * x2;
-	x5 = x3 * x2;
-	x6 = x3 * x3;
-	x7 = x3 * x4;
-	x8 = x4 * x4;
-	top = a[0] + a[1] * x + a[2] * x2 + a[3] * x3 + a[4] * 
-	    x4 + a[5] * x5 + a[6] * x6 + a[7] * x7 + a[8] * x8;
-	bot = b[0] + b[1] * x + b[2] * x2 + b[3] * x3 + 
-	    b[4] * x4 + b[5] * x5 + b[6] * x6 + b[7] * x7 + x8;
-	erfc = exp(-x2) * top / bot;
-
-	if (isw == -1) {
-	    erfc = 2. - erfc;
-	}
-    } else {
-	x2 = x * x;
-	x4 = x2 * x2;
-	x6 = x4 * x2;
-	x8 = x4 * x4;
-	top = c[0] + c[1] * x2 + c[2] * x4 + c[3] * x6 + c[4] * x8;
-	bot = d[0] + d[1] * x2 + d[2] * x4 + d[3] * x6 + x8;
-	erf = x * top / bot;
-
-	erf *= isw;
-	erfc = 1.0 - erf;
-    }
-
-    return erfc * .5;
-}
-
 /* Copyright (c) James G. MacKinnon, 1993.  This routine uses the
    Cholesky decomposition to invert a real symmetric matrix.
 */
@@ -235,12 +99,12 @@ static int cholx (double *a, int m, int n)
 
     for (i = 1; i <= n; ++i) {
 	for (j = i; j <= n; ++j) {
-	    ooa = 1. / a[j + j * m];
+	    ooa = 1.0 / a[j + j * m];
 	    if (i >= j) {
-		t = 1.;
+		t = 1.0;
 	    } else {
 		kl = j - 1;
-		t = 0.;
+		t = 0.0;
 		for (k = i; k <= kl; ++k) {
 		    t -= a[i + k * m] * a[k + j * m];
 		}
@@ -251,7 +115,7 @@ static int cholx (double *a, int m, int n)
 
     for (i = 1; i <= n; ++i) {
 	for (j = i; j <= n; ++j) {
-	    t = 0.;
+	    t = 0.0;
 	    for (k = j; k <= n; ++k) {
 		t += a[i + k * m] * a[j + k * m];
 	    }
@@ -405,18 +269,18 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	/* imin is not too close to the end. 
 	   Use np points around stat. 
 	*/
-	for (i = 1; i <= np; ++i) {
+	for (i=1; i<=np; i++) {
 	    ic = imin - nph - 1 + i;
 	    yvec[i - 1] = cnorm[ic];
-	    xmat[i - 1] = 1.;
+	    xmat[i - 1] = 1.0;
 	    xmat[i + 19] = crits[ic - 1];
 	    xmat[i + 39] = xmat[i + 19] * crits[ic - 1];
 	    xmat[i + 59] = xmat[i + 39] * crits[ic - 1];
 	}
 
 	/* form omega matrix */
-	for (i = 1; i <= np; ++i) {
-	    for (j = i; j <= np; ++j) {
+	for (i=1; i<=np; i++) {
+	    for (j=i; j<=np; j++) {
 		ic = imin - nph - 1 + i;
 		jc = imin - nph - 1 + j;
 		top = prob[ic] * (1. - prob[jc]);
@@ -424,8 +288,8 @@ static double fpval (double *beta, double *cnorm, double *wght,
 		omega[i + j * 20 - 21] = wght[ic] * wght[jc] * sqrt(top / bot);
 	    }
 	}
-	for (i = 1; i <= np; ++i) {
-	    for (j = i; j <= np; ++j) {
+	for (i=1; i<=np; i++) {
+	    for (j=i; j<=np; j++) {
 		omega[j + i * 20 - 21] = omega[i + j * 20 - 21];
 	    }
 	}
@@ -446,7 +310,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1);
 	}
-	pval = ddnor(crfit);
+	pval = normal_cdf(crfit);
     } else {
 	/* imin is close to one of the ends. Use points from 
 	   imin +/- nph to end. 
@@ -512,13 +376,13 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1) + 
 		gamma[3] * (d1 * d1 * d1);
-	    pval = ddnor(crfit);
+	    pval = normal_cdf(crfit);
 	} else {
 	    gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt,
 		np1, 3, 20, 4, 1);
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1);
-	    pval = ddnor(crfit);
+	    pval = normal_cdf(crfit);
 	}
 
 	/* check that nothing crazy has happened at the ends */
@@ -618,16 +482,12 @@ static int urcval (int niv, int itv, int nobs, double arg,
     fflush(fdb);
 #endif
 
-    if (urc.model == 2 || urc.model == 4) {
-	nvar = 3;
-    } else {
-	nvar = 4;
-    }
+    nvar = (urc.model == 2 || urc.model == 4)? 3 : 4;
 
-    for (i = 1; i <= URCLEN; i++) {
+    for (i=1; i<=URCLEN; i++) {
 	char *s = gzgets(fz, line, sizeof line);
 
-	for (j = 1; j <= nvar; j++) {
+	for (j=1; j<=nvar; j++) {
 	    s = read_double_and_advance(&urc.beta[j + (i << 2) - 5], s);
 	}
 	read_double_and_advance(&urc.wght[i - 1], s);
@@ -635,7 +495,7 @@ static int urcval (int niv, int itv, int nobs, double arg,
 
     /* read from embedded "probs.tab" */
     gzseek(fz, (z_off_t) urc_offsets[MAXVARS], SEEK_SET);
-    for (i = 0; i < URCLEN; i++) {
+    for (i=0; i<URCLEN; i++) {
 	gzgets(fz, line, sizeof line);
 	sscanf(line, "%lf %lf", &urc.probs[i], &urc.cnorm[i]);
     }
