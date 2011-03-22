@@ -1275,7 +1275,7 @@ static int get_gpt_marker (const char *line, char *label)
                         p == PLOT_TRI_GRAPH || \
                         p == PLOT_BI_GRAPH)
 
-static int get_gpt_data (GPT_SPEC *spec, int do_markers, 
+static int get_gpt_data (GPT_SPEC *spec, int datacols, int do_markers, 
 			 const char *buf)
 {
     char s[MAXLEN];
@@ -1386,8 +1386,11 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 		okobs--;
 	    }
 
-	    if (i == imin && do_markers) {
+	    if (i <= imin && do_markers) {
 		get_gpt_marker(s, spec->markers[t]);
+		if (spec->code == PLOT_FACTORIZED && imin == 0) {
+		    imin = 1;
+		}
 	    }
 	}
 
@@ -1401,6 +1404,12 @@ static int get_gpt_data (GPT_SPEC *spec, int do_markers,
 	/* shift 'y' writing location */
 	x[1] += (ncols - 1) * spec->nobs;
     }
+
+#if GPDEBUG
+    for (i=0; i<spec->nobs*datacols; i++) {
+	fprintf(stderr, "spec->data[%d] = %g\n", i, spec->data[i]);
+    }
+#endif
 
     gretl_pop_c_numeric_locale();
 
@@ -2112,7 +2121,7 @@ plot_get_data_and_markers (GPT_SPEC *spec, const char *buf,
 
     /* read the data (and perhaps markers) from the plot file */
     if (!err) {
-	err = get_gpt_data(spec, do_markers, buf);
+	err = get_gpt_data(spec, datacols, do_markers, buf);
     } else {
 	free(spec->data);
 	spec->data = NULL;
@@ -2839,8 +2848,9 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     const double *data_y = NULL;
     double xrange, yrange;
     double xdiff, ydiff;
-    double min_xdist, min_ydist;
+    double dist, mindist = NADBL;
     int best_match = -1;
+    int done = 0, bank = 1;
     int t;
 
 #if GPDEBUG > 2
@@ -2867,11 +2877,11 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
     }
 
     if (plot_is_zoomed(plot)) {
-	min_xdist = xrange = plot->zoom_xmax - plot->zoom_xmin;
-	min_ydist = yrange = plot->zoom_ymax - plot->zoom_ymin;
+	xrange = plot->zoom_xmax - plot->zoom_xmin;
+	yrange = plot->zoom_ymax - plot->zoom_ymin;
     } else {
-	min_xdist = xrange = plot->xmax - plot->xmin;
-	min_ydist = yrange = plot->ymax - plot->ymin;
+	xrange = plot->xmax - plot->xmin;
+	yrange = plot->ymax - plot->ymin;
     }
 
     data_x = plot->spec->data;
@@ -2895,44 +2905,58 @@ static gint identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	    plot->status |= PLOT_NO_MARKERS;	
 	    return TRUE;
 	}
-    } 
+    }
 
-    /* try to find the best-matching data point */
+ repeat:
+
+    /* find the best-matching data point */
     for (t=0; t<plot->spec->nobs; t++) {
 	if (na(data_x[t]) || na(data_y[t])) {
 	    continue;
 	}
-#if GPDEBUG > 2
+#if GPDEBUG > 4
 	fprintf(stderr, "considering t=%d: x=%g, y=%g\n", t, data_x[t], data_y[t]);
 #endif
 	xdiff = fabs(data_x[t] - x);
 	ydiff = fabs(data_y[t] - y);
-	if (xdiff <= min_xdist && ydiff <= min_ydist) {
-	    min_xdist = xdiff;
-	    min_ydist = ydiff;
+	dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+	if (dist < mindist) {
+	    mindist = dist;
 	    best_match = t;
+	    bank = done ? 2 : 1;
 	}
     }
 
-    /* if the point is already labeled, skip */
-    if (plot->spec->labeled[best_match]) {
+    if (plot->spec->code == PLOT_FACTORIZED && !done) {
+	/* check the second "bank" of data also */
+	data_y += plot->spec->nobs;
+	done = 1;
+	goto repeat;
+    }
+
+    t = best_match;
+    data_y = data_x + bank * plot->spec->nobs;
+
+    /* if the closest point is already labeled, get out */
+    if (t >= 0 && plot->spec->labeled[t]) {
 	return TRUE;
     }
 
 #if GPDEBUG > 2
     fprintf(stderr, " best_match=%d, with data_x[%d]=%g, data_y[%d]=%g\n", 
-	    best_match, best_match, data_x[best_match], 
-	    best_match, data_y[best_match]);
+	    t, t, data_x[t], t, data_y[t]);
 #endif
 
     /* if the match is good enough, show the label */
-    if (best_match >= 0 && 
-	min_xdist < TOLDIST * xrange &&
-	min_ydist < TOLDIST * yrange) {
-	write_label_to_plot(plot, best_match, pixel_x, pixel_y);
-	/* flag the point as labeled already */
-	plot->spec->labeled[best_match] = 1;
-    }
+    if (best_match >= 0) {
+	xdiff = fabs(data_x[t] - x);
+	ydiff = fabs(data_y[t] - y);
+	if (xdiff < TOLDIST * xrange && ydiff < TOLDIST * yrange) {
+	    write_label_to_plot(plot, t, pixel_x, pixel_y);
+	    /* flag the point as labeled already */
+	    plot->spec->labeled[t] = 1;
+	}
+    } 
 
     return TRUE;
 }

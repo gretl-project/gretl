@@ -623,9 +623,26 @@ static int print_polar_labels (const GPT_SPEC *spec, FILE *fp)
     return 0;	
 }
 
+static int usable_obs (const double *x, const double *y0,
+		       const double *y1, int t,
+		       const double **py)
+{
+    *py = y0;
+
+    if (!na(x[t]) && !na(y0[t])) {
+	return 1;
+    } else if (!na(x[t]) && y1 != NULL && !na(y1[t])) {
+	*py = y1;
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 {
-    const double *x, *y;
+    const double *x, *y, *y0;
+    const double *y1 = NULL;
     double xrange, yrange;
     double yoff;
     int t;
@@ -641,7 +658,11 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
     }
 
     x = spec->data;
-    y = x + spec->nobs;
+    y0 = x + spec->nobs;
+
+    if (spec->code == PLOT_FACTORIZED) {
+	y1 = y0 + spec->nobs;
+    }
 
     xrange = spec->range[GP_X_RANGE][1] - spec->range[GP_X_RANGE][0];
     yrange = spec->range[GP_Y_RANGE][1] - spec->range[GP_Y_RANGE][0];
@@ -651,7 +672,7 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 	double xmin = 1.0e+16, xmax = -1.0e+16;
 
 	for (t=0; t<spec->nobs; t++) {
-	    if (!na(x[t]) && !na(y[t])) {
+	    if (usable_obs(x, y0, y1, t, &y)) {
 		if (yrange == 0.0) {
 		    if (y[t] < ymin) {
 			ymin = y[t];
@@ -690,7 +711,7 @@ static int print_data_labels (const GPT_SPEC *spec, FILE *fp)
 	    continue;
 	}
 
-	if (!na(x[t]) && !na(y[t])) {
+	if (usable_obs(x, y0, y1, t, &y)) {
 	    if (x[t] > .90 * xrange) {
 		xoff = -.02 * xrange;
 	    }

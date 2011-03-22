@@ -25,6 +25,8 @@ version 1.9.5, in progress
   MA terms
 - Fix bug: wrong handling of string fields in ODBC data import
 - Fix bug: spurious "unmatched 'if'" error under some conditions
+- Fix bug: incorrect handling of observation markers in context of
+  scatter plot "with factor separation"
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 
