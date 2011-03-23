@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-03-11 14:51-0500\n"
-"PO-Revision-Date: 2011-02-28 17:44+0100\n"
+"PO-Revision-Date: 2011-03-23 09:53+0100\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "MIME-Version: 1.0\n"
@@ -2647,9 +2647,9 @@ msgid "Relative frequency"
 msgstr "Frecuencia relativa"
 
 #: lib/src/graphing.c:3923
-#, fuzzy, c-format
+#, c-format
 msgid "observations sorted by %s"
-msgstr "¡No quedarían observaciones!"
+msgstr "las observaciones están ordenadas por %s"
 
 #: lib/src/graphing.c:3944
 #, c-format
@@ -4124,9 +4124,9 @@ msgid "This command requires one variable.\n"
 msgstr "Esta instrucción necesita una variables\n"
 
 #: lib/src/interact.c:4819
-#, fuzzy, c-format
+#, c-format
 msgid "data frequency = %d\n"
-msgstr "haciendo frecuencia de datos = %d\n"
+msgstr "frecuencia de los datos = %d\n"
 
 #: lib/src/interact.c:4849
 msgid "store: no filename given\n"
@@ -4277,14 +4277,12 @@ msgid "Point observations"
 msgstr "Observaciones puntuales"
 
 #: lib/src/modelprint.c:201
-#, fuzzy
 msgid "Left-censored observations"
-msgstr "Observaciones censuradas"
+msgstr "Observaciones censuradas por la izquierda"
 
 #: lib/src/modelprint.c:202
-#, fuzzy
 msgid "Right-censored observations"
-msgstr "Observaciones no censuradas por la derecha"
+msgstr "Observaciones censuradas por la derecha"
 
 #: lib/src/modelprint.c:220 lib/src/modelprint.c:229 lib/src/modelprint.c:247
 #: lib/src/modelprint.c:2830
@@ -7131,7 +7129,8 @@ msgid "translator_credits"
 msgstr ""
 "Traducido al Español por Ignacio Díaz-Emparanza <ignacio.diaz-emparanza@ehu."
 "es>\n"
-" se agradece la financiación del proyecto del MCYT SEJ2007-61362"
+"Se agradece la financiación de los proyectos MCYT SEJ2007-61362\n"
+"y ECO2010-15332 del Ministerio de Ciencia e Innovación y FEDER."
 
 #: gui2/about.c:175
 msgid "License"
@@ -15178,6 +15177,8 @@ msgid ""
 "Warning: the critical values shown are for the case of\n"
 "a restricted trend"
 msgstr ""
+"Atención: los valores críticos que se muestran corresponden\n"
+"al caso de una tendencia restringida"
 
 #: plugin/johansen.c:1570
 msgid ""
