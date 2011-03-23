@@ -171,6 +171,16 @@ const double maxev_v_coef[5][5] = {
     { 2.0899, -5.3303, -7.15230, -0.252600, 12.393 }
 }; 
 
+static void fill_x_array (double *x, int n)
+{
+    x[0] = n * n;
+    x[1] = n;
+    x[2] = 1.0;
+    x[3] = (n == 1)? 1.0 : 0.0;
+    x[4] = (n == 2)? 1.0 : 0.0;
+    x[5] = sqrt((double) n);
+}
+
 /*
    Asymptotic p-values for Johansen's likelihood ratio tests
    computed using J. Doornik's gamma approximation --
@@ -187,7 +197,7 @@ const double maxev_v_coef[5][5] = {
         J_REST_TREND   = restricted trend
         J_UNREST_TREND = unrestricted trend
 
-   N: (>= 1), the number of potentially cointegrated
+   n: (>= 1), the number of potentially cointegrated
    variables minus the cointegration rank under the null
 
    pval: on output, array of p-values for the two tests
@@ -195,7 +205,7 @@ const double maxev_v_coef[5][5] = {
 
 static int
 gamma_LR_pvals (double trace, double lmax, JohansenCode det, 
-		int N, double *pval)
+		int n, double *pval)
 {
     const double *tracem = trace_m_coef[det];
     const double *tracev = trace_v_coef[det];
@@ -206,12 +216,7 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     double x[6];
     int i;
 
-    x[0] = N * N;
-    x[1] = N;
-    x[2] = 1.0;
-    x[3] = (N == 1)? 1.0 : 0.0;
-    x[4] = (N == 2)? 1.0 : 0.0;
-    x[5] = sqrt((double) N);
+    fill_x_array(x, n);
 
     for (i=0; i<6; i++) {
 	mt += x[i] * tracem[i];
@@ -228,11 +233,48 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     return 0;
 }
 
+#if 0 /* not quite ready */
+
+static double
+gamma_harbo_trace_pval (double trace, JohansenCode det, 
+			int n1, int n, int r)
+{
+    const double *tracem = trace_m_coef[det];
+    const double *tracev = trace_v_coef[det];
+    double mt = 0, vt = 0;
+    double cov, x[6];
+    int m = n1 - r;
+    int m, n, n1, i;
+
+    fill_x_array(x, m);
+
+    for (i=0; i<6; i++) {
+	mt += x[i] * tracem[i];
+	vt += x[i] * tracev[i];
+    }
+
+    if (det == J_REST_TREND) {
+	cov = -1.35;
+    } else if (det == J_REST_CONST) {
+	cov = -1.066;
+    } else {
+	cov = -1.270;
+    }
+
+    mt *= (n1 - r) / (double) (n - r);
+    vt *= (n1 - r) / (double) (n - r);
+    vt -= (n - n1) * (n1 - r) * cov;
+
+    return gamma_cdf_comp(mt, vt, trace, 2);
+}
+
+#endif
+
 /* public function accessible via gretl's plugin apparatus */
 
-double trace_pvalue (double trace, int N, int det)
+double trace_pvalue (double trace, int n, int det)
 {
-    if (det < J_NO_CONST || det > J_UNREST_TREND || N < 1) {
+    if (det < J_NO_CONST || det > J_UNREST_TREND || n < 1) {
 	return NADBL;
     } else {
 	const double *tracem = trace_m_coef[det];
@@ -241,12 +283,7 @@ double trace_pvalue (double trace, int N, int det)
 	double x[6];
 	int i;
 
-	x[0] = N * N;
-	x[1] = N;
-	x[2] = 1.0;
-	x[3] = (N == 1)? 1.0 : 0.0;
-	x[4] = (N == 2)? 1.0 : 0.0;
-	x[5] = sqrt((double) N);
+	fill_x_array(x, n);
 
 	for (i=0; i<6; i++) {
 	    mt += x[i] * tracem[i];
