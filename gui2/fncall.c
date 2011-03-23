@@ -761,7 +761,7 @@ static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
     int *xlist = NULL;
     GtkWidget *combo;
 
-    combo = gtk_combo_box_new_text();
+    combo = gtk_combo_box_text_new();
     widget_set_int(combo, "argnum", i);
     g_signal_connect(G_OBJECT(combo), "changed",
 		     G_CALLBACK(update_xlist_arg), cinfo);
