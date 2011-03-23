@@ -1,4 +1,5 @@
 version 1.9.5, in progress
+- Add new translation: Greek (Manolis Tzagarakis and Ioannis Venetis)
 - When building against gtk3, put the plugins into LIBDIR/gretl-gtk3
 - "foreign" command: enable the --send-data option for Octave, in
   which case the gretl dataset is pre-loaded as a matrix named
