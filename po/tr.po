@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-03-11 14:51-0500\n"
-"PO-Revision-Date: 2011-03-14 10:31+0200\n"
+"PO-Revision-Date: 2011-03-24 09:19+0200\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -271,12 +271,12 @@ msgstr ""
 #: lib/src/bootstrap.c:406
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
-msgstr "%s katsayısı için (%g nokta tahmini)"
+msgstr "%s katsayısı için (nokta tahmini %g)"
 
 #: lib/src/bootstrap.c:432
 #, c-format
 msgid "Studentized %g%% confidence interval = %g to %g"
-msgstr "Studentlemeli %%%g güven aralığı =%g - %g"
+msgstr "Studentlemeli %%%g güven aralığı = %g - %g"
 
 #: lib/src/bootstrap.c:435
 #, c-format
@@ -290,7 +290,7 @@ msgstr "%d çoğaltmaya dayalı"
 
 #: lib/src/bootstrap.c:444
 msgid "using resampled residuals"
-msgstr "yeniden örneklemeli kalıntılar kullanıldı"
+msgstr "yeniden örneklemeli kalıntılar kullanılarak"
 
 #: lib/src/bootstrap.c:446
 msgid "with simulated normal errors"
@@ -487,12 +487,12 @@ msgstr "doğrusal-dışılık"
 #: lib/src/compare.c:1280
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
-msgstr "Sırayla eleme (iki-yanlı alfa = %.2f kullanılarak)"
+msgstr "Sırayla eleme (iki-yanlı alfa = %.2f kullanarak)"
 
 #: lib/src/compare.c:1286
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
-msgstr "%-16s çıkarılıyor (p-değeri %.3f)\n"
+msgstr "%-16s çıkarıldı (p-değeri %.3f)\n"
 
 #: lib/src/compare.c:1665 lib/src/estimate.c:2762 lib/src/gretl_model.c:3012
 #: lib/src/gretl_model.c:3018 lib/src/modelprint.c:716 gui2/library.c:2696
@@ -2635,7 +2635,7 @@ msgstr "Göreli sıklık"
 #: lib/src/graphing.c:3923
 #, c-format
 msgid "observations sorted by %s"
-msgstr "gözlem sıralama ölçütü %s"
+msgstr "gözlem sıralama ölçütü: %s"
 
 #: lib/src/graphing.c:3944
 #, c-format
@@ -5561,7 +5561,7 @@ msgstr "Hoşgörü = %g\n"
 #: lib/src/nonparam.c:258 lib/src/printout.c:2517 gui2/guiprint.c:1508
 #: gui2/guiprint.c:1570 gui2/guiprint.c:1626 gui2/guiprint.c:1667
 msgid "Obs"
-msgstr "Göz"
+msgstr "Gözl"
 
 #: lib/src/nonparam.c:259 lib/src/nonparam.c:260
 msgid "rank"
@@ -12889,11 +12889,11 @@ msgstr "CORC"
 
 #: gui2/model_table.c:756
 msgid "Adj. R{\\super 2}"
-msgstr "Düz. R{\\super 2}"
+msgstr "Ayr. R{\\super 2}"
 
 #: gui2/model_table.c:759
 msgid "Adj. R**2"
-msgstr "Düz. R**2"
+msgstr "Ayr. R**2"
 
 #: gui2/model_table.c:901 gui2/model_table.c:966 gui2/model_table.c:973
 #: gui2/model_table.c:980
@@ -13448,7 +13448,7 @@ msgid ""
 "using two-sided p-value:"
 msgstr ""
 "Değişkenlerin sırayla elenmesi\n"
-"(iki-yanlı p-değeri kullanılarak):"
+"(iki-yanlı p-değeri kullanarak):"
 
 #: gui2/selector.c:5061
 msgid "Test only selected variables"
@@ -14105,7 +14105,7 @@ msgstr "gretl: seçenekler"
 
 #: gui2/settings.c:953 gui2/settings.c:2317
 msgid "Browse..."
-msgstr "Gözat..."
+msgstr "Göz at..."
 
 #: gui2/settings.c:991
 msgid "English (US letter paper)"
@@ -15157,7 +15157,7 @@ msgstr "Jacobyen'e dayalı, sd = %d\n"
 #: plugin/kernel.c:108
 #, c-format
 msgid "bandwidth = %g"
-msgstr "kuşakgenişliği = %g"
+msgstr "Kuşakgenişliği = %g"
 
 #: plugin/kernel.c:111
 #, c-format
