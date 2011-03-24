@@ -233,7 +233,7 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     return 0;
 }
 
-#if 0 /* not quite ready */
+#if 1 /* not quite ready */
 
 static double
 gamma_harbo_trace_pval (double trace, JohansenCode det, 
@@ -243,8 +243,7 @@ gamma_harbo_trace_pval (double trace, JohansenCode det,
     const double *tracev = trace_v_coef[det];
     double mt = 0, vt = 0;
     double cov, x[6];
-    int m = n1 - r;
-    int m, n, n1, i;
+    int i, m = n1 - r;
 
     fill_x_array(x, m);
 
