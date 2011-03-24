@@ -29,110 +29,6 @@
 
 #define JDEBUG 0
 
-/* Critical values for the trace test of the sort reported by Harbo et
-   al, "Asymptotic Inference on Cointegrating Rank in Partial
-   Systems", Journal of Business and Economic Statistics 16/4, October
-   1998, pp. 388-399. See also Pesaran, Shin and Smith, "Structural
-   analysis of vector error correction models with exogenous I(1)
-   variables", Journal of Econometrics 97 (2000), pp. 293-343.
-
-   These values were produced using libgretl, with T = 500 and 50,000
-   repetitions; the RNG was the SFMT. 
-*/
-
-/* Johansen case = 3 */
-
-const double harbo_data_3[21][4] = {
-    /* 80%   90%   95%   99% */
-    /* p2 = 1 */
-    { 11.0, 13.2, 15.3, 19.8 }, /* N = 1 */
-    { 24.8, 28.0, 30.7, 36.4 }, /* N = 2 */
-    { 42.3, 46.2, 49.7, 56.4 }, /* N = 3 */
-    { 63.4, 68.2, 72.4, 80.3 }, /* N = 4 */
-    { 88.6, 94.2, 98.8, 108 },  /* N = 5 */
-    { 117, 124, 129, 140 },     /* N = 6 */
-    /* p2 = 2 */
-    { 13.4, 15.9, 18.0, 23.0 }, /* N = 1 */
-    { 29.3, 32.7, 35.6, 41.8 }, /* N = 2 */
-    { 48.7, 52.9, 56.6, 64.3 }, /* N = 3 */
-    { 71.9, 77.0, 81.4, 90.3 }, /* N = 4 */
-    { 98.8, 105, 110, 120 },    /* N = 5 */
-    /* p2 = 3 */
-    { 15.7, 18.3, 20.7, 25.7 }, /* N = 1 */
-    { 33.6, 37.4, 40.5, 47.0 }, /* N = 2 */
-    { 55.0, 59.5, 63.4, 71.4 }, /* N = 3 */
-    { 80.1, 85.5, 90.1, 99.8 }, /* N = 4 */
-    /* p2 = 4 */
-    { 17.9, 20.7, 23.2, 28.5 }, /* N = 1 */
-    { 37.8, 41.7, 45.1, 51.8 }, /* N = 2 */
-    { 61.2, 66.0, 70.1, 78.4 }, /* N = 3 */
-    /* p2 = 5 */
-    { 20.2, 23.1, 25.8, 31.3 }, /* N = 1 */
-    { 42.0, 46.0, 49.7, 57.1 }, /* N = 2 */
-    /* p2 = 6 */
-    { 22.4, 25.5, 28.3, 34.1 }  /* N = 1 */
-};
-
-/* Johansen case = 1 */
-
-const double harbo_data_1[21][4] = {
-    /* 80%   90%   95%   99% */
-    /* p2 = 1 */
-    { 8.40, 10.4, 12.4, 16.5 }, /* N = 1 */
-    { 20.0, 22.8, 25.3, 30.6 }, /* N = 2 */
-    { 35.4, 38.9, 42.2, 49.0 }, /* N = 3 */
-    { 54.8, 59.3, 63.1, 70.6 }, /* N = 4 */
-    { 77.5, 82.7, 87.2, 96.4 }, /* N = 5 */
-    { 105, 111, 116, 126 },     /* N = 6 */
-    /* p2 = 2 */
-    { 10.8, 13.0, 15.1, 19.5 }, /* N = 1 */
-    { 24.5, 27.6, 30.4, 36.4 }, /* N = 2 */
-    { 41.9, 45.9, 49.5, 56.8 }, /* N = 3 */
-    { 63.1, 67.9, 72.1, 80.3 }, /* N = 4 */
-    { 88.1, 93.8, 98.7, 108 },  /* N = 5 */
-    /* p2 = 3 */
-    { 13.2, 15.7, 18.0, 22.8 }, /* N = 1 */
-    { 28.9, 32.3, 35.3, 41.5 }, /* N = 2 */
-    { 48.3, 52.6, 56.4, 63.8 }, /* N = 3 */
-    { 71.6, 76.9, 81.3, 90.1 }, /* N = 4 */
-    /* p2 = 4 */
-    { 15.5, 18.2, 20.5, 25.5 }, /* N = 1 */
-    { 33.3, 36.9, 40.2, 46.9 }, /* N = 2 */
-    { 54.7, 59.3, 63.4, 71.5 }, /* N = 3 */
-    /* p2 = 5 */
-    { 17.8, 20.6, 23.2, 28.7 }, /* N = 1 */
-    { 37.6, 41.5, 44.9, 52.0 }, /* N = 2 */
-    /* p2 = 6 */
-    { 20.1, 23.1, 25.7, 31.1 }  /* N = 1 */
-};
-
-static int harbo_critvals (int jcase, int p2, int N, double *cv)
-{
-    int i, inc = 6, k = N - 1;
-
-    for (i=2; i<=p2; i++) {
-	k += inc--;
-    }
-
-    if (k <= 20) {
-	const double *vals;
-
-	if (jcase == J_UNREST_CONST || jcase == J_REST_TREND) {
-	    vals = harbo_data_3[k];
-	} else if (jcase == J_REST_CONST) {
-	    vals = harbo_data_1[k];
-	}
-
-	cv[0] = vals[0];
-	cv[1] = vals[1];
-	cv[2] = vals[2];
-	cv[3] = vals[3];
-	return 0;
-    }
-
-    return 1;
-}
-
 /* coefficient matrices for the trace test */
 
 const double trace_m_coef[5][6] = {
@@ -233,17 +129,26 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     return 0;
 }
 
-#if 1 /* not quite ready */
+/*
+  @n1: number of potentially cointegrated variables
+  @n2: number of variables that are conditioned upon
+  @r:  cointegrating rank under H0.
+
+  The Doornik gamma-approximation approach with 
+  correction for the case of a "partial system" as
+  discussed in Harbo, Johansen, Nielsen and Rahbek.
+*/
 
 static double
 gamma_harbo_trace_pval (double trace, JohansenCode det, 
-			int n1, int n, int r)
+			int n1, int n2, int r)
 {
     const double *tracem = trace_m_coef[det];
     const double *tracev = trace_v_coef[det];
     double mt = 0, vt = 0;
     double cov, x[6];
-    int i, m = n1 - r;
+    int n = n1 + n2;
+    int i, m = n - r;
 
     fill_x_array(x, m);
 
@@ -266,8 +171,6 @@ gamma_harbo_trace_pval (double trace, JohansenCode det,
 
     return gamma_cdf_comp(mt, vt, trace, 2);
 }
-
-#endif
 
 /* public function accessible via gretl's plugin apparatus */
 
@@ -1489,17 +1392,6 @@ static void coint_test_print_exog (GRETL_VAR *jvar,
     }
 }
 
-static void print_cv (double c, PRN *prn)
-{
-    if (c < 10) {
-	pprintf(prn, "   %.2f", c);
-    } else if (c < 100) {
-	pprintf(prn, "   %.1f", c);
-    } else {
-	pprintf(prn, "    %.0f", c);
-    }
-}
-
 static int 
 compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, 
 		    const DATAINFO *pdinfo, PRN *prn)
@@ -1509,10 +1401,10 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     int T = jvar->T;
     int n = jvar->neqns;
     int nexo = 0, nrexo = 0;
-    int max_nexo, use_harbo = 0;
+    int partial = 0;
     double llc, trace, lmax;
     double cumeig = 0.0;
-    int i;
+    int jcase, i;
 
     tests = gretl_matrix_alloc(n, 2);
     pvals = gretl_matrix_alloc(n, 2);
@@ -1539,20 +1431,14 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	nrexo = jvar->rlist[0];
     }
 
-    max_nexo = (nrexo > nexo)? nrexo : nexo; /* FIXME? */
+    jcase = jcode(jvar);
 
-    if (max_nexo > 0 && max_nexo < 7) {
-	if (jcode(jvar) == J_REST_CONST ||
-	    jcode(jvar) == J_REST_TREND) {
-	    /* OK */
-	    use_harbo = 1;
-	} else if (jcode(jvar) == J_UNREST_CONST) {
-	    /* but this is a fudge */
-	    use_harbo = 1;
-	}
-    }
+    if (nrexo > 0 && jcase != J_UNREST_TREND) {
+	/* use gamma-approx for partial system */
+	partial = 1;
+    } 
 
-    print_Johansen_test_case(jcode(jvar), prn);
+    print_Johansen_test_case(jcase, prn);
     if (nexo > 0) {
 	coint_test_print_exog(jvar, pdinfo, prn);
     }
@@ -1562,9 +1448,9 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
     pprintf(prn, "\n%s = %g (including c: %g)\n", _("Log-likelihood"), 
 	    jvar->ll + llc, jvar->ll);
 
-    if (use_harbo) {
-	pprintf(prn, "\n%s %s %s    80%%    90%%    95%%    99%%\n", _("Rank"), 
-		_("Eigenvalue"), _("Trace test"));
+    if (partial) {
+	pprintf(prn, "\n%s %s %s %s\n", _("Rank"), _("Eigenvalue"), 
+		_("Trace test"), _("p-value"));
     } else {
 	pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
 		_("Trace test"), _("p-value"),
@@ -1573,21 +1459,24 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 
     for (i=0; i<n; i++) {
 	trace = gretl_matrix_get(tests, i, 0);
-	if (use_harbo) {
-	    double cv[4] = {0};
-	    int j;
+	if (partial) {
+	    double pv;
+	    int det = jcase;
 
-	    harbo_critvals(jcode(jvar), nexo, n - i, cv);
-	    pprintf(prn, "%4d%#11.5g%#11.5g", i, evals->val[i], trace);
-	    for (j=0; j<4; j++) {
-		print_cv(cv[j], prn);
+	    /* bodge for comparability with CATS */
+	    if (jcase == J_UNREST_CONST) {
+		det = J_REST_TREND;
 	    }
-	    pputc(prn, '\n');
+	    pv = gamma_harbo_trace_pval(trace, det, n, nrexo, i);
+	    pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]\n", i,
+		    evals->val[i], trace, pv);
+	    gretl_matrix_set(pvals, i, 0, pv);
+	    gretl_matrix_set(pvals, i, 1, NADBL);
 	} else {
 	    double pv[2] = {0};
 
 	    lmax = gretl_matrix_get(tests, i, 1);
-	    gamma_LR_pvals(trace, lmax, jcode(jvar), n - i, pv);
+	    gamma_LR_pvals(trace, lmax, jcase, n - i, pv);
 	    pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
 		    i, evals->val[i], trace, pv[0], lmax, pv[1]);
 	    gretl_matrix_set(pvals, i, 0, pv[0]);
@@ -1597,22 +1486,17 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 
     pputc(prn, '\n');
 
-    if (max_nexo > 0) {
-	if (use_harbo && jcode(jvar) == J_UNREST_CONST) {
-	    pputs(prn, _("Warning: the critical values shown are for the "
+    if (nexo > 0 || nrexo > 0) {
+	if (partial && jcase == J_UNREST_CONST) {
+	    pputs(prn, _("Warning: the p-values shown are for the "
 		  "case of\na restricted trend"));
 	    pputs(prn, "\n\n");
-	} else if (!use_harbo) {
+	} else if (!partial) {
 	    pputs(prn, _("Note: in general, the test statistics above "
 			 "are valid only in the\nabsence of additional "
 			 "regressors."));
 	    pputs(prn, "\n\n");
 	}
-    }
-
-    if (use_harbo) {
-	gretl_matrix_free(pvals);
-	pvals = NULL;
     }
 
     record_matrix_test_result(tests, pvals);
