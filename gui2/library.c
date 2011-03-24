@@ -1043,7 +1043,7 @@ void unit_root_test (int ci)
 	       A Monte Carlo Investigation", Journal of Business and
 	       Economic Statistics, 7(2), 1989, pp. 5-17.
 	    */
-	    order = (int) floor(12.0 * pow(okT/100.0, 0.25));
+	    order = 12.0 * pow(okT/100.0, 0.25);
 	}
     }
     
@@ -1082,7 +1082,7 @@ void unit_root_test (int ci)
 	/* levinlin */
 	title = llc_title;
 	spintext = adf_spintext;
-	opts = adf_opts;
+	opts = adf_opts + 1;
 	nchecks = 0;
 	nradios = 3;
 	rvar = &llc_case;
