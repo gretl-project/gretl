@@ -296,16 +296,31 @@ static void show_lags_test (MODEL *pmod, int order, PRN *prn)
     }
 }
 
-static void DF_header (const char *s, int p, PRN *prn)
+static void DF_header (const char *s, int p, int pmax,
+		       gretlopt opt, PRN *prn)
 {
+    pputc(prn, '\n');
+
     if (p <= 0) {
-	pprintf(prn, _("\nDickey-Fuller test for %s\n"), s);	
+	if (opt & OPT_G) {
+	    pprintf(prn, _("Dickey-Fuller (GLS) test for %s\n"), s);
+	} else {
+	    pprintf(prn, _("Dickey-Fuller test for %s\n"), s);
+	}	
     } else {
-	pprintf(prn, _("\nAugmented Dickey-Fuller test for %s\n"), s);
+	if (opt & OPT_G) {
+	    pprintf(prn, _("Augmented Dickey-Fuller (GLS) test for %s\n"), s);
+	} else {
+	    pprintf(prn, _("Augmented Dickey-Fuller test for %s\n"), s);
+	}
 	if (p == 1) {
 	    pprintf(prn, _("including one lag of (1-L)%s"), s);
 	} else {
 	    pprintf(prn, _("including %d lags of (1-L)%s"), p, s);
+	}
+	if (pmax >= p) {
+	    pputc(prn, ' ');
+	    pprintf(prn, _("(max was %d)"), pmax);
 	}
 	pputc(prn, '\n');
     }
@@ -360,7 +375,7 @@ static const char *DF_test_string (int i)
 }
 
 static void 
-print_adf_results (int order, int auto_order, double DFt, double pv, 
+print_adf_results (int order, int pmax, double DFt, double pv, 
 		   MODEL *dfmod, int dfnum, const char *vname, 
 		   int *blurb_done, unsigned char flags, int i, 
 		   int niv, int nseas, gretlopt opt, PRN *prn)
@@ -387,7 +402,7 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
     } 
 
     if (*blurb_done == 0) {
-	DF_header(vname, order, prn);
+	DF_header(vname, order, pmax, opt, prn);
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	if (flags & ADF_PANEL) {
 	    pputc(prn, '\n');
@@ -400,9 +415,6 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 
     if (!(flags & ADF_EG_RESIDS)) {
 	pprintf(prn, "   %s ", _(DF_test_string(i)));
-	if (opt & OPT_G) {
-	    pputs(prn, "(GLS) ");
-	}
 	if (nseas > 0 && i > 0) {
 	    pputs(prn, _("plus seasonal dummies"));
 	}
@@ -445,7 +457,7 @@ print_adf_results (int order, int auto_order, double DFt, double pv,
 }
 
 static int auto_adjust_order (int *list, int order_max,
-			      double ***pZ, DATAINFO *pdinfo,
+			      double **Z, DATAINFO *pdinfo,
 			      PRN *prn)
 {
     MODEL kmod;
@@ -453,9 +465,7 @@ static int auto_adjust_order (int *list, int order_max,
     int k, pos;
 
     for (k=order_max; k>0; k--) {
-
-	kmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
-
+	kmod = lsq(list, Z, pdinfo, OLS, OPT_A);
 	if (kmod.errcode) {
 	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
 		    kmod.errcode);
@@ -463,11 +473,9 @@ static int auto_adjust_order (int *list, int order_max,
 	    k = -1;
 	    break;
 	}
-
 #if ADF_DEBUG
 	printmodel(&kmod, pdinfo, OPT_NONE, prn);
 #endif
-
 	pos = k + kmod.ifc;
 	tstat = kmod.coeff[pos] / kmod.sderr[pos];
 	clear_model(&kmod);
@@ -669,15 +677,14 @@ static int real_adf_test (int varno, int order, int niv,
     if (opt & OPT_E) {
 	/* testing down */
 	auto_order = 1;
+	order_max = order;
     }
 
     if (order < 0) {
 	/* testing down: backward compatibility */
 	auto_order = 1;
-	order = -order;
+	order = order_max = -order;
     }
-
-    order_max = order;
 
 #if ADF_DEBUG
     fprintf(stderr, "real_adf_test: order = %d, auto_order = %d\n", order, auto_order);
@@ -803,7 +810,7 @@ static int real_adf_test (int varno, int order, int niv,
     skipdet:
 
 	if (auto_order) {
-	    order = auto_adjust_order(list, order_max, pZ, pdinfo, prn);
+	    order = auto_adjust_order(list, order_max, *pZ, pdinfo, prn);
 	    if (order < 0) {
 		err = 1;
 		clear_model(&dfmod);
@@ -857,7 +864,7 @@ static int real_adf_test (int varno, int order, int niv,
 	}
 
 	if (!(opt & OPT_Q) && !(flags & ADF_PANEL)) {
-	    print_adf_results(order, auto_order, DFt, pv, &dfmod, dfnum, 
+	    print_adf_results(order, order_max, DFt, pv, &dfmod, dfnum, 
 			      pdinfo->varname[varno], &blurb_done, flags,
 			      itv, niv, nseas, opt, prn);
 	}
@@ -1102,11 +1109,8 @@ static int panel_DF_test (int v, int order,
     if (!quiet) {
 	int j = DF_index(opt);
 
-	DF_header(pdinfo->varname[v], (opt & OPT_E)? 0 : order, prn);
+	DF_header(pdinfo->varname[v], (opt & OPT_E)? 0 : order, 0, opt, prn);
 	pprintf(prn, "   %s ", _(DF_test_string(j)));
-	if (opt & OPT_G) {
-	    pputs(prn, "(GLS) ");
-	}
 	pputc(prn, '\n');
 	pprintf(prn, "   %s: %s\n\n", _("model"), 
 		(order > 0)? ADF_model_string(j) : DF_model_string(j));

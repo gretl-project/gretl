@@ -3844,21 +3844,29 @@ static void set_checks_opt (GtkWidget *w, int *active)
 
 static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 				      const char **opts, int nchecks,
-				      int *active, int need_check)
+				      int *active, int check_min,
+				      int check_max)
 {
     GtkWidget *button;
-    int i, nc = 0;
+    int nc0 = 0, nc1 = 0;
+    int i;
 
-    if (need_check > 0 && need_check <= nchecks) {
-	nc = need_check;
+    if (check_min >= 0 && check_max > check_min && check_max <= nchecks) {
+	nc0 = check_min;
+	nc1 = check_max;
     }
 
-    if (nc) {
+    if (nc1 > 0) {
 	g_object_set_data(G_OBJECT(dialog), "active", active);
-	widget_set_int(dialog, "need-check", need_check);
+	widget_set_int(dialog, "check-min", check_min);
+	widget_set_int(dialog, "check-max", check_max);
     }
 
     for (i=0; i<nchecks; i++) {
+	if (nc1 > 0 && i == nc0) {
+	    /* mark start of the "must check one" area */
+	    vbox_add_hsep(vbox);
+	}	    
 	button = gtk_check_button_new_with_label(_(opts[i]));
 	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
 	if (active[i] < 0) {
@@ -3872,8 +3880,8 @@ static void checks_dialog_add_checks (GtkWidget *dialog, GtkWidget *vbox,
 	    g_object_set_data(G_OBJECT(button), "optnum", 
 			      GINT_TO_POINTER(i));
 	}
-	if (i+1 == nc) {
-	    /* mark off the "must check one" area */
+	if (i+1 == nc1) {
+	    /* mark end of the "must check one" area */
 	    vbox_add_hsep(vbox);
 	}
     }
@@ -3907,17 +3915,18 @@ static void checks_dialog_add_radios (GtkWidget *vbox, const char **opts,
 
 static void checks_dialog_ok (GtkButton *button, GtkWidget *dialog)
 {
-    int nc = widget_get_int(dialog, "need-check");
+    int nc0 = widget_get_int(dialog, "check-min");
+    int nc1 = widget_get_int(dialog, "check-max");
     int done = 1;
 
-    if (nc > 0) {
+    if (nc1 > 0) {
 	/* in case at least one option needs to be selected, 
 	   check that this is so */
 	int *active = g_object_get_data(G_OBJECT(dialog), "active");
 	int i;
 
 	done = 0;
-	for (i=0; i<nc; i++) {
+	for (i=nc0; i<nc1; i++) {
 	    if (active[i]) {
 		done = 1;
 		break;
@@ -3938,11 +3947,14 @@ static void checks_dialog_ok (GtkButton *button, GtkWidget *dialog)
 }
 
 /*
-  Note: @nchecks is the number of check buttons; @need_check, if
-  non-zero, is a positive integer such that at least one check button
-  with index < @need_check must be selected, or else the the dialog
-  would give a null result.
+  Notes: 
 
+  @nchecks is the number of check buttons.
+
+  @check_min and @check_max: if @check_max is > 0, it indicates 
+  that at least one check button with index greater than or
+  equal to @check_min and less than @check_max must be selected,
+  or else the the dialog would give a null result.
   This is used to flag a warning to the user if OK is pressed with
   "nothing selected".
 */
@@ -3950,7 +3962,8 @@ static void checks_dialog_ok (GtkButton *button, GtkWidget *dialog)
 GtkWidget *
 build_checks_dialog (const char *title, const char *blurb, 
 		     const char **opts, 
-		     int nchecks, int *active, int need_check,
+		     int nchecks, int *active, 
+		     int check_min, int check_max,
 		     int nradios, int *rvar, 
 		     int *spinvar, const char *spintxt, 
 		     int spinmin, int spinmax, 
@@ -3996,7 +4009,8 @@ build_checks_dialog (const char *title, const char *blurb,
 	if (radios_first) {
 	    gtk_box_pack_start(GTK_BOX(vbox), gtk_hseparator_new(), TRUE, TRUE, 5);
 	}
-	checks_dialog_add_checks(dialog, vbox, opts, nchecks, active, need_check);
+	checks_dialog_add_checks(dialog, vbox, opts, nchecks, active, 
+				 check_min, check_max);
 	opts += nchecks;
     }
 
@@ -4037,7 +4051,8 @@ build_checks_dialog (const char *title, const char *blurb,
 
 int checks_dialog (const char *title, const char *blurb,
 		   const char **opts, 
-		   int nchecks, int *active, int need_check,
+		   int nchecks, int *active, 
+		   int check_min, int check_max,
 		   int nradios, int *rvar, 
 		   int *spinvar, const char *spintxt, 
 		   int spinmin, int spinmax, 
@@ -4047,7 +4062,8 @@ int checks_dialog (const char *title, const char *blurb,
     int ret = 0;
 
     dlg = build_checks_dialog(title, blurb, opts, 
-			      nchecks, active, need_check,
+			      nchecks, active, 
+			      check_min, check_max,
 			      nradios, rvar, 
 			      spinvar, spintxt,
 			      spinmin, spinmax, 
@@ -4070,7 +4086,7 @@ int checks_only_dialog (const char *title, const char *blurb,
     int ret = 0;
 
     dlg = build_checks_dialog(title, blurb, 
-			      opts, nopts, active, 0,
+			      opts, nopts, active, 0, 0,
 			      0, NULL,    /* no radios */
 			      NULL, NULL, /* no spinners */
 			      0, 0, hcode, &ret);
@@ -4089,8 +4105,8 @@ int spin_dialog (const char *title, const char *blurb,
 		 int spinmin, int spinmax, int hcode)
 {
     return checks_dialog(title, blurb, 
-			 NULL, 0, NULL, 0, /* no checks */
-			 0, NULL,          /* no radios */
+			 NULL, 0, NULL, 0, 0, /* no checks */
+			 0, NULL,             /* no radios */
 			 spinvar, spintxt,
 			 spinmin, spinmax, hcode);
 }

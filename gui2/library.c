@@ -963,13 +963,13 @@ void unit_root_test (int ci)
 {
     PRN *prn;
     const char *adf_opts[] = {
+	N_("test down from maximum lag order"),
 	N_("test without constant"),
 	N_("with constant"),
 	N_("with constant and trend"),
 	N_("with constant, trend and trend squared"),
 	N_("include seasonal dummies"),
 	N_("show regression results"),
-	N_("test down from maximum lag order"),
 	/* non-panel: radio items */
 	N_("use level of variable"),
 	N_("use first difference of variable")
@@ -984,6 +984,7 @@ void unit_root_test (int ci)
 	N_("show individual test results")
     };
     const char *alt_opts[] = {
+	N_("test down from maximum lag order"),
 	N_("include a trend"),
 	N_("show regression results"),
 	/* radio items */
@@ -1005,11 +1006,11 @@ void unit_root_test (int ci)
     const char *title, *spintext, **opts;
 
     /* save the user's settings, per session */
-    static int adf_active[] = { 0, 1, 1, 0, 0, 0, 0 };
+    static int adf_active[] = { 1, 0, 1, 1, 0, 0, 0 };
     static int panel_adf_active[] = { 0, 0, 1 };
-    static int alt_active[] = { 0, 0 };
+    static int alt_active[] = { 1, 0, 0 };
     static int panel_alt_active[] = { 0, 0, 1 };
-    static int ts_order = 1;
+    static int ts_order = -1;
     static int panel_order = 0;
     static int llc_case = 1;
 
@@ -1019,22 +1020,33 @@ void unit_root_test (int ci)
     int order, omax, okT, v = mdata_active_var();
     int *active = NULL;
     int nchecks, nradios;
-    int need_check = 0;
+    int check_min = 0, check_max = 0;
     int helpcode = 0;
     int vlist[2] = {1, v};
     int err;
 
     if (panel) {
 	okT = datainfo->pd;
-	order = (panel_order < 0)? -panel_order : panel_order;
+	order = panel_order;
     } else {
 	okT = ok_obs_in_series(v);
-	order = (ts_order < 0)? -ts_order : ts_order;
 	helpcode = ci;
     }
 
     omax = okT / 2;
 
+    if (!panel && ci != KPSS) {
+	if (ts_order >= 0) {
+	    order = ts_order;
+	} else {
+	    /* default to L_{12}: see G. W. Schwert, "Tests for Unit Roots:
+	       A Monte Carlo Investigation", Journal of Business and
+	       Economic Statistics, 7(2), 1989, pp. 5-17.
+	    */
+	    order = (int) floor(12.0 * pow(okT/100.0, 0.25));
+	}
+    }
+    
     /* note: making nradios < 0 places the radio
        buttons before the check boxes in the
        dialog box produced bu checks_dialog()
@@ -1045,22 +1057,25 @@ void unit_root_test (int ci)
 	spintext = adf_spintext;
 	opts = (panel)? panel_adf_opts : adf_opts;
 	nchecks = (panel)? 3 : 7;
-	need_check = (panel)? 0 : 4;
+	if (!panel) {
+	    check_min = 1;
+	    check_max = 5;
+	}
 	active = (panel)? panel_adf_active : adf_active;
 	nradios = (panel)? -2 : 2;
     } else if (ci == DFGLS) {
 	title = dfgls_title;
 	spintext = adf_spintext;
 	opts = (panel)? panel_alt_opts : alt_opts;
-	nchecks = (panel)? 3 : 2;
+	nchecks = 3;
 	active = (panel)? panel_alt_active : alt_active;
 	nradios = (panel)? 0 : 2;
     } else if (ci == KPSS) {
 	title = kpss_title;
 	spintext = kpss_spintext;
-	opts = (panel)? panel_alt_opts : alt_opts;
+	opts = (panel)? panel_alt_opts : (alt_opts + 1);
 	nchecks = (panel)? 3 : 2;
-	active = (panel)? panel_alt_active : alt_active;
+	active = (panel)? panel_alt_active : (alt_active + 1);
 	nradios = (panel)? 0 : 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
     } else {
@@ -1091,7 +1106,8 @@ void unit_root_test (int ci)
     }
 
     err = checks_dialog(_(title), NULL, 
-			opts, nchecks, active, need_check,
+			opts, nchecks, active, 
+			check_min, check_max,
 			nradios, rvar, 
 			&order, _(spintext), 0, omax, 
 			helpcode);
@@ -1107,22 +1123,27 @@ void unit_root_test (int ci)
 	    if (active[0]) opt |= OPT_E; /* test down */
 	    if (pantrend) opt |= OPT_T;
 	} else {
-	    if (active[0]) opt |= OPT_N;
-	    if (active[1]) opt |= OPT_C;
-	    if (active[2]) opt |= OPT_T;
-	    if (active[3]) opt |= OPT_R; /* quad trend */
-	    if (active[4] > 0) opt |= OPT_D;
-	    if (active[5]) opt |= OPT_V;
-	    if (active[6]) opt |= OPT_E;
+	    if (active[0]) opt |= OPT_E;
+	    if (active[1]) opt |= OPT_N;
+	    if (active[2]) opt |= OPT_C;
+	    if (active[3]) opt |= OPT_T;
+	    if (active[4]) opt |= OPT_R; /* quad trend */
+	    if (active[5] > 0) opt |= OPT_D;
+	    if (active[6]) opt |= OPT_V;
 	}
     } else if (ci == DFGLS) {
 	opt |= OPT_G; /* --gls */
 	if (active[0]) {
+	    opt |= OPT_E;
+	}
+	if (active[1]) {
 	    opt |= OPT_T;
 	} else {
 	    opt |= OPT_C;
 	}
-	if (!panel && active[1]) opt |= OPT_V;
+	if (!panel && active[2]) {
+	    opt |= OPT_V;
+	}
     } else {
 	/* KPSS */
 	if (active[0]) opt |= OPT_T;
@@ -1136,6 +1157,11 @@ void unit_root_test (int ci)
 
     if (difference) {
 	opt |= OPT_F;
+    }
+
+    if (order == 0 && (opt & OPT_E)) {
+	/* scrub the test-down option */
+	opt &= ~OPT_E;
     }
 
     if (bufopen(&prn)) {
@@ -1165,7 +1191,7 @@ void unit_root_test (int ci)
 
 	if (panel) {
 	    panel_order = order;
-	} else {
+	} else if (ci == ADF || ci == DFGLS) {
 	    ts_order = order;
 	}
 
@@ -1430,7 +1456,7 @@ void count_missing (void)
     active = (datainfo->n < 1000);
 
     resp = checks_dialog(_("gretl: missing values info"), NULL,
-			 opts, 1, &active, 0, 0,
+			 opts, 1, &active, 0, 0, 0,
 			 NULL, NULL, NULL, 0, 0, 0);
 
     if (resp < 0 || bufopen(&prn)) {
