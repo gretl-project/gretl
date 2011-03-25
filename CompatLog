@@ -2,7 +2,11 @@ version 1.9.5, in progress
 
 Matrix operators: "B / A" now has the same semantics as 
 Octave/Matlab "matrix right division"; for square A, it's in
-principle equivalent to B * inv(A).
+principle equivalent to B * inv(A). Also, "\" (not previously
+defined as an operator in gretl) now serves for "matrix left 
+division". In practical terms, occurrences of B/A in existing
+gretl scripts -- where they produced, in effect, inv(A)*B --
+should be replaced by A\B to produce the same effect.
 
 2011-02-24 version 1.9.4
 
