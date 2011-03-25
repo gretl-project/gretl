@@ -305,10 +305,11 @@ static gretl_matrix *negbin_nhessian (negbin_info *nbinfo, int *err)
 {
     gretl_matrix *H;
     int np = nbinfo->k + 1;
-    
+
     nbinfo->flags = SCORE_UPDATE_MU;
-    H = hessian_from_score(nbinfo->theta, np, negbin_score, 
-			   nbinfo, err);
+    H = hessian_inverse_from_score(nbinfo->theta, np,
+				   negbin_score, NULL,
+				   nbinfo, err);
     nbinfo->flags = 0;
 
     return H;

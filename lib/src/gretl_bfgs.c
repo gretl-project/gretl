@@ -102,40 +102,46 @@ static double **triangular_array_new (int n)
     return m;
 }
 
-/* In case an analytical score function (@gradfun) is available,
-   construct a numerical approximation to the Hessian using that
-   function.  This is intended for building a covariance matrix at
-   convergence; note that it will be unlikely to work at an arbitrary
-   point in the parameter space.  
+/**
+ * hessian_from_score:
+ * @b: array of k parameter estimates.
+ * @H: k x k matrix to receive the (negative) Hessian.
+ * @gradfunc: function to compute gradient.
+ * @cfunc: function to compute criterion (or NULL, see below).
+ * @data: data to be passed to the @gradfunc callback.
+ *
+ * Uses the score function (@gradfunc) is to construct a 
+ * numerical approximation to the Hessian. This is primarily 
+ * intended for building a covariance matrix at convergence; 
+ * note that it may not work well at an arbitrary point in 
+ * the parameter space. 
+ *
+ * Note that the only use of @cfunc within this function is
+ * as an argument to be passed to @gradfunc. It is therefore
+ * OK to pass NULL for @cfunc provided that @gradfunc does not 
+ * use its 4th argument, which corresponds to the BFGS_CRIT_FUNC 
+ * parameter.
+ * 
+ * Returns: 0 on successful completion, non-zero error code
+ * on error.
+ */
 
-   Also note that the NULL pointer passed to gradfun in the 4th 
-   argument corresponds to the BFGS_CRIT_FUNC parameter, so this 
-   will fail horribly unless @gradfun calculates the score independently 
-   of the criterion function (and so does not try to access the 4th 
-   argument).
-*/
-
-gretl_matrix *hessian_from_score (double *b, int n, 
-				  BFGS_GRAD_FUNC gradfun, 
-				  void *data, int *err)
+int hessian_from_score (double *b, gretl_matrix *H,
+			BFGS_GRAD_FUNC gradfunc,
+			BFGS_CRIT_FUNC cfunc,
+			void *data)
 {
-    gretl_matrix *H = NULL;
     double *g, *splus, *sminus;
     double x, eps = 1.0e-05;
-    int i, j;
+    int n = gretl_matrix_rows(H);
+    int i, j, err = 0;
     
     splus  = malloc(n * sizeof *splus);
     sminus = malloc(n * sizeof *sminus);
     g      = malloc(n * sizeof *g);
 
     if (splus == NULL || sminus == NULL || g == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }
-
-    H = gretl_matrix_alloc(n, n);
-    if (H == NULL) {
-	*err = E_ALLOC;
+	err = E_ALLOC;
 	goto bailout;
     }
 
@@ -143,15 +149,15 @@ gretl_matrix *hessian_from_score (double *b, int n,
 	double b0 = b[i];
 
 	b[i] = b0 + eps;
-	*err = gradfun(b, g, n, NULL, data);
-	if (*err) break;
+	err = gradfunc(b, g, n, cfunc, data);
+	if (err) break;
 	for (j=0; j<n; j++) {
 	    splus[j] = g[j];
 	}
 
 	b[i] = b0 - eps;
-	*err = gradfun(b, g, n, NULL, data);
-	if (*err) break;
+	err = gradfunc(b, g, n, cfunc, data);
+	if (err) break;
 	for (j=0; j<n; j++) {
 	    sminus[j] = g[j];
 	}
@@ -163,21 +169,55 @@ gretl_matrix *hessian_from_score (double *b, int n,
 	}
     }
 
-    if (!*err) {
+    if (!err) {
 	gretl_matrix_xtr_symmetric(H);
-	*err = gretl_invert_symmetric_matrix(H);
     }
 
  bailout:
 
-    if (*err) {
-	gretl_matrix_free(H);
-	H = NULL;
-    }
-
     free(splus);
     free(sminus);
     free(g);
+
+    return err;
+}
+
+/**
+ * hessian_inverse_from_score:
+ * @b: array of parameter estimates.
+ * @n: the number of elements in @b.
+ * @gradfunc: function to compute gradient.
+ * @cfunc: function to compute criterion.
+ * @data: data to be passed to the @gradfunc callback.
+ * @err: location to receive error code.
+ *
+ * A wrapper for hessian_from_score() which takes care of 
+ * (a) allocation of the Hessian and (b) inversion.
+ * 
+ * Returns: the inverse of the (negative) Hessian on successful 
+ * completion, NULL on error.
+ */
+
+gretl_matrix *hessian_inverse_from_score (double *b, int n,
+					  BFGS_GRAD_FUNC gradfunc,
+					  BFGS_CRIT_FUNC cfunc,
+					  void *data, int *err)
+{
+    gretl_matrix *H = gretl_zero_matrix_new(n, n);
+
+    if (H == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = hessian_from_score(b, H, gradfunc, cfunc, data);
+    }
+
+    if (!*err) {
+	*err = gretl_invert_symmetric_matrix(H);
+	if (*err) {
+	    gretl_matrix_free(H);
+	    H = NULL;
+	}
+    }
 
     return H;
 }
@@ -224,11 +264,9 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
    the negative inverse of the Hessian.
 */
 
-gretl_matrix *numerical_hessian (const double *b, int n, 
-				 BFGS_CRIT_FUNC func, 
-				 void *data, int *err)
+static int numerical_hessian (const double *b, gretl_matrix *H,
+			      BFGS_CRIT_FUNC func, void *data)
 {
-    gretl_matrix *H = NULL;
     double Dx[RSTEPS];
     double Hx[RSTEPS];
     double *wspace;
@@ -240,14 +278,15 @@ gretl_matrix *numerical_hessian (const double *b, int n,
     double v = 2.0;      /* reduction factor for h */
     double f0, f1, f2;
     double p4m, hij;
+    int n = gretl_matrix_rows(H);
     int vn = (n * (n + 1)) / 2;
     int dn = vn + n;
     int i, j, k, m, u;
+    int err = 0;
 
     wspace = malloc((4 * n + dn) * sizeof *wspace);
     if (wspace == NULL) {
-	*err = E_ALLOC;
-	return NULL;
+	return E_ALLOC;
     }
 
     c = wspace;
@@ -255,12 +294,6 @@ gretl_matrix *numerical_hessian (const double *b, int n,
     h = h0 + n;
     Hd = h + n;
     D = Hd + n; /* D is of length dn */
-
-    H = gretl_matrix_alloc(n, n);
-    if (H == NULL) {
-	*err = E_ALLOC;
-	goto bailout;
-    }	
 
     for (i=0; i<n; i++) {
 	h0[i] = (fabs(b[i]) < 0.01)? eps : d * b[i];
@@ -278,7 +311,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 	    if (na(f1)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
 			"criterion = NA for theta[%d] = %g\n", i, c[i]);
-		*err = E_NAN;
+		err = E_NAN;
 		goto bailout;
 	    }
 	    hess_b_adjust_i(c, b, h, n, i, -1);
@@ -286,7 +319,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 	    if (na(f2)) {
 		fprintf(stderr, "numerical_hessian: 1st derivative: "
 			"criterion = NA for theta[%d] = %g\n", i, c[i]);
-		*err = E_NAN;
+		err = E_NAN;
 		goto bailout;
 	    }
 	    /* F'(i) */
@@ -322,7 +355,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 		    if (na(f1)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
 				"objective function gave NA\n", i, j);
-			*err = E_NAN;
+			err = E_NAN;
 			goto bailout;
 		    }
 		    hess_b_adjust_ij(c, b, h, n, i, j, -1);
@@ -330,7 +363,7 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 		    if (na(f2)) {
 			fprintf(stderr, "numerical_hessian: 2nd derivatives (%d,%d): "
 				"objective function gave NA\n", i, j);
-			*err = E_NAN;
+			err = E_NAN;
 			goto bailout;
 		    }
 		    /* cross-partial */
@@ -361,17 +394,66 @@ gretl_matrix *numerical_hessian (const double *b, int n,
 	}
     }
 
-    *err = gretl_invert_symmetric_matrix(H);
-
  bailout:
 
-    if (*err != 0 && *err != E_ALLOC) {
+    if (err && err != E_ALLOC) {
 	gretl_errmsg_set(_("Failed to compute numerical Hessian"));
     }
 
     free(wspace);
 
+    return err;
+}
+
+/**
+ * numerical_hessian_inverse:
+ * @b: array of parameter estimates.
+ * @n: the number of elements in @b.
+ * @func: function to compute criterion.
+ * @data: data to be passed to the @gradfunc callback.
+ * @err: location to receive error code.
+ *
+ * A wrapper for numerical_hessian() which takes care of 
+ * (a) allocation of the Hessian and (b) inversion.
+ * 
+ * Returns: the inverse of the (negative) Hessian on successful 
+ * completion, NULL on error.
+ */
+
+gretl_matrix *numerical_hessian_inverse (const double *b, int n, 
+					 BFGS_CRIT_FUNC func, 
+					 void *data, int *err)
+{
+    gretl_matrix *H = gretl_zero_matrix_new(n, n);
+
+    if (H == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = numerical_hessian(b, H, func, data);
+    }
+
+    if (!*err) {
+	*err = gretl_invert_symmetric_matrix(H);
+	if (*err) {
+	    gretl_errmsg_set(_("Failed to compute numerical Hessian"));
+	    gretl_matrix_free(H);
+	    H = NULL;
+	}
+    }
+
     return H;
+}
+
+static int NR_fallback_hessian (double *b, gretl_matrix *H,
+				BFGS_GRAD_FUNC gradfunc,
+				BFGS_CRIT_FUNC cfunc,
+				void *data)
+{
+    if (gradfunc != NULL) {
+	return hessian_from_score(b, H, gradfunc, cfunc, data);
+    } else {
+	return numerical_hessian(b, H, cfunc, data);
+    }
 }
 
 #define ALT_OPG 0
@@ -524,8 +606,8 @@ static int simple_gradient (double *b, double *g, int n,
 
 /* default numerical calculation of gradient in context of BFGS */
 
-int BFGS_numeric_gradient (double *b, double *g, int n,
-			   BFGS_CRIT_FUNC func, void *data)
+int numeric_gradient (double *b, double *g, int n,
+		      BFGS_CRIT_FUNC func, void *data)
 {
     int err = 0;
 
@@ -541,7 +623,7 @@ int BFGS_numeric_gradient (double *b, double *g, int n,
     }
 
 #if BFGS_DEBUG
-    fprintf(stderr, "BFGS_numeric_gradient returning, err = %d\n", err);
+    fprintf(stderr, "numeric_gradient returning, err = %d\n", err);
 #endif
 
     return err;
@@ -695,7 +777,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     BFGS_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
     if (gradfunc == NULL) {
-	gradfunc = BFGS_numeric_gradient;
+	gradfunc = numeric_gradient;
     }
 
     wspace = malloc(4 * n * sizeof *wspace);
@@ -981,13 +1063,10 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 	       int crittype, BFGS_GRAD_FUNC gradfunc, void *data, 
 	       gretlopt opt, PRN *prn)
 {
-    double *g = NULL;
-    double *l = NULL;
-    double *u = NULL;
-    double *wa = NULL;
-    int *nbd = NULL;
-    int *iwa = NULL;
-    int i, m, wadim;
+    double *wspace = NULL;
+    double *g, *l, *u, *wa;
+    int *iwa, *nbd = NULL;
+    int i, m, dim;
     char task[60];
     char csave[60];
     double f, pgtol;
@@ -1014,26 +1093,28 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     */
     m = libset_get_int(LBFGS_MEM); 
 
-    wadim = (2*m+4)*n + 12*m*m + 12*m;
+    dim = (2*m+4)*n + 12*m*m + 12*m; /* for wa */
+    dim += 3*n; /* for g, l and u */
 
-    g = malloc(n * sizeof *g);
-    l = malloc(n * sizeof *l);
-    u = malloc(n * sizeof *u);
-    wa = malloc(wadim * sizeof *wa);
-    nbd = malloc(n * sizeof *nbd);
-    iwa = malloc(3*n * sizeof *iwa);
+    wspace = malloc(dim * sizeof *wspace);
+    nbd = malloc(4*n * sizeof *nbd);
 
-    if (g == NULL || l == NULL || u == NULL ||
-	wa == NULL || nbd == NULL || iwa == NULL) {
+    if (wspace == NULL || nbd == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
+
+    g = wspace;
+    l = g + n;
+    u = l + n;
+    wa = u + n;
+    iwa = nbd + n;
 
     verbskip = libset_get_int("bfgs_verbskip");
     show_activity = show_activity_func_installed();
 
     if (gradfunc == NULL) {
-	gradfunc = BFGS_numeric_gradient;
+	gradfunc = numeric_gradient;
     }
 
     /* Gradient convergence criterion (not used -- we use reltol instead) */
@@ -1116,12 +1197,8 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
  bailout:
 
-    free(g);
-    free(l);
-    free(u);
-    free(wa);
+    free(wspace);
     free(nbd);
-    free(iwa);
 
     return err;
 }
@@ -1598,7 +1675,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     return J;
 }
 
-/* Below: experimental Newton-Raphson code, starting with a few
+/* Below: Newton-Raphson code, starting with a few
    auxiliary functions */
 
 static int broken_matrix (const gretl_matrix *m)
@@ -1720,24 +1797,45 @@ NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     return err;
 }
 
-/* Newton-Raphson maximizer, loosely based on R's maxNR(). 
-
-   The functions cfunc (computes the criterion, usually a
-   loglikelihood) and gradfunc (score, provides an updated
-   estimate of the gradient in its second argument) are just as in
-   BFGS_max above.
-
-   The hessfunc callback should compute the negative Hessian,
-   _not_ inverted; newton_raphson_max takes care of the inversion,
-   with a routine for fixing up the matrix if it's not positive
-   definite.
-
-   Note that unlike maxNR, there is no provision here for automatic
-   substitution of numerical routines for gradfunc or hessfunc if
-   these functions are not provided. My guess is that that without
-   analytical functions Newton-Raphson is bound to perform worse than
-   BFGS.
-*/
+/**
+ * newton_raphson_max:
+ * @b: array of adjustable coefficients.
+ * @n: number elements in array @b.
+ * @maxit: the maximum number of iterations to allow.
+ * @crittol: tolerance for terminating iteration, in terms of
+ * the change in the criterion.
+ * @gradtol: tolerance for terminating iteration, in terms of
+ * the gradient.
+ * @itercount: location to receive count of iterations.
+ * @crittype: code for type of the maximand/minimand: should
+ * be %C_LOGLIK, %C_GMM or %C_OTHER.  Used only in printing
+ * iteration info.
+ * @cfunc: pointer to function used to calculate maximand.
+ * @gradfunc: pointer to function used to calculate the 
+ * gradient, or %NULL for default numerical calculation.
+ * @hessfunc: pointer to function used to calculate the
+ * Hessian.
+ * @data: pointer that will be passed as the last
+ * parameter to the callback functions @cfunc, @gradfunc
+ * and @hessfunc.
+ * @opt: may contain %OPT_V for verbose operation.
+ * @prn: printing struct (or %NULL).  Only used if @opt
+ * includes %OPT_V.
+ *
+ * The functions @cfunc (computes the criterion, usually a
+ * loglikelihood) and @gradfunc (score, provides an updated
+ * estimate of the gradient in its second argument) are just as in
+ * BFGS_max above.
+ *
+ * The @hessfunc callback should compute the negative Hessian,
+ * _not_ inverted; newton_raphson_max takes care of the inversion,
+ * with a routine for fixing up the matrix if it's not positive
+ * definite. If @hessfunc is NULL we fall back on a numerical
+ * approximation to the Hessian.
+ * 
+ * Returns: 0 on successful completion, non-zero error code
+ * on error.
+ */
 
 int newton_raphson_max (double *b, int n, int maxit, 
 			double crittol, double gradtol, 
@@ -1785,11 +1883,19 @@ int newton_raphson_max (double *b, int n, int maxit,
     }
 
     if (!err) {
-	err = gradfunc(b, g->val, n, cfunc, data);
+	if (gradfunc != NULL) {
+	    err = gradfunc(b, g->val, n, cfunc, data);
+	} else {
+	    err = numeric_gradient(b, g->val, n, cfunc, data);
+	}
     }
 
     if (!err) {
-	err = hessfunc(b, H1, data);
+	if (hessfunc != NULL) {
+	    err = hessfunc(b, H1, data);
+	} else {
+	    err = NR_fallback_hessian(b, H1, gradfunc, cfunc, data);
+	}
 	if (!err) {
 	    gretl_matrix_copy_values(H0, H1);
 	    err = NR_invert_hessian(H1, H0);
@@ -1833,13 +1939,23 @@ int newton_raphson_max (double *b, int n, int maxit,
 			    steplen, prn);
 	}
 
-	err = gradfunc(b1, g->val, n, cfunc, data);
+	if (gradfunc != NULL) {
+	    err = gradfunc(b1, g->val, n, cfunc, data);
+	} else {
+	    err = numeric_gradient(b1, g->val, n, cfunc, data);
+	}
+
 	if (err || broken_matrix(g)) {
 	    err = (err == 0)? E_NAN : err;
 	    break;
 	}	
 
-	err = hessfunc(b1, H1, data);
+	if (hessfunc != NULL) {
+	    err = hessfunc(b1, H1, data);
+	} else {
+	    err = NR_fallback_hessian(b1, H1, gradfunc, cfunc, data);
+	}
+
 	if (err || broken_matrix(H1)) {
 	    err = (err == 0)? E_NAN : err;
 	    break;

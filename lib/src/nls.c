@@ -2246,8 +2246,8 @@ static int mle_calculate (nlspec *s, PRN *prn)
 		       NULL, s->opt, s->prn);
 	if (!err && (s->opt & (OPT_H | OPT_R))) {
 	    /* doing Hessian or QML covariance matrix */
-	    s->Hinv = numerical_hessian(s->coeff, s->ncoeff, 
-					get_mle_ll, s, &err);
+	    s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
+						get_mle_ll, s, &err);
 	}
     }
 
