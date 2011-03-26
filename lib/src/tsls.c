@@ -602,12 +602,13 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     MODEL hmod;
     double URSS;
     int *HT_list = NULL;
-    int t, df, nobs1;
+    int t, df;
     int nv = pdinfo->v;
     int ku = 0;
     int err = 0;
 
 #if HTDBG
+    int nobs1;
     PRN *dbgprn = NULL;
     dbgprn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 #endif
@@ -634,6 +635,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 #if HTDBG
     pprintf(dbgprn, "Hausman: unrestricted model (df = %d)\n", hmod.dfd);
     printmodel(&hmod, pdinfo, OPT_NONE, dbgprn);
+    nobs1 = hmod.nobs;
 #endif
 
     if (hmod.dfd == 0) {
@@ -642,7 +644,6 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     }
 
     URSS = hmod.ess;
-    nobs1 = hmod.nobs;
     ku = hmod.ncoeff;
 
     /* add fitted values from unrestricted model to dataset */

@@ -3057,7 +3057,7 @@ static int sys_add_structural_form (equation_system *sys,
     int n = ne + ni;
     double x = 0.0;
     int type, col;
-    int i, j, k, vj, lag;
+    int i, j, vj, lag;
     int err = 0;
 
 #if SYSDEBUG
@@ -3094,7 +3094,6 @@ static int sys_add_structural_form (equation_system *sys,
 
     /* process stochastic equations */
 
-    k = 0;
     for (i=0; i<sys->neqns && !err; i++) {
 	const MODEL *pmod = sys->models[i];
 	const int *mlist = pmod->list;

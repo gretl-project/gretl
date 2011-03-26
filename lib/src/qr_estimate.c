@@ -1050,13 +1050,11 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 		 gretlopt opt)
 {
-    integer T, k;
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
     gretl_matrix *V = NULL;
-    int err = 0;
+    int k, err = 0;
 
-    T = pmod->nobs;               /* # of rows (observations) */
     k = pmod->list[0] - 1;        /* # of cols (variables) */
 
     Q = make_data_X(pmod, Z);

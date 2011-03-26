@@ -456,7 +456,6 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	int (*kdfunc) (const double *, int, const char *);
 	void *handle;
 	char label[48];
-	int err;
 
 	kdfunc = get_plugin_function("array_kernel_density", &handle);
 	if (kdfunc == NULL) {
@@ -471,7 +470,7 @@ static void bs_print_result (boot *bs, double *xi, int tail, PRN *prn)
 	    strcpy(label, _("bootstrap coefficient"));
 	} 
 
-	err = (*kdfunc)(xi, bs->B, label);
+	(*kdfunc)(xi, bs->B, label);
 	close_plugin(handle);
     }
 }

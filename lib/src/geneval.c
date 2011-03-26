@@ -3602,14 +3602,13 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 
     if (starting(p)) {
 	const double *x = NULL, *y = NULL;
-	int t1, t2;
+	int t1 = p->dinfo->t1;
+	int t2 = p->dinfo->t2;
 
 	if (l->t == VEC && r->t == VEC) {
 	    /* two series */
 	    x = l->v.xvec;
 	    y = r->v.xvec;
-	    t1 = p->dinfo->t1;
-	    t2 = p->dinfo->t2;
 	} else {
 	    /* two matrices */
 	    int n1 = gretl_vector_get_length(l->v.m);
@@ -4782,12 +4781,12 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 
     if (!p->err) {
 	const double *x = NULL;
-	int t1, t2, width = -1;
+	int t1 = p->dinfo->t1;
+	int t2 = p->dinfo->t2;
+	int width = -1;
 
 	if (l->t == VEC) {
 	    x = l->v.xvec;
-	    t1 = p->dinfo->t1;
-	    t2 = p->dinfo->t2;
 	} else if (l->t == MAT) {
 	    x = l->v.m->val;
 	    t1 = 0;

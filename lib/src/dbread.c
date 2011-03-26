@@ -3362,13 +3362,17 @@ weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
 	monbak = mon;
     }
 
-    /* flush the last observation */
+    if (err) {
+	mcount = 0;
+    } else {
+	/* flush the last observation */
 #if WEEKLY_DEBUG
-    fprintf(stderr, "month %d ('%d'), weekly obs = %d\n", 
-	    mcount, monbak, wcount);
+	fprintf(stderr, "month %d ('%d'), weekly obs = %d\n", 
+		mcount, monbak, wcount);
 #endif
-    *endyr = yr;
-    *endmon = mon;
+	*endyr = yr;
+	*endmon = mon;
+    }
 
     return mcount;
 }
@@ -3378,8 +3382,8 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 {
     double **mZ = NULL;
     DATAINFO minfo;
-    int startyr = 1, endyr;
-    int startmon = 1, endmon;
+    int startyr = 1, endyr = 1;
+    int startmon = 1, endmon = 1;
     int err = 0;
 
     minfo.n = weeks_to_months_check(pdinfo, &startyr, &endyr, &startmon, &endmon);

@@ -1972,10 +1972,9 @@ double rhohat (int order, int t1, int t2, const double *uhat)
 
 static int hatvar (MODEL *pmod, int n, const double **Z)
 {
-    int xno, i, t;
     int yno = pmod->list[1];
-    int ssize = 0;
-    double x, u, logs, s = 0.0;
+    int xno, i, t;
+    double x;
 
     for (t=0; t<n; t++) {
 	pmod->yhat[t] = pmod->uhat[t] = NADBL;
@@ -1998,13 +1997,8 @@ static int hatvar (MODEL *pmod, int n, const double **Z)
 	if (pmod->nwt) {
 	    x *= sqrt(Z[pmod->nwt][t]);
 	}
-        pmod->uhat[t] = u = x - pmod->yhat[t];
-	ssize++;
-	s += u*u;
+        pmod->uhat[t] = x - pmod->yhat[t];
     }
-
-    s = sqrt(s/ssize);
-    logs = log(s);
 
     return 0;
 }
@@ -3023,7 +3017,6 @@ static double get_BP_LM (MODEL *pmod, int *list, MODEL *aux,
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn)
 {
-    int lo, ncoeff, yno, t;
     int BP = (opt & OPT_B);
     int aux = AUX_NONE;
     int v = pdinfo->v;
@@ -3032,7 +3025,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int save_t2 = pdinfo->t2;
     double zz, LM;
     MODEL white;
-    int err = 0;
+    int t, err = 0;
 
     if (pmod->ci == IVREG) {
 	return tsls_hetero_test(pmod, pZ, pdinfo, opt, prn);
@@ -3069,10 +3062,6 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     gretl_model_init(&white);
-
-    lo = pmod->list[0];
-    yno = pmod->list[1];
-    ncoeff = pmod->ncoeff;    
 
     /* make space in data set */
     if (dataset_add_series(1, pZ, pdinfo)) {

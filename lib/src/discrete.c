@@ -419,6 +419,10 @@ static int opg_from_ascore (op_container *OC, gretl_matrix *GG)
     }
 
     ll = op_loglik(OC->theta, OC);
+    if (na(ll)) {
+	free(g0);
+	return E_DATA;
+    }
 
     for (j=0; j<k; j++) {
 	g0[j] = OC->g[j];
@@ -447,10 +451,11 @@ static int opg_from_ascore (op_container *OC, gretl_matrix *GG)
 
 static int ihess_from_ascore (op_container *OC, gretl_matrix *inH) 
 {
-    int i, j, err, k = OC->k;
     double smal = 1.0e-07;  /* "small" is some sort of macro on win32 */
     double smal2 = 2.0 * smal;
     double ti, x, ll, *g0;
+    int i, j, k = OC->k;
+    int err = 0;
 
     g0 = malloc(k * sizeof *g0);
     if (g0 == NULL) {
@@ -461,11 +466,21 @@ static int ihess_from_ascore (op_container *OC, gretl_matrix *inH)
 	ti = OC->theta[i];
 	OC->theta[i] -= smal;
 	ll = op_loglik(OC->theta, OC);
+	if (na(ll)) {
+	    OC->theta[i] = ti;
+	    err = E_DATA;
+	    break;
+	}
 	for (j=0; j<k; j++) {
 	    g0[j] = OC->g[j];
 	}
 	OC->theta[i] += smal2;
 	ll = op_loglik(OC->theta, OC);
+	if (na(ll)) {
+	    OC->theta[i] = ti; 
+	    err = E_DATA;
+	    break;
+	}	
 	for (j=0; j<k; j++) {
 	    x = (OC->g[j] - g0[j]) / smal2;
 	    gretl_matrix_set(inH, i, j, -x);
@@ -474,17 +489,14 @@ static int ihess_from_ascore (op_container *OC, gretl_matrix *inH)
 	OC->theta[i] = ti;
     }
 
-    gretl_matrix_xtr_symmetric(inH);
-
     free(g0);
 
-#if LPDEBUG
-    gretl_matrix_print(inH, "inverse of Hessian");
-#endif
-
-    err = gretl_invert_symmetric_matrix(inH);
-    if (err) {
-	fprintf(stderr, "ihess_from_ascore: failed to invert numerical Hessian\n");
+    if (!err) {
+	gretl_matrix_xtr_symmetric(inH);
+	err = gretl_invert_symmetric_matrix(inH);
+	if (err) {
+	    fprintf(stderr, "ihess_from_ascore: failed to invert numerical Hessian\n");
+	}	
     }
 
     return err;

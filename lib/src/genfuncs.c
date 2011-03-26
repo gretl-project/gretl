@@ -223,37 +223,31 @@ int rank_series (const double *x, double *y, int f,
 int diff_series (const double *x, double *y, int f, 
 		 const DATAINFO *pdinfo)
 {
-    int t1 = pdinfo->t1;
     int k = (f == F_SDIFF)? pdinfo->pd : 1;
-    int t, err = 0;
+    int t, t1 = pdinfo->t1;
 
     if (t1 < k) {
 	t1 = k;
     }
 
     for (t=t1; t<=pdinfo->t2; t++) {
-
 	if (dataset_is_panel(pdinfo) && t % pdinfo->pd == 0) {
 	    /* skip first observation in panel unit */
 	    continue;
 	}
-
 	if (na(x[t]) || na(x[t-k])) {
 	    continue;
 	}
-
 	if (f == F_DIFF || f == F_SDIFF) {
 	    y[t] = x[t] - x[t-k];
 	} else if (f == F_LDIFF) {
-	    if (x[t] <= 0.0 || x[t-k] <= 0.0) {
-		err = E_LOGS; /* FIXME: should be warning? */
-	    } else {
+	    if (x[t] > 0.0 && x[t-k] > 0.0) {
 		y[t] = log(x[t]) - log(x[t-k]);
-	    }
+	    } 
 	}
     }
 
-    return 0; /* see FIXME above */
+    return 0;
 }
 
 /**

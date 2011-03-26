@@ -1122,12 +1122,11 @@ static int set_workdir (const char *s)
 	err = E_DATA;
     } else {
 	char workdir[MAXLEN];
-	int n = 0;
 
 	if (*s == '"') {
-	    n = sscanf(s+1, "%511[^\"]", workdir);
+	    sscanf(s+1, "%511[^\"]", workdir);
 	} else {
-	    n = sscanf(s, "%511s", workdir);
+	    sscanf(s, "%511s", workdir);
 	}
 	if (workdir_callback != NULL) {
 	    err = (*workdir_callback)(workdir);

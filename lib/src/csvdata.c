@@ -721,8 +721,8 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
     if (sscanf(lbl1, "%d%c%d%c%d", &d1[0], &s1, &d1[1], &s2, &d1[2]) == 5 &&
 	sscanf(lbl2, "%d%c%d%c%d", &d2[0], &s1, &d2[1], &s2, &d2[2]) == 5 &&
 	s1 == s2 && ispunct(s1)) {
-	int yr1, mon1, day1;
-	int yr2, mon2, day2;
+	int mon1, day1;
+	int mon2, day2;
 	int pd, ret = 0;
 
 	dorder = get_date_order(d1[0], d2[0]);
@@ -731,28 +731,22 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, int *reversed,
 
 	if (dorder == YYYYMMDD) {
 	    pputs(prn, M_("Trying date order YYYYMMDD\n"));
-	    yr1 = d1[0];
 	    mon1 = d1[1];
 	    day1 = d1[2];
-	    yr2 = d2[0];
 	    mon2 = d2[1];
 	    day2 = d2[2];
 	} else if (dorder == DDMMYYYY) {
 	    pputs(prn, M_("Trying date order DDMMYYYY\n"));
 	    day1 = d1[0];
 	    mon1 = d1[1];
-	    yr1 = d1[2];
 	    day2 = d2[0];
 	    mon2 = d2[1];
-	    yr2 = d2[2];
 	} else {
 	    pputs(prn, M_("Trying date order MMDDYYYY\n"));
 	    mon1 = d1[0];
 	    day1 = d1[1];
-	    yr1 = d1[2];
 	    mon2 = d2[0];
 	    day2 = d2[1];
-	    yr2 = d2[2];
 	}		
 	    
 	if (mon1 > 0 && mon1 < 13 &&

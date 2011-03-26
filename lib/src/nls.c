@@ -1711,7 +1711,6 @@ static MODEL GNR (nlspec *spec, const double **Z, DATAINFO *pdinfo,
     int T = spec->nobs;
     int iters = spec->iters;
     int perfect = 0;
-    int err = 0;
 
 #if NLS_DEBUG
     fprintf(stderr, "GNR: T = %d\n", T);
@@ -1825,7 +1824,6 @@ static MODEL GNR (nlspec *spec, const double **Z, DATAINFO *pdinfo,
     if (gnr.errcode) {
 	pputs(prn, _("In Gauss-Newton Regression:\n"));
 	errmsg(gnr.errcode, prn);
-	err = 1;
     } 
 
     if (gnr.list[0] != glist[0]) {

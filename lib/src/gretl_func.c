@@ -4510,15 +4510,14 @@ static int parse_function_return (ufunc *fun, const char *line)
 {
     const char *s = line + 6; /* skip "return" */
     char s1[16], s2[VNAMELEN];
-    int type, n;
-    int err = 0;
+    int type, err = 0;
 
 #if FNPARSE_DEBUG
     fprintf(stderr, "parse_function_return: line = '%s'\n", line);
 #endif
 
-    n = sscanf(s, "%15s %15s", s1, s2);
-
+    *s1 = *s2 = '\0';
+    sscanf(s, "%15s %15s", s1, s2);
     type = return_type_from_string(s1);
 
     if (type > 0 && fun->rettype != GRETL_TYPE_NONE) {

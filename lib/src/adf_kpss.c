@@ -975,9 +975,9 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 	}
     }
 
-    if (Oi != NULL || order > 0 ) {
+    if (Oi != NULL || order > 0) {
 	/* non-zero lag order: use IPS's W_{tbar} statistic */
-	double E, V, Etbar, Vtbar, Wtbar;
+	double E, V, Wtbar, Etbar = 0, Vtbar = 0;
 	int order_i;
 
 	IPS_tbar_rho_moments = get_plugin_function("IPS_tbar_rho_moments", &handle);
@@ -1002,7 +1002,7 @@ static int do_IPS_test (double tbar, int n, const int *Ti,
 	}
     } else if (Tmax > Tmin) {
 	/* sample sizes differ: use IPS's Z_{tbar} */
-	double E, V, Etbar, Vtbar, Ztbar;
+	double E, V, Ztbar, Etbar = 0, Vtbar = 0;
 
 	IPS_tbar_moments = get_plugin_function("IPS_tbar_moments", &handle);
 
@@ -1568,7 +1568,7 @@ static int panel_kpss_test (int order, int v,
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
     int gt_10 = 0, lt_01 = 0;
     double pval;
-    int i, err;
+    int i, err = 0;
 
     /* run a KPSS test for each unit and record the
        results */

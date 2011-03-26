@@ -2244,7 +2244,6 @@ int transcribe_VAR_models (GRETL_VAR *var,
     char **params = NULL;
     int yno, N = pdinfo->n;
     int ecm = (var->ci == VECM);
-    const double *y;
     double x;
     int i, j, jmax;
     int err = 0;
@@ -2260,7 +2259,6 @@ int transcribe_VAR_models (GRETL_VAR *var,
 
     for (i=0; i<var->neqns && !err; i++) {
 	yno = var->ylist[i+1];
-	y = Z[yno];
 
 	pmod = var->models[i];
 	pmod->ID = i + 1;

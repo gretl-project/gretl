@@ -1101,7 +1101,7 @@ static int vmat_maxlen (VMatrix *vmat)
 void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 {
     register int i, j;
-    int nf, li2, p, k, m, idx, ij2;
+    int nf, li2, p, k, idx, ij2;
     int maxlen = 0;
     int fwidth = 14;
     int fields = 5;
@@ -1116,8 +1116,6 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	fields = 4;
 	fwidth = 16;
     }
-
-    m = 1;
 
     for (i=0; i<=vmat->dim/fields; i++) {
 	nf = i * fields;

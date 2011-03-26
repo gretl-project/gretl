@@ -2734,8 +2734,8 @@ octave_varname (char *name, const char *s, int nnum, int v)
 
 static int get_max_line_length (FILE *fp, PRN *prn)
 {
-    int c, c1, cbak = 0, cc = 0;
-    int comment = 0, maxlen = 0;
+    int c, c1, cc = 0;
+    int maxlen = 0;
 
     while ((c = fgetc(fp)) != EOF) {
 	if (c == 0x0d) {
@@ -2759,15 +2759,11 @@ static int get_max_line_length (FILE *fp, PRN *prn)
 	    cc = 0;
 	    continue;
 	}
-	cbak = c;
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
 	    !(c == CTRLZ)) {
 	    pprintf(prn, M_("Binary data (%d) encountered: this is not a valid "
 			   "text file\n"), c);
 	    return -1;
-	}
-	if (cc == 0) {
-	    comment = (c == '#');
 	}
 	cc++;
     }
@@ -3185,7 +3181,6 @@ int gretl_is_pkzip_file (const char *fname)
 GretlFileType detect_filetype (char *fname, gretlopt opt)
 {
     int i, c, ftype = GRETL_NATIVE_DATA;
-    char teststr[5];
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
@@ -3258,13 +3253,9 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 	    ftype = GRETL_NATIVE_DATA; /* native binary data? */
 	    break;
 	}
-	if (i < 4) {
-	    teststr[i] = c;
-	}
     }
 
     fclose(fp);
-    teststr[4] = 0;
 
     return ftype;
 }

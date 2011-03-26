@@ -790,7 +790,7 @@ static int real_push_option_param (int ci, gretlopt opt, char *val,
 	    "err = %d\n", op->val, n_parms, err);
 #endif
 
-    return 0;
+    return err;
 }
 
 /**
