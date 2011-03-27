@@ -140,7 +140,7 @@ void text_replace (GtkWidget *w, windata_t *vwin)
     gchar *selbuf = NULL;
     char *modbuf = NULL;
     int count = 0;
-    size_t sz, fullsz, len, diff;
+    size_t fullsz, len, diff;
     char *p, *q;
     gchar *tmp;
     struct search_replace s;
@@ -178,7 +178,6 @@ void text_replace (GtkWidget *w, windata_t *vwin)
 	goto cleanup;
     }
 
-    sz = strlen(buf);
     fullsz = strlen(fullbuf);
 
     len = strlen(s.find);

@@ -1250,7 +1250,7 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
     GtkWidget *w;
     GtkTreeModel *mod;
     GtkTreeIter iter;
-    int locus, append = 1;
+    int append = 1;
     int modv, row = 0;
     int jmin = 0, jmax = 1;
     int i, j;
@@ -1271,8 +1271,6 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
 	    return;
 	}
 
-	locus = (j > 0)? SR_RVARS2: SR_RVARS1;
-	
 	mod = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
 
 	if (lcontext == 0) {
@@ -6907,7 +6905,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     GtkWidget *tbl, *tmp, *vbox, *hbox;
     GtkWidget *y_check = NULL;
     gint tbl_len;
-    double lmax, ldef;
+    double lmax;
     int VAR_special, insts;
     int i, j;
     int ret = GRETL_CANCEL;
@@ -6924,7 +6922,6 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     insts = in_gretl_list(list, LAG_W);
 
     lmax = (datainfo->t2 - datainfo->t1) / list[0];
-    ldef = datainfo->pd;
 
     if (VAR_special) {
 	/* allow for gaps in VAR lag order */

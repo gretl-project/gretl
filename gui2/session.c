@@ -719,7 +719,7 @@ static int add_model_to_session (void *ptr, const char *name,
 	view_session();
     }
 
-    return 0;
+    return err;
 }
 
 static int replace_session_graph (SESSION_GRAPH *graph,

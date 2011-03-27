@@ -1016,7 +1016,7 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	fputs(buf, fp);
     } else {
 #ifdef G_OS_WIN32
-      int gotpause = 0;
+	int gotpause = 0;
 #endif
 	gchar *trbuf;
 	char bufline[512];

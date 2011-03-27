@@ -661,12 +661,10 @@ void text_zoom (GtkAction *action, gpointer data)
     const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) data;
     GtkTextBuffer *tbuf;
-    GtkTextTagTable *table;
     static PangoFontDescription *hpf;
     static gint fsize;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-    table = gtk_text_buffer_get_tag_table(tbuf);
 
     if (hpf == NULL) {
 	hpf = pango_font_description_copy(fixed_font);
@@ -1249,13 +1247,10 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 {
     static gboolean hovering_over_link = FALSE;
     GSList *tags = NULL, *tagp = NULL;
-    GtkTextBuffer *tbuf;
     GtkTextIter iter;
     gboolean hovering = FALSE;
 
-    tbuf = gtk_text_view_get_buffer(view);
     gtk_text_view_get_iter_at_location(view, &iter, x, y);
-  
     tags = gtk_text_iter_get_tags(&iter);
 
     for (tagp = tags; tagp != NULL; tagp = tagp->next) {
@@ -1271,7 +1266,6 @@ set_cursor_if_appropriate (GtkTextView *view, gint x, gint y)
 
     if (hovering != hovering_over_link) {
 	hovering_over_link = hovering;
-
 	if (hovering_over_link) {
 	    gdk_window_set_cursor(gtk_text_view_get_window(view, GTK_TEXT_WINDOW_TEXT), 
 				  hand_cursor);
