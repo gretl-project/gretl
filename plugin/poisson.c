@@ -382,8 +382,12 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
 
     pmod->ci = NEGBIN;
 
-    gretl_model_set_int(pmod, "fncount", fncount);
-    gretl_model_set_int(pmod, "grcount", grcount);
+    if (grcount > 0) {
+	gretl_model_set_int(pmod, "fncount", fncount);
+	gretl_model_set_int(pmod, "grcount", grcount);
+    } else {
+	gretl_model_set_int(pmod, "iters", fncount);
+    }
 
     if (oinfo != NULL) {
 	gretl_model_set_int(pmod, "offset_var", oinfo->vnum);
@@ -461,27 +465,42 @@ static int do_negbin (MODEL *pmod, offset_info *oinfo,
     gretl_matrix *H = NULL;
     negbin_info nbinfo;
     double toler;
-    int maxit;
+    int maxit = 100;
     int fncount = 0;
     int grcount = 0;
+    int use_newton = 0;
     int err = 0;
+
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
+	use_newton = 1;
+    }
 
     err = negbin_init(&nbinfo, pmod, Z, oinfo, opt, prn);
 
-    if (!err) {
-	/* to initialize BFGS curvature */
+    if (!err && !use_newton) {
+	/* initialize BFGS curvature */
 	H = negbin_init_H(&nbinfo);
     }
 
-    if (!err) {
+    if (!err && use_newton) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+
+	nbinfo.flags = SCORE_UPDATE_MU;
+	err = newton_raphson_max(nbinfo.theta, nbinfo.k + 1, maxit, 
+				 crittol, gradtol, &fncount, 
+				 C_LOGLIK, negbin_loglik, 
+				 negbin_score, NULL, 
+				 &nbinfo, max_opt, nbinfo.prn);
+	nbinfo.flags = 0;
+    } else if (!err) {
 	BFGS_defaults(&maxit, &toler, NEGBIN);
 	err = BFGS_max(nbinfo.theta, nbinfo.k + 1, maxit, toler, 
 		       &fncount, &grcount, negbin_loglik, C_LOGLIK,
 		       negbin_score, &nbinfo, H, max_opt, 
 		       nbinfo.prn);
+	gretl_matrix_free(H);
     }
-
-    gretl_matrix_free(H);
 
     if (!err) {
 	err = transcribe_negbin_results(pmod, &nbinfo, Z, pdinfo, 
