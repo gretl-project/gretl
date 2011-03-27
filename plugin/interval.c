@@ -298,7 +298,6 @@ static double int_loglik (const double *theta, void *ptr)
     double x0, x1, z0, z1;
     double derivs = 0.0, derivb = 0.0;
     double sigma, ndxt, ll = 0.0;
-    double dP, f0, f1;
     int i, t, k = IC->k;
 
     sigma = exp(theta[k-1]);
@@ -313,9 +312,6 @@ static double int_loglik (const double *theta, void *ptr)
 	x0 = IC->lo[t];
 	x1 = IC->hi[t];
 	ndxt = IC->ndx[t];
-	dP   = IC->dP[t];
-	f0   = IC->f0[t];
-	f1   = IC->f1[t];
 
 	switch (IC->obstype[t]) {
 	case INT_LOW:
@@ -382,7 +378,7 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
     double z0 = 0, z1 = 0, mu = 0;
     double q0 = 0, q1 = 0, nu = 0;
     double x, vij, x0, x1;    
-    double dP, f0, f1, Hss = 0;
+    double f0, f1, Hss = 0;
     double sigma, ndxt, lambda = 0;
     int i, j, t, k = IC->k;
     int err = 0;
@@ -408,7 +404,6 @@ int int_ahess (double *theta, gretl_matrix *V, void *ptr)
 	x0 = IC->lo[t];
 	x1 = IC->hi[t];
 	ndxt = IC->ndx[t];
-	dP = IC->dP[t];
 	f0 = IC->f0[t];
 	f1 = IC->f1[t];
 
@@ -794,7 +789,8 @@ static int add_norm_test_to_model (MODEL *pmod, double X2)
 }
 
 static int fill_intreg_model (int_container *IC, gretl_matrix *V,
-			      int iters, const DATAINFO *pdinfo,
+			      int fncount, int grcount,
+			      const DATAINFO *pdinfo,
 			      gretlopt opt)
 {
     MODEL *pmod = IC->pmod;
@@ -847,7 +843,15 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     pmod->fstt = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
 
-    gretl_model_set_int(pmod, "iters", iters);
+    if (grcount > 0) {
+	/* BFGS */
+	gretl_model_set_int(pmod, "fncount", fncount);
+	gretl_model_set_int(pmod, "grcount", grcount);
+    } else {
+	/* Newton */
+	gretl_model_set_int(pmod, "iters", fncount);
+    }
+
     gretl_model_set_int(pmod, "n_left", IC->typecount[0]);
     gretl_model_set_int(pmod, "n_right", IC->typecount[2]);
 
@@ -876,22 +880,15 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     return 0;
 }
 
-#define USE_NEWTON 1
-
 static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
 			MODEL *mod, gretlopt opt, PRN *prn) 
 {
-#if USE_NEWTON
-    double crittol = 1.0e-07;
-    double gradtol = 1.0e-07;
-#else
-    int grcount = 0;
-#endif
     int_container *IC;
     gretl_matrix *V = NULL;
-    int maxit, fncount;
+    int maxit, fncount, grcount = 0;
     double toler, normtest = NADBL;
     gretlopt maxopt = opt & OPT_V;
+    int use_bfgs = 0;
     int err = 0;
 
     IC = int_container_new(list, Z, pdinfo, mod);
@@ -901,15 +898,22 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 
     BFGS_defaults(&maxit, &toler, INTREG);
 
-#if USE_NEWTON
-    err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
-			     &fncount, C_LOGLIK, int_loglik, 
-			     int_score, int_ahess, IC, maxopt, prn);
-#else
-    err = BFGS_max(IC->theta, IC->k, maxit, toler, 
-		   &fncount, &grcount, int_loglik, C_LOGLIK,
-		   int_score, IC, NULL, maxopt, prn);
-#endif
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
+	use_bfgs = 1;
+    }    
+
+    if (use_bfgs) {
+	err = BFGS_max(IC->theta, IC->k, maxit, toler, 
+		       &fncount, &grcount, int_loglik, C_LOGLIK,
+		       int_score, IC, NULL, maxopt, prn);
+    } else {
+	double crittol = 1.0e-07;
+	double gradtol = 1.0e-07;
+	
+	err = newton_raphson_max(IC->theta, IC->k, maxit, crittol, gradtol,
+				 &fncount, C_LOGLIK, int_loglik, 
+				 int_score, int_ahess, IC, maxopt, prn);
+    }
 
     if (!err) {
 	IC->ll = int_loglik(IC->theta, IC);
@@ -920,7 +924,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = fill_intreg_model(IC, V, fncount, pdinfo, opt);
+	err = fill_intreg_model(IC, V, fncount, grcount, pdinfo, opt);
     }
 
     if (!err) {

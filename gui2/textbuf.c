@@ -660,11 +660,8 @@ void text_zoom (GtkAction *action, gpointer data)
 {
     const gchar *s = gtk_action_get_name(action);
     windata_t *vwin = (windata_t *) data;
-    GtkTextBuffer *tbuf;
     static PangoFontDescription *hpf;
     static gint fsize;
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
 
     if (hpf == NULL) {
 	hpf = pango_font_description_copy(fixed_font);

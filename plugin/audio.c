@@ -490,9 +490,12 @@ static int get_data_x_y (const char *line, double *x, double *y)
 
 static int read_datafile (const char *fname, dataset *dset)
 {
+#ifdef PLAY_AUTOFIT_LINE
+    int fitline = 0;
+#endif
     char line[256];
     int i, err = 0;
-    int got_e = 0, y2data = 0, fitline = 0;
+    int got_e = 0, y2data = 0;
     FILE *fdat;
 
     dataset_init(dset);
@@ -517,7 +520,10 @@ static int read_datafile (const char *fname, dataset *dset)
 		break;
 	    }
 	} else if (strstr(line, "automatic fitted")) {
+#ifdef PLAY_AUTOFIT_LINE
 	    fitline = 1;
+#endif
+	    continue;
 	} else if (isdigit((unsigned char) line[0])) {
 	    if (strstr(line, "title")) {
 #ifdef PLAY_AUTOFIT_LINE

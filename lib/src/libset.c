@@ -87,6 +87,7 @@ struct set_vars_ {
     int loop_maxiter;           /* max no. of iterations in non-for loops */
     char delim;                 /* delimiter for CSV data export */
     int vecm_norm;              /* VECM beta normalization */
+    int optim;                  /* code for preferred optimizer */
     int bfgs_maxiter;           /* max iterations, BFGS */         
     double bfgs_toler;          /* convergence tolerance, BFGS */
     double bfgs_maxgrad;        /* max acceptable gradient norm, BFGS */
@@ -150,6 +151,7 @@ struct set_vars_ {
 		       !strcmp(s, LOOP_MAXITER) || \
                        !strcmp(s, RQ_MAXITER) || \
 		       !strcmp(s, VECM_NORM) || \
+		       !strcmp(s, GRETL_OPTIM) || \			     
 		       !strcmp(s, GRETL_DEBUG) || \
 		       !strcmp(s, BLAS_NMK_MIN))
 
@@ -226,6 +228,13 @@ static const char *vecm_norm_strs[] = {
     NULL
 };
 
+static const char *optim_strs[] = {
+    "auto",
+    "BFGS",
+    "newton",
+    NULL
+};
+
 static const char *normal_rand_strs[] = {
     "ziggurat",
     "box-muller",
@@ -250,6 +259,8 @@ static const char **libset_option_strings (const char *s)
 	return hc_version_strs;
     } else if (!strcmp(s, VECM_NORM)) {
 	return vecm_norm_strs;
+    } else if (!strcmp(s, GRETL_OPTIM)) {
+	return optim_strs;
     } else if (!strcmp(s, NORMAL_RAND)) {
 	return normal_rand_strs;
     } else if (!strcmp(s, RNG)) {
@@ -300,6 +311,8 @@ static const char *libset_option_string (const char *s)
 	return hc_version_strs[state->ropts.hc_version];
     } else if (!strcmp(s, VECM_NORM)) {
 	return vecm_norm_strs[state->vecm_norm];
+    } else if (!strcmp(s, GRETL_OPTIM)) {
+	return optim_strs[state->optim];
     } else if (!strcmp(s, NORMAL_RAND)) {
 	return normal_rand_strs[gretl_rand_get_box_muller()];
     } else if (!strcmp(s, RNG)) {
@@ -365,6 +378,7 @@ static void state_vars_copy (set_vars *sv)
     sv->nls_toler = state->nls_toler;
     sv->delim = state->delim; 
     sv->vecm_norm = state->vecm_norm;
+    sv->optim = state->optim;
     sv->bfgs_maxiter = state->bfgs_maxiter;
     sv->bfgs_toler = state->bfgs_toler;
     sv->bfgs_maxgrad = state->bfgs_maxgrad;
@@ -399,6 +413,7 @@ static void state_vars_init (set_vars *sv)
     sv->gmm_maxiter = 250;
     sv->delim = UNSET_INT;
     sv->vecm_norm = NORM_PHILLIPS;
+    sv->optim = OPTIM_AUTO;
     sv->initvals = NULL;
     sv->matmask = NULL;
 
@@ -815,11 +830,20 @@ static int parse_libset_int_code (const char *key,
 		break;
 	    }
 	}
+    } else if (!g_ascii_strcasecmp(key, GRETL_OPTIM)) {
+	for (i=0; i<OPTIM_MAX; i++) {
+	    if (!g_ascii_strcasecmp(val, optim_strs[i])) {
+		state->optim = i;
+		err = 0;
+		break;
+	    }
+	}	
     } else if (!g_ascii_strcasecmp(key, NORMAL_RAND)) {
 	for (i=0; normal_rand_strs[i] != NULL; i++) {
 	    if (!g_ascii_strcasecmp(val, normal_rand_strs[i])) {
 		gretl_rand_set_box_muller(i);
 		err = 0;
+		break;
 	    }
 	}
     } else if (!g_ascii_strcasecmp(key, RNG)) {
@@ -827,6 +851,7 @@ static int parse_libset_int_code (const char *key,
 	    if (!g_ascii_strcasecmp(val, RNG_strs[i])) {
 		gretl_rand_set_sfmt(i);
 		err = 0;
+		break;
 	    }
 	}
     }	
@@ -1184,6 +1209,7 @@ static void libset_print_bool (const char *s, PRN *prn,
 			 !strcmp(s, HAC_KERNEL) || \
                          !strcmp(s, HC_VERSION) || \
 			 !strcmp(s, VECM_NORM) || \
+			 !strcmp(s, GRETL_OPTIM) || \
 			 !strcmp(s, NORMAL_RAND) || \
                          !strcmp(s, RNG))
 
@@ -1301,6 +1327,7 @@ static int print_settings (PRN *prn, gretlopt opt)
 
     libset_header(N_("Numerical methods"), prn, opt);
 
+    libset_print_int(GRETL_OPTIM, prn, opt);
     libset_print_int(BFGS_MAXITER, prn, opt);
     libset_print_double(BFGS_TOLER, prn, opt);
     libset_print_double(BFGS_MAXGRAD, prn, opt);
@@ -1702,6 +1729,8 @@ int libset_get_int (const char *key)
 	return state->loop_maxiter;
     } else if (!strcmp(key, VECM_NORM)) {
 	return state->vecm_norm;
+    } else if (!strcmp(key, GRETL_OPTIM)) {
+	return state->optim;
     } else if (!strcmp(key, GRETL_DEBUG)) {
 	return gretl_debug;
     } else if (!strcmp(key, BLAS_NMK_MIN)) {
@@ -1759,6 +1788,10 @@ static int intvar_min_max (const char *s, int *min, int *max,
 	*min = 0;
 	*max = NORM_MAX;
 	*var = &state->vecm_norm;
+    } else if (!strcmp(s, GRETL_OPTIM)) {
+	*min = 0;
+	*max = OPTIM_MAX;
+	*var = &state->optim;
     } else if (!strcmp(s, GRETL_DEBUG)) {
 	*min = 0;
 	*max = 4;

@@ -1316,7 +1316,6 @@ static gretl_matrix *heckit_init_H (double *theta,
 
 int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 {
-    int do_newton = (opt & OPT_N);
     gretl_matrix *H = NULL;
     gretl_matrix *init_H = NULL;
     int maxit, fncount, grcount;
@@ -1324,6 +1323,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     double *hess = NULL;
     double *theta = NULL;
     int i, j, np = HC->kmain + HC->ksel + 2;
+    int use_bfgs = 0;
     int err = 0;
 
     theta = malloc(np * sizeof *theta);
@@ -1349,48 +1349,42 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
 
     theta[np-1] = atanh(rho);
 
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
+	use_bfgs = 1;
+    }
+
     BFGS_defaults(&maxit, &toler, HECKIT);
 
 #if INITH_OPG
-    if (!do_newton) {
+    if (use_bfgs) {
 	init_H = heckit_init_H(theta, HC, np);
     }
 #endif
 
-    if (do_newton) {
+    if (use_bfgs) {
+	err = BFGS_max(theta, np, maxit, toler, &fncount, 
+		       &grcount, h_loglik, C_LOGLIK,
+		       heckit_score, HC, init_H,
+		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+    } else {	
 	gretlopt maxopt = opt & OPT_V;
 
 	err = newton_raphson_max(theta, np, maxit, toler, gradtol,
 				 &fncount, C_LOGLIK, h_loglik, 
 				 heckit_score, heckit_hessian,
 				 HC, maxopt, prn);
-#if 0
-	if (err == E_NOTPD) {
-	    pprintf(prn, "Hessian not pd: switching from Newton to BFGS\n");
-	    do_newton = 0;
-	    err = BFGS_max(theta, np, maxit, toler, &fncount, 
-			   &grcount, h_loglik, C_LOGLIK,
-			   heckit_score, HC, init_H,
-			   (prn != NULL)? OPT_V : OPT_NONE, prn);
-	}
-#endif
-    } else {
-	err = BFGS_max(theta, np, maxit, toler, &fncount, 
-		       &grcount, h_loglik, C_LOGLIK,
-		       heckit_score, HC, init_H,
-		       (prn != NULL)? OPT_V : OPT_NONE, prn);
-    }
+    } 
 
     gretl_matrix_free(init_H);
 
     if (!err) {
 	HC->ll = hm->lnL = h_loglik(theta, HC);
-	if (do_newton) {
-	    gretl_model_set_int(hm, "iters", fncount);
-	} else {
+	if (use_bfgs) {
 	    gretl_model_set_int(hm, "fncount", fncount);	
 	    gretl_model_set_int(hm, "grcount", grcount);
-	}	
+	} else {	    
+	    gretl_model_set_int(hm, "iters", fncount);
+	} 	
 	HC->lambda = HC->sigma * HC->rho;
 
 	H = gretl_matrix_alloc(np, np);

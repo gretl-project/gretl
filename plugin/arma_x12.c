@@ -202,7 +202,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 {
     FILE *fp;
     char line[80], statname[12];
-    int nobs = 0, nefobs = 0;
+    int nefobs = 0;
     double x;
 
     fp = gretl_fopen(fname, "r");
@@ -217,8 +217,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
-	    if (!strcmp(statname, "nobs")) nobs = (int) x;
-	    else if (!strcmp(statname, "nefobs")) nefobs = (int) x;
+	    if (!strcmp(statname, "nefobs")) nefobs = (int) x;
 	    else if (!strcmp(statname, "var")) pmod->sigma = sqrt(x);
 	    else if (!strcmp(statname, "lnlkhd")) pmod->lnL = x;
 	    else if (!strcmp(statname, "aic")) pmod->criterion[C_AIC] = x;

@@ -555,12 +555,8 @@ gtk_fontsel_hack_new (void)
 static void
 gtk_fontsel_hack_finalize (GObject *object)
 {
-    GtkFontselHack *fontsel;
-  
     g_return_if_fail(GTK_IS_FNTHACK(object));
   
-    fontsel = GTK_FNTHACK(object);
-
     (* G_OBJECT_CLASS (gtk_fontsel_hack_parent_class)->finalize) (object);
 }
 
@@ -641,7 +637,6 @@ gtk_fontsel_hack_select_font (GtkTreeSelection *selection,
     GtkFontselHack *fontsel;
     GtkTreeModel *model;
     GtkTreeIter iter;
-    const gchar *family_name;
   
     fontsel = GTK_FNTHACK (data);
 
@@ -651,7 +646,6 @@ gtk_fontsel_hack_select_font (GtkTreeSelection *selection,
 	gtk_tree_model_get (model, &iter, FAMILY_COLUMN, &family, -1);
 	if (fontsel->family != family) {
 	    fontsel->family = family;
-	    family_name = pango_font_family_get_name (fontsel->family);
 	    gtk_fontsel_hack_show_available_styles (fontsel);
 	    gtk_fontsel_hack_select_best_style (fontsel, TRUE);
 	}
@@ -1074,12 +1068,10 @@ gtk_fontsel_hack_show_available_sizes (GtkFontselHack *fontsel,
 {
     size_t i;
     GtkListStore *model;
-    GtkTreeSelection *selection;
     gchar buffer[128];
     gchar *p;
       
     model = GTK_LIST_STORE (gtk_tree_view_get_model (GTK_TREE_VIEW (fontsel->size_list)));
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (fontsel->size_list));
 
     /* Insert the standard font sizes */
     if (first_time) {
@@ -1110,6 +1102,7 @@ gtk_fontsel_hack_show_available_sizes (GtkFontselHack *fontsel,
 
 	if (!found) {
 	    GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (fontsel->size_list));
+
 	    gtk_tree_selection_unselect_all (selection);
 	}
     }

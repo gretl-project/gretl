@@ -43,18 +43,14 @@ static int stepy_ (integer *n, integer *p, doublereal *a,
 		   doublereal *d, doublereal *b, doublereal *ada, 
 		   integer *info)
 {
-    /* System generated locals */
     integer a_dim1 = *p, ada_dim1 = *p;
     integer a_offset = 1 + a_dim1, ada_offset = 1 + ada_dim1;
-    integer i, j, k, pp;
+    integer i, j, k;
 
     /* Parameter adjustments */
     --d;
     ada -= ada_offset;
     a -= a_offset;
-
-    /* Function Body */
-    pp = *p * *p;
 
     for (j = 1; j <= *p; ++j) {
 	for (k = 1; k <= *p; ++k) {
@@ -89,7 +85,7 @@ static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__,
 
     /* Local variables */
     static doublereal g;
-    static integer i, pp;
+    static integer i;
     static doublereal mu, gap;
     static doublereal dsdw, dxdz;
     static doublereal deltad, deltap;
@@ -120,7 +116,6 @@ static int lpfnb_ (integer *n, integer *p, doublereal *a, doublereal *c__,
     nit[1] = 0;
     nit[2] = 0;
     nit[3] = *n;
-    pp = *p * *p;
     dgemv_("N", p, n, &c_b4, &a[a_offset], p, &c__[1], &one, &zero, &y[1], &
 	   one, (ftnlen) 1);
     for (i = 1; i <= *n; ++i) {

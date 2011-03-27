@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "matrix_extra.h"
 #include "gretl_bfgs.h"
+#include "libset.h"
 #include "missing_private.h"
 
 #define BIPDEBUG 0
@@ -968,8 +969,6 @@ static double *make_bp_theta (bp_container *bp, int *err)
 /* Actual likelihood maximization and post-estimation                     */
 /* ---------------------------------------------------------------------- */
 
-#define USE_NEWTON 1
-
 static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 {
     double crittol = 1.0e-06;
@@ -984,20 +983,20 @@ static int bp_do_maxlik (bp_container *bp, gretlopt opt, PRN *prn)
 	return err;
     }
 
-#if USE_NEWTON
-    err = newton_raphson_max(theta, bp->npar, maxit, crittol, gradtol,
-			     &fncount, C_LOGLIK, biprob_loglik, 
-			     biprob_score, biprobit_hessian,
-			     bp, maxopt, prn);
-#else
-    int grcount;
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
+	int grcount = 0;
 
-    crittol = 1.0e-11;
-    err = BFGS_max(theta, bp->npar, maxit, crittol, &fncount, 
-		   &grcount, biprob_loglik, C_LOGLIK,
-		   biprob_score, bp, NULL,
-		   maxopt, prn);
-#endif
+	crittol = 1.0e-11;
+	err = BFGS_max(theta, bp->npar, maxit, crittol, &fncount, 
+		       &grcount, biprob_loglik, C_LOGLIK,
+		       biprob_score, bp, NULL,
+		       maxopt, prn);
+    } else {	
+	err = newton_raphson_max(theta, bp->npar, maxit, crittol, gradtol,
+				 &fncount, C_LOGLIK, biprob_loglik, 
+				 biprob_score, biprobit_hessian,
+				 bp, maxopt, prn);
+    }
 
     free(theta);
 

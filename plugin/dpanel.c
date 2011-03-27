@@ -22,8 +22,6 @@
 #define DPDEBUG 0
 #define IVDEBUG 0
 
-#define ALT_COL_ADJ 1
-
 /* Populate the residual vector, dpd->uhat. In the system case
    we stack the residuals in levels under the residuals in
    differences, per unit. Calculate SSR and \sigma^2 while
@@ -480,7 +478,6 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 	dpd->max_ni += dpd->max_ni - 1;
     }   
 
-#if ALT_COL_ADJ
     dpd->dcols = dpd->t2max - t1dif + 1;
     dpd->dcolskip = dpd->p + 1;
     if (t1dif > dpd->dcolskip) {
@@ -488,12 +485,6 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
     }
     dpd->lcolskip = (t1lev > dpd->p)? t1lev : dpd->p;
     dpd->lcol0 = dpd->dcols - dpd->lcolskip;
-#else
-    dpd->dcols = dpd->t2max - dpd->p + 1;
-    dpd->dcolskip = dpd->p + 1;
-    dpd->lcolskip = dpd->p;
-    dpd->lcol0 = dpd->T - dpd->p - (dpd->p + 1);
-#endif
 
     /* sum the total observations overall */
     dpd->totobs = dpd->ndiff + dpd->nlev;
@@ -600,8 +591,7 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 {
     const double *y = Z[dpd->yno];
     int i, usable = goodobs[0] - 1;
-    int col_adj;
-    int t0, t1, i0, i1;
+    int t0, t1, i0, i1, ycol;
     double dy;
 
     gretl_matrix_zero(Yi);
@@ -613,13 +603,14 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	t0 = t + i0;
 	t1 = t + i1;
 	dy = y[t1] - y[t0];
-	if (i1 - dpd->dcolskip >= Yi->cols) {
+	ycol = i1 - dpd->dcolskip;
+	if (ycol >= Yi->cols) {
 	    fprintf(stderr, "Bzzt! scribbling off the end of Yi (diffs)\n"
 		    " Yi->cols = %d; i1 - dcolskip = %d - %d = %d\n", 
-		    Yi->cols, i1, dpd->dcolskip, i1 - dpd->dcolskip);
+		    Yi->cols, i1, dpd->dcolskip, ycol);
 	    return E_DATA;
 	} else {
-	    gretl_vector_set(Yi, i1 - dpd->dcolskip, dy);
+	    gretl_vector_set(Yi, ycol, dy);
 	}
     }
     
@@ -628,15 +619,16 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
 	for (i=0; i<=usable; i++) {
 	    i1 = goodobs[i+1];
 	    t1 = t + i1;
-	    if (i1 + col_adj >= Yi->cols) {
+	    ycol = i1 + dpd->lcol0;
+	    if (ycol >= Yi->cols) {
 		fprintf(stderr, "Bzzt! scribbling off the end of Yi (levels)\n"
 			" Yi->cols = %d; i1 + lcol0 = %d + %d = %d\n", 
-			Yi->cols, i1, dpd->lcol0, i1 + dpd->lcol0);
+			Yi->cols, i1, dpd->lcol0, ycol);
 		fprintf(stderr, " note: dpd->t1min = %d, 1 + dpd->p = %d\n",
 			dpd->t1min, 1 + dpd->p);
 		return E_DATA;
 	    } else {
-		gretl_vector_set(Yi, i1 + dpd->lcol0, y[t1]);
+		gretl_vector_set(Yi, ycol, y[t1]);
 	    }
 	}
     }

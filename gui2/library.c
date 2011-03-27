@@ -2497,7 +2497,7 @@ void do_vif (GtkAction *action, gpointer p)
 	return;
     }	
 	
-    err = (*print_vifs)(pmod, Z, pdinfo, prn);
+    err = (*print_vifs)(pmod, *pZ, pdinfo, prn);
     close_plugin(handle);
 
     if (err) {
@@ -5944,7 +5944,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
     free(xlist);
 
-    err = gnuplot_3d(list, NULL, Z, pdinfo, GPT_GUI | GPT_FA);
+    err = gnuplot_3d(list, NULL, *pZ, pdinfo, GPT_GUI | GPT_FA);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));

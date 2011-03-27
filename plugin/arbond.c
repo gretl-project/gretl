@@ -687,7 +687,6 @@ arbond_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
     unit_info *unit = &dpd->ui[i];
     int t1i = dpd->T - 1, t2i = 0; 
     int tmin = dpd->p + 1;
-    int Ti = 0;
     int t;
 
 #if ADEBUG
@@ -721,8 +720,6 @@ arbond_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
 	return 0;
     }
 
-    Ti = t2i - t1i + 1;
-
     if (unit->nobs > dpd->maxTi) {
 	dpd->maxTi = unit->nobs;
     }
@@ -742,7 +739,7 @@ arbond_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
 
 #if ADEBUG
     fprintf(stderr, "t1 = %d, t2 = %d, Ti = %d, usable obs = %d\n", 
-	    t1i, t2i, Ti, unit->nobs);
+	    t1i, t2i, t2i - t1i + 1, unit->nobs);
 #endif
 
     return 0;

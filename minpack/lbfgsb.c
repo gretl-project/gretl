@@ -1687,16 +1687,9 @@ static int lnsrlb_(int *n, double *l, double *u,
     return 0;
 } /* lnsrlb_ */
 
-static void timer_(double *ttime)
-{
-    clock_t tim = clock();
-    *ttime = (double) tim / CLOCKS_PER_SEC;
-} /* timer_ */
-
 static double dpmeps_(void)
 {
     /* Initialized data */
-
     static double zero = 0.;
     static double one = 1.;
     static double two = 2.;
@@ -2070,14 +2063,12 @@ static int mainlb_(int *n, int *m, double *x,
     int col;
     double tol;
     int wrk;
-    double stp, cpu1, cpu2;
+    double stp;
     int head;
     double fold = 0;
     double ddum;
     int info;
-    double time;
     int nfgv, iter, nint, ifun = 0;
-    double time1, time2;
     int iback = 0;
     double gdold = 0;
     int nfree;
@@ -2087,16 +2078,13 @@ static int mainlb_(int *n, int *m, double *x,
     int nskip;
     double xstep, stpmx = 0;
     int ileave;
-    double cachyt;
     double epsmch;
     int updatd;
-    double sbtime;
     int prjctd;
     int iupdat;
     int cnstnd;
     double sbgnrm;
     int nenter;
-    double lnscht;
     int nintol;
 
     static int iword, itail, nact, itfile;
@@ -2149,7 +2137,6 @@ static int mainlb_(int *n, int *m, double *x,
 
     /* Function Body */
     if (strncmp(task, "START", 5) == 0) {
-	timer_(&time1);
 	epsmch = dpmeps_();
 	col = 0;
 	head = 1;
@@ -2169,9 +2156,6 @@ static int mainlb_(int *n, int *m, double *x,
 #else
 	tol = *factr / 100.0;
 #endif
-	cachyt = 0.;
-	sbtime = 0.;
-	lnscht = 0.;
 	info = 0;
 	errclb_(n, m, factr, &l[1], &u[1], &nbd[1], task, &info, &k);
 	if (strncmp(task, "ERROR", 5) == 0) {
@@ -2207,11 +2191,6 @@ static int mainlb_(int *n, int *m, double *x,
 	tol = dsave[3];
 	dnorm = dsave[4];
 	epsmch = dsave[5];
-	cpu1 = dsave[6];
-	cachyt = dsave[7];
-	sbtime = dsave[8];
-	lnscht = dsave[9];
-	time1 = dsave[10];
 	gd = dsave[11];
 	stpmx = dsave[12];
 	sbgnrm = dsave[13];
@@ -2248,7 +2227,6 @@ static int mainlb_(int *n, int *m, double *x,
 	nint = 0;
 	goto L333;
     }
-    timer_(&cpu1);
     cauchy_(n, &x[1], &l[1], &u[1], &nbd[1], &g[1], &indx2[1], &iwhere[1], 
 	    &t[1], &d[1], &z[1], m, &wy[wy_offset], &ws[ws_offset], 
 	    &sy[sy_offset], &wt[wt_offset], &theta, &col, &head, &wa[1], 
@@ -2261,12 +2239,8 @@ static int mainlb_(int *n, int *m, double *x,
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
-	timer_(&cpu2);
-	cachyt = cachyt + cpu2 - cpu1;
 	goto L222;
     }
-    timer_(&cpu2);
-    cachyt = cachyt + cpu2 - cpu1;
     nintol += nint;
     freev_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iwhere[1], &
 	   wrk, &updatd, &cnstnd, &iter);
@@ -2275,7 +2249,6 @@ static int mainlb_(int *n, int *m, double *x,
     if (nfree == 0 || col == 0) {
 	goto L555;
     }
-    timer_(&cpu1);
     if (wrk) {
 	formk_(n, &nfree, &index[1], &nenter, &ileave, &indx2[1], &iupdat, &
 	       updatd, &wn[wn_offset], &snd[snd_offset], m, &ws[ws_offset], &
@@ -2288,8 +2261,6 @@ static int mainlb_(int *n, int *m, double *x,
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
-	timer_(&cpu2);
-	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
     }
     cmprlb_(n, m, &x[1], &g[1], &ws[ws_offset], &wy[wy_offset], 
@@ -2309,18 +2280,13 @@ static int mainlb_(int *n, int *m, double *x,
 	theta = 1.;
 	iupdat = 0;
 	updatd = 0;
-	timer_(&cpu2);
-	sbtime = sbtime + cpu2 - cpu1;
 	goto L222;
     }
-    timer_(&cpu2);
-    sbtime = sbtime + cpu2 - cpu1;
  L555:
     i1 = *n;
     for (i = 1; i <= i1; ++i) {
 	d[i] = z[i] - x[i];
     }
-    timer_(&cpu1);
  L666:
     lnsrlb_(n, &l[1], &u[1], &nbd[1], &x[1], f, &fold, &gd, &gdold, &g[1],
 	    &d[1], &r[1], &t[1], &z[1], &stp, &dnorm, &dtd, &xstep, &stpmx, 
@@ -2351,15 +2317,11 @@ static int mainlb_(int *n, int *m, double *x,
 	    iupdat = 0;
 	    updatd = 0;
 	    strcpy(task, "RESTART_FROM_LNSRCH");
-	    timer_(&cpu2);
-	    lnscht = lnscht + cpu2 - cpu1;
 	    goto L222;
 	}
     } else if (strncmp(task, "FG_LN", 5) == 0) {
 	goto L1000;
     } else {
-	timer_(&cpu2);
-	lnscht = lnscht + cpu2 - cpu1;
 	++iter;
 	projgr_(n, &l[1], &u[1], &nbd[1], &x[1], &g[1], &sbgnrm);
 	goto L1000;
@@ -2415,8 +2377,6 @@ static int mainlb_(int *n, int *m, double *x,
  L888:
     goto L222;
  L999:
-    timer_(&time2);
-    time = time2 - time1;
  L1000:
     lsave[1] = prjctd;
     lsave[2] = cnstnd;
@@ -2445,11 +2405,6 @@ static int mainlb_(int *n, int *m, double *x,
     dsave[3] = tol;
     dsave[4] = dnorm;
     dsave[5] = epsmch;
-    dsave[6] = cpu1;
-    dsave[7] = cachyt;
-    dsave[8] = sbtime;
-    dsave[9] = lnscht;
-    dsave[10] = time1;
     dsave[11] = gd;
     dsave[12] = stpmx;
     dsave[13] = sbgnrm;
@@ -2469,7 +2424,7 @@ int setulb_(int *n, int *m, double *x,
     int i1;
 
     /* Local variables */
-    static int l1, l2, l3, ld, lr, lt, lz, lwa, lsg, lyg, lwn, lss, lws, 
+    static int ld, lr, lt, lz, lwa, lsg, lyg, lwn, lss, lws, 
 	lwt, lsy, lwy, lyy, lsnd, lsgo, lygo;
 
     /* Parameter adjustments */
@@ -2509,9 +2464,6 @@ int setulb_(int *n, int *m, double *x,
 	isave[19] = isave[18] + *m;
 	isave[20] = isave[19] + *m;
     }
-    l1 = isave[1];
-    l2 = isave[2];
-    l3 = isave[3];
     lws = isave[4];
     lwy = isave[5];
     lsy = isave[6];

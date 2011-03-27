@@ -1334,14 +1334,13 @@ static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
 
 static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy)
 {
-    int i, v, nobs, nv, yno;
+    int i, v, nobs, nv;
     mpf_t *diag, ysum, ypy, zz, rss, tss;
     mpf_t den, sgmasq, tmp;
     double ess;
     MPCHOLBETA cb;
 
     nv = xpxxpy.nv;
-    yno = pmod->list[1];
 
     pmod->sderr = malloc(nv * sizeof *pmod->sderr);
     if (pmod->sderr == NULL) {

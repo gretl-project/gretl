@@ -655,9 +655,9 @@ static int broken_gradient (double *g, int n)
    maximum number of iterations and the convergence tolerance.
 */
 
-static void BFGS_get_user_values (double *b, int n, int *maxit,
-				  double *reltol, double *gradmax,
-				  gretlopt opt, PRN *prn)
+static void optim_get_user_values (double *b, int n, int *maxit,
+				   double *reltol, double *gradmax,
+				   gretlopt opt, PRN *prn)
 {
     const gretl_matrix *uinit;
     int uilen, umaxit;
@@ -774,7 +774,7 @@ static int BFGS_orig (double *b, int n, int maxit, double reltol,
     int i, j, ilast, iter;
     int err = 0;
 
-    BFGS_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
+    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
     if (gradfunc == NULL) {
 	gradfunc = numeric_gradient;
@@ -1081,7 +1081,7 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 
     *fncount = *grcount = 0;    
 
-    BFGS_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
+    optim_get_user_values(b, n, &maxit, &reltol, &gradmax, opt, prn);
 
     /*
       m: the number of corrections used in the limited memory matrix.
@@ -1131,7 +1131,6 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
     strcpy(task, "START");
 
     while (1) {
-
 	/* Call the L-BFGS-B code */
 	setulb_(&n, &m, b, l, u, nbd, &f, g, &reltol, &pgtol, wa, iwa, 
 		task, csave, lsave, isave, dsave);
@@ -1139,7 +1138,6 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 	iter = isave[29] + 1;
 
 	if (!strncmp(task, "FG", 2)) {
-
 	    /* Compute function value, f */
 	    f = cfunc(b, data);
 	    if (!na(f)) {
@@ -1150,12 +1148,10 @@ int LBFGS_max (double *b, int n, int maxit, double reltol,
 		break;
 	    }
 	    *fncount += 1;
-
 	    /* Compute gradient, g */
 	    gradfunc(b, g, n, cfunc, data);
 	    reverse_gradient(g, n);
 	    *grcount += 1;
-	    
 	} else if (!strncmp(task, "NEW_X", 5)) {
 	    /* The optimizer has produced a new set of parameter values */
 	    if (isave[33] >= maxit) {
@@ -1771,9 +1767,9 @@ NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
     if (err == E_NOTPD) {
 	double target = gretl_matrix_trace(Hcpy) / H->rows;
 	double x, lambda = 1.0;
-	int i, j, s, smax = 10;
+	int i, j, s;
 
-	for (s=0; s<smax && err; s++) {
+	for (s=0; lambda > 0.25 && err; s++) {
 	    lambda *= 0.9;
 	    gretl_matrix_copy_values(H, Hcpy);
 	    fprintf(stderr, "newton hessian fixup: round %d, lambda=%g, target=%g\n",

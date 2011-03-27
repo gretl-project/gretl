@@ -22,7 +22,7 @@ int rqbr_ (int n, int pp, double *x, double *y, double tau,
     int i, j, k, l, jj;
     int n1, n2, n3, n4, p1, p2;
     int kd, kl = 0, in = 0, kr = 0;
-    double tn, dif, dmin, dmax, aux;
+    double tn, dmin, dmax, aux;
     double sum, tnt, told;
     char init, iend;
     double tnew, smax = 0;
@@ -118,7 +118,6 @@ int rqbr_ (int n, int pp, double *x, double *y, double tau,
 	}
 	wa[n3 + j * n5] *= 2.0;
     }
-    dif = 0;
     init = 0;
     if (!ci2) {
 	/* compute the p column means */

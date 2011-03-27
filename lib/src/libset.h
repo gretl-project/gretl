@@ -28,6 +28,13 @@ typedef enum {
     NORM_MAX
 } VECMnorm;
 
+typedef enum {
+    OPTIM_AUTO,
+    OPTIM_BFGS,
+    OPTIM_NEWTON,
+    OPTIM_MAX
+} OptimCode;
+
 /* guard against consequences of typos */
 
 #define BFGS_MAXITER     "bfgs_maxiter"
@@ -61,6 +68,7 @@ typedef enum {
 #define USE_SVD          "svd"
 #define USE_FCP          "fcp"
 #define VECM_NORM        "vecm_norm"
+#define GRETL_OPTIM      "optimizer"
 #define ARMA_VCV         "arma_vcv"
 #define SKIP_MISSING     "skip_missing"
 #define R_FUNCTIONS      "R_functions"

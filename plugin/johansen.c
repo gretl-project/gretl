@@ -724,11 +724,9 @@ static int make_vecm_Y (GRETL_VAR *v, const double **Z,
 		}
 		gretl_matrix_set(v->Y, s++, i, yti);
 	    }
-#if JDEBUG
 	    if (wexo) {
 		fprintf(stderr, "make_vecm_Y: var %d is weakly exogenous\n", i);
 	    }
-#endif
 	}
     } 
 
@@ -2039,7 +2037,7 @@ est_simple_alpha_restr (GRETL_VAR *jvar, gretl_restriction *rset,
 {
     const gretl_matrix *Ra = rset_get_Ra_matrix(rset);
     gretlopt opt = OPT_F;
-    int err;
+    int err = 0;
 
 #if JDEBUG
     fprintf(stderr, "\n*** starting est_simple_alpha_restr\n\n");

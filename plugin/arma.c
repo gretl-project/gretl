@@ -1264,6 +1264,7 @@ static int kalman_arma (double *coeff,
     gretl_matrix *X = NULL;
     int r, k = 1 + ainfo->nexo; /* number of exog vars plus space for const */
     int fncount = 0, grcount = 0;
+    int use_newton = 0;
     double *b;
     int i, err = 0;
     
@@ -1331,8 +1332,8 @@ static int kalman_arma (double *coeff,
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
     } else {
-	int maxit, save_lbfgs = 0;
 	double toler;
+	int maxit;
 
 	kalman_attach_printer(K, ainfo->prn);
 	kalman_attach_data(K, kh);
@@ -1349,28 +1350,44 @@ static int kalman_arma (double *coeff,
 	    kalman_set_options(K, KALMAN_ARMA_LL);
 	}
 
-	save_lbfgs = libset_get_bool(USE_LBFGS);
-
-	if (save_lbfgs) {
-	    ainfo->pflags |= ARMA_LBFGS;
-	} else if (opt & OPT_L) {
-	    libset_set_bool(USE_LBFGS, 1);
-	    ainfo->pflags |= ARMA_LBFGS;
-	}
-
 	BFGS_defaults(&maxit, &toler, ARMA);
 
-	err = BFGS_max(b, ainfo->nc, maxit, toler, 
-		       &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
-		       NULL, K, NULL, opt, ainfo->prn);
+	if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON ||
+	    getenv("ARMA_USE_NEWTON") != NULL) {
+	    use_newton = 1;
+	}
+
+	if (use_newton) {
+	    double crittol = 1.0e-7;
+	    double gradtol = 1.0e-7;
+
+	    err = newton_raphson_max(b, ainfo->nc, maxit, 
+				     crittol, gradtol, &fncount, 
+				     C_LOGLIK, kalman_arma_ll, 
+				     NULL, NULL, K, opt, 
+				     ainfo->prn);
+	} else {
+	    int save_lbfgs = libset_get_bool(USE_LBFGS);
+
+	    if (save_lbfgs) {
+		ainfo->pflags |= ARMA_LBFGS;
+	    } else if (opt & OPT_L) {
+		libset_set_bool(USE_LBFGS, 1);
+		ainfo->pflags |= ARMA_LBFGS;
+	    }
+	    
+	    err = BFGS_max(b, ainfo->nc, maxit, toler, 
+			   &fncount, &grcount, kalman_arma_ll, C_LOGLIK,
+			   NULL, K, NULL, opt, ainfo->prn);
+
+	    if (save_lbfgs == 0 && (opt & OPT_L)) {
+		libset_set_bool(USE_LBFGS, 0);
+	    }
+	}
 
 	if (err) {
-	    fprintf(stderr, "BFGS_max returned %d\n", err);
+	    fprintf(stderr, "kalman_arma: optimizer returned %d\n", err);
 	} 
-
-	if (!save_lbfgs && (opt & OPT_L)) {
-	    libset_set_bool(USE_LBFGS, 0);
-	}
     }
 
     if (!err && ainfo->yscale != 1.0) {
@@ -1378,8 +1395,12 @@ static int kalman_arma (double *coeff,
     }
 
     if (!err) {
-	gretl_model_set_int(pmod, "fncount", fncount);
-	gretl_model_set_int(pmod, "grcount", grcount);
+	if (use_newton) {
+	    gretl_model_set_int(pmod, "iters", fncount);
+	} else {
+	    gretl_model_set_int(pmod, "fncount", fncount);
+	    gretl_model_set_int(pmod, "grcount", grcount);
+	}
 	err = kalman_arma_finish(pmod, ainfo, 
 				 Z, pdinfo, K, b, 
 				 opt, ainfo->prn);
@@ -1416,7 +1437,7 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
 	return E_DATA;
     }
 
-    if (arma_exact_ml(ainfo)) {
+    if (arma_exact_ml(ainfo) && libset_get_int(GRETL_OPTIM) != OPTIM_NEWTON) {
 	/* initialization is handled within BFGS */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;

@@ -578,7 +578,6 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 			     const int *zdigits, int *mpfails, 
 			     PRN *prn)
 {
-    PRN *vprn;
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, const int *,
 		 const double **, const DATAINFO *, MODEL *, 
@@ -588,8 +587,6 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     int realv = dinfo->v - npoly;
     MODEL model;
     double acc;
-
-    vprn = (verbose)? prn : NULL;
 
     gretl_model_init(&model);
 
