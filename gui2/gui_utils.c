@@ -177,10 +177,8 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
 	gui_errmsg(err);
     } else {
 	gchar *title = gretl_window_title(_("equation"), NULL);
-	windata_t *viewer;
 
-	viewer = view_buffer_with_parent(vwin, prn, 78, 200, 
-					 title, PRINT, NULL);
+	view_buffer_with_parent(vwin, prn, 78, 200, title, PRINT, NULL);
 	g_free(title);			   
     }
 }

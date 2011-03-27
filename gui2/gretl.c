@@ -1062,13 +1062,10 @@ void mdata_select_last_var (void)
     GtkTreeIter iter, last;
     GtkTreeView *view;
     GtkTreeModel *model;
-    GtkTreeStore *store;
     GtkTreeSelection *select;
 
     view = GTK_TREE_VIEW(mdata->listbox);
     model = gtk_tree_view_get_model(view);
-    store = GTK_TREE_STORE(model);
-
     gtk_tree_model_get_iter_first(model, &iter);
 
     while (1) {

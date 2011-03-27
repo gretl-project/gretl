@@ -1879,13 +1879,12 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
 {
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox;
-    int tbl_len, tbl_num, tbl_col;
+    int tbl_len = 1;
     char label_text[32];
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(nlinfo->dlg));
     hbox = gtk_hbox_new(FALSE, 5);
 
-    tbl_len = 1;
     tbl = gtk_table_new(tbl_len, 3, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
@@ -1894,8 +1893,6 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
     gtk_widget_show(hbox);
     gtk_widget_show(tbl);
    
-    tbl_num = tbl_col = 0;
-
     /* identifier and formula text */
     tbl_len++;
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
@@ -2392,7 +2389,7 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *hbox, *sep;
     GtkWidget *page;
-    int i, tbl_len, tbl_num, tbl_col;
+    int i, tbl_len;
     GList *stylist = NULL;
     int axis_chooser;
     int pgnum = -1;
@@ -2444,8 +2441,6 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
     tbl = gp_dialog_table(tbl_len, 3, vbox);
     gtk_widget_show(tbl);
    
-    tbl_num = tbl_col = 0;
-
     for (i=0; i<ed->gui_nlines; i++) {
 	GPT_LINE *line = &spec->lines[i];
 	int label_done = 0;
@@ -2707,7 +2702,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
     GtkWidget *notebook = ed->notebook;
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *page, *sep;
-    int i, j, tbl_len, tbl_num, tbl_col;
+    int i, j, tbl_len;
     png_plot *plot = (png_plot *) spec->ptr;
     int pgnum = -1;
 
@@ -2735,8 +2730,6 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
     tbl = gp_dialog_table(tbl_len, 3, vbox);
     gtk_widget_show(tbl);
    
-    tbl_num = tbl_col = 0;
-
     for (i=0; i<ed->gui_nlabels; i++) {
 	GtkWidget *hbox, *button, *image;
 	GdkPixbuf *icon;

@@ -551,12 +551,9 @@ static void begin_image_print (GtkPrintOperation *op,
 			       GtkPrintContext *context,
 			       char *pngname)
 {
-    GtkPageSetup *setup;
     cairo_surface_t *cs;
     cairo_t *cr;
     gdouble x, y;
-
-    setup = gtk_print_context_get_page_setup(context);
 
     x = gtk_print_context_get_width(context);
     y = gtk_print_context_get_height(context);
