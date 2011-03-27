@@ -2075,7 +2075,6 @@ static int mainlb_(int *n, int *m, double *x,
     double fold = 0;
     double ddum;
     int info;
-    double time;
     int nfgv, iter, nint, ifun = 0;
     double time1, time2;
     int iback = 0;
@@ -2416,7 +2415,6 @@ static int mainlb_(int *n, int *m, double *x,
     goto L222;
  L999:
     timer_(&time2);
-    time = time2 - time1;
  L1000:
     lsave[1] = prjctd;
     lsave[2] = cnstnd;
@@ -2469,7 +2467,7 @@ int setulb_(int *n, int *m, double *x,
     int i1;
 
     /* Local variables */
-    static int l1, l2, l3, ld, lr, lt, lz, lwa, lsg, lyg, lwn, lss, lws, 
+    static int ld, lr, lt, lz, lwa, lsg, lyg, lwn, lss, lws, 
 	lwt, lsy, lwy, lyy, lsnd, lsgo, lygo;
 
     /* Parameter adjustments */
@@ -2509,9 +2507,6 @@ int setulb_(int *n, int *m, double *x,
 	isave[19] = isave[18] + *m;
 	isave[20] = isave[19] + *m;
     }
-    l1 = isave[1];
-    l2 = isave[2];
-    l3 = isave[3];
     lws = isave[4];
     lwy = isave[5];
     lsy = isave[6];
