@@ -1622,17 +1622,14 @@ static gboolean
 set_obs_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
     GtkSpinButton *button;
-    const gchar *s;
 
     if (rset->spin1 != NULL && rset->t1 != NULL) {
 	button = GTK_SPIN_BUTTON(rset->spin1);
-	s = gtk_entry_get_text(GTK_ENTRY(button));
 	*rset->t1 = gtk_spin_button_get_value_as_int(button);
     }
 
     if (rset->spin2 != NULL && rset->t2 != NULL) {
 	button = GTK_SPIN_BUTTON(rset->spin2);
-	s = gtk_entry_get_text(GTK_ENTRY(button));
 	*rset->t2 = gtk_spin_button_get_value_as_int(button); 
     }
 

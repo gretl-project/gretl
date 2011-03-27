@@ -1015,9 +1015,11 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	/* nice and simple! */
 	fputs(buf, fp);
     } else {
+#ifdef G_OS_WIN32
+      int gotpause = 0;
+#endif
 	gchar *trbuf;
 	char bufline[512];
-	int gotpause = 0;
 	int handled;
 
 	bufgets_init(buf);
@@ -1038,9 +1040,11 @@ int dump_plot_buffer (const char *buf, const char *fname,
 	    if (!handled) {
 		fputs(bufline, fp);
 	    }
+#ifdef G_OS_WIN32
 	    if (addpause && strstr(bufline, "pause -1")) {
 		gotpause = 1;
 	    }
+#endif
 	}
 
 	bufgets_finalize(buf);

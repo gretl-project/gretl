@@ -337,7 +337,7 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 	const char *cstr = NULL;
 	int v, dbv, start, stop;
 	int pad1 = 0, pad2 = 0;
-	int expand = 0, compact = 0;
+	int compact = 0;
 	int interpol = 0;
 
 	sinfo = &dw->sinfo[i];
@@ -380,7 +380,6 @@ add_db_series_to_dataset (windata_t *vwin, double **dbZ, dbwrapper *dw)
 
 	if (sinfo->pd < datainfo->pd) {
 	    /* the series needs to be expanded */
-	    expand = 1;
 	    xvec = expand_db_series(dbZ[v], sinfo, datainfo->pd, interpol);
 	} else if (sinfo->pd > datainfo->pd) {
 	    /* the series needs to be compacted */
@@ -2727,7 +2726,6 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
     char line[256];
     char fname[32];
     char tstr[16];
-    const char *status;
     char *basename;
     char *descrip;
     int n, err = 0;
@@ -2756,7 +2754,6 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
 	    continue;
 	}
 
-	status = "";
 	basename = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
