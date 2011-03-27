@@ -2225,7 +2225,13 @@ static int check_derivatives (nlspec *spec, PRN *prn)
 
 static int mle_calculate (nlspec *s, PRN *prn)
 {
+    BFGS_GRAD_FUNC gradfun = NULL;
+    int maxit, use_newton = 0;
     int err = 0;
+
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
+	use_newton = 1;
+    }
 
     if (analytic_mode(s)) {
 	if (!(s->opt & OPT_G)) {
@@ -2234,20 +2240,32 @@ static int mle_calculate (nlspec *s, PRN *prn)
     }
 
     if (!err) {
-	BFGS_GRAD_FUNC gradfun = (analytic_mode(s))?
-	    get_mle_gradient : NULL;
-	int maxit = 500;
+	gradfun = (analytic_mode(s))? get_mle_gradient : NULL;
+    }
 
+    if (!err && use_newton) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+
+	maxit = 100;
+	err = newton_raphson_max(s->coeff, s->ncoeff, maxit, 
+				 crittol, gradtol, &s->fncount, 
+				 C_LOGLIK, get_mle_ll, 
+				 gradfun, NULL, s,
+				 s->opt, s->prn);
+    } else if (!err) {
+	maxit = 500;
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
 		       get_mle_ll, C_LOGLIK, gradfun, s,
 		       NULL, s->opt, s->prn);
-	if (!err && (s->opt & (OPT_H | OPT_R))) {
-	    /* doing Hessian or QML covariance matrix */
-	    s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
-						get_mle_ll, s, &err);
-	}
     }
+
+    if (!err && (s->opt & (OPT_H | OPT_R))) {
+	/* doing Hessian or QML covariance matrix */
+	s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
+					    get_mle_ll, s, &err);
+    }	
 
     return err;    
 }

@@ -1869,6 +1869,10 @@ int newton_raphson_max (double *b, int n, int maxit,
 	return E_ALLOC;
     }
 
+#if 0 /* not ready */
+    optim_get_user_values(b, n, &maxit, &crittol, &gradtol, opt, prn);
+#endif
+
     b1 = b0 + n;
     copy_to(b1, b, n);
 
