@@ -1520,7 +1520,7 @@ int default_VAR_horizon (const DATAINFO *pdinfo)
     return h;
 }
 
-gretl_matrix *reorder_responses (GRETL_VAR *var, int *err)
+gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err)
 {
     gretl_matrix *S, *C;
     int i, j, r, c;
@@ -1773,7 +1773,8 @@ gretl_VAR_get_fcast_se (GRETL_VAR *var, int periods)
 }
 
 gretl_matrix *
-gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
+gretl_VAR_get_fcast_decomp (const GRETL_VAR *var, 
+			    int targ, int periods,
 			    int *err)
 {
     int n = var->neqns;
@@ -1883,6 +1884,45 @@ gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
     }
 
     return vd;
+}
+
+gretl_matrix *
+gretl_VAR_get_fevd_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
+			   int *err)
+{
+    gretl_matrix *vd, *V;
+    double vjk;
+    int h = default_VAR_horizon(pdinfo);
+    int n = var->neqns;
+    int i, j, k, kk;
+    
+    V = gretl_matrix_alloc(h, n * n);
+    if (V == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    kk = 0;
+    for (i=0; i<n && !*err; i++) {
+	vd = gretl_VAR_get_fcast_decomp(var, i, h, err);
+	if (!*err) {
+	    for (k=0; k<n; k++) {
+		for (j=0; j<h; j++) {
+		    vjk = gretl_matrix_get(vd, j, k);
+		    gretl_matrix_set(V, j, kk, vjk / 100.0);
+		}
+		kk++;
+	    }
+	    gretl_matrix_free(vd);
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(V);
+	V = NULL;
+    }
+    
+    return V;
 }
 
 int var_max_order (const int *list, const DATAINFO *pdinfo)

@@ -179,6 +179,23 @@
       </description>
     </function>
 
+    <function name="$fevd" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow estimation of a VAR. Returns a matrix containing
+	  the forecast error decomposition. This matrix has
+	  <math>h</math> rows where <math>h</math> is the forecast
+	  horizon, which can be chosen using <lit>set horizon</lit> or
+	  otherwise is set automatically based on the frequency of the
+	  data.  For a VAR with <math>p</math> variables, the matrix
+	  has <math>p</math><sup>2</sup> columns. The fraction of the
+	  forecast error for variable <math>i</math> attributable to
+	  innovation in variable <math>j</math> is found in column
+	  (<math>i</math> &minus; 1)<math>p</math> + <math>j</math>.
+	</para>
+      </description>
+    </function>
+
     <function name="$Fstat" section="access" output="scalar">
       <description>
 	<para>

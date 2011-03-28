@@ -99,12 +99,17 @@ const gretl_matrix *
 gretl_VAR_get_residual_matrix (const GRETL_VAR *var);
 
 gretl_matrix *
-gretl_VAR_get_fcast_decomp (GRETL_VAR *var, int targ, int periods,
+gretl_VAR_get_fcast_decomp (const GRETL_VAR *var, 
+			    int targ, int periods,
 			    int *errp);
 
 gretl_matrix *
 gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
 			  int *err);
+
+gretl_matrix *
+gretl_VAR_get_fevd_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
+			   int *err);
 
 gretl_matrix *
 VECM_get_EC_matrix (const GRETL_VAR *v, 
