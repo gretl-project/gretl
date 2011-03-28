@@ -1425,8 +1425,6 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
     return err;
 }
 
-
-
 /* calculate standard errors etc using the Hessian */
 
 static int logit_probit_vcv (MODEL *dmod, gretlopt opt, const double **Z)
@@ -2163,6 +2161,7 @@ static int mn_logit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll
     mnl_info *mnl = (mnl_info *) ptr;
     double x, xti, pti, p, g;
     int i, j, k, t, yt;
+    int err = 0;
 
     errno = 0;
 
@@ -2194,16 +2193,20 @@ static int mn_logit_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll
 	}
     }
 
-    return 1;
+    if (errno != 0) {
+	err = E_NAN;
+    }
+
+    return err;
 }
 
-/* multinomial logit; form the negative inverse of the analytical
+/* multinomial logit: form the negative of the analytical
    Hessian */
 
-static gretl_matrix *mnl_hess_inverse (mnl_info *mnl, int *err)
+static int mnl_hessian (double *theta, gretl_matrix *H, void *data)
 {
+    mnl_info *mnl = data;
     gretl_matrix_block *B;
-    gretl_matrix *H;
     gretl_matrix *x;
     gretl_matrix *xx;
     gretl_matrix *hjk;
@@ -2211,20 +2214,12 @@ static gretl_matrix *mnl_hess_inverse (mnl_info *mnl, int *err)
     int r, c;
     int i, j, k, t;
 
-    H = gretl_zero_matrix_new(mnl->npar, mnl->npar);
-    if (H == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
     B = gretl_matrix_block_new(&x, 1, mnl->k,
 			       &xx, mnl->k, mnl->k,
 			       &hjk, mnl->k, mnl->k,
 			       NULL);
     if (B == NULL) {
-	*err = E_ALLOC;
-	gretl_matrix_free(H);
-	return NULL;
+	return E_ALLOC;
     }
 
     r = c = 0;
@@ -2257,11 +2252,22 @@ static gretl_matrix *mnl_hess_inverse (mnl_info *mnl, int *err)
 
     gretl_matrix_block_destroy(B);
 
-    *err = gretl_invert_symmetric_matrix(H);
+    return 0;
+}
 
-    if (*err) {
-	gretl_matrix_free(H);
-	H = NULL;
+static gretl_matrix *mnl_hessian_inverse (mnl_info *mnl, int *err)
+{
+    gretl_matrix *H;
+
+    H = gretl_zero_matrix_new(mnl->npar, mnl->npar);
+    if (H == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = mnl_hessian(mnl->theta, H, mnl);
+    }
+
+    if (!*err) {
+	*err = gretl_invert_symmetric_matrix(H);
     }
 
     return H;
@@ -2316,7 +2322,7 @@ static int mnl_add_variance_matrix (MODEL *pmod, mnl_info *mnl,
     gretl_matrix *V = NULL;
     int err = 0;
 
-    H = mnl_hess_inverse(mnl, &err);
+    H = mnl_hessian_inverse(mnl, &err);
     if (err) {
 	return err;
     }
@@ -2774,7 +2780,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     int *valcount = NULL;
     int *yvals = NULL;
     int n, k = list[0] - 1;
-    int use_newton = 0;
+    int use_bfgs = 0;
     int i, vi, t, s;
 
     /* we'll start with OLS to flush out data issues */
@@ -2836,27 +2842,27 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
-	use_newton = 1;
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_BFGS) {
+	use_bfgs = 1;
     }
 
-    if (use_newton) {
-	double crittol = 1.0e-7;
+    if (use_bfgs) {
+	mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
+			       &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
+			       mn_logit_score, mnl, NULL,
+			       (prn != NULL)? OPT_V : OPT_NONE, prn);
+    } else {	
+	double crittol = 1.0e-8;
 	double gradtol = 1.0e-7;
 	
 	maxit = 100;
 	mod.errcode = newton_raphson_max(mnl->theta, mnl->npar, maxit, 
 					 crittol, gradtol, &fncount, 
 					 C_LOGLIK, mn_logit_loglik, 
-					 mn_logit_score, NULL, mnl,
+					 mn_logit_score, mnl_hessian, mnl,
 					 (prn != NULL)? OPT_V : OPT_NONE,
 					 prn);
-    } else {
-	mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
-			       &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
-			       mn_logit_score, mnl, NULL,
-			       (prn != NULL)? OPT_V : OPT_NONE, prn);
-    }
+    } 
 
     if (!mod.errcode) {
 	mnl_finish(mnl, &mod, valcount, yvals, pdinfo, opt);

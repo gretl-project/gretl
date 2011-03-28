@@ -1875,7 +1875,7 @@ int newton_raphson_max (double *b, int n, int maxit,
     }
 
     /* needs some work */
-    optim_get_user_values(b, n, &maxit, NULL, NULL, opt, prn);
+    optim_get_user_values(b, n, NULL, NULL, NULL, opt, prn);
 
     b1 = b0 + n;
     copy_to(b1, b, n);
@@ -2006,4 +2006,3 @@ int newton_raphson_max (double *b, int n, int maxit,
 
     return err;
 }
-
