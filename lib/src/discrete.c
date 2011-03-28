@@ -2774,6 +2774,7 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     int *valcount = NULL;
     int *yvals = NULL;
     int n, k = list[0] - 1;
+    int use_newton = 0;
     int i, vi, t, s;
 
     /* we'll start with OLS to flush out data issues */
@@ -2835,10 +2836,27 @@ static MODEL mnl_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
-			   &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
-			   mn_logit_score, mnl, NULL,
-			   (prn != NULL)? OPT_V : OPT_NONE, prn);
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
+	use_newton = 1;
+    }
+
+    if (use_newton) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+	
+	maxit = 100;
+	mod.errcode = newton_raphson_max(mnl->theta, mnl->npar, maxit, 
+					 crittol, gradtol, &fncount, 
+					 C_LOGLIK, mn_logit_loglik, 
+					 mn_logit_score, NULL, mnl,
+					 (prn != NULL)? OPT_V : OPT_NONE,
+					 prn);
+    } else {
+	mod.errcode = BFGS_max(mnl->theta, mnl->npar, maxit, 0.0, 
+			       &fncount, &grcount, mn_logit_loglik, C_LOGLIK,
+			       mn_logit_score, mnl, NULL,
+			       (prn != NULL)? OPT_V : OPT_NONE, prn);
+    }
 
     if (!mod.errcode) {
 	mnl_finish(mnl, &mod, valcount, yvals, pdinfo, opt);
