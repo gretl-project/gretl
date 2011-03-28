@@ -634,7 +634,7 @@ static void op_LR_test (MODEL *pmod, op_container *OC,
 static void fill_op_model (MODEL *pmod, const int *list,
 			   const double **Z, const DATAINFO *pdinfo, 
 			   op_container *OC, gretl_matrix *V, 
-			   int fnc, int grc)
+			   int fncount, int grcount)
 {
     int npar = OC->k;
     int nx = OC->nx;
@@ -646,8 +646,13 @@ static void fill_op_model (MODEL *pmod, const int *list,
 
     gretl_model_set_int(pmod, "ordered", 1);
     gretl_model_set_int(pmod, "nx", OC->nx);
-    gretl_model_set_int(pmod, "fncount", fnc);
-    gretl_model_set_int(pmod, "grcount", grc);
+
+    if (grcount > 0) {
+	gretl_model_set_int(pmod, "fncount", fncount);
+	gretl_model_set_int(pmod, "grcount", grcount);
+    } else {
+	gretl_model_set_int(pmod, "iters", fncount);
+    }
 
     pmod->ncoeff = npar;
 
@@ -791,6 +796,7 @@ static int do_ordered (int ci, int ndum,
     gretl_matrix *V = NULL;
     double *theta = NULL;
     double toler;
+    int use_newton = 0;
     int err;
 
     OC = op_container_new(ci, ndum, Z, pmod, opt);
@@ -826,18 +832,31 @@ static int do_ordered (int ci, int ndum,
 	    op_loglik(theta, OC));
 #endif
 
-    BFGS_defaults(&maxit, &toler, PROBIT);
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
+	use_newton = 1;
+    }
 
-    err = BFGS_max(theta, npar, maxit, toler, 
-		   &fncount, &grcount, op_loglik, C_LOGLIK,
-		   op_score, OC, NULL, 
-		   (prn != NULL)? OPT_V : OPT_NONE, prn);
+    if (use_newton) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+
+	err = newton_raphson_max(theta, npar, maxit, 
+				 crittol, gradtol, &fncount, 
+				 C_LOGLIK, op_loglik, 
+				 op_score, NULL, OC, 
+				 (prn != NULL)? OPT_V : OPT_NONE,
+				 prn);
+    } else {
+	BFGS_defaults(&maxit, &toler, PROBIT);
+	err = BFGS_max(theta, npar, maxit, toler, 
+		       &fncount, &grcount, op_loglik, C_LOGLIK,
+		       op_score, OC, NULL, 
+		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+    }
 
     if (err) {
 	goto bailout;
-    } else {
-	fprintf(stderr, "Number of iterations = %d (%d)\n", fncount, grcount);
-    }
+    } 
 
     /* transform back to 'real' theta */
     op_get_real_theta(OC, theta);

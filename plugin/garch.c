@@ -434,9 +434,11 @@ garch_driver (const int *list, double **Z, double scale,
 			  ifc, prn);
 	if (iters > 0) {
 	    gretl_model_set_int(pmod, "iters", iters);
-	} else if (fnc > 0) {
+	} else if (grc > 0) {
 	    gretl_model_set_int(pmod, "fncount", fnc);
 	    gretl_model_set_int(pmod, "grcount", grc);
+	} else {
+	    gretl_model_set_int(pmod, "iters", fnc);
 	}
 	gretl_model_set_vcv_info(pmod, VCV_ML, vopt);
     }
