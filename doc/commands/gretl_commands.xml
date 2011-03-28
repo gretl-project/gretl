@@ -9213,6 +9213,15 @@
       </para>
       <ilist>
 	<li>	
+	  <para><lit>optimizer</lit>: either <lit>auto</lit> (the
+	  default), <lit>BFGS</lit> or <lit>newton</lit>. Sets the
+	  optimization algorithm used for various ML estimators, in
+	  cases where both BFGS and Newton&ndash;Raphson are
+	  applicable. The default is to use Newton&ndash;Raphson
+	  where an analytical Hessian is available, otherwise BFGS.
+	  </para>
+	</li>
+	<li>	
 	  <para><lit>bhhh_maxiter</lit>: one integer, the maximum number of
 	    iterations for gretl's internal BHHH routine, which is used in
 	    the <cmd>arma</cmd> command for conditional ML estimation. If
@@ -9447,7 +9456,8 @@
 	    (Unlike the Bartlett and Parzen kernels, the QS bandwidth need
 	    not be an integer.)
 	  </para>
-	</li> </ilist>
+	</li> 
+      </ilist>
 
       <para>
 	<emphasis>Time series</emphasis>

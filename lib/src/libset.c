@@ -61,7 +61,7 @@ enum {
     STATE_LOOP_PROG       = 1 << 17, /* progressive loop is in progress */
     STATE_BFGS_RSTEP      = 1 << 18, /* use Richardson method in BFGS numerical
 					gradient */
-    STATE_DPDSTYLE_ON     = 1 << 19, /* emulate dpd in dynamic panel data models */
+    STATE_DPDSTYLE_ON     = 1 << 19  /* emulate dpd in dynamic panel data models */
 };    
 
 /* for values that really want a non-negative integer */
