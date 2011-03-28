@@ -3476,21 +3476,45 @@ VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
     double x;
     int i, j;
 
-    m = gretl_matrix_alloc(var->models[0]->ncoeff, var->neqns);
+#define M_VECG (-1) /* not ready */
+
+    if (idx == M_VECG) {
+	m = gretl_matrix_alloc(var->neqns, var->neqns * var->order);
+    } else {
+	m = gretl_matrix_alloc(var->models[0]->ncoeff, var->neqns);
+    }
+
     if (m == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    for (j=0; j<var->neqns; j++) {
-	pmod = var->models[j];
-	for (i=0; i<pmod->ncoeff; i++) {
-	    if (idx == M_COEFF) {
-		x = pmod->coeff[i];
-	    } else {
-		x = pmod->sderr[i];
+    if (idx == M_VECG) {
+	int k, mcol, cnum;
+
+	for (j=0; j<var->neqns; j++) {
+	    pmod = var->models[j];
+	    mcol = 0;
+	    for (i=0; i<var->order; i++) {
+		cnum = pmod->ifc + i;
+		for (k=0; k<var->neqns; k++) {
+		    x = pmod->coeff[cnum];
+		    gretl_matrix_set(m, j, mcol++, x);
+		    cnum += var->order;
+		}
 	    }
-	    gretl_matrix_set(m, i, j, x);
+	}
+    } else {	
+	for (j=0; j<var->neqns; j++) {
+	    pmod = var->models[j];
+	    for (i=0; i<pmod->ncoeff; i++) {
+		if (idx == M_COEFF) {
+		    x = pmod->coeff[i];
+		} else {
+		    x = pmod->sderr[i];
+		}
+		gretl_matrix_set(m, i, j, x);
+	    }
 	}
     }
 
