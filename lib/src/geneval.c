@@ -2691,6 +2691,7 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 
 	if (!p->err && r->flags & TRANSP_NODE) {
 	    p->err = gretl_matrix_transpose_in_place(a);
+	    r->flags &= ~TRANSP_NODE;
 	}
 
 	if (a != NULL) {
@@ -7318,6 +7319,11 @@ object_var_get_submatrix (const char *oname, int idx, NODE *t, parser *p,
     if (M != NULL) {
 	S = matrix_get_submatrix(M, r->v.mspec, &p->err);
 	gretl_matrix_free(M);
+    }
+
+    if (p->err == 0 && (r->flags & TRANSP_NODE)) {
+	p->err = gretl_matrix_transpose_in_place(S);
+	r->flags &= ~TRANSP_NODE;
     }
 
     return S;
