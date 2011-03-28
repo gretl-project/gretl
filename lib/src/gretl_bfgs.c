@@ -693,6 +693,11 @@ static void optim_get_user_values (double *b, int n, int *maxit,
 	}
     }
 
+    if (reltol == NULL || gradmax == NULL) {
+	/* Newton */
+	return;
+    }
+
     /* then check for a setting of the maximum number
        of iterations */
 
@@ -1869,9 +1874,8 @@ int newton_raphson_max (double *b, int n, int maxit,
 	return E_ALLOC;
     }
 
-#if 0 /* not ready */
-    optim_get_user_values(b, n, &maxit, &crittol, &gradtol, opt, prn);
-#endif
+    /* needs some work */
+    optim_get_user_values(b, n, &maxit, NULL, NULL, opt, prn);
 
     b1 = b0 + n;
     copy_to(b1, b, n);

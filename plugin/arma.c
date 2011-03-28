@@ -1437,8 +1437,8 @@ static int user_arma_init (double *coeff, arma_info *ainfo, int *init_done)
 	return E_DATA;
     }
 
-    if (arma_exact_ml(ainfo) && libset_get_int(GRETL_OPTIM) != OPTIM_NEWTON) {
-	/* initialization is handled within BFGS */
+    if (arma_exact_ml(ainfo)) {
+	/* initialization is handled within BFGS/Newton-Raphson */
 	for (i=0; i<ainfo->nc; i++) {
 	    coeff[i] = 0.0;
 	}	

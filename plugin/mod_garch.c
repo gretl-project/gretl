@@ -415,7 +415,7 @@ static int garch_etht (const double *par, garch_container *DH)
     return 0;
 } 
 
-static double loglik (const double *theta, void *ptr)
+static double garch_loglik (const double *theta, void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
     double ll = NADBL;
@@ -450,8 +450,8 @@ static int score_fill_matrices (const double *theta, garch_container *DH)
     return err;
 }
 
-static int anal_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
-		       void *ptr)
+static int garch_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll, 
+			void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
     double tmp;
@@ -683,8 +683,8 @@ static void test_score (garch_container *DH, double *theta)
     testa = malloc(DH->k * sizeof *testa);
     testn = malloc(DH->k * sizeof *testn);
 
-    testret = anal_score(theta, testa, DH->k, loglik, DH);
-    testret = BFGS_numeric_gradient(theta, testn, DH->k, loglik, DH);
+    testret = garch_score(theta, testa, DH->k, garch_loglik, DH);
+    testret = BFGS_numeric_gradient(theta, testn, DH->k, garch_loglik, DH);
 
     fprintf(stderr, "ret = %d:\n", testret);
 
@@ -736,8 +736,9 @@ int garch_estimate_mod (const double *y, const double **X,
 			int vopt, PRN *prn)
 {
     garch_container *DH;
-    int npar, maxit;
     double toler;
+    int npar, maxit;
+    int use_newton = 0;
     int err = 0;
 
     DH = garch_container_new(y, X, t1, t2, nobs, nc, p, q, 
@@ -750,12 +751,29 @@ int garch_estimate_mod (const double *y, const double **X,
 
     npar = nc + 1 + p + q; 
 
+    if (libset_get_int(GRETL_OPTIM) == OPTIM_NEWTON) {
+	use_newton = 1;
+    }
+
     BFGS_defaults(&maxit, &toler, GARCH);
 
-    err = BFGS_max(theta, npar, maxit, toler, 
-		   fncount, grcount, loglik, C_LOGLIK,
-		   anal_score, DH, NULL, 
-		   (prn != NULL)? OPT_V : OPT_NONE, prn);
+    if (use_newton) {
+	double crittol = 1.0e-7;
+	double gradtol = 1.0e-7;
+
+	maxit = 100;
+	err = newton_raphson_max(theta, npar, maxit, 
+				 crittol, gradtol, fncount, 
+				 C_LOGLIK, garch_loglik, 
+				 garch_score, NULL, DH,
+				 (prn != NULL)? OPT_V : OPT_NONE,
+				 prn);
+    } else {
+	err = BFGS_max(theta, npar, maxit, toler, 
+		       fncount, grcount, garch_loglik, C_LOGLIK,
+		       garch_score, DH, NULL, 
+		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+    }
 
 #if GDEBUG
     fprintf(stderr, "maxit = %d, fncount = %d, grcount = %d\n",
@@ -765,7 +783,7 @@ int garch_estimate_mod (const double *y, const double **X,
     if (err) {
 	*pll = NADBL;
     } else {
-	*pll = loglik(theta, DH) - (t2 - t1 + 1) * log(scale);
+	*pll = garch_loglik(theta, DH) - (t2 - t1 + 1) * log(scale);
     }
     
 #if GDEBUG
