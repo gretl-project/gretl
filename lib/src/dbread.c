@@ -3776,7 +3776,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	}
 	sprintf(stobs, "%d", startmaj);
     } else if (newpd == 52) {
-	if (pdinfo->S != NULL) {
+	if (oldpd >= 5 && oldpd <= 7 && pdinfo->S != NULL) {
 	    strcpy(stobs, pdinfo->S[min_startskip]);
 	} else {
 	    strcpy(stobs, "1");
