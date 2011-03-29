@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-03-25 09:39-0400\n"
-"PO-Revision-Date: 2011-03-14 21:22+0000\n"
+"PO-Revision-Date: 2011-03-30 00:28+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -30,32 +30,24 @@ msgid "lagged differences"
 msgstr "diferenças desfasadas"
 
 #: lib/src/adf_kpss.c:306
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Teste de Dickey-Fuller para %s\n"
+msgstr "Teste de Dickey-Fuller (GLS) para %s\n"
 
 #: lib/src/adf_kpss.c:308
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Teste de Dickey-Fuller para %s\n"
+msgstr "Teste de Dickey-Fuller para %s\n"
 
 #: lib/src/adf_kpss.c:312
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Teste Aumentado de Dickey-Fuller, para %s\n"
+msgstr "Teste Aumentado de Dickey-Fuller (GLS) para %s\n"
 
 #: lib/src/adf_kpss.c:314
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Teste Aumentado de Dickey-Fuller, para %s\n"
+msgstr "Teste Aumentado de Dickey-Fuller para %s\n"
 
 #: lib/src/adf_kpss.c:317 plugin/panurc.c:577
 #, c-format
@@ -70,7 +62,7 @@ msgstr "incluindo %d desfasamentos de (1-L)%s"
 #: lib/src/adf_kpss.c:323
 #, c-format
 msgid "(max was %d)"
-msgstr ""
+msgstr "(o máximo foi %d)"
 
 #: lib/src/adf_kpss.c:364 gui2/library.c:967 gui2/selector.c:5301
 #: plugin/panurc.c:233
@@ -2678,9 +2670,9 @@ msgid "forecast"
 msgstr "predição"
 
 #: lib/src/graphing.c:4210
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% interval for mean"
-msgstr "intervalo a %g%%"
+msgstr "intervalo da média a %g%%"
 
 #: lib/src/graphing.c:4315
 #, c-format
@@ -7139,7 +7131,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 14 de Março de 2011."
+"Tradução de 30 de Março de 2011."
 
 #: gui2/about.c:175
 msgid "License"
@@ -8795,19 +8787,16 @@ msgid "shaded area"
 msgstr "área sombreada"
 
 #: gui2/dialogs.c:2607
-#, fuzzy
 msgid "Show interval for"
-msgstr "intervalo a %g%%"
+msgstr "Mostrar intervalo d"
 
 #: gui2/dialogs.c:2610
-#, fuzzy
 msgid "actual Y"
-msgstr "efectivo"
+msgstr "o Y efetivo"
 
 #: gui2/dialogs.c:2611
-#, fuzzy
 msgid "mean Y"
-msgstr "média"
+msgstr "a média"
 
 #: gui2/dialogs.c:2647
 msgid "Produce forecast for"
@@ -13385,14 +13374,12 @@ msgid "lags..."
 msgstr "desfasamentos..."
 
 #: gui2/selector.c:4083
-#, fuzzy
 msgid "left bound"
-msgstr "limite inferior"
+msgstr "o limite inferior"
 
 #: gui2/selector.c:4084
-#, fuzzy
 msgid "right bound"
-msgstr "superior direita"
+msgstr "o limite superior"
 
 #: gui2/selector.c:4363
 msgid "GARCH p:"
@@ -15199,13 +15186,12 @@ msgid "Lmax test"
 msgstr "Teste Lmax"
 
 #: plugin/johansen.c:1491
-#, fuzzy
 msgid ""
 "Warning: the p-values shown are for the case of\n"
 "a restricted trend"
 msgstr ""
-"Atenção: os valores críticos apresentados são para o caso\n"
-"de uma tendência restringida."
+"Atenção: os p-valores apresentados são para o caso\n"
+"de uma tendência restringida"
 
 #: plugin/johansen.c:1495
 msgid ""
