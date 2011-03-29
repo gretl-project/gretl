@@ -87,6 +87,7 @@ typedef enum {
     M_RHO,        /* autoregressive coefficients */
     M_COMPAN,     /* VAR companion matrix */
     M_XTXINV,     /* VARs, VECMs: X'X^{-1} */
+    M_VECG,       /* VECMs: the Gamma matrices */
     M_JALPHA,     /* Johansen's alpha */
     M_JBETA,      /* Johansen's beta */
     M_JVBETA,     /* Covariance matrix for Johansen's normalized beta */

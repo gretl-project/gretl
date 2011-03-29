@@ -3476,7 +3476,10 @@ VAR_matrix_from_models (const GRETL_VAR *var, int idx, int *err)
     double x;
     int i, j;
 
-#define M_VECG (-1) /* not ready */
+    if (idx == M_VECG && var->ci != VECM) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
 
     if (idx == M_VECG) {
 	m = gretl_matrix_alloc(var->neqns, var->neqns * var->order);
@@ -3676,7 +3679,7 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	copy = 0;
     } else if (idx == M_COMPAN) {
 	src = var->A;
-    } else if (idx == M_COEFF || idx == M_SE) {
+    } else if (idx == M_COEFF || idx == M_SE || idx == M_VECG) {
 	M = VAR_matrix_from_models(var, idx, err);
 	copy = 0;
     } else if (idx == M_XTXINV) {

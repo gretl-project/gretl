@@ -8,6 +8,8 @@ version 1.9.5, in progress
   printing of the Pi matrix when exogenous regressors are present
 - VARs: add $fevd accessor to get the forecast error variance
   decomposition as a matrix
+- VECMs: add $vecGamma accessor to get the Gamma matrices (coefficients
+  on the differences of the system variables) in standard format
 - "tobit" command: add options to specify left- and/or right-
   censoring; also add --robust option
 - GUI forecast dialog, for cross-sectional data: give option of showing

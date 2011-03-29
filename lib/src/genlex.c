@@ -119,6 +119,7 @@ struct str_table mvars[] = {
     { M_RHO,     "$rho" },
     { M_COMPAN,  "$compan" },
     { M_XTXINV,  "$xtxinv" },
+    { M_VECG,    "$vecGamma" },
     { M_VMA,     "$vma" },
     { M_FEVD,    "$fevd" },
     { M_JALPHA,  "$jalpha" }, 

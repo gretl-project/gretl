@@ -151,7 +151,7 @@ struct set_vars_ {
 		       !strcmp(s, LOOP_MAXITER) || \
                        !strcmp(s, RQ_MAXITER) || \
 		       !strcmp(s, VECM_NORM) || \
-		       !strcmp(s, GRETL_OPTIM) || \			     
+		       !strcmp(s, GRETL_OPTIM) || \
 		       !strcmp(s, GRETL_DEBUG) || \
 		       !strcmp(s, BLAS_NMK_MIN))
 

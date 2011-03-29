@@ -672,6 +672,18 @@
       </description>
     </function>
 
+    <function name="$vecGamma" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the estimation of a VECM; returns a matrix in
+	  which the Gamma matrices (coefficients on the lagged differences
+	  of the cointegrated variables) are stacked side by side.
+	  Each row represents an equation; for a VECM of lag order
+	  <math>p</math> there are <math>p</math> &minus; 1 sub-matrices.
+	</para>
+      </description>
+    </function>    
+
     <function name="$version" section="access" output="scalar">
       <description>
 	<para>
