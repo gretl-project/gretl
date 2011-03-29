@@ -1887,23 +1887,42 @@ gretl_VAR_get_fcast_decomp (const GRETL_VAR *var,
 }
 
 gretl_matrix *
-gretl_VAR_get_fevd_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
+gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var, 
+			   int targ, int horizon, 
+			   const DATAINFO *pdinfo,
 			   int *err)
 {
     gretl_matrix *vd, *V;
     double vjk;
-    int h = default_VAR_horizon(pdinfo);
+    int h = horizon;
     int n = var->neqns;
+    int imin, imax;
     int i, j, k, kk;
+
+    if (h <= 0) {
+	h = default_VAR_horizon(pdinfo);
+    }
+
+    if (targ < 0) {
+	/* doing the whole thing */
+	k = n * n;
+	imin = 0;
+	imax = n;
+    } else {
+	/* doing one specific equation */
+	k = n;
+	imin = targ;
+	imax = targ + 1;
+    }
     
-    V = gretl_matrix_alloc(h, n * n);
+    V = gretl_matrix_alloc(h, k);
     if (V == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
     kk = 0;
-    for (i=0; i<n && !*err; i++) {
+    for (i=imin; i<imax && !*err; i++) {
 	vd = gretl_VAR_get_fcast_decomp(var, i, h, err);
 	if (!*err) {
 	    for (k=0; k<n; k++) {
@@ -1923,6 +1942,13 @@ gretl_VAR_get_fevd_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
     }
     
     return V;
+}
+
+gretl_matrix *
+gretl_VAR_get_full_FEVD_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
+				int *err)
+{
+    return gretl_VAR_get_FEVD_matrix(var, -1, -1, pdinfo, err);
 }
 
 int var_max_order (const int *list, const DATAINFO *pdinfo)

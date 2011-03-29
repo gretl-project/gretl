@@ -4969,6 +4969,65 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return gnuplot_make_graph();
 }
 
+int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
+			 const DATAINFO *pdinfo)
+{
+    FILE *fp = NULL;
+    gretl_matrix *V;
+    gchar *title;
+    int i, t, v;
+    int err = 0;
+
+    V = gretl_VAR_get_FEVD_matrix(var, targ, periods, pdinfo, &err);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+
+    fp = get_plot_input_stream(PLOT_REGULAR, &err);
+    if (err) {
+	gretl_matrix_free(V);
+	return err;
+    }
+
+    v = gretl_VAR_get_variable_number(var, targ);
+
+    fputs("set key left top\n", fp);
+    title = g_strdup_printf(_("forecast variance decomposition for %s"), 
+			    pdinfo->varname[v]);
+    fprintf(fp, "set xlabel '%s'\n", _("periods"));
+    fputs("set xzeroaxis\n", fp);
+    fprintf(fp, "set title '%s'\n", title);
+    g_free(title);
+
+    fputs("plot \\\n", fp);
+
+    for (i=0; i<var->neqns; i++) {
+	v = gretl_VAR_get_variable_number(var, i);
+	fprintf(fp, "'-' using 1:2 title '%s' w lines", pdinfo->varname[v]);
+	if (i < var->neqns - 1) {
+	    fputs(", \\\n", fp);
+	} else {
+	    fputc('\n', fp);
+	}
+    }
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<var->neqns; i++) {
+	for (t=0; t<periods; t++) {
+	    fprintf(fp, "%d %.10g\n", t, gretl_matrix_get(V, t, i));
+	}
+	fputs("e\n", fp);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+    gretl_matrix_free(V);
+
+    return gnuplot_make_graph();
+}
+
 int 
 gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
 			     int periods, double alpha,

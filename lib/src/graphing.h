@@ -235,6 +235,9 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 const DATAINFO *pdinfo,
 				 gretlopt opt);
 
+int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
+			 const DATAINFO *pdinfo);
+
 int 
 gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
 			     int periods, double alpha,

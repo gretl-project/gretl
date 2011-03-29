@@ -3409,6 +3409,44 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
     return resp;
 }
 
+static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec, 
+		       int *horizon) 
+{
+    gchar *title;
+    int h = default_VAR_horizon(datainfo);
+    GtkWidget *dlg;
+    int resp = 0;
+
+    title = g_strdup_printf("gretl: %s", _("Variance decomposition"));
+
+    dlg = build_checks_dialog(title, NULL,
+			      NULL, 0, NULL, 0, 0, /* no checks */
+			      0, NULL, /* no radios */
+			      &h, _("forecast horizon (periods):"),
+			      2, datainfo->n / 2, 0, &resp);
+
+    g_free(title);
+
+    if (dlg == NULL) {
+	return -1;
+    }
+
+    if (ordvec != NULL) {
+	dialog_add_order_selector(dlg, var, ordvec);
+    }
+
+    gtk_widget_show_all(dlg);
+
+    if (resp < 0) {
+	/* cancelled */
+	*horizon = 0;
+    } else {
+	*horizon = h;
+    }
+
+    return resp;
+}
+
 static void impulse_params_from_action (GtkAction *action, 
 					int *targ,
 					int *shock)
@@ -3416,6 +3454,14 @@ static void impulse_params_from_action (GtkAction *action,
     const gchar *s = gtk_action_get_name(action);
 
     sscanf(s, "Imp:%d:%d", targ, shock);
+}
+
+static void FEVD_param_from_action (GtkAction *action, 
+				    int *targ)
+{
+    const gchar *s = gtk_action_get_name(action);
+
+    sscanf(s, "FEVD:%d", targ);
 }
 
 static int ordvec_default (gretl_matrix *v)
@@ -3445,11 +3491,47 @@ static gretl_matrix *cholesky_order_vector (GRETL_VAR *var)
 	    for (i=0; i<var->neqns; i++) {
 		v->val[i] = i;
 	    }
-	    
 	}
     }
 
     return v;
+}
+
+static void FEVD_plot_call (GtkAction *action, gpointer p)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int targ, horizon;
+    gretl_matrix *ordvec = NULL;
+    int resp, err;
+
+    FEVD_param_from_action(action, &targ);
+    ordvec = cholesky_order_vector(var);
+
+    resp = FEVD_setup(var, ordvec, &horizon);
+    
+    if (resp < 0) {
+	/* canceled */
+	gretl_matrix_free(ordvec);
+	return;
+    }
+
+    if (ordvec != NULL) {
+	if (ordvec_default(ordvec)) {
+	    gretl_matrix_free(ordvec);
+	    gretl_VAR_set_ordering(var, NULL);
+	} else {
+	    gretl_VAR_set_ordering(var, ordvec);
+	}
+    }
+
+    err = gretl_VAR_plot_FEVD(var, targ, horizon, datainfo);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
+    }
 }
 
 static void impulse_plot_call (GtkAction *action, gpointer p)
@@ -4112,7 +4194,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 
 	/* path under which to add shocks */
 	sprintf(newpath, "/menubar/Graphs/targ_%d", i);
-	
+
 	for (j=0; j<neqns; j++) {
 	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_VAR_get_variable_number(var, j);
@@ -4125,6 +4207,23 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	    vwin_menu_add_item(vwin, newpath, &item);
 	}
     }
+
+    if (var != NULL) {
+	item.name = "FEVD";
+	item.label = _("Variance decomposition");
+	item.callback = NULL;
+	vwin_menu_add_menu(vwin, graphs, &item);
+	for (j=0; j<neqns; j++) {
+	    /* FEVD graphs per equation */
+	    vtarg = gretl_VAR_get_variable_number(var, j);
+	    double_underscores(tmp, datainfo->varname[vtarg]);
+	    sprintf(istr, "FEVD:%d", j);
+	    item.name = istr;
+	    item.label = tmp;
+	    item.callback = G_CALLBACK(FEVD_plot_call);
+	    vwin_menu_add_item(vwin, "/menubar/Graphs/FEVD", &item);
+	}
+    }	
 
     if (ci == VECM) {
 	/* save ECs items */

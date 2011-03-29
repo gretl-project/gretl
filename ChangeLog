@@ -7,7 +7,8 @@ version 1.9.5, in progress
 - "coint2" (Johansen test): print the log-likelihood, plus improve the
   printing of the Pi matrix when exogenous regressors are present
 - VARs: add $fevd accessor to get the forecast error variance
-  decomposition as a matrix
+  decomposition as a matrix; also add GUI access to forecast variance
+  decomposition plots
 - VECMs: add $vecGamma accessor to get the Gamma matrices (coefficients
   on the differences of the system variables) in standard format
 - "tobit" command: add options to specify left- and/or right-

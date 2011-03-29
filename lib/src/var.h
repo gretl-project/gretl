@@ -107,9 +107,15 @@ gretl_matrix *
 gretl_VAR_get_vma_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
 			  int *err);
 
+gretl_matrix *gretl_VAR_get_FEVD_matrix (const GRETL_VAR *var, 
+					 int targ, int horizon, 
+					 const DATAINFO *pdinfo,
+					 int *err);
+
 gretl_matrix *
-gretl_VAR_get_fevd_matrix (const GRETL_VAR *var, const DATAINFO *pdinfo,
-			   int *err);
+gretl_VAR_get_full_FEVD_matrix (const GRETL_VAR *var, 
+				const DATAINFO *pdinfo,
+				int *err);
 
 gretl_matrix *
 VECM_get_EC_matrix (const GRETL_VAR *v, 
