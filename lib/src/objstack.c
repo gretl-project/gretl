@@ -1087,10 +1087,10 @@ real_get_obj_string (void *p, GretlObjType type, int idx,
 
 static stacker genr_model;
 
-void set_genr_model (MODEL *pmod)
+void set_genr_model (void *ptr, GretlObjType type)
 {
-    genr_model.type = GRETL_OBJ_EQN;
-    genr_model.ptr = pmod;
+    genr_model.ptr = ptr;
+    genr_model.type = type;
 }
 
 void unset_genr_model (void)

@@ -3423,7 +3423,7 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 
 static int shorten_the_constant (double **Z, int n)
 {
-    double *tmp = realloc(Z[0], n * sizeof **Z);
+    double *tmp = realloc(Z[0], n * sizeof *tmp);
 
     if (tmp == NULL) {
 	return E_ALLOC;
@@ -3594,27 +3594,29 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
 			   int nmiss)
 {
     int oldn = pdinfo->n;
-    double *tmp;
+    double *tmp, **Z;
     int i, s, t, skip;
     int err = 0;
 
-    tmp = malloc(oldn * sizeof *tmp);
-    if (tmp == NULL) {
-	return E_ALLOC;
-    }
-
-    err = dataset_add_observations(nmiss, pZ, pdinfo, OPT_A);
+    err = dataset_add_observations(nmiss, pZ, pdinfo, OPT_NONE);
     if (err) {
-	free(tmp);
 	return err;
     }
 
+#if DB_DEBUG
+    fprintf(stderr, "daily data: expanded n from %d to %d\n",
+	    oldn, pdinfo->n);
+#endif
+
+    Z = *pZ;
+    tmp = Z[0];
+
     for (i=1; i<pdinfo->v && !err; i++) {
 	for (s=0; s<oldn; s++) {
-	    tmp[s] = (*pZ)[i][s];
+	    tmp[s] = Z[i][s];
 	}
 
-	(*pZ)[i][0] = tmp[0];
+	Z[i][0] = tmp[0];
 	t = 1;
 	for (s=1; s<oldn; s++) {
 	    skip = get_daily_skip(pdinfo, s);
@@ -3623,19 +3625,30 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
 		break;
 	    }
 	    while (skip--) {
-		(*pZ)[i][t++] = NADBL;
+		Z[i][t++] = NADBL;
 	    }
-	    (*pZ)[i][t++] = tmp[s];
+	    Z[i][t++] = tmp[s];
 	}
     }
 
-    free(tmp);
+    for (t=0; t<pdinfo->n; t++) {
+	Z[0][t] = 1.0;
+	if (pdinfo->S != NULL) {
+	    calendar_date_string(pdinfo->S[t], t, pdinfo);
+	}
+    }
 
     if (!err) {
-	dataset_destroy_obs_markers(pdinfo);
 	pdinfo->t2 = pdinfo->n - 1;
 	ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
     }
+
+#if DB_DEBUG > 1
+    fprintf(stderr, "insert_missing_hidden_obs, done, err = %d\n", err);
+    for (t=0; t<pdinfo->n; t++) {
+	fprintf(stderr, "Z[1][%d] = %14g\n", t, Z[1][t]);
+    }    
+#endif
 
     return err;
 }
@@ -3700,6 +3713,8 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	if (err) {
 	    gretl_errmsg_set("Error expanding daily data with missing observations");
 	    return err;
+	} else {
+	    oldn = pdinfo->n;
 	}
     }
 
@@ -3761,7 +3776,11 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	}
 	sprintf(stobs, "%d", startmaj);
     } else if (newpd == 52) {
-	strcpy(stobs, "1");
+	if (pdinfo->S != NULL) {
+	    strcpy(stobs, pdinfo->S[min_startskip]);
+	} else {
+	    strcpy(stobs, "1");
+	}
     } else {
 	int m0 = startmin + min_startskip;
 	int minor = m0 / compfac + (m0 % compfac > 0);
@@ -3782,7 +3801,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     pdinfo->t2 = pdinfo->n - 1;
     ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
     
-    if (oldpd >= 5 && oldpd <= 7) {
+    if (oldpd >= 5 && oldpd <= 7 && pdinfo->markers) {
 	/* remove any daily date strings */
 	dataset_destroy_obs_markers(pdinfo);
     }

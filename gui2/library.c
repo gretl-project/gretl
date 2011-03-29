@@ -4231,7 +4231,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	return 1;
     }
 
-    set_genr_model(pmod);
+    set_genr_model(pmod, GRETL_OBJ_EQN);
 
     err = generate(cmdline, &Z, datainfo, OPT_NONE, prn); 
 

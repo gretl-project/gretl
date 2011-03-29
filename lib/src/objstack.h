@@ -161,7 +161,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, PRN *prn);
 
-void set_genr_model (MODEL *pmod);
+void set_genr_model (void *ptr, GretlObjType type);
 
 void unset_genr_model (void);
 

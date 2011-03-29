@@ -3417,7 +3417,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
     GtkWidget *dlg;
     int resp = 0;
 
-    title = g_strdup_printf("gretl: %s", _("Variance decomposition"));
+    title = g_strdup_printf("gretl: %s", _("Forecast variance decomposition"));
 
     dlg = build_checks_dialog(title, NULL,
 			      NULL, 0, NULL, 0, 0, /* no checks */
@@ -4210,7 +4210,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 
     if (var != NULL) {
 	item.name = "FEVD";
-	item.label = _("Variance decomposition");
+	item.label = _("Forecast variance decomposition");
 	item.callback = NULL;
 	vwin_menu_add_menu(vwin, graphs, &item);
 	for (j=0; j<neqns; j++) {

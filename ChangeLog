@@ -35,6 +35,9 @@ version 1.9.5, in progress
   scatter plot "with factor separation"
 - Fix bug: transposition not being done in expressions of the form
   matrix m = $accessor[range]', with trailing transpose symbol
+- Fix bug: usable observations could be omitted when compacting from
+  daily to weekly frequency, if the daily data contained "hidden"
+  missing observations
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 

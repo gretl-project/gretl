@@ -95,9 +95,12 @@ static void glib_str_array_free (gchar **S, int n)
 
 static int caller_is_model_window (windata_t *vwin)
 {
-    if (vwin != NULL && vwin->role == VIEW_MODEL &&
+    if (vwin != NULL && 
+	(vwin->role == VIEW_MODEL ||
+	 vwin->role == VAR ||
+	 vwin->role == VECM ||
+	 vwin->role == SYSTEM) &&
 	vwin->data != NULL) {
-	/* FIXME more conditionality required? */
 	return 1;
     }
 
@@ -1482,6 +1485,19 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
     return err;
 }
 
+static void set_genr_model_from_vwin (windata_t *vwin)
+{
+    GretlObjType type = GRETL_OBJ_EQN;
+
+    if (vwin->role == VAR || vwin->role == VECM) {
+	type = GRETL_OBJ_VAR;
+    } else if (vwin->role == SYSTEM) {
+	type = GRETL_OBJ_SYS;
+    }
+
+    set_genr_model(vwin->data, type);
+}
+
 static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 {
     ExecState state;
@@ -1537,7 +1553,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     state.line = fnline;
 
     if (cinfo->flags & MODEL_CALL) {
-	set_genr_model((MODEL *) cinfo->vwin->data);
+	set_genr_model_from_vwin(cinfo->vwin);
     }
 
 #if USE_GTK_SPINNER
@@ -2267,9 +2283,8 @@ void maybe_add_packages_to_menus (windata_t *vwin)
    model-window menu
 */
 
-static int precheck_error (ufunc *func, gpointer p)
+static int precheck_error (ufunc *func, windata_t *vwin)
 {
-    MODEL *pmod = (MODEL *) p;
     fnargs *args = fn_args_new();
     PRN *prn;
     double check_err = 0;
@@ -2280,7 +2295,7 @@ static int precheck_error (ufunc *func, gpointer p)
     }
 
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-    set_genr_model(pmod);
+    set_genr_model_from_vwin(vwin);
     err = gretl_function_exec(func, args, GRETL_TYPE_DOUBLE,
 			      &Z, datainfo, &check_err, NULL, prn);
     unset_genr_model();
@@ -2330,7 +2345,7 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
 	    if (precheck != NULL) {
 		ufunc *func = get_function_from_package(precheck, pkg);
 	    
-		if (func == NULL || precheck_error(func, vwin->data)) {
+		if (func == NULL || precheck_error(func, vwin)) {
 		    fprintf(stderr, "precheck failed\n");
 		    err = 1;
 		}
