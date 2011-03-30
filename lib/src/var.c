@@ -3002,7 +3002,8 @@ GRETL_VAR *johansen_test (int order, const int *list,
  * include centered seasonals; %OPT_N: no constant; %OPT_R:
  * restricted constant; %OPT_T: constant and unrestricted trend
  * (note: default "case" is unrestricted constant);
- * %OPT_V: produce verbose results; %OPT_Q: just print the tests.
+ * %OPT_V: produce verbose results; %OPT_Q: just print the tests;
+ * %OPT_S: don't print anything.
  * @prn: gretl printing struct.
  *
  * Carries out the Johansen test for cointegration and prints the
@@ -3013,14 +3014,15 @@ GRETL_VAR *johansen_test (int order, const int *list,
  */
 
 int johansen_test_simple (int order, const int *list, 
-			  const double **Z, const DATAINFO *pdinfo, 
+			  const double **Z, const DATAINFO *pdinfo,
 			  gretlopt opt, PRN *prn)
 {
     GRETL_VAR *jvar = NULL;
     int err = 0;
 
     jvar = johansen_wrapper(VECM_CTEST, order, 0, NULL, list, NULL, 
-			    Z, pdinfo, opt, prn, &err);
+			    Z, pdinfo, opt, (opt & OPT_S)? NULL : prn, 
+			    &err);
 
     if (jvar != NULL) {
 	gretl_VAR_free(jvar);

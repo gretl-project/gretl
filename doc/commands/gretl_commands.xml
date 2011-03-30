@@ -1572,6 +1572,10 @@
 	  <effect>print just the tests</effect>
         </option>
         <option>
+	  <flag>--silent</flag>
+	  <effect>don't print anything</effect>
+        </option>
+        <option>
 	  <flag>--verbose</flag>
 	  <effect>print details of auxiliary regressions</effect>
         </option>
