@@ -10795,7 +10795,7 @@
         </option>
         <option>
 	  <flag>--variance-decomp</flag>
-	  <effect>print forecast variance decompositions</effect>
+	  <effect>print variance decompositions</effect>
         </option>
         <option>
 	  <flag>--lagselect</flag>
@@ -11036,7 +11036,7 @@
         </option>
         <option>
 	  <flag>--variance-decomp</flag>
-	  <effect>print forecast variance decompositions</effect>
+	  <effect>print variance decompositions</effect>
         </option>
       </options>
       <examples>
