@@ -1765,15 +1765,16 @@ double GED_cdf_comp (double nu, double x)
  * @N: the number of potentially cointegrated variables
  * minus the cointegration rank under H0.
  * @det: index of deterministic setup of model (0 to 4).
+ * @T: the sample size, or 0 for an asymptotic result.
  * @tr: the trace statistic.
  *
  * Returns: the p-value of the trace statistic, computed
  * via Doornik's gamma approximation, or #NADBL on failure.
  */
 
-double johansen_trace_pval (int N, int det, double tr)
+double johansen_trace_pval (int N, int det, int T, double tr)
 {
-    double (*pvfunc) (double, int, int);
+    double (*pvfunc) (double, int, int, int);
     void *handle;
     double pv = NADBL;
 
@@ -1782,7 +1783,7 @@ double johansen_trace_pval (int N, int det, double tr)
     if (pvfunc == NULL) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
     } else {
-	pv = (*pvfunc) (tr, N, det);
+	pv = (*pvfunc) (tr, N, det, T);
 	close_plugin(handle);
     }
 
@@ -1868,9 +1869,10 @@ static int pdist_check_input (char st, const double *parm,
     if (st == 'z') {
 	np = 0;
     } else if (st == 'F' || st == 'G' ||
-	       st == 'B' || st == 'W' ||
-	       st == 'J') {
+	       st == 'B' || st == 'W') {
 	np = 2;
+    } else if (st == 'J') {
+	np = 3;
     }
 
     for (i=0; i<np; i++) {
@@ -2132,7 +2134,8 @@ double gretl_get_pvalue (char st, const double *parm, double x)
     } else if (st == 'E') {
 	y = GED_cdf_comp(parm[0], x);
     } else if (st == 'J') {
-	y = johansen_trace_pval((int) parm[0], (int) parm[1], x);
+	y = johansen_trace_pval((int) parm[0], (int) parm[1], 
+				(int) parm[2], x);
     }
 
     remember_pvalue_args(parm, x);

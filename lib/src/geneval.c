@@ -775,7 +775,7 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
     } else if (*s == 'J') {
 	/* Johansen trace test: only p-value */
 	if (f == F_PVAL) {
-	    *np = 2;
+	    *np = 3;
 	} else {
 	    err = E_INVARG;
 	}
@@ -1186,7 +1186,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	NODE *e, *s, *r = n->v.b1.b;
 	int i, k, m = r->v.bn.n_nodes;
 	int rgen = (n->t == F_RANDGEN);
-	double parm[2] = {0};
+	double parm[3] = {0};
 	double argval = NADBL;
 	double *parmvec[2] = { NULL };
 	double *argvec = NULL;
@@ -1194,7 +1194,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	int np, argc;
 	char d, *dist, code[2];
 
-	if (m < 2 || m > 4) {
+	if (m < 2 || m > 5) {
 	    p->err = E_INVARG;
 	    goto disterr;
 	}

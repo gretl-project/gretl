@@ -48,6 +48,27 @@ const double trace_v_coef[5][6] = {
     { 3,  4.00,  0.80, -5.8, -2.66,  0 }
 };
 
+/* trace-test sample size correction: log(m)-log(m-hat) */
+
+const double trace_m_corr[5][7] = {
+    /* sqrt(n)/T   n/T  n^2/T^2   n==1/T     n==1     n==2      n==3 */
+    { -0.101,   0.499,   0.896,  -0.562,  0.00229, 0.00662,        0 }, 
+    {      0,   0.465,   0.984,  -0.273, -0.00244,       0,        0 }, 
+    {  0.134,   0.422,    1.02,    2.17, -0.00182,       0, -0.00321 }, 
+    { 0.0252,   0.448,    1.09,  -0.353,        0,       0,        0 }, 
+    { -0.819,   0.615,   0.896,    2.43,  0.00149,       0,        0 }
+};
+
+/* trace-test sample size correction: log(v)-log(v-hat) */
+
+const double trace_v_corr[5][7] = {
+    { -0.204,   0.980,    3.11,   -2.14,   0.0499,  -0.0103, -0.00902 },
+    {  0.224,   0.863,    3.38,  -0.807,        0,        0,  -0.0091 }, 
+    {  0.422,   0.734,    3.76,    4.32, -0.00606,        0, -0.00718 }, 
+    {      0,   0.836,    3.99,   -1.33, -0.00298, -0.00139, -0.00268 }, 
+    {  -1.29,    1.01,    3.92,    4.67,  0.00484, -0.00127,  -0.0199 }
+};
+
 /* coefficient matrices for the lambdamax test */
 
 const double maxev_m_coef[5][5] = { 
@@ -67,7 +88,7 @@ const double maxev_v_coef[5][5] = {
     { 2.0899, -5.3303, -7.15230, -0.252600, 12.393 }
 }; 
 
-static void fill_x_array (double *x, int n)
+static void fill_x_asy_array (double *x, int n)
 {
     x[0] = n * n;
     x[1] = n;
@@ -75,6 +96,17 @@ static void fill_x_array (double *x, int n)
     x[3] = (n == 1)? 1.0 : 0.0;
     x[4] = (n == 2)? 1.0 : 0.0;
     x[5] = sqrt((double) n);
+}
+
+static void fill_x_corr_array (double *x, int n, int T)
+{
+    x[0] = sqrt((double) n) / T;
+    x[1] = n / (double) T;
+    x[2] = (n * n) / (double) (T * T);
+    x[3] = (n == 1)? 1.0 / T : 0.0;
+    x[4] = (n == 1)? 1.0 : 0.0;
+    x[5] = (n == 2)? 1.0 : 0.0;
+    x[6] = (n == 3)? 1.0 : 0.0;;
 }
 
 /*
@@ -100,8 +132,8 @@ static void fill_x_array (double *x, int n)
 */
 
 static int
-gamma_LR_pvals (double trace, double lmax, JohansenCode det, 
-		int n, double *pval)
+gamma_LR_asy_pvals (double trace, double lmax, JohansenCode det, 
+		    int n, double *pval)
 {
     const double *tracem = trace_m_coef[det];
     const double *tracev = trace_v_coef[det];
@@ -112,7 +144,7 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     double x[6];
     int i;
 
-    fill_x_array(x, n);
+    fill_x_asy_array(x, n);
 
     for (i=0; i<6; i++) {
 	mt += x[i] * tracem[i];
@@ -127,6 +159,38 @@ gamma_LR_pvals (double trace, double lmax, JohansenCode det,
     pval[1] = gamma_cdf_comp(ml, vl, lmax, 2);
 
     return 0;
+}
+
+static double
+gamma_LR_T_pval (double trace, JohansenCode det, int n, int T)
+{
+    const double *tracem = trace_m_coef[det];
+    const double *tracev = trace_v_coef[det];
+    const double *mcorr = trace_m_corr[det];
+    const double *vcorr = trace_v_corr[det];
+    double mt = 0, vt = 0;
+    double mtcorr = 0, vtcorr = 0;
+    double x[7];
+    int i;
+
+    fill_x_asy_array(x, n);
+
+    for (i=0; i<6; i++) {
+	mt += x[i] * tracem[i];
+	vt += x[i] * tracev[i];
+    }
+
+    fill_x_corr_array(x, n, T);
+
+    for (i=0; i<7; i++) {
+	mtcorr += x[i] * mcorr[i];
+	vtcorr += x[i] * vcorr[i];
+    }    
+
+    mt = exp(log(mt) + mtcorr);
+    vt = exp(log(vt) + vtcorr);
+
+    return gamma_cdf_comp(mt, vt, trace, 2);
 }
 
 /*
@@ -150,7 +214,7 @@ gamma_harbo_trace_pval (double trace, JohansenCode det,
     int n = n1 + n2;
     int i, m = n - r;
 
-    fill_x_array(x, m);
+    fill_x_asy_array(x, m);
 
     for (i=0; i<6; i++) {
 	mt += x[i] * tracem[i];
@@ -174,7 +238,7 @@ gamma_harbo_trace_pval (double trace, JohansenCode det,
 
 /* public function accessible via gretl's plugin apparatus */
 
-double trace_pvalue (double trace, int n, int det)
+double trace_pvalue (double trace, int n, int det, int T)
 {
     if (det < J_NO_CONST || det > J_UNREST_TREND || n < 1) {
 	return NADBL;
@@ -182,15 +246,31 @@ double trace_pvalue (double trace, int n, int det)
 	const double *tracem = trace_m_coef[det];
 	const double *tracev = trace_v_coef[det];
 	double mt = 0, vt = 0;
-	double x[6];
+	double x[7];
 	int i;
 
-	fill_x_array(x, n);
+	fill_x_asy_array(x, n);
 
 	for (i=0; i<6; i++) {
 	    mt += x[i] * tracem[i];
 	    vt += x[i] * tracev[i];
 	}
+
+	if (T > 0 && T < 5000) {
+	    const double *mcorr = trace_m_corr[det];
+	    const double *vcorr = trace_v_corr[det];
+	    double mtcorr = 0, vtcorr = 0;
+
+	    fill_x_corr_array(x, n, T);
+
+	    for (i=0; i<7; i++) {
+		mtcorr += x[i] * mcorr[i];
+		vtcorr += x[i] * vcorr[i];
+	    }    
+
+	    mt = exp(log(mt) + mtcorr);
+	    vt = exp(log(vt) + vtcorr);
+	}	    
 
 	return gamma_cdf_comp(mt, vt, trace, 2);
     }
@@ -1474,7 +1554,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	    double pv[2] = {0};
 
 	    lmax = gretl_matrix_get(tests, i, 1);
-	    gamma_LR_pvals(trace, lmax, jcase, n - i, pv);
+	    gamma_LR_asy_pvals(trace, lmax, jcase, n - i, pv);
 	    pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
 		    i, evals->val[i], trace, pv[0], lmax, pv[1]);
 	    gretl_matrix_set(pvals, i, 0, pv[0]);
