@@ -365,7 +365,7 @@ following options to the \texttt{coint2} and \texttt{vecm} commands:
     0 & \option{nc} & no constant \\
     $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \option{rc} & restricted
        constant \\
-    $\mu_0$ &  default & unrestricted constant \\
+    $\mu_0$ &  \option{uc} & unrestricted constant \\
     $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \option{crt} &
      constant + restricted trend \\
     $\mu_0 + \mu_1 t$ &  \option{ct} & 
@@ -375,7 +375,7 @@ following options to the \texttt{coint2} and \texttt{vecm} commands:
 Note that for this command the above options are mutually exclusive.
 In addition, you have the option of using the \option{seasonal}
 options, for augmenting $\mu_t$ with centered seasonal dummies.  In
-each case, p-values are computed via the approximations by
+each case, p-values are computed via the approximations devised by
 \cite{doornik98}.
 
 \section{The Johansen cointegration tests}
@@ -386,7 +386,7 @@ rank of $\beta$; in other words, how many cointegration vectors the
 system has.  These are the ``$\lambda$-max'' test, for hypotheses on
 individual eigenvalues, and the ``trace'' test, for joint hypotheses.
 Suppose that the eigenvalues $\lambda_i$ are sorted from largest to
-smallest. The null hypothesis for the ``$\lambda$-max'' test on the
+smallest. The null hypothesis for the $\lambda$-max test on the
 $i$-th eigenvalue is that $\lambda_i = 0$. The corresponding trace
 test, instead, considers the hypothesis $\lambda_j = 0$ for all $j \ge
 i$.

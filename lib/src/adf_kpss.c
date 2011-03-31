@@ -1260,8 +1260,8 @@ int levin_lin_test (int vnum, const int *plist,
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
- * Carries out and prints the results of the Augmented Dickey-Fuller test for 
- * a unit root. 
+ * Carries out and prints the results of the Augmented Dickey-Fuller 
+ * test for a unit root. 
  *
  * By default two tests are performed, one for a model
  * including a constant and one including a linear trend. The 
@@ -1312,6 +1312,15 @@ int adf_test (int order, const int *list, double ***pZ,
 	    vlist[1] = v = list[i];
 	    err = list_adjust_sample(vlist, &pdinfo->t1, &pdinfo->t2, 
 				     (const double **) *pZ);
+	    if (!err && order == -1) {
+		/* default to L_{12}: see G. W. Schwert, "Tests for Unit Roots:
+		   A Monte Carlo Investigation", Journal of Business and
+		   Economic Statistics, 7(2), 1989, pp. 5-17.
+		*/
+		int T = pdinfo->t2 - pdinfo->t1 + 1;
+
+		order = 12.0 * pow(T/100.0, 0.25);
+	    }
 	    if (!err) {
 		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
 				    0, NULL, prn);

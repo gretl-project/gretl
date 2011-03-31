@@ -217,12 +217,16 @@
 
       <para context="cli">
 	If the lag order, <math>k</math>, is greater than 0, then
-	<math>k</math> lags of the dependent variable are included
-	on the right-hand side of the test regressions, subject to the
-	following qualification.  If the <opt>--test-down</opt> option is
-	given, <math>k</math> is taken as the maximum lag
-	and the actual lag order used is obtained by testing down, using
-	this algorithm:
+	<math>k</math> lags of the dependent variable are included on
+	the right-hand side of the test regressions.  If the order is
+	given as &minus;1, <math>k</math> is set following the
+	recommendation of <cite key="schwert89">Schwert (1989)</cite>,
+	namely 12(<math>T</math>/100)<sup>0.25</sup>, where
+	<math>T</math> is the sample size.  In either case, however,
+	if the <opt>--test-down</opt> option is given then
+	<math>k</math> is taken as the <emphasis>maximum</emphasis>
+	lag and the actual lag order used is obtained by testing down,
+	using this algorithm:
       </para>
 
       <para context="gui">
@@ -252,7 +256,8 @@
       <para>In the context of step 2 above, <quote>significant</quote>
 	means that the <math>t</math>-statistic for the last lag
 	has an asymptotic two-sided <emphasis>p</emphasis>-value,
-	against the normal distribution, of 0.10 or less.</para> 
+	against the normal distribution, of 0.10 or less.
+      </para> 
 
       <para context="cli">
 	The <opt>--gls</opt> option can be used in conjunction with
@@ -1554,6 +1559,10 @@
         <option>
 	  <flag>--rc</flag>
 	  <effect>restricted constant</effect>
+        </option>
+        <option>
+	  <flag>--uc</flag>
+	  <effect>unrestricted constant</effect>
         </option>
         <option>
 	  <flag>--crt</flag>

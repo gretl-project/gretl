@@ -1060,7 +1060,6 @@ static void open_script_link (GtkTextTag *tag)
     g_object_get(G_OBJECT(tag), "name", &fname, NULL);
     sprintf(fullname, "%sscripts%cmisc%c%s", gretldir, 
 	    SLASH, SLASH, fname);
-    g_free(fname);
 
     fp = gretl_fopen(fullname, "r");
     if (fp != NULL) {
@@ -1069,6 +1068,8 @@ static void open_script_link (GtkTextTag *tag)
 	sprintf(fullname, "%sscripts%c%s", gretldir, 
 		SLASH, fname);
     }
+
+    g_free(fname);
 
     view_file(fullname, 0, 0, 78, 370, VIEW_SCRIPT);
 }
