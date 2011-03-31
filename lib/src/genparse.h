@@ -97,7 +97,7 @@ enum {
 	      SUBSL,	  /* row or column component of MSPEC */
 	      MDEF,	  /* explicit matrix definition {...} */
 	      LAG,        /* variable plus lag length */	  
-	      DVAR,	  /* $ dataset variable (scalar or series) */
+	      DVAR,	  /* $ "dataset" variable (mostly scalar or series) */
 	      MVAR,	  /* $ model var (scalar, series, or matrix) */
   /* 70 */    OVAR,	  /* object variable: variable "under" an object */
               LIST,	  /* reference to named list */

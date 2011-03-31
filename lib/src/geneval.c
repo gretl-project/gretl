@@ -7249,36 +7249,87 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
     return m;
 }
 
+static gretl_matrix *submat_postprocess (gretl_matrix *M,
+					 NODE *n, parser *p)
+{
+    gretl_matrix *S = matrix_get_submatrix(M, n->v.mspec, &p->err);
+
+    gretl_matrix_free(M);
+
+    if (p->err == 0 && (n->flags & TRANSP_NODE)) {
+	p->err = gretl_matrix_transpose_in_place(S);
+	n->flags &= ~TRANSP_NODE;
+    }
+
+    return S;
+}
+
+static gretl_matrix *dvar_get_submatrix (int idx, NODE *t, parser *p)
+{
+    NODE *r = eval(t->v.b2.r, p);
+    gretl_matrix *M, *S = NULL;
+
+    if (r == NULL || r->t != MSPEC) {
+	if (!p->err) {
+	    p->err = E_TYPES;
+	}
+	return NULL;
+    }
+
+    M = dvar_get_matrix(idx, &p->err);
+
+    if (M != NULL) {
+	S = submat_postprocess(M, r, p);
+    }
+
+    return S;
+}
+
 static NODE *dollar_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
+
     if (starting(p)) {
-	if (dvar_scalar(t->v.idnum)) {
+	int idx, mslice = (t->t == DMSL);
+
+	if (mslice) {
+	    /* "slice" spec on right subnode, index on left */
+	    idx = t->v.b2.l->v.idnum;
+	} else {
+	    idx = t->v.idnum;
+	}
+
+	if (mslice) {
+	    ret = aux_matrix_node(p);
+	    if (ret != NULL && starting(p)) {
+		ret->v.m = dvar_get_submatrix(idx, t, p);
+	    }
+	} else if (dvar_scalar(idx)) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL && starting(p)) {
-		ret->v.xval = dvar_get_scalar(t->v.idnum, p->dinfo, 
+		ret->v.xval = dvar_get_scalar(idx, p->dinfo, 
 					      p->lh.label);
 	    }
-	} else if (dvar_series(t->v.idnum)) {
+	} else if (dvar_series(idx)) {
 	    ret = aux_vec_node(p, 0);
 	    if (ret != NULL && starting(p)) {
-		ret->v.xvec = dvar_get_series(t->v.idnum, p->dinfo,
+		ret->v.xvec = dvar_get_series(idx, p->dinfo,
 					      &p->err);
 	    }
-	} else if (dvar_variant(t->v.idnum)) {
+	} else if (dvar_variant(idx)) {
 	    GretlType type = get_last_test_type();
 
 	    if (type == GRETL_TYPE_MATRIX) {
 		ret = aux_matrix_node(p);
 		if (ret != NULL && starting(p)) {
-		    ret->v.m = dvar_get_matrix(t->v.idnum, &p->err);
+		    ret->v.m = dvar_get_matrix(idx, &p->err);
 		}		
 	    } else {
 		/* scalar or none */
 		ret = aux_scalar_node(p);
 		if (ret != NULL && starting(p)) {
-		    ret->v.xval = dvar_get_scalar(t->v.idnum, p->dinfo, 
+		    ret->v.xval = dvar_get_scalar(idx, p->dinfo, 
 						  p->lh.label);
 		}
 	    } 
@@ -7317,13 +7368,7 @@ object_var_get_submatrix (const char *oname, int idx, NODE *t, parser *p,
     }
 
     if (M != NULL) {
-	S = matrix_get_submatrix(M, r->v.mspec, &p->err);
-	gretl_matrix_free(M);
-    }
-
-    if (p->err == 0 && (r->flags & TRANSP_NODE)) {
-	p->err = gretl_matrix_transpose_in_place(S);
-	r->flags &= ~TRANSP_NODE;
+	S = submat_postprocess(M, r, p);
     }
 
     return S;
@@ -7468,6 +7513,11 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    idx = r->v.b2.l->v.idnum;
 	} else {
 	    idx = r->v.idnum;
+	}
+
+	if (mslice && dvar_variant(idx)) {
+	    /* we're in the wrong place */
+	    return dollar_var_node(r, p);
 	}
 		
 	vtype = object_var_type(idx, oname, &needs_data);

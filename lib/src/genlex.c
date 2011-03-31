@@ -935,7 +935,8 @@ static void look_up_word (const char *s, parser *p)
 
 #define could_be_matrix(t) (model_data_matrix(t) || \
 			    model_data_matrix_builder(t) || \
-			    t == M_UHAT || t == M_YHAT)
+			    t == M_UHAT || t == M_YHAT || \
+			    t == R_TEST_STAT || R_TEST_PVAL)
 
 static void word_check_next_char (const char *s, parser *p)
 {
@@ -966,7 +967,8 @@ static void word_check_next_char (const char *s, parser *p)
 	if (p->sym == UMAT) {
 	    /* slice of user matrix */
 	    p->sym = MSL;
-	} else if (p->sym == MVAR && could_be_matrix(p->idnum)) {
+	} else if ((p->sym == MVAR || p->sym == DVAR) && 
+		   could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
 	} else if (p->sym == USERIES) {
