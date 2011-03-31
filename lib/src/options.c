@@ -132,6 +132,7 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_T, "ct", 0 },
     { COINT2,   OPT_S, "silent", 0 },
     { COINT2,   OPT_V, "verbose", 0 },
+    { COINT2,   OPT_Y, "asy", 0 },
     { CORR,     OPT_K, "kendall", 0 },
     { CORR,     OPT_S, "spearman", 0 },
     { CORR,     OPT_U, "uniform", 0 },

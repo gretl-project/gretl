@@ -51,22 +51,22 @@ const double trace_v_coef[5][6] = {
 /* trace-test sample size correction: log(m)-log(m-hat) */
 
 const double trace_m_corr[5][7] = {
-    /* sqrt(n)/T   n/T  n^2/T^2   n==1/T     n==1     n==2      n==3 */
-    { -0.101,   0.499,   0.896,  -0.562,  0.00229, 0.00662,        0 }, 
-    {      0,   0.465,   0.984,  -0.273, -0.00244,       0,        0 }, 
-    {  0.134,   0.422,    1.02,    2.17, -0.00182,       0, -0.00321 }, 
-    { 0.0252,   0.448,    1.09,  -0.353,        0,       0,        0 }, 
-    { -0.819,   0.615,   0.896,    2.43,  0.00149,       0,        0 }
+    /* sqrt(n)/T n/T  n^2/T^2  n==1/T     n==1     n==2      n==3 */
+    { -0.101,  0.499,  0.896, -0.562,  0.00229, 0.00662,        0 }, 
+    {      0,  0.465,  0.984, -0.273, -0.00244,       0,        0 }, 
+    {  0.134,  0.422,   1.02,   2.17, -0.00182,       0, -0.00321 }, 
+    { 0.0252,  0.448,   1.09, -0.353,        0,       0,        0 }, 
+    { -0.819,  0.615,  0.896,   2.43,  0.00149,       0,        0 }
 };
 
 /* trace-test sample size correction: log(v)-log(v-hat) */
 
 const double trace_v_corr[5][7] = {
-    { -0.204,   0.980,    3.11,   -2.14,   0.0499,  -0.0103, -0.00902 },
-    {  0.224,   0.863,    3.38,  -0.807,        0,        0,  -0.0091 }, 
-    {  0.422,   0.734,    3.76,    4.32, -0.00606,        0, -0.00718 }, 
-    {      0,   0.836,    3.99,   -1.33, -0.00298, -0.00139, -0.00268 }, 
-    {  -1.29,    1.01,    3.92,    4.67,  0.00484, -0.00127,  -0.0199 }
+    { -0.204,  0.980,  3.11,  -2.14,   0.0499,  -0.0103, -0.00902 },
+    {  0.224,  0.863,  3.38, -0.807,        0,        0,  -0.0091 }, 
+    {  0.422,  0.734,  3.76,   4.32, -0.00606,        0, -0.00718 }, 
+    {      0,  0.836,  3.99,  -1.33, -0.00298, -0.00139, -0.00268 }, 
+    {  -1.29,   1.01,  3.92,   4.67,  0.00484, -0.00127,  -0.0199 }
 };
 
 /* coefficient matrices for the lambdamax test */
@@ -270,7 +270,9 @@ double trace_pvalue (double trace, int n, int det, int T)
 
 	    mt = exp(log(mt) + mtcorr);
 	    vt = exp(log(vt) + vtcorr);
-	}	    
+	}
+
+	/* fprintf(stderr, "trace: m = %g, v = %g\n", mt, vt); */
 
 	return gamma_cdf_comp(mt, vt, trace, 2);
     }
@@ -1472,7 +1474,8 @@ static void coint_test_print_exog (GRETL_VAR *jvar,
 
 static int 
 compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, 
-		    const DATAINFO *pdinfo, PRN *prn)
+		    const DATAINFO *pdinfo, gretlopt opt, 
+		    PRN *prn)
 {
     gretl_matrix *tests;
     gretl_matrix *pvals;
@@ -1559,6 +1562,23 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 		    i, evals->val[i], trace, pv[0], lmax, pv[1]);
 	    gretl_matrix_set(pvals, i, 0, pv[0]);
 	    gretl_matrix_set(pvals, i, 1, pv[1]);
+	}
+    }
+
+    if (!partial) {
+	double pv;
+
+	pprintf(prn, "\n%s:\n", _("Corrected for sample size"));
+	pprintf(prn, "\n%s %s %s\n", _("Rank"), _("Trace test"), 
+		_("p-value"));
+	for (i=0; i<n; i++) {
+	    trace = gretl_matrix_get(tests, i, 0);
+	    pv = gamma_LR_T_pval(trace, jcase, n - i, T);
+	    pprintf(prn, "%4d%#11.5g [%6.4f]\n", i, trace, pv);
+	    if (!(opt & OPT_Y)) {
+		/* not asymptotic: prefer sample-corrected p-value */
+		gretl_matrix_set(pvals, i, 0, pv);
+	    }
 	}
     }
 
@@ -1702,7 +1722,7 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	pputs(prn, _("Failed to find eigenvalues\n"));
     } else {
 	johansen_ll_calc(jvar, evals);
-	compute_coint_test(jvar, evals, pdinfo, prn);
+	compute_coint_test(jvar, evals, pdinfo, opt, prn);
 
 	if (!(opt & OPT_Q)) {
 	    print_beta_and_alpha(jvar, evals, p, pdinfo, prn);
