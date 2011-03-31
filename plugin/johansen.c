@@ -161,6 +161,10 @@ gamma_LR_asy_pvals (double trace, double lmax, JohansenCode det,
     return 0;
 }
 
+/* Variant of gamma_LR_asy_pvals() with sample-size correction.
+   Only the trace test is handled.
+*/
+
 static double
 gamma_LR_T_pval (double trace, JohansenCode det, int n, int T)
 {
@@ -236,7 +240,12 @@ gamma_harbo_trace_pval (double trace, JohansenCode det,
     return gamma_cdf_comp(mt, vt, trace, 2);
 }
 
-/* public function accessible via gretl's plugin apparatus */
+/* public function accessible via gretl's plugin apparatus
+
+   In a script, do: pv = pvalue(J, n, det, T, trace)
+
+   Use T = 0 for the plain asymptotic result.
+*/
 
 double trace_pvalue (double trace, int n, int det, int T)
 {
@@ -256,7 +265,7 @@ double trace_pvalue (double trace, int n, int det, int T)
 	    vt += x[i] * tracev[i];
 	}
 
-	if (T > 0 && T < 5000) {
+	if (T > 0 && T < 10000) {
 	    const double *mcorr = trace_m_corr[det];
 	    const double *vcorr = trace_v_corr[det];
 	    double mtcorr = 0, vtcorr = 0;
@@ -268,11 +277,9 @@ double trace_pvalue (double trace, int n, int det, int T)
 		vtcorr += x[i] * vcorr[i];
 	    }    
 
-	    mt = exp(log(mt) + mtcorr);
-	    vt = exp(log(vt) + vtcorr);
+	    mt *= exp(mtcorr);
+	    vt *= exp(vtcorr);
 	}
-
-	/* fprintf(stderr, "trace: m = %g, v = %g\n", mt, vt); */
 
 	return gamma_cdf_comp(mt, vt, trace, 2);
     }
