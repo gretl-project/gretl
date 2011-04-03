@@ -1887,7 +1887,12 @@ static int real_csv_to_clipboard (const int *list)
 
     err = data_to_buf_as_csv(list, prn);
     if (!err) {
-	prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+	err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+	if (err) {
+	    fprintf(stderr, "prn_to_clipboard: err = %d\n", err);
+	}
+    } else {
+	fprintf(stderr, "data_to_buf_as_csv: err = %d\n", err);
     }
 
     gretl_print_destroy(prn);

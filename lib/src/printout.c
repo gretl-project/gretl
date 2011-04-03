@@ -2184,7 +2184,7 @@ int print_data_sorted (const int *list, const int *obsvec,
     int colwidth = 0;
     int ncols = 0, obslen = 0;
     int gprec = 6;
-    int T, lmax;
+    int T, lmax = 0;
     int i, s, t;
 
     if (obsvec != NULL) {
@@ -2192,11 +2192,13 @@ int print_data_sorted (const int *list, const int *obsvec,
 	lmax = 4;
     } else {
 	T = sample_size(pdinfo);
-	lmax = 8;
+	if (rtf) {
+	    lmax = 8;
+	}
     }
 
     /* must have a list of not more than lmax variables... */
-    if (list == NULL || list[0] < 1 || list[0] > lmax) {
+    if (list == NULL || list[0] < 1 || (lmax >  0 && list[0] > lmax)) {
 	return E_DATA;
     }
 
