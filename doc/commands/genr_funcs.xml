@@ -3345,11 +3345,12 @@
 	  <argname>p</argname> is a positive scalar, returns a matrix
 	  in which the columns of <argname>X</argname> are shifted
 	  down by <argname>p</argname> rows and the first
-	  <argname>p</argname> rows are filled with zeros. If
-	  <argname>p</argname> is a negative number,
-	  <argname>X</argname> is shifted up and the last rows are
-	  filled with the value <argname>m</argname> if present, zero
-	  otherwise.
+	  <argname>p</argname> rows are filled with the value
+	  <argname>m</argname>. If <argname>p</argname> is a negative
+	  number, <argname>X</argname> is shifted up and the last rows
+	  are filled with the value <argname>m</argname>. If
+	  <argname>m</argname> is omitted, it is understood to be
+	  zero.
 	</para>
 	<para context="tex">
 	  Shifts up or down the rows of <argname>X</argname>. If $p$
@@ -3358,10 +3359,12 @@
 	  otherwise. In other words, the columns of
 	  <argname>X</argname> are shifted down by
 	  <argname>p</argname> rows and the first <argname>p</argname>
-	  rows are filled with zeros. If <argname>p</argname> is a
-	  negative number, <argname>X</argname> is shifted up and the
-	  last rows are filled with the value <argname>m</argname> if
-	  present, zero otherwise.
+	  rows are filled with the value <argname>m</argname>. If
+	  <argname>p</argname> is a negative number,
+	  <argname>X</argname> is shifted up and the last rows are
+	  filled with the value <argname>m</argname>. If
+	  <argname>m</argname> is omitted, it is understood to be
+	  zero.
 	</para>
 	<para context="notex">
 	  If <argname>p</argname> is a vector, the above operation is
