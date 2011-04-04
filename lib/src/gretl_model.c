@@ -4571,7 +4571,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	    /* normality */
 	    if (mci == TOBIT || mci == PROBIT ||
 		mci == LOGIT || mci == INTREG ||
-		mci == DURATION) {
+		mci == HECKIT || mci == DURATION) {
 		/* POISSON, NEGBIN? */
 		ok = 0;
 	    }	    

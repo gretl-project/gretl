@@ -1512,10 +1512,7 @@ int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo,
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = ptr;
 
-	if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	    gretl_model_get_int(pmod, "ordered")) {
-	    err = E_NOTIMP;
-	} else if (!exact_fit_check(pmod, prn)) {
+	if (!exact_fit_check(pmod, prn)) {
 	    err = model_error_dist(ptr, pZ, pdinfo, opt, prn);
 	}
     } else if (type == GRETL_OBJ_SYS) {
