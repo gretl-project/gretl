@@ -28,6 +28,8 @@ version 1.9.5, in progress
   a list can now be substituted for the name of a series
 - quantile() function: allow a vector for the second argument when the 
   first argument is a matrix
+- Copy data to clipboard in GUI: remove limitation of 8 series max
+- "difftest" command: record $test and $pvalue
 - Fix bug: wrong out-of-sample forecasts for ARMA models with seasonal
   MA terms
 - Fix bug: wrong handling of string fields in ODBC data import

@@ -63,9 +63,9 @@ int printdata (const int *list, const char *mstr,
 	       const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 
-int print_data_sorted (const int *list, const int *obsvec, 
-		       const double **Z, const DATAINFO *pdinfo, 
-		       PRN *prn);
+int print_data_in_columns (const int *list, const int *obsvec, 
+			   const double **Z, const DATAINFO *pdinfo, 
+			   PRN *prn);
 
 int print_series_with_format (const int *list, const double **Z, 
 			      const DATAINFO *pdinfo, 

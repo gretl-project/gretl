@@ -1861,8 +1861,8 @@ static int data_to_buf_as_rtf (const int *list, PRN *prn)
     int err;
 
     gretl_print_set_format(prn, GRETL_FORMAT_RTF);
-    err = print_data_sorted(list, NULL, (const double **) Z, 
-			    datainfo, prn);
+    err = print_data_in_columns(list, NULL, (const double **) Z, 
+				datainfo, prn);
     return err;
 }
 
@@ -1871,8 +1871,8 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     int err;
 
     gretl_print_set_format(prn, GRETL_FORMAT_CSV);
-    err = print_data_sorted(list, NULL, (const double **) Z, 
-			    datainfo, prn);
+    err = print_data_in_columns(list, NULL, (const double **) Z, 
+				datainfo, prn);
     return err;
 }
 

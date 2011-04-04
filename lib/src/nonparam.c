@@ -856,25 +856,27 @@ int runs_test (int v, const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-static void print_z_prob (double z, PRN *prn)
+static double print_z_prob (double z, PRN *prn)
 {
-    double p = NADBL;
+    double pv = NADBL;
 
     if (z > 0) {
-	p = normal_pvalue_1(z);
-	if (!na(p)) {
-	    pprintf(prn, "  P(Z > %g) = %g\n", z, p);
+	pv = normal_pvalue_1(z);
+	if (!na(pv)) {
+	    pprintf(prn, "  P(Z > %g) = %g\n", z, pv);
 	}
     } else if (z < 0) {
-	p = normal_cdf(z);
-	if (!na(p)) {
-	    pprintf(prn, "  P(Z < %g) = %g\n", z, p);
+	pv = normal_cdf(z);
+	if (!na(pv)) {
+	    pprintf(prn, "  P(Z < %g) = %g\n", z, pv);
 	}
     }
 
-    if (!na(p) && p > 0) {
-	pprintf(prn, "  %s = %g\n", _("Two-tailed p-value"), 2 * p);
+    if (!na(pv) && pv > 0) {
+	pprintf(prn, "  %s = %g\n", _("Two-tailed p-value"), 2 * pv);
     }
+
+    return pv;
 }
 
 static void diff_test_header (int v1, int v2, const DATAINFO *pdinfo,
@@ -906,10 +908,11 @@ struct ranker {
 static int 
 signed_rank_test (const double *x, const double *y, 
 		  int v1, int v2, const DATAINFO *pdinfo,
-		  gretlopt opt, PRN *prn)
+		  double *result, gretlopt opt, PRN *prn)
 {
     struct ranker *r;
     double d, T, wp, wm;
+    double z = NADBL, pval = NADBL;
     int Z = 0, N = 0;
     int i, k, t, n = 0;
 
@@ -1005,7 +1008,7 @@ signed_rank_test (const double *x, const double *y,
 	    Z, _("non-zero ties"), k);
 
     if (n > 8) {
-	double s2, x, num, z;
+	double s2, x, num;
 
 	x = (N*(N+1) - Z*(Z+1)) / 4.0;
 	pprintf(prn, "  %s = %g\n", _("Expected value"), x);
@@ -1019,7 +1022,7 @@ signed_rank_test (const double *x, const double *y,
 	}
 	z = num / sqrt(s2);
 	pprintf(prn, "  z = %g\n", z);
-	print_z_prob(z, prn);
+	pval = print_z_prob(z, prn);
     } else if (n > 5) {
 	pprintf(prn, "  5%% critical values: %d (two-tailed), %d (one-tailed)\n",
 		rank5[n-6][0], rank5[n-6][1]);
@@ -1030,6 +1033,9 @@ signed_rank_test (const double *x, const double *y,
 
     pputc(prn, '\n');
 
+    result[0] = z;
+    result[1] = pval;
+
     free(r);
 
     return 0;
@@ -1037,10 +1043,10 @@ signed_rank_test (const double *x, const double *y,
 
 static int rank_sum_test (const double *x, const double *y, 
 			  int v1, int v2, const DATAINFO *pdinfo,
-			  gretlopt opt, PRN *prn)
+			  double *result, gretlopt opt, PRN *prn)
 {
     struct ranker *r;
-    double wa;
+    double wa, z = NADBL, pval = NADBL;
     char xc = 'a', yc = 'b';
     int na = 0, nb = 0;
     int i, t, n = 0;
@@ -1131,13 +1137,13 @@ static int rank_sum_test (const double *x, const double *y,
     pprintf(prn, "  w (%s) = %g\n", _("sum of ranks, sample 1"), wa);
 
     if (na >= 10 && nb >= 10) {
-	double m, s, z;
+	double m, s;
 
 	m = na * (na + nb + 1) / 2.0;
 	s = sqrt(na * nb * (na + nb + 1) / 12.0);
 	z = (wa - m) / s;
 	pprintf(prn, "  z = (%g - %g) / %g = %g\n", wa, m, s, z);
-	print_z_prob(z, prn);
+	pval = print_z_prob(z, prn);
     } else if (na >= 4 && nb >= 4 && nb <= 12) {
 	void (*cv) (int, int, PRN *);
 	void *handle;
@@ -1154,6 +1160,9 @@ static int rank_sum_test (const double *x, const double *y,
 
     pputc(prn, '\n');
 
+    result[0] = z;
+    result[1] = pval;
+
     free(r);
 
     return 0;
@@ -1161,7 +1170,7 @@ static int rank_sum_test (const double *x, const double *y,
 
 static int sign_test (const double *x, const double *y, 
 		      int v1, int v2, const DATAINFO *pdinfo,
-		      gretlopt opt, PRN *prn)
+		      double *result, gretlopt opt, PRN *prn)
 {
     double pv;
     int n, w, t;
@@ -1198,6 +1207,9 @@ static int sign_test (const double *x, const double *y,
     }
     pprintf(prn, "  %s(W >= %d) = %g\n\n", _("Prob"), w, pv);
 
+    result[0] = w;
+    result[1] = pv;
+
     return 0;
 }
 
@@ -1221,11 +1233,13 @@ int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	       gretlopt opt, PRN *prn)
 {
     const double *x, *y;
+    double result[2] = {0};
     int v1, v2;
+    int err = 0;
 
     if (list[0] != 2) {
 	pputs(prn, _("This command requires two variables\n"));
-	return 1;
+	return E_DATA;
     }
 
     v1 = list[1];
@@ -1239,14 +1253,16 @@ int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (opt & OPT_G) {
-	return sign_test(x, y, v1, v2, pdinfo, opt, prn);
+	err = sign_test(x, y, v1, v2, pdinfo, result, opt, prn);
     } else if (opt & OPT_R) {
-	return rank_sum_test(x, y, v1, v2, pdinfo, opt, prn);
+	err = rank_sum_test(x, y, v1, v2, pdinfo, result, opt, prn);
     } else if (opt & OPT_I) {
-	return signed_rank_test(x, y, v1, v2, pdinfo, opt, prn);
-    }
+	err = signed_rank_test(x, y, v1, v2, pdinfo, result, opt, prn);
+    } 
 
-    return 1;
+    record_test_result(result[0], result[1], "diff");
+
+    return err;
 }
 
 struct pair_sorter {

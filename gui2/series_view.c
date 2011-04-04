@@ -257,8 +257,8 @@ static void multi_series_view_print_sorted (windata_t *vwin)
 	return;
     }
 
-    err = print_data_sorted(sview->list, obsvec, (const double **) Z, 
-			    datainfo, prn);
+    err = print_data_in_columns(sview->list, obsvec, (const double **) Z, 
+				datainfo, prn);
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -333,8 +333,8 @@ PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
     }
 
     gretl_print_set_format(prn, fmt);
-    err = print_data_sorted(sview->list, obsvec, (const double **) Z, 
-			    datainfo, prn);
+    err = print_data_in_columns(sview->list, obsvec, (const double **) Z, 
+				datainfo, prn);
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);

@@ -2152,7 +2152,7 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
 #define prn_delimited(p) (prn_format(p) & (GRETL_FORMAT_CSV | GRETL_FORMAT_TAB))
 
 /**
- * print_data_sorted:
+ * print_data_in_columns:
  * @list: list of variables to print.
  * @obsvec: list of observation numbers (or %NULL)
  * @Z: data matrix.
@@ -2170,9 +2170,9 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int print_data_sorted (const int *list, const int *obsvec, 
-		       const double **Z, const DATAINFO *pdinfo, 
-		       PRN *prn)
+int print_data_in_columns (const int *list, const int *obsvec, 
+			   const double **Z, const DATAINFO *pdinfo, 
+			   PRN *prn)
 {
     int delimited = prn_delimited(prn);
     int rtf = rtf_format(prn);
@@ -2184,27 +2184,22 @@ int print_data_sorted (const int *list, const int *obsvec,
     int colwidth = 0;
     int ncols = 0, obslen = 0;
     int gprec = 6;
-    int T, lmax = 0;
-    int i, s, t;
+    int i, s, t, T;
 
     if (obsvec != NULL) {
 	T = obsvec[0];
-	lmax = 4;
     } else {
 	T = sample_size(pdinfo);
-	if (rtf) {
-	    lmax = 8;
-	}
     }
 
-    /* must have a list of not more than lmax variables... */
-    if (list == NULL || list[0] < 1 || (lmax >  0 && list[0] > lmax)) {
+    /* must have a non-empty list of variables */
+    if (list == NULL || list[0] < 1) {
 	return E_DATA;
     }
 
     /* ...with no bad variable numbers */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] >= pdinfo->v) {
+	if (list[i] < 0 || list[i] >= pdinfo->v) {
 	    return E_DATA;
 	}
     }
