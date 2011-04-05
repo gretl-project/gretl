@@ -2338,7 +2338,8 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
     } else if (loop->type == INDEX_LOOP) {
 	sprintf(ins, "%d", idx);
     } else if (loop->type == DATED_LOOP) {
-	ntodate(ins, idx, pdinfo);
+	/* note: ntodate is 0-based */
+	ntodate(ins, idx - 1, pdinfo);
     } else if (loop->type == EACH_LOOP) {
 	pins = loop->eachstrs[idx - 1];
     }  

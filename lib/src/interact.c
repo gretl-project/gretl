@@ -2543,6 +2543,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        position as rem
     */
     rem = line + strcspn(line, " ") + 1;
+    /* ? rem += strspn(rem, " "); */
 
     if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
 	/* TeX printing commands can take a filename parameter, and
