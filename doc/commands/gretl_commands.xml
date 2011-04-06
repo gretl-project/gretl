@@ -1577,6 +1577,10 @@
 	  <effect>include centered seasonal dummies</effect>
         </option>
         <option>
+	  <flag>--asy</flag>
+	  <effect>record asymptotic p-values</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>print just the tests</effect>
         </option>
@@ -1599,19 +1603,24 @@
     <description>
       <para context="cli">
 	Carries out the Johansen test for cointegration among the
-	variables in <repl>ylist</repl> for the given lag order. Critical
-	values are computed via J. Doornik's gamma approximation <cite
-	key="doornik98" p="true">(Doornik, 1998)</cite>. For details of
-	this test see <cite key="hamilton94">Hamilton (1994)</cite>,
-	Chapter 20.
+	variables in <repl>ylist</repl> for the given lag order.  For
+	details of this test see <guideref targ="chap:vecm"/> or <cite
+	key="hamilton94">Hamilton (1994)</cite>, Chapter 20. P-values
+	are computed via Doornik's gamma approximation <cite
+	key="doornik98" p="true">(Doornik, 1998)</cite>. Two sets of
+	p-values are shown for the trace test, straight asymptotic
+	values and values adjusted for the sample size. By default the
+	<lit>$pvalue</lit> accessor gets the adjusted variant, but the
+	<opt>--asy</opt> flag may be used to record the asymptotic
+	values instead.
       </para>
 
       <para context="gui">
-	Carries out the Johansen test for cointegration among the listed
-	variables for the selected lag order. Critical values are computed
-	via J. Doornik's gamma approximation (Doornik, 1998). For details
-	of this test see Hamilton, <book>Time Series Analysis</book>
-	(1994), Chapter 20.
+	Carries out the Johansen test for cointegration among the
+	listed variables for the selected lag order.  For details of
+	this test see, for example, Hamilton, <book>Time Series
+	Analysis</book> (1994), Chapter 20.  P-values are computed via
+	Doornik's (1998) gamma approximation.
       </para>
 
       <para context="cli">
