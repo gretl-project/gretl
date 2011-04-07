@@ -1865,9 +1865,73 @@ static int add_slopes_to_model (MODEL *pmod, const double **Z)
     return err;
 }
 
-static void binary_model_add_stats (MODEL *pmod, const double *y,
+/* Binary probit normality test as in Verbeek, Modern Econometrics,
+   chapter 7: we regress a column of 1s on the products of the
+   generalized residual with X\beta, (X\beta)^2 and (X\beta)^3.
+   The test statistic is T times the uncentered R-squared,
+   and is distributed as chi-square(2).
+*/
+
+static int binary_probit_normtest (MODEL *pmod, double **Z)
+{
+    gretl_matrix *X, *y, *b = NULL;
+    double Xb, et;
+    int i, vi, s, t;
+    int err = 0;
+
+    X = gretl_matrix_alloc(pmod->nobs, 3);
+    y = gretl_unit_matrix_new(pmod->nobs, 1);
+    b = gretl_matrix_alloc(3, 1);
+
+    if (X == NULL || y == NULL || b == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->uhat[t])) {
+	    continue;
+	}
+	et = pmod->uhat[t];
+	Xb = 0;
+	for (i=0; i<pmod->ncoeff; i++) {
+	    vi = pmod->list[i+2];
+	    Xb += pmod->coeff[i] * Z[vi][t];
+	}
+	gretl_matrix_set(X, s, 0, et * Xb);
+	gretl_matrix_set(X, s, 1, et * Xb * Xb);
+	gretl_matrix_set(X, s, 2, et * Xb * Xb * Xb);
+	s++;
+    }
+
+    err = gretl_matrix_ols(y, X, b, NULL, NULL, NULL);
+
+    if (!err) {
+	double X2 = pmod->nobs;
+
+	gretl_matrix_multiply(X, b, y);
+	for (t=0; t<y->rows; t++) {
+	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
+	}
+
+	gretl_model_add_normality_test(pmod, X2);
+    }
+	
+ bailout:
+    
+    gretl_matrix_free(X);
+    gretl_matrix_free(y);
+    gretl_matrix_free(b);    
+
+    return err;
+}
+
+static void binary_model_add_stats (MODEL *pmod, int depvar, 
+				    double **Z, 
 				    const DATAINFO *pdinfo)
 {
+    const double *y = Z[depvar];
     int *act_pred;
     double *llt;
     double F, xx = 0.0;
@@ -1934,6 +1998,10 @@ static void binary_model_add_stats (MODEL *pmod, const double *y,
     }
 
     mle_criteria(pmod, 0);
+
+    if (pmod->ci == PROBIT) {
+	binary_probit_normtest(pmod, Z);
+    }
 }
 
 static MODEL 
@@ -2036,7 +2104,7 @@ binary_logit_probit (const int *inlist, double **Z, DATAINFO *pdinfo,
     }
 
     if (!dmod.errcode) {
-	binary_model_add_stats(&dmod, Z[depvar], pdinfo);
+	binary_model_add_stats(&dmod, depvar, Z, pdinfo);
 	if (opt & OPT_A) {
 	    dmod.aux = AUX_AUX;
 	} else {

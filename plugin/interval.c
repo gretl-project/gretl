@@ -770,24 +770,6 @@ static int intreg_normtest (int_container *IC, double *teststat)
     return err;
 }
 
-static int add_norm_test_to_model (MODEL *pmod, double X2)
-{
-    ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
-    int err = 0;
-
-    if (test != NULL) {
-        model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
-        model_test_set_dfn(test, 2);
-        model_test_set_value(test, X2);
-        model_test_set_pvalue(test, chisq_cdf_comp(2, X2));
-        maybe_add_test_to_model(pmod, test);
-    } else {
-        err = 1;
-    }
-
-    return err;
-}
-
 static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 			      int fncount, int grcount,
 			      const DATAINFO *pdinfo,
@@ -930,7 +912,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     if (!err) {
 	err = intreg_normtest(IC, &normtest);
 	if (!err) {
-	    err = add_norm_test_to_model(IC->pmod, normtest);
+	    err = gretl_model_add_normality_test(IC->pmod, normtest);
 	}
 	/* don't let this be a show-stopper */
 	err = 0;

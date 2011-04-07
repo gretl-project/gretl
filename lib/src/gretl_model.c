@@ -5089,6 +5089,24 @@ int gretl_model_add_y_median (MODEL *pmod, const double *y)
     return 0;
 }
 
+int gretl_model_add_normality_test (MODEL *pmod, double X2)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_NORMAL);
+    int err = 0;
+
+    if (test != NULL) {
+        model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
+        model_test_set_dfn(test, 2);
+        model_test_set_value(test, X2);
+        model_test_set_pvalue(test, chisq_cdf_comp(2, X2));
+        maybe_add_test_to_model(pmod, test);
+    } else {
+        err = E_ALLOC;
+    }
+
+    return err;
+}
+
 static int xneq (double x, double y)
 {
     double reldiff;

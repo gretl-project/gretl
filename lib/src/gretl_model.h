@@ -424,6 +424,8 @@ void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames);
 
 int gretl_model_add_y_median (MODEL *pmod, const double *y);
 
+int gretl_model_add_normality_test (MODEL *pmod, double X2);
+
 char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				      const double **Z,
 				      const DATAINFO *pdinfo);
