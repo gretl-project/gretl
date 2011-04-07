@@ -35,6 +35,10 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
+#ifdef USE_GTKSOURCEVIEW_3
+# define GTK_IS_SOURCE_VIEW GTK_SOURCE_IS_VIEW
+#endif
+
 #define GUIDE_PAGE  999
 #define SCRIPT_PAGE 998
 #define GFR_PAGE    997
