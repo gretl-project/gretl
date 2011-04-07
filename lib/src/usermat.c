@@ -1920,6 +1920,50 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
     return E;
 }
 
+gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A, 
+				      const gretl_matrix *B,
+				      const char *rname,
+				      int *err)
+{
+    gretl_matrix *E = NULL, *V = NULL;
+
+    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (gretl_matrix_xna_check(A) || gretl_matrix_xna_check(B)) {
+	*err = E_NAN;
+	return NULL;
+    }
+
+    if (!nullarg(rname)) {
+	if (get_matrix_by_name(rname) == NULL) {
+	    gretl_errmsg_sprintf(_("'%s': no such matrix"), rname);
+	    *err = E_UNKVAR;
+	    return NULL;
+	} else {
+	    V = gretl_matrix_alloc(B->cols, A->rows);
+	    if (V == NULL) {
+		*err = E_ALLOC;
+		return NULL;
+	    }
+	}
+    }
+
+    E = gretl_gensymm_eigenvals(A, B, V, err);
+
+    if (V != NULL) {
+	if (*err) {
+	    gretl_matrix_free(V);
+	} else {
+	    user_matrix_replace_matrix_by_name(rname, V);
+	}
+    }
+
+    return E;
+}
+
 static void xml_put_user_matrix (user_matrix *u, FILE *fp)
 {
     gretl_matrix *M;

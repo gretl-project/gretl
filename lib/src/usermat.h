@@ -156,6 +156,11 @@ gretl_matrix *
 user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
 			    int *err);
 
+gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A, 
+				      const gretl_matrix *B,
+				      const char *rname,
+				      int *err);
+
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
 				    matrix_subspec *spec,
 				    int *err);
