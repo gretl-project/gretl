@@ -1865,11 +1865,14 @@ static int add_slopes_to_model (MODEL *pmod, const double **Z)
     return err;
 }
 
-/* Binary probit normality test as in Verbeek, Modern Econometrics,
-   chapter 7: we regress a column of 1s on the products of the
-   generalized residual with X\beta, (X\beta)^2 and (X\beta)^3.
-   The test statistic is T times the uncentered R-squared,
-   and is distributed as chi-square(2).
+/* Binary probit normality test as in Jarque, Bera and Lee (1984),
+   also quoted in Verbeek, chapter 7: we regress a column of 1s on the
+   products of the generalized residual with X, (X\beta)^2 and
+   (X\beta)^3.  The test statistic is T times the uncentered
+   R-squared, and is distributed as chi-square(2). It can be shown
+   that this test is numerically identical to the Chesher-Irish (87)
+   test in the probit case (although C&I make no mention of this in
+   their article).  
 */
 
 static int binary_probit_normtest (MODEL *pmod, double **Z)
@@ -1877,11 +1880,12 @@ static int binary_probit_normtest (MODEL *pmod, double **Z)
     gretl_matrix *X, *y, *b = NULL;
     double Xb, et;
     int i, vi, s, t;
+    int k = pmod->ncoeff;
     int err = 0;
 
-    X = gretl_matrix_alloc(pmod->nobs, 3);
+    X = gretl_matrix_alloc(pmod->nobs, k + 2);
     y = gretl_unit_matrix_new(pmod->nobs, 1);
-    b = gretl_matrix_alloc(3, 1);
+    b = gretl_matrix_alloc(k+2, 1);
 
     if (X == NULL || y == NULL || b == NULL) {
 	err = E_ALLOC;
@@ -1895,13 +1899,13 @@ static int binary_probit_normtest (MODEL *pmod, double **Z)
 	}
 	et = pmod->uhat[t];
 	Xb = 0;
-	for (i=0; i<pmod->ncoeff; i++) {
+	for (i=0; i<k; i++) {
 	    vi = pmod->list[i+2];
 	    Xb += pmod->coeff[i] * Z[vi][t];
+	    gretl_matrix_set(X, s, i, et * Z[vi][t]);
 	}
-	gretl_matrix_set(X, s, 0, et * Xb);
-	gretl_matrix_set(X, s, 1, et * Xb * Xb);
-	gretl_matrix_set(X, s, 2, et * Xb * Xb * Xb);
+	gretl_matrix_set(X, s, k, et * Xb * Xb);
+	gretl_matrix_set(X, s, k+1, et * Xb * Xb * Xb);
 	s++;
     }
 
