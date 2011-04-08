@@ -275,7 +275,7 @@ struct str_table funcs[] = {
     { F_QR,       "qrdecomp" },
     { F_EIGSYM,   "eigensym" },
     { F_EIGGEN,   "eigengen" },
-    { F_EIGGEN2,  "eiggen2" },
+    { F_EIGSOLVE, "eigsolve" },
     { F_NULLSPC,  "nullspace" },
     { F_PRINCOMP, "princomp" },
     { F_MEXP,     "mexp" },

@@ -1818,6 +1818,26 @@
       </description>
     </function>
 
+    <function name="eigsolve" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="symmat">A</fnarg>
+	<fnarg type="symmat">B</fnarg>
+	<fnarg type="matrixref" optional="true">&amp;U</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Solves the generalized eigenvalue problem |<math>A</math>
+	  &minus; &lgr;<math>B</math>| = 0, where both
+	  <math>A</math> and <math>B</math> are symmetric and
+	  <math>B</math> is positive definite. The eigenvalues are
+	  returned directly. If the optional third argument is given
+	  it should be the name of an existing matrix preceded by
+	  <lit>&amp;</lit>; in that case the generalized eigenvectors
+	  are written to the named matrix.
+	</para>
+      </description>
+    </function>
+
     <function name="epochday" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="scalar">year</fnarg>

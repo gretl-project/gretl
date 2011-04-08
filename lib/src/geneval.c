@@ -5960,7 +5960,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 		gretl_matrix_free(mm);
 	    }
 	}
-    } else if (f == F_EIGGEN2) {
+    } else if (f == F_EIGSOLVE) {
 	if (l->t != MAT) {
 	    node_type_error(f, 1, MAT, l, p);
 	} else if (m->t != MAT) {
@@ -8466,7 +8466,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_IRF:
     case F_STRSUB:
     case F_MLAG:
-    case F_EIGGEN2:
+    case F_EIGSOLVE:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

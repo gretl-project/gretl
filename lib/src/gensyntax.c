@@ -298,9 +298,9 @@ static int unary_apost (parser *p)
 	} else {
 	    return 1;
 	}
-    } 
-
-    return 0;
+    } else {
+	return 0;
+    }
 }
 
 static NODE *base (parser *p, NODE *up)
@@ -375,7 +375,7 @@ static NODE *base (parser *p, NODE *up)
 	}
 	if (p->sym == G_RBR) {
 	    if (up->t == MSL || up->t == DMSL) {
-		if (p->ch == '\'') {
+		if (unary_apost(p)) {
 		    set_transpose(up);
 		    parser_getc(p);
 		}
@@ -770,7 +770,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 		p->err = push_bn_node(t, n);
 		lex(p);
 	    } else if (p->sym == G_RCB) {
-		if (p->ch == '\'') {
+		if (unary_apost(p)) {
 		    set_transpose(t);
 		    parser_getc(p);
 		} else if (p->ch == '[') {
@@ -853,8 +853,8 @@ static void get_slice_parts (NODE *t, parser *p)
 		}
 	    }
 	    if (p->sym == G_RBR) {
-		if (p->ch == '\'') {
-		    set_transpose(t); /* ?? */
+		if (unary_apost(p)) {
+		    set_transpose(t);
 		    parser_getc(p);
 		}
 		lex(p);
@@ -1237,8 +1237,6 @@ static NODE *powterm (parser *p)
     } else {
 	t = base(p, NULL);
     }
-
-    
 
     if (next == '[') {
 	/* support func(args)[slice] */

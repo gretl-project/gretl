@@ -334,7 +334,7 @@ enum {
     F_IRF,
     F_STRSUB,
     F_MLAG,
-    F_EIGGEN2,
+    F_EIGSOLVE,
     F3_MAX,       /* SEPARATOR: end of three-arg functions */
     F_BKFILT,
     F_MOLS,
