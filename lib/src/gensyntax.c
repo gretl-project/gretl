@@ -280,28 +280,22 @@ static void unmatched_symbol_error (int c, parser *p)
 #define matrix_ref_node(p) (p->sym == UMAT || (p->sym == MVAR && \
                             model_data_matrix(p->idnum)))
 
-/* try to recognize a unary ', indicating that we're taking
-   the transpose of the preceding matrix */
+#define apost(p) (p->ch == '\'')
 
-static int unary_apost (parser *p) 
+/* try to recognize a unary apostrophe, indicating that 
+   we're taking the transpose of the preceding matrix 
+*/
+
+static int apost_is_unary (parser *p) 
 {
-    if (p->ch == '\'') {
-	/* peek ahead */
-	int c = parser_next_nonspace_char(p);
-
-	if (isalpha(c) || c == '$' || c == '(') {
-	    /* next symbol is variable or expression: the
-	       apostrophe must be the binary operator, 
-	       B_TRMUL
-	    */
-	    return 0;
-	} else {
-	    return 1;
-	}
-    } else {
-	return 0;
-    }
-}
+    /* peek ahead */
+    int c = parser_next_nonspace_char(p);
+    
+    /* if the next symbol is a variable or expression the
+       apostrophe must be the binary operator, B_TRMUL
+    */  
+    return !(isalpha(c) || c == '$' || c == '(');
+} 
 
 static NODE *base (parser *p, NODE *up)
 { 
@@ -332,7 +326,7 @@ static NODE *base (parser *p, NODE *up)
     case LIST:
     case BUNDLE:
 	t = newref(p, p->sym);
-	if (matrix_ref_node(p) && unary_apost(p)) {
+	if (matrix_ref_node(p) && apost(p) && apost_is_unary(p)) {
 	    set_transpose(t);
 	    parser_getc(p);
 	}
@@ -357,7 +351,8 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	t = expr(p);
 	if (p->sym == G_RPR) {
-	    if (up != NULL && up->t != LAG && unary_apost(p)) {
+	    if (up != NULL && up->t != LAG && 
+		apost(p) && apost_is_unary(p)) {
 		set_transpose(up);
 		parser_getc(p);
 	    } 
@@ -375,7 +370,7 @@ static NODE *base (parser *p, NODE *up)
 	}
 	if (p->sym == G_RBR) {
 	    if (up->t == MSL || up->t == DMSL) {
-		if (unary_apost(p)) {
+		if (apost(p) && apost_is_unary(p)) {
 		    set_transpose(up);
 		    parser_getc(p);
 		}
@@ -770,7 +765,7 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 		p->err = push_bn_node(t, n);
 		lex(p);
 	    } else if (p->sym == G_RCB) {
-		if (unary_apost(p)) {
+		if (apost(p) && apost_is_unary(p)) {
 		    set_transpose(t);
 		    parser_getc(p);
 		} else if (p->ch == '[') {
@@ -853,7 +848,7 @@ static void get_slice_parts (NODE *t, parser *p)
 		}
 	    }
 	    if (p->sym == G_RBR) {
-		if (unary_apost(p)) {
+		if (apost(p) && apost_is_unary(p)) {
 		    set_transpose(t);
 		    parser_getc(p);
 		}
@@ -991,7 +986,7 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 		pad_parent(t, k, i, p);
 	    } 
 	    /* matrix functions: handle trailing transpose */
-	    if (p->ch == '\'') {
+	    if (apost(p) && apost_is_unary(p)) {
 		*next = p->ch;
 		parser_getc(p);
 	    }

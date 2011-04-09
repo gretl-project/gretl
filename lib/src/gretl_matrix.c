@@ -7754,7 +7754,7 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
     return err;
 }
 
-#else
+#else /* non-Jacobi */
 
 static int 
 real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
@@ -8135,8 +8135,6 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
     gretl_matrix *R = NULL;
     gretl_matrix *V = NULL;
     gretl_matrix *S = NULL;
-    double x;
-    int m, n, r;
     int i, j, k;
 
     if (gretl_is_null_matrix(M)) {
@@ -8144,17 +8142,21 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
 	return NULL;
     }
 
-    m = M->rows;
-    n = M->cols;
-    r = (m < n)? m : n;
-
     *err = gretl_matrix_SVD(M, NULL, &S, &V);
 
     if (!*err) {
+	char E = 'E';
+	int m = M->rows;
+	int n = M->cols;
+	int r = (m < n)? m : n;
+	int sz = (m > n)? m : n;
+	double x, eps = dlamch_(&E);
+	double smin = sz * S->val[0] * eps;
+
 	/* rank plus nullity = n */
 	k = n;
 	for (i=0; i<r; i++) {
-	    if (S->val[i] > SVD_SMIN) {
+	    if (S->val[i] > smin) {
 		k--;
 	    }
 	}
@@ -8179,6 +8181,7 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M, int *err)
     } 
 
 #if 0
+    gretl_matrix_print(S, "S");
     gretl_matrix_print(V, "V'");
     gretl_matrix_print(R, "R");
 #endif
