@@ -1314,7 +1314,8 @@ double gamma_cdf (double s1, double s2, double x, int control)
 	shape = s1 / scale; 
     }
 
-    /* cephes expects inverse-scale, shape, I think >8-} */
+    /* for the cephes functions, the parameterization is
+       inverse-scale (or "rate"), shape */
 
     p = gdtr(1.0 / scale, shape, x);
     if (get_cephes_errno()) {

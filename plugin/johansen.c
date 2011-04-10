@@ -1709,7 +1709,7 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 
     jvar->jinfo->Beta = gretl_matrix_alloc(p1, p);
     jvar->jinfo->Alpha = gretl_matrix_alloc(p, p);
-    jvar->jinfo->evals = gretl_vector_alloc(p);
+    jvar->jinfo->evals = gretl_column_vector_alloc(p);
 
     if (jvar->jinfo->Beta == NULL ||
 	jvar->jinfo->Alpha == NULL ||
@@ -2289,6 +2289,10 @@ static int j_estimate_unrestr (GRETL_VAR *jvar,
     }
 
     if (!err) {
+	if (evals->rows > r) {
+	    /* include only the non-zero values */
+	    evals->rows = r;
+	}	
 	jvar->jinfo->evals = evals;
     } else {
 	gretl_matrix_free(evals);

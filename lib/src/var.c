@@ -2757,7 +2757,14 @@ int johansen_stage_1 (GRETL_VAR *v, const double **Z,
 #else
     err = gretl_matrix_multi_ols(v->Y, v->X, v->B, 
 				 v->jinfo->R1, NULL);
-#endif 
+#endif
+
+#if 0 /* FIXME something going wrong with v->Y */
+    gretl_matrix_print(v->jinfo->R1, "R1, just produced\n");
+    gretl_matrix_print(v->Y, "v->Y\n");
+    gretl_matrix_print(v->X, "v->X\n");
+    gretl_matrix_print(v->B, "v->B\n");
+#endif    
 
     if (!err && (opt & OPT_V)) {
 	gretl_matrix_print_to_prn(v->B, "Coefficients, eqns in lagged levels", 
@@ -2919,7 +2926,7 @@ johansen_driver (GRETL_VAR *jvar,
 	/* doing cointegration test */
 	coint_test_header(jvar, pdinfo, prn);
     }
-    
+
     jvar->err = johansen_stage_1(jvar, Z, pdinfo, opt, prn); 
     if (jvar->err) {
 	return jvar->err;

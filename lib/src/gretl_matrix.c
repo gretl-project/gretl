@@ -7985,7 +7985,7 @@ int gretl_matrix_SVD_johansen_solve (const gretl_matrix *R0,
     if (A != NULL && (A->rows != p || A->cols != p)) {
 	fprintf(stderr, "Johansen SVD: A is wrong size\n");
 	return E_NONCONF;
-    }    
+    } 
 
     err = real_gretl_matrix_SVD(R0, &U0, NULL, NULL, SVD_THIN);
 
