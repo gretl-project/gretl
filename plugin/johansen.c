@@ -1480,10 +1480,10 @@ static void coint_test_print_exog (GRETL_VAR *jvar,
 }
 
 static int 
-compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals, 
-		    const DATAINFO *pdinfo, gretlopt opt, 
-		    PRN *prn)
+compute_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, 
+		    gretlopt opt, PRN *prn)
 {
+    gretl_matrix *evals = jvar->jinfo->evals;
     gretl_matrix *tests;
     gretl_matrix *pvals;
     int T = jvar->T;
@@ -1503,7 +1503,7 @@ compute_coint_test (GRETL_VAR *jvar, const gretl_matrix *evals,
 	return E_ALLOC;
     }
 
-    for (i=n-1; i>=0; i--){
+    for (i=n-1; i>=0; i--) {
 	lmax = -T * log(1.0 - evals->val[i]); 
 	cumeig += lmax;
 	trace = cumeig; 
@@ -1703,41 +1703,40 @@ int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 int johansen_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn)
 {
-    gretl_matrix *evals = NULL;
     int p1 = jvar->jinfo->R1->cols;
     int p = jvar->neqns;
     int err = 0;
 
     jvar->jinfo->Beta = gretl_matrix_alloc(p1, p);
     jvar->jinfo->Alpha = gretl_matrix_alloc(p, p);
-    evals = gretl_vector_alloc(p);
+    jvar->jinfo->evals = gretl_vector_alloc(p);
 
     if (jvar->jinfo->Beta == NULL ||
 	jvar->jinfo->Alpha == NULL ||
-	evals == NULL) {
+	jvar->jinfo->evals == NULL) {
 	err = E_ALLOC;
     }
 
     if (!err) {
 	err = gretl_matrix_SVD_johansen_solve(jvar->jinfo->R0, 
 					      jvar->jinfo->R1,
-					      evals, jvar->jinfo->Beta, 
+					      jvar->jinfo->evals, 
+					      jvar->jinfo->Beta, 
 					      jvar->jinfo->Alpha, 0);
     }
 
     if (err) {
 	pputs(prn, _("Failed to find eigenvalues\n"));
     } else {
-	johansen_ll_calc(jvar, evals);
-	compute_coint_test(jvar, evals, pdinfo, opt, prn);
+	johansen_ll_calc(jvar, jvar->jinfo->evals);
+	compute_coint_test(jvar, pdinfo, opt, prn);
 
 	if (!(opt & OPT_Q)) {
-	    print_beta_and_alpha(jvar, evals, p, pdinfo, prn);
+	    print_beta_and_alpha(jvar, jvar->jinfo->evals, p, 
+				 pdinfo, prn);
 	    print_long_run_matrix(jvar, pdinfo, prn);
 	}
     }
-
-    gretl_matrix_free(evals);
 
     return err;
 }
@@ -2289,8 +2288,13 @@ static int j_estimate_unrestr (GRETL_VAR *jvar,
 	err = vecm_finalize(jvar, NULL, NULL, Z, pdinfo, 0);
     }
 
+    if (!err) {
+	jvar->jinfo->evals = evals;
+    } else {
+	gretl_matrix_free(evals);
+    }
+
     gretl_matrix_free(S00);
-    gretl_matrix_free(evals);
 
     return err;
 }

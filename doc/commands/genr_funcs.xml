@@ -179,6 +179,15 @@
       </description>
     </function>
 
+    <function name="$evals" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the estimation of a VECM; returns a vector
+	  containing the eigenvalues of the Pi matrix.
+	</para>
+      </description>
+    </function>
+
     <function name="$fevd" section="access" output="matrix">
       <description>
 	<para>

@@ -122,6 +122,7 @@ struct str_table mvars[] = {
     { M_VECG,    "$vecGamma" },
     { M_VMA,     "$vma" },
     { M_FEVD,    "$fevd" },
+    { M_EVALS,   "$evals" },
     { M_JALPHA,  "$jalpha" }, 
     { M_JBETA,   "$jbeta" },
     { M_JVBETA,  "$jvbeta" },

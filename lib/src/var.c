@@ -771,6 +771,7 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->S11);
     gretl_matrix_free(jv->S01);
 
+    gretl_matrix_free(jv->evals);
     gretl_matrix_free(jv->Beta);
     gretl_matrix_free(jv->Alpha);
     gretl_matrix_free(jv->Bvar);
@@ -2845,6 +2846,7 @@ johansen_info_new (GRETL_VAR *var, int rank, gretlopt opt)
     jv->S00 = NULL;
     jv->S11 = NULL;
     jv->S01 = NULL;
+    jv->evals = NULL;
     jv->Beta = NULL;
     jv->Alpha = NULL;
     jv->Bse = NULL;
@@ -3686,7 +3688,8 @@ gretl_matrix *VECM_get_EC_matrix (const GRETL_VAR *v,
 
 #define vecm_matrix(i) (i == M_JALPHA || i == M_JBETA || \
                         i == M_JVBETA || i == M_JS00 || \
-                        i == M_JS11 || i == M_JS01 || i == M_EC)
+                        i == M_JS11 || i == M_JS01 || \
+			i == M_EC || i == M_EVALS)
 
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err)
@@ -3717,6 +3720,9 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     } else if (vecm_matrix(idx)) {
 	if (var->jinfo != NULL) {
 	    switch (idx) {
+	    case M_EVALS: 
+		src = var->jinfo->evals;
+		break;
 	    case M_JALPHA: 
 		src = var->jinfo->Alpha;
 		break;
@@ -3903,6 +3909,8 @@ static int VAR_retrieve_jinfo (xmlNodePtr node, xmlDocPtr doc,
 		    jinfo->S11 = gretl_xml_get_matrix(cur, doc, &err);
 		} else if (!strcmp(mname, "Suv")) {
 		    jinfo->S01 = gretl_xml_get_matrix(cur, doc, &err);
+		} else if (!strcmp(mname, "evals")) {
+		    jinfo->evals = gretl_xml_get_matrix(cur, doc, &err);
 		} else if (!strcmp(mname, "Beta")) {
 		    jinfo->Beta = gretl_xml_get_matrix(cur, doc, &err);
 		} else if (!strcmp(mname, "Alpha")) {
@@ -4228,6 +4236,7 @@ static void johansen_serialize (JohansenInfo *j, FILE *fp)
     gretl_xml_put_matrix(j->S00, "Suu", fp);
     gretl_xml_put_matrix(j->S11, "Svv", fp);
     gretl_xml_put_matrix(j->S01, "Suv", fp);
+    gretl_xml_put_matrix(j->evals, "evals", fp);
     gretl_xml_put_matrix(j->Beta, "Beta", fp);
     gretl_xml_put_matrix(j->Alpha, "Alpha", fp);
     gretl_xml_put_matrix(j->Bvar, "Bvar", fp);

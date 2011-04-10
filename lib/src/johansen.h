@@ -40,6 +40,7 @@ struct JohansenInfo_ {
     gretl_matrix *S00;    /* cross-products of residuals */
     gretl_matrix *S11;    /* cross-products of residuals */
     gretl_matrix *S01;    /* cross-products of residuals */
+    gretl_matrix *evals;  /* vector of eigenvalues */
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Bvar;   /* variance matrix of beta */
