@@ -451,16 +451,24 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 
 	if (v->xlist != NULL && !miss) {
 	    for (i=1; i<=v->xlist[0] && !miss; i++) {
-		if (na(Z[v->xlist[i]][t])) {
+		vi = v->xlist[i];
+		if (na(Z[vi][t])) {
 		    v->t1 += 1;
 		    miss = 1;
 		}
 	    }
 	}
 
+	/* Note that in estimating a VECM we need the first lag of the
+	   level of each restricted exogenous var to serve as
+	   dependent variable in one of the initial OLS equations.
+	*/
+
+	s = t - 1;
 	if (v->rlist != NULL && !miss) {
 	    for (i=1; i<=v->rlist[0] && !miss; i++) {
-		if (na(Z[v->rlist[i]][t])) {
+		vi = v->rlist[i];
+		if (na(Z[vi][t]) || s < 0 || na(Z[vi][s])) {
 		    v->t1 += 1;
 		    miss = 1;
 		}
@@ -478,7 +486,8 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 	int miss = 0;
 
 	for (i=1; i<=v->ylist[0] && !miss; i++) {
-	    if (na(Z[v->ylist[i]][t])) {
+	    vi = v->ylist[i];
+	    if (na(Z[vi][t])) {
 		v->t2 -= 1;
 		miss = 1;
 	    }
@@ -486,7 +495,8 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 
 	if (v->xlist != NULL && !miss) {
 	    for (i=1; i<=v->xlist[0] && !miss; i++) {
-		if (na(Z[v->xlist[i]][t])) {
+		vi = v->xlist[i];
+		if (na(Z[vi][t])) {
 		    v->t2 -= 1;
 		    miss = 1;
 		}
@@ -495,7 +505,8 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 
 	if (v->rlist != NULL && !miss) {
 	    for (i=1; i<=v->rlist[0] && !miss; i++) {
-		if (na(Z[v->rlist[i]][t])) {
+		vi = v->rlist[i];
+		if (na(Z[vi][t])) {
 		    v->t2 -= 1;
 		    miss = 1;
 		}
@@ -512,14 +523,16 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
     for (t=v->t1; t<=v->t2 && !err; t++) {
 
 	for (i=1; i<=v->ylist[0] && !err; i++) {
-	    if (na(Z[v->ylist[i]][t])) {
+	    vi = v->ylist[i];
+	    if (na(Z[vi][t])) {
 		err = E_MISSDATA;
 	    }
 	}
 
 	if (v->xlist != NULL && !err) {
 	    for (i=1; i<=v->xlist[0] && !err; i++) {
-		if (na(Z[v->xlist[i]][t])) {
+		vi = v->xlist[i];
+		if (na(Z[vi][t])) {
 		    err = E_MISSDATA;
 		}
 	    }
@@ -527,12 +540,17 @@ static int VAR_set_sample (GRETL_VAR *v, const double **Z,
 
 	if (v->rlist != NULL && !err) {
 	    for (i=1; i<=v->rlist[0] && !err; i++) {
-		if (na(Z[v->rlist[i]][t])) {
+		vi = v->rlist[i];
+		if (na(Z[vi][t])) {
 		    err = E_MISSDATA;
 		}
 	    }
 	}
     }
+
+#if 0
+    fprintf(stderr, "VAR_set_sample: t1=%d, t2=%d\n", v->t1, v->t2); 
+#endif   
 
     return err;
 }
@@ -2758,13 +2776,6 @@ int johansen_stage_1 (GRETL_VAR *v, const double **Z,
     err = gretl_matrix_multi_ols(v->Y, v->X, v->B, 
 				 v->jinfo->R1, NULL);
 #endif
-
-#if 0 /* FIXME something going wrong with v->Y */
-    gretl_matrix_print(v->jinfo->R1, "R1, just produced\n");
-    gretl_matrix_print(v->Y, "v->Y\n");
-    gretl_matrix_print(v->X, "v->X\n");
-    gretl_matrix_print(v->B, "v->B\n");
-#endif    
 
     if (!err && (opt & OPT_V)) {
 	gretl_matrix_print_to_prn(v->B, "Coefficients, eqns in lagged levels", 
