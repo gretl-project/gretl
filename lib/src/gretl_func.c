@@ -6081,7 +6081,7 @@ static int debug_command_loop (ExecState *state,
 }
 
 void set_function_error_message (ufunc *u, ExecState *state,
-				 const char *line)
+				 int err, const char *line)
 {
     if (state->funcerr == FNERR_FLAGGED) {
 	/* let the function writer do the message */
@@ -6092,6 +6092,13 @@ void set_function_error_message (ufunc *u, ExecState *state,
 	strncat(funcerr_msg, state->cmd->param, 255 - n);
     } else {
 	/* we'll handle this ourselves */
+	const char *msg = gretl_errmsg_get();
+
+	if (*msg == '\0') {
+	    msg = errmsg_get_with_default(err);
+	    gretl_errmsg_set(msg);
+	} 
+
 	if (*line != '\0') {
 	    gretl_errmsg_sprintf("*** error in function %s\n> %s", u->name, line);
 	} else {
@@ -6153,7 +6160,7 @@ static int handle_return_statement (fncall *call,
 	    sprintf(formula, "%s $retval=%s", typestr, s);
 	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
 	    if (err) {
-		set_function_error_message(fun, state, s);
+		set_function_error_message(fun, state, err, s);
 	    } else {
 		call->retname = gretl_strdup("$retval");
 	    }
@@ -6483,7 +6490,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (err || state.funcerr) {
-	    set_function_error_message(u, &state, line);
+	    set_function_error_message(u, &state, err, line);
 	    break;
 	}
 
@@ -6495,7 +6502,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	if (gretl_execute_loop()) { 
 	    err = gretl_loop_exec(&state, pZ, pdinfo);
 	    if (err || state.funcerr) {
-		set_function_error_message(u, &state, state.line);
+		set_function_error_message(u, &state, err, state.line);
 	    }
 	}
     }

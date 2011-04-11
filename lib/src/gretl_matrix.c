@@ -32,12 +32,6 @@
 # include <omp.h>
 #endif
 
-#ifdef HAVE_LAPACK_3_2
-# define USE_JACOBI 0 /* not just yet */
-#else
-# define USE_JACOBI 0
-#endif
-
 /**
  * SECTION:gretl_matrix
  * @short_description: construct and manipulate matrices
@@ -7533,34 +7527,6 @@ enum {
     SVD_FULL
 };
 
-#if USE_JACOBI
-
-/* Note: these are minimal workspace sizes; we might be
-   better trying for optimal size: see dgejsv.f */
-
-static int dgejsv_workspace_size (integer m, integer n,
-				  char jobu, char jobv)
-{
-    int sz = 0;
-
-    if (jobu == 'N' && jobv == 'N') { 
-	/* no singular vectors wanted */
-	sz = max(2 * m + n, 4 * n + 1);
-	if (sz < 7) sz = 7;
-    } else if (jobv == 'N' || jobu == 'N') {
-	/* one set of singular vectors wanted */
-	sz = max(2 * n + m, 5 * n + 1);
-	if (sz < 7) sz = 7;
-    } else {
-	/* both sets wanted */
-	sz = 6 * n + 2 * n * n;
-    }
-
-    return sz;
-}
-
-#endif
-
 /**
  * gretl_matrix_SVD:
  * @a: matrix to decompose.
@@ -7569,192 +7535,10 @@ static int dgejsv_workspace_size (integer m, integer n,
  * @pvt: location for matrix V (transposed), or NULL if not wanted.
  * 
  * Computes SVD factorization of a general matrix using the lapack
- * function dgesvd or dgejsv. A = u * diag(s) * vt.
+ * function dgesvd. A = u * diag(s) * vt.
  *
  * Returns: 0 on success; non-zero error code on failure.
  */
-
-#if USE_JACOBI
-
-/* There are complications below stemming from the fact that the new
-   lapack 3.2 function dgejsv (SVD via Jacobi), while it's said to be
-   very accurate and fast, is incompatible in more than one way with
-   dgesvd.  Here we have to create a compatibility layer.  It'll be
-   some time before we can assume lapack 3.2 is avaailable on all
-   systems.
-
-   The first incompatibility is that, when the right-hand singular
-   vectors are wanted, the 'traditional' lapack function dgesvd
-   produces V' (the transpose) while dgejsv produces the actual V, so
-   for backward compatibility we need to transpose the V produced
-   here.
-
-   Second, dgesvd can handle the case of m < n (for m x n input matrix
-   A) but dgejsv cannot.  So if we're given m < n we need to transpose
-   the input matrix then sort everything out on output.  This means
-   that U and V have to be swapped, and it's U, not V, that needs
-   transposing.  Clear enough? ;-)
-*/
-
-static int 
-real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
-		       gretl_vector **ps, gretl_matrix **pv,
-		       int smod)
-{
-    integer m, n, lda;
-    integer ldu = 1, ldv = 1;
-    integer lwork, info;
-    gretl_matrix *b = NULL;
-    gretl_matrix *s = NULL;
-    gretl_matrix *u = NULL;
-    gretl_matrix *v = NULL;
-    char jobu = 'N', jobv = 'N';
-    char joba = 'C', jobr = 'R';
-    char jobt = 'N', jobp = 'N';
-    integer *iwork = NULL;
-    double xu, xv;
-    double *uval = &xu, *vval = &xv;
-    double *work = NULL;
-    int k, tr = 0, err = 0;
-
-    if (pu == NULL && ps == NULL && pv == NULL) {
-	/* no-op */
-	return 0;
-    }
-
-    if (gretl_is_null_matrix(a)) {
-	return E_DATA;
-    }
-
-    if (a->rows < a->cols) {
-	if (smod == SVD_THIN) {
-	    fprintf(stderr, "real_gretl_matrix_SVD: a is %d x %d, should be 'thin'\n",
-		    a->rows, a->cols);
-	    return E_NONCONF;
-	} else {
-	    tr = 1;
-	}
-    }
-
-    m = (tr)? a->cols : a->rows;
-    n = (tr)? a->rows : a->cols;
-    lda = m;
-
-    b = (tr)? gretl_matrix_copy_transpose(a) : gretl_matrix_copy(a);
-    if (b == NULL) {
-	return E_ALLOC;
-    }
-
-    k = (m < n)? m : n;
-
-    s = gretl_vector_alloc(k);
-    if (s == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-    
-    if ((!tr && pu != NULL) || (tr && pv != NULL)) {
-	if (smod == SVD_FULL) {
-	    u = gretl_matrix_alloc(m, m);
-	} else {
-	    u = gretl_matrix_alloc(m, n);
-	}
-	if (u == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	} else {
-	    ldu = m;
-	    uval = u->val;
-	    jobu = (smod == SVD_FULL)? 'F' : 'U';
-	}
-    } 
-
-    if ((!tr && pv != NULL) || (tr && pu != NULL)) {
-	v = gretl_matrix_alloc(n, n);
-	if (v == NULL) {
-	    err = E_ALLOC;
-	    goto bailout;
-	} else {
-	    ldv = n;
-	    vval = v->val;
-	    jobv = 'V';
-	}
-    }
-
-    lwork = dgejsv_workspace_size(m, n, jobu, jobv);
-
-    work = lapack_malloc(lwork * sizeof *work);
-    if (work == NULL) {
-	err = E_ALLOC; 
-	goto bailout;
-    }
-
-    iwork = malloc((m + 3 * n) * sizeof *iwork);
-    if (iwork == NULL) {
-	err = E_ALLOC; 
-	goto bailout;
-    }    
-
-    /* Jacobi computation */
-    dgejsv_(&joba, &jobu, &jobv, &jobr, &jobt, &jobp,
-	    &m, &n, b->val, &lda, s->val, uval, &ldu,
-	    vval, &ldv, work, &lwork, iwork, &info);
-
-    if (info != 0) {
-	fprintf(stderr, "gretl_matrix_SVD: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
-    }
-
-    if (ps != NULL) {
-	*ps = s;
-	s = NULL;
-    }
-
-    if (pu != NULL) {
-	/* left-hand singular vectors wanted */
-	if (tr) {
-	    /* U <- V' */
-	    err = gretl_matrix_transpose_in_place(v);
-	    if (!err) {
-		*pu = v;
-		v = NULL;
-	    }	    
-	} else {
-	    /* phew! */
-	    *pu = u;
-	    u = NULL;
-	}
-    }
-
-    if (pv != NULL && !err) {
-	/* right-hand singular vectors wanted */
-	if (!tr) {
-	    /* V' <- V */
-	    err = gretl_matrix_transpose_in_place(v);
-	    if (!err) {
-		*pv = v;
-		v = NULL;
-	    }
-	} else {
-	    *pv = u;
-	    u = NULL;
-	}
-    }
-
- bailout:
-    
-    lapack_free(work);
-    gretl_matrix_free(b);
-    gretl_matrix_free(s);
-    gretl_matrix_free(u);
-    gretl_matrix_free(v);
-    free(iwork);
-
-    return err;
-}
-
-#else /* non-Jacobi */
 
 static int 
 real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu, 
@@ -7895,8 +7679,6 @@ real_gretl_matrix_SVD (const gretl_matrix *a, gretl_matrix **pu,
 
     return err;
 }
-
-#endif
 
 /**
  * gretl_matrix_SVD:

@@ -183,7 +183,8 @@
       <description>
 	<para>
 	  Must follow the estimation of a VECM; returns a vector
-	  containing the eigenvalues of the Pi matrix.
+	  containing the eigenvalues that are used in computing
+	  the trace test for cointegration.
 	</para>
       </description>
     </function>

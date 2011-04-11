@@ -1537,6 +1537,9 @@ compute_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	    jvar->ll + llc, jvar->ll);
 
     if (partial) {
+	pputc(prn, '\n');
+	pprintf(prn, _("Cointegration tests conditional on %d I(1) variable(s)"),
+		       nrexo);
 	pprintf(prn, "\n%s %s %s %s\n", _("Rank"), _("Eigenvalue"), 
 		_("Trace test"), _("p-value"));
     } else {
