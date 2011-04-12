@@ -50,6 +50,9 @@ GPT_SPEC *plotspec_new (void)
     spec->labels = NULL;
     spec->n_labels = 0;
 
+    spec->arrows = NULL;
+    spec->n_arrows = 0;
+
     spec->literal = NULL;
     spec->n_literal = 0;
 
@@ -129,6 +132,10 @@ void plotspec_destroy (GPT_SPEC *spec)
 	free(spec->labels);
     }    
 
+    if (spec->arrows != NULL) {
+	free(spec->arrows);
+    } 
+  
     if (spec->data != NULL) {
 	free(spec->data);
     }
@@ -531,6 +538,66 @@ GPT_LABEL *plotspec_clone_labels (GPT_SPEC *spec, int *err)
     return labels;
 }
 
+int plotspec_add_arrow (GPT_SPEC *spec)
+{
+    GPT_ARROW *arrows;
+    int n = spec->n_arrows;
+
+    arrows = realloc(spec->arrows, (n + 1) * sizeof *arrows);
+    if (arrows == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->arrows = arrows;
+    spec->n_arrows += 1;
+    arrows[n].x0 = 0;
+    arrows[n].y0 = 0;
+    arrows[n].x1 = 0;
+    arrows[n].y1 = 0;
+    arrows[n].head = 0;
+
+    return 0;
+}
+
+static void copy_arrow_content (GPT_ARROW *targ, GPT_ARROW *src)
+{
+    targ->x0 = src->x0;
+    targ->y0 = src->y0;
+    targ->x1 = src->x1;
+    targ->head = src->head;
+}
+
+int plotspec_delete_arrow (GPT_SPEC *spec, int i)
+{
+    GPT_ARROW *arrows = spec->arrows;
+    int j, n = spec->n_arrows;
+    int err = 0;
+
+    if (i < 0 || i >= n) {
+	return E_DATA;
+    }
+
+    for (j=i; j<n-1; j++) {
+	copy_arrow_content(&arrows[j], &arrows[j+1]);
+    }
+
+    spec->n_arrows -= 1;
+
+    if (spec->n_arrows == 0) {
+	free(spec->arrows);
+	spec->arrows = NULL;
+    } else {
+	arrows = realloc(spec->arrows, (n - 1) * sizeof *arrows);
+	if (arrows == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    spec->arrows = arrows;
+	}
+    }
+
+    return err;
+}
+
 static char *escape_quotes (const char *s)
 {
     if (strchr(s, '"') == NULL) {
@@ -579,8 +646,7 @@ const char *gp_justification_string (int j)
     }
 }
 
-static void 
-print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
+static void print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
 {
     char *label = escape_quotes(lbl->text);
 
@@ -598,6 +664,15 @@ print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
     if (label != NULL) {
 	free(label);
     }
+}
+
+static void print_plot_arrow (const GPT_ARROW *arrow, FILE *fp)
+{
+    gretl_push_c_numeric_locale();
+    fprintf(fp, "set arrow from %g,%g to %g,%g %s\n", 
+	    arrow->x0, arrow->y0, arrow->x1, arrow->y1,
+	    (arrow->head)? "head" : "nohead");
+    gretl_pop_c_numeric_locale();
 }
 
 static int print_polar_labels (const GPT_SPEC *spec, FILE *fp)
@@ -962,6 +1037,10 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	    print_plot_labelspec(&spec->labels[i], fp);
 	}
     }
+
+    for (i=0; i<spec->n_arrows; i++) {
+	print_plot_arrow(&spec->arrows[i], fp);
+    }    
 
     if (spec->flags & GPT_XZEROAXIS) {
 	fputs("set xzeroaxis\n", fp);

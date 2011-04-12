@@ -109,6 +109,11 @@ typedef struct {
     int just;
 } GPT_LABEL;
 
+typedef struct {
+    double x0, y0, x1, y1;
+    int head;
+} GPT_ARROW;
+
 /* "global" information concerning a gnuplot graph specification */
 
 struct GPT_SPEC_ {
@@ -146,6 +151,8 @@ struct GPT_SPEC_ {
     int n_markers;             /* number of such markers */
     GPT_LABEL *labels;         /* textual labels written onto graph */
     int n_labels;              /* number of the above */
+    GPT_ARROW *arrows;         /* arrows drawn onto graph */
+    int n_arrows;              /* number of the above */
     int *reglist;              /* regression list for X-Y plot with fitted line */
     gretl_matrix *b_ols;       /* coeffs for linear fit */
     gretl_matrix *b_quad;      /* coeffs for quadratic fit */
@@ -166,6 +173,10 @@ void plotspec_label_init (GPT_LABEL *lbl);
 int plotspec_add_line (GPT_SPEC *spec);
 
 int plotspec_delete_line (GPT_SPEC *spec, int i);
+
+int plotspec_add_arrow (GPT_SPEC *spec);
+
+int plotspec_delete_arrow (GPT_SPEC *spec, int i);
 
 GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err);
 

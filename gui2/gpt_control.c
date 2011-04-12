@@ -115,7 +115,7 @@ struct png_plot_t {
     GtkWidget *statusarea;    
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
-    GtkWidget *labelpos_entry;
+    GtkWidget *pos_entry;
     GtkWidget *editor;
     GdkWindow *window;
 #if GTK_MAJOR_VERSION == 2
@@ -199,7 +199,7 @@ static void terminate_plot_positioning (png_plot *plot)
 {
     if (plot->status & PLOT_POSITIONING) {
 	plot->status ^= PLOT_POSITIONING;
-	plot->labelpos_entry = NULL;
+	plot->pos_entry = NULL;
 	gdk_window_set_cursor(plot->window, NULL);
 	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
 	if (plot->editor != NULL) {
@@ -275,7 +275,7 @@ void set_plot_has_y2_axis (png_plot *plot, gboolean s)
     }
 }
 
-void plot_label_position_click (GtkWidget *w, png_plot *plot)
+void plot_position_click (GtkWidget *w, png_plot *plot)
 {
     if (plot != NULL) {
 	GtkWidget *entry;
@@ -284,11 +284,11 @@ void plot_label_position_click (GtkWidget *w, png_plot *plot)
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
 	gdk_window_set_cursor(plot->window, cursor);
 	gdk_cursor_unref(cursor);
-	entry = g_object_get_data(G_OBJECT(w), "labelpos_entry");
-	plot->labelpos_entry = entry;
+	entry = g_object_get_data(G_OBJECT(w), "pos_entry");
+	plot->pos_entry = entry;
 	plot->status |= PLOT_POSITIONING;
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
-			   _(" Click to set label position"));
+			   _(" Click to set position"));
     }
 }
 
@@ -1491,6 +1491,43 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
     return err;
 }
 
+/* read a gnuplot source line specifying an arrow */
+
+static int parse_arrow_line (GPT_SPEC *spec, const char *line)
+{
+    double x0, y0, x1, y1;
+    char head[16];
+    int n, err = 0;
+
+    /* Example:
+       set arrow from 2000,150 to 2000,500 nohead
+    */
+
+    gretl_push_c_numeric_locale();
+    n = sscanf(line, "set arrow from %lf,%lf to %lf,%lf %s", 
+	       &x0, &y0, &x1, &y1, head);
+    gretl_pop_c_numeric_locale();
+
+    if (n < 5) {
+	err = E_DATA;
+    } else {
+	err = plotspec_add_arrow(spec);
+    }
+
+    if (!err) {
+	int h = strcmp(head, "nohead") ? 1 : 0;
+
+	n = spec->n_arrows - 1;
+	spec->arrows[n].x0 = x0;
+	spec->arrows[n].y0 = y0;
+	spec->arrows[n].x1 = x1;
+	spec->arrows[n].y1 = y1;
+	spec->arrows[n].head = h;
+    }
+
+    return err;
+}
+
 static int 
 read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
 {
@@ -1719,7 +1756,10 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "label")) {
 	parse_label_line(spec, s);
 	return 0;
-    }
+    } else if (!strcmp(key, "arrow")) {
+	parse_arrow_line(spec, s);
+	return 0;
+    }	
 
     /* now catch value for settings that need a parameter */
 
@@ -3921,14 +3961,14 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     }
 
     if (plot_doing_position(plot)) {
-	if (plot->labelpos_entry != NULL) {
+	if (plot->pos_entry != NULL) {
 	    double dx, dy;
 	    
 	    if (get_data_xy(plot, event->x, event->y, &dx, &dy)) {
 		gchar *posstr;
 
 		posstr = g_strdup_printf("%g %g", dx, dy);
-		gtk_entry_set_text(GTK_ENTRY(plot->labelpos_entry), posstr);
+		gtk_entry_set_text(GTK_ENTRY(plot->pos_entry), posstr);
 		g_free(posstr);
 	    }
 	} 

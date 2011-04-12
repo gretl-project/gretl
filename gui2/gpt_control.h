@@ -34,7 +34,7 @@ void saver_preview_graph (GPT_SPEC *spec, char *termstr);
 
 int saver_save_graph (GPT_SPEC *spec, char *termstr, const char *fname);
 
-void plot_label_position_click (GtkWidget *w, png_plot *plot);
+void plot_position_click (GtkWidget *w, png_plot *plot);
 
 int redisplay_edited_plot (png_plot *plot);
 
