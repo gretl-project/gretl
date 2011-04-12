@@ -14,6 +14,7 @@ version 1.9.5, in progress
   on the differences of the system variables) in standard format
 - "tobit" command: add options to specify left- and/or right-
   censoring; also add --robust option
+- gnuplot (command and GUI): add option to plot fitted cubic
 - GUI forecast dialog, for cross-sectional data: give option of showing
   confidence interval for mean Y rather than actual Y
 - Fix a small memory leak when opening an *.asc data file

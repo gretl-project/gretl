@@ -213,6 +213,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_L, "loess-fit", 0 },
     { GNUPLOT,  OPT_Q, "quadratic-fit", 0 },
     { GNUPLOT,  OPT_N, "linear-fit", 0 },
+    { GNUPLOT,  OPT_B, "cubic-fit", 0 },
     { GNUPLOT,  OPT_M, "with-impulses", 0 },
     { GNUPLOT,  OPT_S, "suppress-fitted", 0 },
     { GNUPLOT,  OPT_T, "time-series", 0 },

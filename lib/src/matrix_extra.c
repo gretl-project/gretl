@@ -834,7 +834,9 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 	return E_MISSDATA;
     }
 
-    if (fit == PLOT_FIT_QUADRATIC) {
+    if (fit == PLOT_FIT_CUBIC) {
+	k = 4;
+    } else if (fit == PLOT_FIT_QUADRATIC) {
 	k = 3;
     } else if (fit == PLOT_FIT_LOESS) {
 	k = 1;
@@ -864,8 +866,11 @@ int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 	    } else {
 		gretl_matrix_set(X, i, j++, xt);
 	    }
-	    if (fit == PLOT_FIT_QUADRATIC) {
-		gretl_matrix_set(X, i, j, xt * xt);
+	    if (fit == PLOT_FIT_QUADRATIC || fit == PLOT_FIT_CUBIC) {
+		gretl_matrix_set(X, i, j++, xt * xt);
+	    }
+	    if (fit == PLOT_FIT_CUBIC) {
+		gretl_matrix_set(X, i, j, xt * xt * xt);
 	    }
 	    i++;
 	}

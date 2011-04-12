@@ -120,6 +120,7 @@ const gchar *fittype_strings[] = {
     N_("none"),
     N_("linear: y = a + b*x"),
     N_("quadratic: y = a + b*x + c*x^2"),
+    N_("cubic: y = a + b*x + c*x^2 + d*x^3"),
     N_("inverse: y = a + b*(1/x)"),
     N_("loess (locally weighted fit)"),
     NULL
@@ -500,7 +501,8 @@ static void fittype_from_combo (GtkComboBox *box, GPT_SPEC *spec)
     }
 
     if (f == PLOT_FIT_OLS || f == PLOT_FIT_QUADRATIC || 
-	f == PLOT_FIT_INVERSE || f == PLOT_FIT_LOESS) {
+	f == PLOT_FIT_CUBIC || f == PLOT_FIT_INVERSE || 
+	f == PLOT_FIT_LOESS) {
 	plotspec_add_fit(spec, f);
 	spec->flags &= ~GPT_FIT_HIDDEN;
     } else if (f == PLOT_FIT_NONE) {
@@ -539,6 +541,9 @@ static gboolean fit_type_changed (GtkComboBox *box, plot_editor *ed)
 		s1, s2);
     } else if (f == PLOT_FIT_QUADRATIC) {
 	title = g_strdup_printf(_("%s versus %s (with quadratic fit)"),
+		s1, s2);
+    } else if (f == PLOT_FIT_CUBIC) {
+	title = g_strdup_printf(_("%s versus %s (with cubic fit)"),
 		s1, s2);
     } else if (f == PLOT_FIT_INVERSE) {
 	title = g_strdup_printf(_("%s versus %s (with inverse fit)"),

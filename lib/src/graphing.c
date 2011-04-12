@@ -271,6 +271,8 @@ static GptFlags get_gp_flags (gretlopt opt, int k, FitType *f)
 	    *f = PLOT_FIT_INVERSE;
 	} else if (opt & OPT_Q) {
 	    *f = PLOT_FIT_QUADRATIC;
+	} else if (opt & OPT_B) {
+	    *f = PLOT_FIT_CUBIC;
 	} else if (opt & OPT_L) {
 	    *f = PLOT_FIT_LOESS;
 	} else if (opt & OPT_N) {
@@ -1501,6 +1503,9 @@ static void make_gtitle (gnuplot_info *gi, int code,
 	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
 	    sprintf(title, _("%s versus %s (with quadratic fit)"),
 		    s1, s2);
+	} else if (gi->fit == PLOT_FIT_CUBIC) {	 
+	    sprintf(title, _("%s versus %s (with cubic fit)"),
+		    s1, s2);
 	}	    
 	break;
     case GTITLE_RESID:
@@ -1695,6 +1700,7 @@ static int get_fitted_line (gnuplot_info *gi,
     int err = 0;
 
     if (gi->x != NULL && (pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {
+	/* starting value of time index */
 	x0 = gi->x[gi->t1];
     } else {
 	xvar = Z[gi->list[2]];
@@ -1722,8 +1728,13 @@ static int get_fitted_line (gnuplot_info *gi,
 				 &y, &X);
 
     if (!err) {
-	int k = (gi->fit == PLOT_FIT_QUADRATIC)? 3 : 2;
+	int  k = 2;
 
+	if (gi->fit == PLOT_FIT_CUBIC) {
+	    k = 4;
+	} else if (gi->fit == PLOT_FIT_QUADRATIC) {
+	    k = 3;
+	}
 	b = gretl_column_vector_alloc(k);
 	if (b == NULL) {
 	    err = E_ALLOC;

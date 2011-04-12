@@ -149,6 +149,7 @@ struct GPT_SPEC_ {
     int *reglist;              /* regression list for X-Y plot with fitted line */
     gretl_matrix *b_ols;       /* coeffs for linear fit */
     gretl_matrix *b_quad;      /* coeffs for quadratic fit */
+    gretl_matrix *b_cub;       /* coeffs for cubic fit */
     gretl_matrix *b_inv;       /* coeffs for inverse fit */
     char *labeled;             /* for GUI use */
     void *ptr;                 /* for GUI use */
