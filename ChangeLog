@@ -43,6 +43,7 @@ version 1.9.5, in progress
 - Fix bug: usable observations could be omitted when compacting from
   daily to weekly frequency, if the daily data contained "hidden"
   missing observations
+- Fix bug 3285196 (respect indicated encoding when importing SPSS data)
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 

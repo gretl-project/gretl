@@ -415,7 +415,7 @@ plugins/stata_import.dll: stata_import.o dllinit.o
 
 plugins/spss_import.dll: spss_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) $(GRETLLIB)
 
 plugins/sas_import.dll: sas_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

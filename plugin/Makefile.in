@@ -228,7 +228,7 @@ stata_import.la: stata_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 spss_import.la: spss_import.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
+	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 sas_import.la: sas_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)

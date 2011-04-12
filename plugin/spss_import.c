@@ -30,6 +30,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 
+#include <glib.h>
+
 #include "libgretl.h"
 #include "gretl_string_table.h"
 #include "swap_bytes.h"
@@ -148,7 +150,7 @@ struct spss_dataset_ {
     int nvars;                 /* number of variables (really, 'elements') */
     int nobs;                  /* number of observations ('cases') */
     int swapends;              /* reversing endianness? (1/0) */
-    int encoding;              /* FIXME not handled at this point */
+    int encoding;              /* encoding for strings */
     int max_sv;                /* index of highest-numbered string variable */
     spss_var *vars;            /* info on individual variables */
     int nlabelsets;            /* number of sets of value -> label mappings */
@@ -274,23 +276,20 @@ static int read_rec_7_3 (spss_dataset *dset, int size, int count)
     }
 
     enc = dset->encoding = data[7];
-    fprintf(stderr, "encoding = %d\n", enc);
     
     /* See
        http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html
     */
 
     if (enc == 1 || enc == 4) {
-	return sav_error("File-indicated character representation code (%s) is not ASCII", 
-			 (enc == 1)? "EBCDIC" : (enc == 4 ? "DEC Kanji" : "Unknown"));
+	return sav_error("Indicated character encoding (%s) is not ASCII", 
+			 (enc == 1)? "EBCDIC" : "DEC Kanji");
     }
 
     if (enc >= 500) {
-	fprintf(stderr, "File-indicated character representation code (%d) looks "
-		"like a Windows codepage\n", enc);
+	fprintf(stderr, "Indicated character encoding (%d) may be a Windows codepage\n", enc);
     } else if (enc > 4) {
-	fprintf(stderr, "File-indicated character representation code (%d) is unknown", 
-		enc);
+	fprintf(stderr, "Indicated character encoding (%d) is unknown", enc);
     }
 
     return err;
@@ -345,6 +344,41 @@ static spss_var *get_spss_var_by_name (spss_dataset *dset, const char *s)
     }
 
     return NULL;
+}
+
+static int recode_sav_string (char *targ, const char *src,
+			      int encoding, int maxlen)
+{
+    int err = 0;
+
+    *targ = '\0';
+
+    if (g_utf8_validate(src, -1, NULL)) {
+	strncat(targ, src, maxlen);
+    } else if (encoding >= 500) {
+	/* try Windows codepage? */
+	gchar *fromset, *tmp;
+	gsize wrote = 0;
+
+	fromset = g_strdup_printf("CP%d", encoding);
+	tmp = g_convert(src, -1, "UTF-8", fromset,
+			NULL, &wrote, NULL);
+	g_free(fromset);
+	if (tmp != NULL) {
+	    strncat(targ, tmp, maxlen);
+	    g_free(tmp);
+	} else {
+	    err = E_DATA;
+	}
+    } else {
+	err = E_DATA;
+    }
+
+    if (err) {
+	strcpy(targ, "unknown");
+    }
+
+    return err;
 }
 
 /* Read record type 7, subtype 13: long variable names */
@@ -1496,13 +1530,14 @@ static int sav_read_observation (spss_dataset *dset,
 	    }
 	} else {
 	    /* variable is of string type */
-	    char cval[256];
+	    char raw[256], cval[256];
 	    int ix, len;
 
 	    len = (v->width < 256)? v->width : 255;
-	    memcpy(cval, &tmp[v->offset], len);
-	    cval[len] = '\0';
-	    tailstrip(cval);
+	    memcpy(raw, &tmp[v->offset], len);
+	    raw[len] = '\0';
+	    tailstrip(raw);
+	    recode_sav_string(cval, raw, dset->encoding, 255);
 #if SPSS_DEBUG
 	    fprintf(stderr, "string val Z[%d][%d] = '%s'\n", j, t, cval);
 #endif
@@ -1556,8 +1591,10 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
     j = 1;
     for (i=0; i<dset->nvars; i++) {
 	if (!CONTD(dset, i)) {
-	    strcpy(pdinfo->varname[j], dset->vars[i].name);
-	    strcpy(VARLABEL(pdinfo, j), dset->vars[i].label);
+	    recode_sav_string(pdinfo->varname[j], dset->vars[i].name, 
+			      dset->encoding, VNAMELEN - 1);
+	    recode_sav_string(VARLABEL(pdinfo, j), dset->vars[i].label,
+			      dset->encoding, MAXLABEL - 1);
 	    if (has_value_labels(dset, i)) {
 		set_var_discrete(pdinfo, j, 1);
 	    }
@@ -1720,7 +1757,10 @@ static void print_labelsets (spss_dataset *dset, PRN *prn)
 	v = &dset->vars[lj];
 
 	for (j=0; j<lset->nlabels; j++) {
-	    pprintf(prn, "%10g -> '%s'", lset->vals[j], lset->labels[j]);
+	    char label[256];
+
+	    recode_sav_string(label, lset->labels[j], dset->encoding, 255);
+	    pprintf(prn, "%10g -> '%s'", lset->vals[j], label);
 	    if (spss_user_missing(v, lset->vals[j])) {
 		pputs(prn, " [M]\n");
 	    } else {
