@@ -1496,11 +1496,11 @@ static int parse_label_line (GPT_SPEC *spec, const char *line)
 static int parse_arrow_line (GPT_SPEC *spec, const char *line)
 {
     double x0, y0, x1, y1;
-    char head[16];
+    char head[12] = {0};
     int n, err = 0;
 
     /* Example:
-       set arrow from 2000,150 to 2000,500 nohead
+       set arrow from 2000,150 to 2000,500 nohead [ lt 0 ]
     */
 
     gretl_push_c_numeric_locale();
@@ -1515,14 +1515,20 @@ static int parse_arrow_line (GPT_SPEC *spec, const char *line)
     }
 
     if (!err) {
-	int h = strcmp(head, "nohead") ? 1 : 0;
+	int flags = 0;
 
+	if (strcmp(head, "nohead")) {
+	    flags |= GP_ARROW_HEAD;
+	}
+	if (strstr(line, "lt 0")) {
+	    flags |= GP_ARROW_DOTS;
+	}	
 	n = spec->n_arrows - 1;
 	spec->arrows[n].x0 = x0;
 	spec->arrows[n].y0 = y0;
 	spec->arrows[n].x1 = x1;
 	spec->arrows[n].y1 = y1;
-	spec->arrows[n].head = h;
+	spec->arrows[n].flags = flags;
     }
 
     return err;

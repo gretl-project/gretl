@@ -109,9 +109,14 @@ typedef struct {
     int just;
 } GPT_LABEL;
 
+typedef enum {
+    GP_ARROW_HEAD = 1 << 0,
+    GP_ARROW_DOTS = 1 << 1
+} gp_arrow_flags;
+
 typedef struct {
     double x0, y0, x1, y1;
-    int head;
+    int flags;
 } GPT_ARROW;
 
 /* "global" information concerning a gnuplot graph specification */

@@ -682,12 +682,13 @@ static int get_arrow_spec_from_entries (plot_editor *ed, int i,
     int j, err = 0;
 
     for (j=0; j<2 && !err; j++) {
-	GtkWidget *entry, *chk = NULL;
+	GtkWidget *entry, *b1 = NULL, *b2 = NULL;
 	double *x, *y;
 
 	if (j == 0) {
 	    entry = ed->arrowpos[i];
-	    chk = g_object_get_data(G_OBJECT(entry), "arrow_check");
+	    b1 = g_object_get_data(G_OBJECT(entry), "arrow_check");
+	    b2 = g_object_get_data(G_OBJECT(entry), "dots_check");
 	    x = &arrow->x0;
 	    y = &arrow->y0;
 	} else {
@@ -711,8 +712,19 @@ static int get_arrow_spec_from_entries (plot_editor *ed, int i,
 	    err = 1;
 	}
 
-	if (chk != NULL) {
-	    arrow->head = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chk));
+	if (b1 != NULL) {
+	    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b1))) {
+		arrow->flags |= GP_ARROW_HEAD;
+	    } else {
+		arrow->flags &= ~GP_ARROW_HEAD;
+	    }
+	}
+	if (b2 != NULL) {
+	    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b2))) {
+		arrow->flags |= GP_ARROW_DOTS;
+	    } else {
+		arrow->flags &= ~GP_ARROW_DOTS;
+	    }
 	}
     }
 
@@ -3009,7 +3021,7 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
     if (ed->gui_narrows > 1) {
 	nsep = ed->gui_narrows - 1;
     }
-    tbl_len = 1 + 3 * ed->gui_narrows + nsep;
+    tbl_len = 1 + 4 * ed->gui_narrows + nsep;
     tbl = gp_dialog_table(tbl_len, 3, vbox);
     r = 1;
    
@@ -3066,9 +3078,20 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
 	/* arrow head selector */
 	chk = gtk_check_button_new_with_label(_("arrow has head"));
 	g_object_set_data(G_OBJECT(ed->arrowpos[i]), "arrow_check", chk);
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), spec->arrows[i].head);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), 
+				     (spec->arrows[i].flags & GP_ARROW_HEAD)?
+				     TRUE : FALSE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), chk, 2, 3, r-1, r);
 	r++;
+
+	/* dotted line selector */
+	chk = gtk_check_button_new_with_label(_("line is dotted"));
+	g_object_set_data(G_OBJECT(ed->arrowpos[i]), "dots_check", chk);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), 
+				     (spec->arrows[i].flags & GP_ARROW_DOTS)?
+				     TRUE : FALSE);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), chk, 2, 3, r-1, r);
+	r++;	
 
 	if (i < ed->gui_narrows - 1) {
 	    /* separator */

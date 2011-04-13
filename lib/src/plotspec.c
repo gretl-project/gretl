@@ -554,7 +554,7 @@ int plotspec_add_arrow (GPT_SPEC *spec)
     arrows[n].y0 = 0;
     arrows[n].x1 = 0;
     arrows[n].y1 = 0;
-    arrows[n].head = 0;
+    arrows[n].flags = 0;
 
     return 0;
 }
@@ -565,7 +565,7 @@ static void copy_arrow_content (GPT_ARROW *targ, GPT_ARROW *src)
     targ->y0 = src->y0;
     targ->x1 = src->x1;
     targ->y1 = src->y1;
-    targ->head = src->head;
+    targ->flags = src->flags;
 }
 
 int plotspec_delete_arrow (GPT_SPEC *spec, int i)
@@ -692,9 +692,13 @@ static void print_plot_labelspec (const GPT_LABEL *lbl, FILE *fp)
 static void print_plot_arrow (const GPT_ARROW *arrow, FILE *fp)
 {
     gretl_push_c_numeric_locale();
-    fprintf(fp, "set arrow from %g,%g to %g,%g %s\n", 
+    fprintf(fp, "set arrow from %g,%g to %g,%g %s", 
 	    arrow->x0, arrow->y0, arrow->x1, arrow->y1,
-	    (arrow->head)? "head" : "nohead");
+	    (arrow->flags & GP_ARROW_HEAD)? "head" : "nohead");
+    if (arrow->flags & GP_ARROW_DOTS) {
+	fputs(" lt 0", fp);
+    }
+    fputc('\n', fp);
     gretl_pop_c_numeric_locale();
 }
 
