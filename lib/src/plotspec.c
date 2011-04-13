@@ -564,6 +564,7 @@ static void copy_arrow_content (GPT_ARROW *targ, GPT_ARROW *src)
     targ->x0 = src->x0;
     targ->y0 = src->y0;
     targ->x1 = src->x1;
+    targ->y1 = src->y1;
     targ->head = src->head;
 }
 
