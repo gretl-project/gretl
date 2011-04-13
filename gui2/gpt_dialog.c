@@ -3028,7 +3028,6 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
     for (i=0; i<ed->gui_narrows; i++) {
 	GtkWidget *button, *image, *chk;
 	GdkPixbuf *icon;
-	int k;
 
 	item_remove_button(tbl, r, ed, i, GUI_ARROW);
 
@@ -3044,7 +3043,6 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    }
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), label, 1, 2, r-1, r);
 
-	    k = i * 2 + j;
 	    apos = gtk_entry_new();
 	    gtk_entry_set_max_length(GTK_ENTRY(apos), PLOT_POSITION_LEN);
 	    arrow_pos_to_entry(&spec->arrows[i], apos, j);
