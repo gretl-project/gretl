@@ -201,6 +201,8 @@ gamma_LR_T_pval (double trace, JohansenCode det, int n, int T)
   @n1: number of potentially cointegrated variables
   @n2: number of variables that are conditioned upon
   @r:  cointegrating rank under H0.
+  @T:  sample size minus number of parameters, or
+       0 for the asymptotic result
 
   The Doornik gamma-approximation approach with 
   correction for the case of a "partial system" as
@@ -209,12 +211,12 @@ gamma_LR_T_pval (double trace, JohansenCode det, int n, int T)
 
 static double
 gamma_harbo_trace_pval (double trace, JohansenCode det, 
-			int n1, int n2, int r)
+			int n1, int n2, int r, int T)
 {
     const double *tracem = trace_m_coef[det];
     const double *tracev = trace_v_coef[det];
     double mt = 0, vt = 0;
-    double cov, x[6];
+    double cov, x[7];
     int n = n1 + n2;
     int i, m = n - r;
 
@@ -224,6 +226,22 @@ gamma_harbo_trace_pval (double trace, JohansenCode det,
 	mt += x[i] * tracem[i];
 	vt += x[i] * tracev[i];
     }
+
+    if (T > 0) {
+	const double *mcorr = trace_m_corr[det];
+	const double *vcorr = trace_v_corr[det];
+	double mtcorr = 0, vtcorr = 0;
+
+	fill_x_corr_array(x, m, T);
+
+	for (i=0; i<7; i++) {
+	    mtcorr += x[i] * mcorr[i];
+	    vtcorr += x[i] * vcorr[i];
+	}
+    
+	mt = exp(log(mt) + mtcorr);
+	vt = exp(log(vt) + vtcorr);
+    }   
 
     if (det == J_REST_TREND) {
 	cov = -1.35;
@@ -838,16 +856,24 @@ static void vecm_set_df (GRETL_VAR *v, const gretl_matrix *H,
     int Kpi, K = 0;
     double c;
 
+    if (r == 0) {
+	/* full-rank VAR */
+	r = p;
+    }
+
     /* lagged differences */
     K += var_n_lags(v) * p;
 
     /* deterministic stuff */
-    K += v->jinfo->seasonals + v->ifc;
+    K += v->jinfo->seasonals;
+    if (jcode(v) > J_REST_CONST) {
+	K++;
+    }
     if (jcode(v) == J_UNREST_TREND) {
 	K++;
     }
 
-    /* exogenous vars? */
+    /* unrestricted exogenous vars? */
     if (v->xlist != NULL) {
 	K += v->xlist[0];
     }
@@ -1536,21 +1562,39 @@ compute_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
     pprintf(prn, "\n%s = %g (including c: %g)\n", _("Log-likelihood"), 
 	    jvar->ll + llc, jvar->ll);
 
+    /* make sure the df is calculated */
+    vecm_set_df(jvar, NULL, NULL);
+
+    if (partial) {
+	pputc(prn, '\n');
+	pputs(prn, _("Cointegration tests, ignoring exogenous variables"));
+    }
+	
+    pprintf(prn, "\n%s %s %s  %s  %s  %s\n", _("Rank"), _("Eigenvalue"), 
+	    _("Trace test"), _("p-value"),
+	    _("Lmax test"), _("p-value"));
+
+    for (i=0; i<n; i++) {
+	double pv[2] = {0};
+
+	trace = gretl_matrix_get(tests, i, 0);
+	lmax = gretl_matrix_get(tests, i, 1);
+	gamma_LR_asy_pvals(trace, lmax, jcase, n - i, pv);
+	pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
+		i, evals->val[i], trace, pv[0], lmax, pv[1]);
+	gretl_matrix_set(pvals, i, 0, pv[0]);
+	gretl_matrix_set(pvals, i, 1, pv[1]);
+    }
+
     if (partial) {
 	pputc(prn, '\n');
 	pprintf(prn, _("Cointegration tests conditional on %d I(1) variable(s)"),
 		       nrexo);
-	pprintf(prn, "\n%s %s %s %s\n", _("Rank"), _("Eigenvalue"), 
-		_("Trace test"), _("p-value"));
-    } else {
-	pprintf(prn, "\n%s %s %s %s   %s  %s\n", _("Rank"), _("Eigenvalue"), 
-		_("Trace test"), _("p-value"),
-		_("Lmax test"), _("p-value"));
-    }
+	pprintf(prn, "\n%s %s %s  %s  %s\n", _("Rank"), _("Eigenvalue"), 
+		_("Trace test"), _("p-value"), _("pval(T)"));
 
-    for (i=0; i<n; i++) {
-	trace = gretl_matrix_get(tests, i, 0);
-	if (partial) {
+	for (i=0; i<n; i++) {
+	   trace = gretl_matrix_get(tests, i, 0);
 	    double pv;
 	    int det = jcase;
 
@@ -1558,32 +1602,26 @@ compute_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
 	    if (jcase == J_UNREST_CONST) {
 		det = J_REST_TREND;
 	    }
-	    pv = gamma_harbo_trace_pval(trace, det, n, nrexo, i);
-	    pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]\n", i,
+	    pv = gamma_harbo_trace_pval(trace, det, n, nrexo, i, 0);
+	    pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]", i,
 		    evals->val[i], trace, pv);
 	    gretl_matrix_set(pvals, i, 0, pv);
 	    gretl_matrix_set(pvals, i, 1, NADBL);
-	} else {
-	    double pv[2] = {0};
-
-	    lmax = gretl_matrix_get(tests, i, 1);
-	    gamma_LR_asy_pvals(trace, lmax, jcase, n - i, pv);
-	    pprintf(prn, "%4d%#11.5g%#11.5g [%6.4f]%#11.5g [%6.4f]\n", 
-		    i, evals->val[i], trace, pv[0], lmax, pv[1]);
-	    gretl_matrix_set(pvals, i, 0, pv[0]);
-	    gretl_matrix_set(pvals, i, 1, pv[1]);
+	    pv = gamma_harbo_trace_pval(trace, det, n, nrexo, i, jvar->df);
+	    pprintf(prn, " [%6.4f]\n", pv);
 	}
-    }
+    } 
 
     if (!partial) {
 	double pv;
 
-	pprintf(prn, "\n%s:\n", _("Corrected for sample size"));
+	pputc(prn, '\n');
+	pprintf(prn, _("Corrected for sample size (df = %d)"), jvar->df);
 	pprintf(prn, "\n%s %s %s\n", _("Rank"), _("Trace test"), 
 		_("p-value"));
 	for (i=0; i<n; i++) {
 	    trace = gretl_matrix_get(tests, i, 0);
-	    pv = gamma_LR_T_pval(trace, jcase, n - i, T);
+	    pv = gamma_LR_T_pval(trace, jcase, n - i, jvar->df);
 	    pprintf(prn, "%4d%#11.5g [%6.4f]\n", i, trace, pv);
 	    if (!(opt & OPT_Y)) {
 		/* not asymptotic: prefer sample-corrected p-value */
