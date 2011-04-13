@@ -174,13 +174,15 @@ int plotspec_add_line (GPT_SPEC *spec);
 
 int plotspec_delete_line (GPT_SPEC *spec, int i);
 
+int plotspec_max_line_width (GPT_SPEC *spec);
+
+GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err);
+
 int plotspec_add_arrow (GPT_SPEC *spec);
 
 int plotspec_delete_arrow (GPT_SPEC *spec, int i);
 
-GPT_LINE *plotspec_clone_lines (GPT_SPEC *spec, int *err);
-
-int plotspec_max_line_width (GPT_SPEC *spec);
+GPT_ARROW *plotspec_clone_arrows (GPT_SPEC *spec, int *err);
 
 int plotspec_add_label (GPT_SPEC *spec);
 

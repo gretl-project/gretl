@@ -598,6 +598,28 @@ int plotspec_delete_arrow (GPT_SPEC *spec, int i)
     return err;
 }
 
+GPT_ARROW *plotspec_clone_arrows (GPT_SPEC *spec, int *err)
+{
+    GPT_ARROW *arrows = NULL;
+    int i;
+
+    if (spec->n_arrows == 0) {
+	/* no-op */
+	return NULL;
+    }
+
+    arrows = malloc(spec->n_arrows * sizeof *arrows);
+    if (arrows == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<spec->n_arrows; i++) {
+	    copy_arrow_content(&arrows[i], &spec->arrows[i]);
+	}
+    }
+
+    return arrows;
+}
+
 static char *escape_quotes (const char *s)
 {
     if (strchr(s, '"') == NULL) {

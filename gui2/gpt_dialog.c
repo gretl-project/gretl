@@ -53,19 +53,22 @@ struct gpt_range_t {
 #define MAX_AXES 3
 #define NTITLES  4
 
-/* apparatus for handling the case where lines and/or labels are
+/* apparatus for handling the case where plot components are
    added or removed via the gui dialog, but these changes are
    discarded (the user doesn't click "OK" or "Apply")
 */
 
 #define old_lines_init(e) (e->old_n_lines = -1, e->old_lines = NULL)
 #define old_labels_init(e) (e->old_n_labels = -1, e->old_labels = NULL)
+#define old_arrows_init(e) (e->old_n_arrows = -1, e->old_arrows = NULL)
 
 #define lines_not_synced(e) (e->old_n_lines < 0)
 #define labels_not_synced(e) (e->old_n_labels < 0)
+#define arrows_not_synced(e) (e->old_n_arrows < 0)
 
 #define restore_lines(e) (e->old_n_lines >= 0)
 #define restore_labels(e) (e->old_n_labels >= 0)
+#define restore_arrows(e) (e->old_n_arrows >= 0)
 
 typedef struct plot_editor_ plot_editor;
 
@@ -111,12 +114,14 @@ struct plot_editor_ {
 
     int old_n_lines;
     int old_n_labels;
+    int old_n_arrows;
 
     GPT_LINE *old_lines;
     GPT_LABEL *old_labels;
+    GPT_ARROW *old_arrows;
 };
 
-#define PLOT_LABEL_POS_LEN 32
+#define PLOT_POSITION_LEN 32
 
 const gchar *fittype_strings[] = {
     N_("none"),
@@ -649,8 +654,7 @@ static void entry_to_gp_double (GtkWidget *w, double *val)
 #define gp_string_to_entry(w,s) do { \
 	gtk_entry_set_text(GTK_ENTRY(w),s); } while (0)
 
-static int
-get_label_pos_from_entry (GtkWidget *w, double *pos)
+static int get_label_pos_from_entry (GtkWidget *w, double *pos)
 {
     int err = 0;
 
@@ -660,13 +664,56 @@ get_label_pos_from_entry (GtkWidget *w, double *pos)
     
 	chk = sscanf(s, "%lf %lf", &pos[0], &pos[1]);
 	if (chk != 2) {
-	    errbox(_("Invalid label position, must be X Y"));
+	    errbox(_("Invalid position, must be X Y"));
 	    gtk_editable_select_region(GTK_EDITABLE(w), 0, strlen(s));
 	    pos[0] = pos[1] = NADBL;
 	    err = 1;
 	} 
     } else {
 	err = 1;
+    }
+
+    return err;
+}
+
+static int get_arrow_spec_from_entries (plot_editor *ed, int i, 
+					GPT_ARROW *arrow)
+{
+    int j, err = 0;
+
+    for (j=0; j<2 && !err; j++) {
+	GtkWidget *entry, *chk = NULL;
+	double *x, *y;
+
+	if (j == 0) {
+	    entry = ed->arrowpos[i];
+	    chk = g_object_get_data(G_OBJECT(entry), "arrow_check");
+	    x = &arrow->x0;
+	    y = &arrow->y0;
+	} else {
+	    entry = g_object_get_data(G_OBJECT(ed->arrowpos[i]), "pos_2");
+	    x = &arrow->x1;
+	    y = &arrow->y1;
+	}
+
+	if (GTK_IS_ENTRY(entry)) {
+	    const gchar *s = gtk_entry_get_text(GTK_ENTRY(entry));
+	    int n;
+    
+	    n = sscanf(s, "%lf %lf", x, y);
+	    if (n != 2) {
+		errbox(_("Invalid position, must be X Y"));
+		gtk_editable_select_region(GTK_EDITABLE(entry), 0, strlen(s));
+		*x = *y = NADBL;
+		err = 1;
+	    } 
+	} else {
+	    err = 1;
+	}
+
+	if (chk != NULL) {
+	    arrow->head = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chk));
+	}
     }
 
     return err;
@@ -734,6 +781,9 @@ static void plot_editor_sync (plot_editor *ed)
 
     free(ed->old_labels);
     old_labels_init(ed);
+
+    free(ed->old_arrows);
+    old_arrows_init(ed);
 }
 
 static void set_graph_font_from_widgets (plot_editor *ed)
@@ -968,6 +1018,10 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    spec->labels[i].just = 
 		gtk_combo_box_get_active(GTK_COMBO_BOX(ed->labeljust[i]));
 	}
+    } 
+
+    for (i=0; i<ed->gui_narrows && !err; i++) {
+	err = get_arrow_spec_from_entries(ed, i, &spec->arrows[i]);
     } 
 
     if (!err && ed->border_check != NULL) {
@@ -1928,7 +1982,7 @@ static void gpt_tab_new_line (plot_editor *ed, new_line_info *nlinfo)
     gtk_widget_show(nlinfo->formula_entry);
 }
 
-/* back up exiting spec lines / labels in case changes are not
+/* back up existing spec components in case changes are not
    applied and we need to restore the prior state */
 
 static int make_labels_backup (plot_editor *ed)
@@ -1939,6 +1993,20 @@ static int make_labels_backup (plot_editor *ed)
 	ed->old_labels = plotspec_clone_labels(ed->spec, &err);
 	if (!err) {
 	    ed->old_n_labels = ed->spec->n_labels;
+	}
+    }
+
+    return err;
+}
+
+static int make_arrows_backup (plot_editor *ed)
+{
+    int err = 0;
+
+    if (arrows_not_synced(ed)) {
+	ed->old_arrows = plotspec_clone_arrows(ed->spec, &err);
+	if (!err) {
+	    ed->old_n_arrows = ed->spec->n_arrows;
 	}
     }
 
@@ -1987,9 +2055,7 @@ static int allocate_arrow (plot_editor *ed)
 {
     int err = 0;
 
-#if 0
     err = make_arrows_backup(ed);
-#endif
 
     if (!err) {
 	err = plotspec_add_arrow(ed->spec);
@@ -2033,14 +2099,12 @@ static int allocate_line (plot_editor *ed)
 
 static void add_label_callback (GtkWidget *w, plot_editor *ed)
 {
-    gint pgnum;
-    int err;
-
-    err = allocate_label(ed);
+    int err = allocate_label(ed);
 
     if (!err) {
 	/* re-fill the "labels" notebook page */
-	pgnum = widget_get_int(ed->notebook, "labels_page");
+	gint pgnum = widget_get_int(ed->notebook, "labels_page");
+
 	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
 	gpt_tab_labels(ed, ed->spec, pgnum);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
@@ -2049,14 +2113,12 @@ static void add_label_callback (GtkWidget *w, plot_editor *ed)
 
 static void add_arrow_callback (GtkWidget *w, plot_editor *ed)
 {
-    gint pgnum;
-    int err;
-
-    err = allocate_arrow(ed);
-
+    int err = allocate_arrow(ed);
+ 
     if (!err) {
 	/* re-fill the "arrows" notebook page */
-	pgnum = widget_get_int(ed->notebook, "arrows_page");
+	gint pgnum = widget_get_int(ed->notebook, "arrows_page");
+
 	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
 	gpt_tab_arrows(ed, ed->spec, pgnum);
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
@@ -2203,6 +2265,23 @@ static void remove_label (GtkWidget *w, plot_editor *ed)
     }
 }
 
+static void remove_arrow (GtkWidget *w, plot_editor *ed)
+{
+    if (make_arrows_backup(ed) != 0) {
+	nomem();
+    } else {
+	int pgnum = widget_get_int(ed->notebook, "arrows_page");
+
+	plotspec_delete_arrow(ed->spec, widget_get_int(w, "arrownum"));
+	ed->gui_narrows -= 1;
+
+	/* refresh the associated notebook page */
+	gtk_notebook_remove_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+	gpt_tab_arrows(ed, ed->spec, pgnum);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(ed->notebook), pgnum);
+    }
+}
+
 static void item_remove_button (GtkWidget *tbl, int row, 
 				plot_editor *ed, int i,
 				int j)
@@ -2210,11 +2289,13 @@ static void item_remove_button (GtkWidget *tbl, int row,
     GtkWidget *button; 
     const gchar *key[] = {
 	"linenum",
-	"labelnum"
+	"labelnum",
+	"arrownum"
     };
     GCallback cb[] = {
 	G_CALLBACK(remove_line),
-	G_CALLBACK(remove_label)
+	G_CALLBACK(remove_label),
+	G_CALLBACK(remove_arrow)
     };
 
     button = gtk_button_new_with_label(_("Remove"));
@@ -2814,7 +2895,7 @@ static void gpt_tab_labels (plot_editor *ed, GPT_SPEC *spec, int ins)
 
 	/* entry for coordinates */
 	ed->labelpos[i] = gtk_entry_new();
-	gtk_entry_set_max_length(GTK_ENTRY(ed->labelpos[i]), PLOT_LABEL_POS_LEN);
+	gtk_entry_set_max_length(GTK_ENTRY(ed->labelpos[i]), PLOT_POSITION_LEN);
 	label_pos_to_entry(spec->labels[i].pos, ed->labelpos[i]);
 	g_signal_connect(G_OBJECT(ed->labelpos[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
@@ -2888,20 +2969,27 @@ static void arrow_pos_to_entry (GPT_ARROW *arrow, GtkWidget *w, int j)
 {
     double x = (j == 0)? arrow->x0 : arrow->x1;
     double y = (j == 0)? arrow->y0 : arrow->y1;
-    gchar *s = g_strdup_printf("%.10g %.10g", x, y);
 
-    gtk_entry_set_text(GTK_ENTRY(w), s);
-    g_free(s);
+    if (!na(x) && !na(y)) {
+	gchar *s = g_strdup_printf("%.10g %.10g", x, y);
+
+	gtk_entry_set_text(GTK_ENTRY(w), s);
+	g_free(s);
+    } else {
+	gtk_entry_set_text(GTK_ENTRY(w), "");
+    }
 }
+
+#define ARROW_MAX 6
 
 static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins) 
 {
     GtkWidget *notebook = ed->notebook;
     GtkWidget *label, *tbl;
     GtkWidget *vbox, *page, *sep;
-    int i, j, tbl_len;
+    int i, j, r, tbl_len;
     png_plot *plot = (png_plot *) spec->ptr;
-    int pgnum = -1;
+    int nsep = 0, pgnum = -1;
 
     vbox = gp_dialog_vbox();
     gtk_widget_show(vbox);
@@ -2917,43 +3005,52 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
     }  
 
     widget_set_int(notebook, "arrows_page", pgnum);
- 
-    tbl_len = 1;
+
+    if (ed->gui_narrows > 1) {
+	nsep = ed->gui_narrows - 1;
+    }
+    tbl_len = 1 + 3 * ed->gui_narrows + nsep;
     tbl = gp_dialog_table(tbl_len, 3, vbox);
-    gtk_widget_show(tbl);
+    r = 1;
    
     for (i=0; i<ed->gui_narrows; i++) {
-	GtkWidget *hbox, *button, *image;
+	GtkWidget *button, *image, *chk;
 	GdkPixbuf *icon;
+	int k;
 
-	/* placement */
-	tbl_len++;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	item_remove_button(tbl, r, ed, i, GUI_ARROW);
 
-	item_remove_button(tbl, tbl_len, ed, i, GUI_ARROW);
-
-	print_field_label(tbl, tbl_len, _("from (X Y)"));
-
-	/* holder for entry and button */
-	hbox = gtk_hbox_new(FALSE, 5);
-
-	/* entries for coordinates */
+	/* entries and buttons for (start, stop) coordinates */
 	for (j=0; j<2; j++) {
-	    int k = i * 2 + j;
+	    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	    GtkWidget *apos;
 
-	    ed->arrowpos[k] = gtk_entry_new();
-	    gtk_entry_set_max_length(GTK_ENTRY(ed->arrowpos[k]), PLOT_LABEL_POS_LEN);
-	    arrow_pos_to_entry(&spec->arrows[i], ed->arrowpos[k], j);
-	    g_signal_connect(G_OBJECT(ed->arrowpos[k]), "activate", 
+	    if (j == 0) {
+		label = gtk_label_new(_("from (X Y)"));
+	    } else {
+		label = gtk_label_new(_("to (X Y)"));
+	    }
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), label, 1, 2, r-1, r);
+
+	    k = i * 2 + j;
+	    apos = gtk_entry_new();
+	    gtk_entry_set_max_length(GTK_ENTRY(apos), PLOT_POSITION_LEN);
+	    arrow_pos_to_entry(&spec->arrows[i], apos, j);
+	    g_signal_connect(G_OBJECT(apos), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     ed);
-	    gtk_container_add(GTK_CONTAINER(hbox), ed->arrowpos[k]);
-	    gtk_widget_show(ed->arrowpos[k]);
+	    gtk_container_add(GTK_CONTAINER(hbox), apos);
+
+	    if (j == 0) {
+		ed->arrowpos[i] = apos;
+	    } else {
+		g_object_set_data(G_OBJECT(ed->arrowpos[i]), "pos_2", apos);
+	    }
 
 	    if (plot_is_mouseable(plot)) {
 		/* button to invoke mouse-assisted placement */
 		button = gtk_button_new();
-		g_object_set_data(G_OBJECT(button), "pos_entry", ed->arrowpos[k]);
+		g_object_set_data(G_OBJECT(button), "pos_entry", apos);
 		g_signal_connect(G_OBJECT(button), "clicked",
 				 G_CALLBACK(plot_position_click), spec->ptr);
 		icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
@@ -2961,47 +3058,36 @@ static void gpt_tab_arrows (plot_editor *ed, GPT_SPEC *spec, int ins)
 		gtk_widget_set_size_request(button, 32, 26);
 		gtk_container_add(GTK_CONTAINER(button), image);
 		gtk_container_add(GTK_CONTAINER(hbox), button);
-		gtk_widget_show_all(button);
+		gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, r-1, r);
+		r++;
 	    }
 	}
 
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  hbox, 2, 3, tbl_len-1, tbl_len);
-	gtk_widget_show(hbox);
-
-#if 0
 	/* arrow head selector */
-	tbl_len++;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	chk = gtk_check_button_new_with_label(_("arrow has head"));
+	g_object_set_data(G_OBJECT(ed->arrowpos[i]), "arrow_check", chk);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk), spec->arrows[i].head);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), chk, 2, 3, r-1, r);
+	r++;
 
-	print_field_label(tbl, tbl_len, _("arrow has head"));
-#endif
-
-	if (i < ed->gui_narrows - 1 || spec->n_arrows < 8) {
+	if (i < ed->gui_narrows - 1) {
 	    /* separator */
-	    tbl_len++;
-	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	    sep = gtk_hseparator_new();
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, 
-				      tbl_len-1, tbl_len);
-	    gtk_widget_show(sep);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), sep, 0, 3, r-1, r);
+	    r++;
 	}
     }
 
-    if (spec->n_arrows < 6) {
+    if (spec->n_arrows < ARROW_MAX) {
 	/* button for adding an arrow */
-	GtkWidget *button;
+	GtkWidget *button = gtk_button_new_with_label(_("Add..."));
 
-	tbl_len++;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	button = gtk_button_new_with_label(_("Add..."));
 	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(add_arrow_callback), 
-			 ed);
-	gtk_widget_show(button);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, 
-				  tbl_len-1, tbl_len);
+			 G_CALLBACK(add_arrow_callback), ed);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), button, 0, 1, r-1, r);
     }
+
+    gtk_widget_show_all(tbl);
 }
 
 static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis) 
@@ -3230,6 +3316,13 @@ static void plot_editor_destroy (plot_editor *ed)
 	ed->spec->labels = ed->old_labels;
 	ed->spec->n_labels = ed->old_n_labels;
     }  
+
+    if (restore_arrows(ed)) {
+	/* undo any unapplied changes to arrows */
+	free(ed->spec->arrows);
+	ed->spec->arrows = ed->old_arrows;
+	ed->spec->n_arrows = ed->old_n_arrows;
+    }     
 
     if (ed->barsfile != NULL) {
 	remember_user_bars_file(ed->barsfile);
@@ -3465,6 +3558,7 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
 
     old_lines_init(ed);
     old_labels_init(ed);
+    old_arrows_init(ed);
 
     return ed;
 } 
@@ -3519,9 +3613,7 @@ GtkWidget *plot_add_editor (png_plot *plot)
     }
 
     gpt_tab_labels(editor, spec, 0);
-#if 0 /* not yet */
     gpt_tab_arrows(editor, spec, 0);
-#endif
 
     if (!frequency_plot_code(spec->code)) {
 	gpt_tab_palette(notebook);
