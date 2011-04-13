@@ -918,9 +918,16 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	err = aux.errcode;
 	fprintf(stderr, "auxiliary regression failed\n");
     } else {
-	double trsq = aux.rsq * aux.nobs;
-	int df = list[0] - pmod->list[0];
-	double pval = chisq_cdf_comp(df, trsq);
+	double pval, trsq = aux.rsq * aux.nobs;
+	int df = aux.ncoeff - pmod->ncoeff;
+
+	if (df <= 0) {
+	    /* couldn't add any regressors */
+	    err = E_SINGULAR;
+	    goto bailout;
+	}
+
+	pval = chisq_cdf_comp(df, trsq);
 
 	aux.aux = aux_code;
 
@@ -951,6 +958,8 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 
 	record_test_result(trsq, pval, _("non-linearity"));
     } 
+
+ bailout:
 
     clear_model(&aux);
 
@@ -1001,8 +1010,7 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     impose_model_smpl(pmod, pdinfo);
 
     /* add squares or logs */
-    tmplist = augment_regression_list(pmod->list, aux, 
-				      pZ, pdinfo);
+    tmplist = augment_regression_list(pmod->list, aux, pZ, pdinfo);
     if (tmplist == NULL) {
 	return E_ALLOC;
     } else if (tmplist[0] == pmod->list[0]) {

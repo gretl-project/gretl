@@ -355,18 +355,18 @@ static int recode_sav_string (char *targ, const char *src,
 
     if (g_utf8_validate(src, -1, NULL)) {
 	strncat(targ, src, maxlen);
-    } else if (encoding >= 500) {
+    } else if (encoding >= 500 && encoding <= 9999) {
 	/* try Windows codepage? */
-	gchar *fromset, *tmp;
+	char cpage[8];
+	gchar *conv;
 	gsize wrote = 0;
-
-	fromset = g_strdup_printf("CP%d", encoding);
-	tmp = g_convert(src, -1, "UTF-8", fromset,
-			NULL, &wrote, NULL);
-	g_free(fromset);
-	if (tmp != NULL) {
-	    strncat(targ, tmp, maxlen);
-	    g_free(tmp);
+	
+	sprintf(cpage, "CP%d", encoding);
+	conv = g_convert(src, -1, "UTF-8", cpage,
+			 NULL, &wrote, NULL);
+	if (conv != NULL) {
+	    strncat(targ, conv, maxlen);
+	    g_free(conv);
 	} else {
 	    err = E_DATA;
 	}
