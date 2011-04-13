@@ -11,10 +11,13 @@ version 1.9.5, in progress
   decomposition as a matrix; also add GUI access to forecast variance
   decomposition plots
 - VECMs: add $vecGamma accessor to get the Gamma matrices (coefficients
-  on the differences of the system variables) in standard format
+  on the differences of the system variables) in standard format, plus
+  $evals accessor to get the eigenvalues used in computing the trace
+  test
 - "tobit" command: add options to specify left- and/or right-
   censoring; also add --robust option
 - gnuplot (command and GUI): add option to plot fitted cubic
+- GUI plot dialog: add option to draw arrows on a graph
 - GUI forecast dialog, for cross-sectional data: give option of showing
   confidence interval for mean Y rather than actual Y
 - Fix a small memory leak when opening an *.asc data file
