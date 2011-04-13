@@ -3295,6 +3295,7 @@ static void gpt_tab_XY (plot_editor *ed, GPT_SPEC *spec, gint axis)
 	    g_free(txt);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
 	} else {
+	    gtk_combo_box_set_active(GTK_COMBO_BOX(combo), 0);
 	    gtk_widget_set_sensitive(entry, FALSE);
 	}
 
