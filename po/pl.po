@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-13 08:52-0400\n"
-"PO-Revision-Date: 2011-03-26 01:30-0400\n"
+"PO-Revision-Date: 2011-04-14 23:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -2581,7 +2581,7 @@ msgid "%s versus %s (with quadratic fit)"
 msgstr "%s względem %s (z regresją kwadratową)"
 
 #: lib/src/graphing.c:1507 gui2/gpt_dialog.c:556
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with cubic fit)"
 msgstr "%s względem %s (z regresją kwadratową)"
 
@@ -2730,9 +2730,9 @@ msgid "%g and %g quantiles"
 msgstr "kwantyle %g i %g"
 
 #: lib/src/graphing.c:5006
-#, fuzzy, c-format
+#, c-format
 msgid "forecast variance decomposition for %s"
-msgstr "Dekompozycje wariancji"
+msgstr "Dekompozycja wariancji dla %s"
 
 #: lib/src/graphing.c:5203
 msgid "VAR residuals"
@@ -9670,7 +9670,6 @@ msgstr ""
 "Czy chcesz zapisać je teraz?"
 
 #: gui2/gpt_control.c:291
-#, fuzzy
 msgid " Click to set position"
 msgstr " Wskaż położenie opisu"
 
@@ -9814,20 +9813,19 @@ msgstr "  Kliknij na wykres a uzyskasz menu"
 
 #: gui2/gpt_dialog.c:128
 msgid "linear: y = a + b*x"
-msgstr "liniowa: y = a + b*x"
+msgstr "liniowa:    y = a + b*x"
 
 #: gui2/gpt_dialog.c:129
 msgid "quadratic: y = a + b*x + c*x^2"
 msgstr "kwadratowa: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:130
-#, fuzzy
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
-msgstr "kwadratowa: y = a + b*x + c*x^2"
+msgstr "sześcienna: y = a + b*x + c*x^2 + d*x^3"
 
 #: gui2/gpt_dialog.c:131
 msgid "inverse: y = a + b*(1/x)"
-msgstr "odwrotna: y = a+ b*(1/x)"
+msgstr "odwrotna:   y = a+ b*(1/x)"
 
 #: gui2/gpt_dialog.c:132
 msgid "loess (locally weighted fit)"
@@ -9842,7 +9840,6 @@ msgid "Select color"
 msgstr "Wybór koloru"
 
 #: gui2/gpt_dialog.c:667 gui2/gpt_dialog.c:706
-#, fuzzy
 msgid "Invalid position, must be X Y"
 msgstr "Błędne położenie opisu, musi być X Y"
 
@@ -10013,25 +10010,23 @@ msgstr "Dodaj..."
 
 #: gui2/gpt_dialog.c:3009
 msgid "Arrows"
-msgstr ""
+msgstr "Dodaj strzałki"
 
 #: gui2/gpt_dialog.c:3040
 msgid "from (X Y)"
-msgstr ""
+msgstr "od (X Y)"
 
 #: gui2/gpt_dialog.c:3042
-#, fuzzy
 msgid "to (X Y)"
-msgstr "położenie (X Y)"
+msgstr "do (X Y)"
 
 #: gui2/gpt_dialog.c:3077
 msgid "arrow has head"
-msgstr ""
+msgstr "linia z grotem"
 
 #: gui2/gpt_dialog.c:3086
-#, fuzzy
 msgid "line is dotted"
-msgstr "szerokość lini"
+msgstr "linia kropkowana"
 
 #: gui2/gpt_dialog.c:3124
 msgid "X-axis"
@@ -15187,7 +15182,7 @@ msgstr "Zmienne egzogeniczne"
 #: plugin/johansen.c:1541
 #, c-format
 msgid "Cointegration tests conditional on %d I(1) variable(s)"
-msgstr ""
+msgstr "Cointegration tests conditional on %d I(1) variable(s)"
 
 #: plugin/johansen.c:1543 plugin/johansen.c:1546
 msgid "Eigenvalue"
@@ -15202,9 +15197,8 @@ msgid "Lmax test"
 msgstr "Test Lmax"
 
 #: plugin/johansen.c:1581
-#, fuzzy
 msgid "Corrected for sample size"
-msgstr "Jednolity zakres próby"
+msgstr "Skorygowany zakres próby"
 
 #: plugin/johansen.c:1599
 msgid ""
