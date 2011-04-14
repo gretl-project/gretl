@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-13 08:52-0400\n"
-"PO-Revision-Date: 2011-03-24 09:19+0200\n"
+"PO-Revision-Date: 2011-04-14 10:47+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -25,32 +25,24 @@ msgid "lagged differences"
 msgstr "gecikmeli farklar"
 
 #: lib/src/adf_kpss.c:306
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"%s için Dickey-Fuller sınaması\n"
+msgstr "%s için Dickey-Fuller (GEK) sınaması\n"
 
 #: lib/src/adf_kpss.c:308
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"%s için Dickey-Fuller sınaması\n"
+msgstr "%s için Dickey-Fuller sınaması\n"
 
 #: lib/src/adf_kpss.c:312
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"%s için Genişletmeli Dickey-Fuller sınaması\n"
+msgstr "%s için Genişletmeli Dickey-Fuller (GEK) sınaması\n"
 
 #: lib/src/adf_kpss.c:314
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"%s için Genişletmeli Dickey-Fuller sınaması\n"
+msgstr "%s için Genişletmeli Dickey-Fuller sınaması\n"
 
 #: lib/src/adf_kpss.c:317 plugin/panurc.c:577
 #, c-format
@@ -65,7 +57,7 @@ msgstr "(1-L)%2$s için %1$d gecikme eklendi"
 #: lib/src/adf_kpss.c:323
 #, c-format
 msgid "(max was %d)"
-msgstr ""
+msgstr "(ençok %d idi)"
 
 #: lib/src/adf_kpss.c:364 gui2/library.c:967 gui2/selector.c:5299
 #: plugin/panurc.c:233
@@ -2575,9 +2567,9 @@ msgid "%s versus %s (with quadratic fit)"
 msgstr "%s ve %s (kareli yakıştırma ile)"
 
 #: lib/src/graphing.c:1507 gui2/gpt_dialog.c:556
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with cubic fit)"
-msgstr "%s ve %s (kareli yakıştırma ile)"
+msgstr "%s ve %s (küplü yakıştırma ile)"
 
 #: lib/src/graphing.c:1513
 #, c-format
@@ -2667,9 +2659,9 @@ msgid "forecast"
 msgstr "yordama"
 
 #: lib/src/graphing.c:4221
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% interval for mean"
-msgstr "(%%%g aralığı)"
+msgstr "ortalama için %g%% aralığı"
 
 #: lib/src/graphing.c:4326
 #, c-format
@@ -2725,9 +2717,9 @@ msgid "%g and %g quantiles"
 msgstr "%g ve %g bölütleri"
 
 #: lib/src/graphing.c:5006
-#, fuzzy, c-format
+#, c-format
 msgid "forecast variance decomposition for %s"
-msgstr "Yordama varyans ayrıştırması"
+msgstr "%s için yordama varyans ayrıştırması"
 
 #: lib/src/graphing.c:5203
 msgid "VAR residuals"
@@ -8746,19 +8738,16 @@ msgid "shaded area"
 msgstr "taralı alan"
 
 #: gui2/dialogs.c:2604
-#, fuzzy
 msgid "Show interval for"
-msgstr "(%%%g aralığı)"
+msgstr "Aralık gösterilecek olan:"
 
 #: gui2/dialogs.c:2607
-#, fuzzy
 msgid "actual Y"
-msgstr "asıl"
+msgstr "asıl Y"
 
 #: gui2/dialogs.c:2608
-#, fuzzy
 msgid "mean Y"
-msgstr "ortalama"
+msgstr "ortalama Y"
 
 #: gui2/dialogs.c:2644
 msgid "Produce forecast for"
@@ -9652,9 +9641,8 @@ msgstr ""
 "Şimdi bir işlev yazmak istiyor musunuz?"
 
 #: gui2/gpt_control.c:291
-#, fuzzy
 msgid " Click to set position"
-msgstr "Etiket konumunu saptamak için tıklayınız"
+msgstr " Konum saptamak için tıklayınız"
 
 #: gui2/gpt_control.c:1205
 msgid "Gnuplot error creating graph"
@@ -9800,12 +9788,11 @@ msgstr "doğrusal: y = a + b*x"
 
 #: gui2/gpt_dialog.c:129
 msgid "quadratic: y = a + b*x + c*x^2"
-msgstr "ikinci dereceden: y = a + b*x + c*x^2"
+msgstr "kareli: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:130
-#, fuzzy
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
-msgstr "ikinci dereceden: y = a + b*x + c*x^2"
+msgstr "küplü: y = a + b*x + c*x^2 + d*x^3"
 
 #: gui2/gpt_dialog.c:131
 msgid "inverse: y = a + b*(1/x)"
@@ -9824,9 +9811,8 @@ msgid "Select color"
 msgstr "Renk seçiniz"
 
 #: gui2/gpt_dialog.c:667 gui2/gpt_dialog.c:706
-#, fuzzy
 msgid "Invalid position, must be X Y"
-msgstr "Geçersiz etiket konumu, X Y olmalıdır"
+msgstr "Geçersiz konum, X Y olmalı"
 
 #: gui2/gpt_dialog.c:1170 gui2/gpt_dialog.c:1205 gui2/gpt_dialog.c:1903
 #: gui2/graphics.c:432
@@ -9995,25 +9981,23 @@ msgstr "Ekle..."
 
 #: gui2/gpt_dialog.c:3009
 msgid "Arrows"
-msgstr ""
+msgstr "Oklar"
 
 #: gui2/gpt_dialog.c:3040
 msgid "from (X Y)"
-msgstr ""
+msgstr "(X Y)'den"
 
 #: gui2/gpt_dialog.c:3042
-#, fuzzy
 msgid "to (X Y)"
-msgstr "konum (X Y)"
+msgstr "(X Y)'ye"
 
 #: gui2/gpt_dialog.c:3077
 msgid "arrow has head"
-msgstr ""
+msgstr "ok başlığı var"
 
 #: gui2/gpt_dialog.c:3086
-#, fuzzy
 msgid "line is dotted"
-msgstr "çizgi genişliği"
+msgstr "noktalı çizgi"
 
 #: gui2/gpt_dialog.c:3124
 msgid "X-axis"
@@ -13360,14 +13344,12 @@ msgid "lags..."
 msgstr "Gecikmeler..."
 
 #: gui2/selector.c:4081
-#, fuzzy
 msgid "left bound"
-msgstr "alt sınır"
+msgstr "soldan bağlı"
 
 #: gui2/selector.c:4082
-#, fuzzy
 msgid "right bound"
-msgstr "sağ üst"
+msgstr "sağdan bağlı"
 
 #: gui2/selector.c:4361
 msgid "GARCH p:"
@@ -15162,7 +15144,7 @@ msgstr "Dıştürel bağlayan(lar)"
 #: plugin/johansen.c:1541
 #, c-format
 msgid "Cointegration tests conditional on %d I(1) variable(s)"
-msgstr ""
+msgstr "Eştümleşme sınamaları, %d I(1) değişken(ler) koşullu"
 
 #: plugin/johansen.c:1543 plugin/johansen.c:1546
 msgid "Eigenvalue"
@@ -15177,17 +15159,15 @@ msgid "Lmax test"
 msgstr "Lmax sınaması"
 
 #: plugin/johansen.c:1581
-#, fuzzy
 msgid "Corrected for sample size"
-msgstr "Tekbiçim örneklem büyüklüğü sağla"
+msgstr "Örneklem büyüklüğüne göre düzeltmeli"
 
 #: plugin/johansen.c:1599
-#, fuzzy
 msgid ""
 "Warning: the p-values shown are for the case of\n"
 "a restricted trend"
 msgstr ""
-"Uyarı: Gösterilen kritik değerler sınırlamalı eğilim\n"
+"Uyarı: Gösterilen p-değerleri sınırlamalı eğilim\n"
 "seçeneği içindir."
 
 #: plugin/johansen.c:1603
