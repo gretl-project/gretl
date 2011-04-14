@@ -6262,7 +6262,7 @@ static void do_panel_plot (int varnum)
 	handled = 1;
     } else {
 	/* single boxplot */
-	do_boxplot_var(varnum, OPT_NONE);
+	do_boxplot_var(varnum, OPT_S);
 	handled = 1;
     }
 
@@ -6311,11 +6311,12 @@ void do_boxplot_var (int varnum, gretlopt opt)
 	return;
     }
 
-#if 1
-    if (multi_unit_panel_sample(datainfo)) {
+    if (opt & OPT_S) {
+	/* enforces a single plot */
+	opt = OPT_NONE;
+    } else if (multi_unit_panel_sample(datainfo)) {
 	opt = OPT_P;
     }
-#endif
 
     err = boxplots(libcmd.list, (const double **) Z, datainfo, opt);
 

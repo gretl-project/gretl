@@ -294,11 +294,6 @@ static int dwiz_make_changes (DATAINFO *dwinfo, dw_opts *opts,
 	    /* recording? */
 	    goto finalize;
 	} else {
-	    /* FIXME we can get here even though dwinfo->pd should
-	       differ from datainfo->pd */
-	    fprintf(stderr, "dwinfo->pd = %d, datainfo->pd = %d\n",
-		    dwinfo->pd, datainfo->pd);
-	    fprintf(stderr, "n (t1) = %d, T (t2) = %d\n", dwinfo->t1, dwinfo->t2);
 	    infobox(_("No changes were made"));
 	    return 0;
 	}
