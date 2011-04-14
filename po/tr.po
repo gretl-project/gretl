@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-13 08:52-0400\n"
-"PO-Revision-Date: 2011-04-14 10:47+0300\n"
+"PO-Revision-Date: 2011-04-14 11:03+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -9867,11 +9867,11 @@ msgstr "Ana"
 
 #: gui2/gpt_dialog.c:1744
 msgid "key position"
-msgstr "anahtarın konumu"
+msgstr "Anahtar konumu"
 
 #: gui2/gpt_dialog.c:1770
 msgid "fitted line"
-msgstr "yakıştırılan çizgi"
+msgstr "Yakıştırılan çizgi"
 
 #: gui2/gpt_dialog.c:1806
 msgid "Use only one y axis"
@@ -9985,15 +9985,15 @@ msgstr "Oklar"
 
 #: gui2/gpt_dialog.c:3040
 msgid "from (X Y)"
-msgstr "(X Y)'den"
+msgstr "(X Y) başlama"
 
 #: gui2/gpt_dialog.c:3042
 msgid "to (X Y)"
-msgstr "(X Y)'ye"
+msgstr "(X Y) bitiş"
 
 #: gui2/gpt_dialog.c:3077
 msgid "arrow has head"
-msgstr "ok başlığı var"
+msgstr "ok başı"
 
 #: gui2/gpt_dialog.c:3086
 msgid "line is dotted"
@@ -10036,7 +10036,7 @@ msgid ""
 "These colors will be used unless overridden\n"
 "by graph-specific choices\n"
 msgstr ""
-"Çizite-özel seçimlerce geçersiz kılınmadıkça\n"
+"Çizite özel seçimlerce geçersiz kılınmadıkça\n"
 "aşağıdaki renkler kullanılacaktır\n"
 
 #: gui2/gpt_dialog.c:3575
