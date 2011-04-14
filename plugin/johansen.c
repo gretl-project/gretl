@@ -1565,7 +1565,7 @@ compute_coint_test (GRETL_VAR *jvar, const DATAINFO *pdinfo,
     /* make sure the df is calculated */
     vecm_set_df(jvar, NULL, NULL);
 
-    if (partial) {
+    if (partial || nexo > 0) {
 	pputc(prn, '\n');
 	pputs(prn, _("Cointegration tests, ignoring exogenous variables"));
     }
