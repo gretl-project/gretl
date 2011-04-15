@@ -28,7 +28,7 @@
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
 
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 # include <omp.h>
 #endif
 
@@ -3689,7 +3689,7 @@ gretl_blas_dsyrk (const gretl_matrix *a, int atr,
     dsyrk_(&uplo, &tr, &n, &k, &alpha, a->val, &lda,
 	   &beta, c->val, &n);
 
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if(n*n>OPENP_MIN) private(i, j, x)
 #endif
     for (i=0; i<n; i++) {
@@ -3747,7 +3747,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
     }
 
     if (atr) {
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if (nc*nc>OPENP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
@@ -3762,7 +3762,7 @@ matrix_multiply_self_transpose (const gretl_matrix *a, int atr,
 	    }
 	} 
     } else {
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if (nc*nc>OPENP_MIN) private(i, j, k, idx1, idx2, x)
 #endif
 	for (i=0; i<nc; i++) {
@@ -3910,7 +3910,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     if (!btr) {
 	if (!atr) {
 	    /* C := alpha*A*B + beta*C */
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x) 
 #endif
 	    for (j=0; j<n; j++) {
@@ -3930,7 +3930,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	    }
 	} else {
 	    /* C := alpha*A'*B + beta*C */
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
@@ -3950,7 +3950,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
     } else {
 	if (!atr) {
 	    /* C := alpha*A*B' + beta*C */
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {
@@ -3970,7 +3970,7 @@ static void gretl_dgemm (const gretl_matrix *a, int atr,
 	    }
 	} else {
 	    /* C := alpha*A'*B' + beta*C */
-#ifdef _OPENMP
+#if defined(_OPENMP) && defined(USE_OPENMP)
 #pragma omp parallel for if (m*n>OPENP_MIN) private(j, i, l, x)
 #endif
 	    for (j=0; j<n; j++) {

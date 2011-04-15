@@ -1610,7 +1610,7 @@ int gretl_delete_var_by_name (const char *s, PRN *prn)
    otherwise fall back on clock()
 */ 
 
-#if defined(_OPENMP)
+#if defined(_OPENMP) && defined(USE_OPENMP)
 
 #include <omp.h>
 
