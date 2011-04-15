@@ -292,6 +292,31 @@ gchar *gp_locale_from_utf8 (const gchar *src)
     return ret;
 }
 
+static int maybe_adjust_cairo (char *line)
+{
+    char *s = line + 12;
+    int ret = 0;
+
+    if (!strncmp(s, "cairo", 5)) {
+	if (gnuplot_png_terminal() != GP_PNG_CAIRO) {
+	    /* drop back to non-cairo PNG term */
+	    shift_string_left(s + 5, 5);
+	    ret = 1;
+	}
+    } else if (gnuplot_png_terminal() == GP_PNG_CAIRO &&
+	       strlen(line) < 512 - 5) {
+	/* substitute the preferred cairo PNG term */
+	char tmp[512];
+
+	strcpy(tmp, "set term pngcairo");
+	strcat(tmp, s);
+	strcpy(line, tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
 /* Backward compatibility for gnuplot command files as saved in
    sessions: if the file is non-ascii and non-UTF-8, convert to UTF-8,
    since we have now (2008-01) standardized on UTF-8 as the encoding
@@ -336,7 +361,12 @@ int maybe_rewrite_gp_file (const char *fname)
 	} else if (!strncmp(line, "# set term", 10)) {
 	    /* skip it */
 	    modline = 1;
-	} 
+	} else if (!strncmp(line, "set term png", 12)) {
+	    if (maybe_adjust_cairo(line)) {
+		fputs(line, fout);
+		modline = 1;
+	    }
+	}
 
 	if (!modline && !g_utf8_validate(line, -1, NULL)) {
 	    trbuf = gp_locale_to_utf8(line, !recoded);

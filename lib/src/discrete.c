@@ -638,13 +638,12 @@ static int oprobit_normtest (MODEL *pmod, op_container *OC)
     int nx = OC->nx;
     int M = OC->ymax;
     double *theta = OC->theta;
-
     int t, s, i, yt, err = 0;
     gretl_matrix *CMtestmat;
     gretl_matrix *y;
     gretl_matrix *beta;
-
-    double m0, m1, a, b, u, v, a2v, b2u;
+    double m0, m1, u, v, a2v, b2u;
+    double a = 0, b = 0;
     double e3, e4;
 
     CMtestmat = gretl_matrix_alloc(nobs, k+2);

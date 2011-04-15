@@ -1177,7 +1177,7 @@ static int add_remote_db_series_list (windata_t *vwin, char *buf)
     GtkTreeIter iter;  
     gchar *row[3];
     char sername[VNAMELEN];
-    char line1[150], line2[150];
+    char line1[256], line2[256];
     int offset = 0;
     int n, err = 0;
 
