@@ -631,6 +631,102 @@ static void op_LR_test (MODEL *pmod, op_container *OC,
     OC->k += nx;
 }
 
+static int oprobit_normtest (MODEL *pmod, op_container *OC)
+{
+    int nobs = OC->nobs;
+    int k = OC->k;
+    int nx = OC->nx;
+    int M = OC->ymax;
+    double *theta = OC->theta;
+
+    int t, s, i, yt, err = 0;
+    gretl_matrix *CMtestmat;
+    gretl_matrix *y;
+    gretl_matrix *beta;
+
+    double m0, m1, a, b, u, v, a2v, b2u;
+    double e3, e4;
+
+    CMtestmat = gretl_matrix_alloc(nobs, k+2);
+    y = gretl_unit_matrix_new(nobs, 1);
+    beta = gretl_matrix_alloc(k+2, 1);
+
+    if (CMtestmat == NULL || y == NULL || beta == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    s = 0;
+    for (t=OC->pmod->t1; t<=OC->pmod->t2; t++) {
+	if (na(OC->pmod->uhat[t])) {
+	    continue;
+	}
+
+	yt = OC->y[s];
+
+	if (yt == 0) {
+	    m0 = theta[nx];
+	    b = OC->ndx[s] + m0;
+	} else {
+	    m0 = theta[nx + yt - 1];
+	    a = OC->ndx[s] + m0;
+	    if (yt < M) {
+		m1 = theta[nx + yt];
+		b = OC->ndx[s] + m1;
+	    }
+	} 
+
+	if (yt == 0) {
+	    u = OC->G[nx][s];
+	    b2u = b*b*u;
+	    v = a2v = 0;
+	} else {
+	    v = -OC->G[nx + yt - 1][s];
+	    a2v = a*a*v;
+	    if (yt < M) {
+		u = OC->G[nx + yt][s];
+		b2u = b*b*u;
+	    } else {
+		b2u = u = 0;
+	    }
+	} 
+
+	for (i=0; i<k; i++) {
+	    gretl_matrix_set(CMtestmat, s, i, OC->G[i][s]);
+	}
+
+	e3 = 2*(v-u) + (a2v - b2u);
+	e4 = 3*(a*v-b*u) + (a*a2v - b*b2u);
+
+	gretl_matrix_set(CMtestmat, s, k, e3);
+	gretl_matrix_set(CMtestmat, s, k+1, e4);
+
+	s++;
+    }
+
+    err = gretl_matrix_ols(y, CMtestmat, beta, NULL, NULL, NULL);
+
+    if (!err) {
+	double X2 = nobs;
+
+	gretl_matrix_multiply(CMtestmat, beta, y);
+	for (t=0; t<y->rows; t++) {
+	    X2 -= (1 - y->val[t]) * (1 - y->val[t]);
+	}
+
+	gretl_model_add_normality_test(pmod, X2);
+    }
+
+
+ bailout:
+
+    gretl_matrix_free(CMtestmat);
+    gretl_matrix_free(y);
+    gretl_matrix_free(beta);
+
+    return err;
+}
+
 static void fill_op_model (MODEL *pmod, const int *list,
 			   const double **Z, const DATAINFO *pdinfo, 
 			   op_container *OC, gretl_matrix *V, 
@@ -670,6 +766,10 @@ static void fill_op_model (MODEL *pmod, const int *list,
     if (OC->opt & OPT_R) {
 	gretl_model_set_vcv_info(pmod, VCV_ML, VCV_QML);
 	pmod->opt |= OPT_R;
+    }
+
+    if (OC->ci == PROBIT) {
+	oprobit_normtest(pmod, OC);
     }
 
     s = 0;
@@ -726,6 +826,7 @@ static void fill_op_model (MODEL *pmod, const int *list,
 	op_LR_test(pmod, OC, Z);
 	gretl_model_set_coeff_separator(pmod, NULL, nx);
     }
+
 }
 
 static gretl_matrix *oprobit_vcv (op_container *OC, int *err)
