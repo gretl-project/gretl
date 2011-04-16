@@ -2158,8 +2158,8 @@ binary_logit_probit (const int *inlist, double **Z, DATAINFO *pdinfo,
 
     if (!dmod.errcode) {
 	dmod = lsq(list, Z, pdinfo, OLS, OPT_A);
-	if (dmod.errcode == 0 && dmod.ncoeff != nx) {
-	    dmod.errcode = E_DATA;
+	if (dmod.errcode == 0 && dmod.ncoeff < nx) {
+	    dmod.errcode = E_SINGULAR;
 	}
     }
 
