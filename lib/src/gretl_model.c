@@ -2895,6 +2895,28 @@ int maybe_add_test_to_model (MODEL *pmod, ModelTest *test)
     return add;
 }
 
+int gretl_model_get_normality_test (const MODEL *pmod, PRN *prn)
+{
+    ModelTest *test = NULL;
+    int i, err = 0;
+
+    for (i=0; i<pmod->ntests; i++) {
+	if (pmod->tests[i].type == GRETL_TEST_NORMAL) {
+	    test = &pmod->tests[i];
+	    break;
+	}
+    } 
+
+    if (test == NULL) {
+	err = E_BADSTAT;
+    } else {
+	record_test_result(test->value, test->pvalue, "Normality");
+	gretl_model_test_print(pmod, i, prn);
+    }
+
+    return err;
+}
+
 void model_test_set_teststat (ModelTest *test, unsigned char ts)
 {
     test->teststat = ts;
@@ -4569,9 +4591,7 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	    ok = (mci == AR1);
 	} else if (opt & OPT_N) {
 	    /* normality */
-	    if (mci == TOBIT || mci == PROBIT ||
-		mci == LOGIT || mci == INTREG ||
-		mci == HECKIT || mci == DURATION) {
+	    if (mci == LOGIT || mci == HECKIT || mci == DURATION) {
 		/* POISSON, NEGBIN? */
 		ok = 0;
 	    }	    

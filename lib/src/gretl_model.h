@@ -140,7 +140,8 @@ struct VCVInfo_ {
 
 #define LIMDEP(c) (c == LOGIT || \
                    c == PROBIT || \
-                   c == TOBIT)
+                   c == TOBIT || \
+                   c == INTREG)
 
 #define COUNT_MODEL(c) (c == POISSON || c == NEGBIN)
 
@@ -425,6 +426,8 @@ void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames);
 int gretl_model_add_y_median (MODEL *pmod, const double *y);
 
 int gretl_model_add_normality_test (MODEL *pmod, double X2);
+
+int gretl_model_get_normality_test (const MODEL *pmod, PRN *prn);
 
 char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				      const double **Z,

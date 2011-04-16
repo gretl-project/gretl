@@ -1510,11 +1510,7 @@ int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (type == GRETL_OBJ_EQN) {
-	MODEL *pmod = ptr;
-
-	if (!exact_fit_check(pmod, prn)) {
-	    err = model_error_dist(ptr, pZ, pdinfo, opt, prn);
-	}
+	err = model_error_dist(ptr, pZ, pdinfo, opt, prn);
     } else if (type == GRETL_OBJ_SYS) {
 	err = system_normality_test(ptr, prn);
     } else if (type == GRETL_OBJ_VAR) {
