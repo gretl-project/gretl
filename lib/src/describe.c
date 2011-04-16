@@ -2410,7 +2410,6 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 	return E_DATA;
     }
 
-#if 1
     err = gretl_model_get_normality_test(pmod, prn);
     if (!err) {
 	return 0;
@@ -2419,7 +2418,6 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
     } else {
 	err = 0;
     }
-#endif
 
     if (exact_fit_check(pmod, prn)) {
 	return 0;

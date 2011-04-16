@@ -1944,7 +1944,6 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 		     DATAINFO *pdinfo, PRN *prn)
 {
     MODEL femod;
-    // gretlopt lsqopt = OPT_A | OPT_Z | OPT_X;
     gretlopt lsqopt = OPT_A | OPT_X;
     double **wZ = NULL;
     DATAINFO *winfo = NULL;
@@ -1976,13 +1975,16 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	felist[i] = i - 1;
     }
 
+    if (pan->opt & OPT_F) {
+	/* suppress auto-removal of collinear terms */
+	lsqopt |= OPT_Z;
+    }
+
     femod = lsq(felist, wZ, winfo, OLS, lsqopt);
 
     if (femod.errcode) {
 	fprintf(stderr, "femod.errcode = %d\n", femod.errcode);
-    } else if (0 && femod.list[0] < felist[0]) {
-	/* one or more variables were dropped, because they were
-	   all zero -- this is a symptom of collinearity */
+    } else if ((pan->opt & OPT_F) && femod.list[0] < felist[0]) {
 	femod.errcode = E_SINGULAR;
     } else {
 	/* we estimated a bunch of group means, and have to
