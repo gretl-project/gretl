@@ -1151,9 +1151,9 @@ ces4000000017  Indexes of Aggregate Weekly Payrolls of All Employees: Trade, Tra
 M  2006.03 - 2011.03  n = 61
 ces4000000030  Average Weekly Earnings of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, $ per Week, SA
 M  1964.01 - 2011.03  n = 567
-ces4000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, Index 2002=100, SA
+ces4000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, 2002=100, SA
 M  1964.01 - 2011.03  n = 567
-ces4000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, Index 2002=100, SA
+ces4000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, 2002=100, SA
 M  1964.01 - 2011.03  n = 567
 ces4000000039  Women Employees-To-All Employees Ratio: Trade, Transportation, and Utilities, %, SA
 M  1964.01 - 2011.03  n = 567
@@ -1179,9 +1179,9 @@ ceu4000000017  Indexes of Aggregate Weekly Payrolls of All Employees: Trade, Tra
 M  2006.03 - 2011.03  n = 61
 ceu4000000030  Average Weekly Earnings of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, $ per Week, NSA
 M  1964.01 - 2011.03  n = 567
-ceu4000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, Index 2002=100, NSA
+ceu4000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, 2002=100, NSA
 M  1964.01 - 2011.03  n = 567
-ceu4000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, Index 2002=100, NSA
+ceu4000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Trade, Transportation, and Utilities, 2002=100, NSA
 M  1964.01 - 2011.03  n = 567
 ustpu  All Employees: Trade, Transportation & Utilities, Thous., SA
 M  1939.01 - 2011.03  n = 867
@@ -1709,9 +1709,9 @@ ces6000000017  Indexes of Aggregate Weekly Payrolls of All Employees: Profession
 M  2006.03 - 2011.03  n = 61
 ces6000000030  Average Weekly Earnings of Production and Nonsupervisory Employees: Professional and Business Services, $ per Week, SA
 M  1964.01 - 2011.03  n = 567
-ces6000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Professional and Business Services, Index 2002=100, SA
+ces6000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Professional and Business Services, 2002=100, SA
 M  1964.01 - 2011.03  n = 567
-ces6000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Professional and Business Services, Index 2002=100, SA
+ces6000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Professional and Business Services, 2002=100, SA
 M  1964.01 - 2011.03  n = 567
 ces6000000039  Women Employees-To-All Employees Ratio: Professional and Business Services, %, SA
 M  1964.01 - 2011.03  n = 567
@@ -1763,9 +1763,9 @@ ceu6000000017  Indexes of Aggregate Weekly Payrolls of All Employees: Profession
 M  2006.03 - 2011.03  n = 61
 ceu6000000030  Average Weekly Earnings of Production and Nonsupervisory Employees: Professional and Business Services, $ per Week, NSA
 M  1964.01 - 2011.03  n = 567
-ceu6000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Professional and Business Services, Index 2002=100, NSA
+ceu6000000034  Indexes of Aggregate Weekly Hours of Production and Nonsupervisory Employees: Professional and Business Services, 2002=100, NSA
 M  1964.01 - 2011.03  n = 567
-ceu6000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Professional and Business Services, Index 2002=100, NSA
+ceu6000000035  Indexes of Aggregate Weekly Payrolls of Production and Nonsupervisory Employees: Professional and Business Services, 2002=100, NSA
 M  1964.01 - 2011.03  n = 567
 ceu6054000001  All Employees: Professional and Business Services: Professional and Technical Services, Thous., NSA
 M  1990.01 - 2011.03  n = 255
