@@ -8290,8 +8290,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (k == -1) return 1;  /* action was faulty */
     }
 
-    /* if we're stacking commands for a loop, parse "lightly" */
     if (gretl_compiling_loop()) { 
+	/* when stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, cmd);
     } else {
 	err = parse_command_line(line, cmd, pZ, pdinfo);
@@ -8303,7 +8303,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (err) {
 	int catch = 0;
-
+	
 	gretl_exec_state_uncomment(s);
 	if (err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
 	    set_gretl_errno(err);
@@ -8513,6 +8513,10 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
   	    print_smpl(pdinfo, get_full_length_n(), prn);
 	    set_sample_label(pdinfo);
   	}
+	if (err && err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
+	    set_gretl_errno(err);
+	    err = 0;
+	}
   	break;
 
     case CLEAR:

@@ -1085,7 +1085,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (err) {
 	gretl_exec_state_uncomment(s);
     }
-
+    
     return err;
 }
 
