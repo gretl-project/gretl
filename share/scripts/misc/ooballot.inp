@@ -22,6 +22,10 @@ ols Vote 0 CPI
 # on an interval scale: so try ordered probit
 probit Vote 0 CPI
 
+# Normality is strongly rejected so use QML standard errors:
+# CPI is still strongly significant
+probit Vote 0 CPI --robust
+
 # Compare the rank-sum test given on effi.org, using
 # all non-abstaining countries for which CPI is available
 smpl --full
