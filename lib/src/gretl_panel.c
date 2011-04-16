@@ -1944,7 +1944,8 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 		     DATAINFO *pdinfo, PRN *prn)
 {
     MODEL femod;
-    gretlopt lsqopt = OPT_A | OPT_Z | OPT_X;
+    // gretlopt lsqopt = OPT_A | OPT_Z | OPT_X;
+    gretlopt lsqopt = OPT_A | OPT_X;
     double **wZ = NULL;
     DATAINFO *winfo = NULL;
     int *felist = NULL;
@@ -1979,7 +1980,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 
     if (femod.errcode) {
 	fprintf(stderr, "femod.errcode = %d\n", femod.errcode);
-    } else if (femod.list[0] < felist[0]) {
+    } else if (0 && femod.list[0] < felist[0]) {
 	/* one or more variables were dropped, because they were
 	   all zero -- this is a symptom of collinearity */
 	femod.errcode = E_SINGULAR;
