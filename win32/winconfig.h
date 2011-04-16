@@ -11,6 +11,9 @@
 /* disable SFMT RNG? */
 /* #undef NO_SFMT */
 
+/* openmp: not for now */
+/* #undef USE_OPENMP */
+
 /* sse2: assume this is OK */
 #define USE_SSE2 1
 

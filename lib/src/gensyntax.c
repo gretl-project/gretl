@@ -305,6 +305,12 @@ static NODE *base (parser *p, NODE *up)
 	return NULL;
     }
 
+    if (p->sym == NUM && isalpha(p->ch)) {
+	/* catch things like "4x" */
+	p->err = E_PARSE;
+	return NULL;
+    }
+
 #if SDEBUG
     fprintf(stderr, "base(): on input sym = %d ('%s'), ch = '%c'\n", 
 	    p->sym, getsymb(p->sym, p), p->ch? p->ch : '0');

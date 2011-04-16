@@ -1425,8 +1425,12 @@ void lex (parser *p)
 	    }
 	    if (bare_data_type(p->sym) || closing_sym(p->sym) ||
 		(p->targ == LIST && p->sym == LAG)) {
-		p->sym = B_LCAT;
-		return;
+		if (*(p->point - 2) == ' ') {
+		    /* may be forming a list, but only if there are 
+		       spaces between the terms */
+		    p->sym = B_LCAT;
+		    return;
+		}
 	    }
 	    if (isdigit(p->ch) || (p->ch == '.' && isdigit(*p->point))) {
 		p->xval = getdbl(p);
