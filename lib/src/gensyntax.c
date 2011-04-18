@@ -30,8 +30,6 @@
 # define MDEBUG 0
 #endif
 
-#define set_transpose(n) (n->flags |= TRANSP_NODE)
-
 static NODE *powterm (parser *p);
 
 #if SDEBUG
@@ -42,7 +40,7 @@ static void notify (const char *s, NODE *t, parser *p)
 }
 #endif
 
-static NODE *newempty (int t)
+static NODE *newempty (void)
 {  
     NODE *n = malloc(sizeof *n);
 
@@ -51,7 +49,7 @@ static NODE *newempty (int t)
 #endif
 
     if (n != NULL) {
-	n->t = t;
+	n->t = EMPTY;
 	n->v.idnum = 0;
 	n->flags = 0;
 	n->vnum = NO_VNUM;
@@ -280,23 +278,6 @@ static void unmatched_symbol_error (int c, parser *p)
 #define matrix_ref_node(p) (p->sym == UMAT || (p->sym == MVAR && \
                             model_data_matrix(p->idnum)))
 
-#define apost(p) (p->ch == '\'')
-
-/* try to recognize a unary apostrophe, indicating that 
-   we're taking the transpose of the preceding matrix 
-*/
-
-static int apost_is_unary (parser *p) 
-{
-    /* peek ahead */
-    int c = parser_next_nonspace_char(p);
-    
-    /* if the next symbol is a variable or expression the
-       apostrophe must be the binary operator, B_TRMUL
-    */  
-    return !(isalpha(c) || c == '$' || c == '(');
-} 
-
 static NODE *base (parser *p, NODE *up)
 { 
     NODE *t = NULL;
@@ -304,14 +285,6 @@ static NODE *base (parser *p, NODE *up)
     if (p->err) {
 	return NULL;
     }
-
-#if 1 /* should be redundant? */
-    if (p->sym == NUM && isalpha(p->ch)) {
-	/* catch things like "4x" */
-	p->err = E_PARSE;
-	return NULL;
-    }
-#endif
 
 #if SDEBUG
     fprintf(stderr, "base(): on input sym = %d ('%s'), ch = '%c'\n", 
@@ -334,24 +307,16 @@ static NODE *base (parser *p, NODE *up)
     case LIST:
     case BUNDLE:
 	t = newref(p, p->sym);
-	if (matrix_ref_node(p) && apost(p) && apost_is_unary(p)) {
-	    set_transpose(t);
-	    parser_getc(p);
-	}
 	lex(p);
 	break;
     case DUM:
 	if (p->idnum == DUM_NULL) {
-	    t = newempty(EMPTY);
+	    t = newempty();
 	} else {
 	    t = newref(p, p->sym);
 	}
 	lex(p);
 	break;
-#if 0
-    case B_SUB:
-    case B_ADD:
-#endif
     case B_RANGE:
     case P_DOT:
 	lex(p);
@@ -361,11 +326,6 @@ static NODE *base (parser *p, NODE *up)
 	lex(p);
 	t = expr(p);
 	if (p->sym == G_RPR) {
-	    if (up != NULL && up->t != LAG && 
-		apost(p) && apost_is_unary(p)) {
-		set_transpose(up);
-		parser_getc(p);
-	    } 
 	    lex(p);
 	} else if (p->err == 0) {
 	    expected_symbol_error(')', p);
@@ -379,12 +339,6 @@ static NODE *base (parser *p, NODE *up)
 	    t = obs_node(p);
 	}
 	if (p->sym == G_RBR) {
-	    if (up->t == MSL || up->t == DMSL) {
-		if (apost(p) && apost_is_unary(p)) {
-		    set_transpose(up);
-		    parser_getc(p);
-		}
-	    }
 	    lex(p);
 	} else if (p->err == 0) {
 	    expected_symbol_error(']', p);
@@ -396,11 +350,15 @@ static NODE *base (parser *p, NODE *up)
 	break;
     }
 
-#if 0 /* check this more and probably use it */
-    if (p->err == 0 && p->sym != EOT && !binary_op(p->sym)) {
+    if (p->err == 0 && p->sym != EOT && p->sym != QUERY &&
+	!(p->sym > U_MAX && p->sym < PUNCT_MAX)) {
+	/* catch high-level syntax errors: a "base" is followed
+	   by something that cannot really follow, e.g. a series
+	   is followed by another series
+	*/
+	fprintf(stderr, "gensytax: base: bad exit sym = %d\n", p->sym);
 	p->err = E_PARSE;
     }
-#endif
 
 #if SDEBUG
     notify("base", t, p);
@@ -778,14 +736,11 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 	    if (p->sym == P_COM) {
 		lex(p);
 	    } else if (p->sym == P_SEMI) {
-		n = newempty(EMPTY);
+		n = newempty();
 		p->err = push_bn_node(t, n);
 		lex(p);
 	    } else if (p->sym == G_RCB) {
-		if (apost(p) && apost_is_unary(p)) {
-		    set_transpose(t);
-		    parser_getc(p);
-		} else if (p->ch == '[') {
+		if (p->ch == '[') {
 		    parser_ungetc(p);
 		    *sub = 1;
 		}
@@ -823,7 +778,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	lex(p);
 	if (p->sym == P_COM) {
 	    /* empty row spec, OK */
-	    t->v.b2.l = newempty(EMPTY);
+	    t->v.b2.l = newempty();
 	} else {
 	    t->v.b2.l = expr(p);
 	}
@@ -833,14 +788,15 @@ static void get_slice_parts (NODE *t, parser *p)
 	    lex(p);
 	    if (p->sym == P_COM || p->sym == G_RBR) {
 		/* reached end: second part implicitly empty */
-		t->v.b2.l->v.b2.r = newempty(EMPTY);
+		t->v.b2.l->v.b2.r = newempty();
 	    } else {
 		t->v.b2.l->v.b2.r = expr(p);
 	    }
 	}
 	if (p->sym == G_RBR) {
 	    /* no comma, no second arg string: may be OK */
-	    t->v.b2.r = newempty(ABSENT);
+	    t->v.b2.r = newempty();
+	    t->v.b2.r->t = ABSENT;
 	    lex(p);
 	    set_matrix_slice_off();
 	    return;
@@ -849,7 +805,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    lex(p);
 	    if (p->sym == G_RBR) {
 		/* empty column spec, OK */
-		t->v.b2.r = newempty(EMPTY);
+		t->v.b2.r = newempty();
 	    } else {
 		t->v.b2.r = expr(p);
 	    }
@@ -859,16 +815,12 @@ static void get_slice_parts (NODE *t, parser *p)
 		lex(p);
 		if (p->sym == G_RBR) {
 		    /* reached end: second part implicitly empty */
-		    t->v.b2.r->v.b2.r = newempty(EMPTY);
+		    t->v.b2.r->v.b2.r = newempty();
 		} else {
 		    t->v.b2.r->v.b2.r = expr(p);
 		}
 	    }
 	    if (p->sym == G_RBR) {
-		if (apost(p) && apost_is_unary(p)) {
-		    set_transpose(t);
-		    parser_getc(p);
-		}
 		lex(p);
 	    } else {
 		cexp = ']';
@@ -926,7 +878,7 @@ static void pad_parent (NODE *parent, int k, int i, parser *p)
     int j;
 
     for (j=i; j<k; j++) {
-	n = newempty(EMPTY);
+	n = newempty();
 	attach_child(parent, n, k, j, p);
     }
 }
@@ -1002,11 +954,6 @@ static void get_args (NODE *t, parser *p, int f, int k, int opt, int *next)
 	    if (i < k) {
 		pad_parent(t, k, i, p);
 	    } 
-	    /* matrix functions: handle trailing transpose */
-	    if (apost(p) && apost_is_unary(p)) {
-		*next = p->ch;
-		parser_getc(p);
-	    }
 	    lex(p);
 	    if (p->sym == G_LBR) {
 		*next = '[';
@@ -1259,9 +1206,6 @@ static NODE *powterm (parser *p)
 		get_slice_parts(t->v.b2.r, p);
 	    }
 	}	
-    } else if (next == '\'') {
-	/* support func(args)' */
-	set_transpose(t);
     }
 
 #if SDEBUG
@@ -1298,6 +1242,18 @@ static void convert_pow_term (NODE *n)
 #define pow_sym(t)     (t == B_POW || t == B_DOTPOW)
 #define pow_pow_node(n) (pow_sym(n->t) && pow_sym(n->v.b2.l->t))
 
+/* Test for whether the ' symbol must represent the unary
+   transposition operator rather than binary transpose-multiply,
+   based on the following symbol.
+*/
+
+#define must_be_unary(t) (t == EOT || \
+                          t < OP_MAX || \
+			  t == P_COM || \
+                          t == G_RPR || \
+	                  t == G_RBR ||	\
+                          t == G_RCB)
+
 static NODE *factor (parser *p)
 {  
     int sym = p->sym == B_SUB ? U_NEG : 
@@ -1325,22 +1281,24 @@ static NODE *factor (parser *p)
     } else {
 	t = powterm(p);
 	if (t != NULL) {
-	    if (p->sym == B_TRMUL && p->ch == 0) {
-		/* can't really be TRMUL at end of input */
-		set_transpose(t);
-	    } else {
-		while (!p->err && (p->sym == B_POW || 
-				   p->sym == B_DOTPOW ||
-				   p->sym == B_TRMUL)) {
-		    t = newb2(p->sym, t, NULL);
-		    if (t != NULL) {
-			lex(p);
+	    int upsym = p->sym;
+
+	    while (!p->err && (p->sym == B_POW || 
+			       p->sym == B_DOTPOW ||
+			       p->sym == B_TRMUL)) {
+		t = newb2(p->sym, t, NULL);
+		if (t != NULL) {
+		    lex(p);
+		    if (upsym == B_TRMUL && must_be_unary(p->sym)) {
+			/* dummy RHS for unary transpose */
+			t->v.b2.r = newempty();
+		    } else {
 			t->v.b2.r = powterm(p);
 		    }
-		    if (!p->err && pow_pow_node(t)) {
-			/* make exponentiation associate rightward */
-			convert_pow_term(t);
-		    }
+		}
+		if (!p->err && pow_pow_node(t)) {
+		    /* make exponentiation associate rightward */
+		    convert_pow_term(t);
 		}
 	    }
 	}

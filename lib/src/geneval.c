@@ -1818,6 +1818,16 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 		ret->v.xval = xy_calc(m->val[0], x, op, MAT, p);
 	    }
 	    return ret;
+	} else if (op == B_TRMUL) {
+	    gretl_matrix *tmp = gretl_matrix_copy_transpose(m);
+
+	    if (tmp == NULL) {
+		p->err = E_ALLOC;
+	    } else {
+		gretl_matrix_multiply_by_scalar(tmp, x);
+		ret->v.m = tmp;
+	    }
+	    return ret;
 	}
 
 	if (comp) {
@@ -1857,6 +1867,32 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	} 
     } else {
 	ret = aux_any_node(p);
+    }
+
+    return ret;
+}
+
+static NODE *matrix_transpose_node (NODE *n, parser *p)
+{
+    NODE *ret = NULL;
+
+    if (starting(p)) {
+	if (is_tmp_node(n)) {
+	    /* transpose temp matrix in place */
+	    p->err = gretl_matrix_transpose_in_place(n->v.m);
+	    ret = n;
+	} else {
+	    /* create transpose as new matrix */
+	    ret = aux_matrix_node(p);
+	    if (!p->err) {
+		ret->v.m = gretl_matrix_copy_transpose(n->v.m);
+		if (ret->v.m == NULL) {
+		    p->err = E_ALLOC;
+		}
+	    }
+	}
+    } else {
+	ret = is_tmp_node(n) ? n : aux_matrix_node(p);
     }
 
     return ret;
@@ -2687,11 +2723,6 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 	    a = user_matrix_get_submatrix(l->v.str, r->v.mspec, &p->err);
 	} else {
 	    p->err = E_TYPES;
-	}
-
-	if (!p->err && r->flags & TRANSP_NODE) {
-	    p->err = gretl_matrix_transpose_in_place(a);
-	    r->flags &= ~TRANSP_NODE;
 	}
 
 	if (a != NULL) {
@@ -7270,11 +7301,6 @@ static gretl_matrix *submat_postprocess (gretl_matrix *M,
 
     gretl_matrix_free(M);
 
-    if (p->err == 0 && (n->flags & TRANSP_NODE)) {
-	p->err = gretl_matrix_transpose_in_place(S);
-	n->flags &= ~TRANSP_NODE;
-    }
-
     return S;
 }
 
@@ -7620,33 +7646,6 @@ static NODE *scalar_minmax (NODE *l, NODE *r, int t, parser *p)
     return ret;    
 }
 
-static void transpose_matrix_result (NODE *n, parser *p)
-{
-    if (n == NULL || p->err) {
-	return;
-    }
-
-#if EDEBUG
-    fprintf(stderr, "*** transpose_matrix_result: n = %p, n->t = %d\n", 
-	    (void *) n, n->t);
-#endif
-
-    if (n->t == MAT) {
-	gretl_matrix *m = n->v.m;
-
-	n->v.m = gretl_matrix_copy_transpose(m);
-	if (is_tmp_node(n)) {
-	    gretl_matrix_free(m);
-	}
-	n->flags |= TMP_NODE; 
-    } else if (n->t == MSPEC) {
-	/* will be handled downstream */
-	n->flags |= TRANSP_NODE;
-    } else {
-	p->err = E_TYPES;
-    }
-}
-
 static int series_calc_nodes (NODE *l, NODE *r)
 {
     int ret = 0;
@@ -7904,6 +7903,8 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_series_calc(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == NUM) {
 	    ret = matrix_scalar_calc(l, r, t->t, p);
+	} else if (l->t == MAT && r->t == EMPTY) {
+	    ret = matrix_transpose_node(l, p);
 	} else {
 	    p->err = E_TYPES; 
 	}
@@ -8705,10 +8706,6 @@ static NODE *eval (NODE *t, parser *p)
     }
 
  bailout:
-
-    if (t->flags & TRANSP_NODE) { /* "starting"? */
-	transpose_matrix_result(ret, p);
-    }
 
 #if EDEBUG
     fprintf(stderr, "eval (t->t = %03d): returning NODE at %p\n", 

@@ -471,8 +471,7 @@ union val {
 enum {
     AUX_NODE    = 1 << 0, /* auxiliary: free on exit */
     TMP_NODE    = 1 << 1, /* temporary: free content on exit */
-    TRANSP_NODE = 1 << 2, /* matrix node: should be transposed */
-    PTR_NODE    = 1 << 3  /* node is compatible with P_LHPTR */
+    PTR_NODE    = 1 << 2  /* node is compatible with P_LHPTR */
 };
 
 struct node {
