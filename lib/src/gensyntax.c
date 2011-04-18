@@ -305,11 +305,13 @@ static NODE *base (parser *p, NODE *up)
 	return NULL;
     }
 
+#if 1 /* should be redundant? */
     if (p->sym == NUM && isalpha(p->ch)) {
 	/* catch things like "4x" */
 	p->err = E_PARSE;
 	return NULL;
     }
+#endif
 
 #if SDEBUG
     fprintf(stderr, "base(): on input sym = %d ('%s'), ch = '%c'\n", 
@@ -346,8 +348,10 @@ static NODE *base (parser *p, NODE *up)
 	}
 	lex(p);
 	break;
+#if 0
     case B_SUB:
     case B_ADD:
+#endif
     case B_RANGE:
     case P_DOT:
 	lex(p);
@@ -392,8 +396,15 @@ static NODE *base (parser *p, NODE *up)
 	break;
     }
 
+#if 0 /* check this more and probably use it */
+    if (p->err == 0 && p->sym != EOT && !binary_op(p->sym)) {
+	p->err = E_PARSE;
+    }
+#endif
+
 #if SDEBUG
     notify("base", t, p);
+    fprintf(stderr, "on exit from base, p->sym = %d\n", p->sym);
 #endif    
 
     return t;
@@ -1293,6 +1304,10 @@ static NODE *factor (parser *p)
 	p->sym == B_ADD ? U_POS : p->sym;
     NODE *t;
 
+#if SDEBUG
+    fprintf(stderr, "factor: starting...\n");
+#endif
+
     if (p->err) {
 	return NULL;
     }
@@ -1342,6 +1357,10 @@ static NODE *term (parser *p)
 {  
     NODE *t;
 
+#if SDEBUG
+    fprintf(stderr, "term: starting...\n");
+#endif
+
     if (p->err || (t = factor(p)) == NULL) {
 	return NULL;
     }
@@ -1367,6 +1386,10 @@ static NODE *term (parser *p)
 static NODE *expr4 (parser *p)
 {  
     NODE *t;
+
+#if SDEBUG
+    fprintf(stderr, "expr4: starting...\n");
+#endif
 
     if (p->err || (t = term(p)) == NULL) {
 	return NULL;
@@ -1394,6 +1417,10 @@ static NODE *expr3 (parser *p)
 {  
     NODE *t;
 
+#if SDEBUG
+    fprintf(stderr, "expr3: starting...\n");
+#endif
+
     if (p->err || (t = expr4(p)) == NULL) {
 	return NULL;
     }
@@ -1419,6 +1446,10 @@ static NODE *expr2 (parser *p)
 {  
     NODE *t;
 
+#if SDEBUG
+    fprintf(stderr, "expr2: starting...\n");
+#endif
+
     if (p->err || (t = expr3(p)) == NULL) {
 	return NULL;
     }
@@ -1443,6 +1474,10 @@ static NODE *expr1 (parser *p)
 {  
     NODE *t;
 
+#if SDEBUG
+    fprintf(stderr, "expr1: starting...\n");
+#endif
+
     if (p->err || (t = expr2(p)) == NULL) {
 	return NULL;
     }
@@ -1462,9 +1497,13 @@ static NODE *expr1 (parser *p)
     return t;
 }
 
-NODE *expr0 (parser *p)
+static NODE *expr0 (parser *p)
 {  
     NODE *t;
+
+#if SDEBUG
+    fprintf(stderr, "expr0: starting...\n");
+#endif
 
     if (p->err || (t = expr1(p)) == NULL) {
 	return NULL;
@@ -1488,6 +1527,10 @@ NODE *expr0 (parser *p)
 NODE *expr (parser *p)
 {  
     NODE *t;
+
+#if SDEBUG
+    fprintf(stderr, "expr: starting...\n");
+#endif
 
     if (p->err || (t = expr0(p)) == NULL) {
 	return NULL;

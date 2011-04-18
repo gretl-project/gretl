@@ -1423,14 +1423,13 @@ void lex (parser *p)
 		parser_getc(p);
 		return;
 	    }
-	    if (bare_data_type(p->sym) || closing_sym(p->sym) ||
-		(p->targ == LIST && p->sym == LAG)) {
-		if (*(p->point - 2) == ' ') {
-		    /* may be forming a list, but only if there are 
-		       spaces between the terms */
-		    p->sym = B_LCAT;
-		    return;
-		}
+	    if (p->targ == LIST && *(p->point - 2) == ' ' && 
+		(bare_data_type(p->sym) || closing_sym(p->sym) ||
+		 (p->sym == LAG))) {
+		/* may be forming a list, but only if there are 
+		   spaces between the terms */
+		p->sym = B_LCAT;
+		return;
 	    }
 	    if (isdigit(p->ch) || (p->ch == '.' && isdigit(*p->point))) {
 		p->xval = getdbl(p);
