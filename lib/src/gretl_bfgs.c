@@ -1751,41 +1751,37 @@ static void print_NR_status (int status, double crittol, double gradtol,
    The strategy here may be simplistic, but appears to be effective in
    quite a few cases: If the (negative) Hessian is not pd, we try to
    nudge it towards positive definiteness without losing too much
-   information on curvature by considering a linear combination of H 
-   with an identity matrix with the same trace. In practice, we feed 
-   Newton-Raphson with
+   information on curvature by downsizing the off-diagonal elements of
+   H. In practice, we use
 
-   C = \lambda H + (1-lambda) k I
+   C = \lambda H + (1-lambda) diag(H)
 
-   where k is chosen in a way such that tr(C) = tr(H) and lambda is
-   reasonably close to 1. Note that, if lambda was 0, a NR iteration
-   would just amount to an iteration of the simple gradient method.
-   Hopefully, a few of those should be able to "tow us away" from the 
+   where lambda is reasonably close to 1. Note that, if lambda was 0,
+   a NR iteration would just amount to an iteration of the simple
+   gradient method (on a scaled version of the coefficients).
+   Hopefully, a few of those should be able to "tow us away" from the
    non-pd region.
 */
 
-static int 
-NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
+static int NR_invert_hessian (gretl_matrix *H, const gretl_matrix *Hcpy)
 {
     int err = gretl_invert_symmetric_matrix(H);
 
     if (err == E_NOTPD) {
-	double target = gretl_matrix_trace(Hcpy) / H->rows;
 	double x, lambda = 1.0;
 	int i, j, s;
 
-	for (s=0; lambda > 0.25 && err; s++) {
+	for (s=0; lambda > 0.1 && err; s++) {
 	    lambda *= 0.9;
+	    fprintf(stderr, "newton hessian fixup: round %d, lambda=%g\n",
+		    s, lambda);
+
 	    gretl_matrix_copy_values(H, Hcpy);
-	    fprintf(stderr, "newton hessian fixup: round %d, lambda=%g, target=%g\n",
-		    s, lambda, target);
 	    for (i=0; i<H->rows; i++) {
-		for (j=0; j<H->rows; j++) {
+		for (j=0; j<i; j++) {
 		    x = lambda * gretl_matrix_get(H, i, j);
-		    if (i == j) {
-			x += (1 - lambda) * target;
-		    }
 		    gretl_matrix_set(H, i, j, x);
+		    gretl_matrix_set(H, j, i, x);
 		}
 	    }
 #if 0
