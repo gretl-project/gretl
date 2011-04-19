@@ -45,7 +45,7 @@
 #include <errno.h>
 #include <time.h>
 
-#define N_BROWSER_TYPES 5
+#define N_BROWSER_TYPES 6
 #define BROWSER_BUSY    1
 #define BROWSER_OK      0
 

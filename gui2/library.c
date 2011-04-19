@@ -1663,7 +1663,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     gretlopt opt = OPT_NONE;
     double conf = 0.95;
     FITRESID *fr;
-    PRN *prn;
+    PRN *prn = NULL;
     int resp, err = 0;
 
     err = model_sample_problem(pmod, datainfo);
@@ -4420,7 +4420,7 @@ void do_resid_freq (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***pZ;
-    DATAINFO *pdinfo;
+    DATAINFO *pdinfo = NULL;
     int save_t1 = datainfo->t1;
     int save_t2 = datainfo->t2;
     int origv = datainfo->v;
@@ -4431,6 +4431,21 @@ void do_resid_freq (GtkAction *action, gpointer p)
     }
 
     if (bufopen(&prn)) return;
+
+    if (LIMDEP(pmod->ci)) {
+	err = gretl_model_get_normality_test(pmod, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    gchar *title = g_strdup_printf("gretl: %s", _("normality test"));
+
+	    view_buffer_with_parent(vwin, prn, 78, 300, title,
+				    PRINT, NULL);
+	    g_free(title);
+	}
+	return;
+    }
 
     pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
     if (err) {
@@ -6017,7 +6032,7 @@ void display_fit_resid (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***pZ;
-    DATAINFO *pdinfo;
+    DATAINFO *pdinfo = NULL;
     FITRESID *fr;
     PRN *prn;
     int err = 0;

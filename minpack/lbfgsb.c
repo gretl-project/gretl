@@ -2070,7 +2070,7 @@ static int mainlb_(int *n, int *m, double *x,
     int col;
     double tol;
     int wrk;
-    double stp, cpu1, cpu2;
+    double stp, cpu1 = 0, cpu2 = 0;
     int head;
     double fold = 0;
     double ddum;

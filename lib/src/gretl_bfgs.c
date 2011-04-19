@@ -17,7 +17,7 @@
  * 
  */
 
-/* The BFGS optimizer and the fdjac Jacobian function */
+/* The BFGS and Newton optimizers plus the fdjac Jacobian function */
 
 #include "libgretl.h"
 #include "gretl_bfgs.h"
