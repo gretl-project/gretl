@@ -214,6 +214,7 @@ gretl_matrix *hessian_inverse_from_score (double *b, int n,
     if (!*err) {
 	*err = gretl_invert_symmetric_matrix(H);
 	if (*err) {
+	    fprintf(stderr, "hessian_inverse_from_score: failed\n");
 	    gretl_matrix_free(H);
 	    H = NULL;
 	}
@@ -435,6 +436,7 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
     if (!*err) {
 	*err = gretl_invert_symmetric_matrix(H);
 	if (*err) {
+	    fprintf(stderr, "numerical_hessian_inverse: failed\n");
 	    gretl_errmsg_set(_("Failed to compute numerical Hessian"));
 	    gretl_matrix_free(H);
 	    H = NULL;

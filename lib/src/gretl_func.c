@@ -508,17 +508,24 @@ static void set_listargs_from_call (fncall *call, DATAINFO *pdinfo)
     }
 }
 
-static void set_executing_off (fncall *call, DATAINFO *pdinfo)
+static void set_executing_off (fncall *call, DATAINFO *pdinfo, PRN *prn)
 {
+    int dbg = gretl_debugging_on();
     fncall *popcall = NULL;
 
     fn_executing--;
 
     callstack = g_list_remove(callstack, call);
+
 #if EXEC_DEBUG
     fprintf(stderr, "set_executing_off: removing call to %s, depth now %d\n",
 	    call->fun->name, g_list_length(callstack));
 #endif
+
+    if (dbg) {
+	pprintf(prn, "*** exiting function %s, ", call->fun->name);
+    }
+
     fncall_free(call);
 
     if (fn_executing > 0) {
@@ -533,6 +540,14 @@ static void set_executing_off (fncall *call, DATAINFO *pdinfo)
 
     if (pdinfo != NULL) {
 	set_listargs_from_call(popcall, pdinfo);
+    }
+
+    if (dbg) {
+	if (popcall != NULL) {
+	    pprintf(prn, "returning to %s\n", popcall->fun->name);
+	} else {
+	    pputs(prn, "returning to main\n");
+	}
     }
 }
 
@@ -5736,7 +5751,7 @@ static int restore_obs_info (obsinfo *o, double ***pZ, DATAINFO *pdinfo)
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
 			double ***pZ, DATAINFO *pdinfo,
-			int orig_v)
+			PRN *prn, int orig_v)
 {
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
@@ -5843,7 +5858,7 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 	restore_obs_info(&call->obs, pZ, pdinfo);
     }
 
-    set_executing_off(call, pdinfo);
+    set_executing_off(call, pdinfo, prn);
 
     return err;
 }
@@ -6548,7 +6563,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     gretl_exec_state_clear(&state);
 
     if (started) {
-	int stoperr = stop_fncall(call, rtype, ret, pZ, pdinfo, orig_v);
+	int stoperr = stop_fncall(call, rtype, ret, pZ, pdinfo, prn,
+				  orig_v);
 
 	if (stoperr && !err) {
 	    err = stoperr;
