@@ -799,29 +799,34 @@ int main (int argc, char **argv)
 {
     FILE *fidx = NULL, *fbin = NULL;
 #if 0 /* testing: just personal income, expenditure */
-    int topcats[] = {
+    int pi_cats[] = {
 	110, -1
     };
 #else
-    int topcats[] = {
+    int us_cats[] = {
 	1, 9, 10, 13, 15, 18, 22, 23, 24, 31, 45, 46, -1
     };
+    int intl_cats[] = {
+	32263, -1
+    };    
 #endif
+    int *topcats = us_cats;
     FREDbuf *fb = NULL;
     const char *keyfile = NULL;
-    int cats_only = 0;
+    int intl = 0, cats_only = 0;
     int i, err = 0;
 
-    if (argc > 1 && !strcmp(argv[1], "--categories")) {
-	/* just retrieve the FRED categories, don't get the data */
-	cats_only = 1;
+    for (i=1; i<argc; i++) {
+	if (!strcmp(argv[i], "--categories")) {
+	    /* just retrieve the FRED categories, don't get the data */
+	    cats_only = 1;
+	} else if (!strncmp(argv[i], "--keyfile=", 10)) {
+	    keyfile = argv[i];
+	} else if (!strcmp(argv[i], "--intl")) {
+	    topcats = intl_cats;
+	    intl = 1;
+	}
     }
-
-    if (argc == 2 && !strncmp(argv[1], "--keyfile=", 10)) {
-	keyfile = argv[1];
-    } else if (argc == 3 && !strncmp(argv[2], "--keyfile=", 10)) {
-	keyfile = argv[2];
-    }    
 
     err = get_api_key(keyfile);
     if (err) {
@@ -829,8 +834,13 @@ int main (int argc, char **argv)
     }
 
     if (!cats_only) {
-	fidx = fopen("fedstl.idx", "w");
-	fbin = fopen("fedstl.bin", "wb");
+	if (intl) {
+	    fidx = fopen("fred_intl.idx", "w");
+	    fbin = fopen("fred_intl.bin", "wb");
+	} else {
+	    fidx = fopen("fedstl.idx", "w");
+	    fbin = fopen("fedstl.bin", "wb");
+	}
 
 	if (fidx == NULL || fbin == NULL) {
 	    fprintf(stderr, "%s: couldn't open output files\n", argv[0]);
