@@ -1338,6 +1338,9 @@ static void ml_vcv_line (const VCVInfo *vi, PRN *prn)
 	    s = N_("Bollerslev-Wooldridge standard errors");
 	}
 	break;
+    case VCV_MAX:
+	s = N_("Warning: could not compute standard errors");
+	break;
     default:
 	break;
     }

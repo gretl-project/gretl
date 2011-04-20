@@ -1354,8 +1354,17 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
 	err = gretl_invert_symmetric_matrix(V);
 	if (err) {
 	    gretl_errmsg_set("failed to invert OPG matrix GG'");
+#if 0 /* experiment: show estimates even tho' VCV has failed */
+	    *vcvopt = VCV_MAX;
+	    k = k * k;
+	    for (i=0; i<k; i++) {
+		V->val[i] = 0.0/0.0;
+	    }
+	    err = 0;
+#endif
+	} else {
+	    *vcvopt = VCV_OP;
 	}
-	*vcvopt = VCV_OP;
     }
 
     if (!err) {
@@ -2265,6 +2274,12 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	/* doing Hessian or QML covariance matrix */
 	s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
 					    get_mle_ll, s, &err);
+	if (err) {
+	    /* try dropping back to OPG */
+	    s->opt &= ~OPT_H;
+	    s->opt &= ~OPT_R;
+	    err = 0;
+	}
     }	
 
     return err;    
