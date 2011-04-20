@@ -1819,8 +1819,13 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 	    }
 	    return ret;
 	} else if (op == B_TRMUL) {
-	    gretl_matrix *tmp = gretl_matrix_copy_transpose(m);
+	    gretl_matrix *tmp;
 
+	    if (l->t == NUM) {
+		tmp = gretl_matrix_copy(m);
+	    } else {
+		tmp = gretl_matrix_copy_transpose(m);
+	    }
 	    if (tmp == NULL) {
 		p->err = E_ALLOC;
 	    } else {
@@ -7901,10 +7906,13 @@ static NODE *eval (NODE *t, parser *p)
 	    ret = matrix_matrix_calc(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == VEC) {
 	    ret = matrix_series_calc(l, r, t->t, p);
-	} else if (l->t == MAT && r->t == NUM) {
+	} else if ((l->t == MAT && r->t == NUM) ||
+		   (l->t == NUM && r->t == MAT)) {
 	    ret = matrix_scalar_calc(l, r, t->t, p);
 	} else if (l->t == MAT && r->t == EMPTY) {
 	    ret = matrix_transpose_node(l, p);
+	} else if (l->t == NUM && r->t == EMPTY) {
+	    ret = l; /* no-op */
 	} else {
 	    p->err = E_TYPES; 
 	}
@@ -10126,9 +10134,6 @@ static int edit_list (parser *p)
 
     return p->err;
 }
-
-#define scalar_matrix(n) (n->t == MAT && n->v.m->rows == 1 && \
-			  n->v.m->cols == 1)
 
 #define ok_return_type(t) (t == NUM || t == VEC || t == MAT || \
 			   t == LIST || t == LVEC || t == DUM || \
