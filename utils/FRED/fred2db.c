@@ -70,7 +70,7 @@ static FREDbuf *fredget (FREDtask task, int catid, const char *sername,
 			 FILE *fidx, int *err);
 static int parse_fred_xml (FREDbuf *fb, FILE *fidx, FILE *fbin);
 
-#define MAX_SERIES 2000
+#define MAX_SERIES 3000
 
 char **sernames;
 int n_series;
