@@ -1412,7 +1412,7 @@ int write_data (const char *fname, int *list,
 	    /* optional comment */
 	    const char *msg = get_optval_string(STORE, OPT_E);
 
-	    if (s != NULL && *s != '\0') {
+	    if (msg != NULL && *msg != '\0') {
 		fprintf(fp, "# %s\n", msg);
 	    }
 	}	    
