@@ -6684,6 +6684,59 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	    }	
 	    ret->v.m = user_matrix_rls(Y, X, R, Q, SU, SV, &p->err);
 	}
+    } else if (t->t == F_NRMAX) {
+	gretl_matrix *b = NULL;
+	const char *sf = NULL;
+	const char *sg = NULL;
+	const char *sh = NULL;
+
+	if (k < 2 || k > 4) {
+	    n_args_error(k, 4, "NRmax", p);
+	} 
+
+	for (i=0; i<k && !p->err; i++) {
+	    e = eval(n->v.bn.n[i], p);
+	    if (i == 0) {
+		if (e->t != MAT) {
+		    node_type_error(t->t, i+1, MAT, e, p);
+		} else {
+		    b = e->v.m;
+		}
+	    } else if (i == 1) {
+		if (e->t != STR) {
+		    node_type_error(t->t, i+1, STR, e, p);
+		} else {
+		    sf = e->v.str;
+		}
+	    } else if (e->t == EMPTY) {
+		; /* OK */
+	    } else if (e->t != STR) {
+		node_type_error(t->t, i+1, STR, e, p);
+	    } else if (i == 2) {
+		sg = e->v.str;
+	    } else {
+		sh = e->v.str;
+	    }
+	}
+
+	if (!p->err) {
+	    if (!gretl_vector_get_length(b)) {
+		p->err = E_TYPES;
+	    } else if (!is_function_call(sf) ||
+		       (sg != NULL && !is_function_call(sg)) ||
+		       (sh != NULL && !is_function_call(sh))) {
+		p->err = E_TYPES;
+	    }
+	}
+
+	if (!p->err) {
+	    ret = aux_scalar_node(p);
+	}
+
+	if (!p->err) {
+	    ret->v.xval = user_NR(b, sf, sg, sh, p->Z, p->dinfo, 
+				  p->prn, &p->err);
+	}
     } 
 
     return ret;
@@ -8507,6 +8560,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_KFILTER:
     case F_KSMOOTH:
     case F_KSIMUL:
+    case F_NRMAX:
 	/* built-in functions taking more than three args */
 	ret = eval_nargs_func(t, p);
 	break;

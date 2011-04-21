@@ -1268,7 +1268,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     return ret;
 }
 
-/* user-level access to BFGS and fdjac */
+/* user-level access to BFGS, NR and fdjac */
 
 typedef struct umax_ umax;
 
@@ -1276,12 +1276,15 @@ struct umax_ {
     GretlType gentype;    /* GRETL_TYPE_DOUBLE or GRETL_TYPE_MATRIX */
     gretl_matrix *b;      /* parameter vector */
     gretl_matrix *g;      /* gradient vector */
+    gretl_matrix *h;      /* hessian matrix */
     int ncoeff;           /* number of coefficients */
     GENERATOR *gf;        /* for generating scalar or matrix result */
     GENERATOR *gg;        /* for generating gradient */
+    GENERATOR *gh;        /* for generating Hessian */
     double fx_out;        /* function double value */
     gretl_matrix *fm_out; /* function matrix value */
     char gmname[VNAMELEN]; /* name of user-defined gradient vector */
+    char hmname[VNAMELEN]; /* name of user-defined Hessian matrix */
     double ***Z;          /* pointer to data array */
     DATAINFO *dinfo;      /* dataset info */
     PRN *prn;             /* optional printing struct */
@@ -1295,12 +1298,15 @@ static umax *umax_new (GretlType t)
 	u->gentype = t;
 	u->b = NULL;
 	u->g = NULL;
+	u->h = NULL;
 	u->ncoeff = 0;
 	u->gf = NULL;
 	u->gg = NULL;
+	u->gh = NULL;
 	u->fx_out = NADBL;
 	u->fm_out = NULL;
 	u->gmname[0] = '\0';
+	u->hmname[0] = '\0';
 	u->Z = NULL;
 	u->dinfo = NULL;
 	u->prn = NULL;
@@ -1321,11 +1327,12 @@ static void umax_destroy (umax *u)
 
     destroy_genr(u->gf);
     destroy_genr(u->gg);
+    destroy_genr(u->gh);
 
     free(u);
 }
 
-/* user-defined BFGS: get the criterion value */
+/* user-defined optimizer: get the criterion value */
 
 static double user_get_criterion (const double *b, void *p)
 {
@@ -1364,7 +1371,7 @@ static double user_get_criterion (const double *b, void *p)
     return x;
 }
 
-/* user-defined BFGS: get the gradient, if specified */
+/* user-defined optimizer: get the gradient, if specified */
 
 static int user_get_gradient (double *b, double *g, int k,
 			      BFGS_CRIT_FUNC func, void *p)
@@ -1398,14 +1405,48 @@ static int user_get_gradient (double *b, double *g, int k,
     return err;
 }
 
-/* parse the name of the user gradient matrix (vector) out of
-   the gradient function call, where it must be the first
-   argument, given in pointer form
+/* user-defined optimizer: get the hessian, if specified */
+
+static int user_get_hessian (double *b, gretl_matrix *H,
+			     void *p)
+{
+    umax *u = (umax *) p;
+    gretl_matrix *uH;
+    int k = H->rows;
+    int i, err;
+
+    for (i=0; i<k; i++) {
+	u->b->val[i] = b[i];
+    }
+
+    err = execute_genr(u->gh, u->Z, u->dinfo, u->prn); 
+
+    if (err) {
+	return err;
+    }
+
+    uH = get_matrix_by_name(u->hmname);
+
+    if (uH == NULL) {
+	err = E_UNKVAR;
+    } else if (uH->rows != k || uH->cols != k) {
+	err = E_NONCONF;
+    } else {
+	gretl_matrix_copy_values(H, uH);
+    } 
+
+    return err;
+}
+
+/* parse the name of the user gradient matrix (vector) or
+   Hessian out of the associated function call, where it 
+   must be the first argument, given in pointer form
 */
 
-static int get_grad_vector_name (umax *u, const char *gradcall)
+static int get_opt_matrix_name (umax *u, const char *fncall,
+				char *mname)
 {
-    const char *s = strchr(gradcall, '(');
+    const char *s = strchr(fncall, '(');
     int n, err = 0;
 
     if (s == NULL) {
@@ -1421,7 +1462,7 @@ static int get_grad_vector_name (umax *u, const char *gradcall)
 	    if (n >= VNAMELEN) {
 		err = E_DATA;
 	    } else {
-		strncat(u->gmname, s, n);
+		strncat(mname, s, n);
 	    }
 	}
     }
@@ -1432,6 +1473,7 @@ static int get_grad_vector_name (umax *u, const char *gradcall)
 static int user_gen_setup (umax *u,
 			   const char *fncall,
 			   const char *gradcall,
+			   const char *hesscall,
 			   double ***pZ, 
 			   DATAINFO *pdinfo)
 {
@@ -1453,9 +1495,20 @@ static int user_gen_setup (umax *u,
 
     if (!err && gradcall != NULL) {
 	/* process gradient formula */
-	err = get_grad_vector_name(u, gradcall);
+	err = get_opt_matrix_name(u, gradcall, u->gmname);
 	if (!err) {
 	    u->gg = genr_compile(gradcall, pZ, pdinfo, OPT_P | OPT_U, &err);
+	    if (!err) {
+		err = execute_genr(u->gg, pZ, pdinfo, u->prn);
+	    } 
+	}
+    }
+
+    if (!err && hesscall != NULL) {
+	/* process Hessian formula */
+	err = get_opt_matrix_name(u, hesscall, u->hmname);
+	if (!err) {
+	    u->gh = genr_compile(hesscall, pZ, pdinfo, OPT_P | OPT_U, &err);
 	    if (!err) {
 		err = execute_genr(u->gg, pZ, pdinfo, u->prn);
 	    } 
@@ -1503,7 +1556,7 @@ double user_BFGS (gretl_matrix *b,
 
     u->b = b;
 
-    *err = user_gen_setup(u, fncall, gradcall, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, gradcall, NULL, pZ, pdinfo);
     if (*err) {
 	return NADBL;
     }
@@ -1525,6 +1578,65 @@ double user_BFGS (gretl_matrix *b,
 	pprintf(prn, _("Function evaluations: %d\n"), fcount);
 	pprintf(prn, _("Evaluations of gradient: %d\n"), gcount);
     }
+
+    if (!*err) {
+	ret = u->fx_out;
+    }
+
+ bailout:
+
+    umax_destroy(u);
+
+    return ret;
+}
+
+double user_NR (gretl_matrix *b, 
+		const char *fncall,
+		const char *gradcall, 
+		const char *hesscall,
+		double ***pZ, DATAINFO *pdinfo,
+		PRN *prn, int *err)
+{
+    umax *u;
+    double ret = NADBL;
+    double crittol = 1.0e-7;
+    double gradtol = 1.0e-7;
+    gretlopt opt = OPT_NONE;
+    int verbose = libset_get_bool(MAX_VERBOSE);
+    int maxit = 100;
+    int iters = 0;
+
+    u = umax_new(GRETL_TYPE_DOUBLE);
+    if (u == NULL) {
+	*err = E_ALLOC;
+	return ret;
+    }
+
+    u->ncoeff = gretl_vector_get_length(b);
+    if (u->ncoeff == 0) {
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    u->b = b;
+
+    *err = user_gen_setup(u, fncall, gradcall, hesscall, pZ, pdinfo);
+    if (*err) {
+	return NADBL;
+    }
+
+    if (verbose) {
+	opt = OPT_V;
+	u->prn = prn;
+    }
+
+    *err = newton_raphson_max(b->val, u->ncoeff, maxit, 
+			      crittol, gradtol, 
+			      &iters, C_OTHER, 
+			      user_get_criterion,
+			      (u->gg == NULL)? NULL : user_get_gradient,
+			      (u->gh == NULL)? NULL : user_get_hessian,
+			      u, opt, prn);
 
     if (!*err) {
 	ret = u->fx_out;
@@ -1633,7 +1745,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     u->b = theta;
     u->ncoeff = n;
 
-    *err = user_gen_setup(u, fncall, NULL, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, NULL, NULL, pZ, pdinfo);
     if (*err) {
 	fprintf(stderr, "fdjac: error %d from user_gen_setup\n", *err);
 	goto bailout;

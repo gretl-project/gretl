@@ -23,6 +23,7 @@ version 1.9.5, in progress
 - Fix a small memory leak when opening an *.asc data file
 - New function colname(): retrieve a column name from a matrix
 - New function eigsolve(): solves generalized eigenvalue problem
+- New function NRmax(): Newton-Raphson maximizer
 - New model accessors with string values: $depvar for the name of the
   dependent variable, and $command for the command word used
 - Matrix "division": give the operators "\" and "/" the same semantics

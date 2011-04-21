@@ -345,6 +345,7 @@ enum {
     F_KFILTER,
     F_KSMOOTH,
     F_KSIMUL,
+    F_NRMAX,
     FN_MAX,	  /* SEPARATOR: end of n-arg functions */
 };
 
@@ -383,10 +384,10 @@ enum {
 
 /* functions taking a string arg in last position */
 #define string_last_func(s) (s == F_FDJAC || s == F_BFGSMAX || \
-                             s == F_DESEAS)
+                             s == F_NRMAX || s == F_DESEAS)
 
 /* functions taking string arg in middle position */
-#define string_mid_func(s) (s == F_BFGSMAX)
+#define string_mid_func(s) (s == F_BFGSMAX || s == F_NRMAX)
 
 #define unary_op(s)  (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)

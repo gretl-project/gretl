@@ -282,6 +282,7 @@ struct str_table funcs[] = {
     { F_MEXP,     "mexp" },
     { F_FDJAC,    "fdjac" },
     { F_BFGSMAX,  "BFGSmax" },
+    { F_NRMAX,    "NRmax" },
     { F_OBSNUM,   "obsnum" },
     { F_ISSERIES, "isseries" },
     { F_ISSCALAR, "isscalar" },

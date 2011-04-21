@@ -1187,7 +1187,9 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    t->v.b1.b = newbn(FARGS);
 	    if (t != NULL) {
-		get_args(t->v.b1.b, p, sym, -1, opt, &next);
+		int k = (sym == F_NRMAX)? 4 : -1;
+
+		get_args(t->v.b1.b, p, sym, k, opt, &next);
 	    }
 	}
     } else if (sym == STR || sym == VSTR) {
