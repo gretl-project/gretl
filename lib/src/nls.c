@@ -1298,8 +1298,8 @@ static int mle_build_vcv (MODEL *pmod, nlspec *spec, int *vcvopt)
     }
 
     if (numeric_mode(spec)) {
-	G = build_score_matrix(spec->coeff, k, T, mle_llt_callback, 
-			       (void *) spec, &err);
+	G = numerical_score_matrix(spec->coeff, k, T, mle_llt_callback, 
+				   (void *) spec, &err);
 	if (err) {
 	    gretl_matrix_free(V);
 	    return err;
@@ -2273,9 +2273,9 @@ static int mle_calculate (nlspec *s, PRN *prn)
     if (!err && (s->opt & (OPT_H | OPT_R))) {
 	/* doing Hessian or QML covariance matrix */
 	if (analytic_mode(s)) {
-	    s->Hinv = hessian_inverse_from_score (s->coeff, s->ncoeff, 
-						  gradfun, get_mle_ll,
-						  s, &err);
+	    s->Hinv = hessian_inverse_from_score(s->coeff, s->ncoeff, 
+						 gradfun, get_mle_ll,
+						 s, &err);
 	} else {
 	    s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
 						get_mle_ll, s, &err);

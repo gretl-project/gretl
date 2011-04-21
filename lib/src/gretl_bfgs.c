@@ -465,9 +465,9 @@ static int NR_fallback_hessian (double *b, gretl_matrix *H,
    to the loglikelihood, lltfun 
 */
 
-gretl_matrix *build_score_matrix (double *b, int k, int T,
-				  BFGS_LLT_FUNC lltfun,
-				  void *data, int *err)
+gretl_matrix *numerical_score_matrix (double *b, int k, int T,
+				      BFGS_LLT_FUNC lltfun,
+				      void *data, int *err)
 {
     double h = 1e-8;
 #if ALT_OPG

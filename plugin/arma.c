@@ -828,8 +828,8 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     double rcond;
     int err = 0;
 
-    G = build_score_matrix(b, k, T, kalman_arma_llt_callback, 
-			   K, &err);
+    G = numerical_score_matrix(b, k, T, kalman_arma_llt_callback, 
+			       K, &err);
     if (err) {
 	goto bailout;
     }

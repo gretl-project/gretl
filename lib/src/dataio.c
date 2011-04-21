@@ -1408,6 +1408,15 @@ int write_data (const char *fname, int *list,
 		    datestr, pdinfo->pd);
 	}
 
+	if (fmt == GRETL_FMT_CSV) {
+	    /* optional comment */
+	    const char *msg = get_optval_string(STORE, OPT_E);
+
+	    if (s != NULL && *s != '\0') {
+		fprintf(fp, "# %s\n", msg);
+	    }
+	}	    
+
 	if (fmt == GRETL_FMT_CSV && (opt & OPT_N)) {
 	    ; /* no header */
 	} else {

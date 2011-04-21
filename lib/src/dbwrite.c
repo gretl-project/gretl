@@ -618,7 +618,13 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
     } 
 
     if (!append) {
-	fprintf(fidx, "# Description goes here\n");
+	const char *s = get_optval_string(STORE, OPT_E);
+
+	if (s != NULL && *s != '\0') {
+	    fprintf(fidx, "# %s\n", s);
+	} else {
+	    fputs("# Description goes here\n", fidx);
+	}
     }
 
     for (i=1; i<=mylist[0]; i++) {

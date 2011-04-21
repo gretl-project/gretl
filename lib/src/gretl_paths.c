@@ -659,15 +659,28 @@ int gretl_mkstemp (char *tmpl)
 
 int gretl_mkdir (const char *path)
 {
-    int err = 0;
+    int err;
 
     errno = 0;
 
-    if (mkdir(path, 0755)) {
-	if (errno != EEXIST) { 
-	    fprintf(stderr, "%s: %s\n", path, strerror(errno));
-	    err = 1;
+#if (GLIB_MAJOR_VERSION > 2 || GLIB_MINOR_VERSION >= 8)
+    err = g_mkdir_with_parents(path, 0755);
+#else
+    err = mkdir(path, 0755);
+    if (err && errno == EEXIST) {
+	/* OK if we have an existing directory */
+	DIR *dir = opendir(path);
+
+	if (dir != NULL) {
+	    closedir(dir);
+	    err = 0;
 	}
+    }
+#endif
+
+    if (err) {
+	fprintf(stderr, "%s: %s\n", path, strerror(errno));
+	err = 1;
     }
 
     return err;
@@ -1865,7 +1878,7 @@ static int validate_writedir (const char *dirname)
     err = gretl_mkdir(dirname);
     if (err) {
 	gretl_errmsg_sprintf( _("Couldn't create directory '%s'"), dirname);
-    }
+    } 
 
     if (!err) {
 	/* ensure the directory is writable */

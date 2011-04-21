@@ -54,9 +54,9 @@ int newton_raphson_max (double *b, int n, int maxit,
 int BFGS_numeric_gradient (double *b, double *g, int n,
 			   BFGS_CRIT_FUNC func, void *data);
 
-gretl_matrix *build_score_matrix (double *b, int k, int T,
-				  BFGS_LLT_FUNC lltfun,
-				  void *data, int *err);
+gretl_matrix *numerical_score_matrix (double *b, int k, int T,
+				      BFGS_LLT_FUNC lltfun,
+				      void *data, int *err);
 
 int hessian_from_score (double *b, gretl_matrix *H,
 			BFGS_GRAD_FUNC gradfunc, 

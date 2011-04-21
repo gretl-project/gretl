@@ -46,6 +46,13 @@ typedef enum {
     FRED_MAX
 } FREDtask;
 
+typedef enum {
+    DB_MAIN,
+    DB_INTL,
+    DB_JOLTS,
+    DB_MAX
+} FREDdb;
+
 #define MAXNAME 32
 #define OBSLEN 16
 
@@ -65,6 +72,7 @@ struct FREDbuf_ {
 };
 
 static char API_KEY[33];
+static int db_opt;
 
 static FREDbuf *fredget (FREDtask task, int catid, const char *sername, 
 			 FILE *fidx, int *err);
@@ -428,6 +436,8 @@ static void fb_indent (FREDbuf *fb)
     }
 }
 
+#define is_jolts_id(i) (i == 32241 || i == 32243 || (i >= 32245 && i <= 32249))
+
 /* FRED categories that we'll skip, so as to produce a 
    gretl database of manageable size
 */
@@ -435,6 +445,12 @@ static void fb_indent (FREDbuf *fb)
 static int skipcat (int id)
 {
     int skip = 0;
+
+    if (db_opt == DB_JOLTS) {
+	return !is_jolts_id(id);
+    } else if (is_jolts_id(id)) {
+	return 1;
+    }
 
     if (id == 64 || (id > 83 && id < 93)) {
 	/* banking data by US region */
@@ -790,6 +806,8 @@ static int get_api_key (const char *keyopt)
     3008 Regional Data
    32145 Foreign Exchange Intervention 
 
+   Also note: JOLTS is category 32241
+
    This list can be updated via
    http://api.stlouisfed.org/fred/category/children?category_id=0&api_key=$KEY
 
@@ -803,18 +821,23 @@ int main (int argc, char **argv)
 	110, -1
     };
 #else
-    int us_cats[] = {
+    int main_cats[] = {
 	1, 9, 10, 13, 15, 18, 22, 23, 24, 31, 45, 46, -1
     };
     int intl_cats[] = {
 	32263, -1
+    };
+    int jolts_cats[] = {
+	10, -1
     };    
 #endif
-    int *topcats = us_cats;
+    int *topcats = main_cats;
     FREDbuf *fb = NULL;
     const char *keyfile = NULL;
-    int intl = 0, cats_only = 0;
+    int cats_only = 0;
     int i, err = 0;
+
+    db_opt = DB_MAIN;
 
     for (i=1; i<argc; i++) {
 	if (!strcmp(argv[i], "--categories")) {
@@ -824,7 +847,13 @@ int main (int argc, char **argv)
 	    keyfile = argv[i];
 	} else if (!strcmp(argv[i], "--intl")) {
 	    topcats = intl_cats;
-	    intl = 1;
+	    db_opt = DB_INTL;
+	} else if (!strcmp(argv[i], "--jolts")) {
+	    topcats = jolts_cats;
+	    db_opt = DB_JOLTS;
+	} else {
+	    fprintf(stderr, "%s: bad option '%s'\n", argv[0], argv[i]);
+	    exit(EXIT_FAILURE);
 	}
     }
 
@@ -834,9 +863,12 @@ int main (int argc, char **argv)
     }
 
     if (!cats_only) {
-	if (intl) {
+	if (db_opt == DB_INTL) {
 	    fidx = fopen("fred_intl.idx", "w");
 	    fbin = fopen("fred_intl.bin", "wb");
+	} else if (db_opt == DB_JOLTS) {
+	    fidx = fopen("jolts.idx", "w");
+	    fbin = fopen("jolts.bin", "wb");
 	} else {
 	    fidx = fopen("fedstl.idx", "w");
 	    fbin = fopen("fedstl.bin", "wb");
@@ -845,6 +877,10 @@ int main (int argc, char **argv)
 	if (fidx == NULL || fbin == NULL) {
 	    fprintf(stderr, "%s: couldn't open output files\n", argv[0]);
 	    exit(EXIT_FAILURE);
+	} else if (db_opt == DB_INTL) {
+	    fputs("# St Louis Fed (international series)\n", fidx);
+	} else if (db_opt == DB_JOLTS) {
+	    fputs("# St Louis Fed (JOLTS)\n", fidx);
 	} else {
 	    fputs("# St Louis Fed (various series, large)\n", fidx);
 	}
