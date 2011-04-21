@@ -10153,6 +10153,11 @@
 	  <flag>--overwrite</flag>
 	  <effect>see below, on database format</effect>
         </option>
+        <option>
+	  <flag>--comment</flag>
+	  <optparm>string</optparm>
+	  <effect>see below</effect>
+        </option>
       </options>
     </usage>
 
@@ -10196,7 +10201,14 @@
 	that is already present in the database. The
 	<opt>--overwrite</opt> flag has the effect that, if there are
 	variable names in common, the newly saved variable replaces the
-	variable of the same name in the original dataset.
+	variable of the same name in the original dataset. 
+      </para>
+      <para>
+	The <opt>--comment</opt> option is available when saving data
+	as a database or in CSV format. The required parameter is a
+	double-quoted one-line string, attached to the option flag
+	with an equals sign. The string is inserted as a comment into
+	the database index file or at the top of the CSV output.
       </para>
     </description>
 
