@@ -1301,23 +1301,26 @@ static void check_first_field (const char *line, csvdata *c, PRN *prn)
     }
 }
 
-static int csv_missval (const char *str, int i, int t, PRN *prn)
+static int csv_missval (const char *str, int i, int t, 
+			int *miss_shown, PRN *prn)
 {
     int miss = 0;
 
     if (*str == '\0') {
-	if (t < 100) {
+	if (t < 80 || *miss_shown < i) {
 	    pprintf(prn, M_("   the cell for variable %d, obs %d "
 			    "is empty: treating as missing value\n"), 
 		    i, t);
+	    *miss_shown += 1;
 	}
 	miss = 1;
     }
 
     if (import_na_string(str)) {
-	if (t < 100) {
+	if (t < 80 || *miss_shown < i) {
 	    pprintf(prn, M_("   warning: missing value for variable "
 			    "%d, obs %d\n"), i, t);
+	    *miss_shown += 1;
 	}
 	miss = 1;
     }
@@ -1444,7 +1447,8 @@ static double try_comma_atof (const char *orig)
     }
 }
 
-static int process_csv_obs (csvdata *c, int i, int t, PRN *prn)
+static int process_csv_obs (csvdata *c, int i, int t, int *miss_shown,
+			    PRN *prn)
 {
     int ix, err = 0;
 
@@ -1457,7 +1461,7 @@ static int process_csv_obs (csvdata *c, int i, int t, PRN *prn)
 		err = E_DATA;
 	    }
 	}
-    } else if (csv_missval(c->str, i, t+1, prn)) {
+    } else if (csv_missval(c->str, i, t+1, miss_shown, prn)) {
 	c->Z[i][t] = NADBL;
     } else if (check_atof(c->str)) {
 	if (c->delim != ',' && get_local_decpoint() != ',' &&
@@ -1757,6 +1761,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
     int i, k, n, m, t = 0;
+    int miss_shown = 0;
     int err = 0;
 
     c->real_n = c->dinfo->n;
@@ -1784,7 +1789,7 @@ static int fixed_format_read (csvdata *c, FILE *fp, PRN *prn)
 	    p = c->line + k - 1;
 	    *c->str = '\0';
 	    strncat(c->str, p, n);
-	    if (csv_missval(c->str, i, t+1, prn)) {
+	    if (csv_missval(c->str, i, t+1, &miss_shown, prn)) {
 		c->Z[i][t] = NADBL;
 	    } else if (check_atof(c->str)) {
 		if (c->delim != ',' && get_local_decpoint() != ',' &&
@@ -1843,6 +1848,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 {
     char *p;
     int i, k, nv, t = 0;
+    int miss_shown = 0;
     int err = 0;
 
     c->real_n = c->dinfo->n;
@@ -1890,7 +1896,7 @@ real_read_labels_and_data (csvdata *c, FILE *fp, PRN *prn)
 		} 
 	    } else {
 		nv = (csv_skip_column(c))? k : k + 1;
-		err = process_csv_obs(c, nv, t, prn);
+		err = process_csv_obs(c, nv, t, &miss_shown, prn);
 		if (err) {
 		    break;
 		}
