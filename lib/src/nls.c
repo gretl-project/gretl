@@ -2272,8 +2272,15 @@ static int mle_calculate (nlspec *s, PRN *prn)
 
     if (!err && (s->opt & (OPT_H | OPT_R))) {
 	/* doing Hessian or QML covariance matrix */
-	s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
-					    get_mle_ll, s, &err);
+	if (analytic_mode(s)) {
+	    s->Hinv = hessian_inverse_from_score (s->coeff, s->ncoeff, 
+						  gradfun, get_mle_ll,
+						  s, &err);
+	} else {
+	    s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
+						get_mle_ll, s, &err);
+	}
+
 	if (err) {
 	    /* try dropping back to OPG */
 	    s->opt &= ~OPT_H;
