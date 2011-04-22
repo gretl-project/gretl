@@ -2667,7 +2667,8 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 	    /* try falling back on the default working dir */
 	    const char *defpath = gretl_default_workdir();
 
-	    if (*defpath != '\0' && strcmp(defpath, paths.workdir)) {
+	    if (defpath != NULL && *defpath != '\0' && 
+		strcmp(defpath, paths.workdir)) {
 		err1 = validate_writedir(defpath);
 		if (err1 == 0) {
 		    strcpy(paths.workdir, defpath);
