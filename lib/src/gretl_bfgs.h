@@ -91,4 +91,6 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
 
 void BFGS_defaults (int *maxit, double *tol, int ci);
 
+int optimizer_get_matrix_name (const char *fncall, char *name);
+
 #endif /* GRETL_BFGS_H */

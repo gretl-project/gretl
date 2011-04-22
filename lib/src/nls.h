@@ -38,11 +38,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo);
 
 void nlspec_destroy (nlspec *spec);
 
-int 
-nlspec_add_param_with_deriv (nlspec *spec, 
-			     const char *dstr,
-			     const double **Z, 
-			     const DATAINFO *pdinfo);
+int nlspec_add_param_with_deriv (nlspec *spec, const char *s);
 
 int nlspec_add_param_list (nlspec *spec, int np, double *vals,
 			   char **names, double ***pZ,

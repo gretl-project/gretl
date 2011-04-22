@@ -321,7 +321,7 @@ void check_var_labels_state (GtkMenuItem *item, gpointer p)
 {
     gboolean s = FALSE;
 
-    if (datainfo != NULL) {
+    if (datainfo != NULL && datainfo->v > 0) {
 	if (datainfo->v > 2 || strcmp(datainfo->varname[1], "index")) {
 	    s = TRUE;
 	}

@@ -37,6 +37,7 @@ struct nlspec_ {
     int dv;             /* ID number of dependent variable (NLS) */
     int lhtype;         /* type of the LHS variable */
     char lhname[VNAMELEN]; /* name of LHS var in criterion function */
+    char hname[VNAMELEN];  /* name of Hessian matrix, if present */
     char *parnames;     /* user-set names for parameters */
     int lhv;            /* ID number of LHS series in function being
 			   minimized or maximized... */
@@ -51,8 +52,8 @@ struct nlspec_ {
     int naux;           /* number of auxiliary commands */
     int ngenrs;         /* number of variable-generating formulae */
     int iters;          /* number of iterations performed */
-    int fncount;        /* number of function evaluations (ML, GMM) */
-    int grcount;        /* number of gradient evaluations (ML, GMM) */
+    int fncount;        /* number of function evaluations (BFGS) */
+    int grcount;        /* number of gradient evaluations (BFGS) */
     int t1;             /* starting observation */
     int t2;             /* ending observation */
     int real_t1;        /* real starting observation (if sub-sampled) */
@@ -67,7 +68,9 @@ struct nlspec_ {
     double *coeff;      /* coefficient estimates */
     gretl_matrix *Hinv; /* negative inverse of Hessian */
     char **aux;         /* auxiliary commands */
+    char *hesscall;     /* function call for Hessian */
     GENERATOR **genrs;  /* variable-generation pointers */
+    GENERATOR *hgen;    /* generator for Hessian */
     double ***Z;        /* pointer to data array */
     DATAINFO *dinfo;    /* pointer to dataset info */
     PRN *prn;           /* printing aparatus */

@@ -52,9 +52,11 @@
 #define ML_DEBUG 0
 
 enum {
-    ANALYTIC_DERIVS = 1 << 0,
-    NLS_AUTOREG     = 1 << 1
-} nls_flags;
+    NL_ANALYTICAL = 1 << 0,
+    NL_AUTOREG    = 1 << 1,
+    NL_AHESS      = 1 << 2,
+    NL_NEWTON     = 1 << 3
+} nl_flags;
 
 struct parm_ {
     char name[VNAMELEN];  /* name of parameter */
@@ -73,8 +75,8 @@ struct parm_ {
 #define matrix_deriv(s,i) (s->params[i].dmat != NULL)
 #define scalar_deriv(s,i) (gretl_is_scalar(s->params[i].dname))
 
-#define numeric_mode(s) (!(s->flags & ANALYTIC_DERIVS))
-#define analytic_mode(s) (s->flags & ANALYTIC_DERIVS)
+#define numeric_mode(s) (!(s->flags & NL_ANALYTICAL))
+#define analytic_mode(s) (s->flags & NL_ANALYTICAL)
 
 /* file-scope global variables */
 
@@ -85,12 +87,12 @@ static char *adjust_saved_nlfunc (char *s);
 
 static void set_numeric_mode (nlspec *s)
 {
-    s->flags &= ~ANALYTIC_DERIVS;
+    s->flags &= ~NL_ANALYTICAL;
 }
 
 static void set_analytic_mode (nlspec *s)
 {
-    s->flags |= ANALYTIC_DERIVS;
+    s->flags |= NL_ANALYTICAL;
 }
 
 static void destroy_genrs_array (GENERATOR **genrs, int n)
@@ -162,7 +164,7 @@ static int nls_dynamic_check (nlspec *s, char *formula)
     genr = genr_compile(formula, s->Z, s->dinfo, OPT_P, &err);
 
     if (!err && genr_is_autoregressive(genr)) {
-	s->flags |= NLS_AUTOREG;
+	s->flags |= NL_AUTOREG;
     }
 
     /* restore the dependent variable */
@@ -335,6 +337,14 @@ static int nls_genr_setup (nlspec *s)
 	}
 #endif
     }
+
+    if (!err && s->hesscall != NULL) {
+	s->hgen = genr_compile(s->hesscall, s->Z, s->dinfo, 
+			       OPT_P | OPT_U, &err);
+	if (!err) {
+	    err = execute_genr(s->hgen, s->Z, s->dinfo, s->prn);
+	} 
+    }	
 
     if (err) {
 	destroy_genrs_array(genrs, ngen);
@@ -1107,7 +1117,7 @@ static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
     return err;
 }
 
-/* analytical derivatives, used in the context of BFGS */
+/* for use with analytical derivatives */
 
 static int get_mle_gradient (double *b, double *g, int n, 
 			     BFGS_CRIT_FUNC llfunc,
@@ -1196,6 +1206,56 @@ static int get_mle_gradient (double *b, double *g, int n,
     }
 
     return err;
+}
+
+static int get_mle_hessian (double *b, gretl_matrix *H, void *p)
+{
+    nlspec *spec = (nlspec *) p;
+    int k = H->rows;
+    int err;
+
+    if (b != NULL) {
+	update_coeff_values(b, spec);
+    }
+
+    err = execute_genr(spec->hgen, spec->Z, spec->dinfo, spec->prn); 
+
+    if (!err) {
+	gretl_matrix *uH = get_matrix_by_name(spec->hname);
+
+	if (uH == NULL) {
+	    err = E_UNKVAR;
+	} else if (uH->rows != k || uH->cols != k) {
+	    err = E_NONCONF;
+	} else {
+	    gretl_matrix_copy_values(H, uH);
+	}
+    }
+
+    return err;
+}
+
+static gretl_matrix *mle_hessian_inverse (nlspec *spec, int *err)
+{
+    int k = spec->ncoeff;
+    gretl_matrix *H = gretl_matrix_alloc(k, k);
+
+    if (H == NULL) {
+	*err = E_ALLOC;
+    } else {
+	*err = get_mle_hessian(NULL, H, spec);
+    }
+
+    if (!*err) {
+	*err = gretl_invert_symmetric_matrix(H);
+	if (*err) {
+	    fprintf(stderr, "mle_hessian_inverse: failed\n");
+	    gretl_matrix_free(H);
+	    H = NULL;
+	}
+    }
+
+    return H;
 }
 
 /* Compute auxiliary statistics and add them to the NLS 
@@ -1462,7 +1522,7 @@ static char *adjust_saved_nlfunc (char *s)
     return s;
 }
 
- /* Attach additional spcification info to make it possible to
+ /* Attach additional specification info to make it possible to
     reconstruct the model from the saved state.  We need this
     for the "Modify model" option in the gretl GUI, and may
     also make use of it for bootstrapping NLS models.
@@ -1508,6 +1568,10 @@ static int nl_model_add_spec_info (MODEL *pmod, nlspec *spec)
 	    pprintf(prn, "deriv %s = %s\n", spec->params[i].name,
 		    spec->params[i].deriv);
 	}
+    }
+
+    if (spec->hesscall != NULL) {
+	pprintf(prn, "hessian %s\n", spec->hesscall);
     }
 
     pprintf(prn, "end %s\n", cmd);
@@ -1658,7 +1722,7 @@ add_fit_resid_to_model (MODEL *pmod, nlspec *spec, double *uhat,
 	}
     }
 
-    if (perfect || (spec->flags & NLS_AUTOREG)) {
+    if (perfect || (spec->flags & NL_AUTOREG)) {
 	pmod->rho = pmod->dw = NADBL;
     }
 }
@@ -1859,7 +1923,7 @@ static MODEL GNR (nlspec *spec, const double **Z, DATAINFO *pdinfo,
 	gretl_model_set_int(&gnr, "iters", iters);
 	gretl_model_set_double(&gnr, "tol", spec->tol);
 	transcribe_nls_function(&gnr, spec->nlfunc);
-	if (spec->flags & NLS_AUTOREG) {
+	if (spec->flags & NL_AUTOREG) {
 	    gretl_model_set_int(&gnr, "dynamic", 1);
 	}
     }
@@ -1956,9 +2020,13 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
     }
 
     if (!pmod->errcode) {
-	gretl_model_set_int(pmod, "fncount", spec->fncount);
-	gretl_model_set_int(pmod, "grcount", spec->grcount);
-	gretl_model_set_double(pmod, "tol", spec->tol);
+	if (spec->flags & NL_NEWTON) {
+	    gretl_model_set_int(pmod, "iters", spec->fncount);
+	} else {
+	    gretl_model_set_int(pmod, "fncount", spec->fncount);
+	    gretl_model_set_int(pmod, "grcount", spec->grcount);
+	    gretl_model_set_double(pmod, "tol", spec->tol);
+	}
     }
 
     /* mask invalid stats */
@@ -2037,6 +2105,11 @@ static void clear_nlspec (nlspec *spec)
     }
     spec->ngenrs = 0;
     spec->generr = 0;
+
+    if (spec->hgen != NULL) {
+	destroy_genr(spec->hgen);
+    }
+    free(spec->hesscall);
 
     free(spec->nlfunc);
     spec->nlfunc = NULL;
@@ -2234,7 +2307,8 @@ static int check_derivatives (nlspec *spec, PRN *prn)
 
 static int mle_calculate (nlspec *s, PRN *prn)
 {
-    BFGS_GRAD_FUNC gradfun = NULL;
+    BFGS_GRAD_FUNC gradfunc = NULL;
+    HESS_FUNC hessfunc = NULL;
     int maxit, use_newton = 0;
     int err = 0;
 
@@ -2249,7 +2323,13 @@ static int mle_calculate (nlspec *s, PRN *prn)
     }
 
     if (!err) {
-	gradfun = (analytic_mode(s))? get_mle_gradient : NULL;
+	if (analytic_mode(s)) {
+	    gradfunc = get_mle_gradient;
+	}
+	if (s->hesscall != NULL) {
+	    hessfunc = get_mle_hessian;
+	    s->flags |= NL_AHESS;
+	}
     }
 
     if (!err && use_newton) {
@@ -2257,24 +2337,27 @@ static int mle_calculate (nlspec *s, PRN *prn)
 	double gradtol = 1.0e-7;
 
 	maxit = 100;
+	s->flags |= NL_NEWTON;
 	err = newton_raphson_max(s->coeff, s->ncoeff, maxit, 
 				 crittol, gradtol, &s->fncount, 
 				 C_LOGLIK, get_mle_ll, 
-				 gradfun, NULL, s,
+				 gradfunc, hessfunc, s,
 				 s->opt, s->prn);
     } else if (!err) {
 	maxit = 500;
 	err = BFGS_max(s->coeff, s->ncoeff, maxit, s->tol, 
 		       &s->fncount, &s->grcount, 
-		       get_mle_ll, C_LOGLIK, gradfun, s,
+		       get_mle_ll, C_LOGLIK, gradfunc, s,
 		       NULL, s->opt, s->prn);
     }
 
     if (!err && (s->opt & (OPT_H | OPT_R))) {
 	/* doing Hessian or QML covariance matrix */
-	if (analytic_mode(s)) {
+	if (hessfunc != NULL) {
+	    s->Hinv = mle_hessian_inverse(s, &err);
+	} else if (analytic_mode(s)) {
 	    s->Hinv = hessian_inverse_from_score(s->coeff, s->ncoeff, 
-						 gradfun, get_mle_ll,
+						 gradfunc, get_mle_ll,
 						 s, &err);
 	} else {
 	    s->Hinv = numerical_hessian_inverse(s->coeff, s->ncoeff, 
@@ -2479,10 +2562,8 @@ static int lm_approximate (nlspec *spec, PRN *prn)
 /**
  * nlspec_add_param_with_deriv:
  * @spec: pointer to nls specification.
- * @dstr: string specifying a derivative with respect to a
+ * @s: string specifying a derivative with respect to a
  *   parameter of the regression function.
- * @Z: data array.
- * @pdinfo: information on dataset.
  *
  * Adds an analytical derivative to @spec.  This pointer must
  * have previously been obtained by a call to nlspec_new().
@@ -2497,11 +2578,9 @@ static int lm_approximate (nlspec *spec, PRN *prn)
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int 
-nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
-			     const double **Z, const DATAINFO *pdinfo)
+int nlspec_add_param_with_deriv (nlspec *spec, const char *s)
 {
-    const char *p = dstr;
+    const char *p = s;
     char *name = NULL;
     char *deriv = NULL;
     int err = 0;
@@ -2518,7 +2597,7 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
 
     err = equation_get_lhs_and_rhs(p, &name, &deriv);
     if (err) {
-	fprintf(stderr, "parse error in deriv string: '%s'\n", dstr);
+	fprintf(stderr, "parse error in deriv string: '%s'\n", s);
 	return E_PARSE;
     }
 
@@ -2536,6 +2615,32 @@ nlspec_add_param_with_deriv (nlspec *spec, const char *dstr,
 
     if (!err) {
 	set_analytic_mode(spec);
+    }
+
+    return err;
+}
+
+static int nlspec_add_hessian (nlspec *spec, const char *hesscall)
+{
+    int err;
+
+    if (spec->ci != MLE) {
+	/* we only do this for MLE */
+	return E_TYPES;
+    }
+
+    if (*spec->hname != '\0') {
+	/* Hessian already added */
+	return E_DATA;
+    }
+
+    err = optimizer_get_matrix_name(hesscall, spec->hname);
+
+    if (!err) {
+	spec->hesscall = gretl_strdup(hesscall);
+	if (spec->hesscall == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
     return err;
@@ -2710,7 +2815,8 @@ void nlspec_set_t1_t2 (nlspec *spec, int t1, int t2)
 #define param_line(s) (!strncmp(s, "deriv ", 6) || \
                        !strncmp(s, "params ", 7) || \
                        !strncmp(s, "orthog ", 7) || \
-                       !strncmp(s, "weights ", 8))
+                       !strncmp(s, "weights ", 8) || \
+                       !strncmp(s, "hessian ", 8))
 
 #define cmd_start(s) (!strncmp(s, "nls ", 4) || \
                       !strncmp(s, "mle ", 4) || \
@@ -2766,7 +2872,7 @@ int nl_parse_line (int ci, const char *line, const double **Z,
 				       "line and analytical derivatives"));
 		    err = E_PARSE;
 		} else {
-		    err = nlspec_add_param_with_deriv(s, line, Z, pdinfo);
+		    err = nlspec_add_param_with_deriv(s, line);
 		}
 	    } else if (!strncmp(line, "params", 6)) {
 		if (numeric_mode(s)) {
@@ -2780,6 +2886,8 @@ int nl_parse_line (int ci, const char *line, const double **Z,
 		err = nlspec_add_orthcond(s, line + 6, Z, pdinfo);
 	    } else if (!strncmp(line, "weights", 7)) {
 		err = nlspec_add_weights(s, line + 7);
+	    } else if (!strncmp(line, "hessian", 7)) {
+		err = nlspec_add_hessian(s, line + 8);
 	    }
 	}
     } else if (parnames_line(line)) {
@@ -3043,7 +3151,7 @@ static MODEL real_nl_model (nlspec *spec, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!(spec->opt & OPT_Q)) {
+    if (!(spec->opt & OPT_Q) && !(spec->flags & NL_NEWTON)) {
 	pprintf(prn, _("Tolerance = %g\n"), spec->tol);
     }
 
@@ -3183,6 +3291,9 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->ngenrs = 0;
     spec->generr = 0;
 
+    spec->hgen = NULL;
+    spec->hesscall = NULL;
+
     spec->fvec = NULL;
     spec->jac = NULL;
     
@@ -3199,6 +3310,7 @@ nlspec *nlspec_new (int ci, const DATAINFO *pdinfo)
     spec->dv = 0;
     spec->lhtype = GRETL_TYPE_NONE;
     *spec->lhname = '\0';
+    *spec->hname = '\0';
     spec->parnames = NULL;
     spec->lhv = 0;
     spec->lvec = NULL;

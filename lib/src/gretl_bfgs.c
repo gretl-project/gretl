@@ -1443,8 +1443,7 @@ static int user_get_hessian (double *b, gretl_matrix *H,
    must be the first argument, given in pointer form
 */
 
-static int get_opt_matrix_name (umax *u, const char *fncall,
-				char *mname)
+int optimizer_get_matrix_name (const char *fncall, char *name)
 {
     const char *s = strchr(fncall, '(');
     int n, err = 0;
@@ -1462,7 +1461,7 @@ static int get_opt_matrix_name (umax *u, const char *fncall,
 	    if (n >= VNAMELEN) {
 		err = E_DATA;
 	    } else {
-		strncat(mname, s, n);
+		strncat(name, s, n);
 	    }
 	}
     }
@@ -1495,7 +1494,7 @@ static int user_gen_setup (umax *u,
 
     if (!err && gradcall != NULL) {
 	/* process gradient formula */
-	err = get_opt_matrix_name(u, gradcall, u->gmname);
+	err = optimizer_get_matrix_name(gradcall, u->gmname);
 	if (!err) {
 	    u->gg = genr_compile(gradcall, pZ, pdinfo, OPT_P | OPT_U, &err);
 	    if (!err) {
@@ -1506,7 +1505,7 @@ static int user_gen_setup (umax *u,
 
     if (!err && hesscall != NULL) {
 	/* process Hessian formula */
-	err = get_opt_matrix_name(u, hesscall, u->hmname);
+	err = optimizer_get_matrix_name(hesscall, u->hmname);
 	if (!err) {
 	    u->gh = genr_compile(hesscall, pZ, pdinfo, OPT_P | OPT_U, &err);
 	    if (!err) {
