@@ -1,4 +1,4 @@
-version 1.9.5, in progress
+2011-04-22 version 1.9.5
 
 Matrix operators: "B / A" now has the same semantics as 
 Octave/Matlab "matrix right division"; for square A, it's in
