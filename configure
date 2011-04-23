@@ -669,6 +669,7 @@ READLINE_CFLAGS
 new_readline
 have_readline
 OPENMP_CFLAGS
+SSE2_CFLAGS
 MKLANG
 HOSTCC
 OTOOL64
@@ -14119,6 +14120,8 @@ if test "${enable_sse2+set}" = set; then :
 fi
 
   sse2_result=no
+  save_CFLAGS=$CFLAGS
+  SSE2_CFLAGS=
   if test ! "$enable_sse2" = no; then
     if test "x$SSE2_CFLAGS" = "x" ; then
       if test "x$SUNCC" = "xyes"; then
@@ -14132,7 +14135,6 @@ fi
     fi
 
     have_sse2_intrinsics=no
-    save_CFLAGS=$CFLAGS
     CFLAGS="$SSE2_CFLAGS $CFLAGS"
 
     cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -14195,12 +14197,12 @@ fi
     if test "$sse2_result" = "yes" ; then
        $as_echo "#define USE_SSE2 1" >>confdefs.h
 
-    else
-       CFLAGS="$save_CFLAGS"
     fi
   fi
+  CFLAGS="$save_CFLAGS"
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $sse2_result" >&5
 $as_echo "$sse2_result" >&6; }
+
 
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use OpenMP" >&5

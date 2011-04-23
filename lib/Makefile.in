@@ -249,7 +249,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CCV) -c $(CFLAGS)
 %.lo: %.c
 	$(CCECHO)
 	$(AMP)$(COMPILE) -o $@ $<
-	$(AMP)$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
+	$(AMP)$(CCV) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d
 
 $(LIBGRETL): .deps $(LOBJS) $(AUX_LOBJ)
 	$(LDECHO)
