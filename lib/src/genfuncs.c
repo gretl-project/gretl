@@ -418,8 +418,31 @@ int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
 	s++;
     }
 
-    if (s < pdinfo->t2) {
-	y[s] = x[s];
+    if (s == pdinfo->t2) {
+	/* no usable data */
+	return 0;
+    }
+
+    y[s] = x[s];
+
+    if (dataset_is_panel(pdinfo)) {
+	int k;
+
+	for (t=s+1; t<=pdinfo->t2; t++) {
+	    if (t % pdinfo->pd == 0) {
+		/* first obs for panel unit */
+		for (k=0; k<pdinfo->pd; k++) {
+		    if (!na(x[t+k])) {
+			t = t + k;
+			y[t] = x[t];
+			break;
+		    }
+		}
+	    } else if (!na(y[t-1]) && !na(x[t])) {
+		y[t] = y[t-1] + x[t];
+	    }
+	}
+    } else {
 	for (t=s+1; t<=pdinfo->t2 && !na(x[t]); t++) {
 	    y[t] = y[t-1] + x[t];
 	}
