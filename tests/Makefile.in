@@ -10,13 +10,14 @@ GMP_LIBS = @GMP_LIBS@
 FLIB = @FLIB@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
+SSE2_OPT = @SSE2_CFLAGS@
 OMP_OPT = @OPENMP_CFLAGS@
 
 ifeq ($(CC),)
   CC = gcc
 endif
 
-CCO = $(CC) $(OMP_OPT)
+CCO = $(CC) $(SSE2_OPT) $(OMP_OPT)
 
 LIBGRETL = ../lib/libgretl-1.0.la
 RAND_LIBS = $(LIBGRETL)

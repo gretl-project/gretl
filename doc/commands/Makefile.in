@@ -12,7 +12,10 @@ XSLT_LIBS = @XSLT_LIBS@
 GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 
+SSE2_OPT = @SSE2_CFLAGS@
 OMP_OPT = @OPENMP_CFLAGS@
+
+CCV = $(CC) $(SSE2_OPT) $(OMP_OPT)
 
 prefix = @prefix@
 datadir = @datadir@
@@ -73,19 +76,19 @@ bbl2txt: bbl2txt.c
 	$(CC) $(CFLAGS) -o $@ $< 
 
 skeleton: skeleton.o
-	$(LIBTOOL) --mode=link $(CC) $(OMP_OPT) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
 validate: validate.o
-	$(LIBTOOL) --mode=link $(CC) $(OMP_OPT) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
 topiclist: topiclist.o
-	$(LIBTOOL) --mode=link $(CC) $(OMP_OPT) $(LDFLAGS) -o $@ $^ $(GRETLLIB) $(GLIB_LIBS)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB) $(GLIB_LIBS)
 
 tables: tables.o
-	$(LIBTOOL) --mode=link $(CC) $(OMP_OPT) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
 matfuncs: matfuncs.o
-	$(LIBTOOL) --mode=link $(CC) $(OMP_OPT) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
+	$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $^ $(GRETLLIB)
 
 skeleton.o: skeleton.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<

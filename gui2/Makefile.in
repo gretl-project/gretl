@@ -8,6 +8,7 @@ libdir = @libdir@
 CC = @CC@
 CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
+SSE2_OPT = @SSE2_CFLAGS@
 OMP_OPT = @OPENMP_CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
@@ -101,9 +102,9 @@ ifeq ($(quiet_build),yes)
   AMP = @
   CCECHO = @echo "  CC    $@"
   LDECHO = @echo "  LD    $@" 
-  CCV = $(CC) $(OMP_OPT) > /dev/null
+  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT) > /dev/null
 else
-  CCV = $(CC) $(OMP_OPT)
+  CCV = $(CC) $(SSE2_OPT) $(OMP_OPT)
 endif
 
 DEFS = $(NLSDEF) $(GNOMEDEF)

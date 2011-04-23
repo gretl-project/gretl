@@ -18,6 +18,8 @@ AC_DEFUN([AC_C_SSE2],
     [enable_sse2=$enableval]
   )
   sse2_result=no
+  save_CFLAGS=$CFLAGS
+  SSE2_CFLAGS=
   if test ! "$enable_sse2" = no; then
     if test "x$SSE2_CFLAGS" = "x" ; then
       if test "x$SUNCC" = "xyes"; then
@@ -31,7 +33,6 @@ AC_DEFUN([AC_C_SSE2],
     fi
   
     have_sse2_intrinsics=no
-    save_CFLAGS=$CFLAGS
     CFLAGS="$SSE2_CFLAGS $CFLAGS"  
   
     AC_COMPILE_IFELSE([
@@ -71,10 +72,10 @@ int main (void)
  
     if test "$sse2_result" = "yes" ; then      
        AC_DEFINE(USE_SSE2)
-    else
-       CFLAGS="$save_CFLAGS"  
-    fi      
+    fi 
   fi
+  CFLAGS="$save_CFLAGS"
   AC_MSG_RESULT([$sse2_result])
+  AC_SUBST([SSE2_CFLAGS])
 ])
 
