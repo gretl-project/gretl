@@ -40,8 +40,8 @@ double **Z;
 
 int verbose;
 int use_derivs = 0;
-double avg_coeff_min = 0.0;
-double avg_sd_min = 0.0;
+int avg_coeff_min = 0;
+int avg_sd_min = 0;
 int n_ok = 0;
 int n_fail = 0;
 int total_iters = 0;
@@ -55,8 +55,8 @@ int ok_sderrs = 0;
 
 int n_analytic = 0;
 
-double worst_coeff_acc = 20.0;
-double worst_sderr_acc = 20.0;
+int worst_coeff_acc = 20;
+int worst_sderr_acc = 20;
 char worst_coeff_name[16];
 char worst_sderr_name[16];
 
@@ -69,18 +69,18 @@ const char *misra1a_derivs[] = {
 };
 
 const char *misra1b_derivs[] = {
-    "1-1/(1 + .5*b2*x)**2",
-    "b1*x/(1 + .5*b2*x)**3"
+    "1-1/(1 + .5*b2*x)^2",
+    "b1*x/(1 + .5*b2*x)^3"
 };
 
 const char *misra1c_derivs[] = {
-    "1-(1+2*b2*x)**(-.5)",
-    "b1*x/((1+2*b2*x)**(1.5))"
+    "1-(1+2*b2*x)^(-.5)",
+    "b1*x/((1+2*b2*x)^(1.5))"
 };
 
 const char *misra1d_derivs[] = {
     "b2*x/(1+b2*x)",
-    "(b1*x/(1+b2*x)) - (b1*b2*x**2)/((1+b2*x)**2)"
+    "(b1*x/(1+b2*x)) - (b1*b2*x^2)/((1+b2*x)^2)"
 };
 
 const char *nelson_derivs[] = {
@@ -90,18 +90,18 @@ const char *nelson_derivs[] = {
 };
 
 const char *danwood_derivs[] = {
-    "x**b2",
-    "b1*x**b2*log(x)"
+    "x^b2",
+    "b1*x^b2*log(x)"
 };
 
 const char *hahn_derivs[] = {
-    "1/(1+b5*x+b6*x**2+b7*x**3)",
-    "x/(1+b5*x+b6*x**2+b7*x**3)",
-    "x**2/(1+b5*x+b6*x**2+b7*x**3)",
-    "x**3/(1+b5*x+b6*x**2+b7*x**3)",
-    "-(b1+b2*x+b3*x**2+b4*x**3)*x/(1+b5*x+b6*x**2+b7*x**3)**2",
-    "-(b1+b2*x+b3*x**2+b4*x**3)*x^2/(1+b5*x+b6*x**2+b7*x**3)**2",
-    "-(b1+b2*x+b3*x**2+b4*x**3)*x^3/(1+b5*x+b6*x**2+b7*x**3)**2"
+    "1/(1+b5*x+b6*x^2+b7*x^3)",
+    "x/(1+b5*x+b6*x^2+b7*x^3)",
+    "x^2/(1+b5*x+b6*x^2+b7*x^3)",
+    "x^3/(1+b5*x+b6*x^2+b7*x^3)",
+    "-(b1+b2*x+b3*x^2+b4*x^3)*x/(1+b5*x+b6*x^2+b7*x^3)^2",
+    "-(b1+b2*x+b3*x^2+b4*x^3)*x^2/(1+b5*x+b6*x^2+b7*x^3)^2",
+    "-(b1+b2*x+b3*x^2+b4*x^3)*x^3/(1+b5*x+b6*x^2+b7*x^3)^2"
 };
 
 const char *lanczos_derivs[] = {
@@ -119,16 +119,16 @@ const char *boxbod_derivs[] = {
 };
 
 const char *mgh09_derivs[] = {
-    "(x**2+x*b2) / (x**2+x*b3+b4)",
-    "b1*x / (x**2+x*b3+b4)",
-    "-(b1*(x**2+x*b2) / ((x**2+x*b3+b4)**2))*x",
-    "-b1*(x**2+x*b2) / ((x**2+x*b3+b4)**2)"
+    "(x^2+x*b2) / (x^2+x*b3+b4)",
+    "b1*x / (x^2+x*b3+b4)",
+    "-(b1*(x^2+x*b2) / ((x^2+x*b3+b4)^2))*x",
+    "-b1*(x^2+x*b2) / ((x^2+x*b3+b4)^2)"
 };
 
 const char *mgh10_derivs[] = {
     "exp(b2/(x+b3))",
     "b1*exp(b2/(x+b3)) / (x+b3)",
-    "-b1*b2*exp(b2/(x+b3)) / ((x+b3)**2)"
+    "-b1*b2*exp(b2/(x+b3)) / ((x+b3)^2)"
 };
 
 const char *mgh17_derivs[] = {
@@ -141,8 +141,8 @@ const char *mgh17_derivs[] = {
 
 const char *chwirut_derivs[] = {
     "-x*exp(-b1*x) / (b2+b3*x)",
-    "-exp(-b1*x) / ((b2+b3*x)**2)",
-    "-x * exp(-b1*x) / ((b2+b3*x)**2)"
+    "-exp(-b1*x) / ((b2+b3*x)^2)",
+    "-x * exp(-b1*x) / ((b2+b3*x)^2)"
 };
 
 const char *eckerle_derivs[] = {
@@ -162,22 +162,22 @@ const char *kirby_derivs[] = {
 const char *gauss_derivs[] = {
     "exp(-b2*x)",
     "-b1*x*exp(-b2*x)",
-    "exp(-(x-b4)**2/b5**2)",
-    "2*b3*(x-b4)*exp(-(x-b4)**2/b5**2)/b5**2",
-    "2*b3*(x-b4)**2*exp(-(x-b4)**2/b5**2)/b5**3",
-    "exp(-(x-b7)**2/b8**2)",
-    "2*b6*(x-b7)*exp(-(x-b7)**2/b8**2)/b8**2",
-    "2*b6*(x-b7)**2*exp(-(x-b7)**2/b8**2)/b8**3"
+    "exp(-(x-b4)^2/b5^2)",
+    "2*b3*(x-b4)*exp(-(x-b4)^2/b5^2)/b5^2",
+    "2*b3*(x-b4)^2*exp(-(x-b4)^2/b5^2)/b5^3",
+    "exp(-(x-b7)^2/b8^2)",
+    "2*b6*(x-b7)*exp(-(x-b7)^2/b8^2)/b8^2",
+    "2*b6*(x-b7)^2*exp(-(x-b7)^2/b8^2)/b8^3"
 };
 
 const char *enso_derivs[] = {
     "1",
     "cos(pi*x/6)",
     "sin(pi*x/6)",
-    "(2/b4**2)*b5*sin(2*pi*x/b4)*pi*x - (2/b4**2)*b6*cos(2*pi*x/b4)*pi*x",
+    "(2/b4^2)*b5*sin(2*pi*x/b4)*pi*x - (2/b4^2)*b6*cos(2*pi*x/b4)*pi*x",
     "cos(2*pi*x/b4)",
     "sin(2*pi*x/b4)",
-    "(2/b7**2)*b8*sin(2*pi*x/b7)*pi*x - (2/b7**2)*b9*cos(2*pi*x/b7)*pi*x",
+    "(2/b7^2)*b8*sin(2*pi*x/b7)*pi*x - (2/b7^2)*b9*cos(2*pi*x/b7)*pi*x",
     "cos(2*pi*x/b7)",
     "sin(2*pi*x/b7)"
 };
@@ -185,20 +185,20 @@ const char *enso_derivs[] = {
 const char *roszman_derivs[] = {
     "1",
     "-x",
-    "-1/((x-b4)*(1+(b3**2/(x-b4)**2))*pi)",
-    "-b3/((x-b4)**2*(1+(b3**2/(x-b4)**2))*pi)"
+    "-1/((x-b4)*(1+(b3^2/(x-b4)^2))*pi)",
+    "-b3/((x-b4)^2*(1+(b3^2/(x-b4)^2))*pi)"
 };
 
 const char *bennett_derivs[] = {
-    "(b2+x)**(-1/b3)",
-    "-b1*(b2+x)**(-1/b3) / (b3*(b2+x))",
-    "b1*(b2+x)**(-1/b3)*log(b2+x) / b3**2"
+    "(b2+x)^(-1/b3)",
+    "-b1*(b2+x)^(-1/b3) / (b3*(b2+x))",
+    "b1*(b2+x)^(-1/b3)*log(b2+x) / b3^2"
 };
 
 const char *rat42_derivs[] = {
     "1 / (1+exp(b2-b3*x))",
-    "-b1*exp(b2-b3*x) / (1+exp(b2-b3*x))**2",
-    "b1*x*exp(b2-b3*x) / (1+exp(b2-b3*x))**2"
+    "-b1*exp(b2-b3*x) / (1+exp(b2-b3*x))^2",
+    "b1*x*exp(b2-b3*x) / (1+exp(b2-b3*x))^2"
 };
 
 const char *rat43_derivs[] = {
@@ -266,8 +266,8 @@ static int print_derivs (char *line, PRN *prn)
 	    if (verbose) {
 		printf("%s\n", line);
 	    }
-	    err = nls_parse_line(NLS, line, (const double **) Z, 
-				 datainfo, prn);
+	    err = nl_parse_line(NLS, line, (const double **) Z, 
+				datainfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 		break;
@@ -276,6 +276,30 @@ static int print_derivs (char *line, PRN *prn)
     } else {
 	fprintf(stderr, "%s: no analytical derivs\n", tester.datname);
     }
+
+    return err;
+}
+
+static int print_params (char *line, PRN *prn)
+{
+    int i, err = 0;
+
+    strcpy(line, "params ");
+
+    for (i=0; i<tester.nparam; i++) {
+	strcat(line, tester.coeffs[i].name);
+	if (i < tester.nparam - 1) {
+	    strcat(line , " ");
+	} else {
+	    strcat(line , "\n");
+	}
+    }
+
+    err = nl_parse_line(NLS, line, (const double **) Z, 
+			datainfo, prn);
+    if (err) {
+	errmsg(err, prn);
+    }  
 
     return err;
 }
@@ -362,6 +386,9 @@ static int parse_model_line (char *s)
 	    *p = '(';
 	} else if (*p == ']') {
 	    *p = ')';
+	} else if (*p == '*' && *(p+1) == '*') {
+	    *p = '^';
+	    memmove(p+1, p+2, strlen(p+2) + 1);
 	}
 	p++;
     }
@@ -616,7 +643,7 @@ static int read_nist_nls_data (const char *fname)
 static void set_tolerance (void)
 {
     if (toler != 0.0) {
-	libset_set_double(NLS_TOLER, toler); /* libset.c */
+	set_nls_toler(toler); /* libset.c */
     }
 }
 
@@ -673,6 +700,31 @@ static void catch_arctan (void)
     }
 }
 
+static int doubles_differ (const char *v1, const char *v2)
+{
+    if ((!strcmp(v1, "inf") || !strcmp(v1, "nan")) && 
+	!strncmp(v2, "-999", 4)) {
+	return 0;
+    } else {
+	double diff = fabs(fabs(atof(v1)) - fabs(atof(v2)));
+
+	return diff > DBL_EPSILON;
+    }
+}
+
+static void print_result_error (int digits, 
+			 const char *v1, const char *v2, 
+			 const char *str)
+{
+    if (verbose) {
+	int missing = !strncmp(v2, "-999", 4);
+
+	printf("\nDisagreement at %d significant digits over %s:\n"
+	       " Certified value = %s, libgretl value = %s\n",
+	       digits, str, v1, (missing)? "NA" : v2);
+    }
+}
+
 int find_coeff_number (const MODEL *pmod, const char *param)
 {
     int i;
@@ -690,45 +742,50 @@ int find_coeff_number (const MODEL *pmod, const char *param)
     return -1;
 }
 
-#define mylog10(x) (log(x) / 2.3025850929940459)
-
-static double log_error (double q, double c, PRN *prn)
+static void estimates_ok (MODEL *pmod)
 {
-    double le = 0.0;
+    int i, j;
+    char v1[48], v2[48];
 
-    if (q == c) {
-	le = 15.0;
-	pprintf(prn, "%10.3f\n", le);
-    } else if (isinf(c)) {
-	/* certval is inf: can't really handle this? */
-	le = -log(0);
-	pprintf(prn, "%10.3f (log abs error)\n", le);
-    } else if (c == 0.0) {
-	le = -mylog10(fabs(q));
-	pprintf(prn, "%10.3f (log abs error)\n", le);
-    } else {
-	le = -mylog10(fabs(q - c) / fabs(c));
-	pprintf(prn, "%10.3f\n", le);
+    for (i=0; i<pmod->ncoeff; i++) {
+	j = find_coeff_number(pmod, tester.coeffs[i].name);
+
+	if (j < 0) {
+	    fprintf(stderr, "%s: ERROR: Couldn't find param '%s'\n",
+		    tester.datname, tester.coeffs[i].name);
+	    continue;
+	}
+
+	/* coefficients */
+	total_coeffs++;
+	sprintf(v1, "%#.*g", CHECK_DIGITS, tester.coeffs[i].val);
+	sprintf(v2, "%#.*g", CHECK_DIGITS, pmod->coeff[j]);
+	if (na(pmod->coeff[j])) {
+	    continue;
+	}
+	if (doubles_differ(v1, v2) == 0) {
+	    ok_coeffs++;
+	}
+
+	/* standard errors -- Lanczos1 is a special case */
+	if (strcmp(tester.datname, "Lanczos1")) {
+	    total_sderrs++;
+	    sprintf(v1, "%#.*g", CHECK_DIGITS, tester.coeffs[i].sderr);
+	    sprintf(v2, "%#.*g", CHECK_DIGITS, pmod->sderr[j]);
+	    if (na(pmod->sderr[j])) {
+		continue;
+	    }
+	    if (doubles_differ(v1, v2) == 0) {
+		ok_sderrs++;
+	    }
+	}
     }
-
-    if (isnan(le)) {
-	pprintf(prn, "q = %g, c = %g\n", q, c);
-    }
-
-    return le;
 }
 
-static 
-void get_accuracy (MODEL *pmod, double *coeff_acc, double *sderr_acc,
-		   PRN *prn)
+static int results_agree (MODEL *pmod, int digits, int errs, int *abort)
 {
-    char label[32];
-    double b_lemin = 32.0;
-    double s_lemin = 32.0;
-    double le;
     int i, j;
-
-    pprintf(prn, "\nstatistic   log relative error\n\n");
+    char v1[48], v2[48];
 
     for (i=0; i<pmod->ncoeff; i++) {
 	j = find_coeff_number(pmod, tester.coeffs[i].name);
@@ -737,39 +794,68 @@ void get_accuracy (MODEL *pmod, double *coeff_acc, double *sderr_acc,
 		    tester.datname, tester.coeffs[i].name);
 	    continue;
 	}
-	sprintf(label, "%s", tester.coeffs[i].name);
-	pprintf(prn, "%-12s", label); 
-	le = log_error(pmod->coeff[j], tester.coeffs[i].val, prn);
-	if (le < b_lemin) {
-	    b_lemin = le;
+	if (errs == 0) {
+	    sprintf(v1, "%#.*g", digits, tester.coeffs[i].val);
+	    sprintf(v2, "%#.*g", digits, pmod->coeff[j]);
+	    if (na(pmod->coeff[j])) *abort = 1;
+	    if (doubles_differ(v1, v2)) {
+		char s[32];
+
+		sprintf(s, "coeff for %s", tester.coeffs[i].name);
+		print_result_error(digits, v1, v2, s);
+		return 0;
+	    }
+	} else {
+	    sprintf(v1, "%#.*g", digits, tester.coeffs[i].sderr);
+	    sprintf(v2, "%#.*g", digits, pmod->sderr[j]);
+	    if (na(pmod->sderr[j])) *abort = 1;
+	    if (doubles_differ(v1, v2)) {
+		char s[32];
+
+		sprintf(s, "std err for %s", tester.coeffs[i].name);
+		print_result_error(digits, v1, v2, s);
+		return 0; 
+	    }
 	}
-	total_coeffs++;
-	if (le >= CHECK_DIGITS) {
-	    ok_coeffs++;
-	}
-	sprintf(label, "Std.Err.");
-	pprintf(prn, "%-12s", label);
-	le = log_error(pmod->sderr[j], tester.coeffs[i].sderr, prn);
-	if (le < s_lemin) {
-	    s_lemin = le;
-	}
-	total_sderrs++;
-	if (le >= CHECK_DIGITS) {
-	    ok_sderrs++;
-	}	
     }
 
-    *coeff_acc = b_lemin;
-    *sderr_acc = s_lemin;
+    return 1;
+}
+
+static void get_accuracy (MODEL *pmod, int *coeff_acc, int *sderr_acc)
+{
+    int digits, abort;
+
+    *coeff_acc = 0;
+    *sderr_acc = 0;
+
+    abort = 0;
+
+    for (digits=MAX_DIGITS; digits>=MIN_DIGITS && !abort; digits--) {
+	if (results_agree(pmod, digits, 0, &abort)) {
+	    *coeff_acc = digits;
+	    break;
+	}
+    }
+
+    abort = 0;
+
+    for (digits=MAX_DIGITS; digits>=MIN_DIGITS && !abort; digits--) {
+	if (results_agree(pmod, digits, 1, &abort)) {
+	    *sderr_acc = digits;
+	    break;
+	}
+    }
+
+    /* tallies */
+    estimates_ok(pmod);
 }
 
 static int real_run_check (int round, PRN *prn)
 {
-    double coeff_acc = 0.0;
-    double sderr_acc = 0.0;
+    int coeff_acc = 0, sderr_acc = 0, err = 0;
     char line[512];
     MODEL *pmod = NULL;
-    int err = 0;
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
@@ -786,30 +872,33 @@ static int real_run_check (int round, PRN *prn)
 
     if (!err) {
 	catch_log_depvar();
-	err = nls_parse_line(NLS, tester.model_spec, (const double **) Z, 
-			     datainfo, prn);
+	err = nl_parse_line(NLS, tester.model_spec, (const double **) Z, 
+			    datainfo, prn);
 	if (verbose) {
 	    printf("%s\n", tester.model_spec);
 	}
 	if (err) {
-	    fprintf(stderr, "%s: ERROR: in nls_parse_line\n '%s'\n",
+	    fprintf(stderr, "%s: ERROR: in nl_parse_line\n '%s'\n",
 		    tester.datname, tester.model_spec);
 	    errmsg(err, prn);
 	    return err;
 	}
     }
 
-    if (!err && use_derivs) {
-	err = print_derivs(line, prn);
+    if (!err) {
+	if (use_derivs) {
+	    err = print_derivs(line, prn);
+	} else {
+	    err = print_params(line, prn);
+	}
     }
 
     if (!err) {
-	*pmod = nls(&Z, datainfo, OPT_NONE, prn);
+	*pmod = nl_model(&Z, datainfo, OPT_NONE, prn);
 
 	if (pmod->errcode) {
 	    err = pmod->errcode;
-	    fprintf(stderr, "%s: ERROR: model error %d\n", 
-		    tester.datname, err);
+	    fprintf(stderr, "%s: ERROR: model error %d\n", tester.datname, err);
 	    errmsg(err, prn);
 	} else {
 	    if (verbose) {
@@ -820,7 +909,7 @@ static int real_run_check (int round, PRN *prn)
 	    print_tol = gretl_model_get_double(pmod, "tol");
 	    total_iters += gretl_model_get_int(pmod, "iters");
 
-	    get_accuracy(pmod, &coeff_acc, &sderr_acc, prn);
+	    get_accuracy(pmod, &coeff_acc, &sderr_acc);
 	    if (coeff_acc < worst_coeff_acc) {
 		worst_coeff_acc = coeff_acc;
 		strcpy(worst_coeff_name, tester.datname);
@@ -850,30 +939,27 @@ static int real_run_check (int round, PRN *prn)
     }
 
     if (!err) {
-	if (verbose) {
-	    printf("\n ***\n");
-	}
+	if (verbose) printf("\n ***\n");
 
 	if (coeff_acc >= 6) {
-	    printf(" coefficient accuracy = %.3f digits\n", coeff_acc);
+	    printf(" coefficient accuracy >= %d digits\n", coeff_acc);
 	} else if (coeff_acc >= MIN_DIGITS) {
-	    printf(" coefficient accuracy = %.3f digits\n", coeff_acc);
+	    printf(" coefficient accuracy >= %d digits\n", coeff_acc);
 	} else {
 	    printf(" min. coefficient accuracy < %d digits\n", MIN_DIGITS);
 	}
 
 	if (sderr_acc >= 6) {
-	    printf(" stderr accuracy = %.3f digits\n", sderr_acc);
+	    printf(" stderr accuracy >= %d digits\n", sderr_acc);
 	} else if (sderr_acc >= MIN_DIGITS) {
-	    printf(" stderr accuracy = %.3f digits\n", sderr_acc);
+	    printf(" stderr accuracy >= %d digits\n", sderr_acc);
 	} else {
 	    printf(" min. stderr accuracy < %d digits\n", MIN_DIGITS);
 	}
     }
 
-    if (verbose) {
+    if (verbose) 
 	printf("Round %d, error code = %d\n", round, err);
-    }
 	
     return err;
 }
@@ -881,13 +967,11 @@ static int real_run_check (int round, PRN *prn)
 static int run_gretl_nls_check (void)
 {
     int err1 = 0, err2 = 0;
-    PRN *prn;
+    PRN *prn = NULL;
 
     if (verbose) {
 	prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
-    } else {
-	prn = NULL;
-    }
+    } 
 
     err1 = real_run_check(1, prn);
     err2 = real_run_check(2, prn);
@@ -969,9 +1053,9 @@ static void print_nls_summary (void)
     printf("Cases using analytical derivatives = %d\n", n_analytic);
     printf("Number of estimation failures = %d\n", n_fail);
     printf("Avg. min. correct figures, coeffs, OK runs = %.3f\n",
-	   avg_coeff_min / n_ok);
+	   (double) avg_coeff_min / n_ok);
     printf("Avg. min. correct figures, std. errs, OK runs = %.3f\n",
-	   avg_sd_min / n_ok);
+	   (double) avg_sd_min / n_ok);
     printf("Proportion of coeffs OK to %d figs = %d/%d = %.3f\n",
 	   CHECK_DIGITS, ok_coeffs, total_coeffs, 
 	   (double) ok_coeffs / total_coeffs);
@@ -979,9 +1063,9 @@ static void print_nls_summary (void)
 	   CHECK_DIGITS, ok_sderrs, total_sderrs, 
 	   (double) ok_sderrs / total_sderrs);
     printf("Avg. number of iterations = %d\n", total_iters / n_ok);
-    printf("Worst minimum coefficient accuracy = %g figs (%s)\n",
+    printf("Worst minimum coefficient accuracy = %d figs (%s)\n",
 	   worst_coeff_acc, worst_coeff_name);
-    printf("Worst minimum std. error accuracy = %g figs (%s)\n",
+    printf("Worst minimum std. error accuracy = %d figs (%s)\n",
 	   worst_sderr_acc, worst_sderr_name);
     printf("(Note: the std err summary numbers exclude Lanczos1)\n");
 }
