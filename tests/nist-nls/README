@@ -1,0 +1,16 @@
+1. The C program nist-nls-test needs to built; this requires that
+   libgretl be installed along with the gretl header files.
+   
+2. If you don't already have the NIST NLS data files, you need to
+   grab them: this can be done using get_data.sh (requires wget).
+
+3. After that you can run the script ./run_tests.sh, which will
+   produce an out.DATE file and an errlog.DATE.
+
+4. Options to ./run_tests.sh:
+ 
+   -a           use analytic derivatives (default is numeric)
+   -v           verbose output
+   -t tol       use tolerance "tol" instead of gretl's default
+   -f filename  run a single specified NIST test (default is all) 
+
