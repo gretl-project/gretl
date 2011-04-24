@@ -130,6 +130,5 @@ int main (void)
     libgretl_cleanup();
 
     return 0;
-
 }
 

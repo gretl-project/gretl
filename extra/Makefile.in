@@ -5,7 +5,7 @@ VPATH = $(topsrc)/extra
 CFLAGS = -g -O2 -Wall `pkg-config --cflags gretl`
 LDFLAGS = `pkg-config --libs gretl`
 
-all: simple_client hsk_test
+all: simple_client
 
 clean:
 	rm -f ./simple_client core 
