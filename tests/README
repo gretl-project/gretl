@@ -1,13 +1,10 @@
 Here's a checker program that runs libgretl against the NIST reference
 datasets for linear regression, for details on which see
 
-http://www.nist.gov/itl/div898/strd/general/main.html
+http://itl.nist.gov/div898/strd/general/main.html
 
 The checker validates libgretl and (if available) the gretl multiple
 precision plugin.
-
-There's also a tester for the Pseudo-Random Number Generator (PRNG) in
-gretl -- see below.
 
 And there's a sub-dir named nist-nls with a rig for checking gretl's
 nonlinear regression code against the NIST reference datasets.
@@ -15,10 +12,7 @@ nonlinear regression code against the NIST reference datasets.
 NIST Results with libgretl
 ==========================
 
-If all is well there should be exactly one failure, namely gretl
-will not be able to obtain estimates on the Filip model (a 10th degree
-polynomial which exhibits very high collinearity).  Any other failures
-should be cause for concern.
+If all is well there should be no failures on the 11 NIST tests.
 
 The checker program reads the "certified values" and data out of each
 NIST file, runs a regression using libgretl, and compares the libgretl
@@ -37,8 +31,7 @@ NIST Results with multiple precision plugin
 
 If the Gnu Multiple Precision library (GMP) was detected when gretl
 was configured, and gretl's GMP plugin was built, then each NIST test
-will be repeated using the plugin.  In this case the Filip model
-should be estimated without difficulty.  All tests should give results
+will be repeated using the plugin.  All tests should give results
 that agree with the NIST certified values to at least 12 significant
 figures.
 
@@ -51,41 +44,9 @@ raising the precision used in the calculations.  The default for
 gretl's multiple precision plugin is to assign 256 bits for the
 representation of each floating point number, which is enough for most
 purposes.  You can increase this value by setting the environment
-variable GRETL_MP_BITS.  On my IBM Thinkpad A21m (pentium 3), I find I
-can get zero standard errors on Wampler1 and Wampler2 by running the
-checker thus:
+variable GRETL_MP_BITS, for example:
 
 GRETL_MP_BITS=4096 ./nistcheck -v
 
-
-Check on gretl's PRNG
-=====================
-
-Also included here is a slightly modified version of George
-Marsaglia's "diehard" tester for Pseudo-Random Number Generators.
-(The modifications do not concern the substance of Marsaglia's test
-suite; they are purely to do with convenience when running his program
-as a check on gretl.)
-
-To run this set of tests, do "make randcheck".  It's possible you may
-have to edit the Makefile, if the "diehard" program is not produced
-correctly (perhaps modifying the libraries that are required to link
-what was originally a FORTRAN program).  If the test programs build
-OK, you should find in this directory a large (around 11MB) file of
-pseudo-random unsigned integers generated via gretl's PRNG, and a file
-named "gretl_rand.txt" containing a summary of the analysis.  (You
-should also see the results zipping by on standard output, probably
-too fast to read.)  Basically, you are looking for p-values from the
-various tests uniformly distributed on [0,1).  If you should see
-blocks of p-values of 0.0 or 1.0, something is seriously wrong.
-
-Doing "make clean" in here will delete the big file of random numbers,
-along with the auxiliary programs.
-
-For more details on the tests see marsaglia.txt or diehard.txt, or
-visit the web site from which these tests derive at
-
-http://stat.fsu.edu/pub/diehard/
-
 Allin Cottrell
-March 2003
+last updated April 2011

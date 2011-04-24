@@ -44,31 +44,13 @@ nistcheck: nistcheck.o $(LIBGRETL)
 nistcheck.o: nistcheck.c
 	$(CCO) $(CFLAGS) $(XML_CFLAGS) -c $<
 
-randcheck: diehard mtrand
-	if [ `pwd` != "$(topsrc)/tests" ] ; then \
-	cp $(topsrc)/tests/operm5.data . ; \
-	cp $(topsrc)/tests/randtests.txt . ; fi
-	./mtrand && ./diehard
-
-diehard: diehard.c
-	$(CC) -I$(topsrc)/lib/src -o $@ $< $(FLIB) -lm
-
-mtrand: mtrand.o
-	../libtool --mode=link $(CC) -o $@ $< $(RAND_LIBS)
-
 .PHONY :
 
 check: nistcheck
 	./nistcheck $(topsrc)/tests
 
-qrcheck: nistcheck
-	GRETL_USE_QR=1 ./nistcheck $(topsrc)/tests
-
 clean:
-	rm -f nistcheck diehard mtrand *.o test.out
-	rm -f gretl_output.32 gretl_rand.txt
-	if [ `pwd` != "$(topsrc)/tests" ] ; then \
-	rm -f operm5.data randtests.txt ; fi
+	rm -f nistcheck *.o test.out
 	rm -rf .libs
 
 distclean: clean
