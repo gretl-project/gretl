@@ -2260,14 +2260,14 @@ struct addon_info {
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
     struct addon_info addons[] = {
-	{ "gig", "GARCH variants", "/menubar/Model/TSModels" },
-	{ "ivpanel", "Panel IV model", "/menubar/Model/PanelModels" }
+	{ "gig",     N_("GARCH variants"), "/menubar/Model/TSModels" },
+	{ "ivpanel", N_("Panel IV model"), "/menubar/Model/PanelModels" }
     };
     int i, n = sizeof addons / sizeof addons[0];
 
     for (i=0; i<n; i++) {
 	add_package_to_menu(addons[i].pkgname,
-			    addons[i].label,
+			    _(addons[i].label),
 			    addons[i].menupath,
 			    vwin);
     }
@@ -2312,7 +2312,7 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 void maybe_add_packages_to_model_menus (windata_t *vwin)
 {
     struct addon_info model_addons[] = {
-	{ "bandplot", "Confidence band plot", "/menubar/Graphs" }
+	{ "bandplot", N_("Confidence band plot"), "/menubar/Graphs" }
     };
     int i, n = sizeof model_addons / sizeof model_addons[0];
     char *path;
@@ -2355,7 +2355,7 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
 	}
 
 	if (!err) {
-	    add_package_to_menu(addon->pkgname, addon->label, 
+	    add_package_to_menu(addon->pkgname, _(addon->label), 
 				addon->menupath, vwin);
 	}
 
