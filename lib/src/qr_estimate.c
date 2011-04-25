@@ -314,7 +314,7 @@ static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
 
 /* Calculate W(t)-transpose * W(t-lag) */
 
-static void wtw (gretl_matrix *wt, gretl_matrix *X, 
+static void wtw (gretl_matrix *wt, const gretl_matrix *X, 
 		 int n, int t, int lag)
 {
     int i, j;
@@ -444,15 +444,15 @@ int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt)
     return err;
 }
 
-static int prewhiten_uhat (double **pu, int T, double *pa)
+static double *prewhiten_uhat (const double *u, int T, double *pa)
 {
     double a, num = 0.0, den = 0.0;
-    double *uw, *u = *pu;
+    double *uw;
     int sgn, t;
 
     uw = malloc(T * sizeof *uw);
     if (uw == NULL) {
-	return E_ALLOC;
+	return NULL;
     }
 
     for (t=1; t<T; t++) {
@@ -471,9 +471,121 @@ static int prewhiten_uhat (double **pu, int T, double *pa)
     } 
 
     *pa = a;
-    *pu = uw;
 
-    return 0;
+    return uw;
+}
+
+gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
+		       VCVInfo *vi, int *err)
+{
+    gretl_matrix *XOX = NULL, *Wtj = NULL, *Gj = NULL;
+    int prewhiten = libset_get_bool(PREWHITEN);
+    int kern = libset_get_int(HAC_KERNEL);
+    int T = X->rows;
+    int k = X->cols;
+    int p, j, t;
+    double wj, uu;
+    double a = 0, bt = 0;
+    double *u = NULL;
+
+    if (prewhiten) {
+	u = prewhiten_uhat(uhat->val, T, &a);
+	if (u == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    } else {
+	u = uhat->val;
+    }
+
+    XOX = gretl_zero_matrix_new(k, k);
+    Wtj = gretl_matrix_alloc(k, k);
+    Gj = gretl_matrix_alloc(k, k);
+
+    if (XOX == NULL || Wtj == NULL || Gj == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* determine the bandwidth setting */
+
+    if (data_based_hac_bandwidth()) {
+	gretl_matrix umat;
+
+	umat.rows = T;
+	umat.cols = 1;
+	umat.val = u;
+	umat.t1 = umat.t2 = 0;
+	*err = newey_west_bandwidth(&umat, kern, &p, &bt);
+	if (*err) {
+	    goto bailout;
+	}
+    } else if (kern == KERNEL_QS) {
+	bt = libset_get_double(QS_BANDWIDTH);
+	p = T - 1;
+    } else {
+	p = get_hac_lag(T);
+    }
+
+    for (j=0; j<=p; j++) {
+	/* cumulate running sum of Gamma-hat terms */
+	gretl_matrix_zero(Gj);
+	for (t=j; t<T; t++) {
+	    /* W(t)-transpose * W(t-j) */
+	    wtw(Wtj, X, k, t, j);
+	    uu = u[t] * u[t-j];
+	    gretl_matrix_multiply_by_scalar(Wtj, uu);
+	    /* DM equation (9.36), p. 363 */
+	    gretl_matrix_add_to(Gj, Wtj);
+	}
+
+	if (j > 0) {
+	    /* Gamma(j) = Gamma(j) + Gamma(j)-transpose */
+	    gretl_matrix_add_self_transpose(Gj);
+	    if (kern == KERNEL_QS) {
+		wj = qs_hac_weight(bt, j);
+	    } else {
+		wj = hac_weight(kern, p, j);
+	    }
+	    gretl_matrix_multiply_by_scalar(Gj, wj);
+	}
+
+	/* DM equation (9.38), p. 364 */
+	gretl_matrix_add_to(XOX, Gj);
+    }
+
+    if (prewhiten) {
+	/* re-color */
+	gretl_matrix_divide_by_scalar(XOX, (1-a) * (1-a));
+    }
+
+    vi->vmaj = VCV_HAC;
+    vi->vmin = kern;
+    vi->flags = prewhiten;
+
+    if (kern == KERNEL_QS) {
+	vi->order = 0;
+	vi->bw = bt;
+    } else {
+	vi->order = p;
+	vi->bw = NADBL;
+    }
+
+ bailout:
+
+    gretl_matrix_free(Wtj);
+    gretl_matrix_free(Gj);
+
+    if (u != uhat->val) {
+	free(u);
+    }
+
+    if (*err && XOX != NULL) {
+	gretl_matrix_free(XOX);
+	XOX = NULL;
+    }
+
+    return XOX;
 }
 
 /* Calculate HAC covariance matrix.  Algorithm and (basically)
@@ -481,125 +593,53 @@ static int prewhiten_uhat (double **pu, int T, double *pa)
    and Methods, chapter 9.
 */
 
-static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
+static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *XTXi)
 {
-    gretl_matrix *vcv = NULL, *wtj = NULL, *gammaj = NULL;
-    gretl_matrix *X;
-    int prewhiten = libset_get_bool(PREWHITEN);
-    int kern = libset_get_int(HAC_KERNEL);
+    gretl_matrix *X, *XOX, *V = NULL;
+    gretl_matrix umat;
+    VCVInfo vi;
     int T = pmod->nobs;
-    int k = pmod->ncoeff;
-    int free_uhat = 0;
-    int p, j, t;
-    double wj, uu;
-    double a = 0, bt = 0;
-    double *uhat;
     int err = 0;
 
     X = make_data_X(pmod, Z);
-    if (X == NULL) return 1;
+    if (X == NULL) {
+	return E_ALLOC;
+    }
 
     /* pmod->uhat is a full-length series: we must take an offset
        into it, equal to the offset of the data on which the model
        is actually estimated.
     */
-    uhat = pmod->uhat + pmod->t1;
+    umat.rows = T;
+    umat.cols = 1;
+    umat.t1 = umat.t2 = 0;
+    umat.val = pmod->uhat + pmod->t1;
 
-    if (prewhiten) {
-	err = prewhiten_uhat(&uhat, T, &a);
-	if (err) {
-	    return err;
+    XOX = HAC_XOX(&umat, X, &vi, &err);
+
+    if (!err) {
+	V = gretl_matrix_alloc(XOX->rows, XOX->rows);
+	if (V == NULL) {
+	    err = E_ALLOC;
 	}
-	free_uhat = 1;
     }
 
-    vcv = gretl_matrix_alloc(k, k);
-    wtj = gretl_matrix_alloc(k, k);
-    gammaj = gretl_matrix_alloc(k, k);
-
-    if (vcv == NULL || wtj == NULL || gammaj == NULL) {
-	err = 1;
-	goto bailout;
+    if (!err) {
+	gretl_matrix_qform(XTXi, GRETL_MOD_TRANSPOSE, XOX,
+			   V, GRETL_MOD_NONE);
+	/* Transcribe vcv into triangular representation */
+	err = qr_make_vcv(pmod, V, VCV_ROBUST);
     }
 
-    /* determine the bandwidth setting */
+    if (!err) {
+	gretl_model_set_full_vcv_info(pmod, vi.vmaj, vi.vmin,
+				      vi.order, vi.flags,
+				      vi.bw);
+    }	
 
-    if (data_based_hac_bandwidth()) {
-	gretl_matrix u;
-
-	u.rows = T;
-	u.cols = 1;
-	u.val = uhat;
-	err = newey_west_bandwidth(&u, kern, &p, &bt);
-	if (err) {
-	    goto bailout;
-	}
-    } else if (kern == KERNEL_QS) {
-	bt = libset_get_double(QS_BANDWIDTH);
-	p = pmod->nobs - 1;
-    } else {
-	p = get_hac_lag(T);
-    }
-
-    if (kern == KERNEL_QS) {
-	gretl_model_set_full_vcv_info(pmod, VCV_HAC, kern, 0, 
-				      prewhiten, bt);
-    } else {
-	gretl_model_set_full_vcv_info(pmod, VCV_HAC, kern, p, 
-				      prewhiten, NADBL);
-    }
-
-    gretl_matrix_zero(vcv);
-
-    for (j=0; j<=p; j++) {
-	/* cumulate running sum of Gamma-hat terms */
-	gretl_matrix_zero(gammaj);
-	for (t=j; t<T; t++) {
-	    /* W(t)-transpose * W(t-j) */
-	    wtw(wtj, X, k, t, j);
-	    uu = uhat[t] * uhat[t-j];
-	    gretl_matrix_multiply_by_scalar(wtj, uu);
-	    /* DM equation (9.36), p. 363 */
-	    gretl_matrix_add_to(gammaj, wtj);
-	}
-
-	if (j > 0) {
-	    /* Gamma(j) = Gamma(j) + Gamma(j)-transpose */
-	    gretl_matrix_add_self_transpose(gammaj);
-	    if (kern == KERNEL_QS) {
-		wj = qs_hac_weight(bt, j);
-	    } else {
-		wj = hac_weight(kern, p, j);
-	    }
-	    gretl_matrix_multiply_by_scalar(gammaj, wj);
-	}
-
-	/* DM equation (9.38), p. 364 */
-	gretl_matrix_add_to(vcv, gammaj);
-    }
-
-    if (prewhiten) {
-	/* re-color */
-	gretl_matrix_divide_by_scalar(vcv, (1-a) * (1-a));
-    }
-
-    gretl_matrix_copy_values(wtj, vcv);
-    gretl_matrix_qform(xpxinv, GRETL_MOD_TRANSPOSE, wtj,
-		       vcv, GRETL_MOD_NONE);
-
-    /* Transcribe vcv into triangular representation */
-    err = qr_make_vcv(pmod, vcv, VCV_ROBUST);
-
- bailout:
-
-    gretl_matrix_free(wtj);
-    gretl_matrix_free(gammaj);
-    gretl_matrix_free(vcv);
     gretl_matrix_free(X);
-
-    if (free_uhat) {
-	free(uhat);
-    }
+    gretl_matrix_free(XOX);
+    gretl_matrix_free(V);
 
     return err;
 }
@@ -630,7 +670,7 @@ static void do_X_prime_diag (const gretl_matrix *X,
 */
 
 static int qr_make_hccme (MODEL *pmod, const double **Z, 
-			  gretl_matrix *Q, gretl_matrix *xpxinv)
+			  gretl_matrix *Q, gretl_matrix *XTXi)
 {
     gretl_matrix *X;
     gretl_matrix *diag = NULL;
@@ -685,7 +725,7 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
 
     do_X_prime_diag(X, diag, tmp1);
     gretl_matrix_multiply(tmp1, X, tmp2);
-    gretl_matrix_qform(xpxinv, GRETL_MOD_NONE, tmp2,
+    gretl_matrix_qform(XTXi, GRETL_MOD_NONE, tmp2,
 		       vcv, GRETL_MOD_NONE);
 
     /* Transcribe vcv into triangular representation */

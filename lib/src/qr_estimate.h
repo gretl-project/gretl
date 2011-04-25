@@ -32,4 +32,7 @@ double qs_hac_weight (double bt, int i);
 
 int newey_west_bandwidth (const gretl_matrix *f, int kern, int *h, double *bt);
 
+gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
+		       VCVInfo *vi, int *err);
+
 #endif  /* QR_ESTIMATE_H */

@@ -23,6 +23,7 @@
 #include "vartest.h"
 #include "matrix_extra.h"
 #include "libset.h"
+#include "qr_estimate.h"
 
 int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
 {
@@ -393,17 +394,34 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
     gretl_matrix *XOX = NULL;
     gretl_matrix *hvec = NULL;
     double xij, xti, xtj, utk, u2, ht;
+    int HAC = !libset_get_bool(FORCE_HC);
+    VCVInfo vi = {0};
     int T = var->T;
     int g = var->ncoeff;
     int i, j, t;
     int err = 0;
 
-    XOX = gretl_matrix_alloc(g, g);
+    if (HAC) {
+	gretl_matrix *uk = gretl_column_vector_alloc(T);
+
+	if (uk != NULL) {
+	    for (t=0; t<T; t++) {
+		uk->val[t] = gretl_matrix_get(var->E, t, k);
+	    }
+	    XOX = HAC_XOX(uk, var->X, &vi, &err);
+	    gretl_matrix_free(uk);
+	}
+    } else {
+	XOX = gretl_matrix_alloc(g, g);
+    }
+
     if (XOX == NULL) {
 	return E_ALLOC;
     }
 
-    if (hcv > 1) {
+    if (HAC) {
+	goto finish;
+    } else if (hcv > 1) {
 	hvec = VAR_get_hvec(var->X, var->XTX, &err);
 	if (err) {
 	    gretl_matrix_free(XOX);
@@ -439,10 +457,18 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
 	}
     }
 
+ finish:
+
     gretl_matrix_qform(var->XTX, GRETL_MOD_TRANSPOSE, XOX,
 		       V, GRETL_MOD_NONE);
 
-    gretl_model_set_vcv_info(pmod, VCV_HC, hcv);
+    if (HAC) {
+	gretl_model_set_full_vcv_info(pmod, VCV_HAC, vi.vmin,
+				      vi.order, vi.flags,
+				      vi.bw);
+    } else {
+	gretl_model_set_vcv_info(pmod, VCV_HC, hcv);
+    }
 
     gretl_matrix_free(XOX);
     gretl_matrix_free(hvec);
