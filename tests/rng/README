@@ -1,0 +1,32 @@
+Rig for testing gretl's random number generator.
+
+Prerequisites: 
+
+* libgretl must be installed, along with its headers and pkg-config .pc file
+
+* The TestU01 library (P. L'Ecuyer and R. Simard) must be installed --
+  see http://www.iro.umontreal.ca/~simardr/testu01/tu01.html
+
+Given the above, adjust the lines at the top of the Makefile in this 
+directory if needed for your system, then type "make" to build the 
+program "gretltest". To see what options this program offers, invoke
+
+./gretltest --help
+
+Note that the default test suite is "SmallCrush", which runs fast but is
+not very stringent. To run the more stringent "Crush" suite, do
+
+./gretltest --size=1 > Crush.out
+
+This test is likely to take a couple of hours or so.
+
+To run the extremely stringent "BigCrush" (which may take upwards of
+12 hours) do
+
+./gretltest --size=2 > BigCrush.out
+
+One or two "failures" (p-values quite close to 0 or 1) are to be expected 
+when running BigCrush.
+
+Allin Cottrell
+April 2011
