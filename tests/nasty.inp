@@ -1,6 +1,6 @@
 # Elements of Wilkinson's (1985) "Statistics Quiz"
 open nasty.gdt
-gnuplot HUGE TINY
+gnuplot HUGE TINY --output=display
 # compute basic stats for all vars
 summary
 # correlation matrix: all defined entries should be 1.0
