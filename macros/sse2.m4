@@ -49,7 +49,7 @@ int main () {
    c = _mm_xor_si128 (a, b);
    return 0;
 }      
-    ], have_sse2_intrinsics=yes,)
+    ], have_sse2_intrinsics=yes,SSE2_CFLAGS="")
     if test "$have_sse2_intrinsics" = "yes" ; then
       AC_RUN_IFELSE([
 #include <stdio.h>

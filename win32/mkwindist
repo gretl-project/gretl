@@ -16,12 +16,14 @@ THISDIR=`pwd`
 
 if [ "$BUILDTYPE" = "cross" ] ; then
   WINFILES=/home/cottrell/stats/esl/win32
+  ADDONS=/home/cottrell/stats/gretl-addons
   HLPDIR=${TOPDIR}/share
   DOCDIR=${TOPDIR}/build/doc/tex
   SYSBIN=/opt/cross-tools/mingw32/bin
   INNO_CMD="wine c:/innodir/ISCC.exe"
 else
   WINFILES=/mingw/winbuild
+  ADDONS=${WINFILES}/gretl-addons
   HLPDIR=${WINFILES}/help
   DOCDIR=${WINFILES}/doc
   SYSBIN=c:/mingw/bin
@@ -38,6 +40,15 @@ function process_tarball {
     tar tvfz $1 | awk '{ print $3" "$4" "$5" "$6 }' | \
        grep -v ^0 >> MANIFEST
     tar xfz $1
+}
+
+# function: add content of a zip file
+# the single argument is the path to the file
+function process_zipfile {
+    echo "adding content of $1"
+    unzip -l $1 | awk '{ print $1" 20"$2" "$3" "$4 }' | \
+     grep -ve "^0\|^Arc\|^Len\|\bfiles" | grep -v ^'-' >> MANIFEST
+    unzip $1
 }
 
 # function: add individual file to package
@@ -263,13 +274,6 @@ else
   process_tarball ${WINFILES}/gtk-runtime.tar.gz
 fi
 
-if [ ! -f ${WINFILES}/gretl-addons.tar.gz ] ; then
-  echo "Couldn't find gretl-addons.tar.gz"
-  exit 1
-else 
-  process_tarball ${WINFILES}/gretl-addons.tar.gz
-fi
-
 # replacement builds
 if [ -f ${WINFILES}/misc-dll/libpixmap.dll ] ; then
   cp -p ${WINFILES}/misc-dll/libpixmap.dll gretl/lib/gtk-2.0/2.10.0/engines/
@@ -284,6 +288,19 @@ if [ ! -f ${WINFILES}/gp45cvsw32.tar.gz ] ; then
 else
   process_tarball ${WINFILES}/gp45cvsw32.tar.gz
 fi
+
+# add the approved gretl addons
+WINDIST=`pwd`
+cd gretl/functions
+for f in gig ivpanel ; do
+  if [ ! -f ${ADDONS}/${f}/${f}.zip ] ; then
+    echo "Couldn't find ${f}.zip"
+    exit 1
+  else
+    process_zipfile ${ADDONS}/$f/$f.zip
+  fi
+done
+cd $WINDIST
 
 make gretl.iss
 
