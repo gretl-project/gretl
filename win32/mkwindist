@@ -42,12 +42,12 @@ function process_tarball {
     tar xfz $1
 }
 
-# function: add content of a zip file
+# function: add content of an addon zip file
 # the single argument is the path to the file
-function process_zipfile {
+function process_addon {
     echo "adding content of $1"
-    unzip -l $1 | awk '{ print $1" 20"$2" "$3" "$4 }' | \
-     grep -ve "^0\|^Arc\|^Len\|\bfiles" | grep -v ^'-' >> MANIFEST
+    unzip -l $1 | awk '{ print $1" 20"$2" "$3" gretl/functions/"$4 }' | \
+     grep -ve "^0\|^Arc\|^Len\|\bfiles" | grep -v ^'-' >> ../../MANIFEST
     unzip $1
 }
 
@@ -297,7 +297,7 @@ for f in gig ivpanel ; do
     echo "Couldn't find ${f}.zip"
     exit 1
   else
-    process_zipfile ${ADDONS}/$f/$f.zip
+    process_addon ${ADDONS}/$f/$f.zip
   fi
 done
 cd $WINDIST
