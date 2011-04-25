@@ -23,16 +23,15 @@
 #include <time.h>
 #include <glib.h>
 
-#ifndef NO_SFMT /* flag to cut out all SFMT code */
-# ifdef USE_SSE2
-#  define HAVE_SSE2
-# endif
-# include "../../rng/SFMT.c"
-# if defined(HAVE_POSIX_MEMALIGN) || defined(OSX_BUILD) || defined(WIN32)
-#  define USE_SFMT_ARRAYS 0 /* faster, but needs more testing */
-# else
-#  define USE_SFMT_ARRAYS 0
-# endif
+#ifdef USE_SSE2
+# define HAVE_SSE2
+#endif
+
+#include "../../rng/SFMT.c"
+#if defined(HAVE_POSIX_MEMALIGN) || defined(OSX_BUILD) || defined(WIN32)
+# define USE_SFMT_ARRAYS 0 /* potentially faster, but needs more testing */
+#else
+# define USE_SFMT_ARRAYS 0
 #endif
 
 /**
@@ -56,11 +55,7 @@
 static GRand *gretl_rand;
 static guint32 useed;
 
-#ifdef NO_SFMT
-static int use_sfmt = 0;
-#else
 static int use_sfmt = 1;
-#endif
 
 static guint32 gretl_rand_octet (guint32 *sign);
 
@@ -70,25 +65,25 @@ static void *gretl_memalign (size_t size, int *err)
 {
     void *mem = NULL;
 
-#if defined(HAVE_POSIX_MEMALIGN)
+# if defined(HAVE_POSIX_MEMALIGN)
     *err = posix_memalign((void **) &mem, 16, size);
     if (*err) {
 	fprintf(stderr, "posix_memalign: err = %d\n", *err);
 	return NULL;
     }
-#elif defined(WIN32)
+# elif defined(WIN32)
     mem = win32_memalign(size, 16);
     if (mem == NULL) {
 	fputs("win32_memalign: failed\n", stderr);
 	*err = E_ALLOC;
     }
-#else /* OS X: should be aligned OK by default */
+# else /* OS X: should be aligned OK by default */
     mem = malloc(size);
     if (mem == NULL) {
 	fputs("osx_malloc: failed\n", stderr);
 	*err = E_ALLOC;
     }
-#endif
+# endif
 
     return mem;
 }
@@ -117,11 +112,11 @@ static int sfmt_array_setup (void)
 
 static void sfmt_array_cleanup (void)
 {
-#if defined(WIN32) && !defined(HAVE_POSIX_MEMALIGN)
+# if defined(WIN32) && !defined(HAVE_POSIX_MEMALIGN)
     win32_aligned_free(rbuf);
-#else
+# else
     free(rbuf);
-#endif
+# endif
     rbuf = NULL;
 }
 
@@ -148,11 +143,11 @@ static int sfmt_fill_U01_array (double *a, int t1, int t2, int n)
 	a[t] = to_real2(buf[i++]);
     }
 
-#if defined(WIN32) && !defined(HAVE_POSIX_MEMALIGN)
+# if defined(WIN32) && !defined(HAVE_POSIX_MEMALIGN)
     win32_aligned_free(buf);
-#else
+# else
     free(buf);
-#endif
+# endif
 
     return err;
 }
@@ -167,9 +162,9 @@ static inline guint32 sfmt_rand32 (void)
     return rbuf[r_i++];
 }
 
-#else
+#else /* !USE_SFMT_ARRAYS */
 
-#define sfmt_rand32 gen_rand32
+# define sfmt_rand32 gen_rand32
 
 #endif /* USE_SFMT_ARRAYS */
 
@@ -183,11 +178,9 @@ void gretl_rand_init (void)
 {
     useed = time(NULL);
 
-#ifndef NO_SFMT
     init_gen_rand(useed);
-# if USE_SFMT_ARRAYS
+#if USE_SFMT_ARRAYS
     sfmt_array_setup();
-# endif
 #endif
 
     if (gretl_rand == NULL) {
@@ -241,11 +234,9 @@ unsigned int gretl_rand_get_seed (void)
 void gretl_rand_set_seed (unsigned int seed)
 {
     useed = (seed == 0)? time(NULL) : seed;
-#ifndef NO_SFMT
     init_gen_rand(useed); 
-# if USE_SFMT_ARRAYS
+#if USE_SFMT_ARRAYS
     sfmt_array_setup();
-# endif
 #endif
     g_rand_set_seed(gretl_rand, useed);
     gretl_rand_octet(NULL);
@@ -311,15 +302,11 @@ int gretl_rand_get_sfmt (void)
 
 double gretl_rand_01 (void)
 {
-#ifdef NO_SFMT
-    return g_rand_double(gretl_rand);
-#else
     if (use_sfmt) {
 	return to_real2(sfmt_rand32());
     } else {
 	return g_rand_double(gretl_rand);
     }
-#endif
 }
 
 /* Below: an implementation of the Marsaglia/Tsang Ziggurat method for
@@ -485,15 +472,11 @@ static guint32 gretl_rand_octet (guint32 *sign)
     }
 
     if (i == 0) {
-#ifdef NO_SFMT
-	wr.u = g_rand_int(gretl_rand);
-#else
 	if (use_sfmt) {
 	    wr.u = sfmt_rand32();
 	} else {
 	    wr.u = g_rand_int(gretl_rand);
 	}
-#endif
 	i = 4;
     }
 
@@ -508,11 +491,7 @@ static double ran_normal_ziggurat (void)
     double x, y;
 
     while (1) {
-#ifdef NO_SFMT
-	j = g_rand_int(gretl_rand);
-#else
 	j = use_sfmt ? sfmt_rand32() : g_rand_int(gretl_rand);
-#endif
 	i = gretl_rand_octet(&sign);
 	j = j >> 2;
 
@@ -711,8 +690,6 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
     return 0;
 }
 
-#ifndef NO_SFMT
-
 static guint32 sfmt_int_range (guint32 begin, guint32 end)
 {
     guint32 dist = end - begin;
@@ -743,8 +720,6 @@ static guint32 sfmt_int_range (guint32 begin, guint32 end)
     return begin + rval;
 }
 
-#endif
-
 /**
  * gretl_rand_uniform_minmax:
  * @a: target array.
@@ -773,16 +748,12 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
-#ifdef NO_SFMT
-	a[t] = g_rand_double_range(gretl_rand, min, max);
-#else
 	if (use_sfmt) {
 	    /* FIXME use native array functionality? */
 	    a[t] = to_real2(sfmt_rand32()) * (max - min) + min;
 	} else {
 	    a[t] = g_rand_double_range(gretl_rand, min, max);
 	}
-#endif
     }
 
     return 0;
@@ -813,15 +784,11 @@ int gretl_rand_int_minmax (int *a, int n, int min, int max)
     /* note: in g_rand_int_range the upper bound is open */
 
     for (i=0; i<n; i++) {
-#ifdef NO_SFMT
-	a[i] = g_rand_int_range(gretl_rand, min, max + 1);
-#else
 	if (use_sfmt) {
 	    a[i] = sfmt_int_range(min, max + 1);
 	} else {
 	    a[i] = g_rand_int_range(gretl_rand, min, max + 1);
 	} 
-#endif
     }
 
     return 0;
@@ -842,12 +809,7 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 {
     int t;
 
-#ifdef NO_SFMT
-    for (t=t1; t<=t2; t++) {
-	a[t] = g_rand_double(gretl_rand);
-    }
-#else 
-# if USE_SFMT_ARRAYS
+#if USE_SFMT_ARRAYS
     if (use_sfmt) {
 	int n = t2 - t1 + 1;
 	int err = 0;
@@ -859,7 +821,7 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 	    }
 	}
     }
-# endif
+#endif
     if (use_sfmt) {
 	for (t=t1; t<=t2; t++) {
 	   a[t] = to_real2(sfmt_rand32());
@@ -869,7 +831,6 @@ void gretl_rand_uniform (double *a, int t1, int t2)
 	   a[t] = g_rand_double(gretl_rand);
 	}
     }
-#endif	
 }
 
 /**
@@ -1277,15 +1238,11 @@ int gretl_rand_GED (double *a, int t1, int t2, double nu)
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
-#ifdef NO_SFMT
-    return g_rand_int_range(gretl_rand, 0, max);
-#else
     if (use_sfmt) {
 	return sfmt_int_range(0, max);
     } else {
 	return g_rand_int_range(gretl_rand, 0, max);
     }
-#endif
 }
 
 /**
@@ -1297,14 +1254,10 @@ unsigned int gretl_rand_int_max (unsigned int max)
 
 unsigned int gretl_rand_int (void)
 {
-#ifdef NO_SFMT
-    return g_rand_int(gretl_rand);
-#else
     if (use_sfmt) {
 	return sfmt_rand32();
     } else {
 	return g_rand_int(gretl_rand);
     }
-#endif
 }
 
