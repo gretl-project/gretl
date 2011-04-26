@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-25 09:51-0400\n"
-"PO-Revision-Date: 2011-04-05 21:27+0100\n"
+"PO-Revision-Date: 2011-04-26 22:21+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -1026,7 +1026,7 @@ msgstr ""
 #: plugin/jmulti_import.c:383 plugin/sas_import.c:690
 #: plugin/spss_import.c:1941 plugin/stata_import.c:954
 msgid "warning: some variable names were duplicated\n"
-msgstr "atenção: alguns nomes de variáveis estavam repetidos\n"
+msgstr "aviso: alguns nomes de variáveis estavam repetidos\n"
 
 #: lib/src/csvdata.c:2225 plugin/eviews_import.c:405
 #: plugin/eviews_import.c:420 plugin/excel_import.c:1477
@@ -1041,23 +1041,23 @@ msgstr "Memória esgotada\n"
 #: lib/src/dataio.c:294
 #, c-format
 msgid "WARNING: binary data read error at var %d"
-msgstr "Atenção: erro na leitura dos dados binários na variável %d"
+msgstr "Aviso: erro na leitura dos dados binários na variável %d"
 
 #: lib/src/dataio.c:212 lib/src/dataio.c:251 lib/src/dataio.c:342
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr ""
-"Atençao: erro na leitura dos dados ASCII na variável %d, na observação %d"
+"Aviso: erro na leitura dos dados ASCII na variável %d, na observação %d"
 
 #: lib/src/dataio.c:316
 #, c-format
 msgid "WARNING: ascii data read error at obs %d"
-msgstr "Atenção: erro na leitura dos dados ASCII na observação %d"
+msgstr "Aviso: erro na leitura dos dados ASCII na observação %d"
 
 #: lib/src/dataio.c:331
 #, c-format
 msgid "WARNING: failed to read case marker for obs %d"
-msgstr "Atenção: impossível ler o marcador para a observação %d"
+msgstr "Aviso: impossível ler o marcador para a observação %d"
 
 #: lib/src/dataio.c:405
 #, c-format
@@ -1943,7 +1943,7 @@ msgstr "Curva de Lorenz"
 #: lib/src/describe.c:5683 plugin/excel_import.c:1590
 #: plugin/gnumeric_import.c:795
 msgid "Warning: there were missing values\n"
-msgstr "Atenção: havia valores ausentes\n"
+msgstr "Aviso: havia valores ausentes\n"
 
 #: lib/src/describe.c:5688
 msgid "Sample Gini coefficient"
@@ -2583,9 +2583,9 @@ msgid "%s versus %s (with quadratic fit)"
 msgstr "%s versus %s (com ajustamento quadrático)"
 
 #: lib/src/graphing.c:1507 gui2/gpt_dialog.c:556
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with cubic fit)"
-msgstr "%s versus %s (com ajustamento quadrático)"
+msgstr "%s versus %s (com ajustamento cúbico)"
 
 #: lib/src/graphing.c:1513
 #, c-format
@@ -4852,9 +4852,8 @@ msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Erros padrão Bollerslev-Wooldridge"
 
 #: lib/src/modelprint.c:1342
-#, fuzzy
 msgid "Warning: could not compute standard errors"
-msgstr "Não se conseguiu calcular os erros padrão de Beck-Katz"
+msgstr "Aviso: não se conseguiu calcular os erros padrão"
 
 #: lib/src/modelprint.c:1366
 #, c-format
@@ -5124,7 +5123,7 @@ msgstr "Declive"
 
 #: lib/src/modelprint.c:2195
 msgid "Warning: data matrix close to singularity!"
-msgstr "Atenção: matriz de dados quase singular!"
+msgstr "Aviso: matriz de dados quase singular!"
 
 #: lib/src/modelprint.c:2219
 msgid ""
@@ -5576,7 +5575,7 @@ msgid ""
 "Warning: The supplied derivatives may be incorrect, or perhaps\n"
 "the data are ill-conditioned for this function.\n"
 msgstr ""
-"Atenção: As derivadas fornecidas podem estar incorrectas, ou talvez\n"
+"Aviso: As derivadas fornecidas podem estar incorrectas, ou talvez\n"
 "os dados foram mal-condicionados para esta função.\n"
 
 #: lib/src/nls.c:2295
@@ -5861,7 +5860,7 @@ msgstr "A opção '--%s' requer um parâmetro"
 #: lib/src/options.c:1305
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
-msgstr "Atenção: opção%s ignorada fora do ciclo"
+msgstr "Aviso: opção%s ignorada fora do ciclo"
 
 #: lib/src/plotspec.c:188 lib/src/plotspec.c:211
 msgid "lines"
@@ -6065,7 +6064,7 @@ msgstr "Teste do qui-quadrado de Pearson = %g (%d gl, valor p = %g)"
 msgid ""
 "Warning: Less than of 80% of cells had expected values of 5 or greater.\n"
 msgstr ""
-"Atenção: Menos que 80% das células tinham valores esperados de 5 ou "
+"Aviso: Menos que 80% das células tinham valores esperados de 5 ou "
 "superiores.\n"
 
 #: lib/src/printout.c:645 lib/src/printout.c:656
@@ -6637,7 +6636,7 @@ msgid ""
 "Warning: the Hansen-Sargan over-identification test failed.\n"
 "This probably indicates that the estimation problem is ill-conditioned.\n"
 msgstr ""
-"Atenção: o teste de sobre-identificação de Hansen-Sargan falhou.\n"
+"Aviso: o teste de sobre-identificação de Hansen-Sargan falhou.\n"
 "Isto poderá querer indicar que o problema a estimar está mal condicionado.\n"
 
 #: lib/src/system.c:2878
@@ -7146,7 +7145,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de Abril de 2011."
+"Tradução de 27 de Abril de 2011."
 
 #: gui2/about.c:175
 msgid "License"
@@ -7356,7 +7355,7 @@ msgstr "Estatística de teste: z = [(%g - %g) - (%g)]/%g = %g\n"
 #: gui2/calculator.c:1642
 msgid "Warning: with small samples, asymptotic approximation may be poor\n"
 msgstr ""
-"Atenção: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
+"Aviso: com amostras pequenas, a aproximação assimptótica pode ser fraca\n"
 
 #: gui2/calculator.c:1649
 msgid "Null hypothesis: The population variances are equal\n"
@@ -7996,7 +7995,7 @@ msgstr ""
 
 #: gui2/database.c:719
 msgid "Warning: series has missing observations"
-msgstr "Atenção: a série tem observações omissas"
+msgstr "Aviso: a série tem observações omissas"
 
 #: gui2/database.c:723
 msgid "Couldn't access binary datafile"
@@ -9553,19 +9552,16 @@ msgstr ""
 "Pretende tentar descarregá-lo agora?"
 
 #: gui2/fncall.c:2263
-#, fuzzy
 msgid "GARCH variants"
-msgstr "todas as variantes"
+msgstr "Variantes GARCH"
 
 #: gui2/fncall.c:2264
-#, fuzzy
 msgid "Panel IV model"
-msgstr "Modelo de painel"
+msgstr "Modelo de painel IV"
 
 #: gui2/fncall.c:2315
-#, fuzzy
 msgid "Confidence band plot"
-msgstr "Intervalo de confiança"
+msgstr "Gráfico da banda de confiança"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -9721,9 +9717,8 @@ msgstr ""
 "Pretende escrever uma função agora?"
 
 #: gui2/gpt_control.c:291
-#, fuzzy
 msgid " Click to set position"
-msgstr " Clicar para definir a posição do texto"
+msgstr " Clicar para definir a posição"
 
 #: gui2/gpt_control.c:1205
 msgid "Gnuplot error creating graph"
@@ -9872,9 +9867,8 @@ msgid "quadratic: y = a + b*x + c*x^2"
 msgstr "quadrática: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:130
-#, fuzzy
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
-msgstr "quadrática: y = a + b*x + c*x^2"
+msgstr "cúbica: y = a + b*x + c*x^2 + d*x^3"
 
 #: gui2/gpt_dialog.c:131
 msgid "inverse: y = a + b*(1/x)"
@@ -9893,9 +9887,8 @@ msgid "Select color"
 msgstr "Seleccionar cor"
 
 #: gui2/gpt_dialog.c:667 gui2/gpt_dialog.c:706
-#, fuzzy
 msgid "Invalid position, must be X Y"
-msgstr "Posição inválida da etiqueta, tem que ser X Y"
+msgstr "Posição inválida, tem que ser X Y"
 
 #: gui2/gpt_dialog.c:1170 gui2/gpt_dialog.c:1205 gui2/gpt_dialog.c:1903
 #: gui2/graphics.c:432
@@ -10065,25 +10058,23 @@ msgstr "Acrescentar..."
 
 #: gui2/gpt_dialog.c:3009
 msgid "Arrows"
-msgstr ""
+msgstr "Setas"
 
 #: gui2/gpt_dialog.c:3040
 msgid "from (X Y)"
-msgstr ""
+msgstr "de (X Y)"
 
 #: gui2/gpt_dialog.c:3042
-#, fuzzy
 msgid "to (X Y)"
-msgstr "posição (X Y)"
+msgstr "para (X Y)"
 
 #: gui2/gpt_dialog.c:3077
 msgid "arrow has head"
-msgstr ""
+msgstr "seta tem cabeça"
 
 #: gui2/gpt_dialog.c:3086
-#, fuzzy
 msgid "line is dotted"
-msgstr "espessura da linha"
+msgstr "linha a tracejado"
 
 #: gui2/gpt_dialog.c:3124
 msgid "X-axis"
@@ -14465,7 +14456,7 @@ msgstr "Inserir Observação"
 
 #: gui2/ssheet.c:1397 gui2/ssheet.c:2518
 msgid "Warning: there were missing observations"
-msgstr "Atenção: havia observações omissas"
+msgstr "Aviso: havia observações omissas"
 
 #: gui2/ssheet.c:1424 gui2/toolbar.c:347
 msgid "gretl: save matrix"
@@ -14486,7 +14477,7 @@ msgstr "Não há série para editar"
 #: gui2/ssheet.c:2516
 #, c-format
 msgid "Warning: series %s is empty"
-msgstr "Atenção: a série %s está vazia"
+msgstr "Aviso: a série %s está vazia"
 
 #: gui2/ssheet.c:2783
 msgid "gretl: edit matrix"
@@ -15235,7 +15226,7 @@ msgstr "Regressores exógenos"
 
 #: plugin/johansen.c:1570
 msgid "Cointegration tests, ignoring exogenous variables"
-msgstr ""
+msgstr "Testes de cointegração, ignorando as variáveis exógenas"
 
 #: plugin/johansen.c:1573 plugin/johansen.c:1593
 msgid "Eigenvalue"
@@ -15252,23 +15243,23 @@ msgstr "Teste Lmax"
 #: plugin/johansen.c:1591
 #, c-format
 msgid "Cointegration tests conditional on %d I(1) variable(s)"
-msgstr ""
+msgstr "Testes de cointegração condicional em %d I(1) variáveis"
 
 #: plugin/johansen.c:1594
 msgid "pval(T)"
-msgstr ""
+msgstr "valor_p(T)"
 
 #: plugin/johansen.c:1619
-#, fuzzy, c-format
+#, c-format
 msgid "Corrected for sample size (df = %d)"
-msgstr "Corrigido de acordo com o tamanho de amostra"
+msgstr "Corrigido de acordo com o tamanho de amostra (gl= %d)"
 
 #: plugin/johansen.c:1637
 msgid ""
 "Warning: the p-values shown are for the case of\n"
 "a restricted trend"
 msgstr ""
-"Atenção: os p-valores apresentados são para o caso\n"
+"Aviso: os p-valores apresentados são para o caso\n"
 "de uma tendência restringida"
 
 #: plugin/johansen.c:1641
