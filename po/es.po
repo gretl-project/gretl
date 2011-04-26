@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-25 09:51-0400\n"
-"PO-Revision-Date: 2011-03-23 09:53+0100\n"
+"PO-Revision-Date: 2011-04-26 12:09+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -23,32 +23,24 @@ msgid "lagged differences"
 msgstr "diferencias retardadas"
 
 #: lib/src/adf_kpss.c:306
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Contraste de Dickey-Fuller para %s\n"
+msgstr "Contraste de Dickey-Fuller (GLS) para %s\n"
 
 #: lib/src/adf_kpss.c:308
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Contraste de Dickey-Fuller para %s\n"
+msgstr "Contraste de Dickey-Fuller para %s\n"
 
 #: lib/src/adf_kpss.c:312
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Contraste aumentado de Dickey-Fuller para %s\n"
+msgstr "Contraste aumentado de Dickey-Fuller (GLS) para %s\n"
 
 #: lib/src/adf_kpss.c:314
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Contraste aumentado de Dickey-Fuller para %s\n"
+msgstr "Contraste aumentado de Dickey-Fuller para %s\n"
 
 #: lib/src/adf_kpss.c:317 plugin/panurc.c:577
 #, c-format
@@ -63,7 +55,7 @@ msgstr "incluyendo %d retardos de (1-L)%s"
 #: lib/src/adf_kpss.c:323
 #, c-format
 msgid "(max was %d)"
-msgstr ""
+msgstr "(el máximo fue %d)"
 
 #: lib/src/adf_kpss.c:364 gui2/library.c:967 gui2/selector.c:5299
 #: plugin/panurc.c:233
@@ -2589,9 +2581,9 @@ msgid "%s versus %s (with quadratic fit)"
 msgstr "%s con respecto a %s (con ajuste cuadrático)"
 
 #: lib/src/graphing.c:1507 gui2/gpt_dialog.c:556
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with cubic fit)"
-msgstr "%s con respecto a %s (con ajuste cuadrático)"
+msgstr "%s con respecto a %s (con ajuste cúbico)"
 
 #: lib/src/graphing.c:1513
 #, c-format
@@ -2681,9 +2673,9 @@ msgid "forecast"
 msgstr "predicción"
 
 #: lib/src/graphing.c:4221
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% interval for mean"
-msgstr "Intervalo de %g%%"
+msgstr "Intervalo de %g%% para la media"
 
 #: lib/src/graphing.c:4326
 #, c-format
@@ -2738,9 +2730,9 @@ msgid "%g and %g quantiles"
 msgstr "cuantiles %g y %g"
 
 #: lib/src/graphing.c:5006
-#, fuzzy, c-format
+#, c-format
 msgid "forecast variance decomposition for %s"
-msgstr "Descomposición de la varianza de predicción"
+msgstr "Descomposición de la varianza de predicción para %s"
 
 #: lib/src/graphing.c:5203
 msgid "VAR residuals"
@@ -4863,9 +4855,8 @@ msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Desviaciones típicas Bollerslev--Wooldridge"
 
 #: lib/src/modelprint.c:1342
-#, fuzzy
 msgid "Warning: could not compute standard errors"
-msgstr "No fue posible calcular las desviaciones típicas de Beck-Katz"
+msgstr "Atención: No fue posible calcular las desviaciones típicas"
 
 #: lib/src/modelprint.c:1366
 #, c-format
@@ -8826,19 +8817,16 @@ msgid "shaded area"
 msgstr "área sombreada"
 
 #: gui2/dialogs.c:2604
-#, fuzzy
 msgid "Show interval for"
-msgstr "Intervalo de %g%%"
+msgstr "Mostrar el Intervalo para "
 
 #: gui2/dialogs.c:2607
-#, fuzzy
 msgid "actual Y"
-msgstr "observada"
+msgstr "Y observada"
 
 #: gui2/dialogs.c:2608
-#, fuzzy
 msgid "mean Y"
-msgstr "media"
+msgstr "media de Y"
 
 #: gui2/dialogs.c:2644
 msgid "Produce forecast for"
@@ -9580,19 +9568,16 @@ msgstr ""
 "¿Desea intentar descargarlo ahora?"
 
 #: gui2/fncall.c:2263
-#, fuzzy
 msgid "GARCH variants"
-msgstr "todas las variantes"
+msgstr "Variantes del GARCH"
 
 #: gui2/fncall.c:2264
-#, fuzzy
 msgid "Panel IV model"
-msgstr "Modelo de panel"
+msgstr "Modelo de panel IV"
 
 #: gui2/fncall.c:2315
-#, fuzzy
 msgid "Confidence band plot"
-msgstr "Intervalo de confianza"
+msgstr "Gráfico de la banda de confianza"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -9748,9 +9733,8 @@ msgstr ""
 "¿Desea escribir una función ahora?"
 
 #: gui2/gpt_control.c:291
-#, fuzzy
 msgid " Click to set position"
-msgstr " Pulse aquí para establecer la posición de la etiqueta"
+msgstr " Pulse para establecer la posición"
 
 #: gui2/gpt_control.c:1205
 msgid "Gnuplot error creating graph"
@@ -9899,9 +9883,8 @@ msgid "quadratic: y = a + b*x + c*x^2"
 msgstr "cuadrática: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:130
-#, fuzzy
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
-msgstr "cuadrática: y = a + b*x + c*x^2"
+msgstr "cúbica: y = a + b*x + c*x^2 + d*x^3"
 
 #: gui2/gpt_dialog.c:131
 msgid "inverse: y = a + b*(1/x)"
@@ -9920,9 +9903,8 @@ msgid "Select color"
 msgstr "Seleccione un color"
 
 #: gui2/gpt_dialog.c:667 gui2/gpt_dialog.c:706
-#, fuzzy
 msgid "Invalid position, must be X Y"
-msgstr "Posición de etiqueta no válida, debe ser X Y"
+msgstr "Posición no válida, debe ser X Y"
 
 #: gui2/gpt_dialog.c:1170 gui2/gpt_dialog.c:1205 gui2/gpt_dialog.c:1903
 #: gui2/graphics.c:432
@@ -10091,25 +10073,23 @@ msgstr "Añadir..."
 
 #: gui2/gpt_dialog.c:3009
 msgid "Arrows"
-msgstr ""
+msgstr "Flechas"
 
 #: gui2/gpt_dialog.c:3040
 msgid "from (X Y)"
-msgstr ""
+msgstr "desde (X Y)"
 
 #: gui2/gpt_dialog.c:3042
-#, fuzzy
 msgid "to (X Y)"
-msgstr "posición (X Y)"
+msgstr "hasta (X Y)"
 
 #: gui2/gpt_dialog.c:3077
 msgid "arrow has head"
-msgstr ""
+msgstr "flecha con cabeza"
 
 #: gui2/gpt_dialog.c:3086
-#, fuzzy
 msgid "line is dotted"
-msgstr "grosor de línea"
+msgstr "línea de puntos"
 
 #: gui2/gpt_dialog.c:3124
 msgid "X-axis"
@@ -13463,14 +13443,12 @@ msgid "lags..."
 msgstr "retardos..."
 
 #: gui2/selector.c:4081
-#, fuzzy
 msgid "left bound"
-msgstr "límite inferior"
+msgstr "cota izquierda"
 
 #: gui2/selector.c:4082
-#, fuzzy
 msgid "right bound"
-msgstr "arriba derecha"
+msgstr "cota derecha"
 
 #: gui2/selector.c:4361
 msgid "GARCH p:"
@@ -15270,7 +15248,7 @@ msgstr "Regresor(es) exógeno(s)"
 
 #: plugin/johansen.c:1570
 msgid "Cointegration tests, ignoring exogenous variables"
-msgstr ""
+msgstr "Contrastes de cointegración, ignorando las variables exógenas"
 
 #: plugin/johansen.c:1573 plugin/johansen.c:1593
 msgid "Eigenvalue"
@@ -15287,24 +15265,23 @@ msgstr "Estad. Lmáx"
 #: plugin/johansen.c:1591
 #, c-format
 msgid "Cointegration tests conditional on %d I(1) variable(s)"
-msgstr ""
+msgstr "Contrastes de cointegración condicionados sobre %d variable(s) I(1)"
 
 #: plugin/johansen.c:1594
 msgid "pval(T)"
-msgstr ""
+msgstr "pval(T)"
 
 #: plugin/johansen.c:1619
-#, fuzzy, c-format
+#, c-format
 msgid "Corrected for sample size (df = %d)"
-msgstr "Asegurar un tamaño muestral uniforme"
+msgstr "Corregido por el tamaño muestral (gl = %d)"
 
 #: plugin/johansen.c:1637
-#, fuzzy
 msgid ""
 "Warning: the p-values shown are for the case of\n"
 "a restricted trend"
 msgstr ""
-"Atención: los valores críticos que se muestran corresponden\n"
+"Atención: los valores p que se muestran corresponden\n"
 "al caso de una tendencia restringida"
 
 #: plugin/johansen.c:1641
