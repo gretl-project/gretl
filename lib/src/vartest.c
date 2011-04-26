@@ -394,14 +394,13 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
     gretl_matrix *XOX = NULL;
     gretl_matrix *hvec = NULL;
     double xij, xti, xtj, utk, u2, ht;
-    int HAC = !libset_get_bool(FORCE_HC);
     VCVInfo vi = {0};
     int T = var->T;
     int g = var->ncoeff;
     int i, j, t;
     int err = 0;
 
-    if (HAC) {
+    if (var->robust == VAR_HAC) {
 	gretl_matrix *uk = gretl_column_vector_alloc(T);
 
 	if (uk != NULL) {
@@ -419,7 +418,7 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
 	return E_ALLOC;
     }
 
-    if (HAC) {
+    if (var->robust == VAR_HAC) {
 	goto finish;
     } else if (hcv > 1) {
 	hvec = VAR_get_hvec(var->X, var->XTX, &err);
@@ -462,7 +461,7 @@ static int VAR_robust_vcv (GRETL_VAR *var, gretl_matrix *V,
     gretl_matrix_qform(var->XTX, GRETL_MOD_TRANSPOSE, XOX,
 		       V, GRETL_MOD_NONE);
 
-    if (HAC) {
+    if (var->robust == VAR_HAC) {
 	gretl_model_set_full_vcv_info(pmod, VCV_HAC, vi.vmin,
 				      vi.order, vi.flags,
 				      vi.bw);

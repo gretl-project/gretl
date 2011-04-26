@@ -29,6 +29,11 @@ enum Detflags {
     DET_SEAS  = 1 << 2
 };
 
+enum VAR_robust {
+    VAR_HC = 1,
+    VAR_HAC
+};
+
 typedef struct JohansenInfo_ JohansenInfo;
 
 struct GRETL_VAR_ {

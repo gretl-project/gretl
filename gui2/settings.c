@@ -1201,7 +1201,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    gtk_widget_set_sensitive(rc_vars[i-1].widget, FALSE);
 		}
 	    }
-
 	} else if (rc->flags & BOOLSET) { 
 	    /* radio-button dichotomy */
 	    int rcval = *(int *) (rc->var);

@@ -416,6 +416,7 @@ struct gretl_option gretl_opts[] = {
     { TOBIT,    OPT_V, "verbose", 0 },
     { VAR,      OPT_D, "seasonals", 0 },
     { VAR,      OPT_F, "variance-decomp", 0 },
+    { VAR,      OPT_H, "robust-hac", 0 },
     { VAR,      OPT_I, "impulse-responses", 0 },
     { VAR,      OPT_L, "lagselect", 0 },
     { VAR,      OPT_N, "nc", 0 },

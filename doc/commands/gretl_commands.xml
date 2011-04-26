@@ -4652,8 +4652,8 @@
 	and White; HC3 is a close approximation to the jackknife.
       </para>
       <para>
-	If you use the HAC estimator for time-series data, you are
-	able to fine-tune the lag-length using the <cmd>set</cmd>
+	If you use the HAC estimator for OLS on time-series data, you
+	are able to fine-tune the lag-length using the <cmd>set</cmd>
 	command.  Please see the gretl manual or the script commands
 	help file for details.
       </para>
@@ -4662,7 +4662,7 @@
 	robust estimator of the covariance matrix is that given by
 	Arellano.  The alternative is Beck and Katz's Panel Corrected
 	Standard Errors (PCSE).  The latter take into account
-	heteroskedastcity but not autocorrelation.  
+	heteroskedasticity but not autocorrelation.  
       </para>
       <para>
 	Two robust estimators of the covariance matrix are
@@ -9407,12 +9407,15 @@
 	</li>
 	<li>
 	  <para><lit>force_hc</lit>: <lit>off</lit> (the default) or
-	    <lit>on</lit>.  By default, with time-series data and when the
-	    <lit>--robust</lit> option is given with <lit>ols</lit>, the
-	    HAC estimator is used.  If you set <lit>force_hc</lit> to
-	    <quote>on</quote>, this forces calculation of the regular
-	    Heteroskedasticity Consistent Covariance Matrix (which does
-	    not take autocorrelation into account).
+	  <lit>on</lit>.  By default, with time-series data and when
+	  the <lit>--robust</lit> option is given with <lit>ols</lit>,
+	  the HAC estimator is used.  If you set <lit>force_hc</lit>
+	  to <quote>on</quote>, this forces calculation of the regular
+	  Heteroskedasticity Consistent Covariance Matrix (HCCM),
+	  which does not take autocorrelation into account. Note that
+	  when a VAR is estimated with the <lit>--robust</lit> option,
+	  the default is regular HCCM, but the <lit>--robust-hac</lit>
+	  option is available to produce a HAC estimator.
 	  </para>
 	</li>
 	<li>
@@ -10824,6 +10827,10 @@
 	  <effect>robust standard errors</effect>
         </option>
         <option>
+	  <flag>--robust-hac</flag>
+	  <effect>HAC standard errors</effect>
+        </option>
+        <option>
 	  <flag>--impulse-responses</flag>
 	  <effect>print impulse responses</effect>
         </option>
@@ -10891,12 +10898,13 @@
       </para>
 
       <para context="cli">
-	A separate regression is run for each variable in <repl>ylist</repl>.
-	Output for each equation includes <math>F</math>-tests for zero
-	restrictions on all lags of each of the variables, an
-	<math>F</math>-test for the significance of the maximum lag, and,
-	if the <opt>--impulse-responses</opt> flag is given, forecast variance
-	decompositions and impulse responses.
+	A separate regression is reported for each variable in
+	<repl>ylist</repl>.  Output for each equation includes
+	<math>F</math>-tests for zero restrictions on all lags of each
+	of the variables, an <math>F</math>-test for the significance
+	of the maximum lag, and, if the <opt>--impulse-responses</opt>
+	flag is given, forecast variance decompositions and impulse
+	responses.
       </para>
 
       <para>
@@ -10907,6 +10915,16 @@
 	  exogenous</quote> within-period. The horizon for variance
 	decompositions and impulse responses can be set using the <cmdref
 	  targ="set"/> command.
+      </para>
+
+      <para context="cli">
+	If the <opt>--robust</opt> option is given, standard errors
+	are corrected for heteroskedasticity. Alternatively, the
+	<opt>--robust-hac</opt> option can be given to produce
+	standard errors that are robust with respect to both
+	heteroskedasticity and autocorrelation (HAC). In general
+	the latter correction should not be needed if the VAR
+	includes sufficient lags.
       </para>
 
       <para context="cli">

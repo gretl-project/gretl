@@ -3024,7 +3024,15 @@ int cli_read_rc (void)
 		strncat(cpaths.pngfont, val, 128 - 1);
 	    } else if (!strcmp(key, "Gp_colors")) {
 		rc_set_gp_colors(val);
-	    } 
+	    } else if (!strcmp(key, "HC_xsect")) {
+		set_xsect_hccme(val);
+	    } else if (!strcmp(key, "HC_tseri")) {
+		set_tseries_hccme(val);
+	    } else if (!strcmp(key, "HC_panel")) {
+		set_panel_hccme(val);
+	    } else if (!strcmp(key, "HC_garch")) {
+		set_garch_robust_vcv(val);
+	    }
 	}
     }
 

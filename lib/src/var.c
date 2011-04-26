@@ -689,8 +689,12 @@ static GRETL_VAR *gretl_VAR_new (int code, int order, int rank,
     var->order = order;
     var->lags = gretl_list_copy(lags);
 
-    if (ci == VAR && (opt & OPT_R)) {
-	var->robust = 1;
+    if (ci == VAR) {
+	if (opt & OPT_H) {
+	    var->robust = VAR_HAC;
+	} else if (opt & OPT_R) {
+	    var->robust = VAR_HC;
+	}
     }
 
     err = VAR_make_lists(var, list, Z, pdinfo);
@@ -4281,7 +4285,7 @@ int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
 	    (var->ci == VECM), var->neqns, var->order, var->detflags);
 
     if (var->robust) {
-	gretl_xml_put_int("robust", 1, fp);
+	gretl_xml_put_int("robust", var->robust, fp);
     }
 
     if (var->LBs > 0 && !na(var->LB)) {

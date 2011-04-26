@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.4
+# Polish translation for gretl-1.9.5
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2011
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2011
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.4\n"
+"Project-Id-Version: gretl-1.9.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-25 09:51-0400\n"
-"PO-Revision-Date: 2011-04-14 23:30-0400\n"
+"PO-Revision-Date: 2011-04-26 09:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -4831,9 +4831,8 @@ msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Błędy standardowe Bollerslev--Wooldridge"
 
 #: lib/src/modelprint.c:1342
-#, fuzzy
 msgid "Warning: could not compute standard errors"
-msgstr "Nie można wyznaczyc błędów standardowych Beck-Katz"
+msgstr "Uwaga: Nie można wyznaczyć błędów standardowych"
 
 #: lib/src/modelprint.c:1366
 #, c-format
@@ -9523,17 +9522,14 @@ msgstr ""
 "Would you like to try downloading it now?"
 
 #: gui2/fncall.c:2263
-#, fuzzy
 msgid "GARCH variants"
-msgstr "wszystkie warianty"
+msgstr "Modele GARCH, APARCH, EGARCH, TARCH, NARCH, GJR ..."
 
 #: gui2/fncall.c:2264
-#, fuzzy
 msgid "Panel IV model"
-msgstr "Model panelowy"
+msgstr "Panelowe Modele zmiennych instrumentalnych ..."
 
 #: gui2/fncall.c:2315
-#, fuzzy
 msgid "Confidence band plot"
 msgstr "Przedział ufności"
 
@@ -13405,11 +13401,11 @@ msgstr "opóźnienia..."
 
 #: gui2/selector.c:4081
 msgid "left bound"
-msgstr "lewa granica"
+msgstr "lewostrona cenzura <="
 
 #: gui2/selector.c:4082
 msgid "right bound"
-msgstr "prawa granica"
+msgstr "prawostrona cenzura >="
 
 #: gui2/selector.c:4361
 msgid "GARCH p:"
@@ -15200,9 +15196,8 @@ msgid "Exogenous regressor(s)"
 msgstr "Zmienne egzogeniczne"
 
 #: plugin/johansen.c:1570
-#, fuzzy
 msgid "Cointegration tests, ignoring exogenous variables"
-msgstr "Cointegration tests conditional on %d I(1) variable(s)"
+msgstr "Test kointegracji, ignoruje procesy egzogeniczne"
 
 #: plugin/johansen.c:1573 plugin/johansen.c:1593
 msgid "Eigenvalue"
@@ -15223,12 +15218,12 @@ msgstr "Cointegration tests conditional on %d I(1) variable(s)"
 
 #: plugin/johansen.c:1594
 msgid "pval(T)"
-msgstr ""
+msgstr "pval(T)"
 
 #: plugin/johansen.c:1619
-#, fuzzy, c-format
+#, c-format
 msgid "Corrected for sample size (df = %d)"
-msgstr "Skorygowany zakres próby"
+msgstr "Skorygowany zakres próby (df = %d)"
 
 #: plugin/johansen.c:1637
 msgid ""

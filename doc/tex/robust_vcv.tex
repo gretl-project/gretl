@@ -457,7 +457,6 @@ example,
 set qs_bandwidth 3.5
 \end{code}
 
-
 \subsection{Prewhitening and data-based bandwidth selection}
 \label{sec:hac-prewhiten}
 
@@ -532,6 +531,18 @@ calculating a series of residual covariances.  The length of this
 series is given as a function of the sample size, but only up to a
 scalar multiple --- for example, it is given as $O(T^{2/9})$ for the
 Bartlett kernel.  \app{Gretl} uses an implied multiple of 1.  
+
+\subsection{VARs: a special case}
+\label{sec:hac-VARs}
+
+A well-specified vector autoregression (VAR) will generally include
+enough lags of the dependent variables to obviate the problem of
+residual autocorrelation, in which case HAC estimation is redundant
+--- although there may still be a need to correct for
+heteroskedasticity. For that reason plain HCCME, and not HAC, is the
+default when the \option{robust} flag is given in the context of the
+\cmd{var} command. However, if for some reason you need HAC you can
+force the issue by giving the option \option{robust-hac}.
 
 
 \section{Special issues with panel data}
