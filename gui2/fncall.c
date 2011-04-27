@@ -2078,6 +2078,49 @@ static int ols_bundle_callback (selector *sr)
 
 #endif /* OLS_BUNDLE_DEMO */
 
+/* get a listing of available addons along with (a) the 
+   name of the versioned subdirectory containing the 
+   most recent usable version (given the gretl version)
+   and (b) the date of that package version, taken from its 
+   spec file. E.g.
+
+   gig 1.9.5 2011-04-22
+   ivpanel 1.9.4 2011-02-10
+*/
+
+int query_addons (void)
+{
+    gchar *query;
+    char *buf = NULL;
+    int v1, v2, v3;
+    int err = 0;
+
+    sscanf(GRETL_VERSION, "%d.%d.%d", &v1, &v2, &v3);
+    if (strstr(GRETL_VERSION, "cvs")) {
+	/* benefit of the doubt */
+	v3++;
+    }
+    
+    query = g_strdup_printf("/addons-data/pkginfo.php?gretl_version=%d.%d.%d",
+			    v1, v2, v3);
+    err = query_sourceforge(query, &buf);
+    g_free(query);
+
+    if (!err && buf == NULL) {
+	/* shouldn't happen */
+	err = E_DATA;
+    }
+
+    if (!err) {
+	/* make use of info! */
+	infobox(buf);
+    }
+
+    free(buf);
+
+    return err;
+}
+
 static int query_addons_dir (const char *pkgname, char *sfdir)
 {
     gchar *query;

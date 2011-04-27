@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-# ifdef WIN32
+#ifdef WIN32
 
 static size_t get_bufsize (const char *buf)
 {
@@ -43,7 +43,7 @@ static size_t get_bufsize (const char *buf)
     return newsize;
 }
 
-# endif /* WIN32 */
+#endif /* WIN32 */
 
 /* E.g. Sun Mar 16 13:50:52 EST 2003 */
 
@@ -197,7 +197,9 @@ static int real_update_query (int queryopt)
 
     err = get_update_info(&getbuf, filedate, queryopt);
 
-    if (err || getbuf == NULL) return 1;
+    if (err || getbuf == NULL) {
+	return 1;
+    }
 
     if (strncmp(getbuf, "message:", 8) == 0) {
 	infobox(getbuf + 9);
@@ -212,6 +214,10 @@ static int real_update_query (int queryopt)
     }
 
     free(getbuf);
+
+#if 0
+    query_addons();
+#endif
 
     return err;
 }

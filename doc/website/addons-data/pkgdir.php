@@ -28,13 +28,13 @@ $got_version = "";
 while (!feof($fp)) {
     $pkg_version = trim(fgets($fp));
     if (strlen($pkg_version) > 0) {
-	$vp1 = strtok($pkg_version, ".");
-	$vp2 = strtok(".");
-	$vp3 = strtok(".");
+	$vp1 = strtok($pkg_version, ". ");
+	$vp2 = strtok(". ");
+	$vp3 = strtok(". ");
 	if (too_new($gretl_maj, $gretl_min, $gretl_pl, $vp1, $vp2, $vp3)) {
 	    break;
 	} else {
-	    $last_version = $pkg_version;
+	    $last_version = "$vp1.$vp2.$vp3";
 	}
     }
 }

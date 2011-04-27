@@ -39,4 +39,6 @@ void maybe_add_packages_to_model_menus (windata_t *vwin);
 
 void maybe_add_packages_to_menus (windata_t *vwin);
 
+int query_addons (void);
+
 #endif /* FNCALL_H */
