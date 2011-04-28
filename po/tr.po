@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-04-25 09:51-0400\n"
+"POT-Creation-Date: 2011-04-28 12:39-0400\n"
 "PO-Revision-Date: 2011-04-14 11:03+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
@@ -176,7 +176,7 @@ msgid "H0: all groups have unit root"
 msgstr "H0: tüm kümelerin birim kökü var"
 
 #: lib/src/adf_kpss.c:1238 lib/src/estimate.c:3908 lib/src/estimate.c:3969
-#: lib/src/estimate.c:4118 lib/src/genfuncs.c:1728 lib/src/gretl_func.c:6241
+#: lib/src/estimate.c:4118 lib/src/genfuncs.c:1728 lib/src/gretl_func.c:6323
 #: lib/src/pvalues.c:1785
 msgid "Couldn't load plugin function\n"
 msgstr "Eklenti işlevi yüklenemedi\n"
@@ -222,7 +222,7 @@ msgstr "Gecikme budama değiştirgesi = %d\n"
 #: lib/src/modelprint.c:2265 lib/src/modelprint.c:2270
 #: lib/src/modelprint.c:2288 lib/src/modelprint.c:2292
 #: lib/src/modelprint.c:2297 lib/src/modelprint.c:2309
-#: lib/src/modelprint.c:2314 lib/src/modelprint.c:2318 lib/src/vartest.c:635
+#: lib/src/modelprint.c:2314 lib/src/modelprint.c:2318 lib/src/vartest.c:660
 msgid "Test statistic"
 msgstr "Sınama istatistiği"
 
@@ -435,7 +435,7 @@ msgstr "Olabilirlik oranı sınaması"
 #: lib/src/system.c:1008 lib/src/system.c:2860 lib/src/system.c:2882
 #: lib/src/system.c:2913 lib/src/system.c:2931 lib/src/system.c:4005
 #: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1262
-#: lib/src/varprint.c:1270 lib/src/vartest.c:60 lib/src/vartest.c:636
+#: lib/src/varprint.c:1270 lib/src/vartest.c:61 lib/src/vartest.c:661
 #: plugin/johansen.c:1859 plugin/jrestrict.c:2826
 msgid "Chi-square"
 msgstr "Ki-kare"
@@ -483,7 +483,7 @@ msgstr "Doğrusal-dışılık sınaması (loglar)"
 #: lib/src/modelprint.c:2295 lib/src/modelprint.c:2299
 #: lib/src/modelprint.c:2312 lib/src/modelprint.c:2316
 #: lib/src/modelprint.c:2320 lib/src/printout.c:325 lib/src/printout.c:331
-#: lib/src/vartest.c:60
+#: lib/src/vartest.c:61
 msgid "with p-value"
 msgstr "p-değeri"
 
@@ -1431,8 +1431,9 @@ msgstr "Tanımlanmış bir seri uzunluğu yok"
 msgid "Series imported OK"
 msgstr "Seri içe aktarma başarılı"
 
-#: lib/src/dbread.c:2406 lib/src/gretl_func.c:2268 lib/src/gretl_utils.c:1523
-#: lib/src/interact.c:4176 gui2/dialogs.c:4778 plugin/tramo-x12a.c:680
+#: lib/src/dbread.c:2406 lib/src/gretl_func.c:2218 lib/src/gretl_func.c:2278
+#: lib/src/gretl_func.c:2341 lib/src/gretl_utils.c:1523
+#: lib/src/interact.c:4179 gui2/dialogs.c:4778 plugin/tramo-x12a.c:680
 #, c-format
 msgid "Couldn't open %s"
 msgstr "%s açılamadı"
@@ -1954,7 +1955,7 @@ msgstr "Lilliefors sınaması"
 msgid "Test for normality of %s:"
 msgstr "%s için normallik sınaması"
 
-#: lib/src/discrete.c:1178 lib/src/interact.c:4361
+#: lib/src/discrete.c:1178 lib/src/interact.c:4364
 #, c-format
 msgid "The variable '%s' is not discrete"
 msgstr "%s değişkeni kesikli değil"
@@ -2137,7 +2138,7 @@ msgstr "'if' için belirsizlik koşulu"
 msgid "Unmatched \"%s\""
 msgstr "\"%s\" uyuşmadı"
 
-#: lib/src/flow_control.c:255 lib/src/interact.c:2329
+#: lib/src/flow_control.c:255 lib/src/interact.c:2332
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "komuttaki '%s' alanı geçersiz"
@@ -2156,7 +2157,7 @@ msgstr "%s serisi (Kimlik# %d) değiştirildi"
 msgid "Generated series %s (ID %d)"
 msgstr "%s serisi (Kimlik# %d) oluşturuldu"
 
-#: lib/src/geneval.c:3250 lib/src/interact.c:1522
+#: lib/src/geneval.c:3250 lib/src/interact.c:1523
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Değişken sayısı %d sınırlar dışında"
@@ -2469,7 +2470,7 @@ msgstr "%s dizgisi oluşturuldu"
 msgid "Replaced after model %d: "
 msgstr "model %d sonrası değiştirildi: "
 
-#: lib/src/genmain.c:270 lib/src/interact.c:2326
+#: lib/src/genmain.c:270 lib/src/interact.c:2329
 #, c-format
 msgid "'%s' may not be used as a variable name"
 msgstr "'%s' bir değişken adı olarak kullanılamaz"
@@ -2501,7 +2502,7 @@ msgid "too many arguments"
 msgstr "argümanlar aşırı sayıda"
 
 #: lib/src/gmm.c:130 lib/src/gretl_list.c:2960 lib/src/gretl_panel.c:4470
-#: lib/src/gretl_panel.c:4480 lib/src/interact.c:3863 lib/src/nls.c:2763
+#: lib/src/gretl_panel.c:4480 lib/src/interact.c:3866 lib/src/nls.c:2763
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr "Bilinmeyen değişken '%s'"
@@ -2636,7 +2637,7 @@ msgstr "Normallik sınama istatistiği"
 msgid "Test statistic for gamma"
 msgstr "Gama sınama istatistiği"
 
-#: lib/src/graphing.c:3653
+#: lib/src/graphing.c:3653 plugin/addons-i18n.c:8
 msgid "Density"
 msgstr "Yoğunluk"
 
@@ -3007,63 +3008,63 @@ msgstr "sonlu-dışı değerler oluştu"
 msgid "Warning"
 msgstr "Uyarı"
 
-#: lib/src/gretl_func.c:2739 gui2/fnsave.c:1367
+#: lib/src/gretl_func.c:2812 gui2/fnsave.c:1367
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: DTD'ye karşı geçerleme tamam"
 
-#: lib/src/gretl_func.c:2769
+#: lib/src/gretl_func.c:2846
 msgid "No functions are available for packaging at present."
 msgstr "Şu an elde paketlemek için işlev yok."
 
-#: lib/src/gretl_func.c:3812
+#: lib/src/gretl_func.c:3894
 msgid "No description available"
 msgstr "Elde betimleme yok"
 
-#: lib/src/gretl_func.c:3851
+#: lib/src/gretl_func.c:3933
 msgid "Function names must start with a letter"
 msgstr "İşlev adları bir harf ile başlamalıdır"
 
-#: lib/src/gretl_func.c:3854
+#: lib/src/gretl_func.c:3936
 #, c-format
 msgid "'%s' is the name of a gretl command"
 msgstr "'%s' bir gretl komut adı"
 
-#: lib/src/gretl_func.c:3858
+#: lib/src/gretl_func.c:3940
 #, c-format
 msgid "'%s' is the name of a built-in function"
 msgstr "'%s' programa gömülü bir işlevin adı"
 
-#: lib/src/gretl_func.c:3897
+#: lib/src/gretl_func.c:3979
 #, c-format
 msgid "Deleted function '%s'\n"
 msgstr "'%s' işlevi silindi\n"
 
-#: lib/src/gretl_func.c:4893
+#: lib/src/gretl_func.c:4975
 msgid "You can't change the name of a function here"
 msgstr "Bir işlev adını burada değiştiremezsiniz"
 
-#: lib/src/gretl_func.c:5972
+#: lib/src/gretl_func.c:6054
 #, c-format
 msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
 msgstr "%s: %d argüman türü yanlış (is %s, should be %s)\n"
 
-#: lib/src/gretl_func.c:5982
+#: lib/src/gretl_func.c:6064
 #, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
 msgstr "%s, argüman %d: %g değeri sınırlar dışında\n"
 
-#: lib/src/gretl_func.c:5993
+#: lib/src/gretl_func.c:6075
 #, c-format
 msgid "%s: not enough arguments\n"
 msgstr "%s: yeterli argüman yok\n"
 
-#: lib/src/gretl_func.c:6105
+#: lib/src/gretl_func.c:6187
 #, c-format
 msgid "Error message from %s:\n"
 msgstr "%s hata iletisi:\n"
 
-#: lib/src/gretl_func.c:6867
+#: lib/src/gretl_func.c:6949
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" tanımlı değil.\n"
@@ -3680,7 +3681,7 @@ msgid "Deleted string %s"
 msgstr "%s dizgisi silindi"
 
 #: lib/src/gretl_string_table.c:779 lib/src/gretl_win32.c:654
-#: lib/src/interact.c:3277
+#: lib/src/interact.c:3280
 msgid "The shell command is not activated."
 msgstr "Kabuk komutu etkinleştirilmiş değil."
 
@@ -3699,7 +3700,7 @@ msgstr "%s dizgisi oluşturuldu\n"
 msgid "Replaced string %s\n"
 msgstr "%s dizgisi değiştirildi\n"
 
-#: lib/src/gretl_string_table.c:1057 lib/src/interact.c:4150
+#: lib/src/gretl_string_table.c:1057 lib/src/interact.c:4153
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Komut satırı için ençok uzunluk (%d byte) aşıldı\n"
@@ -3936,71 +3937,71 @@ msgstr "Değişken bilgisi eksik"
 msgid "No observations were found"
 msgstr "Bulunan gözlem yok"
 
-#: lib/src/interact.c:1260
+#: lib/src/interact.c:1261
 msgid "generation of lag variable failed"
 msgstr "gecikme değişkeni oluşturma başarısız"
 
-#: lib/src/interact.c:1538 gui2/gui_utils.c:4606 gui2/library.c:4374
+#: lib/src/interact.c:1539 gui2/gui_utils.c:4606 gui2/library.c:4374
 #, c-format
 msgid "A series named %s already exists"
 msgstr "%s adında bir seri zaten var"
 
-#: lib/src/interact.c:1675
+#: lib/src/interact.c:1676
 #, c-format
 msgid "Parse error in '%s'"
 msgstr "'%s' için çözümleme hatası"
 
-#: lib/src/interact.c:1851
+#: lib/src/interact.c:1852
 #, c-format
 msgid "command 'end %s' not recognized"
 msgstr "'end%s' komutu tanınamadı"
 
-#: lib/src/interact.c:1856
+#: lib/src/interact.c:1857
 msgid "end: nothing to end"
 msgstr "end: sonlandırılacak birşey yok"
 
-#: lib/src/interact.c:1925
+#: lib/src/interact.c:1928
 #, c-format
 msgid "%s: required parameter is missing"
 msgstr "%s: gerekli değiştirge eksik"
 
-#: lib/src/interact.c:1946
+#: lib/src/interact.c:1949
 #, c-format
 msgid "%s: expected an integer order"
 msgstr "%s: tamsayı bir derece bekleniyor"
 
-#: lib/src/interact.c:2099
+#: lib/src/interact.c:2102
 #, c-format
 msgid "%d is not a valid variable number"
 msgstr "%d geçerli bir değişken adı değildir"
 
-#: lib/src/interact.c:2178
+#: lib/src/interact.c:2181
 #, c-format
 msgid "'%s' is not the name of a series"
 msgstr "'%s' bir seri adı değil"
 
-#: lib/src/interact.c:2181
+#: lib/src/interact.c:2184
 #, c-format
 msgid "'%s' is not the name of a variable"
 msgstr "'%s' bir değişken adı değil"
 
-#: lib/src/interact.c:2385 lib/src/system.c:562 plugin/arbond.c:2593
+#: lib/src/interact.c:2388 lib/src/system.c:562 plugin/arbond.c:2593
 #, c-format
 msgid "variable %d duplicated in the command list."
 msgstr "değişken %d komut listesinde tekrarlı"
 
-#: lib/src/interact.c:2518 lib/src/interact.c:5482 cli/cli_object.c:54
+#: lib/src/interact.c:2521 lib/src/interact.c:5485 cli/cli_object.c:54
 #: gui2/objectsave.c:62
 #, c-format
 msgid "command '%s' not recognized"
 msgstr "'%s' komutu tanınamadı"
 
-#: lib/src/interact.c:2811 lib/src/interact.c:3037
+#: lib/src/interact.c:2814 lib/src/interact.c:3040
 #, c-format
 msgid "Unable to access the file %s.\n"
 msgstr "%s dosyasına erişilemiyor.\n"
 
-#: lib/src/interact.c:2839
+#: lib/src/interact.c:2842
 msgid ""
 "\n"
 "\n"
@@ -4010,11 +4011,11 @@ msgstr ""
 "\n"
 "Belirgin bir işlev ile ilgili yardım için, 'help <işlevadı>' giriniz"
 
-#: lib/src/interact.c:2840
+#: lib/src/interact.c:2843
 msgid " (e.g. help qrdecomp)\n"
 msgstr " (örn: help qrdecomp)\n"
 
-#: lib/src/interact.c:2984
+#: lib/src/interact.c:2987
 msgid ""
 "\n"
 "Valid gretl commands are:\n"
@@ -4022,7 +4023,7 @@ msgstr ""
 "\n"
 "Geçerli gretl komutları şunlardır:\n"
 
-#: lib/src/interact.c:2999
+#: lib/src/interact.c:3002
 msgid ""
 "\n"
 "\n"
@@ -4032,126 +4033,126 @@ msgstr ""
 "\n"
 "Belirgin bir komut ile ilgili yardım için, 'help <komutadı>' giriniz"
 
-#: lib/src/interact.c:3000
+#: lib/src/interact.c:3003
 msgid " (e.g. help smpl)\n"
 msgstr " (örn: help smpl)\n"
 
-#: lib/src/interact.c:3001
+#: lib/src/interact.c:3004
 msgid "You can also do 'help functions' for a list of functions\n"
 msgstr "İşlevlerin bir listesi için ayrıca 'help functions' diyebilirsiniz\n"
 
-#: lib/src/interact.c:3007
+#: lib/src/interact.c:3010
 msgid "genrcli.hlp"
 msgstr "genrcli.hlp"
 
-#: lib/src/interact.c:3032
+#: lib/src/interact.c:3035
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
 msgstr "\"%s\" bir gretl komutu değil.\n"
 
-#: lib/src/interact.c:3048 lib/src/interact.c:3074
+#: lib/src/interact.c:3051 lib/src/interact.c:3077
 #, c-format
 msgid "%s: sorry, no help available.\n"
 msgstr "%s: üzgünüm, elde yardım yok.\n"
 
-#: lib/src/interact.c:3895 lib/src/printout.c:1622
+#: lib/src/interact.c:3898 lib/src/printout.c:1622
 msgid "No series are defined\n"
 msgstr "Tanımlı bir seri yok\n"
 
-#: lib/src/interact.c:3899
+#: lib/src/interact.c:3902
 msgid "Listing labels for variables:\n"
 msgstr "Değişken etiketleri listesi:\n"
 
-#: lib/src/interact.c:3947
+#: lib/src/interact.c:3950
 msgid "Output is not currently diverted to file\n"
 msgstr "Çıktılar, şu an dosyaya yönlendirilmiş değil\n"
 
-#: lib/src/interact.c:3952
+#: lib/src/interact.c:3955
 #, c-format
 msgid "Closed output file '%s'\n"
 msgstr "Çıktı dosyası '%s' kapatıldı\n"
 
-#: lib/src/interact.c:3960
+#: lib/src/interact.c:3963
 #, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr "Çıktılar '%s' dosyasına zaten yönlendirili\n"
 
-#: lib/src/interact.c:3967
+#: lib/src/interact.c:3970
 msgid "Now discarding output\n"
 msgstr "Çıktılar şimdi atılıyor\n"
 
-#: lib/src/interact.c:3989
+#: lib/src/interact.c:3992
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "%s yazmak için açılamadı\n"
 
-#: lib/src/interact.c:3995
+#: lib/src/interact.c:3998
 #, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "Çıktılar şimdi '%s' dosyasına yazılıyor\n"
 
-#: lib/src/interact.c:3997
+#: lib/src/interact.c:4000
 #, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "Çıktılar şimdi '%s' dosyasına iliştiriliyor\n"
 
-#: lib/src/interact.c:4061
+#: lib/src/interact.c:4064
 msgid "No data information is available.\n"
 msgstr "Elde veri bilgisi yok.\n"
 
-#: lib/src/interact.c:4573
+#: lib/src/interact.c:4576
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "Burada bir döngü bitiremezsiniz, daha başlamış değilsiniz\n"
 
-#: lib/src/interact.c:4679
+#: lib/src/interact.c:4682
 msgid "This command requires one variable.\n"
 msgstr "Bu komut bir tane değişken gerektirir.\n"
 
-#: lib/src/interact.c:4820
+#: lib/src/interact.c:4823
 #, c-format
 msgid "data frequency = %d\n"
 msgstr "veri sıklığı = %d\n"
 
-#: lib/src/interact.c:4850
+#: lib/src/interact.c:4853
 msgid "store: no filename given\n"
 msgstr "store: verili bir dosya adı yok\n"
 
-#: lib/src/interact.c:4853 lib/src/monte_carlo.c:2208
+#: lib/src/interact.c:4856 lib/src/monte_carlo.c:2208
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "store: %s dosya adı kullanılarak\n"
 
-#: lib/src/interact.c:4859 lib/src/monte_carlo.c:2214
+#: lib/src/interact.c:4862 lib/src/monte_carlo.c:2214
 msgid "Data written OK.\n"
 msgstr "Verileri yazma başarılı.\n"
 
-#: lib/src/interact.c:4903
+#: lib/src/interact.c:4906
 msgid "This estimator requires panel data"
 msgstr "Bu tahminci panel verileri gerektirir"
 
-#: lib/src/interact.c:5059
+#: lib/src/interact.c:5062
 msgid "Couldn't format model\n"
 msgstr "Model biçimlendirilemedi\n"
 
-#: lib/src/interact.c:5075
+#: lib/src/interact.c:5078
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Model %s dosyasına kaydedildi\n"
 
-#: lib/src/interact.c:5188 cli/gretlcli.c:1034 gui2/library.c:8495
+#: lib/src/interact.c:5191 cli/gretlcli.c:1034 gui2/library.c:8495
 msgid "Infinite loop detected in script\n"
 msgstr "Betikte sonsuz döngü bulundu\n"
 
-#: lib/src/interact.c:5209
+#: lib/src/interact.c:5212
 msgid "You cannot delete variables in this context\n"
 msgstr "Bu bağlamda değişken silemezsiniz\n"
 
-#: lib/src/interact.c:5261 cli/gretlcli.c:664
+#: lib/src/interact.c:5264 cli/gretlcli.c:664
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: komut bulunmuyor\n"
 
-#: lib/src/interact.c:5267
+#: lib/src/interact.c:5270
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Üzgünüm, %s komutu daha libgretl'a eklenmedi\n"
@@ -4205,6 +4206,7 @@ msgid "Robust estimation"
 msgstr "Sağlam tahmin"
 
 #: lib/src/libset.c:1372 gui2/datawiz.c:497 gui2/menustate.c:574
+#: plugin/addons-i18n.c:27
 msgid "Time series"
 msgstr "Zaman serisi"
 
@@ -4485,7 +4487,7 @@ msgstr "GBY (GMM)"
 msgid "Logistic"
 msgstr "lojistik"
 
-#: lib/src/modelprint.c:812 gui2/selector.c:3386
+#: lib/src/modelprint.c:812 gui2/selector.c:3386 plugin/addons-i18n.c:12
 msgid "GARCH"
 msgstr "GÖBKF (GARCH)"
 
@@ -4922,7 +4924,7 @@ msgstr "T"
 
 #: lib/src/modelprint.c:1731 lib/src/modelprint.c:1734
 #: lib/src/modelprint.c:1737 lib/src/system.c:4000 lib/src/system.c:4019
-#: lib/src/vartest.c:54 lib/src/vartest.c:81
+#: lib/src/vartest.c:55 lib/src/vartest.c:82
 msgid "Equation"
 msgstr "Denklem"
 
@@ -5800,17 +5802,17 @@ msgstr ""
 "Yapılamıyor: şu anki veri seti, başvurulan modelin tahmininde\n"
 "kullanılandan farklı\n"
 
-#: lib/src/options.c:1022
+#: lib/src/options.c:1025
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "Geçersiz seçenek '--%s'"
 
-#: lib/src/options.c:1040
+#: lib/src/options.c:1043
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "'--%s' seçeneği bir değiştirge gerektirir"
 
-#: lib/src/options.c:1305
+#: lib/src/options.c:1308
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Uyarı: %s seçeneği döngü dışında yok sayıldı"
@@ -6725,40 +6727,40 @@ msgstr "Silinen dizey %s"
 msgid "Matrix decomposition failed"
 msgstr "Dizey ayrıştırması başarısız"
 
-#: lib/src/var.c:699 lib/src/var.c:3078
+#: lib/src/var.c:703 lib/src/var.c:3082
 #, c-format
 msgid "vecm: rank %d is out of bounds"
 msgstr "VECM: sıra %d sınırlar dışında"
 
-#: lib/src/var.c:2542
+#: lib/src/var.c:2546
 msgid "Sample variance-covariance matrices for residuals"
 msgstr "Kalıntılar için örneklem varyans-kovaryans dizeyleri"
 
-#: lib/src/var.c:2544
+#: lib/src/var.c:2548
 msgid "VAR system in first differences"
 msgstr "Birinci farklarda YÖB sistemi"
 
-#: lib/src/var.c:2552
+#: lib/src/var.c:2556
 msgid "System with levels as dependent variable"
 msgstr "Sistem (düzey bağımlı değişkeni ile)"
 
-#: lib/src/var.c:2560
+#: lib/src/var.c:2564
 msgid "Cross-products"
 msgstr "Çapraz-çarpımlar"
 
-#: lib/src/var.c:2898
+#: lib/src/var.c:2902
 msgid "Johansen test"
 msgstr "Johansen sınaması"
 
-#: lib/src/var.c:2899
+#: lib/src/var.c:2903
 msgid "Number of equations"
 msgstr "Denklem sayısı"
 
-#: lib/src/var.c:2900
+#: lib/src/var.c:2904
 msgid "Lag order"
 msgstr "Gecikme derecesi"
 
-#: lib/src/var.c:2901
+#: lib/src/var.c:2905
 msgid "Estimation period"
 msgstr "Tahmin dönemi"
 
@@ -6911,12 +6913,12 @@ msgstr "Bilgi ölçütlerinin karşılaştırması"
 msgid "Lag order %*d"
 msgstr "Gecikme derecesi %*d"
 
-#: lib/src/vartest.c:217
+#: lib/src/vartest.c:218
 #, c-format
 msgid "VAR system, maximum lag order %d"
 msgstr "YÖB sistemi, ençok gecikme derecesi %d"
 
-#: lib/src/vartest.c:220
+#: lib/src/vartest.c:221
 msgid ""
 "The asterisks below indicate the best (that is, minimized) values\n"
 "of the respective information criteria, AIC = Akaike criterion,\n"
@@ -6926,11 +6928,11 @@ msgstr ""
 "enaz olan) değerleri göstermektedir. ABÖ = Akaike ölçütü,\n"
 "BBÖ = Schwarz Bayesçi ölçüt, HQÖ = Hannan-Quinn ölçütü."
 
-#: lib/src/vartest.c:225
+#: lib/src/vartest.c:226
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr "gecik      log-olb    p(OO)       ABÖ          BBÖ          HQÖ"
 
-#: lib/src/vartest.c:629
+#: lib/src/vartest.c:654
 msgid ""
 "\n"
 "  Null hypothesis: the regression parameters are zero for the variables\n"
@@ -6940,7 +6942,7 @@ msgstr ""
 "  Sıfır önsavı: Seçilen değişken(ler) için bağlanım katsayısı = 0\n"
 "\n"
 
-#: lib/src/vartest.c:637
+#: lib/src/vartest.c:662
 #, c-format
 msgid ""
 "with p-value = %g\n"
@@ -9480,11 +9482,11 @@ msgstr "İşlev paketi bozuk"
 msgid "Couldn't get function package information"
 msgstr "İşlev paket bilgisi alınamadı"
 
-#: gui2/fncall.c:2190 gui2/selector.c:448 gui2/toolbar.c:1028
+#: gui2/fncall.c:2233 gui2/selector.c:448 gui2/toolbar.c:1028
 msgid "gretl: specify model"
 msgstr "gretl: model belirt"
 
-#: gui2/fncall.c:2199
+#: gui2/fncall.c:2242
 #, c-format
 msgid ""
 "The %s package was not found, or is not up to date.\n"
@@ -9493,17 +9495,17 @@ msgstr ""
 "%s paketi bulunamadı, ya da güncel değil.\n"
 "Şimdi indirmeyi denemek istiyor musunuz?"
 
-#: gui2/fncall.c:2263
+#: gui2/fncall.c:2306
 #, fuzzy
 msgid "GARCH variants"
 msgstr "tüm değişkeler"
 
-#: gui2/fncall.c:2264
+#: gui2/fncall.c:2307
 #, fuzzy
 msgid "Panel IV model"
 msgstr "Panel modeli"
 
-#: gui2/fncall.c:2315
+#: gui2/fncall.c:2358
 #, fuzzy
 msgid "Confidence band plot"
 msgstr "Güven aralığı"
@@ -12936,7 +12938,7 @@ msgstr "Model çizelgeye eklendi"
 msgid "HSK"
 msgstr "FSP (HSK)"
 
-#: gui2/model_table.c:408 gui2/selector.c:3384
+#: gui2/model_table.c:408 gui2/selector.c:3384 plugin/addons-i18n.c:6
 msgid "ARCH"
 msgstr "ÖBKF (ARCH)"
 
@@ -13543,7 +13545,7 @@ msgstr ""
 msgid "Test only selected variables"
 msgstr "Yanlızca seçili değişkenleri sına"
 
-#: gui2/selector.c:5165
+#: gui2/selector.c:5165 plugin/addons-i18n.c:35
 msgid "Fixed effects"
 msgstr "Sabit etkiler"
 
@@ -14193,7 +14195,7 @@ msgstr ""
 msgid "gretl: options"
 msgstr "gretl: seçenekler"
 
-#: gui2/settings.c:953 gui2/settings.c:2317
+#: gui2/settings.c:953 gui2/settings.c:2316
 msgid "Browse..."
 msgstr "Göz at..."
 
@@ -14233,59 +14235,59 @@ msgstr "HCCME"
 msgid "Manuals"
 msgstr "Belgeler"
 
-#: gui2/settings.c:1410
+#: gui2/settings.c:1409
 msgid "Fixed font..."
 msgstr "Tekhacimli yazı tipi..."
 
-#: gui2/settings.c:1424
+#: gui2/settings.c:1423
 msgid "Menu font..."
 msgstr "Menü yazı tipi..."
 
-#: gui2/settings.c:1438
+#: gui2/settings.c:1437
 msgid "Working directory..."
 msgstr "Çalışma dizini..."
 
-#: gui2/settings.c:1594
+#: gui2/settings.c:1593
 msgid "This change will take effect when you restart gretl"
 msgstr "Bu değişiklik gretl'ı yeniden başlattığınızda etkili olacaktır"
 
-#: gui2/settings.c:2131
+#: gui2/settings.c:2130
 msgid "Font for gretl output windows"
 msgstr "Gretl çıktı penceresi yazı tipi"
 
-#: gui2/settings.c:2135
+#: gui2/settings.c:2134
 msgid "Font for menus and labels"
 msgstr "Menü ve etiketler için yazı tipi"
 
-#: gui2/settings.c:2302
+#: gui2/settings.c:2301
 msgid "Working directory:"
 msgstr "Çalışma dizini:"
 
-#: gui2/settings.c:2326
+#: gui2/settings.c:2325
 msgid "On start-up, gretl should use:"
 msgstr "gretl açılışta şunu kullansın:"
 
-#: gui2/settings.c:2333
+#: gui2/settings.c:2332
 msgid "the directory selected above"
 msgstr "yukarıdaki seçili dizin"
 
-#: gui2/settings.c:2340
+#: gui2/settings.c:2339
 msgid "the current directory as determined via the shell"
 msgstr "kabuk tarafından belirli şu anki dizin"
 
-#: gui2/settings.c:2350
+#: gui2/settings.c:2349
 msgid "The file selection dialog should:"
 msgstr "Dosya seçimi iletisi:"
 
-#: gui2/settings.c:2357
+#: gui2/settings.c:2356
 msgid "remember the last-opened folder"
 msgstr "en son açılan dizini anımsasın"
 
-#: gui2/settings.c:2366
+#: gui2/settings.c:2365
 msgid "always start in the working directory"
 msgstr "her zaman çalışma dizininde başlasın"
 
-#: gui2/settings.c:2420
+#: gui2/settings.c:2419
 msgid "gretl: working directory"
 msgstr "gretl: çalışma dizini"
 
@@ -14786,7 +14788,7 @@ msgstr ""
 msgid "This file is part of the gretl update notification system\n"
 msgstr "Bu dosya, gretl güncelleme uyarı sisteminin bir parçasıdır\n"
 
-#: gui2/update.c:211
+#: gui2/update.c:213
 msgid "No new files"
 msgstr "Yeni dosya yok"
 
@@ -14857,6 +14859,139 @@ msgstr "Kesikli değişken olarak ele al"
 #: gui2/varinfo.c:977
 msgid "Name of variable:"
 msgstr "Değişken adı:"
+
+#: plugin/addons-i18n.c:4
+msgid "gig"
+msgstr ""
+
+#: plugin/addons-i18n.c:5
+#, fuzzy
+msgid "APARCH"
+msgstr "ÖBKF (ARCH)"
+
+#: plugin/addons-i18n.c:7
+#, fuzzy
+msgid "Covariance estimator"
+msgstr "Kovaryans dizeyi"
+
+#: plugin/addons-i18n.c:9
+#, fuzzy
+msgid "Dependent Variable"
+msgstr "Bağımlı değişken"
+
+#: plugin/addons-i18n.c:10
+#, fuzzy
+msgid "Distribution"
+msgstr "Dağılım:"
+
+#: plugin/addons-i18n.c:11
+#, fuzzy
+msgid "EGARCH"
+msgstr "GÖBKF (GARCH)"
+
+#: plugin/addons-i18n.c:13
+msgid "GED"
+msgstr ""
+
+#: plugin/addons-i18n.c:14
+msgid "GJR"
+msgstr ""
+
+#: plugin/addons-i18n.c:15
+#, fuzzy
+msgid "Hessian"
+msgstr " (Hesseyen kullanılarak)"
+
+#: plugin/addons-i18n.c:16
+#, fuzzy
+msgid "Mean regressors"
+msgstr "Bağlayanlar"
+
+#: plugin/addons-i18n.c:17
+#, fuzzy
+msgid "Model type"
+msgstr "Model çizelge"
+
+#: plugin/addons-i18n.c:18
+#, fuzzy
+msgid "NARCH"
+msgstr "ÖBKF (ARCH)"
+
+#: plugin/addons-i18n.c:19
+#, fuzzy
+msgid "Normal"
+msgstr "normal"
+
+#: plugin/addons-i18n.c:20
+msgid "OPG"
+msgstr ""
+
+#: plugin/addons-i18n.c:21
+#, fuzzy
+msgid "Plot type"
+msgstr "tür"
+
+#: plugin/addons-i18n.c:22
+#, fuzzy
+msgid "Sandwich"
+msgstr "Kuşakgenişliği:"
+
+#: plugin/addons-i18n.c:23
+msgid "Skewed GED"
+msgstr ""
+
+#: plugin/addons-i18n.c:24
+#, fuzzy
+msgid "Skewed t"
+msgstr "Çarpıklık"
+
+#: plugin/addons-i18n.c:25
+#, fuzzy
+msgid "TARCH"
+msgstr "ÖBKF (ARCH)"
+
+#: plugin/addons-i18n.c:26
+msgid "Taylor/Schwert GARCH"
+msgstr ""
+
+#: plugin/addons-i18n.c:28
+#, fuzzy
+msgid "Variance regressors"
+msgstr "Birinci denklem bağlayanları"
+
+#: plugin/addons-i18n.c:29
+#, fuzzy
+msgid "Verbosity"
+msgstr "_Ayrıntılı"
+
+#: plugin/addons-i18n.c:30
+#, fuzzy
+msgid "t"
+msgstr "->"
+
+#: plugin/addons-i18n.c:34
+#, fuzzy
+msgid "Between model"
+msgstr "_Kümeler-arası model..."
+
+#: plugin/addons-i18n.c:36
+msgid "G2SLS"
+msgstr ""
+
+#: plugin/addons-i18n.c:37
+#, fuzzy
+msgid "dependent variable"
+msgstr "Bağımlı değişken"
+
+#: plugin/addons-i18n.c:38
+#, fuzzy
+msgid "instruments"
+msgstr "Araçlar"
+
+#: plugin/addons-i18n.c:39
+#, fuzzy
+msgid "regressors"
+msgstr "Bağlayanlar"
 
 #: plugin/anova.c:106 plugin/anova.c:108
 msgid "Treatment"
@@ -15885,9 +16020,6 @@ msgstr "Olasılık dağılımları"
 
 #~ msgid "Residual _spectrum"
 #~ msgstr "Kalıntı i_zgesi"
-
-#~ msgid "Bandwidth:"
-#~ msgstr "Kuşakgenişliği:"
 
 #~ msgid "Spectrum"
 #~ msgstr "İzge"

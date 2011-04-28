@@ -127,6 +127,7 @@ gui2/treeutils.c
 gui2/update.c
 gui2/varinfo.c
 gui2/winstack.c
+plugin/addons-i18n.c
 plugin/anova.c
 plugin/arbond.c
 plugin/arma.c

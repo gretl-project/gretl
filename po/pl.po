@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.9.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-04-25 09:51-0400\n"
+"POT-Creation-Date: 2011-04-28 12:39-0400\n"
 "PO-Revision-Date: 2011-04-26 09:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -175,7 +175,7 @@ msgid "H0: all groups have unit root"
 msgstr "H0: wszystkie grupy mają pierwiastek jednostkowy"
 
 #: lib/src/adf_kpss.c:1238 lib/src/estimate.c:3908 lib/src/estimate.c:3969
-#: lib/src/estimate.c:4118 lib/src/genfuncs.c:1728 lib/src/gretl_func.c:6241
+#: lib/src/estimate.c:4118 lib/src/genfuncs.c:1728 lib/src/gretl_func.c:6323
 #: lib/src/pvalues.c:1785
 msgid "Couldn't load plugin function\n"
 msgstr "Niemożliwe załadowanie dodatkowych funkcji\n"
@@ -222,7 +222,7 @@ msgstr "Parametr rzędu opóźnienia (lag truncation) = %d\n"
 #: lib/src/modelprint.c:2265 lib/src/modelprint.c:2270
 #: lib/src/modelprint.c:2288 lib/src/modelprint.c:2292
 #: lib/src/modelprint.c:2297 lib/src/modelprint.c:2309
-#: lib/src/modelprint.c:2314 lib/src/modelprint.c:2318 lib/src/vartest.c:635
+#: lib/src/modelprint.c:2314 lib/src/modelprint.c:2318 lib/src/vartest.c:660
 msgid "Test statistic"
 msgstr "Statystyka testu"
 
@@ -439,7 +439,7 @@ msgstr "Test ilorazu wiarygodności"
 #: lib/src/system.c:1008 lib/src/system.c:2860 lib/src/system.c:2882
 #: lib/src/system.c:2913 lib/src/system.c:2931 lib/src/system.c:4005
 #: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1262
-#: lib/src/varprint.c:1270 lib/src/vartest.c:60 lib/src/vartest.c:636
+#: lib/src/varprint.c:1270 lib/src/vartest.c:61 lib/src/vartest.c:661
 #: plugin/johansen.c:1859 plugin/jrestrict.c:2826
 msgid "Chi-square"
 msgstr "Chi-kwadrat"
@@ -487,7 +487,7 @@ msgstr "Test na nieliniowość (logarytmy)"
 #: lib/src/modelprint.c:2295 lib/src/modelprint.c:2299
 #: lib/src/modelprint.c:2312 lib/src/modelprint.c:2316
 #: lib/src/modelprint.c:2320 lib/src/printout.c:325 lib/src/printout.c:331
-#: lib/src/vartest.c:60
+#: lib/src/vartest.c:61
 msgid "with p-value"
 msgstr "z wartością p"
 
@@ -1436,8 +1436,9 @@ msgstr "Niezdefiniowana długość serii"
 msgid "Series imported OK"
 msgstr "Seria zaimportowana: OK"
 
-#: lib/src/dbread.c:2406 lib/src/gretl_func.c:2268 lib/src/gretl_utils.c:1523
-#: lib/src/interact.c:4176 gui2/dialogs.c:4778 plugin/tramo-x12a.c:680
+#: lib/src/dbread.c:2406 lib/src/gretl_func.c:2218 lib/src/gretl_func.c:2278
+#: lib/src/gretl_func.c:2341 lib/src/gretl_utils.c:1523
+#: lib/src/interact.c:4179 gui2/dialogs.c:4778 plugin/tramo-x12a.c:680
 #, c-format
 msgid "Couldn't open %s"
 msgstr "Niemożliwe otwarcie pliku %s"
@@ -1966,7 +1967,7 @@ msgstr "Test Lillieforsa"
 msgid "Test for normality of %s:"
 msgstr "Test na normalność rozkładu %s:"
 
-#: lib/src/discrete.c:1178 lib/src/interact.c:4361
+#: lib/src/discrete.c:1178 lib/src/interact.c:4364
 #, c-format
 msgid "The variable '%s' is not discrete"
 msgstr "Zmienna '%s' nie jest dyskretna"
@@ -2151,7 +2152,7 @@ msgstr "nieokreślony warunek dla polecenia 'if'"
 msgid "Unmatched \"%s\""
 msgstr "Niedopasowany \"%s\""
 
-#: lib/src/flow_control.c:255 lib/src/interact.c:2329
+#: lib/src/flow_control.c:255 lib/src/interact.c:2332
 #, c-format
 msgid "field '%s' in command is invalid"
 msgstr "ciąg znaków '%s' jest błędnym poleceniem"
@@ -2170,7 +2171,7 @@ msgstr "Zamieniono serię %s (ID %d)"
 msgid "Generated series %s (ID %d)"
 msgstr "Wygenerowano serie %s (ID %d)"
 
-#: lib/src/geneval.c:3250 lib/src/interact.c:1522
+#: lib/src/geneval.c:3250 lib/src/interact.c:1523
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Numer zmiennej %d jest spoza zakresu"
@@ -2483,7 +2484,7 @@ msgstr "Wygenerowano łańcuch znaków %s"
 msgid "Replaced after model %d: "
 msgstr "Zamieniono model %d: "
 
-#: lib/src/genmain.c:270 lib/src/interact.c:2326
+#: lib/src/genmain.c:270 lib/src/interact.c:2329
 #, c-format
 msgid "'%s' may not be used as a variable name"
 msgstr "'%s' nie odnosi się do użytej nazwy zmiennej"
@@ -2515,7 +2516,7 @@ msgid "too many arguments"
 msgstr "Za dużo argumentów"
 
 #: lib/src/gmm.c:130 lib/src/gretl_list.c:2960 lib/src/gretl_panel.c:4470
-#: lib/src/gretl_panel.c:4480 lib/src/interact.c:3863 lib/src/nls.c:2763
+#: lib/src/gretl_panel.c:4480 lib/src/interact.c:3866 lib/src/nls.c:2763
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr "Nieznana zmienna '%s'"
@@ -2650,7 +2651,7 @@ msgstr "Test na normalność rozkładu"
 msgid "Test statistic for gamma"
 msgstr "Test statystyczny dla gamma"
 
-#: lib/src/graphing.c:3653
+#: lib/src/graphing.c:3653 plugin/addons-i18n.c:8
 msgid "Density"
 msgstr "Gęstość"
 
@@ -3020,63 +3021,63 @@ msgstr "wygenerowano nieskończone wartoci"
 msgid "Warning"
 msgstr "Uwaga"
 
-#: lib/src/gretl_func.c:2739 gui2/fnsave.c:1367
+#: lib/src/gretl_func.c:2812 gui2/fnsave.c:1367
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: poprawność w stosunku do DTD OK"
 
-#: lib/src/gretl_func.c:2769
+#: lib/src/gretl_func.c:2846
 msgid "No functions are available for packaging at present."
 msgstr "Niedostępne są funkcje dla bieżących pakietów."
 
-#: lib/src/gretl_func.c:3812
+#: lib/src/gretl_func.c:3894
 msgid "No description available"
 msgstr "Niedostępny opis"
 
-#: lib/src/gretl_func.c:3851
+#: lib/src/gretl_func.c:3933
 msgid "Function names must start with a letter"
 msgstr "Nazwa funkcji musi zaczynać się od litery"
 
-#: lib/src/gretl_func.c:3854
+#: lib/src/gretl_func.c:3936
 #, c-format
 msgid "'%s' is the name of a gretl command"
 msgstr "'%s' jest nazwą poleceniem gretla"
 
-#: lib/src/gretl_func.c:3858
+#: lib/src/gretl_func.c:3940
 #, c-format
 msgid "'%s' is the name of a built-in function"
 msgstr "'%s' jest nazwą pakietu funkcji"
 
-#: lib/src/gretl_func.c:3897
+#: lib/src/gretl_func.c:3979
 #, c-format
 msgid "Deleted function '%s'\n"
 msgstr "Usunięto funkcję '%s'\n"
 
-#: lib/src/gretl_func.c:4893
+#: lib/src/gretl_func.c:4975
 msgid "You can't change the name of a function here"
 msgstr "Niemożliwa zmiana nazwy funkcji teraz"
 
-#: lib/src/gretl_func.c:5972
+#: lib/src/gretl_func.c:6054
 #, c-format
 msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
 msgstr "%s: argument %d ma nieodpowiedni typ (ma %s, powinien być %s)\n"
 
-#: lib/src/gretl_func.c:5982
+#: lib/src/gretl_func.c:6064
 #, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
 msgstr "%s, argument %d: wartość %g jest spoza zakresu\n"
 
-#: lib/src/gretl_func.c:5993
+#: lib/src/gretl_func.c:6075
 #, c-format
 msgid "%s: not enough arguments\n"
 msgstr "%s: brak argumentów\n"
 
-#: lib/src/gretl_func.c:6105
+#: lib/src/gretl_func.c:6187
 #, c-format
 msgid "Error message from %s:\n"
 msgstr "Błędny komunikat z %s:\n"
 
-#: lib/src/gretl_func.c:6867
+#: lib/src/gretl_func.c:6949
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" nie jest zdefiniowane.\n"
@@ -3695,7 +3696,7 @@ msgid "Deleted string %s"
 msgstr "Usunięto łańcuch znaków %s"
 
 #: lib/src/gretl_string_table.c:779 lib/src/gretl_win32.c:654
-#: lib/src/interact.c:3277
+#: lib/src/interact.c:3280
 msgid "The shell command is not activated."
 msgstr "Polecenia shell command są niedostępne."
 
@@ -3714,7 +3715,7 @@ msgstr "Wygenerowano łańcuch znaków %s\n"
 msgid "Replaced string %s\n"
 msgstr "Zamieniono łańcuch znaków %s\n"
 
-#: lib/src/gretl_string_table.c:1057 lib/src/interact.c:4150
+#: lib/src/gretl_string_table.c:1057 lib/src/interact.c:4153
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
 msgstr "Maksymalna długość lini polecenia przekracza (%d bajtów)\n"
@@ -3951,71 +3952,71 @@ msgstr "Brak informacji o zmiennych"
 msgid "No observations were found"
 msgstr "Nie znaleziono żadnych obserwacji"
 
-#: lib/src/interact.c:1260
+#: lib/src/interact.c:1261
 msgid "generation of lag variable failed"
 msgstr "błąd generowania zmiennej opóźnionej"
 
-#: lib/src/interact.c:1538 gui2/gui_utils.c:4606 gui2/library.c:4374
+#: lib/src/interact.c:1539 gui2/gui_utils.c:4606 gui2/library.c:4374
 #, c-format
 msgid "A series named %s already exists"
 msgstr "Macierz o tej nazwie %s już istnieje"
 
-#: lib/src/interact.c:1675
+#: lib/src/interact.c:1676
 #, c-format
 msgid "Parse error in '%s'"
 msgstr "Błędna analiza w '%s'"
 
-#: lib/src/interact.c:1851
+#: lib/src/interact.c:1852
 #, c-format
 msgid "command 'end %s' not recognized"
 msgstr "polecenie 'end %s' jest nie rozpoznawalne"
 
-#: lib/src/interact.c:1856
+#: lib/src/interact.c:1857
 msgid "end: nothing to end"
 msgstr "end: nic nie kończy"
 
-#: lib/src/interact.c:1925
+#: lib/src/interact.c:1928
 #, c-format
 msgid "%s: required parameter is missing"
 msgstr "%s: brak wymaganego parametru"
 
-#: lib/src/interact.c:1946
+#: lib/src/interact.c:1949
 #, c-format
 msgid "%s: expected an integer order"
 msgstr "%s: oczekiwano całkowitej wartości"
 
-#: lib/src/interact.c:2099
+#: lib/src/interact.c:2102
 #, c-format
 msgid "%d is not a valid variable number"
 msgstr "%d nie jest prawidłowym numerem zmiennej"
 
-#: lib/src/interact.c:2178
+#: lib/src/interact.c:2181
 #, c-format
 msgid "'%s' is not the name of a series"
 msgstr "'%s' nie jest nazwą serii"
 
-#: lib/src/interact.c:2181
+#: lib/src/interact.c:2184
 #, c-format
 msgid "'%s' is not the name of a variable"
 msgstr "'%s' nie jest nazwą zmiennej"
 
-#: lib/src/interact.c:2385 lib/src/system.c:562 plugin/arbond.c:2593
+#: lib/src/interact.c:2388 lib/src/system.c:562 plugin/arbond.c:2593
 #, c-format
 msgid "variable %d duplicated in the command list."
 msgstr "zmienna %d jest zduplikowana w poleceniu."
 
-#: lib/src/interact.c:2518 lib/src/interact.c:5482 cli/cli_object.c:54
+#: lib/src/interact.c:2521 lib/src/interact.c:5485 cli/cli_object.c:54
 #: gui2/objectsave.c:62
 #, c-format
 msgid "command '%s' not recognized"
 msgstr "polecenia '%s' nie można cofnąć"
 
-#: lib/src/interact.c:2811 lib/src/interact.c:3037
+#: lib/src/interact.c:2814 lib/src/interact.c:3040
 #, c-format
 msgid "Unable to access the file %s.\n"
 msgstr "Niemożliwy dostęp do pliku %s.\n"
 
-#: lib/src/interact.c:2839
+#: lib/src/interact.c:2842
 msgid ""
 "\n"
 "\n"
@@ -4025,11 +4026,11 @@ msgstr ""
 "\n"
 "Pomoc dla funkcji uzyskasz po napisaniu: help funkcja"
 
-#: lib/src/interact.c:2840
+#: lib/src/interact.c:2843
 msgid " (e.g. help qrdecomp)\n"
 msgstr " (np. help qrdecomp)\n"
 
-#: lib/src/interact.c:2984
+#: lib/src/interact.c:2987
 msgid ""
 "\n"
 "Valid gretl commands are:\n"
@@ -4037,7 +4038,7 @@ msgstr ""
 "\n"
 "Poprawne polecenia gretla:\n"
 
-#: lib/src/interact.c:2999
+#: lib/src/interact.c:3002
 msgid ""
 "\n"
 "\n"
@@ -4047,127 +4048,127 @@ msgstr ""
 "\n"
 "Pomoc dla poleceń uzyskasz po napisaniu: help polecenie"
 
-#: lib/src/interact.c:3000
+#: lib/src/interact.c:3003
 msgid " (e.g. help smpl)\n"
 msgstr " (np. help smpl)\n"
 
-#: lib/src/interact.c:3001
+#: lib/src/interact.c:3004
 msgid "You can also do 'help functions' for a list of functions\n"
 msgstr "Listę funkcji uzyskasz po napisaniu 'help functions'.\n"
 
-#: lib/src/interact.c:3007
+#: lib/src/interact.c:3010
 msgid "genrcli.hlp"
 msgstr "genrcli.hlp"
 
-#: lib/src/interact.c:3032
+#: lib/src/interact.c:3035
 #, c-format
 msgid "\"%s\" is not a gretl command.\n"
 msgstr "\"%s\" nie jest poleceniem gretla.\n"
 
-#: lib/src/interact.c:3048 lib/src/interact.c:3074
+#: lib/src/interact.c:3051 lib/src/interact.c:3077
 #, c-format
 msgid "%s: sorry, no help available.\n"
 msgstr "%s: sorry, brak pomocy.\n"
 
-#: lib/src/interact.c:3895 lib/src/printout.c:1622
+#: lib/src/interact.c:3898 lib/src/printout.c:1622
 msgid "No series are defined\n"
 msgstr "Niezdefiniowane serie\n"
 
-#: lib/src/interact.c:3899
+#: lib/src/interact.c:3902
 msgid "Listing labels for variables:\n"
 msgstr "Lista nazw zmiennych:\n"
 
-#: lib/src/interact.c:3947
+#: lib/src/interact.c:3950
 msgid "Output is not currently diverted to file\n"
 msgstr "Wyniki nie są na bieżąco kierowane do pliku\n"
 
-#: lib/src/interact.c:3952
+#: lib/src/interact.c:3955
 #, c-format
 msgid "Closed output file '%s'\n"
 msgstr "Plik wyników '%s' jest zamknięty\n"
 
-#: lib/src/interact.c:3960
+#: lib/src/interact.c:3963
 #, c-format
 msgid "Output is already diverted to '%s'\n"
 msgstr "Wyniki są już kierowane do '%s'\n"
 
-#: lib/src/interact.c:3967
+#: lib/src/interact.c:3970
 msgid "Now discarding output\n"
 msgstr "Trwa usuwanie wyników\n"
 
-#: lib/src/interact.c:3989
+#: lib/src/interact.c:3992
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "Niemożliwe otwarcie pliku %s do zapisywania\n"
 
-#: lib/src/interact.c:3995
+#: lib/src/interact.c:3998
 #, c-format
 msgid "Now writing output to '%s'\n"
 msgstr "Teraz wyniki zapisywane są do '%s'\n"
 
-#: lib/src/interact.c:3997
+#: lib/src/interact.c:4000
 #, c-format
 msgid "Now appending output to '%s'\n"
 msgstr "Teraz wyniki dodawane są do '%s'\n"
 
-#: lib/src/interact.c:4061
+#: lib/src/interact.c:4064
 msgid "No data information is available.\n"
 msgstr "Nie dostępna informacja o pliku danych.\n"
 
-#: lib/src/interact.c:4573
+#: lib/src/interact.c:4576
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr ""
 "Niemożliwe zamknięcie pętli, ponieważ jeszcze nie została ona otwarta\n"
 
-#: lib/src/interact.c:4679
+#: lib/src/interact.c:4682
 msgid "This command requires one variable.\n"
 msgstr "To polecenie wymaga jednej zmiennej.\n"
 
-#: lib/src/interact.c:4820
+#: lib/src/interact.c:4823
 #, c-format
 msgid "data frequency = %d\n"
 msgstr "parametr okresowość danych = %d\n"
 
-#: lib/src/interact.c:4850
+#: lib/src/interact.c:4853
 msgid "store: no filename given\n"
 msgstr "brak nazwy pliku dla polecenia 'store'\n"
 
-#: lib/src/interact.c:4853 lib/src/monte_carlo.c:2208
+#: lib/src/interact.c:4856 lib/src/monte_carlo.c:2208
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "polecenie 'store' wykorzystuje plik %s\n"
 
-#: lib/src/interact.c:4859 lib/src/monte_carlo.c:2214
+#: lib/src/interact.c:4862 lib/src/monte_carlo.c:2214
 msgid "Data written OK.\n"
 msgstr "Plik danych zapisany: OK\n"
 
-#: lib/src/interact.c:4903
+#: lib/src/interact.c:4906
 msgid "This estimator requires panel data"
 msgstr "Ten estymator stosowany jest tylko dla danych panelowych"
 
-#: lib/src/interact.c:5059
+#: lib/src/interact.c:5062
 msgid "Couldn't format model\n"
 msgstr "Niewłaściwy format modelu\n"
 
-#: lib/src/interact.c:5075
+#: lib/src/interact.c:5078
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Wydrukowano model %s\n"
 
-#: lib/src/interact.c:5188 cli/gretlcli.c:1034 gui2/library.c:8495
+#: lib/src/interact.c:5191 cli/gretlcli.c:1034 gui2/library.c:8495
 msgid "Infinite loop detected in script\n"
 msgstr "Wykryto nieskończoną pętlę w skrypcie\n"
 
-#: lib/src/interact.c:5209
+#: lib/src/interact.c:5212
 msgid "You cannot delete variables in this context\n"
 msgstr "Niemożliwe usunięcie wykorzystywanej zmiennej\n"
 
-#: lib/src/interact.c:5261 cli/gretlcli.c:664
+#: lib/src/interact.c:5264 cli/gretlcli.c:664
 #, c-format
 msgid "%s: command not available\n"
 msgstr "%s: niedostępne polecenie\n"
 
-#: lib/src/interact.c:5267
+#: lib/src/interact.c:5270
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Sorry, polecenie %s nie jest jeszcze zaimplementowane w libgretl\n"
@@ -4221,6 +4222,7 @@ msgid "Robust estimation"
 msgstr "Odporny estymator"
 
 #: lib/src/libset.c:1372 gui2/datawiz.c:497 gui2/menustate.c:574
+#: plugin/addons-i18n.c:27
 msgid "Time series"
 msgstr "Szeregi czasowe"
 
@@ -4503,7 +4505,7 @@ msgstr "GMM"
 msgid "Logistic"
 msgstr "Logistic"
 
-#: lib/src/modelprint.c:812 gui2/selector.c:3386
+#: lib/src/modelprint.c:812 gui2/selector.c:3386 plugin/addons-i18n.c:12
 msgid "GARCH"
 msgstr "GARCH"
 
@@ -4939,7 +4941,7 @@ msgstr "N"
 
 #: lib/src/modelprint.c:1731 lib/src/modelprint.c:1734
 #: lib/src/modelprint.c:1737 lib/src/system.c:4000 lib/src/system.c:4019
-#: lib/src/vartest.c:54 lib/src/vartest.c:81
+#: lib/src/vartest.c:55 lib/src/vartest.c:82
 msgid "Equation"
 msgstr "Równanie"
 
@@ -5820,17 +5822,17 @@ msgstr ""
 "Uwaga: bieżący zbiór danych jest różny od zbioru\n"
 "wykorzystywanego w estymacji modelu\n"
 
-#: lib/src/options.c:1022
+#: lib/src/options.c:1025
 #, c-format
 msgid "Invalid option '--%s'"
 msgstr "Błędna opcja '--%s'"
 
-#: lib/src/options.c:1040
+#: lib/src/options.c:1043
 #, c-format
 msgid "The option '--%s' requires a parameter"
 msgstr "Opcja '--%s' wymagany parameter"
 
-#: lib/src/options.c:1305
+#: lib/src/options.c:1308
 #, c-format
 msgid "Warning: option%s ignored outside of loop"
 msgstr "Uwaga: opcja %s jest ignorowana poza pętlą"
@@ -6753,40 +6755,40 @@ msgstr "Usunięto macierz %s"
 msgid "Matrix decomposition failed"
 msgstr "Błąd dekompozycji macierzy"
 
-#: lib/src/var.c:699 lib/src/var.c:3078
+#: lib/src/var.c:703 lib/src/var.c:3082
 #, c-format
 msgid "vecm: rank %d is out of bounds"
 msgstr "VECM: rząd %d jest spoza zakresu"
 
-#: lib/src/var.c:2542
+#: lib/src/var.c:2546
 msgid "Sample variance-covariance matrices for residuals"
 msgstr "Macierz wariancji i kowariancji dla reszt"
 
-#: lib/src/var.c:2544
+#: lib/src/var.c:2548
 msgid "VAR system in first differences"
 msgstr "System VAR dla pierwszych różnic"
 
-#: lib/src/var.c:2552
+#: lib/src/var.c:2556
 msgid "System with levels as dependent variable"
 msgstr "System dla poziomów zmiennej zależnej"
 
-#: lib/src/var.c:2560
+#: lib/src/var.c:2564
 msgid "Cross-products"
 msgstr "Iloczyn wektorowy"
 
-#: lib/src/var.c:2898
+#: lib/src/var.c:2902
 msgid "Johansen test"
 msgstr "Test Johansena"
 
-#: lib/src/var.c:2899
+#: lib/src/var.c:2903
 msgid "Number of equations"
 msgstr "Liczba równań"
 
-#: lib/src/var.c:2900
+#: lib/src/var.c:2904
 msgid "Lag order"
 msgstr "Rząd opóźnienia:"
 
-#: lib/src/var.c:2901
+#: lib/src/var.c:2905
 msgid "Estimation period"
 msgstr "Estymowany okres"
 
@@ -6939,12 +6941,12 @@ msgstr "Porównanie kryteriów informacyjnych"
 msgid "Lag order %*d"
 msgstr "Rząd opóźnienia %*d"
 
-#: lib/src/vartest.c:217
+#: lib/src/vartest.c:218
 #, c-format
 msgid "VAR system, maximum lag order %d"
 msgstr "System VAR, maksymalny rząd opóźnienia %d"
 
-#: lib/src/vartest.c:220
+#: lib/src/vartest.c:221
 msgid ""
 "The asterisks below indicate the best (that is, minimized) values\n"
 "of the respective information criteria, AIC = Akaike criterion,\n"
@@ -6954,11 +6956,11 @@ msgstr ""
 "odpowiednich kryteriów informacyjnych, AIC = kryterium Akaike'a,\n"
 "BIC = kryterium Schwartz-Bayesian i HQC = kryterium Hannan-Quinna."
 
-#: lib/src/vartest.c:225
+#: lib/src/vartest.c:226
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
 msgstr "opóźnienia  loglik    p(LR)       AIC          BIC          HQC"
 
-#: lib/src/vartest.c:629
+#: lib/src/vartest.c:654
 msgid ""
 "\n"
 "  Null hypothesis: the regression parameters are zero for the variables\n"
@@ -6969,7 +6971,7 @@ msgstr ""
 "zero\n"
 "\n"
 
-#: lib/src/vartest.c:637
+#: lib/src/vartest.c:662
 #, c-format
 msgid ""
 "with p-value = %g\n"
@@ -9508,11 +9510,11 @@ msgstr "Pakiet funkcji jest przerwany"
 msgid "Couldn't get function package information"
 msgstr "Niemożliwe pobranie informacji o pakiecie funkcji"
 
-#: gui2/fncall.c:2190 gui2/selector.c:448 gui2/toolbar.c:1028
+#: gui2/fncall.c:2233 gui2/selector.c:448 gui2/toolbar.c:1028
 msgid "gretl: specify model"
 msgstr "gretl: specyfikacja modelu"
 
-#: gui2/fncall.c:2199
+#: gui2/fncall.c:2242
 #, c-format
 msgid ""
 "The %s package was not found, or is not up to date.\n"
@@ -9521,15 +9523,15 @@ msgstr ""
 "The %s package was not found, or is not up to date.\n"
 "Would you like to try downloading it now?"
 
-#: gui2/fncall.c:2263
+#: gui2/fncall.c:2306
 msgid "GARCH variants"
 msgstr "Modele GARCH, APARCH, EGARCH, TARCH, NARCH, GJR ..."
 
-#: gui2/fncall.c:2264
+#: gui2/fncall.c:2307
 msgid "Panel IV model"
 msgstr "Panelowe Modele zmiennych instrumentalnych ..."
 
-#: gui2/fncall.c:2315
+#: gui2/fncall.c:2358
 msgid "Confidence band plot"
 msgstr "Przedział ufności"
 
@@ -12967,7 +12969,7 @@ msgstr "Model dodany do tabeli"
 msgid "HSK"
 msgstr "HSK"
 
-#: gui2/model_table.c:408 gui2/selector.c:3384
+#: gui2/model_table.c:408 gui2/selector.c:3384 plugin/addons-i18n.c:6
 msgid "ARCH"
 msgstr "ARCH"
 
@@ -13579,7 +13581,7 @@ msgstr ""
 msgid "Test only selected variables"
 msgstr "Selekcja tylko wśród wybranych zmiennych"
 
-#: gui2/selector.c:5165
+#: gui2/selector.c:5165 plugin/addons-i18n.c:35
 msgid "Fixed effects"
 msgstr "Ustalone efekty (nielosowe)"
 
@@ -14227,7 +14229,7 @@ msgstr "Uruchamiasz gretla jako root. Kontynuować?"
 msgid "gretl: options"
 msgstr "gretl: opcje"
 
-#: gui2/settings.c:953 gui2/settings.c:2317
+#: gui2/settings.c:953 gui2/settings.c:2316
 msgid "Browse..."
 msgstr "Przeglądaj..."
 
@@ -14267,59 +14269,59 @@ msgstr "HCCME"
 msgid "Manuals"
 msgstr "Manual"
 
-#: gui2/settings.c:1410
+#: gui2/settings.c:1409
 msgid "Fixed font..."
 msgstr "Czcionka tekstu..."
 
-#: gui2/settings.c:1424
+#: gui2/settings.c:1423
 msgid "Menu font..."
 msgstr "Czcionka menu..."
 
-#: gui2/settings.c:1438
+#: gui2/settings.c:1437
 msgid "Working directory..."
 msgstr "Katalog roboczy gretla..."
 
-#: gui2/settings.c:1594
+#: gui2/settings.c:1593
 msgid "This change will take effect when you restart gretl"
 msgstr "Zmiany będą widoczne po restarcie programu gretla"
 
-#: gui2/settings.c:2131
+#: gui2/settings.c:2130
 msgid "Font for gretl output windows"
 msgstr "Czcionaka dla okien wyników"
 
-#: gui2/settings.c:2135
+#: gui2/settings.c:2134
 msgid "Font for menus and labels"
 msgstr "Czcionaka dla menu i etykiet"
 
-#: gui2/settings.c:2302
+#: gui2/settings.c:2301
 msgid "Working directory:"
 msgstr "Katalog roboczy:"
 
-#: gui2/settings.c:2326
+#: gui2/settings.c:2325
 msgid "On start-up, gretl should use:"
 msgstr "Startowy katalog roboczy:"
 
-#: gui2/settings.c:2333
+#: gui2/settings.c:2332
 msgid "the directory selected above"
 msgstr "wykorzystaj katalog określony powyżej"
 
-#: gui2/settings.c:2340
+#: gui2/settings.c:2339
 msgid "the current directory as determined via the shell"
 msgstr "wykorzystaj bieżący folder powłoki shell"
 
-#: gui2/settings.c:2350
+#: gui2/settings.c:2349
 msgid "The file selection dialog should:"
 msgstr "Wybór pliku z okna dialogowego:"
 
-#: gui2/settings.c:2357
+#: gui2/settings.c:2356
 msgid "remember the last-opened folder"
 msgstr "ostatnio wykorzystywanego katalogu"
 
-#: gui2/settings.c:2366
+#: gui2/settings.c:2365
 msgid "always start in the working directory"
 msgstr "zawsze startuj z katalogu roboczego"
 
-#: gui2/settings.c:2420
+#: gui2/settings.c:2419
 msgid "gretl: working directory"
 msgstr "gretl: katalog roboczy"
 
@@ -14820,7 +14822,7 @@ msgstr ""
 msgid "This file is part of the gretl update notification system\n"
 msgstr "Ten plik jest częścią systemu aktualizacji baz danych gretla\n"
 
-#: gui2/update.c:211
+#: gui2/update.c:213
 msgid "No new files"
 msgstr "Brak nowych plików"
 
@@ -14891,6 +14893,138 @@ msgstr "Ta zmienna jest dyskretna"
 #: gui2/varinfo.c:977
 msgid "Name of variable:"
 msgstr "Nazwa zmiennej:"
+
+#: plugin/addons-i18n.c:4
+msgid "gig"
+msgstr ""
+
+#: plugin/addons-i18n.c:5
+#, fuzzy
+msgid "APARCH"
+msgstr "ARCH"
+
+#: plugin/addons-i18n.c:7
+#, fuzzy
+msgid "Covariance estimator"
+msgstr "Macierz kowariancji"
+
+#: plugin/addons-i18n.c:9
+#, fuzzy
+msgid "Dependent Variable"
+msgstr "Zmienna zależna"
+
+#: plugin/addons-i18n.c:10
+#, fuzzy
+msgid "Distribution"
+msgstr "Rozkłady:"
+
+#: plugin/addons-i18n.c:11
+#, fuzzy
+msgid "EGARCH"
+msgstr "GARCH"
+
+#: plugin/addons-i18n.c:13
+msgid "GED"
+msgstr ""
+
+#: plugin/addons-i18n.c:14
+msgid "GJR"
+msgstr ""
+
+#: plugin/addons-i18n.c:15
+#, fuzzy
+msgid "Hessian"
+msgstr " (użyto Hessianu)"
+
+#: plugin/addons-i18n.c:16
+#, fuzzy
+msgid "Mean regressors"
+msgstr "Regresory"
+
+#: plugin/addons-i18n.c:17
+#, fuzzy
+msgid "Model type"
+msgstr "Tabela model"
+
+#: plugin/addons-i18n.c:18
+#, fuzzy
+msgid "NARCH"
+msgstr "ARCH"
+
+#: plugin/addons-i18n.c:19
+#, fuzzy
+msgid "Normal"
+msgstr "normalny"
+
+#: plugin/addons-i18n.c:20
+msgid "OPG"
+msgstr ""
+
+#: plugin/addons-i18n.c:21
+#, fuzzy
+msgid "Plot type"
+msgstr "typ"
+
+#: plugin/addons-i18n.c:22
+msgid "Sandwich"
+msgstr ""
+
+#: plugin/addons-i18n.c:23
+msgid "Skewed GED"
+msgstr ""
+
+#: plugin/addons-i18n.c:24
+#, fuzzy
+msgid "Skewed t"
+msgstr "Skośność"
+
+#: plugin/addons-i18n.c:25
+#, fuzzy
+msgid "TARCH"
+msgstr "ARCH"
+
+#: plugin/addons-i18n.c:26
+msgid "Taylor/Schwert GARCH"
+msgstr ""
+
+#: plugin/addons-i18n.c:28
+#, fuzzy
+msgid "Variance regressors"
+msgstr "Regresory pierwszego równania"
+
+#: plugin/addons-i18n.c:29
+#, fuzzy
+msgid "Verbosity"
+msgstr "Rozszerzony"
+
+#: plugin/addons-i18n.c:30
+#, fuzzy
+msgid "t"
+msgstr "do"
+
+#: plugin/addons-i18n.c:34
+#, fuzzy
+msgid "Between model"
+msgstr "_Między-grupowy model..."
+
+#: plugin/addons-i18n.c:36
+msgid "G2SLS"
+msgstr ""
+
+#: plugin/addons-i18n.c:37
+#, fuzzy
+msgid "dependent variable"
+msgstr "Zmienna zależna"
+
+#: plugin/addons-i18n.c:38
+#, fuzzy
+msgid "instruments"
+msgstr "Instrumenty"
+
+#: plugin/addons-i18n.c:39
+#, fuzzy
+msgid "regressors"
+msgstr "Regresory"
 
 #: plugin/anova.c:106 plugin/anova.c:108
 msgid "Treatment"
