@@ -202,6 +202,7 @@ enum browser_codes {
     RATS_SERIES,
     PCGIVE_SERIES,
     REMOTE_SERIES,
+    REMOTE_ADDONS,
     MAINWIN
 };
 

@@ -2166,7 +2166,7 @@ static int query_addons_dir (const char *pkgname, char *sfdir)
     return err;
 }
 
-static int download_addon (const char *pkgname, char **local_path)
+int download_addon (const char *pkgname, char **local_path)
 {
     const char *SF = "http://downloads.sourceforge.net/"
 	"project/gretl/addons";
@@ -2205,9 +2205,11 @@ static int download_addon (const char *pkgname, char **local_path)
 	    strcat(path, SLASHSTR);
 	    strcat(path, pkgname);
 	    strcat(path, ".gfn");
-	    *local_path = gretl_strdup(path);
-	    if (*local_path == NULL) {
-		err = E_ALLOC;
+	    if (local_path != NULL) {
+		*local_path = gretl_strdup(path);
+		if (*local_path == NULL) {
+		    err = E_ALLOC;
+		}
 	    }
 	}
 	g_free(uri);

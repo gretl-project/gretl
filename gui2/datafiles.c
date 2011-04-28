@@ -97,7 +97,8 @@ struct fpkg_response {
 
 #define REMOTE_ACTION(c) (c == REMOTE_DB || \
                           c == REMOTE_FUNC_FILES || \
-                          c == REMOTE_DATA_PKGS)
+                          c == REMOTE_DATA_PKGS || \
+                          c == REMOTE_ADDONS)
 
 static void
 read_fn_files_in_dir (DIR *dir, const char *path, 
@@ -941,12 +942,78 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	edit_function_package(path);
     } else if (task == CALL_FN_PKG) {
 	call_function_package(path, vwin, &err);
-    }
+    } 
 
     g_free(pkgname);
 
     if (!err && task == CALL_FN_PKG) {
 	maybe_update_func_files_window(task);
+    }
+}
+
+static void show_addon_info (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    gchar *pkgname = NULL;
+    gchar *descrip = NULL;
+    gchar *status = NULL;
+    int v = vwin->active_var;
+
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 0, &pkgname);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 4, &descrip);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 3, &status);
+    
+    if (pkgname == NULL || descrip == NULL) {
+	gui_errmsg(E_DATA);
+    } else {
+	gchar *local = NULL;
+
+	if (status != NULL && !strcmp(status, _("Installed"))) {
+	    char *path = gretl_function_package_get_path(pkgname, PKG_ADDON);
+	    gchar *ver = NULL, *date = NULL;
+	    fnpkg *pkg = NULL;
+	    int err = 0;
+
+	    if (path != NULL) {
+		pkg = get_function_package_by_filename(path, &err);
+		err = function_package_get_properties(pkg, "version", &ver,
+						      "date", &date,
+						      NULL);
+		if (!err) {
+		    local = g_strdup_printf("Installed version is %s (%s)", 
+					    ver, date);
+		    g_free(ver);
+		    g_free(date);
+		}
+		free(path);
+	    }
+	}
+	if (local != NULL) {
+	    infobox("%s:\n%s\n%s", pkgname, descrip, local);
+	    g_free(local);
+	} else {
+	    infobox("%s:\n%s", pkgname, descrip);
+	}
+    }
+
+    g_free(pkgname);
+    g_free(descrip);
+    g_free(status);
+}
+
+static void install_addon_callback (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    gchar *pkgname = NULL;
+    int v = vwin->active_var;
+
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), v, 0, &pkgname);
+    
+    if (pkgname == NULL) {
+	gui_errmsg(E_DATA);
+    } else {
+	download_addon(pkgname, NULL);
+	g_free(pkgname);
     }
 }
 
@@ -1108,7 +1175,7 @@ static void build_funcfiles_popup (windata_t *vwin)
 	    add_popup_item(_("New"), vwin->popup, 
 			   G_CALLBACK(new_package_callback), 
 			   vwin);
-	} else {
+	} else if (vwin->role == REMOTE_FUNC_FILES) {
 	    /* files on server: limited menu */
 	    add_popup_item(_("Info"), vwin->popup, 
 			   G_CALLBACK(pkg_info_from_server), 
@@ -1116,7 +1183,16 @@ static void build_funcfiles_popup (windata_t *vwin)
 	    add_popup_item(_("Install"), vwin->popup, 
 			   G_CALLBACK(install_file_from_server), 
 			   vwin);
+	} else {
+	    /* addons */
+	    add_popup_item(_("Info"), vwin->popup, 
+			   G_CALLBACK(show_addon_info), 
+			   vwin);
+	    add_popup_item(_("Install"), vwin->popup, 
+			   G_CALLBACK(install_addon_callback), 
+			   vwin);
 	}
+	    
     }
 }
 
@@ -1244,6 +1320,10 @@ static int files_item_get_callback (GretlToolItem *item, int role)
     } else if (local_funcs_item(item->flag)) {
 	return (role == FUNC_FILES);
     } else if (item->flag == BTN_INST) {
+	if (role == REMOTE_ADDONS) {
+	    item->func = G_CALLBACK(install_addon_callback);
+	    return 1;
+	}
 	return (role == REMOTE_DB || 
 		role == REMOTE_FUNC_FILES ||
 		role == REMOTE_DATA_PKGS);
@@ -1267,7 +1347,9 @@ static int files_item_get_callback (GretlToolItem *item, int role)
 	    item->func = G_CALLBACK(show_function_info);
 	} else if (role == REMOTE_FUNC_FILES) {
 	    item->func = G_CALLBACK(pkg_info_from_server);
-	} 
+	} else if (role == REMOTE_ADDONS) {
+	    item->func = G_CALLBACK(show_addon_info);
+	}
     } else if (item->flag == BTN_INDX) {
 	/* index: databases only */
 	if (role == NATIVE_DB) {
@@ -1356,6 +1438,8 @@ static gchar *files_title (int code)
     return ret;
 }
 
+/* handle drag of pointer from remote database window */
+
 static void  
 db_window_handle_drag  (GtkWidget *widget,
 			GdkDragContext *context,
@@ -1366,7 +1450,6 @@ db_window_handle_drag  (GtkWidget *widget,
 			guint time,
 			gpointer p)
 {
-    /* handle drag of pointer from remote database window */
     if (info == GRETL_REMOTE_DB_PTR && data != NULL) {
 	GdkAtom type = gtk_selection_data_get_data_type(data);
 	
@@ -1378,6 +1461,8 @@ db_window_handle_drag  (GtkWidget *widget,
     }
 }
 
+/* handle drag of pointer from remote function package window */
+
 static void  
 pkg_window_handle_drag  (GtkWidget *widget,
 			 GdkDragContext *context,
@@ -1388,7 +1473,6 @@ pkg_window_handle_drag  (GtkWidget *widget,
 			 guint time,
 			 gpointer p)
 {
-    /* handle drag of pointer from remote function package window */
     if (info == GRETL_REMOTE_FNPKG_PTR && data != NULL) {
 	GdkAtom type = gtk_selection_data_get_data_type(data);
 
@@ -1463,6 +1547,8 @@ void display_files (int code, gpointer p)
 	title = g_strdup(_("gretl: function packages on server"));
     } else if (code == REMOTE_DATA_PKGS) {
 	title = g_strdup(_("gretl: data packages on server"));
+    } else if (code == REMOTE_ADDONS) {
+	title = g_strdup(_("gretl: addons"));
     }
 
     vwin = gretl_browser_new(code, title, 0);
@@ -1507,7 +1593,8 @@ void display_files (int code, gpointer p)
 			     vwin->popup);
 	}
 	reset_data_stack();
-    } else if (code == FUNC_FILES || code == REMOTE_FUNC_FILES) {
+    } else if (code == FUNC_FILES || code == REMOTE_FUNC_FILES ||
+	       code == REMOTE_ADDONS) {
 	build_funcfiles_popup(vwin);
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 			 G_CALLBACK(popup_menu_handler), 
@@ -1522,7 +1609,7 @@ void display_files (int code, gpointer p)
 	g_signal_connect(G_OBJECT(vwin->listbox), "button-press-event",
 			 G_CALLBACK(popup_menu_handler), 
 			 vwin->popup);
-    }	
+    } 
 
     if (REMOTE_ACTION(code)) {
 	GtkWidget *hbox;
@@ -1589,6 +1676,8 @@ static int display_files_code (const gchar *s)
 	return FUNC_FILES;
     if (!strcmp(s, "RemoteGfn"))
 	return REMOTE_FUNC_FILES;
+    if (!strcmp(s, "SFAddons"))
+	return REMOTE_ADDONS;
     return 0;
 }
 
@@ -1976,6 +2065,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_remote_data_pkg_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
 	return populate_func_list(vwin, p);
+    } else if (vwin->role == REMOTE_ADDONS) {
+	return populate_remote_addons_list(vwin);
     } else {
 	return read_file_descriptions(vwin, p);
     }
@@ -2018,6 +2109,12 @@ static GtkWidget *files_window (windata_t *vwin)
 	N_("Summary"), 
 	N_("Local status")
     };
+    const char *addons_titles[] = {
+	N_("Package"), 
+	N_("Version"),
+	N_("Date"),
+	N_("Local status")
+    };
 
     GType types_2[] = {
 	G_TYPE_STRING,
@@ -2041,6 +2138,13 @@ static GtkWidget *files_window (windata_t *vwin)
 	G_TYPE_STRING,
 	G_TYPE_STRING,
 	G_TYPE_BOOLEAN  /* hidden boolean: zipfile? */
+    };
+    GType types_5c[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING  /* hidden string: description */
     };
 
     const char **titles = data_titles;
@@ -2091,6 +2195,13 @@ static GtkWidget *files_window (windata_t *vwin)
 	hidden_col = TRUE;
 	full_width = 580;
 	break;
+    case REMOTE_ADDONS:
+	titles = addons_titles;
+	cols = 5;
+	types = types_5c;
+	hidden_col = TRUE;
+	full_width = 400;
+	break;	
     default:
 	break;
     }

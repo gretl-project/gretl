@@ -215,10 +215,6 @@ static int real_update_query (int queryopt)
 
     free(getbuf);
 
-#if 0
-    query_addons();
-#endif
-
     return err;
 }
 

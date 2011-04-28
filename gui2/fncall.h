@@ -41,4 +41,6 @@ void maybe_add_packages_to_menus (windata_t *vwin);
 
 int query_addons (void);
 
+int download_addon (const char *pkgname, char **local_path);
+
 #endif /* FNCALL_H */

@@ -303,6 +303,7 @@
       <menuitem action="PDFCmdRef"/>
       <separator/>
       <menuitem action="UpdateCheck"/>
+      <menuitem action="SFAddons"/>
       <menuitem action="About"/>
     </menu>
   </menubar>

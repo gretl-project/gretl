@@ -25,6 +25,7 @@
 #include "datafiles.h"
 #include "gretl_www.h"
 #include "gretl_untar.h"
+#include "gretl_xml.h"
 #include "menustate.h"
 #include "treeutils.h"
 #include "winstack.h"
@@ -2617,6 +2618,117 @@ gint populate_remote_db_list (windata_t *vwin)
     if (!err) {
 	db_drag_db_connect(vwin);
     }
+
+    return err;
+}
+
+static int get_addon_info (xmlNodePtr node, xmlDocPtr doc, char **S)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    int err = 0;
+
+    while (cur != NULL) {
+	if (!xmlStrcmp(cur->name, (XUC) "version")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &S[1]);
+	} else if (!xmlStrcmp(cur->name, (XUC) "date")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &S[2]);
+	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &S[4]);
+	}
+
+	cur = cur->next;
+    }
+
+    if (S[1] == NULL || S[2] == NULL || S[4] == NULL) {
+	err = E_DATA;
+    } else {
+	char *path = gretl_function_package_get_path(S[0], PKG_ADDON);
+
+	if (path != NULL) {
+	    S[3] = gretl_strdup(_("Installed"));
+	    free(path);
+	} else {
+	    S[3] = gretl_strdup(_("Not installed"));
+	}
+    }
+
+    return err;
+}
+
+gint populate_remote_addons_list (windata_t *vwin)
+{
+    xmlDocPtr doc;
+    xmlNodePtr node = NULL;
+    char *getbuf = NULL;
+    int n = 0, err = 0;
+
+    err = query_sourceforge("/addons-data/addons.xml", &getbuf);
+    if (err) {
+	show_network_error(NULL);
+	free(getbuf);
+	return err;
+    }
+
+    xmlKeepBlanksDefault(0);
+
+    doc = xmlParseMemory(getbuf, strlen(getbuf));
+    if (doc == NULL) {
+	err = E_DATA;
+    } else {
+	node = xmlDocGetRootElement(doc);
+	if (node == NULL || xmlStrcmp(node->name, (XUC) "gretl-addons")) {
+	    err = E_DATA;
+	}
+    }
+
+    if (!err) {
+	GtkListStore *store;
+	GtkTreeIter iter;
+	char *S[5] = {0};
+	int i;
+
+	store = GTK_LIST_STORE(gtk_tree_view_get_model 
+			   (GTK_TREE_VIEW(vwin->listbox)));
+	gtk_list_store_clear(store);
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	node = node->xmlChildrenNode;
+
+	while (node != NULL && !err) {
+	    if (!xmlStrcmp(node->name, (XUC) "gretl-addon")) {
+		gretl_xml_get_prop_as_string(node, "name", &S[0]);
+		if (S[0] != NULL && 
+		    (err = get_addon_info(node, doc, S)) == 0) {
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter, 
+				       0, S[0], 1, S[1],
+				       2, S[2], 3, S[3], 
+				       4, S[4], -1);
+		    for (i=0; i<5; i++) {
+			free(S[i]);
+			S[i] = NULL;
+		    }
+		    n++;
+		} else {
+		    err = E_DATA;
+		}
+	    } 
+	    node = node->next;
+	}
+    }
+
+    if (err) {
+	gui_errmsg(err);
+    } else if (n == 0) {
+	warnbox(_("No function packages found"));
+	err = 1;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }       
+    
+    free(getbuf);
 
     return err;
 }
