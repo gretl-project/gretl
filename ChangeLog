@@ -3,6 +3,8 @@ version 1.9.6, in progress
 - build with SSE2 enabled: ensure that the C compiler SSE2 option is
   not wiped out if the user (re-)specifies CFLAGS when doing "make"
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac
+- "makepkg" command: add options to produce an XML index entry and a
+  file of translatable strings suitable for use with gettext
 
 2011-04-22 version 1.9.5
 - Add new translation: Greek (Manolis Tzagarakis and Ioannis Venetis)
