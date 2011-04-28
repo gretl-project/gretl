@@ -5938,6 +5938,16 @@
       <arguments>
         <argument>filename</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--index</flag>
+	  <effect>write auxiliary index file</effect>
+        </option>
+        <option>
+	  <flag>--translations</flag>
+	  <effect>write auxiliary strings file</effect>
+        </option>
+      </options>
     </usage>    
 
     <description>
@@ -5947,6 +5957,16 @@
 	to be created, and should have the <lit>.gfn</lit>
 	extension. Please see <guideref targ="chap:functions"/> for
 	details.
+      </para>
+      <para>
+	The option flags support the writing of auxiliary files for
+	use with gretl <quote>addons</quote>. The index file is a
+	short XML document containing basic information about the
+	package; it has the same basename as the package and the
+	extension <lit>.xml</lit>. The translations file contains
+	strings from the package that may be suitable for translation,
+	in C format; for package <lit>foo</lit> this file is named
+	<lit>foo-i18n.c</lit>.
       </para>
     </description>
 
