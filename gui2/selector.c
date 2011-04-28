@@ -3888,7 +3888,7 @@ static void third_var_box (selector *sr, GtkWidget *vbox)
     if (sr->ci == GR_3D) {
 	label = N_("Z-axis variable");
     } else if (sr->ci == GR_DUMMY) {
-	label = _("Factor (dummy)");
+	label = _("Factor (discrete)");
     } else if (sr->ci == GR_XYZ) {
 	label = N_("Control variable");
     } else if (sr->ci == ANOVA) {

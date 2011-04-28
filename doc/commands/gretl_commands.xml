@@ -4232,12 +4232,13 @@
       </para>
 
       <para>
-	If the <opt>--dummy</opt> option is selected, exactly three variables
-	should be given: a single <math>y</math> variable, an <math>x</math>
-	variable, and <repl>dumvar</repl>, a dummy variable.  The effect is to
-	plot <repl>yvar</repl> against <repl>xvar</repl> with the points shown
-	in different colors depending on whether the value of
-	<repl>dumvar</repl> is 1 or 0 at the given observation.
+	If the <opt>--dummy</opt> option is selected, exactly three
+	variables should be given: a single <math>y</math> variable, an
+	<math>x</math> variable, and <repl>dvar</repl>, a discrete
+	variable.  The effect is to plot <repl>yvar</repl> against
+	<repl>xvar</repl> with the points shown in different colors
+	depending on the value of <repl>dvar</repl> at the given
+	observation.
       </para>
 
       <para context="cli">
