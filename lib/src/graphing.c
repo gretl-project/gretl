@@ -67,8 +67,7 @@ struct gnuplot_info_ {
     FILE *fp;
     const char *yformula;
     const double *x;
-    double *yvar1;
-    double *yvar2;
+    gretl_matrix *dvals;
 };
 
 #define MAX_LETTERBOX_LINES 8
@@ -318,51 +317,33 @@ static void printvars (FILE *fp, int t, const int *list, const double **Z,
     fputc('\n', fp);
 }
 
-static int factorized_vars (gnuplot_info *gi, const double **Z)
+static int factor_check (gnuplot_info *gi, const double **Z,
+			 const DATAINFO *pdinfo)
 {
-    int ynum, dum;
-    int fn, t, i;
+    int err = 0;
 
-    if (gi->list[0] != 3 || !gretl_isdummy(gi->t1, gi->t2, Z[gi->list[3]])) {
-	gretl_errmsg_set(_("You must supply three variables, the last of "
-			   "which is a dummy variable\n(with values 1 or 0)\n"));
-	return E_DATA;
-    }
+    if (gi->list[0] != 3) {
+	err = E_DATA;
+    } else {
+	int v3 = gi->list[3];
 
-    ynum = gi->list[1];
-    dum = gi->list[3];
-
-    fn = gi->t2 - gi->t1 + 1;
-
-    gi->yvar1 = malloc(fn * sizeof *gi->yvar1);
-    if (gi->yvar1 == NULL) {
-	return E_ALLOC;
-    }
-
-    gi->yvar2 = malloc(fn * sizeof *gi->yvar2);
-    if (gi->yvar2 == NULL) {
-	free(gi->yvar1);
-	return E_ALLOC;
-    }
-
-    i = 0;
-    for (t=gi->t1; t<=gi->t2; t++) {
-	if (na(Z[ynum][t])) {
-	    gi->yvar1[i] = NADBL;
-	    gi->yvar2[i] = NADBL;
-	} else {
-	    if (Z[dum][t] == 1.0) {
-		gi->yvar1[i] = Z[ynum][t];
-		gi->yvar2[i] = NADBL;
-	    } else {
-		gi->yvar1[i] = NADBL;
-		gi->yvar2[i] = Z[ynum][t];
-	    }
+	if (!var_is_discrete(pdinfo, v3) &&
+	    !gretl_isdiscrete(gi->t1, gi->t2, Z[v3])) {
+	    err = E_DATA;
 	}
-	i++;
     }
 
-    return 0;
+    if (err) {
+	gretl_errmsg_set(_("You must supply three variables, the last of "
+			   "which is discrete"));
+    } else {
+	const double *d = Z[gi->list[3]];
+	int T = gi->t2 - gi->t1 + 1;
+
+	gi->dvals = gretl_matrix_values(d + gi->t1, T, &err);
+    }
+
+    return err;
 }
 
 #ifdef WIN32
@@ -2033,25 +2014,31 @@ static int print_gp_dummy_data (gnuplot_info *gi,
 				const double **Z, 
 				const DATAINFO *pdinfo)
 {
-    double xx, yy;
-    int i, s, t;
+    const double *d = Z[gi->list[3]];
+    const double *y = Z[gi->list[1]];
+    double xt, yt;
+    int i, t, n;
 
-    for (i=0; i<2; i++) {
+    n = gretl_vector_get_length(gi->dvals);
+
+    for (i=0; i<n; i++) {
 	for (t=gi->t1; t<=gi->t2; t++) {
-	    s = t - gi->t1;
 	    if (gi->x != NULL) {
-		xx = gi->x[t];
+		xt = gi->x[t];
 	    } else {
-		xx = Z[gi->list[2]][t];
-		if (na(xx)) {
+		xt = Z[gi->list[2]][t];
+		if (na(xt)) {
 		    continue;
 		}
 	    }
-	    yy = (i > 0)? gi->yvar2[s] : gi->yvar1[s];
-	    if (na(yy)) {
-		fprintf(gi->fp, "%.10g ?\n", xx);
+	    if (na(d[t])) {
+		continue;
+	    }
+	    yt = (d[t] == gi->dvals->val[i])? y[t] : NADBL;
+	    if (na(yt)) {
+		fprintf(gi->fp, "%.10g ?\n", xt);
 	    } else {
-		fprintf(gi->fp, "%.10g %.10g", xx, yy);
+		fprintf(gi->fp, "%.10g %.10g", xt, yt);
 		if (!(gi->flags & GPT_TS)) {
 		    if (pdinfo->markers) {
 			fprintf(gi->fp, " # %s", pdinfo->S[t]);
@@ -2192,9 +2179,8 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
     gi->fp = NULL;
 
     gi->x = NULL;
-    gi->yvar1 = NULL;
-    gi->yvar2 = NULL;
     gi->list = NULL;
+    gi->dvals = NULL;
 
     if (l0 < 2 && !(gi->flags & GPT_IDX)) {
 	return E_ARGS;
@@ -2238,9 +2224,8 @@ gpinfo_init (gnuplot_info *gi, gretlopt opt, const int *list,
 
 static void clear_gpinfo (gnuplot_info *gi)
 {
-    free(gi->yvar1);
-    free(gi->yvar2);
     free(gi->list);
+    gretl_matrix_free(gi->dvals);
 
     if (gi->fp != NULL) {
 	fclose(gi->fp);
@@ -2827,7 +2812,7 @@ int gnuplot (const int *plotlist, const char *literal,
 
     /* separation by dummy: create special vars */
     if (gi.flags & GPT_DUMMY) { 
-	err = factorized_vars(&gi, Z);
+	err = factor_check(&gi, Z, pdinfo);
 	if (err) {
 	    goto bailout;
 	}
@@ -2955,11 +2940,20 @@ int gnuplot (const int *plotlist, const char *literal,
 	}
     } else if (gi.flags & GPT_DUMMY) { 
 	/* plot shows separation by dummy variable */
+	int nd = gretl_vector_get_length(gi.dvals);
+
 	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 
 	       var_get_graph_name(pdinfo, list[1]));
 	strcpy(s2, var_get_graph_name(pdinfo, list[3]));
-	fprintf(fp, " '-' using 1:($2) title \"%s (%s=1)\" w points, \\\n", s1, s2);
-	fprintf(fp, " '-' using 1:($2) title \"%s (%s=0)\" w points\n", s1, s2);
+	for (i=0; i<nd; i++) {
+	    fprintf(fp, " '-' using 1:($2) title \"%s (%s=%g)\" w points ", 
+		    s1, s2, gretl_vector_get(gi.dvals, i));
+	    if (i < nd - 1) {
+		fputs(", \\\n", fp);
+	    } else {
+		fputc('\n', fp);
+	    }
+	}
     } else if (gi.yformula != NULL) {
 	/* we have a formula to plot, not just data */
 	fprintf(fp, " '-' using 1:($2) title \"%s\" w points , \\\n", _("actual"));	

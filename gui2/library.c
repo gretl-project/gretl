@@ -6412,9 +6412,10 @@ int do_dummy_graph (selector *sr)
     }
 
     if (libcmd.list[0] != 3 || 
-	!gretl_isdummy(datainfo->t1, datainfo->t2, Z[libcmd.list[3]])) {
-	errbox(_("You must supply three variables, the last\nof which "
-	       "is a dummy variable (values 1 or 0)"));
+	(!var_is_discrete(datainfo, libcmd.list[3]) &&
+	 !gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[libcmd.list[3]]))) {
+	errbox(_("You must supply three variables, the last of "
+		 "which is discrete"));
 	return 1;
     }
 
