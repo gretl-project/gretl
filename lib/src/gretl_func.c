@@ -2206,8 +2206,19 @@ static char *trim_text (char *s)
 
 static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
 {
+    FILE *fp;
+    gchar *trname;
     char **S = NULL;
     int i, n = 0;
+
+    trname = g_strdup_printf("%s-i18n.c", pkg->name);
+
+    fp = gretl_fopen(trname, "w");
+    if (fp == NULL) {
+	gretl_errmsg_sprintf(_("Couldn't open %s"), trname);
+	g_free(trname);
+	return E_FOPEN;
+    }
 
     if (pkg->pub != NULL) {
 	int j, k;
@@ -2229,23 +2240,85 @@ static int package_write_translatable_strings (fnpkg *pkg, PRN *prn)
     }
 
     if (pkg->label != NULL || S != NULL) {
-	pprintf(prn, "const char *%s_translations[] = {\n", pkg->name);
+	fprintf(fp, "const char *%s_translations[] = {\n", pkg->name);
 	if (pkg->label != NULL) {
-	    pprintf(prn, "    N_(\"%s\"),\n", pkg->label);
+	    fprintf(fp, "    N_(\"%s\"),\n", pkg->label);
 	}	
 	if (S != NULL) {
 	    strings_array_sort(&S, &n, OPT_U);
 	    for (i=0; i<n; i++) {
-		pprintf(prn, "    N_(\"%s\")", S[i]);
+		fprintf(fp, "    N_(\"%s\")", S[i]);
 		if (i < n-1) {
-		    pputc(prn, ',');
+		    fputc(',', fp);
 		}
-		pputc(prn, '\n');
+		fputc('\n', fp);
 	    }
 	    free_strings_array(S, n);
 	}
-	pputs(prn, "};\n");
+	fputs("};\n", fp);
     }
+
+    fclose(fp);
+
+    pprintf(prn, "Wrote translations file %s\n", trname);
+    g_free(trname);
+
+    return 0;
+}
+
+static int package_write_index (fnpkg *pkg, PRN *prn)
+{
+    gchar *idxname;
+    FILE *fp;
+
+    idxname = g_strdup_printf("%s.xml", pkg->name);
+
+    fp = gretl_fopen(idxname, "w");
+    if (fp == NULL) {
+	gretl_errmsg_sprintf(_("Couldn't open %s"), idxname);
+	g_free(idxname);
+	return E_FOPEN;
+    }
+
+    gretl_xml_header(fp);
+
+    fputs("<gretl-addon", fp);
+
+    fprintf(fp, " name=\"%s\"", pkg->name);
+
+    if (pkg->dreq == FN_NEEDS_TS) {
+	fprintf(fp, " %s=\"true\"", NEEDS_TS);
+    } else if (pkg->dreq == FN_NEEDS_QM) {
+	fprintf(fp, " %s=\"true\"", NEEDS_QM);
+    } else if (pkg->dreq == FN_NEEDS_PANEL) {
+	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
+    } else if (pkg->dreq == FN_NODATA_OK) {
+	fprintf(fp, " %s=\"true\"", NO_DATA_OK);
+    }
+
+    if (pkg->minver > 0) {
+	char vstr[8];
+
+	fprintf(fp, " minver=\"%s\"", get_version_string(vstr, pkg->minver));
+    }
+
+    fputs(">\n", fp);
+
+    gretl_xml_put_tagged_string("author",  pkg->author, fp);
+    gretl_xml_put_tagged_string("version", pkg->version, fp);
+    gretl_xml_put_tagged_string("date",    pkg->date, fp);
+    gretl_xml_put_tagged_string("description", pkg->descrip, fp);
+
+    if (pkg->label != NULL) {
+	gretl_xml_put_tagged_string("label", pkg->label, fp);
+    }
+
+    fputs("</gretl-addon>\n", fp);
+
+    fclose(fp);
+
+    pprintf(prn, "Wrote index file %s\n", idxname);
+    g_free(idxname);
 
     return 0;
 }
@@ -2752,6 +2825,8 @@ static int cli_validate_package_file (const char *fname, PRN *prn)
 /**
  * create_and_write_function_package:
  * @fname: filename for function package.
+ * @opt: may include OPT_I to write a package-index entry,
+ * OPT_T to write translatable strings.
  * @prn: printer struct for feedback.
  *
  * Create a package based on the functions currently loaded, and
@@ -2760,7 +2835,9 @@ static int cli_validate_package_file (const char *fname, PRN *prn)
  * Returns: 0 on success, non-zero on error.
  */
 
-int create_and_write_function_package (const char *fname, PRN *prn)
+int create_and_write_function_package (const char *fname, 
+				       gretlopt opt,
+				       PRN *prn)
 {
     fnpkg *pkg = NULL;
     int err = 0;
@@ -2777,7 +2854,12 @@ int create_and_write_function_package (const char *fname, PRN *prn)
 		/* should we delete @fname ? */
 	    }
 	    if (!err) {
-		package_write_translatable_strings(pkg, prn);
+		if (opt & OPT_T) {
+		    package_write_translatable_strings(pkg, prn);
+		}
+		if (opt & OPT_I) {
+		    package_write_index(pkg, prn);
+		}		
 	    }
 	}
     }

@@ -244,6 +244,8 @@ struct gretl_option gretl_opts[] = {
     { LEVERAGE, OPT_S, "save", 0 },
     { LEVINLIN, OPT_N, "nc", 0 },
     { LEVINLIN, OPT_T, "ct", 0 },
+    { MAKEPKG,  OPT_I, "index", 0 },
+    { MAKEPKG,  OPT_T, "translations", 0 },
     { MODTEST,  OPT_A, "autocorr", 0 },
     { MODTEST,  OPT_B, "breusch-pagan", 0 },
     { MODTEST,  OPT_C, "comfac", 0 },

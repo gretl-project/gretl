@@ -352,7 +352,8 @@ static int catch_system_alias (char *line, CMD *cmd)
 
 #define REQUIRES_PARAM(c) (c == DATAMOD || \
                            c == FUNC || \
-                           c == LOOP ||  \
+                           c == LOOP || \
+                           c == MAKEPKG || \
 			   c == MODPRINT || \
 			   c == NORMTEST || \
                            c == NULLDATA || \
@@ -1918,6 +1919,8 @@ static int capture_param (CMD *cmd, const char *s)
 	}
 	return cmd->err;
     }
+
+    s += strspn(s, " ");
 
     if (string_is_blank(s)) {
 	if (REQUIRES_PARAM(cmd->ci) || REQUIRES_ORDER(cmd->ci)) {
@@ -4840,7 +4843,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case MAKEPKG:
-	err = create_and_write_function_package(cmd->param, prn);
+	err = create_and_write_function_package(cmd->param, cmd->opt, prn);
 	break;
 
     case STORE:
