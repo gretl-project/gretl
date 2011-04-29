@@ -195,6 +195,12 @@ static void loop_store_free (LOOP_STORE *lstore);
 static int extend_loop_dataset (LOOP_STORE *lstore);
 static void controller_free (controller *clr);
 
+static int 
+make_dollar_substitutions (char *str, int maxlen,
+			   const LOOPSET *loop,
+			   const DATAINFO *pdinfo,
+			   int *subst);
+
 #define LOOP_BLOCK 32
 
 /* record of state, and communication of state with outside world */
@@ -780,13 +786,27 @@ static int list_vars_to_strings (LOOPSET *loop, const int *list,
 
 /* At loop runtime, check the named list and insert the names (or
    numbers) of the variables as "eachstrs"; flag an error if the list
-   has disappeared.
+   has disappeared. We also have to handle the case where the name
+   of the loop-controlling list is subject to $-substitution.
 */
 
 static int loop_list_refresh (LOOPSET *loop, const DATAINFO *pdinfo)
 {
-    int *list = get_list_by_name(loop->listname);
+    int *list = NULL;
     int err = 0;
+
+    if (strchr(loop->listname, '$') != NULL) {
+	char lname[VNAMELEN];
+
+	strcpy(lname, loop->listname);
+	err = make_dollar_substitutions(lname, VNAMELEN, loop, 
+					pdinfo, NULL);
+	if (!err) {
+	    list = get_list_by_name(lname);
+	} 
+    } else {
+	list = get_list_by_name(loop->listname);
+    }
 
     if (loop->eachstrs != NULL) {
 	free_strings_array(loop->eachstrs, loop->itermax);
@@ -796,7 +816,9 @@ static int loop_list_refresh (LOOPSET *loop, const DATAINFO *pdinfo)
     loop->itermax = loop->final.val = 0;
 
     if (list == NULL) {
-	err = E_UNKVAR;
+	if (!err) {
+	    err = E_UNKVAR;
+	}
     } else if (list[0] > 0) {
 	err = list_vars_to_strings(loop, list, pdinfo);
 	if (!err) {
@@ -2284,20 +2306,22 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 }
 
 static int 
-substitute_dollar_targ (char *str, const LOOPSET *loop,
-			const double **Z, const DATAINFO *pdinfo,
+substitute_dollar_targ (char *str, int maxlen, 
+			const LOOPSET *loop,
+			const DATAINFO *pdinfo,
 			int *subst)
 {
-    char ins[32], targ[VNAMELEN + 3] = {0};
-    char *p, *pins;
-    int targlen, idx = 0;
+    char insert[32], targ[VNAMELEN + 3] = {0};
+    char *p, *ins, *q;
+    int targlen, inslen, idx = 0;
+    int incr, cumlen = 0;
     int err = 0;
 
 #if SUBST_DEBUG
     fprintf(stderr, "subst_dollar_targ:\n original: '%s'\n", str);
 #endif
 
-    /* construct the substitution target */
+    /* construct the target for substitution */
 
     if (loop->type == FOR_LOOP) {
 	if (!gretl_is_scalar(loop->init.vname)) {
@@ -2311,6 +2335,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	targlen = strlen(targ);
 	idx = loop->init.val + loop->iter;
     } else {
+	/* shouldn't be here! */
 	return 1;
     }
 
@@ -2323,40 +2348,59 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	return 0;
     }
 
-    pins = ins;
+    ins = insert;
 
-    /* prepare substitute string */
+    /* prepare the substitute string */
 
     if (loop->type == FOR_LOOP) {
 	double x = gretl_scalar_get_value(loop->init.vname);
 
 	if (na(x)) {
-	    strcpy(ins, "NA");
+	    strcpy(insert, "NA");
 	} else {
-	    sprintf(ins, "%g", x);
+	    sprintf(insert, "%g", x);
 	}
     } else if (loop->type == INDEX_LOOP) {
-	sprintf(ins, "%d", idx);
+	sprintf(insert, "%d", idx);
     } else if (loop->type == DATED_LOOP) {
 	/* note: ntodate is 0-based */
-	ntodate(ins, idx - 1, pdinfo);
+	ntodate(insert, idx - 1, pdinfo);
     } else if (loop->type == EACH_LOOP) {
-	pins = loop->eachstrs[idx - 1];
-    }  
+	ins = loop->eachstrs[idx - 1];
+    } 
+
+    inslen = strlen(ins);
+    incr = inslen - targlen;
+    if (incr > 0) {
+	/* substitution will lengthen the string */
+	cumlen = strlen(str);
+    }
+
+    q = malloc(strlen(strstr(str, targ)));
+    if (q == NULL) {
+	err = E_ALLOC;
+    }
+
+    /* crawl along str, replacing targ with ins */
 
     while ((p = strstr(str, targ)) != NULL && !err) {
-	char *q = malloc(strlen(p));
-
-	if (q == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    strcpy(q, p + targlen);
-	    strcpy(p, pins);
-	    strcpy(p + strlen(pins), q);
-	    free(q);
+	if (incr > 0) {
+	    cumlen += incr;
+	    if (cumlen >= maxlen) {
+		/* substitution would cause overflow */
+		err = (maxlen == VNAMELEN)? E_UNKVAR : E_TOOLONG;
+		break;
+	    }
+	}
+	strcpy(q, p + targlen);
+	strcpy(p, ins);
+	strcpy(p + inslen, q);
+	if (subst != NULL) {
 	    *subst = 1;
 	}
     }
+
+    free(q);
 
 #if SUBST_DEBUG
     fprintf(stderr, " after: '%s'\n", str);
@@ -2489,18 +2533,22 @@ subst_loop_in_parentage (const LOOPSET *loop)
 }
 
 static int 
-make_dollar_substitutions (char *str, const LOOPSET *loop,
-			   const double **Z, const DATAINFO *pdinfo,
+make_dollar_substitutions (char *str, int maxlen,
+			   const LOOPSET *loop,
+			   const DATAINFO *pdinfo,
 			   int *subst)
 {
     int err = 0;
 
-    if (indexed_loop(loop) || loop->type == FOR_LOOP) {
-	err = substitute_dollar_targ(str, loop, Z, pdinfo, subst);
+    /* if maxlen == VNAMELEN we're just processing a list name, at the top
+       of a loop */
+
+    if (maxlen != VNAMELEN && (indexed_loop(loop) || loop->type == FOR_LOOP)) {
+	err = substitute_dollar_targ(str, maxlen, loop, pdinfo, subst);
     }
 
     while (!err && (loop = subst_loop_in_parentage(loop)) != NULL) {
-	err = substitute_dollar_targ(str, loop, Z, pdinfo, subst);
+	err = substitute_dollar_targ(str, maxlen, loop, pdinfo, subst);
     }
 
     return err;
@@ -2850,8 +2898,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    }
 
 	    if (!loop_cmd_nodol(loop, j) && strchr(line, '$')) {
-		err = make_dollar_substitutions(line, loop, 
-						(const double **) *pZ,
+		err = make_dollar_substitutions(line, MAXLINE, loop, 
 						pdinfo, &subst);
 		if (err) {
 		    break;
