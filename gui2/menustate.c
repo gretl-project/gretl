@@ -346,7 +346,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Frequency distribution"))) 
 	do_freq_dist();
     else if (!strcmp(item, _("Boxplot")))
-	do_boxplot_var(v, OPT_NONE);
+	menu_boxplot_callback(v);
     else if (!strcmp(item, _("Gini coefficient")))
 	do_gini();
     else if (!strcmp(item, _("Correlogram")))

@@ -6314,26 +6314,30 @@ void ts_plot_callback (void)
 
 void do_boxplot_var (int varnum, gretlopt opt)
 {
+    gretlopt plotopt = OPT_NONE;
     int err = 0;
 
     if (varnum < 0) {
 	return;
     }
 
-    gretl_command_sprintf("boxplot %s", datainfo->varname[varnum]);
+    if (!(opt & OPT_S) && multi_unit_panel_sample(datainfo)) {
+	/* note: OPT_S enforces a single plot */
+	plotopt = OPT_P;
+    }
+
+    if (opt & OPT_O) {
+	plotopt |= OPT_O;
+    }
+
+    gretl_command_sprintf("boxplot %s%s", datainfo->varname[varnum],
+			  print_flags(plotopt, BXPLOT));
 
     if (check_and_record_command()) {
 	return;
     }
 
-    if (opt & OPT_S) {
-	/* enforces a single plot */
-	opt = OPT_NONE;
-    } else if (multi_unit_panel_sample(datainfo)) {
-	opt = OPT_P;
-    }
-
-    err = boxplots(libcmd.list, (const double **) Z, datainfo, opt);
+    err = boxplots(libcmd.list, (const double **) Z, datainfo, plotopt);
 
     gui_graph_handler(err);
 }
@@ -6365,16 +6369,13 @@ int do_scatters (selector *sr)
 
 void do_box_graph (GtkWidget *w, dialog_t *dlg)
 {
-    int action = edit_dialog_get_action(dlg);
     const char *buf = edit_dialog_get_text(dlg);
-    gretlopt opt;
+    gretlopt opt = edit_dialog_get_opt(dlg);
     int err;
 
     if (buf == NULL || *buf == '\0') {
 	return;
     }
-
-    opt = (action == GR_NBOX)? OPT_O : OPT_NONE;
 
     if (strchr(buf, '(')) {
 	err = boolean_boxplots(buf, &Z, datainfo, opt);
@@ -6394,6 +6395,40 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
 	close_dialog(dlg);
 	register_graph(NULL);
     }
+}
+
+int do_factorized_boxplot (selector *sr)
+{
+    const char *buf = selector_list(sr);
+    int err;
+
+    if (buf == NULL) {
+	return 1;
+    }
+
+    gretl_command_sprintf("boxplot %s --factorized", buf);
+
+    if (check_and_record_command()) {
+	return 1;
+    }
+
+    if (libcmd.list[0] != 2 || 
+	(!var_is_discrete(datainfo, libcmd.list[2]) &&
+	 !gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[libcmd.list[2]]))) {
+	errbox(_("You must supply two variables, the second of "
+		 "which is discrete"));
+	return 1;
+    }
+
+    err = boxplots(libcmd.list, (const double **) Z, datainfo, OPT_Z);
+    
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph(NULL);
+    }
+
+    return 0;
 }
 
 /* X, Y scatter with separation by dummy (factor) */

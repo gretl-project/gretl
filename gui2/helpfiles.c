@@ -99,7 +99,7 @@ static struct gui_help_item gui_help_items[] = {
     { GR_XYZ,         "controlled" },
     { BXPLOT,         "boxplots" },
     { GR_BOX,         "boxplots" },
-    { GR_NBOX,        "boxplots" },
+    { GR_FBOX,        "boxplots" },
     { GR_3D,          "3-D" },
     { ONLINE,         "online" },
     { MARKERS,        "markers" },

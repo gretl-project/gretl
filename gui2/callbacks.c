@@ -411,6 +411,8 @@ static int selector_callback_code (const gchar *s)
 	return SCATTERS;
     if (!strcmp(s, "MultiTS"))
 	return TSPLOTS;
+    if (!strcmp(s, "GR_FBOX"))
+	return GR_FBOX;
     if (!strcmp(s, "VLAGSEL"))
 	return VLAGSEL;
     if (!strcmp(s, "ConfEllipse"))
@@ -440,9 +442,9 @@ void selector_callback (GtkAction *action, gpointer data)
 			 do_vector_model, ci);
     } else if (ci == VLAGSEL) {
 	selection_dialog(_("gretl: VAR lag selection"), do_vector_model, ci);
-    } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY
-	       || ci == SCATTERS || ci == GR_3D
-	       || ci == GR_XYZ) {
+    } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
+	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
+	       ci == GR_FBOX) {
 	int (*selfunc)() = NULL;
 
 	switch (ci) {
@@ -461,6 +463,9 @@ void selector_callback (GtkAction *action, gpointer data)
 	    break;
 	case SCATTERS:
 	    selfunc = do_scatters;
+	    break;
+	case GR_FBOX:
+	    selfunc = do_factorized_boxplot;
 	    break;
 	default:
 	    return;
@@ -501,8 +506,6 @@ static int gretl_callback_code (const gchar *s)
 	return GSETMISS;
     if (!strcmp(s, "GR_BOX")) 
 	return GR_BOX;
-    if (!strcmp(s, "GR_NBOX")) 
-	return GR_NBOX;
     if (!strcmp(s, "gmm")) 
 	return GMM;
     if (!strcmp(s, "mle")) 
@@ -558,7 +561,6 @@ void gretl_callback (GtkAction *action, gpointer data)
 	okfunc = do_global_setmiss;
 	break;
     case GR_BOX:
-    case GR_NBOX:
 	title = N_("gretl: boxplots");
 	query = N_("Specify variables to plot:");
 	okfunc = do_box_graph;
@@ -616,6 +618,29 @@ void gretl_callback (GtkAction *action, gpointer data)
     } else {
 	edit_dialog(_(title), _(query), defstr, okfunc, data, 
 		    cmd, varclick, &cancel);
+    }
+}
+
+void menu_boxplot_callback (int varnum)
+{
+    const char *opts[] = {
+	N_("Simple boxplot"),
+	N_("With confidence interval for median"),
+	N_("Factorized")
+    };
+    int ret;
+
+    ret = radio_dialog(_("gretl: define graph"), NULL, 
+		       opts, 3, 0, 0);
+
+    if (ret == 0) {
+	do_boxplot_var(varnum, OPT_NONE);
+    } else if (ret == 1) {
+	do_boxplot_var(varnum, OPT_O);
+    } else if (ret == 2) {
+	selector_set_varnum(varnum);
+	selection_dialog(_("gretl: define graph"), 
+			 do_factorized_boxplot, GR_FBOX);
     }
 }
 

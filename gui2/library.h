@@ -268,6 +268,8 @@ void do_graph_var (int varnum);
 
 void do_boxplot_var (int varnum, gretlopt opt);
 
+int do_factorized_boxplot (selector *sr);
+
 void ts_plot_callback (void);
 
 int do_scatters (selector *sr);

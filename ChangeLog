@@ -5,6 +5,10 @@ version 1.9.6, in progress
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac
 - "makepkg" command: add options to produce an XML index entry and a
   file of translatable strings suitable for use with gettext
+- Graphing ("gnuplot" command and GUI): generalize the option of 
+  separation using a binary dummy to allow use of discrete variables
+- "boxplot" command: add --factorized and --panel options; also
+  enhance the boxplot options available via the GUI
 
 2011-04-22 version 1.9.5
 - Add new translation: Greek (Manolis Tzagarakis and Ioannis Venetis)
@@ -56,6 +60,7 @@ version 1.9.6, in progress
   daily to weekly frequency, if the daily data contained "hidden"
   missing observations
 - Fix bug 3285196 (respect indicated encoding when importing SPSS data)
+- Fix bug: gretl could crash on start-up with no datafile specified
 
 2011-02-24 version 1.9.4
 - Change the default random number generator from GLib's 

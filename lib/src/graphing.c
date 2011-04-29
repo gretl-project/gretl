@@ -2939,7 +2939,7 @@ int gnuplot (const int *plotlist, const char *literal,
 		    (i == list[0] - 1)? "\n" : ", \\\n");
 	}
     } else if (gi.flags & GPT_DUMMY) { 
-	/* plot shows separation by dummy variable */
+	/* plot shows separation by discrete variable */
 	int nd = gretl_vector_get_length(gi.dvals);
 
 	strcpy(s1, (gi.flags & GPT_RESIDS)? _("residual") : 

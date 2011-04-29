@@ -489,7 +489,7 @@ struct dialog_t_ {
     GtkWidget *edit;
     GtkWidget *popup;
     gpointer data;
-    gint code;
+    gint ci;
     gint blocking;
     gretlopt opt;
 };
@@ -537,9 +537,9 @@ gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
     }
 }
 
-static dialog_t *
-dialog_data_new (gpointer p, gint code, const char *title,
-		 int *canceled)
+static dialog_t *dialog_data_new (gpointer p, int ci, 
+				  const char *title,
+				  int *canceled)
 {
     dialog_t *d = mymalloc(sizeof *d);
     GtkWidget *aa;
@@ -549,7 +549,7 @@ dialog_data_new (gpointer p, gint code, const char *title,
     }
 
     d->data = p;
-    d->code = code;
+    d->ci = ci;
     d->opt = OPT_NONE;
     d->dialog = gtk_dialog_new();
     d->popup = NULL;
@@ -613,7 +613,7 @@ static void set_edit_save_buf (const char *buf, int code)
 
 static int dlg_text_set_previous (dialog_t *d)
 {
-    if (d->code == edit_save_code && 
+    if (d->ci == edit_save_code && 
 	edit_save_buf != NULL) {
 	textview_set_text(d->edit, edit_save_buf);
 	return 1;
@@ -632,7 +632,7 @@ static int dlg_text_set_gmm_skel (dialog_t *d)
 	"  params\n"
 	"end gmm\n";
 
-    if (d->code == GMM && edit_save_buf == NULL) {
+    if (d->ci == GMM && edit_save_buf == NULL) {
 	textview_set_text(d->edit, skel);
 	textview_set_cursor_at_line(d->edit, 1);
 	return 1;
@@ -664,7 +664,7 @@ gchar *edit_dialog_special_get_text (dialog_t *dlg)
 	gtk_widget_destroy(dlg->dialog);
     }
 
-    set_edit_save_buf(buf, dlg->code);
+    set_edit_save_buf(buf, dlg->ci);
 
     return buf;
 }
@@ -676,7 +676,7 @@ const gchar *edit_dialog_get_text (dialog_t *dlg)
     buf = gtk_entry_get_text(GTK_ENTRY(dlg->edit));
 
     if (buf == NULL || *buf == '\0') {
-	if (dlg->code != CORRGM) {
+	if (dlg->ci != CORRGM) {
 	    gtk_widget_destroy(dlg->dialog);
 	}
 	return NULL;
@@ -687,7 +687,7 @@ const gchar *edit_dialog_get_text (dialog_t *dlg)
 
 int edit_dialog_get_action (const dialog_t *dlg)
 {
-    return dlg->code;
+    return dlg->ci;
 }
 
 gretlopt edit_dialog_get_opt (const dialog_t *dlg)
@@ -831,11 +831,11 @@ static GtkWidget *build_edit_popup (dialog_t *d)
     menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (d->code == NLS && (i != ADD_DERIV)) {
+	if (d->ci == NLS && (i != ADD_DERIV)) {
 	    continue;
-	} else if (d->code == MLE && (i != ADD_DERIV)) {
+	} else if (d->ci == MLE && (i != ADD_DERIV)) {
 	    continue;
-	} else if (d->code == SYSTEM) {
+	} else if (d->ci == SYSTEM) {
 	    if (i == ADD_DERIV) continue;
 	    if ((i == ADD_ENDO_LIST || i == ADD_INSTR_LIST) &&
 		edit_has_list(d->edit, i)) {
@@ -921,27 +921,30 @@ static GtkWidget *dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 {
     GtkWidget *b = NULL;
 
-    if (opt == OPT_T) {
+    if (dlg->ci == GR_BOX && opt == OPT_O) {
+	b = gretl_option_check_button(_("Show interval for median"),
+				      &dlg->opt, opt);
+    } else if (opt == OPT_T) {
 	b = gretl_option_check_button(_("Iterated estimation"),
-				      &dlg->opt, OPT_T); /* OPT_T vs OPT_I?? */
+				      &dlg->opt, opt); /* OPT_T vs OPT_I?? */
 	if (pmod != NULL && (pmod->opt & OPT_I)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
 	}
     } else if (opt == OPT_V) {
 	b = gretl_option_check_button(_("Show details of iterations"),
-				      &dlg->opt, OPT_V);
+				      &dlg->opt, opt);
     } else if (opt == OPT_R) {
 	b = gretl_option_check_button(_("Robust standard errors"),
-				      &dlg->opt, OPT_R);
+				      &dlg->opt, opt);
 	if (pmod != NULL && (pmod->opt & OPT_R)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), TRUE);
 	}
     } else if (opt == OPT_B) {
 	b = gretl_option_check_button(_("Use bootstrap"),
-				      &dlg->opt, OPT_B);
+				      &dlg->opt, opt);
     } else if (opt == OPT_F) {
 	b = gretl_option_check_button(_("Show full restricted estimates"),
-				      &dlg->opt, OPT_F);
+				      &dlg->opt, opt);
     } 
 
     if (b != NULL) {
@@ -1018,7 +1021,7 @@ static void mle_gmm_iters_dialog (GtkWidget *w, dialog_t *d)
     double tol;
     int cancel = 0;
 
-    BFGS_defaults(&maxit, &tol, d->code);
+    BFGS_defaults(&maxit, &tol, d->ci);
     lmem = libset_get_int(LBFGS_MEM);
 
     if (maxit <= 0) {
@@ -1168,7 +1171,7 @@ static void dlg_display_sys (dialog_t *d)
     GtkWidget *w;
     int hsize = 62;
 
-    if (d->code == ESTIMATE) {
+    if (d->ci == ESTIMATE) {
 	/* estimating an existing system, not editing */
 	GtkWidget *vbox;
 
@@ -1179,7 +1182,7 @@ static void dlg_display_sys (dialog_t *d)
 	gtk_widget_show(w);
     }
 
-    d->edit = dlg_text_edit_new(&hsize, d->code == SYSTEM);
+    d->edit = dlg_text_edit_new(&hsize, d->ci == SYSTEM);
     dialog_table_setup(d, hsize);
     dlg_text_set_from_sys(sys, d); 
     gretl_dialog_set_resizeable(d->dialog, TRUE);
@@ -1380,6 +1383,8 @@ void edit_dialog (const char *title, const char *info, const char *deflt,
 	dialog_option_switch(top_vbox, d, OPT_B, NULL);
     } else if (ci == RESTRICT && vecm_model_window(okptr)) {
 	dialog_option_switch(top_vbox, d, OPT_F, NULL);
+    } else if (ci == GR_BOX) {
+	dialog_option_switch(top_vbox, d, OPT_O, NULL);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 

@@ -3060,7 +3060,7 @@ static void parse_third_var_slot (selector *sr)
 	    return;
 	} else if (sr->ci == GR_3D) {
 	    warnbox(_("You must select a Z-axis variable"));
-	} else if (sr->ci == GR_DUMMY) {
+	} else if (sr->ci == GR_DUMMY || sr->ci == GR_FBOX) {
 	    warnbox(_("You must select a factor variable"));
 	} else {
 	    warnbox(_("You must select a control variable"));
@@ -3160,7 +3160,7 @@ static void compose_cmdlist (selector *sr)
 	return;
     }
 
-    if (THREE_VARS_CODE(sr->ci)) { 
+    if (sr->ci == GR_FBOX || THREE_VARS_CODE(sr->ci)) { 
 	parse_third_var_slot(sr);
 	return;
     } 
@@ -3670,16 +3670,25 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
     return entry;
 }
 
-static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
+static void build_x_axis_section (selector *sr, GtkWidget *right_vbox,
+				  int vnum)
 {
     if (sr->ci == SCATTERS) {
 	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
 						  NULL, 1,
 						  set_dependent_var_callback);
+    } else if (sr->ci == GR_FBOX) {
+	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
+						  _("Variable to plot"), 0,
+						  set_dependent_var_callback);
     } else {
 	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
 						  _("X-axis variable"), 0,
 						  set_dependent_var_callback);
+    }
+
+    if (vnum > 0 && vnum < datainfo->v) {
+        gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[vnum]);
     }
 }
 
@@ -3881,13 +3890,13 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 }
 
-static void third_var_box (selector *sr, GtkWidget *vbox)
+static void extra_plotvar_box (selector *sr, GtkWidget *vbox)
 {
     const gchar *label;
 
     if (sr->ci == GR_3D) {
 	label = N_("Z-axis variable");
-    } else if (sr->ci == GR_DUMMY) {
+    } else if (sr->ci == GR_DUMMY || sr->ci == GR_FBOX) {
 	label = _("Factor (discrete)");
     } else if (sr->ci == GR_XYZ) {
 	label = N_("Control variable");
@@ -5574,6 +5583,8 @@ static void selection_dialog_add_top_label (selector *sr)
 	    s = N_("multiple scatterplots");
 	else if (ci == GR_DUMMY)
 	    s = N_("factorized plot");
+	else if (ci == GR_FBOX)
+	    s = N_("factorized boxplot");
 	else if (ci == GR_XYZ)
 	    s = N_("scatterplot with control");
 	else if (ci == SAVE_FUNCTIONS) 
@@ -5786,9 +5797,10 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 	/* models: top right -> dependent variable */
 	yvar = build_depvar_section(sr, right_vbox, preselect);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY ||
-	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ) {
-	/* graphs: top right -> x-axis variable */
-	build_x_axis_section(sr, right_vbox);
+	       ci == SCATTERS || ci == GR_3D || ci == GR_XYZ ||
+	       ci == GR_FBOX) {
+	/* graphs: top right -> x-axis variable or equivalent */
+	build_x_axis_section(sr, right_vbox, preselect);
     } else if (FNPKG_CODE(ci)) {
 	primary_rhs_varlist(sr, right_vbox);
     }
@@ -5801,9 +5813,9 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
 	build_mid_section(sr, right_vbox);
     }
     
-    if (THREE_VARS_CODE(ci)) {
+    if (ci == GR_FBOX || THREE_VARS_CODE(ci)) {
 	/* choose extra var for plot */
-	third_var_box(sr, right_vbox);
+	extra_plotvar_box(sr, right_vbox);
     } else if (AUX_LAST(ci)) {
 	secondary_rhs_varlist(sr, right_vbox);
     } else {
@@ -5894,7 +5906,6 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to display");
     case GR_PLOT: 
     case GR_BOX: 
-    case GR_NBOX:
 	return N_("Select variables to plot");
     case SAVE_DATA:
     case SAVE_DATA_AS:

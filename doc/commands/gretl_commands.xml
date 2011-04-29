@@ -1177,6 +1177,14 @@
 	  <effect>show 90 percent interval for median</effect>
 	</option>
 	<option>
+	  <flag>--factorized</flag>
+	  <effect>see below</effect>
+	</option>
+	<option>
+	  <flag>--panel</flag>
+	  <effect>see below</effect>
+	</option>
+	<option>
 	  <flag>--output</flag>
 	  <optparm>filename</optparm>
 	  <effect>send output to specified file</effect>
@@ -1187,53 +1195,61 @@
     <description>
 
       <para>
-	These plots (after Tukey and Chambers) display the distribution of a
-	variable. The central box encloses the middle 50 percent of the data,
-	&ie; it is bounded by the first and third quartiles.  The
-	<quote>whiskers</quote> extend to the minimum and maximum values.  A
-	line is drawn across the box at the median.  A <quote>+</quote> sign
-	indicates the mean.
-      </para>
-
-      <para>
-	In the case of notched boxes, the notch shows the limits of an
-	approximate 90 percent confidence interval for the median.  This is
-	obtained by the bootstrap method.
+	These plots display the distribution of a variable. The
+	central box encloses the middle 50 percent of the data, &ie;
+	it is bounded by the first and third quartiles.  The
+	<quote>whiskers</quote> extend to the minimum and maximum
+	values.  A line is drawn across the box at the median.  A
+	<quote>+</quote> sign is used to indicate the mean.  If the
+	option of showing a confidence interval for the median is
+	selected, this is computed via the bootstrap method and
+	shown in the form of dashed horizontal lines above and/or
+	below the median.
       </para>
 
       <para context="gui">
-	After each variable specified in the boxplot command, a parenthesized
-	Boolean expression may be added, to limit the sample for the variable
-	in question.  A space must be inserted between the variable name or
-	number and the expression. Suppose you have salary figures for men and
-	women, and you have a dummy variable <lit>GENDER</lit> with value 1
-	for men and 0 for women.  In that case you could draw comparative
-	boxplots with the following line in the boxplots dialog:
+	The <quote>factorized</quote> option allows you to examine the
+	distribution of a chosen variable conditional on the value of
+	some discrete factor. For example, if a data set contains
+	wages and a gender dummy variable you can select the wage
+	variable as the target and gender as the factor, to see
+	side-by-side boxplots of male and female wages.
+      </para>
+      
+      <para context="cli">
+	The <opt>factorized</opt> option allows you to examine the
+	distribution of a chosen variable conditional on the value of
+	some discrete factor. For example, if a data set contains
+	wages and a gender dummy variable you can select the wage
+	variable as the target and gender as the factor, to see
+	side-by-side boxplots of male and female wages, as in
+      </para>
+      <code context="cli">
+	boxplot wage gender --factorized
+      </code>
+      <para context="cli">
+	Note that in this case you must specify exactly two variables,
+	with the factor given second.
       </para>
 
       <para context="cli">
-	After each variable specified in the boxplot
-	command, a parenthesized Boolean expression may be added, to
-	limit the sample for the variable in question.  A space must
-	be inserted between the variable name or number and the
-	expression. Suppose you have salary figures for men and women,
-	and you have a dummy variable <lit>GENDER</lit> with value 1
-	for men and 0 for women.  In that case you could draw
-	comparative boxplots with the following <repl
-	  quote="true">varlist</repl>:</para>
-      <code>
-	salary (GENDER=1) salary (GENDER=0)
-      </code>
+	If the current data set is a panel, and just one variable is
+	specified, the <opt>panel</opt> option produces a series of
+	side-by-side boxplots, one for each panel <quote>unit</quote>
+	or group.
+      </para>
 
       <para context="cli">
-	In interactive mode the result is displayed immediately. In batch mode
-	the default behavior is that a gnuplot command file is written in the
-	user's working directory, with a name on the pattern
-	<filename>gpttmpN.plt</filename>, starting with N = <lit>01</lit>. The
-	actual plots may be generated later using <program>gnuplot</program>
-	(under MS Windows, <program>wgnuplot</program>).  This behavior can be
-	modified by use of the <lit>--output=</lit><repl>filename</repl>
-	option.  For details, please see the <cmdref targ="gnuplot"/> command.
+	In interactive mode the result is displayed immediately. In
+	batch mode the default behavior is that a gnuplot command file
+	is written in the user's working directory, with a name on the
+	pattern <filename>gpttmpN.plt</filename>, starting with N =
+	<lit>01</lit>. The actual plots may be generated later using
+	<program>gnuplot</program> (under MS Windows,
+	<program>wgnuplot</program>).  This behavior can be modified
+	by use of the <lit>--output=</lit><repl>filename</repl>
+	option.  For details, please see the <cmdref targ="gnuplot"/>
+	command.
       </para>
 
     </description>
