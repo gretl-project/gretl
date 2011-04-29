@@ -684,15 +684,14 @@ static int real_boxplots (const int *list, char **bools,
     for (i=0; i<np && !err; i++) {
 	BOXPLOT *plot;
 	const char *vname;
-	int n, vi = 0;
+	int n;
 
 	if (opt & OPT_Z) {
 	    n = transcribe_array_factorized(grp, i, Z, pdinfo);
 	    vname = pdinfo->varname[list[1]];
 	} else {
-	    vi = list[i+1];
-	    n = transcribe_array(grp->x, Z[vi], pdinfo);
-	    vname = pdinfo->varname[vi];
+	    n = transcribe_array(grp->x, Z[list[i+1]], pdinfo);
+	    vname = pdinfo->varname[list[i+1]];
 	}
 
 	if (n < 2) {
