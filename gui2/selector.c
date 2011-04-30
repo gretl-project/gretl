@@ -1572,7 +1572,7 @@ static int rvars1_n_vars (selector *sr)
 static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter, 
 			      selector *sr, int locus)
 {
-    GtkWidget *list;
+    GtkWidget *w;
     GtkTreeModel *model;
     GtkTreeIter iter;
     gchar *vname = NULL;
@@ -1582,13 +1582,13 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
     gint keep_names = 0;
     int nvars = 0;
 
-    list = (locus == SR_RVARS2)? sr->rvars2 : sr->rvars1;
+    w = (locus == SR_RVARS2)? sr->rvars2 : sr->rvars1;
 
-    if (!GTK_IS_TREE_VIEW(list)) {
+    if (!GTK_IS_TREE_VIEW(w)) {
 	return;
     }
 
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
     if (model == NULL) {
 	return;
     }
@@ -2092,7 +2092,11 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
     GdkModifierType mods = parent_get_pointer_mask(sr->lvars);
 
     if (RIGHT_CLICK(mods)) {
-	add_to_rvars1_callback(NULL, sr);
+	if (sr->ci == GR_FBOX) {
+	    set_third_var_callback(NULL, sr);
+	} else {
+	    add_to_rvars1_callback(NULL, sr);
+	}
 	return TRUE;
     }
 

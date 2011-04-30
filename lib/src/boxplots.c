@@ -442,6 +442,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
 	}
 	if ((opt & OPT_P) && pdinfo != NULL) {
 	    strcpy(grp->ylabel, VARLABEL(pdinfo, 1));
+	    strcpy(grp->xlabel, _("group"));
 	}
     }
 
@@ -548,15 +549,12 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     lpos = grp->gmin - h;
     get_box_y_range(grp, gyrange, &ymin, &ymax);
 
-    if (opt & OPT_Z) {
-	/* debatable things: make these configurable? */
-	int nvals = gretl_vector_get_length(grp->dvals);
-
-	if (nvals > 1 && nvals <= 30) {
+    if (opt & (OPT_Z | OPT_P)) {
+	if (n > 1 && n <= 30) {
 	    set_use_xtics(grp);
 	}
 	/* set_alt_boxwidth(grp); */
-    }
+    } 
 
     if (grp->title != NULL) {
 	fprintf(fp, "set title \"%s\"\n", grp->title);
@@ -579,33 +577,26 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	lwidth = 1;
     } else {
 	fputs("set ytics nomirror\n", fp);
+	fputs("set border 2\n", fp);
 
 	if (use_xtics(grp)) {
-	    fputs("set border 3\n", fp);
 	    fputs("set xtics (", fp);
 	    for (i=0; i<n; i++) {
-		fprintf(fp, "\"%g\" %d", grp->dvals->val[i], i+1);
-		if (i < n - 1) {
-		   fputs(", ", fp);
+		if (opt & OPT_Z) {
+		    fprintf(fp, "\"%g\" %d", grp->dvals->val[i], i+1);
 		} else {
-		   fputs(")\n", fp);
+		    fprintf(fp, "\"%s\" %d", grp->plots[i].varname, i+1);
+		}
+		if (i < n - 1) {
+		    fputs(", ", fp);
+		} else {
+		    fputs(") scale 0.0\n", fp);
 		} 
 	    }
 	    fputs("set xtics nomirror\n", fp);
 	} else {
-	    fputs("set border 2\n", fp);
 	    fputs("set noxtics\n", fp);
 	    fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3);
-	}
-
-	if (!use_xtics(grp) && (opt & OPT_Z)) {
-	    for (i=0; i<n; i++) {
-		if (grp->plots[i].bool != NULL) {
-		    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-			    grp->plots[i].bool, i+1, lpos);
-		}
-	    }	    
-	} else if (!use_xtics(grp)) {
 	    for (i=0; i<n; i++) {
 		fprintf(fp, "set label \"%s\" at %d,%g center\n", 
 			grp->plots[i].varname, i+1, lpos);
@@ -745,7 +736,6 @@ static int factorized_boxplot_check (const int *list,
 static int real_boxplots (const int *list, char **bools, 
 			  const double **Z, 
 			  const DATAINFO *pdinfo,
-			  const char *title,
 			  gretlopt opt)
 {
     PLOTGROUP *grp;
@@ -764,12 +754,9 @@ static int real_boxplots (const int *list, char **bools,
 	return E_ALLOC;
     }
 
-    if (title != NULL) {
-	grp->title = gretl_strdup(title);
-    } else if (opt & OPT_Z) {
+    if (*grp->ylabel != '\0' && *grp->xlabel != '\0') {
 	grp->title = gretl_strdup_printf(_("Distribution of %s by %s"),
-					 pdinfo->varname[list[1]],
-					 pdinfo->varname[list[2]]);
+					 grp->ylabel, grp->xlabel);
     }
 
     if (opt & OPT_O) {
@@ -862,7 +849,6 @@ static int panel_group_boxplots (int vnum, const double **Z,
     DATAINFO *gdinfo;
     int nunits, T = pdinfo->pd;
     int *list = NULL;
-    char *title = NULL;
     int nv, u0, i, t, s, s0;
     int err = 0;
 
@@ -894,13 +880,9 @@ static int panel_group_boxplots (int vnum, const double **Z,
 	}
     }
 
-    title = gretl_strdup_printf("%s by group", 
-				var_get_graph_name(pdinfo, vnum));
-
     err = real_boxplots(list, NULL, (const double **) gZ, gdinfo, 
-			title, opt);
+			opt);
 
-    free(title);
     destroy_dataset(gZ, gdinfo);
     free(list);
 
@@ -920,7 +902,7 @@ int boxplots (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    err = panel_group_boxplots(list[1], Z, pdinfo, opt);
 	}
     } else {
-	err = real_boxplots(list, NULL, Z, pdinfo, NULL, opt);
+	err = real_boxplots(list, NULL, Z, pdinfo, opt);
     }
 
     return err;
@@ -1090,7 +1072,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	err = real_boxplots(list, bools, (const double **) *pZ, 
-			    pdinfo, NULL, opt);
+			    pdinfo, opt);
     } 
     
     free(list);
