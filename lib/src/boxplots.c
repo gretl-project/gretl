@@ -55,6 +55,7 @@ typedef struct {
     double gmin, gmax;
     double *x;
     gretl_matrix *dvals;
+    char *xlabel;
 } PLOTGROUP;
 
 #define BPSTRLEN 128
@@ -316,6 +317,7 @@ static void plotgroup_destroy (PLOTGROUP *grp)
     }
 
     free(grp->title);
+    free(grp->xlabel);
     free(grp->x);
     free(grp->plots);
     free(grp->numbers);
@@ -373,6 +375,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
     grp->dvals = NULL;
     grp->title = NULL;
     grp->numbers = NULL;
+    grp->xlabel = NULL;
     
     if (pdinfo != NULL) {
 	grp->list = list;
@@ -385,6 +388,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
 
     if (!err) {
 	if (opt & OPT_Z) {
+	    grp->xlabel = gretl_strdup(pdinfo->varname[list[2]]);
 	    err = plotgroup_factor_setup(grp, Z, pdinfo);
 	} else {
 	    grp->nplots = list[0];
@@ -510,6 +514,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
     if (opt & OPT_Z) {
 	fprintf(fp, "set ylabel \"%s\"\n", grp->plots[0].varname);
+	fprintf(fp, "set xlabel \"%s\"\n", grp->xlabel);
     }
 
     if (n > 30) {
@@ -748,9 +753,7 @@ static int real_boxplots (const int *list, char **bools,
 	strcpy(plot->varname, vname);
 
 	if (opt & OPT_Z) {
-	    plot->bool = gretl_strdup_printf("(%s=%g)",
-					     pdinfo->varname[list[2]],
-					     grp->dvals->val[i]);
+	    plot->bool = gretl_strdup_printf("%g", grp->dvals->val[i]);
 	    grp->n_bools += 1;
 	} else if (bools != NULL && bools[i] != NULL) {
 	    plot->bool = bools[i];
