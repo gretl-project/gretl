@@ -104,22 +104,8 @@ static void quartiles (double *x, const int n, BOXPLOT *box)
     box->uq = p[2];
 }
 
-static void real_six_numbers (PLOTGROUP *grp, int i, int offset, 
-			      int do_mean, PRN *prn)
+static void six_numbers (BOXPLOT *plt, int do_mean, PRN *prn)
 {
-    BOXPLOT *plt = &grp->plots[i];
-
-    if (factorized(grp)) {
-	char numstr[32];
-	
-	sprintf(numstr, "%g", gretl_vector_get(grp->dvals, i));
-	pprintf(prn, "%-*s", offset, numstr);
-    } else if (plt->bool != NULL) {
-	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
-    } else {
-	pprintf(prn, "%-*s", offset, plt->varname);
-    }
-
     if (do_mean) {
 	pprintf(prn, "%9.5g", plt->mean);
     }
@@ -134,14 +120,20 @@ static void real_six_numbers (PLOTGROUP *grp, int i, int offset,
     }
 }
 
-static void 
-five_numbers_with_interval (PLOTGROUP *grp, int i, int offset, 
-			    PRN *prn)
+static void five_numbers_with_interval (BOXPLOT *plt, PRN *prn)
 {
-    BOXPLOT *plt = &grp->plots[i];
     char tmp[32];
 
     sprintf(tmp, "%.5g - %.5g", plt->conf[0], plt->conf[1]);
+    pprintf(prn, "%8.5g%10.5g%10.5g%17s%10.5g%10.5g\n",
+	    plt->min, plt->lq, plt->median,
+	    tmp, plt->uq, plt->max);
+}
+
+static void box_stats_leader (PLOTGROUP *grp, int i, int offset, 
+			      PRN *prn)
+{
+    BOXPLOT *plt = &grp->plots[i];
 
     if (factorized(grp)) {
 	char numstr[32];
@@ -153,10 +145,6 @@ five_numbers_with_interval (PLOTGROUP *grp, int i, int offset,
     } else {
 	pprintf(prn, "%-*s", offset, plt->varname);
     }
-	    
-    pprintf(prn, "%8.5g%10.5g%10.5g%17s%10.5g%10.5g\n",
-	    plt->min, plt->lq, plt->median,
-	    tmp, plt->uq, plt->max);
 }
 
 static int has_mean (PLOTGROUP *grp)
@@ -191,10 +179,10 @@ static int get_format_offset (PLOTGROUP *grp)
     return L + 2;
 }
 
-static int six_numbers (PLOTGROUP *grp, PRN *prn) 
+static int boxplot_print_stats (PLOTGROUP *grp, PRN *prn) 
 {
-    int offset;
-    int i;
+    int do_mean = 0;
+    int offset, pad, i;
 
     if (factorized(grp)) {
 	offset = strlen(grp->xlabel) + 2;
@@ -202,24 +190,37 @@ static int six_numbers (PLOTGROUP *grp, PRN *prn)
 	offset = get_format_offset(grp);
     }
 
-    if (na(grp->plots[0].conf[0])) { 
-	/* no confidence intervals */
-	int pad, do_mean = has_mean(grp);
-
-	if (factorized(grp)) {
+    if (do_intervals(grp)) {
+	pprintf(prn, "%s\n\n", _("Numerical summary with bootstrapped confidence "
+				 "interval for median"));
+	pad = offset + 8;
+    } else {
+	if (*grp->ylabel != '\0') {
 	    pprintf(prn, _("Numerical summary for %s"), grp->ylabel);
 	    pputs(prn, "\n\n");
 	} else {
 	    pprintf(prn, "%s\n\n", _("Numerical summary"));
 	}
-
+	do_mean = has_mean(grp);
 	pad = (do_mean)? (offset + 9) : (offset + 10);
+    }
 
-	if (factorized(grp)) {
-	    pputs(prn, grp->xlabel);
-	    pad -= strlen(grp->xlabel);
-	} 	
+    if (factorized(grp)) {
+	pputs(prn, grp->xlabel);
+	pad -= strlen(grp->xlabel);
+    }    
 
+    if (do_intervals(grp)) {
+	pprintf(prn, "%*s%10s%10s%17s%10s%10s\n", pad,
+		"min", "Q1", _("median"), 
+		/* xgettext:no-c-format */
+		_("(90% interval)"), 
+		"Q3", "max");
+	for (i=0; i<grp->nplots; i++) {
+	    box_stats_leader(grp, i, offset, prn);
+	    five_numbers_with_interval(&grp->plots[i], prn);
+	}
+    } else {	
 	if (do_mean) {
 	    pprintf(prn, "%*s%9s%9s%9s%9s%9s\n", pad, _("mean"),
 		    "min", "Q1", _("median"), "Q3", "max");
@@ -227,32 +228,11 @@ static int six_numbers (PLOTGROUP *grp, PRN *prn)
 	    pprintf(prn, "%*s%10s%10s%10s%10s\n", pad,
 		    "min", "Q1", _("median"), "Q3", "max");
 	}	    
-
 	for (i=0; i<grp->nplots; i++) {
-	    real_six_numbers(grp, i, offset, do_mean, prn);
+	    box_stats_leader(grp, i, offset, prn);
+	    six_numbers(&grp->plots[i], do_mean, prn);
 	}
-    } else { 
-	/* with confidence intervals */
-	int pad = offset + 8;
-
-	pprintf(prn, "%s\n\n", _("Numerical summary with bootstrapped confidence "
-				 "interval for median"));
-
-	if (factorized(grp)) {
-	    pputs(prn, grp->xlabel);
-	    pad -= strlen(grp->xlabel);
-	}	    
-
-	pprintf(prn, "%*s%10s%10s%17s%10s%10s\n", pad,
-		"min", "Q1", _("median"), 
-		/* xgettext:no-c-format */
-		_("(90% interval)"), 
-		"Q3", "max");
-
-	for (i=0; i<grp->nplots; i++) {
-	    five_numbers_with_interval(grp, i, offset, prn);
-	}
-    }
+    } 
 
     return 0;
 }
@@ -452,13 +432,16 @@ static PLOTGROUP *plotgroup_new (const int *list,
 
     if (!err) {
 	if (opt & OPT_Z) {
-	    strcpy(grp->ylabel, pdinfo->varname[list[1]]);
-	    strcpy(grp->xlabel, pdinfo->varname[list[2]]);
-	    if (Z != NULL && pdinfo != NULL) {
+	    if (pdinfo != NULL) {
+		strcpy(grp->ylabel, pdinfo->varname[list[1]]);
+		strcpy(grp->xlabel, pdinfo->varname[list[2]]);
 		err = plotgroup_factor_setup(grp, Z, pdinfo);
 	    }
 	} else {
 	    grp->nplots = list[0];
+	}
+	if ((opt & OPT_P) && pdinfo != NULL) {
+	    strcpy(grp->ylabel, VARLABEL(pdinfo, 1));
 	}
     }
 
@@ -567,7 +550,11 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
     if (opt & OPT_Z) {
 	/* debatable things: make these configurable? */
-	set_use_xtics(grp);
+	int nvals = gretl_vector_get_length(grp->dvals);
+
+	if (nvals > 1 && nvals <= 30) {
+	    set_use_xtics(grp);
+	}
 	/* set_alt_boxwidth(grp); */
     }
 
@@ -580,10 +567,13 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     fprintf(fp, "set xrange [0:%d]\n", n + 1);
     fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
 
-    if (opt & OPT_Z) {
+    if (*grp->ylabel != '\0') {
 	fprintf(fp, "set ylabel \"%s\"\n", grp->ylabel);
-	fprintf(fp, "set xlabel \"%s\"\n", grp->xlabel);
     }
+
+    if (*grp->xlabel != '\0') {
+	fprintf(fp, "set xlabel \"%s\"\n", grp->xlabel);
+    }    
 
     if (n > 30) {
 	lwidth = 1;
@@ -892,6 +882,9 @@ static int panel_group_boxplots (int vnum, const double **Z,
     }
 
     s0 = pdinfo->t1 * pdinfo->pd;
+
+    /* record the name of the original variable */
+    strcpy(VARLABEL(gdinfo, 1), pdinfo->varname[vnum]);
 
     for (i=0; i<nunits; i++) {
 	sprintf(gdinfo->varname[i+1], "%d", u0+i+1);
@@ -1479,12 +1472,15 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     }
 
     if (!err) {
+	strcpy(grp->ylabel, yvar);
+	strcpy(grp->xlabel, xvar);
 	if (factorized) {
-	    strcpy(grp->ylabel, yvar);
-	    strcpy(grp->xlabel, xvar);
 	    set_box_factor(grp);
 	}
-	six_numbers(grp, prn);
+	if (!na(grp->plots[0].conf[0])) {
+	    set_do_intervals(grp);
+	}
+	boxplot_print_stats(grp, prn);
     }
 
     fclose(fp);
