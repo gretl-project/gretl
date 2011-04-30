@@ -508,6 +508,9 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
     fprintf(fp, "set xrange [0:%d]\n", n + 1);
     fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
+    if (opt & OPT_Z) {
+	fprintf(fp, "set ylabel \"%s\"\n", grp->plots[0].varname);
+    }
 
     if (n > 30) {
 	lwidth = 1;
@@ -518,18 +521,31 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
 	fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3); 
 
-	for (i=0; i<n; i++) {
-	    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-		    grp->plots[i].varname, i+1, lpos);
-	    if (grp->plots[i].bool != NULL) {
-		/* FIXME positioning? */
+	if (opt & OPT_Z) {
+	    for (i=0; i<n; i++) {
+		if (grp->plots[i].bool != NULL) {
+		    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
+			    grp->plots[i].bool, i+1, lpos);
+		}
+	    }	    
+	} else {
+	    for (i=0; i<n; i++) {
 		fprintf(fp, "set label \"%s\" at %d,%g center\n", 
-			grp->plots[i].bool, i+1, lpos - .8 * h);
+			grp->plots[i].varname, i+1, lpos);
+		if (grp->plots[i].bool != NULL) {
+		    /* FIXME positioning? */
+		    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
+			    grp->plots[i].bool, i+1, lpos - .8 * h);
+		}
 	    }
 	}
     }
 
-    fprintf(fp, "set boxwidth %g absolute\n", 1.0 / (n + 2));
+    if (opt & OPT_Z) {
+	fputs("set boxwidth 0.5 relative\n", fp);
+    } else {
+	fprintf(fp, "set boxwidth %g absolute\n", 1.0 / (n + 2));
+    }
 
     fputs("plot \\\n", fp);
     /* the quartiles and extrema */
