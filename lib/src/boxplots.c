@@ -107,10 +107,10 @@ static void quartiles (double *x, const int n, BOXPLOT *box)
 static void six_numbers (BOXPLOT *plt, int do_mean, PRN *prn)
 {
     if (do_mean) {
-	pprintf(prn, "%9.5g", plt->mean);
+	pprintf(prn, "%#9.5g", plt->mean);
     }
 
-    pprintf(prn, "%9.5g%9.5g%9.5g%9.5g%9.5g", plt->min, 
+    pprintf(prn, "%#9.5g%#9.5g%#9.5g%#9.5g%#9.5g", plt->min, 
 	    plt->lq, plt->median, plt->uq, plt->max);
 
     if (plt->n > 0) {
@@ -124,8 +124,8 @@ static void five_numbers_with_interval (BOXPLOT *plt, PRN *prn)
 {
     char tmp[32];
 
-    sprintf(tmp, "%.5g - %.5g", plt->conf[0], plt->conf[1]);
-    pprintf(prn, "%8.5g%10.5g%10.5g%17s%10.5g%10.5g\n",
+    sprintf(tmp, "%#.5g - %#.5g", plt->conf[0], plt->conf[1]);
+    pprintf(prn, "%#8.5g%#10.5g%#10.5g%17s%#10.5g%#10.5g\n",
 	    plt->min, plt->lq, plt->median,
 	    tmp, plt->uq, plt->max);
 }
