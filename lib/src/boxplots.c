@@ -48,7 +48,8 @@ enum {
     BOX_ALTWIDTH  = 1 << 2,
     BOX_WHISKBARS = 1 << 3,
     BOX_OUTLIERS  = 1 << 4,
-    BOX_XTICS     = 1 << 5
+    BOX_XTICS     = 1 << 5,
+    BOX_FACTOR    = 1 << 6
 };
 
 typedef struct {
@@ -62,7 +63,8 @@ typedef struct {
     double gmin, gmax;
     double *x;
     gretl_matrix *dvals;
-    char *xlabel;
+    char xlabel[VNAMELEN];
+    char ylabel[VNAMELEN];
 } PLOTGROUP;
 
 #define show_mean(g)    (g->flags & BOX_SHOW_MEAN)
@@ -71,11 +73,13 @@ typedef struct {
 #define whiskerbars(g)  (g->flags & BOX_WHISKBARS)
 #define do_outliers(g)  (g->flags & BOX_OUTLIERS)
 #define use_xtics(g)    (g->flags & BOX_XTICS)
+#define factorized(g)   (g->flags & BOX_FACTOR)
 
 #define set_show_mean(g)    (g->flags |= BOX_SHOW_MEAN)
 #define set_do_intervals(g) (g->flags |= BOX_INTERVALS)
 #define set_alt_boxwidth(g) (g->flags |= BOX_ALTWIDTH)
 #define set_use_xtics(g)    (g->flags |= BOX_XTICS)
+#define set_box_factor(g)   (g->flags |= BOX_FACTOR)
 
 #define unset_show_mean(g)    (g->flags &= ~BOX_SHOW_MEAN)
 #define unset_do_intervals(g) (g->flags &= ~BOX_INTERVALS)
@@ -100,10 +104,17 @@ static void quartiles (double *x, const int n, BOXPLOT *box)
     box->uq = p[2];
 }
 
-static void real_six_numbers (BOXPLOT *plt, int offset, int do_mean,
-			      PRN *prn)
+static void real_six_numbers (PLOTGROUP *grp, int i, int offset, 
+			      int do_mean, PRN *prn)
 {
-    if (plt->bool != NULL) {
+    BOXPLOT *plt = &grp->plots[i];
+
+    if (factorized(grp)) {
+	char numstr[32];
+	
+	sprintf(numstr, "%g", gretl_vector_get(grp->dvals, i));
+	pprintf(prn, "%-*s", offset, numstr);
+    } else if (plt->bool != NULL) {
 	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
     } else {
 	pprintf(prn, "%-*s", offset, plt->varname);
@@ -124,13 +135,20 @@ static void real_six_numbers (BOXPLOT *plt, int offset, int do_mean,
 }
 
 static void 
-five_numbers_with_interval (BOXPLOT *plt, int offset, PRN *prn)
+five_numbers_with_interval (PLOTGROUP *grp, int i, int offset, 
+			    PRN *prn)
 {
+    BOXPLOT *plt = &grp->plots[i];
     char tmp[32];
 
     sprintf(tmp, "%.5g - %.5g", plt->conf[0], plt->conf[1]);
 
-    if (plt->bool != NULL) {
+    if (factorized(grp)) {
+	char numstr[32];
+
+	sprintf(numstr, "%g", gretl_vector_get(grp->dvals, i));
+	pprintf(prn, "%-*s", offset, numstr);
+    } else if (plt->bool != NULL) {
 	pprintf(prn, "%s\n %-*s", plt->varname, offset - 1, plt->bool);
     } else {
 	pprintf(prn, "%-*s", offset, plt->varname);
@@ -178,38 +196,61 @@ static int six_numbers (PLOTGROUP *grp, PRN *prn)
     int offset;
     int i;
 
-    offset = get_format_offset(grp);
+    if (factorized(grp)) {
+	offset = strlen(grp->xlabel) + 2;
+    } else {
+	offset = get_format_offset(grp);
+    }
 
     if (na(grp->plots[0].conf[0])) { 
 	/* no confidence intervals */
-	int do_mean = has_mean(grp);
+	int pad, do_mean = has_mean(grp);
 
-	pprintf(prn, "%s\n\n", _("Numerical summary"));
+	if (factorized(grp)) {
+	    pprintf(prn, _("Numerical summary for %s"), grp->ylabel);
+	    pputs(prn, "\n\n");
+	} else {
+	    pprintf(prn, "%s\n\n", _("Numerical summary"));
+	}
+
+	pad = (do_mean)? (offset + 9) : (offset + 10);
+
+	if (factorized(grp)) {
+	    pputs(prn, grp->xlabel);
+	    pad -= strlen(grp->xlabel);
+	} 	
 
 	if (do_mean) {
-	    pprintf(prn, "%*s%9s%9s%9s%9s%9s\n", offset + 9, _("mean"),
+	    pprintf(prn, "%*s%9s%9s%9s%9s%9s\n", pad, _("mean"),
 		    "min", "Q1", _("median"), "Q3", "max");
 	} else {
-	    pprintf(prn, "%*s%10s%10s%10s%10s\n", offset + 10,
+	    pprintf(prn, "%*s%10s%10s%10s%10s\n", pad,
 		    "min", "Q1", _("median"), "Q3", "max");
 	}	    
 
 	for (i=0; i<grp->nplots; i++) {
-	    real_six_numbers(&grp->plots[i], offset, do_mean, prn);
+	    real_six_numbers(grp, i, offset, do_mean, prn);
 	}
     } else { 
 	/* with confidence intervals */
-	pprintf(prn, "%s\n\n", _("Numerical summary with bootstrapped confidence "
-				 "interval for median"));	 
+	int pad = offset + 8;
 
-	pprintf(prn, "%*s%10s%10s%17s%10s%10s\n",
-		offset + 8, "min", "Q1", _("median"), 
+	pprintf(prn, "%s\n\n", _("Numerical summary with bootstrapped confidence "
+				 "interval for median"));
+
+	if (factorized(grp)) {
+	    pputs(prn, grp->xlabel);
+	    pad -= strlen(grp->xlabel);
+	}	    
+
+	pprintf(prn, "%*s%10s%10s%17s%10s%10s\n", pad,
+		"min", "Q1", _("median"), 
 		/* xgettext:no-c-format */
 		_("(90% interval)"), 
 		"Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
-	    five_numbers_with_interval(&grp->plots[i], offset, prn);
+	    five_numbers_with_interval(grp, i, offset, prn);
 	}
     }
 
@@ -339,7 +380,6 @@ static void plotgroup_destroy (PLOTGROUP *grp)
     }
 
     free(grp->title);
-    free(grp->xlabel);
     free(grp->x);
     free(grp->plots);
     free(grp->numbers);
@@ -397,7 +437,9 @@ static PLOTGROUP *plotgroup_new (const int *list,
     grp->dvals = NULL;
     grp->title = NULL;
     grp->numbers = NULL;
-    grp->xlabel = NULL;
+
+    *grp->xlabel = '\0';
+    *grp->ylabel = '\0';
     
     if (pdinfo != NULL) {
 	grp->list = list;
@@ -410,8 +452,11 @@ static PLOTGROUP *plotgroup_new (const int *list,
 
     if (!err) {
 	if (opt & OPT_Z) {
-	    grp->xlabel = gretl_strdup(pdinfo->varname[list[2]]);
-	    err = plotgroup_factor_setup(grp, Z, pdinfo);
+	    strcpy(grp->ylabel, pdinfo->varname[list[1]]);
+	    strcpy(grp->xlabel, pdinfo->varname[list[2]]);
+	    if (Z != NULL && pdinfo != NULL) {
+		err = plotgroup_factor_setup(grp, Z, pdinfo);
+	    }
 	} else {
 	    grp->nplots = list[0];
 	}
@@ -520,10 +565,6 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     lpos = grp->gmin - h;
     get_box_y_range(grp, gyrange, &ymin, &ymax);
 
-#if 0
-    six_numbers(grp, fp);
-#endif
-
     if (opt & OPT_Z) {
 	/* debatable things: make these configurable? */
 	set_use_xtics(grp);
@@ -540,7 +581,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
 
     if (opt & OPT_Z) {
-	fprintf(fp, "set ylabel \"%s\"\n", grp->plots[0].varname);
+	fprintf(fp, "set ylabel \"%s\"\n", grp->ylabel);
 	fprintf(fp, "set xlabel \"%s\"\n", grp->xlabel);
     }
 
@@ -1289,6 +1330,40 @@ int gnuplot_from_boxplot (const char *fname)
     return err;
 }
 
+/* e.g. ("0" 1, "1" 2, "4", 3) */
+
+static int get_vals_from_tics (PLOTGROUP *grp, const char *s)
+{
+    double x;
+    int i, err = 0;
+
+    grp->dvals = gretl_column_vector_alloc(grp->nplots);
+    if (grp->dvals == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<grp->nplots && !err; i++) {
+	s = strchr(s, '"');
+	if (s == NULL) {
+	    err = E_DATA;
+	} else if (sscanf(s+1, "%lf", &x) != 1) {
+	    err = E_DATA;
+	} else {
+	    gretl_vector_set(grp->dvals, i, x);
+	    s++; /* skip the current '"' */
+	    s += strcspn(s, "\""); /* skip to closing */
+	    s++; 
+	}
+    }
+
+    if (err) {
+	gretl_matrix_free(grp->dvals);
+	grp->dvals = NULL;
+    }
+
+    return err;
+}
+
 /* Given a gnuplot boxplot file created by gretl, parse out the
    "numerical summary" information.  Note that this requires a
    strictly regimented plot file, so if you make any changes to the
@@ -1299,6 +1374,9 @@ int gnuplot_from_boxplot (const char *fname)
 int boxplot_numerical_summary (const char *fname, PRN *prn)
 {
     PLOTGROUP *grp = NULL;
+    int factorized = 0;
+    char yvar[VNAMELEN];
+    char xvar[VNAMELEN];
     char line[512];
     FILE *fp;
     int dlines = 0;
@@ -1310,12 +1388,18 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	return E_FOPEN;
     }
 
+    *yvar = *xvar = '\0';
+
     /* first pass: count the plots, using labels as heuristic */
 
     while (fgets(line, sizeof line, fp)) {
 	if (!strncmp(line, "1 ", 2)) {
 	    /* reached first data block */
 	    break;
+	} else if (!strncmp(line, "set ylabel ", 11)) {
+	    sscanf(line + 12, "%15[^\"]", yvar);
+	} else if (!strncmp(line, "set xlabel ", 11)) {
+	    sscanf(line + 12, "%15[^\"]", xvar);
 	} else if (!strncmp(line, "set label ", 10)) {
 	    if (!strncmp(line + 10, "\"(", 2)) {
 		; /* boolean specifier */
@@ -1325,6 +1409,20 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	    }
 	} else if (!strncmp(line, "'-'", 3)) {
 	    dlines++;
+	}
+    }
+
+    if (n == 0 && *yvar != '\0' && *xvar != '\0') {
+	/* try getting a count of plots via the first data block */
+	while (fgets(line, sizeof line, fp)) {
+	    sscanf(line, "%d", &n);
+	    if (*line == 'e') {
+		/* end of block */
+		break;
+	    }
+	}
+	if (n > 0) {
+	    factorized = 1;
 	}
     }
 
@@ -1353,7 +1451,9 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	gretl_push_c_numeric_locale();
 
 	while (fgets(line, sizeof line, fp) && !err) {
-	    if (!strncmp(line, "set label ", 10)) {
+	    if (factorized && !strncmp(line, "set xtics (", 11)) {
+		err = get_vals_from_tics(grp, line + 10);
+	    } else if (!factorized && !strncmp(line, "set label ", 10)) {
 		label = gretl_quoted_string_strdup(line + 10, NULL);
 		if (label == NULL) {
 		    err = E_DATA;
@@ -1379,6 +1479,11 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     }
 
     if (!err) {
+	if (factorized) {
+	    strcpy(grp->ylabel, yvar);
+	    strcpy(grp->xlabel, xvar);
+	    set_box_factor(grp);
+	}
 	six_numbers(grp, prn);
     }
 
