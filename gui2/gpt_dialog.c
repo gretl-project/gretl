@@ -365,6 +365,10 @@ static GtkWidget *line_color_button (GPT_SPEC *spec, int i)
     GtkWidget *image, *button;
     int j = 0, dotted = 0, shade = 0;
 
+    if (spec->lines[i].type == 0) {
+	return NULL;
+    }
+
     if (spec->lines[i].style == GP_STYLE_FILLEDCURVE) {
 	shade = 1;
     } else {
@@ -2764,20 +2768,21 @@ static void gpt_tab_lines (plot_editor *ed, GPT_SPEC *spec, int ins)
 	    gtk_widget_set_sensitive(ed->linewidth[i], FALSE);
 	}
 
+	ed->colorsel[i] = NULL;
+	color_label = NULL;
+
 	/* line color adjustment */
 	if (i < 6 && !frequency_plot_code(spec->code)) {
 	    ed->colorsel[i] = line_color_button(spec, i);
-	    if (ed->colorsel[i] != NULL) {
-		color_label = gtk_label_new(_("color"));
-		gtk_box_pack_start(GTK_BOX(hbox), color_label, FALSE, FALSE, 0);
-		gtk_widget_show(color_label);
-		gtk_box_pack_start(GTK_BOX(hbox), ed->colorsel[i], 
-				   FALSE, FALSE, 0);
-		gtk_widget_show_all(ed->colorsel[i]);
-	    }
-	} else {
-	    ed->colorsel[i] = NULL;
-	    color_label = NULL;
+	}
+
+	if (ed->colorsel[i] != NULL) {
+	    color_label = gtk_label_new(_("color"));
+	    gtk_box_pack_start(GTK_BOX(hbox), color_label, FALSE, FALSE, 0);
+	    gtk_widget_show(color_label);
+	    gtk_box_pack_start(GTK_BOX(hbox), ed->colorsel[i], 
+			       FALSE, FALSE, 0);
+	    gtk_widget_show_all(ed->colorsel[i]);
 	}
 
 	if (line->flags & GP_LINE_USER) {

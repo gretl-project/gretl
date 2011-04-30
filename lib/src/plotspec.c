@@ -63,6 +63,8 @@ GPT_SPEC *plotspec_new (void)
     *spec->xvarname = '\0';
     *spec->yvarname = '\0';
 
+    spec->xticstr = NULL;
+
     spec->xfmt[0] = 0;
     spec->xtics[0] = 0;
     spec->mxtics[0] = 0;
@@ -162,8 +164,12 @@ void plotspec_destroy (GPT_SPEC *spec)
 
     if (spec->fontstr != NULL) {
 	free(spec->fontstr);
-    }    
-
+    } 
+   
+    if (spec->xticstr != NULL) {
+	free(spec->xticstr);
+    } 
+  
     gretl_matrix_free(spec->b_ols);
     gretl_matrix_free(spec->b_quad);
     gretl_matrix_free(spec->b_cub);
@@ -1117,7 +1123,11 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	fputs("set noxtics\n", fp);
     } else {
 	if (!string_is_blank(spec->xtics)) {
+	    /* may contain "nomirror" */
 	    fprintf(fp, "set xtics %s\n", spec->xtics);
+	}
+	if (spec->xticstr != NULL) {
+	    fprintf(fp, "set xtics %s\n", spec->xticstr);
 	}
 	if (!string_is_blank(spec->mxtics)) {
 	    fprintf(fp, "set mxtics %s\n", spec->mxtics);

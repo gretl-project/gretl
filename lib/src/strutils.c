@@ -89,6 +89,7 @@ double dot_atof (const char *s)
 
 	atof_point = *lc->decimal_point;
     }
+
     if (atof_point == '.') {
 	x = atof(s);
     } else {

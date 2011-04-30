@@ -42,13 +42,20 @@ typedef struct {
     OUTLIERS *outliers;
 } BOXPLOT;
 
+enum {
+    BOX_SHOW_MEAN = 1 << 0,
+    BOX_INTERVALS = 1 << 1,
+    BOX_ALTWIDTH  = 1 << 2,
+    BOX_WHISKBARS = 1 << 3,
+    BOX_OUTLIERS  = 1 << 4,
+    BOX_XTICS     = 1 << 5
+};
+
 typedef struct {
+    int flags;
     int nplots;
     const int *list;
     char *title;
-    int show_mean;
-    int do_notches;
-    int show_outliers;
     int n_bools;
     char *numbers;
     BOXPLOT *plots;
@@ -57,6 +64,21 @@ typedef struct {
     gretl_matrix *dvals;
     char *xlabel;
 } PLOTGROUP;
+
+#define show_mean(g)    (g->flags & BOX_SHOW_MEAN)
+#define do_intervals(g) (g->flags & BOX_INTERVALS)
+#define alt_boxwidth(g) (g->flags & BOX_ALTWIDTH)
+#define whiskerbars(g)  (g->flags & BOX_WHISKBARS)
+#define do_outliers(g)  (g->flags & BOX_OUTLIERS)
+#define use_xtics(g)    (g->flags & BOX_XTICS)
+
+#define set_show_mean(g)    (g->flags |= BOX_SHOW_MEAN)
+#define set_do_intervals(g) (g->flags |= BOX_INTERVALS)
+#define set_alt_boxwidth(g) (g->flags |= BOX_ALTWIDTH)
+#define set_use_xtics(g)    (g->flags |= BOX_XTICS)
+
+#define unset_show_mean(g)    (g->flags &= ~BOX_SHOW_MEAN)
+#define unset_do_intervals(g) (g->flags &= ~BOX_INTERVALS)
 
 #define BPSTRLEN 128
 
@@ -218,7 +240,7 @@ static int read_data_block (PLOTGROUP *grp, char *line, size_t lsize,
 	    nf = sscanf(line, "%d %lf", &j, &plot->median);
 	} else if (*block == 2) {
 	    /* mean, or lower bound of c.i. */
-	    if (grp->do_notches) {
+	    if (do_intervals(grp)) {
 		nf = sscanf(line, "%d %lf", &j, &plot->conf[0]);
 	    } else {
 		nf = sscanf(line, "%d %lf", &j, &plot->mean);
@@ -407,9 +429,7 @@ static PLOTGROUP *plotgroup_new (const int *list,
 	for (i=0; i<grp->nplots; i++) {
 	    boxplot_init(&grp->plots[i]);
 	}
-	grp->show_mean = 0;
-	grp->do_notches = 0;
-	grp->show_outliers = 0;
+	grp->flags = 0;
 	grp->n_bools = 0;
 	grp->gmax = grp->gmin = 0.0;
     }
@@ -504,6 +524,12 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     six_numbers(grp, fp);
 #endif
 
+    if (opt & OPT_Z) {
+	/* debatable things: make these configurable? */
+	set_use_xtics(grp);
+	/* set_alt_boxwidth(grp); */
+    }
+
     if (grp->title != NULL) {
 	fprintf(fp, "set title \"%s\"\n", grp->title);
     }
@@ -512,6 +538,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
     fprintf(fp, "set xrange [0:%d]\n", n + 1);
     fprintf(fp, "set yrange [%g:%g]\n", ymin, ymax);
+
     if (opt & OPT_Z) {
 	fprintf(fp, "set ylabel \"%s\"\n", grp->plots[0].varname);
 	fprintf(fp, "set xlabel \"%s\"\n", grp->xlabel);
@@ -520,20 +547,34 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     if (n > 30) {
 	lwidth = 1;
     } else {
-	fputs("set ytics nomirror\n"
-	      "set noxtics\n"
-	      "set border 2\n", fp);
+	fputs("set ytics nomirror\n", fp);
 
-	fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3); 
+	if (use_xtics(grp)) {
+	    fputs("set border 3\n", fp);
+	    fputs("set xtics (", fp);
+	    for (i=0; i<n; i++) {
+		fprintf(fp, "\"%g\" %d", grp->dvals->val[i], i+1);
+		if (i < n - 1) {
+		   fputs(", ", fp);
+		} else {
+		   fputs(")\n", fp);
+		} 
+	    }
+	    fputs("set xtics nomirror\n", fp);
+	} else {
+	    fputs("set border 2\n", fp);
+	    fputs("set noxtics\n", fp);
+	    fprintf(fp, "set bmargin %d\n", (anybool)? 4 : 3);
+	}
 
-	if (opt & OPT_Z) {
+	if (!use_xtics(grp) && (opt & OPT_Z)) {
 	    for (i=0; i<n; i++) {
 		if (grp->plots[i].bool != NULL) {
 		    fprintf(fp, "set label \"%s\" at %d,%g center\n", 
 			    grp->plots[i].bool, i+1, lpos);
 		}
 	    }	    
-	} else {
+	} else if (!use_xtics(grp)) {
 	    for (i=0; i<n; i++) {
 		fprintf(fp, "set label \"%s\" at %d,%g center\n", 
 			grp->plots[i].varname, i+1, lpos);
@@ -546,7 +587,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	}
     }
 
-    if (opt & OPT_Z) {
+    if (alt_boxwidth(grp)) {
 	fputs("set boxwidth 0.5 relative\n", fp);
     } else {
 	fprintf(fp, "set boxwidth %g absolute\n", 1.0 / (n + 2));
@@ -555,21 +596,22 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     fputs("plot \\\n", fp);
     /* the quartiles and extrema */
     fprintf(fp, "'-' using 1:3:2:5:4 w candlesticks lt %d lw %d "
-	    "notitle whiskerbars 0.5, \\\n", qtype, lwidth);
+	    "notitle%s, \\\n", qtype, lwidth, (whiskerbars(grp))? 
+	    " whiskerbars 0.5" : "");
     /* the median */
     fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
 
-    if (grp->show_mean || grp->do_notches) {
+    if (show_mean(grp) || do_intervals(grp)) {
 	/* continue plot lines array */
 	fputs(", \\\n", fp);
     } else {
 	fputc('\n', fp);
     }
 
-    if (grp->show_mean) {
+    if (show_mean(grp)) {
 	/* plot the mean as point */
 	fputs("'-' using 1:2 w points pt 1 notitle\n", fp);
-    } else if (grp->do_notches) {
+    } else if (do_intervals(grp)) {
 	/* upper and lower bounds of median interval */
 	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle, \\\n", fp);
 	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle\n", fp);
@@ -589,14 +631,14 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     }
     fputs("e\n", fp);
 
-    if (grp->show_mean) {
+    if (show_mean(grp)) {
 	/* data for mean */
 	for (i=0; i<n; i++) {
 	    bp = &grp->plots[i];
 	    fprintf(fp, "%d %g\n", i+1, bp->mean);
 	}
 	fputs("e\n", fp);
-    } else if (grp->do_notches) {
+    } else if (do_intervals(grp)) {
 	/* data for lower median bound */
 	for (i=0; i<n; i++) {
 	    bp = &grp->plots[i];
@@ -693,10 +735,14 @@ static int real_boxplots (const int *list, char **bools,
 
     if (title != NULL) {
 	grp->title = gretl_strdup(title);
+    } else if (opt & OPT_Z) {
+	grp->title = gretl_strdup_printf(_("Distribution of %s by %s"),
+					 pdinfo->varname[list[1]],
+					 pdinfo->varname[list[2]]);
     }
 
     if (opt & OPT_O) {
-	grp->do_notches = 1;
+	set_do_intervals(grp);
     }
 
     np = grp->nplots;
@@ -743,10 +789,10 @@ static int real_boxplots (const int *list, char **bools,
 	    grp->gmax = plot->max;
 	}
 
-	if (grp->do_notches) {
+	if (do_intervals(grp)) {
 	    if (median_interval(grp->x, n, &plot->conf[0], &plot->conf[1])) {
 		plot->conf[0] = plot->conf[1] = NADBL;
-		grp->do_notches = 0;
+		unset_do_intervals(grp);
 	    }
 	} 
 
@@ -764,8 +810,8 @@ static int real_boxplots (const int *list, char **bools,
     }
 
     if (!err) {
-	if (!grp->do_notches) {
-	    grp->show_mean = 1;
+	if (!do_intervals(grp)) {
+	    set_show_mean(grp);
 	}
 	err = gnuplot_do_boxplot(grp, opt);
     }
@@ -1166,8 +1212,8 @@ int gnuplot_from_boxplot (const char *fname)
 
     grp->gmax = gmax;
     grp->gmin = gmin;
-    grp->show_mean = 1;
-    grp->do_notches = 1;
+    set_show_mean(grp);
+    set_do_intervals(grp);
 
     for (i=0; i<grp->nplots && !err; i++) {
 	plt = &grp->plots[i];
@@ -1205,10 +1251,10 @@ int gnuplot_from_boxplot (const char *fname)
 	    break;
 	}
 
-	if (!err && grp->do_notches) {
+	if (!err && do_intervals(grp)) {
 	    gotnotch = check_confidence_interval(plt);
 	    if (!gotnotch) {
-		grp->do_notches = 0;
+		unset_do_intervals(grp);
 	    }
 	}	    
 
@@ -1217,10 +1263,10 @@ int gnuplot_from_boxplot (const char *fname)
 	    err = plot_retrieve_outliers(plt, nout, fp);
 	} 
 
-	if (!err && grp->show_mean) {
+	if (!err && show_mean(grp)) {
 	    gotmean = maybe_get_plot_mean(plt, fp);
 	    if (!gotmean) {
-		grp->show_mean = 0;
+		unset_show_mean(grp);
 	    }
 	}
     }
@@ -1230,8 +1276,8 @@ int gnuplot_from_boxplot (const char *fname)
     fclose(fp);
 
     if (!err) {
-	if (grp->show_mean && grp->do_notches) {
-	    grp->show_mean = 0;
+	if (show_mean(grp) && do_intervals(grp)) {
+	    unset_show_mean(grp);
 	}
 	err = write_gnuplot_boxplot(grp, fname, OPT_NONE);
     } else if (err == E_DATA) {
@@ -1294,7 +1340,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     }
 
     if (!err && dlines == 4) {
-	grp->do_notches = 1;
+	set_do_intervals(grp);
     }
 
     if (!err) {

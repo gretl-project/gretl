@@ -1693,6 +1693,16 @@ static int parse_gp_unset_line (GPT_SPEC *spec, const char *s)
     return err;
 }
 
+static void read_xtics_setting (GPT_SPEC *spec, const char *val)
+{
+    if (*val == '(') {
+	/* set of specific xtic values */
+	spec->xticstr = gretl_strdup(val);
+    } else {
+	safecpy(spec->xtics, val, sizeof(spec->xtics) - 1);
+    }
+}
+
 static int parse_gp_set_line (GPT_SPEC *spec, const char *s, 
 			      linestyle *styles)
 {
@@ -1810,7 +1820,7 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *s,
     } else if (!strcmp(key, "key")) {
 	spec->keyspec = gp_keypos_from_name(val);
     } else if (!strcmp(key, "xtics")) { 
-	safecpy(spec->xtics, val, sizeof(spec->xtics) - 1);
+	read_xtics_setting(spec, val);
     } else if (!strcmp(key, "mxtics")) { 
 	safecpy(spec->mxtics, val, sizeof(spec->mxtics) - 1);
     } else if (!strcmp(key, "ytics")) { 
