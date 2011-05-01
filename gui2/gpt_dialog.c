@@ -805,7 +805,7 @@ static void plot_editor_sync (plot_editor *ed)
 static void set_graph_font_from_widgets (plot_editor *ed)
 {
     gchar *tmp = combo_box_get_active_text(ed->ttfcombo);
-    int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->ttfspin));
+    int ptsize = spinner_get_int(ed->ttfspin);
 
     if (tmp != NULL && *tmp != '\0') {
 	const char *fname = get_font_filename(tmp);
@@ -1015,8 +1015,7 @@ static void apply_gpt_changes (GtkWidget *w, plot_editor *ed)
 	    entry_to_gp_double(ed->linescale[i], &line->scale);
 	}
 	if (ed->linewidth[i] != NULL) {
-	    line->width = 
-		gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ed->linewidth[i]));
+	    line->width = spinner_get_int(ed->linewidth[i]);
 	}
 	if (ed->colorsel[i] != NULL) {
 	    apply_line_color(ed->colorsel[i], spec, i);

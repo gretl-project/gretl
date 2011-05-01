@@ -283,7 +283,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
     }
 
     if (!err && vset->changed[VSET_LINEWIDTH]) {
-	ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vset->line_spin));
+	ival = spinner_get_int(vset->line_spin);
 	var_set_linewidth(datainfo, v, ival);
     }
 
@@ -297,7 +297,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	    record_varlabel_change(v);
 	}
 	if (vset->changed[VSET_IDNUM]) {
-	    ival = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(vset->id_spin));
+	    ival = spinner_get_int(vset->id_spin);
 	    dataset_renumber_variable(v, ival, Z, datainfo);
 	    populate_varlist();
 	    vset->varnum = ival;

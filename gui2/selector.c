@@ -254,8 +254,6 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
 
-#define spinner_get_int(b) (gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(b)))
-
 static void vbox_add_vwedge (GtkWidget *vbox)
 {
     GtkWidget *h = gtk_hbox_new(FALSE, 0);
@@ -1528,12 +1526,12 @@ static int arima_selected (selector *sr)
 
     if (sr->extra[2] != NULL) {
 	/* the arima_d spinner */
-	ret = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[2]));
+	ret = spinner_get_int(sr->extra[2]);
     }
 
     if (!ret && sr->extra[6] != NULL) {
 	/* the seasonal arima_D spinner */
-	ret = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[6]));
+	ret = spinner_get_int(sr->extra[6]);
     } 
 
     return ret;
@@ -2430,7 +2428,7 @@ discrete_lags_string (const char *vname, const int *laglist,
 
 int selector_get_VAR_order (const selector *sr)
 {
-    return gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[0]));
+    return spinner_get_int(sr->extra[0]);
 }
 
 /* for use in constructing command list, possibly with
@@ -2992,7 +2990,7 @@ static void vec_get_spinner_data (selector *sr, int *order,
     char numstr[8];
 
     /* lag order from global spinner */
-    lmax = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[0]));
+    lmax = spinner_get_int(sr->extra[0]);
     sprintf(numstr, "%d", lmax);
     add_to_cmdlist(sr, numstr);
     *order = lmax;
@@ -3007,7 +3005,7 @@ static void vec_get_spinner_data (selector *sr, int *order,
 
     if (sr->ci == VECM) {
 	/* cointegration rank */
-	jrank = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(sr->extra[1]));
+	jrank = spinner_get_int(sr->extra[1]);
 	sprintf(numstr, " %d", jrank);
 	add_to_cmdlist(sr, numstr);
     }

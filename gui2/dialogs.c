@@ -1782,7 +1782,6 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     }
 
     /* spinner for u1 */
-
     lbl = gtk_label_new(_("Start:"));
     rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(rset->dinfo.t1, 0, 
 						      rset->dinfo.n - 1, 
@@ -1825,6 +1824,206 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
 
     return hbox;
 }
+
+#if 0 /* not ready yet */
+
+typedef struct panel_setting_ {
+    int u1, u2;
+    int t1, t2;
+    int Nmax, Tmax;
+    GtkWidget *spin[4];
+    GtkWidget *dlg;
+    GtkWidget *obslabel;
+} panel_setting;
+
+static panel_setting *pset_new (void)
+{
+    panel_setting *pset;
+
+    pset = mymalloc(sizeof *pset);
+    if (pset == NULL) return NULL;
+
+    pset->dlg = gretl_dialog_new(_("gretl: set sample"), NULL, 
+				 GRETL_DLG_BLOCK);
+    pset->obslabel = NULL;
+
+    return pset;
+}
+
+static void free_pset (GtkWidget *w, panel_setting *pset)
+{
+    free(pset);
+}
+
+static void set_panel_sample (GtkWidget *w, panel_setting *pset)
+{
+    int orig_u1 = 1 + datainfo->t1 / datainfo->pd;
+    int orig_u2 = (datainfo->t2 + 1) / datainfo->pd;
+    int T = pset->t2 - pset->t1 + 1;
+
+    fprintf(stderr, "set panel sample\n");
+    fprintf(stderr, "orig_u1 = %d, orig_u2 = %d\n", orig_u1, orig_u2);
+    fprintf(stderr, "u1 = %d, u2 = %d, t1 = %d, t2 = %d\n",
+	    pset->u1, pset->u2, pset->t1, pset->t2);
+
+    if (T < datainfo->pd) {
+	fprintf(stderr, "Need to shrink (restrict) by time\n");
+    }
+
+    if (pset->u1 != orig_u1 || pset->u2 != orig_u2) {
+	fprintf(stderr, "Need to smpl by unit\n");
+    }	
+}
+
+static void panel_sample_callback (GtkSpinButton *b,
+				   panel_setting *pset)
+{
+    int N, T, k = gtk_spin_button_get_value_as_int(b);
+    GtkWidget *w = GTK_WIDGET(b);
+    gchar *msg;
+
+    if (w == pset->spin[0]) {
+	if (k > pset->u2) {
+	    if (pset->u2 < pset->Nmax) {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[1]), 
+					  pset->u2 + 1);
+	    } else {
+		gtk_spin_button_set_value(b, --k);
+	    }
+	} 
+	pset->u1 = k;
+    } else if (w == pset->spin[1]) {
+	if (k < pset->u1) {
+	    if (pset->u1 > 1) {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[0]), 
+					  pset->u1 - 1);
+	    } else {
+		gtk_spin_button_set_value(b, ++k);
+	    }
+	}
+	pset->u2 = k;
+    } else if (w == pset->spin[2]) {
+	if (k > pset->t2) {
+	    if (pset->t2 < pset->Tmax) {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[3]),
+					  pset->t2 + 1);
+	    } else {
+		gtk_spin_button_set_value(b, --k);
+	    }
+	}
+	pset->t1 = k;
+    } else if (w == pset->spin[3]) {
+	if (k < pset->t1) {
+	    if (pset->t1 > 1) {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(pset->spin[2]), 
+					  pset->t1 - 1);
+	    } else {
+		gtk_spin_button_set_value(b, ++k);
+	    }
+	}
+	pset->t2 = k;
+    }
+
+    N = pset->u2 - pset->u1 + 1;
+    T = pset->t2 - pset->t1 + 1;
+
+    msg = g_strdup_printf("N=%d, T=%d, NT=%d", N, T, N*T);
+    gtk_label_set_text(GTK_LABEL(pset->obslabel), msg);
+    g_free(msg);
+}
+
+static void panel_new_spinbox (panel_setting *pset)
+{
+    GtkWidget *lbl, *vbox;
+    GtkWidget *tbl, *spin;
+    GtkWidget *hbox;
+    gchar *msg;
+    int i, k, N, T;
+
+    pset->u1 = 1 + datainfo->t1 / datainfo->pd;
+    pset->u2 = (datainfo->t2 + 1) / datainfo->pd;
+    pset->t1 = 1;
+    pset->t2 = datainfo->pd;
+    pset->Nmax = datainfo->n / datainfo->pd;
+    pset->Tmax = datainfo->pd;
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(pset->dlg));
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    tbl = gtk_table_new(2, 4, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+
+    k = 0;
+
+    /* group/unit spinners */
+    for (i=0; i<2; i++) {
+	int spinmax = (i==0)? pset->Nmax : pset->Tmax;
+	int s1 = (i==0)? pset->u1 : pset->t1;
+	int s2 = (i==0)? pset->u2 : pset->t2;
+
+	lbl = gtk_label_new((i==0)? _("Groups") : _("Periods"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, i, i+1);
+	spin = gtk_spin_button_new_with_range(1, spinmax, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s1);
+	pset->spin[k++] = spin;
+	gtk_table_attach_defaults(GTK_TABLE(tbl), spin, 
+				  1, 2, i, i+1);
+	lbl = gtk_label_new(_("to"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 
+				  2, 3, i, i+1);
+	spin = gtk_spin_button_new_with_range(1, spinmax, 1);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), s2);
+	pset->spin[k++] = spin;
+	gtk_table_attach_defaults(GTK_TABLE(tbl), spin, 
+				  3, 4, i, i+1);
+    }
+
+    for (i=0; i<4; i++) {
+	gtk_entry_set_activates_default(GTK_ENTRY(pset->spin[i]), TRUE);
+	g_signal_connect(G_OBJECT(pset->spin[i]), "value-changed",
+			 G_CALLBACK(panel_sample_callback), pset);
+    }
+
+    N = pset->u2 - pset->u1 + 1;
+    T = pset->t2 - pset->t1 + 1;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    msg = g_strdup_printf("N=%d, T=%d, NT=%d", N, T, N*T);
+    pset->obslabel = lbl = gtk_label_new(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), lbl, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
+    g_free(msg);
+}
+
+static void panel_sample_dialog (void)
+{
+    panel_setting *pset;
+    GtkWidget *w, *hbox;
+
+    pset = pset_new();
+    if (pset == NULL) {
+	return;
+    }
+
+    panel_new_spinbox(pset);
+
+    hbox = gtk_dialog_get_action_area(GTK_DIALOG(pset->dlg));
+    cancel_delete_button(hbox, pset->dlg, NULL);
+    w = ok_button(hbox);
+    g_signal_connect(G_OBJECT(w), "clicked",
+		     G_CALLBACK(set_panel_sample), pset);
+    gtk_widget_grab_default(w);
+    g_signal_connect(G_OBJECT(pset->dlg), "destroy", 
+		     G_CALLBACK(free_pset), pset);
+
+    gretl_dialog_keep_above(pset->dlg);
+    gtk_widget_show_all(pset->dlg);
+}
+
+#endif /* not ready */
 
 typedef enum {
     SPIN_LABEL_NONE,
@@ -1972,9 +2171,14 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 {
     struct range_setting *rset = NULL;
     GtkWidget *w, *vbox, *hbox;
-    int u;
+    int u = sample_range_code(action);
 
-    u = sample_range_code(action);
+#if 0 /* not ready */
+    if (dataset_is_panel(datainfo) && u == SMPL) {
+	panel_sample_dialog();
+	return;
+    }
+#endif
 
     rset = rset_new(u, p, NULL, NULL, NULL, _("gretl: set sample"));
     if (rset == NULL) return;
@@ -2046,8 +2250,8 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 
 static void panel_units_finalize (GtkButton *b, struct range_setting *rset)
 {
-    *rset->t1 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin1));
-    *rset->t2 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin2));
+    *rset->t1 = spinner_get_int(rset->spin1);
+    *rset->t2 = spinner_get_int(rset->spin2);
 
     gtk_widget_destroy(rset->dlg);
 }
@@ -2062,8 +2266,8 @@ static void sensitize_panel_options (GtkSpinButton *spin,
     int i, j, t1, t2, N;
     int fixit = 0;
 
-    t1 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin1));
-    t2 = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->spin2));
+    t1 = spinner_get_int(rset->spin1);
+    t2 = spinner_get_int(rset->spin2);
     N = t2 - t1 + 1;
 
     for (i=0; i<ng; i++) {
@@ -2924,7 +3128,7 @@ struct add_obs_info {
 
 static gboolean set_add_obs (GtkWidget *w, struct add_obs_info *ainfo)
 {
-    ainfo->val = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ainfo->spin));
+    ainfo->val = spinner_get_int(ainfo->spin);
     gtk_widget_destroy(ainfo->dlg);
 
     return TRUE;
@@ -3758,7 +3962,7 @@ int density_dialog (int vnum, double *bw)
 
 static void option_spin_set (GtkWidget *w, int *ivar)
 {
-    *ivar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(w));
+    *ivar = spinner_get_int(w);
 }
 
 static GtkWidget *dialog_blurb_box (const char *text)
