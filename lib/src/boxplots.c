@@ -24,13 +24,6 @@
 #include "libset.h"
 
 typedef struct {
-    int n;
-    double *vals;
-    double rmax;
-    double rmin;
-} OUTLIERS;
-
-typedef struct {
     double mean;
     double median;
     double conf[2];
@@ -39,7 +32,7 @@ typedef struct {
     int n;
     char varname[VNAMELEN];
     char *bool;
-    OUTLIERS *outliers;
+    gretl_matrix *outliers;
 } BOXPLOT;
 
 enum {
@@ -61,6 +54,7 @@ typedef struct {
     char *numbers;
     BOXPLOT *plots;
     double gmin, gmax;
+    double limit;
     double *x;
     gretl_matrix *dvals;
     char xlabel[VNAMELEN];
@@ -93,15 +87,43 @@ const char *get_last_boxplots_string (void)
     return boxplots_string;
 }
 
-static void quartiles (double *x, const int n, BOXPLOT *box)
+static void quartiles_etc (double *x, int n, BOXPLOT *plt,
+			   double limit)
 {
     double p[3] = {0.25, 0.5, 0.75};
 
     gretl_array_quantiles(x, n, p, 3);
 
-    box->lq = p[0];
-    box->median = p[1];
-    box->uq = p[2];
+    plt->lq = p[0];
+    plt->median = p[1];
+    plt->uq = p[2];
+
+    if (limit > 0) {
+	double d = limit * (plt->uq - plt->lq);
+	double xlo = plt->lq - d;
+	double xhi = plt->uq + d;
+	int i, nout = 0;
+
+	for (i=0; i<n; i++) {
+	    if (x[i] < xlo || x[i] > xhi) {
+		nout++;
+	    }
+	}
+
+	if (nout > 0) {
+	    plt->outliers = gretl_vector_alloc(nout);
+	}
+
+	if (plt->outliers != NULL) {
+	    int j = 0;
+
+	    for (i=0; i<n; i++) {
+		if (x[i] < xlo || x[i] > xhi) {
+		    gretl_vector_set(plt->outliers, j++, x[i]);
+		}
+	    }
+	}	
+    }
 }
 
 static void six_numbers (BOXPLOT *plt, int do_mean, PRN *prn)
@@ -355,7 +377,7 @@ static void plotgroup_destroy (PLOTGROUP *grp)
     }
 
     for (i=0; i<grp->nplots; i++) { 
-	free(grp->plots[i].outliers);
+	gretl_matrix_free(grp->plots[i].outliers);
 	free(grp->plots[i].bool);
     }
 
@@ -400,6 +422,7 @@ static int plotgroup_factor_setup (PLOTGROUP *grp,
 static PLOTGROUP *plotgroup_new (const int *list, 
 				 const double **Z,
 				 const DATAINFO *pdinfo,
+				 double limit,
 				 gretlopt opt)
 {
     PLOTGROUP *grp;
@@ -417,6 +440,12 @@ static PLOTGROUP *plotgroup_new (const int *list,
     grp->dvals = NULL;
     grp->title = NULL;
     grp->numbers = NULL;
+
+    if (na(limit)) {
+	grp->limit = 1.5;
+    } else {
+	grp->limit = limit;
+    }
 
     *grp->xlabel = '\0';
     *grp->ylabel = '\0';
@@ -471,6 +500,19 @@ static PLOTGROUP *plotgroup_new (const int *list,
     return grp;
 }
 
+static int test_for_outliers (PLOTGROUP *grp)
+{
+    int i;
+
+    for (i=0; i<grp->nplots; i++) {
+	if (grp->plots[i].outliers != NULL) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int test_for_bool (PLOTGROUP *grp)
 {
     int i;
@@ -511,7 +553,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     int n = grp->nplots;
     double lpos, h, gyrange;
     double ymin, ymax;
-    int anybool = test_for_bool(grp);
+    int anybool, any_outliers;
     int lwidth = 2;
     int fmt = 0;
     int qtype = 2;
@@ -542,7 +584,8 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	return err;
     }
 
-    /* FIXME outliers */
+    anybool = test_for_bool(grp);
+    any_outliers = test_for_outliers(grp);
 
     gyrange = grp->gmax - grp->gmin;
     h = gyrange / 20;
@@ -553,7 +596,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	if (n > 1 && n <= 30) {
 	    set_use_xtics(grp);
 	}
-	/* set_alt_boxwidth(grp); */
+	set_alt_boxwidth(grp);
     } 
 
     if (grp->title != NULL) {
@@ -610,7 +653,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     }
 
     if (alt_boxwidth(grp)) {
-	fputs("set boxwidth 0.5 relative\n", fp);
+	fputs("set boxwidth 0.3 relative\n", fp);
     } else {
 	fprintf(fp, "set boxwidth %g absolute\n", 1.0 / (n + 2));
     }
@@ -623,7 +666,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     /* the median */
     fputs("'-' using 1:2:2:2:2 w candlesticks lt -1 notitle", fp);
 
-    if (show_mean(grp) || do_intervals(grp)) {
+    if (show_mean(grp) || do_intervals(grp) || any_outliers) {
 	/* continue plot lines array */
 	fputs(", \\\n", fp);
     } else {
@@ -632,17 +675,34 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
     if (show_mean(grp)) {
 	/* plot the mean as point */
-	fputs("'-' using 1:2 w points pt 1 notitle\n", fp);
+	fputs("'-' using 1:2 w points pt 1 notitle", fp);
     } else if (do_intervals(grp)) {
 	/* upper and lower bounds of median interval */
 	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle, \\\n", fp);
-	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle\n", fp);
+	fputs("'-' using 1:2:2:2:2 w candlesticks lt 0 notitle", fp);
     }
 
-    /* data for quartiles and extrema */
+    if (any_outliers) {
+	fputs(", \\\n", fp);
+	/* FIXME point type */
+	fprintf(fp, "'-' using 1:2 w points lt 0 pt 7 ps 0.25 notitle\n");
+    } else {
+	fputc('\n', fp);
+    }
+
+    /* data for quartiles and whiskers */
     for (i=0; i<n; i++) {
+	double ymin, ymax;
+
 	bp = &grp->plots[i];
-	fprintf(fp, "%d %g %g %g %g\n", i+1, bp->min, bp->lq, bp->uq, bp->max);
+	if (bp->outliers != NULL) {
+	    ymin = bp->lq - 1.5 * (bp->uq - bp->lq);
+	    ymax = bp->uq + 1.5 * (bp->uq - bp->lq);
+	} else {
+	    ymin = bp->min;
+	    ymax = bp->max;
+	}
+	fprintf(fp, "%d %g %g %g %g\n", i+1, ymin, bp->lq, bp->uq, ymax);
     }
     fputs("e\n", fp);
 
@@ -673,6 +733,22 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 	    fprintf(fp, "%d %g\n", i+1, bp->conf[1]);
 	}
 	fputs("e\n", fp);
+    }
+
+    if (any_outliers) {
+	int j, nout;
+
+	for (i=0; i<n; i++) {
+	    bp = &grp->plots[i];
+	    if (bp->outliers != NULL) {
+		nout = gretl_vector_get_length(bp->outliers);
+		for (j=0; j<nout; j++) {
+		    fprintf(fp, "%d %.10g\n", i+1, 
+			    gretl_vector_get(bp->outliers, j));
+		}
+	    }
+	}
+	fputs("e\n", fp);    
     }
 
     gretl_pop_c_numeric_locale();
@@ -739,8 +815,17 @@ static int real_boxplots (const int *list, char **bools,
 			  gretlopt opt)
 {
     PLOTGROUP *grp;
+    double lim = NADBL;
     int i, k, np;
     int err = 0;
+
+    if (opt & OPT_L) {
+	/* we should have an explicit outlier limit */
+	lim = get_optval_double(BXPLOT, OPT_L);
+	if (na(lim) || lim < 0) {
+	    return E_BADOPT;
+	} 
+    }
 
     if (opt & OPT_Z) {
 	err = factorized_boxplot_check(list, bools, Z, pdinfo);
@@ -749,7 +834,7 @@ static int real_boxplots (const int *list, char **bools,
 	} 
     } 
 
-    grp = plotgroup_new(list, Z, pdinfo, opt);
+    grp = plotgroup_new(list, Z, pdinfo, lim, opt);
     if (grp == NULL) {
 	return E_ALLOC;
     }
@@ -796,7 +881,8 @@ static int real_boxplots (const int *list, char **bools,
 	qsort(grp->x, n, sizeof *grp->x, gretl_compare_doubles);
 	plot->min = grp->x[0];
 	plot->max = grp->x[n-1];
-	quartiles(grp->x, n, plot);
+	quartiles_etc(grp->x, n, plot, grp->limit);
+	
 	plot->n = n;
 
 	if (k == 0 || plot->min < grp->gmin) {
@@ -1099,33 +1185,25 @@ static int check_confidence_interval (BOXPLOT *plt)
 static int plot_retrieve_outliers (BOXPLOT *plt, int n, FILE *fp)
 {
     char line[80];
+    double x;
     int i;
 
-    plt->outliers = malloc(sizeof *plt->outliers);
+    plt->outliers = gretl_vector_alloc(n);
     if (plt->outliers == NULL) {
 	return E_ALLOC;
     }
 
-    plt->outliers->vals = malloc(n * sizeof *plt->outliers->vals);
-    if (plt->outliers->vals == NULL) {
-	return E_ALLOC;
-    }
-
-    plt->outliers->n = n;
-
     if (fgets(line, sizeof line, fp) == NULL) {
-	return E_DATA;
-    }
-
-    if (sscanf(line, "%*d rmax rmin = %lf %lf", &plt->outliers->rmax, 
-	       &plt->outliers->rmin) != 2) {
+	/* old rmax, rmin line */
 	return E_DATA;
     }
 
     for (i=0; i<n; i++) {
 	if (fgets(line, sizeof line, fp) == NULL ||
-	    sscanf(line, "%*d vals %lf", &plt->outliers->vals[i]) != 1) {
+	    sscanf(line, "%*d vals %lf", &x) != 1) {
 	    return E_DATA;
+	} else {
+	    gretl_vector_set(plt->outliers, i, x);
 	}
     }
 
@@ -1212,7 +1290,7 @@ int gnuplot_from_boxplot (const char *fname)
     if (!err) {
 	int list[2] = {nplots, 0};
 
-	grp = plotgroup_new(list, NULL, NULL, OPT_NONE);
+	grp = plotgroup_new(list, NULL, NULL, NADBL, OPT_NONE);
 	if (grp == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1406,7 +1484,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     } else {
 	int list[2] = {n, 0};
 
-	grp = plotgroup_new(list, NULL, NULL, OPT_NONE);
+	grp = plotgroup_new(list, NULL, NULL, NADBL, OPT_NONE);
 	if (grp == NULL) {
 	    err = E_ALLOC;
 	}

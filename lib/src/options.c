@@ -115,6 +115,7 @@ struct gretl_option gretl_opts[] = {
     { BIPROBIT, OPT_V, "verbose", 0 },
     { BIPROBIT, OPT_X, "save-xbeta", 0 },
     { BXPLOT,   OPT_O, "notches", 0 },
+    { BXPLOT,   OPT_L, "outliers", 2 },
     { BXPLOT,   OPT_P, "panel", 0 },
     { BXPLOT,   OPT_U, "output", 2 },
     { BXPLOT,   OPT_Z, "factorized", 0 },
