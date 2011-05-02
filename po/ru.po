@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-28 12:39-0400\n"
-"PO-Revision-Date: 2011-02-16 23:19+0200\n"
+"PO-Revision-Date: 2011-05-02 13:44+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,40 +31,32 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:291
 msgid "lagged differences"
 msgstr "лаг для разностей"
 
 #: lib/src/adf_kpss.c:306
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Тест Дики-Фуллера (DF-тест) для %s\n"
+msgstr "Тест Дики-Фуллера (GLS) для %s\n"
 
 #: lib/src/adf_kpss.c:308
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Тест Дики-Фуллера (DF-тест) для %s\n"
+msgstr "Тест Дики-Фуллера для %s\n"
 
 #: lib/src/adf_kpss.c:312
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Расширенный тест Дики-Фуллера (ADF-тест) для %s\n"
+msgstr "Расширенный тест Дики-Фуллера (GLS) для %s\n"
 
 #: lib/src/adf_kpss.c:314
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Расширенный тест Дики-Фуллера (ADF-тест) для %s\n"
+msgstr "Расширенный тест Дики-Фуллера для %s\n"
 
 #: lib/src/adf_kpss.c:317 plugin/panurc.c:577
 #, c-format
@@ -79,7 +71,7 @@ msgstr "включая %d лага(-ов) для (1-L)%s"
 #: lib/src/adf_kpss.c:323
 #, c-format
 msgid "(max was %d)"
-msgstr ""
+msgstr "(максимальное значение равно %d)"
 
 #: lib/src/adf_kpss.c:364 gui2/library.c:967 gui2/selector.c:5299
 #: plugin/panurc.c:233
@@ -2329,7 +2321,7 @@ msgstr "%s = 1 если %d-й период, 0 в противном случае
 
 #: lib/src/genfuncs.c:2190 lib/src/gretl_errors.c:80 lib/src/nls.c:3037
 msgid "No dataset is in place"
-msgstr ""
+msgstr "Нет подходящего набора данных"
 
 #: lib/src/genfuncs.c:2198 lib/src/gretl_errors.c:47
 msgid "This command won't work with the current periodicity"
@@ -2604,9 +2596,9 @@ msgid "%s versus %s (with quadratic fit)"
 msgstr "%s от %s (с подбором квадратичной зависимости)"
 
 #: lib/src/graphing.c:1507 gui2/gpt_dialog.c:556
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with cubic fit)"
-msgstr "%s от %s (с подбором квадратичной зависимости)"
+msgstr "%s от %s (с подбором кубической зависимости) "
 
 #: lib/src/graphing.c:1513
 #, c-format
@@ -2682,9 +2674,9 @@ msgid "Relative frequency"
 msgstr "Относительная частота"
 
 #: lib/src/graphing.c:3970
-#, fuzzy, c-format
+#, c-format
 msgid "observations sorted by %s"
-msgstr "Не осталось не одного наблюдения!"
+msgstr "Наблюдения отсортированы по %s"
 
 #: lib/src/graphing.c:3991 lib/src/graphing.c:4223
 #, c-format
@@ -2696,9 +2688,9 @@ msgid "forecast"
 msgstr "Прогноз"
 
 #: lib/src/graphing.c:4221
-#, fuzzy, c-format
+#, c-format
 msgid "%g%% interval for mean"
-msgstr "%g%% доверительный интервал"
+msgstr "%g%%-ый интервал для среднего"
 
 #: lib/src/graphing.c:4326
 #, c-format
@@ -2753,9 +2745,9 @@ msgid "%g and %g quantiles"
 msgstr "Квантили %g и %g"
 
 #: lib/src/graphing.c:5006
-#, fuzzy, c-format
+#, c-format
 msgid "forecast variance decomposition for %s"
-msgstr "Прогноз для разложения дисперсии"
+msgstr ""
 
 #: lib/src/graphing.c:5203
 msgid "VAR residuals"
@@ -4137,9 +4129,9 @@ msgid "This command requires one variable.\n"
 msgstr "Эта команда требует одной переменной.\n"
 
 #: lib/src/interact.c:4823
-#, fuzzy, c-format
+#, c-format
 msgid "data frequency = %d\n"
-msgstr "установить частоту данных = %d\n"
+msgstr "Частота данных = %d\n"
 
 #: lib/src/interact.c:4853
 msgid "store: no filename given\n"
@@ -4291,14 +4283,12 @@ msgid "Point observations"
 msgstr "Точечные наблюдения"
 
 #: lib/src/modelprint.c:202
-#, fuzzy
 msgid "Left-censored observations"
-msgstr "Цензурированных наблюдений"
+msgstr "Цензурированные слева наблюдения"
 
 #: lib/src/modelprint.c:203
-#, fuzzy
 msgid "Right-censored observations"
-msgstr "Неограниченные справа наблюдения"
+msgstr "Цензурированные справа наблюдения"
 
 #: lib/src/modelprint.c:235 lib/src/modelprint.c:248 lib/src/modelprint.c:274
 #: lib/src/modelprint.c:2860
@@ -4846,9 +4836,8 @@ msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Стандартные ошибки Боллерслева-Вулдриджа (Bollerslev-Wooldridge)"
 
 #: lib/src/modelprint.c:1342
-#, fuzzy
 msgid "Warning: could not compute standard errors"
-msgstr "Не удалось рассчитать стандартные ошибки Бека-Каца (Beck-Katz)"
+msgstr "ВНИМАНИЕ: Не удалось рассчитать стандартные ошибки"
 
 #: lib/src/modelprint.c:1366
 #, c-format
@@ -7473,7 +7462,7 @@ msgstr "Название"
 
 #: gui2/calculator.c:2013
 msgid "CDF instead of density"
-msgstr ""
+msgstr "Интегральное распределение вместо плотности"
 
 #: gui2/calculator.c:2191
 #, c-format
@@ -8710,7 +8699,7 @@ msgstr "Простая коробчатая диаграмма"
 
 #: gui2/dialogs.c:2113 gui2/dialogs.c:2125
 msgid "panel plot"
-msgstr ""
+msgstr "Панельный график"
 
 #: gui2/dialogs.c:2228
 msgid "Enter boolean condition for selecting cases:"
@@ -8749,19 +8738,16 @@ msgid "shaded area"
 msgstr "Затемненная область"
 
 #: gui2/dialogs.c:2604
-#, fuzzy
 msgid "Show interval for"
-msgstr "%g%% доверительный интервал"
+msgstr "Показать интервал для"
 
 #: gui2/dialogs.c:2607
-#, fuzzy
 msgid "actual Y"
-msgstr "Наблюдаемые"
+msgstr "Наблюдаемые Y"
 
 #: gui2/dialogs.c:2608
-#, fuzzy
 msgid "mean Y"
-msgstr "Среднее"
+msgstr "Среднее Y"
 
 #: gui2/dialogs.c:2644
 msgid "Produce forecast for"
@@ -9047,7 +9033,7 @@ msgstr ""
 
 #: gui2/dialogs.c:4947
 msgid "show scalars window"
-msgstr ""
+msgstr "Показать скалярные величины"
 
 #: gui2/dialogs.c:4948
 msgid "show icons window"
@@ -9288,7 +9274,7 @@ msgstr "среднее всего ряда"
 
 #: gui2/filters.c:479
 msgid "quadratic"
-msgstr ""
+msgstr "квадратичный"
 
 #: gui2/filters.c:480
 msgid "cosine-bell"
@@ -9502,19 +9488,16 @@ msgid ""
 msgstr ""
 
 #: gui2/fncall.c:2306
-#, fuzzy
 msgid "GARCH variants"
-msgstr "все варианты"
+msgstr "GARCH варианты"
 
 #: gui2/fncall.c:2307
-#, fuzzy
 msgid "Panel IV model"
-msgstr "Панельная модель"
+msgstr "Панельная модель IV"
 
 #: gui2/fncall.c:2358
-#, fuzzy
 msgid "Confidence band plot"
-msgstr "Доверительный интервал"
+msgstr "График доверительного интервала"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -9552,7 +9535,7 @@ msgstr "Панельные данные"
 
 #: gui2/fnsave.c:815
 msgid "No dataset needed"
-msgstr ""
+msgstr "Набор данных не требуется"
 
 #: gui2/fnsave.c:820
 msgid "Data requirement"
@@ -9663,9 +9646,8 @@ msgstr ""
 "Хотите создать новую функцию?"
 
 #: gui2/gpt_control.c:291
-#, fuzzy
 msgid " Click to set position"
-msgstr " Щелкните для указания положения метки"
+msgstr "Щелкните для указания положения метки"
 
 #: gui2/gpt_control.c:1205
 msgid "Gnuplot error creating graph"
@@ -9814,9 +9796,8 @@ msgid "quadratic: y = a + b*x + c*x^2"
 msgstr "квадратичная: y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:130
-#, fuzzy
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
-msgstr "квадратичная: y = a + b*x + c*x^2"
+msgstr "кубическая: y = a + b*x + c*x^2 + d*x^3"
 
 #: gui2/gpt_dialog.c:131
 msgid "inverse: y = a + b*(1/x)"
@@ -9835,7 +9816,6 @@ msgid "Select color"
 msgstr "Выбрать цвет"
 
 #: gui2/gpt_dialog.c:667 gui2/gpt_dialog.c:706
-#, fuzzy
 msgid "Invalid position, must be X Y"
 msgstr "Неверное положение метки, должны быть координаты X Y"
 
@@ -10004,25 +9984,23 @@ msgstr "Добавить..."
 
 #: gui2/gpt_dialog.c:3009
 msgid "Arrows"
-msgstr ""
+msgstr "Стрелки"
 
 #: gui2/gpt_dialog.c:3040
 msgid "from (X Y)"
-msgstr ""
+msgstr "От (X Y)"
 
 #: gui2/gpt_dialog.c:3042
-#, fuzzy
 msgid "to (X Y)"
-msgstr "Положение (X Y)"
+msgstr "До (X Y)"
 
 #: gui2/gpt_dialog.c:3077
 msgid "arrow has head"
-msgstr ""
+msgstr "Стрелки с маркерами"
 
 #: gui2/gpt_dialog.c:3086
-#, fuzzy
 msgid "line is dotted"
-msgstr "Толщина линии"
+msgstr "Штриховая линия"
 
 #: gui2/gpt_dialog.c:3124
 msgid "X-axis"
@@ -10134,7 +10112,7 @@ msgstr "Список графиков пуст"
 
 #: gui2/graph_page.c:620
 msgid "graph page options"
-msgstr ""
+msgstr "Опции для графиков"
 
 #: gui2/gretl.c:107
 msgid ""
@@ -10780,7 +10758,7 @@ msgstr "График _временного ряда"
 
 #: gui2/gretl.c:1528
 msgid "_Panel plot..."
-msgstr ""
+msgstr "_Панельный график..."
 
 #: gui2/gretl.c:1529
 msgid "_Unit root tests"
@@ -11092,7 +11070,7 @@ msgstr "Главное окно"
 
 #: gui2/gretl.c:1987
 msgid "sample status"
-msgstr ""
+msgstr "Статус выборки"
 
 #: gui2/gretlwin32.c:83 gui2/gretlwin32.c:89
 msgid "Couldn't find usable socket driver\n"
@@ -11361,7 +11339,7 @@ msgstr "_Изменить модель..."
 
 #: gui2/gui_utils.c:201
 msgid "_Restore model sample"
-msgstr ""
+msgstr "_Восстановить выборку для модели"
 
 #: gui2/gui_utils.c:203 gui2/gui_utils.c:332
 msgid "_Tests"
@@ -11655,7 +11633,7 @@ msgstr "консоль gretl"
 
 #: gui2/gui_utils.c:2345 gui2/gui_utils.c:2358
 msgid "Outcome probabilities"
-msgstr ""
+msgstr "Выходные вероятности"
 
 #: gui2/gui_utils.c:2426
 msgid "_Fitted values"
@@ -12807,7 +12785,7 @@ msgstr "График временного ряда"
 
 #: gui2/menustate.c:344 gui2/menustate.c:434
 msgid "Panel plot..."
-msgstr ""
+msgstr "Панельный график..."
 
 #: gui2/menustate.c:346 gui2/menustate.c:435
 msgid "Frequency distribution"
@@ -12942,7 +12920,7 @@ msgstr ""
 
 #: gui2/model_table.c:419
 msgid "GLS"
-msgstr ""
+msgstr "GLS"
 
 #: gui2/model_table.c:421
 msgid "Between"
@@ -12950,15 +12928,15 @@ msgstr "Межгрупповая"
 
 #: gui2/model_table.c:425
 msgid "HILU"
-msgstr ""
+msgstr "HILU"
 
 #: gui2/model_table.c:427
 msgid "PWE"
-msgstr ""
+msgstr "PWE"
 
 #: gui2/model_table.c:429
 msgid "CORC"
-msgstr ""
+msgstr "CORC"
 
 #: gui2/model_table.c:756
 msgid "Adj. R{\\super 2}"
@@ -13257,11 +13235,11 @@ msgstr "Ось X"
 
 #: gui2/selector.c:3493
 msgid "NegBin 2"
-msgstr ""
+msgstr "Отрицательное биномиальное (2)"
 
 #: gui2/selector.c:3494
 msgid "NegBin 1"
-msgstr ""
+msgstr "Отрицательное биномиальное (1)"
 
 #: gui2/selector.c:3500 gui2/selector.c:3554
 msgid "Distribution:"
@@ -13360,14 +13338,12 @@ msgid "lags..."
 msgstr "Лаги..."
 
 #: gui2/selector.c:4081
-#, fuzzy
 msgid "left bound"
 msgstr "нижняя граница"
 
 #: gui2/selector.c:4082
-#, fuzzy
 msgid "right bound"
-msgstr "Справа вверху"
+msgstr "верхняя граница"
 
 #: gui2/selector.c:4361
 msgid "GARCH p:"
@@ -14051,7 +14027,7 @@ msgstr "Разрешить команды shell"
 
 #: gui2/settings.c:160
 msgid "Show icon view automatically"
-msgstr ""
+msgstr "Показывать иконки автоматически"
 
 #: gui2/settings.c:162
 msgid "Prompt to save session"
@@ -14857,134 +14833,113 @@ msgstr "Название переменной:"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
-msgstr ""
+msgstr "gig"
 
 #: plugin/addons-i18n.c:5
-#, fuzzy
 msgid "APARCH"
-msgstr "ARCH"
+msgstr "APARCH"
 
 #: plugin/addons-i18n.c:7
-#, fuzzy
 msgid "Covariance estimator"
-msgstr "Ковариационная матрица"
+msgstr "Оценка ковариации"
 
 #: plugin/addons-i18n.c:9
-#, fuzzy
 msgid "Dependent Variable"
 msgstr "Зависимая переменная"
 
 #: plugin/addons-i18n.c:10
-#, fuzzy
 msgid "Distribution"
-msgstr "Распределения:"
+msgstr "Распределение"
 
 #: plugin/addons-i18n.c:11
-#, fuzzy
 msgid "EGARCH"
-msgstr "GARCH"
+msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:13
 msgid "GED"
-msgstr ""
+msgstr "GED"
 
 #: plugin/addons-i18n.c:14
 msgid "GJR"
-msgstr ""
+msgstr "GJR"
 
 #: plugin/addons-i18n.c:15
-#, fuzzy
 msgid "Hessian"
-msgstr " (использован Гессиан)"
+msgstr "Гессиан"
 
 #: plugin/addons-i18n.c:16
-#, fuzzy
 msgid "Mean regressors"
-msgstr "Регрессоры"
+msgstr "Среднее регрессоров"
 
 #: plugin/addons-i18n.c:17
-#, fuzzy
 msgid "Model type"
-msgstr "Модели"
+msgstr "Тип модели"
 
 #: plugin/addons-i18n.c:18
-#, fuzzy
 msgid "NARCH"
-msgstr "ARCH"
+msgstr "NARCH"
 
 #: plugin/addons-i18n.c:19
-#, fuzzy
 msgid "Normal"
 msgstr "Нормальное"
 
 #: plugin/addons-i18n.c:20
 msgid "OPG"
-msgstr ""
+msgstr "OPG"
 
 #: plugin/addons-i18n.c:21
-#, fuzzy
 msgid "Plot type"
-msgstr "Тип"
+msgstr "Тип графика"
 
 #: plugin/addons-i18n.c:22
-#, fuzzy
 msgid "Sandwich"
-msgstr "Ширина окна:"
+msgstr ""
 
 #: plugin/addons-i18n.c:23
 msgid "Skewed GED"
-msgstr ""
+msgstr "Скошенный GED"
 
 #: plugin/addons-i18n.c:24
-#, fuzzy
 msgid "Skewed t"
-msgstr "Асимметрия"
+msgstr "Скошенное t"
 
 #: plugin/addons-i18n.c:25
-#, fuzzy
 msgid "TARCH"
-msgstr "ARCH"
+msgstr "TARCH"
 
 #: plugin/addons-i18n.c:26
 msgid "Taylor/Schwert GARCH"
 msgstr ""
 
 #: plugin/addons-i18n.c:28
-#, fuzzy
 msgid "Variance regressors"
-msgstr "Первое уравнение регрессии"
+msgstr "Регрессоры для дисперсии"
 
 #: plugin/addons-i18n.c:29
-#, fuzzy
 msgid "Verbosity"
-msgstr "_Подробные"
+msgstr "Подробно"
 
 #: plugin/addons-i18n.c:30
-#, fuzzy
 msgid "t"
-msgstr "-"
+msgstr "t"
 
 #: plugin/addons-i18n.c:34
-#, fuzzy
 msgid "Between model"
-msgstr "_Межгрупповая модель..."
+msgstr "Межгрупповая модель"
 
 #: plugin/addons-i18n.c:36
 msgid "G2SLS"
-msgstr ""
+msgstr "G2SLS"
 
 #: plugin/addons-i18n.c:37
-#, fuzzy
 msgid "dependent variable"
 msgstr "Зависимая переменная"
 
 #: plugin/addons-i18n.c:38
-#, fuzzy
 msgid "instruments"
 msgstr "Инструменты"
 
 #: plugin/addons-i18n.c:39
-#, fuzzy
 msgid "regressors"
 msgstr "Регрессоры"
 
@@ -15125,7 +15080,7 @@ msgstr "log(размер выборки)"
 
 #: plugin/fractals.c:43 plugin/fractals.c:123
 msgid "log(RS)"
-msgstr ""
+msgstr "log(RS)"
 
 #: plugin/fractals.c:120
 msgid "Size"
@@ -15133,7 +15088,7 @@ msgstr "Размер"
 
 #: plugin/fractals.c:121
 msgid "RS(avg)"
-msgstr ""
+msgstr "RS(avg)"
 
 #: plugin/fractals.c:122
 msgid "log(Size)"
@@ -15308,12 +15263,12 @@ msgstr ""
 
 #: plugin/johansen.c:1594
 msgid "pval(T)"
-msgstr ""
+msgstr "pval(T)"
 
 #: plugin/johansen.c:1619
-#, fuzzy, c-format
+#, c-format
 msgid "Corrected for sample size (df = %d)"
-msgstr "Обеспечить одинаковый размер выборки"
+msgstr "Скорректировано по размеру выборки (df = %d)"
 
 #: plugin/johansen.c:1637
 msgid ""
@@ -15646,11 +15601,11 @@ msgstr "Этот файл не является файлом Stata"
 
 #: plugin/stats_tables.c:241 plugin/stats_tables.c:250
 msgid "lower tail"
-msgstr ""
+msgstr "Нижний \"хвост\""
 
 #: plugin/stats_tables.c:245 plugin/stats_tables.c:253
 msgid "upper tail"
-msgstr ""
+msgstr "Верхний \"хвост\""
 
 #: plugin/tramo_options.c:342
 msgid "Time-series model plus seasonal adjustment"
@@ -15873,7 +15828,7 @@ msgstr "Создание и ввод/вывод"
 
 #: doc/commands/matfuncs.c:51
 msgid "Shape/size/arrangement"
-msgstr ""
+msgstr "Форма/размер/положение"
 
 #: doc/commands/matfuncs.c:52
 msgid "Element by element"
