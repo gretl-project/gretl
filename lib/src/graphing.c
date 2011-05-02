@@ -337,10 +337,10 @@ static int factor_check (gnuplot_info *gi, const double **Z,
 	gretl_errmsg_set(_("You must supply three variables, the last of "
 			   "which is discrete"));
     } else {
-	const double *d = Z[gi->list[3]];
+	const double *d = Z[gi->list[3]] + gi->t1;
 	int T = gi->t2 - gi->t1 + 1;
 
-	gi->dvals = gretl_matrix_values(d + gi->t1, T, &err);
+	gi->dvals = gretl_matrix_values(d, T, &err);
     }
 
     return err;
@@ -1870,26 +1870,33 @@ static void check_y_tics (gnuplot_info *gi, const double **Z,
 /* Find the minimum and maximum x-axis values and construct the gnuplot
    x-range.  We have to be a bit careful here to include only values
    that will actually display on the plot, i.e. x-values that are
-   accompanied by at least one non-missing y-axis value.  We also have
-   to avoid creating an "empty x range" that will choke gnuplot.
+   accompanied by at least one non-missing y-axis value.  
+
+   In the case of a "factorized" plot the factor variable must also
+   be non-missing in order to include a given data point.
+
+   We also have to avoid creating an "empty x range" that will choke 
+   gnuplot.
 */
 
 static void 
 print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 {
-    int vx, k, dk = -1;
-    const double *x;
+    const double *x, *d = NULL;
+    int k, l0 = list[0];
 
     if (gi->flags & GPT_DUMMY) {
-	dk = list[0];
-	k = dk - 1;
+	/* the factor variable comes last and the x variable 
+	   is in second-last place */
+	d = Z[list[l0]];
+	k = l0 - 1;
     } else {
-	k = list[0];
+	/* the x variable comes last in the list */
+	k = l0;
     }
 
-    vx = list[k];
-    x = Z[vx];
-    
+    x = Z[list[k]];
+
     if (gretl_isdummy(gi->t1, gi->t2, x)) {
 	fputs("set xrange [-1:2]\n", gi->fp);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gi->fp);
@@ -1901,7 +1908,7 @@ print_x_range_from_list (gnuplot_info *gi, const double **Z, const int *list)
 
 	for (t=gi->t1; t<=gi->t2; t++) {
 	    obs_ok = 0;
-	    if (!na(x[t]) && (dk < 0 || !na(Z[dk][t]))) {
+	    if (!na(x[t]) && (d == NULL || !na(d[t]))) {
 		for (i=1; i<k; i++) {
 		    vy = list[i];
 		    if (!na(Z[vy][t])) {
