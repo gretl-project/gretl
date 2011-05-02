@@ -696,8 +696,8 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
 	bp = &grp->plots[i];
 	if (bp->outliers != NULL) {
-	    ymin = bp->lq - 1.5 * (bp->uq - bp->lq);
-	    ymax = bp->uq + 1.5 * (bp->uq - bp->lq);
+	    ymin = bp->lq - grp->limit * (bp->uq - bp->lq);
+	    ymax = bp->uq + grp->limit * (bp->uq - bp->lq);
 	} else {
 	    ymin = bp->min;
 	    ymax = bp->max;
