@@ -23,7 +23,7 @@
 int boxplots (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	      gretlopt opt);
 
-int boolean_boxplots (const char *str, double ***pZ, 
+int boolean_boxplots (const char *line, double ***pZ, 
 		      DATAINFO *pdinfo, gretlopt opt);
 
 int gnuplot_from_boxplot (const char *fname);

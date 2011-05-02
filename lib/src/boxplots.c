@@ -26,9 +26,10 @@
 typedef struct {
     double mean;
     double median;
-    double conf[2];
-    double uq, lq;
-    double max, min;
+    double conf[2];    /* bounds of confidence interval */
+    double uq, lq;     /* upper and lower quartiles */
+    double max, min;   /* data max and min */
+    double wmax, wmin; /* whisker max and min */
     int n;
     char varname[VNAMELEN];
     char *bool;
@@ -49,7 +50,6 @@ typedef struct {
     const int *list;
     char *title;
     int n_bools;
-    char *numbers;
     BOXPLOT *plots;
     double gmin, gmax;
     double limit;
@@ -87,6 +87,9 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 {
     double p[3] = {0.25, 0.5, 0.75};
 
+    plt->wmin = plt->min = x[0];
+    plt->wmax = plt->max = x[n-1];
+
     gretl_array_quantiles(x, n, p, 3);
 
     plt->lq = p[0];
@@ -97,11 +100,20 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	double d = limit * (plt->uq - plt->lq);
 	double xlo = plt->lq - d;
 	double xhi = plt->uq + d;
-	int i, nout = 0;
+	int i, j, nout = 0;
 
 	for (i=0; i<n; i++) {
-	    if (x[i] < xlo || x[i] > xhi) {
+	    if (x[i] < xlo) {
 		nout++;
+	    } else if (x[i] > xhi) {
+		nout++;
+		if (i > 0 && x[i-1] <= xhi) {
+		    /* the top of the upper whisker */
+		    plt->wmax = x[i-1];
+		}
+	    } else if (i > 0 && x[i-1] < xlo) {
+		/* the bottom of the lower whisker */
+		plt->wmin = x[i-1];
 	    }
 	}
 
@@ -110,8 +122,7 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 	}
 
 	if (plt->outliers != NULL) {
-	    int j = 0;
-
+	    j = 0;
 	    for (i=0; i<n; i++) {
 		if (x[i] < xlo || x[i] > xhi) {
 		    gretl_vector_set(plt->outliers, j++, x[i]);
@@ -254,86 +265,6 @@ static int boxplot_print_stats (PLOTGROUP *grp, PRN *prn)
     return 0;
 }
 
-static int read_plot_outliers (PLOTGROUP *grp, char *line,
-			       size_t lsize, FILE *fp)
-{
-    BOXPLOT *plot;
-    double x;
-    int i, k, n;
-    int err = 0;
-
-    if (sscanf(line + 9, "%d", &n) != 1) {
-	return E_DATA;
-    }
-
-    for (i=0; i<n && !err; i++) {
-	if (fgets(line, lsize, fp) == NULL) {
-	    err = E_DATA;
-	} else if (sscanf(line, "%d %lf", &k, &x) != 2) {
-	    err = E_DATA;
-	} else if (k < 1 || k > grp->nplots) {
-	    err = E_DATA;
-	} else {
-	    plot = &grp->plots[k-1];
-	    if (x < plot->min) {
-		plot->min = x;
-	    } else if (x > plot->max) {
-		plot->max = x;
-	    }
-	}
-    }
-
-    return err;
-}
-
-/* read data out of a boxplots file in order to reconstruct
-   numerical summary */
-
-static int read_plot_data_block (PLOTGROUP *grp, char *line, 
-				 size_t lsize, int *block, 
-				 FILE *fp)
-{
-    BOXPLOT *plot;
-    int i, j, nf, targ;
-    int err = 0;
-
-    for (i=0; i<grp->nplots && !err; i++) {
-	plot = &grp->plots[i];
-	targ = 2; /* the number of values we should read */
-	nf = 0;   /* the number of values actually read */
-	if (*block == 0) {
-	    /* min, Q1, Q3, max */
-	    targ = 5;
-	    nf = sscanf(line, "%d %lf %lf %lf %lf", 
-			&j, &plot->min, &plot->lq, &plot->uq, &plot->max);
-	} else if (*block == 1) {
-	    /* median */
-	    nf = sscanf(line, "%d %lf", &j, &plot->median);
-	} else if (*block == 2) {
-	    /* mean, or lower bound of c.i. */
-	    if (do_intervals(grp)) {
-		nf = sscanf(line, "%d %lf", &j, &plot->conf[0]);
-	    } else {
-		nf = sscanf(line, "%d %lf", &j, &plot->mean);
-	    }
-	} else if (*block == 3) {
-	    /* upper bound of c.i. */
-	    nf = sscanf(line, "%d %lf", &j, &plot->conf[1]);
-	}
-	if (nf != targ || j != i + 1) {
-	    /* data read screwed up */
-	    err = E_DATA;
-	} else if (fgets(line, lsize, fp) == NULL) {
-	    /* can't get data line for next plot */
-	    err = E_DATA;
-	}
-    }
-
-    *block += 1;
-
-    return err;
-}
-
 #define ITERS 560
 #define CONFIDENCE 0.90
 
@@ -412,7 +343,6 @@ static void plotgroup_destroy (PLOTGROUP *grp)
     free(grp->title);
     free(grp->x);
     free(grp->plots);
-    free(grp->numbers);
     gretl_matrix_free(grp->dvals);
 
     free(grp);
@@ -425,6 +355,7 @@ static void boxplot_init (BOXPLOT *bp)
     bp->conf[0] = bp->conf[1] = NADBL;
     bp->uq = bp->lq = NADBL;
     bp->max = bp->min = NADBL;
+    bp->wmax = bp->wmin = NADBL;
     bp->n = 0;
     bp->varname[0] = '\0';
     bp->bool = NULL;
@@ -467,7 +398,6 @@ static PLOTGROUP *plotgroup_new (const int *list,
     grp->x = NULL;
     grp->dvals = NULL;
     grp->title = NULL;
-    grp->numbers = NULL;
 
     if (na(limit)) {
 	grp->limit = 1.5;
@@ -718,17 +648,10 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
     /* data for quartiles and whiskers */
     for (i=0; i<n; i++) {
-	double ymin, ymax;
-
 	bp = &grp->plots[i];
-	if (bp->outliers != NULL) {
-	    ymin = bp->lq - grp->limit * (bp->uq - bp->lq);
-	    ymax = bp->uq + grp->limit * (bp->uq - bp->lq);
-	} else {
-	    ymin = bp->min;
-	    ymax = bp->max;
-	}
-	fprintf(fp, "%d %g %g %g %g\n", i+1, ymin, bp->lq, bp->uq, ymax);
+	if (na(bp->wmin)) bp->wmin = bp->min;
+	if (na(bp->wmax)) bp->wmax = bp->max;
+	fprintf(fp, "%d %g %g %g %g\n", i+1, bp->wmin, bp->lq, bp->uq, bp->wmax);
     }
     fputs("e\n", fp);
 
@@ -796,9 +719,9 @@ static int gnuplot_do_boxplot (PLOTGROUP *grp, gretlopt opt)
     return err;
 }
 
-int transcribe_array_factorized (PLOTGROUP *grp, int i,
-				 const double **Z, 
-				 const DATAINFO *pdinfo) 
+static int transcribe_array_factorized (PLOTGROUP *grp, int i,
+					const double **Z, 
+					const DATAINFO *pdinfo) 
 {
     const double *y = Z[grp->list[1]];
     const double *d = Z[grp->list[2]];
@@ -835,6 +758,9 @@ static int factorized_boxplot_check (const int *list,
 
     return err;
 }
+
+/* build the boxplot group data structure, then pass it to 
+   gnuplot_do_boxplot to write the command file */
 
 static int real_boxplots (const int *list, char **bools, 
 			  const double **Z, 
@@ -909,8 +835,6 @@ static int real_boxplots (const int *list, char **bools,
 	plot = &grp->plots[k]; /* note: k rather than i */
 	plot->mean = gretl_mean(0, n - 1, grp->x);
 	qsort(grp->x, n, sizeof *grp->x, gretl_compare_doubles);
-	plot->min = grp->x[0];
-	plot->max = grp->x[n-1];
 	quartiles_etc(grp->x, n, plot, grp->limit);
 	
 	plot->n = n;
@@ -1005,6 +929,21 @@ static int panel_group_boxplots (int vnum, const double **Z,
     return err;
 }
 
+/*
+ * boxplots:
+ * @list: list of variables to plot.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @opt: may include OPT_P for a plot by panel group (in which
+ * case @list should have just one member), or OPT_Z for a
+ * "factorized" plot (@list should have exactly three members),
+ * and/or OPT_L to set the limit for outliers.
+ *
+ * Constructs a boxplot command file for use with gnuplot.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
 int boxplots (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	      gretlopt opt)
 {
@@ -1072,7 +1011,7 @@ static char *boxplots_fix_parentheses (const char *line, int *err)
     return s;
 }
 
-int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo, 
+int boolean_boxplots (const char *line, double ***pZ, DATAINFO *pdinfo, 
 		      gretlopt opt)
 {
     int i, k, v, nvars, nbool;
@@ -1083,13 +1022,13 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     int *list = NULL;
     int err = 0;
 
-    if (!strncmp(str, "boxplots ", 9)) {
-	str += 9;
-    } else if (!strncmp(str, "boxplot ", 8)) {
-	str += 8;
+    if (!strncmp(line, "boxplots ", 9)) {
+	line += 9;
+    } else if (!strncmp(line, "boxplot ", 8)) {
+	line += 8;
     }
 
-    s = boxplots_fix_parentheses(str, &err);
+    s = boxplots_fix_parentheses(line, &err);
 
     if (!err) {
 	nvars = special_varcount(s);
@@ -1212,6 +1151,8 @@ static int check_confidence_interval (BOXPLOT *plt)
     return !na(plt->conf[0]) && !na(plt->conf[1]);
 }
 
+/* get outlier data from old-style gretl boxplot file */
+
 static int plot_retrieve_outliers (BOXPLOT *plt, int n, FILE *fp)
 {
     char line[80];
@@ -1306,7 +1247,7 @@ int gnuplot_from_boxplot (const char *fname)
 	return E_FOPEN;
     }
 
-    for (i=0; i<6 && fgets(line, 79, fp) && !err; i++) {
+    for (i=0; i<6 && fgets(line, sizeof line, fp) && !err; i++) {
 	if (i == 1 && sscanf(line, "nplots = %d", &nplots) != 1) {
 	    err = E_DATA;
 	} else if (i == 2 && sscanf(line, "numbers = %7s", numstr) != 1) {
@@ -1330,10 +1271,6 @@ int gnuplot_from_boxplot (const char *fname)
 	goto bailout;
     }
 
-    if (strcmp(numstr, "NULL")) {
-	grp->numbers = gretl_strdup(numstr);
-    }
-
     grp->gmax = gmax;
     grp->gmin = gmin;
     set_show_mean(grp);
@@ -1343,7 +1280,7 @@ int gnuplot_from_boxplot (const char *fname)
 	plt = &grp->plots[i];
 	nout = 0;
 
-	for (j=0; j<7 && fgets(line, 79, fp) && !err; j++) {
+	for (j=0; j<7 && fgets(line, sizeof line, fp) && !err; j++) {
 	    if (j == 0 && 
 		sscanf(line, "%*d median = %lf", &plt->median) != 1) {
 		err = E_DATA;
@@ -1413,7 +1350,8 @@ int gnuplot_from_boxplot (const char *fname)
     return err;
 }
 
-/* e.g. ("0" 1, "1" 2, "4", 3) */
+/* parse "factor" values out of the xtics line in a gretl
+   boxplot file, e.g. ("0" 1, "1" 2, "4", 3) */
 
 static int get_vals_from_tics (PLOTGROUP *grp, const char *s)
 {
@@ -1443,6 +1381,89 @@ static int get_vals_from_tics (PLOTGROUP *grp, const char *s)
 	gretl_matrix_free(grp->dvals);
 	grp->dvals = NULL;
     }
+
+    return err;
+}
+
+/* read outliers data out of a boxplots file and revise the
+   min and max values for the individual plots */
+
+static int read_plot_outliers (PLOTGROUP *grp, char *line,
+			       size_t lsize, FILE *fp)
+{
+    BOXPLOT *plot;
+    double x;
+    int i, k, n;
+    int err = 0;
+
+    if (sscanf(line + 9, "%d", &n) != 1) {
+	return E_DATA;
+    }
+
+    for (i=0; i<n && !err; i++) {
+	if (fgets(line, lsize, fp) == NULL) {
+	    err = E_DATA;
+	} else if (sscanf(line, "%d %lf", &k, &x) != 2) {
+	    err = E_DATA;
+	} else if (k < 1 || k > grp->nplots) {
+	    err = E_DATA;
+	} else {
+	    plot = &grp->plots[k-1];
+	    if (x < plot->min) {
+		plot->min = x;
+	    } else if (x > plot->max) {
+		plot->max = x;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/* read data out of a boxplots file in order to reconstruct
+   numerical summary */
+
+static int read_plot_data_block (PLOTGROUP *grp, char *line, 
+				 size_t lsize, int *block, 
+				 FILE *fp)
+{
+    BOXPLOT *plot;
+    int i, j, nf, targ;
+    int err = 0;
+
+    for (i=0; i<grp->nplots && !err; i++) {
+	plot = &grp->plots[i];
+	targ = 2; /* the number of values we should read */
+	nf = 0;   /* the number of values actually read */
+	if (*block == 0) {
+	    /* min, Q1, Q3, max */
+	    targ = 5;
+	    nf = sscanf(line, "%d %lf %lf %lf %lf", 
+			&j, &plot->min, &plot->lq, &plot->uq, &plot->max);
+	} else if (*block == 1) {
+	    /* median */
+	    nf = sscanf(line, "%d %lf", &j, &plot->median);
+	} else if (*block == 2) {
+	    /* mean, or lower bound of c.i. */
+	    if (do_intervals(grp)) {
+		nf = sscanf(line, "%d %lf", &j, &plot->conf[0]);
+	    } else {
+		nf = sscanf(line, "%d %lf", &j, &plot->mean);
+	    }
+	} else if (*block == 3) {
+	    /* upper bound of c.i. */
+	    nf = sscanf(line, "%d %lf", &j, &plot->conf[1]);
+	}
+	if (nf != targ || j != i + 1) {
+	    /* data read screwed up */
+	    err = E_DATA;
+	} else if (fgets(line, lsize, fp) == NULL) {
+	    /* can't get data line for next plot */
+	    err = E_DATA;
+	}
+    }
+
+    *block += 1;
 
     return err;
 }
