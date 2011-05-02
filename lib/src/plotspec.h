@@ -74,7 +74,8 @@ typedef struct plotbars_ plotbars;
 
 typedef enum {
     GP_LINE_USER    = 1 << 0,
-    GP_LINE_BOXDATA = 1 << 1
+    GP_LINE_BOXDATA = 1 << 1,
+    GP_LINE_AUXDATA = 1 << 2
 } gp_line_flags;
 
 /* information about a line within a gnuplot graph */
@@ -85,6 +86,7 @@ typedef struct {
     char title[MAXTITLE];          /* key or legend title */
     char formula[GP_MAXFORMULA];   /* expression to plot (rather than data) */
     double scale;                  /* scale factor for data */
+    double pscale;                 /* scale factor for points */
     char rgb[8];                   /* rgb color specification */
     char yaxis;                    /* 1 for left, 2 for right */
     int type;                      /* 1, 2, ... (style) */
@@ -168,6 +170,7 @@ struct GPT_SPEC_ {
     void *ptr;                 /* for GUI use */
     plotbars *bars;            /* for GUI use */
     char *fontstr;             /* for GUI use */
+    gretl_matrix *auxdata;     /* for GUI use */
 };
 
 GPT_SPEC *plotspec_new (void);
@@ -201,6 +204,8 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp);
 int plotspec_add_fit (GPT_SPEC *spec, FitType f);
 
 void print_auto_fit_string (FitType fit, FILE *fp);
+
+int gp_line_data_columns (GPT_SPEC *spec, int i);
 
 const char *gp_line_style_display_name (int t);
 

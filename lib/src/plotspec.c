@@ -91,6 +91,7 @@ GPT_SPEC *plotspec_new (void)
     spec->fit = PLOT_FIT_NONE;
     spec->fp = NULL;
     spec->data = NULL;
+    spec->auxdata = NULL;
     spec->markers = NULL;
     spec->n_markers = 0;
     spec->labeled = NULL;
@@ -141,6 +142,10 @@ void plotspec_destroy (GPT_SPEC *spec)
     if (spec->data != NULL) {
 	free(spec->data);
     }
+
+    if (spec->auxdata != NULL) {
+	gretl_matrix_free(spec->auxdata);
+    }    
 
     if (spec->reglist != NULL) {
 	free(spec->reglist);
@@ -371,6 +376,7 @@ int plotspec_add_line (GPT_SPEC *spec)
     lines[n].varnum = 0;
     lines[n].style = 0;
     lines[n].scale = 1.0;
+    lines[n].pscale = 1.0;
     lines[n].title[0] = '\0';
     lines[n].formula[0] = '\0';
     lines[n].rgb[0] = '\0';
@@ -390,6 +396,7 @@ static void copy_line_content (GPT_LINE *targ, GPT_LINE *src)
     targ->varnum = src->varnum;
     targ->style = src->style;
     targ->scale = src->scale;
+    targ->pscale = src->pscale;
     strcpy(targ->title, src->title);
     strcpy(targ->formula, src->formula);
     strcpy(targ->rgb, src->rgb);
@@ -1023,9 +1030,18 @@ static int print_point_type (GPT_LINE *line)
                      s->fit == PLOT_FIT_INVERSE || \
                      s->fit == PLOT_FIT_LOESS)
 
+int gp_line_data_columns (GPT_SPEC *spec, int i)
+{
+    if (spec->lines[i].flags & GP_LINE_AUXDATA) {
+	return 0;
+    } else {
+	return spec->lines[i].ncols;
+    }
+}
+
 int plotspec_print (GPT_SPEC *spec, FILE *fp)
 {
-    int i, k, t;
+    int i, j, k, t;
     int png = get_png_output(spec);
     int mono = (spec->flags & GPT_MONO);
     int started_data_lines = 0;
@@ -1300,6 +1316,9 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 
 	if (print_point_type(line)) {
 	    fprintf(fp, " pt %d", line->ptype);
+	    if (!na(line->pscale) && line->pscale != 1.0) {
+		fprintf(fp, " ps %g", line->pscale);
+	    }
 	}
 
 	if (line->width != 1) {
@@ -1326,10 +1345,10 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
     }
 
     for (i=0; i<spec->n_lines; i++) { 
-	int j, ncols = spec->lines[i].ncols;
+	int ncols = gp_line_data_columns(spec, i);
 
 	if (ncols == 0) {
-	    /* no data to print */
+	    /* no (regular) data to print */
 	    continue;
 	}
 
@@ -1400,6 +1419,21 @@ int plotspec_print (GPT_SPEC *spec, FILE *fp)
 	x[1] += (ncols - 1) * spec->nobs;
     }
 
+    if (spec->auxdata != NULL) {
+	int rows = gretl_matrix_rows(spec->auxdata);
+	int cols = gretl_matrix_cols(spec->auxdata);
+
+	fprintf(fp, "# auxdata %d %d\n", rows, cols);
+	
+	for (i=0; i<rows; i++) {
+	    for (j=0; j<cols; j++) {
+		fprintf(fp, "%.10g ", gretl_matrix_get(spec->auxdata, i, j));
+	    }
+	    fputc('\n', fp);
+	}
+	fputs("e\n", fp);
+    }
+
     gretl_pop_c_numeric_locale();
 
     if (png && gnuplot_has_bbox()) {
@@ -1431,6 +1465,7 @@ static int set_loess_fit (GPT_SPEC *spec, int d, double q, gretl_matrix *x,
 
     sprintf(spec->lines[1].title, _("loess fit, d = %d, q = %g"), d, q);
     spec->lines[1].scale = 1.0;
+    spec->lines[1].pscale = NADBL;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 2;
 
@@ -1548,6 +1583,7 @@ static void plotspec_set_fitted_line (GPT_SPEC *spec, FitType f, double x0)
 
     spec->fit = f;
     spec->lines[1].scale = NADBL;
+    spec->lines[1].pscale = NADBL;
     spec->lines[1].style = GP_STYLE_LINES;
     spec->lines[1].ncols = 0;
 }
