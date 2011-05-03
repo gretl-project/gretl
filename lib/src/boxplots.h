@@ -26,8 +26,6 @@ int boxplots (const int *list, const double **Z, const DATAINFO *pdinfo,
 int boolean_boxplots (const char *line, double ***pZ, 
 		      DATAINFO *pdinfo, gretlopt opt);
 
-int gnuplot_from_boxplot (const char *fname);
-
 int boxplot_numerical_summary (const char *fname, PRN *prn);
 
 const char *get_last_boxplots_string (void);

@@ -27,12 +27,7 @@ static int check_graph_file (const char *fname, int type)
 	    fgets(line, sizeof line, fp);
 	    fclose(fp);
 	    if (!strncmp(line, "# boxplot generated", 19)) {
-		err = gnuplot_from_boxplot(fullname);
-		if (err) {
-		    fprintf(stderr, "Failed to convert old boxplot file\n");
-		} else {
-		    fprintf(stderr, "Converted old boxplot file OK\n");
-		}
+		fprintf(stderr, "Ignoring old boxplot file\n");
 	    }
 	} else {
 	    fclose(fp);
