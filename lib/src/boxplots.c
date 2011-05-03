@@ -128,7 +128,13 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 		    gretl_vector_set(plt->outliers, j++, x[i]);
 		}
 	    }
-	}	
+	}
+
+	for (i=0; i<n; i++) {
+	    fprintf(stderr, "x[%d] = %g\n", i, x[i]);
+	}
+	fprintf(stderr, "xlo = %g, xhi = %g\n", xlo, xhi);
+	fprintf(stderr, "wmin = %g, wmax = %g\n", plt->wmin, plt->wmax);
     }
 }
 
@@ -1480,6 +1486,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     PLOTGROUP *grp = NULL;
     int factorized = 0;
     int plotlines = 0;
+    int got_title = 0;
     char yvar[VNAMELEN];
     char xvar[VNAMELEN];
     char line[512];
@@ -1504,6 +1511,8 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	    sscanf(line + 12, "%15[^\"]", yvar);
 	} else if (!strncmp(line, "set xlabel ", 11)) {
 	    sscanf(line + 12, "%15[^\"]", xvar);
+	} else if (!strncmp(line, "set title ", 10)) {
+	    got_title = 1;
 	} else if (!strncmp(line, "set label ", 10)) {
 	    if (!strncmp(line + 10, "\"(", 2)) {
 		; /* boolean specifier */
@@ -1528,6 +1537,8 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	if (n > 0) {
 	    factorized = 1;
 	}
+    } else if (n == 0 && got_title) {
+	n = 1;
     }
 
     if (n == 0) {
