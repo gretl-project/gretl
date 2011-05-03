@@ -54,7 +54,7 @@ have_x12a="yes"
 have_audio="no"
 try_sourceview="yes"
 have_sourceview="no"
-bundled_sourceview="yes"
+bundled_sourceview="no"
 fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
@@ -597,6 +597,13 @@ if test "$gtk_version" = "2.0" && test "$have_gtkprint" = "no" ; then
 fi
 
 dnl
+dnl Option for GTK 2 build: force use of bundled sourceview
+dnl
+if test "$gtk_version" = "2.0" && test "$try_sourceview" = "no" ; then
+   bundled_sourceview="yes" 
+fi
+
+dnl
 dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
 if test "$gtk_version" = "2.0" && test "$try_sourceview" = "yes" ; then
@@ -613,12 +620,6 @@ if test "$gtk_version" = "2.0" && test "$try_sourceview" = "yes" ; then
        )
     fi      
 fi
-dnl fallback: test regex availability for bundled gtksourceview
-if test "$bundled_sourceview" = "yes" ; then
-     AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
-     have_gnu_regex="yes",
-     have_gnu_regex="no")
-fi
 
 dnl
 dnl Check for installed gtksourceview (GTK 3 variant)
@@ -629,6 +630,13 @@ if test "$gtk_version" = "3.0" ; then
       have_sourceview="3.0",
       echo "version 3.0 not found"
     )
+fi
+
+dnl fallback: test regex availability for bundled gtksourceview
+if test "$bundled_sourceview" = "yes" ; then
+     AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
+     have_gnu_regex="yes",
+     have_gnu_regex="no")
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -679,16 +687,7 @@ if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
 fi
 
 dnl Check for libxml2
-if test "$have_gtk" = "yes" ; then
-    PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
-else 
-    XMLCONF=''
-    AC_CHECK_PROGS(XMLCONF,xml2-config xml-config,)
-    if test x"${XMLCONF}" != x ; then
-       XML_CFLAGS=`$XMLCONF --cflags`
-       XML_LIBS=`$XMLCONF --libs`
-    fi
-fi
+PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
 
 dnl Check for libxslt (for the helpfiles)
 if test "${build_docs}" = "yes" ; then
