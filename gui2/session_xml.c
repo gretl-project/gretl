@@ -28,6 +28,7 @@ static int check_graph_file (const char *fname, int type)
 	    fclose(fp);
 	    if (!strncmp(line, "# boxplot generated", 19)) {
 		fprintf(stderr, "Ignoring old boxplot file\n");
+		err = 1;
 	    }
 	} else {
 	    fclose(fp);
