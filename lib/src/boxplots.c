@@ -498,13 +498,7 @@ static void get_box_y_range (PLOTGROUP *grp, double gyrange,
     }
 }
 
-/* note: @fname is non-NULL only when we're doing the
-   backward-compatibility thing of reading an old-style
-   gretl boxplot file and converting it to gnuplot.
-*/
-
-static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
-				  gretlopt opt)
+static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 {
     FILE *fp = NULL;
     BOXPLOT *bp;
@@ -517,13 +511,7 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
     int qtype = 2;
     int i, err = 0;
 
-    if (fname != NULL) {
-	/* converting old-style file */
-	fp = gretl_fopen(fname, "w");
-	if (fp == NULL) {
-	    err = E_FOPEN;
-	}
-    } else if (gretl_in_batch_mode()) {
+    if (gretl_in_batch_mode()) {
 	/* batch mode: auto-named file */
 	fp = get_gnuplot_batch_stream(PLOT_BOXPLOTS, &err);
 	if (!err) {
@@ -705,16 +693,9 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, const char *fname,
 
     fclose(fp);
 
-    return err;
-}
-
-static int gnuplot_do_boxplot (PLOTGROUP *grp, gretlopt opt)
-{
-    int err = write_gnuplot_boxplot(grp, NULL, opt);
-
     if (!err) {
 	err = gnuplot_make_graph();
-    } 
+    }
 
     return err;
 }
@@ -871,7 +852,7 @@ static int real_boxplots (const int *list, char **bools,
 	if (!do_intervals(grp)) {
 	    set_show_mean(grp);
 	}
-	err = gnuplot_do_boxplot(grp, opt);
+	err = write_gnuplot_boxplot(grp, opt);
     }
 
     plotgroup_destroy(grp);   
