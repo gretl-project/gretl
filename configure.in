@@ -40,7 +40,6 @@ have_pkgconfig="no"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
-have_gtk="no"
 gtk_version="none"
 have_gtkprint="no"
 have_gnome="no"
@@ -546,7 +545,6 @@ if test "$try_gtk3" = "yes" ; then
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       AC_DEFINE(USE_GTK3)
-      have_gtk="yes"
       gtk_version="3.0"
       have_gtkprint="yes"
       fake_gtkspinner="no",
@@ -557,10 +555,9 @@ elif test "$build_gui" = "yes" ; then
     PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
-      have_gtk="yes"
       gtk_version="2.0",
       build_gui="no"
-      echo "GTK not found"     
+      echo "GTK 2 not found"     
     )
 fi
 
@@ -647,7 +644,6 @@ fi
 
 dnl record the results of the above tests
 AC_SUBST(build_gui)
-AC_SUBST(have_gtk)
 AC_SUBST(gtk_version)
 AC_SUBST(have_mpfr)
 AC_SUBST(have_sourceview)
@@ -661,7 +657,7 @@ AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
 dnl Check for gdk-pixbuf support
-if test ${have_gtk} = "yes" ; then
+if test ${build_gui} = "yes" ; then
     PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= 0.7.0,
         pixbuf_failed="no",
 	pixbuf_failed="yes"

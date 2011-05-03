@@ -5,9 +5,6 @@ libsrc = $(topsrc)/lib/src
 
 CC = @CC@
 CFLAGS = @CFLAGS@
-have_gtk = @have_gtk@
-GMP_LIBS = @GMP_LIBS@
-FLIB = @FLIB@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 SSE2_OPT = @SSE2_CFLAGS@
@@ -20,21 +17,10 @@ endif
 CCO = $(CC) $(SSE2_OPT) $(OMP_OPT)
 
 LIBGRETL = ../lib/libgretl-1.0.la
-RAND_LIBS = $(LIBGRETL)
-
-ifeq ($(GMP_LIBS),)
-  DEFINES = -DNO_GMP -DSTANDALONE
-else
-  DEFINES = -DUSE_GMP -DSTANDALONE
-endif
-
-ifeq ($(havegtk),2.0)
-  RAND_LIBS += $(GLIB_LIBS)
-endif
 
 VPATH = $(topsrc)/tests
 
-override CFLAGS += -I$(libsrc) $(DEFINES)
+override CFLAGS += -I$(libsrc) -DSTANDALONE
 
 all: nistcheck
 

@@ -10,7 +10,7 @@ MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
 HOSTCC = @HOSTCC@
-have_gtk = @have_gtk@
+build_gui = @build_gui@
 gtk_version = @gtk_version@
 build_po = @build_po@
 build_doc = @build_docs@
@@ -23,7 +23,7 @@ ifeq ($(HOSTCC),)
   HOSTCC = $(CC)
 endif
 
-ifeq ($(have_gtk),yes)
+ifeq ($(build_gui),yes)
   GUIDIR = gui2
 endif
 

@@ -629,7 +629,6 @@ fake_gtkspinner
 have_sourceview
 have_mpfr
 gtk_version
-have_gtk
 build_gui
 GTKSOURCEVIEW_LIBS
 GTKSOURCEVIEW_CFLAGS
@@ -2646,7 +2645,6 @@ have_pkgconfig="no"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
-have_gtk="no"
 gtk_version="none"
 have_gtkprint="no"
 have_gnome="no"
@@ -16517,7 +16515,6 @@ $as_echo "yes" >&6; }
       LIBS="$LIBS $GTK_LIBS"
       $as_echo "#define USE_GTK3 1" >>confdefs.h
 
-      have_gtk="yes"
       gtk_version="3.0"
       have_gtkprint="yes"
       fake_gtkspinner="no"
@@ -16581,11 +16578,11 @@ fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
                 build_gui="no"
-      echo "GTK not found"
+      echo "GTK 2 not found"
 
 elif test $pkg_failed = untried; then
 	build_gui="no"
-      echo "GTK not found"
+      echo "GTK 2 not found"
 
 else
 	GTK_CFLAGS=$pkg_cv_GTK_CFLAGS
@@ -16594,7 +16591,6 @@ else
 $as_echo "yes" >&6; }
 	CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
-      have_gtk="yes"
       gtk_version="2.0"
 fi
 fi
@@ -17075,8 +17071,7 @@ fi
 
 
 
-
-if test ${have_gtk} = "yes" ; then
+if test ${build_gui} = "yes" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GDK_PIXBUF" >&5
