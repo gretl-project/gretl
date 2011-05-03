@@ -129,12 +129,6 @@ static void quartiles_etc (double *x, int n, BOXPLOT *plt,
 		}
 	    }
 	}
-
-	for (i=0; i<n; i++) {
-	    fprintf(stderr, "x[%d] = %g\n", i, x[i]);
-	}
-	fprintf(stderr, "xlo = %g, xhi = %g\n", xlo, xhi);
-	fprintf(stderr, "wmin = %g, wmax = %g\n", plt->wmin, plt->wmax);
     }
 }
 
@@ -1486,9 +1480,9 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     PLOTGROUP *grp = NULL;
     int factorized = 0;
     int plotlines = 0;
-    int got_title = 0;
     char yvar[VNAMELEN];
     char xvar[VNAMELEN];
+    char vname[VNAMELEN];
     char line[512];
     FILE *fp;
     int n = 0;
@@ -1499,7 +1493,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	return E_FOPEN;
     }
 
-    *yvar = *xvar = '\0';
+    *yvar = *xvar = *vname = '\0';
 
     /* first pass: count the plots, using labels as heuristic */
 
@@ -1512,7 +1506,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	} else if (!strncmp(line, "set xlabel ", 11)) {
 	    sscanf(line + 12, "%15[^\"]", xvar);
 	} else if (!strncmp(line, "set title ", 10)) {
-	    got_title = 1;
+	    sscanf(line + 11, "%15[^\"]", vname);
 	} else if (!strncmp(line, "set label ", 10)) {
 	    if (!strncmp(line + 10, "\"(", 2)) {
 		; /* boolean specifier */
@@ -1537,7 +1531,8 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
 	if (n > 0) {
 	    factorized = 1;
 	}
-    } else if (n == 0 && got_title) {
+    } else if (n == 0 && *vname != '\0') {
+	/* plotting a single variable, no labels */
 	n = 1;
     }
 
@@ -1606,6 +1601,10 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     }
 
     if (!err) {
+	if (n == 1 && grp->plots[0].varname[0] == '\0' &&
+	    *vname != '\0') {
+	    strcpy(grp->plots[0].varname, vname);
+	}
 	strcpy(grp->ylabel, yvar);
 	strcpy(grp->xlabel, xvar);
 	if (factorized) {
