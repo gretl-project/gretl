@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-28 12:39-0400\n"
-"PO-Revision-Date: 2011-04-26 22:21+0100\n"
+"PO-Revision-Date: 2011-05-03 01:44+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -7147,7 +7147,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 27 de Abril de 2011."
+"Tradução de 3 de Maio de 2011."
 
 #: gui2/about.c:175
 msgid "License"
@@ -14924,135 +14924,115 @@ msgstr "Nomde da variável:"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
-msgstr ""
+msgstr "gig"
 
 #: plugin/addons-i18n.c:5
-#, fuzzy
 msgid "APARCH"
-msgstr "ARCH"
+msgstr "APARCH"
 
 #: plugin/addons-i18n.c:7
-#, fuzzy
 msgid "Covariance estimator"
-msgstr "Matriz de covariância"
+msgstr "Estimador de covariância"
 
 #: plugin/addons-i18n.c:9
-#, fuzzy
 msgid "Dependent Variable"
 msgstr "Variável dependente"
 
 #: plugin/addons-i18n.c:10
-#, fuzzy
 msgid "Distribution"
-msgstr "Distribuição:"
+msgstr "Distribuição"
 
 #: plugin/addons-i18n.c:11
-#, fuzzy
 msgid "EGARCH"
-msgstr "GARCH"
+msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:13
 msgid "GED"
-msgstr ""
+msgstr "GED"
 
 #: plugin/addons-i18n.c:14
 msgid "GJR"
-msgstr ""
+msgstr "GJR"
 
 #: plugin/addons-i18n.c:15
-#, fuzzy
 msgid "Hessian"
-msgstr " (usando Hessiana)"
+msgstr "Hessiana"
 
 #: plugin/addons-i18n.c:16
-#, fuzzy
 msgid "Mean regressors"
-msgstr "Regressores"
+msgstr "Regressores da Média"
 
 #: plugin/addons-i18n.c:17
-#, fuzzy
 msgid "Model type"
-msgstr "Tabela de modelos"
+msgstr "Tipo de modelo"
 
 #: plugin/addons-i18n.c:18
-#, fuzzy
 msgid "NARCH"
-msgstr "ARCH"
+msgstr "NARCH"
 
 #: plugin/addons-i18n.c:19
-#, fuzzy
 msgid "Normal"
-msgstr "normal"
+msgstr "Normal"
 
 #: plugin/addons-i18n.c:20
 msgid "OPG"
-msgstr ""
+msgstr "OPG"
 
 #: plugin/addons-i18n.c:21
-#, fuzzy
 msgid "Plot type"
-msgstr "tipo"
+msgstr "Tipo de gráfico"
 
 #: plugin/addons-i18n.c:22
 msgid "Sandwich"
-msgstr ""
+msgstr "Sandwich"
 
 #: plugin/addons-i18n.c:23
 msgid "Skewed GED"
-msgstr ""
+msgstr "GED enviezado"
 
 #: plugin/addons-i18n.c:24
-#, fuzzy
 msgid "Skewed t"
-msgstr "Enviesamento"
+msgstr "t enviesado"
 
 #: plugin/addons-i18n.c:25
-#, fuzzy
 msgid "TARCH"
-msgstr "ARCH"
+msgstr "TARCH"
 
 #: plugin/addons-i18n.c:26
 msgid "Taylor/Schwert GARCH"
-msgstr ""
+msgstr "GARCH Taylor/Schwert"
 
 #: plugin/addons-i18n.c:28
-#, fuzzy
 msgid "Variance regressors"
-msgstr "Regressores da primeira equação"
+msgstr "Regressores de variância"
 
 #: plugin/addons-i18n.c:29
-#, fuzzy
 msgid "Verbosity"
-msgstr "_Detalhado"
+msgstr "Detalhe"
 
 #: plugin/addons-i18n.c:30
-#, fuzzy
 msgid "t"
-msgstr "para"
+msgstr "t"
 
 #: plugin/addons-i18n.c:34
-#, fuzzy
 msgid "Between model"
-msgstr "_Entre modelos..."
+msgstr "Entre modelo"
 
 #: plugin/addons-i18n.c:36
 msgid "G2SLS"
-msgstr ""
+msgstr "G2SLS"
 
 #: plugin/addons-i18n.c:37
-#, fuzzy
 msgid "dependent variable"
-msgstr "Variável dependente"
+msgstr "variável dependente"
 
 #: plugin/addons-i18n.c:38
-#, fuzzy
 msgid "instruments"
-msgstr "Instrumentos"
+msgstr "instrumentos"
 
 #: plugin/addons-i18n.c:39
-#, fuzzy
 msgid "regressors"
-msgstr "Regressores"
+msgstr "regressores"
 
 #: plugin/anova.c:106 plugin/anova.c:108
 msgid "Treatment"
