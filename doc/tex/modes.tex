@@ -137,9 +137,11 @@ example of the syntax for achieving this effect:
 Model1 <- ols Ct 0 Yt
 \end{code}
 That is, you type a name for the model to be saved under, then a
-back-pointing ``assignment arrow'', then the model command.  You may
-use names that have embedded spaces if you like, but such names must
-be wrapped in double quotes:
+back-pointing ``assignment arrow'', then the model command. The
+assignment arrow is composed of the less-than sign followed by a dash;
+it must be separated by spaces from both the preceding name and the
+following command. The name for a saved object may include spaces, but
+in that case it must be wrapped in double quotes:
 \begin{code}
 "Model 1" <- ols Ct 0 Yt
 \end{code}

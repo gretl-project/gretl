@@ -488,35 +488,34 @@ static int catch_system_alias (char *line, CMD *cmd)
 
 static void maybe_extract_savename (char *s, CMD *cmd)
 {
-    *cmd->savename = 0;
+    char savename[32], test[4];
+    int n;
 
-#if 0
+    *cmd->savename = '\0';
+
+#if CMD_DEBUG > 1
     fprintf(stderr, "** testing for savename: '%s'\n", s);
 #endif
 
-    if (strncmp(s, "genr ", 5) && strstr(s, "<-")) {
-	int n, len, quoted;
+    if (*s == '"') {
+	n = sscanf(s, "\"%31[^\"]\" <- %3s", savename, test);
+    } else {
+	n = sscanf(s, "%31s <- %3s", savename, test);
+    } 
 
-	quoted = (*s == '"');
-	len = strcspn(s, "<");
-	if (len - quoted == 0) {
-	    return;
-	}
-	n = len - quoted;
-	if (n > MAXSAVENAME - 1) {
-	    n = MAXSAVENAME - 1;
-	}
-	strncat(cmd->savename, s + quoted, n);
-	tailstrip(cmd->savename);
-	n = strlen(cmd->savename);
-	if (cmd->savename[n-1] == '"') {
-	    cmd->savename[n-1] = 0;
-	}
-	shift_string_left(s, len + 2);
-	while (*s == ' ') {
-	    shift_string_left(s, 1);
-	}
+    if (n == 2) {
+	char *p = strstr(s + strlen(savename), " <- ");
+
+	strcpy(cmd->savename, savename);
+	p += 4;
+	p += strspn(p, " ");
+	n = p - s;
+	shift_string_left(s, n);
     }
+
+#if CMD_DEBUG > 1
+    fprintf(stderr, "** after test for savename: '%s'\n", s);
+#endif
 }
 
 static inline void maybe_set_catch_flag (char *s, CMD *cmd)
@@ -2467,7 +2466,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } 
 
     if (!cmd_nosave(cmd)) {
-	if (!cmd->context && gretl_function_depth() == 0) {
+	if (!cmd->context && gretl_function_depth() == 0 &&
+	    strstr(line, " <- ") != NULL) {
 	    /* extract "savename" for storing an object? */
 	    maybe_extract_savename(line, cmd);
 	}
