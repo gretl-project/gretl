@@ -14,6 +14,8 @@ version 1.9.6, in progress
 - Fix bug: a nested "foreach" loop using a named list, with the name of 
   the list subject to dollar-substitution via the parent loop, produced
   an "unknown variable" error
+- Fix bug: The symbol "<-" for assignment to an object could get confused
+  with a mathematical expression such as "x<-1.0"
 
 2011-04-22 version 1.9.5
 - Add new translation: Greek (Manolis Tzagarakis and Ioannis Venetis)
