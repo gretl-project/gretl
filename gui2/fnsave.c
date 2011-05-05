@@ -374,7 +374,14 @@ static void login_cancel (GtkWidget *w, login_info *linfo)
 static gboolean update_active_func (GtkComboBox *menu, 
 				    function_info *finfo)
 {
-    int i = gtk_combo_box_get_active(menu);
+    int i = 0;
+
+    if (menu != NULL) {
+	i = gtk_combo_box_get_active(menu);
+	if (i < 0) {
+	    i = 0;
+	}
+    }
 
     if (i < finfo->n_pub) {
 	finfo->active = finfo->pubnames[i];
@@ -716,10 +723,10 @@ static char **get_function_names (const int *list, int *err)
    relative to the existing lists of function names in @finfo.
 */
 
-static int finfo_set_function_names (function_info *finfo,
-				     const int *publist,
-				     const int *privlist,
-				     int *changed)
+static int finfo_reset_function_names (function_info *finfo,
+				       const int *publist,
+				       const int *privlist,
+				       int *changed)
 {
     char **pubnames = NULL;
     char **privnames = NULL;
@@ -752,17 +759,36 @@ static int finfo_set_function_names (function_info *finfo,
     if (!*changed) {
 	free_strings_array(pubnames, npub);
 	free_strings_array(privnames, npriv);
-    }
-
-    if (!err && *changed) {
-	free(finfo->pubnames);
+    } else if (!err) {
+	free_strings_array(finfo->pubnames, finfo->n_pub);
 	finfo->pubnames = pubnames;
 	finfo->n_pub = npub;
-	finfo->active = finfo->pubnames[0];
-
-	free(finfo->privnames);
+	free_strings_array(finfo->privnames, finfo->n_priv);
 	finfo->privnames = privnames;
 	finfo->n_priv = npriv;
+	finfo->active = finfo->pubnames[0];
+    }
+
+    return err;
+}
+
+static int finfo_set_function_names (function_info *finfo,
+				     const int *publist,
+				     const int *privlist)
+{
+    int npriv = (privlist == NULL)? 0 : privlist[0];
+    int err = 0;
+
+    finfo->pubnames = get_function_names(publist, &err);
+    if (!err) {
+	finfo->n_pub = publist[0];
+    }
+
+    if (!err && npriv > 0) {
+	finfo->privnames = get_function_names(privlist, &err);
+	if (!err) {
+	    finfo->n_priv = npriv;
+	}
     }
 
     return err;
@@ -789,9 +815,8 @@ static void func_selector_set_strings (function_info *finfo,
 
 static GtkWidget *active_func_selector (function_info *finfo)
 {
-    GtkWidget *ifmenu;
+    GtkWidget *ifmenu = gtk_combo_box_text_new();
 
-    ifmenu = gtk_combo_box_text_new();
     func_selector_set_strings(finfo, ifmenu);
     gtk_widget_show_all(ifmenu);
 
@@ -1139,6 +1164,7 @@ static void finfo_dialog (function_info *finfo)
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
 	g_signal_connect(G_OBJECT(finfo->codesel), "changed",
 			 G_CALLBACK(update_active_func), finfo);
+	update_active_func(NULL, finfo);
     } 
 
     /* save package as script button */
@@ -1750,7 +1776,6 @@ void edit_new_function_package (void)
     function_info *finfo;
     int *publist = NULL;
     int *privlist = NULL;
-    int changed = 0;
     int err = 0;
 
     err = get_lists_from_selector(&publist, &privlist);
@@ -1764,8 +1789,7 @@ void edit_new_function_package (void)
     }
 
     if (!err) {
-	err = finfo_set_function_names(finfo, publist, privlist,
-				       &changed);
+	err = finfo_set_function_names(finfo, publist, privlist);
 	if (err) {
 	    gretl_errmsg_set("Couldn't find the requested functions");
 	}
@@ -1804,8 +1828,8 @@ void revise_function_package (void *p)
     printlist(privlist, "new privlist");
 #endif
 
-    err = finfo_set_function_names(finfo, publist, privlist,
-				   &changed);
+    err = finfo_reset_function_names(finfo, publist, privlist,
+				     &changed);
 
     if (!err && changed) {
 	depopulate_combo_box(GTK_COMBO_BOX(finfo->codesel));
@@ -1822,7 +1846,6 @@ void edit_function_package (const char *fname)
     function_info *finfo;
     int *publist = NULL;
     int *privlist = NULL;
-    int changed = 0;
     fnpkg *pkg;
     const char *p;
     int err = 0;
@@ -1854,8 +1877,7 @@ void edit_function_package (const char *fname)
 					  NULL);
 
     if (!err && publist != NULL) {
-	err = finfo_set_function_names(finfo, publist, privlist,
-				       &changed);
+	err = finfo_set_function_names(finfo, publist, privlist);
     }
 
 #if PKG_DEBUG

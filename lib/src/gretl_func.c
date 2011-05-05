@@ -3209,13 +3209,17 @@ static void real_function_package_free (fnpkg *pkg, int full)
     if (pkg != NULL) {
 	int i;
 
-	for (i=0; i<n_ufuns; i++) {
-	    if (ufuns[i]->pkg == pkg) {
-		if (full) {
-		    /* trash the member functions */
-		    ufunc_free(ufuns[i]);
-		} else {
-		    /* just remove package info */
+	if (full) {
+	    for (i=0; i<pkg->n_pub; i++) {
+		ufunc_free(pkg->pub[i]);
+	    }
+	    for (i=0; i<pkg->n_priv; i++) {
+		ufunc_free(pkg->priv[i]);
+	    }
+	} else {
+	    for (i=0; i<n_ufuns; i++) {
+		if (ufuns[i]->pkg == pkg) {
+		    /* remove package info */
 		    ufuns[i]->pkg = NULL;
 		    set_function_private(ufuns[i], FALSE);
 		}
@@ -3823,6 +3827,11 @@ real_print_function_package_data (const char *fname, PRN *prn, int task)
 	    function_package_free_full(pkg);
 	}
     }
+
+#if PKG_DEBUG
+    fprintf(stderr, "real_get_function_file_info: err = %d (free_pkg = %d)\n", 
+	    err, free_pkg);
+#endif
 
     return err;
 }

@@ -1375,7 +1375,7 @@ void free_windata (GtkWidget *w, gpointer data)
 
 	/* menu stuff */
 	if (vwin->popup != NULL) {
-	    gtk_widget_destroy(GTK_WIDGET(vwin->popup));
+	    gtk_widget_destroy(vwin->popup);
 	}
 	if (vwin->ui != NULL) {
 	    g_object_unref(G_OBJECT(vwin->ui));
@@ -1432,7 +1432,7 @@ gboolean text_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     if (RIGHT_CLICK(mods)) {
 	windata_t *vwin = (windata_t *) p;
 
-	if (vwin->popup) {
+	if (vwin->popup != NULL) {
 	    gtk_widget_destroy(vwin->popup);
 	    vwin->popup = NULL;
 	}
@@ -4702,10 +4702,11 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
     if (RIGHT_CLICK(mods) && event->type == GDK_BUTTON_PRESS) {
 	GdkEventButton *bevent = (GdkEventButton *) event; 
 
-	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
-			bevent->button, bevent->time);
+	gtk_menu_popup(GTK_MENU(data), NULL, NULL, NULL, NULL,
+		       bevent->button, bevent->time);
 	return TRUE;
     }
+
     return FALSE;
 }
 
