@@ -259,8 +259,8 @@ static void hess_b_adjust_ij (double *c, const double *b, double *h, int n,
 
 /* The algorithm below implements the method of Richardson
    Extrapolation.  It is derived from code in the gnu R package
-   "numDeriv" by Paul Gilbert, which was in turn derived from C code
-   by Xinqiao Liu.  Turned back into C and modified for gretl by
+   "numDeriv" by Paul Gilbert, which was in turn derived from code
+   by Xinqiao Liu.  Turned into C and modified for gretl by
    Allin Cottrell, June 2006.  On successful completion, returns
    the negative inverse of the Hessian.
 */
@@ -329,13 +329,13 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 	    Hx[k] = (f1 - 2.0*f0 + f2) / (h[i] * h[i]);
 	    hess_h_reduce(h, v, n);
 	}
-	p4m = 4;
+	p4m = 4.0;
 	for (m=0; m<r-1; m++) {
-	    for (k=0; k<r-m; k++) {
+	    for (k=0; k<r-m-1; k++) {
 		Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1);
 		Hx[k] = (Hx[k+1] * p4m - Hx[k]) / (p4m - 1);
 	    }
-	    p4m *= 4;
+	    p4m *= 4.0;
 	}
 	D[i] = Dx[0];
 	Hd[i] = Hx[0];
@@ -374,7 +374,7 @@ static int numerical_hessian (const double *b, gretl_matrix *H,
 		}
 		p4m = 4.0;
 		for (m=0; m<r-1; m++) {
-		    for (k=0; k<r-m; k++) {
+		    for (k=0; k<r-m-1; k++) {
 			Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1);
 		    }
 		    p4m *= 4.0;
