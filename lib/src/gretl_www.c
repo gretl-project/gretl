@@ -31,6 +31,8 @@
 # include "libset.h"
 #endif
 
+#define DATA_PKG_SF 1
+
 #define WBUFSIZE 8192
 
 #include "version.h"
@@ -59,11 +61,12 @@
 #define DBHLEN 64
 
 static int wproxy;
-static char dbhost[DBHLEN]      = "ricardo.ecn.wfu.edu";
-static char gretlhost[DBHLEN]   = "ricardo.ecn.wfu.edu";
-static char datacgi[DBHLEN]     = "/gretl/cgi-bin/gretldata.cgi";
-static char updatecgi[DBHLEN]   = "/gretl/cgi-bin/gretl_update.cgi";
-static char manual_path[DBHLEN] = "/project/gretl/manual/";
+static char dbhost[DBHLEN]       = "ricardo.ecn.wfu.edu";
+static char gretlhost[DBHLEN]    = "ricardo.ecn.wfu.edu";
+static char datacgi[DBHLEN]      = "/gretl/cgi-bin/gretldata.cgi";
+static char updatecgi[DBHLEN]    = "/gretl/cgi-bin/gretl_update.cgi";
+static char manual_path[DBHLEN]  = "/project/gretl/manual/";
+static char dataset_path[DBHLEN] = "/project/gretl/datafiles/";
 
 #ifndef STANDALONE
 static char sffiles[DBHLEN] = "downloads.sourceforge.net";
@@ -264,14 +267,14 @@ struct urlinfo_ {
 };
 
 struct http_stat {
-    long len;			/* received length */
-    long contlen;		/* expected length */
-    int res;			/* the result of last read */
-    char *newloc;		/* new location (redirection) */
-    char *remote_time;		/* remote time-stamp string */
-    char *error;		/* textual HTTP error */
-    int statcode;		/* status code */
-    long dltime;		/* time of the download */
+    long len;		     /* received length */
+    long contlen;	     /* expected length */
+    int res;		     /* the result of last read */
+    char *newloc;	     /* new location (redirection) */
+    char *remote_time;	     /* remote time-stamp string */
+    char *error;	     /* textual HTTP error */
+    int statcode;	     /* status code */
+    long dltime;	     /* time of the download */
 };
 
 struct rbuf {
@@ -783,6 +786,10 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 					    &handle);
 	if (show_progress != NULL) show = 1;
     }
+#endif
+
+#if WDEBUG
+    fprintf(stderr, "get_contents: expected = %d\n", (int) expected);
 #endif
 
     if (show) {
@@ -1727,6 +1734,17 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return E_ALLOC;
     }
 
+#if DATA_PKG_SF
+    if (opt == GRAB_PKG) {
+	urlinfo_set_dl_path(u, dataset_path, fname);
+	if (u->path == NULL) {
+	    urlinfo_destroy(u, 0);
+	    return 1;
+	}
+	goto next_step;
+    }
+#endif
+
     if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
 	/* note: not using the gretl server */
 	urlinfo_set_dl_path(u, NULL, fname);
@@ -1750,6 +1768,10 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	    return 1;
 	}
     }
+
+#if DATA_PKG_SF
+ next_step:
+#endif
 
     err = get_host_ip(u, host);
     if (err) {
@@ -2093,7 +2115,7 @@ int retrieve_remote_function_package (const char *pkgname,
 /**
  * retrieve_remote_datafiles_package:
  * @pkgname: name of data files package to retrieve, e.g. 
- * "wooldridge.tar.gz".
+ * "wooldridge".
  * @localname: full path to which the package file should be
  * written on the local machine.
  *
@@ -2105,8 +2127,27 @@ int retrieve_remote_function_package (const char *pkgname,
 int retrieve_remote_datafiles_package (const char *pkgname, 
 				       const char *localname)
 {
+#if DATA_PKG_SF
+    /* retrieve textbook data file packages from sourceforge */
+    char fullname[48];
+
+    strcpy(fullname, pkgname);
+    if (strstr(pkgname, "dougherty") || strstr(pkgname, "koop")) {
+	/* FIXME ugliness */
+	if (!strstr(pkgname, "_data")) {
+	    strcat(fullname, "_data");
+	}
+    }
+    if (!strstr(fullname, ".tar.gz")) {
+	strcat(fullname, ".tar.gz");
+    }
+
+    return retrieve_url(sffiles, GRAB_PKG, fullname, NULL, SAVE_TO_FILE,
+			localname, NULL);
+#else
     return retrieve_url(gretlhost, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
 			localname, NULL);
+#endif
 }
 
 /**
