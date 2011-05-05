@@ -2465,11 +2465,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
     } 
 
-    if (!cmd_nosave(cmd)) {
-	if (!cmd->context && gretl_function_depth() == 0 &&
-	    strstr(line, " <- ") != NULL) {
+    if (!cmd->context) {
+	if (gretl_function_depth() == 0 && strstr(line, " <- ") != NULL) {
 	    /* extract "savename" for storing an object? */
 	    maybe_extract_savename(line, cmd);
+	} else {
+	    *cmd->savename = '\0';
 	}
     } 
 

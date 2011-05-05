@@ -114,8 +114,7 @@ enum loop_command_codes {
     LOOP_CMD_LIT     = 1 << 1, /* literal printing */
     LOOP_CMD_NODOL   = 1 << 2, /* no $-substitution this line */
     LOOP_CMD_NOSUB   = 1 << 3, /* no @-substitution this line */
-    LOOP_CMD_NOOPT   = 1 << 4, /* no option flags in this line */
-    LOOP_CMD_NOSAVE  = 1 << 5  /* no "foo <- cmd" in this line */
+    LOOP_CMD_NOOPT   = 1 << 4  /* no option flags in this line */
 };
 
 struct loop_command_ {
@@ -2697,7 +2696,6 @@ static int loop_process_error (int err, PRN *prn)
 #define loop_cmd_nodol(l,j) (l->cmds[j].flags & LOOP_CMD_NODOL)
 #define loop_cmd_nosub(l,j) (l->cmds[j].flags & LOOP_CMD_NOSUB)
 #define loop_cmd_noopt(l,j) (l->cmds[j].flags & LOOP_CMD_NOOPT)
-#define loop_cmd_nosave(l,j) (l->cmds[j].flags & LOOP_CMD_NOSAVE)
 
 /* based on the stored flags in the loop-line record, set
    or unset some flags for the command parser: this can 
@@ -2730,14 +2728,6 @@ static inline void loop_info_to_cmd (LOOPSET *loop, int j,
     } else {
 	cmd->flags &= ~CMD_NOOPT;
     }
-
-    if (loop_cmd_nosave(loop, j)) {
-	/* tell parser not to try for a "savename" */
-	cmd->flags |= CMD_NOSAVE;
-	*cmd->savename = '\0';
-    } else {
-	cmd->flags &= ~CMD_NOSAVE;
-    }
 }
 
 /* based on the parsed info in @cmd, maybe write some flags to
@@ -2761,10 +2751,6 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
 	    /* record: no options are present on this line */
 	    loop->cmds[j].flags |= LOOP_CMD_NOOPT;
 	} 
-	if (*cmd->savename == '\0') {
-	    /* record: no savename on this line */
-	    loop->cmds[j].flags |= LOOP_CMD_NOSAVE;
-	}
     }
 }
 
@@ -3077,7 +3063,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     cmd->flags &= ~CMD_NOSUB;
     cmd->flags &= ~CMD_NOOPT;
-    cmd->flags &= ~CMD_NOSAVE;
 
     if (loop->brk) {
 	/* turn off break flag */
