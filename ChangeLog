@@ -16,6 +16,7 @@ version 1.9.6, in progress
   an "unknown variable" error
 - Fix bug: The symbol "<-" for assignment to an object could get confused
   with a mathematical expression such as "x<-1.0"
+- Fix bug: reading beyond array bound in numerical Hessian
 
 2011-04-22 version 1.9.5
 - Add new translation: Greek (Manolis Tzagarakis and Ioannis Venetis)
