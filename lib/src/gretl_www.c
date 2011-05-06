@@ -31,8 +31,6 @@
 # include "libset.h"
 #endif
 
-#define DATA_PKG_SF 1
-
 #define WBUFSIZE 8192
 
 #include "version.h"
@@ -1549,8 +1547,6 @@ static char *print_option (int opt)
 	return "CHECK_DB";
     case LIST_PKGS:
 	return "LIST_PKGS";
-    case GRAB_PKG:
-	return "GRAB_PKG";
     default:
 	break;
     }
@@ -1654,8 +1650,6 @@ urlinfo_set_params (urlinfo *u, CGIOpt opt, const char *fname,
     if (fname != NULL) {
 	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
 	    strcat(u->params, "&fname=");
-	} else if (opt == GRAB_PKG) {
-	    strcat(u->params, "&pkg=");
 	} else {
 	    strcat(u->params, "&dbase=");
 	}
@@ -1734,22 +1728,12 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return E_ALLOC;
     }
 
-#if DATA_PKG_SF
-    if (opt == GRAB_PKG) {
-	urlinfo_set_dl_path(u, dataset_path, fname);
-	if (u->path == NULL) {
-	    urlinfo_destroy(u, 0);
-	    return 1;
-	}
-	goto next_step;
-    }
-#endif
-
     if (opt == GRAB_FOREIGN || opt == QUERY_SF) {
-	/* note: not using the gretl server */
 	urlinfo_set_dl_path(u, NULL, fname);
     } else if (opt == GRAB_PDF) {
 	urlinfo_set_dl_path(u, manual_path, fname);
+    } else if (opt == GRAB_PKG) {
+	urlinfo_set_dl_path(u, dataset_path, fname);
     } else if (opt == GRAB_FILE) {
 	urlinfo_set_cgi_path(u, updatecgi);
     } else {
@@ -1761,17 +1745,15 @@ retrieve_url (const char *host, CGIOpt opt, const char *fname,
 	return 1;
     }
 
-    if (opt != GRAB_PDF && opt != GRAB_FOREIGN && opt != QUERY_SF) {
+    if (opt != GRAB_PDF && opt != GRAB_FOREIGN &&
+	opt != GRAB_PKG && opt != QUERY_SF) {
+	/* a gretl-server download */
 	urlinfo_set_params(u, opt, fname, dbseries);
 	if (u->params == NULL) {
 	    urlinfo_destroy(u, 0);
 	    return 1;
 	}
     }
-
-#if DATA_PKG_SF
- next_step:
-#endif
 
     err = get_host_ip(u, host);
     if (err) {
@@ -2037,40 +2019,40 @@ int upload_function_package (const char *login, const char *pass,
 
 int list_remote_dbs (char **getbuf)
 {
-    return retrieve_url (dbhost, LIST_DBS, NULL, NULL, SAVE_TO_BUFFER, 
-			 NULL, getbuf);
+    return retrieve_url(dbhost, LIST_DBS, NULL, NULL, 
+			SAVE_TO_BUFFER, NULL, getbuf);
 }
 
 int list_remote_function_packages (char **getbuf)
 {
-    return retrieve_url (gretlhost, LIST_FUNCS, NULL, NULL, SAVE_TO_BUFFER, 
-			 NULL, getbuf);
+    return retrieve_url(gretlhost, LIST_FUNCS, NULL, NULL, 
+			SAVE_TO_BUFFER, NULL, getbuf);
 }
 
 int query_sourceforge (const char *query, char **getbuf)
 {
-    return retrieve_url (sfweb, QUERY_SF, query, NULL, SAVE_TO_BUFFER, 
-			 NULL, getbuf);
+    return retrieve_url(sfweb, QUERY_SF, query, NULL, 
+			SAVE_TO_BUFFER, NULL, getbuf);
 }
 
 int list_remote_data_packages (char **getbuf)
 {
-    return retrieve_url (gretlhost, LIST_PKGS, NULL, NULL, SAVE_TO_BUFFER, 
-			 NULL, getbuf);
+    return retrieve_url(gretlhost, LIST_PKGS, NULL, NULL, 
+			SAVE_TO_BUFFER, NULL, getbuf);
 }
 
 int retrieve_remote_db_index (const char *dbname, char **getbuf) 
 {
-    return retrieve_url (dbhost, GRAB_IDX, dbname, NULL, SAVE_TO_BUFFER, 
-			 NULL, getbuf);
+    return retrieve_url(dbhost, GRAB_IDX, dbname, NULL, 
+			SAVE_TO_BUFFER, NULL, getbuf);
 }
 
 int retrieve_remote_db (const char *dbname, 
 			const char *localname,
 			int opt)
 {
-    return retrieve_url (dbhost, opt, dbname, NULL, SAVE_TO_FILE, 
-			 localname, NULL);
+    return retrieve_url(dbhost, opt, dbname, NULL, 
+			SAVE_TO_FILE, localname, NULL);
 }
 
 int check_remote_db (const char *dbname)
@@ -2078,8 +2060,8 @@ int check_remote_db (const char *dbname)
     char *getbuf = NULL;
     int err;
 
-    err = retrieve_url (dbhost, CHECK_DB, dbname, NULL, SAVE_TO_BUFFER, 
-			NULL, &getbuf);
+    err = retrieve_url(dbhost, CHECK_DB, dbname, NULL, 
+		       SAVE_TO_BUFFER, NULL, &getbuf);
 
     if (!err && getbuf != NULL) {
 	err = strncmp(getbuf, "OK", 2) != 0;
@@ -2108,18 +2090,18 @@ int check_remote_db (const char *dbname)
 int retrieve_remote_function_package (const char *pkgname, 
 				      const char *localname)
 {
-    return retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
-			localname, NULL);
+    return retrieve_url(gretlhost, GRAB_FUNC, pkgname, NULL, 
+			SAVE_TO_FILE, localname, NULL);
 }
 
 /**
  * retrieve_remote_datafiles_package:
  * @pkgname: name of data files package to retrieve, e.g. 
- * "wooldridge".
+ * "wooldridge.tar.gz".
  * @localname: full path to which the package file should be
  * written on the local machine.
  *
- * Retrieves the specified file from the gretl data server.
+ * Retrieves the specified package from sourceforge.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -2127,27 +2109,8 @@ int retrieve_remote_function_package (const char *pkgname,
 int retrieve_remote_datafiles_package (const char *pkgname, 
 				       const char *localname)
 {
-#if DATA_PKG_SF
-    /* retrieve textbook data file packages from sourceforge */
-    char fullname[48];
-
-    strcpy(fullname, pkgname);
-    if (strstr(pkgname, "dougherty") || strstr(pkgname, "koop")) {
-	/* FIXME ugliness */
-	if (!strstr(pkgname, "_data")) {
-	    strcat(fullname, "_data");
-	}
-    }
-    if (!strstr(fullname, ".tar.gz")) {
-	strcat(fullname, ".tar.gz");
-    }
-
-    return retrieve_url(sffiles, GRAB_PKG, fullname, NULL, SAVE_TO_FILE,
-			localname, NULL);
-#else
-    return retrieve_url(gretlhost, GRAB_PKG, pkgname, NULL, SAVE_TO_FILE, 
-			localname, NULL);
-#endif
+    return retrieve_url(sffiles, GRAB_PKG, pkgname, NULL, 
+			SAVE_TO_FILE, localname, NULL);
 }
 
 /**
@@ -2169,8 +2132,8 @@ int retrieve_remote_db_data (const char *dbname,
 			     char **getbuf,
 			     int opt)
 {
-    return retrieve_url(dbhost, opt, dbname, varname, SAVE_TO_BUFFER, 
-			NULL, getbuf);
+    return retrieve_url(dbhost, opt, dbname, varname, 
+			SAVE_TO_BUFFER, NULL, getbuf);
 }
 
 /**
@@ -2179,16 +2142,16 @@ int retrieve_remote_db_data (const char *dbname,
  * @localname: full path to which the file should be written
  * on the local machine.
  *
- * Retrieves the specified manual file in PDF format from the 
- * gretl server.
+ * Retrieves the specified manual file in PDF format from 
+ * sourceforge.
  *
  * Returns: 0 on success, non-zero on failure.
  */
 
 int retrieve_manfile (const char *fname, const char *localname)
 {
-    return retrieve_url(sffiles, GRAB_PDF, fname, NULL, SAVE_TO_FILE,
-			localname, NULL);
+    return retrieve_url(sffiles, GRAB_PDF, fname, NULL, 
+			SAVE_TO_FILE, localname, NULL);
 }
 
 /**

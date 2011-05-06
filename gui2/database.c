@@ -2082,7 +2082,10 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 	    err = retrieve_remote_function_package(objname, path);
 	}
     } else if (vwin->role == REMOTE_DATA_PKGS) {
-	err = retrieve_remote_datafiles_package(objname, path);
+	gchar *tarname = g_strdup_printf("%s.tar.gz", objname);
+
+	err = retrieve_remote_datafiles_package(tarname, path);
+	g_free(tarname);
     } else {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	err = retrieve_remote_db(objname, path, GRAB_NBO_DATA);
