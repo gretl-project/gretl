@@ -7,6 +7,8 @@ version 1.9.6, in progress
   file of translatable strings suitable for use with gettext
 - Add facility for inspecting the list of gretl addons, under the GUI
   Help menu
+- Download of textbook data-file packages: use sourceforge for better
+  reliability
 - Graphing ("gnuplot" command and GUI): generalize the option of 
   separation using a binary dummy to allow use of discrete variables
 - "boxplot" command: add --factorized and --panel options; also
