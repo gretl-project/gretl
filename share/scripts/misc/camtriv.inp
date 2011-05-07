@@ -1,10 +1,22 @@
-# Replicate ordered probit model of doctor visits from 
-# A. C. Cameron and P. K. Trivedi, "Regression Analysis 
-# of Count Data" (Cambridge, 1998).  
+# Replicate several count data models of doctor visits from 
+# A. C. Cameron and P. K. Trivedi, "Regression Analysis of 
+# Count Data" (Cambridge, 1998).  
 
 # See also http://cameron.econ.ucdavis.edu/racd/count.html
 # and http://www.stanford.edu/~clint/bench/ for TSP results
 
-open rac3d.gdt
-probit DVISITS 0 SEX AGE AGESQ INCOME LEVYPLUS FREEPOOR FREEREPA \
+open rac3d.gdt --quiet
+list X = 0 SEX AGE AGESQ INCOME LEVYPLUS FREEPOOR FREEREPA \
   ILLNESS ACTDAYS HSCORE CHCOND1 CHCOND2
+
+# Poisson regression
+poisson DVISITS X
+
+# Negative binomial (model II)
+negbin DVISITS X
+
+# Negative binomial (model I)
+negbin DVISITS X --model1
+
+# ordered probit
+probit DVISITS X

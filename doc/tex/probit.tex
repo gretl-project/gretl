@@ -464,7 +464,31 @@ cross-section for 1987.
 \section{Bivariate probit}
 \label{sec:biprobit}
 
-FIXME: todo.
+The bivariate probit model is simply a two-equation system in which
+each equation is a probit model, but the two disturbance terms may not
+be independent. In formulae,
+\begin{eqnarray}
+  y^*_{1,i} = \sum_{j=1}^{k_1} x_{ij} \beta_j + \varepsilon_{1,i}  & \qquad &
+  y_{1,i}=1  \Longleftrightarrow y^*_{1,i}>0 \\
+  y^*_{2,i} = \sum_{j=1}^{k_2} z_{ij} \gamma_j + \varepsilon_{2,i} & \qquad &
+  y_{2,i}=1  \Longleftrightarrow y^*_{2,i}>0 \\
+  \left[ \begin{array}{c}
+      \varepsilon_{2,i} \\ \varepsilon_{2,i}
+    \end{array} \right] \sim 
+  N \left[ 0, \left( \begin{array}{cc}
+      1 & \rho \\ \rho & 1
+    \end{array} \right) \right] 
+\end{eqnarray}
+
+\begin{itemize}
+\item The explanatory variables for the first equation $x$ and for the
+  second equation $z$ may overlap
+\item example contained in \texttt{biprobit.inp}
+\item \dollar{uhat} and \dollar{yhat} are matrices
+\end{itemize}
+
+FIXME: expand.
+
 
 \section{The Tobit model}
 \label{sec:tobit}
@@ -550,12 +574,15 @@ models in several special cases:
 \begin{itemize}
 \item When all observations are point observations the model trivially
   reduces to the ordinary linear regression model.
-\item When $m_i = M_i$ when $y^*_i> 0$, while $m_i = -\infty$ and $M_i
-  = 0$ otherwise, we have the Tobit model (see \ref{sec:tobit}).
 \item The interval model could be thought of an ordered probit model
   (see \ref{sec:ordered}) in which the cut points (the $\alpha_j$
   coefficients in eq. \ref{eq:QR-ordered}) are observed and don't need
   to be estimated.
+\item The Tobit model (see \ref{sec:tobit}) is a special case of the
+  interval model in which $m_i$ and $M_i$ do not depend on $i$, that
+  is, the censoring limits are the same for all observations. As a
+  matter of fact, \app{gretl}'s \texttt{tobit} commands is handled
+  internally as a special case of the interval model.
 \end{itemize}
 
 The \app{gretl} command \texttt{intreg} estimates interval models by
@@ -773,7 +800,16 @@ heckit lww X ; LFP Z --two-step
 \section{Count data}
 \label{sec:count}
 
-To be written.
+Here the dependent variable is assumed to be a non-negative integer,
+so a probabilistic description of $y_i | x_i$ must hinge on some
+discrete distribution. The most common model is the Poisson model, in
+which
+\begin{eqnarray*}
+  P(y_i = Y | x_i) & = & e^{\mu_i} \frac{\mu_i^Y}{Y!} \\
+  \mu_i & = & \exp\left( \sum_j x_{ij} \beta_j \right)
+\end{eqnarray*}
+
+FIXME:expand
 
 \section{Duration models}
 \label{sec:duration}

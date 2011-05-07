@@ -4,7 +4,7 @@
 "bbond98","Dynamic panel model (GMM-SYS)","UK employment data"
 "biprobit","Bivariate probit (William Greene)","credit rating"
 "bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"
-"camtriv","Ordered Probit (Cameron and Trivedi)","doctor visits"
+"camtriv","Count Data (Cameron and Trivedi)","doctor visits"
 "convolve","Fast Fourier Transform","artificial data"
 "credscore","Testing for heteroskedasticity","credit card spending"
 "denmark","Vector Error Correction Model","Danish macro data"
