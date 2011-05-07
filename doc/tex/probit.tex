@@ -755,14 +755,6 @@ generalized residuals. As in the ordinary Tobit model, the residuals
 equal the difference between actual and fitted $y_i$ only for
 uncensored observations (those for which $d_i = 1$).
 
-Example \ref{ex:heckit} shows two estimates from the dataset used in
-\cite{mroz87}: the first one replicates Table 22.7 in
-\cite{greene03},\footnote{Note that the estimates given by \app{gretl}
-  do not coincide with those found in the printed volume.  They do,
-  however, match those found on the errata web page for Greene's book:
-  \url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}.}
-while the second one replicates table 17.1 in \cite{wooldridge-panel}.
-
 \begin{script}[htbp]
   \caption{Heckit model}
   \label{ex:heckit}
@@ -792,6 +784,15 @@ heckit lww X ; LFP Z --two-step
 \end{scode}
 \end{script}
 
+
+Example \ref{ex:heckit} shows two estimates from the dataset used in
+\cite{mroz87}: the first one replicates Table 22.7 in
+\cite{greene03},\footnote{Note that the estimates given by \app{gretl}
+  do not coincide with those found in the printed volume.  They do,
+  however, match those found on the errata web page for Greene's book:
+  \url{http://pages.stern.nyu.edu/~wgreene/Text/Errata/ERRATA5.htm}.}
+while the second one replicates table 17.1 in \cite{wooldridge-panel}.
+
 \section{Count data}
 \label{sec:count}
 
@@ -804,7 +805,34 @@ which
   \mu_i & = & \exp\left( \sum_j x_{ij} \beta_j \right)
 \end{eqnarray*}
 
-FIXME:expand
+\begin{itemize}
+\item Estimation is, again, typically carried out by maximum
+  likelihood. \app{Gretl} command: \texttt{poisson depvar indep}.
+\item In some cases, an ``offset'' variable is needed. The number of
+  occurrences of $y_i$ in a given time is assumed to be strictly
+  proportional to the offset variable $n_i$. In the epidemiology
+  literature, the offset is known as ``population at risk''. Syntax:
+  \texttt{poisson depvar indep ; offset}.
+\item The Poisson model has the peculiar feature that $E(y_i | x_i) =
+  V(y_i | x_i)$; this may be at odds with the data (overdirspersion).
+\item Standard solution to the overdispersion problem: use another
+  probability distribution. Gamma mixture leads to
+  \begin{equation}
+    \label{eq:negbin2}
+  P(y_i = Y | x_i) = 
+  \frac{\Gamma(y_i + \alpha)}{\Gamma(\alpha)\Gamma(y_i + 1)}
+  \left[ \frac{\mu_i} {\mu_i + \alpha }\right]^{y_i}
+  \left[ \frac{\alpha} {\mu_i + \alpha }\right]^{\alpha}
+\end{equation}
+which is known as the ``Negative Binomial Model''.  \app{Gretl}
+command: \texttt{negbin depvar indep}.
+\item There is also a less used variant of the negative binomial
+  model. To distinguish between the two, the model \eqref{eq:negbin2}
+  is termed ``Type 2''.  \app{Gretl} implements model 1 via
+  \texttt{negbin depvar indep} \option{model1}.
+\end{itemize}
+
+FIXME: expand.
 
 \section{Duration models}
 \label{sec:duration}
