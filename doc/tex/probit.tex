@@ -162,7 +162,7 @@ Dependent variable: GRADE
 In this context, the \dollar{uhat} accessor function takes a special
 meaning: it returns generalized residuals as defined in
 \citet*{gourieroux87}, which can be interpreted as unbiased estimators
-of the latent disturbances $\varepsilon_t$. These are defined as
+of the latent disturbances $\varepsilon_i$. These are defined as
 %
 \begin{equation}
   \label{eq:QR-genres}
@@ -260,9 +260,8 @@ such that
     y = J & \textrm{if } \, y^* > \alpha_J \\
   \end{array}
 \end{equation*}
-
 For example, if the response takes on three values there will be two
-such cut points, $\alpha_1$ and $\alpha_2$.
+such cut points, $\alpha_1$ and $\alpha_2$. 
 
 The probability that individual $i$ exhibits response $j$, conditional
 on the characteristics $x_i$, is then given by
@@ -291,16 +290,21 @@ separate command for ordered models: the \texttt{logit} and
 \texttt{probit} commands automatically estimate the ordered version if
 the dependent variable is acceptable, but not binary.
 
-Example \ref{ex:oprobit} reproduces the results presented in section
-15.10 of \cite{wooldridge-panel}.  The question of interest in this
-analysis is what difference it makes, to the allocation of assets
-in pension funds, whether individual plan participants have a
-choice in the matter.  The response variable is an ordinal measure of
-the weight of stocks in the pension portfolio.  Having reported the
-results of estimation of the ordered model, Wooldridge illustrates the
-effect of the \texttt{choice} variable by reference to an ``average''
-participant.  The example script shows how one can compute this effect
-in \app{gretl}.  
+Note that the $\alpha_j$ parameters can be shifted arbitrarily by
+adding a constant to $z_i$, so the model is under-identified if there
+is some linear combination of the explanatory variables which is
+constant. The most obvious case in which this occurs is when the model
+contains a constant term; for this reason, \app{gretl} drops
+automatically the intercept if present. However, it may happen that
+the user inadventently specifies a list of regressors that may be
+combined in such a way to produce a constant (for example, by using a
+full set of dummy variables for a discrete factor). If this happens,
+the most likely outcome of estimation is an error message stating that
+the variance-covariance matrix of the parameters is not positive
+definite. However, in some cases \app{gretl} may fail to detect the
+singularity and report a bogus estimate. This situation, however, is
+easily spotted by the fact that in these cases the standard errors
+associated with the $\alpha_i$ parameters will be inordinately large.
 
 \begin{script}[htbp]
   \caption{Ordered probit model}
@@ -367,6 +371,17 @@ printf "Estimated choice effect via ML = %.2f (OLS = %.2f)\n", E1 - E0,
 \end{scode}
 \end{script}
 
+Example \ref{ex:oprobit} reproduces the results presented in section
+15.10 of \cite{wooldridge-panel}.  The question of interest in this
+analysis is what difference it makes, to the allocation of assets
+in pension funds, whether individual plan participants have a
+choice in the matter.  The response variable is an ordinal measure of
+the weight of stocks in the pension portfolio.  Having reported the
+results of estimation of the ordered model, Wooldridge illustrates the
+effect of the \texttt{choice} variable by reference to an ``average''
+participant.  The example script shows how one can compute this effect
+in \app{gretl}.  
+
 After estimating ordered models, the \dollar{uhat} accessor yields
 generalized residuals as in binary models; additionally, the
 \dollar{yhat} accessor function returns $\hat{z}_i$, so it is
@@ -397,6 +412,46 @@ and
   P(y_i = 0 |  x_i) = \frac{1}{1 + \sum_{j=1}^p \exp(x_i \beta_j)} .
 \]
 
+\begin{script}[htbp]
+  \caption{Multinomial logit}
+  \label{ex:mlogit}
+Input:
+\begin{scodebit}
+open keane.gdt
+smpl (year=87) --restrict
+logit status 0 educ exper expersq black --multinomial
+\end{scodebit}
+Output (selected portions):
+\begin{scodebit}
+Model 1: Multinomial Logit, using observations 1-1738 (n = 1717)
+Missing or incomplete observations dropped: 21
+Dependent variable: status
+Standard errors based on Hessian
+
+             coefficient   std. error      z      p-value 
+  --------------------------------------------------------
+  status = 2
+  const      10.2779       1.13334       9.069    1.20e-19 ***
+  educ       -0.673631     0.0698999    -9.637    5.57e-22 ***
+  exper      -0.106215     0.173282     -0.6130   0.5399  
+  expersq    -0.0125152    0.0252291    -0.4961   0.6199  
+  black       0.813017     0.302723      2.686    0.0072   ***
+  status = 3
+  const       5.54380      1.08641       5.103    3.35e-07 ***
+  educ       -0.314657     0.0651096    -4.833    1.35e-06 ***
+  exper       0.848737     0.156986      5.406    6.43e-08 ***
+  expersq    -0.0773003    0.0229217    -3.372    0.0007   ***
+  black       0.311361     0.281534      1.106    0.2687  
+
+Mean dependent var   2.691322   S.D. dependent var   0.573502
+Log-likelihood      -907.8572   Akaike criterion     1835.714
+Schwarz criterion    1890.198   Hannan-Quinn         1855.874
+
+Number of cases 'correctly predicted' = 1366 (79.6%)
+Likelihood ratio test: Chi-square(8) = 583.722 [0.0000]  
+\end{scodebit}
+\end{script}
+
 Example~\ref{ex:mlogit} reproduces Table 15.2 in
 \cite{wooldridge-panel}, based on data on career choice from
 \cite{keane97}.  The dependent variable is the occupational status of
@@ -404,70 +459,22 @@ an individual (0 = in school; 1 = not in school and not working; 2 =
 working), and the explanatory variables are education and work
 experience (linear and square) plus a ``black'' binary variable.  The
 full data set is a panel; here the analysis is confined to a
-cross-section for 1987.  For explanations of the matrix methods
-employed in the script, see chapter~\ref{chap:matrices}.
+cross-section for 1987. 
 
-\begin{script}[htbp]
-  \caption{Multinomial logit}
-  \label{ex:mlogit}
-\begin{scode}
-function series mlogitlogprobs (series y, matrix X, matrix theta)
-  scalar n = max(y)
-  scalar k = cols(X)
-  matrix b = mshape(theta,k,n)
-  matrix tmp = X*b
-  series ret = -ln(1 + sumr(exp(tmp)))
+\section{Bivariate probit}
+\label{sec:biprobit}
 
-  loop for i=1..n --quiet
-    series x = tmp[,i]
-    ret += (y=$i)? x : 0 
-  endloop
-
-  return ret
-end function
-
-open keane.gdt
-
-# for the manual mle variant the dep. var. must be 0-based
-status = status - 1
-# and we must exclude missing values
-smpl (year=87 && ok(status)) --restrict
-
-matrix X = { const, educ, exper, expersq, black }
-scalar k = cols(X)
-matrix theta = zeros(2*k, 1)
-
-mle loglik = mlogitlogprobs(status,X,theta)
-  params theta
-end mle --hessian
-
-# Compare the built-in command (in this case we don't need
-# status to be 0-based, and NAs are handled correctly)
-smpl --full
-status = status + 1
-smpl (year=87) --restrict
-logit status 0 educ exper expersq black --multinomial
-\end{scode}
-%$
-\end{script}
-
+FIXME: todo.
 
 \section{The Tobit model}
 \label{sec:tobit}
 
 The Tobit model is used when the dependent variable of a model is
-\emph{censored}.\footnote{We assume here that censoring occurs from
-  below at 0. Censoring from above, or at a point different from zero,
-  can be rather easily handled by re-defining the dependent variable
-  appropriately. For the more general case of two-sided censoring the
-  \cmd{intreg} command may be used (see below).}  
-Assume a latent variable $y^*_i$ can be described
+\emph{censored}. Assume a latent variable $y^*_i$ can be described
 as
-%
 \[
   y^*_i = \sum_{j=1}^k x_{ij} \beta_j + \varepsilon_i ,
 \]
-%
 where $\varepsilon_i \sim N(0,\sigma^2)$. If $y^*_i$ were observable,
 the model's parameters could be estimated via ordinary least squares.
 On the contrary, suppose that we observe $y_i$, defined as
@@ -475,21 +482,23 @@ On the contrary, suppose that we observe $y_i$, defined as
 \begin{equation}
   \label{eq:tobit}
   y_i = \left\{ 
-    \begin{array}{ll} 
-      y^*_i & \mathrm{for} \quad y^*_i > 0 \\ 
-      0 & \mathrm{for} \quad y^*_i \le 0 
+    \begin{array}{ll}
+      a & \mathrm{for} \quad y^*_i \le a \\
+      y^*_i & \mathrm{for} \quad a < y^*_i < b \\ 
+      b & \mathrm{for} \quad y^*_i \ge b 
     \end{array}
     \right. 
 \end{equation}
-%
-In this case, regressing $y_i$ on the $x_i$s does not yield
-consistent estimates of the parameters $\beta$, because the
-conditional mean $E(y_i|x_i)$ is not equal to $\sum_{j=1}^k x_{ij}
-\beta_j$.  It can be shown that restricting the sample to non-zero
-observations would not yield consistent estimates either. The solution
-is to estimate the parameters via maximum likelihood. The syntax is
-simply
-%
+In most cases found in the applied literature, $a=0$ and $b=\infty$,
+so in practice negative values of $y^*_i$ are not observed and are
+replaced by zeros.
+
+In this case, regressing $y_i$ on the $x_i$s does not yield consistent
+estimates of the parameters $\beta$, because the conditional mean
+$E(y_i|x_i)$ is not equal to $\sum_{j=1}^k x_{ij} \beta_j$.  It can be
+shown that restricting the sample to non-zero observations would not
+yield consistent estimates either. The solution is to estimate the
+parameters via maximum likelihood. The syntax is simply
 \begin{code}
 tobit depvar indvars
 \end{code}
@@ -504,8 +513,16 @@ only holds for uncensored observations, that is, when $y_i>0$.
 An important difference between the Tobit estimator and OLS is that
 the consequences of non-normality of the disturbance term are much
 more severe: non-normality implies inconsistency for the Tobit
-estimator. For this reason, the output for the tobit model includes
+estimator. For this reason, the output for the Tobit model includes
 the \cite{chesher-irish87} normality test by default.
+
+The general case in which $a$ is nonzero and/or $b$ is finite can be
+handled by using the options \option{llimit} and \option{rlimit}. So,
+for example,
+\begin{code}
+tobit depvar indvars --llimit=10
+\end{code}
+would tell \app{gretl} that the left bound $a$ is set to 10.
 
 \section{Interval regression}
 \label{sec:intreg}
@@ -960,7 +977,7 @@ option flags \verb|--exponential|, \verb|--loglogistic| or
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
 section 20.3 of \cite{wooldridge-panel}, and it concerns criminal
-recidivism.\footnote{Germ·n RodrÌguez of Princeton University has a
+recidivism.\footnote{Germ√°n Rodr√≠guez of Princeton University has a
   page disussing this example and displaying estimates from
   \app{Stata} at \url{http://data.princeton.edu/pop509a/recid1.html}.}
 The data (filename \texttt{recid.gdt}) pertain to a sample of 1,445
