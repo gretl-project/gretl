@@ -1144,16 +1144,45 @@ static int *make_op_list (const int *list, double ***pZ,
     return biglist;
 }
 
-static void list_purge_const (int *list)
+static void list_purge_const (int *list, double **pZ,
+			      DATAINFO *pdinfo)
 {
     int i;
+
+    /* remove the constant if present first */
 
     for (i=2; i<=list[0]; i++) {
 	if (list[i] == 0) {
 	    gretl_list_delete_at_pos(list, i);
-	    return;
+	    break;
 	}
     }
+
+    /* drop other stuff possibly collinear with the constant 
+       (eg sets of dummies) */
+
+    int ok = 0;
+    int depvar = list[1];
+    MODEL tmpmod;
+    
+    list[1] = 0;
+    gretl_model_init(&tmpmod);
+
+    while (!ok) {
+	tmpmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	ok = (tmpmod.ess > 1.0e-6);
+	if (!ok) {
+	    for (i=tmpmod.ncoeff-1; i>0; i--) {
+		if (fabs(tmpmod.coeff[i]) > 1.0e-06) {
+		    gretl_list_delete_at_pos(list, i+2);
+		    break;
+		}
+	    }
+	}
+    }
+
+    list[1] = depvar;
+
 }
 
 static int check_for_missing_dummies (MODEL *pmod, int *dlist)
@@ -1203,7 +1232,7 @@ static MODEL ordered_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (!model.errcode) {
 	/* remove the constant from the incoming list, if present */
-	list_purge_const(list);
+	list_purge_const(list, *pZ, pdinfo);
 
 	/* construct augmented regression list, including dummies 
 	   for the level of the dependent variable

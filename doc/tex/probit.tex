@@ -299,12 +299,7 @@ automatically the intercept if present. However, it may happen that
 the user inadventently specifies a list of regressors that may be
 combined in such a way to produce a constant (for example, by using a
 full set of dummy variables for a discrete factor). If this happens,
-the most likely outcome of estimation is an error message stating that
-the variance-covariance matrix of the parameters is not positive
-definite. However, in some cases \app{gretl} may fail to detect the
-singularity and report a bogus estimate. This situation, however, is
-easily spotted by the fact that in these cases the standard errors
-associated with the $\alpha_i$ parameters will be inordinately large.
+\app{gretl} will also drop any offending regressors.
 
 \begin{script}[htbp]
   \caption{Ordered probit model}
@@ -1013,7 +1008,7 @@ option flags \verb|--exponential|, \verb|--loglogistic| or
 Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
 section 20.3 of \cite{wooldridge-panel}, and it concerns criminal
-recidivism.\footnote{Germán Rodríguez of Princeton University has a
+recidivism.\footnote{Germ\'an Rodr\'iguez of Princeton University has a
   page disussing this example and displaying estimates from
   \app{Stata} at \url{http://data.princeton.edu/pop509a/recid1.html}.}
 The data (filename \texttt{recid.gdt}) pertain to a sample of 1,445
