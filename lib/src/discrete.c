@@ -1144,12 +1144,14 @@ static int *make_op_list (const int *list, double ***pZ,
     return biglist;
 }
 
-static void list_purge_const (int *list, double **pZ,
+static void list_purge_const (int *list, double **Z,
 			      DATAINFO *pdinfo)
 {
-    int i;
+    MODEL tmpmod;
+    int depvar = list[1];
+    int i, ok = 0;
 
-    /* remove the constant if present first */
+    /* first remove the constant itself, if present */
 
     for (i=2; i<=list[0]; i++) {
 	if (list[i] == 0) {
@@ -1160,16 +1162,11 @@ static void list_purge_const (int *list, double **pZ,
 
     /* drop other stuff possibly collinear with the constant 
        (eg sets of dummies) */
-
-    int ok = 0;
-    int depvar = list[1];
-    MODEL tmpmod;
     
-    list[1] = 0;
-    gretl_model_init(&tmpmod);
+    list[1] = 0; /* substitute the constant as dependent */
 
     while (!ok) {
-	tmpmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
+	tmpmod = lsq(list, Z, pdinfo, OLS, OPT_A);
 	ok = (tmpmod.ess > 1.0e-6);
 	if (!ok) {
 	    for (i=tmpmod.ncoeff-1; i>0; i--) {
@@ -1179,10 +1176,11 @@ static void list_purge_const (int *list, double **pZ,
 		}
 	    }
 	}
+	clear_model(&tmpmod);
     }
 
+    /* reinstate the real dependent variable */
     list[1] = depvar;
-
 }
 
 static int check_for_missing_dummies (MODEL *pmod, int *dlist)
