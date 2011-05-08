@@ -406,8 +406,13 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 	u2[i] = probmod.uhat[probmod.t1 + i];
     }
 
+#if 0
+    /* this seems to yield no real benefit after all */
     bp->arho = match_residuals(T, u1, u2, bp->mask);
     bp->arho = atanh(bp->arho);
+#else
+    bp->arho = 0;
+#endif
     
  bailout:
 
