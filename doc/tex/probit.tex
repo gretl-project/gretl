@@ -103,10 +103,14 @@ probit GRADE const GPA TUCE PSI
 As an example, we reproduce the results given in chapter 21 of
 \cite{greene00}, where the effectiveness of a program for teaching
 economics is evaluated by the improvements of students' grades.
-Running the code in example \ref{simple-QR} gives the following
-output:
-\begin{code}
+Running the code in example \ref{simple-QR} gives the output reported
+in Table \ref{tab:logit-probit}; note that, for the probit model, a 
+conditional moment test on skewness and kurtosis is printed out
+automatically as a test for normality.
 
+\begin{table}
+  \centering
+\begin{code}
 Model 1: Logit estimates using the 32 observations 1-32
 Dependent variable: GRADE
 
@@ -157,7 +161,14 @@ Dependent variable: GRADE
   Actual 0  18    3
          1   3    8
 
+Test for normality of residual -
+  Null hypothesis: error is normally distributed
+  Test statistic: Chi-square(2) = 3.61059
+  with p-value = 0.164426
 \end{code}
+  \caption{Example logit and probit}
+  \label{tab:logit-probit}
+\end{table}
 
 In this context, the \dollar{uhat} accessor function takes a special
 meaning: it returns generalized residuals as defined in
@@ -280,15 +291,9 @@ on the characteristics $x_i$, is then given by
 %
 The unknown parameters $\alpha_j$ are estimated jointly with the
 $\beta$s via maximum likelihood.  The $\hat{\alpha}_j$ estimates are
-reported by \app{gretl} as \texttt{cut1}, \texttt{cut2} and so on.
-
-In order to apply these models in \app{gretl}, the dependent variable
-must either take on only non-negative integer values, or be explicitly
-marked as discrete.  (In case the variable has non-integer values, it
-will be recoded internally.)  Note that \app{gretl} does not provide a
-separate command for ordered models: the \texttt{logit} and
-\texttt{probit} commands automatically estimate the ordered version if
-the dependent variable is acceptable, but not binary.
+reported by \app{gretl} as \texttt{cut1}, \texttt{cut2} and so on. For
+the probit variant, a conditional moment test for normality
+constructed in the spirit of \cite{chesher-irish87} is also included.
 
 Note that the $\alpha_j$ parameters can be shifted arbitrarily by
 adding a constant to $z_i$, so the model is under-identified if there
@@ -300,6 +305,14 @@ the user inadventently specifies a list of regressors that may be
 combined in such a way to produce a constant (for example, by using a
 full set of dummy variables for a discrete factor). If this happens,
 \app{gretl} will also drop any offending regressors.
+
+In order to apply these models in \app{gretl}, the dependent variable
+must either take on only non-negative integer values, or be explicitly
+marked as discrete.  (In case the variable has non-integer values, it
+will be recoded internally.)  Note that \app{gretl} does not provide a
+separate command for ordered models: the \texttt{logit} and
+\texttt{probit} commands automatically estimate the ordered version if
+the dependent variable is acceptable, but not binary.
 
 \begin{script}[htbp]
   \caption{Ordered probit model}
@@ -608,8 +621,10 @@ both cases via the \dollar{lnl} accessor, and then referring twice the
 difference between the two log-likelihoods to the chi-square
 distribution with $k$ degrees of freedom, where $k$ is the number of
 additional regressors (see the \texttt{pvalue} command in the
-\GCR). An example is contained in the sample script \texttt{wtp.inp},
-provided with the \app{gretl} distribution.
+\GCR). Also included is a conditional moment normality test, similar
+to those provided for the probit, ordered probit and Tobit models (see
+above).  An example is contained in the sample script
+\texttt{wtp.inp}, provided with the \app{gretl} distribution.
 
 \begin{script}[ht]
   \caption{Interval model on artificial data}
@@ -784,7 +799,6 @@ heckit lww X ; LFP Z --two-step
 \end{scode}
 \end{script}
 
-
 Example \ref{ex:heckit} shows two estimates from the dataset used in
 \cite{mroz87}: the first one replicates Table 22.7 in
 \cite{greene03},\footnote{Note that the estimates given by \app{gretl}
@@ -814,7 +828,9 @@ which
   literature, the offset is known as ``population at risk''. Syntax:
   \texttt{poisson depvar indep ; offset}.
 \item The Poisson model has the peculiar feature that $E(y_i | x_i) =
-  V(y_i | x_i)$; this may be at odds with the data (overdirspersion).
+  V(y_i | x_i)$; this may be at odds with the data
+  (overdirspersion). Overdispersion can be attributed to individual
+  heterogeneity.
 \item Standard solution to the overdispersion problem: use another
   probability distribution. Gamma mixture leads to
   \begin{equation}
@@ -824,8 +840,10 @@ which
   \left[ \frac{\mu_i} {\mu_i + \alpha }\right]^{y_i}
   \left[ \frac{\alpha} {\mu_i + \alpha }\right]^{\alpha}
 \end{equation}
-which is known as the ``Negative Binomial Model''.  \app{Gretl}
-command: \texttt{negbin depvar indep}.
+which is known as the ``Negative Binomial Model''. The parameter
+$\alpha$ is a positive real number, which measures the degree of
+heterogeneity between indviduals. \app{Gretl} command: \texttt{negbin
+  depvar indep}.
 \item There is also a less used variant of the negative binomial
   model. To distinguish between the two, the model \eqref{eq:negbin2}
   is termed ``Type 2''.  \app{Gretl} implements model 1 via
