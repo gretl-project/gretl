@@ -562,7 +562,7 @@ static int biprob_prelim (const double *theta, bp_container *bp)
 
     bp->arho = theta[bp->npar - 1];
 
-    if (fabs(bp->arho) > 16) {
+    if (fabs(bp->arho) > 18) {
 	return 1; /* suitable error code? */
     }
 
@@ -701,13 +701,25 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
     return 0;
 }
 
-/* analytical hessian */
+/* 
+   Analytical Hessian for the biprobit model; it is assumed that 
+   the score matrix has already been computed and is safely stored 
+   in the container. This is important because we use a neat trick:
+
+   \frac{\partial^2 ln f(x)}{\partial x \partial x'} =
+   \frac{\partial^2 f(x)}{\partial x \partial x'} - gg'
+
+   where g = \frac{\partial ln f(x)}{\partial x}.
+   In practice, we just compute explicitly the difference between
+   the OPG and the actual Hessain, and then reconstruct H from 
+   there.
+ */
 
 int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 {
     bp_container *bp = (bp_container *) ptr;
     double a, b, P, f, d1, d2, da, tmp, u_ab, u_ba;
-    double ca, sa, ssa, x;
+    double ca, sa, ssa, rho, x;
     double h11 = 0;
     double h12 = 0;
     double h13 = 0;
@@ -728,6 +740,8 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	gretl_matrix_zero(bp->sscore);
 	gretl_matrix_block_zero(bp->B);
 
+	/* first, put the OPG matrix into H */
+
 	err = gretl_matrix_multiply_mod(bp->score, GRETL_MOD_TRANSPOSE,
 					bp->score, GRETL_MOD_NONE,
 					H, GRETL_MOD_NONE);
@@ -738,6 +752,15 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
     }
 
     for (t=0; t<bp->nobs; t++) {
+
+	/* Warning: it is important to handle properly the four
+	   cases (00, 01, 10, 11) and the associated sign switches;
+	   this may be very tricky. The code below should be bug-free
+	   from this point of view, but you never know. Kudos to
+	   Claudia Pigini for going through this with incredible 
+	   perseverance.
+	*/
+
 	a = gretl_vector_get(bp->fitted1, t);
 	b = gretl_vector_get(bp->fitted2, t);
 	
@@ -745,35 +768,35 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	b = bp->s2[t] ? b : -b;
 	eqt = (bp->s1[t] == bp->s2[t]);
 	ssa = eqt ? sa : -sa;
+	rho = ssa/ca;
+	P = bvnorm_cdf(rho, a, b);
 	
-	P = bvnorm_cdf(ssa/ca, a, b);
-	
-	/* score */
+	/* score (for atan(rho) we use the precomputed one) */
 	
 	u_ba = (ca*b - ssa*a);
 	u_ab = (ca*a - ssa*b);
-	f = ca/M_2PI * exp(-0.5* (a*a + u_ba*u_ba));
 
 	d1 = exp(-0.5*a*a) * normal_cdf(u_ba) / (P * SQRT_2_PI);
 	d2 = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);
-	da = f / (P*ca*ca);
-	da = eqt ? da : -da;
+
+	d1 = bp->s1[t] ? d1 : -d1;
+	d2 = bp->s2[t] ? d2 : -d2;
+
+	f = ca/M_2PI * exp(-0.5* (a*a + u_ba*u_ba));
+
+	da = gretl_matrix_get(bp->score,t, k1+k2);
+
+	/* hessian + opg */
 
 	h11 = -(a * d1 + sa*ca*da);
-
-	tmp = f/P;
-	h12 = (eqt ? tmp : -tmp);
-
-	tmp = -da * (ca * u_ab);
-	h13 = (bp->s1[t] ? tmp : -tmp);
-
+	h12 = (eqt ? f/P : -f/P);
+	h13 = (bp->s1[t] ? -da * (ca * u_ab) : da * (ca * u_ab));
 	h22 = -(b*d2 + sa*ca*da);
-
-	tmp = -da * (ca * u_ba);
-	h23 = (bp->s2[t] ? tmp : -tmp);
+	h23 = (bp->s2[t] ? -da * (ca * u_ba) : da * (ca * u_ba));
 
 	tmp = (eqt ? u_ba*u_ab : -u_ba*u_ab);
-	h33 += da * (ca * tmp - sa);
+	tmp = da * (ca * tmp - sa) /ca;
+	h33 += tmp;
 
 	for (i=0; i<bp->k1; i++) {
 	    x = gretl_matrix_get(bp->reg1, t, i);
@@ -819,7 +842,7 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
     gretl_matrix_print(bp->H13, "H13");
     gretl_matrix_print(bp->H22, "H22");
     gretl_matrix_print(bp->H23, "H23");
-    fprintf(stderr, "h33 = %12.6f\n", h33);
+    fprintf(stderr, "ca = %g, sa = %g, h33 = %12.6f\n", ca, sa, h33);
     gretl_matrix_print(H, "OPG");
 #endif
 
