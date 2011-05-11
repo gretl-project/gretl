@@ -660,27 +660,20 @@ static int biprob_score (double *theta, double *s, int npar, BFGS_CRIT_FUNC ll,
 	d1 = exp(-0.5*a*a) * normal_cdf(u_ba) / (P * SQRT_2_PI);
 	d2 = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);
 	da = f / (P*ca*ca);
+
+	d1 = bp->s1[i] ? d1 : -d1;
+	d2 = bp->s2[i] ? d2 : -d2;
 	da = eqt ? da : -da;
 
 	for (j=0; j<bp->k1; j++) {
-	    if (bp->s1[i]) {
-		tmp = gretl_matrix_get(bp->reg1, i, j) * d1;
-	    } else {
-		tmp = -gretl_matrix_get(bp->reg1, i, j) * d1;
-	    }
-	    
+	    tmp = gretl_matrix_get(bp->reg1, i, j) * d1;
 	    gretl_matrix_set(bp->score, i, j, tmp);
 	    tmp += gretl_vector_get(bp->sscore, j);
 	    gretl_vector_set(bp->sscore, j, tmp);
 	}
 	
 	for (j=0; j<bp->k2; j++) {
-	    if (bp->s2[i]) {
-		tmp = gretl_matrix_get(bp->reg2, i, j) * d2;
-	    } else {
-		tmp = -gretl_matrix_get(bp->reg2, i, j) * d2;
-	    }
-
+	    tmp = gretl_matrix_get(bp->reg2, i, j) * d2;
 	    gretl_matrix_set(bp->score, i, bp->k1 + j, tmp);
 	    tmp += gretl_vector_get(bp->sscore, bp->k1 + j);
 	    gretl_vector_set(bp->sscore, bp->k1 + j, tmp);
@@ -777,10 +770,7 @@ int biprobit_hessian (double *theta, gretl_matrix *H, void *ptr)
 	u_ab = (ca*a - ssa*b);
 
 	d1 = exp(-0.5*a*a) * normal_cdf(u_ba) / (P * SQRT_2_PI);
-	d2 = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);
-
-	d1 = bp->s1[t] ? d1 : -d1;
-	d2 = bp->s2[t] ? d2 : -d2;
+	d2 = exp(-0.5*b*b) * normal_cdf(u_ab) / (P * SQRT_2_PI);       
 
 	f = ca/M_2PI * exp(-0.5* (a*a + u_ba*u_ba));
 
