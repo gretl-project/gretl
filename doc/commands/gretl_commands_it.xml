@@ -8180,10 +8180,11 @@
       l'intervallo completo del campione.
       </para>
  
-      <para>Si noti che i vincoli sul campione di solito sono cumulativi:
-      il valore di riferimento di ogni comando <lit>smpl</lit> è il campione
-      attuale. Se si vuole che il comando funzioni sostituendo i vincoli esistenti,
-      così che ogni vincolo si aggiunga a quelli già impostati, occorre usare
+      <para>Si noti che i vincoli sul campione di solito sono
+      cumulativi: il valore di riferimento di ogni comando
+      <lit>smpl</lit> è il campione attuale, così che ogni vincolo si
+      aggiunge a quelli già impostati. Se si vuole che il comando
+      funzioni sostituendo i vincoli esistenti, occorre usare
       l'opzione <lit>--replace</lit> alla fine del comando.</para>
 
       <para>La variabile interna <lit>obs</lit> può essere usata con la
@@ -8201,7 +8202,8 @@
         smpl obs!="USA" --restrict
       </code>
         
-        <para>scarterà l'osservazione a cui è associata l'etichetta <quote>USA</quote>.
+        <para>scarterà l'osservazione a cui è associata l'etichetta
+        <quote>USA</quote>.
         </para>
 
       <para>Per le forme <lit>--dummy</lit>, <lit>--restrict</lit> e
