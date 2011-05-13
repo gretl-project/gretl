@@ -684,10 +684,10 @@ static int add_series_from_file (const char *path, int src,
 
     /* formulate name of new variable to add */
     if (request->prog == TRAMO_SEATS) {
-	sprintf(varname, "%.5s_%.2s", pdinfo->varname[0], 
+	sprintf(varname, "%.8s_%.2s", pdinfo->varname[0], 
 		tramo_save_strings[src]);
     } else {
-	sprintf(varname, "%.4s_%s", pdinfo->varname[0], 
+	sprintf(varname, "%.8s_%s", pdinfo->varname[0], 
 		x12a_save_strings[src]);
     }
 
