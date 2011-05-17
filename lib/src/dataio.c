@@ -1464,22 +1464,22 @@ int write_data (const char *fname, int *list,
 	}
     } else if (fmt == GRETL_FMT_OCTAVE) { 
 	/* GNU Octave: write out data as several matrices (one per
-	   series) in the same file*/
+	   series) in the same file */
 
 	for (i=1; i<=list[0]; i++) {
+	    v = list[i];
 	    fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n", 
-		    pdinfo->varname[list[i]], n);
+		    pdinfo->varname[v], n);
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		v = list[i];
 		xx = Z[v][t];
 		if (na(xx)) {
 		    fputs("NaN ", fp);
 		} else 	if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.15g ", Z[v][t]);
+		    fprintf(fp, "%.15g ", xx);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]); 
+		    fprintf(fp, "%.*f ", pmax[i-1], xx); 
 		}
-		if ((t==pdinfo->t2) || (t%4 == 0)) {
+		if (t == pdinfo->t2 || t % 4 == 0) {
 		    fputc('\n', fp);
 		}
 	    }
