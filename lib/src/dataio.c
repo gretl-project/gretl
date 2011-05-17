@@ -1471,7 +1471,10 @@ int write_data (const char *fname, int *list,
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=1; i<=list[0]; i++) {
 		v = list[i];
-		if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		xx = Z[v][t];
+		if (na(xx)) {
+		    fputs("NaN ", fp);
+		} else 	if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.15g ", Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]); 
