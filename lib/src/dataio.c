@@ -1463,13 +1463,13 @@ int write_data (const char *fname, int *list,
 	    }
 	}
     } else if (fmt == GRETL_FMT_OCTAVE) { 
-	/* GNU Octave: write out data as a matrix */
-	const char *matname = (opt & OPT_F)? "gretldata" : "X";
+	/* GNU Octave: write out data as several matrices (one per
+	   series) in the same file*/
 
-	fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: %d\n", 
-		matname, n, list[0]);
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    for (i=1; i<=list[0]; i++) {
+	for (i=1; i<=list[0]; i++) {
+	    fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n", 
+		    pdinfo->varname[list[i]], n);
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		v = list[i];
 		xx = Z[v][t];
 		if (na(xx)) {
@@ -1479,8 +1479,10 @@ int write_data (const char *fname, int *list,
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]); 
 		}
+		if ((t==pdinfo->t2) || (t%4 == 0)) {
+		    fputc('\n', fp);
+		}
 	    }
-	    fputc('\n', fp);
 	}
     } else if (fmt == GRETL_FMT_DAT) { 
 	/* PcGive: data file with load info */
