@@ -827,31 +827,52 @@ which
   proportional to the offset variable $n_i$. In the epidemiology
   literature, the offset is known as ``population at risk''. Syntax:
   \texttt{poisson depvar indep ; offset}.
-\item The Poisson model has the peculiar feature that $E(y_i | x_i) =
-  V(y_i | x_i) = \mu_i$; this may be at odds with the data
-  (overdirspersion). Overdispersion can be attributed to individual
-  heterogeneity.
-\item Standard solution to the overdispersion problem: use another
-  probability distribution. Gamma mixture leads to
+\end{itemize}
+
+In the Poisson model, $E(y_i | x_i) = V(y_i | x_i) = \mu_i$, that is,
+the conditional mean equals the conditional variance by
+construction. In many cases, this feature is at odds with the data, as
+the conditional variance is often larger than the mean (this
+phenomenon is called ``overdirspersion''). The output from the
+\texttt{poisson} command automatically includes a conditional moment
+test for overdispersion (as per \citet{davidson-mackinnon04}, section
+11.5), which is printed automatically after estimation.
+
+Overdispersion can be attributed to unmodeled heterogeneity between
+individuals. Two data points with the same observable characteristics
+$x_i = x_j$ may have different means because of some unobserved scale
+factor $s_i \ne s_j$ so that
+\[
+   E(y_i | x_i, s_i) = \mu_i s_i \ne \mu_j s_j = E(y_j | x_j, s_j)
+\]
+even though $\mu_i = \mu_j$. It is often assumed that $s_i$ can be
+represented as a gamma random variable with mean 1 and variance
+$\alpha$: the parameter $\alpha$ is estimated together with the vector
+$\beta$, and measures the degree of heterogeneity between indviduals.
+
+In this case, the conditional probability for $y_i$ given
+$x_i$ can be shown to be
   \begin{equation}
     \label{eq:negbin2}
   P(y_i | x_i) = 
-  \frac{\Gamma(y_i + \alpha)}{\Gamma(\alpha)\Gamma(y_i + 1)}
-  \left[ \frac{\mu_i} {\mu_i + \alpha }\right]^{y_i}
-  \left[ \frac{\alpha} {\mu_i + \alpha }\right]^{\alpha}
+  \frac{\Gamma(y_i + \alpha^{-1})}{\Gamma(\alpha^{-1})\Gamma(y_i + 1)}
+  \left[ \frac{\mu_i} {\mu_i + \alpha^{-1} }\right]^{y_i}
+  \left[ \frac{\alpha^{-1}} {\mu_i + \alpha^{-1} }\right]^{\alpha^{-1}}
 \end{equation}
-which is known as the ``Negative Binomial Model''. The parameter
-$\alpha$ is a positive real number, which measures the degree of
-heterogeneity between indviduals. The conditional mean is still $E(y_i
-| x_i) = \mu_i$, but the variance equals $V(y_i | x_i) = \mu_i \left(
-  1 + \mu_i/\alpha \right)$. The \app{gretl} command for this model is
-\texttt{negbin depvar indep}.
+which is known as the ``Negative Binomial Model''. The conditional
+mean is still $E(y_i | x_i) = \mu_i$, but the variance equals $V(y_i |
+x_i) = \mu_i \left( 1 + \mu_i \alpha \right)$. The \app{gretl} command
+for this model is \texttt{negbin depvar indep}.
+
+\begin{itemize}
 \item There is also a less used variant of the negative binomial
   model, in which the conditional variance is a scalar multiple of the
   conditional mean, that is $V(y_i | x_i) = \mu_i \left( 1 + \gamma
   \right)$. To distinguish between the two, the model
   \eqref{eq:negbin2} is termed ``Type 2''.  \app{Gretl} implements
   model 1 via the option \option{model1}.
+\item A script which exemplifies the above models is included among
+  \app{gretl}'s sample scripts, under the name \texttt{camtriv.inp}.
 \end{itemize}
 
 FIXME: expand.
