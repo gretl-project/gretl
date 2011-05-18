@@ -815,7 +815,7 @@ so a probabilistic description of $y_i | x_i$ must hinge on some
 discrete distribution. The most common model is the Poisson model, in
 which
 \begin{eqnarray*}
-  P(y_i = Y | x_i) & = & e^{\mu_i} \frac{\mu_i^Y}{Y!} \\
+  P(y_i | x_i) & = & e^{\mu_i} \frac{\mu_i^Y}{Y!} \\
   \mu_i & = & \exp\left( \sum_j x_{ij} \beta_j \right)
 \end{eqnarray*}
 
@@ -828,26 +828,30 @@ which
   literature, the offset is known as ``population at risk''. Syntax:
   \texttt{poisson depvar indep ; offset}.
 \item The Poisson model has the peculiar feature that $E(y_i | x_i) =
-  V(y_i | x_i)$; this may be at odds with the data
+  V(y_i | x_i) = \mu_i$; this may be at odds with the data
   (overdirspersion). Overdispersion can be attributed to individual
   heterogeneity.
 \item Standard solution to the overdispersion problem: use another
   probability distribution. Gamma mixture leads to
   \begin{equation}
     \label{eq:negbin2}
-  P(y_i = Y | x_i) = 
+  P(y_i | x_i) = 
   \frac{\Gamma(y_i + \alpha)}{\Gamma(\alpha)\Gamma(y_i + 1)}
   \left[ \frac{\mu_i} {\mu_i + \alpha }\right]^{y_i}
   \left[ \frac{\alpha} {\mu_i + \alpha }\right]^{\alpha}
 \end{equation}
 which is known as the ``Negative Binomial Model''. The parameter
 $\alpha$ is a positive real number, which measures the degree of
-heterogeneity between indviduals. \app{Gretl} command: \texttt{negbin
-  depvar indep}.
+heterogeneity between indviduals. The conditional mean is still $E(y_i
+| x_i) = \mu_i$, but the variance equals $V(y_i | x_i) = \mu_i \left(
+  1 + \mu_i/\alpha \right)$. The \app{gretl} command for this model is
+\texttt{negbin depvar indep}.
 \item There is also a less used variant of the negative binomial
-  model. To distinguish between the two, the model \eqref{eq:negbin2}
-  is termed ``Type 2''.  \app{Gretl} implements model 1 via
-  \texttt{negbin depvar indep} \option{model1}.
+  model, in which the conditional variance is a scalar multiple of the
+  conditional mean, that is $V(y_i | x_i) = \mu_i \left( 1 + \gamma
+  \right)$. To distinguish between the two, the model
+  \eqref{eq:negbin2} is termed ``Type 2''.  \app{Gretl} implements
+  model 1 via the option \option{model1}.
 \end{itemize}
 
 FIXME: expand.
