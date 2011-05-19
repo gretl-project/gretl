@@ -964,9 +964,9 @@ gretl_matrix *gretl_matrix_read_from_text (const char *fname, int *err)
  * @A: matrix.
  * @fname: name of file to write.
  *
- * Writes the matrix @A to a plain text file by the name @fname; the 
- * column separator is the tab. The number of rows and columns are 
- * written on the first line of the file (which comes in handy for 
+ * Writes the matrix @A to a plain text file by the name @fname; the
+ * column separator is the tab. The number of rows and columns are
+ * written on the first line of the file (which comes in handy for
  * reading the matrix).
  *
  * Returns: 0 on successful completion, non-zero code on error.
@@ -978,6 +978,7 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
     int c = A->cols;
     int i, j, err = 0;
     FILE *fp;
+    char d = '\t';
 
     fname = gretl_maybe_switch_dir(fname);
 
@@ -987,15 +988,19 @@ int gretl_matrix_write_as_text (gretl_matrix *A, const char *fname)
 	return E_FOPEN;
     }
 
-    fprintf(fp, "%d\t%d\n", r, c);
+    fprintf(fp, "%d%c%d\n", r, d, c);
     
     gretl_push_c_numeric_locale();
 
     for (i=0; i<r; i++) {
 	for (j=0; j<c; j++) {
-	    fprintf(fp, "%26.18E\t", gretl_matrix_get(A, i, j));
+	    fprintf(fp, "%26.18E", gretl_matrix_get(A, i, j));
+	    if (j == c-1) {
+		fputc('\n', fp); 
+	    } else {
+		fputc(d, fp);
+	    }
 	}
-	fputc('\n', fp);
     }
 
     gretl_pop_c_numeric_locale();
