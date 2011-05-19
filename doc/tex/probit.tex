@@ -815,7 +815,7 @@ so a probabilistic description of $y_i | x_i$ must hinge on some
 discrete distribution. The most common model is the Poisson model, in
 which
 \begin{eqnarray*}
-  P(y_i | x_i) & = & e^{\mu_i} \frac{\mu_i^Y}{Y!} \\
+  P(y_i = Y | x_i) & = & e^{\mu_i} \frac{\mu_i^Y}{Y!} \\
   \mu_i & = & \exp\left( \sum_j x_{ij} \beta_j \right)
 \end{eqnarray*}
 
@@ -833,7 +833,7 @@ In the Poisson model, $E(y_i | x_i) = V(y_i | x_i) = \mu_i$, that is,
 the conditional mean equals the conditional variance by
 construction. In many cases, this feature is at odds with the data, as
 the conditional variance is often larger than the mean (this
-phenomenon is called ``overdirspersion''). The output from the
+phenomenon is called ``overdispersion''). The output from the
 \texttt{poisson} command includes a conditional moment test for
 overdispersion (as per \citet{davidson-mackinnon04}, section 11.5),
 which is printed automatically after estimation.
@@ -848,7 +848,7 @@ factor $s_i \ne s_j$ so that
 even though $\mu_i = \mu_j$. It is often assumed that $s_i$ can be
 represented as a gamma random variable with mean 1 and variance
 $\alpha$: the parameter $\alpha$ is estimated together with the vector
-$\beta$, and measures the degree of heterogeneity between indviduals.
+$\beta$, and measures the degree of heterogeneity between individuals.
 
 In this case, the conditional probability for $y_i$ given
 $x_i$ can be shown to be
@@ -884,7 +884,7 @@ In some contexts we wish to apply econometric methods to measurements
 of the duration of certain states. Classic examples include the
 following:
 \begin{itemize}
-\item From enginering, the ``time to failure'' of electronic or
+\item From engineering, the ``time to failure'' of electronic or
   mechanical components: how long do, say, computer hard drives
   last until they malfunction?
 \item From the medical realm: how does a new treatment affect the
@@ -1080,7 +1080,7 @@ Interpreting the coefficients in a duration model requires some care,
 and we will work through an illustrative case. The example comes from
 section 20.3 of \cite{wooldridge-panel}, and it concerns criminal
 recidivism.\footnote{Germ\'an Rodr\'iguez of Princeton University has a
-  page disussing this example and displaying estimates from
+  page discussing this example and displaying estimates from
   \app{Stata} at \url{http://data.princeton.edu/pop509a/recid1.html}.}
 The data (filename \texttt{recid.gdt}) pertain to a sample of 1,445
 convicts released from prison between July 1, 1977 and June 30,
@@ -1164,7 +1164,7 @@ Log-likelihood      -1597.059   Akaike criterion     3218.118
 \end{script}
 
 On a priori grounds, however, we may doubt the monotonic decline in
-hazard that is simplied by the Weibull specification. Even if a person
+hazard that is implied by the Weibull specification. Even if a person
 is liable to return to crime, it seems relatively unlikely that he
 would do so straight out of prison. In the data, we find that only 2.6
 percent of those followed were rearrested within 3 months. The
@@ -1181,7 +1181,7 @@ interpretation of the sign right.  Recall that $X\beta$ enters
 negatively into the intermediate variable $w$. The Weibull hazard is 
 $\lambda(w_i) = e^{w_i}$, so being married reduces the hazard of
 re-offending, or in other words lengthens the expected duration out of
-prison.  The same qualititive interpretation applies for the
+prison.  The same qualitative interpretation applies for the
 log-normal.  
 
 To get a better sense of the married effect, it is useful to show its
@@ -1194,7 +1194,7 @@ that does this, and the resulting plots are shown in
 Figure~\ref{fig:hazard-plots}. Note that when computing the hazards we
 need to multiply by the Jacobian of the transformation from $t_i$ to
 $w_i = \log (t_i - x_i\beta)/\sigma$, namely $1/t$.  Note also that
-the estimate of $\sigma$ is available via the accessior \verb|$sigma|,
+the estimate of $\sigma$ is available via the accessor \verb|$sigma|,
 but it is also present as the last element in the coefficient vector
 obtained via \verb|$coeff|.
 
