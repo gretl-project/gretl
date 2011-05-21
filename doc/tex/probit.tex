@@ -819,36 +819,61 @@ which
   \mu_i & = & \exp\left( \sum_j x_{ij} \beta_j \right)
 \end{eqnarray*}
 
-\begin{itemize}
-\item Estimation is, again, typically carried out by maximum
-  likelihood. \app{Gretl} command: \texttt{poisson depvar indep}.
-\item In some cases, an ``offset'' variable is needed. The number of
-  occurrences of $y_i$ in a given time is assumed to be strictly
-  proportional to the offset variable $n_i$. In the epidemiology
-  literature, the offset is known as ``population at risk''. Syntax:
-  \texttt{poisson depvar indep ; offset}.
-\end{itemize}
+In some cases, an ``offset'' variable is needed. The number of
+occurrences of $y_i$ in a given time is assumed to be strictly
+proportional to the offset variable $n_i$. In the epidemiology
+literature, the offset is known as ``population at risk''. In this
+case, the model becomes
+\[
+  \mu_i = n_i \exp\left( \sum_j x_{ij} \beta_j \right)
+\]
+Another way to look at the offset variable is to consider its natural
+log as just another explanatory variable whose coefficient is
+constrained to be one.
+
+Estimation is carried out by maximum likelihood and follows the syntax
+\begin{code}
+  poisson depvar indep
+\end{code}
+If an offset variable is needed, it has to be specified at the end of
+the command, separated from the list of explanatory variables by a
+semicolon, as in
+\begin{code}
+  poisson depvar indep ; offset
+\end{code}
+It should be noted that the \texttt{poisson} command does not use,
+internally, the same optimization engines as most other \app{gretl}
+command, such as \cmd{arma} or \cmd{tobit}. As a consequence, some
+details may differ: the \option{verbose} option will yield different
+output and settings such as \texttt{bfgs\_toler} will not work.
+
+\subsection{Overdispersion}
 
 In the Poisson model, $E(y_i | x_i) = V(y_i | x_i) = \mu_i$, that is,
 the conditional mean equals the conditional variance by
 construction. In many cases, this feature is at odds with the data, as
-the conditional variance is often larger than the mean (this
-phenomenon is called ``overdispersion''). The output from the
+the conditional variance is often larger than the mean; this
+phenomenon is called ``overdispersion''. The output from the
 \texttt{poisson} command includes a conditional moment test for
 overdispersion (as per \citet{davidson-mackinnon04}, section 11.5),
 which is printed automatically after estimation.
 
 Overdispersion can be attributed to unmodeled heterogeneity between
 individuals. Two data points with the same observable characteristics
-$x_i = x_j$ may have different means because of some unobserved scale
-factor $s_i \ne s_j$ so that
+$x_i = x_j$ may differ because of some unobserved scale factor $s_i
+\ne s_j$ so that
 \[
    E(y_i | x_i, s_i) = \mu_i s_i \ne \mu_j s_j = E(y_j | x_j, s_j)
 \]
-even though $\mu_i = \mu_j$. It is often assumed that $s_i$ can be
-represented as a gamma random variable with mean 1 and variance
-$\alpha$: the parameter $\alpha$ is estimated together with the vector
-$\beta$, and measures the degree of heterogeneity between individuals.
+even though $\mu_i = \mu_j$. In other words, $y_i$ is a Poisson random
+variable conditional on both $x_i$ and $s_i$, but since $s_i$ is
+unobservable, the only thing we can we can use, $P(y_i | x_i)$, will
+not follow the Poisson distribution.
+
+It is often assumed that $s_i$ can be represented as a gamma random
+variable with mean 1 and variance $\alpha$: the parameter $\alpha$ is
+estimated together with the vector $\beta$, and measures the degree of
+heterogeneity between individuals.
 
 In this case, the conditional probability for $y_i$ given
 $x_i$ can be shown to be
