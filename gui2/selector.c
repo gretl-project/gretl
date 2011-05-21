@@ -253,6 +253,7 @@ static void functions_list (selector *sr);
 static void primary_rhs_varlist (selector *sr, GtkWidget *vbox);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void call_iters_dialog (GtkWidget *w, GtkWidget *combo);
+static void reset_arma_spinners (selector *sr);
 
 static void vbox_add_vwedge (GtkWidget *vbox)
 {
@@ -427,6 +428,14 @@ void clear_selector (void)
 
     destroy_lag_preferences();
     call_iters_dialog(NULL, NULL);
+
+    if (open_selector != NULL) {
+	selector *sr = open_selector;
+
+	if (sr->ci == ARMA) {
+	    reset_arma_spinners(sr);
+	}
+    }
 }
 
 GtkWidget *selector_get_window (const selector *sr)
@@ -4533,6 +4542,48 @@ static void build_arma_spinners (selector *sr)
 
 	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
     }
+}
+
+static void reset_arma_spinners (selector *sr)
+{
+    if (sr->extra[0] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[0])) {
+	/* non-seasonal AR maxlag */
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[0]), 
+				  (gdouble) arma_p);
+    } 
+    if (sr->extra[1] != NULL && GTK_IS_ENTRY(sr->extra[1])) {
+	/* non-seasonal AR specific lags */
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[1]), "");
+    } 
+    if (sr->extra[2] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[2])) {
+	/* non-seasonal diff */
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[2]), 
+				  (gdouble) arima_d);
+    } 
+    if (sr->extra[3] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[3])) {
+	/* non-seasonal MA maxlag */
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[3]), 
+				  (gdouble) arma_q);
+    } 
+    if (sr->extra[4] != NULL && GTK_IS_ENTRY(sr->extra[4])) {
+	/* non-seasonal MA specific lags */
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[4]), "");
+    } 
+    if (sr->extra[5] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[5])) {
+	/* seasonal AR maxlag */
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[5]), 
+				  (gdouble) arma_P);
+    } 
+    if (sr->extra[6] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[6])) {
+	/* seasonal diff */
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[6]), 
+				  (gdouble) arima_D);
+    } 
+    if (sr->extra[7] != NULL && GTK_IS_SPIN_BUTTON(sr->extra[7])) {
+	/* seasonal MA maxlag */
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(sr->extra[7]), 
+				  (gdouble) arma_Q);
+    } 
 }
 
 static void hc_config (GtkWidget *w, selector *sr)
