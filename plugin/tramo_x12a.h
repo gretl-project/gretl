@@ -34,6 +34,7 @@ struct _common_opt_info {
     GtkWidget *check;
     char save;
     unsigned short v;
+    char savename[VNAMELEN];
 };
 
 struct _x12a_opts {
@@ -47,6 +48,7 @@ struct _tx_request {
     GtkWidget *dialog;
     void (*helpfunc);
     common_opt_info opts[TX_MAXOPT];
+    char yname[VNAMELEN];
     void *gui;
     gretlopt *popt;
     int savevars;
@@ -55,6 +57,12 @@ struct _tx_request {
     x12a_opts xopt;
 };
 
-int show_tramo_options (tx_request *request, GtkWidget *vbox);
+int add_tramo_options (tx_request *request, GtkWidget *vbox);
 
 int print_tramo_options (tx_request *request, FILE *fp);
+
+const char *get_tramo_save_string (int i);
+
+void sensitize_tx_entry (GtkToggleButton *b, GtkWidget *w);
+
+void update_tx_savename (GtkEntry *entry, char *name);

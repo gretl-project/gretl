@@ -311,10 +311,12 @@ static void set_imean (GtkWidget *w, tramo_options *opts)
 
 static GtkWidget *make_notebook_page_table (GtkWidget *notebook, 
 					    const gchar *tab_title,
-					    gint rows, gint cols)
+					    gint rows, gint cols,
+					    gint *page)
 {
     GtkWidget *box, *tmp, *tbl;
-
+    gint pg;
+ 
     box = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
@@ -322,7 +324,10 @@ static GtkWidget *make_notebook_page_table (GtkWidget *notebook,
     tmp = gtk_label_new(tab_title);
     gtk_widget_show(tmp);
 
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tmp);  
+    pg = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tmp);
+    if (page != NULL) {
+	*page = pg;
+    }
 
     tbl = gtk_table_new(rows, cols, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
@@ -343,16 +348,14 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
 	N_("Time-series model only")
     };
    
-    tbl = make_notebook_page_table(notebook, _("General"), tbl_len, 2);
+    tbl = make_notebook_page_table(notebook, _("General"), tbl_len, 2, NULL);
 
     /* checkbox for standard default run */
     tmp = gtk_check_button_new_with_label(_("Standard automatic analysis"));
-    gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
-    g_object_set_data(G_OBJECT(notebook), "opts",
-		      request->gui);
+    g_object_set_data(G_OBJECT(notebook), "opts", request->gui);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(main_auto_callback), 
 		     notebook);
@@ -361,13 +364,11 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     tmp = gtk_hseparator_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);    
 
     /* TRAMO + SEATS option */
     tmp = gtk_radio_button_new_with_label(NULL, _(radio_labels[0]));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd > 1));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-    gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
 
@@ -383,7 +384,6 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     tmp = gtk_radio_button_new_with_label(group, _(radio_labels[1]));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd == 1));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-    gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
 
@@ -398,91 +398,99 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
 
 static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
 {
+    const gchar *save_strs[] = {
+	N_("Seasonally adjusted series"),
+	N_("Trend/cycle"),
+	N_("Irregular")
+    };
+    int save_codes[] = {
+	TX_SA, TX_TR, TX_IR
+    };
     GtkWidget *tbl, *tmp;
     int tbl_len = 10, row = 0;
     GSList *group = NULL;
+    int i, pg;
 
-    if (request->pd == 1) tbl_len -= 2;
+    if (request->pd == 1) {
+	tbl_len -= 2;
+    }
 
-    tbl = make_notebook_page_table(notebook, _("Output"), tbl_len, 2);
+    tbl = make_notebook_page_table(notebook, _("Output"), tbl_len, 2, &pg);
 
     /* label for output window detail */
     tmp = gtk_label_new(_("Output window:"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);
 
     /* full detail option */
     tmp = gtk_radio_button_new_with_label(NULL, _("Full details"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);    
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-    gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
-    row++;
-    
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(set_out), 
+    g_signal_connect(G_OBJECT(tmp), "clicked", G_CALLBACK(set_out), 
 		     request->gui);
-    g_object_set_data(G_OBJECT(tmp), "out_value", 
-                      GINT_TO_POINTER(0));
+    g_object_set_data(G_OBJECT(tmp), "out_value", GINT_TO_POINTER(0));
+    row++;
 
     /* reduced output option */
     tmp = gtk_radio_button_new_with_label(group, _("Reduced output"));
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-    gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
-    row++;
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(set_out), 
+    g_signal_connect(G_OBJECT(tmp), "clicked", G_CALLBACK(set_out), 
 		     request->gui);
-    g_object_set_data(G_OBJECT(tmp), "out_value", 
-                      GINT_TO_POINTER(1));
+    g_object_set_data(G_OBJECT(tmp), "out_value", GINT_TO_POINTER(1));
+    row++;
 
-    /* horizontal separator */
     tmp = gtk_hseparator_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);    
 
     /* label pertaining to saving series */
     tmp = gtk_label_new(_("Save to data set:"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);
 
-    if (request->pd > 1) {
-	tmp = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
-	gtk_widget_show(tmp);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
+    for (i=0; i<3; i++) {
+	/* buttons plus entries for saving series */
+	gboolean active = FALSE;
+	GtkWidget *entry;
+	int idx = save_codes[i];
+
+	if (request->pd == 1 && i == 0) {
+	    request->opts[idx].check = NULL;
+	    continue;
+	}
+
+	tmp = gtk_check_button_new_with_label(_(save_strs[i]));
+	request->opts[idx].check = tmp;
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), active);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row+1);
+	entry = gtk_entry_new();
+	gtk_widget_set_sensitive(entry, active);
+	gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN-1);
+	g_object_set_data(G_OBJECT(tmp), "entry", entry);
+	g_object_set_data(G_OBJECT(entry), "book", notebook);
+	g_object_set_data(G_OBJECT(entry), "output-page", 
+			  GINT_TO_POINTER(pg));
+	sprintf(request->opts[idx].savename, "%.8s_%.2s", request->yname,
+		get_tramo_save_string(i));
+	gtk_entry_set_text(GTK_ENTRY(entry), request->opts[idx].savename);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, row, row+1);
+	g_signal_connect(G_OBJECT(tmp), "toggled",
+			 G_CALLBACK(sensitize_tx_entry), entry);
+	g_signal_connect(G_OBJECT(GTK_EDITABLE(entry)), "changed",
+			 G_CALLBACK(update_tx_savename), 
+			 request->opts[idx].savename);
 	row++;
-	request->opts[TX_SA].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
-    } else {
-	request->opts[TX_SA].check = NULL;
     }
 
-    tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
-    gtk_widget_show(tmp);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
-    row++;
-    request->opts[TX_TR].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
-
-    tmp = gtk_check_button_new_with_label(_("Irregular"));
-    gtk_widget_show(tmp);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
-    row++;
-    request->opts[TX_IR].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
-
     tmp = gtk_hseparator_new();
-    gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
 
     if (request->pd > 1) {
 	tmp = gtk_check_button_new_with_label(_("Generate graph"));
-	gtk_widget_show(tmp);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
 	request->opts[TRIGRAPH].check = tmp;
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
@@ -497,39 +505,34 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
     GSList *log_group = NULL, *mean_group = NULL;
     int tbl_len = 6, row = 0;
 
-    tbl = make_notebook_page_table(notebook, _("Transformations"), tbl_len, 2);
+    tbl = make_notebook_page_table(notebook, _("Transformations"), 
+				   tbl_len, 2, NULL);
 
     /* logs versus levels: radio group */
 
     /* logs option */
     b1 = gtk_radio_button_new_with_label(NULL, _("Log transformation"));
     log_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
-    gtk_widget_show(b1);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 2, row, row + 1);
-    row++;
-
     g_signal_connect(G_OBJECT(b1), "clicked", G_CALLBACK(set_lam), opts);
     g_object_set_data(G_OBJECT(b1), "lam_value", GINT_TO_POINTER(0));
+    row++;
 
     /* no logs option */
     b2 = gtk_radio_button_new_with_label(log_group, _("No log transformation"));
     log_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
-    gtk_widget_show(b2);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 2, row, row + 1);
-    row++;
-
     g_signal_connect(G_OBJECT(b2), "clicked", G_CALLBACK(set_lam), opts);
     g_object_set_data(G_OBJECT(b2), "lam_value", GINT_TO_POINTER(1));
+    row++;
 
     /* automatic log/level option */
     b3 = gtk_radio_button_new_with_label(log_group, _("Automatic"));
     log_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b3));
-    gtk_widget_show(b3);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b3, 0, 2, row, row + 1);
-    row++;
-
     g_signal_connect(G_OBJECT(b3), "clicked", G_CALLBACK(set_lam), opts);
     g_object_set_data(G_OBJECT(b3), "lam_value", GINT_TO_POINTER(-1));
+    row++;
 
     if (opts->lam == 0) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
@@ -543,31 +546,22 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
     tmp = gtk_hseparator_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);
 
     /* mean correction: radio group */
     b1 = gtk_radio_button_new_with_label(NULL, _("Mean correction"));
     mean_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
-    gtk_widget_show(b1);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 2, row, row + 1);
-    row++;
-
-    g_signal_connect(G_OBJECT(b1), "clicked",
-		     G_CALLBACK(set_imean), 
+    g_signal_connect(G_OBJECT(b1), "clicked", G_CALLBACK(set_imean), 
 		     opts);
-    g_object_set_data(G_OBJECT(b1), "imean_value", 
-                      GINT_TO_POINTER(1));
+    g_object_set_data(G_OBJECT(b1), "imean_value", GINT_TO_POINTER(1));
+    row++;
 
     b2 = gtk_radio_button_new_with_label(mean_group, _("No mean correction"));
     mean_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
-    gtk_widget_show(b2);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 2, row, row + 1);
-
-    g_signal_connect(G_OBJECT(b2), "clicked",
-		     G_CALLBACK(set_imean), 
+    g_signal_connect(G_OBJECT(b2), "clicked", G_CALLBACK(set_imean), 
 		     opts);
-    g_object_set_data(G_OBJECT(b2), "imean_value", 
-                      GINT_TO_POINTER(0));
+    g_object_set_data(G_OBJECT(b2), "imean_value", GINT_TO_POINTER(0));
 
     if (opts->imean == 0) {
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b2), TRUE);
@@ -587,94 +581,75 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
     GtkAdjustment *adj;
     int tbl_len = 9, row = 0;
 
-    tbl = make_notebook_page_table(notebook, _("Outliers"), tbl_len, 2);
+    tbl = make_notebook_page_table(notebook, _("Outliers"), tbl_len, 2, NULL);
 
     /* Overall choice: outlier correction or no? */
     tmp = gtk_check_button_new_with_label(_("Detect and correct for outliers"));
     opts->iatip_button = tmp;
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
-    row++;
-    gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->iatip != 0));
-
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(flip_iatip), 
+    g_signal_connect(G_OBJECT(tmp), "clicked", G_CALLBACK(flip_iatip), 
 		     opts);
+    row++;
 
     /* horizontal separator */
     tmp = gtk_hseparator_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);
     
     /* label pertaining to transitory and level-shift buttons */
     tmp = gtk_label_new(_("Besides additive outliers, allow for:"));
     opts->aio_label = tmp;
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);
 
     /* "transitory" button */
     tmp = gtk_check_button_new_with_label(_("transitory changes"));
     opts->aio_transitory_button = tmp;
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
-    row++;
-    gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->aio < 3));
-
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(tramo_aio_callback), 
+    g_signal_connect(G_OBJECT(tmp), "clicked", G_CALLBACK(tramo_aio_callback), 
 		     opts);
+    row++;
 
     /* level-shift button */
     tmp = gtk_check_button_new_with_label(_("shifts of level"));
     opts->aio_shift_button = tmp;
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
-    row++;
-    gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->aio > 1));
-
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(tramo_aio_callback), 
+    g_signal_connect(G_OBJECT(tmp), "clicked", G_CALLBACK(tramo_aio_callback), 
 		     opts);
+    row++;
 
     /* innovationals button */
     tmp = gtk_check_button_new_with_label(_("innovational outliers"));
     opts->aio_innov_button = tmp;
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
-    row++;
-    gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->aio == 0));
     gtk_widget_set_sensitive(tmp, opts->seats == 0);
-
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(tramo_innov_callback), 
+    g_signal_connect(G_OBJECT(tmp), "clicked", G_CALLBACK(tramo_innov_callback), 
 		     opts);
+    row++;
     
     /* horizontal separator */
     tmp = gtk_hseparator_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);
 
     /* label pertaining to critical value */
     tmp = gtk_label_new(_("Critical value for outliers:"));
     opts->va_label = tmp;
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-    gtk_widget_show(tmp);
 
     /* check button for auto critical value */
     tmp = gtk_check_button_new_with_label(_("Automatic"));
     opts->va_button = tmp;
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
-    row++;
-    gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->va == 0.0));
-
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(flip_auto_va), 
+    g_signal_connect(G_OBJECT(tmp), "clicked", G_CALLBACK(flip_auto_va), 
 		     opts);
+    row++;
 
     /* spinner for manual critical value */
     adj = (GtkAdjustment *) gtk_adjustment_new((opts->va == 0.0)? 3.3 : opts->va, 
@@ -683,12 +658,9 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
     opts->va_spinner = tmp;
     gtk_table_attach(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1,
 		     0, 0, 0, 0);
-    gtk_widget_show(tmp);
     gtk_widget_set_sensitive(tmp, (opts->va != 0.0));
-
     g_signal_connect(G_OBJECT(tmp), "value-changed",
-		     G_CALLBACK(get_va_value), 
-		     opts);
+		     G_CALLBACK(get_va_value), opts);
 }
 
 static void arima_spin_callback (GtkSpinButton *sb, gint *var)
@@ -727,7 +699,7 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
     int tbl_len = (pd == 1)? 7 : 10;
     int row = 0;
 
-    tbl = make_notebook_page_table(notebook, _("ARIMA"), tbl_len, 2);
+    tbl = make_notebook_page_table(notebook, _("ARIMA"), tbl_len, 2, NULL);
     gtk_table_set_homogeneous(GTK_TABLE(tbl), FALSE);
 
     /* auto versus manual button */
@@ -833,7 +805,7 @@ static tramo_options *tramo_options_new (int pd)
     return opts;
 }
 
-int show_tramo_options (tx_request *request, GtkWidget *vbox)
+int add_tramo_options (tx_request *request, GtkWidget *vbox)
 {
     tramo_options *opts;
 

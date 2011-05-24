@@ -4761,7 +4761,7 @@ static void real_do_tramo_x12a (int v, int tramo)
     int save_t2 = datainfo->t2;
     void *handle;
     int (*write_tx_data) (char *, int, double ***, DATAINFO *, 
-			  gretlopt *, int, void *);
+			  gretlopt *, int, GtkWindow *, void *);
     char outfile[MAXLEN] = {0};
     int graph_ok = 1;
     int err = 0;
@@ -4783,7 +4783,7 @@ static void real_do_tramo_x12a (int v, int tramo)
     series_adjust_sample(Z[v], &datainfo->t1, &datainfo->t2);
 
     err = write_tx_data(outfile, v, &Z, datainfo, &opt, tramo,
-			x12a_help); 
+			GTK_WINDOW(mdata->main), x12a_help); 
 
     close_plugin(handle);
 

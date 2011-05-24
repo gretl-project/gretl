@@ -29,6 +29,8 @@
 # include "gtk_compat.h"
 #endif
 
+#define button_is_active(b) (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(b)))
+
 #ifdef WIN32
 # include <windows.h>
 #else
@@ -72,6 +74,11 @@ const char *default_mdl = {
     "(0 2 2)(0 1 1) X\n"
     "(2 1 2)(0 1 1)\n"
 };  
+
+const char *get_tramo_save_string (int i)
+{
+    return tramo_save_strings[i];
+}
 
 #ifndef WIN32
 
@@ -199,35 +206,53 @@ static void toggle_edit_script (GtkToggleButton *b, tx_request *request)
     }
 }
 
-static void show_x12a_options (tx_request *request, GtkBox *vbox)
+void sensitize_tx_entry (GtkToggleButton *b, GtkWidget *w)
 {
+    gtk_widget_set_sensitive(w, button_is_active(b));
+}
+
+void update_tx_savename (GtkEntry *entry, char *name)
+{
+    strcpy(name, gtk_entry_get_text(entry));
+}
+
+static void add_x12a_options (tx_request *request, GtkBox *vbox)
+{
+    const gchar *save_strs[] = {
+	N_("Seasonally adjusted series"),
+	N_("Trend/cycle"),
+	N_("Irregular")
+    };
+    gretlopt save_opts[] = {
+	OPT_A, OPT_B, OPT_C
+    };
+    int save_codes[] = {
+	TX_SA, TX_TR, TX_IR
+    };
     GtkWidget *tmp, *b[3], *chk[4];
+    GtkWidget *tbl;
     GSList *group;
+    int i;
 
     tmp = gtk_label_new(_("X-12-ARIMA options"));
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, TRUE, TRUE, 5);
 
     tmp = gtk_check_button_new_with_label(_("Detect and correct for outliers"));
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->xopt.outliers);
     g_signal_connect(GTK_TOGGLE_BUTTON(tmp), "toggled",
 		     G_CALLBACK(toggle_outliers), request);
 
     tmp = gtk_check_button_new_with_label(_("Correct for trading days effect"));
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), request->xopt.trdays);
     g_signal_connect(GTK_TOGGLE_BUTTON(tmp), "toggled",
 		     G_CALLBACK(toggle_trading_days), request);
 
     tmp = gtk_hseparator_new();
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
     b[0] = gtk_radio_button_new_with_label(NULL, _("Log transformation"));
-    gtk_widget_show(b[0]);
     gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[0]), "toggled",
 		     G_CALLBACK(set_logtrans), request);
@@ -235,7 +260,6 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
     b[1] = gtk_radio_button_new_with_label(group, _("No log transformation"));
-    gtk_widget_show(b[1]);
     gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
 		     G_CALLBACK(set_logtrans), request);
@@ -243,7 +267,6 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[1]));
     b[2] = gtk_radio_button_new_with_label(group, _("Automatic"));
-    gtk_widget_show(b[2]);
     gtk_box_pack_start(vbox, b[2], FALSE, FALSE, 0);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[2]), "toggled",
 		     G_CALLBACK(set_logtrans), request);
@@ -253,63 +276,65 @@ static void show_x12a_options (tx_request *request, GtkBox *vbox)
 				 TRUE); 
 
     tmp = gtk_hseparator_new();
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
     tmp = gtk_label_new(_("Save data"));
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
 
-    chk[0] = gtk_check_button_new_with_label(_("Seasonally adjusted series"));
-    gtk_widget_show(chk[0]);
-    gtk_box_pack_start(vbox, chk[0], FALSE, FALSE, 0);
-    request->opts[TX_SA].check = chk[0];
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[0]), 
-				 (*request->popt & OPT_A)? TRUE : FALSE);
+    tbl = gtk_table_new(3, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
 
-    chk[1] = gtk_check_button_new_with_label(_("Trend/cycle"));
-    gtk_widget_show(chk[1]);
-    gtk_box_pack_start(vbox, chk[1], FALSE, FALSE, 0);
-    request->opts[TX_TR].check = chk[1];
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[1]), 
-				 (*request->popt & OPT_B)? TRUE : FALSE);
+    for (i=0; i<3; i++) {
+	/* buttons plus entries for saving series */
+	gboolean active = (*request->popt & save_opts[i])? TRUE : FALSE;
+	GtkWidget *entry;
+	int idx = save_codes[i];
 
-    chk[2] = gtk_check_button_new_with_label(_("Irregular"));
-    gtk_widget_show(chk[2]);
-    gtk_box_pack_start(vbox, chk[2], FALSE, FALSE, 0);
-    request->opts[TX_IR].check = chk[2];
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[2]), 
-				 (*request->popt & OPT_C)? TRUE : FALSE);
+	chk[i] = gtk_check_button_new_with_label(_(save_strs[i]));
+	request->opts[idx].check = chk[i];
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[i]), active);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), chk[i], 0, 1, i, i+1);
+	entry = gtk_entry_new();
+	gtk_widget_set_sensitive(entry, active);
+	gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN-1);
+	sprintf(request->opts[idx].savename, "%.8s_%s", request->yname, 
+		x12a_save_strings[i]);
+	gtk_entry_set_text(GTK_ENTRY(entry), request->opts[idx].savename);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
+	g_object_set_data(G_OBJECT(chk[i]), "entry", entry);
+	g_signal_connect(G_OBJECT(chk[i]), "toggled",
+			 G_CALLBACK(sensitize_tx_entry), entry);
+	g_signal_connect(G_OBJECT(GTK_EDITABLE(entry)), "changed",
+			 G_CALLBACK(update_tx_savename), 
+			 request->opts[idx].savename);
+    }
+
+    gtk_box_pack_start(vbox, tbl, FALSE, FALSE, 5);
 
     tmp = gtk_hseparator_new();
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
     
     chk[3] = gtk_check_button_new_with_label(_("Generate graph"));
-    gtk_widget_show(chk[3]);
     gtk_box_pack_start(vbox, chk[3], FALSE, FALSE, 0);
     request->opts[TRIGRAPH].check = chk[3];
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(chk[3]), 
 				 (*request->popt & OPT_G)? TRUE : FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Show full output"));
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 0);
     request->opts[TEXTOUT].check = tmp;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp),
 				 (*request->popt & OPT_Q)? FALSE : TRUE);
 
     tmp = gtk_hseparator_new();
-    gtk_widget_show(tmp);
     gtk_box_pack_start(vbox, tmp, FALSE, FALSE, 5);
 
     b[0] = gtk_radio_button_new_with_label(NULL, _("Execute X-12-ARIMA directly"));
-    gtk_widget_show(b[0]);
     gtk_box_pack_start(vbox, b[0], FALSE, FALSE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b[0]));
     b[1] = gtk_radio_button_new_with_label(group, _("Make X-12-ARIMA command file"));
-    gtk_widget_show(b[1]);
     gtk_box_pack_start(vbox, b[1], FALSE, FALSE, 0);
     g_object_set_data(G_OBJECT(b[1]), "checks", chk);
     g_signal_connect(GTK_TOGGLE_BUTTON(b[1]), "toggled",
@@ -328,7 +353,6 @@ static GtkWidget *x12a_help_button (GtkWidget *hbox, tx_request *request)
     gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
 				       button, TRUE);
     gtk_widget_show(button);
-
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(request->helpfunc), 
 		     NULL);
@@ -336,18 +360,81 @@ static GtkWidget *x12a_help_button (GtkWidget *hbox, tx_request *request)
     return button;
 }
 
+static void tx_errbox (tx_request *request)
+{
+    GtkWidget *w = gtk_message_dialog_new(GTK_WINDOW(request->dialog),
+					  GTK_DIALOG_DESTROY_WITH_PARENT,
+					  GTK_MESSAGE_ERROR,
+					  GTK_BUTTONS_CLOSE,
+					  _("Expected a valid variable name"));
+
+    gtk_dialog_run(GTK_DIALOG(w));
+    gtk_widget_destroy(w);
+}
+
+static int check_savevars (tx_request *request)
+{
+    int i, err = 0;
+
+    for (i=0; i<=TX_IR && !err; i++) {
+	GtkWidget *w = request->opts[i].check;
+
+	if (w != NULL && gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	    const char *vname = request->opts[i].savename;
+
+	    if (*vname == '\0') {
+		err = 1;
+	    } else {
+		err = check_varname(vname);
+	    }
+	    if (err) {
+		GtkWidget *entry, *book;
+
+		entry = g_object_get_data(G_OBJECT(w), "entry");
+		book = g_object_get_data(G_OBJECT(entry), "book");
+		if (book != NULL) {
+		    gint pg = GPOINTER_TO_INT
+			(g_object_get_data(G_OBJECT(entry), "output-page"));
+
+		    gtk_notebook_set_current_page(GTK_NOTEBOOK(book), pg);
+		}
+		tx_errbox(request);
+		gtk_widget_grab_focus(entry);
+	    }
+	}
+    }
+
+    return err;
+}
+
 static void tx_dialog_callback (GtkDialog *dlg, gint id, int *ret)
 {
+    int err = 0;
+
     if (id == GTK_RESPONSE_REJECT || id == GTK_RESPONSE_ACCEPT) {
 	*ret = id;
     } else if (id == GTK_RESPONSE_DELETE_EVENT) {
 	*ret = GTK_RESPONSE_REJECT;
     }
 
-    gtk_main_quit();
+    if (*ret == GTK_RESPONSE_ACCEPT) {
+	tx_request *request = g_object_get_data(G_OBJECT(dlg), "request");
+	
+	err = check_savevars(request);
+    }
+
+    if (!err) {
+	gtk_main_quit();
+    }
 } 
 
-static int tx_dialog (tx_request *request)
+static void nullify_request_dialog (GtkWidget *dlg, 
+				    tx_request *request)
+{
+    request->dialog = NULL;
+}
+
+static int tx_dialog (tx_request *request, GtkWindow *parent)
 {
     GtkDialogFlags dflags = GTK_DIALOG_DESTROY_WITH_PARENT;
     GtkWidget *hbox, *vbox;
@@ -362,14 +449,21 @@ static int tx_dialog (tx_request *request)
     }
 
     request->dialog = 
-	gtk_dialog_new_with_buttons ((request->prog == TRAMO_SEATS)?
-				     "TRAMO/SEATS" : "X-12-ARIMA",
-				     NULL, dflags,
-				     GTK_STOCK_CANCEL,
-				     GTK_RESPONSE_REJECT,
-				     GTK_STOCK_OK,
-				     GTK_RESPONSE_ACCEPT,
-				     NULL);
+	gtk_dialog_new_with_buttons((request->prog == TRAMO_SEATS)?
+				    "TRAMO/SEATS" : "X-12-ARIMA",
+				    parent,
+				    dflags,
+				    GTK_STOCK_CANCEL,
+				    GTK_RESPONSE_REJECT,
+				    GTK_STOCK_OK,
+				    GTK_RESPONSE_ACCEPT,
+				    NULL);
+
+    g_signal_connect(G_OBJECT(request->dialog), "destroy",
+		     G_CALLBACK(nullify_request_dialog),
+		     request);
+    g_object_set_data(G_OBJECT(request->dialog), "request",
+		      request);
 
     vbox = gtk_vbox_new(FALSE, 0);    
 
@@ -377,15 +471,13 @@ static int tx_dialog (tx_request *request)
 #if GTK_MAJOR_VERSION < 3    
 	gtk_dialog_set_has_separator(GTK_DIALOG(request->dialog), FALSE);
 #endif	
-	show_tramo_options(request, vbox);
+	add_tramo_options(request, vbox);
     } else {
-	show_x12a_options(request, GTK_BOX(vbox));
+	add_x12a_options(request, GTK_BOX(vbox));
     }
 
-    gtk_widget_show(vbox);
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(request->dialog));
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
@@ -393,13 +485,12 @@ static int tx_dialog (tx_request *request)
     if (request->prog == X12A) {
 	hbox = gtk_dialog_get_action_area(GTK_DIALOG(request->dialog));
 	x12a_help_button(hbox, request);
-	g_signal_connect(G_OBJECT(request->dialog), "response", 
-			 G_CALLBACK(tx_dialog_callback), &ret);
-	gtk_widget_show_all(request->dialog);
-	gtk_main(); /* block */
-    } else {
-	ret = gtk_dialog_run(GTK_DIALOG(request->dialog));
     }
+
+    g_signal_connect(G_OBJECT(request->dialog), "response", 
+		     G_CALLBACK(tx_dialog_callback), &ret);
+    gtk_widget_show_all(request->dialog);
+    gtk_main(); /* note: block */
 
     return (ret == GTK_RESPONSE_ACCEPT)? 1 : 0;
 }
@@ -683,12 +774,15 @@ static int add_series_from_file (const char *path, int src,
     }
 
     /* formulate name of new variable to add */
-    if (request->prog == TRAMO_SEATS) {
-	sprintf(varname, "%.8s_%.2s", pdinfo->varname[0], 
-		tramo_save_strings[src]);
-    } else {
-	sprintf(varname, "%.8s_%s", pdinfo->varname[0], 
-		x12a_save_strings[src]);
+    strcpy(varname, request->opts[src].savename);
+    if (*varname == '\0') {
+	if (request->prog == TRAMO_SEATS) {
+	    sprintf(varname, "%.8s_%.2s", pdinfo->varname[0], 
+		    tramo_save_strings[src]);
+	} else {
+	    sprintf(varname, "%.8s_%s", pdinfo->varname[0], 
+		    x12a_save_strings[src]);
+	}
     }
 
     /* copy varname and label into place */
@@ -825,12 +919,14 @@ static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
 }
 
 static void request_opts_init (tx_request *request, const DATAINFO *pdinfo,
-			       void (*helpfunc))
+			       int varnum, void (*helpfunc))
 {
     int i;
 
     request->savevars = 0;
     request->helpfunc = helpfunc;
+
+    strcpy(request->yname, pdinfo->varname[varnum]);
 
     request->xopt.logtrans = 3; /* x12a: automatic logs or not */
     request->xopt.outliers = 1; /* x12a: detect outliers */
@@ -838,6 +934,7 @@ static void request_opts_init (tx_request *request, const DATAINFO *pdinfo,
 
     for (i=0; i<TX_MAXOPT; i++) {
 	request->opts[i].save = 0;
+	request->opts[i].savename[0] = '\0';
     }
 
     request->seasonal_ok = 1;
@@ -1288,6 +1385,7 @@ int exec_tx_script (char *outname, const gchar *buf)
 int write_tx_data (char *fname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt *opt, int tramo,
+		   GtkWindow *mainwin,
 		   void (*help_func))
 {
     const char *exepath;
@@ -1311,7 +1409,7 @@ int write_tx_data (char *fname, int varnum,
 	workdir = gretl_x12_arima_dir();
     }	
 	
-    request_opts_init(&request, pdinfo, help_func);
+    request_opts_init(&request, pdinfo, varnum, help_func);
 
     err = check_sample_bound(request.prog, pdinfo);
     if (err) {
@@ -1322,14 +1420,17 @@ int write_tx_data (char *fname, int varnum,
     request.popt = opt;
 
     /* show dialog and get option settings */
-    doit = tx_dialog(&request); 
-    if (!doit) {
+    doit = tx_dialog(&request, mainwin); 
+    if (doit) {
+	set_opts(&request);
+    } 
+    if (request.dialog != NULL) {
 	gtk_widget_destroy(request.dialog);
+    }
+    if (!doit) {
 	*fname = '\0';
 	return 0;
     }
-    set_opts(&request);
-    gtk_widget_destroy(request.dialog);
 
 #if 0
     if (request.prog == TRAMO_SEATS) {
