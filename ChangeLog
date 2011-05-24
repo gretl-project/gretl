@@ -13,6 +13,8 @@ version 1.9.6, in progress
   separation using a binary dummy to allow use of discrete variables
 - "boxplot" command: add --factorized and --panel options; also
   enhance the boxplot options available via the GUI
+- X-12-ARIMA and TRAMO analysis: allow the user to supply names when
+  saving series to the dataset 
 - Fix bug: a nested "foreach" loop using a named list, with the name of 
   the list subject to dollar-substitution via the parent loop, produced
   an "unknown variable" error
