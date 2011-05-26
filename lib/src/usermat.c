@@ -316,6 +316,11 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
     return 0;
 }
 
+int user_matrix_get_level (user_matrix *u)
+{
+    return (u == NULL)? -1 : u->level;
+}
+
 int user_matrix_adjust_level (user_matrix *u, int adj)
 {
     if (u == NULL) {

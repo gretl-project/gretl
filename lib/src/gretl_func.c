@@ -5133,6 +5133,15 @@ static int localize_const_matrix (struct fnarg *arg, fn_param *fp)
 static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
 {
     user_matrix *u = arg->val.um;
+    int ulev = user_matrix_get_level(u);
+
+    if (ulev == fn_executing + 1) {
+	/* the matrix ref must have been localized already, 
+	   in connection with a preceding parameter
+	*/
+	gretl_errmsg_sprintf("Duplicated pointer argument: not allowed");
+	return E_DATA;
+    }
 
     arg->upname = gretl_strdup(user_matrix_get_name(u));
     if (arg->upname == NULL) {

@@ -76,6 +76,8 @@ int user_matrix_destroy_by_name (const char *name, PRN *prn);
 
 int user_matrix_destroy (user_matrix *u);
 
+int user_matrix_get_level (user_matrix *u);
+
 int user_matrix_adjust_level (user_matrix *u, int adj);
 
 const char *user_matrix_get_name (user_matrix *u);
