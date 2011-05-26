@@ -5139,7 +5139,7 @@ static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
 	/* the matrix ref must have been localized already, 
 	   in connection with a preceding parameter
 	*/
-	gretl_errmsg_sprintf("Duplicated pointer argument: not allowed");
+	gretl_errmsg_set("Duplicated pointer argument: not allowed");
 	return E_DATA;
     }
 
