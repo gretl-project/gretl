@@ -4345,6 +4345,104 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
     return K;
 }
 
+/**
+ * gretl_matrix_hdproduct:
+ * @A: left-hand matrix, p x q.
+ * @B: right-hand matrix, p x s.
+ * @C: target matrix, p x (q * r).
+ *
+ * Writes into @C the horizontal direct product of @A and @B. 
+ * That is, $C_i' = A_i' \otimes B_i'$ (in TeX notation)
+ *
+ * Returns: 0 on success, %E_NONCONF if @A and @B have different
+ * numbers of rows or matrix @C is not correctly dimensioned for the
+ * operation.
+ */
+
+int gretl_matrix_hdproduct (const gretl_matrix *A, 
+			    const gretl_matrix *B,
+			    gretl_matrix *C)
+{
+    double x, aij, bik;
+    int p, q, r;
+    int i, j, k, l;
+    int joff, Kj;
+
+    if (gretl_is_null_matrix(A) || 
+	gretl_is_null_matrix(B) || 
+	gretl_is_null_matrix(C)) {
+	return E_DATA;
+    }
+
+    p = A->rows;
+    q = A->cols;
+    r = B->cols;
+
+    if (B->rows != p || C->rows != p || C->cols != q * r) {
+	return E_NONCONF;
+    }
+    
+    for (i=0; i<p; i++) {
+	for (j=0; j<q; j++) {
+	    aij = gretl_matrix_get(A, i, j);
+	    if (aij != 0.0) {
+		joff = j * r;
+		for (k=0; k<r; k++) {
+		    bik = gretl_matrix_get(B, i, k);
+		    gretl_matrix_set(C, i, joff + k, aij*bik);
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_hdproduct_new:
+ * @A: left-hand matrix, p x q.
+ * @B: right-hand matrix, p x r.
+ * @err: location to receive error code.
+ * 
+ * Returns: A newly allocated p x (r * s) matrix which is the
+ * horizontal direct product of matrices @A and @B, or NULL on
+ * failure.
+ */
+
+gretl_matrix *
+gretl_matrix_hdproduct_new (const gretl_matrix *A, 
+			    const gretl_matrix *B,
+			    int *err)
+{
+    gretl_matrix *K;
+    int p, q, r;
+
+    if (gretl_is_null_matrix(A) || gretl_is_null_matrix(B)) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    p = A->rows;
+
+    if (p != B->rows) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    q = A->cols;
+    r = B->cols;    
+    
+    K = gretl_matrix_alloc(p, q * r);
+
+    if (K == NULL) {
+	*err = E_ALLOC;
+    } else {
+	gretl_matrix_hdproduct(A, B, K);
+    }
+
+    return K;
+}
+
 /* 
    returns the sequence of bits in the binary expansion of s
 */

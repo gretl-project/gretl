@@ -245,6 +245,7 @@ struct str_table funcs[] = {
     { F_FFT,      "fft" },
     { F_FFTI,     "ffti" },
     { F_CMULT,    "cmult" },
+    { F_HDPROD,   "hdprod" },
     { F_CDIV,     "cdiv" },
     { F_MCOV,     "mcov" },
     { F_MCORR,    "mcorr" },

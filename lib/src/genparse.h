@@ -279,6 +279,7 @@ enum {
     F_PRINCOMP,
     F_QUANTILE,
     F_CMULT,	  /* complex multiplication */
+    F_HDPROD,    /* horizontal direct product */
     F_CDIV,	  /* complex division */
     F_MXTAB,
     F_MWRITE,

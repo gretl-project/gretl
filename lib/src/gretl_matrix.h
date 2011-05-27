@@ -387,6 +387,16 @@ gretl_matrix_kronecker_product_new (const gretl_matrix *A,
 				    const gretl_matrix *B,
 				    int *err);
 
+int gretl_matrix_hdproduct (const gretl_matrix *A, 
+			    const gretl_matrix *B,
+			    gretl_matrix *C);
+
+gretl_matrix *
+gretl_matrix_hdproduct_new (const gretl_matrix *A, 
+			    const gretl_matrix *B,
+			    int *err);
+
+
 int
 gretl_matrix_I_kronecker (int p, const gretl_matrix *B,
 			  gretl_matrix *K);

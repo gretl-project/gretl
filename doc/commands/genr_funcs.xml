@@ -2217,6 +2217,54 @@
       </description>
     </function>
 
+    <function name="hdprod" section="linalg" output="matrix">
+      <fnargs>
+	<fnarg type="matrix">X</fnarg>
+	<fnarg type="matrix">Y</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Horizontal direct product. The two arguments must have the
+	  same number of rows, <math>n</math>. The return value is a
+	  matrix with <math>n</math> rows, in which the
+	  <math>i</math>-th row is the Kronecker product of the
+	  corresponding rows of <argname>X</argname> and
+	  <argname>Y</argname>.
+	</para>
+	<para context="tex">
+	  In other words, if $X$ is an $n \times k$ matrix, $Y$ is an
+	  $n \times m$ matrix and $Z$ is the result matrix of the
+	  horizontal direct product of $X$ times $Y$, then $Z$ will
+	  have $k\cdot m$ columns, and 
+	  \[ 
+	  Z_{in} = X_{ij} Y_{il} 
+	  \]
+	  where $n = (j-1) m + l$.
+	</para>
+	<para>
+	  As far as we know, there isn't an established name for this
+	  operation in matrix algebra. "Horizontal direct product" is
+	  the way this operation is called in the GAUSS programming
+	  language.
+	</para>
+	<para>
+	  Example: the code
+	</para>
+	<code>
+	  A = {1,2,3; 4,5,6}
+	  B = {0,1; -1,1}
+	  C = hdprod(A, B)
+	</code>
+	<para>
+	  produces the following matrix:
+	</para>
+	<code>
+	  0    1    0    2    0    3 
+         -4    4   -5    5   -6    6 
+	</code>
+      </description>
+    </function>
+
     <function name="hpfilt" section="filters" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>

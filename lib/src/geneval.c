@@ -1627,6 +1627,9 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 	/* Kronecker product */
 	C = gretl_matrix_kronecker_product_new(A, B, err);
 	break;
+    case F_HDPROD:
+	C = gretl_matrix_hdproduct_new(A, B, err);
+	break;    
     case F_CMULT:
 	C = gretl_matrix_complex_multiply(A, B, err);
 	break;
@@ -7994,6 +7997,7 @@ static NODE *eval (NODE *t, parser *p)
     case B_HCAT:
     case B_VCAT:
     case F_QFORM:
+    case F_HDPROD:	
     case F_CMULT:
     case F_CDIV:
     case F_MRSEL:
