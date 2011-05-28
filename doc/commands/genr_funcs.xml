@@ -2259,8 +2259,8 @@
 	  produces the following matrix:
 	</para>
 	<code>
-	  0    1    0    2    0    3 
-         -4    4   -5    5   -6    6 
+         0    1    0    2    0    3 
+        -4    4   -5    5   -6    6 
 	</code>
       </description>
     </function>
