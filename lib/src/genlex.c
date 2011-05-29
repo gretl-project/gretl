@@ -201,6 +201,8 @@ struct str_table funcs[] = {
     { F_MAX,      "max" },
     { F_SD,       "sd" },
     { F_VCE,      "var" },
+    { F_SKEWNESS, "skewness" },
+    { F_KURTOSIS, "kurtosis" },
     { F_SST,      "sst" },
     { F_CNORM,    "cnorm" },
     { F_DNORM,    "dnorm" },

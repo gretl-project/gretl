@@ -119,6 +119,10 @@ double gretl_corr (int t1, int t2, const double *x, const double *y,
 
 double gretl_corr_rsq (int t1, int t2, const double *x, const double *y);
 
+double gretl_skewness (int t1, int t2, const double *x);
+
+double gretl_kurtosis (int t1, int t2, const double *x);
+
 int gretl_moments (int t1, int t2, const double *x, 
 		   double *xbar, double *sd, 
 		   double *skew, double *kurt, int k);

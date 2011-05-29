@@ -169,6 +169,8 @@ enum {
     F_MAX,
     F_SD,
     F_VCE,	  /* variance */
+    F_SKEWNESS,
+    F_KURTOSIS,
     F_SST,
     F_CNORM,
     F_DNORM,

@@ -4266,6 +4266,12 @@ series_scalar_func (NODE *n, int f, parser *p)
 	case F_SST:
 	    ret->v.xval = gretl_sst(t1, t2, x);
 	    break;
+	case F_SKEWNESS:
+	    ret->v.xval = gretl_skewness(t1, t2, x);
+	    break;
+	case F_KURTOSIS:
+	    ret->v.xval = gretl_kurtosis(t1, t2, x);
+	    break;
 	case F_MIN:
 	    ret->v.xval = gretl_min(t1, t2, x);
 	    break;
@@ -8260,6 +8266,8 @@ static NODE *eval (NODE *t, parser *p)
     case F_SD:
     case F_VCE:
     case F_SST:
+    case F_SKEWNESS:
+    case F_KURTOSIS:
     case F_MIN:
     case F_MAX:
     case F_MEDIAN:

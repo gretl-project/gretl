@@ -937,6 +937,102 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
 /* we're supposing a variance smaller than this is just noise */
 #define TINYVAR 1.0e-36
 
+double gretl_skewness (int t1, int t2, const double *x)
+{
+    int t, n = t2 - t1 + 1;
+    double s, sd, xx, xbar, ret;
+
+    if (n == 0) {
+	/* null sample */
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    s = 0.0;
+    n = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    xx = x[t] - xbar;
+	    s += xx * xx;
+	    n++;
+	}
+    }
+
+    s /=n;
+
+    if (s <= TINYVAR) {
+	ret = NADBL;
+    } else {
+	sd = sqrt(s);
+	s = 0.0;
+
+	for (t=t1; t<=t2; t++) {
+	    if (!na(x[t])) {
+		xx = (x[t] - xbar)/sd;
+		s += xx * xx * xx;
+	    }
+	}
+
+	ret = s/n;
+    }
+
+    return ret;
+}
+
+/* note: the following computes EXCESS kurtosis */
+
+double gretl_kurtosis (int t1, int t2, const double *x)
+{
+    int t, n = t2 - t1 + 1;
+    double s, sd, xx, xbar, ret;
+
+    if (n == 0) {
+	/* null sample */
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    s = 0.0;
+    n = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    xx = x[t] - xbar;
+	    s += xx * xx;
+	    n++;
+	}
+    }
+
+    s /=n;
+
+    if (s <= TINYVAR) {
+	ret = NADBL;
+    } else {
+	sd = sqrt(s);
+	s = 0.0;
+
+	for (t=t1; t<=t2; t++) {
+	    if (!na(x[t])) {
+		xx = (x[t] - xbar)/sd;
+		s += xx * xx * xx * xx;
+	    }
+	}
+
+	ret = s/n - 3.0;
+    }
+
+    return ret;
+}
+
 /**
  * gretl_moments:
  * @t1: starting observation.
