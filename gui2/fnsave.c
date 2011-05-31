@@ -383,9 +383,6 @@ static gboolean update_active_func (GtkComboBox *menu,
 	}
     }
 
-    fprintf(stderr, "update_active: i = %d, n_pub = %d\n", i,
-	    finfo->n_pub);
-
     if (i < finfo->n_pub) {
 	finfo->active = finfo->pubnames[i];
     } else {
