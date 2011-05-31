@@ -2130,6 +2130,9 @@ static void clear_nlspec (nlspec *spec)
     spec->lhv = 0;
     spec->lvec = NULL;
 
+    spec->lhname[0] = '\0';
+    spec->hname[0] = '\0';
+
     spec->iters = 0;
     spec->fncount = 0;
     spec->grcount = 0;
