@@ -383,6 +383,9 @@ static gboolean update_active_func (GtkComboBox *menu,
 	}
     }
 
+    fprintf(stderr, "update_active: i = %d, n_pub = %d\n", i,
+	    finfo->n_pub);
+
     if (i < finfo->n_pub) {
 	finfo->active = finfo->pubnames[i];
     } else {
@@ -1164,8 +1167,9 @@ static void finfo_dialog (function_info *finfo)
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
 	g_signal_connect(G_OBJECT(finfo->codesel), "changed",
 			 G_CALLBACK(update_active_func), finfo);
-	update_active_func(NULL, finfo);
     } 
+
+    update_active_func(NULL, finfo);
 
     /* save package as script button */
     button = gtk_button_new_with_label(_("Save as script"));
