@@ -2108,6 +2108,7 @@ static void clear_nlspec (nlspec *spec)
 
     if (spec->hgen != NULL) {
 	destroy_genr(spec->hgen);
+	spec->hgen = NULL;
     }
     free(spec->hesscall);
 
