@@ -211,6 +211,15 @@ const char *gretl_scalar_get_name (int i)
     }
 }
 
+int gretl_scalar_get_level (int i)
+{
+    if (i >= 0 && i < n_scalars) {
+	return scalars[i]->level;
+    } else {
+	return -1;
+    }
+}
+
 double gretl_scalar_get_value_by_index (int i)
 {
     if (i >= 0 && i < n_scalars) {

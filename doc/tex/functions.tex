@@ -340,7 +340,7 @@ By default, when a variable is passed to a function as an argument,
 what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
 modified by anything that goes on inside the function.  But the use of
-pointers allows a function and its caller to ``cooperate'' such that
+pointers allows a function and its caller to cooperate such that
 an outer variable can be modified by the function.  In effect, this
 allows a function to ``return'' more than one value (although only one
 variable can be returned directly --- see below).  The parameter in
@@ -473,6 +473,24 @@ it is a good idea to signal this to the user by adding the
 Example~\ref{ex:perf-pointers}.  When a pointer argument is qualified
 in this way, any attempt to modify the object within the function will
 generate an error.
+
+One limitation on the use of pointer-type arguments should be noted:
+you cannot supply a given variable as a pointer argument more than
+once in any given function call. For example, suppose we have a
+function that takes two matrix-pointer arguments,
+\begin{code}
+function scalar pointfunc (matrix *a, matrix *b)
+\end{code}
+And suppose we have two matrices, \texttt{x} and \texttt{y}, at the
+caller level.  The call
+\begin{code}
+pointfunc(&x, &y)
+\end{code}
+is OK, but the call
+\begin{code}
+pointfunc(&x, &x) # will not work
+\end{code}
+will generate an error.
 
 \subsection{List arguments}
 

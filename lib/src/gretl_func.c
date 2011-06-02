@@ -5136,10 +5136,7 @@ static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
     int ulev = user_matrix_get_level(u);
 
     if (ulev == fn_executing + 1) {
-	/* the matrix ref must have been localized already, 
-	   in connection with a preceding parameter
-	*/
-	gretl_errmsg_set("Duplicated pointer argument: not allowed");
+	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
 	return E_DATA;
     }
 
@@ -5156,15 +5153,26 @@ static int localize_matrix_ref (struct fnarg *arg, fn_param *fp)
     return 0;
 }
 
-static int localize_bundle_ref (struct fnarg *arg, fn_param *fp)
+static int localize_bundle_ref (fnargs *args, int i,
+				fn_param *fp)
 {
-    int err = 0;
+    struct fnarg *arg = args->arg[i];
+    const char *alt, *bname = arg->val.str;
+    int j, err = 0;
 
-    arg->upname = gretl_strdup(arg->val.str);
+    for (j=0; j<i; j++) {
+	alt = args->arg[j]->upname;
+	if (alt != NULL && !strcmp(alt, bname)) {
+	    gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
+	    return E_DATA;
+	}
+    }
+
+    arg->upname = gretl_strdup(bname);
     if (arg->upname == NULL) {
 	err = E_ALLOC;
     } else {
-	err = gretl_bundle_localize(arg->upname, fp->name);
+	err = gretl_bundle_localize(bname, fp->name);
     }
 
     return err;
@@ -5179,6 +5187,11 @@ static int localize_scalar_ref (fncall *call, struct fnarg *arg,
     if (s == NULL) {
 	return E_DATA;
     } 
+
+    if (gretl_scalar_get_level(i) == fn_executing + 1) {
+	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
+	return E_DATA;
+    }
 
     arg->upname = gretl_strdup(s);
     if (arg->upname == NULL) {
@@ -5195,6 +5208,11 @@ static int localize_series_ref (fncall *call, struct fnarg *arg,
 				fn_param *fp, DATAINFO *pdinfo)
 {
     int v = arg->val.idnum;
+
+    if (STACK_LEVEL(pdinfo, v) == fn_executing + 1) {
+	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
+	return E_DATA;
+    }
 
     arg->upname = gretl_strdup(pdinfo->varname[v]);
     if (arg->upname == NULL) {
@@ -5326,7 +5344,7 @@ static int allocate_function_args (fncall *call,
 	    }
 	} else if (fp->type == GRETL_TYPE_BUNDLE_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_bundle_ref(arg, fp);
+		err = localize_bundle_ref(args, i, fp);
 	    }
 	} 
 

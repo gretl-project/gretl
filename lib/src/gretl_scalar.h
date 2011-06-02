@@ -34,6 +34,8 @@ int gretl_scalar_get_index (const char *name, int *err);
 
 const char *gretl_scalar_get_name (int i);
 
+int gretl_scalar_get_level (int i);
+
 double gretl_scalar_get_value_by_index (int i);
 
 double gretl_scalar_get_value (const char *name);
