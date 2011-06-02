@@ -3387,22 +3387,24 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 
 static int more_coming (const CMD *cmd, int i, int gotsep)
 {
+    int ret = 0;
+
     if (cmd->opt) {
-	return 1;
+	ret = 1;
     } else if (cmd->linfo == NULL) {
-	return (i < cmd->list[0]);
+	ret = (i < cmd->list[0]);
     } else {
 	int j;
 
-	for (j=i+1; j<=cmd->list[0]; j++) {
-	    if (!is_auto_generated_lag(i, cmd->list, cmd->linfo) ||
-		is_first_lag(i, cmd->list, gotsep, cmd->linfo, NULL)) {
-		return 1;
+	for (j=i+1; j<=cmd->list[0] && !ret; j++) {
+	    if (!is_auto_generated_lag(j, cmd->list, cmd->linfo) ||
+		is_first_lag(j, cmd->list, gotsep, cmd->linfo, NULL)) {
+		ret = 1;
 	    }
 	}
     }
 
-    return 0;
+    return ret;
 }
 
 static int n_separators (const int *list)
