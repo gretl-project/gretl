@@ -206,6 +206,7 @@ static int arma_Q = 0;
 static int garch_p = 1;
 static int garch_q = 1;
 static int arma_const = 1;
+static int garch_const = 1;
 static int arma_x12 = 0;
 static int arma_hessian = 1;
 static int arima_xdiff = 1;
@@ -405,6 +406,7 @@ void clear_selector (void)
 
     garch_p = 1;
     garch_q = 1;
+    garch_const = 1;
 
     jrank = 1;
     jcase = J_UNREST_CONST;
@@ -627,6 +629,7 @@ void selector_from_model (void *ptr, int ci)
 	} else if (pmod->ci == GARCH) {
 	    garch_p = pmod->list[1];
 	    garch_q = pmod->list[2];
+	    garch_const = pmod->ifc;
 	} else if (pmod->ci == HECKIT) {
 	    retrieve_heckit_info(pmod, &gotinst);
 	} else if (COUNT_MODEL(pmod->ci)) {
@@ -2157,7 +2160,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	}
     }
 
-    if (MODEL_CODE(sr->ci) && sr->ci != ARMA) {
+    if (MODEL_CODE(sr->ci) && sr->ci != ARMA && sr->ci != GARCH) {
 	/* insert default const in regressors box */
 	varlist_insert_const(sr->rvars1);
     }
@@ -2532,7 +2535,6 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     gint rvar, lag;
     gchar *rvstr;
     int added = 0;
-    int gotconst = 0;
     int i, j = 1;
 
     if (SAVE_DATA_ACTION(sr->ci) && sr->ci != COPY_CSV && rows == sr->n_left) {
@@ -2551,11 +2553,7 @@ static void get_rvars1_data (selector *sr, int rows, int context)
     gtk_tree_model_get_iter_first(model, &iter);
 
     for (i=0; i<rows; i++) {
-
 	gtk_tree_model_get(model, &iter, 0, &rvar, 1, &lag, -1);
-	if (rvar == 0) {
-	    gotconst = 1;
-	}
 
 	if (is_lag_dummy(rvar, lag, context)) {
 	    gtk_tree_model_iter_next(model, &iter);
@@ -2586,12 +2584,6 @@ static void get_rvars1_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_iter_next(model, &iter);
     }
-
-    if (sr->ci == GARCH && !gotconst) {
-	/* if the user has deliberately removed the constant,
-	   don't put it back in */
-	sr->opts |= OPT_N;
-    } 
 
     if (sr->ci == ARMA && added && !(sr->opts & OPT_N)) {
 	/* add const explicitly unless forbidden */
@@ -3287,6 +3279,7 @@ static void compose_cmdlist (selector *sr)
 	    arima_xdiff = (sr->opts & OPT_Y)? 0 : 1;
 	    arma_x12 = (sr->opts & OPT_X)? 1 : 0;
 	} else 	if (sr->ci == GARCH) {
+	    garch_const = (sr->opts & OPT_N)? 0 : 1;
 	    if (sr->opts & OPT_F) {
 		sr->opts &= ~OPT_F;
 		libset_set_bool(USE_FCP, 1);
@@ -4647,6 +4640,7 @@ static void call_iters_dialog (GtkWidget *w, GtkWidget *combo)
 	tol = libset_get_double(BHHH_TOLER);
 	optim = BHHH_MAX;
     } else {
+	optim = BFGS_MAX;
 	BFGS_defaults(&maxit, &tol, sr->ci);
 	lmem = libset_get_int(LBFGS_MEM);
     }
@@ -4831,6 +4825,10 @@ static void build_selector_switches (selector *sr)
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, arma_const, TRUE, OPT_N, 0);
 	}
+	if (sr->ci == GARCH) {
+	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
+	    pack_switch(tmp, sr, garch_const, TRUE, OPT_N, 0);
+	}	
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	pack_switch(tmp, sr, verbose, FALSE, OPT_V, 0);
     } else if (sr->ci == COINT2 || sr->ci == VECM || 
@@ -5544,7 +5542,7 @@ static int list_show_var (int v, int ci, int show_lags)
 
     if (v == 0 && (ci == DEFINE_LIST || ci == DEFINE_MATRIX)) {
 	;
-    } else if (v == 0 && (!MODEL_CODE(ci) || ci == ARMA)) {
+    } else if (v == 0 && (!MODEL_CODE(ci) || ci == ARMA || ci == GARCH)) {
 	ret = 0;
     } else if (var_is_hidden(datainfo, v)) {
 	ret = 0;
@@ -5733,6 +5731,8 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     if (MODEL_CODE(sr->ci)) {
 	if (sr->ci == ARMA) {
 	    g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
+	} else if (sr->ci == GARCH) {
+	    ; /* skip */
 	} else if (xlist == NULL || has_0(xlist)) {
 	    /* stick the constant in by default */
 	    list_append_var(mod, &iter, 0, sr, SR_RVARS1);
