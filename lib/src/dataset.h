@@ -334,6 +334,8 @@ int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo);
 
+int dataset_add_NA_series (double ***pZ, DATAINFO *pdinfo);
+
 int dataset_add_allocated_series (double *x, double ***pZ, 
 				  DATAINFO *pdinfo);
 

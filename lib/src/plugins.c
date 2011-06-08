@@ -386,6 +386,7 @@ void *get_plugin_function (const char *funcname, void **handle)
 
     *handle = get_plugin_handle(plugname);
     if (*handle == NULL) {
+	fprintf(stderr, "handle == NULL for '%s'\n", plugname);
 	return NULL;
     }
 
@@ -406,6 +407,7 @@ void *get_plugin_function (const char *funcname, void **handle)
 
     if (funp == NULL) {
 	gretl_errmsg_set(_("Couldn't load plugin function"));
+	fprintf(stderr, "plugname = '%s' for function '%s'\n", plugname, funcname);
 	close_plugin(*handle);
 	*handle = NULL;
     }

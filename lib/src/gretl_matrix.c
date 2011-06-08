@@ -4363,10 +4363,10 @@ int gretl_matrix_hdproduct (const gretl_matrix *A,
 			    const gretl_matrix *B,
 			    gretl_matrix *C)
 {
-    double x, aij, bik;
+    double aij, bik;
     int p, q, r;
-    int i, j, k, l;
-    int joff, Kj;
+    int i, j, k;
+    int joff;
 
     if (gretl_is_null_matrix(A) || 
 	gretl_is_null_matrix(B) || 

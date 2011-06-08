@@ -233,6 +233,8 @@ static int bp_base_info (bp_container *bp, const double **Z, DATAINFO *pdinfo)
     return err;
 }
 
+#if 0 /* not used at present */
+
 static double match_residuals (int T, double *u1, double *u2, char *mask)
 {
     double v1 = 0, v2 = 0, cv = 0;
@@ -260,6 +262,8 @@ static double match_residuals (int T, double *u1, double *u2, char *mask)
 
     return rho;
 }
+
+#endif
 
 static int bp_make_lists (bp_container *bp, int **plist1, int **plist2)
 {

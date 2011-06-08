@@ -1073,8 +1073,7 @@ static int real_add_series (int newvars, double *x,
     double **newZ;
     int v = pdinfo->v;
     int n = pdinfo->n;
-    int i, t;
-    int err = 0;
+    int i, err = 0;
 
     if (newvars == 0) {
 	/* no-op */
@@ -1104,11 +1103,7 @@ static int real_add_series (int newvars, double *x,
 		newZ[v+i] = malloc(n * sizeof **newZ);
 		if (newZ[v+i] == NULL) {
 		    err = E_ALLOC;
-		} else {
-		    for (t=0; t<n; t++) {
-			newZ[v+i][t] = 0.0;
-		    }
-		}
+		} 
 	    }
 	}
     }
@@ -1127,8 +1122,7 @@ static int real_add_series (int newvars, double *x,
  * @pdinfo: dataset information.
  *
  * Adds space for the specified number of additional series
- * to the dataset.  It is the caller's responsibility to
- * initialize the numerical values of the new series.
+ * to the dataset. Values are initialized to zero.
  *
  * Returns: 0 on success, E_ALLOC on error.
  */
@@ -1136,7 +1130,46 @@ static int real_add_series (int newvars, double *x,
 int 
 dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo)
 {
-    return real_add_series(newvars, NULL, pZ, pdinfo);
+    int v0 = pdinfo->v;
+    int err = real_add_series(newvars, NULL, pZ, pdinfo);
+
+    if (!err) {
+	int i, t;
+
+	for (i=0; i<newvars; i++) {
+	    for (t=0; t<pdinfo->n; t++) {
+		(*pZ)[v0+i][t] = 0.0;
+	    }
+	}
+    }
+
+    return err;
+}
+
+/**
+ * dataset_add_NA_series:
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Adds space for one additional series in the dataset; the
+ * values of of the new series are initialized to NADBL.
+ *
+ * Returns: 0 on success, E_ALLOC on error.
+ */
+
+int dataset_add_NA_series (double ***pZ, DATAINFO *pdinfo)
+{
+    int err = real_add_series(1, NULL, pZ, pdinfo);
+
+    if (!err) {
+	int t, v = pdinfo->v - 1;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[v][t] = NADBL;
+	}
+    }
+
+    return err;
 }
 
 /**

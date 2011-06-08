@@ -9283,7 +9283,7 @@ static void do_decl (parser *p)
 	    } else if (p->targ == NUM) {
 		p->err = gretl_scalar_add(S[i], NADBL);
 	    } else if (p->targ == VEC) {
-		p->err = dataset_add_series(1, p->Z, p->dinfo);
+		p->err = dataset_add_NA_series(p->Z, p->dinfo);
 		if (!p->err) {
 		    v = p->dinfo->v - 1;
 		    strcpy(p->dinfo->varname[v], S[i]);
