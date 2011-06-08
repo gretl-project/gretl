@@ -185,7 +185,6 @@ static int bp_cont_fill_data (bp_container *bp, const double **Z)
 /*
   Records into the container a few items:
 
-  * sample beginning and end
   * the lists
   * the number of parameters
 */
@@ -232,38 +231,6 @@ static int bp_base_info (bp_container *bp, const double **Z, DATAINFO *pdinfo)
 
     return err;
 }
-
-#if 0 /* not used at present */
-
-static double match_residuals (int T, double *u1, double *u2, char *mask)
-{
-    double v1 = 0, v2 = 0, cv = 0;
-    double u1t, u2t, rho;
-    int t;
-
-    for (t=0; t<T; t++) {
-	u1t = u1[t];
-	u2t = u2[t];
-	mask[t] = (na(u1t) || na(u2t));
-	if (!mask[t]) {
-	    v1 += u1t * u1t; 
-	    v2 += u2t * u2t; 
-	    cv += u1t * u2t; 
-	}
-    }
-
-    rho = cv / sqrt(v1 * v2);
-
-    if (rho > 0.99) {
-	rho = 0.99;
-    } else if (rho < -0.99) {
-	rho = -0.99;
-    }
-
-    return rho;
-}
-
-#endif
 
 static int bp_make_lists (bp_container *bp, int **plist1, int **plist2)
 {
@@ -408,15 +375,10 @@ static int biprobit_first_pass (bp_container *bp, MODEL *olsmod,
 
     for (i=0; i<T; i++) {
 	u2[i] = probmod.uhat[probmod.t1 + i];
+	bp->mask[i] = (na(u1[i]) || na(u2[i]));
     }
 
-#if 0
-    /* this seems to yield no real benefit after all */
-    bp->arho = match_residuals(T, u1, u2, bp->mask);
-    bp->arho = atanh(bp->arho);
-#else
     bp->arho = 0;
-#endif
     
  bailout:
 
@@ -441,9 +403,11 @@ static int bp_container_fill (bp_container *bp, MODEL *olsmod,
 {
     int err;
 
+    /* sample beginning and end */
     bp->t1 = olsmod->t1;
     bp->t2 = olsmod->t2;
 
+    /* lists and number of parameters per equation */
     err = bp_base_info(bp, (const double **) Z, pdinfo);
 
     if (!err) {
