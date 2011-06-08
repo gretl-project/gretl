@@ -9,13 +9,14 @@ version 1.9.6, in progress
   Help menu
 - Download of textbook data-file packages: use sourceforge for better
   reliability
-- Graphing ("gnuplot" command and GUI): generalize the option of 
+- Graphing ("gnuplot" command and GUI): generalize the option of
   separation using a binary dummy to allow use of discrete variables
 - "boxplot" command: add --factorized and --panel options; also
   enhance the boxplot options available via the GUI
 - X-12-ARIMA and TRAMO analysis: allow the user to supply names when
-  saving series to the dataset 
-- Fix bug: a nested "foreach" loop using a named list, with the name of 
+  saving series to the dataset
+- Declaration of new series: set initial values to NA, not zero
+- Fix bug: a nested "foreach" loop using a named list, with the name of
   the list subject to dollar-substitution via the parent loop, produced
   an "unknown variable" error
 - Fix bug: The symbol "<-" for assignment to an object could get confused

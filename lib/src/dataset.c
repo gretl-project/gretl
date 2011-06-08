@@ -1067,6 +1067,10 @@ dataset_expand_varinfo (int newvars, DATAINFO *pdinfo)
     return 0;
 }
 
+/* note: values of series newly added here are left uninitialized:
+   that is the responsibility of the caller
+*/
+
 static int real_add_series (int newvars, double *x,
 			    double ***pZ, DATAINFO *pdinfo)
 {
@@ -1122,7 +1126,7 @@ static int real_add_series (int newvars, double *x,
  * @pdinfo: dataset information.
  *
  * Adds space for the specified number of additional series
- * to the dataset. Values are initialized to zero.
+ * in the dataset. Values are initialized to zero.
  *
  * Returns: 0 on success, E_ALLOC on error.
  */
@@ -1152,7 +1156,7 @@ dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo)
  * @pdinfo: dataset information.
  *
  * Adds space for one additional series in the dataset; the
- * values of of the new series are initialized to NADBL.
+ * values of the new series are initialized to NADBL.
  *
  * Returns: 0 on success, E_ALLOC on error.
  */
