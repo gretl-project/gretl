@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-28 12:39-0400\n"
-"PO-Revision-Date: 2011-06-08 11:11+0300\n"
+"PO-Revision-Date: 2011-06-09 09:17+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -153,11 +153,11 @@ msgstr "Choi üst-sınamaları:"
 
 #: lib/src/adf_kpss.c:1065
 msgid "Inverse chi-square"
-msgstr "Evrik ki-kare"
+msgstr "Ters ki-kare"
 
 #: lib/src/adf_kpss.c:1067
 msgid "Inverse normal test"
-msgstr "Evrik normallik sınaması"
+msgstr "Ters normallik sınaması"
 
 #: lib/src/adf_kpss.c:1069
 msgid "Logit test"
@@ -1902,7 +1902,7 @@ msgstr "Kovaryans dizeyi"
 
 #: lib/src/describe.c:5375
 msgid "Inverse of covariance matrix"
-msgstr "Kovaryans dizeyi evriği"
+msgstr "Kovaryans dizeyinin tersi"
 
 #: lib/src/describe.c:5392
 msgid "Mahalanobis distances from the centroid"
@@ -2740,7 +2740,7 @@ msgstr "EC terimi"
 
 #: lib/src/graphing.c:5451
 msgid "VAR inverse roots in relation to the unit circle"
-msgstr "YÖB evrik kökleri, birim çembere göre"
+msgstr "YÖB ters kökleri, birim çembere göre"
 
 #: lib/src/graphing.c:5539
 #, c-format
@@ -3516,7 +3516,7 @@ msgstr "gretl_prn_new: bir dosya adı sağlamalısınız\n"
 #: lib/src/gretl_restrict.c:104
 msgid "Matrix inversion failed: restrictions may be inconsistent or redundant"
 msgstr ""
-"Dizey evriği alma başarısız: Sınırlamalar tutarsız veya fazla gelmiş olabilir"
+"Dizey tersi alma başarısız: Sınırlamalar tutarsız veya fazla gelmiş olabilir"
 
 #: lib/src/gretl_restrict.c:725
 msgid "Please give a coefficient number"
@@ -3595,7 +3595,7 @@ msgid ""
 "Matrix inversion failed:\n"
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
-"Dizey evriği alma başarısız:\n"
+"Dizey tersi alma başarısız:\n"
 "Sınırlamalar tutarsız veya fazla gelmiş olabilir\n"
 
 #: lib/src/gretl_restrict.c:2496
@@ -11855,7 +11855,7 @@ msgstr "Birleşik EC çizimi"
 
 #: gui2/gui_utils.c:4151
 msgid "VAR inverse roots"
-msgstr "YÖB evrik kökleri"
+msgstr "YÖB ters kökleri"
 
 #: gui2/gui_utils.c:4159
 msgid "Impulse responses (combined)"
@@ -15816,7 +15816,7 @@ msgstr "X'X dizeyinin özellikleri"
 
 #: plugin/vif.c:110
 msgid "Reciprocal condition number"
-msgstr "Ters koşul sayısı"
+msgstr "Evrik koşul sayısı"
 
 #: plugin/vif.c:165
 msgid "The statistic you requested is not meaningful for this model"
