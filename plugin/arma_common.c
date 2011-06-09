@@ -535,9 +535,13 @@ static int arma_adjust_sample (arma_info *ainfo,
 
 /* remove the intercept from list of regressors */
 
-static int arma_remove_const (int *list, int seasonal, int diffs,
-			      const double **Z, const DATAINFO *pdinfo)
+static int arma_remove_const (arma_info *ainfo, 
+			      const double **Z, 
+			      const DATAINFO *pdinfo)
 {
+    int *list = ainfo->alist;
+    int seasonal = arma_has_seasonal(ainfo);
+    int diffs = arma_is_arima(ainfo);
     int xstart, ret = 0;
     int i, j;
 
@@ -561,8 +565,9 @@ static int arma_remove_const (int *list, int seasonal, int diffs,
     return ret;
 }
 
-static int check_arma_sep (int *list, int sep1, arma_info *ainfo)
+static int check_arma_sep (arma_info *ainfo, int sep1)
 {
+    int *list = ainfo->alist;
     int sep2 = (sep1 == 3)? 6 : 8;
     int i, err = 0;
 
@@ -597,30 +602,30 @@ static int check_arma_sep (int *list, int sep1, arma_info *ainfo)
     return err;
 }
 
-static int arma_add_xlist (arma_info *ainfo, const int *list,
-			   int ypos)
+static int arma_add_xlist (arma_info *ainfo, int ypos)
 {
+    int i, err = 0;
+
     ainfo->xlist = gretl_list_new(ainfo->nexo);
 
     if (ainfo->xlist == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
     } else {
-	int i;
-
 	for (i=1; i<=ainfo->nexo; i++) {
-	    ainfo->xlist[i] = list[ypos + i];
+	    ainfo->xlist[i] = ainfo->alist[ypos + i];
 	}
-
-	return 0;
     }
+
+    return err;
 }
 
 #define count_arma_coeffs(a) (a->ifc + a->np + a->nq + a->P + a->Q + a->nexo)
 
-static int check_arma_list (int *list, gretlopt opt, 
+static int check_arma_list (arma_info *ainfo, 
 			    const double **Z, const DATAINFO *pdinfo,
-			    arma_info *ainfo)
+			    gretlopt opt)
 {
+    int *list = ainfo->alist;
     int ypos = arma_has_seasonal(ainfo) ? 7 : 4;
     int armax = (list[0] > ypos);
     int hadconst = 0;
@@ -668,8 +673,7 @@ static int check_arma_list (int *list, gretlopt opt,
 
     if (!err) {
 	if (armax) {
-	    hadconst = arma_remove_const(list, arma_has_seasonal(ainfo),
-					 0, Z, pdinfo);
+	    hadconst = arma_remove_const(ainfo, Z, pdinfo);
 	}
 	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ; /* no constant present */
@@ -685,17 +689,18 @@ static int check_arma_list (int *list, gretlopt opt,
 	ainfo->nc = count_arma_coeffs(ainfo);
 	ainfo->yno = list[ypos];
 	if (ainfo->nexo > 0) {
-	    err = arma_add_xlist(ainfo, list, ypos);
+	    err = arma_add_xlist(ainfo, ypos);
 	}
     }
 
     return err;
 }
 
-static int check_arima_list (int *list, gretlopt opt, 
+static int check_arima_list (arma_info *ainfo,
 			     const double **Z, const DATAINFO *pdinfo,
-			     arma_info *ainfo)
+			     gretlopt opt)
 {
+    int *list = ainfo->alist;
     int ypos = arma_has_seasonal(ainfo) ? 9 : 5;
     int armax = (list[0] > ypos);
     int hadconst = 0;
@@ -749,8 +754,7 @@ static int check_arima_list (int *list, gretlopt opt,
 
     if (!err) {
 	if (armax) {
-	    hadconst = arma_remove_const(list, arma_has_seasonal(ainfo),
-					 1, Z, pdinfo);
+	    hadconst = arma_remove_const(ainfo, Z, pdinfo);
 	}
 	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ;
@@ -766,7 +770,7 @@ static int check_arima_list (int *list, gretlopt opt,
 	ainfo->nc = count_arma_coeffs(ainfo);
 	ainfo->yno = list[ypos];
 	if (ainfo->nexo > 0) {
-	    err = arma_add_xlist(ainfo, list, ypos);
+	    err = arma_add_xlist(ainfo, ypos);
 	}
     }
 
@@ -797,16 +801,16 @@ static int arma_check_list (arma_info *ainfo,
     }
 
     if (!err) {
-	err = check_arma_sep(list, sep1, ainfo);
+	err = check_arma_sep(ainfo, sep1);
     }
 
     if (!err) {
 	if (arma_is_arima(ainfo)) {
 	    /* check for arima spec */
-	    err = check_arima_list(list, opt, Z, pdinfo, ainfo);
+	    err = check_arima_list(ainfo, Z, pdinfo, opt);
 	} else {	    
 	    /* check for simple arma spec */
-	    err = check_arma_list(list, opt, Z, pdinfo, ainfo);
+	    err = check_arma_list(ainfo, Z, pdinfo, opt);
 	} 
     }
 
