@@ -979,6 +979,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
     khelper *kh = kalman_get_data(K);
     int do_hess = arma_use_hessian(opt);
     int kopt, i, t, k = ainfo->nc;
+    int opg_failed = 0;
     double s2;
     int err;
 
@@ -1031,6 +1032,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
 	if (err) {
 	    err = 0;
+	    opg_failed = 1;
 	    do_hess = 1;
 	} else {
 	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
@@ -1052,6 +1054,17 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    err = gretl_model_write_vcv(pmod, Hinv, -1);
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
+	    }
+	} else if (err == E_NOTPD && !opg_failed) {
+	    /* try falling back to OPG */
+	    err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
+	    if (err) {
+		/* reinstate the Hessian error */
+		err = E_NOTPD;
+	    } else {
+		gretl_model_set_int(pmod, "hess-error", 1);
+		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
+		pmod->opt |= OPT_G;
 	    }
 	}
 	gretl_matrix_free(Hinv);

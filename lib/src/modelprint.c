@@ -590,6 +590,14 @@ static void maybe_print_lad_warning (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void maybe_print_hessian_warning (const MODEL *pmod, PRN *prn)
+{
+    if (gretl_model_get_int(pmod, "hess-error")) {
+	pputs(prn, _("Warning: couldn't compute numerical Hessian"));
+	pputc(prn, '\n');
+    }
+}
+
 static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 {
     double ws2 = gretl_model_get_double(pmod, "within-variance");
@@ -2008,7 +2016,9 @@ static void print_model_heading (const MODEL *pmod,
 
     if (plain_format(prn) && pmod->ci == LAD) {
 	maybe_print_lad_warning(pmod, prn);
-    }
+    } else if (plain_format(prn) && pmod->ci == ARMA) {
+	maybe_print_hessian_warning(pmod, prn);
+    }    
 
     if (pmod->missmask == NULL && gretl_model_get_int(pmod, "wt_dummy")) { 
 	/* FIXME alt formats */
