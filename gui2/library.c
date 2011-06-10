@@ -1093,9 +1093,9 @@ void unit_root_test (int ci)
 	order = omax;
     }  
 
-    if (ci == ADF && datainfo->pd == 1) {
+    if (opts == adf_opts && datainfo->pd == 1) {
 	/* disallow seasonal dummies option */
-	adf_active[4] = -1;
+	adf_active[5] = -1;
     }
 
     if (!panel) {
@@ -1127,9 +1127,9 @@ void unit_root_test (int ci)
 	    if (active[1]) opt |= OPT_N;
 	    if (active[2]) opt |= OPT_C;
 	    if (active[3]) opt |= OPT_T;
-	    if (active[4]) opt |= OPT_R; /* quad trend */
-	    if (active[5] > 0) opt |= OPT_D;
-	    if (active[6]) opt |= OPT_V;
+	    if (active[4]) opt |= OPT_R;     /* quad trend */
+	    if (active[5] > 0) opt |= OPT_D; /* seasonals */
+	    if (active[6]) opt |= OPT_V;     /* verbosity */
 	}
     } else if (ci == DFGLS) {
 	opt |= OPT_G; /* --gls */

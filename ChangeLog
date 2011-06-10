@@ -26,6 +26,8 @@ version 1.9.6, in progress
   function to a package
 - Fix bug in GUI function-package editor: "edit code" not working for
   packages containing a single function
+- Fix bug in ADF test in GUI with data frequency 1: quadratic trend
+  case being added even when deselected
 
 2011-04-22 version 1.9.5
 - Add new translation: Greek (Manolis Tzagarakis and Ioannis Venetis)
