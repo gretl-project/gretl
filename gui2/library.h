@@ -306,7 +306,7 @@ void do_new_script (int code);
 
 void new_script_callback (GtkAction *action);
 
-int do_store (char *mydatfile, gretlopt oflag, int checked);
+int do_store (char *mydatfile, gretlopt oflag);
 
 void view_latex (PRN *prn);
 

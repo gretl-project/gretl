@@ -582,7 +582,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (src == FSEL_DATA_PRN) {
 	filesel_save_prn_buffer((PRN *) data, fname);
     } else if (SAVE_DATA_ACTION(action)) {
-	err = do_store(fname, save_action_to_opt(action, data), 1);
+	err = do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
 	save_graph_to_file(data, fname);
     } else if (action == SAVE_GRAPHIC) {

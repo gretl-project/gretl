@@ -7305,50 +7305,6 @@ static int db_write_response (const char *filename, const int *list)
 
 #define WRITING_DB(o) (o & OPT_D)
 
-static int set_auto_overwrite (const char *fname, gretlopt opt,
-			       int *sublist)
-{
-    int ret = 0;
-
-    if (fname == datafile) {
-	/* saving current dataset under same name */
-	ret = 1;
-    } else if (WRITING_DB(opt)) {
-	/* allow for appending to databases */
-	ret = 1;
-    } else {
-	int samename = (strcmp(fname, datafile) == 0);
-
-	if (storelist == NULL) {
-	    if (samename) {
-		ret = 1;
-	    }
-	} else {
-	    int err = 0;
-	    int *test = gretl_list_from_string(storelist, &err);
-
-	    if (test != NULL) {
-		int i, nv = 0;
-
-		for (i=1; i<datainfo->v; i++) {
-		    if (!var_is_hidden(datainfo, i)) {
-			nv++;
-		    }
-		}
-		if (test[0] == nv) {
-		    /* saving full dataset */
-		    ret = samename;
-		} else {
-		    *sublist = 1;
-		}
-		free(test);
-	    }
-	}
-    } 
-
-    return ret;
-}
-
 static int shrink_dataset_to_sample (void)
 {
     int err;
@@ -7430,25 +7386,13 @@ static void maybe_shrink_dataset (const char *newname, int sublist)
 #define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | \
                              OPT_C | OPT_D | OPT_J | OPT_X))
 
-/* If the @checked arg is non-zero, that means that if there's
-   an existing file by the name of @filename, we have already
-   determined that the user is OK with over-writing this file.
-*/
-
-int do_store (char *filename, gretlopt opt, int checked)
+int do_store (char *filename, gretlopt opt)
 {
     const char *mylist;
     gchar *tmp = NULL;
     FILE *fp;
-    int overwrite_ok;
     int sublist = 0;
     int err = 0;
-
-    if (checked) {
-	overwrite_ok = 1;
-    } else {
-	overwrite_ok = set_auto_overwrite(filename, opt, &sublist);
-    }
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
@@ -7474,19 +7418,6 @@ int do_store (char *filename, gretlopt opt, int checked)
     } else {
 	/* standard data save */
 	tmp = g_strdup_printf("store '%s' %s", filename, mylist);
-    }
-
-    if (!overwrite_ok) {
-	fp = gretl_fopen(filename, "rb");
-	if (fp != NULL) {
-	    fclose(fp);
-	    if (yes_no_dialog(_("gretl: save data"), 
-			      _("There is already a file of this name.\n"
-				"OK to overwrite it?"), 
-			      0) == GRETL_NO) {
-		goto store_get_out;
-	    }
-	}
     }
 
     err = check_specific_command(tmp);
