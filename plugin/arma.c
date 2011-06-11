@@ -937,14 +937,14 @@ static int arima_ydiff_only (arma_info *ainfo)
     }
 }
 
-static int arma_use_hessian (gretlopt opt)
+static int arma_use_opg (gretlopt opt)
 {
-    int ret = 1;
+    int ret = 0; /* use of the Hessian is the default */
 
     if (opt & OPT_G) {
-	ret = 0;
+	ret = 1;
     } else if (libset_get_int(ARMA_VCV) == VCV_OP) {
-	ret = 0;
+	ret = 1;
     }
 
     return ret;
@@ -977,9 +977,8 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 			       gretlopt opt, PRN *prn)
 {
     khelper *kh = kalman_get_data(K);
-    int do_hess = arma_use_hessian(opt);
+    int do_opg = arma_use_opg(opt);
     int kopt, i, t, k = ainfo->nc;
-    int opg_failed = 0;
     double s2;
     int err;
 
@@ -1027,20 +1026,8 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    (do_hess)? "Hessian" : "OPG");
 #endif
 
-    if (!do_hess) {
-	/* try OPG first, hessian as fallback */
-	err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
-	if (err) {
-	    err = 0;
-	    opg_failed = 1;
-	    do_hess = 1;
-	} else {
-	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
-	    pmod->opt |= OPT_G;
-	}
-    }	
-
-    if (do_hess) { 
+    if (!do_opg) { 
+	/* base covariance matrix on Hessian */
 	gretl_matrix *Hinv;
 
 	kalman_do_ma_check = 0;
@@ -1055,20 +1042,24 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    if (!err) {
 		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_HESSIAN);
 	    }
-	} else if (err == E_NOTPD && !opg_failed) {
-	    /* try falling back to OPG */
-	    err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
-	    if (err) {
-		/* reinstate the Hessian error */
-		err = E_NOTPD;
-	    } else {
-		gretl_model_set_int(pmod, "hess-error", 1);
-		gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
-		pmod->opt |= OPT_G;
-	    }
+	} else if (err == E_NOTPD && !(opt & OPT_H)) {
+	    /* try falling back to OPG, if use of the Hessian has not
+	       been explicitly specified
+	    */
+	    err = 0;
+	    do_opg = 1;
+	    gretl_model_set_int(pmod, "hess-error", 1);
 	}
 	gretl_matrix_free(Hinv);
-    }
+    } 
+
+    if (do_opg) {
+	err = arma_OPG_vcv(pmod, K, b, s2, k, ainfo->T, prn);
+	if (!err) {
+	    gretl_model_set_vcv_info(pmod, VCV_ML, VCV_OP);
+	    pmod->opt |= OPT_G;
+	}
+    }	
 
     if (!err) {
 	write_arma_model_stats(pmod, ainfo, Z, pdinfo);

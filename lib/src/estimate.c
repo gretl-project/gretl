@@ -4068,6 +4068,15 @@ int get_x12a_maxpd (void)
  * If the model specification does not include a constant
  * this is added automatically, unless @opt includes OPT_N
  * ("no constant").
+ *
+ * When the estimation method is native exact ML, two (mutually 
+ * exclusive) flags in @opt may be used to control the estimator 
+ * of the covariance matrix: OPT_G specifies use of the outer 
+ * product of the gradient (OPG), while OPT_H specifies use of
+ * the (numerical) Hessian. If neither of these flags is given, the
+ * default is to use the Hessian by preference, but to fall back
+ * to OPG if computation of the numerical Hessian fails. These
+ * flags are ignored if estimation is not via native exact ML.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -4076,17 +4085,23 @@ MODEL arma (const int *list, const int *pqlags,
 	    const double **Z, const DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn)
 {
-    MODEL armod;
-    void *handle;
     MODEL (*arma_model) (const int *, const int *,
 			 const double **, const DATAINFO *, 
 			 gretlopt, PRN *);
     MODEL (*arma_x12_model) (const int *, const int *,
 			     const double **, const DATAINFO *, 
 			     int, gretlopt, PRN *);
-    int plugerr = 0;
+    MODEL armod;
+    void *handle;
+    int err = 0;
 
     gretl_model_init(&armod);
+
+    err = incompatible_options(opt, OPT_G | OPT_H);
+    if (err) {
+	armod.errcode = err;
+	return armod;
+    }	
 
     if (opt & OPT_X) {
 	int pdmax = get_x12a_maxpd();
@@ -4101,22 +4116,22 @@ MODEL arma (const int *list, const int *pqlags,
 	arma_x12_model = get_plugin_function("arma_x12_model", &handle);
 
 	if (arma_x12_model == NULL) {
-	    plugerr = E_FOPEN;
+	    err = E_FOPEN;
 	} else {
 	    armod = (*arma_x12_model) (list, pqlags, Z, pdinfo, pdmax, opt, prn);
 	}
     } else {
 	arma_model = get_plugin_function("arma_model", &handle);
 	if (arma_model == NULL) {
-	    plugerr = E_FOPEN;
+	    err = E_FOPEN;
 	} else {
 	    armod = (*arma_model) (list, pqlags, Z, pdinfo, opt, prn);
 	}
     }
 
-    if (plugerr) {
+    if (err) {
 	fputs(I_("Couldn't load plugin function\n"), stderr);
-	armod.errcode = plugerr;
+	armod.errcode = err;
 	return armod;
     }
 
