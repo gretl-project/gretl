@@ -13,6 +13,10 @@ version 1.9.6, in progress
   separation using a binary dummy to allow use of discrete variables
 - "boxplot" command: add --factorized and --panel options; also
   enhance the boxplot options available via the GUI
+- "arima" command (native exact ML variant): add a --hessian option to
+  enforce computation of standard errors using the Hessian; if this
+  option is not given, allow use of OPG as fallback if the numerical
+  Hessian cannot be computed
 - X-12-ARIMA and TRAMO analysis: allow the user to supply names when
   saving series to the dataset
 - Declaration of new series: set initial values to NA, not zero
