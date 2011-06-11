@@ -2170,7 +2170,7 @@ static void auto_store (void)
 	}
 
 	if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
-	    do_store(datafile, oflag);
+	    do_store(datafile, oflag, 0);
 	} else {
 	    file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
 	}

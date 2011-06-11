@@ -7430,11 +7430,12 @@ static void maybe_shrink_dataset (const char *newname, int sublist)
 #define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | \
                              OPT_C | OPT_D | OPT_J | OPT_X))
 
-/* returning 1 here means that we'll automatically overwrite
-   a file of the same name; returning 0 means we'll query
-   the user about overwriting */
+/* If the @checked arg is non-zero, that means that if there's
+   an existing file by the name of @filename, we have already
+   determined that the user is OK with over-writing this file.
+*/
 
-int do_store (char *filename, gretlopt opt)
+int do_store (char *filename, gretlopt opt, int checked)
 {
     const char *mylist;
     gchar *tmp = NULL;
@@ -7443,7 +7444,11 @@ int do_store (char *filename, gretlopt opt)
     int sublist = 0;
     int err = 0;
 
-    overwrite_ok = set_auto_overwrite(filename, opt, &sublist);
+    if (checked) {
+	overwrite_ok = 1;
+    } else {
+	overwrite_ok = set_auto_overwrite(filename, opt, &sublist);
+    }
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
