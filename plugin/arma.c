@@ -1048,6 +1048,7 @@ static int kalman_arma_finish (MODEL *pmod, arma_info *ainfo,
 	    */
 	    err = 0;
 	    do_opg = 1;
+	    /* arrange for a warning to be printed */
 	    gretl_model_set_int(pmod, "hess-error", 1);
 	}
 	gretl_matrix_free(Hinv);
