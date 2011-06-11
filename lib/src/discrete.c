@@ -3579,7 +3579,7 @@ static double table_prob (double a, double b, double c, double d,
  * @prn: gretl printer.
  *
  * Computes and prints to @prn the p-value for Fisher's Exact Test for 
- * assocation between the two variables represented in @tab.
+ * association between the two variables represented in @tab.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
