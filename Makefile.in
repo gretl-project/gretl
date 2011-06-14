@@ -104,7 +104,7 @@ osx-dist:
 # dependency for parallel builds
 cli: lib
 $(GUIDIR): lib buildstamp
-plugin: lib
+plugin: lib buildstamp
 tests: lib
 
 
