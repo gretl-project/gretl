@@ -368,12 +368,20 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 static int check_file_type (FILE *fp)
 {
     char s[22] = {0};
-    int err = 0;
+    int err = 2;
 
-    if (fread(s, 1, 21, fp) != 21) {
-	err = 1;
-    } else if (strcmp(s, "New MicroTSP Workfile")) {
-	err = 1;
+    if (fread(s, 1, 21, fp) == 21 && 
+	!strcmp(s, "New MicroTSP Workfile")) {
+	/* old-style EViews file, OK */
+	err = 0;
+    } else {
+	s[0] = s[15] = '\0';
+	rewind(fp);
+	if (fread(s, 1, 15, fp) == 15 &&
+	    !strcmp(s, "EViews File V01")) {
+	    /* new style */
+	    err = 1;
+	}
     }
 
     return err;
@@ -394,9 +402,14 @@ int wf1_get_data (const char *fname,
 	return E_FOPEN;
     }
 
-    if (check_file_type(fp)) {
+    err = check_file_type(fp);
+    if (err) {
 	fclose(fp);
-	pputs(prn, "This file does not seem to be an Eviews workfile");
+	if (err == 1) {
+	    pputs(prn, "This file is not a MicroTSP (EViews) Workfile");
+	} else {
+	    pputs(prn, "This file does not seem to be an EViews workfile");
+	}
 	return E_DATA;
     }
 
