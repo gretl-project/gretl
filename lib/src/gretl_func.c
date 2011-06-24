@@ -6212,7 +6212,7 @@ static void set_function_error_message (int err, ufunc *u,
 {
     if (err == E_FUNCERR) {
 	/* let the function writer set the message */
-	gretl_errmsg_sprintf(_("Error message from %s():\n%s"), u->name,
+	gretl_errmsg_sprintf(_("Error message from %s():\n %s"), u->name,
 			     state->cmd->param);
     } else {
 	/* we'll handle this ourselves */
