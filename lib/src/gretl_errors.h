@@ -67,8 +67,8 @@ typedef enum {
     E_NOTPD,       /* 45 */
     E_JACOBIAN,    /* 46 */
     E_TOOFEW,      /* 47 */
-    E_DB_DUP,      /* 48 : duplicate vars found when saving to database */
-    E_FUNCERR,     /* 49 : error set by function writer */
+    E_FUNCERR,     /* 48 : error set by function writer */
+    E_DB_DUP,      /* 49 : duplicate vars found when saving to database */
     E_OK,          /* 50 : not really an error */
     E_MAX          /* 51 */
 } GretlError; 

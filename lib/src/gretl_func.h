@@ -115,8 +115,6 @@ int object_is_function_arg (const char *name);
 
 void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2);
 
-const char *get_funcerr_message (void);
-
 int function_return_type_from_string (const char *s);
 
 int gretl_function_print_code (ufunc *u, PRN *prn);

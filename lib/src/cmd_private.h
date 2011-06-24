@@ -61,7 +61,6 @@ struct ExecState_ {
     int prev_model_count;
     char *submask;        /* record of incoming sub-sample for functions */
     int in_comment;
-    int funcerr;
     EXEC_CALLBACK callback;
 };
 

@@ -1345,16 +1345,12 @@ void dataset_info (void)
 
 void gui_errmsg (int errcode)
 {
-    if (errcode == E_FUNCERR) {
-	errbox(_("Error executing function"));
-    } else {
-	const char *msg = errmsg_get_with_default(errcode);
+    const char *msg = errmsg_get_with_default(errcode);
 
-	if (msg != NULL && *msg != '\0') {
-	    errbox(msg);
-	} else {
-	    errbox(_("Unspecified error"));
-	}
+    if (msg != NULL && *msg != '\0') {
+	errbox(msg);
+    } else {
+	errbox(_("Unspecified error"));
     }
 }
 

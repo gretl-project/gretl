@@ -6206,33 +6206,14 @@ static int debug_command_loop (ExecState *state,
     return 1 + debug_next(state->cmd);
 }
 
-#define FN_ERRLEN 256
-
-static char funcerr_msg[FN_ERRLEN];
-
-const char *get_funcerr_message (void)
+static void set_function_error_message (int err, ufunc *u, 
+					ExecState *state,
+					const char *line)
 {
-    return funcerr_msg;
-}
-
-static void print_funcerr_message (PRN *prn)
-{
-    if (*funcerr_msg != '\0') {
-	pputs(prn, funcerr_msg);
-    }
-}
-
-static void 
-set_function_error_message (ufunc *u, ExecState *state,
-			    int err, const char *line)
-{
-    if (state->funcerr) {
-	/* let the function writer do the message */
-	int n;
-
-	sprintf(funcerr_msg, _("Error message from %s:\n"), u->name);
-	n = strlen(funcerr_msg);
-	strncat(funcerr_msg, state->cmd->param, FN_ERRLEN - n - 1);
+    if (err == E_FUNCERR) {
+	/* let the function writer set the message */
+	gretl_errmsg_sprintf(_("Error message from %s():\n%s"), u->name,
+			     state->cmd->param);
     } else {
 	/* we'll handle this ourselves */
 	const char *msg = gretl_errmsg_get();
@@ -6303,7 +6284,7 @@ static int handle_return_statement (fncall *call,
 	    sprintf(formula, "%s $retval=%s", typestr, s);
 	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
 	    if (err) {
-		set_function_error_message(fun, state, err, s);
+		set_function_error_message(err, fun, state, s);
 	    } else {
 		call->retname = gretl_strdup("$retval");
 	    }
@@ -6503,8 +6484,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     int debugging = u->debug;
     int i, err = 0;
 
-    *funcerr_msg = '\0';
-
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
 #endif
@@ -6632,8 +6611,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 					   &err);
 	}
 
-	if (err || state.funcerr) {
-	    set_function_error_message(u, &state, err, line);
+	if (err) {
+	    set_function_error_message(err, u, &state, line);
 	    break;
 	}
 
@@ -6644,8 +6623,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 	if (gretl_execute_loop()) { 
 	    err = gretl_loop_exec(&state, pZ, pdinfo);
-	    if (err || state.funcerr) {
-		set_function_error_message(u, &state, err, state.line);
+	    if (err) {
+		set_function_error_message(err, u, &state, state.line);
 	    }
 	}
     }
@@ -6677,9 +6656,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    gretl_if_state_clear();
 	} else {
 	    gretl_if_state_reset(indent0);
-	}
-	if (state.funcerr) {
-	    print_funcerr_message(prn);
 	}
     } else if (retline >= 0) {
 	/* we returned prior to the end of the function */
