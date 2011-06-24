@@ -6022,13 +6022,6 @@ static int start_fncall (fncall *call, DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-static char funcerr_msg[256];
-
-const char *get_funcerr_message (void)
-{
-    return funcerr_msg;
-}
-
 static void func_exec_callback (ExecState *s, void *ptr,
 				GretlObjType type)
 {
@@ -6213,16 +6206,33 @@ static int debug_command_loop (ExecState *state,
     return 1 + debug_next(state->cmd);
 }
 
-void set_function_error_message (ufunc *u, ExecState *state,
-				 int err, const char *line)
+#define FN_ERRLEN 256
+
+static char funcerr_msg[FN_ERRLEN];
+
+const char *get_funcerr_message (void)
 {
-    if (state->funcerr == FNERR_FLAGGED) {
+    return funcerr_msg;
+}
+
+static void print_funcerr_message (PRN *prn)
+{
+    if (*funcerr_msg != '\0') {
+	pputs(prn, funcerr_msg);
+    }
+}
+
+static void 
+set_function_error_message (ufunc *u, ExecState *state,
+			    int err, const char *line)
+{
+    if (state->funcerr) {
 	/* let the function writer do the message */
 	int n;
 
 	sprintf(funcerr_msg, _("Error message from %s:\n"), u->name);
 	n = strlen(funcerr_msg);
-	strncat(funcerr_msg, state->cmd->param, 255 - n);
+	strncat(funcerr_msg, state->cmd->param, FN_ERRLEN - n - 1);
     } else {
 	/* we'll handle this ourselves */
 	const char *msg = gretl_errmsg_get();
@@ -6667,6 +6677,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    gretl_if_state_clear();
 	} else {
 	    gretl_if_state_reset(indent0);
+	}
+	if (state.funcerr) {
+	    print_funcerr_message(prn);
 	}
     } else if (retline >= 0) {
 	/* we returned prior to the end of the function */

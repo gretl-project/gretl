@@ -82,6 +82,7 @@ static const char *gretl_error_messages[] = {
     N_("Failed to calculate Jacobian"),                          /* E_JACOBIAN */
     N_("Insufficient observations for this operation"),          /* E_TOOFEW */
     NULL,                                                        /* E_DB_DUP */
+    NULL,                                                        /* E_FUNCERR */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */
 };
@@ -96,7 +97,9 @@ static const char *gretl_warning_messages[] = {
 
 static const char *look_up_errmsg (int err)
 {
-    if (err > 0 && err < E_MAX) {
+    if (err == E_FUNCERR) {
+	return NULL; 
+    } else if (err > 0 && err < E_MAX) {
 	return gretl_error_messages[err];
     } else if (err == 0) {
 	return "";
@@ -188,7 +191,9 @@ void errmsg (int err, PRN *prn)
     if (!error_printed && prn != NULL) {
 	const char *msg = errmsg_get_with_default(err);
 
-	pprintf(prn, "%s\n", msg);
+	if (msg != NULL) {
+	    pprintf(prn, "%s\n", msg);
+	}
 	error_printed = 1;
     } 
 }

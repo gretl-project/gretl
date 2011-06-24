@@ -2585,9 +2585,11 @@ static void get_rvars1_data (selector *sr, int rows, int context)
 	gtk_tree_model_iter_next(model, &iter);
     }
 
+#if 0
     if (MODEL_CODE(sr->ci)) {
 	printlist(xlist, "xlist");
     }
+#endif
 
     if (sr->ci == ARMA && added && !(sr->opts & OPT_N)) {
 	/* add const explicitly unless forbidden */

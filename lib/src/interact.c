@@ -5205,8 +5205,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 				 gretl_command_word(cmd->ci));
 	    err = 1;
 	} else if (cmd->ci == FUNCERR) {
-	    err = 1;
-	    s->funcerr = FNERR_FLAGGED;
+	    err = s->funcerr = E_FUNCERR;
 	} 
 	break;
 
@@ -5350,8 +5349,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     s->pmod = NULL; /* be on the safe side */
 
     if (s->cmd->ci == FUNCERR) {
-	err = 1;
-	s->funcerr = FNERR_FLAGGED;
+	err = s->funcerr = E_FUNCERR;
     } else {
 	/* note: error messages may be printed to s->prn */
 	err = gretl_cmd_exec(s, pZ, pdinfo);
@@ -5631,7 +5629,7 @@ void gretl_exec_state_init (ExecState *s,
     s->rset = NULL;
     s->var = NULL;
     s->in_comment = 0;
-    s->funcerr = FNERR_NONE;
+    s->funcerr = 0;
 
     if (flags == FUNCTION_EXEC) {
 	/* On entry to function execution we check if there's
@@ -5709,7 +5707,7 @@ void gretl_exec_state_clear (ExecState *s)
     s->prev_model_count = -1;
 
     free_subsample_mask(s->submask);
-    s->funcerr = FNERR_NONE;
+    s->funcerr = 0;
 }
 
 void gretl_exec_state_uncomment (ExecState *s)

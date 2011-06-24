@@ -980,24 +980,20 @@ static void insert_today (GtkWidget *w, GtkWidget *entry)
 static gint today_popup (GtkWidget *entry, GdkEventButton *event,
 			 GtkWidget **popup)
 {
-    GdkModifierType mods = parent_get_pointer_mask(entry);
+    if (*popup == NULL) {
+	GtkWidget *menu = gtk_menu_new();
+	GtkWidget *item;
 
-    if (RIGHT_CLICK(mods)) {
-	if (*popup == NULL) {
-	    GtkWidget *menu = gtk_menu_new();
-	    GtkWidget *item;
-
-	    item = gtk_menu_item_new_with_label(_("Insert today's date"));
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(insert_today), entry);
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-	    *popup = menu;
-	}
-
-	gtk_menu_popup(GTK_MENU(*popup), NULL, NULL, NULL, NULL, 
-		       event->button, event->time);
+	item = gtk_menu_item_new_with_label(_("Insert today's date"));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(insert_today), entry);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+	*popup = menu;
     }
+
+    gtk_menu_popup(GTK_MENU(*popup), NULL, NULL, NULL, NULL, 
+		   event->button, event->time);
 
     return TRUE;
 }

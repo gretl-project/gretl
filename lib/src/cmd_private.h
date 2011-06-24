@@ -45,12 +45,6 @@ struct CMD_ {
 
 typedef void (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
 
-enum {
-    FNERR_NONE,
-    FNERR_FLAGGED,
-    FNERR_AUTO
-};
-
 struct ExecState_ {
     ExecFlags flags;
     CMD *cmd;
