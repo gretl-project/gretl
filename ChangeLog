@@ -30,6 +30,8 @@ version 1.9.6, in progress
   function to a package
 - Fix bug in GUI function-package editor: "edit code" not working for
   packages containing a single function
+- Fix bug in GUI function-package editor: not apparent how to change
+  the recorded date for a function package
 - Fix bug in ADF test in GUI with data frequency 1: quadratic trend
   case being added even when deselected
 

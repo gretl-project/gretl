@@ -1426,6 +1426,22 @@ static void print_param_description (fn_param *param, PRN *prn)
     }
 }
 
+static void print_param_labels (fn_param *param, PRN *prn)
+{
+    int i;
+
+    pputs(prn, " {");
+
+    for (i=0; i<param->nlabels; i++) {
+	pprintf(prn, "\"%s\"", param->labels[i]);
+	if (i < param->nlabels - 1) {
+	    pputs(prn, ", ");
+	}
+    }
+
+    pputc(prn, '}');
+}
+
 static void print_min_max_deflt (fn_param *param, PRN *prn)
 {
     if (na(param->min) && na(param->max) && na(param->deflt)) {
@@ -1927,6 +1943,9 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	    print_opt_flags(&fun->params[i], prn);
 	}
 	print_param_description(&fun->params[i], prn);
+	if (fun->params[i].nlabels > 0) {
+	    print_param_labels(&fun->params[i], prn);
+	}
 	if (i == fun->n_params - 1) {
 	    pputc(prn, ')');
 	} else {
