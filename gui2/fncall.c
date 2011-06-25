@@ -1706,6 +1706,24 @@ static void maybe_set_gui_interface (const char *gname,
     }
 }
 
+static int need_model_check (call_info *cinfo)
+{
+    int i, err = 0;
+
+    for (i=0; i<cinfo->n_params; i++) {
+	if (fn_param_uses_xlist(cinfo->func, i)) {
+	    if (cinfo->vwin == NULL ||
+		cinfo->vwin->role != VIEW_MODEL) {
+		err = E_DATA;
+		errbox("Needs a model in place");
+		break;
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* call to execute a function from the specified package: we do
    this only for locally installed packages */
 
@@ -1805,6 +1823,11 @@ void call_function_package (const char *fname, windata_t *vwin,
 	    fprintf(stderr, "user_func_get_return_type: failed\n");
 	    errbox(_("Couldn't get function package information"));
 	}
+    }
+
+    if (!err) {
+	/* FIXME this check should come earlier */
+	err = need_model_check(cinfo);
     }
 
     if (!err) {

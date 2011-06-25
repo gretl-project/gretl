@@ -927,7 +927,8 @@ static void browser_functions_handler (windata_t *vwin, int task)
     }
 
 #if 1
-    fprintf(stderr, "browser_functions_handler: path='%s'\n", path);
+    fprintf(stderr, "browser_functions_handler: active=%d, pkgname='%s'\n"
+	    "path='%s'\n", vwin->active_var, pkgname, path);
 #endif
 
     if (task == LOAD_FN_PKG) {
