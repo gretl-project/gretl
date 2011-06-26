@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-28 12:39-0400\n"
-"PO-Revision-Date: 2011-05-10 00:39+0100\n"
+"PO-Revision-Date: 2011-06-26 16:13+0100\n"
 "Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
@@ -10513,9 +10513,8 @@ msgid "Panel IV model"
 msgstr "Model paneli IV"
 
 #: gui2/fncall.c:2358
-#, fuzzy
 msgid "Confidence band plot"
-msgstr "Intervali i besimit"
+msgstr "Grafik i intervalit të besimit"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -16230,10 +16229,10 @@ msgstr ""
 msgid "Hessian"
 msgstr "Hesjania"
 
+# ?
 #: plugin/addons-i18n.c:16
-#, fuzzy
 msgid "Mean regressors"
-msgstr "Regresorët"
+msgstr "Regresorët e mesatares"
 
 #: plugin/addons-i18n.c:17
 msgid "Model type"
@@ -16261,12 +16260,11 @@ msgstr "Sandwich"
 
 #: plugin/addons-i18n.c:23
 msgid "Skewed GED"
-msgstr ""
+msgstr "GED asimetrik"
 
 #: plugin/addons-i18n.c:24
-#, fuzzy
 msgid "Skewed t"
-msgstr "Asimetria"
+msgstr "t asimetrik"
 
 #: plugin/addons-i18n.c:25
 msgid "TARCH"
@@ -16276,10 +16274,10 @@ msgstr "TARCH"
 msgid "Taylor/Schwert GARCH"
 msgstr ""
 
+# ?
 #: plugin/addons-i18n.c:28
-#, fuzzy
 msgid "Variance regressors"
-msgstr "Regresorët e ekuacionit të parë"
+msgstr "Regresorët e variancës"
 
 #: plugin/addons-i18n.c:29
 msgid "Verbosity"
@@ -16290,9 +16288,8 @@ msgid "t"
 msgstr "t"
 
 #: plugin/addons-i18n.c:34
-#, fuzzy
 msgid "Between model"
-msgstr "Model _Between"
+msgstr "Model Between"
 
 #: plugin/addons-i18n.c:36
 msgid "G2SLS"

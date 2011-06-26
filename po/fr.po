@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-04-28 12:39-0400\n"
-"PO-Revision-Date: 2011-06-03 11:18+0100\n"
+"PO-Revision-Date: 2011-06-26 16:14+0100\n"
 "Last-Translator: \n"
 "Language-Team: French <traduc@traduc.org>\n"
 "Language: fr\n"
@@ -3720,7 +3720,7 @@ msgstr ""
 "           (écart-type entre parenthèses, p. critique entre crochets)\n"
 "\n"
 
-#  
+#
 #: lib/src/gretl_panel.c:1556
 msgid ""
 "Fixed effects estimator\n"
@@ -5365,9 +5365,8 @@ msgid "Bollerslev-Wooldridge standard errors"
 msgstr "Écarts type de Bollerslev-Wooldridge"
 
 #: lib/src/modelprint.c:1342
-#, fuzzy
 msgid "Warning: could not compute standard errors"
-msgstr "Ne peut pas calculer les écarts type Beck-Katz"
+msgstr "Attention : Ne peut pas calculer les écarts-types"
 
 #: lib/src/modelprint.c:1366
 #, c-format
@@ -10502,19 +10501,16 @@ msgstr ""
 "Voulez-vous essayer de le télécharger maintenant ?"
 
 #: gui2/fncall.c:2306
-#, fuzzy
 msgid "GARCH variants"
-msgstr "toutes variantes"
+msgstr "Variantes de GARCH"
 
 #: gui2/fncall.c:2307
-#, fuzzy
 msgid "Panel IV model"
-msgstr "modèle de panel"
+msgstr "Modèle de panel IV"
 
 #: gui2/fncall.c:2358
-#, fuzzy
 msgid "Confidence band plot"
-msgstr "Intervalle de confiance"
+msgstr "Graphique de l'intervalle de confiance"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -10673,7 +10669,6 @@ msgstr ""
 "Voulez-vous définir une fonction ?"
 
 #: gui2/gpt_control.c:291
-#, fuzzy
 msgid " Click to set position"
 msgstr " Cliquer pour fixer la position de l'étiquette"
 
@@ -10863,9 +10858,8 @@ msgid "quadratic: y = a + b*x + c*x^2"
 msgstr "quadratique : y = a + b*x + c*x^2"
 
 #: gui2/gpt_dialog.c:130
-#, fuzzy
 msgid "cubic: y = a + b*x + c*x^2 + d*x^3"
-msgstr "quadratique : y = a + b*x + c*x^2"
+msgstr "cubique : y = a + b*x + c*x^2 + d*x^3"
 
 #: gui2/gpt_dialog.c:131
 msgid "inverse: y = a + b*(1/x)"
@@ -10886,9 +10880,8 @@ msgstr "Sélectionner la couleur"
 
 #: gui2/gpt_dialog.c:667
 #: gui2/gpt_dialog.c:706
-#, fuzzy
 msgid "Invalid position, must be X Y"
-msgstr "Position invalide d'étiquette, doit être X Y"
+msgstr "Position invalide, doit être X Y"
 
 #: gui2/gpt_dialog.c:1170
 #: gui2/gpt_dialog.c:1205
@@ -11067,25 +11060,25 @@ msgstr "Ajouter..."
 
 #: gui2/gpt_dialog.c:3009
 msgid "Arrows"
-msgstr ""
+msgstr "Flèches"
 
 #: gui2/gpt_dialog.c:3040
 msgid "from (X Y)"
-msgstr ""
+msgstr "depuis (X Y)"
 
 #: gui2/gpt_dialog.c:3042
-#, fuzzy
 msgid "to (X Y)"
 msgstr "position (X Y)"
 
+# à améliorer peut-être
 #: gui2/gpt_dialog.c:3077
 msgid "arrow has head"
-msgstr ""
+msgstr "la flèche comporte une tête"
 
+# à améliorer peut-être
 #: gui2/gpt_dialog.c:3086
-#, fuzzy
 msgid "line is dotted"
-msgstr "épaisseur de la ligne"
+msgstr "ligne discontinue"
 
 #: gui2/gpt_dialog.c:3124
 msgid "X-axis"
@@ -16190,29 +16183,24 @@ msgid "gig"
 msgstr ""
 
 #: plugin/addons-i18n.c:5
-#, fuzzy
 msgid "APARCH"
-msgstr "ARCH"
+msgstr "APRCH"
 
 #: plugin/addons-i18n.c:7
-#, fuzzy
 msgid "Covariance estimator"
-msgstr "Matrice de covariance"
+msgstr "Estimateur de la covariance"
 
 #: plugin/addons-i18n.c:9
-#, fuzzy
 msgid "Dependent Variable"
-msgstr "Variable dépendante"
+msgstr "Variable Dépendante"
 
 #: plugin/addons-i18n.c:10
-#, fuzzy
 msgid "Distribution"
-msgstr "Distribution :"
+msgstr "Distribution"
 
 #: plugin/addons-i18n.c:11
-#, fuzzy
 msgid "EGARCH"
-msgstr "GARCH"
+msgstr "EGARCH"
 
 #: plugin/addons-i18n.c:13
 msgid "GED"
@@ -16223,100 +16211,85 @@ msgid "GJR"
 msgstr ""
 
 #: plugin/addons-i18n.c:15
-#, fuzzy
 msgid "Hessian"
-msgstr "/Session"
+msgstr "La Héssienne"
 
+# ?
 #: plugin/addons-i18n.c:16
-#, fuzzy
 msgid "Mean regressors"
-msgstr "Régresseurs"
+msgstr "Les régresseurs de la moyenne"
 
 #: plugin/addons-i18n.c:17
-#, fuzzy
 msgid "Model type"
-msgstr "Table des modèles"
+msgstr "Type de modèles"
 
 #: plugin/addons-i18n.c:18
-#, fuzzy
 msgid "NARCH"
-msgstr "ARCH"
+msgstr "NARCH"
 
 #: plugin/addons-i18n.c:19
-#, fuzzy
 msgid "Normal"
-msgstr "normal"
+msgstr "Normal"
 
 #: plugin/addons-i18n.c:20
 msgid "OPG"
 msgstr ""
 
 #: plugin/addons-i18n.c:21
-#, fuzzy
 msgid "Plot type"
-msgstr "type"
+msgstr "Type de graphique"
 
 #: plugin/addons-i18n.c:22
-#, fuzzy
 msgid "Sandwich"
-msgstr "Largeur de bande = %g"
+msgstr ""
 
 #: plugin/addons-i18n.c:23
 msgid "Skewed GED"
-msgstr ""
+msgstr "GED asymétrique"
 
 #: plugin/addons-i18n.c:24
-#, fuzzy
 msgid "Skewed t"
-msgstr "Asymétrie"
+msgstr "t asymétrique"
 
 #: plugin/addons-i18n.c:25
-#, fuzzy
 msgid "TARCH"
-msgstr "ARCH"
+msgstr "TARCH"
 
 #: plugin/addons-i18n.c:26
 msgid "Taylor/Schwert GARCH"
 msgstr ""
 
 #: plugin/addons-i18n.c:28
-#, fuzzy
 msgid "Variance regressors"
-msgstr "Régresseurs de l'équation de sélection"
+msgstr "Les régresseurs de la variance"
 
 #: plugin/addons-i18n.c:29
-#, fuzzy
 msgid "Verbosity"
-msgstr "Mode _explicatif"
+msgstr "Mode explicatif"
 
 #: plugin/addons-i18n.c:30
-#, fuzzy
 msgid "t"
-msgstr "à"
+msgstr "t"
 
 #: plugin/addons-i18n.c:34
-#, fuzzy
 msgid "Between model"
-msgstr "Modèle _Between..."
+msgstr "Modèle Between"
 
 #: plugin/addons-i18n.c:36
 msgid "G2SLS"
 msgstr ""
 
 #: plugin/addons-i18n.c:37
-#, fuzzy
 msgid "dependent variable"
-msgstr "Variable dépendante"
+msgstr "variable dépendante"
 
 #: plugin/addons-i18n.c:38
-#, fuzzy
 msgid "instruments"
-msgstr "Instruments"
+msgstr "instruments"
 
 #: plugin/addons-i18n.c:39
-#, fuzzy
 msgid "regressors"
-msgstr "Régresseurs"
+msgstr "régresseurs"
 
 #: plugin/anova.c:106
 #: plugin/anova.c:108
@@ -16641,7 +16614,7 @@ msgstr "Variables exogènes"
 
 #: plugin/johansen.c:1570
 msgid "Cointegration tests, ignoring exogenous variables"
-msgstr ""
+msgstr "Tests de cointégration, variables exogènes exclues"
 
 #: plugin/johansen.c:1573
 #: plugin/johansen.c:1593
@@ -16661,17 +16634,16 @@ msgstr "test Lmax"
 #: plugin/johansen.c:1591
 #, c-format
 msgid "Cointegration tests conditional on %d I(1) variable(s)"
-msgstr ""
+msgstr "Tests de conintégration conditionnels sur %d I(1) variable(s)"
 
 #: plugin/johansen.c:1594
 msgid "pval(T)"
 msgstr ""
 
-# Garantir une taille d'échantillon uniforme
 #: plugin/johansen.c:1619
-#, fuzzy, c-format
+#, c-format
 msgid "Corrected for sample size (df = %d)"
-msgstr "Corrigé pour la taille de l'échantillon"
+msgstr "Corrigé pour la taille de l'échantillon  (df = %d)"
 
 #: plugin/johansen.c:1637
 msgid ""
