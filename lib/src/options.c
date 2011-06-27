@@ -1191,8 +1191,13 @@ gretlopt get_gretl_options (char *line, int *err)
 	return oflags;
     }
 
-    if (ci != SET && ci != SETINFO && ci != TABPRINT && ci != EQNPRINT) {
-	/* try for short-form options (e.g. "-o") */
+    if (ci != SET && ci != SETINFO && ci != SMPL &&
+	ci != TABPRINT && ci != EQNPRINT) {
+	/* try for short-form options (e.g. "-o"): but note that
+	   with some commands there's the possibility of collision
+	   between short options and other syntactical elements,
+	   so we only recognize long-form options.
+	*/
 	opt = get_short_opts(line, ci, (ci == SMPL)? NULL : &myerr);
 	if (!myerr && opt) {
 	    oflags |= opt;
