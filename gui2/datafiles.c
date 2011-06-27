@@ -840,6 +840,21 @@ windata_t *display_function_package_data (const char *pkgname,
     return vwin;
 }
 
+/* on adding files to gfn view window: ensure that the GTK
+   selection stays in sync with the "active_var" ID
+*/
+
+static void fix_selected_row (GtkTreeModel *model,
+			      GtkTreePath *path,
+			      GtkTreeIter *iter,
+			      gpointer data)
+{
+    gint idx = gtk_tree_path_get_indices(path)[0];
+    windata_t *vwin = data;
+
+    vwin->active_var = idx;
+}
+
 void set_funcs_dir_callback (windata_t *vwin, char *path)
 {
     DIR *dir = opendir(path);
@@ -886,6 +901,10 @@ void set_funcs_dir_callback (windata_t *vwin, char *path)
 	read_fn_files_in_dir(dir, path, store, &iter, &nfn, &maxlen);
 
 	if (nfn > nfn0) {
+	    GtkTreeSelection *sel;
+
+	    sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(vwin->listbox));
+	    gtk_tree_selection_selected_foreach(sel, fix_selected_row, vwin);
 	    infobox(_("Found %d function file(s)"), nfn - nfn0);
 	    g_object_set_data(G_OBJECT(vwin->listbox), "nfn", GINT_TO_POINTER(nfn));
 	    if (resp > 0) {
