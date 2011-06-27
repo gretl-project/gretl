@@ -760,9 +760,15 @@ static void update_xlist_arg (GtkComboBox *combo,
 
 static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
 {
-    MODEL *pmod = cinfo->vwin->data;
-    int *xlist = NULL;
+    MODEL *pmod;
+    int *xlist;
     GtkWidget *combo;
+
+    if (cinfo->vwin == NULL || cinfo->vwin->data == NULL) {
+	return NULL;
+    }
+
+    pmod = cinfo->vwin->data;
 
     combo = gtk_combo_box_text_new();
     widget_set_int(combo, "argnum", i);
@@ -1712,10 +1718,9 @@ static int need_model_check (call_info *cinfo)
 
     for (i=0; i<cinfo->n_params; i++) {
 	if (fn_param_uses_xlist(cinfo->func, i)) {
-	    if (cinfo->vwin == NULL ||
-		cinfo->vwin->role != VIEW_MODEL) {
+	    if (cinfo->vwin == NULL || cinfo->vwin->role != VIEW_MODEL) {
 		err = E_DATA;
-		errbox("Needs a model in place");
+		errbox(_("This function needs a model in place"));
 		break;
 	    }
 	}
@@ -1826,7 +1831,7 @@ void call_function_package (const char *fname, windata_t *vwin,
     }
 
     if (!err) {
-	/* FIXME this check should come earlier */
+	/* FIXME this check should come earlier? */
 	err = need_model_check(cinfo);
     }
 

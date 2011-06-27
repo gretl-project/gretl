@@ -10,6 +10,7 @@ const char *special_keyword[] = {
     "return", 
     "while",
     "elif",
+    "eval",
     "const",
     "3sls",
     "liml",
@@ -29,6 +30,8 @@ const char *gretl_data_types[] = {
     "series",
     "matrix",
     "list",
+    "string",
+    "bundle",
     "null",
     "void",
     NULL
