@@ -1012,7 +1012,7 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     GList *list = NULL;
     GtkWidget *combo;
     GtkWidget *entry;
-    int null_OK = 0;
+    int k = 0, null_OK = 0;
 
     combo = combo_box_text_new_with_entry();
     entry = gtk_bin_get_child(GTK_BIN(combo));
@@ -1030,13 +1030,16 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
     list = get_selection_list(ptype);
     if (list != NULL) {
 	set_combo_box_strings_from_list(combo, list);
-	if (null_OK) {
-	    combo_box_append_text(combo, "null");	    
-	}
 	arg_combo_set_default(cinfo, GTK_COMBO_BOX(combo), 
 			      list, ptype);
+	k = g_list_length(list);
 	g_list_free(list);
     } 
+
+    if (null_OK) {
+	combo_box_append_text(combo, "null");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);	
+    }
 
     if (ptype == GRETL_TYPE_INT || ptype == GRETL_TYPE_DOUBLE) {
 	double x = fn_param_default(cinfo->func, i);
