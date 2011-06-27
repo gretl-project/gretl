@@ -4308,6 +4308,9 @@ static void selector_init (selector *sr, guint ci, const char *title,
     }
     
     gtk_window_set_default_size(GTK_WINDOW(sr->dlg), dlgx, dlgy); 
+#ifndef G_OS_WIN32
+    set_wm_icon(sr->dlg);
+#endif    
 
     g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 		     G_CALLBACK(destroy_selector), 

@@ -2220,6 +2220,10 @@ static GtkWidget *files_window (windata_t *vwin)
 		      types, titles, use_tree);
     gtk_widget_show(box);
 
+#ifndef G_OS_WIN32
+    set_wm_icon(vwin->main);
+#endif
+
     return box;
 }
 
