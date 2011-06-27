@@ -1453,13 +1453,24 @@ static void print_min_max_deflt (fn_param *param, PRN *prn)
     }
 
     pputc(prn, '[');
+
+    /* minimum */
     if (!na(param->min)) pprintf(prn, "%g", param->min);
     pputc(prn, ':');
+
+    /* maximum */
     if (!na(param->max)) pprintf(prn, "%g", param->max);
     pputc(prn, ':');
+
+    /* default */
     if (!na(param->deflt)) pprintf(prn, "%g", param->deflt);
-    pputc(prn, ':');
-    if (!na(param->step)) pprintf(prn, "%g", param->step);
+
+    if (!na(param->step)) {
+	/* step */
+	pputc(prn, ':');
+	pprintf(prn, "%g", param->step);
+    }
+
     pputc(prn, ']');
 }
 

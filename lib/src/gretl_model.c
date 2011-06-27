@@ -1555,6 +1555,10 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     int *list = NULL;
     int i, nx;
 
+    if (pmod == NULL) {
+	return NULL;
+    }
+
     if (pmod->ci == ARMA) {
 	int start = arma_depvar_pos(pmod);
 
