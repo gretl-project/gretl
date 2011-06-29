@@ -42,9 +42,9 @@ double normal_pvalue_2 (double x);
 
 double normal_pvalue_1 (double x);
 
-double student_pvalue_2 (int df, double x);
+double student_pvalue_2 (double df, double x);
 
-double student_pvalue_1 (int df, double x);
+double student_pvalue_1 (double df, double x);
 
 double chisq_cdf (int df, double x);
 

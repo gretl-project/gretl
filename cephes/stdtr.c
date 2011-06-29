@@ -21,10 +21,10 @@
  *                                      -
  *                                     | |
  *              -                      |         2   -(k+1)/2
- *             | ( (k+1)/2)           |  (     x  )
+ *              | ( (k+1)/2)           |  (     x  )
  *       ----------------------        |  ( 1 + ---)        dx
  *                     -               |  (      k )
- *       sqrt( k pi) | ( k/2)        |
+ *       sqrt( k pi)   | ( k/2)        |
  *                                   | |
  *                                    -
  *                                   -inf.
@@ -86,14 +86,17 @@
 
 #include "mconf.h"
 
-double stdtr (int k, double t)
+double stdtr (double rk, double t)
 {
-    double x, rk, z, f, tz, p, xsqk;
-    int j;
+    double x, z, f, tz, p, xsqk;
+    int k, j, is_int;
 
-    if (k <= 0) {
+    if (rk <= 0) {
 	mtherr("stdtr", CEPHES_DOMAIN);
 	return 0.0;
+    } else {
+	k = (int) rk;
+	is_int = (rk - k) == 0.0;
     }
 
     if (t == 0) {
@@ -101,80 +104,89 @@ double stdtr (int k, double t)
     }
 
     if (t < -2.0) {
-	rk = k;
 	z = rk / (rk + t * t);
 	p = 0.5 * incbet(0.5*rk, 0.5, z);
 	return p;
     }
 
-    /*	compute integral from -t to +t */
+    if (is_int) {
+	/* integer df */
 
-    if (t < 0) {
-	x = -t;
-    } else {
-	x = t;
-    }
+	/*	compute integral from -t to +t */
 
-    rk = k;	/* degrees of freedom */
-    z = 1.0 + (x * x)/rk;
+	if (t < 0) {
+	    x = -t;
+	} else {
+	    x = t;
+	}
 
-    /* test if k is odd or even */
-    if ((k & 1) != 0) {
+	z = 1.0 + (x * x)/rk;
 
-	/* computation for odd k */
+	/* test if k is odd or even */
+	if ((k & 1) != 0) {
 
-	xsqk = x/sqrt(rk);
-	p = atan(xsqk);
-	if (k > 1) {
+	    /* computation for odd k */
+
+	    xsqk = x/sqrt(rk);
+	    p = atan(xsqk);
+	    if (k > 1) {
+		f = 1.0;
+		tz = 1.0;
+		j = 3;
+		while ((j <= (k-2)) && ((tz/f) > MACHEP)) {
+		    tz *= (j - 1)/(z * j);
+		    f += tz;
+		    j += 2;
+		}
+		p += f * xsqk/z;
+	    }
+	    p *= 2.0/PI;
+	} else {
+
+	    /* computation for even k */
+
 	    f = 1.0;
 	    tz = 1.0;
-	    j = 3;
+	    j = 2;
+
 	    while ((j <= (k-2)) && ((tz/f) > MACHEP)) {
 		tz *= (j - 1)/(z * j);
 		f += tz;
 		j += 2;
 	    }
-	    p += f * xsqk/z;
+	    p = f * x/sqrt(z*rk);
 	}
-	p *= 2.0/PI;
+
+	/* common exit */
+	
+	if (t < 0) {
+	    p = -p;	/* note destruction of relative accuracy */
+	}
+
+	p = 0.5 + 0.5 * p;
+
     } else {
-
-	/* computation for even k */
-
-	f = 1.0;
-	tz = 1.0;
-	j = 2;
-
-	while ((j <= (k-2)) && ((tz/f) > MACHEP)) {
-	    tz *= (j - 1)/(z * j);
-	    f += tz;
-	    j += 2;
-	}
-	p = f * x/sqrt(z*rk);
+	/* non-integer df */
+	z = rk / (rk + t * t);
+	p = 0.5 * incbet(0.5*rk, 0.5, z);
+	if (t > 0) {
+	    p = 1-p;
+	} 
     }
 
-    /* common exit */
-
-    if (t < 0) {
-	p = -p;	/* note destruction of relative accuracy */
-    }
-
-    p = 0.5 + 0.5 * p;
 
     return p;
 }
 
-double stdtri (int k, double p)
+double stdtri (double rk, double p)
 {
-    double t, rk, z;
+    double t, z;
     int rflg;
 
-    if (k <= 0 || p <= 0.0 || p >= 1.0) {
+    if (rk <= 0 || p <= 0.0 || p >= 1.0) {
 	mtherr("stdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
-
-    rk = k;
 
     if (p > 0.25 && p < 0.75) {
 	if (p == 0.5) {

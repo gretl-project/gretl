@@ -60,15 +60,15 @@ double fdtri (int ia, int ib, double y);
 
 /*
    Computes the integral from minus infinity to t of the Student
-   t distribution with integer k > 0 degrees of freedom.
+   t distribution with k > 0 degrees of freedom.
 */
-double stdtr (int k, double t);
+double stdtr (double rk, double t);
 
 /*
    Given probability p, finds the argument t such that stdtr(k,t)
    is equal to p.
 */
-double stdtri (int k, double p);
+double stdtri (double rk, double p);
 
 /*
    Returns the area under the Gaussian probability density

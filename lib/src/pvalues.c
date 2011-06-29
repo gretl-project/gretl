@@ -397,7 +397,7 @@ double normal_pvalue_1 (double x)
  * #NADBL on failure.
  */
 
-double student_cdf (int df, double x)
+double student_cdf (double df, double x)
 {
     double p = NADBL;
 
@@ -421,7 +421,7 @@ double student_cdf (int df, double x)
  * #NADBL on failure.
  */
 
-static double student_cdf_comp (int df, double x)
+static double student_cdf_comp (double df, double x)
 {
     double p = NADBL;
 
@@ -482,7 +482,7 @@ double normal_cdf_comp (double x)
  * or #NADBL on failure.
  */
 
-double student_pvalue_1 (int df, double x)
+double student_pvalue_1 (double df, double x)
 {
     double p = NADBL;
 
@@ -508,7 +508,7 @@ double student_pvalue_1 (int df, double x)
  * #NADBL on failure.
  */
 
-double student_pvalue_2 (int df, double x)
+double student_pvalue_2 (double df, double x)
 {
     double p = NADBL;
 
@@ -528,8 +528,6 @@ double student_pvalue_2 (int df, double x)
     return p;
 }
 
-#define df_ok(d) (floor(d) == d && d < (double) INT_MAX)
-
 /**
  * student_critval:
  * @df: degrees of freedom.
@@ -544,22 +542,14 @@ double student_critval (double df, double a)
 {
     double x;
 
-    if (df < 1) {
+    if (df < 0) {
 	return NADBL;
     }    
 
-    if (df_ok(df)) {
-	if (a > .10) {
-	    x = stdtri((int) df, 1 - a);
-	} else {
-	    x = -stdtri((int) df, a);
-	}
+    if (a > .10) {
+	x = stdtri(df, 1 - a);
     } else {
-	if (a > .10) {
-	    x = ndtri(1 - a);
-	} else {
-	    x = -ndtri(a);
-	}
+	x = -stdtri(df, a);
     }
 
     if (get_cephes_errno()) {
@@ -583,15 +573,11 @@ double student_cdf_inverse (double df, double a)
 {
     double x;
 
-    if (df < 1) {
+    if (df < 0) {
 	return NADBL;
     }
 
-    if (df_ok(df)) {
-	x = stdtri((int) df, a);
-    } else {
-	x = ndtri(a);
-    }    
+    x = stdtri(df, a);
 
     if (get_cephes_errno()) {
 	x = NADBL;
@@ -1986,7 +1972,7 @@ double gretl_get_cdf (char st, const double *parm, double x)
     if (st == 'z') {
 	y = normal_cdf(x);
     } else if (st == 't') {
-	y = student_cdf((int) parm[0], x);
+	y = student_cdf(parm[0], x);
     } else if (st == 'X') {
 	y = chisq_cdf((int) parm[0], x);
     } else if (st == 'F') {
@@ -2119,7 +2105,7 @@ double gretl_get_pvalue (char st, const double *parm, double x)
     if (st == 'z') {
 	y = normal_cdf_comp(x);
     } else if (st == 't') {
-	y = student_cdf_comp((int) parm[0], x);
+	y = student_cdf_comp(parm[0], x);
     } else if (st == 'X') {
 	y = chisq_cdf_comp((int) parm[0], x);
     } else if (st == 'F') {
@@ -2386,7 +2372,7 @@ void print_pvalue (char st, const double *parm, double x,
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pv, 1 - 2 * pv);
 	} else {
-	    pc = student_cdf((int) parm[0], x);
+	    pc = student_cdf(parm[0], x);
 	    pprintf(prn, _("(to the left: %g)\n"), pc);
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2 * pc, 1 - 2 * pc);
