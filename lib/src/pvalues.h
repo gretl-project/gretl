@@ -78,6 +78,8 @@ double gamma_cdf (double s1, double s2, double x, int control);
 
 double gamma_cdf_comp (double s1, double s2, double x, int control);
 
+double gamma_cdf_inverse (double shape, double scale, double p);
+
 double GED_pdf (double nu, double x);
 
 double GED_cdf (double nu, double x);

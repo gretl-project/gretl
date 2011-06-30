@@ -727,7 +727,7 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
     } else if (*s == '5' || *s == 'g' || *s == 'G') {
 	/* Gamma: partial support */
 	*s = 'G';
-	if (f == F_CRIT || f == F_INVCDF) {
+	if (f == F_CRIT) {
 	    err = 1;
 	} else {
 	    *np = 2; /* shape, scale */

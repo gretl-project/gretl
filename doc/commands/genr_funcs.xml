@@ -2523,6 +2523,11 @@
 	  </li>
 	  <li>
 	    <para>
+	      Gamma (g or G): shape; scale
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      Student's t (t): degrees of freedom
 	    </para>
 	  </li>
@@ -2554,6 +2559,8 @@
 	  \textit{Arg} 2 &amp; \textit{Arg} 3 \\[4pt] 
 	  Standard normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp;
 	  -- &amp; -- \\ 
+	  Gamma &amp; \texttt{g} or \texttt{G} &amp;
+	  shape &amp; scale \\ 
 	  Student's $t$ (central) &amp; \texttt{t} &amp; 
 	  degrees of freedom &amp; -- \\ 
 	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; 

@@ -112,6 +112,10 @@ double gdtr (double a, double b, double x);
 */
 double gdtrc (double a, double b, double x);
 
+/* 
+   Returns the inverse incomplete gamma function.
+*/
+double igami( double a, double y0 );
 /*
    Returns gamma function of the argument.  The result is
    correctly signed.
@@ -139,8 +143,3 @@ int polrt (double *xcof, double *cof, int m, cmplx *root);
 int get_cephes_errno (void);
 
 #endif /* LIBPROB_H */
-
-
-
-
-

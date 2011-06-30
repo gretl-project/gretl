@@ -1347,6 +1347,36 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
     return p;
 }
 
+/**
+ * gamma_cdf_inverse:
+ * @shape: shape.
+ * @scale: scale.
+ * @p: probability.
+ *
+ * Returns: the argument x such that the integral from minus infinity
+ * to @x of the gamma density with given scale and shape parameters is
+ * equal to the given probability @p, or #NADBL on failure. Note that
+ * the alternate parametrization (mean, variance) is not supported.
+ */
+
+double gamma_cdf_inverse (double shape, double scale, double p)
+{
+    double x = NADBL;
+
+    if (p==0) {
+	return 0;
+    }
+
+    if (shape > 0 && scale > 0 && p > 0 && p < 1) {
+	x = igami(shape, 1-p) * scale;
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
+}
+
 static int gamma_pdf_array (double shape, double scale, 
 			    double *x, int n)
 {
@@ -1898,6 +1928,8 @@ double gretl_get_cdf_inverse (char st, const double *parm,
 	y = student_cdf_inverse(parm[0], a);
     } else if (st == 'X') {
 	y = chisq_cdf_inverse((int) parm[0], a);
+    } else if (st == 'G') {
+	y = gamma_cdf_inverse(parm[0], parm[1], a);
     } else if (st == 'F') {
 	y = snedecor_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (st == 'B') {
