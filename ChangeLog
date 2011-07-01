@@ -1,5 +1,10 @@
 version 1.9.6, in progress
 - cum() function: make this respect panel structure
+- New function, hdprod(): implements "direct row product" for matrices
+- extend the cdf() function to Student's t with non-integer degrees of
+  freedom
+- extend the invcdf() function to the Gamma distribution and Student's
+  t with non-integer degrees of freedom
 - build with SSE2 enabled: ensure that the C compiler SSE2 option is
   not wiped out if the user (re-)specifies CFLAGS when doing "make"
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac
