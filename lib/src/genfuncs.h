@@ -29,6 +29,8 @@ int gretl_sort_by (const double *x, const double *y,
 int rank_series (const double *x, double *y, int f, 
 		 const DATAINFO *pdinfo);
 
+gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err);
+
 int diff_series (const double *x, double *y, int f, 
 		 const DATAINFO *pdinfo);
 

@@ -2324,16 +2324,21 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 
 	if (gretl_is_null_matrix(m) && !nullmat_ok(f)) {
 	    p->err = E_DATA;
-	    goto finalize;
-	}
-
-	if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC) {
+	} else if (f == F_RESAMPLE || f == F_MREVERSE || f == F_SDC) {
 	    /* the r node may be absent, but if present it should
 	       hold a scalar */
 	    if (!empty_or_num(r)) {
 		node_type_error(f, 2, NUM, r, p);
-		goto finalize;
 	    }
+	} else if (f == F_RANKING) {
+	    if (gretl_vector_get_length(m) == 0) {
+		/* m must be a vector */
+		p->err = E_TYPES;
+	    }
+	}
+
+	if (p->err) {
+	    goto finalize;
 	}
 
 	gretl_error_clear();
@@ -2429,6 +2434,9 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	case F_POLROOTS:
 	    ret->v.m = gretl_matrix_polroots(m, &p->err);
+	    break;
+	case F_RANKING:
+	    ret->v.m = rank_vector(m, F_SORT, &p->err);
 	    break;
 	case F_MINC:
 	case F_MAXC:
@@ -8218,7 +8226,6 @@ static NODE *eval (NODE *t, parser *p)
     case F_PMAX:
     case F_PMEAN:
     case F_PSD:
-    case F_RANKING:
     case F_DESEAS:
 	/* series argument needed */
 	if (l->t == VEC || l->t == MAT) {
@@ -8230,6 +8237,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CUM:
     case F_DIFF:
     case F_RESAMPLE:
+    case F_RANKING:
 	/* series or matrix argument */
 	if (l->t == VEC) {
 	    ret = series_series_func(l, r, t->t, p);

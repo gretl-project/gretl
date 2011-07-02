@@ -153,16 +153,14 @@ static void genrank (const double *sz, int m,
     }
 }
 
-int rank_series (const double *x, double *y, int f, 
-		 const DATAINFO *pdinfo)
+static int rank_array (const double *x, double *y, int f, int n)
 {
     double *sx = NULL;
     double *rx = NULL;
-    int n = sample_size(pdinfo);
     int m = n;
     int i, t;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=0; t<n; t++) {
 	if (na(x[t])) m--;
     }
 
@@ -176,7 +174,7 @@ int rank_series (const double *x, double *y, int f,
     }
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=0; t<n; t++) {
 	if (!na(x[t])) {
 	    sx[i] = x[t];
 	    rx[i] = 0.0;
@@ -190,10 +188,10 @@ int rank_series (const double *x, double *y, int f,
 	qsort(sx, m, sizeof *sx, gretl_compare_doubles);
     }
 
-    genrank(sx, m, x + pdinfo->t1, n, rx);
+    genrank(sx, m, x, n, rx);
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=0; t<n; t++) {
 	if (!na(x[t])) {
 	    y[t] = rx[i++];
 	}
@@ -203,6 +201,38 @@ int rank_series (const double *x, double *y, int f,
     free(rx);
 
     return 0;
+}
+
+int rank_series (const double *x, double *y, int f, 
+		 const DATAINFO *pdinfo)
+{
+    return rank_array(x + pdinfo->t1, y + pdinfo->t1,
+		      f, sample_size(pdinfo));
+}
+
+gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err) 
+{
+    gretl_matrix *y = NULL;
+    int n = gretl_vector_get_length(x);
+
+    if (n == 0) {
+	*err = E_DATA;
+    } else {
+	y = gretl_matrix_alloc(x->rows, x->cols);
+	if (y == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	*err = rank_array(x->val, y->val, f, n);
+	if (*err) {
+	    gretl_matrix_free(y);
+	    y = NULL;
+	}
+    }
+
+    return y;
 }
 
 /**
