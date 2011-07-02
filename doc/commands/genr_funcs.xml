@@ -4708,20 +4708,21 @@
       </description>
     </function>
 
-    <function name="ranking" section="stats" output="series">
+    <function name="ranking" section="stats" output="asinput">
       <fnargs>
-	<fnarg type="series">y</fnarg>
+	<fnarg type="series-or-vec">y</fnarg>
       </fnargs>
       <description>
 	<para>
-	  Returns a series with the ranks of <math>y</math>. The rank for
-	  observation <math>i</math> is the number of elements in the
-	  series that are less than <math>y</math><sub>i</sub> plus one
-	  half the number of elements in the series that are equal to
-	  <math>y</math><sub>i</sub>. (Intuitively, you may think of chess
-	  points, where victory gives you one point and a draw gives you
-	  half a point.) One is added so the lowest rank is 1 instead of
-	  0.
+	  Returns a series or vector with the ranks of
+	  <math>y</math>. The rank for observation <math>i</math> is
+	  the number of elements that are less than
+	  <math>y</math><sub>i</sub> plus one half the number of
+	  elements that are equal to
+	  <math>y</math><sub>i</sub>. (Intuitively, you may think of
+	  chess points, where victory gives you one point and a draw
+	  gives you half a point.) One is added so the lowest rank is
+	  1 instead of 0.
 	</para>
 	<para context="tex">
 	  Formally, 

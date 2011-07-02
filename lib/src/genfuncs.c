@@ -153,6 +153,8 @@ static void genrank (const double *sz, int m,
     }
 }
 
+/* implements both rank_series() and rank_vector() */
+
 static int rank_array (const double *x, double *y, int f, int n)
 {
     double *sx = NULL;
@@ -192,7 +194,9 @@ static int rank_array (const double *x, double *y, int f, int n)
 
     i = 0;
     for (t=0; t<n; t++) {
-	if (!na(x[t])) {
+	if (na(x[t])) {
+	    y[t] = NADBL;
+	} else {
 	    y[t] = rx[i++];
 	}
     }    
