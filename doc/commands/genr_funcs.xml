@@ -2825,6 +2825,18 @@
       </description>
     </function> 
 
+    <function name="kurtosis" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the excess kurtosis of the series <argname>x</argname>,
+	  skipping any missing observations.
+	</para>
+      </description>
+    </function>
+
     <function name="isseries" section="data-utils" output="scalar">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -5102,6 +5114,18 @@
 	    <fncref targ="cosh"/>
 	    <fncref targ="tanh"/>
 	  </seelist>
+	</para>
+      </description>
+    </function>
+
+    <function name="skewness" section="stats" output="scalar">
+      <fnargs>
+	<fnarg type="series">x</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns the skewness value for the series <argname>x</argname>,
+	  skipping any missing observations.
 	</para>
       </description>
     </function>
