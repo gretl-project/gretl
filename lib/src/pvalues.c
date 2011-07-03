@@ -2233,7 +2233,7 @@ double *gretl_get_random_series (char st, const double *parm,
 	}
     } else if (st == 't') {
 	/* Student's t */
-	int v = parm[0];
+	double v = parm[0];
 
 	if (serp1 != NULL) {
 	    for (t=t1; t<=t2 && !*err; t++) {

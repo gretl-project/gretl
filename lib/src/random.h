@@ -50,7 +50,7 @@ int gretl_rand_normal_full (double *a, int t1, int t2,
 
 int gretl_rand_chisq (double *a, int t1, int t2, int v);
 
-int gretl_rand_student (double *a, int t1, int t2, int v);
+int gretl_rand_student (double *a, int t1, int t2, double v);
 
 int gretl_rand_F (double *a, int t1, int t2, int v1, int v2);
 

@@ -965,19 +965,19 @@ int gretl_rand_chisq (double *a, int t1, int t2, int v)
  *
  * Fill the selected range of array @a with pseudo-random drawings
  * from the Student t distribution with @v degrees of freedom, 
- * using the Mersenne Twister for uniform input and the Box-Muller 
+ * using the Mersenne Twister for uniform input and the ziggurat 
  * method for converting to the normal distribution.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_rand_student (double *a, int t1, int t2, int v) 
+int gretl_rand_student (double *a, int t1, int t2, double v) 
 {
     double *X2 = NULL;
     int T = t2 - t1 + 1;
     int t;
 
-    if (v < 1) {
+    if (v <= 0) {
 	return E_INVARG;
     }
 
@@ -987,7 +987,7 @@ int gretl_rand_student (double *a, int t1, int t2, int v)
     }
 
     gretl_rand_normal(a, t1, t2);
-    gretl_rand_chisq(X2, 0, T-1, v);
+    gretl_rand_gamma(X2, 0, T-1, 0.5*v, 2);
 
     for (t=0; t<T; t++) {
 	a[t + t1] /= sqrt(X2[t] / v);
