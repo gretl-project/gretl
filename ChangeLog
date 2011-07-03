@@ -1,6 +1,8 @@
 version 1.9.6, in progress
 - cum() function: make this respect panel structure
+- ranking() function: accept vectors as well as series
 - New function, hdprod(): implements "direct row product" for matrices
+- New functions for series: skewness() and kurtosis()
 - allow non-integer degrees of freedom for Student's t in cdf(), invcdf()
   and randgen()
 - extend the invcdf() function to the Gamma distribution

@@ -33,7 +33,7 @@
 
 #define WF1_NA 1e-37
 
-static void bin_error (int *err)
+static void wf1_error (int *err)
 {
     fputs("binary read error\n", stderr);
     *err = 1;
@@ -44,7 +44,7 @@ static int read_int (FILE *fp, int *err)
     int i;
 
     if (fread(&i, sizeof i, 1, fp) != 1) {
-	bin_error(err);
+	wf1_error(err);
     }
 #if WORDS_BIGENDIAN
     reverse_int(i);
@@ -69,7 +69,7 @@ static int read_short (FILE *fp, int *err)
     short s;
 
     if (fread(&s, sizeof s, 1, fp) != 1) {
-	bin_error(err);
+	wf1_error(err);
     } 
     i = s;
 #endif
@@ -82,7 +82,7 @@ static long read_long (FILE *fp, int *err)
     long int l;
 
     if (fread(&l, sizeof l, 1, fp) != 1) {
-	bin_error(err);
+	wf1_error(err);
     }
 #if WORDS_BIGENDIAN
     reverse_int(l);
@@ -96,7 +96,7 @@ static double read_double (FILE *fp, int *err)
     double x;
 
     if (fread(&x, sizeof x, 1, fp) != 1) {
-	bin_error(err);
+	wf1_error(err);
     }
 #if WORDS_BIGENDIAN
     reverse_double(x);
@@ -105,7 +105,8 @@ static double read_double (FILE *fp, int *err)
     return (x == WF1_NA)? NADBL : x;
 }
 
-static int get_data (FILE *fp, int ftype, long pos, double **Z, int i, int n)
+static int wf1_read_values (FILE *fp, int ftype, long pos, double **Z, 
+			    int i, int n)
 {
     double x;
     int t, nobs = 0;
@@ -125,8 +126,9 @@ static int get_data (FILE *fp, int ftype, long pos, double **Z, int i, int n)
 	fprintf(stderr, "0x%x: read nobs = %d\n", (unsigned) pos, nobs);
     }
 
-#if 1
+#if EVDEBUG
     int j;
+
     fprintf(stderr, "following ints:");
     for (j=0; j<4; j++) {
 	t = read_int(fp, &err);
@@ -136,7 +138,8 @@ static int get_data (FILE *fp, int ftype, long pos, double **Z, int i, int n)
 #endif
 
     fseek(fp, pos + 22, SEEK_SET); /* offset 22 is wrong for type V01? */
-    fprintf(stderr, "reading doubles at 0x%x\n", (unsigned) pos+22);
+    fprintf(stderr, "reading doubles at 0x%x (%d)\n", (unsigned) pos+22, 
+	    (int) pos+22);
     for (t=0; t<nobs; t++) {
 	x = read_double(fp, &err);
 	if (err) {
@@ -148,7 +151,7 @@ static int get_data (FILE *fp, int ftype, long pos, double **Z, int i, int n)
     return err;
 }
 
-static int read_history (FILE *fp, long pos, DATAINFO *pdinfo, int i)
+static int wf1_read_history (FILE *fp, long pos, DATAINFO *pdinfo, int i)
 {
     char *htxt;
     int hpos, len, err = 0;
@@ -184,6 +187,9 @@ static int read_history (FILE *fp, long pos, DATAINFO *pdinfo, int i)
 static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 			       DATAINFO *dinfo, int *nvread, PRN *prn)
 {
+#if EVDEBUG
+    int k;
+#endif
     int nv = dinfo->v + 1; /* allow for "RESID" */
     int msg_done = 0;
     char vname[32];
@@ -195,7 +201,7 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
     fseek(fp, pos + 62, SEEK_SET);
     code = read_short(fp, &err);
     if (code == 0) {
-	fprintf(stderr, "Did not get sensible code: trying skipping forward 32 bytes\n");
+	fprintf(stderr, "Did not get sensible code: skipping 32 bytes\n");
 	pos += 32;
     }
 
@@ -206,6 +212,7 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 	code = read_short(fp, &err);
 	if (code == 43) {
 	    /* constant: skip */
+	    fprintf(stderr, "\nDiscarding constant (C)\n");
 	    continue;
 	} else if (code != 44) {
 	    if (!msg_done) {
@@ -220,12 +227,21 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 	fseek(fp, pos + 22, SEEK_SET);
 	fscanf(fp, "%31s", vname);
 	if (!strcmp(vname, "C") || !strcmp(vname, "RESID")) {
-	    fprintf(stderr, "Discarding '%s'\n", vname);
+	    fprintf(stderr, "\nDiscarding '%s'\n", vname);
 	    continue;
 	}
 	fprintf(stderr, "\n*** variable %d, '%s'\n", j + 1, vname);
 	dinfo->varname[++j][0] = 0;
 	strncat(dinfo->varname[j], vname, VNAMELEN - 1);
+
+#if EVDEBUG
+	fseek(fp, pos + 6, SEEK_SET);
+	k = read_int(fp, &err);
+	fprintf(stderr, "data record size: %d\n", k);
+	fseek(fp, pos + 10, SEEK_SET);
+	k = read_int(fp, &err);
+	fprintf(stderr, "data block size: %d\n", k);
+#endif	
 
 	/* get stream position for the data */
 	fseek(fp, pos + 14, SEEK_SET);
@@ -233,7 +249,7 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
 	    fprintf(stderr, "Reading data block...\n");
-	    err = get_data(fp, ftype, u, Z, j, dinfo->n);
+	    err = wf1_read_values(fp, ftype, u, Z, j, dinfo->n);
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
 	}
@@ -243,7 +259,7 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 	u = read_long(fp, &err);
 	if (u > 0) {
 	    fprintf(stderr, "Reading history block at 0x%x\n", (unsigned) u);
-	    read_history(fp, u, dinfo, j);
+	    wf1_read_history(fp, u, dinfo, j);
 	}
     }
 
@@ -381,7 +397,7 @@ static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo, long *offset)
     return err;
 }
 
-static int check_file_type (FILE *fp)
+static int wf1_check_file_type (FILE *fp)
 {
     char s[22] = {0};
     int ftype = -1;
@@ -419,7 +435,7 @@ int wf1_get_data (const char *fname,
 	return E_FOPEN;
     }
 
-    ftype = check_file_type(fp);
+    ftype = wf1_check_file_type(fp);
     
     if (ftype < 0) {
 	fclose(fp);
