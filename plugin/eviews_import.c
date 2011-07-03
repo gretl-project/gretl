@@ -29,7 +29,7 @@
 # include "swap_bytes.h"
 #endif
 
-#define EDEBUG 0
+#define EDEBUG 4
 
 #define WF1_NA 1e-37
 
@@ -105,7 +105,7 @@ static double read_double (FILE *fp, int *err)
     return (x == WF1_NA)? NADBL : x;
 }
 
-static int get_data (FILE *fp, long pos, double **Z, int i, int n)
+static int get_data (FILE *fp, int ftype, long pos, double **Z, int i, int n)
 {
     double x;
     int t, nobs = 0;
@@ -121,9 +121,42 @@ static int get_data (FILE *fp, long pos, double **Z, int i, int n)
     if (nobs != n) {
 	fputs("problem: this does not match the specification "
 	      " for the dataset\n", stderr);
+    } else {
+	fprintf(stderr, "0x%x: read nobs = %d\n", (unsigned) pos, nobs);
     }
 
-    fseek(fp, pos + 22, SEEK_SET);
+#if 1
+    int j;
+    fprintf(stderr, "following ints:");
+    for (j=0; j<4; j++) {
+	t = read_int(fp, &err);
+	fprintf(stderr, " %d", t);
+    }
+    fputc('\n', stderr);
+#endif
+
+#if 0
+    if (ftype == 1) {
+	// int i, imin = 98 + 8 * 8;
+	int i, imin = 8;
+
+	for (i=imin; i<=256; i+=2) {
+	    fseek(fp, pos + i, SEEK_SET);
+	    fprintf(stderr, "offset = %d\n", i);
+	    for (t=0; t<nobs; t++) {
+		x = read_double(fp, &err);
+		if (err) {
+		    break;
+		} else {
+		    fprintf(stderr, "x(%d) = %g\n", t, x);
+		}
+	    }
+	}
+    }
+#endif 
+
+    fseek(fp, pos + 22, SEEK_SET); /* offset 22 is wrong for type V01 */
+    fprintf(stderr, "reading doubles at 0x%x\n", (unsigned) pos+22);
     for (t=0; t<nobs; t++) {
 	x = read_double(fp, &err);
 	if (err) {
@@ -160,7 +193,7 @@ static int read_history (FILE *fp, long pos, DATAINFO *pdinfo, int i)
 
 	    *targ = '\0';
 	    strncat(targ, htxt, MAXLABEL - 1);
-	    fprintf(stderr, "history: '%s'\n", htxt);
+	    fprintf(stderr, "history (0x%x): '%s'\n", (unsigned) hpos, htxt);
 	}
 	free(htxt);
     }
@@ -168,10 +201,10 @@ static int read_history (FILE *fp, long pos, DATAINFO *pdinfo, int i)
     return 0;
 }
 
-static int read_wf1_variables (FILE *fp, long pos, double **Z,
+static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 			       DATAINFO *dinfo, int *nvread, PRN *prn)
 {
-    int nv = dinfo->v + 1; /* RESID */
+    int nv = dinfo->v + 1; /* allow for "RESID" */
     int msg_done = 0;
     char vname[32];
     short code = 0;
@@ -207,9 +240,10 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	fseek(fp, pos + 22, SEEK_SET);
 	fscanf(fp, "%31s", vname);
 	if (!strcmp(vname, "C") || !strcmp(vname, "RESID")) {
+	    fprintf(stderr, "Discarding '%s'\n", vname);
 	    continue;
 	}
-	fprintf(stderr, "Got variable %d, '%s'\n", j + 1, vname);
+	fprintf(stderr, "\n*** variable %d, '%s'\n", j + 1, vname);
 	dinfo->varname[++j][0] = 0;
 	strncat(dinfo->varname[j], vname, VNAMELEN - 1);
 
@@ -218,7 +252,8 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	u = read_long(fp, &err);
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
-	    err = get_data(fp, u, Z, j, dinfo->n);
+	    fprintf(stderr, "Reading data block...\n");
+	    err = get_data(fp, ftype, u, Z, j, dinfo->n);
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
 	}
@@ -227,6 +262,7 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	fseek(fp, pos + 54, SEEK_SET);
 	u = read_long(fp, &err);
 	if (u > 0) {
+	    fprintf(stderr, "Reading history block at 0x%x\n", (unsigned) u);
 	    read_history(fp, u, dinfo, j);
 	}
     }
@@ -271,7 +307,7 @@ static void analyse_mystery_vals (FILE *fp)
 
 #endif
 
-static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
+static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo, long *offset)
 {
     int nvars = 0, nobs = 0, startyr = 0;
     short pd = 0, startper = 0;
@@ -368,23 +404,23 @@ static int parse_wf1_header (FILE *fp, DATAINFO *dinfo, long *offset)
 static int check_file_type (FILE *fp)
 {
     char s[22] = {0};
-    int err = 2;
+    int ftype = -1;
 
     if (fread(s, 1, 21, fp) == 21 && 
 	!strcmp(s, "New MicroTSP Workfile")) {
 	/* old-style EViews file, OK */
-	err = 0;
+	ftype = 0;
     } else {
 	s[0] = s[15] = '\0';
 	rewind(fp);
 	if (fread(s, 1, 15, fp) == 15 &&
 	    !strcmp(s, "EViews File V01")) {
 	    /* new style */
-	    err = 1;
+	    ftype = 1;
 	}
     }
 
-    return err;
+    return ftype;
 }
 
 int wf1_get_data (const char *fname, 
@@ -395,21 +431,19 @@ int wf1_get_data (const char *fname,
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
     long offset;
-    int nvread, err = 0;
+    int nvread, ftype;
+    int err = 0;
 
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
-    err = check_file_type(fp);
-    if (err) {
+    ftype = check_file_type(fp);
+    
+    if (ftype < 0) {
 	fclose(fp);
-	if (err == 1) {
-	    pputs(prn, "This file is not a MicroTSP (EViews) Workfile");
-	} else {
-	    pputs(prn, "This file does not seem to be an EViews workfile");
-	}
+	pputs(prn, "This file does not seem to be an EViews workfile");
 	return E_DATA;
     }
 
@@ -420,7 +454,7 @@ int wf1_get_data (const char *fname,
 	return E_ALLOC;
     }
 
-    err = parse_wf1_header(fp, newinfo, &offset);
+    err = parse_wf1_header(fp, ftype, newinfo, &offset);
     if (err) {
 	pputs(prn, _("Error reading workfile header\n"));
 	free_datainfo(newinfo);
@@ -436,7 +470,7 @@ int wf1_get_data (const char *fname,
 	return E_ALLOC;
     }	
 
-    err = read_wf1_variables(fp, offset, newZ, newinfo, &nvread, prn);
+    err = read_wf1_variables(fp, ftype, offset, newZ, newinfo, &nvread, prn);
 
     if (err) {
 	destroy_dataset(newZ, newinfo);
