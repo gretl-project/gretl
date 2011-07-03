@@ -135,27 +135,7 @@ static int get_data (FILE *fp, int ftype, long pos, double **Z, int i, int n)
     fputc('\n', stderr);
 #endif
 
-#if 0
-    if (ftype == 1) {
-	// int i, imin = 98 + 8 * 8;
-	int i, imin = 8;
-
-	for (i=imin; i<=256; i+=2) {
-	    fseek(fp, pos + i, SEEK_SET);
-	    fprintf(stderr, "offset = %d\n", i);
-	    for (t=0; t<nobs; t++) {
-		x = read_double(fp, &err);
-		if (err) {
-		    break;
-		} else {
-		    fprintf(stderr, "x(%d) = %g\n", t, x);
-		}
-	    }
-	}
-    }
-#endif 
-
-    fseek(fp, pos + 22, SEEK_SET); /* offset 22 is wrong for type V01 */
+    fseek(fp, pos + 22, SEEK_SET); /* offset 22 is wrong for type V01? */
     fprintf(stderr, "reading doubles at 0x%x\n", (unsigned) pos+22);
     for (t=0; t<nobs; t++) {
 	x = read_double(fp, &err);
