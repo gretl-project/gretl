@@ -29,7 +29,7 @@
 # include "swap_bytes.h"
 #endif
 
-#define EDEBUG 4
+#define EDEBUG 0
 
 #define WF1_NA 1e-37
 
