@@ -29,7 +29,7 @@
 # include "swap_bytes.h"
 #endif
 
-#define EDEBUG 0
+#define EVDEBUG 0
 
 #define WF1_NA 1e-37
 
@@ -258,7 +258,7 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
     return err;
 }
 
-#if EDEBUG
+#if EVDEBUG
 
 static void analyse_mystery_vals (FILE *fp)
 {
@@ -320,7 +320,7 @@ static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo, long *offset)
     fseek(fp, 140, SEEK_SET);
     nobs = read_int(fp, &err);
 
-#if EDEBUG
+#if EVDEBUG
     analyse_mystery_vals(fp);
 #endif
 
@@ -423,9 +423,21 @@ int wf1_get_data (const char *fname,
     
     if (ftype < 0) {
 	fclose(fp);
-	pputs(prn, "This file does not seem to be an EViews workfile");
+	pputs(prn, "This file does not seem to be an EViews workfile\n");
 	return E_DATA;
     }
+
+#if EVDEBUG
+    if (ftype == 1) {
+	pputs(prn, "Experimental!\n");
+    }
+#else
+    if (ftype != 0) {
+	fclose(fp);
+	pputs(prn, "Unsupported file type (EViews 7)\n");
+	return E_DATA;
+    }	
+#endif
 
     newinfo = datainfo_new();
     if (newinfo == NULL) {

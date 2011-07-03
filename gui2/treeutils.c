@@ -221,8 +221,8 @@ static void update_dialogs_from_varclick (int active_var)
 
 #ifdef OSX_BUILD
 
-/* Trying to support command-click as replacement for Ctrl-click
-   on OS X. But it doesn't work. I wonder why... */
+/* Support for command-click as replacement for Ctrl-click
+   on OS X */
 
 static gboolean maybe_do_meta_click (GtkWidget *widget, GtkTreeView *view,
 				     GtkTreePath *path)
