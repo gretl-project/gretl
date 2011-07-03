@@ -229,32 +229,7 @@ static gboolean maybe_do_meta_click (GtkWidget *widget, GtkTreeView *view,
 {
     GdkModifierType mods = widget_get_pointer_mask(widget);
 
-    if (mods & GDK_META_MASK) {
-	fprintf(stderr, "Got GDK_META_MASK\n");
-    }
-
-    if (mods & GDK_MOD1_MASK) {
-	fprintf(stderr, "Got GDK_MOD1_MASK\n");
-    }
-
     if (mods & GDK_MOD2_MASK) {
-	fprintf(stderr, "Got GDK_MOD2_MASK\n");
-    }
-
-    if (mods & GDK_MOD5_MASK) {
-	fprintf(stderr, "Got GDK_MOD5_MASK\n");
-    }
-
-    if (mods & GDK_HYPER_MASK) {
-	fprintf(stderr, "Got GDK_HYPER_MASK\n");
-    }
-
-    if (mods & GDK_CONTROL_MASK) {
-	fprintf(stderr, "Got GDK_CONTROL_MASK\n");
-    }    
-
-    /* was GDK_HYPER_MASK */
-    if (mods & GDK_META_MASK) {
 	/* The idea here is that we add to the current selection
 	   and return TRUE to block further processing of the
 	   click, so as to implement selection of non-contiguous
