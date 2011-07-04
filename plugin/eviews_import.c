@@ -66,7 +66,7 @@ static int read_short (FILE *fp, int *err)
     fread(&(sc.c[0]), 1, 1, fp);
     i = sc.s;
 #else
-    short s;
+    unsigned short s;
 
     if (fread(&s, sizeof s, 1, fp) != 1) {
 	wf1_error(err);
@@ -77,18 +77,18 @@ static int read_short (FILE *fp, int *err)
     return i;
 }
 
-static long read_long (FILE *fp, int *err)
+static unsigned int read_unsigned (FILE *fp, int *err)
 {
-    long int l;
+    unsigned int u;
 
-    if (fread(&l, sizeof l, 1, fp) != 1) {
+    if (fread(&u, sizeof u, 1, fp) != 1) {
 	wf1_error(err);
     }
 #if WORDS_BIGENDIAN
-    reverse_int(l);
+    reverse_int(u);
 #endif
 
-    return l;
+    return u;
 }
 
 static double read_double (FILE *fp, int *err)
@@ -105,10 +105,47 @@ static double read_double (FILE *fp, int *err)
     return (x == WF1_NA)? NADBL : x;
 }
 
-static int wf1_read_values (FILE *fp, int ftype, long pos, double **Z, 
-			    int i, int n)
+static int wf1_read_history (FILE *fp, unsigned pos, 
+			     DATAINFO *pdinfo, int i)
+{
+    char *htxt;
+    unsigned hpos;
+    int len, err = 0;
+
+    fseek(fp, pos + 2, SEEK_SET);
+    len = read_int(fp, &err);
+    if (err) {
+	return 1;
+    }
+
+    fseek(fp, pos + 10, SEEK_SET);
+    hpos = read_unsigned(fp, &err);
+    if (err) {
+	return 1;
+    }  
+
+    htxt = calloc(len + 1, 1);
+    if (htxt != NULL) {
+	fseek(fp, hpos, SEEK_SET);
+	if (fread(htxt, 1, len, fp) == len) {
+	    char *targ = VARLABEL(pdinfo, i);
+
+	    *targ = '\0';
+	    strncat(targ, htxt, MAXLABEL - 1);
+	    fprintf(stderr, "%s\n", htxt);
+	}
+	free(htxt);
+    }
+
+    return 0;
+}
+
+static int wf1_read_values (FILE *fp, int ftype, 
+			    unsigned pos, unsigned sz,
+			    double **Z, int i, int n)
 {
     double x;
+    unsigned xpos;
     int t, nobs = 0;
     int err = 0;
 
@@ -123,8 +160,14 @@ static int wf1_read_values (FILE *fp, int ftype, long pos, double **Z,
 	fputs("problem: this does not match the specification "
 	      " for the dataset\n", stderr);
     } else {
-	fprintf(stderr, "0x%x: read nobs = %d\n", (unsigned) pos, nobs);
+	fprintf(stderr, "got nobs = %d\n", nobs);
     }
+
+    if (sz != nobs * sizeof(double)) {
+	fprintf(stderr, "trouble: data size only %d bytes (at most %d doubles)\n", 
+		(int) sz, (int) sz / sizeof(double));
+	return 1;
+    }    
 
 #if EVDEBUG
     int j;
@@ -134,67 +177,34 @@ static int wf1_read_values (FILE *fp, int ftype, long pos, double **Z,
 	t = read_int(fp, &err);
 	fprintf(stderr, " %d", t);
     }
+    t = read_short(fp, &err);
+    fprintf(stderr, " %d", t);
     fputc('\n', stderr);
 #endif
 
-    fseek(fp, pos + 22, SEEK_SET); /* offset 22 is wrong for type V01? */
-    fprintf(stderr, "reading doubles at 0x%x (%d)\n", (unsigned) pos+22, 
-	    (int) pos+22);
-    for (t=0; t<nobs; t++) {
+    xpos = pos + 22;
+
+    fseek(fp, xpos, SEEK_SET);
+    fprintf(stderr, "reading doubles at 0x%x (%d)\n", xpos, (int) xpos);
+    for (t=0; t<nobs && !err; t++) {
 	x = read_double(fp, &err);
-	if (err) {
-	    break;
+	if (!err) {
+	    Z[i][t] = x;
 	}
-	Z[i][t] = x;
     }
 
     return err;
 }
 
-static int wf1_read_history (FILE *fp, long pos, DATAINFO *pdinfo, int i)
+static int read_wf1_variables (FILE *fp, int ftype, unsigned pos, 
+			       double **Z, DATAINFO *dinfo, 
+			       int *nvread, PRN *prn)
 {
-    char *htxt;
-    int hpos, len, err = 0;
-
-    fseek(fp, pos + 2, SEEK_SET);
-    len = read_int(fp, &err);
-    if (err) {
-	return 1;
-    }
-
-    fseek(fp, pos + 10, SEEK_SET);
-    hpos = read_long(fp, &err);
-    if (err) {
-	return 1;
-    }  
-
-    htxt = calloc(len + 1, 1);
-    if (htxt != NULL) {
-	fseek(fp, hpos, SEEK_SET);
-	if (fread(htxt, 1, len, fp) == len) {
-	    char *targ = VARLABEL(pdinfo, i);
-
-	    *targ = '\0';
-	    strncat(targ, htxt, MAXLABEL - 1);
-	    fprintf(stderr, "history (0x%x): '%s'\n", (unsigned) hpos, htxt);
-	}
-	free(htxt);
-    }
-
-    return 0;
-}
-
-static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
-			       DATAINFO *dinfo, int *nvread, PRN *prn)
-{
-#if EVDEBUG
-    int k;
-#endif
     int nv = dinfo->v + 1; /* allow for "RESID" */
     int msg_done = 0;
     char vname[32];
     short code = 0;
-    long u;
+    unsigned u, sz;
     int i, j = 0;
     int err = 0;
 
@@ -212,7 +222,7 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 	code = read_short(fp, &err);
 	if (code == 43) {
 	    /* constant: skip */
-	    fprintf(stderr, "\nDiscarding constant (C)\n");
+	    fprintf(stderr, "\nDiscarding 'C'\n");
 	    continue;
 	} else if (code != 44) {
 	    if (!msg_done) {
@@ -230,43 +240,46 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
 	    fprintf(stderr, "\nDiscarding '%s'\n", vname);
 	    continue;
 	}
-	fprintf(stderr, "\n*** variable %d, '%s'\n", j + 1, vname);
+	fprintf(stderr, "\n*** variable %d, '%s' at 0x%x (%d)\n", j + 1, 
+		vname, pos, (int) pos);
 	dinfo->varname[++j][0] = 0;
 	strncat(dinfo->varname[j], vname, VNAMELEN - 1);
 
-#if EVDEBUG
 	fseek(fp, pos + 6, SEEK_SET);
-	k = read_int(fp, &err);
-	fprintf(stderr, "data record size: %d\n", k);
+	sz = read_unsigned(fp, &err);
+	fprintf(stderr, "data record size: %d\n", (int) sz);
 	fseek(fp, pos + 10, SEEK_SET);
-	k = read_int(fp, &err);
-	fprintf(stderr, "data block size: %d\n", k);
-#endif	
+	sz = read_unsigned(fp, &err);
+	fprintf(stderr, "data block size: %d\n", (int) sz);
 
 	/* get stream position for the data */
 	fseek(fp, pos + 14, SEEK_SET);
-	u = read_long(fp, &err);
+	u = read_unsigned(fp, &err);
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
-	    fprintf(stderr, "Reading data block...\n");
-	    err = wf1_read_values(fp, ftype, u, Z, j, dinfo->n);
+	    fprintf(stderr, "data record at 0x%x (%d)\n", u, (int) u);
+	    err = wf1_read_values(fp, ftype, u, sz, Z, j, dinfo->n);
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
+	    continue;
 	}
 
-	/* stream pos for history */
-	fseek(fp, pos + 54, SEEK_SET);
-	u = read_long(fp, &err);
-	if (u > 0) {
-	    fprintf(stderr, "Reading history block at 0x%x\n", (unsigned) u);
-	    wf1_read_history(fp, u, dinfo, j);
+	if (!err) {
+	    /* stream position for history */
+	    fseek(fp, pos + 54, SEEK_SET);
+	    u = read_unsigned(fp, &err);
+	    if (u > 0) {
+		fprintf(stderr, "Reading history block at 0x%x\n", (unsigned) u);
+		wf1_read_history(fp, u, dinfo, j);
+	    }
 	}
     }
 
     *nvread = j;
 
-    fprintf(stderr, "actual number of variables read = %d\n", *nvread);
-    if (*nvread == 0) {
+    if (!err) {
+	fprintf(stderr, "actual number of variables read = %d\n", *nvread);
+    } else if (*nvread == 0) {
 	pputs(prn, _("No variables were read\n"));
 	err = E_DATA;
     }
@@ -274,7 +287,7 @@ static int read_wf1_variables (FILE *fp, int ftype, long pos, double **Z,
     return err;
 }
 
-#if EVDEBUG
+#if EVDEBUG > 1
 
 static void analyse_mystery_vals (FILE *fp)
 {
@@ -303,15 +316,16 @@ static void analyse_mystery_vals (FILE *fp)
 
 #endif
 
-static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo, long *offset)
+static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo, 
+			     unsigned *offset)
 {
     int nvars = 0, nobs = 0, startyr = 0;
     short pd = 0, startper = 0;
-    long off;
+    unsigned off;
     int err = 0;
 
     fseek(fp, 80, SEEK_SET);
-    off = read_long(fp, &err);
+    off = read_unsigned(fp, &err);
     *offset = off + 26;
 
     fseek(fp, 114, SEEK_SET);
@@ -320,23 +334,16 @@ static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo, long *offset)
     fseek(fp, 124, SEEK_SET);
     pd = read_short(fp, &err);
 
-#if 0 /* old approach, seems to be wrong? */
-    fseek(fp, 126, SEEK_SET);
-    startper = read_short(fp, &err);
-#endif
-
     fseek(fp, 128, SEEK_SET);
     startyr = read_int(fp, &err);
 
-#if 1
     fseek(fp, 132, SEEK_SET);
     startper = read_short(fp, &err);
-#endif
 
     fseek(fp, 140, SEEK_SET);
     nobs = read_int(fp, &err);
 
-#if EVDEBUG
+#if EVDEBUG > 1
     analyse_mystery_vals(fp);
 #endif
 
@@ -426,7 +433,7 @@ int wf1_get_data (const char *fname,
     FILE *fp;
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;
-    long offset;
+    unsigned offset;
     int nvread, ftype;
     int err = 0;
 
@@ -445,7 +452,7 @@ int wf1_get_data (const char *fname,
 
 #if EVDEBUG
     if (ftype == 1) {
-	pputs(prn, "Experimental!\n");
+	pputs(prn, "EViews 7 file: expect problems!\n");
     }
 #else
     if (ftype != 0) {
