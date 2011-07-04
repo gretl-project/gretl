@@ -17,7 +17,7 @@
  * 
  */
 
-/* import data from Eviews workfiles */
+/* import data from EViews workfiles */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -166,7 +166,11 @@ static int wf1_read_values (FILE *fp, int ftype,
     if (sz != nobs * sizeof(double)) {
 	fprintf(stderr, "trouble: data size only %d bytes (at most %d doubles)\n", 
 		(int) sz, (int) sz / sizeof(double));
+#if EVDEBUG
+	nobs = sz / sizeof(double);
+#else
 	return 1;
+#endif
     }    
 
 #if EVDEBUG
@@ -178,7 +182,7 @@ static int wf1_read_values (FILE *fp, int ftype,
 	fprintf(stderr, " %d", t);
     }
     t = read_short(fp, &err);
-    fprintf(stderr, " %d", t);
+    fprintf(stderr, ", %d", t);
     fputc('\n', stderr);
 #endif
 
@@ -236,10 +240,16 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 	/* grab the variable name */
 	fseek(fp, pos + 22, SEEK_SET);
 	fscanf(fp, "%31s", vname);
-	if (!strcmp(vname, "C") || !strcmp(vname, "RESID")) {
+	if (!strcmp(vname, "C")) {
 	    fprintf(stderr, "\nDiscarding '%s'\n", vname);
 	    continue;
 	}
+#if EVDEBUG < 2
+	if (!strcmp(vname, "RESID")) {
+	    fprintf(stderr, "\nDiscarding '%s'\n", vname);
+	    continue;
+	}
+#endif
 	fprintf(stderr, "\n*** variable %d, '%s' at 0x%x (%d)\n", j + 1, 
 		vname, pos, (int) pos);
 	dinfo->varname[++j][0] = 0;
@@ -251,6 +261,22 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 	fseek(fp, pos + 10, SEEK_SET);
 	sz = read_unsigned(fp, &err);
 	fprintf(stderr, "data block size: %d\n", (int) sz);
+
+#if EVDEBUG
+	int k;
+	fprintf(stderr, "first 6 bytes as shorts:");
+	fseek(fp, pos, SEEK_SET);
+	for (k=0; k<3; k++) {
+	    fprintf(stderr, " %d", read_short(fp, &err));
+	}
+	fputc('\n', stderr);
+	fprintf(stderr, "last 6 bytes as shorts:");
+	fseek(fp, pos + 64, SEEK_SET);
+	for (k=0; k<3; k++) {
+	    fprintf(stderr, " %d", read_short(fp, &err));
+	}
+	fputc('\n', stderr);
+#endif
 
 	/* get stream position for the data */
 	fseek(fp, pos + 14, SEEK_SET);
@@ -293,10 +319,10 @@ static void analyse_mystery_vals (FILE *fp)
 {
     union {
 	unsigned char s[8];
-	short i2[4];
-	int i4[2];
+	unsigned short i2[4];
+	unsigned int i4[2];
     } u;
-    short k;
+    unsigned short k;
     int err = 0;
 
     fseek(fp, 122, SEEK_SET);
