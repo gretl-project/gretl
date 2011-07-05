@@ -150,9 +150,29 @@ static int wf1_read_history (FILE *fp, unsigned pos,
     return 0;
 }
 
+#if EVDEBUG
+
+static void print_bytes (FILE *fp, unsigned pos, int n)
+{
+    unsigned char u;
+    int i;
+
+    fprintf(stderr, "%d bytes at 0x%x: ", n, pos);
+    fseek(fp, pos, SEEK_SET);
+
+    for (i=0; i<n; i++) {
+	fread(&u, sizeof u, 1, fp);
+	fprintf(stderr, " %03d", (int) u);
+    }	
+    fputc('\n', stderr);
+}
+
+#endif
+
 static int wf1_read_values (FILE *fp, int ftype, 
 			    unsigned pos, unsigned sz,
-			    double **Z, int i, int n)
+			    double **Z, int i, int n,
+			    int k)
 {
     double x;
     unsigned xpos;
@@ -198,6 +218,12 @@ static int wf1_read_values (FILE *fp, int ftype,
 	/* don't overflow the Z array */
 	nobs = n;
     }
+
+#if EVDEBUG
+    if (k != 11) {
+	print_bytes(fp, xpos, 8);
+    }
+#endif
 
     fseek(fp, xpos, SEEK_SET);
     fprintf(stderr, "reading doubles at 0x%x (%d)\n", xpos, (int) xpos);
@@ -299,7 +325,7 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
 	    fprintf(stderr, "data record at 0x%x (%d)\n", u, (int) u);
-	    err = wf1_read_values(fp, ftype, u, sz, Z, j, dinfo->n);
+	    err = wf1_read_values(fp, ftype, u, sz, Z, j, dinfo->n, k);
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
 	    continue;
@@ -448,20 +474,17 @@ static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo,
 static int wf1_check_file_type (FILE *fp)
 {
     char s[22] = {0};
+    int n = fread(s, 1, 21, fp);
     int ftype = -1;
 
-    if (fread(s, 1, 21, fp) == 21 && 
-	!strcmp(s, "New MicroTSP Workfile")) {
-	/* old-style EViews file, OK */
-	ftype = 0;
-    } else {
-	s[0] = s[15] = '\0';
-	rewind(fp);
-	if (fread(s, 1, 15, fp) == 15 &&
-	    !strcmp(s, "EViews File V01")) {
+    if (n == 21) {
+	if (!strcmp(s, "New MicroTSP Workfile")) {
+	    /* old-style EViews file, OK */
+	    ftype = 0;
+	} else if (!strncmp(s, "EViews File V01", 15)) {
 	    /* new style */
 	    ftype = 1;
-	}
+	}		
     }
 
     return ftype;
