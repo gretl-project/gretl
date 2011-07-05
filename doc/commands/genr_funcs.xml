@@ -1627,7 +1627,7 @@
       </fnargs>
       <description>
 	<para>
-	  Returns the "direct sum" of <argname>A</argname>
+	  Returns the direct sum of <argname>A</argname>
 	  and <argname>B</argname>, that is a block-diagonal matrix
 	  holding <argname>A</argname> in its north-west corner
 	  and <argname>B</argname> in its south-east corner.
@@ -1669,8 +1669,14 @@
 	<fnarg type="anyfloat">x</fnarg>
       </fnargs>    
       <description>
-	<para>
-	  Returns the digamma (or Psi) function of <argname>x</argname>. 
+	<para context="notex">
+	  Returns the digamma (or Psi) function
+	  of <argname>x</argname>, that is the derivative of the log
+	  of the Gamma function.
+	</para>
+	<para context="tex">
+	  Returns the digamma (or Psi) function of $x$, that is 
+	  $\frac{\mathrm{d} \Gamma(x)}{\mathrm{d} x}$.
 	</para>
       </description>
     </function>
