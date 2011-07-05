@@ -112,11 +112,21 @@ static int wf1_read_history (FILE *fp, unsigned pos,
     unsigned hpos;
     int len, err = 0;
 
+#if EVDEBUG
+    fseek(fp, pos, SEEK_SET);
+    fprintf(stderr, "first short: %d\n", read_short(fp, &err));
+#endif
+
     fseek(fp, pos + 2, SEEK_SET);
     len = read_int(fp, &err);
     if (err) {
 	return 1;
     }
+
+#if EVDEBUG
+    fprintf(stderr, "history length: %d\n", len);
+    fprintf(stderr, "next int: %d\n", read_int(fp, &err));
+#endif
 
     fseek(fp, pos + 10, SEEK_SET);
     hpos = read_unsigned(fp, &err);
@@ -155,34 +165,30 @@ static int wf1_read_values (FILE *fp, int ftype,
 	return 1;
     }
 
-    /* should we be able to handle an offset here? */
+    fprintf(stderr, "got nobs = %d\n", nobs);
     if (nobs != n) {
 	fputs("problem: this does not match the specification "
 	      " for the dataset\n", stderr);
-    } else {
-	fprintf(stderr, "got nobs = %d\n", nobs);
     }
 
     if (sz != nobs * sizeof(double)) {
 	fprintf(stderr, "trouble: data size only %d bytes (at most %d doubles)\n", 
 		(int) sz, (int) sz / sizeof(double));
 #if EVDEBUG
+	/* try soldiering on */
 	nobs = sz / sizeof(double);
 #else
+	/* give up */
 	return 1;
 #endif
     }    
 
 #if EVDEBUG
-    int j;
-
     fprintf(stderr, "following ints:");
-    for (j=0; j<4; j++) {
-	t = read_int(fp, &err);
-	fprintf(stderr, " %d", t);
+    for (t=0; t<4; t++) {
+	fprintf(stderr, " %d", read_int(fp, &err));
     }
-    t = read_short(fp, &err);
-    fprintf(stderr, ", %d", t);
+    fprintf(stderr, ", %d", read_short(fp, &err));
     fputc('\n', stderr);
 #endif
 
@@ -205,11 +211,11 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 			       int *nvread, PRN *prn)
 {
     int nv = dinfo->v + 1; /* allow for "RESID" */
-    int msg_done = 0;
     char vname[32];
     short code = 0;
     unsigned u, sz;
-    int i, j = 0;
+    int i, k, j = 0;
+    int obj = 1;
     int err = 0;
 
     fseek(fp, pos + 62, SEEK_SET);
@@ -220,38 +226,43 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
     }
 
     for (i=0; i<nv && !err; i++, pos += 70) {
+	int discard = 0;
+
 	/* read the 'code' for the 'object' (should be 44 for a regular
 	   variable?) */
 	fseek(fp, pos + 62, SEEK_SET);
 	code = read_short(fp, &err);
-	if (code == 43) {
-	    /* constant: skip */
-	    fprintf(stderr, "\nDiscarding 'C'\n");
-	    continue;
-	} else if (code != 44) {
-	    if (!msg_done) {
-		pprintf(prn, "byte %ld: unknown object code %d\n", 
-			pos + 62, (int) code);
-		msg_done = 1;
-	    }
+	if (code != 44) {
+	    discard = 1;
+	}
+
+	/* grab the object name */
+	fseek(fp, pos + 22, SEEK_SET);
+	fscanf(fp, "%31s", vname);
+	if (!strcmp(vname, "C") || !strcmp(vname, "RESID")) {
+	    discard = 1;
+	}
+
+	fprintf(stderr, "\n*** object %d (type %d), '%s', at 0x%x (%d)\n", obj++, 
+		(int) code, vname, pos, (int) pos);
+
+	if (discard) {
+	    fprintf(stderr, "Discarding '%s'\n", vname);
 	    continue;
 	}
 
-	/* grab the variable name */
-	fseek(fp, pos + 22, SEEK_SET);
-	fscanf(fp, "%31s", vname);
-	if (!strcmp(vname, "C")) {
-	    fprintf(stderr, "\nDiscarding '%s'\n", vname);
+	/* storage type code? */
+	fseek(fp, pos + 4, SEEK_SET);
+	k = read_short(fp, &err);
+	if (k != 11) {
+#if EVDEBUG
+	    fprintf(stderr, "unknown data storage method %d\n", (int) k);
+#else
+	    pputs(prn, "unknown data storage method, skipping\n");
 	    continue;
-	}
-#if EVDEBUG < 2
-	if (!strcmp(vname, "RESID")) {
-	    fprintf(stderr, "\nDiscarding '%s'\n", vname);
-	    continue;
-	}
 #endif
-	fprintf(stderr, "\n*** variable %d, '%s' at 0x%x (%d)\n", j + 1, 
-		vname, pos, (int) pos);
+	}
+
 	dinfo->varname[++j][0] = 0;
 	strncat(dinfo->varname[j], vname, VNAMELEN - 1);
 
@@ -263,7 +274,6 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 	fprintf(stderr, "data block size: %d\n", (int) sz);
 
 #if EVDEBUG
-	int k;
 	fprintf(stderr, "first 6 bytes as shorts:");
 	fseek(fp, pos, SEEK_SET);
 	for (k=0; k<3; k++) {
@@ -303,12 +313,12 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 
     *nvread = j;
 
-    if (!err) {
-	fprintf(stderr, "actual number of variables read = %d\n", *nvread);
-    } else if (*nvread == 0) {
+    fprintf(stderr, "actual number of variables read = %d\n", *nvread);
+
+    if (*nvread == 0) {
 	pputs(prn, _("No variables were read\n"));
 	err = E_DATA;
-    }
+    } 
 
     return err;
 }
@@ -476,9 +486,9 @@ int wf1_get_data (const char *fname,
 	return E_DATA;
     }
 
-#if EVDEBUG
+#if 1 || EVDEBUG
     if (ftype == 1) {
-	pputs(prn, "EViews 7 file: expect problems!\n");
+	pputs(prn, "EViews 7+ file: expect problems!\n");
     }
 #else
     if (ftype != 0) {

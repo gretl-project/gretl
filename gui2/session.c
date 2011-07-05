@@ -2242,6 +2242,7 @@ static int delete_session_object (gui_obj *obj)
     }
 
     session_delete_icon(obj);
+    mark_session_changed();
 
     return 0;
 }
