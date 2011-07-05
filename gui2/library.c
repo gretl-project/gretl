@@ -1415,7 +1415,13 @@ void drop_all_missing (void)
 
 int do_set_sample (void)
 {
-    return set_sample(cmdline, &Z, datainfo);
+    int err = set_sample(cmdline, &Z, datainfo);
+
+    if (!err) {
+	mark_session_changed();
+    }
+
+    return err;
 }
 
 static int any_missing (void)
