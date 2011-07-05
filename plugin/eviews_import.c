@@ -194,6 +194,11 @@ static int wf1_read_values (FILE *fp, int ftype,
 
     xpos = pos + 22;
 
+    if (nobs > n) {
+	/* don't overflow the Z array */
+	nobs = n;
+    }
+
     fseek(fp, xpos, SEEK_SET);
     fprintf(stderr, "reading doubles at 0x%x (%d)\n", xpos, (int) xpos);
     for (t=0; t<nobs && !err; t++) {
@@ -486,17 +491,9 @@ int wf1_get_data (const char *fname,
 	return E_DATA;
     }
 
-#if 1 || EVDEBUG
     if (ftype == 1) {
 	pputs(prn, "EViews 7+ file: expect problems!\n");
     }
-#else
-    if (ftype != 0) {
-	fclose(fp);
-	pputs(prn, "Unsupported file type (EViews 7)\n");
-	return E_DATA;
-    }	
-#endif
 
     newinfo = datainfo_new();
     if (newinfo == NULL) {
