@@ -5264,6 +5264,7 @@ void add_dummies (GtkAction *action)
 	gui_errmsg(err);
     } else {
 	populate_varlist();
+	mark_dataset_as_modified();
     }
 }
 
@@ -5283,6 +5284,7 @@ void add_index (GtkAction *action)
 	       _("Error generating index variable"));
     } else {
 	populate_varlist();
+	mark_dataset_as_modified();
     }
 }
 
