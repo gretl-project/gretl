@@ -2638,6 +2638,44 @@
       </description>
     </function>
 
+    <function name="irf" section="stats" output="matrix">
+      <fnargs>
+	<fnarg type="scalar">target</fnarg>
+	<fnarg type="scalar">shock</fnarg>
+	<fnarg type="pscalar" optional="true">alpha</fnarg>
+      </fnargs>  
+      <description>
+	<para>
+	  This function is available only when the last model
+	  estimated was a VAR. It returns a matrix containing the
+	  estimated response of the <argname>target</argname> variable
+	  to an impulse of one standard deviation in the
+	  <argname>shock</argname> variable. These variables are
+	  identified by their position in the VAR specification: for
+	  example, if <argname>target</argname> and
+	  <argname>shock</argname> are given as 1 and 3 respectively,
+	  the returned matrix gives the response of the first
+	  variable in the VAR for a shock to the third variable.
+	</para>
+	<para>
+	  If the optional <argname>alpha</argname> argument is given,
+	  the returned matrix has three columns: the point estimate of
+	  the responses, followed by the lower and upper limits of a 1
+	  &minus; &agr; confidence interval obtained via
+	  bootstrapping.  (So <argname>alpha</argname> = 0.1
+	  corresponds to 90 percent confidence.) If
+	  <argname>alpha</argname> is omitted or set to zero, only the
+	  point estimate is provided.
+	</para>
+	<para>
+	  The number of periods (rows) over which the response is
+	  traced is determined automatically based on the frequency
+	  of the data, but this can be overridden via the <cmdref
+	  targ="set"/> command, as in <lit>set horizon 10</lit>.
+	</para>
+      </description>
+    </function>
+
     <function name="irr" section="math" output="scalar">
       <fnargs>
 	<fnarg type="series-or-vec">x</fnarg>
