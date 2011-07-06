@@ -1445,10 +1445,10 @@ static int add_time_ok (const char *s, int *lpos,
 static int wildcard_expand (const char *s, int *lpos,
 			    const DATAINFO *pdinfo, CMD *cmd)
 {
-    int ok = 0;
+    int err = 0, ok = 0;
 
     if (strchr(s, '*') != NULL) {
-	int *wildlist = varname_match_list(pdinfo, s);
+	int *wildlist = varname_match_list(pdinfo, s, &err);
 
 	if (wildlist != NULL) {
 	    int k, nw = wildlist[0];

@@ -26,7 +26,18 @@ list reglist = income price
 Note that the variables in question must be of the series type: you
 cannot include scalars in a named list.
 
-Two special forms are available:
+Two abbreviations are available in defining lists:
+\begin{itemize}
+\item You can use the wildcard character, ``\texttt{*}'', to create a
+  list of variables by name. For example, \texttt{dum*} can be used to
+  indicate all variables whose names begin with \texttt{dum}.
+\item You can use two dots to indicate a range of variables. For
+  example \texttt{income..price} indicates the set of variables whose
+  ID numbers are greater than or equal to that of \texttt{income}
+  and less than or equal to that of \texttt{price}.
+\end{itemize}
+
+In addition there are two special forms:
 \begin{itemize}
 \item If you use the keyword \texttt{null} on the right-hand side,
   you get an empty list.

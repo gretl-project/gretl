@@ -3199,7 +3199,7 @@ static int *node_get_list (NODE *n, parser *p)
     int v = 0;
 
     if (n->t == LIST && strchr(n->v.str, '*')) {
-	list = varname_match_list(p->dinfo, n->v.str);
+	list = varname_match_list(p->dinfo, n->v.str, &p->err);
     } else if (n->t == LVEC || n->t == LIST) {
 	int *src = (n->t == LVEC)? n->v.ivec : get_list_by_name(n->v.str);
 
@@ -7693,7 +7693,22 @@ static NODE *wildlist_node (NODE *n, parser *p)
     NODE *ret = aux_lvec_node(p);
 
     if (ret != NULL && starting(p)) {
-	int *list = varname_match_list(p->dinfo, n->v.str);
+	int *list = varname_match_list(p->dinfo, n->v.str,
+				       &p->err);
+
+	ret->v.ivec = list;
+    }
+
+    return ret;
+}
+
+static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
+{
+    NODE *ret = aux_lvec_node(p);
+
+    if (ret != NULL && starting(p)) {
+	int *list = ellipsis_list(p->dinfo, l->vnum, r->vnum,
+				  &p->err);
 
 	ret->v.ivec = list;
     }
@@ -8037,6 +8052,14 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t->t, (l->t == MAT)? 2 : 1,
 			    MAT, (l->t == MAT)? r : l, p);
+	}
+	break;
+    case B_ELLIP:
+	/* list-making ellipsis */
+	if (useries_node(l) && useries_node(r)) {
+	    ret = ellipsis_list_node(l, r, p);
+	} else {
+	    p->err = E_TYPES; 
 	}
 	break;
     case F_MSORTBY:

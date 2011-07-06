@@ -902,10 +902,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 
     if (type == WILDCARD_LIST) {
 	s += strspn(s, " \t");
-	list = varname_match_list(pdinfo, s);
-	if (list == NULL) {
-	    err = 1;
-	}
+	list = varname_match_list(pdinfo, s, &err);
     } else {
 	char vn1[VNAMELEN], vn2[VNAMELEN];
 	

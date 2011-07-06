@@ -1007,7 +1007,7 @@ static void word_check_next_char (const char *s, parser *p)
 
     if (p->err) {
 	context_error(p->ch, p);
-    }
+    } 
 }
 
 static int is_word_char (parser *p)
@@ -1414,6 +1414,10 @@ void lex (parser *p)
 		return;
 	    } else if (p->ch == '<') {
 		p->sym = B_DOTLT;
+		parser_getc(p);
+		return;
+	    } else if (p->ch == '.') {
+		p->sym = B_ELLIP;
 		parser_getc(p);
 		return;
 	    } else {

@@ -2984,12 +2984,14 @@ void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
  * varname_match_list:
  * @pdinfo: pointer to dataset information.
  * @pattern: pattern to be matched.
+ * @err: location to receive error code.
  *
  * Returns: a list of ID numbers of variables whose names
  * match @pattern, or NULL if there are no matches.
  */
 
-int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
+int *varname_match_list (const DATAINFO *pdinfo, const char *pattern,
+			 int *err)
 {
     GPatternSpec *pspec;
     int *list = NULL;
@@ -3013,7 +3015,9 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
 
     if (n > 0) {
 	list = gretl_list_new(n);
-	if (list != NULL) {
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	} else {
 	    int j = 1;
 
 	    for (i=1; i<pdinfo->v; i++) { 
@@ -3027,6 +3031,52 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
     }
 
     g_pattern_spec_free(pspec);
+
+    return list;
+}
+
+/**
+ * ellipsis_list:
+ * @pdinfo: pointer to dataset information.
+ * @v1: index of first variable.
+ * @v2: index of last variable.
+ * @err: location to receive error code.
+ *
+ * Returns: a list of ID numbers of variables running
+ * from @v1 to @v2.
+ */
+
+int *ellipsis_list (const DATAINFO *pdinfo, int v1, int v2, int *err)
+{
+    int *list = NULL;
+    int i, fd, n = 0;
+
+    if (pdinfo == NULL || pdinfo->v == 0) {
+	return NULL;
+    }
+
+    fd = gretl_function_depth();
+
+    for (i=v1; i<=v2; i++) { 
+	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
+	    n++;
+	}
+    }
+
+    if (n > 0) {
+	list = gretl_list_new(n);
+	if (list == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    int j = 1;
+
+	    for (i=v1; i<=v2; i++) { 
+		if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
+		    list[j++] = i;
+		}
+	    }
+	}
+    }
 
     return list;
 }
