@@ -90,7 +90,7 @@ sample according to the values of \texttt{d}.
 \begin{code}
 matrix vd = values(d)
 m = rows(vd)
-loop for i=1..m
+loop i=1..m
   scalar sel = vd[i]
   smpl (d=sel) --restrict --replace
   ols y const x
@@ -357,7 +357,7 @@ names can help. For example, if
 \end{code}
 looping over the integers is quite intuitive and certainly more elegant:
 \begin{code}
-  loop for i=1..3
+  loop i=1..3
     ols y$i const x$i
   endloop
 \end{code}

@@ -223,7 +223,7 @@ would estimate an ARMA$(p,q)$ model on $\Delta^d y_t$. It is
 functionally equivalent to 
 \begin{code}
 series tmp = y
-loop for i=1..d
+loop i=1..d
   tmp = diff(tmp)
 endloop
 arma p q ; tmp 

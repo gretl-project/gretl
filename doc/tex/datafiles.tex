@@ -519,7 +519,7 @@ periods), but with 20 variables rather than 2.
 
 \begin{code}
 open panel.txt
-loop for i=1..20
+loop i=1..20
   genr k = ($i - 1) * 50
   genr x$i = stack(p1..p5) --offset=k --length=50
 endloop
