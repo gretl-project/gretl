@@ -5,7 +5,7 @@ version 1.9.6, in progress
 - New functions for series: skewness() and kurtosis()
 - allow non-integer degrees of freedom for Student's t in cdf(), invcdf()
   and randgen()
-- extend the invcdf() function to the Gamma distribution
+- extend the invcdf() function to the Gamma and std. GED distributions
 - build with SSE2 enabled: ensure that the C compiler SSE2 option is
   not wiped out if the user (re-)specifies CFLAGS when doing "make"
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac

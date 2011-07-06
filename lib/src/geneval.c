@@ -758,9 +758,9 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	    *np = 2; /* shape, scale */
 	}
     } else if (*s == 'e' || *s == 'E') {
-	/* GED: critical values and inverse cdf not supported */
+	/* GED: critical values not supported */
 	*s = 'E';
-	if (f == F_CRIT || f == F_INVCDF) {
+	if (f == F_CRIT) {
 	    err = E_INVARG;
 	} else {
 	    *np = 1; /* shape */

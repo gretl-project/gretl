@@ -2557,6 +2557,11 @@
 	      Poisson (p or P): mean
 	    </para>
 	  </li>
+	  <li>
+	    <para>
+	      Standardized GED (E): shape
+	    </para>
+	  </li>
 	</ilist>
 	<para context="tex">
 	  \begin{center} 

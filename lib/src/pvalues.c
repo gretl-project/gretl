@@ -1353,10 +1353,10 @@ double gamma_cdf_comp (double s1, double s2, double x, int control)
  * @scale: scale.
  * @p: probability.
  *
- * Returns: the argument x such that the integral from minus infinity
- * to @x of the gamma density with given scale and shape parameters is
- * equal to the given probability @p, or #NADBL on failure. Note that
- * the alternate parametrization (mean, variance) is not supported.
+ * Returns: the argument x such that the integral from zero to @x of
+ * the gamma density with given scale and shape parameters is equal to
+ * the given probability @p, or #NADBL on failure. Note that the
+ * alternate parametrization (mean, variance) is not supported.
  */
 
 double gamma_cdf_inverse (double shape, double scale, double p)
@@ -1778,6 +1778,46 @@ double GED_cdf_comp (double nu, double x)
 }
 
 /**
+ * GED_cdf_inverse:
+ * @nu: shape parameter.
+ * @a: probability.
+ *
+ * Returns: the argument x such that the integral from minus infinity
+ * to @x of the standardized GED density with shape parameter @nu is
+ * equal to the given probability @a, or #NADBL on failure. We exploit
+ * the well-known relationship between the standardized GED and the
+ * Gamma variates.
+ *
+ * Returns: the calculated probability, or #NADBL on failure.
+ */
+
+double GED_cdf_inverse (double nu, double a)
+{
+    if (nu > 0 && a<1 && a>0) {
+	double a2;
+	int sgn;
+
+	if (a>0.5) {
+	    a2 = 2*a - 1;
+	    sgn = 1;
+	} else {
+	    a2 = 1 - 2*a;
+	    sgn = -1;
+	}
+
+	double p   = 1/nu;
+	double lg1 = ln_gamma(p);
+	double lg3 = ln_gamma(3*p);
+	double sd  = pow(2.0, p) * exp(0.5*(lg3 - lg1));
+	double x   = gamma_cdf_inverse(p, 2.0, a2);
+
+	return sgn * pow(x, p) / sd;
+    } else {
+	return NADBL;
+    }
+}
+
+/**
  * johansen_trace_pval:
  * @N: the number of potentially cointegrated variables
  * minus the cointegration rank under H0.
@@ -1936,6 +1976,8 @@ double gretl_get_cdf_inverse (char st, const double *parm,
 	y = binomial_cdf_inverse((int) parm[0], (int) parm[1], a);
     } else if (st == 'P') {
 	y = poisson_cdf_inverse((int) parm[0], a);
+    } else if (st == 'E') {
+	y = GED_cdf_inverse(parm[0], a);
     } 
 
     return y;

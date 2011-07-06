@@ -86,6 +86,8 @@ double GED_cdf (double nu, double x);
 
 double GED_cdf_comp (double nu, double x);
 
+double GED_cdf_inverse (double nu, double a);
+
 double tcrit95 (int df);
 
 double rhocrit95 (int n);
