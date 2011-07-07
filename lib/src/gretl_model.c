@@ -5857,23 +5857,24 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 	}
     }
 
-    /* FIXME 0-based versus 1-based indexing */
-
     if (idx == M_RHO) {
-	if (!(numeric_string(s))) {
-	    *err = E_INVARG;
-	} else if (dot_atof(s) == 1 && pmod->ci == AR1) {
+	int k = atoi(s);
+
+	if (k == 1 && pmod->ci == AR1) {
 	    x = gretl_model_get_double(pmod, "rho_in");
-	} else if (pmod->ci != AR && dot_atof(s) == 1) {
+	} else if (k == 1 && pmod->ci != AR) {
 	    x = pmod->rho;
 	} else if (pmod->arinfo == NULL || 
 		   pmod->arinfo->arlist == NULL || 
 		   pmod->arinfo->rho == NULL) {
 	    *err = E_INVARG;
-	} else if (!(vi = gretl_list_position(atoi(s), pmod->arinfo->arlist))) {
-	    *err = E_INVARG;
 	} else {
-	    x = pmod->arinfo->rho[vi-1];
+	    vi = in_gretl_list(pmod->arinfo->arlist, k);
+	    if (vi > 0) {
+		x = pmod->arinfo->rho[vi-1];
+	    } else {
+		*err = E_INVARG;
+	    }
 	}
     } else if (idx == M_VCV) {
 	x = get_vcv_element(pmod, s, pdinfo);

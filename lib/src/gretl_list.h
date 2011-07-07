@@ -97,8 +97,6 @@ int gretl_list_const_pos (const int *list, int minpos, const double **Z,
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 			   int ref_id);
 
-int gretl_list_position (int v, const int *list);
-
 int gretl_list_separator_position (const int *list);
 
 int gretl_list_has_separator (const int *list);

@@ -392,7 +392,7 @@ void gretl_print_detach_stream (PRN *prn)
  * @newpath: new name for file.
  * 
  * If @prn is printing to a %FILE pointer, rename the
- * file to which it's printing and switch the stream
+ * file to which it is printing and switch the stream
  * to the new file.
  *
  * Returns: 0 on success, 1 on error.
@@ -445,7 +445,7 @@ int gretl_print_rename_file (PRN *prn, const char *oldpath,
  * similar will then overwite rather than cumulating
  * the printed content.
  *
- * Returns: 0 on success, 1 if @prn has no buufer.
+ * Returns: 0 on success, 1 if @prn has no buffer.
  */
 
 int gretl_print_reset_buffer (PRN *prn)
@@ -485,7 +485,8 @@ const char *gretl_print_get_buffer (PRN *prn)
  * Obtain a pointer to the buffer associated
  * with @prn, if any.  This pointer must not be
  * modified in any way.  An opening newline
- * is skipped.
+ * is skipped and any trailing white space is
+ * substituted by NULs.
  *
  * Returns: the buffer, or NULL on failure.
  */
@@ -519,7 +520,7 @@ const char *gretl_print_get_trimmed_buffer (PRN *prn)
  * @width: location to receive width, or NULL.
  * @height: location to receive height, or NULL.
  * 
- * If @prn has a non-null buffer attached, provide
+ * If @prn has a non-null buffer attached, provides
  * the width and/or height of the buffer, the width in
  * characters and the height in lines.
  */
@@ -834,8 +835,8 @@ static int pprintf_init (PRN *prn)
  *
  * Multi-purpose printing function: can output to stream, to buffer
  * or to nowhere (silently discarding the output), depending on
- * how @prn was initialized.  It's not advisable to use this function
- * for large chunks of text: use #pputs instead.
+ * how @prn was initialized.  It is not advisable to use this function
+ * for large chunks of fixed text: use #pputs instead.
  * 
  * Returns: the number of bytes printed, or -1 on memory allocation
  * failure.

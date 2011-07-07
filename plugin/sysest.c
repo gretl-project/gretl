@@ -760,7 +760,7 @@ static int drop_redundant_instruments (equation_system *sys,
     int j, k, pos, err = 0;
 
     for (j=1; j<=droplist[0]; j++) {
-	pos = gretl_list_position(droplist[j], sys->ilist);
+	pos = in_gretl_list(sys->ilist, droplist[j]);
 	if (pos > 0) {
 	    gretl_list_delete_at_pos(sys->ilist, pos);
 	} else {

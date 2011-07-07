@@ -2696,38 +2696,6 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
 }
 
 /**
- * gretl_list_position:
- * @v: ID number of variable to find.
- * @list: list to search.
- *
- * Scans @list, from position 1 onward, for variable @v.
- * In case the list contains a list separator, #LISTSEP,
- * only the portion prior to the separator is considered.
- *
- * Returns: the 0-based position, or 0 if the variable is 
- * not found.
- */
-
-int gretl_list_position (int v, const int *list)
-{
-    int i, lmax = list[0];
-
-    /* handle lists with separator: search only first part */
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    lmax = i - 1;
-	    break;
-	}
-    }
-	    
-    for (i=lmax; i>=1; i--) {
-	if (v == list[i]) return i;
-    }
-
-    return 0;
-}
-
-/**
  * gretl_list_is_consecutive:
  * @list: list to check.
  *

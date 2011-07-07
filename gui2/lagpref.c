@@ -322,7 +322,7 @@ int remove_specific_lag (int v, int lag, char context)
 	err = 1;
     } else {
 	if (lpref->spectype == LAGS_LIST) {
-	    int pos = gretl_list_position(lag, lpref->lspec.laglist);
+	    int pos = in_gretl_list(lpref->lspec.laglist, lag);
 
 	    if (pos == 0) {
 		err = 1;
