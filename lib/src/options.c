@@ -40,11 +40,13 @@
 			 c == ESTIMATE ||	\
 			 c == FCAST ||		\
 			 c == FOREIGN ||	\
+                         c == FRACTINT ||       \
 			 c == FREQ ||		\
 			 c == KPSS ||		\
 			 c == MODTEST ||	\
                          c == LEVINLIN ||       \
 			 c == LOOP ||		\
+                         c == MAHAL ||          \
 			 c == NORMTEST ||	\
 			 c == OLS ||		\
 			 c == OMIT ||		\
@@ -110,7 +112,6 @@ struct gretl_option gretl_opts[] = {
     { ARMA,     OPT_X, "x-12-arima", 0 },
     { ARMA,     OPT_Y, "y-diff-only", 0 },
     { BIPROBIT, OPT_G, "opg", 0 },
-    { BIPROBIT, OPT_Q, "quiet", 0 },
     { BIPROBIT, OPT_R, "robust", 0 },
     { BIPROBIT, OPT_V, "verbose", 0 },
     { BIPROBIT, OPT_X, "save-xbeta", 0 },
@@ -193,7 +194,6 @@ struct gretl_option gretl_opts[] = {
     { FOREIGN,  OPT_V, "verbose", 0 },
     { FRACTINT, OPT_G, "gph", 0 },
     { FRACTINT, OPT_A, "all", 0 },
-    { FRACTINT, OPT_Q, "quiet", 0 },
     { FREQ,     OPT_O, "gamma", 0 },
     { FREQ,     OPT_S, "silent", 0 },
     { FREQ,     OPT_Z, "normal", 0 },
@@ -268,7 +268,6 @@ struct gretl_option gretl_opts[] = {
     { LOGIT,    OPT_V, "verbose", 0 },
     { LOOP,     OPT_P, "progressive", 0 },
     { LOOP,     OPT_V, "verbose", 0 },
-    { MAHAL,    OPT_Q, "quiet", 0 },
     { MAHAL,    OPT_S, "save", 0 },
     { MAHAL,    OPT_V, "vcv", 0 },
     { MEANTEST, OPT_O, "unequal-vars", 0 },

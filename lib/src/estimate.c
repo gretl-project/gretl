@@ -166,32 +166,31 @@ static int get_model_df (MODEL *pmod)
 
 #define LDDEBUG 0
 
-static int
-transcribe_ld_vcv (MODEL *targ, MODEL *src)
+static int transcribe_ld_vcv (MODEL *targ, MODEL *src)
 {
     int nv = targ->ncoeff;
     int nxpx = (nv * nv + nv) / 2;
-    int i, j;
+    int i, j, err = 0;
 
-    if (makevcv(src, src->sigma)) {
-	return 1;
-    }
+    err = makevcv(src, src->sigma);
 
-    if (targ->vcv == NULL) {
+    if (!err && targ->vcv == NULL) {
 	targ->vcv = malloc(nxpx * sizeof *targ->vcv);
 	if (targ->vcv == NULL) {
-	    return 1;
+	    err = E_ALLOC;
 	}
     }
 
-    for (i=0; i<nv; i++) {
-	for (j=i; j<nv; j++) {
-	    targ->vcv[ijton(i, j, nv)] = 
-		src->vcv[ijton(i, j, src->ncoeff)];
+    if (!err) {
+	for (i=0; i<nv; i++) {
+	    for (j=i; j<nv; j++) {
+		targ->vcv[ijton(i, j, nv)] = 
+		    src->vcv[ijton(i, j, src->ncoeff)];
+	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
 /* Calculate consistent standard errors (and VCV matrix) when doing
@@ -1730,10 +1729,9 @@ static void regress (MODEL *pmod, double *xpy,
     }
 
     /* Note: 'xpy' is used purely as workspace in diaginv() below, as
-       a matter on economy/convenience; no values in this array are
+       a matter of economy/convenience; no values in this array are
        used before they are written. 
     */
-
     diaginv(pmod->xpx, xpy, diag, pmod->ncoeff);
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -2574,42 +2572,6 @@ MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo)
     return hsk;
 }
 
-static double **allocate_hccm_p (int k, int n)
-{
-    double **p = malloc(k * sizeof *p);
-    int i;
-
-    if (p == NULL) return NULL;
-
-    for (i=0; i<k; i++) {
-	p[i] = malloc(n * sizeof **p);
-	if (p[i] == NULL) {
-	    int j;
-
-	    for (j=0; j<i; j++) {
-		free(p[j]);
-	    }
-	    free(p);
-	    p = NULL;
-	    break;
-	}
-    }
-
-    return p;
-}
-
-static void free_hccm_p (double **p, int m)
-{
-    if (p != NULL) {
-	int i;
-
-	for (i=0; i<m; i++) {
-	    free(p[i]);
-	}
-	free(p);
-    }
-}
-
 static int jackknife_vcv (MODEL *pmod, const double **Z)
 {
     double *st = NULL, *ustar = NULL;
@@ -2627,7 +2589,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 
     st = malloc(nc * sizeof *st);
     ustar = malloc(nobs * sizeof *ustar);
-    p = allocate_hccm_p(nc, nobs);
+    p = doubles_array_new(nc, nobs);
 
     if (st == NULL || p == NULL || ustar == NULL) {
 	err = E_ALLOC;
@@ -2728,7 +2690,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 
     free(st);
     free(ustar);
-    free_hccm_p(p, nc);
+    doubles_array_free(p, nc);
 
     return err;
 }
@@ -3196,50 +3158,39 @@ MODEL ar_model (const int *list, double ***pZ,
 {
     double diff, ess, tss, xx;
     int i, j, t, t1, t2, vc, yno, ryno, iter;
-    int lag, maxlag, v = pdinfo->v;
+    int k, maxlag, v = pdinfo->v;
     int *arlist = NULL, *rholist = NULL;
     int *reglist = NULL, *reglist2 = NULL;
-    int pos, cpos;
+    double **Z;
+    int cpos, nvadd;
     MODEL ar, rhomod;
 
     gretl_error_clear();
-
     gretl_model_init(&ar);
     gretl_model_init(&rhomod);
 
-    pos = gretl_list_separator_position(list);
+    ar.errcode = gretl_list_split_on_separator(list, &arlist, &reglist);
 
-    arlist = malloc(pos * sizeof *arlist);
-    reglist = malloc((list[0] - pos + 2) * sizeof *reglist);
-    reglist2 = malloc((list[0] - pos + 2) * sizeof *reglist2);
-    rholist = malloc((pos + 2) * sizeof *rholist);
-
-    if (arlist == NULL || reglist == NULL || reglist2 == NULL ||
-	rholist == NULL) {
-	ar.errcode = E_ALLOC;
-	goto bailout;
-    }
-    
-    arlist[0] = pos - 1;
-    for (i=1; i<pos; i++) {
-	arlist[i] = list[i];
-    }
-
-    reglist2[0] = reglist[0] = list[0] - pos;
-    for (i=1; i<=reglist[0]; i++) {
-	reglist[i] = list[i + pos];
-    }
-
-    rholist[0] = arlist[0] + 1;
-    maxlag = ar_list_max(arlist);
-
-    cpos = reglist_check_for_const(reglist, (const double **) *pZ, pdinfo);
-
-    /* special case: ar 1 ; ... => use AR1 */
-    if (arlist[0] == 1 && arlist[1] == 1) {
+    if (!ar.errcode && arlist[0] == 1 && arlist[1] == 1) {
+	/* special case: ar 1 ; ... => use AR1 apparatus */
 	ar = ar1_model(reglist, pZ, pdinfo, OPT_NONE, prn);
 	goto bailout;
     }
+
+    if (!ar.errcode) {
+	reglist2 = gretl_list_new(reglist[0]);
+	rholist = gretl_list_new(arlist[0] + 1);
+	if (reglist2 == NULL || rholist == NULL) {
+	    ar.errcode = E_ALLOC;
+	}
+    }
+    
+    if (ar.errcode) {
+	goto bailout;
+    }
+
+    maxlag = ar_list_max(arlist);
+    cpos = reglist_check_for_const(reglist, (const double **) *pZ, pdinfo);
 
     /* first pass: estimate model via OLS: use OPT_M to generate an
        error in case of missing values within sample range 
@@ -3249,15 +3200,19 @@ MODEL ar_model (const int *list, double ***pZ,
 	goto bailout;
     }
 
+    nvadd = arlist[0] + 1 + reglist[0];
+
     /* allocate space for the uhat terms and transformed data */
-    if (dataset_add_series(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
+    if (dataset_add_series(nvadd, pZ, pdinfo)) {
 	ar.errcode = E_ALLOC;
 	goto bailout;
     }
 
     yno = reglist[1];
-    t1 = ar.t1; t2 = ar.t2;
+    t1 = ar.t1; 
+    t2 = ar.t2;
     rholist[1] = v;
+    Z = *pZ;
 
     pprintf(prn, "%s\n\n", _("Generalized Cochrane-Orcutt estimation"));
     bufspace(17, prn);
@@ -3268,50 +3223,51 @@ MODEL ar_model (const int *list, double ***pZ,
     /* now loop while ess is changing */
     diff = 1.0e6;
     ess = 0.0;
+
     for (iter = 1; iter <= 20 && diff > 0.005; iter++) {
 	for (t=0; t<pdinfo->n; t++) {
 	    if (t < t1 || t > t2) {
-		(*pZ)[v][t] = NADBL;
+		Z[v][t] = NADBL;
 	    } else {
 		/* special computation of uhat */
-		xx = (*pZ)[yno][t];
+		xx = Z[yno][t];
 		for (j=0; j<reglist[0]-1; j++) {
-		    xx -= ar.coeff[j] * (*pZ)[reglist[j+2]][t];
+		    xx -= ar.coeff[j] * Z[reglist[j+2]][t];
 		}
-		(*pZ)[v][t] = xx;
+		Z[v][t] = xx;
 	    }
 	}		
 	for (i=1; i<=arlist[0]; i++) {
-	    lag = arlist[i];
+	    k = arlist[i];
 	    rholist[1+i] = v + i;
 	    for (t=0; t<pdinfo->n; t++) {
-		if (t < t1 + lag || t > t2) {
-		    (*pZ)[v+i][t] = NADBL;
+		if (t < t1 + k || t > t2) {
+		    Z[v+i][t] = NADBL;
 		} else {
-		    (*pZ)[v+i][t] = (*pZ)[v][t-lag];
+		    Z[v+i][t] = Z[v][t-k];
 		}
 	    }
 	}
 
-	/* now estimate the rho terms */
+	/* estimate the rho terms */
 	if (iter > 1) {
 	    clear_model(&rhomod);
 	}
-	rhomod = lsq(rholist, *pZ, pdinfo, OLS, OPT_A);
+	rhomod = lsq(rholist, Z, pdinfo, OLS, OPT_A);
 
 	/* and rho-transform the data */
 	ryno = vc = v + i;
 	for (i=1; i<=reglist[0]; i++) {
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t < t1 + maxlag || t > t2) {
-		    (*pZ)[vc][t] = NADBL;
+		    Z[vc][t] = NADBL;
 		} else {
-		    xx = (*pZ)[reglist[i]][t];
+		    xx = Z[reglist[i]][t];
 		    for (j=1; j<=arlist[0]; j++) {
-			lag = arlist[j];
-			xx -= rhomod.coeff[j-1] * (*pZ)[reglist[i]][t-lag];
+			k = arlist[j];
+			xx -= rhomod.coeff[j-1] * Z[reglist[i]][t-k];
 		    }
-		    (*pZ)[vc][t] = xx;
+		    Z[vc][t] = xx;
 		}
 	    }
 	    reglist2[i] = vc++;
@@ -3319,7 +3275,7 @@ MODEL ar_model (const int *list, double ***pZ,
 
 	/* estimate the transformed model */
 	clear_model(&ar);
-	ar = lsq(reglist2, *pZ, pdinfo, OLS, OPT_A);
+	ar = lsq(reglist2, Z, pdinfo, OLS, OPT_A);
 
         if (iter > 1) {
 	    diff = 100 * (ar.ess - ess) / ess;
@@ -3356,37 +3312,38 @@ MODEL ar_model (const int *list, double ***pZ,
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
 	for (j=2; j<=reglist[0]; j++) { 
-	    xx += ar.coeff[j-2] * (*pZ)[reglist[j]][t];
+	    xx += ar.coeff[j-2] * Z[reglist[j]][t];
 	}
-	ar.uhat[t] = (*pZ)[yno][t] - xx;
+	ar.uhat[t] = Z[yno][t] - xx;
 	for (j=1; j<=arlist[0]; j++) {
 	    if (t - t1 >= arlist[j]) {
-		xx += rhomod.coeff[j-1] * ar.uhat[t - arlist[j]];
+		k = arlist[j];
+		xx += rhomod.coeff[j-1] * ar.uhat[t-k];
 	    }
 	}
 	ar.yhat[t] = xx;
     }
 
     for (t=t1; t<=t2; t++) { 
-	ar.uhat[t] = (*pZ)[yno][t] - ar.yhat[t];
+	ar.uhat[t] = Z[yno][t] - ar.yhat[t];
     }
 
-    ar.rsq = gretl_corr_rsq(ar.t1, ar.t2, (*pZ)[reglist[1]], ar.yhat);
+    ar.rsq = gretl_corr_rsq(ar.t1, ar.t2, Z[reglist[1]], ar.yhat);
     ar.adjrsq = 1.0 - ((1.0 - ar.rsq) * (ar.nobs - 1.0) / ar.dfd);
 
     /* special computation of TSS */
-    xx = gretl_mean(ar.t1, ar.t2, (*pZ)[ryno]);
+    xx = gretl_mean(ar.t1, ar.t2, Z[ryno]);
     tss = 0.0;
     for (t=ar.t1; t<=ar.t2; t++) {
-	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
+	tss += (Z[ryno][t] - xx) * (Z[ryno][t] - xx);
     }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
     ar.lnL = NADBL;
     mle_criteria(&ar, 0);
-    ar.dw = dwstat(maxlag, &ar, (const double **) *pZ);
+    ar.dw = dwstat(maxlag, &ar, (const double **) Z);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 
-    dataset_drop_last_variables(arlist[0] + 1 + reglist[0], pZ, pdinfo);
+    dataset_drop_last_variables(nvadd, pZ, pdinfo);
 
     if (gretl_model_add_arinfo(&ar, maxlag)) {
 	ar.errcode = E_ALLOC;

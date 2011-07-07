@@ -88,21 +88,16 @@ int gretl_minmax (int t1, int t2, const double *x,
 {
     int t, n = 0;
 
-    while (na(x[t1]) && t1 <= t2) {
-	t1++;
-    }
-
-    if (t1 > t2) {
-        *min = *max = NADBL;
-        return 0;
-    }
-
-    *min = *max = x[t1];
+    *max = *min = NADBL;
 
     for (t=t1; t<=t2; t++) {
 	if (!(na(x[t]))) {
-	    if (x[t] > *max) *max = x[t];
-	    if (x[t] < *min) *min = x[t];
+	    if (n == 0) {
+		*max = *min = x[t];
+	    } else {
+		if (x[t] > *max) *max = x[t];
+		if (x[t] < *min) *min = x[t];
+	    }
 	    n++;
 	}
     }
@@ -271,21 +266,14 @@ double gretl_restricted_mean (int t1, int t2, const double *x,
 			      const double *y, GretlOp yop, 
 			      double yval)
 {
-    int n;
-    register int t;
     double xbar, sum = 0.0;
-
-    n = t2 - t1 + 1;
-    if (n <= 0) {
-	return NADBL;
-    }
+    int t, n = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t]) && eval_ytest(y[t], yop, yval)) {
 	    sum += x[t];
-	} else {
-	    n--;
-	}
+	    n++;
+	} 
     }
 
     if (n == 0) {
@@ -650,12 +638,8 @@ double gretl_restricted_variance (int t1, int t2, const double *x,
 				  const double *y, GretlOp yop, 
 				  double yval)
 {
-    int t, n = t2 - t1 + 1;
     double sumsq, xx, xbar;
-
-    if (n == 0) {
-	return NADBL;
-    }
+    int t, n = 0;
 
     xbar = gretl_restricted_mean(t1, t2, x, y, yop, yval);
     if (na(xbar)) {
@@ -668,9 +652,8 @@ double gretl_restricted_variance (int t1, int t2, const double *x,
 	if (!na(x[t]) && eval_ytest(y[t], yop, yval)) {
 	    xx = x[t] - xbar;
 	    sumsq += xx * xx;
-	} else {
-	    n--;
-	}
+	    n++;
+	} 
     }
 
     sumsq = (n > 1)? sumsq / (n - 1) : 0.0;
@@ -939,13 +922,8 @@ double gretl_corr_rsq (int t1, int t2, const double *x, const double *y)
 
 double gretl_skewness (int t1, int t2, const double *x)
 {
-    int t, n = t2 - t1 + 1;
     double s, sd, xx, xbar, ret;
-
-    if (n == 0) {
-	/* null sample */
-	return NADBL;
-    }
+    int t, n = 0;
 
     xbar = gretl_mean(t1, t2, x);
     if (na(xbar)) {
@@ -953,7 +931,6 @@ double gretl_skewness (int t1, int t2, const double *x)
     }
 
     s = 0.0;
-    n = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
@@ -963,7 +940,7 @@ double gretl_skewness (int t1, int t2, const double *x)
 	}
     }
 
-    s /=n;
+    s /= n;
 
     if (s <= TINYVAR) {
 	ret = NADBL;
@@ -973,7 +950,7 @@ double gretl_skewness (int t1, int t2, const double *x)
 
 	for (t=t1; t<=t2; t++) {
 	    if (!na(x[t])) {
-		xx = (x[t] - xbar)/sd;
+		xx = (x[t] - xbar) / sd;
 		s += xx * xx * xx;
 	    }
 	}
@@ -988,13 +965,8 @@ double gretl_skewness (int t1, int t2, const double *x)
 
 double gretl_kurtosis (int t1, int t2, const double *x)
 {
-    int t, n = t2 - t1 + 1;
     double s, sd, xx, xbar, ret;
-
-    if (n == 0) {
-	/* null sample */
-	return NADBL;
-    }
+    int t, n = 0;
 
     xbar = gretl_mean(t1, t2, x);
     if (na(xbar)) {
@@ -1002,7 +974,6 @@ double gretl_kurtosis (int t1, int t2, const double *x)
     }
 
     s = 0.0;
-    n = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (!na(x[t])) {
@@ -1012,7 +983,7 @@ double gretl_kurtosis (int t1, int t2, const double *x)
 	}
     }
 
-    s /=n;
+    s /= n;
 
     if (s <= TINYVAR) {
 	ret = NADBL;
@@ -1022,7 +993,7 @@ double gretl_kurtosis (int t1, int t2, const double *x)
 
 	for (t=t1; t<=t2; t++) {
 	    if (!na(x[t])) {
-		xx = (x[t] - xbar)/sd;
+		xx = (x[t] - xbar) / sd;
 		s += xx * xx * xx * xx;
 	    }
 	}
@@ -1359,17 +1330,13 @@ series_get_moments (int t1, int t2, const double *x,
 		    double *skew, double *xkurt,
 		    int *pn)
 {
-    double xbar, dev, var;
-    double s = 0.0;
-    double s2 = 0.0;
-    double s3 = 0.0;
-    double s4 = 0.0;
-    int i, n = 0;
+    double dev, s[4] = {0.0};
+    int t, n = 0;
     int err = 0;
 
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    s += x[i];
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    s[0] += x[t];
 	    n++;
 	}
     }
@@ -1379,22 +1346,22 @@ series_get_moments (int t1, int t2, const double *x,
 	return E_DATA;
     }
     
-    xbar = s / n;
+    s[0] /= n;
 
-    for (i=t1; i<=t2; i++) {
-	if (!na(x[i])) {
-	    dev = x[i] - xbar;
-	    s2 += dev * dev;
-	    s3 += pow(dev, 3);
-	    s4 += pow(dev, 4);
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t])) {
+	    dev = x[t] - s[0];
+	    s[1] += dev * dev;
+	    s[2] += pow(dev, 3);
+	    s[3] += pow(dev, 4);
 	}
     }
 
-    var = s2 / n;
+    s[1] /= n;
 
-    if (var > 0.0) {
-	*skew = (s3 / n) / pow(s2 / n, 1.5);
-	*xkurt = ((s4 / n) / pow(s2 / n, 2)) - 3.0;
+    if (s[1] > 0.0) {
+	*skew = (s[2] / n) / pow(s[1], 1.5);
+	*xkurt = ((s[3] / n) / pow(s[1], 2)) - 3.0;
     } else {
 	/* if variance is effectively zero, these should be undef'd */
 	*skew = *xkurt = NADBL;
@@ -1408,32 +1375,27 @@ static int
 get_moments (const gretl_matrix *M, int row, double *skew, double *kurt)
 {
     int j, n = gretl_matrix_cols(M);
-    double xi, xbar, dev, var;
-    double s = 0.0;
-    double s2 = 0.0;
-    double s3 = 0.0;
-    double s4 = 0.0;
+    double dev, s[4] = {0.0};
     int err = 0;
     
     for (j=0; j<n; j++) {
-	s += gretl_matrix_get(M, row, j);
+	s[0] += gretl_matrix_get(M, row, j);
     }
 
-    xbar = s / n;
+    s[0] /= n;
 
     for (j=0; j<n; j++) {
-	xi = gretl_matrix_get(M, row, j);
-	dev = xi - xbar;
-	s2 += dev * dev;
-	s3 += pow(dev, 3);
-	s4 += pow(dev, 4);
+	dev = gretl_matrix_get(M, row, j) - s[0];
+	s[1] += dev * dev;
+	s[2] += pow(dev, 3);
+	s[3] += pow(dev, 4);
     }
 
-    var = s2 / n;
+    s[1] /= n;
 
-    if (var > 0.0) {
-	*skew = (s3 / n) / pow(s2 / n, 1.5);
-	*kurt = ((s4 / n) / pow(s2 / n, 2));
+    if (s[1] > 0.0) {
+	*skew = (s[2] / n) / pow(s[1], 1.5);
+	*kurt = ((s[3] / n) / pow(s[1], 2));
     } else {
 	/* if variance is effectively zero, these should be undef'd */
 	*skew = *kurt = NADBL;

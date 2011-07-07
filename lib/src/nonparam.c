@@ -1442,18 +1442,14 @@ static void weight_x_y (const gretl_matrix *x, const gretl_matrix *y,
 gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 			 int d, double q, gretlopt opt, int *err)
 {
-    gretl_matrix *Xr = NULL;
-    gretl_matrix *yr = NULL;
-    gretl_matrix *wt = NULL;
-    gretl_matrix *bj = NULL;
+    gretl_matrix_block *B;
+    gretl_matrix *Xr, *yr, *wt, *bj;
     gretl_matrix *yh = NULL;
     gretl_matrix *ei = NULL;
     gretl_matrix *wi = NULL;
-
     int T = gretl_vector_get_length(y);
     double xi, d1, d2, dmax;
-    int jmin, jmax;
-    int k, kmax;
+    int jmin, jmax, k, kmax;
     int i, j, t, n;
 
     if (d < 0 || d > 2) {
@@ -1476,17 +1472,21 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 
     n = (int) ceil(q * T);
 
-    Xr = gretl_matrix_alloc(n, d + 1);
-    yr = gretl_column_vector_alloc(n);
-    wt = gretl_column_vector_alloc(n);
-    bj = gretl_column_vector_alloc(d + 1);
-    yh = gretl_column_vector_alloc(T);
+    B = gretl_matrix_block_new(&Xr, n, d+1,
+			       &yr, n, 1,
+			       &wt, n, 1,
+			       &bj, d+1, 1,
+			       NULL);
+    if (B == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
 
-    if (Xr == NULL || yr == NULL || wt == NULL || 
-	bj == NULL || yh == NULL) {
+    yh = gretl_column_vector_alloc(T);
+    if (yh == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
-    }
+    }    
 
     if (opt & OPT_R) {
 	ei = gretl_column_vector_alloc(n);
@@ -1578,10 +1578,7 @@ gretl_matrix *loess_fit (const gretl_matrix *x, const gretl_matrix *y,
 
  bailout:
 	
-    gretl_matrix_free(Xr);
-    gretl_matrix_free(yr);
-    gretl_matrix_free(wt);
-    gretl_matrix_free(bj);
+    gretl_matrix_block_destroy(B);
     gretl_matrix_free(ei);
     gretl_matrix_free(wi);
 
