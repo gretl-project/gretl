@@ -1209,20 +1209,17 @@ GretlType gretl_type_from_name (const char *s, const DATAINFO *pdinfo)
 
 double *copyvec (const double *src, int n)
 {
-    double *targ;
+    double *targ = NULL;
     int i;
 
-    if (n == 0 || src == NULL) {
-	return NULL;
+    if (n > 0 && src != NULL) {
+	targ = malloc(n * sizeof *targ);
     }
 
-    targ = malloc(n * sizeof *targ);
-    if (targ == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	targ[i] = src[i];
+    if (targ != NULL) {
+	for (i=0; i<n; i++) {
+	    targ[i] = src[i];
+	}
     }
 
     return targ;

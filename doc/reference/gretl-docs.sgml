@@ -8,7 +8,7 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.9.3</releaseinfo>
+    <releaseinfo>for gretl 1.9.5</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">

@@ -8,6 +8,8 @@ version 1.9.6, in progress
 - extend the invcdf() function to the Gamma and std. GED distributions
 - build with SSE2 enabled: ensure that the C compiler SSE2 option is
   not wiped out if the user (re-)specifies CFLAGS when doing "make"
+- Defining lists: document the wildcard operator, *, and add an
+  ellipsis operator (two dots).
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac
 - "makepkg" command: add options to produce an XML index entry and a
   file of translatable strings suitable for use with gettext

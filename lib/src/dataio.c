@@ -38,7 +38,7 @@
  * @title: Data support
  * @include: gretl/libgretl.h
  *
- * Data handling functions that are basically internal to
+ * The following data handling functions are basically internal to
  * gretl and not in a state where they can be readily
  * documented as public APIs.
  * 
@@ -68,6 +68,14 @@ static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
 #define PROGRESS_BAR "progress_bar"
+
+/**
+ * get_date_x:
+ * @pd: frequency of data.
+ * @obs: observation string.
+ * 
+ * Returns: the floating-point representation of @obs.
+ */
 
 double get_date_x (int pd, const char *obs)
 {
@@ -795,13 +803,12 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
  * @date: string representation of date for processing.
  * @pdinfo: pointer to data information struct.
  * 
- * Given a "current" date string, a periodicity, and a starting
- * date string, returns the observation number corresponding to
- * the current date string, counting from zero. It is an error
- * if @date represents an observation that lies outside of the
- * full data range specified in @pdinfo.
+ * Determines the observation number corresponding to @date,
+ * relative to @pdinfo. It is an error if @date represents an 
+ * observation that lies outside of the full data range 
+ * specified in @pdinfo.
  * 
- * Returns: integer observation number, or -1 on error.
+ * Returns: zero-based observation number, or -1 on error.
  */
 
 int dateton (const char *date, const DATAINFO *pdinfo)
@@ -820,7 +827,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
  * inended for use when merging data, or when creating a new
  * dataset.
  * 
- * Returns: integer observation number, or -1 on error.
+ * Returns: zero-based observation number, or -1 on error.
  */
 
 int merge_dateton (const char *date, const DATAINFO *pdinfo)
@@ -845,12 +852,12 @@ static char *panel_obs (char *s, int t, const DATAINFO *pdinfo)
 
 /**
  * ntodate:
- * @datestr: string to which date is to be printed.
- * @t: an observation number (zero-based).
+ * @datestr: char array to which date is to be printed.
+ * @t: zero-based observation number.
  * @pdinfo: data information struct.
  * 
- * print to @datestr the calendar representation of observation
- * number @t.
+ * Prints to @datestr (which must be at least #OBSLEN bytes)
+ * the calendar representation of observation number @t.
  * 
  * Returns: the observation string.
  */
@@ -906,12 +913,21 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 
 #define xround(x) (((x-floor(x))>.5)? ceil(x) : floor(x))
 
-/* for "seasonal" time series data (broad sense): given
-   the 0-based observation number, t, determine the
-   sub-period at that obs. The "sub-period" might
-   be the quarter, month, hour or whatever.  The value
-   returned is zero-based (e.g. first quarter = 0).
-*/
+/**
+ * get_subperiod:
+ * @t: zero-based observation number.
+ * @pdinfo: data information struct.
+ * @err: location to receive error code, or NULL.
+ * 
+ * For "seasonal" time series data (in a broad sense), 
+ * determines the sub-period at observation @t. The "sub-period" 
+ * might be a quarter, month, hour or whatever.  The value
+ * returned is zero-based (e.g. first quarter = 0).
+ * If the data are not "seasonal", 0 is returned and if
+ * @err is non-NULL it receives a non-zero error code.
+ * 
+ * Returns: the sub-period.
+ */
 
 int get_subperiod (int t, const DATAINFO *pdinfo, int *err)
 {
@@ -951,8 +967,6 @@ int get_subperiod (int t, const DATAINFO *pdinfo, int *err)
     return ret;    
 }
 
-/* .......................................................... */
-
 static int blank_check (FILE *fp)
 {
     int i, deflt = 1;
@@ -975,7 +989,7 @@ static int blank_check (FILE *fp)
 
 /**
  * get_info:
- * @hdrfile: name of data header file
+ * @hdrfile: name of data header file.
  * @prn: gretl printing struct.
  * 
  * print to @prn the informative comments contained in the given
@@ -983,7 +997,6 @@ static int blank_check (FILE *fp)
  * 
  * Returns: 0 on successful completion, non-zero on error or if there
  * are no informative comments.
- * 
  */
 
 int get_info (const char *hdrfile, PRN *prn)
@@ -1713,7 +1726,7 @@ int is_gzipped (const char *fname)
 /**
  * gz_switch_ext:
  * @targ: target or "output" filename (must be pre-allocated).
- * @src: "source or "input" filename.
+ * @src: source or "input" filename.
  * @ext: suffix to add to filename.
  * 
  * Copy @src filename to @targ, without the existing suffix (if any),
@@ -3160,6 +3173,14 @@ static int is_jmulti_datafile (const char *fname)
     return ret;
 }
 
+/**
+ * gretl_is_pkzip_file:
+ * @fname: name of file to examine.
+ * 
+ * Returns: 1 if @fname is readable and is a PKZIP file,
+ * else 0.
+ */
+
 int gretl_is_pkzip_file (const char *fname)
 {
     FILE *fp;
@@ -3381,8 +3402,7 @@ static int transpose_varname_used (const char *vname,
  *
  * Attempts to transpose the current dataset, so that each
  * variable becomes interpreted as an observation and each
- * observation as a variable.  This will not work if the
- * dataset contains scalar variables.
+ * observation as a variable.
  *
  * Returns: 0 on success, non-zero error code on error.
  */
@@ -3458,10 +3478,17 @@ struct filetype_info {
     const char *src;
 };
 
-/* On successful import of data from some "foreign" format,
-   add a note to the "descrip" member of the new dataset
-   saying where it came from and when.
-*/
+/**
+ * dataset_add_import_info:
+ * @pdinfo: pointer to dataset information struct.
+ * @fname: the name of a file from which data have been imported.
+ * @type: code representing the type of the file identified by
+ * @fname.
+ *
+ * On successful import of data from some "foreign" format,
+ * add a note to the "descrip" member of the new dataset
+ * saying where it came from and when.
+ */
 
 void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
 			      GretlFileType type)
