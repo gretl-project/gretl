@@ -1572,6 +1572,8 @@ static int maybe_delete_bundle_value (const char *s, PRN *prn)
     return err;
 }
 
+/* note: this is not used for series */
+
 int gretl_delete_var_by_name (const char *s, PRN *prn)
 {
     int err = 0;

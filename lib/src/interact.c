@@ -5211,7 +5211,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case DELEET:
 	if (cmd->list != NULL && cmd->list[0] > 0) {
-	    pputs(prn, _("You cannot delete variables in this context\n"));
+	    pputs(prn, _("You cannot delete series in this context\n"));
 	    err = 1;
 	} else {
 	    err = gretl_delete_var_by_name(cmd->param, prn);

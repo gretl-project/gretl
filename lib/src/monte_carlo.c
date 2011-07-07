@@ -353,7 +353,6 @@ int ok_in_loop (int c)
     if (c == CORRGM ||
 	c == CUSUM ||
 	c == DATA ||
-	c == DELEET ||
 	c == EQNPRINT ||
 	c == FUNC ||
 	c == HURST ||
@@ -2751,6 +2750,23 @@ static inline void cmd_info_to_loop (LOOPSET *loop, int j,
     }
 }
 
+static int loop_delete_object (CMD *cmd, PRN *prn)
+{
+    int err = 0;
+
+    if (cmd->list != NULL && cmd->list[0] > 0) {
+	pputs(prn, _("You cannot delete series in this context\n"));
+	err = 1;
+    } else if (gretl_is_scalar(cmd->param)) {
+	pputs(prn, _("You cannot delete scalars in this context\n"));
+	err = 1;
+    } else {
+	err = gretl_delete_var_by_name(cmd->param, prn);
+    }
+
+    return err;
+}
+
 static int loop_report_error (LOOPSET *loop, int err, 
 			      const char *errline,
 			      ExecState *state,
@@ -3014,6 +3030,8 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 			err = execute_genr(genr, pZ, pdinfo, prn);
 		    }
 		}
+	    } else if (cmd->ci == DELEET) {
+		err = loop_delete_object(cmd, prn);
 	    } else {
 		err = gretl_cmd_exec(s, pZ, pdinfo);
 		if (!err && !check_gretl_errno() && block_model(cmd)) {
