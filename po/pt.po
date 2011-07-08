@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-07-01 12:22-0400\n"
-"PO-Revision-Date: 2011-05-03 01:44+0100\n"
+"PO-Revision-Date: 2011-07-08 00:42+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -336,9 +336,9 @@ msgstr ""
 "Resumo numérico com intervalo de confiança (bootstrapped) para a mediana"
 
 #: lib/src/boxplots.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s"
-msgstr "Resumo numérico"
+msgstr "Resumo numérico de %s"
 
 #: lib/src/boxplots.c:230 gui2/gpt_control.c:3593 gui2/gpt_control.c:3671
 msgid "Numerical summary"
@@ -362,21 +362,17 @@ msgid "mean"
 msgstr "média"
 
 #: lib/src/boxplots.c:432
-#, fuzzy
 msgid "group"
-msgstr "_entre grupos"
+msgstr "grupo"
 
 #: lib/src/boxplots.c:734 gui2/library.c:6416
-#, fuzzy
 msgid "You must supply two variables, the second of which is discrete"
-msgstr ""
-"Você tem que fornecer 3 variáveis, sendo\n"
-"a última delas uma auxiliar (valores 1 ou 0)"
+msgstr "Você tem que fornecer 2 variáveis, sendo a última delas dscreta"
 
 #: lib/src/boxplots.c:777
-#, fuzzy, c-format
+#, c-format
 msgid "Distribution of %s by %s"
-msgstr "Distribuição"
+msgstr "Distribuição de %s por %s"
 
 #: lib/src/boxplots.c:1056
 #, c-format
@@ -2575,11 +2571,8 @@ msgid "std. dev"
 msgstr "desvio padrão"
 
 #: lib/src/graphing.c:337 gui2/library.c:6450
-#, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
-msgstr ""
-"Você tem que fornecer 3 variáveis, sendo\n"
-"a última delas uma auxiliar (valores 1 ou 0)"
+msgstr "Você tem que fornecer 3 variáveis, sendo a última delas discreta"
 
 #: lib/src/graphing.c:1409
 msgid "Gnuplot does not support PDF output on this system"
@@ -3026,11 +3019,8 @@ msgid "Insufficient observations for this operation"
 msgstr "Número de observações insuficiente para a operação"
 
 #: lib/src/gretl_errors.c:84
-#, fuzzy
 msgid "Error executing function"
-msgstr ""
-"\n"
-"Erro ao executar sequência de comandos: parando\n"
+msgstr "Erro ao executar função"
 
 #: lib/src/gretl_errors.c:92
 msgid "gradient is not close to zero"
@@ -3087,7 +3077,7 @@ msgstr "Você não pode alterar o nome de uma função aqui"
 #: lib/src/gretl_func.c:5169 lib/src/gretl_func.c:5196
 #: lib/src/gretl_func.c:5222 lib/src/gretl_func.c:5243
 msgid "Duplicated pointer argument: not allowed"
-msgstr ""
+msgstr "Não é permitido argumentos de ponteiro duplicados"
 
 #: lib/src/gretl_func.c:6113
 #, c-format
@@ -3105,11 +3095,13 @@ msgid "%s: not enough arguments\n"
 msgstr "%s: não foram fornecidos argumentos suficientes\n"
 
 #: lib/src/gretl_func.c:6245
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
-msgstr "Mensagem de erro vinda de %s:\n"
+msgstr ""
+"Mensagem de erro vinda de %s():\n"
+"%s"
 
 #: lib/src/gretl_func.c:7004
 #, c-format
@@ -4408,9 +4400,8 @@ msgid "Warning: solution is probably not unique"
 msgstr "Aviso: a solução provavelmente não é única"
 
 #: lib/src/modelprint.c:596
-#, fuzzy
 msgid "Warning: couldn't compute numerical Hessian"
-msgstr "Falha no cálculo da Hessiana"
+msgstr "Aviso: Falha no cálculo da Hessiana numérica"
 
 #: lib/src/modelprint.c:614 lib/src/modelprint.c:632 lib/src/modelprint.c:640
 msgid "'Within' variance"
@@ -7183,7 +7174,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 3 de Maio de 2011."
+"Tradução de 8 de Julho de 2011."
 
 #: gui2/about.c:175
 msgid "License"
@@ -7920,19 +7911,16 @@ msgid "Type a command:"
 msgstr "Escreva um comando:"
 
 #: gui2/callbacks.c:627
-#, fuzzy
 msgid "Simple boxplot"
-msgstr "gráfico caixa com bigodes simples"
+msgstr "Gráfico caixa com bigodes simples"
 
 #: gui2/callbacks.c:628
-#, fuzzy
 msgid "With confidence interval for median"
-msgstr "Traçar o intervalo de confiança usando"
+msgstr "Com intervalo de confiança para a mediana"
 
 #: gui2/callbacks.c:629
-#, fuzzy
 msgid "Factorized"
-msgstr "gráfico com separação por factores"
+msgstr "Factorizado"
 
 #: gui2/callbacks.c:726
 msgid "gretl: create data set"
@@ -8148,9 +8136,8 @@ msgid "No database files found"
 msgstr "Não se encontrou ficheiros de bases de dados"
 
 #: gui2/database.c:2651 gui2/datafiles.c:991
-#, fuzzy
 msgid "Installed"
-msgstr "Instalar"
+msgstr "Instalado"
 
 #: gui2/database.c:2725 gui2/database.c:2821
 msgid "No function packages found"
@@ -8295,9 +8282,8 @@ msgid "gretl: data packages on server"
 msgstr "gretl: pacotes de dados em servidor"
 
 #: gui2/datafiles.c:1571
-#, fuzzy
 msgid "gretl: addons"
-msgstr "gretl: acrescentar informação"
+msgstr "gretl: acessórios (\"addons\")"
 
 #: gui2/datafiles.c:2001 gui2/fnsave.c:1933
 msgid "gretl: function packages"
@@ -8789,14 +8775,12 @@ msgid "gretl: set sample"
 msgstr "gretl: definir amostra"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Groups"
-msgstr "Mínimos Quadrados Pesados (WLS) entre grupos"
+msgstr "Grupos"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Periods"
-msgstr "períodos"
+msgstr "Períodos"
 
 #: gui2/dialogs.c:1974 gui2/selector.c:7077
 msgid "to"
@@ -9214,9 +9198,8 @@ msgid "Add list of instruments"
 msgstr "Acrescentar lista de instrumentos"
 
 #: gui2/dlgutils.c:925
-#, fuzzy
 msgid "Show interval for median"
-msgstr "Mostrar intervalo d"
+msgstr "Mostrar intervalo para a mediana"
 
 #: gui2/dlgutils.c:928 gui2/dlgutils.c:1083 gui2/selector.c:3608
 msgid "Iterated estimation"
@@ -9616,7 +9599,7 @@ msgstr "fechar este diálogo com \"OK\""
 
 #: gui2/fncall.c:1726
 msgid "This function needs a model in place"
-msgstr ""
+msgstr "Esta função precisa de um modelo em uso"
 
 #: gui2/fncall.c:1774
 msgid "Function package is broken"
@@ -10745,9 +10728,8 @@ msgid "_Boxplots..."
 msgstr "Caixa com bigodes..."
 
 #: gui2/gretl.c:1469
-#, fuzzy
 msgid "_Factorized boxplot..."
-msgstr "gráfico com separação por factores"
+msgstr "Gráfico caixa com bigodes com separação por _factores..."
 
 #: gui2/gretl.c:1470
 msgid "_Q-Q plot..."
@@ -11226,9 +11208,8 @@ msgid "Check for _updates"
 msgstr "Verificar actualização da versão"
 
 #: gui2/gretl.c:1619
-#, fuzzy
 msgid "Check for _addons"
-msgstr "Verificar actualização da versão"
+msgstr "Procurar _acessórios (\"addons\")"
 
 #: gui2/gretl.c:1620
 msgid "_About gretl"
@@ -13437,9 +13418,8 @@ msgid "Choose"
 msgstr "Escolher"
 
 #: gui2/selector.c:3692
-#, fuzzy
 msgid "Variable to plot"
-msgstr "Variável para ordenação"
+msgstr "Variável para traçar gráfico"
 
 #: gui2/selector.c:3734
 msgid "Lower bound variable"
@@ -13478,9 +13458,8 @@ msgid "Z-axis variable"
 msgstr "Variável do eixo dos ZZ"
 
 #: gui2/selector.c:3910
-#, fuzzy
 msgid "Factor (discrete)"
-msgstr "Factor (auxiliar)"
+msgstr "Factor (discreta)"
 
 #: gui2/selector.c:3912
 msgid "Control variable"
@@ -13767,9 +13746,8 @@ msgid "factorized plot"
 msgstr "gráfico com separação por factores"
 
 #: gui2/selector.c:5647
-#, fuzzy
 msgid "factorized boxplot"
-msgstr "gráfico com separação por factores"
+msgstr "gráfico caixa com bigodes com separação por factores"
 
 #: gui2/selector.c:5649
 msgid "scatterplot with control"
