@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.5
+# Polish translation for gretl-1.9.5cvs
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2011
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2011
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-07-01 12:22-0400\n"
-"PO-Revision-Date: 2011-04-29 23:00-0400\n"
+"PO-Revision-Date: 2011-07-09 11:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -331,9 +331,9 @@ msgstr ""
 "bootstrapową)"
 
 #: lib/src/boxplots.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s"
-msgstr "Pozycyjne miary opisu"
+msgstr "Podsumowanie dla %s"
 
 #: lib/src/boxplots.c:230 gui2/gpt_control.c:3593 gui2/gpt_control.c:3671
 msgid "Numerical summary"
@@ -357,21 +357,19 @@ msgid "mean"
 msgstr "średnia"
 
 #: lib/src/boxplots.c:432
-#, fuzzy
 msgid "group"
-msgstr "_Groupwise"
+msgstr "Group"
 
 #: lib/src/boxplots.c:734 gui2/library.c:6416
-#, fuzzy
 msgid "You must supply two variables, the second of which is discrete"
 msgstr ""
-"Należy wprowadzić trzy zmienne, ale ostatnia musi\n"
-"być zmienną zero-jedynkową (tylko wartości 0 lub 1)"
+"Należy wprowadzić dwie zmienne, ale\n"
+"druga musi być zmienną dyskretną"
 
 #: lib/src/boxplots.c:777
-#, fuzzy, c-format
+#, c-format
 msgid "Distribution of %s by %s"
-msgstr "Rozkład"
+msgstr "Rozkład dla %s względem %s"
 
 #: lib/src/boxplots.c:1056
 #, c-format
@@ -2562,7 +2560,7 @@ msgstr "Niewyspecyfikowano warunków ortogonalności"
 
 #: lib/src/gmm.c:1540
 msgid "Orthogonality conditions - descriptive statistics"
-msgstr "Warunki ortogonalności - statystyki opisowe"
+msgstr "'OC' warunki ortogonalności - statystyki opisowe"
 
 #: lib/src/gmm.c:1541
 msgid "OC"
@@ -2573,7 +2571,6 @@ msgid "std. dev"
 msgstr "odchylenie std."
 
 #: lib/src/graphing.c:337 gui2/library.c:6450
-#, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
 msgstr ""
 "Należy wprowadzić trzy zmienne, ale ostatnia musi\n"
@@ -3023,11 +3020,8 @@ msgid "Insufficient observations for this operation"
 msgstr "Niewystarczająca liczba obserwacji dla tej operacji"
 
 #: lib/src/gretl_errors.c:84
-#, fuzzy
 msgid "Error executing function"
-msgstr ""
-"\n"
-"Błąd skryptu: wykonanie przerwano\n"
+msgstr "Błąd skryptu: wykonanie przerwano"
 
 #: lib/src/gretl_errors.c:92
 msgid "gradient is not close to zero"
@@ -3102,11 +3096,12 @@ msgid "%s: not enough arguments\n"
 msgstr "%s: brak argumentów\n"
 
 #: lib/src/gretl_func.c:6245
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
-msgstr "Błędny komunikat z %s:\n"
+msgstr "Komunikat błędu z %s():\n"
+" %s"
 
 #: lib/src/gretl_func.c:7004
 #, c-format
@@ -4387,9 +4382,8 @@ msgid "Warning: solution is probably not unique"
 msgstr "Uwaga: to rozwiązanie nie jest prawdopodobnie jedyne"
 
 #: lib/src/modelprint.c:596
-#, fuzzy
 msgid "Warning: couldn't compute numerical Hessian"
-msgstr "Błąd w wyznaczaniu Hessianu"
+msgstr "Uwaga: niemozliwe numeryczne wyznaczanie Hessianu"
 
 #: lib/src/modelprint.c:614 lib/src/modelprint.c:632 lib/src/modelprint.c:640
 msgid "'Within' variance"
@@ -7889,19 +7883,16 @@ msgid "Type a command:"
 msgstr "Wprowadź polecenie:"
 
 #: gui2/callbacks.c:627
-#, fuzzy
 msgid "Simple boxplot"
-msgstr "wykres pudełkowy"
+msgstr "prosty wykres pudełkowy"
 
 #: gui2/callbacks.c:628
-#, fuzzy
 msgid "With confidence interval for median"
-msgstr "Wykres przedziałów ufności jako"
+msgstr "z przedziałami ufności dla mediany"
 
 #: gui2/callbacks.c:629
-#, fuzzy
 msgid "Factorized"
-msgstr "Czynnikowy wykres rozrzutu XY"
+msgstr "w podziale według zmiennej 0-1"
 
 #: gui2/callbacks.c:726
 msgid "gretl: create data set"
@@ -8117,9 +8108,8 @@ msgid "No database files found"
 msgstr "Nie znaleziono pliku danych"
 
 #: gui2/database.c:2651 gui2/datafiles.c:991
-#, fuzzy
 msgid "Installed"
-msgstr "Zainstaluj"
+msgstr "Zainstalowany"
 
 #: gui2/database.c:2725 gui2/database.c:2821
 msgid "No function packages found"
@@ -8264,9 +8254,8 @@ msgid "gretl: data packages on server"
 msgstr "gretl: serwer baz danych"
 
 #: gui2/datafiles.c:1571
-#, fuzzy
 msgid "gretl: addons"
-msgstr "gretl: dodawanie opisu pliku danych"
+msgstr "gretl: dodatki - addons"
 
 #: gui2/datafiles.c:2001 gui2/fnsave.c:1933
 msgid "gretl: function packages"
@@ -8757,14 +8746,12 @@ msgid "gretl: set sample"
 msgstr "gretl: zakres próby"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Groups"
-msgstr "Groupwise WLS"
+msgstr "Groups"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Periods"
-msgstr "okresy"
+msgstr "Okresy"
 
 #: gui2/dialogs.c:1974 gui2/selector.c:7077
 msgid "to"
@@ -9182,9 +9169,8 @@ msgid "Add list of instruments"
 msgstr "Dołącz listę zmiennych - instrumentów"
 
 #: gui2/dlgutils.c:925
-#, fuzzy
 msgid "Show interval for median"
-msgstr "Pokaż przedział dla"
+msgstr "Pokaż przedział ufnoci dla mediany"
 
 #: gui2/dlgutils.c:928 gui2/dlgutils.c:1083 gui2/selector.c:3608
 msgid "Iterated estimation"
@@ -10690,32 +10676,31 @@ msgstr "_Wykresy zmiennych"
 
 #: gui2/gretl.c:1463
 msgid "_Time series plot..."
-msgstr "Wykres szeregów czasowych..."
+msgstr "_Wykres szeregów czasowych..."
 
 #: gui2/gretl.c:1464
 msgid "X-Y _scatter..."
-msgstr "Wykres rozrzutu X-Y..."
+msgstr "Wykres rozrzutu _X-Y..."
 
 #: gui2/gretl.c:1465
 msgid "X-Y with _impulses..."
-msgstr "Wykres rozrzutu X-Y z impulsami..."
+msgstr "Wykres rozrzutu X-Y z _impulsami..."
 
 #: gui2/gretl.c:1466
 msgid "X-Y with _factor separation..."
-msgstr "Wykres X-Y z separatorem..."
+msgstr "Wykres X-Y z dyskretnym _separatorem..."
 
 #: gui2/gretl.c:1467
 msgid "X-Y with _control..."
-msgstr "Wykres rozrzutu X-Y z kontrolą..."
+msgstr "Wykres rozrzutu X-Y z _kontrolą..."
 
 #: gui2/gretl.c:1468
 msgid "_Boxplots..."
-msgstr "Wykres pudełkowy..."
+msgstr "Wykres _pudełkowy..."
 
 #: gui2/gretl.c:1469
-#, fuzzy
 msgid "_Factorized boxplot..."
-msgstr "Czynnikowy wykres rozrzutu XY"
+msgstr "Wykres pudełkowy z _dyskretnym separatorem..."
 
 #: gui2/gretl.c:1470
 msgid "_Q-Q plot..."
@@ -10723,7 +10708,7 @@ msgstr "Wykres _Q-Q ..."
 
 #: gui2/gretl.c:1471
 msgid "_3D plot..."
-msgstr "Wykres 3D..."
+msgstr "Wykres _3D..."
 
 #: gui2/gretl.c:1472
 msgid "_Multiple graphs"
@@ -11194,9 +11179,8 @@ msgid "Check for _updates"
 msgstr "_Sprawdź uaktualnienia oprogramowania"
 
 #: gui2/gretl.c:1619
-#, fuzzy
 msgid "Check for _addons"
-msgstr "_Sprawdź uaktualnienia oprogramowania"
+msgstr "Sprawdź dodatki '_addons' oprogramowania"
 
 #: gui2/gretl.c:1620
 msgid "_About gretl"
@@ -13413,9 +13397,8 @@ msgid "Choose"
 msgstr "Wybór"
 
 #: gui2/selector.c:3692
-#, fuzzy
 msgid "Variable to plot"
-msgstr "Sortuj zmienne według"
+msgstr "Zmienna dla wykresu"
 
 #: gui2/selector.c:3734
 msgid "Lower bound variable"
@@ -13454,9 +13437,8 @@ msgid "Z-axis variable"
 msgstr "Zmienna dla osi Z"
 
 #: gui2/selector.c:3910
-#, fuzzy
 msgid "Factor (discrete)"
-msgstr "Czynnik (zmienna 0-1)"
+msgstr "Czynnik (zmienna dyskretna)"
 
 #: gui2/selector.c:3912
 msgid "Control variable"
@@ -13743,9 +13725,8 @@ msgid "factorized plot"
 msgstr "Czynnikowy wykres rozrzutu XY"
 
 #: gui2/selector.c:5647
-#, fuzzy
 msgid "factorized boxplot"
-msgstr "Czynnikowy wykres rozrzutu XY"
+msgstr "Wykres pudełkowy wg zmiennej dyskretnej"
 
 #: gui2/selector.c:5649
 msgid "scatterplot with control"
@@ -16009,16 +15990,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "boxplot file is corrupt"
-#~ msgstr "plik boxplot jest uszkodzony"
-
-#~ msgid ""
-#~ "You must supply three variables, the last of which is a dummy variable\n"
-#~ "(with values 1 or 0)\n"
-#~ msgstr ""
-#~ "Musisz wskazać trzy zmienne, ostatnia zmienna musi\n"
-#~ "być zmienną zero-jedynkową (z wartościami 0 lub 1)\n"
-
-#~ msgid "_Notched boxplots..."
-#~ msgstr "Wykres pudełkowy z 90% przedziałem..."
