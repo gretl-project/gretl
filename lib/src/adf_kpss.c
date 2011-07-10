@@ -1405,14 +1405,14 @@ real_kpss_test (int order, int varno, double ***pZ,
 		kpss_info *kinfo, PRN *prn)
 {
     MODEL KPSSmod;
-    int list[4];
-    int hastrend = 0;
+    int *list = NULL;
+    int hastrend = 0, hasseas = 0;
     double et, s2 = 0.0;
     double cumsum = 0.0, cumsum2 = 0.0;
     double teststat, pval = NADBL;
     double *autocov;
     int t1, t2, T;
-    int i, t;
+    int i, t, ndum, nreg;
 
     /* sanity check */
     if (varno <= 0 || varno >= pdinfo->v) {
@@ -1436,7 +1436,19 @@ real_kpss_test (int order, int varno, double ***pZ,
 	hastrend = 1;
     }
 
-    list[0] = (2 + hastrend);
+    if (opt & OPT_D) {
+	hasseas = 1;
+    }
+
+    ndum = hasseas ? pdinfo->pd - 1 : 0;
+    nreg = 1 + hastrend + ndum;
+
+    list = malloc((nreg + 2) * sizeof *list);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    list[0] = nreg + 1;
     list[1] = varno;
     list[2] = 0;
 
@@ -1444,6 +1456,16 @@ real_kpss_test (int order, int varno, double ***pZ,
 	list[3] = gettrend(pZ, pdinfo, 0);
 	if (list[3] == 0) {
 	    return E_ALLOC;
+	}
+    }
+
+    if (hasseas) {
+	int firstdum = dummy(pZ, pdinfo, 0);
+	if (firstdum == 0) {
+	    return E_ALLOC;
+	}
+	for (i=0; i<ndum; i++) {
+	    list[4+i] = firstdum + i;
 	}
     }
 
@@ -1537,8 +1559,21 @@ real_kpss_test (int order, int varno, double ***pZ,
 	cv[1] = kpss_critval(a[1], T, hastrend);
 	cv[2] = kpss_critval(a[2], T, hastrend);
 
-	pprintf(prn, _("\nKPSS test for %s %s\n\n"), pdinfo->varname[varno],
-		(hastrend)? _("(including trend)") : _("(without trend)"));
+	pprintf(prn, _("\nKPSS test for %s"), pdinfo->varname[varno]);
+	if (hastrend) {
+	    if (hasseas) {
+		pputs(prn, _(" (including trend and seasonals)\n\n"));
+	    } else {
+		pputs(prn, _(" (including trend)\n\n"));
+	    }
+	} else {
+	    if (hasseas) {
+		pputs(prn, _(" (including seasonals)\n\n"));
+	    } else {
+		pputs(prn, "\n\n");
+	    }
+	}
+
 	pprintf(prn, "T = %d\n", T);
 	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
 	pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
@@ -1560,6 +1595,7 @@ real_kpss_test (int order, int varno, double ***pZ,
     }
 
     clear_model(&KPSSmod);
+    free(list);
     free(autocov);
 
     return 0;

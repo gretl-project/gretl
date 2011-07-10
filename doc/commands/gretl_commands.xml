@@ -5173,6 +5173,10 @@
 	  <effect>include a trend</effect>
 	</option>
 	<option>
+	  <flag>--seasonals</flag>
+	  <effect>include seasonal dummies</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>print regression results</effect>
 	</option>
