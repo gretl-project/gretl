@@ -2781,32 +2781,33 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
    except conversion from daily to monthly
 */
 
-static double *compact_series (const double *src, int i, int n, int oldn,
+static double *compact_series (const DATASET *dset, int i, int oldn,
 			       int startskip, int min_startskip, int compfac,
 			       CompactMethod method)
 {
-    int t, idx;
+    const double *src = dset->Z[i];
+    double *x;
     int lead = startskip - min_startskip;
     int to_weekly = (compfac >= 5 && compfac <= 7);
-    double *x;
+    int t, idx;
 
 #if DB_DEBUG
     fprintf(stderr, "compact_series: startskip=%d, min_startskip=%d, compfac=%d "
 	    "lead=%d\n", startskip, min_startskip, compfac, lead);
 #endif
 
-    x = malloc(n * sizeof *x);
+    x = malloc(dset->n * sizeof *x);
     if (x == NULL) {
 	return NULL;
     }
 
-    for (t=0; t<n; t++) {
+    for (t=0; t<dset->n; t++) {
 	x[t] = NADBL;
     }
 
     idx = startskip;
 
-    for (t=lead; t<n && idx<oldn; t++) {
+    for (t=lead; t<dset->n && idx<oldn; t++) {
 	if (method == COMPACT_SOP) {
 	    if (to_weekly && na(src[idx]) && idx < oldn - 1) {
 		/* allow one day's slack */
@@ -2884,11 +2885,12 @@ static double *extend_series (const double *z, int n)
 }
 
 static double *
-daily_series_to_monthly (const double *src, DATASET *dset, int i, 
+daily_series_to_monthly (DATASET *dset, int i, 
 			 int nm, int yr, int mon, int offset, 
 			 int any_eop, CompactMethod method)
 {
     double *x;
+    const double *src = dset->Z[i];
     const double *z;
     double *tmp = NULL;
     int t, mdbak;
@@ -3544,7 +3546,7 @@ static int daily_dataset_to_monthly (DATASET *dset,
 	    method = default_method;
 	}
 
-	x = daily_series_to_monthly(dset->Z[i], dset, i, nm,
+	x = daily_series_to_monthly(dset, i, nm,
 				    startyr, startmon, 
 				    offset, any_eop, method);
 	if (x == NULL) {
@@ -3820,8 +3822,8 @@ int compact_data_set (DATASET *dset, int newpd,
 	    }
 	}
 
-	x = compact_series(dset->Z[i], i, dset->n, oldn, startskip, 
-			   min_startskip, compfac, this_method);
+	x = compact_series(dset, i, oldn, startskip, min_startskip, 
+			   compfac, this_method);
 	if (x == NULL) {
 	    err = E_ALLOC;
 	} else {

@@ -2541,16 +2541,16 @@ static int get_pacf (double *pacf, const double *acf, int m)
 
 /* also used in GUI, library.c */
 
-int auto_acf_order (int pd, int n)
+int auto_acf_order (int T)
 {
-    int m = 10 * log10(n);
+    int p = 10 * log10(T);
 
-    if (m > n / 5) {
+    if (p > T / 5) {
 	/* restrict to 20 percent of data (Tadeusz) */
-	m = n / 5;
+	p = T / 5;
     }
 
-    return m;
+    return p;
 }
 
 /**
@@ -2890,7 +2890,7 @@ int corrgram (int varno, int order, int nparam, DATASET *dset,
     /* lag order for acf */
     m = order;
     if (m == 0) {
-	m = auto_acf_order(dset->pd, T);
+	m = auto_acf_order(T);
     } else if (m > T - dset->pd) {
 	int mmax = T - 1; 
 
@@ -3070,7 +3070,7 @@ gretl_matrix *acf_vec (const double *x, int order,
 	}
     } else {
 	if (m == 0) {
-	    m = auto_acf_order(dset->pd, T);
+	    m = auto_acf_order(T);
 	} else if (m > T - dset->pd) {
 	    int mmax = T - 1; 
 
@@ -3398,7 +3398,7 @@ int xcorrgram (const int *list, int order, DATASET *dset,
 
     p = order;
     if (p == 0) {
-	p = auto_acf_order(dset->pd, T) / 2;
+	p = auto_acf_order(T) / 2;
     } else if (2 * p > T - dset->pd) {
 	p = (T - 1) / 2; /* ?? */
     }
@@ -3468,8 +3468,7 @@ struct fractint_test {
 };
 
 static int fract_int_GPH (int T, int m, const double *xvec, 
-			  struct fractint_test *ft,
-			  PRN *prn)
+			  struct fractint_test *ft)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
@@ -3692,7 +3691,7 @@ int auto_spectrum_order (int T, gretlopt opt)
 }
 
 static int fract_int_LWE (const double *x, int m, int t1, int t2,
-			  struct fractint_test *ft, PRN *prn)
+			  struct fractint_test *ft)
 {
     gretl_matrix *X;
     int err = 0;
@@ -3896,7 +3895,7 @@ static int finalize_fractint (const double *x,
     /* do LWE if wanted */
 
     if (!GPH_only) {
-	err = fract_int_LWE(x, m, t1, t2, &ft, prn);
+	err = fract_int_LWE(x, m, t1, t2, &ft);
 	if (!err) {
 	    double z = ft.d / ft.se;
 	    double pv = normal_pvalue_2(z);
@@ -3918,7 +3917,7 @@ static int finalize_fractint (const double *x,
 
     if (!err && (opt & (OPT_A | OPT_G))) {
 	/* --all or --gph */
-	err = fract_int_GPH(T, m, dens, &ft, prn);
+	err = fract_int_GPH(T, m, dens, &ft);
 	if (!err && (GPH_only || do_print)) {
 	    double tval = ft.d / ft.se;
 	    int df = m - 2;
@@ -4221,7 +4220,7 @@ static void output_line (char *str, PRN *prn, int dblspc)
 }
 
 static void prhdr (const char *str, const DATASET *dset, 
-		   int ci, int missing, PRN *prn)
+		   int missing, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[96];
 
@@ -4263,7 +4262,7 @@ static void print_summary_single (const Summary *s, int j,
     ntodate(obs1, dset->t1, dset);
     ntodate(obs2, dset->t2, dset);
 
-    prhdr(_("Summary statistics"), dset, SUMMARY, 0, prn);
+    prhdr(_("Summary statistics"), dset, 0, prn);
     sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
 	    dset->varname[s->list[j+1]], s->n);
     output_line(tmp, prn, 1);
@@ -4344,7 +4343,7 @@ void print_summary (const Summary *summ,
     len = (maxlen <= 8)? 10 : (maxlen + 1);
 
     if (!(summ->opt & OPT_B)) {
-	prhdr(_("Summary statistics"), dset, SUMMARY, summ->missing, prn);
+	prhdr(_("Summary statistics"), dset, summ->missing, prn);
     }
 
     pputc(prn, '\n');
@@ -5679,7 +5678,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
  * gini:
  * @varno: ID number of variable to examine.
  * @dset: dataset struct.
- * @opt: unused.
+ * @opt: unused at present.
  * @prn: gretl printing struct.
  *
  * Graphs the Lorenz curve for variable @vnum and prints the
@@ -5767,7 +5766,7 @@ static double poly (const float *cc, int n, float x) {
 
 /* Calculate coefficients for the Shapiro-Wilk test */
 
-static void sw_coeff (int n, int n1, int n2, float *a) 
+static void sw_coeff (int n, int n2, float *a) 
 {
     const float c1[6] = { 0.f,.221157f,-.147981f,-2.07119f, 4.434685f, -2.706056f };
     const float c2[6] = { 0.f,.042981f,-.293762f,-1.752461f,5.682633f, -3.582633f };
@@ -5813,7 +5812,7 @@ static void sw_coeff (int n, int n1, int n2, float *a)
    Rendered into C by Marcin Blazejowski, May 2008.
 */
 
-static int sw_w (float *x, int n, int n1, int n2, float *a, 
+static int sw_w (float *x, int n, int n1, float *a, 
 		 double *W, double *pval)
 {
     const float z90 = 1.2816f;
@@ -6028,8 +6027,8 @@ int shapiro_wilk (const double *x, int t1, int t2, double *W, double *pval)
 	}
 	qsort(xf, n, sizeof *xf, compare_floats);
 	/* Main job: compute W stat and its p-value */
-	sw_coeff(n, n1, n2, a);
-	err = sw_w(xf, n, n1, n2, a, W, pval);
+	sw_coeff(n, n2, a);
+	err = sw_w(xf, n, n1, a, W, pval);
     } 
 	
     free(a);

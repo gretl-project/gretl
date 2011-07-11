@@ -3637,14 +3637,14 @@ static int real_do_model (int action)
 	break;
 
     case ARMA:
-	*pmod = arma(libcmd.list, libcmd.auxlist,
-		     dataset, libcmd.opt, prn);
+	*pmod = arma(libcmd.list, libcmd.auxlist, dataset, 
+		     libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case ARCH:
 	*pmod = arch_model(libcmd.list, atoi(libcmd.param), dataset, 
-			   libcmd.opt, prn); 
+			   libcmd.opt); 
 	err = model_output(pmod, prn);
 	break;
 
@@ -4922,7 +4922,7 @@ static void real_do_corrgm (DATASET *dset, int code)
     strcpy(title, "gretl: ");
     strcat(title, _("correlogram"));
 
-    order = auto_acf_order(dset->pd, T);
+    order = auto_acf_order(T);
 
     err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
 		      1, T - 1, CORRGM);

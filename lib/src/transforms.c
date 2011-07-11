@@ -1171,7 +1171,7 @@ int list_loggenr (int *list, DATASET *dset)
     return (l0 > 0)? 0 : E_LOGS;
 }
 
-static int *make_lags_list (int *list, int order, DATASET *dset)
+static int *make_lags_list (int *list, int order)
 {
     int i, v, nl = 0;
 
@@ -1221,7 +1221,7 @@ int list_laggenr (int **plist, int order, DATASET *dset)
 	return err;
     }
 
-    laglist = make_lags_list(list, order, dset);
+    laglist = make_lags_list(list, order);
     if (laglist == NULL) {
 	destroy_mangled_names();
 	return E_ALLOC;

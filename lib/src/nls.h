@@ -41,7 +41,7 @@ void nlspec_destroy (nlspec *spec);
 int nlspec_add_param_with_deriv (nlspec *spec, const char *s);
 
 int nlspec_add_param_list (nlspec *spec, int np, double *vals,
-			   char **names, DATASET *dset);
+			   char **names);
 
 int 
 nlspec_set_regression_function (nlspec *spec, 

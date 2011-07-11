@@ -5208,8 +5208,7 @@ static int localize_bundle_ref (fnargs *args, int i,
     return err;
 }
 
-static int localize_scalar_ref (fncall *call, struct fnarg *arg, 
-				fn_param *fp)
+static int localize_scalar_ref (struct fnarg *arg, fn_param *fp)
 {
     int i = arg->val.idnum;
     const char *s = gretl_scalar_get_name(i);
@@ -5360,7 +5359,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	    }
 	} else if (fp->type == GRETL_TYPE_SCALAR_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_scalar_ref(call, arg, fp);
+		err = localize_scalar_ref(arg, fp);
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -5680,8 +5679,7 @@ static int unlocalize_list (const char *lname, int status,
     return 0;
 }
 
-static int handle_string_return (const char *sname, void *ptr,
-				 DATASET *dset)
+static int handle_string_return (const char *sname, void *ptr)
 {
     const char *s = get_string_by_name(sname);
     char *ret = NULL;
@@ -5789,7 +5787,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    copy = is_pointer_arg(call, args, rtype);
 	    err = handle_bundle_return(call, ret, copy);
 	} else if (rtype == GRETL_TYPE_STRING) {
-	    err = handle_string_return(call->retname, ret, dset);
+	    err = handle_string_return(call->retname, ret);
 	} 
 
 	if (err == E_UNKVAR) {
@@ -6075,9 +6073,7 @@ static double arg_get_double_val (struct fnarg *arg)
     }
 }
 
-static int check_function_args (ufunc *u, fnargs *args, 
-				const DATASET *dset,
-				PRN *prn)
+static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
 {
     struct fnarg *arg;
     fn_param *fp;
@@ -6534,7 +6530,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-    err = check_function_args(u, args, dset, prn);
+    err = check_function_args(u, args, prn);
 
     if (function_is_plugin(u)) {
 	if (!err) {

@@ -3258,7 +3258,6 @@ static int x_sectional_wtd_stddev (double *x, const int *list,
 }
 
 static int x_sectional_extremum (int f, double *x, const int *list, 
-				 const int *wlist,
 				 const DATASET *dset)
 {
     double xit, xx;
@@ -3319,7 +3318,7 @@ int cross_sectional_stat (double *x, const int *list,
     } else if (f == F_SD) {
 	return x_sectional_wtd_stddev(x, list, NULL, dset);
     } else if (f == F_MIN || f == F_MAX) {
-	return x_sectional_extremum(f, x, list, NULL, dset);
+	return x_sectional_extremum(f, x, list, dset);
     } else if (f == F_SUM) {
 	return x_sectional_sum(x, list, dset);
     } else {

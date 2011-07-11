@@ -716,9 +716,9 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 /* form matrix of instruments and perform QR decomposition
    of this matrix; return Q */
 
-static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
+static gretl_matrix *tsls_Q (int *instlist, int **pdlist,
 			     const DATASET *dset, char *mask, 
-			     gretlopt opt, int *err)
+			     int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -869,7 +869,7 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
 
 static void tsls_residuals (MODEL *pmod, const int *reglist, 
 			    const DATASET *dset,
-			    int panel_N, gretlopt opt)
+			    gretlopt opt)
 {
     int yno = reglist[1];
     double yh, sigma0 = pmod->sigma;
@@ -1291,8 +1291,7 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
 }
 
 static int tsls_adjust_sample (const int *list, DATASET *dset,
-			       gretlopt opt, char **pmask,
-			       int *panel_N)
+			       char **pmask)
 {
     int i, t, t1min = dset->t1, t2max = dset->t2;
     char *mask = NULL;
@@ -1473,7 +1472,6 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     MODEL tsls;
     gretl_matrix *Q = NULL;
     char *missmask = NULL;
-    int panel_N = 0;
     int orig_t1 = dset->t1, orig_t2 = dset->t2;
     int *reglist = NULL, *instlist = NULL;
     int *hatlist = NULL, *s2list = NULL;
@@ -1505,7 +1503,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
     /* adjust sample range for missing observations */
-    err = tsls_adjust_sample(list, dset, opt, &missmask, &panel_N);
+    err = tsls_adjust_sample(list, dset, &missmask);
 
     if (!err) {
 	/* allocate second stage regression list */
@@ -1554,8 +1552,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     }
 
     if (!err) {
-	Q = tsls_Q(instlist, reglist, &droplist,
-		   dset, missmask, opt, &err);
+	Q = tsls_Q(instlist, &droplist, dset, missmask, &err);
     }
 
     if (err) {
@@ -1645,7 +1642,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     if (nendo > 0) {
 	/* special: we need to use the original RHS vars to compute
 	   residuals and associated statistics */
-	tsls_residuals(&tsls, reglist, dset, panel_N, opt);
+	tsls_residuals(&tsls, reglist, dset, opt);
     }
 
     if (opt & OPT_R) {

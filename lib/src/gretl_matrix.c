@@ -8739,10 +8739,7 @@ get_ols_error_variance (const gretl_vector *y, const gretl_matrix *X,
     return s2;
 }
 
-static int
-get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
-	     const gretl_vector *b, gretl_matrix *V,
-	     double *s2)
+static int get_ols_vcv (gretl_matrix *V, double *s2)
 {
     if (gretl_invert_general_matrix(V)) {
 	gretl_matrix_print(V, "get_ols_vcv: inversion failed");
@@ -9403,7 +9400,7 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	    *s2 = get_ols_error_variance(y, X, b, 0);
 	}
 	if (vcv != NULL) {
-	    err = get_ols_vcv(y, X, b, vcv, s2);
+	    err = get_ols_vcv(vcv, s2);
 	}
 	if (uhat != NULL) {
 	    get_ols_uhat(y, X, b, uhat);
@@ -9667,7 +9664,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	    *s2 = get_ols_error_variance(y, X, b, nr);
 	}
 	if (S != NULL) {
-	    err = get_ols_vcv(y, X, b, S, s2);
+	    err = get_ols_vcv(S, s2);
 	    if (!err) {
 		for (i=0; i<k; i++) {
 		    for (j=0; j<k; j++) {

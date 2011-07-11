@@ -233,10 +233,9 @@ int system_adjust_t1t2 (equation_system *sys,
 
 #ifdef FULL_XML_HEADERS
 
-equation_system *
-equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, 
-			  const DATASET *dset,
-			  int *err);
+equation_system *equation_system_from_XML (xmlNodePtr node, 
+					   xmlDocPtr doc, 
+					   int *err);
 
 #endif
 

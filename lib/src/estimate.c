@@ -3154,7 +3154,7 @@ MODEL ar_model (const int *list, DATASET *dset,
 
     if (!ar.errcode && arlist[0] == 1 && arlist[1] == 1) {
 	/* special case: ar 1 ; ... => use AR1 apparatus */
-	ar = ar1_model(reglist, dset, OPT_NONE, prn);
+	ar = ar1_model(reglist, dset, opt, prn);
 	goto bailout;
     }
 
@@ -3538,8 +3538,8 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 }
 
 static int real_arch_test (const double *u, int T, int order, 
-			   MODEL *pmod, const DATASET *dset, 
-			   gretlopt opt, PRN *prn)
+			   MODEL *pmod, gretlopt opt, 
+			   PRN *prn)
 {
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
@@ -3622,7 +3622,7 @@ static int real_arch_test (const double *u, int T, int order,
  * arch_test:
  * @pmod: model to be tested.
  * @order: lag order for ARCH process.
- * @dset: dataset information.
+ * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model;
  * if OPT_Q, be less verbose.
  * @prn: gretl printing struct.
@@ -3632,7 +3632,7 @@ static int real_arch_test (const double *u, int T, int order,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int arch_test (MODEL *pmod, int order, const DATASET *dset, 
+int arch_test (MODEL *pmod, int order, const DATASET *dset,
 	       gretlopt opt, PRN *prn)
 {
     int err;
@@ -3647,7 +3647,7 @@ int arch_test (MODEL *pmod, int order, const DATASET *dset,
 	    order = dset->pd;
 	}
 
-	err = real_arch_test(u, pmod->nobs, order, pmod, dset, 
+	err = real_arch_test(u, pmod->nobs, order, pmod, 
 			     opt, prn);
     }
 
@@ -3657,7 +3657,7 @@ int arch_test (MODEL *pmod, int order, const DATASET *dset,
 int array_arch_test (const double *u, int n, int order, 
 		     gretlopt opt, PRN *prn)
 {
-    return real_arch_test(u, n, order, NULL, NULL, opt, prn);
+    return real_arch_test(u, n, order, NULL, opt, prn);
 }
 
 /**
@@ -3666,7 +3666,6 @@ int array_arch_test (const double *u, int n, int order,
  * @order: lag order for ARCH process.
  * @dset: dataset struct.
  * @opt: may contain OPT_O to print covariance matrix.
- * @prn: gretl printing struct.
  *
  * Estimate the model given in @list via weighted least squares,
  * with the weights based on the predicted error variances from
@@ -3677,7 +3676,7 @@ int array_arch_test (const double *u, int n, int order,
  */
 
 MODEL arch_model (const int *list, int order, DATASET *dset, 
-		  gretlopt opt, PRN *prn)
+		  gretlopt opt)
 {
     MODEL amod;
     int *wlist = NULL, *alist = NULL;

@@ -1786,8 +1786,7 @@ static int do_BRMR (const int *list, MODEL *dmod, int ci,
 }
 
 static char *classifier_check (int *list, const DATASET *dset,
-			       gretlopt opt, PRN *prn, 
-			       int *err)
+			       PRN *prn, int *err)
 {
     char *mask = NULL;
     const double *y = dset->Z[list[1]];
@@ -2168,7 +2167,7 @@ binary_logit_probit (const int *inlist, DATASET *dset,
     /* FIXME should the return value be ignored here? */
     list_adjust_sample(list, &dset->t1, &dset->t2, dset);
 
-    mask = classifier_check(list, dset, opt, prn, &dmod.errcode);
+    mask = classifier_check(list, dset, prn, &dmod.errcode);
     if (dmod.errcode) {
 	goto bailout;
     }

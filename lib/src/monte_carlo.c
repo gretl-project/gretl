@@ -545,9 +545,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
     free(loop);
 }
 
-static int parse_as_while_loop (LOOPSET *loop,
-				DATASET *dset,
-				const char *s)
+static int parse_as_while_loop (LOOPSET *loop, const char *s)
 {
     int err = 0;
 
@@ -703,10 +701,7 @@ static int parse_as_count_loop (LOOPSET *loop,
     return err;
 }
 
-static int 
-set_forloop_element (char *s, LOOPSET *loop,
-		     DATASET *dset,
-		     int i)
+static int set_forloop_element (char *s, LOOPSET *loop, int i)
 {
     controller *clr = (i == 0)? &loop->init :
 	(i == 1)? &loop->test : &loop->delta;
@@ -1033,8 +1028,7 @@ parse_as_each_loop (LOOPSET *loop, const DATASET *dset, char *s)
 
 /* try to parse out (expr1; expr2; expr3) */
 
-static int 
-parse_as_for_loop (LOOPSET *loop, DATASET *dset, char *s)
+static int parse_as_for_loop (LOOPSET *loop, char *s)
 {
     char *tmp, *q;
     int i, j, len;
@@ -1077,7 +1071,7 @@ parse_as_for_loop (LOOPSET *loop, DATASET *dset, char *s)
 	    s++;
 	}
 	tmp[i] = '\0';
-	err = set_forloop_element(tmp, loop, dset, j);
+	err = set_forloop_element(tmp, loop, j);
     }  
 
     if (!err && (sc != 2 || s != q)) {
@@ -1122,9 +1116,9 @@ static int parse_first_loopline (char *s, LOOPSET *loop,
     } else if (sscanf(s, "%15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, dset, lvar, op, rvar);
     } else if (!strncmp(s, "for", 3)) {
-	err = parse_as_for_loop(loop, dset, s + 4);
+	err = parse_as_for_loop(loop, s + 4);
     } else if (!strncmp(s, "while", 5)) {
-	err = parse_as_while_loop(loop, dset, s + 6);
+	err = parse_as_while_loop(loop, s + 6);
     } else if (sscanf(s, "%15s", lvar) == 1) {
 	err = parse_as_count_loop(loop, dset, lvar);
     } else {
@@ -1580,8 +1574,7 @@ static int loop_store_set_filename (LOOPSET *loop, const char *fname,
 /* check, allocate and initialize loop data storage */
 
 static int loop_store_start (LOOPSET *loop, const int *list, 
-			     const char *fname, DATASET *dset,
-			     gretlopt opt)
+			     const char *fname, gretlopt opt)
 {
     int i, n, err = 0;
 
@@ -1622,7 +1615,7 @@ static int loop_store_start (LOOPSET *loop, const int *list,
 
 static int loop_store_update (LOOPSET *loop, int lno,
 			      const int *list, const char *fname,
-			      DATASET *dset, gretlopt opt)
+			      gretlopt opt)
 {
     int i, t, err = 0;
 
@@ -1634,7 +1627,7 @@ static int loop_store_update (LOOPSET *loop, int lno,
 
     if (loop->store.dset == NULL) {
 	/* not started yet */
-	err = loop_store_start(loop, list, fname, dset, opt);
+	err = loop_store_start(loop, list, fname, opt);
 	if (err) {
 	    return err;
 	}
@@ -1827,9 +1820,7 @@ static int loop_model_update (LOOP_MODEL *lmod, MODEL *pmod)
    allocation first.
 */
 
-static int loop_print_update (LOOP_PRINT *lprn,
-			      const int *list, 
-			      const DATASET *dset)
+static int loop_print_update (LOOP_PRINT *lprn, const int *list) 
 {
     mpf_t m;
     int j, vj;
@@ -2146,8 +2137,7 @@ static void loop_model_print (LOOP_MODEL *lmod, const DATASET *dset,
     pputc(prn, '\n');
 }
 
-static void loop_print_print (LOOP_PRINT *lprn, const DATASET *dset, 
-			      PRN *prn)
+static void loop_print_print (LOOP_PRINT *lprn, PRN *prn)
 {
     bigval mean, m, sd;
     int i, vi, n;
@@ -2279,7 +2269,7 @@ static void print_loop_results (LOOPSET *loop, const DATASET *dset,
 		loop_model_zero(&loop->lmodels[j], 1);
 		j++;
 	    } else if (ci == PRINT && !loop_literal(loop, i)) {
-		loop_print_print(&loop->prns[k], dset, prn);
+		loop_print_print(&loop->prns[k], prn);
 		loop_print_zero(&loop->prns[k], 1);
 		k++;
 	    } else if (ci == STORE) {
@@ -2992,11 +2982,11 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		       loop_is_progressive(loop)) {
 		lprn = get_loop_print_by_line(loop, j, &err);
 		if (!err) {
-		    loop_print_update(lprn, cmd->list, dset);
+		    loop_print_update(lprn, cmd->list);
 		}
 	    } else if (cmd->ci == STORE && loop_is_progressive(loop)) {
 		err = loop_store_update(loop, j, cmd->list, cmd->param,
-					dset, cmd->opt);
+					cmd->opt);
 	    } else if (loop_is_progressive(loop) && not_ok_in_progloop(cmd->ci)) {
 		gretl_errmsg_sprintf(_("%s: not implemented in 'progressive' loops"),
 				     cmd->word);

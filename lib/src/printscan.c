@@ -724,8 +724,7 @@ int do_printf (const char *line, DATASET *dset, PRN *prn)
 
 /* below: sscanf apparatus */
 
-static int 
-sscanf_target_var (const char *vname, DATASET *dset, int *err)
+static int sscanf_target_var (const char *vname, int *err)
 {
     if (gretl_is_scalar(vname)) {
 	return 0;
@@ -943,7 +942,7 @@ static int scan_scalar (const char *targ, char **psrc,
     int err = 0;
 
     if (targ != NULL) {
-	v = sscanf_target_var(targ, dset, &err);
+	v = sscanf_target_var(targ, &err);
 	if (err) {
 	    return err;
 	}
@@ -1065,7 +1064,7 @@ static int scan_matrix (const char *targ, char **psrc, int rows, int *ns)
 }
 
 static int scan_arg (char **psrc, char **pfmt, char **pargs, 
-		     DATASET *dset, PRN *prn, int *ns)
+		     DATASET *dset, int *ns)
 {
     char *fmt = NULL;
     char *arg = NULL;
@@ -1343,7 +1342,7 @@ int do_sscanf (const char *line, DATASET *dset, PRN *prn)
 	    r++;
 	    p++;
 	} else if (*p == '%') {
-	    err = scan_arg(&r, &p, &q, dset, prn, &nscan);
+	    err = scan_arg(&r, &p, &q, dset, &nscan);
 	} else {
 	    break;
 	}

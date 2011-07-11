@@ -31,8 +31,7 @@ plain_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn);
 static int 
 alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn);
 static void alt_print_rho_terms (const MODEL *pmod, PRN *prn);
-static void logit_probit_stats (const MODEL *pmod, const DATASET *dset,
-				PRN *prn);
+static void logit_probit_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_heckit_stats (const MODEL *pmod, PRN *prn);
 
@@ -1227,7 +1226,7 @@ print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
     return 0;
 }
 
-static void dpd_asy_vcv_line (const MODEL *pmod, PRN *prn)
+static void dpd_asy_vcv_line (PRN *prn)
 {
     if (csv_format(prn)) {
 	pprintf(prn, "\"%s\"", I_("Asymptotic standard errors"));
@@ -1433,7 +1432,7 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	beck_katz_failed_line(prn);
     } else if ((pmod->ci == ARBOND || pmod->ci == DPANEL) && 
 	       gretl_model_get_int(pmod, "asy")) {
-	dpd_asy_vcv_line(pmod, prn);
+	dpd_asy_vcv_line(prn);
     } else {
 	vi = gretl_model_get_data(pmod, "vcv_info");
     }
@@ -3143,7 +3142,7 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	print_DPD_stats(pmod, prn);
     } else if (logit_probit_model(pmod)) {
 	if (!pmod->aux) {
-	    logit_probit_stats(pmod, dset, prn);
+	    logit_probit_stats(pmod, prn);
 	}
     } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
@@ -4884,9 +4883,7 @@ static int limdep_df (const MODEL *pmod)
     return df;
 }
 
-static void logit_probit_stats (const MODEL *pmod, 
-				const DATASET *dset,
-				PRN *prn)
+static void logit_probit_stats (const MODEL *pmod, PRN *prn)
 {
     const int *act_pred = NULL;
     int binary, slopes, correct = 0;

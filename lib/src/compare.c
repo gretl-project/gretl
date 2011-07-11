@@ -793,7 +793,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep = dpd_model(list, auxlist, param, dset, myopt, prn);
 	break;
     case ARCH:
-	rep = arch_model(list, order, dset, myopt, prn);
+	rep = arch_model(list, order, dset, myopt);
 	break;
     case LOGIT:
     case PROBIT:
@@ -1323,7 +1323,7 @@ static void list_copy_values (int *targ, const int *src)
 static int auto_omit (const int *omitlist, 
 		      MODEL *orig, MODEL *pmod, 
 		      DATASET *dset, gretlopt est_opt, 
-		      gretlopt opt, PRN *prn)
+		      PRN *prn)
 {
     double amax;
     int *tmplist = NULL;
@@ -1503,9 +1503,9 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 
     if (opt & OPT_A) {
 	if (omitvars != NULL && omitvars[0] > 0) {
-	    err = auto_omit(omitvars, orig, pmod, dset, est_opt, opt, prn);
+	    err = auto_omit(omitvars, orig, pmod, dset, est_opt, prn);
 	} else {
-	    err = auto_omit(NULL, orig, pmod, dset, est_opt, opt, prn);
+	    err = auto_omit(NULL, orig, pmod, dset, est_opt, prn);
 	}
     } else {
 	*pmod = replicate_estimator(orig, &tmplist, dset, est_opt, prn);
@@ -2311,7 +2311,7 @@ static double QLR_get_critval (double Fmax, int dfn, int *a, int *approx)
 }
 
 static int QLR_graph (const double *Ft, int t1, int t2, 
-		      int tmax, int dfn, const DATASET *dset)
+		      const DATASET *dset)
 {
     const double *x = gretl_plotx(dset);
     FILE *fp;
@@ -2555,7 +2555,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset,
 	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, dset, opt, prn);
 	    record_test_result(Fmax, NADBL, "QLR");
 	    if (Ft != NULL) {
-		QLR_graph(Ft, split, smax, tmax, dfn, dset);
+		QLR_graph(Ft, split, smax, dset);
 	    }
 	}
 

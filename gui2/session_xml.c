@@ -237,7 +237,7 @@ static int rebuild_session_model (const char *fname,
     } else if (type == GRETL_OBJ_VAR) {
 	ptr = gretl_VAR_from_XML(node, doc, dataset, &err);
     } else {
-	ptr = equation_system_from_XML(node, doc, dataset, &err);
+	ptr = equation_system_from_XML(node, doc, &err);
     }
 
     xmlFreeDoc(doc);

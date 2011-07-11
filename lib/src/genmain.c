@@ -31,7 +31,7 @@
 
 # define settings_obs_value(p) (p->lh.obs >= 0)
 
-static void write_scalar_message (const parser *p, int oldv, PRN *prn)
+static void write_scalar_message (const parser *p, PRN *prn)
 {
     double x = gretl_scalar_get_value(p->lh.name);
 
@@ -60,7 +60,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    pprintf(prn, _("Modified series %s (ID %d)"),
 		    p->lh.name, p->lh.v);
 	} else {
-	    write_scalar_message(p, oldv, prn);
+	    write_scalar_message(p, prn);
 	}
     } else if (p->targ == VEC) {
 	if (p->lh.v < oldv) {

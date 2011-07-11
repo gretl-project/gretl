@@ -1610,8 +1610,8 @@ static int max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
 */
 
 static int
-set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod, 
-			  int pmax, int npsi, double **pphi, double **ppsi,
+set_up_ar_fcast_variance (const MODEL *pmod, int pmax, int npsi, 
+			  double **pphi, double **ppsi,
 			  double **perrphi)
 {
     double *errphi = NULL;
@@ -1694,7 +1694,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	npsi = fc->t2 - fc->t1 + 1;
 	/* npsi = fc->t2 - pmod->t2; */
 	DPRINTF(("pmax = %d, npsi = %d\n", pmax, npsi));
-	set_up_ar_fcast_variance(fc, pmod, pmax, npsi, &phi, &psi, &errphi);
+	set_up_ar_fcast_variance(pmod, pmax, npsi, &phi, &psi, &errphi);
     }
 
     pwe = (pmod->opt & OPT_P);
@@ -2961,8 +2961,7 @@ static int get_sys_fcast_var (const int *ylist, const char *vname,
 static int fill_system_forecast (FITRESID *fr, int i, int yno,
 				 GRETL_VAR *var, equation_system *sys,
 				 const gretl_matrix *F,
-				 DATASET *dset,
-				 gretlopt opt)
+				 DATASET *dset)
 {
     int m = F->cols / 2;
     int s, t, nf;
@@ -3099,7 +3098,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     
 	for (i=imin; i<=imax && !err; i++) {
 	    err = fill_system_forecast(fr, i, ylist[i+1], var, sys, 
-				       F, dset, opt);
+				       F, dset);
 	    if (!err) {
 		err = text_print_forecast(fr, dset, printopt, prn);
 	    }
@@ -3287,8 +3286,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	fr->df = df;
     }
 
-    *err = fill_system_forecast(fr, i, yno, var, sys, 
-				F, dset, opt);
+    *err = fill_system_forecast(fr, i, yno, var, sys, F, dset);
 
     if (*err) {
 	free_fit_resid(fr);
@@ -3388,7 +3386,7 @@ static int y_lag (int v, int parent, const DATASET *dset)
 }
 
 static int k_step_init (MODEL *pmod, const DATASET *dset, 
-			int k, double **py, int **pllist)
+			double **py, int **pllist)
 {
     double *y = NULL;
     int *llist = NULL;
@@ -3486,7 +3484,7 @@ rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
     }
 
     if (k > 1) {
-	*err = k_step_init(pmod, dset, k, &y, &llist);
+	*err = k_step_init(pmod, dset, &y, &llist);
 	if (*err) {
 	    return NULL;
 	}

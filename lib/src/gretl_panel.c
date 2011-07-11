@@ -243,9 +243,7 @@ static int var_is_varying (const panelmod_t *pan, int v)
 
 /* retrieve X'X^{-1} from the pooled or fixed effects model */
 
-static gretl_matrix *panel_model_xpxinv (MODEL *pmod, 
-					 const panelmod_t *pan,
-					 int *err)
+static gretl_matrix *panel_model_xpxinv (MODEL *pmod, int *err)
 {
     gretl_matrix *X;
     int k = pmod->ncoeff;
@@ -542,7 +540,7 @@ panel_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
 	goto bailout;
     }
 
-    XX = panel_model_xpxinv(pmod, pan, &err);
+    XX = panel_model_xpxinv(pmod, &err);
     if (err) {
 	goto bailout;
     }
@@ -1834,8 +1832,7 @@ static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
 */
 
 static void 
-fix_panel_hatvars (MODEL *pmod, const DATASET *dset, 
-		   panelmod_t *pan, const double **Z)
+fix_panel_hatvars (MODEL *pmod, panelmod_t *pan, const double **Z)
 {
     const double *y = NULL;
     double *uhat = pan->pooled->uhat;
@@ -1986,7 +1983,7 @@ fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 #endif
 	if (pan->opt & OPT_F) {
 	    /* estimating the FE model in its own right */
-	    fix_panel_hatvars(&femod, wset, pan, (const double **) dset->Z);
+	    fix_panel_hatvars(&femod, pan, (const double **) dset->Z);
 	    if (pan->opt & OPT_R) {
 		panel_robust_vcv(&femod, pan, (const double **) wset->Z);
 	    } else {
@@ -2149,7 +2146,7 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	    gretl_model_set_double(pmod, "gls-theta", pan->theta);
 	}
 	gretl_model_add_panel_varnames(pmod, dset, NULL);
-	fix_panel_hatvars(pmod, dset, pan, Z);
+	fix_panel_hatvars(pmod, pan, Z);
 	fix_gls_stats(pmod, pan);	
     }
 
@@ -2419,8 +2416,7 @@ static void save_breusch_pagan_result (panelmod_t *pan)
 /* do the panel Breusch-Pagan test and either print or save
    the results */
 
-static int 
-breusch_pagan_LM (panelmod_t *pan, const DATASET *dset, PRN *prn)
+static int breusch_pagan_LM (panelmod_t *pan, PRN *prn)
 {
     double A = 0.0;
     int n = pan->pooled->nobs;
@@ -2714,7 +2710,7 @@ int panel_diagnostics (MODEL *pmod, DATASET *dset,
 	goto bailout;
     }
 
-    breusch_pagan_LM(&pan, dset, prn);
+    breusch_pagan_LM(&pan, prn);
 
     if (xdf <= 0) {
 	pprintf(prn, "Omitting group means regression: "
@@ -2868,7 +2864,7 @@ add_dummies_to_list (const int *list, DATASET *dset,
     return err;
 }
 
-static int panel_check_for_const (const int *list, panelmod_t *pan)
+static int panel_check_for_const (const int *list)
 {
     int i;
 
@@ -2953,7 +2949,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 
     if (!(opt & OPT_P)) {
 	/* not just pooled OLS */
-	mod.errcode = panel_check_for_const(list, &pan);
+	mod.errcode = panel_check_for_const(list);
 	if (mod.errcode) {
 	    return mod;
 	}
@@ -3065,7 +3061,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
     if ((opt & OPT_U) && !na(pan.s2e)) {
 	DATASET *gset;
 
-	breusch_pagan_LM(&pan, dset, prn);
+	breusch_pagan_LM(&pan, prn);
 
 	gset = group_means_dataset(&pan, dset);
 	if (gset == NULL) {
@@ -3206,9 +3202,8 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
 */
 
 static double 
-wald_hetero_test (const MODEL *pmod, const DATASET *dset, 
-		  double s2, const double *uvar,
-		  panelmod_t *pan)
+wald_hetero_test (const MODEL *pmod, double s2, 
+		  const double *uvar, panelmod_t *pan)
 {
     double x, W = 0.0;
     int i, t, Ti;
@@ -3332,10 +3327,8 @@ static int singleton_check (const int *unit_obs, int nunits)
 
 /* compute per-unit error variances */
 
-static void 
-unit_error_variances (double *uvar, const MODEL *pmod, 
-		      const DATASET *dset,
-		      panelmod_t *pan)
+static void unit_error_variances (double *uvar, const MODEL *pmod, 
+				  panelmod_t *pan)
 {
     int i, t;
     double uit;
@@ -3477,7 +3470,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 
 	iter++;
 
-	unit_error_variances(uvar, &mdl, dset, &pan);
+	unit_error_variances(uvar, &mdl, &pan);
 
 	if (opt & OPT_V) {
 	    if (opt & OPT_I) {
@@ -3533,7 +3526,7 @@ MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 	if (opt & OPT_I) {
 	    gretl_model_set_int(&mdl, "iters", iter);
 	    ml_hetero_test(&mdl, s2, uvar, pan.nunits, pan.unit_obs);
-	    unit_error_variances(uvar, &mdl, dset, &pan);
+	    unit_error_variances(uvar, &mdl, &pan);
 	    panel_ML_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
@@ -3612,9 +3605,9 @@ int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 
     s2 = pmod->ess / pmod->nobs;
 
-    unit_error_variances(uvar, pmod, dset, &pan);
+    unit_error_variances(uvar, pmod, &pan);
 
-    W = wald_hetero_test(pmod, dset, s2, uvar, &pan);
+    W = wald_hetero_test(pmod, s2, uvar, &pan);
 
     if (!na(W)) {
 	double pval;

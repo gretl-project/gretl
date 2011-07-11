@@ -1898,7 +1898,7 @@ struct spoint_t_ {
     double *vals;
 };
 
-static void free_spoints (spoint_t *sv, int n, int v)
+static void free_spoints (spoint_t *sv, int n)
 {
     int i;
 
@@ -1923,7 +1923,7 @@ static spoint_t *allocate_spoints (int n, int v)
 	for (i=0; i<n; i++) {
 	    sv[i].vals = malloc(v * sizeof(double));
 	    if (sv[i].vals == NULL) {
-		free_spoints(sv, n, v);
+		free_spoints(sv, n);
 		sv = NULL;
 		break;
 	    }
@@ -1975,7 +1975,7 @@ int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt)
 
     x = malloc(dset->n * sizeof *x);
     if (x == NULL) {
-	free_spoints(sv, dset->n, ns);
+	free_spoints(sv, dset->n);
 	return E_ALLOC;
     }    
 
@@ -2022,7 +2022,7 @@ int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt)
 
  bailout:
 
-    free_spoints(sv, dset->n, ns);
+    free_spoints(sv, dset->n);
     free(x);
 
     return err;

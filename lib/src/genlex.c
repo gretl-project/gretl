@@ -943,7 +943,7 @@ static void look_up_word (const char *s, parser *p)
 			    t == M_UHAT || t == M_YHAT || \
 			    t == R_TEST_STAT || R_TEST_PVAL)
 
-static void word_check_next_char (const char *s, parser *p)
+static void word_check_next_char (parser *p)
 {
 #if LDEBUG
     if (p->ch) fprintf(stderr, "word_check_next_char: ch = '%c'\n", p->ch);
@@ -1070,7 +1070,7 @@ static void getword (parser *p)
     }
 
     if (!p->err && *word != '@') {
-	word_check_next_char(word, p);
+	word_check_next_char(p);
     }
 
 #if LDEBUG

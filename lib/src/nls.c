@@ -623,8 +623,7 @@ static int nlspec_add_param_names (nlspec *spec, const char *s)
 */
 
 static int 
-nlspec_add_params_from_line (nlspec *s, const char *str,
-			     const DATASET *dset)
+nlspec_add_params_from_line (nlspec *s, const char *str)
 {
     int i, nf = count_fields(str);
     int err = 0;
@@ -667,7 +666,6 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
  * @np: number of parameters.
  * @vals: array of initial parameter values.
  * @names: array of parameter names.
- * @dset: dataset struct.
  *
  * Adds to @spec a list of (scalar) parameters to be estimated.
  * For an example of use see arma.c in the gretl plugin directory.
@@ -676,7 +674,7 @@ nlspec_add_params_from_line (nlspec *s, const char *str,
  */
 
 int nlspec_add_param_list (nlspec *spec, int np, double *vals,
-			   char **names, DATASET *dset)
+			   char **names)
 {
     int i, err = 0;
 
@@ -1007,7 +1005,7 @@ static int nl_function_calc (double *f, void *p)
     return 0;
 }
 
-static int get_nls_derivs (int k, int T, int offset, double *g, double **G,
+static int get_nls_derivs (int T, int offset, double *g, double **G,
 			   void *p)
 {
     nlspec *spec = (nlspec *) p;
@@ -1623,8 +1621,7 @@ static int copy_user_parnames (MODEL *pmod, nlspec *spec)
    the names of the parameters and some other string info
 */
 
-static int 
-add_param_names_to_model (MODEL *pmod, nlspec *spec, const DATASET *dset)
+static int add_param_names_to_model (MODEL *pmod, nlspec *spec)
 {
     char pname[VNAMELEN];
     int nc = pmod->ncoeff;
@@ -1856,7 +1853,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	fprintf(stderr, "GNR: calling get_nls_derivs\n");
 	fprintf(stderr, "Z[%d] = %p\n", dset->v-1, (void *) Z[dset->v-1]);
 #endif
-	get_nls_derivs(spec->nparam, T, spec->t1, NULL, gdset->Z + 2, spec);
+	get_nls_derivs(T, spec->t1, NULL, gdset->Z + 2, spec);
     } else {
 	for (i=0; i<spec->ncoeff; i++) {
 	    v = i + 2;
@@ -1911,7 +1908,7 @@ static MODEL GNR (nlspec *spec, DATASET *dset, PRN *prn)
 	ls_criteria(&gnr);
 	gnr.fstt = gnr.chisq = NADBL;
 	add_coeffs_to_model(&gnr, spec->coeff);
-	add_param_names_to_model(&gnr, spec, dset);
+	add_param_names_to_model(&gnr, spec);
 	add_fit_resid_to_model(&gnr, spec, uhat, dset, perfect);
 	gnr.list[1] = spec->dv;
 
@@ -2000,7 +1997,7 @@ static int make_nl_model (MODEL *pmod, nlspec *spec,
     if (spec->ci == GMM && (spec->opt & OPT_G)) {
 	; /* IVREG via GMM */
     } else {
-	pmod->errcode = add_param_names_to_model(pmod, spec, dset);
+	pmod->errcode = add_param_names_to_model(pmod, spec);
     }
 
     if (!pmod->errcode) {
@@ -2197,7 +2194,7 @@ static int nls_calc (integer *m, integer *n, double *x, double *fvec,
 	} 
     } else if (*iflag == 2) {
 	/* calculate jacobian at x, results into jac */
-	if (get_nls_derivs(*n, *m, 0, jac, NULL, p)) {
+	if (get_nls_derivs(*m, 0, jac, NULL, p)) {
 	    *iflag = -1; 
 	}
     }
@@ -2878,7 +2875,7 @@ int nl_parse_line (int ci, const char *line,
 		}
 	    } else if (!strncmp(line, "params", 6)) {
 		if (numeric_mode(s)) {
-		    err = nlspec_add_params_from_line(s, line + 6, dset);
+		    err = nlspec_add_params_from_line(s, line + 6);
 		} else {
 		    pprintf(prn, _("Analytical derivatives supplied: "
 				   "\"params\" line will be ignored"));
@@ -3441,8 +3438,7 @@ static int ivreg_weights_setup (nlspec *spec, const int *ilist,
     return err;
 }
 
-static int ivreg_set_params (nlspec *spec, MODEL *pmod, 
-			     DATASET *dset)
+static int ivreg_set_params (nlspec *spec, MODEL *pmod)
 {
     int np = pmod->ncoeff;
     char **names;
@@ -3457,7 +3453,7 @@ static int ivreg_set_params (nlspec *spec, MODEL *pmod,
 	sprintf(names[i], "b%d", i);
     }
 
-    err = nlspec_add_param_list(spec, np, pmod->coeff, names, dset);
+    err = nlspec_add_param_list(spec, np, pmod->coeff, names);
 
     free_strings_array(names, np);
 
@@ -3566,7 +3562,7 @@ MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt)
 
     if (!err) {
 	/* add the scalar parameters */
-	err = ivreg_set_params(spec, &olsmod, dset);
+	err = ivreg_set_params(spec, &olsmod);
     }
 
     if (!err) {

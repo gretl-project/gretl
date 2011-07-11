@@ -164,7 +164,7 @@ void free_xtab (Xtab *tab);
 int model_error_dist (const MODEL *pmod, DATASET *dset, 
 		      gretlopt opt, PRN *prn);
 
-int auto_acf_order (int pd, int nobs);
+int auto_acf_order (int T);
 
 int auto_spectrum_order (int T, gretlopt opt);
 

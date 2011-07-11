@@ -334,15 +334,13 @@ static int catch_command_alias (char *line, CMD *cmd)
     return cmd->ci;
 }
 
-static int catch_system_alias (char *line, CMD *cmd)
+static int catch_system_alias (CMD *cmd)
 {
-    char *s = cmd->word;
-
     cmd->ci = 0;
     
-    if (!strcmp(s, "equation")) {
+    if (!strcmp(cmd->word, "equation")) {
 	cmd->ci = EQUATION;
-    } else if (!strcmp(s, "equations")) {
+    } else if (!strcmp(cmd->word, "equations")) {
 	cmd->ci = EQUATION;
 	cmd->opt |= OPT_M;
     }
@@ -575,8 +573,7 @@ static int filename_to_param (CMD *cmd, const char *s,
     return 0;
 }
 
-static int 
-get_maybe_quoted_filename (CMD *cmd, char **ps, int *nf)
+static int get_maybe_quoted_filename (CMD *cmd, char **ps)
 {
     int err, len = 0;
     int quoted = 0;
@@ -985,9 +982,7 @@ static void grab_arbond_diag (char *s, CMD *cmd)
 
 #define LAG_DEBUG 0
 
-static int lag_from_lstr (const char *s, 
-			  const DATASET *dset,
-			  int *err)
+static int lag_from_lstr (const char *s, int *err)
 {
     int lsign = 1, lag = 0;
 
@@ -1026,15 +1021,15 @@ static int lag_from_lstr (const char *s,
 }
 
 static int get_contiguous_lags (LAGVAR *lv,
-				const char *l1str, const char *l2str,
-				const DATASET *dset)
+				const char *l1str, 
+				const char *l2str)
 {
     int err = 0;
 
-    lv->lmin = lag_from_lstr(l1str, dset, &err);
+    lv->lmin = lag_from_lstr(l1str, &err);
 
     if (!err) {
-	lv->lmax = lag_from_lstr(l2str, dset, &err);
+	lv->lmax = lag_from_lstr(l2str, &err);
     }
 
     return err;
@@ -1073,7 +1068,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 
     if (sscanf(s, "%15[^(](%15s to %15[^)])", lv->name, 
 	       l1str, l2str) == 3) {
-	err = get_contiguous_lags(lv, l1str, l2str, dset);
+	err = get_contiguous_lags(lv, l1str, l2str);
     } else if (strchr(l1str, ',') != NULL) {
 	lv->laglist = gretl_list_from_string(strchr(s, '('), &err);
 	if (lv->laglist != NULL) {
@@ -1084,7 +1079,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	}
     } else {
 	sscanf(s, "%15[^(](%15[^ )]", lv->name, l1str);
-	lv->lmin = lv->lmax = lag_from_lstr(l1str, dset, &err);
+	lv->lmin = lv->lmax = lag_from_lstr(l1str, &err);
     }
 
 #if LAG_DEBUG
@@ -2478,7 +2473,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	/* replace simple aliases and a few specials */
 	catch_command_alias(line, cmd);
     } else if (cmd->context == SYSTEM) {
-	catch_system_alias(line, cmd);
+	catch_system_alias(cmd);
     }
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
@@ -2691,7 +2686,7 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
     /* "store" is a special case since the filename that comes
        before the list may be quoted, and have spaces in it */
     if (cmd->ci == STORE && nf > 0) {
-	cmd->err = get_maybe_quoted_filename(cmd, &rem, &nf);
+	cmd->err = get_maybe_quoted_filename(cmd, &rem);
 	if (cmd->err) {
 	    goto cmd_exit;
 	} else {
@@ -3826,7 +3821,7 @@ static void get_optional_filename_etc (const char *s, CMD *cmd)
 }
 
 static int set_var_info (const char *line, gretlopt opt, 
-			 DATASET *dset, PRN *prn)
+			 DATASET *dset)
 {
     char *p, vname[VNAMELEN];
     int v;
@@ -4696,7 +4691,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case SETINFO:
-	err = set_var_info(line, cmd->opt, dset, prn);
+	err = set_var_info(line, cmd->opt, dset);
 	break;
 
     case SETMISS:
@@ -4878,7 +4873,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 			      cmd->opt, prn);
 	} else {
 	    *models[0] = arch_model(cmd->list, cmd->order, dset,
-				    cmd->opt, prn);
+				    cmd->opt);
 	}
 	err = print_save_model(models[0], dset, cmd->opt, prn, s);
 	break;

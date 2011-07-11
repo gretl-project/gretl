@@ -61,12 +61,12 @@ MODEL dpd_model (const int *list, const int *laglist,
 MODEL hsk_model (const int *list, DATASET *dset);
 
 MODEL arch_model (const int *list, int order, DATASET *dset, 
-		  gretlopt opt, PRN *prn);
+		  gretlopt opt);
 
 int whites_test (MODEL *pmod, DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
-int arch_test (MODEL *pmod, int order, const DATASET *dset, 
+int arch_test (MODEL *pmod, int order, const DATASET *dset,
 	       gretlopt opt, PRN *prn);
 
 int array_arch_test (const double *u, int n, int order, 

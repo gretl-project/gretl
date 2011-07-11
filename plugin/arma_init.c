@@ -1035,8 +1035,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 
     if (!err) {
 	set_auxiliary_scalars();
-	err = nlspec_add_param_list(spec, nparam, parms, pnames,
-				    dset);
+	err = nlspec_add_param_list(spec, nparam, parms, pnames);
 
 	if (!err) {
 	    *amod = model_from_nlspec(spec, dset, nlsopt, prn);

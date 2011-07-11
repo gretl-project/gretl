@@ -954,7 +954,6 @@ static int DF_index (gretlopt opt)
 
 static int do_IPS_test (double tbar, int n, const int *Ti, 
 			int order, const int *Oi,
-			const DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
     int (*get_IPS_critvals) (int, int, int, double *);
@@ -1171,7 +1170,7 @@ static int panel_DF_test (int v, int order, DATASET *dset,
 	pprintf(prn, "%s\n\n", _("H0: all groups have unit root"));
 	if (!na(tbar)) {
 	    tbar /= n;
-	    do_IPS_test(tbar, n, Ti, order, Oi, dset, opt, prn);
+	    do_IPS_test(tbar, n, Ti, order, Oi, opt, prn);
 	}
 	if (!na(ppv)) {
 	    pputc(prn, '\n');

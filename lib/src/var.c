@@ -2408,7 +2408,7 @@ int transcribe_VAR_models (GRETL_VAR *var,
    string to a numeric list and sort it.
 */
 
-static int *maybe_get_lags_list (int *list, int order, int *err)
+static int *maybe_get_lags_list (int order, int *err)
 {
     int *lags = NULL;
     const char *s;
@@ -2470,7 +2470,7 @@ GRETL_VAR *gretl_VAR (int order, int *list, const DATASET *dset,
     int *lags = NULL;
 
     if (opt & OPT_S) {
-	lags = maybe_get_lags_list(list, order, err);
+	lags = maybe_get_lags_list(order, err);
 	if (*err) {
 	    return NULL;
 	}
@@ -3070,7 +3070,7 @@ GRETL_VAR *gretl_VECM (int order, int rank, int *list,
     }
 
     if (opt & OPT_S) {
-	lags = maybe_get_lags_list(list, order, err);
+	lags = maybe_get_lags_list(order, err);
 	if (*err) {
 	    return NULL;
 	}
@@ -3136,7 +3136,7 @@ int *VAR_list_composite (const int *ylist, const int *xlist,
     return big;
 }
 
-static int *rebuild_full_VAR_list (const GRETL_VAR *var, int *err)
+static int *rebuild_full_VAR_list (const GRETL_VAR *var)
 {
     int *list;
 
@@ -3177,8 +3177,8 @@ real_gretl_restricted_vecm (GRETL_VAR *orig,
 	return NULL;
     }   
 
-    list = rebuild_full_VAR_list(orig, err);
-    if (*err) {
+    list = rebuild_full_VAR_list(orig);
+    if (list == NULL) {
 	return NULL;
     }
 

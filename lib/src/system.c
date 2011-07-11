@@ -2610,8 +2610,7 @@ int highest_numbered_var_in_system (const equation_system *sys,
     return vmax;
 }
 
-static identity *
-sys_retrieve_identity (xmlNodePtr node, xmlDocPtr doc, int *err)
+static identity *sys_retrieve_identity (xmlNodePtr node, int *err)
 {
     identity *ident;
     xmlNodePtr cur;
@@ -2662,9 +2661,7 @@ sys_retrieve_identity (xmlNodePtr node, xmlDocPtr doc, int *err)
 }
 
 equation_system *
-equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, 
-			  const DATASET *dset,
-			  int *err)
+equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 {
     equation_system *sys;
     xmlNodePtr cur;
@@ -2722,7 +2719,7 @@ equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc,
 	} else if (!xmlStrcmp(cur->name, (XUC) "instr_vars")) {
 	    sys->ilist = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "identity")) {
-	    sys->idents[j++] = sys_retrieve_identity(cur, doc, err); 
+	    sys->idents[j++] = sys_retrieve_identity(cur, err); 
 	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
 	    sys->R = gretl_xml_get_matrix(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "q")) {
@@ -3037,8 +3034,7 @@ static int sys_add_RF_covariance_matrix (equation_system *sys,
     return err;
 }
 
-static int sys_add_structural_form (equation_system *sys,
-				    const DATASET *dset)
+static int sys_add_structural_form (equation_system *sys)
 {
     const int *ylist = sys->ylist;
     const int *xlist = sys->xlist;
@@ -3964,7 +3960,7 @@ system_save_and_print_results (equation_system *sys, DATASET *dset,
     err = system_add_yhat_matrix(sys);
 
     if (!err) {
-	err = sys_add_structural_form(sys, dset);
+	err = sys_add_structural_form(sys);
     } 
 
     if (!(opt & OPT_Q)) {
