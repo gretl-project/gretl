@@ -1258,8 +1258,9 @@ n_vars_from_col (wbook *book, int totcols, char *blank_col)
     return nv;
 }
 
-static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo, 
-			    int totcols, char *blank_col, PRN *prn)
+static int transcribe_data (wbook *book, DATASET *dset, 
+			    int totcols, char *blank_col, 
+			    PRN *prn)
 {
     int startcol = book->col_offset;
     int roff = book->row_offset;
@@ -1277,36 +1278,36 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	    continue;
 	}
 
-	if (j >= pdinfo->v) {
+	if (j >= dset->v) {
 	    break;
 	}
 
-	pdinfo->varname[j][0] = 0;
+	dset->varname[j][0] = 0;
 	if (book_auto_varnames(book)) {
-	    sprintf(pdinfo->varname[j], "v%d", j);
+	    sprintf(dset->varname[j], "v%d", j);
 	} else if (rows[roff].cells[i] == NULL) {
-	    sprintf(pdinfo->varname[j], "v%d", j);
+	    sprintf(dset->varname[j], "v%d", j);
 	} else if (i >= rows[roff].end) {
-	    sprintf(pdinfo->varname[j], "v%d", j);
+	    sprintf(dset->varname[j], "v%d", j);
 	} else {
-	    strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
+	    strncat(dset->varname[j], rows[roff].cells[i] + 1, 
 		    VNAMELEN - 1);
 	    dbprintf("accessing rows[%d].cells[%d] at %p\n",
 		     roff, i, (void *) rows[roff].cells[i]);
 	}
 
 	/* remedial: replace space with underscore */
-	charsub(pdinfo->varname[j], ' ', '_');
+	charsub(dset->varname[j], ' ', '_');
 
-	err = check_varname(pdinfo->varname[j]);
+	err = check_varname(dset->varname[j]);
 	if (err) {
 	    pprintf(prn, "%s\n", gretl_errmsg_get());
 	    break;
 	}
 
-	dbprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);
+	dbprintf("set varname[%d] = '%s'\n", j, dset->varname[j]);
 
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    ts = t + 1 + roff;
 	    if (rows[ts].cells == NULL || i >= rows[ts].end ||
 		rows[ts].cells[i] == NULL) {
@@ -1318,9 +1319,9 @@ static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo,
 	    dbprintf("setting Z[%d][%d] = rows[%d].cells[%d] "
 		     "= '%s'\n", j, t, i, ts, rows[ts].cells[i]);
 
-	    Z[j][t] = atof(rows[ts].cells[i]);
-	    if (Z[j][t] == -999 || Z[j][t] == -9999) {
-		Z[j][t] = NADBL;
+	    dset->Z[j][t] = atof(rows[ts].cells[i]);
+	    if (dset->Z[j][t] == -999 || dset->Z[j][t] == -9999) {
+		dset->Z[j][t] = NADBL;
 	    }
 	}
 
@@ -1440,7 +1441,7 @@ static int alpha_cell (const char *s)
     return 0;
 }
 
-static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
+static void book_time_series_setup (wbook *book, DATASET *newinfo, int pd)
 {
     newinfo->pd = pd;
     newinfo->structure = TIME_SERIES;
@@ -1454,26 +1455,24 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
 }
 
 int xls_get_data (const char *fname, int *list, char *sheetname,
-		  double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt, PRN *prn)
+		  DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
     wbook xbook;
     wbook *book = &xbook;
-    double **newZ = NULL;
-    DATAINFO *newinfo;
+    DATASET *newset;
     int datacols, totcols;
     struct string_err strerr;
     char *blank_col = NULL;
     int ts_markers = 0;
     char **ts_S = NULL;
     int r0, c0;
-    int merge = (*pZ != NULL);
+    int merge = (dset->Z != NULL);
     int i, t, pd = 0;
     int err = 0;
 
-    newinfo = datainfo_new();
-    if (newinfo == NULL) {
+    newset = datainfo_new();
+    if (newset == NULL) {
 	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
@@ -1593,17 +1592,17 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
 
     r0 = book->row_offset;
     c0 = book->col_offset;
-    newinfo->n = nrows - 1 - book->row_offset;
+    newset->n = nrows - 1 - book->row_offset;
 
     if (book_numeric_dates(book) || 
 	(!book_auto_varnames(book) && import_obs_label(rows[r0].cells[c0]))) {
 	pd = importer_dates_check(book->row_offset + 1, book->col_offset, 
-				  &book->flags, NULL, newinfo, prn, &err);
+				  &book->flags, NULL, newset, prn, &err);
 	if (pd > 0) {
 	    /* got time-series info from dates/labels */
-	    book_time_series_setup(book, newinfo, pd);
-	    ts_markers = newinfo->markers;
-	    ts_S = newinfo->S;
+	    book_time_series_setup(book, newset, pd);
+	    ts_markers = newset->markers;
+	    ts_S = newset->S;
 	} else if (!book_numeric_dates(book) && alpha_cell(rows[r0].cells[c0]) && 
 	    col0_is_numeric(nrows, r0, c0)) {
 	    book_unset_obs_labels(book);
@@ -1611,56 +1610,56 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 
     /* dimensions of the dataset */
-    newinfo->v = n_vars_from_col(book, totcols, blank_col);
-    fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
-	    newinfo->v, newinfo->n);
+    newset->v = n_vars_from_col(book, totcols, blank_col);
+    fprintf(stderr, "newset->v = %d, newset->n = %d\n",
+	    newset->v, newset->n);
 
     /* create import dataset */
-    err = worksheet_start_dataset(&newZ, newinfo);
+    err = worksheet_start_dataset(newset);
     if (err) {
 	goto getout;
     }
 
     if (book_time_series(book)) {
-	newinfo->markers = ts_markers;
-	newinfo->S = ts_S;
+	newset->markers = ts_markers;
+	newset->S = ts_S;
     } else {
-	dataset_obs_info_default(newinfo);
+	dataset_obs_info_default(newset);
     } 
 
     /* OK: actually populate the dataset */
-    err = transcribe_data(book, newZ, newinfo, totcols, blank_col, prn);
+    err = transcribe_data(book, newset, totcols, blank_col, prn);
     if (err) {
 	goto getout;
     }
 
-    if (fix_varname_duplicates(newinfo)) {
+    if (fix_varname_duplicates(newset)) {
 	pputs(prn, _("warning: some variable names were duplicated\n"));
     }
 
     if (book_obs_labels(book)) {
-	dataset_allocate_obs_markers(newinfo);
-	if (newinfo->S != NULL) {
+	dataset_allocate_obs_markers(newset);
+	if (newset->S != NULL) {
 	    i = book->col_offset;
-	    for (t=0; t<newinfo->n; t++) {
+	    for (t=0; t<newset->n; t++) {
 		int ts = t + 1 + book->row_offset;
 		char *src = rows[ts].cells[i];
 
 		if (src != NULL) {
-		    strncat(newinfo->S[t], src + 1, OBSLEN - 1);
+		    strncat(newset->S[t], src + 1, OBSLEN - 1);
 		}
 	    }
 	}
     }
 
     if (book->flags & BOOK_DATA_REVERSED) {
-	reverse_data(newZ, newinfo, prn);
+	reverse_data(newset, prn);
     }
 
-    err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+    err = merge_or_replace_data(dset, &newset, opt, prn);
 
     if (!err && !merge) {
-	dataset_add_import_info(pdinfo, fname, GRETL_XLS);
+	dataset_add_import_info(dset, fname, GRETL_XLS);
     }
 
     if (!err && gui) {
@@ -1681,8 +1680,8 @@ int xls_get_data (const char *fname, int *list, char *sheetname,
     }
 #endif
 
-    if (newinfo != NULL) {
-	destroy_dataset(newZ, newinfo);
+    if (newset != NULL) {
+	destroy_dataset(newset);
     }
 
     return err;

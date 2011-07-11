@@ -110,24 +110,23 @@ int equation_system_append (equation_system *sys, const int *list);
 
 int equation_system_append_multi (equation_system *sys, 
 				  const char *mname, 
-				  const DATAINFO *pdinfo);
+				  const DATASET *dset);
 
 int system_parse_line (equation_system *sys,
 		       const char *line,
-		       double ***pZ, 
-		       DATAINFO *pdinfo);
+		       DATASET *dset);
 
 int equation_system_finalize (equation_system *sys, 
-			      double ***pZ, DATAINFO *pdinfo,
+			      DATASET *dset,
 			      gretlopt opt, PRN *prn);
 
 int 
 equation_system_estimate (equation_system *sys, 
-			  double ***pZ, DATAINFO *pdinfo, 
+			  DATASET *dset, 
 			  gretlopt opt, PRN *prn);
 
 int estimate_named_system (const char *line, 
-			   double ***pZ, DATAINFO *pdinfo, 
+			   DATASET *dset, 
 			   gretlopt opt, PRN *prn);
 
 void equation_system_destroy (equation_system *sys);
@@ -178,7 +177,7 @@ int rhs_var_in_identity (const equation_system *sys, int lhsvar,
 
 void 
 print_equation_system_info (const equation_system *sys, 
-			    const DATAINFO *pdinfo, 
+			    const DATASET *dset, 
 			    gretlopt opt, PRN *prn);
 
 void 
@@ -195,11 +194,11 @@ int system_wald_test (const equation_system *sys,
 		      PRN *prn);
 
 double *system_get_resid_series (equation_system *sys, int eqnum,
-				 DATAINFO *pdinfo, int *err);
+				 DATASET *dset, int *err);
 
 double *
 equation_system_get_series (const equation_system *sys, 
-			    const DATAINFO *pdinfo,
+			    const DATASET *dset,
 			    int idx, const char *key, int *err);
 
 gretl_matrix *
@@ -207,52 +206,51 @@ equation_system_get_matrix (const equation_system *sys, int idx,
 			    int *err);
 
 int highest_numbered_var_in_system (const equation_system *sys, 
-				    const DATAINFO *pdinfo);
+				    const DATASET *dset);
 
 int equation_system_serialize (equation_system *sys, 
 			       SavedObjectFlags flags,
 			       FILE *fp);
 
 int gretl_system_print (equation_system *sys, 
-			const double **Z, const DATAINFO *pdinfo, 
+			const DATASET *dset, 
 			gretlopt opt, PRN *prn);
 
 int system_print_sigma (const equation_system *sys, PRN *prn);
 
 const gretl_matrix *
 system_get_forecast_matrix (equation_system *sys, int t1, int t2,
-			    const double **Z, DATAINFO *pdinfo, 
-			    gretlopt opt, int *err);
+			    DATASET *dset, gretlopt opt, 
+			    int *err);
 
 gretl_matrix *sys_get_fitted_values (equation_system *sys,
 				     int v, int t1, int t2,
-				     const double **Z, 
-				     const DATAINFO *pdinfo,
+				     const DATASET *dset,
 				     int *err);
 
-int system_adjust_t1t2 (equation_system *sys, const double **Z, 
-			const DATAINFO *pdinfo);
+int system_adjust_t1t2 (equation_system *sys, 
+			const DATASET *dset);
 
 #ifdef FULL_XML_HEADERS
 
 equation_system *
 equation_system_from_XML (xmlNodePtr node, xmlDocPtr doc, 
-			  const DATAINFO *pdinfo,
+			  const DATASET *dset,
 			  int *err);
 
 #endif
 
 int 
 system_save_and_print_results (equation_system *sys,
-			       double ***pZ, DATAINFO *pdinfo,
-			       gretlopt opt, PRN *prn);
+			       DATASET *dset, gretlopt opt, 
+			       PRN *prn);
 
 int system_autocorrelation_test (equation_system *sys, int order, 
 				 PRN *prn);
 
 int system_arch_test (equation_system *sys, int order, PRN *prn);
 
-MODEL single_equation_liml (const int *list, double ***pZ,
-			    DATAINFO *pdinfo, gretlopt opt);
+MODEL single_equation_liml (const int *list, DATASET *dset, 
+			    gretlopt opt);
 
 #endif /* EQUATION_SYSTEM_H */

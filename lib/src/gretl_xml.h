@@ -119,10 +119,10 @@ int gretl_write_matrix_as_gdt (const char *fname,
 			       const char **labels);
 
 int gretl_write_gdt (const char *fname, const int *list, 
-		     const double **Z, const DATAINFO *pdinfo, 
-		     gretlopt opt, int progress);
+		     const DATASET *dset, gretlopt opt, 
+		     int progress);
 
-int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo, 
+int gretl_read_gdt (const char *fname, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
 char *gretl_get_gdt_description (const char *fname);

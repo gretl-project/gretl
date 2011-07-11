@@ -418,8 +418,8 @@ static int get_nobs (FILE *fp, struct SAS_fileinfo *finfo)
 }
 
 static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
-			  double **Z, DATAINFO *pdinfo, 
-			  gretl_string_table *st, PRN *prn)
+			  DATASET *dset, gretl_string_table *st, 
+			  PRN *prn)
 {
     char *buf = NULL, *cbuf = NULL;
     char c8[8];
@@ -440,8 +440,8 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
     }
 
     for (i=0; i<finfo->nvars; i++) {
-	strcpy(pdinfo->varname[i+1], finfo->vars[i].name);
-	strcpy(VARLABEL(pdinfo, i+1), finfo->vars[i].label);
+	strcpy(dset->varname[i+1], finfo->vars[i].name);
+	strcpy(VARLABEL(dset, i+1), finfo->vars[i].label);
     }
 
     t = 0;
@@ -451,17 +451,17 @@ static int SAS_read_data (FILE *fp, struct SAS_fileinfo *finfo,
 	    if (finfo->vars[i].type == XPT_NUMERIC) {
 		memcpy(c8, buf + pos, 8);
 		x = read_xpt(c8);
-		Z[i+1][t] = x;
+		dset->Z[i+1][t] = x;
 	    } else if (st != NULL) {
 		/* character data */
 		*cbuf = '\0';
 		strncat(cbuf, buf + pos, finfo->vars[i].size);
 		tailstrip(cbuf);
 		if (*cbuf) {
-		    Z[i+1][t] = gretl_string_table_index(st, cbuf, i+1, 
+		    dset->Z[i+1][t] = gretl_string_table_index(st, cbuf, i+1, 
 							 1, prn);
 		} else {
-		    Z[i+1][t] = 0.0;
+		    dset->Z[i+1][t] = 0.0;
 		}
 	    }
 	}
@@ -579,30 +579,28 @@ static int SAS_read_global_header (FILE *fp, struct SAS_fileinfo *finfo)
     return err;
 }
 
-static void append_SAS_date_info (DATAINFO *pdinfo, struct SAS_fileinfo *finfo)
+static void append_SAS_date_info (DATASET *dset, struct SAS_fileinfo *finfo)
 {
-    if (pdinfo->descrip != NULL && *finfo->revdate != '\0') {
-	int n = strlen(pdinfo->descrip) + strlen(finfo->revdate) + 20;
+    if (dset->descrip != NULL && *finfo->revdate != '\0') {
+	int n = strlen(dset->descrip) + strlen(finfo->revdate) + 20;
 	char *tmp = malloc(n);
 
 	if (tmp != NULL) {
-	    sprintf(tmp, "%s\nSAS data dated %s", pdinfo->descrip,
+	    sprintf(tmp, "%s\nSAS data dated %s", dset->descrip,
 		    finfo->revdate);
-	    free(pdinfo->descrip);
-	    pdinfo->descrip = tmp;
+	    free(dset->descrip);
+	    dset->descrip = tmp;
 	}
     }
 }
 
 /* driver for reading SAS xport files */
 
-int xport_get_data (const char *fname, 
-		    double ***pZ, DATAINFO *pdinfo,
+int xport_get_data (const char *fname, DATASET *dset,
 		    gretlopt opt, PRN *prn)
 {
     struct SAS_fileinfo finfo;
-    double **newZ = NULL;
-    DATAINFO *newinfo = NULL;
+    DATASET *newset = NULL;
     gretl_string_table *st = NULL;
     int chunks = 0;
     FILE *fp;
@@ -641,8 +639,8 @@ int xport_get_data (const char *fname,
     }
 
     if (!err) {
-	newinfo = datainfo_new();
-	if (newinfo == NULL) {
+	newset = datainfo_new();
+	if (newset == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -656,13 +654,13 @@ int xport_get_data (const char *fname,
 	goto bailout;
     }
 
-    newinfo->v = finfo.nvars + 1;
-    newinfo->n = finfo.nobs;
+    newset->v = finfo.nvars + 1;
+    newset->n = finfo.nobs;
 
-    err = start_new_Z(&newZ, newinfo, 0);
+    err = start_new_Z(newset, 0);
     if (err) {
 	pputs(prn, _("Out of memory\n"));
-	free_datainfo(newinfo);
+	free_datainfo(newset);
 	goto bailout;
     }
 
@@ -671,35 +669,35 @@ int xport_get_data (const char *fname,
     }
 
     if (!err) {
-	err = SAS_read_data(fp, &finfo, newZ, newinfo, st, prn);
+	err = SAS_read_data(fp, &finfo, newset, st, prn);
     }
 
     if (err) {
-	destroy_dataset(newZ, newinfo);
+	destroy_dataset(newset);
 	if (st != NULL) {
 	    gretl_string_table_destroy(st);
 	}	
     } else {
-	int merge = (*pZ != NULL);
+	int merge = (dset->Z != NULL);
 
 	/* some massive SAS datasets may contain many series
 	   that have nothing but missing values */
-	maybe_prune_dataset(&newZ, &newinfo, st);
+	maybe_prune_dataset(&newset, st);
 	
-	if (fix_varname_duplicates(newinfo)) {
+	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
 	if (st != NULL) {
-	    gretl_string_table_print(st, newinfo, fname, prn);
+	    gretl_string_table_print(st, newset, fname, prn);
 	    gretl_string_table_destroy(st);
 	}
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+	err = merge_or_replace_data(dset, &newset, opt, prn);
 
 	if (!err && !merge) {
-	    dataset_add_import_info(pdinfo, fname, GRETL_SAS);
-	    append_SAS_date_info(pdinfo, &finfo);
+	    dataset_add_import_info(dset, fname, GRETL_SAS);
+	    append_SAS_date_info(dset, &finfo);
 	}
     }
 

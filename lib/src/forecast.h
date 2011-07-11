@@ -57,30 +57,29 @@ struct FITRESID_ {
 
 void free_fit_resid (FITRESID *fr);
 
-FITRESID *get_fit_resid (const MODEL *pmod, const double **Z, 
-			 const DATAINFO *pdinfo, int *err);
+FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset, 
+			 int *err);
 
 FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
-			double ***pZ, DATAINFO *pdinfo,
-			gretlopt opt, int *err);
+			DATASET *dset, gretlopt opt, int *err);
 
 FITRESID *get_system_forecast (void *p, int ci, int i, 
 			       int t1, int t2, int pre_n,
-			       const double **Z, DATAINFO *pdinfo,
-			       gretlopt opt, int *err);
+			       DATASET *dset, gretlopt opt, 
+			       int *err);
 
-int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
+int do_forecast (const char *str, DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
-void forecast_options_for_model (MODEL *pmod, const double **Z,
-				 const DATAINFO *pdinfo, int *flags,
-				 int *dt2max, int *st2max);
+void forecast_options_for_model (MODEL *pmod, const DATASET *dset, 
+				 int *flags, int *dt2max, int *st2max);
 
 gretl_matrix *get_forecast_matrix (int idx, int *err);
 
 FITRESID *
-rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
-			  int t1, int t2, int k, int pre_n, int *err);
+rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
+			  int t1, int t2, int k, int pre_n, 
+			  int *err);
 
 void fcast_get_continuous_range (const FITRESID *fr, int *pt1, int *pt2);
 

@@ -74,7 +74,7 @@ static void negbin_free (negbin_info *nbinfo)
 }
 
 static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
-			const double **Z, offset_info *oinfo,
+			const DATASET *dset, offset_info *oinfo,
 			gretlopt opt, PRN *prn)
 {
     int n = pmod->nobs;
@@ -121,13 +121,13 @@ static int negbin_init (negbin_info *nbinfo, MODEL *pmod,
 	    continue;
 	}
 	v = pmod->list[1];
-	nbinfo->y->val[s] = Z[v][t];
+	nbinfo->y->val[s] = dset->Z[v][t];
 	if (oinfo != NULL) {
 	    nbinfo->offset->val[s] = oinfo->x[t];
 	}
 	for (i=0; i<k; i++) {
 	    v = pmod->list[i+2];
-	    gretl_matrix_set(nbinfo->X, s, i, Z[v][t]);
+	    gretl_matrix_set(nbinfo->X, s, i, dset->Z[v][t]);
 	}
 	s++;
     }
@@ -373,8 +373,8 @@ static int negbin_hessian_vcv (MODEL *pmod, negbin_info *nbinfo)
 
 static int 
 transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo, 
-			   const double **Z, const DATAINFO *pdinfo, 
-			   offset_info *oinfo, int fncount, int grcount,
+			   const DATASET *dset, offset_info *oinfo, 
+			   int fncount, int grcount,
 			   gretlopt opt)
 {
     int nc = nbinfo->k + 1;
@@ -409,7 +409,7 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
 
 	    for (i=0; i<nbinfo->k; i++) {
 		v = pmod->list[i+2];
-		strcpy(pmod->params[i], pdinfo->varname[v]);
+		strcpy(pmod->params[i], dset->varname[v]);
 	    }
 	    strcpy(pmod->params[nc-1], "alpha");
 	}
@@ -458,8 +458,8 @@ transcribe_negbin_results (MODEL *pmod, negbin_info *nbinfo,
 }
 
 static int do_negbin (MODEL *pmod, offset_info *oinfo,
-		      const double **Z, DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn)
+		      DATASET *dset, gretlopt opt, 
+		      PRN *prn)
 {
     gretlopt max_opt = (opt & OPT_V)? OPT_V : OPT_NONE;
     gretl_matrix *H = NULL;
@@ -475,7 +475,7 @@ static int do_negbin (MODEL *pmod, offset_info *oinfo,
 	use_newton = 1;
     }
 
-    err = negbin_init(&nbinfo, pmod, Z, oinfo, opt, prn);
+    err = negbin_init(&nbinfo, pmod, dset, oinfo, opt, prn);
 
     if (!err && !use_newton) {
 	/* initialize BFGS curvature */
@@ -503,7 +503,7 @@ static int do_negbin (MODEL *pmod, offset_info *oinfo,
     }
 
     if (!err) {
-	err = transcribe_negbin_results(pmod, &nbinfo, Z, pdinfo, 
+	err = transcribe_negbin_results(pmod, &nbinfo, dset, 
 					oinfo, fncount, grcount, 
 					opt);
     }
@@ -565,11 +565,11 @@ static int poisson_robust_vcv (MODEL *pmod, gretl_matrix *G)
 /* Overdispersion test via augmented OPG regression: see
    Davidson and McKinnon, ETM, section 11.5 */
 
-static int overdispersion_test (MODEL *pmod, const double **Z,
+static int overdispersion_test (MODEL *pmod, const DATASET *dset,
 				gretlopt opt)
 {
     const double *mu = pmod->yhat;
-    const double *y = Z[pmod->list[1]];
+    const double *y = dset->Z[pmod->list[1]];
     gretl_matrix *u, *G, *b, *e;
     double mt, mxt, zt;
     int n = pmod->nobs;
@@ -601,7 +601,7 @@ static int overdispersion_test (MODEL *pmod, const double **Z,
 	mt = y[t] - mu[t];
 	for (i=0; i<k; i++) {
 	    v = pmod->list[i+2];
-	    mxt = mt * Z[v][t];
+	    mxt = mt * dset->Z[v][t];
 	    gretl_matrix_set(G, s, i, mxt);
 	}
 	zt = mt * mt - y[t];
@@ -778,12 +778,12 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
 }
 
 static int do_poisson (MODEL *pmod, offset_info *oinfo, 
-		       double ***pZ, DATAINFO *pdinfo, 
-		       gretlopt opt, PRN *prn)
+		       DATASET *dset, gretlopt opt, 
+		       PRN *prn)
 {
-    int origv = pdinfo->v;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int origv = dset->v;
+    int orig_t1 = dset->t1;
+    int orig_t2 = dset->t2;
     int iter = 0;
     double crit = 1.0;
     double *y, *wgt;
@@ -795,8 +795,8 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
     gretl_model_init(&tmpmod);
 
     /* set the sample to that of the initial OLS model */
-    pdinfo->t1 = pmod->t1;
-    pdinfo->t2 = pmod->t2;
+    dset->t1 = pmod->t1;
+    dset->t2 = pmod->t2;
 
     local_list = gretl_list_new(pmod->list[0] + 1);
     if (local_list == NULL) {
@@ -804,21 +804,21 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 	goto bailout;
     }
 
-    if (dataset_add_series(2, pZ, pdinfo)) {
+    if (dataset_add_series(2, dset)) {
 	pmod->errcode = E_ALLOC;
 	goto bailout;
     }
 
     /* the original dependent variable */
-    y = (*pZ)[pmod->list[1]];
+    y = dset->Z[pmod->list[1]];
 
     /* weighting variable (first newly added var) */
     local_list[1] = origv;
-    wgt = (*pZ)[origv];
+    wgt = dset->Z[origv];
 
     /* dependent variable for GNR (second newly added var) */
     local_list[2] = origv + 1;
-    depvar = (*pZ)[origv + 1];
+    depvar = dset->Z[origv + 1];
     
     for (i=3; i<=local_list[0]; i++) { 
 	/* the original independent vars */
@@ -854,7 +854,7 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 
 	iter++;
 
-	tmpmod = lsq(local_list, *pZ, pdinfo, WLS, OPT_A);
+	tmpmod = lsq(local_list, dset, WLS, OPT_A);
 
 	if (tmpmod.errcode) {
 	    fprintf(stderr, "poisson_estimate: lsq returned %d\n", 
@@ -897,17 +897,17 @@ static int do_poisson (MODEL *pmod, offset_info *oinfo,
 
     if (pmod->errcode == 0 && !(opt & OPT_A)) {
 	transcribe_poisson_results(pmod, &tmpmod, y, iter, oinfo);
-	overdispersion_test(pmod, (const double **) *pZ, opt);
+	overdispersion_test(pmod, dset, opt);
     }
 
  bailout:
 
     clear_model(&tmpmod);
     free(local_list);
-    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - origv, dset);
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
     return pmod->errcode;
 }
@@ -947,8 +947,8 @@ static int get_offset_info (MODEL *pmod, offset_info *oinfo)
 /* the incoming @pmod has been estimated via OLS */
 
 int count_data_estimate (MODEL *pmod, int ci, int offvar, 
-			 double ***pZ, DATAINFO *pdinfo,
-			 gretlopt opt, PRN *prn) 
+			 DATASET *dset, gretlopt opt, 
+			 PRN *prn) 
 {
     offset_info oinfo_t, *oinfo = NULL;
     PRN *vprn = NULL;
@@ -957,7 +957,7 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
     if (offvar > 0) {
 	/* handle the offset variable */
 	oinfo_t.vnum = offvar;
-	oinfo_t.x = (*pZ)[offvar];
+	oinfo_t.x = dset->Z[offvar];
 	err = get_offset_info(pmod, &oinfo_t);
 	if (err) {
 	    pmod->errcode = err;
@@ -973,13 +973,12 @@ int count_data_estimate (MODEL *pmod, int ci, int offvar,
 
     if (ci == NEGBIN) {
 	/* use auxiliary poisson to initialize the estimates */
-	err = do_poisson(pmod, oinfo, pZ, pdinfo, OPT_A, NULL);
+	err = do_poisson(pmod, oinfo, dset, OPT_A, NULL);
 	if (!err) {
-	    err = do_negbin(pmod, oinfo, (const double **) *pZ, 
-			    pdinfo, opt, vprn);
+	    err = do_negbin(pmod, oinfo, dset, opt, vprn);
 	}
     } else {
-	err = do_poisson(pmod, oinfo, pZ, pdinfo, opt, vprn);
+	err = do_poisson(pmod, oinfo, dset, opt, vprn);
     }
 
     return err;

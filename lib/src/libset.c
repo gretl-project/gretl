@@ -434,26 +434,26 @@ static void state_vars_init (set_vars *sv)
     robust_opts_init(&sv->ropts);
 }
 
-int get_bkbp_k (const DATAINFO *pdinfo)
+int get_bkbp_k (const DATASET *dset)
 {
-    if (pdinfo->pd == 1) {
+    if (dset->pd == 1) {
 	return 3;
-    } else if (pdinfo->pd == 4) {
+    } else if (dset->pd == 4) {
 	return 12;
-    } else if (pdinfo->pd == 12) {
+    } else if (dset->pd == 12) {
 	return 36;
     } else {
 	return 3;
     }
 }
 
-void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u)
+void get_bkbp_periods (const DATASET *dset, int *l, int *u)
 {
-    *l = (pdinfo->pd == 4)? 6 :
-	(pdinfo->pd == 12)? 18 : 2;
+    *l = (dset->pd == 4)? 6 :
+	(dset->pd == 12)? 18 : 2;
 
-    *u = (pdinfo->pd == 4)? 32 :
-	(pdinfo->pd == 12)? 96 : 8;
+    *u = (dset->pd == 4)? 32 :
+	(dset->pd == 12)? 96 : 8;
 }
 
 void set_gretl_echo (int e)
@@ -529,13 +529,13 @@ int get_mp_bits (void)
     }
 }
 
-char get_csv_delim (const DATAINFO *pdinfo)
+char get_csv_delim (const DATASET *dset)
 {
     check_for_state();
     if (state->delim > 0) {
 	return state->delim;
     } else {
-	return pdinfo->delim;
+	return dset->delim;
     }
 }
 
@@ -928,11 +928,11 @@ void set_garch_robust_vcv (const char *s)
 }
 
 static int set_line_width (const char *s0, const char *s1,
-			   DATAINFO *pdinfo, PRN *prn)
+			   DATASET *dset, PRN *prn)
 {
     int v, w, err = 0;
 
-    if (pdinfo == NULL) {
+    if (dset == NULL) {
 	/* treat as no-op */
 	return 0;
     }
@@ -944,7 +944,7 @@ static int set_line_width (const char *s0, const char *s1,
     if (isdigit((unsigned char) *s0)) {
 	v = atoi(s0);
     } else {
-	v = current_series_index(pdinfo, s0);
+	v = current_series_index(dset, s0);
     }
 
     if (v < 0) {
@@ -956,9 +956,9 @@ static int set_line_width (const char *s0, const char *s1,
     if (w < 0 || w > 32) {
 	err = E_DATA;
     } else {
-	var_set_linewidth(pdinfo, v, w);
+	var_set_linewidth(dset, v, w);
 	pprintf(prn, _("Line width for %s = %d\n"), 
-		pdinfo->varname[v], w);
+		dset->varname[v], w);
     }
 
     return err;
@@ -996,8 +996,7 @@ static int set_initvals (const char *s, PRN *prn)
     return err;
 }
 
-static int set_matmask (const char *s, const double **Z,
-			const DATAINFO *pdinfo,
+static int set_matmask (const char *s, const DATASET *dset,
 			PRN *prn)
 {
     char vname[VNAMELEN];
@@ -1010,7 +1009,7 @@ static int set_matmask (const char *s, const double **Z,
 	gretl_matrix_free(state->matmask);
 	state->matmask = NULL;
     } else {
-	int t, v = current_series_index(pdinfo, vname);
+	int t, v = current_series_index(dset, vname);
 
 	if (v < 0) {
 	    err = E_UNKVAR;
@@ -1018,12 +1017,12 @@ static int set_matmask (const char *s, const double **Z,
 	    if (state->matmask != NULL) {
 		gretl_matrix_free(state->matmask);
 	    }
-	    state->matmask = gretl_column_vector_alloc(pdinfo->n);
+	    state->matmask = gretl_column_vector_alloc(dset->n);
 	    if (state->matmask == NULL) {
 		err = E_ALLOC;
 	    } else {
-		for (t=0; t<pdinfo->n; t++) {
-		    state->matmask->val[t] = Z[v][t];
+		for (t=0; t<dset->n; t++) {
+		    state->matmask->val[t] = dset->Z[v][t];
 		}
 	    }
 	}
@@ -1483,9 +1482,8 @@ static int write_or_read_settings (gretlopt opt, PRN *prn)
     return err;
 }
 
-int execute_set_line (const char *line, const double **Z,
-		      DATAINFO *pdinfo, gretlopt opt, 
-		      PRN *prn)
+int execute_set_line (const char *line, DATASET *dset, 
+		      gretlopt opt, PRN *prn)
 {
     char setobj[32], setarg[32], setarg2[32];
     int k, nw, err = E_PARSE;
@@ -1510,7 +1508,7 @@ int execute_set_line (const char *line, const double **Z,
 	if (!strcmp(setobj, "initvals")) {
 	    return set_initvals(line, prn);
 	} else if (!strcmp(setobj, "matrix_mask")) {
-	    return set_matmask(line, Z, pdinfo, prn);
+	    return set_matmask(line, dset, prn);
 	} else if (!strcmp(setobj, "shelldir")) {
 	    return set_shelldir(line);
 	} else if (!strcmp(setobj, "codevars")) {
@@ -1599,7 +1597,7 @@ int execute_set_line (const char *line, const double **Z,
 	}
     } else if (nw == 3) {
 	if (!strcmp(setobj, "linewidth")) {
-	    err = set_line_width(setarg, setarg2, pdinfo, prn);
+	    err = set_line_width(setarg, setarg2, dset, prn);
 	} else {
 	    err = E_UNKVAR;
 	}
@@ -2400,7 +2398,7 @@ static int real_libset_read_script (const char *fname,
 		continue;
 	    }
 	    tailstrip(line);
-	    err = execute_set_line(line, NULL, NULL, OPT_NONE, prn);
+	    err = execute_set_line(line, NULL, OPT_NONE, prn);
 	    if (err && prn != NULL) {
 		break;
 	    }

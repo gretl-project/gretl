@@ -50,16 +50,16 @@ static void drawline (int n, PRN *prn)
     pputc(prn, '\n');
 }
 
-static void prntdate (int nt, int n, const DATAINFO *pdinfo, PRN *prn)
+static void prntdate (int nt, int n, const DATASET *dset, PRN *prn)
 {
-    if (n != pdinfo->t2 - pdinfo->t1 + 1) {
+    if (n != dset->t2 - dset->t1 + 1) {
 	pprintf(prn, "%5d  ", nt);
     } else {
-	double xx = date(nt, pdinfo->pd, pdinfo->sd0);
+	double xx = date(nt, dset->pd, dset->sd0);
 
-	if (pdinfo->pd == 1) {
+	if (dset->pd == 1) {
 	    pprintf(prn, "%5.0f ", xx);
-	} else if (pdinfo->pd < 10) {
+	} else if (dset->pd < 10) {
 	    pprintf(prn, "%5g ", xx);
 	} else {
 	    pprintf(prn, "%6.2f", xx);
@@ -79,16 +79,16 @@ static void printgx (double x, PRN *prn)
 } 
 
 static int z_to_xy (int v1, int v2, double *x, double *y, 
-		    const double **Z, const DATAINFO *pdinfo)
+		    const DATASET *dset)
 {
     int t, m = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++)  {
-	if (na(Z[v1][t]) || na(Z[v2][t])) {
+    for (t=dset->t1; t<=dset->t2; t++)  {
+	if (na(dset->Z[v1][t]) || na(dset->Z[v2][t])) {
 	    continue;
 	}
-	x[m] = Z[v1][t];
-	y[m] = Z[v2][t];
+	x[m] = dset->Z[v1][t];
+	y[m] = dset->Z[v2][t];
 	m++;
     }
 
@@ -97,17 +97,17 @@ static int z_to_xy (int v1, int v2, double *x, double *y,
 
 static int z_to_xyz (int v1, int v2, int v3, 
 		     double *x, double *y, double *z,
-		     const double **Z, const DATAINFO *pdinfo)
+		     const DATASET *dset)
 {
     int t, m = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++)  {
-	if (na(Z[v1][t]) || na(Z[v2][t]) || na(Z[v3][t])) {
+    for (t=dset->t1; t<=dset->t2; t++)  {
+	if (na(dset->Z[v1][t]) || na(dset->Z[v2][t]) || na(dset->Z[v3][t])) {
 	    continue;
 	}
-	x[m] = Z[v1][t];
-	y[m] = Z[v2][t];
-	z[m] = Z[v3][t];
+	x[m] = dset->Z[v1][t];
+	y[m] = dset->Z[v2][t];
+	z[m] = dset->Z[v3][t];
 	m++;
     }
 
@@ -303,15 +303,14 @@ int graphyx (const double *y, const double *x, int n,
    otherwise they are scaled to fit
 */
 
-static int ascii_plot (const int *list, const double **Z, 
-		       const DATAINFO *pdinfo, gretlopt opt, 
-		       PRN *prn)
+static int ascii_plot (const int *list, const DATASET *dset, 
+		       gretlopt opt, PRN *prn)
 {
     int i, nc2, vy, vz, cntrline;
     int ix = 0, iy = 0, iz = 0, n = 0;
     int ncols = 70;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     char word[32], px[132];
     char s1[10], s2[10];
     double xmin, xmax, xrange, ymin, ymax, yrange, xymin, xymax; 
@@ -319,22 +318,22 @@ static int ascii_plot (const int *list, const double **Z,
     double *x, *y;
     int ls, t;
 
-    x = malloc(2 * pdinfo->n * sizeof *x);
+    x = malloc(2 * dset->n * sizeof *x);
     if (x == NULL) {
 	return E_ALLOC;
     }
 
-    y = x + pdinfo->n;
+    y = x + dset->n;
 
     pputc(prn, '\n');
 
     nc2 = ncols / 2;
     vy = list[1];
-    strcpy(s1, pdinfo->varname[vy]);
+    strcpy(s1, dset->varname[vy]);
 
     if (list[0] == 1) {
 	/* only one variable is to be plotted */
-	n = transcribe_array(x, Z[vy], pdinfo);
+	n = transcribe_array(x, dset->Z[vy], dset);
 	gretl_minmax(t1, t2, x, &xmin, &xmax);
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;
@@ -362,11 +361,11 @@ static int ascii_plot (const int *list, const double **Z,
 	gretl_push_c_numeric_locale();
 
 	for (t=t1; t<=t2; ++t) {
-	    xx = Z[vy][t];
+	    xx = dset->Z[vy][t];
 	    if (na(xx)) {
 		continue;
 	    }
-	    prntdate(t, n, pdinfo, prn);
+	    prntdate(t, n, dset, prn);
 	    ix = (floatneq(xrange, 0.0))? ((xx-xmin)/xrange) * ncols : nc2;
 	    initpx(ncols, px);
 	    if (cntrline) {
@@ -392,8 +391,8 @@ static int ascii_plot (const int *list, const double **Z,
 
     /* two variables are to be plotted */
     vz = list[2];
-    strcpy(s2, pdinfo->varname[vz]);
-    n = z_to_xy(vy, vz, x, y, Z, pdinfo);
+    strcpy(s2, dset->varname[vz]);
+    n = z_to_xy(vy, vz, x, y, dset);
 
     /* find maximum and minimum using all values from both arrays */
     gretl_minmax(t1, t2, x, &xmin, &xmax);
@@ -464,14 +463,14 @@ static int ascii_plot (const int *list, const double **Z,
 
     for (t=t1; t<=t2; ++t) {
 
-	xx = Z[vy][t];
-	yy = Z[vz][t];
+	xx = dset->Z[vy][t];
+	yy = dset->Z[vz][t];
 
 	if (na(xx) || na(yy)) {
 	    continue;
 	}
 
-	prntdate(t, n, pdinfo, prn);
+	prntdate(t, n, dset, prn);
 
 	if (opt & OPT_O) {
 	    ix = (floatneq(xyrange, 0.0))? ((xx-xymin)/xyrange) * ncols : nc2;
@@ -513,10 +512,10 @@ static int ascii_plot (const int *list, const double **Z,
 }
 
 static int 
-ascii_scatter (const int *list, const double **Z, const DATAINFO *pdinfo, 
+ascii_scatter (const int *list, const DATASET *dset, 
 	       gretlopt opt, PRN *prn)
 {
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
     int vx, vy1, vy2 = -1;
     double *x = NULL;
     double *y1, *y2 = NULL;
@@ -542,17 +541,17 @@ ascii_scatter (const int *list, const double **Z, const DATAINFO *pdinfo,
     /* Put values from Z array into x and y arrays */
     if (list[0] == 2) {
 	vx = list[2];
-	T = z_to_xy(vx, vy1, x, y1, Z, pdinfo);
+	T = z_to_xy(vx, vy1, x, y1, dset);
     } else {
 	vy2 = list[2];
 	vx = list[3];
-	T = z_to_xyz(vx, vy1, vy2, x, y1, y2, Z, pdinfo);
+	T = z_to_xyz(vx, vy1, vy2, x, y1, y2, dset);
     }
 
     pputc(prn, '\n');
-    err = graphyzx(y1, y2, x, T, pdinfo->varname[vy1], 
-		   (vy2 < 0)? NULL : pdinfo->varname[vy2], 
-		   pdinfo->varname[vx], opt, prn);
+    err = graphyzx(y1, y2, x, T, dset->varname[vy1], 
+		   (vy2 < 0)? NULL : dset->varname[vy2], 
+		   dset->varname[vx], opt, prn);
     pputc(prn, '\n');
 
     free(x); 
@@ -563,8 +562,7 @@ ascii_scatter (const int *list, const double **Z, const DATAINFO *pdinfo,
 /**
  * textplot:
  * @list: list of series to plot.
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: see below.
  * @prn: gretl printing struct.
  *
@@ -582,15 +580,15 @@ ascii_scatter (const int *list, const double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int textplot (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int textplot (const int *list, const DATASET *dset, 
 	      gretlopt opt, PRN *prn)
 {
     if (opt & OPT_S) {
 	/* time series */
-	return ascii_plot(list, Z, pdinfo, opt, prn);
+	return ascii_plot(list, dset, opt, prn);
     } else if (list[0] < 2) {
 	return E_ARGS; 
     } else {
-	return ascii_scatter(list, Z, pdinfo, opt, prn);
+	return ascii_scatter(list, dset, opt, prn);
     }
 }

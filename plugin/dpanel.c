@@ -28,7 +28,7 @@
    we're at it.
 */
 
-static void dpanel_residuals (dpdinfo *dpd)
+static void dpanel_residuals (ddset *dpd)
 {
     const double *b = dpd->beta->val;
     double SSRd = 0.0, SSRl = 0.0;
@@ -105,10 +105,11 @@ static void dpanel_residuals (dpdinfo *dpd)
    max number of observations that are actually usable.
 */
 
-static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z, 
+static int check_unit_obs (ddset *dpd, int *goodobs, 
+			   const DATASET *dset,
 			   int t0)
 {
-    const double *y = Z[dpd->yno];
+    const double *y = dset->Z[dpd->yno];
     int i, s, t, ok;
 
     goodobs[0] = 0;
@@ -132,7 +133,7 @@ static int check_unit_obs (dpdinfo *dpd, int *goodobs, const double **Z,
 	if (ok && dpd->xlist != NULL) {
 	    /* and regressors? */
 	    for (i=1; i<=dpd->xlist[0] && ok; i++) {
-		ok &= !na(Z[dpd->xlist[i]][big_t]);
+		ok &= !na(dset->Z[dpd->xlist[i]][big_t]);
 	    }
 	}
 
@@ -186,7 +187,7 @@ static void copy_diag_info (diag_info *targ, diag_info *src)
    in the difference they are supposed to be instrumenting.
 */
 
-int diff_iv_accounts (dpdinfo *dpd, int tmin, int tmax)
+int diff_iv_accounts (ddset *dpd, int tmin, int tmax)
 {
     int t, tbot, ttop;
     int k, i, nrows = 0;
@@ -276,7 +277,7 @@ int diff_iv_accounts (dpdinfo *dpd, int tmin, int tmax)
    lags that have been specified for the given instrument.
 */
 
-int lev_iv_accounts (dpdinfo *dpd, int tbot, int ttop)
+int lev_iv_accounts (ddset *dpd, int tbot, int ttop)
 {
     int i, t, k, nrows = 0;
 
@@ -360,7 +361,7 @@ int lev_iv_accounts (dpdinfo *dpd, int tbot, int ttop)
    of instrument rows that will appear in the Z matrix.
 */
 
-static int block_instrument_count (dpdinfo *dpd, int t1lev, int t2pen)
+static int block_instrument_count (ddset *dpd, int t1lev, int t2pen)
 {
     int nrows;
 
@@ -394,7 +395,7 @@ static int block_instrument_count (dpdinfo *dpd, int t1lev, int t2pen)
    analysis at the outset; we can then allocate memory en bloc.
 */
 
-static void do_unit_accounting (dpdinfo *dpd, const double **Z,
+static void do_unit_accounting (ddset *dpd, const DATASET *dset,
 				int **Goodobs)
 {
     /* t1lev = index of first good obs in levels, 
@@ -419,7 +420,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
 
     for (i=0, t=dpd->t1; i<dpd->N; i++, t+=dpd->T) {
 	int *goodobs = Goodobs[i];
-	int Ti = check_unit_obs(dpd, goodobs, Z, t);
+	int Ti = check_unit_obs(dpd, goodobs, dset, t);
 	int gmax = goodobs[0];
 
 #if DPDEBUG > 1
@@ -504,7 +505,7 @@ static void do_unit_accounting (dpdinfo *dpd, const double **Z,
    construct H unless we're doing things "dpdstyle").
 */
 
-static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
+static void build_unit_D_matrix (ddset *dpd, int *goodobs, gretl_matrix *D)
 {
     int usable = goodobs[0] - 1;
     int i, j, i0, i1;    
@@ -534,7 +535,7 @@ static void build_unit_D_matrix (dpdinfo *dpd, int *goodobs, gretl_matrix *D)
 #endif
 }
 
-static void build_unit_H_matrix (dpdinfo *dpd, int *goodobs, 
+static void build_unit_H_matrix (ddset *dpd, int *goodobs, 
 				 gretl_matrix *D)
 {
     build_unit_D_matrix(dpd, goodobs, D);
@@ -565,7 +566,7 @@ static void make_dpdstyle_H (gretl_matrix *H, int nd)
 #endif
 }
 
-static int timedum_level (dpdinfo *dpd, int j, int t)
+static int timedum_level (ddset *dpd, int j, int t)
 {
     if (dpd->ifc) {
 	return (t == j + 1 + dpd->t1min)? 1 : 0;
@@ -574,7 +575,7 @@ static int timedum_level (dpdinfo *dpd, int j, int t)
     }
 }
 
-static double timedum_diff (dpdinfo *dpd, int j, int t)
+static double timedum_diff (ddset *dpd, int j, int t)
 {
     int d0 = timedum_level(dpd, j, t);
     int d1 = timedum_level(dpd, j, t-1);
@@ -586,10 +587,11 @@ static double timedum_diff (dpdinfo *dpd, int j, int t)
    differences, followed by levels if wanted. 
 */
 
-static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z, 
+static int build_Y (ddset *dpd, int *goodobs, 
+		    const DATASET *dset,
 		    int t, gretl_matrix *Yi)
 {
-    const double *y = Z[dpd->yno];
+    const double *y = dset->Z[dpd->yno];
     int i, usable = goodobs[0] - 1;
     int t0, t1, i0, i1, ycol;
     double dy;
@@ -640,10 +642,11 @@ static int build_Y (dpdinfo *dpd, int *goodobs, const double **Z,
    differences, followed by levels if wanted.
 */
 
-static void build_X (dpdinfo *dpd, int *goodobs, const double **Z, 
+static void build_X (ddset *dpd, int *goodobs, 
+		     const DATASET *dset,
 		     int t, gretl_matrix *Xi)
 {
-    const double *y = Z[dpd->yno];
+    const double *y = dset->Z[dpd->yno];
     int usable = goodobs[0] - 1;
     int nlags = dpd->laglist[0];
     const double *xj;
@@ -678,7 +681,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	    if (!gmm_sys(dpd) && dpd->xlist[j] == 0) {
 		dx = 1.0;
 	    } else {
-		xj = Z[dpd->xlist[j]];
+		xj = dset->Z[dpd->xlist[j]];
 		dx = xj[t1] - xj[t0];
 	    }
 	    gretl_matrix_set(Xi, row++, col, dx);
@@ -713,7 +716,7 @@ static void build_X (dpdinfo *dpd, int *goodobs, const double **Z,
 	    }
 
 	    for (j=1; j<=dpd->nx; j++) {
-		xj = Z[dpd->xlist[j]];
+		xj = dset->Z[dpd->xlist[j]];
 		gretl_matrix_set(Xi, row++, col, xj[t1]);
 	    }
 
@@ -749,7 +752,7 @@ static int row_increment (diag_info *d, int t1)
    out by block_instrument_count (see above).
 */
 
-static int bad_write_check (dpdinfo *dpd, int row, int lev)
+static int bad_write_check (ddset *dpd, int row, int lev)
 {
     if (!lev && row >= dpd->nzdiff) {
 	fprintf(stderr, "*** ERROR in gmm_inst_diff: writing to "
@@ -770,7 +773,7 @@ static int bad_write_check (dpdinfo *dpd, int row, int lev)
 
 /* GMM-style instruments in levels for the eqns in differences */
 
-static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x, 
+static int gmm_inst_diff (ddset *dpd, int bnum, const double *x, 
 			  int s, int *goodobs, int row0, int col0, 
 			  gretl_matrix *Zi)
 {
@@ -808,7 +811,7 @@ static int gmm_inst_diff (dpdinfo *dpd, int bnum, const double *x,
 
 /* GMM-style instruments in differences for the eqns in levels */
 
-static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x, 
+static int gmm_inst_lev (ddset *dpd, int bnum, const double *x, 
 			 int s, int *goodobs, int row0, int col0, 
 			 gretl_matrix *Zi)
 {
@@ -881,7 +884,8 @@ static int gmm_inst_lev (dpdinfo *dpd, int bnum, const double *x,
 
 */
 
-static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z, 
+static void build_Z (ddset *dpd, int *goodobs, 
+		     const DATASET *dset,
 		     int t, gretl_matrix *Zi)
 {
     const int usable = goodobs[0] - 1;
@@ -898,7 +902,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 
     /* GMM-style instruments in levels for diffs equations */
     for (i=0; i<dpd->nzb; i++) {
-	x = Z[dpd->d[i].v];
+	x = dset->Z[dpd->d[i].v];
 	row = gmm_inst_diff(dpd, i, x, t, goodobs, row, 0, Zi);	
     }
 
@@ -906,7 +910,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 
     /* GMM-style instruments in diffs for levels equations */
     for (i=0; i<dpd->nzb2; i++) {
-	x = Z[dpd->d2[i].v];
+	x = dset->Z[dpd->d2[i].v];
 	row = gmm_inst_lev(dpd, i, x, t, goodobs, row, col, Zi);	
     }
 
@@ -926,7 +930,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 		if (!gmm_sys(dpd) && dpd->ilist[j+1] == 0) {
 		    dx = 1.0;
 		} else {
-		    x = Z[dpd->ilist[j+1]];
+		    x = dset->Z[dpd->ilist[j+1]];
 		    dx = x[t1] - x[t0];
 		}
 		gretl_matrix_set(Zi, k2 + j, col, dx);
@@ -954,7 +958,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
 		t1 = t + i1;
 		col = i1 + dpd->lcol0;
 		for (j=0; j<dpd->nzr; j++) {
-		    x = Z[dpd->ilist[j+1]];
+		    x = dset->Z[dpd->ilist[j+1]];
 		    gretl_matrix_set(Zi, k2 + j, col, x[t1]);
 		}
 	    }
@@ -974,7 +978,7 @@ static void build_Z (dpdinfo *dpd, int *goodobs, const double **Z,
     }
 }
 
-static int trim_zero_inst (dpdinfo *dpd)
+static int trim_zero_inst (ddset *dpd)
 {
     char *mask;
     int err = 0;
@@ -1010,7 +1014,7 @@ static int trim_zero_inst (dpdinfo *dpd)
 
 /* allocate temporary storage needed by do_units() */
 
-static int make_units_workspace (dpdinfo *dpd, gretl_matrix **D, 
+static int make_units_workspace (ddset *dpd, gretl_matrix **D, 
 				 gretl_matrix **Yi, gretl_matrix **Xi)
 {
     int err = 0;
@@ -1043,7 +1047,7 @@ static int make_units_workspace (dpdinfo *dpd, gretl_matrix **D,
    observations in differences and in levels.
 */
 
-static void stack_unit_data (dpdinfo *dpd,
+static void stack_unit_data (ddset *dpd,
 			     const gretl_matrix *Yi, 
 			     const gretl_matrix *Xi,
 			     const gretl_matrix *Zi,
@@ -1117,7 +1121,7 @@ static void stack_unit_data (dpdinfo *dpd,
    accounts, which are recorded in the Goodobs lists.
 */
 
-static int do_units (dpdinfo *dpd, const double **Z, 
+static int do_units (ddset *dpd, const DATASET *dset,
 		     int **Goodobs)
 {
 #if DPDEBUG
@@ -1174,12 +1178,12 @@ static int do_units (dpdinfo *dpd, const double **Z,
 	}
 
 	t = data_index(dpd, i);
-	err = build_Y(dpd, goodobs, Z, t, Yi);
+	err = build_Y(dpd, goodobs, dset, t, Yi);
 	if (err) {
 	    break;
 	}
-	build_X(dpd, goodobs, Z, t, Xi);
-	build_Z(dpd, goodobs, Z, t, Zi);
+	build_X(dpd, goodobs, dset, t, Xi);
+	build_Z(dpd, goodobs, dset, t, Zi);
 #if DPDEBUG
 	sprintf(ystr, "do_units: Y_%d", i);
 	gretl_matrix_print(Yi, ystr);
@@ -1218,7 +1222,7 @@ static int do_units (dpdinfo *dpd, const double **Z,
    any equations in levels.
 */
 
-static void maybe_prune_const (dpdinfo *dpd)
+static void maybe_prune_const (ddset *dpd)
 {
     int i;
 
@@ -1260,7 +1264,7 @@ static void maybe_prune_const (dpdinfo *dpd)
    default version, with unlimited lags 
 */
 
-static int add_default_ydiff_spec (dpdinfo *dpd)
+static int add_default_ydiff_spec (ddset *dpd)
 {
     diag_info *d;
 
@@ -1298,7 +1302,7 @@ static int add_default_ydiff_spec (dpdinfo *dpd)
    we set up the default version, with 1 lag 
 */
 
-static int add_default_ylev_spec (dpdinfo *dpd)
+static int add_default_ylev_spec (ddset *dpd)
 {
     diag_info *d;
 
@@ -1342,7 +1346,7 @@ static int compare_gmm_specs (const void *a, const void *b)
    any adjustments that may be needed in the system case.
 */
 
-static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
+static int dpanel_adjust_GMM_spec (ddset *dpd)
 {
     int have_ydiff_spec = 0;
     int have_ylev_spec = 0;
@@ -1404,19 +1408,19 @@ static int dpanel_adjust_GMM_spec (dpdinfo *dpd)
 /* we're doing two-step, but print the one-step results for
    reference */
 
-static int print_step_1 (MODEL *pmod, dpdinfo *dpd,
+static int print_step_1 (MODEL *pmod, ddset *dpd,
 			 const int *list, const int *ylags,
-			 const char *ispec, const double *y, 
-			 const DATAINFO *pdinfo,
+			 const char *ispec, 
+			 const DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     int err = dpd_finalize_model(pmod, dpd, list, ylags, ispec, 
-				 y, pdinfo, opt);
+				 dset, opt);
 
     if (!err) {
 	dpd->flags &= ~DPD_TWOSTEP;
 	pmod->ID = -1;
-	printmodel(pmod, pdinfo, opt, prn);
+	printmodel(pmod, dset, opt, prn);
 	pmod->ID = 0;
 	dpd->flags |= (DPD_TWOSTEP | DPD_REDO);
     }
@@ -1426,8 +1430,8 @@ static int print_step_1 (MODEL *pmod, dpdinfo *dpd,
 
 #if DPDEBUG
 
-static void debug_print_specs (dpdinfo *dpd, const char *ispec,
-			       const DATAINFO *pdinfo)
+static void debug_print_specs (ddset *dpd, const char *ispec,
+			       const DATASET *dset)
 {
     int i;
 
@@ -1440,13 +1444,13 @@ static void debug_print_specs (dpdinfo *dpd, const char *ispec,
 
     for (i=0; i<dpd->nzb; i++) {
 	fprintf(stderr, "var %d (%s): lags %d to %d (GMM)\n", 
-		dpd->d[i].v, pdinfo->varname[dpd->d[i].v], 
+		dpd->d[i].v, dset->varname[dpd->d[i].v], 
 		dpd->d[i].minlag, dpd->d[i].maxlag); 
     }
 
     for (i=0; i<dpd->nzb2; i++) {
 	fprintf(stderr, "var %d (%s): lags %d to %d (GMMlevel)\n", 
-		dpd->d2[i].v, pdinfo->varname[dpd->d[i].v], 
+		dpd->d2[i].v, dset->varname[dpd->d[i].v], 
 		dpd->d2[i].minlag, dpd->d2[i].maxlag); 
     }
 
@@ -1462,19 +1466,18 @@ static void debug_print_specs (dpdinfo *dpd, const char *ispec,
 */
 
 MODEL dpd_estimate (const int *list, const int *laglist,
-		    const char *ispec, const double **Z, 
-		    const DATAINFO *pdinfo, gretlopt opt, 
-		    PRN *prn)
+		    const char *ispec, const DATASET *dset, 
+		    gretlopt opt, PRN *prn)
 {
     diag_info *d = NULL;
-    dpdinfo *dpd = NULL;
+    ddset *dpd = NULL;
     int **Goodobs = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
 
     gretl_model_init(&mod);
-    gretl_model_smpl_init(&mod, pdinfo);
+    gretl_model_smpl_init(&mod, dset);
 
     if (libset_get_bool(DPDSTYLE)) {
 	opt |= OPT_X;
@@ -1482,13 +1485,13 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
-	mod.errcode = parse_GMM_instrument_spec(DPANEL, ispec, pdinfo, &d, &nzb);
+	mod.errcode = parse_GMM_instrument_spec(DPANEL, ispec, dset, &d, &nzb);
 	if (mod.errcode) {
 	    return mod;
 	}
     }
 
-    dpd = dpdinfo_new(DPANEL, list, laglist, Z, pdinfo, opt, d, nzb, &mod.errcode);
+    dpd = ddset_new(DPANEL, list, laglist, dset, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
@@ -1502,7 +1505,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 
 #if DPDEBUG
     if (dpd->nzb > 0 || dpd->nzb2 > 0) {
-	debug_print_specs(dpd, ispec, pdinfo);
+	debug_print_specs(dpd, ispec, dset);
     }
 #endif
 
@@ -1512,13 +1515,13 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     }
 
     if (!err) {
-	do_unit_accounting(dpd, Z, Goodobs);
+	do_unit_accounting(dpd, dset, Goodobs);
 	err = dpd_allocate_matrices(dpd);
     }
 
     if (!err) {
 	/* build the moment matrices */
-	err = do_units(dpd, Z, Goodobs);
+	err = do_units(dpd, dset, Goodobs);
     }
 
     gretl_list_array_free(Goodobs, dpd->N);
@@ -1535,7 +1538,7 @@ MODEL dpd_estimate (const int *list, const int *laglist,
 	/* second step, if wanted */
 	if (opt & OPT_V) {
 	    err = print_step_1(&mod, dpd, list, laglist, ispec, 
-			       Z[dpd->yno], pdinfo, opt, prn);
+			       dset, opt, prn);
 	}
 	if (!err) {
 	    err = dpd_step_2(dpd);
@@ -1549,10 +1552,10 @@ MODEL dpd_estimate (const int *list, const int *laglist,
     if (!mod.errcode) {
 	/* write estimation info into model struct */
 	mod.errcode = dpd_finalize_model(&mod, dpd, list, laglist, ispec, 
-					 Z[dpd->yno], pdinfo, opt);
+					 dset, opt);
     }
 
-    dpdinfo_free(dpd);
+    ddset_free(dpd);
 
     return mod;
 }

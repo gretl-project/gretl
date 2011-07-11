@@ -109,8 +109,7 @@
 #define MAXSTR FILENAME_MAX
 
 /* basic global program vars */
-extern double **Z;
-extern DATAINFO *datainfo;
+extern DATASET *dataset;
 extern MODEL **models;
 
 /* global counters */
@@ -169,7 +168,7 @@ int mdata_active_var (void);
 void populate_varlist (void);
 void clear_varlist (GtkWidget *widget);
 void mdata_select_last_var (void);
-int gui_restore_sample (double ***pZ, DATAINFO *pdinfo);
+int gui_restore_sample (DATASET *dset);
 
 void add_window_list_item (GtkWidget *w, int role);
 void window_list_popup (GtkWidget *src);

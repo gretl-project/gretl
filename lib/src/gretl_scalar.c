@@ -267,11 +267,11 @@ void gretl_scalar_set_value (const char *name, double val)
 /* check that we're not colliding with a pre-existing object of
    different type */
 
-static int gretl_scalar_check_name (const char *s, const DATAINFO *pdinfo)
+static int gretl_scalar_check_name (const char *s, const DATASET *dset)
 {
     int v, err = 0;
 
-    if ((v = series_index(pdinfo, s)) < pdinfo->v) {
+    if ((v = series_index(dset, s)) < dset->v) {
 	err = E_TYPES;
     } else if (get_matrix_by_name(s)) {
 	err = E_TYPES;
@@ -325,9 +325,9 @@ int gretl_scalar_add (const char *name, double val)
 }
 
 int gretl_scalar_add_with_check (const char *name, double val,
-				 const DATAINFO *pdinfo)
+				 const DATASET *dset)
 {
-    int err = gretl_scalar_check_name(name, pdinfo);
+    int err = gretl_scalar_check_name(name, dset);
 
     if (!err) {
 	err = gretl_scalar_add(name, val);

@@ -34,33 +34,31 @@ enum {
 
 typedef struct nlspec_ nlspec;
 
-nlspec *nlspec_new (int ci, const DATAINFO *pdinfo);
+nlspec *nlspec_new (int ci, const DATASET *dset);
 
 void nlspec_destroy (nlspec *spec);
 
 int nlspec_add_param_with_deriv (nlspec *spec, const char *s);
 
 int nlspec_add_param_list (nlspec *spec, int np, double *vals,
-			   char **names, double ***pZ,
-			   DATAINFO *pdinfo);
+			   char **names, DATASET *dset);
 
 int 
 nlspec_set_regression_function (nlspec *spec, 
 				const char *fnstr, 
-				const DATAINFO *pdinfo);
+				const DATASET *dset);
 
 void nlspec_set_t1_t2 (nlspec *spec, int t1, int t2);
 
-int nl_parse_line (int ci, const char *line, const double **Z,
-		   const DATAINFO *pdinfo, PRN *prn);
+int nl_parse_line (int ci, const char *line, 
+		   const DATASET *dset, PRN *prn);
 
-MODEL nl_model (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+MODEL nl_model (DATASET *dset, gretlopt opt, PRN *prn);
 
-MODEL model_from_nlspec (nlspec *spec, double ***pZ, 
-			 DATAINFO *pdinfo, gretlopt opt, 
-			 PRN *prn);
+MODEL model_from_nlspec (nlspec *spec, DATASET *dset, 
+			 gretlopt opt, PRN *prn);
 
-int nls_boot_calc (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 		   int ft1, int ft2, double *fcerr); 
 
 double get_default_nls_toler (void);

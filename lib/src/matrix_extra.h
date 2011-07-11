@@ -45,8 +45,8 @@ gretl_vector *
 gretl_coeff_vector_from_model (const MODEL *pmod, const char *select, int *err);
 
 gretl_matrix *
-gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 
-				      const DATAINFO *pdinfo, 
+gretl_covariance_matrix_from_varlist (const int *list, 
+				      const DATASET *dset, 
 				      gretl_matrix **means,
 				      int *errp);
 
@@ -55,23 +55,25 @@ int gretl_matrix_row_to_array (const gretl_matrix *m, int i, double *x);
 double **gretl_matrix_get_columns (const gretl_matrix *m, int *err);
 
 gretl_matrix *
-gretl_matrix_data_subset_masked (const int *list, const double **Z,
+gretl_matrix_data_subset_masked (const int *list, 
+				 const DATASET *dset,
 				 int t1, int t2, const char *mask, 
 				 int *err);
 
-gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
+gretl_matrix *gretl_matrix_data_subset (const int *list, 
+					const DATASET *dset,
 					int t1, int t2, int missop, 
 					int *err);
 
 gretl_matrix *
-gretl_matrix_data_subset_special (const int *list, const double **Z,
-				  const DATAINFO *pdinfo,
+gretl_matrix_data_subset_special (const int *list, 
+				  const DATASET *dset,
 				  const gretl_matrix *mmask,
 				  int *err);
 
-DATAINFO *gretl_dataset_from_matrix (const gretl_matrix *m, 
-				     const int *list,
-				     double ***pZ, int *err);
+DATASET *gretl_dataset_from_matrix (const gretl_matrix *m, 
+				    const int *list,
+				    int *err);
 
 int gretl_plotfit_matrices (const double *yvar, const double *xvar,
 			    FitType fit, int t1, int t2, 

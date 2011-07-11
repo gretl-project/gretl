@@ -236,7 +236,7 @@ enum {
 /* mechanism to check if a console action has altered the
    current sample information */
 
-static int console_sample_handler (const DATAINFO *pdinfo, int code)
+static int console_sample_handler (const DATASET *pdinfo, int code)
 {
     static int pd, t1, t2, ts;
     static double sd0;
@@ -264,12 +264,12 @@ static int console_sample_handler (const DATAINFO *pdinfo, int code)
 /* the two functions below are public because they are
    also used with the command 'minibuffer' */
 
-void console_record_sample (const DATAINFO *pdinfo)
+void console_record_sample (const DATASET *pdinfo)
 {
     console_sample_handler(pdinfo, SAMPLE_RECORD);
 }
 
-int console_sample_changed (const DATAINFO *pdinfo)
+int console_sample_changed (const DATASET *pdinfo)
 {
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
@@ -315,10 +315,10 @@ static int real_console_exec (ExecState *state)
     push_history_line(state->line);
 
     state->flags = CONSOLE_EXEC;
-    err = gui_exec_line(state, &Z, datainfo);
+    err = gui_exec_line(state, dataset);
 
     while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(state, &Z, datainfo);
+	err = gretl_loop_exec(state, dataset);
     }
 
 #if CDEBUG
@@ -347,7 +347,7 @@ static void update_console (ExecState *state, GtkWidget *cview)
     GtkTextBuffer *buf;
     GtkTextIter iter;
 
-    console_record_sample(datainfo);
+    console_record_sample(dataset);
 
     if (state == console_state) {
 	real_console_exec(state);
@@ -376,8 +376,8 @@ static void update_console (ExecState *state, GtkWidget *cview)
     }
 
     /* update sample info if needed */
-    if (console_sample_changed(datainfo)) {
-	set_sample_label(datainfo);
+    if (console_sample_changed(dataset)) {
+	set_sample_label(dataset);
     }
 
 #ifdef G_OS_WIN32
@@ -607,9 +607,9 @@ const char *console_varname_complete (const char *s)
     size_t n = strlen(s);
     int i;
 
-    for (i=0; i<datainfo->v; i++) {
-	if (!strncmp(s, datainfo->varname[i], n)) {
-	    return datainfo->varname[i];
+    for (i=0; i<dataset->v; i++) {
+	if (!strncmp(s, dataset->varname[i], n)) {
+	    return dataset->varname[i];
 	}
     }
 

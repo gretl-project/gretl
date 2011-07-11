@@ -32,7 +32,6 @@ int gretl_if_state_check (int indent0);
 
 void gretl_if_state_reset (int indent);
 
-int flow_control (const char *line, double ***pZ, 
-		  DATAINFO *pdinfo, CMD *cmd);
+int flow_control (const char *line, DATASET *dset, CMD *cmd);
 
 #endif /* FLOW_CONTROL_H_ */

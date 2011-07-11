@@ -120,8 +120,7 @@ static int hr_transcribe_coeffs (arma_info *ainfo,
    with the first-pass residuals.
 */
 
-static int real_hr_arma_init (double *coeff, const double **Z, 
-			      const DATAINFO *pdinfo,
+static int real_hr_arma_init (double *coeff, const DATASET *dset,
 			      arma_info *ainfo, PRN *prn)
 {
     const int *list = ainfo->alist;
@@ -132,8 +131,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     int nexo = ainfo->nexo;
     int pass1lags, pass1v;
     const double *y;
-    double **aZ = NULL;
-    DATAINFO *adinfo = NULL;
+    DATASET *aset = NULL;
     int *pass1list = NULL;
     int *pass2list = NULL;
     int *arlags = NULL;
@@ -144,7 +142,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     int i, j, t;
     int err = 0;
 
-    pass1lags = (ainfo->Q + ainfo->P) * pdinfo->pd;
+    pass1lags = (ainfo->Q + ainfo->P) * dset->pd;
     if (pass1lags < HR_MINLAGS) {
 	pass1lags = HR_MINLAGS;
     }
@@ -153,13 +151,13 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     /* dependent variable */
     if (arma_xdiff(ainfo)) {
 	/* for initialization, use the level of y */
-	y = Z[ainfo->yno];
+	y = dset->Z[ainfo->yno];
     } else { 
 	y = ainfo->y;
     } 
 
-    adinfo = create_auxiliary_dataset(&aZ, pass1v + qtotal, ainfo->T);
-    if (adinfo == NULL) {
+    aset = create_auxiliary_dataset(pass1v + qtotal, ainfo->T);
+    if (aset == NULL) {
 	return E_ALLOC;
     }
 
@@ -187,14 +185,14 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 
     /* variable names */
 
-    strcpy(adinfo->varname[1], "y");
+    strcpy(aset->varname[1], "y");
     for (i=0; i<nexo; i++) { 
 	/* exogenous vars */
-	sprintf(adinfo->varname[i+1], "x%d", i);
+	sprintf(aset->varname[i+1], "x%d", i);
     }
     for (i=1; i<=pass1lags; i++) { 
 	/* lags */
-	sprintf(adinfo->varname[i+1+nexo], "y_%d", i);
+	sprintf(aset->varname[i+1+nexo], "y_%d", i);
     }
 
      /* Fill the dataset with the data for pass 1 */
@@ -208,20 +206,20 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 
     for (t=0; t<ainfo->T; t++) {
 	s = t + ainfo->t1;
-	aZ[1][t] = y[s];
+	aset->Z[1][t] = y[s];
 	for (i=0, pos=2; i<nexo; i++) {
 	    m = list[xstart + i];
-	    aZ[pos++][t] = Z[m][s];
+	    aset->Z[pos++][t] = dset->Z[m][s];
 	}
 	for (i=1; i<=pass1lags; i++) {
 	    s = t + ainfo->t1 - i;
-	    aZ[pos++][t] = (s >= 0)? y[s] : NADBL;
+	    aset->Z[pos++][t] = (s >= 0)? y[s] : NADBL;
 	}
     }
 
     /* pass 1 proper */
 
-    armod = lsq(pass1list, aZ, adinfo, OLS, OPT_A);
+    armod = lsq(pass1list, aset, OLS, OPT_A);
     if (armod.errcode) {
 	err = armod.errcode;
 	goto bailout;
@@ -244,7 +242,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 	    }
 	    for (i=0; i<ainfo->Q; i++) {
 		for (j=0; j<=nq; j++) {
-		    malags[pos++] = (i+1) * pdinfo->pd + j;
+		    malags[pos++] = (i+1) * dset->pd + j;
 		}
 	    }
 	}
@@ -260,7 +258,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 	    }
 	    for (i=0; i<ainfo->P; i++) {
 		for (j=0; j<=np; j++) {
-		    arlags[pos++] = (i+1) * pdinfo->pd + j;
+		    arlags[pos++] = (i+1) * dset->pd + j;
 		}
 	    }
 	}
@@ -281,10 +279,10 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     /* stick lagged residuals into temp dataset */
     pos = pass1v;
     for (i=0; i<qtotal; i++) {
-	sprintf(adinfo->varname[pos], "e_%d", malags[i]);
+	sprintf(aset->varname[pos], "e_%d", malags[i]);
 	for (t=0; t<ainfo->T; t++) {
 	    s = t - malags[i];
-	    aZ[pos][t] = (s >= 0)? armod.uhat[s] : NADBL;
+	    aset->Z[pos][t] = (s >= 0)? armod.uhat[s] : NADBL;
 	}
 	pos++;
     }
@@ -308,7 +306,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     
     /* now do pass2 */
     clear_model(&armod);
-    armod = lsq(pass2list, aZ, adinfo, OLS, OPT_A);
+    armod = lsq(pass2list, aset, OLS, OPT_A);
 
     if (armod.errcode) {
 	err = armod.errcode;
@@ -316,7 +314,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 #if AINIT_DEBUG
 	PRN *modprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
-	printmodel(&armod, adinfo, OPT_S, modprn);
+	printmodel(&armod, aset, OPT_S, modprn);
 	gretl_print_destroy(modprn);
 #endif
 	err = hr_transcribe_coeffs(ainfo, &armod, coeff);
@@ -342,7 +340,7 @@ static int real_hr_arma_init (double *coeff, const double **Z,
     free(pass2list);
     free(arlags);
     free(malags);
-    destroy_dataset(aZ, adinfo);
+    destroy_dataset(aset);
     clear_model(&armod);
 
     if (!err && prn != NULL) {
@@ -355,10 +353,10 @@ static int real_hr_arma_init (double *coeff, const double **Z,
 
 /* Do we have enough observations to do Hannan-Rissanen? */
 
-static int hr_df_check (arma_info *ainfo, const DATAINFO *pdinfo)
+static int hr_df_check (arma_info *ainfo, const DATASET *dset)
 {
     int nobs = ainfo->T;
-    int nlags = (ainfo->P + ainfo->Q) * pdinfo->pd;
+    int nlags = (ainfo->P + ainfo->Q) * dset->pd;
     int ncoeff, df;
     int ok = 1;
 
@@ -382,15 +380,14 @@ static int hr_df_check (arma_info *ainfo, const DATAINFO *pdinfo)
     return ok;
 }
 
-int hr_arma_init (double *coeff, const double **Z, 
-		  const DATAINFO *pdinfo,
+int hr_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, int *done)
 {
-    int ok = hr_df_check(ainfo, pdinfo);
+    int ok = hr_df_check(ainfo, dset);
     int err = 0;
 
     if (ok) {
-	err = real_hr_arma_init(coeff, Z, pdinfo, ainfo, ainfo->prn);
+	err = real_hr_arma_init(coeff, dset, ainfo, ainfo->prn);
 	if (!err) {
 	    *done = 1;
 	}
@@ -470,12 +467,12 @@ static void arma_init_transcribe_coeffs (arma_info *ainfo,
 
 static void arma_init_add_varnames (arma_info *ainfo, 
 				    int ptotal, int narmax, 
-				    DATAINFO *adinfo)
+				    DATASET *aset)
 {
     int i, j, k, kx, ky;
     int lag, k0 = 2;
 
-    strcpy(adinfo->varname[1], "y");
+    strcpy(aset->varname[1], "y");
 
     k = k0;
     kx = ptotal + ainfo->nexo + k0;
@@ -483,9 +480,9 @@ static void arma_init_add_varnames (arma_info *ainfo,
     for (i=0; i<ainfo->p; i++) {
 	if (AR_included(ainfo, i)) {
 	    lag = i + 1;
-	    sprintf(adinfo->varname[k++], "y_%d", lag);
+	    sprintf(aset->varname[k++], "y_%d", lag);
 	    for (j=0; j<narmax; j++) {
-		sprintf(adinfo->varname[kx++], "x%d_%d", j+1, lag);
+		sprintf(aset->varname[kx++], "x%d_%d", j+1, lag);
 	    }
 	}
     }
@@ -495,16 +492,16 @@ static void arma_init_add_varnames (arma_info *ainfo,
     for (j=0; j<ainfo->P; j++) {
 	lag = (j + 1) * ainfo->pd;
 	k = k0 + ainfo->np + j;
-	sprintf(adinfo->varname[k], "y_%d", lag);
+	sprintf(aset->varname[k], "y_%d", lag);
 	for (i=0; i<narmax; i++) {
-	    sprintf(adinfo->varname[kx++], "x%d_%d", i+1, lag);
+	    sprintf(aset->varname[kx++], "x%d_%d", i+1, lag);
 	}
 	for (i=0; i<ainfo->p; i++) {
 	    if (AR_included(ainfo, i)) {
 		lag = (j + 1) * ainfo->pd + (i + 1);
-		sprintf(adinfo->varname[ky++], "y_%d", lag);
+		sprintf(aset->varname[ky++], "y_%d", lag);
 		for (k=0; k<narmax; k++) {
-		    sprintf(adinfo->varname[kx++], "x%d_%d", k+1, lag);
+		    sprintf(aset->varname[kx++], "x%d_%d", k+1, lag);
 		}
 	    }
 	}
@@ -513,7 +510,7 @@ static void arma_init_add_varnames (arma_info *ainfo,
     kx = ptotal + k0;
 
     for (i=0; i<ainfo->nexo; i++) {
-	sprintf(adinfo->varname[kx++], "x%d", i+1);
+	sprintf(aset->varname[kx++], "x%d", i+1);
     }
 }
 
@@ -523,20 +520,19 @@ static void arma_init_add_varnames (arma_info *ainfo,
 */
 
 static int arma_init_add_dummies (arma_info *ainfo,
-				  double ***pZ, 
-				  DATAINFO *pdinfo)
+				  DATASET *dset)
 {
     int *misslist = NULL;
-    int t1 = pdinfo->t1;
+    int t1 = dset->t1;
     int i, t, err = 0;
 
     /* if we have a block of leading NAs, skip it */
 
-    for (t=t1; t<=pdinfo->t2 && !err; t++) {
+    for (t=t1; t<=dset->t2 && !err; t++) {
 	int miss = 0;
 
-	for (i=1; i<pdinfo->v; i++) {
-	    if (na((*pZ)[i][t])) {
+	for (i=1; i<dset->v; i++) {
+	    if (na(dset->Z[i][t])) {
 		miss = 1;
 		break;
 	    }
@@ -550,9 +546,9 @@ static int arma_init_add_dummies (arma_info *ainfo,
 
     /* form list of observation indices of interior NAs */
 
-    for (t=t1; t<=pdinfo->t2 && !err; t++) {
-	for (i=1; i<pdinfo->v; i++) {
-	    if (na((*pZ)[i][t])) {
+    for (t=t1; t<=dset->t2 && !err; t++) {
+	for (i=1; i<dset->v; i++) {
+	    if (na(dset->Z[i][t])) {
 		misslist = gretl_list_append_term(&misslist, t);
 		if (misslist == NULL) {
 		    err = E_ALLOC;
@@ -570,19 +566,19 @@ static int arma_init_add_dummies (arma_info *ainfo,
 	/* For each observation with any missing values, add
 	   a specific dummy and zero out the missing data.
 	*/
-	int origv = pdinfo->v;
+	int origv = dset->v;
 	int j, v, nd = misslist[0];
 
-	err = dataset_add_series(nd, pZ, pdinfo);
+	err = dataset_add_series(nd, dset);
 	if (!err) {
 	    for (i=1; i<=misslist[0]; i++) {
 		v = origv + i - 1;
 		t = misslist[i];
-		sprintf(pdinfo->varname[v], "d%d", i);
-		(*pZ)[v][t] = 1.0;
+		sprintf(dset->varname[v], "d%d", i);
+		dset->Z[v][t] = 1.0;
 		for (j=1; j<origv; j++) {
-		    if (na((*pZ)[j][t])) {
-			(*pZ)[j][t] = 0.0;
+		    if (na(dset->Z[j][t])) {
+			dset->Z[j][t] = 0.0;
 		    }
 		}
 	    }
@@ -598,13 +594,13 @@ static const int *xlist;
 
 /* X, if non-NULL, holds the differenced regressors */
 
-static double get_xti (const double **Z, int i, int t, 
+static double get_xti (const DATASET *dset, int i, int t, 
 		       const gretl_matrix *X)
 {
     if (X != NULL) {
 	return gretl_matrix_get(X, t, i);
     } else {
-	return Z[xlist[i]][t];
+	return dset->Z[xlist[i]][t];
     }
 }
 
@@ -617,13 +613,11 @@ static double get_xti (const double **Z, int i, int t,
 static int arma_init_build_dataset (arma_info *ainfo, 
 				    int ptotal, int narmax, 
 				    const int *list,
-				    const double **Z,
-				    const DATAINFO *pdinfo,
-				    double ***paZ, 
-				    DATAINFO *adinfo,
+				    const DATASET *dset,
+				    DATASET *aset,
 				    int nonlin)
 {
-    double **aZ = *paZ;
+    double **aZ = aset->Z;
     const double *y;
     const gretl_matrix *X = NULL;
     int i, j, k, kx, ky;
@@ -634,7 +628,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 
     if (arima_levels(ainfo)) {
 	/* we'll need differences for initialization */
-	err = arima_difference(ainfo, Z, pdinfo, 1);
+	err = arima_difference(ainfo, dset, 1);
 	if (err) {
 	    return err;
 	}
@@ -643,13 +637,13 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	X = ainfo->dX;
     } else if (arma_xdiff(ainfo)) {
 	/* run init in levels (FIXME?) */
-	y = Z[ainfo->yno];
+	y = dset->Z[ainfo->yno];
     } else {
 	y = ainfo->y;
     }
 
     /* add variable names to auxiliary dataset */
-    arma_init_add_varnames(ainfo, ptotal, narmax, adinfo);
+    arma_init_add_varnames(ainfo, ptotal, narmax, aset);
 
     /* starting position for reading exogeneous vars */
     if (ainfo->d > 0 || ainfo->D > 0) {
@@ -661,7 +655,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
     /* set "local" globals */
     xlist = list + xstart;
 
-    for (t=0; t<adinfo->n; t++) {
+    for (t=0; t<aset->n; t++) {
 	int realt = t + ainfo->t1;
 	int miss = 0;
 
@@ -692,7 +686,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		}
 		k++;
 		for (j=0; j<narmax; j++) {
-		    aZ[kx++][t] = get_xti(Z, j, s, X);
+		    aZ[kx++][t] = get_xti(dset, j, s, X);
 		}
 	    }
 	}
@@ -714,7 +708,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    aZ[k][t] *= ainfo->yscale;
 		}		
 		for (k=0; k<narmax; k++) {
-		    aZ[kx++][t] = get_xti(Z, k, s, X);
+		    aZ[kx++][t] = get_xti(dset, k, s, X);
 		}
 	    }
 	    for (i=0; i<ainfo->p; i++) {
@@ -735,7 +729,7 @@ static int arma_init_build_dataset (arma_info *ainfo,
 		    }
 		    ky++;
 		    for (k=0; k<narmax; k++) {
-			aZ[kx++][t] = get_xti(Z, k, s, X);
+			aZ[kx++][t] = get_xti(dset, k, s, X);
 		    }
 		}
 	    }
@@ -744,36 +738,34 @@ static int arma_init_build_dataset (arma_info *ainfo,
 	kx = ptotal + k0;
 
 	for (i=0; i<ainfo->nexo; i++) {
-	    aZ[kx++][t] = get_xti(Z, i, realt, X);
+	    aZ[kx++][t] = get_xti(dset, i, realt, X);
 	}
 
 	if (miss) {
-	    adinfo->t1 = t + 1;
+	    aset->t1 = t + 1;
 	}	
     }
 
     if (nonlin && arma_missvals(ainfo)) {
-	err = arma_init_add_dummies(ainfo, paZ, adinfo);
-	aZ = *paZ;
+	err = arma_init_add_dummies(ainfo, aset);
     }
 
     if (undo_diff) {
-	arima_difference_undo(ainfo, Z);
+	arima_difference_undo(ainfo, dset);
     }
 
 #if AINIT_DEBUG
     fprintf(stderr, "arma init dataset:\n");
-    for (i=0; i<adinfo->v; i++) {
-	fprintf(stderr, "var %d '%s', obs[0] = %g\n", i, adinfo->varname[i], 
-		aZ[i][0]);
+    for (i=0; i<aset->v; i++) {
+	fprintf(stderr, "var %d '%s', obs[0] = %g\n", i, aset->varname[i], 
+		aset->Z[i][0]);
     }
 #endif
 
     return err;
 }
 
-static void nls_kickstart (MODEL *pmod, double **Z, 
-			   DATAINFO *pdinfo,
+static void nls_kickstart (MODEL *pmod, DATASET *dset,
 			   double *b0, double *by1)
 {
     int list[4];
@@ -789,7 +781,7 @@ static void nls_kickstart (MODEL *pmod, double **Z,
 	list[2] = 2;
     }
 
-    *pmod = lsq(list, Z, pdinfo, OLS, OPT_A | OPT_Z);
+    *pmod = lsq(list, dset, OLS, OPT_A | OPT_Z);
 
     if (!pmod->errcode) {
 	if (b0 != 0) {
@@ -862,8 +854,7 @@ static int y_Xb_at_lag (char *spec, arma_info *ainfo,
 
 static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 			       int narmax, const double *coeff,
-			       double ***pZ, DATAINFO *pdinfo,
-			       PRN *prn) 
+			       DATASET *dset, PRN *prn) 
 {
     gretlopt nlsopt = OPT_A;
     char fnstr[MAXLINE];
@@ -875,7 +866,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     int nparam, lag;
     int i, j, k, err = 0;
 
-    spec = nlspec_new(NLS, pdinfo);
+    spec = nlspec_new(NLS, dset);
     if (spec == NULL) {
 	return E_ALLOC;
     }
@@ -927,7 +918,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 	if (coeff != NULL) {
 	    parms[k] = coeff[k];
 	} else {
-	    parms[k] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
+	    parms[k] = gretl_mean(0, dset->n - 1, dset->Z[1]);
 	}
 	b0 = &parms[k];
 	strcpy(pnames[k++], "b0");
@@ -971,7 +962,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
     if (ainfo->misslist != NULL) {
 	for (i=1; i<=ainfo->misslist[0]; i++) {
 	    j = ainfo->misslist[i];
-	    parms[k] = (*pZ)[1][j];
+	    parms[k] = dset->Z[1][j];
 	    sprintf(pnames[k++], "c%d", i);
 	}
     }
@@ -1028,7 +1019,7 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 
     if (!err) {
 	if (coeff == NULL) {
-	    nls_kickstart(amod, *pZ, pdinfo, b0, by1);
+	    nls_kickstart(amod, dset, b0, by1);
 	}
 
 #if AINIT_DEBUG
@@ -1039,20 +1030,20 @@ static int arma_get_nls_model (MODEL *amod, arma_info *ainfo,
 	}
 #endif
 
-	err = nlspec_set_regression_function(spec, fnstr, pdinfo);
+	err = nlspec_set_regression_function(spec, fnstr, dset);
     }
 
     if (!err) {
 	set_auxiliary_scalars();
 	err = nlspec_add_param_list(spec, nparam, parms, pnames,
-				    pZ, pdinfo);
+				    dset);
 
 	if (!err) {
-	    *amod = model_from_nlspec(spec, pZ, pdinfo, nlsopt, prn);
+	    *amod = model_from_nlspec(spec, dset, nlsopt, prn);
 	    err = amod->errcode;
 #if AINIT_DEBUG
 	    if (!err) {
-		printmodel(amod, pdinfo, OPT_NONE, prn);
+		printmodel(amod, dset, OPT_NONE, prn);
 	    }
 #endif
 	}
@@ -1122,8 +1113,7 @@ static int *make_ar_ols_list (arma_info *ainfo, int av)
    near-zero.
 */
 
-int ar_arma_init (double *coeff, const double **Z, 
-		  const DATAINFO *pdinfo,
+int ar_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, MODEL *pmod)
 {
     PRN *prn = ainfo->prn;
@@ -1131,17 +1121,16 @@ int ar_arma_init (double *coeff, const double **Z,
     int nmixed = ainfo->np * ainfo->P;
     int ptotal = ainfo->np + ainfo->P + nmixed;
     int av = ptotal + ainfo->nexo + 2;
-    double **aZ = NULL;
-    DATAINFO *adinfo = NULL;
+    DATASET *aset = NULL;
     int *arlist = NULL;
     MODEL armod;
     int narmax, nonlin = 0;
     int i, err = 0;
 
 #if AINIT_DEBUG
-    fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (pdinfo->n=%d);\n"
+    fprintf(stderr, "ar_arma_init: dset->t1=%d, dset->t2=%d (dset->n=%d);\n"
 	    " ainfo->t1=%d, ainfo->t2=%d, ",
-	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
+	    dset->t1, dset->t2, dset->n, ainfo->t1, ainfo->t2);
     fprintf(stderr, "nmixed = %d, ptotal = %d\n", nmixed, ptotal);
 #endif
 
@@ -1167,8 +1156,8 @@ int ar_arma_init (double *coeff, const double **Z,
 	maybe_set_yscale(ainfo);
     }
 
-    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->fullT);
-    if (adinfo == NULL) {
+    aset = create_auxiliary_dataset(av, ainfo->fullT);
+    if (aset == NULL) {
 	return E_ALLOC;
     }
 
@@ -1182,7 +1171,7 @@ int ar_arma_init (double *coeff, const double **Z,
 
     /* build temporary dataset */
     arma_init_build_dataset(ainfo, ptotal, narmax, list,
-			    Z, pdinfo, &aZ, adinfo, nonlin);
+			    dset, aset, nonlin);
 
     if (nonlin) {
 	PRN *dprn = NULL;
@@ -1191,13 +1180,13 @@ int ar_arma_init (double *coeff, const double **Z,
 	fprintf(stderr, "arma:_init_by_ls: doing NLS\n");
 	dprn = prn;
 #endif
-	err = arma_get_nls_model(&armod, ainfo, narmax, NULL, &aZ, adinfo,
+	err = arma_get_nls_model(&armod, ainfo, narmax, NULL, aset,
 				 dprn);
     } else {
 #if AINIT_DEBUG
 	printlist(arlist, "'arlist' in ar_arma_init (OLS)");
 #endif
-	armod = lsq(arlist, aZ, adinfo, OLS, OPT_A | OPT_Z);
+	armod = lsq(arlist, aset, OLS, OPT_A | OPT_Z);
 	err = armod.errcode;
     }
 
@@ -1239,13 +1228,12 @@ int ar_arma_init (double *coeff, const double **Z,
     /* clean up */
     clear_model(&armod);
     free(arlist);
-    destroy_dataset(aZ, adinfo);
+    destroy_dataset(aset);
 
     return err;
 }
 
-int arma_by_ls (const double *coeff, 
-		const double **Z, const DATAINFO *pdinfo,
+int arma_by_ls (const double *coeff, const DATASET *dset,
 		arma_info *ainfo, MODEL *pmod)
 {
     PRN *prn = ainfo->prn;
@@ -1253,13 +1241,12 @@ int arma_by_ls (const double *coeff,
     int nmixed = ainfo->np * ainfo->P;
     int ptotal = ainfo->np + ainfo->P + nmixed;
     int av = ptotal + ainfo->nexo + 2;
-    double **aZ = NULL;
-    DATAINFO *adinfo = NULL;
+    DATASET *aset = NULL;
     int *arlist = NULL;
     int nonlin = 0;
 
-    adinfo = create_auxiliary_dataset(&aZ, av, ainfo->T);
-    if (adinfo == NULL) {
+    aset = create_auxiliary_dataset(av, ainfo->T);
+    if (aset == NULL) {
 	return E_ALLOC;
     }
 
@@ -1273,23 +1260,23 @@ int arma_by_ls (const double *coeff,
 
     /* build temporary dataset */
     arma_init_build_dataset(ainfo, ptotal, 0, list,
-			    Z, pdinfo, &aZ, adinfo, nonlin);
+			    dset, aset, nonlin);
 
     if (nonlin) {
-	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, &aZ, adinfo,
+	pmod->errcode = arma_get_nls_model(pmod, ainfo, 0, coeff, aset,
 					   prn);
     } else {
-	*pmod = lsq(arlist, aZ, adinfo, OLS, OPT_A | OPT_Z);
+	*pmod = lsq(arlist, aset, OLS, OPT_A | OPT_Z);
     }
 
     /* clean up */
     free(arlist);
-    destroy_dataset(aZ, adinfo);
+    destroy_dataset(aset);
 
-    if (!pmod->errcode && pmod->full_n < pdinfo->n) {
+    if (!pmod->errcode && pmod->full_n < dset->n) {
 	/* the model series are short */
-	double *uhat = malloc(pdinfo->n * sizeof *uhat);
-	double *yhat = malloc(pdinfo->n * sizeof *yhat);
+	double *uhat = malloc(dset->n * sizeof *uhat);
+	double *yhat = malloc(dset->n * sizeof *yhat);
 	int s, t;
 
 	if (uhat == NULL || yhat == NULL) {
@@ -1297,7 +1284,7 @@ int arma_by_ls (const double *coeff,
 	    free(yhat);
 	    pmod->errcode = E_ALLOC;
 	} else {
-	    for (t=0; t<pdinfo->n; t++) {
+	    for (t=0; t<dset->n; t++) {
 		uhat[t] = yhat[t] = NADBL;
 	    }
 	    t = ainfo->t1;
@@ -1314,6 +1301,3 @@ int arma_by_ls (const double *coeff,
 
     return pmod->errcode;
 }
-
-
-

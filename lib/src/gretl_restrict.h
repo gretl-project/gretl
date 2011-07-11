@@ -33,32 +33,30 @@ var_restriction_set_start (const char *line, GRETL_VAR *var);
 
 gretl_restriction *
 eqn_restriction_set_start (const char *line, MODEL *pmod, 
-			   const DATAINFO *pdinfo,
+			   const DATASET *dset,
 			   gretlopt opt);
 
 gretl_restriction *rset_from_VECM (GRETL_VAR *var, int *err);
 
 int 
 restriction_set_parse_line (gretl_restriction *rset, const char *line,
-			    const DATAINFO *pdinfo);
+			    const DATASET *dset);
 
 int
 gretl_restriction_finalize (gretl_restriction *rset, 
-			    const double **Z, const DATAINFO *pdinfo,
+			    const DATASET *dset,
 			    gretlopt opt, PRN *prn);
 
 int
 gretl_restriction_finalize_full (ExecState *state,
 				 gretl_restriction *rset, 
-				 const double **Z,
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 gretlopt opt,
 				 PRN *prn);
 
 GRETL_VAR *
 gretl_restricted_vecm (gretl_restriction *rset, 
-		       const double **Z,
-		       const DATAINFO *pdinfo,
+		       const DATASET *dset,
 		       gretlopt opt, 
 		       PRN *prn,
 		       int *err);
@@ -70,7 +68,7 @@ void print_restriction_from_matrices (const gretl_matrix *R,
 
 void destroy_restriction_set (gretl_restriction *rset);
 
-int gretl_sum_test (const int *list, MODEL *pmod, DATAINFO *pdinfo,
+int gretl_sum_test (const int *list, MODEL *pmod, DATASET *dset,
 		    PRN *prn);
 
 const gretl_matrix *rset_get_R_matrix (const gretl_restriction *rset);

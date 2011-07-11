@@ -73,7 +73,7 @@ enum {
 #define REM_RND_UP(x,y) ((x) % (y) ? (y) - (x) % (y) : 0)
 
 typedef struct spss_var_ spss_var;
-typedef struct spss_dataset_ spss_dataset;
+typedef struct spss_data_ spss_data;
 typedef struct spss_labelset_ spss_labelset;
 
 struct spss_var_ {
@@ -144,7 +144,7 @@ struct sav_extension {
 };
 
 /* working information on dataset */
-struct spss_dataset_ {
+struct spss_data_ {
     FILE *fp;                  /* stream for reading */
     gretlopt opt;              /* option flags */
     int nvars;                 /* number of variables (really, 'elements') */
@@ -224,12 +224,12 @@ static int sav_error (const char *fmt, ...)
     return 1;
 }
 
-static int sav_read_int32 (spss_dataset *dset, int *err)
+static int sav_read_int32 (spss_data *sdat, int *err)
 {
     int32_t ret = 0;
 
-    *err = fread(&ret, sizeof ret, 1, dset->fp) != 1;
-    if (*err && dset->swapends) {
+    *err = fread(&ret, sizeof ret, 1, sdat->fp) != 1;
+    if (*err && sdat->swapends) {
 	reverse_int(ret);
     }
 
@@ -238,7 +238,7 @@ static int sav_read_int32 (spss_dataset *dset, int *err)
 
 /* Read record type 7, subtype 3 */
 
-static int read_rec_7_3 (spss_dataset *dset, int size, int count)
+static int read_rec_7_3 (spss_data *sdat, int size, int count)
 {
     int file_big_endian;
     int32_t data[8];
@@ -251,11 +251,11 @@ static int read_rec_7_3 (spss_dataset *dset, int size, int count)
 			 size, count, sizeof(int32_t));
     }
 
-    if (fread(data, sizeof data, 1, dset->fp) != 1) {
+    if (fread(data, sizeof data, 1, sdat->fp) != 1) {
 	return E_DATA;
     }
 
-    if (dset->swapends) {
+    if (sdat->swapends) {
 	for (i=0; i<8; i++) {
 	    reverse_int(data[i]);
 	}
@@ -266,16 +266,16 @@ static int read_rec_7_3 (spss_dataset *dset, int size, int count)
     }
 
 #ifdef WORDS_BIGENDIAN
-    file_big_endian = !dset->swapends;
+    file_big_endian = !sdat->swapends;
 #else
-    file_big_endian = dset->swapends;
+    file_big_endian = sdat->swapends;
 #endif
 
     if ((file_big_endian && data[6] != 1) || (!file_big_endian && data[6] != 2)) {
 	return sav_error("I'm confused over the endianness of this .sav file");
     }
 
-    enc = dset->encoding = data[7];
+    enc = sdat->encoding = data[7];
     
     /* See
        http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html
@@ -297,7 +297,7 @@ static int read_rec_7_3 (spss_dataset *dset, int size, int count)
 
 /* Read record type 7, subtype 4 */
 
-static int read_rec_7_4 (spss_dataset *dset, int size, int count)
+static int read_rec_7_4 (spss_data *sdat, int size, int count)
 {
     double data[3];
     int i;
@@ -308,20 +308,20 @@ static int read_rec_7_4 (spss_dataset *dset, int size, int count)
 			 size, count, sizeof(double));
     }
 
-    if (fread(data, sizeof data, 1, dset->fp) != 1) {
+    if (fread(data, sizeof data, 1, sdat->fp) != 1) {
 	return E_DATA;
     }
 
-    if (dset->swapends) {
+    if (sdat->swapends) {
 	for (i=0; i<3; i++) {
 	    reverse_double(data[i]);
 	}
     }
 
     if (data[0] != SYSMIS || data[1] != DBL_MAX || data[2] != second_lowest_double_val()) {
-	dset->ext.sysmis = data[0];
-	dset->ext.highest = data[1];
-	dset->ext.lowest = data[2];
+	sdat->ext.sysmis = data[0];
+	sdat->ext.highest = data[1];
+	sdat->ext.lowest = data[2];
 	fprintf(stderr, "File-indicated value is different from internal value for at "
 		"least one of the three system values.  SYSMIS: indicated %g, "
 		"expected %g; HIGHEST: %g, %g; LOWEST: %g, %g\n",
@@ -333,13 +333,13 @@ static int read_rec_7_4 (spss_dataset *dset, int size, int count)
     return 0;
 }
 
-static spss_var *get_spss_var_by_name (spss_dataset *dset, const char *s)
+static spss_var *get_spss_var_by_name (spss_data *sdat, const char *s)
 {
     int i;
 
-    for (i=0; i<dset->nvars; i++) {
-	if (!strcmp(dset->vars[i].name, s)) {
-	    return &dset->vars[i];
+    for (i=0; i<sdat->nvars; i++) {
+	if (!strcmp(sdat->vars[i].name, s)) {
+	    return &sdat->vars[i];
 	}
     }
 
@@ -383,7 +383,7 @@ static int recode_sav_string (char *targ, const char *src,
 
 /* Read record type 7, subtype 13: long variable names */
 
-static int read_long_varnames (spss_dataset *dset, unsigned size, 
+static int read_long_varnames (spss_data *sdat, unsigned size, 
 			       unsigned count)
 {
     char *buf, *val;
@@ -407,7 +407,7 @@ static int read_long_varnames (spss_dataset *dset, unsigned size,
 	return E_ALLOC;
     }
 
-    if (fread(buf, size, 1, dset->fp) != 1) {
+    if (fread(buf, size, 1, sdat->fp) != 1) {
 	free(buf);
 	return E_DATA;
     }
@@ -424,7 +424,7 @@ static int read_long_varnames (spss_dataset *dset, unsigned size,
 	    *val = 0;
 	    ++val;
 	    /* at this point p is key, val is long name */
-	    var = get_spss_var_by_name(dset, p);
+	    var = get_spss_var_by_name(sdat, p);
 	    if (var != NULL) {
 		/* replace original name with "long name" */
 #if SPSS_DEBUG
@@ -446,7 +446,7 @@ static int read_long_varnames (spss_dataset *dset, unsigned size,
 
 /* read a subrecord of SPSS record type 7 */
 
-static int read_subrecord (spss_dataset *dset)
+static int read_subrecord (spss_data *sdat)
 {
     struct {
 	int32_t subtype;
@@ -456,7 +456,7 @@ static int read_subrecord (spss_dataset *dset)
     int skip = 0;
     int err = 0;
 
-    if (fread(&data, sizeof data, 1, dset->fp) != 1) {
+    if (fread(&data, sizeof data, 1, sdat->fp) != 1) {
 	return E_DATA;
     }
 
@@ -465,7 +465,7 @@ static int read_subrecord (spss_dataset *dset)
 	    data.subtype, data.size, data.count);
 #endif
 
-    if (dset->swapends) {
+    if (sdat->swapends) {
 	reverse_int(data.subtype);
 	reverse_int(data.size);
 	reverse_int(data.count);
@@ -473,10 +473,10 @@ static int read_subrecord (spss_dataset *dset)
 
     switch (data.subtype) {
     case 3:
-	err = read_rec_7_3(dset, data.size, data.count);
+	err = read_rec_7_3(sdat, data.size, data.count);
 	break;
     case 4:
-	err = read_rec_7_4(dset, data.size, data.count);
+	err = read_rec_7_4(sdat, data.size, data.count);
 	break;
     case 5:
     case 6:
@@ -487,7 +487,7 @@ static int read_subrecord (spss_dataset *dset)
 	skip = 1;
 	break;
     case 13: 
-	err = read_long_varnames(dset, data.size, data.count);
+	err = read_long_varnames(sdat, data.size, data.count);
 	break;
     case 16: 
 	/* http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html */
@@ -504,17 +504,17 @@ static int read_subrecord (spss_dataset *dset)
 
 	fprintf(stderr, "record type 7, subtype %d: skipping %d bytes\n", 
 		data.subtype, n);
-	fseek(dset->fp, n, SEEK_CUR);
+	fseek(sdat->fp, n, SEEK_CUR);
     }
 
     return err;
 }
 
-static int read_type_4 (spss_dataset *dset, int *err)
+static int read_type_4 (spss_data *sdat, int *err)
 {
     int32_t rec_type, n_vars = 0;
 
-    rec_type = sav_read_int32(dset, err);
+    rec_type = sav_read_int32(sdat, err);
     if (*err) {
 	return 0;
     }
@@ -526,51 +526,51 @@ static int read_type_4 (spss_dataset *dset, int *err)
 	return 0;
     }
 
-    n_vars = sav_read_int32(dset, err);
+    n_vars = sav_read_int32(sdat, err);
     if (*err) {
 	return 0;
     }
 
-    if (n_vars < 1 || n_vars > dset->nvars) {
+    if (n_vars < 1 || n_vars > sdat->nvars) {
 	*err = sav_error("Number of variables associated with a value label "
 			  "(%d) is not between 1 and the number of variables (%d)",
-			  n_vars, dset->nvars);
+			  n_vars, sdat->nvars);
     }
 
     return n_vars;
 }
 
-static void dset_remove_labelset (spss_dataset *dset)
+static void sdat_remove_labelset (spss_data *sdat)
 {
-    int n = dset->nlabelsets - 1;
+    int n = sdat->nlabelsets - 1;
 
     if (n < 0) {
 	return;
     }
 
-    free_labelset(dset->labelsets[n]);
-    dset->labelsets[n] = NULL;
-    dset->nlabelsets = n;
+    free_labelset(sdat->labelsets[n]);
+    sdat->labelsets[n] = NULL;
+    sdat->nlabelsets = n;
 }
 
-static int dset_add_labelset (spss_dataset *dset, int n_labels)
+static int sdat_add_labelset (spss_data *sdat, int n_labels)
 {
     spss_labelset *lset, **lsets;
-    int n = dset->nlabelsets + 1;
+    int n = sdat->nlabelsets + 1;
     int err = 0;
 
     if (n_labels <= 0) {
 	return E_DATA;
     }
 
-    lsets = realloc(dset->labelsets, n * sizeof *lsets);
+    lsets = realloc(sdat->labelsets, n * sizeof *lsets);
     if (lsets == NULL) {
 	return E_ALLOC;
     }
 
     lsets[n-1] = NULL;
-    dset->labelsets = lsets;
-    dset->nlabelsets = n;
+    sdat->labelsets = lsets;
+    sdat->nlabelsets = n;
 
     lset = malloc(sizeof *lset);
     if (lset == NULL) {
@@ -598,16 +598,16 @@ static int dset_add_labelset (spss_dataset *dset, int n_labels)
     return err;
 }
 
-static int check_label_varindex (spss_dataset *dset, spss_labelset *lset, int idx)
+static int check_label_varindex (spss_data *sdat, spss_labelset *lset, int idx)
 {
     int err = 0;
 
-    if (idx < 1 || idx > dset->nvars) {
+    if (idx < 1 || idx > sdat->nvars) {
 	err = sav_error("Variable index associated with value label (%d) is "
 			 "not between 1 and the number of values (%d)",
-			 idx, dset->nvars);
+			 idx, sdat->nvars);
     } else {
-	spss_var *v = &dset->vars[idx-1];
+	spss_var *v = &sdat->vars[idx-1];
 
 	if (v->type == -1) {
 	    err = sav_error("Variable index associated with value label (%d) refers "
@@ -628,15 +628,15 @@ static int check_label_varindex (spss_dataset *dset, spss_labelset *lset, int id
     return err;
 }
 
-static int read_value_labels (spss_dataset *dset)
+static int read_value_labels (spss_data *sdat)
 {
-    FILE *fp = dset->fp;
+    FILE *fp = sdat->fp;
     spss_labelset *lset;
     int32_t n_labels = 0;  /* Number of labels */
     int32_t n_vars = 0;    /* Number of associated variables */
     int i, err = 0;
 
-    n_labels = sav_read_int32(dset, &err);
+    n_labels = sav_read_int32(sdat, &err);
     if (err) {
 	return err;
     }
@@ -645,12 +645,12 @@ static int read_value_labels (spss_dataset *dset)
     fprintf(stderr, "\n*** label set: %d labels\n", n_labels);
 #endif
 
-    err = dset_add_labelset(dset, n_labels);
+    err = sdat_add_labelset(sdat, n_labels);
     if (err) {
 	return err;
     }
 
-    lset = dset->labelsets[dset->nlabelsets - 1];
+    lset = sdat->labelsets[sdat->nlabelsets - 1];
 
     /* first step: read the value/label pairs */
 
@@ -693,7 +693,7 @@ static int read_value_labels (spss_dataset *dset)
     */
 
     if (!err) {
-	n_vars = read_type_4(dset, &err);
+	n_vars = read_type_4(sdat, &err);
     }
 
 #if SPSS_DEBUG
@@ -711,17 +711,17 @@ static int read_value_labels (spss_dataset *dset)
     for (i=0; i<n_vars && !err; i++) {
 	int32_t idx;
 
-	idx = sav_read_int32(dset, &err);
+	idx = sav_read_int32(sdat, &err);
 	if (err) {
 	    break;
 	}
 
-	err = check_label_varindex(dset, lset, idx);
+	err = check_label_varindex(sdat, lset, idx);
 	if (!err) {
 	    lset->varlist[i+1] = idx;
 #if SPSS_DEBUG
 	    fprintf(stderr, " %3d: idx = %d (%s)\n", i, idx,
-		    dset->vars[idx-1].name);
+		    sdat->vars[idx-1].name);
 #endif
 	}
     }
@@ -729,7 +729,7 @@ static int read_value_labels (spss_dataset *dset)
     /* we'll preserve value -> label mappings only for numeric
        variables */
     if (!err && lset->vtype != SPSS_NUMERIC) {
-	dset_remove_labelset(dset);
+	sdat_remove_labelset(sdat);
     }
 
     return err;
@@ -738,12 +738,12 @@ static int read_value_labels (spss_dataset *dset)
 /* Reads an SPSS "document" record, type 6, and discards it: for now,
    this is just to keep our place in the stream */
 
-static int read_documents (spss_dataset *dset)
+static int read_documents (spss_data *sdat)
 {
     int32_t n_lines;
     int err = 0;
 
-    n_lines = sav_read_int32(dset, &err);
+    n_lines = sav_read_int32(sdat, &err);
 
     if (n_lines <= 0) {
 	fprintf(stderr, "Number of document lines (%d) must be greater than 0\n",
@@ -754,7 +754,7 @@ static int read_documents (spss_dataset *dset)
 	unsigned char c;
 
 	for (i=0; i<n; i++) {
-	    fread(&c, 1, 1, dset->fp);
+	    fread(&c, 1, 1, sdat->fp);
 	}
 
 	fprintf(stderr, "read_documents: got %d lines\n", n_lines);
@@ -765,21 +765,21 @@ static int read_documents (spss_dataset *dset)
 
 /* Read records of types 3, 4, 6, and 7 */
 
-static int read_sav_other_records (spss_dataset *dset)
+static int read_sav_other_records (spss_data *sdat)
 {
-    FILE *fp = dset->fp;
+    FILE *fp = sdat->fp;
     int32_t pad, rec_type = 0;
     int err = 0;
 
     while (rec_type >= 0 && !err) {
-	rec_type = sav_read_int32(dset, &err);
+	rec_type = sav_read_int32(sdat, &err);
 	if (err) {
 	    break;
 	}
 
 	switch (rec_type) {
 	case 3:
-	    err = read_value_labels(dset);
+	    err = read_value_labels(sdat);
 	    break;
 	case 4:
 	    fprintf(stderr, "Orphaned variable index record (type 4).  Type 4\n"
@@ -787,10 +787,10 @@ static int read_sav_other_records (spss_dataset *dset)
 	    err = E_DATA;
 	    break;
 	case 6:
-	    err = read_documents(dset);
+	    err = read_documents(sdat);
 	    break;
 	case 7:
-	    read_subrecord(dset);
+	    read_subrecord(sdat);
 	    break;
 	case 999:
 	    fread(&pad, sizeof pad, 1, fp);
@@ -806,23 +806,23 @@ static int read_sav_other_records (spss_dataset *dset)
     return err;
 }
 
-static int dset_add_variables (spss_dataset *dset)
+static int sdat_add_variables (spss_data *sdat)
 {
     int i;
 
-    dset->vars = malloc(dset->nvars * sizeof *dset->vars);
-    if (dset->vars == NULL) {
+    sdat->vars = malloc(sdat->nvars * sizeof *sdat->vars);
+    if (sdat->vars == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=0; i<dset->nvars; i++) {
-	dset->vars[i].type = SPSS_NUMERIC;
-	dset->vars[i].gretl_index = -1;
-	dset->vars[i].n_ok_obs = 0;
-	dset->vars[i].miss_type = MISSING_NONE;
-	dset->vars[i].name[0] = '\0';
-	dset->vars[i].label[0] = '\0';
-	dset->vars[i].offset = -1;
+    for (i=0; i<sdat->nvars; i++) {
+	sdat->vars[i].type = SPSS_NUMERIC;
+	sdat->vars[i].gretl_index = -1;
+	sdat->vars[i].n_ok_obs = 0;
+	sdat->vars[i].miss_type = MISSING_NONE;
+	sdat->vars[i].name[0] = '\0';
+	sdat->vars[i].label[0] = '\0';
+	sdat->vars[i].offset = -1;
     }
 
     return 0;
@@ -845,9 +845,9 @@ static int validate_var_info (struct sysfile_variable *sv, int i)
     return err;
 }
 
-static int transcribe_varname (spss_dataset *dset, struct sysfile_variable *sv, int i)
+static int transcribe_varname (spss_data *sdat, struct sysfile_variable *sv, int i)
 {
-    spss_var *v = &dset->vars[i];
+    spss_var *v = &sdat->vars[i];
     unsigned char c = sv->name[0];
     int j = 0, k = 0;
 
@@ -884,13 +884,13 @@ static int transcribe_varname (spss_dataset *dset, struct sysfile_variable *sv, 
     return 0;
 }
 
-static int grab_var_label (spss_dataset *dset, spss_var *v)
+static int grab_var_label (spss_data *sdat, spss_var *v)
 {
     size_t labread, rem = 0;
     int32_t len;
     int err = 0;
 
-    len = sav_read_int32(dset, &err);
+    len = sav_read_int32(sdat, &err);
     if (err) {
 	return err;
     }
@@ -910,7 +910,7 @@ static int grab_var_label (spss_dataset *dset, spss_var *v)
 	}
     }
 
-    fread(v->label, labread, 1, dset->fp);
+    fread(v->label, labread, 1, sdat->fp);
     v->label[len] = '\0';
     tailstrip(v->label);
 
@@ -920,13 +920,13 @@ static int grab_var_label (spss_dataset *dset, spss_var *v)
 
     if (rem > 0) {
 	/* skip excess label characters */
-	fseek(dset->fp, rem, SEEK_CUR);
+	fseek(sdat->fp, rem, SEEK_CUR);
     }
 
     return 0;
 }
 
-static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
+static int record_missing_vals_info (spss_data *sdat, spss_var *v,
 				     int nmiss)
 {
     int anmiss = abs(nmiss);
@@ -938,9 +938,9 @@ static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
 			  v->name);
     }
 
-    fread(mv, anmiss * sizeof *mv, 1, dset->fp);
+    fread(mv, anmiss * sizeof *mv, 1, sdat->fp);
 
-    if (dset->swapends && v->type == SPSS_NUMERIC) {
+    if (sdat->swapends && v->type == SPSS_NUMERIC) {
 	for (j=0; j<anmiss; j++) {
 	    reverse_double(mv[j]);
 	}
@@ -962,10 +962,10 @@ static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
 			  "specified as a range", v->name);
     } else {
 	j = 0;
-	if (mv[0] == dset->ext.lowest) {
+	if (mv[0] == sdat->ext.lowest) {
 	    v->miss_type = MISSING_LOW;
 	    v->missing[j++] = mv[1];
-	} else if (mv[1] == dset->ext.highest) {
+	} else if (mv[1] == sdat->ext.highest) {
 	    v->miss_type = MISSING_HIGH;
 	    v->missing[j++] = mv[0];
 	} else {
@@ -993,7 +993,7 @@ static int record_missing_vals_info (spss_dataset *dset, spss_var *v,
 
 /* read info on the variables in SPSS .sav file */
 
-static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
+static int read_sav_variables (spss_data *sdat, struct sysfile_header *hdr)
 {
     struct sysfile_variable sv;
     int long_string_count = 0; /* # of long string continuation
@@ -1002,20 +1002,20 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
     int gidx = 0;              /* gretl index number for variable */
     int i, err;
 
-    err = dset_add_variables(dset);
+    err = sdat_add_variables(sdat);
     if (err) {
 	return err;
     }
 
-    for (i=0; i<dset->nvars && !err; i++) {
-	spss_var *v = &dset->vars[i];
+    for (i=0; i<sdat->nvars && !err; i++) {
+	spss_var *v = &sdat->vars[i];
 
-	if (fread(&sv, sizeof sv, 1, dset->fp) != 1) {
+	if (fread(&sv, sizeof sv, 1, sdat->fp) != 1) {
 	    err = E_DATA;
 	    break;
 	}
 
-	if (dset->swapends) {
+	if (sdat->swapends) {
 	    reverse_int(sv.rec_type);
 	    reverse_int(sv.type);
 	    reverse_int(sv.has_var_label);
@@ -1060,7 +1060,7 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 	err = validate_var_info(&sv, i);
 
 	if (!err) {
-	    err = transcribe_varname(dset, &sv, i);
+	    err = transcribe_varname(sdat, &sv, i);
 	}
 
 #if SPSS_DEBUG
@@ -1085,12 +1085,12 @@ static int read_sav_variables (spss_dataset *dset, struct sysfile_header *hdr)
 
 	/* get the variable label, if any */
 	if (!err && sv.has_var_label == 1) {
-	    err = grab_var_label(dset, v);
+	    err = grab_var_label(sdat, v);
 	}
 
 	/* set missing values, if applicable */
 	if (!err && sv.n_missing_values != 0) {
-	    err = record_missing_vals_info(dset, v, sv.n_missing_values);
+	    err = record_missing_vals_info(sdat, v, sv.n_missing_values);
 	} 
     }
 
@@ -1133,7 +1133,7 @@ static void print_product_name (struct sysfile_header *hdr)
     fprintf(stderr, "%s\n", prod_name);
 }
 
-static void dset_add_descrip (spss_dataset *dset, struct sysfile_header *hdr)
+static void sdat_add_descrip (spss_data *sdat, struct sysfile_header *hdr)
 {
     char datestr[10];
     char *s = hdr->file_label;
@@ -1162,13 +1162,13 @@ static void dset_add_descrip (spss_dataset *dset, struct sysfile_header *hdr)
 	n += strlen(label) + 1;
     }
 
-    dset->descrip = malloc(n);
+    sdat->descrip = malloc(n);
 
-    if (dset->descrip != NULL) {
+    if (sdat->descrip != NULL) {
 	if (label != NULL) {
-	    sprintf(dset->descrip, "%s\n%s\n", label, datestr);
+	    sprintf(sdat->descrip, "%s\n%s\n", label, datestr);
 	} else {
-	    sprintf(dset->descrip, "%s\n", datestr);
+	    sprintf(sdat->descrip, "%s\n", datestr);
 	}
     }
 
@@ -1177,22 +1177,22 @@ static void dset_add_descrip (spss_dataset *dset, struct sysfile_header *hdr)
 
 /* read sav header rcord and check for errors */
 
-static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
+static int read_sav_header (spss_data *sdat, struct sysfile_header *hdr)
 {
     int fgot = 0;
 
-    fgot += fread(&hdr->rec_type, 4, 1, dset->fp);
-    fgot += fread(&hdr->prod_name, 60, 1, dset->fp);
-    fgot += fread(&hdr->layout_code, 4, 1, dset->fp);
-    fgot += fread(&hdr->case_size, 4, 1, dset->fp);
-    fgot += fread(&hdr->compressed, 4, 1, dset->fp);
-    fgot += fread(&hdr->weight_index, 4, 1, dset->fp);
-    fgot += fread(&hdr->ncases, 4, 1, dset->fp);
-    fgot += fread(&hdr->bias, 8, 1, dset->fp);
-    fgot += fread(&hdr->creation_date, 9, 1, dset->fp);
-    fgot += fread(&hdr->creation_time, 8, 1, dset->fp);
-    fgot += fread(&hdr->file_label, 64, 1, dset->fp);
-    fgot += fread(&hdr->padding, 3, 1, dset->fp);
+    fgot += fread(&hdr->rec_type, 4, 1, sdat->fp);
+    fgot += fread(&hdr->prod_name, 60, 1, sdat->fp);
+    fgot += fread(&hdr->layout_code, 4, 1, sdat->fp);
+    fgot += fread(&hdr->case_size, 4, 1, sdat->fp);
+    fgot += fread(&hdr->compressed, 4, 1, sdat->fp);
+    fgot += fread(&hdr->weight_index, 4, 1, sdat->fp);
+    fgot += fread(&hdr->ncases, 4, 1, sdat->fp);
+    fgot += fread(&hdr->bias, 8, 1, sdat->fp);
+    fgot += fread(&hdr->creation_date, 9, 1, sdat->fp);
+    fgot += fread(&hdr->creation_time, 8, 1, sdat->fp);
+    fgot += fread(&hdr->file_label, 64, 1, sdat->fp);
+    fgot += fread(&hdr->padding, 3, 1, sdat->fp);
 
     if (fgot < 12) {
 	fprintf(stderr, "read_sav_header: failed to read full header\n");
@@ -1211,7 +1211,7 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 	    return sav_error("File layout code has unexpected value %d.  Value should be 2 or 3, "
 			     "in big-endian or little-endian format", hdr->layout_code);
 	}
-	dset->swapends = 1;
+	sdat->swapends = 1;
 	reverse_int(hdr->case_size);
 	reverse_int(hdr->compressed);
 	reverse_int(hdr->weight_index);
@@ -1252,10 +1252,10 @@ static int read_sav_header (spss_dataset *dset, struct sysfile_header *hdr)
 		hdr->bias);
     }
 
-    dset->nvars = hdr->case_size;
-    dset->nobs = hdr->ncases;
+    sdat->nvars = hdr->case_size;
+    sdat->nobs = hdr->ncases;
 
-    dset_add_descrip(dset, hdr);
+    sdat_add_descrip(sdat, hdr);
 
     return 0;
 }
@@ -1340,12 +1340,12 @@ static int spss_user_missing (spss_var *v, double x)
     return miss;
 }
 
-static int has_value_labels (spss_dataset *dset, int i)
+static int has_value_labels (spss_data *sdat, int i)
 {
     int j;
 
-    for (j=0; j<dset->nlabelsets; j++) {
-	if (in_gretl_list(dset->labelsets[j]->varlist, i)) {
+    for (j=0; j<sdat->nlabelsets; j++) {
+	if (in_gretl_list(sdat->labelsets[j]->varlist, i)) {
 	    return 1;
 	}
     }
@@ -1372,14 +1372,14 @@ static int buffer_input (struct sav_extension *ext, FILE *fp)
 
 /* decompression routine for special SPSS-compressed data */
 
-static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
+static int read_compressed_data (spss_data *sdat, struct sysfile_header *hdr,
 				 double *tmp)
 {
-    struct sav_extension *ext = &dset->ext;
+    struct sav_extension *ext = &sdat->ext;
     const unsigned char *p_end = ext->x + sizeof(double);
     unsigned char *p = ext->y;
     const double *tmp_beg = tmp;
-    const double *tmp_end = tmp + dset->nvars;
+    const double *tmp_end = tmp + sdat->nvars;
     int err = 0, done = 0;
 
     if (ext->buf == NULL) {
@@ -1406,7 +1406,7 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
 		/* Code 253: the value is stored explicitly
 		   following the instruction bytes */
 		if (ext->ptr == NULL || ext->ptr >= ext->end) {
-		    if (!buffer_input(ext, dset->fp)) {
+		    if (!buffer_input(ext, sdat->fp)) {
 			err = sav_error("Unexpected end of file");
 		    }
 		}
@@ -1419,7 +1419,7 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
 	    case 255:
 		/* Code 255: denotes the system-missing value */
 		*tmp = ext->sysmis;
-		if (dset->swapends) {
+		if (sdat->swapends) {
 		    reverse_double(*tmp);
 		}
 		tmp++;
@@ -1430,7 +1430,7 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
 		   BIAS is the compression bias (generally 100.0) 
 		*/
 		*tmp = *p - hdr->bias;
-		if (dset->swapends) {
+		if (sdat->swapends) {
 		    reverse_double(*tmp);
 		}
 		tmp++;
@@ -1449,7 +1449,7 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
 
 	/* Reached the end of this instruction octet: read another */
 	if (ext->ptr == NULL || ext->ptr >= ext->end) {
-	    if (!buffer_input(ext, dset->fp)) {
+	    if (!buffer_input(ext, sdat->fp)) {
 		if (tmp_beg != tmp) {
 		    err = sav_error("Unexpected end of file");
 		}
@@ -1468,9 +1468,9 @@ static int read_compressed_data (spss_dataset *dset, struct sysfile_header *hdr,
     return err;
 }
 
-static int value_is_missing (spss_dataset *dset, spss_var *v, double x)
+static int value_is_missing (spss_data *sdat, spss_var *v, double x)
 {
-    if (x == dset->ext.sysmis) {
+    if (x == sdat->ext.sysmis) {
 	return 1;
     } else if (spss_user_missing(v, x)) {
 	/* What should we be doing here?  For now, we'll not mark
@@ -1485,10 +1485,10 @@ static int value_is_missing (spss_dataset *dset, spss_var *v, double x)
 
 /* Read values for all variables at observation t */
 
-static int sav_read_observation (spss_dataset *dset, 
+static int sav_read_observation (spss_data *sdat, 
 				 struct sysfile_header *hdr,
-				 double *tmp, double **Z, 
-				 DATAINFO *pdinfo,
+				 double *tmp, 
+				 DATASET *dset,
 				 int t)
 {
     spss_var *v;
@@ -1496,12 +1496,12 @@ static int sav_read_observation (spss_dataset *dset,
     int i, j, err = 0;
 
     if (hdr->compressed) {
-	err = read_compressed_data(dset, hdr, tmp);
+	err = read_compressed_data(sdat, hdr, tmp);
     } else {
-	size_t amt = fread(tmp, sizeof *tmp, dset->nvars, dset->fp);
+	size_t amt = fread(tmp, sizeof *tmp, sdat->nvars, sdat->fp);
 
-	if (amt != dset->nvars) {
-	    if (ferror(dset->fp)) {
+	if (amt != sdat->nvars) {
+	    if (ferror(sdat->fp)) {
 		err = sav_error("Reading SPSS file: %s", strerror(errno));
 	    } else if (amt != 0) {
 		err = sav_error("Partial record at end of SPSS file");
@@ -1511,8 +1511,8 @@ static int sav_read_observation (spss_dataset *dset,
 
     j = 1;
 
-    for (i=0; i<dset->nvars && !err; i++) {
-	v = &dset->vars[i];
+    for (i=0; i<sdat->nvars && !err; i++) {
+	v = &sdat->vars[i];
 
 	if (v->offset == -1) {
 	    continue;
@@ -1520,13 +1520,13 @@ static int sav_read_observation (spss_dataset *dset,
 
 	if (v->type == SPSS_NUMERIC) {
 	    xit = tmp[v->offset];
-	    if (dset->swapends) {
+	    if (sdat->swapends) {
 		reverse_double(xit);
 	    }
-	    if (value_is_missing(dset, v, xit)) {
-		Z[j][t] = NADBL;
+	    if (value_is_missing(sdat, v, xit)) {
+		dset->Z[j][t] = NADBL;
 	    } else {
-		Z[j][t] = xit;
+		dset->Z[j][t] = xit;
 	    }
 	} else {
 	    /* variable is of string type */
@@ -1537,19 +1537,19 @@ static int sav_read_observation (spss_dataset *dset,
 	    memcpy(raw, &tmp[v->offset], len);
 	    raw[len] = '\0';
 	    tailstrip(raw);
-	    recode_sav_string(cval, raw, dset->encoding, 255);
+	    recode_sav_string(cval, raw, sdat->encoding, 255);
 #if SPSS_DEBUG
 	    fprintf(stderr, "string val Z[%d][%d] = '%s'\n", j, t, cval);
 #endif
-	    ix = gretl_string_table_index(dset->st, cval, j, 0, NULL);
+	    ix = gretl_string_table_index(sdat->st, cval, j, 0, NULL);
 	    if (ix > 0) {
-		Z[j][t] = ix;
+		dset->Z[j][t] = ix;
 		v->n_ok_obs += 1;
 		if (t == 0) {
-		    set_var_discrete(pdinfo, j, 1);
+		    set_var_discrete(dset, j, 1);
 		}
 	    } else {
-		Z[j][t] = NADBL;
+		dset->Z[j][t] = NADBL;
 		
 	    }
 	}
@@ -1559,11 +1559,11 @@ static int sav_read_observation (spss_dataset *dset,
     return err;
 }
 
-static int do_drop_empty (spss_dataset *dset)
+static int do_drop_empty (spss_data *sdat)
 {
-    if (dset->droplist != NULL) {
-	int mindrop = dset->droplist[1];
-	int max_sv = dset->vars[dset->max_sv].gretl_index;
+    if (sdat->droplist != NULL) {
+	int mindrop = sdat->droplist[1];
+	int max_sv = sdat->vars[sdat->max_sv].gretl_index;
 
 	if (mindrop > max_sv) {
 	    /* no collision with string table: OK to drop vars */
@@ -1574,14 +1574,14 @@ static int do_drop_empty (spss_dataset *dset)
     return 0;
 }
 
-static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
-			  double ***pZ, DATAINFO *pdinfo, PRN *prn)
+static int read_sav_data (spss_data *sdat, struct sysfile_header *hdr,
+			  DATASET *dset, PRN *prn)
 {
     double *tmp = NULL;
     int i, j, t, err = 0;
 
     /* temporary storage for one complete observation */
-    tmp = malloc(dset->nvars * sizeof *tmp);
+    tmp = malloc(sdat->nvars * sizeof *tmp);
     if (tmp == NULL) {
 	err = E_ALLOC;
     }
@@ -1589,22 +1589,22 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
     /* transcribe varnames and labels; also mark as discrete any vars
        for which we got 'value labels' */
     j = 1;
-    for (i=0; i<dset->nvars; i++) {
-	if (!CONTD(dset, i)) {
-	    recode_sav_string(pdinfo->varname[j], dset->vars[i].name, 
-			      dset->encoding, VNAMELEN - 1);
-	    recode_sav_string(VARLABEL(pdinfo, j), dset->vars[i].label,
-			      dset->encoding, MAXLABEL - 1);
-	    if (has_value_labels(dset, i)) {
-		set_var_discrete(pdinfo, j, 1);
+    for (i=0; i<sdat->nvars; i++) {
+	if (!CONTD(sdat, i)) {
+	    recode_sav_string(dset->varname[j], sdat->vars[i].name, 
+			      sdat->encoding, VNAMELEN - 1);
+	    recode_sav_string(VARLABEL(dset, j), sdat->vars[i].label,
+			      sdat->encoding, MAXLABEL - 1);
+	    if (has_value_labels(sdat, i)) {
+		set_var_discrete(dset, j, 1);
 	    }
 	    j++;
 	}
     }
 
     /* retrieve actual data values */
-    for (t=0; t<dset->nobs && !err; t++) {
-	err = sav_read_observation(dset, hdr, tmp, *pZ, pdinfo, t);
+    for (t=0; t<sdat->nobs && !err; t++) {
+	err = sav_read_observation(sdat, hdr, tmp, dset, t);
 	if (err) {
 	    fprintf(stderr, "sav_read_case: err = %d at i = %d\n", err, i);
 	}
@@ -1614,13 +1614,13 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
 
     /* count valid observations, to determine 'empty' variables */
     j = 1;
-    for (i=0; i<dset->nvars; i++) {
-	if (!CONTD(dset, i)) {
-	    if (dset->vars[i].n_ok_obs == 0) {
+    for (i=0; i<sdat->nvars; i++) {
+	if (!CONTD(sdat, i)) {
+	    if (sdat->vars[i].n_ok_obs == 0) {
 		fprintf(stderr, "var %d: no valid observations\n", j);
-		if (dset->opt & OPT_D) {
-		    gretl_list_append_term(&dset->droplist, j);
-		    dset->vars[i].gretl_index = -1;
+		if (sdat->opt & OPT_D) {
+		    gretl_list_append_term(&sdat->droplist, j);
+		    sdat->vars[i].gretl_index = -1;
 		}
 	    }
 	    j++;
@@ -1632,38 +1632,38 @@ static int read_sav_data (spss_dataset *dset, struct sysfile_header *hdr,
        a 'string table' that would get messed up by dropping
        variables.
     */
-    if (do_drop_empty(dset)) {
-	err = dataset_drop_listed_variables(dset->droplist, pZ, pdinfo, 
+    if (do_drop_empty(sdat)) {
+	err = dataset_drop_listed_variables(sdat->droplist, dset, 
 					    NULL, NULL);
     }
 
     return err;
 }
 
-static void spss_dataset_init (spss_dataset *dset, FILE *fp)
+static void spss_data_init (spss_data *sdat, FILE *fp)
 {
-    dset->fp = fp;
-    dset->opt = OPT_NONE;
-    dset->nvars = 0;
-    dset->nobs = 0;
-    dset->swapends = 0;
-    dset->encoding = 0;
-    dset->max_sv = -1;
-    dset->vars = NULL;
-    dset->nlabelsets = 0;
-    dset->labelsets = NULL;
+    sdat->fp = fp;
+    sdat->opt = OPT_NONE;
+    sdat->nvars = 0;
+    sdat->nobs = 0;
+    sdat->swapends = 0;
+    sdat->encoding = 0;
+    sdat->max_sv = -1;
+    sdat->vars = NULL;
+    sdat->nlabelsets = 0;
+    sdat->labelsets = NULL;
 
-    dset->ext.buf = dset->ext.ptr = dset->ext.end = NULL;
-    dset->ext.sysmis = -DBL_MAX;
-    dset->ext.highest = DBL_MAX;
-    dset->ext.lowest = second_lowest_double_val();
+    sdat->ext.buf = sdat->ext.ptr = sdat->ext.end = NULL;
+    sdat->ext.sysmis = -DBL_MAX;
+    sdat->ext.highest = DBL_MAX;
+    sdat->ext.lowest = second_lowest_double_val();
 
-    memset(dset->ext.x, 0, sizeof dset->ext.x);
-    dset->ext.y = dset->ext.x + sizeof dset->ext.x;
+    memset(sdat->ext.x, 0, sizeof sdat->ext.x);
+    sdat->ext.y = sdat->ext.x + sizeof sdat->ext.x;
 
-    dset->st = NULL;
-    dset->descrip = NULL;
-    dset->droplist = NULL;
+    sdat->st = NULL;
+    sdat->descrip = NULL;
+    sdat->droplist = NULL;
 }
 
 static void free_labelset (spss_labelset *lset)
@@ -1676,59 +1676,59 @@ static void free_labelset (spss_labelset *lset)
     }
 }
 
-static void free_spss_dataset (spss_dataset *dset)
+static void free_spss_data (spss_data *sdat)
 {
     int i;
 
-    free(dset->vars);
-    free(dset->ext.buf);
+    free(sdat->vars);
+    free(sdat->ext.buf);
 
-    if (dset->labelsets != NULL) {
-	for (i=0; i<dset->nlabelsets; i++) {
-	    free_labelset(dset->labelsets[i]);
+    if (sdat->labelsets != NULL) {
+	for (i=0; i<sdat->nlabelsets; i++) {
+	    free_labelset(sdat->labelsets[i]);
 	}
-	free(dset->labelsets);
+	free(sdat->labelsets);
     }
 
-    gretl_string_table_destroy(dset->st);
-    free(dset->descrip);
-    free(dset->droplist);
+    gretl_string_table_destroy(sdat->st);
+    free(sdat->descrip);
+    free(sdat->droplist);
 }
 
 /* eliminate any elements of @list which represent variables
    that have been dropped because they have no valid values
 */
 
-static void prune_labellist (spss_dataset *dset, int *list)
+static void prune_labellist (spss_data *sdat, int *list)
 {
     int i;
 
     for (i=list[0]; i>0; i--) {
-	if (in_gretl_list(dset->droplist, list[i] - 1)) {
+	if (in_gretl_list(sdat->droplist, list[i] - 1)) {
 	    gretl_list_delete_at_pos(list, i);
 	}
     }
 }
 
 /* Print info on value -> label mappings.  Note that the
-   indices into dset->vars, stored in the lset->varlist's,
+   indices into sdat->vars, stored in the lset->varlist's,
    are 1-based.
 */
 
-static void print_labelsets (spss_dataset *dset, PRN *prn)
+static void print_labelsets (spss_data *sdat, PRN *prn)
 {
     int i, j, lj;
 
     pputs(prn, "\nNote: any values marked with a suffix of '[M]' are annotated\n"
 	  "in the SPSS data file as 'missing'.\n");
 
-    for (i=0; i<dset->nlabelsets; i++) {
-	spss_labelset *lset = dset->labelsets[i];
+    for (i=0; i<sdat->nlabelsets; i++) {
+	spss_labelset *lset = sdat->labelsets[i];
 	int *vlist = lset->varlist;
 	spss_var *v;
 
-	if (dset->droplist != NULL) {
-	    prune_labellist(dset, vlist);
+	if (sdat->droplist != NULL) {
+	    prune_labellist(sdat, vlist);
 	    if (vlist[0] == 0) {
 		continue;
 	    }
@@ -1739,7 +1739,7 @@ static void print_labelsets (spss_dataset *dset, PRN *prn)
 	if (vlist[0] == 1) {
 	    /* mapping applies to just one variable */
 	    lj = vlist[1] - 1;
-	    v = &dset->vars[lj];
+	    v = &sdat->vars[lj];
 	    pprintf(prn, "Value -> label mappings for variable %d (%s)\n", 
 		    v->gretl_index, v->name);
 	} else {
@@ -1748,18 +1748,18 @@ static void print_labelsets (spss_dataset *dset, PRN *prn)
 		    vlist[0]);
 	    for (j=1; j<=vlist[0]; j++) {
 		lj = vlist[j] - 1;
-		v = &dset->vars[lj];
+		v = &sdat->vars[lj];
 		pprintf(prn, " %3d (%s)\n", v->gretl_index, v->name);
 	    }
 	}
 
 	lj = vlist[1] - 1;
-	v = &dset->vars[lj];
+	v = &sdat->vars[lj];
 
 	for (j=0; j<lset->nlabels; j++) {
 	    char label[256];
 
-	    recode_sav_string(label, lset->labels[j], dset->encoding, 255);
+	    recode_sav_string(label, lset->labels[j], sdat->encoding, 255);
 	    pprintf(prn, "%10g -> '%s'", lset->vals[j], label);
 	    if (spss_user_missing(v, lset->vals[j])) {
 		pputs(prn, " [M]\n");
@@ -1773,7 +1773,7 @@ static void print_labelsets (spss_dataset *dset, PRN *prn)
 /* print out value -> label mappings (for numeric variables) and
    attach the text buffer to the dataset's string table */
 
-static int add_label_mappings_to_st (spss_dataset *dset)
+static int add_label_mappings_to_st (spss_data *sdat)
 {
     PRN *prn;
     int err = 0;
@@ -1781,8 +1781,8 @@ static int add_label_mappings_to_st (spss_dataset *dset)
     prn = gretl_print_new(GRETL_PRINT_BUFFER, &err);
 
     if (prn != NULL) {
-	print_labelsets(dset, prn);
-	gretl_string_table_add_extra(dset->st, prn);
+	print_labelsets(sdat, prn);
+	gretl_string_table_add_extra(sdat->st, prn);
 	gretl_print_destroy(prn);
     }
 
@@ -1792,17 +1792,17 @@ static int add_label_mappings_to_st (spss_dataset *dset)
 /* We'll add a 'string table' if (a) the dataset contains one or more
    string-valued variables or (b) it contains one or more numerical
    variables that have associated value labels.  The latter situation
-   is registered in a non-zero value for dset->nlabelsets.
+   is registered in a non-zero value for sdat->nlabelsets.
 */
 
-static int maybe_add_string_table (spss_dataset *dset)
+static int maybe_add_string_table (spss_data *sdat)
 {
     int i, nsv = 0;
     int err = 0;
 
-    for (i=0; i<dset->nvars; i++) {
-	if (dset->vars[i].type > 0) {
-	    dset->max_sv = i;
+    for (i=0; i<sdat->nvars; i++) {
+	if (sdat->vars[i].type > 0) {
+	    sdat->max_sv = i;
 	    nsv++;
 	}
     }
@@ -1816,73 +1816,70 @@ static int maybe_add_string_table (spss_dataset *dset)
 	if (list == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (i=0; i<dset->nvars; i++) {
-		if (dset->vars[i].type > 0) {
-		    list[j++] = dset->vars[i].gretl_index;
+	    for (i=0; i<sdat->nvars; i++) {
+		if (sdat->vars[i].type > 0) {
+		    list[j++] = sdat->vars[i].gretl_index;
 		}
 	    }
-	    dset->st = string_table_new_from_cols_list(list);
+	    sdat->st = string_table_new_from_cols_list(list);
 	    free(list);
 	}
-    } else if (dset->nlabelsets > 0) {
-	dset->st = gretl_string_table_new(&err);
+    } else if (sdat->nlabelsets > 0) {
+	sdat->st = gretl_string_table_new(&err);
     }
 
     return err;
 }
 
-static int prepare_gretl_dataset (spss_dataset *dset,
-				  double ***pZ,
-				  DATAINFO **ppdinfo,
+static int prepare_gretl_dataset (spss_data *sdat,
+				  DATASET **pdset,
 				  PRN *prn)
 {
-    DATAINFO *newinfo = datainfo_new();
-    int nvars = dset->nvars + 1;
+    DATASET *newset = datainfo_new();
+    int nvars = sdat->nvars + 1;
     int i, err = 0;
 
-    if (newinfo == NULL) {
+    if (newset == NULL) {
 	pputs(prn, _("Out of memory\n"));
 	err = E_ALLOC;
     }
 
-    for (i=0; i<dset->nvars && !err; i++) {
-	if (CONTD(dset, i)) {
+    for (i=0; i<sdat->nvars && !err; i++) {
+	if (CONTD(sdat, i)) {
 	    /* not a real variable (string continuation) */
 	    nvars--;
 	}
     }
 
     if (!err) {
-	maybe_add_string_table(dset);
+	maybe_add_string_table(sdat);
     }
 
     if (!err) {
-	newinfo->v = nvars;
-	newinfo->n = dset->nobs;
+	newset->v = nvars;
+	newset->n = sdat->nobs;
 	/* time-series info? */
-	err = start_new_Z(pZ, newinfo, 0);
+	err = start_new_Z(newset, 0);
 	if (err) {
 	    pputs(prn, _("Out of memory\n"));
-	    free_datainfo(newinfo);
+	    free_datainfo(newset);
 	    err = E_ALLOC;
 	}
     }
 
-    *ppdinfo = newinfo;
+    *pdset = newset;
 
     return err;
 }
 
-int sav_get_data (const char *fname, 
-		  double ***pZ, DATAINFO *pdinfo,
+int sav_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
-    spss_dataset dset;
+    spss_data sdat;
     struct sysfile_header hdr;
     char buf[5] = {0};
     FILE *fp;
-    double **newZ = NULL;
-    DATAINFO *newinfo = NULL;
+    DATASET *newset = NULL;
     int err = 0;
 
     if (sizeof(double) != 8 || sizeof(int) != 4) {
@@ -1910,58 +1907,58 @@ int sav_get_data (const char *fname,
 	return E_DATA;
     }
 
-    spss_dataset_init(&dset, fp);
-    err = read_sav_header(&dset, &hdr);
+    spss_data_init(&sdat, fp);
+    err = read_sav_header(&sdat, &hdr);
 
     if (!err) {
 	if (opt & OPT_D) {
-	    dset.opt |= OPT_D;
+	    sdat.opt |= OPT_D;
 	}
-	read_sav_variables(&dset, &hdr);
+	read_sav_variables(&sdat, &hdr);
     }
 
     if (!err) {
-	err = read_sav_other_records(&dset);
+	err = read_sav_other_records(&sdat);
     }
 
     if (!err) {
-	err = prepare_gretl_dataset(&dset, &newZ, &newinfo, prn);
+	err = prepare_gretl_dataset(&sdat, &newset, prn);
     }	
 
     if (!err) {
-	err = read_sav_data(&dset, &hdr, &newZ, newinfo, prn);
+	err = read_sav_data(&sdat, &hdr, newset, prn);
     }
 
     if (err) {
-	destroy_dataset(newZ, newinfo);
+	destroy_dataset(newset);
     } else {
-	int merge = (*pZ != NULL);
+	int merge = (dset->Z != NULL);
 
-	if (fix_varname_duplicates(newinfo)) {
+	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
-	if (dset.st != NULL) {
-	    if (dset.nlabelsets > 0) {
-		add_label_mappings_to_st(&dset);
+	if (sdat.st != NULL) {
+	    if (sdat.nlabelsets > 0) {
+		add_label_mappings_to_st(&sdat);
 	    }
-	    gretl_string_table_print(dset.st, newinfo, fname, prn);
+	    gretl_string_table_print(sdat.st, newset, fname, prn);
 	}
 	
-	if (dset.descrip != NULL) {
-	    newinfo->descrip = dset.descrip;
-	    dset.descrip = NULL;
+	if (sdat.descrip != NULL) {
+	    newset->descrip = sdat.descrip;
+	    sdat.descrip = NULL;
 	}
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+	err = merge_or_replace_data(dset, &newset, opt, prn);
 
 	if (!err && !merge) {
-	    dataset_add_import_info(pdinfo, fname, GRETL_SAV);
+	    dataset_add_import_info(dset, fname, GRETL_SAV);
 	}	
     }
 
     fclose(fp);
-    free_spss_dataset(&dset);
+    free_spss_data(&sdat);
 
     return err;
 } 

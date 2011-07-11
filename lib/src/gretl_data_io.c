@@ -40,8 +40,7 @@
  * int main (int argc, char **argv)
  * {
  *     char *fname;
- *     double **Z = NULL;
- *     DATAINFO *pdinfo;
+ *     DATASET *dset;
  *     PRN *prn;
  *     int err;
  *
@@ -53,19 +52,19 @@
  *
  *     libgretl_init();
  *     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
- *     pdinfo = datainfo_new();
+ *     dset = datainfo_new();
  *    
- *     err = gretl_read_native_data(fname, &Z, pdinfo);
+ *     err = gretl_read_native_data(fname, dset);
  *     if (err) {
  *         pprintf(prn, "Got error %d reading data from %s\n", err, fname);
  *         errmsg(err, prn);
  *     } else {
  *         pprintf(prn, "Read data from %s OK\n", fname);
- *         print_smpl(pdinfo, 0, prn);
- *         varlist(pdinfo, prn);
+ *         print_smpl(dset, 0, prn);
+ *         varlist(dset, prn);
  *     }
  * 
- *     destroy_dataset(Z, pdinfo);
+ *     destroy_dataset(dset);
  *     gretl_print_destroy(prn);
  *     libgretl_cleanup();
  *
@@ -80,35 +79,30 @@
 /**
  * gretl_read_native_data:
  * @fname: path to a native gretl (.gdt) data file.
- * @pZ: address of data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * 
  * Read data from file into gretl's work space, allocating memory
  * as required.  
  * 
- * The argument @pZ must be given as the address of an object of type
- * (double **) which we'll call "Z". Z itself must be set to NULL
- * on entry; it will be allocated by this function. 
- *
- * The argument @pdinfo represents a pointer-to-DATAINFO. It should
- * either be given as the address of a #DATAINFO struct that exists
+ * The argument @dset represents a pointer-to-DATASET. It should
+ * either be given as the address of a #DATASET struct that exists
  * at the caller level, or it can be a pointer obtained via the
  * libgretl function datainfo_new().
  * 
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int gretl_read_native_data (const char *fname, double ***pZ, DATAINFO *pdinfo)
+int gretl_read_native_data (const char *fname, DATASET *dset)
 {
     int err = 0;
 
-    if (fname == NULL || pZ == NULL || pdinfo == NULL) {
+    if (fname == NULL || dset == NULL) {
 	err = E_INVARG;
-    } else if (*pZ != NULL) {
+    } else if (dset->Z != NULL) {
 	fprintf(stderr, "gretl_read_native_data: Z must be NULL on entry\n");
 	err = E_INVARG;
     } else {
-	err = gretl_read_gdt(fname, pZ, pdinfo, OPT_NONE, NULL);
+	err = gretl_read_gdt(fname, dset, OPT_NONE, NULL);
     }
 
     return err;
@@ -118,8 +112,7 @@ int gretl_read_native_data (const char *fname, double ***pZ, DATAINFO *pdinfo)
  * gretl_write_native_data:
  * @fname: name of file to write.
  * @list: list of ID numbers of series to write (or NULL to write all).
- * @Z: data matrix.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * 
  * Write out in native gretl (.gdt) format a data file containing 
  * the values of the given set of variables.
@@ -128,25 +121,24 @@ int gretl_read_native_data (const char *fname, double ***pZ, DATAINFO *pdinfo)
  */
 
 int gretl_write_native_data (const char *fname, const int *list,
-			     const double **Z, const DATAINFO *pdinfo)
+			     const DATASET *dset)
 {
-    if (fname == NULL || Z == NULL || pdinfo == NULL) {
+    if (fname == NULL || dset == NULL || dset->Z == NULL) {
 	return E_INVARG;
     }
 
-    return gretl_write_gdt(fname, list, Z, pdinfo, OPT_Z, 0);
+    return gretl_write_gdt(fname, list, dset, OPT_Z, 0);
 }
 
 /**
  * gretl_read_foreign_data:
  * @fname: path to a data file of a type that gretl can handle.
  * @file_type: code representing the format of the data file.
- * @pZ: address of data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @prn: printer for diagnostic info, or NULL.
  * 
  * Read data from a "foreign" format data file into gretl's work space, 
- * allocating memory as required. For comments on the arguments @pZ and @pdinfo,
+ * allocating memory as required. For comments on the arguments @pZ and @dset,
  * see gretl_read_native_data().
  *
  * @file_type must be one of GRETL_CSV, GRETL_OCTAVE, 
@@ -166,23 +158,23 @@ int gretl_write_native_data (const char *fname, const int *list,
  */
 
 int gretl_read_foreign_data (const char *fname, GretlFileType file_type,
-			     double ***pZ, DATAINFO *pdinfo, PRN *prn)
+			     DATASET *dset, PRN *prn)
 {
     int err = 0;
 
-    if (fname == NULL || pZ == NULL || pdinfo == NULL) {
+    if (fname == NULL || dset == NULL) {
 	err = E_INVARG;
-    } else if (*pZ != NULL) {
+    } else if (dset->Z != NULL) {
 	fprintf(stderr, "gretl_read_foreign_data: Z must be NULL on entry\n");
 	err = E_INVARG;
     } if (file_type == GRETL_CSV) {
-	err = import_csv(fname, pZ, pdinfo, OPT_NONE, prn);
+	err = import_csv(fname, dset, OPT_NONE, prn);
     } else if (SPREADSHEET_IMPORT(file_type)) {
 	err = import_spreadsheet(fname, file_type, NULL, NULL,
-				 pZ, pdinfo, OPT_NONE, prn);
+				 dset, OPT_NONE, prn);
     } else if (OTHER_IMPORT(file_type)) {
 	err = import_spreadsheet(fname, file_type, NULL, NULL,
-				 pZ, pdinfo, OPT_NONE, prn);
+				 dset, OPT_NONE, prn);
     } else {	
 	gretl_errmsg_set("Unknown data import type");
 	err = E_INVARG;

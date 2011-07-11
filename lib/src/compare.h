@@ -96,54 +96,48 @@ double wald_omit_F (const int *list, MODEL *pmod);
 double wald_omit_chisq (const int *list, MODEL *pmod);
 
 int add_test (const int *addvars,  MODEL *orig, MODEL *pmod,
-	      double ***pZ, DATAINFO *pdinfo, 
-	      gretlopt opt, PRN *prn);
+	      DATASET *dset, gretlopt opt, PRN *prn);
 
 int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod, 
-	       double ***pZ, DATAINFO *pdinfo, 
-	       gretlopt opt, PRN *prn);
+	       DATASET *dset, gretlopt opt, PRN *prn);
 
-int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+int nonlinearity_test (MODEL *pmod, DATASET *dset,
 		       ModelAuxCode aux, gretlopt opt, PRN *prn); 
 
-int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int reset_test (MODEL *pmod, DATASET *dset, 
 		gretlopt opt, PRN *prn);
 
-int autocorr_test (MODEL *pmod, int order,
-		   double ***pZ, DATAINFO *pdinfo, 
+int autocorr_test (MODEL *pmod, int order, DATASET *dset, 
 		   gretlopt opt, PRN *prn);
 
-int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int comfac_test (MODEL *pmod, DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
 double get_DW_pvalue_for_model (const MODEL *pmod, 
-				double ***pZ, DATAINFO *pdinfo,
+				DATASET *dset,
 				int *err);
 
-int chow_test (int splitobs, MODEL *pmod, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+int chow_test (int splitobs, MODEL *pmod, DATASET *dset, 
+	       gretlopt opt, PRN *prn);
 
-int chow_test_from_dummy (int splitvar, MODEL *pmod, double ***pZ,
-			  DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset, 
+			  gretlopt opt, PRN *prn);
 
-int QLR_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+int QLR_test (MODEL *pmod, DATASET *dset,
 	      gretlopt opt, PRN *prn);
 
-int cusum_test (MODEL *pmod, 
-		double **Z, DATAINFO *pdinfo, 
+int cusum_test (MODEL *pmod, DATASET *dset, 
 		gretlopt opt, PRN *prn);
 
-int panel_hausman_test (MODEL *pmod, 
-			double ***pZ, DATAINFO *pdinfo, 
+int panel_hausman_test (MODEL *pmod, DATASET *dset, 
 			gretlopt opt, PRN *prn);
 
-int vif_test (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn);
+int vif_test (MODEL *pmod, DATASET *dset, PRN *prn);
 
-int leverage_test (MODEL *pmod, 
-		   double ***pZ, DATAINFO *pdinfo, 
+int leverage_test (MODEL *pmod, DATASET *dset, 
 		   gretlopt opt, PRN *prn);
 
-int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				    gretl_matrix *m, int flags);
+int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m, 
+				    int flags);
 
 #endif /* COMPARE_H */

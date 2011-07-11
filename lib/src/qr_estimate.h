@@ -20,11 +20,9 @@
 #ifndef QR_ESTIMATE_H
 #define QR_ESTIMATE_H
 
-int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
-		      gretlopt opt);
+int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt);
 
-int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
-		 gretlopt opt);
+int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt);
 
 double hac_weight (int kern, int h, int i);
 

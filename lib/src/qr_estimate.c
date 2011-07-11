@@ -206,7 +206,7 @@ static int qr_make_vcv (MODEL *pmod, gretl_matrix *v, int flag)
     return 0;
 }
 
-static void get_resids_and_SSR (MODEL *pmod, const double **Z,
+static void get_resids_and_SSR (MODEL *pmod, const DATASET *dset,
 				gretl_matrix *yhat, int fulln)
 {
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
@@ -228,11 +228,11 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    if (t < pmod->t1 || t > pmod->t2) {
 		pmod->yhat[t] = u[t] = NADBL;
 	    } else {
-		y = Z[yvar][t];
+		y = dset->Z[yvar][t];
 		if (t == pmod->t1 && pwe) {
 		    y *= sqrt(1.0 - pmod->rho * pmod->rho);
 		} else {
-		    y -= pmod->rho * Z[yvar][t-1];
+		    y -= pmod->rho * dset->Z[yvar][t-1];
 		}
 		pmod->yhat[t] = yhat->val[i];
 		u[t] = y - yhat->val[i];
@@ -245,12 +245,12 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
 		pmod->yhat[t] = u[t] = NADBL;
 	    } else {
-		y = Z[yvar][t];
-		if (dwt && Z[dwt][t] == 0.0) {
+		y = dset->Z[yvar][t];
+		if (dwt && dset->Z[dwt][t] == 0.0) {
 		    pmod->yhat[t] = NADBL;
 		} else {
 		    if (!dwt) {
-			y *= sqrt(Z[pmod->nwt][t]);
+			y *= sqrt(dset->Z[pmod->nwt][t]);
 		    }
 		    pmod->yhat[t] = yhat->val[i];
 		    u[t] = y - yhat->val[i];
@@ -265,7 +265,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		pmod->yhat[t] = u[t] = NADBL;
 	    } else {
 		pmod->yhat[t] = yhat->val[i];
-		u[t] = Z[yvar][t] - yhat->val[i];
+		u[t] = dset->Z[yvar][t] - yhat->val[i];
 		pmod->ess += u[t] * u[t];
 		i++;
 	    }
@@ -279,7 +279,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 }
 
 static void 
-get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
+get_data_X (gretl_matrix *X, const MODEL *pmod, const DATASET *dset)
 {
     int wt = pmod->nwt;
     int i, j, t, vi;
@@ -291,22 +291,23 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!model_missing(pmod, t)) {
 		if (wt) {
-		    X->val[j++] = sqrt(Z[wt][t]) * Z[vi][t];
+		    X->val[j++] = sqrt(dset->Z[wt][t]) * dset->Z[vi][t];
 		} else {
-		    X->val[j++] = Z[vi][t];
+		    X->val[j++] = dset->Z[vi][t];
 		}
 	    }
 	}
     }
 }
 
-static gretl_matrix *make_data_X (const MODEL *pmod, const double **Z)
+static gretl_matrix *make_data_X (const MODEL *pmod, 
+				  const DATASET *dset)
 {
     gretl_matrix *X;
 
     X = gretl_matrix_alloc(pmod->nobs, pmod->ncoeff);
     if (X != NULL) {
-	get_data_X(X, pmod, Z);
+	get_data_X(X, pmod, dset);
     }
 
     return X;
@@ -593,7 +594,8 @@ gretl_matrix *HAC_XOX (const gretl_matrix *uhat, const gretl_matrix *X,
    and Methods, chapter 9.
 */
 
-static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *XTXi)
+static int qr_make_hac (MODEL *pmod, const DATASET *dset, 
+			gretl_matrix *XTXi)
 {
     gretl_matrix *X, *XOX, *V = NULL;
     gretl_matrix umat;
@@ -601,7 +603,7 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *XTXi)
     int T = pmod->nobs;
     int err = 0;
 
-    X = make_data_X(pmod, Z);
+    X = make_data_X(pmod, dset);
     if (X == NULL) {
 	return E_ALLOC;
     }
@@ -669,7 +671,7 @@ static void do_X_prime_diag (const gretl_matrix *X,
    page 200.  Implements HC0, HC1, HC2 and HC3.
 */
 
-static int qr_make_hccme (MODEL *pmod, const double **Z, 
+static int qr_make_hccme (MODEL *pmod, const DATASET *dset,
 			  gretl_matrix *Q, gretl_matrix *XTXi)
 {
     gretl_matrix *X;
@@ -681,7 +683,7 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     int i, t;
     int err = 0;
 
-    X = make_data_X(pmod, Z);
+    X = make_data_X(pmod, dset);
     if (X == NULL) return 1;
 
     diag = gretl_vector_from_array(pmod->uhat + pmod->t1, T,
@@ -742,13 +744,13 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     return err;
 }
 
-static int qr_dw_stats (MODEL *pmod, const double **Z,
+static int qr_dw_stats (MODEL *pmod, const DATASET *dset,
 			gretl_matrix *X, gretl_matrix *u)
 {
     double DW, pv;
     int t, s, err = 0;
 
-    get_data_X(X, pmod, Z);
+    get_data_X(X, pmod, dset);
 
     for (s=0, t=pmod->t1; t<=pmod->t2; s++, t++) {
 	gretl_vector_set(u, s, pmod->uhat[t]);
@@ -772,7 +774,7 @@ static int qr_make_regular_vcv (MODEL *pmod, gretl_matrix *v,
     return qr_make_vcv(pmod, v, flag);
 }
 
-static void get_model_data (MODEL *pmod, const double **Z, 
+static void get_model_data (MODEL *pmod, const DATASET *dset,
 			    gretl_matrix *Q, gretl_matrix *y)
 {
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
@@ -796,16 +798,16 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	    if (model_missing(pmod, t)) {
 		continue;
 	    }
-	    x = Z[pmod->list[i]][t];
+	    x = dset->Z[pmod->list[i]][t];
 	    if (dwt) {
-		if (Z[dwt][t] == 0.0) continue;
+		if (dset->Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
-		x *= sqrt(Z[pmod->nwt][t]);
+		x *= sqrt(dset->Z[pmod->nwt][t]);
 	    } else if (qdiff) {
 		if (pwe && t == pmod->t1) {
 		    x *= pw1;
 		} else {
-		    x -= pmod->rho * Z[pmod->list[i]][t-1];
+		    x -= pmod->rho * dset->Z[pmod->list[i]][t-1];
 		}
 	    }
 	    Q->val[j++] = x;
@@ -819,16 +821,16 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	    if (model_missing(pmod, t)) {
 		continue;
 	    }		
-	    x = Z[pmod->list[1]][t];
+	    x = dset->Z[pmod->list[1]][t];
 	    if (dwt) {
-		if (Z[dwt][t] == 0.0) continue;
+		if (dset->Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
-		x *= sqrt(Z[pmod->nwt][t]);
+		x *= sqrt(dset->Z[pmod->nwt][t]);
 	    } else if (qdiff) {
 		if (pwe && t == pmod->t1) {
 		    x *= pw1;
 		} else {
-		    x -= pmod->rho * Z[pmod->list[1]][t-1];
+		    x -= pmod->rho * dset->Z[pmod->list[1]][t-1];
 		}
 	    }
 	    y->val[j++] = x;
@@ -956,8 +958,7 @@ drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
     }   
 }
 
-int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
-		      gretlopt opt)
+int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 {
     integer T, k;
     gretl_matrix *Q = NULL, *y = NULL;
@@ -981,7 +982,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 	goto qr_cleanup;
     }
 
-    get_model_data(pmod, Z, Q, y);
+    get_model_data(pmod, dset, Q, y);
     err = QR_decomp_plus(Q, R, &rank, &warn);
 
     /* handling of (near-)perfect collinearity */
@@ -991,10 +992,10 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 	gretl_matrix_reuse(Q, T, k);
 	gretl_matrix_reuse(R, k, k);
 	gretl_matrix_reuse(V, k, k);
-	get_model_data(pmod, Z, Q, y);
+	get_model_data(pmod, dset, Q, y);
 	err = QR_decomp_plus(Q, R, NULL, &warn);
 	if (!err) {
-	    maybe_shift_ldepvar(pmod, Z, pdinfo);
+	    maybe_shift_ldepvar(pmod, dset);
 	}
     }
 
@@ -1010,7 +1011,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
 	goto qr_cleanup;
     }
 
-    if (allocate_model_arrays(pmod, k, pdinfo->n)) {
+    if (allocate_model_arrays(pmod, k, dset->n)) {
 	err = E_ALLOC;
 	goto qr_cleanup;
     }
@@ -1028,7 +1029,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     gretl_matrix_multiply(Q, g, y);    
 
     /* get vector of residuals and SSR */
-    get_resids_and_SSR(pmod, Z, y, pdinfo->n);
+    get_resids_and_SSR(pmod, dset, y, dset->n);
 
     /* standard error of regression */
     if (T - k > 0) {
@@ -1051,20 +1052,20 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     if (opt & OPT_R) { 
 	pmod->opt |= OPT_R;
 	if ((opt & OPT_T) && !libset_get_bool(FORCE_HC)) {
-	    qr_make_hac(pmod, Z, V);
+	    qr_make_hac(pmod, dset, V);
 	} else {
-	    qr_make_hccme(pmod, Z, Q, V);
+	    qr_make_hccme(pmod, dset, Q, V);
 	}
     } else {
 	qr_make_regular_vcv(pmod, V, opt);
     }
 
     /* get R^2, F */
-    qr_compute_stats(pmod, Z[pmod->list[1]], T, opt);
+    qr_compute_stats(pmod, dset->Z[pmod->list[1]], T, opt);
 
     /* D-W stat and p-value */
     if ((opt & OPT_I) && pmod->missmask == NULL) {
-	qr_dw_stats(pmod, Z, Q, y);
+	qr_dw_stats(pmod, dset, Q, y);
     }
 
     /* near-singularity? */
@@ -1087,8 +1088,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, DATAINFO *pdinfo,
     return err;    
 }
 
-int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
-		 gretlopt opt)
+int qr_tsls_vcv (MODEL *pmod, const DATASET *dset, gretlopt opt)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -1097,7 +1097,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 
     k = pmod->list[0] - 1;        /* # of cols (variables) */
 
-    Q = make_data_X(pmod, Z);
+    Q = make_data_X(pmod, dset);
     R = gretl_matrix_alloc(k, k);
     V = gretl_matrix_alloc(k, k);
 
@@ -1118,18 +1118,18 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 
     /* VCV and standard errors */
     if (opt & OPT_R) {
-	if (dataset_is_panel(pdinfo)) {
+	if (dataset_is_panel(dset)) {
 	    err = qr_make_regular_vcv(pmod, V, OPT_X);
 	    if (!err) {
-		err = panel_tsls_robust_vcv(pmod, Z, pdinfo);
+		err = panel_tsls_robust_vcv(pmod, dset);
 	    }
-	} else if (dataset_is_time_series(pdinfo) && 
+	} else if (dataset_is_time_series(dset) && 
 		   !libset_get_bool(FORCE_HC)) {
 	    pmod->opt |= OPT_R;
-	    err = qr_make_hac(pmod, Z, V);
+	    err = qr_make_hac(pmod, dset, V);
 	} else {
 	    pmod->opt |= OPT_R;
-	    err = qr_make_hccme(pmod, Z, Q, V);
+	    err = qr_make_hccme(pmod, dset, Q, V);
 	}
     } else {
 	qr_make_regular_vcv(pmod, V, OPT_NONE);

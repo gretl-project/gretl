@@ -31,7 +31,6 @@ int *ivreg_list_add (const int *orig, const int *add, gretlopt opt, int *err);
 int *tsls_make_endolist (const int *reglist, int **instlist, 
 			 int *addconst, int *err);
 
-MODEL tsls (const int *list, double ***pZ, DATAINFO *pdinfo,
-	    gretlopt opt);
+MODEL tsls (const int *list, DATASET *dset, gretlopt opt);
 
 #endif /* TSLS_H */

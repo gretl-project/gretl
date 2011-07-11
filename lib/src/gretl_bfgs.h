@@ -75,19 +75,20 @@ gretl_matrix *numerical_hessian_inverse (const double *b, int n,
 double user_BFGS (gretl_matrix *b, 
 		  const char *fncall,
 		  const char *gradcall,
-		  double ***pZ, DATAINFO *pdinfo,
-		  PRN *prn, int *err);
+		  DATASET *dset, 
+		  PRN *prn, 
+		  int *err);
 
 double user_NR (gretl_matrix *b, 
 		const char *fncall,
 		const char *gradcall, 
 		const char *hesscall,
-		double ***pZ, DATAINFO *pdinfo,
-		PRN *prn, int *err);
+		DATASET *dset,
+		PRN *prn, 
+		int *err);
 
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
-		     double ***pZ, DATAINFO *pdinfo,
-		     int *err);
+		     DATASET *dset, int *err);
 
 void BFGS_defaults (int *maxit, double *tol, int ci);
 

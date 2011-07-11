@@ -92,7 +92,8 @@ static void boot_destroy (boot *bs)
 }
 
 static int 
-make_model_matrices (boot *bs, const MODEL *pmod, const double **Z)
+make_model_matrices (boot *bs, const MODEL *pmod, 
+		     const DATASET *dset)
 {
     double xti;
     int T = pmod->nobs;
@@ -122,16 +123,16 @@ make_model_matrices (boot *bs, const MODEL *pmod, const double **Z)
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    bs->y->val[s] = Z[pmod->list[1]][t];
+	    bs->y->val[s] = dset->Z[pmod->list[1]][t];
 	    if (pmod->ci == WLS) {
-		bs->w->val[s] = sqrt(Z[pmod->nwt][t]);
+		bs->w->val[s] = sqrt(dset->Z[pmod->nwt][t]);
 		bs->y->val[s] *= bs->w->val[s];
 		bs->u0->val[s] = bs->y->val[s];
 	    } else {
 		gretl_vector_set(bs->u0, s, pmod->uhat[t]);
 	    }
 	    for (i=2; i<=pmod->list[0]; i++) {
-		xti = Z[pmod->list[i]][t];
+		xti = dset->Z[pmod->list[i]][t];
 		if (pmod->ci == WLS) {
 		    xti *= bs->w->val[s];
 		    bs->u0->val[s] -= bs->b0->val[i-2] * xti;
@@ -220,7 +221,7 @@ int maybe_adjust_B (int B, double a, int flags)
 }
 
 static boot *boot_new (const MODEL *pmod,
-		       const double **Z,
+		       const DATASET *dset,
 		       int B, gretlopt opt)
 {
     boot *bs;
@@ -240,7 +241,7 @@ static boot *boot_new (const MODEL *pmod,
     bs->R = NULL;
     bs->q = NULL;
 
-    if (make_model_matrices(bs, pmod, Z)) {
+    if (make_model_matrices(bs, pmod, dset)) {
 	boot_destroy(bs);
 	return NULL;
     }
@@ -914,8 +915,7 @@ static int bs_add_restriction (boot *bs, int p)
  * @pmod: model to be examined.
  * @p: 0-based index number of the coefficient to analyse.
  * @B: number of replications.
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: option flags -- may contain %OPT_P to compute p-value
  * (default is to calculate confidence interval), %OPT_N
  * to use simulated normal errors (default is to resample the
@@ -932,8 +932,8 @@ static int bs_add_restriction (boot *bs, int p)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
-			const DATAINFO *pdinfo, gretlopt opt,
+int bootstrap_analysis (MODEL *pmod, int p, int B, 
+			const DATASET *dset, gretlopt opt,
 			PRN *prn)
 {
     boot *bs = NULL;
@@ -947,7 +947,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	return E_DATA;
     }
 
-    bs = boot_new(pmod, Z, B, opt);
+    bs = boot_new(pmod, dset, B, opt);
     if (bs == NULL) {
 	err = E_ALLOC;
     }  
@@ -965,7 +965,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 	} else {
 	    bs->SE = pmod->sigma;
 	}
-	strcpy(bs->vname, pdinfo->varname[v]);
+	strcpy(bs->vname, dset->varname[v]);
 	bs->point = pmod->coeff[p];
 	bs->se0 = pmod->sderr[p];
 	bs->test0 = pmod->coeff[p] / pmod->sderr[p];
@@ -990,7 +990,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
  * @test: initial test statistic.
  * @g: number of restrictions.
  * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @opt: options passed to the restrict command.
  * @prn: printing struct.
  *
@@ -1005,7 +1005,7 @@ int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
 
 int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
 				gretl_matrix *q, double test, int g,
-				const double **Z, const DATAINFO *pdinfo, 
+				const DATASET *dset, 
 				gretlopt opt, PRN *prn)
 {
     gretlopt bopt = OPT_P | OPT_R | OPT_F;
@@ -1027,7 +1027,7 @@ int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R,
 
     gretl_restriction_get_boot_params(&B, &bopt);
 
-    bs = boot_new(pmod, Z, B, bopt);
+    bs = boot_new(pmod, dset, B, bopt);
     if (bs == NULL) {
 	err = E_ALLOC;
     } 

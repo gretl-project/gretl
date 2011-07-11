@@ -415,7 +415,7 @@ static int print_var_lags (const int *laglist, int gotsep,
 
 static int 
 print_lags_by_varnum (int v, const Laginfo *linfo, 
-		      const DATAINFO *pdinfo, 
+		      const DATASET *dset, 
 		      int gotsep, PRN *prn)
 {
     const int *laglist = NULL;
@@ -429,7 +429,7 @@ print_lags_by_varnum (int v, const Laginfo *linfo,
     laglist = get_lag_list_by_varnum(v, linfo);
     if (laglist != NULL) {
 	pputc(prn, ' ');
-	ret = 1 + pputs(prn, pdinfo->varname[v]);
+	ret = 1 + pputs(prn, dset->varname[v]);
 	ret += print_var_lags(laglist, gotsep, prn);
     } 
 

@@ -168,7 +168,7 @@ make_transform_label (char *label, const char *parent,
 /**
  * is_standard_lag:
  * @v: ID number of variable to test.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @parent: location to receive ID number of parent variable,
  * or NULL.
  *
@@ -177,24 +177,24 @@ make_transform_label (char *label, const char *parent,
  * otherwise 0.
  */
 
-int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
+int is_standard_lag (int v, const DATASET *dset, int *parent)
 {
     int pv = 0, ret = 0;
 
-    if (pdinfo == NULL || v <= 0 || v >= pdinfo->v) {
+    if (dset == NULL || v <= 0 || v >= dset->v) {
 	return 0;
     }
 
-    if (pdinfo->varinfo[v]->transform == LAGS) {
-	pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
-	pv = (pv < pdinfo->v)? pv : 0;
-	ret = pdinfo->varinfo[v]->lag;
+    if (dset->varinfo[v]->transform == LAGS) {
+	pv = series_index(dset, dset->varinfo[v]->parent);
+	pv = (pv < dset->v)? pv : 0;
+	ret = dset->varinfo[v]->lag;
     }
 
     if (pv > 0) {
-	int n = strcspn(pdinfo->varname[v], "_");
+	int n = strcspn(dset->varname[v], "_");
 
-	if (!strncmp(pdinfo->varname[v], pdinfo->varname[pv], n)) {
+	if (!strncmp(dset->varname[v], dset->varname[pv], n)) {
 	    if (parent != NULL) {
 		*parent = pv;
 	    }
@@ -211,7 +211,7 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
 /**
  * is_standard_diff:
  * @v: ID number of variable to test.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @parent: location to receive ID number of parent variable,
  * or NULL.
  *
@@ -220,17 +220,17 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
  * otherwise 0.
  */
 
-int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent)
+int is_standard_diff (int v, const DATASET *dset, int *parent)
 {
     int pv = 0, ret = 0;
 
-    if (v <= 0 || v >= pdinfo->v) {
+    if (v <= 0 || v >= dset->v) {
 	return 0;
     }
 
-    if (pdinfo->varinfo[v]->transform == DIFF) {
-	pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
-	pv = (pv < pdinfo->v)? pv : 0;
+    if (dset->varinfo[v]->transform == DIFF) {
+	pv = series_index(dset, dset->varinfo[v]->parent);
+	pv = (pv < dset->v)? pv : 0;
 	if (pv > 0) {
 	    if (parent != NULL) {
 		*parent = pv;
@@ -245,7 +245,7 @@ int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent)
 /**
  * is_dummy_child:
  * @v: ID number of variable to test.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @parent: location to receive ID number of parent variable,
  * or NULL.
  *
@@ -254,24 +254,24 @@ int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent)
  * variable in the dataset, otherwise 0.
  */
 
-int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
+int is_dummy_child (int v, const DATASET *dset, int *parent)
 {
-    int pv = pdinfo->v;
+    int pv = dset->v;
     int i = 0, ret = 0;
 
-    if (pdinfo->varinfo[v]->transform == DUMMIFY) {
-	pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
-    } else if (!strncmp(pdinfo->varname[v], "dt_", 3)) {
-	if (sscanf(pdinfo->varname[v] + 3, "%d", &i) && i > 1) {
-	    pv = series_index(pdinfo, "dt_1");
+    if (dset->varinfo[v]->transform == DUMMIFY) {
+	pv = series_index(dset, dset->varinfo[v]->parent);
+    } else if (!strncmp(dset->varname[v], "dt_", 3)) {
+	if (sscanf(dset->varname[v] + 3, "%d", &i) && i > 1) {
+	    pv = series_index(dset, "dt_1");
 	}
-    } else if (!strncmp(pdinfo->varname[v], "du_", 3)) {
-	if (sscanf(pdinfo->varname[v] + 3, "%d", &i) && i > 1) {
-	    pv = series_index(pdinfo, "du_1");
+    } else if (!strncmp(dset->varname[v], "du_", 3)) {
+	if (sscanf(dset->varname[v] + 3, "%d", &i) && i > 1) {
+	    pv = series_index(dset, "du_1");
 	}
     }	
 
-    if (pv < pdinfo->v) {
+    if (pv < dset->v) {
 	*parent = pv;
 	ret = 1;
     } else {
@@ -282,11 +282,11 @@ int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
 }
 
 static void make_xp_varname (char *vname, int v1, int v2,
-			     const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     int len)
 {
-    int n1 = strlen(pdinfo->varname[v1]);
-    int n2 = strlen(pdinfo->varname[v2]);
+    int n1 = strlen(dset->varname[v1]);
+    int n2 = strlen(dset->varname[v2]);
     int cut = n1 + n2 + 1 - len;
     int cut1 = 0, cut2 = 0;
 
@@ -298,9 +298,9 @@ static void make_xp_varname (char *vname, int v1, int v2,
     }
 
     *vname = '\0';
-    strncat(vname, pdinfo->varname[v1], n1 - cut1);
+    strncat(vname, dset->varname[v1], n1 - cut1);
     strcat(vname, "_");
-    strncat(vname, pdinfo->varname[v2], n2 - cut2);    
+    strncat(vname, dset->varname[v2], n2 - cut2);    
 }
 
 /* Array into which to write a generated variable, prior to testing
@@ -357,18 +357,18 @@ void gretl_transforms_cleanup (void)
 /* write lagged values of variable v into xlag */
 
 static int get_lag (int v, int lag, double *xlag, 
-		    const double **Z, const DATAINFO *pdinfo)
+		    const DATASET *dset)
 {
-    const double *x = Z[v];
+    const double *x = dset->Z[v];
     int t1 = (lag > 0)? lag : 0;
-    int t2 = pdinfo->n - 1;
+    int t2 = dset->n - 1;
     int t, s, miss;
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	xlag[t] = NADBL;
     }
 
-    if (dated_daily_data(pdinfo)) {
+    if (dated_daily_data(dset)) {
 	for (t=t1; t<=t2; t++) {
 	    s = t - lag;
 	    miss = 0;
@@ -381,11 +381,11 @@ static int get_lag (int v, int lag, double *xlag,
     } else { 
 	for (t=t1; t<=t2; t++) {
 	    s = t - lag;
-	    if (pdinfo->structure == STACKED_TIME_SERIES &&
-		t / pdinfo->pd != s / pdinfo->pd) {
+	    if (dset->structure == STACKED_TIME_SERIES &&
+		t / dset->pd != s / dset->pd) {
 		continue;
 	    }	    
-	    if (s >= 0 && s < pdinfo->n) {
+	    if (s >= 0 && s < dset->n) {
 		xlag[t] = x[s];
 	    }
 	}
@@ -396,14 +396,13 @@ static int get_lag (int v, int lag, double *xlag,
 
 /* write log of variable v into logvec */
 
-static int get_log (int v, double *logvec, const double **Z, 
-		    const DATAINFO *pdinfo)
+static int get_log (int v, double *logvec, const DATASET *dset)
 {
     double xx;
     int t, err = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2 && !err; t++) {
-	xx = Z[v][t];
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
+	xx = dset->Z[v][t];
 	if (na(xx) || xx <= 0.0) {
 	    logvec[t] = NADBL;
 	    set_gretl_warning(W_GENMISS);
@@ -418,22 +417,22 @@ static int get_log (int v, double *logvec, const double **Z,
 /* write some sort of difference of variable v into diffvec */
 
 static int get_diff (int v, double *diffvec, int ci,
-		     const double **Z, const DATAINFO *pdinfo)
+		     const DATASET *dset)
 {
     double x0, x1;
     int t, t0, t1;
 
-    t0 = (ci == SDIFF)? pdinfo->pd : 1;
-    t1 = (pdinfo->t1 > t0)? pdinfo->t1 : t0;
+    t0 = (ci == SDIFF)? dset->pd : 1;
+    t1 = (dset->t1 > t0)? dset->t1 : t0;
 
-    for (t=t1; t<=pdinfo->t2; t++) {
-	if (pdinfo->structure == STACKED_TIME_SERIES &&
-	    panel_unit_first_obs(t, pdinfo)) {
+    for (t=t1; t<=dset->t2; t++) {
+	if (dset->structure == STACKED_TIME_SERIES &&
+	    panel_unit_first_obs(t, dset)) {
 	    continue;
 	}
 
-	x0 = Z[v][t];
-	x1 = Z[v][t - t0];
+	x0 = dset->Z[v][t];
+	x1 = dset->Z[v][t - t0];
 
 	if (ci == LDIFF) {
 	    if (!na(x0) && !na(x1) && x0 > 0 && x1 > 0) {
@@ -451,23 +450,21 @@ static int get_diff (int v, double *diffvec, int ci,
 
 /* orthogonal deviations */
 
-static int get_orthdev (int v, double *xvec, const double **Z, 
-			const DATAINFO *pdinfo)
+static int get_orthdev (int v, double *xvec, const DATASET *dset)
 {
-    return orthdev_series(Z[v], xvec, pdinfo);
+    return orthdev_series(dset->Z[v], xvec, dset);
 }
 
 /* write square or cross-product into xvec */
 
-static int get_xpx (int vi, int vj, double *xvec, const double **Z, 
-		    const DATAINFO *pdinfo)
+static int get_xpx (int vi, int vj, double *xvec, const DATASET *dset)
 {
     double xit, xjt;
     int t;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xit = Z[vi][t];
-	xjt = Z[vj][t];
+    for (t=dset->t1; t<=dset->t2; t++) {
+	xit = dset->Z[vi][t];
+	xjt = dset->Z[vj][t];
 	if (na(xit) || na(xjt)) {
 	    xvec[t] = NADBL;
 	} else {
@@ -480,14 +477,13 @@ static int get_xpx (int vi, int vj, double *xvec, const double **Z,
 
 /* write reciprocal into xvec */
 
-static int get_inverse (int v, double *xvec, const double **Z, 
-			const DATAINFO *pdinfo)
+static int get_inverse (int v, double *xvec, const DATASET *dset)
 {
     double xt;
     int t;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xt = Z[v][t];
+    for (t=dset->t1; t<=dset->t2; t++) {
+	xt = dset->Z[v][t];
 	if (na(xt) || xt == 0.0) {
 	    xvec[t] = NADBL;
 	} else {
@@ -500,14 +496,14 @@ static int get_inverse (int v, double *xvec, const double **Z,
 
 /* write dummy for (v == value) into xvec */
 
-static int get_discdum (int v, double val, double *xvec, const double **Z, 
-			const DATAINFO *pdinfo)
+static int get_discdum (int v, double val, double *xvec, 
+			const DATASET *dset)
 {
     double xt;
     int t;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xt = Z[v][t];
+    for (t=dset->t1; t<=dset->t2; t++) {
+	xt = dset->Z[v][t];
 	if (na(xt)) {
 	    xvec[t] = NADBL;
 	} else {
@@ -531,16 +527,14 @@ enum transform_results {
 
 static int transform_handle_duplicate (int ci, int lag, int v, 
 				       const double *x, const char *label,
-				       DATAINFO *pdinfo, double **Z,
-				       int origv)
+				       DATASET *dset, int origv)
 {
     int ret = VARNAME_DUPLICATE;
     int t, ok = 0;
 
-    if (!strcmp(label, VARLABEL(pdinfo, v))) {
+    if (!strcmp(label, VARLABEL(dset, v))) {
 	/* labels identical, so OK? */
 	ok = 1;
-	
     }
 
 #if TR_OVERWRITE
@@ -552,17 +546,17 @@ static int transform_handle_duplicate (int ci, int lag, int v,
     if (ok) {
 #if TRDEBUG
 	fprintf(stderr, "transform_handle_duplicate: updating var %d (%s)\n",
-		v, pdinfo->varname[v]);
+		v, dset->varname[v]);
 #endif
-	for (t=0; t<pdinfo->n; t++) {
-	    Z[v][t] = x[t];
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[v][t] = x[t];
 	}
 	if (*label != '\0') {
-	    strcpy(VARLABEL(pdinfo, v), label);
+	    strcpy(VARLABEL(dset, v), label);
 	}
-	pdinfo->varinfo[v]->transform = ci;
-	pdinfo->varinfo[v]->lag = lag;
-	pdinfo->varinfo[v]->flags = 0;
+	dset->varinfo[v]->transform = ci;
+	dset->varinfo[v]->lag = lag;
+	dset->varinfo[v]->flags = 0;
 	ret = VAR_EXISTS_OK;
     }	
 
@@ -572,14 +566,13 @@ static int transform_handle_duplicate (int ci, int lag, int v,
 static int 
 check_add_transform (int ci, int lag, int vnum, const double *x,
 		     const char *vname, const char *label,
-		     DATAINFO *pdinfo, double ***pZ,
-		     int origv)
+		     DATASET *dset, int origv)
 {
     int t, ret = VAR_ADDED_OK;
 
-    if (vnum < pdinfo->v) {
+    if (vnum < dset->v) {
 	/* a variable of this name already exists */
-	int chk = check_vals(x, (*pZ)[vnum], pdinfo->n);
+	int chk = check_vals(x, dset->Z[vnum], dset->n);
 
 	/* heuristic: we'll assume that if the variables have the same
 	   name, and differ only in respect of one being more complete
@@ -596,23 +589,23 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
 	    /* is this right? */
 	    ret = VAR_EXISTS_OK;
 	} else if (chk == Y_HAS_MISSING) {
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[vnum][t] = x[t];
+	    for (t=0; t<dset->n; t++) {
+		dset->Z[vnum][t] = x[t];
 	    }
 	    ret = VAR_EXISTS_OK;
 	} else {
-	    ret = transform_handle_duplicate(ci, lag, vnum, x, label, pdinfo,
-					     *pZ, origv);
+	    ret = transform_handle_duplicate(ci, lag, vnum, x, label, dset,
+					     origv);
 	}
     } else {
 	/* no var of this name, working from scratch */
-	if (dataset_add_series(1, pZ, pdinfo)) {
+	if (dataset_add_series(1, dset)) {
 	    ret = VAR_ADD_FAILED;
 	} else {
-	    strcpy(pdinfo->varname[vnum], vname);
-	    strcpy(VARLABEL(pdinfo, vnum), label);
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[vnum][t] = x[t];
+	    strcpy(dset->varname[vnum], vname);
+	    strcpy(VARLABEL(dset, vnum), label);
+	    for (t=0; t<dset->n; t++) {
+		dset->Z[vnum][t] = x[t];
 	    }
 	}
     }
@@ -620,14 +613,14 @@ check_add_transform (int ci, int lag, int vnum, const double *x,
     return ret;
 }
 
-static int get_lag_ID (int srcv, int lag, const DATAINFO *pdinfo)
+static int get_lag_ID (int srcv, int lag, const DATASET *dset)
 {
-    const char *vname = pdinfo->varname[srcv];
+    const char *vname = dset->varname[srcv];
     VARINFO *vinfo;
     int i;
 
-    for (i=1; i<pdinfo->v; i++) {
-	vinfo = pdinfo->varinfo[i];
+    for (i=1; i<dset->v; i++) {
+	vinfo = dset->varinfo[i];
 	if (vinfo->lag == lag && !strcmp(vinfo->parent, vname)) {
 	    return i;
 	}
@@ -649,8 +642,7 @@ static int get_lag_ID (int srcv, int lag, const DATAINFO *pdinfo)
 */
 
 static int get_transform (int ci, int v, int aux, double x, 
-			  double ***pZ, DATAINFO *pdinfo,
-			  int startlen, int origv)
+			  DATASET *dset, int startlen, int origv)
 {
     char vname[VNAMELEN] = {0};
     char label[MAXLABEL] = {0};
@@ -659,37 +651,37 @@ static int get_transform (int ci, int v, int aux, double x,
     const char *srcname;
     double *vx;
 
-    vx = testvec(pdinfo->n);
+    vx = testvec(dset->n);
     if (vx == NULL) {
 	return -1;
     }
 
     if (ci == LAGS) {
 	lag = aux;
-	err = get_lag(v, lag, vx, (const double **) *pZ, pdinfo);
+	err = get_lag(v, lag, vx, dset);
     } else if (ci == LOGS) {
-	err = get_log(v, vx, (const double **) *pZ, pdinfo);
+	err = get_log(v, vx, dset);
     } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
-	err = get_diff(v, vx, ci, (const double **) *pZ, pdinfo);
+	err = get_diff(v, vx, ci, dset);
     } else if (ci == ORTHDEV) {
-	err = get_orthdev(v, vx, (const double **) *pZ, pdinfo);
+	err = get_orthdev(v, vx, dset);
     } else if (ci == SQUARE) {
 	/* "aux" = second variable number */
-	err = get_xpx(v, aux, vx, (const double **) *pZ, pdinfo);
+	err = get_xpx(v, aux, vx, dset);
     } else if (ci == DUMMIFY) {
 	/* "x" = value for dummy */
-	err = get_discdum(v, x, vx, (const double **) *pZ, pdinfo);
+	err = get_discdum(v, x, vx, dset);
     } else if (ci == INVERSE) {
-	err = get_inverse(v, vx, (const double **) *pZ, pdinfo);
+	err = get_inverse(v, vx, dset);
     }
 
     if (err) {
 	return -1;
     }
 
-    if (ci == LAGS && (vno = get_lag_ID(v, aux, pdinfo)) > 0) {
+    if (ci == LAGS && (vno = get_lag_ID(v, aux, dset)) > 0) {
 	/* special case: pre-existing lag */
-	err = check_add_transform(ci, lag, vno, vx, vname, label, pdinfo, pZ, origv);
+	err = check_add_transform(ci, lag, vno, vx, vname, label, dset, origv);
 	if (err != VAR_EXISTS_OK) {
 	    vno = -1;
 	}
@@ -697,31 +689,31 @@ static int get_transform (int ci, int v, int aux, double x,
     }
 
     if (ci == SQUARE && v != aux) {
-	sprintf(label, _("= %s times %s"), pdinfo->varname[v], 
-		pdinfo->varname[aux]);
+	sprintf(label, _("= %s times %s"), dset->varname[v], 
+		dset->varname[aux]);
     } else if (ci == DUMMIFY) {
-	sprintf(label, _("dummy for %s = %g"), pdinfo->varname[v], x);
+	sprintf(label, _("dummy for %s = %g"), dset->varname[v], x);
     } else {
-	make_transform_label(label, pdinfo->varname[v], ci, aux);
+	make_transform_label(label, dset->varname[v], ci, aux);
     }
 
     srcname = get_mangled_name_by_id(v);
     if (srcname == NULL) {
-	srcname = pdinfo->varname[v];
+	srcname = dset->varname[v];
     }
 
     for (len=startlen; len<=VNAMELEN; len++) {
 	if (len == VNAMELEN) {
 	    /* last resort: hack the name */
-	    make_varname_unique(vname, 0, pdinfo);
+	    make_varname_unique(vname, 0, dset);
 	} else if (ci == SQUARE && v != aux) {
-	    make_xp_varname(vname, v, aux, pdinfo, len);
+	    make_xp_varname(vname, v, aux, dset, len);
 	} else {
 	    make_transform_varname(vname, srcname, ci, aux, len);
 	}
-	vno = series_index(pdinfo, vname);
+	vno = series_index(dset, vname);
 
-	err = check_add_transform(ci, lag, vno, vx, vname, label, pdinfo, pZ, origv);
+	err = check_add_transform(ci, lag, vno, vx, vname, label, dset, origv);
 	if (err != VAR_EXISTS_OK && err != VAR_ADDED_OK) {
 	    vno = -1;
 	}
@@ -733,18 +725,18 @@ static int get_transform (int ci, int v, int aux, double x,
 
     if (!err && vno > 0) {
 	if (ci == DUMMIFY) {
-	    strcpy(pdinfo->varinfo[vno]->parent, pdinfo->varname[v]);
-	    pdinfo->varinfo[vno]->transform = DUMMIFY;
-	    set_var_discrete(pdinfo, vno, 1);
+	    strcpy(dset->varinfo[vno]->parent, dset->varname[v]);
+	    dset->varinfo[vno]->transform = DUMMIFY;
+	    set_var_discrete(dset, vno, 1);
 	} else if (ci == LAGS || ci == DIFF) {
-	    strcpy(pdinfo->varinfo[vno]->parent, pdinfo->varname[v]);
-	    pdinfo->varinfo[vno]->transform = ci;
+	    strcpy(dset->varinfo[vno]->parent, dset->varname[v]);
+	    dset->varinfo[vno]->transform = ci;
 	}
 
 	if (ci == LAGS) {
-	    pdinfo->varinfo[vno]->lag = aux;
+	    dset->varinfo[vno]->lag = aux;
 	} else {
-	    pdinfo->varinfo[vno]->lag = 0;
+	    dset->varinfo[vno]->lag = 0;
 	}
     }
 
@@ -755,8 +747,7 @@ static int get_transform (int ci, int v, int aux, double x,
  * laggenr: 
  * @v: ID number in dataset of source variable.
  * @lag: the order of the lag to create.
- * @pZ: pointer to data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  *
  * Creates the specified lag of variable @v if this variable does
  * not already exist.
@@ -764,18 +755,18 @@ static int get_transform (int ci, int v, int aux, double x,
  * Returns: the ID number of the lagged variable, or -1 on error.
  */
 
-int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
+int laggenr (int v, int lag, DATASET *dset)
 {
     int lno;
 
-    if (lag > pdinfo->n || -lag > pdinfo->n) {
+    if (lag > dset->n || -lag > dset->n) {
 	gretl_errmsg_sprintf(_("Invalid lag order %d"), lag);
 	lno = -1;
     } else if (lag == 0) {
 	lno = v;
     } else {
-	lno = get_transform(LAGS, v, lag, 0.0, pZ, pdinfo, 
-			    VNAMELEN - 3, pdinfo->v);
+	lno = get_transform(LAGS, v, lag, 0.0, dset, 
+			    VNAMELEN - 3, dset->v);
     }
 
     return lno;
@@ -786,8 +777,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
  * @v: ID number in dataset of source variable.
  * @minlag: minimum lag order.
  * @maxlag: maximum lag order.
- * @pZ: pointer to data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  * @err: location to receive error code.
  *
  * Creates the specified lags of variable @v if they do not
@@ -796,8 +786,8 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
  * Returns: list of lag variables, or NULL or on error.
  */
 
-int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ, 
-		      DATAINFO *pdinfo, int *err)
+int *laggenr_from_to (int v, int minlag, int maxlag, 
+		      DATASET *dset, int *err)
 {
     int *llist;
     int i, lv, nlags = -1;
@@ -824,7 +814,7 @@ int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ,
     p = minlag;
 
     for (i=0; i<nlags; i++) {
-	lv = laggenr(v, p, pZ, pdinfo);
+	lv = laggenr(v, p, dset);
 	if (lv < 0) {
 	    *err = E_DATA;
 	    free(llist);
@@ -845,8 +835,7 @@ int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ,
 /**
  * loggenr: 
  * @v: ID number in dataset of source variable.
- * @pZ: pointer to data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  *
  * Creates the natural log of variable @v if this variable does
  * not already exist.
@@ -854,17 +843,16 @@ int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ,
  * Returns: the ID number of the log variable, or -1 on error.
  */
 
-int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
+int loggenr (int v, DATASET *dset)
 {
-    return get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, 
-			 VNAMELEN - 3, pdinfo->v);
+    return get_transform(LOGS, v, 0, 0.0, dset, 
+			 VNAMELEN - 3, dset->v);
 }
 
 /**
  * invgenr: 
  * @v: ID number in dataset of source variable.
- * @pZ: pointer to data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  *
  * Creates the reciprocal of variable @v if this variable does
  * not already exist.
@@ -872,10 +860,10 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
  * Returns: the ID number of the reciprocal, or -1 on error.
  */
 
-int invgenr (int v, double ***pZ, DATAINFO *pdinfo)
+int invgenr (int v, DATASET *dset)
 {
-    return get_transform(INVERSE, v, 0, 0.0, pZ, pdinfo, 
-			 VNAMELEN - 3, pdinfo->v);
+    return get_transform(INVERSE, v, 0, 0.0, dset, 
+			 VNAMELEN - 3, dset->v);
 }
 
 /**
@@ -883,8 +871,7 @@ int invgenr (int v, double ***pZ, DATAINFO *pdinfo)
  * @v: ID number in dataset of source variable.
  * @ci: DIFF (first difference), LDIFF (log difference) or SDIFF
  * (seasonal difference).
- * @pZ: pointer to data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  *
  * Creates the first difference (or log- or seasonal difference, 
  * depending on the value of @ci) of variable @v, if the
@@ -893,26 +880,25 @@ int invgenr (int v, double ***pZ, DATAINFO *pdinfo)
  * Returns: the ID number of the differenced variable, or -1 on error.
  */
 
-int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
+int diffgenr (int v, int ci, DATASET *dset)
 {
     if (ci != DIFF && ci != LDIFF && ci != SDIFF) {
 	return -1;
     }
 
-    if (ci == SDIFF && !dataset_is_seasonal(pdinfo)) {
+    if (ci == SDIFF && !dataset_is_seasonal(dset)) {
 	return -1;
     }
 
-    return get_transform(ci, v, 0, 0.0, pZ, pdinfo, 
-			 VNAMELEN - 3, pdinfo->v);
+    return get_transform(ci, v, 0, 0.0, dset, 
+			 VNAMELEN - 3, dset->v);
 }
 
 /**
  * xpxgenr: 
  * @vi: ID number in dataset of first source variable.
  * @vj: ID number in dataset of second source variable.
- * @pZ: pointer to data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  *
  * Creates the cross product of variables @vi and @vj if this 
  * variable does not already exist.
@@ -921,20 +907,20 @@ int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
  * or -1 on error.
  */
 
-int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
+int xpxgenr (int vi, int vj, DATASET *dset)
 {
     if (vi == vj) {
-	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[vi])) {
+	if (gretl_isdummy(dset->t1, dset->t2, dset->Z[vi])) {
 	    return -1;
 	}
     }
 
-    return get_transform(SQUARE, vi, vj, 0.0, pZ, pdinfo, 
-			 VNAMELEN - 3, pdinfo->v);
+    return get_transform(SQUARE, vi, vj, 0.0, dset, 
+			 VNAMELEN - 3, dset->v);
 }
 
 static int 
-get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
+get_starting_length (const int *list, DATASET *dset, int trim)
 {
     int width = VNAMELEN - 3 - trim;
     const char *vni, *vnj;
@@ -947,7 +933,7 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
     }
 
     for (i=1; i<=list[0]; i++) {
-	len = strlen(pdinfo->varname[list[i]]);
+	len = strlen(dset->varname[list[i]]);
 	if (len > maxlen) {
 	    maxlen = len;
 	}
@@ -961,9 +947,9 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
     for (len=width; len<=maxlen; len++) {
 	conflict = 0;
 	for (i=1; i<=list[0] && !conflict; i++) {
-	    vni = pdinfo->varname[list[i]];
+	    vni = dset->varname[list[i]];
 	    for (j=i+1; j<=list[0] && !conflict; j++) {
-		vnj = pdinfo->varname[list[j]];
+		vnj = dset->varname[list[j]];
 		if (!strncmp(vni, vnj, len)) {
 		    conflict = 1;
 		}
@@ -1064,8 +1050,7 @@ static int make_mangled_name (int v, const char *s, int nc)
 }
 
 static int 
-transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
-			   int f)
+transform_preprocess_list (int *list, const DATASET *dset, int f)
 {
     int maxc = VNAMELEN - 3;
     int longnames = 0;
@@ -1089,7 +1074,7 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
 	    if (v == 0) { /* FIXME?? */
 		ok = 1; 
 	    }
-	    if (gretl_isdummy(pdinfo->t1, pdinfo->t2, Z[v])) {
+	    if (gretl_isdummy(dset->t1, dset->t2, dset->Z[v])) {
 		ok = 0;
 	    }
 	} else if (f == LAGS) {
@@ -1099,10 +1084,10 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
 	} else if (f == DUMMIFY) {
 	    ok = 0; /* reverse burden of proof */
 	    if (v > 0) {
-		if (var_is_discrete(pdinfo, v)) {
+		if (var_is_discrete(dset, v)) {
 		    /* pre-approved */
 		    ok = 1;
-		} else if (gretl_isdiscrete(0, pdinfo->n - 1, Z[v])) {
+		} else if (gretl_isdiscrete(0, dset->n - 1, dset->Z[v])) {
 		    ok = 1;
 		}
 	    }
@@ -1110,8 +1095,8 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
 
 	if (!ok) {
 	    gretl_list_delete_at_pos(list, i--);
-	} else if (strlen(pdinfo->varname[v]) > maxc) {
-	    strings_array_add(&S, &longnames, pdinfo->varname[v]);
+	} else if (strlen(dset->varname[v]) > maxc) {
+	    strings_array_add(&S, &longnames, dset->varname[v]);
 	}
     }
 
@@ -1126,9 +1111,9 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
 	    for (i=0; i<longnames && !herr; i++) {
 		for (j=i+1; j<longnames && !herr; j++) {
 		    if (!strncmp(S[i], S[j], maxc)) {
-			v = series_index(pdinfo, S[i]);
+			v = series_index(dset, S[i]);
 			herr = make_mangled_name(v, S[i], maxc);
-			v = series_index(pdinfo, S[j]);
+			v = series_index(dset, S[j]);
 			herr += make_mangled_name(v, S[j], maxc);
 		    }
 		}
@@ -1145,8 +1130,7 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
  * list_loggenr:
  * @list: on entry, list of variables to process; on exit,
  * holds the ID numbers of the generated variables.
- * @pZ: pointer to data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  *
  * Generates and adds to the data set the natural logs of the
  * variables given in @list.
@@ -1154,25 +1138,25 @@ transform_preprocess_list (int *list, double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on success, error code on error.
  */
 
-int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
+int list_loggenr (int *list, DATASET *dset)
 {
-    int origv = pdinfo->v;
+    int origv = dset->v;
     int tnum, i, j, v;
     int startlen;
     int l0 = 0;
     int err;
 
-    err = transform_preprocess_list(list, *pZ, pdinfo, LOGS);
+    err = transform_preprocess_list(list, dset, LOGS);
     if (err) {
 	return err;
     }
 
-    startlen = get_starting_length(list, pdinfo, 2);
+    startlen = get_starting_length(list, dset, 2);
 
     j = 1;
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	tnum = get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, startlen,
+	tnum = get_transform(LOGS, v, 0, 0.0, dset, startlen,
 			     origv);
 	if (tnum > 0) {
 	    list[j++] = tnum;
@@ -1187,7 +1171,7 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
     return (l0 > 0)? 0 : E_LOGS;
 }
 
-static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
+static int *make_lags_list (int *list, int order, DATASET *dset)
 {
     int i, v, nl = 0;
 
@@ -1206,8 +1190,7 @@ static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
  * @plist: on entry, pointer to list of variables to process.  On exit
  * the list holds the ID numbers of the lag variables.
  * @order: number of lags to generate (or 0 for automatic).
- * @pZ: pointer to data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  *
  * Generates and adds to the data set @order lagged values of the 
  * variables given in the list pointed to by @plist.
@@ -1215,9 +1198,9 @@ static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
+int list_laggenr (int **plist, int order, DATASET *dset)
 {
-    int origv = pdinfo->v;
+    int origv = dset->v;
     int *list = *plist;
     int *laglist = NULL;
     int l, i, j, v, lv;
@@ -1230,35 +1213,35 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (order == 0) {
-	order = default_lag_order(pdinfo);
+	order = default_lag_order(dset);
     } 
 
-    err = transform_preprocess_list(list, *pZ, pdinfo, LAGS);
+    err = transform_preprocess_list(list, dset, LAGS);
     if (err) {
 	return err;
     }
 
-    laglist = make_lags_list(list, order, pdinfo);
+    laglist = make_lags_list(list, order, dset);
     if (laglist == NULL) {
 	destroy_mangled_names();
 	return E_ALLOC;
     }
 
-    startlen = get_starting_length(list, pdinfo, (order > 9)? 3 : 2);
+    startlen = get_starting_length(list, dset, (order > 9)? 3 : 2);
 
     j = 1;
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	for (l=1; l<=order; l++) {
-	    lv = get_transform(LAGS, v, l, 0.0, pZ, pdinfo, startlen, origv);
+	    lv = get_transform(LAGS, v, l, 0.0, dset, startlen, origv);
 #if TRDEBUG > 1
 	    fprintf(stderr, "base var '%s', lag %d: lv = %d\n",
-		    pdinfo->varname[v], l, lv);
+		    dset->varname[v], l, lv);
 #endif
 	    if (lv > 0) {
 #if TRDEBUG > 1
 		fprintf(stderr, "lag var name '%s', label '%s'\n",
-			pdinfo->varname[lv], VARLABEL(pdinfo, lv));
+			dset->varname[lv], VARLABEL(dset, lv));
 #endif
 		laglist[j++] = lv;
 		l0++;
@@ -1278,18 +1261,18 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
 
 /**
  * default_lag_order:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  *
  * Returns: the default lag order for generating lags, performing
  * autocorrelation test, and so on.
  */
 
-int default_lag_order (const DATAINFO *pdinfo)
+int default_lag_order (const DATASET *dset)
 {
     int order = 1;
 
-    if (!dataset_is_panel(pdinfo)) {
-	order = (pdinfo->pd < 52)? pdinfo->pd : 14;
+    if (!dataset_is_panel(dset)) {
+	order = (dset->pd < 52)? dset->pd : 14;
     }
 
     return order;
@@ -1300,8 +1283,7 @@ int default_lag_order (const DATAINFO *pdinfo)
  * @list: on entry, list of variables to process; on exit,
  * ID numbers of the generated variables.
  * @ci: must be DIFF, LDIFF or SDIFF.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  *
  * Generate differences of the variables in @list, and add them
  * to the data set.  If @ci is DIFF these are ordinary first
@@ -1311,9 +1293,9 @@ int default_lag_order (const DATAINFO *pdinfo)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
+int list_diffgenr (int *list, int ci, DATASET *dset)
 {
-    int origv = pdinfo->v;
+    int origv = dset->v;
     int i, v, startlen;
     int tnum, l0 = 0;
     int err;
@@ -1326,20 +1308,20 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
 	return 1;
     }
 
-    if (ci == SDIFF && !dataset_is_seasonal(pdinfo)) {
+    if (ci == SDIFF && !dataset_is_seasonal(dset)) {
 	return E_PDWRONG;
     } 
 
-    err = transform_preprocess_list(list, *pZ, pdinfo, ci);
+    err = transform_preprocess_list(list, dset, ci);
     if (err) {
 	return err;
     }
 
-    startlen = get_starting_length(list, pdinfo, (ci == DIFF)? 2 : 3);
+    startlen = get_starting_length(list, dset, (ci == DIFF)? 2 : 3);
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	tnum = get_transform(ci, v, 0, 0.0, pZ, pdinfo, startlen, origv);
+	tnum = get_transform(ci, v, 0, 0.0, dset, startlen, origv);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
@@ -1358,8 +1340,7 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
 /**
  * list_orthdev:
  * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  *
  * Generate orthogonal deviations of the variables in @list, and add
  * them to the data set.
@@ -1367,9 +1348,9 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on success, error code on error.
  */
 
-int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo)
+int list_orthdev (int *list, DATASET *dset)
 {
-    int origv = pdinfo->v;
+    int origv = dset->v;
     int i, v, startlen;
     int tnum, l0 = 0;
     int err;
@@ -1378,20 +1359,20 @@ int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo)
 	return 0;
     }
 
-    if (!dataset_is_panel(pdinfo)) {
+    if (!dataset_is_panel(dset)) {
 	return E_PDWRONG;
     } 
 
-    err = transform_preprocess_list(list, *pZ, pdinfo, ORTHDEV);
+    err = transform_preprocess_list(list, dset, ORTHDEV);
     if (err) {
 	return err;
     }
 
-    startlen = get_starting_length(list, pdinfo, 2);
+    startlen = get_starting_length(list, dset, 2);
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	tnum = get_transform(ORTHDEV, v, 0, 0.0, pZ, pdinfo, startlen, origv);
+	tnum = get_transform(ORTHDEV, v, 0, 0.0, dset, startlen, origv);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
@@ -1412,8 +1393,7 @@ int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo)
  * @plist: pointer to list of variables to process.  On exit
  * the list holds the ID numbers of the squares (and possibly 
  * cross-products).
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: If OPT_O, both squares and cross-products are generated,
  * otherwise only squares.
  *
@@ -1424,17 +1404,16 @@ int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on success, error code on error.
  */
 
-int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt)
+int list_xpxgenr (int **plist, DATASET *dset, gretlopt opt)
 {
-    int origv = pdinfo->v;
+    int origv = dset->v;
     int *list = *plist;
     int *xpxlist = NULL;
     int tnum, i, j, k, vi, vj;
     int startlen, l0;
     int err;
 
-    err = transform_preprocess_list(list, *pZ, pdinfo, SQUARE);
+    err = transform_preprocess_list(list, dset, SQUARE);
     if (err) {
 	return err;
     }
@@ -1453,13 +1432,13 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	xpxlist = list;
     }
 
-    startlen = get_starting_length(list, pdinfo, 3);
+    startlen = get_starting_length(list, dset, 3);
     xpxlist[0] = 0;
 
     k = 1;
     for (i=1; i<=l0; i++) {
 	vi = list[i];
-	tnum = get_transform(SQUARE, vi, vi, 0.0, pZ, pdinfo, startlen,
+	tnum = get_transform(SQUARE, vi, vi, 0.0, dset, startlen,
 			     origv);
 	if (tnum > 0) {
 	    xpxlist[k++] = tnum;
@@ -1468,7 +1447,7 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	if (opt & OPT_O) {
 	    for (j=i+1; j<=l0; j++) {
 		vj = list[j];
-		tnum = xpxgenr(vi, vj, pZ, pdinfo);
+		tnum = xpxgenr(vi, vj, dset);
 		if (tnum > 0) {
 		    xpxlist[k++] = tnum;
 		    xpxlist[0] += 1;
@@ -1491,10 +1470,10 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 
 #define skip_j (x, xs) (!na(xs) && (xs == x))
 
-static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
+static int real_list_dumgenr (int **plist, DATASET *dset,
 			      double oddval, gretlopt opt)
 {
-    int origv = pdinfo->v;
+    int origv = dset->v;
     int *list = *plist;
     int *tmplist = NULL;
     double *x = NULL;
@@ -1502,7 +1481,7 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     int startlen;
     int err;
 
-    err = transform_preprocess_list(list, *pZ, pdinfo, DUMMIFY);
+    err = transform_preprocess_list(list, dset, DUMMIFY);
     if (err) {
 	return err;
     }
@@ -1513,13 +1492,13 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
     
-    x = malloc(pdinfo->n * sizeof *x);
+    x = malloc(dset->n * sizeof *x);
     if (x == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    startlen = get_starting_length(list, pdinfo, 3);
+    startlen = get_starting_length(list, dset, 3);
 
     for (i=1; i<=list[0] && !err; i++) {
 	int vi = list[i];
@@ -1528,8 +1507,8 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	double xt;
 
 	n = 0;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    xt = (*pZ)[vi][t];
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    xt = dset->Z[vi][t];
 	    if (!na(xt)) {
 		x[n++] = xt;
 	    }
@@ -1560,7 +1539,7 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 
 	for (j=jmin; j<jmax && !err; j++) {
 	    if (x[j] != oddval) {
-		tnum = get_transform(DUMMIFY, vi, j+1, x[j], pZ, pdinfo, 
+		tnum = get_transform(DUMMIFY, vi, j+1, x[j], dset, 
 				     startlen, origv);
 #if DUMDEBUG   
 		fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);
@@ -1605,8 +1584,7 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
  * list_dumgenr:
  * @plist: pointer to list of variables to process; on exit
  * the list holds the ID numbers of the generated dummies.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: can include OPT_F to drop the first value, OPT_L to drop
  * the last value.
  *
@@ -1622,18 +1600,16 @@ static int real_list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on success, error code on error.
 */
 
-int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt)
+int list_dumgenr (int **plist, DATASET *dset, gretlopt opt)
 {
-    return real_list_dumgenr(plist, pZ, pdinfo, NADBL, opt);
+    return real_list_dumgenr(plist, dset, NADBL, opt);
 }
 
 /**
  * dumgenr_with_oddval:
  * @plist: pointer to list of variables to process; on exit
  * the list holds the ID numbers of the generated dummies.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @oddval: value which should be skipped when encoding the
  * input values as dummies.
  *
@@ -1647,16 +1623,15 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on success, error code on error.
 */
 
-int dumgenr_with_oddval (int **plist, double ***pZ, DATAINFO *pdinfo,
-			 double oddval)
+int dumgenr_with_oddval (int **plist, DATASET *dset, double oddval)
 {
-    return real_list_dumgenr(plist, pZ, pdinfo, oddval, OPT_NONE);
+    return real_list_dumgenr(plist, dset, oddval, OPT_NONE);
 }
 
 /**
  * list_makediscrete:
  * @list: list of variables to process.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @opt: if OPT_R, reverse the operation.
  *
  * Sets the variables given in @list as discrete, unless
@@ -1666,7 +1641,7 @@ int dumgenr_with_oddval (int **plist, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on success, error code on error.
  */
 
-int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt)
+int list_makediscrete (const int *list, DATASET *dset, gretlopt opt)
 {
     int disc = !(opt & OPT_R);
     int i, v, err = 0;
@@ -1674,7 +1649,7 @@ int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt)
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	if (v > 0) {
-	    set_var_discrete(pdinfo, v, disc);
+	    set_var_discrete(dset, v, disc);
 	}
     }
 

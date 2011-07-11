@@ -422,8 +422,8 @@ static void set_delim (GtkWidget *w, csv_stuff *csv)
 
 static void really_set_csv_stuff (GtkWidget *w, csv_stuff *csv)
 {
-    datainfo->delim = csv->delim;
-    datainfo->decpoint = csv->decpoint;
+    dataset->delim = csv->delim;
+    dataset->decpoint = csv->decpoint;
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -449,7 +449,7 @@ int csv_options_dialog (gretlopt *optp)
 	return -1;
     }
 
-    csvp->delim = datainfo->delim;
+    csvp->delim = dataset->delim;
     csvp->decpoint = '.';
     csvp->point_button = NULL;
 
@@ -560,7 +560,7 @@ int csv_options_dialog (gretlopt *optp)
 	pack_in_hbox(tmp, vbox, 0);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 
-	if (any_missing_user_values((const double **) Z, datainfo)) {
+	if (any_missing_user_values(dataset)) {
 	    tmp = csv_na_combo();
 	    pack_in_hbox(tmp, vbox, 0);
 	}
@@ -940,7 +940,7 @@ static GtkWidget *bs_coeff_popdown (MODEL *pmod, int *pp)
 
     for (i=1; i<=xlist[0]; i++) {
 	vi = xlist[i];
-	combo_box_append_text(w, datainfo->varname[vi]);
+	combo_box_append_text(w, dataset->varname[vi]);
     }
 
     if (pmod->ifc && pmod->ncoeff > 1) {
@@ -1484,7 +1484,7 @@ void iter_control_dialog (int *optim, int *pmaxit, double *ptol,
 
 struct range_setting {
     gretlopt opt;
-    DATAINFO dinfo;       /* auxiliary data info structure */
+    DATASET dinfo;       /* auxiliary data info structure */
     GtkWidget *dlg;       /* dialog box */
     GtkWidget *obslabel;  /* label for showing number of selected obs */
     GtkAdjustment *adj1;  /* adjustment for start spinner */
@@ -1507,12 +1507,12 @@ static void free_rsetting (GtkWidget *w, struct range_setting *rset)
 
 static int unit_get_first_obs (int u)
 {
-    return u * datainfo->pd;
+    return u * dataset->pd;
 }
 
 static int unit_get_last_obs (int u)
 {
-    return (u+1) * datainfo->pd - 1;
+    return (u+1) * dataset->pd - 1;
 }
 
 static gboolean
@@ -1593,11 +1593,11 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    /* selecting panel group range */
 	    t1 = unit_get_first_obs(t1);
 	    t2 = unit_get_last_obs(t2);
-	    ntodate(s1, t1, datainfo);
-	    ntodate(s2, t2, datainfo);
+	    ntodate(s1, t1, dataset);
+	    ntodate(s2, t2, dataset);
 	}
 
-	if (t1 != datainfo->t1 || t2 != datainfo->t2) {
+	if (t1 != dataset->t1 || t2 != dataset->t2) {
 	    gretl_command_sprintf("smpl %s %s", s1, s2);
 	    if (check_and_record_command()) {
 		return TRUE;
@@ -1607,7 +1607,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 		gui_errmsg(err);
 	    } else {
 		gtk_widget_destroy(rset->dlg);
-		set_sample_label(datainfo);
+		set_sample_label(dataset);
 	    }
 	} else {
 	    /* no change */
@@ -1644,9 +1644,9 @@ static GList *get_dummy_list (int *thisdum)
     int v = mdata_active_var();
     int i, j = 0;
 
-    for (i=1; i<datainfo->v; i++) {
-	if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
-	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
+    for (i=1; i<dataset->v; i++) {
+	if (gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[i])) {
+	    dumlist = g_list_append(dumlist, dataset->varname[i]);
 	    if (i == v) {
 		*thisdum = j;
 	    }
@@ -1666,10 +1666,10 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 	gchar *vname = combo_box_get_active_text(box);
 
 	if (vname != NULL) {
-	    int v = series_index(datainfo, vname);
+	    int v = series_index(dataset, vname);
 
-	    if (v < datainfo->v) {
-		n = gretl_isdummy(0, datainfo->n - 1, Z[v]);
+	    if (v < dataset->v) {
+		n = gretl_isdummy(0, dataset->n - 1, dataset->Z[v]);
 	    }
 	    g_free(vname);
 	}
@@ -1699,7 +1699,7 @@ gboolean update_obs_label (GtkComboBox *box, gpointer data)
 
 static int default_randsize (void)
 {
-    int n = sample_size(datainfo);
+    int n = sample_size(dataset);
 
     if (n > 1000) {
 	return n / 10;
@@ -1759,14 +1759,14 @@ static GtkWidget *panel_sample_spinbox (struct range_setting *rset,
     GtkWidget *vbox;
     GtkWidget *hbox;
 
-    rset->dinfo.n = datainfo->n / datainfo->pd;
+    rset->dinfo.n = dataset->n / dataset->pd;
 
     if (temp) {
 	rset->dinfo.t1 = *rset->t1;
 	rset->dinfo.t2 = *rset->t2;
     } else {
-	rset->dinfo.t1 = datainfo->t1 / datainfo->pd;
-	rset->dinfo.t2 = datainfo->t2 / datainfo->pd;
+	rset->dinfo.t1 = dataset->t1 / dataset->pd;
+	rset->dinfo.t2 = dataset->t2 / dataset->pd;
     }
 
     dataset_obs_info_default(&rset->dinfo);
@@ -1857,8 +1857,8 @@ static void free_pset (GtkWidget *w, panel_setting *pset)
 
 static void set_panel_sample (GtkWidget *w, panel_setting *pset)
 {
-    int orig_u1 = 1 + datainfo->t1 / datainfo->pd;
-    int orig_u2 = (datainfo->t2 + 1) / datainfo->pd;
+    int orig_u1 = 1 + dataset->t1 / dataset->pd;
+    int orig_u2 = (dataset->t2 + 1) / dataset->pd;
     int T = pset->t2 - pset->t1 + 1;
 
     fprintf(stderr, "set panel sample\n");
@@ -1866,7 +1866,7 @@ static void set_panel_sample (GtkWidget *w, panel_setting *pset)
     fprintf(stderr, "u1 = %d, u2 = %d, t1 = %d, t2 = %d\n",
 	    pset->u1, pset->u2, pset->t1, pset->t2);
 
-    if (T < datainfo->pd) {
+    if (T < dataset->pd) {
 	fprintf(stderr, "Need to shrink (restrict) by time\n");
     }
 
@@ -1940,12 +1940,12 @@ static void panel_new_spinbox (panel_setting *pset)
     gchar *msg;
     int i, k, N, T;
 
-    pset->u1 = 1 + datainfo->t1 / datainfo->pd;
-    pset->u2 = (datainfo->t2 + 1) / datainfo->pd;
+    pset->u1 = 1 + dataset->t1 / dataset->pd;
+    pset->u2 = (dataset->t2 + 1) / dataset->pd;
     pset->t1 = 1;
-    pset->t2 = datainfo->pd;
-    pset->Nmax = datainfo->n / datainfo->pd;
-    pset->Tmax = datainfo->pd;
+    pset->t2 = dataset->pd;
+    pset->Nmax = dataset->n / dataset->pd;
+    pset->Tmax = dataset->pd;
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(pset->dlg));
     hbox = gtk_hbox_new(FALSE, 5);
@@ -2044,23 +2044,23 @@ obs_spinbox (struct range_setting *rset, const char *label,
     int smin; /* "step increment" */
     int smaj; /* "page increment" */
 
-    if (dataset_is_panel(datainfo)) {
+    if (dataset_is_panel(dataset)) {
 	int tmp;
 
-	smin = smaj = datainfo->pd;
+	smin = smaj = dataset->pd;
 	/* below: minimal selection should be the complete time series
 	   for a single panel unit */
 	if (t1max == t2max) {
-	    tmp = t1max - datainfo->pd;
+	    tmp = t1max - dataset->pd;
 	    t1max = (tmp < 0)? 0 : tmp;
 	}
 	if (t2min == t1min) {
-	    tmp = t2min + datainfo->pd;
-	    t2min = (tmp > datainfo->n - 1)? datainfo->n - 1 : tmp;
+	    tmp = t2min + dataset->pd;
+	    t2min = (tmp > dataset->n - 1)? dataset->n - 1 : tmp;
 	}
     } else {
 	smin = 1;
-	smaj = datainfo->pd;
+	smaj = dataset->pd;
     }
 
     if (label != NULL && align == SPIN_LABEL_ABOVE) {
@@ -2085,7 +2085,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
     }
     rset->adj1 = (GtkAdjustment *) gtk_adjustment_new(*t1, t1min, t1max, 
 						      smin, smaj, 0);
-    rset->spin1 = obs_button_new(rset->adj1, datainfo);
+    rset->spin1 = obs_button_new(rset->adj1, dataset);
     gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
     gtk_box_pack_start(GTK_BOX(vbox), rset->spin1, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -2099,7 +2099,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	}
 	rset->adj2 = (GtkAdjustment *) gtk_adjustment_new(*t2, t2min, t2max, 
 							  smin, smaj, 0);
-	rset->spin2 = obs_button_new(rset->adj2, datainfo);
+	rset->spin2 = obs_button_new(rset->adj2, dataset);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin2), TRUE);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->spin2, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -2108,13 +2108,13 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	g_object_set_data(G_OBJECT(rset->spin1), "spin2", rset->spin2);
 	g_object_set_data(G_OBJECT(rset->spin2), "spin1", rset->spin1);
 
-	if (dataset_is_panel(datainfo)) {
+	if (dataset_is_panel(dataset)) {
 	    /* ensure that minimum separation of the spinners represents
 	       full time-series length */
 	    g_object_set_data(G_OBJECT(rset->spin1), "minsep", 
-			      GINT_TO_POINTER(datainfo->pd - 1));
+			      GINT_TO_POINTER(dataset->pd - 1));
 	    g_object_set_data(G_OBJECT(rset->spin2), "minsep", 
-			      GINT_TO_POINTER(datainfo->pd - 1));
+			      GINT_TO_POINTER(dataset->pd - 1));
 	}
     }
 
@@ -2174,7 +2174,7 @@ void sample_range_dialog (GtkAction *action, gpointer p)
     int u = sample_range_code(action);
 
 #if 0 /* not ready */
-    if (dataset_is_panel(datainfo) && u == SMPL) {
+    if (dataset_is_panel(dataset) && u == SMPL) {
 	panel_sample_dialog();
 	return;
     }
@@ -2192,20 +2192,20 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	hbox = gtk_hbox_new(FALSE, 5);
 
 	labtxt = g_strdup_printf(_("Number of observations to select (max %d)"),
-				 datainfo->n - 1);
+				 dataset->n - 1);
 
 	/* spinner for number of obs */
 	w = gtk_label_new(labtxt);
 	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
 	adj = (GtkAdjustment *) gtk_adjustment_new(default_randsize(), 
-						   1, datainfo->n - 1,
+						   1, dataset->n - 1,
 						   1, 1, 0);
 	rset->spin1 = gtk_spin_button_new(adj, 1, 0);
 	gtk_entry_set_activates_default(GTK_ENTRY(rset->spin1), TRUE);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->spin1, FALSE, FALSE, 5);
 
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
-    } else if (u == SMPL && dataset_is_panel(datainfo)) {
+    } else if (u == SMPL && dataset_is_panel(dataset)) {
 	hbox = panel_sample_spinbox(rset, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
 	rset->opt = OPT_P;
@@ -2213,8 +2213,8 @@ void sample_range_dialog (GtkAction *action, gpointer p)
 	/* either plain SMPL or CREATE_DATASET */
 	hbox = obs_spinbox(rset, _("Set sample range"), 
 			   _("Start:"), _("End:"),
-			   0, datainfo->n - 1, &datainfo->t1,
-			   0, datainfo->n - 1, &datainfo->t2,
+			   0, dataset->n - 1, &dataset->t1,
+			   0, dataset->n - 1, &dataset->t2,
 			   SPIN_LABEL_ABOVE);
 	gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     }
@@ -2310,7 +2310,7 @@ int panel_graph_dialog (int *t1, int *t2)
     GtkWidget *w, *vbox, *hbox;
     GtkWidget *button;
     gchar *title;
-    int nunits = panel_sample_size(datainfo);
+    int nunits = panel_sample_size(dataset);
     int i, deflt, nopts = 7;
     int ret = 0;
 
@@ -2583,7 +2583,7 @@ static void chow_dumv_callback (GtkComboBox *box, int *dumv)
 {
     gchar *vname = combo_box_get_active_text(box);
 
-    *dumv = series_index(datainfo, vname);
+    *dumv = series_index(dataset, vname);
     g_free(vname);
 }
 
@@ -2839,7 +2839,7 @@ static GtkWidget *forecast_integrate_option (const MODEL *pmod,
 	int dv, dvp;
 
 	dv = gretl_model_get_depvar(pmod);
-	is_standard_diff(dv, datainfo, &dvp);
+	is_standard_diff(dv, dataset, &dvp);
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	tbl = gtk_table_new(2, 2, FALSE);
@@ -2848,12 +2848,12 @@ static GtkWidget *forecast_integrate_option (const MODEL *pmod,
 	w = gtk_label_new(_("Produce forecast for"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 0, 1, 0, 1);
 
-	s = datainfo->varname[dv];
+	s = dataset->varname[dv];
 	w = gtk_radio_button_new_with_label(NULL, s);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 1, 2, 0, 1);
 
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(w));
-	s = datainfo->varname[dvp];
+	s = dataset->varname[dvp];
 	w = gtk_radio_button_new_with_label(group, s);
 	g_signal_connect(G_OBJECT(w), "toggled",
 			 G_CALLBACK(toggle_opt_I), optp); 
@@ -3136,15 +3136,15 @@ static gboolean set_add_obs (GtkWidget *w, struct add_obs_info *ainfo)
 
 int add_obs_dialog (const char *blurb, int addmin)
 {
-    int step, panel = dataset_is_panel(datainfo);
+    int step, panel = dataset_is_panel(dataset);
     struct add_obs_info ainfo;
     GtkWidget *vbox, *hbox;
     GtkWidget *tmp;
 
     if (panel) {
-	ainfo.val = datainfo->pd;
-	addmin = datainfo->pd;
-	step = datainfo->pd;
+	ainfo.val = dataset->pd;
+	addmin = dataset->pd;
+	step = dataset->pd;
     } else {
 	ainfo.val = 1;
 	step = 1;
@@ -3195,7 +3195,7 @@ static void set_var_from_combo (GtkWidget *w, GtkWidget *dlg)
     gchar *vname;
 
     vname = combo_box_get_active_text(GTK_COMBO_BOX(combo));
-    *selvar = series_index(datainfo, vname);
+    *selvar = series_index(dataset, vname);
     g_free(vname);
 }
 
@@ -3266,7 +3266,7 @@ int select_var_from_list_with_opt (const int *list,
 
     combo = gtk_combo_box_text_new();
     for (i=1; i<=list[0]; i++) {
-	combo_box_append_text(combo, datainfo->varname[list[i]]);
+	combo_box_append_text(combo, dataset->varname[list[i]]);
     }
 
     /* select last entry in list */
@@ -3464,7 +3464,7 @@ gboolean select_repday (GtkComboBox *menu, int *repday)
 {
     int i = gtk_combo_box_get_active(menu);
 
-    *repday = (datainfo->pd == 7)? i : i + 1;
+    *repday = (dataset->pd == 7)? i : i + 1;
 
     return FALSE;
 }
@@ -3519,7 +3519,7 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-    if (dated_daily_data(datainfo) && cinfo->repday != NULL) {
+    if (dated_daily_data(dataset) && cinfo->repday != NULL) {
 	GtkWidget *hbox, *daymenu;
 
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -3534,8 +3534,8 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 
 	daymenu = gtk_combo_box_text_new();
 	for (i=0; i<7; i++) {
-	    if ((i == 0 && datainfo->pd != 7) ||
-		(i == 6 && datainfo->pd == 5)) {
+	    if ((i == 0 && dataset->pd != 7) ||
+		(i == 6 && dataset->pd == 5)) {
 		continue;
 	    }
 	    combo_box_append_text(daymenu, _(weekdays[i])); 
@@ -3560,13 +3560,13 @@ static int compact_methods_set (void)
     int i, nmeth = 0;
     int ret = NO_METHODS_SET;
 
-    for (i=1; i<datainfo->v; i++) {
-	if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
+    for (i=1; i<dataset->v; i++) {
+	if (COMPACT_METHOD(dataset, i) != COMPACT_NONE) {
 	    nmeth++;
 	}
     }
 
-    if (nmeth == datainfo->v - 1) {
+    if (nmeth == dataset->v - 1) {
 	ret = ALL_METHODS_SET;
     } else if (nmeth > 0) {
 	ret = SOME_METHODS_SET;
@@ -3616,7 +3616,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	    show_pd_buttons = 1;
 	} else if (spd >= 5 && spd <= 7) {
 	    /* source data are daily */
-	    if (dated_daily_data(datainfo)) {
+	    if (dated_daily_data(dataset)) {
 		labelstr = g_strdup(_("Compact daily data to:"));
 		show_pd_buttons = 1;
 	    } else {
@@ -3626,7 +3626,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	    if (mon_start != NULL) {
 		show_monday_buttons = 1;
 	    }
-	} else if (dated_weekly_data(datainfo)) {
+	} else if (dated_weekly_data(dataset)) {
 	    labelstr = g_strdup(_("Compact weekly data to monthly"));
 	    *target_pd = 12;
 	} else if (spd == 24) {

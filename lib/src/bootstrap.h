@@ -20,13 +20,13 @@
 #ifndef BOOTSTRAP_H
 #define BOOTSTRAP_H
  
-int bootstrap_analysis (MODEL *pmod, int p, int B, const double **Z,
-			const DATAINFO *pdinfo, gretlopt opt,
+int bootstrap_analysis (MODEL *pmod, int p, int B, 
+			const DATASET *dset, gretlopt opt,
 			PRN *prn);
 
 int bootstrap_test_restriction (MODEL *pmod, gretl_matrix *R, 
 				gretl_matrix *q, double test, int g,
-				const double **Z, const DATAINFO *pdinfo, 
+				const DATASET *dset, 
 				gretlopt opt, PRN *prn);
 
 int bootstrap_ok (int ci);

@@ -60,9 +60,9 @@ typedef enum {
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
 
 static int writelbl (const char *lblfile, const int *list, 
-		     const DATAINFO *pdinfo);
+		     const DATASET *dset);
 static int writehdr (const char *hdrfile, const int *list, 
-		     const DATAINFO *pdinfo, int opt);
+		     const DATASET *dset, int opt);
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
@@ -168,10 +168,10 @@ static void eatspace (FILE *fp)
     }
 }
 
-static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
+static int readdata (FILE *fp, const DATASET *dset,
 		     int binary, int old_byvar)
 {
-    int i, t, n = pdinfo->n;
+    int i, t, n = dset->n;
     char c, marker[OBSLEN];
     int err = 0;
 
@@ -181,7 +181,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	/* single-precision binary data */
 	float x;
 
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof x, 1, fp)) {
 		    gretl_errmsg_sprintf(_("WARNING: binary data read error at "
@@ -189,9 +189,9 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 		    return 1;
 		}
 		if (x == -999.0) {
-		    Z[i][t] = NADBL;
+		    dset->Z[i][t] = NADBL;
 		} else {
-		    Z[i][t] = (double) x;
+		    dset->Z[i][t] = (double) x;
 		}
 	    }
 	}
@@ -199,31 +199,31 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	/* double-precision binary data */
 	double x;
 
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof x, 1, fp)) {
 		    gretl_errmsg_sprintf(_("WARNING: binary data read error at var %d"), i);
 		    return 1;
 		}
 		if (x == -999.0) {
-		    Z[i][t] = NADBL;
+		    dset->Z[i][t] = NADBL;
 		} else {
-		    Z[i][t] = x;
+		    dset->Z[i][t] = x;
 		}
 	    }
 	}
     } else if (old_byvar) {
 	/* ascii data by variable */
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    for (t=0; t<n && !err; t++) {
-		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
+		if ((fscanf(fp, "%lf", &dset->Z[i][t])) != 1) {
 		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
 					   "obs %d"), i, t + 1);
 		    err = 1;
 		    break;
 		}
-		if (Z[i][t] == -999.0) {
-		    Z[i][t] = NADBL;
+		if (dset->Z[i][t] == -999.0) {
+		    dset->Z[i][t] = NADBL;
 		} 
 	    }
 	}	       
@@ -245,24 +245,24 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	    } else {
 		ungetc(c, fp);
 	    }
-	    if (pdinfo->markers) {
+	    if (dset->markers) {
 		*marker = '\0';
 		fscanf(fp, sformat, marker);
 		if (*marker == '"' || *marker == '\'') {
-		    strcpy(pdinfo->S[t], marker + 1);
+		    strcpy(dset->S[t], marker + 1);
 		} else {
-		    strcpy(pdinfo->S[t], marker);
+		    strcpy(dset->S[t], marker);
 		}
 	    }
-	    for (i=1; i<pdinfo->v; i++) {
-		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
+	    for (i=1; i<dset->v; i++) {
+		if ((fscanf(fp, "%lf", &dset->Z[i][t])) != 1) {
 		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
 					   "obs %d"), i, t + 1);
 		    err = 1;
 		    break;
 		}
-		if (Z[i][t] == -999.0) {
-		    Z[i][t] = NADBL;
+		if (dset->Z[i][t] == -999.0) {
+		    dset->Z[i][t] = NADBL;
 		} 
 	    }
 	}
@@ -273,10 +273,9 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
     return err;
 }
 
-static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
-			int binary)
+static int gz_readdata (gzFile fz, DATASET *dset, int binary)
 {
-    int i, t, n = pdinfo->n;
+    int i, t, n = dset->n;
     int err = 0;
     
     gretl_error_clear();
@@ -285,20 +284,20 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 	/* single-precision binary data */
 	float xx;
 
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!gzread(fz, &xx, sizeof xx)) {
 		    gretl_errmsg_sprintf(_("WARNING: binary data read error at "
 					   "var %d"), i);
 		    return 1;
 		}
-		Z[i][t] = (double) xx;
+		dset->Z[i][t] = (double) xx;
 	    }
 	}
     } else if (binary == 2) { 
 	/* double-precision binary data */
-	for (i=1; i<pdinfo->v; i++) {
-	    if (!gzread(fz, &Z[i][0], n * sizeof(double))) {
+	for (i=1; i<dset->v; i++) {
+	    if (!gzread(fz, &dset->Z[i][0], n * sizeof(double))) {
 		gretl_errmsg_sprintf(_("WARNING: binary data read error at var %d"), i);
 		return 1;
 	    }
@@ -306,7 +305,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
     } else { 
 	/* ascii data */
 	char *line, numstr[24], sformat[8];
-	int llen = pdinfo->v * 32;
+	int llen = dset->v * 32;
 	size_t offset;
 
 	line = malloc(llen);
@@ -334,18 +333,18 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 		continue;
 	    }
 
-	    if (pdinfo->markers) {
-		if (sscanf(line, sformat, pdinfo->S[t]) != 1) {
+	    if (dset->markers) {
+		if (sscanf(line, sformat, dset->S[t]) != 1) {
 		    gretl_errmsg_sprintf(_("WARNING: failed to read case marker for "
 					   "obs %d"), t + 1);
 		    err = 1;
 		    break;
 		}
-		pdinfo->S[t][OBSLEN-1] = 0;
-		offset += strlen(pdinfo->S[t]) + 1;
+		dset->S[t][OBSLEN-1] = 0;
+		offset += strlen(dset->S[t]) + 1;
 	    }
 
-	    for (i=1; i<pdinfo->v; i++) {
+	    for (i=1; i<dset->v; i++) {
 		if (sscanf(line + offset, "%23s", numstr) != 1) {
 		    gretl_errmsg_sprintf(_("WARNING: ascii data read error at var %d, "
 					   "obs %d"), i, t + 1);
@@ -353,8 +352,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 		    break;
 		}
 		numstr[23] = 0;
-		Z[i][t] = atof(numstr);
-		if (i < pdinfo->v - 1) {
+		dset->Z[i][t] = atof(numstr);
+		if (i < dset->v - 1) {
 		    offset += strlen(numstr) + 1;
 		}
 	    }
@@ -434,7 +433,7 @@ int check_varname (const char *varname)
     return ret;
 }   
 
-static int readhdr (const char *hdrfile, DATAINFO *pdinfo, 
+static int readhdr (const char *hdrfile, DATASET *dset, 
 		    int *binary, int *old_byvar)
 {
     FILE *fp;
@@ -470,10 +469,10 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 	} else i++;
     }
 
-    pdinfo->v = i + 1;
+    dset->v = i + 1;
     fclose(fp);
 
-    if (dataset_allocate_varnames(pdinfo)) {
+    if (dataset_allocate_varnames(dset)) {
 	return E_ALLOC;
     }
 
@@ -483,8 +482,8 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     str[0] = 0;
     fscanf(fp, "%s", str);
     if (skipcomments(fp, str)) {
-        safecpy(pdinfo->varname[i], str, VNAMELEN - 1);
-	if (check_varname(pdinfo->varname[i++])) {
+        safecpy(dset->varname[i], str, VNAMELEN - 1);
+	if (check_varname(dset->varname[i++])) {
 	    goto varname_error;
 	}
     } else {
@@ -495,15 +494,15 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
         fscanf(fp, "%s", str);
 	n = strlen(str);
 	if (str[n-1] != ';') {
-            safecpy(pdinfo->varname[i], str, VNAMELEN - 1);
-	    if (check_varname(pdinfo->varname[i++])) {
+            safecpy(dset->varname[i], str, VNAMELEN - 1);
+	    if (check_varname(dset->varname[i++])) {
 		goto varname_error;
 	    }
         } else {
 	    if (n > 1) {
-		safecpy(pdinfo->varname[i], str, n-1);
-		pdinfo->varname[i][n] = '\0';
-		if (check_varname(pdinfo->varname[i])) {
+		safecpy(dset->varname[i], str, n-1);
+		dset->varname[i][n] = '\0';
+		if (check_varname(dset->varname[i])) {
 		    goto varname_error; 
 		}
 	    }
@@ -511,28 +510,28 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 	}
     }
 
-    fscanf(fp, "%d", &pdinfo->pd);
-    fscanf(fp, "%s", pdinfo->stobs);
-    fscanf(fp, "%s", pdinfo->endobs);
+    fscanf(fp, "%d", &dset->pd);
+    fscanf(fp, "%s", dset->stobs);
+    fscanf(fp, "%s", dset->endobs);
 
-    colonize_obs(pdinfo->stobs);
-    colonize_obs(pdinfo->endobs);
+    colonize_obs(dset->stobs);
+    colonize_obs(dset->endobs);
 
-    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+    dset->sd0 = get_date_x(dset->pd, dset->stobs);
 
-    if (pdinfo->sd0 >= 2.0) {
-        pdinfo->structure = TIME_SERIES; /* actual time series? */
-    } else if (pdinfo->sd0 > 1.0) {
-	pdinfo->structure = STACKED_TIME_SERIES; /* panel data? */
+    if (dset->sd0 >= 2.0) {
+        dset->structure = TIME_SERIES; /* actual time series? */
+    } else if (dset->sd0 > 1.0) {
+	dset->structure = STACKED_TIME_SERIES; /* panel data? */
     } else {
-	pdinfo->structure = CROSS_SECTION;
+	dset->structure = CROSS_SECTION;
     }
 
-    pdinfo->n = -1;
-    pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
+    dset->n = -1;
+    dset->n = dateton(dset->endobs, dset) + 1;
 
     *binary = 0;
-    pdinfo->markers = NO_MARKERS;
+    dset->markers = NO_MARKERS;
 
     n = fscanf(fp, "%5s %7s", byobs, option);
 
@@ -544,21 +543,21 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 	} else if (strcmp(option, "BINARY") == 0) {
 	    *binary = 2;
 	} else if (strcmp(option, "MARKERS") == 0) {
-	    pdinfo->markers = 1;
+	    dset->markers = 1;
 	} else if (strcmp(option, "PANEL2") == 0) {
 	    panel = 1;
-	    pdinfo->structure = STACKED_TIME_SERIES;
+	    dset->structure = STACKED_TIME_SERIES;
 	} else if (strcmp(option, "PANEL3") == 0) {
 	    panel = 1;
-	    pdinfo->structure = STACKED_CROSS_SECTION;
+	    dset->structure = STACKED_CROSS_SECTION;
 	}
     } 
 
     if (!panel && fscanf(fp, "%6s", option) == 1) {
 	if (strcmp(option, "PANEL2") == 0) {
-	    pdinfo->structure = STACKED_TIME_SERIES;
+	    dset->structure = STACKED_TIME_SERIES;
 	} else if (strcmp(option, "PANEL3") == 0) {
-	    pdinfo->structure = STACKED_CROSS_SECTION;
+	    dset->structure = STACKED_CROSS_SECTION;
 	}
     }
 
@@ -567,7 +566,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     }
 
     /* last pass, to pick up data description */
-    pdinfo->descrip = NULL;
+    dset->descrip = NULL;
     if (descrip) {
 	char *dbuf = NULL;
 	int lines;
@@ -576,9 +575,9 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 	if (fp == NULL) return 0;
 	if ((lines = comment_lines(fp, &dbuf)) > 0) {
 	    delchar('\r', dbuf);
-	    pdinfo->descrip = malloc(strlen(dbuf) + 1);
-	    if (pdinfo->descrip != NULL) {
-		strcpy(pdinfo->descrip, dbuf);
+	    dset->descrip = malloc(strlen(dbuf) + 1);
+	    if (dset->descrip != NULL) {
+		strcpy(dset->descrip, dbuf);
 	    }
 	    free(dbuf);
 	} else if (lines < 0) {
@@ -592,7 +591,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     varname_error:
 
     fclose(fp);
-    clear_datainfo(pdinfo, CLEAR_FULL);
+    clear_datainfo(dset, CLEAR_FULL);
 
     return E_DATA;
 }
@@ -649,7 +648,7 @@ static int get_dot_pos (const char *s)
 
 #define DATES_DEBUG 0
 
-static int match_obs_marker (const char *s, const DATAINFO *pdinfo)
+static int match_obs_marker (const char *s, const DATASET *dset)
 {
     char test[OBSLEN];
     int t;
@@ -660,8 +659,8 @@ static int match_obs_marker (const char *s, const DATAINFO *pdinfo)
 
     maybe_unquote_label(test, s);
 
-    for (t=0; t<pdinfo->n; t++) {
-	if (!strcmp(test, pdinfo->S[t])) {
+    for (t=0; t<dset->n; t++) {
+	if (!strcmp(test, dset->S[t])) {
 	    /* handled */
 	    return t;
 	}
@@ -671,8 +670,8 @@ static int match_obs_marker (const char *s, const DATAINFO *pdinfo)
 	/* try harder */
 	int k = strlen(test);
 
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!strncmp(test, pdinfo->S[t], k)) {
+	for (t=0; t<dset->n; t++) {
+	    if (!strncmp(test, dset->S[t], k)) {
 		return t;
 	    }
 	}
@@ -682,7 +681,7 @@ static int match_obs_marker (const char *s, const DATAINFO *pdinfo)
 }
 
 static int 
-real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
+real_dateton (const char *date, const DATASET *dset, int nolimit)
 {
     int handled = 0;
     int t, n = -1;
@@ -690,24 +689,24 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
     /* first check if this is calendar data and if so,
        treat accordingly */
 
-    if (calendar_data(pdinfo)) {
+    if (calendar_data(dset)) {
 #if DATES_DEBUG
 	fprintf(stderr, "dateton: treating as calendar data\n");
 #endif
-	if (dataset_has_markers(pdinfo)) {
+	if (dataset_has_markers(dset)) {
 	    /* "hard-wired" calendar dates as strings */
-	    for (t=0; t<pdinfo->n; t++) {
-		if (!strcmp(date, pdinfo->S[t])) {
+	    for (t=0; t<dset->n; t++) {
+		if (!strcmp(date, dset->S[t])) {
 		    /* handled */
 		    return t;
 		}
 	    }
 	    /* try allowing for 2- versus 4-digit years? */
-	    if (strlen(pdinfo->S[0]) == 10 &&
-		(!strncmp(pdinfo->S[0], "19", 2) || 
-		 !strncmp(pdinfo->S[0], "20", 2))) {
-		for (t=0; t<pdinfo->n; t++) {
-		    if (!strcmp(date, pdinfo->S[t] + 2)) {
+	    if (strlen(dset->S[0]) == 10 &&
+		(!strncmp(dset->S[0], "19", 2) || 
+		 !strncmp(dset->S[0], "20", 2))) {
+		for (t=0; t<dset->n; t++) {
+		    if (!strcmp(date, dset->S[t] + 2)) {
 			/* handled */
 			return t;
 		    }
@@ -717,11 +716,11 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	    return -1;
 	} else {
 	    /* automatic calendar dates */
-	    n = calendar_obs_number(date, pdinfo);
+	    n = calendar_obs_number(date, dset);
 	    handled = 1;
 	} 
-    } else if (dataset_is_daily(pdinfo) ||
-	       dataset_is_weekly(pdinfo)) {
+    } else if (dataset_is_daily(dset) ||
+	       dataset_is_weekly(dset)) {
 #if DATES_DEBUG
 	fprintf(stderr, "dateton: trying undated time series\n");
 #endif
@@ -730,14 +729,14 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	    n = t - 1;
 	    handled = 1;
 	}
-    } else if (dataset_is_decennial(pdinfo)) {
+    } else if (dataset_is_decennial(dset)) {
 	t = positive_int_from_string(date);
 	if (t > 0) {
-	    n = (t - pdinfo->sd0) / 10;
+	    n = (t - dset->sd0) / 10;
 	    handled = 1;
 	}	
-    } else if (dataset_has_markers(pdinfo)) {
-	t = match_obs_marker(date, pdinfo);
+    } else if (dataset_has_markers(dset)) {
+	t = match_obs_marker(date, dset);
 	if (t >= 0) {
 	    return t;
 	}
@@ -760,12 +759,12 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	}
 
 	dotpos1 = get_dot_pos(date);
-	dotpos2 = get_dot_pos(pdinfo->stobs);
+	dotpos2 = get_dot_pos(dset->stobs);
 
 	if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
 	    gretl_errmsg_set(_("Date strings inconsistent"));
 	} else if (!dotpos1 && !dotpos2) {
-	    n = atoi(date) - atoi(pdinfo->stobs);
+	    n = atoi(date) - atoi(dset->stobs);
 	} else {
 	    char majstr[5] = {0};
 	    char minstr[3] = {0};
@@ -780,17 +779,17 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 	    strncat(minstr, date + dotpos1 + 1, 2);
 	    min = atoi(minstr);	    
 
-	    strncat(majstr0, pdinfo->stobs, dotpos2);
+	    strncat(majstr0, dset->stobs, dotpos2);
 	    maj0 = atoi(majstr0);
-	    strncat(minstr0, pdinfo->stobs + dotpos2 + 1, 2);
+	    strncat(minstr0, dset->stobs + dotpos2 + 1, 2);
 	    min0 = atoi(minstr0);
     
-	    n = pdinfo->pd * (maj - maj0) + (min - min0);
+	    n = dset->pd * (maj - maj0) + (min - min0);
 	}
     }
 
-    if (!nolimit && pdinfo->n > 0 && n >= pdinfo->n) {
-	fprintf(stderr, "n = %d, pdinfo->n = %d: out of bounds\n", n, pdinfo->n);
+    if (!nolimit && dset->n > 0 && n >= dset->n) {
+	fprintf(stderr, "n = %d, dset->n = %d: out of bounds\n", n, dset->n);
 	gretl_errmsg_set(_("Observation number out of bounds"));
 	n = -1; 
     }
@@ -801,48 +800,48 @@ real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 /**
  * dateton:
  * @date: string representation of date for processing.
- * @pdinfo: pointer to data information struct.
+ * @dset: pointer to data information struct.
  * 
  * Determines the observation number corresponding to @date,
- * relative to @pdinfo. It is an error if @date represents an 
+ * relative to @dset. It is an error if @date represents an 
  * observation that lies outside of the full data range 
- * specified in @pdinfo.
+ * specified in @dset.
  * 
  * Returns: zero-based observation number, or -1 on error.
  */
 
-int dateton (const char *date, const DATAINFO *pdinfo)
+int dateton (const char *date, const DATASET *dset)
 {
-    return real_dateton(date, pdinfo, 0);
+    return real_dateton(date, dset, 0);
 }
 
 /**
  * merge_dateton:
  * @date: string representation of date for processing.
- * @pdinfo: pointer to data information struct.
+ * @dset: pointer to data information struct.
  * 
  * Works just as dateton(), except that for this function it
  * is not an error if @date represents an observation that
- * lies beyond the data range specified in @pdinfo. This is 
+ * lies beyond the data range specified in @dset. This is 
  * inended for use when merging data, or when creating a new
  * dataset.
  * 
  * Returns: zero-based observation number, or -1 on error.
  */
 
-int merge_dateton (const char *date, const DATAINFO *pdinfo)
+int merge_dateton (const char *date, const DATASET *dset)
 {
-    return real_dateton(date, pdinfo, 1);
+    return real_dateton(date, dset, 1);
 }
 
-static char *panel_obs (char *s, int t, const DATAINFO *pdinfo)
+static char *panel_obs (char *s, int t, const DATASET *dset)
 {
-    int i = t / pdinfo->pd + 1;
-    int j = (t + 1) % pdinfo->pd;
-    int d = 1 + floor(log10(pdinfo->pd));
+    int i = t / dset->pd + 1;
+    int j = (t + 1) % dset->pd;
+    int d = 1 + floor(log10(dset->pd));
 
     if (j == 0) {
-	j = pdinfo->pd;
+	j = dset->pd;
     }
 
     sprintf(s, "%d:%0*d", i, d, j);
@@ -854,7 +853,7 @@ static char *panel_obs (char *s, int t, const DATAINFO *pdinfo)
  * ntodate:
  * @datestr: char array to which date is to be printed.
  * @t: zero-based observation number.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * 
  * Prints to @datestr (which must be at least #OBSLEN bytes)
  * the calendar representation of observation number @t.
@@ -862,44 +861,44 @@ static char *panel_obs (char *s, int t, const DATAINFO *pdinfo)
  * Returns: the observation string.
  */
 
-char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
+char *ntodate (char *datestr, int t, const DATASET *dset)
 {
     double x;
 
 #if 0
     fprintf(stderr, "real_ntodate: t=%d, pd=%d, sd0=%g\n",
-	    t, pdinfo->pd, pdinfo->sd0);
+	    t, dset->pd, dset->sd0);
 #endif
 
-    if (calendar_data(pdinfo)) {
+    if (calendar_data(dset)) {
 	/* handles both daily and dated weekly data */
-	if (dataset_has_markers(pdinfo)) {
-	    strcpy(datestr, pdinfo->S[t]);
+	if (dataset_has_markers(dset)) {
+	    strcpy(datestr, dset->S[t]);
 	} else {
-	    calendar_date_string(datestr, t, pdinfo);
+	    calendar_date_string(datestr, t, dset);
 	}
 	return datestr;
-    } else if (dataset_is_daily(pdinfo) || 
-	       dataset_is_weekly(pdinfo)) {
+    } else if (dataset_is_daily(dset) || 
+	       dataset_is_weekly(dset)) {
 	/* undated time series */
-	x = date(t, 1, pdinfo->sd0);
+	x = date(t, 1, dset->sd0);
 	sprintf(datestr, "%d", (int) x);
 	return datestr;
-    } else if (dataset_is_decennial(pdinfo)) {
-	x = pdinfo->sd0 + 10 * t;
+    } else if (dataset_is_decennial(dset)) {
+	x = dset->sd0 + 10 * t;
 	sprintf(datestr, "%d", (int) x);
 	return datestr;
-    } else if (dataset_is_panel(pdinfo)) {
-	panel_obs(datestr, t, pdinfo);
+    } else if (dataset_is_panel(dset)) {
+	panel_obs(datestr, t, dset);
 	return datestr;
     }
 
-    x = date(t, pdinfo->pd, pdinfo->sd0);
+    x = date(t, dset->pd, dset->sd0);
 
-    if (pdinfo->pd == 1) {
+    if (dset->pd == 1) {
         sprintf(datestr, "%d", (int) x);
     } else {
-	int pdp = pdinfo->pd, len = 1;
+	int pdp = dset->pd, len = 1;
 	char fmt[8];
 
 	while ((pdp = pdp / 10)) len++;
@@ -916,7 +915,7 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 /**
  * get_subperiod:
  * @t: zero-based observation number.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @err: location to receive error code, or NULL.
  * 
  * For "seasonal" time series data (in a broad sense), 
@@ -929,33 +928,33 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
  * Returns: the sub-period.
  */
 
-int get_subperiod (int t, const DATAINFO *pdinfo, int *err)
+int get_subperiod (int t, const DATASET *dset, int *err)
 {
     int ret = 0;
 
-    if (!dataset_is_seasonal(pdinfo)) {
+    if (!dataset_is_seasonal(dset)) {
 	if (err != NULL) {
 	    *err = E_PDWRONG;
 	}
 	return 0;
     }
 
-    if (dataset_is_weekly(pdinfo)) {
+    if (dataset_is_weekly(dset)) {
 	/* bodge -- what else to do? */
-	ret = t % pdinfo->pd;
-    } else if (calendar_data(pdinfo)) {
+	ret = t % dset->pd;
+    } else if (calendar_data(dset)) {
 	/* dated daily data */
 	char datestr[12];
 
-	calendar_date_string(datestr, t, pdinfo);
+	calendar_date_string(datestr, t, dset);
 	ret = get_day_of_week(datestr); 
-    } else if (dataset_is_daily(pdinfo)) {
+    } else if (dataset_is_daily(dset)) {
 	/* bodge, again */
-	ret = t % pdinfo->pd;
+	ret = t % dset->pd;
     } else {
 	/* quarterly, monthly, hourly... */
-	double x = date(t, pdinfo->pd, pdinfo->sd0);
-	int i, d = ceil(log10(pdinfo->pd));
+	double x = date(t, dset->pd, dset->sd0);
+	int i, d = ceil(log10(dset->pd));
 
 	x -= floor(x);
 	for (i=0; i<d; i++) {
@@ -1050,7 +1049,7 @@ int get_info (const char *hdrfile, PRN *prn)
 }
 
 static int writehdr (const char *hdrfile, const int *list, 
-		     const DATAINFO *pdinfo, int opt)
+		     const DATASET *dset, int opt)
 {
     FILE *fp;
     char startdate[OBSLEN], enddate[OBSLEN];
@@ -1062,8 +1061,8 @@ static int writehdr (const char *hdrfile, const int *list,
 	binary = 2;
     }
 
-    ntodate(startdate, pdinfo->t1, pdinfo);
-    ntodate(enddate, pdinfo->t2, pdinfo);
+    ntodate(startdate, dset->t1, dset);
+    ntodate(enddate, dset->t2, dset);
 
     fp = gretl_fopen(hdrfile, "w");
     if (fp == NULL) {
@@ -1071,12 +1070,12 @@ static int writehdr (const char *hdrfile, const int *list,
     }
 
     /* write description of data set, if any */
-    if (pdinfo->descrip != NULL) {
-	size_t len = strlen(pdinfo->descrip);
+    if (dset->descrip != NULL) {
+	size_t len = strlen(dset->descrip);
 
 	if (len > 2) {
-	    fprintf(fp, "(*\n%s%s*)\n", pdinfo->descrip,
-		    (pdinfo->descrip[len-1] == '\n')? "" : "\n");
+	    fprintf(fp, "(*\n%s%s*)\n", dset->descrip,
+		    (dset->descrip[len-1] == '\n')? "" : "\n");
 	}
     }
 
@@ -1085,7 +1084,7 @@ static int writehdr (const char *hdrfile, const int *list,
 	if (list[i] == 0) {
 	    continue;
 	}
-	fprintf(fp, "%s ", pdinfo->varname[list[i]]);
+	fprintf(fp, "%s ", dset->varname[list[i]]);
 	if (i && i <list[0] && (i+1) % 8 == 0) {
 	    fputc('\n', fp);
 	}
@@ -1094,7 +1093,7 @@ static int writehdr (const char *hdrfile, const int *list,
     fputs(";\n", fp);
 
     /* then obs line */
-    fprintf(fp, "%d %s %s\n", pdinfo->pd, startdate, enddate);
+    fprintf(fp, "%d %s %s\n", dset->pd, startdate, enddate);
     
     /* and flags as required */
     if (binary == 1) {
@@ -1103,14 +1102,14 @@ static int writehdr (const char *hdrfile, const int *list,
 	fputs("BYVAR\nBINARY\n", fp);
     } else { 
 	fputs("BYOBS\n", fp);
-	if (pdinfo->markers) {
+	if (dset->markers) {
 	    fputs("MARKERS\n", fp);
 	}
     }
 
-    if (pdinfo->structure == STACKED_TIME_SERIES) {
+    if (dset->structure == STACKED_TIME_SERIES) {
 	fputs("PANEL2\n", fp);
-    } else if (pdinfo->structure == STACKED_CROSS_SECTION) {
+    } else if (dset->structure == STACKED_CROSS_SECTION) {
 	fputs("PANEL3\n", fp);
     }
     
@@ -1229,12 +1228,12 @@ format_from_opt_or_name (gretlopt opt, const char *fname,
     return fmt;
 }
 
-static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
+static void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
 {
     char obs[OBSLEN];
     char *s;
 
-    ntodate(obs, t, pdinfo);
+    ntodate(obs, t, dset);
 
     *maj = atoi(obs);
     s = strchr(obs, ':');
@@ -1251,8 +1250,7 @@ static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
  * write_data:
  * @fname: name of file to write.
  * @list: list of variables to write (or %NULL to write all series).
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: option flag indicating format in which to write the data.
  * @progress: may be 1 when called from gui to display progress
  * bar in case of a large data write; generally should be 0.
@@ -1263,15 +1261,14 @@ static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int write_data (const char *fname, int *list, 
-		const double **Z, const DATAINFO *pdinfo, 
+int write_data (const char *fname, int *list, const DATASET *dset, 
 		gretlopt opt, int progress)
 {
     int i, t, v, l0;
     GretlDataFormat fmt;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
-    int tsamp = sample_size(pdinfo);
-    int n = pdinfo->n;
+    int tsamp = sample_size(dset);
+    int n = dset->n;
     int pop_locale = 0;
     char delim = 0;
     FILE *fp = NULL;
@@ -1287,7 +1284,7 @@ int write_data (const char *fname, int *list,
     }
 
     if (list == NULL) {
-	list = full_var_list(pdinfo, &l0);
+	list = full_var_list(dset, &l0);
 	if (l0 == 0) {
 	    return E_ARGS;
 	} else if (list == NULL) {
@@ -1304,19 +1301,19 @@ int write_data (const char *fname, int *list,
     fname = gretl_maybe_switch_dir(fname);
 
     if (fmt == 0 || fmt == GRETL_FMT_GZIPPED) {
-	err = gretl_write_gdt(fname, list, Z, pdinfo, 
+	err = gretl_write_gdt(fname, list, dset, 
 			      (fmt == GRETL_FMT_GZIPPED)? OPT_Z : OPT_NONE,
 			      progress);
 	goto write_exit;
     }
 
     if (fmt == GRETL_FMT_DB) {
-	err = write_db_data(fname, list, opt, Z, pdinfo);
+	err = write_db_data(fname, list, opt, dset);
 	goto write_exit;
     }
 
-    if (fmt == GRETL_FMT_CSV && get_csv_delim(pdinfo) == ',' && 
-	',' == pdinfo->decpoint) {
+    if (fmt == GRETL_FMT_CSV && get_csv_delim(dset) == ',' && 
+	',' == dset->decpoint) {
 	gretl_errmsg_set(_("You can't use the same character for "
 			   "the column delimiter and the decimal point"));
 	err = E_DATA;
@@ -1336,12 +1333,12 @@ int write_data (const char *fname, int *list,
 	    gz_switch_ext(hdrfile, datfile, "hdr");
 	    gz_switch_ext(lblfile, datfile, "lbl");
 	}
-	if (writehdr(hdrfile, list, pdinfo, fmt)) {
+	if (writehdr(hdrfile, list, dset, fmt)) {
 	    fputs(I_("Write of header file failed"), stderr);
 	    err = E_FOPEN;
 	    goto write_exit;
 	}
-	if (writelbl(lblfile, list, pdinfo)) {
+	if (writelbl(lblfile, list, dset)) {
 	    fputs(I_("Write of labels file failed"), stderr);
 	    err = E_FOPEN;
 	    goto write_exit;
@@ -1367,29 +1364,29 @@ int write_data (const char *fname, int *list,
 	}
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
-	    pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
+	    pmax[i-1] = get_precision(&dset->Z[v][dset->t1], tsamp, 10);
 	}	
     }
 
-    if (fmt != GRETL_FMT_CSV || pdinfo->decpoint != ',') {
+    if (fmt != GRETL_FMT_CSV || dset->decpoint != ',') {
 	gretl_push_c_numeric_locale();
 	pop_locale = 1;
     }
 
     if (fmt == GRETL_FMT_TRAD) { 
 	/* plain ASCII */
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (dataset_has_markers(pdinfo)) {
-		fprintf(fp, "%s ", pdinfo->S[t]);
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (dataset_has_markers(dset)) {
+		fprintf(fp, "%s ", dset->S[t]);
 	    }
 	    for (i=1; i<=l0; i++) {
 		v = list[i];
-		if (na(Z[v][t])) {
+		if (na(dset->Z[v][t])) {
 		    fprintf(fp, "-999 ");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.12g ", Z[v][t]);
+		    fprintf(fp, "%.12g ", dset->Z[v][t]);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]);
+		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
 		}
 	    }
 	    fputc('\n', fp);
@@ -1400,25 +1397,25 @@ int write_data (const char *fname, int *list,
 	int print_obs = 0;
 
 	if (fmt == GRETL_FMT_CSV) {
-	    if ((pdinfo->structure == TIME_SERIES || pdinfo->S != NULL)
+	    if ((dset->structure == TIME_SERIES || dset->S != NULL)
 		&& !(opt & OPT_X)) {
 		print_obs = 1;
 	    }
 	    if (!delim) {
-		delim = get_csv_delim(pdinfo);
+		delim = get_csv_delim(dset);
 	    }
 	    strcpy(na_string, get_csv_na_string());
 	} else {
-	    print_obs = (pdinfo->S != NULL);
+	    print_obs = (dset->S != NULL);
 	    delim = ' ';
 	}
 
-	if (fmt == GRETL_FMT_R && dataset_is_time_series(pdinfo)) {
+	if (fmt == GRETL_FMT_R && dataset_is_time_series(dset)) {
 	    char datestr[OBSLEN];
 
-	    ntodate(datestr, pdinfo->t1, pdinfo);
+	    ntodate(datestr, dset->t1, dset);
 	    fprintf(fp, "# time-series data: start = %s, frequency = %d\n",
-		    datestr, pdinfo->pd);
+		    datestr, dset->pd);
 	}
 
 	if (fmt == GRETL_FMT_CSV) {
@@ -1435,32 +1432,32 @@ int write_data (const char *fname, int *list,
 	} else {
 	    /* header: variable names */
 	    if (fmt == GRETL_FMT_CSV && print_obs && 
-		(pdinfo->S != NULL || pdinfo->structure != CROSS_SECTION)) {
+		(dset->S != NULL || dset->structure != CROSS_SECTION)) {
 		fprintf(fp, "obs%c", delim);
 	    }
 	    for (i=1; i<l0; i++) {
-		fprintf(fp, "%s%c", pdinfo->varname[list[i]], delim);
+		fprintf(fp, "%s%c", dset->varname[list[i]], delim);
 	    }
-	    fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
+	    fprintf(fp, "%s\n", dset->varname[list[l0]]);
 	}
 	
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (print_obs) {
-		if (pdinfo->S != NULL) {
-		    fprintf(fp, "\"%s\"%c", pdinfo->S[t], delim);
+		if (dset->S != NULL) {
+		    fprintf(fp, "\"%s\"%c", dset->S[t], delim);
 		} else {
 		    char tmp[OBSLEN];
 
-		    ntodate(tmp, t, pdinfo);
-		    if (quarterly_or_monthly(pdinfo)) {
-			modify_date_for_csv(tmp, pdinfo->pd);
+		    ntodate(tmp, t, dset);
+		    if (quarterly_or_monthly(dset)) {
+			modify_date_for_csv(tmp, dset->pd);
 		    }
 		    fprintf(fp, "%s%c", tmp, delim);
 		}
 	    }
 	    for (i=1; i<=l0; i++) { 
 		v = list[i];
-		xx = Z[v][t];
+		xx = dset->Z[v][t];
 		if (na(xx)) {
 		    fputs(na_string, fp);
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -1482,9 +1479,9 @@ int write_data (const char *fname, int *list,
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
 	    fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n", 
-		    pdinfo->varname[v], n);
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = Z[v][t];
+		    dset->varname[v], n);
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		xx = dset->Z[v][t];
 		if (na(xx)) {
 		    fputs("NaN ", fp);
 		} else 	if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -1492,34 +1489,34 @@ int write_data (const char *fname, int *list,
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], xx); 
 		}
-		if (t == pdinfo->t2 || t % 4 == 0) {
+		if (t == dset->t2 || t % 4 == 0) {
 		    fputc('\n', fp);
 		}
 	    }
 	}
     } else if (fmt == GRETL_FMT_DAT) { 
 	/* PcGive: data file with load info */
-	int pd = pdinfo->pd;
+	int pd = dset->pd;
 
 	for (i=1; i<=list[0]; i++) {
-	    fprintf(fp, ">%s ", pdinfo->varname[list[i]]);
-	    if (pdinfo->structure == TIME_SERIES &&
+	    fprintf(fp, ">%s ", dset->varname[list[i]]);
+	    if (dset->structure == TIME_SERIES &&
 		(pd == 1 || pd == 4 || pd == 12)) {
 		int maj, min;
 
-		date_maj_min(pdinfo->t1, pdinfo, &maj, &min);
+		date_maj_min(dset->t1, dset, &maj, &min);
 		fprintf(fp, "%d %d ", maj, min);
-		date_maj_min(pdinfo->t2, pdinfo, &maj, &min);
+		date_maj_min(dset->t2, dset, &maj, &min);
 		fprintf(fp, "%d %d %d", maj, min, pd);
 	    } else {
-		fprintf(fp, "%d 1 %d 1 1", pdinfo->t1, pdinfo->t2);
+		fprintf(fp, "%d 1 %d 1 1", dset->t1, dset->t2);
 	    }
 			   
 	    fputc('\n', fp);
 
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    for (t=dset->t1; t<=dset->t2; t++) {
 		v = list[i];
-		xx = Z[v][t];
+		xx = dset->Z[v][t];
 		if (na(xx)) {
 		    fprintf(fp, "-9999.99");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -1538,31 +1535,31 @@ int write_data (const char *fname, int *list,
 	fputs("/*\n", fp);
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    fprintf(fp, " %s: %s\n", pdinfo->varname[v], VARLABEL(pdinfo, v));
+	    fprintf(fp, " %s: %s\n", dset->varname[v], VARLABEL(dset, v));
 	}
 	fputs("*/\n", fp);
-	date_maj_min(pdinfo->t1, pdinfo, &maj, &min);
-	if (pdinfo->pd == 4 || pdinfo->pd == 12) {
-	    fprintf(fp, "<%d %c%d>\n", maj, (pdinfo->pd == 4)? 'Q' : 'M', min);
-	} else if (pdinfo->pd == 1) {
+	date_maj_min(dset->t1, dset, &maj, &min);
+	if (dset->pd == 4 || dset->pd == 12) {
+	    fprintf(fp, "<%d %c%d>\n", maj, (dset->pd == 4)? 'Q' : 'M', min);
+	} else if (dset->pd == 1) {
 	    fprintf(fp, "<%d>\n", maj);
 	} else {
 	    fputs("<1>\n", fp);
 	}
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    fprintf(fp, " %s", pdinfo->varname[v]);
+	    fprintf(fp, " %s", dset->varname[v]);
 	}
 	fputc('\n', fp);
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    for (i=1; i<=list[0]; i++) {
 		v = list[i];
-		if (na(Z[v][t])) {
+		if (na(dset->Z[v][t])) {
 		    fputs("NaN ", fp);
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.12g ", Z[v][t]);
+		    fprintf(fp, "%.12g ", dset->Z[v][t]);
 		} else {
-		    fprintf(fp, "%.*f ", pmax[i-1], Z[v][t]);
+		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
 		}
 	    }
 	    fputc('\n', fp);
@@ -1590,7 +1587,7 @@ int write_data (const char *fname, int *list,
     return err;
 }
 
-static int no_case_series_index (const DATAINFO *pdinfo,
+static int no_case_series_index (const DATASET *dset,
 				 const char *vname)
 {
     char s1[VNAMELEN], s2[VNAMELEN];
@@ -1600,8 +1597,8 @@ static int no_case_series_index (const DATAINFO *pdinfo,
     strncat(s1, vname, VNAMELEN - 1);
     lower(s1);
 
-    for (i=1; i<pdinfo->v; i++) {
-	strcpy(s2, pdinfo->varname[i]);
+    for (i=1; i<dset->v; i++) {
+	strcpy(s2, dset->varname[i]);
 	lower(s2);
 	if (strcmp(s1, s2) == 0) {
 	    return i;
@@ -1613,7 +1610,7 @@ static int no_case_series_index (const DATAINFO *pdinfo,
 
 /* read data "labels" from file */
 
-static int readlbl (const char *lblfile, DATAINFO *pdinfo)
+static int readlbl (const char *lblfile, DATASET *dset)
 {
     FILE * fp;
     char line[MAXLEN], varname[VNAMELEN];
@@ -1633,15 +1630,15 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 	    gretl_errmsg_sprintf(_("Bad data label in %s"), lblfile); 
             break;
         }
-	v = series_index(pdinfo, varname);
-	if (v == pdinfo->v) {
-	    v = no_case_series_index(pdinfo, varname);
+	v = series_index(dset, varname);
+	if (v == dset->v) {
+	    v = no_case_series_index(dset, varname);
 	}
-	if (v > 0 && v < pdinfo->v) {
+	if (v > 0 && v < dset->v) {
 	    p = line + strlen(varname);
 	    p += strspn(p, " \t");
-	    VARLABEL(pdinfo, v)[0] = '\0';
-	    strncat(VARLABEL(pdinfo, v), p, MAXLABEL - 1);
+	    VARLABEL(dset, v)[0] = '\0';
+	    strncat(VARLABEL(dset, v), p, MAXLABEL - 1);
 	} else {
 	    fprintf(stderr, I_("extraneous label for var '%s'\n"), varname);
 	}
@@ -1653,7 +1650,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 }
 
 static int writelbl (const char *lblfile, const int *list, 
-		     const DATAINFO *pdinfo)
+		     const DATASET *dset)
 {
     FILE *fp;
     int i, lblcount = 0;
@@ -1662,7 +1659,7 @@ static int writelbl (const char *lblfile, const int *list,
 	if (list[i] == 0) {
 	    continue;
 	}
-	if (strlen(VARLABEL(pdinfo, list[i])) > 2) {
+	if (strlen(VARLABEL(dset, list[i])) > 2) {
 	    lblcount++;
 	    break;
 	}
@@ -1678,9 +1675,9 @@ static int writelbl (const char *lblfile, const int *list,
 	if (list[i] == 0) {
 	    continue;
 	}
-	if (strlen(VARLABEL(pdinfo, list[i])) > 2) {
-	    fprintf(fp, "%s %s\n", pdinfo->varname[list[i]],
-		    VARLABEL(pdinfo, list[i]));
+	if (strlen(VARLABEL(dset, list[i])) > 2) {
+	    fprintf(fp, "%s %s\n", dset->varname[list[i]],
+		    VARLABEL(dset, list[i]));
 	}
     }
     
@@ -1768,8 +1765,7 @@ static void try_gdt (char *fname)
 /**
  * gretl_get_data:
  * @fname: name of file to try.
- * @pZ: pointer to data set.
- * @pdinfo: pointer to data information struct.
+ * @dset: dataset struct.
  * @opt: option flags.
  * @prn: where messages should be written.
  * 
@@ -1794,11 +1790,10 @@ static void try_gdt (char *fname)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo, 
+int gretl_get_data (char *fname, DATASET *dset, 
 		    gretlopt opt, PRN *prn) 
 {
-    DATAINFO *tmpdinfo = NULL;
-    double **tmpZ = NULL;
+    DATASET *tmpset = NULL;
     FILE *dat = NULL;
     gzFile fz = NULL;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
@@ -1852,11 +1847,11 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* catch XML files that have strayed in here? */
     if (gdtsuff && gretl_is_xml_file(fname)) {
-	return gretl_read_gdt(fname, pZ, pdinfo, OPT_NONE, prn);
+	return gretl_read_gdt(fname, dset, OPT_NONE, prn);
     }
 
-    tmpdinfo = datainfo_new();
-    if (tmpdinfo == NULL) {
+    tmpset = datainfo_new();
+    if (tmpset == NULL) {
 	return E_ALLOC;
     }
 	
@@ -1869,14 +1864,14 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* try reading data header file */
-    err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
+    err = readhdr(hdrfile, tmpset, &binary, &old_byvar);
     if (err) {
-	free(tmpdinfo);
+	free(tmpset);
     }
 
     if (err == E_FOPEN) {
 	/* no header file, so maybe it's just an ascii datafile */
-	return import_csv(fname, pZ, pdinfo, OPT_NONE, prn);
+	return import_csv(fname, dset, OPT_NONE, prn);
     } else if (err) {
 	return err;
     } else { 
@@ -1885,13 +1880,13 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* deal with case where first col. of data file contains
        "marker" strings */
-    tmpdinfo->S = NULL;
-    if (tmpdinfo->markers && dataset_allocate_obs_markers(tmpdinfo)) {
+    tmpset->S = NULL;
+    if (tmpset->markers && dataset_allocate_obs_markers(tmpset)) {
 	return E_ALLOC; 
     }
     
     /* allocate dataset */
-    if (allocate_Z(&tmpZ, tmpdinfo)) {
+    if (allocate_Z(tmpset)) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -1916,28 +1911,28 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (gzsuff) {
-	err = gz_readdata(fz, tmpdinfo, tmpZ, binary); 
+	err = gz_readdata(fz, tmpset, binary); 
 	gzclose(fz);
     } else {
-	err = readdata(dat, tmpdinfo, tmpZ, binary, old_byvar); 
+	err = readdata(dat, tmpset, binary, old_byvar); 
 	fclose(dat);
     }
 
     if (err) goto bailout;
 
-    if (tmpdinfo->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(tmpZ, tmpdinfo);
+    if (tmpset->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(tmpset);
     }
 
     if (err) goto bailout;
 
     /* print out basic info from the files read */
     pprintf(prn, I_("periodicity: %d, maxobs: %d\n"
-	   "observations range: %s-%s\n"), tmpdinfo->pd, tmpdinfo->n,
-	   tmpdinfo->stobs, tmpdinfo->endobs);
+	   "observations range: %s-%s\n"), tmpset->pd, tmpset->n,
+	   tmpset->stobs, tmpset->endobs);
 
     pputs(prn, I_("\nReading "));
-    pputs(prn, (tmpdinfo->structure == TIME_SERIES) ? 
+    pputs(prn, (tmpset->structure == TIME_SERIES) ? 
 	    I_("time-series") : _("cross-sectional"));
     pputs(prn, I_(" datafile"));
     if (strlen(fname) > 40) {
@@ -1946,18 +1941,18 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, " %s\n\n", fname);
 
     /* Set sample range to entire length of dataset by default */
-    tmpdinfo->t1 = 0; 
-    tmpdinfo->t2 = tmpdinfo->n - 1;
+    tmpset->t1 = 0; 
+    tmpset->t2 = tmpset->n - 1;
 
-    err = readlbl(lblfile, tmpdinfo);
+    err = readlbl(lblfile, tmpset);
     if (err) goto bailout;
 
-    err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, opt, prn);
+    err = merge_or_replace_data(dset, &tmpset, opt, prn);
 
  bailout:
 
-    if (err && tmpdinfo != NULL) {
-	destroy_dataset(tmpZ, tmpdinfo);
+    if (err && tmpset != NULL) {
+	destroy_dataset(tmpset);
     }
 
     return err;
@@ -1965,8 +1960,7 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
 
 /**
  * open_nulldata:
- * @pZ: pointer to data set.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @data_status: indicator for whether a data file is currently open
  * in gretl's work space (1) or not (0).
  * @length: desired length of data series.
@@ -1978,59 +1972,58 @@ int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo,
  *
  */
 
-int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
-		   int data_status, int length,
+int open_nulldata (DATASET *dset, int data_status, int length,
 		   PRN *prn) 
 {
     int t;
 
     /* clear any existing data info */
     if (data_status) {
-	clear_datainfo(pdinfo, CLEAR_FULL);
+	clear_datainfo(dset, CLEAR_FULL);
     }
 
     /* dummy up the data info */
-    pdinfo->n = length;
-    pdinfo->v = 2;
-    dataset_obs_info_default(pdinfo);
+    dset->n = length;
+    dset->v = 2;
+    dataset_obs_info_default(dset);
 
-    if (dataset_allocate_varnames(pdinfo)) {
+    if (dataset_allocate_varnames(dset)) {
 	return E_ALLOC;
     }
 
     /* allocate dataset */
-    if (allocate_Z(pZ, pdinfo)) {
+    if (allocate_Z(dset)) {
 	return E_ALLOC;
     }
 
     /* add an index var */
-    strcpy(pdinfo->varname[1], "index");
-    strcpy(VARLABEL(pdinfo, 1), _("index variable"));
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[1][t] = (double) (t + 1);
+    strcpy(dset->varname[1], "index");
+    strcpy(VARLABEL(dset, 1), _("index variable"));
+    for (t=0; t<dset->n; t++) {
+	dset->Z[1][t] = (double) (t + 1);
     }
 
     /* print out basic info */
     pprintf(prn, M_("periodicity: %d, maxobs: %d\n"
-	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
-	   pdinfo->stobs, pdinfo->endobs);
+	   "observations range: %s-%s\n"), dset->pd, dset->n,
+	   dset->stobs, dset->endobs);
 
     /* Set sample range to entire length of data-set by default */
-    pdinfo->t1 = 0; 
-    pdinfo->t2 = pdinfo->n - 1;
+    dset->t1 = 0; 
+    dset->t2 = dset->n - 1;
 
     return 0;
 }
 
-static int extend_markers (DATAINFO *pdinfo, int old_n, int new_n)
+static int extend_markers (DATASET *dset, int old_n, int new_n)
 {
-    char **S = realloc(pdinfo->S, new_n * sizeof *S);
+    char **S = realloc(dset->S, new_n * sizeof *S);
     int t, err = 0;
 	   
     if (S == NULL) {
 	err = 1;
     } else {
-	pdinfo->S = S;
+	dset->S = S;
 	for (t=old_n; t<new_n && !err; t++) {
 	    S[t] = malloc(OBSLEN);
 	    if (S[t] == NULL) {
@@ -2048,7 +2041,7 @@ static void merge_error (char *msg, PRN *prn)
     gretl_errmsg_set(msg);
 }
 
-static int count_new_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo,
+static int count_new_vars (const DATASET *dset, const DATASET *addinfo,
 			   PRN *prn)
 {
     const char *newname;
@@ -2065,9 +2058,9 @@ static int count_new_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo,
 	    merge_error("can't replace string with series\n", prn);
 	    addvars = -1;
 	} else {
-	    for (j=1; j<pdinfo->v; j++) {
+	    for (j=1; j<dset->v; j++) {
 		/* FIXME collision with scalar, matrix names */
-		if (!strcmp(newname, pdinfo->varname[j])) {
+		if (!strcmp(newname, dset->varname[j])) {
 		    addvars--;
 		}
 	    }
@@ -2077,8 +2070,8 @@ static int count_new_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo,
     return addvars;
 }
 
-static int compare_ranges (const DATAINFO *targ,
-			   const DATAINFO *src,
+static int compare_ranges (const DATASET *targ,
+			   const DATASET *src,
 			   int *offset)
 {
     int ed0 = dateton(targ->endobs, targ);
@@ -2158,11 +2151,11 @@ static int compare_ranges (const DATAINFO *targ,
    stipulated that the new data are time-varying.
 */
 
-static int panel_expand_ok (DATAINFO *pdinfo, DATAINFO *addinfo,
+static int panel_expand_ok (DATASET *dset, DATASET *addinfo,
 			    gretlopt opt)
 {
-    int n = pdinfo->n / pdinfo->pd;
-    int T = pdinfo->pd;
+    int n = dset->n / dset->pd;
+    int T = dset->pd;
     int ok = 0;
 
     if (addinfo->n == T) {
@@ -2177,35 +2170,33 @@ static int panel_expand_ok (DATAINFO *pdinfo, DATAINFO *addinfo,
 }
 
 static int panel_append_special (int addvars, 
-				 double ***pZ, 
-				 DATAINFO *pdinfo, 
-				 double **addZ, 
-				 DATAINFO *addinfo,
+				 DATASET *dset, 
+				 DATASET *addset,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    int n = pdinfo->n / pdinfo->pd;
-    int T = pdinfo->pd;
-    int k = pdinfo->v;
+    int n = dset->n / dset->pd;
+    int T = dset->pd;
+    int k = dset->v;
     int tsdata;
     int i, j, s, p, t;
     int err = 0;
 
-    if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
+    if (addvars > 0 && dataset_add_series(addvars, dset)) {
 	merge_error(_("Out of memory!\n"), prn);
 	err = E_ALLOC;
     }
 
-    tsdata = ((opt & OPT_T) || addinfo->n != n);
+    tsdata = ((opt & OPT_T) || addset->n != n);
 
-    for (i=1; i<addinfo->v && !err; i++) {
-	int v = series_index(pdinfo, addinfo->varname[i]);
+    for (i=1; i<addset->v && !err; i++) {
+	int v = series_index(dset, addset->varname[i]);
 
 	if (v >= k) {
 	    /* a new variable */
 	    v = k++;
-	    strcpy(pdinfo->varname[v], addinfo->varname[i]);
-	    copy_varinfo(pdinfo->varinfo[v], addinfo->varinfo[i]);
+	    strcpy(dset->varname[v], addset->varname[i]);
+	    copy_varinfo(dset->varinfo[v], addset->varinfo[i]);
 	} 
 
 	s = 0;
@@ -2214,7 +2205,7 @@ static int panel_append_special (int addvars,
 	    for (t=0; t<T; t++) {
 		/* loop across periods */
 		p = (tsdata)? t : j;
-		(*pZ)[v][s++] = addZ[i][p]; 
+		dset->Z[v][s++] = addset->Z[i][p]; 
 	    }
 	}
     }
@@ -2223,7 +2214,7 @@ static int panel_append_special (int addvars,
 }
 
 static int 
-just_append_rows (const DATAINFO *targ, const DATAINFO *src,
+just_append_rows (const DATASET *targ, const DATASET *src,
 		  int *offset)
 {
     if (targ->structure == CROSS_SECTION &&
@@ -2237,7 +2228,7 @@ just_append_rows (const DATAINFO *targ, const DATAINFO *src,
     }
 }
 
-static int simple_range_match (const DATAINFO *targ, const DATAINFO *src,
+static int simple_range_match (const DATASET *targ, const DATASET *src,
 			       int *offset)
 {
     int ret = 0;
@@ -2255,15 +2246,15 @@ static int simple_range_match (const DATAINFO *targ, const DATAINFO *src,
 }
 
 #if 0
-static int markers_are_ints (const DATAINFO *pdinfo)
+static int markers_are_ints (const DATASET *dset)
 {
     char *test;
     int i;
 
     errno = 0;
 
-    for (i=0; i<pdinfo->n; i++) {
-	strtol(pdinfo->S[i], &test, 10);
+    for (i=0; i<dset->n; i++) {
+	strtol(dset->S[i], &test, 10);
 	if (*test || errno) {
 	    errno = 0;
 	    return 0;
@@ -2281,10 +2272,8 @@ static int markers_are_ints (const DATAINFO *pdinfo)
 
 /**
  * merge_data:
- * @pZ: pointer to data set.
- * @pdinfo: data information struct.
- * @addZ: new data set to be merged in.
- * @addinfo: data information associated with @addZ.
+ * @dset: dataset struct.
+ * @addset: dataset to be merged in.
  * @opt: may include OPT_T to force a time-series interpretation
  * when appending to a panel dataset.
  * @prn: print struct to accept messages.
@@ -2295,8 +2284,7 @@ static int markers_are_ints (const DATAINFO *pdinfo)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-static int merge_data (double ***pZ, DATAINFO *pdinfo,
-		       double **addZ, DATAINFO *addinfo,
+static int merge_data (DATASET *dset, DATASET *addset,
 		       gretlopt opt, PRN *prn)
 {
     int dayspecial = 0;
@@ -2308,40 +2296,40 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
     int err = 0;
 
     /* first see how many new vars we have */
-    addvars = count_new_vars(pdinfo, addinfo, prn);
+    addvars = count_new_vars(dset, addset, prn);
     if (addvars < 0) {
 	return 1;
     }
 
-    if (dated_daily_data(pdinfo) && dated_daily_data(addinfo)) {
+    if (dated_daily_data(dset) && dated_daily_data(addset)) {
 	fprintf(stderr, "special: merging daily data\n");
 	dayspecial = 1;
     }
 
-    /* below: had additional condition: simple_structure(pdinfo)
+    /* below: had additional condition: simple_structure(dset)
        relaxed this on 2009-05-15 */
 
-    if (simple_range_match(pdinfo, addinfo, &offset)) {
+    if (simple_range_match(dset, addset, &offset)) {
 	/* we'll allow undated data to be merged with the existing
 	   dateset, sideways, provided the number of observations
 	   matches OK */
 	addsimple = 1;
-    } else if (dataset_is_panel(pdinfo) && 
-	       panel_expand_ok(pdinfo, addinfo, opt)) {
+    } else if (dataset_is_panel(dset) && 
+	       panel_expand_ok(dset, addset, opt)) {
 	/* allow appending to panel when the number of obs matches
 	   either the cross-section size or the time-series length */
 	addpanel = 1;
-    } else if (pdinfo->pd != addinfo->pd) {
+    } else if (dset->pd != addset->pd) {
 	merge_error(_("Data frequency does not match\n"), prn);
 	err = 1;
     }
 
     if (!err) {
 	if (!addsimple && !addpanel) {
-	    addobs = compare_ranges(pdinfo, addinfo, &offset);
+	    addobs = compare_ranges(dset, addset, &offset);
 	}
 	if (addobs <= 0 && addvars == 0) {
-	    addobs = just_append_rows(pdinfo, addinfo, &offset);
+	    addobs = just_append_rows(dset, addset, &offset);
 	}
     }
 
@@ -2350,12 +2338,12 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 	err = 1;
     }
 
-    if (!err && !addpanel && pdinfo->markers != addinfo->markers) {
-	if (addinfo->n != pdinfo->n) {
+    if (!err && !addpanel && dset->markers != addset->markers) {
+	if (addset->n != dset->n) {
 	    merge_error(_("Inconsistency in observation markers\n"), prn);
 	    err = 1;
-	} else if (addinfo->markers && !pdinfo->markers) {
-	    dataset_destroy_obs_markers(addinfo);
+	} else if (addset->markers && !dset->markers) {
+	    dataset_destroy_obs_markers(addset);
 	}
     }
 
@@ -2367,88 +2355,88 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
     /* if checks are passed, try merging the data */
 
     if (!err && addobs > 0) { 
-	int i, t, new_n = pdinfo->n + addobs;
+	int i, t, new_n = dset->n + addobs;
 
-	if (pdinfo->markers) {
-	    err = extend_markers(pdinfo, pdinfo->n, new_n);
+	if (dset->markers) {
+	    err = extend_markers(dset, dset->n, new_n);
 	    if (!err) {
-		for (t=pdinfo->n; t<new_n; t++) {
-		    strcpy(pdinfo->S[t], addinfo->S[t - offset]);
+		for (t=dset->n; t<new_n; t++) {
+		    strcpy(dset->S[t], addset->S[t - offset]);
 		}
 	    }
 	}
 
-	for (i=0; i<pdinfo->v && !err; i++) {
+	for (i=0; i<dset->v && !err; i++) {
 	    double *x;
 
-	    x = realloc((*pZ)[i], new_n * sizeof *x);
+	    x = realloc(dset->Z[i], new_n * sizeof *x);
 	    if (x == NULL) {
 		err = 1;
 		break;
 	    }
 
-	    for (t=pdinfo->n; t<new_n; t++) {
+	    for (t=dset->n; t<new_n; t++) {
 		if (i == 0) {
 		    x[t] = 1.0;
 		} else {
 		    x[t] = NADBL;
 		}
 	    }
-	    (*pZ)[i] = x;
+	    dset->Z[i] = x;
 	}
 
 	if (err) { 
 	    merge_error(_("Out of memory!\n"), prn);
 	} else {
-	    pdinfo->n = new_n;
-	    ntodate(pdinfo->endobs, new_n - 1, pdinfo);
-	    pdinfo->t2 = pdinfo->n - 1;
+	    dset->n = new_n;
+	    ntodate(dset->endobs, new_n - 1, dset);
+	    dset->t2 = dset->n - 1;
 	}
     }
 
     if (!err && addpanel) {
-	err = panel_append_special(addvars, pZ, pdinfo, addZ, addinfo, 
+	err = panel_append_special(addvars, dset, addset, 
 				   opt, prn);
     } else if (!err) { 
-	int k = pdinfo->v;
+	int k = dset->v;
 	int i, t;
 
-	if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
+	if (addvars > 0 && dataset_add_series(addvars, dset)) {
 	    merge_error(_("Out of memory!\n"), prn);
 	    err = E_ALLOC;
 	}
 
-	for (i=1; i<addinfo->v && !err; i++) {
-	    int v = series_index(pdinfo, addinfo->varname[i]);
+	for (i=1; i<addset->v && !err; i++) {
+	    int v = series_index(dset, addset->varname[i]);
 	    int newvar = 0;
 
 	    if (v >= k) {
 		/* a new variable */
 		v = k++;
 		newvar = 1;
-		strcpy(pdinfo->varname[v], addinfo->varname[i]);
-		copy_varinfo(pdinfo->varinfo[v], addinfo->varinfo[i]);
+		strcpy(dset->varname[v], addset->varname[i]);
+		copy_varinfo(dset->varinfo[v], addset->varinfo[i]);
 	    } 
 
 	    if (dayspecial) {
 		char obs[OBSLEN];
 		int s;
 
-		for (t=0; t<pdinfo->n; t++) {
-		    ntodate(obs, t, pdinfo);
-		    s = dateton(obs, addinfo);
-		    if (s >= 0 && s < addinfo->n) {
-			(*pZ)[v][t] = addZ[i][s];
+		for (t=0; t<dset->n; t++) {
+		    ntodate(obs, t, dset);
+		    s = dateton(obs, addset);
+		    if (s >= 0 && s < addset->n) {
+			dset->Z[v][t] = addset->Z[i][s];
 		    } else {
-			(*pZ)[v][t] = NADBL;
+			dset->Z[v][t] = NADBL;
 		    }
 		}
 	    } else {
-		for (t=0; t<pdinfo->n; t++) {
-		    if (t >= offset && t - offset < addinfo->n) {
-			(*pZ)[v][t] = addZ[i][t - offset];
+		for (t=0; t<dset->n; t++) {
+		    if (t >= offset && t - offset < addset->n) {
+			dset->Z[v][t] = addset->Z[i][t - offset];
 		    } else if (newvar) {
-			(*pZ)[v][t] = NADBL;
+			dset->Z[v][t] = NADBL;
 		    }
 		}
 	    }
@@ -2464,41 +2452,37 @@ static int merge_data (double ***pZ, DATAINFO *pdinfo,
 
 /**
  * merge_or_replace_data:
- * @pZ0: pointer to original data set.
- * @pdinfo0: original dataset information struct.
- * @pZ1: new data set.
- * @ppdinfo1: pointer to dataset information associated with @pZ1.
+ * @dset0: original dataset struct.
+ * @pdset1: new dataset struct.
  * @opt: may include OPT_T when appending to a panel dataset,
  * to force a time-series interpretation of the added data.
  * @prn: print struct to accept messages.
  *
- * Given a newly-created dataset, pointed to by @pZ1 and
- * @ppdinfo1, either attempt to merge it with @pZ0, if the
- * original dataset is non-NULL, or replace the content of
- * the original pointers with the new dataset.
+ * Given a newly-created dataset, pointed to by @pdset1, either 
+ * attempt to merge it with @dset0, if the original data array 
+ * is non-NULL, or replace the content of the original pointer
+ * with the new dataset.
+ *
  * In case merging is not successful, the new dataset is
  * destroyed.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
-			   double ***pZ1, DATAINFO **ppdinfo1,
+int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 			   gretlopt opt, PRN *prn)
 {
     int err = 0;
 
-    if (*pZ0 != NULL) {
-	err = merge_data(pZ0, pdinfo0, *pZ1, *ppdinfo1, opt, prn);
-	destroy_dataset(*pZ1, *ppdinfo1);
+    if (dset0->Z != NULL) {
+	err = merge_data(dset0, *pdset1, opt, prn);
+	destroy_dataset(*pdset1);
     } else {
-	*pdinfo0 = **ppdinfo1;
-	free(*ppdinfo1);
-	*pZ0 = *pZ1;
+	*dset0 = **pdset1;
+	free(*pdset1);
     }
 
-    *pZ1 = NULL;
-    *ppdinfo1 = NULL;
+    *pdset1 = NULL;
 
     return err;
 }
@@ -2528,7 +2512,7 @@ static int check_imported_string (char *src, int i, size_t len)
 
 /**
  * add_obs_markers_from_file:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @fname: name of file containing case markers.
  * 
  * Read case markers (strings of %OBSLEN - 1 characters or less that identify
@@ -2540,7 +2524,7 @@ static int check_imported_string (char *src, int i, size_t len)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
+int add_obs_markers_from_file (DATASET *dset, const char *fname)
 {
     char **S = NULL;
     FILE *fp;
@@ -2552,16 +2536,16 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 	return E_FOPEN;
     }
 
-    S = strings_array_new_with_length(pdinfo->n, OBSLEN);
+    S = strings_array_new_with_length(dset->n, OBSLEN);
     if (S == NULL) {
 	fclose(fp);
 	return E_ALLOC;
     }
     
-    for (t=0; t<pdinfo->n && !err; t++) {
+    for (t=0; t<dset->n && !err; t++) {
 	if (fgets(line, sizeof line, fp) == NULL) {
 	    gretl_errmsg_sprintf("Expected %d markers; found %d\n", 
-				 pdinfo->n, t);
+				 dset->n, t);
 	    err = E_DATA;
 	} else if (sscanf(line, "%31[^\n\r]", marker) != 1) {
 	    gretl_errmsg_sprintf("Couldn't read marker on line %d", t+1);
@@ -2574,13 +2558,13 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
     }
 
     if (err) {
-	free_strings_array(S, pdinfo->n);
+	free_strings_array(S, dset->n);
     } else {
-	if (pdinfo->S != NULL) {
-	    free_strings_array(pdinfo->S, pdinfo->n);
+	if (dset->S != NULL) {
+	    free_strings_array(dset->S, dset->n);
 	} 
-	pdinfo->markers = REGULAR_MARKERS;
-	pdinfo->S = S;
+	dset->markers = REGULAR_MARKERS;
+	dset->S = S;
     }
 
     return err;
@@ -2588,26 +2572,26 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 
 /**
  * dataset_has_var_labels:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * 
  * Returns: 1 if at least one variable in the current dataset
  * has a descriptive label, otherwise 0.
  */
 
-int dataset_has_var_labels (const DATAINFO *pdinfo)
+int dataset_has_var_labels (const DATASET *dset)
 {
     const char *label;
     int i, imin = 1;
 
-    if (pdinfo->v > 1) {
-	if (!strcmp(pdinfo->varname[1], "index") &&
-	    !strcmp(VARLABEL(pdinfo, 1), _("index variable"))) {
+    if (dset->v > 1) {
+	if (!strcmp(dset->varname[1], "index") &&
+	    !strcmp(VARLABEL(dset, 1), _("index variable"))) {
 	    imin = 2;
 	}
     }
 
-    for (i=imin; i<pdinfo->v; i++) {
-	label = VARLABEL(pdinfo, i);
+    for (i=imin; i<dset->v; i++) {
+	label = VARLABEL(dset, i);
 	if (*label != '\0') {
 	    return 1;
 	}
@@ -2618,7 +2602,7 @@ int dataset_has_var_labels (const DATAINFO *pdinfo)
 
 /**
  * save_var_labels_to_file:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @fname: name of file containing labels.
  * 
  * Writes to @fname the descriptive labels for the series in
@@ -2627,7 +2611,7 @@ int dataset_has_var_labels (const DATAINFO *pdinfo)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int save_var_labels_to_file (const DATAINFO *pdinfo, const char *fname)
+int save_var_labels_to_file (const DATASET *dset, const char *fname)
 {
     FILE *fp;
     int i, err = 0;
@@ -2637,8 +2621,8 @@ int save_var_labels_to_file (const DATAINFO *pdinfo, const char *fname)
     if (fp == NULL) {
 	err = E_FOPEN;
     } else {
-	for (i=1; i<pdinfo->v; i++) {
-	    fprintf(fp, "%s\n", VARLABEL(pdinfo, i));
+	for (i=1; i<dset->v; i++) {
+	    fprintf(fp, "%s\n", VARLABEL(dset, i));
 	}
 	fclose(fp);
     }
@@ -2648,7 +2632,7 @@ int save_var_labels_to_file (const DATAINFO *pdinfo, const char *fname)
 
 /**
  * add_var_labels_from_file:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @fname: name of file containing labels.
  * 
  * Read descriptive variables for labels (strings of %MAXLABEL - 1 
@@ -2660,7 +2644,7 @@ int save_var_labels_to_file (const DATAINFO *pdinfo, const char *fname)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname)
+int add_var_labels_from_file (DATASET *dset, const char *fname)
 {
     FILE *fp;
     char line[256], label[MAXLABEL];
@@ -2673,13 +2657,13 @@ int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname)
 	return E_FOPEN;
     }
 
-    for (i=1; i<pdinfo->v && !err; i++) {
+    for (i=1; i<dset->v && !err; i++) {
 	if (fgets(line, sizeof line, fp) == NULL) {
 	    break;
 	} else if (sscanf(line, "%127[^\n\r]", label) != 1) {
 	    continue;
 	} else {
-	    targ = VARLABEL(pdinfo, i);
+	    targ = VARLABEL(dset, i);
 	    g_strstrip(label);
 	    *targ = '\0';
 	    strncat(targ, label, MAXLABEL - 1);
@@ -2700,7 +2684,7 @@ int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname)
     return err;
 }
 
-int read_or_write_var_labels (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
+int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn)
 {
     const char *fname;
     int err;
@@ -2717,18 +2701,18 @@ int read_or_write_var_labels (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 
     if (opt & OPT_T) {
 	/* to-file */
-	if (!dataset_has_var_labels(pdinfo)) {
+	if (!dataset_has_var_labels(dset)) {
 	    pprintf(prn, "No labels are available for writing\n");
 	    err = E_DATA;
 	} else {
-	    err = save_var_labels_to_file(pdinfo, fname);
+	    err = save_var_labels_to_file(dset, fname);
 	    if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 		pprintf(prn, "Labels written OK\n");
 	    }
 	}
     } else if (opt & OPT_F) {
 	/* from-file */
-	err = add_var_labels_from_file(pdinfo, fname);
+	err = add_var_labels_from_file(dset, fname);
 	if (!err && gretl_messages_on() && !gretl_looping_quietly()) {
 	    pprintf(prn, "Labels loaded OK\n");
 	}	
@@ -2807,12 +2791,10 @@ static int get_max_line_length (FILE *fp, PRN *prn)
     return maxlen;
 }
 
-static int 
-import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo, 
-	       gretlopt opt, PRN *prn)
+static int import_octave (const char *fname, DATASET *dset, 
+			  gretlopt opt, PRN *prn)
 {
-    DATAINFO *octinfo = NULL;
-    double **octZ = NULL;
+    DATASET *octset = NULL;
     FILE *fp = NULL;
     char *line = NULL;
     char tmp[8], name[32];
@@ -2900,17 +2882,17 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* initialize datainfo and Z */
 
-    octinfo = datainfo_new();
-    if (octinfo == NULL) {
+    octset = datainfo_new();
+    if (octset == NULL) {
 	pputs(prn, M_("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
     }
 
-    octinfo->n = nrows;
-    octinfo->v = ncols + 1;
+    octset->n = nrows;
+    octset->v = ncols + 1;
 
-    if (start_new_Z(&octZ, octinfo, 0)) {
+    if (start_new_Z(octset, 0)) {
 	pputs(prn, M_("Out of memory!\n"));
 	err = E_ALLOC;
 	goto oct_bailout;
@@ -2944,7 +2926,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    continue;
 	}
 
-	if (t >= octinfo->n) {
+	if (t >= octset->n) {
 	    err = 1;
 	}
 
@@ -2955,7 +2937,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    if (t == 0) {
 		int nnum = (bcols > 1)? j + 1 : 0;
 
-		octave_varname(octinfo->varname[i+j], name, nnum, v);
+		octave_varname(octset->varname[i+j], name, nnum, v);
 	    }
 
 	    while (isspace(*s)) s++;
@@ -2963,7 +2945,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		fprintf(stderr, "error: '%s', didn't get double\n", s);
 		err = 1;
 	    } else {
-		octZ[v][t] = x;
+		octset->Z[v][t] = x;
 		while (!isspace(*s)) s++;
 	    }	
 	}
@@ -2976,7 +2958,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	goto oct_bailout;
     } 
 
-    err = merge_or_replace_data(pZ, pdinfo, &octZ, &octinfo, opt, prn);
+    err = merge_or_replace_data(dset, &octset, opt, prn);
 
  oct_bailout:
 
@@ -2988,8 +2970,8 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	free(line);
     }
 
-    if (octinfo != NULL) {
-	clear_datainfo(octinfo, CLEAR_FULL);
+    if (octset != NULL) {
+	clear_datainfo(octset, CLEAR_FULL);
     }
 
     console_off();
@@ -3002,7 +2984,7 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
  * @fname: name of file.
  * @ftype: type of data file.
  * @pZ: pointer to data set.
- * @pdinfo: pointer to data information struct.
+ * @dset: pointer to data information struct.
  * @opt: option flag; see gretl_get_data().
  * @prn: gretl printing struct.
  * 
@@ -3012,13 +2994,11 @@ import_octave (const char *fname, double ***pZ, DATAINFO *pdinfo,
  */
 
 int import_other (const char *fname, GretlFileType ftype,
-		  double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt, PRN *prn)
+		  DATASET *dset, gretlopt opt, PRN *prn)
 {
     void *handle;
     FILE *fp;
-    int (*importer) (const char *, 
-		     double ***, DATAINFO *, 
+    int (*importer) (const char *, DATASET *, 
 		     gretlopt, PRN *);
     int err = 0;
 
@@ -3035,7 +3015,7 @@ int import_other (const char *fname, GretlFileType ftype,
 
     if (ftype == GRETL_OCTAVE) {
 	/* plugin not needed */
-	return import_octave(fname, pZ, pdinfo, opt, prn);
+	return import_octave(fname, dset, opt, prn);
     }
 
     if (ftype == GRETL_WF1) {
@@ -3057,7 +3037,7 @@ int import_other (const char *fname, GretlFileType ftype,
     if (importer == NULL) {
         err = 1;
     } else {
-	err = (*importer)(fname, pZ, pdinfo, opt, prn);
+	err = (*importer)(fname, dset, opt, prn);
 	close_plugin(handle);
     }
 
@@ -3074,8 +3054,7 @@ int import_other (const char *fname, GretlFileType ftype,
  * @ftype: type of data file.
  * @list: list of parameters for spreadsheet import, or NULL.
  * @sheetname: name of specific worksheet, or NULL.
- * @pZ: pointer to data set.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: option flag; see gretl_get_data().
  * @prn: gretl printing struct.
  * 
@@ -3088,14 +3067,12 @@ int import_other (const char *fname, GretlFileType ftype,
 
 int import_spreadsheet (const char *fname, GretlFileType ftype, 
 			int *list, char *sheetname,
-			double ***pZ, DATAINFO *pdinfo, 
-			gretlopt opt, PRN *prn)
+			DATASET *dset, gretlopt opt, PRN *prn)
 {
     void *handle;
     FILE *fp;
     int (*importer) (const char*, int *, char *,
-		     double ***, DATAINFO *, 
-		     gretlopt, PRN *);
+		     DATASET *, gretlopt, PRN *);
     int err = 0;
 
     check_for_console(prn);
@@ -3124,7 +3101,7 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
     if (importer == NULL) {
         err = 1;
     } else {
-	err = (*importer)(fname, list, sheetname, pZ, pdinfo, opt, prn);
+	err = (*importer)(fname, list, sheetname, dset, opt, prn);
 	close_plugin(handle);
     }
 
@@ -3381,7 +3358,7 @@ int check_atoi (const char *numstr)
 }
 
 static int transpose_varname_used (const char *vname, 
-				   DATAINFO *dinfo,
+				   DATASET *dinfo,
 				   int imax)
 {
     int i;
@@ -3398,7 +3375,7 @@ static int transpose_varname_used (const char *vname,
 /**
  * transpose_data:
  * @pZ: pointer to data array.
- * @pdinfo: pointer to dataset information struct.
+ * @dset: pointer to dataset information struct.
  *
  * Attempts to transpose the current dataset, so that each
  * variable becomes interpreted as an observation and each
@@ -3407,40 +3384,39 @@ static int transpose_varname_used (const char *vname,
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int transpose_data (double ***pZ, DATAINFO *pdinfo)
+int transpose_data (DATASET *dset)
 {
-    double **tZ = NULL;
-    DATAINFO *tinfo;
-    int k = pdinfo->n + 1;
-    int T = pdinfo->v - 1;
+    DATASET *tset;
+    int k = dset->n + 1;
+    int T = dset->v - 1;
     int i, t;
 
-    tinfo = create_new_dataset(&tZ, k, T, 0);
-    if (tinfo == NULL) {
+    tset = create_new_dataset(k, T, 0);
+    if (tset == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=1; i<pdinfo->v; i++) {
-	for (t=0; t<pdinfo->n; t++) {
-	    tZ[t+1][i-1] = (*pZ)[i][t];
+    for (i=1; i<dset->v; i++) {
+	for (t=0; t<dset->n; t++) {
+	    tset->Z[t+1][i-1] = dset->Z[i][t];
 	}
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	int k = t + 1;
-	char *targ = tinfo->varname[k];
+	char *targ = tset->varname[k];
 
-	if (pdinfo->S != NULL && pdinfo->S[t][0] != '\0') {
+	if (dset->S != NULL && dset->S[t][0] != '\0') {
 	    int err;
 
 	    *targ = '\0';
-	    strncat(targ, pdinfo->S[t], VNAMELEN - 1);
+	    strncat(targ, dset->S[t], VNAMELEN - 1);
 	    charsub(targ, ' ', '_');
 	    err = check_varname(targ);
 	    if (err) {
 		sprintf(targ, "v%d", k);
 		gretl_error_clear();
-	    } else if (transpose_varname_used(targ, tinfo, k)) {
+	    } else if (transpose_varname_used(targ, tset, k)) {
 		sprintf(targ, "v%d", k);
 	    }
 	} else {
@@ -3448,29 +3424,29 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    free_Z(*pZ, pdinfo);
-    *pZ = tZ;
+    free_Z(dset);
+    dset->Z = tset->Z;
 
-    clear_datainfo(pdinfo, CLEAR_FULL);
+    clear_datainfo(dset, CLEAR_FULL);
 
-    pdinfo->v = k;
-    pdinfo->n = T;
-    pdinfo->t1 = 0;
-    pdinfo->t2 = pdinfo->n - 1;
+    dset->v = k;
+    dset->n = T;
+    dset->t1 = 0;
+    dset->t2 = dset->n - 1;
 
-    pdinfo->varname = tinfo->varname;
-    pdinfo->varinfo = tinfo->varinfo;
+    dset->varname = tset->varname;
+    dset->varinfo = tset->varinfo;
 
-    dataset_obs_info_default(pdinfo);
+    dataset_obs_info_default(dset);
 
-    free(tinfo);
+    free(tset);
 
     return 0;
 }
 
-void dataset_set_regular_markers (DATAINFO *pdinfo)
+void dataset_set_regular_markers (DATASET *dset)
 {
-    pdinfo->markers = REGULAR_MARKERS;
+    dset->markers = REGULAR_MARKERS;
 }
 
 struct filetype_info {
@@ -3480,7 +3456,7 @@ struct filetype_info {
 
 /**
  * dataset_add_import_info:
- * @pdinfo: pointer to dataset information struct.
+ * @dset: pointer to dataset information struct.
  * @fname: the name of a file from which data have been imported.
  * @type: code representing the type of the file identified by
  * @fname.
@@ -3490,7 +3466,7 @@ struct filetype_info {
  * saying where it came from and when.
  */
 
-void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
+void dataset_add_import_info (DATASET *dset, const char *fname,
 			      GretlFileType type)
 {
     struct filetype_info ftypes[] = {
@@ -3535,17 +3511,17 @@ void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
     }
 
     if (note != NULL) {
-	if (pdinfo->descrip == NULL) {
-	    pdinfo->descrip = gretl_strdup(note);
+	if (dset->descrip == NULL) {
+	    dset->descrip = gretl_strdup(note);
 	} else {
-	    int dlen = strlen(pdinfo->descrip);
+	    int dlen = strlen(dset->descrip);
 	    int nlen = strlen(note);
-	    char *tmp = realloc(pdinfo->descrip, dlen + nlen + 3);
+	    char *tmp = realloc(dset->descrip, dlen + nlen + 3);
 
 	    if (tmp != NULL) {
-		pdinfo->descrip = tmp;
-		strcat(pdinfo->descrip, "\n\n");
-		strncat(pdinfo->descrip, note, nlen);
+		dset->descrip = tmp;
+		strcat(dset->descrip, "\n\n");
+		strncat(dset->descrip, note, nlen);
 	    }
 	}
 	g_free(note);

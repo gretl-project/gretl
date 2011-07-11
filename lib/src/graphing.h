@@ -187,72 +187,64 @@ int matrix_plot (gretl_matrix *m, const int *list, const char *literal,
 		 gretlopt opt);
 
 int gnuplot (const int *plotlist, const char *literal,
-	     const double **Z, const DATAINFO *pdinfo, 
-	     gretlopt opt);
+	     const DATASET *dset, gretlopt opt);
 
-int multi_scatters (const int *list, const double **Z,
-		    const DATAINFO *pdinfo, gretlopt opt);
+int multi_scatters (const int *list, const DATASET *dset, 
+		    gretlopt opt);
 
 int gnuplot_3d (int *list, const char *literal,
-		double **Z, DATAINFO *pdinfo, 
-		gretlopt opt);
+		DATASET *dset, gretlopt opt);
 
 int plot_freq (FreqDist *freq, DistCode dist);
 
-int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo); 
+int garch_resid_plot (const MODEL *pmod, const DATASET *dset); 
 
-int rmplot (const int *list, const double **Z, DATAINFO *pdinfo, 
+int rmplot (const int *list, DATASET *dset, 
 	    gretlopt opt, PRN *prn);
 
-int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, 
+int hurstplot (const int *list, DATASET *dset, 
 	       PRN *prn);
 
-int qq_plot (const int *list, const double **Z, 
-	     const DATAINFO *pdinfo, gretlopt opt);
+int qq_plot (const int *list, const DATASET *dset, gretlopt opt);
 
-int theil_forecast_plot (const int *plotlist, const double **Z, 
-			 const DATAINFO *pdinfo, gretlopt opt);
-
-int gretl_panel_ts_plot (int vnum, const double **Z, DATAINFO *pdinfo,
+int theil_forecast_plot (const int *plotlist, const DATASET *dset, 
 			 gretlopt opt);
 
+int gretl_panel_ts_plot (int vnum, DATASET *dset, gretlopt opt);
+
 int plot_fcast_errs (const FITRESID *fr, const double *maxerr,
-		     const DATAINFO *pdinfo, gretlopt opt);
+		     const DATASET *dset, gretlopt opt);
 
 int plot_simple_fcast_bands (const MODEL *pmod, 
 			     const FITRESID *fr, 
-			     const double **Z,
-			     const DATAINFO *pdinfo, 
+			     const DATASET *dset, 
 			     gretlopt opt);
 
-int plot_tau_sequence (const MODEL *pmod, const DATAINFO *pdinfo,
+int plot_tau_sequence (const MODEL *pmod, const DATASET *dset,
 		       int k);
 
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, 
 				 int periods, double alpha,
-				 const double **Z,
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 gretlopt opt);
 
 int gretl_VAR_plot_FEVD (GRETL_VAR *var, int targ, int periods, 
-			 const DATAINFO *pdinfo);
+			 const DATASET *dset);
 
 int 
 gretl_VAR_plot_multiple_irf (GRETL_VAR *var, 
 			     int periods, double alpha,
-			     const double **Z,
-			     const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     gretlopt opt);
 
 int gretl_VECM_combined_EC_plot (GRETL_VAR *var, 
-				 const double **Z, 
-				 const DATAINFO *pdinfo);
+				 const DATASET *dset);
 
-int gretl_system_residual_plot (void *p, int ci, const DATAINFO *pdinfo);
+int gretl_system_residual_plot (void *p, int ci, const DATASET *dset);
 
-int gretl_system_residual_mplot (void *p, int ci, const DATAINFO *pdinfo); 
+int gretl_system_residual_mplot (void *p, int ci, const DATASET *dset); 
 
 int gretl_VAR_roots_plot (GRETL_VAR *var);
 
@@ -261,8 +253,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b,
 			     const char *iname, const char *jname);
 
 int xy_plot_with_control (const int *list, const char *literal,
-			  const double **Z, const DATAINFO *pdinfo,
-			  gretlopt opt);
+			  const DATASET *dset, gretlopt opt);
 
 int gnuplot_process_file (gretlopt opt, PRN *prn);
 

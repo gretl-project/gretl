@@ -46,9 +46,9 @@ int days_in_month_before (int yr, int mon, int day, int wkdays);
 
 int days_in_month_after (int yr, int mon, int day, int wkdays);
 
-int calendar_obs_number (const char *date, const DATAINFO *pdinfo);
+int calendar_obs_number (const char *date, const DATASET *dset);
 
-void calendar_date_string (char *str, int t, const DATAINFO *pdinfo);
+void calendar_date_string (char *str, int t, const DATASET *dset);
 
 int MS_excel_date_string (char *date, int mst, int pd, int d1904);
 
@@ -56,8 +56,8 @@ double get_dec_date (const char *date);
 
 double day_of_week (int yr, int mo, int day, int *err);
 
-int n_hidden_missing_obs (const DATAINFO *pdinfo);
+int n_hidden_missing_obs (const DATASET *dset);
 
-int guess_daily_pd (const DATAINFO *pdinfo);
+int guess_daily_pd (const DATASET *dset);
 
 #endif /* CALENDAR_H */ 

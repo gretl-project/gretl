@@ -213,13 +213,12 @@ static GOptionEntry options[] = {
 #endif /* old vs new GTK switch */
 
 windata_t *mdata;
-DATAINFO *datainfo;
+DATASET *dataset;
 
 char datafile[MAXLEN];
 char scriptfile[MAXLEN];
 char tryfile[MAXLEN];
 
-double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
 
 int data_status, orig_vars;
@@ -482,7 +481,7 @@ static void gui_show_activity (void)
 
 static int have_data (void)
 {
-    return datainfo != NULL && datainfo->v > 0;
+    return dataset != NULL && dataset->v > 0;
 }
 
 int main (int argc, char **argv)
@@ -561,8 +560,8 @@ int main (int argc, char **argv)
     set_show_activity_func(gui_show_activity);
 
     /* allocate data information struct */
-    datainfo = datainfo_new();
-    if (datainfo == NULL) {
+    dataset = datainfo_new();
+    if (dataset == NULL) {
 	noalloc();
     }
 
@@ -611,16 +610,13 @@ int main (int argc, char **argv)
 
 	switch (ftype) {
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(datafile, &Z, datainfo, 
-				 OPT_NONE, prn);
+	    err = gretl_get_data(datafile, dataset, OPT_NONE, prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(datafile, &Z, datainfo, 
-				 OPT_NONE, prn);
+	    err = gretl_read_gdt(datafile, dataset, OPT_NONE, prn);
 	    break;
 	case GRETL_CSV:
-	    err = import_csv(datafile, &Z, datainfo, 
-			     OPT_NONE, prn);
+	    err = import_csv(datafile, dataset, OPT_NONE, prn);
 	    break;
 	case GRETL_XLS:
 	case GRETL_GNUMERIC:
@@ -676,7 +672,7 @@ int main (int argc, char **argv)
 
     if (have_data()) {
 	/* redundant? */
-	set_sample_label(datainfo);
+	set_sample_label(dataset);
     }
 
     add_files_to_menus();
@@ -727,17 +723,13 @@ int main (int argc, char **argv)
     /* clean up before exiting */
     free_session();
 
-    if (Z != NULL) {
-	free_Z(Z, datainfo);
-    }
-
     destroy_working_models(models, 3);
 
     library_command_free();
     libgretl_cleanup();
 
     if (data_status) {
-	free_datainfo(datainfo);
+	destroy_dataset(dataset);
     }
 
     destroy_file_collections();
@@ -816,7 +808,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	}
     }
 
-    if (datainfo->v == 0) {
+    if (dataset->v == 0) {
 	goto suppress;
     }
 
@@ -960,14 +952,14 @@ void populate_varlist (void)
     gtk_tree_store_clear(store);
     gtk_tree_model_get_iter_first(model, &iter);
 
-    for (i=0; i<datainfo->v; i++) {
+    for (i=0; i<dataset->v; i++) {
 	int pv = 0;
 
-	if (var_is_hidden(datainfo, i)) {
+	if (var_is_hidden(dataset, i)) {
 	    continue;
 	}
-	if (i > 0 && (is_standard_lag(i, datainfo, &pv) ||
-		      is_dummy_child(i, datainfo, &pv))) {
+	if (i > 0 && (is_standard_lag(i, dataset, &pv) ||
+		      is_dummy_child(i, dataset, &pv))) {
 	    if (pv > 0) {
 		GtkTreeIter child_iter, parent_iter;
 
@@ -977,8 +969,8 @@ void populate_varlist (void)
 		    sprintf(id, "%d", i);
 		    gtk_tree_store_set(store, &child_iter, 
 				       0, id, 
-				       1, datainfo->varname[i],
-				       2, VARLABEL(datainfo, i),
+				       1, dataset->varname[i],
+				       2, VARLABEL(dataset, i),
 				       -1);	
 		}	
 	    }
@@ -989,8 +981,8 @@ void populate_varlist (void)
 	    sprintf(id, "%d", i);
 	    gtk_tree_store_set(store, &iter, 
 			       0, id, 
-			       1, datainfo->varname[i],
-			       2, VARLABEL(datainfo, i),
+			       1, dataset->varname[i],
+			       2, VARLABEL(dataset, i),
 			       -1);
 	}
     } 
@@ -1025,7 +1017,7 @@ void populate_varlist (void)
     select = gtk_tree_view_get_selection(view);
     gtk_tree_selection_select_iter(select, &iter);
 
-    if (datainfo->v > 1) {
+    if (dataset->v > 1) {
 	GtkTreePath *path;
 
 	sprintf(id, "%d", pos);
@@ -1948,12 +1940,12 @@ void window_list_popup (GtkWidget *src)
     }
 }
 
-int gui_restore_sample (double ***pZ, DATAINFO *pdinfo)
+int gui_restore_sample (DATASET *dset)
 {
     int err = 0;
 
-    if (pZ != NULL && *pZ != NULL) {
-	err = restore_full_sample(pZ, pdinfo, NULL);
+    if (dset != NULL && dset->Z != NULL) {
+	err = restore_full_sample(dset, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -1966,10 +1958,10 @@ int gui_restore_sample (double ***pZ, DATAINFO *pdinfo)
 
 static void restore_sample_callback (void)
 {
-    int err = gui_restore_sample(&Z, datainfo); 
+    int err = gui_restore_sample(dataset); 
 
     if (!err) {
-	set_sample_label(datainfo);    
+	set_sample_label(dataset);    
 	gretl_command_strcpy("smpl --full");
 	check_and_record_command();
     }
@@ -1984,7 +1976,7 @@ static void show_sample_callback (void)
 	return;
     }
 
-    print_sample_status(datainfo, prn);
+    print_sample_status(dataset, prn);
     title = g_strdup_printf("gretl: %s", _("sample status"));
     view_buffer(prn, 78, 360, title, PRINT, NULL);
     g_free(title);

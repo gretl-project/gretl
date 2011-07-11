@@ -83,9 +83,7 @@ struct {
     int offset; /* sampling offset into full dataset */
 } panidx;
 
-static int 
-varying_vars_list (const double **Z, const DATAINFO *pdinfo,
-		   panelmod_t *pan);
+static int varying_vars_list (const DATASET *dset, panelmod_t *pan);
 
 /* translate from (i = unit, t = time period for that unit) to
    overall 0-based index into the data set */
@@ -95,11 +93,11 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 
 
 static void 
-panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
+panel_index_init (const DATASET *dset, int nunits, int T)
 {
     panidx.n = nunits;
     panidx.T = T;
-    panidx.offset = pdinfo->t1;
+    panidx.offset = dset->t1;
 
 #if PDEBUG
     fprintf(stderr, "panel_index_init: n=%d, T=%d, offset=%d\n", 
@@ -1039,11 +1037,10 @@ static int *real_varying_list (panelmod_t *pan)
    are skipped.
 */
 
-static DATAINFO *
-within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
-		       double ***wZ, panelmod_t *pan)
+static DATASET *within_groups_dataset (const DATASET *dset,
+				       panelmod_t *pan)
 {
-    DATAINFO *winfo = NULL;
+    DATASET *wset = NULL;
     int *vlist = NULL;
     int i, j, vj, nv;
     int s, t, bigt;
@@ -1059,8 +1056,8 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
  	}
     }
 
-    if (pan->NT < pdinfo->n) {
-	err = allocate_data_finders(pan, pdinfo->n);
+    if (pan->NT < dset->n) {
+	err = allocate_data_finders(pan, dset->n);
 	if (err) {
 	    return NULL;
 	}
@@ -1078,8 +1075,8 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	    pan->vlist[0], pan->NT);
 #endif
 
-    winfo = create_auxiliary_dataset(wZ, nv, pan->NT);
-    if (winfo == NULL) {
+    wset = create_auxiliary_dataset(nv, pan->NT);
+    if (wset == NULL) {
 	free(vlist);
 	return NULL;
     }
@@ -1092,7 +1089,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	s = 0;
 
 #if PDEBUG
-	strcpy(winfo->varname[j], pdinfo->varname[vj]);
+	strcpy(wset->varname[j], dset->varname[vj]);
 #endif
 
 	for (i=0; i<pan->nunits; i++) {
@@ -1108,7 +1105,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	    for (t=0; t<pan->T; t++) {
 		bigt = panel_index(i, t);
 		if (!panel_missing(pan, bigt)) {
-		    xbar += Z[vj][bigt];
+		    xbar += dset->Z[vj][bigt];
 		}
 	    }
 
@@ -1120,7 +1117,7 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	    for (t=0; t<pan->T && got<Ti; t++) { 
 		bigt = panel_index(i, t);
 		if (!panel_missing(pan, bigt)) {
-		    (*wZ)[j][s] = Z[vj][bigt] - xbar;
+		    wset->Z[j][s] = dset->Z[vj][bigt] - xbar;
 		    got++;
 		    if (pan->small2big != NULL) {
 			pan->small2big[s] = bigt;
@@ -1134,13 +1131,13 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
 	/* wZ = data - group mean + grand mean */
 	gxbar /= pan->NT;
 	for (s=0; s<pan->NT; s++) {
-	    (*wZ)[j][s] += gxbar;
+	    wset->Z[j][s] += gxbar;
 	}
     }
 
     free(vlist);
 
-    return winfo;
+    return wset;
 }
 
 /* Construct a quasi-demeaned version of the dataset so we can apply
@@ -1151,13 +1148,12 @@ within_groups_dataset (const double **Z, const DATAINFO *pdinfo,
    variables.
 */
 
-static DATAINFO *
-random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
-			const double **gZ, const DATAINFO *ginfo,
-			double ***reZ, int *relist, int *hlist, 
+static DATASET *
+random_effects_dataset (const DATASET *dset, const DATASET *gset,
+			int *relist, int *hlist, 
 			panelmod_t *pan)
 {
-    DATAINFO *reinfo;
+    DATASET *rset;
     double xbar, theta_i;
     int hreg = (hlist != NULL);
     int v1 = relist[0];
@@ -1176,8 +1172,8 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	}
     }  
 
-    if (pan->NT < pdinfo->n) {
-	err = allocate_data_finders(pan, pdinfo->n);
+    if (pan->NT < dset->n) {
+	err = allocate_data_finders(pan, dset->n);
 	if (err) {
 	    return NULL;
 	}
@@ -1188,8 +1184,8 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	    v1 + v2, pan->NT);
 #endif
 
-    reinfo = create_auxiliary_dataset(reZ, v1 + v2, pan->NT);
-    if (reinfo == NULL) {
+    rset = create_auxiliary_dataset(v1 + v2, pan->NT);
+    if (rset == NULL) {
 	return NULL;
     }
 
@@ -1204,11 +1200,11 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	    relist[j] = 0;
 	} else {
 	    relist[j] = ++k;
-	    strcpy(reinfo->varname[k], pdinfo->varname[vj]);
+	    strcpy(rset->varname[k], dset->varname[vj]);
 	    if (hreg && j > 1 && var_is_varying(pan, vj)) {
 		k2++;
-		strcpy(reinfo->varname[k2], "_");
-		strncat(reinfo->varname[k2], pdinfo->varname[vj],
+		strcpy(rset->varname[k2], "_");
+		strncat(rset->varname[k2], dset->varname[vj],
 			VNAMELEN - 2);
 	    }
 	}
@@ -1244,13 +1240,13 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 		for (j=0; j<v1; j++) {
 		    vj = pan->pooled->list[j+1];
 		    if (vj == 0) {
-			(*reZ)[0][s] -= theta_i;
+			rset->Z[0][s] -= theta_i;
 		    } else {
 			k++;
-			xbar = (k < ginfo->v)? gZ[k][u] : 1.0 / pan->Tmax;
-			(*reZ)[k][s] = Z[vj][bigt] - theta_i * xbar;
+			xbar = (k < gset->v)? gset->Z[k][u] : 1.0 / pan->Tmax;
+			rset->Z[k][s] = dset->Z[vj][bigt] - theta_i * xbar;
 			if (hreg && var_is_varying(pan, vj)) {
-			    (*reZ)[++k2][s] = Z[vj][bigt] - xbar;
+			    rset->Z[++k2][s] = dset->Z[vj][bigt] - xbar;
 			}
 		    }
 		}
@@ -1265,7 +1261,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	u++;
     }
 
-    return reinfo;
+    return rset;
 }
 
 #define BETWEEN_DEBUG 0
@@ -1274,12 +1270,10 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
    order to run the group-means or "between" regression.
 */
 
-static DATAINFO *
-group_means_dataset (panelmod_t *pan,
-		     const double **Z, const DATAINFO *pdinfo,
-		     double ***gZ)
+static DATASET *group_means_dataset (panelmod_t *pan, 
+				     const DATASET *dset)
 {
-    DATAINFO *ginfo;
+    DATASET *gset;
     double x;
     int gn = pan->effn;
     int gv = pan->pooled->list[0];
@@ -1295,8 +1289,8 @@ group_means_dataset (panelmod_t *pan,
 	    gv, gn);
 #endif
 
-    ginfo = create_auxiliary_dataset(gZ, gv, gn);
-    if (ginfo == NULL) {
+    gset = create_auxiliary_dataset(gv, gn);
+    if (gset == NULL) {
 	return NULL;
     }
 
@@ -1309,11 +1303,11 @@ group_means_dataset (panelmod_t *pan,
 	}
 
 #if BETWEEN_DEBUG
-	strcpy(ginfo->varname[k], pdinfo->varname[vj]);
+	strcpy(ginfo->varname[k], dset->varname[vj]);
 #else
 	if (pan->opt & OPT_B) {
 	    /* will save the "between" model: so name the variables */
-	    strcpy(ginfo->varname[k], pdinfo->varname[vj]);
+	    strcpy(gset->varname[k], dset->varname[vj]);
 	}
 #endif
 
@@ -1329,10 +1323,10 @@ group_means_dataset (panelmod_t *pan,
 	    for (t=0; t<pan->T; t++) {
 		bigt = panel_index(i, t);
 		if (!panel_missing(pan, bigt)) {
-		    x += Z[vj][bigt];
+		    x += dset->Z[vj][bigt];
 		}
 	    }
-	    (*gZ)[k][s++] = x / Ti;
+	    gset->Z[k][s++] = x / Ti;
 	}
 	k++;
     }
@@ -1341,18 +1335,18 @@ group_means_dataset (panelmod_t *pan,
     if (1) {
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 
-	printdata(NULL, NULL, (const double **) *gZ, ginfo, OPT_O, prn);
+	printdata(NULL, NULL, gset, OPT_O, prn);
 	gretl_print_destroy(prn);
     }
 #endif
 
-    return ginfo;
+    return gset;
 }
 
 /* spruce up the between model and attach it to pan */
 
 static int save_between_model (MODEL *pmod, const int *blist,
-			       DATAINFO *ginfo, panelmod_t *pan)
+			       DATASET *gset, panelmod_t *pan)
 {
     int *droplist;
     int i, j, dpos;
@@ -1362,7 +1356,7 @@ static int save_between_model (MODEL *pmod, const int *blist,
     pmod->opt |= OPT_B;
     pmod->dw = NADBL;
 
-    gretl_model_add_panel_varnames(pmod, ginfo, NULL);
+    gretl_model_add_panel_varnames(pmod, gset, NULL);
 
     droplist = gretl_model_get_data(pmod, "droplist");
 
@@ -1389,8 +1383,7 @@ static int save_between_model (MODEL *pmod, const int *blist,
 /* calculate the group means or "between" regression and its error
    variance */
 
-static int
-between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
+static int between_variance (panelmod_t *pan, DATASET *gset)
 {
     gretlopt bopt;
     MODEL bmod;
@@ -1398,13 +1391,13 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     int i, j, k;
     int err = 0;
 
-    blist = gretl_list_new(ginfo->v);
+    blist = gretl_list_new(gset->v);
     if (blist == NULL) {
 	return E_ALLOC;
     }
 
     j = k = 1;
-    for (i=1; i<=ginfo->v; i++) { 
+    for (i=1; i<=gset->v; i++) { 
 	if (pan->pooled->list[i] == 0) {
 	    blist[k++] = 0;
 	} else {
@@ -1413,7 +1406,7 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     }
 
     bopt = (pan->opt & OPT_B)? OPT_NONE : OPT_A;
-    bmod = lsq(blist, *gZ, ginfo, OLS, bopt);
+    bmod = lsq(blist, gset, OLS, bopt);
 
     if (bmod.errcode == 0) {
 	pan->between_s2 = bmod.sigma * bmod.sigma;
@@ -1425,7 +1418,7 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
     }
 
     if (!err && (pan->opt & OPT_B)) {
-	err = save_between_model(&bmod, blist, ginfo, pan);
+	err = save_between_model(&bmod, blist, gset, pan);
     } else {
 	clear_model(&bmod);
     }
@@ -1547,7 +1540,7 @@ static void panel_df_correction (MODEL *pmod, int k)
 
 static int print_fe_results (panelmod_t *pan, 
 			     MODEL *pmod,
-			     DATAINFO *pdinfo,
+			     DATASET *dset,
 			     PRN *prn)
 {
     int dfn, i;
@@ -1562,7 +1555,7 @@ static int print_fe_results (panelmod_t *pan,
     for (i=0; i<pmod->ncoeff; i++) {
 	int vi = pan->vlist[i+2];
 
-	print_panel_coeff(pmod, pdinfo->varname[vi], i, prn);
+	print_panel_coeff(pmod, dset->varname[vi], i, prn);
     }
     pputc(prn, '\n');   
 
@@ -1769,21 +1762,20 @@ static int fix_within_stats (MODEL *fmod, panelmod_t *pan)
    should have a full-length residual series.
 */
 
-static int fe_model_add_ahat (MODEL *pmod, const double **Z, 
-			      const DATAINFO *pdinfo,
+static int fe_model_add_ahat (MODEL *pmod, const DATASET *dset,
 			      panelmod_t *pan)
 {
     double *ahat = NULL;
     double ahi;
-    int i, j, t, bigt;
+    int i, j, t, v, bigt;
     int err = 0;
 
-    ahat = malloc(pdinfo->n * sizeof *ahat);
+    ahat = malloc(dset->n * sizeof *ahat);
     if (ahat == NULL) {
 	return E_ALLOC;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	ahat[t] = NADBL;
     }
 
@@ -1800,9 +1792,10 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 	for (t=0; t<pan->T; t++) {
 	    bigt = panel_index(i, t);
 	    if (!na(pmod->uhat[bigt])) {
-		ahi += Z[pmod->list[1]][bigt];
+		ahi += dset->Z[pmod->list[1]][bigt];
 		for (j=1; j<pmod->ncoeff; j++) {
-		    ahi -= pmod->coeff[j] * Z[pmod->list[j+2]][bigt];
+		    v = pmod->list[j+2];
+		    ahi -= pmod->coeff[j] * dset->Z[v][bigt];
 		}
 	    }
 	}
@@ -1819,7 +1812,7 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 
     err = gretl_model_set_data(pmod, "ahat", ahat, 
 			       GRETL_TYPE_DOUBLE_ARRAY, 
-			       pdinfo->n * sizeof *ahat);
+			       dset->n * sizeof *ahat);
 
     return err;
 }
@@ -1841,7 +1834,7 @@ static int fe_model_add_ahat (MODEL *pmod, const double **Z,
 */
 
 static void 
-fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo, 
+fix_panel_hatvars (MODEL *pmod, const DATASET *dset, 
 		   panelmod_t *pan, const double **Z)
 {
     const double *y = NULL;
@@ -1915,7 +1908,7 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
 #if PDEBUG > 1
 
 static void verbose_femod_print (MODEL *femod, double **wZ,
-				 DATAINFO *winfo, PRN *prn)
+				 DATASET *winfo, PRN *prn)
 {
     int i, j;
 
@@ -1940,13 +1933,11 @@ static void verbose_femod_print (MODEL *femod, double **wZ,
 */
 
 static MODEL 
-fixed_effects_model (panelmod_t *pan, const double **Z, 
-		     DATAINFO *pdinfo, PRN *prn)
+fixed_effects_model (panelmod_t *pan, DATASET *dset, PRN *prn)
 {
     MODEL femod;
     gretlopt lsqopt = OPT_A | OPT_X;
-    double **wZ = NULL;
-    DATAINFO *winfo = NULL;
+    DATASET *wset = NULL;
     int *felist = NULL;
     int i;
 
@@ -1962,8 +1953,8 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	return femod;
     }	
 
-    winfo = within_groups_dataset(Z, pdinfo, &wZ, pan);
-    if (winfo == NULL) {
+    wset = within_groups_dataset(dset, pan);
+    if (wset == NULL) {
 	free(felist);
 	femod.errcode = E_ALLOC;
 	return femod;
@@ -1980,7 +1971,7 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	lsqopt |= OPT_Z;
     }
 
-    femod = lsq(felist, wZ, winfo, OLS, lsqopt);
+    femod = lsq(felist, wset, OLS, lsqopt);
 
     if (femod.errcode) {
 	fprintf(stderr, "femod.errcode = %d\n", femod.errcode);
@@ -1991,20 +1982,20 @@ fixed_effects_model (panelmod_t *pan, const double **Z,
 	   subtract degrees of freedom */
 	panel_df_correction(&femod, pan->N_fe - 1);
 #if PDEBUG > 1
-	verbose_femod_print(&femod, wZ, winfo, prn);
+	verbose_femod_print(&femod, wset, prn);
 #endif
 	if (pan->opt & OPT_F) {
 	    /* estimating the FE model in its own right */
-	    fix_panel_hatvars(&femod, winfo, pan, Z);
+	    fix_panel_hatvars(&femod, wset, pan, (const double **) dset->Z);
 	    if (pan->opt & OPT_R) {
-		panel_robust_vcv(&femod, pan, (const double **) wZ);
+		panel_robust_vcv(&femod, pan, (const double **) wset->Z);
 	    } else {
 		femod_regular_vcv(&femod);
 	    }
 	}
     }
 
-    destroy_dataset(wZ, winfo);
+    destroy_dataset(wset);
     free(felist);
 
     return femod;
@@ -2129,7 +2120,7 @@ static void add_panel_obs_info (MODEL *pmod, panelmod_t *pan)
 
 static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 			     const double **Z, 
-			     const DATAINFO *pdinfo)
+			     const DATASET *dset)
 {
     int err = 0;
 
@@ -2145,9 +2136,9 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	    return err;
 	}
 	ulist = fe_units_list(pan);
-	gretl_model_add_panel_varnames(pmod, pdinfo, ulist);
+	gretl_model_add_panel_varnames(pmod, dset, ulist);
 	free(ulist);
-	fe_model_add_ahat(pmod, Z, pdinfo, pan);
+	fe_model_add_ahat(pmod, dset, pan);
 	save_fixed_effects_F(pan, pmod);
     } else {
 	/* random effects */
@@ -2157,8 +2148,8 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
 	if (pan->balanced) {
 	    gretl_model_set_double(pmod, "gls-theta", pan->theta);
 	}
-	gretl_model_add_panel_varnames(pmod, pdinfo, NULL);
-	fix_panel_hatvars(pmod, pdinfo, pan, Z);
+	gretl_model_add_panel_varnames(pmod, dset, NULL);
+	fix_panel_hatvars(pmod, dset, pan, Z);
 	fix_gls_stats(pmod, pan);	
     }
 
@@ -2187,13 +2178,13 @@ static int save_panel_model (MODEL *pmod, panelmod_t *pan,
    results (if wanted), and compute the "within" error variance */
 
 static int within_variance (panelmod_t *pan,
-			    double ***pZ, DATAINFO *pdinfo,
+			    DATASET *dset,
 			    PRN *prn)
 {
     MODEL femod;
     int i, err = 0;
 
-    femod = fixed_effects_model(pan, (const double **) *pZ, pdinfo, prn);
+    femod = fixed_effects_model(pan, dset, prn);
 
     if (femod.errcode) {
 	pputs(prn, _("Error estimating fixed effects model\n"));
@@ -2214,7 +2205,7 @@ static int within_variance (panelmod_t *pan,
 	fixed_effects_F(pan, &femod);
 
 	if (pan->opt & OPT_V) {
-	    print_fe_results(pan, &femod, pdinfo, prn);
+	    print_fe_results(pan, &femod, dset, prn);
 	}
 
 	if (pan->bdiff != NULL && pan->Sigma != NULL) {
@@ -2227,9 +2218,8 @@ static int within_variance (panelmod_t *pan,
 	}
 
 	if (pan->opt & OPT_F) {
-	    err = save_panel_model(&femod, pan, 
-				   (const double **) *pZ,
-				   pdinfo);
+	    err = save_panel_model(&femod, pan, (const double **) dset->Z, 
+				   dset);
 	    if (err) {
 		clear_model(&femod);
 	    }
@@ -2287,12 +2277,11 @@ static void save_hausman_result (panelmod_t *pan)
 */
 
 static int random_effects (panelmod_t *pan, 
-			   const double **Z, DATAINFO *pdinfo, 
-			   const double **gZ, DATAINFO *ginfo, 
+			   DATASET *dset, 
+			   DATASET *gset, 
 			   PRN *prn)
 {
-    double **reZ;
-    DATAINFO *reinfo;
+    DATASET *rset;
     MODEL remod;
     gretlopt lsqopt = OPT_A | OPT_Z;
     int *relist = NULL;
@@ -2333,9 +2322,8 @@ static int random_effects (panelmod_t *pan,
 #endif
 
     /* make special transformed dataset, and regression list */
-    reinfo = random_effects_dataset(Z, pdinfo, gZ, ginfo, &reZ, relist, 
-				    hlist, pan);
-    if (reinfo == NULL) {
+    rset = random_effects_dataset(dset, gset, relist, hlist, pan);
+    if (rset == NULL) {
 	free(relist);
 	free(hlist);
 	return E_ALLOC;
@@ -2346,7 +2334,7 @@ static int random_effects (panelmod_t *pan,
 	int *biglist = gretl_list_add(relist, hlist, &err);
 
 	if (!err) {
-	    remod = lsq(biglist, reZ, reinfo, OLS, OPT_A);
+	    remod = lsq(biglist, rset, OLS, OPT_A);
 	    if (remod.errcode == 0) {
 		/* record unrestricted SSR */
 		URSS = remod.ess;
@@ -2357,7 +2345,7 @@ static int random_effects (panelmod_t *pan,
     }	
 
     /* regular random-effects model */
-    remod = lsq(relist, reZ, reinfo, OLS, lsqopt);
+    remod = lsq(relist, rset, OLS, lsqopt);
 
     if ((err = remod.errcode)) {
 	pputs(prn, _("Error estimating random effects model\n"));
@@ -2372,7 +2360,7 @@ static int random_effects (panelmod_t *pan,
 	    int vi = pan->pooled->list[i+2];
 
 	    if (pan->opt & OPT_V) {
-		print_panel_coeff(&remod, pdinfo->varname[vi], i, prn);
+		print_panel_coeff(&remod, dset->varname[vi], i, prn);
 	    }
 	    if (pan->bdiff != NULL && var_is_varying(pan, vi)) {
 		pan->bdiff->val[k++] -= remod.coeff[i];
@@ -2396,12 +2384,12 @@ static int random_effects (panelmod_t *pan,
 #endif	
 
     if (!err && (pan->opt & OPT_U)) {
-	save_panel_model(&remod, pan, Z, reinfo);
+	save_panel_model(&remod, pan, (const double **) dset->Z, rset);
     } else {
 	clear_model(&remod);
     }
 
-    destroy_dataset(reZ, reinfo);
+    destroy_dataset(rset);
 
     free(relist);    
     free(hlist);
@@ -2432,7 +2420,7 @@ static void save_breusch_pagan_result (panelmod_t *pan)
    the results */
 
 static int 
-breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
+breusch_pagan_LM (panelmod_t *pan, const DATASET *dset, PRN *prn)
 {
     double A = 0.0;
     int n = pan->pooled->nobs;
@@ -2619,7 +2607,7 @@ static void calculate_Tbar (panelmod_t *pan)
 }
 
 static int 
-panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATAINFO *pdinfo, 
+panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATASET *dset, 
 		int ntdum, gretlopt opt)
 {
     int err = 0;
@@ -2628,10 +2616,10 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATAINFO *pdinfo,
     pan->pooled = pmod;
 
     /* assumes (possibly padded) balanced panel dataset */
-    pan->nunits = (pdinfo->t2 - pdinfo->t1 + 1) / pdinfo->pd;
-    pan->T = pdinfo->pd;
+    pan->nunits = (dset->t2 - dset->t1 + 1) / dset->pd;
+    pan->T = dset->pd;
 
-    panel_index_init(pdinfo, pan->nunits, pan->T);
+    panel_index_init(dset, pan->nunits, pan->T);
     pan->ntdum = ntdum;
     
     err = panel_obs_accounts(pan);
@@ -2655,7 +2643,7 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod, const DATAINFO *pdinfo,
    both fixed and random effects.
 */
 
-int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int panel_diagnostics (MODEL *pmod, DATASET *dset, 
 		       gretlopt opt, PRN *prn)
 {
     panelmod_t pan;
@@ -2673,7 +2661,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     /* add OPT_V to make the fixed and random effects functions verbose */
     panelmod_init(&pan);
-    err = panelmod_setup(&pan, pmod, pdinfo, 0, opt | OPT_V);
+    err = panelmod_setup(&pan, pmod, dset, 0, opt | OPT_V);
     if (err) {
 	goto bailout;
     }   
@@ -2686,7 +2674,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* figure out which of the original regressors are time-varying */
-    err = varying_vars_list((const double **) *pZ, pdinfo, &pan);
+    err = varying_vars_list(dset, &pan);
     if (err) {
 	goto bailout;
     }
@@ -2721,12 +2709,12 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		pan.effn, pan.Tmax);
     }
 
-    err = within_variance(&pan, pZ, pdinfo, prn);
+    err = within_variance(&pan, dset, prn);
     if (err) {
 	goto bailout;
     }
 
-    breusch_pagan_LM(&pan, pdinfo, prn);
+    breusch_pagan_LM(&pan, dset, prn);
 
     if (xdf <= 0) {
 	pprintf(prn, "Omitting group means regression: "
@@ -2735,15 +2723,13 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
     
     if (xdf > 0 && !na(pan.s2e)) {
-	double **gZ = NULL;
-	DATAINFO *ginfo;
+	DATASET *gset;
 
-	ginfo = group_means_dataset(&pan, (const double **) *pZ,
-				    pdinfo, &gZ);
-	if (ginfo == NULL) {
+	gset = group_means_dataset(&pan, dset);
+	if (gset == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = between_variance(&pan, &gZ, ginfo);
+	    err = between_variance(&pan, gset);
 	}
 
 	if (err) { 
@@ -2753,13 +2739,12 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		err = 0;
 	    }
 	} else {
-	    random_effects(&pan, (const double **) *pZ, pdinfo, 
-			   (const double **) gZ, ginfo, prn);
+	    random_effects(&pan, dset, gset, prn);
 	    finalize_hausman_test(&pan, prn);
 	}
 
-	if (ginfo != NULL) {
-	    destroy_dataset(gZ, ginfo);
+	if (gset != NULL) {
+	    destroy_dataset(gset);
 	}
     }
 
@@ -2770,22 +2755,20 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static int between_model (panelmod_t *pan, const double **Z,
-			  const DATAINFO *pdinfo)
+static int between_model (panelmod_t *pan, const DATASET *dset)
 {
-    double **gZ = NULL;
-    DATAINFO *ginfo;
+    DATASET *gset;
     int err = 0;
 
-    ginfo = group_means_dataset(pan, Z, pdinfo, &gZ);
-    if (ginfo == NULL) {
+    gset = group_means_dataset(pan, dset);
+    if (gset == NULL) {
 	err = E_ALLOC;
     } else {
-	err = between_variance(pan, &gZ, ginfo);
+	err = between_variance(pan, gset);
     }
 
-    if (ginfo != NULL) {
-	destroy_dataset(gZ, ginfo);
+    if (gset != NULL) {
+	destroy_dataset(gset);
     }
 
     return err;
@@ -2802,7 +2785,7 @@ static int between_model (panelmod_t *pan, const double **Z,
 #if CLEAN_UP_DUMMIES
 
 static int 
-process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
+process_time_dummies (MODEL *pmod, const DATASET *dset, int v)
 {
     int i, vi, n = 0;
 
@@ -2821,7 +2804,7 @@ process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
 
 	for (i=2; i<=pmod->list[0]; i++) {
 	    vi = pmod->list[i];
-	    strcpy(pmod->params[i-2], pdinfo->varname[vi]);
+	    strcpy(pmod->params[i-2], dset->varname[vi]);
 	}
 
 	for (i=pmod->list[0]; i>1; i--) {
@@ -2842,12 +2825,12 @@ process_time_dummies (MODEL *pmod, const DATAINFO *pdinfo, int v)
 #endif
 
 static int
-add_dummies_to_list (const int *list, DATAINFO *pdinfo, 
+add_dummies_to_list (const int *list, DATASET *dset, 
 		     int **plist)
 {
     char dname[VNAMELEN];
     int *biglist = NULL;
-    int ndum = pdinfo->pd - 1;
+    int ndum = dset->pd - 1;
     int i, j, v;
     int err = 0;
 
@@ -2862,10 +2845,10 @@ add_dummies_to_list (const int *list, DATAINFO *pdinfo,
 
     j = list[0] + 1;
 
-    for (i=2; i<=pdinfo->pd; i++) {
+    for (i=2; i<=dset->pd; i++) {
 	sprintf(dname, "dt_%d", i);
-	v = series_index(pdinfo, dname);
-	if (v == pdinfo->v) {
+	v = series_index(dset, dname);
+	if (v == dset->v) {
 	    err = E_DATA;
 	    break;
 	} else if (in_gretl_list(list, v)) {
@@ -2938,8 +2921,7 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
 
 /* real_panel_model:
  * @list: list containing model specification.
- * @pZ: pointer to data array.  
- * @pdinfo: data info pointer. 
+ * @dset: dataset struct.
  * @opt: may include %OPT_U for the random effects model;
  * %OPT_R for robust standard errors (fixed effects model
  * and pooled OLS only); %OPT_M to use the matrix-difference 
@@ -2953,11 +2935,11 @@ static void save_pooled_model (MODEL *pmod, panelmod_t *pan,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL real_panel_model (const int *list, DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
 #if CLEAN_UP_DUMMIES
-    int orig_v = pdinfo->v;
+    int orig_v = dset->v;
 #endif
     MODEL mod;
     panelmod_t pan;
@@ -2979,9 +2961,9 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* add time dummies to list? */
     if (opt & OPT_D) {
-	err = panel_dummies(pZ, pdinfo, OPT_T);
+	err = panel_dummies(dset, OPT_T);
 	if (!err) {
-	    err = add_dummies_to_list(list, pdinfo, &olslist);
+	    err = add_dummies_to_list(list, dset, &olslist);
 	}  
     } else {
 	olslist = gretl_list_copy(list);
@@ -2995,7 +2977,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* baseline: estimate via pooled OLS */
-    mod = lsq(olslist, *pZ, pdinfo, OLS, OPT_A);
+    mod = lsq(olslist, dset, OLS, OPT_A);
     if (mod.errcode) {
 	err = mod.errcode;
 	fprintf(stderr, "real_panel_model: error %d in intial OLS\n", 
@@ -3007,7 +2989,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 #if PDEBUG
     pprintf(prn, "*** initial baseline OLS\n");
-    printmodel(&mod, pdinfo, OPT_NONE, prn);
+    printmodel(&mod, dset, OPT_NONE, prn);
 #endif
 
     if (!estimator_specified(opt)) {
@@ -3027,18 +3009,18 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	ntdum = get_ntdum(list, mod.list);
     }
 
-    err = panelmod_setup(&pan, &mod, pdinfo, ntdum, pan_opt);
+    err = panelmod_setup(&pan, &mod, dset, ntdum, pan_opt);
     if (err) {
 	goto bailout;
     }   
 
     if (opt & OPT_P) {
-	save_pooled_model(&mod, &pan, (const double **) *pZ);
+	save_pooled_model(&mod, &pan, (const double **) dset->Z);
 	goto bailout;
     }
 
     if (opt & OPT_B) {
-	err = between_model(&pan, (const double **) *pZ, pdinfo);
+	err = between_model(&pan, dset);
 	goto bailout;
     }	
 
@@ -3047,7 +3029,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* figure out which of the original regressors are time-varying,
        or unit-varying as the case may be 
     */
-    err = varying_vars_list((const double **) *pZ, pdinfo, &pan);
+    err = varying_vars_list(dset, &pan);
     if (err) {
 	goto bailout;
     }
@@ -3075,38 +3057,35 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     } 
 
-    err = within_variance(&pan, pZ, pdinfo, prn);
+    err = within_variance(&pan, dset, prn);
     if (err) {
 	goto bailout;
     }
 
     if ((opt & OPT_U) && !na(pan.s2e)) {
-	double **gZ = NULL;
-	DATAINFO *ginfo;
+	DATASET *gset;
 
-	breusch_pagan_LM(&pan, pdinfo, prn);
+	breusch_pagan_LM(&pan, dset, prn);
 
-	ginfo = group_means_dataset(&pan, (const double **) *pZ,
-				    pdinfo, &gZ);
-	if (ginfo == NULL) {
+	gset = group_means_dataset(&pan, dset);
+	if (gset == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = between_variance(&pan, &gZ, ginfo);
+	    err = between_variance(&pan, gset);
 	}
 
 	if (err) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
-	    err = random_effects(&pan, (const double **) *pZ, pdinfo, 
-				 (const double **) gZ, ginfo, prn);
+	    err = random_effects(&pan, dset, gset, prn);
 	    if (!err) {
 		save_breusch_pagan_result(&pan);
 		finalize_hausman_test(&pan, prn);
 	    }
 	}
 
-	if (ginfo != NULL) {
-	    destroy_dataset(gZ, ginfo);
+	if (gset != NULL) {
+	    destroy_dataset(gset);
 	}
     }
 
@@ -3125,10 +3104,10 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    clear_model(&mod);
 	    mod = *pan.realmod;
 	}
-	gretl_model_smpl_init(&mod, pdinfo);
+	gretl_model_smpl_init(&mod, dset);
 #if CLEAN_UP_DUMMIES
 	if (opt & OPT_D) {
-	    process_time_dummies(&mod, pdinfo, orig_v);
+	    process_time_dummies(&mod, dset, orig_v);
 	}
 #endif
     }
@@ -3140,7 +3119,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
 #if CLEAN_UP_DUMMIES
-    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - orig_v, dset);
 #endif
 
     return mod;    
@@ -3150,17 +3129,16 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
    for in the context of TSLS estimation on panel data.
 */
 
-int panel_tsls_robust_vcv (MODEL *pmod, const double **Z, 
-			   const DATAINFO *pdinfo)
+int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset)
 {
     panelmod_t pan;
     int err = 0;
 
     panelmod_init(&pan);
 
-    err = panelmod_setup(&pan, pmod, pdinfo, 0, OPT_NONE);
+    err = panelmod_setup(&pan, pmod, dset, 0, OPT_NONE);
     if (!err) {
-	err = panel_robust_vcv(pmod, &pan, Z);
+	err = panel_robust_vcv(pmod, &pan, (const double **) dset->Z);
     }
 
     panelmod_free(&pan); 
@@ -3173,9 +3151,9 @@ int panel_tsls_robust_vcv (MODEL *pmod, const double **Z,
 
 static int 
 write_weights_to_dataset (double *uvar, int nunits, int T,
-			  double **Z, DATAINFO *pdinfo)
+			  DATASET *dset)
 {
-    int w = pdinfo->v - 1;
+    int w = dset->v - 1;
     double wi;
     int i, t;
 
@@ -3186,21 +3164,20 @@ write_weights_to_dataset (double *uvar, int nunits, int T,
 	    wi = 1.0 / uvar[i];
 	}
 	for (t=0; t<T; t++) {
-	    Z[w][panel_index(i, t)] = wi;
+	    dset->Z[w][panel_index(i, t)] = wi;
 	}
     }
 
     return 0;
 }
 
-static int
-allocate_weight_var (double ***pZ, DATAINFO *pdinfo)
+static int allocate_weight_var (DATASET *dset)
 {
-    if (dataset_add_series(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, dset)) {
 	return E_ALLOC;
     }
 
-    strcpy(pdinfo->varname[pdinfo->v - 1], "unit_wt");
+    strcpy(dset->varname[dset->v - 1], "unit_wt");
 
     return 0;
 }
@@ -3229,7 +3206,7 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
 */
 
 static double 
-wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo, 
+wald_hetero_test (const MODEL *pmod, const DATASET *dset, 
 		  double s2, const double *uvar,
 		  panelmod_t *pan)
 {
@@ -3357,7 +3334,7 @@ static int singleton_check (const int *unit_obs, int nunits)
 
 static void 
 unit_error_variances (double *uvar, const MODEL *pmod, 
-		      const DATAINFO *pdinfo,
+		      const DATASET *dset,
 		      panelmod_t *pan)
 {
     int i, t;
@@ -3400,8 +3377,7 @@ static void print_unit_variances (panelmod_t *pan, double *uvar, PRN *prn)
 /**
  * panel_wls_by_unit:
  * @list: regression list.
- * @pZ: pointer to data array.
- * @pdinfo: information on the (panel) data set.
+ * @dset: dataset struct.
  * @opt: may include %OPT_I (iterate to ML solution), 
  * %OPT_V for verbose operation.
  * @prn: for printing details of iterations (or %NULL).
@@ -3412,7 +3388,7 @@ static void print_unit_variances (panelmod_t *pan, double *uvar, PRN *prn)
  * Returns: the estimates, in a %MODEL.
  */
 
-MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn)
 {
     MODEL mdl;
@@ -3422,7 +3398,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     double *bvec = NULL;
     double s2, diff = 1.0;
     int *wlist = NULL;
-    int orig_v = pdinfo->v;
+    int orig_v = dset->v;
     int i, iter = 0;
 
     gretl_error_clear();
@@ -3434,12 +3410,12 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* baseline pooled model */
-    mdl = lsq(list, *pZ, pdinfo, OLS, OPT_A);
+    mdl = lsq(list, dset, OLS, OPT_A);
     if (mdl.errcode) {
 	goto bailout;
     }
 
-    mdl.errcode = panelmod_setup(&pan, &mdl, pdinfo, 0, OPT_NONE);
+    mdl.errcode = panelmod_setup(&pan, &mdl, dset, 0, OPT_NONE);
     if (mdl.errcode) {
 	goto bailout;
     }
@@ -3467,7 +3443,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
     }
 
-    if (allocate_weight_var(pZ, pdinfo)) {
+    if (allocate_weight_var(dset)) {
 	mdl.errcode = E_ALLOC;
 	goto bailout;
     }
@@ -3488,7 +3464,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    wlist[1] = pdinfo->v - 1; /* weight variable: the last var added */
+    wlist[1] = dset->v - 1; /* weight variable: the last var added */
     for (i=2; i<=wlist[0]; i++) {
 	wlist[i] = mdl.list[i-1];
     }
@@ -3501,7 +3477,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	iter++;
 
-	unit_error_variances(uvar, &mdl, pdinfo, &pan);
+	unit_error_variances(uvar, &mdl, dset, &pan);
 
 	if (opt & OPT_V) {
 	    if (opt & OPT_I) {
@@ -3513,7 +3489,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    print_unit_variances(&pan, uvar, prn);
 	}
 
-	write_weights_to_dataset(uvar, pan.nunits, pan.T, *pZ, pdinfo);
+	write_weights_to_dataset(uvar, pan.nunits, pan.T, dset);
 
 	if (opt & OPT_I) {
 	    /* save coefficients for comparison */
@@ -3523,7 +3499,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	clear_model(&mdl);
-	mdl = lsq(wlist, *pZ, pdinfo, WLS, wlsopt);
+	mdl = lsq(wlist, dset, WLS, wlsopt);
 	if (mdl.errcode) {
 	    break;
 	}
@@ -3557,7 +3533,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	if (opt & OPT_I) {
 	    gretl_model_set_int(&mdl, "iters", iter);
 	    ml_hetero_test(&mdl, s2, uvar, pan.nunits, pan.unit_obs);
-	    unit_error_variances(uvar, &mdl, pdinfo, &pan);
+	    unit_error_variances(uvar, &mdl, dset, &pan);
 	    panel_ML_ll(&mdl, uvar, pan.nunits, pan.unit_obs);
 	    if (opt & OPT_V) {
 		pputc(prn, '\n');
@@ -3573,7 +3549,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     free(bvec);
 
     if (!(opt & OPT_V)) {
-	dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+	dataset_drop_last_variables(dset->v - orig_v, dset);
     }
     
     return mdl;
@@ -3597,7 +3573,7 @@ static void print_wald_test (double W, int df, double pval,
 /**
  * groupwise_hetero_test:
  * @pmod: panel model to be tested.
- * @pdinfo: information on the (panel) data set.
+ * @dset: information on the (panel) data set.
  * @prn: for printing details of iterations (or %NULL).
  *
  * Performs a Wald test for the null hypothesis that the 
@@ -3606,7 +3582,7 @@ static void print_wald_test (double W, int df, double pval,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
+int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 			   gretlopt opt, PRN *prn)
 {
     panelmod_t pan;
@@ -3623,7 +3599,7 @@ int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
     gretl_error_clear();
     panelmod_init(&pan);
 
-    err = panelmod_setup(&pan, pmod, pdinfo, 0, OPT_NONE);
+    err = panelmod_setup(&pan, pmod, dset, 0, OPT_NONE);
     if (err) {
 	return err;
     }
@@ -3636,9 +3612,9 @@ int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
 
     s2 = pmod->ess / pmod->nobs;
 
-    unit_error_variances(uvar, pmod, pdinfo, &pan);
+    unit_error_variances(uvar, pmod, dset, &pan);
 
-    W = wald_hetero_test(pmod, pdinfo, s2, uvar, &pan);
+    W = wald_hetero_test(pmod, dset, s2, uvar, &pan);
 
     if (!na(W)) {
 	double pval;
@@ -3672,28 +3648,28 @@ int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
     return err;
 }
 
-static void panel_copy_var (double **targZ, DATAINFO *targinfo, int targv,
-			    double *src, DATAINFO *srcinfo, int srcv,
+static void panel_copy_var (DATASET *targ, int targv,
+			    double *x, DATASET *src, int srcv,
 			    int order)
 {
     int t, j = 0;
 
-    for (t=srcinfo->t1; t<=srcinfo->t2; t++) {
-	if (t % srcinfo->pd >= order) {
-	    targZ[targv][j++] = src[t];
+    for (t=src->t1; t<=src->t2; t++) {
+	if (t % src->pd >= order) {
+	    targ->Z[targv][j++] = x[t];
 	} 
     }
 
     if (srcv == -1) {
-	strcpy(targinfo->varname[targv], "uhat");
-	strcpy(VARLABEL(targinfo, targv), _("residual"));
+	strcpy(targ->varname[targv], "uhat");
+	strcpy(VARLABEL(targ, targv), _("residual"));
     } else {
-	strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
-	strcpy(VARLABEL(targinfo, targv), VARLABEL(srcinfo, srcv));
+	strcpy(targ->varname[targv], src->varname[srcv]);
+	strcpy(VARLABEL(targ, targv), VARLABEL(src, srcv));
     }
 }
 
-static void make_reduced_data_info (DATAINFO *targ, DATAINFO *src, int order)
+static void make_reduced_data_info (DATASET *targ, DATASET *src, int order)
 {
     targ->pd = src->pd - order;
     ntodate(targ->stobs, src->t1 + order, src);
@@ -3701,20 +3677,20 @@ static void make_reduced_data_info (DATAINFO *targ, DATAINFO *src, int order)
     targ->structure = src->structure;
 }
 
-static void panel_lag (double **tmpZ, DATAINFO *tmpinfo, 
-		       double *src, DATAINFO *srcinfo, 
+static void panel_lag (DATASET *tmpset, 
+		       double *src, DATASET *srcset, 
 		       int v, int order, int lag)
 {
     int t, j = 0;
 
-    for (t=srcinfo->t1; t<=srcinfo->t2; t++) {
-	if (t % srcinfo->pd >= order) {
-	    tmpZ[v][j++] = src[t - lag];
+    for (t=srcset->t1; t<=srcset->t2; t++) {
+	if (t % srcset->pd >= order) {
+	    tmpset->Z[v][j++] = src[t - lag];
 	}
     }
 
-    sprintf(tmpinfo->varname[v], "uhat_%d", lag);
-    *VARLABEL(tmpinfo, v) = 0;
+    sprintf(tmpset->varname[v], "uhat_%d", lag);
+    *VARLABEL(tmpset, v) = 0;
 }
 
 /* - do some sanity checks
@@ -3725,17 +3701,15 @@ static void panel_lag (double **tmpZ, DATAINFO *tmpinfo,
    - destroy the temporary data set
 */
 
-int panel_autocorr_test (MODEL *pmod, int order, 
-			 double **Z, DATAINFO *pdinfo, 
+int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset, 
 			 gretlopt opt, PRN *prn)
 {
     int *aclist;
-    double **tmpZ;
-    DATAINFO *tmpinfo;
+    DATASET *tmpset;
     MODEL aux;
     double trsq, LMF;
     int i, nv, nunits, nobs, err = 0;
-    int sn = pdinfo->t2 - pdinfo->t1 + 1;
+    int sn = dset->t2 - dset->t1 + 1;
 
     if (pmod->ci != OLS) {
 	return E_NOTIMP;
@@ -3747,11 +3721,11 @@ int panel_autocorr_test (MODEL *pmod, int order,
 
     /* basic checks */
     if (order <= 0) order = 1;
-    if (order > pdinfo->pd - 1) return E_DF;
+    if (order > dset->pd - 1) return E_DF;
     if (pmod->ncoeff + order >= sn) return E_DF;
 
     /* get number of cross-sectional units */
-    nunits = sn / pdinfo->pd;
+    nunits = sn / dset->pd;
 
     /* we lose "order" observations for each unit */
     nobs = sn - nunits * order;
@@ -3760,16 +3734,16 @@ int panel_autocorr_test (MODEL *pmod, int order,
     nv = pmod->list[0] + order;
 
     /* create temporary reduced dataset */
-    tmpinfo = create_auxiliary_dataset(&tmpZ, nv, nobs);
-    if (tmpinfo == NULL) {
+    tmpset = create_auxiliary_dataset(nv, nobs);
+    if (tmpset == NULL) {
 	return E_ALLOC;
     }
 
-    make_reduced_data_info(tmpinfo, pdinfo, order);
+    make_reduced_data_info(tmpset, dset, order);
 
 #if PDEBUG
     fprintf(stderr, "Created data set, n=%d, pd=%d, vars=%d, stobs='%s'\n", 
-	    tmpinfo->n, tmpinfo->pd, tmpinfo->v, tmpinfo->stobs);
+	    tmpset->n, tmpset->pd, tmpset->v, tmpset->stobs);
 #endif
 
     /* allocate the auxiliary regression list */
@@ -3779,24 +3753,25 @@ int panel_autocorr_test (MODEL *pmod, int order,
     } 
 
     if (!err) {
-	int k;
+	int k, v;
 
 	aclist[0] = pmod->list[0] + order;
 	/* copy model uhat to position 1 in temp data set */
 	aclist[1] = 1;
-	panel_copy_var(tmpZ, tmpinfo, 1,
-		       &pmod->uhat[0], pdinfo, -1,
+	panel_copy_var(tmpset, 1,
+		       &pmod->uhat[0], dset, -1,
 		       order);
 	/* copy across the original indep vars, making
 	   the new regression list while we're at it */
 	k = 2;
 	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == 0) { /* the constant */
+	    v = pmod->list[i];
+	    if (v == 0) { /* the constant */
 		aclist[i] = 0;
 	    } else {
 		aclist[i] = k;
-		panel_copy_var(tmpZ, tmpinfo, k, 
-			       &Z[pmod->list[i]][0], pdinfo, pmod->list[i], 
+		panel_copy_var(tmpset, k, 
+			       dset->Z[v], dset, v, 
 			       order);
 		k++;
 	    }
@@ -3808,14 +3783,14 @@ int panel_autocorr_test (MODEL *pmod, int order,
 
 	/* add lags of uhat to temp data set */
 	for (i=1; i<=order; i++) {
-	    panel_lag(tmpZ, tmpinfo, &pmod->uhat[0], 
-		      pdinfo, v + i, order, i);
+	    panel_lag(tmpset, pmod->uhat, 
+		      dset, v + i, order, i);
 	    aclist[v + i + 1] = v + i;
 	}
     }
 
     if (!err) {
-	aux = lsq(aclist, tmpZ, tmpinfo, OLS, OPT_A);
+	aux = lsq(aclist, tmpset, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -3828,7 +3803,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 
 	aux.aux = AUX_AR;
 	gretl_model_set_int(&aux, "BG_order", order);
-	printmodel(&aux, tmpinfo, OPT_NONE, prn);
+	printmodel(&aux, tmpset, OPT_NONE, prn);
 	trsq = aux.rsq * aux.nobs;
 	/* FIXME LMF */
 	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 
@@ -3863,18 +3838,17 @@ int panel_autocorr_test (MODEL *pmod, int order,
     free(aclist);
     clear_model(&aux); 
 
-    destroy_dataset(tmpZ, tmpinfo);
+    destroy_dataset(tmpset);
 
     return err;
 }
 
 /**
  * switch_panel_orientation:
- * @Z: data array.
- * @pdinfo: dataset information struct.
+ * @dset: dataset struct.
  * 
  * Reorganizes the data array @Z and rewrites the dataset information
- * @pdinfo, transforming from stacked cross sections to stacked
+ * @dset, transforming from stacked cross sections to stacked
  * time series or vice versa.  If the transformation is from
  * stacked time series to stacked cross section, the dataset will
  * no longer be acceptable as a panel for gretl's purposes; it
@@ -3883,9 +3857,9 @@ int panel_autocorr_test (MODEL *pmod, int order,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
+int switch_panel_orientation (DATASET *dset)
 {
-    int oldmode = pdinfo->structure;
+    int oldmode = dset->structure;
     double *tmp;
     char **markers = NULL;
     double pdx;
@@ -3897,92 +3871,92 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 	return E_DATA;
     }
 
-    tmp = malloc(pdinfo->n * sizeof *tmp);
+    tmp = malloc(dset->n * sizeof *tmp);
     if (tmp == NULL) {
 	return E_ALLOC;
     }
 
     if (oldmode == STACKED_CROSS_SECTION) {
-	n = pdinfo->pd;
-	T = pdinfo->n / n;
+	n = dset->pd;
+	T = dset->n / n;
     } else {
-	T = pdinfo->pd;
-	n = pdinfo->n / T;
+	T = dset->pd;
+	n = dset->n / T;
     }
 
     /* copy the data series across in transformed order */
-    for (i=1; i<pdinfo->v; i++) {
-	for (t=0; t<pdinfo->n; t++) {
+    for (i=1; i<dset->v; i++) {
+	for (t=0; t<dset->n; t++) {
 	    /* transcribe to tmp in original order */
-	    tmp[t] = Z[i][t];
+	    tmp[t] = dset->Z[i][t];
 	}
 	s = 0;
 	if (oldmode == STACKED_CROSS_SECTION) {
 	    /* convert to stacked time-series */
 	    for (j=0; j<n; j++) {
 		for (t=0; t<T; t++) {
-		    Z[i][s++] = tmp[t * n + j];
+		    dset->Z[i][s++] = tmp[t * n + j];
 		}
 	    }
 	} else {
 	    /* convert to stacked cross-sections */
 	    for (t=0; t<T; t++) {
 		for (j=0; j<n; j++) {
-		    Z[i][s++] = tmp[j * T + t];
+		    dset->Z[i][s++] = tmp[j * T + t];
 		}
 	    } 
 	}  
     }
 
     /* rearrange observations markers if relevant */
-    if (pdinfo->S != NULL) {
-	markers = strings_array_new_with_length(pdinfo->n, OBSLEN);
+    if (dset->S != NULL) {
+	markers = strings_array_new_with_length(dset->n, OBSLEN);
 	if (markers != NULL) {
-	    for (t=0; t<pdinfo->n; t++) {
-		strcpy(markers[t], pdinfo->S[t]);
+	    for (t=0; t<dset->n; t++) {
+		strcpy(markers[t], dset->S[t]);
 	    }
 	    s = 0;
 	    if (oldmode == STACKED_CROSS_SECTION) {
 		for (j=0; j<n; j++) {
 		    for (t=0; t<T; t++) {
-			strcpy(pdinfo->S[s++], markers[t * n + j]);
+			strcpy(dset->S[s++], markers[t * n + j]);
 		    }
 		}
 	    } else {
 		for (t=0; t<T; t++) {
 		    for (j=0; j<n; j++) {
-			strcpy(pdinfo->S[s++], markers[j * T + t]);
+			strcpy(dset->S[s++], markers[j * T + t]);
 		    }
 		}
 	    }
-	    free_strings_array(markers, pdinfo->n);
+	    free_strings_array(markers, dset->n);
 	} else {
 	    /* should we flag an error? */
-	    dataset_destroy_obs_markers(pdinfo); 
+	    dataset_destroy_obs_markers(dset); 
 	}
     }
 
-    pdinfo->sd0 = 1.0;
+    dset->sd0 = 1.0;
     pdx = 0.1;
 
     /* change the datainfo setup */
     if (oldmode == STACKED_CROSS_SECTION) {
-	pdinfo->structure = STACKED_TIME_SERIES;
-	pdinfo->pd = T;
+	dset->structure = STACKED_TIME_SERIES;
+	dset->pd = T;
 	while (T /= 10) {
 	    pdx *= 0.1;
 	}	
     } else {
-	pdinfo->structure = STACKED_CROSS_SECTION;
-	pdinfo->pd = n;
+	dset->structure = STACKED_CROSS_SECTION;
+	dset->pd = n;
 	while (n /= 10) {
 	    pdx *= 0.1;
 	}
     }
 	
-    pdinfo->sd0 += pdx;
-    ntodate(pdinfo->stobs, 0, pdinfo);
-    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    dset->sd0 += pdx;
+    ntodate(dset->stobs, 0, dset);
+    ntodate(dset->endobs, dset->n - 1, dset);
 
     free(tmp);
 
@@ -4058,9 +4032,7 @@ int panel_isconst (int t1, int t2, int pd, const double *x,
     return ret;
 }
 
-static int 
-varying_vars_list (const double **Z, const DATAINFO *pdinfo,
-		   panelmod_t *pan)
+static int varying_vars_list (const DATASET *dset, panelmod_t *pan)
 {
     int i, j, k, t;
     int bigt;
@@ -4099,9 +4071,9 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 		    continue;
 		}
 		if (!started) {
-		    xval = Z[vj][bigt];
+		    xval = dset->Z[vj][bigt];
 		    started = 1;
-		} else if (Z[vj][bigt] != xval) {
+		} else if (dset->Z[vj][bigt] != xval) {
 		    varies = 1;
 		    break;
 		}
@@ -4114,7 +4086,7 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 	    pan->vlist[0] += 1;
 	} else {
 	    fprintf(stderr, "Variable %d '%s' is time-invariant\n",
-		    vj, pdinfo->varname[vj]);
+		    vj, dset->varname[vj]);
 	} 
     }
 
@@ -4192,10 +4164,9 @@ static int check_indices (sorter *s, int n)
     return 0;
 }
 
-static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
-			       int uv, int tv, int *ustrs)
+static int panel_data_sort_by (DATASET *dset, int uv, int tv, int *ustrs)
 {
-    int n = pdinfo->n;
+    int n = dset->n;
     char **S = NULL;
     double *tmp = NULL;
     int i, t;
@@ -4213,7 +4184,7 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
 	return E_ALLOC;
     } 
 
-    if (pdinfo->S != NULL) {
+    if (dset->S != NULL) {
 	S = strings_array_new_with_length(n, OBSLEN);
 	if (S == NULL) {
 	    free(tmp);
@@ -4225,7 +4196,7 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
     s.sortvar1 = uv;
     s.sortvar2 = tv;
     
-    sorter_fill_points(&s, (const double **) Z, n);
+    sorter_fill_points(&s, (const double **) dset->Z, n);
 
     qsort((void *) s.points, (size_t) n, sizeof s.points[0], 
 	  compare_obs);
@@ -4235,29 +4206,29 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    for (i=1; i<pdinfo->v; i++) {
+    for (i=1; i<dset->v; i++) {
 	for (t=0; t<n; t++) {
-	    tmp[t] = Z[i][t];
+	    tmp[t] = dset->Z[i][t];
 	}
 	for (t=0; t<n; t++) {
-	    Z[i][t] = tmp[s.points[t].obsnum];
+	    dset->Z[i][t] = tmp[s.points[t].obsnum];
 	}
     }
 
     if (S != NULL) {
 	*ustrs = 1;
 	for (t=0; t<n; t++) {
-	    strcpy(S[t], pdinfo->S[t]);
+	    strcpy(S[t], dset->S[t]);
 	    if (S[t][0] == '\0') {
 		*ustrs = 0;
 	    }
 	}
 	for (t=0; t<n; t++) {
-	    strcpy(pdinfo->S[t], S[s.points[t].obsnum]);
+	    strcpy(dset->S[t], S[s.points[t].obsnum]);
 	}
 	for (t=1; t<n && *ustrs; t++) {
-	    if (Z[uv][t] == Z[uv][t-1] &&
-		strcmp(pdinfo->S[t], pdinfo->S[t-1])) {
+	    if (dset->Z[uv][t] == dset->Z[uv][t-1] &&
+		strcmp(dset->S[t], dset->S[t-1])) {
 		*ustrs = 0;
 	    }
 	}
@@ -4278,7 +4249,7 @@ static int panel_data_sort_by (double **Z, DATAINFO *pdinfo,
 */
 
 static int normalize_uid_tid (const double *tid, int T,
-			      const double **Z, const DATAINFO *pdinfo,
+			      const DATASET *dset,
 			      int uv, int tv, int **pnuid, int **pntid)
 {
     int *nuid = NULL;
@@ -4286,8 +4257,8 @@ static int normalize_uid_tid (const double *tid, int T,
     int ui, tmin;
     int i, t;
 
-    nuid = malloc(pdinfo->n * sizeof *nuid);
-    ntid = malloc(pdinfo->n * sizeof *ntid);
+    nuid = malloc(dset->n * sizeof *nuid);
+    ntid = malloc(dset->n * sizeof *ntid);
     if (nuid == NULL || ntid == NULL) {
 	free(nuid);
 	free(ntid);
@@ -4296,8 +4267,8 @@ static int normalize_uid_tid (const double *tid, int T,
 
     ui = tmin = 0;
 
-    for (i=0; i<pdinfo->n; i++) {
-	if (i > 0 && Z[uv][i] > Z[uv][i-1]) {
+    for (i=0; i<dset->n; i++) {
+	if (i > 0 && dset->Z[uv][i] > dset->Z[uv][i-1]) {
 	    tmin = 0;
 	    ui++;
 	} else if (i > 0) {
@@ -4305,7 +4276,7 @@ static int normalize_uid_tid (const double *tid, int T,
 	}
 	nuid[i] = ui;
 	for (t=tmin; t<T; t++) {
-	    if (Z[tv][i] == tid[t]) {
+	    if (dset->Z[tv][i] == tid[t]) {
 		ntid[i] = t;
 		break;
 	    }
@@ -4320,36 +4291,39 @@ static int normalize_uid_tid (const double *tid, int T,
 
 static int pad_panel_dataset (const double *uid, int uv, int nunits,
 			      const double *tid, int tv, int nperiods, 
-			      double **Z, DATAINFO *pdinfo,
-			      int ustrs, char *mask)
+			      DATASET *dset, int ustrs, char *mask)
 {
     double **bigZ = NULL;
     char **S = NULL;
     int *nuid = NULL;
     int *ntid = NULL;
-    int n_orig = pdinfo->n;
-    int t2_orig = pdinfo->t2;
+    int big_n, n_orig = dset->n;
     int i, j, s, t;
     int err = 0;
 
-    err = normalize_uid_tid(tid, nperiods, (const double **) Z,
-			    pdinfo, uv, tv, &nuid, &ntid);
+    err = normalize_uid_tid(tid, nperiods, dset, uv, tv, 
+			    &nuid, &ntid);
+
+    big_n = nunits * nperiods;
+
+    bigZ = doubles_array_new(dset->v, big_n);
+    if (bigZ == NULL) {
+	err = E_ALLOC;
+    } else {
+	dset->n = big_n;
+	dset->t2 = dset->n - 1;
+	for (i=0; i<dset->v; i++) {
+	    for (t=0; t<big_n; t++) {
+		bigZ[i][t] = (i == 0)? 1.0 : NADBL;
+	    }
+	}
+    }
+
+    if (!err && dset->S != NULL && ustrs) {
+	S = strings_array_new_with_length(dset->n, OBSLEN);
+    }
 
     if (!err) {
-	/* allocate temporary storage */
-	pdinfo->n = nunits * nperiods;
-	pdinfo->t2 = pdinfo->n - 1;
-	err = allocate_Z(&bigZ, pdinfo);
-    }
-
-    if (!err && pdinfo->S != NULL && ustrs) {
-	S = strings_array_new_with_length(pdinfo->n, OBSLEN);
-    }
-
-    if (err) {
-	pdinfo->n = n_orig;
-	pdinfo->t2 = t2_orig;
-    } else {
 	int buv = 0, btv = 0;
 	int tref = 0;
 
@@ -4357,11 +4331,11 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	for (t=0; t<n_orig; t++) {
 	    j = 1;
 	    s = nuid[t] * nperiods + ntid[t];
-	    for (i=1; i<pdinfo->v; i++) {
-		bigZ[j++][s] = Z[i][t];
+	    for (i=1; i<dset->v; i++) {
+		bigZ[j++][s] = dset->Z[i][t];
 	    }
 	    if (S != NULL) {
-		strcpy(S[s], pdinfo->S[t]);
+		strcpy(S[s], dset->S[t]);
 	    }
 	    if (mask != NULL && s > tref) {
 		/* recording the padding in "mask" */
@@ -4375,7 +4349,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 
 	/* where are uv and tv in bigZ? */
 	j = 1;
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    if (i == uv) {
 		buv = j;
 	    } else if (i == tv) {
@@ -4386,7 +4360,7 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 
 	/* complete the index info in slots uv and tv */
 	i = j = 0;
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (t > 0 && t % nperiods == 0) {
 		i++;
 		j = 0;
@@ -4396,9 +4370,9 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	}
 
 	/* swap the padded arrays into Z */
-	for (i=0, j=0; i<pdinfo->v; i++) {
-	    free(Z[i]);
-	    Z[i] = bigZ[j++];
+	for (i=0, j=0; i<dset->v; i++) {
+	    free(dset->Z[i]);
+	    dset->Z[i] = bigZ[j++];
 	}
 
 	free(bigZ);
@@ -4407,12 +4381,12 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
     free(nuid);
     free(ntid);
 
-    if (pdinfo->S != NULL) {
+    if (dset->S != NULL) {
 	/* expand the obs (unit) marker strings appropriately */
 	if (S == NULL) {
-	    free_strings_array(pdinfo->S, n_orig);
-	    pdinfo->S = NULL;
-	    pdinfo->markers = NO_MARKERS;
+	    free_strings_array(dset->S, n_orig);
+	    dset->S = NULL;
+	    dset->markers = NO_MARKERS;
 	} else {
 	    char si[OBSLEN];
 
@@ -4430,8 +4404,8 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 		    strcpy(S[t++], si);
 		}
 	    }
-	    free_strings_array(pdinfo->S, n_orig);
-	    pdinfo->S = S;
+	    free_strings_array(dset->S, n_orig);
+	    dset->S = S;
 	}
     }
 
@@ -4453,7 +4427,7 @@ static int check_index_values (const double *x, int n)
     return 0;
 }
 
-static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
+static int uv_tv_from_line (const char *line, const DATASET *dset,
 			    int *uv, int *tv)
 {
     char uvname[VNAMELEN];
@@ -4464,8 +4438,8 @@ static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
 	return E_PARSE;
     }
 
-    *uv = series_index(pdinfo, uvname);
-    if (*uv == pdinfo->v) {
+    *uv = series_index(dset, uvname);
+    if (*uv == dset->v) {
 	/* FIXME "not a series" */
 	gretl_errmsg_sprintf(_("Unknown variable '%s'"), uvname);
 	err = E_UNKVAR;
@@ -4475,8 +4449,8 @@ static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
 	return err;
     }
 
-    *tv = series_index(pdinfo, tvname);
-    if (*tv == pdinfo->v) {
+    *tv = series_index(dset, tvname);
+    if (*tv == dset->v) {
 	gretl_errmsg_sprintf(_("Unknown variable '%s'"), tvname);
 	err = E_UNKVAR;
     } 
@@ -4497,7 +4471,7 @@ static void print_unit_var (int uv, double **Z, int n, int after)
 }
 #endif
 
-static void finalize_panel_datainfo (DATAINFO *pdinfo, int nperiods)
+static void finalize_panel_datainfo (DATASET *dset, int nperiods)
 {
     int pdp = nperiods;
     int den = 10.0;
@@ -4505,21 +4479,19 @@ static void finalize_panel_datainfo (DATAINFO *pdinfo, int nperiods)
     while ((pdp = pdp / 10)) {
 	den *= 10;
     }
-    pdinfo->structure = STACKED_TIME_SERIES;
-    pdinfo->pd = nperiods;
-    pdinfo->sd0 = 1.0 + 1.0 / den;
-    ntodate(pdinfo->stobs, 0, pdinfo); 
-    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    dset->structure = STACKED_TIME_SERIES;
+    dset->pd = nperiods;
+    dset->sd0 = 1.0 + 1.0 / den;
+    ntodate(dset->stobs, 0, dset); 
+    ntodate(dset->endobs, dset->n - 1, dset);
 }
 
-int set_panel_structure_from_vars (int uv, int tv, 
-				   double **Z, 
-				   DATAINFO *pdinfo)
+int set_panel_structure_from_vars (int uv, int tv, DATASET *dset)
 {
     double *uid = NULL;
     double *tid = NULL;
     char *mask = NULL;
-    int n = pdinfo->n;
+    int n = dset->n;
     int totmiss = 0;
     int fulln = 0;
     int nunits = 0;
@@ -4532,12 +4504,12 @@ int set_panel_structure_from_vars (int uv, int tv,
 #if PDEBUG
     fprintf(stderr, "set_panel_structure_from_vars:\n "
 	    "using var %d ('%s') for unit, var %d ('%s') for time\n",
-	    uv, pdinfo->varname[uv], tv, pdinfo->varname[tv]);
+	    uv, dset->varname[uv], tv, dset->varname[tv]);
     print_unit_var(uv, Z, n, 0);
 #endif
 
-    uid = copyvec(Z[uv], n);
-    tid = copyvec(Z[tv], n);
+    uid = copyvec(dset->Z[uv], n);
+    tid = copyvec(dset->Z[tv], n);
 
     if (uid == NULL || tid == NULL) {
 	err = E_ALLOC;
@@ -4545,10 +4517,10 @@ int set_panel_structure_from_vars (int uv, int tv,
     }  
 
     qsort(uid, n, sizeof *uid, gretl_compare_doubles);
-    nunits = count_distinct_values(uid, pdinfo->n);
+    nunits = count_distinct_values(uid, dset->n);
 
     qsort(tid, n, sizeof *tid, gretl_compare_doubles);
-    nperiods = count_distinct_values(tid, pdinfo->n);
+    nperiods = count_distinct_values(tid, dset->n);
 
     if (nunits == 1 || nperiods == 1 || 
 	nunits == n || nperiods == n ||
@@ -4560,18 +4532,18 @@ int set_panel_structure_from_vars (int uv, int tv,
     }
 
     fulln = nunits * nperiods;
-    totmiss = fulln - pdinfo->n;
+    totmiss = fulln - dset->n;
 
 #if PDEBUG
     fprintf(stderr, "Found %d units, %d periods\n", nunits, nperiods);
     fprintf(stderr, "Units: min %g, max %g\n", uid[0], uid[n - 1]);
     fprintf(stderr, "Periods: min %g, max %g\n", tid[0], tid[n - 1]);
     fprintf(stderr, "Required rows = %d * %d = %d\n", nunits, nperiods, fulln);
-    fprintf(stderr, "Missing rows = %d - %d = %d\n", fulln, pdinfo->n, totmiss);
+    fprintf(stderr, "Missing rows = %d - %d = %d\n", fulln, dset->n, totmiss);
 #endif
 
     /* sort full dataset by unit and period */
-    err = panel_data_sort_by(Z, pdinfo, uv, tv, &ustrs);
+    err = panel_data_sort_by(dset, uv, tv, &ustrs);
 
 #if PDEBUG
     print_unit_var(uv, Z, n, 1);
@@ -4584,12 +4556,12 @@ int set_panel_structure_from_vars (int uv, int tv,
 	rearrange_id_array(tid, nperiods, n);
 	err = pad_panel_dataset(uid, uv, nunits, 
 				tid, tv, nperiods, 
-				Z, pdinfo, ustrs, 
+				dset, ustrs, 
 				mask);
     }
 
     if (!err) {
-	finalize_panel_datainfo(pdinfo, nperiods);
+	finalize_panel_datainfo(dset, nperiods);
     }
 
  bailout:
@@ -4601,11 +4573,9 @@ int set_panel_structure_from_vars (int uv, int tv,
     return err;
 }
 
-int set_panel_structure_from_line (const char *line, 
-				   double **Z, 
-				   DATAINFO *pdinfo)
+int set_panel_structure_from_line (const char *line, DATASET *dset)
 {
-    int n = pdinfo->n;
+    int n = dset->n;
     int uv = 0, tv = 0;
     int err = 0;
 
@@ -4613,24 +4583,24 @@ int set_panel_structure_from_line (const char *line,
 	line += 7;
     }
 
-    err = uv_tv_from_line(line, pdinfo, &uv, &tv);
+    err = uv_tv_from_line(line, dset, &uv, &tv);
 
     if (!err) {
-	err = check_index_values(Z[uv], n);
+	err = check_index_values(dset->Z[uv], n);
     }
 
     if (!err) {
-	err = check_index_values(Z[tv], n);
+	err = check_index_values(dset->Z[tv], n);
     }
 
     if (!err) {
-	err = set_panel_structure_from_vars(uv, tv, Z, pdinfo);
+	err = set_panel_structure_from_vars(uv, tv, dset);
     }
 
     return err;
 }
 
-static int find_time_var (const DATAINFO *pdinfo)
+static int find_time_var (const DATASET *dset)
 {
     const char *tnames[] = {
 	"year",
@@ -4642,8 +4612,8 @@ static int find_time_var (const DATAINFO *pdinfo)
     int i, v;
 
     for (i=0; tnames[i] != NULL; i++) {
-	v = series_index(pdinfo, tnames[i]);
-	if (v < pdinfo->v) {
+	v = series_index(dset, tnames[i]);
+	if (v < dset->v) {
 	    return v;
 	}
     }
@@ -4653,34 +4623,34 @@ static int find_time_var (const DATAINFO *pdinfo)
     
 /* utility functions */
 
-int guess_panel_structure (double **Z, DATAINFO *pdinfo)
+int guess_panel_structure (double **Z, DATASET *dset)
 {
-    int ret, v = find_time_var(pdinfo);
+    int ret, v = find_time_var(dset);
 
     if (v == 0) {
 	ret = 0; /* can't guess */
     } else if (floateq(Z[v][0], Z[v][1])) { 
 	/* "year" or whatever is same for first two obs */
-	pdinfo->structure = STACKED_CROSS_SECTION; 
+	dset->structure = STACKED_CROSS_SECTION; 
 	ret = STACKED_CROSS_SECTION;
     } else {
-	pdinfo->structure = STACKED_TIME_SERIES; 
+	dset->structure = STACKED_TIME_SERIES; 
 	ret = STACKED_TIME_SERIES;
     }
 
     return ret;
 }
 
-int balanced_panel (const DATAINFO *pdinfo)
+int balanced_panel (const DATASET *dset)
 {
-    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int n = dset->t2 - dset->t1 + 1;
     int ret = 0;
 
-    if (n % pdinfo->pd == 0) {
+    if (n % dset->pd == 0) {
 	char unit[OBSLEN], period[OBSLEN];
 
-	if (sscanf(pdinfo->endobs, "%[^:]:%s", unit, period) == 2) {
-	    if (atoi(period) == pdinfo->pd) {
+	if (sscanf(dset->endobs, "%[^:]:%s", unit, period) == 2) {
+	    if (atoi(period) == dset->pd) {
 		ret = 1;
 	    }
 	}
@@ -4715,21 +4685,21 @@ static int may_be_time_name (const char *vname)
    series plot.
 */
 
-int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo)
+int plausible_panel_time_var (const DATASET *dset)
 {
     int i, t, ret = 0;
 
-    for (i=1; i<pdinfo->v && ret==0; i++) {
-	if (may_be_time_name(pdinfo->varname[i])) {
-	    const double *x = Z[i];
+    for (i=1; i<dset->v && ret==0; i++) {
+	if (may_be_time_name(dset->varname[i])) {
+	    const double *x = dset->Z[i];
 	    int val0 = x[0];
 	    int incr0 = x[1] - x[0];
 	    int ok = 1;
 
-	    for (t=0; t<pdinfo->n && ok; t++) {
+	    for (t=0; t<dset->n && ok; t++) {
 		if (na(x[t]) || x[t] < 0) {
 		    ok = 0;
-		} else if (t > 0 && t % pdinfo->pd == 0) {
+		} else if (t > 0 && t % dset->pd == 0) {
 		    if (x[t] != val0) {
 			ok = 0;
 		    }
@@ -4930,7 +4900,7 @@ int *panel_list_add (const MODEL *orig, const int *add, int *err)
 /* calculate the within and between standard deviations for a given
    variable in a panel data set */
 
-int panel_variance_info (const double *x, const DATAINFO *pdinfo,
+int panel_variance_info (const double *x, const DATASET *dset,
 			 double xbar, double *psw, double *psb)
 {
     double sw = 0.0, sb = 0.0;
@@ -4939,12 +4909,12 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
     int n, T, nT, Ti;
     int i, t, s;
     
-    if (!dataset_is_panel(pdinfo)) {
+    if (!dataset_is_panel(dset)) {
 	return E_PDWRONG;
     }
 
-    nT = pdinfo->t2 - pdinfo->t1 + 1;
-    T = pdinfo->pd;
+    nT = dset->t2 - dset->t1 + 1;
+    T = dset->pd;
     n = nT / T;
 
     effn = 0;
@@ -4954,7 +4924,7 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
 	Ti = 0;
 	xibar = 0.0;
 	for (t=0; t<T; t++) {
-	    s = pdinfo->t1 + i * T + t;
+	    s = dset->t1 + i * T + t;
 	    if (!na(x[s])) {
 		Ti++;
 		xibar += x[s];
@@ -4963,7 +4933,7 @@ int panel_variance_info (const double *x, const DATAINFO *pdinfo,
 	if (Ti > 1) {
 	    xibar /= Ti;
 	    for (t=0; t<T; t++) {
-		s = pdinfo->t1 + i * T + t;
+		s = dset->t1 + i * T + t;
 		if (!na(x[s])) {
 		    d = x[s] - xibar;
 		    sw += d * d;

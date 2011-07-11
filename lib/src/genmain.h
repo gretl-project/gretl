@@ -129,14 +129,13 @@ typedef enum {
 
 typedef struct parser_ GENERATOR;
 
-int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
+int generate (const char *line, DATASET *dset, 
 	      gretlopt opt, PRN *prn);
 
-GENERATOR *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo, 
+GENERATOR *genr_compile (const char *s, DATASET *dset, 
 			 gretlopt opt, int *err);
 
-int execute_genr (GENERATOR *genr, double ***pZ, DATAINFO *pdinfo,
-		  PRN *prn);
+int execute_genr (GENERATOR *genr, DATASET *dset, PRN *prn);
 
 void destroy_genr (GENERATOR *genr);
 
@@ -154,36 +153,31 @@ int genr_get_last_output_type (void);
 
 gretl_matrix *genr_get_output_matrix (const GENERATOR *genr);
 
-int series_index (const DATAINFO *pdinfo, const char *varname);
+int series_index (const DATASET *dset, const char *varname);
 
-int current_series_index (const DATAINFO *pdinfo, const char *vname);
+int current_series_index (const DATASET *dset, const char *vname);
 
 int extract_varname (char *targ, const char *src, int *len);
 
-int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 		    ModelDataIndex idx);
 
-double generate_scalar (const char *s, double ***pZ, 
-			DATAINFO *pdinfo, int *err);
+double generate_scalar (const char *s, DATASET *dset, int *err);
 
-double *generate_series (const char *s, double ***pZ, 
-			 DATAINFO *pdinfo, PRN *prn,
+double *generate_series (const char *s, DATASET *dset, PRN *prn,
 			 int *err);
 
-gretl_matrix *generate_matrix (const char *s, double ***pZ, 
-			       DATAINFO *pdinfo, int *err);
+gretl_matrix *generate_matrix (const char *s, DATASET *dset, 
+			       int *err);
 
-char *generate_string (const char *s, double ***pZ, 
-		       DATAINFO *pdinfo, int *err);
+char *generate_string (const char *s, DATASET *dset, int *err);
 
-int *generate_list (const char *s, double ***pZ, 
-		    DATAINFO *pdinfo, int *err);
+int *generate_list (const char *s, DATASET *dset, int *err);
 
 int print_object_var (const char *oname, const char *param,
-		      double ***pZ, DATAINFO *pdinfo,
-		      PRN *prn);
+		      DATASET *dset, PRN *prn);
 
-int gretl_is_series (const char *name, const DATAINFO *pdinfo);
+int gretl_is_series (const char *name, const DATASET *dset);
 
 int gretl_reserved_word (const char *str);
 

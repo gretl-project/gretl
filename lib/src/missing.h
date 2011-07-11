@@ -46,13 +46,13 @@ int first_missing_index (const double *x, int t1, int t2);
 int series_adjust_sample (const double *x, int *t1, int *t2);
 
 int list_adjust_sample (const int *list, int *t1, int *t2, 
-			const double **Z);
+			const DATASET *dset);
 
-int set_miss (const int *list, const char *param, double **Z,
-	      DATAINFO *pdinfo, PRN *prn);
+int set_miss (const int *list, const char *param,
+	      DATASET *dset, PRN *prn);
 
-double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo);
+double missing_obs_fraction (const DATASET *dset);
 
-int any_missing_user_values (const double **Z, const DATAINFO *pdinfo);
+int any_missing_user_values (const DATASET *dset);
 
 #endif /* MISSING_H */

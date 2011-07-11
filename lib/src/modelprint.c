@@ -27,11 +27,11 @@
 #include <glib.h>
 
 static int 
-plain_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
+plain_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn);
 static int 
-alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
+alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn);
 static void alt_print_rho_terms (const MODEL *pmod, PRN *prn);
-static void logit_probit_stats (const MODEL *pmod, const DATAINFO *pdinfo,
+static void logit_probit_stats (const MODEL *pmod, const DATASET *dset,
 				PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_heckit_stats (const MODEL *pmod, PRN *prn);
@@ -179,7 +179,7 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
 }
 
 static void print_intreg_info (const MODEL *pmod, 
-			       const DATAINFO *pdinfo,
+			       const DATASET *dset,
 			       PRN *prn)
 {
     const char *nstrs[] = {
@@ -205,11 +205,11 @@ static void print_intreg_info (const MODEL *pmod,
 	    llim = gretl_model_get_double(pmod, "llimit");
 	    if (tex_format(prn)) {
 		lstr = g_strdup_printf(" (%s $\\le$ %g)", 
-				       pdinfo->varname[pmod->list[1]],
+				       dset->varname[pmod->list[1]],
 				       llim);
 	    } else {
 		lstr = g_strdup_printf(" (%s <= %g)", 
-				       pdinfo->varname[pmod->list[1]],
+				       dset->varname[pmod->list[1]],
 				       llim);
 	    }
 	}
@@ -217,11 +217,11 @@ static void print_intreg_info (const MODEL *pmod,
 	    rlim = gretl_model_get_double(pmod, "rlimit");
 	    if (!na(rlim) && tex_format(prn)) {
 		rstr = g_strdup_printf(" (%s $\\ge$ %g)", 
-				       pdinfo->varname[pmod->list[1]],
+				       dset->varname[pmod->list[1]],
 				       rlim);
 	    } else if (!na(rlim)) {
 		rstr = g_strdup_printf(" (%s >= %g)", 
-				       pdinfo->varname[pmod->list[1]],
+				       dset->varname[pmod->list[1]],
 				       rlim);
 	    }
 	}	
@@ -695,7 +695,7 @@ static int least_significant_coeff (const MODEL *pmod)
     return 0;
 }
 
-static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo, 
+static void pval_max_line (const MODEL *pmod, const DATASET *dset, 
 			   PRN *prn)
 {
     int k = pmod->ncoeff - pmod->ifc;
@@ -707,10 +707,10 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 	if (pmod->ifc) {
 	    sprintf(tmp, _("Excluding the constant, p-value was highest "
-			   "for variable %d (%s)"), k, pdinfo->varname[k]);
+			   "for variable %d (%s)"), k, dset->varname[k]);
 	} else {
 	    sprintf(tmp, _("P-value was highest for variable %d (%s)"), 
-		    k, pdinfo->varname[k]);
+		    k, dset->varname[k]);
 	}	    
 	pprintf(prn, "%s\n\n", tmp);
     }
@@ -1157,7 +1157,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 }
 
 static int 
-print_ivreg_instruments (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+print_ivreg_instruments (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     const char *strs[] = {
 	N_("Instrumented"),
@@ -1194,14 +1194,14 @@ print_ivreg_instruments (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     
 	for (i=imin; i<=list[0]; i++) {
 	    vi = list[i];
-	    if (vi >= pdinfo->v) {
+	    if (vi >= dset->v) {
 		fprintf(stderr, "print_ivreg_instruments: bad varnum %d\n", vi);
 		continue;
 	    }
 	    if (tex) {
-		tex_escape(vname, pdinfo->varname[vi]);
+		tex_escape(vname, dset->varname[vi]);
 	    } else {
-		strcpy(vname, pdinfo->varname[vi]);
+		strcpy(vname, dset->varname[vi]);
 	    }
 	    ccount += pprintf(prn, "%s ", vname);
 	    if (ccount >= 64) {
@@ -1459,7 +1459,7 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 }
 
 static void print_extra_list (const char *tag, const int *list, 
-			      const DATAINFO *pdinfo, PRN *prn)
+			      const DATASET *dset, PRN *prn)
 {
     int i, v, len;
 
@@ -1467,8 +1467,8 @@ static void print_extra_list (const char *tag, const int *list,
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (v < pdinfo->v) {
-	    len += pprintf(prn, " %s", pdinfo->varname[v]);
+	if (v < dset->v) {
+	    len += pprintf(prn, " %s", dset->varname[v]);
 	} else {
 	    len += pprintf(prn, " %d", v);
 	}
@@ -1482,7 +1482,7 @@ static void print_extra_list (const char *tag, const int *list,
 }
 
 static void print_model_zerolist (const MODEL *pmod, 
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  PRN *prn)
 {
     const int *zlist = gretl_model_get_data(pmod, "zerolist");
@@ -1492,21 +1492,21 @@ static void print_model_zerolist (const MODEL *pmod,
 	return;
     }
 
-    print_extra_list(tag, zlist, pdinfo, prn);
+    print_extra_list(tag, zlist, dset, prn);
 }
 
 static void print_model_droplist (const MODEL *pmod, 
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  PRN *prn)
 {
     const int *dlist = gretl_model_get_data(pmod, "droplist");
     const char *tag = N_("Omitted due to exact collinearity:");
 
-    print_extra_list(tag, dlist, pdinfo, prn);
+    print_extra_list(tag, dlist, dset, prn);
 }
 
 static void print_ivreg_droplist (const MODEL *pmod, 
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  PRN *prn)
 {
     const int *dlist = gretl_model_get_data(pmod, "inst_droplist");
@@ -1515,8 +1515,8 @@ static void print_ivreg_droplist (const MODEL *pmod,
     pputs(prn, _("Redundant instruments:"));
     for (i=1; i<=dlist[0]; i++) {
 	v = dlist[i];
-	if (v < pdinfo->v) {
-	    pprintf(prn, " %s", pdinfo->varname[v]);
+	if (v < dset->v) {
+	    pprintf(prn, " %s", dset->varname[v]);
 	} else {
 	    pprintf(prn, " %d", v);
 	}
@@ -1525,7 +1525,7 @@ static void print_ivreg_droplist (const MODEL *pmod,
 }
 
 static void print_arma_depvar (const MODEL *pmod,
-			       const DATAINFO *pdinfo,
+			       const DATASET *dset,
 			       PRN *prn)
 {
     int tex = tex_format(prn);
@@ -1555,7 +1555,7 @@ static void print_arma_depvar (const MODEL *pmod,
 	if (d > 0 || D > 0) {
 	    strcat(vname, "$");
 	}
-	tex_escape(tmp, pdinfo->varname[yno]);
+	tex_escape(tmp, dset->varname[yno]);
 	strcat(vname, tmp);
     } else {
 	if (d == 1) {
@@ -1571,7 +1571,7 @@ static void print_arma_depvar (const MODEL *pmod,
 	if (d > 0 || D > 0) {
 	    strcat(vname, " ");
 	}
-	strcat(vname, pdinfo->varname[yno]);
+	strcat(vname, dset->varname[yno]);
     }
 
     pprintf(prn, "%s: %s", I_("Dependent variable"), vname);
@@ -1636,33 +1636,33 @@ static void godfrey_test_string (int ci, int order, PRN *prn)
    the list separator */
 
 static const char *heckit_selvar_name (const MODEL *pmod,
-				       const DATAINFO *pdinfo)
+				       const DATASET *dset)
 {
     const int *list = pmod->list;
     int pos = gretl_list_separator_position(list);
 
-    if (pos > 0 && pos < list[0] && list[pos+1] < pdinfo->v) {
-	return pdinfo->varname[list[pos+1]];
+    if (pos > 0 && pos < list[0] && list[pos+1] < dset->v) {
+	return dset->varname[list[pos+1]];
     } else {
 	return NULL;
     }
 }
 
 static void print_intreg_depvar (const MODEL *pmod,
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 PRN *prn)
 {
     int lov = gretl_model_get_int(pmod, "lovar");
     int hiv = gretl_model_get_int(pmod, "hivar");
 
-    if (lov < pdinfo->v && hiv < pdinfo->v) {
-	pprintf(prn, "%s: %s", I_("Lower limit"), pdinfo->varname[lov]);
-	pprintf(prn, ", %s: %s", I_("Upper limit"), pdinfo->varname[hiv]);
+    if (lov < dset->v && hiv < dset->v) {
+	pprintf(prn, "%s: %s", I_("Lower limit"), dset->varname[lov]);
+	pprintf(prn, ", %s: %s", I_("Upper limit"), dset->varname[hiv]);
     }
 }
 
 static void maybe_print_T (const MODEL *pmod, 
-			   const DATAINFO *pdinfo,
+			   const DATASET *dset,
 			   const char *start,
 			   PRN *prn)
 {
@@ -1671,7 +1671,7 @@ static void maybe_print_T (const MODEL *pmod,
     } else if (!strcmp(start, "1") && !model_has_missing_obs(pmod)) {
 	return;
     } else {
-	int xsect = dataset_is_cross_section(pdinfo);
+	int xsect = dataset_is_cross_section(dset);
 
 	if (model_has_missing_obs(pmod) || !xsect || strcmp(start, "1")) {
 	    const char *nstrs[] = {
@@ -1692,7 +1692,7 @@ static void maybe_print_T (const MODEL *pmod,
 }
 
 static void print_model_heading (const MODEL *pmod, 
-				 const DATAINFO *pdinfo, 
+				 const DATASET *dset, 
 				 gretlopt opt, 
 				 PRN *prn)
 {
@@ -1704,8 +1704,8 @@ static void print_model_heading (const MODEL *pmod,
     int order = 0;
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
-	ntodate(startdate, t1, pdinfo);
-	ntodate(enddate, t2, pdinfo);
+	ntodate(startdate, t1, dset);
+	ntodate(enddate, t2, dset);
     }
 
     switch (pmod->aux) {
@@ -1775,8 +1775,8 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, I_("%s, using observations %s%s%s"),
 		I_(system_short_string(pmod)),
 		startdate, (tex)? "--" : "-", enddate);
-	maybe_print_T(pmod, pdinfo, startdate, prn);
-    } else if (!dataset_is_panel(pdinfo)) {
+	maybe_print_T(pmod, dset, startdate, prn);
+    } else if (!dataset_is_panel(dset)) {
 	int mc, Tmax = pmod->t2 - pmod->t1 + 1;
 	const char *estr = estimator_string(pmod, prn);
 	const char *fmt;
@@ -1785,12 +1785,12 @@ static void print_model_heading (const MODEL *pmod,
 	    fmt = N_("%s, obs. %s%s%s");
 	    pprintf(prn, I_(fmt), I_(estr), startdate, 
 		    (tex)? "--" : "-", enddate);
-	    maybe_print_T(pmod, pdinfo, startdate, prn);
+	    maybe_print_T(pmod, dset, startdate, prn);
 	} else {
 	    fmt = N_("%s, using observations %s%s%s");
 	    pprintf(prn, I_(fmt), I_(estr), startdate, 
 		    (tex)? "--" : "-", enddate);
-	    maybe_print_T(pmod, pdinfo, startdate, prn);
+	    maybe_print_T(pmod, dset, startdate, prn);
 	}
 
 	if (pmod->ci == HECKIT) {
@@ -1880,14 +1880,14 @@ static void print_model_heading (const MODEL *pmod,
 	    dvnl = 0;
 	}
     } else if (pmod->ci == ARMA) {
-	print_arma_depvar(pmod, pdinfo, prn);
+	print_arma_depvar(pmod, dset, prn);
     } else if (pmod->ci == INTREG) {
-	print_intreg_depvar(pmod, pdinfo, prn);
+	print_intreg_depvar(pmod, dset, prn);
     } else if (pmod->ci == BIPROBIT) {
 	dvnl = 0;
     } else { 
 	const char *dvname = 
-	    gretl_model_get_depvar_name(pmod, pdinfo);
+	    gretl_model_get_depvar_name(pmod, dset);
 
 	if (tex) {
 	    if (pmod->aux == AUX_VECM) {
@@ -1920,7 +1920,7 @@ static void print_model_heading (const MODEL *pmod,
 	int method = gretl_model_get_int(pmod, "method");
 
 	if (method != SYS_METHOD_FIML && method != SYS_METHOD_LIML) {
-	    print_ivreg_instruments(pmod, pdinfo, prn);
+	    print_ivreg_instruments(pmod, dset, prn);
 	}
     } else if (pmod->ci == LAD) {
 	/* tau for quantile regression */
@@ -1936,7 +1936,7 @@ static void print_model_heading (const MODEL *pmod,
 	}
     } else if (pmod->ci == HECKIT) {
 	/* selection variable for Heckit */
-	const char *selvar = heckit_selvar_name(pmod, pdinfo);
+	const char *selvar = heckit_selvar_name(pmod, dset);
 
 	if (selvar != NULL) {
 	    if (csv) pputc(prn, '"');
@@ -1967,11 +1967,11 @@ static void print_model_heading (const MODEL *pmod,
     } else if (pmod->ci == WLS && !pmod->aux) {
 	/* weight variable for WLS */
 	if (tex) {
-	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
+	    tex_escape(vname, dset->varname[pmod->nwt]);
 	}
 	if (csv) pputc(prn, '"');
 	pprintf(prn, "%s: %s", I_("Variable used as weight"), 
-		(tex)? vname : pdinfo->varname[pmod->nwt]);
+		(tex)? vname : dset->varname[pmod->nwt]);
 	if (csv) pputc(prn, '"');
 	pputc(prn, '\n');
     } else if (pmod->ci == ARCH) {
@@ -2001,16 +2001,16 @@ static void print_model_heading (const MODEL *pmod,
     /* IVREG: message about redundant instruments */
     if (plain_format(prn) && pmod->ci == IVREG &&
 	gretl_model_get_data(pmod, "inst_droplist") != NULL) {
-	print_ivreg_droplist(pmod, pdinfo, prn);
+	print_ivreg_droplist(pmod, dset, prn);
     }  
 
     /* messages about collinear and/or zero regressors */
     if (plain_format(prn)) {
 	if (gretl_model_get_data(pmod, "zerolist") != NULL) {
-	    print_model_zerolist(pmod, pdinfo, prn);
+	    print_model_zerolist(pmod, dset, prn);
 	}
 	if (gretl_model_get_data(pmod, "droplist") != NULL) {
-	    print_model_droplist(pmod, pdinfo, prn);
+	    print_model_droplist(pmod, dset, prn);
 	}
     } 
 
@@ -3018,7 +3018,7 @@ static void set_csv_delim (PRN *prn)
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @opt: may contain %OPT_O to print covariance matrix, %OPT_S
  * to get a "simple" print (just coefficients and standard
  * errors).
@@ -3029,7 +3029,7 @@ static void set_csv_delim (PRN *prn)
  * Returns: 0 on success, 1 if some of the values to print were %NaN.
  */
 
-int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt, 
+int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt, 
 		PRN *prn)
 {
     int gotnan = 0;
@@ -3048,12 +3048,12 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     model_format_start(prn);
 
-    print_model_heading(pmod, pdinfo, opt, prn);
+    print_model_heading(pmod, dset, opt, prn);
 
     if (plain_format(prn)) {
-	gotnan = plain_print_coefficients(pmod, pdinfo, prn);
+	gotnan = plain_print_coefficients(pmod, dset, prn);
     } else {
-	gotnan = alt_print_coefficients(pmod, pdinfo, prn);
+	gotnan = alt_print_coefficients(pmod, dset, prn);
     }
 
     print_coeff_table_end(pmod, prn);
@@ -3143,12 +3143,12 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_DPD_stats(pmod, prn);
     } else if (logit_probit_model(pmod)) {
 	if (!pmod->aux) {
-	    logit_probit_stats(pmod, pdinfo, prn);
+	    logit_probit_stats(pmod, dset, prn);
 	}
     } else if (tsls_model(pmod) && plain_format(prn)) {
 	addconst_message(pmod, prn);
     } else if (intreg_model(pmod)) {
-	print_intreg_info(pmod, pdinfo, prn);
+	print_intreg_info(pmod, dset, prn);
     } else if (pmod->ci == POISSON) {
 	print_overdisp_test(pmod, prn);
     } else if (pmod->ci == DURATION) {
@@ -3172,7 +3172,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	pmod->ci != DURATION && !ordered_model(pmod) && !multinomial_model(pmod) && 
 	!COUNT_MODEL(pmod->ci) && !intreg_model(pmod) &&
 	pmod->ci != BIPROBIT && !pmod->aux) {
-	pval_max_line(pmod, pdinfo, prn);
+	pval_max_line(pmod, dset, prn);
     }
 
  close_format:
@@ -3182,7 +3182,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     if (opt & OPT_O) {
-	outcovmx(pmod, pdinfo, prn);
+	outcovmx(pmod, dset, prn);
     }
 
     if (any_tests(pmod) && !(opt & OPT_S)) {
@@ -3210,7 +3210,7 @@ static void print_pval_str (double pval, char *str)
 /* used only for "alternate" model-output formats */
 
 static int 
-prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
+prepare_model_coeff (const MODEL *pmod, const DATASET *dset,
 		     int i, int adfnum, model_coeff *mc, PRN *prn)
 {
     int gotnan = 0;
@@ -3220,9 +3220,9 @@ prepare_model_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
     mc->show_pval = !binary_model(pmod) || (pmod->opt & OPT_P);
 
     if (tex_format(prn)) {
-	make_tex_coeff_name(pmod, pdinfo, i, mc->name);
+	make_tex_coeff_name(pmod, dset, i, mc->name);
     } else {
-	gretl_model_get_param_name(pmod, pdinfo, i, mc->name);
+	gretl_model_get_param_name(pmod, dset, i, mc->name);
     }
 
     if (xna(pmod->coeff[i])) {
@@ -3469,7 +3469,7 @@ static void print_coeff_left_string (const char *s, PRN *prn)
 }
 
 static int 
-print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+print_rq_sequence (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     gretl_vector *tauvec = gretl_model_get_data(pmod, "rq_tauvec");
     gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
@@ -3498,7 +3498,7 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     bcols = gretl_matrix_cols(B);
 
     for (i=2; i<=pmod->list[0]; i++) {
-	n = char_len(pdinfo->varname[pmod->list[i]]);
+	n = char_len(dset->varname[pmod->list[i]]);
 	if (n > namelen) {
 	    namelen = n;
 	}
@@ -3536,7 +3536,7 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     pputc(prn, '\n');
 
     for (i=0; i<pmod->ncoeff; i++) {
-	pprintf(prn, "  %-*s  ", namelen, pdinfo->varname[pmod->list[i+2]]);
+	pprintf(prn, "  %-*s  ", namelen, dset->varname[pmod->list[i+2]]);
 	for (j=0; j<ntau; j++) {
 	    tau = gretl_vector_get(tauvec, j);
 	    bi  = gretl_matrix_get(B, k, 0);
@@ -3569,7 +3569,7 @@ print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 #if 0 /* not ready */
 
 static int 
-alt_print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+alt_print_rq_sequence (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     gretl_vector *tauvec = gretl_model_get_data(pmod, "rq_tauvec");
     gretl_matrix *B = gretl_model_get_data(pmod, "rq_sequence");
@@ -3589,7 +3589,7 @@ alt_print_rq_sequence (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
 
     for (i=0; i<pmod->ncoeff; i++) {
-	pprintf(prn, "  %-*s  ", namelen, pdinfo->varname[pmod->list[i+2]]);
+	pprintf(prn, "  %-*s  ", namelen, dset->varname[pmod->list[i+2]]);
 	for (j=0; j<ntau; j++) {
 	    tau = gretl_vector_get(tauvec, j);
 	    bi  = gretl_matrix_get(B, k, 0);
@@ -4016,7 +4016,7 @@ int print_coeffs (const double *b,
 }
 
 static int plain_print_mp_coeffs (const MODEL *pmod, 
-				  const DATAINFO *pdinfo, 
+				  const DATASET *dset, 
 				  PRN *prn)
 {
     struct printval **vals;
@@ -4056,7 +4056,7 @@ static int plain_print_mp_coeffs (const MODEL *pmod,
 	    err = E_NAN;
 	    goto bailout;
 	}
-	gretl_model_get_param_name(pmod, pdinfo, i, names[i]);
+	gretl_model_get_param_name(pmod, dset, i, names[i]);
 	n = char_len(names[i]);
 	if (n > namelen) {
 	    namelen = n;
@@ -4140,7 +4140,7 @@ get_col_heading (const char **S, int j, int slopes,
 }
 
 static void 
-print_count_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
+print_count_offset (const MODEL *pmod, const DATASET *dset, 
 		    struct printval *val, int namelen, 
 		    int colsep, int w, int lmax,
 		    int addoff, PRN *prn)
@@ -4151,7 +4151,7 @@ print_count_offset (const MODEL *pmod, const DATAINFO *pdinfo,
 	char name[24];
 	int n;
 
-	sprintf(name, "log(%s)", pdinfo->varname[offvar]);
+	sprintf(name, "log(%s)", dset->varname[offvar]);
 	n = strlen(name);
 	pprintf(prn, "\n  %-*s", namelen, name);
 	if (n > namelen) {
@@ -4181,9 +4181,9 @@ static void print_ar_sum (const MODEL *pmod, PRN *prn)
 }
 
 static void mn_logit_coeffsep (char *sep, const MODEL *pmod, 
-			       const DATAINFO *pdinfo, int i)
+			       const DATASET *dset, int i)
 {
-    const char *vname = gretl_model_get_depvar_name(pmod, pdinfo);
+    const char *vname = gretl_model_get_depvar_name(pmod, dset);
     const int *list = (const int *) gretl_model_get_data(pmod, "yvals");
     int val = (list != NULL)? list[i+1] : i;
 
@@ -4191,7 +4191,7 @@ static void mn_logit_coeffsep (char *sep, const MODEL *pmod,
 }
 
 static int plain_print_coeffs (const MODEL *pmod, 
-			       const DATAINFO *pdinfo, 
+			       const DATASET *dset, 
 			       PRN *prn)
 {
     struct printval **vals, *vij;
@@ -4296,7 +4296,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	    err = E_NAN;
 	    goto bailout;
 	}
-	gretl_model_get_param_name(pmod, pdinfo, i, names[i]);
+	gretl_model_get_param_name(pmod, dset, i, names[i]);
 	n = char_len(names[i]);
 	if (n > namelen) {
 	    namelen = n;
@@ -4386,7 +4386,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 
     /* biprobit special: name of first dependent variable */
     if (pmod->ci == BIPROBIT) {
-	print_coeff_left_string(gretl_model_get_depvar_name(pmod, pdinfo), 
+	print_coeff_left_string(gretl_model_get_depvar_name(pmod, dset), 
 				prn);
     }
 
@@ -4404,7 +4404,7 @@ static int plain_print_coeffs (const MODEL *pmod,
 	} else if (cblock > 0 && i % cblock == 0) {
 	    char mnlsep[32];
 
-	    mn_logit_coeffsep(mnlsep, pmod, pdinfo, ++k);
+	    mn_logit_coeffsep(mnlsep, pmod, dset, ++k);
 	    print_coeff_separator(mnlsep, 0, prn);
 	}
 	pprintf(prn, "  %-*s", namelen, names[i]);
@@ -4424,7 +4424,7 @@ static int plain_print_coeffs (const MODEL *pmod,
     if (pmod->ci == AR) {
 	print_ar_sum(pmod, prn);
     } else if (COUNT_MODEL(pmod->ci)) {
-	print_count_offset(pmod, pdinfo, &vals[0][0], namelen, 
+	print_count_offset(pmod, dset, &vals[0][0], namelen, 
 			   colsep, w[0], lmax[0], addoff[0],
 			   prn);
     }
@@ -4444,16 +4444,16 @@ static int plain_print_coeffs (const MODEL *pmod,
 }
 
 static int 
-plain_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+plain_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     if (pmod->ncoeff == 0) {
 	return 0;
     } else if (gretl_model_get_data(pmod, "rq_sequence") != NULL) {
-	return print_rq_sequence(pmod, pdinfo, prn);
+	return print_rq_sequence(pmod, dset, prn);
     } else if (pmod->ci == MPOLS) {
-	return plain_print_mp_coeffs(pmod, pdinfo, prn);
+	return plain_print_mp_coeffs(pmod, dset, prn);
     } else {
-	return plain_print_coeffs(pmod, pdinfo, prn);
+	return plain_print_coeffs(pmod, dset, prn);
     }
 }
 
@@ -4488,14 +4488,14 @@ static void alt_print_arch_terms (const MODEL *pmod, PRN *prn)
 }
 
 static void 
-alt_print_count_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+alt_print_count_offset (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     int offvar = gretl_model_get_int(pmod, "offset_var");
 
     if (offvar > 0) {
 	char name[24];
 
-	sprintf(name, "log(%s)", pdinfo->varname[offvar]);
+	sprintf(name, "log(%s)", dset->varname[offvar]);
 
 	if (plain_format(prn)) {
 	    pprintf(prn, "\n  %-13s         1.0\n", name);
@@ -4513,7 +4513,7 @@ alt_print_count_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 }
 
 static int 
-alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+alt_print_coefficients (const MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     gretl_matrix *intervals = NULL;
     const char *sepstr = NULL;
@@ -4549,13 +4549,13 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (pmod->ci == BIPROBIT) {
-	print_coeff_left_string(gretl_model_get_depvar_name(pmod, pdinfo), 
+	print_coeff_left_string(gretl_model_get_depvar_name(pmod, dset), 
 				prn);
     }
 
     for (i=0; i<nc; i++) {
 
-	err = prepare_model_coeff(pmod, pdinfo, i, adfnum, &mc, prn);
+	err = prepare_model_coeff(pmod, dset, i, adfnum, &mc, prn);
 	if (err) gotnan = 1;
 
 	if (i == seppos) {
@@ -4580,7 +4580,7 @@ alt_print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     } else if (pmod->ci == ARCH) {
 	alt_print_arch_terms(pmod, prn);
     } else if (COUNT_MODEL(pmod->ci)) {
-	alt_print_count_offset(pmod, pdinfo, prn);
+	alt_print_count_offset(pmod, dset, prn);
     }
 
     return gotnan;
@@ -4885,7 +4885,7 @@ static int limdep_df (const MODEL *pmod)
 }
 
 static void logit_probit_stats (const MODEL *pmod, 
-				const DATAINFO *pdinfo,
+				const DATASET *dset,
 				PRN *prn)
 {
     const int *act_pred = NULL;

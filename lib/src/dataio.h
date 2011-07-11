@@ -78,13 +78,13 @@ typedef enum {
 
 /* functions follow */
 
-int dateton (const char *date, const DATAINFO *pdinfo);
+int dateton (const char *date, const DATASET *dset);
 
-int merge_dateton (const char *date, const DATAINFO *pdinfo);
+int merge_dateton (const char *date, const DATASET *dset);
 
-char *ntodate (char *datestr, int t, const DATAINFO *pdinfo);
+char *ntodate (char *datestr, int t, const DATASET *dset);
 
-int get_subperiod (int t, const DATAINFO *pdinfo, int *err);
+int get_subperiod (int t, const DATASET *dset, int *err);
 
 int get_info (const char *hdrfile, PRN *prn);
 
@@ -93,8 +93,8 @@ int get_precision (const double *x, int n, int placemax);
 double get_date_x (int pd, const char *obs);
 
 int write_data (const char *fname, int *list, 
-		const double **Z, const DATAINFO *pdinfo, 
-	        gretlopt opt, int progress);
+		const DATASET *dset, gretlopt opt, 
+		int progress);
 
 int is_gzipped (const char *fname);
 
@@ -102,38 +102,34 @@ int gretl_is_pkzip_file (const char *fname);
 
 void gz_switch_ext (char *targ, char *src, char *ext);
 
-int merge_or_replace_data (double ***pZ0, DATAINFO *pdinfo0,
-			   double ***pZ1, DATAINFO **ppdinfo1,
+int merge_or_replace_data (DATASET *dset0, DATASET **pdset1,
 			   gretlopt opt, PRN *prn);
 
-int gretl_get_data (char *fname, double ***pZ, DATAINFO *pdinfo, 
+int gretl_get_data (char *fname, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
-int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
-		   int data_status, int length,
-		   PRN *prn);
+int open_nulldata (DATASET *dset, int data_status, 
+		   int length, PRN *prn);
 
-int import_csv (const char *fname, double ***pZ, DATAINFO *pdinfo, 
+int import_csv (const char *fname, DATASET *dset, 
 	        gretlopt opt, PRN *prn);
 
 int import_spreadsheet (const char *fname, GretlFileType ftype,
 			int *list, char *sheetname,
-			double ***pZ, DATAINFO *pdinfo, 
-			gretlopt opt, PRN *prn);
+			DATASET *dset, gretlopt opt, PRN *prn);
 
 int import_other (const char *fname, GretlFileType ftype,
-		  double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt, PRN *prn);
+		  DATASET *dset, gretlopt opt, PRN *prn);
 
-int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
+int add_obs_markers_from_file (DATASET *dset, const char *fname);
 
-int add_var_labels_from_file (DATAINFO *pdinfo, const char *fname);
+int add_var_labels_from_file (DATASET *dset, const char *fname);
 
-int save_var_labels_to_file (const DATAINFO *pdinfo, const char *fname);
+int save_var_labels_to_file (const DATASET *dset, const char *fname);
 
-int dataset_has_var_labels (const DATAINFO *pdinfo);
+int dataset_has_var_labels (const DATASET *dset);
 
-int read_or_write_var_labels (gretlopt opt, DATAINFO *pdinfo, PRN *prn);
+int read_or_write_var_labels (gretlopt opt, DATASET *dset, PRN *prn);
 
 GretlFileType detect_filetype (char *fname, gretlopt opt);
 
@@ -145,9 +141,9 @@ int check_atof (const char *numstr);
 
 int check_atoi (const char *numstr);
 
-int transpose_data (double ***pZ, DATAINFO *pdinfo);
+int transpose_data (DATASET *dset);
 
-void dataset_add_import_info (DATAINFO *pdinfo, const char *fname,
+void dataset_add_import_info (DATASET *dset, const char *fname,
 			      GretlFileType type);
 
 #endif /* DATAIO_H */

@@ -24,57 +24,49 @@
 
 #include "gretl_matrix.h"
 
-MODEL lsq (const int *list, double **Z, DATAINFO *pdinfo, 
+MODEL lsq (const int *list, DATASET *dset, 
 	   GretlCmdIndex ci, gretlopt opt);
 
-MODEL ar_model (const int *list,  
-		double ***pZ, DATAINFO *pdinfo, 
+MODEL ar_model (const int *list, DATASET *dset, 
 		gretlopt opt, PRN *prn);
 
-MODEL ar1_model (const int *list,  
-		 double ***pZ, DATAINFO *pdinfo, 
+MODEL ar1_model (const int *list, DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
-MODEL lad (const int *list, double **Z, DATAINFO *pdinfo); 
+MODEL lad (const int *list, DATASET *dset); 
 
 MODEL quantreg (const gretl_matrix *tau, const int *list, 
-		double **Z, DATAINFO *pdinfo,
-		gretlopt opt, PRN *prn);
+		DATASET *dset, gretlopt opt, PRN *prn);
 
 MODEL arma (const int *list, const int *pqlags,
-	    const double **Z, const DATAINFO *pdinfo, 
-	    gretlopt opt, PRN *prn);
+	    const DATASET *dset, gretlopt opt, PRN *prn);
 
-MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
+MODEL garch (const int *list, DATASET *dset, gretlopt opt,
 	     PRN *prn);
 
-MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo);
+MODEL mp_ols (const int *list, DATASET *dset);
 
-MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL panel_model (const int *list, DATASET *dset,
 		   gretlopt opt, PRN *prn);
 
-MODEL ivreg (const int *list, double ***pZ, DATAINFO *pdinfo,
-	     gretlopt opt);
+MODEL ivreg (const int *list, DATASET *dset, gretlopt opt);
 
-MODEL arbond_model (const int *list, const char *ispec, const double **Z, 
-		    const DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+MODEL arbond_model (const int *list, const char *ispec, 
+		    const DATASET *dset, gretlopt opt, PRN *prn);
 
 MODEL dpd_model (const int *list, const int *laglist,
-		 const char *ispec, const double **Z, 
-		 const DATAINFO *pdinfo, gretlopt opt, 
-		 PRN *prn);
-
-MODEL hsk_model (const int *list, double ***pZ, DATAINFO *pdinfo);
-
-MODEL arch_model (const int *list, int order, 
-		  double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt, PRN *prn);
-
-int whites_test (MODEL *pmod, 
-		 double ***pZ, DATAINFO *pdinfo, 
+		 const char *ispec, const DATASET *dset, 
 		 gretlopt opt, PRN *prn);
 
-int arch_test (MODEL *pmod, int order, const DATAINFO *pdinfo, 
+MODEL hsk_model (const int *list, DATASET *dset);
+
+MODEL arch_model (const int *list, int order, DATASET *dset, 
+		  gretlopt opt, PRN *prn);
+
+int whites_test (MODEL *pmod, DATASET *dset, 
+		 gretlopt opt, PRN *prn);
+
+int arch_test (MODEL *pmod, int order, const DATASET *dset, 
 	       gretlopt opt, PRN *prn);
 
 int array_arch_test (const double *u, int n, int order, 
@@ -83,11 +75,12 @@ int array_arch_test (const double *u, int n, int order,
 int makevcv (MODEL *pmod, double sigma);
 
 int *augment_regression_list (const int *orig, int aux, 
-			      double ***pZ, DATAINFO *pdinfo);
+			      DATASET *dset);
 
-double *gretl_XTX (const MODEL *pmod, const double **Z, int *err);
+double *gretl_XTX (const MODEL *pmod, const DATASET *dset, 
+		   int *err);
 
-int anova (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int anova (const int *list, const DATASET *dset, 
 	   gretlopt opt, PRN *prn);
 
 #endif /* ESTIMATE_H */

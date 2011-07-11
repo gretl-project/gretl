@@ -539,12 +539,12 @@ static void tex_arma_coeff_name (char *targ, const char *src,
 }
 
 static void tex_VAR_varname (char *s, const MODEL *pmod,
-			     const DATAINFO *pdinfo, int v)
+			     const DATASET *dset, int v)
 {
     char tmp[32], base[12];
     int lag;
 
-    gretl_model_get_param_name(pmod, pdinfo, v, tmp);
+    gretl_model_get_param_name(pmod, dset, v, tmp);
 
     if (sscanf(tmp, "%11[^_]_%d", base, &lag) == 2) {
 	sprintf(s, "%s$_{t-%d}$", base, lag);
@@ -554,12 +554,12 @@ static void tex_VAR_varname (char *s, const MODEL *pmod,
 }
 
 static void tex_VECM_varname (char *s, const MODEL *pmod,
-			      const DATAINFO *pdinfo, int v)
+			      const DATASET *dset, int v)
 {
     char tmp[32], base[12];
     int lag;
 
-    gretl_model_get_param_name(pmod, pdinfo, v, tmp);
+    gretl_model_get_param_name(pmod, dset, v, tmp);
 
     if (sscanf(tmp, "d_%11[^_]_%d", base, &lag) == 2) {
 	sprintf(s, "$\\Delta$%s$_{t-%d}$", base, lag);
@@ -636,12 +636,12 @@ static int tex_print_coeff_custom (const model_coeff *mc, PRN *prn)
     return 0;
 }
 
-void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
+void make_tex_coeff_name (const MODEL *pmod, const DATASET *dset, int i,
 			  char *name)
 {
     char pname[VNAMELEN];
 
-    gretl_model_get_param_name(pmod, pdinfo, i, pname);    
+    gretl_model_get_param_name(pmod, dset, i, pname);    
 
     if (pmod->aux == AUX_ARCH) {
 	tex_make_cname(name, pname);
@@ -654,9 +654,9 @@ void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo, int i,
     } else if (pmod->ci == GARCH) {
 	tex_garch_coeff_name(name, pname, 0);
     } else if (pmod->ci == VAR) {
-	tex_VAR_varname(name, pmod, pdinfo, i);
+	tex_VAR_varname(name, pmod, dset, i);
     } else if (pmod->aux == AUX_VECM) {
-	tex_VECM_varname(name, pmod, pdinfo, i);
+	tex_VECM_varname(name, pmod, dset, i);
     } else if (pmod->ci == MPOLS) {
 	tex_mp_coeff_name(name, pname, 0);
     } else {
@@ -870,7 +870,7 @@ void tex_coeff_table_end (PRN *prn)
     pputs(prn, "\\end{tabular}\n\n");
 }
 
-void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
+void tex_print_VECM_omega (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
 {
     char vname[48];
     const int *list = vecm->ylist;
@@ -888,7 +888,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "}\n & ");
 
     for (i=0; i<vecm->neqns; i++) {
-	tex_escape(vname, pdinfo->varname[list[i+1]]);
+	tex_escape(vname, dset->varname[list[i+1]]);
 	pprintf(prn, "$\\Delta$%s ", vname);
 	if (i == vecm->neqns - 1) {
 	    pputs(prn, "\\\\\n");
@@ -899,7 +899,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
     pputc(prn, '\n');
 
     for (i=0; i<vecm->neqns; i++) {
-	tex_escape(vname, pdinfo->varname[list[i+1]]);
+	tex_escape(vname, dset->varname[list[i+1]]);
 	pprintf(prn, "$\\Delta$%s & ", vname);
 	for (j=0; j<vecm->neqns; j++) {
 	    x = gretl_matrix_get(vecm->S, i, j);
@@ -923,23 +923,23 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 
 static void tex_beta_vname (char *s,
 			    const GRETL_VAR *v,
-			    const DATAINFO *pdinfo,
+			    const DATASET *dset,
 			    int i, PRN *prn)
 {
     if (i < v->neqns) {
-	tex_escape(s, pdinfo->varname[v->ylist[i+1]]);
+	tex_escape(s, dset->varname[v->ylist[i+1]]);
 	pprintf(prn, "%s$_{t-1}$ & ", s);
     } else if (auto_restr(v) && i == v->neqns) {
 	pprintf(prn, "%s & ", (jcode(v) == J_REST_CONST)? "const" : "trend");
     } else if (v->rlist != NULL) {
 	int k = i - v->ylist[0] - auto_restr(v) + 1;
 
-	tex_escape(s, pdinfo->varname[v->rlist[k]]);
+	tex_escape(s, dset->varname[v->rlist[k]]);
 	pprintf(prn, "%s$_{t-1}$ & ", s);
     } 
 }
 
-void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
+void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn)
 {
     char s[32];
     JohansenInfo *jv = vecm->jinfo;
@@ -965,7 +965,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     pputs(prn, "}\n");
 
     for (i=0; i<rows; i++) {
-	tex_beta_vname(s, vecm, pdinfo, i, prn);
+	tex_beta_vname(s, vecm, dset, i, prn);
 
 	/* coefficients */
 	for (j=0; j<jv->rank; j++) {
@@ -1021,7 +1021,7 @@ void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *pr
     pputs(prn, "}\n");
 
     for (i=0; i<rows; i++) {
-	tex_beta_vname(s, vecm, pdinfo, i, prn);
+	tex_beta_vname(s, vecm, dset, i, prn);
 
 	/* coefficients */
 	for (j=0; j<jv->rank; j++) {
@@ -1331,7 +1331,7 @@ static void tex_print_unsigned_double (double x, PRN *prn)
 /**
  * tex_print_equation:
  * @pmod:  pointer to gretl MODEL struct.
- * @pdinfo:  information regarding the data set.
+ * @dset:  information regarding the data set.
  * @opt: can include %OPT_S for a standalone document, and
  * %OPT_T to print t-ratios rather than standard errors.
  * @prn: gretl printing struct.
@@ -1343,7 +1343,7 @@ static void tex_print_unsigned_double (double x, PRN *prn)
  * Returns: 0 on successful completion.
  */
 
-int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+int tex_print_equation (const MODEL *pmod, const DATASET *dset, 
 			gretlopt opt, PRN *prn)
 {
     double x;
@@ -1384,7 +1384,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	tex_escape(tmp, pmod->depvar);
     } else {
 	i = gretl_model_get_depvar(pmod);
-	tex_escape(tmp, pdinfo->varname[i]);
+	tex_escape(tmp, dset->varname[i]);
     }
 
     if (pmod->ci == ARBOND) {
@@ -1429,9 +1429,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (i > 0 || pmod->ifc == 0) {
 	    /* regular coefficient, not const */
 	    if (offvar > 0 && i == nc - 1) {
-		strcpy(vname, pdinfo->varname[offvar]);
+		strcpy(vname, dset->varname[offvar]);
 	    } else {
-		gretl_model_get_param_name(pmod, pdinfo, i, vname);
+		gretl_model_get_param_name(pmod, dset, i, vname);
 	    }
 	    cchars += strlen(vname);
 
@@ -1570,7 +1570,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 /**
  * tex_print_model:
  * @pmod:  pointer to gretl MODEL struct.
- * @pdinfo: information regarding the data set.
+ * @dset: information regarding the data set.
  * @opt: may include %OPT_T in case of printing a model
  * in equation format, to use t-ratios instead of standard
  * errors.
@@ -1586,7 +1586,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion.
  */
 
-int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
+int tex_print_model (MODEL *pmod, const DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
     int ret;
@@ -1600,9 +1600,9 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     if (tex_eqn_format(prn)) { 
-	ret = tex_print_equation(pmod, pdinfo, opt, prn);
+	ret = tex_print_equation(pmod, dset, opt, prn);
     } else {
-	ret = printmodel(pmod, pdinfo, OPT_NONE, prn);
+	ret = printmodel(pmod, dset, OPT_NONE, prn);
     }
 
     return ret;
@@ -1611,7 +1611,7 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
 /**
  * texprint:
  * @pmod: pointer to model.
- * @pdinfo: information regarding the data set.
+ * @dset: information regarding the data set.
  * @fname: name of file to save.
  * @opt: if opt & %OPT_O, complete doc, else fragment;
  * if opt & %OPT_E print as equation, otherwise use tabular
@@ -1625,7 +1625,7 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
+int texprint (MODEL *pmod, const DATASET *dset, char *fname, 
 	      gretlopt opt)
 {
     PRN *prn;
@@ -1640,14 +1640,14 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname,
     prn = make_tex_prn(pmod->ID, fname, eqn, doc, &err);
 
     if (!err) {
-	err = tex_print_model(pmod, pdinfo, opt, prn);
+	err = tex_print_model(pmod, dset, opt, prn);
 	gretl_print_destroy(prn);
     }
 
     return err;
 }
 
-int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
+int rtfprint (MODEL *pmod, const DATASET *dset, char *fname, 
 	      gretlopt opt)
 {
     PRN *prn;
@@ -1660,7 +1660,7 @@ int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname,
     prn = make_rtf_prn(pmod->ID, fname, &err);
 
     if (!err) {
-	err = printmodel(pmod, pdinfo, opt, prn);
+	err = printmodel(pmod, dset, opt, prn);
 	gretl_print_destroy(prn);
     }
 
@@ -1670,20 +1670,20 @@ int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname,
 /**
  * tex_print_obs_marker:
  * @t: observation number.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @prn: gretl printing struct.
  *
  * Print a string (label, date or obs number) representing the given @t.
  */
 
-void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
+void tex_print_obs_marker (int t, const DATASET *dset, PRN *prn)
 {
-    if (pdinfo->markers) { 
-	pprintf(prn, "\\texttt{%s} ", pdinfo->S[t]); 
+    if (dset->markers) { 
+	pprintf(prn, "\\texttt{%s} ", dset->S[t]); 
     } else {
 	char tmp[OBSLEN]; 
 
-	ntodate(tmp, t, pdinfo);
+	ntodate(tmp, t, dset);
 	pprintf(prn, "%8s ", tmp);
     }
 }

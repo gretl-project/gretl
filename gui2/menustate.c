@@ -32,7 +32,7 @@ void refresh_data (void)
 {
     if (data_status) {
 	populate_varlist();
-	set_sample_label(datainfo);
+	set_sample_label(dataset);
     }
 }
 
@@ -106,7 +106,7 @@ void variable_menu_state (gboolean s)
 
     flip(mdata->ui, "/menubar/Variable", s);
     flip(mdata->ui, "/menubar/View/xcorrgm",  
-	 dataset_is_time_series(datainfo));
+	 dataset_is_time_series(dataset));
 }
 
 static void view_items_state (gboolean s)
@@ -193,9 +193,9 @@ void window_list_state (gboolean s)
 
 void time_series_menu_state (gboolean s)
 {
-    gboolean sx = extended_ts(datainfo);
-    gboolean panel = dataset_is_panel(datainfo);
-    gboolean realpan = multi_unit_panel_sample(datainfo);
+    gboolean sx = extended_ts(dataset);
+    gboolean panel = dataset_is_panel(dataset);
+    gboolean realpan = multi_unit_panel_sample(dataset);
     gboolean ur = s;
 
     if (mdata->ui == NULL) {
@@ -203,11 +203,11 @@ void time_series_menu_state (gboolean s)
     }
 
     if (panel) {
-	ur = datainfo->pd > 5;
+	ur = dataset->pd > 5;
     }
 
     /* File menu */
-    flip(mdata->ui, "/menubar/File/SaveDataAs/SaveAsDb", DATASET_DB_OK(datainfo));
+    flip(mdata->ui, "/menubar/File/SaveDataAs/SaveAsDb", DATASET_DB_OK(dataset));
 
     /* Plots */
     flip(mdata->ui, "/menubar/View/GraphVars/TSPlot", sx);
@@ -237,8 +237,8 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Model/TSModels", s);
     /* Sample menu */
     flip(mdata->ui, "/menubar/Data/DataCompact", 
-	 s && (COMPACTABLE(datainfo) || dated_weekly_data(datainfo)));
-    flip(mdata->ui, "/menubar/Data/DataExpand", s && EXPANSIBLE(datainfo));
+	 s && (COMPACTABLE(dataset) || dated_weekly_data(dataset)));
+    flip(mdata->ui, "/menubar/Data/DataExpand", s && EXPANSIBLE(dataset));
 }
 
 void panel_menu_state (gboolean s)
@@ -247,7 +247,7 @@ void panel_menu_state (gboolean s)
 	flip(mdata->ui, "/menubar/Add/UnitDums", s);
 	flip(mdata->ui, "/menubar/Add/TimeDums", s);
 	flip(mdata->ui, "/menubar/Model/PanelModels", s);
-	if (s && datainfo->pd <= 2) {
+	if (s && dataset->pd <= 2) {
 	    flip(mdata->ui, "/menubar/Model/PanelModels/dpanel", 0);
 	}
     }
@@ -264,7 +264,7 @@ void ts_or_panel_menu_state (gboolean s)
     flip(mdata->ui, "/menubar/Add/diff", s);
     flip(mdata->ui, "/menubar/Add/ldiff", s);
 
-    s = dataset_is_seasonal(datainfo);
+    s = dataset_is_seasonal(dataset);
     flip(mdata->ui, "/menubar/Add/sdiff", s);
     flip(mdata->ui, "/menubar/Add/PeriodDums", s);
 }
@@ -321,8 +321,8 @@ void check_var_labels_state (GtkMenuItem *item, gpointer p)
 {
     gboolean s = FALSE;
 
-    if (datainfo != NULL && datainfo->v > 0) {
-	if (datainfo->v > 2 || strcmp(datainfo->varname[1], "index")) {
+    if (dataset != NULL && dataset->v > 0) {
+	if (dataset->v > 2 || strcmp(dataset->varname[1], "index")) {
 	    s = TRUE;
 	}
     }
@@ -446,7 +446,7 @@ GtkWidget *build_var_popup (void)
     GtkWidget *menu;
     GtkWidget *item;
     int i, n = G_N_ELEMENTS(items);
-    int real_panel = multi_unit_panel_sample(datainfo);
+    int real_panel = multi_unit_panel_sample(dataset);
 
     menu = gtk_menu_new();
 
@@ -465,10 +465,10 @@ GtkWidget *build_var_popup (void)
 	    /* don't offer panel plot */
 	    continue;
 	}	
-	if ((i == 6 || i == 7) && !dataset_is_time_series(datainfo)) {
+	if ((i == 6 || i == 7) && !dataset_is_time_series(dataset)) {
 	    continue;
 	}
-	if (i == 2 && !extended_ts(datainfo)) {
+	if (i == 2 && !extended_ts(dataset)) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
@@ -511,10 +511,10 @@ GtkWidget *build_selection_popup (void)
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	    continue;
 	}
-	if (!dataset_is_time_series(datainfo) && (i == 3 || i == 11)) {
+	if (!dataset_is_time_series(dataset) && (i == 3 || i == 11)) {
 	    continue;
 	}
-	if (!extended_ts(datainfo) && i == 4) {
+	if (!extended_ts(dataset) && i == 4) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
@@ -566,7 +566,7 @@ void set_main_window_title (const char *name, gboolean modified)
     }
 }
 
-static const char *get_pd_string (DATAINFO *pdinfo)
+static const char *get_pd_string (DATASET *pdinfo)
 {
     char *pdstr;
 
@@ -602,7 +602,7 @@ static const char *get_pd_string (DATAINFO *pdinfo)
     return pdstr;
 }
 
-void set_sample_label (DATAINFO *pdinfo)
+void set_sample_label (DATASET *pdinfo)
 {
     GtkWidget *dlabel;
     char t1str[OBSLEN], t2str[OBSLEN];
@@ -625,9 +625,9 @@ void set_sample_label (DATAINFO *pdinfo)
     
     if (complex_subsampled() && pdinfo->t1 == 0 && 
 	pdinfo->t2 == pdinfo->n - 1 && 
-	datainfo->structure == CROSS_SECTION) {
+	dataset->structure == CROSS_SECTION) {
 	sprintf(tmp, _("Undated: Full range n = %d; current sample"
-		       " n = %d"), get_full_length_n(), datainfo->n);
+		       " n = %d"), get_full_length_n(), dataset->n);
     } else {
 	const char *pdstr;
 
@@ -690,7 +690,7 @@ void set_sample_label (DATAINFO *pdinfo)
 	restore_sample_state(TRUE);
     }
 
-    console_record_sample(datainfo);
+    console_record_sample(dataset);
 }
 
 void action_entry_init (GtkActionEntry *entry)

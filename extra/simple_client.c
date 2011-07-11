@@ -30,12 +30,23 @@ void noalloc(void)
 int main (void)
 {
 
-    DATAINFO *datainfo;         /* data information struct */
-    double **Z;                 /* the data array */
-    int *list;                  /* list of regressors etc. */
-    MODEL *model;               /* pointer to model struct */
-    PRN *prn;                   /* pointer to struct for printing */
-    int model_count = 0;        /* keep a tally of models estimated */
+    DATASET *dataset;       /* pointer to dataset struct */
+    int *list;              /* list of regressors etc. */
+    MODEL *model;           /* pointer to model struct */
+    PRN *prn;               /* pointer to struct for printing */
+    int model_count = 0;    /* keep a tally of models estimated */
+    int i;                  /* index variable */
+
+    /* the first data series to load */
+    double z1[] = { 
+	199.9, 228, 235, 285, 239, 293, 285, 
+	365, 295, 290, 385, 505, 425, 415 
+    };
+    /* and the second series */
+    double z2[] = { 
+	1065, 1254, 1300, 1577, 1600, 1750, 1800,
+	1870, 1935, 1948, 2254, 2600, 2800, 3000
+    };
 
     /* basic initialization of library */
     libgretl_init();
@@ -43,43 +54,33 @@ int main (void)
     logo(0); /* print version info and session time */
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); /* simple printing */
 
-    /* create the datainfo struct and data matrix -- pass in pointer
-       to data array; specify the number of variables (allowing one
-       for the constant term), and the number of observations on each
-       variable (here 3 variables, 14 observations).  The last
-       parameter is a 0/1 flag indicating whether we want to supply
-       "case marker" strings for the observations: here we don't
+    /* allocate the dataset struct: the parameters are the number of
+       variables (here 3, allowing for the constant in position 0),
+       the number of observations on each variable (here 14), and
+       a 0/1 flag indicating whether we want to supply "case marker" 
+       strings for the observations (here we don't).
     */
-    datainfo = create_new_dataset(&Z, 3, 14, 0);
-    if (datainfo == NULL) noalloc();
+    dataset = create_new_dataset(3, 14, 0);
+    if (dataset == NULL) noalloc();
 
     /* copy in the names of the variables (starting at [1]
        because [0] refers to the constant) */
-    strcpy(datainfo->varname[1], "price");
-    strcpy(datainfo->varname[2], "sqft");
+    strcpy(dataset->varname[1], "price");
+    strcpy(dataset->varname[2], "sqft");
 
-    /* Fill in the dataset, Z.  Note that Z may be a superset of the 
-       data actually used in the regression equation.
-
-       The elements of Z[0] are automatically reserved for the
-       constant (via create_new_dataset()), so we fill in data values
-       starting from column 1.  
+    /* Fill in the data array, starting at variable 1. Note that 
+       this array may be a superset of the data actually used in 
+       the regression equation. Note that dataset->n records the
+       number of observations.
     */
 
-    Z[1][0] = 199.9;	Z[2][0]  = 1065;
-    Z[1][1]  = 228;	Z[2][1]  = 1254;
-    Z[1][2]  = 235;	Z[2][2]  = 1300;
-    Z[1][3]  = 285;	Z[2][3]  = 1577;
-    Z[1][4]  = 239;	Z[2][4]  = 1600;
-    Z[1][5]  = 293;	Z[2][5]  = 1750;
-    Z[1][6]  = 285;	Z[2][6]  = 1800;
-    Z[1][7]  = 365;	Z[2][7]  = 1870;
-    Z[1][8]  = 295;	Z[2][8]  = 1935;
-    Z[1][9]  = 290;	Z[2][9]  = 1948;
-    Z[1][10] = 385;	Z[2][10] = 2254;
-    Z[1][11] = 505;	Z[2][11] = 2600;
-    Z[1][12] = 425;	Z[2][12] = 2800;
-    Z[1][13] = 415;	Z[2][13] = 3000;
+    for (i=0; i<dataset->n; i++) {
+	dset_set_data(dataset, 1, i, z1[i]);
+    }
+
+    for (i=0; i<dataset->n; i++) {
+	dset_set_data(dataset, 2, i, z2[i]);
+    }    
 
     /* Set up the "list", which is fed to the regression function.
        The first element of list represents the length of the list
@@ -100,8 +101,7 @@ int main (void)
     model = gretl_model_new();
     if (model == NULL) noalloc();
     *model = lsq(list,     /* regressand and regressors */
-		 Z,        /* data array */
-		 datainfo, /* data information */
+		 dataset,  /* the dataset */
 		 OLS,      /* use Ordinary Least Squares */
 		 OPT_NONE  /* no special options */
 		 );
@@ -113,18 +113,18 @@ int main (void)
         return 1;
     }
 
-    /* Otherwise give this model an ID number for reference... */
+    /* Otherwise give this model an ID number for reference */
     ++model_count;
     model->ID = model_count;
 
-    /* ...and print info from the regression. */
-    printmodel(model, datainfo, OPT_NONE, prn);
+    /* and print the regression results */
+    printmodel(model, dataset, OPT_NONE, prn);
 
     /* memory management check -- try explicitly freeing all allocated
        memory */
     gretl_model_free(model);
     free(list);
-    destroy_dataset(Z, datainfo); 
+    destroy_dataset(dataset); 
     gretl_print_destroy(prn);
 
     libgretl_cleanup();

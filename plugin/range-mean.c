@@ -43,9 +43,9 @@ static void get_range_and_mean (int t1, int t2, const double *x,
     }
 }
 
-static int 
-do_range_mean_plot (int n, const double **Z, double a, double b,
-		    const char *vname)
+static int do_range_mean_plot (int n, const DATASET *dset, 
+			       double a, double b,
+			       const char *vname)
 {
     FILE *fp;
     int fitline = 0;
@@ -77,7 +77,7 @@ do_range_mean_plot (int n, const double **Z, double a, double b,
     fputs("'-' using 1:2 w points lt 1\n", fp);
 
     for (t=0; t<n; t++) {
-	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
+	fprintf(fp, "%g %g\n", dset->Z[2][t], dset->Z[1][t]);
     }
     fputs("e\n", fp);
 
@@ -92,17 +92,17 @@ do_range_mean_plot (int n, const double **Z, double a, double b,
    encountered */
 
 static int 
-rm_adjust_sample (int v, const double **Z, int *t1, int *t2)
+rm_adjust_sample (int v, const DATASET *dset, int *t1, int *t2)
 {
     int t, t1min = *t1, t2max = *t2;
 
     for (t=t1min; t<t2max; t++) {
-	if (na(Z[v][t])) t1min++;
+	if (na(dset->Z[v][t])) t1min++;
 	else break;
     }
 
     for (t=t2max; t>t1min; t--) {
-	if (na(Z[v][t])) t2max--;
+	if (na(dset->Z[v][t])) t2max--;
 	else break;
     }
 
@@ -111,11 +111,10 @@ rm_adjust_sample (int v, const double **Z, int *t1, int *t2)
     return 0;
 }
 
-int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo, 
+int range_mean_graph (int vnum, DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
-    double **rmZ;
-    DATAINFO *rminfo;
+    DATASET *rmset;
     MODEL rmmod;
     int rmlist[4] = { 3, 1, 0, 2 };
     int k, t, m, nsamp, err = 0;
@@ -126,9 +125,9 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo,
     double a, b;
     int t1, t2;
 
-    t1 = pdinfo->t1;
-    t2 = pdinfo->t2;
-    rm_adjust_sample(vnum, Z, &t1, &t2);
+    t1 = dset->t1;
+    t2 = dset->t2;
+    rm_adjust_sample(vnum, dset, &t1, &t2);
 
     nsamp = t2 - t1 + 1;
 
@@ -137,8 +136,8 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo,
 	return E_DATA;
     } 	
 
-    if (pdinfo->pd > 1 && nsamp >= 3 * pdinfo->pd) {
-	k = pdinfo->pd;
+    if (dset->pd > 1 && nsamp >= 3 * dset->pd) {
+	k = dset->pd;
     } else {
 	k = (int) sqrt((double) nsamp);
     }
@@ -146,14 +145,14 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo,
     extra = nsamp % k;
     m = (nsamp / k) + ((extra >= 3)? 1 : 0);
 
-    rminfo = create_auxiliary_dataset(&rmZ, 3, m);
-    if (rminfo == NULL) {
+    rmset = create_auxiliary_dataset(3, m);
+    if (rmset == NULL) {
 	return E_ALLOC;
     }
 
     if (verbose) {
 	pprintf(prn, _("Range-mean statistics for %s\n"), 
-		pdinfo->varname[vnum]);
+		dset->varname[vnum]);
 	pprintf(prn, _("using %d sub-samples of size %d\n\n"),
 		m, k);
 	pprintf(prn, "%30s%16s\n", _("range"), _("mean"));
@@ -172,26 +171,26 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo,
 	    end += extra;
 	}
 
-	get_range_and_mean(start, end, Z[vnum], &range, &mean);
-	rmZ[1][t] = range;
-	rmZ[2][t] = mean;
+	get_range_and_mean(start, end, dset->Z[vnum], &range, &mean);
+	rmset->Z[1][t] = range;
+	rmset->Z[2][t] = mean;
 
 	if (verbose) {
-	    ntodate(startdate, start, pdinfo);
-	    ntodate(enddate, end, pdinfo);
+	    ntodate(startdate, start, dset);
+	    ntodate(enddate, end, dset);
 	    sprintf(obsstr, "%s - %s", startdate, enddate);
 	    pputs(prn, obsstr);
 	    bufspace(20 - strlen(obsstr), prn);
-	    gretl_print_fullwidth_double(rmZ[1][t], GRETL_DIGITS, prn);
-	    gretl_print_fullwidth_double(rmZ[2][t], GRETL_DIGITS, prn);
+	    gretl_print_fullwidth_double(rmset->Z[1][t], GRETL_DIGITS, prn);
+	    gretl_print_fullwidth_double(rmset->Z[2][t], GRETL_DIGITS, prn);
 	    pputc(prn, '\n');
 	}
     }
 
-    strcpy(rminfo->varname[1], "range");
-    strcpy(rminfo->varname[2], "mean");
+    strcpy(rmset->varname[1], "range");
+    strcpy(rmset->varname[2], "mean");
 
-    rmmod = lsq(rmlist, rmZ, rminfo, OLS, OPT_A);
+    rmmod = lsq(rmlist, rmset, OLS, OPT_A);
 
     a = b = NADBL;
 
@@ -223,13 +222,13 @@ int range_mean_graph (int vnum, const double **Z, DATAINFO *pdinfo,
     }
 
     if (verbose && !gretl_in_batch_mode() && !gretl_looping()) {
-	err = do_range_mean_plot(m, (const double **) rmZ, a, b, 
-				 pdinfo->varname[vnum]);
+	err = do_range_mean_plot(m, rmset, a, b, 
+				 dset->varname[vnum]);
     }
 
     clear_model(&rmmod);
 
-    destroy_dataset(rmZ, rminfo);
+    destroy_dataset(rmset);
 
     return err;
 }

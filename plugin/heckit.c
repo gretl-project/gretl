@@ -161,19 +161,19 @@ static h_container *h_container_new (const int *list)
 
 static int 
 make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
-		     const double **Z, const DATAINFO *pdinfo)
+		     const DATASET *dset)
 {
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
     int totmiss = 0;
     int i, t, err = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	int miss = 0;
 
 	/* screen the primary equation variables */
-	if (Z[HC->selvar][t] == 1.0) {
+	if (dset->Z[HC->selvar][t] == 1.0) {
 	    for (i=1; i<=reglist[0] && !miss; i++) {
-		if (na(Z[reglist[i]][t])) {
+		if (na(dset->Z[reglist[i]][t])) {
 		    miss = 1;
 		    totmiss++;
 		}
@@ -182,7 +182,7 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 
 	/* screen the selection equation variables */
 	for (i=1; i<=sellist[0] && !miss; i++) {
-	    if (na(Z[sellist[i]][t])) {
+	    if (na(dset->Z[sellist[i]][t])) {
 		miss = 1;
 		totmiss++;
 	    }
@@ -196,7 +196,7 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
     if (totmiss > 0) {
 	int s;
 
-	HC->probmask = malloc(pdinfo->n + 1);
+	HC->probmask = malloc(dset->n + 1);
 	HC->fullmask = calloc(T, 1);
 
 	if (HC->probmask == NULL ||
@@ -204,15 +204,15 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 	    return E_ALLOC;
 	}
 
-	memset(HC->probmask, '0', pdinfo->n);
-	HC->probmask[pdinfo->n] = 0;
+	memset(HC->probmask, '0', dset->n);
+	HC->probmask[dset->n] = 0;
 
-	for (s=0, t=pdinfo->t1; t<=pdinfo->t2; t++, s++) {
+	for (s=0, t=dset->t1; t<=dset->t2; t++, s++) {
 	    int miss = 0;
 
-	    if (Z[HC->selvar][t] == 1.0) {
+	    if (dset->Z[HC->selvar][t] == 1.0) {
 		for (i=1; i<=reglist[0] && !miss; i++) {
-		    if (na(Z[reglist[i]][t])) {
+		    if (na(dset->Z[reglist[i]][t])) {
 			HC->fullmask[s] = 1;
 			HC->probmask[t] = '1';
 			miss = 1;
@@ -221,7 +221,7 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
 	    }
 
 	    for (i=1; i<=sellist[0] && !miss; i++) {
-		if (na(Z[sellist[i]][t])) {
+		if (na(dset->Z[sellist[i]][t])) {
 		    HC->fullmask[s] = 1;
 		    HC->probmask[t] = '1';
 		    miss = 1;
@@ -240,10 +240,9 @@ make_heckit_NA_mask (h_container *HC, const int *reglist, const int *sellist,
     return err;
 }
 
-static int make_uncens_mask (h_container *HC, const double **Z, 
-			     DATAINFO *pdinfo)
+static int make_uncens_mask (h_container *HC, DATASET *dset)
 {
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
     int t, s = 0;
 
     HC->uncmask = calloc(T, 1);
@@ -252,15 +251,15 @@ static int make_uncens_mask (h_container *HC, const double **Z,
     }
 
     if (HC->fullmask == NULL) {
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (Z[HC->selvar][t] == 0.0) {
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (dset->Z[HC->selvar][t] == 0.0) {
 		HC->uncmask[s] = 1;
 	    }
 	    s++;
 	}
     } else {
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (Z[HC->selvar][t] == 0.0 || HC->fullmask[s]) {
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    if (dset->Z[HC->selvar][t] == 0.0 || HC->fullmask[s]) {
 		HC->uncmask[s] = 1;
 	    }
 	    s++;
@@ -274,7 +273,7 @@ static int make_uncens_mask (h_container *HC, const double **Z,
 
 static void debug_print_masks (h_container *HC,
 			       const int *Xl,
-			       const double **Z)
+			       const DATASET *dset)
 {
     double x;
     int t, i;
@@ -287,14 +286,14 @@ static void debug_print_masks (h_container *HC,
 	    fputc('U', stderr);
 	}
 	fputc('\t', stderr);
-	x = Z[HC->selvar][t];
+	x = dset->Z[HC->selvar][t];
 	if (na(x)) {
 	    fprintf(stderr, "          NA");
 	} else {
 	    fprintf(stderr, "%12.4f", x);
 	}
 	for (i=1; i<=Xl[0]; i++) {
-	    x = Z[Xl[i]][t];
+	    x = dset->Z[Xl[i]][t];
 	    if (na(x)) {
 		fprintf(stderr, "          NA");
 	    } else {
@@ -337,9 +336,8 @@ static int h_make_data_lists (h_container *HC,
 }
 
 static int h_container_fill (h_container *HC, const int *Xl, 
-			     const int *Zl, const double **Z, 
-			     DATAINFO *pdinfo, MODEL *probmod, 
-			     MODEL *olsmod)
+			     const int *Zl, DATASET *dset, 
+			     MODEL *probmod, MODEL *olsmod)
 {
     gretl_vector *tmp = NULL;
     double bmills, s2, mdelta;
@@ -381,23 +379,24 @@ static int h_container_fill (h_container *HC, const int *Xl,
       observations, and may be NULL; uncmasks skips censored
       observations too.
     */
-    err = make_uncens_mask(HC, Z, pdinfo);
+    err = make_uncens_mask(HC, dset);
 
 #if HDEBUG > 1
     if (!err && HC->fullmask != NULL) {
-	debug_print_masks(HC, Xl, Z);
+	debug_print_masks(HC, Xl, dset);
     }
 #endif
 
-    t1 = pdinfo->t1;
-    t2 = pdinfo->t2;
+    t1 = dset->t1;
+    t2 = dset->t2;
 
     tmplist[0] = 1;
 
     if (!err) {
 	/* dependent variable vector */
 	tmplist[1] = HC->depvar;
-	HC->y = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
+	HC->y = gretl_matrix_data_subset_masked(tmplist, dset,
+						t1, t2, 
 						HC->uncmask, &err);
     }
 
@@ -405,7 +404,8 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->nunc = gretl_matrix_rows(HC->y);
 	/* selection variable vector */
 	tmplist[1] = HC->selvar;
-	HC->d = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
+	HC->d = gretl_matrix_data_subset_masked(tmplist, dset,
+						t1, t2, 
 						HC->fullmask, &err);
     }
 
@@ -413,7 +413,8 @@ static int h_container_fill (h_container *HC, const int *Xl,
 	HC->ntot = gretl_matrix_rows(HC->d);
 	/* Mills ratio vector */
 	tmplist[1] = HC->millsvar;
-	HC->mills = gretl_matrix_data_subset_masked(tmplist, Z, t1, t2, 
+	HC->mills = gretl_matrix_data_subset_masked(tmplist, dset,
+						    t1, t2, 
 						    HC->uncmask, &err);
     }
 
@@ -426,20 +427,23 @@ static int h_container_fill (h_container *HC, const int *Xl,
     }
 
     /* regressors in primary equation */
-    HC->reg = gretl_matrix_data_subset_masked(HC->Xlist, Z, t1, t2, 
+    HC->reg = gretl_matrix_data_subset_masked(HC->Xlist, dset,
+					      t1, t2, 
 					      HC->uncmask, &err);
 
     if (!err) {
 	/* regressors in selection equation */
 	HC->selreg = 
-	    gretl_matrix_data_subset_masked(HC->Zlist, Z, t1, t2, 
+	    gretl_matrix_data_subset_masked(HC->Zlist, dset,
+					    t1, t2, 
 					    HC->fullmask, &err);
     }
 
     if (!err) {
 	/* regressors in selection equation, uncensored sample */
 	HC->selreg_u = 
-	    gretl_matrix_data_subset_masked(HC->Zlist, Z, t1, t2, 
+	    gretl_matrix_data_subset_masked(HC->Zlist, dset,
+					    t1, t2, 
 					    HC->uncmask, &err);
     }
 
@@ -954,7 +958,7 @@ double *heckit_nhessian (const double *b, int n, BFGS_CRIT_FUNC func,
 */
 
 static void heckit_yhat_uhat (MODEL *hm, h_container *HC, 
-			      const double **Z, DATAINFO *pdinfo)
+			      DATASET *dset)
 {
     double x, xb, zg, u;
     double F, lam = HC->lambda;
@@ -966,18 +970,18 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     double *llt;
     int i, t, v;
 
-    llt = malloc(pdinfo->n * sizeof *llt);
+    llt = malloc(dset->n * sizeof *llt);
     if (llt != NULL) {
-	for (i=0; i<pdinfo->n; i++) {
+	for (i=0; i<dset->n; i++) {
 	    llt[i] = NADBL;
 	}
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	xb = 0.0;
 	for (i=0; i<kb; i++) {
 	    v = HC->Xlist[i+1];
-	    x = Z[v][t];
+	    x = dset->Z[v][t];
 	    if (na(x)) {
 		xb = NADBL;
 		break;
@@ -993,7 +997,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	zg = 0.0;
 	for (i=0; i<kg; i++) {
 	    v = HC->Zlist[i+1];
-	    x = Z[v][t];
+	    x = dset->Z[v][t];
 	    if (na(x)) {
 		zg = NADBL;
 		break;
@@ -1007,16 +1011,16 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
 	    continue;
 	}
 
-	if (Z[HC->selvar][t] == 0) {
+	if (dset->Z[HC->selvar][t] == 0) {
 	    /* censored */
 	    F = normal_cdf(-zg);
 	    hm->uhat[t] = -lam * invmills(zg);
 	    if (llt != NULL) {
 		llt[t] = log(F);
 	    }
-	} else if (!na(xb) && Z[HC->selvar][t] == 1) {
+	} else if (!na(xb) && dset->Z[HC->selvar][t] == 1) {
 	    /* uncensored */
-	    hm->uhat[t] = u = Z[HC->depvar][t] - xb;
+	    hm->uhat[t] = u = dset->Z[HC->depvar][t] - xb;
 	    if (llt != NULL) {
 		u /= HC->sigma;
 		x = (zg + rho*u) * rhofunc;
@@ -1028,7 +1032,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
     if (llt != NULL) {
 	gretl_model_set_data(hm, "llt", llt, 
 			     GRETL_TYPE_DOUBLE_ARRAY,
-			     pdinfo->n * sizeof *llt);
+			     dset->n * sizeof *llt);
     }
 }
 
@@ -1038,7 +1042,7 @@ static void heckit_yhat_uhat (MODEL *hm, h_container *HC,
   anyway.
 */
 
-static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinfo)
+static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATASET *dset)
 {
     double *fullcoeff;
     int kb = HC->kmain;
@@ -1056,7 +1060,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 
     if (!err) {
 	for (i=0; i<kb; i++) {
-	    strcpy(hm->params[i], pdinfo->varname[hm->list[i+2]]);
+	    strcpy(hm->params[i], dset->varname[hm->list[i+2]]);
 	    fullcoeff[i] = gretl_vector_get(HC->beta, i);
 	}
 	
@@ -1064,7 +1068,7 @@ static int transcribe_heckit_params (MODEL *hm, h_container *HC, DATAINFO *pdinf
 	fullcoeff[kb] = HC->lambda;
 
 	for (i=0; i<HC->ksel; i++) {
-	    strcpy(hm->params[i+kb+1], pdinfo->varname[HC->Zlist[i+1]]);
+	    strcpy(hm->params[i+kb+1], dset->varname[HC->Zlist[i+1]]);
 	    fullcoeff[i+kb+1] = gretl_vector_get(HC->gama, i);
 	}
     }
@@ -1447,7 +1451,7 @@ int heckit_ml (MODEL *hm, h_container *HC, gretlopt opt, PRN *prn)
     return err;
 }
 
-static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
+static MODEL heckit_init (h_container *HC, DATASET *dset)
 {
 #if HDEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
@@ -1469,8 +1473,7 @@ static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
     if (!err) {
 	HC->depvar = reglist[1];
 	HC->selvar = sellist[1];
-	err = make_heckit_NA_mask(HC, reglist, sellist, (const double **) *pZ, 
-				  pdinfo);
+	err = make_heckit_NA_mask(HC, reglist, sellist, dset);
     }
 
     if (err) {
@@ -1478,7 +1481,7 @@ static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* run initial auxiliary probit */
-    probmod = binary_probit(sellist, *pZ, pdinfo, OPT_A, NULL);
+    probmod = binary_probit(sellist, dset, OPT_A, NULL);
     if (probmod.errcode) {
 	hm.errcode = probmod.errcode;
 	goto bailout;
@@ -1488,45 +1491,45 @@ static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
     HC->t2 = probmod.t2;
 
 #if HDEBUG
-    printmodel(&probmod, pdinfo, OPT_NONE, prn);
+    printmodel(&probmod, dset, OPT_NONE, prn);
 #endif
 
     /* add the inverse Mills ratio to the dataset */
 
-    err = dataset_add_series(1, pZ, pdinfo);
+    err = dataset_add_series(1, dset);
     if (err) {
 	goto bailout;
     } 
 
-    HC->millsvar = pdinfo->v - 1;
+    HC->millsvar = dset->v - 1;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if ((*pZ)[HC->selvar][t] == 1.0) {
-	    (*pZ)[HC->millsvar][t] = probmod.uhat[t];
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (dset->Z[HC->selvar][t] == 1.0) {
+	    dset->Z[HC->millsvar][t] = probmod.uhat[t];
 	} else {
-	    (*pZ)[HC->millsvar][t] = NADBL;
+	    dset->Z[HC->millsvar][t] = NADBL;
 	}
     }
 
-    strcpy(pdinfo->varname[HC->millsvar], "lambda");
+    strcpy(dset->varname[HC->millsvar], "lambda");
     gretl_list_append_term(&reglist, HC->millsvar);
 
     /* run OLS including Mills variable */
-    hm = lsq(reglist, *pZ, pdinfo, OLS, OPT_A);
+    hm = lsq(reglist, dset, OLS, OPT_A);
     if (!hm.errcode) {
 	hm.ci = HECKIT;
 	gretl_model_set_int(&hm, "totobs", probmod.nobs); 
     }
 
 #if HDEBUG
-    printmodel(&hm, pdinfo, OPT_NONE, prn);
+    printmodel(&hm, dset, OPT_NONE, prn);
     gretl_print_destroy(prn);
 #endif
 
     if (!hm.errcode) {
 	/* fill the container with all the relevant data */
-	err = h_container_fill(HC, reglist, sellist, (const double **) *pZ, 
-			       pdinfo, &probmod, &hm);
+	err = h_container_fill(HC, reglist, sellist, dset, 
+			       &probmod, &hm);
     }
 
  bailout:
@@ -1552,13 +1555,13 @@ static MODEL heckit_init (h_container *HC, double ***pZ, DATAINFO *pdinfo)
    ML.
 */
 
-MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL heckit_estimate (const int *list, DATASET *dset, 
 		       gretlopt opt, PRN *prn) 
 {
     PRN *vprn = NULL;
     h_container *HC = NULL;
     MODEL hm;
-    int oldv = pdinfo->v;
+    int oldv = dset->v;
     int err = 0;
 
     if (opt & OPT_V) {
@@ -1573,7 +1576,7 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return hm;
     }
 
-    hm = heckit_init(HC, pZ, pdinfo);
+    hm = heckit_init(HC, dset);
     if (hm.errcode) {
 	h_container_destroy(HC);
 	return hm;
@@ -1590,8 +1593,8 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	hm.errcode = err;
     } else {
-	err = transcribe_heckit_params(&hm, HC, pdinfo);
-	heckit_yhat_uhat(&hm, HC, (const double **) *pZ, pdinfo);
+	err = transcribe_heckit_params(&hm, HC, dset);
+	heckit_yhat_uhat(&hm, HC, dset);
 	clear_model_xpx(&hm);
     }
 
@@ -1608,8 +1611,8 @@ MODEL heckit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	hm.opt |= OPT_R;
     }
 
-    if (pdinfo->v > oldv) {
-	dataset_drop_last_variables(1, pZ, pdinfo);
+    if (dset->v > oldv) {
+	dataset_drop_last_variables(1, dset);
     }
 
     h_container_destroy(HC);

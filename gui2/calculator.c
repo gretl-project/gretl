@@ -1307,7 +1307,7 @@ static int calc_finish_genr (void)
 	return 1;
     }
 
-    err = generate(cmdline, &Z, datainfo, OPT_NONE, prn); 
+    err = generate(cmdline, dataset, OPT_NONE, prn); 
 
     if (err) {
 	errbox(gretl_print_get_buffer(prn));
@@ -1415,17 +1415,17 @@ static void np_test (GtkWidget *w, test_t *test)
     int err = 0;
 
     var1 = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
-    v1 = series_index(datainfo, var1);
+    v1 = series_index(dataset, var1);
 
-    if (v1 == datainfo->v) {
+    if (v1 == dataset->v) {
 	gui_errmsg(E_UNKVAR);
 	return;
     }
 
     if (test->code == NP_DIFF) {
 	var2 = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	v2 = series_index(datainfo, var2);
-	if (v2 == datainfo->v) {
+	v2 = series_index(dataset, var2);
+	if (v2 == dataset->v) {
 	    gui_errmsg(E_UNKVAR);
 	    return;
 	}
@@ -1450,8 +1450,7 @@ static void np_test (GtkWidget *w, test_t *test)
 	    opt |= OPT_I;
 	}
 
-	err = diff_test(list, (const double **) Z, datainfo, 
-			opt, prn);
+	err = diff_test(list, dataset, opt, prn);
     } else if (test->code == NP_RUNS) {
 	if (test->extra != NULL && button_is_active(test->extra)) {
 	    opt |= OPT_D;
@@ -1459,8 +1458,7 @@ static void np_test (GtkWidget *w, test_t *test)
 	if (test->check != NULL && button_is_active(test->check)) {
 	    opt |= OPT_E;
 	}	
-	err = runs_test(v1, (const double **) Z, datainfo, 
-			opt, prn);
+	err = runs_test(v1, dataset, opt, prn);
     }	
 
     if (err) {
@@ -2034,8 +2032,8 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     if (sscanf(str, "%15s", test) != 1) {
 	err = 1;
     } else {
-	*vx = series_index(datainfo, test);
-	if (*vx >= datainfo->v) {
+	*vx = series_index(dataset, test);
+	if (*vx >= dataset->v) {
 	    gui_errmsg(E_UNKVAR);
 	    err = 1;
 	}
@@ -2078,8 +2076,8 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
 	if (sscanf(p, "%15s", test) != 1) {
 	    err = 1;
 	} else {
-	    *vy = series_index(datainfo, test);
-	    if (*vy >= datainfo->v) {
+	    *vy = series_index(dataset, test);
+	    if (*vy >= dataset->v) {
 		gui_errmsg(E_UNKVAR);
 		err = 1;
 	    }
@@ -2126,7 +2124,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     test_t *test = g_object_get_data(G_OBJECT(p), "test");
     int pos = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(p), "pos"));
     gchar **pbuf = g_object_get_data(G_OBJECT(p), "pbuf");
-    int t, n = sample_size(datainfo);
+    int t, n = sample_size(dataset);
     int vx = -1, vy = -1;
     GretlOp yop = 0;
     gchar *buf = NULL;
@@ -2158,8 +2156,8 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	/* e.g. "cholest (gender = 1)" */
 	err = get_restriction_vxy(buf, &vx, &vy, &yop, &yval);
     } else {
-	vx = series_index(datainfo, buf);
-	if (vx >= datainfo->v) {
+	vx = series_index(dataset, buf);
+	if (vx >= dataset->v) {
 	    err = 1;
 	}
     }
@@ -2181,45 +2179,50 @@ static void populate_stats (GtkWidget *w, gpointer p)
 	return;
     }
 
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	if (na(Z[vx][t]) || (vy > 0 && !eval_ytest(Z[vy][t], yop, yval))) {
+    for (t=dataset->t1; t<=dataset->t2; t++) {
+	if (na(dataset->Z[vx][t]) || 
+	    (vy > 0 && !eval_ytest(dataset->Z[vy][t], yop, yval))) {
 	    n--;
 	}
     }
 
     if (n == 0) {		
-	errbox(_("Data missing for variable '%s'"), datainfo->varname[vx]);
+	errbox(_("Data missing for variable '%s'"), dataset->varname[vx]);
 	return;
     }
 
     if (test->code == ONE_MEAN || test->code == TWO_MEANS) {
 	if (vy < 0) {
-	    x1 = gretl_mean(datainfo->t1, datainfo->t2, Z[vx]);
-	    x2 = gretl_stddev(datainfo->t1, datainfo->t2, Z[vx]);
+	    x1 = gretl_mean(dataset->t1, dataset->t2, dataset->Z[vx]);
+	    x2 = gretl_stddev(dataset->t1, dataset->t2, dataset->Z[vx]);
 	} else {
-	    x1 = gretl_restricted_mean(datainfo->t1, datainfo->t2, 
-				      Z[vx], Z[vy], yop, yval);
-	    x2 = gretl_restricted_stddev(datainfo->t1, datainfo->t2, 
-					 Z[vx], Z[vy], yop, yval);
+	    x1 = gretl_restricted_mean(dataset->t1, dataset->t2, 
+				       dataset->Z[vx], dataset->Z[vy], 
+				       yop, yval);
+	    x2 = gretl_restricted_stddev(dataset->t1, dataset->t2, 
+					 dataset->Z[vx], dataset->Z[vy], 
+					 yop, yval);
 	}
 	entry_set_float(test, pos, x1);
 	entry_set_float(test, pos + 1, x2);
 	entry_set_int(test, pos + 2, n);
     } else if (test->code == ONE_VARIANCE || test->code == TWO_VARIANCES) {
 	if (vy < 0) {
-	    x1 = gretl_variance(datainfo->t1, datainfo->t2, Z[vx]);
+	    x1 = gretl_variance(dataset->t1, dataset->t2, dataset->Z[vx]);
 	} else {
-	    x1 = gretl_restricted_variance(datainfo->t1, datainfo->t2, 
-					   Z[vx], Z[vy], yop, yval);
+	    x1 = gretl_restricted_variance(dataset->t1, dataset->t2, 
+					   dataset->Z[vx], dataset->Z[vy], 
+					   yop, yval);
 	}
 	entry_set_float(test, pos, x1);
 	entry_set_int(test, pos + 1, n);
     } else if (test->code == ONE_PROPN || test->code == TWO_PROPNS) {
 	if (vy < 0) {
-	    x1 = gretl_mean(datainfo->t1, datainfo->t2, Z[vx]);
+	    x1 = gretl_mean(dataset->t1, dataset->t2, dataset->Z[vx]);
 	} else {
-	    x1 = gretl_restricted_mean(datainfo->t1, datainfo->t2, 
-				      Z[vx], Z[vy], yop, yval);
+	    x1 = gretl_restricted_mean(dataset->t1, dataset->t2, 
+				       dataset->Z[vx], dataset->Z[vy], 
+				       yop, yval);
 	}
 	entry_set_float(test, pos, x1);
 	entry_set_int(test, pos + 1, n);
@@ -2230,10 +2233,10 @@ static int var_is_ok (int i, int code)
 {
     int ret = 1;
 
-    if (var_is_hidden(datainfo, i)) {
+    if (var_is_hidden(dataset, i)) {
 	ret = 0;
     } else if ((code == ONE_PROPN || code == TWO_PROPNS) &&
-	       !gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
+	       !gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[i])) {
 	ret = 0;
     }
 
@@ -2244,17 +2247,17 @@ static void add_vars_to_combo (GtkWidget *box, int code, int pos)
 {
     int i, vmin = (pos > 0)? 2 : 1;
 
-    for (i=vmin; i<datainfo->v; i++) {
+    for (i=vmin; i<dataset->v; i++) {
 	if (var_is_ok(i, code)) {
-	    combo_box_append_text(box, datainfo->varname[i]);
+	    combo_box_append_text(box, dataset->varname[i]);
 	}
     }
 
     if (pos > 0) {
 	/* add first variable at the end of the list */
-	for (i=1; i<datainfo->v; i++) {
+	for (i=1; i<dataset->v; i++) {
 	    if (var_is_ok(i, code)) {
-		combo_box_append_text(box, datainfo->varname[i]);
+		combo_box_append_text(box, dataset->varname[i]);
 		break;
 	    }
 	}
@@ -2450,9 +2453,9 @@ static int n_ok_series (void)
 {
     int i, nv = 0;
 
-    if (datainfo != NULL) {
-	for (i=1; i<datainfo->v; i++) {
-	    if (!var_is_hidden(datainfo, i)) {
+    if (dataset != NULL) {
+	for (i=1; i<dataset->v; i++) {
+	    if (!var_is_hidden(dataset, i)) {
 		nv++;
 	    }
 	}
@@ -2465,10 +2468,10 @@ static int n_ok_dummies (void)
 {
     int i, nv = 0;
 
-    if (datainfo != NULL) {
-	for (i=1; i<datainfo->v; i++) {
-	    if (!var_is_hidden(datainfo, i) &&
-		gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
+    if (dataset != NULL) {
+	for (i=1; i<dataset->v; i++) {
+	    if (!var_is_hidden(dataset, i) &&
+		gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[i])) {
 		nv++;
 	    }
 	}

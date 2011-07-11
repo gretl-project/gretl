@@ -31,9 +31,9 @@ static gboolean obs_button_input (GtkSpinButton *spin,
     int n;
 
     if (g_object_get_data(G_OBJECT(spin), "newdata")) {
-	n = merge_dateton(obs, (DATAINFO *) p);
+	n = merge_dateton(obs, (DATASET *) p);
     } else {
-	n = dateton(obs, (DATAINFO *) p);
+	n = dateton(obs, (DATASET *) p);
     }
 
     *new_val = n;
@@ -47,7 +47,7 @@ static gboolean obs_button_output (GtkSpinButton *spin, gpointer p)
     gchar buf[OBSLEN];
     int n = gtk_spin_button_get_value_as_int(spin);
 
-    ntodate(buf, n, (DATAINFO *) p);
+    ntodate(buf, n, (DATASET *) p);
 
     if (strcmp(buf, gtk_entry_get_text(GTK_ENTRY(spin)))) {
 	gtk_entry_set_text(GTK_ENTRY(spin), buf);
@@ -61,7 +61,7 @@ static gboolean obs_button_output (GtkSpinButton *spin, gpointer p)
     return TRUE;
 }
 
-GtkWidget *obs_button_new (GtkAdjustment *adj, DATAINFO *pdinfo) 
+GtkWidget *obs_button_new (GtkAdjustment *adj, DATASET *pdinfo) 
 {
     GtkWidget *spinner;
     int n = strlen(pdinfo->endobs);
@@ -78,7 +78,7 @@ GtkWidget *obs_button_new (GtkAdjustment *adj, DATAINFO *pdinfo)
     return spinner;
 }
 
-GtkWidget *data_start_button (GtkAdjustment *adj, DATAINFO *pdinfo) 
+GtkWidget *data_start_button (GtkAdjustment *adj, DATASET *pdinfo) 
 {
     GtkWidget *spinner = obs_button_new(adj, pdinfo);
 

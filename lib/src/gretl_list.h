@@ -52,15 +52,14 @@ char *gretl_list_to_string (const int *list);
 
 char *gretl_list_to_lags_string (const int *list, int *err);
 
-char *gretl_list_get_names (const int *list, const DATAINFO *pdinfo,
+char *gretl_list_get_names (const int *list, const DATASET *dset,
 			    int *err);
 
 int in_gretl_list (const int *list, int k);
 
 int gretl_list_delete_at_pos (int *list, int pos);
 
-int gretl_list_purge_const (int *list, const double **Z,
-			    const DATAINFO *pdinfo);
+int gretl_list_purge_const (int *list, const DATASET *dset);
 
 int gretl_list_min_max (const int *list, int *lmin, int *lmax);
 
@@ -80,7 +79,7 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist);
 
 int *gretl_list_diff_new (const int *biglist, const int *sublist, int minpos);
 
-int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err);
+int *gretl_list_build (const char *s, const DATASET *dset, int *err);
 
 int gretl_list_add_list (int **targ, const int *src);
 
@@ -88,13 +87,12 @@ int gretl_list_insert_list (int **targ, const int *src, int pos);
 
 int gretl_list_insert_list_minus (int **targ, const int *src, int pos);
 
-int reglist_check_for_const (int *list, const double **Z,
-			     const DATAINFO *pdinfo);
+int reglist_check_for_const (int *list, const DATASET *dset);
 
-int gretl_list_const_pos (const int *list, int minpos, const double **Z,
-			  const DATAINFO *pdinfo);
+int gretl_list_const_pos (const int *list, int minpos, 
+			  const DATASET *dset);
 
-int list_members_replaced (const int *list, const DATAINFO *pdinfo,
+int list_members_replaced (const int *list, const DATASET *dset,
 			   int ref_id);
 
 int gretl_list_separator_position (const int *list);
@@ -113,7 +111,7 @@ int gretl_lists_share_members (const int *list1, const int *list2);
 
 int gretl_list_n_distinct_members (const int *list);
 
-int *full_var_list (const DATAINFO *pdinfo, int *nvars);
+int *full_var_list (const DATASET *dset, int *nvars);
 
 int n_saved_lists (void);
 
@@ -154,14 +152,14 @@ int load_user_lists_file (const char *fname);
 int gretl_serialize_lists (const char *fname);
 
 void gretl_list_print (const char *lname, 
-		       const DATAINFO *pdinfo,
+		       const DATASET *dset,
 		       PRN *prn);
 
-int *varname_match_list (const DATAINFO *pdinfo, const char *pattern,
+int *varname_match_list (const DATASET *dset, const char *pattern,
 			 int *err);
 
-int *ellipsis_list (const DATAINFO *pdinfo, int v1, int v2, int *err);
+int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err);
 
-int varname_match_any (const DATAINFO *pdinfo, const char *pattern);
+int varname_match_any (const DATASET *dset, const char *pattern);
 
 #endif /* GRETL_LIST_H */

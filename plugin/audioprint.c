@@ -4,12 +4,12 @@
 
 #include "gretl_enums.h"
 
-static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+static int audioprint_coeff (const DATASET *dset, const MODEL *pmod, 
 			     int i, PRN *prn)
 {
     char varname[24];
 
-    gretl_model_get_param_name(pmod, pdinfo, i, varname);
+    gretl_model_get_param_name(pmod, dset, i, varname);
 
     pprintf(prn, "Variable %s.\n", varname);
 
@@ -41,14 +41,14 @@ static int audioprint_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     return 0;
 }
 
-static int audioprint_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, 
+static int audioprint_coefficients (const MODEL *pmod, const DATASET *dset, 
 				    PRN *prn)
 {
     int i, err = 0, gotnan = 0;
     int n = pmod->ncoeff;
 
     for (i=0; i<n; i++) {
-	err = audioprint_coeff(pdinfo, pmod, i, prn);
+	err = audioprint_coeff(dset, pmod, i, prn);
 	if (err) gotnan = 1;
     }
 
@@ -66,7 +66,7 @@ static void audio_rsqline (const MODEL *pmod, PRN *prn)
 }
 
 static void 
-audioprint_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+audioprint_model (MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
 
@@ -75,32 +75,32 @@ audioprint_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	return;
     }
 
-    ntodate(startdate, pmod->t1, pdinfo);
-    ntodate(enddate, pmod->t2, pdinfo);
+    ntodate(startdate, pmod->t1, dset);
+    ntodate(enddate, pmod->t2, dset);
 
     pprintf(prn, "O.L.S estimates using the %d observations %s to %s.\n",
 	    pmod->nobs, startdate, enddate);
-    pprintf(prn, "Dependent variable %s.\n", pdinfo->varname[pmod->list[1]]);
+    pprintf(prn, "Dependent variable %s.\n", dset->varname[pmod->list[1]]);
 
-    audioprint_coefficients(pmod, pdinfo, prn);  
+    audioprint_coefficients(pmod, dset, prn);  
 
     audio_rsqline(pmod, prn);
 }
 
 static void 
-audioprint_summary (Summary *summ, const DATAINFO *pdinfo,
+audioprint_summary (Summary *summ, const DATASET *dset,
 		    PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
     int lo = summ->list[0], i, vi;
 
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
+    ntodate(date1, dset->t1, dset);
+    ntodate(date2, dset->t2, dset);
 
     if (lo == 1) {
 	pprintf(prn, "Summary Statistics for the variable '%s' using the "
 		"observations %s to %s.\n",
-		pdinfo->varname[summ->list[1]], date1, date2);
+		dset->varname[summ->list[1]], date1, date2);
     } else {
 	pprintf(prn, "Summary Statistics, using the observations %s to %s.\n",
 		date1, date2);
@@ -109,7 +109,7 @@ audioprint_summary (Summary *summ, const DATAINFO *pdinfo,
     for (i=0; i<summ->list[0]; i++) {
 	vi = summ->list[i + 1];
 	if (lo > 1) {
-	    pprintf(prn, "%s, ", pdinfo->varname[vi]);
+	    pprintf(prn, "%s, ", dset->varname[vi]);
 	}
 	pprintf(prn, "mean, %.4g,\n", summ->mean[i]);
 	pprintf(prn, "median, %.4g,\n", summ->median[i]);
@@ -120,7 +120,7 @@ audioprint_summary (Summary *summ, const DATAINFO *pdinfo,
 }
 
 static void
-audioprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo,
+audioprint_matrix (const VMatrix *vmat, const DATASET *dset,
 		   PRN *prn)
 {
     int i, j, k;
@@ -130,8 +130,8 @@ audioprint_matrix (const VMatrix *vmat, const DATAINFO *pdinfo,
     if (vmat->ci == CORR) {
 	char date1[OBSLEN], date2[OBSLEN];
 
-	ntodate(date1, vmat->t1, pdinfo);
-	ntodate(date2, vmat->t2, pdinfo);
+	ntodate(date1, vmat->t1, dset);
+	ntodate(date2, vmat->t2, dset);
 
 	pprintf(prn, "Correlation coefficients, using the observations "
 		"%s to %s.\n", date1, date2);
@@ -316,7 +316,7 @@ static int speak_line (const char *line)
 
 #endif
 
-static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
+static int audio_print_special (int role, void *data, const DATASET *dset,
 				int (*should_stop)())
 {
     PRN *prn;
@@ -330,11 +330,11 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
     if (role == SUMMARY || role == VAR_SUMMARY) {
 	Summary *summ = (Summary *) data;
 
-	audioprint_summary(summ, pdinfo, prn);
+	audioprint_summary(summ, dset, prn);
     } else if (role == CORR || role == COVAR) {
 	VMatrix *vmat = (VMatrix *) data;
 
-	audioprint_matrix(vmat, pdinfo, prn);
+	audioprint_matrix(vmat, dset, prn);
     } else if (role == COEFFINT) {
 	CoeffIntervals *cf = (CoeffIntervals *) data;
 
@@ -342,7 +342,7 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
     } else if (role == VIEW_MODEL) {
 	MODEL *pmod = (MODEL *) data;
 
-	audioprint_model(pmod, pdinfo, prn);
+	audioprint_model(pmod, dset, prn);
     }
 
     buf = gretl_print_get_buffer(prn);
@@ -410,12 +410,12 @@ int read_window_text (GtkWidget *listbox,
 		      GtkWidget *text, 
 		      int role,
 		      gpointer data,
-		      const DATAINFO *pdinfo,
+		      const DATASET *dset,
 		      int (*should_stop)())
 {
     int err = 0;
 
-    if (pdinfo == NULL) {
+    if (dset == NULL) {
 	return read_listbox_content(listbox, should_stop);
     }
 
@@ -425,7 +425,7 @@ int read_window_text (GtkWidget *listbox,
 	role == COVAR ||
 	role == COEFFINT ||
 	role == VIEW_MODEL) {
-	err = audio_print_special(role, data, pdinfo, should_stop);
+	err = audio_print_special(role, data, dset, should_stop);
     } else {
 	GtkTextBuffer *tbuf;
 	GtkTextIter start, end;

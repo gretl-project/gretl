@@ -21,6 +21,6 @@
 #define DBWRITE_H
 
 int write_db_data (const char *fname, const int *list, gretlopt opt,
-		   const double **Z, const DATAINFO *pdinfo);
+		   const DATASET *dset);
 
 #endif /* DBWRITE_H */

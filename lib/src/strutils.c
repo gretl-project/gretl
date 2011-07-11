@@ -1696,17 +1696,17 @@ void free_strings_array (char **strs, int nstrs)
  * get_obs_string:
  * @obs: char array big enough to hold the observation (#OBSLEN).
  * @t: zero-based observation number.
- * @pdinfo: pointer to dataset information.
+ * @dset: pointer to dataset information.
  *
  * Returns: the observation string corresponding to @t.
  */
 
-char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo)
+char *get_obs_string (char *obs, int t, const DATASET *dset)
 {
-    if (dataset_has_markers(pdinfo)) { 
-	strcpy(obs, pdinfo->S[t]);
+    if (dataset_has_markers(dset)) { 
+	strcpy(obs, dset->S[t]);
     } else {
-	ntodate(obs, t, pdinfo);
+	ntodate(obs, t, dset);
     }
 
     return obs;
@@ -1783,25 +1783,25 @@ void modify_date_for_csv (char *s, int pd)
 /**
  * csv_obs_string_to_prn:
  * @t: 0-based observation number.
- * @pdinfo: data set information struct.
+ * @dset: data set information struct.
  * @prn: printing struct.
  *
  * Prints the observation string corresponding to obervation @t to
  * @prn, in a format suitable for a CSV file.
  */
 
-void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
+void csv_obs_to_prn (int t, const DATASET *dset, PRN *prn)
 {
-    if (pdinfo->S != NULL) {
-	pprintf(prn, "%s%c", pdinfo->S[t], pdinfo->delim);
-    } else if (pdinfo->structure != CROSS_SECTION) {
+    if (dset->S != NULL) {
+	pprintf(prn, "%s%c", dset->S[t], dset->delim);
+    } else if (dset->structure != CROSS_SECTION) {
 	char tmp[OBSLEN];
 
-	ntodate(tmp, t, pdinfo);
-	if (quarterly_or_monthly(pdinfo)) {
-	    modify_date_for_csv(tmp, pdinfo->pd);
+	ntodate(tmp, t, dset);
+	if (quarterly_or_monthly(dset)) {
+	    modify_date_for_csv(tmp, dset->pd);
 	}
-	pprintf(prn, "%s%c", tmp, pdinfo->delim);
+	pprintf(prn, "%s%c", tmp, dset->delim);
     }
 }
 	
@@ -2006,7 +2006,7 @@ void unescape_url (char *url)
  * make_varname_unique:
  * @vname: tentative name for variable.
  * @v: the ID number for the new variable.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * Given a tentative name for a new variable, check that it
  * is not a duplicate of an existing varname.  If it is,
@@ -2019,7 +2019,7 @@ void unescape_url (char *url)
  * Returns: the (possibly modified) variable name.
  */
 
-char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
+char *make_varname_unique (char *vname, int v, DATASET *dset) 
 {
     const char *add = "abcdefghijklmnopqrstuvwxyz";
     size_t n = strlen(vname);
@@ -2031,8 +2031,8 @@ char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo)
 
     for (j=0; j<26; j++) {
 	conflict = 0;
-	for (i=1; i<pdinfo->v && !conflict; i++) {
-	    if (i != v && !strcmp(vname, pdinfo->varname[i])) {
+	for (i=1; i<dset->v && !conflict; i++) {
+	    if (i != v && !strcmp(vname, dset->varname[i])) {
 		conflict = 1;
 	    }
 	}
@@ -2047,17 +2047,17 @@ char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo)
     return vname;
 }
 
-int fix_varname_duplicates (DATAINFO *pdinfo)
+int fix_varname_duplicates (DATASET *dset)
 {
     int dups = 0;
     int i, j;
 
-    for (i=1; i<pdinfo->v; i++) {
-	for (j=i+1; j<pdinfo->v; j++) {
-	    if (!strcmp(pdinfo->varname[i], pdinfo->varname[j])) {
-		fprintf(stderr, "'%s' duplicated variable name\n", pdinfo->varname[i]);
+    for (i=1; i<dset->v; i++) {
+	for (j=i+1; j<dset->v; j++) {
+	    if (!strcmp(dset->varname[i], dset->varname[j])) {
+		fprintf(stderr, "'%s' duplicated variable name\n", dset->varname[i]);
 		dups = 1;
-		make_varname_unique(pdinfo->varname[j], j, pdinfo);
+		make_varname_unique(dset->varname[j], j, dset);
 	    }
 	}
     }

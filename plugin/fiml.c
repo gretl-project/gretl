@@ -158,16 +158,13 @@ static fiml_system *fiml_system_new (equation_system *sys, int *err)
    unrestricted log-likelihood for the system 
 */
 
-static int 
-fiml_overid_test (fiml_system *fsys, double **Z, DATAINFO *pdinfo)
+static int fiml_overid_test (fiml_system *fsys, DATASET *dset)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
-    int t1 = pdinfo->t1;
-
+    int t1 = dset->t1;
     gretl_matrix *uru = NULL;
     gretl_matrix *urv = NULL;
-
     MODEL umod;
     double ldetS;
     int *list;
@@ -202,7 +199,7 @@ fiml_overid_test (fiml_system *fsys, double **Z, DATAINFO *pdinfo)
 
     for (i=0; i<fsys->g; i++) {
 	list[1] = enlist[i + 1];
-	umod = lsq(list, Z, pdinfo, OLS, OPT_A);
+	umod = lsq(list, dset, OLS, OPT_A);
 	if (umod.errcode) {
 	    err = umod.errcode;
 	    goto bailout;
@@ -241,7 +238,9 @@ fiml_overid_test (fiml_system *fsys, double **Z, DATAINFO *pdinfo)
 
 /* calculate FIML residuals as YG - WB */
 
-static void fiml_form_uhat (fiml_system *fsys, const double **Z, int t1)
+static void fiml_form_uhat (fiml_system *fsys, 
+			    const DATASET *dset, 
+			    int t1)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
@@ -254,12 +253,12 @@ static void fiml_form_uhat (fiml_system *fsys, const double **Z, int t1)
 	    y = 0.0;
 	    for (i=0; i<fsys->nendo; i++) {
 		gij = gretl_matrix_get(fsys->G, i, j);
-		y += Z[enlist[i + 1]][t + t1] * gij;
+		y += dset->Z[enlist[i + 1]][t + t1] * gij;
 	    }
 	    x = 0.0;
 	    for (i=0; i<fsys->nexo; i++) {
 		bij = gretl_matrix_get(fsys->B, i, j);
-		x += Z[exlist[i + 1]][t + t1] * bij;
+		x += dset->Z[exlist[i + 1]][t + t1] * bij;
 	    } 
 	    gretl_matrix_set(fsys->WB1, t, j, x);
 	    if (j < fsys->g) {
@@ -279,12 +278,13 @@ static void fiml_form_uhat (fiml_system *fsys, const double **Z, int t1)
 */ 
 
 static int 
-fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
+fiml_form_sigma_and_psi (fiml_system *fsys, const DATASET *dset, 
+			 int t1)
 {
     int err;
 
     /* YG - WB */
-    fiml_form_uhat(fsys, Z, t1);
+    fiml_form_uhat(fsys, dset, t1);
 
     /* Davidson and MacKinnon, ETM, equation (12.81) */
 
@@ -321,8 +321,8 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
 }
 
 static void 
-fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
-			 int iters)
+fiml_transcribe_results (fiml_system *fsys, const DATASET *dset, 
+			 int t1, int iters)
 {
     MODEL *pmod;
     const double *y;
@@ -335,7 +335,7 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     k = 0;
     for (i=0; i<fsys->g; i++) {
 	pmod = system_get_model(fsys->sys, i);
-	y = Z[pmod->list[1]];
+	y = dset->Z[pmod->list[1]];
 	pmod->ess = 0.0;
 	for (t=0; t<fsys->n; t++) {
 	    u = gretl_matrix_get(fsys->uhat, t, i);
@@ -416,7 +416,8 @@ static int endo_var_number (const int *enlist, int v)
 /* form the RHS matrix for the artificial regression */
 
 static void 
-fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
+fiml_form_indepvars (fiml_system *fsys, const DATASET *dset, 
+		     int t1)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
@@ -437,7 +438,7 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
 
 	    if (on_exo_list(exlist, list[j])) {
 		/* the variable is exogenous or predetermined */
-		xj = Z[list[j]] + t1;
+		xj = dset->Z[list[j]] + t1;
 	    } else {
 		/* RHS endogenous variable */
 		vj = endo_var_number(enlist, list[j]);
@@ -509,7 +510,7 @@ rhs_var_in_eqn (const int *list, int v)
 /* initialize Gamma matrix based on 3SLS estimates plus identities */
 
 static void 
-fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
+fiml_G_init (fiml_system *fsys, const DATASET *dset)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *slist; 
@@ -559,7 +560,7 @@ fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 #if FDEBUG
     printf("Order of columns (and rows):");
     for (i=1; i<=enlist[0]; i++) {
-	printf(" %s", pdinfo->varname[enlist[i]]);
+	printf(" %s", dset->varname[enlist[i]]);
     }
     putchar('\n');
     gretl_matrix_print(fsys->G, "fiml Gamma");
@@ -596,7 +597,7 @@ static void fiml_G_update (fiml_system *fsys)
 
 /* initialize B matrix based on 3SLS estimates and identities */
 
-static void fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
+static void fiml_B_init (fiml_system *fsys, const DATASET *dset)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
@@ -630,12 +631,12 @@ static void fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
 #if FDEBUG
     printf("Order of columns:");
     for (i=1; i<=enlist[0]; i++) {
-	printf(" %s", pdinfo->varname[enlist[i]]);
+	printf(" %s", dset->varname[enlist[i]]);
     }
     putchar('\n');
     printf("Order of rows:");
     for (i=1; i<=exlist[0]; i++) {
-	printf(" %s", pdinfo->varname[exlist[i]]);
+	printf(" %s", dset->varname[exlist[i]]);
     }
     putchar('\n');
     gretl_matrix_print(fsys->B, "fiml B");
@@ -669,7 +670,8 @@ static void fiml_B_update (fiml_system *fsys)
 
 /* calculate log-likelihood for FIML system */
 
-static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
+static int fiml_ll (fiml_system *fsys, const DATASET *dset,
+		    int t1)
 {
     double tr;
     double ldetG;
@@ -682,7 +684,7 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
     /* form \hat{\Sigma} (ETM, equation 12.81); invert and
        Cholesky-decompose to get \Psi while we're at it 
     */
-    err = fiml_form_sigma_and_psi(fsys, Z, t1);
+    err = fiml_form_sigma_and_psi(fsys, dset, t1);
     if (err) {
 	fputs("fiml_form_sigma_and_psi: failed\n", stderr);
 	return err;
@@ -741,7 +743,8 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
    MacKinnon, ETM, equation (12.70)
 */
 
-static int fiml_endog_rhs (fiml_system *fsys, const double **Z, int t1)
+static int fiml_endog_rhs (fiml_system *fsys, const DATASET *dset,
+			   int t1)
 {
     int err;
 
@@ -778,8 +781,8 @@ static void copy_estimates_to_btmp (fiml_system *fsys)
 */
 
 static int
-fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1,
-		       double *instep)
+fiml_adjust_estimates (fiml_system *fsys, const DATASET *dset,
+		       int t1, double *instep)
 {
     MODEL *pmod;
     double llbak = fsys->ll;
@@ -816,7 +819,7 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1,
 	fiml_B_update(fsys);
 
 	/* has the likelihood improved? */
-	err = fiml_ll(fsys, Z, t1);
+	err = fiml_ll(fsys, dset, t1);
 	if (!err) {
 	    if (fsys->ll > llbak) {
 		improved = 1;
@@ -905,12 +908,12 @@ static void fiml_print_gradients (const gretl_matrix *b, PRN *prn)
 
 #define FIML_ITER_MAX 250
 
-int fiml_driver (equation_system *sys, double **Z, 
-		 DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+int fiml_driver (equation_system *sys, DATASET *dset, 
+		 gretlopt opt, PRN *prn)
 {
     const gretl_matrix *R = NULL;
     fiml_system *fsys;
-    int t1 = pdinfo->t1;
+    int t1 = dset->t1;
     double llbak;
     double crit = 1.0;
     double tol = 1.0e-12; /* over-ambitious? */
@@ -934,13 +937,13 @@ int fiml_driver (equation_system *sys, double **Z,
 #endif
 
     /* intialize Gamma coefficient matrix */
-    fiml_G_init(fsys, pdinfo);
+    fiml_G_init(fsys, dset);
 
     /* intialize B coefficient matrix */
-    fiml_B_init(fsys, pdinfo);
+    fiml_B_init(fsys, dset);
 
     /* initial loglikelihood */
-    err = fiml_ll(fsys, (const double **) Z, t1);
+    err = fiml_ll(fsys, dset, t1);
     if (err) {
 	fputs("fiml_ll: failed\n", stderr);
 	goto bailout;
@@ -962,14 +965,14 @@ int fiml_driver (equation_system *sys, double **Z,
 	fiml_form_depvar(fsys);
 
 	/* instrument the RHS endog vars */
-	err = fiml_endog_rhs(fsys, (const double **) Z, t1);
+	err = fiml_endog_rhs(fsys, dset, t1);
 	if (err) {
 	    fputs("fiml_endog_rhs: failed\n", stderr);
 	    break;
 	}	
 
 	/* form RHS matrix for artificial regression */
-	fiml_form_indepvars(fsys, (const double **) Z, t1);
+	fiml_form_indepvars(fsys, dset, t1);
 
 	/* run artificial regression (ETM, equation 12.86) */
 	if (R != NULL) {
@@ -992,8 +995,7 @@ int fiml_driver (equation_system *sys, double **Z,
 	}
 
 	/* adjust param estimates based on gradients in fsys->artb */
-	err = fiml_adjust_estimates(fsys, (const double **) Z, 
-				    t1, &step);
+	err = fiml_adjust_estimates(fsys, dset, t1, &step);
 	if (err) {
 	    break;
 	}
@@ -1029,11 +1031,11 @@ int fiml_driver (equation_system *sys, double **Z,
     }
 
     if (R != NULL && verbose) {
-	fiml_overid_test(fsys, Z, pdinfo);
+	fiml_overid_test(fsys, dset);
     }
 
     /* write the results into the parent system */
-    fiml_transcribe_results(fsys, (const double **) Z, t1, iters);
+    fiml_transcribe_results(fsys, dset, t1, iters);
 
  bailout:
     

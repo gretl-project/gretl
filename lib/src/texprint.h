@@ -20,10 +20,10 @@
 #ifndef TEXPRINT_H
 #define TEXPRINT_H
 
-int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+int tex_print_equation (const MODEL *pmod, const DATASET *dset, 
 			gretlopt opt, PRN *prn);
 
-int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
+int tex_print_model (MODEL *pmod, const DATASET *dset, 
 		     gretlopt opt, PRN *prn);
 
 int tex_coeff_table_start (const char **cols, gretlopt opt, PRN *prn);
@@ -32,19 +32,19 @@ void tex_coeff_table_end (PRN *prn);
 
 void tex_print_coeff (const model_coeff *mc, PRN *prn);
 
-void make_tex_coeff_name (const MODEL *pmod, const DATAINFO *pdinfo,
+void make_tex_coeff_name (const MODEL *pmod, const DATASET *dset,
 			  int i, char *name);
 
-void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
+void tex_print_VECM_omega (GRETL_VAR *vecm, const DATASET *dset, PRN *prn);
 
-void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn);
+void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATASET *dset, PRN *prn);
 
 void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn);
 
-int texprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
+int texprint (MODEL *pmod, const DATASET *dset, char *fname, 
 	      gretlopt opt);
 
-int rtfprint (MODEL *pmod, const DATAINFO *pdinfo, char *fname, 
+int rtfprint (MODEL *pmod, const DATASET *dset, char *fname, 
 	      gretlopt opt);
 
 char *tex_escape (char *targ, const char *src);
@@ -73,7 +73,7 @@ int get_tex_use_pdf (void);
 
 void gretl_tex_preamble (PRN *prn, int fmt);
 
-void tex_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
+void tex_print_obs_marker (int t, const DATASET *dset, PRN *prn);
 
 void set_tex_param_format (const char *s);
 

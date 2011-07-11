@@ -248,7 +248,7 @@ static int get_jmulti_var_info (FILE *fp, char *line, int len,
 }
 
 static int read_jmulti_data (FILE *fp, char *line, int len,
-			     double **Z, DATAINFO *pdinfo)
+			     DATASET *dset)
 {
     char *s, numstr[32];
     int i, t, err = 0;
@@ -258,11 +258,11 @@ static int read_jmulti_data (FILE *fp, char *line, int len,
     }
 
     s = line;
-    for (i=1; i<pdinfo->v; i++) {
+    for (i=1; i<dset->v; i++) {
 	s += strspn(s, " ");
-	sscanf(s, "%15s", pdinfo->varname[i]);
-	if (check_varname(pdinfo->varname[i]) && 
-	    try_fix_varname(pdinfo->varname[i])) {
+	sscanf(s, "%15s", dset->varname[i]);
+	if (check_varname(dset->varname[i]) && 
+	    try_fix_varname(dset->varname[i])) {
 	    err = 1;
 	}
 	s += strcspn(s, " \t\n");
@@ -276,15 +276,15 @@ static int read_jmulti_data (FILE *fp, char *line, int len,
 	    continue;
 	}
 	s = line;
-	for (i=1; i<pdinfo->v && !err; i++) {
+	for (i=1; i<dset->v && !err; i++) {
 	    s += strspn(s, " \t");
 	    if (sscanf(s, "%31s", numstr) != 1) {
 		err = 1;
 	    } else {
 		if (!strcmp(numstr, "NaN")) {
-		    Z[i][t] = NADBL;
+		    dset->Z[i][t] = NADBL;
 		} else {
-		    Z[i][t] = atof(numstr);
+		    dset->Z[i][t] = atof(numstr);
 		}
 		s += strcspn(s, " \t");
 	    }
@@ -297,8 +297,7 @@ static int read_jmulti_data (FILE *fp, char *line, int len,
     return err;
 }
 
-int jmulti_get_data (const char *fname, 
-		     double ***pZ, DATAINFO *pdinfo,
+int jmulti_get_data (const char *fname, DATASET *dset,
 		     gretlopt opt, PRN *prn)
 {
     int maxlen = 0;
@@ -306,8 +305,7 @@ int jmulti_get_data (const char *fname,
     FILE *fp;
     char *descrip = NULL;
     char *line = NULL;
-    double **newZ = NULL;
-    DATAINFO *newinfo = NULL;
+    DATASET *newset = NULL;
     char stobs[OBSLEN];
     int pd = 0;
     int err = 0;
@@ -349,47 +347,47 @@ int jmulti_get_data (const char *fname,
 	goto bailout;
     }
 
-    newinfo = datainfo_new();
-    if (newinfo == NULL) {
+    newset = datainfo_new();
+    if (newset == NULL) {
 	pputs(prn, _("Out of memory\n"));
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    newinfo->v = nvar + 1;
-    newinfo->n = nobs;
-    newinfo->pd = pd;
-    strcpy(newinfo->stobs, stobs);
+    newset->v = nvar + 1;
+    newset->n = nobs;
+    newset->pd = pd;
+    strcpy(newset->stobs, stobs);
 
-    if (strcmp(newinfo->stobs, "1")) {
-	newinfo->structure = TIME_SERIES;
-	newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
+    if (strcmp(newset->stobs, "1")) {
+	newset->structure = TIME_SERIES;
+	newset->sd0 = get_date_x(newset->pd, newset->stobs);
     }
 
-    err = start_new_Z(&newZ, newinfo, 0);
+    err = start_new_Z(newset, 0);
     if (err) {
 	pputs(prn, _("Out of memory\n"));
-	free_datainfo(newinfo);
+	free_datainfo(newset);
 	goto bailout;
     }	
 
-    err = read_jmulti_data(fp, line, maxlen, newZ, newinfo);
+    err = read_jmulti_data(fp, line, maxlen, newset);
     if (err) {
-	destroy_dataset(newZ, newinfo);
+	destroy_dataset(newset);
     } else {
-	int merge = (*pZ != NULL);
+	int merge = (dset->Z != NULL);
 
-	if (fix_varname_duplicates(newinfo)) {
+	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
-	newinfo->descrip = descrip;
+	newset->descrip = descrip;
 	descrip = NULL;
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+	err = merge_or_replace_data(dset, &newset, opt, prn);
 
 	if (!err && !merge) {
-	    dataset_add_import_info(pdinfo, fname, GRETL_JMULTI);
+	    dataset_add_import_info(dset, fname, GRETL_JMULTI);
 	}
     }
 

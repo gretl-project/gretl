@@ -40,7 +40,7 @@ struct model_coeff_ {
     char name[MC_NAMELEN];
 };
 
-int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
+int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 		PRN *prn);
 
 const char *estimator_string (const MODEL *pmod, PRN *prn);

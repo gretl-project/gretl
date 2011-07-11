@@ -934,8 +934,7 @@ MODEL *maybe_stack_model (MODEL *pmod, CMD *cmd, PRN *prn, int *err)
    the form of a simple scalar */
 
 static double real_get_obj_scalar (void *p, GretlObjType type, 
-				   double ***pZ, DATAINFO *pdinfo,
-				   int idx)
+				   DATASET *dset, int idx)
 {
     double x = INVALID_STAT;
     int err = 0;
@@ -947,7 +946,7 @@ static double real_get_obj_scalar (void *p, GretlObjType type,
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) p;
 
-	x = gretl_model_get_scalar(pmod, idx, pZ, pdinfo, &err);
+	x = gretl_model_get_scalar(pmod, idx, dset, &err);
 	if (err) {
 	    x = INVALID_STAT;
 	}
@@ -988,7 +987,7 @@ static double real_get_obj_scalar (void *p, GretlObjType type,
 
 static double *
 real_get_obj_series (void *p, GretlObjType type, int idx,
-		     const DATAINFO *pdinfo, int *err)
+		     const DATASET *dset, int *err)
 {
     double *x = NULL;
 
@@ -1000,7 +999,7 @@ real_get_obj_series (void *p, GretlObjType type, int idx,
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) p;
 
-	x = gretl_model_get_series(pmod, pdinfo, idx, err);
+	x = gretl_model_get_series(pmod, dset, idx, err);
     } 
 
     return x;
@@ -1060,7 +1059,7 @@ real_get_obj_list (void *p, GretlObjType type, int idx, int *err)
 
 static char *
 real_get_obj_string (void *p, GretlObjType type, int idx, 
-		     const DATAINFO *pdinfo, int *err)
+		     const DATASET *dset, int *err)
 {
     char *str = NULL;
 
@@ -1075,7 +1074,7 @@ real_get_obj_string (void *p, GretlObjType type, int idx,
 	str = gretl_strdup(gretl_command_word(pmod->ci));
     } else if (type == GRETL_OBJ_EQN && idx == M_DEPVAR) {
 	const char *s = gretl_model_get_depvar_name((MODEL *) p, 
-						    pdinfo);
+						    dset);
 
 	str = gretl_strdup(s);
     } else {
@@ -1176,7 +1175,7 @@ int *saved_object_get_list (const char *oname, int idx, int *err)
 }
 
 char *saved_object_get_string (const char *oname, int idx, 
-			       const DATAINFO *pdinfo, int *err)
+			       const DATASET *dset, int *err)
 {
     char *ret = NULL;
     stacker *smatch;
@@ -1185,15 +1184,14 @@ char *saved_object_get_string (const char *oname, int idx,
 
     if (smatch != NULL) {
 	ret = real_get_obj_string(smatch->ptr, smatch->type, idx, 
-				  pdinfo, err);
+				  dset, err);
     }
 
     return ret;
 }
 
 double saved_object_get_scalar (const char *oname, int idx, 
-				double ***pZ, DATAINFO *pdinfo,
-				int *err)
+				DATASET *dset, int *err)
 {
     double ret = INVALID_STAT;
     stacker *smatch;
@@ -1202,7 +1200,7 @@ double saved_object_get_scalar (const char *oname, int idx,
 
     if (smatch != NULL) {
 	ret = real_get_obj_scalar(smatch->ptr, smatch->type, 
-				  pZ, pdinfo, idx);
+				  dset, idx);
     }
 
     if (ret == INVALID_STAT) {
@@ -1213,7 +1211,7 @@ double saved_object_get_scalar (const char *oname, int idx,
 }
 
 double *saved_object_get_series (const char *oname, int idx,
-				 const DATAINFO *pdinfo, 
+				 const DATASET *dset, 
 				 int *err)
 {
     double *x = NULL;
@@ -1223,7 +1221,7 @@ double *saved_object_get_series (const char *oname, int idx,
 
     if (smatch != NULL) {
 	x = real_get_obj_series(smatch->ptr, smatch->type, idx, 
-				pdinfo, err);
+				dset, err);
     }
 
     if (x == NULL && !*err) {
@@ -1270,7 +1268,7 @@ saved_object_get_matrix (const char *oname, int idx, int *err)
 
 gretl_matrix *
 saved_object_build_matrix (const char *oname, int idx, 
-			   const double **Z, const DATAINFO *pdinfo,
+			   const DATASET *dset,
 			   int *err)
 {
     stacker *smatch = find_smatch(oname);
@@ -1279,13 +1277,13 @@ saved_object_build_matrix (const char *oname, int idx,
     if (smatch == NULL) {
 	*err = E_DATA;
     } else if (idx == M_MNLPROBS && smatch->type == GRETL_OBJ_EQN) {
-	M = mn_logit_probabilities(smatch->ptr, Z, pdinfo, err);
+	M = mn_logit_probabilities(smatch->ptr, dset, err);
     } else if (idx == M_EC && smatch->type == GRETL_OBJ_VAR) {
-	M = VECM_get_EC_matrix(smatch->ptr, Z, pdinfo, err);
+	M = VECM_get_EC_matrix(smatch->ptr, dset, err);
     } else if (idx == M_VMA && smatch->type == GRETL_OBJ_VAR) {
-	M = gretl_VAR_get_vma_matrix(smatch->ptr, pdinfo, err);
+	M = gretl_VAR_get_vma_matrix(smatch->ptr, dset, err);
     } else if (idx == M_FEVD && smatch->type == GRETL_OBJ_VAR) {
-	M = gretl_VAR_get_full_FEVD_matrix(smatch->ptr, pdinfo, err);
+	M = gretl_VAR_get_full_FEVD_matrix(smatch->ptr, dset, err);
     } else {
 	*err = E_BADSTAT;
     }
@@ -1295,8 +1293,7 @@ saved_object_build_matrix (const char *oname, int idx,
 
 gretl_matrix *
 last_model_get_irf_matrix (int targ, int shock, double alpha, 
-			   const double **Z, const DATAINFO *pdinfo,
-			   int *err)
+			   const DATASET *dset, int *err)
 {
     stacker *smatch = find_smatch(NULL);
     gretl_matrix *M = NULL;
@@ -1305,7 +1302,7 @@ last_model_get_irf_matrix (int targ, int shock, double alpha,
 	*err = E_BADSTAT;
     } else {
 	M = gretl_VAR_get_impulse_response(smatch->ptr, targ, shock, 0,
-					   alpha, Z, pdinfo, err);
+					   alpha, dset, err);
     }
 
     return M;
@@ -1448,7 +1445,7 @@ static void saved_object_free (stacker *s)
 
 #define sys_modtest_opt_ok(o) (o & (OPT_A | OPT_H | OPT_N))
 
-int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo, 
+int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset, 
 			PRN *prn)
 {
     GretlObjType type;
@@ -1464,10 +1461,10 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
     if (type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) ptr;
   
-	if (!model_test_ok(ci, opt, pmod, pdinfo)) {
+	if (!model_test_ok(ci, opt, pmod, dset)) {
 	    err = E_NOTIMP;
 	}
-	if (model_sample_problem(pmod, pdinfo)) {
+	if (model_sample_problem(pmod, dset)) {
 	    pputs(prn, _("Can't do: the current data set is different from "
 			 "the one on which\nthe reference model was estimated\n"));
 	    err = E_DATA;
@@ -1497,8 +1494,7 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
     return err;
 }
 
-int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, 
-			  gretlopt opt, PRN *prn)
+int last_model_test_uhat (DATASET *dset, gretlopt opt, PRN *prn)
 {
     GretlObjType type;
     void *ptr;
@@ -1510,7 +1506,7 @@ int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (type == GRETL_OBJ_EQN) {
-	err = model_error_dist(ptr, pZ, pdinfo, opt, prn);
+	err = model_error_dist(ptr, dset, opt, prn);
     } else if (type == GRETL_OBJ_SYS) {
 	err = system_normality_test(ptr, prn);
     } else if (type == GRETL_OBJ_VAR) {
@@ -1522,7 +1518,7 @@ int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-int highest_numbered_var_in_saved_object (const DATAINFO *pdinfo)
+int highest_numbered_var_in_saved_object (const DATASET *dset)
 {
     GretlObjType type;
     void *ptr;
@@ -1539,7 +1535,7 @@ int highest_numbered_var_in_saved_object (const DATAINFO *pdinfo)
 	    continue;
 	}
 	if (type == GRETL_OBJ_EQN) {
-	    mvm = highest_numbered_var_in_model((MODEL *) ptr, pdinfo);
+	    mvm = highest_numbered_var_in_model((MODEL *) ptr, dset);
 	    if (mvm > vmax) {
 		vmax = mvm;
 	    }
@@ -1549,7 +1545,7 @@ int highest_numbered_var_in_saved_object (const DATAINFO *pdinfo)
 		vmax = mvm;
 	    }
 	} else if (type == GRETL_OBJ_SYS) {
-	    mvm = highest_numbered_var_in_system((equation_system *) ptr, pdinfo);
+	    mvm = highest_numbered_var_in_system((equation_system *) ptr, dset);
 	    if (mvm > vmax) {
 		vmax = mvm;
 	    }
@@ -1559,12 +1555,12 @@ int highest_numbered_var_in_saved_object (const DATAINFO *pdinfo)
     return vmax;
 }
 
-int check_variable_deletion_list (int *list, const DATAINFO *pdinfo)
+int check_variable_deletion_list (int *list, const DATASET *dset)
 {
     int pruned = 0;
     int i, vsave;
 
-    vsave = highest_numbered_var_in_saved_object(pdinfo);
+    vsave = highest_numbered_var_in_saved_object(dset);
 
     for (i=list[0]; i>0; i--) {
 	if (list[i] <= vsave) {

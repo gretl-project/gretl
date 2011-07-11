@@ -1293,7 +1293,7 @@ static int rq_fit_fn (gretl_matrix *y, gretl_matrix *XT,
 */
 
 static int rq_make_matrices (MODEL *pmod,
-			     double **Z, DATAINFO *pdinfo,
+			     DATASET *dset,
 			     gretl_matrix **py,
 			     gretl_matrix **pX,
 			     int tr)
@@ -1323,7 +1323,7 @@ static int rq_make_matrices (MODEL *pmod,
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (!na(pmod->uhat[t])) {
-	    gretl_vector_set(y, s++, Z[yno][t]);
+	    gretl_vector_set(y, s++, dset->Z[yno][t]);
 	}
     }
 
@@ -1333,9 +1333,9 @@ static int rq_make_matrices (MODEL *pmod,
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->uhat[t])) {
 		if (tr) {
-		    gretl_matrix_set(X, i, s++, Z[v][t]);
+		    gretl_matrix_set(X, i, s++, dset->Z[v][t]);
 		} else {
-		    gretl_matrix_set(X, s++, i, Z[v][t]);
+		    gretl_matrix_set(X, s++, i, dset->Z[v][t]);
 		}
 	    }
 	}
@@ -1392,8 +1392,7 @@ static int check_user_tau (const gretl_matrix *tau, int *ntau)
 }
 
 int rq_driver (const gretl_matrix *tau, MODEL *pmod,
-	       double **Z, DATAINFO *pdinfo,
-	       gretlopt opt, PRN *prn)
+	       DATASET *dset, gretlopt opt, PRN *prn)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
@@ -1414,7 +1413,7 @@ int rq_driver (const gretl_matrix *tau, MODEL *pmod,
 	       using F-N so the model will be equipped with standard
 	       errors
 	    */
-	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, 1);
+	    err = rq_make_matrices(pmod, dset, &y, &X, 1);
 	    if (!err) {
 		err = rq_fit_fn(y, X, tau, opt, pmod);
 	    }
@@ -1425,7 +1424,7 @@ int rq_driver (const gretl_matrix *tau, MODEL *pmod,
 	} else {
 	    int tr = !(opt & OPT_I);
 
-	    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, tr);
+	    err = rq_make_matrices(pmod, dset, &y, &X, tr);
 	}
     }
 
@@ -1441,7 +1440,7 @@ int rq_driver (const gretl_matrix *tau, MODEL *pmod,
 
     if (!err) {
 	/* some common finishing touches */
-	gretl_model_add_y_median(pmod, Z[pmod->list[1]]);
+	gretl_model_add_y_median(pmod, dset->Z[pmod->list[1]]);
 	pmod->ci = LAD;
 	gretl_model_set_int(pmod, "rq", 1);
 	if (opt & OPT_R) {
@@ -1465,7 +1464,7 @@ int rq_driver (const gretl_matrix *tau, MODEL *pmod,
 /* restock the y and X matrices with a bootstrap sample */
 
 static void rq_refill_matrices (MODEL *pmod,
-				double **Z, 
+				DATASET *dset,
 				gretl_matrix *y,
 				gretl_matrix *X,
 				int *sample)
@@ -1477,14 +1476,14 @@ static void rq_refill_matrices (MODEL *pmod,
 
     for (i=0; i<n; i++) {
 	t = sample[i];
-	gretl_vector_set(y, i, Z[yno][t]);
+	gretl_vector_set(y, i, dset->Z[yno][t]);
     }
 
     for (j=0; j<p; j++) {
 	v = pmod->list[j+2];
 	for (i=0; i<n; i++) {
 	    t = sample[i];
-	    gretl_matrix_set(X, i, j, Z[v][t]);
+	    gretl_matrix_set(X, i, j, dset->Z[v][t]);
 	}
     }
 }
@@ -1510,7 +1509,7 @@ static int *good_observations_array (MODEL *pmod)
 
 /* obtain bootstrap estimates of LAD covariance matrix */
 
-static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
+static int lad_bootstrap_vcv (MODEL *pmod, DATASET *dset,
 			      gretl_matrix *y, gretl_matrix *X,
 			      struct br_info *rq)
 {
@@ -1564,7 +1563,7 @@ static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
 	    }
 	}
 
-	rq_refill_matrices(pmod, Z, y, X, sample);
+	rq_refill_matrices(pmod, dset, y, X, sample);
 
 	/* re-estimate LAD model */
 	err = real_br_calc(y, X, 0.5, rq, 0);
@@ -1620,7 +1619,7 @@ static int lad_bootstrap_vcv (MODEL *pmod, double **Z,
     return err;
 }
 
-static int lad_fit_br (MODEL *pmod, double **Z,
+static int lad_fit_br (MODEL *pmod, DATASET *dset,
 		       gretl_matrix *y, gretl_matrix *X)
 {
     struct br_info rq;
@@ -1644,7 +1643,7 @@ static int lad_fit_br (MODEL *pmod, double **Z,
     }
 
     if (!err) {
-	err = lad_bootstrap_vcv(pmod, Z, y, X, &rq);
+	err = lad_bootstrap_vcv(pmod, dset, y, X, &rq);
     }
 
     br_info_free(&rq);
@@ -1657,20 +1656,20 @@ static int lad_fit_br (MODEL *pmod, double **Z,
    covariance matrix.
 */
 
-int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
+int lad_driver (MODEL *pmod, DATASET *dset)
 {
     gretl_matrix *y = NULL;
     gretl_matrix *X = NULL;
     int err;
 
-    err = rq_make_matrices(pmod, Z, pdinfo, &y, &X, 0);
+    err = rq_make_matrices(pmod, dset, &y, &X, 0);
 
     if (!err) {
-	err = lad_fit_br(pmod, Z, y, X);
+	err = lad_fit_br(pmod, dset, y, X);
     }
 
     if (!err) {
-	gretl_model_add_y_median(pmod, Z[pmod->list[1]]);
+	gretl_model_add_y_median(pmod, dset->Z[pmod->list[1]]);
 	pmod->ci = LAD;
     }
 

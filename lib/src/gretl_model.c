@@ -689,7 +689,7 @@ static void plain_ar_coeff_name (char *targ, const MODEL *pmod, int i)
 /**
  * gretl_model_get_param_name:
  * @pmod: pointer to model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @i: index number for parameter, zero-based, corresponding
  * to position in the %coeff array in @pmod.
  * @targ: string into which to write param name.
@@ -702,7 +702,7 @@ static void plain_ar_coeff_name (char *targ, const MODEL *pmod, int i)
  * Returns: @targ.
  */
 
-char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
+char *gretl_model_get_param_name (const MODEL *pmod, const DATASET *dset,
 				  int i, char *targ)
 {
     *targ = '\0';
@@ -713,15 +713,15 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 
 #if 0
 	/* should we do this? */
-	if (pmod->dataset != NULL && pmod->dataset->dinfo != NULL) {
-	    pdinfo = pmod->dataset->dinfo;
+	if (pmod->dataset != NULL) {
+	    dset = pmod->dataset;
 	}
 #endif
 
 	if (pmod->aux == AUX_ARCH) {
-	    make_cname(pdinfo->varname[pmod->list[j]], targ);
+	    make_cname(dset->varname[pmod->list[j]], targ);
 	} else if (pmod->ci == PANEL && (pmod->opt & OPT_W)) {
-	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
+	    strcpy(targ, dset->varname[pmod->list[j]]);
 	} else if (NONLIST_MODEL(pmod->ci) ||
 		   pmod->ci == ARMA || pmod->ci == PANEL || 
 		   pmod->ci == ARBOND || pmod->ci == DPANEL ||
@@ -739,7 +739,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	} else if (pmod->list == NULL || j > pmod->list[0]) {
 	    k = i;
 	} else {
-	    strcpy(targ, pdinfo->varname[pmod->list[j]]);
+	    strcpy(targ, dset->varname[pmod->list[j]]);
 	}
 
 	if (k >= 0) {
@@ -758,7 +758,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 /**
  * gretl_model_get_param_number:
  * @pmod: pointer to model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @s: name of model parameter.
  *
  * Returns: the zero-based index of the coefficient in @pmod
@@ -767,7 +767,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
  */
 
 int 
-gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
+gretl_model_get_param_number (const MODEL *pmod, const DATASET *dset,
 			      const char *s)
 {
     char pname[16], tmp[16];
@@ -784,7 +784,7 @@ gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
-	gretl_model_get_param_name(pmod, pdinfo, i, tmp);
+	gretl_model_get_param_name(pmod, dset, i, tmp);
 	if (!strcmp(pname, tmp)) {
 	    idx = i;
 	    break;
@@ -853,7 +853,7 @@ int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
 /**
  * gretl_model_get_coeff_intervals:
  * @pmod: pointer to gretl model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * Save the 95 percent confidence intervals for the parameter
  * estimates in @pmod.
@@ -863,7 +863,7 @@ int reset_coeff_intervals (CoeffIntervals *cf, double alpha)
 
 CoeffIntervals *
 gretl_model_get_coeff_intervals (const MODEL *pmod, 
-				 const DATAINFO *pdinfo)
+				 const DATASET *dset)
 {
     CoeffIntervals *cf;
     char pname[24];
@@ -913,7 +913,7 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     for (i=0; i<cf->ncoeff && !err; i++) { 
 	cf->coeff[i] = pmod->coeff[i];
 	cf->maxerr[i] = (pmod->sderr[i] > 0)? cf->t * pmod->sderr[i] : 0.0;
-	gretl_model_get_param_name(pmod, pdinfo, i, pname);
+	gretl_model_get_param_name(pmod, dset, i, pname);
 	cf->names[i] = gretl_strdup(pname);
 	if (cf->names[i] == NULL) {
 	    int j;
@@ -1498,13 +1498,13 @@ int gretl_model_get_depvar (const MODEL *pmod)
 /**
  * gretl_model_get_depvar_name:
  * @pmod: pointer to gretl model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * Returns: the name of the dependent variable in @pmod.
  */
 
 const char *gretl_model_get_depvar_name (const MODEL *pmod,
-					 const DATAINFO *pdinfo)
+					 const DATASET *dset)
 {
     int dv;
 
@@ -1528,7 +1528,7 @@ const char *gretl_model_get_depvar_name (const MODEL *pmod,
 	}
     }
 
-    return pdinfo->varname[dv];
+    return dset->varname[dv];
 }
 
 static int ordered_model (const MODEL *pmod)
@@ -1868,7 +1868,7 @@ static double *copy_vcv_subset (const MODEL *pmod)
 /**
  * gretl_model_get_vcv:
  * @pmod: pointer to model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * 
  * Supplies the caller with a copy of the variance-covariance 
  * matrix for the parameter estimates in @pmod, in a format
@@ -1879,7 +1879,7 @@ static double *copy_vcv_subset (const MODEL *pmod)
  * Returns: #VMatrix struct or %NULL on error.
  */
 
-VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
+VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset)
 {
     char varname[VNAMELEN];
     int i, k = pmod->ncoeff;
@@ -1911,7 +1911,7 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
     }
 
     for (i=0; i<k; i++) {
-	gretl_model_get_param_name(pmod, pdinfo, i, varname);
+	gretl_model_get_param_name(pmod, dset, i, varname);
 	vcv->names[i] = gretl_strdup(varname);
 	if (vcv->names[i] == NULL) {
 	    free_vmatrix(vcv);
@@ -1983,9 +1983,9 @@ int gretl_model_write_coeffs (MODEL *pmod, double *b, int k)
 /**
  * impose_model_smpl:
  * @pmod: pointer to model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
- * Sets on @pdinfo the sample range (starting and ending
+ * Sets on @dset the sample range (starting and ending
  * observations) that was in effect when @pmod was estimated.
  * This is not always the same as the data range over which
  * @pmod was actually estimated (e.g. in case of 
@@ -1993,13 +1993,13 @@ int gretl_model_write_coeffs (MODEL *pmod, double *b, int k)
  * to allow for lags).
  */
 
-void impose_model_smpl (const MODEL *pmod, DATAINFO *pdinfo)
+void impose_model_smpl (const MODEL *pmod, DATASET *dset)
 {
-    pdinfo->t1 = pmod->smpl.t1;
-    pdinfo->t2 = pmod->smpl.t2;
+    dset->t1 = pmod->smpl.t1;
+    dset->t2 = pmod->smpl.t2;
 #if MDEBUG
     fprintf(stderr, "impose_model_smpl: set t1=%d, t2=%d\n", 
-	    pdinfo->t1, pdinfo->t2);
+	    dset->t1, dset->t2);
 #endif
 }
 
@@ -2286,7 +2286,7 @@ void gretl_model_init (MODEL *pmod)
 /**
  * gretl_model_smpl_init:
  * @pmod: pointer to model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * Records the start and end of the current sample range in
  * the model @pmod, which may be necessary for future reference
@@ -2297,13 +2297,13 @@ void gretl_model_init (MODEL *pmod)
  * be dropped to allow for lags).
  */
 
-void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
+void gretl_model_smpl_init (MODEL *pmod, const DATASET *dset)
 {
-    pmod->smpl.t1 = pdinfo->t1;
-    pmod->smpl.t2 = pdinfo->t2;
+    pmod->smpl.t1 = dset->t1;
+    pmod->smpl.t2 = dset->t2;
 #if MDEBUG
     fprintf(stderr, "gretl_model_smpl_init: set t1=%d, t2=%d\n",
-	    pdinfo->t1, pdinfo->t2);
+	    dset->t1, dset->t2);
 #endif
 }
 
@@ -2554,9 +2554,8 @@ void clear_model (MODEL *pmod)
 	if (pmod->params != NULL) {
 	    free_strings_array(pmod->params, pmod->nparams);
 	}
-	if (pmod->dataset) {
-	    free_model_dataset(pmod);
-	}
+
+	destroy_dataset(pmod->dataset);
 	gretl_model_destroy_tests(pmod);
 	destroy_all_data_items(pmod);
     }
@@ -4092,12 +4091,12 @@ static void compat_compose_vcv_info (MODEL *pmod)
 
 #define old_listsep(v) (v == 999 || v == 9999)
 
-static void maybe_convert_listsep (int *list, const DATAINFO *pdinfo)
+static void maybe_convert_listsep (int *list, const DATASET *dset)
 {
     int i;
 
     for (i=1; i<=list[0]; i++) {
-	if (old_listsep(list[i]) && list[i] >= pdinfo->v) {
+	if (old_listsep(list[i]) && list[i] >= dset->v) {
 	    list[i] = LISTSEP;
 	}
     }
@@ -4281,7 +4280,7 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
  * gretl_model_from_XML:
  * @node: XML node from which to read.
  * @doc: pointer to XML document.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @err: location to receive error code.
  *
  * Reads info on a gretl model from the given XML @node
@@ -4291,7 +4290,7 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
  */
 
 MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, 
-			     const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     int *err)
 {
     MODEL *pmod;
@@ -4442,7 +4441,7 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc,
     }
 
     if (!*err && pmod->list != NULL) {
-	maybe_convert_listsep(pmod->list, pdinfo);
+	maybe_convert_listsep(pmod->list, dset);
     }
 
     if (modname != NULL) {
@@ -4639,18 +4638,18 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
  * @ci: index of a model test command.
  * @opt: option associated with test command, if any.
  * @pmod: the model to be tested.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * A more rigorous version of command_ok_for_model().  Use
  * this function if the extra information is available.
  * 
  * Returns: 1 if the test command @ci (with possible option
  * @opt) is acceptable in the context of the model @pmod, and 
- * the dataset described by @pdinfo, otherwise 0.
+ * the dataset described by @dset, otherwise 0.
  */
 
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
-		   const DATAINFO *pdinfo)
+		   const DATASET *dset)
 {
     int ok = command_ok_for_model(ci, opt, pmod->ci);
 
@@ -4673,7 +4672,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 	}
     }
 
-    if (ok && !dataset_is_time_series(pdinfo)) {
+    if (ok && !dataset_is_time_series(dset)) {
 	/* time-series-only tests */
 	if (ci == CUSUM || ci == QLRTEST || 
 	    (ci == MODTEST && (opt & (OPT_H | OPT_A)))) {
@@ -4682,8 +4681,8 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 
 #if 0
-    if (ok && !dataset_is_time_series(pdinfo) &&
-	!dataset_is_panel(pdinfo)) {
+    if (ok && !dataset_is_time_series(dset) &&
+	!dataset_is_panel(dset)) {
 	/* time-series or panel tests */
 	if (ci == MODTEST && (opt & OPT_A)) {
 	    ok = 0;
@@ -4691,7 +4690,7 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
     }
 #endif
 
-    if (ok && !dataset_is_panel(pdinfo)) {
+    if (ok && !dataset_is_panel(dset)) {
 	/* panel-only tests */
 	if (ci == HAUSMAN || (ci == MODTEST && (opt & OPT_P))) {
 	    ok = 0;
@@ -4758,7 +4757,7 @@ void model_list_to_string (int *list, char *buf)
 }
 
 int highest_numbered_var_in_model (const MODEL *pmod, 
-				   const DATAINFO *pdinfo)
+				   const DATASET *dset)
 {
     int i, v, vmax = 0;
     int gotsep = 0;
@@ -4773,7 +4772,7 @@ int highest_numbered_var_in_model (const MODEL *pmod,
 	    gotsep = 1;
 	    continue;
 	}
-	if (v >= pdinfo->v) {
+	if (v >= dset->v) {
 	    /* temporary variables, already gone? */
 	    continue;
 	}
@@ -4900,7 +4899,7 @@ static int count_coeffs (int p, const char *pmask,
 /**
  * gretl_model_add_arma_varnames:
  * @pmod: pointer to target model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @yno: ID number of dependent variable.
  * @p: non-seasonal (max) AR order.
  * @q: non-seasonal (max) MA order.
@@ -4916,7 +4915,7 @@ static int count_coeffs (int p, const char *pmask,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 				   int yno, int p, int q, 
 				   const char *pmask, const char *qmask,
 				   int P, int Q, 
@@ -4931,7 +4930,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	free(pmod->depvar);
     }
 
-    pmod->depvar = gretl_strdup(pdinfo->varname[yno]);
+    pmod->depvar = gretl_strdup(dset->varname[yno]);
     if (pmod->depvar == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
@@ -4955,7 +4954,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     pmod->nparams = nc;
 
     if (pmod->ifc) {
-	strcpy(pmod->params[0], pdinfo->varname[0]);
+	strcpy(pmod->params[0], dset->varname[0]);
 	j = 1;
     } else {
 	j = 0;
@@ -4984,7 +4983,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     xstart = arma_depvar_pos(pmod) + 1;
 
     for (i=0; i<r; i++) {
-	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[xstart+i]]); 
+	strcpy(pmod->params[j++], dset->varname[pmod->list[xstart+i]]); 
     }   
 
     return 0;
@@ -4993,7 +4992,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 /**
  * gretl_model_add_panel_varnames:
  * @pmod: pointer to target model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @ulist: list of index numbers of cross-sectional
  * units included in the model.
  * 
@@ -5003,13 +5002,13 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+int gretl_model_add_panel_varnames (MODEL *pmod, const DATASET *dset,
 				    const int *ulist)
 {
     int np = pmod->ncoeff;
     int i, j, v;
 
-    pmod->depvar = gretl_strdup(pdinfo->varname[pmod->list[1]]);
+    pmod->depvar = gretl_strdup(dset->varname[pmod->list[1]]);
     if (pmod->depvar == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
@@ -5026,8 +5025,8 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     j = 1;
     for (i=0; i<np; i++) {
 	v = pmod->list[i+2];
-	if (v < pdinfo->v) {
-	    strcpy(pmod->params[i], pdinfo->varname[v]);
+	if (v < dset->v) {
+	    strcpy(pmod->params[i], dset->varname[v]);
 	} else if (ulist != NULL) {
 	    sprintf(pmod->params[i], "ahat_%d", ulist[j++]);
 	} else {
@@ -5152,10 +5151,10 @@ static int xneq (double x, double y)
    actually a quadratic model (x_2 = x_1^2). */
 
 static int model_is_quadratic (const MODEL *pmod, const int *xlist,
-			       const double **Z, const DATAINFO *pdinfo)
+			       const DATASET *dset)
 {
-    const double *x1 = Z[xlist[2]];
-    const double *x2 = Z[xlist[3]];
+    const double *x1 = dset->Z[xlist[2]];
+    const double *x2 = dset->Z[xlist[3]];
     int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -5179,7 +5178,7 @@ static int model_is_quadratic (const MODEL *pmod, const int *xlist,
  * @pmod: pointer to target model.
  * @xvar: ID number of variable that _may_ be "x" in the model.
  * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * 
  * If @pmod is a simple linear, quadratic or logistic model, 
  * and if @xvar is in fact the "x" variable from the model, 
@@ -5192,11 +5191,9 @@ static int model_is_quadratic (const MODEL *pmod, const int *xlist,
  */
 
 char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar, 
-				      const double **Z,
-				      const DATAINFO *pdinfo)
+				      const DATASET *dset)
 {
-    const double **mZ;
-    const DATAINFO *mdinfo;
+    const DATASET *mset;
     int *xlist = NULL;
     char *ret = NULL;
 
@@ -5210,11 +5207,9 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
     } 
 
     if (pmod->dataset != NULL) {
-	mZ = (const double **) pmod->dataset->Z;
-	mdinfo = pmod->dataset->dinfo;
+	mset = pmod->dataset;
     } else {
-	mZ = Z;
-	mdinfo = pdinfo;
+	mset = dset;
     }
 
     gretl_push_c_numeric_locale();
@@ -5237,7 +5232,7 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				  (pmod->coeff[1] >= 0)? "+" : "",
 				  pmod->coeff[1]);
     } else if (pmod->ifc && pmod->ncoeff == 3 && xvar == xlist[2]) {
-	if (model_is_quadratic(pmod, xlist, mZ, mdinfo)) {
+	if (model_is_quadratic(pmod, xlist, mset)) {
 	    ret = gretl_strdup_printf("yformula: %g%s%g*x%s%g*x**2", pmod->coeff[0], 
 				      (pmod->coeff[1] >= 0)? "+" : "",
 				      pmod->coeff[1], 
@@ -5305,8 +5300,7 @@ const char *gretl_model_get_name (const MODEL *pmod)
  * gretl_model_get_scalar:
  * @pmod: pointer to target model.
  * @idx: index for the scalar value that is wanted.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @err: location to receive error code (required).
  * 
  * Retrieves a specified scalar statistic from @pmod:
@@ -5317,8 +5311,7 @@ const char *gretl_model_get_name (const MODEL *pmod)
  */
 
 double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
-			       double ***pZ, DATAINFO *pdinfo,
-			       int *err)
+			       DATASET *dset, int *err)
 {
     double x = NADBL;
 
@@ -5370,7 +5363,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 	x = (double) pmod->nobs;
 	break;
     case M_DWPVAL:
-	x = get_DW_pvalue_for_model(pmod, pZ, pdinfo, err);
+	x = get_DW_pvalue_for_model(pmod, dset, err);
 	break;
     case M_FSTT:
 	x = pmod->fstt;
@@ -5392,7 +5385,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 /**
  * gretl_model_get_series:
  * @pmod: pointer to target model.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @idx: index for the series that is wanted.
  * @err: location to receive error code (required).
  * 
@@ -5405,15 +5398,15 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
  */
 
 double *
-gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo, 
+gretl_model_get_series (MODEL *pmod, const DATASET *dset, 
 			ModelDataIndex idx, int *err)
 {
     const double *src = NULL;
     double *x = NULL;
     int t;
 
-    if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
-	model_sample_problem(pmod, pdinfo)) {
+    if (pmod->t2 - pmod->t1 + 1 > dset->n || 
+	model_sample_problem(pmod, dset)) {
 	gretl_errmsg_set( 
 	       (idx == M_UHAT)? 
 	       _("Can't retrieve uhat: data set has changed") :
@@ -5448,14 +5441,14 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    x = malloc(pdinfo->n * sizeof *x);
+    x = malloc(dset->n * sizeof *x);
     if (x == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
     if (idx == M_SAMPLE) {
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {
 		x[t] = 0.0;
 	    } else {
@@ -5463,7 +5456,7 @@ gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo,
 	    }
 	}
     } else {
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (t < pmod->t1 || t > pmod->t2) {
 		x[t] = NADBL;
 	    } else {
@@ -5782,7 +5775,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 }
 
 static double get_vcv_element (MODEL *pmod, const char *s, 
-			       const DATAINFO *pdinfo)
+			       const DATASET *dset)
 {
     char v1str[VNAMELEN], v2str[VNAMELEN];
     int v1 = 0, v2 = 0;
@@ -5797,8 +5790,8 @@ static double get_vcv_element (MODEL *pmod, const char *s,
 	return NADBL;
     }
 
-    v1 = gretl_model_get_param_number(pmod, pdinfo, v1str);
-    v2 = gretl_model_get_param_number(pmod, pdinfo, v2str);
+    v1 = gretl_model_get_param_number(pmod, dset, v1str);
+    v2 = gretl_model_get_param_number(pmod, dset, v2str);
 
     if (v1 < 0 || v2 < 0) {
 	return NADBL;
@@ -5840,7 +5833,7 @@ static double get_vcv_element (MODEL *pmod, const char *s,
 
 double 
 gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
-			      const DATAINFO *pdinfo, int *err)
+			      const DATASET *dset, int *err)
 {
     GretlObjType type;
     double x = NADBL;
@@ -5877,12 +5870,12 @@ gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 	    }
 	}
     } else if (idx == M_VCV) {
-	x = get_vcv_element(pmod, s, pdinfo);
+	x = get_vcv_element(pmod, s, dset);
 	if (na(x)) {
 	    *err = E_INVARG;
 	}
     } else if (idx == M_COEFF || idx == M_SE) {
-	vi = gretl_model_get_param_number(pmod, pdinfo, s);
+	vi = gretl_model_get_param_number(pmod, dset, s);
 	if (vi < 0) {
 	    *err = E_INVARG;
 	} else {

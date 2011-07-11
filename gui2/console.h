@@ -22,9 +22,9 @@
 
 void gretl_console (void);
 
-void console_record_sample (const DATAINFO *pdinfo);
+void console_record_sample (const DATASET *pdinfo);
 
-int console_sample_changed (const DATAINFO *pdinfo);
+int console_sample_changed (const DATASET *pdinfo);
 
 int console_is_busy (void);
 

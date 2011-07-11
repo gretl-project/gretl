@@ -75,12 +75,12 @@ void kalman_set_options (kalman *K, int opts);
 
 int kalman_get_options (kalman *K);
 
-int kalman_parse_line (const char *line, const double **Z,
-		       const DATAINFO *pdinfo, gretlopt opt);
+int kalman_parse_line (const char *line, const DATASET *dset, 
+		       gretlopt opt);
 
 int user_kalman_run (const char *E, const char *V, const char *S,
-		     const char *P, const char *G, double **Z,
-		     const DATAINFO *pdinfo, PRN *prn, int *errp);
+		     const char *P, const char *G, const DATASET *dset, 
+		     PRN *prn, int *errp);
 
 gretl_matrix *user_kalman_smooth (const char *Pname, const char *Uname,
 				  int *err);

@@ -171,7 +171,7 @@ static void text_eqn_callback (GtkAction *action, gpointer p)
 	return;
     }
     
-    err = text_print_equation(pmod, datainfo, OPT_NONE, prn);
+    err = text_print_equation(pmod, dataset, OPT_NONE, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -521,7 +521,7 @@ void stop_talking (void)
 void audio_render_window (windata_t *vwin, int key)
 {
     int (*read_window_text) (GtkWidget *, GtkWidget *, int, gpointer,
-			     const DATAINFO *, int (*)());
+			     const DATASET *, int (*)());
     void *handle;
 
     if (vwin == NULL) {
@@ -542,7 +542,7 @@ void audio_render_window (windata_t *vwin, int key)
 			     vwin->data, NULL, &should_stop_talking);
     } else {
 	(*read_window_text) (vwin->listbox, vwin->text, vwin->role, 
-			     vwin->data, datainfo, &should_stop_talking);
+			     vwin->data, dataset, &should_stop_talking);
     }
 
     close_plugin(handle);
@@ -649,7 +649,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     if (upkey == GDK_Q || (upkey == GDK_W && Ctrl)) { 
         gtk_widget_destroy(w);
-    } else if (upkey == GDK_S && Z != NULL && vwin->role == VIEW_MODEL) {
+    } else if (upkey == GDK_S && data_status && vwin->role == VIEW_MODEL) {
 	model_add_as_icon(NULL, vwin);
     } 
 
@@ -699,7 +699,7 @@ void *myrealloc (void *ptr, size_t size)
 void mark_dataset_as_modified (void)
 {
     data_status |= MODIFIED_DATA;
-    set_sample_label(datainfo);
+    set_sample_label(dataset);
 
     if (session_file_is_open()) {
 	mark_session_changed();
@@ -753,7 +753,7 @@ static void real_register_data (int flag, const char *user_fname,
 {    
     /* basic accounting */
     data_status |= HAVE_DATA;
-    orig_vars = datainfo->v;
+    orig_vars = dataset->v;
 
     /* set appropriate data_status bits */
     if (file_opened(flag)) {
@@ -786,7 +786,7 @@ static void real_register_data (int flag, const char *user_fname,
     /* sync main window with datafile */
     if (mdata != NULL) {
 	populate_varlist();
-	set_sample_label(datainfo);
+	set_sample_label(dataset);
 	main_menubar_state(TRUE);
 	session_menu_state(TRUE);
     }
@@ -841,8 +841,8 @@ static void finalize_data_open (const char *fname, int ftype,
 
     real_register_data(DATAFILE_OPENED, NULL, plist);
 
-    if (import && !dataset_is_time_series(datainfo) && 
-	!dataset_is_panel(datainfo) && mdata != NULL) {
+    if (import && !dataset_is_time_series(dataset) && 
+	!dataset_is_panel(dataset) && mdata != NULL) {
 	int resp;
 
 	resp = yes_no_dialog(_("gretl: open data"),
@@ -881,9 +881,9 @@ int get_imported_data (char *fname, int ftype, int append)
     const char *errbuf;
     int list[4] = {3, 1, 0, 0};
     int *plist = NULL;
-    int (*ss_importer) (const char *, int *, char *, double ***, DATAINFO *, 
+    int (*ss_importer) (const char *, int *, char *, DATASET *, 
 			gretlopt, PRN *);
-    int (*misc_importer) (const char *, double ***, DATAINFO *, 
+    int (*misc_importer) (const char *, DATASET *, 
 			  gretlopt, PRN *);
     int err = 0;
 
@@ -936,10 +936,10 @@ int get_imported_data (char *fname, int ftype, int append)
     }
 
     if (SPREADSHEET_IMPORT(ftype)) {
-	err = (*ss_importer)(fname, plist, NULL, &Z, datainfo, 
+	err = (*ss_importer)(fname, plist, NULL, dataset, 
 			     OPT_G, errprn);
     } else {
-	err = (*misc_importer)(fname, &Z, datainfo, OPT_G, errprn);
+	err = (*misc_importer)(fname, dataset, OPT_G, errprn);
     }
 	
     close_plugin(handle);
@@ -991,10 +991,10 @@ static int get_csv_data (char *fname, int ftype, int append)
     }
 
     if (ftype == GRETL_OCTAVE) {
-	err = import_other(fname, ftype, &Z, datainfo, OPT_NONE, prn);
+	err = import_other(fname, ftype, dataset, OPT_NONE, prn);
 	title = g_strdup_printf(_("gretl: import %s data"), "Octave");
     } else {
-	err = import_csv(fname, &Z, datainfo, OPT_NONE, prn);
+	err = import_csv(fname, dataset, OPT_NONE, prn);
 	title = g_strdup_printf(_("gretl: import %s data"), "CSV");
     }
 
@@ -1023,9 +1023,9 @@ static int get_native_data (char *fname, int ftype, int append,
     }
 
     if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(fname, &Z, datainfo, OPT_B, prn);
+	err = gretl_read_gdt(fname, dataset, OPT_B, prn);
     } else {
-	err = gretl_get_data(fname, &Z, datainfo, OPT_NONE, prn);
+	err = gretl_get_data(fname, dataset, OPT_NONE, prn);
     }
 
     buf = gretl_print_steal_buffer(prn);
@@ -2262,12 +2262,12 @@ static void set_tests_menu_state (GtkUIManager *ui, const MODEL *pmod)
 	    continue;
 	} else if (!strcmp(s, "Hsk")) {
 	    ci = MODTEST;
-	    opt = (dataset_is_panel(datainfo))? OPT_P : OPT_W;
+	    opt = (dataset_is_panel(dataset))? OPT_P : OPT_W;
 	} else {
 	    ci = gretl_command_number(s);
 	}
 	sprintf(path, "/menubar/Tests/%s", s);
-	flip(ui, path, model_test_ok(ci, opt, pmod, datainfo));
+	flip(ui, path, model_test_ok(ci, opt, pmod, dataset));
     }
 }
 
@@ -2291,7 +2291,7 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 
     if (pmod == NULL) return;
 
-    P = mn_logit_probabilities(pmod, (const double **) Z, datainfo, &err);
+    P = mn_logit_probabilities(pmod, dataset, &err);
  
     if (err) {
 	gui_errmsg(err);
@@ -2302,13 +2302,13 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	    gretl_matrix_free(P);
 	} else {
 	    const int *yvals = gretl_model_get_data(pmod, "yvals");
-	    int obslen = max_obs_label_length(datainfo);
+	    int obslen = max_obs_label_length(dataset);
 	    int i, j, t = P->t1;
 	    char obslabel[OBSLEN];
 	    double x;
 
 	    pprintf(prn, "\nEstimated outcome probabilities for %s\n\n",
-		    gretl_model_get_depvar_name(pmod, datainfo));
+		    gretl_model_get_depvar_name(pmod, dataset));
 
 	    /* case values */
 	    bufspace(obslen, prn);
@@ -2323,11 +2323,11 @@ static void mnl_probs_callback (GtkAction *action, gpointer p)
 	    for (i=0; i<P->rows; i++) {
 		int thislen = obslen;
 
-		if (dataset_has_markers(datainfo)) {
-		    strcpy(obslabel, datainfo->S[t]);
+		if (dataset_has_markers(dataset)) {
+		    strcpy(obslabel, dataset->S[t]);
 		    thislen = get_utf_width(obslabel, obslen);
 		} else {
-		    ntodate(obslabel, t, datainfo);
+		    ntodate(obslabel, t, dataset);
 		}
 		pprintf(prn, "%*s", thislen, obslabel);
 		for (j=0; j<P->cols; j++) {
@@ -2624,7 +2624,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     
     for (i=0; i<2; i++) {
 	/* plot against time/obs number */
-	if (dataset_is_time_series(datainfo)) {
+	if (dataset_is_time_series(dataset)) {
 	    entry.label = _("_Against time");
 	} else {
 	    entry.label = _("By _observation number");
@@ -2646,7 +2646,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    v1 = gretl_model_get_depvar(pmod);
 	    if (v1 > 0) {
 		sprintf(aname, "r:xvar %d", v1); /* FIXME */
-		double_underscores(tmp, datainfo->varname[v1]);
+		double_underscores(tmp, dataset->varname[v1]);
 		alabel = g_strdup_printf(_("_Against %s"), tmp);
 		entry.name = aname;
 		entry.label = alabel;
@@ -2663,11 +2663,11 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 		if (v1 == 0) {
 		    continue;
 		}
-		if (!strcmp(datainfo->varname[v1], "time")) {
+		if (!strcmp(dataset->varname[v1], "time")) {
 		    continue;
 		}
 		sprintf(aname, "%c:xvar %d", (i == 0)? 'r' : 'f', v1);
-		double_underscores(tmp, datainfo->varname[v1]);
+		double_underscores(tmp, dataset->varname[v1]);
 		alabel = g_strdup_printf(_("_Against %s"), tmp);
 		entry.name = aname;
 		entry.label = alabel;
@@ -2688,7 +2688,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     }
 
     /* time series models: residual correlogram, spectrum */
-    if (dataset_is_time_series(datainfo)) {
+    if (dataset_is_time_series(dataset)) {
 	vwin_menu_add_separator(vwin, "/menubar/Graphs");
 	entry.name = "Correlogram";
 	entry.label = _("Residual _correlogram");
@@ -2722,8 +2722,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    char tmp2[VNAMELEN2];
 
 	    vwin_menu_add_separator(vwin, mpath[1]);
-	    double_underscores(tmp, datainfo->varname[v1]);
-	    double_underscores(tmp2, datainfo->varname[v2]);
+	    double_underscores(tmp, dataset->varname[v1]);
+	    double_underscores(tmp2, dataset->varname[v2]);
 	    alabel = g_strdup_printf(_("_Against %s and %s"), tmp, tmp2);	
 	    entry.name = "splot";
 	    entry.label = alabel;
@@ -2766,8 +2766,8 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	vi = pmod->list[i];
 	if (vi == LISTSEP) {
 	    break;
-	} else if (vi > 0 && vi < datainfo->v && 
-	    gretl_isdummy(datainfo->t1, datainfo->t2, Z[vi])) {
+	} else if (vi > 0 && vi < dataset->v && 
+	    gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[vi])) {
 	    gretl_list_append_term(&dlist, vi);
 	}
     }
@@ -2802,7 +2802,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     for (i=1; i<=dlist[0]; i++) {
 	vi = dlist[i];
 	radio_action_init(&items[i]);
-	double_underscores(tmp, datainfo->varname[vi]);
+	double_underscores(tmp, dataset->varname[vi]);
 	items[i].name = g_strdup_printf("dum %d", vi);
 	items[i].label = g_strdup_printf(_("By %s"), tmp);
 	items[i].value = vi;
@@ -2834,7 +2834,7 @@ static void tau_plot_call (GtkAction *action, gpointer p)
     int v, err;
 
     varnum_from_action(action, &v);
-    err = plot_tau_sequence(pmod, datainfo, v);
+    err = plot_tau_sequence(pmod, dataset, v);
 
     if (err) {
 	gui_errmsg(err);
@@ -2860,7 +2860,7 @@ static void add_tau_plot_menu (windata_t *vwin)
     /* put the independent vars on the menu list */
     for (i=2; i<=pmod->list[0]; i++) {
 	sprintf(aname, "tauseq %d", i - 2);
-	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
+	double_underscores(tmp, dataset->varname[pmod->list[i]]);
 	item.name = aname;
 	item.label = tmp;
 	vwin_menu_add_item(vwin, "/menubar/Graphs/TauMenu", &item);
@@ -2993,7 +2993,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
        depending on the nature of the model
     */
 
-    if (dataset_is_panel(datainfo)) {
+    if (dataset_is_panel(dataset)) {
 	if (pmod->ci == OLS) {
 	    vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 				panel_hsk_items, 
@@ -3006,7 +3006,7 @@ set_up_model_view_menu (GtkWidget *window, windata_t *vwin)
 	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 			    ivreg_hsk_items, 
 			    G_N_ELEMENTS(ivreg_hsk_items));
-    } else if (model_test_ok(MODTEST, OPT_W, pmod, datainfo)) {
+    } else if (model_test_ok(MODTEST, OPT_W, pmod, dataset)) {
 	vwin_menu_add_items(vwin, "/menubar/Tests/Hsk", 
 			    base_hsk_items, 
 			    G_N_ELEMENTS(base_hsk_items));
@@ -3131,10 +3131,10 @@ static void system_data_callback (GtkAction *action, gpointer p)
 	    for (i=0; i<k && !err; i++) {
 		v = (var != NULL)? gretl_VAR_get_variable_number(var, i) :
 		    sys->lists[i][1];
-		if (v < 0 || v >= datainfo->v) {
+		if (v < 0 || v >= dataset->v) {
 		    err = E_DATA;
 		} else {
-		    heads[i] = datainfo->varname[v];
+		    heads[i] = dataset->varname[v];
 		}
 	    }
 	}
@@ -3316,7 +3316,7 @@ static void dialog_add_order_selector (GtkWidget *dlg, GRETL_VAR *var,
     for (i=0; i<var->neqns; i++) {
 	j = gretl_vector_get(ordvec, i);
 	v = var->ylist[j+1];
-	vname = datainfo->varname[v];
+	vname = dataset->varname[v];
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, vname,
 			   1, j, -1);
@@ -3365,7 +3365,7 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 			int *bootstrap, double *alpha, gretlopt *gopt)
 {
     gchar *title;
-    int h = default_VAR_horizon(datainfo);
+    int h = default_VAR_horizon(dataset);
     const char *impulse_opts[] = {
 	N_("include bootstrap confidence interval")
     };
@@ -3380,7 +3380,7 @@ impulse_response_setup (GRETL_VAR *var, gretl_matrix *ordvec, int *horizon,
 			      impulse_opts, 1, active, 0, 0, /* check */
 			      0, NULL, /* no radios */
 			      &h, _("forecast horizon (periods):"),
-			      2, datainfo->n / 2, IRF_BOOT,
+			      2, dataset->n / 2, IRF_BOOT,
 			      &resp);
 
     g_free(title);
@@ -3413,7 +3413,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 		       int *horizon) 
 {
     gchar *title;
-    int h = default_VAR_horizon(datainfo);
+    int h = default_VAR_horizon(dataset);
     GtkWidget *dlg;
     int resp = 0;
 
@@ -3423,7 +3423,7 @@ static int FEVD_setup (GRETL_VAR *var, gretl_matrix *ordvec,
 			      NULL, 0, NULL, 0, 0, /* no checks */
 			      0, NULL, /* no radios */
 			      &h, _("forecast horizon (periods):"),
-			      2, datainfo->n / 2, 0, &resp);
+			      2, dataset->n / 2, 0, &resp);
 
     g_free(title);
 
@@ -3525,7 +3525,7 @@ static void FEVD_plot_call (GtkAction *action, gpointer p)
 	}
     }
 
-    err = gretl_VAR_plot_FEVD(var, targ, horizon, datainfo);
+    err = gretl_VAR_plot_FEVD(var, targ, horizon, dataset);
 
     if (err) {
 	gui_errmsg(err);
@@ -3542,8 +3542,8 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     gint shock, targ;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
-    const double **vZ = NULL;
     gretl_matrix *ordvec = NULL;
+    double this_alpha = 0;
     int resp, err;
 
     impulse_params_from_action(action, &targ, &shock);
@@ -3559,7 +3559,7 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     }
 
     if (bootstrap) {
-	vZ = (const double **) Z;
+	this_alpha = alpha;
     }
 
     if (ordvec != NULL) {
@@ -3572,9 +3572,8 @@ static void impulse_plot_call (GtkAction *action, gpointer p)
     }
 
     err = gretl_VAR_plot_impulse_response(var, targ, shock, 
-					  horizon, alpha, 
-					  vZ, datainfo,
-					  gopt);
+					  horizon, this_alpha, 
+					  dataset, gopt);
 
     if (err) {
 	gui_errmsg(err);
@@ -3587,11 +3586,11 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-    const double **vZ = NULL;
     int horizon, bootstrap;
     static double alpha = 0.10;
     static gretlopt gopt = OPT_NONE;
     gretl_matrix *ordvec = NULL;
+    double this_alpha = 0;
     int resp, err;
 
     ordvec = cholesky_order_vector(var);
@@ -3606,7 +3605,7 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
     }
 
     if (bootstrap) {
-	vZ = (const double **) Z;
+	this_alpha = alpha;
     }   
 
     if (ordvec != NULL) {
@@ -3618,8 +3617,8 @@ static void multiple_irf_plot_call (GtkAction *action, gpointer p)
 	}
     }    
 
-    err = gretl_VAR_plot_multiple_irf(var, horizon, alpha, 
-				      vZ, datainfo, gopt);
+    err = gretl_VAR_plot_multiple_irf(var, horizon, this_alpha, 
+				      dataset, gopt);
 
     if (err) {
 	gui_errmsg(err);
@@ -3658,7 +3657,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     }
 
     code = VAR_model_data_code(action);
-    h = default_VAR_horizon(datainfo);
+    h = default_VAR_horizon(dataset);
     ordvec = cholesky_order_vector(var);
 
     title = g_strdup_printf("gretl: %s", 
@@ -3669,7 +3668,7 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
 			      NULL, 0, NULL, 0, 0, /* no check-buttons */
 			      0, NULL,             /* no radios */
 			      &h, _("forecast horizon (periods):"),
-			      2, datainfo->n / 2, 
+			      2, dataset->n / 2, 
 			      0, &resp);
 
     if (dlg == NULL) {
@@ -3702,9 +3701,9 @@ static void VAR_model_data_callback (GtkAction *action, gpointer p)
     }    
 
     if (code == VAR_IRF) {
-	err = gretl_VAR_print_all_impulse_responses(var, datainfo, h, prn);
+	err = gretl_VAR_print_all_impulse_responses(var, dataset, h, prn);
     } else if (code == VAR_DECOMP) {
-	err = gretl_VAR_print_all_fcast_decomps(var, datainfo, h, prn);
+	err = gretl_VAR_print_all_fcast_decomps(var, dataset, h, prn);
     } else {
 	err = 1;
     }
@@ -3755,7 +3754,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	return;
     }
 
-    t2 = datainfo->n - 1;
+    t2 = dataset->n - 1;
 
     /* if no out-of-sample obs are available, alert the user */
     if (t2 == t2est) {
@@ -3763,11 +3762,11 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	if (err) {
 	    return;
 	}
-	t2 = datainfo->n - 1;
+	t2 = dataset->n - 1;
     }
 
     /* max number of pre-forecast obs in "best case" */
-    premax = datainfo->n - 1;
+    premax = dataset->n - 1;
 
     /* if there are spare obs available, default to an
        out-of-sample forecast */
@@ -3806,8 +3805,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
     }
 
     fr = get_system_forecast(vwin->data, ci, i, t1, t2, pre_n,
-			     (const double **) Z, datainfo, 
-			     opt, &err);
+			     dataset, opt, &err);
 
     if (err) {
 	gui_errmsg(err);
@@ -3820,7 +3818,7 @@ static void system_forecast_callback (GtkAction *action, gpointer p)
 	}
 
 	fr->alpha = 1 - conf;
-	err = text_print_forecast(fr, datainfo, gopt, prn);
+	err = text_print_forecast(fr, dataset, gopt, prn);
 	if (!err) {
 	    register_graph(NULL);
 	}
@@ -3879,13 +3877,13 @@ static void system_test_call (GtkAction *action, gpointer p)
     }
 
     if (code == SYS_AUTOCORR_TEST || code == SYS_ARCH_TEST) {
-	order = default_lag_order(datainfo);
+	order = default_lag_order(dataset);
 	set_window_busy(vwin);
 	err = spin_dialog((code == SYS_AUTOCORR_TEST)?
 			  _("gretl: autocorrelation") :
 			  _("gretl: ARCH test"), NULL,
 			  &order, _("Lag order for test:"),
-			  1, datainfo->n / 2, 0);
+			  1, dataset->n / 2, 0);
 	unset_window_busy(vwin);
 	if (err < 0) {
 	    gretl_print_destroy(prn);
@@ -3898,7 +3896,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 	cstr = g_strdup_printf("modtest %d --autocorr", order);
 	if (var != NULL) {
 	    err = gretl_VAR_autocorrelation_test(var, order, 
-						 &Z, datainfo, 
+						 dataset, 
 						 prn);
 	} else {
 	    err = system_autocorrelation_test(sys, order, prn);
@@ -3907,7 +3905,7 @@ static void system_test_call (GtkAction *action, gpointer p)
 	title = g_strdup(_("gretl: ARCH test"));
 	cstr = g_strdup_printf("modtest %d --arch", order);
 	if (var != NULL) {
-	    err = gretl_VAR_arch_test(var, order, datainfo, prn);
+	    err = gretl_VAR_arch_test(var, order, dataset, prn);
 	} else {
 	    err = system_arch_test(sys, order, prn);
 	}
@@ -3956,7 +3954,7 @@ static void combined_EC_plot_call (GtkAction *action, gpointer p)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int err;
 
-    err = gretl_VECM_combined_EC_plot(var, (const double **) Z, datainfo);
+    err = gretl_VECM_combined_EC_plot(var, dataset);
     
     if (err) {
 	gui_errmsg(err);
@@ -3980,7 +3978,7 @@ static void system_resid_plot_call (GtkAction *action, gpointer p)
     int ci = sys_ci_from_action(action);
     int err;
 
-    err = gretl_system_residual_plot(vwin->data, ci, datainfo);
+    err = gretl_system_residual_plot(vwin->data, ci, dataset);
     
     if (err) {
 	gui_errmsg(err);
@@ -3995,7 +3993,7 @@ static void system_resid_mplot_call (GtkAction *action, gpointer p)
     int ci = sys_ci_from_action(action);
     int err;
 
-    err = gretl_system_residual_mplot(vwin->data, ci, datainfo);
+    err = gretl_system_residual_mplot(vwin->data, ci, dataset);
     
     if (err) {
 	gui_errmsg(err);
@@ -4034,7 +4032,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 
     /* FIXME: the following two tests should really be multivariate */
 
-    if (dataset_is_time_series(datainfo)) {
+    if (dataset_is_time_series(dataset)) {
 	/* univariate autocorrelation tests */
 	item.name = "autocorr";
 	item.label = N_("_Autocorrelation");
@@ -4171,7 +4169,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	} else {
 	    dv = sys->ylist[i+1];
 	}
-	double_underscores(tmp, datainfo->varname[dv]);
+	double_underscores(tmp, dataset->varname[dv]);
 	sprintf(istr, "fcast %d", i);
 	item.name = istr;
 	item.label = tmp;
@@ -4184,7 +4182,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 
 	/* impulse response plots: make menu for target */
 	vtarg = gretl_VAR_get_variable_number(var, i);
-	double_underscores(tmp, datainfo->varname[vtarg]);
+	double_underscores(tmp, dataset->varname[vtarg]);
 	sprintf(istr, "targ_%d", i);
 	sprintf(maj, _("Response of %s"), tmp);
 	item.name = istr;
@@ -4198,7 +4196,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	for (j=0; j<neqns; j++) {
 	    /* impulse responses: subitems for shocks */
 	    vshock = gretl_VAR_get_variable_number(var, j);
-	    double_underscores(tmp, datainfo->varname[vshock]);
+	    double_underscores(tmp, dataset->varname[vshock]);
 	    sprintf(istr, "Imp:%d:%d", i, j);
 	    sprintf(min, _("to %s"), tmp);
 	    item.name = istr;
@@ -4216,7 +4214,7 @@ static void add_system_menu_items (windata_t *vwin, int ci)
 	for (j=0; j<neqns; j++) {
 	    /* FEVD graphs per equation */
 	    vtarg = gretl_VAR_get_variable_number(var, j);
-	    double_underscores(tmp, datainfo->varname[vtarg]);
+	    double_underscores(tmp, dataset->varname[vtarg]);
 	    sprintf(istr, "FEVD:%d", j);
 	    item.name = istr;
 	    item.label = tmp;
@@ -4265,7 +4263,7 @@ static void save_bundled_item_call (GtkAction *action, gpointer p)
 
     note = gretl_bundle_get_note(bundle, key);
 
-    if (type == GRETL_TYPE_SERIES && size == datainfo->n) {
+    if (type == GRETL_TYPE_SERIES && size == dataset->n) {
 	const double *x = (double *) val;
 
 	save_bundled_series(x, key, note);
@@ -4368,7 +4366,7 @@ static void add_bundled_item_to_menu (gpointer key,
 	}
     }
 
-    if (type == GRETL_TYPE_SERIES && size != datainfo->n) {
+    if (type == GRETL_TYPE_SERIES && size != dataset->n) {
 	type = GRETL_TYPE_MATRIX;
     }
 
@@ -4457,11 +4455,11 @@ static int set_sample_from_model (MODEL *pmod)
     int err = 0;
 
     /* first restore the full dataset */
-    err = restore_full_sample(&Z, datainfo, NULL);
+    err = restore_full_sample(dataset, NULL);
 
     /* then, if the model was subsampled, restore the subsample */
     if (!err && !full) {
-	err = restrict_sample_from_mask(pmod->submask, &Z, datainfo, OPT_NONE);
+	err = restrict_sample_from_mask(pmod->submask, dataset, OPT_NONE);
     }
 
     if (err) {
@@ -4480,7 +4478,7 @@ static int set_sample_from_model (MODEL *pmod)
 	}
 
 	mark_session_changed();
-	set_sample_label(datainfo);
+	set_sample_label(dataset);
     }
 
     return err;
@@ -4521,7 +4519,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (Z == NULL) {
+    if (dataset == NULL || dataset->Z == NULL) {
 	flip(vwin->ui, "/menubar/File/SaveAsIcon", FALSE);
 	flip(vwin->ui, "/menubar/File/SaveAndClose", FALSE);
 	flip(vwin->ui, "/menubar/Edit/Copy", FALSE);
@@ -4536,7 +4534,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (model_sample_problem(pmod, datainfo)) { 
+    if (model_sample_problem(pmod, dataset)) { 
 	ok = FALSE;
     }
 
@@ -4664,7 +4662,7 @@ int real_gui_validate_varname (const char *name, GretlType t,
 
     if (!err && t != GRETL_TYPE_NONE) {
 	/* check for collisions */
-	GretlType t0 = gretl_type_from_name(name, datainfo);
+	GretlType t0 = gretl_type_from_name(name, dataset);
 
 	if (t0 != GRETL_TYPE_NONE) {
 	    if (t == t0 && allow_overwrite) {
@@ -4793,7 +4791,7 @@ static void run_ox_or_octave (gchar *buf, int ox)
     } else {
 	err = write_gretl_octave_file(buf, OPT_G, 
 				      (const double **) Z, 
-				      datainfo,
+				      dataset,
 				      &fname);
     }
 
@@ -5026,8 +5024,7 @@ void run_octave_script (gchar *buf)
     const char *fname;
     int err;
 
-    err = write_gretl_octave_file(buf, OPT_G, 
-				  (const double **) Z, datainfo,
+    err = write_gretl_octave_file(buf, OPT_G, dataset,
 				  &fname);
 
     if (err) {
@@ -5066,8 +5063,7 @@ void start_R (const char *buf, int send_data, int interactive)
 	Ropt |= OPT_D;
     }
 
-     err = write_gretl_R_files(buf, (const double **) Z,
-			       datainfo, Ropt);
+     err = write_gretl_R_files(buf, dataset, Ropt);
 
     if (err) {
 	gui_errmsg(err);

@@ -139,8 +139,8 @@ static void varinfo_set_field_changed (gui_varinfo *vset, int i,
 
 static int formula_ok (int v)
 {
-    if (var_is_generated(datainfo, v)) {
-	const char *s = VARLABEL(datainfo, v);
+    if (var_is_generated(dataset, v)) {
+	const char *s = VARLABEL(dataset, v);
 	int n = strlen(s);
 
 	/* note: the test for a trailing dot here is to check
@@ -190,8 +190,8 @@ static void show_varinfo_changes (int v)
 
     if (iptr != NULL) {
         gtk_tree_store_set(GTK_TREE_STORE(model), iptr, 
-                           1, datainfo->varname[v],
-                           2, VARLABEL(datainfo, v),
+                           1, dataset->varname[v],
+                           2, VARLABEL(dataset, v),
                            -1);
     }
 }
@@ -220,8 +220,8 @@ static int try_regenerate_var (int v, const char *s)
     }
 
     if (*s == '=') s++;
-    sprintf(line, "%s=%s", datainfo->varname[v], s);
-    err = generate(line, &Z, datainfo, OPT_NONE, prn);
+    sprintf(line, "%s=%s", dataset->varname[v], s);
+    err = generate(line, dataset, OPT_NONE, prn);
 
     if (err) {
 	errbox(gretl_print_get_buffer(prn));
@@ -260,7 +260,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	if (vset->use_formula) {
 	    err = try_regenerate_var(v, newstr);
 	} else {
-	    var_set_description(datainfo, v, newstr);
+	    var_set_description(dataset, v, newstr);
 	}
 	g_free(newstr);
     }
@@ -272,24 +272,24 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 		      "contain double quotes"));
 	    err = E_DATA;
 	} else {
-	    var_set_display_name(datainfo, v, newstr);
+	    var_set_display_name(dataset, v, newstr);
 	}
 	g_free(newstr);
     }
 
     if (!err && vset->changed[VSET_COMPACT]) {
 	ival = gtk_combo_box_get_active(GTK_COMBO_BOX(vset->compaction_menu));
-	var_set_compact_method(datainfo, v, ival);
+	var_set_compact_method(dataset, v, ival);
     }
 
     if (!err && vset->changed[VSET_LINEWIDTH]) {
 	ival = spinner_get_int(vset->line_spin);
-	var_set_linewidth(datainfo, v, ival);
+	var_set_linewidth(dataset, v, ival);
     }
 
     if (!err && vset->changed[VSET_DISCRETE]) {
 	ival = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vset->discrete_check));
-	set_var_discrete(datainfo, v, ival);
+	set_var_discrete(dataset, v, ival);
     }  
 
     if (!err) {
@@ -298,7 +298,7 @@ static void really_set_variable_info (GtkWidget *w, gui_varinfo *vset)
 	}
 	if (vset->changed[VSET_IDNUM]) {
 	    ival = spinner_get_int(vset->id_spin);
-	    dataset_renumber_variable(v, ival, Z, datainfo);
+	    dataset_renumber_variable(v, ival, dataset);
 	    populate_varlist();
 	    vset->varnum = ival;
 	} else if (vset->changed[VSET_VARNAME] || vset->changed[VSET_LABEL]) {
@@ -334,11 +334,11 @@ static void set_series_name_and_desc (GtkWidget *w, name_setter *nset)
 	int v;
 
 	s = entry_get_trimmed_text(nset->name_entry);
-	v = series_index(datainfo, s);
+	v = series_index(dataset, s);
 
-	if (v > 0 && v < datainfo->v) {
+	if (v > 0 && v < dataset->v) {
 	    /* there's already a series of this name */
-	    if (series_is_parent(datainfo, v)) {
+	    if (series_is_parent(dataset, v)) {
 		allow_overwrite = 0;
 	    } else if (v <= max_untouchable_series_ID()) {
 		allow_overwrite = 0;
@@ -450,13 +450,13 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
 {
     int is_parent;
 
-    if (v <= 0 || v >= datainfo->v) {
+    if (v <= 0 || v >= dataset->v) {
 	return;
     }
 
     vset->varnum = v;
     vset->use_formula = 0;
-    is_parent = series_is_parent(datainfo, v);
+    is_parent = series_is_parent(dataset, v);
 
     if (!is_parent && formula_ok(v)) {
 	gtk_widget_hide(vset->label_label);
@@ -468,7 +468,7 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
     }
 
     gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
-		       datainfo->varname[v]);
+		       dataset->varname[v]);
     gtk_widget_set_sensitive(vset->name_entry, !is_parent);
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), !is_parent);
 
@@ -477,25 +477,25 @@ static void varinfo_insert_info (gui_varinfo *vset, int v)
     }
 
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
-		       VARLABEL(datainfo, v));
+		       VARLABEL(dataset, v));
 
     if (vset->display_entry != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
-			   DISPLAYNAME(datainfo, v));
+			   DISPLAYNAME(dataset, v));
     }
 
     if (vset->line_spin != NULL) { 
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
-				 COMPACT_METHOD(datainfo, v));
+				 COMPACT_METHOD(dataset, v));
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vset->line_spin), 
-				  var_get_linewidth(datainfo, v));
+				  var_get_linewidth(dataset, v));
     } 
 
     if (vset->discrete_check != NULL) {
-	int d2 = 0, d1 = var_is_discrete(datainfo, v);
+	int d2 = 0, d1 = var_is_discrete(dataset, v);
 
 	if (!d1) {
-	    d2 = gretl_isdiscrete(0, datainfo->n - 1, Z[v]);
+	    d2 = gretl_isdiscrete(0, dataset->n - 1, dataset->Z[v]);
 	}
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->discrete_check), d1);
 	gtk_widget_set_sensitive(vset->discrete_check, d1 || d2);
@@ -565,7 +565,7 @@ static void varinfo_apply (GtkButton *b, gui_varinfo *vset)
 static void varinfo_discrete_changed (GtkToggleButton *button, gui_varinfo *vset)
 {
     int d = gtk_toggle_button_get_active(button);
-    int orig = var_is_discrete(datainfo, vset->varnum);
+    int orig = var_is_discrete(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_DISCRETE, d != orig);
 }
@@ -573,7 +573,7 @@ static void varinfo_discrete_changed (GtkToggleButton *button, gui_varinfo *vset
 static void varinfo_linewidth_changed (GtkSpinButton *spin, gui_varinfo *vset)
 {
     int lw = gtk_spin_button_get_value_as_int(spin);
-    int orig = var_get_linewidth(datainfo, vset->varnum);
+    int orig = var_get_linewidth(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_LINEWIDTH, lw != orig);
 }
@@ -581,7 +581,7 @@ static void varinfo_linewidth_changed (GtkSpinButton *spin, gui_varinfo *vset)
 static void varinfo_compact_changed (GtkComboBox *box, gui_varinfo *vset)
 {
     int method = gtk_combo_box_get_active(box);
-    int orig = COMPACT_METHOD(datainfo, vset->varnum);
+    int orig = COMPACT_METHOD(dataset, vset->varnum);
 
     varinfo_set_field_changed(vset, VSET_COMPACT, method != orig);
 }
@@ -590,15 +590,15 @@ static void varinfo_text_changed (GtkEditable *e, gui_varinfo *vset)
 {
     GtkWidget *w = GTK_WIDGET(e);
     gchar *newstr = entry_get_trimmed_text(w);
-    const char *orig = datainfo->varname[vset->varnum];
+    const char *orig = dataset->varname[vset->varnum];
     int f = VSET_VARNAME;
     gboolean s;
 
     if (w == vset->label_entry) {
-	orig = VARLABEL(datainfo, vset->varnum);
+	orig = VARLABEL(dataset, vset->varnum);
 	f = VSET_LABEL;
     } else if (w == vset->display_entry) {
-	orig = DISPLAYNAME(datainfo, vset->varnum);
+	orig = DISPLAYNAME(dataset, vset->varnum);
 	f = VSET_DISPLAY;
     }
 
@@ -717,7 +717,7 @@ void varinfo_dialog (int varnum)
     vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
     gui_varinfo_init(vset, varnum);
 
-    is_parent = series_is_parent(datainfo, varnum);
+    is_parent = series_is_parent(dataset, varnum);
     if (!is_parent && formula_ok(varnum)) {
 	vset->use_formula = 1;
     }
@@ -735,7 +735,7 @@ void varinfo_dialog (int varnum)
     gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), VNAMELEN+3);
     gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
-		       datainfo->varname[varnum]);
+		       dataset->varname[varnum]);
     g_signal_connect(G_OBJECT(vset->name_entry), "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     
@@ -752,7 +752,7 @@ void varinfo_dialog (int varnum)
 	/* allow changing variable's ID number? */
 	int m = max_untouchable_series_ID();
 	int m1 = max_varno_in_saved_lists();
-	int n = datainfo->v - 1;
+	int n = dataset->v - 1;
 
 	if (m1 > m) {
 	    m = m1;
@@ -815,7 +815,7 @@ void varinfo_dialog (int varnum)
     vset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
-		       VARLABEL(datainfo, varnum));
+		       VARLABEL(dataset, varnum));
     g_signal_connect(G_OBJECT(vset->label_entry), "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);
@@ -840,7 +840,7 @@ void varinfo_dialog (int varnum)
     gtk_entry_set_width_chars(GTK_ENTRY(vset->display_entry), 
 			      MAXDISP+4);
     gtk_entry_set_text(GTK_ENTRY(vset->display_entry), 
-		       DISPLAYNAME(datainfo, varnum));
+		       DISPLAYNAME(dataset, varnum));
     g_signal_connect(G_OBJECT(vset->display_entry), "changed", 
 		     G_CALLBACK(varinfo_text_changed), vset);
     gtk_box_pack_start(GTK_BOX(hbox), 
@@ -851,7 +851,7 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
 
-    if (dataset_is_time_series(datainfo)) {  
+    if (dataset_is_time_series(dataset)) {  
 	/* compaction method */
 	int i;
 
@@ -868,7 +868,7 @@ void varinfo_dialog (int varnum)
 	}
 	
 	gtk_combo_box_set_active(GTK_COMBO_BOX(vset->compaction_menu), 
-				 COMPACT_METHOD(datainfo, varnum));
+				 COMPACT_METHOD(dataset, varnum));
 	g_signal_connect(G_OBJECT(vset->compaction_menu), "changed",
 			 G_CALLBACK(varinfo_compact_changed), vset);
 	gtk_box_pack_start(GTK_BOX(hbox), vset->compaction_menu, FALSE, FALSE, 5);
@@ -878,7 +878,7 @@ void varinfo_dialog (int varnum)
 	gtk_widget_show(hbox); 
     }
 
-    if (dataset_is_time_series(datainfo)) {  
+    if (dataset_is_time_series(dataset)) {  
 	/* graph line width */
 	int w;
 
@@ -888,7 +888,7 @@ void varinfo_dialog (int varnum)
 	gtk_widget_show(tmp);
 
 	tmp = gtk_spin_button_new_with_range(1, 8, 1);
-	w = var_get_linewidth(datainfo, varnum);
+	w = var_get_linewidth(dataset, varnum);
 	if (w > 1) {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), w);
 	}
@@ -904,13 +904,13 @@ void varinfo_dialog (int varnum)
 
     if (1) {
 	/* mark variable as discrete or not */
-	int d = var_is_discrete(datainfo, varnum);
+	int d = var_is_discrete(dataset, varnum);
 
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_check_button_new_with_label(_("Treat this variable "
 						"as discrete"));
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), d);
-	if (!d && !gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
+	if (!d && !gretl_isdiscrete(0, dataset->n - 1, dataset->Z[varnum])) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	} 
 	g_signal_connect(G_OBJECT(tmp), "toggled",
@@ -966,7 +966,7 @@ void name_new_variable_dialog (char *vname, char *descrip,
     flags = GRETL_DLG_MODAL | GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
     nset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
 
-    make_varname_unique(vname, 0, datainfo);
+    make_varname_unique(vname, 0, dataset);
     name_setter_init(nset, vname, descrip, cancel);
 
     g_signal_connect(G_OBJECT(nset->dlg), "destroy", 

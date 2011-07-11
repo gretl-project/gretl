@@ -121,8 +121,7 @@ static void mp_2d_array_free (mpf_t **X, int v, int n)
 /* reject the incoming data (a) if any values are missing, (b) if any
    vars are all "zero" */
 
-static int data_problems (const int *list, const double **Z, 
-			  const DATAINFO *pdinfo)
+static int data_problems (const int *list, const DATASET *dset)
 {
     int i, t, allzero;
 
@@ -131,14 +130,14 @@ static int data_problems (const int *list, const double **Z,
 	    continue; 
 	}
 	allzero = 1;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	    if (!eqzero(Z[list[i]][t])) {
+	for (t=dset->t1; t<=dset->t2; t++) { 
+	    if (!eqzero(dset->Z[list[i]][t])) {
 		allzero = 0;
 	    }
 	}
 	if (allzero) {
 	    gretl_errmsg_sprintf(_("Variable '%s' is all zeros"), 
-				 pdinfo->varname[list[i]]);
+				 dset->varname[list[i]]);
 	    return 1;
 	}
     }
@@ -166,8 +165,9 @@ static void make_poly_series (MPMODEL *pmod, mpf_t **mpZ,
     }
 }
 
-static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
-			    const int *zdigits, int i, int mpi)
+static void fill_mp_series (MPMODEL *pmod, const DATASET *dset,
+			    mpf_t **mpZ, const int *zdigits, 
+			    int i, int mpi)
 {
     char numstr[64];
     int t, s = 0; 
@@ -175,11 +175,11 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (zdigits != NULL && zdigits[i] > 0 && zdigits[i] < DBL_DIG) {
 	    /* do trick with strings */
-	    sprintf(numstr, "%.*g", zdigits[i], Z[i][t]);
+	    sprintf(numstr, "%.*g", zdigits[i], dset->Z[i][t]);
 	    mpf_init_set_str(mpZ[mpi][s], numstr, 10);
 	} else { 
 	    /* do straight conversion */
-	    mpf_init_set_d(mpZ[mpi][s], Z[i][t]);
+	    mpf_init_set_d(mpZ[mpi][s], dset->Z[i][t]);
 	}
 	s++;
     }
@@ -206,8 +206,7 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
 */
 
 static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
-			 const double **Z, const DATAINFO *pdinfo, 
-			 char **xnames)
+			 const DATASET *dset, char **xnames)
 {
     int i, s, t;
     int n = mpmod->t2 - mpmod->t1 + 1;
@@ -246,7 +245,7 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
 	    mpf_init_set_d(mpZ[0][s++], 1.0);
 	}
 	if (xnames != NULL) { 	 
-	    strcpy(xnames[v++], pdinfo->varname[0]); 	 
+	    strcpy(xnames[v++], dset->varname[0]); 	 
 	}
 	nvars++;
     } 
@@ -281,10 +280,10 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
 	    mp_poly_pos = nvars;
 	}
 	    
-	fill_mp_series(mpmod, Z, mpZ, zdigits, mpmod->list[i], nvars); 
+	fill_mp_series(mpmod, dset, mpZ, zdigits, mpmod->list[i], nvars); 
 	mpmod->varlist[i] = mpmod->list[i];
         if (xnames != NULL && i > 1) { 	 
-	    strcpy(xnames[v++], pdinfo->varname[mpmod->list[i]]); 	 
+	    strcpy(xnames[v++], dset->varname[mpmod->list[i]]); 	 
 	}
 	mpmod->list[i] = nvars;
 	nvars++;
@@ -306,7 +305,7 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const int *zdigits,
 
         if (xnames != NULL) { 	 
 	    sprintf(xnames[v++], "%s^%d", 	 
-		    pdinfo->varname[mpmod->polyvar], 	 
+		    dset->varname[mpmod->polyvar], 	 
 		    mpmod->polylist[i+1]); 	 
 	}
 
@@ -984,14 +983,14 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
 }
 
 static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
-			    const DATAINFO *pdinfo, mpf_t **mpZ,
+			    const DATASET *dset, mpf_t **mpZ,
 			    char **xnames, gretlopt opt)
 {
-    int tseries = dataset_is_time_series(pdinfo);
+    int tseries = dataset_is_time_series(dset);
     int i, err = 0;
 
     pmod->ncoeff = mpmod->ncoeff;
-    pmod->full_n = pdinfo->n;
+    pmod->full_n = dset->n;
     pmod->ci = MPOLS;
 
     err = gretl_model_allocate_storage(pmod);
@@ -1542,8 +1541,7 @@ static int mp_rearrange (int *list)
  * @polylist: list of polynomial terms (or %NULL).
  * @zdigits: list of digits of input precision for data series
  * (or %NULL).
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @pmod: MODEL pointer to hold results.
  * @opt: if contains %OPT_S, save additional model
  * information (including the names of parameters in 
@@ -1556,22 +1554,21 @@ static int mp_rearrange (int *list)
  */
 
 int mplsq (const int *list, const int *polylist, const int *zdigits,
-	   const double **Z, DATAINFO *pdinfo, 
-	   MODEL *pmod, gretlopt opt) 
+	   DATASET *dset, MODEL *pmod, gretlopt opt) 
 {
     int l0, i;
     mpf_t **mpZ = NULL;
     char **xnames = NULL;
     MPXPXXPY xpxxpy;
     MPMODEL mpmod;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int orig_t1 = dset->t1;
+    int orig_t2 = dset->t2;
     int err = 0;
 
     gretl_error_clear();
 
-    if (list == NULL || Z == NULL || pdinfo == NULL ||
-	list[0] < 2 || pdinfo->v < 2) {
+    if (list == NULL || dset == NULL || dset->Z == NULL ||
+	list[0] < 2 || dset->v < 2) {
 	return E_DATA;
     }
 
@@ -1579,8 +1576,8 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
 
     mp_model_init(&mpmod);
 
-    mpmod.t1 = pdinfo->t1;
-    mpmod.t2 = pdinfo->t2;
+    mpmod.t1 = dset->t1;
+    mpmod.t2 = dset->t2;
 
     if (polylist == NULL) {
 	mpmod.list = gretl_list_copy(list);
@@ -1600,17 +1597,17 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     }
 
     /* check for missing obs in sample */
-    err = list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
+    err = list_adjust_sample(list, &dset->t1, &dset->t2, dset);
     if (err) {
 	goto bailout;
     }
     
     /* in case of any changes */
-    mpmod.t1 = pdinfo->t1;
-    mpmod.t2 = pdinfo->t2;
+    mpmod.t1 = dset->t1;
+    mpmod.t2 = dset->t2;
 
     /* check for other data issues */
-    if (data_problems(list, Z, pdinfo)) {
+    if (data_problems(list, dset)) {
 	err = E_DATA;
 	goto bailout;
     }
@@ -1628,7 +1625,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
     mpmod.ifc = mp_rearrange(mpmod.list);
 
     /* construct multiple-precision data matrix */
-    mpZ = make_mpZ(&mpmod, zdigits, Z, pdinfo, xnames);
+    mpZ = make_mpZ(&mpmod, zdigits, dset, xnames);
 
     if (mpZ == NULL) {
 	err = E_ALLOC;
@@ -1666,7 +1663,7 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
 
     err = mpmod.errcode;
     if (!err) {
-	err = copy_mp_results(&mpmod, pmod, pdinfo, mpZ, xnames, opt);
+	err = copy_mp_results(&mpmod, pmod, dset, mpZ, xnames, opt);
     } 
 
     /* free all the mpf stuff */
@@ -1675,8 +1672,8 @@ int mplsq (const int *list, const int *polylist, const int *zdigits,
 
  bailout:
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
     mp_model_free(&mpmod);
 

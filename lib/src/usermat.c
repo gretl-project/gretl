@@ -1194,7 +1194,7 @@ int umatrix_set_names_from_string (const gretl_matrix *M,
 
 int umatrix_set_names_from_list (const gretl_matrix *M, 
 				 const int *list,
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 int byrow)
 {
     user_matrix *u = get_user_matrix_by_data(M);
@@ -1218,7 +1218,7 @@ int umatrix_set_names_from_list (const gretl_matrix *M,
 	}
 
 	for (i=0; i<n && !err; i++) {
-	    S[i] = gretl_strndup(pdinfo->varname[list[i+1]], 12);
+	    S[i] = gretl_strndup(dset->varname[list[i+1]], 12);
 	    if (S[i] == NULL) {
 		err = E_ALLOC;
 	    }

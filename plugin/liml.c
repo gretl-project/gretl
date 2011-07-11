@@ -52,11 +52,11 @@
 
 static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 			const int *exlist, const int *list, 
-			double **Z, DATAINFO *pdinfo)
+			DATASET *dset)
 {
     int i, vi, t, j = 0;
     int T = E->rows;
-    int t1 = pdinfo->t1;
+    int t1 = dset->t1;
     int err = 0;
 
     for (i=1; i<=list[0]; i++) {
@@ -70,7 +70,7 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 
 	/* regress the given endogenous var on the specified
 	   set of instruments */
-	*lmod = lsq(reglist, Z, pdinfo, OLS, OPT_A);
+	*lmod = lsq(reglist, dset, OLS, OPT_A);
 	if ((err = lmod->errcode)) {
 	    clear_model(lmod);
 	    break;
@@ -156,8 +156,7 @@ liml_make_reglist (const equation_system *sys, const int *list,
 static int 
 liml_set_model_data (MODEL *pmod, const gretl_matrix *E, 
 		     const int *exlist, const int *list, 
-		     int T, int t1, int n, double lmin,
-		     double **Z)
+		     int T, double lmin, DATASET *dset)
 {
     double *Xi = NULL;
     double *ymod = NULL;
@@ -169,32 +168,32 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     pos = gretl_list_separator_position(list);
     m = (pos > 0)? (pos - 2) : list[0] - 1;
 
-    ymod = malloc(n * sizeof *ymod);
+    ymod = malloc(dset->n * sizeof *ymod);
     if (ymod == NULL) {
 	return 1;
     }
 
-    for (t=0; t<n; t++) {
+    for (t=0; t<dset->n; t++) {
 	ymod[t] = NADBL;
     }
 
     for (t=0; t<T; t++) {
-	s = t + t1;
-	yt = Z[list[1]][s];
+	s = t + dset->t1;
+	yt = dset->Z[list[1]][s];
 	eit = gretl_matrix_get(E, t, 0);
-	ymod[t + t1] = yt - lmin * eit;
+	ymod[t + dset->t1] = yt - lmin * eit;
 	j = 1;
 	for (i=0; i<m; i++) {
 	    vi = list[i+2];
 	    if (in_gretl_list(exlist, vi)) {
 		continue;
 	    }
-	    Xi = model_get_Xi(pmod, Z, i);
+	    Xi = model_get_Xi(pmod, dset, i);
 	    if (Xi == NULL) {
 		err = 1;
 		break;
 	    }
-	    xit = Z[vi][s];
+	    xit = dset->Z[vi][s];
 	    eit = gretl_matrix_get(E, t, j++);
 	    Xi[s] = xit - lmin * eit;
 	}
@@ -204,7 +203,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     if (!err) {
 	err = gretl_model_set_data(pmod, "liml_y", ymod, 
 				   GRETL_TYPE_DOUBLE_ARRAY,
-				   n * sizeof *ymod);
+				   dset->n * sizeof *ymod);
     }
 
     if (err) {
@@ -215,8 +214,7 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 }
 
 static int liml_do_equation (equation_system *sys, int eq, 
-			     double **Z, DATAINFO *pdinfo, 
-			     PRN *prn)
+			     DATASET *dset, PRN *prn)
 {
     int *list = system_get_list(sys, eq);
     int *exlist = NULL;
@@ -233,7 +231,7 @@ static int liml_do_equation (equation_system *sys, int eq,
     int err = 0;
 
 #if LDEBUG
-    fprintf(stderr, "\nWorking on equation for %s\n", pdinfo->varname[list[1]]);
+    fprintf(stderr, "\nWorking on equation for %s\n", dset->varname[list[1]]);
     printlist(list, "original equation list");
 #endif
 
@@ -292,8 +290,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 	goto bailout;
     }
 
-    err = resids_to_E(E, &lmod, reglist, exlist, list, 
-		      Z, pdinfo);
+    err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
 
     if (!err) {
 	err = gretl_matrix_multiply_mod(E, GRETL_MOD_TRANSPOSE,
@@ -311,8 +308,7 @@ static int liml_do_equation (equation_system *sys, int eq,
 	for (i=2; i<=reglist[0]; i++) {
 	    reglist[i] = exlist[i-1];
 	}
-	err = resids_to_E(E, &lmod, reglist, exlist, list, 
-			  Z, pdinfo);
+	err = resids_to_E(E, &lmod, reglist, exlist, list, dset);
     }
 
     if (!err) {
@@ -347,8 +343,8 @@ static int liml_do_equation (equation_system *sys, int eq,
 	fprintf(stderr, "lmin = %g, idf = %d\n", lmin, idf);
 #endif
 
-	err = liml_set_model_data(pmod, E, exlist, list, T, pdinfo->t1, 
-				  pdinfo->n, lmin, Z);
+	err = liml_set_model_data(pmod, E, exlist, list, T, 
+				  lmin, dset);
 	if (err) {
 	    fprintf(stderr, "error in liml_set_model_data()\n");
 	}
@@ -387,8 +383,7 @@ static int liml_do_equation (equation_system *sys, int eq,
    models
 */
 
-int liml_driver (equation_system *sys, double **Z, 
-		 DATAINFO *pdinfo, PRN *prn)
+int liml_driver (equation_system *sys, DATASET *dset, PRN *prn)
 {
     int i, err = 0;
 
@@ -398,9 +393,9 @@ int liml_driver (equation_system *sys, double **Z,
 
     for (i=0; i<sys->neqns && !err; i++) {
 #if LDEBUG > 1
-	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
+	printmodel(system_get_model(sys, i), dset, OPT_NONE, prn);
 #endif
-	err = liml_do_equation(sys, i, Z, pdinfo, prn);
+	err = liml_do_equation(sys, i, dset, prn);
     }
 
     return err;

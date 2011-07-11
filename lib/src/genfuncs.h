@@ -21,64 +21,64 @@
 #define GENFUNCS_H
 
 int sort_series (const double *x, double *y, int f, 
-		 const DATAINFO *pdinfo);
+		 const DATASET *dset);
 
 int gretl_sort_by (const double *x, const double *y, 
-		   double *z, const DATAINFO *pdinfo);
+		   double *z, const DATASET *dset);
 
 int rank_series (const double *x, double *y, int f, 
-		 const DATAINFO *pdinfo);
+		 const DATASET *dset);
 
 gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err);
 
 int diff_series (const double *x, double *y, int f, 
-		 const DATAINFO *pdinfo);
+		 const DATASET *dset);
 
-int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo);
+int orthdev_series (const double *x, double *y, const DATASET *dset);
 
 int cum_series (const double *x, double *y, 
-		const DATAINFO *pdinfo);
+		const DATASET *dset);
 
 int resample_series (const double *x, double *y, 
-		     const DATAINFO *pdinfo);
+		     const DATASET *dset);
 
 int block_resample_series (const double *x, double *y, int blocklen,
-			   const DATAINFO *pdinfo);
+			   const DATASET *dset);
 
 int fracdiff_series (const double *x, double *y, double d,
-		     int diff, int obs, const DATAINFO *pdinfo);
+		     int diff, int obs, const DATASET *dset);
 
 int boxcox_series (const double *x, double *y, double d,
-		   const DATAINFO *pdinfo);
+		   const DATASET *dset);
 
-int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
+int filter_series (const double *x, double *y, const DATASET *dset, 
 		   gretl_matrix *A, gretl_matrix *C, double y0);
 
 int exponential_movavg_series (const double *x, double *y, 
-			       const DATAINFO *pdinfo,
+			       const DATASET *dset,
 			       double d, int n);
 
-int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
+int movavg_series (const double *x, double *y, const DATASET *dset,
 		   int k, int center);
 
 int seasonally_adjust_series (const double *x, double *y, 
-			      DATAINFO *pdinfo, int tramo);
+			      DATASET *dset, int tramo);
 
-int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
+int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k);
 
-int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
+int hp_filter (const double *x, double *hp, const DATASET *dset,
 	       double lambda, gretlopt opt);
 
-int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo, 
+int bkbp_filter (const double *x, double *bk, const DATASET *dset, 
 		 int bkl, int bku, int k);
 
-int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
+int butterworth_filter (const double *x, double *bw, const DATASET *dset,
 			int n, double cutoff);
 
-int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order);
+int poly_trend (const double *x, double *fx, const DATASET *dset, int order);
 
-int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
+int weighted_poly_trend (const double *x, double *fx, const DATASET *dset,
 			 int order, gretlopt opt, double wratio, 
 			 double midfrac);
 
@@ -89,34 +89,33 @@ gretl_matrix *hp_gain (double lambda, int hipass);
 
 gretl_matrix *butterworth_gain (int n, double cutoff, int hipass);
 
-int dummy (double ***pZ, DATAINFO *pdinfo, int center);
+int dummy (DATASET *dset, int center);
 
-int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt);
+int panel_dummies (DATASET *dset, gretlopt opt);
 
-int gen_unit (double ***pZ, DATAINFO *pdinfo);
+int gen_unit (DATASET *dset);
 
-int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
+int panel_unit_first_obs (int t, const DATASET *dset);
 
-int gen_time (double ***pZ, DATAINFO *pdinfo, int tm);
+int gen_time (DATASET *dset, int tm);
 
-int gen_wkday (double ***pZ, DATAINFO *pdinfo);
+int gen_wkday (DATASET *dset);
 
-int plotvar_code (const DATAINFO *pdinfo);
+int plotvar_code (const DATASET *dset);
 
-const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo);
+const double *gretl_plotx (const DATASET *dset);
 
-double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, 
+double *get_fit_or_resid (const MODEL *pmod, DATASET *dset, 
 			  ModelDataIndex idx, char *vname, 
 			  char *vlabel, int *err);
 
-int get_observation_number (const char *s, const DATAINFO *pdinfo);
+int get_observation_number (const char *s, const DATASET *dset);
 
-int get_t_from_obs_string (const char *s, const double **Z, 
-			   const DATAINFO *pdinfo);
+int get_t_from_obs_string (const char *s, const DATASET *dset);
 
 int list_linear_combo (double *y, const int *list, 
-		       const gretl_vector *b, const double **Z, 
-		       const DATAINFO *pdinfo);
+		       const gretl_vector *b, 
+		       const DATASET *dset);
 
 double imhof (const gretl_matrix *m, double arg, int *err);
 
@@ -125,14 +124,12 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
 
 gretl_matrix *multi_acf (const gretl_matrix *m, 
 			 const int *list, 
-			 const double **Z,
-			 const DATAINFO *pdinfo,
+			 const DATASET *dset,
 			 int p, int *err);
 
 gretl_matrix *multi_xcf (const void *px, int xtype,
 			 const void *py, int ytype,
-			 const double **Z,
-			 const DATAINFO *pdinfo,
+			 const DATASET *dset,
 			 int p, int *err);
 
 gretl_matrix *forecast_stats (const double *y, const double *f,
@@ -154,6 +151,6 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 			      const gretl_matrix *X,
 			      int f, int *err);
 
-int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn);
+int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 
 #endif /* GENFUNCS_H */

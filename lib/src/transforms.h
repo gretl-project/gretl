@@ -20,45 +20,42 @@
 #ifndef TRANSFORMS_H
 #define TRANSFORMS_H
 
-int default_lag_order (const DATAINFO *pdinfo);
+int default_lag_order (const DATASET *dset);
 
-int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent);
+int is_standard_lag (int v, const DATASET *dset, int *parent);
 
-int is_standard_diff (int v, const DATAINFO *pdinfo, int *parent);
+int is_standard_diff (int v, const DATASET *dset, int *parent);
 
-int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent);
+int is_dummy_child (int v, const DATASET *dset, int *parent);
 
-int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo);
+int diffgenr (int v, int ci, DATASET *dset);
 
-int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo);
+int laggenr (int v, int lag, DATASET *dset);
 
-int loggenr (int v, double ***pZ, DATAINFO *pdinfo);
+int loggenr (int v, DATASET *dset);
 
-int invgenr (int v, double ***pZ, DATAINFO *pdinfo);
+int invgenr (int v, DATASET *dset);
 
-int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo);
+int xpxgenr (int vi, int vj, DATASET *dset);
 
-int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo);
+int list_diffgenr (int *list, int ci, DATASET *dset);
 
-int list_orthdev (int *list, double ***pZ, DATAINFO *pdinfo);
+int list_orthdev (int *list, DATASET *dset);
 
-int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo);
+int list_laggenr (int **plist, int order, DATASET *dset);
 
-int *laggenr_from_to (int v, int minlag, int maxlag, double ***pZ, 
-		      DATAINFO *pdinfo, int *err);
+int *laggenr_from_to (int v, int minlag, int maxlag, 
+		      DATASET *dset, int *err);
 
-int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
+int list_loggenr (int *list, DATASET *dset);
 
-int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt);
+int list_xpxgenr (int **plist, DATASET *dset, gretlopt opt);
 
-int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt);
+int list_dumgenr (int **plist, DATASET *dset, gretlopt opt);
 
-int dumgenr_with_oddval (int **plist, double ***pZ, DATAINFO *pdinfo,
-			 double oddval);
+int dumgenr_with_oddval (int **plist, DATASET *dset, double oddval);
 
-int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt);
+int list_makediscrete (const int *list, DATASET *dset, gretlopt opt);
 
 void gretl_transforms_cleanup (void);
 

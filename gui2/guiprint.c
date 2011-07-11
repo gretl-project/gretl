@@ -639,7 +639,7 @@ void gtk_print_graph (const char *fname)
 
 #endif /* GTK_PRINTING */
 
-void rtf_print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
+void rtf_print_obs_marker (int t, const DATASET *pdinfo, PRN *prn)
 {
     const char *obs;
 
@@ -689,7 +689,7 @@ static void printfrtf (double zz, PRN *prn, int endrow)
                       "\\cellx2000\\cellx4000\\cellx6000\\cellx8000\n"
 
 static void 
-rtfprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
+rtfprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[128];
     int i, vi;
@@ -780,7 +780,7 @@ static char *eqn_numstr (double x, char *s)
     return gretl_fix_exponent(s);
 }
 
-int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+int text_print_equation (const MODEL *pmod, const DATASET *pdinfo, 
 			 gretlopt opt, PRN *prn)
 {
     double x;
@@ -901,7 +901,7 @@ static void printftex (double x, PRN *prn, int endrow)
 }
 
 static void 
-texprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
+texprint_summary (const Summary *summ, const DATASET *pdinfo, PRN *prn)
 {
     char pt = get_local_decpoint();
     char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
@@ -982,7 +982,7 @@ texprint_summary (const Summary *summ, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "\\end{tabular}\n\\end{center}\n");
 }
 
-void special_print_summary (const Summary *summ, const DATAINFO *pdinfo,
+void special_print_summary (const Summary *summ, const DATASET *pdinfo,
 			    PRN *prn)
 {
     if (tex_format(prn)) {
@@ -1039,7 +1039,7 @@ static void rtf_vmat_blank_row (int lo, int n, PRN *prn)
 #define FIELDS 5
 
 static void
-rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
+rtfprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 {
     register int i, j;
     int n = vmat->t2 - vmat->t1 + 1;
@@ -1129,7 +1129,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 }
 
 static void
-texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
+texprint_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, PRN *prn)
 {
     register int i, j;
     int n = vmat->t2 - vmat->t1 + 1;
@@ -1226,7 +1226,7 @@ texprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
     pputs(prn, "\\end{center}\n");
 }
 
-void special_print_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, 
+void special_print_vmatrix (const VMatrix *vmat, const DATASET *pdinfo, 
 			    PRN *prn)
 {
     if (tex_format(prn)) {
@@ -1296,7 +1296,7 @@ static int texprint_fcast_stats (const FITRESID *fr,
 }
 
 static 
-void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
+void tex_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo, 
 			 PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN]; 
@@ -1313,7 +1313,7 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
 }
 
 static 
-void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
+void rtf_fit_resid_head (const FITRESID *fr, const DATASET *pdinfo, 
 			 PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN]; 
@@ -1349,7 +1349,7 @@ static void tex_print_x (double x, int pmax, PRN *prn)
 }
 
 static void texprint_fit_resid (const FITRESID *fr, 
-				const DATAINFO *pdinfo, 
+				const DATASET *pdinfo, 
 				PRN *prn)
 {
     int t, anyast = 0;
@@ -1409,7 +1409,7 @@ static void texprint_fit_resid (const FITRESID *fr,
                 "\\cellx6100\n"
 
 static void rtfprint_fit_resid (const FITRESID *fr, 
-				const DATAINFO *pdinfo, 
+				const DATASET *pdinfo, 
 				PRN *prn)
 {
     double xx;
@@ -1462,7 +1462,7 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 }
 
 void special_print_fit_resid (const FITRESID *fr, 
-			      const DATAINFO *pdinfo, 
+			      const DATASET *pdinfo, 
 			      PRN *prn)
 {
     if (tex_format(prn)) {
@@ -1482,7 +1482,7 @@ static void texprint_fcast_x (double x, int places, char *str)
 }
 
 static void texprint_fcast_without_errs (const FITRESID *fr, 
-					 const DATAINFO *pdinfo, 
+					 const DATASET *pdinfo, 
 					 PRN *prn)
 {
     char actual[32], fitted[32];
@@ -1518,7 +1518,7 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
 }
 
 static void texprint_fcast_with_errs (const FITRESID *fr, 
-				      const DATAINFO *pdinfo, 
+				      const DATASET *pdinfo, 
 				      PRN *prn)
 {
     double maxerr, tval = 0;
@@ -1606,7 +1606,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
                  "\\cellx7800\n"
 
 static void rtfprint_fcast_without_errs (const FITRESID *fr, 
-					 const DATAINFO *pdinfo, 
+					 const DATASET *pdinfo, 
 					 PRN *prn)
 {
     int t;
@@ -1632,7 +1632,7 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 }
 
 static void rtfprint_fcast_with_errs (const FITRESID *fr, 
-				      const DATAINFO *pdinfo, 
+				      const DATASET *pdinfo, 
 				      PRN *prn)
 {
     double maxerr, tval = 0;
@@ -1685,7 +1685,7 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 }
 
 void special_print_forecast (const FITRESID *fr, 
-			     const DATAINFO *pdinfo, 
+			     const DATASET *pdinfo, 
 			     PRN *prn)
 {
     if (tex_format(prn)) {
@@ -1828,13 +1828,13 @@ int scalars_to_prn (PRN *prn)
     double sval;
     int i, n = n_saved_scalars();
 
-    if (datainfo->delim == ',' && ',' == datainfo->decpoint) {
+    if (dataset->delim == ',' && ',' == dataset->decpoint) {
 	errbox(_("You can't use the same character for "
 		 "the column delimiter and the decimal point"));
 	return 1;
     }
 
-    if (datainfo->decpoint != ',') {
+    if (dataset->decpoint != ',') {
 	gretl_push_c_numeric_locale();
     }
 
@@ -1843,13 +1843,13 @@ int scalars_to_prn (PRN *prn)
 	sname = gretl_scalar_get_name(i);
 	sval = gretl_scalar_get_value_by_index(i);
 	if (na(sval)) {
-	    pprintf(prn, "%s%cNA\n", sname, datainfo->delim);
+	    pprintf(prn, "%s%cNA\n", sname, dataset->delim);
 	} else {
-	    pprintf(prn, "%s%c%.15g\n", sname, datainfo->delim, sval);
+	    pprintf(prn, "%s%c%.15g\n", sname, dataset->delim, sval);
 	}
     }
 
-    if (datainfo->decpoint != ',') {
+    if (dataset->decpoint != ',') {
 	gretl_pop_c_numeric_locale();
     }
 
@@ -1861,8 +1861,7 @@ static int data_to_buf_as_rtf (const int *list, PRN *prn)
     int err;
 
     gretl_print_set_format(prn, GRETL_FORMAT_RTF);
-    err = print_data_in_columns(list, NULL, (const double **) Z, 
-				datainfo, prn);
+    err = print_data_in_columns(list, NULL, dataset, prn);
     return err;
 }
 
@@ -1871,8 +1870,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     int err;
 
     gretl_print_set_format(prn, GRETL_FORMAT_CSV);
-    err = print_data_in_columns(list, NULL, (const double **) Z, 
-				datainfo, prn);
+    err = print_data_in_columns(list, NULL, dataset, prn);
     return err;
 }
 
@@ -1954,12 +1952,12 @@ static void matrix_print_as_csv (const gretl_matrix *m, PRN *prn)
 	for (j=0; j<m->cols; j++) {
 	    x = gretl_matrix_get(m, i, j);
 	    sprintf(numstr, "%.*g", DBL_DIG, x);
-	    if (datainfo->decpoint != '.') {
-		charsub(numstr, '.', datainfo->decpoint);
+	    if (dataset->decpoint != '.') {
+		charsub(numstr, '.', dataset->decpoint);
 	    }
 	    pputs(prn, numstr);
 	    if (j < m->cols - 1) {
-		pputc(prn, datainfo->delim);
+		pputc(prn, dataset->delim);
 	    }
 	}
 	pputc(prn, '\n');
@@ -2028,24 +2026,24 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 {
     int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
-    char save_delim = datainfo->delim;
-    char save_decpoint = datainfo->decpoint;
+    char save_delim = dataset->delim;
+    char save_decpoint = dataset->decpoint;
     int i, err = 0;
 
     if (list != NULL) {
 	for (i=1; i<=list[0]; i++) {
-	    if (list[i] >= datainfo->v) {
+	    if (list[i] >= dataset->v) {
 		gui_errmsg(E_DATA);
 		return E_DATA;
 	    }
 	}
 
 	if (fmt == GRETL_FORMAT_CSV) {
-	    datainfo->delim = ',';
-	    datainfo->decpoint = '.';
+	    dataset->delim = ',';
+	    dataset->decpoint = '.';
 	} else if (fmt == GRETL_FORMAT_TAB) {
 	    fmt |= GRETL_FORMAT_CSV;
-	    datainfo->delim = '\t';
+	    dataset->delim = '\t';
 	}
 
 	if (series_view_is_sorted(vwin)) {
@@ -2079,8 +2077,8 @@ int copy_vars_formatted (windata_t *vwin, int fmt, int action)
 	free(list);
     }
 
-    datainfo->delim = save_delim;
-    datainfo->decpoint = save_decpoint;
+    dataset->delim = save_delim;
+    dataset->decpoint = save_decpoint;
 
     return err;
 }

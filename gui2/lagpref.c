@@ -523,7 +523,7 @@ static int set_lag_prefs_from_xlist (int *list, int dv, char cbase,
 	    continue;
 	}
 	pv = 0;
-	lag = (vi == 0)? 0 : is_standard_lag(vi, datainfo, &pv);
+	lag = (vi == 0)? 0 : is_standard_lag(vi, dataset, &pv);
 	if (lag != 0) {
 	    context = (pv == dv)? cbase + 1 : cbase;
 	    err = set_lag_pref_from_lag(pv, lag, context);
@@ -704,7 +704,7 @@ get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
 	return;
     }  
     
-    if (lpref == NULL || v >= datainfo->v) {
+    if (lpref == NULL || v >= dataset->v) {
 	return;
     }
 

@@ -276,7 +276,7 @@ static void set_true_zeros (gretl_matrix *m)
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     gretl_restriction *rset,
-		     const DATAINFO *pdinfo, 
+		     const DATASET *dset, 
 		     gretlopt opt,
 		     PRN *prn)
 {
@@ -384,7 +384,7 @@ int vecm_alpha_test (GRETL_VAR *jvar,
 	}
 
 	if (!err && (opt & OPT_V)) {
-	    print_beta_alpha_Pi(jvar, pdinfo, prn);
+	    print_beta_alpha_Pi(jvar, dset, prn);
 	}
 
 	gretl_matrix_free(evals);

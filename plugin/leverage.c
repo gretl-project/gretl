@@ -203,7 +203,7 @@ leverage_x_range (int t1, int t2, const double *x, FILE *fp)
 }
 
 static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
-			  double ***pZ, DATAINFO *pdinfo)
+			  DATASET *dset)
 {
     FILE *fp;
     const double *obs = NULL;
@@ -214,8 +214,8 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	return err;
     }
 
-    if (dataset_is_time_series(pdinfo)) { 
-	obs = gretl_plotx(NULL, pdinfo);
+    if (dataset_is_time_series(dset)) { 
+	obs = gretl_plotx(dset);
 	if (obs == NULL) {
 	    if (fp != NULL) {
 		fclose(fp);
@@ -298,18 +298,19 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     return 0;
 }
 
-static int studentized_residuals (const MODEL *pmod, double ***pZ, 
-				  DATAINFO *pdinfo, gretl_matrix *S)
+static int studentized_residuals (const MODEL *pmod, 
+				  DATASET *dset, 
+				  gretl_matrix *S)
 {
     double *dum;
     int *slist;
     MODEL smod;  
-    int orig_v = pdinfo->v;
+    int orig_v = dset->v;
     int err = 0;
     int i, t, k;
 
     /* create a full-length dummy variable */
-    dum = malloc(pdinfo->n * sizeof *dum);
+    dum = malloc(dset->n * sizeof *dum);
     if (dum == NULL) {
 	return E_ALLOC;
     }
@@ -321,14 +322,14 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	return E_ALLOC;
     }
 
-    if (dataset_add_allocated_series(dum, pZ, pdinfo)) {
+    if (dataset_add_allocated_series(dum, dset)) {
 	free(dum);
 	free(slist);
 	return E_ALLOC;	
     }
 
     /* zero out the dummy */
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	dum[t] = 0.0;
     }
 
@@ -336,7 +337,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	slist[i] = pmod->list[i];
     }
 
-    slist[slist[0]] = pdinfo->v - 1; /* last var added */  
+    slist[slist[0]] = dset->v - 1; /* last var added */  
     k = slist[0] - 2;
 
     for (t=pmod->t1, i=0; t<=pmod->t2 && !err; t++, i++) {
@@ -350,7 +351,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 	    if (t > pmod->t1) {
 		dum[t-1] = 0.0;
 	    }
-	    smod = lsq(slist, *pZ, pdinfo, OLS, OPT_A);
+	    smod = lsq(slist, dset, OLS, OPT_A);
 	    if (smod.errcode) {
 		err = smod.errcode;
 	    } else {
@@ -370,7 +371,7 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 
     free(slist);
 
-    dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - orig_v, dset);
 
     return err;
 }
@@ -381,9 +382,9 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
    contiguous.
 */
 
-gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ, 
-			      DATAINFO *pdinfo, gretlopt opt,
-			      PRN *prn, int *err)
+gretl_matrix *model_leverage (const MODEL *pmod, DATASET *dset, 
+			      gretlopt opt, PRN *prn, 
+			      int *err)
 {
     integer info, lwork;
     integer m, n, lda;
@@ -416,7 +417,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	vi = pmod->list[i];
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->uhat[t])) {
-		Q->val[j++] = (*pZ)[vi][t];
+		Q->val[j++] = dset->Z[vi][t];
 	    }
 	}
     }
@@ -492,11 +493,11 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     }
 
     /* put studentized resids into S[2] */
-    serr = studentized_residuals(pmod, pZ, pdinfo, S);
+    serr = studentized_residuals(pmod, dset, S);
 
     lp = 2.0 * n / m;
 
-    obs_marker_init(pdinfo);
+    obs_marker_init(dset);
 
     /* print the results */
     for (t=pmod->t1, j=0; t<=pmod->t2; t++, j++) {
@@ -504,7 +505,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	char fstr[32];
 
 	if (na(pmod->uhat[t])) {
-	    print_obs_marker(t, pdinfo, prn);
+	    print_obs_marker(t, dset, prn);
 	    gretl_matrix_set(S, j, 1, NADBL);
 	    pputc(prn, '\n');
 	    continue;
@@ -523,7 +524,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	    sprintf(fstr, "%15s", _("undefined"));
 	}
 
-	print_obs_marker(t, pdinfo, prn);
+	print_obs_marker(t, dset, prn);
 
 	if (!serr) {
 	    st = gretl_matrix_get(S, j, 2);
@@ -546,7 +547,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     }
 
     if (opt & OPT_P) {
-	leverage_plot(pmod, S, pZ, pdinfo);
+	leverage_plot(pmod, S, dset);
     }
 
  qr_cleanup:
@@ -567,4 +568,3 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 
     return S;    
 }
-

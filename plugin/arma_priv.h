@@ -113,20 +113,16 @@ int ma_out_of_bounds (arma_info *ainfo, const double *theta,
 
 void bounds_checker_cleanup (void);
 
-int hr_arma_init (double *coeff, const double **Z, 
-		  const DATAINFO *pdinfo,
+int hr_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, int *done);
 
-int ar_arma_init (double *coeff, const double **Z, 
-		  const DATAINFO *pdinfo,
+int ar_arma_init (double *coeff, const DATASET *dset,
 		  arma_info *ainfo, MODEL *pmod);
 
-int arma_by_ls (const double *coeff, const double **Z, 
-		const DATAINFO *pdinfo,
+int arma_by_ls (const double *coeff, const DATASET *dset,
 		arma_info *ainfo, MODEL *pmod);
 
-int bhhh_arma (double *theta, 
-	       const double **Z, const DATAINFO *pdinfo,
+int bhhh_arma (double *theta, const DATASET *dset,
 	       arma_info *ainfo, MODEL *pmod,
 	       gretlopt opt);
 
@@ -136,12 +132,11 @@ int arma_model_add_roots (MODEL *pmod, arma_info *ainfo,
 			  const double *coeff);
 
 void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
-			     const double **Z, 
-			     const DATAINFO *pdinfo);
+			     const DATASET *dset);
 
-int arima_difference (arma_info *ainfo, const double **Z,
-		      const DATAINFO *pdinfo, int fullX);
+int arima_difference (arma_info *ainfo, const DATASET *dset, 
+		      int fullX);
 
-void arima_difference_undo (arma_info *ainfo, const double **Z);
+void arima_difference_undo (arma_info *ainfo, const DATASET *dset);
 
 #endif /* ARMA_PRIV_H */

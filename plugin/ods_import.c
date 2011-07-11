@@ -87,8 +87,7 @@ struct ods_sheet_ {
     int seltab;            /* number of selected table */
     int xoffset;           /* col offset chosen by user */
     int yoffset;           /* row offset chosen by user */
-    double **Z;            /* data array */
-    DATAINFO *dinfo;       /* dataset info */
+    DATASET *dset;         /* dataset struct */
 };
 
 static ods_table *ods_table_new (xmlNodePtr node, int *err)
@@ -151,8 +150,7 @@ static ods_sheet *ods_sheet_new (xmlDocPtr doc, int *err)
 	sheet->seltab = -1;
 	sheet->xoffset = 0;
 	sheet->yoffset = 0;
-	sheet->Z = NULL;
-	sheet->dinfo = NULL;
+	sheet->dset = NULL;
     } else {
 	*err = E_ALLOC;
     }
@@ -181,7 +179,7 @@ static void ods_sheet_free (ods_sheet *sheet)
 	    xmlCleanupParser();
 	}
 
-	destroy_dataset(sheet->Z, sheet->dinfo);
+	destroy_dataset(sheet->dset);
 
 	free(sheet);
     }
@@ -419,8 +417,8 @@ static int ods_error (ods_sheet *sheet,
     } else {
 	int v = (sheet->flags & BOOK_OBS_LABELS)? j : j + 1;
 
-	if (v > 0 && v < sheet->dinfo->v) {
-	    pprintf(prn, " (\"%s\"):\n", sheet->dinfo->varname[v]);
+	if (v > 0 && v < sheet->dset->v) {
+	    pprintf(prn, " (\"%s\"):\n", sheet->dset->varname[v]);
 	} else {
 	    pputs(prn, ":\n");
 	}
@@ -449,7 +447,7 @@ static int real_read_cell (xmlNodePtr cur,
     v = jread + 1 - obscol;
     t = iread - vnames;
 
-    if (v >= sheet->dinfo->v || t >= sheet->dinfo->n) {
+    if (v >= sheet->dset->v || t >= sheet->dset->n) {
 	fprintf(stderr, "v = %d, t = %d: out of bounds?\n", v, t);
 	return E_DATA;
     }
@@ -475,11 +473,11 @@ static int real_read_cell (xmlNodePtr cur,
 	if (vtype == ODS_STRING) {
 	    val = get_ods_string_value(cur);
 	    if (val != NULL) {
-		*sheet->dinfo->varname[v] = '\0';
-		strncat(sheet->dinfo->varname[v],
+		*sheet->dset->varname[v] = '\0';
+		strncat(sheet->dset->varname[v],
 			val, VNAMELEN - 1);
 		fprintf(stderr, " varname: '%s'\n", val);
-		if (check_varname(sheet->dinfo->varname[v])) {
+		if (check_varname(sheet->dset->varname[v])) {
 		    invalid_varname(prn);
 		    err = 1;
 		}
@@ -528,7 +526,7 @@ static int real_read_cell (xmlNodePtr cur,
 	}
 
 	if (!err) {
-	    strncat(sheet->dinfo->S[t], val, OBSLEN - 1);
+	    strncat(sheet->dset->S[t], val, OBSLEN - 1);
 	}
 
 	free(val);
@@ -562,8 +560,8 @@ static int real_read_cell (xmlNodePtr cur,
     if (err) {
 	ods_error(sheet, iread, jread, ODS_NUMERIC, vtype, prn);
     } else {
-	for (j=0, vj=v; j<nr && vj<sheet->dinfo->v; j++, vj++) {
-	    sheet->Z[vj][t] = x;
+	for (j=0, vj=v; j<nr && vj<sheet->dset->v; j++, vj++) {
+	    sheet->dset->Z[vj][t] = x;
 	}
     }	    
 
@@ -620,14 +618,14 @@ static int sheet_allocate_data (ods_sheet *sheet,
     fprintf(stderr, "sheet_allocate_data: n=%d, v=%d\n",
 	    n, v);
 
-    sheet->dinfo = create_new_dataset(&sheet->Z, v, n, labels);
-    if (sheet->dinfo == NULL) {
+    sheet->dset = create_new_dataset(v, n, labels);
+    if (sheet->dset == NULL) {
 	return E_ALLOC;
     }
 
     /* write fallback variable names */
     for (i=1; i<v; i++) {
-	sprintf(sheet->dinfo->varname[i], "v%d", i);
+	sprintf(sheet->dset->varname[i], "v%d", i);
     }
 
     return 0;
@@ -747,17 +745,17 @@ static int repeat_data_row (ods_sheet *sheet, int iread,
     int vnames = (sheet->flags & BOOK_AUTO_VARNAMES)? 0 : 1;
     int i, t = iread - vnames;
 
-    if (t < 1 || t >= sheet->dinfo->n) {
+    if (t < 1 || t >= sheet->dset->n) {
 	pprintf(prn, "Found a repeated row in the wrong place\n");
 	return E_DATA;
     }
 
-    for (i=1; i<sheet->dinfo->v; i++) {
-	sheet->Z[i][t] = sheet->Z[i][t-1];
+    for (i=1; i<sheet->dset->v; i++) {
+	sheet->dset->Z[i][t] = sheet->dset->Z[i][t-1];
     }
 
-    if (sheet->dinfo->S != NULL) {
-	strcpy(sheet->dinfo->S[t], sheet->dinfo->S[t-1]);
+    if (sheet->dset->S != NULL) {
+	strcpy(sheet->dset->S[t], sheet->dset->S[t-1]);
     }
 
     return 0;
@@ -1014,17 +1012,17 @@ static int ts_check (ods_sheet *sheet, PRN *prn)
     int reversed = 0;
     int mpd = -1;
 
-    if (sheet->dinfo->S == NULL) {
+    if (sheet->dset->S == NULL) {
 	return 0;
     }
 
-    mpd = test_markers_for_dates(&sheet->Z, sheet->dinfo, &reversed,
+    mpd = test_markers_for_dates(sheet->dset, &reversed,
 				 NULL, prn);
 
     if (mpd > 0) {
 	pputs(prn, _("taking date information from row labels\n\n"));
-	if (sheet->dinfo->markers != DAILY_DATE_STRINGS) {
-	    dataset_destroy_obs_markers(sheet->dinfo);
+	if (sheet->dset->markers != DAILY_DATE_STRINGS) {
+	    dataset_destroy_obs_markers(sheet->dset);
 	}
 	if (reversed) {
 	    sheet->flags |= BOOK_DATA_REVERSED;
@@ -1032,11 +1030,11 @@ static int ts_check (ods_sheet *sheet, PRN *prn)
     } 
 
 #if ODEBUG
-    fprintf(stderr, "sheet->dinfo->pd = %d\n", sheet->dinfo->pd);
+    fprintf(stderr, "sheet->dset->pd = %d\n", sheet->dset->pd);
 #endif
 
-    if (sheet->dinfo->pd != 1 || strcmp(sheet->dinfo->stobs, "1")) { 
-        sheet->dinfo->structure = TIME_SERIES;
+    if (sheet->dset->pd != 1 || strcmp(sheet->dset->stobs, "1")) { 
+        sheet->dset->structure = TIME_SERIES;
     }
 
     return 0;
@@ -1190,9 +1188,9 @@ static int ods_prune_columns (ods_sheet *sheet)
     int allmiss = 1, ndel = 0;
     int i, t, err = 0;
 
-    for (i=sheet->dinfo->v-1; i>0 && allmiss; i--) {
-	for (t=0; t<sheet->dinfo->n; t++) {
-	    if (!na(sheet->Z[i][t])) {
+    for (i=sheet->dset->v-1; i>0 && allmiss; i--) {
+	for (t=0; t<sheet->dset->n; t++) {
+	    if (!na(sheet->dset->Z[i][t])) {
 		allmiss = 0;
 		break;
 	    }
@@ -1202,14 +1200,15 @@ static int ods_prune_columns (ods_sheet *sheet)
 
     if (ndel > 0) {
 	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
-	err = dataset_drop_last_variables(ndel, &sheet->Z, sheet->dinfo);
+	err = dataset_drop_last_variables(ndel, sheet->dset);
     }
 
     return err;
 }
 
-static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
-				ods_sheet *sheet, gretlopt opt,
+static int finalize_ods_import (DATASET *dset,
+				ods_sheet *sheet, 
+				gretlopt opt,
 				PRN *prn)
 {
     PRN *tprn;
@@ -1217,7 +1216,7 @@ static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
 
     err = ods_prune_columns(sheet);
 
-    if (!err && sheet->dinfo->v == 1) {
+    if (!err && sheet->dset->v == 1) {
 	gretl_errmsg_set(_("No numeric data were found"));
 	err = E_DATA;
     }
@@ -1226,14 +1225,13 @@ static int finalize_ods_import (double ***pZ, DATAINFO *pdinfo,
 	tprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	ts_check(sheet, tprn);
 	if (sheet->flags & BOOK_DATA_REVERSED) {
-	    reverse_data(sheet->Z, sheet->dinfo, tprn);
+	    reverse_data(sheet->dset, tprn);
 	}
 	gretl_print_destroy(tprn);
     }
 
     if (!err) {
-	err = merge_or_replace_data(pZ, pdinfo, &sheet->Z, 
-				    &sheet->dinfo, opt, prn);
+	err = merge_or_replace_data(dset, &sheet->dset, opt, prn);
     }  
 
     return err;
@@ -1253,8 +1251,7 @@ static char *get_absolute_path (const char *fname)
 }
 
 int ods_get_data (const char *fname, int *list, char *sheetname,
-		  double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt, PRN *prn)
+		  DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
     ods_sheet *sheet = NULL;
@@ -1365,7 +1362,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
     }
 
     if (!err) {
-	err = finalize_ods_import(pZ, pdinfo, sheet, opt, prn); 
+	err = finalize_ods_import(dset, sheet, opt, prn); 
 	if (!err && gui) {
 	    record_ods_params(sheet, list);
 	}

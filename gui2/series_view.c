@@ -84,9 +84,9 @@ static void series_view_fill_points (series_view *sview)
 
     v = (sview->varnum > 0)? sview->varnum : sview->sortvar;
 
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+    for (t=dataset->t1; t<=dataset->t2; t++) {
 	sview->points[s].obsnum = t;
-	sview->points[s].val = Z[v][t];
+	sview->points[s].val = dataset->Z[v][t];
 	s++;
     }
 }
@@ -99,7 +99,7 @@ static int series_view_allocate (series_view *sview)
 	/* already allocated */
 	return 0;
     } else {
-	int T = sample_size(datainfo);
+	int T = sample_size(dataset);
 
 	sview->points = mymalloc(T * sizeof *sview->points);
 	if (sview->points == NULL) {
@@ -122,7 +122,7 @@ static PRN *single_series_view_print_formatted (windata_t *vwin,
 {
     series_view *sview = (series_view *) vwin->data;
     char obslabel[OBSLEN];
-    char dchar = datainfo->delim;
+    char dchar = dataset->delim;
     double x;
     PRN *prn;
     int i, t;
@@ -131,15 +131,15 @@ static PRN *single_series_view_print_formatted (windata_t *vwin,
 	return NULL;
     }
 
-    pprintf(prn, "obs%c%s\n", dchar, datainfo->varname[sview->varnum]);
+    pprintf(prn, "obs%c%s\n", dchar, dataset->varname[sview->varnum]);
 
     for (i=0; i<sview->npoints; i++) {
 	t = sview->points[i].obsnum;
 	x = sview->points[i].val;
-	if (dataset_has_markers(datainfo)) {
-	    strcpy(obslabel, datainfo->S[t]);
+	if (dataset_has_markers(dataset)) {
+	    strcpy(obslabel, dataset->S[t]);
 	} else {
-	    ntodate(obslabel, t, datainfo);
+	    ntodate(obslabel, t, dataset);
 	}
 	if (na(x)) {
 	    pprintf(prn, "%s%cNA\n", obslabel, dchar);
@@ -176,15 +176,14 @@ static void single_series_view_print (windata_t *vwin)
 	    series_view_unsort(sview);
 	}
 	
-	err = printdata(list, NULL, (const double **) Z, 
-			datainfo, OPT_O, prn);
+	err = printdata(list, NULL, dataset, OPT_O, prn);
 	if (err) {
 	    gui_errmsg(err);
 	} 
 	goto finalize;
     }
 
-    obslen = max_obs_label_length(datainfo);
+    obslen = max_obs_label_length(dataset);
     if (obslen < 2) {
 	obslen = -2;
     }
@@ -196,16 +195,16 @@ static void single_series_view_print (windata_t *vwin)
     }
 	
     pprintf(prn, "\n%*s ", obslen, "");
-    pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
+    pprintf(prn, "%13s\n\n", dataset->varname[sview->varnum]);
 
     for (i=0; i<sview->npoints; i++) {
 	t = sview->points[i].obsnum;
 	x = sview->points[i].val;
-	if (dataset_has_markers(datainfo)) {
-	    strcpy(obslabel, datainfo->S[t]);
+	if (dataset_has_markers(dataset)) {
+	    strcpy(obslabel, dataset->S[t]);
 	    thislen = get_utf_width(obslabel, obslen);
 	} else {
-	    ntodate(obslabel, t, datainfo);
+	    ntodate(obslabel, t, dataset);
 	    thislen = obslen;
 	}
 	if (na(x)) {
@@ -257,8 +256,7 @@ static void multi_series_view_print_sorted (windata_t *vwin)
 	return;
     }
 
-    err = print_data_in_columns(sview->list, obsvec, (const double **) Z, 
-				datainfo, prn);
+    err = print_data_in_columns(sview->list, obsvec, dataset, prn);
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -280,12 +278,11 @@ static void multi_series_view_print (windata_t *vwin)
     }
 
     if (sview->view == VIEW_STANDARD) {
-	err = printdata(sview->list, NULL, (const double **) Z, 
-			datainfo, OPT_O, prn);
+	err = printdata(sview->list, NULL, dataset, OPT_O, prn);
     } else {
-	err = print_series_with_format(sview->list, (const double **) Z, 
-				       datainfo, sview->format, 
-				       sview->digits, prn);
+	err = print_series_with_format(sview->list, dataset, 
+				       sview->format, sview->digits, 
+				       prn);
     } 
 
     if (err) {
@@ -333,8 +330,7 @@ PRN *vwin_print_sorted_with_format (windata_t *vwin, PrnFormat fmt)
     }
 
     gretl_print_set_format(prn, fmt);
-    err = print_data_in_columns(sview->list, obsvec, (const double **) Z, 
-				datainfo, prn);
+    err = print_data_in_columns(sview->list, obsvec, dataset, prn);
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
@@ -439,7 +435,7 @@ void series_view_graph (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    if (dataset_is_time_series(datainfo)) {
+    if (dataset_is_time_series(dataset)) {
 	do_graph_var(sview->varnum);
     } else {
 	do_boxplot_var(sview->varnum, OPT_NONE);
@@ -450,7 +446,7 @@ void series_view_edit (GtkWidget *w, windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
 
-    if (sview != NULL && sview->varnum > 0 && sview->varnum < datainfo->v) {
+    if (sview != NULL && sview->varnum > 0 && sview->varnum < dataset->v) {
 	show_spreadsheet_for_series(sview->varnum);
     }
 }
@@ -459,7 +455,7 @@ void series_view_refresh (GtkWidget *w, windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
 
-    if (sview != NULL && sview->varnum > 0 && sview->varnum < datainfo->v) {
+    if (sview != NULL && sview->varnum > 0 && sview->varnum < dataset->v) {
 	int list[2] = {1, sview->varnum};
 	PRN *prn = NULL;
 	int err;
@@ -468,7 +464,7 @@ void series_view_refresh (GtkWidget *w, windata_t *vwin)
 	    return;
 	}
 
-	err = printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
+	err = printdata(list, NULL, dataset, OPT_O, prn);
 
 	if (err) {
 	    gui_errmsg(err);

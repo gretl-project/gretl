@@ -64,14 +64,13 @@ int gretl_isdiscrete (int t1, int t2, const double *x);
 
 int gretl_is_oprobit_ok (int t1, int t2, const double *x);
 
-int true_const (int v, const double **Z, const DATAINFO *pdinfo);
+int true_const (int v, const DATASET *dset);
 
 /* setting observations */
 
 char *format_obs (char *obs, int maj, int min, int pd);
 
-int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo, 
-	     gretlopt opt);
+int set_obs (const char *line, DATASET *dset, gretlopt opt);
 
 /* sorting and comparison */
 
@@ -97,9 +96,9 @@ int gretl_int_from_string (const char *s, int *err);
 
 int positive_int_from_string (const char *s);
 
-int varnum_from_string (const char *str, DATAINFO *pdinfo);
+int varnum_from_string (const char *str, DATASET *dset);
 
-GretlType gretl_type_from_name (const char *s, const DATAINFO *pdinfo);
+GretlType gretl_type_from_name (const char *s, const DATASET *dset);
 
 double *copyvec (const double *src, int n);
 
@@ -117,11 +116,11 @@ double **data_array_from_model (const MODEL *pmod, double **Z,
 int ijton (int i, int j, int nrows);
 
 int transcribe_array (double *targ, const double *src, 
-		      const DATAINFO *pdinfo); 
+		      const DATASET *dset); 
 
-int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
+int ztox (int i, double *px, const double **Z, const DATASET *dset);
 
-double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
+double get_xvalue (int i, const double **Z, const DATASET *dset);
 
 int gretl_copy_file (const char *src, const char *dest);
 

@@ -364,7 +364,7 @@ static void add_matrix_callback (GtkWidget *w, windata_t *vwin)
 
 static void add_data_callback (GtkWidget *w, windata_t *vwin)
 {
-    int oldv = datainfo->v;
+    int oldv = dataset->v;
 
     if (vwin->role == PCA) {
 	add_pca_data(vwin);
@@ -376,7 +376,7 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 	add_fcast_data(vwin);
     }
 
-    if (datainfo->v > oldv) {
+    if (dataset->v > oldv) {
 	populate_varlist();
 	mark_dataset_as_modified();
     }	
@@ -614,7 +614,7 @@ static int edit_script_popup_item (GretlToolItem *item)
 
 static void set_plot_icon (GretlToolItem *item)
 {
-    if (dataset_is_time_series(datainfo)) {
+    if (dataset_is_time_series(dataset)) {
 	item->icon = GRETL_STOCK_TS;
     } else {
 	item->icon = GRETL_STOCK_BOX;
@@ -1008,7 +1008,7 @@ static void tbar_command_ref (void)
 static void tbar_xy_graph (void)
 {
     if (data_status) {
-	if (datainfo->v == 2) {
+	if (dataset->v == 2) {
 	    do_graph_var(mdata->active_var);
 	} else if (mdata_selection_count() == 2) {
 	    plot_from_selection(GR_XY);

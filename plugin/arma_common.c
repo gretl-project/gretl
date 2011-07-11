@@ -28,7 +28,7 @@ real_arima_difference_series (double *dx, const double *x,
 
 static void 
 arma_info_init (arma_info *ainfo, gretlopt opt, 
-		const int *pqspec, const DATAINFO *pdinfo)
+		const int *pqspec, const DATASET *dset)
 {
     ainfo->yno = 0;
     ainfo->flags = 0;
@@ -66,9 +66,9 @@ arma_info_init (arma_info *ainfo, gretlopt opt,
     ainfo->nexo = 0;
     ainfo->nc = 0;
 
-    ainfo->t1 = pdinfo->t1;
-    ainfo->t2 = pdinfo->t2;
-    ainfo->pd = pdinfo->pd;
+    ainfo->t1 = dset->t1;
+    ainfo->t2 = dset->t2;
+    ainfo->pd = dset->pd;
     ainfo->T = 0;
     ainfo->r0 = 0;
 
@@ -295,7 +295,7 @@ static void ainfo_data_to_model (arma_info *ainfo, MODEL *pmod)
 }
 
 static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
-			       const double **Z)
+			       const DATASET *dset)
 {
     if (arma_is_arima(ainfo) && !arima_ydiff(ainfo)) {
 	/* calculate differenced y for stats */
@@ -307,8 +307,8 @@ static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
 	if (dy != NULL && delta != NULL) {
 	    int k = d + ainfo->pd * D;
 
-	    real_arima_difference_series(dy, Z[ainfo->yno], pmod->t1,
-					 pmod->t2, delta, k);
+	    real_arima_difference_series(dy, dset->Z[ainfo->yno], 
+					 pmod->t1, pmod->t2, delta, k);
 	    pmod->ybar = gretl_mean(0, T - 1, dy);
 	    pmod->sdy = gretl_stddev(0, T - 1, dy);
 	}
@@ -326,8 +326,7 @@ static void arma_depvar_stats (MODEL *pmod, arma_info *ainfo,
    a gretl MODEL struct */
 
 void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
-			     const double **Z, 
-			     const DATAINFO *pdinfo)
+			     const DATASET *dset)
 {
     double mean_error;
     int do_criteria = 1;
@@ -341,7 +340,7 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
     pmod->list = gretl_list_copy(ainfo->alist);
 
     if (!arma_least_squares(ainfo)) {
-	arma_depvar_stats(pmod, ainfo, Z);
+	arma_depvar_stats(pmod, ainfo, dset);
     }
 
     mean_error = pmod->ess = 0.0;
@@ -362,7 +361,8 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 
 #if USE_ARIMA_INTEGRATE
     if (arma_is_arima(ainfo) && arima_ydiff(ainfo)) {
-	arima_integrate(pmod->yhat, Z[ainfo->yno], pmod->t1, pmod->t2, 
+	arima_integrate(pmod->yhat, dset->Z[ainfo->yno], 
+			pmod->t1, pmod->t2, 
 			ainfo->d, ainfo->D, ainfo->pd);
     }
 #endif
@@ -390,7 +390,7 @@ void write_arma_model_stats (MODEL *pmod, arma_info *ainfo,
 	mle_criteria(pmod, 1);
     }
 
-    gretl_model_add_arma_varnames(pmod, pdinfo, ainfo->yno,
+    gretl_model_add_arma_varnames(pmod, dset, ainfo->yno,
 				  ainfo->p, ainfo->q, 
 				  ainfo->pmask, ainfo->qmask,
 				  ainfo->P, ainfo->Q,
@@ -415,13 +415,12 @@ static void calc_max_lag (arma_info *ainfo)
 }
 
 static int arma_adjust_sample (arma_info *ainfo, 
-			       const double **Z,
-			       const DATAINFO *pdinfo,
+			       const DATASET *dset,
 			       int *missv, int *misst)
 {
     int *list = ainfo->alist;
     int ypos = arma_list_y_position(ainfo);
-    int t0, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t0, t1 = dset->t1, t2 = dset->t2;
     int i, vi, vlmax, k, t;
     int missing;
     int err = 0;
@@ -449,13 +448,13 @@ static int arma_adjust_sample (arma_info *ainfo,
 	missing = 0;
 	for (i=ypos; i<=list[0] && !missing; i++) {
 	    vi = list[i];
-	    if (na(Z[vi][t])) {
+	    if (na(dset->Z[vi][t])) {
 		/* current value missing */
 		missing = 1;
 	    }
 	    if (i <= vlmax) {
 		for (k=1; k<=ainfo->maxlag && !missing; k++) {
-		    if (na(Z[vi][t-k])) {
+		    if (na(dset->Z[vi][t-k])) {
 			/* lagged value missing */
 			missing = 1;
 		    }
@@ -475,7 +474,7 @@ static int arma_adjust_sample (arma_info *ainfo,
 	missing = 0;
 	for (i=ypos; i<=list[0] && !missing; i++) {
 	    vi = list[i];
-	    if (na(Z[vi][t])) {
+	    if (na(dset->Z[vi][t])) {
 		missing = 1;
 	    }
 	}
@@ -494,7 +493,7 @@ static int arma_adjust_sample (arma_info *ainfo,
 
 	for (i=ypos; i<=list[0]; i++) {
 	    vi = list[i];
-	    if (na(Z[vi][t])) {
+	    if (na(dset->Z[vi][t])) {
 		if (missv != NULL && misst != NULL && *missv == 0) {
 		    /* record info on first missing obs */
 		    *missv = vi;
@@ -536,8 +535,7 @@ static int arma_adjust_sample (arma_info *ainfo,
 /* remove the intercept from list of regressors */
 
 static int arma_remove_const (arma_info *ainfo, 
-			      const double **Z, 
-			      const DATAINFO *pdinfo)
+			      const DATASET *dset)
 {
     int *list = ainfo->alist;
     int seasonal = arma_has_seasonal(ainfo);
@@ -552,7 +550,7 @@ static int arma_remove_const (arma_info *ainfo,
     }
 
     for (i=xstart; i<=list[0]; i++) {
-	if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
+	if (list[i] == 0 || true_const(list[i], dset)) {
 	    for (j=i; j<list[0]; j++) {
 		list[j] = list[j+1];
 	    }
@@ -622,7 +620,7 @@ static int arma_add_xlist (arma_info *ainfo, int ypos)
 #define count_arma_coeffs(a) (a->ifc + a->np + a->nq + a->P + a->Q + a->nexo)
 
 static int check_arma_list (arma_info *ainfo, 
-			    const double **Z, const DATAINFO *pdinfo,
+			    const DATASET *dset,
 			    gretlopt opt)
 {
     int *list = ainfo->alist;
@@ -673,7 +671,7 @@ static int check_arma_list (arma_info *ainfo,
 
     if (!err) {
 	if (armax) {
-	    hadconst = arma_remove_const(ainfo, Z, pdinfo);
+	    hadconst = arma_remove_const(ainfo, dset);
 	}
 	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ; /* no constant present */
@@ -697,7 +695,7 @@ static int check_arma_list (arma_info *ainfo,
 }
 
 static int check_arima_list (arma_info *ainfo,
-			     const double **Z, const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     gretlopt opt)
 {
     int *list = ainfo->alist;
@@ -754,7 +752,7 @@ static int check_arima_list (arma_info *ainfo,
 
     if (!err) {
 	if (armax) {
-	    hadconst = arma_remove_const(ainfo, Z, pdinfo);
+	    hadconst = arma_remove_const(ainfo, dset);
 	}
 	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ;
@@ -778,8 +776,7 @@ static int check_arima_list (arma_info *ainfo,
 }
 
 static int arma_check_list (arma_info *ainfo, 
-			    const double **Z, 
-			    const DATAINFO *pdinfo,
+			    const DATASET *dset,
 			    gretlopt opt)
 {
     int *list = ainfo->alist;
@@ -807,10 +804,10 @@ static int arma_check_list (arma_info *ainfo,
     if (!err) {
 	if (arma_is_arima(ainfo)) {
 	    /* check for arima spec */
-	    err = check_arima_list(ainfo, Z, pdinfo, opt);
+	    err = check_arima_list(ainfo, dset, opt);
 	} else {	    
 	    /* check for simple arma spec */
-	    err = check_arma_list(ainfo, Z, pdinfo, opt);
+	    err = check_arma_list(ainfo, dset, opt);
 	} 
     }
 
@@ -856,10 +853,10 @@ real_arima_difference_series (double *dx, const double *x,
    ainfo->T but if fullX = 0 it equals ainfo->t2 + 1.
 */
 
-int arima_difference (arma_info *ainfo, const double **Z,
-		      const DATAINFO *pdinfo, int fullX)
+int arima_difference (arma_info *ainfo, const DATASET *dset, 
+		      int fullX)
 {
-    const double *y = Z[ainfo->yno];
+    const double *y = dset->Z[ainfo->yno];
     double *dy = NULL;
     int *delta = NULL;
     int s = ainfo->pd;
@@ -873,9 +870,9 @@ int arima_difference (arma_info *ainfo, const double **Z,
 	    ainfo->t2);
 #endif
 
-    /* note: dy is a full length series (pdinfo->n) */
+    /* note: dy is a full length series (dset->n) */
 
-    dy = malloc(pdinfo->n * sizeof *dy);
+    dy = malloc(dset->n * sizeof *dy);
     if (dy == NULL) {
 	return E_ALLOC;
     }
@@ -886,11 +883,11 @@ int arima_difference (arma_info *ainfo, const double **Z,
 	return E_ALLOC;
     }    
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	dy[t] = NADBL;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	if (na(y[t])) {
 	    t1++;
 	} else {
@@ -904,7 +901,7 @@ int arima_difference (arma_info *ainfo, const double **Z,
     real_arima_difference_series(dy + t1, y, t1, ainfo->t2, delta, k);
 
 #if ARMA_DEBUG > 1
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	fprintf(stderr, "dy[%d] = % 12.7g\n", t, dy[t]);
     }
 #endif    
@@ -931,8 +928,8 @@ int arima_difference (arma_info *ainfo, const double **Z,
 
 	    for (i=0; i<ainfo->nexo; i++) {
 		vi = ainfo->xlist[i+1];
-		real_arima_difference_series(val, Z[vi], xt1, ainfo->t2,
-					     delta, k);
+		real_arima_difference_series(val, dset->Z[vi], xt1, 
+					     ainfo->t2, delta, k);
 		val += xT;
 	    }
 	}
@@ -943,10 +940,10 @@ int arima_difference (arma_info *ainfo, const double **Z,
     return err;
 }
 
-void arima_difference_undo (arma_info *ainfo, const double **Z)
+void arima_difference_undo (arma_info *ainfo, const DATASET *dset)
 {
     free(ainfo->y);
-    ainfo->y = (double *) Z[ainfo->yno];
+    ainfo->y = (double *) dset->Z[ainfo->yno];
 
     if (ainfo->dX != NULL) {
 	gretl_matrix_free(ainfo->dX);

@@ -20,45 +20,39 @@
 #ifndef GRETL_PANEL_H_
 #define GRETL_PANEL_H_
 
-int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int panel_diagnostics (MODEL *pmod, DATASET *dset, 
 		       gretlopt opt, PRN *prn);
 
-MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL real_panel_model (const int *list, DATASET *dset,
 			gretlopt opt, PRN *prn);
 
-MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL panel_wls_by_unit (const int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn);
 
-int panel_autocorr_test (MODEL *pmod, int order, 
-			 double **Z, DATAINFO *pdinfo, 
+int panel_autocorr_test (MODEL *pmod, int order, DATASET *dset, 
 			 gretlopt opt, PRN *prn);
 
-int groupwise_hetero_test (MODEL *pmod, DATAINFO *pdinfo,
+int groupwise_hetero_test (MODEL *pmod, DATASET *dset,
 			   gretlopt opt, PRN *prn);
 
-int panel_tsls_robust_vcv (MODEL *pmod, const double **Z, 
-			   const DATAINFO *pdinfo);
+int panel_tsls_robust_vcv (MODEL *pmod, const DATASET *dset);
 
-int set_panel_structure_from_vars (int uv, int tv, 
-				   double **Z, 
-				   DATAINFO *pdinfo);
+int set_panel_structure_from_vars (int uv, int tv, DATASET *dset);
 
-int set_panel_structure_from_line (const char *line, 
-				   double **Z, 
-				   DATAINFO *pdinfo);
+int set_panel_structure_from_line (const char *line, DATASET *dset);
 
-int switch_panel_orientation (double **Z, DATAINFO *pdinfo);
+int switch_panel_orientation (DATASET *dset);
 
-int balanced_panel (const DATAINFO *pdinfo);
+int balanced_panel (const DATASET *dset);
 
 int *panel_list_omit (const MODEL *orig, const int *drop, int *err);
 
 int *panel_list_add (const MODEL *orig, const int *add, int *err);
 
-int panel_variance_info (const double *x, const DATAINFO *pdinfo,
+int panel_variance_info (const double *x, const DATASET *dset,
 			 double xbar, double *psw, double *psb);
 
-int plausible_panel_time_var (const double **Z, const DATAINFO *pdinfo);
+int plausible_panel_time_var (const DATASET *dset);
 
 int panel_isconst (int t1, int t2, int pd, const double *x,
 		   int bygroup);

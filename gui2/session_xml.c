@@ -233,11 +233,11 @@ static int rebuild_session_model (const char *fname,
     }
 
     if (type == GRETL_OBJ_EQN) {
-	ptr = gretl_model_from_XML(node, doc, datainfo, &err);
+	ptr = gretl_model_from_XML(node, doc, dataset, &err);
     } else if (type == GRETL_OBJ_VAR) {
-	ptr = gretl_VAR_from_XML(node, doc, datainfo, &err);
+	ptr = gretl_VAR_from_XML(node, doc, dataset, &err);
     } else {
-	ptr = equation_system_from_XML(node, doc, datainfo, &err);
+	ptr = equation_system_from_XML(node, doc, dataset, &err);
     }
 
     xmlFreeDoc(doc);
@@ -744,8 +744,8 @@ static int write_session_xml (const char *datname)
 	fputs("<gretl-session>\n", fp);
     }
 
-    fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", datainfo->t1, datainfo->t2);
-    write_datainfo_submask(datainfo, fp);
+    fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", dataset->t1, dataset->t2);
+    write_datainfo_submask(dataset, fp);
 
     nmodels = session.nmodels;
     tabmodels = model_table_n_models();

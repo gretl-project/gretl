@@ -79,11 +79,9 @@
 #define lhlist(p) (p->flags & P_LHLIST)
 #define lhstr(p) (p->flags & P_LHSTR)
 
-static void parser_init (parser *p, const char *str, 
-			 double ***pZ, DATAINFO *dinfo,
+static void parser_init (parser *p, const char *str, DATASET *dset, 
 			 PRN *prn, int flags);
-static void parser_reinit (parser *p, double ***pZ, 
-			   DATAINFO *dinfo, PRN *prn);
+static void parser_reinit (parser *p, DATASET *dset, PRN *prn);
 static void printnode (NODE *t, parser *p);
 static NODE *eval (NODE *t, parser *p);
 static void node_type_error (int ntype, int argnum, int goodt, 
@@ -497,7 +495,7 @@ static void no_data_error (parser *p)
 
 static NODE *aux_vec_node (parser *p, int n)
 {
-    if (p->dinfo == NULL || p->dinfo->n == 0) {
+    if (p->dset == NULL || p->dset->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
@@ -507,7 +505,7 @@ static NODE *aux_vec_node (parser *p, int n)
 
 static NODE *aux_series_node (parser *p, int n)
 {
-    if (p->dinfo == NULL || p->dinfo->n == 0) {
+    if (p->dset == NULL || p->dset->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
@@ -524,7 +522,7 @@ static NODE *aux_ivec_node (parser *p, int n)
 
 static NODE *aux_lvec_node (parser *p)
 {
-    if (p->dinfo == NULL || p->dinfo->n == 0) {
+    if (p->dset == NULL || p->dset->n == 0) {
 	no_data_error(p);
 	return NULL;
     } else {
@@ -821,13 +819,13 @@ static double scalar_pdist (int t, char d, const double *parm,
 
 static double *full_length_NA_vec (parser *p)
 {
-    double *x = malloc(p->dinfo->n * sizeof *x);
+    double *x = malloc(p->dset->n * sizeof *x);
     int t;
 
     if (x == NULL) {
 	p->err = E_ALLOC;
     } else {
-	for (t=0; t<p->dinfo->n; t++) {
+	for (t=0; t<p->dset->n; t++) {
 	    x[t] = NADBL;
 	}
     }
@@ -854,14 +852,14 @@ static double *series_pdist (int f, char d,
 
     if (f == F_PDF) {
 	/* fast treatment, for pdf only at this point */
-	int n = sample_size(p->dinfo);
+	int n = sample_size(p->dset);
 
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    xvec[t] = argvec[t];
 	}
-	gretl_fill_pdf_array(d, parm, xvec + p->dinfo->t1, n);
+	gretl_fill_pdf_array(d, parm, xvec + p->dset->t1, n);
     } else {
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    xvec[t] = scalar_pdist(f, d, parm, np, 
 				   argvec[t], p);
 	}
@@ -1107,7 +1105,7 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 		p->err = E_INVARG;
 	    } else if (avec != NULL || bvec != NULL) {
 		mode = 1;
-		ret = aux_vec_node(p, p->dinfo->n);
+		ret = aux_vec_node(p, p->dset->n);
 	    } else if (amat != NULL || bmat != NULL) {
 		mode = 2;
 		ret = aux_matrix_node(p);
@@ -1128,7 +1126,7 @@ static NODE *bvnorm_node (NODE *n, parser *p)
 	    /* a and/or b are series */
 	    int t;
 
-	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		a = (avec != NULL)? avec[t] : args[0];
 		b = (bvec != NULL)? bvec[t] : args[1];
 		if (na(a) || na(b)) {
@@ -1290,7 +1288,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	if (rgen) {
 	    ret->v.xvec = gretl_get_random_series(d, parm, 
 						  parmvec[0], parmvec[1], 
-						  p->dinfo, &p->err);
+						  p->dset, &p->err);
 	} else if (argvec != NULL) {
 	    ret->v.xvec = series_pdist(n->t, d, parm, np, argvec, p);
 	} else if (argmat != NULL) {
@@ -1403,10 +1401,10 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
     double *x = NULL;
     int t, t1, t2;
 
-    if (annual_data(p->dinfo)) {
-	yt = get_date_x(p->dinfo->pd, r->v.str);
+    if (annual_data(p->dset)) {
+	yt = get_date_x(p->dset->pd, r->v.str);
     } else {
-	t = dateton(r->v.str, p->dinfo);
+	t = dateton(r->v.str, p->dset);
 	if (t >= 0) {
 	    yt = t + 1;
 	} else {
@@ -1416,7 +1414,7 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
 	}
     }
 
-    ret = aux_vec_node(p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dset->n);
     if (ret == NULL) {
 	return NULL;
     }
@@ -1426,8 +1424,8 @@ static NODE *number_string_calc (NODE *l, NODE *r, int f, parser *p)
 	    (void *) l, (void *) r, (void *) ret);
 #endif
 
-    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+    t1 = (autoreg(p))? p->obs : p->dset->t1;
+    t2 = (autoreg(p))? p->obs : p->dset->t2;
 
     if (l->t == VEC) x = l->v.xvec;
 
@@ -1451,7 +1449,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
     double xt = 0, yt = 0;
     int t, t1, t2;
 
-    ret = aux_vec_node(p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dset->n);
     if (ret == NULL) {
 	return NULL;
     }
@@ -1472,8 +1470,8 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 	yt = r->v.m->val[0];
     } 
 
-    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+    t1 = (autoreg(p))? p->obs : p->dset->t1;
+    t2 = (autoreg(p))? p->obs : p->dset->t2;
 
     for (t=t1; t<=t2; t++) {
 	if (x != NULL) {
@@ -1668,7 +1666,7 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
 
 static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
 {
-    int t, T = sample_size(p->dinfo);
+    int t, T = sample_size(p->dset);
     const double *x = n->v.xvec;
     gretl_matrix *m = NULL;
 
@@ -1679,7 +1677,7 @@ static gretl_matrix *tmp_matrix_from_series (NODE *n, parser *p)
     } else {
 	int i = 0;
 
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    if (na(x[t])) {
 		m->val[i++] = M_NA;
 	    } else {
@@ -1699,7 +1697,7 @@ const double *get_colvec_as_series (NODE *n, int f, parser *p)
     } else {	
 	const gretl_matrix *m = n->v.m;
 
-	if (m->rows == p->dinfo->n && m->cols == 1) {
+	if (m->rows == p->dset->n && m->cols == 1) {
 	    return m->val;
 	} else {
 	    node_type_error(f, 1, VEC, n, p);
@@ -1937,7 +1935,7 @@ static NODE *numeric_jacobian (NODE *l, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	ret->v.m = fdjac(l->v.m, s, p->Z, p->dinfo, &p->err);
+	ret->v.m = fdjac(l->v.m, s, p->dset, &p->err);
     } else {
 	ret = aux_matrix_node(p);
     }
@@ -1981,7 +1979,7 @@ static NODE *BFGS_maximize (NODE *l, NODE *m, NODE *r, parser *p)
 	    return NULL;
 	}
 
-	ret->v.xval = user_BFGS(b, sf, sg, p->Z, p->dinfo, 
+	ret->v.xval = user_BFGS(b, sf, sg, p->dset, 
 				p->prn, &p->err);
     } else {
 	ret = aux_scalar_node(p);
@@ -1999,20 +1997,20 @@ static void lag_calc (double *y, const double *x,
 
     for (t=t1; t<=t2; t++) {
 	s = t - k;
-	if (dated_daily_data(p->dinfo)) {
-	    if (s >= 0 && s < p->dinfo->n) {
+	if (dated_daily_data(p->dset)) {
+	    if (s >= 0 && s < p->dset->n) {
 		while (s >= 0 && xna(x[s])) {
 		    s--;
 		}
 	    }
-	} else if (p->dinfo->structure == STACKED_TIME_SERIES) {
-	    if (s / p->dinfo->pd != t / p->dinfo->pd) {
+	} else if (p->dset->structure == STACKED_TIME_SERIES) {
+	    if (s / p->dset->pd != t / p->dset->pd) {
 		/* s and t pertain to different units */
 		s = -1;
 	    }
 	}
 
-	if (s >= 0 && s < p->dinfo->n) {
+	if (s >= 0 && s < p->dset->n) {
 	    if (op == B_ASN && mul == 1.0) {
 		y[t] = x[s];
 	    } else if (op == B_ASN) {
@@ -2255,7 +2253,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 	    if (p->err) {
 		ret->v.xval = 1;
 	    } else {
-		ret->v.xval = umatrix_set_names_from_list(m, list, p->dinfo,
+		ret->v.xval = umatrix_set_names_from_list(m, list, p->dset,
 							  byrow);
 	    }
 	}
@@ -2932,7 +2930,7 @@ static NODE *apply_scalar_func (NODE *n, int f, parser *p)
 
 static NODE *apply_series_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
     int t, t1, t2;
 
     if (ret != NULL) {
@@ -2946,8 +2944,8 @@ static NODE *apply_series_func (NODE *n, int f, parser *p)
 	}
 
 	if (!p->err) {
-	    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-	    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+	    t1 = (autoreg(p))? p->obs : p->dset->t1;
+	    t2 = (autoreg(p))? p->obs : p->dset->t2;
 	    for (t=t1; t<=t2; t++) {
 		ret->v.xvec[t] = real_apply_func(x[t], f, p);
 	    }
@@ -2989,14 +2987,14 @@ static NODE *dummify_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = E_ALLOC;
 	} else if (r->t == EMPTY) {
 	    /* got just one argument */
-	    p->err = list_dumgenr(&list, p->Z, p->dinfo, OPT_F);
+	    p->err = list_dumgenr(&list, p->dset, OPT_F);
 	    ret->v.ivec = list;
 	} else if (list[0] > 1) {
 	    gretl_errmsg_set("dummify(x, y): first argument should be a single variable");
 	    free(list);
 	    p->err = E_DATA;
 	} else {
-	    p->err = dumgenr_with_oddval(&list, p->Z, p->dinfo, oddval);
+	    p->err = dumgenr_with_oddval(&list, p->dset, oddval);
 	    ret->v.ivec = list;
 	}
     }
@@ -3032,11 +3030,11 @@ static NODE *list_gen_func (NODE *l, NODE *r, int f, parser *p)
 	    case F_LLAG:
 		order = node_get_int(l, p);
 		if (!p->err) {
-		    p->err = list_laggenr(&list, order, p->Z, p->dinfo);
+		    p->err = list_laggenr(&list, order, p->dset);
 		}
 		break;
 	    case F_ODEV:
-		p->err = list_orthdev(list, p->Z, p->dinfo);
+		p->err = list_orthdev(list, p->dset);
 		break;
 	    default:
 		break;
@@ -3074,7 +3072,7 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 	if (list != NULL) {
 	    switch (f) {
 	    case F_LOG:
-		p->err = list_loggenr(list, p->Z, p->dinfo);
+		p->err = list_loggenr(list, p->dset);
 		break;
 	    case F_DIFF:
 	    case F_LDIFF:
@@ -3082,13 +3080,13 @@ static NODE *apply_list_func (NODE *n, int f, parser *p)
 		if (f == F_DIFF) t = DIFF;
 		else if (f == F_LDIFF) t = LDIFF;
 		else if (f == F_SDIFF) t = SDIFF;
-		p->err = list_diffgenr(list, t, p->Z, p->dinfo);
+		p->err = list_diffgenr(list, t, p->dset);
 		break;
 	    case F_XPX:
-		p->err = list_xpxgenr(&list, p->Z, p->dinfo, OPT_O);
+		p->err = list_xpxgenr(&list, p->dset, OPT_O);
 		break;
 	    case F_ODEV:
-		p->err = list_orthdev(list, p->Z, p->dinfo);
+		p->err = list_orthdev(list, p->dset);
 		break;
 	    default:
 		break;
@@ -3105,7 +3103,7 @@ static NODE *dataset_list_node (parser *p)
     NODE *ret = aux_lvec_node(p);
 
     if (ret != NULL && starting(p)) {
-	int *list = full_var_list(p->dinfo, NULL);
+	int *list = full_var_list(p->dset, NULL);
 
 	if (list == NULL) {
 	    list = gretl_null_list();
@@ -3127,17 +3125,17 @@ static NODE *trend_node (parser *p)
     fprintf(stderr, "trend_node called\n");
 #endif
 
-    if (p->dinfo == NULL || p->dinfo->n == 0) {
+    if (p->dset == NULL || p->dset->n == 0) {
 	no_data_error(p);
     } else {
 	ret = aux_series_node(p, 0);
     }
 
     if (ret != NULL && starting(p)) {
-	p->err = gen_time(p->Z, p->dinfo, 1);
+	p->err = gen_time(p->dset, 1);
 	if (!p->err) {
-	    ret->vnum = series_index(p->dinfo, "time");
-	    ret->v.xvec = (*p->Z)[ret->vnum];
+	    ret->vnum = series_index(p->dset, "time");
+	    ret->v.xvec = p->dset->Z[ret->vnum];
 	}
     }
 
@@ -3164,12 +3162,12 @@ static NODE *get_lag_list (NODE *l, NODE *r, parser *p)
 	    int minlag = -r->v.ivec[0];
 	    int maxlag = -r->v.ivec[1];
 
-	    list = laggenr_from_to(lv, minlag, maxlag, p->Z, 
-				   p->dinfo, &p->err);
+	    list = laggenr_from_to(lv, minlag, maxlag,
+				   p->dset, &p->err);
 	} else {
 	    int lag = -r->v.xval;
 
-	    lv = laggenr(lv, lag, p->Z, p->dinfo);
+	    lv = laggenr(lv, lag, p->dset);
 	    if (lv > 0) {
 		list = gretl_list_new(1);
 		if (list != NULL) {
@@ -3199,7 +3197,7 @@ static int *node_get_list (NODE *n, parser *p)
     int v = 0;
 
     if (n->t == LIST && strchr(n->v.str, '*')) {
-	list = varname_match_list(p->dinfo, n->v.str, &p->err);
+	list = varname_match_list(p->dset, n->v.str, &p->err);
     } else if (n->t == LVEC || n->t == LIST) {
 	int *src = (n->t == LVEC)? n->v.ivec : get_list_by_name(n->v.str);
 
@@ -3210,7 +3208,7 @@ static int *node_get_list (NODE *n, parser *p)
 	}
     } else if (n->t == VEC || n->t == NUM) {
 	v = (n->t == VEC)? n->vnum : n->v.xval;
-	if (v < 0 || v >= p->dinfo->v) {
+	if (v < 0 || v >= p->dset->v) {
 	    p->err = E_UNKVAR;
 	} else {
 	    list = gretl_list_new(1);
@@ -3223,7 +3221,7 @@ static int *node_get_list (NODE *n, parser *p)
     } else if (n->t == EMPTY) {
 	list = gretl_null_list();
     } else if (dataset_dum(n)) {
-	list = full_var_list(p->dinfo, NULL);
+	list = full_var_list(p->dset, NULL);
     } else if (n->t == MAT) {
 	if (gretl_is_null_matrix(n->v.m)) {
 	    list = gretl_null_list();
@@ -3238,7 +3236,7 @@ static int *node_get_list (NODE *n, parser *p)
 	    } else {
 		for (i=0; i<k; i++) {
 		    v = (int) n->v.m->val[i];
-		    if (v < 0 || v >= p->dinfo->v) {
+		    if (v < 0 || v >= p->dset->v) {
 			p->err = E_UNKVAR;
 			break;
 		    }
@@ -3383,7 +3381,7 @@ static int reversed_comp (int f)
 static NODE *list_bool_comp (NODE *l, NODE *r, int f, int reversed,
 			     parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
@@ -3403,7 +3401,7 @@ static NODE *list_bool_comp (NODE *l, NODE *r, int f, int reversed,
 	}
 
 	if (list != NULL) {
-	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		if (tvec != NULL) {
 		    targ = tvec[t];
 		}
@@ -3413,7 +3411,7 @@ static NODE *list_bool_comp (NODE *l, NODE *r, int f, int reversed,
 		}
 		x[t] = 1.0; /* assume 'true' */
 		for (i=1; i<=list[0]; i++) {
-		    xit = (*p->Z)[list[i]][t];
+		    xit = p->dset->Z[list[i]][t];
 		    if (na(xit)) {
 			x[t] = NADBL;
 			break;
@@ -3474,15 +3472,14 @@ static NODE *list_list_comp (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_to_series_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
 
 	if (list != NULL) {
 	    p->err = cross_sectional_stat(ret->v.xvec, list,
-					  (const double **) *p->Z, 
-					  p->dinfo, f);
+					  p->dset, f);
 	    free(list);
 	}
     }
@@ -3495,7 +3492,7 @@ static NODE *list_to_series_func (NODE *n, int f, parser *p)
 
 static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(r, p);
@@ -3504,11 +3501,11 @@ static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
 	    double xt, xi;
 	    int i, t;
 
-	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		xt = l->v.xvec[t];
 		if (!na(xt)) {
 		    for (i=1; i<=list[0]; i++) {
-			xi = (*p->Z)[list[i]][t];
+			xi = p->dset->Z[list[i]][t];
 			if (na(xi)) {
 			    xt = NADBL;
 			    break;
@@ -3532,16 +3529,14 @@ static NODE *series_list_calc (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_matrix_series_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(l, p);
 	const gretl_matrix *b = r->v.m;
 
 	if (list != NULL && !gretl_is_null_matrix(b)) {
-	    p->err = list_linear_combo(ret->v.xvec, list, b,
-				       (const double **) *p->Z, 
-				       p->dinfo);
+	    p->err = list_linear_combo(ret->v.xvec, list, b, p->dset);
 	}
 	free(list);
     }
@@ -3551,7 +3546,7 @@ static NODE *list_matrix_series_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	int *llist = node_get_list(l, p);
@@ -3560,8 +3555,7 @@ static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
 	if (llist != NULL && rlist != NULL) {
 	    p->err = x_sectional_weighted_stat(ret->v.xvec,
 					       llist, rlist,
-					       (const double **) *p->Z, 
-					       p->dinfo, f);
+					       p->dset, f);
 	}
 	free(llist);
 	free(rlist);
@@ -3574,7 +3568,7 @@ static NODE *list_list_series_func (NODE *l, NODE *r, int f, parser *p)
 
 static NODE *list_ok_func (NODE *n, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	int *list = node_get_list(n, p);
@@ -3586,11 +3580,11 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
 	    return ret;
 	}
 
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    x = (f == F_DATAOK)? 1 : 0;
 	    for (i=1; i<=list[0]; i++) {
 		v = list[i];
-		if (na((*p->Z)[v][t])) {
+		if (na(p->dset->Z[v][t])) {
 		    x = (f == F_DATAOK)? 0 : 1;
 		    break;
 		}
@@ -3610,7 +3604,7 @@ static NODE *list_ok_func (NODE *n, int f, parser *p)
 static NODE *
 series_fill_func (NODE *l, NODE *r, int f, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	double x, y;
@@ -3621,14 +3615,14 @@ series_fill_func (NODE *l, NODE *r, int f, parser *p)
 	switch (f) {
 	case F_RUNIFORM:
 	    p->err = gretl_rand_uniform_minmax(ret->v.xvec, 
-					       p->dinfo->t1, 
-					       p->dinfo->t2,
+					       p->dset->t1, 
+					       p->dset->t2,
 					       x, y);
 	    break;
 	case F_RNORMAL:
 	    p->err = gretl_rand_normal_full(ret->v.xvec, 
-					    p->dinfo->t1, 
-					    p->dinfo->t2,
+					    p->dset->t1, 
+					    p->dset->t2,
 					    x, y);
 	    break;
 	default:
@@ -3656,8 +3650,8 @@ static NODE *series_2_func (NODE *l, NODE *r, int f, parser *p)
 	    /* two series */
 	    x = l->v.xvec;
 	    y = r->v.xvec;
-	    t1 = p->dinfo->t1;
-	    t2 = p->dinfo->t2;
+	    t1 = p->dset->t1;
+	    t2 = p->dset->t2;
 	} else {
 	    /* two matrices */
 	    int n1 = gretl_vector_get_length(l->v.m);
@@ -3720,7 +3714,7 @@ static NODE *mxtab_func (NODE *l, NODE *r, parser *p)
 	    const double *x = l->v.xvec;
 	    const double *y = r->v.xvec;
 	    
-	    ret->v.m = gretl_matrix_xtab(p->dinfo->t1, p->dinfo->t2, 
+	    ret->v.m = gretl_matrix_xtab(p->dset->t1, p->dset->t2, 
 					 x, y, &p->err);
 	} else {
 	    p->err = E_TYPES;
@@ -3739,7 +3733,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 
 	ret->v.xval = NADBL;
 	if (f == F_ISSERIES) {
-	    ret->v.xval = gretl_is_series(s, p->dinfo);
+	    ret->v.xval = gretl_is_series(s, p->dset);
 	} else if (f == F_ISSCALAR) {
 	    ret->v.xval = gretl_is_scalar(s);
 	} else if (f == F_ISLIST) {
@@ -3748,7 +3742,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_is_string(s);
 	} else if (f == F_ISNULL) {
 	    ret->v.xval = 1;
-	    if (gretl_is_series(s, p->dinfo)) {
+	    if (gretl_is_series(s, p->dset)) {
 		ret->v.xval = 0.0;
 	    } else if (gretl_is_scalar(s)) {
 		ret->v.xval = 0.0;
@@ -3762,7 +3756,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 		ret->v.xval = 0.0;
 	    }
 	} else if (f == F_OBSNUM) {
-	    int t = get_observation_number(s, p->dinfo);
+	    int t = get_observation_number(s, p->dset);
 
 	    if (t > 0) {
 		ret->v.xval = t;
@@ -3770,7 +3764,7 @@ static NODE *object_status (NODE *n, int f, parser *p)
 	} else if (f == F_STRLEN) {
 	    ret->v.xval = strlen(s);
 	} else if (f == F_SSCANF) {
-	    p->err = do_sscanf(s, p->Z, p->dinfo, NULL);
+	    p->err = do_sscanf(s, p->dset, NULL);
 	    ret->v.xval = (p->err)? NADBL : n_scanned_items();
 	}
     }
@@ -3817,7 +3811,7 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
-    if (p->err == 0 && (p->dinfo == NULL || p->dinfo->v == 0)) {
+    if (p->err == 0 && (p->dset == NULL || p->dset->v == 0)) {
 	p->err = E_NODATA;
     }
 
@@ -3830,7 +3824,7 @@ static NODE *in_list_node (NODE *l, NODE *r, parser *p)
 	    if (useries_node(r)) {
 		k = r->vnum;
 	    } else if (r->t == NUM) {
-		if (r->v.xval >= 0 && r->v.xval < p->dinfo->v) {
+		if (r->v.xval >= 0 && r->v.xval < p->dset->v) {
 		    k = (int) r->v.xval;
 		}
 	    } else {
@@ -3854,7 +3848,7 @@ static NODE *argname_from_uvar (NODE *n, parser *p)
 	const char *s = NULL;
 
 	if (n->t == VEC) {
-	    s = p->dinfo->varname[n->vnum];
+	    s = p->dset->varname[n->vnum];
 	} else if (n->t == NUM) {
 	    s = gretl_scalar_get_name(n->vnum);
 	}
@@ -3875,7 +3869,7 @@ static NODE *varnum_node (NODE *n, parser *p)
 
     if (ret != NULL && starting(p)) {
 	if (n->t == STR) {
-	    int v = current_series_index(p->dinfo, n->v.str);
+	    int v = current_series_index(p->dset, n->v.str);
 
 	    ret->v.xval = (v >= 0)? v : NADBL;
 	} else {
@@ -3901,10 +3895,10 @@ static NODE *int_to_string_func (NODE *n, int f, parser *p)
 	}
 
 	if (f == F_OBSLABEL) {
-	    ret->v.str = retrieve_date_string(i, p->dinfo, &p->err);
+	    ret->v.str = retrieve_date_string(i, p->dset, &p->err);
 	} else if (f == F_VARNAME) {
-	    if (i >= 0 && i < p->dinfo->v) {
-		ret->v.str = gretl_strdup(p->dinfo->varname[i]);
+	    if (i >= 0 && i < p->dset->v) {
+		ret->v.str = gretl_strdup(p->dset->varname[i]);
 	    } else {
 		p->err = E_DATA;
 	    }
@@ -3932,7 +3926,7 @@ static NODE *list_to_string_func (NODE *n, int f, parser *p)
 	}
 
 	if (f == F_VARNAME) {
-	    ret->v.str = gretl_list_get_names(list, p->dinfo,
+	    ret->v.str = gretl_list_get_names(list, p->dset,
 					      &p->err);
 	} else {
 	    p->err = E_DATA;
@@ -4209,7 +4203,7 @@ static void cast_to_series (NODE *n, int f, gretl_matrix **tmp,
 
     if (gretl_is_null_matrix(m)) {
 	p->err = E_DATA;
-    } else if (len == p->dinfo->n) {
+    } else if (len == p->dset->n) {
 	*tmp = m;
 	n->v.xvec = m->val;
     } else {
@@ -4235,8 +4229,8 @@ series_scalar_func (NODE *n, int f, parser *p)
 
     if (ret != NULL && starting(p)) {
 	gretl_matrix *tmp = NULL;
-	int t1 = p->dinfo->t1;
-	int t2 = p->dinfo->t2;
+	int t1 = p->dset->t1;
+	int t2 = p->dset->t2;
 	const double *x;
 
 	if (n->t == MAT) {
@@ -4299,10 +4293,10 @@ series_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_isconst(t1, t2, x);
 	    break;
 	case F_T1:
-	    ret->v.xval = series_get_start(p->dinfo->n, x);
+	    ret->v.xval = series_get_start(p->dset->n, x);
 	    break;
 	case F_T2:
-	    ret->v.xval = series_get_end(p->dinfo->n, x);
+	    ret->v.xval = series_get_end(p->dset->n, x);
 	    break;
 	default:
 	    break;
@@ -4361,8 +4355,8 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
     if (starting(p)) {
 	double rval = node_get_scalar(r, p);
 	const double *xvec;
-	int t1 = p->dinfo->t1;
-	int t2 = p->dinfo->t2;
+	int t1 = p->dset->t1;
+	int t2 = p->dset->t2;
 	int pd = 1;
 
 	if (l->t == MAT) {
@@ -4377,7 +4371,7 @@ series_scalar_scalar_func (NODE *l, NODE *r, int f, parser *p)
 	    xvec = l->v.m->val;
 	} else {
 	    /* got a series on the left */
-	    pd = p->dinfo->pd;
+	    pd = p->dset->pd;
 	    xvec = l->v.xvec;
 	}
 
@@ -4417,7 +4411,7 @@ static NODE *isconst_node (NODE *l, NODE *r, parser *p)
     } else if (l->t == MAT) {
 	node_type_error(F_ISCONST, 1, VEC, l, p);
 	return NULL;
-    } else if (!dataset_is_panel(p->dinfo)) {
+    } else if (!dataset_is_panel(p->dset)) {
 	p->err = E_PDWRONG;
 	return NULL;
     } else {
@@ -4435,15 +4429,14 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 	int t;
 
 	if (r->t == STR) {
-	    t = dateton(r->v.str, p->dinfo);
+	    t = dateton(r->v.str, p->dset);
 	} else {
 	    t = node_get_int(r, p);
 	    if (!p->err) {
 		char word[16];
 
 		sprintf(word, "%d", t);
-		t = get_t_from_obs_string(word, (const double **) *p->Z, 
-					  p->dinfo);
+		t = get_t_from_obs_string(word, p->dset);
 	    }
 	}
 
@@ -4451,7 +4444,7 @@ static NODE *series_obs (NODE *l, NODE *r, parser *p)
 	    return ret;
 	}
 
-	if (t >= 0 && t < p->dinfo->n) {
+	if (t >= 0 && t < p->dset->n) {
 	    ret->v.xval = l->v.xvec[t];
 	} else {
 	    ret->v.xval = NADBL;
@@ -4468,8 +4461,8 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
     if (ret != NULL && starting(p)) {
 	const double *x = l->v.xvec;
 	int k = node_get_int(r, p);
-	int t1 = p->dinfo->t1;
-	int t2 = p->dinfo->t2;
+	int t1 = p->dset->t1;
+	int t2 = p->dset->t2;
 
 	if (p->err) {
 	    return ret;
@@ -4486,14 +4479,14 @@ static NODE *series_ljung_box (NODE *l, NODE *r, parser *p)
 
 static NODE *series_polyfit (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	const double *x = l->v.xvec;
 	int order = node_get_int(r, p);
 
 	if (!p->err) {
-	    p->err = poly_trend(x, ret->v.xvec, p->dinfo, order);
+	    p->err = poly_trend(x, ret->v.xvec, p->dset, order);
 	}
     }
 
@@ -4518,7 +4511,7 @@ static NODE *series_movavg (NODE *l, NODE *m, NODE *r, parser *p)
 	if (d < 0.0) {
 	    p->err = E_INVARG;
 	    return NULL;
-	} else if (dataset_is_panel(p->dinfo)) {
+	} else if (dataset_is_panel(p->dset)) {
 	    p->err = E_PDWRONG;
 	    return NULL;
 	}
@@ -4544,16 +4537,16 @@ static NODE *series_movavg (NODE *l, NODE *m, NODE *r, parser *p)
 	ctrl = 1;
     }
 
-    ret = aux_vec_node(p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dset->n);
     if (ret == NULL) {
 	return NULL;
     }
 
     if (d > 0) {
 	p->err = exponential_movavg_series(x, ret->v.xvec, 
-					   p->dinfo, d, ctrl);
+					   p->dset, d, ctrl);
     } else {
-	p->err = movavg_series(x, ret->v.xvec, p->dinfo, k, ctrl);
+	p->err = movavg_series(x, ret->v.xvec, p->dset, k, ctrl);
     }
 
     return ret;
@@ -4567,15 +4560,15 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
     int t1, t2;
 
     if (!p->err) {
-	ret = aux_vec_node(p, p->dinfo->n);
+	ret = aux_vec_node(p, p->dset->n);
     }
 
     if (ret == NULL) {
 	return NULL;
     }
 
-    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+    t1 = (autoreg(p))? p->obs : p->dset->t1;
+    t2 = (autoreg(p))? p->obs : p->dset->t2;
 
     lag_calc(ret->v.xvec, x, k, t1, t2, B_ASN, 1.0, p);
 
@@ -4584,11 +4577,11 @@ static NODE *series_lag (NODE *l, NODE *r, parser *p)
 
 static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
 {
-    NODE *ret = aux_vec_node(p, p->dinfo->n);
+    NODE *ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL && starting(p)) {
 	if (l->t == VEC && r->t == VEC) {
-	    p->err = gretl_sort_by(l->v.xvec, r->v.xvec, ret->v.xvec, p->dinfo); 
+	    p->err = gretl_sort_by(l->v.xvec, r->v.xvec, ret->v.xvec, p->dset); 
 	} else {
 	    p->err = E_TYPES;
 	}
@@ -4604,12 +4597,12 @@ static NODE *series_sort_by (NODE *l, NODE *r, parser *p)
 
 static NODE *vector_sort (NODE *l, int f, parser *p)
 {
-    NODE *ret = (l->t == VEC)? aux_vec_node(p, p->dinfo->n) :
+    NODE *ret = (l->t == VEC)? aux_vec_node(p, p->dset->n) :
 	aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
 	if (l->t == VEC) {
-	    p->err = sort_series(l->v.xvec, ret->v.xvec, f, p->dinfo); 
+	    p->err = sort_series(l->v.xvec, ret->v.xvec, f, p->dset); 
 	} else if (gretl_is_null_matrix(l->v.m)) {
 	    p->err = E_DATA;
 	} else {
@@ -4648,8 +4641,8 @@ static NODE *vector_values (NODE *l, parser *p)
 	int n = 0;
 
 	if (l->t == VEC) {
-	    n = sample_size(p->dinfo);
-	    x = l->v.xvec + p->dinfo->t1;
+	    n = sample_size(p->dset);
+	    x = l->v.xvec + p->dset->t1;
 	} else if (!gretl_is_null_matrix(l->v.m)) {
 	    n = gretl_vector_get_length(l->v.m);
 	    x = l->v.m->val;
@@ -4679,9 +4672,9 @@ static NODE *do_irr (NODE *l, parser *p)
 	int pd = 1, n = 0;
 
 	if (l->t == VEC) {
-	    n = sample_size(p->dinfo);
-	    x = l->v.xvec + p->dinfo->t1;
-	    pd = p->dinfo->pd;
+	    n = sample_size(p->dset);
+	    x = l->v.xvec + p->dset->t1;
+	    pd = p->dset->pd;
 	} else if (!gretl_is_null_matrix(l->v.m)) {
 	    n = gretl_vector_get_length(l->v.m);
 	    x = l->v.m->val;
@@ -4714,7 +4707,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
 
-    if (f == F_SDIFF && !dataset_is_seasonal(p->dinfo)) {
+    if (f == F_SDIFF && !dataset_is_seasonal(p->dset)) {
 	p->err = E_PDWRONG;
 	return NULL;
     }
@@ -4729,7 +4722,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	return NULL;
     }
 
-    ret = aux_vec_node(p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dset->n);
 
     if (ret != NULL) {
 	gretl_matrix *tmp = NULL;
@@ -4755,42 +4748,42 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 
 	switch (f) {
 	case F_HPFILT:
-	    p->err = hp_filter(x, y, p->dinfo, parm, OPT_NONE);
+	    p->err = hp_filter(x, y, p->dset, parm, OPT_NONE);
 	    break;
 	case F_FRACDIFF:
-	    p->err = fracdiff_series(x, y, parm, 1, (autoreg(p))? p->obs : -1, p->dinfo);
+	    p->err = fracdiff_series(x, y, parm, 1, (autoreg(p))? p->obs : -1, p->dset);
 	    break;
 	case F_FRACLAG:
-	    p->err = fracdiff_series(x, y, parm, 0, (autoreg(p))? p->obs : -1, p->dinfo);
+	    p->err = fracdiff_series(x, y, parm, 0, (autoreg(p))? p->obs : -1, p->dset);
 	    break;
 	case F_BOXCOX:
-	    p->err = boxcox_series(x, y, parm, p->dinfo);
+	    p->err = boxcox_series(x, y, parm, p->dset);
 	    break;
 	case F_DIFF:
 	case F_LDIFF:
 	case F_SDIFF:
-	    p->err = diff_series(x, y, f, p->dinfo); 
+	    p->err = diff_series(x, y, f, p->dset); 
 	    break;
 	case F_ODEV:
-	    p->err = orthdev_series(x, y, p->dinfo); 
+	    p->err = orthdev_series(x, y, p->dset); 
 	    break;
 	case F_CUM:
-	    p->err = cum_series(x, y, p->dinfo); 
+	    p->err = cum_series(x, y, p->dset); 
 	    break;
 	case F_DESEAS:
 	    if (r != NULL && r->t == STR) {
 		int tramo = tramo_string(r->v.str);
 
-		p->err = seasonally_adjust_series(x, y, p->dinfo, tramo); 
+		p->err = seasonally_adjust_series(x, y, p->dset, tramo); 
 	    } else {
-		p->err = seasonally_adjust_series(x, y, p->dinfo, 0);
+		p->err = seasonally_adjust_series(x, y, p->dset, 0);
 	    }
 	    break;
 	case F_RESAMPLE:
 	    if (r != NULL && r->t == NUM) {
-		p->err = block_resample_series(x, y, parm, p->dinfo); 
+		p->err = block_resample_series(x, y, parm, p->dset); 
 	    } else {
-		p->err = resample_series(x, y, p->dinfo); 
+		p->err = resample_series(x, y, p->dset); 
 	    }
 	    break;
 	case F_PNOBS:
@@ -4798,10 +4791,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_PMAX:
 	case F_PMEAN:
 	case F_PSD:
-	    p->err = panel_statistic(x, y, p->dinfo, f); 
+	    p->err = panel_statistic(x, y, p->dset, f); 
 	    break;
 	case F_RANKING:
-	    p->err = rank_series(x, y, F_SORT, p->dinfo); 
+	    p->err = rank_series(x, y, F_SORT, p->dset); 
 	    break;
 	default:
 	    break;
@@ -4841,8 +4834,8 @@ static NODE *pergm_node (NODE *l, NODE *r, parser *p)
 
 	if (l->t == VEC) {
 	    x = l->v.xvec;
-	    t1 = p->dinfo->t1;
-	    t2 = p->dinfo->t2;
+	    t1 = p->dset->t1;
+	    t2 = p->dset->t2;
 	} else if (l->t == MAT) {
 	    x = l->v.m->val;
 	    t1 = 0;
@@ -5000,16 +4993,16 @@ static gretl_matrix *matrix_from_scalars (NODE *t, int m,
     return M;
 }
 
-static int *full_series_list (const DATAINFO *pdinfo, int *err)
+static int *full_series_list (const DATASET *dset, int *err)
 {
     int *list = NULL;
 
-    if (pdinfo->v < 2) {
+    if (dset->v < 2) {
 	*err = E_DATA;
 	return NULL;
     }	
 
-    list = gretl_consecutive_list_new(1, pdinfo->v - 1);
+    list = gretl_consecutive_list_new(1, dset->v - 1);
     if (list == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -5019,7 +5012,7 @@ static int *full_series_list (const DATAINFO *pdinfo, int *err)
 }
 
 static gretl_matrix *real_matrix_from_list (const int *list,
-					    const double **X, 
+					    const DATASET *dset,
 					    parser *p)
 {
     gretl_matrix *M;
@@ -5030,13 +5023,13 @@ static gretl_matrix *real_matrix_from_list (const int *list,
 	const gretl_matrix *mmask = get_matrix_mask();
 
 	if (mmask != NULL) {
-	    M = gretl_matrix_data_subset_special(list, X, p->dinfo, 
+	    M = gretl_matrix_data_subset_special(list, dset, 
 						 mmask, &p->err);
 	} else {
 	    int missop = (libset_get_bool(SKIP_MISSING))? M_MISSING_SKIP :
 		M_MISSING_OK;
 
-	    M = gretl_matrix_data_subset(list, X, p->dinfo->t1, p->dinfo->t2, 
+	    M = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2, 
 					 missop, &p->err);
 	}
     }
@@ -5060,12 +5053,12 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 	    p->err = E_DATA;
 	}
     } else {
-	list = full_series_list(p->dinfo, &p->err);
+	list = full_series_list(p->dset, &p->err);
 	freelist = 1;
     }
 
     if (!p->err) {
-	M = real_matrix_from_list(list, (const double **) *p->Z, p);
+	M = real_matrix_from_list(list, p->dset, p);
     }
 
     if (freelist) {
@@ -5252,7 +5245,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    pdescrip = &descrip;
 	}
 
-	p->err = gretl_function_exec(uf, args, rtype, p->Z, p->dinfo, 
+	p->err = gretl_function_exec(uf, args, rtype, p->dset, 
 				     retp, pdescrip, p->prn);
 
 	if (!p->err) {
@@ -5485,12 +5478,12 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     } else if (type == GRETL_TYPE_SERIES) {
 	const double *x = val;
 
-	if (size == p->dinfo->n) {
-	    ret = aux_vec_node(p, p->dinfo->n);
+	if (size == p->dset->n) {
+	    ret = aux_vec_node(p, p->dset->n);
 	    if (ret != NULL) {
 		int t;
 
-		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		    ret->v.xvec[t] = x[t];
 		}
 	    }
@@ -5601,7 +5594,7 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
 	case VEC:
 	    ptr = n->v.xvec;
 	    type = GRETL_TYPE_SERIES;
-	    size = p->dinfo->n;
+	    size = p->dset->n;
 	    break;
 	case BUNDLE:
 	    ptr = node_get_bundle(n, p);
@@ -5677,13 +5670,12 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
     if (!xcf) {
 	/* acf/pacf */
 	if (l->t == VEC) {
-	    A = acf_vec(l->v.xvec, k, p->dinfo, 0, &p->err);
+	    A = acf_vec(l->v.xvec, k, p->dset, 0, &p->err);
 	} else if (l->t == MAT) {
-	    A = multi_acf(l->v.m, NULL, NULL, NULL, k, &p->err);
+	    A = multi_acf(l->v.m, NULL, NULL, k, &p->err);
 	} else {
 	    /* must be a list */
-	    A = multi_acf(NULL, list, (const double **) *p->Z, 
-			  p->dinfo, k, &p->err);
+	    A = multi_acf(NULL, list, p->dset, k, &p->err);
 	}
     } else {
 	/* cross-correlogram */
@@ -5702,8 +5694,7 @@ static gretl_matrix *get_corrgm_matrix (NODE *l,
 
 	py = (r->t == MAT)? (void *) r->v.m : (void *) r->v.xvec;
 
-	A = multi_xcf(px, xtype, py, r->t, (const double **) *p->Z, 
-		      p->dinfo, k, &p->err);
+	A = multi_xcf(px, xtype, py, r->t, p->dset, k, &p->err);
     }
 
     free(list);
@@ -5721,8 +5712,8 @@ static const char *ptr_node_get_name (NODE *t, parser *p)
 	if (n->t == VEC) {
 	    int v = n->vnum;
 
-	    if (p->dinfo != NULL && v > 0 && v < p->dinfo->n) {
-		ret = p->dinfo->varname[v];
+	    if (p->dset != NULL && v > 0 && v < p->dset->n) {
+		ret = p->dset->varname[v];
 	    }
 	} else {
 	    ret = n->v.str;
@@ -5733,11 +5724,11 @@ static const char *ptr_node_get_name (NODE *t, parser *p)
 }
 
 static gretl_matrix *get_density_matrix (const double *x, 
-					 const DATAINFO *pdinfo, 
+					 const DATASET *dset, 
 					 double bws, int ctrl,
 					 int *err)
 {
-    gretl_matrix *(*kdfunc) (const double *, const DATAINFO *,
+    gretl_matrix *(*kdfunc) (const double *, const DATASET *,
 			     double, gretlopt, int *);
     void *handle;
     gretl_matrix *m = NULL;
@@ -5750,7 +5741,7 @@ static gretl_matrix *get_density_matrix (const double *x,
     }
 
     opt = (ctrl)? OPT_O : OPT_NONE; 
-    m = (*kdfunc)(x, pdinfo, bws, opt, err);
+    m = (*kdfunc)(x, dset, bws, opt, err);
     close_plugin(handle);
 
     return m;
@@ -5874,7 +5865,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    double bws = (m->t != EMPTY)? m->v.xval : 1.0;
 	    int ctrl = (r->t != EMPTY)? (int) r->v.xval : 0;
 
-	    A = get_density_matrix(x, p->dinfo, bws,
+	    A = get_density_matrix(x, p->dset, bws,
 				   ctrl, &p->err);
 	}
     } else if (f == F_MONTHLEN) {
@@ -5951,9 +5942,9 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	} else if (r->t != NUM) {
 	    node_type_error(f, 3, NUM, r, p);
 	} else {
-	    ret = aux_vec_node(p, p->dinfo->n);
+	    ret = aux_vec_node(p, p->dset->n);
 	    if (!p->err) {
-		p->err = butterworth_filter(l->v.xvec, ret->v.xvec, p->dinfo,
+		p->err = butterworth_filter(l->v.xvec, ret->v.xvec, p->dset,
 					    m->v.xval, r->v.xval);
 	    }
 	}
@@ -5986,8 +5977,7 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    int shock = (int) m->v.xval - 1;
 
 	    A = last_model_get_irf_matrix(targ, shock, alpha,
-					  (const double **) *p->Z, p->dinfo,
-					  &p->err);
+					  p->dset, &p->err);
 	}
     } else if (f == F_MLAG) {
 	if (l->t != MAT) {
@@ -6087,11 +6077,11 @@ static NODE *eval_bessel_func (NODE *l, NODE *m, NODE *r, parser *p)
 	    }
 	}
     } else if (r->t == VEC) {
-	ret = aux_vec_node(p, p->dinfo->n);
+	ret = aux_vec_node(p, p->dset->n);
 	if (ret != NULL) {
 	    const double *x = r->v.xvec;
-	    int t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-	    int t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+	    int t1 = (autoreg(p))? p->obs : p->dset->t1;
+	    int t2 = (autoreg(p))? p->obs : p->dset->t2;
 	    int t;
 
 	    for (t=t1; t<=t2 && !p->err; t++) {
@@ -6259,7 +6249,7 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 
     if (!p->err) {
 	if (src->t == VEC) {
-	    ret = aux_vec_node(p, p->dinfo->n);
+	    ret = aux_vec_node(p, p->dset->n);
 	} else if (src->t == MAT) {
 	    ret = aux_matrix_node(p);
 	} else {
@@ -6277,7 +6267,7 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 	if (k1 < 0) k1 = 1;
 
 	if (src->t == VEC) {
-	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		xt = src->v.xvec[t];
 		ret->v.xvec[t] = subst_val(xt, px0, k0, px1, k1);
 	    }
@@ -6349,11 +6339,11 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret = aux_vec_node(p, p->dinfo->n);
+	    ret = aux_vec_node(p, p->dset->n);
 	}
 
 	if (!p->err) {
-	    p->err = bkbp_filter(x, ret->v.xvec, p->dinfo, bk[0], bk[1], bk[2]);
+	    p->err = bkbp_filter(x, ret->v.xvec, p->dset, bk[0], bk[1], bk[2]);
 	} 
     } else if (t->t == F_FILTER) {
 	const double *x = NULL;
@@ -6419,9 +6409,9 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	} 
 	
 	if (!p->err) {
-	    ret = aux_vec_node(p, p->dinfo->n);
+	    ret = aux_vec_node(p, p->dset->n);
 	    if (!p->err) {
-		p->err = filter_series(x, ret->v.xvec, p->dinfo, A, C, y0);
+		p->err = filter_series(x, ret->v.xvec, p->dset, A, C, y0);
 	    }
 	}
 
@@ -6504,8 +6494,8 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 
 	if (!p->err) {
 	    ret->v.xval = user_kalman_run(E, V, S, P, G, 
-					  *p->Z, p->dinfo,
-					  p->prn, &p->err);
+					  p->dset, p->prn, 
+					  &p->err);
 	} 
     } else if (t->t == F_KSMOOTH) {
 	const char *P = NULL;
@@ -6751,7 +6741,7 @@ static NODE *eval_nargs_func (NODE *t, parser *p)
 	}
 
 	if (!p->err) {
-	    ret->v.xval = user_NR(b, sf, sg, sh, p->Z, p->dinfo, 
+	    ret->v.xval = user_NR(b, sf, sg, sh, p->dset, 
 				  p->prn, &p->err);
 	}
     } 
@@ -6772,7 +6762,7 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
     NODE *n;
     gretl_matrix *m = NULL;
     const int *list;
-    const double **X = NULL;
+    double **Z = NULL;
     int *dumlist;
     int i, j, k = 0;
 
@@ -6797,51 +6787,61 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	}
     }
 
-    /* create dummy dataset */
-    X = malloc(k * sizeof *X);
-    if (X == NULL) {
+    /* create dummy data array */
+    Z = malloc(k * sizeof *Z);
+    if (Z == NULL) {
 	p->err = E_ALLOC;
 	return NULL;
     }
 
 #if EDEBUG
-    fprintf(stderr, " got %d columns, X at %p\n", k, (void *) X);
+    fprintf(stderr, " got %d columns, Z at %p\n", k, (void *) Z);
 #endif
 
-    /* and a list associated with X */
+    /* and a list associated with Z */
     dumlist = gretl_consecutive_list_new(0, k-1);
     if (dumlist == NULL) {
 	p->err = E_ALLOC;
-	free(X);
+	free(Z);
 	return NULL;
     }
 
-    /* fill out the pointers in X */
+    /* attach series pointers to Z */
     k = 0;
     for (i=0; i<nnodes; i++) {
 	n = nn->v.bn.n[i];
 	if (n->t == LIST) {
 	    list = get_list_by_name(n->v.str);
 	    for (j=1; j<=list[0]; j++) {
-		X[k++] = (*p->Z)[list[j]];
+		Z[k++] = p->dset->Z[list[j]];
 	    }
 	} else if (n->t == LVEC) {
 	    list = n->v.ivec;
 	    for (j=1; j<=list[0]; j++) {
-		X[k++] = (*p->Z)[list[j]];
+		Z[k++] = p->dset->Z[list[j]];
 	    }	    
 	} else if (n->t == VEC) {
 	    if (useries_node(n) && (p->flags & P_EXEC)) {
 		reattach_data_series(n, p);
 	    } 
-	    X[k++] = n->v.xvec;
+	    Z[k++] = n->v.xvec;
 	}
     }
 
-    m = real_matrix_from_list(dumlist, X, p);
+    if (!p->err) {
+	DATASET dumset = {0};
+
+	dumset.Z = Z;
+	dumset.v = k;
+	dumset.n = p->dset->n;
+	dumset.t1 = p->dset->t1;
+	dumset.t2 = p->dset->t2;
+
+	m = real_matrix_from_list(dumlist, &dumset, p);
+    }
 
     free(dumlist);
-    free(X);
+    free(Z);
 
     return m;
 }
@@ -7018,8 +7018,8 @@ static int vec_branch (const double *c, parser *p)
     int c1, t, t1, t2;
     int ret;
 
-    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+    t1 = (autoreg(p))? p->obs : p->dset->t1;
+    t2 = (autoreg(p))? p->obs : p->dset->t2;
 
     c1 = (c[t1] != 0.0); 
     ret = (c1)? FORK_L : FORK_R;
@@ -7084,10 +7084,10 @@ static NODE *query_eval_vec (const double *c, NODE *n, parser *p)
 	}
     }
 
-    ret = aux_vec_node(p, p->dinfo->n);
+    ret = aux_vec_node(p, p->dset->n);
 
-    t1 = (autoreg(p))? p->obs : p->dinfo->t1;
-    t2 = (autoreg(p))? p->obs : p->dinfo->t2;
+    t1 = (autoreg(p))? p->obs : p->dset->t1;
+    t2 = (autoreg(p))? p->obs : p->dset->t2;
 
     for (t=t1; t<=t2; t++) {
 	if (xna(c[t])) {
@@ -7152,7 +7152,7 @@ static NODE *ternary_return_node (NODE *n, parser *p)
 	    ret->v.xval = n->v.xval;
 	}
     } else if (n->t == VEC) {
-	int t, T = p->dinfo->n;
+	int t, T = p->dset->n;
 
 	ret = aux_vec_node(p, T);
 	if (ret != NULL) {
@@ -7252,25 +7252,25 @@ static int get_version_as_scalar (void)
 
 #define no_data(p) (p == NULL || p->n == 0)
 
-double dvar_get_scalar (int i, const DATAINFO *pdinfo,
+double dvar_get_scalar (int i, const DATASET *dset,
 			char *label)
 {
     int ival;
 
     switch (i) {
     case R_NOBS:
-	return (pdinfo == NULL) ? NADBL : 
-	(pdinfo->n == 0 ? 0 : sample_size(pdinfo));
+	return (dset == NULL) ? NADBL : 
+	(dset->n == 0 ? 0 : sample_size(dset));
     case R_NVARS:
-	return (pdinfo == NULL)? NADBL : pdinfo->v;
+	return (dset == NULL)? NADBL : dset->v;
     case R_PD:
-	return (no_data(pdinfo))? NADBL : pdinfo->pd;
+	return (no_data(dset))? NADBL : dset->pd;
     case R_T1:
-	return (no_data(pdinfo))? NADBL : pdinfo->t1 + 1;
+	return (no_data(dset))? NADBL : dset->t1 + 1;
     case R_T2:
-	return (no_data(pdinfo))? NADBL : pdinfo->t2 + 1;
+	return (no_data(dset))? NADBL : dset->t2 + 1;
     case R_DATATYPE:
-	return (no_data(pdinfo))? NADBL : dataset_get_structure(pdinfo);
+	return (no_data(dset))? NADBL : dataset_get_structure(dset);
     case R_TEST_PVAL:
 	return get_last_pvalue(label);
     case R_TEST_STAT:
@@ -7306,22 +7306,22 @@ double dvar_get_scalar (int i, const DATAINFO *pdinfo,
     }
 }
 
-static double *dvar_get_series (int i, const DATAINFO *pdinfo, 
+static double *dvar_get_series (int i, const DATASET *dset, 
 				int *err)
 {
     double *x = NULL;
     int t;
 
-    if (pdinfo == NULL || pdinfo->n == 0) {
+    if (dset == NULL || dset->n == 0) {
 	*err = E_NODATA;
 	return NULL;
     }
 
     switch (i) {
     case R_INDEX:
-	x = malloc(pdinfo->n * sizeof *x);
+	x = malloc(dset->n * sizeof *x);
 	if (x != NULL) {
-	    for (t=0; t<pdinfo->n; t++) {
+	    for (t=0; t<dset->n; t++) {
 		x[t] = t + 1;
 	    }
 	} else {
@@ -7329,11 +7329,11 @@ static double *dvar_get_series (int i, const DATAINFO *pdinfo,
 	}
 	break;
     case R_PUNIT:
-	if (dataset_is_panel(pdinfo)) {
-	    x = malloc(pdinfo->n * sizeof *x);
+	if (dataset_is_panel(dset)) {
+	    x = malloc(dset->n * sizeof *x);
 	    if (x != NULL) {
-		for (t=0; t<pdinfo->n; t++) {
-		    x[t] = t / pdinfo->pd + 1;
+		for (t=0; t<dset->n; t++) {
+		    x[t] = t / dset->pd + 1;
 		}
 	    } else {
 		*err = E_ALLOC;
@@ -7423,13 +7423,13 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 	} else if (dvar_scalar(idx)) {
 	    ret = aux_scalar_node(p);
 	    if (ret != NULL && starting(p)) {
-		ret->v.xval = dvar_get_scalar(idx, p->dinfo, 
+		ret->v.xval = dvar_get_scalar(idx, p->dset, 
 					      p->lh.label);
 	    }
 	} else if (dvar_series(idx)) {
 	    ret = aux_vec_node(p, 0);
 	    if (ret != NULL && starting(p)) {
-		ret->v.xvec = dvar_get_series(idx, p->dinfo,
+		ret->v.xvec = dvar_get_series(idx, p->dset,
 					      &p->err);
 	    }
 	} else if (dvar_variant(idx)) {
@@ -7444,7 +7444,7 @@ static NODE *dollar_var_node (NODE *t, parser *p)
 		/* scalar or none */
 		ret = aux_scalar_node(p);
 		if (ret != NULL && starting(p)) {
-		    ret->v.xval = dvar_get_scalar(idx, p->dinfo, 
+		    ret->v.xval = dvar_get_scalar(idx, p->dset, 
 						  p->lh.label);
 		}
 	    } 
@@ -7475,9 +7475,7 @@ object_var_get_submatrix (const char *oname, int idx, NODE *t, parser *p,
     }
 
     if (needs_data) {
-	M = saved_object_build_matrix(oname, idx, 
-				      (const double **) *p->Z,
-				      p->dinfo, &p->err);
+	M = saved_object_build_matrix(oname, idx, p->dset, &p->err);
     } else {
 	M = saved_object_get_matrix(oname, idx, &p->err);
     }
@@ -7537,7 +7535,7 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
 	NODE *r = t->v.b2.r;
 
 	ret->v.xval = gretl_model_get_data_element(pmod, l->v.idnum, r->v.str, 
-						   p->dinfo, &p->err);
+						   p->dset, &p->err);
 
 	if (na(ret->v.xval)) {
 	    const char *s = get_string_by_name(r->v.str);
@@ -7545,7 +7543,7 @@ static NODE *dollar_str_node (NODE *t, MODEL *pmod, parser *p)
 	    if (s != NULL) {
 		p->err = 0;
 		ret->v.xval = gretl_model_get_data_element(pmod, l->v.idnum, s, 
-							   p->dinfo, &p->err);
+							   p->dset, &p->err);
 	    }
 	}
 
@@ -7659,15 +7657,15 @@ static NODE *object_var_node (NODE *t, parser *p)
 	if (ret == NULL) {
 	    return ret;
 	} else if (vtype == GRETL_TYPE_DOUBLE) {
-	    ret->v.xval = saved_object_get_scalar(oname, idx, p->Z,
-						  p->dinfo, &p->err);
+	    ret->v.xval = saved_object_get_scalar(oname, idx, p->dset, 
+						  &p->err);
 	} else if (vtype == GRETL_TYPE_SERIES) {
-	    ret->v.xvec = saved_object_get_series(oname, idx, p->dinfo,
+	    ret->v.xvec = saved_object_get_series(oname, idx, p->dset,
 						  &p->err);
 	} else if (vtype == GRETL_TYPE_LIST) {
 	    ret->v.ivec = saved_object_get_list(oname, idx, &p->err);
 	} else if (vtype == GRETL_TYPE_STRING) {
-	    ret->v.str = saved_object_get_string(oname, idx, p->dinfo,
+	    ret->v.str = saved_object_get_string(oname, idx, p->dset,
 						 &p->err);
 	} else if (mslice) {
 	    /* the right-hand subnode needs more work */
@@ -7675,8 +7673,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	} else if (vtype == GRETL_TYPE_MATRIX) {
 	    if (needs_data) {
 		ret->v.m = saved_object_build_matrix(oname, idx,
-						     (const double **) *p->Z,
-						     p->dinfo, &p->err);
+						     p->dset, &p->err);
 	    } else {
 		ret->v.m = saved_object_get_matrix(oname, idx, &p->err);
 	    }
@@ -7693,7 +7690,7 @@ static NODE *wildlist_node (NODE *n, parser *p)
     NODE *ret = aux_lvec_node(p);
 
     if (ret != NULL && starting(p)) {
-	int *list = varname_match_list(p->dinfo, n->v.str,
+	int *list = varname_match_list(p->dset, n->v.str,
 				       &p->err);
 
 	ret->v.ivec = list;
@@ -7707,7 +7704,7 @@ static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
     NODE *ret = aux_lvec_node(p);
 
     if (ret != NULL && starting(p)) {
-	int *list = ellipsis_list(p->dinfo, l->vnum, r->vnum,
+	int *list = ellipsis_list(p->dset, l->vnum, r->vnum,
 				  &p->err);
 
 	ret->v.ivec = list;
@@ -7753,11 +7750,11 @@ static void reattach_data_series (NODE *n, parser *p)
 {
     int v = n->vnum;
 
-    if (v >= p->dinfo->v) {
-	fprintf(stderr, "VEC node, ID = %d but p->dinfo->v = %d\n", v, p->dinfo->v);
+    if (v >= p->dset->v) {
+	fprintf(stderr, "VEC node, ID = %d but p->dset->v = %d\n", v, p->dset->v);
 	p->err = E_DATA;
     } else {
-	n->v.xvec = (*p->Z)[v];
+	n->v.xvec = p->dset->Z[v];
     }
 }
 
@@ -8929,7 +8926,7 @@ static void printnode (NODE *t, parser *p)
     if (t == NULL) {
 	pputs(p->prn, "NULL"); 
     } else if (useries_node(t)) {
-	pprintf(p->prn, "%s", p->dinfo->varname[t->vnum]);
+	pprintf(p->prn, "%s", p->dset->varname[t->vnum]);
     } else if (uscalar_node(t)) {
 	pprintf(p->prn, "%s", gretl_scalar_get_name(t->vnum));
     } else if (t->t == NUM) {
@@ -8942,11 +8939,11 @@ static void printnode (NODE *t, parser *p)
 	const double *x = t->v.xvec;
 	int i, j = 1;
 
-	if (p->lh.v > 0 && p->lh.v < p->dinfo->v) {
-	    pprintf(p->prn, "%s\n", p->dinfo->varname[p->lh.v]);
+	if (p->lh.v > 0 && p->lh.v < p->dset->v) {
+	    pprintf(p->prn, "%s\n", p->dset->varname[p->lh.v]);
 	}
 
-	for (i=p->dinfo->t1; i<=p->dinfo->t2; i++, j++) {
+	for (i=p->dset->t1; i<=p->dset->t2; i++, j++) {
 	    if (na(x[i])) {
 		pputs(p->prn, "NA");
 	    } else {
@@ -8954,7 +8951,7 @@ static void printnode (NODE *t, parser *p)
 	    }
 	    if (j % 8 == 0) {
 		pputc(p->prn, '\n');
-	    } else if (i < p->dinfo->t2) {
+	    } else if (i < p->dset->t2) {
 		pputc(p->prn, ' ');
 	    }
 	}
@@ -9154,7 +9151,7 @@ static void get_lh_mspec (parser *p)
 	/* executing a previously compiled parser */
 	parser_free_aux_nodes(subp);
 	parser_aux_init(subp);
-	parser_reinit(subp, p->Z, p->dinfo, p->prn);
+	parser_reinit(subp, p->dset, p->prn);
     } else {
 	/* starting from scratch */
 	int subflags = P_SLICE;
@@ -9174,7 +9171,7 @@ static void get_lh_mspec (parser *p)
 	if (p->flags & P_COMPILE) {
 	    subflags |= P_COMPILE;
 	}
-	parser_init(subp, s, p->Z, p->dinfo, p->prn, subflags);
+	parser_init(subp, s, p->dset, p->prn, subflags);
 	parser_aux_init(subp);
 	subp->targ = MSPEC;
 # if LHDEBUG
@@ -9223,7 +9220,7 @@ static void get_lh_obsnum (parser *p)
     if (p->lh.substr[0] != '"') {
 	int err = 0;
 
-	p->lh.obs = generate_scalar(p->lh.substr, p->Z, p->dinfo, &err);
+	p->lh.obs = generate_scalar(p->lh.substr, p->dset, &err);
 	if (!err) {
 	    p->lh.obs -= 1; /* convert to 0-based for internal use */
 	    done = 1;
@@ -9231,11 +9228,10 @@ static void get_lh_obsnum (parser *p)
     }
 
     if (!done) {
-	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
-					  p->dinfo);
+	p->lh.obs = get_t_from_obs_string(p->lh.substr, p->dset);
     }
     
-    if (p->lh.obs < 0 || p->lh.obs >= p->dinfo->n) {
+    if (p->lh.obs < 0 || p->lh.obs >= p->dset->n) {
 	gretl_errmsg_sprintf("'[%s]': bad observation specifier", p->lh.substr);
 	p->err = E_PARSE;
     } else {
@@ -9279,9 +9275,9 @@ static void parser_print_result (parser *p, PRN *prn)
     if (p->targ == VEC) {
 	int list[2] = { 1, p->lh.v };
 
-	printdata(list, NULL, (const double **) *p->Z, p->dinfo, OPT_NONE, prn);
+	printdata(list, NULL, (const double **) *p->Z, p->dset, OPT_NONE, prn);
     } else if (p->targ == NUM) {
-	printdata(NULL, p->lh.name, (const double **) *p->Z, p->dinfo, OPT_NONE, prn);
+	printdata(NULL, p->lh.name, (const double **) *p->Z, p->dset, OPT_NONE, prn);
     } else if (p->targ == MAT) {
 	gretl_matrix_print_to_prn(p->lh.m1, p->lh.name, prn);
     }
@@ -9314,10 +9310,10 @@ static void do_decl (parser *p)
 	    } else if (p->targ == NUM) {
 		p->err = gretl_scalar_add(S[i], NADBL);
 	    } else if (p->targ == VEC) {
-		p->err = dataset_add_NA_series(p->Z, p->dinfo);
+		p->err = dataset_add_NA_series(p->dset);
 		if (!p->err) {
-		    v = p->dinfo->v - 1;
-		    strcpy(p->dinfo->varname[v], S[i]);
+		    v = p->dset->v - 1;
+		    strcpy(p->dset->varname[v], S[i]);
 		}
 	    } else if (p->targ == LIST) {
 		int *nlist = gretl_null_list();
@@ -9354,7 +9350,7 @@ static NODE *lhs_copy_node (parser *p)
     if (p->targ == NUM) {
 	n->v.xval = gretl_scalar_get_value(p->lh.name);
     } else if (p->targ == VEC) {
-	n->v.xvec = (*p->Z)[p->lh.v];
+	n->v.xvec = p->dset->Z[p->lh.v];
     } else {
 	n->v.m = p->lh.m0;
     }
@@ -9478,7 +9474,7 @@ static int overwrite_const_check (const char *s, parser *p)
     }
 
 #if 0
-    if (p->lh.t == VEC && series_is_parent(p->dinfo, p->lh.v)) {
+    if (p->lh.t == VEC && series_is_parent(p->dset, p->lh.v)) {
 	err = 1;
     }
 #endif
@@ -9559,7 +9555,7 @@ static void pre_process (parser *p, int flags)
 	s += 7;
     }
 
-    if (p->targ == VEC && p->dinfo->n == 0) {
+    if (p->targ == VEC && p->dset->n == 0) {
 	no_data_error(p);
 	return;
     }
@@ -9608,7 +9604,7 @@ static void pre_process (parser *p, int flags)
 
     /* find out if the LHS var already exists, and if
        so, what type it is */
-    if ((v = current_series_index(p->dinfo, test)) >= 0) {
+    if ((v = current_series_index(p->dset, test)) >= 0) {
 	p->lh.v = v;
 	p->lh.t = VEC;
 	newvar = 0;
@@ -9789,7 +9785,7 @@ static int matrix_may_be_masked (const gretl_matrix *m, int n,
 static int series_compatible (const gretl_matrix *m, parser *p)
 {
     int n = gretl_vector_get_length(m);
-    int T = sample_size(p->dinfo);
+    int T = sample_size(p->dset);
     int ok = 0;
 
     if (m->t2 > 0) {
@@ -9802,7 +9798,7 @@ static int series_compatible (const gretl_matrix *m, parser *p)
     } else if (n == T) {
 	/* length matches current sample */
 	ok = 1;
-    } else if (n == p->dinfo->n) {
+    } else if (n == p->dset->n) {
 	/* length matches full series length */
 	ok = 1;
     } else if (n == 1) {
@@ -9842,7 +9838,7 @@ static void gen_check_errvals (parser *p)
     } else if (n->t == VEC) {
 	int t;
 
-	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+	for (t=p->dset->t1; t<=p->dset->t2; t++) {
 	    if (!isfinite(n->v.xvec[t])) {
 #if SERIES_ENSURE_FINITE
 		n->v.xvec[t] = NADBL;
@@ -9915,7 +9911,7 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	}	
     } else if (r->t == VEC) {
 	/* result was a series, not a matrix */
-	int i, n = sample_size(p->dinfo);
+	int i, n = sample_size(p->dset);
 	const double *x = r->v.xvec;
 
 	m = gretl_column_vector_alloc(n);
@@ -9923,7 +9919,7 @@ static gretl_matrix *grab_or_copy_matrix_result (parser *p)
 	    p->err = E_ALLOC;
 	} else {
 	    for (i=0; i<n; i++) {
-		m->val[i] = x[i + p->dinfo->t1];
+		m->val[i] = x[i + p->dset->t1];
 	    }
 	}
     } else if (r->t == MAT && is_tmp_node(r)) {
@@ -10001,7 +9997,7 @@ static int LHS_matrix_reusable (parser *p)
     if (p->ret->t == NUM) {
 	ok = (m->rows == 1 && m->cols == 1);
     } else if (p->ret->t == VEC) {
-	int T = sample_size(p->dinfo);
+	int T = sample_size(p->dset);
 
 	ok = (m->rows == T && m->cols == 1);
     } else if (p->ret->t == MAT) {
@@ -10028,7 +10024,7 @@ static void assign_to_matrix (parser *p)
 	    x = p->ret->v.xval;
 	    m->val[0] = na(x)? M_NA : x;
 	} else if (p->ret->t == VEC) {
-	    int i, s = p->dinfo->t1;
+	    int i, s = p->dset->t1;
 
 	    for (i=0; i<m->rows; i++) {
 		x = p->ret->v.xvec[s++];
@@ -10251,7 +10247,7 @@ static int gen_check_return_type (parser *p)
 	return (p->err = E_DATA);
     }
 
-    if ((p->dinfo == NULL || p->dinfo->n == 0) && 
+    if ((p->dset == NULL || p->dset->n == 0) && 
 	r->t != MAT && r->t != NUM && 
 	r->t != STR && r->t != BUNDLE &&
 	r->t != U_ADDR && r->t != EMPTY) {
@@ -10331,17 +10327,17 @@ static int gen_check_return_type (parser *p)
 static int gen_allocate_storage (parser *p)
 {
     if (p->lh.v == 0) {
-	if (p->dinfo == NULL || p->Z == NULL) {
+	if (p->dset == NULL || p->dset->Z == NULL) {
 	    p->err = E_DATA;
 	} else {
-	    p->err = dataset_add_series(1, p->Z, p->dinfo);
+	    p->err = dataset_add_series(1, p->dset);
 	}
 	if (!p->err) {
 	    int t;
 
-	    p->lh.v = p->dinfo->v - 1;
-	    for (t=0; t<p->dinfo->n; t++) {
-		(*p->Z)[p->lh.v][t] = NADBL;
+	    p->lh.v = p->dset->v - 1;
+	    for (t=0; t<p->dset->n; t++) {
+		p->dset->Z[p->lh.v][t] = NADBL;
 	    }
 #if EDEBUG
 	    fprintf(stderr, "gen_allocate_storage: added series #%d (%s)\n",
@@ -10380,14 +10376,14 @@ static void align_matrix_to_series (double *y, const gretl_matrix *m,
     const gretl_matrix *mask = get_matrix_mask();
     int t, s = 0;
 
-    if (mask == NULL || mask->rows != p->dinfo->n) {
+    if (mask == NULL || mask->rows != p->dset->n) {
 	p->err = E_DATA;
 	return;
     }
 
-    for (t=0; t<p->dinfo->n; t++) {
+    for (t=0; t<p->dset->n; t++) {
 	if (mask->val[t] != 0.0) {
-	    if (t >= p->dinfo->t1 && t <= p->dinfo->t2) {
+	    if (t >= p->dset->t1 && t <= p->dset->t2) {
 		y[t] = xy_calc(y[t], m->val[s], p->op, VEC, p);
 	    }
 	    s++;
@@ -10421,8 +10417,8 @@ static int save_generated_var (parser *p, PRN *prn)
 	}
     }
 
-    if (p->Z != NULL) {
-	Z = *p->Z;
+    if (p->dset != NULL && p->dset->Z != NULL) {
+	Z = p->dset->Z;
 	v = p->lh.v;
     }
 
@@ -10438,7 +10434,7 @@ static int save_generated_var (parser *p, PRN *prn)
 	    } else if (r->t == MAT) {
 		Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, NUM, p);
 	    }
-	    strcpy(p->dinfo->varname[v], p->lh.name);
+	    strcpy(p->dset->varname[v], p->lh.name);
 	    set_dataset_is_changed();
 	} else if (p->flags & P_LHSCAL) {
 	    /* modifying existing scalar */
@@ -10461,27 +10457,27 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == VEC) {
 	/* writing a series */
 	if (r->t == NUM) {
-	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) { 
+	    for (t=p->dset->t1; t<=p->dset->t2; t++) { 
 		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, VEC, p);
 	    }
 	} else if (r->t == VEC) {
 	    const double *x = r->v.xvec;
-	    int t1 = p->dinfo->t1;
+	    int t1 = p->dset->t1;
 
 	    if (autoreg(p) && p->op == B_ASN) {
-		while (xna(x[t1]) && t1 <= p->dinfo->t2) {
+		while (xna(x[t1]) && t1 <= p->dset->t2) {
 		    t1++;
 		}
 	    }
 	    if (p->op == B_ASN) {
 		/* avoid multiple calls to xy_calc */
 		if (Z[v] != x) {
-		    size_t sz = (p->dinfo->t2 - t1 + 1) * sizeof *x;
+		    size_t sz = (p->dset->t2 - t1 + 1) * sizeof *x;
 
 		    memcpy(Z[v] + t1, x + t1, sz);
 		}
 	    } else {
-		for (t=t1; t<=p->dinfo->t2; t++) {
+		for (t=t1; t<=p->dset->t2; t++) {
 		    Z[v][t] = xy_calc(Z[v][t], x[t], p->op, VEC, p);
 		}
 	    }
@@ -10494,23 +10490,23 @@ static int save_generated_var (parser *p, PRN *prn)
 		align_matrix_to_series(Z[v], m, p);
 	    } else if (k == 1) {
 		/* result is effectively a scalar */
-		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[0], p->op, VEC, p);
 		}
-	    } else if (k == p->dinfo->n) {
+	    } else if (k == p->dset->n) {
 		/* treat result as full-length series */
-		for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
+		for (t=p->dset->t1; t<=p->dset->t2; t++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[t], p->op, VEC, p);
 		}
-	    } else if (k == sample_size(p->dinfo) && m->t1 == 0) {
+	    } else if (k == sample_size(p->dset) && m->t1 == 0) {
 		/* treat as series of current sample length */
-		for (t=p->dinfo->t1, s=0; t<=p->dinfo->t2; t++, s++) {
+		for (t=p->dset->t1, s=0; t<=p->dset->t2; t++, s++) {
 		    Z[v][t] = xy_calc(Z[v][t], m->val[s], p->op, VEC, p);
 		}
 	    } else {
 		/* align using m->t1 */
-		for (t=m->t1; t<m->t1 + k && t<=p->dinfo->t2; t++) {
-		    if (t >= p->dinfo->t1) {
+		for (t=m->t1; t<m->t1 + k && t<=p->dset->t2; t++) {
+		    if (t >= p->dset->t1) {
 			Z[v][t] = xy_calc(Z[v][t], m->val[t - m->t1], p->op, VEC, p);
 		    }
 		}
@@ -10519,10 +10515,10 @@ static int save_generated_var (parser *p, PRN *prn)
 
 #if SERIES_ENSURE_FINITE
 	if (!p->err) {
-	    series_make_finite(Z[v], p->dinfo->n);
+	    series_make_finite(Z[v], p->dset->n);
 	}
 #endif
-	strcpy(p->dinfo->varname[v], p->lh.name);
+	strcpy(p->dset->varname[v], p->lh.name);
 #if EDEBUG
 	fprintf(stderr, "var %d: gave generated series the name '%s'\n", 
 		v, p->lh.name);
@@ -10580,8 +10576,7 @@ static int save_generated_var (parser *p, PRN *prn)
     return p->err;
 }
 
-static void parser_reinit (parser *p, double ***pZ, 
-			   DATAINFO *dinfo, PRN *prn) 
+static void parser_reinit (parser *p, DATASET *dset, PRN *prn) 
 {
     /* flags that should be reinstated if they were
        present at compile time */
@@ -10600,8 +10595,7 @@ static void parser_reinit (parser *p, double ***pZ,
 	}
     }
 
-    p->Z = pZ;
-    p->dinfo = dinfo;
+    p->dset = dset;
     p->prn = prn;
 
     p->obs = 0;
@@ -10639,7 +10633,7 @@ static void parser_reinit (parser *p, double ***pZ,
 	    p->flags |= P_LHLIST;
 	}
     } else if (p->targ == VEC) {
-	if (p->lh.v >= p->dinfo->v) {
+	if (p->lh.v >= p->dset->v) {
 	    /* recorded series ID is no longer valid */
 	    p->lh.v = 0;
 	}
@@ -10652,12 +10646,11 @@ static void parser_reinit (parser *p, double ***pZ,
 }
 
 static void parser_init (parser *p, const char *str, 
-			 double ***pZ, DATAINFO *dinfo,
-			 PRN *prn, int flags)
+			 DATASET *dset, PRN *prn, 
+			 int flags)
 {
     p->point = p->rhs = p->input = str;
-    p->Z = pZ;
-    p->dinfo = dinfo;
+    p->dset = dset;
     p->prn = prn;
     p->flags = flags | P_START;
     p->targ = UNK;
@@ -10723,7 +10716,7 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    if (p->ret->t == MAT) {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
 	    } else if (p->ret->t == LIST) {
-		gretl_list_print(p->lh.name, p->dinfo, p->prn);
+		gretl_list_print(p->lh.name, p->dset, p->prn);
 	    } else if (p->ret->t == STR) {
 		pprintf(p->prn, "%s\n", get_string_by_name(p->lh.name));
 	    } else if (p->ret->t == BUNDLE) {
@@ -10818,7 +10811,7 @@ static int decl_check (parser *p, int flags)
 static void autoreg_error (parser *p, int t)
 {
     fprintf(stderr, "*** autoreg error at obs t = %d (t1 = %d):\n", 
-	    t, p->dinfo->t1);
+	    t, p->dset->t1);
 
     if (p->ret != NULL && p->ret->t != VEC) {
 	fprintf(stderr, " ret type != VEC (=%d), p->err = %d\n", p->ret->t, p->err);
@@ -10833,8 +10826,8 @@ static void autoreg_error (parser *p, int t)
     }
 }
 
-int realgen (const char *s, parser *p, double ***pZ, 
-	     DATAINFO *pdinfo, PRN *prn, int flags)
+int realgen (const char *s, parser *p, DATASET *dset, PRN *prn, 
+	     int flags)
 {
     int t;
 
@@ -10844,7 +10837,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 #endif
 
     if (flags & P_EXEC) {
-	parser_reinit(p, pZ, pdinfo, prn);
+	parser_reinit(p, dset, prn);
 	if (p->err) {
 	    fprintf(stderr, "error in parser_reinit\n");
 	    return p->err;
@@ -10855,7 +10848,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 	    goto starteval;
 	}
     } else {
-	parser_init(p, s, pZ, pdinfo, prn, flags);
+	parser_init(p, s, dset, prn, flags);
 	if (p->err) {
 	    if (gretl_function_depth() == 0) {
 		errmsg(p->err, prn);
@@ -10919,7 +10912,7 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     if (p->flags & P_AUTOREG) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
-	for (t=p->dinfo->t1; t<p->dinfo->t2 && !p->err; t++) {
+	for (t=p->dset->t1; t<p->dset->t2 && !p->err; t++) {
 	    const double *x;
 
 	    p->aux_i = 0;
@@ -10935,12 +10928,12 @@ int realgen (const char *s, parser *p, double ***pZ,
 		    fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d]\n",
 			    t, x[t], p->lh.v, t);
 #endif
-		    (*p->Z)[p->lh.v][t] = x[t];
+		    p->dset->Z[p->lh.v][t] = x[t];
 		} 
 	    } else {
 		autoreg_error(p, t);
 	    }
-	    if (t == p->dinfo->t1) {
+	    if (t == p->dset->t1) {
 		p->flags &= ~P_START;
 	    } 
 	}

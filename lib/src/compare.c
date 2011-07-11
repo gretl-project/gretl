@@ -270,18 +270,16 @@ double wald_omit_chisq (const int *list, MODEL *pmod)
     return X;
 }
 
-/* ----------------------------------------------------- */
-
 static int 
 add_diffvars_to_test (ModelTest *test, const int *list, 
-		      const DATAINFO *pdinfo)
+		      const DATASET *dset)
 {
     char *vnames;
     int i, len = 0;
     int err = 0;
 
     for (i=1; i<=list[0]; i++) {
-	len += strlen(pdinfo->varname[list[i]]) + 1;
+	len += strlen(dset->varname[list[i]]) + 1;
     }
 
     vnames = malloc(len);
@@ -291,7 +289,7 @@ add_diffvars_to_test (ModelTest *test, const int *list,
     } else {
 	*vnames = '\0';
 	for (i=1; i<=list[0]; i++) {
-	    strcat(vnames, pdinfo->varname[list[i]]);
+	    strcat(vnames, dset->varname[list[i]]);
 	    if (i < list[0]) {
 		strcat(vnames, " ");
 	    }
@@ -304,7 +302,7 @@ add_diffvars_to_test (ModelTest *test, const int *list,
 
 static void
 gretl_make_compare (const struct COMPARE *cmp, const int *diffvars, 
-		    MODEL *newmod, const DATAINFO *pdinfo, 
+		    MODEL *newmod, const DATASET *dset, 
 		    gretlopt opt, PRN *prn)
 {
     ModelTest *test = NULL;
@@ -366,7 +364,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	if (diffvars[0] == 1) {
 	    pputs(prn, "\n  ");
 	    pprintf(prn, _("Null hypothesis: the regression parameter is zero for %s"), 
-		    pdinfo->varname[diffvars[1]]);
+		    dset->varname[diffvars[1]]);
 	    pputc(prn, '\n');
 	} else {
 	    const char *vname;
@@ -376,7 +374,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 			 "zero for the variables\n"));
 	    pputs(prn, "    ");
 	    for (i=1; i<=diffvars[0]; i++) {
-		vname = pdinfo->varname[diffvars[i]];
+		vname = dset->varname[diffvars[i]];
 		nc += strlen(vname) + 2;
 		pprintf(prn, "%s", vname);
 		if (i < diffvars[0]) {
@@ -465,7 +463,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     }	
 
     if (test != NULL) {
-	add_diffvars_to_test(test, diffvars, pdinfo);
+	add_diffvars_to_test(test, diffvars, dset);
 	maybe_add_test_to_model(newmod, test);
     }
 
@@ -678,8 +676,8 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
 #define SMPL_DEBUG 0
 
 static MODEL replicate_estimator (const MODEL *orig, int **plist,
-				  double ***pZ, DATAINFO *pdinfo,
-				  gretlopt myopt, PRN *prn)
+				  DATASET *dset, gretlopt myopt, 
+				  PRN *prn)
 {
     MODEL rep;
     const char *param = NULL;
@@ -783,69 +781,67 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_model(list, pZ, pdinfo, myopt, prn);
+	rep = ar_model(list, dset, myopt, prn);
 	break;
     case AR1:
-	rep = ar1_model(list, pZ, pdinfo, myopt, prn);
+	rep = ar1_model(list, dset, myopt, prn);
 	break;
     case ARBOND:
-	rep = arbond_model(list, param, (const double **) *pZ, 
-			   pdinfo, myopt, prn);
+	rep = arbond_model(list, param, dset, myopt, prn);
 	break;
     case DPANEL: 
-	rep = dpd_model(list, auxlist, param, (const double **) *pZ, 
-			pdinfo, myopt, prn);
+	rep = dpd_model(list, auxlist, param, dset, myopt, prn);
 	break;
     case ARCH:
-	rep = arch_model(list, order, pZ, pdinfo, myopt, prn);
+	rep = arch_model(list, order, dset, myopt, prn);
 	break;
     case LOGIT:
     case PROBIT:
-	rep = logit_probit(list, pZ, pdinfo, orig->ci, myopt, NULL);
+	rep = logit_probit(list, dset, orig->ci, myopt, NULL);
 	break;
     case TOBIT:
-	rep = tobit_driver(list, pZ, pdinfo, myopt, NULL);
+	rep = tobit_driver(list, dset, myopt, NULL);
 	break;
     case LAD:
 	if (gretl_model_get_int(orig, "rq")) {
-	    rep = quantreg_driver(altparm, list, pZ, pdinfo, myopt, NULL);
+	    rep = quantreg_driver(altparm, list, dset, myopt, NULL);
 	} else {
-	    rep = lad(list, *pZ, pdinfo);
+	    rep = lad(list, dset);
 	}
 	break;
     case POISSON:
     case NEGBIN:
-	rep = count_model(list, orig->ci, pZ, pdinfo, myopt, NULL);
+	rep = count_model(list, orig->ci, dset, myopt, NULL);
 	break;
     case DURATION:
-	rep = duration_model(list, *pZ, pdinfo, myopt, NULL);
+	rep = duration_model(list, dset, myopt, NULL);
 	break;
     case HECKIT:
-	rep = heckit_model(list, pZ, pdinfo, myopt, NULL);
+	rep = heckit_model(list, dset, myopt, NULL);
 	break;
     case IVREG:
-	rep = ivreg(list, pZ, pdinfo, myopt);
+	rep = ivreg(list, dset, myopt);
 	break;
     case LOGISTIC: 
 	{
 	    double lmax = gretl_model_get_double(orig, "lmax");
 
-	    rep = logistic_model(list, lmax, pZ, pdinfo);
+	    rep = logistic_model(list, lmax, dset);
 	}
 	break;
     case PANEL:
-	rep = panel_model(list, pZ, pdinfo, myopt, prn);
+	rep = panel_model(list, dset, myopt, prn);
 	break;
     case HSK:
-	rep = hsk_model(list, pZ, pdinfo);
+	rep = hsk_model(list, dset);
 	break;
     default:
 	/* handles OLS, WLS, etc. */
 	if (gretl_model_get_int(orig, "pooled")) {
 	    myopt |= OPT_P;
-	    rep = panel_model(list, pZ, pdinfo, myopt, prn);
+	    rep = panel_model(list, dset, myopt, prn);
 	} else {
-	    rep = lsq(list, *pZ, pdinfo, repci, myopt);
+	    rep = lsq(list, dset, repci, myopt);
 	}
 	break;
     }
@@ -861,8 +857,8 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     /* check that we got the same sample as the original */
     if (!rep.errcode && rep.nobs != orig->nobs) {
 	if (first && obs_diff_ok(orig, &rep)) {
-	    pdinfo->t1 = orig->t1;
-	    pdinfo->t2 = orig->t2;
+	    dset->t1 = orig->t1;
+	    dset->t2 = orig->t2;
 	    clear_model(&rep);
 	    first = 0;
 	    goto try_again;
@@ -894,26 +890,25 @@ static void nonlin_test_header (int code, PRN *prn)
 
 static int
 real_nonlinearity_test (MODEL *pmod, int *list,
-			double ***pZ, DATAINFO *pdinfo,
-			int aux_code, gretlopt opt, 
-			PRN *prn)
+			DATASET *dset, int aux_code, 
+			gretlopt opt, PRN *prn)
 {
     MODEL aux;
     int t, err = 0;
 
     /* grow data set to accommodate new dependent var */
-    if (dataset_add_series(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, dset)) {
 	return E_ALLOC;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[pdinfo->v - 1][t] = pmod->uhat[t];
+    for (t=0; t<dset->n; t++) {
+	dset->Z[dset->v - 1][t] = pmod->uhat[t];
     }
 
     /* replace the dependent var */
-    list[1] = pdinfo->v - 1;
+    list[1] = dset->v - 1;
 
-    aux = lsq(list, *pZ, pdinfo, OLS, OPT_A);
+    aux = lsq(list, dset, OLS, OPT_A);
     if (aux.errcode) {
 	err = aux.errcode;
 	fprintf(stderr, "auxiliary regression failed\n");
@@ -934,7 +929,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	if (opt & OPT_Q) {
 	    nonlin_test_header(aux_code, prn);
 	} else {
-	    printmodel(&aux, pdinfo, opt, prn);
+	    printmodel(&aux, dset, opt, prn);
 	    pputc(prn, '\n');
 	}
 
@@ -969,8 +964,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 /**
  * nonlinearity_test:
  * @pmod: pointer to original model.
- * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @aux: AUX_SQ for squares or AUX_LOG for logs
  * @opt: if contains OPT_S, save test results to model.
  * @prn: gretl printing struct.
@@ -982,13 +976,13 @@ real_nonlinearity_test (MODEL *pmod, int *list,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		       ModelAuxCode aux, gretlopt opt, PRN *prn) 
+int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux, 
+		       gretlopt opt, PRN *prn) 
 {
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int *tmplist = NULL;
-    const int orig_nvar = pdinfo->v; 
+    const int orig_nvar = dset->v; 
     int err = 0;
 
     if (!command_ok_for_model(ADD, 0, pmod->ci)) {
@@ -1000,17 +994,17 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* check for changes in original list members */
-    err = list_members_replaced(pmod->list, pdinfo, pmod->ID);
+    err = list_members_replaced(pmod->list, dset, pmod->ID);
     if (err) {
 	return err;
     }
 
     /* re-impose the sample that was in force when the original model
        was estimated */
-    impose_model_smpl(pmod, pdinfo);
+    impose_model_smpl(pmod, dset);
 
     /* add squares or logs */
-    tmplist = augment_regression_list(pmod->list, aux, pZ, pdinfo);
+    tmplist = augment_regression_list(pmod->list, aux, dset);
     if (tmplist == NULL) {
 	return E_ALLOC;
     } else if (tmplist[0] == pmod->list[0]) {
@@ -1025,16 +1019,16 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = real_nonlinearity_test(pmod, tmplist, pZ, pdinfo, aux, 
+	err = real_nonlinearity_test(pmod, tmplist, dset, aux, 
 				     opt, prn);
     }
 	
     /* trash any extra variables generated (squares, logs) */
-    dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - orig_nvar, dset);
 
-    /* put back into pdinfo what was there on input */
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    /* put back into dset what was there on input */
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     free(tmplist);
 
@@ -1071,8 +1065,7 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
  * @addvars: list of variables to add to original model.
  * @orig: pointer to original model.
  * @pmod: pointer to receive new model, with vars added.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: can contain OPT_Q (quiet) to suppress printing
  * of the new model, OPT_O to print covariance matrix,
  * OPT_I for silent operation.  Additional options that
@@ -1088,14 +1081,13 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
  */
 
 int add_test (const int *addvars, MODEL *orig, MODEL *pmod, 
-	      double ***pZ, DATAINFO *pdinfo, 
-	      gretlopt opt, PRN *prn)
+	      DATASET *dset, gretlopt opt, PRN *prn)
 {
     gretlopt est_opt = opt;
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int *tmplist = NULL;
-    const int orig_nvar = pdinfo->v; 
+    const int orig_nvar = dset->v; 
     int err = 0;
 
     if (orig == NULL || orig->list == NULL || addvars == NULL) {
@@ -1111,13 +1103,13 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
     }
 
     /* check for changes in original list members */
-    err = list_members_replaced(orig->list, pdinfo, orig->ID);
+    err = list_members_replaced(orig->list, dset, orig->ID);
     if (err) {
 	return err;
     }
 
     /* check for NAs in add list relative to model */
-    err = add_vars_missing(orig, addvars, (const double **) *pZ);
+    err = add_vars_missing(orig, addvars, (const double **) dset->Z);
     if (err) {
 	return err;
     }
@@ -1138,7 +1130,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 
     /* impose as sample range the sample range in force
        when the original model was estimated */
-    impose_model_smpl(orig, pdinfo);
+    impose_model_smpl(orig, dset);
 
     /* don't pass special opts to replicate_estimator() */
     remove_special_flags(&est_opt);
@@ -1147,7 +1139,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
        method; use OPT_Z to suppress the elimination of perfectly
        collinear variables.
     */
-    *pmod = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
+    *pmod = replicate_estimator(orig, &tmplist, dset, 
 				(est_opt | OPT_Z), prn);
 
     if (pmod->errcode) {
@@ -1164,7 +1156,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	pmod->aux = AUX_ADD;
 
 	if (print_add_omit_model(pmod, opt)) {
-	    printmodel(pmod, pdinfo, est_opt, prn);
+	    printmodel(pmod, dset, est_opt, prn);
 	}
 
 	if (orig->ci == OLS && pmod->nobs == orig->nobs) {
@@ -1177,17 +1169,17 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	addlist = gretl_list_diff_new(pmod->list, orig->list, 2);
 	if (addlist != NULL) {
 	    cmp = add_or_omit_compare(origmod, pmod, flag, addlist);
-	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
+	    gretl_make_compare(&cmp, addlist, orig, dset, opt, prn);
 	    free(addlist);
 	}
     }
 
     /* trash any extra variables generated (squares, logs) */
-    dataset_drop_last_variables(pdinfo->v - orig_nvar, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - orig_nvar, dset);
 
-    /* put back into pdinfo what was there on input */
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    /* put back into dset what was there on input */
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     free(tmplist);
 
@@ -1195,7 +1187,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 }
 
 static int wald_omit_test (const int *list, MODEL *pmod, 
-			   const DATAINFO *pdinfo, gretlopt opt,
+			   const DATASET *dset, gretlopt opt,
 			   PRN *prn)
 {
     struct COMPARE cmp;
@@ -1224,7 +1216,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 	return cmp.err;
     }
 
-    gretl_make_compare(&cmp, list, pmod, pdinfo, opt, prn);
+    gretl_make_compare(&cmp, list, pmod, dset, opt, prn);
 
     return err;
 }
@@ -1236,7 +1228,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 */
 
 static int coeff_is_removable (const int *cands, const MODEL *pmod,
-			       DATAINFO *pdinfo, int i)
+			       DATASET *dset, int i)
 {
     int ret = 1;
 
@@ -1247,8 +1239,8 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
 	ret = 0; /* reverse the presumption */
 
 	for (j=1; j<=cands[0]; j++) {
-	    vname = pdinfo->varname[cands[j]];
-	    pj = gretl_model_get_param_number(pmod, pdinfo, vname);
+	    vname = dset->varname[cands[j]];
+	    pj = gretl_model_get_param_number(pmod, dset, vname);
 	    if (pj == i) {
 		ret = 1;
 		break;
@@ -1267,7 +1259,7 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
 */
 
 static int auto_drop_var (const int *cands, const MODEL *pmod, 
-			  int *list, DATAINFO *pdinfo, 
+			  int *list, DATASET *dset, 
 			  double alpha_max, int d0, 
 			  PRN *prn, int *err)
 {
@@ -1280,7 +1272,7 @@ static int auto_drop_var (const int *cands, const MODEL *pmod,
     }
     
     for (i=pmod->ifc; i<pmod->ncoeff; i++) {
-	if (coeff_is_removable(cands, pmod, pdinfo, i)) {
+	if (coeff_is_removable(cands, pmod, dset, i)) {
 	    tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
 	    if (tstat < tmin) {
 		tmin = tstat;
@@ -1303,7 +1295,7 @@ static int auto_drop_var (const int *cands, const MODEL *pmod,
 	    pputs(prn, "\n\n");
 	}
 
-	gretl_model_get_param_name(pmod, pdinfo, k, pname);
+	gretl_model_get_param_name(pmod, dset, k, pname);
 	pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), pname, pv);
 	*err = gretl_list_delete_at_pos(list, k + 2);
 	ret = 1;
@@ -1330,9 +1322,8 @@ static void list_copy_values (int *targ, const int *src)
 
 static int auto_omit (const int *omitlist, 
 		      MODEL *orig, MODEL *pmod, 
-		      double ***pZ, DATAINFO *pdinfo, 
-		      gretlopt est_opt, gretlopt opt,
-		      PRN *prn)
+		      DATASET *dset, gretlopt est_opt, 
+		      gretlopt opt, PRN *prn)
 {
     double amax;
     int *tmplist = NULL;
@@ -1348,7 +1339,7 @@ static int auto_omit (const int *omitlist,
 	amax = 0.10;
     }
 
-    if (!auto_drop_var(omitlist, orig, tmplist, pdinfo, amax, 1, prn, &err)) {
+    if (!auto_drop_var(omitlist, orig, tmplist, dset, amax, 1, prn, &err)) {
 	free(tmplist);
 	return (err)? err : E_NOOMIT;
     }    
@@ -1357,14 +1348,13 @@ static int auto_omit (const int *omitlist,
 	if (i > 0) {
 	    set_reference_missmask_from_model(orig);
 	}
-	*pmod = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
-				    est_opt, prn);
+	*pmod = replicate_estimator(orig, &tmplist, dset, est_opt, prn);
 	if (pmod->errcode) {
 	    err = pmod->errcode;
 	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n", err);
 	} else {
 	    list_copy_values(tmplist, pmod->list);
-	    if (auto_drop_var(omitlist, pmod, tmplist, pdinfo, 
+	    if (auto_drop_var(omitlist, pmod, tmplist, dset, 
 			      amax, 0, prn, &err)) {
 		model_count_minus();
 		clear_model(pmod);
@@ -1442,8 +1432,7 @@ static int omit_options_inconsistent (gretlopt opt)
  * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original model.
  * @pmod: pointer to receive new model, with vars omitted.
- * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: can contain OPT_Q (quiet) to suppress printing
  * of the new model, OPT_O to print covariance matrix,
  * OPT_I for silent operation; for OPT_A, see below.
@@ -1464,12 +1453,11 @@ static int omit_options_inconsistent (gretlopt opt)
  */
 
 int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod, 
-	       double ***pZ, DATAINFO *pdinfo, 
-	       gretlopt opt, PRN *prn)
+	       DATASET *dset, gretlopt opt, PRN *prn)
 {
     gretlopt est_opt = opt;
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int omitlast = 0;
     int *tmplist = NULL;
     int err = 0;
@@ -1487,11 +1475,11 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
     }
 
     if (opt & OPT_W) {
-	return wald_omit_test(omitvars, orig, pdinfo, opt, prn);
+	return wald_omit_test(omitvars, orig, dset, opt, prn);
     }
 
     /* check that vars to omit have not been redefined */
-    if ((err = list_members_replaced(orig->list, pdinfo, orig->ID))) {
+    if ((err = list_members_replaced(orig->list, dset, orig->ID))) {
 	return err;
     }
 
@@ -1503,7 +1491,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
     }
 
     /* impose the sample range used for the original model */ 
-    impose_model_smpl(orig, pdinfo);
+    impose_model_smpl(orig, dset);
 
     /* set the mask for missing obs within the sample range, based
        on the original model */
@@ -1515,12 +1503,12 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 
     if (opt & OPT_A) {
 	if (omitvars != NULL && omitvars[0] > 0) {
-	    err = auto_omit(omitvars, orig, pmod, pZ, pdinfo, est_opt, opt, prn);
+	    err = auto_omit(omitvars, orig, pmod, dset, est_opt, opt, prn);
 	} else {
-	    err = auto_omit(NULL, orig, pmod, pZ, pdinfo, est_opt, opt, prn);
+	    err = auto_omit(NULL, orig, pmod, dset, est_opt, opt, prn);
 	}
     } else {
-	*pmod = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
+	*pmod = replicate_estimator(orig, &tmplist, dset, est_opt, prn);
 	err = pmod->errcode;
     }
 
@@ -1532,7 +1520,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}
 
 	if (print_add_omit_model(orig, opt)) {
-	    printmodel(pmod, pdinfo, est_opt, prn); 
+	    printmodel(pmod, dset, est_opt, prn); 
 	}	
 
 	if (!omitlast) {
@@ -1550,7 +1538,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	    omitlist = gretl_list_diff_new(orig->list, pmod->list, 2);
 	    if (omitlist != NULL) {
 		cmp = add_or_omit_compare(orig, newmod, flag, omitlist);
-		gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
+		gretl_make_compare(&cmp, omitlist, orig, dset, opt, prn); 
 		free(omitlist);
 	    }
 	}
@@ -1560,9 +1548,9 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}
     }
 
-    /* put back into pdinfo what was there on input */
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    /* put back into dset what was there on input */
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     free(tmplist);
 
@@ -1572,8 +1560,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 /**
  * get_DW_pvalue_for_model:
  * @pmod: model to be tested.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @err: location to receive error code.
  *
  * Computes the p-value for the Durbin-Watson statistic for the
@@ -1582,17 +1569,16 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
  * Returns: the p-value, or #NADBL on error.
  */
 
-double get_DW_pvalue_for_model (const MODEL *pmod, 
-				double ***pZ, DATAINFO *pdinfo,
+double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset, 
 				int *err)
 {
     MODEL dwmod;
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int *list = NULL;
     double pv = NADBL;
 
-    if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+    if (dset == NULL || dset->Z == NULL) {
 	*err = E_NODATA;
     } else if (pmod == NULL || pmod->list == NULL) {
 	*err = E_DATA;
@@ -1601,7 +1587,7 @@ double get_DW_pvalue_for_model (const MODEL *pmod,
 	*err = E_BADSTAT;
     } else {
 	/* check that relevant vars have not been redefined */
-	*err = list_members_replaced(pmod->list, pdinfo, pmod->ID);
+	*err = list_members_replaced(pmod->list, dset, pmod->ID);
     }
 
     if (!*err) {
@@ -1618,18 +1604,18 @@ double get_DW_pvalue_for_model (const MODEL *pmod,
     gretl_model_init(&dwmod);
 
     /* impose the sample range used for the original model */ 
-    impose_model_smpl(pmod, pdinfo);
+    impose_model_smpl(pmod, dset);
 
-    dwmod = replicate_estimator(pmod, &list, pZ, pdinfo, OPT_A | OPT_I, NULL);
+    dwmod = replicate_estimator(pmod, &list, dset, OPT_A | OPT_I, NULL);
     *err = dwmod.errcode;
 
     if (!*err) {
 	pv = gretl_model_get_double(&dwmod, "dw_pval");
     }
 
-    /* put back into pdinfo what was there on input */
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    /* put back into dset what was there on input */
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
     
     clear_model(&dwmod);
     free(list);
@@ -1640,8 +1626,7 @@ double get_DW_pvalue_for_model (const MODEL *pmod,
 /**
  * reset_test:
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if contains %OPT_S, save test results to model. %OPT_Q
  * suppresses the printout of the auxiliary regression. %OPT_R and
  * %OPT_C stand for "squares only" and "cubes only", respectively.
@@ -1652,15 +1637,15 @@ double get_DW_pvalue_for_model (const MODEL *pmod,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int reset_test (MODEL *pmod, DATASET *dset, 
 		gretlopt opt, PRN *prn)
 {
     int *newlist = NULL;
     MODEL aux;
     double RF;
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
-    int i, t, v = pdinfo->v; 
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
+    int i, t, v = dset->v; 
     int addcols;
     const char *mode;
     int err = 0;
@@ -1692,9 +1677,9 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	mode = N_("squares and cubes");
     }
 
-    impose_model_smpl(pmod, pdinfo);
+    impose_model_smpl(pmod, dset);
 
-    if (pmod->ncoeff + addcols >= pdinfo->t2 - pdinfo->t1) {
+    if (pmod->ncoeff + addcols >= dset->t2 - dset->t1) {
 	err = E_DF;
     }
 
@@ -1710,7 +1695,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	for (i=1; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_series(addcols, pZ, pdinfo)) {
+	if (dataset_add_series(addcols, dset)) {
 	    err = E_ALLOC;
 	}
     }
@@ -1724,26 +1709,26 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    double xx = pmod->yhat[t];
 
 	    if (!(opt & OPT_C)) {
-		(*pZ)[sqcol][t] = xx * xx;
+		dset->Z[sqcol][t] = xx * xx;
 	    }
 	    if (!(opt & OPT_R)) {
-		(*pZ)[cubecol][t] = xx * xx * xx;
+		dset->Z[cubecol][t] = xx * xx * xx;
 	    }
 	}
 
 	if (!(opt & OPT_C)) {
-	    strcpy(pdinfo->varname[sqcol], "yhat^2");
+	    strcpy(dset->varname[sqcol], "yhat^2");
 	    newlist[pmod->list[0] + 1] = sqcol;
 	}
 
 	if (!(opt & OPT_R)) {
-	    strcpy(pdinfo->varname[cubecol], "yhat^3");
+	    strcpy(dset->varname[cubecol], "yhat^3");
 	    newlist[newlist[0]] = cubecol;
 	}
     }
 
     if (!err) {
-	aux = lsq(newlist, *pZ, pdinfo, OLS, OPT_A);
+	aux = lsq(newlist, dset, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1756,7 +1741,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	aux.aux = AUX_RESET;
 
 	if (!(opt & OPT_Q)) {
-	    printmodel(&aux, pdinfo, OPT_NONE, prn);
+	    printmodel(&aux, dset, OPT_NONE, prn);
 	} else {
 	    if (!(opt & OPT_G)) {
 		pputc(prn, '\n');
@@ -1797,11 +1782,11 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     free(newlist);
-    dataset_drop_last_variables(addcols, pZ, pdinfo); 
+    dataset_drop_last_variables(addcols, dset); 
     clear_model(&aux); 
 
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }
@@ -1874,8 +1859,7 @@ static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
  * ivreg_autocorr_test:
  * @pmod: pointer to model to be tested.
  * @order: lag order for test.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model;
  * if OPT_Q, be less verbose.
  * @prn: gretl printing struct.
@@ -1895,13 +1879,13 @@ static double ivreg_autocorr_wald_stat (MODEL *aux, int order, int *err)
  */
 
 static int ivreg_autocorr_test (MODEL *pmod, int order, 
-				double ***pZ, DATAINFO *pdinfo, 
-				gretlopt opt, PRN *prn)
+				DATASET *dset, gretlopt opt, 
+				PRN *prn)
 {
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
-    int n = pdinfo->n;
-    int v = pdinfo->v;
+    int smpl_t1 = dset->t1;
+    int smpl_t2 = dset->t2;
+    int n = dset->n;
+    int v = dset->v;
     int *addlist = NULL;
     int *testlist = NULL;
     double x, pval = 1.0;
@@ -1909,7 +1893,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     int i, t;
     int err = 0;
 
-    if (dataset_is_panel(pdinfo)) { 
+    if (dataset_is_panel(dset)) { 
 	return E_NOTIMP;
     }
 
@@ -1918,15 +1902,15 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     }
 
     /* impose original sample range */
-    impose_model_smpl(pmod, pdinfo);
+    impose_model_smpl(pmod, dset);
 
     gretl_model_init(&aux);
 
     if (order <= 0) {
-	order = pdinfo->pd;
+	order = dset->pd;
     }
 
-    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1) {
+    if (pmod->ncoeff + order >= dset->t2 - dset->t1) {
 	return E_DF;
     }
 
@@ -1935,21 +1919,21 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     if (addlist == NULL) {
 	err = E_ALLOC;
     } else {
-	err = dataset_add_series(1, pZ, pdinfo);
+	err = dataset_add_series(1, dset);
     }
 
     if (!err) {
 	/* add uhat to data set */
 	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = pmod->uhat[t];
+	    dset->Z[v][t] = pmod->uhat[t];
 	}
-	strcpy(pdinfo->varname[v], "uhat");
-	strcpy(VARLABEL(pdinfo, v), _("residual"));
+	strcpy(dset->varname[v], "uhat");
+	strcpy(VARLABEL(dset, v), _("residual"));
 	/* then lags of same */
 	for (i=1; i<=order && !err; i++) {
 	    int lnum;
 
-	    lnum = laggenr(v, i, pZ, pdinfo);
+	    lnum = laggenr(v, i, dset);
 
 	    if (lnum < 0) {
 		gretl_errmsg_set(_("lagging uhat failed"));
@@ -1958,7 +1942,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 		/* set the first entries to 0 for compatibility with Godfrey (1994)
 		   and PcGive (not perfect) */
 		for (t=smpl_t1; t<smpl_t1+i; t++) {
-		    (*pZ)[lnum][t] = 0;
+		    dset->Z[lnum][t] = 0;
 		}
 		addlist[i] = lnum;
 	    }
@@ -1974,7 +1958,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 
 	transcribe_option_flags(&ivopt, pmod->opt,
 				OPT_L | OPT_G | OPT_R);
-	aux = ivreg(testlist, pZ, pdinfo, ivopt);
+	aux = ivreg(testlist, dset, ivopt);
 	err = aux.errcode;
     }
 
@@ -1990,7 +1974,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 	if (opt & OPT_Q) {
 	    bg_test_header(order, prn, 1);
 	} else {
-	    printmodel(&aux, pdinfo, OPT_S, prn);
+	    printmodel(&aux, dset, OPT_S, prn);
 	} 
 
 	pputc(prn, '\n');
@@ -2018,12 +2002,12 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     free(addlist);
     free(testlist);
 
-    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
+    dataset_drop_last_variables(dset->v - v, dset); 
     clear_model(&aux); 
 
     /* reset sample as it was */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    dset->t1 = smpl_t1;
+    dset->t2 = smpl_t2;
 
     return err;
 }
@@ -2032,8 +2016,7 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
  * autocorr_test:
  * @pmod: pointer to model to be tested.
  * @order: lag order for test.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model;
  * if OPT_Q, be less verbose.
  * @prn: gretl printing struct.
@@ -2045,21 +2028,20 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int autocorr_test (MODEL *pmod, int order, 
-		   double ***pZ, DATAINFO *pdinfo, 
+int autocorr_test (MODEL *pmod, int order, DATASET *dset, 
 		   gretlopt opt, PRN *prn)
 {
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int *newlist = NULL;
     MODEL aux;
     double RSSxe, RSSx = pmod->ess;
-    int i, t, n = pdinfo->n, v = pdinfo->v; 
+    int i, t, n = dset->n, v = dset->v; 
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
 
     if (pmod->ci == IVREG) {
-	return ivreg_autocorr_test(pmod, order, pZ, pdinfo, opt, prn);
+	return ivreg_autocorr_test(pmod, order, dset, opt, prn);
     }
 
     if (pmod->ci != OLS && pmod->ci != VAR) { 
@@ -2070,18 +2052,18 @@ int autocorr_test (MODEL *pmod, int order,
 	return E_MISSDATA;
     }
 
-    if (dataset_is_panel(pdinfo)) {
+    if (dataset_is_panel(dset)) {
 #if 1 /* FIXME */
 	return E_NOTIMP;
 #else
-	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
+	return panel_autocorr_test(pmod, order, dset, opt, prn);
 #endif
     }
 
     gretl_model_init(&aux);
 
     if (order <= 0) {
-	order = pdinfo->pd;
+	order = dset->pd;
     }
 
     if (pmod->ncoeff + order >= pmod->t2 - pmod->t1) {
@@ -2097,7 +2079,7 @@ int autocorr_test (MODEL *pmod, int order,
 	for (i=2; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_series(1 + order, pZ, pdinfo)) {
+	if (dataset_add_series(1 + order, dset)) {
 	    err = E_ALLOC;
 	}
     }
@@ -2107,27 +2089,27 @@ int autocorr_test (MODEL *pmod, int order,
 	   pre-sample values */
 	for (t=0; t<n; t++) {
 	    if (t < pmod->t1) {
-		(*pZ)[v][t] = 0.0;
+		dset->Z[v][t] = 0.0;
 	    } else {
-		(*pZ)[v][t] = pmod->uhat[t];
+		dset->Z[v][t] = pmod->uhat[t];
 	    }
 	}
-	strcpy(pdinfo->varname[v], "uhat");
-	strcpy(VARLABEL(pdinfo, v), _("residual"));
+	strcpy(dset->varname[v], "uhat");
+	strcpy(VARLABEL(dset, v), _("residual"));
 	/* then order lags of same */
 	for (i=1; i<=order; i++) {
 	    int s, lv = v + i;
 	    double ul;
 
-	    sprintf(pdinfo->varname[lv], "uhat_%d", i);
+	    sprintf(dset->varname[lv], "uhat_%d", i);
 	    newlist[pmod->list[0] + i] = lv;
-	    for (t=0; t<pdinfo->n; t++) {
+	    for (t=0; t<dset->n; t++) {
 		s = t - i;
 		if (s < 0) {
-		    (*pZ)[lv][t] = 0.0;
+		    dset->Z[lv][t] = 0.0;
 		} else {
-		    ul = (*pZ)[v][s];
-		    (*pZ)[lv][t] = (na(ul))? 0.0 : ul;
+		    ul = dset->Z[v][s];
+		    dset->Z[lv][t] = (na(ul))? 0.0 : ul;
 		}
 	    }
 	} 
@@ -2139,9 +2121,9 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (!err) {
 	/* regression on [X~E], using original sample */
-	impose_model_smpl(pmod, pdinfo);
+	impose_model_smpl(pmod, dset);
 	newlist[1] = v;
-	aux = lsq(newlist, *pZ, pdinfo, OLS, OPT_A);
+	aux = lsq(newlist, dset, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	   errmsg(err, prn);
@@ -2164,7 +2146,7 @@ int autocorr_test (MODEL *pmod, int order,
 	    if (opt & OPT_Q) {
 		bg_test_header(order, prn, 0);
 	    } else {
-		printmodel(&aux, pdinfo, OPT_NONE, prn);
+		printmodel(&aux, dset, OPT_NONE, prn);
 		pputc(prn, '\n');
 	    } 
 	    pprintf(prn, "%s: LMF = %f,\n", _("Test statistic"), LMF);
@@ -2176,7 +2158,7 @@ int autocorr_test (MODEL *pmod, int order,
 	    pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", _("with p-value"), 
 		    _("Chi-square"), order, trsq, chisq_cdf_comp(order, trsq));
 
-	    lb = ljung_box(order, pmod->t1, pmod->t2, (*pZ)[v], &lberr);
+	    lb = ljung_box(order, pmod->t1, pmod->t2, dset->Z[v], &lberr);
 	    if (!na(lb)) {
 		pprintf(prn, "Ljung-Box Q' = %g,\n", lb);
 		pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n", _("with p-value"), 
@@ -2203,12 +2185,12 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     free(newlist);
-    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo); 
+    dataset_drop_last_variables(dset->v - v, dset); 
     clear_model(&aux); 
 
     /* reset sample as it was */
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }
@@ -2226,7 +2208,7 @@ static int chow_active (int split, const double *x, int t)
    them to the data set */
 
 static int *
-make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+make_chow_list (const MODEL *pmod, DATASET *dset,
 		int split, int dumv, int *err)
 {
     int *chowlist = NULL;
@@ -2234,16 +2216,16 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int ninter = pmod->ncoeff - pmod->ifc; /* number of interaction terms */
     int havedum = (dumv > 0);
     int newvars = ninter + 1 - havedum;
-    int i, t, v = pdinfo->v;
+    int i, t, v = dset->v;
 
     if (havedum && in_gretl_list(pmod->list, dumv)) {
 	gretl_errmsg_sprintf(_("The model already contains %s"), 
-			     pdinfo->varname[dumv]);
+			     dset->varname[dumv]);
 	*err = E_DATA;
 	return NULL;
     }
 
-    if (dataset_add_series(newvars, pZ, pdinfo)) {
+    if (dataset_add_series(newvars, dset)) {
 	*err = E_ALLOC;
     } else {
 	chowlist = gretl_list_new(pmod->list[0] + ninter + 1);
@@ -2261,14 +2243,14 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	if (dumv > 0) {
 	    /* we have a user-supplied dummy var */
-	    cdum = (*pZ)[dumv];
+	    cdum = dset->Z[dumv];
 	} else {
 	    /* generate the split variable */
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[v][t] = (double) (t >= split); 
+	    for (t=0; t<dset->n; t++) {
+		dset->Z[v][t] = (double) (t >= split); 
 	    }
-	    strcpy(pdinfo->varname[v], "splitdum");
-	    strcpy(VARLABEL(pdinfo, v), _("dummy variable for Chow test"));
+	    strcpy(dset->varname[v], "splitdum");
+	    strcpy(VARLABEL(dset, v), _("dummy variable for Chow test"));
 	}
 
 	chowlist[l0 + 1] = (dumv > 0)? dumv : v;
@@ -2278,22 +2260,22 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    int pv = pmod->list[i + 2 + pmod->ifc];
 	    int sv = v + i + 1 - havedum;
 
-	    for (t=0; t<pdinfo->n; t++) {
+	    for (t=0; t<dset->n; t++) {
 		if (model_missing(pmod, t)) {
-		    (*pZ)[sv][t] = NADBL;
+		    dset->Z[sv][t] = NADBL;
 		} else if (chow_active(split, cdum, t)) {
-		    (*pZ)[sv][t] = (*pZ)[pv][t];
+		    dset->Z[sv][t] = dset->Z[pv][t];
 		} else {
-		    (*pZ)[sv][t] = 0.0;
+		    dset->Z[sv][t] = 0.0;
 		}
 	    }
 
 	    if (havedum) {
-		sprintf(pdinfo->varname[sv], "%.2s_", pdinfo->varname[dumv]);
+		sprintf(dset->varname[sv], "%.2s_", dset->varname[dumv]);
 	    } else {
-		strcpy(pdinfo->varname[sv], "sd_");
+		strcpy(dset->varname[sv], "sd_");
 	    }
-	    strncat(pdinfo->varname[sv], pdinfo->varname[pv], VNAMELEN - 4);
+	    strncat(dset->varname[sv], dset->varname[pv], VNAMELEN - 4);
 	    chowlist[l0 + 2 + i] = sv;
 	}
     }
@@ -2329,9 +2311,9 @@ static double QLR_get_critval (double Fmax, int dfn, int *a, int *approx)
 }
 
 static int QLR_graph (const double *Ft, int t1, int t2, 
-		      int tmax, int dfn, const DATAINFO *pdinfo)
+		      int tmax, int dfn, const DATASET *dset)
 {
-    const double *x = gretl_plotx(NULL, pdinfo);
+    const double *x = gretl_plotx(dset);
     FILE *fp;
     int t, err = 0;
 
@@ -2378,14 +2360,14 @@ static void save_QLR_test (MODEL *pmod, const char *datestr,
 
 static void QLR_print_result (MODEL *pmod,
 			      double Fmax, int tmax, int dfn, int dfd,
-			      const DATAINFO *pdinfo, gretlopt opt,
+			      const DATASET *dset, gretlopt opt,
 			      PRN *prn)
 {
     char datestr[OBSLEN];
     double crit = 0.0;
     int a = 0, approx = 0;
 
-    ntodate(datestr, tmax, pdinfo);
+    ntodate(datestr, tmax, dset);
 
     pputs(prn, _("Quandt likelihood ratio test for structural break at an "
 		 "unknown point,\nwith 15 percent trimming"));
@@ -2473,8 +2455,7 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
  * @chowparm: sample breakpoint; or ID number of dummy
  * variable if given OPT_D; or ignored if given OPT_T.
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @opt: if flags include OPT_S, save test results to model;
  * if OPT_D included, do the Chow test based on a given dummy
  * variable; if OPT_T included, do the QLR test.
@@ -2483,13 +2464,13 @@ static void save_chow_test (MODEL *pmod, const char *chowstr,
  * Returns: 0 on successful completion, error code on error.
  */
 
-static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
-			   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+static int real_chow_test (int chowparm, MODEL *pmod, DATASET *dset, 
+			   gretlopt opt, PRN *prn)
 {
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int *chowlist = NULL;
-    int origv = pdinfo->v;
+    int origv = dset->v;
     MODEL chow_mod;
     int QLR = (opt & OPT_T);
     int dumv = 0, split = 0, smax = 0;
@@ -2505,7 +2486,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
-    impose_model_smpl(pmod, pdinfo);
+    impose_model_smpl(pmod, dset);
 
     gretl_model_init(&chow_mod);
 
@@ -2522,7 +2503,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
     }
 
     if (!err) {
-	chowlist = make_chow_list(pmod, pZ, pdinfo, split, dumv, &err);
+	chowlist = make_chow_list(pmod, dset, split, dumv, &err);
     }
 
     if (err) {
@@ -2542,7 +2523,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 	}
 	
 	for (t=split; t<=smax; t++) {
-	    chow_mod = lsq(chowlist, *pZ, pdinfo, OLS, OPT_A);
+	    chow_mod = lsq(chowlist, dset, OLS, OPT_A);
 	    if (chow_mod.errcode) {
 		err = chow_mod.errcode;
 		errmsg(err, prn);
@@ -2566,15 +2547,15 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 #endif
 	    clear_model(&chow_mod);
 	    for (i=0; i<pmod->ncoeff; i++) {
-		(*pZ)[origv+i][t] = 0.0;
+		dset->Z[origv+i][t] = 0.0;
 	    }
 	}
 
 	if (!err) {
-	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, pdinfo, opt, prn);
+	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, dset, opt, prn);
 	    record_test_result(Fmax, NADBL, "QLR");
 	    if (Ft != NULL) {
-		QLR_graph(Ft, split, smax, tmax, dfn, pdinfo);
+		QLR_graph(Ft, split, smax, tmax, dfn, dset);
 	    }
 	}
 
@@ -2590,7 +2571,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 	    lsqopt |= OPT_R;
 	}
 
-	chow_mod = lsq(chowlist, *pZ, pdinfo, OLS, lsqopt);
+	chow_mod = lsq(chowlist, dset, OLS, lsqopt);
 
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
@@ -2605,7 +2586,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 
 	    if (!(opt & OPT_Q)) {
 		chow_mod.aux = AUX_CHOW;
-		printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
+		printmodel(&chow_mod, dset, OPT_NONE, prn);
 	    }
 
 	    if (robust) {
@@ -2628,11 +2609,11 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
 		    pputc(prn, '\n');
 		}
 		if (opt & OPT_D) {
-		    strcpy(chowstr, pdinfo->varname[chowparm]);
+		    strcpy(chowstr, dset->varname[chowparm]);
 		    pprintf(prn, _("Chow test for structural difference with respect to %s"),
 			    chowstr);
 		} else {
-		    ntodate(chowstr, chowparm, pdinfo);
+		    ntodate(chowstr, chowparm, dset);
 		    pprintf(prn, _("Chow test for structural break at observation %s"),
 			    chowstr);
 		} 
@@ -2662,11 +2643,11 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
  bailout:
 
     /* clean up extra variables */
-    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - origv, dset);
     free(chowlist);
 
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }
@@ -2676,8 +2657,7 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
  * @splitobs: the 0-based observation number at which to split
  * the sample.
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
@@ -2690,16 +2670,16 @@ static int real_chow_test (int chowparm, MODEL *pmod, double ***pZ,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test (int splitobs, MODEL *pmod, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+int chow_test (int splitobs, MODEL *pmod, DATASET *dset, 
+	       gretlopt opt, PRN *prn)
 {
     int err = 0;
 
-    if (splitobs <= 0 || splitobs >= pdinfo->n) { 
+    if (splitobs <= 0 || splitobs >= dset->n) { 
 	gretl_errmsg_set(_("Invalid sample split for Chow test"));
 	err = E_DATA;
     } else {
-	err = real_chow_test(splitobs, pmod, pZ, pdinfo, opt, prn);
+	err = real_chow_test(splitobs, pmod, dset, opt, prn);
     }
 
     return err;
@@ -2710,8 +2690,7 @@ int chow_test (int splitobs, MODEL *pmod, double ***pZ,
  * @splitvar: the ID number of a dummy variable that should
  * be used to divide the sample.
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
@@ -2722,16 +2701,16 @@ int chow_test (int splitobs, MODEL *pmod, double ***pZ,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test_from_dummy (int splitvar, MODEL *pmod, double ***pZ,
-			  DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+int chow_test_from_dummy (int splitvar, MODEL *pmod, DATASET *dset, 
+			  gretlopt opt, PRN *prn)
 {
     int err = 0;
 
-    if (splitvar <= 0 || splitvar >= pdinfo->v) { 
+    if (splitvar <= 0 || splitvar >= dset->v) { 
 	gretl_errmsg_set(_("Invalid sample split for Chow test"));
 	err = E_DATA;
     } else {
-	err = real_chow_test(splitvar, pmod, pZ, pdinfo, opt | OPT_D, prn);
+	err = real_chow_test(splitvar, pmod, dset, opt | OPT_D, prn);
     }
 
     return err;
@@ -2740,8 +2719,7 @@ int chow_test_from_dummy (int splitvar, MODEL *pmod, double ***pZ,
 /**
  * QLR_test:
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: if flags include OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
@@ -2752,10 +2730,10 @@ int chow_test_from_dummy (int splitvar, MODEL *pmod, double ***pZ,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int QLR_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+int QLR_test (MODEL *pmod, DATASET *dset,
 	      gretlopt opt, PRN *prn)
 {
-    return real_chow_test(0, pmod, pZ, pdinfo, opt | OPT_T, prn);
+    return real_chow_test(0, pmod, dset, opt | OPT_T, prn);
 }
 
 /* compute v'Mv, for symmetric M */
@@ -2796,7 +2774,7 @@ static double vprime_M_v (double *v, double *M, int n)
 */
 
 static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
-			  double *wbar, double **Z, DATAINFO *pdinfo) 
+			  double *wbar, DATASET *dset) 
 {
     MODEL cmod;
     gretlopt opt = OPT_X | OPT_A;
@@ -2812,24 +2790,24 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
     }
 
     /* set minimal sample based on model to be tested */
-    pdinfo->t1 = pmod->t1;
-    pdinfo->t2 = pmod->t1 + k - 1;    
+    dset->t1 = pmod->t1;
+    dset->t2 = pmod->t1 + k - 1;    
 
     for (j=0; j<n && !err; j++) {
-	cmod = lsq(pmod->list, Z, pdinfo, OLS, opt);
+	cmod = lsq(pmod->list, dset, OLS, opt);
 	if (cmod.errcode) {
 	    err = cmod.errcode;
 	} else {
 	    /* compute one step ahead prediction error: \hat{y}_t
 	       based on estimates through t - 1
 	    */
-	    t = pdinfo->t2 + 1;
+	    t = dset->t2 + 1;
 	    yhat = 0.0;
 	    for (i=0; i<cmod.ncoeff; i++) {
-		xt[i] = Z[cmod.list[i+2]][t];
+		xt[i] = dset->Z[cmod.list[i+2]][t];
 		yhat += cmod.coeff[i] * xt[i];
 	    }
-	    cresid[j] = Z[pmod->list[1]][t] - yhat;
+	    cresid[j] = dset->Z[pmod->list[1]][t] - yhat;
 	    cmod.ci = CUSUM;
 	    err = makevcv(&cmod, 1.0); /* (X'X)^{-1} */
 	    if (!err) {
@@ -2840,7 +2818,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 		cresid[j] /= sqrt(1.0 + den);
 		*wbar += cresid[j];
 		/* extend the sample by one observation */
-		pdinfo->t2 += 1;
+		dset->t2 += 1;
 	    }
 	}
 	clear_model(&cmod); 
@@ -2855,7 +2833,7 @@ static int cusum_compute (MODEL *pmod, double *cresid, int T, int k,
 
 static int cusum_do_graph (double a, double b, const double *W, 
 			   int t1, int k, int m, 
-			   DATAINFO *pdinfo, gretlopt opt)
+			   DATASET *dset, gretlopt opt)
 {
     FILE *fp = NULL;
     const double *obs = NULL;
@@ -2868,10 +2846,10 @@ static int cusum_do_graph (double a, double b, const double *W,
 	return err;
     }
 
-    if (dataset_is_time_series(pdinfo) && okfreq(pdinfo->pd)) {
-	b *= pdinfo->pd;
-	frac /= pdinfo->pd;
-        obs = gretl_plotx(NULL, pdinfo);
+    if (dataset_is_time_series(dset) && okfreq(dset->pd)) {
+	b *= dset->pd;
+	frac /= dset->pd;
+        obs = gretl_plotx(dset);
 	if (obs != NULL) {
 	    x0 = obs[t1 + k];
 	}
@@ -2949,8 +2927,7 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
 /**
  * cusum_test:
  * @pmod: pointer to model to be tested.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if flags include %OPT_S, save results of test to model.
  * @prn: gretl printing struct.
  *
@@ -2961,11 +2938,11 @@ static void cusum_harvey_collier (double wbar, double sigma, int m,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo, 
+int cusum_test (MODEL *pmod, DATASET *dset, 
 		gretlopt opt, PRN *prn) 
 {
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int T = pmod->nobs;
     int k = pmod->ncoeff;
     char cumdate[OBSLEN];
@@ -2998,7 +2975,7 @@ int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = cusum_compute(pmod, cresid, T, k, &wbar, Z, pdinfo);
+	err = cusum_compute(pmod, cresid, T, k, &wbar, dset);
 	if (err) {
 	    errmsg(err, prn);
 	}
@@ -3072,7 +3049,7 @@ int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 		sig = fabs(W[j]) > a + j * b;
 	    }
 	    if (!quiet) {
-		ntodate(cumdate, pmod->t1 + k + j, pdinfo);
+		ntodate(cumdate, pmod->t1 + k + j, dset);
 		pprintf(prn, " %s %9.3f %s\n", cumdate, W[j], sig? "*" : "");
 	    }
 	}
@@ -3083,13 +3060,13 @@ int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 
 	/* plot with 95% confidence bands if not in batch mode */
 	if (!gretl_in_batch_mode()) {
-	    err = cusum_do_graph(a, b, W, pmod->t1, k, m, pdinfo, opt);
+	    err = cusum_do_graph(a, b, W, pmod->t1, k, m, dset, opt);
 	}
     }
 
     /* restore original sample range */
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
     
     free(cresid);
     free(W);
@@ -3100,8 +3077,7 @@ int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 /**
  * comfac_test:
  * @pmod: pointer to original model.
- * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if contains %OPT_S, save test results to model.
  * @prn: gretl printing struct.
  *
@@ -3112,13 +3088,13 @@ int cusum_test (MODEL *pmod, double **Z, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int comfac_test (MODEL *pmod, DATASET *dset, 
 		 gretlopt opt, PRN *prn)
 {
     MODEL cmod;
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
-    int v = pdinfo->v;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
+    int v = dset->v;
     int *biglist = NULL;
     int clearit = 0;
     int nadd, i, k, t;
@@ -3130,7 +3106,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* check for changes in original list members */
-    err = list_members_replaced(pmod->list, pdinfo, pmod->ID);
+    err = list_members_replaced(pmod->list, dset, pmod->ID);
     if (err) {
 	return err;
     }
@@ -3142,7 +3118,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     nadd = 1 + pmod->ncoeff - pmod->ifc;
 
-    err = dataset_add_series(nadd, pZ, pdinfo);
+    err = dataset_add_series(nadd, dset);
     if (err) {
 	free(biglist);
 	return err;
@@ -3161,11 +3137,11 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (src == 0) {
 	    continue;
 	}
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t == 0 || na((*pZ)[src][t-1])) {
-		(*pZ)[k][t] = NADBL;
+	for (t=0; t<dset->n; t++) {
+	    if (t == 0 || na(dset->Z[src][t-1])) {
+		dset->Z[k][t] = NADBL;
 	    } else {
-		(*pZ)[k][t] = (*pZ)[src][t-1];
+		dset->Z[k][t] = dset->Z[src][t-1];
 	    }
 	}
 	biglist = gretl_list_append_term(&biglist, k);
@@ -3173,18 +3149,18 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    err = E_ALLOC;
 	    break;
 	}
-	lag = is_standard_lag(src, pdinfo, &parent);
+	lag = is_standard_lag(src, dset, &parent);
 	if (lag && parent) {
 	    char tmp[8];
 
 	    sprintf(tmp, "_%d", lag + 1);
-	    strcpy(pdinfo->varname[k], pdinfo->varname[parent]);
-	    gretl_trunc(pdinfo->varname[k], 15 - strlen(tmp));
-	    strcat(pdinfo->varname[k], tmp);
+	    strcpy(dset->varname[k], dset->varname[parent]);
+	    gretl_trunc(dset->varname[k], 15 - strlen(tmp));
+	    strcat(dset->varname[k], tmp);
 	} else {
-	    strcpy(pdinfo->varname[k], pdinfo->varname[src]);
-	    gretl_trunc(pdinfo->varname[k], 13);
-	    strcat(pdinfo->varname[k], "_1");
+	    strcpy(dset->varname[k], dset->varname[src]);
+	    gretl_trunc(dset->varname[k], 13);
+	    strcat(dset->varname[k], "_1");
 	}
 	k++;
     }
@@ -3192,8 +3168,8 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	/* re-impose the sample that was in force when the original model
 	   was estimated */
-	impose_model_smpl(pmod, pdinfo);
-	cmod = lsq(biglist, *pZ, pdinfo, OLS, OPT_A);
+	impose_model_smpl(pmod, dset);
+	cmod = lsq(biglist, dset, OLS, OPT_A);
 	clearit = 1;
 	err = cmod.errcode;
     }
@@ -3218,7 +3194,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	if (!(opt & OPT_Q)) {
 	    cmod.aux = AUX_COMFAC;
-	    printmodel(&cmod, pdinfo, OPT_S, prn);
+	    printmodel(&cmod, dset, OPT_S, prn);
 	    pputc(prn, '\n');
 	}
 
@@ -3254,11 +3230,11 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     /* delete the added variables and restore the original
        sample range */
 
-    dataset_drop_last_variables(nadd, pZ, pdinfo);   
+    dataset_drop_last_variables(nadd, dset);   
     free(biglist);
 
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }
@@ -3266,8 +3242,7 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 /**
  * panel_hausman_test:
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
@@ -3276,10 +3251,10 @@ int comfac_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int panel_hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int panel_hausman_test (MODEL *pmod, DATASET *dset, 
 			gretlopt opt, PRN *prn) 
 {
-    if (pmod->ci != OLS || !dataset_is_panel(pdinfo)) {
+    if (pmod->ci != OLS || !dataset_is_panel(dset)) {
 	pputs(prn, _("This test is only relevant for pooled models\n"));
 	return 1;
     }
@@ -3289,13 +3264,13 @@ int panel_hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    if (!balanced_panel(pdinfo)) { /* ?? */
+    if (!balanced_panel(dset)) { /* ?? */
 	pputs(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
 		"You need to have the same number of observations\n"
 		"for each cross-sectional unit"));
 	return 1;
     } else {
-	panel_diagnostics(pmod, pZ, pdinfo, opt, prn);
+	panel_diagnostics(pmod, dset, opt, prn);
     }
 
     return 0;
@@ -3303,8 +3278,7 @@ int panel_hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 /**
  * add_leverage_values_to_dataset:
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @m: matrix containing leverage values.
  * @flags: may include SAVE_LEVERAGE, SAVE_INFLUENCE,
  * and/or SAVE_DFFITS.
@@ -3315,8 +3289,8 @@ int panel_hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				    gretl_matrix *m, int flags)
+int add_leverage_values_to_dataset (DATASET *dset, gretl_matrix *m, 
+				    int flags)
 {
     int t1, t2;
     int addvars = 0;
@@ -3329,7 +3303,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 	return 0;
     }
 
-    if (dataset_add_series(addvars, pZ, pdinfo)) {
+    if (dataset_add_series(addvars, dset)) {
 	return E_ALLOC;
     }
 
@@ -3338,63 +3312,63 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 
     /* add leverage? */
     if (flags & SAVE_LEVERAGE) {
-	int t, v = pdinfo->v - addvars;
+	int t, v = dset->v - addvars;
 	int j = 0;
 
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (t < t1 || t >= t2) {
-		(*pZ)[v][t] = NADBL;
+		dset->Z[v][t] = NADBL;
 	    } else {
-		(*pZ)[v][t] = gretl_matrix_get(m, j++, 0);
+		dset->Z[v][t] = gretl_matrix_get(m, j++, 0);
 	    }
 	}
-	strcpy(pdinfo->varname[v], "lever");
-	make_varname_unique(pdinfo->varname[v], v, pdinfo);
-	strcpy(VARLABEL(pdinfo, v), "leverage values");
+	strcpy(dset->varname[v], "lever");
+	make_varname_unique(dset->varname[v], v, dset);
+	strcpy(VARLABEL(dset, v), "leverage values");
     }
 
     /* add influence? */
     if (flags & SAVE_INFLUENCE) {
-	int t, v = pdinfo->v - (addvars - 1);
+	int t, v = dset->v - (addvars - 1);
 	int j = 0;
 
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (t < t1 || t >= t2) {
-		(*pZ)[v][t] = NADBL;
+		dset->Z[v][t] = NADBL;
 	    } else {
-		(*pZ)[v][t] = gretl_matrix_get(m, j++, 1);
+		dset->Z[v][t] = gretl_matrix_get(m, j++, 1);
 	    }
 	}	
-	strcpy(pdinfo->varname[v], "influ");
-	make_varname_unique(pdinfo->varname[v], v, pdinfo);
-	strcpy(VARLABEL(pdinfo, v), "influence values");
+	strcpy(dset->varname[v], "influ");
+	make_varname_unique(dset->varname[v], v, dset);
+	strcpy(VARLABEL(dset, v), "influence values");
     }
 
     /* add DFFITS? */
     if (flags & SAVE_DFFITS) {
-	int t, v = pdinfo->v - (addvars - 2);
+	int t, v = dset->v - (addvars - 2);
 	int j = 0;
 
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    double s, h;
 
 	    if (t < t1 || t >= t2) {
-		(*pZ)[v][t] = NADBL;
+		dset->Z[v][t] = NADBL;
 	    } else {
 		/* s = studentized residuals */
 		h = gretl_matrix_get(m, j, 0);
 		s = gretl_matrix_get(m, j, 2);
 		if (na(h) || na(s)) {
-		    (*pZ)[v][t] = NADBL;
+		    dset->Z[v][t] = NADBL;
 		} else {
-		    (*pZ)[v][t] = s * sqrt(h / (1.0 - h));
+		    dset->Z[v][t] = s * sqrt(h / (1.0 - h));
 		}
 		j++;
 	    }
 	}	
-	strcpy(pdinfo->varname[v], "dffits");
-	make_varname_unique(pdinfo->varname[v], v, pdinfo);
-	strcpy(VARLABEL(pdinfo, v), "DFFITS values");
+	strcpy(dset->varname[v], "dffits");
+	make_varname_unique(dset->varname[v], v, dset);
+	strcpy(VARLABEL(dset, v), "DFFITS values");
     }
 
     return 0;
@@ -3403,8 +3377,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 /**
  * leverage_test:
  * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if OPT_S, add calculated series to data set.
  * @prn: gretl printing struct.
  *
@@ -3414,13 +3387,12 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+int leverage_test (MODEL *pmod, DATASET *dset, 
 		   gretlopt opt, PRN *prn)
 {
     void *handle;
-    gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
-				     const DATAINFO *, gretlopt,
-				     PRN *, int *);
+    gretl_matrix *(*model_leverage) (const MODEL *, const DATASET *, 
+				     gretlopt, PRN *, int *);
     gretl_matrix *m;
     int err = 0;
 
@@ -3433,10 +3405,10 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    m = (*model_leverage)(pmod, pZ, pdinfo, OPT_NONE, prn, &err);
+    m = (*model_leverage)(pmod, dset, OPT_NONE, prn, &err);
 
     if (!err && (opt & OPT_S)) {
-	err = add_leverage_values_to_dataset(pZ, pdinfo, m, 
+	err = add_leverage_values_to_dataset(dset, m, 
 					     SAVE_LEVERAGE |
 					     SAVE_INFLUENCE| 
 					     SAVE_DFFITS);
@@ -3452,8 +3424,7 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 /**
  * vif_test:
  * @pmod: pointer to model to be tested.
- * @Z: pointer to data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @prn: gretl printing struct.
  *
  * Calculates and displays the Variance Inflation Factors for
@@ -3462,10 +3433,10 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int vif_test (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
+int vif_test (MODEL *pmod, DATASET *dset, PRN *prn)
 {
     void *handle;
-    int (*print_vifs) (MODEL *, double **, DATAINFO *, PRN *);
+    int (*print_vifs) (MODEL *, DATASET *, PRN *);
     int err;
 
     gretl_error_clear();
@@ -3475,7 +3446,7 @@ int vif_test (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
 
-    err = (*print_vifs)(pmod, Z, pdinfo, prn);
+    err = (*print_vifs)(pmod, dset, prn);
 
     close_plugin(handle);
 

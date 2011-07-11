@@ -300,7 +300,7 @@ int model_command_init (int model_ID)
 	    pprintf(logprn, "# %s %d\n", _("model"), model_ID);
 	    prev_ID = model_ID;
 	}
-	echo_cmd(libcmd, datainfo, line, CMD_RECORDING, logprn);
+	echo_cmd(libcmd, dataset, line, CMD_RECORDING, logprn);
 	set_commands_recorded();
     } 
 

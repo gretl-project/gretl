@@ -39,52 +39,37 @@
   rather than just moving the starting or ending points of the data
   range -- we create a new sub-dataset, and we need to keep the full
   dataset around so that it can be restored later.  The pointers fullZ
-  and fullinfo are used to record the addresses of the full data
-  matrix and DATAINFO struct respectively.
+  and fullset are used to record the addresses of the full data
+  matrix and DATASET struct respectively.
 
-  In addition, peerinfo keeps track of the location of the DATAINFO
+  In addition, peerinfo keeps track of the location of the DATASET
   struct associated with the back-up full dataset; by means of this,
   we can know when to free the full dataset and when not to (for
   instance, if we're freeing an auxiliary dataset).
 */
 
-static double **fullZ;
-static DATAINFO *fullinfo;
-static DATAINFO *peerinfo;
+static DATASET *fullset;
+static DATASET *peerinfo;
 
 #define SUBMASK_SENTINEL 127
 
-static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
-			 int *err);
+static int smpl_get_int (const char *s, DATASET *dset, int *err);
 
 /* accessors for full dataset, when sub-sampled */
 
-double ***fetch_full_Z (void)
+DATASET *fetch_full_dataset (void)
 {
-    return &fullZ;
+    return fullset;
 }
 
-void reset_full_Z (double ***pZ)
-{
-#if SUBDEBUG
-    fprintf(stderr, "reset_full_Z -> %p\n", (void *) *pZ);
-#endif    
-    fullZ = *pZ;
-}
-
-DATAINFO *fetch_full_datainfo (void)
-{
-    return fullinfo;
-}
-
-static int full_data_length (const DATAINFO *pdinfo)
+static int full_data_length (const DATASET *dset)
 {
     int n = 0;
 
-    if (fullinfo != NULL) {
-	n = fullinfo->n;
-    } else if (pdinfo != NULL) {
-	n = pdinfo->n;
+    if (fullset != NULL) {
+	n = fullset->n;
+    } else if (dset != NULL) {
+	n = dset->n;
     } 
 
     return n;
@@ -133,12 +118,12 @@ char *copy_subsample_mask (const char *src, int *err)
     return ret;
 }
 
-char *copy_datainfo_submask (const DATAINFO *pdinfo, int *err)
+char *copy_datainfo_submask (const DATASET *dset, int *err)
 {
     char *mask = NULL;
 
     if (complex_subsampled()) {
-	mask = copy_subsample_mask(pdinfo->submask, err);
+	mask = copy_subsample_mask(dset->submask, err);
     }
 
     return mask;
@@ -165,26 +150,26 @@ int write_model_submask (const MODEL *pmod, FILE *fp)
     return ret;
 }
 
-int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
+int write_datainfo_submask (const DATASET *dset, FILE *fp)
 {
     int ret = 0;
 
-    if (pdinfo->submask == RESAMPLED) {
+    if (dset->submask == RESAMPLED) {
 	unsigned int seed = get_resampling_seed();
 
-	fprintf(fp, "<resample seed=\"%u\" n=\"%d\"/>\n", seed, pdinfo->n);
+	fprintf(fp, "<resample seed=\"%u\" n=\"%d\"/>\n", seed, dset->n);
 	ret = 1;
     } else if (complex_subsampled()) {
-	int i, n = get_submask_length(pdinfo->submask);
+	int i, n = get_submask_length(dset->submask);
 
 	fprintf(fp, "<submask length=\"%d\">", n);
 	for (i=0; i<n; i++) {
-	    fprintf(fp, "%d ", (int) pdinfo->submask[i]);
+	    fprintf(fp, "%d ", (int) dset->submask[i]);
 	}
 	fputs("</submask>\n", fp);
 
-	if (pdinfo->restriction != NULL) {
-	    gretl_xml_put_tagged_string("restriction", pdinfo->restriction, fp);
+	if (dset->restriction != NULL) {
+	    gretl_xml_put_tagged_string("restriction", dset->restriction, fp);
 	}
 
 	ret = 1;
@@ -226,27 +211,26 @@ static char *make_submask (int n)
     return mask;
 }
 
-void set_dataset_resampled (DATAINFO *pdinfo)
+void set_dataset_resampled (DATASET *dset)
 {
-    pdinfo->submask = RESAMPLED;
+    dset->submask = RESAMPLED;
 }
 
-int dataset_is_resampled (const DATAINFO *pdinfo)
+int dataset_is_resampled (const DATASET *dset)
 {
-    return (pdinfo != NULL && pdinfo->submask == RESAMPLED);
+    return (dset != NULL && dset->submask == RESAMPLED);
 }
 
-void maybe_free_full_dataset (const DATAINFO *pdinfo)
+void maybe_free_full_dataset (const DATASET *dset)
 {
-    if (pdinfo == peerinfo) {
-	if (fullZ != NULL) {
-	    free_Z(fullZ, fullinfo);
-	    fullZ = NULL;
-	}
-	if (fullinfo != NULL) {
-	    clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
-	    free(fullinfo);
-	    fullinfo = NULL;
+    if (dset == peerinfo) {
+	if (fullset != NULL) {
+	    if (fullset->Z != NULL) {
+		free_Z(fullset);
+	    }
+	    clear_datainfo(fullset, CLEAR_SUBSAMPLE);
+	    free(fullset);
+	    fullset = NULL;
 	}
 	peerinfo = NULL;
     }
@@ -254,54 +238,50 @@ void maybe_free_full_dataset (const DATAINFO *pdinfo)
 
 /* we do this on "restore full sample" */
 
-static void 
-relink_to_full_dataset (double ***pZ, DATAINFO *pdinfo)
+static void relink_to_full_dataset (DATASET *dset)
 {
-    *pZ = fullZ;
-    *pdinfo = *fullinfo;
-
 #if SUBDEBUG
-    fprintf(stderr, "relink_to_full_dataset: fullZ = %p, fullinfo = %p\n",
-	    (void *) fullZ, (void *) fullinfo);
-    fprintf(stderr, "fullinfo->v = %d\n", fullinfo->v);
+    fprintf(stderr, "relink_to_full_dataset: fullset = %p\n",
+	    (void *) fullset);
+    fprintf(stderr, "fullset->v = %d\n", fullset->v);
 #endif
 
-    fullZ = NULL;
-    free(fullinfo);
-    fullinfo = NULL;
+    *dset = *fullset;
+    free(fullset);
+    fullset = NULL;
     peerinfo = NULL;
 }
 
-/* sync malloced elements of the fullinfo struct that might
+/* sync malloced elements of the fullset struct that might
    have been moved via realloc
 */
 
-static void sync_datainfo_members (const DATAINFO *pdinfo)
+static void sync_datainfo_members (const DATASET *dset)
 {
-    if (fullinfo->v > pdinfo->v) {
+    if (fullset->v > dset->v) {
 	int i;
 
 #if FULLDEBUG
-	fprintf(stderr, "*** sync_datainfo_members: fullinfo->v = %d but pdinfo->v = %d\n",
-		fullinfo->v, pdinfo->v);
+	fprintf(stderr, "*** sync_datainfo_members: fullset->v = %d but dset->v = %d\n",
+		fullset->v, dset->v);
 	fprintf(stderr, " deleting the last %d element(s) of fullZ\n", 
-		fullinfo->v - pdinfo->v);
+		fullset->v - dset->v);
 #endif
-	for (i=pdinfo->v; i<fullinfo->v; i++) {
-	    free(fullZ[i]);
-	    fullZ[i] = NULL;
+	for (i=dset->v; i<fullset->v; i++) {
+	    free(fullset->Z[i]);
+	    fullset->Z[i] = NULL;
 	}
-	fullinfo->v = pdinfo->v;
+	fullset->v = dset->v;
     }
 
-    fullinfo->varname = pdinfo->varname;
-    fullinfo->varinfo = pdinfo->varinfo;
-    fullinfo->descrip = pdinfo->descrip;
+    fullset->varname = dset->varname;
+    fullset->varinfo = dset->varinfo;
+    fullset->descrip = dset->descrip;
 }
 
 /* attach_subsample_to_model:
  * @pmod: model to which subsample should be attached.
- * @pdinfo: pointer to current dataset info.
+ * @dset: pointer to current dataset info.
  *
  * If the dataset is currently subsampled, record the subsample
  * information with the model so that it can be retrieved later.
@@ -310,24 +290,24 @@ static void sync_datainfo_members (const DATAINFO *pdinfo)
  * error code failure.
  */
 
-int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
+int attach_subsample_to_model (MODEL *pmod, const DATASET *dset)
 {
     int err = 0;
 
 #if SUBDEBUG
-    fprintf(stderr, "attach_subsample_to_model: fullZ = %p\n",
-	    (void *) fullZ);
+    fprintf(stderr, "attach_subsample_to_model: fullset = %p\n",
+	    (void *) fullset);
 #endif
 
-    if (fullZ != NULL) {
+    if (fullset != NULL) {
 	/* sync, in case anything has moved */
-	sync_datainfo_members(pdinfo);
+	sync_datainfo_members(dset);
 
 	if (pmod->submask != NULL) {
 	    free_subsample_mask(pmod->submask);
 	}
 
-	pmod->submask = copy_subsample_mask(pdinfo->submask, &err);
+	pmod->submask = copy_subsample_mask(dset->submask, &err);
     }
 
     return err;
@@ -341,41 +321,35 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
    structures; the numerical arrays get deleted later.
 */
 
-static int resample_sync_dataset (double ***pZ, DATAINFO *pdinfo)
+static int resample_sync_dataset (DATASET *dset)
 {
-    if (pdinfo->v > fullinfo->v) {
+    if (dset->v > fullset->v) {
 	char **varname;
 	VARINFO **varinfo;
-	int i, nv = fullinfo->v;
+	int i, nv = fullset->v;
 
-	for (i=fullinfo->v; i<pdinfo->v; i++) {
-	    free(pdinfo->varname[i]);
-	    free(pdinfo->varinfo[i]);
+	for (i=fullset->v; i<dset->v; i++) {
+	    free(dset->varname[i]);
+	    free(dset->varinfo[i]);
 	}
 
-	varname = realloc(pdinfo->varname, nv * sizeof *varname);
+	varname = realloc(dset->varname, nv * sizeof *varname);
 	if (varname == NULL) {
 	    return E_ALLOC;
 	}
-	pdinfo->varname = varname;
+	dset->varname = varname;
 
-	varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
+	varinfo = realloc(dset->varinfo, nv * sizeof *varinfo);
 	if (varinfo == NULL) {
 	    return E_ALLOC;
 	}
-	pdinfo->varinfo = varinfo;
-
-#if SUBDEBUG
-	fprintf(stderr, "resample_trim_dataset: drop = %d, pZ=%p, Z=%p\n", 
-		pdinfo->v - fullinfo->v, (void *) pZ, (void *) *pZ);
-#endif
-
+	dset->varinfo = varinfo;
     }
 
     /* sync */
-    fullinfo->varname = pdinfo->varname;
-    fullinfo->varinfo = pdinfo->varinfo;
-    fullinfo->descrip = pdinfo->descrip;
+    fullset->varname = dset->varname;
+    fullset->varinfo = dset->varinfo;
+    fullset->descrip = dset->descrip;
 
     return 0;
 }
@@ -385,21 +359,21 @@ static int resample_sync_dataset (double ***pZ, DATAINFO *pdinfo)
 */
 
 static void
-update_full_data_values (const double **subZ, const DATAINFO *pdinfo)
+update_full_data_values (const DATASET *dset)
 {
     int i, s, t;
 
 #if SUBDEBUG
-    fprintf(stderr, "update_full_data_values: fullZ=%p, subZ=%p, pdinfo=%p\n",
-	    (void *) fullZ, (void *) subZ, (void *) pdinfo);
+    fprintf(stderr, "update_full_data_values: fullZ=%p, subZ=%p, dset=%p\n",
+	    (void *) fullZ, (void *) subZ, (void *) dset);
 #endif
 
-    for (i=1; i<fullinfo->v && i<pdinfo->v; i++) {
+    for (i=1; i<fullset->v && i<dset->v; i++) {
 	s = 0;
-	for (t=0; t<fullinfo->n; t++) {
-	    if (pdinfo->submask[t] == 1) {
-		fullZ[i][t] = subZ[i][s++];
-	    } else if (pdinfo->submask[t] == 'p') {
+	for (t=0; t<fullset->n; t++) {
+	    if (dset->submask[t] == 1) {
+		fullset->Z[i][t] = dset->Z[i][s++];
+	    } else if (dset->submask[t] == 'p') {
 		/* skip panel padding (?) */
 		s++;
 	    }
@@ -407,22 +381,22 @@ update_full_data_values (const double **subZ, const DATAINFO *pdinfo)
     }
 }
 
-static int update_case_markers (const DATAINFO *pdinfo)
+static int update_case_markers (const DATASET *dset)
 {
     int err = 0;
 
-    if (pdinfo->markers && !fullinfo->markers) {
-	dataset_allocate_obs_markers(fullinfo);
-	if (fullinfo->S == NULL) {
+    if (dset->markers && !fullset->markers) {
+	dataset_allocate_obs_markers(fullset);
+	if (fullset->S == NULL) {
 	    err = 1;
 	} else {
 	    int t, subt = 0;
 
-	    for (t=0; t<fullinfo->n; t++) {
-		if (pdinfo->submask[t]) {
-		    strcpy(fullinfo->S[t], pdinfo->S[subt++]);
+	    for (t=0; t<fullset->n; t++) {
+		if (dset->submask[t]) {
+		    strcpy(fullset->S[t], dset->S[subt++]);
 		} else {
-		    sprintf(fullinfo->S[t], "%d", t + 1);
+		    sprintf(fullset->S[t], "%d", t + 1);
 		}
 	    }
 	}
@@ -431,11 +405,11 @@ static int update_case_markers (const DATAINFO *pdinfo)
     return err;
 }
 
-static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
+static int add_new_vars_to_full (DATASET *dset)
 {
-    int V1 = pdinfo->v;
-    int V0 = fullinfo->v;
-    int N = fullinfo->n;
+    int V1 = dset->v;
+    int V0 = fullset->v;
+    int N = fullset->n;
     double **newZ = NULL;
     int i, t, s;
     int err = 0;
@@ -444,33 +418,33 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 	return 0;
     }
 
-    if (pdinfo->submask == NULL) {
+    if (dset->submask == NULL) {
 	return E_NOMERGE;
     }
 
 #if SUBDEBUG
     fprintf(stderr, "add_new_vars_to_full:\n");
-    fprintf(stderr, " V1 = pdinfo->v = %d; V0 = fullinfo->v = %d\n",
+    fprintf(stderr, " V1 = dset->v = %d; V0 = fullset->v = %d\n",
 	    V1, V0);
     fprintf(stderr, " Z = %p, fullZ = %p\n", (void *) Z, (void *) fullZ);
 #endif
 
     /* allocate expanded data array */
-    newZ = realloc(fullZ, V1 * sizeof *fullZ);
+    newZ = realloc(fullset->Z, V1 * sizeof *fullset->Z);
 
     if (newZ == NULL) {
 	return E_ALLOC;
     } 
 
-    fullZ = newZ;
+    fullset->Z = newZ;
 
-    for (i=V0; i<pdinfo->v && !err; i++) {
+    for (i=V0; i<dset->v && !err; i++) {
 #if FULLDEBUG
 	fprintf(stderr, "adding to full: var %d (%s, level %d)\n",
-		i, pdinfo->varname[i], STACK_LEVEL(pdinfo, i));
+		i, dset->varname[i], STACK_LEVEL(dset, i));
 #endif
-	fullZ[i] = malloc(N * sizeof **newZ);
-	if (fullZ[i] == NULL) {
+	fullset->Z[i] = malloc(N * sizeof **fullset->Z);
+	if (fullset->Z[i] == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -481,66 +455,67 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 
 #if SUBDEBUG
     fprintf(stderr, "After expansion, fullZ = %p (%d vars)\n", (void *) fullZ,
-	    pdinfo->v);
+	    dset->v);
 #endif
 
-    for (i=V0; i<pdinfo->v; i++) {
+    for (i=V0; i<dset->v; i++) {
 	s = 0;
 	for (t=0; t<N; t++) {
-	    fullZ[i][t] = (pdinfo->submask[t])? Z[i][s++] : NADBL;
+	    fullset->Z[i][t] = (dset->submask[t])? 
+		dset->Z[i][s++] : NADBL;
 	}
     }
 
-    fullinfo->v = V1;
+    fullset->v = V1;
 
     return 0;
 }
 
-static int sync_data_to_full (double ***pZ, DATAINFO *pdinfo)
+static int sync_data_to_full (DATASET *dset)
 {
     int err;
 
     /* update values for pre-existing series, which may have been
        modified via genr etc */
-    update_full_data_values((const double **) *pZ, pdinfo);
+    update_full_data_values(dset);
 
     /* if case markers were added when subsampled, carry them back */
-    update_case_markers(pdinfo);
+    update_case_markers(dset);
 
     /* delete any newly added hidden vars */
-    err = dataset_destroy_hidden_variables(pZ, pdinfo, fullinfo->v);
+    err = dataset_destroy_hidden_variables(dset, fullset->v);
 
     /* in case any new vars were added when subsampled, try to merge
        them into the full dataset */
     if (!err) {
-	err = add_new_vars_to_full((const double **) *pZ, pdinfo);
+	err = add_new_vars_to_full(dset);
     }
 
     return err;
 }
 
-static char *make_current_sample_mask (DATAINFO *pdinfo)
+static char *make_current_sample_mask (DATASET *dset)
 {
-    int n = full_data_length(pdinfo);
+    int n = full_data_length(dset);
     char *currmask = NULL;
     int s, t, err = 0;
 
-    if (pdinfo->submask == NULL) {
+    if (dset->submask == NULL) {
 	/* no pre-existing mask: not sub-sampled */
 	currmask = make_submask(n);
 	if (currmask != NULL) {
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    for (t=dset->t1; t<=dset->t2; t++) {
 		currmask[t] = 1;
 	    }
 	}
     } else {
 	/* there's a pre-existing mask */
-	currmask = copy_subsample_mask(pdinfo->submask, &err);
+	currmask = copy_subsample_mask(dset->submask, &err);
 	if (currmask != NULL) {
 	    s = -1;
 	    for (t=0; t<n; t++) {
-		if (pdinfo->submask[t]) s++;
-		if (s < pdinfo->t1 || s > pdinfo->t2) {
+		if (dset->submask[t]) s++;
+		if (s < dset->t1 || s > dset->t2) {
 		    currmask[t] = 0;
 		} 
 	    }
@@ -551,8 +526,7 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
 }
 
 /* restore_full_sample: 
- * @pZ: pointer to data array.  
- * @pdinfo: pointer to dataset information.
+ * @dset: dataset struct.
  * @state: structure representing program execution state,
  * or %NULL. 
  *
@@ -565,9 +539,13 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
+int restore_full_sample (DATASET *dset, ExecState *state)
 {
     int err = 0;
+
+    if (dset == NULL) {
+	return E_NODATA;
+    }
 
     gretl_error_clear();
 
@@ -577,16 +555,16 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
 	if (state == NULL) {
 	    /* not inside a function */
 	    t1min = 0;
-	    t2max = pdinfo->n - 1;
+	    t2max = dset->n - 1;
 	} else {
 	    /* don't go outside the bounds set on entry to
 	       a function */
-	    sample_range_get_extrema(pdinfo, &t1min, &t2max);
+	    sample_range_get_extrema(dset, &t1min, &t2max);
 	}
 
-	if (pdinfo->t1 != t1min || pdinfo->t2 != t2max) {
-	    pdinfo->t1 = t1min;
-	    pdinfo->t2 = t2max;
+	if (dset->t1 != t1min || dset->t2 != t2max) {
+	    dset->t1 = t1min;
+	    dset->t2 = t2max;
 #if SUBDEBUG
 	    fprintf(stderr, "restore_full_sample: just set t1=%d and t2=%d\n",
 		    t1min, t2max);
@@ -596,8 +574,8 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
     }
 
 #if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestore_full_sample: pZ=%p, *pZ=%p, pdinfo=%p\n",
-	    (void *) pZ, (void *) *pZ, (void *) pdinfo);
+    fprintf(stderr, "\nrestore_full_sample: pZ=%p, *pZ=%p, dset=%p\n",
+	    (void *) pZ, (void *) *pZ, (void *) dset);
 #endif
 
     /* beyond this point we are doing a non-trivial restoration
@@ -605,11 +583,11 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
        subsampled, e.g., by some boolean criterion 
     */
 
-    if (pdinfo->submask == RESAMPLED) {
-	err = resample_sync_dataset(pZ, pdinfo);
+    if (dset->submask == RESAMPLED) {
+	err = resample_sync_dataset(dset);
     } else {
-	sync_datainfo_members(pdinfo);
-	err = sync_data_to_full(pZ, pdinfo);
+	sync_datainfo_members(dset);
+	err = sync_data_to_full(dset);
     }
 
     if (err == E_NOMERGE) {
@@ -623,27 +601,27 @@ int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state)
     /* destroy sub-sampled data array */
 #if SUBDEBUG
     fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d)\n"
-	    "and clearing pdinfo at %p\n", (void *) *pZ, pdinfo->v, (void *) pdinfo);
+	    "and clearing dset at %p\n", (void *) *pZ, dset->v, (void *) dset);
 #endif
-    free_Z(*pZ, pdinfo);
-    clear_datainfo(pdinfo, CLEAR_SUBSAMPLE);
+    free_Z(dset);
+    clear_datainfo(dset, CLEAR_SUBSAMPLE);
 
-    relink_to_full_dataset(pZ, pdinfo);
+    relink_to_full_dataset(dset);
 
     if (state != NULL) {
 	/* "full" really means, relative to the original state */
 	if (state->submask != NULL) {
-	    err = restrict_sample_from_mask(state->submask, pZ, pdinfo,
+	    err = restrict_sample_from_mask(state->submask, dset,
 					    OPT_NONE);
 	} else {
 	    int t1min, t2max;
 
-	    sample_range_get_extrema(pdinfo, &t1min, &t2max);
-	    if (pdinfo->t1 < t1min) {
-		pdinfo->t1 = t1min;
+	    sample_range_get_extrema(dset, &t1min, &t2max);
+	    if (dset->t1 < t1min) {
+		dset->t1 = t1min;
 	    }
-	    if (pdinfo->t2 > t2max) {
-		pdinfo->t2 = t2max;
+	    if (dset->t2 > t2max) {
+		dset->t2 = t2max;
 	    }
 	}
     }
@@ -668,18 +646,17 @@ static int overlay_masks (char *targ, const char *src, int n)
 }
 
 static int 
-make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
-		   char *mask)
+make_missing_mask (const int *list, const DATASET *dset, char *mask)
 {
     int i, vi, t;
 
     if (list != NULL && list[0] > 0) {
 	/* check specified list of variables */
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    mask[t] = 1;
 	    for (i=1; i<=list[0]; i++) {
 		vi = list[i];
-		if (na(Z[vi][t])) {
+		if (na(dset->Z[vi][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -687,10 +664,10 @@ make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
 	}
     } else {	
 	/* check all variables */
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    mask[t] = 1;
-	    for (i=1; i<pdinfo->v; i++) {
-		if (!var_is_hidden(pdinfo, i) && na(Z[i][t])) {
+	    for (i=1; i<dset->v; i++) {
+		if (!var_is_hidden(dset, i) && na(dset->Z[i][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -716,7 +693,7 @@ static int copy_dummy_to_mask (char *mask, const double *x, int n)
     return err;
 }
 
-static int mask_from_temp_dummy (const char *s, double ***pZ, DATAINFO *pdinfo, 
+static int mask_from_temp_dummy (const char *s, DATASET *dset, 
 				 char *mask, PRN *prn)
 {
     char formula[MAXLEN];
@@ -726,10 +703,10 @@ static int mask_from_temp_dummy (const char *s, double ***pZ, DATAINFO *pdinfo,
     *formula = '\0';
     strncat(formula, s, MAXLEN - 1);
 
-    x = generate_series(formula, pZ, pdinfo, prn, &err);
+    x = generate_series(formula, dset, prn, &err);
 
     if (!err) {
-	err = copy_dummy_to_mask(mask, x, pdinfo->n);
+	err = copy_dummy_to_mask(mask, x, dset->n);
 	if (err) {
 	    gretl_errmsg_sprintf(_("'%s' is not a dummy variable"), "mask");
 	}
@@ -740,20 +717,20 @@ static int mask_from_temp_dummy (const char *s, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static int mask_from_dummy (const char *s, const double **Z, const DATAINFO *pdinfo,
+static int mask_from_dummy (const char *s, const DATASET *dset,
 			    char *mask)
 {
     char dname[VNAMELEN] = {0};
     int dnum, err = 0;
 
     sscanf(s, "%15s", dname);
-    dnum = series_index(pdinfo, dname);
+    dnum = series_index(dset, dname);
 
-    if (dnum == pdinfo->v) {
+    if (dnum == dset->v) {
 	gretl_errmsg_sprintf(_("Variable '%s' not defined"), dname);
 	err = 1;
     } else {
-	err = copy_dummy_to_mask(mask, Z[dnum], pdinfo->n);
+	err = copy_dummy_to_mask(mask, dset->Z[dnum], dset->n);
 	if (err) {
 	    gretl_errmsg_sprintf(_("'%s' is not a dummy variable"), dname);
 	}
@@ -766,11 +743,11 @@ static int mask_from_dummy (const char *s, const double **Z, const DATAINFO *pdi
    subsample mask? */
 
 static int 
-count_selected_cases (const char *mask, const DATAINFO *pdinfo)
+count_selected_cases (const char *mask, const DATASET *dset)
 {
     int i, n = 0;
 
-    for (i=0; i<pdinfo->n; i++) {
+    for (i=0; i<dset->n; i++) {
 	if (mask[i]) {
 	    n++;
 	}
@@ -783,14 +760,14 @@ count_selected_cases (const char *mask, const DATAINFO *pdinfo)
    in the masked subset of observations? */
 
 static int 
-count_panel_units (const char *mask, const DATAINFO *pdinfo)
+count_panel_units (const char *mask, const DATASET *dset)
 {
     int u, ubak = -1;
     int i, n = 0;
 
-    for (i=0; i<pdinfo->n; i++) {
+    for (i=0; i<dset->n; i++) {
 	if (mask[i]) {
-	    u = i / pdinfo->pd;
+	    u = i / dset->pd;
 	    if (u != ubak) {
 		n++;
 		ubak = u;
@@ -812,23 +789,22 @@ count_panel_units (const char *mask, const DATAINFO *pdinfo)
 */
 
 static int make_random_mask (const char *s, const char *oldmask, 
-			     double ***pZ, DATAINFO *pdinfo,
-			     char *mask)
+			     DATASET *dset, char *mask)
 {
     unsigned u;
-    int targ, avail, oldn = pdinfo->n;
+    int targ, avail, oldn = dset->n;
     int i, subn, cases, rejn;
     int err = 0;
 
     /* how many cases are requested? */
-    subn = smpl_get_int(s, pZ, pdinfo, &err);
+    subn = smpl_get_int(s, dset, &err);
 
-    if (subn <= 0 || subn >= pdinfo->n) {
+    if (subn <= 0 || subn >= dset->n) {
 	err = 1;
     } else if (oldmask != NULL) {
 	/* dataset is already sub-sampled */
 	oldn = 0;
-	for (i=0; i<pdinfo->n; i++) {
+	for (i=0; i<dset->n; i++) {
 	    if (oldmask[i]) {
 		oldn++;
 	    }
@@ -858,7 +834,7 @@ static int make_random_mask (const char *s, const char *oldmask,
 	avail = 0;
     }
 
-    for (i=0; i<pdinfo->n; i++) {
+    for (i=0; i<dset->n; i++) {
 	if (oldmask != NULL && oldmask[i] == 0) {
 	    /* obs is already excluded, hence not selectable */
 	    mask[i] = -1;
@@ -870,7 +846,7 @@ static int make_random_mask (const char *s, const char *oldmask,
     cases = 0;
 
     while (cases < targ) {
-	u = gretl_rand_int_max(pdinfo->n);
+	u = gretl_rand_int_max(dset->n);
 	if (mask[u] == avail) {
 	    /* obs is available, not yet selected */
 	    mask[u] = !avail;
@@ -880,7 +856,7 @@ static int make_random_mask (const char *s, const char *oldmask,
 
     if (oldmask != NULL) {
 	/* undo the 'already excluded' coding above */
-	for (i=0; i<pdinfo->n; i++) {
+	for (i=0; i<dset->n; i++) {
 	    if (mask[i] == -1) {
 		mask[i] = 0;
 	    }
@@ -890,16 +866,15 @@ static int make_random_mask (const char *s, const char *oldmask,
     return err;
 }
 
-int backup_full_dataset (double **Z, DATAINFO *pdinfo)
+int backup_full_dataset (DATASET *dset)
 {
 #if SUBDEBUG
     int newfull = 0;
 #endif
-    fullZ = Z;
 
-    if (fullinfo == NULL) {
-	fullinfo = malloc(sizeof *fullinfo);
-	if (fullinfo == NULL) {
+    if (fullset == NULL) {
+	fullset = malloc(sizeof *fullset);
+	if (fullset == NULL) {
 	    return E_ALLOC;
 	}
 #if SUBDEBUG
@@ -907,14 +882,14 @@ int backup_full_dataset (double **Z, DATAINFO *pdinfo)
 #endif
     }
 
-    if (pdinfo != NULL) {
-	*fullinfo = *pdinfo;
-	peerinfo = pdinfo;
+    if (dset != NULL) {
+	*fullset = *dset;
+	peerinfo = dset;
     } 
 
 #if SUBDEBUG
-    fprintf(stderr, "backup_full_dataset: fullZ = %p, fullinfo = %p (%s)\n",
-	    (void *) fullZ, (void *) fullinfo, newfull ? "new" : "old");
+    fprintf(stderr, "backup_full_dataset: fullset = %p (%s)\n",
+	    (void *) fullset, newfull ? "new" : "old");
 #endif
 
     return 0;
@@ -922,15 +897,15 @@ int backup_full_dataset (double **Z, DATAINFO *pdinfo)
 
 int complex_subsampled (void)
 {
-    return (fullZ != NULL);
+    return (fullset != NULL && fullset->Z != NULL);
 }
 
 int get_full_length_n (void)
 {
     int n = 0;
 
-    if (fullinfo != NULL) {
-	n = fullinfo->n;
+    if (fullset != NULL) {
+	n = fullset->n;
     }
 
     return n;
@@ -942,13 +917,13 @@ int get_full_length_n (void)
 */
 
 static int mask_contiguous (const char *mask,
-			    const DATAINFO *pdinfo,
+			    const DATASET *dset,
 			    int *pt1, int *pt2)
 {
-    int t, t1 = 0, t2 = pdinfo->n - 1;
+    int t, t1 = 0, t2 = dset->n - 1;
     int contig = 1;
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	if (mask[t] == 0) {
 	    t1++;
 	} else {
@@ -956,7 +931,7 @@ static int mask_contiguous (const char *mask,
 	}
     }
 
-    for (t=pdinfo->n - 1; t>=0; t--) {
+    for (t=dset->n - 1; t>=0; t--) {
 	if (mask[t] == 0) {
 	    t2--;
 	} else {
@@ -972,15 +947,15 @@ static int mask_contiguous (const char *mask,
 	}
     }
 
-    if (contig && dataset_is_panel(pdinfo)) {
+    if (contig && dataset_is_panel(dset)) {
 	int n = t2 - t1 + 1;
 
 	/* sample must leave a whole number of panel units; moreover,
 	   to retain "panelness" this number must be greater than 1 
 	*/
-	if (t1 % pdinfo->pd != 0 || n % pdinfo->pd != 0) {
+	if (t1 % dset->pd != 0 || n % dset->pd != 0) {
 	    contig = 0;
-	} else if (n == pdinfo->pd) {
+	} else if (n == dset->pd) {
 	    contig = 0;
 	}
     }
@@ -994,44 +969,43 @@ static int mask_contiguous (const char *mask,
 }
 
 static void 
-copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
-			const double **Z, const DATAINFO *pdinfo,
+copy_data_to_subsample (DATASET *subset, const DATASET *dset,
 			int maxv, const char *mask)
 {
     int i, t, s;
 
 #if SUBDEBUG
-    fprintf(stderr, "copy_data_to_subsample: subinfo = %p, pdinfo = %p\n",
-	    (void *) subinfo, (void *) pdinfo);
+    fprintf(stderr, "copy_data_to_subsample: subset = %p, dset = %p\n",
+	    (void *) subset, (void *) dset);
 #endif
 
     /* copy data values */
     for (i=1; i<maxv; i++) {
 	s = 0;
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (mask == NULL) {
-		subZ[i][s++] = Z[i][t];
+		subset->Z[i][s++] = dset->Z[i][t];
 	    } else if (mask[t] == 1) {
-		subZ[i][s++] = Z[i][t];
+		subset->Z[i][s++] = dset->Z[i][t];
 	    } else if (mask[t] == 'p') {
 		/* panel padding */
-		subZ[i][s++] = NADBL;
+		subset->Z[i][s++] = NADBL;
 	    }
 	}
     }
 
     /* copy observation markers, if any */
-    if (pdinfo->markers && subinfo->markers) {
+    if (dset->markers && subset->markers) {
 	s = 0;
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (mask == NULL || mask[t] == 1 || mask[t] == 'p') {
-		strcpy(subinfo->S[s++], pdinfo->S[t]);
+		strcpy(subset->S[s++], dset->S[t]);
 	    }
 	}
     }
 
-    strcpy(subinfo->stobs, "1");
-    sprintf(subinfo->endobs, "%d", subinfo->n);
+    strcpy(subset->stobs, "1");
+    sprintf(subset->endobs, "%d", subset->n);
 }
 
 int get_restriction_mode (gretlopt opt)
@@ -1077,14 +1051,14 @@ static int copy_periods_list (int *T0, const int *Ti)
    and in addition the observations must be temporally contiguous.
 */
 
-static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
+static int mask_leaves_balanced_panel (char *mask, const DATASET *dset)
 {
     int *T0, *Ti;
     int i, u, ubak = -1;
     int ret = 1;
 
-    T0 = gretl_list_new(pdinfo->pd);
-    Ti = gretl_list_new(pdinfo->pd);
+    T0 = gretl_list_new(dset->pd);
+    Ti = gretl_list_new(dset->pd);
 
     if (T0 == NULL || Ti == NULL) {
 	free(T0);
@@ -1094,9 +1068,9 @@ static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
 
     T0[0] = Ti[0] = 0;
 
-    for (i=0; i<pdinfo->n && ret; i++) {
+    for (i=0; i<dset->n && ret; i++) {
 	if (mask[i]) {
-	    u = i / pdinfo->pd;
+	    u = i / dset->pd;
 	    if (u != ubak) {
 		if (Ti[0] > 0) {
 		    if (T0[0] == 0) {
@@ -1108,10 +1082,10 @@ static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
 		    }
 		}
 		Ti[0] = 1;
-		Ti[1] = i % pdinfo->pd;
+		Ti[1] = i % dset->pd;
 	    } else {
 		Ti[0] += 1;
-		Ti[Ti[0]] = i % pdinfo->pd;
+		Ti[Ti[0]] = i % dset->pd;
 	    }
 	    ubak = u;
 	}
@@ -1124,10 +1098,10 @@ static int mask_leaves_balanced_panel (char *mask, const DATAINFO *pdinfo)
 }
 
 static int 
-make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
+make_panel_submask (char *mask, const DATASET *dset, int *err)
 {
-    int T = pdinfo->pd;
-    int N = pdinfo->n / T;
+    int T = dset->pd;
+    int N = dset->n / T;
     char *umask = NULL;
     char *pmask = NULL;
     int i, np = 0;
@@ -1145,17 +1119,17 @@ make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
 	return 0;
     }
 
-    for (i=0; i<pdinfo->n; i++) {
+    for (i=0; i<dset->n; i++) {
 	if (mask[i]) {
-	    umask[i / pdinfo->pd] = 1;
-	    pmask[i % pdinfo->pd] = 1;
+	    umask[i / dset->pd] = 1;
+	    pmask[i % dset->pd] = 1;
 	}
     }
 
-    for (i=0; i<pdinfo->n; i++) {
+    for (i=0; i<dset->n; i++) {
 	if (!mask[i]) {
-	    if (umask[i / pdinfo->pd] &&
-		pmask[i % pdinfo->pd]) {
+	    if (umask[i / dset->pd] &&
+		pmask[i % dset->pd]) {
 		mask[i] = 'p'; /* mark as padding row */
 		np++;
 	    }
@@ -1178,8 +1152,8 @@ make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
                              m == SUBSAMPLE_BOOLEAN)
 
 static int 
-make_restriction_mask (int mode, const char *s, const int *list, 
-		       double ***pZ, DATAINFO *pdinfo,
+make_restriction_mask (int mode, const char *s,
+		       const int *list, DATASET *dset,
 		       const char *oldmask, char **pmask,
 		       PRN *prn)
 {
@@ -1190,7 +1164,7 @@ make_restriction_mask (int mode, const char *s, const int *list,
 	return E_ARGS;
     }
 
-    mask = make_submask(pdinfo->n);
+    mask = make_submask(dset->n);
     if (mask == NULL) {
 	return E_ALLOC;
     }
@@ -1198,13 +1172,13 @@ make_restriction_mask (int mode, const char *s, const int *list,
     /* construct subsample mask in one of several possible ways */
 
     if (mode == SUBSAMPLE_DROP_MISSING) {   
-	err = make_missing_mask(list, (const double **) *pZ, pdinfo, mask);
+	err = make_missing_mask(list, dset, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
-	err = make_random_mask(s, oldmask, pZ, pdinfo, mask);
+	err = make_random_mask(s, oldmask, dset, mask);
     } else if (mode == SUBSAMPLE_USE_DUMMY) {
-	err = mask_from_dummy(s, (const double **) *pZ, pdinfo, mask);
+	err = mask_from_dummy(s, dset, mask);
     } else if (mode == SUBSAMPLE_BOOLEAN) {
-	err = mask_from_temp_dummy(s, pZ, pdinfo, mask, prn);
+	err = mask_from_temp_dummy(s, dset, mask, prn);
     } else {
 	gretl_errmsg_set(_("Sub-sample command failed mysteriously"));
 	err = 1;
@@ -1218,9 +1192,9 @@ make_restriction_mask (int mode, const char *s, const int *list,
 
     /* cumulate sample restrictions, if appropriate */
     if (oldmask != NULL && mode != SUBSAMPLE_RANDOM) {
-	sn = overlay_masks(mask, oldmask, pdinfo->n);
+	sn = overlay_masks(mask, oldmask, dset->n);
     } else {
-	sn = count_selected_cases(mask, pdinfo);
+	sn = count_selected_cases(mask, dset);
     }
 
     /* does this policy lead to an empty sample, or no change in the
@@ -1229,7 +1203,7 @@ make_restriction_mask (int mode, const char *s, const int *list,
     if (sn == 0) {
 	gretl_errmsg_set(_("No observations would be left!"));
 	err = 1;
-    } else if (sn == pdinfo->n) {
+    } else if (sn == dset->n) {
 	/* not really an error, just a no-op */
 	if (gretl_messages_on()) {
 	    pputs(prn, _("No observations were dropped!"));
@@ -1255,11 +1229,9 @@ make_restriction_mask (int mode, const char *s, const int *list,
 */
 
 int 
-restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
-			   gretlopt opt)
+restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 {
-    double **subZ = NULL;
-    DATAINFO *subinfo;
+    DATASET *subset;
     int err = 0;
 
     if (mask == RESAMPLED) {
@@ -1267,88 +1239,87 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    subinfo = datainfo_new();
-    if (subinfo == NULL) {
+    subset = datainfo_new();
+    if (subset == NULL) {
 	return E_ALLOC;
     }
 
-    subinfo->n = count_selected_cases(mask, pdinfo);
-    subinfo->v = pdinfo->v;
+    subset->n = count_selected_cases(mask, dset);
+    subset->v = dset->v;
 
 #if SUBDEBUG
-    fprintf(stderr, "restrict_sample_from_mask: new subinfo=%p, %d obs in subsample\n",
-	    (void *) subinfo, subinfo->n);
+    fprintf(stderr, "restrict_sample_from_mask: new subset=%p, %d obs in subsample\n",
+	    (void *) subset, subset->n);
 #endif
 
-    if (dataset_is_panel(pdinfo)) {
+    if (dataset_is_panel(dset)) {
 	/* are we able to reconstitute a panel? */
-	int nunits = count_panel_units(mask, pdinfo);
+	int nunits = count_panel_units(mask, dset);
 	int ok = 0, npad = 0;
 
-	if (nunits > 1 && subinfo->n > nunits) {
+	if (nunits > 1 && subset->n > nunits) {
 	    if (opt & OPT_B) {
 		/* only add padding rows if this was requested */
-		npad = make_panel_submask(mask, pdinfo, &err);
+		npad = make_panel_submask(mask, dset, &err);
 		fprintf(stderr, "npad = %d\n", npad);
 		if (err) {
-		    free(subinfo);
+		    free(subset);
 		    return err;
 		}
 		ok = 1;
 	    } else {		
-		ok = mask_leaves_balanced_panel(mask, pdinfo);
+		ok = mask_leaves_balanced_panel(mask, dset);
 	    } 
 	    if (ok) {
-		subinfo->structure = STACKED_TIME_SERIES;
-		subinfo->n += npad;
-		subinfo->pd = subinfo->n / nunits;
+		subset->structure = STACKED_TIME_SERIES;
+		subset->n += npad;
+		subset->pd = subset->n / nunits;
 		/* note: revised panel indices are added below */
 	    }
-	} else if (nunits == 1 && subinfo->n == pdinfo->pd) {
+	} else if (nunits == 1 && subset->n == dset->pd) {
 	    /* time series for single panel unit */
-	    subinfo->structure = SPECIAL_TIME_SERIES;
+	    subset->structure = SPECIAL_TIME_SERIES;
 	}
     }
 
     /* set up the sub-sampled datainfo */
-    if (start_new_Z(&subZ, subinfo, 1)) {
-	free(subinfo);
-	return E_ALLOC;
+    err = start_new_Z(subset, 1);
+    if (err) { 
+	free(subset);
+	return err;
     }
 
 #if SUBDEBUG
     fprintf(stderr, "incoming *pZ at %p, new subZ is at %p\n", 
-	    (void *) *pZ, (void *) subZ);
+	    (void *) *pZ, (void *) subZ); // FIXME
 #endif
 
     /* link (don't copy) varnames and descriptions, since these are
        not dependent on the series length */
-    subinfo->varname = pdinfo->varname;
-    subinfo->varinfo = pdinfo->varinfo;
-    subinfo->descrip = pdinfo->descrip;
+    subset->varname = dset->varname;
+    subset->varinfo = dset->varinfo;
+    subset->descrip = dset->descrip;
 
     /* set up case markers? */
-    if (pdinfo->markers) {
-	err = dataset_allocate_obs_markers(subinfo);
+    if (dset->markers) {
+	err = dataset_allocate_obs_markers(subset);
 	if (err) {
-	    free_Z(subZ, subinfo);
-	    free(subinfo);
+	    free_Z(subset);
+	    free(subset);
 	    return E_ALLOC;
 	}
     }
 
     /* copy across data (and case markers, if any) */
-    copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
-			   pdinfo, pdinfo->v, mask);
+    copy_data_to_subsample(subset, dset, dset->v, mask);
 
-    err = backup_full_dataset(*pZ, pdinfo);
+    err = backup_full_dataset(dset);
 
-    subinfo->submask = copy_subsample_mask(mask, &err);
+    subset->submask = copy_subsample_mask(mask, &err);
 
     /* switch pointers */
-    *pZ = subZ;
-    *pdinfo = *subinfo;
-    free(subinfo);
+    *dset = *subset;
+    free(subset);
 
     return err;
 }
@@ -1364,10 +1335,9 @@ restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
 */
 
 static char *precompute_mask (const char *s, const char *oldmask,
-			      double ***pZ, DATAINFO *pdinfo, 
-			      PRN *prn, int *err)
+			      DATASET *dset, PRN *prn, int *err)
 {
-    char *tmp = make_submask(pdinfo->n);
+    char *tmp = make_submask(dset->n);
     char *mask = NULL;
     int i, t;
 
@@ -1381,11 +1351,11 @@ static char *precompute_mask (const char *s, const char *oldmask,
     }
 
     /* fill out mask relative to current, restricted dataset */
-    *err = mask_from_temp_dummy(s, pZ, pdinfo, tmp, prn);
+    *err = mask_from_temp_dummy(s, dset, tmp, prn);
 
     if (!*err) {
 	/* make blank full-length mask */
-	mask = make_submask(fullinfo->n);
+	mask = make_submask(fullset->n);
 	if (mask == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -1394,7 +1364,7 @@ static char *precompute_mask (const char *s, const char *oldmask,
     if (!*err) {
 	/* map the new mask onto full data range */
 	i = 0;
-	for (t=0; t<fullinfo->n; t++) {
+	for (t=0; t<fullset->n; t++) {
 	    if (oldmask[t]) {
 		mask[t] = tmp[i++];
 	    }
@@ -1413,12 +1383,11 @@ static char *precompute_mask (const char *s, const char *oldmask,
 */
 
 static int set_contiguous_sample (const int *list,
-				  const double **Z,
-				  DATAINFO *pdinfo,
+				  DATASET *dset,
 				  gretlopt opt)
 {
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int err = 0;
 
     if (opt & OPT_P) {
@@ -1427,25 +1396,26 @@ static int set_contiguous_sample (const int *list,
     }
 
     if (list != NULL && list[0] > 0) {
-	err = list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, Z);
+	err = list_adjust_sample(list, &dset->t1, &dset->t2, dset);
     } else {
 	int *biglist = NULL;
 	int nvars = 0;
 
-	biglist = full_var_list(pdinfo, &nvars);
+	biglist = full_var_list(dset, &nvars);
 	if (nvars == 0) {
 	    ; /* no-op */
 	} else if (biglist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    err = list_adjust_sample(biglist, &pdinfo->t1, &pdinfo->t2, Z);
+	    err = list_adjust_sample(biglist, &dset->t1, &dset->t2, 
+				     dset);
 	    free(biglist);
 	}
     } 
 
     if (err) {
-	pdinfo->t1 = save_t1;
-	pdinfo->t2 = save_t2;
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
     }
 
     return err;
@@ -1470,15 +1440,15 @@ static int restriction_uses_obs (const char *s)
    no-missing option is chosen via the gretl GUI.
 */
 
-static int make_restriction_string (DATAINFO *pdinfo, char *old, 
+static int make_restriction_string (DATASET *dset, char *old, 
 				    const char *restr, int mode)
 {
     char *s = NULL;
     int n = 0, err = 0;
 
-    if (pdinfo->restriction != NULL) {
-	free(pdinfo->restriction);
-	pdinfo->restriction = NULL;
+    if (dset->restriction != NULL) {
+	free(dset->restriction);
+	dset->restriction = NULL;
     }
 
     if (old != NULL) {
@@ -1513,7 +1483,7 @@ static int make_restriction_string (DATAINFO *pdinfo, char *old,
 	} else if (restr != NULL) {
 	    strcat(s, restr);
 	}
-	pdinfo->restriction = s;
+	dset->restriction = s;
     }
 
     if (old != NULL) {
@@ -1525,8 +1495,7 @@ static int make_restriction_string (DATAINFO *pdinfo, char *old,
 
 /* restrict_sample: 
  * @line: command line (or %NULL).  
- * @pZ: pointer to original data array.  
- * @pdinfo: data info pointer. 
+ * @dset: dataset struct.
  * @state: structure representing program state (or %NULL).
  * @list: list of variables in case of OPT_M (or %NULL).  
  * @opt: option flags.
@@ -1553,22 +1522,24 @@ static int make_restriction_string (DATAINFO *pdinfo, char *old,
  */
 
 int restrict_sample (const char *line, const int *list,
-		     double ***pZ, DATAINFO *pdinfo, 
-		     ExecState *state, gretlopt opt, 
-		     PRN *prn)
+		     DATASET *dset, ExecState *state, 
+		     gretlopt opt, PRN *prn)
 {
     char *oldrestr = NULL;
     char *oldmask = NULL;
     char *mask = NULL;
     int free_oldmask = 0;
     int mode, err = 0;
+    
+    if (dset == NULL || dset->Z == NULL) {
+	return E_NODATA;
+    }
 
     gretl_error_clear();
 
 #if FULLDEBUG || SUBDEBUG
     fprintf(stderr, "\nrestrict_sample: '%s'\n", line);
-    fprintf(stderr, " pdinfo=%p, pZ=%p, *pZ=%p, state=%p\n", 
-	    (void *) pdinfo, (void *) pZ, (void *) *pZ,
+    fprintf(stderr, " dset=%p, state=%p\n", (void *) dset, 
 	    (void *) state);
 #endif
 
@@ -1579,8 +1550,7 @@ int restrict_sample (const char *line, const int *list,
     }
 
     if (opt & OPT_C) {
-	return set_contiguous_sample(list, (const double **) *pZ,
-				     pdinfo, opt);
+	return set_contiguous_sample(list, dset, opt);
     }	
 
     mode = get_restriction_mode(opt);
@@ -1592,13 +1562,13 @@ int restrict_sample (const char *line, const int *list,
 
     if (!(opt & OPT_P)) {
 	/* not replacing but cumulating any existing restrictions */
-	oldmask = make_current_sample_mask(pdinfo);
+	oldmask = make_current_sample_mask(dset);
 	if (oldmask == NULL) {
 	    return E_ALLOC;
 	}
 	free_oldmask = 1;
-	if (pdinfo->restriction != NULL) {
-	    oldrestr = gretl_strdup(pdinfo->restriction);
+	if (dset->restriction != NULL) {
+	    oldrestr = gretl_strdup(dset->restriction);
 	}
     } else if (state != NULL && state->submask != NULL) {
 	/* subsampling within a function, with incoming
@@ -1607,14 +1577,14 @@ int restrict_sample (const char *line, const int *list,
 	oldmask = state->submask;
     }
 
-    if (mode == SUBSAMPLE_BOOLEAN && fullinfo != NULL && 
+    if (mode == SUBSAMPLE_BOOLEAN && fullset != NULL && 
 	oldmask != NULL && restriction_uses_obs(line)) {
-	mask = precompute_mask(line, oldmask, pZ, pdinfo, prn, &err);
+	mask = precompute_mask(line, oldmask, dset, prn, &err);
     }
 
     /* restore the full data range, for housekeeping purposes */
     if (!err) {
-	err = restore_full_sample(pZ, pdinfo, NULL);
+	err = restore_full_sample(dset, NULL);
     }
 
     if (err) {
@@ -1623,7 +1593,7 @@ int restrict_sample (const char *line, const int *list,
 
     if (mask == NULL) {
 	/* not already handled by "precompute" above */
-	err = make_restriction_mask(mode, line, list, pZ, pdinfo, 
+	err = make_restriction_mask(mode, line, list, dset, 
 				    oldmask, &mask, prn);
     }
 
@@ -1635,7 +1605,7 @@ int restrict_sample (const char *line, const int *list,
 	    /* AC 2009-04-11: this check was not being done
 	       for cross-sectional data.  Why not?
 	    */
-	    contig = mask_contiguous(mask, pdinfo, &t1, &t2);
+	    contig = mask_contiguous(mask, dset, &t1, &t2);
 	}
 
 	if (contig) {
@@ -1646,13 +1616,13 @@ int restrict_sample (const char *line, const int *list,
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: got contiguous range\n");
 #endif
-	    pdinfo->t1 = t1;
-	    pdinfo->t2 = t2;
+	    dset->t1 = t1;
+	    dset->t2 = t2;
 	} else {
 #if SUBDEBUG
 	    fprintf(stderr, "restrict sample: using mask\n");
 #endif
-	    err = restrict_sample_from_mask(mask, pZ, pdinfo, opt);
+	    err = restrict_sample_from_mask(mask, dset, opt);
 	}
     }
 
@@ -1662,7 +1632,7 @@ int restrict_sample (const char *line, const int *list,
 	free(oldmask);
     }
 
-    make_restriction_string(pdinfo, oldrestr, line, mode);
+    make_restriction_string(dset, oldrestr, line, mode);
 
     return err;
 }
@@ -1672,14 +1642,14 @@ enum {
     SMPL_T2
 };
 
-static int panel_round (const DATAINFO *pdinfo, int t, int code)
+static int panel_round (const DATASET *dset, int t, int code)
 {
     if (code == SMPL_T1) {
-	while ((t + 1) % pdinfo->pd != 1) {
+	while ((t + 1) % dset->pd != 1) {
 	    t++;
 	}
     } else {
-	while ((t + 1) % pdinfo->pd != 0) {
+	while ((t + 1) % dset->pd != 0) {
 	    t--;
 	}
     }
@@ -1687,8 +1657,7 @@ static int panel_round (const DATAINFO *pdinfo, int t, int code)
     return t;
 }
 
-static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
-			 int *err)
+static int smpl_get_int (const char *s, DATASET *dset, int *err)
 {
     int k;
 
@@ -1697,57 +1666,60 @@ static int smpl_get_int (const char *s, double ***pZ, DATAINFO *pdinfo,
     } else if (gretl_is_scalar(s)) {
 	k = gretl_scalar_get_value(s);
     } else {
-	k = (int) generate_scalar(s, pZ, pdinfo, err);
+	k = (int) generate_scalar(s, dset, err);
     }
 
     return k;
 }
 
-static int get_sample_limit (char *s, double ***pZ, DATAINFO *pdinfo,
-			     int code)
+static int get_sample_limit (char *s, DATASET *dset, int code)
 {
     int ret = -1;
     int err = 0;
 
     if (*s == '-' || *s == '+') {
 	/* increment/decrement form */
-	int incr = smpl_get_int(s + 1, pZ, pdinfo, &err);
+	int incr = smpl_get_int(s + 1, dset, &err);
 
 	if (!err) {
 	    if (*s == '-') {
 		incr = -incr;
 	    }
-	    if (dataset_is_panel(pdinfo)) {
-		incr *= pdinfo->pd;
+	    if (dataset_is_panel(dset)) {
+		incr *= dset->pd;
 	    }
 	    if (code == SMPL_T1) {
-		ret = pdinfo->t1 + incr;
+		ret = dset->t1 + incr;
 	    } else {
-		ret = pdinfo->t2 + incr;
+		ret = dset->t2 + incr;
 	    }
 	}
     } else {
 	/* absolute form */
-	ret = get_t_from_obs_string(s, (const double **) *pZ, pdinfo);
+	ret = get_t_from_obs_string(s, dset);
 	if (ret < 0) {
-	    ret = smpl_get_int(s, pZ, pdinfo, &err);
+	    ret = smpl_get_int(s, dset, &err);
 	    /* convert to base 0 */
 	    if (!err) ret--;
 	}
-	if (ret >= 0 && dataset_is_panel(pdinfo)) {
-	    ret = panel_round(pdinfo, ret, code);
+	if (ret >= 0 && dataset_is_panel(dset)) {
+	    ret = panel_round(dset, ret, code);
 	}
     }
 
     return ret;
 }
 
-int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
+int set_sample (const char *line, DATASET *dset)
 {
-    int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
+    int nf, new_t1 = dset->t1, new_t2 = dset->t2;
     int tmin = 0, tmax = 0;
     char newstart[VNAMELEN+1];
     char newstop[VNAMELEN+1];
+
+    if (dset == NULL) {
+	return E_NODATA;
+    }
 
     gretl_error_clear();
 
@@ -1757,17 +1729,17 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
     nf = count_fields(line);
 
 #if SUBDEBUG
-    fprintf(stderr, "set_sample: line='%s', nf=%d, pdinfo=%p\n", 
-	    line, nf, (void *) pdinfo);
-    if (pdinfo != NULL) {
-	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d, pd = %d\n",
-		pdinfo->v, pdinfo->n, pdinfo->pd);
+    fprintf(stderr, "set_sample: line='%s', nf=%d, dset=%p\n", 
+	    line, nf, (void *) dset);
+    if (dset != NULL) {
+	fprintf(stderr, "dset->v = %d, dset->n = %d, pd = %d\n",
+		dset->v, dset->n, dset->pd);
     }
 #endif
 
-    if (nf == 2 && pdinfo->n == 0) {
+    if (nf == 2 && dset->n == 0) {
 	/* database special */
-	return db_set_sample(line, pdinfo);
+	return db_set_sample(line, dset);
     }
 
     if (nf == 0) {
@@ -1775,7 +1747,7 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 	return 0;
     }
 
-    sample_range_get_extrema(pdinfo, &tmin, &tmax);
+    sample_range_get_extrema(dset, &tmin, &tmax);
 
 #if SUBDEBUG
     fprintf(stderr, "sample extrema: lo = %d, hi = %d\n", tmin, tmax);
@@ -1786,12 +1758,12 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 	    gretl_errmsg_set(_("error reading smpl line"));
 	    return 1;
 	} else {
-	    new_t1 = get_sample_limit(newstart, pZ, pdinfo, SMPL_T1);
+	    new_t1 = get_sample_limit(newstart, dset, SMPL_T1);
 	    if (new_t1 < tmin || new_t1 > tmax) {
 		gretl_errmsg_set(_("error in new starting obs"));
 		return 1;
 	    }
-	    pdinfo->t1 = new_t1;
+	    dset->t1 = new_t1;
 	    return 0;
 	}
     }
@@ -1804,7 +1776,7 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (strcmp(newstart, ";")) {
-	new_t1 = get_sample_limit(newstart, pZ, pdinfo, SMPL_T1);
+	new_t1 = get_sample_limit(newstart, dset, SMPL_T1);
 	if (new_t1 < tmin || new_t1 > tmax) {
 	    gretl_errmsg_set(_("error in new starting obs"));
 	    return 1;
@@ -1812,7 +1784,7 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (strcmp(newstop, ";")) {
-	new_t2 = get_sample_limit(newstop, pZ, pdinfo, SMPL_T2);
+	new_t2 = get_sample_limit(newstop, dset, SMPL_T2);
 	if (new_t2 < tmin || new_t2 > tmax) {
 	    gretl_errmsg_set(_("error in new ending obs"));
 	    return 1;
@@ -1824,16 +1796,15 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
 	return 1;
     }
 
-    pdinfo->t1 = new_t1;
-    pdinfo->t2 = new_t2;
+    dset->t1 = new_t1;
+    dset->t2 = new_t2;
 
     return 0;
 }
 
 /**
  * count_missing_values:
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: use %OPT_V for verbose operation, %OPT_A to 
  * examine all data.
  * @prn: printing struct.
@@ -1849,8 +1820,8 @@ int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo)
  * otherwise the total number of missing values.
  */
 
-int count_missing_values (const double **Z, const DATAINFO *pdinfo, 
-			  gretlopt opt, PRN *prn, int *err)
+int count_missing_values (const DATASET *dset, gretlopt opt, 
+			  PRN *prn, int *err)
 {
     int missval = 0, missobs = 0, totvals = 0, oldmiss = 0;
     int T, t1, t2;
@@ -1860,32 +1831,32 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
 
     if (opt & OPT_A) {
 	t1 = 0;
-	t2 = pdinfo->n - 1;
+	t2 = dset->n - 1;
     } else {
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
+	t1 = dset->t1;
+	t2 = dset->t2;
     }
 
     T = t2 - t1 + 1;
 
-    missvec = malloc(pdinfo->v * sizeof missvec);
+    missvec = malloc(dset->v * sizeof missvec);
 
     if (missvec == NULL) {
 	*err = E_ALLOC;
 	return 0;
     }
 
-    for (i=0; i<pdinfo->v; i++) {
+    for (i=0; i<dset->v; i++) {
 	missvec[i] = 0;
     }
 
     for (t=t1; t<=t2; t++) {
 	tmiss = 0;
-	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_hidden(pdinfo, i)) {
+	for (i=1; i<dset->v; i++) {
+	    if (var_is_hidden(dset, i)) {
 		continue;
 	    }
-	    if (na(Z[i][t])) {
+	    if (na(dset->Z[i][t])) {
 		if (missvec[i] == 0) {
 		    missvec[0] += 1;
 		}
@@ -1902,13 +1873,13 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
 
 	    if (opt & OPT_V) {
 		/* verbose print by observation */
-		if (pdinfo->markers) { 
-		    pprintf(prn, "%8s %4d %s\n", pdinfo->S[t], tmiss,
+		if (dset->markers) { 
+		    pprintf(prn, "%8s %4d %s\n", dset->S[t], tmiss,
 			    _("missing values"));
 		} else {
 		    char tmp[OBSLEN];
 
-		    ntodate(tmp, t, pdinfo);
+		    ntodate(tmp, t, dset);
 		    pprintf(prn, "%8s %4d %s\n", tmp, tmiss,
 			    _("missing values"));
 		}
@@ -1928,11 +1899,11 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
 
     if (missvec[0] > 0) {
 	pputc(prn, '\n');
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    if (missvec[i] > 0) {
 		missfrac = 100.0 * (double) missvec[i] / T;
 		pprintf(prn, "%8s: %d %s (%.2f%%); %d %s (%.2f%%)\n", 
-			pdinfo->varname[i], missvec[i], _("missing values"),
+			dset->varname[i], missvec[i], _("missing values"),
 			missfrac, T - missvec[i], _("valid values"),
 			100.0 - missfrac);
 	    }
@@ -1944,7 +1915,7 @@ int count_missing_values (const double **Z, const DATAINFO *pdinfo,
     return missval;
 }
 
-static void copy_series_info (DATAINFO *dest, const DATAINFO *src,
+static void copy_series_info (DATASET *dest, const DATASET *src,
 			      int maxv)
 {
     int i;
@@ -1954,18 +1925,6 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src,
 	if (src->varinfo != NULL) {
 	    copy_varinfo(dest->varinfo[i], src->varinfo[i]);
 	}
-    }
-}
-
-void free_model_dataset (MODEL *pmod)
-{
-    if (pmod->dataset != NULL) {
-#if SUBDEBUG
-	fprintf(stderr, "freeing pmod->dataset\n");
-#endif
-	destroy_dataset(pmod->dataset->Z, pmod->dataset->dinfo);
-	free(pmod->dataset);
-	pmod->dataset = NULL;
     }
 }
 
@@ -1986,34 +1945,30 @@ void free_model_dataset (MODEL *pmod)
    OPT_G is given we include only the constant.
 */
 
-int add_dataset_to_model (MODEL *pmod, const double **Z, 
-			  const DATAINFO *pdinfo,
+int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
 			  gretlopt opt)
 {
-    const double **srcZ;
-    const DATAINFO *srcinfo;
-    double **modZ = NULL;
-    DATAINFO *modinfo = NULL;
+    const DATASET *srcset;
     char *mask = NULL;
     int maxv, sn = 0;
 
     if (pmod->dataset != NULL) {
-	free_model_dataset(pmod);
+	/* FIXME? */
+	destroy_dataset(pmod->dataset);
+	pmod->dataset = NULL;
     }    
 
-    if (fullZ != NULL) {
-	sync_datainfo_members(pdinfo);
-	srcZ = (const double **) fullZ;
-	srcinfo = fullinfo;
+    if (fullset != NULL) {
+	sync_datainfo_members(dset);
+	srcset = fullset;
     } else {
-	srcZ = Z;
-	srcinfo = pdinfo;
+	srcset = dset;
     }
 
     if (pmod->submask == NULL) {
 	/* no subsample info: pmod was estimated on the full dataset,
 	   so we'll reconstruct the full dataset */
-	sn = srcinfo->n;
+	sn = srcset->n;
 #if SUBDEBUG
 	fprintf(stderr, "pmod->submask = NULL, set sn = %d\n", sn);
 #endif
@@ -2022,11 +1977,11 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
 	   be reconstructed */
 	int t;
 
-	mask = calloc(srcinfo->n, 1);
+	mask = calloc(srcset->n, 1);
 	if (mask == NULL) {
 	    return E_ALLOC;
 	}
-	for (t=0; t<srcinfo->n; t++) {
+	for (t=0; t<srcset->n; t++) {
 	    if (pmod->submask[t] > 0) {
 		mask[t] = 1;
 		sn++;
@@ -2038,9 +1993,17 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
 	}
     }
 
-    pmod->dataset = malloc(sizeof *pmod->dataset);
+    if (opt & OPT_F) {
+	maxv = srcset->v;
+    } else if (opt & OPT_G) {
+	maxv = 1;
+    } else {
+	maxv = highest_numbered_var_in_model(pmod, dset) + 1;
+    }
+
+    /* allocate auxiliary dataset */
+    pmod->dataset = create_auxiliary_dataset(maxv, sn);
     if (pmod->dataset == NULL) {
-	free(mask);
 	return E_ALLOC;
     }
 
@@ -2049,28 +2012,11 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
 	    (void *) pmod->dataset);
 #endif
 
-    if (opt & OPT_F) {
-	maxv = srcinfo->v;
-    } else if (opt & OPT_G) {
-	maxv = 1;
-    } else {
-	maxv = highest_numbered_var_in_model(pmod, pdinfo) + 1;
-    }
-
-    /* allocate auxiliary dataset */
-    modinfo = create_auxiliary_dataset(&modZ, maxv, sn);
-    if (modinfo == NULL) {
-	free(mask);
-	free(pmod->dataset);
-	pmod->dataset = NULL;
-	return E_ALLOC;
-    }
-
     /* copy across info on series */
-    copy_series_info(modinfo, srcinfo, maxv);
+    copy_series_info(pmod->dataset, srcset, maxv);
 
     /* copy across data */
-    copy_data_to_subsample(modZ, modinfo, srcZ, srcinfo, maxv, mask);
+    copy_data_to_subsample(pmod->dataset, srcset, maxv, mask);
 
     /* dataset characteristics such as pd: if we're rebuilding the
        full dataset copy these across; but if we're reconstructing a
@@ -2078,15 +2024,12 @@ int add_dataset_to_model (MODEL *pmod, const double **Z,
        wrong, and we stay with the simple defaults
     */
     if (pmod->submask == NULL) {
-	modinfo->pd = srcinfo->pd;
-	modinfo->sd0 = srcinfo->sd0;
-	strcpy(modinfo->stobs, srcinfo->stobs);
-	strcpy(modinfo->endobs, srcinfo->endobs);
-	modinfo->structure = srcinfo->structure;
+	pmod->dataset->pd = srcset->pd;
+	pmod->dataset->sd0 = srcset->sd0;
+	strcpy(pmod->dataset->stobs, srcset->stobs);
+	strcpy(pmod->dataset->endobs, srcset->endobs);
+	pmod->dataset->structure = srcset->structure;
     }
-
-    pmod->dataset->Z = modZ;
-    pmod->dataset->dinfo = modinfo;
 
     free(mask);
 
@@ -2112,19 +2055,19 @@ static int submask_match (const char *s1, const char *s2, int n)
     return 1;
 }
 
-/* check the subsample mask from a model (or modelspec) against 
-   datainfo to see if it may have been estimated on a different
+/* check the subsample mask from a model against datainfo to 
+   see if it may have been estimated on a different
    (subsampled) data set from the current one
 */
 
-int model_sample_problem (MODEL *pmod, const DATAINFO *pdinfo)
+int model_sample_problem (MODEL *pmod, const DATASET *dset)
 {
-    int n = pdinfo->n;
+    int n = dset->n;
     int ret = 1;
 
     if (pmod->submask == NULL) {
 	/* the model has no sub-sampling info recorded */
-	if (pdinfo->submask == NULL) {
+	if (dset->submask == NULL) {
 	    /* data set is not sub-sampled either, OK */
 	    ret = 0;
 	} else {
@@ -2134,11 +2077,11 @@ int model_sample_problem (MODEL *pmod, const DATAINFO *pdinfo)
 	}
     } else {
 	/* the model does have sub-sampling info recorded */
-	if (pdinfo->submask == NULL) {
+	if (dset->submask == NULL) {
 	    fputs(I_("model is subsampled, dataset is not\n"), stderr);
 	    gretl_errmsg_set(_("model is subsampled, dataset is not\n"));
 	    ret = 1;
-	} else if (submask_match(pdinfo->submask, pmod->submask, n)) {
+	} else if (submask_match(dset->submask, pmod->submask, n)) {
 	    /* the subsamples (model and current data set) agree, OK */
 	    ret = 0;
 	} else {
@@ -2148,31 +2091,26 @@ int model_sample_problem (MODEL *pmod, const DATAINFO *pdinfo)
 	}
     }
 
-    if (ret == 0 && pmod->dataset != NULL) {
-	/* the model carries a now redundant auxiliary dataset */
-	free_model_dataset(pmod);
-    }
-
     return ret;
 }
 
-static void dataset_type_string (char *str, const DATAINFO *pdinfo)
+static void dataset_type_string (char *str, const DATASET *dset)
 {
-    if (dataset_is_time_series(pdinfo)) {
+    if (dataset_is_time_series(dset)) {
 	strcpy(str, _("time series"));
-    } else if (dataset_is_panel(pdinfo)) {
+    } else if (dataset_is_panel(dset)) {
         strcpy(str, _("panel"));
     } else {
         strcpy(str, _("undated"));
     }
 }
 
-static void pd_string (char *str, const DATAINFO *pdinfo)
+static void pd_string (char *str, const DATASET *dset)
 {
-    if (custom_time_series(pdinfo)) {
+    if (custom_time_series(dset)) {
 	strcpy(str, _("special"));
     } else {
-	switch (pdinfo->pd) {
+	switch (dset->pd) {
 	case 1:
 	    strcpy(str, _("annual")); break;
 	case 4:
@@ -2195,64 +2133,64 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
     }
 }
 
-void print_sample_obs (const DATAINFO *pdinfo, PRN *prn)
+void print_sample_obs (const DATASET *dset, PRN *prn)
 {
     char d1[OBSLEN], d2[OBSLEN];
 
-    ntodate(d1, pdinfo->t1, pdinfo);
-    ntodate(d2, pdinfo->t2, pdinfo);
+    ntodate(d1, dset->t1, dset);
+    ntodate(d2, dset->t2, dset);
 
     pprintf(prn, "%s: %s - %s", _("Current sample"), d1, d2);
-    pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
+    pprintf(prn, " (n = %d)\n", dset->t2 - dset->t1 + 1);
 }
 
-void print_sample_status (const DATAINFO *pdinfo, PRN *prn)
+void print_sample_status (const DATASET *dset, PRN *prn)
 {
     char tmp[128];
 
     if (complex_subsampled()) {
 	pprintf(prn, "%s\n\n", _("Full dataset"));
-	dataset_type_string(tmp, fullinfo);
+	dataset_type_string(tmp, fullset);
 	pprintf(prn, "%s: %s\n", _("Type"), tmp);
-	if (dataset_is_time_series(fullinfo)) {
-	    pd_string(tmp, fullinfo);
+	if (dataset_is_time_series(fullset)) {
+	    pd_string(tmp, fullset);
 	    pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
-	} else if (dataset_is_panel(fullinfo)) {
-	    int nu = fullinfo->n / fullinfo->pd;
+	} else if (dataset_is_panel(fullset)) {
+	    int nu = fullset->n / fullset->pd;
 
 	    pprintf(prn, "%s: %d\n", _("Number of cross-sectional units"), nu);
-	    pprintf(prn, "%s: %d\n", _("Number of time periods"), fullinfo->pd);
+	    pprintf(prn, "%s: %d\n", _("Number of time periods"), fullset->pd);
 	}
 	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Range"), 
-		fullinfo->stobs, fullinfo->endobs, fullinfo->n);
+		fullset->stobs, fullset->endobs, fullset->n);
 
 	pprintf(prn, "\n%s\n", _("Subsampled data"));
-	if (pdinfo->restriction != NULL) {
-	    pprintf(prn, "(%s: %s)\n\n", _("restriction"), pdinfo->restriction);
+	if (dset->restriction != NULL) {
+	    pprintf(prn, "(%s: %s)\n\n", _("restriction"), dset->restriction);
 	} else {
 	    pputc(prn, '\n');
 	}
     }	
 
-    dataset_type_string(tmp, pdinfo);
+    dataset_type_string(tmp, dset);
     pprintf(prn, "%s: %s\n", _("Type"), tmp);
-    if (dataset_is_time_series(pdinfo)) {
-	pd_string(tmp, pdinfo);
+    if (dataset_is_time_series(dset)) {
+	pd_string(tmp, dset);
 	pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
-    } else if (dataset_is_panel(pdinfo)) {
-	int nu = pdinfo->n / pdinfo->pd;
+    } else if (dataset_is_panel(dset)) {
+	int nu = dset->n / dset->pd;
 
 	pprintf(prn, "%s: %d\n", _("Number of cross-sectional units"), nu);
-	pprintf(prn, "%s: %d\n", _("Number of time periods"), pdinfo->pd);
+	pprintf(prn, "%s: %d\n", _("Number of time periods"), dset->pd);
     }	
     pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full range"), 
-	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
-    print_sample_obs(pdinfo, prn); 
+	    dset->stobs, dset->endobs, dset->n);
+    print_sample_obs(dset, prn); 
 }
 
 /**
  * data_report:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @fname: filename for current datafile.
  * @prn: gretl printing struct.
  * 
@@ -2262,14 +2200,14 @@ void print_sample_status (const DATAINFO *pdinfo, PRN *prn)
  * 
  */
 
-int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn)
+int data_report (const DATASET *dset, const char *fname, PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN], tmp[MAXLEN];
     char tstr[48];
     int i;
 
-    ntodate(startdate, 0, pdinfo);
-    ntodate(enddate, pdinfo->n - 1, pdinfo);
+    ntodate(startdate, 0, dset);
+    ntodate(enddate, dset->n - 1, dset);
 
     sprintf(tmp, _("Data file %s\nas of"), 
 	    (*fname != '\0')? fname : _("(unsaved)"));
@@ -2277,28 +2215,28 @@ int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn)
     print_time(tstr);
     pprintf(prn, "%s %s\n\n", tmp, tstr);
 
-    if (pdinfo->descrip != NULL && *pdinfo->descrip != '\0') {
+    if (dset->descrip != NULL && *dset->descrip != '\0') {
 	pprintf(prn, "%s:\n\n", _("Description"));
-	pputs(prn, pdinfo->descrip);
+	pputs(prn, dset->descrip);
 	pputs(prn, "\n\n");
     }
 
-    dataset_type_string(tmp, pdinfo);
+    dataset_type_string(tmp, dset);
     pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
     
-    if (dataset_is_time_series(pdinfo)) {
-	pd_string(tmp, pdinfo);
+    if (dataset_is_time_series(dset)) {
+	pd_string(tmp, dset);
 	pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
     }	
 
     pprintf(prn, "%s: %s - %s (n = %d)\n\n", _("Range"),
-	    startdate, enddate, pdinfo->n);
+	    startdate, enddate, dset->n);
 
     pprintf(prn, "%s:\n\n", _("Listing of variables"));
 
-    for (i=1; i<pdinfo->v; i++) {
-	pprintf(prn, "%*s  %s\n", VNAMELEN, pdinfo->varname[i], 
-		VARLABEL(pdinfo, i));
+    for (i=1; i<dset->v; i++) {
+	pprintf(prn, "%*s  %s\n", VNAMELEN, dset->varname[i], 
+		VARLABEL(dset, i));
     }
 
     return 0;

@@ -87,7 +87,7 @@ typedef int (*DEBUG_OUTPUT) (void *);
 
 int libset_init (void);
 void libset_cleanup (void);
-int libset_restore_state_zero (DATAINFO *pdinfo);
+int libset_restore_state_zero (DATASET *dset);
 
 int push_program_state (void);
 int pop_program_state (void);
@@ -114,8 +114,8 @@ void set_garch_robust_vcv (const char *s);
 int get_hac_lag (int T);
 int data_based_hac_bandwidth (void);
 
-int get_bkbp_k (const DATAINFO *pdinfo);
-void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u);
+int get_bkbp_k (const DATASET *dset);
+void get_bkbp_periods (const DATASET *dset, int *l, int *u);
 
 void set_mp_bits (int b);
 int get_mp_bits (void);
@@ -153,14 +153,13 @@ int gretl_debugging_on (void);
 void shelldir_init (const char *s);
 char *get_shelldir (void);
 
-char get_csv_delim (const DATAINFO *pdinfo);
+char get_csv_delim (const DATASET *dset);
 
 const char *get_csv_na_string (void);
 void set_csv_na_string (const char *s);
 
-int execute_set_line (const char *line, const double **Z,
-		      DATAINFO *pdinfo, gretlopt opt, 
-		      PRN *prn);
+int execute_set_line (const char *line, DATASET *dset, 
+		      gretlopt opt, PRN *prn);
 
 void set_iter_print_func (ITER_PRINT_FUNC func);
 int iter_print_callback (int i, PRN *prn);

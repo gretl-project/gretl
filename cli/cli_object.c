@@ -61,7 +61,7 @@ static int cli_parse_object_request (const char *line,
 }
 
 static int object_command_setup (CMD *pcmd, char *cmdstr,
-				 double ***pZ, DATAINFO *pdinfo)
+				 DATASET *dset)
 {
     char *myline;
     int err = 0;
@@ -74,7 +74,7 @@ static int object_command_setup (CMD *pcmd, char *cmdstr,
 	gretl_cmd_init(pcmd);
 	*myline = 0;
 	strncat(myline, cmdstr, MAXLINE - 1);
-	err = parse_command_line(myline, pcmd, pZ, pdinfo);
+	err = parse_command_line(myline, pcmd, dset);
 	free(myline);
     }
 
@@ -83,13 +83,13 @@ static int object_command_setup (CMD *pcmd, char *cmdstr,
 
 static int 
 object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, 
-			  double ***pZ, DATAINFO *pdinfo,
-			  MODEL **models, PRN *prn)
+			  DATASET *dset, MODEL **models, 
+			  PRN *prn)
 {
     CMD mycmd;
     int err;
 
-    err = object_command_setup(&mycmd, cmdstr, pZ, pdinfo);
+    err = object_command_setup(&mycmd, cmdstr, dset);
     if (err) {
 	return err;
     }
@@ -97,10 +97,10 @@ object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr,
     clear_model(models[1]);
     if (action == OBJ_ACTION_ADD) {
 	err = add_test(mycmd.list, pmod, models[1], 
-		       pZ, pdinfo, mycmd.opt, prn);
+		       dset, mycmd.opt, prn);
     } else {
 	err = omit_test(mycmd.list, pmod, models[1],
-			pZ, pdinfo, mycmd.opt, prn);
+			dset, mycmd.opt, prn);
     }
 
     if (err) {
@@ -119,20 +119,19 @@ object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr,
 }
 
 static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr, 
-			    double ***pZ, DATAINFO *pdinfo,
-			    PRN *prn)
+			    DATASET *dset, PRN *prn)
 {
     GRETL_VAR *var;
     CMD mycmd;
     int err;
 
-    err = object_command_setup(&mycmd, cmdstr, pZ, pdinfo);
+    err = object_command_setup(&mycmd, cmdstr, dset);
     if (err) {
 	return err;
     }
 
-    var = gretl_VAR_omit_test(mycmd.list, orig, (const double **) *pZ, 
-			      pdinfo, prn, &err);
+    var = gretl_VAR_omit_test(mycmd.list, orig, dset, 
+			      prn, &err);
     gretl_VAR_free(var);
 
     if (err) {
@@ -145,8 +144,9 @@ static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr,
 }
 
 static int saved_object_action (const char *line, 
-				double ***pZ, DATAINFO *pdinfo,
-				MODEL **models, PRN *prn)
+				DATASET *dset,
+				MODEL **models, 
+				PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
     char *param = NULL;
@@ -183,30 +183,29 @@ static int saved_object_action (const char *line,
 
     if (action == OBJ_ACTION_SHOW) {
 	if (type == GRETL_OBJ_EQN) {
-	    printmodel((MODEL *) ptr, pdinfo, OPT_NONE, prn);
+	    printmodel((MODEL *) ptr, dset, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    gretl_VAR_print((GRETL_VAR *) ptr, pdinfo, OPT_NONE, prn);
+	    gretl_VAR_print((GRETL_VAR *) ptr, dset, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_SYS) {
 	    err = equation_system_estimate((equation_system *) ptr, 
-					   pZ, pdinfo, OPT_NONE, prn);
+					   dset, OPT_NONE, prn);
 	} 
     } else if (action == OBJ_ACTION_SHOW_STAT) {
-	err = print_object_var(objname, param, pZ, pdinfo, prn);
+	err = print_object_var(objname, param, dset, prn);
     } else if (action == OBJ_ACTION_IRF) {
-	err = gretl_VAR_do_irf((GRETL_VAR *) ptr, line, 
-			       (const double **) *pZ, pdinfo);
+	err = gretl_VAR_do_irf((GRETL_VAR *) ptr, line, dset);
     } else if (action == OBJ_ACTION_FREE) {
 	gretl_object_unref(ptr, GRETL_OBJ_ANY);
     } else if (action == OBJ_ACTION_ADD) {
 	err = object_model_add_or_omit((MODEL *) ptr, action, param, 
-				       pZ, pdinfo, models, prn);
+				       dset, models, prn);
     } else if (action == OBJ_ACTION_OMIT) {
 	if (type == GRETL_OBJ_EQN) {
 	    err = object_model_add_or_omit((MODEL *) ptr, action, param, 
-					   pZ, pdinfo, models, prn);
+					   dset, models, prn);
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = object_VAR_omit((GRETL_VAR *) ptr, param, 
-				  pZ, pdinfo, prn);
+				  dset, prn);
 	}
     }
 

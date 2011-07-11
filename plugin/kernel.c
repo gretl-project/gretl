@@ -248,10 +248,10 @@ static void set_kernel_params (kernel_info *kinfo,
 #define MINOBS 30
 
 static double *
-get_sorted_x (const double *y, const DATAINFO *pdinfo,
+get_sorted_x (const double *y, const DATASET *dset,
 	      int *pn, int *err)
 {
-    int len = sample_size(pdinfo);
+    int len = sample_size(dset);
     double *x = malloc(len * sizeof *x);
     int n;
 
@@ -260,7 +260,7 @@ get_sorted_x (const double *y, const DATAINFO *pdinfo,
 	return NULL;
     } 
 
-    n = transcribe_array(x, y, pdinfo);
+    n = transcribe_array(x, y, dset);
     if (n < MINOBS) {
 	*err = E_TOOFEW;
 	free(x);
@@ -275,14 +275,14 @@ get_sorted_x (const double *y, const DATAINFO *pdinfo,
 }
 
 int 
-kernel_density (const double *y, const DATAINFO *pdinfo,
+kernel_density (const double *y, const DATASET *dset,
 		double bwscale, const char *label,
 		gretlopt opt)
 {
     kernel_info kinfo;
     int err = 0;
 
-    kinfo.x = get_sorted_x(y, pdinfo, &kinfo.n, &err);
+    kinfo.x = get_sorted_x(y, dset, &kinfo.n, &err);
     if (err) {
 	return err;
     }
@@ -297,13 +297,13 @@ kernel_density (const double *y, const DATAINFO *pdinfo,
 }
 
 gretl_matrix * 
-kernel_density_matrix (const double *y, const DATAINFO *pdinfo,
+kernel_density_matrix (const double *y, const DATASET *dset,
 		       double bwscale, gretlopt opt, int *err)
 {
     gretl_matrix *m = NULL;
     kernel_info kinfo;
 
-    kinfo.x = get_sorted_x(y, pdinfo, &kinfo.n, err);
+    kinfo.x = get_sorted_x(y, dset, &kinfo.n, err);
     if (*err) {
 	return NULL;
     }

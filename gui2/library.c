@@ -382,7 +382,7 @@ static int cmd_init (const char *s, int flag)
 	if (flag == CONSOLE_EXEC) {
 	    pputs(echo, "# via console\n");
 	}
-	echo_cmd(&libcmd, datainfo, s, CMD_RECORDING, echo);
+	echo_cmd(&libcmd, dataset, s, CMD_RECORDING, echo);
 	buf = gretl_print_get_buffer(echo);
 #if CMD_DEBUG
 	fprintf(stderr, "from echo_cmd: buf='%s'\n", buf);
@@ -434,7 +434,7 @@ int check_specific_command (char *s)
 #endif
 
     /* "libcmd" is global */
-    err = parse_command_line(s, &libcmd, &Z, datainfo); 
+    err = parse_command_line(s, &libcmd, dataset); 
     if (err) {
 	gui_errmsg(err);
     } 
@@ -464,7 +464,7 @@ static int *command_list_from_string (char *s)
     err = gretl_cmd_init(&mycmd);
 
     if (!err) {
-	err = parse_command_line(s, &mycmd, &Z, datainfo);
+	err = parse_command_line(s, &mycmd, dataset);
 	if (!err) {
 	    list = gretl_list_copy(mycmd.list);
 	}
@@ -493,31 +493,31 @@ static int add_or_replace_series (double *x, const char *vname,
 				  const char *descrip,
 				  int flag)
 {
-    int v = series_index(datainfo, vname);
+    int v = series_index(dataset, vname);
     int err = 0;
 
-    if (v > 0 && v < datainfo->v) {
+    if (v > 0 && v < dataset->v) {
 	/* replacing */
-	err = dataset_replace_series(Z, datainfo, v, x,
+	err = dataset_replace_series(dataset, v, x,
 				     descrip, flag);
     } else {
 	/* adding */
 	if (flag == DS_GRAB_VALUES) {
-	    err = dataset_add_allocated_series(x, &Z, datainfo);
+	    err = dataset_add_allocated_series(x, dataset);
 	} else {
-	    err = dataset_add_series(1, &Z, datainfo);
+	    err = dataset_add_series(1, dataset);
 	}
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    v = datainfo->v - 1;
-	    strcpy(datainfo->varname[v], vname);
-	    var_set_description(datainfo, v, descrip);
+	    v = dataset->v - 1;
+	    strcpy(dataset->varname[v], vname);
+	    var_set_description(dataset, v, descrip);
 	    if (flag == DS_COPY_VALUES) {
 		int t;
 
-		for (t=0; t<datainfo->n; t++) {
-		    Z[v][t] = x[t];
+		for (t=0; t<dataset->n; t++) {
+		    dataset->Z[v][t] = x[t];
 		}
 	    }
 	}
@@ -572,16 +572,16 @@ void add_mahalanobis_data (windata_t *vwin)
 void add_pca_data (windata_t *vwin)
 {
     VMatrix *cmat = (VMatrix *) vwin->data;
-    int oldv = datainfo->v;
+    int oldv = dataset->v;
     int err;
 
-    err = call_pca_plugin(cmat, &Z, datainfo, OPT_D, NULL);
+    err = call_pca_plugin(cmat, dataset, OPT_D, NULL);
 
     if (err) {
 	gui_errmsg(err);
-    } else if (datainfo->v > oldv) {
+    } else if (dataset->v > oldv) {
 	/* if data were added, register the command */
-	int addv = datainfo->v - oldv;
+	int addv = dataset->v - oldv;
 	char *liststr = gretl_list_to_string(cmat->list);
 	gretlopt opt = (addv == cmat->list[0])? OPT_O : OPT_A;
 	const char *flagstr = print_flags(opt, PCA);
@@ -613,8 +613,7 @@ void VECM_add_EC_data (GtkAction *action, gpointer p)
     int err = 0;
 
     EC_num_from_action(action, &j);
-    x = gretl_VECM_get_EC(var, j, (const double **) Z, 
-			  datainfo, &err);
+    x = gretl_VECM_get_EC(var, j, dataset, &err);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -672,8 +671,8 @@ void add_fcast_data (windata_t *vwin)
     if (!err) {
 	char stobs[OBSLEN], endobs[OBSLEN];
 
-	ntodate(stobs, fr->t1, datainfo);
-	ntodate(endobs, fr->t2, datainfo);
+	ntodate(stobs, fr->t1, dataset);
+	ntodate(endobs, fr->t2, dataset);
 
 	gretl_command_sprintf("fcast %s %s %s", stobs, endobs, vname);
 	model_command_init(fr->model_ID);
@@ -682,7 +681,7 @@ void add_fcast_data (windata_t *vwin)
 
 static const char *selected_varname (void)
 {
-    return datainfo->varname[mdata_active_var()];
+    return dataset->varname[mdata_active_var()];
 }
 
 void do_menu_op (int ci, const char *liststr, gretlopt opt)
@@ -757,13 +756,13 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 
     case CORR:
     case PCA:
-	obj = corrlist(libcmd.list, (const double **) Z, datainfo, 
+	obj = corrlist(libcmd.list, dataset, 
 		       (ci == PCA)? (opt | OPT_U) : opt, &err);
 	if (!err) {
 	    if (ci == CORR) {
-		print_corrmat(obj, datainfo, prn);
+		print_corrmat(obj, dataset, prn);
 	    } else {
-		err = call_pca_plugin((VMatrix *) obj, &Z, datainfo, 
+		err = call_pca_plugin((VMatrix *) obj, dataset, 
 				      OPT_NONE, prn);
 	    }
 	}	    
@@ -771,11 +770,10 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 
     case XTAB:
 	if (libcmd.list[0] == 2) {
-	    obj = single_crosstab(libcmd.list, (const double **) Z,
-				  datainfo, opt, prn, &err);
+	    obj = single_crosstab(libcmd.list, dataset, opt, 
+				  prn, &err);
 	} else {
-	    err = crosstab(libcmd.list, (const double **) Z, datainfo,
-			   opt, prn);
+	    err = crosstab(libcmd.list, dataset, opt, prn);
 	    ci = PRINT;
 	}
 	break;
@@ -784,22 +782,20 @@ void do_menu_op (int ci, const char *liststr, gretlopt opt)
 	if (libcmd.list[0] <= 4) {
 	    opt = OPT_V;
 	}
-	obj = get_mahal_distances(libcmd.list, &Z, datainfo, opt, 
+	obj = get_mahal_distances(libcmd.list, dataset, opt, 
 				  prn, &err);
 	break;
 
     case SUMMARY:
-	obj = get_summary(libcmd.list, (const double **) Z, datainfo, 
-			  OPT_NONE, prn, &err);
+	obj = get_summary(libcmd.list, dataset, OPT_NONE, prn, &err);
 	if (!err) {
-	    print_summary(obj, datainfo, prn);
+	    print_summary(obj, dataset, prn);
 	}
 	break;
 
     case NORMTEST:
 	err = gretl_normality_test(selected_varname(),
-				   (const double **) Z, datainfo, 
-				   OPT_A, prn);
+				   dataset, OPT_A, prn);
 	ci = PRINT;
 	break;
     }
@@ -821,7 +817,7 @@ static void do_qq_xyplot (const char *buf, gretlopt opt)
     } else {
 	int err;
 
-	err = qq_plot(libcmd.list, (const double **) Z, datainfo, opt);
+	err = qq_plot(libcmd.list, dataset, opt);
 
 	if (err) {
 	    gui_errmsg(err);
@@ -916,11 +912,11 @@ int do_coint (selector *sr)
     order = atoi(libcmd.param);
 
     if (action == COINT) {
-	err = engle_granger_test(order, libcmd.list, &Z, datainfo, 
+	err = engle_granger_test(order, libcmd.list, dataset, 
 				 libcmd.opt, prn);
     } else {
-	jvar = johansen_test(order, libcmd.list, (const double **) Z, 
-			     datainfo, libcmd.opt, prn);
+	jvar = johansen_test(order, libcmd.list, dataset, 
+			     libcmd.opt, prn);
 	if (jvar == NULL) {
 	    err = E_DATA;
 	} else if ((err = jvar->err)) {
@@ -944,14 +940,14 @@ static int ok_obs_in_series (int varno)
 {
     int t, t1, t2;
 
-    for (t=datainfo->t1; t<datainfo->t2; t++) {
-	if (!na(Z[varno][t])) break;
+    for (t=dataset->t1; t<dataset->t2; t++) {
+	if (!na(dataset->Z[varno][t])) break;
     }
 
     t1 = t;
 
-    for (t=datainfo->t2; t>=datainfo->t1; t--) {
-	if (!na(Z[varno][t])) break;
+    for (t=dataset->t2; t>=dataset->t1; t--) {
+	if (!na(dataset->Z[varno][t])) break;
     }
 
     t2 = t;
@@ -986,6 +982,7 @@ void unit_root_test (int ci)
     const char *alt_opts[] = {
 	N_("test down from maximum lag order"),
 	N_("include a trend"),
+	N_("include seasonal dummies"),
 	N_("show regression results"),
 	/* radio items */
 	N_("use level of variable"),
@@ -1016,7 +1013,7 @@ void unit_root_test (int ci)
 
     gretlopt opt = 0;
     int pantrend = 0, difference = 0, *rvar = NULL;
-    int panel = dataset_is_panel(datainfo);
+    int panel = dataset_is_panel(dataset);
     int order, omax, okT, v = mdata_active_var();
     int *active = NULL;
     int nchecks, nradios;
@@ -1026,7 +1023,7 @@ void unit_root_test (int ci)
     int err;
 
     if (panel) {
-	okT = datainfo->pd;
+	okT = dataset->pd;
 	order = panel_order;
     } else {
 	okT = ok_obs_in_series(v);
@@ -1074,7 +1071,7 @@ void unit_root_test (int ci)
 	title = kpss_title;
 	spintext = kpss_spintext;
 	opts = (panel)? panel_alt_opts : (alt_opts + 1);
-	nchecks = (panel)? 3 : 2;
+	nchecks = (panel)? 3 : 3;
 	active = (panel)? panel_alt_active : (alt_active + 1);
 	nradios = (panel)? 0 : 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
@@ -1093,7 +1090,7 @@ void unit_root_test (int ci)
 	order = omax;
     }  
 
-    if (opts == adf_opts && datainfo->pd == 1) {
+    if (opts == adf_opts && dataset->pd == 1) {
 	/* disallow seasonal dummies option */
 	adf_active[5] = -1;
     }
@@ -1147,7 +1144,8 @@ void unit_root_test (int ci)
     } else {
 	/* KPSS */
 	if (active[0]) opt |= OPT_T;
-	if (!panel && active[1]) opt |= OPT_V;
+	if (!panel && active[1]) opt |= OPT_D;
+	if (!panel && active[2]) opt |= OPT_V;
     } 
 
     if (panel && ci != LEVINLIN) {
@@ -1169,13 +1167,13 @@ void unit_root_test (int ci)
     }
 
     if (ci == ADF || ci == DFGLS) {
-	err = adf_test(order, vlist, &Z, datainfo, opt, prn);
+	err = adf_test(order, vlist, dataset, opt, prn);
     } else if (ci == KPSS) {
-	err = kpss_test(order, vlist, &Z, datainfo, opt, prn);
+	err = kpss_test(order, vlist, dataset, opt, prn);
     } else {
 	int plist[2] = {1, order};
 
-	err = levin_lin_test(vlist[1], plist, Z, datainfo, opt, prn);
+	err = levin_lin_test(vlist[1], plist, dataset, opt, prn);
     }
 
     if (err) {
@@ -1185,7 +1183,7 @@ void unit_root_test (int ci)
 	int rci = (ci == DFGLS)? ADF : ci;
 
 	gretl_command_sprintf("%s %d %s%s", gretl_command_word(rci), 
-			      order, datainfo->varname[v],
+			      order, dataset->varname[v],
 			      print_flags(opt, rci));
 	record_command_verbatim(cmdline);
 
@@ -1236,9 +1234,9 @@ int do_rankcorr (selector *sr)
     }
 
     if (opt & OPT_K) {
-	err = kendall_tau(libcmd.list, (const double **) Z, datainfo, opt, prn);
+	err = kendall_tau(libcmd.list, dataset, opt, prn);
     } else {
-	err = spearman_rho(libcmd.list, (const double **) Z, datainfo, opt, prn);
+	err = spearman_rho(libcmd.list, dataset, opt, prn);
     }
 
     if (err) {
@@ -1282,12 +1280,12 @@ int do_xcorrgm (selector *sr)
     strcpy(title, "gretl: ");
     strcat(title, _("cross-correlogram"));
 
-    order = default_lag_order(datainfo);
-    if (order > datainfo->n / 4) {
-	order = datainfo->n / 4;
+    order = default_lag_order(dataset);
+    if (order > dataset->n / 4) {
+	order = dataset->n / 4;
     }
     err = spin_dialog(title, NULL, &order, _("Lag order:"),
-		      1, datainfo->n / 4, 0);
+		      1, dataset->n / 4, 0);
     if (err < 0) {
 	/* canceled */
 	free(mbuf);
@@ -1305,8 +1303,8 @@ int do_xcorrgm (selector *sr)
 	return 1;
     }
 
-    err = xcorrgram(libcmd.list, order, (const double **) Z, 
-		    datainfo, prn, OPT_NONE);
+    err = xcorrgram(libcmd.list, order, dataset, 
+		    OPT_NONE, prn);
 
     if (err) {
         gui_errmsg(err);
@@ -1321,16 +1319,16 @@ int do_xcorrgm (selector *sr)
 
 void dataset_info (void)
 {
-    if (datainfo->descrip == NULL) {
+    if (dataset->descrip == NULL) {
 	if (yes_no_dialog(_("gretl: add info"), 
 			  _("The data file contains no informative comments.\n"
 			    "Would you like to add some now?"), 
 			  0) == GRETL_YES) {
-	    edit_buffer(&datainfo->descrip, 80, 400, _("gretl: edit data info"),
+	    edit_buffer(&dataset->descrip, 80, 400, _("gretl: edit data info"),
 			EDIT_HEADER);
 	}
     } else if (data_status & BOOK_DATA) {
-	char *buf = g_strdup(datainfo->descrip);
+	char *buf = g_strdup(dataset->descrip);
 	PRN *prn;
 	
 	if (buf != NULL) {
@@ -1338,7 +1336,7 @@ void dataset_info (void)
 	    view_buffer(prn, 80, 400, _("gretl: data info"), INFO, NULL);
 	}
     } else {
-	edit_buffer(&datainfo->descrip, 80, 400, _("gretl: edit data info"),
+	edit_buffer(&dataset->descrip, 80, 400, _("gretl: edit data info"),
 		    EDIT_HEADER);
     }	
 }
@@ -1372,10 +1370,10 @@ int bool_subsample (gretlopt opt)
     }
 
     if (opt & OPT_M) {
-	err = restrict_sample(NULL, NULL, &Z, datainfo, NULL, 
+	err = restrict_sample(NULL, NULL, dataset, NULL, 
 			      opt, prn);
     } else {
-	err = restrict_sample(cmdline, NULL, &Z, datainfo, NULL, 
+	err = restrict_sample(cmdline, NULL, dataset, NULL, 
 			      opt, prn);
     }
 
@@ -1390,7 +1388,7 @@ int bool_subsample (gretlopt opt)
 	goto alldone;
     }
 
-    set_sample_label(datainfo);
+    set_sample_label(dataset);
 
     if (opt & OPT_M) {
 	infobox(_("Sample now includes only complete observations"));
@@ -1415,7 +1413,7 @@ void drop_all_missing (void)
 
 int do_set_sample (void)
 {
-    int err = set_sample(cmdline, &Z, datainfo);
+    int err = set_sample(cmdline, dataset);
 
     if (!err) {
 	mark_session_changed();
@@ -1428,10 +1426,10 @@ static int any_missing (void)
 {
     int i, t;
 
-    for (i=1; i<datainfo->v; i++) {
-	if (!var_is_hidden(datainfo, i)) {
-	    for (t=0; t<datainfo->n; t++) {
-		if (na(Z[i][t])) {
+    for (i=1; i<dataset->v; i++) {
+	if (!var_is_hidden(dataset, i)) {
+	    for (t=0; t<dataset->n; t++) {
+		if (na(dataset->Z[i][t])) {
 		    return 1;
 		}
 	    }
@@ -1457,7 +1455,7 @@ void count_missing (void)
 	return;
     }
 
-    active = (datainfo->n < 1000);
+    active = (dataset->n < 1000);
 
     resp = checks_dialog(_("gretl: missing values info"), NULL,
 			 opts, 1, &active, 0, 0, 0,
@@ -1469,7 +1467,7 @@ void count_missing (void)
 
     opt = (active)? (OPT_V | OPT_A) : OPT_A;
 
-    mc = count_missing_values((const double **) Z, datainfo, opt, prn, &err);
+    mc = count_missing_values(dataset, opt, prn, &err);
 
     if (!err && mc > 0) {
 	view_buffer(prn, 78, 300, _("gretl: missing values info"), 
@@ -1486,7 +1484,7 @@ void count_missing (void)
 
 void do_add_markers (const char *fname) 
 {
-    int err = add_obs_markers_from_file(datainfo, fname);
+    int err = add_obs_markers_from_file(dataset, fname);
 
     if (err) {
 	gui_errmsg(err);
@@ -1500,7 +1498,7 @@ int do_save_markers (const char *fname)
     FILE *fp;
     int i;
 
-    if (datainfo->S == NULL) {
+    if (dataset->S == NULL) {
 	return E_DATA;
     }
 
@@ -1511,8 +1509,8 @@ int do_save_markers (const char *fname)
 	return E_FOPEN;
     }
 
-    for (i=0; i<datainfo->n; i++) {
-	fprintf(fp, "%s\n", datainfo->S[i]);
+    for (i=0; i<dataset->n; i++) {
+	fprintf(fp, "%s\n", dataset->S[i]);
     }
 
     fclose(fp);
@@ -1522,7 +1520,7 @@ int do_save_markers (const char *fname)
 
 void markers_callback (void) 
 {
-    if (datainfo->S != NULL) {
+    if (dataset->S != NULL) {
 	/* we have markers in place */
 	const char *opts[] = {
 	    N_("Export the markers to file"),
@@ -1536,7 +1534,7 @@ void markers_callback (void)
 	if (resp == 0) {
 	    file_selector(SAVE_MARKERS, FSEL_DATA_NONE, NULL);
 	} else if (resp == 1) {
-	    dataset_destroy_obs_markers(datainfo);
+	    dataset_destroy_obs_markers(dataset);
 	    mark_dataset_as_modified();
 	}
     } else {
@@ -1551,7 +1549,7 @@ void markers_callback (void)
 
 void do_add_labels (const char *fname) 
 {
-    int err = add_var_labels_from_file(datainfo, fname);
+    int err = add_var_labels_from_file(dataset, fname);
 
     if (err) {
 	gui_errmsg(err);
@@ -1565,7 +1563,7 @@ int do_save_labels (const char *fname)
 {
     int err;
 
-    err = save_var_labels_to_file(datainfo, fname);
+    err = save_var_labels_to_file(dataset, fname);
 
     if (err) {
 	file_write_errbox(fname);
@@ -1578,8 +1576,8 @@ static void gui_remove_var_labels (void)
 {
     int i;
 
-    for (i=1; i<datainfo->v; i++) {
-	VARLABEL(datainfo, i)[0] = '\0';
+    for (i=1; i<dataset->v; i++) {
+	VARLABEL(dataset, i)[0] = '\0';
     }
 
     populate_varlist();
@@ -1588,7 +1586,7 @@ static void gui_remove_var_labels (void)
 
 void labels_callback (void) 
 {
-    if (dataset_has_var_labels(datainfo)) {
+    if (dataset_has_var_labels(dataset)) {
 	/* we have (some) labels in place */
 	const char *opts[] = {
 	    N_("Export the labels to file"),
@@ -1627,8 +1625,8 @@ int out_of_sample_info (int add_ok, int *t2)
 	if (n < 0) {
 	    err = 1;
 	} else if (n > 0) {
-	    set_original_n(datainfo->n);
-	    err = dataset_add_observations(n, &Z, datainfo, OPT_A);
+	    set_original_n(dataset->n);
+	    err = dataset_add_observations(n, dataset, OPT_A);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
@@ -1662,23 +1660,23 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     int premax, pre_n = 0;
     int t1min = 0;
     int rolling = 0, k = 1, *kptr;
-    int dt2 = datainfo->n - 1;
-    int st2 = datainfo->n - 1;
+    int dt2 = dataset->n - 1;
+    int st2 = dataset->n - 1;
     gretlopt opt = OPT_NONE;
     double conf = 0.95;
     FITRESID *fr;
     PRN *prn = NULL;
     int resp, err = 0;
 
-    err = model_sample_problem(pmod, datainfo);
+    err = model_sample_problem(pmod, dataset);
     if (err) {
 	gui_errmsg(err);
 	return;
     }
 
     /* try to figure which options might be applicable */
-    forecast_options_for_model(pmod, (const double **) Z, datainfo, 
-			       &flags, &dt2, &st2);
+    forecast_options_for_model(pmod, dataset, &flags, 
+			       &dt2, &st2);
 
     if (flags & (FC_DYNAMIC_OK | FC_AUTO_OK)) {
 	t2 = dt2;
@@ -1688,7 +1686,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 
     /* if no out-of-sample obs are available in case of time-
        series data, alert the user */
-    if (t2 <= pmod->t2 && dataset_is_time_series(datainfo)) {
+    if (t2 <= pmod->t2 && dataset_is_time_series(dataset)) {
 	err = out_of_sample_info(flags & FC_ADDOBS_OK, &t2);
 	if (err) {
 	    return;
@@ -1696,7 +1694,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     /* max number of pre-forecast obs in "best case" */
-    premax = datainfo->n - 1;
+    premax = dataset->n - 1;
 
     /* if there are spare obs available, default to an
        out-of-sample forecast */
@@ -1755,13 +1753,13 @@ void gui_do_forecast (GtkAction *action, gpointer p)
     }
 
     if (rolling) {
-	fr = rolling_OLS_k_step_fcast(pmod, Z, datainfo,
+	fr = rolling_OLS_k_step_fcast(pmod, dataset,
 				      t1, t2, k, pre_n, &err);
     } else {
 	const char *flagstr;
 
-	ntodate(startobs, t1, datainfo);
-	ntodate(endobs, t2, datainfo);
+	ntodate(startobs, t1, dataset);
+	ntodate(endobs, t2, dataset);
 	flagstr = print_flags(opt, FCAST);
 
 	gretl_command_sprintf("fcasterr %s %s%s", startobs, endobs,
@@ -1770,7 +1768,7 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	    return;
 	}
 
-	fr = get_forecast(pmod, t1, t2, pre_n, &Z, datainfo, 
+	fr = get_forecast(pmod, t1, t2, pre_n, dataset, 
 			  opt, &err);
     }
 
@@ -1785,9 +1783,9 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 	int width = 78;
 
 	if (rolling) {
-	    err = text_print_fit_resid(fr, datainfo, prn);
+	    err = text_print_fit_resid(fr, dataset, prn);
 	} else {
-	    if (dataset_is_cross_section(datainfo)) {
+	    if (dataset_is_cross_section(dataset)) {
 		ols_special = gretl_is_simple_OLS(pmod);
 	    }
 	    if (LIMDEP(pmod->ci) || ols_special) {
@@ -1797,13 +1795,12 @@ void gui_do_forecast (GtkAction *action, gpointer p)
 		gopt |= OPT_P;
 	    }
 	    fr->alpha = 1 - conf;
-	    err = text_print_forecast(fr, datainfo, gopt, prn);
+	    err = text_print_forecast(fr, dataset, gopt, prn);
 	}
 
 	if (ols_special) {
 	    err = plot_simple_fcast_bands(pmod, fr, 
-					  (const double **) Z,
-					  datainfo,
+					  dataset,
 					  gopt);
 	    gopt |= OPT_P;
 	}
@@ -1833,7 +1830,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
     PRN *prn;
     int err;
 
-    err = model_sample_problem(pmod, datainfo);
+    err = model_sample_problem(pmod, dataset);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -1847,8 +1844,7 @@ void do_bootstrap (GtkAction *action, gpointer p)
 	return;
     }
 
-    err = bootstrap_analysis(pmod, k, B, (const double **) Z,
-			     datainfo, opt, prn);
+    err = bootstrap_analysis(pmod, k, B, dataset, opt, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -1887,7 +1883,7 @@ int do_coeff_sum (selector *sr)
     }
 
     pmod = vwin->data;
-    err = gretl_sum_test(libcmd.list, pmod, datainfo, prn);
+    err = gretl_sum_test(libcmd.list, pmod, dataset, prn);
 
     if (err) {
         gui_errmsg(err);
@@ -1905,37 +1901,34 @@ int do_coeff_sum (selector *sr)
     return 0;
 }
 
-static double ***
-maybe_get_model_data (MODEL *pmod, DATAINFO **ppdinfo, 
-		      gretlopt opt, int *err)
+static DATASET *
+maybe_get_model_data (MODEL *pmod, gretlopt opt, int *err)
 {
-    double ***pZ = NULL;
+    DATASET *dset = NULL;
 
-    if (model_sample_problem(pmod, datainfo)) { 
-	*err = add_dataset_to_model(pmod, (const double **) Z, 
-				    datainfo, opt);
+    if (model_sample_problem(pmod, dataset)) { 
+	*err = add_dataset_to_model(pmod, dataset, opt);
 	if (*err) {
 	    gui_errmsg(*err);
 	} else {
-	    pZ = &pmod->dataset->Z;
-	    *ppdinfo = pmod->dataset->dinfo;
+	    dset = pmod->dataset;
 	}
     } else {
-	pZ = &Z;
-	*ppdinfo = datainfo;
+	dset = dataset;
 	*err = 0;
     }
 
-    return pZ;
+    return dset;
 }
 
 static void trim_dataset (MODEL *pmod, int origv)
 {
     if (pmod != NULL && pmod->dataset != NULL) {
-	free_model_dataset(pmod);
+	destroy_dataset(pmod->dataset);
+	pmod->dataset = NULL;
     } else if (origv > 0) {
-	dataset_drop_last_variables(datainfo->v - origv, &Z, 
-				    datainfo);
+	dataset_drop_last_variables(dataset->v - origv,  
+				    dataset);
     }
 }
 
@@ -1948,8 +1941,7 @@ int do_add_omit (selector *sr)
     int auto_omit = (ci == OMIT && (opt & OPT_A));
     const char *flagstr = NULL;
     MODEL *pmod, *newmod = NULL;
-    double ***pZ = &Z;
-    DATAINFO *pdinfo = datainfo;
+    DATASET *dset = dataset;
     PRN *prn;
     int err = 0;
 
@@ -1964,7 +1956,7 @@ int do_add_omit (selector *sr)
     } else {
 	gretlopt opt = (ci == ADD)? OPT_F : OPT_NONE;
 
-	pZ = maybe_get_model_data(pmod, &pdinfo, opt, &err);
+	dset = maybe_get_model_data(pmod, opt, &err);
 	if (err) {
 	    return err;
 	}
@@ -1995,9 +1987,9 @@ int do_add_omit (selector *sr)
 
     if (!err) {
 	if (ci == ADD) { 
-	    err = add_test(libcmd.list, pmod, newmod, pZ, pdinfo, opt, prn);
+	    err = add_test(libcmd.list, pmod, newmod, dset, opt, prn);
 	} else {
-	    err = omit_test(libcmd.list, pmod, newmod, pZ, pdinfo, opt, prn);
+	    err = omit_test(libcmd.list, pmod, newmod, dset, opt, prn);
 	}
     }
 
@@ -2015,7 +2007,7 @@ int do_add_omit (selector *sr)
 	    if (pmod->dataset != NULL) {
 		newmod->submask = copy_subsample_mask(pmod->submask, &err);
 	    } else {
-		attach_subsample_to_model(newmod, datainfo);
+		attach_subsample_to_model(newmod, dataset);
 	    }
 	    gretl_object_ref(newmod, GRETL_OBJ_EQN);
 	    sprintf(title, _("gretl: model %d"), newmod->ID);
@@ -2055,8 +2047,8 @@ int do_VAR_omit (selector *sr)
     omitlist = gretl_list_from_string(buf, &err);
 
     if (!err) {
-	var = gretl_VAR_omit_test(omitlist, orig, (const double **) Z, 
-				  datainfo, prn, &err);
+	var = gretl_VAR_omit_test(omitlist, orig, dataset, 
+				  prn, &err);
     }
 
     if (err) {
@@ -2114,8 +2106,8 @@ int do_confidence_region (selector *sr)
     tcrit = student_cdf_inverse(pmod->dfd, 1 - alpha / 2);
     Fcrit = 2.0 * snedecor_critval(2, pmod->dfd, alpha);
 
-    gretl_model_get_param_name(pmod, datainfo, v[0], iname);
-    gretl_model_get_param_name(pmod, datainfo, v[1], jname);
+    gretl_model_get_param_name(pmod, dataset, v[0], iname);
+    gretl_model_get_param_name(pmod, dataset, v[1], jname);
 
     err = confidence_ellipse_plot(V, b, tcrit, Fcrit, alpha,
 				  iname, jname);
@@ -2199,8 +2191,7 @@ void do_modtest (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    double ***pZ = &Z;
-    DATAINFO *pdinfo = datainfo;
+    DATASET *dset = dataset;
     PRN *prn;
     char title[64];
     gretlopt opt = OPT_NONE;
@@ -2212,7 +2203,7 @@ void do_modtest (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    dset = maybe_get_model_data(pmod, OPT_NONE, &err);
     if (err) {
 	gretl_print_destroy(prn);
 	return;
@@ -2224,7 +2215,7 @@ void do_modtest (GtkAction *action, gpointer p)
 
     if (opt == OPT_W) {
 	gretl_command_strcpy("modtest --white");
-	err = whites_test(pmod, pZ, pdinfo, OPT_S, prn);
+	err = whites_test(pmod, dset, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
@@ -2233,7 +2224,7 @@ void do_modtest (GtkAction *action, gpointer p)
 	}
     } else if (opt == OPT_X) {
 	gretl_command_strcpy("modtest --white-nocross");
-	err = whites_test(pmod, pZ, pdinfo, OPT_S | OPT_X, prn);
+	err = whites_test(pmod, dset, OPT_S | OPT_X, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
@@ -2246,7 +2237,7 @@ void do_modtest (GtkAction *action, gpointer p)
 	} else {
 	    gretl_command_strcpy("modtest --breusch-pagan");
 	}
-	err = whites_test(pmod, pZ, pdinfo, opt | OPT_S, prn);
+	err = whites_test(pmod, dset, opt | OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
@@ -2255,7 +2246,7 @@ void do_modtest (GtkAction *action, gpointer p)
 	}
     } else if (opt == OPT_P) {
 	gretl_command_strcpy("modtest --panel");
-	err = groupwise_hetero_test(pmod, pdinfo, opt | OPT_S, prn);
+	err = groupwise_hetero_test(pmod, dset, opt | OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
@@ -2271,7 +2262,7 @@ void do_modtest (GtkAction *action, gpointer p)
 	    gretl_command_strcpy("modtest --logs");
 	}
 	clear_model(models[0]);
-	err = nonlinearity_test(pmod, pZ, pdinfo, aux, OPT_S, prn);
+	err = nonlinearity_test(pmod, dset, aux, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
@@ -2280,7 +2271,7 @@ void do_modtest (GtkAction *action, gpointer p)
 	} 
     } else if (opt == OPT_C) {
 	gretl_command_strcpy("modtest --comfac");
-	err = comfac_test(pmod, pZ, pdinfo, OPT_S, prn);
+	err = comfac_test(pmod, dset, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    gretl_print_destroy(prn);
@@ -2310,12 +2301,12 @@ void do_arch (GtkAction *action, gpointer p)
 	return;
     }    
 
-    order = default_lag_order(datainfo);
+    order = default_lag_order(dataset);
 
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: ARCH test"), NULL,
 		      &order, _("Lag order for ARCH test:"),
-		      1, datainfo->n / 2, 0);
+		      1, dataset->n / 2, 0);
     unset_window_busy(vwin);
 
     if (err < 0) {
@@ -2326,7 +2317,7 @@ void do_arch (GtkAction *action, gpointer p)
 	return;
     }
 
-    err = arch_test(pmod, order, datainfo, OPT_S, prn);
+    err = arch_test(pmod, order, dataset, OPT_S, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -2348,7 +2339,7 @@ void do_panel_tests (GtkAction *action, gpointer p)
     PRN *prn;
     int err = 0;
 
-    err = model_sample_problem(pmod, datainfo);
+    err = model_sample_problem(pmod, dataset);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -2358,7 +2349,7 @@ void do_panel_tests (GtkAction *action, gpointer p)
 	return;
     }
 
-    err = panel_diagnostics(pmod, &Z, datainfo, OPT_NONE, prn);
+    err = panel_diagnostics(pmod, dataset, OPT_NONE, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -2413,7 +2404,7 @@ void add_leverage_data (windata_t *vwin)
 
     if (opt == 0) return;
 
-    err = add_leverage_values_to_dataset(&Z, datainfo, m, opt);
+    err = add_leverage_values_to_dataset(dataset, m, opt);
 
     if (err) {
 	gui_errmsg(err);
@@ -2430,9 +2421,8 @@ void do_leverage (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     void *handle;
-    gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
-				     DATAINFO *, gretlopt,
-				     PRN *, int *);
+    gretl_matrix *(*model_leverage) (const MODEL *, DATASET *, 
+				     gretlopt, PRN *, int *);
     PRN *prn;
     gretl_matrix *m;
     int err = 0;
@@ -2452,7 +2442,7 @@ void do_leverage (GtkAction *action, gpointer p)
 	return;
     }	
 	
-    m = (*model_leverage)(pmod, &Z, datainfo, OPT_P, prn, &err);
+    m = (*model_leverage)(pmod, dataset, OPT_P, prn, &err);
     close_plugin(handle);
 
     if (err) {
@@ -2476,14 +2466,13 @@ void do_vif (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int (*print_vifs) (MODEL *, double **, DATAINFO *, PRN *);
+    int (*print_vifs) (MODEL *, DATASET *, PRN *);
     void *handle;
-    double ***pZ;
-    DATAINFO *pdinfo;
+    DATASET *dset;
     PRN *prn;
     int err;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    dset = maybe_get_model_data(pmod, OPT_NONE, &err);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -2501,7 +2490,7 @@ void do_vif (GtkAction *action, gpointer p)
 	return;
     }	
 	
-    err = (*print_vifs)(pmod, *pZ, pdinfo, prn);
+    err = (*print_vifs)(pmod, dset, prn);
     close_plugin(handle);
 
     if (err) {
@@ -2528,7 +2517,7 @@ void do_gini (void)
 	return;
     }
 
-    err = gini(v, (const double **) Z, datainfo, opt, prn);
+    err = gini(v, dataset, opt, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -2568,7 +2557,7 @@ void do_qqplot (void)
 	opt |= OPT_R;
     }
 
-    gretl_command_sprintf("qqplot %s%s", datainfo->varname[v], 
+    gretl_command_sprintf("qqplot %s%s", dataset->varname[v], 
 			  print_flags(opt, QQPLOT));
 
     if (check_and_record_command()) {
@@ -2577,7 +2566,7 @@ void do_qqplot (void)
 	int list[2] = {1, v};
 	int err;
 
-	err = qq_plot(list, (const double **) Z, datainfo, opt);
+	err = qq_plot(list, dataset, opt);
 
 	if (err) {
 	    gui_errmsg(err);
@@ -2590,14 +2579,14 @@ void do_qqplot (void)
 void do_kernel (void)
 {
     void *handle;
-    int (*kernel_density) (const double *, const DATAINFO *,
+    int (*kernel_density) (const double *, const DATASET *,
 			   double, const char *, gretlopt);
     gretlopt opt = OPT_NONE;
     double bw = 1.0;
     int v = mdata_active_var();
     int err;
 
-    if (sample_size(datainfo) < 30) {
+    if (sample_size(dataset) < 30) {
 	gui_errmsg(E_TOOFEW);
 	return;
     }
@@ -2617,8 +2606,8 @@ void do_kernel (void)
 	return;
     }
 
-    err = (*kernel_density)(Z[v], datainfo, bw, 
-			    datainfo->varname[v],
+    err = (*kernel_density)(dataset->Z[v], dataset, bw, 
+			    dataset->varname[v],
 			    opt);
     close_plugin(handle);
 
@@ -2679,12 +2668,12 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 	}
 
 	if (splitdum > 0) {
-	    gretl_command_sprintf("chow %s --dummy", datainfo->varname[splitdum]);
+	    gretl_command_sprintf("chow %s --dummy", dataset->varname[splitdum]);
 	    opt |= OPT_D;
 	} else {
 	    char brkstr[OBSLEN];
 
-	    ntodate(brkstr, splitbrk, datainfo);
+	    ntodate(brkstr, splitbrk, dataset);
 	    gretl_command_sprintf("chow %s", brkstr);
 	}
     } else if (ci == QLRTEST) {
@@ -2701,17 +2690,17 @@ void do_chow_cusum (GtkAction *action, gpointer p)
 
     if (ci == CHOW) {
 	if (opt & OPT_D) {
-	    err = chow_test_from_dummy(splitdum, pmod, &Z, datainfo, opt, prn);
+	    err = chow_test_from_dummy(splitdum, pmod, dataset, opt, prn);
 	} else {
-	    err = chow_test(splitbrk, pmod, &Z, datainfo, opt, prn);
+	    err = chow_test(splitbrk, pmod, dataset, opt, prn);
 	}
     } else if (ci == QLRTEST) {
-	err = QLR_test(pmod, &Z, datainfo, opt, prn);
+	err = QLR_test(pmod, dataset, opt, prn);
     } else {
 	if (ci == CUSUMSQ) {
 	    opt |= OPT_R;
 	}
-	err = cusum_test(pmod, Z, datainfo, opt, prn);
+	err = cusum_test(pmod, dataset, opt, prn);
     }
 
     if (err) {
@@ -2741,8 +2730,7 @@ void do_reset (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = vwin->data;
-    double ***pZ;
-    DATAINFO *pdinfo;
+    DATASET *dset;
     PRN *prn;
     const char *optstrs[] = {
 	N_("squares and cubes"),
@@ -2770,7 +2758,7 @@ void do_reset (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    dset = maybe_get_model_data(pmod, OPT_NONE, &err);
     if (err) {
 	gretl_print_destroy(prn);
 	return;
@@ -2788,15 +2776,15 @@ void do_reset (GtkAction *action, gpointer p)
 	/* gui special: show short form of all 3 tests */
 	width = 60;
 	height = 320;
-	err = reset_test(pmod, pZ, pdinfo, opt, prn);
+	err = reset_test(pmod, dset, opt, prn);
 	if (!err) {
-	    err = reset_test(pmod, pZ, pdinfo, (opt | OPT_R), prn);
+	    err = reset_test(pmod, dset, (opt | OPT_R), prn);
 	}
 	if (!err) {
-	    err = reset_test(pmod, pZ, pdinfo, (opt | OPT_C), prn);
+	    err = reset_test(pmod, dset, (opt | OPT_C), prn);
 	}
     } else {
-	err = reset_test(pmod, pZ, pdinfo, opt, prn);
+	err = reset_test(pmod, dset, opt, prn);
     }
 
     if (err) {
@@ -2828,12 +2816,12 @@ void do_autocorr (GtkAction *action, gpointer p)
 	return;
     }
 
-    order = default_lag_order(datainfo);
+    order = default_lag_order(dataset);
 
     set_window_busy(vwin);
     err = spin_dialog(_("gretl: autocorrelation"), NULL,
 		      &order, _("Lag order for test:"),
-		      1, datainfo->n / 2, 0);
+		      1, dataset->n / 2, 0);
     unset_window_busy(vwin);
 
     if (err < 0) {
@@ -2846,11 +2834,11 @@ void do_autocorr (GtkAction *action, gpointer p)
 
     strcpy(title, _("gretl: LM test (autocorrelation)"));
 
-    if (dataset_is_panel(datainfo)) {
-	err = panel_autocorr_test(pmod, order, Z, datainfo,
+    if (dataset_is_panel(dataset)) {
+	err = panel_autocorr_test(pmod, order, dataset,
 				  OPT_S, prn);
     } else {
-	err = autocorr_test(pmod, order, &Z, datainfo, OPT_S, prn);
+	err = autocorr_test(pmod, order, dataset, OPT_S, prn);
     }
 
     if (err) {
@@ -2878,7 +2866,7 @@ void do_dwpval (GtkAction *action, gpointer p)
 	return;
     }
 
-    pv = get_DW_pvalue_for_model(pmod, &Z, datainfo, &err);
+    pv = get_DW_pvalue_for_model(pmod, dataset, &err);
 
     if (err) {
 	gui_errmsg(err);
@@ -2915,7 +2903,7 @@ static int model_output (MODEL *pmod, PRN *prn)
     if (model_error(pmod)) {
 	err = 1;
     } else {
-	printmodel(pmod, datainfo, OPT_NONE, prn);
+	printmodel(pmod, dataset, OPT_NONE, prn);
     }
 
     return err;
@@ -2923,7 +2911,7 @@ static int model_output (MODEL *pmod, PRN *prn)
 
 static gint check_model_cmd (void)
 {
-    int err = parse_command_line(cmdline, &libcmd, &Z, datainfo); 
+    int err = parse_command_line(cmdline, &libcmd, dataset); 
 
     if (err) {
 	gui_errmsg(err);
@@ -2977,8 +2965,8 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     PRN *prn;
     char title[64], bufline[MAXLINE];
     gretl_restriction *my_rset = NULL;
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
+    int save_t1 = dataset->t1;
+    int save_t2 = dataset->t2;
     int got_start_line = 0, got_end_line = 0;
     int height = 300;
     int err = 0;
@@ -3018,7 +3006,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	if (my_rset == NULL) {
 	    if (pmod != NULL) {
 		my_rset = eqn_restriction_set_start(bufline, pmod, 
-						    datainfo, opt);
+						    dataset, opt);
 	    } else if (sys != NULL) {
 		my_rset = cross_restriction_set_start(bufline, sys);
 	    } else {
@@ -3029,7 +3017,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 		gui_errmsg(err);
 	    }
 	} else {
-	    err = restriction_set_parse_line(my_rset, bufline, datainfo);
+	    err = restriction_set_parse_line(my_rset, bufline, dataset);
 	    if (err) {
 		gui_errmsg(err);
 	    }
@@ -3062,16 +3050,14 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
     if (bufopen(&prn)) return; 
 
     if (pmod != NULL) {
-	datainfo->t1 = pmod->t1;
-	datainfo->t2 = pmod->t2;
+	dataset->t1 = pmod->t1;
+	dataset->t2 = pmod->t2;
     } 
 
     if (opt & OPT_F) {
-	vnew = gretl_restricted_vecm(my_rset, (const double **) Z, 
-				     datainfo, opt, prn, &err);
+	vnew = gretl_restricted_vecm(my_rset, dataset, opt, prn, &err);
     } else {
-	err = gretl_restriction_finalize(my_rset, (const double **) Z, 
-					 datainfo, OPT_NONE, prn);
+	err = gretl_restriction_finalize(my_rset, dataset, OPT_NONE, prn);
     }
 
     if (err) {
@@ -3082,7 +3068,7 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 	    record_model_commands_from_buf(buf, pmod, got_start_line,
 					   got_end_line);
 	} else if (sys != NULL) {
-	    equation_system_estimate(sys, &Z, datainfo, OPT_NONE, prn);
+	    equation_system_estimate(sys, dataset, OPT_NONE, prn);
 	    height = 450;
 	} else if (vecm != NULL) {
 	    height = 450;
@@ -3100,8 +3086,8 @@ void do_restrict (GtkWidget *w, dialog_t *dlg)
 				PRINT, NULL);
     }
 
-    datainfo->t1 = save_t1;
-    datainfo->t2 = save_t2;
+    dataset->t1 = save_t1;
+    dataset->t2 = save_t2;
 }
 
 static int 
@@ -3231,7 +3217,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 		} 
 	    }
 	} else {
-	    err = system_parse_line(my_sys, bufline, &Z, datainfo);
+	    err = system_parse_line(my_sys, bufline, dataset);
 	    if (err) {
 		/* sys is destroyed on error */
 		gui_errmsg(err);
@@ -3253,7 +3239,7 @@ void do_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return; 
     }
 
-    err = equation_system_finalize(my_sys, &Z, datainfo, opt, prn);
+    err = equation_system_finalize(my_sys, dataset, opt, prn);
     if (err) {
 	errmsg(err, prn);
     } else {
@@ -3293,7 +3279,7 @@ void do_saved_eqn_system (GtkWidget *w, dialog_t *dlg)
 	return; 
     }
 
-    err = equation_system_estimate(my_sys, &Z, datainfo,
+    err = equation_system_estimate(my_sys, dataset,
 				   opt, prn);
     if (err) {
 	errmsg(err, prn);
@@ -3417,7 +3403,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	    strcat(realline, tmp);
 	} 
 
-	err = nl_parse_line(ci, realline, (const double **) Z, datainfo, NULL);
+	err = nl_parse_line(ci, realline, dataset, NULL);
 
 	if (!started) {
 	    started = 1;
@@ -3454,7 +3440,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 	return;
     }
 
-    *pmod = nl_model(&Z, datainfo, opt, prn);
+    *pmod = nl_model(dataset, opt, prn);
     err = model_output(pmod, prn);
 
     if (err) {
@@ -3467,7 +3453,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
     /* record sub-sample info (if any) with the model */
-    attach_subsample_to_model(pmod, datainfo);
+    attach_subsample_to_model(pmod, dataset);
 
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
     
@@ -3494,7 +3480,8 @@ static int logistic_model_get_lmax (CMD *cmd)
     double ymax, lmax;
     int err;
 
-    err = logistic_ymax_lmax(Z[cmd->list[1]], datainfo, &ymax, &lmax);
+    err = logistic_ymax_lmax(dataset->Z[cmd->list[1]], dataset, 
+			     &ymax, &lmax);
 
     if (!err) {
 	lmax_dialog(&lmax, ymax);
@@ -3523,8 +3510,7 @@ static int do_straight_anova (void)
 	return 1;
     }
 
-    err = anova(libcmd.list, (const double **) Z, datainfo, 
-		libcmd.opt, prn);
+    err = anova(libcmd.list, dataset, libcmd.opt, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -3568,7 +3554,7 @@ static int real_do_model (int action)
     switch (action) {
 
     case AR1:
-	*pmod = ar1_model(libcmd.list, &Z, datainfo, libcmd.opt | OPT_G, prn);
+	*pmod = ar1_model(libcmd.list, dataset, libcmd.opt | OPT_G, prn);
 	err = model_output(pmod, prn);
 	if (libcmd.opt & OPT_H) {
 	    register_graph(NULL);
@@ -3577,94 +3563,93 @@ static int real_do_model (int action)
 
     case OLS:
     case WLS:
-	*pmod = lsq(libcmd.list, Z, datainfo, action, libcmd.opt);
+	*pmod = lsq(libcmd.list, dataset, action, libcmd.opt);
 	err = model_output(pmod, prn);
 	break;
 
     case PANEL:
-	*pmod = panel_model(libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	*pmod = panel_model(libcmd.list, dataset, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case ARBOND:
 	/* FIXME instrument spec */
-	*pmod = arbond_model(libcmd.list, NULL, (const double **) Z, 
-			     datainfo, libcmd.opt, prn);
+	*pmod = arbond_model(libcmd.list, NULL, dataset, 
+			     libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case DPANEL:
 	/* FIXME ylags, instrument spec */
-	*pmod = dpd_model(libcmd.list, NULL, NULL, (const double **) Z, 
-			  datainfo, libcmd.opt, prn);
+	*pmod = dpd_model(libcmd.list, NULL, NULL, dataset, 
+			  libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case HSK:
-	*pmod = hsk_model(libcmd.list, &Z, datainfo);
+	*pmod = hsk_model(libcmd.list, dataset);
 	err = model_output(pmod, prn);
 	break;
 
     case IVREG:
-	*pmod = ivreg(libcmd.list, &Z, datainfo, libcmd.opt);
+	*pmod = ivreg(libcmd.list, dataset, libcmd.opt);
 	err = model_output(pmod, prn);
 	break;
 
     case AR:
-	*pmod = ar_model(libcmd.list, &Z, datainfo, OPT_NONE, prn);
+	*pmod = ar_model(libcmd.list, dataset, OPT_NONE, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case LOGIT:
     case PROBIT:
-	*pmod = logit_probit(libcmd.list, &Z, datainfo, action, libcmd.opt,
+	*pmod = logit_probit(libcmd.list, dataset, action, libcmd.opt,
 			     prn);
 	err = model_output(pmod, prn);
 	break;
 
     case BIPROBIT:
-	*pmod = biprobit_model(libcmd.list, Z, datainfo, libcmd.opt, prn);
+	*pmod = biprobit_model(libcmd.list, dataset, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case TOBIT:
-	*pmod = tobit_driver(libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	*pmod = tobit_driver(libcmd.list, dataset, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case HECKIT:
-	*pmod = heckit_model(libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	*pmod = heckit_model(libcmd.list, dataset, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case POISSON:
     case NEGBIN:
-	*pmod = count_model(libcmd.list, action, &Z, datainfo, libcmd.opt,
+	*pmod = count_model(libcmd.list, action, dataset, libcmd.opt,
 			    prn);
 	err = model_output(pmod, prn);
 	break;
 
     case DURATION:
-	*pmod = duration_model(libcmd.list, Z, datainfo, libcmd.opt,
+	*pmod = duration_model(libcmd.list, dataset, libcmd.opt,
 			       prn);
 	err = model_output(pmod, prn);
 	break;
 
     case ARMA:
 	*pmod = arma(libcmd.list, libcmd.auxlist,
-		     (const double **) Z, datainfo,
-		     libcmd.opt, prn);
+		     dataset, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
     case ARCH:
-	*pmod = arch_model(libcmd.list, atoi(libcmd.param), &Z, datainfo, 
+	*pmod = arch_model(libcmd.list, atoi(libcmd.param), dataset, 
 			   libcmd.opt, prn); 
 	err = model_output(pmod, prn);
 	break;
 
     case GARCH:
-	*pmod = garch(libcmd.list, &Z, datainfo, libcmd.opt, prn); 
+	*pmod = garch(libcmd.list, dataset, libcmd.opt, prn); 
 	err = model_output(pmod, prn);
 	break;
 
@@ -3676,29 +3661,29 @@ static int real_do_model (int action)
 	    gui_errmsg(err);
 	    break;
 	} else {
-	    *pmod = logistic_driver(libcmd.list, &Z, datainfo, libcmd.param);
+	    *pmod = logistic_driver(libcmd.list, dataset, libcmd.param);
 	    err = model_output(pmod, prn);
 	}
 	break;	
 
     case LAD:
-	*pmod = lad(libcmd.list, Z, datainfo);
+	*pmod = lad(libcmd.list, dataset);
 	err = model_output(pmod, prn);
 	break;	
 
     case QUANTREG:
-	*pmod = quantreg_driver(libcmd.param, libcmd.list, &Z, datainfo, 
+	*pmod = quantreg_driver(libcmd.param, libcmd.list, dataset, 
 				libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;	
 
     case INTREG:
-	*pmod = interval_model(libcmd.list, &Z, datainfo, libcmd.opt, prn);
+	*pmod = interval_model(libcmd.list, dataset, libcmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;	
 
     case MPOLS:
-	*pmod = mp_ols(libcmd.list, (const double **) Z, datainfo);
+	*pmod = mp_ols(libcmd.list, dataset);
 	err = model_output(pmod, prn);
 	break;	
 
@@ -3719,7 +3704,7 @@ static int real_do_model (int action)
 	model_command_init(pmod->ID);
 
 	/* record sub-sample info (if any) with the model */
-	attach_subsample_to_model(pmod, datainfo);
+	attach_subsample_to_model(pmod, dataset);
 
 	sprintf(title, _("gretl: model %d"), pmod->ID);
 	view_model(prn, pmod, 78, 420, title); 
@@ -3758,7 +3743,7 @@ int do_model (selector *sr)
        associated option.
     */
 
-    if (ci == OLS && dataset_is_panel(datainfo)) {
+    if (ci == OLS && dataset_is_panel(dataset)) {
 	/* pooled OLS */
 	ci = PANEL;
 	addopt = OPT_P;
@@ -3849,7 +3834,7 @@ int do_vector_model (selector *sr)
 	return 1;
     }
 
-    if (libcmd.order > var_max_order(libcmd.list, datainfo)) {
+    if (libcmd.order > var_max_order(libcmd.list, dataset)) {
 	gui_errmsg(E_TOOFEW);
 	gretl_print_destroy(prn);
 	return 1;
@@ -3857,16 +3842,16 @@ int do_vector_model (selector *sr)
 
     if (action == VAR && !(libcmd.opt & OPT_L)) {
 	/* regular VAR, not VAR lag selection */
-	var = gretl_VAR(libcmd.order, libcmd.list, (const double **) Z, 
-			datainfo, libcmd.opt, prn, &err);
+	var = gretl_VAR(libcmd.order, libcmd.list, dataset, 
+			libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 			VAR, var);
 	}
     } else if (action == VAR) {
 	/* VAR lag selection */
-	gretl_VAR(libcmd.order, libcmd.list, (const double **) Z, 
-		  datainfo, libcmd.opt, prn, &err);
+	gretl_VAR(libcmd.order, libcmd.list, dataset, 
+		  libcmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 72, 350, _("gretl: VAR lag selection"), 
 			PRINT, NULL);
@@ -3876,8 +3861,8 @@ int do_vector_model (selector *sr)
 	int rank = gretl_int_from_string(libcmd.extra, &err);
 
 	if (!err) {
-	    var = gretl_VECM(libcmd.order, rank, libcmd.list, (const double **) Z, 
-			     datainfo, libcmd.opt, prn, &err);
+	    var = gretl_VECM(libcmd.order, rank, libcmd.list, 
+			     dataset, libcmd.opt, prn, &err);
 	}
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
@@ -3904,9 +3889,9 @@ static char *alt_list_buf (const int *inlist, int fit)
     int v;
 
     if (fit == PLOT_FIT_QUADRATIC) {
-	v = xpxgenr(src, src, &Z, datainfo);
+	v = xpxgenr(src, src, dataset);
     } else {
-	v = invgenr(src, &Z, datainfo);
+	v = invgenr(src, dataset);
     }
 
     if (v < 0) {
@@ -3944,7 +3929,7 @@ void do_graph_model (const int *list, int fit)
     char title[32];
     int err = 0;
 
-    if (list == NULL || list[1] >= datainfo->v || list[2] >= datainfo->v) {
+    if (list == NULL || list[1] >= dataset->v || list[2] >= dataset->v) {
 	gui_errmsg(E_DATA);
 	return;
     }
@@ -3973,7 +3958,7 @@ void do_graph_model (const int *list, int fit)
 	return;
     }
 
-    *pmod = lsq(libcmd.list, Z, datainfo, OLS, libcmd.opt);
+    *pmod = lsq(libcmd.list, dataset, OLS, libcmd.opt);
     err = model_output(pmod, prn);
 
     if (err) {
@@ -3987,7 +3972,7 @@ void do_graph_model (const int *list, int fit)
 	return;
     }
 
-    attach_subsample_to_model(pmod, datainfo);
+    attach_subsample_to_model(pmod, dataset);
 
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
     
@@ -4031,12 +4016,12 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
 	return;
     }
 
-    console_record_sample(datainfo);
+    console_record_sample(dataset);
 
     gretl_exec_state_init(&state, CONSOLE_EXEC, cmdline, &libcmd, 
 			  models, NULL);
 
-    err = gui_exec_line(&state, &Z, datainfo);
+    err = gui_exec_line(&state, dataset);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -4049,8 +4034,8 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     }    
 
     /* update sample info and options if needed */
-    if (console_sample_changed(datainfo)) {
-	set_sample_label(datainfo);
+    if (console_sample_changed(dataset)) {
+	set_sample_label(dataset);
     }
 }
 
@@ -4104,7 +4089,7 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
 {
     const gchar *s = edit_dialog_get_text(dlg);
     gpointer p = edit_dialog_get_data(dlg);
-    int err, oldv = datainfo->v;
+    int err, oldv = dataset->v;
 
     if (s == NULL) {
 	return;
@@ -4124,8 +4109,8 @@ void do_selector_genr (GtkWidget *w, dialog_t *dlg)
 
     err = finish_genr(NULL, dlg);
 
-    if (!err && datainfo->v > oldv) {
-	selector_register_genr(datainfo->v - oldv, p);
+    if (!err && dataset->v > oldv) {
+	selector_register_genr(dataset->v - oldv, p);
     }
 }
 
@@ -4154,7 +4139,7 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
 	} else {
 	    gretl_command_sprintf("series %s", s);
 	}
-	oldv = datainfo->v;
+	oldv = dataset->v;
     } else if (type == GRETL_TYPE_DOUBLE) {
 	if (!strncmp(s, "scalar", 6)) {
 	    gretl_command_strcpy(s);
@@ -4172,7 +4157,7 @@ void do_fncall_genr (GtkWidget *w, dialog_t *dlg)
     err = finish_genr(NULL, dlg);
 
     if (!err) {
-	int newv = (scalargen)? n_saved_scalars(): datainfo->v;
+	int newv = (scalargen)? n_saved_scalars(): dataset->v;
 
 	if (oldv >= 0 && newv > oldv) {
 	    fncall_register_genr(newv - oldv, p);
@@ -4237,7 +4222,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 
     set_genr_model(pmod, GRETL_OBJ_EQN);
 
-    err = generate(cmdline, &Z, datainfo, OPT_NONE, prn); 
+    err = generate(cmdline, dataset, OPT_NONE, prn); 
 
     unset_genr_model();
 
@@ -4291,7 +4276,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 static int real_do_setmiss (double missval, int varno) 
 {
     int i, t, count = 0;
-    int start = 1, end = datainfo->v;
+    int start = 1, end = dataset->v;
 
     if (varno) {
 	start = varno;
@@ -4299,9 +4284,9 @@ static int real_do_setmiss (double missval, int varno)
     }
 
     for (i=start; i<end; i++) {
-	for (t=0; t<datainfo->n; t++) {
-	    if (Z[i][t] == missval) {
-		Z[i][t] = NADBL;
+	for (t=0; t<dataset->n; t++) {
+	    if (dataset->Z[i][t] == missval) {
+		dataset->Z[i][t] = NADBL;
 		count++;
 	    }
 	}	
@@ -4369,12 +4354,12 @@ int do_rename_variable (int v, const char *newname)
 {
     int err = 0;
 
-    if (v < datainfo->v && !strcmp(newname, datainfo->varname[v])) {
+    if (v < dataset->v && !strcmp(newname, dataset->varname[v])) {
 	/* no-op (shouldn't happen) */
 	return 0;
     }
 
-    if (gretl_is_series(newname, datainfo)) {
+    if (gretl_is_series(newname, dataset)) {
 	errbox(_("A series named %s already exists"), newname);
 	err = E_DATA;
     } else {
@@ -4387,7 +4372,7 @@ int do_rename_variable (int v, const char *newname)
     }
 
     if (!err) {
-	strcpy(datainfo->varname[v], newname);
+	strcpy(dataset->varname[v], newname);
 	mark_dataset_as_modified();
     }
 
@@ -4397,9 +4382,9 @@ int do_rename_variable (int v, const char *newname)
 int record_varlabel_change (int v)
 {
     gretl_command_sprintf("setinfo %s -d \"%s\" -n \"%s\"", 
-			  datainfo->varname[v],
-			  VARLABEL(datainfo, v), 
-			  DISPLAYNAME(datainfo, v));
+			  dataset->varname[v],
+			  VARLABEL(dataset, v), 
+			  DISPLAYNAME(dataset, v));
 
     return check_and_record_command();
 }
@@ -4423,11 +4408,10 @@ void do_resid_freq (GtkAction *action, gpointer p)
     PRN *prn;
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    double ***pZ;
-    DATAINFO *pdinfo = NULL;
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
-    int origv = datainfo->v;
+    DATASET *dset = NULL;
+    int save_t1 = dataset->t1;
+    int save_t2 = dataset->t2;
+    int origv = dataset->v;
     int err = 0;
 
     if (gui_exact_fit_check(pmod)) {
@@ -4451,31 +4435,31 @@ void do_resid_freq (GtkAction *action, gpointer p)
 	return;
     }
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
+    dset = maybe_get_model_data(pmod, OPT_G, &err);
     if (err) {
 	gretl_print_destroy(prn);
 	return;
     }
 
-    if (pdinfo == datainfo) {
-	datainfo->t1 = pmod->t1;
-	datainfo->t2 = pmod->t2;
+    if (dset == dataset) {
+	dataset->t1 = pmod->t1;
+	dataset->t2 = pmod->t2;
     }	
 
     if (!err) {
-	err = genr_fit_resid(pmod, pZ, pdinfo, M_UHAT);
+	err = genr_fit_resid(pmod, dset, M_UHAT);
     }
 
     if (err) {
 	gui_errmsg(err);
-	datainfo->t1 = save_t1;
-	datainfo->t2 = save_t2;
+	dataset->t1 = save_t1;
+	dataset->t2 = save_t2;
 	gretl_print_destroy(prn);
 	return;
     }
 
-    freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
-		    NADBL, NADBL, 0, pmod->ncoeff, OPT_Z, &err);
+    freq = get_freq(dset->v - 1, dset, NADBL, NADBL, 0, 
+		    pmod->ncoeff, OPT_Z, &err);
 
     if (err) {
 	gui_errmsg(err);
@@ -4500,8 +4484,8 @@ void do_resid_freq (GtkAction *action, gpointer p)
     }
 
     trim_dataset(pmod, origv);
-    datainfo->t1 = save_t1;
-    datainfo->t2 = save_t2;
+    dataset->t1 = save_t1;
+    dataset->t2 = save_t2;
 
     free_freq(freq);
 }
@@ -4511,7 +4495,7 @@ series_has_negative_vals (const double *x)
 {
     int t;
 
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+    for (t=dataset->t1; t<=dataset->t2; t++) {
 	if (x[t] < 0.0) {
 	    return 1;
 	}
@@ -4534,10 +4518,10 @@ void do_freq_dist (void)
     int plot = 1;
     int err = 0;
 
-    if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[v])) {
+    if (gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[v])) {
 	nbins = 3;
-    } else if (var_is_discrete(datainfo, v) ||
-	       gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[v])) {
+    } else if (var_is_discrete(dataset, v) ||
+	       gretl_isdiscrete(dataset->t1, dataset->t2, dataset->Z[v])) {
 	discrete = 1;
     }
 
@@ -4547,13 +4531,13 @@ void do_freq_dist (void)
 	int n;
 
 	if (discrete) {
-	    n = gretl_minmax(datainfo->t1, datainfo->t2, Z[v], &xmin, &xmax);
+	    n = gretl_minmax(dataset->t1, dataset->t2, dataset->Z[v], 
+			     &xmin, &xmax);
 	    if (n == 0) {
 		err = E_MISSDATA;
 	    }
 	} else {
-	    err = freq_setup(v, (const double **) Z, datainfo,
-			     &n, &xmax, &xmin, &nbins, &fwid);
+	    err = freq_setup(v, dataset, &n, &xmax, &xmin, &nbins, &fwid);
 	}
 
 	if (err) {
@@ -4563,7 +4547,7 @@ void do_freq_dist (void)
 
 	tmp = g_strdup_printf(_("range %g to %g"), xmin, xmax);
 	bintxt = g_strdup_printf(_("%s (n = %d, %s)"), 
-				 datainfo->varname[v],
+				 dataset->varname[v],
 				 n, tmp);
 	g_free(tmp);
 	tmp = g_strdup_printf("gretl: %s", _("frequency distribution"));
@@ -4594,7 +4578,7 @@ void do_freq_dist (void)
 	}
     }
 
-    gretl_command_sprintf("freq %s%s", datainfo->varname[v],
+    gretl_command_sprintf("freq %s%s", dataset->varname[v],
 			  (dist == D_NORMAL)? " --normal" :
 			  (dist == D_GAMMA)? " --gamma" : 
 			  "");
@@ -4603,11 +4587,10 @@ void do_freq_dist (void)
 	return;
     }
 
-    freq = get_freq(v, (const double **) Z, datainfo, 
-		    fmin, fwid, nbins, 1, opt, &err);
+    freq = get_freq(v, dataset, fmin, fwid, nbins, 1, opt, &err);
 
     if (plot && !err) {
-	if (opt == OPT_O && series_has_negative_vals(Z[v])) {
+	if (opt == OPT_O && series_has_negative_vals(dataset->Z[v])) {
 	    errbox(_("Data contain negative values: gamma distribution not "
 		     "appropriate"));
 	} else {
@@ -4745,7 +4728,7 @@ static void display_tx_output (const char *fname, int graph_ok,
 	make_and_display_graph();
     }
 
-    if (oldv > 0 && datainfo->v > oldv) {
+    if (oldv > 0 && dataset->v > oldv) {
 	populate_varlist();
 	mark_dataset_as_modified();
     }
@@ -4760,19 +4743,19 @@ static void real_do_tramo_x12a (int v, int tramo)
 {
     /* save options between invocations */
     static gretlopt opt = OPT_G;
-    int oldv = datainfo->v;
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
+    int oldv = dataset->v;
+    int save_t1 = dataset->t1;
+    int save_t2 = dataset->t2;
     void *handle;
-    int (*write_tx_data) (char *, int, double ***, DATAINFO *, 
-			  gretlopt *, int, GtkWindow *, void *);
+    int (*write_tx_data) (char *, int, DATASET *, gretlopt *, 
+			  int, GtkWindow *, void *);
     char outfile[MAXLEN] = {0};
     int graph_ok = 1;
     int err = 0;
 
     if (!tramo) {
 	/* we'll let tramo handle annual data, but not x12a */
-	if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
+	if (dataset->pd == 1 || !dataset_is_time_series(dataset)) {
 	    errbox(_("Input must be a monthly or quarterly time series"));
 	    return;
 	}
@@ -4784,15 +4767,15 @@ static void real_do_tramo_x12a (int v, int tramo)
 	return;
     }
 
-    series_adjust_sample(Z[v], &datainfo->t1, &datainfo->t2);
+    series_adjust_sample(dataset->Z[v], &dataset->t1, &dataset->t2);
 
-    err = write_tx_data(outfile, v, &Z, datainfo, &opt, tramo,
+    err = write_tx_data(outfile, v, dataset, &opt, tramo,
 			GTK_WINDOW(mdata->main), x12a_help); 
 
     close_plugin(handle);
 
-    datainfo->t1 = save_t1;
-    datainfo->t2 = save_t2;
+    dataset->t1 = save_t1;
+    dataset->t2 = save_t2;
 
     if (err) {
 	gui_errmsg(err);
@@ -4861,7 +4844,7 @@ void do_range_mean (void)
 {
     int v = mdata_active_var();
     void *handle;
-    int (*range_mean_graph) (int, const double **, const DATAINFO *, 
+    int (*range_mean_graph) (int, const DATASET *, 
 			     gretlopt opt, PRN *);
     PRN *prn;
     int err = 0;
@@ -4877,13 +4860,12 @@ void do_range_mean (void)
 	return; 
     }
 
-    err = range_mean_graph(v, (const double **) Z, 
-			   datainfo, OPT_NONE, prn);
+    err = range_mean_graph(v, dataset, OPT_NONE, prn);
 
     close_plugin(handle);
 
     if (!err) {
-	gchar *cline = g_strdup_printf("rmplot %s", datainfo->varname[v]);
+	gchar *cline = g_strdup_printf("rmplot %s", dataset->varname[v]);
 
 	make_and_display_graph();
 	record_command_line(cline);
@@ -4899,8 +4881,7 @@ void do_hurst (void)
     gint err;
     int v = mdata_active_var();
     void *handle;
-    int (*hurst_exponent) (int, const double **, 
-			   const DATAINFO *, PRN *);
+    int (*hurst_exponent) (int, const DATASET *, PRN *);
     PRN *prn;
 
     hurst_exponent = gui_get_plugin_function("hurst_exponent", 
@@ -4914,8 +4895,7 @@ void do_hurst (void)
 	return; 
     }
 
-    err = hurst_exponent(v, (const double **) Z,
-			 datainfo, prn);
+    err = hurst_exponent(v, dataset, prn);
 
     close_plugin(handle);
 
@@ -4932,17 +4912,17 @@ enum {
     MODEL_VAR
 };
 
-static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
+static void real_do_corrgm (DATASET *dset, int code)
 {
     char title[64];
     int order, err = 0;
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
     PRN *prn;
 
     strcpy(title, "gretl: ");
     strcat(title, _("correlogram"));
 
-    order = auto_acf_order(pdinfo->pd, T);
+    order = auto_acf_order(dset->pd, T);
 
     err = spin_dialog(title, NULL, &order, _("Maximum lag:"),
 		      1, T - 1, CORRGM);
@@ -4958,11 +4938,11 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = corrgram(libcmd.list[1], order, 0, (const double **) Z, 
-		       pdinfo, prn, OPT_NONE);
+	err = corrgram(libcmd.list[1], order, 0, 
+		       dset, OPT_NONE, prn);
     } else {
-	err = corrgram(pdinfo->v - 1, order, 0, (const double **) Z, 
-		       pdinfo, prn, OPT_R);
+	err = corrgram(dset->v - 1, order, 0,
+		       dset, OPT_R, prn);
     }
 
     if (err) {
@@ -4978,13 +4958,12 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 
 void do_corrgm (void)
 {
-    real_do_corrgm(&Z, datainfo, SELECTED_VAR);
+    real_do_corrgm(dataset, SELECTED_VAR);
 }
 
-static int tmp_add_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			      int code)
+static int tmp_add_fit_resid (MODEL *pmod, DATASET *dset, int code)
 {
-    int err = genr_fit_resid(pmod, pZ, pdinfo, code);
+    int err = genr_fit_resid(pmod, dset, code);
 
     if (err) {
 	gui_errmsg(err);
@@ -4997,22 +4976,21 @@ void residual_correlogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int origv = datainfo->v;
-    double ***pZ;
-    DATAINFO *pdinfo;
+    int origv = dataset->v;
+    DATASET *dset;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
+    dset = maybe_get_model_data(pmod, OPT_G, &err);
     if (err) {
 	return;
     }
 
     /* add residuals to data set temporarily */
-    if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT)) {
+    if (tmp_add_fit_resid(pmod, dset, M_UHAT)) {
 	return;
     }
 
-    real_do_corrgm(pZ, pdinfo, MODEL_VAR);
+    real_do_corrgm(dset, MODEL_VAR);
 
     trim_dataset(pmod, origv);
 }
@@ -5023,11 +5001,11 @@ void residual_correlogram (GtkAction *action, gpointer p)
    as the last series.
 */
 
-static void real_do_pergm (double **Z, DATAINFO *pdinfo, int code)
+static void real_do_pergm (DATASET *dset, int code)
 {
     PRN *prn;
     const gchar *title = N_("gretl: periodogram");
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
     gretlopt opt = OPT_NONE;
     int width, cancel;
     int err = 0;
@@ -5046,12 +5024,12 @@ static void real_do_pergm (double **Z, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = periodogram(libcmd.list[1], width, (const double **) Z, 
-			  pdinfo, libcmd.opt, prn);
+	err = periodogram(libcmd.list[1], width,
+			  dset, libcmd.opt, prn);
     } else {
 	opt |= OPT_R;
-	err = periodogram(pdinfo->v - 1, width, (const double **) Z, 
-			  pdinfo, opt, prn);
+	err = periodogram(dset->v - 1, width, 
+			  dset, opt, prn);
     }
 
     if (err) {
@@ -5065,26 +5043,25 @@ static void real_do_pergm (double **Z, DATAINFO *pdinfo, int code)
 
 void do_pergm (GtkAction *action)
 {
-    real_do_pergm(Z, datainfo, SELECTED_VAR);
+    real_do_pergm(dataset, SELECTED_VAR);
 }
 
 void residual_periodogram (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int origv = datainfo->v;
-    double ***pZ;
-    DATAINFO *pdinfo;
+    int origv = dataset->v;
+    DATASET *dset;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
+    dset = maybe_get_model_data(pmod, OPT_G, &err);
 
     if (!err) {
-	err = tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT);
+	err = tmp_add_fit_resid(pmod, dset, M_UHAT);
     }
 
     if (!err) {
-	real_do_pergm(*pZ, pdinfo, MODEL_VAR);
+	real_do_pergm(dset, MODEL_VAR);
 	trim_dataset(pmod, origv); 
     }
 }
@@ -5092,7 +5069,7 @@ void residual_periodogram (GtkAction *action, gpointer p)
 void do_fractint (GtkAction *action)
 {
     const gchar *title = N_("gretl: fractional integration");
-    int T = sample_size(datainfo);
+    int T = sample_size(dataset);
     gretlopt opt = OPT_A;
     int width, err;
     PRN *prn;    
@@ -5109,8 +5086,8 @@ void do_fractint (GtkAction *action)
     err = check_and_record_command();
 
     if (!err) {
-	err = fractint(libcmd.list[1], width, (const double **) Z, 
-		       datainfo, libcmd.opt, prn);
+	err = fractint(libcmd.list[1], width, dataset, 
+		       libcmd.opt, prn);
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -5127,22 +5104,21 @@ void residual_qq_plot (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    int origv = datainfo->v;
-    double ***pZ;
-    DATAINFO *pdinfo;
+    int origv = dataset->v;
+    DATASET *dset;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_G, &err);
+    dset = maybe_get_model_data(pmod, OPT_G, &err);
 
     if (!err) {
 	/* add residuals to data set temporarily */
-	err = tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT);
+	err = tmp_add_fit_resid(pmod, dset, M_UHAT);
     }
 
     if (!err) {
 	int list[2] = {1, origv};
 
-	err = qq_plot(list, (const double **) *pZ, pdinfo, OPT_NONE);
+	err = qq_plot(list, dset, OPT_NONE);
 
 	if (err) {
 	    gui_errmsg(err);
@@ -5163,7 +5139,7 @@ void do_coeff_intervals (GtkAction *action, gpointer p)
 
     if (bufopen(&prn)) return;
 
-    cf = gretl_model_get_coeff_intervals(pmod, datainfo);
+    cf = gretl_model_get_coeff_intervals(pmod, dataset);
 
     if (cf != NULL) {
 	text_print_model_confints(cf, prn);
@@ -5180,14 +5156,14 @@ void do_outcovmx (GtkAction *action, gpointer p)
     VMatrix *vcv = NULL;
     PRN *prn;
 
-    if (Z == NULL || datainfo == NULL) {
+    if (dataset == NULL || dataset->Z == NULL) {
 	errbox(_("Data set is gone"));
 	return;
     }
 
     if (bufopen(&prn)) return;
 
-    vcv = gretl_model_get_vcv(pmod, datainfo);
+    vcv = gretl_model_get_vcv(pmod, dataset);
 
     if (vcv == NULL) {
 	errbox(_("Error generating covariance matrix"));
@@ -5243,7 +5219,7 @@ void add_dummies (GtkAction *action)
 
     if (u == TS_DUMMIES) {
 	gretl_command_strcpy("genr dummy");
-    } else if (dataset_is_panel(datainfo)) {
+    } else if (dataset_is_panel(dataset)) {
 	if (u == PANEL_UNIT_DUMMIES) {
 	    gretl_command_strcpy("genr unitdum");
 	} else {
@@ -5261,9 +5237,9 @@ void add_dummies (GtkAction *action)
     }
 
     if (u == TS_DUMMIES) {
-	err = dummy(&Z, datainfo, 0) == 0;
+	err = dummy(dataset, 0) == 0;
     } else {
-	err = panel_dummies(&Z, datainfo, opt);
+	err = panel_dummies(dataset, opt);
     } 
 
     if (err) {
@@ -5285,7 +5261,7 @@ void add_index (GtkAction *action)
 	return;
     }
 
-    if (gen_time(&Z, datainfo, tm)) {
+    if (gen_time(dataset, tm)) {
 	errbox((tm)? _("Error generating time trend") :
 	       _("Error generating index variable"));
     } else {
@@ -5300,7 +5276,7 @@ void do_add_obs (void)
     int err = 0;
 
     if (n > 0) {
-	err = dataset_add_observations(n, &Z, datainfo, OPT_A);
+	err = dataset_add_observations(n, dataset, OPT_A);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -5317,7 +5293,7 @@ void do_remove_obs (void)
 	errbox(_("The data set is currently sub-sampled.\n"));
 	drop_obs_state(FALSE);
     } else {
-	drop = datainfo->n - get_original_n();
+	drop = dataset->n - get_original_n();
     }
 
     if (drop > 0) {
@@ -5330,7 +5306,7 @@ void do_remove_obs (void)
 	g_free(msg);
 
 	if (resp == GRETL_YES) {
-	    int err = dataset_drop_observations(drop, &Z, datainfo);
+	    int err = dataset_drop_observations(drop, dataset);
 
 	    if (err) {
 		gui_errmsg(err);
@@ -5377,10 +5353,10 @@ void add_logs_etc (int ci)
     if (ci == LAGS) {
 	int resp;
 
-	order = default_lag_order(datainfo);
+	order = default_lag_order(dataset);
 	resp = spin_dialog(_("gretl: generate lags"), NULL,
 			   &order, _("Number of lags to create:"), 
-			   1, datainfo->n - 1, 0);
+			   1, dataset->n - 1, 0);
 	if (resp < 0) {
 	    free(liststr);
 	    return;
@@ -5404,7 +5380,7 @@ void add_logs_etc (int ci)
 	}
 
 	for (i=1; i<=list[0]; i++) {
-	    if (!var_is_discrete(datainfo, list[i])) {
+	    if (!var_is_discrete(dataset, list[i])) {
 		err++; 
 	    }
 	}
@@ -5439,15 +5415,15 @@ void add_logs_etc (int ci)
     }
 
     if (ci == LAGS) {
-	err = list_laggenr(&libcmd.list, order, &Z, datainfo);
+	err = list_laggenr(&libcmd.list, order, dataset);
     } else if (ci == LOGS) {
-	err = list_loggenr(libcmd.list, &Z, datainfo);
+	err = list_loggenr(libcmd.list, dataset);
     } else if (ci == SQUARE) {
-	err = list_xpxgenr(&libcmd.list, &Z, datainfo, OPT_NONE);
+	err = list_xpxgenr(&libcmd.list, dataset, OPT_NONE);
     } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
-	err = list_diffgenr(libcmd.list, ci, &Z, datainfo);
+	err = list_diffgenr(libcmd.list, ci, dataset);
     } else if (ci == DUMMIFY) {
-	err = list_dumgenr(&libcmd.list, &Z, datainfo, libcmd.opt);
+	err = list_dumgenr(&libcmd.list, dataset, libcmd.opt);
     }
 
     if (err) {
@@ -5500,7 +5476,7 @@ int save_fit_resid (MODEL *pmod, int code)
 	fprintf(stderr, "FIXME saving fit/resid from subsampled model\n");
 	err = E_DATA;
     } else {
-	x = get_fit_or_resid(pmod, datainfo, code, vname, descrip, &err);
+	x = get_fit_or_resid(pmod, dataset, code, vname, descrip, &err);
     }
 
     if (err) {
@@ -5588,7 +5564,7 @@ void add_system_resid (GtkAction *action, gpointer p)
     } else {
 	equation_system *sys = vwin->data;
 
-	uhat = system_get_resid_series(sys, j, datainfo, &err);
+	uhat = system_get_resid_series(sys, j, dataset, &err);
     }	
 
     if (err) {
@@ -5744,14 +5720,13 @@ void resid_plot (GtkAction *action, gpointer p)
     int pdum = vwin->active_var; 
     int ts, xvar = 0;
     int yno, uhatno;
-    double ***pZ;
-    DATAINFO *pdinfo;
-    int origv = datainfo->v;
+    DATASET *dset;
+    int origv = dataset->v;
     int err = 0;
 
     /* special case: GARCH model (show fitted variance) */
     if (pmod->ci == GARCH && !(pmod->opt & OPT_Z) && xvar == 0) {
-	err = garch_resid_plot(pmod, datainfo);
+	err = garch_resid_plot(pmod, dataset);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -5763,13 +5738,13 @@ void resid_plot (GtkAction *action, gpointer p)
     xvar_from_action(action, &xvar);
 
     /* FIXME OPT_F? */
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_F, &err);
+    dset = maybe_get_model_data(pmod, OPT_F, &err);
     if (err) {
 	return;
     }
 
     /* add residuals to data set temporarily */
-    if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_UHAT)) {
+    if (tmp_add_fit_resid(pmod, dset, M_UHAT)) {
 	return;
     }
 
@@ -5778,21 +5753,21 @@ void resid_plot (GtkAction *action, gpointer p)
 	opt |= OPT_Z; /* dummy */
     }
 
-    ts = dataset_is_time_series(pdinfo);
-    uhatno = pdinfo->v - 1; /* residual: last var added */
+    ts = dataset_is_time_series(dset);
+    uhatno = dset->v - 1; /* residual: last var added */
 
     plotlist[0] = 1;
     plotlist[1] = uhatno; 
 
-    strcpy(pdinfo->varname[uhatno], _("residual"));
+    strcpy(dset->varname[uhatno], _("residual"));
 
     if (pmod->ci == GARCH && (pmod->opt & OPT_Z)) {
-	strcpy(DISPLAYNAME(pdinfo, uhatno), _("standardized residual"));
+	strcpy(DISPLAYNAME(dset, uhatno), _("standardized residual"));
 	opt ^= OPT_R;
     } else {
 	yno = gretl_model_get_depvar(pmod);
-	sprintf(VARLABEL(pdinfo, uhatno), "residual for %s", 
-		pdinfo->varname[yno]);
+	sprintf(VARLABEL(dset, uhatno), "residual for %s", 
+		dset->varname[yno]);
     }
 
     if (xvar) { 
@@ -5814,7 +5789,7 @@ void resid_plot (GtkAction *action, gpointer p)
     }
 
     /* generate graph */
-    err = gnuplot(plotlist, NULL, (const double **) *pZ, pdinfo, opt);
+    err = gnuplot(plotlist, NULL, dset, opt);
 
     if (err) {
 	gui_errmsg(err);
@@ -5825,24 +5800,23 @@ void resid_plot (GtkAction *action, gpointer p)
     trim_dataset(pmod, origv);
 }
 
-static void theil_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
+static void theil_plot (MODEL *pmod, DATASET *dset)
 {
     int plotlist[3];
     int dv, fv, err;
 
-    if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_YHAT)) {
+    if (tmp_add_fit_resid(pmod, dset, M_YHAT)) {
 	return;
     }
 
     plotlist[0] = 2;
     plotlist[1] = dv = gretl_model_get_depvar(pmod);
-    plotlist[2] = fv = pdinfo->v - 1; /* fitted values */
+    plotlist[2] = fv = dset->v - 1; /* fitted values */
 
-    sprintf(DISPLAYNAME(pdinfo, fv), _("predicted %s"),
-	    pdinfo->varname[dv]);
+    sprintf(DISPLAYNAME(dset, fv), _("predicted %s"),
+	    dset->varname[dv]);
 
-    err = theil_forecast_plot(plotlist, (const double **) *pZ, 
-			      pdinfo, OPT_G);
+    err = theil_forecast_plot(plotlist, dset, OPT_G);
 
     if (err) {
 	gui_errmsg(err);
@@ -5858,13 +5832,12 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
     int xvar = 0;
-    double ***pZ;
-    DATAINFO *pdinfo;
-    int origv = datainfo->v;
+    DATASET *dset;
+    int origv = dataset->v;
     char *formula;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    dset = maybe_get_model_data(pmod, OPT_NONE, &err);
     if (err) {
 	return;
     }
@@ -5872,13 +5845,12 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     xvar_from_action(action, &xvar);
 
     if (xvar < 0) {
-	theil_plot(pmod, pZ, pdinfo);
+	theil_plot(pmod, dset);
 	trim_dataset(pmod, origv);
 	return;
     }
 
-    formula = gretl_model_get_fitted_formula(pmod, xvar, (const double **) *pZ,
-					     pdinfo);
+    formula = gretl_model_get_fitted_formula(pmod, xvar, dset);
 
     if (formula != NULL) {
 	/* fitted value can be represented as a formula: if feasible,
@@ -5887,7 +5859,7 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 	plotlist[1] = 0; /* placeholder entry */
 	plotlist[2] = gretl_model_get_depvar(pmod);
 	plotlist[3] = xvar;
-	err = gnuplot(plotlist, formula, (const double **) *pZ, pdinfo, opt);
+	err = gnuplot(plotlist, formula, dset, opt);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -5898,12 +5870,12 @@ void fit_actual_plot (GtkAction *action, gpointer p)
     }
 
     /* add fitted values to data set temporarily */
-    if (tmp_add_fit_resid(pmod, pZ, pdinfo, M_YHAT)) {
+    if (tmp_add_fit_resid(pmod, dset, M_YHAT)) {
 	return;
     }
 
     plotlist[0] = 3;
-    plotlist[1] = pdinfo->v - 1; /* last var added (fitted vals) */
+    plotlist[1] = dset->v - 1; /* last var added (fitted vals) */
 
     /* depvar from regression */
     plotlist[2] = gretl_model_get_depvar(pmod);
@@ -5915,12 +5887,12 @@ void fit_actual_plot (GtkAction *action, gpointer p)
 	/* plot against obs */
 	plotlist[0] -= 1;
 	opt |= OPT_T;
-	if (dataset_is_time_series(pdinfo)) {
+	if (dataset_is_time_series(dset)) {
 	    opt |= OPT_O; /* use lines */
 	}
     } 
 
-    err = gnuplot(plotlist, NULL, (const double **) *pZ, pdinfo, opt);
+    err = gnuplot(plotlist, NULL, dset, opt);
 
     if (err) {
 	gui_errmsg(err);
@@ -5935,14 +5907,13 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    double ***pZ;
-    DATAINFO *pdinfo;
-    int origv = datainfo->v;
+    DATASET *dset;
+    int origv = dataset->v;
     int *xlist = NULL;
     int list[4];
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    dset = maybe_get_model_data(pmod, OPT_NONE, &err);
     if (err) {
 	return;
     }
@@ -5965,7 +5936,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
     free(xlist);
 
-    err = gnuplot_3d(list, NULL, *pZ, pdinfo, GPT_GUI | GPT_FA);
+    err = gnuplot_3d(list, NULL, dset, GPT_GUI | GPT_FA);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -5986,7 +5957,7 @@ void fit_actual_splot (GtkAction *action, gpointer p)
 
 void display_selected (void)
 {
-    int n = sample_size(datainfo);
+    int n = sample_size(dataset);
     PRN *prn = NULL;
     int *list = NULL;
 
@@ -6008,7 +5979,7 @@ void display_selected (void)
 	if (user_fopen("data_display_tmp", fname, &prn)) {
 	    goto display_exit;
 	}
-	printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
+	printdata(list, NULL, dataset, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { 
@@ -6018,7 +5989,7 @@ void display_selected (void)
 	if (bufopen(&prn)) {
 	    goto display_exit;
 	}
-	if (printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn)) {
+	if (printdata(list, NULL, dataset, OPT_O, prn)) {
 	    nomem();
 	    gretl_print_destroy(prn);
 	} else {
@@ -6037,26 +6008,25 @@ void display_fit_resid (GtkAction *action, gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
     MODEL *pmod = (MODEL *) vwin->data;
-    double ***pZ;
-    DATAINFO *pdinfo = NULL;
+    DATASET *dset = NULL;
     FITRESID *fr;
     PRN *prn;
     int err = 0;
 
-    pZ = maybe_get_model_data(pmod, &pdinfo, OPT_NONE, &err);
+    dset = maybe_get_model_data(pmod, OPT_NONE, &err);
     if (err) {
 	return;
     }
 
     if (bufopen(&prn)) return;
 
-    fr = get_fit_resid(pmod, (const double **) *pZ, pdinfo, &err);
+    fr = get_fit_resid(pmod, dset, &err);
 
     if (fr == NULL) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	text_print_fit_resid(fr, pdinfo, prn);
+	text_print_fit_resid(fr, dset, prn);
 	if (pmod->dataset == NULL) {
 	    view_buffer_with_parent(vwin, prn, 78, 350, 
 				    _("gretl: display data"), 
@@ -6091,7 +6061,7 @@ int max_untouchable_series_ID (void)
     }
 
     /* and models saved via command line */
-    vmax = highest_numbered_var_in_saved_object(datainfo);
+    vmax = highest_numbered_var_in_saved_object(dataset);
     if (vmax > vsave) {
 	vsave = vmax;
     }    
@@ -6140,10 +6110,10 @@ static void real_delete_vars (int id, int *dlist)
 
 	if (maybe_prune_delete_list(testlist)) {
 	    errbox(_("Cannot delete %s; variable is in use"), 
-		   datainfo->varname[id]);
+		   dataset->varname[id]);
 	    return;
 	} else {
-	    msg = g_strdup_printf(_("Really delete %s?"), datainfo->varname[id]);
+	    msg = g_strdup_printf(_("Really delete %s?"), dataset->varname[id]);
 	}
     } else if (dlist == NULL) {
 	/* delete vars selected in main window */
@@ -6193,7 +6163,7 @@ static void real_delete_vars (int id, int *dlist)
 	errbox(_("Cannot delete all of the specified variables"));
     }
 
-    err = dataset_drop_listed_variables(libcmd.list, &Z, datainfo, 
+    err = dataset_drop_listed_variables(libcmd.list, dataset, 
 					&renumber, NULL);
 
     if (err) {
@@ -6225,12 +6195,11 @@ static int regular_ts_plot (int vnum)
     int list[2] = {1, vnum};
     int err;
 
-    err = gnuplot(list, NULL, (const double **) Z, 
-		  datainfo, OPT_G | OPT_O | OPT_T);
+    err = gnuplot(list, NULL, dataset, OPT_G | OPT_O | OPT_T);
 
     if (!err) {
 	gretl_command_sprintf("gnuplot %s --time-series --with-lines", 
-			      datainfo->varname[vnum]);
+			      dataset->varname[vnum]);
 	record_command_verbatim(cmdline);
     }
 
@@ -6239,10 +6208,10 @@ static int regular_ts_plot (int vnum)
 
 static void do_panel_plot (int varnum)
 {
-    int t1 = datainfo->t1 / datainfo->pd;
-    int t2 = datainfo->t2 / datainfo->pd;
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
+    int t1 = dataset->t1 / dataset->pd;
+    int t2 = dataset->t2 / dataset->pd;
+    int save_t1 = dataset->t1;
+    int save_t2 = dataset->t2;
     int handled = 0;
     int sel, err = 0;
     
@@ -6254,29 +6223,25 @@ static void do_panel_plot (int varnum)
     } else {
 	int n = t2 - t1 + 1;
 
-	datainfo->t1 = datainfo->pd * t1;
-	datainfo->t2 = datainfo->t1 + n * datainfo->pd - 1;
+	dataset->t1 = dataset->pd * t1;
+	dataset->t2 = dataset->t1 + n * dataset->pd - 1;
     }
 
     if (sel == 0) {
 	/* group means time series */
-	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				  datainfo, OPT_G | OPT_M);
+	err = gretl_panel_ts_plot(varnum, dataset, OPT_G | OPT_M);
     } else if (sel == 1) {
 	/* time-series overlay */
-	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				  datainfo, OPT_G);
+	err = gretl_panel_ts_plot(varnum, dataset, OPT_G);
     } else if (sel == 2) {
 	/* sequential by unit */
 	err = regular_ts_plot(varnum);
     } else if (sel == 3) {
 	/* small multiples in grid */
-	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				  datainfo, OPT_S);
+	err = gretl_panel_ts_plot(varnum, dataset, OPT_S);
     } else if (sel == 4) {
 	/* small multiples stacked vertically */
-	err = gretl_panel_ts_plot(varnum, (const double **) Z, 
-				  datainfo, OPT_S | OPT_V);
+	err = gretl_panel_ts_plot(varnum, dataset, OPT_S | OPT_V);
     } else if (sel == 5) {
 	/* boxplots by group */
 	do_boxplot_var(varnum, OPT_P);
@@ -6287,8 +6252,8 @@ static void do_panel_plot (int varnum)
 	handled = 1;
     }
 
-    datainfo->t1 = save_t1;
-    datainfo->t2 = save_t2;
+    dataset->t1 = save_t1;
+    dataset->t2 = save_t2;
 
     if (!handled) {
 	gui_graph_handler(err);
@@ -6302,9 +6267,9 @@ void do_graph_var (int varnum)
 {
     if (varnum <= 0) return;
 
-    if (dataset_is_cross_section(datainfo)) {
+    if (dataset_is_cross_section(dataset)) {
 	do_freq_dist();
-    } else if (multi_unit_panel_sample(datainfo)) {
+    } else if (multi_unit_panel_sample(dataset)) {
 	do_panel_plot(varnum);
     } else {
 	int err = regular_ts_plot(varnum);
@@ -6327,7 +6292,7 @@ void do_boxplot_var (int varnum, gretlopt opt)
 	return;
     }
 
-    if (!(opt & OPT_S) && multi_unit_panel_sample(datainfo)) {
+    if (!(opt & OPT_S) && multi_unit_panel_sample(dataset)) {
 	/* note: OPT_S enforces a single plot */
 	plotopt = OPT_P;
     }
@@ -6336,14 +6301,14 @@ void do_boxplot_var (int varnum, gretlopt opt)
 	plotopt |= OPT_O;
     }
 
-    gretl_command_sprintf("boxplot %s%s", datainfo->varname[varnum],
+    gretl_command_sprintf("boxplot %s%s", dataset->varname[varnum],
 			  print_flags(plotopt, BXPLOT));
 
     if (check_and_record_command()) {
 	return;
     }
 
-    err = boxplots(libcmd.list, (const double **) Z, datainfo, plotopt);
+    err = boxplots(libcmd.list, dataset, plotopt);
 
     gui_graph_handler(err);
 }
@@ -6365,8 +6330,7 @@ int do_scatters (selector *sr)
     err = check_and_record_command();
 
     if (!err) {
-	err = multi_scatters(libcmd.list, (const double **) Z, datainfo, 
-			     opt);
+	err = multi_scatters(libcmd.list, dataset, opt);
 	gui_graph_handler(err);
     }
 
@@ -6384,7 +6348,7 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
     }
 
     if (strchr(buf, '(')) {
-	err = boolean_boxplots(buf, &Z, datainfo, opt);
+	err = boolean_boxplots(buf, dataset, opt);
     } else {
 	gretl_command_sprintf("boxplot %s%s", 
 			      (opt & OPT_O)? "--notches " : "", buf);
@@ -6392,7 +6356,7 @@ void do_box_graph (GtkWidget *w, dialog_t *dlg)
 	if (check_and_record_command()) {
 	    return;
 	}
-	err = boxplots(libcmd.list, (const double **) Z, datainfo, opt);
+	err = boxplots(libcmd.list, dataset, opt);
     }
 
     if (err) {
@@ -6419,14 +6383,15 @@ int do_factorized_boxplot (selector *sr)
     }
 
     if (libcmd.list[0] != 2 || 
-	(!var_is_discrete(datainfo, libcmd.list[2]) &&
-	 !gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[libcmd.list[2]]))) {
+	(!var_is_discrete(dataset, libcmd.list[2]) &&
+	 !gretl_isdiscrete(dataset->t1, dataset->t2, 
+			   dataset->Z[libcmd.list[2]]))) {
 	errbox(_("You must supply two variables, the second of "
 		 "which is discrete"));
 	return 1;
     }
 
-    err = boxplots(libcmd.list, (const double **) Z, datainfo, OPT_Z);
+    err = boxplots(libcmd.list, dataset, OPT_Z);
     
     if (err) {
 	gui_errmsg(err);
@@ -6453,15 +6418,15 @@ int do_dummy_graph (selector *sr)
     }
 
     if (libcmd.list[0] != 3 || 
-	(!var_is_discrete(datainfo, libcmd.list[3]) &&
-	 !gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[libcmd.list[3]]))) {
+	(!var_is_discrete(dataset, libcmd.list[3]) &&
+	 !gretl_isdiscrete(dataset->t1, dataset->t2, 
+			   dataset->Z[libcmd.list[3]]))) {
 	errbox(_("You must supply three variables, the last of "
 		 "which is discrete"));
 	return 1;
     }
 
-    err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, OPT_G | OPT_Z);
+    err = gnuplot(libcmd.list, NULL, dataset, OPT_G | OPT_Z);
 
     if (err) {
 	gui_errmsg(err);
@@ -6493,8 +6458,7 @@ int do_xyz_graph (selector *sr)
     }
 
     err = xy_plot_with_control(libcmd.list, NULL, 
-			       (const double **) Z, 
-			       datainfo, OPT_G);
+			       dataset, OPT_G);
 
     if (err) {
 	gui_errmsg(err);
@@ -6528,8 +6492,7 @@ int do_graph_from_selector (selector *sr)
 	return 1;
     }
 
-    err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-		  datainfo, opt);
+    err = gnuplot(libcmd.list, NULL, dataset, opt);
 
     gui_graph_handler(err);
 
@@ -6580,7 +6543,7 @@ int do_splot_from_selector (selector *sr)
 	return err;
     }
 
-    err = gnuplot_3d(list, NULL, Z, datainfo, GPT_GUI);
+    err = gnuplot_3d(list, NULL, dataset, GPT_GUI);
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
@@ -6698,11 +6661,9 @@ void plot_from_selection (int code)
 
 	if (!err) {
 	    if (opt & OPT_L) {
-		err = multi_scatters(libcmd.list, (const double **) Z, 
-				     datainfo, opt);
+		err = multi_scatters(libcmd.list, dataset, opt);
 	    } else {	
-		err = gnuplot(libcmd.list, NULL, (const double **) Z, 
-			      datainfo, opt);
+		err = gnuplot(libcmd.list, NULL, dataset, opt);
 	    } 
 	    gui_graph_handler(err);
 	}
@@ -6715,13 +6676,13 @@ static int all_missing (int v)
 {
     int t;
     
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	if (!na(Z[v][t])) {
+    for (t=dataset->t1; t<=dataset->t2; t++) {
+	if (!na(dataset->Z[v][t])) {
 	    return 0;
 	} 
     }
 
-    warnbox("%s: no valid values", datainfo->varname[v]);
+    warnbox("%s: no valid values", dataset->varname[v]);
     return 1;
 }
 
@@ -6731,7 +6692,7 @@ void display_var (void)
     PRN *prn;
     windata_t *vwin;
     int height = 400;
-    int n = sample_size(datainfo);
+    int n = sample_size(dataset);
     int v = mdata_active_var();
 
     list[0] = 1;
@@ -6749,7 +6710,7 @@ void display_var (void)
 	    return;
 	}
 
-	printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
+	printdata(list, NULL, dataset, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 28, height, VIEW_DATA);
     } else { 
@@ -6760,14 +6721,14 @@ void display_var (void)
 	    return;
 	}
 
-	err = printdata(list, NULL, (const double **) Z, datainfo, OPT_O, prn);
+	err = printdata(list, NULL, dataset, OPT_O, prn);
 
 	if (err) {
 	    nomem();
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	vwin = view_buffer(prn, 36, height, datainfo->varname[v], 
+	vwin = view_buffer(prn, 36, height, dataset->varname[v], 
 			   VIEW_SERIES, NULL);
 	series_view_connect(vwin, v);
     }
@@ -7181,7 +7142,7 @@ int maybe_restore_full_data (int action)
 	}
 
 	if (resp == GRETL_YES) {
-	    gui_restore_sample(&Z, datainfo);
+	    gui_restore_sample(dataset);
 	} else if (resp == GRETL_CANCEL || action == COMPACT || action == EXPAND) {
 	    return 1;
 	}
@@ -7200,7 +7161,7 @@ void gui_transpose_data (void)
 			   "Do you want to proceed?"), 0);
 
     if (resp == GRETL_YES) {
-	int err = transpose_data(&Z, datainfo);
+	int err = transpose_data(dataset);
     
 	if (err) {
 	    gui_errmsg(err);
@@ -7217,7 +7178,7 @@ void gui_sort_data (void)
     int *list = NULL;
     int nv = 0;
 
-    list = full_var_list(datainfo, &nv);
+    list = full_var_list(dataset, &nv);
 
     if (nv == 0) {
 	errbox("No suitable variables");
@@ -7248,7 +7209,7 @@ void gui_sort_data (void)
 	if (v > 0) {
 	    int list[] = { 1, v };
 
-	    err = dataset_sort_by(list, Z, datainfo, opt);
+	    err = dataset_sort_by(list, dataset, opt);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
@@ -7263,7 +7224,7 @@ void gui_sort_data (void)
 void gui_resample_data (void)
 {
     gchar *title;
-    int resp, n = datainfo->n;
+    int resp, n = dataset->n;
 
     title = g_strdup_printf("gretl: %s", _("resample dataset"));
 
@@ -7278,7 +7239,7 @@ void gui_resample_data (void)
 	int err;
 
 	err = modify_dataset(DS_RESAMPLE, NULL, nstr, 
-			     &Z, datainfo, NULL);
+			     dataset, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	} else {
@@ -7300,8 +7261,7 @@ static int db_write_response (const char *filename, const int *list)
     if (resp == GRETL_NO) {
 	ret = 1;
     } else {
-	ret = write_db_data(filename, list, OPT_F,
-			    (const double **) Z, datainfo);
+	ret = write_db_data(filename, list, OPT_F, dataset);
     }
 
     g_free(msg);  
@@ -7316,10 +7276,10 @@ static int shrink_dataset_to_sample (void)
     int err;
 
     if (complex_subsampled()) {
-	maybe_free_full_dataset(datainfo);
+	maybe_free_full_dataset(dataset);
     }
 
-    err = dataset_shrink_obs_range(&Z, datainfo);
+    err = dataset_shrink_obs_range(dataset);
     if (err) {
 	gui_errmsg(err);
     }
@@ -7346,7 +7306,7 @@ static int shrink_dataset_to_sublist (void)
 	return err;
     }
 
-    full_list = full_var_list(datainfo, NULL);
+    full_list = full_var_list(dataset, NULL);
     droplist = gretl_list_diff_new(full_list, sublist, 1);
     
     if (droplist == NULL) {
@@ -7449,8 +7409,7 @@ int do_store (char *filename, gretlopt opt)
     } 
 
     /* actually write the data to file */
-    err = write_data(filename, libcmd.list, (const double **) Z, datainfo, 
-		     opt, 1);
+    err = write_data(filename, libcmd.list, dataset, opt, 1);
 
     if (err) {
 	if (WRITING_DB(opt) && err == E_DB_DUP) {
@@ -7476,7 +7435,7 @@ int do_store (char *filename, gretlopt opt)
 	if (is_gzipped(datafile)) {
 	    data_status |= GZIPPED_DATA;
 	} 
-	set_sample_label(datainfo);	
+	set_sample_label(dataset);	
     }
 
     /* tell the user */
@@ -7778,15 +7737,15 @@ void save_latex (PRN *prn, const char *fname)
     }
 }
 
-static void clean_up_varlabels (DATAINFO *pdinfo)
+static void clean_up_varlabels (DATASET *dset)
 {
     char *label;
     gchar *conv;
     gsize wrote;
     int i;
 
-    for (i=1; i<pdinfo->v; i++) {
-	label = VARLABEL(pdinfo, i);
+    for (i=1; i<dset->v; i++) {
+	label = VARLABEL(dset, i);
 	if (!g_utf8_validate(label, -1, NULL)) {
 	    conv = g_convert(label, -1,
 			     "UTF-8",
@@ -7933,7 +7892,7 @@ static int execute_script (const char *runfile, const char *buf,
 
     while (libcmd.ci != QUIT) {
 	if (gretl_execute_loop()) { 
-	    exec_err = gretl_loop_exec(&state, &Z, datainfo);
+	    exec_err = gretl_loop_exec(&state, dataset);
 	    if (exec_err) {
 		goto endwhile;
 	    }
@@ -7981,7 +7940,7 @@ static int execute_script (const char *runfile, const char *buf,
 		    strcpy(state.runfile, runfile);
 		}
 		state.flags = exec_code;
-		exec_err = gui_exec_line(&state, &Z, datainfo);
+		exec_err = gui_exec_line(&state, dataset);
 	    }
 
 	    if (exec_err && !gretl_error_is_fatal()) {
@@ -8055,10 +8014,10 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     } else if (ci == FREQ && (s->flags & CONSOLE_EXEC)) {
 	register_graph(NULL);
     } else if (ci == SETOBS) {
-	set_sample_label(datainfo);
+	set_sample_label(dataset);
 	mark_dataset_as_modified();
     } else if (ci == SMPL) {
-	set_sample_label(datainfo);
+	set_sample_label(dataset);
     } else if (ci == DATAMOD) {
 	mark_dataset_as_modified();
 	populate_varlist();
@@ -8083,12 +8042,12 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     }
 }
 
-static int script_renumber_series (const char *s, double **Z, 
-				   DATAINFO *pdinfo, PRN *prn)
+static int script_renumber_series (const char *s, DATASET *dset, 
+				   PRN *prn)
 {
     int err, fixmax = max_untouchable_series_ID();
 
-    err = renumber_series_with_checks(s, fixmax, Z, pdinfo, prn);
+    err = renumber_series_with_checks(s, fixmax, dset, prn);
     if (err) {
 	errmsg(err, prn);
     }
@@ -8114,8 +8073,8 @@ static int gui_try_http (const char *s, char *fname, int *http)
     return err;
 }
 
-static int script_open_append (ExecState *s, double ***pZ,
-			       DATAINFO *pdinfo, PRN *prn)
+static int script_open_append (ExecState *s, DATASET *dset, 
+			       PRN *prn)
 {
     gretlopt openopt = OPT_NONE;
     char *line = s->line;
@@ -8183,20 +8142,20 @@ static int script_open_append (ExecState *s, double ***pZ,
     }
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(myfile, pZ, pdinfo, openopt, prn);
+	err = import_csv(myfile, dset, openopt, prn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(myfile, pZ, pdinfo, openopt | OPT_B, prn);
+	err = gretl_read_gdt(myfile, dset, openopt | OPT_B, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
-	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->extra, pZ, pdinfo, 
+	err = import_spreadsheet(myfile, ftype, cmd->list, cmd->extra, dset, 
 				 openopt, prn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(myfile, ftype, pZ, pdinfo, openopt, prn);
+	err = import_other(myfile, ftype, dset, openopt, prn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(line, prn);
     } else if (dbdata) {
 	err = set_db_name(myfile, ftype, prn);
     } else {
-	err = gretl_get_data(myfile, pZ, pdinfo, openopt, prn);
+	err = gretl_get_data(myfile, dset, openopt, prn);
     }
 
     if (err) {
@@ -8217,14 +8176,14 @@ static int script_open_append (ExecState *s, double ***pZ,
 	}
     }
 
-    if (pdinfo->v > 0 && !dbdata) {
+    if (dset->v > 0 && !dbdata) {
 	if (cmd->ci == APPEND) {
 	    register_data(DATA_APPENDED);
 	} else {
 	    register_data(OPENED_VIA_CLI);
 	}
 	if (!(cmd->opt & OPT_Q)) { 
-	    varlist(pdinfo, prn);
+	    varlist(dset, prn);
 	}
     }
 
@@ -8246,7 +8205,7 @@ static int script_open_append (ExecState *s, double ***pZ,
    commands are passed on to libgretl.
 */
 
-int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+int gui_exec_line (ExecState *s, DATASET *dset)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -8287,7 +8246,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* when stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, cmd);
     } else {
-	err = parse_command_line(line, cmd, pZ, pdinfo);
+	err = parse_command_line(line, cmd, dset);
     }
 
 #if CMD_DEBUG
@@ -8328,7 +8287,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	err = gretl_loop_append_line(s, pZ, pdinfo);
+	err = gretl_loop_append_line(s, dset);
 	if (err) {
 	    errmsg(err, prn);
 	    return 1;
@@ -8349,11 +8308,11 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     switch (cmd->ci) {
 
     case DATA:
-	err = db_get_series(line, pZ, pdinfo, cmd->opt, prn);
+	err = db_get_series(line, dset, cmd->opt, prn);
         if (!err) { 
-	    clean_up_varlabels(pdinfo);
+	    clean_up_varlabels(dset);
 	    register_data(DATA_APPENDED);
-            varlist(pdinfo, prn);
+            varlist(dset, prn);
         }
 	break;
 
@@ -8380,13 +8339,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		break;
 	    }
 	    maybe_prune_delete_list(cmd->list);
-	    err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
+	    err = dataset_drop_listed_variables(cmd->list, dset, 
 						&k, prn);
 	    if (!err) {
 		if (k) {
 		    pputs(prn, _("Take note: variables have been renumbered"));
 		    pputc(prn, '\n');
-		    maybe_list_vars(pdinfo, prn);
+		    maybe_list_vars(dset, prn);
 		}
 		maybe_clear_selector(cmd->list);
 	    }
@@ -8397,8 +8356,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case QQPLOT:
-	err = qq_plot(cmd->list, (const double **) *pZ, pdinfo,
-		      cmd->opt);
+	err = qq_plot(cmd->list, dset, cmd->opt);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -8420,7 +8378,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case OPEN:
     case APPEND:
-	err = script_open_append(s, pZ, pdinfo, prn);
+	err = script_open_append(s, dset, prn);
 	break;
 
     case NULLDATA:
@@ -8436,7 +8394,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 	close_session(cmd->opt);
-	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
+	err = open_nulldata(dset, data_status, k, prn);
 	if (err) { 
 	    errmsg(err, prn);
 	} else {
@@ -8493,18 +8451,18 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case SMPL:
  	if (cmd->opt == OPT_F) {
- 	    gui_restore_sample(pZ, pdinfo);
+ 	    gui_restore_sample(dset);
  	} else if (cmd->opt) {
- 	    err = restrict_sample(line, cmd->list, pZ, pdinfo,
+ 	    err = restrict_sample(line, cmd->list, dset,
  				  NULL, cmd->opt, prn);
  	} else {
- 	    err = set_sample(line, pZ, pdinfo);
+ 	    err = set_sample(line, dset);
  	}
   	if (err) {
   	    errmsg(err, prn);
   	} else {
-  	    print_smpl(pdinfo, get_full_length_n(), prn);
-	    set_sample_label(pdinfo);
+  	    print_smpl(dset, get_full_length_n(), prn);
+	    set_sample_label(dset);
   	}
 	if (err && err != E_ALLOC && (cmd->flags & CMD_CATCH)) {
 	    set_gretl_errno(err);
@@ -8527,13 +8485,13 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    close_session(cmd->opt);
 	    break;
 	} else if (cmd->aux == DS_RENUMBER) {
-	    err = script_renumber_series(cmd->param, *pZ, pdinfo, prn);
+	    err = script_renumber_series(cmd->param, dset, prn);
 	    break;
 	}
 	/* else fall-through intended */
 
     default:
-	err = gretl_cmd_exec(s, pZ, pdinfo);
+	err = gretl_cmd_exec(s, dset);
 	break;
     } /* end of command switch */
 

@@ -340,10 +340,10 @@ static int probably_stochastic (int v)
 {
     int ret = 1;
 
-    if (sample_size(datainfo) >= 3) {
-	int t = datainfo->t1;
-	double d1 = Z[v][t+1] - Z[v][t];
-	double d2 = Z[v][t+2] - Z[v][t+1];
+    if (sample_size(dataset) >= 3) {
+	int t = dataset->t1;
+	double d1 = dataset->Z[v][t+1] - dataset->Z[v][t];
+	double d2 = dataset->Z[v][t+2] - dataset->Z[v][t+1];
 
 	if (d1 == floor(d1) && d2 == d1) {
 	    ret = 0;
@@ -383,13 +383,13 @@ static GList *add_series_names (GList *list)
 {
     int i;
 
-    for (i=1; i<datainfo->v; i++) {
-	if (!var_is_hidden(datainfo, i)) {
-	    list = g_list_append(list, (gpointer) datainfo->varname[i]);
+    for (i=1; i<dataset->v; i++) {
+	if (!var_is_hidden(dataset, i)) {
+	    list = g_list_append(list, (gpointer) dataset->varname[i]);
 	} 
     }
 
-    list = g_list_append(list, (gpointer) datainfo->varname[0]);
+    list = g_list_append(list, (gpointer) dataset->varname[0]);
 
     return list;
 }
@@ -784,7 +784,7 @@ static GtkWidget *xlist_int_selector (call_info *cinfo, int i)
 	for (i=1; i<=xlist[0]; i++) {
 	    vi = xlist[i];
 	    if (vi > 0) {
-		s = datainfo->varname[xlist[i]];
+		s = dataset->varname[xlist[i]];
 		combo_box_append_text(combo, s);
 	    }
 	}
@@ -835,7 +835,7 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i,
     adj = (GtkAdjustment *) gtk_adjustment_new(initv, minv, maxv, 
 					       1, 1, 0);
     if (type == GRETL_TYPE_OBS) {
-	spin = obs_button_new(adj, datainfo);
+	spin = obs_button_new(adj, dataset);
     } else {
 	spin = gtk_spin_button_new(adj, 1, 0);
     }
@@ -860,8 +860,8 @@ static GtkWidget *int_arg_selector (call_info *cinfo, int i,
     if (type == GRETL_TYPE_OBS) {
 	/* the incoming vals will be 1-based */
 	minv = (na(dminv) || dminv < 1)? 0 : (int) dminv - 1;
-	maxv = (na(dmaxv) || dmaxv > datainfo->n)? 
-	    (datainfo->n - 1) : (int) dmaxv - 1;
+	maxv = (na(dmaxv) || dmaxv > dataset->n)? 
+	    (dataset->n - 1) : (int) dmaxv - 1;
     } else {
 	minv = (na(dminv))? INT_MIN : (int) dminv;
 	maxv = (na(dmaxv))? INT_MAX : (int) dmaxv;
@@ -982,7 +982,7 @@ static void arg_combo_set_default (call_info *cinfo,
 	int ok = 0;
 
 	if (series_arg(ptype)) {
-	    int v = current_series_index(datainfo, name);
+	    int v = current_series_index(dataset, name);
 
 	    if (v > 0 && probably_stochastic(v)) {
 		ok = !already_set_as_default(cinfo, name, ptype);
@@ -1356,7 +1356,7 @@ static int function_data_check (call_info *cinfo)
     int i, err = 0;
 
     if (cinfo->dreq != FN_NODATA_OK) {
-	if (datainfo == NULL || datainfo->v == 0) {
+	if (dataset == NULL || dataset->v == 0) {
 	    warnbox(_("Please open a data file first"));
 	    return 1;
 	}
@@ -1367,7 +1367,7 @@ static int function_data_check (call_info *cinfo)
 
 	if (type == GRETL_TYPE_SERIES || type == GRETL_TYPE_LIST ||
 	    type == GRETL_TYPE_SERIES_REF) {
-	    if (datainfo == NULL || datainfo->v == 0) {
+	    if (dataset == NULL || dataset->v == 0) {
 		warnbox(_("Please open a data file first"));
 		err = 1;
 		break;
@@ -1425,11 +1425,11 @@ static int maybe_add_amp (call_info *cinfo, int i, PRN *prn, int *add)
 	    }
 	}
     } else if (t == GRETL_TYPE_SERIES_REF) {
-	if (current_series_index(datainfo, s) < 0) {
+	if (current_series_index(dataset, s) < 0) {
 	    char cmd[32];
 
 	    sprintf(cmd, "series %s", s);
-	    err = generate(cmd, &Z, datainfo, OPT_Q, NULL);
+	    err = generate(cmd, dataset, OPT_Q, NULL);
 	    if (!err) {
 		pprintf(prn, "? %s\n", cmd);
 	    }
@@ -1464,7 +1464,7 @@ static int pre_process_args (call_info *cinfo, PRN *prn)
 	if (should_addressify_var(cinfo, i)) {
 	    sprintf(auxname, "FNARG%d", i + 1);
 	    sprintf(auxline, "genr %s=%s", auxname, cinfo->args[i]);
-	    err = generate(auxline, &Z, datainfo, OPT_NONE, NULL);
+	    err = generate(auxline, dataset, OPT_NONE, NULL);
 	    if (!err) {
 		g_free(cinfo->args[i]);
 		cinfo->args[i] = g_strdup(auxname);
@@ -1515,7 +1515,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     const char *funname;
     gretl_bundle *bundle = NULL;
     int attach_bundle = 0;
-    int orig_v = datainfo->v;
+    int orig_v = dataset->v;
     int i, err = 0;
 
     funname = user_function_name_by_index(cinfo->iface);
@@ -1568,7 +1568,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 #if USE_GTK_SPINNER
     start_wait_for_output(cinfo->top_hbox, 0); 
 #endif
-    err = gui_exec_line(&state, &Z, datainfo);
+    err = gui_exec_line(&state, dataset);
 #if USE_GTK_SPINNER
     stop_wait_for_output(cinfo->top_hbox);
 #endif
@@ -1606,7 +1606,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	gui_errmsg(err);
     } 
 
-    if (datainfo->v != orig_v) {
+    if (dataset->v != orig_v) {
 	mark_dataset_as_modified();
 	populate_varlist();
     }
@@ -1776,7 +1776,7 @@ void call_function_package (const char *fname, windata_t *vwin,
 
     if (!err) {
 	/* do we have suitable data in place? */
-	err = check_function_needs(datainfo, cinfo->dreq, minver);
+	err = check_function_needs(dataset, cinfo->dreq, minver);
 	if (err) {
 	    gui_errmsg(err);
 	}
@@ -1914,7 +1914,7 @@ int exec_bundle_plot_function (void *ptr, const char *aname)
 	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
 
 	err = gretl_function_exec(func, args, GRETL_TYPE_NONE,
-				  &Z, datainfo, NULL, NULL, prn);
+				  dataset, NULL, NULL, prn);
 	gretl_print_destroy(prn);
     }
 
@@ -1991,7 +1991,7 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
 	gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
 			      NULL, prn);
 	state.line = fnline;
-	err = gui_exec_line(&state, &Z, datainfo);
+	err = gui_exec_line(&state, dataset);
 
 	if (err) {
 	    gui_errmsg(err);
@@ -2089,7 +2089,7 @@ static int ols_bundle_callback (selector *sr)
 	err = bufopen(&prn);
 
 	if (!err) {
-	    err = gretl_function_exec(uf, args, GRETL_TYPE_BUNDLE, &Z, datainfo, 
+	    err = gretl_function_exec(uf, args, GRETL_TYPE_BUNDLE, dataset, 
 				      &bundle, NULL, prn);
 	}
 	if (!err) {
@@ -2373,7 +2373,7 @@ static int precheck_error (ufunc *func, windata_t *vwin)
     prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
     set_genr_model_from_vwin(vwin);
     err = gretl_function_exec(func, args, GRETL_TYPE_DOUBLE,
-			      &Z, datainfo, &check_err, NULL, prn);
+			      dataset, &check_err, NULL, prn);
     unset_genr_model();
     gretl_print_destroy(prn);
     fn_args_free(args);
@@ -2426,7 +2426,7 @@ void maybe_add_packages_to_model_menus (windata_t *vwin)
 		    err = 1;
 		}
 	    } else {
-		err = check_function_needs(datainfo, dreq, minver);
+		err = check_function_needs(dataset, dreq, minver);
 	    }
 	}
 

@@ -20,18 +20,17 @@
 #ifndef ADF_KPSS_H
 #define ADF_KPSS_H
 
-int adf_test (int order, const int *list, double ***pZ,
-	      DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+int adf_test (int order, const int *list, DATASET *dset, 
+	      gretlopt opt, PRN *prn);
 
-int kpss_test (int order, const int *list, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+int kpss_test (int order, const int *list, DATASET *dset, 
+	       gretlopt opt, PRN *prn);
 
-int levin_lin_test (int vnum, const int *plist,
-		    double **Z, DATAINFO *pdinfo, 
+int levin_lin_test (int vnum, const int *plist, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
-int engle_granger_test (int order, const int *list, double ***pZ, 
-			DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+int engle_granger_test (int order, const int *list, DATASET *dset, 
+			gretlopt opt, PRN *prn);
 
 double get_urc_pvalue (double tau, int n, int niv, 
 		       int itv, gretlopt opt);

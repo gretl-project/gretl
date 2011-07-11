@@ -21,11 +21,10 @@
 
 int foreign_append_line(const char *line, gretlopt opt, PRN *prn);
 
-int foreign_execute (const double **Z, const DATAINFO *pdinfo,
-		     gretlopt opt, PRN *prn);
+int foreign_execute (const DATASET *dset, gretlopt opt, PRN *prn);
 
 int write_gretl_R_files (const char *buf,
-			 const double **Z, const DATAINFO *pdinfo,
+			 const DATASET *dset,
 			 gretlopt opt);
 
 void delete_gretl_R_files (void);
@@ -33,7 +32,7 @@ void delete_gretl_R_files (void);
 int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname);
 
 int write_gretl_octave_file (const char *buf, gretlopt opt, 
-			     const double **Z, const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     const char **pfname);
 
 void delete_gretl_ox_file (void);

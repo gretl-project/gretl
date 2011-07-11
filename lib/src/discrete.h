@@ -20,55 +20,51 @@
 #ifndef DISCRETE_H
 #define DISCRETE_H
 
-MODEL binary_logit (int *list, double **Z, DATAINFO *pdinfo, 
+MODEL binary_logit (int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
-MODEL binary_probit (int *list, double **Z, DATAINFO *pdinfo, 
+MODEL binary_probit (int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn);
 
-MODEL ordered_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL ordered_logit (int *list, DATASET *dset, 
 		     gretlopt opt, PRN *prn);
 
-MODEL ordered_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL ordered_probit (int *list, DATASET *dset, 
 		      gretlopt opt, PRN *prn);
 
-MODEL multinomial_logit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL multinomial_logit (int *list, DATASET *dset, 
 			 gretlopt opt, PRN *prn);
 
-MODEL biprobit_model (int *list, double **Z, DATAINFO *pdinfo, 
+MODEL biprobit_model (int *list, DATASET *dset, 
 		      gretlopt opt, PRN *prn);
 
 MODEL logistic_model (const int *list, double lmax,
-		      double ***pZ, DATAINFO *pdinfo);
+		      DATASET *dset);
 
-MODEL interval_model (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL interval_model (int *list, DATASET *dset, 
 		      gretlopt opt, PRN *prn);
 
 MODEL tobit_model (const int *list, double llim, double rlim,
-		   double ***pZ, DATAINFO *pdinfo, 
+		   DATASET *dset, gretlopt opt, PRN *prn);
+
+MODEL duration_model (const int *list, DATASET *dset, 
+		      gretlopt opt, PRN *prn);
+
+MODEL count_model (const int *list, int ci, DATASET *dset, 
 		   gretlopt opt, PRN *prn);
 
-MODEL duration_model (const int *list, double **Z, 
-		      DATAINFO *pdinfo, gretlopt opt, 
-		      PRN *prn);
-
-MODEL count_model (const int *list, int ci,
-		   double ***pZ, DATAINFO *pdinfo, 
-		   gretlopt opt, PRN *prn);
-
-MODEL heckit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL heckit_model (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
 int fishers_exact_test (const Xtab *tab, PRN *prn);
 
 double ordered_model_prediction (const MODEL *pmod, double Xb);
 
-int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
+int logistic_ymax_lmax (const double *y, const DATASET *dset,
 			double *ymax, double *lmax);
 
 gretl_matrix *mn_logit_probabilities (const MODEL *pmod,
-				      const double **Z,
-				      const DATAINFO *pdinfo,
+				      const DATASET *dset,
 				      int *err);
 
 #endif /* DISCRETE_H */

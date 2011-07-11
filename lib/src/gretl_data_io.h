@@ -20,13 +20,13 @@
 #ifndef GRETL_DATA_IO_H
 #define GRETL_DATA_IO_H
 
-int gretl_read_native_data (const char *fname, double ***pZ, DATAINFO *pdinfo);
+int gretl_read_native_data (const char *fname, DATASET *dset);
 
 int gretl_write_native_data (const char *fname, const int *list,
-			     const double **Z, const DATAINFO *pdinfo);
+			     const DATASET *dset);
 
 int gretl_read_foreign_data (const char *fname, GretlFileType file_type,
-			     double ***pZ, DATAINFO *pdinfo, PRN *prn);
+			     DATASET *dset, PRN *prn);
 
 GretlFileType gretl_detect_filetype (const char *fname);
 

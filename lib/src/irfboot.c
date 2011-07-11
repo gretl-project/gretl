@@ -47,8 +47,7 @@ struct irfboot_ {
     gretl_matrix *resp; /* impulse response matrix */
     gretl_matrix *C0;   /* initial coefficient estimates (VECM only) */
     int *sample;        /* resampling array */
-    double **Z;         /* dummy dataset for levels (VECM only) */
-    DATAINFO *dinfo;    /* ditto */
+    DATASET *dset;      /* dummy dataset for levels (VECM only) */  
 };
 
 static void irf_boot_free (irfboot *b)
@@ -66,8 +65,8 @@ static void irf_boot_free (irfboot *b)
     gretl_matrix_free(b->resp);
     gretl_matrix_free(b->C0);
 
-    if (b->Z != NULL) {
-	destroy_dataset(b->Z, b->dinfo);
+    if (b->dset != NULL) {
+	destroy_dataset(b->dset);
     }
 
     free(b->sample);
@@ -124,8 +123,7 @@ static irfboot *irf_boot_new (const GRETL_VAR *var, int periods)
     b->C0 = NULL;
 
     b->sample = NULL;
-    b->Z = NULL;
-    b->dinfo = NULL;
+    b->dset = NULL;
 
     b->horizon = periods;
 
@@ -225,8 +223,7 @@ static int
 re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock, 
 		  int iter, int scount)
 {
-    static int (*jbr) (GRETL_VAR *, const double **, 
-		       const DATAINFO *) = NULL;
+    static int (*jbr) (GRETL_VAR *, const DATASET *) = NULL;
     static void *handle = NULL;
     int err = 0;
 
@@ -244,12 +241,11 @@ re_estimate_VECM (irfboot *b, GRETL_VAR *v, int targ, int shock,
        expected by johansen_stage_1() */
     maybe_resize_vecm_matrices(v);
 
-    err = johansen_stage_1(v, (const double **) b->Z, b->dinfo,
-			   OPT_NONE, NULL);
+    err = johansen_stage_1(v, b->dset, OPT_NONE, NULL);
 
     if (!err) {
 	/* call the plugin function */
-	err = jbr(v, (const double **) b->Z, b->dinfo);
+	err = jbr(v, b->dset);
     }
 
 #if BDEBUG
@@ -454,7 +450,7 @@ gretl_matrix *VAR_coeff_matrix_from_VECM (const GRETL_VAR *var)
 */
 
 static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
-			      const double **Z, const DATAINFO *pdinfo)
+			      const DATASET *dset)
 {
     int nv = var->neqns + 1;
     int i, j, vi, t;
@@ -463,20 +459,20 @@ static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
 	nv += var->rlist[0];
     }
 
-    b->dinfo = create_auxiliary_dataset(&b->Z, nv, pdinfo->n);
-    if (b->dinfo == NULL) {
+    b->dset = create_auxiliary_dataset(nv, dset->n);
+    if (b->dset == NULL) {
 	return E_ALLOC;
     }   
 
-    copy_dataset_obs_info(b->dinfo, pdinfo);
-    b->dinfo->t1 = pdinfo->t1;
-    b->dinfo->t2 = pdinfo->t2;
+    copy_dataset_obs_info(b->dset, dset);
+    b->dset->t1 = dset->t1;
+    b->dset->t2 = dset->t2;
 
     /* copy levels of Y into boot->Z and adjust ylist */
     for (i=0, j=1; i<var->neqns; i++, j++) {
 	vi = var->ylist[i+1];
-	for (t=0; t<pdinfo->n; t++) {
-	    b->Z[j][t] = Z[vi][t];
+	for (t=0; t<dset->n; t++) {
+	    b->dset->Z[j][t] = dset->Z[vi][t];
 	}
 	var->ylist[j] = j;
     }
@@ -485,8 +481,8 @@ static int init_VECM_dataset (irfboot *b, GRETL_VAR *var,
 	/* copy restricted X into boot->Z and adjust rlist */
 	for (i=1; i<=var->rlist[0]; i++, j++) {
 	    vi = var->rlist[i];
-	    for (t=0; t<pdinfo->n; t++) {
-		b->Z[j][t] = Z[vi][t];
+	    for (t=0; t<dset->n; t++) {
+		b->dset->Z[j][t] = dset->Z[vi][t];
 	    }
 	    var->rlist[i] = j;
 	}
@@ -528,7 +524,7 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 	    for (j=1; j<=var->neqns; j++) {
 		for (k=1; k<=order; k++) {
 		    cij = gretl_matrix_get(b->C0, i, col++);
-		    bti += cij * b->Z[j][t-k];
+		    bti += cij * b->dset->Z[j][t-k];
 		}
 	    }
 
@@ -563,21 +559,21 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 	    if (var->rlist != NULL) {
 		for (j=1; j<=var->rlist[0]; j++) {
 		    cij = gretl_matrix_get(b->C0, i, col++);
-		    bti += cij * b->Z[j+var->neqns][t-1];
+		    bti += cij * b->dset->Z[j+var->neqns][t-1];
 		}
 	    }
 
 	    /* set level of Y(t, i) to fitted value + re-sampled error */
 	    eti = gretl_matrix_get(b->rE, s, i);
-	    b->Z[i+1][t] = bti + eti;
+	    b->dset->Z[i+1][t] = bti + eti;
 	}
     }
 
 #if BDEBUG > 1
     fprintf(stderr, "VECM: recomputed levels\n\n");
-    for (t=0; t<b->dinfo->n; t++) {
+    for (t=0; t<b->dset->n; t++) {
 	for (i=1; i<=var->neqns; i++) {
-	    fprintf(stderr, "%12.5g", b->Z[i][t]);
+	    fprintf(stderr, "%12.5g", b->dset->Z[i][t]);
 	}
 	fputc('\n', stderr);
     }
@@ -589,7 +585,7 @@ compute_VECM_dataset (irfboot *b, GRETL_VAR *var, int iter)
 	for (j=1; j<=var->order; j++) {
 	    s = 0;
 	    for (t=var->t1; t<=var->t2; t++) {
-		xti = b->Z[i][t-j] - b->Z[i][t-j-1];
+		xti = b->dset->Z[i][t-j] - b->dset->Z[i][t-j-1];
 		gretl_matrix_set(var->X, s++, k, xti);
 	    }
 	    k++;
@@ -871,8 +867,7 @@ static void restore_VAR_data (GRETL_VAR *v, GRETL_VAR *vbak)
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
 			     int targ, int shock, 
 			     int periods, double alpha,
-			     const double **Z, 
-			     const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     int *err)
 {
     gretl_matrix *R = NULL; /* the return value */
@@ -915,7 +910,7 @@ gretl_matrix *irf_bootstrap (GRETL_VAR *var,
 	if (boot->C0 == NULL) {
 	    *err = E_ALLOC;
 	} else {
-	    *err = init_VECM_dataset(boot, var, Z, pdinfo);
+	    *err = init_VECM_dataset(boot, var, dset);
 	}
     }
 

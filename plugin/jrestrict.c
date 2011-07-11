@@ -2772,14 +2772,14 @@ static int Jgradient (double *theta, double *gr, int n,
 }
 
 static int max_beta_vname (GRETL_VAR *v, 
-			   const DATAINFO *pdinfo)
+			   const DATASET *dset)
 {
     int r = gretl_matrix_rows(v->jinfo->Beta);
     const char *s;
     int i, ni, n = 0;
 
     for (i=0; i<r; i++) {    
-	s = beta_vname(v, pdinfo, i);
+	s = beta_vname(v, dset, i);
 	ni = strlen(s);
 	if (ni > n) {
 	    n = ni;
@@ -2793,7 +2793,7 @@ static int max_beta_vname (GRETL_VAR *v,
 
 static int printres (Jwrap *J, GRETL_VAR *jvar, 
 		     gretl_restriction *rset,
-		     const DATAINFO *pdinfo,
+		     const DATASET *dset,
 		     PRN *prn)
 {
     const gretl_matrix *c = J->beta;
@@ -2836,11 +2836,11 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     }
     pputs(prn, "\n\n");
 
-    nwid = max_beta_vname(jvar, pdinfo) + 1;
+    nwid = max_beta_vname(jvar, dset) + 1;
     sprintf(namefmt, "%%-%ds", nwid);
 
     for (i=0; i<J->p1; i++) {
-	pprintf(prn, namefmt, beta_vname(jvar, pdinfo, i));
+	pprintf(prn, namefmt, beta_vname(jvar, dset, i));
 
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
@@ -2870,7 +2870,7 @@ static int printres (Jwrap *J, GRETL_VAR *jvar,
     pputs(prn, "\n\n");
 
     for (i=0; i<J->p; i++) {
-	sprintf(vname, "%s", pdinfo->varname[jvar->ylist[i+1]]);
+	sprintf(vname, "%s", dset->varname[jvar->ylist[i+1]]);
 	pprintf(prn, namefmt, vname);
 	for (j=0; j<J->r; j++) {
 	    pprintf(prn, "%#12.5g ", gretl_matrix_get(c, i, j));
@@ -3167,7 +3167,7 @@ static int do_bfgs (Jwrap *J, gretlopt opt, PRN *prn)
 
 int general_vecm_analysis (GRETL_VAR *jvar, 
 			   gretl_restriction *rset,
-			   const DATAINFO *pdinfo,
+			   const DATASET *dset,
 			   PRN *prn)
 {
     Jwrap *J = NULL;
@@ -3257,7 +3257,7 @@ int general_vecm_analysis (GRETL_VAR *jvar,
 	} else if (opt & OPT_B) {
 	    transcribe_to_jvar(J, jvar, OPT_B);
 	} else {
-	    printres(J, jvar, rset, pdinfo, prn);
+	    printres(J, jvar, rset, dset, prn);
 	}
     } 
 

@@ -363,14 +363,13 @@ static void boxplot_init (BOXPLOT *bp)
 }
 
 static int plotgroup_factor_setup (PLOTGROUP *grp, 
-				   const double **Z,
-				   const DATAINFO *pdinfo)
+				   const DATASET *dset)
 {
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
     int dv = grp->list[2];
     int err = 0;
 
-    grp->dvals = gretl_matrix_values(Z[dv] + pdinfo->t1, T, &err);
+    grp->dvals = gretl_matrix_values(dset->Z[dv] + dset->t1, T, &err);
     if (!err) {
 	grp->nplots = gretl_vector_get_length(grp->dvals);
     }
@@ -379,8 +378,7 @@ static int plotgroup_factor_setup (PLOTGROUP *grp,
 }
 
 static PLOTGROUP *plotgroup_new (const int *list, 
-				 const double **Z,
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 double limit,
 				 gretlopt opt)
 {
@@ -408,9 +406,9 @@ static PLOTGROUP *plotgroup_new (const int *list,
     *grp->xlabel = '\0';
     *grp->ylabel = '\0';
     
-    if (pdinfo != NULL) {
+    if (dset != NULL) {
 	grp->list = list;
-	n = sample_size(pdinfo);
+	n = sample_size(dset);
 	grp->x = malloc(n * sizeof *grp->x);
 	if (grp->x == NULL) {
 	    err = E_ALLOC;
@@ -419,16 +417,16 @@ static PLOTGROUP *plotgroup_new (const int *list,
 
     if (!err) {
 	if (opt & OPT_Z) {
-	    if (pdinfo != NULL) {
-		strcpy(grp->ylabel, pdinfo->varname[list[1]]);
-		strcpy(grp->xlabel, pdinfo->varname[list[2]]);
-		err = plotgroup_factor_setup(grp, Z, pdinfo);
+	    if (dset != NULL) {
+		strcpy(grp->ylabel, dset->varname[list[1]]);
+		strcpy(grp->xlabel, dset->varname[list[2]]);
+		err = plotgroup_factor_setup(grp, dset);
 	    }
 	} else {
 	    grp->nplots = list[0];
 	}
-	if ((opt & OPT_P) && pdinfo != NULL) {
-	    strcpy(grp->ylabel, VARLABEL(pdinfo, 1));
+	if ((opt & OPT_P) && dset != NULL) {
+	    strcpy(grp->ylabel, VARLABEL(dset, 1));
 	    strcpy(grp->xlabel, _("group"));
 	}
     }
@@ -701,14 +699,13 @@ static int write_gnuplot_boxplot (PLOTGROUP *grp, gretlopt opt)
 }
 
 static int transcribe_array_factorized (PLOTGROUP *grp, int i,
-					const double **Z, 
-					const DATAINFO *pdinfo) 
+					const DATASET *dset) 
 {
-    const double *y = Z[grp->list[1]];
-    const double *d = Z[grp->list[2]];
+    const double *y = dset->Z[grp->list[1]];
+    const double *d = dset->Z[grp->list[2]];
     int t, n = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (d[t] == grp->dvals->val[i] && !na(y[t])) {
 	    grp->x[n++] = y[t];
 	}
@@ -719,8 +716,7 @@ static int transcribe_array_factorized (PLOTGROUP *grp, int i,
 
 static int factorized_boxplot_check (const int *list, 
 				     char **bools, 
-				     const double **Z,
-				     const DATAINFO *pdinfo)
+				     const DATASET *dset)
 {
     int err = 0;
 
@@ -729,8 +725,8 @@ static int factorized_boxplot_check (const int *list,
     } else {
 	int v2 = list[2];
 	
-	if (!var_is_discrete(pdinfo, v2) &&
-	    !gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[v2])) {
+	if (!var_is_discrete(dset, v2) &&
+	    !gretl_isdiscrete(dset->t1, dset->t2, dset->Z[v2])) {
 	    gretl_errmsg_set(_("You must supply two variables, the second of "
 			       "which is discrete"));
 	    err = E_DATA;
@@ -744,8 +740,7 @@ static int factorized_boxplot_check (const int *list,
    gnuplot_do_boxplot to write the command file */
 
 static int real_boxplots (const int *list, char **bools, 
-			  const double **Z, 
-			  const DATAINFO *pdinfo,
+			  const DATASET *dset,
 			  gretlopt opt)
 {
     PLOTGROUP *grp;
@@ -762,13 +757,13 @@ static int real_boxplots (const int *list, char **bools,
     }
 
     if (opt & OPT_Z) {
-	err = factorized_boxplot_check(list, bools, Z, pdinfo);
+	err = factorized_boxplot_check(list, bools, dset);
 	if (err) {
 	    return err;
 	} 
     } 
 
-    grp = plotgroup_new(list, Z, pdinfo, lim, opt);
+    grp = plotgroup_new(list, dset, lim, opt);
     if (grp == NULL) {
 	return E_ALLOC;
     }
@@ -778,7 +773,7 @@ static int real_boxplots (const int *list, char **bools,
 					 grp->ylabel, grp->xlabel);
     } else if (list[0] == 1 && bools == NULL) {
 	/* doing a single straight plot */
-	grp->title = gretl_strdup(pdinfo->varname[list[1]]);
+	grp->title = gretl_strdup(dset->varname[list[1]]);
     }
 
     if (opt & OPT_O) {
@@ -794,11 +789,11 @@ static int real_boxplots (const int *list, char **bools,
 	int n;
 
 	if (opt & OPT_Z) {
-	    n = transcribe_array_factorized(grp, i, Z, pdinfo);
-	    vname = pdinfo->varname[list[1]];
+	    n = transcribe_array_factorized(grp, i, dset);
+	    vname = dset->varname[list[1]];
 	} else {
-	    n = transcribe_array(grp->x, Z[list[i+1]], pdinfo);
-	    vname = pdinfo->varname[list[i+1]];
+	    n = transcribe_array(grp->x, dset->Z[list[i+1]], dset);
+	    vname = dset->varname[list[i+1]];
 	}
 
 	if (n < 2) {
@@ -862,49 +857,46 @@ static int real_boxplots (const int *list, char **bools,
 
 /* boxplots using a single selected series, by panel group */
 
-static int panel_group_boxplots (int vnum, const double **Z, 
-				 const DATAINFO *pdinfo,
+static int panel_group_boxplots (int vnum, const DATASET *dset,
 				 gretlopt opt)
 {
-    double **gZ = NULL;
-    DATAINFO *gdinfo;
-    int nunits, T = pdinfo->pd;
+    DATASET *gdset;
+    int nunits, T = dset->pd;
     int *list = NULL;
     int nv, u0, i, t, s, s0;
     int err = 0;
 
-    nunits = panel_sample_size(pdinfo);
+    nunits = panel_sample_size(dset);
     nv = nunits + 1;
-    u0 = pdinfo->t1 / T;
+    u0 = dset->t1 / T;
 
-    gdinfo = create_auxiliary_dataset(&gZ, nv, T);
-    if (gdinfo == NULL) {
+    gdset = create_auxiliary_dataset(nv, T);
+    if (gdset == NULL) {
 	return E_ALLOC;
     }
 
     list = gretl_consecutive_list_new(1, nv - 1);
     if (list == NULL) {
-	destroy_dataset(gZ, gdinfo);
+	destroy_dataset(gdset);
 	return E_ALLOC;
     }
 
-    s0 = pdinfo->t1 * pdinfo->pd;
+    s0 = dset->t1 * dset->pd;
 
     /* record the name of the original variable */
-    strcpy(VARLABEL(gdinfo, 1), pdinfo->varname[vnum]);
+    strcpy(VARLABEL(gdset, 1), dset->varname[vnum]);
 
     for (i=0; i<nunits; i++) {
-	sprintf(gdinfo->varname[i+1], "%d", u0+i+1);
+	sprintf(gdset->varname[i+1], "%d", u0+i+1);
 	s = s0 + i * T;
 	for (t=0; t<T; t++) {
-	    gZ[i+1][t] = Z[vnum][s++];
+	    gdset->Z[i+1][t] = dset->Z[vnum][s++];
 	}
     }
 
-    err = real_boxplots(list, NULL, (const double **) gZ, gdinfo, 
-			opt);
+    err = real_boxplots(list, NULL, gdset, opt);
 
-    destroy_dataset(gZ, gdinfo);
+    destroy_dataset(gdset);
     free(list);
 
     return err;
@@ -913,8 +905,7 @@ static int panel_group_boxplots (int vnum, const double **Z,
 /*
  * boxplots:
  * @list: list of variables to plot.
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: may include OPT_P for a plot by panel group (in which
  * case @list should have just one member), or OPT_Z for a
  * "factorized" plot (@list should have exactly three members),
@@ -925,20 +916,19 @@ static int panel_group_boxplots (int vnum, const double **Z,
  * Returns: 0 on success, error code on error.
  */
 
-int boxplots (const int *list, const double **Z, const DATAINFO *pdinfo, 
-	      gretlopt opt)
+int boxplots (const int *list, const DATASET *dset, gretlopt opt)
 {
     int err;
 
     if (opt & OPT_P) {
-	if (!multi_unit_panel_sample(pdinfo) ||
+	if (!multi_unit_panel_sample(dset) ||
 	    list[0] > 1 || (opt & OPT_Z)) {
 	    err = E_BADOPT;
 	} else {
-	    err = panel_group_boxplots(list[1], Z, pdinfo, opt);
+	    err = panel_group_boxplots(list[1], dset, opt);
 	}
     } else {
-	err = real_boxplots(list, NULL, Z, pdinfo, opt);
+	err = real_boxplots(list, NULL, dset, opt);
     }
 
     return err;
@@ -992,12 +982,11 @@ static char *boxplots_fix_parentheses (const char *line, int *err)
     return s;
 }
 
-int boolean_boxplots (const char *line, double ***pZ, DATAINFO *pdinfo, 
-		      gretlopt opt)
+int boolean_boxplots (const char *line, DATASET *dset, gretlopt opt)
 {
     int i, k, v, nvars, nbool;
-    int n = pdinfo->n;
-    int origv = pdinfo->v;
+    int n = dset->n;
+    int origv = dset->v;
     char *tok, *s = NULL;
     char **bools = NULL;
     int *list = NULL;
@@ -1057,7 +1046,7 @@ int boolean_boxplots (const char *line, double ***pZ, DATAINFO *pdinfo,
 		    err = E_DATA;
 		}
 	    } else if (isalpha(tok[0])) {
-		v = current_series_index(pdinfo, tok);
+		v = current_series_index(dset, tok);
 		if (v >= 0) {
 		    list[++i] = v;
 		} else {
@@ -1088,27 +1077,26 @@ int boolean_boxplots (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	sprintf(formula, "bool_%d = %s", i, bools[i]);
-	err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	err = generate(formula, dset, OPT_P, NULL);
 
 	if (!err) {
 	    int t, vi = list[i+1];
 
 	    for (t=0; t<n; t++) {
-		if ((*pZ)[k][t] == 1.0) {
-		    (*pZ)[k][t] = (*pZ)[vi][t];
+		if (dset->Z[k][t] == 1.0) {
+		    dset->Z[k][t] = dset->Z[vi][t];
 		} else { 
-		    (*pZ)[k][t] = NADBL;
+		    dset->Z[k][t] = NADBL;
 		}
 	    }
-	    strcpy(pdinfo->varname[k], pdinfo->varname[vi]);
+	    strcpy(dset->varname[k], dset->varname[vi]);
 	    list[i+1] = k++;
 	    nbool++;
 	}
     }
 
     if (!err) {
-	err = real_boxplots(list, bools, (const double **) *pZ, 
-			    pdinfo, opt);
+	err = real_boxplots(list, bools, dset, opt);
     } 
     
     free(list);
@@ -1116,7 +1104,7 @@ int boolean_boxplots (const char *line, double ***pZ, DATAINFO *pdinfo,
     free(s);
 
     if (nbool) {
-	dataset_drop_last_variables(nbool, pZ, pdinfo);
+	dataset_drop_last_variables(nbool, dset);
     }
     
     return err;
@@ -1313,7 +1301,7 @@ int boxplot_numerical_summary (const char *fname, PRN *prn)
     } else {
 	int list[2] = {n, 0};
 
-	grp = plotgroup_new(list, NULL, NULL, NADBL, OPT_NONE);
+	grp = plotgroup_new(list, NULL, NADBL, OPT_NONE);
 	if (grp == NULL) {
 	    err = E_ALLOC;
 	}

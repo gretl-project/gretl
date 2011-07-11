@@ -113,16 +113,15 @@ void gretl_object_ref (void *ptr, GretlObjType type);
 void gretl_object_unref (void *ptr, GretlObjType type);
 
 double saved_object_get_scalar (const char *oname, int idx,
-				double ***pZ, DATAINFO *pdinfo,
-				int *err);
+				DATASET *dset, int *err);
 
 int saved_object_print_scalar (const char *oname, const char *key, PRN *prn);
 
 double saved_object_get_scalar_element (const char *oname, const char *key,
-					const DATAINFO *pdinfo, int *err);
+					const DATASET *dset, int *err);
 
 double *saved_object_get_series (const char *oname, int idx, 
-				 const DATAINFO *pdinfo, 
+				 const DATASET *dset, 
 				 int *err);
 
 gretl_matrix *
@@ -130,18 +129,16 @@ saved_object_get_matrix (const char *oname, int idx, int *err);
 
 gretl_matrix *
 saved_object_build_matrix (const char *oname, int idx, 
-			   const double **Z, const DATAINFO *pdinfo,
-			   int *err);
+			   const DATASET *dset, int *err);
 
 gretl_matrix *
 last_model_get_irf_matrix (int targ, int shock, double alpha, 
-			   const double **Z, const DATAINFO *pdinfo,
-			   int *err);
+			   const DATASET *dset, int *err);
 
 int *saved_object_get_list (const char *oname, int idx, int *err);
 
 char *saved_object_get_string (const char *oname, int idx, 
-			       const DATAINFO *pdinfo, int *err);
+			       const DATASET *dset, int *err);
 
 int gretl_object_rename (void *p, GretlObjType type, const char *oname);
 
@@ -155,19 +152,18 @@ int parse_object_command (const char *s, char *name, char **cmd);
 
 int match_object_command (const char *s, GretlObjType type);
 
-int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo, 
+int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset, 
 			PRN *prn);
 
-int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, 
-			  gretlopt opt, PRN *prn);
+int last_model_test_uhat (DATASET *dset, gretlopt opt, PRN *prn);
 
 void set_genr_model (void *ptr, GretlObjType type);
 
 void unset_genr_model (void);
 
-int highest_numbered_var_in_saved_object (const DATAINFO *pdinfo);
+int highest_numbered_var_in_saved_object (const DATASET *dset);
 
-int check_variable_deletion_list (int *list, const DATAINFO *pdinfo);
+int check_variable_deletion_list (int *list, const DATASET *dset);
 
 void gretl_saved_objects_cleanup (void);
 

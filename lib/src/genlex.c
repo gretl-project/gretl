@@ -793,8 +793,7 @@ NODE *obs_node (parser *p)
     } 
 
     if (special && !p->err) {
-	t = get_t_from_obs_string(word, (const double **) *p->Z, 
-				  p->dinfo);
+	t = get_t_from_obs_string(word, p->dset);
 	if (t >= 0) {
 	    /* convert to use-style 1-based index */
 	    t++;
@@ -883,7 +882,7 @@ static void look_up_word (const char *s, parser *p)
 	    if (p->idnum > 0) {
 		p->sym = DUM;
 	    } else {
-		if ((p->idnum = current_series_index(p->dinfo, s)) >= 0) {
+		if ((p->idnum = current_series_index(p->dset, s)) >= 0) {
 		    p->sym = USERIES;
 		} else if (!strcmp(s, "time")) {
 		    p->sym = DUM;
@@ -910,7 +909,7 @@ static void look_up_word (const char *s, parser *p)
 		    p->sym = VSTR;
 		    p->idstr = gretl_strdup(s);
 		} else if (p->targ == LIST &&
-			   varname_match_any(p->dinfo, s)) {
+			   varname_match_any(p->dset, s)) {
 		    p->sym = LIST;
 		    p->idstr = gretl_strdup(s);
 		} else if (!strcmp(s, "t")) {
@@ -1188,10 +1187,10 @@ static double getdbl (parser *p)
 #endif
     
     if (gotcol) {
-	if (p->dinfo->pd == 1) {
+	if (p->dset->pd == 1) {
 	    p->err = E_PDWRONG;
 	} else {
-	    d = (double) dateton(xstr, p->dinfo);
+	    d = (double) dateton(xstr, p->dset);
 	    if (d < 0) {
 		p->err = E_DATA;
 		d = NADBL;
@@ -1509,7 +1508,7 @@ const char *getsymb (int t, const parser *p)
 	if (t == NUM) {
 	    return fromdbl(p->xval); 
 	} else if (t == USERIES) {
-	    return p->dinfo->varname[p->idnum];
+	    return p->dset->varname[p->idnum];
 	} else if (t == USCALAR) {
 	    return p->idstr;
 	} else if (t == BUNDLE) {

@@ -265,14 +265,14 @@ static int standardize (double *y, const double *x, int n)
 
 static int pca_save_components (VMatrix *cmat, 
 				gretl_matrix *E, gretl_matrix *C, 
-				double ***pZ, DATAINFO *pdinfo,
+				DATASET *dset,
 				gretlopt opt)
 {
     int save_all = (opt & OPT_A);
     double **sZ = NULL;
     double x;
     int *plist = NULL;
-    int m, v = pdinfo->v;
+    int m, v = dset->v;
     int k = cmat->dim;
     int i, j, t, vi;
     int err = 0;
@@ -301,19 +301,18 @@ static int pca_save_components (VMatrix *cmat,
 		plist[j++] = i;
 	    }
 	}
-	err = dataset_add_series(m, pZ, pdinfo);
+	err = dataset_add_series(m, dset);
     }
 
     if (!err) {
 	/* construct standardized versions of variables */
-	sZ = doubles_array_new(k, pdinfo->n); 
+	sZ = doubles_array_new(k, dset->n); 
 	if (sZ == NULL) {
 	    err = E_ALLOC;
 	} else {
 	    for (i=0; i<k && !err; i++) {
 		vi = cmat->list[i+1];
-		err = standardize(sZ[i], (const double *) (*pZ)[vi], 
-				  pdinfo->n);
+		err = standardize(sZ[i], dset->Z[vi], dset->n);
 	    }
 	}
     }
@@ -324,22 +323,22 @@ static int pca_save_components (VMatrix *cmat,
 	    double load;
 
 	    vi = v + i - 1;
-	    sprintf(pdinfo->varname[vi], "PC%d", i);
-	    make_varname_unique(pdinfo->varname[vi], vi, pdinfo);
-	    sprintf(VARLABEL(pdinfo, vi), 
+	    sprintf(dset->varname[vi], "PC%d", i);
+	    make_varname_unique(dset->varname[vi], vi, dset);
+	    sprintf(VARLABEL(dset, vi), 
 		    _("Component with eigenvalue = %.4f"), 
 		    E->val[pi]);
 
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[vi][t] = 0.0;
+	    for (t=0; t<dset->n; t++) {
+		dset->Z[vi][t] = 0.0;
 		for (j=0; j<k; j++) {
 		    x = sZ[j][t];
 		    if (na(x)) {
-			(*pZ)[vi][t] = NADBL;
+			dset->Z[vi][t] = NADBL;
 			break;
 		    } else {
 			load = gretl_matrix_get(C, j, pi);
-			(*pZ)[vi][t] += load * x;
+			dset->Z[vi][t] += load * x;
 		    }
 		}
 	    }
@@ -367,9 +366,8 @@ static int pca_save_components (VMatrix *cmat,
    member of the VMatrix struct.
  */
 
-int pca_from_cmatrix (VMatrix *cmat, double ***pZ,
-		      DATAINFO *pdinfo, gretlopt opt,
-		      PRN *prn)
+int pca_from_cmatrix (VMatrix *cmat, DATASET *dset, 
+		      gretlopt opt, PRN *prn)
 {
     gretl_matrix *C;
     gretl_matrix *evals = NULL;
@@ -416,7 +414,7 @@ int pca_from_cmatrix (VMatrix *cmat, double ***pZ,
     }
 
     if (!err && saveopt) {
-	err = pca_save_components(cmat, evals, C, pZ, pdinfo, saveopt);
+	err = pca_save_components(cmat, evals, C, dset, saveopt);
     }
 
     gretl_matrix_free(evals);

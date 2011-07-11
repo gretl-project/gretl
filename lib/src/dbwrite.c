@@ -39,13 +39,13 @@ static void dotify (char *s)
     }
 }
 
-static char pd_char (const DATAINFO *pdinfo)
+static char pd_char (const DATASET *dset)
 {
-    if (pdinfo->pd == 4) {
+    if (dset->pd == 4) {
 	return 'Q';
-    } else if (pdinfo->pd == 12) {
+    } else if (dset->pd == 12) {
 	return 'M';
-    } else if (dataset_is_time_series(pdinfo)) {
+    } else if (dataset_is_time_series(dset)) {
 	return 'A';
     } else {
 	return 'U';
@@ -138,7 +138,7 @@ static int get_db_series_names (const char *idxname, char ***pnames,
 */
 
 static int 
-check_for_db_duplicates (const int *list, const DATAINFO *pdinfo,
+check_for_db_duplicates (const int *list, const DATASET *dset,
 			 const char *idxname, int *err)
 {
     char **snames = NULL;
@@ -157,7 +157,7 @@ check_for_db_duplicates (const int *list, const DATAINFO *pdinfo,
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	for (j=0; j < oldv; j++) {
-	    if (!strcmp(pdinfo->varname[v], snames[j])) {
+	    if (!strcmp(dset->varname[v], snames[j])) {
 		ret++;
 		break;
 	    }
@@ -169,7 +169,7 @@ check_for_db_duplicates (const int *list, const DATAINFO *pdinfo,
     return ret;
 }
 
-static int output_db_var (int v, const double **Z, const DATAINFO *pdinfo,
+static int output_db_var (int v, const DATASET *dset,
 			  FILE *fidx, FILE *fbin) 
 {
     char stobs[OBSLEN], endobs[OBSLEN];
@@ -178,15 +178,15 @@ static int output_db_var (int v, const double **Z, const DATAINFO *pdinfo,
     float val;
 
     t1 = 0;
-    t2 = pdinfo->n - 1;
+    t2 = dset->n - 1;
 
-    if (dataset_is_time_series(pdinfo)) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (na(Z[v][t])) t1++;
+    if (dataset_is_time_series(dset)) {
+	for (t=0; t<dset->n; t++) {
+	    if (na(dset->Z[v][t])) t1++;
 	    else break;
 	}
-	for (t=pdinfo->n - 1; t>=t1; t--) {
-	    if (na(Z[v][t])) t2--;
+	for (t=dset->n - 1; t>=t1; t--) {
+	    if (na(dset->Z[v][t])) t2--;
 	    else break;
 	}
     }
@@ -196,20 +196,20 @@ static int output_db_var (int v, const double **Z, const DATAINFO *pdinfo,
 	return 0;
     }
 
-    ntodate(stobs, t1, pdinfo);
-    ntodate(endobs, t2, pdinfo);
+    ntodate(stobs, t1, dset);
+    ntodate(endobs, t2, dset);
     dotify(stobs);
     dotify(endobs);	
 
-    fprintf(fidx, "%s  %s\n", pdinfo->varname[v], VARLABEL(pdinfo, v));
-    fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(pdinfo),
+    fprintf(fidx, "%s  %s\n", dset->varname[v], VARLABEL(dset, v));
+    fprintf(fidx, "%c  %s - %s  n = %d\n", pd_char(dset),
 	    stobs, endobs, nobs);
 
     for (t=t1; t<=t2; t++) {
-	if (na(Z[v][t])) {
+	if (na(dset->Z[v][t])) {
 	    val = DBNA;
 	} else {
-	    val = Z[v][t];
+	    val = dset->Z[v][t];
 	}
 	fwrite(&val, sizeof val, 1, fbin);
     }
@@ -257,8 +257,7 @@ static void list_delete_element (int *list, int m)
 
 static int 
 append_db_data_with_replacement (const char *idxname, const char *binname,
-				 int *list, const double **Z, 
-				 const DATAINFO *pdinfo) 
+				 int *list, const DATASET *dset) 
 {
     FILE *fidx = NULL, *fbin = NULL;
     char **oldnames = NULL;
@@ -288,7 +287,7 @@ append_db_data_with_replacement (const char *idxname, const char *binname,
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 	for (j=0; j<oldv; j++) {
-	    if (!strcmp(oldnames[j], pdinfo->varname[v])) {
+	    if (!strcmp(oldnames[j], dset->varname[v])) {
 		/* match: remove var v from "newlist" and flag that it
 		   is a replacement in "mask" */
 		list_delete_element(newlist, v);
@@ -382,11 +381,11 @@ append_db_data_with_replacement (const char *idxname, const char *binname,
 		fprintf(stderr, "old db, var %d, nobs = %d\n", i, nobs);
 #endif
 		if (mask[i]) {
-		    v = series_index(pdinfo, oldnames[i]);
+		    v = series_index(dset, oldnames[i]);
 #if DB_DEBUG
 		    fprintf(stderr, "replacing this with var %d\n", v);
 #endif
-		    output_db_var(v, Z, pdinfo, fidx, fbin);
+		    output_db_var(v, dset, fidx, fbin);
 		} else {
 #if DB_DEBUG
 		    fprintf(stderr, "passing through old var\n");
@@ -425,7 +424,7 @@ append_db_data_with_replacement (const char *idxname, const char *binname,
 #if DB_DEBUG
 	    fprintf(stderr, "adding new var, %d\n", newlist[i]);
 #endif
-	    output_db_var(newlist[i], Z, pdinfo, fidx, fbin);
+	    output_db_var(newlist[i], dset, fidx, fbin);
 	}
     }
 
@@ -501,8 +500,7 @@ open_db_files (const char *fname, char *idxname, char *binname,
    missing obs.
 */
 
-static int *make_db_save_list (const int *list, const double **Z, 
-			       const DATAINFO *pdinfo)
+static int *make_db_save_list (const int *list, const DATASET *dset)
 {
     int *dlist = gretl_list_new(list[0]);
     int i, t;
@@ -517,8 +515,8 @@ static int *make_db_save_list (const int *list, const double **Z,
 	int v = list[i];
 	int gotobs = 0;
 
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!na(Z[v][t])) {
+	for (t=0; t<dset->n; t++) {
+	    if (!na(dset->Z[v][t])) {
 		gotobs = 1;
 		break;
 	    }
@@ -540,8 +538,7 @@ static int *make_db_save_list (const int *list, const double **Z,
  * @fname: name of target database file (e.g. "foo.bin").
  * @list: list of series ID numbers.
  * @opt: option flag.
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  *
  * Writes the listed series from @Z to a gretl database. If @opt
  * includes OPT_F (force, overwrite), then in case any variables
@@ -553,7 +550,7 @@ static int *make_db_save_list (const int *list, const double **Z,
  */
 
 int write_db_data (const char *fname, const int *list, gretlopt opt,
-		   const double **Z, const DATAINFO *pdinfo) 
+		   const DATASET *dset) 
 {
     char idxname[FILENAME_MAX];
     char binname[FILENAME_MAX];
@@ -564,11 +561,11 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
     int force = (opt & OPT_F);
     int i, err = 0;
 
-    if (dataset_is_time_series(pdinfo)) {
-	if (pdinfo->pd != 1 && pdinfo->pd != 4 && pdinfo->pd != 12) {
+    if (dataset_is_time_series(dset)) {
+	if (dset->pd != 1 && dset->pd != 4 && dset->pd != 12) {
 	    return 1;
 	}
-    } else if (pdinfo->pd != 1) {
+    } else if (dset->pd != 1) {
 	return 1;
     }
 
@@ -581,7 +578,7 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 #if DB_DEBUG
 	fprintf(stderr, "Appending to existing db\n");
 #endif
-	dlist = make_db_save_list(list, Z, pdinfo);
+	dlist = make_db_save_list(list, dset);
 	if (dlist == NULL) {
 	    err = E_ALLOC;
 	    goto bailout;
@@ -594,9 +591,9 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
 	    fclose(fidx);
 	    fclose(fbin);
 	    return append_db_data_with_replacement(idxname, binname, dlist,
-						   Z, pdinfo);
+						   dset);
 	} else {
-	    int dups = check_for_db_duplicates(dlist, pdinfo, idxname, &err);
+	    int dups = check_for_db_duplicates(dlist, dset, idxname, &err);
 
 #if DB_DEBUG
 	    fprintf(stderr, "No force flag, checking for dups\n");
@@ -630,7 +627,7 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
     for (i=1; i<=mylist[0]; i++) {
 	int v = mylist[i];
 
-	output_db_var(v, Z, pdinfo, fidx, fbin);
+	output_db_var(v, dset, fidx, fbin);
     }
 
  bailout:

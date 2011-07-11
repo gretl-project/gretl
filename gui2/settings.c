@@ -294,7 +294,7 @@ const char *get_scriptpage (void)
 
 int autoicon_on (void)
 {
-    if (datainfo != NULL && datainfo->v > 0) {
+    if (dataset != NULL && dataset->v > 0) {
 	return autoicon;
     } else {
 	return 0;
@@ -574,7 +574,7 @@ static int tramo_ok = 0;
 
 int get_tramo_ok (void)
 {
-    return tramo_ok && tramo_ts(datainfo);
+    return tramo_ok && tramo_ts(dataset);
 }
 
 static void set_tramo_status (void)
@@ -617,7 +617,7 @@ static int x12a_ok = 0;
 
 int get_x12a_ok (void)
 {
-    return x12a_ok && x12_ts(datainfo);
+    return x12a_ok && x12_ts(dataset);
 }
 
 static void set_x12a_status (void)

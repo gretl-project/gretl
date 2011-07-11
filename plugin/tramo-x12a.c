@@ -534,8 +534,7 @@ static void set_keypos (const double *x, int t1, int t2,
     }
 }
 
-static int graph_series (const double **Z, const DATAINFO *pdinfo, 
-			 tx_request *req)
+static int graph_series (const DATASET *dset, tx_request *req)
 {
     FILE *fp = NULL;
     const double *obs;
@@ -548,7 +547,7 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
     char title[32];
     int t, err = 0;
 
-    obs = gretl_plotx(NULL, pdinfo);
+    obs = gretl_plotx(dset);
     if (obs == NULL) {
 	return E_ALLOC;
     }
@@ -560,13 +559,13 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
 
     gretl_push_c_numeric_locale();
 
-    if (pdinfo->pd == 4) {
-	if ((pdinfo->t2 - pdinfo->t1) / 4 < 8) {
+    if (dset->pd == 4) {
+	if ((dset->t2 - dset->t1) / 4 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 4\n", fp);
 	}
-    } else if (pdinfo->pd == 12) {
-	if ((pdinfo->t2 - pdinfo->t1) / 12 < 8) {
+    } else if (dset->pd == 12) {
+	if ((dset->t2 - dset->t1) / 12 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 12\n", fp);
 	}
@@ -588,7 +587,7 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
 	irmax = 0.5;
     }
 
-    irbar = gretl_mean(pdinfo->t1, pdinfo->t2, Z[v_ir]);
+    irbar = gretl_mean(dset->t1, dset->t2, dset->Z[v_ir]);
     if (irbar > irmax) {
 	sub1 = 1;
     }
@@ -606,8 +605,8 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
 	    "plot '-' using 1:%s title '%s' w impulses\n",
 	    (sub1)? "($2-1.0)" : "2", title);
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	double yt = Z[v_ir][t];
+    for (t=dset->t1; t<=dset->t2; t++) {
+	double yt = dset->Z[v_ir][t];
 
 	if (req->prog == TRAMO_SEATS && tramo_got_irfin) {
 	    yt /= 100.0;
@@ -617,22 +616,22 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
     }
     fputs("e\n", fp);
 
-    set_keypos(Z[0], pdinfo->t1, pdinfo->t2, fp);
+    set_keypos(dset->Z[0], dset->t1, dset->t2, fp);
 
     /* actual (in var 0) vs trend/cycle */
 
     fprintf(fp, "set origin 0.0,%.2f\n"
 	    "plot '-' using 1:2 title '%s' w l, \\\n"
 	    " '-' using 1:2 title '%s' w l\n",
-	    f1, pdinfo->varname[0], _("trend/cycle"));
+	    f1, dset->varname[0], _("trend/cycle"));
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	fprintf(fp, "%.10g %.10g\n", obs[t], Z[0][t]);
+    for (t=dset->t1; t<=dset->t2; t++) { 
+	fprintf(fp, "%.10g %.10g\n", obs[t], dset->Z[0][t]);
     }
     fputs("e , \\\n", fp);
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	fprintf(fp, "%.10g %.10g\n", obs[t], Z[v_tr][t]);
+    for (t=dset->t1; t<=dset->t2; t++) { 
+	fprintf(fp, "%.10g %.10g\n", obs[t], dset->Z[v_tr][t]);
     }
     fputs("e\n", fp);
 
@@ -641,15 +640,15 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
 	fprintf(fp, "set origin 0.0,0.66\n"
 		"plot '-' using 1:2 title '%s' w l, \\\n"
 		" '-' using 1:2 title '%s' w l\n",
-		pdinfo->varname[0], _("adjusted"));
+		dset->varname[0], _("adjusted"));
 
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    fprintf(fp, "%.10g %.10g\n", obs[t], Z[0][t]);
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    fprintf(fp, "%.10g %.10g\n", obs[t], dset->Z[0][t]);
 	}
 	fputs("e\n", fp);
 
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    fprintf(fp, "%.10g %.10g\n", obs[t], Z[v_sa][t]);
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    fprintf(fp, "%.10g %.10g\n", obs[t], dset->Z[v_sa][t]);
 	}
 	fputs("e\n", fp);
     }
@@ -663,17 +662,17 @@ static int graph_series (const double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
-			   double **srcZ, DATAINFO *srcinfo, int srcv)
+static void copy_variable (DATASET *targ, int targv,
+			   DATASET *src, int srcv)
 {
     int t;
 
-    for (t=0; t<targinfo->n; t++) {
-	targZ[targv][t] = srcZ[srcv][t];
+    for (t=0; t<targ->n; t++) {
+	targ->Z[targv][t] = src->Z[srcv][t];
     }
 
-    strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
-    strcpy(VARLABEL(targinfo, targv), VARLABEL(srcinfo, srcv));
+    strcpy(targ->varname[targv], src->varname[srcv]);
+    strcpy(VARLABEL(targ, targv), VARLABEL(src, srcv));
 }
 
 static void clear_tramo_files (const char *path, const char *vname)
@@ -710,8 +709,8 @@ static void clear_x12a_files (const char *path, const char *vname)
 }
 
 static int add_series_from_file (const char *path, int src,
-				 double **Z, DATAINFO *pdinfo,
-				 int targv, tx_request *request)
+				 DATASET *dset, int targv, 
+				 tx_request *request)
 {
     FILE *fp;
     char line[128], sfname[MAXLEN];
@@ -777,26 +776,26 @@ static int add_series_from_file (const char *path, int src,
     strcpy(varname, request->opts[src].savename);
     if (*varname == '\0') {
 	if (request->prog == TRAMO_SEATS) {
-	    sprintf(varname, "%.8s_%.2s", pdinfo->varname[0], 
+	    sprintf(varname, "%.8s_%.2s", dset->varname[0], 
 		    tramo_save_strings[src]);
 	} else {
-	    sprintf(varname, "%.8s_%s", pdinfo->varname[0], 
+	    sprintf(varname, "%.8s_%s", dset->varname[0], 
 		    x12a_save_strings[src]);
 	}
     }
 
     /* copy varname and label into place */
-    strcpy(pdinfo->varname[targv], varname);
-    sprintf(VARLABEL(pdinfo, targv), _(tx_descrip_formats[src]), pdinfo->varname[0]);
+    strcpy(dset->varname[targv], varname);
+    sprintf(VARLABEL(dset, targv), _(tx_descrip_formats[src]), dset->varname[0]);
 
     if (request->prog == TRAMO_SEATS) {
-	strcat(VARLABEL(pdinfo, targv), " (TRAMO/SEATS)");
+	strcat(VARLABEL(dset, targv), " (TRAMO/SEATS)");
     } else {
-	strcat(VARLABEL(pdinfo, targv), " (X-12-ARIMA)");
+	strcat(VARLABEL(dset, targv), " (X-12-ARIMA)");
     }	
 
-    for (t=0; t<pdinfo->n; t++) {
-	Z[targv][t] = NADBL;
+    for (t=0; t<dset->n; t++) {
+	dset->Z[targv][t] = NADBL;
     }
 
     gretl_push_c_numeric_locale();
@@ -804,16 +803,16 @@ static int add_series_from_file (const char *path, int src,
     if (request->prog == TRAMO_SEATS) {
 	int i = 0;
 
-	t = pdinfo->t1;
+	t = dset->t1;
 	while (fgets(line, 127, fp)) {
 	    i++;
 	    if (i >= 7 && sscanf(line, " %lf", &x) == 1) {
-		if (t >= pdinfo->n) {
-		    fprintf(stderr, "t = %d >= pdinfo->n = %d\n", t, pdinfo->n);
+		if (t >= dset->n) {
+		    fprintf(stderr, "t = %d >= dset->n = %d\n", t, dset->n);
 		    err = 1;
 		    break;
 		}		
-		Z[targv][t++] = x;
+		dset->Z[targv][t++] = x;
 	    }
 	}
     } else {
@@ -829,12 +828,12 @@ static int add_series_from_file (const char *path, int src,
 	    yr = d / 100;
 	    per = d % 100;
 	    sprintf(date, "%d.%d", yr, per);
-	    t = dateton(date, pdinfo);
-	    if (t < 0 || t >= pdinfo->n) {
+	    t = dateton(date, dset);
+	    if (t < 0 || t >= dset->n) {
 		err = 1;
 		break;
 	    }
-	    Z[targv][t] = x;
+	    dset->Z[targv][t] = x;
 	}
     }
 
@@ -845,7 +844,7 @@ static int add_series_from_file (const char *path, int src,
     return err;
 }
 
-static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
+static int grab_deseasonal_series (double *y, const DATASET *dset,
 				   int prog, const char *path)
 {
     FILE *fp;
@@ -877,12 +876,12 @@ static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
     if (prog == TRAMO_SEATS) {
 	int i = 0;
 
-	t = pdinfo->t1;
+	t = dset->t1;
 	while (fgets(line, 127, fp)) {
 	    i++;
 	    if (i >= 7 && sscanf(line, " %lf", &yt) == 1) {
-		if (t >= pdinfo->n) {
-		    fprintf(stderr, "t = %d >= pdinfo->n = %d\n", t, pdinfo->n);
+		if (t >= dset->n) {
+		    fprintf(stderr, "t = %d >= dset->n = %d\n", t, dset->n);
 		    err = E_DATA;
 		    break;
 		}		
@@ -902,8 +901,8 @@ static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
 	    yr = d / 100;
 	    per = d % 100;
 	    sprintf(date, "%d.%d", yr, per);
-	    t = dateton(date, pdinfo);
-	    if (t < 0 || t >= pdinfo->n) {
+	    t = dateton(date, dset);
+	    if (t < 0 || t >= dset->n) {
 		err = E_DATA;
 		break;
 	    }
@@ -918,7 +917,7 @@ static int grab_deseasonal_series (double *y, const DATAINFO *pdinfo,
     return err;
 }
 
-static void request_opts_init (tx_request *request, const DATAINFO *pdinfo,
+static void request_opts_init (tx_request *request, const DATASET *dset,
 			       int varnum, void (*helpfunc))
 {
     int i;
@@ -926,7 +925,7 @@ static void request_opts_init (tx_request *request, const DATAINFO *pdinfo,
     request->savevars = 0;
     request->helpfunc = helpfunc;
 
-    strcpy(request->yname, pdinfo->varname[varnum]);
+    strcpy(request->yname, dset->varname[varnum]);
 
     request->xopt.logtrans = 3; /* x12a: automatic logs or not */
     request->xopt.outliers = 1; /* x12a: detect outliers */
@@ -985,11 +984,11 @@ static void cancel_savevars (tx_request *request)
 static int write_tramo_file (const char *fname, 
 			     const double *y, 
 			     const char *vname, 
-			     const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     tx_request *request) 
 {
     int startyr, startper;
-    int T = pdinfo->t2 - pdinfo->t1 + 1; 
+    int T = dset->t2 - dset->t1 + 1; 
     char *p, tmp[8];
     double x;
     FILE *fp;
@@ -1002,7 +1001,7 @@ static int write_tramo_file (const char *fname,
 
     gretl_push_c_numeric_locale();
 
-    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
+    x = date(dset->t1, dset->pd, dset->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');
@@ -1013,10 +1012,10 @@ static int write_tramo_file (const char *fname,
     }
 
     fprintf(fp, "%s\n", vname);
-    fprintf(fp, "%d %d %d %d\n", T, startyr, startper, pdinfo->pd);
+    fprintf(fp, "%d %d %d %d\n", T, startyr, startper, dset->pd);
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (t && t % pdinfo->pd == 0) fputc('\n', fp);
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (t && t % dset->pd == 0) fputc('\n', fp);
 	if (na(y[t])) {
 	    fputs("-99999 ", fp);
 	} else {
@@ -1041,7 +1040,7 @@ static int write_tramo_file (const char *fname,
 
 static int write_spc_file (const char *fname, const double *y,
 			   const char *vname,
-			   const DATAINFO *pdinfo, 
+			   const DATASET *dset, 
 			   const int *savelist,
 			   x12a_opts *xopt)
 {
@@ -1058,7 +1057,7 @@ static int write_spc_file (const char *fname, const double *y,
 
     gretl_push_c_numeric_locale();
 
-    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
+    x = date(dset->t1, dset->pd, dset->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');
@@ -1068,10 +1067,10 @@ static int write_spc_file (const char *fname, const double *y,
 	startper = 1;
     }
 
-    fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, vname);
+    fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", dset->pd, vname);
     fprintf(fp, " start=%d.%d\n", startyr, startper);
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (na(y[t])) {
 	    fputs(" missingcode=-99999\n", fp);
 	    break;
@@ -1081,7 +1080,7 @@ static int write_spc_file (const char *fname, const double *y,
     fputs(" data=(\n", fp);
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (na(y[t])) {
 	    fputs("-99999 ", fp);
 	} else {
@@ -1149,7 +1148,7 @@ static void form_savelist (int *list, tx_request *request)
     }
 }
 
-static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
+static void copy_basic_data_info (DATASET *targ, DATASET *src)
 {
     targ->sd0 = src->sd0;
     strcpy(targ->stobs, src->stobs); 
@@ -1159,33 +1158,34 @@ static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
     targ->structure = src->structure;
 }
 
-static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				 double **tmpZ, DATAINFO *tmpinfo,
-				 int *varlist, tx_request *request)
+static int save_vars_to_dataset (DATASET *dset,
+				 DATASET *tmpset,
+				 int *varlist, 
+				 tx_request *request)
 {
     int i, v, j, addvars = 0;
 
     /* how many vars are wanted, and how many are new? */
     for (i=1; i<=varlist[0]; i++) {
 	if (request->opts[varlist[i]].save && 
-	    series_index(pdinfo, tmpinfo->varname[i]) == pdinfo->v) {
+	    series_index(dset, tmpset->varname[i]) == dset->v) {
 	    addvars++;
 	}
     }
 
-    if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
+    if (addvars > 0 && dataset_add_series(addvars, dset)) {
 	return E_ALLOC;
     }
 
-    j = pdinfo->v - addvars;
+    j = dset->v - addvars;
 
     for (i=1; i<=varlist[0]; i++) {
 	if (request->opts[varlist[i]].save) {
-	    v = series_index(pdinfo, tmpinfo->varname[i]);
-	    if (v < pdinfo->v) {
-		copy_variable(*pZ, pdinfo, v, tmpZ, tmpinfo, i);
+	    v = series_index(dset, tmpset->varname[i]);
+	    if (v < dset->v) {
+		copy_variable(dset, v, tmpset, i);
 	    } else {
-		copy_variable(*pZ, pdinfo, j++, tmpZ, tmpinfo, i);
+		copy_variable(dset, j++, tmpset, i);
 	    }
 	}
     }
@@ -1299,9 +1299,9 @@ static int check_x12a_model_file (const char *workdir)
     return err;
 }
 
-static int check_sample_bound (int prog, const DATAINFO *pdinfo)
+static int check_sample_bound (int prog, const DATASET *dset)
 {
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = dset->t2 - dset->t1 + 1;
 
     if (prog == TRAMO_SEATS && T > 600) {
 	gretl_errmsg_set(_("TRAMO can't handle more than 600 observations.\n"
@@ -1383,7 +1383,7 @@ int exec_tx_script (char *outname, const gchar *buf)
 */
 
 int write_tx_data (char *fname, int varnum, 
-		   double ***pZ, DATAINFO *pdinfo, 
+		   DATASET *dset, 
 		   gretlopt *opt, int tramo,
 		   GtkWindow *mainwin,
 		   void (*help_func))
@@ -1393,8 +1393,7 @@ int write_tx_data (char *fname, int varnum,
     char vname[VNAMELEN];
     int savelist[4];
     tx_request request;
-    double **tmpZ = NULL;
-    DATAINFO *tmpinfo = NULL;
+    DATASET *tmpset = NULL;
     int savescript = 0;
     int i, doit;
     int err = 0;
@@ -1409,14 +1408,14 @@ int write_tx_data (char *fname, int varnum,
 	workdir = gretl_x12_arima_dir();
     }	
 	
-    request_opts_init(&request, pdinfo, varnum, help_func);
+    request_opts_init(&request, dset, varnum, help_func);
 
-    err = check_sample_bound(request.prog, pdinfo);
+    err = check_sample_bound(request.prog, dset);
     if (err) {
 	return err;
     }
 
-    request.pd = pdinfo->pd;
+    request.pd = dset->pd;
     request.popt = opt;
 
     /* show dialog and get option settings */
@@ -1443,12 +1442,12 @@ int write_tx_data (char *fname, int varnum,
 	savescript = 1;
     } else {
 	/* create little temporary dataset */
-	tmpinfo = create_auxiliary_dataset(&tmpZ, 4, pdinfo->n);
-	if (tmpinfo == NULL) {
+	tmpset = create_auxiliary_dataset(4, dset->n);
+	if (tmpset == NULL) {
 	    return E_ALLOC;
 	}
 
-	copy_basic_data_info(tmpinfo, pdinfo);
+	copy_basic_data_info(tmpset, dset);
 
 	if (request.prog == X12A) { 
 	    err = check_x12a_model_file(workdir);
@@ -1458,13 +1457,13 @@ int write_tx_data (char *fname, int varnum,
 	}
     } 
 
-    strcpy(vname, pdinfo->varname[varnum]);
+    strcpy(vname, dset->varname[varnum]);
     form_savelist(savelist, &request);
 
     if (request.prog == X12A) { 
 	/* write out the .spc file for x12a */
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	write_spc_file(fname, (*pZ)[varnum], vname, pdinfo, savelist,
+	write_spc_file(fname, dset->Z[varnum], vname, dset, savelist,
 		       &request.xopt);
     } else { 
 	/* TRAMO, possibly plus SEATS */
@@ -1473,7 +1472,7 @@ int write_tx_data (char *fname, int varnum,
 	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
 	/* next line: this also sets request->prog = TRAMO_ONLY if
 	   SEATS is not to be run */
-	write_tramo_file(fname, (*pZ)[varnum], vname, pdinfo, &request);
+	write_tramo_file(fname, dset->Z[varnum], vname, dset, &request);
 	if (request.prog == TRAMO_ONLY) {
 	    cancel_savevars(&request); /* FIXME later */
 	    savelist[0] = 0;
@@ -1535,10 +1534,10 @@ int write_tx_data (char *fname, int varnum,
 	if (savelist[0] > 0) {
 	    const char *path = (request.prog == X12A)? fname : workdir;
 
-	    copy_variable(tmpZ, tmpinfo, 0, *pZ, pdinfo, varnum);
+	    copy_variable(tmpset, 0, dset, varnum);
 
 	    for (i=1; i<=savelist[0]; i++) {
-		err = add_series_from_file(path, savelist[i], tmpZ, tmpinfo,
+		err = add_series_from_file(path, savelist[i], tmpset,
 					   i, &request);
 		if (err) {
 		    fprintf(stderr, "i = %d: add_series_from_file() failed\n", i);
@@ -1552,7 +1551,7 @@ int write_tx_data (char *fname, int varnum,
 
 	    if (!err) {
 		if (request.opts[TRIGRAPH].save) {
-		    err = graph_series((const double **) tmpZ, tmpinfo, &request);
+		    err = graph_series(tmpset, &request);
 		    if (err) {
 			fprintf(stderr, "graph_series() failed\n");
 		    } else {
@@ -1574,19 +1573,19 @@ int write_tx_data (char *fname, int varnum,
 
 	/* now save the local vars to main dataset, if wanted */
 	if (!err && request.savevars > 0) {
-	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, savelist, 
+	    err = save_vars_to_dataset(dset, tmpset, savelist, 
 				       &request);
 	}
     }
 
  bailout:
 
-    destroy_dataset(tmpZ, tmpinfo);
+    destroy_dataset(tmpset);
 
     return err;
 }
 
-int adjust_series (const double *x, double *y, const DATAINFO *pdinfo, 
+int adjust_series (const double *x, double *y, const DATASET *dset, 
 		   int tramo)
 {
     int prog = (tramo)? TRAMO_SEATS : X12A;
@@ -1618,14 +1617,14 @@ int adjust_series (const double *x, double *y, const DATAINFO *pdinfo,
 			   0  /* trading days correction */
 	};
 
-	if (pdinfo->pd == 12) {
+	if (dset->pd == 12) {
 	    xopt.trdays = 1;
 	}
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, vname);
-	write_spc_file(fname, x, vname, pdinfo, savelist, &xopt);
+	write_spc_file(fname, x, vname, dset, savelist, &xopt);
     } else { 
 	sprintf(fname, "%s%c%s", workdir, SLASH, vname);
-	write_tramo_file(fname, x, vname, pdinfo, NULL); 
+	write_tramo_file(fname, x, vname, dset, NULL); 
     }
 
     if (prog == X12A) {
@@ -1645,7 +1644,7 @@ int adjust_series (const double *x, double *y, const DATAINFO *pdinfo,
     if (!err) {
 	const char *path = (prog == X12A)? fname : workdir;
 
-	err = grab_deseasonal_series(y, pdinfo, prog, path);
+	err = grab_deseasonal_series(y, dset, prog, path);
     }
 
     return err;

@@ -31,10 +31,10 @@
 #include <errno.h>
 
 int sort_series (const double *x, double *y, int f, 
-		 const DATAINFO *pdinfo)
+		 const DATASET *dset)
 {
     double *z = NULL;
-    int n = sample_size(pdinfo);
+    int n = sample_size(dset);
     int i, t;
 
     z = malloc(n * sizeof *z);
@@ -43,7 +43,7 @@ int sort_series (const double *x, double *y, int f,
     }
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t])) {
 	    z[i++] = x[t];
 	}
@@ -56,7 +56,7 @@ int sort_series (const double *x, double *y, int f,
     }
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (na(x[t])) {
 	    y[t] = NADBL;
 	} else {
@@ -78,13 +78,13 @@ struct pair_sorter {
    into z */
 
 int gretl_sort_by (const double *x, const double *y, 
-		   double *z, const DATAINFO *pdinfo)
+		   double *z, const DATASET *dset)
 {
     struct pair_sorter *xy;
-    int n = sample_size(pdinfo);
+    int n = sample_size(dset);
     int i, t;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (na(x[t])) {
 	    return E_MISSDATA;
 	}
@@ -96,7 +96,7 @@ int gretl_sort_by (const double *x, const double *y,
     }
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	xy[i].x = x[t];
 	xy[i].y = y[t];
 	i++;
@@ -105,7 +105,7 @@ int gretl_sort_by (const double *x, const double *y,
     qsort(xy, n, sizeof *xy, gretl_compare_doubles);
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	z[t] = xy[i++].y;
     }
 
@@ -208,10 +208,10 @@ static int rank_array (const double *x, double *y, int f, int n)
 }
 
 int rank_series (const double *x, double *y, int f, 
-		 const DATAINFO *pdinfo)
+		 const DATASET *dset)
 {
-    return rank_array(x + pdinfo->t1, y + pdinfo->t1,
-		      f, sample_size(pdinfo));
+    return rank_array(x + dset->t1, y + dset->t1,
+		      f, sample_size(dset));
 }
 
 gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err) 
@@ -244,7 +244,7 @@ gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err)
  * @x: array of original data.
  * @y: array into which to write the result.
  * @f: function, F_DIFF, F_SDIFF or F_LDIFF.
- * @pdinfo: data set information.
+ * @dset: data set information.
  *
  * Calculates the differenced counterpart to the input 
  * series @x.  If @f = F_SDIFF, the seasonal difference is
@@ -255,17 +255,17 @@ gretl_matrix *rank_vector (const gretl_matrix *x, int f, int *err)
  */
 
 int diff_series (const double *x, double *y, int f, 
-		 const DATAINFO *pdinfo)
+		 const DATASET *dset)
 {
-    int k = (f == F_SDIFF)? pdinfo->pd : 1;
-    int t, t1 = pdinfo->t1;
+    int k = (f == F_SDIFF)? dset->pd : 1;
+    int t, t1 = dset->t1;
 
     if (t1 < k) {
 	t1 = k;
     }
 
-    for (t=t1; t<=pdinfo->t2; t++) {
-	if (dataset_is_panel(pdinfo) && t % pdinfo->pd == 0) {
+    for (t=t1; t<=dset->t2; t++) {
+	if (dataset_is_panel(dset) && t % dset->pd == 0) {
 	    /* skip first observation in panel unit */
 	    continue;
 	}
@@ -288,7 +288,7 @@ int diff_series (const double *x, double *y, int f,
  * orthdev_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @pdinfo: data set information.
+ * @dset: data set information.
  *
  * Calculates in @y the forward orthogonal deviations of the input 
  * series @x.  That is, y[t] is the scaled difference between x[t]
@@ -297,21 +297,21 @@ int diff_series (const double *x, double *y, int f,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
+int orthdev_series (const double *x, double *y, const DATASET *dset)
 {
     double xbar;
     int n, s, t, Tt;
 
-    for (t=pdinfo->t1; t<pdinfo->t2; t++) {
+    for (t=dset->t1; t<dset->t2; t++) {
 
 	if (na(x[t])) {
 	    continue;
 	}
 
-	if (dataset_is_panel(pdinfo)) {
-	    Tt = pdinfo->pd - (t % pdinfo->pd) - 1;
+	if (dataset_is_panel(dset)) {
+	    Tt = dset->pd - (t % dset->pd) - 1;
 	} else {
-	    Tt = pdinfo->t2 - t;
+	    Tt = dset->t2 - t;
 	}
 
 	xbar = 0.0;
@@ -346,7 +346,7 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
  * @obs: used for autoreg calculation, -1 if whole series 
  *	should be calculated otherwise just the observation for
  *	obs is calculated 
- * @pdinfo: data set information.
+ * @dset: data set information.
  *
  * Calculates the fractionally differenced or lagged 
  * counterpart to the input series @x. The fractional 
@@ -357,12 +357,12 @@ int orthdev_series (const double *x, double *y, const DATAINFO *pdinfo)
  */
 
 int fracdiff_series (const double *x, double *y, double d,
-		     int diff, int obs, const DATAINFO *pdinfo)
+		     int diff, int obs, const DATASET *dset)
 {
     int dd, t, T;
     const double TOL = 1.0E-12;
-    int t1 = pdinfo->t1;
-    int t2 = (obs >= 0)? obs : pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = (obs >= 0)? obs : dset->t2;
     int tmiss = 0;
     double phi = (diff)? -d : d;
 
@@ -380,7 +380,7 @@ int fracdiff_series (const double *x, double *y, double d,
     if (obs >= 0) {
 	/* doing a specific observation */
 	T = obs - t1 + 1;
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    y[t] = NADBL;
 	}
 	if (obs != t1) {
@@ -418,7 +418,7 @@ int fracdiff_series (const double *x, double *y, double d,
  * @x: array of original data.
  * @y: array into which to write the result.
  * @d: lambda parameter.
- * @pdinfo: data set information.
+ * @dset: data set information.
  *
  * Calculates in @y the Box-Cox transformation for the 
  * input series @x.
@@ -427,11 +427,11 @@ int fracdiff_series (const double *x, double *y, double d,
  */
 
 int boxcox_series (const double *x, double *y, double d,
-		   const DATAINFO *pdinfo)
+		   const DATASET *dset)
 {
     int t;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (na(x[t])) {
 	    y[t] = NADBL;
 	} else if (d == 0) {
@@ -444,28 +444,28 @@ int boxcox_series (const double *x, double *y, double d,
     return 0;
 }
 
-int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
+int cum_series (const double *x, double *y, const DATASET *dset)
 {
-    int t, s = pdinfo->t1;
+    int t, s = dset->t1;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2 && na(x[t]); t++) {
+    for (t=dset->t1; t<=dset->t2 && na(x[t]); t++) {
 	s++;
     }
 
-    if (s == pdinfo->t2) {
+    if (s == dset->t2) {
 	/* no usable data */
 	return 0;
     }
 
     y[s] = x[s];
 
-    if (dataset_is_panel(pdinfo)) {
+    if (dataset_is_panel(dset)) {
 	int k;
 
-	for (t=s+1; t<=pdinfo->t2; t++) {
-	    if (t % pdinfo->pd == 0) {
+	for (t=s+1; t<=dset->t2; t++) {
+	    if (t % dset->pd == 0) {
 		/* first obs for panel unit */
-		for (k=0; k<pdinfo->pd; k++) {
+		for (k=0; k<dset->pd; k++) {
 		    if (!na(x[t+k])) {
 			t = t + k;
 			y[t] = x[t];
@@ -477,7 +477,7 @@ int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
 	    }
 	}
     } else {
-	for (t=s+1; t<=pdinfo->t2 && !na(x[t]); t++) {
+	for (t=s+1; t<=dset->t2 && !na(x[t]); t++) {
 	    y[t] = y[t-1] + x[t];
 	}
     }
@@ -485,10 +485,10 @@ int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
     return 0;
 }
 
-int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
+int resample_series (const double *x, double *y, const DATASET *dset)
 {
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int *z = NULL;
     int i, t, n;
 
@@ -518,10 +518,10 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
 }
 
 int block_resample_series (const double *x, double *y, int blocklen,
-			   const DATAINFO *pdinfo)
+			   const DATASET *dset)
 {
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int *z = NULL;
     int m, rem, bt2, x0;
     int i, s, t, n;
@@ -531,7 +531,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
     }
 
     if (blocklen == 1) {
-	return resample_series(x, y, pdinfo);
+	return resample_series(x, y, dset);
     }    
 
     series_adjust_sample(x, &t1, &t2);
@@ -589,7 +589,7 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * filter_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @A: vector for autoregressive polynomial.
  * @C: vector for moving average polynomial.
  * @y0: initial value of output series.
@@ -604,11 +604,11 @@ int block_resample_series (const double *x, double *y, int blocklen,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int filter_series (const double *x, double *y, const DATAINFO *pdinfo, 
+int filter_series (const double *x, double *y, const DATASET *dset, 
 		   gretl_vector *A, gretl_vector *C, double y0)
 {
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int t, s, i, n;
     int amax, cmax;
     double xlag, coef, *e;
@@ -704,7 +704,7 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
  * exponential_movavg_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @d: coefficient on lagged @x.
  * @n: number of @x observations to average to give the
  * initial @y value.
@@ -713,11 +713,11 @@ int filter_series (const double *x, double *y, const DATAINFO *pdinfo,
  */
 
 int exponential_movavg_series (const double *x, double *y, 
-			       const DATAINFO *pdinfo,
+			       const DATASET *dset,
 			       double d, int n)
 {
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int t, T;
 
     if (n < 0) {
@@ -759,18 +759,18 @@ int exponential_movavg_series (const double *x, double *y,
  * movavg_series:
  * @x: array of original data.
  * @y: array into which to write the result.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @k: number of terms in MA.
  * @center: if non-zero, produce centered MA.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
+int movavg_series (const double *x, double *y, const DATASET *dset,
 		   int k, int center)
 {
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int k1 = k-1, k2 = 0;
     int i, s, t, T;
     int err;
@@ -798,8 +798,8 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
 
 	for (i=-k1; i<=k2; i++) {
 	    s = t + i;
-	    if (pdinfo->structure == STACKED_TIME_SERIES) {
-		if (s / pdinfo->pd != t / pdinfo->pd) {
+	    if (dset->structure == STACKED_TIME_SERIES) {
+		if (s / dset->pd != t / dset->pd) {
 		    s = -1;
 		}
 	    }
@@ -839,16 +839,16 @@ int movavg_series (const double *x, double *y, const DATAINFO *pdinfo,
 }
 
 int seasonally_adjust_series (const double *x, double *y, 
-			      DATAINFO *pdinfo, int tramo)
+			      DATASET *dset, int tramo)
 {
     void *handle;
     int (*adjust_series) (const double *, double *, 
-			  const DATAINFO *, int);
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+			  const DATASET *, int);
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int T, err = 0;
 
-    if (!quarterly_or_monthly(pdinfo)) {
+    if (!quarterly_or_monthly(dset)) {
 	gretl_errmsg_set(_("Input must be a monthly or quarterly time series"));	
 	return E_PDWRONG;
     }
@@ -856,7 +856,7 @@ int seasonally_adjust_series (const double *x, double *y,
     series_adjust_sample(x, &t1, &t2);
     T = t2 - t1 + 1;
 
-    if (T < pdinfo->pd * 3) {
+    if (T < dset->pd * 3) {
 	return E_TOOFEW;
     } else if (tramo && T > 600) {
 	gretl_errmsg_set(_("TRAMO can't handle more than 600 observations.\n"
@@ -877,16 +877,16 @@ int seasonally_adjust_series (const double *x, double *y,
     if (adjust_series == NULL) {
 	err = E_FOPEN;
     } else {
-	int save_t1 = pdinfo->t1;
-	int save_t2 = pdinfo->t2;
+	int save_t1 = dset->t1;
+	int save_t2 = dset->t2;
 
-	pdinfo->t1 = t1;
-	pdinfo->t2 = t2;
+	dset->t1 = t1;
+	dset->t2 = t2;
 
-	err = (*adjust_series) (x, y, pdinfo, tramo);
+	err = (*adjust_series) (x, y, dset, tramo);
 
-	pdinfo->t1 = save_t1;
-	pdinfo->t2 = save_t2;
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
 
 	close_plugin(handle);
     }
@@ -894,12 +894,12 @@ int seasonally_adjust_series (const double *x, double *y,
     return err;
 }
 
-static int new_unit (const DATAINFO *pdinfo, int t)
+static int new_unit (const DATASET *dset, int t)
 {
-    return t > 0 && (t / pdinfo->pd != (t-1) / pdinfo->pd);
+    return t > 0 && (t / dset->pd != (t-1) / dset->pd);
 }
 
-int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo, 
+int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k)
 {
     double ret = NADBL;
@@ -908,18 +908,18 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
     int smin = 0;
     int s, t, Ti = 0;
 
-    if (!dataset_is_panel(pdinfo)) {
+    if (!dataset_is_panel(dset)) {
 	return E_DATA;
     }
 
     switch (k) {
     case F_PNOBS:
-	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
 		for (s=smin; s<t; s++) {
 		    y[s] = Ti;
 		}
-		if (t == pdinfo->n) {
+		if (t == dset->n) {
 		    break;
 		}
 		Ti = 0;
@@ -931,12 +931,12 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	}
 	break;
     case F_PMIN:
-	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
 		for (s=smin; s<t; s++) {
 		    y[s] = aux;
 		}
-		if (t == pdinfo->n) {
+		if (t == dset->n) {
 		    break;
 		}
 		aux = NADBL;
@@ -950,12 +950,12 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	}
 	break;
     case F_PMAX:
-	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
 		for (s=smin; s<t; s++) {
 		    y[s] = aux;
 		}
-		if (t == pdinfo->n) {
+		if (t == dset->n) {
 		    break;
 		}
 		aux = NADBL;
@@ -969,8 +969,8 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	}
 	break;
     case F_PMEAN:
-	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
 		if (!na(xbar)) {
 		    xbar /= Ti;
 		}
@@ -979,7 +979,7 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 		for (s=smin; s<t; s++) {
 		    y[s] = xbar;
 		}
-		if (t == pdinfo->n) {
+		if (t == dset->n) {
 		    break;
 		}
 		Ti = 0;
@@ -997,8 +997,8 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 	}
 	break;
     case F_PSD:
-	for (t=0; t<=pdinfo->n; t++) {
-	    if (t == pdinfo->n || new_unit(pdinfo, t)) {
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
 		if (na(xbar)) {
 		    ret = NADBL;
 		} else if (Ti == 1) {
@@ -1010,7 +1010,7 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
 		for (s=smin; s<t; s++) {
 		    y[s] = ret;
 		}
-		if (t == pdinfo->n) {
+		if (t == dset->n) {
 		    break;
 		}
 		Ti = 0;
@@ -1037,16 +1037,16 @@ int panel_statistic (const double *x, double *y, const DATAINFO *pdinfo,
     return 0;
 }
 
-static double default_hp_lambda (const DATAINFO *pdinfo)
+static double default_hp_lambda (const DATASET *dset)
 {
-    return 100 * pdinfo->pd * pdinfo->pd;
+    return 100 * dset->pd * dset->pd;
 }
 
 /**
  * hp_filter:
  * @x: array of original data.
  * @hp: array in which filtered series is computed.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @lambda: smoothing parameter (or #NADBL to use the default
  * value).
  * @opt: if %OPT_T, return the trend rather than the cycle.
@@ -1058,10 +1058,10 @@ static double default_hp_lambda (const DATAINFO *pdinfo)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
+int hp_filter (const double *x, double *hp, const DATASET *dset,
 	       double lambda, gretlopt opt)
 {
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = dset->t1, t2 = dset->t2;
     double v00 = 1.0, v11 = 1.0, v01 = 0.0;
     double det, tmp0, tmp1;
     double e0, e1, b00, b01, b11;
@@ -1086,7 +1086,7 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
     }
 
     if (na(lambda)) {
-	lambda = default_hp_lambda(pdinfo);
+	lambda = default_hp_lambda(dset);
     }
 
     V = doubles_array_new(4, T);
@@ -1208,7 +1208,7 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
  * bkbp_filter:
  * @x: array of original data.
  * @bk: array into which to write the filtered series.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @bkl: lower frequency bound (or 0 for automatic).
  * @bku: upper frequency bound (or 0 for automatic).
  * @k: approximation order (or 0 for automatic).
@@ -1218,10 +1218,10 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
+int bkbp_filter (const double *x, double *bk, const DATASET *dset,
 		 int bkl, int bku, int k)
 {
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = dset->t1, t2 = dset->t2;
     double omubar, omlbar;
     double avg_a;
     double *a;
@@ -1229,11 +1229,11 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
 
     if (bkl <= 0 || bku <= 0) {
 	/* get user settings if available (or the defaults) */
-	get_bkbp_periods(pdinfo, &bkl, &bku);
+	get_bkbp_periods(dset, &bkl, &bku);
     }
 
     if (k <= 0) {
-	k = get_bkbp_k(pdinfo);
+	k = get_bkbp_k(dset);
     }
 
 #if BK_DEBUG
@@ -1285,7 +1285,7 @@ int bkbp_filter (const double *x, double *bk, const DATAINFO *pdinfo,
     /* now we filter the series, skipping the first
        and last k observations */
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	if (t < t1 + k || t > t2 - k) {
 	    bk[t] = NADBL;
 	} else {
@@ -1845,7 +1845,7 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
  * butterworth_filter:
  * @x: array of original data.
  * @bw: array into which to write the filtered series.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @n: desired lag order.
  * @cutoff: desired angular cutoff in degrees (0, 180).
  *
@@ -1856,12 +1856,12 @@ set_bw_lambda (double cutoff, int n, double *lam1, double *lam2)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int butterworth_filter (const double *x, double *bw, const DATAINFO *pdinfo,
+int butterworth_filter (const double *x, double *bw, const DATASET *dset,
 			int n, double cutoff)
 {
     double *g, *ds, *tmp, *y;
     double lam1, lam2 = 1.0;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = dset->t1, t2 = dset->t2;
     int T, t, m;
     int bad_lambda = 0;
     int err = 0;
@@ -1997,7 +1997,7 @@ static int real_poly_trend (const double *x, double *fx, double *w,
  * poly_trend:
  * @x: array of original data.
  * @fx: array into which to write the fitted series.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @order: desired polynomial order.
  *
  * Calculates a trend via the method of orthogonal polynomials.
@@ -2006,9 +2006,9 @@ static int real_poly_trend (const double *x, double *fx, double *w,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int poly_trend (const double *x, double *fx, const DATAINFO *pdinfo, int order)
+int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
 {
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = dset->t1, t2 = dset->t2;
     int T, err;
 
     err = series_adjust_sample(x, &t1, &t2);
@@ -2096,7 +2096,7 @@ void poly_weights (double *w, int T, double wmax,
  * weighted_poly_trend:
  * @x: array of original data.
  * @fx: array into which to write the fitted series.
- * @pdinfo: data set information.
+ * @dset: data set information.
  * @order: desired polynomial order.
  * @opt: weighting option (OPT_Q = quadratic, OPT_B = cosine bell,
  * OPT_C = crenelated).
@@ -2111,12 +2111,12 @@ void poly_weights (double *w, int T, double wmax,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
+int weighted_poly_trend (const double *x, double *fx, const DATASET *dset,
 			 int order, gretlopt opt, double wratio, 
 			 double midfrac)
 {
     double *w = NULL;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = dset->t1, t2 = dset->t2;
     int T, err;
 
     err = series_adjust_sample(x, &t1, &t2);
@@ -2142,7 +2142,7 @@ int weighted_poly_trend (const double *x, double *fx, const DATAINFO *pdinfo,
     return err;
 }
 
-static int n_new_dummies (const DATAINFO *pdinfo,
+static int n_new_dummies (const DATASET *dset,
 			  int nunits, int nperiods)
 {
     char dname[VNAMELEN];
@@ -2150,14 +2150,14 @@ static int n_new_dummies (const DATAINFO *pdinfo,
 
     for (i=0; i<nunits; i++) {
 	sprintf(dname, "du_%d", i + 1);
-	if (gretl_is_series(dname, pdinfo)) {
+	if (gretl_is_series(dname, dset)) {
 	    nnew--;
 	}
     }
 
     for (i=0; i<nperiods; i++) {
 	sprintf(dname, "dt_%d", i + 1);
-	if (gretl_is_series(dname, pdinfo)) {
+	if (gretl_is_series(dname, dset)) {
 	    nnew--;
 	}
     }
@@ -2166,7 +2166,7 @@ static int n_new_dummies (const DATAINFO *pdinfo,
 }
 
 static void 
-make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
+make_dummy_name_and_label (int vi, const DATASET *dset, int center,
 			   char *vname, char *vlabel)
 {
     if (center > 0) {
@@ -2175,10 +2175,10 @@ make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
     } else if (center < 0) {
 	sprintf(vname, "S%d", vi);
 	strcpy(vlabel, "uncentered periodic dummy");
-    } else if (pdinfo->pd == 4 && pdinfo->structure == TIME_SERIES) {
+    } else if (dset->pd == 4 && dset->structure == TIME_SERIES) {
 	sprintf(vname, "dq%d", vi);
 	sprintf(vlabel, _("= 1 if quarter = %d, 0 otherwise"), vi);
-    } else if (pdinfo->pd == 12 && pdinfo->structure == TIME_SERIES) {
+    } else if (dset->pd == 12 && dset->structure == TIME_SERIES) {
 	sprintf(vname, "dm%d", vi);
 	sprintf(vlabel, _("= 1 if month = %d, 0 otherwise"), vi);
     } else {
@@ -2196,8 +2196,7 @@ make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
 
 /**
  * dummy:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @center: if greater than zero subtract the population mean from
  * each of the generated dummies; if less than zero, do not
  * subtract the mean but generate dummies with labels on the
@@ -2211,7 +2210,7 @@ make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
  * or 0 on error.
  */
 
-int dummy (double ***pZ, DATAINFO *pdinfo, int center)
+int dummy (DATASET *dset, int center)
 {
     char vname[VNAMELEN];
     char vlabel[MAXLABEL];
@@ -2220,13 +2219,13 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     int di, di0;
     double xx, dx;
 
-    if (pdinfo == NULL || pdinfo->n == 0) {
+    if (dset == NULL || dset->n == 0) {
 	gretl_errmsg_set(_("No dataset is in place"));
 	return 0;
     }
 
-    ndums = pdinfo->pd;
-    di0 = pdinfo->v;
+    ndums = dset->pd;
+    di0 = dset->v;
 
     if (ndums < 2 || ndums > 99999) {
 	gretl_errmsg_set(_("This command won't work with the current periodicity"));
@@ -2234,15 +2233,15 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     }
 
     for (vi=0; vi<ndums; vi++) {
-	make_dummy_name_and_label(vi + 1, pdinfo, center, vname, vlabel);
-	di = series_index(pdinfo, vname);
-	if (di >= pdinfo->v || strcmp(vlabel, VARLABEL(pdinfo, di))) {
+	make_dummy_name_and_label(vi + 1, dset, center, vname, vlabel);
+	di = series_index(dset, vname);
+	if (di >= dset->v || strcmp(vlabel, VARLABEL(dset, di))) {
 	    nnew++;
 	} else if (vi == 0) {
 	    di0 = di;
 	} else if (di != di0 + vi) {
 	    /* dummies not consecutive: problem */
-	    di0 = pdinfo->v;
+	    di0 = dset->v;
 	    nnew = ndums;
 	    break;
 	}
@@ -2251,57 +2250,57 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     if (nnew == 0) {
 	/* all dummies already present */
 	return di0;
-    } else if (pZ == NULL) {
+    } else if (dset->Z == NULL) {
 	return -1;
     }
 
-    if (dataset_add_series(ndums, pZ, pdinfo)) {
+    if (dataset_add_series(ndums, dset)) {
 	gretl_errmsg_set(_("Out of memory!"));
 	return 0;
     }
 
     for (vi=1, di = di0; vi<=ndums; vi++, di++) {
-	make_dummy_name_and_label(vi, pdinfo, center, vname, vlabel);
-	strcpy(pdinfo->varname[di], vname);
-	strcpy(VARLABEL(pdinfo, di), vlabel);
+	make_dummy_name_and_label(vi, dset, center, vname, vlabel);
+	strcpy(dset->varname[di], vname);
+	strcpy(VARLABEL(dset, di), vlabel);
     }
 
-    if (dataset_is_daily(pdinfo)) {
+    if (dataset_is_daily(dset)) {
 	int yy, mm = 10;
 
-	pp = pdinfo->pd;
+	pp = dset->pd;
 	while ((pp = pp / 10)) {
 	    mm *= 10;
 	}
 
 	for (vi=1, di = di0; vi<=ndums; vi++, di++) {
-	    for (t=0; t<pdinfo->n; t++) {
-		xx = date(t, pdinfo->pd, pdinfo->sd0) + .1;
+	    for (t=0; t<dset->n; t++) {
+		xx = date(t, dset->pd, dset->sd0) + .1;
 		yy = (int) xx;
 		pp = (int) (mm * (xx - yy) + 0.5);
 		dx = (pp == vi)? 1.0 : 0.0;
-		(*pZ)[di][t] = dx;
+		dset->Z[di][t] = dx;
 	    }
 	}
     } else {
-	int p0 = get_subperiod(0, pdinfo, NULL);
+	int p0 = get_subperiod(0, dset, NULL);
 
-	for (t=0; t<pdinfo->n; t++) {
-	    pp = (t + p0) % pdinfo->pd;
+	for (t=0; t<dset->n; t++) {
+	    pp = (t + p0) % dset->pd;
 	    for (vi=0, di = di0; vi<ndums; vi++, di++) {
 		dx = (pp == vi)? 1 : 0;
-		(*pZ)[di][t] = dx;
+		dset->Z[di][t] = dx;
 	    }
 	}
     }
 
     if (center > 0) {
-	double cx = 1.0 / pdinfo->pd;
-	int vimax = di0 + pdinfo->pd - 1;
+	double cx = 1.0 / dset->pd;
+	int vimax = di0 + dset->pd - 1;
 
 	for (vi=di0; vi<=vimax; vi++) {
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[vi][t] -= cx;
+	    for (t=0; t<dset->n; t++) {
+		dset->Z[vi][t] -= cx;
 	    }
 	}	
     }
@@ -2311,8 +2310,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 
 /**
  * panel_dummies:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: %OPT_T for time dummies, otherwise unit dummies.
  *
  * Adds to the data set a set of dummy variables corresponding
@@ -2322,11 +2320,11 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
+int panel_dummies (DATASET *dset, gretlopt opt)
 {
     char vname[16];
     int vi, t, yy, pp, mm;
-    int orig_v = pdinfo->v;
+    int orig_v = dset->v;
     int ndum, nnew;
     int n_unitdum = 0;
     int n_timedum = 0;
@@ -2334,10 +2332,10 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     double xx;
 
     if (opt & OPT_T) {
-	ndum = n_timedum = pdinfo->pd;
+	ndum = n_timedum = dset->pd;
     } else {	
-	n_unitdum = pdinfo->n / pdinfo->pd;
-	if (pdinfo->n % pdinfo->pd) {
+	n_unitdum = dset->n / dset->pd;
+	if (dset->n % dset->pd) {
 	    n_unitdum++;
 	}
 	ndum = n_unitdum;
@@ -2347,13 +2345,13 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	return E_PDWRONG;
     }
 
-    nnew = n_new_dummies(pdinfo, n_unitdum, n_timedum);
+    nnew = n_new_dummies(dset, n_unitdum, n_timedum);
 
-    if (nnew > 0 && dataset_add_series(nnew, pZ, pdinfo)) {
+    if (nnew > 0 && dataset_add_series(nnew, dset)) {
 	return E_ALLOC;
     }
 
-    pp = pdinfo->pd;
+    pp = dset->pd;
     mm = 10;
     while ((pp = pp / 10)) {
 	mm *= 10;
@@ -2368,45 +2366,45 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
 	sprintf(vname, "dt_%d", vi);
 
-	dnum = series_index(pdinfo, vname);
+	dnum = series_index(dset, vname);
 	if (dnum >= orig_v) {
 	    dnum = newvnum++;
 	}
 
-	strcpy(pdinfo->varname[dnum], vname);
-	sprintf(VARLABEL(pdinfo, dnum), 
+	strcpy(dset->varname[dnum], vname);
+	sprintf(VARLABEL(dset, dnum), 
 		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
 		_("period"), vi);
 
-	for (t=0; t<pdinfo->n; t++) {
-	    xx = date(t, pdinfo->pd, pdinfo->sd0);
+	for (t=0; t<dset->n; t++) {
+	    xx = date(t, dset->pd, dset->sd0);
 	    yy = (int) xx;
 	    pp = (int) (mm * (xx - yy) + 0.5);
-	    (*pZ)[dnum][t] = (pp == vi)? 1.0 : 0.0;
+	    dset->Z[dnum][t] = (pp == vi)? 1.0 : 0.0;
 	}
     }
 
     /* generate unit-based dummies, if wanted */
 
     for (vi=1; vi<=n_unitdum; vi++) {
-	int dmin = (vi - 1) * pdinfo->pd;
-	int dmax = vi * pdinfo->pd;
+	int dmin = (vi - 1) * dset->pd;
+	int dmax = vi * dset->pd;
 	int dnum;
 
 	sprintf(vname, "du_%d", vi);
 
-	dnum = series_index(pdinfo, vname);
+	dnum = series_index(dset, vname);
 	if (dnum >= orig_v) {
 	    dnum = newvnum++;
 	}	
 
-	strcpy(pdinfo->varname[dnum], vname);
-	sprintf(VARLABEL(pdinfo, dnum), 
+	strcpy(dset->varname[dnum], vname);
+	sprintf(VARLABEL(dset, dnum), 
 		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
 		_("unit"), vi);
 
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[dnum][t] = (t >= dmin && t < dmax)? 1 : 0;
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[dnum][t] = (t >= dmin && t < dmax)? 1 : 0;
 	}
     }
 
@@ -2415,8 +2413,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
 /**
  * gen_unit:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  *
  * (For panel data only) adds to the data set an index variable 
  * that uniquely identifies the cross-sectional units.
@@ -2424,31 +2421,31 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int gen_unit (double ***pZ, DATAINFO *pdinfo)
+int gen_unit (DATASET *dset)
 {
     int xt = 0;
     int i, t;
 
-    if (pdinfo->structure != STACKED_TIME_SERIES) {
+    if (dset->structure != STACKED_TIME_SERIES) {
 	gretl_errmsg_set("'genr unit' can be used only with "
 			 "panel data");
 	return 1;
     }
 
-    i = series_index(pdinfo, "unit");
+    i = series_index(dset, "unit");
 
-    if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
+    if (i == dset->v && dataset_add_series(1, dset)) {
 	return E_ALLOC;
     }
 
-    strcpy(pdinfo->varname[i], "unit");
-    strcpy(VARLABEL(pdinfo, i), _("cross-sectional unit index"));
+    strcpy(dset->varname[i], "unit");
+    strcpy(VARLABEL(dset, i), _("cross-sectional unit index"));
 
-    for (t=0; t<pdinfo->n; t++) {
-	if (t % pdinfo->pd == 0) {
+    for (t=0; t<dset->n; t++) {
+	if (t % dset->pd == 0) {
 	    xt++;
 	}
-	(*pZ)[i][t] = (double) xt;
+	dset->Z[i][t] = (double) xt;
     }
 
     return 0;
@@ -2457,19 +2454,19 @@ int gen_unit (double ***pZ, DATAINFO *pdinfo)
 /**
  * panel_unit_first_obs:
  * @t: zero-based observation number.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  *
  * Returns: 1 if observation @t is the first time-series
  * observation on a given cross-sectional unit in a
  * panel dataset, else 0.
  */
 
-int panel_unit_first_obs (int t, const DATAINFO *pdinfo)
+int panel_unit_first_obs (int t, const DATASET *dset)
 {
     char *p, obs[OBSLEN];
     int ret = 0;
 
-    ntodate(obs, t, pdinfo);
+    ntodate(obs, t, dset);
     p = strchr(obs, ':');
     if (p != NULL && atoi(p + 1) == 1) {
 	ret = 1;
@@ -2480,12 +2477,12 @@ int panel_unit_first_obs (int t, const DATAINFO *pdinfo)
 
 /* make special time variable for panel data */
 
-static void make_panel_time_var (double *x, const DATAINFO *pdinfo)
+static void make_panel_time_var (double *x, const DATASET *dset)
 {
     int t, xt = 0;
 
-    for (t=0; t<pdinfo->n; t++) {
-	if (t % pdinfo->pd == 0) {
+    for (t=0; t<dset->n; t++) {
+	if (t % dset->pd == 0) {
 	    xt = 1;
 	}
 	x[t] = (double) xt++;
@@ -2494,8 +2491,7 @@ static void make_panel_time_var (double *x, const DATAINFO *pdinfo)
 
 /**
  * gen_time:
- * @pZ: pointer to data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @tm: if non-zero, an actual time trend is wanted,
  * otherwise just an index of observations.
  *
@@ -2510,29 +2506,29 @@ static void make_panel_time_var (double *x, const DATAINFO *pdinfo)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gen_time (double ***pZ, DATAINFO *pdinfo, int tm)
+int gen_time (DATASET *dset, int tm)
 {
     int i, t;
 
-    i = series_index(pdinfo, (tm)? "time" : "index");
+    i = series_index(dset, (tm)? "time" : "index");
 
-    if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
+    if (i == dset->v && dataset_add_series(1, dset)) {
 	return E_ALLOC;
     }
 
     if (tm) {
-	strcpy(pdinfo->varname[i], "time");
-	strcpy(VARLABEL(pdinfo, i), _("time trend variable"));
+	strcpy(dset->varname[i], "time");
+	strcpy(VARLABEL(dset, i), _("time trend variable"));
     } else {
-	strcpy(pdinfo->varname[i], "index");
-	strcpy(VARLABEL(pdinfo, i), _("data index variable"));
+	strcpy(dset->varname[i], "index");
+	strcpy(VARLABEL(dset, i), _("data index variable"));
     }
     
-    if (tm && pdinfo->structure == STACKED_TIME_SERIES) {
-	make_panel_time_var((*pZ)[i], pdinfo);
+    if (tm && dset->structure == STACKED_TIME_SERIES) {
+	make_panel_time_var(dset->Z[i], dset);
     } else {
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[i][t] = (double) (t + 1);
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[i][t] = (double) (t + 1);
 	}
     }
 
@@ -2541,8 +2537,7 @@ int gen_time (double ***pZ, DATAINFO *pdinfo, int tm)
 
 /**
  * genr_wkday:
- * @pZ: pointer to data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  *
  * Generates (and adds to the dataset, if it's not already
  * present) an index representing the day of the week for
@@ -2553,27 +2548,27 @@ int gen_time (double ***pZ, DATAINFO *pdinfo, int tm)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gen_wkday (double ***pZ, DATAINFO *pdinfo)
+int gen_wkday (DATASET *dset)
 {
     char datestr[OBSLEN];
     int i, t;
 
-    if (!dated_daily_data(pdinfo)) {
+    if (!dated_daily_data(dset)) {
 	return E_PDWRONG;
     }
 
-    i = series_index(pdinfo, "weekday");
+    i = series_index(dset, "weekday");
 
-    if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
+    if (i == dset->v && dataset_add_series(1, dset)) {
 	return E_ALLOC;
     }
 
-    strcpy(pdinfo->varname[i], "weekday");
-    strcpy(VARLABEL(pdinfo, i), _("day of week (1 = Monday)"));
+    strcpy(dset->varname[i], "weekday");
+    strcpy(VARLABEL(dset, i), _("day of week (1 = Monday)"));
     
-    for (t=0; t<pdinfo->n; t++) {
-	ntodate(datestr, t, pdinfo);
-	(*pZ)[i][t] = get_day_of_week(datestr);
+    for (t=0; t<dset->n; t++) {
+	ntodate(datestr, t, dset);
+	dset->Z[i][t] = get_day_of_week(datestr);
     }
 
     return 0;
@@ -2592,21 +2587,21 @@ typedef enum {
     PLOTVAR_MAX
 } plotvar_type; 
 
-int plotvar_code (const DATAINFO *pdinfo)
+int plotvar_code (const DATASET *dset)
 {
-    if (!dataset_is_time_series(pdinfo)) {
+    if (!dataset_is_time_series(dset)) {
 	return PLOTVAR_INDEX;
-    } else if (pdinfo->pd == 1) {
+    } else if (dset->pd == 1) {
 	return PLOTVAR_ANNUAL;
-    } else if (pdinfo->pd == 4) {
+    } else if (dset->pd == 4) {
 	return PLOTVAR_QUARTERS;
-    } else if (pdinfo->pd == 12) {
+    } else if (dset->pd == 12) {
 	return PLOTVAR_MONTHS;
-    } else if (pdinfo->pd == 24) {
+    } else if (dset->pd == 24) {
 	return PLOTVAR_HOURLY;
-    } else if (calendar_data(pdinfo)) {
+    } else if (calendar_data(dset)) {
 	return PLOTVAR_CALENDAR;
-    } else if (dataset_is_decennial(pdinfo)) {
+    } else if (dataset_is_decennial(dset)) {
 	return PLOTVAR_DECADES;
     } else {
 	return PLOTVAR_TIME;
@@ -2615,18 +2610,18 @@ int plotvar_code (const DATAINFO *pdinfo)
 
 /**
  * gretl_plotx:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  *
  * Finds or creates a special dummy variable for use on the
  * x-axis in plotting; this will have the full length of the
- * data series as given in @pdinfo, and will be appropriately
+ * data series as given in @dset, and will be appropriately
  * configured for the data frequency.  Do not try to free this
  * variable.
  *
  * Returns: pointer to plot x-variable, or NULL on failure.
  */
 
-const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
+const double *gretl_plotx (const DATASET *dset)
 {
     static double *x;
     static int ptype;
@@ -2638,7 +2633,7 @@ const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
     double sd0;
     float rm;
 
-    if (pdinfo == NULL) {
+    if (dset == NULL) {
 	/* cleanup signal */
 	free(x);
 	x = NULL;
@@ -2648,21 +2643,21 @@ const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    if (dataset_is_panel(pdinfo) && 
-	sample_size(pdinfo) == pdinfo->pd && Z != NULL) {
+    if (dataset_is_panel(dset) && 
+	sample_size(dset) == dset->pd && dset->Z != NULL) {
 	/* handle the case of a time-series plot for a single panel unit */
-	panvar = plausible_panel_time_var(Z, pdinfo);
+	panvar = plausible_panel_time_var(dset);
 	if (panvar > 0) {
 	    new_ptype = PLOTVAR_PANEL;
 	}
     }
 
     if (new_ptype == 0) {
-	new_ptype = plotvar_code(pdinfo);
+	new_ptype = plotvar_code(dset);
     }
 
-    T = pdinfo->n;
-    sd0 = pdinfo->sd0;
+    T = dset->n;
+    sd0 = dset->sd0;
 
     if (x != NULL && new_ptype == ptype && Tbak == T && sd0 == sd0bak) {
 	/* a suitable array is already at hand */
@@ -2674,7 +2669,7 @@ const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
     }
 
     if (new_ptype == PLOTVAR_PANEL) {
-	x = copyvec(Z[panvar], pdinfo->n);
+	x = copyvec(dset->Z[panvar], dset->n);
     } else {
 	x = malloc(T * sizeof *x);
     }
@@ -2693,7 +2688,7 @@ const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
     switch (ptype) {
     case PLOTVAR_ANNUAL: 
 	for (t=0; t<T; t++) {
-	    x[t] = (double) (t + atoi(pdinfo->stobs));
+	    x[t] = (double) (t + atoi(dset->stobs));
 	}
 	break;
     case PLOTVAR_QUARTERS:
@@ -2716,19 +2711,19 @@ const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
 	break;
     case PLOTVAR_CALENDAR:
 	for (t=0; t<T; t++) {
-	    if (pdinfo->S != NULL) {
-		x[t] = get_dec_date(pdinfo->S[t]);
+	    if (dset->S != NULL) {
+		x[t] = get_dec_date(dset->S[t]);
 	    } else {
 		char datestr[OBSLEN];
 		    
-		calendar_date_string(datestr, t, pdinfo);
+		calendar_date_string(datestr, t, dset);
 		x[t] = get_dec_date(datestr);
 	    }
 	}
 	break;
     case PLOTVAR_DECADES:
 	for (t=0; t<T; t++) {
-	    x[t] = pdinfo->sd0 + 10 * t;
+	    x[t] = dset->sd0 + 10 * t;
 	}
 	break;
     case PLOTVAR_INDEX:
@@ -2751,7 +2746,7 @@ const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
 /**
  * get_fit_or_resid:
  * @pmod: pointer to source model.
- * @pdinfo: information on the data set.
+ * @dset: information on the data set.
  * @idx: %M_UHAT, %M_UHAT2, %M_YHAT, %M_AHAT or %M_H.
  * @vname: location to write series name (length %VNAMELEN)
  * @vlabel: location to write series description (length should
@@ -2765,7 +2760,7 @@ const double *gretl_plotx (const double **Z, const DATAINFO *pdinfo)
  * Returns: allocated array on success or NULL on failure.
  */
 
-double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo, 
+double *get_fit_or_resid (const MODEL *pmod, DATASET *dset, 
 			  ModelDataIndex idx, char *vname, 
 			  char *vlabel, int *err)
 {
@@ -2788,13 +2783,13 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    ret = malloc(pdinfo->n * sizeof *ret);
+    ret = malloc(dset->n * sizeof *ret);
     if (ret == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	if (t >= pmod->t1 && t <= pmod->t2) {
 	    if (idx == M_UHAT2) {
 		ret[t] = na(src[t]) ? NADBL : (src[t] * src[t]);
@@ -2840,8 +2835,7 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo,
 /**
  * genr_fit_resid:
  * @pmod: pointer to source model.
- * @pZ: pointer to data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @idx: %M_UHAT, %M_UHAT2, %M_YHAT, %M_AHAT or %M_H.
  * 
  * Adds residuals or fitted values or squared residuals from a
@@ -2850,32 +2844,32 @@ double *get_fit_or_resid (const MODEL *pmod, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+int genr_fit_resid (const MODEL *pmod, DATASET *dset,
 		    ModelDataIndex idx)
 {
     char vname[VNAMELEN], vlabel[MAXLABEL];
     double *x;
     int err = 0;
 
-    x = get_fit_or_resid(pmod, pdinfo, idx, vname, vlabel, &err);
+    x = get_fit_or_resid(pmod, dset, idx, vname, vlabel, &err);
 
     if (!err) {
-	err = dataset_add_allocated_series(x, pZ, pdinfo);
+	err = dataset_add_allocated_series(x, dset);
     }
 
     if (err) {
 	free(x);
     } else {
-	int v = pdinfo->v - 1;
+	int v = dset->v - 1;
 
-	strcpy(pdinfo->varname[v], vname);
-	strcpy(VARLABEL(pdinfo, v), vlabel);
+	strcpy(dset->varname[v], vname);
+	strcpy(VARLABEL(dset, v), vlabel);
     }
 
     return err;
 }
 
-int get_observation_number (const char *s, const DATAINFO *pdinfo)
+int get_observation_number (const char *s, const DATASET *dset)
 {
     char test[OBSLEN];
     size_t n;
@@ -2889,34 +2883,34 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
 	test[n-1] = '\0';
     }
 
-    if (dataset_has_markers(pdinfo)) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!strcmp(test, pdinfo->S[t])) {
+    if (dataset_has_markers(dset)) {
+	for (t=0; t<dset->n; t++) {
+	    if (!strcmp(test, dset->S[t])) {
 		return t + 1;
 	    }
 	}
-	if (calendar_data(pdinfo)) {
-	    for (t=0; t<pdinfo->n; t++) {
-		if (!strcmp(test, pdinfo->S[t]) ||
-		    !strcmp(test, pdinfo->S[t] + 2)) {
+	if (calendar_data(dset)) {
+	    for (t=0; t<dset->n; t++) {
+		if (!strcmp(test, dset->S[t]) ||
+		    !strcmp(test, dset->S[t] + 2)) {
 		    return t + 1;
 		}
 	    }
 	}
     }
 
-    if (pdinfo->structure == TIME_SERIES) {
-	t = dateton(test, pdinfo);
+    if (dset->structure == TIME_SERIES) {
+	t = dateton(test, dset);
 	if (t >= 0) {
 	    return t + 1;
 	}
     }
 
-    if (calendar_data(pdinfo)) {
+    if (calendar_data(dset)) {
 	char datestr[OBSLEN];
 
-	for (t=0; t<pdinfo->n; t++) {
-	    calendar_date_string(datestr, t, pdinfo);
+	for (t=0; t<dset->n; t++) {
+	    calendar_date_string(datestr, t, dset);
 	    if (!strcmp(test, datestr) ||
 		!strcmp(test, datestr + 2)) {
 		return t + 1;
@@ -2929,7 +2923,7 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
 
 #define OBS_DEBUG 0
 
-static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
+static int plain_obs_number (const char *obs, const DATASET *dset)
 {
     char *test;
     int t = -1;
@@ -2940,7 +2934,7 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 
     if (errno == 0 && *test == '\0') {
 	t = atoi(obs) - 1; /* convert from 1-based to 0-based */
-	if (t >= pdinfo->n) {
+	if (t >= dset->n) {
 	    t = -1;
 	}
     }
@@ -2956,8 +2950,7 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
    space to 0-based indexing for internal purposes.
 */
 
-int get_t_from_obs_string (const char *s, const double **Z, 
-			   const DATAINFO *pdinfo)
+int get_t_from_obs_string (const char *s, const DATASET *dset)
 {
     int t;
 
@@ -2968,9 +2961,9 @@ int get_t_from_obs_string (const char *s, const double **Z,
 	*obs = '\0';
 	strncat(obs, s, 15);
 	gretl_unquote(obs, &err);
-	t = dateton(obs, pdinfo);
+	t = dateton(obs, dset);
     } else {
-	t = dateton(s, pdinfo);
+	t = dateton(s, dset);
     }
 
 #if OBS_DEBUG
@@ -2980,7 +2973,7 @@ int get_t_from_obs_string (const char *s, const double **Z,
 
     if (t < 0) {
 	if (isdigit((unsigned char) *s)) {
-	    t = plain_obs_number(s, pdinfo);
+	    t = plain_obs_number(s, dset);
 #if OBS_DEBUG
 	    fprintf(stderr, " plain_obs_number gives t = %d\n", t);
 #endif
@@ -2989,12 +2982,12 @@ int get_t_from_obs_string (const char *s, const double **Z,
 		t = gretl_scalar_get_value(s);
 	    } 
 
-	    if (t > pdinfo->n) {
+	    if (t > dset->n) {
 		/* e.g. annual dates */
 		char try[16];
 
 		sprintf(try, "%d", t);
-		t = dateton(try, pdinfo);
+		t = dateton(try, dset);
 #if OBS_DEBUG
 		fprintf(stderr, " revised via dateton: t = %d\n", t);
 #endif
@@ -3062,7 +3055,7 @@ int check_declarations (char ***pS, parser *p)
     }
 
     for (i=0; i<n && !p->err; i++) {
-	if (gretl_is_series(S[i], p->dinfo) ||
+	if (gretl_is_series(S[i], p->dset) ||
 	    gretl_is_scalar(S[i]) ||
 	    gretl_is_bundle(S[i]) ||
 	    get_matrix_by_name(S[i]) ||
@@ -3159,8 +3152,7 @@ static double weighted_mean_at_obs (const int *list, const int *wlist,
 
 static int x_sectional_weighted_mean (double *x, const int *list, 
 				      const int *wlist,
-				      const double **Z, 
-				      const DATAINFO *pdinfo)
+				      const DATASET *dset)
 {
     int n = list[0];
     int t, v;
@@ -3169,17 +3161,19 @@ static int x_sectional_weighted_mean (double *x, const int *list,
 	return 0; /* all NAs */
     } else if (n == 1) {
 	v = list[1];
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    x[t] = Z[v][t]; 
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    x[t] = dset->Z[v][t]; 
 	}
 	return 0;
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (wlist != NULL) {
-	    x[t] = weighted_mean_at_obs(list, wlist, Z, t, NULL, NULL);
+	    x[t] = weighted_mean_at_obs(list, wlist, 
+					(const double **) dset->Z, 
+					t, NULL, NULL);
 	} else {
-	    x[t] = mean_at_obs(list, Z, t);
+	    x[t] = mean_at_obs(list, (const double **) dset->Z, t);
 	}
     }
 
@@ -3193,8 +3187,7 @@ static int x_sectional_weighted_mean (double *x, const int *list,
 
 static int x_sectional_wtd_variance (double *x, const int *list,
 				     const int *wlist,
-				     const double **Z, 
-				     const DATAINFO *pdinfo)
+				     const DATASET *dset)
 {
     double xdev, xbar, wsum;
     int m = 0, n = list[0];
@@ -3203,17 +3196,19 @@ static int x_sectional_wtd_variance (double *x, const int *list,
     if (n == 0) {
 	return 0; /* all NAs */
     } else if (n == 1) {
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    x[t] = 0.0;
 	}
 	return 0;
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (wlist != NULL) {
-	    xbar = weighted_mean_at_obs(list, wlist, Z, t, &wsum, &m);
+	    xbar = weighted_mean_at_obs(list, wlist, 
+					(const double **) dset->Z, 
+					t, &wsum, &m);
 	} else {
-	    xbar = mean_at_obs(list, Z, t);
+	    xbar = mean_at_obs(list, (const double **) dset->Z, t);
 	}
 	if (na(xbar)) {
 	    x[t] = NADBL;
@@ -3226,9 +3221,9 @@ static int x_sectional_wtd_variance (double *x, const int *list,
 	x[t] = 0.0;
 	for (i=1; i<=list[0]; i++) {
 	    v = list[i];
-	    xdev = Z[v][t] - xbar;
+	    xdev = dset->Z[v][t] - xbar;
 	    if (wlist != NULL) {
-		x[t] += xdev * xdev * Z[wlist[i]][t] / wsum;
+		x[t] += xdev * xdev * dset->Z[wlist[i]][t] / wsum;
 	    } else {
 		x[t] += xdev * xdev;
 	    }
@@ -3245,15 +3240,14 @@ static int x_sectional_wtd_variance (double *x, const int *list,
 
 static int x_sectional_wtd_stddev (double *x, const int *list, 
 				   const int *wlist,
-				   const double **Z, 
-				   const DATAINFO *pdinfo)
+				   const DATASET *dset)
 {
     int t, err;
 
-    err = x_sectional_wtd_variance(x, list, wlist, Z, pdinfo);
+    err = x_sectional_wtd_variance(x, list, wlist, dset);
 
     if (!err) {
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    if (!na(x[t])) {
 		x[t] = sqrt(x[t]);
 	    }
@@ -3265,16 +3259,15 @@ static int x_sectional_wtd_stddev (double *x, const int *list,
 
 static int x_sectional_extremum (int f, double *x, const int *list, 
 				 const int *wlist,
-				 const double **Z, 
-				 const DATAINFO *pdinfo)
+				 const DATASET *dset)
 {
     double xit, xx;
     int i, t, err = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	xx = (f == F_MIN)? NADBL : -NADBL;
 	for (i=1; i<=list[0]; i++) {
-	    xit = Z[list[i]][t];
+	    xit = dset->Z[list[i]][t];
 	    if (!na(xit)) { 
 		if (f == F_MAX && xit > xx) {
 		    xx = xit;
@@ -3294,16 +3287,15 @@ static int x_sectional_extremum (int f, double *x, const int *list,
 }
 
 static int x_sectional_sum (double *x, const int *list, 
-			    const double **Z, 
-			    const DATAINFO *pdinfo)
+			    const DATASET *dset)
 {
     double xit, xx;
     int i, t, err = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	xx = 0.0;
 	for (i=1; i<=list[0]; i++) {
-	    xit = Z[list[i]][t];
+	    xit = dset->Z[list[i]][t];
 	    if (na(xit)) { 
 		xx = NADBL;
 		break;
@@ -3318,20 +3310,18 @@ static int x_sectional_sum (double *x, const int *list,
 }
 
 int cross_sectional_stat (double *x, const int *list, 
-			  const double **Z, 
-			  const DATAINFO *pdinfo,
-			  int f)
+			  const DATASET *dset, int f)
 {
     if (f == F_MEAN) {
-	return x_sectional_weighted_mean(x, list, NULL, Z, pdinfo);
+	return x_sectional_weighted_mean(x, list, NULL, dset);
     } else if (f == F_VCE) {
-	return x_sectional_wtd_variance(x, list, NULL, Z, pdinfo);
+	return x_sectional_wtd_variance(x, list, NULL, dset);
     } else if (f == F_SD) {
-	return x_sectional_wtd_stddev(x, list, NULL, Z, pdinfo);
+	return x_sectional_wtd_stddev(x, list, NULL, dset);
     } else if (f == F_MIN || f == F_MAX) {
-	return x_sectional_extremum(f, x, list, NULL, Z, pdinfo);
+	return x_sectional_extremum(f, x, list, NULL, dset);
     } else if (f == F_SUM) {
-	return x_sectional_sum(x, list, Z, pdinfo);
+	return x_sectional_sum(x, list, dset);
     } else {
 	return E_DATA;
     }
@@ -3339,8 +3329,7 @@ int cross_sectional_stat (double *x, const int *list,
 
 int x_sectional_weighted_stat (double *x, const int *list, 
 			       const int *wlist,
-			       const double **Z, 
-			       const DATAINFO *pdinfo,
+			       const DATASET *dset,
 			       int f)
 {
     if (wlist[0] != list[0]) {
@@ -3350,11 +3339,11 @@ int x_sectional_weighted_stat (double *x, const int *list,
     }
 
     if (f == F_WMEAN) {
-	return x_sectional_weighted_mean(x, list, wlist, Z, pdinfo);
+	return x_sectional_weighted_mean(x, list, wlist, dset);
     } else if (f == F_WVAR) {
-	return x_sectional_wtd_variance(x, list, wlist, Z, pdinfo);
+	return x_sectional_wtd_variance(x, list, wlist, dset);
     } else if (f == F_WSD) {
-	return x_sectional_wtd_stddev(x, list, wlist, Z, pdinfo);
+	return x_sectional_wtd_stddev(x, list, wlist, dset);
     } else {
 	return E_DATA;
     }
@@ -3365,8 +3354,8 @@ int x_sectional_weighted_stat (double *x, const int *list,
 */
 
 int list_linear_combo (double *y, const int *list, 
-		       const gretl_vector *b, const double **Z, 
-		       const DATAINFO *pdinfo)
+		       const gretl_vector *b, 
+		       const DATASET *dset)
 {
     int nb = gretl_vector_get_length(b);
     int nl = list[0];
@@ -3378,10 +3367,10 @@ int list_linear_combo (double *y, const int *list,
 	int i, t;
 	double xit, yt;
 
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    yt = 0;
 	    for (i=0; i<nl; i++) {
-		xit = Z[list[i+1]][t];
+		xit = dset->Z[list[i+1]][t];
 		if (na(xit)) {
 		    yt = NADBL;
 		    break;
@@ -3718,8 +3707,7 @@ double dw_pval (const gretl_matrix *u, const gretl_matrix *X,
 
 gretl_matrix *multi_acf (const gretl_matrix *m, 
 			 const int *list,
-			 const double **Z,
-			 const DATAINFO *pdinfo,
+			 const DATASET *dset,
 			 int p, int *err)
 {
     gretl_matrix *a, *A = NULL;
@@ -3749,8 +3737,8 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 	x = m->val;
 	T = m->rows;
     } else {
-	x = Z[list[1]] + pdinfo->t1;
-	T = sample_size(pdinfo);
+	x = dset->Z[list[1]] + dset->t1;
+	T = sample_size(dset);
     }
 
     acol = 0;
@@ -3782,7 +3770,7 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 	    if (m != NULL) {
 		x += m->rows;
 	    } else {
-		x = Z[list[j+2]] + pdinfo->t1;
+		x = dset->Z[list[j+2]] + dset->t1;
 	    }
 	}
     }
@@ -3792,8 +3780,7 @@ gretl_matrix *multi_acf (const gretl_matrix *m,
 
 gretl_matrix *multi_xcf (const void *px, int xtype,
 			 const void *py, int ytype,
-			 const double **Z,
-			 const DATAINFO *pdinfo,
+			 const DATASET *dset,
 			 int p, int *err)
 {
     const int *xlist = NULL;
@@ -3801,7 +3788,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
     const double *xvec = NULL;
     const double *yvec = NULL;
     gretl_matrix *xj, *XCF = NULL;
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
     int np = 2 * p + 1;
     int Ty, nx = 1;
     int i, j;
@@ -3813,7 +3800,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	    *err = E_DATA;
 	    return NULL;
 	}	    
-	xvec = Z[xlist[1]] + pdinfo->t1; 
+	xvec = dset->Z[xlist[1]] + dset->t1; 
     } else if (xtype == MAT) {
 	Xmat = px;
 	if (gretl_is_null_matrix(Xmat)) {
@@ -3826,7 +3813,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
     } else {
 	/* VEC: note: px is of type *void */
 	xvec = px;
-	xvec += pdinfo->t1;
+	xvec += dset->t1;
     }
 
     if (ytype == MAT) {
@@ -3839,8 +3826,8 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	yvec = ymat->val;
 	Ty = ymat->rows;
     } else {
-	yvec = (const double *) py + pdinfo->t1;
-	Ty = sample_size(pdinfo);
+	yvec = (const double *) py + dset->t1;
+	Ty = sample_size(dset);
     }
 
     if (Ty != T) {
@@ -3880,7 +3867,7 @@ gretl_matrix *multi_xcf (const void *px, int xtype,
 	    if (Xmat != NULL) {
 		xvec += Xmat->rows;
 	    } else {
-		xvec = Z[xlist[j+2]] + pdinfo->t1;
+		xvec = dset->Z[xlist[j+2]] + dset->t1;
 	    }
 	}
     }
@@ -4309,7 +4296,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
     return ret;
 }
 
-int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 {
     int nm = 0;
     int i;
@@ -4325,13 +4312,13 @@ int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	int err = 0;
 
 	if (i < M_SCALAR_MAX) {
-	    x = saved_object_get_scalar(NULL, i, pZ, pdinfo, &err);
+	    x = saved_object_get_scalar(NULL, i, dset, &err);
 	    if (!na(x)) {
 		type = GRETL_TYPE_DOUBLE;
 	    }
 	} else if (i > M_SCALAR_MAX && i < M_SERIES_MAX) {
 	    type = GRETL_TYPE_SERIES;
-	    px = saved_object_get_series(NULL, i, pdinfo, &err);
+	    px = saved_object_get_series(NULL, i, dset, &err);
 	    if (err) {
 		if (i == M_UHAT || i == M_YHAT || i == M_SIGMA) {
 		    /* maybe the result is a matrix? */
@@ -4354,8 +4341,7 @@ int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	} else if (i > M_MATRIX_MAX && i < M_MBUILD_MAX) {
 	    type = GRETL_TYPE_MATRIX;
 	    m = saved_object_build_matrix(NULL, i,
-					  (const double **) *pZ,
-					  pdinfo, &err);
+					  dset, &err);
 	} else {
 	    type = GRETL_TYPE_LIST;
 	    list = saved_object_get_list(NULL, i, &err);
@@ -4390,7 +4376,7 @@ int list_ok_dollar_vars (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    continue;
 	}
 
-	x = dvar_get_scalar(i, pdinfo, NULL);
+	x = dvar_get_scalar(i, dset, NULL);
 	if (!na(x)) {
 	    pprintf(prn, " %s (scalar: %g)\n", dvarname(i), x);
 	}

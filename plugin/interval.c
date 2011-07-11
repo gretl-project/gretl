@@ -73,8 +73,8 @@ static void int_container_destroy (int_container *IC)
     free(IC);
 }
 
-static int_container *int_container_new (int *list, double **Z, 
-					 DATAINFO *pdinfo, MODEL *mod)
+static int_container *int_container_new (int *list, DATASET *dset, 
+					 MODEL *mod)
 {
     int_container *IC;
     int nobs, i, s, t, vlo = list[1], vhi = list[2];
@@ -141,8 +141,8 @@ static int_container *int_container_new (int *list, double **Z,
     for (t=mod->t1; t<=mod->t2; t++) {
 	if (!na(mod->uhat[t])) {
 
-	    x0 = Z[vlo][t];
-	    x1 = Z[vhi][t];
+	    x0 = dset->Z[vlo][t];
+	    x1 = dset->Z[vhi][t];
 	    IC->lo[s] = x0;
 	    IC->hi[s] = x1;
 
@@ -157,7 +157,7 @@ static int_container *int_container_new (int *list, double **Z,
 	    }
 
 	    for (i=0; i<IC->nx; i++) {
-		IC->X[i][s] = Z[list[i+3]][t];
+		IC->X[i][s] = dset->Z[list[i+3]][t];
 	    }
 
 	    s++;
@@ -188,24 +188,24 @@ static int_container *int_container_new (int *list, double **Z,
     return IC;
 }
 
-static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo, 
+static int create_midpoint_y (int *list, DATASET *dset, 
 			      int **initlist)
 {
-    int mpy = pdinfo->v;
+    int mpy = dset->v;
     double *lo, *hi, *mid;
     double x0, x1;
     int i, t, err;
 
-    err = dataset_add_series(1, pZ, pdinfo);
+    err = dataset_add_series(1, dset);
     if (err) {
 	return err;
     }
 
-    lo = (*pZ)[list[1]];
-    hi = (*pZ)[list[2]];
-    mid = (*pZ)[mpy];
+    lo = dset->Z[list[1]];
+    hi = dset->Z[list[2]];
+    mid = dset->Z[mpy];
 
-    for (t=pdinfo->t1; t<=pdinfo->t2 && !err; t++) {
+    for (t=dset->t1; t<=dset->t2 && !err; t++) {
 	x0 = lo[t];
 	x1 = hi[t];
 
@@ -238,7 +238,7 @@ static int create_midpoint_y (int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 
 #if INTDEBUG > 1
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    fprintf(stderr, "%2d: %g\n", t, mid[t]);
 	}
 #endif
@@ -772,7 +772,7 @@ static int intreg_normtest (int_container *IC, double *teststat)
 
 static int fill_intreg_model (int_container *IC, gretl_matrix *V,
 			      int fncount, int grcount,
-			      const DATAINFO *pdinfo,
+			      const DATASET *dset,
 			      gretlopt opt)
 {
     MODEL *pmod = IC->pmod;
@@ -862,8 +862,8 @@ static int fill_intreg_model (int_container *IC, gretl_matrix *V,
     return 0;
 }
 
-static int do_interval (int *list, double **Z, DATAINFO *pdinfo, 
-			MODEL *mod, gretlopt opt, PRN *prn) 
+static int do_interval (int *list, DATASET *dset, MODEL *mod, 
+			gretlopt opt, PRN *prn) 
 {
     int_container *IC;
     gretl_matrix *V = NULL;
@@ -873,7 +873,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     int use_bfgs = 0;
     int err = 0;
 
-    IC = int_container_new(list, Z, pdinfo, mod);
+    IC = int_container_new(list, dset, mod);
     if (IC == NULL) {
 	return E_ALLOC;
     }
@@ -906,7 +906,7 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = fill_intreg_model(IC, V, fncount, grcount, pdinfo, opt);
+	err = fill_intreg_model(IC, V, fncount, grcount, dset, opt);
     }
 
     if (!err) {
@@ -927,10 +927,9 @@ static int do_interval (int *list, double **Z, DATAINFO *pdinfo,
 /* if the list contains a constant, ensure that it appears
    as the first regressor, in position 3 */
 
-static void maybe_reposition_const (int *list, const double **Z,
-				    const DATAINFO *pdinfo)
+static void maybe_reposition_const (int *list, const DATASET *dset)
 {
-    int cpos = gretl_list_const_pos(list, 4, Z, pdinfo);
+    int cpos = gretl_list_const_pos(list, 4, dset);
     int i;
 
     if (cpos > 0) {
@@ -941,7 +940,7 @@ static void maybe_reposition_const (int *list, const double **Z,
     }	
 }
 
-MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL interval_estimate (int *list, DATASET *dset,
 			 gretlopt opt, PRN *prn) 
 {
     MODEL model;
@@ -950,19 +949,19 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&model);
     
     if (list[0] > 3) {
-	maybe_reposition_const(list, (const double **) *pZ, pdinfo);
+	maybe_reposition_const(list, dset);
     }
 
     /* create extra series for model initialization and
        corresponding regression list
     */
-    model.errcode = create_midpoint_y(list, pZ, pdinfo, &initlist);
+    model.errcode = create_midpoint_y(list, dset, &initlist);
     if (model.errcode) {
 	return model;
     }
 
     /* run initial OLS */
-    model = lsq(initlist, *pZ, pdinfo, OLS, OPT_A);
+    model = lsq(initlist, dset, OLS, OPT_A);
     if (model.errcode) {
 	fprintf(stderr, "interval_estimate: initial OLS failed\n");
 	free(initlist);
@@ -971,15 +970,15 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 
 #if INTDEBUG
     pprintf(prn, "interval_estimate: initial OLS\n");
-    printmodel(&model, pdinfo, OPT_S, prn);
+    printmodel(&model, dset, OPT_S, prn);
 #endif
 
     /* clean up midpoint-y */
-    dataset_drop_last_variables(1, pZ, pdinfo);
+    dataset_drop_last_variables(1, dset);
     free(initlist);
 
     /* do the actual analysis */
-    model.errcode = do_interval(list, *pZ, pdinfo, &model, opt, prn);
+    model.errcode = do_interval(list, dset, &model, opt, prn);
 
     clear_model_xpx(&model);
 
@@ -987,25 +986,24 @@ MODEL interval_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 static int tobit_add_lo_hi (MODEL *pmod, double llim, double rlim,
-			    double ***pZ, DATAINFO *pdinfo, 
-			    int **plist)
+			    DATASET *dset, int **plist)
 {
     double *y, *lo, *hi;
     int *list;
     int lv, hv;
     int i, t, err;
 
-    err = dataset_add_series(2, pZ, pdinfo);
+    err = dataset_add_series(2, dset);
     if (err) {
 	return err;
     }
 
-    lv = pdinfo->v - 2;
-    hv = pdinfo->v - 1;
+    lv = dset->v - 2;
+    hv = dset->v - 1;
 
-    lo = (*pZ)[lv];
-    hi = (*pZ)[hv];
-    y = (*pZ)[pmod->list[1]];
+    lo = dset->Z[lv];
+    hi = dset->Z[hv];
+    y = dset->Z[pmod->list[1]];
 
     for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
 	if (na(y[t])) {
@@ -1038,15 +1036,15 @@ static int tobit_add_lo_hi (MODEL *pmod, double llim, double rlim,
 }
 
 MODEL tobit_via_intreg (int *list, double llim, double rlim,
-			double ***pZ, DATAINFO *pdinfo,
-			gretlopt opt, PRN *prn) 
+			DATASET *dset, gretlopt opt, 
+			PRN *prn) 
 {
     MODEL model;
     int *ilist = NULL;
-    int origv = pdinfo->v;
+    int origv = dset->v;
 
     /* run initial OLS */
-    model = lsq(list, *pZ, pdinfo, OLS, OPT_A);
+    model = lsq(list, dset, OLS, OPT_A);
     if (model.errcode) {
 	fprintf(stderr, "intreg: initial OLS failed\n");
 	return model;
@@ -1054,15 +1052,15 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
 
 #if INTDEBUG
     pprintf(prn, "tobit_via_intreg: initial OLS\n");
-    printmodel(&model, pdinfo, OPT_S, prn);
+    printmodel(&model, dset, OPT_S, prn);
 #endif
 
     model.errcode = tobit_add_lo_hi(&model, llim, rlim,
-				    pZ, pdinfo, &ilist);
+				    dset, &ilist);
 
     if (!model.errcode) {
 	/* do the actual analysis */
-	model.errcode = do_interval(ilist, *pZ, pdinfo, &model, 
+	model.errcode = do_interval(ilist, dset, &model, 
 				    opt | OPT_T, prn);
     }
 
@@ -1080,7 +1078,7 @@ MODEL tobit_via_intreg (int *list, double llim, double rlim,
     }
 
     /* clean up extra data */
-    dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - origv, dset);
     free(ilist);
 
     return model;

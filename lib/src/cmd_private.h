@@ -86,8 +86,8 @@ void gretl_exec_state_set_model (ExecState *s, MODEL *pmod);
 
 int process_command_error (CMD *cmd, int err);
 
-int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
+int maybe_exec_line (ExecState *s, DATASET *dset);
 
-int plausible_genr_start (const char *s, const DATAINFO *pdinfo);
+int plausible_genr_start (const char *s, const DATASET *dset);
 
 #endif /* CMD_PRIVATE_H */

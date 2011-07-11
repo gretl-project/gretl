@@ -138,27 +138,27 @@ const char *get_db_name (void);
 
 int set_odbc_dsn (const char *line, PRN *prn);
 
-int db_set_sample (const char *s, DATAINFO *pdinfo);
+int db_set_sample (const char *s, DATASET *dset);
 
-int db_get_series (char *line, double ***pZ, DATAINFO *datainfo, 
+int db_get_series (char *line, DATASET *datainfo, 
 		   gretlopt opt, PRN *prn);
 
 int db_delete_series_by_name (char *line, PRN *prn);
 
 int db_delete_series_by_number (const int *list, const char *fname);
 
-void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
+void get_db_padding (SERIESINFO *sinfo, DATASET *dset, 
 		     int *pad1, int *pad2);
 
-int db_range_check (SERIESINFO *sinfo, DATAINFO *pdinfo);
+int db_range_check (SERIESINFO *sinfo, DATASET *dset);
 
-int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
+int check_db_import (SERIESINFO *sinfo, DATASET *dset);
 
-int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
-		      CompactMethod default_method, int monstart,
-		      int repday);
+int compact_data_set (DATASET *dset, int newpd,
+		      CompactMethod default_method, 
+		      int monstart, int repday);
 
-int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
+int expand_data_set (DATASET *dset, int newpd,
 		     int interpol);
 
 #endif /* DBREAD_H */

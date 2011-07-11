@@ -35,8 +35,7 @@
    contribution from Eric Postpischil, 2007-10-05.
 */
 
-static void printf_series (int v, const double **Z,
-			   const DATAINFO *pdinfo,
+static void printf_series (int v, const DATASET *dset,
 			   const char *fmt, 
 			   int wid, int prec, 
 			   int wstar, int pstar,
@@ -46,12 +45,12 @@ static void printf_series (int v, const double **Z,
     double x;
     int n, t;
 
-    n = max_obs_label_length(pdinfo) + 1;
+    n = max_obs_label_length(dset) + 1;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	get_obs_string(label, t, pdinfo);
+    for (t=dset->t1; t<=dset->t2; t++) {
+	get_obs_string(label, t, dset);
 	pprintf(prn, "%*s ", n, label);
-	x = Z[v][t];
+	x = dset->Z[v][t];
 	if (na(x)) {
 	    pputc(prn, '\n');
 	    continue;
@@ -96,15 +95,14 @@ static int printf_escape (int c, PRN *prn)
     return 0;
 }
 
-static char *printf_get_string (char *s, double ***pZ,
-				DATAINFO *pdinfo, int t, 
-				int *err)
+static char *printf_get_string (char *s, DATASET *dset, 
+				int t, int *err)
 {
     char *ret = NULL;
 
-    if (!strncmp(s, "marker", 6) && pdinfo != NULL && pdinfo->S != NULL) {
+    if (!strncmp(s, "marker", 6) && dset != NULL && dset->S != NULL) {
 	/* special, not in regular genr */
-	const char *p = pdinfo->S[t];
+	const char *p = dset->S[t];
 	const char *q = s + 6;
 	int len = strlen(p);
 	int offset = 0;
@@ -122,7 +120,7 @@ static char *printf_get_string (char *s, double ***pZ,
 	    }
 	}
     } else {
-	ret = generate_string(s, pZ, pdinfo, err);
+	ret = generate_string(s, dset, err);
     }
 
     if (ret == NULL && !*err) {
@@ -135,8 +133,8 @@ static char *printf_get_string (char *s, double ***pZ,
 /* here we're trying to get a field width or precision
    specifier */
 
-static int printf_get_int (const char *s, double ***pZ,
-			   DATAINFO *pdinfo, int *err)
+static int printf_get_int (const char *s, DATASET *dset, 
+			   int *err)
 {
     double x;
     int ret = 0;
@@ -150,7 +148,7 @@ static int printf_get_int (const char *s, double ***pZ,
     } else if (gretl_is_scalar(s)) {
 	x = gretl_scalar_get_value(s);
     } else {
-	x = generate_scalar(s, pZ, pdinfo, err);
+	x = generate_scalar(s, dset, err);
     }
 
     if (!*err && (xna(x) || fabs(x) > 255)) {
@@ -175,9 +173,9 @@ static int printf_get_int (const char *s, double ***pZ,
    attempt to generate a value (of type unknown).
 */
 
-static int gen_arg_val (const char *s, double ***pZ, DATAINFO *pdinfo, 
-			double *px, gretl_matrix **pm, int *pv,
-			int *scalar)
+static int gen_arg_val (const char *s, DATASET *dset, 
+			double *px, gretl_matrix **pm, 
+			int *pv, int *scalar)
 {
     const char *name = "$ptmp";
     char *genstr;
@@ -188,7 +186,7 @@ static int gen_arg_val (const char *s, double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    err = generate(genstr, pZ, pdinfo, OPT_P, NULL);
+    err = generate(genstr, dset, OPT_P, NULL);
 
     if (!err) {
 	int type = genr_get_last_output_type();
@@ -206,7 +204,7 @@ static int gen_arg_val (const char *s, double ***pZ, DATAINFO *pdinfo,
 	    }
 	    user_matrix_destroy_by_name(name, NULL);
 	} else if (type == GRETL_TYPE_SERIES) {
-	    *pv = current_series_index(pdinfo, name);
+	    *pv = current_series_index(dset, name);
 	} else {
 	    err = E_TYPES; /* FIXME cleanup? */
 	}
@@ -373,8 +371,7 @@ get_printf_format_chunk (const char *s, int *fc,
    we're doing the "genr markers" special thing.
 */
 
-static int print_arg (char **pfmt, char **pargs, 
-		      double ***pZ, DATAINFO *pdinfo,
+static int print_arg (char **pfmt, char **pargs, DATASET *dset,
 		      int t, PRN *prn)
 {
     const char *intconv = "dxul";
@@ -410,7 +407,7 @@ static int print_arg (char **pfmt, char **pargs,
 	/* evaluate field width specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
-	    x = printf_get_int(arg, pZ, pdinfo, &err);
+	    x = printf_get_int(arg, dset, &err);
 	}
 	free(arg);
 	if (err) {
@@ -424,7 +421,7 @@ static int print_arg (char **pfmt, char **pargs,
 	/* evaluate precision specifier */
 	arg = get_next_arg(*pargs, &alen, &err);
 	if (!err) {
-	    x = printf_get_int(arg, pZ, pdinfo, &err);
+	    x = printf_get_int(arg, dset, &err);
 	}
 	free(arg);
 	if (err) {
@@ -442,7 +439,7 @@ static int print_arg (char **pfmt, char **pargs,
 
 	if (fc == 's') {
 	    /* must be printing a string */
-	    str = printf_get_string(arg, pZ, pdinfo, t, &err);
+	    str = printf_get_string(arg, dset, t, &err);
 	} else if (numeric_string(arg)) {
 	    /* printing a scalar value */
 	    x = dot_atof(arg);
@@ -453,17 +450,17 @@ static int print_arg (char **pfmt, char **pargs,
 	    got_scalar = 1;
 	} else if ((m = get_matrix_by_name(arg)) != NULL) {
 	    ; /* printing a named matrix */
-	} else if ((v = current_series_index(pdinfo, arg)) >= 0) {
+	} else if ((v = current_series_index(dset, arg)) >= 0) {
 	    /* printing a named series, unless t >= 0 */
 	    if (t < 0) {
 		series_v = v; 
 	    } else {
-		x = (*pZ)[v][t];
+		x = dset->Z[v][t];
 		got_scalar = 1;
 	    }
 	} else {
 	    /* try treating as generated value */
-	    err = gen_arg_val(arg, pZ, pdinfo, &x, &m, &v, &got_scalar);
+	    err = gen_arg_val(arg, dset, &x, &m, &v, &got_scalar);
 	    if (m != NULL) {
 		free_m = 1;
 	    } else if (v > 0) {
@@ -494,8 +491,7 @@ static int print_arg (char **pfmt, char **pargs,
 	gretl_matrix_print_with_format(m, fmt, wid, prec, prn);
     } else if (series_v >= 0) {
 	/* printing a series */
-	printf_series(series_v, (const double **) *pZ,
-		      pdinfo, fmt, wid, prec, 
+	printf_series(series_v, dset, fmt, wid, prec, 
 		      wstar, pstar, prn);
     } else if (fc == 's') {
 	/* printing a string */
@@ -544,7 +540,7 @@ static int print_arg (char **pfmt, char **pargs,
     if (free_m) {
 	gretl_matrix_free(m);
     } else if (free_v) {
-	dataset_drop_last_variables(1, pZ, pdinfo);
+	dataset_drop_last_variables(1, dset);
     }
     
     return err;
@@ -632,9 +628,8 @@ static int split_printf_line (const char *s, char *targ, int *sp,
     return 0;
 }
 
-static int real_do_printf (const char *line, double ***pZ, 
-			   DATAINFO *pdinfo, PRN *inprn, 
-			   int t)
+static int real_do_printf (const char *line, DATASET *dset, 
+			   PRN *inprn, int t)
 {
     PRN *prn = inprn;
     char targ[VNAMELEN];
@@ -678,7 +673,7 @@ static int real_do_printf (const char *line, double ***pZ,
 		pputc(prn, '%');
 		p += 2;
 	    } else if (*p == '%') {
-		err = print_arg(&p, &q, pZ, pdinfo, t, prn);
+		err = print_arg(&p, &q, dset, t, prn);
 	    } else if (*p == '\\') {
 		err = printf_escape(*(p+1), prn);
 		p += 2;
@@ -713,8 +708,7 @@ static int real_do_printf (const char *line, double ***pZ,
 /**
  * do_printf:
  * @line: command line.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @prn: printing struct.
  *
  * Implements a somewhat limited version of C's printf()
@@ -723,16 +717,15 @@ static int real_do_printf (const char *line, double ***pZ,
  * Returns: 0 on success, non-zero on error.
  */
 
-int do_printf (const char *line, double ***pZ, 
-	       DATAINFO *pdinfo, PRN *prn)
+int do_printf (const char *line, DATASET *dset, PRN *prn)
 {
-    return real_do_printf(line, pZ, pdinfo, prn, -1);
+    return real_do_printf(line, dset, prn, -1);
 }
 
 /* below: sscanf apparatus */
 
 static int 
-sscanf_target_var (const char *vname, DATAINFO *pdinfo, int *err)
+sscanf_target_var (const char *vname, DATASET *dset, int *err)
 {
     if (gretl_is_scalar(vname)) {
 	return 0;
@@ -940,8 +933,8 @@ scan_string (const char *targ, char **psrc, int width,
 }
 
 static int scan_scalar (const char *targ, char **psrc,
-			int fc, int width, double **Z, 
-			DATAINFO *pdinfo, int *ns)
+			int fc, int width, DATASET *dset, 
+			int *ns)
 {
     char *endp = NULL;
     int v = 0;
@@ -950,7 +943,7 @@ static int scan_scalar (const char *targ, char **psrc,
     int err = 0;
 
     if (targ != NULL) {
-	v = sscanf_target_var(targ, pdinfo, &err);
+	v = sscanf_target_var(targ, dset, &err);
 	if (err) {
 	    return err;
 	}
@@ -987,7 +980,7 @@ static int scan_scalar (const char *targ, char **psrc,
 	if (v == 0) {
 	    gretl_scalar_set_value(targ, (fc == 'd')? k : x);
 	} else if (v > 0) {
-	    Z[v][0] = (fc == 'd')? k : x;
+	    dset->Z[v][0] = (fc == 'd')? k : x;
 	}
 	*ns += 1;
     }
@@ -1072,8 +1065,7 @@ static int scan_matrix (const char *targ, char **psrc, int rows, int *ns)
 }
 
 static int scan_arg (char **psrc, char **pfmt, char **pargs, 
-		     double **Z, DATAINFO *pdinfo,
-		     PRN *prn, int *ns)
+		     DATASET *dset, PRN *prn, int *ns)
 {
     char *fmt = NULL;
     char *arg = NULL;
@@ -1128,7 +1120,7 @@ static int scan_arg (char **psrc, char **pfmt, char **pargs,
     } else if (!err && fc == 'm') {
 	err = scan_matrix(targ, psrc, wid, ns);
     } else if (!err) {
-	err = scan_scalar(targ, psrc, fc, wid, Z, pdinfo, ns);
+	err = scan_scalar(targ, psrc, fc, wid, dset, ns);
     }
 
     free(fmt);
@@ -1206,7 +1198,7 @@ static char *get_literal_or_stringvar (const char **src, int *err)
 	}
 	free(tmp);
     } else {
-	ret = generate_string(tmp, NULL, NULL, err);
+	ret = generate_string(tmp, NULL, err);
     }
 
     /* advance the caller's pointer */
@@ -1297,8 +1289,7 @@ int n_scanned_items (void)
 /**
  * do_sscanf:
  * @line: command line.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @prn: printing struct.
  *
  * Implements a somewhat limited version of C's sscanf()
@@ -1307,8 +1298,7 @@ int n_scanned_items (void)
  * Returns: 0 on success, non-zero on error.
  */
 
-int do_sscanf (const char *line, double ***pZ, 
-	       DATAINFO *pdinfo, PRN *prn)
+int do_sscanf (const char *line, DATASET *dset, PRN *prn)
 {
     char *r, *p, *q;
     char *src = NULL;
@@ -1353,7 +1343,7 @@ int do_sscanf (const char *line, double ***pZ,
 	    r++;
 	    p++;
 	} else if (*p == '%') {
-	    err = scan_arg(&r, &p, &q, *pZ, pdinfo, prn, &nscan);
+	    err = scan_arg(&r, &p, &q, dset, prn, &nscan);
 	} else {
 	    break;
 	}
@@ -1379,7 +1369,7 @@ int do_sscanf (const char *line, double ***pZ,
    the equals sign here, in the variable @s.
 */
 
-int generate_obs_markers (const char *s, double ***pZ, DATAINFO *pdinfo)
+int generate_obs_markers (const char *s, DATASET *dset)
 {
     PRN *prn;
     int t, err = 0;
@@ -1390,20 +1380,20 @@ int generate_obs_markers (const char *s, double ***pZ, DATAINFO *pdinfo)
 	return err;
     }
 
-    if (pdinfo->S == NULL) {
-	err = dataset_allocate_obs_markers(pdinfo);
+    if (dset->S == NULL) {
+	err = dataset_allocate_obs_markers(dset);
     }
 
     if (!err) {
 	const char *buf;
 
-	for (t=0; t<pdinfo->n && !err; t++) {
+	for (t=0; t<dset->n && !err; t++) {
 	    gretl_print_reset_buffer(prn);
-	    err = real_do_printf(s, pZ, pdinfo, prn, t);
+	    err = real_do_printf(s, dset, prn, t);
 	    if (!err) {
 		buf = gretl_print_get_buffer(prn);
-		pdinfo->S[t][0] = '\0';
-		strncat(pdinfo->S[t], buf, OBSLEN - 1);
+		dset->S[t][0] = '\0';
+		strncat(dset->S[t], buf, OBSLEN - 1);
 	    }
 	}
     }

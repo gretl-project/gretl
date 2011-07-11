@@ -136,7 +136,7 @@ int strings_array_cmp (char **strs1, char **strs2, int n);
 
 void free_strings_array (char **strs, int nstrs);
 
-char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo);
+char *get_obs_string (char *obs, int t, const DATASET *dset);
 
 double obs_str_to_double (const char *obs);
 
@@ -144,7 +144,7 @@ char *colonize_obs (char *obs);
 
 void modify_date_for_csv (char *s, int pd);
 
-void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn);
+void csv_obs_to_prn (int t, const DATASET *dset, PRN *prn);
 
 char *print_time (char *s);
 
@@ -156,9 +156,9 @@ int gretl_xml_encode_to_buf (char *targ, const char *src, int n);
 
 void unescape_url (char *url);
 
-char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);
+char *make_varname_unique (char *vname, int v, DATASET *dset);
 
-int fix_varname_duplicates (DATAINFO *pdinfo);
+int fix_varname_duplicates (DATASET *dset);
 
 char *append_dir (char *fname, const char *dir);
 

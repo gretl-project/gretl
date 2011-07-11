@@ -33,23 +33,23 @@ johansen_LR_calc (const GRETL_VAR *jvar, const gretl_matrix *evals,
 		  int job, PRN *prn);
 
 void print_beta_alpha_Pi (const GRETL_VAR *jvar,
-			  const DATAINFO *pdinfo,
+			  const DATASET *dset,
 			  PRN *prn);
 
 int 
 general_vecm_analysis (GRETL_VAR *jvar, 
 		       gretl_restriction *rset,
-		       const DATAINFO *pdinfo,
+		       const DATASET *dset,
 		       PRN *prn);
 
 int vecm_alpha_test (GRETL_VAR *jvar, 
 		     gretl_restriction *rset,
-		     const DATAINFO *pdinfo, 
+		     const DATASET *dset, 
 		     gretlopt opt,
 		     PRN *prn);
 
 const char *beta_vname (const GRETL_VAR *v,
-			const DATAINFO *pdinfo,
+			const DATASET *dset,
 			int i);
 
 #endif /* JPRIVATE_H */

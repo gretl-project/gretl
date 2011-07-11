@@ -73,11 +73,12 @@ int data_status;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
-static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo);
+static int exec_line (ExecState *s, DATASET *pdinfo);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
-static int saved_object_action (const char *line, double ***pZ,
-				DATAINFO *pdinfo, MODEL **models,
+static int saved_object_action (const char *line, 
+				DATASET *pdinfo, 
+				MODEL **models,
 				PRN *prn);
 
 static void usage (int err)
@@ -170,8 +171,7 @@ static void nls_init (void)
 #endif /* ENABLE_NLS */
 }
 
-static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
-			   MODEL **models)
+static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL **models)
 {
     gretlopt clearopt = 0;
     int err = 0;
@@ -186,16 +186,17 @@ static int cli_clear_data (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!(clearopt & OPT_O)) {
-	/* OPT_O means "other", i.e. don't scrub the dataset */
+	/* OPT_O means "other", i.e. leave the dataset 
+	   in place but clear all other stuff
+	*/
 	*datafile = 0;
 
-	if (pZ != NULL && *pZ != NULL) {
-	    err = restore_full_sample(pZ, pdinfo, NULL); 
-	    free_Z(*pZ, pdinfo); 
-	    *pZ = NULL;
+	if (dset->Z != NULL) {
+	    err = restore_full_sample(dset, NULL); 
+	    free_Z(dset); 
 	}
 
-	clear_datainfo(pdinfo, CLEAR_FULL);
+	clear_datainfo(dset, CLEAR_FULL);
 	data_status = 0;
     }
 
@@ -342,8 +343,7 @@ int main (int argc, char *argv[])
 #ifdef WIN32
     char *callname = argv[0];
 #endif
-    double **Z = NULL;
-    DATAINFO *datainfo = NULL;
+    DATASET *dset = NULL;
     MODEL **models = NULL;
     ExecState state;
     char *line = NULL;
@@ -365,8 +365,8 @@ int main (int argc, char *argv[])
     rl_bind_key(0x18, ctrl_x);
 #endif
 
-    datainfo = datainfo_new();
-    if (datainfo == NULL) {
+    dset = datainfo_new();
+    if (dset == NULL) {
 	noalloc();
     }
 
@@ -481,19 +481,19 @@ int main (int argc, char *argv[])
 	    exit(EXIT_FAILURE);
 	    break;
 	case GRETL_NATIVE_DATA:
-	    err = gretl_get_data(datafile, &Z, datainfo, OPT_NONE, prn);
+	    err = gretl_get_data(datafile, dset, OPT_NONE, prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = gretl_read_gdt(datafile, &Z, datainfo, OPT_NONE, prn);
+	    err = gretl_read_gdt(datafile, dset, OPT_NONE, prn);
 	    break;
 	case GRETL_CSV:
-	    err = import_csv(datafile, &Z, datainfo, OPT_NONE, prn);
+	    err = import_csv(datafile, dset, OPT_NONE, prn);
 	    break;
 	case GRETL_XLS:
 	case GRETL_GNUMERIC:
 	case GRETL_ODS:
 	    err = import_spreadsheet(datafile, ftype, NULL, NULL,
-				     &Z, datainfo, OPT_NONE, prn);
+				     dset, OPT_NONE, prn);
 	    break;
 	case GRETL_DTA:
 	case GRETL_SAV:
@@ -501,7 +501,7 @@ int main (int argc, char *argv[])
 	case GRETL_JMULTI:
 	case GRETL_OCTAVE:
 	case GRETL_WF1:
-	    err = import_other(datafile, ftype, &Z, datainfo, 
+	    err = import_other(datafile, ftype, dset, 
 			       OPT_NONE, prn);
 	    break;
 	case GRETL_SCRIPT:
@@ -541,7 +541,7 @@ int main (int argc, char *argv[])
 
     /* print list of variables */
     if (data_status) {
-	varlist(datainfo, prn);
+	varlist(dset, prn);
     }
 
     /* check for help file */
@@ -579,7 +579,7 @@ int main (int argc, char *argv[])
 	    set_gretl_echo(0);
 	} 
 	sprintf(line, "run %s\n", runfile);
-	err = exec_line(&state, &Z, datainfo);
+	err = exec_line(&state, dset);
     }
 
     /* main command loop */
@@ -591,7 +591,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (gretl_execute_loop()) { 
-	    if (gretl_loop_exec(&state, &Z, datainfo)) {
+	    if (gretl_loop_exec(&state, dset)) {
 		return 1;
 	    }
 	} else {
@@ -612,7 +612,7 @@ int main (int argc, char *argv[])
 
 	strcpy(linecopy, line);
 	tailstrip(linecopy);
-	err = exec_line(&state, &Z, datainfo);
+	err = exec_line(&state, dset);
     } /* end of get commands loop */
 
     if (!err) {
@@ -625,13 +625,13 @@ int main (int argc, char *argv[])
     if (makepkg && !err) {
 	switch_ext(filearg, runfile, "gfn");
 	sprintf(line, "makepkg %s\n", filearg);
-	exec_line(&state, &Z, datainfo);
+	exec_line(&state, dset);
     }
 
     /* leak check -- try explicitly freeing all memory allocated */
 
     destroy_working_models(models, 2);
-    destroy_dataset(Z, datainfo);
+    destroy_dataset(dset);
 
     if (fb != stdin && fb != NULL) {
 	fclose(fb);
@@ -667,12 +667,12 @@ static void cli_exec_callback (ExecState *s, void *ptr,
     /* otherwise, no-op */
 }
 
-static int cli_renumber_series (const char *s, double **Z, 
-				DATAINFO *pdinfo, PRN *prn)
+static int cli_renumber_series (const char *s, DATASET *dset, 
+				PRN *prn)
 {
-    int err, fixmax = highest_numbered_var_in_saved_object(pdinfo);
+    int err, fixmax = highest_numbered_var_in_saved_object(dset);
 
-    err = renumber_series_with_checks(s, fixmax, Z, pdinfo, prn);
+    err = renumber_series_with_checks(s, fixmax, dset, prn);
     if (err) {
 	errmsg(err, prn);
     }
@@ -698,8 +698,8 @@ static int cli_try_http (const char *s, char *fname, int *http)
     return err;
 }
 
-static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
-			    DATAINFO *pdinfo, MODEL **models,
+static int cli_open_append (CMD *cmd, const char *line, 
+			    DATASET *dset, MODEL **models,
 			    PRN *prn)
 {
     char newfile[MAXLEN] = {0};
@@ -748,24 +748,24 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
     }
 
     if (!dbdata && cmd->ci != APPEND) {
-	cli_clear_data(cmd, pZ, pdinfo, models);
+	cli_clear_data(cmd, dset, models);
     } 
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(newfile, pZ, pdinfo, cmd->opt, prn);
+	err = import_csv(newfile, dset, cmd->opt, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(newfile, ftype, cmd->list, cmd->extra,
-				 pZ, pdinfo, cmd->opt, prn);
+				 dset, cmd->opt, prn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(newfile, ftype, pZ, pdinfo, cmd->opt, prn);
+	err = import_other(newfile, ftype, dset, cmd->opt, prn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(newfile, pZ, pdinfo, cmd->opt, prn);
+	err = gretl_read_gdt(newfile, dset, cmd->opt, prn);
     } else if (ftype == GRETL_ODBC) {
 	err = set_odbc_dsn(line, prn);
     } else if (dbdata) {
 	err = set_db_name(newfile, ftype, prn);
     } else {
-	err = gretl_get_data(newfile, pZ, pdinfo, cmd->opt, prn);
+	err = gretl_get_data(newfile, dset, cmd->opt, prn);
     }
 
     if (err) {
@@ -779,8 +779,8 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
 
     data_status = 1;
 
-    if (pdinfo->v > 0 && !dbdata && !(cmd->opt & OPT_Q)) {
-	varlist(pdinfo, prn);
+    if (dset->v > 0 && !dbdata && !(cmd->opt & OPT_Q)) {
+	varlist(dset, prn);
     }
 
     if (http) {
@@ -800,7 +800,7 @@ static int cli_open_append (CMD *cmd, const char *line, double ***pZ,
    see also gui_exec_line() in gui2/library.c
 */
 
-static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+static int exec_line (ExecState *s, DATASET *dset)
 {
     char *line = s->line;
     CMD *cmd = s->cmd;
@@ -828,7 +828,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	k = saved_object_action(line, pZ, pdinfo, models, prn);
+	k = saved_object_action(line, dset, models, prn);
 	if (k == 1) {
 	    return 0; /* action was OK, or ignored */
 	} else if (k == -1) {
@@ -843,7 +843,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	/* if we're stacking commands for a loop, parse "lightly" */
 	err = get_command_index(line, cmd);
     } else {
-	err = parse_command_line(line, cmd, pZ, pdinfo);
+	err = parse_command_line(line, cmd, dset);
     }
 
     if (err) {
@@ -889,14 +889,14 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (gretl_echo_on() && (!gretl_compiling_loop() || batch || runit)) {
 	    eflag = gretl_compiling_loop()? CMD_STACKING : CMD_BATCH_MODE;
 	    /* straight visual echo */
-	    echo_cmd(cmd, pdinfo, line, eflag, prn);
+	    echo_cmd(cmd, dset, line, eflag, prn);
 	}
-	err = gretl_loop_append_line(s, pZ, pdinfo);
+	err = gretl_loop_append_line(s, dset);
 	if (err) {
 	    errmsg(err, prn);
 	} else if (!batch && !runit) {
 	    /* echo to record */
-	    echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
+	    echo_cmd(cmd, dset, line, CMD_RECORDING, cmdprn);
 	}
 	return err;
     }
@@ -907,7 +907,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    ; /* don't echo */
 	} else {
 	    eflag = (batch || runit)? CMD_BATCH_MODE : CMD_CLI;
-	    echo_cmd(cmd, pdinfo, line, eflag, prn);
+	    echo_cmd(cmd, dset, line, eflag, prn);
 	}
     }
 
@@ -926,7 +926,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (get_list_by_name(cmd->extra)) {
 	    err = delete_list_by_name(cmd->extra);
 	} else {
-	    err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, 
+	    err = dataset_drop_listed_variables(cmd->list, dset, 
 						&k, prn);
 	}
 	if (err) {
@@ -934,7 +934,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	} else if (k) {
 	    pputs(prn, _("Take note: variables have been renumbered"));
 	    pputc(prn, '\n');
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	}
 	break;
 
@@ -944,7 +944,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case OPEN:
     case APPEND:
-	err = cli_open_append(cmd, line, pZ, pdinfo, models, prn);
+	err = cli_open_append(cmd, line, dset, models, prn);
 	break;
 
     case NULLDATA:
@@ -956,8 +956,8 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    break;
 	}
-	cli_clear_data(cmd, pZ, pdinfo, models);
-	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
+	cli_clear_data(cmd, dset, models);
+	err = open_nulldata(dset, data_status, k, prn);
 	if (err) { 
 	    errmsg(err, prn);
 	} else {
@@ -1058,28 +1058,28 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case CLEAR:
-	err = cli_clear_data(cmd, pZ, pdinfo, models);
+	err = cli_clear_data(cmd, dset, models);
 	break;
 
     case DATAMOD:
 	if (cmd->aux == DS_CLEAR) {
-	    err = cli_clear_data(cmd, pZ, pdinfo, models);
+	    err = cli_clear_data(cmd, dset, models);
 	    pputs(prn, _("Dataset cleared\n"));
 	    break;
 	} else if (cmd->aux == DS_RENUMBER) {
-	    err = cli_renumber_series(cmd->param, *pZ, pdinfo, prn);
+	    err = cli_renumber_series(cmd->param, dset, prn);
 	    break;
 	}
 	/* else fall-through intended */
 
     default:
-	err = gretl_cmd_exec(s, pZ, pdinfo);
+	err = gretl_cmd_exec(s, dset);
 	break;
     }
 
     if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
-	echo_cmd(cmd, pdinfo, line, CMD_RECORDING, cmdprn);
+	echo_cmd(cmd, dset, line, CMD_RECORDING, cmdprn);
     }
 
     if (err) {

@@ -33,25 +33,25 @@ void gtk_print_graph (const char *fname);
 #endif
 
 void special_print_summary (const Summary *summ,
-			    const DATAINFO *pdinfo,
+			    const DATASET *pdinfo,
 			    PRN *prn);
 
 void special_print_vmatrix (const VMatrix *corr,
-			    const DATAINFO *pdinfo, 
+			    const DATASET *pdinfo, 
 			    PRN *prn);
 
 void special_print_fit_resid (const FITRESID *fr, 
-			      const DATAINFO *pdinfo, 
+			      const DATASET *pdinfo, 
 			      PRN *prn);
 
 void special_print_forecast (const FITRESID *fr, 
-			     const DATAINFO *pdinfo, 
+			     const DATASET *pdinfo, 
 			     PRN *prn);
 
 void special_print_confints (const CoeffIntervals *cf, 
 			     PRN *prn);
 
-int text_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+int text_print_equation (const MODEL *pmod, const DATASET *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
 int text_equation_ok (const MODEL *pmod);

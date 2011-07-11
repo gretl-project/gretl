@@ -1522,8 +1522,7 @@ int gretl_write_matrix_as_gdt (const char *fname,
  * gretl_write_gdt:
  * @fname: name of file to write.
  * @list: list of variables to write (or %NULL to write all).
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: if %OPT_Z write gzipped data, else uncompressed.
  * @progress: may be 1 when called from gui to display progress
  * bar in case of a large data write; generally should be 0.
@@ -1535,13 +1534,13 @@ int gretl_write_matrix_as_gdt (const char *fname,
  */
 
 int gretl_write_gdt (const char *fname, const int *list, 
-		     const double **Z, const DATAINFO *pdinfo, 
-		     gretlopt opt, int progress)
+		     const DATASET *dset, gretlopt opt, 
+		     int progress)
 {
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
     int gz = (opt & OPT_Z);
-    int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    int tsamp = dset->t2 - dset->t1 + 1;
     int *pmax = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
@@ -1571,7 +1570,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     if (list != NULL) {
 	nvars = list[0];
     } else {
-	nvars = pdinfo->v - 1;
+	nvars = dset->v - 1;
     }
 
     pmax = malloc(nvars * sizeof *pmax);
@@ -1603,7 +1602,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	int prec;
 
 	v = savenum(list, i+1);
-	prec = get_precision(&Z[v][pdinfo->t1], tsamp, GDT_DIGITS);
+	prec = get_precision(&dset->Z[v][dset->t1], tsamp, GDT_DIGITS);
 	if (prec < GDT_DIGITS) {
 	    pmax[i] = prec;
 	} else {
@@ -1611,8 +1610,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	}
     }
 
-    ntodate(startdate, pdinfo->t1, pdinfo);
-    ntodate(enddate, pdinfo->t2, pdinfo);
+    ntodate(startdate, dset->t1, dset);
+    ntodate(enddate, dset->t2, dset);
 
     simple_fname(datname, fname);
     uerr = gretl_xml_encode_to_buf(xmlbuf, datname, sizeof xmlbuf);
@@ -1620,10 +1619,10 @@ int gretl_write_gdt (const char *fname, const int *list,
 	strcpy(xmlbuf, "unknown");
     }
 
-    if (custom_time_series(pdinfo)) {
-	sprintf(freqstr, "special:%d", pdinfo->pd);
+    if (custom_time_series(dset)) {
+	sprintf(freqstr, "special:%d", dset->pd);
     } else {
-	sprintf(freqstr, "%d", pdinfo->pd);
+	sprintf(freqstr, "%d", dset->pd);
     }
 
     if (gz) {
@@ -1641,14 +1640,14 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (gz) {
-	gzprintf(fz, "type=\"%s\">\n", data_structure_string(pdinfo->structure));
+	gzprintf(fz, "type=\"%s\">\n", data_structure_string(dset->structure));
     } else {
-	fprintf(fp, "type=\"%s\">\n", data_structure_string(pdinfo->structure));
+	fprintf(fp, "type=\"%s\">\n", data_structure_string(dset->structure));
     }
 
     /* deal with description, if any */
-    if (pdinfo->descrip != NULL) {
-	char *dbuf = gretl_xml_encode(pdinfo->descrip);
+    if (dset->descrip != NULL) {
+	char *dbuf = gretl_xml_encode(dset->descrip);
 
 	if (dbuf == NULL) {
 	    err = 1;
@@ -1677,7 +1676,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     for (i=1; i<=nvars; i++) {
 	v = savenum(list, i);
-	gretl_xml_encode_to_buf(xmlbuf, pdinfo->varname[v], sizeof xmlbuf);
+	gretl_xml_encode_to_buf(xmlbuf, dset->varname[v], sizeof xmlbuf);
 
 	if (gz) {
 	    gzprintf(fz, "<variable name=\"%s\"", xmlbuf);
@@ -1685,8 +1684,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    fprintf(fp, "<variable name=\"%s\"", xmlbuf);
 	}
 
-	if (*VARLABEL(pdinfo, v)) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, VARLABEL(pdinfo, v), sizeof xmlbuf);
+	if (*VARLABEL(dset, v)) {
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, VARLABEL(dset, v), sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
 		    gzprintf(fz, "\n label=\"%s\"", xmlbuf);
@@ -1696,8 +1695,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
-	if (*DISPLAYNAME(pdinfo, v)) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, DISPLAYNAME(pdinfo, v), sizeof xmlbuf);
+	if (*DISPLAYNAME(dset, v)) {
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, DISPLAYNAME(dset, v), sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
 		    gzprintf(fz, "\n displayname=\"%s\"", xmlbuf);
@@ -1707,8 +1706,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	}
 
-	if (*PARENT(pdinfo, v)) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, PARENT(pdinfo, v), sizeof xmlbuf);
+	if (*PARENT(dset, v)) {
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, PARENT(dset, v), sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
 		    gzprintf(fz, "\n parent=\"%s\"", xmlbuf);
@@ -1718,8 +1717,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	}
 
-	if (pdinfo->varinfo[i]->transform != 0) {
-	    const char *tr = gretl_command_word(pdinfo->varinfo[i]->transform);
+	if (dset->varinfo[i]->transform != 0) {
+	    const char *tr = gretl_command_word(dset->varinfo[i]->transform);
 
 	    if (gz) {
 		gzprintf(fz, "\n transform=\"%s\"", tr);
@@ -1728,16 +1727,16 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	}
 
-	if (pdinfo->varinfo[i]->lag != 0) {
+	if (dset->varinfo[i]->lag != 0) {
 	    if (gz) {
-		gzprintf(fz, "\n lag=\"%d\"", pdinfo->varinfo[i]->lag);
+		gzprintf(fz, "\n lag=\"%d\"", dset->varinfo[i]->lag);
 	    } else {
-		fprintf(fp, "\n lag=\"%d\"", pdinfo->varinfo[i]->lag);
+		fprintf(fp, "\n lag=\"%d\"", dset->varinfo[i]->lag);
 	    }
 	}	    
 
-	if (COMPACT_METHOD(pdinfo, v) != COMPACT_NONE) {
-	    const char *meth = compact_method_to_string(COMPACT_METHOD(pdinfo, v));
+	if (COMPACT_METHOD(dset, v) != COMPACT_NONE) {
+	    const char *meth = compact_method_to_string(COMPACT_METHOD(dset, v));
 
 	    if (gz) {
 		gzprintf(fz, "\n compact-method=\"%s\"", meth);
@@ -1746,7 +1745,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
-	if (var_is_discrete(pdinfo, v)) {
+	if (var_is_discrete(dset, v)) {
 	    alt_puts("\n discrete=\"true\"", fp, fz);
 	}	    
 
@@ -1755,7 +1754,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     alt_puts("</variables>\n", fp, fz);
 
-    have_markers = dataset_has_markers(pdinfo);
+    have_markers = dataset_has_markers(dset);
 
     /* then listing of observations */
     alt_puts("<observations ", fp, fz);
@@ -1768,10 +1767,10 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
     alt_puts(">\n", fp, fz);
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	alt_puts("<obs", fp, fz);
 	if (have_markers) {
-	    uerr = gretl_xml_encode_to_buf(xmlbuf, pdinfo->S[t], sizeof xmlbuf);
+	    uerr = gretl_xml_encode_to_buf(xmlbuf, dset->S[t], sizeof xmlbuf);
 	    if (!uerr) {
 		if (gz) {
 		    gzprintf(fz, " label=\"%s\"", xmlbuf);
@@ -1783,19 +1782,19 @@ int gretl_write_gdt (const char *fname, const int *list,
 	alt_puts(">", fp, fz);
 	for (i=1; i<=nvars; i++) {
 	    v = savenum(list, i);
-	    if (na(Z[v][t])) {
+	    if (na(dset->Z[v][t])) {
 		strcpy(numstr, "NA ");
 	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		sprintf(numstr, "%.*g ", GDT_DIGITS, Z[v][t]);
+		sprintf(numstr, "%.*g ", GDT_DIGITS, dset->Z[v][t]);
 	    } else {
-		sprintf(numstr, "%.*f ", pmax[i-1], Z[v][t]);
+		sprintf(numstr, "%.*f ", pmax[i-1], dset->Z[v][t]);
 	    }
 	    alt_puts(numstr, fp, fz);
 	}
 
 	alt_puts("</obs>\n", fp, fz);
 
-	if (sz && t && ((t - pdinfo->t1) % 50 == 0)) { 
+	if (sz && t && ((t - dset->t1) % 50 == 0)) { 
 	    (*show_progress) (50, tsamp, SP_NONE);
 	}
     }
@@ -1809,7 +1808,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (sz) {
-	(*show_progress)(0, pdinfo->t2 - pdinfo->t1 + 1, SP_FINISH);
+	(*show_progress)(0, dset->t2 - dset->t1 + 1, SP_FINISH);
 	close_plugin(handle);
     } 
 
@@ -1827,7 +1826,7 @@ static void transcribe_string (char *targ, const char *src, int maxlen)
     strncat(targ, src, maxlen - 1);
 }
 
-static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
+static int process_varlist (xmlNodePtr node, DATASET *dset)
 {
     xmlNodePtr cur;
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
@@ -1835,17 +1834,17 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 
     if (tmp != NULL) {
 	if (sscanf((char *) tmp, "%d", &nv) == 1) {
-	    pdinfo->v = nv + 1;
+	    dset->v = nv + 1;
 	} else {
 	    gretl_errmsg_set(_("Failed to parse count of variables"));
 	    err = 1;
 	}
-	if (!err && dataset_allocate_varnames(pdinfo)) {
+	if (!err && dataset_allocate_varnames(dset)) {
 	    err = E_ALLOC;
 	}
 	if (!err) {
-	    *pZ = malloc(pdinfo->v * sizeof **pZ);
-	    if (*pZ == NULL) {
+	    dset->Z = malloc(dset->v * sizeof *dset->Z);
+	    if (dset->Z == NULL) {
 		err = E_ALLOC;
 	    }
 	}		
@@ -1878,7 +1877,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
         if (!xmlStrcmp(cur->name, (XUC) "variable")) {
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
-		transcribe_string(pdinfo->varname[i], (char *) tmp, VNAMELEN);
+		transcribe_string(dset->varname[i], (char *) tmp, VNAMELEN);
 		free(tmp);
 	    } else {
 		gretl_errmsg_sprintf(_("Variable %d has no name"), i);
@@ -1886,42 +1885,42 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "label");
 	    if (tmp != NULL) {
-		transcribe_string(VARLABEL(pdinfo, i), (char *) tmp, MAXLABEL);
+		transcribe_string(VARLABEL(dset, i), (char *) tmp, MAXLABEL);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "displayname");
 	    if (tmp != NULL) {
-		var_set_display_name(pdinfo, i, (char *) tmp);
+		var_set_display_name(dset, i, (char *) tmp);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "parent");
 	    if (tmp != NULL) {
-		strcpy(pdinfo->varinfo[i]->parent, (char *) tmp); 
+		strcpy(dset->varinfo[i]->parent, (char *) tmp); 
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "transform");
 	    if (tmp != NULL) {
 		int ci = gretl_command_number((char *) tmp);
 
-		pdinfo->varinfo[i]->transform = ci; 
+		dset->varinfo[i]->transform = ci; 
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "lag");
 	    if (tmp != NULL) {
-		pdinfo->varinfo[i]->lag = atoi((char *) tmp); 
+		dset->varinfo[i]->lag = atoi((char *) tmp); 
 		free(tmp);
 	    }
 
 	    tmp = xmlGetProp(cur, (XUC) "compact-method");
 	    if (tmp != NULL) {
-		COMPACT_METHOD(pdinfo, i) = compact_string_to_int((char *) tmp);
+		COMPACT_METHOD(dset, i) = compact_string_to_int((char *) tmp);
 		free(tmp);
 	    }
 
 	    tmp = xmlGetProp(cur, (XUC) "discrete");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
-		    series_set_flag(pdinfo, i, VAR_DISCRETE);
+		    series_set_flag(dset, i, VAR_DISCRETE);
 		}
 		free(tmp);
 	    }
@@ -1937,7 +1936,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 			free(val);
 			(*pZ)[i] = malloc(sizeof ***pZ);
 			(*pZ)[i][0] = xx;
-			set_var_scalar(pdinfo, i, 1);
+			set_var_scalar(dset, i, 1);
 		    }
 		}
 #endif
@@ -1948,7 +1947,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	cur = cur->next;
     }
    
-    if (i != pdinfo->v) {
+    if (i != dset->v) {
 	gretl_errmsg_set(_("Number of variables does not match declaration"));
 	err = 1;
     } 
@@ -1956,7 +1955,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
     return err;
 }
 
-static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
+static int process_values (DATASET *dset, int t, char *s)
 {
     char *test;
     double x;
@@ -1964,7 +1963,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 
     gretl_error_clear();
 
-    for (i=1; i<pdinfo->v && !err; i++) {
+    for (i=1; i<dset->v && !err; i++) {
 	while (isspace(*s)) s++;
 	x = strtod(s, &test);
 	if (errno) {
@@ -1983,8 +1982,8 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	} else {
 	    s = test;
 	}
-	if (t < pdinfo->n) {
-	    Z[i][t] = x;
+	if (t < dset->n) {
+	    dset->Z[i][t] = x;
 	}
     }	
 
@@ -1998,8 +1997,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 #define GDT_DEBUG 0
 
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
-				 double ***pZ, DATAINFO *pdinfo,
-				 long progress)
+				 DATASET *dset, long progress)
 {
     xmlNodePtr cur;
     xmlChar *tmp;
@@ -2014,7 +2012,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     } 
 
     if (sscanf((char *) tmp, "%d", &n) == 1) {
-	pdinfo->n = n;
+	dset->n = n;
 	free(tmp);
     } else {
 	gretl_errmsg_set(_("Failed to parse number of observations"));
@@ -2032,7 +2030,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     tmp = xmlGetProp(node, (XUC) "labels");
     if (tmp) {
 	if (!strcmp((char *) tmp, "true")) {
-	    if (dataset_allocate_obs_markers(pdinfo)) {
+	    if (dataset_allocate_obs_markers(dset)) {
 		return E_ALLOC;
 	    }
 	} else if (strcmp((char *) tmp, "false")) {
@@ -2045,21 +2043,21 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return E_DATA;
     }
 
-    if (pdinfo->endobs[0] == '\0') {
-	sprintf(pdinfo->endobs, "%d", pdinfo->n);
+    if (dset->endobs[0] == '\0') {
+	sprintf(dset->endobs, "%d", dset->n);
     }
 
-    pdinfo->t2 = pdinfo->n - 1;
+    dset->t2 = dset->n - 1;
 
-    for (i=0; i<pdinfo->v; i++) {
-	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
-	if ((*pZ)[i] == NULL) {
+    for (i=0; i<dset->v; i++) {
+	dset->Z[i] = malloc(dset->n * sizeof **dset->Z);
+	if (dset->Z[i] == NULL) {
 	    return E_ALLOC;
 	}
     }
 
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[0][t] = 1.0;
+    for (t=0; t<dset->n; t++) {
+	dset->Z[0][t] = 1.0;
     }
 
     /* now get individual obs info: labels and values */
@@ -2077,7 +2075,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	(*show_progress)(0L, progress, SP_LOAD_INIT);
 #if GDT_DEBUG
 	fprintf(stderr, "process_observations: inited progess bar (n=%d)\n",
-		pdinfo->n);
+		dset->n);
 #endif
     }
 
@@ -2085,10 +2083,10 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "obs")) {
 
-	    if (pdinfo->markers) {
+	    if (dset->markers) {
 		tmp = xmlGetProp(cur, (XUC) "label");
 		if (tmp) {
-		    transcribe_string(pdinfo->S[t], (char *) tmp, OBSLEN);
+		    transcribe_string(dset->S[t], (char *) tmp, OBSLEN);
 		    free(tmp);
 		} else {
 		    gretl_errmsg_sprintf(_("Case marker missing at obs %d"), t+1);
@@ -2099,12 +2097,12 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    tmp = xmlNodeListGetRawString(doc, cur->xmlChildrenNode, 1);
 
 	    if (tmp) {
-		if (process_values(*pZ, pdinfo, t, (char *) tmp)) {
+		if (process_values(dset, t, (char *) tmp)) {
 		    return 1;
 		}
 		free(tmp);
 		t++;
-	    } else if (pdinfo->v > 1) {
+	    } else if (dset->v > 1) {
 		gretl_errmsg_sprintf(_("Values missing at observation %d"), t+1);
 		err = E_DATA;
 		goto bailout;
@@ -2115,14 +2113,14 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
  
 	cur = cur->next;
 
-	if (cur != NULL && t == pdinfo->n) {
+	if (cur != NULL && t == dset->n) {
 	    /* got too many observations */
-	    t = pdinfo->n + 1;
+	    t = dset->n + 1;
 	    goto bailout;
 	}
 
 	if (progress && t > 0 && t % 50 == 0) {
-	    (*show_progress) (50L, (long) pdinfo->n, SP_NONE);
+	    (*show_progress) (50L, (long) dset->n, SP_NONE);
 	}
     }
 
@@ -2130,13 +2128,13 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 
     if (progress) {
 #if GDT_DEBUG
-	fprintf(stderr, "finalizing progress bar (n = %d)\n", pdinfo->n);
+	fprintf(stderr, "finalizing progress bar (n = %d)\n", dset->n);
 #endif
-	(*show_progress)(0L, (long) pdinfo->n, SP_FINISH);
+	(*show_progress)(0L, (long) dset->n, SP_FINISH);
 	close_plugin(handle);
     }
 
-    if (!err && t != pdinfo->n) {
+    if (!err && t != dset->n) {
 	gretl_errmsg_set(_("Number of observations does not match declaration"));
 	err = E_DATA;
     }
@@ -2286,69 +2284,69 @@ static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
     return err;
 }
 
-static int lag_from_label (int v, const DATAINFO *pdinfo, int *lag)
+static int lag_from_label (int v, const DATASET *dset, int *lag)
 {
-    const char *test = VARLABEL(pdinfo, v);
+    const char *test = VARLABEL(dset, v);
     char pm, vname[VNAMELEN];
     int pv = 0;
 
     if (sscanf(test, "= %15[^(](t %c %d)", vname, &pm, lag) == 3) {
-	pv = series_index(pdinfo, vname);
-	pv = (pv < pdinfo->v)? pv : 0;
+	pv = series_index(dset, vname);
+	pv = (pv < dset->v)? pv : 0;
     }
 
     return pv;
 }
 
-static int dummy_child_from_label (int v, const DATAINFO *pdinfo)
+static int dummy_child_from_label (int v, const DATASET *dset)
 {
-    const char *test = VARLABEL(pdinfo, v);
+    const char *test = VARLABEL(dset, v);
     char vname[VNAMELEN];
     double val;
     int pv = 0;
 
     if (sscanf(test, _("dummy for %s = %lf"), vname, &val) == 2 ||
 	sscanf(test, "dummy for %s = %lf", vname, &val) == 2) {
-	pv = series_index(pdinfo, vname);
-	pv = (pv < pdinfo->v)? pv : 0;
+	pv = series_index(dset, vname);
+	pv = (pv < dset->v)? pv : 0;
     }
 
     return pv;
 }
 
-static void record_transform_info (double **Z, DATAINFO *pdinfo, double version)
+static void record_transform_info (DATASET *dset, double version)
 {
     VARINFO *vinfo;
     int i, p, pv;
 
-    for (i=1; i<pdinfo->v; i++) {
-	vinfo = pdinfo->varinfo[i];
+    for (i=1; i<dset->v; i++) {
+	vinfo = dset->varinfo[i];
 	if (vinfo->transform == LAGS) {
 	    /* already handled */
 	    continue;
 	}
-	pv = lag_from_label(i, pdinfo, &p);
+	pv = lag_from_label(i, dset, &p);
 	if (pv > 0) {
-	    strcpy(vinfo->parent, pdinfo->varname[pv]);
+	    strcpy(vinfo->parent, dset->varname[pv]);
 	    vinfo->transform = LAGS;
 	    vinfo->lag = p;
 	} else if (version < 1.1) {
-	    pv = dummy_child_from_label(i, pdinfo);
+	    pv = dummy_child_from_label(i, dset);
 	    if (pv > 0) {
-		strcpy(vinfo->parent, pdinfo->varname[pv]);
+		strcpy(vinfo->parent, dset->varname[pv]);
 		vinfo->transform = DUMMIFY;
 	    }
 	}
     }
 }
 
-static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
+static void data_read_message (const char *fname, DATASET *dset, PRN *prn)
 {
     pprintf(prn, M_("\nRead datafile %s\n"), fname);
     pprintf(prn, M_("periodicity: %d, maxobs: %d\n"
 		    "observations range: %s-%s\n"), 
-	    (custom_time_series(pdinfo))? 1 : pdinfo->pd, 
-	    pdinfo->n, pdinfo->stobs, pdinfo->endobs);
+	    (custom_time_series(dset))? 1 : dset->pd, 
+	    dset->n, dset->stobs, dset->endobs);
     pputc(prn, '\n');
 }
 
@@ -2362,17 +2360,17 @@ static long get_filesize (const char *fname)
     return (err)? -1 : buf.st_size;
 }
 
-static int remedy_empty_data (double ***pZ, DATAINFO *pdinfo)
+static int remedy_empty_data (DATASET *dset)
 {
-    int err = dataset_add_series(1, pZ, pdinfo);
+    int err = dataset_add_series(1, dset);
 
     if (!err) {
 	int t;
 
-	strcpy(pdinfo->varname[1], "index");
-	strcpy(VARLABEL(pdinfo, 1), _("index variable"));
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[1][t] = (double) (t + 1);
+	strcpy(dset->varname[1], "index");
+	strcpy(VARLABEL(dset, 1), _("index variable"));
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[1][t] = (double) (t + 1);
 	}
     }
 
@@ -2382,8 +2380,7 @@ static int remedy_empty_data (double ***pZ, DATAINFO *pdinfo)
 /**
  * gretl_read_gdt:
  * @fname: name of file to try.
- * @pZ: address of data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: use OPT_B to display gui progress bar; may also
  * use OPT_T when appending to panel data (see the "append"
  * command in the gretl manual). Otherwise use OPT_NONE.
@@ -2398,11 +2395,10 @@ static int remedy_empty_data (double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, non-zero otherwise.
  */
 
-int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo, 
+int gretl_read_gdt (const char *fname, DATASET *dset, 
 		    gretlopt opt, PRN *prn) 
 {
-    DATAINFO *tmpdinfo;
-    double **tmpZ = NULL;
+    DATASET *tmpset;
     xmlDocPtr doc = NULL;
     xmlNodePtr cur;
     int gotvars = 0, gotobs = 0, err = 0;
@@ -2432,8 +2428,8 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     check_for_console(prn);
 
-    tmpdinfo = datainfo_new();
-    if (tmpdinfo == NULL) {
+    tmpset = datainfo_new();
+    if (tmpset == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -2462,12 +2458,12 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     /* set some datainfo parameters */
 
-    err = xml_get_data_structure(cur, &tmpdinfo->structure);
+    err = xml_get_data_structure(cur, &tmpset->structure);
     if (err) {
 	goto bailout;
     } 
 
-    err = xml_get_data_frequency(cur, &tmpdinfo->pd, &tmpdinfo->structure);
+    err = xml_get_data_frequency(cur, &tmpset->pd, &tmpset->structure);
     if (err) {
 	goto bailout;
     }   
@@ -2475,18 +2471,18 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
     gretl_push_c_numeric_locale();
     in_c_locale = 1;
 
-    strcpy(tmpdinfo->stobs, "1");
-    caldata = dataset_is_daily(tmpdinfo) || dataset_is_weekly(tmpdinfo);
+    strcpy(tmpset->stobs, "1");
+    caldata = dataset_is_daily(tmpset) || dataset_is_weekly(tmpset);
 
-    err = xml_get_startobs(cur, &tmpdinfo->sd0, tmpdinfo->stobs, caldata);
+    err = xml_get_startobs(cur, &tmpset->sd0, tmpset->stobs, caldata);
     if (err) {
 	goto bailout;
     }     
 
-    *tmpdinfo->endobs = '\0';
-    caldata = calendar_data(tmpdinfo);
+    *tmpset->endobs = '\0';
+    caldata = calendar_data(tmpset);
 
-    err = xml_get_endobs(cur, tmpdinfo->endobs, caldata);
+    err = xml_get_endobs(cur, tmpset->endobs, caldata);
     if (err) {
 	goto bailout;
     }     
@@ -2499,10 +2495,10 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "description")) {
-	    tmpdinfo->descrip = (char *) 
+	    tmpset->descrip = (char *) 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
-	    if (process_varlist(cur, tmpdinfo, &tmpZ)) {
+	    if (process_varlist(cur, tmpset)) {
 		err = 1;
 	    } else {
 		gotvars = 1;
@@ -2512,7 +2508,7 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		gretl_errmsg_set(_("Variables information is missing"));
 		err = 1;
 	    }
-	    if (process_observations(doc, cur, &tmpZ, tmpdinfo, progress)) {
+	    if (process_observations(doc, cur, tmpset, progress)) {
 		err = 1;
 	    } else {
 		gotobs = 1;
@@ -2538,8 +2534,8 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	data_read_message(fname, tmpdinfo, prn);
-	err = merge_or_replace_data(pZ, pdinfo, &tmpZ, &tmpdinfo, opt, prn);
+	data_read_message(fname, tmpset, prn);
+	err = merge_or_replace_data(dset, &tmpset, opt, prn);
     }
 
  bailout:
@@ -2556,20 +2552,20 @@ int gretl_read_gdt (const char *fname, double ***pZ, DATAINFO *pdinfo,
     /* pre-process stacked cross-sectional panels: put into canonical
        stacked time series form
     */
-    if (!err && pdinfo->structure == STACKED_CROSS_SECTION) {
-	err = switch_panel_orientation(*pZ, pdinfo);
+    if (!err && dset->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(dset);
     }
 
-    if (!err && pdinfo->v == 1) {
-	err = remedy_empty_data(pZ, pdinfo);
+    if (!err && dset->v == 1) {
+	err = remedy_empty_data(dset);
     }
 
     if (!err && gdtversion < 1.2) {
-	record_transform_info(*pZ, pdinfo, gdtversion);
+	record_transform_info(dset, gdtversion);
     }
 
-    if (err && tmpdinfo != NULL) {
-	destroy_dataset(tmpZ, tmpdinfo);
+    if (err && tmpset != NULL) {
+	destroy_dataset(tmpset);
     }
 
     console_off();

@@ -220,21 +220,21 @@ void print_centered (const char *s, int width, PRN *prn)
 
 /**
  * max_obs_label_length:
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * Returns: the length of the longest observation label
  * within the current sample range.
  */
 
-int max_obs_label_length (const DATAINFO *pdinfo)
+int max_obs_label_length (const DATASET *dset)
 {
     char s[OBSLEN];
     int t, n, nmax = 0;
 
-    if (pdinfo->S != NULL) {
+    if (dset->S != NULL) {
 	/* we have specific observation strings */
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    get_obs_string(s, t, pdinfo);
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    get_obs_string(s, t, dset);
 	    n = g_utf8_strlen(s, -1);
 	    if (n > nmax) {
 		nmax = n;
@@ -243,11 +243,11 @@ int max_obs_label_length (const DATAINFO *pdinfo)
 		break;
 	    }
 	}
-    } else if (dated_daily_data(pdinfo)) {
-	get_obs_string(s, pdinfo->t2, pdinfo);
+    } else if (dated_daily_data(dset)) {
+	get_obs_string(s, dset->t2, dset);
 	nmax = strlen(s);
-    } else if (dataset_is_time_series(pdinfo)) {
-	switch (pdinfo->pd) {
+    } else if (dataset_is_time_series(dset)) {
+	switch (dset->pd) {
 	case 1:   /* annual: YYYY */
 	case 10:  /* decennial: YYYY */
 	    nmax = 4; 
@@ -262,15 +262,15 @@ int max_obs_label_length (const DATAINFO *pdinfo)
 	    break;
 	}
 	if (nmax == 0) {
-	    get_obs_string(s, pdinfo->t2, pdinfo);
+	    get_obs_string(s, dset->t2, dset);
 	    nmax = strlen(s);
 	}
     } else {
-	int T = pdinfo->t2 - pdinfo->t1 + 1;
+	int T = dset->t2 - dset->t1 + 1;
 	int incr = (T < 120)? 1 : (T / 100.0);
 
-	for (t=pdinfo->t1; t<=pdinfo->t2; t+=incr) {
-	    get_obs_string(s, t, pdinfo);
+	for (t=dset->t1; t<=dset->t2; t+=incr) {
+	    get_obs_string(s, t, dset);
 	    n = strlen(s);
 	    if (n > nmax) {
 		nmax = n;
@@ -627,7 +627,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
 /**
  * print_smpl:
- * @pdinfo: data information struct
+ * @dset: data information struct
  * @fulln: full length of data series, if dataset is
  * subsampled, or 0 if not applicable/known.
  * @prn: gretl printing struct.
@@ -635,19 +635,19 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
  * Prints the current sample information to @prn.
  */
 
-void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
+void print_smpl (const DATASET *dset, int fulln, PRN *prn)
 {
-    if (!gretl_messages_on() || pdinfo->v == 0 || gretl_looping_quietly()) {
+    if (!gretl_messages_on() || dset->v == 0 || gretl_looping_quietly()) {
 	return;
     }
 
-    if (fulln && !dataset_is_panel(pdinfo)) {
+    if (fulln && !dataset_is_panel(dset)) {
 	pprintf(prn, _("Full data set: %d observations\n"), fulln);
-	if (sample_size(pdinfo) < pdinfo->n) {
-	    print_sample_obs(pdinfo, prn);
+	if (sample_size(dset) < dset->n) {
+	    print_sample_obs(dset, prn);
 	} else {
 	    pprintf(prn, _("Current sample: %d observations\n"),
-		    pdinfo->n);
+		    dset->n);
 	}
 	return;
     }
@@ -656,36 +656,34 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 	pprintf(prn, _("Full data set: %d observations\n"), fulln);
     } else {
 	pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
-		pdinfo->stobs, pdinfo->endobs, pdinfo->n);
+		dset->stobs, dset->endobs, dset->n);
     }
 
-    if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1 ||
-	(fulln && dataset_is_panel(pdinfo))) {
-	print_sample_obs(pdinfo, prn);
+    if (dset->t1 > 0 || dset->t2 < dset->n - 1 ||
+	(fulln && dataset_is_panel(dset))) {
+	print_sample_obs(dset, prn);
     }
 
     pputc(prn, '\n');
 }
 
-static void print_var_smpl (int v, const double **Z, 
-			    const DATAINFO *pdinfo, 
-			    PRN *prn)
+static void print_var_smpl (int v, const DATASET *dset, PRN *prn)
 {
     int t, n = 0;
 
-    if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
+    if (dset->t1 > 0 || dset->t2 < dset->n - 1) {
 	char d1[OBSLEN], d2[OBSLEN];
-	ntodate(d1, pdinfo->t1, pdinfo);
-	ntodate(d2, pdinfo->t2, pdinfo);
+	ntodate(d1, dset->t1, dset);
+	ntodate(d2, dset->t2, dset);
 
 	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
     } else {
 	pprintf(prn, "%s: %s - %s", _("Full data range"), 
-		pdinfo->stobs, pdinfo->endobs);
+		dset->stobs, dset->endobs);
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(Z[v][t])) {
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!na(dset->Z[v][t])) {
 	    n++;
 	}
     }
@@ -728,15 +726,14 @@ char *gretl_fix_exponent (char *s)
    or %#.*g, with precision 'digits'
 */
 
-static int max_number_length (int v, const double **Z, 
-			      const DATAINFO *pdinfo,
+static int max_number_length (int v, const DATASET *dset,
 			      char fmt, int digits)
 {
     double a, x, amax = 0.0, amin = 1.0e300;
     int t, n, maxsgn = 0, minsgn = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	x = Z[v][t];
+    for (t=dset->t1; t<=dset->t2; t++) {
+	x = dset->Z[v][t];
 	if (!na(x)) {
 	    a = fabs(x);
 	    if (a > amax) {
@@ -780,12 +777,11 @@ static int max_number_length (int v, const double **Z,
     return n;
 }
 
-static int series_column_width (int v, const double **Z, 
-				const DATAINFO *pdinfo,
+static int series_column_width (int v, const DATASET *dset,
 				char fmt, int digits)
 {
-    int namelen = strlen(pdinfo->varname[v]);
-    int numlen = max_number_length(v, Z, pdinfo, fmt, digits);
+    int namelen = strlen(dset->varname[v]);
+    int numlen = max_number_length(v, dset, fmt, digits);
 
     return (namelen > numlen)? namelen : numlen;
 }
@@ -1019,7 +1015,7 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
 /**
  * outcovmx:
  * @pmod: pointer to model.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @prn: gretl printing struct.
  * 
  * Print to @prn the variance-covariance matrix for the parameter
@@ -1028,12 +1024,12 @@ print_contemp_covariance_matrix (const gretl_matrix *m,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+int outcovmx (MODEL *pmod, const DATASET *dset, PRN *prn)
 {
     VMatrix *vmat;
     int err = 0;
 
-    vmat = gretl_model_get_vcv(pmod, pdinfo);
+    vmat = gretl_model_get_vcv(pmod, dset);
 
     if (vmat == NULL) {
 	err = E_ALLOC;
@@ -1157,7 +1153,7 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 }
 
 static void fit_resid_head (const FITRESID *fr, 
-			    const DATAINFO *pdinfo, 
+			    const DATASET *dset, 
 			    PRN *prn)
 {
     char label[16];
@@ -1166,7 +1162,7 @@ static void fit_resid_head (const FITRESID *fr,
     int i;
 
     if (kstep) {
-	ntodate(obs1, fr->model_t1, pdinfo);   
+	ntodate(obs1, fr->model_t1, dset);   
 	pprintf(prn, _("Recursive %d-step ahead forecasts"), fr->k);
 	pputs(prn, "\n\n");
 	pprintf(prn, _("The forecast for time t is based on (a) coefficients obtained by\n"
@@ -1177,8 +1173,8 @@ static void fit_resid_head (const FITRESID *fr,
 		     "are in fact lagged values."));
 	pputs(prn, "\n\n");
     } else {
-	ntodate(obs1, fr->t1, pdinfo);
-	ntodate(obs2, fr->t2, pdinfo);
+	ntodate(obs1, fr->t1, dset);
+	ntodate(obs2, fr->t2, dset);
 	pprintf(prn, _("Model estimation range: %s - %s"), obs1, obs2);
 	pputc(prn, '\n');
 
@@ -1205,7 +1201,7 @@ static void fit_resid_head (const FITRESID *fr,
 /* prints a heading with the names of the variables in @list */
 
 static void varheading (const int *list, int leader, int wid, 
-			const DATAINFO *pdinfo, char delim, 
+			const DATASET *dset, char delim, 
 			PRN *prn)
 {
     int i, vi;
@@ -1214,9 +1210,9 @@ static void varheading (const int *list, int leader, int wid,
 	pprintf(prn, "obs%c", delim);
 	for (i=1; i<=list[0]; i++) { 
 	    vi = list[i];
-	    pputs(prn, pdinfo->varname[vi]);
+	    pputs(prn, dset->varname[vi]);
 	    if (i < list[0]) {
-		pputc(prn, pdinfo->delim);
+		pputc(prn, dset->delim);
 	    } 
 	}
 	pputc(prn, '\n');
@@ -1224,7 +1220,7 @@ static void varheading (const int *list, int leader, int wid,
 	pputs(prn, "{obs\\cell ");
 	for (i=1; i<=list[0]; i++) { 
 	    vi = list[i];
-	    pprintf(prn, "%s\\cell ", pdinfo->varname[vi]);
+	    pprintf(prn, "%s\\cell ", dset->varname[vi]);
 	}
 	pputs(prn, "}\n");	
     } else {
@@ -1232,7 +1228,7 @@ static void varheading (const int *list, int leader, int wid,
 	bufspace(leader, prn);
 	for (i=1; i<=list[0]; i++) { 
 	    vi = list[i];
-	    pprintf(prn, "%*s", wid, pdinfo->varname[vi]);
+	    pprintf(prn, "%*s", wid, dset->varname[vi]);
 	}
 	pputs(prn, "\n\n");
     }
@@ -1277,7 +1273,7 @@ static void fcast_print_x (double x, int n, int pmax, PRN *prn)
 
 /* prints series z from current sample t1 to t2 */
 
-static void print_series_by_var (const double *z, const DATAINFO *pdinfo, 
+static void print_series_by_var (const double *z, const DATASET *dset, 
 				 PRN *prn)
 {
     char format[12];
@@ -1285,7 +1281,7 @@ static void print_series_by_var (const double *z, const DATAINFO *pdinfo,
     int anyneg = 0;
     double x;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (z[t] < 0) {
 	    anyneg = 1;
 	    break;
@@ -1298,7 +1294,7 @@ static void print_series_by_var (const double *z, const DATAINFO *pdinfo,
 	sprintf(format, "%%#.%dg  ", GRETL_DIGITS);
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	char str[32];
 	int n;
 
@@ -1550,7 +1546,7 @@ static char *bufprintnum (char *buf, double x, int signif,
 
 /**
  * obs_marker_init:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  *
  * Check the length to which observation markers should
  * be printed, in a tabular context.  (We don't want to
@@ -1559,15 +1555,15 @@ static char *bufprintnum (char *buf, double x, int signif,
 
 static int oprintlen = 8;
 
-void obs_marker_init (const DATAINFO *pdinfo)
+void obs_marker_init (const DATASET *dset)
 {
     int t, datestrs = 0;
 
-    if (pdinfo->markers) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (strlen(pdinfo->S[t]) == 10 && 
-		isdigit(pdinfo->S[t][0]) &&
-		strchr(pdinfo->S[t], '/')) {
+    if (dset->markers) {
+	for (t=0; t<dset->n; t++) {
+	    if (strlen(dset->S[t]) == 10 && 
+		isdigit(dset->S[t][0]) &&
+		strchr(dset->S[t], '/')) {
 		datestrs = 1;
 		break;
 	    }
@@ -1584,48 +1580,48 @@ void obs_marker_init (const DATAINFO *pdinfo)
 /**
  * print_obs_marker:
  * @t: observation number.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @prn: gretl printing struct.
  *
  * Print a string (label, date or obs number) representing the given @t.
  */
 
-void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
+void print_obs_marker (int t, const DATASET *dset, PRN *prn)
 {
     char tmp[OBSLEN] = {0};
 
-    if (pdinfo->markers) { 
-	strncat(tmp, pdinfo->S[t], oprintlen);
+    if (dset->markers) { 
+	strncat(tmp, dset->S[t], oprintlen);
 	pprintf(prn, "%*s ", oprintlen, tmp); 
     } else {
-	ntodate(tmp, t, pdinfo);
+	ntodate(tmp, t, dset);
 	pprintf(prn, "%8s ", tmp);
     }
 }
 
 /**
  * varlist:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @prn: gretl printing struct
  *
  * Prints a list of the names of the variables currently defined.
  */
 
-void varlist (const DATAINFO *pdinfo, PRN *prn)
+void varlist (const DATASET *dset, PRN *prn)
 {
     int level = gretl_function_depth();
     int len, maxlen = 0;
     int nv = 4;
     int i, j, n = 0;
 
-    if (pdinfo->v == 0) {
+    if (dset->v == 0) {
 	pprintf(prn, _("No series are defined\n"));
 	return;
     }
 
-    for (i=0; i<pdinfo->v; i++) {
-	if (STACK_LEVEL(pdinfo, i) == level) {
-	    len = strlen(pdinfo->varname[i]);
+    for (i=0; i<dset->v; i++) {
+	if (STACK_LEVEL(dset, i) == level) {
+	    len = strlen(dset->varname[i]);
 	    if (len > maxlen) {
 		maxlen = len;
 	    }
@@ -1642,11 +1638,11 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, _("Listing %d variables:\n"), n);
 
     j = 1;
-    for (i=0; i<pdinfo->v; i++) {
-	if (level > 0 && STACK_LEVEL(pdinfo, i) != level) {
+    for (i=0; i<dset->v; i++) {
+	if (level > 0 && STACK_LEVEL(dset, i) != level) {
 	    continue;
 	}
-	pprintf(prn, "%3d) %-*s", i, maxlen + 2, pdinfo->varname[i]);
+	pprintf(prn, "%3d) %-*s", i, maxlen + 2, dset->varname[i]);
 	if (j % nv == 0) {
 	    pputc(prn, '\n');
 	}
@@ -1662,22 +1658,22 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 
 /**
  * maybe_list_vars:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @prn: gretl printing struct
  *
  * Prints a list of the names of the variables currently defined,
  * unless gretl messaging is turned off.
  */
 
-void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
+void maybe_list_vars (const DATASET *dset, PRN *prn)
 {
     if (gretl_messages_on() && !gretl_looping_quietly()) {
-	varlist(pdinfo, prn);
+	varlist(dset, prn);
     }
 }
 
 static void print_varlist (const char *name, const int *list, 
-			   const DATAINFO *pdinfo, PRN *prn)
+			   const DATASET *dset, PRN *prn)
 {
     int i, v, len = 0;
 
@@ -1689,8 +1685,8 @@ static void print_varlist (const char *name, const int *list,
 	    v = list[i];
 	    if (v == LISTSEP) {
 		len += pputs(prn, "; ");
-	    } else if (v >= 0 && v < pdinfo->v) {
-		len += pprintf(prn, "%s ", pdinfo->varname[v]);
+	    } else if (v >= 0 && v < dset->v) {
+		len += pprintf(prn, "%s ", dset->varname[v]);
 	    } else {
 		len += pprintf(prn, "%d ", v);
 	    }
@@ -1704,7 +1700,7 @@ static void print_varlist (const char *name, const int *list,
 }
 
 static void print_listed_objects (const char *s, 
-				  const DATAINFO *pdinfo, 
+				  const DATASET *dset, 
 				  PRN *prn)
 {
     const gretl_matrix *m;
@@ -1719,7 +1715,7 @@ static void print_listed_objects (const char *s,
 	} else if ((m = get_matrix_by_name(name)) != NULL) {
 	    gretl_matrix_print_to_prn(m, name, prn);
 	} else if ((list = get_list_by_name(name)) != NULL) {
-	    print_varlist(name, list, pdinfo, prn);
+	    print_varlist(name, list, dset, prn);
 	} else if ((b = get_gretl_bundle_by_name(name)) != NULL) {
 	    gretl_bundle_print(b, prn);
 	} else if ((p = get_string_by_name(name)) != NULL) {
@@ -1763,10 +1759,10 @@ static int obslen_from_t (int t)
    buffer, pre-allocate a relatively big chunk of memory
 */
 
-static int check_prn_size (const int *list, const DATAINFO *pdinfo,
+static int check_prn_size (const int *list, const DATASET *dset,
 			   PRN *prn)
 {
-    int nx = list[0] * (pdinfo->t2 - pdinfo->t1 + 1);
+    int nx = list[0] * (dset->t2 - dset->t1 + 1);
     int err = 0;
 
     if (nx > 1000) {
@@ -1776,11 +1772,10 @@ static int check_prn_size (const int *list, const DATAINFO *pdinfo,
     return err;
 }
 
-static int *get_pmax_array (const int *list, const double **Z,
-			    const DATAINFO *pdinfo)
+static int *get_pmax_array (const int *list, const DATASET *dset)
 {
     int *pmax = malloc(list[0] * sizeof *pmax);
-    int i, vi, T = sample_size(pdinfo);
+    int i, vi, T = sample_size(dset);
 
     if (pmax == NULL) {
 	return NULL;
@@ -1790,20 +1785,20 @@ static int *get_pmax_array (const int *list, const double **Z,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	pmax[i-1] = get_signif(Z[vi] + pdinfo->t1, T);
+	pmax[i-1] = get_signif(dset->Z[vi] + dset->t1, T);
     }
 
     return pmax;
 }
 
-int column_width_from_list (const int *list, const DATAINFO *pdinfo)
+int column_width_from_list (const int *list, const DATASET *dset)
 {
     int i, n, vi, w = 13;
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi > 0 && vi < pdinfo->v) {
-	    n = strlen(pdinfo->varname[vi]);
+	if (vi > 0 && vi < dset->v) {
+	    n = strlen(dset->varname[vi]);
 	    if (n >= w) {
 		w = n + 1;
 	    }
@@ -1817,8 +1812,8 @@ int column_width_from_list (const int *list, const DATAINFO *pdinfo)
 
 /* print the series referenced in 'list' by observation */
 
-static int print_by_obs (int *list, const double **Z, 
-			 const DATAINFO *pdinfo, 
+static int print_by_obs (int *list, 
+			 const DATASET *dset, 
 			 gretlopt opt, int screenvar,
 			 PRN *prn)
 {
@@ -1832,18 +1827,18 @@ static int print_by_obs (int *list, const double **Z,
     double x;
     int err = 0;
 
-    pmax = get_pmax_array(list, Z, pdinfo);
+    pmax = get_pmax_array(list, dset);
     if (pmax == NULL) {
 	return E_ALLOC;
     }
 
     if (opt & OPT_N) {
-	obslen = obslen_from_t(pdinfo->t2);
+	obslen = obslen_from_t(dset->t2);
     } else {
-	obslen = max_obs_label_length(pdinfo);
+	obslen = max_obs_label_length(dset);
     }
 
-    colwidth = column_width_from_list(list, pdinfo);
+    colwidth = column_width_from_list(list, dset);
 
     nrem = list[0];
     k = 1;
@@ -1858,29 +1853,29 @@ static int print_by_obs (int *list, const double **Z,
 	    nrem--;
 	}
 
-	varheading(blist, obslen, colwidth, pdinfo, 0, prn);
+	varheading(blist, obslen, colwidth, dset, 0, prn);
 	
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    int thislen = obslen;
 
-	    if (screenvar && Z[screenvar][t] == 0.0) {
+	    if (screenvar && dset->Z[screenvar][t] == 0.0) {
 		/* screened out by boolean */
 		continue;
 	    }
 
 	    if (opt & OPT_N) {
 		sprintf(obslabel, "%d", t + 1);
-	    } else if (dataset_has_markers(pdinfo)) {
-		strcpy(obslabel, pdinfo->S[t]);
+	    } else if (dataset_has_markers(dset)) {
+		strcpy(obslabel, dset->S[t]);
 		thislen = get_utf_width(obslabel, obslen);
 	    } else {
-		ntodate(obslabel, t, pdinfo);
+		ntodate(obslabel, t, dset);
 	    }
 
 	    pprintf(prn, "%*s", thislen, obslabel);
 
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
-		x = Z[blist[i]][t];
+		x = dset->Z[blist[i]][t];
 		if (na(x)) {
 		    bufspace(colwidth, prn);
 		} else { 
@@ -1900,8 +1895,8 @@ static int print_by_obs (int *list, const double **Z,
     return err;
 }
 
-static int print_by_var (const int *list, const double **Z,
-			 const DATAINFO *pdinfo, PRN *prn)
+static int print_by_var (const int *list, const DATASET *dset, 
+			 PRN *prn)
 {
     int i, vi;
 
@@ -1909,15 +1904,15 @@ static int print_by_var (const int *list, const double **Z,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi > pdinfo->v) {
+	if (vi > dset->v) {
 	    continue;
 	}
 	if (list[0] > 1) {
-	    pprintf(prn, "%s:\n", pdinfo->varname[vi]);
+	    pprintf(prn, "%s:\n", dset->varname[vi]);
 	}
-	print_var_smpl(vi, Z, pdinfo, prn);
+	print_var_smpl(vi, dset, prn);
 	pputc(prn, '\n');
-	print_series_by_var(Z[vi], pdinfo, prn);
+	print_series_by_var(dset->Z[vi], dset, prn);
 	pputc(prn, '\n');
     }
 
@@ -1928,8 +1923,7 @@ static int print_by_var (const int *list, const double **Z,
  * printdata:
  * @list: list of variables to print.
  * @mstr: optional string holding names of non-series objects to print.
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: if OPT_O, print the data by observation (series in columns);
  * if OPT_N, use simple obs numbers, not dates.
  * @prn: gretl printing struct.
@@ -1941,7 +1935,7 @@ static int print_by_var (const int *list, const double **Z,
  */
 
 int printdata (const int *list, const char *mstr, 
-	       const double **Z, const DATAINFO *pdinfo, 
+	       const DATASET *dset, 
 	       gretlopt opt, PRN *prn)
 {
     int screenvar = 0;
@@ -1960,7 +1954,7 @@ int printdata (const int *list, const char *mstr,
 	if (mstr == NULL) {
 	    int nvars = 0;
 
-	    plist = full_var_list(pdinfo, &nvars);
+	    plist = full_var_list(dset, &nvars);
 	    if (nvars == 0) {
 		/* no-op */
 		return 0;
@@ -1992,22 +1986,22 @@ int printdata (const int *list, const char *mstr,
     }
 
     if (gretl_print_has_buffer(prn)) {
-	err = check_prn_size(plist, pdinfo, prn);
+	err = check_prn_size(plist, dset, prn);
 	if (err) {
 	    goto endprint;
 	}
     }
 
     if (opt & OPT_O) {
-	err = print_by_obs(plist, Z, pdinfo, opt, screenvar, prn);
+	err = print_by_obs(plist, dset, opt, screenvar, prn);
     } else {
-	err = print_by_var(plist, Z, pdinfo, prn);
+	err = print_by_var(plist, dset, prn);
     }
 
  endprint:
 
     if (!err && mstr != NULL) {
-	print_listed_objects(mstr, pdinfo, prn);
+	print_listed_objects(mstr, dset, prn);
     }
 
     free(plist);
@@ -2015,9 +2009,10 @@ int printdata (const int *list, const char *mstr,
     return err;
 }
 
-int print_series_with_format (const int *list, const double **Z, 
-			      const DATAINFO *pdinfo, 
-			      char fmt, int digits, PRN *prn)
+int print_series_with_format (const int *list, 
+			      const DATASET *dset, 
+			      char fmt, int digits, 
+			      PRN *prn)
 {
     int i, j, j0, v, t, k, nrem = 0;
     int *colwidths, blist[BMAX+1];
@@ -2033,7 +2028,7 @@ int print_series_with_format (const int *list, const double **Z,
     }
 
     for (i=1; i<=list[0]; i++) {
-	if (list[i] >= pdinfo->v) {
+	if (list[i] >= dset->v) {
 	    return E_DATA;
 	}
     }
@@ -2047,7 +2042,7 @@ int print_series_with_format (const int *list, const double **Z,
 
     buflen = 0;
     for (i=1; i<=list[0]; i++) {
-	colwidths[i] = series_column_width(list[i], Z, pdinfo, fmt, digits);
+	colwidths[i] = series_column_width(list[i], dset, fmt, digits);
 	colwidths[i] += 3;
 	if (colwidths[i] > buflen) {
 	    buflen = colwidths[i];
@@ -2061,7 +2056,7 @@ int print_series_with_format (const int *list, const double **Z,
     }
 
     if (gretl_print_has_buffer(prn)) {
-	err = check_prn_size(list, pdinfo, prn);
+	err = check_prn_size(list, dset, prn);
 	if (err) {
 	    goto bailout;
 	}
@@ -2073,7 +2068,7 @@ int print_series_with_format (const int *list, const double **Z,
 	sprintf(format, "%%#.%dg", digits);
     }
 
-    obslen = max_obs_label_length(pdinfo);
+    obslen = max_obs_label_length(dset);
 
     k = 1;
 
@@ -2091,17 +2086,17 @@ int print_series_with_format (const int *list, const double **Z,
 	bufspace(obslen, prn);
 	for (i=1, j=j0; i<=blist[0]; i++, j++) {
 	    v = blist[i];
-	    pprintf(prn, "%*s", colwidths[j], pdinfo->varname[v]);
+	    pprintf(prn, "%*s", colwidths[j], dset->varname[v]);
 	}
 	pputs(prn, "\n\n");
 
 	/* print block observations */
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    get_obs_string(obslabel, t, pdinfo);
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    get_obs_string(obslabel, t, dset);
 	    pprintf(prn, "%*s", obslen, obslabel);
 	    for (i=1, j=j0; i<=blist[0]; i++, j++) {
 		v = blist[i];
-		x = Z[v][t];
+		x = dset->Z[v][t];
 		if (na(x)) {
 		    bufspace(colwidths[j], prn);
 		} else { 
@@ -2155,8 +2150,7 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
  * print_data_in_columns:
  * @list: list of variables to print.
  * @obsvec: list of observation numbers (or %NULL)
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list.  If @obsvec is not %NULL,
@@ -2171,8 +2165,7 @@ static void rtf_print_row_spec (int ncols, int type, PRN *prn)
  */
 
 int print_data_in_columns (const int *list, const int *obsvec, 
-			   const double **Z, const DATAINFO *pdinfo, 
-			   PRN *prn)
+			   const DATASET *dset, PRN *prn)
 {
     int delimited = prn_delimited(prn);
     int rtf = rtf_format(prn);
@@ -2189,7 +2182,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
     if (obsvec != NULL) {
 	T = obsvec[0];
     } else {
-	T = sample_size(pdinfo);
+	T = sample_size(dset);
     }
 
     /* must have a non-empty list of variables */
@@ -2199,17 +2192,17 @@ int print_data_in_columns (const int *list, const int *obsvec,
 
     /* ...with no bad variable numbers */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] < 0 || list[i] >= pdinfo->v) {
+	if (list[i] < 0 || list[i] >= dset->v) {
 	    return E_DATA;
 	}
     }
 
     /* and T must be in bounds */
-    if (T > pdinfo->n - pdinfo->t1) {
+    if (T > dset->n - dset->t1) {
 	return E_DATA;
     }
 
-    pmax = get_pmax_array(list, Z, pdinfo);
+    pmax = get_pmax_array(list, dset);
     if (pmax == NULL) {
 	return E_ALLOC;
     }
@@ -2218,15 +2211,15 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	if (csv_format(prn)) {
 	    gprec = 15;
 	}
-	delim = pdinfo->delim;
+	delim = dset->delim;
 	if (get_local_decpoint() == ',' && delim == ',') {
 	    delim = ';';
 	}
     } else if (rtf) {
 	ncols = list[0] + 1;
     } else {
-	colwidth = column_width_from_list(list, pdinfo);
-	obslen = max_obs_label_length(pdinfo);
+	colwidth = column_width_from_list(list, dset);
+	obslen = max_obs_label_length(dset);
     }
 
     if (rtf) {
@@ -2234,7 +2227,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	rtf_print_row_spec(ncols, RTF_HEADER, prn);
     }
 
-    varheading(list, obslen, colwidth, pdinfo, delim, prn);
+    varheading(list, obslen, colwidth, dset, delim, prn);
 
     if (rtf) {
 	rtf_print_row_spec(ncols, RTF_TRAILER, prn);
@@ -2245,16 +2238,16 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	if (obsvec != NULL) {
 	    t = obsvec[s+1];
 	} else {
-	    t = pdinfo->t1 + s;
+	    t = dset->t1 + s;
 	}
-	if (t >= pdinfo->n) {
+	if (t >= dset->n) {
 	    continue;
 	}
 	if (rtf) {
 	    rtf_print_row_spec(ncols, RTF_HEADER, prn);
 	    pputc(prn, '{');
 	}
-	get_obs_string(obs_string, t, pdinfo);
+	get_obs_string(obs_string, t, dset);
 	if (delimited) {
 	    pprintf(prn, "%s%c", obs_string, delim);
 	} else if (rtf) {
@@ -2263,7 +2256,7 @@ int print_data_in_columns (const int *list, const int *obsvec,
 	    pprintf(prn, "%*s", obslen, obs_string);
 	}
 	for (i=1; i<=list[0]; i++) {
-	    xx = Z[list[i]][t];
+	    xx = dset->Z[list[i]][t];
 	    if (na(xx)) {
 		if (delimited) {
 		    pputs(prn, "NA");
@@ -2381,7 +2374,7 @@ static int print_fcast_stats (const FITRESID *fr, gretlopt opt,
 
 #define SIGMA_MIN 1.0e-18
 
-int text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, 
+int text_print_fit_resid (const FITRESID *fr, const DATASET *dset, 
 			  PRN *prn)
 {
     int kstep = fr->method == FC_KSTEP;
@@ -2389,12 +2382,12 @@ int text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
     double yt, yf, et;
     int err = 0;
 
-    fit_resid_head(fr, pdinfo, prn); 
+    fit_resid_head(fr, dset, prn); 
 
-    obs_marker_init(pdinfo);
+    obs_marker_init(dset);
 
     for (t=fr->t1; t<=fr->t2; t++) {
-	print_obs_marker(t, pdinfo, prn);
+	print_obs_marker(t, dset, prn);
 
 	yt = fr->actual[t];
 	yf = fr->fitted[t];
@@ -2446,7 +2439,7 @@ int text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
     print_fcast_stats(fr, OPT_NONE, prn);
 
     if (kstep && fr->nobs > 0 && gretl_in_gui_mode()) {
-	err = plot_fcast_errs(fr, NULL, pdinfo, OPT_NONE);
+	err = plot_fcast_errs(fr, NULL, dset, OPT_NONE);
     }
 
     return err;
@@ -2455,7 +2448,7 @@ int text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
 /**
  * text_print_forecast:
  * @fr: pointer to structure containing forecasts.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @opt: if includes %OPT_P, make a plot of the forecasts;
  * if includes %OPT_N, skip printing of the forecast
  * evaluation statistics.
@@ -2471,7 +2464,7 @@ int text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo,
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo, 
+int text_print_forecast (const FITRESID *fr, DATASET *dset, 
 			 gretlopt opt, PRN *prn)
 {
     int do_errs = (fr->sderr != NULL);
@@ -2536,10 +2529,10 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 	}
     }
 
-    obs_marker_init(pdinfo);
+    obs_marker_init(dset);
 
     for (t=fr->t0; t<=fr->t2; t++) {
-	print_obs_marker(t, pdinfo, prn);
+	print_obs_marker(t, dset, prn);
 	fcast_print_x(fr->actual[t], 15, pmax, prn);
 
 	if (na(fr->fitted[t])) {
@@ -2572,7 +2565,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
     /* do we really want a plot for non-time series? */
 
     if ((opt & OPT_P) && fr->nobs > 0) {
-	err = plot_fcast_errs(fr, maxerr, pdinfo, opt);
+	err = plot_fcast_errs(fr, maxerr, dset, opt);
 	if (!err && (opt & OPT_U)) {
 	    /* specified output file for graph */
 	    report_plot_written(prn);
@@ -2589,8 +2582,7 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
 /**
  * print_fit_resid:
  * @pmod: pointer to gretl model.
- * @Z: data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @prn: gretl printing struct.
  *
  * Print to @prn the fitted values and residuals from @pmod.
@@ -2598,16 +2590,16 @@ int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int print_fit_resid (const MODEL *pmod, const double **Z, 
-		     const DATAINFO *pdinfo, PRN *prn)
+int print_fit_resid (const MODEL *pmod, const DATASET *dset, 
+		     PRN *prn)
 {
     FITRESID *fr;
     int err = 0;
 
-    fr = get_fit_resid(pmod, Z, pdinfo, &err);
+    fr = get_fit_resid(pmod, dset, &err);
 
     if (!err) {
-	text_print_fit_resid(fr, pdinfo, prn);
+	text_print_fit_resid(fr, dset, prn);
 	free_fit_resid(fr);
     }
 

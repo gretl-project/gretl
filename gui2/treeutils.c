@@ -206,14 +206,14 @@ static void update_dialogs_from_varclick (int active_var)
     } else if (active_edit_name != NULL) {
 	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_name));
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), 
-				 datainfo->varname[active_var]);
+				 dataset->varname[active_var]);
     } else if (active_edit_text != NULL) {
 	GtkTextBuffer *tbuf;
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(active_edit_text));
 	if (tbuf != NULL) {
 	    gtk_text_buffer_insert_at_cursor(tbuf, 
-					     datainfo->varname[active_var], 
+					     dataset->varname[active_var], 
 					     -1);
 	}
     }  
@@ -260,7 +260,7 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
     GtkTreePath *path;
     gboolean ret = FALSE;
 
-    if (datainfo == NULL || datainfo->n == 0) {
+    if (dataset == NULL || dataset->n == 0) {
 	return TRUE;
     }
 

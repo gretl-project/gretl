@@ -474,9 +474,9 @@ union val {
 };
 
 enum {
-    AUX_NODE    = 1 << 0, /* auxiliary: free on exit */
-    TMP_NODE    = 1 << 1, /* temporary: free content on exit */
-    PTR_NODE    = 1 << 2  /* node is compatible with P_LHPTR */
+    AUX_NODE = 1 << 0, /* auxiliary: free on exit */
+    TMP_NODE = 1 << 1, /* temporary: free content on exit */
+    PTR_NODE = 1 << 2  /* node is compatible with P_LHPTR */
 };
 
 struct node {
@@ -534,8 +534,7 @@ struct parser_ {
     const char *input; /* complete input string */
     const char *point; /* remaining unprocessed input */
     const char *rhs;   /* for use in labelling */
-    double ***Z;       /* convenience pointer to data array */
-    DATAINFO *dinfo;   /* convenience pointer to data info */
+    DATASET *dset;     /* convenience pointer to dataset */
     PRN *prn;          /* for printing messages */
     int flags;         /* various attributes (see above) */
     int targ;          /* target type */
@@ -577,8 +576,8 @@ void context_error (int c, parser *p);
 void undefined_symbol_error (const char *s, parser *p);
 const char *getsymb (int t, const parser *p);
 
-int realgen (const char *s, parser *p, double ***Z, 
-	     DATAINFO *pdinfo, PRN *prn, int flags);
+int realgen (const char *s, parser *p, DATASET *dset, 
+	     PRN *prn, int flags);
 void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
 void parser_free_aux_nodes (parser *p);
@@ -599,17 +598,15 @@ int check_declarations (char ***pS, parser *p);
 
 /* in genfuncs.c, used only internally */
 int cross_sectional_stat (double *x, const int *list, 
-			  const double **Z, 
-			  const DATAINFO *pdinfo,
+			  const DATASET *dset,
 			  int f);
 int x_sectional_weighted_stat (double *x, const int *list, 
 			       const int *wlist,
-			       const double **Z, 
-			       const DATAINFO *pdinfo,
+			       const DATASET *dset,
 			       int f);
 
 /* in geneval.c, used only internally */
-double dvar_get_scalar (int i, const DATAINFO *pdinfo,
+double dvar_get_scalar (int i, const DATASET *dset,
 			char *label);
 
 /* helper functions for manual, gretl.lang file */

@@ -33,66 +33,57 @@ typedef enum {
 
 #define RESAMPLED ((char *) 0xdeadbeef)
 
-double ***fetch_full_Z (void);
-
-void reset_full_Z (double ***pZ);
-
-DATAINFO *fetch_full_datainfo (void);
+DATASET *fetch_full_dataset (void);
 
 void free_subsample_mask (char *s);
 
 char *copy_subsample_mask (const char *src, int *err);
 
-char *copy_datainfo_submask (const DATAINFO *pdinfo, int *err);
+char *copy_datainfo_submask (const DATASET *dset, int *err);
 
-int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp);
+int write_datainfo_submask (const DATASET *dset, FILE *fp);
 
 int write_model_submask (const MODEL *pmod, FILE *fp);
 
 int submask_cmp (const char *m1, const char *m2);
 
-int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
+int attach_subsample_to_model (MODEL *pmod, const DATASET *dset);
+
+int add_dataset_to_model (MODEL *pmod, const DATASET *dset,
+			  gretlopt opt);
 
 int restrict_sample (const char *line, const int *list,  
-		     double ***pZ, DATAINFO *pdinfo,
-		     ExecState *state, gretlopt opt, 
-		     PRN *prn);
+		     DATASET *dset, ExecState *state, 
+		     gretlopt opt, PRN *prn);
 
 int 
-restrict_sample_from_mask (char *mask, double ***pZ, DATAINFO *pdinfo,
-			   gretlopt opt);
+restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt);
 
 int complex_subsampled (void);
 
 int get_full_length_n (void);
 
-void set_dataset_resampled (DATAINFO *pdinfo);
+void set_dataset_resampled (DATASET *dset);
 
-int dataset_is_resampled (const DATAINFO *pdinfo);
+int dataset_is_resampled (const DATASET *dset);
 
-int set_sample (const char *line, double ***pZ, DATAINFO *pdinfo);
+int set_sample (const char *line, DATASET *dset);
 
-int restore_full_sample (double ***pZ, DATAINFO *pdinfo, ExecState *state);
+int restore_full_sample (DATASET *dset, ExecState *state);
 
-int backup_full_dataset (double **Z, DATAINFO *pdinfo);
+int backup_full_dataset (DATASET *dset);
 
-int count_missing_values (const double **Z, const DATAINFO *pdinfo, 
-			  gretlopt opt, PRN *prn, int *err);
+int count_missing_values (const DATASET *dset, gretlopt opt, 
+			  PRN *prn, int *err);
 
-int add_dataset_to_model (MODEL *pmod, const double **Z, 
-			  const DATAINFO *pdinfo,
-			  gretlopt opt);
+void maybe_free_full_dataset (const DATASET *dset);
 
-void free_model_dataset (MODEL *pmod);
+int model_sample_problem (MODEL *pmod, const DATASET *dset);
 
-void maybe_free_full_dataset (const DATAINFO *pdinfo);
+void print_sample_obs (const DATASET *dset, PRN *prn);
 
-int model_sample_problem (MODEL *pmod, const DATAINFO *pdinfo);
+void print_sample_status (const DATASET *dset, PRN *prn);
 
-void print_sample_obs (const DATAINFO *pdinfo, PRN *prn);
-
-void print_sample_status (const DATAINFO *pdinfo, PRN *prn);
-
-int data_report (const DATAINFO *pdinfo, const char *fname, PRN *prn);
+int data_report (const DATASET *dset, const char *fname, PRN *prn);
 
 #endif /* SUBSAMPLE_H */

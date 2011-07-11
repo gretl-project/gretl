@@ -749,7 +749,7 @@ static void dlg_text_set_from_sys (equation_system *sys,
 	return;
     }
 
-    print_equation_system_info(sys, datainfo, OPT_NONE, prn);
+    print_equation_system_info(sys, dataset, OPT_NONE, prn);
     buf = gretl_print_get_buffer(prn);
     textview_set_text(d->edit, buf);
     gretl_print_destroy(prn);

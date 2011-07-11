@@ -26,7 +26,8 @@
 #define HDEBUG 0
 
 static int 
-do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
+do_hurst_plot (int n, DATASET *dset, const MODEL *pmod, 
+	       const char *vname)
 {
     FILE *fp;
     int t, err = 0;
@@ -50,7 +51,7 @@ do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
     fputs("'-' using 1:2 w points lt 1\n", fp);
 
     for (t=0; t<n; t++) {
-	fprintf(fp, "%.10g %.10g\n", Z[2][t], Z[1][t]);
+	fprintf(fp, "%.10g %.10g\n", dset->Z[2][t], dset->Z[1][t]);
     }
     fputs("e\n", fp);
     
@@ -114,7 +115,7 @@ static double stdev (const double *x, int n, double xbar)
 }
 
 static int hurst_calc (const double *x, int n, int depth,
-		       double **Z, PRN *prn)
+		       DATASET *dset, PRN *prn)
 {
     const char *heads[] = {
 	N_("Size"),
@@ -157,11 +158,11 @@ static int hurst_calc (const double *x, int n, int depth,
 
 	RS /= nsub;
 	
-	Z[1][i] = log_2(RS);
-	Z[2][i] = log_2(m);
+	dset->Z[1][i] = log_2(RS);
+	dset->Z[2][i] = log_2(m);
 
 	pprintf(prn, "%*d %#*.5g %#*.5g %#*.5g\n", cw[0], m, cw[1], RS, 
-		cw[2], Z[2][i], cw[3], Z[1][i]);
+		cw[2], dset->Z[2][i], cw[3], dset->Z[1][i]);
     }
 
     return 0;
@@ -183,25 +184,26 @@ static int get_depth (int T)
 /* drop first/last observations from sample if missing obs 
    encountered */
 
-static int h_adjust_t1t2 (int v, const double **Z, int *t1, int *t2)
+static int h_adjust_t1t2 (int v, const DATASET *dset, 
+			  int *t1, int *t2)
 {
     int t, t1min = *t1, t2max = *t2;
     int miss = 0;
 
     for (t=t1min; t<t2max; t++) {
-	if (na(Z[v][t])) t1min++;
+	if (na(dset->Z[v][t])) t1min++;
 	else break;
     }
 
     for (t=t2max; t>t1min; t--) {
-	if (na(Z[v][t])) t2max--;
+	if (na(dset->Z[v][t])) t2max--;
 	else break;
     }
 
     *t1 = t1min; *t2 = t2max;
 
     for (t=t1min; t<t2max; t++) {
-	if (na(Z[v][t])) {
+	if (na(dset->Z[v][t])) {
 	    miss = 1;
 	    break;
 	}
@@ -210,11 +212,9 @@ static int h_adjust_t1t2 (int v, const double **Z, int *t1, int *t2)
     return miss;
 }
 
-int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo, 
-		    PRN *prn)
+int hurst_exponent (int vnum, const DATASET *dset, PRN *prn)
 {
-    double **hZ;
-    DATAINFO *hinfo;
+    DATASET *hset;
     MODEL hmod;
     int hlist[4] = { 3, 1, 0, 2 };
     int k, T;
@@ -222,10 +222,10 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
     int missing;
     int err = 0;
 
-    t1 = pdinfo->t1;
-    t2 = pdinfo->t2;
+    t1 = dset->t1;
+    t2 = dset->t2;
 
-    missing = h_adjust_t1t2(vnum, Z, &t1, &t2);
+    missing = h_adjust_t1t2(vnum, dset, &t1, &t2);
 
     if (missing) {
 	pputs(prn, _("There were missing data values"));
@@ -243,22 +243,22 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 
     k = get_depth(T);
 
-    hinfo = create_auxiliary_dataset(&hZ, 3, k);
-    if (hinfo == NULL) return E_ALLOC;
+    hset = create_auxiliary_dataset(3, k);
+    if (hset == NULL) return E_ALLOC;
 
     pprintf(prn, _("Rescaled range figures for %s"), 
-	    pdinfo->varname[vnum]);
+	    dset->varname[vnum]);
     pputc(prn, '\n');
     pputs(prn, _("(logs are to base 2)"));
     pputs(prn, "\n\n");
 
     /* do the rescaled range calculations */
-    hurst_calc(Z[vnum] + t1, T, k, hZ, prn);
+    hurst_calc(dset->Z[vnum] + t1, T, k, hset, prn);
 
-    strcpy(hinfo->varname[1], "RSavg");
-    strcpy(hinfo->varname[2], "size");
+    strcpy(hset->varname[1], "RSavg");
+    strcpy(hset->varname[2], "size");
 
-    hmod = lsq(hlist, hZ, hinfo, OLS, OPT_A);
+    hmod = lsq(hlist, hset, OLS, OPT_A);
 
     if ((err = hmod.errcode)) {
 	pputs(prn, _("Error estimating Hurst exponent model\n"));
@@ -290,15 +290,12 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (!err && !gretl_in_batch_mode() && !gretl_looping()) {
-	err = do_hurst_plot(k, hZ, &hmod, pdinfo->varname[vnum]);
+	err = do_hurst_plot(k, hset, &hmod, dset->varname[vnum]);
     }
 
     clear_model(&hmod);
 
-    destroy_dataset(hZ, hinfo);
+    destroy_dataset(hset);
 
     return err;
 }
-
-
-    

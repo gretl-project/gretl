@@ -2180,9 +2180,9 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec)
 
 static int plot_ols_var_ok (const char *vname)
 {
-    int v = current_series_index(datainfo, vname);
+    int v = current_series_index(dataset, vname);
 
-    if (v >= 0 && !strcmp(datainfo->varname[v], vname)) {
+    if (v >= 0 && !strcmp(dataset->varname[v], vname)) {
 	return 1;
     }
 
@@ -2199,7 +2199,7 @@ static void maybe_set_add_fit_ok (GPT_SPEC *spec)
 	       spec->lines[0].ncols == 2 &&
 	       !(spec->flags & (GPT_IMPULSES|GPT_LINES|GPT_RESIDS))) {
 	if (spec->flags & GPT_TS) {
-	    spec->fit = (dataset_is_time_series(datainfo))?
+	    spec->fit = (dataset_is_time_series(dataset))?
 		PLOT_FIT_NONE : PLOT_FIT_NA;
 	} else {
 	    spec->fit = PLOT_FIT_NONE;

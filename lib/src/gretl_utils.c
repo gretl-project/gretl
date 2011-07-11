@@ -114,20 +114,20 @@ int ijton (int i, int j, int nrows)
  * transcribe_array:
  * @targ: arrat to which to write.
  * @src: array from which to read.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * 
  * Copy from @src to @targ, skipping any missing values,
- * over the sample range defined in @pdinfo.
+ * over the sample range defined in @dset.
  *
  * Returns: the number of valid observations put into @targ.
  */
 
 int transcribe_array (double *targ, const double *src, 
-		      const DATAINFO *pdinfo) 
+		      const DATASET *dset) 
 {
     int t, n = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(src[t])) {
 	    targ[n++] = src[t];
 	}
@@ -461,22 +461,21 @@ int gretl_is_oprobit_ok (int t1, int t2, const double *x)
 /**
  * true_const:
  * @v: index number of variable to test.
- * @Z: data array.
- * @pdinfo: dataset information. 
+ * @dset: dataset struct. 
  * 
  * Check whether variable Z[v] equals 1 over the sample
- * range given in @pdinfo (aside from any missing values).
+ * range given in @dset (aside from any missing values).
  *
  * Returns: 1 if so, otherwise 0.
  */
 
-int true_const (int v, const double **Z, const DATAINFO *pdinfo)
+int true_const (int v, const DATASET *dset)
 {
-    if (v < 0 || v >= pdinfo->v) {
+    if (v < 0 || v >= dset->v) {
 	return 0;
     }
 
-    return gretl_isunits(pdinfo->t1, pdinfo->t2, Z[v]);
+    return gretl_isunits(dset->t1, dset->t2, dset->Z[v]);
 }
 
 /**
@@ -849,8 +848,7 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
 /**
  * set_obs:
  * @line: command line.
- * @pZ: pointer to data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: %OPT_S for stacked time-series, %OPT_C for stacked cross-section,
  * %OPT_T for time series, %OPT_X for cross section, %OPT_P to set
  * panel structure via two variables representing unit and period
@@ -861,21 +859,20 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo, 
-	     gretlopt opt)
+int set_obs (const char *line, DATASET *dset, gretlopt opt)
 {
     char pdstr[VNAMELEN];
     char stobs[OBSLEN];
     int structure = STRUCTURE_UNKNOWN;
-    double sd0 = pdinfo->sd0;
+    double sd0 = dset->sd0;
     int pd, dated = 0;
     int err = 0;
 
-    if (pZ == NULL || pdinfo == NULL) {
+    if (dset == NULL) {
 	return E_NODATA;
     }
 
-    if ((opt & (OPT_R | OPT_P)) && *pZ == NULL) {
+    if ((opt & (OPT_R | OPT_P)) && dset->Z == NULL) {
 	return E_NODATA;
     }
 
@@ -883,7 +880,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (opt & OPT_R) {
 	/* restructure panel: "hidden" option */
-	return switch_panel_orientation(*pZ, pdinfo);
+	return switch_panel_orientation(dset);
     }    
 
     if (!strcmp(line, "setobs")) {
@@ -892,7 +889,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (opt & OPT_P) {
-	return set_panel_structure_from_line(line, *pZ, pdinfo);
+	return set_panel_structure_from_line(line, dset);
     }
 
     /* now we get down to business */
@@ -915,7 +912,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* does the supplied frequency make sense? */
-    if (pd < 1 || (pdinfo->n > 0 && pd > pdinfo->n && opt != OPT_T)) {
+    if (pd < 1 || (dset->n > 0 && pd > dset->n && opt != OPT_T)) {
 	gretl_errmsg_sprintf(_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;
     }
@@ -952,7 +949,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    structure = TIME_SERIES;
 
 	    /* replace any existing markers with date strings */
-	    dataset_destroy_obs_markers(pdinfo);
+	    dataset_destroy_obs_markers(dset);
 	} else {
 	    gretl_errmsg_sprintf(_("starting obs '%s' is invalid"), stobs);
 	    return 1;
@@ -973,7 +970,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    /* catch undated daily or weekly data */
 	    structure = TIME_SERIES;
 	} else {
-	    if (catch_setobs_errors(stobs, pd, pdinfo->n, min, opt)) {
+	    if (catch_setobs_errors(stobs, pd, dset->n, min, opt)) {
 		return 1;
 	    }
 	    if (pd == 1) {
@@ -1002,21 +999,21 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	sd0 = dot_atof(stobs);
     }
 
-    pdinfo->pd = pd;
-    pdinfo->structure = structure;
-    pdinfo->sd0 = sd0;
+    dset->pd = pd;
+    dset->structure = structure;
+    dset->sd0 = sd0;
 
-    ntodate(pdinfo->stobs, 0, pdinfo); 
-    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    ntodate(dset->stobs, 0, dset); 
+    ntodate(dset->endobs, dset->n - 1, dset);
 
     /* pre-process stacked cross-sectional panels: put into canonical
        stacked time series form
     */
-    if (pdinfo->structure == STACKED_CROSS_SECTION) {
-	if (*pZ == NULL) {
+    if (dset->structure == STACKED_CROSS_SECTION) {
+	if (dset->Z == NULL) {
 	    err = E_NODATA;
 	} else {
-	    err = switch_panel_orientation(*pZ, pdinfo);
+	    err = switch_panel_orientation(dset);
 	}
     }	
 
@@ -1153,16 +1150,16 @@ int positive_int_from_string (const char *s)
 /**
  * varnum_from_string:
  * @str: string representation of an integer ID number.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * 
  * Returns: integer ID number, or -1 on failure.
  */
 
-int varnum_from_string (const char *str, DATAINFO *pdinfo)
+int varnum_from_string (const char *str, DATASET *dset)
 {
     int v = positive_int_from_string(str);
 
-    if (v <= 0 || v >= pdinfo->v) {
+    if (v <= 0 || v >= dset->v) {
 	v = -1;
     } 
     
@@ -1172,16 +1169,16 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 /**
  * gretl_type_from_name:
  * @s: the name to check.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * 
  * Returns: non-zero if @s is the name of an existing
  * series, matrix, scalar, list or string variable,
  * otherwise 0.
  */
 
-GretlType gretl_type_from_name (const char *s, const DATAINFO *pdinfo)
+GretlType gretl_type_from_name (const char *s, const DATASET *dset)
 {
-    if (gretl_is_series(s, pdinfo)) {
+    if (gretl_is_series(s, dset)) {
 	return GRETL_TYPE_SERIES;
     } else if (get_matrix_by_name(s) != NULL) {
 	return GRETL_TYPE_MATRIX;
@@ -1424,9 +1421,9 @@ double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
     return X;
 }
 
-double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
+double get_xvalue (int i, const double **Z, const DATASET *dset)
 {
-    return Z[i][pdinfo->t1];
+    return Z[i][dset->t1];
 }
 
 #ifndef WIN32
@@ -1724,7 +1721,7 @@ void libgretl_session_cleanup (int mode)
 	gretl_transforms_cleanup();
 	gretl_lists_cleanup();
 	gretl_tests_cleanup();
-	gretl_plotx(NULL, NULL);
+	gretl_plotx(NULL);
     }
 
     if (mode != SESSION_CLEAR_DATASET) {

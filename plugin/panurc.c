@@ -246,12 +246,11 @@ static const char *DF_test_spec (int m)
 
 /* Levin-Lin-Chu panel unit-root test */
 
-int real_levin_lin (int vnum, const int *plist,
-		    double **Z, DATAINFO *pdinfo, 
+int real_levin_lin (int vnum, const int *plist, DATASET *dset, 
 		    gretlopt opt, PRN *prn)
 {
-    int u0 = pdinfo->t1 / pdinfo->pd;
-    int uN = pdinfo->t2 / pdinfo->pd;
+    int u0 = dset->t1 / dset->pd;
+    int uN = dset->t2 / dset->pd;
     int N = uN - u0 + 1; /* units in sample range */
     gretl_matrix_block *B;
     gretl_matrix *y, *yavg, *b;
@@ -296,14 +295,14 @@ int real_levin_lin (int vnum, const int *plist,
     /* check that we have a useable common sample */
     
     for (i=0; i<N && !err; i++) {
-	int pt1 = (i + u0) * pdinfo->pd;
+	int pt1 = (i + u0) * dset->pd;
 	int t1i, t2i;
 
-	pdinfo->t1 = pt1;
-	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
-	err = series_adjust_sample(Z[vnum], &pdinfo->t1, &pdinfo->t2);
-	t1i = pdinfo->t1 - pt1;
-	t2i = pdinfo->t2 - pt1;
+	dset->t1 = pt1;
+	dset->t2 = dset->t1 + dset->pd - 1;
+	err = series_adjust_sample(dset->Z[vnum], &dset->t1, &dset->t2);
+	t1i = dset->t1 - pt1;
+	t2i = dset->t2 - pt1;
 	if (i == 0) {
 	    t1 = t1i;
 	    t2 = t2i;
@@ -372,11 +371,11 @@ int real_levin_lin (int vnum, const int *plist,
     /* compute period sums of y for time-demeaning */
 
     for (i=0; i<N; i++) {
-	pt1 = t1 + (i + u0) * pdinfo->pd;
-	pt2 = t2 + (i + u0) * pdinfo->pd;
+	pt1 = t1 + (i + u0) * dset->pd;
+	pt2 = t2 + (i + u0) * dset->pd;
 	s = 0;
 	for (t=pt1; t<=pt2; t++) {
-	    yavg->val[s++] += Z[vnum][t];
+	    yavg->val[s++] += dset->Z[vnum][t];
 	}
     }
 
@@ -404,23 +403,23 @@ int real_levin_lin (int vnum, const int *plist,
 	}
 
 	/* indices into Z array */
-	pt1 = t1 + (i + u0) * pdinfo->pd;
-	pt2 = t2 + (i + u0) * pdinfo->pd;
+	pt1 = t1 + (i + u0) * dset->pd;
+	pt2 = t2 + (i + u0) * dset->pd;
 	pt0 = pt1 + 1 + p_i;
 
 	/* build (full length) \delta y_t in dy */
 	s = 0;
 	for (t=pt1+1; t<=pt2; t++) {
 	    ss = t - pt1;
-	    yti = Z[vnum][t] - gretl_vector_get(yavg, ss);
-	    yti_1 = Z[vnum][t-1] - gretl_vector_get(yavg, ss-1);
+	    yti = dset->Z[vnum][t] - gretl_vector_get(yavg, ss);
+	    yti_1 = dset->Z[vnum][t-1] - gretl_vector_get(yavg, ss-1);
 	    gretl_vector_set(dy, s++, yti - yti_1);
 	}
 
 	/* build y_{t-1} in y */
 	s = 0;
 	for (t=pt0; t<=pt2; t++) {
-	    yti_1 = Z[vnum][t-1] - gretl_vector_get(yavg, t - pt1 - 1);
+	    yti_1 = dset->Z[vnum][t-1] - gretl_vector_get(yavg, t - pt1 - 1);
 	    gretl_vector_set(y, s++, yti_1);
 	}	
 
@@ -562,7 +561,7 @@ int real_levin_lin (int vnum, const int *plist,
 		    N_("t-ratio"),
 		    N_("z-score")
 		};
-		const char *s = pdinfo->varname[vnum];
+		const char *s = dset->varname[vnum];
 		char NTstr[32];
 		int sp[3] = {0, 3, 5};
 		int w[3] = {4, 6, 0};

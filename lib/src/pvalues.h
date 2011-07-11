@@ -111,12 +111,10 @@ double gretl_get_critval (char st, const double *parm, double a);
 double *gretl_get_random_series (char st, const double *parm,
 				 const double *serp1, 
 				 const double *serp2, 
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 int *err);
 
-int batch_pvalue (const char *str, 
-		  double ***pZ, DATAINFO *pdinfo, 
-		  PRN *prn);
+int batch_pvalue (const char *str, DATASET *dset, PRN *prn);
 
 void print_pvalue (char st, const double *parm, double x, double pv, PRN *prn);
 

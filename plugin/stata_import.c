@@ -350,7 +350,7 @@ static gchar *recode_stata_string (const char *s)
 }
 
 static void
-save_dataset_info (DATAINFO *dinfo, const char *label, const char *stamp)
+save_dataset_info (DATASET *dinfo, const char *label, const char *stamp)
 {
     int dlen = strlen(stamp);
     gchar *tr = NULL;
@@ -416,7 +416,7 @@ static int try_fix_varname (char *name)
    (Stata dates are all zero at the start of 1960.)
 */
 
-static int set_time_info (int t1, int pd, DATAINFO *dinfo)
+static int set_time_info (int t1, int pd, DATASET *dinfo)
 {
     int yr, mo, qt;
 
@@ -484,7 +484,7 @@ static int push_label_info (int **pv, char ***pS, int v, const char *lname)
 }
 
 static int label_array_header (const int *list, char **names, 
-			       const char *lname, const DATAINFO *pdinfo,
+			       const char *lname, const DATASET *dset,
 			       PRN *prn)
 {
     int i, v = 0, n = 0;
@@ -502,13 +502,13 @@ static int label_array_header (const int *list, char **names,
 
     if (n == 1) {
 	pprintf(prn, "\nValue -> label mappings for variable %d (%s)\n", 
-		v, pdinfo->varname[v]);
+		v, dset->varname[v]);
     } else {
 	pprintf(prn, "\nValue -> label mappings for the following %d variables\n", n);
 	for (i=1; i<=list[0]; i++) {
 	    if (!strcmp(names[i-1], lname)) {
 		v = list[i];
-		pprintf(prn, " %3d (%s)\n", v, pdinfo->varname[v]);
+		pprintf(prn, " %3d (%s)\n", v, dset->varname[v]);
 	    }
 	}
     }
@@ -536,14 +536,14 @@ static void print_var_format (int k, const char *s, PRN *prn)
     pprintf(prn, "variable %d: format = '%s'\n", k, tmp);    
 }
 
-static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
+static int read_dta_data (FILE *fp, DATASET *dset,
 			  gretl_string_table **pst, int namelen,
 			  int *nvread, PRN *prn, PRN *vprn)
 {
     int i, j, t, clen;
     int labellen, nlabels, totlen;
     int fmtlen;
-    int nvar = dinfo->v - 1, nsv = 0;
+    int nvar = dset->v - 1, nsv = 0;
     int soffset, pd = 0, tnum = -1;
     char label[81], c50[50], aname[33];
     int *types = NULL;
@@ -571,7 +571,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     pprintf(vprn, "timestamp: '%s'\n", c50);
 
     if (*label != '\0' || *c50 != '\0') {
-	save_dataset_info(dinfo, label, c50);
+	save_dataset_info(dset, label, c50);
     }
   
     /** read variable descriptors **/
@@ -601,7 +601,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	if (check_varname(aname) && try_fix_varname(aname)) {
 	    err = 1;
 	} else {
-	    strncat(dinfo->varname[i+1], aname, VNAMELEN - 1);
+	    strncat(dset->varname[i+1], aname, VNAMELEN - 1);
 	}
     }
 
@@ -648,12 +648,12 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	if (*label != '\0') {
 	    pprintf(vprn, "variable %d: label = '%s'\n", i+1, label);
 	    if (g_utf8_validate(label, -1, NULL)) {
-		strncat(VARLABEL(dinfo, i+1), label, MAXLABEL - 1);
+		strncat(VARLABEL(dset, i+1), label, MAXLABEL - 1);
 	    } else {
 		gchar *tr = recode_stata_string(label);
 
 		if (tr != NULL) {
-		    strncat(VARLABEL(dinfo, i+1), tr, MAXLABEL - 1);
+		    strncat(VARLABEL(dset, i+1), tr, MAXLABEL - 1);
 		    g_free(tr);
 		}
 	    } 
@@ -685,25 +685,25 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     /* actual data values */
-    for (t=0; t<dinfo->n && !err; t++) {
+    for (t=0; t<dset->n && !err; t++) {
 	for (i=0; i<nvar && !err; i++) {
 	    int ix, v = i + 1;
 
-	    Z[v][t] = NADBL; 
+	    dset->Z[v][t] = NADBL; 
 
 	    if (stata_type_float(types[i])) {
-		Z[v][t] = stata_read_float(fp, &err);
+		dset->Z[v][t] = stata_read_float(fp, &err);
 	    } else if (stata_type_double(types[i])) {
-		Z[v][t] = stata_read_double(fp, &err);
+		dset->Z[v][t] = stata_read_double(fp, &err);
 	    } else if (stata_type_long(types[i])) {
 		ix = stata_read_long(fp, 0, &err);
-		Z[v][t] = (ix == NA_INT)? NADBL : ix;
+		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_int(types[i])) {
 		ix = stata_read_int(fp, 0, &err);
-		Z[v][t] = (ix == NA_INT)? NADBL : ix;
+		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else if (stata_type_byte(types[i])) {
 		ix = stata_read_signed_byte(fp, 0, &err);
-		Z[v][t] = (ix == NA_INT)? NADBL : ix;
+		dset->Z[v][t] = (ix == NA_INT)? NADBL : ix;
 	    } else {
 		clen = types[i] - soffset;
 		stata_read_string(fp, clen, strbuf, &err);
@@ -714,16 +714,16 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		if (*strbuf != '\0' && strcmp(strbuf, ".") && *pst != NULL) {
 		    ix = gretl_string_table_index(*pst, strbuf, v, 0, prn);
 		    if (ix > 0) {
-			Z[v][t] = ix;
+			dset->Z[v][t] = ix;
 			if (t == 0) {
-			    set_var_discrete(dinfo, v, 1);
+			    set_var_discrete(dset, v, 1);
 			}
 		    }	
 		}
 	    }
 
 	    if (i == tnum && t == 0) {
-		set_time_info((int) Z[v][t], pd, dinfo);
+		set_time_info((int) dset->Z[v][t], pd, dset);
 	    }
 	}
     }
@@ -778,7 +778,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		break;
 	    }
 
-	    label_array_header(lvars, lnames, aname, dinfo, st_prn);
+	    label_array_header(lvars, lnames, aname, dset, st_prn);
 
 	    for (i=0; i<nlabels && !err; i++) {
 		off[i] = stata_read_long(fp, 1, &err);
@@ -882,15 +882,13 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs,
     return err;
 }
 
-int dta_get_data (const char *fname, 
-		  double ***pZ, DATAINFO *pdinfo,
+int dta_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
     int namelen = 0, nobs = 0;
     int nvar = 0, nvread = 0;
     FILE *fp;
-    double **newZ = NULL;
-    DATAINFO *newinfo = NULL;
+    DATASET *newset = NULL;
     gretl_string_table *st = NULL;
     PRN *vprn = prn;
     int err = 0;
@@ -916,53 +914,53 @@ int dta_get_data (const char *fname,
 	return E_DATA;
     }
 
-    newinfo = datainfo_new();
-    if (newinfo == NULL) {
+    newset = datainfo_new();
+    if (newset == NULL) {
 	pputs(prn, _("Out of memory\n"));
 	fclose(fp);
 	return E_ALLOC;
     }
 
-    newinfo->v = nvar + 1;
-    newinfo->n = nobs;
-    dataset_obs_info_default(newinfo);
+    newset->v = nvar + 1;
+    newset->n = nobs;
+    dataset_obs_info_default(newset);
 
-    err = start_new_Z(&newZ, newinfo, 0);
+    err = start_new_Z(newset, 0);
     if (err) {
 	pputs(prn, _("Out of memory\n"));
-	free_datainfo(newinfo);
+	free_datainfo(newset);
 	fclose(fp);
 	return E_ALLOC;
     }	
 
-    err = read_dta_data(fp, newZ, newinfo, &st, namelen, &nvread, prn, vprn);
+    err = read_dta_data(fp, newset, &st, namelen, &nvread, prn, vprn);
 
     if (err) {
-	destroy_dataset(newZ, newinfo);
+	destroy_dataset(newset);
 	if (st != NULL) {
 	    gretl_string_table_destroy(st);
 	}	
     } else {
-	int merge = (*pZ != NULL);
-	int nvtarg = newinfo->v - 1;
+	int merge = (dset->Z != NULL);
+	int nvtarg = newset->v - 1;
 
 	if (nvread < nvtarg) {
-	    dataset_drop_last_variables(nvtarg - nvread, &newZ, newinfo);
+	    dataset_drop_last_variables(nvtarg - nvread, newset);
 	}
 	
-	if (fix_varname_duplicates(newinfo)) {
+	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
 	if (st != NULL) {
-	    gretl_string_table_print(st, newinfo, fname, prn);
+	    gretl_string_table_print(st, newset, fname, prn);
 	    gretl_string_table_destroy(st);
 	}
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+	err = merge_or_replace_data(dset, &newset, opt, prn);
     
 	if (!err && !merge) {
-	    dataset_add_import_info(pdinfo, fname, GRETL_DTA);
+	    dataset_add_import_info(dset, fname, GRETL_DTA);
 	}
     }
 

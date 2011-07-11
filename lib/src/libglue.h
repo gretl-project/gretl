@@ -20,32 +20,29 @@
 #ifndef LIBGLUE_H
 #define LIBGLUE_H
 
-int model_test_driver (const char *param, 
-		       double ***pZ, DATAINFO *pdinfo, 
+int model_test_driver (const char *param, DATASET *dset, 
 		       gretlopt opt, PRN *prn);
 
-int chow_test_driver (const char *line, MODEL *pmod, double ***pZ,
-		      DATAINFO *pdinfo, gretlopt opt, PRN *prn);
+int chow_test_driver (const char *line, MODEL *pmod, 
+		      DATASET *dset, gretlopt opt, PRN *prn);
 
 int llc_test_driver (const char *parm, const int *list, 
-		     double ***pZ, DATAINFO *pdinfo,
-		     gretlopt opt, PRN *prn);
+		     DATASET *dset, gretlopt opt, PRN *prn);
 
 MODEL quantreg_driver (const char *parm, const int *list, 
-		       double ***pZ, DATAINFO *pdinfo,
-		       gretlopt opt, PRN *prn);
+		       DATASET *dset, gretlopt opt, PRN *prn);
 
-MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL logit_probit (int *list, DATASET *dset, 
 		    int ci, gretlopt opt, PRN *prn);
 
-MODEL logistic_driver (const int *list, double ***pZ, DATAINFO *pdinfo,
+MODEL logistic_driver (const int *list, DATASET *dset,
 		       const char *param); 
 
-MODEL tobit_driver (const int *list, double ***pZ, DATAINFO *pdinfo, 
+MODEL tobit_driver (const int *list, DATASET *dset, 
 		    gretlopt opt, PRN *prn);
 
 int do_modprint (const char *line, gretlopt opt, PRN *prn);
 
-int script_add_obs_markers (DATAINFO *pdinfo);
+int script_add_obs_markers (DATASET *dset);
 
 #endif /* LIBGLUE_H */

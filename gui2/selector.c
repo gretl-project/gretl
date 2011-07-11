@@ -321,7 +321,7 @@ static int sr_get_lag_context (selector *sr, int locus)
 {
     int c = 0;
 
-    if (sr == NULL || !dataset_lags_ok(datainfo)) {
+    if (sr == NULL || !dataset_lags_ok(dataset)) {
 	return 0;
     }
 
@@ -463,8 +463,8 @@ static int varnum_from_keystring (MODEL *pmod, const char *key)
     int v = 0;
 
     if (s != NULL && *s != '\0') {
-	v = series_index(datainfo, s);
-	if (v == datainfo->v) {
+	v = series_index(dataset, s);
+	if (v == dataset->v) {
 	    v = 0;
 	}
     }
@@ -614,7 +614,7 @@ void selector_from_model (void *ptr, int ci)
 	    hivar = varnum_from_keystring(pmod, "hivar");
 	} else {
 	    dv = gretl_model_get_depvar(pmod);
-	    if (dv >= 0 && dv < datainfo->v) {
+	    if (dv >= 0 && dv < dataset->v) {
 		default_y = dv;
 	    }
 	}
@@ -726,8 +726,8 @@ void selector_from_model (void *ptr, int ci)
 
 	y_x_lags_enabled = y_w_lags_enabled = 0;
 
-	if ((dataset_is_time_series(datainfo) || 
-	     dataset_is_panel(datainfo)) && 
+	if ((dataset_is_time_series(dataset) || 
+	     dataset_is_panel(dataset)) && 
 	    (xlist != NULL || gotinst)) {
 	    set_lag_prefs_from_model(dv, xlist, instlist);
 	}
@@ -797,8 +797,8 @@ int selector_get_depvar_number (const selector *sr)
 	const char *s = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
 
 	if (s != NULL && *s != '\0') {
-	    ynum = series_index(datainfo, s);
-	    if (ynum == datainfo->v) {
+	    ynum = series_index(dataset, s);
+	    if (ynum == dataset->v) {
 		ynum = -1;
 	    }
 	}
@@ -854,12 +854,12 @@ real_varlist_set_var (int v, int lag, GtkTreeModel *mod, GtkTreeIter *iter)
 
     if (lag == 0) {
 	gtk_list_store_set(store, iter, 0, v, 1, 0, 
-			   2, datainfo->varname[v], 
+			   2, dataset->varname[v], 
 			   -1);
     } else {
 	char vstr[VNAMELEN + 8];
 
-	sprintf(vstr, "%s(-%d)", datainfo->varname[v], lag);
+	sprintf(vstr, "%s(-%d)", dataset->varname[v], lag);
 	gtk_list_store_set(store, iter, 0, v, 1, lag, 
 			   2, vstr, -1);
     }
@@ -882,7 +882,7 @@ varlist_remove_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter)
 
 #if VLDEBUG
     fprintf(stderr, "\nvarlist_remove_var_full: looking for var %d (%s)\n", v,
-	    datainfo->varname[v]);
+	    dataset->varname[v]);
 #endif
 
     if (gtk_tree_model_get_iter_first(mod, iter)) {
@@ -931,7 +931,7 @@ varlist_insert_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter,
     fprintf(stderr, "varlist_insert_var_full: starting var %d\n", v);
 #endif
 
-    if (v > 0 && dataset_lags_ok(datainfo)) {
+    if (v > 0 && dataset_lags_ok(dataset)) {
 	lcontext = sr_get_lag_context(sr, locus);
     }
 
@@ -1001,7 +1001,7 @@ static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
 
 static void list_append_var_simple (GtkListStore *store, GtkTreeIter *iterp, int v)
 {
-    const char *vname = datainfo->varname[v];
+    const char *vname = dataset->varname[v];
 
     gtk_list_store_append(store, iterp);    
     gtk_list_store_set(store, iterp, 0, v, 1, 0, 2, vname, -1);
@@ -1012,7 +1012,7 @@ static void list_append_var (GtkTreeModel *mod, GtkTreeIter *iter,
 {
     int i, lcontext = 0;
 
-    if (v > 0 && dataset_lags_ok(datainfo)) {
+    if (v > 0 && dataset_lags_ok(dataset)) {
 	lcontext = sr_get_lag_context(sr, locus);
     }
 
@@ -1141,7 +1141,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
 
 static int non_binary_var_check (int vnum, const char *vname)
 {
-    if (!gretl_isdummy(datainfo->t1, datainfo->t2, Z[vnum])) {
+    if (!gretl_isdummy(dataset->t1, dataset->t2, dataset->Z[vnum])) {
 	errbox(_("The variable '%s' is not a 0/1 variable."), vname);
 	return 1;
     }
@@ -1370,7 +1370,7 @@ static void dependent_var_cleanup (selector *sr, int newy)
 static int set_dependent_var_from_active (selector *sr)
 {
     gint vnum = sr->active_var;
-    char *vname = datainfo->varname[vnum];
+    char *vname = dataset->varname[vnum];
 
     if (sr->depvar == NULL) {
 	return 1;
@@ -1504,7 +1504,7 @@ static void select_singleton (selector *sr)
     gtk_tree_model_get_iter_first(rmod, &iter);
     gtk_list_store_append(GTK_LIST_STORE(rmod), &iter);
     gtk_list_store_set(GTK_LIST_STORE(rmod), &iter, 
-		       0, v, 1, 0, 2, datainfo->varname[v], -1);
+		       0, v, 1, 0, 2, dataset->varname[v], -1);
 }
 
 static int varflag_dialog (int v)
@@ -1517,7 +1517,7 @@ static int varflag_dialog (int v)
     int ret;
 
     title = g_strdup_printf("gretl: %s", _("add exogenous variable"));
-    label = g_strdup_printf(_("Status of '%s' in VECM:"), datainfo->varname[v]);
+    label = g_strdup_printf(_("Status of '%s' in VECM:"), dataset->varname[v]);
 
     ret = radio_dialog(title, label, opts, 2, 0, 0);
     if (ret == 0) {
@@ -2449,7 +2449,7 @@ int selector_get_VAR_order (const selector *sr)
 static char *get_lagpref_string (int v, char context,
 				 selector *sr)
 {
-    const char *vname = datainfo->varname[v];
+    const char *vname = dataset->varname[v];
     const int *laglist;
     int lmin, lmax;
     char *s = NULL;
@@ -2642,7 +2642,7 @@ static int get_vecm_exog_list (selector *sr, int rows,
 	if (flag == NULL) {
 	    err = E_DATA;
 	} else if (lag != 0) {
-	    v = laggenr(v, lag, &Z, datainfo);
+	    v = laggenr(v, lag, dataset);
 	    if (v < 0) {
 		err = E_DATA;
 	    }
@@ -2782,7 +2782,7 @@ static void read_quantreg_extras (selector *sr)
 	gretl_matrix *m;
 
 	comma_separate_numbers(tmp);
-	m = generate_matrix(tmp, &Z, datainfo, &sr->error);
+	m = generate_matrix(tmp, dataset, &sr->error);
 	gretl_matrix_free(m);
 
 	if (sr->error) {
@@ -3040,7 +3040,7 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	    sprintf(numstr, "%d", ynum);
 	    add_to_cmdlist(sr, numstr);
 	}
-	if (select_lags_depvar(sr->ci) && dataset_lags_ok(datainfo)) {
+	if (select_lags_depvar(sr->ci) && dataset_lags_ok(dataset)) {
 	    *dvlags = get_lagpref_string(ynum, LAG_Y_X, NULL);
 	    if (USE_ZLIST(sr->ci)) {
 		*idvlags = get_lagpref_string(ynum, LAG_Y_W, NULL);
@@ -3697,8 +3697,8 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox,
 						  set_dependent_var_callback);
     }
 
-    if (vnum > 0 && vnum < datainfo->v) {
-        gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[vnum]);
+    if (vnum > 0 && vnum < dataset->v) {
+        gtk_entry_set_text(GTK_ENTRY(sr->depvar), dataset->varname[vnum]);
     }
 }
 
@@ -3722,9 +3722,9 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     int defvar;
 
     if (sr->ci == INTREG) {
-	defvar = (lovar > 0 && lovar < datainfo->v)? lovar : -1;
+	defvar = (lovar > 0 && lovar < dataset->v)? lovar : -1;
     } else {
-	if (default_y >= datainfo->v) {
+	if (default_y >= dataset->v) {
 	    default_y = -1;
 	}
 	defvar = (preselect)? preselect : default_y;
@@ -3757,7 +3757,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);
 
     if (defvar >= 0) {
-        gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[defvar]);
+        gtk_entry_set_text(GTK_ENTRY(sr->depvar), dataset->varname[defvar]);
     }
 
     gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
@@ -3810,13 +3810,13 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int which)
     };
     int i, nspin = (which == LAG_AND_RANK)? 2 : 1;
 
-    maxlag = (datainfo->n < 72)? (datainfo->n / 2) : 36;
+    maxlag = (dataset->n < 72)? (dataset->n / 2) : 36;
     minlag = (sr->ci == COINT)? 0 : 1;
 
     if (default_order > 0 && default_order <= maxlag) {
 	lag = default_order;
     } else {
-	lag = (datainfo->pd > 12)? 12 : datainfo->pd;
+	lag = (dataset->pd > 12)? 12 : dataset->pd;
     }
 
     if (sr->ci == VLAGSEL) {
@@ -3875,15 +3875,15 @@ static void AR_order_spin (selector *sr, GtkWidget *vbox)
 
     if (sr->ci == ARCH) {
 	tmp = gtk_label_new(_("ARCH order:"));
-	val = datainfo->pd;
-	maxlag = 2 * datainfo->pd;
+	val = dataset->pd;
+	maxlag = 2 * dataset->pd;
     } else {
 	/* dpanel */
 	tmp = gtk_label_new(_("AR order:"));
 	val = dpd_p;
 	maxlag = 10;
-	if (maxlag < datainfo->pd - 2) {
-	    maxlag = datainfo->pd - 2;
+	if (maxlag < dataset->pd - 2) {
+	    maxlag = dataset->pd - 2;
 	}
     }
 
@@ -3930,20 +3930,20 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
 						NULL, 0,
 						set_extra_var_callback);
 
-    if (sr->ci == WLS && wtvar > 0 && wtvar < datainfo->v) {
+    if (sr->ci == WLS && wtvar > 0 && wtvar < dataset->v) {
 	setvar = wtvar;
-    } else if (sr->ci == HECKIT && selvar > 0 && selvar < datainfo->v) {
+    } else if (sr->ci == HECKIT && selvar > 0 && selvar < dataset->v) {
 	setvar = selvar;
-    } else if (sr->ci == INTREG && hivar > 0 && hivar < datainfo->v) {
+    } else if (sr->ci == INTREG && hivar > 0 && hivar < dataset->v) {
 	setvar = hivar;
-    } else if (sr->ci == COUNTMOD && offvar > 0 && offvar < datainfo->v) {
+    } else if (sr->ci == COUNTMOD && offvar > 0 && offvar < dataset->v) {
 	setvar = offvar;
-    } else if (sr->ci == DURATION && censvar > 0 && censvar < datainfo->v) {
+    } else if (sr->ci == DURATION && censvar > 0 && censvar < dataset->v) {
 	setvar = censvar;
     }
 
     if (setvar > 0) {
-	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), datainfo->varname[setvar]);
+	gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), dataset->varname[setvar]);
 	g_object_set_data(G_OBJECT(sr->extra[0]), "data",
 			  GINT_TO_POINTER(setvar));
     }	
@@ -4058,7 +4058,7 @@ static void secondary_rhs_varlist (selector *sr, GtkWidget *vbox)
 
     if (USE_ZLIST(sr->ci) && instlist != NULL) {
 	for (i=1; i<=instlist[0]; i++) {
-	    if (instlist[i] < datainfo->v) {
+	    if (instlist[i] < dataset->v) {
 		list_append_var(mod, &iter, instlist[i], sr, SR_RVARS2);
 	    }
 	}
@@ -4198,7 +4198,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
     sr->data = p;
     
     if (MODEL_CODE(ci)) {
-	if (datainfo->v > 9) {
+	if (dataset->v > 9) {
 	    dlgy += 80;
 	} 
     } 
@@ -4237,7 +4237,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 20;
     }    
 
-    if (ci == ARMA && datainfo->pd > 1) {
+    if (ci == ARMA && dataset->pd > 1) {
 	/* seasonal spinners */
 	dlgy += 60;
     }
@@ -4247,7 +4247,7 @@ static void selector_init (selector *sr, guint ci, const char *title,
 	dlgy += 50;
     }
 
-    if (dataset_lags_ok(datainfo)) {
+    if (dataset_lags_ok(dataset)) {
 	if (MODEL_CODE(ci) && ci != ARMA) {
 	    /* lag selector button at foot */
 	    dlgy += 30;
@@ -4459,7 +4459,7 @@ static void build_arma_spinners (selector *sr)
     };
     int i, j;
 
-    if (datainfo->pd > 1) {
+    if (dataset->pd > 1) {
 	vbox_add_vwedge(sr->vbox);
 	lbl = arma_aux_label(0);
 	gtk_box_pack_start(GTK_BOX(sr->vbox), lbl, FALSE, FALSE, 0);
@@ -4521,7 +4521,7 @@ static void build_arma_spinners (selector *sr)
 
     j = 5;
 
-    if (datainfo->pd > 1) {
+    if (dataset->pd > 1) {
 	vbox_add_vwedge(sr->vbox);
 
 	lbl = arma_aux_label(1);
@@ -4853,9 +4853,9 @@ static void build_selector_switches (selector *sr)
 	}
 	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
 	pack_switch(tmp, sr, 
-		    want_seasonals && (datainfo->pd == 4 || datainfo->pd == 12),
+		    want_seasonals && (dataset->pd == 4 || dataset->pd == 12),
 		    FALSE, OPT_D, 0);
-	if (datainfo->pd != 4 && datainfo->pd != 12) {
+	if (dataset->pd != 4 && dataset->pd != 12) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	}
     } else if (sr->ci == HILU) {
@@ -4927,7 +4927,7 @@ static void unhide_lags_callback (GtkWidget *w, selector *sr)
     imin = (sr->ci == DEFINE_LIST)? 0 : 1;
     show_lags = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
-    for (i=imin; i<datainfo->v; i++) {
+    for (i=imin; i<dataset->v; i++) {
 	if (list_show_var(i, sr->ci, show_lags)) {
 	    list_append_var_simple(store, &iter, i);
 	}
@@ -5553,15 +5553,15 @@ static int list_show_var (int v, int ci, int show_lags)
 	;
     } else if (v == 0 && (!MODEL_CODE(ci) || ci == ARMA || ci == GARCH)) {
 	ret = 0;
-    } else if (var_is_hidden(datainfo, v)) {
+    } else if (var_is_hidden(dataset, v)) {
 	ret = 0;
-    } else if (!show_lags && is_standard_lag(v, datainfo, NULL)) {
+    } else if (!show_lags && is_standard_lag(v, dataset, NULL)) {
 	lags_hidden = 1;
 	ret = 0;
     } else if (ci == XTAB) {
 	ret = 0;
-	if (var_is_discrete(datainfo, v) || 
-	    gretl_isdiscrete(datainfo->t1, datainfo->t2, Z[v])) {
+	if (var_is_discrete(dataset, v) || 
+	    gretl_isdiscrete(dataset->t1, dataset->t2, dataset->Z[v])) {
 	    ret = 1;
 	}
     }
@@ -5584,7 +5584,7 @@ void selector_register_genr (int newvars, gpointer p)
     tree_model_get_iter_last(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<newvars; i++) {
-	v = datainfo->v - newvars + i;
+	v = dataset->v - newvars + i;
 	if (list_show_var(v, sr->ci, 0)) {
 	    list_append_var_simple(store, &iter, v);
 	}
@@ -5845,7 +5845,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     if (FNPKG_CODE(ci)) {
 	functions_list(sr);
     } else {
-	for (i=0; i<datainfo->v; i++) {
+	for (i=0; i<dataset->v; i++) {
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
 	    }
@@ -5915,7 +5915,7 @@ selector *selection_dialog (const char *title, int (*callback)(), guint ci)
     }    
 
     /* plus lag selection stuff, if relevant */
-    if (dataset_lags_ok(datainfo)) {
+    if (dataset_lags_ok(dataset)) {
 	if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY || \
 	    ci == SCATTERS || ci == GR_3D || ci == GR_XYZ) {
 	    unhide_lags_switch(sr);
@@ -6014,7 +6014,7 @@ static int add_omit_list (gpointer p, selector *sr)
 	}
 
 	for (i=0; i<nc; i++) {
-	    gretl_model_get_param_name(pmod, datainfo, i, pname);
+	    gretl_model_get_param_name(pmod, dataset, i, pname);
 	    gtk_list_store_append(store, &iter);
 	    gtk_list_store_set(store, &iter, 
 			       0, i, 1, 0,
@@ -6034,13 +6034,13 @@ static int add_omit_list (gpointer p, selector *sr)
 	if (sr->ci == ADD) {
 	    int dv = gretl_model_get_depvar(pmod);
 
-	    for (i=0; i<datainfo->v; i++) {
+	    for (i=0; i<dataset->v; i++) {
 		if (!in_gretl_list(xlist, i) && i != dv &&
-		    !var_is_hidden(datainfo, i)) {
+		    !var_is_hidden(dataset, i)) {
 		    gtk_list_store_append(store, &iter);
 		    gtk_list_store_set(store, &iter, 
 				       0, i, 1, 0, 
-				       2, datainfo->varname[i],
+				       2, dataset->varname[i],
 				       -1);
 		    nvars++;
 		}
@@ -6050,7 +6050,7 @@ static int add_omit_list (gpointer p, selector *sr)
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
 				   0, xlist[i], 1, 0,
-				   2, datainfo->varname[xlist[i]],
+				   2, dataset->varname[xlist[i]],
 				   -1);
 		nvars++;
 	    }
@@ -6065,7 +6065,7 @@ static int add_omit_list (gpointer p, selector *sr)
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 
 				   0, xlist[i], 1, 0,
-				   2, datainfo->varname[xlist[i]],
+				   2, dataset->varname[xlist[i]],
 				   -1);
 		nvars++;
 	    }	    
@@ -6142,7 +6142,7 @@ add_to_rvars1_from_named_list (selector *sr, const int *list,
 	v = list[i];
 	gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
 	gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
-			   0, v, 1, 0, 2, datainfo->varname[v], -1);
+			   0, v, 1, 0, 2, dataset->varname[v], -1);
     }
 }
 
@@ -6355,7 +6355,7 @@ selector *simple_selection (const char *title, int (*callback)(), guint ci,
     } else {
 	int start = (ci == DEFINE_LIST || ci == DEFINE_MATRIX)? 0 : 1;
 
-	for (i=start; i<datainfo->v; i++) {
+	for (i=start; i<dataset->v; i++) {
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
 		nleft++;
@@ -6994,7 +6994,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     VAR_special = (vlinfo[0].v == VDEFLT && vlinfo[0].context == LAG_Y_V);
     insts = in_gretl_list(list, LAG_W);
 
-    lmax = (datainfo->t2 - datainfo->t1) / list[0];
+    lmax = (dataset->t2 - dataset->t1) / list[0];
 
     if (VAR_special) {
 	/* allow for gaps in VAR lag order */
@@ -7056,7 +7056,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	    if (li == VDEFLT) {
 		lbl = gtk_label_new(_("default"));
 	    } else {
-		lbl = gtk_label_new(datainfo->varname[li]);
+		lbl = gtk_label_new(dataset->varname[li]);
 	    }
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, i, i+1);
 	}
@@ -7228,8 +7228,8 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 
 	    gtk_tree_model_get(model, &iter, 0, &v, 1, &lag, -1);
 
-	    if (v == 0 || !strcmp(datainfo->varname[v], "time") ||
-		!strcmp(datainfo->varname[v], "timesq")) {
+	    if (v == 0 || !strcmp(dataset->varname[v], "time") ||
+		!strcmp(dataset->varname[v], "timesq")) {
 		laggable = 0;
 	    } else if (is_lag_dummy(v, lag, context)) {
 		laggable = 0;

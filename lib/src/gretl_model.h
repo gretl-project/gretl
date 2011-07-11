@@ -230,9 +230,9 @@ void gretl_model_array_destroy (MODEL **models, int n);
 
 void destroy_working_models (MODEL **models, int n);
 
-void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo);
+void gretl_model_smpl_init (MODEL *pmod, const DATASET *dset);
 
-void impose_model_smpl (const MODEL *pmod, DATAINFO *pdinfo);
+void impose_model_smpl (const MODEL *pmod, DATASET *dset);
 
 void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux);
 
@@ -285,25 +285,25 @@ double gretl_model_get_double (const MODEL *pmod, const char *key);
 int *gretl_model_get_list (const MODEL *pmod, const char *key);
 
 char *gretl_model_get_param_name (const MODEL *pmod, 
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  int i, char *targ);
 
 int gretl_model_get_param_number (const MODEL *pmod, 
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  const char *s);
 
 void free_coeff_intervals (CoeffIntervals *cf);
 
 CoeffIntervals *
 gretl_model_get_coeff_intervals (const MODEL *pmod, 
-				 const DATAINFO *pdinfo);
+				 const DATASET *dset);
 
 int reset_coeff_intervals (CoeffIntervals *cf, double alpha);
 
 int gretl_model_get_depvar (const MODEL *pmod);
 
 const char *gretl_model_get_depvar_name (const MODEL *pmod,
-					 const DATAINFO *pdinfo);
+					 const DATASET *dset);
 
 int *gretl_model_get_x_list (const MODEL *pmod);
 
@@ -341,7 +341,7 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
 int gretl_model_write_vcv (MODEL *pmod, const gretl_matrix *V, int k);
 
-VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);
+VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATASET *dset);
 
 int gretl_model_write_coeffs (MODEL *pmod, double *b, int k);
 
@@ -354,7 +354,7 @@ void swap_models (MODEL *targ, MODEL *src);
 int command_ok_for_model (int test_ci, gretlopt opt, int mci);
 
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
-		   const DATAINFO *pdinfo);
+		   const DATASET *dset);
 
 int gretl_is_simple_OLS (const MODEL *pmod);
 
@@ -402,7 +402,7 @@ void gretl_model_destroy_tests (MODEL *pmod);
 void model_list_to_string (int *list, char *buf);
 
 int highest_numbered_var_in_model (const MODEL *pmod, 
-				   const DATAINFO *pdinfo);
+				   const DATASET *dset);
 
 int mle_criteria (MODEL *pmod, int addk);
 
@@ -412,13 +412,13 @@ int exact_fit_check (const MODEL *pmod, PRN *prn);
 
 int gretl_model_allocate_params (MODEL *pmod, int k);
 
-int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+int gretl_model_add_arma_varnames (MODEL *pmod, const DATASET *dset,
 				   int yno, int p, int q, 
 				   const char *pmask, const char *qmask,
 				   int P, int Q, 
 				   int r);
 
-int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+int gretl_model_add_panel_varnames (MODEL *pmod, const DATASET *dset,
 				    const int *ulist);
 
 void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames);
@@ -430,19 +430,17 @@ int gretl_model_add_normality_test (MODEL *pmod, double X2);
 int gretl_model_get_normality_test (const MODEL *pmod, PRN *prn);
 
 char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
-				      const double **Z,
-				      const DATAINFO *pdinfo);
+				      const DATASET *dset);
 
 void gretl_model_set_name (MODEL *pmod, const char *name);
 
 const char *gretl_model_get_name (const MODEL *pmod);
 
 double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
-			       double ***pZ, DATAINFO *pdinfo,
-			       int *err);
+			       DATASET *dset, int *err);
 
 double *
-gretl_model_get_series (MODEL *pmod, const DATAINFO *pdinfo, 
+gretl_model_get_series (MODEL *pmod, const DATASET *dset, 
 			ModelDataIndex idx, int *err);
 
 gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
@@ -450,7 +448,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 
 double 
 gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
-			      const DATAINFO *pdinfo, int *err);
+			      const DATASET *dset, int *err);
 
 int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 			   FILE *fp);
@@ -460,7 +458,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node);
 
 MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, 
-			     const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     int *err);
 #endif
 

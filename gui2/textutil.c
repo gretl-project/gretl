@@ -279,19 +279,19 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
     if (cmd == SUMMARY) {
 	Summary *summ = (Summary *) vwin->data;
 
-	special_print_summary(summ, datainfo, prn);
+	special_print_summary(summ, dataset, prn);
     } else if (cmd == CORR || cmd == COVAR) {
 	VMatrix *corr = (VMatrix *) vwin->data;
 
-	special_print_vmatrix(corr, datainfo, prn);
+	special_print_vmatrix(corr, dataset, prn);
     } else if (cmd == AFR) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
-	special_print_fit_resid(fr, datainfo, prn);
+	special_print_fit_resid(fr, dataset, prn);
     } else if (cmd == FCAST) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
-	special_print_forecast(fr, datainfo, prn);
+	special_print_forecast(fr, dataset, prn);
     } else if (cmd == COEFFINT) {
 	CoeffIntervals *cf = (CoeffIntervals *) vwin->data;
 
@@ -302,16 +302,16 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	if (pmod->errcode) { 
 	    err = pmod->errcode;
 	} else if (tex_format(prn)) {
-	    err = tex_print_model(pmod, datainfo, 
+	    err = tex_print_model(pmod, dataset, 
 				  get_tex_eqn_opt(), 
 				  prn);
 	} else {
-	    err = printmodel(pmod, datainfo, OPT_NONE, prn);
+	    err = printmodel(pmod, dataset, OPT_NONE, prn);
 	}
     } else if (cmd == VAR || cmd == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 
-	err = gretl_VAR_print(var, datainfo, OPT_NONE, prn);
+	err = gretl_VAR_print(var, dataset, OPT_NONE, prn);
     } else if (cmd == VAR_IRF || cmd == VAR_DECOMP) {
 	windata_t *parent = vwin->gretl_parent;
 
@@ -322,16 +322,15 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	    int h = vwin->active_var; /* here records preferred horizon */
 
 	    if (cmd == VAR_IRF) {
-		gretl_VAR_print_all_impulse_responses(var, datainfo, h, prn);
+		gretl_VAR_print_all_impulse_responses(var, dataset, h, prn);
 	    } else {
-		gretl_VAR_print_all_fcast_decomps(var, datainfo, h, prn);
+		gretl_VAR_print_all_fcast_decomps(var, dataset, h, prn);
 	    }
 	}
     } else if (cmd == SYSTEM) {
 	equation_system *sys = (equation_system *) vwin->data;
 
-	err = gretl_system_print(sys, (const double **) Z, datainfo, 
-				 OPT_NONE, prn);
+	err = gretl_system_print(sys, dataset, OPT_NONE, prn);
     } else if (cmd == VIEW_MODELTABLE) {
 	err = special_print_model_table(prn);
     } 

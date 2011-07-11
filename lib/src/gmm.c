@@ -138,15 +138,15 @@ static int gmm_unkvar (const char *s)
 */
 
 static int 
-oc_get_type (const char *name, const DATAINFO *pdinfo, int *err)
+oc_get_type (const char *name, const DATASET *dset, int *err)
 {
     int *list = NULL;
-    int j, v = current_series_index(pdinfo, name);
+    int j, v = current_series_index(dset, name);
     int ret = GRETL_TYPE_NONE;
 
 #if GMM_DEBUG
-    fprintf(stderr, "oc_get_type: looking at '%s' (v = %d, pdinfo->v = %d)\n", 
-	    name, v, pdinfo->v);
+    fprintf(stderr, "oc_get_type: looking at '%s' (v = %d, dset->v = %d)\n", 
+	    name, v, dset->v);
 #endif
 
     if (v >= 0) {
@@ -158,7 +158,7 @@ oc_get_type (const char *name, const DATAINFO *pdinfo, int *err)
     } else if ((list = get_list_by_name(name)) != NULL) {
 	/* failing that, a list */
 	for (j=1; j<=list[0]; j++) {
-	    if (list[j] < 0 || list[j] >= pdinfo->v) {
+	    if (list[j] < 0 || list[j] >= dset->v) {
 		*err = E_DATA;
 		return GRETL_TYPE_NONE;
 	    } 
@@ -460,7 +460,7 @@ int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
 
 static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 			    int rtype, const char *rname,
-			    const double **Z, const DATAINFO *pdinfo)
+			    const DATASET *dset)
 {
     gretl_matrix *e = NULL;
     gretl_matrix *M = NULL;
@@ -499,14 +499,14 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    for (i=0; i<k && !err; i++) {
 		v = list[i + 1];
 		for (t=0; t<s->nobs; t++) {
-		    x = Z[v][t + s->t1];
+		    x = dset->Z[v][t + s->t1];
 		    gretl_matrix_set(e, t, i, x);
 		}
 		err = push_column_source(s, v, NULL);
 	    }
 	}	
     } else if (ltype == GRETL_TYPE_SERIES) {
-	v = series_index(pdinfo, lname);
+	v = series_index(dset, lname);
 	e = gretl_column_vector_alloc(s->nobs);
 	if (e == NULL) {
 	    err = E_ALLOC;
@@ -514,7 +514,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    e->t1 = s->t1;
 	    e->t2 = s->t2;
 	    for (t=0; t<s->nobs; t++) {
-		x = Z[v][t + s->t1];
+		x = dset->Z[v][t + s->t1];
 		gretl_vector_set(e, t, x);
 	    }
 	    err = push_column_source(s, v, NULL);
@@ -555,14 +555,14 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    for (i=0; i<k && !err; i++) {
 		v = list[i + 1];
 		for (t=0; t<s->nobs; t++) {
-		    x = Z[v][t + s->t1];
+		    x = dset->Z[v][t + s->t1];
 		    gretl_matrix_set(M, t, i, x);
 		}
 	    }
 	}
     } else {
 	/* name of single series */
-	v = series_index(pdinfo, rname);
+	v = series_index(dset, rname);
 	k = 1;
 	M = gretl_column_vector_alloc(s->nobs);
 	if (M == NULL) {
@@ -571,7 +571,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 	    M->t1 = s->t1;
 	    M->t2 = s->t2;
 	    for (t=0; t<s->nobs; t++) {
-		x = Z[v][t + s->t1];
+		x = dset->Z[v][t + s->t1];
 		gretl_vector_set(M, t, x);
 	    }
 	}
@@ -623,7 +623,7 @@ static int oc_add_matrices (nlspec *s, int ltype, const char *lname,
 
 int 
 nlspec_add_orthcond (nlspec *s, const char *str,
-		     const double **Z, const DATAINFO *pdinfo)
+		     const DATASET *dset)
 {
     char lname[VNAMELEN], rname[VNAMELEN];
     int ltype = GRETL_TYPE_NONE, rtype = GRETL_TYPE_NONE;
@@ -656,15 +656,14 @@ nlspec_add_orthcond (nlspec *s, const char *str,
 	}
     }
 
-    ltype = oc_get_type(lname, pdinfo, &err);
+    ltype = oc_get_type(lname, dset, &err);
 
     if (!err) {
-	rtype = oc_get_type(rname, pdinfo, &err);
+	rtype = oc_get_type(rname, dset, &err);
     }
 
     if (!err) {
-	err = oc_add_matrices(s, ltype, lname, rtype, rname, 
-			      Z, pdinfo);
+	err = oc_add_matrices(s, ltype, lname, rtype, rname, dset);
     }
 
     if (!err && gretl_in_gui_mode()) {
@@ -838,7 +837,7 @@ int nlspec_add_weights (nlspec *s, const char *str)
 }
 
 void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec, 
-			     const DATAINFO *pdinfo)
+			     const DATASET *dset)
 {
     if (spec->oc != NULL && spec->oc->e != NULL && spec->oc->e->cols == 1) {
 	int t, s = 0;
@@ -847,17 +846,17 @@ void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec,
 	    free(pmod->uhat);
 	}
 
-	pmod->uhat = malloc(pdinfo->n * sizeof *pmod->uhat);
+	pmod->uhat = malloc(dset->n * sizeof *pmod->uhat);
 
 	if (pmod->uhat != NULL) {
-	    for (t=0; t<pdinfo->n; t++) {
+	    for (t=0; t<dset->n; t++) {
 		if (t >= spec->t1 && t <= spec->t2) {
 		    pmod->uhat[t] = spec->oc->e->val[s++];
 		} else {
 		    pmod->uhat[t] = NADBL;
 		}
 	    }
-	    pmod->full_n = pdinfo->n;
+	    pmod->full_n = dset->n;
 	}
     }
 }
@@ -923,7 +922,7 @@ static int gmm_update_e (nlspec *s)
 #endif
 	    /* transcribe from series */
 	    for (t=0; t<s->nobs; t++) {
-		etj = (*s->Z)[v][t + s->t1];
+		etj = s->dset->Z[v][t + s->t1];
 		gretl_matrix_set(s->oc->e, t, j, etj);
 	    }
 	} else {
@@ -1777,7 +1776,7 @@ static void gmm_set_HAC_info (nlspec *s)
 {
     hac_info *hinfo = &s->oc->hinfo;
 
-    if (dataset_is_time_series(s->dinfo) && !libset_get_bool(FORCE_HC)) {
+    if (dataset_is_time_series(s->dset) && !libset_get_bool(FORCE_HC)) {
 	hinfo->whiten = libset_get_bool(PREWHITEN);
 	hinfo->kern = libset_get_int(HAC_KERNEL);
 	if (hinfo->kern == KERNEL_QS) {

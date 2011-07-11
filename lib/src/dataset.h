@@ -280,148 +280,166 @@ typedef enum {
  */
 #define series_set_flag(p, i, f) (p->varinfo[i]->flags |= f)
 
+/**
+ * sample_size:
+ * @p: pointer to data information struct.
+ *
+ * Retrieves the length of the current sample range.
+ */
 #define sample_size(p) ((p == NULL)? 0 : (p->t2 - p->t1 + 1))
 
-void free_Z (double **Z, const DATAINFO *pdinfo);
+/**
+ * dset_get_data:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ * @t: observation number.
+ *
+ * Gets the value of series @i at observation @t.
+ */
+#define dset_get_data(d,i,t) (d->Z[i][t])
 
-DATAINFO *datainfo_new (void);
+/**
+ * dset_set_data:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ * @t: observation number.
+ * @x: value to set.
+ *
+ * Sets the value of series @i at observation @t.
+ */
+#define dset_set_data(d,i,t,x) (d->Z[i][t]=x)
 
-void datainfo_init (DATAINFO *pdinfo);
+void free_Z (DATASET *dset);
 
-DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
-			      int nvar,     /* number of variables */
-			      int nobs,     /* observations per variable */
-			      int markers   /* case markers or not? */
-			      );
+DATASET *datainfo_new (void);
 
-DATAINFO *
-create_auxiliary_dataset (double ***pZ, int nvar, int nobs);
+void datainfo_init (DATASET *dset);
 
-void destroy_dataset (double **Z, DATAINFO *pdinfo);
+DATASET *create_new_dataset (int nvar,     /* number of variables */
+			     int nobs,     /* observations per variable */
+			     int markers   /* case markers or not? */
+			     );
 
-void clear_datainfo (DATAINFO *pdinfo, int code);
+DATASET *create_auxiliary_dataset (int nvar, int nobs);
 
-int allocate_Z (double ***pZ, const DATAINFO *pdinfo);
+void destroy_dataset (DATASET *dset);
 
-int dataset_allocate_varnames (DATAINFO *pdinfo);
+void clear_datainfo (DATASET *dset, int code);
 
-int dataset_allocate_obs_markers (DATAINFO *pdinfo);
+int allocate_Z (DATASET *dset);
 
-void dataset_destroy_obs_markers (DATAINFO *pdinfo);
+int dataset_allocate_varnames (DATASET *dset);
 
-void dataset_obs_info_default (DATAINFO *pdinfo);
+int dataset_allocate_obs_markers (DATASET *dset);
 
-void copy_dataset_obs_info (DATAINFO *targ, const DATAINFO *src);
+void dataset_destroy_obs_markers (DATASET *dset);
+
+void dataset_obs_info_default (DATASET *dset);
+
+void copy_dataset_obs_info (DATASET *targ, const DATASET *src);
 
 void copy_varinfo (VARINFO *targ, const VARINFO *src);
 
-void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
+void set_sorted_markers (DATASET *dset, int v, char **S);
 
-void dataset_set_regular_markers (DATAINFO *pdinfo);
+void dataset_set_regular_markers (DATASET *dset);
 
-int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
+int start_new_Z (DATASET *dset, int resample);
 
 int is_trend_variable (const double *x, int n);
 
-int is_periodic_dummy (const double *x, const DATAINFO *pdinfo);
+int is_periodic_dummy (const double *x, const DATASET *dset);
 
-int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
+int dataset_add_observations (int newobs, DATASET *dset,
 			      gretlopt opt);
 
-int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo);
+int dataset_drop_observations (int n, DATASET *dset);
 
-int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo);
+int dataset_shrink_obs_range (DATASET *dset);
 
-int dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo);
+int dataset_add_series (int newvars, DATASET *dset);
 
-int dataset_add_NA_series (double ***pZ, DATAINFO *pdinfo);
+int dataset_add_NA_series (DATASET *dset);
 
-int dataset_add_allocated_series (double *x, double ***pZ, 
-				  DATAINFO *pdinfo);
+int dataset_add_allocated_series (double *x, DATASET *dset);
 
 int dataset_add_series_as (double *x, const char *newname,
-			   double ***pZ, DATAINFO *pdinfo);
+			   DATASET *dset);
 
 int dataset_copy_variable_as (int v, const char *newname,
-			      double ***pZ, DATAINFO *pdinfo);
+			      DATASET *dset);
 
 int overwrite_err (const char *name);
 
-int series_is_parent (const DATAINFO *pdinfo, int v);
+int series_is_parent (const DATASET *dset, int v);
 
-int dataset_replace_series (double **Z, DATAINFO *pdinfo, int v,
+int dataset_replace_series (DATASET *dset, int v,
 			    double *x, const char *descrip,
 			    DataCopyFlag flag);
 
-int dataset_rename_series (DATAINFO *pdinfo, int v, const char *name);
+int dataset_rename_series (DATASET *dset, int v, const char *name);
 
-int dataset_drop_listed_variables (int *list, double ***pZ, 
-				   DATAINFO *pdinfo, int *renumber,
-				   PRN *prn);
+int dataset_drop_listed_variables (int *list, DATASET *dset, 
+				   int *renumber, PRN *prn);
 
-int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo); 
+int dataset_drop_variable (int v, DATASET *dset); 
 
-int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
-				      int vmin);
+int dataset_destroy_hidden_variables (DATASET *dset, int vmin);
 
-int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo);
+int dataset_drop_last_variables (int delvars, DATASET *dset);
 
 int dataset_renumber_variable (int v_old, int v_new, 
-			       double **Z, DATAINFO *pdinfo);
+			       DATASET *dset);
 
 int renumber_series_with_checks (const char *s, int fixmax,
-				 double **Z, DATAINFO *pdinfo, 
-				 PRN *prn);
+				 DATASET *dset, PRN *prn);
 
-int maybe_prune_dataset (double ***pZ, DATAINFO **ppdinfo, void *p);
+int maybe_prune_dataset (DATASET **pdset, void *p);
 
 int dataset_stack_variables (const char *vname, const char *line,
-			     double ***pZ, DATAINFO *pdinfo, 
-			     PRN *prn);
+			     DATASET *dset, PRN *prn);
 
-int dataset_sort_by (const int *list, double **Z, DATAINFO *pdinfo, gretlopt opt);
+int dataset_sort_by (const int *list, DATASET *dset, gretlopt opt);
 
-int is_log_variable (int i, const DATAINFO *pdinfo, char *parent);
+int is_log_variable (int i, const DATASET *dset, char *parent);
 
-void set_var_discrete (DATAINFO *pdinfo, int i, int s);
+void set_var_discrete (DATASET *dset, int i, int s);
 
-void set_var_scalar (DATAINFO *pdinfo, int i, int s);
+void set_var_scalar (DATASET *dset, int i, int s);
 
-void set_var_hidden (DATAINFO *pdinfo, int i);
+void set_var_hidden (DATASET *dset, int i);
 
-void var_set_linewidth (DATAINFO *pdinfo, int i, int w);
+void var_set_linewidth (DATASET *dset, int i, int w);
 
-int var_get_linewidth (const DATAINFO *pdinfo, int i);
+int var_get_linewidth (const DATASET *dset, int i);
 
-int var_set_display_name (DATAINFO *pdinfo, int i,
+int var_set_display_name (DATASET *dset, int i,
 			  const char *s); 
 
-int var_set_description (DATAINFO *pdinfo, int i,
+int var_set_description (DATASET *dset, int i,
 			 const char *s); 
 
-int var_set_compact_method (DATAINFO *pdinfo, int i,
+int var_set_compact_method (DATASET *dset, int i,
 			    int method);
 
-const char *var_get_graph_name (const DATAINFO *pdinfo, int i);
+const char *var_get_graph_name (const DATASET *dset, int i);
 
 unsigned int get_resampling_seed (void);
 
-int dataset_resample (int n, unsigned int seed,
-		      double ***pZ, DATAINFO *pdinfo);
+int dataset_resample (int n, unsigned int seed, DATASET *dset);
 
 int dataset_op_from_string (const char *s);
 
 int modify_dataset (int op, const int *list, const char *s, 
-		    double ***pZ, DATAINFO *pdinfo, 
-		    PRN *prn);
+		    DATASET *dset, PRN *prn);
 
-int dataset_get_structure (const DATAINFO *pdinfo);
+int dataset_get_structure (const DATASET *dset);
 
-int panel_sample_size (const DATAINFO *pdinfo);
+int panel_sample_size (const DATASET *dset);
 
-int multi_unit_panel_sample (const DATAINFO *pdinfo);
+int multi_unit_panel_sample (const DATASET *dset);
 
-int dataset_purge_missing_rows (double **Z, DATAINFO *pdinfo);
+int dataset_purge_missing_rows (DATASET *dset);
 
 int check_dataset_is_changed (void);
 

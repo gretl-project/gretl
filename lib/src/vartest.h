@@ -24,13 +24,11 @@
 
 void gretl_VAR_clear (GRETL_VAR *var);
 
-void VAR_fill_X (GRETL_VAR *v, int p, const double **Z, 
-		 const DATAINFO *pdinfo);
+void VAR_fill_X (GRETL_VAR *v, int p, const DATASET *dset);
 
 void VAR_write_A_matrix (GRETL_VAR *v);
 
-int johansen_stage_1 (GRETL_VAR *jvar, const double **Z, 
-		      const DATAINFO *pdinfo,
+int johansen_stage_1 (GRETL_VAR *jvar, const DATASET *dset,
 		      gretlopt opt, PRN *prn);
 
 double gretl_VAR_ldet (GRETL_VAR *var, const gretl_matrix *E,
@@ -40,8 +38,8 @@ int VAR_LR_lag_test (GRETL_VAR *var, const gretl_matrix *E);
 
 int VAR_portmanteau_test (GRETL_VAR *var);
 
-int VAR_do_lagsel (GRETL_VAR *var, const double **Z, 
-		   const DATAINFO *pdinfo, PRN *prn);
+int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset, 
+		   PRN *prn);
 
 int VAR_wald_omit_tests (GRETL_VAR *var);
 
@@ -52,8 +50,7 @@ gretl_matrix *reorder_responses (const GRETL_VAR *var, int *err);
 gretl_matrix *irf_bootstrap (GRETL_VAR *var, 
 			     int targ, int shock,
 			     int periods, double alpha,
-			     const double **Z, 
-			     const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     int *err);
 
 #endif /* VARTEST_H_ */

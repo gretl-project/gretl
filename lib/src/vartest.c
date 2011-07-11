@@ -39,15 +39,14 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
 }
 
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
-				    double ***pZ, DATAINFO *pdinfo,
-				    PRN *prn)
+				    DATASET *dset, PRN *prn)
 {
     MODEL *pmod;
     double lb;
     int i, err = 0;
 
     if (order == 0) {
-	order = pdinfo->pd;
+	order = dset->pd;
     }
 
     for (i=0; i<var->neqns && !err; i++) {
@@ -63,8 +62,7 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 		pputc(prn, '\n');
 	    }
 	} else {
-	    err = autocorr_test(pmod, order, pZ, pdinfo,
-				OPT_Q | OPT_S, prn);
+	    err = autocorr_test(pmod, order, dset, OPT_Q | OPT_S, prn);
 	    gretl_model_test_print(var->models[i], 0, prn);
 	    gretl_model_destroy_tests(var->models[i]);
 	}
@@ -74,13 +72,13 @@ int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order,
 }
 
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
-			 DATAINFO *pdinfo, PRN *prn)
+			 DATASET *dset, PRN *prn)
 {
     int i, err = 0;
 
     for (i=0; i<var->neqns && !err; i++) {
 	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
-	err = arch_test(var->models[i], order, pdinfo, OPT_NONE, prn);
+	err = arch_test(var->models[i], order, dset, OPT_NONE, prn);
     }
 
     return err;
@@ -251,8 +249,7 @@ static void gretl_VAR_print_lagsel (gretl_matrix *lltab,
 
 /* apparatus for selecting the optimal lag length for a VAR */
 
-int VAR_do_lagsel (GRETL_VAR *var, const double **Z, 
-		   const DATAINFO *pdinfo, PRN *prn)
+int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset, PRN *prn)
 {
     gretl_matrix *crittab = NULL;
     gretl_matrix *lltab = NULL;
@@ -294,7 +291,7 @@ int VAR_do_lagsel (GRETL_VAR *var, const double **Z,
     for (j=1; j<p && !err; j++) {
 	int jxcols = cols0 + j * n;
 
-	VAR_fill_X(var, j, Z, pdinfo);
+	VAR_fill_X(var, j, dset);
 
 	gretl_matrix_reuse(var->X, T, jxcols);
 	gretl_matrix_reuse(var->B, jxcols, n);
@@ -624,7 +621,7 @@ static int *build_VAR_list (const GRETL_VAR *var, int *exolist, int *err)
 
 static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 				     const GRETL_VAR *new,
-				     const DATAINFO *pdinfo,
+				     const DATASET *dset,
 				     PRN *prn)
 {
     int *omitlist;
@@ -654,7 +651,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
     pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		 "zero for the variables\n\n"));
     for (i=1; i<=omitlist[0]; i++) {
-	pprintf(prn, "    %s\n", pdinfo->varname[omitlist[i]]);	
+	pprintf(prn, "    %s\n", dset->varname[omitlist[i]]);	
     }
 
     pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
@@ -670,8 +667,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
  * gretl_VAR_omit_test:
  * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original VAR.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: datset struct.
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *
@@ -684,13 +680,12 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
  */
 
 GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
-				const double **Z, DATAINFO *pdinfo, 
-				PRN *prn, int *err)
+				DATASET *dset, PRN *prn, int *err)
 {
     GRETL_VAR *var = NULL;
     gretlopt opt = OPT_NONE;
-    int smpl_t1 = pdinfo->t1;
-    int smpl_t2 = pdinfo->t2;
+    int smpl_t1 = dset->t1;
+    int smpl_t2 = dset->t2;
     int *tmplist = NULL;
     int *varlist = NULL;
     int c1 = 0;
@@ -712,7 +707,7 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 #endif
 
     if (orig->ifc) {
-	c1 = !gretl_list_const_pos(omitvars, 1, Z, pdinfo);
+	c1 = !gretl_list_const_pos(omitvars, 1, dset);
     } 
 
     /* create reduced exogenous vars list for test VAR */
@@ -755,19 +750,19 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 
     /* impose as sample range the estimation range of the 
        original VAR */
-    pdinfo->t1 = orig->t1;
-    pdinfo->t2 = orig->t2;
+    dset->t1 = orig->t1;
+    dset->t2 = orig->t2;
 
-    var = gretl_VAR(orig->order, varlist, Z, pdinfo, opt, prn, err);
+    var = gretl_VAR(orig->order, varlist, dset, opt, prn, err);
 
     /* now, if var is non-NULL, do the actual test(s) */
     if (var != NULL) {
-	*err = gretl_VAR_real_omit_test(orig, var, pdinfo, prn);
+	*err = gretl_VAR_real_omit_test(orig, var, dset, prn);
     }
 
-    /* put back into pdinfo what was there on input */
-    pdinfo->t1 = smpl_t1;
-    pdinfo->t2 = smpl_t2;
+    /* put back into dset what was there on input */
+    dset->t1 = smpl_t1;
+    dset->t2 = smpl_t2;
 
  bailout:
 

@@ -1430,7 +1430,7 @@ static gretl_matrix *kalman_update_matrix (kalman *K, int i,
 {
     gretl_matrix *m = NULL;
 
-    *err = generate(K->matcalls[i], NULL, NULL, OPT_U, prn);
+    *err = generate(K->matcalls[i], NULL, OPT_U, prn);
 
     if (*err) {
 	fprintf(stderr, "kalman_update_matrix: call='%s', err=%d\n", 
@@ -1927,23 +1927,23 @@ static int add_matrix_fncall (kalman *K, const char *s, int i,
 */
 
 static gretl_matrix *k_matrix_from_dataset (char *s,
-					    const double **Z, 
-					    const DATAINFO *pdinfo,
+					    const DATASET *dset,
 					    int *err)
 {
-    int v = current_series_index(pdinfo, s);
+    int v = current_series_index(dset, s);
     gretl_matrix *m = NULL;
 	
     if (v >= 0) {
 	int L[2] = {1, v};
 
-	m = gretl_matrix_data_subset(L, Z, pdinfo->t1, pdinfo->t2,
+	m = gretl_matrix_data_subset(L, dset, dset->t1, dset->t2,
 				     M_MISSING_OK, err);
     } else {
 	int *list = get_list_by_name(s);
 
 	if (list != NULL) {
-	    m = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2,
+	    m = gretl_matrix_data_subset(list, dset,
+					 dset->t1, dset->t2,
 					 M_MISSING_OK, err);
 	} 
     }
@@ -2015,7 +2015,7 @@ static gretl_matrix *k_matrix_from_scalar (char *s, int *errp)
 
 static int 
 attach_input_matrix (kalman *K, const char *s, int i,
-		     const double **Z, const DATAINFO *pdinfo)
+		     const DATASET *dset)
 {
     char mname[VNAMELEN+1] = {0};
     gretl_matrix *m = NULL;
@@ -2049,7 +2049,7 @@ attach_input_matrix (kalman *K, const char *s, int i,
 	       list; this should fail gracefully if there's no dataset
 	       in place
 	    */
-	    m = k_matrix_from_dataset(mname, Z, pdinfo, &err);
+	    m = k_matrix_from_dataset(mname, dset, &err);
 	} else {
 	    /* parameter matrix: try a scalar */
 	    m = k_matrix_from_scalar(mname, &err);
@@ -2423,8 +2423,7 @@ static const char *kalman_matrix_name (int sym)
  * @line: "kalman" to start, "end kalman" to end; otherwise
  * this string should contain a matrix specification on the 
  * pattern "key value".
- * @Z: data array (may be NULL).
- * @pdinfo: dataset information (may be NULL).
+ * @dset: dataset struct (may be NULL).
  * @opt: may contain %OPT_D for diffuse initialization of the
  * Kalman filter, %OPT_C to specify that the disturbances are 
  * correlated across the two equations.
@@ -2437,8 +2436,8 @@ static const char *kalman_matrix_name (int sym)
  * otherwise.
  */
 
-int kalman_parse_line (const char *line, const double **Z,
-		       const DATAINFO *pdinfo, gretlopt opt)
+int kalman_parse_line (const char *line, const DATASET *dset, 
+		       gretlopt opt)
 {
     user_kalman *u;
     int err = 0;
@@ -2465,7 +2464,7 @@ int kalman_parse_line (const char *line, const double **Z,
 	if (m < 0) {
 	    err = E_PARSE;
 	} else {
-	    err = attach_input_matrix(u->K, s, m, Z, pdinfo);
+	    err = attach_input_matrix(u->K, s, m, dset);
 	}
     }
 
@@ -2480,14 +2479,14 @@ int kalman_parse_line (const char *line, const double **Z,
 
 #if 0
 static void kalman_timestamp_matrix (gretl_matrix *m,
-				     const DATAINFO *pdinfo)
+				     const DATASET *dset)
 {
     if (K->y != NULL) {
 	int t1 = K->y->t1;
 	int t2 = K->y->t2;
 
-	if (t1 > 0 && t1 < pdinfo->n &&
-	    t2 > 0 && t2 <= pdinfo->n &&
+	if (t1 > 0 && t1 < dset->n &&
+	    t2 > 0 && t2 <= dset->n &&
 	    t2 > t1) {
 	    m->t1 = t1;
 	    m->t2 = t2;
@@ -2498,23 +2497,23 @@ static void kalman_timestamp_matrix (gretl_matrix *m,
 
 static gretl_matrix *series_export_matrix (kalman *K,
 					   const char *name,
-					   const DATAINFO *pdinfo,
+					   const DATASET *dset,
 					   int i, int *v,
 					   int *err)
 {
     gretl_matrix *m = NULL;
-    int T = sample_size(pdinfo);
+    int T = sample_size(dset);
 
     if (T == K->T) {
 	if ((i == K_E || i == K_V) && K->n == 1) {
 	    /* just one observable */
-	    *v = current_series_index(pdinfo, name);
+	    *v = current_series_index(dset, name);
 	} else if ((i == K_BIG_S || i == K_BIG_P) && K->r == 1) {
 	    /* just one state variable */
-	    *v = current_series_index(pdinfo, name);
+	    *v = current_series_index(dset, name);
 	} else if (i == K_K && K->n == 1 && K->r == 1) {
 	    /* observable and state are both 1-vectors */
-	    *v = current_series_index(pdinfo, name);
+	    *v = current_series_index(dset, name);
 	}
     }
 
@@ -2531,7 +2530,7 @@ static gretl_matrix *series_export_matrix (kalman *K,
 
 static int attach_export_matrix (kalman *K,
 				 const char *name, 
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 int *smat, int i)
 {
     gretl_matrix *m = NULL;
@@ -2542,7 +2541,7 @@ static int attach_export_matrix (kalman *K,
 	if (m == NULL) {
 	    int v = 0;
 
-	    m = series_export_matrix(K, name, pdinfo, i, &v, &err);
+	    m = series_export_matrix(K, name, dset, i, &v, &err);
 	    if (m != NULL) {
 		smat[i] = v;
 	    } else if (!err) {
@@ -2595,8 +2594,7 @@ static void transcribe_and_free (double *x, gretl_matrix *m,
 
 int user_kalman_run (const char *E, const char *V, 
 		     const char *S, const char *P,
-		     const char *G, double **Z,
-		     const DATAINFO *pdinfo,
+		     const char *G, const DATASET *dset,
 		     PRN *prn, int *errp)
 {
     user_kalman *u = get_user_kalman(-1);
@@ -2613,27 +2611,27 @@ int user_kalman_run (const char *E, const char *V,
 
     if (!err) {
 	/* forecast errors */
-	err = attach_export_matrix(K, E, pdinfo, smat, K_E);
+	err = attach_export_matrix(K, E, dset, smat, K_E);
     }
 
     if (!err) {
 	/* MSE for observables */
-	err = attach_export_matrix(K, V, pdinfo, smat, K_V);
+	err = attach_export_matrix(K, V, dset, smat, K_V);
     } 
 
     if (!err) {
 	/* estimate of state */
-	err = attach_export_matrix(K, S, pdinfo, smat, K_BIG_S);
+	err = attach_export_matrix(K, S, dset, smat, K_BIG_S);
     }
 
     if (!err) {
 	/* MSE of estimate of state */
-	err = attach_export_matrix(K, P, pdinfo, smat, K_BIG_P);
+	err = attach_export_matrix(K, P, dset, smat, K_BIG_P);
     } 
 
     if (!err) {
 	/* Kalman gain */
-	err = attach_export_matrix(K, G, pdinfo, smat, K_K);
+	err = attach_export_matrix(K, G, dset, smat, K_K);
     } 
 
     if (!err && K->LL == NULL) {
@@ -2652,19 +2650,19 @@ int user_kalman_run (const char *E, const char *V,
 	err = kalman_forecast(K, prn);
     }
 
-    if (pdinfo != NULL) {
-	int t1 = pdinfo->t1;
+    if (dset != NULL) {
+	int t1 = dset->t1;
 
 	if (smat[K_E] > 0) 
-	    transcribe_and_free(Z[smat[K_E]] + t1, K->E, err);
+	    transcribe_and_free(dset->Z[smat[K_E]] + t1, K->E, err);
 	if (smat[K_V > 0]) 
-	    transcribe_and_free(Z[smat[K_V]] + t1, K->V, err);
+	    transcribe_and_free(dset->Z[smat[K_V]] + t1, K->V, err);
 	if (smat[K_BIG_S] > 0) 
-	    transcribe_and_free(Z[smat[K_BIG_S]] + t1, K->S, err);
+	    transcribe_and_free(dset->Z[smat[K_BIG_S]] + t1, K->S, err);
 	if (smat[K_BIG_P] > 0) 
-	    transcribe_and_free(Z[smat[K_BIG_P]] + t1, K->P, err);
+	    transcribe_and_free(dset->Z[smat[K_BIG_P]] + t1, K->P, err);
 	if (smat[K_K] > 0) 
-	    transcribe_and_free(Z[smat[K_K]] + t1, K->K, err);
+	    transcribe_and_free(dset->Z[smat[K_K]] + t1, K->K, err);
     }
 
     if (err != E_NAN) {

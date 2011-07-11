@@ -28,10 +28,9 @@ int gretl_execute_loop (void);
 
 int ok_in_loop (int ci);
 
-int gretl_loop_append_line (ExecState *s, double ***pZ, 
-			    DATAINFO *pdinfo);
+int gretl_loop_append_line (ExecState *s, DATASET *dset);
 
-int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo); 
+int gretl_loop_exec (ExecState *s, DATASET *dset); 
 
 int model_is_in_loop (const MODEL *pmod);
 

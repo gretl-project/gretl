@@ -59,7 +59,7 @@ kronecker_place (gretl_matrix *X, const gretl_matrix *M,
    endogenous variable.
 */
 
-double *model_get_Xi (const MODEL *pmod, double **Z, int i)
+double *model_get_Xi (const MODEL *pmod, DATASET *dset, int i)
 {
     const char *endog = gretl_model_get_data(pmod, "endog");
     double **X;
@@ -67,7 +67,7 @@ double *model_get_Xi (const MODEL *pmod, double **Z, int i)
 
     if (endog == NULL || !endog[i]) {
 	/* return the original data */
-	return Z[pmod->list[i+2]];
+	return dset->Z[pmod->list[i+2]];
     }
 
     X = gretl_model_get_data(pmod, "tslsX");
@@ -91,7 +91,7 @@ double *model_get_Xi (const MODEL *pmod, double **Z, int i)
 */
 
 static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
-			      double **Z, int t1)
+			      DATASET *dset, int t1)
 {
     int i, t;
     const double *Xi;
@@ -99,7 +99,7 @@ static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
     X->cols = pmod->ncoeff;
 
     for (i=0; i<X->cols; i++) {
-	Xi = model_get_Xi(pmod, Z, i);
+	Xi = model_get_Xi(pmod, dset, i);
 	if (Xi == NULL) {
 	    return 1;
 	}
@@ -117,7 +117,7 @@ static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
 
 static int 
 make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
-		  double **Z, int t1, int method)
+		  DATASET *dset, int t1, int method)
 {
     int i, t;
     const double *Xi;
@@ -128,9 +128,9 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 	if (method == SYS_METHOD_3SLS || 
 	    method == SYS_METHOD_FIML || 
 	    method == SYS_METHOD_TSLS) {
-	    Xi = model_get_Xi(pmod, Z, i);
+	    Xi = model_get_Xi(pmod, dset, i);
 	} else {
-	    Xi = Z[pmod->list[i+2]];
+	    Xi = dset->Z[pmod->list[i+2]];
 	}
 	if (Xi == NULL) {
 	    return E_DATA;
@@ -201,7 +201,7 @@ gls_sigma_from_uhat (equation_system *sys, gretl_matrix *sigma)
 /* compute residuals, for all cases other than FIML */
 
 static void 
-sys_resids (equation_system *sys, int eq, const double **Z)
+sys_resids (equation_system *sys, int eq, const DATASET *dset)
 {
     MODEL *pmod = sys->models[eq];
     int yno = pmod->list[1];
@@ -213,10 +213,10 @@ sys_resids (equation_system *sys, int eq, const double **Z)
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	yh = 0.0;
 	for (i=0; i<pmod->ncoeff; i++) {
-	    yh += pmod->coeff[i] * Z[pmod->list[i+2]][t];
+	    yh += pmod->coeff[i] * dset->Z[pmod->list[i+2]][t];
 	}
 	pmod->yhat[t] = yh;
-	pmod->uhat[t] = Z[yno][t] - yh;
+	pmod->uhat[t] = dset->Z[yno][t] - yh;
 	/* for cross-equation vcv */
 	gretl_matrix_set(sys->E, t - pmod->t1, pmod->ID, pmod->uhat[t]);
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
@@ -234,7 +234,8 @@ sys_resids (equation_system *sys, int eq, const double **Z)
 	double r;
 
 #if SYS_CORR_RSQ
-	pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, Z[yno], pmod->yhat);
+	pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, dset->Z[yno], 
+				   pmod->yhat);
 #else
 	pmod->rsq = 1 - (pmod->ess / pmod->tss);
 #endif
@@ -301,7 +302,7 @@ single_eq_scale_vcv (equation_system *sys, gretl_matrix *vcv)
 
 static int 
 calculate_sys_coeffs (equation_system *sys,
-		      const double **Z,
+		      const DATASET *dset,
 		      gretl_matrix *X, gretl_matrix *y, 
 		      int mk, int nr, int do_iteration)
 {
@@ -357,7 +358,7 @@ calculate_sys_coeffs (equation_system *sys,
 	    }
 	    sys->models[i]->coeff[j] = bij;
 	}
-	sys_resids(sys, i, Z);
+	sys_resids(sys, i, dset);
 	j0 += sys->models[i]->ncoeff;
     }
 
@@ -436,7 +437,7 @@ system_model_list (equation_system *sys, int i, int *freeit)
 */
 
 static int hansen_sargan_test (equation_system *sys, 
-			       const double **Z)
+			       const DATASET *dset)
 {
     const int *exlist = system_get_instr_vars(sys);
     const double *Wi, *Wj;
@@ -464,9 +465,9 @@ static int hansen_sargan_test (equation_system *sys,
 
     /* construct W-transpose W */
     for (i=0; i<nx; i++) {
-	Wi = Z[exlist[i+1]] + sys->t1;
+	Wi = dset->Z[exlist[i+1]] + sys->t1;
 	for (j=i; j<nx; j++) {
-	    Wj = Z[exlist[j+1]] + sys->t1;
+	    Wj = dset->Z[exlist[j+1]] + sys->t1;
 	    x = 0.0;
 	    for (t=0; t<sys->T; t++) {
 		x += Wi[t] * Wj[t];
@@ -492,7 +493,7 @@ static int hansen_sargan_test (equation_system *sys,
     */
     for (i=0; i<m; i++) {
 	for (j=0; j<nx; j++) {
-	    Wj = Z[exlist[j+1]] + sys->t1;
+	    Wj = dset->Z[exlist[j+1]] + sys->t1;
 	    x = 0.0;
 	    for (t=0; t<T; t++) {
 		x += gretl_matrix_get(sys->E, t, i) * Wj[t];
@@ -803,13 +804,13 @@ static gretlopt sys_tsls_opt (const equation_system *sys)
 /* general function that forms the basis for all specific system
    estimators */
 
-int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
+int system_estimate (equation_system *sys, DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
     int i, j, k, T, t;
     int v, l, mk, krow, nr;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int orig_t1 = dset->t1;
+    int orig_t2 = dset->t2;
     gretl_matrix *X = NULL;
     gretl_matrix *y = NULL;
     gretl_matrix *Xi = NULL;
@@ -844,14 +845,14 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     /* get uniform sample starting and ending points and check for
        missing data */
-    err = system_adjust_t1t2(sys, (const double **) *pZ, pdinfo);
+    err = system_adjust_t1t2(sys, dset);
     if (err) {
 	return err;
     } 
 
     /* set sample for auxiliary regressions */
-    pdinfo->t1 = sys->t1;
-    pdinfo->t2 = sys->t2;
+    dset->t1 = sys->t1;
+    dset->t2 = sys->t2;
 
     /* max indep vars per equation */
     k = system_max_indep_vars(sys);
@@ -860,8 +861,8 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     mk = system_n_indep_vars(sys);
 
     /* set sample for auxiliary regressions */
-    pdinfo->t1 = sys->t1;
-    pdinfo->t2 = sys->t2;
+    dset->t1 = sys->t1;
+    dset->t2 = sys->t2;
 
     /* number of observations per series */
     T = sys->T;
@@ -877,7 +878,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    
     if ((method == SYS_METHOD_FIML || 
 	 method == SYS_METHOD_LIML) && !(opt & OPT_Q)) {
-	print_equation_system_info(sys, pdinfo, OPT_H, prn);
+	print_equation_system_info(sys, dset, OPT_H, prn);
     }
 
     /* First estimate the equations separately (either by OLS or
@@ -899,9 +900,9 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (sys_ols_ok(sys)) {
-	    *pmod = lsq(list, *pZ, pdinfo, OLS, OPT_A);
+	    *pmod = lsq(list, dset, OLS, OPT_A);
 	} else {
-	    *pmod = tsls(list, pZ, pdinfo, sys_tsls_opt(sys));
+	    *pmod = tsls(list, dset, sys_tsls_opt(sys));
 	}
 
 	if (freeit) {
@@ -944,7 +945,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     if (method == SYS_METHOD_LIML) {
 	/* compute the minimum eigenvalues and generate the
 	   k-class data matrices */
-	err = liml_driver(sys, *pZ, pdinfo, prn);
+	err = liml_driver(sys, dset, prn);
 	if (err) goto cleanup;
     }
 
@@ -1001,7 +1002,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     for (i=0; i<sys->neqns && !err; i++) {
 	int kcol = 0;
 
-	err = make_sys_X_block(Xi, models[i], *pZ, sys->t1, method);
+	err = make_sys_X_block(Xi, models[i], dset, sys->t1, method);
 
 	for (j=0; j<sys->neqns && !err; j++) { 
 	    const gretl_matrix *Xk;
@@ -1012,10 +1013,10 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		    kcol += models[j]->ncoeff;
 		    continue;
 		}
-		err = make_sys_X_block(Xj, models[j], *pZ, sys->t1, method);
+		err = make_sys_X_block(Xj, models[j], dset, sys->t1, method);
 		Xk = Xj;
 	    } else if (method == SYS_METHOD_LIML) {
-		err = make_liml_X_block(Xj, models[i], *pZ, sys->t1);
+		err = make_liml_X_block(Xj, models[i], dset, sys->t1);
 		Xk = Xj;
 	    } else {
 		Xk = Xi;
@@ -1066,7 +1067,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
 	/* loop over the m vertically-arranged blocks */
 
-	make_sys_X_block(Xi, models[i], *pZ, sys->t1, method);
+	make_sys_X_block(Xi, models[i], dset, sys->t1, method);
 
 	for (j=0; j<models[i]->ncoeff; j++) { 
 	    /* loop over the rows within each of the m blocks */
@@ -1088,7 +1089,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		if (method == SYS_METHOD_LIML) {
 		    yl = gretl_model_get_data(models[l], "liml_y");
 		} else {
-		    yl = (*pZ)[system_get_depvar(sys, l)];
+		    yl = dset->Z[system_get_depvar(sys, l)];
 		}
 
 		/* multiply X'[l] into y */
@@ -1123,8 +1124,8 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
        unless, that is, we're just doing restricted OLS, WLS or TSLS
        estimates.
     */
-    err = calculate_sys_coeffs(sys, (const double **) *pZ, X, 
-			       y, mk, nr, do_iteration);
+    err = calculate_sys_coeffs(sys, dset, X, y, mk, nr, 
+			       do_iteration);
     if (err) {
 	goto cleanup;
     }
@@ -1147,7 +1148,7 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (nr == 0 && (method == SYS_METHOD_3SLS || method == SYS_METHOD_SUR)) {
 	/* compute this test while we have sigma-inverse available */
-	hansen_sargan_test(sys, (const double **) *pZ);
+	hansen_sargan_test(sys, dset);
     }
 
     /* refresh sigma (non-inverted) */
@@ -1155,12 +1156,11 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (method == SYS_METHOD_FIML) {
 	/* compute FIML estimates */
-	err = fiml_driver(sys, *pZ, pdinfo, opt, prn);
+	err = fiml_driver(sys, dset, opt, prn);
     }
 
     if (!err && !(sys->flags & SYSTEM_SINGLE)) {
-	err = system_save_and_print_results(sys, pZ, pdinfo, 
-					    opt, prn);
+	err = system_save_and_print_results(sys, dset, opt, prn);
     }
 
  cleanup:
@@ -1173,8 +1173,8 @@ int system_estimate (equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     clean_up_models(sys);
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
     return err;
 }

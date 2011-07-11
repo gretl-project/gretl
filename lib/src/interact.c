@@ -986,8 +986,7 @@ static void grab_arbond_diag (char *s, CMD *cmd)
 #define LAG_DEBUG 0
 
 static int lag_from_lstr (const char *s, 
-			  const double **Z,
-			  const DATAINFO *pdinfo,
+			  const DATASET *dset,
 			  int *err)
 {
     int lsign = 1, lag = 0;
@@ -1028,21 +1027,21 @@ static int lag_from_lstr (const char *s,
 
 static int get_contiguous_lags (LAGVAR *lv,
 				const char *l1str, const char *l2str,
-				const double **Z, const DATAINFO *pdinfo)
+				const DATASET *dset)
 {
     int err = 0;
 
-    lv->lmin = lag_from_lstr(l1str, Z, pdinfo, &err);
+    lv->lmin = lag_from_lstr(l1str, dset, &err);
 
     if (!err) {
-	lv->lmax = lag_from_lstr(l2str, Z, pdinfo, &err);
+	lv->lmax = lag_from_lstr(l2str, dset, &err);
     }
 
     return err;
 }
 
 static int parse_lagvar (const char *s, LAGVAR *lv, 
-			 const double **Z, const DATAINFO *pdinfo)
+			 const DATASET *dset)
 {
     char l1str[16], l2str[16]; /* VNAMELEN */
     int i, err = 1;
@@ -1062,7 +1061,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
     fprintf(stderr, "parse_lagvar: name = '%s'\n", lv->name);
 #endif
 
-    lv->v = current_series_index(pdinfo, lv->name);
+    lv->v = current_series_index(dset, lv->name);
     if (lv->v <= 0) {
 	lv->vlist = get_list_by_name(lv->name);
 	if (lv->vlist == NULL) {
@@ -1074,7 +1073,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 
     if (sscanf(s, "%15[^(](%15s to %15[^)])", lv->name, 
 	       l1str, l2str) == 3) {
-	err = get_contiguous_lags(lv, l1str, l2str, Z, pdinfo);
+	err = get_contiguous_lags(lv, l1str, l2str, dset);
     } else if (strchr(l1str, ',') != NULL) {
 	lv->laglist = gretl_list_from_string(strchr(s, '('), &err);
 	if (lv->laglist != NULL) {
@@ -1085,7 +1084,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
 	}
     } else {
 	sscanf(s, "%15[^(](%15[^ )]", lv->name, l1str);
-	lv->lmin = lv->lmax = lag_from_lstr(l1str, Z, pdinfo, &err);
+	lv->lmin = lv->lmax = lag_from_lstr(l1str, dset, &err);
     }
 
 #if LAG_DEBUG
@@ -1100,7 +1099,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
     return err;
 }
 
-static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
+static int cmd_full_list (const DATASET *dset, CMD *cmd)
 {
     int nv = 0, err = 0;
     int *list;
@@ -1117,7 +1116,7 @@ static int cmd_full_list (const DATAINFO *pdinfo, CMD *cmd)
 	return 0;
     }
 
-    list = full_var_list(pdinfo, &nv);
+    list = full_var_list(dset, &nv);
 
     if (list == NULL) {
 	if (nv > 0) {
@@ -1184,8 +1183,7 @@ static int get_n_lags (LAGVAR *lv, int *incr)
 */
 
 int auto_lag_ok (const char *s, int *lpos,
-		 double ***pZ, DATAINFO *pdinfo,
-		 CMD *cmd)
+		 DATASET *dset, CMD *cmd)
 {
     LAGVAR lagvar;
     int i, j, nlags;
@@ -1195,7 +1193,7 @@ int auto_lag_ok (const char *s, int *lpos,
     int lincr = 1;
     int ok = 1;
 	
-    if (parse_lagvar(s, &lagvar, (const double **) *pZ, pdinfo)) {
+    if (parse_lagvar(s, &lagvar, dset)) {
 	ok = 0;
 	goto bailout;
     }
@@ -1249,11 +1247,11 @@ int auto_lag_ok (const char *s, int *lpos,
 		order = lagvar.lmin + i * lincr;
 	    }
 
-	    lv = laggenr(vj, order, pZ, pdinfo);
+	    lv = laggenr(vj, order, dset);
 
 #if LAG_DEBUG
 	    fprintf(stderr, "laggenr for var %d (%s), lag %d, gave lv = %d\n",
-		    vj, pdinfo->varname[vj], order, lv);
+		    vj, dset->varname[vj], order, lv);
 #endif
 	    if (lv < 0) {
 		cmd->err = 1;
@@ -1289,8 +1287,7 @@ int auto_lag_ok (const char *s, int *lpos,
 } 
 
 static void parse_laglist_spec (const char *s, int *order, char **lname,
-				int *vnum, const double **Z,
-				const DATAINFO *pdinfo)
+				int *vnum, const DATASET *dset)
 {
     int len = strcspn(s, ",;");
 
@@ -1309,8 +1306,8 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 	    ;
 	}
 	sscanf(s + len + 1, "%31[^ )]", word);
-	v = series_index(pdinfo, word);
-	if (v < pdinfo->v) {
+	v = series_index(dset, word);
+	if (v < dset->v) {
 	    *vnum = v;
 	} else {
 	    *lname = gretl_word_strdup(s + len + 1, NULL);
@@ -1321,8 +1318,7 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
 }
 
 static int auto_transform_ok (const char *s, int *lpos,
-			      double ***pZ, DATAINFO *pdinfo,
-			      CMD *cmd)
+			      DATASET *dset, CMD *cmd)
 {
     char fword[9];
     int *genlist = NULL;
@@ -1353,7 +1349,7 @@ static int auto_transform_ok (const char *s, int *lpos,
 
 	    if (trans == LAGS) {
 		parse_laglist_spec(s, &order, &param, &vnum,
-				   (const double **) *pZ, pdinfo);
+				   dset);
 	    } else {
 		param = gretl_word_strdup(s, NULL);
 	    }
@@ -1364,8 +1360,8 @@ static int auto_transform_ok (const char *s, int *lpos,
 		if (gotlist != NULL) {
 		    genlist = gretl_list_copy(gotlist);
 		} else {
-		    vnum = series_index(pdinfo, param);
-		    if (vnum == pdinfo->v) {
+		    vnum = series_index(dset, param);
+		    if (vnum == dset->v) {
 			vnum = 0;
 		    }
 		}
@@ -1388,17 +1384,17 @@ static int auto_transform_ok (const char *s, int *lpos,
     }	
 
     if (trans == LOGS) {
-	cmd->err = list_loggenr(genlist, pZ, pdinfo);
+	cmd->err = list_loggenr(genlist, dset);
     } else if (trans == DIFF || trans == LDIFF || trans == SDIFF) {
-	cmd->err = list_diffgenr(genlist, trans, pZ, pdinfo);
+	cmd->err = list_diffgenr(genlist, trans, dset);
     } else if (trans == ORTHDEV) {
-	cmd->err = list_orthdev(genlist, pZ, pdinfo);
+	cmd->err = list_orthdev(genlist, dset);
     } else if (trans == SQUARE) {
-	cmd->err = list_xpxgenr(&genlist, pZ, pdinfo, opt);
+	cmd->err = list_xpxgenr(&genlist, dset, opt);
     } else if (trans == LAGS) {
-	cmd->err = list_laggenr(&genlist, order, pZ, pdinfo);
+	cmd->err = list_laggenr(&genlist, order, dset);
     } else if (trans == DUMMIFY) {
-	cmd->err = list_dumgenr(&genlist, pZ, pdinfo, OPT_F);
+	cmd->err = list_dumgenr(&genlist, dset, OPT_F);
     }
 
     if (!cmd->err) {
@@ -1419,8 +1415,7 @@ static int auto_transform_ok (const char *s, int *lpos,
 } 
 
 static int add_time_ok (const char *s, int *lpos,
-			double ***pZ, DATAINFO *pdinfo,
-			CMD *cmd)
+			DATASET *dset, CMD *cmd)
 {
     int ok = 0;
 
@@ -1430,9 +1425,9 @@ static int add_time_ok (const char *s, int *lpos,
 	    cmd->opt |= OPT_T;
 	    ok = 1; /* handled */
 	} else {
-	    cmd->err = gen_time(pZ, pdinfo, 1);
+	    cmd->err = gen_time(dset, 1);
 	    if (!cmd->err) {
-		cmd->list[*lpos] = series_index(pdinfo, "time");
+		cmd->list[*lpos] = series_index(dset, "time");
 		*lpos += 1;
 		ok = 1; /* handled */
 	    }
@@ -1443,12 +1438,12 @@ static int add_time_ok (const char *s, int *lpos,
 }
 
 static int wildcard_expand (const char *s, int *lpos,
-			    const DATAINFO *pdinfo, CMD *cmd)
+			    const DATASET *dset, CMD *cmd)
 {
     int err = 0, ok = 0;
 
     if (strchr(s, '*') != NULL) {
-	int *wildlist = varname_match_list(pdinfo, s, &err);
+	int *wildlist = varname_match_list(dset, s, &err);
 
 	if (wildlist != NULL) {
 	    int k, nw = wildlist[0];
@@ -1503,7 +1498,7 @@ static int delete_name_ok (const char *s, CMD *cmd)
 }
 
 static void parse_rename_cmd (const char *s, CMD *cmd, 
-			      const DATAINFO *pdinfo)
+			      const DATASET *dset)
 {
     int vtest, vtarg;
     char targ[VNAMELEN];
@@ -1517,24 +1512,24 @@ static void parse_rename_cmd (const char *s, CMD *cmd,
 
     if (isdigit(*targ)) {
 	vtarg = atoi(targ);
-	if (vtarg >= pdinfo->v || vtarg < 1) {
+	if (vtarg >= dset->v || vtarg < 1) {
 	    cmd->err = E_DATA;
 	    gretl_errmsg_sprintf(_("Variable number %d is out of bounds"), vtarg);
 	    return;
 	}
     } else {
 	/* we're given the name of a variable? */
-	vtarg = series_index(pdinfo, targ);
-	if (vtarg >= pdinfo->v) {
+	vtarg = series_index(dset, targ);
+	if (vtarg >= dset->v) {
 	    cmd->err = E_UNKVAR;
 	    return;
 	}
     } 
 
-    vtest = series_index(pdinfo, newname);
+    vtest = series_index(dset, newname);
     if (vtest == vtarg) {
 	; /* no-op */
-    } else if (vtest < pdinfo->v) {
+    } else if (vtest < dset->v) {
 	gretl_errmsg_sprintf(_("A series named %s already exists"), newname);
 	cmd->err = E_DATA;
 	return;
@@ -1545,7 +1540,7 @@ static void parse_rename_cmd (const char *s, CMD *cmd,
 	    cmd->err = E_DATA;
 	    return;
 	}
-	if (gretl_type_from_name(newname, pdinfo)) {
+	if (gretl_type_from_name(newname, dset)) {
 	    cmd->err = E_TYPES;
 	    return;
 	}
@@ -1742,7 +1737,7 @@ static int get_next_field (char *field, const char *s)
 /* look for a line with an "implicit genr", such as
    y = 3*x, x += 10, etc. */
 
-int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
+int plausible_genr_start (const char *s, const DATASET *dset)
 {
     int ret = 0;
 
@@ -1757,7 +1752,7 @@ int plausible_genr_start (const char *s, const DATAINFO *pdinfo)
 		ret = 1;
 	    }
 	}
-    } else if (gretl_is_series(s, pdinfo)) {
+    } else if (gretl_is_series(s, dset)) {
 	ret = 1;
     } else if (gretl_is_scalar(s)) {
 	ret = 1;
@@ -2084,7 +2079,7 @@ static int handle_semicolon (int *k, int *ints_ok, int *poly,
 }
 
 static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
-			  const DATAINFO *pdinfo, CMD *cmd)
+			  const DATASET *dset, CMD *cmd)
 {
     char *test;
     int v, ok = 0;
@@ -2096,7 +2091,7 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
 	return 0;
     } 
 
-    if (!ints_ok && !poly && v >= pdinfo->v) {
+    if (!ints_ok && !poly && v >= dset->v) {
 	cmd->err = E_UNKVAR;
 	gretl_errmsg_sprintf(_("%d is not a valid variable number"), v);
     } else {
@@ -2115,8 +2110,7 @@ static int get_id_or_int (const char *s, int *k, int ints_ok, int poly,
 			       cmd->ci == STORE))
 
 static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
-				   double ***pZ, DATAINFO *pdinfo, 
-				   CMD *cmd)
+				   DATASET *dset, CMD *cmd)
 {
     int *xlist;
     int v, k = *pk;
@@ -2139,7 +2133,7 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	    cmd->list[k++] = v;
 	    ok = 1;
 	}
-    } else if ((v = series_index(pdinfo, s)) < pdinfo->v) {
+    } else if ((v = series_index(dset, s)) < dset->v) {
 	cmd->list[k++] = v;
 	ok = 1;
     } else if ((xlist = get_list_by_name(s)) != NULL) {
@@ -2156,16 +2150,16 @@ static int parse_alpha_list_field (const char *s, int *pk, int ints_ok,
 	    }
 	}
     } else if (strchr(s, '(') != NULL) {
-	if (auto_lag_ok(s, &k, pZ, pdinfo, cmd)) {
+	if (auto_lag_ok(s, &k, dset, cmd)) {
 	    /* lag specification, e.g. 'var(-1)' */
 	    ok = 1;
-	} else if (auto_transform_ok(s, &k, pZ, pdinfo, cmd)) {
+	} else if (auto_transform_ok(s, &k, dset, cmd)) {
 	    /* automated transformations such as 'logs(list)' */
 	    ok = 1;	
 	}
-    } else if (add_time_ok(s, &k, pZ, pdinfo, cmd)) {
+    } else if (add_time_ok(s, &k, dset, cmd)) {
 	ok = 1;	
-    } else if (wildcard_expand(s, &k, pdinfo, cmd)) {
+    } else if (wildcard_expand(s, &k, dset, cmd)) {
 	ok = 1;
     } else if (cmd->ci == PRINT && print_name_ok(s, cmd)) {
 	ok = 1;
@@ -2261,7 +2255,7 @@ static int get_command_word (const char *line, char *cnext, CMD *cmd)
 */
 
 static int process_command_list (CMD *cmd, const char *line, int nf,
-				 double ***pZ, DATAINFO *pdinfo)
+				 DATASET *dset)
 {
     char field[FIELDLEN] = {0};
     int poly = 0, ints_ok = 0;
@@ -2310,11 +2304,11 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	}
 
 	if (isalpha((unsigned char) *field)) {
-	    ok = parse_alpha_list_field(field, &k, ints_ok, pZ, pdinfo, cmd);
+	    ok = parse_alpha_list_field(field, &k, ints_ok, dset, cmd);
 	} else if (*field == '*') {
-	    ok = wildcard_expand(field, &k, pdinfo, cmd);
+	    ok = wildcard_expand(field, &k, dset, cmd);
 	} else if (isdigit(*field)) {
-	    ok = get_id_or_int(field, &k, ints_ok, poly, pdinfo, cmd);
+	    ok = get_id_or_int(field, &k, ints_ok, poly, dset, cmd);
 	} else if (*field == ';') {
 	    ok = handle_semicolon(&k, &ints_ok, &poly, &sepcount, cmd);
 	} 
@@ -2350,7 +2344,7 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
 	if (cmd->list[0] == 0) {
 	    if (cmd->ci != SMPL) {
 		/* "smpl" accepts an empty list as "all vars" */
-		cmd_full_list(pdinfo, cmd);
+		cmd_full_list(dset, cmd);
 	    }
 	    /* suppress echo of the list -- may be too long */
 	    cmd_set_nolist(cmd);
@@ -2396,15 +2390,14 @@ static int process_command_list (CMD *cmd, const char *line, int nf,
  * parse_command_line:
  * @line: the command line.
  * @cmd: pointer to command struct.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  *
  * Parses @line and fills out @cmd accordingly. 
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo) 
+int parse_command_line (char *line, CMD *cmd, DATASET *dset) 
 {
     int nf, subst = 0;
     char *rem = NULL;
@@ -2505,7 +2498,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    cmd->ci = gretl_command_number(cmd->word);
 	}
 	if (cmd->ci == 0) {
-	    if (plausible_genr_start(line, pdinfo)) {
+	    if (plausible_genr_start(line, dset)) {
 		cmd->ci = GENR;
 	    } else if (function_lookup(cmd->word)) {
 		cmd->ci = GENR;
@@ -2531,7 +2524,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #endif
 
     /* if, else, endif controls: should this come earlier? */
-    if (flow_control(line, pZ, pdinfo, cmd)) {
+    if (flow_control(line, dset, cmd)) {
 	cmd_set_nolist(cmd);
 	cmd->ci = CMD_NULL;
 	return cmd->err;
@@ -2561,7 +2554,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } else if (cmd->ci == RENAME) {
 	/* the "rename" command calls for a variable number and a
 	   new name */
-	parse_rename_cmd(rem, cmd, pdinfo);
+	parse_rename_cmd(rem, cmd, dset);
     } else if (cmd->ci == OPEN || cmd->ci == APPEND) {
 	/* "open" and "append" may have spreadsheet parameters */
 	if (!(cmd->opt & OPT_O)) {
@@ -2746,7 +2739,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        which either has been specified already or needs to
        be filled out automatically */
 
-    cmd->err = process_command_list(cmd, rem, nf, pZ, pdinfo);
+    cmd->err = process_command_list(cmd, rem, nf, dset);
 
  cmd_exit:
 
@@ -3362,7 +3355,7 @@ static int print_command_param (const char *s, PRN *prn)
 }
 
 static int 
-cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
+cmd_list_print_var (const CMD *cmd, int i, const DATASET *dset,
 		    int gotsep, PRN *prn)
 {
     int src, v = cmd->list[i];
@@ -3371,15 +3364,15 @@ cmd_list_print_var (const CMD *cmd, int i, const DATAINFO *pdinfo,
 
     if (v > 0 && i > imin && is_auto_generated_lag(i, cmd->list, cmd->linfo)) {
 	if (is_first_lag(i, cmd->list, gotsep, cmd->linfo, &src)) {
-	    bytes += print_lags_by_varnum(src, cmd->linfo, pdinfo, 
+	    bytes += print_lags_by_varnum(src, cmd->linfo, dset, 
 					  gotsep, prn);
 	} else if (cmd->ci == EQUATION && i == 1) {
 	    pputc(prn, ' ');
-	    bytes += 1 + pputs(prn, pdinfo->varname[v]);
+	    bytes += 1 + pputs(prn, dset->varname[v]);
 	}
     } else {
 	pputc(prn, ' ');
-	bytes += 1 + pputs(prn, pdinfo->varname[v]);
+	bytes += 1 + pputs(prn, dset->varname[v]);
     }
 
     return bytes;
@@ -3456,7 +3449,7 @@ static int effective_ci (const CMD *cmd)
 #define LINELEN 78
 
 static void
-cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,  
+cmd_print_list (const CMD *cmd, const DATASET *dset,  
 		int *plen, PRN *prn)
 {
     char numstr[12];
@@ -3500,7 +3493,7 @@ cmd_print_list (const CMD *cmd, const DATAINFO *pdinfo,
 	}
 
 	if (use_varnames) {
-	    *plen += cmd_list_print_var(cmd, i, pdinfo, gotsep, prn);
+	    *plen += cmd_list_print_var(cmd, i, dset, gotsep, prn);
 	} else {
 	    sprintf(numstr, " %d", cmd->list[i]);
 	    *plen += pputs(prn, numstr);
@@ -3570,7 +3563,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
 /**
  * echo_cmd:
  * @cmd: pointer to #CMD struct.
- * @pdinfo: pointer to data information struct.
+ * @dset: pointer to data information struct.
  * @line: "raw" command line associated with @cmd.
  * @flags: bitwise OR of elements from #CmdEchoFlags.
  * @prn: pointer to gretl printing struct (or %NULL).
@@ -3582,7 +3575,7 @@ static int command_is_silent (const CMD *cmd, const char *line)
  * command that was executed interactively.
  */
 
-void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
+void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line, 
 	       unsigned char flags, PRN *prn)
 {
     int batch = (flags & CMD_BATCH_MODE);
@@ -3687,7 +3680,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	} else {
 	    llen += pprintf(prn, "%s", cmd->word);
 	}
-	cmd_print_list(cmd, pdinfo, &llen, prn);
+	cmd_print_list(cmd, dset, &llen, prn);
     } 
 
     /* print parameter after list, if wanted */
@@ -3833,12 +3826,12 @@ static void get_optional_filename_etc (const char *s, CMD *cmd)
 }
 
 static int set_var_info (const char *line, gretlopt opt, 
-			 DATAINFO *pdinfo, PRN *prn)
+			 DATASET *dset, PRN *prn)
 {
     char *p, vname[VNAMELEN];
     int v;
 
-    if (pdinfo == NULL || pdinfo->varinfo == NULL) {
+    if (dset == NULL || dset->varinfo == NULL) {
 	return E_NODATA;
     }
 
@@ -3855,49 +3848,49 @@ static int set_var_info (const char *line, gretlopt opt,
 
     if (gretl_is_scalar(vname)) {
 	v = gretl_scalar_get_value(vname);
-	if (v < 0 || v >= pdinfo->v) {
+	if (v < 0 || v >= dset->v) {
 	    return E_UNKVAR;
 	}
     } else if (integer_string(vname)) {
 	v = atoi(vname);
-	if (v < 0 || v >= pdinfo->v) {
+	if (v < 0 || v >= dset->v) {
 	    return E_UNKVAR;
 	}	
     } else {
-	v = series_index(pdinfo, vname);
-	if (v < 0 || v >= pdinfo->v) {
+	v = series_index(dset, vname);
+	if (v < 0 || v >= dset->v) {
 	    gretl_errmsg_sprintf(_("Unknown variable '%s'"), vname);
 	    return E_UNKVAR;
 	}
     }
 
     if (opt & OPT_D) {
-	set_var_discrete(pdinfo, v, 1);
+	set_var_discrete(dset, v, 1);
     } else if (opt & OPT_C) {
-	set_var_discrete(pdinfo, v, 0);
+	set_var_discrete(dset, v, 0);
     }
 
     p = get_flag_field(line, 'd');
     if (p != NULL) {
-	var_set_description(pdinfo, v, p);
+	var_set_description(dset, v, p);
 	free(p);
     }
 
     p = get_flag_field(line, 'n');
     if (p != NULL) {
-	var_set_display_name(pdinfo, v, p);
+	var_set_display_name(dset, v, p);
 	free(p);
     } 
 
     return 0;
 }
 
-static void showlabels (const int *list, const DATAINFO *pdinfo, PRN *prn)
+static void showlabels (const int *list, const DATASET *dset, PRN *prn)
 {
     const char *label;
     int i, v;
 
-    if (pdinfo->v == 0) {
+    if (dset->v == 0) {
 	pprintf(prn, _("No series are defined\n"));
 	return;
     }
@@ -3906,10 +3899,10 @@ static void showlabels (const int *list, const DATAINFO *pdinfo, PRN *prn)
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (v >= 0 && v < pdinfo->v) {
-	    label = VARLABEL(pdinfo, v);
+	if (v >= 0 && v < dset->v) {
+	    label = VARLABEL(dset, v);
 	    if (*label != '\0') {
-		pprintf(prn, " %s: %s\n", pdinfo->varname[v], label);
+		pprintf(prn, " %s: %s\n", dset->varname[v], label);
 	    }
 	}
     }
@@ -4012,12 +4005,11 @@ do_outfile_command (gretlopt flag, const char *fname, PRN *prn)
     return err;
 }
 
-int call_pca_plugin (VMatrix *cmat, double ***pZ,
-		     DATAINFO *pdinfo, gretlopt opt,
-		     PRN *prn)
+int call_pca_plugin (VMatrix *cmat, DATASET *dset, 
+		     gretlopt opt, PRN *prn)
 {
     void *handle = NULL;
-    int (*pca_from_cmatrix) (VMatrix *, double ***, DATAINFO *,
+    int (*pca_from_cmatrix) (VMatrix *, DATASET *,
 			     gretlopt, PRN *);
     int err = 0;
 
@@ -4028,13 +4020,13 @@ int call_pca_plugin (VMatrix *cmat, double ***pZ,
         return 1;
     }
         
-    err = (* pca_from_cmatrix) (cmat, pZ, pdinfo, opt, prn);
+    err = (* pca_from_cmatrix) (cmat, dset, opt, prn);
     close_plugin(handle);
     
     return err;
 }
 
-static int do_pca (int *list, double ***pZ, DATAINFO *pdinfo,
+static int do_pca (int *list, DATASET *dset,
 		   gretlopt opt, PRN *prn)
 {
     int err = 0;
@@ -4044,13 +4036,12 @@ static int do_pca (int *list, double ***pZ, DATAINFO *pdinfo,
 
 	/* adding OPT_U ensures a uniform sample for the
 	   correlation or covariance matrix */
-	cmat = corrlist(list, (const double **) *pZ, pdinfo, 
-			opt | OPT_U, &err);
+	cmat = corrlist(list, dset, opt | OPT_U, &err);
 	if (!err) {
-	    err = call_pca_plugin(cmat, pZ, pdinfo, opt, prn);
+	    err = call_pca_plugin(cmat, dset, opt, prn);
 	    if (!err && (opt & (OPT_O | OPT_A))) {
 		/* results saved as series */
-		maybe_list_vars(pdinfo, prn);
+		maybe_list_vars(dset, prn);
 	    }
 	    free_vmatrix(cmat);
 	}
@@ -4059,10 +4050,10 @@ static int do_pca (int *list, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
+static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
 {
-    if (pdinfo != NULL && pdinfo->descrip != NULL) {
-	pprintf(prn, "%s\n", pdinfo->descrip);
+    if (dset != NULL && dset->descrip != NULL) {
+	pprintf(prn, "%s\n", dset->descrip);
     } else {
 	pputs(prn, _("No data information is available.\n"));
     }
@@ -4081,7 +4072,7 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
    adds the model to the GUI session.
 */
 
-static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
+static int print_save_model (MODEL *pmod, DATASET *dset,
 			     gretlopt opt, PRN *prn, 
 			     ExecState *s)
 {
@@ -4095,8 +4086,8 @@ static int print_save_model (MODEL *pmod, DATAINFO *pdinfo,
 	    if (havename) {
 		gretl_model_set_name(pmod, s->cmd->savename);
 	    }
-	    printmodel(pmod, pdinfo, opt, prn);
-	    attach_subsample_to_model(pmod, pdinfo);
+	    printmodel(pmod, dset, opt, prn);
+	    attach_subsample_to_model(pmod, dset);
 	    s->pmod = maybe_stack_model(pmod, s->cmd, prn, &err);
 	    if (!err && s->callback != NULL && havename && 
 		gretl_in_gui_mode()) {
@@ -4131,9 +4122,9 @@ static void gui_save_system (ExecState *s)
     }    
 }
 
-static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
+static int model_test_check (CMD *cmd, DATASET *dset, PRN *prn)
 {
-    return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
+    return last_model_test_ok(cmd->ci, cmd->opt, dset, prn);
 }
 
 static int get_line_continuation (char *line, FILE *fp, PRN *prn)
@@ -4168,8 +4159,8 @@ static int get_line_continuation (char *line, FILE *fp, PRN *prn)
 }
 
 static int run_script (const char *fname, ExecState *s, 
-		       double ***pZ, DATAINFO *pdinfo,
-		       gretlopt opt, PRN *prn)
+		       DATASET *dset, gretlopt opt, 
+		       PRN *prn)
 {
     int indent = gretl_if_state_record();
     int echo = gretl_echo_on();
@@ -4197,7 +4188,7 @@ static int run_script (const char *fname, ExecState *s,
     while (fgets(s->line, MAXLINE - 1, fp) && !err) {
 	err = get_line_continuation(s->line, fp, prn);
 	if (!err) {
-	    err = maybe_exec_line(s, pZ, pdinfo);
+	    err = maybe_exec_line(s, dset);
 	}
     }
 
@@ -4218,7 +4209,7 @@ static int run_script (const char *fname, ExecState *s,
 
 static int append_data (const char *line, int *list, 
 			char *sheetname,
-			double ***pZ, DATAINFO *pdinfo, 
+			DATASET *dset, 
 			gretlopt opt, PRN *prn)
 {
     char fname[MAXLEN] = {0};
@@ -4233,16 +4224,16 @@ static int append_data (const char *line, int *list,
     ftype = detect_filetype(fname, OPT_P);
 
     if (ftype == GRETL_CSV) {
-	err = import_csv(fname, pZ, pdinfo, opt, prn);
+	err = import_csv(fname, dset, opt, prn);
     } else if (SPREADSHEET_IMPORT(ftype)) {
 	err = import_spreadsheet(fname, ftype, list, sheetname, 
-				 pZ, pdinfo, opt, prn);
+				 dset, opt, prn);
     } else if (OTHER_IMPORT(ftype)) {
-	err = import_other(fname, ftype, pZ, pdinfo, opt, prn);
+	err = import_other(fname, ftype, dset, opt, prn);
     } else if (ftype == GRETL_XML_DATA) {
-	err = gretl_read_gdt(fname, pZ, pdinfo, opt, prn);
+	err = gretl_read_gdt(fname, dset, opt, prn);
     } else {
-	err = gretl_get_data(fname, pZ, pdinfo, opt, prn);
+	err = gretl_get_data(fname, dset, opt, prn);
     }
 
     return err;
@@ -4270,9 +4261,8 @@ static void callback_exec (ExecState *s, int err)
     *s->cmd->savename = '\0';
 }
 
-static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+static int do_end_restrict (ExecState *s, DATASET *dset)
 {
-    const double **Z = (const double **) *pZ;
     GretlObjType otype = gretl_restriction_get_type(s->rset);
     gretlopt ropt = gretl_restriction_get_options(s->rset);
     gretlopt opt = s->cmd->opt | ropt;
@@ -4281,13 +4271,13 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (opt & OPT_F) {
 	/* restrict --full */
 	if (otype == GRETL_OBJ_VAR) {
-	    s->var = gretl_restricted_vecm(s->rset, Z, pdinfo, 
+	    s->var = gretl_restricted_vecm(s->rset, dset, 
 					   opt, s->prn, &err);
 	    if (!err && s->var != NULL) {
 		save_var_vecm(s);
 	    }
 	} else if (otype == GRETL_OBJ_EQN) {
-	    err = gretl_restriction_finalize_full(s, s->rset, Z, pdinfo, 
+	    err = gretl_restriction_finalize_full(s, s->rset, dset, 
 						  opt, s->prn);
 	    if (!err) {
 		gretlopt printopt = OPT_NONE;
@@ -4295,11 +4285,11 @@ static int do_end_restrict (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		if (opt & (OPT_Q | OPT_S)) {
 		    printopt = OPT_Q;
 		}
-		print_save_model(s->pmod, pdinfo, printopt, s->prn, s);
+		print_save_model(s->pmod, dset, printopt, s->prn, s);
 	    }
 	}
     } else {
-	err = gretl_restriction_finalize(s->rset, Z, pdinfo, 
+	err = gretl_restriction_finalize(s->rset, dset, 
 					 opt, s->prn);
     }
 
@@ -4336,34 +4326,33 @@ static int do_debug_command (ExecState *state, const char *param,
    commands for each value of the discrete variable
 */
 
-static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
-			  PRN *prn)
+static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
 {
     ExecState state;
     const char *byvar = get_optval_string(cmd->ci, OPT_B);
     char line[64];
     gretl_matrix *vals = NULL;
     const double *x;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int orig_t1 = dset->t1;
+    int orig_t2 = dset->t2;
     int i, v, nvals = 0;
     int err = 0;
 
-    if (pdinfo == NULL || byvar == NULL) {
+    if (dset == NULL || byvar == NULL) {
 	return E_DATA;
     }
 
     /* FIXME accept "unit" and "time"/"period" in place of actual
        variables for panel data? */
 
-    v = current_series_index(pdinfo, byvar);
+    v = current_series_index(dset, byvar);
     if (v < 0) {
 	return E_UNKVAR;
     }
 
-    x = (const double *) (*pZ)[v];
+    x = (const double *) dset->Z[v];
 
-    if (!var_is_discrete(pdinfo, v) && !gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x)) {
+    if (!var_is_discrete(dset, v) && !gretl_isdiscrete(dset->t1, dset->t2, x)) {
 	gretl_errmsg_sprintf(_("The variable '%s' is not discrete"), byvar);
 	return E_DATA;
     }
@@ -4372,14 +4361,14 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     state.models = NULL;
     state.submask = NULL;
 
-    vals = gretl_matrix_values(x + pdinfo->t1, pdinfo->t2 - pdinfo->t1 + 1, &err);
+    vals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, &err);
 
     if (!err) {
 	nvals = gretl_vector_get_length(vals);
     }
 
-    if (!err && pdinfo->submask != NULL) {
-	state.submask = copy_datainfo_submask(pdinfo, &err);
+    if (!err && dset->submask != NULL) {
+	state.submask = copy_datainfo_submask(dset, &err);
 	if (err) {
 	    gretl_matrix_free(vals);
 	    return err;
@@ -4390,19 +4379,18 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 	int n;
 
 	sprintf(line, "smpl %s = %g", byvar, gretl_vector_get(vals, i));
-	err = restrict_sample(line, NULL, pZ, pdinfo, &state, 
+	err = restrict_sample(line, NULL, dset, &state, 
 			      OPT_R | OPT_P, prn);
 	if (err) {
 	    break;
 	}
-	n = pdinfo->t2 - pdinfo->t1 + 1;
+	n = dset->t2 - dset->t1 + 1;
 	if (cmd->ci == SUMMARY) {
 	    if (i == 0) {
 		pputc(prn, '\n');
 	    }	    
 	    pprintf(prn, "%s (n = %d):\n", line + 5, n);
-	    err = list_summary(cmd->list, (const double **) *pZ, pdinfo, 
-			       cmd->opt, prn);
+	    err = list_summary(cmd->list, dset, cmd->opt, prn);
 	}
     }
 
@@ -4411,18 +4399,18 @@ static int do_command_by (CMD *cmd, double ***pZ, DATAINFO *pdinfo,
     if (complex_subsampled()) {
 	if (state.submask == NULL) {
 	    /* we were not sub-sampled on entry */
-	    restore_full_sample(pZ, pdinfo, NULL);
-	} else if (submask_cmp(state.submask, pdinfo->submask)) {
+	    restore_full_sample(dset, NULL);
+	} else if (submask_cmp(state.submask, dset->submask)) {
 	    /* we were sub-sampled differently on entry */
-	    restore_full_sample(pZ, pdinfo, NULL);
-	    restrict_sample_from_mask(state.submask, pZ, pdinfo, OPT_NONE);
+	    restore_full_sample(dset, NULL);
+	    restrict_sample_from_mask(state.submask, dset, OPT_NONE);
 	} 
     }
 
     free(state.submask);
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
     return err;
 }
@@ -4457,12 +4445,11 @@ static int param_to_order (const char *s)
 				c == PERGM || c == LAGS || \
 				c == FRACTINT)
 
-int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
     CMD *cmd = s->cmd;
     char *line = s->line;
     MODEL **models = s->models;
-    const double **Z = NULL;
     PRN *prn = s->prn;
     char runfile[MAXLEN];
     int *listcpy = NULL;
@@ -4471,7 +4458,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     exec_state_prep(s);
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
-	err = model_test_check(cmd, pdinfo, prn);
+	err = model_test_check(cmd, dset, prn);
     } else if (MODIFIES_LIST(cmd->ci)) {
 	if (cmd->list[0] == 0) {
 	    /* no-op */
@@ -4489,7 +4476,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	goto bailout;
     }
 
-    if (cmd->ci == OLS && dataset_is_panel(pdinfo)) {
+    if (cmd->ci == OLS && dataset_is_panel(dset)) {
 	cmd->ci = PANEL;
 	cmd->opt |= OPT_P; /* panel pooled OLS flag */
     }
@@ -4498,42 +4485,38 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	cmd->order = param_to_order(cmd->param);
     }
 
-    if (pZ != NULL) {
-	Z = (const double **) *pZ;
-    }
-
     switch (cmd->ci) {
 
     case APPEND:
-	err = append_data(line, cmd->list, cmd->extra, pZ, pdinfo, 
+	err = append_data(line, cmd->list, cmd->extra, dset, 
 			  cmd->opt, prn);
 	break;
 
     case ANOVA:
-	err = anova(cmd->list, Z, pdinfo, cmd->opt, prn);
+	err = anova(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case ADF:
-	err = adf_test(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
+	err = adf_test(cmd->order, cmd->list, dset, cmd->opt, prn);
 	break;
 
     case KPSS:
-	err = kpss_test(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
+	err = kpss_test(cmd->order, cmd->list, dset, cmd->opt, prn);
 	break;
 
     case LEVINLIN:
-	err = llc_test_driver(cmd->param, cmd->list, pZ, pdinfo, 
+	err = llc_test_driver(cmd->param, cmd->list, dset, 
 			      cmd->opt, prn);
 	break;
 
     case COINT:
-	err = engle_granger_test(cmd->order, cmd->list, pZ, pdinfo, 
+	err = engle_granger_test(cmd->order, cmd->list, dset, 
 				 cmd->opt, prn);
 	break;
 
     case COINT2:
-	err = johansen_test_simple(cmd->order, cmd->list, Z, 
-				   pdinfo, cmd->opt, prn);
+	err = johansen_test_simple(cmd->order, cmd->list, 
+				   dset, cmd->opt, prn);
 	break;
 
     case CORR:
@@ -4542,31 +4525,31 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 	if (cmd->opt & OPT_K) {
-	    err = kendall_tau(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    err = kendall_tau(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->opt & OPT_S) {
-	    err = spearman_rho(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    err = spearman_rho(cmd->list, dset, cmd->opt, prn);
 	} else {
-	    err = gretl_corrmx(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    err = gretl_corrmx(cmd->list, dset, cmd->opt, prn);
 	}
 	break;
 
     case CORRGM:
-	err = corrgram(cmd->list[1], cmd->order, 0, Z, pdinfo, 
-		       prn, cmd->opt | OPT_A);
+	err = corrgram(cmd->list[1], cmd->order, 0, dset, 
+		       cmd->opt | OPT_A, prn);
 	break;
 
     case XCORRGM:
-	err = xcorrgram(cmd->list, cmd->order, Z, pdinfo, 
-			prn, cmd->opt | OPT_A);
+	err = xcorrgram(cmd->list, cmd->order, dset, 
+			cmd->opt | OPT_A, prn);
 	break;
 
     case PERGM:
-	err = periodogram(cmd->list[1], cmd->order, Z, pdinfo, 
+	err = periodogram(cmd->list[1], cmd->order, dset, 
 			  cmd->opt | OPT_N, prn);
 	break;
 
     case FRACTINT:
-	err = fractint(cmd->list[1], cmd->order, Z, pdinfo, 
+	err = fractint(cmd->list[1], cmd->order, dset, 
 		       cmd->opt, prn);
 	break;	
 
@@ -4582,11 +4565,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case FCAST:
-	err = do_forecast(line, pZ, pdinfo, cmd->opt, prn);
+	err = do_forecast(line, dset, cmd->opt, prn);
 	break;
 
     case FREQ:
-	err = freqdist(cmd->list[1], Z, pdinfo, (s->flags == CONSOLE_EXEC),
+	err = freqdist(cmd->list[1], dset, (s->flags == CONSOLE_EXEC),
 		       cmd->opt, prn);
 	if (!err && !(cmd->opt & OPT_Q)) {
 	    schedule_callback(s);
@@ -4594,11 +4577,11 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case DISCRETE:
-	err = list_makediscrete(cmd->list, pdinfo, cmd->opt);
+	err = list_makediscrete(cmd->list, dset, cmd->opt);
 	break;
 
     case ESTIMATE:
-	err = estimate_named_system(line, pZ, pdinfo, cmd->opt, prn);
+	err = estimate_named_system(line, dset, cmd->opt, prn);
 	break;
 
     case FUNC:
@@ -4606,20 +4589,20 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case GENR:
-	err = generate(line, pZ, pdinfo, cmd->opt, prn);
+	err = generate(line, dset, cmd->opt, prn);
 	break;
 
     case PCA:
-	err = do_pca(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	err = do_pca(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case DATA:
-	err = db_get_series(line, pZ, pdinfo, cmd->opt, prn);
+	err = db_get_series(line, dset, cmd->opt, prn);
 	break;
 
     case DATAMOD:
-	err = modify_dataset(cmd->aux, cmd->list, cmd->param, pZ, 
-			     pdinfo, prn);
+	err = modify_dataset(cmd->aux, cmd->list, cmd->param, 
+			     dset, prn);
 	if (!err) { 
 	    schedule_callback(s);
 	} 
@@ -4628,55 +4611,55 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case DIFF:
     case LDIFF:
     case SDIFF:
-	err = list_diffgenr(listcpy, cmd->ci, pZ, pdinfo);
+	err = list_diffgenr(listcpy, cmd->ci, dset);
 	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
 
     case ORTHDEV:
-	err = list_orthdev(listcpy, pZ, pdinfo);
+	err = list_orthdev(listcpy, dset);
 	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
 
     case DUMMIFY:
-	err = list_dumgenr(&listcpy, pZ, pdinfo, cmd->opt);
+	err = list_dumgenr(&listcpy, dset, cmd->opt);
 	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
 
     case LAGS:
-	err = list_laggenr(&listcpy, cmd->order, pZ, pdinfo); 
+	err = list_laggenr(&listcpy, cmd->order, dset); 
 	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
 
     case LOGS:
-	err = list_loggenr(listcpy, pZ, pdinfo);
+	err = list_loggenr(listcpy, dset);
 	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
 
     case SQUARE:
-	err = list_xpxgenr(&listcpy, pZ, pdinfo, cmd->opt);
+	err = list_xpxgenr(&listcpy, dset, cmd->opt);
 	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	    set_dataset_is_changed();
 	}
 	break;
 
     case PLOT:
-	err = textplot(cmd->list, Z, pdinfo, cmd->opt, prn);
+	err = textplot(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case RMPLOT:
@@ -4686,49 +4669,49 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = E_DATA;
 	} else {
 	    if (cmd->ci == RMPLOT) {
-		err = rmplot(cmd->list, Z, pdinfo, cmd->opt, prn);
+		err = rmplot(cmd->list, dset, cmd->opt, prn);
 	    } else {
-		err = hurstplot(cmd->list, Z, pdinfo, prn);
+		err = hurstplot(cmd->list, dset, prn);
 	    } 
 	}
 	break;
 
     case QQPLOT:
-	err = qq_plot(cmd->list, Z, pdinfo, cmd->opt);
+	err = qq_plot(cmd->list, dset, cmd->opt);
 	break;	
 
     case INFO:
-	print_info(cmd->opt, pdinfo, prn);
+	print_info(cmd->opt, dset, prn);
 	break;
 
     case RENAME:
-	err = dataset_rename_series(pdinfo, atoi(cmd->extra), cmd->param);
+	err = dataset_rename_series(dset, atoi(cmd->extra), cmd->param);
 	if (!err) {
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	}
 	break;
 
     case SET:
-	err = execute_set_line(line, Z, pdinfo, cmd->opt, prn);
+	err = execute_set_line(line, dset, cmd->opt, prn);
 	break;
 
     case SETINFO:
-	err = set_var_info(line, cmd->opt, pdinfo, prn);
+	err = set_var_info(line, cmd->opt, dset, prn);
 	break;
 
     case SETMISS:
-	if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	if (dset == NULL || dset->Z == NULL) {
 	    err = E_DATA;
 	} else {
-	    set_miss(cmd->list, cmd->param, *pZ, pdinfo, prn);
+	    set_miss(cmd->list, cmd->param, dset, prn);
 	}
         break;
 
     case LABELS:
 	if (cmd->opt) {
-	    err = read_or_write_var_labels(cmd->opt, pdinfo, prn);
+	    err = read_or_write_var_labels(cmd->opt, dset, prn);
 	} else {
-	    showlabels(cmd->list, pdinfo, prn);
+	    showlabels(cmd->list, dset, prn);
 	}
 	break;
 
@@ -4736,9 +4719,9 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->opt & OPT_S) {
 	    print_scalars(prn);
 	} else if (cmd->opt & OPT_A) {
-	    list_ok_dollar_vars(pZ, pdinfo, prn);
+	    list_ok_dollar_vars(dset, prn);
 	} else {
-	    varlist(pdinfo, prn);
+	    varlist(dset, prn);
 	}
 	break;
 
@@ -4746,30 +4729,30 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (*cmd->param != '\0') {
 	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, cmd->extra, Z, pdinfo, cmd->opt, prn);
+	    printdata(cmd->list, cmd->extra, dset, cmd->opt, prn);
 	}
 	break;
 
     case PRINTF:
     case SPRINTF:
-	err = do_printf(line, pZ, pdinfo, prn);
+	err = do_printf(line, dset, prn);
 	break;
 
     case SSCANF:
-	err = do_sscanf(line, pZ, pdinfo, prn);
+	err = do_sscanf(line, dset, prn);
 	break;
 
     case PVALUE:
-	err = batch_pvalue(line, pZ, pdinfo, prn);
+	err = batch_pvalue(line, dset, prn);
 	break;
 
     case SUMMARY:
 	if (cmd->opt & OPT_B) {
-	    err = do_command_by(cmd, pZ, pdinfo, prn);
+	    err = do_command_by(cmd, dset, prn);
 	} else if (cmd->opt & OPT_M) {
 	    err = print_matrix_summary(cmd->opt, prn);
 	} else {
-	    err = list_summary(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    err = list_summary(cmd->list, dset, cmd->opt, prn);
 	}
 	break; 
 
@@ -4777,33 +4760,33 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (cmd->opt & OPT_M) {
 	    err = crosstab_from_matrix(cmd->opt, prn);
 	} else {
-	    err = crosstab(cmd->list, Z, pdinfo, cmd->opt, prn);
+	    err = crosstab(cmd->list, dset, cmd->opt, prn);
 	}
 	break;
 
     case MAHAL:
-	err = mahalanobis_distance(cmd->list, pZ, pdinfo, 
+	err = mahalanobis_distance(cmd->list, dset, 
 				   cmd->opt, prn);
 	break;
 
     case MEANTEST:
-	err = means_test(cmd->list, Z, pdinfo, cmd->opt, prn);
+	err = means_test(cmd->list, dset, cmd->opt, prn);
 	break;	
 
     case VARTEST:
-	err = vars_test(cmd->list, Z, pdinfo, prn);
+	err = vars_test(cmd->list, dset, prn);
 	break;
 
     case RUNS:
-	err = runs_test(cmd->list[1], Z, pdinfo, cmd->opt, prn);
+	err = runs_test(cmd->list[1], dset, cmd->opt, prn);
 	break;
 
     case SPEARMAN:
-	err = spearman_rho(cmd->list, Z, pdinfo, cmd->opt, prn);
+	err = spearman_rho(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case DIFFTEST:
-	err = diff_test(cmd->list, Z, pdinfo, cmd->opt, prn);
+	err = diff_test(cmd->list, dset, cmd->opt, prn);
 	break;
 
     case OUTFILE:
@@ -4812,36 +4795,34 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case SETOBS:
 	if (cmd->opt & OPT_M) {
-	    err = script_add_obs_markers(pdinfo);
+	    err = script_add_obs_markers(dset);
 	    if (!err) {
 		schedule_callback(s);
 	    }
 	} else {
-	    err = set_obs(line, pZ, pdinfo, cmd->opt);
+	    err = set_obs(line, dset, cmd->opt);
 	    if (!err) {
-		if (pdinfo->n > 0) {
-		    print_smpl(pdinfo, 0, prn);
+		if (dset->n > 0) {
+		    print_smpl(dset, 0, prn);
 		    schedule_callback(s);
 		} else {
-		    pprintf(prn, _("data frequency = %d\n"), pdinfo->pd);
+		    pprintf(prn, _("data frequency = %d\n"), dset->pd);
 		}
 	    }
 	}
 	break;
 
     case SMPL:
-	if (pZ == NULL || pdinfo == NULL) {
-	    err = E_NODATA;
-	} else if (cmd->opt == OPT_F) {
-	    err = restore_full_sample(pZ, pdinfo, s);
+	if (cmd->opt == OPT_F) {
+	    err = restore_full_sample(dset, s);
 	} else if (cmd->opt) {
-	    err = restrict_sample(line, cmd->list, pZ, pdinfo, 
+	    err = restrict_sample(line, cmd->list, dset, 
 				  s, cmd->opt, prn);
 	} else { 
-	    err = set_sample(line, pZ, pdinfo);
+	    err = set_sample(line, dset);
 	}
 	if (!err) {
-	    print_smpl(pdinfo, get_full_length_n(), prn);
+	    print_smpl(dset, get_full_length_n(), prn);
 	}	
 	break;
 
@@ -4850,7 +4831,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case STORE:
-	if (pZ == NULL || Z == NULL || pdinfo == NULL) {
+	if (dset == NULL || dset->Z == NULL) {
 	    err = E_NODATA;
 	} else if (*cmd->param == '\0') {
 	    pputs(prn, _("store: no filename given\n"));
@@ -4859,7 +4840,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    pprintf(prn, _("store: using filename %s\n"), cmd->param);
 	}
 	if (!err) {
-	    err = write_data(cmd->param, cmd->list, Z, pdinfo, cmd->opt, 0);
+	    err = write_data(cmd->param, cmd->list, dset, cmd->opt, 0);
 	}
 	if (!err && gretl_messages_on()) {
 	    pprintf(prn, _("Data written OK.\n"));
@@ -4873,14 +4854,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case OLS:
     case WLS:
 	clear_model(models[0]);
-	*models[0] = lsq(cmd->list, *pZ, pdinfo, cmd->ci, cmd->opt);
-	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
+	*models[0] = lsq(cmd->list, dset, cmd->ci, cmd->opt);
+	err = print_save_model(models[0], dset, cmd->opt, prn, s);
 	break;
 	
     case MPOLS:
 	clear_model(models[0]);
-	*models[0] = mp_ols(cmd->list, Z, pdinfo);
-	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
+	*models[0] = mp_ols(cmd->list, dset);
+	err = print_save_model(models[0], dset, cmd->opt, prn, s);
 	break;
 
     case AR:
@@ -4889,23 +4870,23 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case ARCH:
 	clear_model(models[0]);
 	if (cmd->ci == AR) {
-	    *models[0] = ar_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = ar_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == AR1) {
-	    *models[0] = ar1_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = ar1_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
-	    *models[0] = arma(cmd->list, cmd->auxlist, Z, pdinfo, 
+	    *models[0] = arma(cmd->list, cmd->auxlist, dset, 
 			      cmd->opt, prn);
 	} else {
-	    *models[0] = arch_model(cmd->list, cmd->order, pZ, pdinfo,
+	    *models[0] = arch_model(cmd->list, cmd->order, dset,
 				    cmd->opt, prn);
 	}
-	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
+	err = print_save_model(models[0], dset, cmd->opt, prn, s);
 	break;
 
     case ARBOND:
     case PANEL:	
     case DPANEL:
-	if (!dataset_is_panel(pdinfo)) {
+	if (!dataset_is_panel(dset)) {
 	    gretl_errmsg_set(_("This estimator requires panel data"));
 	    err = E_DATA;
 	    break;
@@ -4927,52 +4908,52 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case BIPROBIT:
 	clear_model(models[0]);
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
-	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, prn);
+	    *models[0] = logit_probit(cmd->list, dset, cmd->ci, cmd->opt, prn);
 	} else if (cmd->ci == HSK) {
-	    *models[0] = hsk_model(cmd->list, pZ, pdinfo);
+	    *models[0] = hsk_model(cmd->list, dset);
 	} else if (cmd->ci == LOGISTIC) {
-	    *models[0] = logistic_driver(cmd->list, pZ, pdinfo, cmd->param);
+	    *models[0] = logistic_driver(cmd->list, dset, cmd->param);
 	} else if (cmd->ci == TOBIT) {
-	    *models[0] = tobit_driver(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = tobit_driver(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == POISSON || cmd->ci == NEGBIN) {
-	    *models[0] = count_model(cmd->list, cmd->ci, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = count_model(cmd->list, cmd->ci, dset, cmd->opt, prn);
 	} else if (cmd->ci == HECKIT) {
-	    *models[0] = heckit_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = heckit_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == IVREG) {
-	    *models[0] = ivreg(cmd->list, pZ, pdinfo, cmd->opt);
+	    *models[0] = ivreg(cmd->list, dset, cmd->opt);
 	} else if (cmd->ci == LAD) {
-	    *models[0] = lad(cmd->list, *pZ, pdinfo);
+	    *models[0] = lad(cmd->list, dset);
 	} else if (cmd->ci == QUANTREG) {
-	    *models[0] = quantreg_driver(cmd->param, cmd->list, pZ, pdinfo,
+	    *models[0] = quantreg_driver(cmd->param, cmd->list, dset,
 					 cmd->opt, prn);
 	} else if (cmd->ci == DURATION) {
-	    *models[0] = duration_model(cmd->list, *pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = duration_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == GARCH) {
-	    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = garch(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == PANEL) {
-	    *models[0] = panel_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = panel_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARBOND) {
-	    *models[0] = arbond_model(cmd->list, cmd->param, Z, pdinfo, 
+	    *models[0] = arbond_model(cmd->list, cmd->param, dset, 
 				      cmd->opt, prn);
 	} else if (cmd->ci == DPANEL) {
 	    *models[0] = dpd_model(cmd->list, cmd->auxlist, cmd->param, 
-				   Z, pdinfo, cmd->opt, prn);
+				   dset, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
-	    *models[0] = interval_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = interval_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == BIPROBIT) {
-	    *models[0] = biprobit_model(cmd->list, *pZ, pdinfo, cmd->opt, prn);
+	    *models[0] = biprobit_model(cmd->list, dset, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;
 	    break;
 	}
-	err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
+	err = print_save_model(models[0], dset, cmd->opt, prn, s);
 	break;
 
     case GMM:
     case MLE:
     case NLS:
-	err = nl_parse_line(cmd->ci, line, Z, pdinfo, prn);
+	err = nl_parse_line(cmd->ci, line, dset, prn);
 	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	} 
@@ -4986,7 +4967,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	break;
 
     case KALMAN:
-	err = kalman_parse_line(line, Z, pdinfo, cmd->opt);
+	err = kalman_parse_line(line, dset, cmd->opt);
 	if (!err && (cmd->opt == OPT_NONE)) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
@@ -4997,10 +4978,10 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	clear_model(models[1]);
 	if (cmd->ci == ADD) {
 	    err = add_test(cmd->list, models[0], models[1], 
-			   pZ, pdinfo, cmd->opt, prn);
+			   dset, cmd->opt, prn);
 	} else {
 	    err = omit_test(cmd->list, models[0], models[1],
-			    pZ, pdinfo, cmd->opt, prn);
+			    dset, cmd->opt, prn);
 	}
 	if (!err && !(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
 	    /* for command-line use, we keep a stack of 
@@ -5025,37 +5006,37 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case QLRTEST:
     case VIF:
 	if (cmd->ci == COEFFSUM) {
-	    err = gretl_sum_test(cmd->list, models[0], pdinfo, prn);
+	    err = gretl_sum_test(cmd->list, models[0], dset, prn);
 	} else if (cmd->ci == CUSUM) {
-	    err = cusum_test(models[0], *pZ, pdinfo, cmd->opt, prn);
+	    err = cusum_test(models[0], dset, cmd->opt, prn);
 	} else if (cmd->ci == RESET) {
-	    err = reset_test(models[0], pZ, pdinfo, cmd->opt, prn);
+	    err = reset_test(models[0], dset, cmd->opt, prn);
 	} else if (cmd->ci == CHOW) {
-	    err = chow_test_driver(line, models[0], pZ, pdinfo, cmd->opt, prn);
+	    err = chow_test_driver(line, models[0], dset, cmd->opt, prn);
 	} else if (cmd->ci == QLRTEST) {
-	    err = QLR_test(models[0], pZ, pdinfo, cmd->opt, prn);
+	    err = QLR_test(models[0], dset, cmd->opt, prn);
 	} else if (cmd->ci == VIF) { 
-	    err = vif_test(models[0], *pZ, pdinfo, prn);
+	    err = vif_test(models[0], dset, prn);
 	} 
 	break;
 
     case NORMTEST:
-	err = gretl_normality_test(cmd->param, Z, pdinfo, cmd->opt, prn);
+	err = gretl_normality_test(cmd->param, dset, cmd->opt, prn);
 	break;
 
     case HAUSMAN:
-	err = panel_hausman_test(models[0], pZ, pdinfo, cmd->opt, prn);
+	err = panel_hausman_test(models[0], dset, cmd->opt, prn);
 	break;
 
     case MODTEST:
-	err = model_test_driver(cmd->param, pZ, pdinfo, cmd->opt, prn);
+	err = model_test_driver(cmd->param, dset, cmd->opt, prn);
 	break;
 
     case LEVERAGE:
-	err = leverage_test(models[0], pZ, pdinfo, cmd->opt, prn);
+	err = leverage_test(models[0], dset, cmd->opt, prn);
 	if (!err && (cmd->opt & OPT_S)) {
 	    /* FIXME gui notification? */
-	    maybe_list_vars(pdinfo, prn);
+	    maybe_list_vars(dset, prn);
 	}
 	break;
 
@@ -5070,12 +5051,12 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    strcpy(fname, cmd->param);
 
 	    if (cmd->opt & OPT_R) {
-		err = rtfprint(models[0], pdinfo, fname, cmd->opt);
+		err = rtfprint(models[0], dset, fname, cmd->opt);
 	    } else {
 		if (cmd->ci == EQNPRINT) {
 		    opt |= OPT_E;
 		}		
-		err = texprint(models[0], pdinfo, fname, opt);
+		err = texprint(models[0], dset, fname, opt);
 	    }
 	    if (!err) {
 		pprintf(prn, _("Model printed to %s\n"), fname);
@@ -5088,7 +5069,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	if (s->rset == NULL) {
 	    if (*cmd->param == '\0') {
 		/* if param is non-blank, we're restricting a named system */
-		err = model_test_check(cmd, pdinfo, prn);
+		err = model_test_check(cmd, dset, prn);
 		if (err) break;
 	    }
 	    s->rset = restriction_set_start(line, cmd->opt, &err);
@@ -5096,7 +5077,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		gretl_cmd_set_context(cmd, RESTRICT);
 	    }
 	} else {
-	    err = restriction_set_parse_line(s->rset, line, pdinfo);
+	    err = restriction_set_parse_line(s->rset, line, dset);
 	    if (err) {
 		s->rset = NULL;
 	    }	
@@ -5111,7 +5092,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		gretl_cmd_set_context(cmd, SYSTEM);
 	    }
 	} else {
-	    err = system_parse_line(s->sys, line, pZ, pdinfo);
+	    err = system_parse_line(s->sys, line, dset);
 	    if (err) {
 		s->sys = NULL;
 	    } 
@@ -5120,7 +5101,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case EQUATION:
 	if (cmd->opt & OPT_M) {
-	    err = equation_system_append_multi(s->sys, cmd->param, pdinfo);
+	    err = equation_system_append_multi(s->sys, cmd->param, dset);
 	} else {
 	    err = equation_system_append(s->sys, cmd->list);
 	}
@@ -5131,7 +5112,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     case END:
 	if (!strcmp(cmd->param, "system")) {
-	    err = equation_system_finalize(s->sys, pZ, pdinfo, cmd->opt, prn);
+	    err = equation_system_finalize(s->sys, dset, cmd->opt, prn);
 	    if (!err) {
 		gui_save_system(s);
 	    }
@@ -5141,14 +5122,14 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
 	    clear_model(models[0]);
-	    *models[0] = nl_model(pZ, pdinfo, cmd->opt, prn);
-	    err = print_save_model(models[0], pdinfo, cmd->opt, prn, s);
+	    *models[0] = nl_model(dset, cmd->opt, prn);
+	    err = print_save_model(models[0], dset, cmd->opt, prn, s);
 	} else if (!strcmp(cmd->param, "restrict")) {
-	    err = do_end_restrict(s, pZ, pdinfo);
+	    err = do_end_restrict(s, dset);
 	} else if (!strcmp(cmd->param, "foreign")) {
-	    err = foreign_execute(Z, pdinfo, cmd->opt, prn);
+	    err = foreign_execute(dset, cmd->opt, prn);
 	} else if (!strcmp(cmd->param, "kalman")) {
-	    err = kalman_parse_line(line, Z, pdinfo, cmd->opt);
+	    err = kalman_parse_line(line, dset, cmd->opt);
 	} else {
 	    err = 1;
 	}
@@ -5157,13 +5138,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     case VAR:
     case VECM:
 	if (cmd->ci == VAR) {
-	    s->var = gretl_VAR(cmd->order, cmd->list, Z, pdinfo, 
+	    s->var = gretl_VAR(cmd->order, cmd->list, dset, 
 			       cmd->opt, prn, &err);
 	} else {
 	    int rank = gretl_int_from_string(cmd->extra, &err);
 
 	    if (!err) {
-		s->var = gretl_VECM(cmd->order, rank, cmd->list, Z, pdinfo, 
+		s->var = gretl_VECM(cmd->order, rank, cmd->list, dset, 
 				    cmd->opt, prn, &err);
 	    }
 	}
@@ -5195,7 +5176,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	    err = 1;
 	    break;
 	}
-	err = run_script(runfile, s, pZ, pdinfo, cmd->opt, prn);
+	err = run_script(runfile, s, dset, cmd->opt, prn);
 	break;
 
     case FUNCERR:
@@ -5230,16 +5211,16 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 		err = gnuplot_process_file(cmd->opt, prn);
 	    } else if (cmd->opt & OPT_C) {
 		err = xy_plot_with_control(cmd->list, cmd->param, 
-					   Z, pdinfo, cmd->opt);
+					   dset, cmd->opt);
 	    } else {
-		err = gnuplot(cmd->list, cmd->param, Z, pdinfo, cmd->opt);
+		err = gnuplot(cmd->list, cmd->param, dset, cmd->opt);
 	    }
 	} else if (cmd->ci == SCATTERS) {
-	    err = multi_scatters(cmd->list, Z, pdinfo, cmd->opt);
+	    err = multi_scatters(cmd->list, dset, cmd->opt);
 	} else if (cmd_nolist(cmd)) { 
-	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt);
+	    err = boolean_boxplots(line, dset, cmd->opt);
 	} else {
-	    err = boxplots(cmd->list, Z, pdinfo, cmd->opt);
+	    err = boxplots(cmd->list, dset, cmd->opt);
 	}
 	if (!err) {
 	    int gui_mode = gretl_in_gui_mode();
@@ -5311,7 +5292,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 /* called by functions, and by scripts executed from within
    functions */
 
-int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+int maybe_exec_line (ExecState *s, DATASET *dset)
 {
     int err = 0;
 
@@ -5322,7 +5303,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
     if (gretl_compiling_loop()) { 
 	err = get_command_index(s->line, s->cmd);
     } else {
-	err = parse_command_line(s->line, s->cmd, pZ, pdinfo);
+	err = parse_command_line(s->line, s->cmd, dset);
     }
 
     if (err) {
@@ -5338,7 +5319,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 
     if (s->cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	err = gretl_loop_append_line(s, pZ, pdinfo);
+	err = gretl_loop_append_line(s, dset);
 	if (err) {
 	    errmsg(err, s->prn);
 	    return err;
@@ -5352,7 +5333,7 @@ int maybe_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 	err = E_FUNCERR;
     } else {
 	/* note: error messages may be printed to s->prn */
-	err = gretl_cmd_exec(s, pZ, pdinfo);
+	err = gretl_cmd_exec(s, dset);
     }
 
     return err;

@@ -40,46 +40,45 @@ void print_freq_test (const FreqDist *freq, PRN *prn);
 
 void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn);
 
-void print_smpl (const DATAINFO *pdinfo, 
+void print_smpl (const DATASET *dset, 
 		 int fulln, PRN *prn); 
 
 void
 print_contemp_covariance_matrix (const gretl_matrix *m, 
 				 double ldet, PRN *prn);
 
-int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
+int outcovmx (MODEL *pmod, const DATASET *dset, PRN *prn);
 
-int max_obs_label_length (const DATAINFO *pdinfo);
+int max_obs_label_length (const DATASET *dset);
 
-void obs_marker_init (const DATAINFO *pdinfo);
+void obs_marker_init (const DATASET *dset);
 
-void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
+void print_obs_marker (int t, const DATASET *dset, PRN *prn);
 
-void varlist (const DATAINFO *pdinfo, PRN *prn);
+void varlist (const DATASET *dset, PRN *prn);
 
-void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn);
+void maybe_list_vars (const DATASET *dset, PRN *prn);
 
 int printdata (const int *list, const char *mstr,
-	       const double **Z, const DATAINFO *pdinfo, 
+	       const DATASET *dset, 
 	       gretlopt opt, PRN *prn);
 
 int print_data_in_columns (const int *list, const int *obsvec, 
-			   const double **Z, const DATAINFO *pdinfo, 
-			   PRN *prn);
+			   const DATASET *dset, PRN *prn);
 
-int print_series_with_format (const int *list, const double **Z, 
-			      const DATAINFO *pdinfo, 
+int print_series_with_format (const int *list,
+			      const DATASET *dset, 
 			      char fmt, int digits, PRN *prn);
 
 int text_print_fit_resid (const FITRESID *fr, 
-			  const DATAINFO *pdinfo, 
+			  const DATASET *dset, 
 			  PRN *prn);
 
 int print_fit_resid (const MODEL *pmod, 
-		     const double **Z, const DATAINFO *pdinfo, 
+		     const DATASET *dset, 
 		     PRN *prn);
 
-int text_print_forecast (const FITRESID *fr, DATAINFO *pdinfo, 
+int text_print_forecast (const FITRESID *fr, DATASET *dset, 
 			 gretlopt opt, PRN *prn);
 
 void print_iter_info (int iter, double crit, int type, int k, 

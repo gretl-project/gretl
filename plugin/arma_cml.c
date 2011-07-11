@@ -407,7 +407,8 @@ static double bhhh_arma_callback (double *coeff,
    independent variables.
 */
 
-static const double **make_arma_Z (arma_info *ainfo, const double **Z)
+static const double **make_arma_Z (arma_info *ainfo, 
+				   const DATASET *dset)
 {
     const double **aZ;
     int *list = ainfo->alist;
@@ -429,13 +430,13 @@ static const double **make_arma_Z (arma_info *ainfo, const double **Z)
     if (ainfo->y != NULL) {
 	aZ[0] = ainfo->y;
     } else {
-	aZ[0] = Z[list[ypos]];
+	aZ[0] = dset->Z[list[ypos]];
     }
 
     /* the independent variables */
     for (i=1; i<=nx; i++) {
 	v = list[i + ypos];
-	aZ[i] = Z[v];
+	aZ[i] = dset->Z[v];
     }
 
     return aZ;
@@ -444,8 +445,7 @@ static const double **make_arma_Z (arma_info *ainfo, const double **Z)
 /* add extra OPG-related stuff to the arma info struct */
 
 static int set_up_arma_OPG_info (arma_info *ainfo, 
-				 const double **Z,
-				 const DATAINFO *pdinfo)
+				 const DATASET *dset)
 {
     /* array length needed for derivatives */
     int nd = 1 + ainfo->q + ainfo->pd * ainfo->Q;
@@ -454,7 +454,7 @@ static int set_up_arma_OPG_info (arma_info *ainfo,
     int err = 0;
 
     /* construct virtual dataset for dep var, real regressors */
-    ainfo->Z = make_arma_Z(ainfo, Z);
+    ainfo->Z = make_arma_Z(ainfo, dset);
     if (ainfo->Z == NULL) {
 	err = E_ALLOC;
     }  
@@ -536,8 +536,7 @@ conditional_arma_model_prep (MODEL *pmod, arma_info *ainfo,
     return err;
 }
 
-int bhhh_arma (double *theta, 
-	       const double **Z, const DATAINFO *pdinfo,
+int bhhh_arma (double *theta, const DATASET *dset,
 	       arma_info *ainfo, MODEL *pmod,
 	       gretlopt opt)
 {
@@ -546,7 +545,7 @@ int bhhh_arma (double *theta,
     int fncount = 0, grcount = 0;
     int err = 0;
 
-    err = set_up_arma_OPG_info(ainfo, Z, pdinfo);
+    err = set_up_arma_OPG_info(ainfo, dset);
     if (err) {
 	pmod->errcode = err;
 	return err;
@@ -563,14 +562,14 @@ int bhhh_arma (double *theta,
     if (err) {
 	fprintf(stderr, "arma: bhhh_max returned %d\n", err);
     } else {
-	pmod->full_n = pdinfo->n;
+	pmod->full_n = dset->n;
 	err = conditional_arma_model_prep(pmod, ainfo, theta);
     }
 
     if (!err) {
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
-	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
+	write_arma_model_stats(pmod, ainfo, dset);
 	arma_model_add_roots(pmod, ainfo, theta);
     }
 

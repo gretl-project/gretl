@@ -79,7 +79,7 @@ void sample_range_dialog (GtkAction *action, gpointer p);
 
 void sample_restrict_dialog (GtkAction *action, gpointer p);
 
-void panel_structure_dialog (DATAINFO *pdinfo);
+void panel_structure_dialog (DATASET *pdinfo);
 
 int panel_graph_dialog (int *t1, int *t2);
 

@@ -826,10 +826,10 @@ int gui_add_graph_to_session (char *fname, char *fullname, int type)
     char graphname[MAXSAVENAME];
     int err = 0;
 
-    if (type != GRETL_OBJ_PLOT && Z == NULL) {
+    if (type != GRETL_OBJ_PLOT && (dataset == NULL || dataset->Z == NULL)) {
 	/* we may be called via the "stats calculator" when
 	   there's no dataset yet */
-	err = open_nulldata(&Z, datainfo, 0, 10, NULL);
+	err = open_nulldata(dataset, 0, 10, NULL);
 	if (err) {
 	    gui_errmsg(err);
 	    return 1;
@@ -1362,7 +1362,7 @@ void do_open_session (void)
     }
 
     if (!err) {
-	err = gretl_read_gdt(gdtname, &Z, datainfo, OPT_B, NULL);
+	err = gretl_read_gdt(gdtname, dataset, OPT_B, NULL);
     }
 
     if (err) {
@@ -1402,13 +1402,13 @@ void do_open_session (void)
     err = maybe_read_settings_file(fname);
 
     if (sinfo.resample_n > 0) {
-	err = dataset_resample(sinfo.resample_n, sinfo.seed, &Z, 
-			       datainfo);
+	err = dataset_resample(sinfo.resample_n, sinfo.seed, 
+			       dataset);
     } else if (sinfo.mask != NULL) {
-	err = restrict_sample_from_mask(sinfo.mask, &Z, datainfo,
+	err = restrict_sample_from_mask(sinfo.mask, dataset,
 					OPT_NONE);
 	if (!err) {
-	    datainfo->restriction = sinfo.restriction;
+	    dataset->restriction = sinfo.restriction;
 	    sinfo.restriction = NULL;
 	}
     }
@@ -1418,13 +1418,13 @@ void do_open_session (void)
 	goto bailout;
     }
 
-    datainfo->t1 = sinfo.t1;
-    datainfo->t2 = sinfo.t2;
+    dataset->t1 = sinfo.t1;
+    dataset->t2 = sinfo.t2;
 
     register_data(OPENED_VIA_SESSION);
 
     if (sinfo.mask != NULL) {
-	set_sample_label(datainfo);
+	set_sample_label(dataset);
     }
 
     sinfo_free_data(&sinfo);
@@ -1568,7 +1568,7 @@ int highest_numbered_variable_in_session (void)
 	}
 	type = session.models[i]->type;
 	if (type == GRETL_OBJ_EQN) {
-	    mvm = highest_numbered_var_in_model((MODEL *) ptr, datainfo);
+	    mvm = highest_numbered_var_in_model((MODEL *) ptr, dataset);
 	    if (mvm > vmax) {
 		vmax = mvm;
 	    }
@@ -1579,7 +1579,7 @@ int highest_numbered_variable_in_session (void)
 	    }
 	} else if (type == GRETL_OBJ_SYS) {
 	    mvm = highest_numbered_var_in_system((equation_system *) ptr, 
-						 datainfo);
+						 dataset);
 	    if (mvm > vmax) {
 		vmax = mvm;
 	    }
@@ -1598,12 +1598,12 @@ void gui_clear_dataset (void)
 {
     *datafile = 0;
 
-    if (Z != NULL) {
-	free_Z(Z, datainfo);
-	Z = NULL;
+    if (dataset->Z != NULL) {
+	free_Z(dataset);
+	dataset->Z = NULL;
     } 
 
-    clear_datainfo(datainfo, CLEAR_FULL);
+    clear_datainfo(dataset, CLEAR_FULL);
 
     clear_varlist(mdata->listbox);
     clear_sample_label();
@@ -1613,9 +1613,9 @@ void gui_clear_dataset (void)
     main_menubar_state(FALSE);
 }
 
-static void session_clear_data (double ***pZ, DATAINFO *pdinfo)
+static void session_clear_data (DATASET *pdinfo)
 {
-    gui_restore_sample(pZ, pdinfo);
+    gui_restore_sample(pdinfo);
     gui_clear_dataset();
 
     /* clear protected models */
@@ -1636,9 +1636,9 @@ void close_session (gretlopt opt)
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
 
-    if (datainfo != NULL && datainfo->v > 0) {
+    if (dataset != NULL && dataset->v > 0) {
 	logcode = LOG_CLOSE;
-	session_clear_data(&Z, datainfo); 
+	session_clear_data(dataset); 
     }
 
     free_session();
@@ -1697,29 +1697,28 @@ static int real_save_session_dataset (const char *dname)
 {
     char tmpname[MAXLEN];
     char *mask = NULL;
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
+    int save_t1 = dataset->t1;
+    int save_t2 = dataset->t2;
     int write_err = 0;
     int err = 0;
 
     /* we need to retrieve and save the full version of the dataset */
 
     if (complex_subsampled()) {
-	mask = copy_datainfo_submask(datainfo, &err);
-	if (!err && dataset_is_resampled(datainfo)) {
+	mask = copy_datainfo_submask(dataset, &err);
+	if (!err && dataset_is_resampled(dataset)) {
 	    /* can't happen? */
 	    mask = NULL;
 	}
     }
 
     if (!err) {
-	err = restore_full_sample(&Z, datainfo, NULL);
+	err = restore_full_sample(dataset, NULL);
     }
 
     if (!err) {
 	session_file_make_path(tmpname, dname);
-	write_err = gretl_write_gdt(tmpname, NULL, (const double **) Z, 
-				    datainfo, OPT_NONE, 1);
+	write_err = gretl_write_gdt(tmpname, NULL, dataset, OPT_NONE, 1);
 	fprintf(stderr, "Save session datafile as '%s', err = %d\n",
 		tmpname, write_err);
     }
@@ -1727,13 +1726,13 @@ static int real_save_session_dataset (const char *dname)
     if (mask != NULL) {
 	/* reset the prior subsample */
 	if (!err) {
-	    err = restrict_sample_from_mask(mask, &Z, datainfo, OPT_NONE);
+	    err = restrict_sample_from_mask(mask, dataset, OPT_NONE);
 	}
 	free(mask);
     }
 
-    datainfo->t1 = save_t1;
-    datainfo->t2 = save_t2;
+    dataset->t1 = save_t1;
+    dataset->t2 = save_t2;
 
     if (!err) {
 	err = write_err;
@@ -1878,7 +1877,7 @@ int save_session (char *fname)
 	    session_name_from_session_file(session.name, fname);
 	    strcpy(sessionfile, fname);
 	    data_status |= SESSION_DATA;
-	    set_sample_label(datainfo);
+	    set_sample_label(dataset);
 	}
 	mark_session_saved();
     }
@@ -2032,12 +2031,12 @@ static int display_session_model (SESSION_MODEL *sm)
     if (sm->type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) sm->ptr;
 
-	printmodel(pmod, datainfo, OPT_NONE, prn);
+	printmodel(pmod, dataset, OPT_NONE, prn);
 	view_model(prn, pmod, 78, 400, sm->name);
     } else if (sm->type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) sm->ptr;
 
-	gretl_VAR_print(var, datainfo, OPT_NONE, prn);
+	gretl_VAR_print(var, dataset, OPT_NONE, prn);
 	view_buffer(prn, 78, 450, sm->name, var->ci, var);
     } else if (sm->type == GRETL_OBJ_SYS) {
 	equation_system *sys = (equation_system *) sm->ptr;

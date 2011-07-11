@@ -38,7 +38,7 @@ static void doubleclick_action (windata_t *vwin)
 {
     switch (vwin->role) {
     case MAINWIN:
-	if (datainfo != NULL && datainfo->n > 0) {
+	if (dataset != NULL && dataset->n > 0) {
 	    display_var();
 	}
 	break;
@@ -539,7 +539,7 @@ void gretl_callback (GtkAction *action, gpointer data)
     switch (cmd) {
     case GENR:
 	title = N_("gretl: add var");
-	if (datainfo->n > 5000) {
+	if (dataset->n > 5000) {
 	    query = N_("Enter formula for new variable");
 	} else {
 	    query = N_("Enter formula for new variable\n"
@@ -552,7 +552,7 @@ void gretl_callback (GtkAction *action, gpointer data)
 	title = N_("gretl: missing code");
 	dynquery = g_strdup_printf(_("Enter value to be read as \"missing\"\n"
 				     "for the variable \"%s\""), 
-				   datainfo->varname[mdata->active_var]);
+				   dataset->varname[mdata->active_var]);
 	okfunc = do_variable_setmiss;
 	break;
     case GSETMISS:
@@ -695,7 +695,7 @@ void genr_callback (void)
 {
     const char *msg;
 
-    if (datainfo->n > 5000) {
+    if (dataset->n > 5000) {
 	msg = N_("Enter formula for new variable");
     } else {
 	msg = N_("Enter formula for new variable\n"
@@ -732,7 +732,7 @@ void newdata_callback (void)
 	return;
     }
 
-    if (open_nulldata(&Z, datainfo, data_status, n, NULL)) {
+    if (open_nulldata(dataset, data_status, n, NULL)) {
 	errbox(_("Failed to create empty data set"));
 	return;
     }

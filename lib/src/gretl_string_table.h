@@ -29,7 +29,7 @@ gretl_string_table *string_table_new_from_cols_list (int *list);
 int gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 			      int addcol, PRN *prn);
 
-int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
+int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
 			      const char *fname, PRN *prn);
 
 void gretl_string_table_destroy (gretl_string_table *st);
@@ -48,7 +48,7 @@ int add_string_as (const char *s, const char *name);
 char *get_string_by_name (const char *name);
 
 int process_string_command (const char *line, 
-			    double ***pZ, DATAINFO *pdinfo,
+			    double ***pZ, DATASET *dset,
 			    PRN *prn);
 
 int substitute_named_strings (char *line, int *subst);
@@ -71,7 +71,7 @@ int set_codevars (const char *s);
 
 char *gretl_getenv (const char *key, int *defined, int *err);
 
-char *retrieve_date_string (int t, const DATAINFO *pdinfo, int *err);
+char *retrieve_date_string (int t, const DATASET *dset, int *err);
 
 char *retrieve_file_content (const char *fname, int *err);
 

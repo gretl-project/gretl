@@ -105,7 +105,7 @@ int umatrix_set_names_from_string (const gretl_matrix *M,
 
 int umatrix_set_names_from_list (const gretl_matrix *M, 
 				 const int *list,
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 int byrow);
 
 const char **user_matrix_get_names (const gretl_matrix *M,

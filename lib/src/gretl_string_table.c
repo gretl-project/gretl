@@ -303,7 +303,7 @@ void gretl_string_table_destroy (gretl_string_table *st)
 /**
  * gretl_string_table_print:
  * @st: gretl string table.
- * @pdinfo: dataset information (for names of variables).
+ * @dset: dataset information (for names of variables).
  * @fname: name of file to which to print.
  * @prn: gretl printer (or %NULL).
  *
@@ -312,7 +312,7 @@ void gretl_string_table_destroy (gretl_string_table *st)
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
+int gretl_string_table_print (gretl_string_table *st, DATASET *dset,
 			      const char *fname, PRN *prn)
 {
     const col_table *ct;
@@ -355,7 +355,7 @@ int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
     for (i=0; i<st->n_cols; i++) {
 	ct = st->cols[i];
 	fprintf(fp, M_("String code table for variable %d (%s):\n"), 
-		ct->idx, pdinfo->varname[ct->idx]);
+		ct->idx, dset->varname[ct->idx]);
 	for (j=0; j<ct->n_strs; j++) {
 	    fprintf(fp, "%3d = '%s'\n", j+1, ct->strs[j]);
 	}
@@ -845,21 +845,21 @@ static char *strim (char *s)
 }
 #endif
 
-char *retrieve_date_string (int t, const DATAINFO *pdinfo, int *err)
+char *retrieve_date_string (int t, const DATASET *dset, int *err)
 {
     char *ret = NULL;
 
-    if (t <= 0 || t > pdinfo->n) {
+    if (t <= 0 || t > dset->n) {
 	*err = E_DATA;
-    } else if (pdinfo->S != NULL) {
-	ret = gretl_strdup(pdinfo->S[t-1]);
+    } else if (dset->S != NULL) {
+	ret = gretl_strdup(dset->S[t-1]);
 	if (ret == NULL) {
 	    *err = E_ALLOC;
 	}	
     } else {
 	char datestr[OBSLEN] = {0};
 
-	ntodate(datestr, t - 1, pdinfo);
+	ntodate(datestr, t - 1, dset);
 	ret = gretl_strdup(datestr);
 	if (ret == NULL) {
 	    *err = E_ALLOC;

@@ -21,19 +21,19 @@
 #define NONPARAM_H
  
 int spearman_rho (const int *list, 
-		  const double **Z, const DATAINFO *pdinfo,
+		  const DATASET *dset,
 		  gretlopt opt, PRN *prn);
 
 int kendall_tau (const int *list, 
-		 const double **Z, const DATAINFO *pdinfo,
+		 const DATASET *dset,
 		 gretlopt opt, PRN *prn);
 
 double lockes_test (const double *x, int t1, int t2);
 
-int runs_test (int v, const double **Z, const DATAINFO *pdinfo, 
+int runs_test (int v, const DATASET *dset, 
 	       gretlopt opt, PRN *prn);
 
-int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int diff_test (const int *list, const DATASET *dset, 
 	       gretlopt opt, PRN *prn);
 
 int sort_pairs_by_x (gretl_matrix *x, gretl_matrix *y, int **order,

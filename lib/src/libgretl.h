@@ -264,7 +264,7 @@ typedef struct VARINFO_ {
 } VARINFO;
 
 /* information on data set */
-typedef struct DATAINFO_ { 
+typedef struct DATASET_ { 
     int v;              /* number of variables */
     int n;              /* number of observations */
     int pd;             /* periodicity or frequency of data */
@@ -273,6 +273,7 @@ typedef struct DATAINFO_ {
     int t1, t2;         /* start and end of current sample */
     char stobs[OBSLEN];  /* string representation of starting obs (date) */
     char endobs[OBSLEN]; /* string representation of ending obs */
+    double **Z;         /* data array */
     char **varname;     /* array of names of variables */
     VARINFO **varinfo;  /* array of specific info on vars */
     char markers;       /* NO_MARKERS (0), REGULAR MARKERS or DAILY_DATE_STRINGS */
@@ -282,12 +283,6 @@ typedef struct DATAINFO_ {
     char *descrip;      /* to hold info on data sources etc. */
     char *submask;      /* subsampling mask */
     char *restriction;  /* record of sub-sampling restriction */
-} DATAINFO;
-
-/* wrapper for the two main elements of a gretl data set */
-typedef struct DATASET_ {
-    DATAINFO *dinfo;
-    double **Z;
 } DATASET;
 
 typedef struct VMatrix_ {

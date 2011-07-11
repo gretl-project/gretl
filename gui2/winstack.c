@@ -57,7 +57,7 @@ static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
 
 		pmod = g_object_get_data(G_OBJECT(wstack[i]), "object");
 		if (pmod != NULL) {
-		    mvm = highest_numbered_var_in_model(pmod, datainfo);
+		    mvm = highest_numbered_var_in_model(pmod, dataset);
 		    if (mvm > vmax) {
 			vmax = mvm;
 		    }

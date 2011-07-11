@@ -2213,7 +2213,7 @@ double gretl_get_pvalue (char st, const double *parm, double x)
  * or %NULL.
  * @serp2: series containing values for second param,
  * or %NULL.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @err: location to receive error code.
  *
  * Produces a random series conforming to the distribution
@@ -2230,12 +2230,12 @@ double gretl_get_pvalue (char st, const double *parm, double x)
 double *gretl_get_random_series (char st, const double *parm,
 				 const double *serp1, 
 				 const double *serp2,
-				 const DATAINFO *pdinfo,
+				 const DATASET *dset,
 				 int *err)
 {
-    double *x = malloc(pdinfo->n * sizeof *x);
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    double *x = malloc(dset->n * sizeof *x);
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int t;
 
     if (x == NULL) {
@@ -2243,7 +2243,7 @@ double *gretl_get_random_series (char st, const double *parm,
 	return NULL;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	x[t] = NADBL;
     }
 
@@ -2551,8 +2551,7 @@ void print_pvalue (char st, const double *parm, double x,
  * pvalue B prob n x (Binomial distribution).
  * pvalue P mean k (Poisson distribution).
  * pvalue W shape scale x (Weibull distribution).
- * @pZ: pointer to the data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @prn: gretl printing struct.
  *
  * Calculates and prints the probability that a random variable 
@@ -2562,9 +2561,7 @@ void print_pvalue (char st, const double *parm, double x,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int batch_pvalue (const char *str, 
-		  double ***pZ, DATAINFO *pdinfo, 
-		  PRN *prn)
+int batch_pvalue (const char *str, DATASET *dset, PRN *prn)
 {
     double pv = NADBL;
     char line[MAXLEN];
@@ -2599,7 +2596,7 @@ int batch_pvalue (const char *str,
     free_strings_array(S, n);
 
     if (!err) {
-	pv = generate_scalar(line, pZ, pdinfo, &err);
+	pv = generate_scalar(line, dset, &err);
     }
 
     if (!err) {

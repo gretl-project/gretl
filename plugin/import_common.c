@@ -29,7 +29,7 @@ static void invalid_varname (PRN *prn)
 
 #ifndef ODS_IMPORTER
 
-static int worksheet_start_dataset (double ***pZ, DATAINFO *newinfo)
+static int worksheet_start_dataset (DATASET *newinfo)
 {
     if (newinfo->v == 1) {
 	/* only the constant is present! */
@@ -37,7 +37,7 @@ static int worksheet_start_dataset (double ***pZ, DATAINFO *newinfo)
 	return E_DATA;
     } else {
 	/* create import dataset */
-	return start_new_Z(pZ, newinfo, 0);
+	return start_new_Z(newinfo, 0);
     }
 }
 
@@ -50,7 +50,7 @@ static int worksheet_start_dataset (double ***pZ, DATAINFO *newinfo)
 static int 
 importer_dates_check (int row_offset, int col_offset, 
 		      BookFlag *pflags, char **labels, 
-		      DATAINFO *newinfo, PRN *prn, int *err)
+		      DATASET *newinfo, PRN *prn, int *err)
 {
     int d, t;
     char dstr[12];
@@ -88,7 +88,7 @@ importer_dates_check (int row_offset, int col_offset,
     if (!*err) {
 	int reversed = 0;
 
-	ret = test_markers_for_dates(NULL, newinfo, &reversed, NULL, prn);
+	ret = test_markers_for_dates(newinfo, &reversed, NULL, prn);
 	if (reversed) {
 	    *pflags |= BOOK_DATA_REVERSED;
 	}

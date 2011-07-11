@@ -109,11 +109,11 @@ static const char *filter_get_title (int ftype)
 static void filter_info_init (filter_info *finfo, int ftype, int v,
 			      int t1, int t2)
 {
-    int pd = datainfo->pd;
+    int pd = dataset->pd;
 
     finfo->ftype = ftype;
     finfo->vnum = v;
-    finfo->vname = datainfo->varname[v];
+    finfo->vname = dataset->varname[v];
     finfo->t1 = t1;
     finfo->t2 = t2;
     finfo->k = 0;
@@ -153,8 +153,8 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     } else if (ftype == FILTER_HP) {
 	finfo->lambda = 100 * pd * pd;
     } else if (ftype == FILTER_BK) {
-	finfo->bkk = get_bkbp_k(datainfo);
-	get_bkbp_periods(datainfo, &finfo->bkl, &finfo->bku);
+	finfo->bkk = get_bkbp_k(dataset);
+	get_bkbp_periods(dataset, &finfo->bkl, &finfo->bku);
     } else if (ftype == FILTER_BW) {
 	finfo->order = 8;
 	finfo->cutoff = 67;
@@ -250,7 +250,7 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 	sprintf(s, "fracdiff(%s, %g)", finfo->vname, finfo->lambda);
     }
 
-    strcpy(VARLABEL(datainfo, v), s);
+    strcpy(VARLABEL(dataset, v), s);
 }
 
 static void check_bk_limits1 (GtkWidget *s1, GtkWidget *s2)
@@ -857,7 +857,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     char title[128];
     int v, err = 0;
 
-    obs = gretl_plotx(NULL, datainfo);
+    obs = gretl_plotx(dataset);
     if (obs == NULL) {
 	return E_ALLOC;
     }
@@ -873,15 +873,15 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     }
 
     if (!twoplot) {
-	fprintf(fp, "# timeseries %d\n", datainfo->pd);
+	fprintf(fp, "# timeseries %d\n", dataset->pd);
     }
 
-    if (datainfo->pd == 4) {
+    if (dataset->pd == 4) {
 	if ((finfo->t2 - finfo->t1) / 4 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 4\n", fp);
 	}
-    } else if (datainfo->pd == 12) {
+    } else if (dataset->pd == 12) {
 	if ((finfo->t2 - finfo->t1) / 12 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 12\n", fp);
@@ -891,15 +891,15 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
     v = finfo->vnum;
 
     if (finfo->graph_opt & FILTER_GRAPH_TREND) {
-	if (Z[v][finfo->t2] > Z[v][finfo->t1]) {
+	if (dataset->Z[v][finfo->t2] > dataset->Z[v][finfo->t1]) {
 	    zkeypos = 'L';
 	}
     }
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "set xrange [%g:%g]\n", floor(obs[datainfo->t1]), 
-	    ceil(obs[datainfo->t2]));
+    fprintf(fp, "set xrange [%g:%g]\n", floor(obs[dataset->t1]), 
+	    ceil(obs[dataset->t2]));
 
     if (twoplot) {
 	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.60\n", fp);
@@ -912,7 +912,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	sprintf(ztitle, _("%s (smoothed)"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
-	print_gp_data(finfo, obs, Z[v], fp);
+	print_gp_data(finfo, obs, dataset->Z[v], fp);
 	fputs("e , \\\n", fp);
 	print_gp_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
@@ -938,7 +938,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	sprintf(ztitle, _("%s (smoothed)"), finfo->vname);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
-	print_gp_data(finfo, obs, Z[v], fp);
+	print_gp_data(finfo, obs, dataset->Z[v], fp);
 	fputs("e , \\\n", fp);
 	print_gp_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
@@ -1032,7 +1032,7 @@ static void butterworth_poles_graph (GtkWidget *button, filter_info *finfo)
 static void weights_shape_graph (GtkWidget *button, filter_info *finfo)
 {
     gretl_matrix *W;
-    int T = sample_size(datainfo);
+    int T = sample_size(dataset);
     int err = 0;
 
     W = gretl_matrix_alloc(T, 2);
@@ -1155,19 +1155,19 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
 {
     const char *vname = (i == FILTER_SAVE_TREND)? finfo->save_t :
 	finfo->save_c;
-    int v = series_index(datainfo, vname);
+    int v = series_index(dataset, vname);
     int err = 0;
 
-    if (v == datainfo->v) {
-	err = dataset_add_allocated_series(x, &Z, datainfo);
+    if (v == dataset->v) {
+	err = dataset_add_allocated_series(x, dataset);
     } else {
-	free(Z[v]);
-	Z[v] = x;
-	set_var_discrete(datainfo, v, 0);
+	free(dataset->Z[v]);
+	dataset->Z[v] = x;
+	set_var_discrete(dataset, v, 0);
     }
 
     if (!err) {
-	strcpy(datainfo->varname[v], vname);
+	strcpy(dataset->varname[v], vname);
 	filter_make_varlabel(finfo, v, i);
 	*saved = 1;
     }
@@ -1242,69 +1242,69 @@ static void record_filter_command (filter_info *finfo)
 
 static int calculate_filter (filter_info *finfo)
 {
-    int save_t1 = datainfo->t1;
-    int save_t2 = datainfo->t2;
-    const double *x = Z[finfo->vnum];
+    int save_t1 = dataset->t1;
+    int save_t2 = dataset->t2;
+    const double *x = dataset->Z[finfo->vnum];
     double *fx = NULL;
     double *u = NULL;
     int saved = 0;
     int t, err = 0;
 
     if (finfo->ftype != FILTER_BK) {
-	fx = malloc(datainfo->n * sizeof *fx);
+	fx = malloc(dataset->n * sizeof *fx);
 	if (fx == NULL) {
 	    return E_ALLOC;
 	}
-	for (t=0; t<datainfo->n; t++) {
+	for (t=0; t<dataset->n; t++) {
 	    fx[t] = NADBL;
 	}
     }
 
     if ((finfo->graph_opt & FILTER_GRAPH_CYCLE) ||
 	finfo->save_opt & FILTER_SAVE_CYCLE) {
-	u = malloc(datainfo->n * sizeof *u);
+	u = malloc(dataset->n * sizeof *u);
 	if (u == NULL) {
 	    free(fx);
 	    return E_ALLOC;
 	}
     }
 
-    datainfo->t1 = finfo->t1;
-    datainfo->t2 = finfo->t2;
+    dataset->t1 = finfo->t1;
+    dataset->t2 = finfo->t2;
 
     if (finfo->ftype == FILTER_SMA) {
 	/* simple moving average */
-	movavg_series(x, fx, datainfo, finfo->k, finfo->center);
+	movavg_series(x, fx, dataset, finfo->k, finfo->center);
     } else if (finfo->ftype == FILTER_EMA) {
 	/* exponential moving average */
-	exponential_movavg_series(x, fx, datainfo, finfo->lambda, finfo->k);
+	exponential_movavg_series(x, fx, dataset, finfo->lambda, finfo->k);
     } else if (finfo->ftype == FILTER_HP) {
 	/* Hodrick-Prescott */
-	err = hp_filter(x, fx, datainfo, finfo->lambda, OPT_T);
+	err = hp_filter(x, fx, dataset, finfo->lambda, OPT_T);
     } else if (finfo->ftype == FILTER_BK) {
 	/* Baxter and King bandpass */
-	err = bkbp_filter(x, u, datainfo, finfo->bkl, finfo->bku, finfo->bkk);
+	err = bkbp_filter(x, u, dataset, finfo->bkl, finfo->bku, finfo->bkk);
     } else if (finfo->ftype == FILTER_BW) {
 	/* Butterworth */
-	err = butterworth_filter(x, fx, datainfo, finfo->order, finfo->cutoff);
+	err = butterworth_filter(x, fx, dataset, finfo->order, finfo->cutoff);
     } else if (finfo->ftype == FILTER_POLY) {
 	if (finfo->wopt != OPT_NONE) {
-	    err = weighted_poly_trend(x, fx, datainfo, finfo->order,
+	    err = weighted_poly_trend(x, fx, dataset, finfo->order,
 				      finfo->wopt, finfo->lambda,
 				      finfo->midfrac);
 	} else {
-	    err = poly_trend(x, fx, datainfo, finfo->order);
+	    err = poly_trend(x, fx, dataset, finfo->order);
 	}
     } else if (finfo->ftype == FILTER_FD) {
 	/* fractional differencing */
-	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, datainfo);
+	err = fracdiff_series(x, fx, finfo->lambda, 1, -1, dataset);
     }
 
-    datainfo->t1 = save_t1;
-    datainfo->t2 = save_t2;
+    dataset->t1 = save_t1;
+    dataset->t2 = save_t2;
 	
     if (!err && fx != NULL && u != NULL) {
-	for (t=0; t<datainfo->n; t++) {
+	for (t=0; t<dataset->n; t++) {
 	    if (na(x[t]) || na(fx[t])) {
 		u[t] = NADBL;
 	    } else {
@@ -1372,13 +1372,13 @@ void filter_callback (GtkAction *action)
 {
     filter_info finfo;
     int v = mdata_active_var();
-    int t1 = datainfo->t1;
-    int t2 = datainfo->t2;
+    int t1 = dataset->t1;
+    int t2 = dataset->t2;
     int code, err = 0;
 
     code = filter_code(action);
 
-    err = series_adjust_sample(Z[v], &t1, &t2);
+    err = series_adjust_sample(dataset->Z[v], &t1, &t2);
 
     if (!err && t2 - t1 + 1 < 4) {
 	err = E_TOOFEW;

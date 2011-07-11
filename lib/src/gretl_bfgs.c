@@ -1285,8 +1285,7 @@ struct umax_ {
     gretl_matrix *fm_out; /* function matrix value */
     char gmname[VNAMELEN]; /* name of user-defined gradient vector */
     char hmname[VNAMELEN]; /* name of user-defined Hessian matrix */
-    double ***Z;          /* pointer to data array */
-    DATAINFO *dinfo;      /* dataset info */
+    DATASET *dset;        /* dataset */
     PRN *prn;             /* optional printing struct */
 };
 
@@ -1307,8 +1306,7 @@ static umax *umax_new (GretlType t)
 	u->fm_out = NULL;
 	u->gmname[0] = '\0';
 	u->hmname[0] = '\0';
-	u->Z = NULL;
-	u->dinfo = NULL;
+	u->dset = NULL;
 	u->prn = NULL;
     }
 
@@ -1317,9 +1315,9 @@ static umax *umax_new (GretlType t)
 
 static void umax_destroy (umax *u)
 {
-    if (u->dinfo != NULL) {
+    if (u->dset != NULL) {
 	/* drop any private "$" series created */
-	dataset_drop_listed_variables(NULL, u->Z, u->dinfo, NULL, NULL);
+	dataset_drop_listed_variables(NULL, u->dset, NULL, NULL);
     }
 
     gretl_scalar_delete("$umax", NULL);
@@ -1344,7 +1342,7 @@ static double user_get_criterion (const double *b, void *p)
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gf, u->Z, u->dinfo, u->prn); 
+    err = execute_genr(u->gf, u->dset, u->prn); 
 
     if (err) {
 	return NADBL;
@@ -1384,7 +1382,7 @@ static int user_get_gradient (double *b, double *g, int k,
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gg, u->Z, u->dinfo, u->prn); 
+    err = execute_genr(u->gg, u->dset, u->prn); 
 
     if (err) {
 	return err;
@@ -1419,7 +1417,7 @@ static int user_get_hessian (double *b, gretl_matrix *H,
 	u->b->val[i] = b[i];
     }
 
-    err = execute_genr(u->gh, u->Z, u->dinfo, u->prn); 
+    err = execute_genr(u->gh, u->dset, u->prn); 
 
     if (err) {
 	return err;
@@ -1473,8 +1471,7 @@ static int user_gen_setup (umax *u,
 			   const char *fncall,
 			   const char *gradcall,
 			   const char *hesscall,
-			   double ***pZ, 
-			   DATAINFO *pdinfo)
+			   DATASET *dset)
 {
     char formula[MAXLINE];
     int err = 0;
@@ -1485,20 +1482,20 @@ static int user_gen_setup (umax *u,
 	sprintf(formula, "$umax=%s", fncall);
     }
 
-    u->gf = genr_compile(formula, pZ, pdinfo, OPT_P, &err);
+    u->gf = genr_compile(formula, dset, OPT_P, &err);
 
     if (!err) {
 	/* see if the formula actually works */
-	err = execute_genr(u->gf, pZ, pdinfo, u->prn);
+	err = execute_genr(u->gf, dset, u->prn);
     }
 
     if (!err && gradcall != NULL) {
 	/* process gradient formula */
 	err = optimizer_get_matrix_name(gradcall, u->gmname);
 	if (!err) {
-	    u->gg = genr_compile(gradcall, pZ, pdinfo, OPT_P | OPT_U, &err);
+	    u->gg = genr_compile(gradcall, dset, OPT_P | OPT_U, &err);
 	    if (!err) {
-		err = execute_genr(u->gg, pZ, pdinfo, u->prn);
+		err = execute_genr(u->gg, dset, u->prn);
 	    } 
 	}
     }
@@ -1507,16 +1504,15 @@ static int user_gen_setup (umax *u,
 	/* process Hessian formula */
 	err = optimizer_get_matrix_name(hesscall, u->hmname);
 	if (!err) {
-	    u->gh = genr_compile(hesscall, pZ, pdinfo, OPT_P | OPT_U, &err);
+	    u->gh = genr_compile(hesscall, dset, OPT_P | OPT_U, &err);
 	    if (!err) {
-		err = execute_genr(u->gg, pZ, pdinfo, u->prn);
+		err = execute_genr(u->gg, dset, u->prn);
 	    } 
 	}
     }
 
     if (!err) {
-	u->Z = pZ;
-	u->dinfo = pdinfo;
+	u->dset = dset;
 	u->fm_out = genr_get_output_matrix(u->gf);
     } else {
 	destroy_genr(u->gf);
@@ -1530,7 +1526,7 @@ static int user_gen_setup (umax *u,
 double user_BFGS (gretl_matrix *b, 
 		  const char *fncall,
 		  const char *gradcall, 
-		  double ***pZ, DATAINFO *pdinfo,
+		  DATASET *dset,
 		  PRN *prn, int *err)
 {
     umax *u;
@@ -1555,7 +1551,7 @@ double user_BFGS (gretl_matrix *b,
 
     u->b = b;
 
-    *err = user_gen_setup(u, fncall, gradcall, NULL, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, gradcall, NULL, dset);
     if (*err) {
 	return NADBL;
     }
@@ -1593,7 +1589,7 @@ double user_NR (gretl_matrix *b,
 		const char *fncall,
 		const char *gradcall, 
 		const char *hesscall,
-		double ***pZ, DATAINFO *pdinfo,
+		DATASET *dset,
 		PRN *prn, int *err)
 {
     umax *u;
@@ -1619,7 +1615,7 @@ double user_NR (gretl_matrix *b,
 
     u->b = b;
 
-    *err = user_gen_setup(u, fncall, gradcall, hesscall, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, gradcall, hesscall, dset);
     if (*err) {
 	return NADBL;
     }
@@ -1665,7 +1661,7 @@ static int user_calc_fvec (integer *m, integer *n, double *x, double *fvec,
     gretl_matrix_print(u->b, "user_calc_fvec: u->b");
 #endif
 
-    err = execute_genr(u->gf, u->Z, u->dinfo, u->prn); 
+    err = execute_genr(u->gf, u->dset, u->prn); 
     if (err) {
 	fprintf(stderr, "execute_genr: err = %d\n", err); 
     }
@@ -1713,8 +1709,7 @@ static int fdjac_allocate (integer m, integer n,
 }
 
 gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
-		     double ***pZ, DATAINFO *pdinfo,
-		     int *err)
+		     DATASET *dset, int *err)
 {
     umax *u;
     gretl_matrix *J = NULL;
@@ -1744,7 +1739,7 @@ gretl_matrix *fdjac (gretl_matrix *theta, const char *fncall,
     u->b = theta;
     u->ncoeff = n;
 
-    *err = user_gen_setup(u, fncall, NULL, NULL, pZ, pdinfo);
+    *err = user_gen_setup(u, fncall, NULL, NULL, dset);
     if (*err) {
 	fprintf(stderr, "fdjac: error %d from user_gen_setup\n", *err);
 	goto bailout;

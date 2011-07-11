@@ -71,8 +71,7 @@ struct nlspec_ {
     char *hesscall;     /* function call for Hessian */
     GENERATOR **genrs;  /* variable-generation pointers */
     GENERATOR *hgen;    /* generator for Hessian */
-    double ***Z;        /* pointer to data array */
-    DATAINFO *dinfo;    /* pointer to dataset info */
+    DATASET *dset;      /* pointer to dataset */
     PRN *prn;           /* printing aparatus */
     ocset *oc;          /* orthogonality info (GMM) */
     char *missmask;     /* mask for missing observations */
@@ -89,7 +88,7 @@ int update_coeff_values (const double *x, nlspec *s);
 int check_gmm_requirements (nlspec *spec);
 
 int nlspec_add_orthcond (nlspec *s, const char *str,
-			 const double **Z, const DATAINFO *pdinfo);
+			 const DATASET *dset);
 
 int nlspec_add_ivreg_oc (nlspec *s, int lhv, const int *rlist,
 			 const double **Z);
@@ -99,7 +98,7 @@ int nlspec_add_weights (nlspec *s, const char *str);
 void nlspec_print_gmm_info (const nlspec *spec, PRN *prn);
 
 void maybe_add_gmm_residual (MODEL *pmod, const nlspec *spec, 
-			     const DATAINFO *pdinfo);
+			     const DATASET *dset);
 
 int gmm_add_vcv (MODEL *pmod, nlspec *spec);
 

@@ -284,8 +284,7 @@ gretl_coeff_vector_from_model (const MODEL *pmod, const char *select, int *err)
 /**
  * gretl_covariance_matrix_from_varlist:
  * @list: list of variables by ID number.
- * @Z: data array.
- * @pdinfo: pointer to data information struct.
+ * @dset: dataset struct.
  * @means: pointer to pick up vector of means, or NULL to discard.
  * @errp: pointer to receive non-zero error code in case of
  * failure, or NULL.
@@ -296,17 +295,15 @@ gretl_coeff_vector_from_model (const MODEL *pmod, const char *select, int *err)
  */
 
 gretl_matrix *
-gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 
-				      const DATAINFO *pdinfo, 
+gretl_covariance_matrix_from_varlist (const int *list, 
+				      const DATASET *dset, 
 				      gretl_matrix **means,
 				      int *errp)
 {
     gretl_matrix *V;
     gretl_vector *xbar;
-
     int k = list[0];
     int t, i, j;
-
     double vv, x, y;
     int n, err = 0;
     
@@ -319,7 +316,7 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
     }
 
     for (i=0; i<k && !err; i++) {
-	xbar->val[i] = gretl_mean(pdinfo->t1, pdinfo->t2, Z[list[i+1]]);
+	xbar->val[i] = gretl_mean(dset->t1, dset->t2, dset->Z[list[i+1]]);
 	if (na(xbar->val[i])) {
 	    err = E_DATA;
 	} 
@@ -329,9 +326,9 @@ gretl_covariance_matrix_from_varlist (const int *list, const double **Z,
 	for (j=i; j<k; j++) {
 	    vv = 0.0;
 	    n = 0;
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		x = Z[list[i+1]][t];
-		y = Z[list[j+1]][t];
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		x = dset->Z[list[i+1]][t];
+		y = dset->Z[list[j+1]][t];
 		if (na(x) || na(y)) {
 		    continue;
 		}
@@ -445,7 +442,8 @@ static int get_mask_count (const char *mask, int n)
 }
 
 static gretl_matrix *
-real_gretl_matrix_data_subset (const int *list, const double **Z,
+real_gretl_matrix_data_subset (const int *list, 
+			       const DATASET *dset,
 			       int t1, int t2, const char *mask,
 			       int op, int *err)
 {
@@ -468,7 +466,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
     if (mask != NULL) {
 	T -= get_mask_count(mask, Tmax);
     } else if (op == M_MISSING_TRIM) {
-	*err = list_adjust_sample(list, &t1, &t2, Z);
+	*err = list_adjust_sample(list, &t1, &t2, dset);
 	if (*err) {
 	    return NULL;
 	} else {
@@ -477,7 +475,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
     } else if (op == M_MISSING_SKIP || op == M_MISSING_ERROR) {
 	for (t=t1; t<=t2 && !*err; t++) {
 	    for (j=0; j<k; j++) {
-		x = Z[list[j+1]][t];
+		x = dset->Z[list[j+1]][t];
 		if (na(x)) {
 		    if (op == M_MISSING_SKIP) {
 			T--;
@@ -509,7 +507,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 	    skip = mask[t - t1];
 	} else if (op == M_MISSING_SKIP) {
 	    for (j=0; j<k; j++) {
-		x = Z[list[j+1]][t];
+		x = dset->Z[list[j+1]][t];
 		if (na(x)) {
 		    skip = 1;
 		    break;
@@ -518,7 +516,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 	}
 	if (!skip) {
 	    for (j=0; j<k; j++) {
-		x = Z[list[j+1]][t];
+		x = dset->Z[list[j+1]][t];
 		gretl_matrix_set(M, s, j, x);
 	    }
 	    if (s == 0) {
@@ -561,7 +559,7 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
 /**
  * gretl_matrix_data_subset:
  * @list: list of variable to process.
- * @Z: data array.
+ * @dset: dataset struct.
  * @t1: starting observation.
  * @t2: ending observation.
  * @missop: how to handle missing observations.
@@ -579,18 +577,19 @@ real_gretl_matrix_data_subset (const int *list, const double **Z,
  * Returns: allocated matrix or NULL on failure. 
  */
 
-gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
+gretl_matrix *gretl_matrix_data_subset (const int *list, 
+					const DATASET *dset,
 					int t1, int t2, int missop, 
 					int *err)
 {
-    return real_gretl_matrix_data_subset(list, Z, t1, t2, NULL, 
+    return real_gretl_matrix_data_subset(list, dset, t1, t2, NULL, 
 					 missop, err);
 }
 
 /**
  * gretl_matrix_data_subset_masked:
  * @list: list of variable to process.
- * @Z: data array.
+ * @dset: dataset struct.
  * @t1: starting observation.
  * @t2: ending observation.
  * @mask: missing observations mask, or NULL.
@@ -607,11 +606,12 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
  */
 
 gretl_matrix *
-gretl_matrix_data_subset_masked (const int *list, const double **Z,
+gretl_matrix_data_subset_masked (const int *list, 
+				 const DATASET *dset,
 				 int t1, int t2, const char *mask,
 				 int *err)
 {
-    return real_gretl_matrix_data_subset(list, Z, t1, t2, mask, 
+    return real_gretl_matrix_data_subset(list, dset, t1, t2, mask, 
 					 M_MISSING_ERROR, err);
 }
 
@@ -619,11 +619,11 @@ gretl_matrix_data_subset_masked (const int *list, const double **Z,
    sample range */
 
 static int mmask_row_count (const gretl_matrix *mask, 
-			    const DATAINFO *pdinfo)
+			    const DATASET *dset)
 {
     int t, m = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (mask->val[t] != 0) {
 	    m++;
 	}
@@ -635,8 +635,7 @@ static int mmask_row_count (const gretl_matrix *mask,
 /**
  * gretl_matrix_data_subset_special:
  * @list: list of variables to process.
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @mmask: matrix holding desired observations mask.
  * @err: location to receive error code.
  *
@@ -646,26 +645,26 @@ static int mmask_row_count (const gretl_matrix *mask,
  * to support the gretl "libset" variable %matrix_mask.
  *
  * The length of the vector @mmask must equal the number of
- * observations in the dataset, the member %n of @pdinfo.
+ * observations in the dataset, the member %n of @dset.
  *
  * Returns: allocated matrix or NULL on failure. 
  */
 
 gretl_matrix *
-gretl_matrix_data_subset_special (const int *list, const double **Z,
-				  const DATAINFO *pdinfo,
+gretl_matrix_data_subset_special (const int *list, 
+				  const DATASET *dset,
 				  const gretl_matrix *mmask,
 				  int *err)
 {
     int n = gretl_vector_get_length(mmask);
     gretl_matrix *X = NULL;
 
-    if (list == NULL || n != pdinfo->n) {
+    if (list == NULL || n != dset->n) {
 	*err = E_DATA;
     } else if (list[0] == 0) {
 	X = gretl_null_matrix_new();
     } else {
-	int T = mmask_row_count(mmask, pdinfo);
+	int T = mmask_row_count(mmask, dset);
 	int k = list[0];
 
 	if (T == 0) {
@@ -680,9 +679,9 @@ gretl_matrix_data_subset_special (const int *list, const double **Z,
 	    int i, s, t;
 
 	    for (i=0; i<k; i++) {
-		xi = Z[list[i+1]];
+		xi = dset->Z[list[i+1]];
 		s = 0;
-		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		for (t=dset->t1; t<=dset->t2; t++) {
 		    if (mmask->val[t] != 0) {
 			xti = xi[t];
 			if (na(xti)) {
@@ -711,7 +710,6 @@ gretl_matrix_data_subset_special (const int *list, const double **Z,
  * gretl_dataset_from_matrix:
  * @m: source matrix.
  * @list: list of columns (1-based) to include, or NULL.
- * @pZ: location to receive data array.
  * @err: location to receive error code.
  *
  * Creates a gretl dataset from matrix @m, either using the
@@ -722,11 +720,11 @@ gretl_matrix_data_subset_special (const int *list, const double **Z,
  * or NULL on failure.
  */
 
-DATAINFO *gretl_dataset_from_matrix (const gretl_matrix *m, 
-				     const int *list,
-				     double ***pZ, int *err)
+DATASET *gretl_dataset_from_matrix (const gretl_matrix *m, 
+				    const int *list,
+				    int *err)
 {
-    DATAINFO *dinfo = NULL;
+    DATASET *dset = NULL;
     const char **names;
     double x;
     int i, t, col, nv, T;
@@ -752,8 +750,8 @@ DATAINFO *gretl_dataset_from_matrix (const gretl_matrix *m,
     } 
 
     if (!*err) {
-	dinfo = create_auxiliary_dataset(pZ, nv + 1, T);
-	if (dinfo == NULL) {
+	dset = create_auxiliary_dataset(nv + 1, T);
+	if (dset == NULL) {
 	    *err = E_ALLOC;
 	}
     }
@@ -768,16 +766,16 @@ DATAINFO *gretl_dataset_from_matrix (const gretl_matrix *m,
 	col = (list != NULL)? list[i] - 1 : i - 1;
 	for (t=0; t<T; t++) {
 	    x = gretl_matrix_get(m, t, col);
-	    (*pZ)[i][t] = x;
+	    dset->Z[i][t] = x;
 	}
 	if (names != NULL) {
-	    strcpy(dinfo->varname[i], names[col]);
+	    strcpy(dset->varname[i], names[col]);
 	} else {
-	    sprintf(dinfo->varname[i], "col%d", col + 1);
+	    sprintf(dset->varname[i], "col%d", col + 1);
 	}
     }
 
-    return dinfo;
+    return dset;
 }
 
 /**

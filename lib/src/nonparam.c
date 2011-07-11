@@ -248,19 +248,19 @@ static int real_spearman_rho (const double *x, const double *y, int n,
 static void print_raw_and_ranked (int vx, int vy,
 				  const double *x, const double *y, 
 				  const double *rx, const double *ry,
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  PRN *prn)
 {
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = dset->t2 - dset->t1 + 1;
     int t, i = 0;
 
-    obs_marker_init(pdinfo);
+    obs_marker_init(dset);
     pprintf(prn, "\n     %s ", _("Obs"));
-    pprintf(prn, "%13s%13s%13s%13s\n\n", pdinfo->varname[vx], _("rank"),
-	    pdinfo->varname[vy], _("rank"));
+    pprintf(prn, "%13s%13s%13s%13s\n\n", dset->varname[vx], _("rank"),
+	    dset->varname[vy], _("rank"));
 
     for (t=0; t<T; t++) {
-	print_obs_marker(t + pdinfo->t1, pdinfo, prn);
+	print_obs_marker(t + dset->t1, dset, prn);
 	if (!(na(x[t])) && !(na(y[t]))) {
 	    gretl_printxn(x[t], 15, prn);
 	    pprintf(prn, "%15g", rx[i]);
@@ -275,8 +275,7 @@ static void print_raw_and_ranked (int vx, int vy,
 /**
  * spearman_rho:
  * @list: list of (two) variables to process.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if includes %OPT_V, print both the "raw" and the ranked data.
  * @prn: gretl printing struct.
  *
@@ -286,10 +285,10 @@ static void print_raw_and_ranked (int vx, int vy,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int spearman_rho (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int spearman_rho (const int *list, const DATASET *dset, 
 		  gretlopt opt, PRN *prn)
 {
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = dset->t2 - dset->t1 + 1;
     double *rx = NULL, *ry = NULL;
     const double *x, *y;
     double rho, zval;
@@ -304,8 +303,8 @@ int spearman_rho (const int *list, const double **Z, const DATAINFO *pdinfo,
     vx = list[1];
     vy = list[2];
 
-    x = Z[vx] + pdinfo->t1;
-    y = Z[vy] + pdinfo->t1;
+    x = dset->Z[vx] + dset->t1;
+    y = dset->Z[vy] + dset->t1;
 
     err = real_spearman_rho(x, y, T, &rho, &zval,
 			    (opt & OPT_V)? &rx : NULL,
@@ -315,8 +314,8 @@ int spearman_rho (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return err;
     }
 
-    pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), pdinfo->varname[vx],
-	    pdinfo->varname[vy]);
+    pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), dset->varname[vx],
+	    dset->varname[vy]);
 
     if (na(rho)) {
 	pputs(prn, _("Spearman's rank correlation is undefined\n"));
@@ -357,7 +356,7 @@ int spearman_rho (const int *list, const double **Z, const DATAINFO *pdinfo,
  skipit:
 
     if (rx != NULL && ry != NULL) { 
-	print_raw_and_ranked(vx, vy, x, y, rx, ry, pdinfo, prn);
+	print_raw_and_ranked(vx, vy, x, y, rx, ry, dset, prn);
 	free(rx);
 	free(ry);
     }
@@ -514,8 +513,7 @@ static int real_kendall_tau (const double *x, const double *y,
 /**
  * kendall_tau:
  * @list: list of (two) variables to process.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if includes %OPT_V, print both the "raw" and the ranked data.
  * @prn: gretl printing struct.
  *
@@ -525,11 +523,11 @@ static int real_kendall_tau (const double *x, const double *y,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int kendall_tau (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int kendall_tau (const int *list, const DATASET *dset, 
 		 gretlopt opt, PRN *prn)
 {
     struct xy_pair *xy = NULL;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int T = dset->t2 - dset->t1 + 1;
     const double *x, *y;
     double tau, z;
     int vx, vy;
@@ -544,8 +542,8 @@ int kendall_tau (const int *list, const double **Z, const DATAINFO *pdinfo,
     vx = list[1];
     vy = list[2];
 
-    x = Z[vx] + pdinfo->t1;
-    y = Z[vy] + pdinfo->t1;
+    x = dset->Z[vx] + dset->t1;
+    y = dset->Z[vy] + dset->t1;
 
     /* count valid pairs */
     for (t=0; t<T; t++) {
@@ -568,8 +566,8 @@ int kendall_tau (const int *list, const double **Z, const DATAINFO *pdinfo,
     err = real_kendall_tau(x, y, T, xy, nn, &tau, &z);
 
     if (!err) {
-	pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), pdinfo->varname[vx],
-		pdinfo->varname[vy]);
+	pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), dset->varname[vx],
+		dset->varname[vy]);
 	pprintf(prn, "%s = %.8f\n", _("Kendall's tau"), tau);
 	pputs(prn, _("Under the null hypothesis of no correlation:\n "));
 	pprintf(prn, _("z-score = %g, with two-tailed p-value %.4f\n"), z,
@@ -582,7 +580,7 @@ int kendall_tau (const int *list, const double **Z, const DATAINFO *pdinfo,
 	rankcorr_get_rankings(x, y, T, &rx, &ry, NULL, NULL);
 
 	if (rx != NULL && ry != NULL) { 
-	    print_raw_and_ranked(vx, vy, x, y, rx, ry, pdinfo, prn);
+	    print_raw_and_ranked(vx, vy, x, y, rx, ry, dset, prn);
 	    free(rx);
 	    free(ry);
 	}
@@ -734,8 +732,7 @@ double lockes_test (const double *x, int t1, int t2)
 /**
  * runs_test:
  * @v: ID number of the variable to process.
- * @Z: data matrix.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: %OPT_D to use first difference of variable, %OPT_E
  * to assume positive and negative are equiprobable.
  * @prn: gretl printing struct.
@@ -747,7 +744,7 @@ double lockes_test (const double *x, int t1, int t2)
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int runs_test (int v, const double **Z, const DATAINFO *pdinfo, 
+int runs_test (int v, const DATASET *dset, 
 	       gretlopt opt, PRN *prn)
 {
     double xt, *x, mu, s2, sigma;
@@ -755,7 +752,7 @@ int runs_test (int v, const double **Z, const DATAINFO *pdinfo,
     int Np, Nm;
     int t, n, runs = 1;
 
-    n = pdinfo->t2 - pdinfo->t1 + 1;
+    n = dset->t2 - dset->t1 + 1;
 
     x = malloc(n * sizeof *x);
     if (x == NULL) {
@@ -767,17 +764,17 @@ int runs_test (int v, const double **Z, const DATAINFO *pdinfo,
     if (opt & OPT_D) {
 	double xt1;
 
-	for (t=pdinfo->t1 + 1; t<=pdinfo->t2; t++) {
-	    xt = Z[v][t];
-	    xt1 = Z[v][t-1];
+	for (t=dset->t1 + 1; t<=dset->t2; t++) {
+	    xt = dset->Z[v][t];
+	    xt1 = dset->Z[v][t-1];
 	    if (na(xt) || na(xt1)) {
 		continue;
 	    }
 	    x[n++] = xt - xt1;
 	} 	
     } else {
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    xt = Z[v][t];
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    xt = dset->Z[v][t];
 	    if (na(xt)) {
 		continue;
 	    }
@@ -830,7 +827,7 @@ int runs_test (int v, const double **Z, const DATAINFO *pdinfo,
     }
 
     pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
-	    pdinfo->varname[v], runs);
+	    dset->varname[v], runs);
 
     if (na(z)) {
 	pprintf(prn, _("Test statistic cannot be computed: try "
@@ -879,12 +876,12 @@ static double print_z_prob (double z, PRN *prn)
     return pv;
 }
 
-static void diff_test_header (int v1, int v2, const DATAINFO *pdinfo,
+static void diff_test_header (int v1, int v2, const DATASET *dset,
 			      PRN *prn)
 {
     pputc(prn, '\n');
     pprintf(prn, _("Test for difference between %s and %s"),
-	    pdinfo->varname[v1], pdinfo->varname[v2]);
+	    dset->varname[v1], dset->varname[v2]);
 }
 
 static const int rank5[3][2] = {
@@ -907,7 +904,7 @@ struct ranker {
 
 static int 
 signed_rank_test (const double *x, const double *y, 
-		  int v1, int v2, const DATAINFO *pdinfo,
+		  int v1, int v2, const DATASET *dset,
 		  double *result, gretlopt opt, PRN *prn)
 {
     struct ranker *r;
@@ -916,7 +913,7 @@ signed_rank_test (const double *x, const double *y,
     int Z = 0, N = 0;
     int i, k, t, n = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t]) && !na(y[t])) {
 	    if (x[t] != y[t]) {
 		n++;
@@ -937,7 +934,7 @@ signed_rank_test (const double *x, const double *y,
     }
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t]) && !na(y[t]) && x[t] != y[t]) {
 	    d = x[t] - y[t];
 	    r[i].val = fabs(d);
@@ -972,7 +969,7 @@ signed_rank_test (const double *x, const double *y,
 	}
     }
 
-    diff_test_header(v1, v2, pdinfo, prn);
+    diff_test_header(v1, v2, dset, prn);
     pprintf(prn, "\n%s\n", _("Wilcoxon Signed-Rank Test"));
     pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 	    _("the median difference is zero"));
@@ -1042,7 +1039,7 @@ signed_rank_test (const double *x, const double *y,
 }
 
 static int rank_sum_test (const double *x, const double *y, 
-			  int v1, int v2, const DATAINFO *pdinfo,
+			  int v1, int v2, const DATASET *dset,
 			  double *result, gretlopt opt, PRN *prn)
 {
     struct ranker *r;
@@ -1051,7 +1048,7 @@ static int rank_sum_test (const double *x, const double *y,
     int na = 0, nb = 0;
     int i, t, n = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t])) na++;
 	if (!na(y[t])) nb++;
     }
@@ -1077,7 +1074,7 @@ static int rank_sum_test (const double *x, const double *y,
     }
 
     i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t])) {
 	    r[i].val = x[t];
 	    r[i].c = xc;
@@ -1109,7 +1106,7 @@ static int rank_sum_test (const double *x, const double *y,
 	}
     }
 
-    diff_test_header(v1, v2, pdinfo, prn);
+    diff_test_header(v1, v2, dset, prn);
     pprintf(prn, "\n%s\n", _("Wilcoxon Rank-Sum Test"));
     pprintf(prn, "%s: %s\n\n", _("Null hypothesis"),
 	    _("the two medians are equal"));
@@ -1169,14 +1166,14 @@ static int rank_sum_test (const double *x, const double *y,
 }
 
 static int sign_test (const double *x, const double *y, 
-		      int v1, int v2, const DATAINFO *pdinfo,
+		      int v1, int v2, const DATASET *dset,
 		      double *result, gretlopt opt, PRN *prn)
 {
     double pv;
     int n, w, t;
 
     n = w = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t]) && !na(y[t]) && x[t] != y[t]) {
 	    w += (x[t] > y[t]);
 	    n++;
@@ -1187,12 +1184,12 @@ static int sign_test (const double *x, const double *y,
 	return E_MISSDATA;
     }
 
-    diff_test_header(v1, v2, pdinfo, prn);
+    diff_test_header(v1, v2, dset, prn);
     pprintf(prn, "\n%s\n\n", _("Sign Test"));
     pprintf(prn, _("Number of differences: n = %d\n"), n);
     pputs(prn, "  ");
     pprintf(prn, _("Number of cases with %s > %s: w = %d (%.2f%%)\n"), 
-	    pdinfo->varname[v1], pdinfo->varname[v2],
+	    dset->varname[v1], dset->varname[v2],
 	    w, 100.0 * w / n);
 
     pputs(prn, "  ");
@@ -1216,8 +1213,7 @@ static int sign_test (const double *x, const double *y,
 /**
  * diff_test:
  * @list: list containing 2 variables.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: %OPT_G, sign test; %OPT_R, rank sum; %OPT_I,
  * signed rank; %OPT_V, verbose (for rank tests).
  * @prn: gretl printing struct.
@@ -1229,7 +1225,7 @@ static int sign_test (const double *x, const double *y,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int diff_test (const int *list, const DATASET *dset, 
 	       gretlopt opt, PRN *prn)
 {
     const double *x, *y;
@@ -1245,19 +1241,19 @@ int diff_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     v1 = list[1];
     v2 = list[2];
 
-    x = Z[v1];
-    y = Z[v2];
+    x = dset->Z[v1];
+    y = dset->Z[v2];
 
     if (opt == OPT_NONE || opt == OPT_V) {
 	opt = OPT_G;
     }
 
     if (opt & OPT_G) {
-	err = sign_test(x, y, v1, v2, pdinfo, result, opt, prn);
+	err = sign_test(x, y, v1, v2, dset, result, opt, prn);
     } else if (opt & OPT_R) {
-	err = rank_sum_test(x, y, v1, v2, pdinfo, result, opt, prn);
+	err = rank_sum_test(x, y, v1, v2, dset, result, opt, prn);
     } else if (opt & OPT_I) {
-	err = signed_rank_test(x, y, v1, v2, pdinfo, result, opt, prn);
+	err = signed_rank_test(x, y, v1, v2, dset, result, opt, prn);
     } 
 
     record_test_result(result[0], result[1], "diff");

@@ -26,11 +26,9 @@ double rhohat (int order, int t1, int t2, const double *uhat);
 
 int check_for_effective_const (MODEL *pmod, const double *y);
 
-void maybe_shift_ldepvar (MODEL *pmod, const double **Z, 
-			  DATAINFO *pdinfo);
+void maybe_shift_ldepvar (MODEL *pmod, DATASET *dset);
 
-MODEL ivreg_via_gmm (const int *list, double ***pZ,
-		     DATAINFO *pdinfo, gretlopt opt);
+MODEL ivreg_via_gmm (const int *list, DATASET *dset, gretlopt opt);
 
 int get_x12a_maxpd (void);
 

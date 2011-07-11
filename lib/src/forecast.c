@@ -190,7 +190,7 @@ static FITRESID *fit_resid_new_with_length (int n, int add_errs)
 }
 
 static FITRESID *fit_resid_new_for_model (const MODEL *pmod, 
-					  const DATAINFO *pdinfo,
+					  const DATASET *dset,
 					  int t1, int t2, int pre_n,
 					  int *err)
 {
@@ -201,7 +201,7 @@ static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
 	return NULL;
     }
 
-    fr = fit_resid_new_with_length(pdinfo->n, 0);
+    fr = fit_resid_new_with_length(dset->n, 0);
 
     if (fr == NULL) {
 	*err = E_ALLOC;
@@ -226,7 +226,7 @@ static FITRESID *fit_resid_new_for_model (const MODEL *pmod,
 }
 
 static FITRESID *fit_resid_new_for_system (int asy, 
-					   const DATAINFO *pdinfo,
+					   const DATASET *dset,
 					   int t1, int t2, int pre_n,
 					   int *err)
 {
@@ -237,7 +237,7 @@ static FITRESID *fit_resid_new_for_system (int asy,
 	return NULL;
     }
 
-    fr = fit_resid_new_with_length(pdinfo->n, 1);
+    fr = fit_resid_new_with_length(dset->n, 1);
 
     if (fr == NULL) {
 	*err = E_ALLOC;
@@ -293,8 +293,7 @@ static int special_depvar (const MODEL *pmod)
  * get_fit_resid:
  * @pmod: the model for which actual and fitted values
  * are wanted.
- * @Z: data array using which @pmod was estimated.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @err: location to receive error code.
  *
  * Allocates a #FITRESID structure and fills it out with
@@ -304,21 +303,21 @@ static int special_depvar (const MODEL *pmod)
  * Returns: pointer to allocated structure, or %NULL on failure.
  */
 
-FITRESID *get_fit_resid (const MODEL *pmod, const double **Z, 
-			 const DATAINFO *pdinfo, int *err)
+FITRESID *get_fit_resid (const MODEL *pmod, const DATASET *dset, 
+			 int *err)
 {
     FITRESID *fr;
     int t, dv = -1;
 
     if (!special_depvar(pmod)) {
 	dv = gretl_model_get_depvar(pmod);
-	if (dv < 0 || dv >= pdinfo->v) {
+	if (dv < 0 || dv >= dset->v) {
 	    *err = E_DATA;
 	    return NULL;
 	}
     }
 
-    fr = fit_resid_new_for_model(pmod, pdinfo, pmod->t1, pmod->t2,
+    fr = fit_resid_new_for_model(pmod, dset, pmod->t1, pmod->t2,
 				 0, err);
     if (*err) {
 	return NULL;
@@ -344,7 +343,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
 		fr->actual[t] = pmod->yhat[t] + pmod->uhat[t];
 	    }
 	} else {
-	    fr->actual[t] = Z[dv][t];
+	    fr->actual[t] = dset->Z[dv][t];
 	}
 	fr->fitted[t] = pmod->yhat[t];
 	fr->resid[t] = pmod->uhat[t];
@@ -359,7 +358,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, const double **Z,
     if (dv < 0) {
 	strcpy(fr->depvar, "implicit y");
     } else {
-	strcpy(fr->depvar, pdinfo->varname[dv]);
+	strcpy(fr->depvar, dset->varname[dv]);
     }
     
     return fr;
@@ -385,7 +384,7 @@ static const int *model_xlist (MODEL *pmod)
    variable among the regressors: return 1 if so, 0 if not
 */
 
-static int has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
+static int has_depvar_lags (MODEL *pmod, const DATASET *dset)
 {
     const char *yname;
     const int *xlist;
@@ -396,12 +395,12 @@ static int has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
 	return 0;
     }
 
-    yname = gretl_model_get_depvar_name(pmod, pdinfo);
+    yname = gretl_model_get_depvar_name(pmod, dset);
 
     for (i=1; i<=xlist[0]; i++) {
         vi = xlist[i];
-	if (pdinfo->varinfo[vi]->lag > 0 &&
-	    !strcmp(yname, pdinfo->varinfo[vi]->parent)) {
+	if (dset->varinfo[vi]->lag > 0 &&
+	    !strcmp(yname, dset->varinfo[vi]->parent)) {
 	    return 1;
 	}
     }
@@ -420,7 +419,7 @@ static int has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
 */
 
 static int process_lagged_depvar (MODEL *pmod, 
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  int **depvar_lags)
 {
     const int *xlist = NULL;
@@ -428,7 +427,7 @@ static int process_lagged_depvar (MODEL *pmod,
     int anylags;
     int err = 0;
 
-    anylags = has_depvar_lags(pmod, pdinfo);
+    anylags = has_depvar_lags(pmod, dset);
 
     if (!anylags) {
 	*depvar_lags = NULL;
@@ -445,13 +444,13 @@ static int process_lagged_depvar (MODEL *pmod,
 	const char *yname;
 	int i, vi;
 
-	yname = gretl_model_get_depvar_name(pmod, pdinfo);
+	yname = gretl_model_get_depvar_name(pmod, dset);
 
 	for (i=1; i<=xlist[0]; i++) {
             vi = xlist[i];
-	    if (pdinfo->varinfo[vi]->lag > 0 &&
-		!strcmp(yname, pdinfo->varinfo[vi]->parent)) {
-		dvlags[i-1] = pdinfo->varinfo[vi]->lag;
+	    if (dset->varinfo[vi]->lag > 0 &&
+		!strcmp(yname, dset->varinfo[vi]->parent)) {
+		dvlags[i-1] = dset->varinfo[vi]->lag;
 	    } else {
 		dvlags[i-1] = 0;
 	    }
@@ -472,7 +471,7 @@ static int process_lagged_depvar (MODEL *pmod,
 
 static int 
 has_real_exog_regressors (MODEL *pmod, const int *dvlags,
-			  const double **Z, const DATAINFO *pdinfo)
+			  const DATASET *dset)
 {
     const int *xlist = model_xlist(pmod);
     int i, xi, ret = 0;
@@ -481,9 +480,9 @@ has_real_exog_regressors (MODEL *pmod, const int *dvlags,
 	for (i=0; i<xlist[0]; i++) {
 	    xi = xlist[i + 1];
 	    if (xi != 0 && (dvlags == NULL || dvlags[i] == 0)) {
-		if (is_trend_variable(Z[xi], pdinfo->n)) {
+		if (is_trend_variable(dset->Z[xi], dset->n)) {
 		    continue;
-		} else if (is_periodic_dummy(Z[xi], pdinfo)) {
+		} else if (is_periodic_dummy(dset->Z[xi], dset)) {
 		    continue;
 		} else {
 		    ret = 1;
@@ -555,7 +554,7 @@ static double fcast_get_ldv (Forecast *fc, int i, int t, int lag,
 
 static int
 static_fcast_with_errs (Forecast *fc, MODEL *pmod, 
-			const double **Z, const DATAINFO *pdinfo,
+			const DATASET *dset,
 			gretlopt opt) 
 {
     gretl_matrix *V = NULL;
@@ -594,7 +593,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 	/* populate Xt vector for observation */
 	for (i=0; i<k && !missing; i++) {
 	    vi = pmod->list[i + 2];
-	    xval = Z[vi][t];
+	    xval = dset->Z[vi][t];
 	    if (na(xval)) {
 		fc->sderr[t] = fc->yhat[t] = NADBL;
 		missing = 1;
@@ -638,7 +637,7 @@ static_fcast_with_errs (Forecast *fc, MODEL *pmod,
 }
 
 static int fixed_effects_fcast (Forecast *fc, MODEL *pmod, 
-				const double **Z, const DATAINFO *pdinfo) 
+				const DATASET *dset) 
 {
     gretl_vector *b = NULL;
     double xval;
@@ -678,7 +677,7 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
 
 	for (i=1; i<k && !missing; i++) {
 	    vi = pmod->list[i + 2];
-	    xval = Z[vi][t];
+	    xval = dset->Z[vi][t];
 	    if (na(xval)) {
 		missing = 1;
 	    } else {
@@ -707,11 +706,11 @@ static int fixed_effects_fcast (Forecast *fc, MODEL *pmod,
 */
 
 static int nls_fcast (Forecast *fc, const MODEL *pmod, 
-		      double ***pZ, DATAINFO *pdinfo)
+		      DATASET *dset)
 {
-    int oldt1 = pdinfo->t1;
-    int oldt2 = pdinfo->t2;
-    int fcv = pdinfo->v;
+    int oldt1 = dset->t1;
+    int oldt2 = dset->t2;
+    int fcv = dset->v;
     int yno = 0;
     const char *nlfunc;   
     double *y = NULL;
@@ -725,7 +724,7 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 
     if (fc->method == FC_AUTO) {
 	yno = pmod->list[1];
-	y = copyvec((*pZ)[yno], pdinfo->n);
+	y = copyvec(dset->Z[yno], dset->n);
 	if (y == NULL) {
 	    err = E_ALLOC;
 	} 
@@ -737,49 +736,49 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 
 	if (t2 >= fc->t1) {
 	    /* non-null static range */
-	    pdinfo->t1 = fc->t1;
-	    pdinfo->t2 = t2;
+	    dset->t1 = fc->t1;
+	    dset->t2 = t2;
 	    sprintf(formula, "$nl_y = %s", nlfunc);
-	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	    err = generate(formula, dset, OPT_P, NULL);
 	    if (!err) {
-		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		    fc->yhat[t] = (*pZ)[fcv][t];
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    fc->yhat[t] = dset->Z[fcv][t];
 		}
 	    }
 	}
 
 	if (!err && fc->method == FC_AUTO && fc->t2 > pmod->t2) {
 	    /* dynamic forecast out of sample */
-	    pdinfo->t1 = pmod->t2 + 1;
-	    pdinfo->t2 = fc->t2;
+	    dset->t1 = pmod->t2 + 1;
+	    dset->t2 = fc->t2;
 	    strcpy(formula, pmod->depvar);
-	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	    err = generate(formula, dset, OPT_P, NULL);
 	    if (!err) {
-		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		    fc->yhat[t] = (*pZ)[yno][t];
+		for (t=dset->t1; t<=dset->t2; t++) {
+		    fc->yhat[t] = dset->Z[yno][t];
 		}
 	    }
 	}
     }
 
-    if (pdinfo->v > fcv) {
-	err = dataset_drop_last_variables(pdinfo->v - fcv, pZ, pdinfo);
+    if (dset->v > fcv) {
+	err = dataset_drop_last_variables(dset->v - fcv, dset);
     }
 
-    pdinfo->t1 = oldt1;
-    pdinfo->t2 = oldt2;
+    dset->t1 = oldt1;
+    dset->t2 = oldt2;
 
     if (y != NULL) {
 	/* restore original dependent variable */
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[yno][t] = y[t];
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[yno][t] = y[t];
 	}
 	free(y);
     }
 
     if (!err && fc->method == FC_STATIC && fc->sderr != NULL) {
 #if 1   /* not fully tested! */
-	err = nls_boot_calc(pmod, pZ, pdinfo, fc->t1, fc->t2, fc->sderr);
+	err = nls_boot_calc(pmod, dset, fc->t1, fc->t2, fc->sderr);
 	if (!err) {
 	    double et, s2 = pmod->sigma * pmod->sigma;
 
@@ -1043,7 +1042,7 @@ static double garch_ldv_sderr (const double *h,
 }
 
 static int garch_fcast (Forecast *fc, MODEL *pmod, 
-			const double **Z, const DATAINFO *pdinfo)
+			const DATASET *dset)
 {
     double xval;
     int xvars, yno;
@@ -1095,9 +1094,10 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 	for (i=0; i<xvars; i++) {
 	    v = xlist[i+1];
 	    if ((lag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, yno, t, lag, Z);
+		xval = fcast_get_ldv(fc, yno, t, lag, 
+				     (const double **) dset->Z);
 	    } else {
-		xval = Z[v][t];
+		xval = dset->Z[v][t];
 	    }
 	    if (na(xval)) {
 		miss = 1;
@@ -1298,7 +1298,7 @@ static int want_x_beta_prep (const MODEL *pmod, const int *xlist)
 */
 
 static int arma_fcast (Forecast *fc, MODEL *pmod, 
-		       const double **Z, const DATAINFO *pdinfo)
+		       const DATASET *dset)
 {
     double *psi = NULL;
     double *phi = NULL;
@@ -1343,7 +1343,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     yno = gretl_model_get_depvar(pmod);
 
     DPRINTF(("forecasting variable %d (%s), obs %d to %d, with p=%d, q=%d\n", yno, 
-	     pdinfo->varname[yno], fc->t1, fc->t2, p, q));
+	     dset->varname[yno], fc->t1, fc->t2, p, q));
 
     xvars = (xlist != NULL)? xlist[0] : 0;
 
@@ -1381,7 +1381,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    }
 	} else {
 	    /* we have ARMAX terms */
-	    Xb = create_Xb_series(fc, pmod, beta, xlist, Z);
+	    Xb = create_Xb_series(fc, pmod, beta, xlist, 
+				  (const double **) dset->Z);
 	    if (Xb == NULL) {
 		err = E_ALLOC;
 	    }
@@ -1413,7 +1414,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     DPRINTF(("ar_smax = %d, ma_smax = %d\n", ar_smax, ma_smax));
 
     /* dependent variable */
-    y = Z[yno];
+    y = dset->Z[yno];
 
     /* do real forecast */
     for (t=fcstart; t<=fc->t2 && !err; t++) {
@@ -1440,7 +1441,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		if (xlist[i] == 0) {
 		    yh += pmod->coeff[0];
 		} else {
-		    xval = Z[xlist[i]][t];
+		    xval = dset->Z[xlist[i]][t];
 		    if (na(xval)) {
 			miss = 1;
 		    } else {
@@ -1664,7 +1665,7 @@ set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod,
 */
 
 static int ar_fcast (Forecast *fc, MODEL *pmod, 
-		     const double **Z, const DATAINFO *pdinfo)
+		     const DATASET *dset)
 {
     const int *arlist;
     double *phi = NULL;
@@ -1728,7 +1729,8 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	for (k=1; k<=arlist[0]; k++) {
 	    rk = pmod->arinfo->rho[k-1];
 	    tk = t - arlist[k];
-	    ylag = fcast_get_ldv(fc, yno, tk, 0, Z);
+	    ylag = fcast_get_ldv(fc, yno, tk, 0, 
+				 (const double **) dset->Z);
 	    if (na(ylag)) {
 		miss = 1;
 	    } else {
@@ -1740,9 +1742,10 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    v = pmod->list[i+2];
 	    if ((dvlag = depvar_lag(fc, i))) {
-		xval = fcast_get_ldv(fc, yno, t, dvlag, Z);
+		xval = fcast_get_ldv(fc, yno, t, dvlag, 
+				     (const double **) dset->Z);
 	    } else {
-		xval = Z[v][t];
+		xval = dset->Z[v][t];
 	    }
 	    if (na(xval)) {
 		miss = 1;
@@ -1755,9 +1758,10 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 		    rk = pmod->arinfo->rho[k-1];
 		    tk = t - arlist[k];
 		    if (dvlag > 0) {
-			xlag = fcast_get_ldv(fc, yno, tk, dvlag, Z);
+			xlag = fcast_get_ldv(fc, yno, tk, dvlag, 
+					     (const double **) dset->Z);
 		    } else {
-			xlag = Z[v][tk];
+			xlag = dset->Z[v][tk];
 		    }
 		    if (!na(xlag)) {
 			xval -= rk * xlag;
@@ -1846,7 +1850,7 @@ static double fcast_transform (double xb, const MODEL *pmod,
 
 static int 
 integrated_fcast (Forecast *fc, const MODEL *pmod, int yno,
-		  const double **Z, const DATAINFO *pdinfo)
+		  const DATASET *dset)
 {
     double s2 = NADBL;
     int dyn_start; /* start of dynamic forecast */
@@ -1854,7 +1858,7 @@ integrated_fcast (Forecast *fc, const MODEL *pmod, int yno,
     int i, vi, t;
 
     if (fc->method == FC_STATIC) {
-	dyn_start = pdinfo->n; /* i.e., never */
+	dyn_start = dset->n; /* i.e., never */
     } else if (fc->method == FC_DYNAMIC) {
 	dyn_start = fc->t1;
     } else {
@@ -1871,7 +1875,7 @@ integrated_fcast (Forecast *fc, const MODEL *pmod, int yno,
 	int miss = 0;
 
 	if (t <= dyn_start) {
-	    yht = Z[yno][t-1];
+	    yht = dset->Z[yno][t-1];
 	    if (na(yht)) {
 		miss = 1;
 	    }
@@ -1879,7 +1883,7 @@ integrated_fcast (Forecast *fc, const MODEL *pmod, int yno,
 
 	for (i=0; i<pmod->ncoeff && !miss; i++) {
 	    vi = pmod->list[i+2];
-	    xval = Z[vi][t];
+	    xval = dset->Z[vi][t];
 	    if (na(xval)) {
 		miss = 1;
 	    } else {
@@ -1992,7 +1996,7 @@ static int linear_fcast (Forecast *fc, const MODEL *pmod, int yno,
 
 static int get_forecast_method (Forecast *fc,
 				MODEL *pmod, 
-				const DATAINFO *pdinfo,
+				const DATASET *dset,
 				gretlopt opt)
 {
     int dyn_ok = 0;
@@ -2009,9 +2013,9 @@ static int get_forecast_method (Forecast *fc,
 
     /* do setup for possible lags of the dependent variable,
        unless OPT_S for "static" has been given */
-    if (dataset_is_time_series(pdinfo) && !(opt & OPT_S) &&
+    if (dataset_is_time_series(dset) && !(opt & OPT_S) &&
 	pmod->ci != ARMA) {
-	process_lagged_depvar(pmod, pdinfo, &fc->dvlags);
+	process_lagged_depvar(pmod, dset, &fc->dvlags);
     }
 
     if (!(opt & OPT_S)) {
@@ -2097,7 +2101,7 @@ static int fc_add_eps (Forecast *fc, int n)
 */
 
 static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
-			    const DATAINFO *pdinfo)
+			    const DATASET *dset)
 {
     int t, t0;
 
@@ -2110,7 +2114,7 @@ static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
     t0 = fr->t0 - 1;
 
     /* find first non-missing value */
-    for (t=t0; t<pdinfo->n; t++) {
+    for (t=t0; t<dset->n; t++) {
 	if (!na(Z[yno][t])) {
 	    break;
 	}
@@ -2118,7 +2122,7 @@ static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
 
     t0 = t;
 
-    if (t0 >= pdinfo->n - 2) {
+    if (t0 >= dset->n - 2) {
 	return E_MISSDATA;
     }
 
@@ -2141,7 +2145,7 @@ static int revise_fr_start (FITRESID *fr, int yno, const double **Z,
 /* check we we really can do an integrated forecast */
 
 static int check_integrated_forecast_option (MODEL *pmod,
-					     DATAINFO *pdinfo,
+					     DATASET *dset,
 					     int *pyno)
 {
     int err = 0;
@@ -2152,7 +2156,7 @@ static int check_integrated_forecast_option (MODEL *pmod,
 	int yno = gretl_model_get_depvar(pmod);
 	int d, parent;
 	
-	d = is_standard_diff(yno, pdinfo, &parent);
+	d = is_standard_diff(yno, dset, &parent);
 	if (!d) {
 	    err = inapplicable_option_error(FCAST, OPT_I);
 	} else if (pyno != NULL) {
@@ -2168,11 +2172,10 @@ static int check_integrated_forecast_option (MODEL *pmod,
    for different sorts of models */
 
 static int real_get_fcast (FITRESID *fr, MODEL *pmod, 
-			   double ***pZ, DATAINFO *pdinfo,
-			   gretlopt opt) 
+			   DATASET *dset, gretlopt opt) 
 {
     Forecast fc;
-    const double **Z = (const double **) *pZ;
+    const double **Z = (const double **) dset->Z;
     int yno = gretl_model_get_depvar(pmod);
     int integrate = (opt & OPT_I);
     int dummy_AR = 0;
@@ -2186,9 +2189,9 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     forecast_init(&fc);
 
     if (integrate) {
-	err = check_integrated_forecast_option(pmod, pdinfo, &yno);
+	err = check_integrated_forecast_option(pmod, dset, &yno);
 	if (!err) {
-	    err = revise_fr_start(fr, yno, (const double **) *pZ, pdinfo);
+	    err = revise_fr_start(fr, yno, Z, dset);
 	}
 	if (err) {
 	    return err;
@@ -2199,7 +2202,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     fc.t2 = fr->t2;
     fc.model_t2 = pmod->t2;
 
-    err = get_forecast_method(&fc, pmod, pdinfo, opt);
+    err = get_forecast_method(&fc, pmod, dset, opt);
     if (err) {
 	return err;
     }
@@ -2252,26 +2255,26 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     fc.sderr = fr->sderr;
 
     if (pmod->ci == ARMA && fc.method == FC_STATIC) {
-	fc_add_eps(&fc, pdinfo->n);
+	fc_add_eps(&fc, dset->n);
     }
 
     /* compute the actual forecast */
     if (pmod->ci == PANEL && (pmod->opt & OPT_F)) {
-	err = fixed_effects_fcast(&fc, pmod, Z, pdinfo);
+	err = fixed_effects_fcast(&fc, pmod, dset);
     } else if (DM_errs) {
-	err = static_fcast_with_errs(&fc, pmod, Z, pdinfo, opt);
+	err = static_fcast_with_errs(&fc, pmod, dset, opt);
     } else if (pmod->ci == NLS) {
-	err = nls_fcast(&fc, pmod, pZ, pdinfo);
+	err = nls_fcast(&fc, pmod, dset);
     } else if (SIMPLE_AR_MODEL(pmod->ci) || dummy_AR) {
-	err = ar_fcast(&fc, pmod, Z, pdinfo);
+	err = ar_fcast(&fc, pmod, dset);
     } else if (pmod->ci == ARMA) {
-	err = arma_fcast(&fc, pmod, Z, pdinfo);
+	err = arma_fcast(&fc, pmod, dset);
     } else if (pmod->ci == GARCH) {
-	err = garch_fcast(&fc, pmod, Z, pdinfo);
+	err = garch_fcast(&fc, pmod, dset);
     } else if (integrate) {
-	err = integrated_fcast(&fc, pmod, yno, Z, pdinfo);
+	err = integrated_fcast(&fc, pmod, yno, dset);
     } else {
-	err = linear_fcast(&fc, pmod, yno, Z);
+	err = linear_fcast(&fc, pmod, yno, (const double **) dset->Z);
     }
 
     /* free any auxiliary info */
@@ -2297,21 +2300,21 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 		fr->resid[t] = pmod->uhat[t];
 	    }
 	}	    
-	fr->actual[t] = (*pZ)[yno][t];
+	fr->actual[t] = dset->Z[yno][t];
     }
 
     if (nf == 0) {
 	err = E_MISSDATA;
     } else {
 	fit_resid_set_dec_places(fr);
-	strcpy(fr->depvar, pdinfo->varname[yno]);
+	strcpy(fr->depvar, dset->varname[yno]);
 	fr->df = pmod->dfd;
     }
 
     return err;
 }
 
-static int fcast_get_limit (const char *s, double ***pZ, DATAINFO *pdinfo)
+static int fcast_get_limit (const char *s, DATASET *dset)
 {
     double x;
     int t, err = 0;
@@ -2319,10 +2322,10 @@ static int fcast_get_limit (const char *s, double ***pZ, DATAINFO *pdinfo)
     if (gretl_is_scalar(s)) {
 	x = gretl_scalar_get_value(s);
     } else {
-	x = generate_scalar(s, pZ, pdinfo, &err);
+	x = generate_scalar(s, dset, &err);
     }
 
-    if (x < 1 || x > pdinfo->n) {
+    if (x < 1 || x > dset->n) {
 	gretl_errmsg_set(_("Observation number out of bounds"));
 	t = -1;
     } else {
@@ -2335,8 +2338,7 @@ static int fcast_get_limit (const char *s, double ***pZ, DATAINFO *pdinfo)
 static int parse_forecast_string (const char *s, 
 				  gretlopt opt, 
 				  int t2est,
-				  double ***pZ,
-				  DATAINFO *pdinfo,
+				  DATASET *dset,
 				  int *pt1, int *pt2,
 				  int *pk, char *vname)
 {
@@ -2445,29 +2447,29 @@ static int parse_forecast_string (const char *s,
     }
 
     if (t1str != NULL && t2str != NULL) {
-	t1 = dateton(t1str, pdinfo);
+	t1 = dateton(t1str, dset);
 	if (t1 < 0) {
-	    t1 = fcast_get_limit(t1str, pZ, pdinfo);
+	    t1 = fcast_get_limit(t1str, dset);
 	}
-	t2 = dateton(t2str, pdinfo);
+	t2 = dateton(t2str, dset);
 	if (t2 < 0) {
-	    t2 = fcast_get_limit(t2str, pZ, pdinfo);
+	    t2 = fcast_get_limit(t2str, dset);
 	}	
 	if (t1 < 0 || t2 < 0 || t2 < t1) {
 	    err = E_DATA;
 	}
     } else if (opt & OPT_O) {
 	/* out of sample, if possible */
-	if (pdinfo->n - t2est - 1 > 0) {
+	if (dset->n - t2est - 1 > 0) {
 	    t1 = t2est + 1;
-	    t2 = pdinfo->n - 1;
+	    t2 = dset->n - 1;
 	} else {
 	    err = E_OBS;
 	}
     } else {
 	/* default: sample range */
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
+	t1 = dset->t1;
+	t2 = dset->t2;
     } 
 
     if (!err) {
@@ -2484,8 +2486,7 @@ static int parse_forecast_string (const char *s,
  * @t1: start of forecast range.
  * @t2: end of forecast range.
  * @pre_n: number of pre-forecast observations to include.
- * @pZ: pointer to data array using which @pmod was estimated.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
@@ -2514,8 +2515,7 @@ static int parse_forecast_string (const char *s,
  */
 
 FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
-			double ***pZ, DATAINFO *pdinfo,
-			gretlopt opt, int *err) 
+			DATASET *dset, gretlopt opt, int *err) 
 {
     FITRESID *fr;
 
@@ -2526,10 +2526,10 @@ FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
 	return NULL;
     }
 
-    fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, pre_n, err);
+    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err);
 
     if (!*err) {
-	*err = real_get_fcast(fr, pmod, pZ, pdinfo, opt);
+	*err = real_get_fcast(fr, pmod, dset, opt);
 	if (*err) {
 	    free_fit_resid(fr);
 	    fr = NULL;
@@ -2814,22 +2814,21 @@ static int set_forecast_matrices_from_F (const gretl_matrix *F,
 /* compatibility with behaviour of old fcast command */
 
 static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
-				 double ***pZ, DATAINFO *pdinfo,
-				 PRN *prn)
+				 DATASET *dset, PRN *prn)
 {
-    int oldv = pdinfo->v;
+    int oldv = dset->v;
     int v, err = 0;
 
-    v = series_index(pdinfo, vname);
+    v = series_index(dset, vname);
 
-    if (v == pdinfo->v) {
+    if (v == dset->v) {
 	/* new variable */
 	if (check_varname(vname)) {
 	    err = E_DATA;
 	} else {
-	    err = dataset_add_series(1, pZ, pdinfo);
+	    err = dataset_add_series(1, dset);
 	    if (!err) {
-		strcpy(pdinfo->varname[v], vname);
+		strcpy(dset->varname[v], vname);
 	    }
 	}
     }
@@ -2837,11 +2836,11 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
     if (!err) {
 	int t;
 
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[v][t] = fr->fitted[t];
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[v][t] = fr->fitted[t];
 	}
 
-	strcpy(VARLABEL(pdinfo, v), _("predicted values"));
+	strcpy(VARLABEL(dset, v), _("predicted values"));
 
 	if (gretl_messages_on()) {
 	    if (v < oldv) {
@@ -2859,8 +2858,8 @@ static int add_fcast_to_dataset (FITRESID *fr, const char *vname,
 }
 
 static int model_do_forecast (const char *str, MODEL *pmod, 
-			      double ***pZ, DATAINFO *pdinfo, 
-			      gretlopt opt, PRN *prn)
+			      DATASET *dset, gretlopt opt, 
+			      PRN *prn)
 {
     char vname[VNAMELEN];
     FITRESID *fr;
@@ -2892,13 +2891,13 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     /* OPT_I for integrate: reject for non-OLS, or if the dependent 
        variable is not recognized as a first difference */
     if (opt & OPT_I) {
-	err = check_integrated_forecast_option(pmod, pdinfo, NULL);
+	err = check_integrated_forecast_option(pmod, dset, NULL);
 	if (err) {
 	    return err;
 	}
     }
 
-    err = parse_forecast_string(str, opt, pmod->t2, pZ, pdinfo, 
+    err = parse_forecast_string(str, opt, pmod->t2, dset, 
 				&t1, &t2, &k, vname);
     if (err) {
 	return err;
@@ -2910,10 +2909,10 @@ static int model_do_forecast (const char *str, MODEL *pmod,
     }
 
     if (opt & OPT_R) {
-	fr = rolling_OLS_k_step_fcast(pmod, *pZ, pdinfo, t1, t2, 
+	fr = rolling_OLS_k_step_fcast(pmod, dset, t1, t2, 
 				      k, 0, &err);
     } else {
-	fr = get_forecast(pmod, t1, t2, 0, pZ, pdinfo, opt, &err);
+	fr = get_forecast(pmod, t1, t2, 0, dset, opt, &err);
     }
 
     if (!err && !(opt & OPT_Q)) {
@@ -2923,12 +2922,12 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 	    /* do graph (from command line) */
 	    printopt |= OPT_P;
 	}
-	err = text_print_forecast(fr, pdinfo, printopt, prn);
+	err = text_print_forecast(fr, dset, printopt, prn);
     }
 
     if (!err && (opt & OPT_A)) {
 	/* add forecast directly */
-	err = add_fcast_to_dataset(fr, vname, pZ, pdinfo, prn);
+	err = add_fcast_to_dataset(fr, vname, dset, prn);
     }
 
     if (!err) {
@@ -2941,13 +2940,13 @@ static int model_do_forecast (const char *str, MODEL *pmod,
 }
 
 static int get_sys_fcast_var (const int *ylist, const char *vname,
-			      DATAINFO *pdinfo)
+			      DATASET *dset)
 {
     int i, vi;
 
     for (i=0; i<ylist[0]; i++) {
 	vi = ylist[i+1];
-	if (!strcmp(vname, pdinfo->varname[vi])) {
+	if (!strcmp(vname, dset->varname[vi])) {
 	    return i;
 	}
     }
@@ -2962,18 +2961,18 @@ static int get_sys_fcast_var (const int *ylist, const char *vname,
 static int fill_system_forecast (FITRESID *fr, int i, int yno,
 				 GRETL_VAR *var, equation_system *sys,
 				 const gretl_matrix *F,
-				 const double **Z, DATAINFO *pdinfo,
+				 DATASET *dset,
 				 gretlopt opt)
 {
     int m = F->cols / 2;
     int s, t, nf;
     int err = 0;
 
-    strcpy(fr->depvar, pdinfo->varname[yno]);
+    strcpy(fr->depvar, dset->varname[yno]);
 
     /* "pre-forecast" observations */
     for (t=fr->t0; t<fr->t1; t++) {
-	fr->actual[t] = Z[yno][t];
+	fr->actual[t] = dset->Z[yno][t];
 	if (sys != NULL) {
 	    if (i < sys->neqns && sys->lists[i][1] == yno) {
 		/* Note: right now we can only handle endogenous
@@ -2997,7 +2996,7 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
     /* actual forecasts */
     nf = 0;
     for (t=fr->t1, s=0; t<=fr->t2; t++, s++) {
-	fr->actual[t] = Z[yno][t];
+	fr->actual[t] = dset->Z[yno][t];
 	fr->fitted[t] = gretl_matrix_get(F, s, i);
 	if (!na(fr->fitted[t])) {
 	    nf++;
@@ -3017,13 +3016,12 @@ static int fill_system_forecast (FITRESID *fr, int i, int yno,
 }
 
 static int system_do_forecast (const char *str, void *ptr, int type,
-			       double ***pZ, DATAINFO *pdinfo, 
-			       gretlopt opt, PRN *prn)
+			       DATASET *dset, gretlopt opt, 
+			       PRN *prn)
 {
     char vname[VNAMELEN];
     GRETL_VAR *var = NULL;
     equation_system *sys = NULL;
-    const double **Z;
     const int *ylist = NULL;
     const gretl_matrix *F = NULL;
     int t1 = 0, t2 = 0;
@@ -3048,22 +3046,21 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 	ylist = sys->ylist;
     }
 
-    err = parse_forecast_string(str, opt, t2est, pZ, pdinfo, &t1, &t2, NULL, vname);
-
-    Z = (const double **) *pZ;
+    err = parse_forecast_string(str, opt, t2est, dset, &t1, &t2, 
+				NULL, vname);
 
     if (!err) {
 	if (var != NULL) {
-	    F = gretl_VAR_get_forecast_matrix(var, t1, t2, Z, pdinfo, 
+	    F = gretl_VAR_get_forecast_matrix(var, t1, t2, dset, 
 					      opt, &err);
 	} else {
-	    F = system_get_forecast_matrix(sys, t1, t2, Z, pdinfo, 
+	    F = system_get_forecast_matrix(sys, t1, t2, dset, 
 					   opt, &err);
 	} 
     }
     
     if (!err && *vname != '\0') {
-	imin = get_sys_fcast_var(ylist, vname, pdinfo);
+	imin = get_sys_fcast_var(ylist, vname, dset);
 	if (imin < 0) {
 	    err = E_DATA;
 	} else {
@@ -3088,7 +3085,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
 
 	asy = (ci == VECM);
 
-	fr = fit_resid_new_for_system(asy, pdinfo, t1, t2, 0, &err);
+	fr = fit_resid_new_for_system(asy, dset, t1, t2, 0, &err);
 	if (err) {
 	    return err;
 	}
@@ -3102,9 +3099,9 @@ static int system_do_forecast (const char *str, void *ptr, int type,
     
 	for (i=imin; i<=imax && !err; i++) {
 	    err = fill_system_forecast(fr, i, ylist[i+1], var, sys, 
-				       F, Z, pdinfo, opt);
+				       F, dset, opt);
 	    if (!err) {
-		err = text_print_forecast(fr, pdinfo, printopt, prn);
+		err = text_print_forecast(fr, dset, printopt, prn);
 	    }
 	    printopt |= OPT_Q;
 	}
@@ -3120,8 +3117,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
  * @str: command string, which may include a starting 
  * observation and ending observation, and/or the name of a 
  * variable for saving the forecast values.
- * @pZ: pointer to data array.
- * @pdinfo: pointer to data information struct.
+ * @dset: dataset struct.
  * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
@@ -3139,7 +3135,7 @@ static int system_do_forecast (const char *str, void *ptr, int type,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo, 
+int do_forecast (const char *str, DATASET *dset, 
 		 gretlopt opt, PRN *prn)
 {
     void *ptr;
@@ -3155,9 +3151,9 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 	/* "rolling", "integrate", plot option: single equations only */
 	err = E_BADOPT;
     } else if (type == GRETL_OBJ_EQN) {
-	err = model_do_forecast(str, ptr, pZ, pdinfo, opt, prn);
+	err = model_do_forecast(str, ptr, dset, opt, prn);
     } else if (type == GRETL_OBJ_SYS || type == GRETL_OBJ_VAR) {
-	err = system_do_forecast(str, ptr, type, pZ, pdinfo, opt, prn);
+	err = system_do_forecast(str, ptr, type, dset, opt, prn);
     } else {
 	err = E_DATA;
     }
@@ -3170,7 +3166,7 @@ int do_forecast (const char *str, double ***pZ, DATAINFO *pdinfo,
 
 static int 
 fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
-		 const double **Z, const DATAINFO *pdinfo, int ftype)
+		 const DATASET *dset, int ftype)
 {
     const double *ay = NULL;
     int i, vi, t;
@@ -3178,10 +3174,10 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
     if (pmod->ci == ARMA && ftype == FC_STATIC) {
 	int yno = gretl_model_get_depvar(pmod);
 
-	ay = Z[yno];
+	ay = dset->Z[yno];
     }
 
-    for (t=pmod->t2; t<pdinfo->n; t++) {
+    for (t=pmod->t2; t<dset->n; t++) {
 	int all_ok = 1;
 
 	if (ay != NULL && na(ay[t-1])) {
@@ -3195,12 +3191,12 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 		continue;
 	    } else if (dvlags != NULL && dvlags[i-1] != 0) {
 		continue;
-	    } else if (is_trend_variable(Z[vi], pdinfo->n)) {
+	    } else if (is_trend_variable(dset->Z[vi], dset->n)) {
 		continue;
-	    } else if (is_periodic_dummy(Z[vi], pdinfo)) {
+	    } else if (is_periodic_dummy(dset->Z[vi], dset)) {
 		continue;
 	    }
-	    if (na(Z[vi][t])) {
+	    if (na(dset->Z[vi][t])) {
 		all_ok = 0;
 		break;
 	    }
@@ -3209,7 +3205,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 	if (!all_ok) {
 	    t--;
 	    break;
-	} else if (t == pdinfo->n - 1) {
+	} else if (t == dset->n - 1) {
 	    break;
 	}
     }
@@ -3227,8 +3223,7 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
  * @t1: start of forecast range.
  * @t2: end of forecast range.
  * @pre_n: number of pre-forecast observations to include.
- * @Z: data array on which system was estimated.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: if %OPT_D, force a dynamic forecast; if %OPT_S, force
  * a static forecast.  By default, the forecast is static within
  * the data range over which the model was estimated, and dynamic
@@ -3244,8 +3239,8 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
 
 FITRESID *get_system_forecast (void *p, int ci, int i, 
 			       int t1, int t2, int pre_n,
-			       const double **Z, DATAINFO *pdinfo,
-			       gretlopt opt, int *err) 
+			       DATASET *dset, gretlopt opt, 
+			       int *err) 
 {
     FITRESID *fr;
     GRETL_VAR *var = NULL;
@@ -3263,12 +3258,12 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 	var = (GRETL_VAR *) p;
 	yno = var->ylist[i+1];
 	df = var->df;
-	F = gretl_VAR_get_forecast_matrix(var, t1, t2, Z, pdinfo, opt, err);
+	F = gretl_VAR_get_forecast_matrix(var, t1, t2, dset, opt, err);
     } else if (ci == SYSTEM) {
 	sys = (equation_system *) p;
 	yno = sys->ylist[i+1];
 	df = sys->df;
-	F = system_get_forecast_matrix(sys, t1, t2, Z, pdinfo, opt, err);
+	F = system_get_forecast_matrix(sys, t1, t2, dset, opt, err);
     } else {
 	*err = E_DATA;
     }
@@ -3280,7 +3275,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 
     asy = (ci == VECM);
 
-    fr = fit_resid_new_for_system(asy, pdinfo, t1, t2, pre_n, err);
+    fr = fit_resid_new_for_system(asy, dset, t1, t2, pre_n, err);
     if (*err) {
 	return NULL;
     }
@@ -3293,7 +3288,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
     }
 
     *err = fill_system_forecast(fr, i, yno, var, sys, 
-				F, Z, pdinfo, opt);
+				F, dset, opt);
 
     if (*err) {
 	free_fit_resid(fr);
@@ -3306,8 +3301,7 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
 /**
  * forecast_options_for_model:
  * @pmod: the model from which forecasts are wanted.
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @flags: location to receive flags from among #ForecastFlags.
  * @dt2max: location to receive the last observation that can
  * be supported for a dynamic forecast.
@@ -3318,9 +3312,8 @@ FITRESID *get_system_forecast (void *p, int ci, int i,
  * applicable.
  */
 
-void forecast_options_for_model (MODEL *pmod, const double **Z,
-				 const DATAINFO *pdinfo, int *flags, 
-				 int *dt2max, int *st2max)
+void forecast_options_for_model (MODEL *pmod, const DATASET *dset, 
+				 int *flags, int *dt2max, int *st2max)
 {
     int *dvlags = NULL;
     int dv, exo = 1;
@@ -3330,14 +3323,14 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     dv = gretl_model_get_depvar(pmod);
 
     if (pmod->ci == OLS) {
-	if (is_standard_diff(dv, pdinfo, NULL)) {
+	if (is_standard_diff(dv, dset, NULL)) {
 	    *flags |= FC_INTEGRATE_OK;
 	} else {
 	    *flags |= FC_MEAN_OK;
 	}
     } else if (pmod->ci == NLS) {
 	/* we'll try winging it! */
-	if (gretl_model_get_int(pmod, "dynamic") && pmod->t2 < pdinfo->n - 1) {
+	if (gretl_model_get_int(pmod, "dynamic") && pmod->t2 < dset->n - 1) {
 	    *flags |= FC_AUTO_OK;
 	}
 	return;
@@ -3350,20 +3343,20 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 	*flags |= FC_DYNAMIC_OK;
     } else if (AR_MODEL(pmod->ci)) {
 	*flags |= FC_DYNAMIC_OK;
-    } else if (dataset_is_time_series(pdinfo) &&
-	       has_depvar_lags(pmod, pdinfo)) {
+    } else if (dataset_is_time_series(dset) &&
+	       has_depvar_lags(pmod, dset)) {
 	*flags |= FC_DYNAMIC_OK;
     }
 
     if (*flags & FC_DYNAMIC_OK) {
-	int err = process_lagged_depvar(pmod, pdinfo, &dvlags);
+	int err = process_lagged_depvar(pmod, dset, &dvlags);
 
 	if (!err) {
-	    exo = has_real_exog_regressors(pmod, dvlags, Z, pdinfo);
+	    exo = has_real_exog_regressors(pmod, dvlags, dset);
 	}
 	if (!exo) {
 	    *flags |= FC_ADDOBS_OK;
-	    *dt2max = pdinfo->n - 1;
+	    *dt2max = dset->n - 1;
 	}
     } 
 
@@ -3371,8 +3364,8 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
 	const int *xlist = model_xlist(pmod);
 
 	if (xlist != NULL) {
-	    *dt2max = fcast_get_t2max(xlist, dvlags, pmod, Z, pdinfo, FC_DYNAMIC);
-	    *st2max = fcast_get_t2max(xlist, dvlags, pmod, Z, pdinfo, FC_STATIC);
+	    *dt2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_DYNAMIC);
+	    *st2max = fcast_get_t2max(xlist, dvlags, pmod, dset, FC_STATIC);
 	}
     }
 
@@ -3381,22 +3374,21 @@ void forecast_options_for_model (MODEL *pmod, const double **Z,
     }
 }
 
-static int y_lag (int v, int parent, const DATAINFO *pdinfo)
+static int y_lag (int v, int parent, const DATASET *dset)
 {
-    if (pdinfo->varinfo[v]->transform == LAGS) {
-	int pv = series_index(pdinfo, pdinfo->varinfo[v]->parent);
+    if (dset->varinfo[v]->transform == LAGS) {
+	int pv = series_index(dset, dset->varinfo[v]->parent);
 
 	if (pv == parent) {
-	    return pdinfo->varinfo[v]->lag;
+	    return dset->varinfo[v]->lag;
 	}
     }
 
     return 0;
 }
 
-static int k_step_init (MODEL *pmod, const DATAINFO *pdinfo, 
-			double **Z, int k, 
-			double **py, int **pllist)
+static int k_step_init (MODEL *pmod, const DATASET *dset, 
+			int k, double **py, int **pllist)
 {
     double *y = NULL;
     int *llist = NULL;
@@ -3404,7 +3396,7 @@ static int k_step_init (MODEL *pmod, const DATAINFO *pdinfo,
     int i, nl = 0;
 
     for (i=2; i<=pmod->list[0]; i++) {
-	if (y_lag(pmod->list[i], vy, pdinfo)) {
+	if (y_lag(pmod->list[i], vy, dset)) {
 	    nl++;
 	}
     }
@@ -3413,7 +3405,7 @@ static int k_step_init (MODEL *pmod, const DATAINFO *pdinfo,
 	return 0;
     }
 
-    y = malloc(pdinfo->n * sizeof *y);
+    y = malloc(dset->n * sizeof *y);
     llist = gretl_list_new(pmod->list[0] - 1);
 
     if (y == NULL || llist == NULL) {
@@ -3422,12 +3414,12 @@ static int k_step_init (MODEL *pmod, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    for (i=0; i<pdinfo->n; i++) {
-	y[i] = Z[vy][i];
+    for (i=0; i<dset->n; i++) {
+	y[i] = dset->Z[vy][i];
     }
 
     for (i=2; i<=pmod->list[0]; i++) {
-	llist[i-1] = y_lag(pmod->list[i], vy, pdinfo);
+	llist[i-1] = y_lag(pmod->list[i], vy, dset);
     }    
 
     *py = y;
@@ -3457,12 +3449,13 @@ static int rolling_fcast_adjust_obs (MODEL *pmod, int *t1, int t2, int k)
 /* recursive k-step ahead forecasts, for models estimated via OLS */
 
 FITRESID * 
-rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
-			  int t1, int t2, int k, int pre_n, int *err)
+rolling_OLS_k_step_fcast (MODEL *pmod, DATASET *dset,
+			  int t1, int t2, int k, 
+			  int pre_n, int *err)
 {
     FITRESID *fr;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int orig_t1 = dset->t1;
+    int orig_t2 = dset->t2;
     double *y = NULL;
     int *llist = NULL;
     double xit, yf = NADBL;
@@ -3493,13 +3486,13 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     }
 
     if (k > 1) {
-	*err = k_step_init(pmod, pdinfo, Z, k, &y, &llist);
+	*err = k_step_init(pmod, dset, k, &y, &llist);
 	if (*err) {
 	    return NULL;
 	}
     }
 
-    fr = fit_resid_new_for_model(pmod, pdinfo, t1, t2, pre_n, err); 
+    fr = fit_resid_new_for_model(pmod, dset, t1, t2, pre_n, err); 
     if (*err) {
 	free(y);
 	free(llist);
@@ -3510,21 +3503,21 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     fr->k = k;
 
     /* sample range for initial estimation */
-    pdinfo->t1 = pmod->t1;
-    pdinfo->t2 = t1 - k; /* start of fcast range minus k */
+    dset->t1 = pmod->t1;
+    dset->t2 = t1 - k; /* start of fcast range minus k */
 
     /* number of forecasts */
     nf = t2 - t1 + 1;
 
-    fprintf(stderr, "rolling fcast: pdinfo->t1=%d, pdinfo->t2=%d, t1=%d, t2=%d, k=%d, nf=%d\n",
-	    pdinfo->t1, pdinfo->t2, t1, t2, k, nf);
+    fprintf(stderr, "rolling fcast: dset->t1=%d, dset->t2=%d, t1=%d, t2=%d, k=%d, nf=%d\n",
+	    dset->t1, dset->t2, t1, t2, k, nf);
 
-    for (t=0; t<pdinfo->n; t++) {
-	fr->actual[t] = Z[pmod->list[1]][t];
+    for (t=0; t<dset->n; t++) {
+	fr->actual[t] = dset->Z[pmod->list[1]][t];
     }
 
     for (s=0; s<nf; s++) {
-	mod = lsq(pmod->list, Z, pdinfo, OLS, OPT_A | OPT_Z);
+	mod = lsq(pmod->list, dset, OLS, OPT_A | OPT_Z);
 	if (mod.errcode) {
 	    *err = mod.errcode;
 	    clear_model(&mod);
@@ -3532,7 +3525,7 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	}
 
 	/* the first obs following the estimation sample */
-	t = pdinfo->t2 + 1;
+	t = dset->t2 + 1;
 
 	for (j=0; j<k; j++) {
 	    yf = 0.0;
@@ -3543,7 +3536,7 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 		if (p > 0 && p <= j) {
 		    xit = y[t-p];
 		} else {
-		    xit = Z[vi][t];
+		    xit = dset->Z[vi][t];
 		}
 		if (na(xit)) {
 		    yf = NADBL;
@@ -3564,18 +3557,18 @@ rolling_OLS_k_step_fcast (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	}
 
 	clear_model(&mod);
-	pdinfo->t2 += 1;
+	dset->t2 += 1;
     }
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
     if (*err) {
 	free_fit_resid(fr);
 	fr = NULL;
     } else {
 	fit_resid_set_dec_places(fr);
-	strcpy(fr->depvar, pdinfo->varname[pmod->list[1]]);
+	strcpy(fr->depvar, dset->varname[pmod->list[1]]);
     }
 
     free(y);

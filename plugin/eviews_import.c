@@ -106,7 +106,7 @@ static double read_double (FILE *fp, int *err)
 }
 
 static int wf1_read_history (FILE *fp, unsigned pos, 
-			     DATAINFO *pdinfo, int i)
+			     DATASET *dset, int i)
 {
     char *htxt;
     unsigned hpos;
@@ -138,7 +138,7 @@ static int wf1_read_history (FILE *fp, unsigned pos,
     if (htxt != NULL) {
 	fseek(fp, hpos, SEEK_SET);
 	if (fread(htxt, 1, len, fp) == len) {
-	    char *targ = VARLABEL(pdinfo, i);
+	    char *targ = VARLABEL(dset, i);
 
 	    *targ = '\0';
 	    strncat(targ, htxt, MAXLABEL - 1);
@@ -171,8 +171,7 @@ static void print_bytes (FILE *fp, unsigned pos, int n)
 
 static int wf1_read_values (FILE *fp, int ftype, 
 			    unsigned pos, unsigned sz,
-			    double **Z, int i, int n,
-			    int k)
+			    DATASET *dset, int i, int k)
 {
     double x;
     unsigned xpos;
@@ -186,7 +185,7 @@ static int wf1_read_values (FILE *fp, int ftype,
     }
 
     fprintf(stderr, "got nobs = %d\n", nobs);
-    if (nobs != n) {
+    if (nobs != dset->n) {
 	fputs("problem: this does not match the specification "
 	      " for the dataset\n", stderr);
     }
@@ -214,9 +213,9 @@ static int wf1_read_values (FILE *fp, int ftype,
 
     xpos = pos + 22;
 
-    if (nobs > n) {
+    if (nobs > dset->n) {
 	/* don't overflow the Z array */
-	nobs = n;
+	nobs = dset->n;
     }
 
 #if EVDEBUG
@@ -230,7 +229,7 @@ static int wf1_read_values (FILE *fp, int ftype,
     for (t=0; t<nobs && !err; t++) {
 	x = read_double(fp, &err);
 	if (!err) {
-	    Z[i][t] = x;
+	    dset->Z[i][t] = x;
 	}
     }
 
@@ -238,10 +237,10 @@ static int wf1_read_values (FILE *fp, int ftype,
 }
 
 static int read_wf1_variables (FILE *fp, int ftype, unsigned pos, 
-			       double **Z, DATAINFO *dinfo, 
-			       int *nvread, PRN *prn)
+			       DATASET *dset, int *nvread, 
+			       PRN *prn)
 {
-    int nv = dinfo->v + 1; /* allow for "RESID" */
+    int nv = dset->v + 1; /* allow for "RESID" */
     char vname[32];
     short code = 0;
     unsigned u, sz;
@@ -294,8 +293,8 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 #endif
 	}
 
-	dinfo->varname[++j][0] = 0;
-	strncat(dinfo->varname[j], vname, VNAMELEN - 1);
+	dset->varname[++j][0] = 0;
+	strncat(dset->varname[j], vname, VNAMELEN - 1);
 
 	fseek(fp, pos + 6, SEEK_SET);
 	sz = read_unsigned(fp, &err);
@@ -325,7 +324,7 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 	if (u > 0) {
 	    /* follow up at the pos given above, if non-zero */
 	    fprintf(stderr, "data record at 0x%x (%d)\n", u, (int) u);
-	    err = wf1_read_values(fp, ftype, u, sz, Z, j, dinfo->n, k);
+	    err = wf1_read_values(fp, ftype, u, sz, dset, j, k);
 	} else {
 	    fputs("Couldn't find the data: skipping this variable\n", stderr);
 	    continue;
@@ -337,7 +336,7 @@ static int read_wf1_variables (FILE *fp, int ftype, unsigned pos,
 	    u = read_unsigned(fp, &err);
 	    if (u > 0) {
 		fprintf(stderr, "Reading history block at 0x%x\n", (unsigned) u);
-		wf1_read_history(fp, u, dinfo, j);
+		wf1_read_history(fp, u, dset, j);
 	    }
 	}
     }
@@ -383,7 +382,7 @@ static void analyse_mystery_vals (FILE *fp)
 
 #endif
 
-static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo, 
+static int parse_wf1_header (FILE *fp, int ftype, DATASET *dset, 
 			     unsigned *offset)
 {
     int nvars = 0, nobs = 0, startyr = 0;
@@ -430,9 +429,9 @@ static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo,
 		nvars, nobs, (int) pd,
 		startyr, (int) startper);
     } else {
-	dinfo->v = nvars - 2; /* skip C and RESID */
-	dinfo->n = nobs;
-	dinfo->pd = pd;
+	dset->v = nvars - 2; /* skip C and RESID */
+	dset->n = nobs;
+	dset->pd = pd;
 
 	fprintf(stderr, "header info:\n"
 		" number of variables = %d\n"
@@ -440,7 +439,7 @@ static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo,
 		" data frequency = %d\n"
 		" starting year or major = %d\n"
 		" starting sub-period or minor = %d\n",
-		dinfo->v, dinfo->n, dinfo->pd,
+		dset->v, dset->n, dset->pd,
 		startyr, (int) startper);
     }
 
@@ -452,20 +451,20 @@ static int parse_wf1_header (FILE *fp, int ftype, DATAINFO *dinfo,
 		char fmt[16];
 
 		sprintf(fmt, "%%d:%%0%dd", p10 + 1);
-		sprintf(dinfo->stobs, fmt, startyr, startper);
+		sprintf(dset->stobs, fmt, startyr, startper);
 	    } else {
-		sprintf(dinfo->stobs, "%d:%d", startyr, startper);
+		sprintf(dset->stobs, "%d:%d", startyr, startper);
 	    }
 	} else {
-	    sprintf(dinfo->stobs, "%d", startyr);
+	    sprintf(dset->stobs, "%d", startyr);
 	}
 
-	if (dinfo->pd > 1 || startyr > 10) {
-	    dinfo->structure = TIME_SERIES;
+	if (dset->pd > 1 || startyr > 10) {
+	    dset->structure = TIME_SERIES;
 	}
 
-	dinfo->sd0 = get_date_x(dinfo->pd, dinfo->stobs);
-	ntodate(dinfo->endobs, dinfo->n - 1, dinfo);
+	dset->sd0 = get_date_x(dset->pd, dset->stobs);
+	ntodate(dset->endobs, dset->n - 1, dset);
     }
 
     return err;
@@ -490,13 +489,11 @@ static int wf1_check_file_type (FILE *fp)
     return ftype;
 }
 
-int wf1_get_data (const char *fname, 
-		  double ***pZ, DATAINFO *pdinfo,
+int wf1_get_data (const char *fname, DATASET *dset,
 		  gretlopt opt, PRN *prn)
 {
     FILE *fp;
-    double **newZ = NULL;
-    DATAINFO *newinfo = NULL;
+    DATASET *newset = NULL;
     unsigned offset;
     int nvread, ftype;
     int err = 0;
@@ -518,49 +515,49 @@ int wf1_get_data (const char *fname,
 	pputs(prn, "EViews 7+ file: expect problems!\n");
     }
 
-    newinfo = datainfo_new();
-    if (newinfo == NULL) {
+    newset = datainfo_new();
+    if (newset == NULL) {
 	pputs(prn, _("Out of memory\n"));
 	fclose(fp);
 	return E_ALLOC;
     }
 
-    err = parse_wf1_header(fp, ftype, newinfo, &offset);
+    err = parse_wf1_header(fp, ftype, newset, &offset);
     if (err) {
 	pputs(prn, _("Error reading workfile header\n"));
-	free_datainfo(newinfo);
+	free_datainfo(newset);
 	fclose(fp);
 	return err;
     }
 
-    err = start_new_Z(&newZ, newinfo, 0);
+    err = start_new_Z(newset, 0);
     if (err) {
 	pputs(prn, _("Out of memory\n"));
-	free_datainfo(newinfo);
+	free_datainfo(newset);
 	fclose(fp);
 	return E_ALLOC;
     }	
 
-    err = read_wf1_variables(fp, ftype, offset, newZ, newinfo, &nvread, prn);
+    err = read_wf1_variables(fp, ftype, offset, newset, &nvread, prn);
 
     if (err) {
-	destroy_dataset(newZ, newinfo);
+	destroy_dataset(newset);
     } else {
-	int merge = (*pZ != NULL);
-	int nvtarg = newinfo->v - 1;
+	int merge = (dset->Z != NULL);
+	int nvtarg = newset->v - 1;
 
 	if (nvread < nvtarg) {
-	    dataset_drop_last_variables(nvtarg - nvread, &newZ, newinfo);
+	    dataset_drop_last_variables(nvtarg - nvread, newset);
 	}
 
-	if (fix_varname_duplicates(newinfo)) {
+	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+	err = merge_or_replace_data(dset, &newset, opt, prn);
 
 	if (!err && !merge) {
-	    dataset_add_import_info(pdinfo, fname, GRETL_WF1);
+	    dataset_add_import_info(dset, fname, GRETL_WF1);
 	}
     }
 

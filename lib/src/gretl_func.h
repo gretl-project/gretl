@@ -103,9 +103,8 @@ int gretl_function_append_line (const char *line);
 int gretl_is_public_user_function (const char *name);
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
-			 double ***pZ, DATAINFO *pdinfo,
-			 void *ret, char **descrip,
-			 PRN *prn);
+			 DATASET *dset, void *ret, 
+			 char **descrip, PRN *prn);
 
 char *gretl_func_get_arg_name (const char *argvar, int *err);
 
@@ -113,7 +112,7 @@ int object_is_const (const char *name);
 
 int object_is_function_arg (const char *name);
 
-void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2);
+void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2);
 
 int function_return_type_from_string (const char *s);
 
@@ -140,7 +139,7 @@ int create_and_write_function_package (const char *fname,
 				       gretlopt opt,
 				       PRN *prn);
 
-int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
+int check_function_needs (const DATASET *dset, FuncDataReq dreq,
 			  int minver);
 
 int write_session_functions_file (const char *fname);

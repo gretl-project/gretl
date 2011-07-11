@@ -123,13 +123,13 @@ static int maybe_record_lag_info (parser *p)
     if (sscanf(s, "%15[^ ()](%d)", vname, &lag) == 2) {
 	s = strchr(s, ')');
 	if (s != NULL && string_is_blank(s + 1)) {
-	    int pv = series_index(p->dinfo, vname);
+	    int pv = series_index(p->dset, vname);
 
-	    if (pv < p->dinfo->v) {
-		strcpy(p->dinfo->varinfo[p->lh.v]->parent, 
-		   p->dinfo->varname[pv]);
-		p->dinfo->varinfo[p->lh.v]->transform = LAGS;
-		p->dinfo->varinfo[p->lh.v]->lag = -lag;
+	    if (pv < p->dset->v) {
+		strcpy(p->dset->varinfo[p->lh.v]->parent, 
+		   p->dset->varname[pv]);
+		p->dset->varinfo[p->lh.v]->transform = LAGS;
+		p->dset->varinfo[p->lh.v]->lag = -lag;
 	    }
 	}
     }
@@ -182,11 +182,11 @@ static void gen_write_label (parser *p, int oldv)
 	strncat(tmp, src, MAXLABEL - 1);
     }
 
-    strcpy(VARLABEL(p->dinfo, p->lh.v), tmp);
-    p->dinfo->varinfo[p->lh.v]->flags |= VAR_GENERATED;
+    strcpy(VARLABEL(p->dset, p->lh.v), tmp);
+    p->dset->varinfo[p->lh.v]->flags |= VAR_GENERATED;
 
 #if GDEBUG
-    fprintf(stderr, "varlabel: '%s'\n", VARLABEL(p->dinfo, p->lh.v));
+    fprintf(stderr, "varlabel: '%s'\n", VARLABEL(p->dset, p->lh.v));
 #endif
 }
 
@@ -303,7 +303,7 @@ int extract_varname (char *targ, const char *src, int *len)
     return err;
 }
 
-static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
+static int try_for_listvar (const DATASET *dset, const char *s)
 {
     char vname[VNAMELEN];
     char lname[VNAMELEN];
@@ -316,21 +316,21 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
 
 	    for (i=1; i<=list[0]; i++) {
 		vi = list[i];
-		if (!strcmp(vname, pdinfo->varname[vi])) {
+		if (!strcmp(vname, dset->varname[vi])) {
 		    return vi;
 		}
 	    }
 	}
     }
 
-    return pdinfo->v;
+    return dset->v;
 }
 
 #define GEN_LEVEL_DEBUG 0
 
 /**
  * series_index:
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @varname: name of variable to test.
  *
  * Returns: the ID number of the variable whose name is given,
@@ -338,15 +338,15 @@ static int try_for_listvar (const DATAINFO *pdinfo, const char *s)
  * that name.
  */
 
-int series_index (const DATAINFO *pdinfo, const char *varname)
+int series_index (const DATASET *dset, const char *varname)
 {
     const char *s = varname;
     int fd = 0, ret = -1;
 
-    if (pdinfo != NULL) {
+    if (dset != NULL) {
 	int i;
 	
-	ret = pdinfo->v;
+	ret = dset->v;
 
 	if (s == NULL || *s == '\0' || isdigit(*s)) {
 	    goto bailout;
@@ -358,7 +358,7 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
 	}
 
 	if (strchr(s, '.') != NULL) {
-	    ret = try_for_listvar(pdinfo, s);
+	    ret = try_for_listvar(dset, s);
 	    goto bailout;
 	}
 
@@ -366,8 +366,8 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
 
 	if (fd == 0) {
 	    /* not inside a user function: easy */
-	    for (i=1; i<pdinfo->v; i++) { 
-		if (strcmp(pdinfo->varname[i], s) == 0) {
+	    for (i=1; i<dset->v; i++) { 
+		if (strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
 		}
@@ -379,10 +379,10 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
 	       not just be the result of its being a member of a list
 	       that was passed as an argument.
 	    */
-	    for (i=1; i<pdinfo->v; i++) { 
-		if (fd == STACK_LEVEL(pdinfo, i) &&
-		    !var_is_listarg(pdinfo, i) && 
-		    strcmp(pdinfo->varname[i], s) == 0) {
+	    for (i=1; i<dset->v; i++) { 
+		if (fd == STACK_LEVEL(dset, i) &&
+		    !var_is_listarg(dset, i) && 
+		    strcmp(dset->varname[i], s) == 0) {
 		    ret = i;
 		    break;
 		}
@@ -393,20 +393,20 @@ int series_index (const DATAINFO *pdinfo, const char *varname)
  bailout:
 
 #if GEN_LEVEL_DEBUG
-    fprintf(stderr, "series_index for '%s', fd = %d: got %d (pdinfo->v = %d)\n", 
-	    s, fd, ret, pdinfo->v);
+    fprintf(stderr, "series_index for '%s', fd = %d: got %d (dset->v = %d)\n", 
+	    s, fd, ret, dset->v);
 #endif 
 
     return ret;
 }
 
-int current_series_index (const DATAINFO *pdinfo, const char *vname)
+int current_series_index (const DATASET *dset, const char *vname)
 {
     int v = -1;
 
-    if (pdinfo != NULL) {
-	v = series_index(pdinfo, vname);
-	if (v >= pdinfo->v) {
+    if (dset != NULL) {
+	v = series_index(dset, vname);
+	if (v >= dset->v) {
 	    v = -1;
 	}
     }
@@ -414,14 +414,14 @@ int current_series_index (const DATAINFO *pdinfo, const char *vname)
     return v;
 }
 
-int gretl_is_series (const char *name, const DATAINFO *pdinfo)
+int gretl_is_series (const char *name, const DATASET *dset)
 {
-    if (pdinfo == NULL) {
+    if (dset == NULL) {
 	return 0;
     } else {
-	int v = series_index(pdinfo, name);
+	int v = series_index(dset, name);
 
-	return (v >= 0 && v < pdinfo->v);
+	return (v >= 0 && v < dset->v);
     }
 }
 
@@ -441,22 +441,21 @@ int genr_special_word (const char *s)
 }
 
 static int gen_special (const char *s, const char *line,
-			double ***pZ, DATAINFO *pdinfo, 
-			PRN *prn, parser *p)
+			DATASET *dset, PRN *prn, parser *p)
 {
     const char *msg = NULL;
-    int orig_v = pdinfo->v;
+    int orig_v = dset->v;
     int write_label = 0;
     int err = 0;
 
-    if (pdinfo == NULL || pdinfo->n == 0) {
+    if (dset == NULL || dset->n == 0) {
 	return E_NODATA;
     }
 
     if (!strcmp(s, "markers")) {
-	return generate_obs_markers(line, pZ, pdinfo);
+	return generate_obs_markers(line, dset);
     } else if (!strcmp(s, "dummy")) {
-	int di0 = dummy(pZ, pdinfo, 0);
+	int di0 = dummy(dset, 0);
 
 	if (di0 == 0) {
 	    err = 1;
@@ -468,26 +467,26 @@ static int gen_special (const char *s, const char *line,
 	    }
 	}
     } else if (!strcmp(s, "timedum")) {
-	err = panel_dummies(pZ, pdinfo, OPT_T);
+	err = panel_dummies(dset, OPT_T);
 	if (!err) {
 	    msg = N_("Panel dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "unitdum")) {
-	err = panel_dummies(pZ, pdinfo, OPT_NONE);
+	err = panel_dummies(dset, OPT_NONE);
 	if (!err) {
 	    msg = N_("Panel dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "time")) {
-	err = gen_time(pZ, pdinfo, 1);
+	err = gen_time(dset, 1);
 	write_label = 1;
     } else if (!strcmp(s, "index")) {
-	err = gen_time(pZ, pdinfo, 0);
+	err = gen_time(dset, 0);
 	write_label = 1;
     } else if (!strcmp(s, "unit")) {
-	err = gen_unit(pZ, pdinfo);
+	err = gen_unit(dset);
 	write_label = 1;
     } else if (!strcmp(s, "weekday")) {
-	err = gen_wkday(pZ, pdinfo);
+	err = gen_wkday(dset);
 	write_label = 1;
     } 
 
@@ -497,9 +496,8 @@ static int gen_special (const char *s, const char *line,
 
     if (!err && write_label) {
 	strcpy(p->lh.name, s);
-	p->lh.v = series_index(pdinfo, s);
-	p->Z = pZ;
-	p->dinfo = pdinfo;
+	p->lh.v = series_index(dset, s);
+	p->dset = dset;
 	p->targ = VEC;
 	p->flags = 0;
 	p->err = 0;
@@ -507,7 +505,7 @@ static int gen_special (const char *s, const char *line,
 	gen_write_message(p, orig_v, prn);
     }
 
-    if (pdinfo->v > orig_v) {
+    if (dset->v > orig_v) {
 	set_dataset_is_changed();
     }
 
@@ -591,8 +589,8 @@ int genr_get_last_output_type (void)
                         !(f & P_QUIET) && \
                         !(f & P_DECL))
 
-int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
-	      gretlopt opt, PRN *prn)
+int generate (const char *line, DATASET *dset, gretlopt opt, 
+	      PRN *prn)
 {
     char vname[VNAMELEN];
     const char *subline = NULL;
@@ -611,19 +609,19 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	flags |= P_QUIET;
     }
 
-    oldv = (pdinfo != NULL)? pdinfo->v : 0;
+    oldv = (dset != NULL)? dset->v : 0;
 
 #if GDEBUG
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
 #endif
 
     if (is_gen_special(line, vname, &subline)) {
-	return gen_special(vname, subline, pZ, pdinfo, prn, &p);
+	return gen_special(vname, subline, dset, prn, &p);
     } else if (do_stack_vars(line, vname, &subline)) {
-	return dataset_stack_variables(vname, subline, pZ, pdinfo, prn);
+	return dataset_stack_variables(vname, subline, dset, prn);
     }
 
-    realgen(line, &p, pZ, pdinfo, prn, flags);
+    realgen(line, &p, dset, prn, flags);
 
     if (!(opt & OPT_U)) {
 	gen_save_or_print(&p, prn);
@@ -654,13 +652,12 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 /* simply retrieve a scalar result */
 
-double generate_scalar (const char *s, double ***pZ, 
-			DATAINFO *pdinfo, int *err)
+double generate_scalar (const char *s, DATASET *dset, int *err)
 {
     parser p;
     double x = NADBL;
 
-    *err = realgen(s, &p, pZ, pdinfo, NULL, P_SCALAR | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_SCALAR | P_PRIVATE);
 
     if (!*err) {
 	if (p.ret->t == MAT) {
@@ -681,14 +678,13 @@ double generate_scalar (const char *s, double ***pZ,
 
 /* retrieve a series result directly */
 
-double *generate_series (const char *s, double ***pZ, 
-			 DATAINFO *pdinfo, PRN *prn,
+double *generate_series (const char *s, DATASET *dset, PRN *prn,
 			 int *err)
 {
     parser p;
     double *x = NULL;
 
-    *err = realgen(s, &p, pZ, pdinfo, prn, P_SERIES | P_PRIVATE);
+    *err = realgen(s, &p, dset, prn, P_SERIES | P_PRIVATE);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -699,7 +695,7 @@ double *generate_series (const char *s, double ***pZ,
 		x = n->v.xvec;
 		n->v.xvec = NULL;
 	    } else {
-		x = copyvec(n->v.xvec, p.dinfo->n);
+		x = copyvec(n->v.xvec, p.dset->n);
 	    }
 	} else {
 	    *err = E_TYPES;
@@ -715,13 +711,13 @@ double *generate_series (const char *s, double ***pZ,
 
 /* retrieve a matrix result directly */
 
-gretl_matrix *generate_matrix (const char *s, double ***pZ, 
-			       DATAINFO *pdinfo, int *err)
+gretl_matrix *generate_matrix (const char *s, DATASET *dset, 
+			       int *err)
 {
     gretl_matrix *m = NULL;
     parser p;
 
-    *err = realgen(s, &p, pZ, pdinfo, NULL, P_MATRIX | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_MATRIX | P_PRIVATE);
 
     if (!*err) {
 	NODE *n = p.ret;
@@ -762,13 +758,12 @@ gretl_matrix *generate_matrix (const char *s, double ***pZ,
 
 /* retrieve a string result directly */
 
-char *generate_string (const char *s, double ***pZ, 
-		       DATAINFO *pdinfo, int *err)
+char *generate_string (const char *s, DATASET *dset, int *err)
 {
     parser p;
     char *ret = NULL;
 
-    *err = realgen(s, &p, pZ, pdinfo, NULL, P_STRING | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_STRING | P_PRIVATE);
 
     if (!*err) {
 	if (p.ret->t == STR) {
@@ -787,13 +782,12 @@ char *generate_string (const char *s, double ***pZ,
 
 /* retrieve a list result directly */
 
-int *generate_list (const char *s, double ***pZ, 
-		    DATAINFO *pdinfo, int *err)
+int *generate_list (const char *s, DATASET *dset, int *err)
 {
     parser p;
     int *ret = NULL;
 
-    *err = realgen(s, &p, pZ, pdinfo, NULL, P_LIST | P_PRIVATE);
+    *err = realgen(s, &p, dset, NULL, P_LIST | P_PRIVATE);
 
     if (!*err) {
 	if (p.ret->t == LIST) {
@@ -826,14 +820,13 @@ int *generate_list (const char *s, double ***pZ,
 */
 
 int print_object_var (const char *oname, const char *param,
-		      double ***pZ, DATAINFO *pdinfo,
-		      PRN *prn)
+		      DATASET *dset, PRN *prn)
 {
     char line[MAXLEN];
     parser p;
 
     sprintf(line, "%s.%s", oname, param);
-    realgen(line, &p, pZ, pdinfo, prn, P_DISCARD);
+    realgen(line, &p, dset, prn, P_DISCARD);
     gen_save_or_print(&p, prn);
     gen_cleanup(&p);
 
@@ -843,7 +836,7 @@ int print_object_var (const char *oname, const char *param,
 /* create a parsed tree that can be evaluated later, 
    probably multiple times */
 
-parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo, 
+parser *genr_compile (const char *s, DATASET *dset, 
 		      gretlopt opt, int *err)
 {
     parser *p = malloc(sizeof *p);
@@ -866,7 +859,7 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 	flags |= P_UFUN;
     }
 
-    *err = realgen(s, p, pZ, pdinfo, NULL, flags);
+    *err = realgen(s, p, dset, NULL, flags);
 
     if (*err) {
 	gen_cleanup(p);
@@ -883,15 +876,14 @@ parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo,
 
 /* run a previously compiled generator */
 
-int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo,
-		  PRN *prn)
+int execute_genr (parser *p, DATASET *dset, PRN *prn)
 {
 #if GDEBUG
     fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p\n", 
 	    (void *) p, p->lh.name, (void *) *pZ);
 #endif
 
-    realgen(NULL, p, pZ, pdinfo, prn, P_EXEC);
+    realgen(NULL, p, dset, prn, P_EXEC);
 
     if (!p->err && !(p->flags & P_UFUN)) {
 	gen_save_or_print(p, prn);

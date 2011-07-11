@@ -90,8 +90,7 @@ static int reorganize_uhat_yhat (MODEL *pmod, MISSOBS *mobs)
 /**
  * undo_daily_repack:
  * @pmod: pointer to model.
- * @Z: data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  *
  * Reverses the effect of repack_missing_daily_obs(), hence
  * restoring a daily dataset to its correct order.  The
@@ -101,8 +100,7 @@ static int reorganize_uhat_yhat (MODEL *pmod, MISSOBS *mobs)
  * Returns: 0 on success, non-zero error code on error.
  */
 
-int undo_daily_repack (MODEL *pmod, double **Z, 
-		       const DATAINFO *pdinfo)
+int undo_daily_repack (MODEL *pmod, DATASET *dset)
 {
     int i, j, t, m, g;
     double *tmpmiss = NULL, *tmpgood = NULL;
@@ -139,17 +137,17 @@ int undo_daily_repack (MODEL *pmod, double **Z,
 
 	m = g = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	     tmpgood[g++] = Z[i][t];
+	     tmpgood[g++] = dset->Z[i][t];
 	}
 	for (t=pmod->t2 + 1; t<=pmod->t2 + mobs->misscount; t++) {
-	    tmpmiss[m++] = Z[i][t];
+	    tmpmiss[m++] = dset->Z[i][t];
 	}
 	m = g = 0;
 	for (t=pmod->t1; t<=pmod->t2 + mobs->misscount; t++) {
 	    if (mobs->missvec[t] == '1') {
-		Z[i][t] = tmpmiss[m++];
+		dset->Z[i][t] = tmpmiss[m++];
 	    } else {
-		Z[i][t] = tmpgood[g++];
+		dset->Z[i][t] = tmpgood[g++];
 	    }
 	}
     }
@@ -180,7 +178,7 @@ int undo_daily_repack (MODEL *pmod, double **Z,
 */
 
 static int 
-repack_missing (const MODEL *pmod, double **Z, const DATAINFO *pdinfo, 
+repack_missing (const MODEL *pmod, DATASET *dset, 
 		const char *missvec, int misscount)
 {
     int i, v, t, m, g;
@@ -204,18 +202,18 @@ repack_missing (const MODEL *pmod, double **Z, const DATAINFO *pdinfo,
 	m = g = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (missvec[t] == '1') {
-		tmpmiss[m++] = Z[v][t];
+		tmpmiss[m++] = dset->Z[v][t];
 	    } else {
-		tmpgood[g++] = Z[v][t];
+		tmpgood[g++] = dset->Z[v][t];
 	    }
 	}
 
 	m = g = 0;
 	for (t=pmod->t1; t<=pmod->t2 - misscount; t++) {
-	     Z[v][t] = tmpgood[g++];
+	     dset->Z[v][t] = tmpgood[g++];
 	}
 	for (t=pmod->t2 + 1 - misscount; t<=pmod->t2; t++) {
-	    Z[v][t] = tmpmiss[m++];
+	    dset->Z[v][t] = tmpmiss[m++];
 	}
     }
 
@@ -227,8 +225,7 @@ repack_missing (const MODEL *pmod, double **Z, const DATAINFO *pdinfo,
 /**
  * repack_missing_daily_obs:
  * @pmod: pointer to model.
- * @Z: data array.
- * @pdinfo: information on dataset.
+ * @dset: dataset struct.
  *
  * Reorganizes a daily dataset, moving any missing observations
  * to the end of the array.  Permits estimation of a model
@@ -241,8 +238,7 @@ repack_missing (const MODEL *pmod, double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on success, %E_ALLOC on error.
  */
 
-int repack_missing_daily_obs (MODEL *pmod, double **Z, 
-			      const DATAINFO *pdinfo)
+int repack_missing_daily_obs (MODEL *pmod, DATASET *dset)
 {
     char *missvec;
     int misscount;
@@ -250,7 +246,7 @@ int repack_missing_daily_obs (MODEL *pmod, double **Z,
     int err = 0;
 
     missvec = model_missmask(pmod->list, pmod->t1, pmod->t2, 
-			     pdinfo->n, (const double **) Z, 
+			     dset->n, (const double **) dset->Z, 
 			     0, &misscount);
     if (missvec == NULL) {
 	pmod->errcode = E_ALLOC;
@@ -264,7 +260,7 @@ int repack_missing_daily_obs (MODEL *pmod, double **Z,
 	return 1;
     }
 	
-    err = repack_missing(pmod, Z, pdinfo, missvec, misscount);
+    err = repack_missing(pmod, dset, missvec, misscount);
 
     if (err) {
 	pmod->errcode = err;
@@ -574,7 +570,7 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
  *      start of sample range adjusted for missing values.
  * @t2: on entry, initial end of sample range; on exit, end
  *      of sample range adjusted for missing values.
- * @Z: data array.
+ * @dset: dataset struct.
  *
  * Drops leading or trailing observations from the sample range
  * initially given by the values in @t1 and @t2, if missing values are 
@@ -585,7 +581,7 @@ int series_adjust_sample (const double *x, int *t1, int *t2)
  */
 
 int list_adjust_sample (const int *list, int *t1, int *t2, 
-			const double **Z)
+			const DATASET *dset)
 {
     int i, t, t1min = *t1, t2max = *t2;
     int vi, missing, err = 0;
@@ -596,7 +592,7 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi > 0 && vi != LISTSEP) {
-		if (na(Z[vi][t])) {
+		if (na(dset->Z[vi][t])) {
 		    missing = 1;
 		    break;
 		}
@@ -615,7 +611,7 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi > 0 && vi != LISTSEP) {
-		if (na(Z[vi][t])) {
+		if (na(dset->Z[vi][t])) {
 		    missing = 1;
 		    break;
 		}
@@ -634,7 +630,7 @@ int list_adjust_sample (const int *list, int *t1, int *t2,
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi > 0 && vi != LISTSEP) {
-		if (na(Z[vi][t])) {
+		if (na(dset->Z[vi][t])) {
 		    err = E_MISSDATA;
 		    break;
 		}
@@ -733,10 +729,10 @@ int reference_missmask_present (void)
 }
 
 static int real_setmiss (double missval, int varno, 
-			 double **Z, DATAINFO *pdinfo) 
+			 DATASET *dset) 
 {
     int i, t, count = 0;
-    int start = 1, end = pdinfo->v;
+    int start = 1, end = dset->v;
 
     if (varno) {
 	start = varno;
@@ -744,9 +740,9 @@ static int real_setmiss (double missval, int varno,
     }
 
     for (i=start; i<end; i++) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (Z[i][t] == missval) {
-		Z[i][t] = NADBL;
+	for (t=0; t<dset->n; t++) {
+	    if (dset->Z[i][t] == missval) {
+		dset->Z[i][t] = NADBL;
 		count++;
 	    }
 	}	
@@ -760,8 +756,7 @@ static int real_setmiss (double missval, int varno,
  * @list: list of variables to process, or an empty list or %NULL
  *        to process all variables.
  * @param: string representation of the numerical value to treat as missing.
- * @Z: data matrix.
- * @pdinfo: pointer to data information struct.
+ * @dset: dataset struct.
  * @prn: pointer to printing struct.
  * 
  * Set to "missing" each observation of each series in @list that
@@ -771,14 +766,14 @@ static int real_setmiss (double missval, int varno,
  * otherwise 0.
  */
 
-int set_miss (const int *list, const char *param, double **Z,
-	      DATAINFO *pdinfo, PRN *prn)
+int set_miss (const int *list, const char *param, 
+	      DATASET *dset, PRN *prn)
 {
     double missval = atof(param);
     int i, vi, count, ret = 0;
 
     if (list == NULL || list[0] == 0) {
-	count = real_setmiss(missval, 0, Z, pdinfo);
+	count = real_setmiss(missval, 0, dset);
 	if (count) { 
 	    pprintf(prn, _("Set %d values to \"missing\"\n"), count);
 	    ret = 1;
@@ -788,14 +783,14 @@ int set_miss (const int *list, const char *param, double **Z,
     } else {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    count = real_setmiss(missval, vi, Z, pdinfo);
+	    count = real_setmiss(missval, vi, dset);
 	    if (count) { 
 		pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
-			pdinfo->varname[vi], count);
+			dset->varname[vi], count);
 		ret = 1;
 	    } else { 
 		pprintf(prn, _("%s: Didn't find any matching observations\n"),
-			pdinfo->varname[vi]);
+			dset->varname[vi]);
 	    }
 	}
     }
@@ -805,26 +800,25 @@ int set_miss (const int *list, const char *param, double **Z,
 
 /**
  * missing_obs_fraction:
- * @Z: data array.
- * @pdinfo: pointer to data information struct.
+ * @dset: dataset struct.
  * 
  * Returns: the fraction of the observations in @Z for which
  * all variables have missing values (empty rows).
  */
 
-double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo)
+double missing_obs_fraction (const DATASET *dset)
 {
     int missrow, totmiss = 0;
     int i, t;
 
-    if (pdinfo->n == 0) {
+    if (dset->n == 0) {
 	return 0.0;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	missrow = 1;
-	for (i=1; i<pdinfo->v; i++) {
-	    if (!na(Z[i][t])) {
+	for (i=1; i<dset->v; i++) {
+	    if (!na(dset->Z[i][t])) {
 		missrow = 0;
 		break;
 	    }
@@ -832,30 +826,29 @@ double missing_obs_fraction (const double **Z, const DATAINFO *pdinfo)
 	totmiss += missrow;
     }
 
-    return (double) totmiss / pdinfo->n;
+    return (double) totmiss / dset->n;
 }
 
 /**
  * any_missing_user_values:
- * @Z: data array.
- * @pdinfo: pointer to data information struct.
+ * @dset: dataset struct.
  * 
  * Returns: 1 if there are missing values for any non-hidden
  * variables within the current sample range, otherwise 0.
  */
 
-int any_missing_user_values (const double **Z, const DATAINFO *pdinfo)
+int any_missing_user_values (const DATASET *dset)
 {
     int i, t;
 
-    if (pdinfo->n == 0) {
+    if (dset->n == 0) {
 	return 0;
     }
 
-    for (i=1; i<pdinfo->v; i++) {
-	if (!var_is_hidden(pdinfo, i)) {
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		if (na(Z[i][t])) {
+    for (i=1; i<dset->v; i++) {
+	if (!var_is_hidden(dset, i)) {
+	    for (t=dset->t1; t<=dset->t2; t++) {
+		if (na(dset->Z[i][t])) {
 		    return 1;
 		}
 	    }

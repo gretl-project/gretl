@@ -39,7 +39,7 @@ enum {
     IFRESET
 };
 
-static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)
+static int if_eval (const char *s, DATASET *dset, int *err)
 {
     double val = NADBL;
     int ret = -1;
@@ -56,7 +56,7 @@ static int if_eval (const char *s, double ***pZ, DATAINFO *pdinfo, int *err)
 
     while (*s == ' ') s++;
 
-    val = generate_scalar(s, pZ, pdinfo, err);
+    val = generate_scalar(s, dset, err);
 
 #if IFDEBUG
     if (err) {
@@ -256,8 +256,7 @@ static int trailing_junk_error (const char *s)
     return E_PARSE;
 }
 
-int flow_control (const char *line, double ***pZ, 
-		  DATAINFO *pdinfo, CMD *cmd)
+int flow_control (const char *line, DATASET *dset, CMD *cmd)
 {
     int ci = cmd->ci;
     int blocked, ok, err = 0;
@@ -272,7 +271,7 @@ int flow_control (const char *line, double ***pZ,
 	if (blocked) {
 	    err = set_if_state(SET_FALSE);
 	} else {
-	    ok = if_eval(line, pZ, pdinfo, &err);
+	    ok = if_eval(line, dset, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }
@@ -283,7 +282,7 @@ int flow_control (const char *line, double ***pZ,
 	err = set_if_state(SET_ELIF);
 	if (!err && get_if_state(IS_TRUE)) {
 	    set_if_state(UNINDENT);
-	    ok = if_eval(line, pZ, pdinfo, &err);
+	    ok = if_eval(line, dset, &err);
 	    if (!err) {
 		err = set_if_state(ok? SET_TRUE : SET_FALSE);
 	    }

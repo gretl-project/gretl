@@ -480,15 +480,14 @@ int write_gretl_ox_file (const char *buf, gretlopt opt, const char **pfname)
    write appropriate octave commands to @fp to source the data
 */
 
-static int write_data_for_octave (const double **Z, 
-				  const DATAINFO *pdinfo,
+static int write_data_for_octave (const DATASET *dset,
 				  FILE *fp)
 {
     gchar *mdata;
     int err;
 
     mdata = g_strdup_printf("%smdata.tmp", gretl_dotdir());
-    err = write_data(mdata, NULL, Z, pdinfo, OPT_M | OPT_F, 0);
+    err = write_data(mdata, NULL, dset, OPT_M | OPT_F, 0);
  
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_octave: failed with err = %d\n", err);
@@ -503,7 +502,7 @@ static int write_data_for_octave (const double **Z,
 }
 
 int write_gretl_octave_file (const char *buf, gretlopt opt, 
-			     const double **Z, const DATAINFO *pdinfo,
+			     const DATASET *dset,
 			     const char **pfname)
 {
     const gchar *fname = gretl_octave_filename();
@@ -521,7 +520,7 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
 	if (opt & OPT_D) {
 	    /* --send-data */
 	    fprintf(stderr, "*** writing data for octave\n");
-	    err = write_data_for_octave(Z, pdinfo, fp);
+	    err = write_data_for_octave(dset, fp);
 	    if (err) {
 		fclose(fp);
 		return err;
@@ -558,18 +557,17 @@ int write_gretl_octave_file (const char *buf, gretlopt opt,
    write appropriate R commands to @fp to source the data
 */
 
-static int write_data_for_R (const double **Z, 
-			     const DATAINFO *pdinfo,
+static int write_data_for_R (const DATASET *dset,
 			     gretlopt opt,
 			     FILE *fp)
 {
-    int ts = dataset_is_time_series(pdinfo);
+    int ts = dataset_is_time_series(dset);
     gchar *Rdata;
     int err;
 
     Rdata = g_strdup_printf("%sRdata.tmp", gretl_dot_dir);
 
-    err = write_data(Rdata, NULL, Z, pdinfo, OPT_R, 0);
+    err = write_data(Rdata, NULL, dset, OPT_R, 0);
     if (err) {
 	gretl_errmsg_sprintf("write_data_for_R: failed with err = %d\n", err);
 	g_free(Rdata);
@@ -582,7 +580,7 @@ static int write_data_for_R (const double **Z,
 	char *p, datestr[OBSLEN];
 	int subper = 1;
 	    
-	ntodate(datestr, pdinfo->t1, pdinfo);
+	ntodate(datestr, dset->t1, dset);
 	p = strchr(datestr, ':');
 	if (p != NULL) {
 	    subper = atoi(p + 1);
@@ -590,7 +588,7 @@ static int write_data_for_R (const double **Z,
 
 	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	fprintf(fp, "gretldata <- ts(gretldata, start=c(%d, %d), frequency = %d)\n", 
-		atoi(datestr), subper, pdinfo->pd);
+		atoi(datestr), subper, dset->pd);
     } else {	
 	fprintf(fp, "gretldata <- read.table(\"%s\", header=TRUE)\n", Rdata);
 	fputs("attach(gretldata)\n", fp);
@@ -706,8 +704,7 @@ static int write_gretl_R_profile (gretlopt opt)
 */
 
 static int write_R_source_file (const char *buf,
-				const double **Z, 
-				const DATAINFO *pdinfo,
+				const DATASET *dset,
 				gretlopt opt)
 {
     FILE *fp = gretl_fopen(gretl_Rsrc, "w");
@@ -757,7 +754,7 @@ static int write_R_source_file (const char *buf,
 
 	if (opt & OPT_D) {
 	    /* --send-data */
-	    err = write_data_for_R(Z, pdinfo, opt, fp);
+	    err = write_data_for_R(dset, opt, fp);
 	    if (err) {
 		fclose(fp);
 		return err;
@@ -804,8 +801,7 @@ static int write_R_source_file (const char *buf,
 */
 
 int write_gretl_R_files (const char *buf,
-			 const double **Z, 
-			 const DATAINFO *pdinfo,
+			 const DATASET *dset,
 			 gretlopt opt)
 { 
     int err = 0;
@@ -824,7 +820,7 @@ int write_gretl_R_files (const char *buf,
 
     if (!err) {
 	/* write commands and/or data to file, to be sourced in R */
-	err = write_R_source_file(buf, Z, pdinfo, opt);
+	err = write_R_source_file(buf, dset, opt);
 	if (err) {
 	    fprintf(stderr, "error writing gretl's Rsrc\n");
 	} 	
@@ -1397,7 +1393,7 @@ int gretl_R_function_exec (const char *name, int *rtype, void **ret)
     return err;
 }
 
-static int run_R_lib (const double **Z, const DATAINFO *pdinfo, 
+static int run_R_lib (const DATASET *dset, 
 		      gretlopt opt, PRN *prn)
 {
     int err;
@@ -1407,7 +1403,7 @@ static int run_R_lib (const double **Z, const DATAINFO *pdinfo,
 
     /* by passing OPT_L below we indicate that we're
        using the library */
-    err = write_R_source_file(NULL, Z, pdinfo, opt | OPT_L);
+    err = write_R_source_file(NULL, dset, opt | OPT_L);
     if (!err) {
 	err = lib_run_Rlib_sync(opt, prn);
     }
@@ -1489,14 +1485,14 @@ int foreign_append_line (const char *line, gretlopt opt, PRN *prn)
     return err;
 }
 
-static int run_R_binary (const double **Z, const DATAINFO *pdinfo, 
+static int run_R_binary (const DATASET *dset, 
 			 gretlopt opt, PRN *prn)
 {
     int err;
 
     /* write both profile and Rsrc files */
 
-    err = write_gretl_R_files(NULL, Z, pdinfo, opt);
+    err = write_gretl_R_files(NULL, dset, opt);
     if (err) {
 	delete_gretl_R_files();
     } else {
@@ -1508,8 +1504,7 @@ static int run_R_binary (const double **Z, const DATAINFO *pdinfo,
 
 /**
  * foreign_execute:
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: may include %OPT_V for verbose operation
  * @prn: struct for printing output.
  *
@@ -1519,7 +1514,7 @@ static int run_R_binary (const double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on success, non-zero on error.
  */
 
-int foreign_execute (const double **Z, const DATAINFO *pdinfo, 
+int foreign_execute (const DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
     int i, err = 0;
@@ -1540,12 +1535,12 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
     if (foreign_lang == LANG_R) {
 #ifdef USE_RLIB
 	if (gretl_use_Rlib()) {
-	    err = run_R_lib(Z, pdinfo, foreign_opt, prn);
+	    err = run_R_lib(dset, foreign_opt, prn);
 	} else {
-	    err = run_R_binary(Z, pdinfo, foreign_opt, prn);
+	    err = run_R_binary(dset, foreign_opt, prn);
 	}
 #else
-	err = run_R_binary(Z, pdinfo, foreign_opt, prn);
+	err = run_R_binary(dset, foreign_opt, prn);
 #endif
     } else if (foreign_lang == LANG_OX) {
 	err = write_gretl_ox_file(NULL, foreign_opt, NULL);
@@ -1556,7 +1551,7 @@ int foreign_execute (const double **Z, const DATAINFO *pdinfo,
 	}
     } else if (foreign_lang == LANG_OCTAVE) {
 	err = write_gretl_octave_file(NULL, foreign_opt, 
-				      Z, pdinfo, NULL);
+				      dset, NULL);
 	if (err) {
 	    delete_gretl_octave_file();
 	} else {

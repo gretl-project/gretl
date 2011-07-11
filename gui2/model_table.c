@@ -312,7 +312,7 @@ static int add_to_param_list (const MODEL *pmod)
     int i, err = 0;
 
     for (i=0; i<pmod->ncoeff && !err; i++) {
-	gretl_model_get_param_name(pmod, datainfo, i, pname);
+	gretl_model_get_param_name(pmod, dataset, i, pname);
 	if (!on_param_list(pname)) {
 	    err = strings_array_add(&pnames, &n_params, pname);
 	}
@@ -518,7 +518,7 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	    if (pmod == NULL) {
 		continue;
 	    }
-	    if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
+	    if ((k = gretl_model_get_param_number(pmod, dataset, pname)) >= 0) {
 		double x = screen_zero(pmod->coeff[k]);
 
 		mt_print_value(numstr, x);
@@ -577,7 +577,7 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 	    if (pmod == NULL) {
 		continue;
 	    }
-	    if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
+	    if ((k = gretl_model_get_param_number(pmod, dataset, pname)) >= 0) {
 		double val;
 
 		if (use_tstats) {
@@ -623,7 +623,7 @@ static void print_model_table_coeffs (int namewidth, int colwidth, PRN *prn)
 		if (pmod == NULL) {
 		    continue;
 		}
-		if ((k = gretl_model_get_param_number(pmod, datainfo, pname)) >= 0) {
+		if ((k = gretl_model_get_param_number(pmod, dataset, pname)) >= 0) {
 		    double pval = modtab_get_pval(pmod, k);
 
 		    if (na(pval)) {
@@ -1015,7 +1015,7 @@ static void plain_print_model_table (PRN *prn)
 	pputc(prn, '\n');
     }
 
-    pprintf(prn, _("Dependent variable: %s\n"), datainfo->varname[depvarnum]);
+    pprintf(prn, _("Dependent variable: %s\n"), dataset->varname[depvarnum]);
 
     pputc(prn, '\n');
     bufspace(namelen + 4, prn);
@@ -1112,7 +1112,7 @@ static int tex_print_model_table (PRN *prn)
 	pputs(prn, "\\\\\n");
     }
 
-    tex_escape(tmp, datainfo->varname[depvarnum]);
+    tex_escape(tmp, dataset->varname[depvarnum]);
     pprintf(prn, "%s: %s \\\\\n", I_("Dependent variable"), tmp);
 
     pputs(prn, "\\vspace{1em}\n\n");
@@ -1207,7 +1207,7 @@ static int rtf_print_model_table (PRN *prn)
     }
 
     pprintf(prn, "\\par \\qc %s: %s\n\\par\n\\par\n{", 
-	    I_("Dependent variable"), datainfo->varname[depvarnum]);
+	    I_("Dependent variable"), dataset->varname[depvarnum]);
 
     print_rtf_row_spec(prn, 1);
     pputs(prn, "\\intbl \\qc \\cell ");

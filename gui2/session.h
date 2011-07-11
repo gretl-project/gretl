@@ -114,7 +114,7 @@ void save_session_callback (GtkAction *action);
 
 int session_file_is_open (void);
 
-int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuild);
+int clear_or_save_model (MODEL **ppmod, DATASET *pdinfo, int rebuild);
 
 void disable_graph_page (void);
 

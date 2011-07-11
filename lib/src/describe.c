@@ -1123,8 +1123,7 @@ int gretl_moments (int t1, int t2, const double *x,
 /**
  * gretl_sorted_series:
  * @v: ID number of input series.
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: may include OPT_M to flag an error in case
  * missing values are found.
  * @n: on input, the minimum acceptable number of
@@ -1133,17 +1132,16 @@ int gretl_moments (int t1, int t2, const double *x,
  * @err: location to receive error code.
  *
  * Returns: an array containing the valid values of the
- * input series over the sample range given in @pdinfo, 
+ * input series over the sample range given in @dset, 
  * sorted from smallest to largest, or NULL on error.
  * An error is flagged if the number of valid observations
  * is less than that given in @n on input, or if OPT_M 
  * is given and the input contains missing values.
  */
 
-double *gretl_sorted_series (int v, const double **Z, 
-			     const DATAINFO *pdinfo,
-			     gretlopt opt,
-			     int *n, int *err)
+double *gretl_sorted_series (int v, const DATASET *dset,
+			     gretlopt opt, int *n, 
+			     int *err)
 {
     double *y = NULL;
     int t, k = 0;
@@ -1152,8 +1150,8 @@ double *gretl_sorted_series (int v, const double **Z,
 	*n = 1;
     }
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(Z[v][t])) {
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!na(dset->Z[v][t])) {
 	    k++;
 	} else if (opt & OPT_M) {
 	    *err = E_MISSDATA;
@@ -1176,9 +1174,9 @@ double *gretl_sorted_series (int v, const double **Z,
     *n = k;
 
     k = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(Z[v][t])) {
-	    y[k++] = Z[v][t];
+    for (t=dset->t1; t<=dset->t2; t++) {
+	if (!na(dset->Z[v][t])) {
+	    y[k++] = dset->Z[v][t];
 	}
     }
     
@@ -1587,15 +1585,15 @@ static int freq_add_arrays (FreqDist *freq, int n)
     return err;
 }
 
-int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
-		int *pn, double *pxmax, double *pxmin, int *nbins, 
+int freq_setup (int v, const DATASET *dset, int *pn, 
+		double *pxmax, double *pxmin, int *nbins, 
 		double *binwidth)
 {
-    const double *x = Z[v];
+    const double *x = dset->Z[v];
     double xrange, xmin = 0, xmax = 0;
     int t, k = 0, n = 0;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	if (!na(x[t])) {
 	    if (n == 0) {
 		xmax = xmin = x[t];
@@ -1610,13 +1608,13 @@ int freq_setup (int v, const double **Z, const DATAINFO *pdinfo,
     if (n < 8) {
 	gretl_errmsg_sprintf(_("Insufficient data to build frequency "
 			       "distribution for variable %s"), 
-			     pdinfo->varname[v]);
+			     dset->varname[v]);
 	return E_TOOFEW;
     }
 
     xrange = xmax - xmin;
     if (xrange == 0) {
-	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[v]);
+	gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[v]);
 	return E_DATA;
     }
 
@@ -1684,11 +1682,11 @@ freq_dist_stat (FreqDist *freq, const double *x, gretlopt opt, int k)
 }
 
 FreqDist *
-get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo, 
+get_discrete_freq (int v, const DATASET *dset, 
 		   gretlopt opt, int *err)
 {
     FreqDist *freq;
-    const double *x = Z[v];
+    const double *x = dset->Z[v];
     int *ifreq = NULL;
     double *ivals = NULL;
     double *sorted = NULL;
@@ -1701,8 +1699,8 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    freq->t1 = pdinfo->t1; 
-    freq->t2 = pdinfo->t2;
+    freq->t1 = dset->t1; 
+    freq->t2 = dset->t2;
 
     freq->n = 0;
     for (t=freq->t1; t<=freq->t2; t++) {
@@ -1714,12 +1712,12 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
     if (freq->n < 3) {
 	gretl_errmsg_sprintf(_("Insufficient data to build frequency "
 			       "distribution for variable %s"), 
-			     pdinfo->varname[v]);
+			     dset->varname[v]);
 	*err = E_TOOFEW;
 	goto bailout;
     }
 
-    strcpy(freq->varname, pdinfo->varname[v]);
+    strcpy(freq->varname, dset->varname[v]);
     freq->discrete = 1;
     freq->test = NADBL;
     freq->dist = 0;
@@ -1793,8 +1791,7 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
 /**
  * get_freq:
  * @varno: ID number of variable to process.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @fmin: lower limit of left-most bin (or #NADBL for automatic).
  * @fwid: bin width (or #NADBL for automatic).
  * @nbins: number of bins to use (or 0 for automatic).
@@ -1812,7 +1809,7 @@ get_discrete_freq (int v, const double **Z, const DATAINFO *pdinfo,
  * Returns: pointer to struct containing the distribution.
  */
 
-FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
+FreqDist *get_freq (int varno, const DATASET *dset, 
 		    double fmin, double fwid, int nbins, int params, 
 		    gretlopt opt, int *err)
 {
@@ -1822,12 +1819,12 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     double binwidth = fwid;
     int t, k, n;
 
-    if (var_is_discrete(pdinfo, varno) || (opt & OPT_D)) {
-	return get_discrete_freq(varno, Z, pdinfo, opt, err);
+    if (var_is_discrete(dset, varno) || (opt & OPT_D)) {
+	return get_discrete_freq(varno, dset, opt, err);
     }
 
-    if (gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[varno])) {
-	return get_discrete_freq(varno, Z, pdinfo, opt, err);
+    if (gretl_isdiscrete(dset->t1, dset->t2, dset->Z[varno])) {
+	return get_discrete_freq(varno, dset, opt, err);
     }
 
     freq = freq_new();
@@ -1836,7 +1833,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    *err = freq_setup(varno, Z, pdinfo, &n, &xmax, &xmin, &nbins, &binwidth);
+    *err = freq_setup(varno, dset, &n, &xmax, &xmin, &nbins, &binwidth);
 
     if (*err) {
 	goto bailout;
@@ -1848,13 +1845,13 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	binwidth = fwid;
     }
 
-    freq->t1 = pdinfo->t1; 
-    freq->t2 = pdinfo->t2;
+    freq->t1 = dset->t1; 
+    freq->t2 = dset->t2;
     freq->n = n;
 
-    strcpy(freq->varname, pdinfo->varname[varno]);
+    strcpy(freq->varname, dset->varname[varno]);
 
-    x = Z[varno];
+    x = dset->Z[varno];
     freq_dist_stat(freq, x, opt, params);
 
     if (opt & OPT_S) {
@@ -1892,7 +1889,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
     }
 	
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=dset->t1; t<=dset->t2; t++) {
 	xx = x[t];
 	if (na(xx)) {
 	    continue;
@@ -1944,7 +1941,7 @@ static void record_freq_test (const FreqDist *freq)
    silent.
 */
 
-int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
+int freqdist (int varno, const DATASET *dset,
 	      int graph, gretlopt opt, PRN *prn)
 {
     FreqDist *freq;
@@ -1958,7 +1955,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	dist = D_NORMAL;
     }
 
-    freq = get_freq(varno, Z, pdinfo, NADBL, NADBL, 0, 1, opt, &err); 
+    freq = get_freq(varno, dset, NADBL, NADBL, 0, 1, opt, &err); 
 
     if (err) {
 	return err;
@@ -2118,24 +2115,22 @@ int compare_xtab_rows (const void *a, const void *b)
 
 /* crosstab struct creation function */
 
-static Xtab *get_xtab (int rvarno, int cvarno, const double **Z, 
-		       const DATAINFO *pdinfo, int *err)
+static Xtab *get_xtab (int rvarno, int cvarno, const DATASET *dset, 
+		       int *err)
 {
+    FreqDist *rowfreq = NULL, *colfreq = NULL;
     Xtab *tab = NULL;
     double **X = NULL;
     int ri = 0, cj = 0;
     int rows, cols;
-
-    FreqDist *rowfreq = NULL, *colfreq = NULL;
-
     double xr = 0.0, xc = 0.0;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int i, t, n = 0;
 
     /* count non-missing values */
     for (t=t1; t<=t2; t++) {
-	if (complete_obs(Z[rvarno], Z[cvarno], t)) {
+	if (complete_obs(dset->Z[rvarno], dset->Z[cvarno], t)) {
 	    n++;
 	}
     }
@@ -2155,8 +2150,8 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     }
 
     tab->missing = (t2 - t1 + 1) - n;
-    strcpy(tab->rvarname, pdinfo->varname[rvarno]);
-    strcpy(tab->cvarname, pdinfo->varname[cvarno]);
+    strcpy(tab->rvarname, dset->varname[rvarno]);
+    strcpy(tab->cvarname, dset->varname[cvarno]);
 
     /* 
        start allocating stuff; we use temporary FreqDists for rows 
@@ -2170,10 +2165,10 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	goto bailout;
     }
 
-    rowfreq = get_freq(rvarno, Z, pdinfo, NADBL, NADBL, 0, 
+    rowfreq = get_freq(rvarno, dset, NADBL, NADBL, 0, 
 		       0, OPT_D | OPT_X, err); 
     if (!*err) {
-	colfreq = get_freq(cvarno, Z, pdinfo, NADBL, NADBL, 0, 
+	colfreq = get_freq(cvarno, dset, NADBL, NADBL, 0, 
 			   0, OPT_D | OPT_X, err); 
     }
 
@@ -2203,9 +2198,9 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 
     i = 0;
     for (t=t1; t<=t2 && i<n; t++) {
-	if (complete_obs(Z[rvarno], Z[cvarno], t)) {
-	    X[i][0] = Z[rvarno][t];
-	    X[i][1] = Z[cvarno][t];
+	if (complete_obs(dset->Z[rvarno], dset->Z[cvarno], t)) {
+	    X[i][0] = dset->Z[rvarno][t];
+	    X[i][1] = dset->Z[cvarno][t];
 	    i++;
 	}
     }
@@ -2323,15 +2318,13 @@ int crosstab_from_matrix (gretlopt opt, PRN *prn)
     return err;    
 }
 
-int crosstab (const int *list, const double **Z, 
-	      const DATAINFO *pdinfo, gretlopt opt, 
-	      PRN *prn)
+int crosstab (const int *list, const DATASET *dset, 
+	      gretlopt opt, PRN *prn)
 {
     Xtab *tab;
     int *rowvar = NULL;
     int *colvar = NULL;
     int i, j, k;
-
     int pos = gretl_list_separator_position(list);
     int err = 0;
     int blanket = 0;
@@ -2358,8 +2351,8 @@ int crosstab (const int *list, const double **Z,
     j = 1;
     for (i=1; i<=nrv; i++) {
 	k = list[i];
-	if (var_is_discrete(pdinfo, k) ||
-	    gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[k])) {
+	if (var_is_discrete(dset, k) ||
+	    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[k])) {
 	    rowvar[j++] = k;
 	} else {
 	    rowvar[0] -= 1;
@@ -2380,8 +2373,8 @@ int crosstab (const int *list, const double **Z,
 	    j = 1;
 	    for (i=1; i<=ncv; i++) {
 		k = pos + i;
-		if (var_is_discrete(pdinfo, list[k]) ||
-		    gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[list[k]])) {
+		if (var_is_discrete(dset, list[k]) ||
+		    gretl_isdiscrete(dset->t1, dset->t2, dset->Z[list[k]])) {
 		    colvar[j++] = list[k];
 		} else {
 		    colvar[0] -= 1;
@@ -2396,7 +2389,7 @@ int crosstab (const int *list, const double **Z,
     for (i=1; i<=rowvar[0] && !err; i++) {
 	if (blanket) {
 	    for (j=1; j<i && !err; j++) {
-		tab = get_xtab(rowvar[j], rowvar[i], Z, pdinfo, &err); 
+		tab = get_xtab(rowvar[j], rowvar[i], dset, &err); 
 		if (!err) {
 		    print_xtab(tab, opt, prn); 
 		    free_xtab(tab);
@@ -2404,7 +2397,7 @@ int crosstab (const int *list, const double **Z,
 	    }
 	} else {
 	    for (j=1; j<=colvar[0] && !err; j++) {
-		tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo, &err); 
+		tab = get_xtab(rowvar[i], colvar[j], dset, &err); 
 		if (!err) {
 		    print_xtab(tab, opt, prn); 
 		    free_xtab(tab);
@@ -2419,9 +2412,8 @@ int crosstab (const int *list, const double **Z,
     return err;
 }
 
-Xtab *single_crosstab (const int *list, const double **Z, 
-		       const DATAINFO *pdinfo, gretlopt opt, 
-		       PRN *prn, int *err)
+Xtab *single_crosstab (const int *list, const DATASET *dset, 
+		       gretlopt opt, PRN *prn, int *err)
 {
     Xtab *tab = NULL;
     int rv, cv;
@@ -2434,19 +2426,19 @@ Xtab *single_crosstab (const int *list, const double **Z,
     rv = list[1];
     cv = list[2];
 
-    if (!var_is_discrete(pdinfo, rv) &&
-	!gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[rv])) {
+    if (!var_is_discrete(dset, rv) &&
+	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[rv])) {
 	*err = E_DATATYPE;
 	return NULL;
     }
 
-    if (!var_is_discrete(pdinfo, cv) &&
-	!gretl_isdiscrete(pdinfo->t1, pdinfo->t2, Z[cv])) {
+    if (!var_is_discrete(dset, cv) &&
+	!gretl_isdiscrete(dset->t1, dset->t2, dset->Z[cv])) {
 	*err = E_DATATYPE;
 	return NULL;
     }
 
-    tab = get_xtab(rv, cv, Z, pdinfo, err);
+    tab = get_xtab(rv, cv, dset, err);
     if (!*err) {
 	print_xtab(tab, opt, prn); 
     }
@@ -2454,14 +2446,13 @@ Xtab *single_crosstab (const int *list, const double **Z,
     return tab;
 }
 
-int model_error_dist (const MODEL *pmod, double ***pZ,
-		      DATAINFO *pdinfo, gretlopt opt,
-		      PRN *prn)
+int model_error_dist (const MODEL *pmod, DATASET *dset, 
+		      gretlopt opt, PRN *prn)
 {
     FreqDist *freq = NULL;
     gretlopt fopt = OPT_Z; /* show normality test */
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int err = 0;
 
     if (pmod == NULL || pmod->uhat == NULL) {
@@ -2481,15 +2472,15 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 	return 0;
     }
 
-    if (genr_fit_resid(pmod, pZ, pdinfo, M_UHAT)) {
+    if (genr_fit_resid(pmod, dset, M_UHAT)) {
 	return E_ALLOC;
     }
 
     if (!err) {
-	pdinfo->t1 = pmod->t1;
-	pdinfo->t2 = pmod->t2;
-	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
-			NADBL, NADBL, 0, pmod->ncoeff, fopt, &err);
+	dset->t1 = pmod->t1;
+	dset->t2 = pmod->t2;
+	freq = get_freq(dset->v - 1, dset, NADBL, NADBL, 0, 
+			pmod->ncoeff, fopt, &err);
     }
 
     if (!err) {
@@ -2501,10 +2492,10 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 	free_freq(freq);
     }
 
-    dataset_drop_last_variables(1, pZ, pdinfo);
+    dataset_drop_last_variables(1, dset);
 
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }
@@ -2844,12 +2835,11 @@ static int corrgm_ascii_plot (const char *vname,
  * @nparam: number of estimated parameters (e.g. for the
  * case of ARMA), used to correct the degrees of freedom 
  * for Q test.
- * @Z: data array.
- * @pdinfo: information on the data set.
- * @prn: gretl printing struct.
+ * @dset: dataset struct.
  * @opt: if includes OPT_Q, no plot, else if includes OPT_A, 
  * use ASCII graphics; if includes OPT_R, variable in question 
  * is a model residual generated "on the fly".
+ * @prn: gretl printing struct.
  *
  * Computes the autocorrelation function and plots the correlogram for
  * the variable specified by @varno.
@@ -2857,8 +2847,8 @@ static int corrgm_ascii_plot (const char *vname,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int corrgram (int varno, int order, int nparam, const double **Z, 
-	      DATAINFO *pdinfo, PRN *prn, gretlopt opt)
+int corrgram (int varno, int order, int nparam, DATASET *dset, 
+	      gretlopt opt, PRN *prn)
 {
     const double z[] = {1.65, 1.96, 2.58};
     double ybar, box, pm[3];
@@ -2866,7 +2856,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
     double *pacf = NULL;
     const char *vname;
     int i, k, m, T, dfQ;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = dset->t1, t2 = dset->t2;
     int err = 0, pacf_err = 0;
 
     gretl_error_clear();
@@ -2876,7 +2866,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	return E_DATA;
     }
 
-    err = series_adjust_sample(Z[varno], &t1, &t2);
+    err = series_adjust_sample(dset->Z[varno], &t1, &t2);
     if (err) {
 	return err;
     }
@@ -2885,23 +2875,23 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 	return E_TOOFEW;
     }
 
-    if (gretl_isconst(t1, t2, Z[varno])) {
-	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[varno]);
+    if (gretl_isconst(t1, t2, dset->Z[varno])) {
+	gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[varno]);
 	return E_DATA;
     }
 
-    ybar = gretl_mean(t1, t2, Z[varno]);
+    ybar = gretl_mean(t1, t2, dset->Z[varno]);
     if (na(ybar)) {
 	return E_DATA;
     }
 
-    vname = var_get_graph_name(pdinfo, varno);
+    vname = var_get_graph_name(dset, varno);
 
     /* lag order for acf */
     m = order;
     if (m == 0) {
-	m = auto_acf_order(pdinfo->pd, T);
-    } else if (m > T - pdinfo->pd) {
+	m = auto_acf_order(dset->pd, T);
+    } else if (m > T - dset->pd) {
 	int mmax = T - 1; 
 
 	if (m > mmax) {
@@ -2918,7 +2908,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
 
     /* calculate acf up to order acf_m */
     for (k=1; k<=m; k++) {
-	acf[k-1] = gretl_acf(k, t1, t2, Z[varno], ybar);
+	acf[k-1] = gretl_acf(k, t1, t2, dset->Z[varno], ybar);
     }
 
     if ((opt & OPT_A) && !(opt & OPT_Q)) { 
@@ -3013,8 +3003,8 @@ int corrgram (int varno, int order, int nparam, const double **Z,
  * acf_vec:
  * @x: series to analyse.
  * @order: maximum lag for autocorrelation function.
- * @pdinfo: information on the data set, or %NULL.
- * @n: length of series (required if @pdinfo is %NULL).
+ * @dset: information on the data set, or %NULL.
+ * @n: length of series (required if @dset is %NULL).
  * @err: location to receive error code.
  *
  * Computes the autocorrelation function for series @x with
@@ -3025,7 +3015,7 @@ int corrgram (int varno, int order, int nparam, const double **Z,
  */
 
 gretl_matrix *acf_vec (const double *x, int order,
-		       const DATAINFO *pdinfo, int n,
+		       const DATASET *dset, int n,
 		       int *err)
 {
     int t1, t2;
@@ -3033,9 +3023,9 @@ gretl_matrix *acf_vec (const double *x, int order,
     double xbar;
     int m, k, t, T;
 
-    if (pdinfo != NULL) {
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
+    if (dset != NULL) {
+	t1 = dset->t1;
+	t2 = dset->t2;
 
 	while (na(x[t1])) t1++;
 	while (na(x[t2])) t2--;
@@ -3073,15 +3063,15 @@ gretl_matrix *acf_vec (const double *x, int order,
 
     m = order;
 
-    if (pdinfo == NULL) {
+    if (dset == NULL) {
 	if (m < 1 || m > T) {
 	    *err = E_DATA;
 	    return NULL;
 	}
     } else {
 	if (m == 0) {
-	    m = auto_acf_order(pdinfo->pd, T);
-	} else if (m > T - pdinfo->pd) {
+	    m = auto_acf_order(dset->pd, T);
+	} else if (m > T - dset->pd) {
 	    int mmax = T - 1; 
 
 	    if (m > mmax) {
@@ -3273,8 +3263,8 @@ static int xcf_data_check (const double *x, const double *y, int T,
  * @x: first series.
  * @y: second series.
  * @p: maximum lag for cross-correlation function.
- * @pdinfo: information on the data set, or NULL.
- * @n: length of series (required only if @pdinfo is NULL).
+ * @dset: information on the data set, or NULL.
+ * @n: length of series (required only if @dset is NULL).
  * @err: location to receive error code.
  *
  * Computes the cross-correlation function for series @x with
@@ -3285,7 +3275,7 @@ static int xcf_data_check (const double *x, const double *y, int T,
  */
 
 gretl_matrix *xcf_vec (const double *x, const double *y,
-		       int p, const DATAINFO *pdinfo,
+		       int p, const DATASET *dset,
 		       int n, int *err)
 {
     gretl_matrix *xcf = NULL;
@@ -3297,11 +3287,11 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
 	return NULL;
     }	
 
-    if (pdinfo != NULL) {
+    if (dset != NULL) {
 	int yt1, yt2;
 
-	t1 = yt1 = pdinfo->t1;
-	t2 = yt2 = pdinfo->t2;
+	t1 = yt1 = dset->t1;
+	t2 = yt2 = dset->t2;
 
 	while (na(x[t1])) t1++;
 	while (na(y[yt1])) yt1++;
@@ -3324,8 +3314,8 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
     fprintf(stderr, "x[t1]=%g, y[t1]=%g\n\n", x[t1], y[t1]);
 #endif
 
-    if (pdinfo != NULL) {
-	if (2 * p > T - pdinfo->pd) { /* ?? */
+    if (dset != NULL) {
+	if (2 * p > T - dset->pd) { /* ?? */
 	    *err = E_DATA;
 	}
     } else if (2 * p > T) {
@@ -3351,11 +3341,10 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
  * xcorrgram:
  * @list: should contain ID numbers of two variables.
  * @order: integer order for autocorrelation function.
- * @Z: data array.
- * @pdinfo: information on the data set.
- * @prn: gretl printing struct.
+ * @dset: dataset struct.
  * @opt: if includes OPT_Q, no graphics; else if includes 
  * OPT_A, use ASCII graphics.
+ * @prn: gretl printing struct.
  *
  * Computes the cross-correlation function and plots the 
  * cross-correlogram for the specified variables.
@@ -3363,15 +3352,15 @@ gretl_matrix *xcf_vec (const double *x, const double *y,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int xcorrgram (const int *list, int order, const double **Z, 
-	       DATAINFO *pdinfo, PRN *prn, gretlopt opt)
+int xcorrgram (const int *list, int order, DATASET *dset, 
+	       gretlopt opt, PRN *prn)
 {
     gretl_matrix *xcf = NULL;
     double pm[3];
     const char *xname, *yname;
     const double *x, *y;
     int k, p;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1 = dset->t1, t2 = dset->t2;
     int badvar = 0;
     int T, err = 0;
 
@@ -3386,10 +3375,10 @@ int xcorrgram (const int *list, int order, const double **Z,
 	return E_DATA;
     }
 
-    x = Z[list[1]];
-    y = Z[list[2]];
+    x = dset->Z[list[1]];
+    y = dset->Z[list[2]];
     
-    err = list_adjust_sample(list, &t1, &t2, Z);
+    err = list_adjust_sample(list, &t1, &t2, dset);
     
     if (!err) {
 	T = t2 - t1 + 1;
@@ -3399,18 +3388,18 @@ int xcorrgram (const int *list, int order, const double **Z,
     if (err) {
 	if (badvar) {
 	    gretl_errmsg_sprintf(_("%s is a constant"), 
-				 pdinfo->varname[list[badvar]]);
+				 dset->varname[list[badvar]]);
 	}
 	return err;
     }
 
-    xname = pdinfo->varname[list[1]];
-    yname = pdinfo->varname[list[2]];
+    xname = dset->varname[list[1]];
+    yname = dset->varname[list[2]];
 
     p = order;
     if (p == 0) {
-	p = auto_acf_order(pdinfo->pd, T) / 2;
-    } else if (2 * p > T - pdinfo->pd) {
+	p = auto_acf_order(dset->pd, T) / 2;
+    } else if (2 * p > T - dset->pd) {
 	p = (T - 1) / 2; /* ?? */
     }
 
@@ -4121,8 +4110,7 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
  * periodogram:
  * @varno: ID number of variable to process.
  * @width: width of window.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: if includes OPT_O, use Bartlett lag window for periodogram;
  * if includes OPT_N, don't display gnuplot graph; if includes
  * OPT_R, the variable is a model residual; OPT_L, use log scale.
@@ -4134,14 +4122,13 @@ pergm_or_fractint (const double *x, int t1, int t2, int width,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int periodogram (int varno, int width, 
-		 const double **Z, const DATAINFO *pdinfo, 
+int periodogram (int varno, int width, const DATASET *dset, 
 		 gretlopt opt, PRN *prn)
 {
-    return pergm_or_fractint(Z[varno], 
-			     pdinfo->t1, pdinfo->t2, 
+    return pergm_or_fractint(dset->Z[varno], 
+			     dset->t1, dset->t2, 
 			     width, 
-			     pdinfo->varname[varno],
+			     dset->varname[varno],
 			     opt, prn, NULL);
 }
 
@@ -4177,8 +4164,7 @@ gretl_matrix *periodogram_func (const double *x, int t1, int t2,
  * fractint:
  * @varno: ID number of variable to process.
  * @width: lag order / window size.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
@@ -4193,17 +4179,16 @@ gretl_matrix *periodogram_func (const double *x, int t1, int t2,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int fractint (int varno, int order, 
-	      const double **Z, const DATAINFO *pdinfo, 
+int fractint (int varno, int order, const DATASET *dset, 
 	      gretlopt opt, PRN *prn)
 {
     int err = incompatible_options(opt, (OPT_G | OPT_A));
 
     if (!err) {
-	err = pergm_or_fractint(Z[varno], 
-				pdinfo->t1, pdinfo->t2, 
+	err = pergm_or_fractint(dset->Z[varno], 
+				dset->t1, dset->t2, 
 				order, 
-				pdinfo->varname[varno],
+				dset->varname[varno],
 				opt | OPT_F, prn, NULL);
     }
 
@@ -4235,13 +4220,13 @@ static void output_line (char *str, PRN *prn, int dblspc)
     }
 }
 
-static void prhdr (const char *str, const DATAINFO *pdinfo, 
+static void prhdr (const char *str, const DATASET *dset, 
 		   int ci, int missing, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN], tmp[96];
 
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
+    ntodate(date1, dset->t1, dset);
+    ntodate(date2, dset->t2, dset);
 
     pputc(prn, '\n');
 
@@ -4255,7 +4240,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
 }
 
 static void print_summary_single (const Summary *s, int j,
-				  const DATAINFO *pdinfo,
+				  const DATASET *dset,
 				  PRN *prn)
 {
     char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
@@ -4275,12 +4260,12 @@ static void print_summary_single (const Summary *s, int j,
     int simple_skip[] = {0,1,0,0,0,1,1,1};
     int slen = 0, i = 0;
 
-    ntodate(obs1, pdinfo->t1, pdinfo);
-    ntodate(obs2, pdinfo->t2, pdinfo);
+    ntodate(obs1, dset->t1, dset);
+    ntodate(obs2, dset->t2, dset);
 
-    prhdr(_("Summary statistics"), pdinfo, SUMMARY, 0, prn);
+    prhdr(_("Summary statistics"), dset, SUMMARY, 0, prn);
     sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-	    pdinfo->varname[s->list[j+1]], s->n);
+	    dset->varname[s->list[j+1]], s->n);
     output_line(tmp, prn, 1);
 
     vals[0] = s->mean[j];
@@ -4326,14 +4311,14 @@ static void print_summary_single (const Summary *s, int j,
 /**
  * print_summary:
  * @summ: pointer to gretl summary statistics struct.
- * @pdinfo: information on the data set.
+ * @dset: information on the data set.
  * @prn: gretl printing struct.
  *
  * Prints the summary statistics for a given variable.
  */
 
 void print_summary (const Summary *summ,
-		    const DATAINFO *pdinfo,
+		    const DATASET *dset,
 		    PRN *prn)
 {
     int len, maxlen = 0;
@@ -4344,13 +4329,13 @@ void print_summary (const Summary *summ,
     }
 
     if (summ->list[0] == 1 && !(summ->opt & OPT_B)) {
-	print_summary_single(summ, 0, pdinfo, prn);
+	print_summary_single(summ, 0, dset, prn);
 	return;
     }
 
     for (i=1; i<=summ->list[0]; i++) {
 	vi = summ->list[i];
-	len = strlen(pdinfo->varname[vi]);
+	len = strlen(dset->varname[vi]);
 	if (len > maxlen) {
 	    maxlen = len;
 	}
@@ -4359,7 +4344,7 @@ void print_summary (const Summary *summ,
     len = (maxlen <= 8)? 10 : (maxlen + 1);
 
     if (!(summ->opt & OPT_B)) {
-	prhdr(_("Summary statistics"), pdinfo, SUMMARY, summ->missing, prn);
+	prhdr(_("Summary statistics"), dset, SUMMARY, summ->missing, prn);
     }
 
     pputc(prn, '\n');
@@ -4381,7 +4366,7 @@ void print_summary (const Summary *summ,
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i + 1];
-	    pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
+	    pprintf(prn, "%-*s", len, dset->varname[vi]);
 	    printf15(summ->mean[i], prn);
 	    printf15(summ->low[i], prn);
 	    printf15(summ->high[i], prn);
@@ -4411,7 +4396,7 @@ void print_summary (const Summary *summ,
 
 	for (i=0; i<summ->list[0]; i++) {
 	    vi = summ->list[i + 1];
-	    pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
+	    pprintf(prn, "%-*s", len, dset->varname[vi]);
 	    printf15(summ->mean[i], prn);
 	    printf15(summ->median[i], prn);
 	    printf15(summ->low[i], prn);
@@ -4430,7 +4415,7 @@ void print_summary (const Summary *summ,
 	    double cv;
 
 	    vi = summ->list[i + 1];
-	    pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
+	    pprintf(prn, "%-*s", len, dset->varname[vi]);
 
 	    if (floateq(summ->mean[i], 0.0)) {
 		cv = NADBL;
@@ -4510,8 +4495,7 @@ static Summary *summary_new (const int *list, gretlopt opt)
 /**
  * get_summary:
  * @list: list of variables to process.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: may include OPT_S for "simple" version.
  * @prn: gretl printing struct.
  * @err: location to receive error code.
@@ -4522,10 +4506,8 @@ static Summary *summary_new (const int *list, gretlopt opt)
  * on failure.
  */
 
-Summary *get_summary (const int *list, const double **Z, 
-		      const DATAINFO *pdinfo, 
-		      gretlopt opt, PRN *prn, 
-		      int *err) 
+Summary *get_summary (const int *list, const DATASET *dset, 
+		      gretlopt opt, PRN *prn, int *err) 
 {
     Summary *s;
     int i, vi, ni, nmax;
@@ -4537,14 +4519,14 @@ Summary *get_summary (const int *list, const double **Z,
 	return NULL;
     }
 
-    nmax = sample_size(pdinfo);
+    nmax = sample_size(dset);
 
     for (i=0; i<s->list[0]; i++)  {
 	double *pskew = NULL, *pkurt = NULL;
 	double x0;
 
 	vi = s->list[i + 1];
-	ni = good_obs(Z[vi] + pdinfo->t1, nmax, &x0);
+	ni = good_obs(dset->Z[vi] + dset->t1, nmax, &x0);
 
 	if (ni < nmax) {
 	    s->missing = 1;
@@ -4556,7 +4538,7 @@ Summary *get_summary (const int *list, const double **Z,
 
 	if (ni == 0) { 
 	    pprintf(prn, _("Dropping %s: sample range contains no valid "
-			   "observations\n"), pdinfo->varname[vi]);
+			   "observations\n"), dset->varname[vi]);
 	    gretl_list_delete_at_pos(s->list, i + 1);
 	    if (s->list[0] == 0) {
 		return s;
@@ -4576,11 +4558,11 @@ Summary *get_summary (const int *list, const double **Z,
 	    pkurt = &s->xkurt[i];
 	}
 
-	gretl_minmax(pdinfo->t1, pdinfo->t2, Z[vi], 
+	gretl_minmax(dset->t1, dset->t2, dset->Z[vi], 
 		     &s->low[i], 
 		     &s->high[i]);
 	
-	gretl_moments(pdinfo->t1, pdinfo->t2, Z[vi], 
+	gretl_moments(dset->t1, dset->t2, dset->Z[vi], 
 		      &s->mean[i], 
 		      &s->sd[i], 
 		      pskew, pkurt, 
@@ -4594,12 +4576,14 @@ Summary *get_summary (const int *list, const double **Z,
 	    } else {
 		s->cv[i] = fabs(s->sd[i] / s->mean[i]);
 	    } 
-	    s->median[i] = gretl_median(pdinfo->t1, pdinfo->t2, Z[vi]);
+	    s->median[i] = gretl_median(dset->t1, dset->t2, 
+					dset->Z[vi]);
 	}
     } 
 
-    if (dataset_is_panel(pdinfo) && list[0] == 1) {
-	panel_variance_info(Z[list[1]], pdinfo, s->mean[0], &s->sw, &s->sb);
+    if (dataset_is_panel(dset) && list[0] == 1) {
+	panel_variance_info(dset->Z[list[1]], dset, s->mean[0], 
+			    &s->sw, &s->sb);
     }
 
     return s;
@@ -4608,8 +4592,7 @@ Summary *get_summary (const int *list, const double **Z,
 /**
  * list_summary:
  * @list: list of series to process.
- * @Z: data array.
- * @pdinfo: information on the data set.
+ * @dset: dataset struct.
  * @opt: may include %OPT_S for "simple" version.
  * @prn: gretl printing struct.
  *
@@ -4618,8 +4601,7 @@ Summary *get_summary (const int *list, const double **Z,
  * Returns: 0 on success, non-zero code on error.
  */
 
-int list_summary (const int *list, const double **Z, 
-		  const DATAINFO *pdinfo, 
+int list_summary (const int *list, const DATASET *dset, 
 		  gretlopt opt, PRN *prn)
 {
     Summary *summ;
@@ -4629,10 +4611,10 @@ int list_summary (const int *list, const double **Z,
 	return 0;
     }
 
-    summ = get_summary(list, Z, pdinfo, opt, prn, &err);
+    summ = get_summary(list, dset, opt, prn, &err);
 
     if (!err) {
-	print_summary(summ, pdinfo, prn);
+	print_summary(summ, dset, prn);
 	free_summary(summ);
     }
 
@@ -4655,8 +4637,7 @@ int print_matrix_summary (gretlopt opt, PRN *prn)
 {
     const char *mname;
     const gretl_matrix *m;
-    double **Z = NULL;
-    DATAINFO *dinfo = NULL;
+    DATASET *dset = NULL;
     int *list = NULL;
     int err = 0;
 
@@ -4672,25 +4653,24 @@ int print_matrix_summary (gretlopt opt, PRN *prn)
     }
 
     if (!err) {
-	dinfo = gretl_dataset_from_matrix(m, NULL, &Z, &err);
+	dset = gretl_dataset_from_matrix(m, NULL, &err);
     }
 
     if (err) {
 	return err;
     }
 
-    list = gretl_consecutive_list_new(1, dinfo->v - 1);
+    list = gretl_consecutive_list_new(1, dset->v - 1);
     if (list == NULL) {
 	err = E_ALLOC;
     } 
 
     if (!err) {
 	opt &= ~OPT_M;
-	err = list_summary(list, (const double **) Z, dinfo, 
-			   opt, prn);
+	err = list_summary(list, dset, opt, prn);
     }
 
-    destroy_dataset(Z, dinfo);   
+    destroy_dataset(dset);   
     free(list);
 
     return err;
@@ -4937,8 +4917,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
 /**
  * corrlist:
  * @list: list of variables to process, by ID number.
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: option flags.
  * @err: location to receive error code.
  *
@@ -4952,7 +4931,7 @@ static int uniform_corrcov_matrix (VMatrix *v, const double **Z, int flag)
  * Returns: gretl correlation matrix struct, or NULL on failure.
  */
 
-VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
+VMatrix *corrlist (int *list, const DATASET *dset,
 		   gretlopt opt, int *err)
 {
     int flag = (opt & OPT_C)? COVMAT : CORRMAT;
@@ -4967,7 +4946,7 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* drop any constants from list */
     for (i=1; i<=list[0]; i++) {
-	if (gretl_isconst(pdinfo->t1, pdinfo->t2, Z[list[i]])) {
+	if (gretl_isconst(dset->t1, dset->t2, dset->Z[list[i]])) {
 	    gretl_list_delete_at_pos(list, i);
 	    i--;
 	}
@@ -4991,20 +4970,20 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    v->t1 = pdinfo->t1;
-    v->t2 = pdinfo->t2;
+    v->t1 = dset->t1;
+    v->t2 = dset->t2;
 
     if (opt & OPT_U) {
 	/* impose uniform sample size */
-	*err = uniform_corrcov_matrix(v, Z, flag);
+	*err = uniform_corrcov_matrix(v, (const double **) dset->Z, flag);
     } else {
 	/* sample sizes may differ */
-	*err = max_corrcov_matrix(v, Z, flag);
+	*err = max_corrcov_matrix(v, (const double **) dset->Z, flag);
     }
 
     if (!*err) {
 	for (i=0; i<m; i++) {  
-	    v->names[i] = gretl_strdup(pdinfo->varname[list[i+1]]);
+	    v->names[i] = gretl_strdup(dset->varname[list[i+1]]);
 	    if (v->names[i] == NULL) {
 		*err = E_ALLOC;
 		goto bailout;
@@ -5053,21 +5032,21 @@ static void printcorr (const VMatrix *v, PRN *prn)
 /**
  * print_corrmat:
  * @corr: gretl correlation matrix.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @prn: gretl printing struct.
  *
  * Prints a gretl correlation matrix to @prn.
  */
 
-void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
+void print_corrmat (VMatrix *corr, const DATASET *dset, PRN *prn)
 {
     if (corr->dim == 2) {
 	printcorr(corr, prn);
     } else {
 	char date1[OBSLEN], date2[OBSLEN], tmp[96];
 
-	ntodate(date1, corr->t1, pdinfo);
-	ntodate(date2, corr->t2, pdinfo);
+	ntodate(date1, corr->t1, dset);
+	ntodate(date2, corr->t2, dset);
 
 	pputc(prn, '\n');
 
@@ -5094,8 +5073,7 @@ void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
 /**
  * gretl_corrmx:
  * @list: gives the ID numbers of the variables to process.
- * @Z: data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: option flags: OPT_U = use uniform sample size.
  * @prn: gretl printing struct.
  *
@@ -5105,7 +5083,7 @@ void print_corrmat (VMatrix *corr, const DATAINFO *pdinfo, PRN *prn)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo, 
+int gretl_corrmx (int *list, const DATASET *dset, 
 		  gretlopt opt, PRN *prn)
 {
     VMatrix *corr;
@@ -5115,12 +5093,12 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
 	return 0;
     }
 
-    corr = corrlist(list, Z, pdinfo, opt, &err);
+    corr = corrlist(list, dset, opt, &err);
     if (err) {
 	return err;
     }
 
-    print_corrmat(corr, pdinfo, prn);
+    print_corrmat(corr, dset, prn);
     free_vmatrix(corr);
 
     return 0;
@@ -5129,8 +5107,7 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
 /**
  * means_test:
  * @list: gives the ID numbers of the variables to compare.
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: if OPT_O, assume population variances are different.
  * @prn: gretl printing struct.
  *
@@ -5140,14 +5117,14 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int means_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
+int means_test (const int *list, const DATASET *dset, 
 		gretlopt opt, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
     double v1, v2;
     double *x = NULL, *y = NULL;
     int vardiff = (opt & OPT_O);
-    int df, n1, n2, n = pdinfo->n;
+    int df, n1, n2, n = dset->n;
 
     if (list[0] < 2) {
 	return E_ARGS;
@@ -5164,8 +5141,8 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	return E_ALLOC;
     }    
 
-    n1 = transcribe_array(x, Z[list[1]], pdinfo);
-    n2 = transcribe_array(y, Z[list[2]], pdinfo);
+    n1 = transcribe_array(x, dset->Z[list[1]], dset);
+    n2 = transcribe_array(y, dset->Z[list[2]], dset);
 
     if (n1 == 0 || n2 == 0) {
 	pputs(prn, _("Sample range has no valid observations."));
@@ -5203,9 +5180,9 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     pprintf(prn, _("\nEquality of means test "
 	    "(assuming %s variances)\n\n"), (vardiff)? _("unequal") : _("equal"));
-    pprintf(prn, "   %s: ", pdinfo->varname[list[1]]);
+    pprintf(prn, "   %s: ", dset->varname[list[1]]);
     pprintf(prn, _("Number of observations = %d\n"), n1);
-    pprintf(prn, "   %s: ", pdinfo->varname[list[2]]);
+    pprintf(prn, "   %s: ", dset->varname[list[2]]);
     pprintf(prn, _("Number of observations = %d\n"), n2);
     pprintf(prn, _("   Difference between sample means = %g - %g = %g\n"), 
 	    m1, m2, mdiff);
@@ -5227,8 +5204,7 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 /**
  * vars_test:
  * @list: gives the ID numbers of the variables to compare.
- * @Z: data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @prn: gretl printing struct.
  *
  * Carries out test of the null hypothesis that the variances of two
@@ -5237,21 +5213,20 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
-	       PRN *prn)
+int vars_test (const int *list, const DATASET *dset, PRN *prn)
 {
     double m, skew, kurt, s1, s2, var1, var2;
     double F, pval;
     double *x = NULL, *y = NULL;
-    int dfn, dfd, n1, n2, n = pdinfo->n;
+    int dfn, dfd, n1, n2, n = dset->n;
 
     if (list[0] < 2) return E_ARGS;
 
     if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
-    n1 = transcribe_array(x, Z[list[1]], pdinfo);
-    n2 = transcribe_array(y, Z[list[2]], pdinfo);
+    n1 = transcribe_array(x, dset->Z[list[1]], dset);
+    n2 = transcribe_array(y, dset->Z[list[2]], dset);
 
     if (n1 == 0 || n2 == 0) {
 	pputs(prn, _("Sample range has no valid observations."));
@@ -5283,9 +5258,9 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     pval = snedecor_cdf_comp(dfn, dfd, F);
 
     pputs(prn, _("\nEquality of variances test\n\n"));
-    pprintf(prn, "   %s: ", pdinfo->varname[list[1]]);
+    pprintf(prn, "   %s: ", dset->varname[list[1]]);
     pprintf(prn, _("Number of observations = %d\n"), n1);
-    pprintf(prn, "   %s: ", pdinfo->varname[list[2]]);
+    pprintf(prn, "   %s: ", dset->varname[list[2]]);
     pprintf(prn, _("Number of observations = %d\n"), n2);
     pprintf(prn, _("   Ratio of sample variances = %g\n"), F);
     pprintf(prn, "   %s: %s\n", _("Null hypothesis"), 
@@ -5363,62 +5338,60 @@ static MahalDist *mahal_dist_new (const int *list, int n)
     return md;
 }
 
-static int mdist_saver (double ***pZ, DATAINFO *pdinfo)
+static int mdist_saver (DATASET *dset)
 {
     int t, v, err;
 
-    err = dataset_add_series(1, pZ, pdinfo);
+    err = dataset_add_series(1, dset);
 
     if (err) {
 	v = 0;
     } else {
-	v = pdinfo->v - 1;
+	v = dset->v - 1;
 
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[v][t] = NADBL;
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[v][t] = NADBL;
 	}
 
-	strcpy(pdinfo->varname[v], "mdist");
-	make_varname_unique(pdinfo->varname[v], v, pdinfo);
+	strcpy(dset->varname[v], "mdist");
+	make_varname_unique(dset->varname[v], v, dset);
 
-	strcpy(VARLABEL(pdinfo, v), _("Mahalanobis distances"));	
+	strcpy(VARLABEL(dset, v), _("Mahalanobis distances"));	
     }
 		
     return v;
 }
 
 static int 
-real_mahalanobis_distance (const int *list, double ***pZ,
-			   DATAINFO *pdinfo, gretlopt opt,
-			   MahalDist *md, PRN *prn)
+real_mahalanobis_distance (const int *list, DATASET *dset, 
+			   gretlopt opt, MahalDist *md, 
+			   PRN *prn)
 {
     gretl_matrix *S = NULL;
     gretl_vector *means = NULL;
     gretl_vector *xdiff;
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int orig_t1 = dset->t1;
+    int orig_t2 = dset->t2;
     int n, err = 0;
 
-    list_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-		       (const double **) *pZ);
+    list_adjust_sample(list, &dset->t1, &dset->t2, dset);
 
-    n = sample_size(pdinfo);
+    n = sample_size(dset);
     if (n < 2) {
-	pdinfo->t1 = orig_t1;
-	pdinfo->t2 = orig_t2;
+	dset->t1 = orig_t1;
+	dset->t2 = orig_t2;
 	return E_DATA;
     }
 
     xdiff = gretl_column_vector_alloc(list[0]);
     if (xdiff == NULL) {
-	pdinfo->t1 = orig_t1;
-	pdinfo->t2 = orig_t2;
+	dset->t1 = orig_t1;
+	dset->t2 = orig_t2;
 	return E_ALLOC;
     }
 
     S = gretl_covariance_matrix_from_varlist(list, 
-					     (const double **) *pZ, 
-					     pdinfo, 
+					     dset, 
 					     &means,
 					     &err);
 
@@ -5444,19 +5417,19 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 
 	if (opt & OPT_S) {
 	    /* save the results to a data series */
-	    savevar = mdist_saver(pZ, pdinfo);
+	    savevar = mdist_saver(dset);
 	}
 
 	pprintf(prn, "%s\n", _("Mahalanobis distances from the centroid"));
 	pprintf(prn, "%s\n", _("using the variables:"));
 	for (i=1; i<=list[0]; i++) {
-	    pprintf(prn, " %s\n", pdinfo->varname[list[i]]);
+	    pprintf(prn, " %s\n", dset->varname[list[i]]);
 	}
 	pputc(prn, '\n');
 
-	obslen = max_obs_label_length(pdinfo);
+	obslen = max_obs_label_length(dset);
 
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	for (t=dset->t1; t<=dset->t2; t++) {
 	    miss = 0;
 
 	    /* write vector of deviations from centroid for
@@ -5464,7 +5437,7 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 	    for (i=0; i<k; i++) {
 		vi = list[i+1];
 		xbar = gretl_vector_get(means, i);
-		x = (*pZ)[vi][t];
+		x = dset->Z[vi][t];
 		miss += na(x);
 		if (!miss) {
 		    gretl_vector_set(xdiff, i,  x - xbar);
@@ -5473,11 +5446,11 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 
 	    m = miss ? NADBL : gretl_scalar_qform(xdiff, S, &err);
 
-	    if (dataset_has_markers(pdinfo)) {
-		strcpy(obs, pdinfo->S[t]);
+	    if (dataset_has_markers(dset)) {
+		strcpy(obs, dset->S[t]);
 		thislen = get_utf_width(obs, obslen);
 	    } else {
-		ntodate(obs, t, pdinfo);
+		ntodate(obs, t, dset);
 		thislen = obslen;
 	    }
 
@@ -5489,7 +5462,7 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 		m = sqrt(m);
 		pprintf(prn, "%9.6f\n", m);
 		if (savevar > 0) {
-		    (*pZ)[savevar][t] = m;
+		    dset->Z[savevar][t] = m;
 		} else if (md != NULL) {
 		    md->d[t] = m;
 		}
@@ -5499,7 +5472,7 @@ real_mahalanobis_distance (const int *list, double ***pZ,
 	if (savevar > 0) {
 	    pputc(prn, '\n');
 	    pprintf(prn, _("Distances saved as '%s'"), 
-		    pdinfo->varname[savevar]);
+		    dset->varname[savevar]);
 	    pputc(prn, '\n');
 	}
 
@@ -5510,30 +5483,28 @@ real_mahalanobis_distance (const int *list, double ***pZ,
     gretl_matrix_free(means);
     gretl_matrix_free(S);
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
     return err;
 }
 
-int mahalanobis_distance (const int *list, double ***pZ,
-			  DATAINFO *pdinfo, gretlopt opt, 
-			  PRN *prn)
+int mahalanobis_distance (const int *list, DATASET *dset, 
+			  gretlopt opt, PRN *prn)
 {
-    return real_mahalanobis_distance(list, pZ, pdinfo, opt, NULL, 
+    return real_mahalanobis_distance(list, dset, opt, NULL, 
 				     (opt & OPT_Q) ? NULL : prn);
 }
 
-MahalDist *get_mahal_distances (const int *list, double ***pZ,
-				DATAINFO *pdinfo, gretlopt opt,
-				PRN *prn, int *err)
+MahalDist *get_mahal_distances (const int *list, DATASET *dset, 
+				gretlopt opt, PRN *prn, int *err)
 {
-    MahalDist *md = mahal_dist_new(list, pdinfo->n);
+    MahalDist *md = mahal_dist_new(list, dset->n);
 
     if (md == NULL) {
 	*err = E_ALLOC;
     } else {
-	*err = real_mahalanobis_distance(list, pZ, pdinfo, opt, 
+	*err = real_mahalanobis_distance(list, dset, opt, 
 					 md, prn);
 	if (*err) {
 	    free_mahal_dist(md);
@@ -5707,8 +5678,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 /**
  * gini:
  * @varno: ID number of variable to examine.
- * @Z: data array
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: unused.
  * @prn: gretl printing struct.
  *
@@ -5718,23 +5688,22 @@ static int lorenz_graph (const char *vname, double *lz, int n)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int gini (int varno, const double **Z, DATAINFO *pdinfo, 
-	  gretlopt opt, PRN *prn)
+int gini (int varno, DATASET *dset, gretlopt opt, PRN *prn)
 {
     double *lz = NULL;
     double gini;
     int n, fulln;
     int err = 0;
 
-    gini = gini_coeff(Z[varno], pdinfo->t1, pdinfo->t2, 
+    gini = gini_coeff(dset->Z[varno], dset->t1, dset->t2, 
 		      &lz, &n, &err);
 
     if (err) {
 	return err;
     }
 
-    fulln = pdinfo->t2 - pdinfo->t1 - 1;
-    pprintf(prn, "%s\n", pdinfo->varname[varno], n);
+    fulln = dset->t2 - dset->t1 - 1;
+    pprintf(prn, "%s\n", dset->varname[varno], n);
     pprintf(prn, _("Number of observations = %d\n"), n);
 
     if (n < fulln) {
@@ -5747,7 +5716,7 @@ int gini (int varno, const double **Z, DATAINFO *pdinfo,
     pprintf(prn, "%s = %g\n", _("Estimate of population value"), 
 	    gini * (double) n / (n - 1));
 
-    err = lorenz_graph(pdinfo->varname[varno], lz, n);
+    err = lorenz_graph(dset->varname[varno], lz, n);
 
     free(lz);
 
@@ -6257,8 +6226,7 @@ static void print_normality_stat (double test, double pval,
 */
 
 int gretl_normality_test (const char *varname,
-			  const double **Z,
-			  const DATAINFO *pdinfo,
+			  const DATASET *dset,
 			  gretlopt opt,
 			  PRN *prn)
 {
@@ -6272,7 +6240,7 @@ int gretl_normality_test (const char *varname,
     err = incompatible_options(opt, OPT_A | alltests);
 
     if (!err) {
-	v = current_series_index(pdinfo, varname);
+	v = current_series_index(dset, varname);
 	if (v < 0) {
 	    err = E_UNKVAR;
 	} 
@@ -6302,7 +6270,7 @@ int gretl_normality_test (const char *varname,
     }
 
     if (opt & OPT_D) {
-	err = skew_kurt_test(Z[v], pdinfo->t1, pdinfo->t2, 
+	err = skew_kurt_test(dset->Z[v], dset->t1, dset->t2, 
 			     &test, &pval, OPT_D);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_D, prn);
@@ -6315,7 +6283,7 @@ int gretl_normality_test (const char *varname,
     }    
 
     if (opt & OPT_W) {
-	err = shapiro_wilk(Z[v], pdinfo->t1, pdinfo->t2, 
+	err = shapiro_wilk(dset->Z[v], dset->t1, dset->t2, 
 			   &test, &pval);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_W, prn);
@@ -6323,7 +6291,7 @@ int gretl_normality_test (const char *varname,
     } 
 
     if (opt & OPT_L) {
-	err = lilliefors_test(Z[v], pdinfo->t1, pdinfo->t2, 
+	err = lilliefors_test(dset->Z[v], dset->t1, dset->t2, 
 			      &test, &pval);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_L, prn);
@@ -6331,7 +6299,7 @@ int gretl_normality_test (const char *varname,
     } 
 
     if (opt & OPT_J) {
-	err = skew_kurt_test(Z[v], pdinfo->t1, pdinfo->t2, 
+	err = skew_kurt_test(dset->Z[v], dset->t1, dset->t2, 
 			     &test, &pval, OPT_J);
 	if (!err && !(opt & OPT_Q)) {
 	    print_normality_stat(test, pval, OPT_J, prn);

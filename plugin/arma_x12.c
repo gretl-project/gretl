@@ -159,17 +159,17 @@ static int print_iterations (const char *path, PRN *prn)
 
 #define non_yearly_frequency(f) (f != 1 && f != 4 && f != 12)
 
-static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
+static int x12_date_to_n (const char *s, const DATASET *dset)
 {
     char date[12] = {0};
 
-    if (non_yearly_frequency(pdinfo->pd)) {
+    if (non_yearly_frequency(dset->pd)) {
 	int t, maj = 0, min = 0, n = strlen(s);
 	char fmt[16];
 
 	sprintf(fmt, "%%%dd%%2d", n - 2);
 	if (sscanf(s, fmt, &maj, &min) == 2) {
-	    t = (maj - 1) * pdinfo->pd + min - 1;
+	    t = (maj - 1) * dset->pd + min - 1;
 	} else {
 	    t = -1;
 	}
@@ -177,7 +177,7 @@ static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 	return t;
     }
 
-    if (pdinfo->pd > 1) {
+    if (dset->pd > 1) {
 	int len = strlen(s);
 
 	if (len <= 4) {
@@ -193,7 +193,7 @@ static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 	strncat(date, s, 4);
     }
 
-    return dateton(date, pdinfo);
+    return dateton(date, dset);
 }
 
 /* Parse the statistics from the X12ARIMA output file foo.lks */
@@ -434,7 +434,7 @@ get_estimates (const char *fname, MODEL *pmod, arma_info *ainfo)
 /* Parse the residuals from the x12a output file foo.rsd */
 
 static int 
-get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
+get_uhat (const char *fname, MODEL *pmod, const DATASET *dset)
 {
     FILE *fp;
     char line[64], date[9];
@@ -456,8 +456,8 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 	    continue;
 	}
 	if (start && sscanf(line, "%s %lf", date, &x) == 2) {
-	    t = x12_date_to_n(date, pdinfo);
-	    if (t >= 0 && t < pdinfo->n) {
+	    t = x12_date_to_n(date, dset);
+	    if (t >= 0 && t < dset->n) {
 		pmod->uhat[t] = x;
 		nobs++;
 	    } 
@@ -478,7 +478,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 
 static void 
 populate_x12a_arma_model (MODEL *pmod, const char *path, 
-			  const double **Z, const DATAINFO *pdinfo, 
+			  const DATASET *dset, 
 			  arma_info *ainfo)
 {
     char fname[MAXLEN];
@@ -487,7 +487,7 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
     pmod->t1 = ainfo->t1;
     pmod->t2 = ainfo->t2;
     pmod->ncoeff = ainfo->nc;
-    pmod->full_n = pdinfo->n;
+    pmod->full_n = dset->n;
 
     err = gretl_model_allocate_storage(pmod);
     if (err) {
@@ -500,7 +500,7 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
 
     if (!err) {
 	sprintf(fname, "%s.rsd", path);
-	err = get_uhat(fname, pmod, pdinfo);
+	err = get_uhat(fname, pmod, dset);
     }
 
     if (!err) {
@@ -525,19 +525,19 @@ populate_x12a_arma_model (MODEL *pmod, const char *path,
 	fprintf(stderr, "problem reading X-12-ARIMA model info\n");
 	pmod->errcode = err;
     } else {
-	write_arma_model_stats(pmod, ainfo, Z, pdinfo);
+	write_arma_model_stats(pmod, ainfo, dset);
     }
 }
 
 static void 
-output_series_to_spc (const int *list, const double **Z, 
+output_series_to_spc (const int *list, const DATASET *dset,
 		      int t1, int t2, FILE *fp)
 {
     int i, t, done = 0;
 
     for (t=t1; t<=t2 && !done; t++) {
 	for (i=1; i<=list[0] && !done; i++) {
-	    if (na(Z[list[i]][t])) {
+	    if (na(dset->Z[list[i]][t])) {
 		fputs(" missingcode=-99999\n", fp);
 		done = 1;
 	    }
@@ -548,10 +548,10 @@ output_series_to_spc (const int *list, const double **Z,
 
     for (t=t1; t<=t2; t++) {
 	for (i=1; i<=list[0]; i++) {
-	    if (na(Z[list[i]][t])) {
+	    if (na(dset->Z[list[i]][t])) {
 		fputs("-99999 ", fp);
 	    } else {
-		fprintf(fp, "%.15g ", Z[list[i]][t]);
+		fprintf(fp, "%.15g ", dset->Z[list[i]][t]);
 	    }
 	}
 	fputc('\n', fp);
@@ -578,21 +578,21 @@ static int *arma_info_get_x_list (arma_info *ainfo)
 }
 
 static void 
-make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
+make_x12a_date_string (int t, const DATASET *dset, char *str)
 {
     double dx;
     int yr, subper = 0;
     char *s;
 
-    if (non_yearly_frequency(pdinfo->pd)) {
-	int maj = t / pdinfo->pd + 1;
-	int min = t % pdinfo->pd + 1;
+    if (non_yearly_frequency(dset->pd)) {
+	int maj = t / dset->pd + 1;
+	int min = t % dset->pd + 1;
 
 	sprintf(str, "%d.%d", maj, min);
 	return;
     } 
 
-    dx = date(t, pdinfo->pd, pdinfo->sd0);
+    dx = date(t, dset->pd, dset->sd0);
     yr = (int) dx;
 
     sprintf(str, "%g", dx);
@@ -600,7 +600,7 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
 
     if (s != NULL) {
 	subper = atoi(s + 1);
-    } else if (pdinfo->pd > 1) {
+    } else if (dset->pd > 1) {
 	subper = 1;
     } 
 
@@ -655,7 +655,7 @@ static void x12_pdq_string (arma_info *ainfo, FILE *fp)
 }
 
 static int write_arma_spc_file (const char *fname, 
-				const double **Z, const DATAINFO *pdinfo,
+				const DATASET *dset,
 				arma_info *ainfo, int pdmax, 
 				gretlopt opt)
 {
@@ -686,11 +686,11 @@ static int write_arma_spc_file (const char *fname,
     gretl_push_c_numeric_locale();
 
     fprintf(fp, "series{\n title=\"%s\"\n period=%d\n", 
-	    pdinfo->varname[ainfo->yno], pdinfo->pd);
+	    dset->varname[ainfo->yno], dset->pd);
 
     t1 -= ainfo->maxlag;
     
-    make_x12a_date_string(t1, pdinfo, datestr);
+    make_x12a_date_string(t1, dset, datestr);
     fprintf(fp, " start=%s\n", datestr);
 
     ylist[0] = 1;
@@ -698,10 +698,10 @@ static int write_arma_spc_file (const char *fname,
 
     tmax = ainfo->t2;
 
-    if ((opt & OPT_F) && ainfo->t2 < pdinfo->n - 1) {
+    if ((opt & OPT_F) && ainfo->t2 < dset->n - 1) {
 	int nobs;
 
-	tmax = pdinfo->n - 1;
+	tmax = dset->n - 1;
 	nobs = tmax - ainfo->t1 + 1; /* t1? */
 	if (nobs > maxobs) {
 	    tmax -= nobs - maxobs;
@@ -716,10 +716,10 @@ static int write_arma_spc_file (const char *fname,
 #endif
     } 
 
-    output_series_to_spc(ylist, Z, t1, tmax, fp);
+    output_series_to_spc(ylist, dset, t1, tmax, fp);
 
     if (tmax > ainfo->t2) {
-	make_x12a_date_string(ainfo->t2, pdinfo, datestr);
+	make_x12a_date_string(ainfo->t2, dset, datestr);
 	fprintf(fp, " span = ( , %s)\n", datestr);
     }
 
@@ -733,10 +733,10 @@ static int write_arma_spc_file (const char *fname,
     if (ainfo->nexo > 0) {
 	fputs(" user = ( ", fp);
 	for (i=1; i<=xlist[0]; i++) {
-	    fprintf(fp, "%s ", pdinfo->varname[xlist[i]]);
+	    fprintf(fp, "%s ", dset->varname[xlist[i]]);
 	}
 	fputs(")\n", fp);
-	output_series_to_spc(xlist, Z, t1, tmax, fp);
+	output_series_to_spc(xlist, dset, t1, tmax, fp);
 	free(xlist);
     }
     fputs("}\n", fp);
@@ -821,8 +821,8 @@ static void x12a_maybe_allow_missvals (arma_info *ainfo)
 }
 
 MODEL arma_x12_model (const int *list, const int *pqspec,
-		      const double **Z, const DATAINFO *pdinfo,
-		      int pdmax, gretlopt opt, PRN *prn)
+		      const DATASET *dset, int pdmax, 
+		      gretlopt opt, PRN *prn)
 {
     int verbose = (opt & OPT_V);
     const char *prog = gretl_x12_arima();
@@ -836,16 +836,16 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
 #endif
     int err = 0;
 
-    if (pdinfo->t2 < pdinfo->n - 1) {
+    if (dset->t2 < dset->n - 1) {
 	/* FIXME this is temporary (OPT_F -> generate forecast) */
 	opt |= OPT_F;
     }
 
     ainfo = &ainfo_s;
-    arma_info_init(ainfo, opt | OPT_X, pqspec, pdinfo);
+    arma_info_init(ainfo, opt | OPT_X, pqspec, dset);
     ainfo->prn = set_up_verbose_printer(opt, prn);
     gretl_model_init(&armod); 
-    gretl_model_smpl_init(&armod, pdinfo);
+    gretl_model_smpl_init(&armod, dset);
 
     ainfo->alist = gretl_list_copy(list);
     if (ainfo->alist == NULL) {
@@ -853,7 +853,7 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
     }
 
     if (!err) {
-	err = arma_check_list(ainfo, Z, pdinfo, opt);
+	err = arma_check_list(ainfo, dset, opt);
     }
 
     if (err) {
@@ -867,19 +867,19 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
     x12a_maybe_allow_missvals(ainfo);
 
     /* adjust sample range if need be */
-    armod.errcode = arma_adjust_sample(ainfo, Z, pdinfo, &missv, &misst);
+    armod.errcode = arma_adjust_sample(ainfo, dset, &missv, &misst);
     if (armod.errcode) {
 	goto bailout;
     } else if (missv > 0) {
 	set_arma_missvals(ainfo);
     }
 
-    ainfo->y = (double *) Z[ainfo->yno]; /* it's really const */
-    strcpy(yname, pdinfo->varname[ainfo->yno]);
+    ainfo->y = (double *) dset->Z[ainfo->yno]; /* it's really const */
+    strcpy(yname, dset->varname[ainfo->yno]);
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
-    write_arma_spc_file(path, Z, pdinfo, ainfo, pdmax, opt);
+    write_arma_spc_file(path, dset, ainfo, pdmax, opt);
 
     /* remove any files from an old run, in case of error */
     delete_old_files(path);
@@ -895,7 +895,7 @@ MODEL arma_x12_model (const int *list, const int *pqspec,
 
     if (!err) {
 	sprintf(path, "%s%c%s", workdir, SLASH, yname); 
-	populate_x12a_arma_model(&armod, path, Z, pdinfo, ainfo);
+	populate_x12a_arma_model(&armod, path, dset, ainfo);
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, ainfo->prn);
 	}

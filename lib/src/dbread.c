@@ -121,9 +121,8 @@ float retrieve_float (netfloat nf)
 #endif
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-			    double ***pZ, DATAINFO *pdinfo,
-			    CompactMethod method, int dbv,
-			    int *newdata, PRN *prn);
+			    DATASET *dset, CompactMethod method, 
+			    int dbv, int *newdata, PRN *prn);
 
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
@@ -1768,7 +1767,7 @@ int set_odbc_dsn (const char *line, PRN *prn)
     return err;
 }
 
-int db_set_sample (const char *s, DATAINFO *pdinfo)
+int db_set_sample (const char *s, DATASET *dset)
 {
     char start[OBSLEN], stop[OBSLEN];
     int t1 = 0, t2 = 0;
@@ -1779,13 +1778,13 @@ int db_set_sample (const char *s, DATAINFO *pdinfo)
     }
 
     if (strcmp(start, ";")) {
-	t1 = dateton(start, pdinfo);
+	t1 = dateton(start, dset);
 	if (t1 < 0) {
 	    return 1;
 	}
     }
 
-    t2 = dateton(stop, pdinfo);
+    t2 = dateton(stop, dset);
     if (t2 < 0) {
 	return 1;
     }
@@ -1795,17 +1794,17 @@ int db_set_sample (const char *s, DATAINFO *pdinfo)
 	return 1;
     }
 
-    pdinfo->t1 = t1;
-    pdinfo->t2 = t2;
-    pdinfo->n = t2 - t1 + 1;
-    strcpy(pdinfo->endobs, stop);
+    dset->t1 = t1;
+    dset->t2 = t2;
+    dset->n = t2 - t1 + 1;
+    strcpy(dset->endobs, stop);
 
 #if DB_DEBUG
     fprintf(stderr, "db_set_sample: t1=%d, t2=%d, stobs='%s', endobs='%s' "
 	    "sd0 = %g, n = %d\n", 
-	    pdinfo->t1, pdinfo->t2, 
-	    pdinfo->stobs, pdinfo->endobs,
-	    pdinfo->sd0, pdinfo->n);
+	    dset->t1, dset->t2, 
+	    dset->stobs, dset->endobs,
+	    dset->sd0, dset->n);
 #endif
 
     return 0;
@@ -2083,9 +2082,8 @@ static char **odbc_get_varnames (char **line, int *err)
     return vnames;
 }
 
-static int odbc_transcribe_data (char **vnames, double **Z,
-				 DATAINFO *pdinfo, int vmin,
-				 int newvars)
+static int odbc_transcribe_data (char **vnames, DATASET *dset, 
+				 int vmin, int newvars)
 {
     int nv = gretl_odinfo.nvars;
     int n = gretl_odinfo.nrows;
@@ -2098,7 +2096,7 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 
 	if (nrepl > 0) {
 	    /* we're replacing some series */
-	    v = current_series_index(pdinfo, vnames[i]);
+	    v = current_series_index(dset, vnames[i]);
 	} else {
 	    /* all the series are new */
 	    v = -1;
@@ -2106,8 +2104,8 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 
 	if (v < 0) {
 	    v = vmin++;
-	    strcpy(pdinfo->varname[v], vnames[i]);
-	    sprintf(VARLABEL(pdinfo, v), "ODBC series %d", i + 1);
+	    strcpy(dset->varname[v], vnames[i]);
+	    sprintf(VARLABEL(dset, v), "ODBC series %d", i + 1);
 	} else {
 	    vnew = 0;
 	}
@@ -2115,14 +2113,14 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 	if (gretl_odinfo.S != NULL) {
 	    /* got obs identifiers via ODBC */
 	    if (vnew) {
-		for (t=0; t<pdinfo->n; t++) {
-		    Z[v][t] = NADBL;
+		for (t=0; t<dset->n; t++) {
+		    dset->Z[v][t] = NADBL;
 		}
 	    }
 	    for (s=0; s<n; s++) {
-		t = dateton(gretl_odinfo.S[s], pdinfo);
-		if (t >= 0 && t < pdinfo->n) {
-		    Z[v][t] = gretl_odinfo.X[i][s];
+		t = dateton(gretl_odinfo.S[s], dset);
+		if (t >= 0 && t < dset->n) {
+		    dset->Z[v][t] = gretl_odinfo.X[i][s];
 		    obs_used++;
 		} else {
 		    fprintf(stderr, "Rejecting obs '%s'\n", gretl_odinfo.S[s]);
@@ -2131,12 +2129,12 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 	} else {
 	    /* no obs identifiers via ODBC */
 	    s = 0;
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t >= pdinfo->t1 && t <= pdinfo->t2 && s < n) {
-		    Z[v][t] = gretl_odinfo.X[i][s++];
+	    for (t=0; t<dset->n; t++) {
+		if (t >= dset->t1 && t <= dset->t2 && s < n) {
+		    dset->Z[v][t] = gretl_odinfo.X[i][s++];
 		    obs_used++;
 		} else if (vnew) {
-		    Z[v][t] = NADBL;
+		    dset->Z[v][t] = NADBL;
 		}
 	    }
 	}
@@ -2151,15 +2149,15 @@ static int odbc_transcribe_data (char **vnames, double **Z,
 }
 
 static int odbc_count_new_vars (char **vnames, int nv, 
-				const DATAINFO *pdinfo)
+				const DATASET *dset)
 {
     int newv = nv;
 
-    if (pdinfo->v > 0) {
+    if (dset->v > 0) {
 	int i;
 
 	for (i=0; i<nv; i++) {
-	    if (current_series_index(pdinfo, vnames[i]) > 0) {
+	    if (current_series_index(dset, vnames[i]) > 0) {
 		newv--;
 	    }
 	}
@@ -2170,7 +2168,7 @@ static int odbc_count_new_vars (char **vnames, int nv,
 
 /* data series [obs-format=format-string] [query=]query-string */
 
-static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
+static int odbc_get_series (char *line, DATASET *dset, 
 			    PRN *prn)
 {
     void *handle = NULL;
@@ -2184,7 +2182,7 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     } 
 
-    if (pdinfo->n == 0) {
+    if (dset->n == 0) {
 	gretl_errmsg_set(_("No series length has been defined"));
 	return 1;
     }
@@ -2243,21 +2241,21 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 		    n, nv);
 	}
 
-	if (pdinfo->v == 0) {
+	if (dset->v == 0) {
 	    /* the data array is still empty */
 	    newvars = nv;
-	    pdinfo->v = 1 + nv;
-	    err = start_new_Z(pZ, pdinfo, 0);
+	    dset->v = 1 + nv;
+	    err = start_new_Z(dset, 0);
 	} else {
-	    newvars = odbc_count_new_vars(vnames, nv, pdinfo);
-	    vmin = pdinfo->v;
+	    newvars = odbc_count_new_vars(vnames, nv, dset);
+	    vmin = dset->v;
 	    if (newvars > 0) {
-		err = dataset_add_series(newvars, pZ, pdinfo);
+		err = dataset_add_series(newvars, dset);
 	    }
 	}
 
 	if (!err) {
-	    odbc_transcribe_data(vnames, *pZ, pdinfo, vmin, newvars);
+	    odbc_transcribe_data(vnames, dset, vmin, newvars);
 	}
     }
 
@@ -2271,7 +2269,7 @@ static int odbc_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
    command-line client or in script or console mode
 */
 
-int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo, 
+int db_get_series (char *line, DATASET *dset, 
 		   gretlopt opt, PRN *prn)
 {
     char series[VNAMELEN];
@@ -2281,12 +2279,12 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
 
     if (opt & OPT_O) {
-	return odbc_get_series(line, pZ, pdinfo, prn);
+	return odbc_get_series(line, dset, prn);
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "db_get_series: line='%s', pZ=%p, pdinfo=%p\n", 
-	    line, (void *) pZ, (void *) pdinfo);
+    fprintf(stderr, "db_get_series: line='%s', pZ=%p, dset=%p\n", 
+	    line, (void *) pZ, (void *) dset);
     fprintf(stderr, "db_name = '%s'\n", db_name);
 #endif
 
@@ -2306,14 +2304,14 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	series_info_init(&sinfo);
 
 	/* see if the series is already in the dataset */
-	v = series_index(pdinfo, series);
-	if (v < pdinfo->v && method == COMPACT_NONE) {
-	    this_var_method = COMPACT_METHOD(pdinfo, v);
+	v = series_index(dset, series);
+	if (v < dset->v && method == COMPACT_NONE) {
+	    this_var_method = COMPACT_METHOD(dset, v);
 	}
 
 #if DB_DEBUG
-	fprintf(stderr, "db_get_series: pdinfo->v = %d, v = %d, series = '%s'\n", 
-		pdinfo->v, v, series);
+	fprintf(stderr, "db_get_series: dset->v = %d, v = %d, series = '%s'\n", 
+		dset->v, v, series);
 	fprintf(stderr, "this_var_method = %d\n", this_var_method);
 #endif
 
@@ -2365,7 +2363,7 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (!err) {
-	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, 
+	    err = cli_add_db_data(dbZ, &sinfo, dset, 
 				  this_var_method, v, 
 				  &newdata, prn);
 	}
@@ -2377,7 +2375,7 @@ int db_get_series (char *line, double ***pZ, DATAINFO *pdinfo,
 	    pprintf(prn, _("Series imported OK"));
 	    pputc(prn, '\n');
 	    if (newdata) {
-		print_smpl(pdinfo, 0, prn);
+		print_smpl(dset, 0, prn);
 	    }
 	}
     }
@@ -2588,25 +2586,25 @@ int db_delete_series_by_number (const int *list, const char *fname)
     return db_delete_series(NULL, list, fname, NULL);
 }
 
-void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
+void get_db_padding (SERIESINFO *sinfo, DATASET *dset, 
 		     int *pad1, int *pad2)
 {
-    *pad1 = dateton(sinfo->stobs, pdinfo); 
+    *pad1 = dateton(sinfo->stobs, dset); 
     fprintf(stderr, "pad1 = dateton(%s) = %d\n", sinfo->stobs, *pad1);
 
-    *pad2 = pdinfo->n - sinfo->nobs - *pad1;
-    fprintf(stderr, "pad2 = pdinfo->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n", 
-	    pdinfo->n, sinfo->nobs, *pad1, *pad2);
+    *pad2 = dset->n - sinfo->nobs - *pad1;
+    fprintf(stderr, "pad2 = dset->n - sinfo->nobs - pad1 = %d - %d - %d = %d\n", 
+	    dset->n, sinfo->nobs, *pad1, *pad2);
 } 
 
-int db_range_check (SERIESINFO *sinfo, DATAINFO *pdinfo)
+int db_range_check (SERIESINFO *sinfo, DATASET *dset)
 {
-    double sdn_orig = get_date_x(pdinfo->pd, pdinfo->endobs);
+    double sdn_orig = get_date_x(dset->pd, dset->endobs);
     double sd0 = get_date_x(sinfo->pd, sinfo->stobs);
     double sdn = get_date_x(sinfo->pd, sinfo->endobs);
     int err = 0;
 
-    if (sd0 > sdn_orig || sdn < pdinfo->sd0) {
+    if (sd0 > sdn_orig || sdn < dset->sd0) {
 	gretl_errmsg_sprintf(_("%s: observation range does not overlap\n"
 			       "with the working data set"),
 			     sinfo->varname);
@@ -2616,13 +2614,13 @@ int db_range_check (SERIESINFO *sinfo, DATAINFO *pdinfo)
     return err;
 }
 
-int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
+int check_db_import (SERIESINFO *sinfo, DATASET *dset)
 {
     int err = 0;
 
-    if (sinfo->pd < pdinfo->pd) {
+    if (sinfo->pd < dset->pd) {
 	if (sinfo->pd != 1 && sinfo->pd != 4 && 
-	    pdinfo->pd != 4 && pdinfo->pd != 12) {
+	    dset->pd != 4 && dset->pd != 12) {
 	    gretl_errmsg_sprintf(_("%s: can't handle conversion"),
 				 sinfo->varname);
 	    err = 1;
@@ -2630,13 +2628,13 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
     }
 
     if (!err) {
-	err = db_range_check(sinfo, pdinfo);
+	err = db_range_check(sinfo, dset);
     }
 
 #if DB_DEBUG
     if (err) {
 	fprintf(stderr, "check_db_import: err = %d\n", err);
-	fprintf(stderr, "(pdinfo->n = %d)\n", pdinfo->n);
+	fprintf(stderr, "(dset->n = %d)\n", dset->n);
     }
 #endif
     
@@ -2644,73 +2642,72 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 }
 
 static void 
-init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
+init_datainfo_from_sinfo (DATASET *dset, SERIESINFO *sinfo)
 {
-    pdinfo->pd = sinfo->pd;
+    dset->pd = sinfo->pd;
 
-    strcpy(pdinfo->stobs, sinfo->stobs);
-    strcpy(pdinfo->endobs, sinfo->endobs);
-    colonize_obs(pdinfo->stobs);
-    colonize_obs(pdinfo->endobs);
+    strcpy(dset->stobs, sinfo->stobs);
+    strcpy(dset->endobs, sinfo->endobs);
+    colonize_obs(dset->stobs);
+    colonize_obs(dset->endobs);
 
-    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-    pdinfo->n = sinfo->nobs;
-    pdinfo->v = 2;
+    dset->sd0 = get_date_x(dset->pd, dset->stobs);
+    dset->n = sinfo->nobs;
+    dset->v = 2;
 
-    pdinfo->t1 = 0;
-    pdinfo->t2 = pdinfo->n - 1;
+    dset->t1 = 0;
+    dset->t2 = dset->n - 1;
 }
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
-			    double ***pZ, DATAINFO *pdinfo,
-			    CompactMethod method, int dbv,
-			    int *newdata, PRN *prn)
+			    DATASET *dset, CompactMethod method, 
+			    int dbv, int *newdata, PRN *prn)
 {
     double *xvec = NULL;
     int pad1 = 0, pad2 = 0;
     int t, start, stop;
     int free_xvec = 0;
-    int new = (dbv == pdinfo->v);
+    int new = (dbv == dset->v);
 
-    if (pdinfo->n == 0) {
+    if (dset->n == 0) {
 	/* if the length of the dataset is not defined yet,
 	   initialize using sinfo */
-	init_datainfo_from_sinfo(pdinfo, sinfo);
-	pdinfo->v = 0; /* trigger for creating data array below */
+	init_datainfo_from_sinfo(dset, sinfo);
+	dset->v = 0; /* trigger for creating data array below */
 	*newdata = 1;
-	if (pdinfo->pd != 1 || strcmp(pdinfo->stobs, "1")) { 
-	    pdinfo->structure = TIME_SERIES;
+	if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
+	    dset->structure = TIME_SERIES;
 	}
-    } else if (check_db_import(sinfo, pdinfo)) {
+    } else if (check_db_import(sinfo, dset)) {
 	return 1;
     }
 
-    if (pdinfo->v == 0) {
+    if (dset->v == 0) {
 	/* the data matrix is still empty */
-	pdinfo->v = 2;
+	dset->v = 2;
 	dbv = 1;
-	if (start_new_Z(pZ, pdinfo, 0)) {
+	if (start_new_Z(dset, 0)) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    return 1;
 	}
-    } else if (new && dataset_add_series(1, pZ, pdinfo)) {
+    } else if (new && dataset_add_series(1, dset)) {
 	gretl_errmsg_set(_("Out of memory!"));
 	return 1;
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "Z=%p\n", (void *) *pZ);
-    fprintf(stderr, "pdinfo->n = %d, pdinfo->v = %d, dbv = %d\n", 
-	    pdinfo->n, pdinfo->v, dbv);
+    fprintf(stderr, "dset->Z=%p\n", (void *) dset->Z);
+    fprintf(stderr, "dset->n = %d, dset->v = %d, dbv = %d\n", 
+	    dset->n, dset->v, dbv);
 #endif
 
     /* is the frequency of the new var higher? */
-    if (sinfo->pd > pdinfo->pd) {
-	if (pdinfo->pd != 1 && pdinfo->pd != 4 &&
+    if (sinfo->pd > dset->pd) {
+	if (dset->pd != 1 && dset->pd != 4 &&
 	    sinfo->pd != 12) {
 	    gretl_errmsg_set(_("Sorry, can't handle this conversion yet!"));
 	    if (new) {
-		dataset_drop_last_variables(1, pZ, pdinfo);
+		dataset_drop_last_variables(1, dset);
 	    }
 	    return 1;
 	}
@@ -2720,11 +2717,11 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 		    sinfo->varname);
 	    pputc(prn, '\n');
 	}
-	xvec = compact_db_series(dbZ[1], sinfo, pdinfo->pd, method);
+	xvec = compact_db_series(dbZ[1], sinfo, dset->pd, method);
 	if (xvec == NULL) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    if (new) {
-		dataset_drop_last_variables(1, pZ, pdinfo);
+		dataset_drop_last_variables(1, dset);
 	    }
 	    return 1;
 	}
@@ -2735,17 +2732,17 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     }
 
     /* common stuff for adding a var */
-    strcpy(pdinfo->varname[dbv], sinfo->varname);
-    strcpy(VARLABEL(pdinfo, dbv), sinfo->descrip);
-    COMPACT_METHOD(pdinfo, dbv) = method;
-    get_db_padding(sinfo, pdinfo, &pad1, &pad2);
+    strcpy(dset->varname[dbv], sinfo->varname);
+    strcpy(VARLABEL(dset, dbv), sinfo->descrip);
+    COMPACT_METHOD(dset, dbv) = method;
+    get_db_padding(sinfo, dset, &pad1, &pad2);
 
     if (pad1 > 0) {
 #if DB_DEBUG
 	fprintf(stderr, "Padding at start, %d obs\n", pad1);
 #endif
 	for (t=0; t<pad1; t++) {
-	    (*pZ)[dbv][t] = NADBL;
+	    dset->Z[dbv][t] = NADBL;
 	}
 	start = pad1;
     } else {
@@ -2756,12 +2753,12 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 #if DB_DEBUG
 	fprintf(stderr, "Padding at end, %d obs\n", pad2);
 #endif
-	for (t=pdinfo->n - 1; t>=pdinfo->n - 1 - pad2; t--) {
-	    (*pZ)[dbv][t] = NADBL;
+	for (t=dset->n - 1; t>=dset->n - 1 - pad2; t--) {
+	    dset->Z[dbv][t] = NADBL;
 	}
-	stop = pdinfo->n - pad2;
+	stop = dset->n - pad2;
     } else {
-	stop = pdinfo->n;
+	stop = dset->n;
     }
 
     /* fill in actual data values */
@@ -2769,7 +2766,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
 #endif
     for (t=start; t<stop; t++) {
-	(*pZ)[dbv][t] = xvec[t-pad1];
+	dset->Z[dbv][t] = xvec[t-pad1];
     }
 
     if (free_xvec) {
@@ -2887,7 +2884,7 @@ static double *extend_series (const double *z, int n)
 }
 
 static double *
-daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i, 
+daily_series_to_monthly (const double *src, DATASET *dset, int i, 
 			 int nm, int yr, int mon, int offset, 
 			 int any_eop, CompactMethod method)
 {
@@ -2903,7 +2900,7 @@ daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i,
     }
 
     if (offset < 0) {
-	tmp = extend_series(src, pdinfo->n + 1);
+	tmp = extend_series(src, dset->n + 1);
 	if (tmp == NULL) {
 	    free(x);
 	    return NULL;
@@ -2933,7 +2930,7 @@ daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i,
 #endif
 
     for (t=0; t<nm; t++) {
-	int mdays = get_days_in_month(mon, yr, pdinfo->pd);
+	int mdays = get_days_in_month(mon, yr, dset->pd);
 
 	sopt += mdbak;
 	eopt += mdays;
@@ -2943,13 +2940,13 @@ daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i,
 	    x[t] = NADBL;
 	} else if (method == COMPACT_SOP) {
 	    /* allow one days's slack */
-	    if (na(z[sopt]) && sopt < pdinfo->n - 1) {
+	    if (na(z[sopt]) && sopt < dset->n - 1) {
 		x[t] = z[sopt + 1];
 	    } else {
 		x[t] = z[sopt];
 	    }
 	} else if (method == COMPACT_EOP) {
-	    if (eopt >= pdinfo->n) {
+	    if (eopt >= dset->n) {
 		x[t] = NADBL;
 	    } else {
 		/* allow one days's slack */
@@ -2968,7 +2965,7 @@ daily_series_to_monthly (const double *src, DATAINFO *pdinfo, int i,
 
 	    for (j=0; j<mdays; j++) {
 		dayt = sopt + j;
-		if (dayt >= pdinfo->n) {
+		if (dayt >= dset->n) {
 		    x[t] = NADBL;
 		    break;
 		} else if (na(z[dayt])) {
@@ -3053,7 +3050,7 @@ static void
 get_daily_compact_params (CompactMethod default_method, 
 			  int *any_eop, int *any_sop,
 			  int *all_same,
-			  const DATAINFO *pdinfo)
+			  const DATASET *dset)
 {
     int i, n_not_eop = 0, n_not_sop = 0;
 
@@ -3061,8 +3058,8 @@ get_daily_compact_params (CompactMethod default_method,
     *any_eop = (default_method == COMPACT_EOP)? 1 : 0;
     *any_sop = (default_method == COMPACT_SOP)? 1 : 0;
 
-    for (i=1; i<pdinfo->v; i++) {
-	CompactMethod method = COMPACT_METHOD(pdinfo, i);
+    for (i=1; i<dset->v; i++) {
+	CompactMethod method = COMPACT_METHOD(dset, i);
 
 	if (method != default_method && method != COMPACT_NONE) {
 	    *all_same = 0;
@@ -3079,11 +3076,11 @@ get_daily_compact_params (CompactMethod default_method,
 	}
     }
 
-    if (n_not_eop == pdinfo->v - 1) {
+    if (n_not_eop == dset->v - 1) {
 	*any_eop = 0;
     }
 
-    if (n_not_sop == pdinfo->v - 1) {
+    if (n_not_sop == dset->v - 1) {
 	*any_sop = 0;
     }
 }
@@ -3095,23 +3092,23 @@ get_global_compact_params (int compfac, int startmin, int endmin,
 			   CompactMethod default_method, 
 			   int *min_startskip, int *max_n,
 			   int *any_eop, int *all_same,
-			   DATAINFO *pdinfo)
+			   DATASET *dset)
 {
     CompactMethod method;
     int i, startskip, n;
     int n_not_eop = 0;
 
-    for (i=0; i<pdinfo->v; i++) {
+    for (i=0; i<dset->v; i++) {
 	if (i == 0) {
-	    get_startskip_etc(compfac, startmin, endmin, pdinfo->n, 
+	    get_startskip_etc(compfac, startmin, endmin, dset->n, 
 			      default_method, &startskip, &n);
 	    if (default_method == COMPACT_EOP) {
 		*any_eop = 1;
 	    }
 	} else {
-	    method = COMPACT_METHOD(pdinfo, i);
+	    method = COMPACT_METHOD(dset, i);
 	    if (method != default_method && method != COMPACT_NONE) {
-		get_startskip_etc(compfac, startmin, endmin, pdinfo->n, 
+		get_startskip_etc(compfac, startmin, endmin, dset->n, 
 				  method, &startskip, &n);
 		*all_same = 0;
 		if (method == COMPACT_EOP) {
@@ -3129,7 +3126,7 @@ get_global_compact_params (int compfac, int startmin, int endmin,
 	}
     }
 
-    if (n_not_eop == pdinfo->v - 1) {
+    if (n_not_eop == dset->v - 1) {
 	*any_eop = 0;
     }
 }
@@ -3149,7 +3146,7 @@ static int get_obs_maj_min (const char *obs, int *maj, int *min)
    be skipped at the start of each series 
 */
 
-static int get_daily_offset (const DATAINFO *pdinfo,
+static int get_daily_offset (const DATASET *dset,
 			     int y, int m, int d, 
 			     int skip)
 {
@@ -3158,10 +3155,10 @@ static int get_daily_offset (const DATAINFO *pdinfo,
     if (skip) {
 	/* moving to start of next month: offset = no. of
 	   observations in the first month */
-	ret = days_in_month_after(y, m, d, pdinfo->pd) + 1;
+	ret = days_in_month_after(y, m, d, dset->pd) + 1;
     } else {
 	/* offset = no. of obs missing at start of first month */
-	ret = days_in_month_before(y, m, d, pdinfo->pd);
+	ret = days_in_month_before(y, m, d, dset->pd);
     }
 
     return ret;
@@ -3171,7 +3168,7 @@ static int get_daily_offset (const DATAINFO *pdinfo,
    observations that can be constructed by compaction
 */
 
-static int get_n_ok_months (const DATAINFO *pdinfo, 
+static int get_n_ok_months (const DATASET *dset, 
 			    CompactMethod default_method,
 			    int *startyr, int *startmon,
 			    int *endyr, int *endmon,
@@ -3181,10 +3178,10 @@ static int get_n_ok_months (const DATAINFO *pdinfo,
     int any_eop, any_sop, all_same;
     int skip = 0, pad = 0, nm = -1;
 
-    if (sscanf(pdinfo->stobs, "%d/%d/%d", &y1, &m1, &d1) != 3) {
+    if (sscanf(dset->stobs, "%d/%d/%d", &y1, &m1, &d1) != 3) {
 	return -1;
     }
-    if (sscanf(pdinfo->endobs, "%d/%d/%d", &y2, &m2, &d2) != 3) {
+    if (sscanf(dset->endobs, "%d/%d/%d", &y2, &m2, &d2) != 3) {
 	return -1;
     }
 
@@ -3198,14 +3195,14 @@ static int get_n_ok_months (const DATAINFO *pdinfo,
     nm = 12 * (y2 - y1) + m2 - m1 + 1;
 
     get_daily_compact_params(default_method, &any_eop, &any_sop,
-			     &all_same, pdinfo);
+			     &all_same, dset);
 
     *startyr = y1;
     *startmon = m1;
     *endyr = y2;
     *endmon = m2;
 
-    if (!day_starts_month(d1, m1, y1, pdinfo->pd, &pad) && !any_eop) {
+    if (!day_starts_month(d1, m1, y1, dset->pd, &pad) && !any_eop) {
 	if (*startmon == 12) {
 	    *startmon = 1;
 	    *startyr += 1;
@@ -3216,7 +3213,7 @@ static int get_n_ok_months (const DATAINFO *pdinfo,
 	nm--;
     }
 
-    if (!day_ends_month(d2, m2, y2, pdinfo->pd) && !any_sop) {
+    if (!day_ends_month(d2, m2, y2, dset->pd) && !any_sop) {
 	if (*endmon == 1) {
 	    *endmon = 12;
 	    *endyr -= 1;
@@ -3229,7 +3226,7 @@ static int get_n_ok_months (const DATAINFO *pdinfo,
     if (pad) {
 	*offset = -1;
     } else {
-	*offset = get_daily_offset(pdinfo, y1, m1, d1, skip);
+	*offset = get_daily_offset(dset, y1, m1, d1, skip);
     }
 
     *p_any_eop = any_eop;
@@ -3240,7 +3237,7 @@ static int get_n_ok_months (const DATAINFO *pdinfo,
 #define WEEKLY_DEBUG 0
 
 static int 
-weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, 
+weeks_to_months_exec (double **mZ, const DATASET *dset, 
 		      CompactMethod method)
 { 
     char obsstr[OBSLEN];
@@ -3250,27 +3247,27 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
     int i, s, t = 0;
     int err = 0;
 
-    mn = malloc(pdinfo->v * sizeof *mn);
+    mn = malloc(dset->v * sizeof *mn);
     if (mn == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=1; i<pdinfo->v; i++) {
+    for (i=1; i<dset->v; i++) {
 	/* initialize all series, first obs */
 	mZ[i][0] = NADBL;
 	mn[i] = 0;
     }    
 
-    for (s=0; s<pdinfo->n; s++) {
+    for (s=0; s<dset->n; s++) {
 	/* loop across the weekly obs in this month */
-	ntodate(obsstr, s, pdinfo);
+	ntodate(obsstr, s, dset);
 	sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day);
 	if (monbak > 0 && mon != monbak) {
 	    /* new month: finalize the previous one */
-	    for (i=1; i<pdinfo->v; i++) {
+	    for (i=1; i<dset->v; i++) {
 		if (method == COMPACT_EOP) {
 		    if (s > 0) {
-			mZ[i][t] = Z[i][s-1];
+			mZ[i][t] = dset->Z[i][s-1];
 		    }
 		} else if (method == COMPACT_AVG) {
 		    if (mn[i] > 0) {
@@ -3279,12 +3276,12 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 		}
 	    }
 	    /* and start another? */
-	    if (s < pdinfo->n - 1) {
+	    if (s < dset->n - 1) {
 		t++;
-		for (i=1; i<pdinfo->v; i++) {
+		for (i=1; i<dset->v; i++) {
 		    /* initialize all series, current obs */
 		    if (method == COMPACT_SOP) {
-			mZ[i][t] = Z[i][s];
+			mZ[i][t] = dset->Z[i][s];
 		    } else {
 			mZ[i][t] = NADBL;
 		    }
@@ -3294,20 +3291,20 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 	} 
 
 	/* cumulate non-missing weekly observations? */
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    if (method == COMPACT_SOP) {
 		; /* handled above */
 	    } else if (method == COMPACT_EOP) {
-		mZ[i][t] = Z[i][s];
-	    } else if (!na(Z[i][s])) {
+		mZ[i][t] = dset->Z[i][s];
+	    } else if (!na(dset->Z[i][s])) {
 		if (na(mZ[i][t])) {
-		    mZ[i][t] = Z[i][s];
+		    mZ[i][t] = dset->Z[i][s];
 		} else {
-		    mZ[i][t] += Z[i][s];
+		    mZ[i][t] += dset->Z[i][s];
 		}
 		mn[i] += 1;
 	    }
-	    if (mon == monbak && s == pdinfo->n - 1) {
+	    if (mon == monbak && s == dset->n - 1) {
 		/* reached the end: ship out last obs */
 		if (method == COMPACT_EOP) {
 		    mZ[i][t] = NADBL;
@@ -3325,7 +3322,7 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo,
 }
 
 static int 
-weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
+weeks_to_months_check (const DATASET *dset, int *startyr, int *endyr,
 		       int *startmon, int *endmon)
 { 
     char obsstr[OBSLEN];
@@ -3334,8 +3331,8 @@ weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
     int monbak = 0;
     int t, err = 0;
 
-    for (t=0; t<pdinfo->n; t++) {
-	ntodate(obsstr, t, pdinfo);
+    for (t=0; t<dset->n; t++) {
+	ntodate(obsstr, t, dset);
 	if (sscanf(obsstr, "%d/%d/%d", &yr, &mon, &day) != 3) {
 	    err = 1;
 	    break;
@@ -3377,45 +3374,43 @@ weeks_to_months_check (const DATAINFO *pdinfo, int *startyr, int *endyr,
     return mcount;
 }
 
-static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
+static int weekly_dataset_to_monthly (DATASET *dset,
 				      CompactMethod method)
 {
-    double **mZ = NULL;
-    DATAINFO minfo;
+    DATASET mset;
     int startyr = 1, endyr = 1;
     int startmon = 1, endmon = 1;
     int err = 0;
 
-    minfo.n = weeks_to_months_check(pdinfo, &startyr, &endyr, &startmon, &endmon);
-    fprintf(stderr, "Weekly data: found %d months\n", minfo.n);
-    if (minfo.n <= 0) {
+    mset.n = weeks_to_months_check(dset, &startyr, &endyr, &startmon, &endmon);
+    fprintf(stderr, "Weekly data: found %d months\n", mset.n);
+    if (mset.n <= 0) {
 	return E_DATA;
     }
 
-    minfo.v = pdinfo->v;
-    err = allocate_Z(&mZ, &minfo);
+    mset.v = dset->v;
+    err = allocate_Z(&mset);
     if (err) {
 	return err;
     }
 
     /* compact series */
-    if (!err && pdinfo->v > 1) {
-	err = weeks_to_months_exec(mZ, (const double **) *pZ, pdinfo, method);
+    if (!err && dset->v > 1) {
+	err = weeks_to_months_exec(mset.Z, dset, method);
     }
 
     if (err) {
-	free_Z(mZ, &minfo);
+	free_Z(&mset);
     } else {
-	free_Z(*pZ, pdinfo);
-	*pZ = mZ;
-
-	pdinfo->n = minfo.n;
-	pdinfo->pd = 12;
-	sprintf(pdinfo->stobs, "%04d:%02d", startyr, startmon);
-	sprintf(pdinfo->endobs, "%04d:%02d", endyr, endmon);
-	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-	pdinfo->t1 = 0;
-	pdinfo->t2 = pdinfo->n - 1;
+	free_Z(dset);
+	dset->Z = mset.Z;
+	dset->n = mset.n;
+	dset->pd = 12;
+	sprintf(dset->stobs, "%04d:%02d", startyr, startmon);
+	sprintf(dset->endobs, "%04d:%02d", endyr, endmon);
+	dset->sd0 = get_date_x(dset->pd, dset->stobs);
+	dset->t1 = 0;
+	dset->t2 = dset->n - 1;
     }
     
     return err;
@@ -3437,8 +3432,7 @@ static int shorten_the_constant (double **Z, int n)
    each Wednesday value.  repday is 0-based on Sunday.
 */
 
-static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
-				    int repday)
+static int daily_dataset_to_weekly (DATASET *dset, int repday)
 {
     int y1, m1, d1;
     char obs[OBSLEN];
@@ -3450,13 +3444,13 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 
     fprintf(stderr, "daily_dataset_to_weekly: repday = %d\n", repday);
 
-    for (t=0; t<pdinfo->n; t++) {
-	ntodate(obs, t, pdinfo);
+    for (t=0; t<dset->n; t++) {
+	ntodate(obs, t, dset);
 	wday = get_day_of_week(obs);
 	if (wday == repday) {
 	    ok = 0;
-	    for (i=1; i<pdinfo->v; i++) {
-		if (!na(Z[i][t])) {
+	    for (i=1; i<dset->v; i++) {
+		if (!na(dset->Z[i][t])) {
 		    ok = 1;
 		    break;
 		}
@@ -3484,25 +3478,25 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    err = shorten_the_constant(Z, n);
+    err = shorten_the_constant(dset->Z, n);
 
-    for (i=1; i<pdinfo->v && !err; i++) {
+    for (i=1; i<dset->v && !err; i++) {
 	int s = 0;
 
-	for (t=0; t<pdinfo->n; t++) {
-	    ntodate(obs, t, pdinfo);
+	for (t=0; t<dset->n; t++) {
+	    ntodate(obs, t, dset);
 	    wday = get_day_of_week(obs);
 	    if (wday == repday) {
-		x[s++] = Z[i][t];
+		x[s++] = dset->Z[i][t];
 	    }
 	}
-	tmp = realloc(Z[i], n * sizeof **Z);
+	tmp = realloc(dset->Z[i], n * sizeof *tmp);
 	if (tmp == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    Z[i] = tmp;
+	    dset->Z[i] = tmp;
 	    for (t=0; t<n; t++) { 
-		Z[i][t] = x[t];
+		dset->Z[i][t] = x[t];
 	    }
 	}
     }
@@ -3510,22 +3504,22 @@ static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
     free(x);
 
     if (!err) {
-	pdinfo->n = n;
-	pdinfo->pd = 52;
+	dset->n = n;
+	dset->pd = 52;
 	
-	sprintf(pdinfo->stobs, "%04d/%02d/%02d", y1, m1, d1);
-	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-	pdinfo->t1 = 0;
-	pdinfo->t2 = pdinfo->n - 1;
-	ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
+	sprintf(dset->stobs, "%04d/%02d/%02d", y1, m1, d1);
+	dset->sd0 = get_date_x(dset->pd, dset->stobs);
+	dset->t1 = 0;
+	dset->t2 = dset->n - 1;
+	ntodate(dset->endobs, dset->t2, dset);
 
-	dataset_destroy_obs_markers(pdinfo);
+	dataset_destroy_obs_markers(dset);
     }    
 
     return err;
 }
 
-static int daily_dataset_to_monthly (double **Z, DATAINFO *pdinfo,
+static int daily_dataset_to_monthly (DATASET *dset,
 				     CompactMethod default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
@@ -3534,7 +3528,7 @@ static int daily_dataset_to_monthly (double **Z, DATAINFO *pdinfo,
     double *x;
     int i, err = 0;
 
-    nm = get_n_ok_months(pdinfo, default_method, &startyr, &startmon,
+    nm = get_n_ok_months(dset, default_method, &startyr, &startmon,
 			 &endyr, &endmon, &offset, &any_eop);
 
     if (nm <= 0) {
@@ -3542,76 +3536,74 @@ static int daily_dataset_to_monthly (double **Z, DATAINFO *pdinfo,
 	return E_DATA;
     }
 
-    err = shorten_the_constant(Z, nm);
+    err = shorten_the_constant(dset->Z, nm);
 
-    for (i=1; i<pdinfo->v && !err; i++) {
-	method = COMPACT_METHOD(pdinfo, i);
+    for (i=1; i<dset->v && !err; i++) {
+	method = COMPACT_METHOD(dset, i);
 	if (method == COMPACT_NONE) {
 	    method = default_method;
 	}
 
-	x = daily_series_to_monthly(Z[i], pdinfo, i, nm,
+	x = daily_series_to_monthly(dset->Z[i], dset, i, nm,
 				    startyr, startmon, 
 				    offset, any_eop, method);
 	if (x == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    free(Z[i]);
-	    Z[i] = x;
+	    free(dset->Z[i]);
+	    dset->Z[i] = x;
 	}
     }
 
     if (!err) {
-	pdinfo->n = nm;
-	pdinfo->pd = 12;
-	sprintf(pdinfo->stobs, "%04d:%02d", startyr, startmon);
-	sprintf(pdinfo->endobs, "%04d:%02d", endyr, endmon);
-	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-	pdinfo->t1 = 0;
-	pdinfo->t2 = pdinfo->n - 1;
+	dset->n = nm;
+	dset->pd = 12;
+	sprintf(dset->stobs, "%04d:%02d", startyr, startmon);
+	sprintf(dset->endobs, "%04d:%02d", endyr, endmon);
+	dset->sd0 = get_date_x(dset->pd, dset->stobs);
+	dset->t1 = 0;
+	dset->t2 = dset->n - 1;
 
-	dataset_destroy_obs_markers(pdinfo);
+	dataset_destroy_obs_markers(dset);
     }
 
     return err;
 }
 
-static int get_daily_skip (const DATAINFO *pdinfo, int t)
+static int get_daily_skip (const DATASET *dset, int t)
 {
-    int dd = calendar_obs_number(pdinfo->S[t], pdinfo) -
-	calendar_obs_number(pdinfo->S[t-1], pdinfo);
+    int dd = calendar_obs_number(dset->S[t], dset) -
+	calendar_obs_number(dset->S[t-1], dset);
 
     if (dd == 0) {
 	fprintf(stderr, "get_daily_skip: S[%d] = '%s', S[%d] = '%s'\n", 
-		t, pdinfo->S[t], t-1, pdinfo->S[t-1]);
+		t, dset->S[t], t-1, dset->S[t-1]);
     }
 
     return dd - 1;
 }
 
-static int 
-insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
-			   int nmiss)
+static int insert_missing_hidden_obs (DATASET *dset, int nmiss)
 {
-    int oldn = pdinfo->n;
+    int oldn = dset->n;
     double *tmp, **Z;
     int i, s, t, skip;
     int err = 0;
 
-    err = dataset_add_observations(nmiss, pZ, pdinfo, OPT_NONE);
+    err = dataset_add_observations(nmiss, dset, OPT_NONE);
     if (err) {
 	return err;
     }
 
 #if DB_DEBUG
     fprintf(stderr, "daily data: expanded n from %d to %d\n",
-	    oldn, pdinfo->n);
+	    oldn, dset->n);
 #endif
 
-    Z = *pZ;
+    Z = dset->Z;
     tmp = Z[0];
 
-    for (i=1; i<pdinfo->v && !err; i++) {
+    for (i=1; i<dset->v && !err; i++) {
 	for (s=0; s<oldn; s++) {
 	    tmp[s] = Z[i][s];
 	}
@@ -3619,7 +3611,7 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
 	Z[i][0] = tmp[0];
 	t = 1;
 	for (s=1; s<oldn; s++) {
-	    skip = get_daily_skip(pdinfo, s);
+	    skip = get_daily_skip(dset, s);
 	    if (skip < 0) {
 		err = E_DATA;
 		break;
@@ -3631,21 +3623,21 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	Z[0][t] = 1.0;
-	if (pdinfo->S != NULL) {
-	    calendar_date_string(pdinfo->S[t], t, pdinfo);
+	if (dset->S != NULL) {
+	    calendar_date_string(dset->S[t], t, dset);
 	}
     }
 
     if (!err) {
-	pdinfo->t2 = pdinfo->n - 1;
-	ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+	dset->t2 = dset->n - 1;
+	ntodate(dset->endobs, dset->n - 1, dset);
     }
 
 #if DB_DEBUG > 1
     fprintf(stderr, "insert_missing_hidden_obs, done, err = %d\n", err);
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	fprintf(stderr, "Z[1][%d] = %14g\n", t, Z[1][t]);
     }    
 #endif
@@ -3653,9 +3645,9 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
+int maybe_expand_daily_data (DATASET *dset)
 {
-    int nmiss = n_hidden_missing_obs(pdinfo);
+    int nmiss = n_hidden_missing_obs(dset);
     int err = 0;
 
     fprintf(stderr, "n_hidden_missing_obs: nmiss = %d\n", nmiss);
@@ -3663,7 +3655,7 @@ int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
     if (nmiss < 0) {
 	err = 1;
     } else if (nmiss > 0) {
-	err = insert_missing_hidden_obs(pZ, pdinfo, nmiss);
+	err = insert_missing_hidden_obs(dset, nmiss);
     }
 
     return err;
@@ -3671,8 +3663,7 @@ int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
 
 /**
  * compact_data_set:
- * @pZ: pointer to data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @newpd: target data frequency.
  * @default_method: code for the default compaction method.
  * @monstart: FIXME add explanation.
@@ -3684,12 +3675,11 @@ int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
-		      CompactMethod default_method, int monstart,
-		      int repday)
+int compact_data_set (DATASET *dset, int newpd,
+		      CompactMethod default_method, 
+		      int monstart, int repday)
 {
-    int newn, oldn = pdinfo->n, oldpd = pdinfo->pd;
-    double **Z = *pZ;
+    int newn, oldn = dset->n, oldpd = dset->pd;
     int compfac;
     int startmaj, startmin;
     int endmaj, endmin;
@@ -3701,35 +3691,35 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     gretl_error_clear();
 
     if (oldpd == 52) {
-	return weekly_dataset_to_monthly(pZ, pdinfo, default_method);
+	return weekly_dataset_to_monthly(dset, default_method);
     }
 
-    if (dated_daily_data(pdinfo)) {
+    if (dated_daily_data(dset)) {
 	/* allow for the possibility that the daily dataset
 	   contains "hidden" or suppressed missing observations
 	   (holidays are just skipped, not marked as NA)
 	*/
-	err = maybe_expand_daily_data(pZ, pdinfo);
+	err = maybe_expand_daily_data(dset);
 	if (err) {
 	    gretl_errmsg_set("Error expanding daily data with missing observations");
 	    return err;
 	} else {
-	    oldn = pdinfo->n;
+	    oldn = dset->n;
 	}
     }
 
     if (newpd == 52 && oldpd >= 5 && oldpd <= 7 && 
 	default_method == COMPACT_WDAY) {
 	/* daily to weekly, using "representative day" */
-	return daily_dataset_to_weekly(Z, pdinfo, repday);
+	return daily_dataset_to_weekly(dset, repday);
     } else if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {
 	/* daily to monthly: special */
-	return daily_dataset_to_monthly(Z, pdinfo, default_method);
+	return daily_dataset_to_monthly(dset, default_method);
     } else if (oldpd >= 5 && oldpd <= 7) {
 	/* daily to weekly */
 	compfac = oldpd;
-	if (dated_daily_data(pdinfo)) {
-	    startmin = get_day_of_week(pdinfo->stobs);
+	if (dated_daily_data(dset)) {
+	    startmin = get_day_of_week(dset->stobs);
 	    if (oldpd == 7) {
 		if (monstart) {
 		    if (startmin == 0) startmin = 7;
@@ -3743,17 +3733,17 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     } else if (oldpd == 24 && newpd >= 5 && newpd <= 7) {
 	/* hourly to daily */
 	compfac = 24;
-	if (!get_obs_maj_min(pdinfo->stobs, &startmaj, &startmin)) {
+	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
 	    return 1;
 	}
     } else {
 	compfac = oldpd / newpd;
 	/* get starting obs major and minor components */
-	if (!get_obs_maj_min(pdinfo->stobs, &startmaj, &startmin)) {
+	if (!get_obs_maj_min(dset->stobs, &startmaj, &startmin)) {
 	    return 1;
 	}
 	/* get ending obs major and minor components */
-	if (!get_obs_maj_min(pdinfo->endobs, &endmaj, &endmin)) {
+	if (!get_obs_maj_min(dset->endobs, &endmaj, &endmin)) {
 	    return 1;
 	} 
     }
@@ -3764,7 +3754,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     all_same = 1;
     get_global_compact_params(compfac, startmin, endmin, default_method,
 			      &min_startskip, &newn, &any_eop, &all_same, 
-			      pdinfo);
+			      dset);
     if (newn == 0) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
 	return 1;
@@ -3776,8 +3766,8 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	}
 	sprintf(stobs, "%d", startmaj);
     } else if (newpd == 52) {
-	if (oldpd >= 5 && oldpd <= 7 && pdinfo->S != NULL) {
-	    strcpy(stobs, pdinfo->S[min_startskip]);
+	if (oldpd >= 5 && oldpd <= 7 && dset->S != NULL) {
+	    strcpy(stobs, dset->S[min_startskip]);
 	} else {
 	    strcpy(stobs, "1");
 	}
@@ -3793,30 +3783,30 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     }
 
     /* revise datainfo members */
-    strcpy(pdinfo->stobs, stobs);
-    pdinfo->pd = newpd;
-    pdinfo->n = newn;
-    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-    pdinfo->t1 = 0;
-    pdinfo->t2 = pdinfo->n - 1;
-    ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
+    strcpy(dset->stobs, stobs);
+    dset->pd = newpd;
+    dset->n = newn;
+    dset->sd0 = get_date_x(dset->pd, dset->stobs);
+    dset->t1 = 0;
+    dset->t2 = dset->n - 1;
+    ntodate(dset->endobs, dset->t2, dset);
     
-    if (oldpd >= 5 && oldpd <= 7 && pdinfo->markers) {
+    if (oldpd >= 5 && oldpd <= 7 && dset->markers) {
 	/* remove any daily date strings */
-	dataset_destroy_obs_markers(pdinfo);
+	dataset_destroy_obs_markers(dset);
     }
 
-    err = shorten_the_constant(Z, pdinfo->n);
+    err = shorten_the_constant(dset->Z, dset->n);
 
     /* compact the individual data series */
-    for (i=1; i<pdinfo->v && !err; i++) {
+    for (i=1; i<dset->v && !err; i++) {
 	CompactMethod this_method = default_method;
 	int startskip = min_startskip;
 	double *x;
 
 	if (!all_same) {
-	    if (COMPACT_METHOD(pdinfo, i) != COMPACT_NONE) {
-		this_method = COMPACT_METHOD(pdinfo, i);
+	    if (COMPACT_METHOD(dset, i) != COMPACT_NONE) {
+		this_method = COMPACT_METHOD(dset, i);
 	    }
 
 	    startskip = compfac - (startmin % compfac) + 1;
@@ -3830,37 +3820,36 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	    }
 	}
 
-	x = compact_series(Z[i], i, pdinfo->n, oldn, startskip, 
+	x = compact_series(dset->Z[i], i, dset->n, oldn, startskip, 
 			   min_startskip, compfac, this_method);
 	if (x == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    free(Z[i]);
-	    Z[i] = x;
+	    free(dset->Z[i]);
+	    dset->Z[i] = x;
 	}
     }
 
     return err;
 }
 
-static gretl_matrix *
-interpol_expand_dataset (const double **Z, const DATAINFO *pdinfo, 
-			 int newpd, int *err)
+static gretl_matrix *interpol_expand_dataset (const DATASET *dset, 
+					      int newpd, int *err)
 {
     gretl_matrix *Y0, *Y1 = NULL;
     int *list;
 
-    list = gretl_consecutive_list_new(1, pdinfo->v - 1);
+    list = gretl_consecutive_list_new(1, dset->v - 1);
     if (list == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    Y0 = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2,
+    Y0 = gretl_matrix_data_subset(list, dset, dset->t1, dset->t2,
 				  M_MISSING_ERROR, err);
 
     if (!*err) {
-	int f = newpd / pdinfo->pd;
+	int f = newpd / dset->pd;
 
 	Y1 = matrix_chowlin(Y0, NULL, f, err);
 	gretl_matrix_free(Y0);
@@ -3873,8 +3862,7 @@ interpol_expand_dataset (const double **Z, const DATAINFO *pdinfo,
 
 /**
  * expand_data_set:
- * @pZ: pointer to data array.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @newpd: target data frequency.
  * @interpol: use interpolation (0/1).
  * 
@@ -3885,14 +3873,13 @@ interpol_expand_dataset (const double **Z, const DATAINFO *pdinfo,
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
-		     int interpol)
+int expand_data_set (DATASET *dset, int newpd, int interpol)
 {
     char stobs[12];
-    int oldn = pdinfo->n;
-    int oldpd = pdinfo->pd;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int oldn = dset->n;
+    int oldpd = dset->pd;
+    int t1 = dset->t1;
+    int t2 = dset->t2;
     int mult, newn, nadd;
     gretl_matrix *X = NULL;
     double *x = NULL;
@@ -3910,8 +3897,7 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     }
 
     if (interpol) {
-	X = interpol_expand_dataset((const double **) *pZ,
-				    pdinfo, newpd, &err);
+	X = interpol_expand_dataset(dset, newpd, &err);
     } else {
 	x = malloc(oldn * sizeof *x);
 	if (x == NULL) {
@@ -3924,36 +3910,36 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     }
 
     mult = newpd / oldpd;
-    newn = mult * pdinfo->n;
+    newn = mult * dset->n;
     nadd = newn - oldn;
 
-    err = dataset_add_observations(nadd, pZ, pdinfo, OPT_NONE);
+    err = dataset_add_observations(nadd, dset, OPT_NONE);
     if (err) {
 	goto bailout;
     }
 
     if (interpol) {
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    for (t=0; t<newn; t++) {
-		(*pZ)[i][t] = gretl_matrix_get(X, t, i-1);
+		dset->Z[i][t] = gretl_matrix_get(X, t, i-1);
 	    }
 	}
     } else {
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=1; i<dset->v; i++) {
 	    for (t=0; t<oldn; t++) {
-		x[t] = (*pZ)[i][t];
+		x[t] = dset->Z[i][t];
 	    }
 	    s = 0;
 	    for (t=0; t<oldn; t++) {
 		for (j=0; j<mult; j++) {
-		    (*pZ)[i][s++] = x[t];
+		    dset->Z[i][s++] = x[t];
 		}
 	    }
 	}
     }
 
-    if (pdinfo->pd == 1) {
-	strcpy(stobs, pdinfo->stobs);
+    if (dset->pd == 1) {
+	strcpy(stobs, dset->stobs);
 	if (newpd == 4) {
 	    strcat(stobs, ":1");
 	} else {
@@ -3962,26 +3948,26 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     } else {
 	int yr, qtr, mo;
 
-	sscanf(pdinfo->stobs, "%d:%d", &yr, &qtr);
+	sscanf(dset->stobs, "%d:%d", &yr, &qtr);
 	mo = (qtr - 1) * 3 + 1;
 	sprintf(stobs, "%d:%02d", yr, mo);
     }
 
-    if (pdinfo->t1 > 0) {
-	pdinfo->t1 *= mult;
+    if (dset->t1 > 0) {
+	dset->t1 *= mult;
     }
 
-    if (pdinfo->t2 < oldn - 1) {
-	pdinfo->t2 = pdinfo->t1 + (t2 - t1 + 1) * mult - 1;
+    if (dset->t2 < oldn - 1) {
+	dset->t2 = dset->t1 + (t2 - t1 + 1) * mult - 1;
     }    
 
-    strcpy(pdinfo->stobs, stobs);
-    pdinfo->pd = newpd;
-    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    strcpy(dset->stobs, stobs);
+    dset->pd = newpd;
+    dset->sd0 = get_date_x(dset->pd, dset->stobs);
+    ntodate(dset->endobs, dset->n - 1, dset);
 
-    if (pdinfo->markers) {
-	dataset_destroy_obs_markers(pdinfo);
+    if (dset->markers) {
+	dataset_destroy_obs_markers(dset);
     }
 
  bailout:

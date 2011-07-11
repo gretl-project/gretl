@@ -492,7 +492,7 @@ static int scalar_try_genr (gchar **ps)
     double x;
     int err = 0;
 
-    x = generate_scalar(*ps + 1, &Z, datainfo, &err);
+    x = generate_scalar(*ps + 1, dataset, &err);
 
     if (!err) {
 	g_free(*ps);
@@ -742,14 +742,14 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 	return;
     }
 
-    if (datainfo->markers && obsname != NULL) {
+    if (dataset->markers && obsname != NULL) {
 	gtk_list_store_set(store, &iter, 0, obsname, -1);
     } else if (sheet->point == SHEET_AT_END) {
 	gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(store), &iter,
 					    pstr);
 	for (j=0; j<n; j++) {
 	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
-	    get_obs_string(rowlabel, sheet->datarows + j, datainfo);
+	    get_obs_string(rowlabel, sheet->datarows + j, dataset);
 	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
 	}
     }
@@ -771,9 +771,9 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 	}
     }	
 
-    if (sheet->point == SHEET_AT_POINT && !datainfo->markers) {
+    if (sheet->point == SHEET_AT_POINT && !dataset->markers) {
 	for (i=rownum; i<sheet->datarows; i++) {
-	    get_obs_string(rowlabel, i, datainfo);
+	    get_obs_string(rowlabel, i, dataset);
 	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
 	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
 	}
@@ -1078,7 +1078,7 @@ static void matrix_fill_callback (GtkAction *action, gpointer data)
 
 static void sheet_add_obs_direct (Spreadsheet *sheet)
 {
-    if (datainfo->markers) {
+    if (dataset->markers) {
 	new_case_dialog(sheet);
     } else if (sheet->point == SHEET_AT_END) {
 	int n = add_obs_dialog(NULL, 1);
@@ -1295,7 +1295,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     GtkTreeIter iter;
     GtkTreeViewColumn *column;
     GtkTreeModel *model;
-    int oldv = datainfo->v;
+    int oldv = dataset->v;
     int newvars = sheet->added_vars;
     int newobs = sheet->datarows - sheet->orig_nobs;
     int missobs = 0;
@@ -1311,8 +1311,8 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
     /* first extend series length, if needed */
 
     if (newobs > 0) {
-	if (dataset_add_observations(newobs, &Z, datainfo, OPT_A) ||
-	    dataset_destroy_hidden_variables(&Z, datainfo, 0)) {
+	if (dataset_add_observations(newobs, dataset, OPT_A) ||
+	    dataset_destroy_hidden_variables(dataset, 0)) {
 	    nomem();
 	    return;
 	}
@@ -1324,7 +1324,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	int vi, v0 = sheet->varlist[0];
 	const gchar *newname;
 
-	if (dataset_add_series(newvars, &Z, datainfo)) {
+	if (dataset_add_series(newvars, dataset)) {
 	    nomem();
 	    return;
 	}
@@ -1340,7 +1340,7 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 	    colnum = v0 + 1 + i;
 	    column = gtk_tree_view_get_column(view, colnum);
 	    newname = gtk_tree_view_column_get_title(column);
-	    strcpy(datainfo->varname[vi], newname); 
+	    strcpy(dataset->varname[vi], newname); 
 #if SSDEBUG
 	    fprintf(stderr, " added var %d (%s) from column %d\n",
 		    vi, newname, colnum);
@@ -1359,15 +1359,15 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
 #if SSDEBUG
 	fprintf(stderr, " updating data for var %d (%s) from column %d\n",
-		vi, datainfo->varname[vi], colnum);
+		vi, dataset->varname[vi], colnum);
 #endif
-	t = datainfo->t1;
+	t = dataset->t1;
 	for (s=0; s<sheet->datarows; s++) {
 	    gtk_tree_model_get(model, &iter, colnum, &numstr, -1);
 	    if (*numstr != '\0') {
-		Z[vi][t++] = atof(numstr); 
+		dataset->Z[vi][t++] = atof(numstr); 
 	    } else {
-		Z[vi][t++] = NADBL;
+		dataset->Z[vi][t++] = NADBL;
 		missobs = 1;
 	    }
 	    g_free(numstr);
@@ -1378,14 +1378,14 @@ static void update_dataset_from_sheet (Spreadsheet *sheet)
 
     /* copy observation markers, if relevant */
 
-    if (dataset_has_markers(datainfo)) {
+    if (dataset_has_markers(dataset)) {
 	gchar *marker;
 
 	gtk_tree_model_get_iter_first(model, &iter);
-	t = datainfo->t1;
+	t = dataset->t1;
 	for (s=0; s<sheet->datarows; s++) {
 	    gtk_tree_model_get(model, &iter, 0, &marker, -1);
-	    strcpy(datainfo->S[t++], marker);
+	    strcpy(dataset->S[t++], marker);
 	    g_free(marker);
 	    gtk_tree_model_iter_next(model, &iter);
 	}
@@ -1721,19 +1721,19 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
     /* insert observation markers */
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	get_obs_string(rowlabel, t, datainfo);
+    for (t=dataset->t1; t<=dataset->t2; t++) {
+	get_obs_string(rowlabel, t, dataset);
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
     }
 
-    sheet->datarows = datainfo->t2 - datainfo->t1 + 1;
+    sheet->datarows = dataset->t2 - dataset->t1 + 1;
 
     /* insert data values */
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (t=datainfo->t1; t<=datainfo->t2; t++) {
+    for (t=dataset->t1; t<=dataset->t2; t++) {
 	if (c == SHEET_NEW_DATASET) {
 	    /* no hidden vars to consider; insert NAs for first var */
 	    gtk_list_store_set(store, &iter, 1, "", -1);
@@ -1744,10 +1744,10 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 
 	    for (i=1; i<=sheet->varlist[0]; i++) {
 		vi = sheet->varlist[i];
-		if (na(Z[vi][t])) {
+		if (na(dataset->Z[vi][t])) {
 		    *numstr = '\0';
 		} else {
-		    sprintf(numstr, "%.*g", DBL_DIG, Z[vi][t]);
+		    sprintf(numstr, "%.*g", DBL_DIG, dataset->Z[vi][t]);
 		}
 		gtk_list_store_set(store, &iter, ++colnum, numstr, -1);
 	    }
@@ -1755,7 +1755,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
 
-    sheet->orig_main_v = datainfo->v;
+    sheet->orig_main_v = dataset->v;
 
 #if SSDEBUG
     fprintf(stderr, " datarows=%d, orig_vars=%d, orig_main_v=%d\n", 
@@ -2225,14 +2225,14 @@ static int build_sheet_view (Spreadsheet *sheet)
 	sheet->datacols = 0;
 
 	for (i=sheet->varlist[0]; i>0; i--) {
-	    if (var_is_hidden(datainfo, sheet->varlist[i])) {
+	    if (var_is_hidden(dataset, sheet->varlist[i])) {
 		gretl_list_delete_at_pos(sheet->varlist, i);
 	    } else {
 		sheet->datacols += 1;
 	    }
 	}  
 
-	if (sheet->varlist[0] < datainfo->v - 1) {
+	if (sheet->varlist[0] < dataset->v - 1) {
 	    sheet->flags |= SHEET_SHORT_VARLIST;
 	}
     }
@@ -2320,11 +2320,11 @@ static int build_sheet_view (Spreadsheet *sheet)
 	for (i=1; i<=sheet->varlist[0]; i++) {
 	    int vi = sheet->varlist[i];
 
-	    if (var_is_hidden(datainfo, vi)) {
+	    if (var_is_hidden(dataset, vi)) {
 		continue;
 	    }
 	    colnum++;
-	    double_underscores(tmpstr, datainfo->varname[vi]);
+	    double_underscores(tmpstr, dataset->varname[vi]);
 	    column = gtk_tree_view_column_new_with_attributes(tmpstr,
 							      sheet->datacell,
 							      "text", 
@@ -2461,11 +2461,11 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
 	return sheet;
     }
 
-    if (datainfo->t1 != 0 || datainfo->t2 < datainfo->n - 1) {
+    if (dataset->t1 != 0 || dataset->t2 < dataset->n - 1) {
 	sheet->flags |= SHEET_SUBSAMPLED;
     }
 
-    sheet->orig_nobs = datainfo->t2 - datainfo->t1 + 1;
+    sheet->orig_nobs = dataset->t2 - dataset->t1 + 1;
 
     if (sheet->cmd == SHEET_NEW_DATASET) {
 	sheet->varlist = gretl_list_new(1);
@@ -2480,7 +2480,7 @@ static Spreadsheet *spreadsheet_new (SheetCmd c, int varnum)
 		sheet->varlist = main_window_selection_as_list();
 	    }
 	} else {
-	    sheet->varlist = full_var_list(datainfo, NULL);
+	    sheet->varlist = full_var_list(dataset, NULL);
 	}
 	if (sheet_list_empty(sheet)) {
 	    return NULL;
@@ -2501,10 +2501,10 @@ static void empty_dataset_guard (void)
 {
     int t, empty = 0, miss = 0;
 
-    if (datainfo->v == 2) {
+    if (dataset->v == 2) {
 	empty = 1;
-	for (t=0; t<datainfo->n; t++) {
-	    if (na(Z[1][t])) {
+	for (t=0; t<dataset->n; t++) {
+	    if (na(dataset->Z[1][t])) {
 		miss = 1;
 	    } else {
 		empty = 0;
@@ -2513,7 +2513,7 @@ static void empty_dataset_guard (void)
     }
 
     if (empty) {
-	infobox(_("Warning: series %s is empty"), datainfo->varname[1]);
+	infobox(_("Warning: series %s is empty"), dataset->varname[1]);
     } else if (miss) {
 	infobox(_("Warning: there were missing observations"));
     }
@@ -2659,11 +2659,11 @@ static void adjust_add_menu_state (Spreadsheet *sheet)
 {
     sheet->flags |= SHEET_ADD_OBS_OK | SHEET_INSERT_OBS_OK;
 
-    if (complex_subsampled() || datainfo->t2 < datainfo->n - 1) {
+    if (complex_subsampled() || dataset->t2 < dataset->n - 1) {
 	sheet->flags &= ~SHEET_ADD_OBS_OK;
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
     } else if ((sheet->flags & SHEET_SHORT_VARLIST) ||
-	       dataset_is_panel(datainfo)) {
+	       dataset_is_panel(dataset)) {
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
     }
 }
@@ -2951,7 +2951,7 @@ void show_spreadsheet (SheetCmd c)
 {
     static Spreadsheet *sheet;    
 
-    if (datainfo->v == 1) {
+    if (dataset->v == 1) {
 	warnbox(_("Please add a variable to the dataset first"));
 	return;
     }
@@ -3277,8 +3277,8 @@ static int gui_matrix_from_list (selector *sr)
 	return err;
     }
 
-    s->m = gretl_matrix_data_subset(list, (const double **) Z, 
-				    datainfo->t1, datainfo->t2, 
+    s->m = gretl_matrix_data_subset(list, dataset, 
+				    dataset->t1, dataset->t2, 
 				    M_MISSING_SKIP, &err);
 
     if (!err) {
@@ -3296,7 +3296,7 @@ static int gui_matrix_from_list (selector *sr)
 
 	    pprintf(prn, "matrix %s = {", s->name);
 	    for (i=1; i<=list[0]; i++) {
-		pprintf(prn, "%s", datainfo->varname[list[i]]);
+		pprintf(prn, "%s", dataset->varname[list[i]]);
 		if (i < list[0]) {
 		    pputc(prn, ',');
 		} else {
@@ -3319,7 +3319,7 @@ matrix_from_formula (struct gui_matrix_spec *s)
     gchar *genline = g_strdup_printf("matrix %s = %s", s->name, s->formula);
     int err;
 
-    err = generate(genline, &Z, datainfo, OPT_NONE, NULL); 
+    err = generate(genline, dataset, OPT_NONE, NULL); 
 
     if (err) {
 	gui_errmsg(err);

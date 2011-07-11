@@ -122,13 +122,13 @@ static int get_data_digits (const char *s)
     return digits;
 }
 
-static int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
+static int grab_nist_data (FILE *fp, DATASET *dset,
 			   int *zdigits, int polyterms, 
 			   PRN *prn)
 {
     double xx;
     int i, t, dit;
-    int realvars = dinfo->v - polyterms;
+    int realvars = dset->v - polyterms;
     char numstr[64];
 
     if (verbose > 1) {
@@ -137,19 +137,19 @@ static int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     for (i=1; i<realvars; i++) {
 	if (i == 1) {
-	    strcpy(dinfo->varname[i], "y");
+	    strcpy(dset->varname[i], "y");
 	} else if (realvars > 3) {
-	    sprintf(dinfo->varname[i], "x%d", i - 1);
+	    sprintf(dset->varname[i], "x%d", i - 1);
 	} else {
-	    strcpy(dinfo->varname[i], "x");
+	    strcpy(dset->varname[i], "x");
 	}
 	if (verbose > 1) {
 	    pprintf(prn, "reading variable %d as '%s'\n",
-		    i, dinfo->varname[i]);
+		    i, dset->varname[i]);
 	}
     }	
 
-    for (t=0; t<dinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	for (i=1; i<realvars; i++) {
 	    if (fscanf(fp, "%s", numstr) != 1) {
 		pputs(prn, "Data ended prematurely\n");
@@ -163,7 +163,7 @@ static int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		}
 		xx = atof(numstr);
 	    }
-	    Z[i][t] = xx;
+	    dset->Z[i][t] = xx;
 	} 
     } 
 
@@ -277,7 +277,7 @@ static double log_error (double q, double c, PRN *prn)
     return le;
 }
 
-static int allocate_data_digits (const DATAINFO *dinfo, int **zdigits)
+static int allocate_data_digits (const DATASET *dinfo, int **zdigits)
 {
     int *zd;
     int i;
@@ -295,8 +295,7 @@ static int allocate_data_digits (const DATAINFO *dinfo, int **zdigits)
 }
 
 static int read_nist_file (const char *fname, 
-			   double ***pZ,
-			   DATAINFO **pdinfo,
+			   DATASET **pdset,
 			   mp_results **pcertvals,
 			   int *polyterms,
 			   int **zdigits,
@@ -307,8 +306,7 @@ static int read_nist_file (const char *fname,
     int cstart = 0, cstop = 0;
     int dstart = 0, dstop = 0;
     int lcount = 0, nvar = 0, nobs = 0;
-    double **Z = NULL;
-    DATAINFO *dinfo = NULL;
+    DATASET *dset = NULL;
     mp_results *certvals = NULL;
     int i, t, npoly = 0;
     char fullname[128];
@@ -404,19 +402,19 @@ static int read_nist_file (const char *fname,
 	}
 
 	/* allocate data matrix once we know its size */
-	if (nvar > 0 && nobs > 0 && Z == NULL) {
+	if (nvar > 0 && nobs > 0 && dset == NULL) {
 
-	    dinfo = create_auxiliary_dataset(&Z, nvar + 1 + npoly, 
-					     nobs);
-	    if (dinfo == NULL) {
+	    dset = create_auxiliary_dataset(nvar + 1 + npoly, 
+					    nobs);
+	    if (dset == NULL) {
 		free_mp_results(certvals);
 		fclose(fp);
 		return 1;
 	    }
 
-	    if (allocate_data_digits(dinfo, zdigits)) {
+	    if (allocate_data_digits(dset, zdigits)) {
 		free_mp_results(certvals);
-		free_datainfo(dinfo);
+		free_datainfo(dset);
 		fclose(fp);
 		return 1;
 	    }	
@@ -442,12 +440,12 @@ static int read_nist_file (const char *fname,
 
 	/* read the data */
 	if (dstart > 0 && lcount == dstart - 1) {
-	    if (Z == NULL) {
+	    if (dset == NULL || dset->Z == NULL) {
 		pputs(prn, "Data coming but data matrix is not "
 		      "allocated: file is problematic\n");
 		fclose(fp);
 		return 1;
-	    } else if (grab_nist_data(fp, Z, dinfo, *zdigits, npoly, prn)) {
+	    } else if (grab_nist_data(fp, dset, *zdigits, npoly, prn)) {
 		fclose(fp);
 		return 1;
 	    } 
@@ -456,12 +454,12 @@ static int read_nist_file (const char *fname,
     } /* end main fgets loop */
 
     if (verbose > 1) {
-	if (Z != NULL) {
+	if (dset != NULL && dset->Z != NULL) {
 	    int i, t;
 
 	    for (t=0; t<nobs; t++) {
 		for (i=1; i<=nvar; i++) {
-		    pprintf(prn, "%#.20g", Z[i][t]);
+		    pprintf(prn, "%#.20g", dset->Z[i][t]);
 		    pputc(prn, ((i == nvar)? '\n' : ' '));
 		}
 	    }
@@ -476,16 +474,15 @@ static int read_nist_file (const char *fname,
 	if (verbose) {
 	    pprintf(prn, "Generating var %d, 'x^%d' = x ** %d\n", i+1, i, i);
 	}
-	sprintf(dinfo->varname[i+1], "x^%d", i);
-	for (t=0; t<dinfo->n; t++) {
-	    Z[i+1][t] = pow(Z[2][t], i);
+	sprintf(dset->varname[i+1], "x^%d", i);
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[i+1][t] = pow(dset->Z[2][t], i);
 	}
     }
 
     fclose(fp);
 
-    *pZ = Z;
-    *pdinfo = dinfo;
+    *pdset = dset;
     *pcertvals = certvals;
     *polyterms = npoly;
 
@@ -573,25 +570,24 @@ static void *get_mplsq (void **handle);
 # endif
 
 static
-int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo, 
+int run_gretl_mp_comparison (DATASET *dset, 
 			     mp_results *certvals, int npoly,
 			     const int *zdigits, int *mpfails, 
 			     PRN *prn)
 {
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, const int *,
-		 const double **, const DATAINFO *, MODEL *, 
-		 gretlopt);
+		 const DATASET *, MODEL *, gretlopt);
     int *list = NULL, *polylist = NULL;
     int i, err = 0;
-    int realv = dinfo->v - npoly;
+    int realv = dset->v - npoly;
     MODEL model;
     double acc;
 
     gretl_model_init(&model);
 
     /* create regression list */
-    list = malloc((realv + 1) * sizeof *list);
+    list = gretl_list_new(realv);
     if (list == NULL) return 1;
 
     if (noint) {
@@ -610,12 +606,11 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 
     /* set up list of polynomial terms, if needed */
     if (npoly) {
-	polylist = malloc((npoly + 1) * sizeof *polylist);
+	polylist = gretl_list_new(npoly);
 	if (polylist == NULL) {
 	    free(list);
 	    return 1;
 	}
-	polylist[0] = npoly;
 	for (i=1; i<=npoly; i++) {
 	    polylist[i] = i + 1;
 	}
@@ -632,8 +627,7 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     }
 
     if (!err) {
-        err = (*mplsq)(list, polylist, zdigits, 
-		       (const double **) *pZ, dinfo, 
+        err = (*mplsq)(list, polylist, zdigits, dset, 
 		       &model, OPT_NONE); 
     }
 
@@ -708,7 +702,7 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 
 static
 int run_gretl_comparison (const char *datname,
-			  double ***pZ, DATAINFO *dinfo, 
+			  DATASET *dset, 
 			  mp_results *certvals,
 			  int *errs, int *poor,
 			  PRN *prn)
@@ -720,16 +714,16 @@ int run_gretl_comparison (const char *datname,
     int i;
     static int modelnum;
 
-    list = malloc((dinfo->v + 1) * sizeof *list);
+    list = gretl_list_new(dset->v);
     if (list == NULL) return 1;
 
     if (noint) {
-	list[0] = dinfo->v - 1;
+	list[0] = dset->v - 1;
 	for (i=1; i<=list[0]; i++) {
 	    list[i] = i;
 	}
     } else {
-	list[0] = dinfo->v;
+	list[0] = dset->v;
 	list[1] = 1;
 	list[2] = 0;
 	for (i=3; i<=list[0]; i++) {
@@ -739,7 +733,7 @@ int run_gretl_comparison (const char *datname,
 
     model = gretl_model_new();
 
-    *model = lsq(list, *pZ, dinfo, OLS, OPT_D | OPT_Z);
+    *model = lsq(list, dset, OLS, OPT_D | OPT_Z);
 
     if (model->errcode) {
 	if (verbose) {
@@ -762,7 +756,7 @@ int run_gretl_comparison (const char *datname,
 	int i;
 
 	model->ID = ++modelnum;
-	printmodel(model, dinfo, OPT_NONE, prn);
+	printmodel(model, dset, OPT_NONE, prn);
 
 	for (i=0; i<model->ncoeff; i++) {
 	    pprintf(prn, " gretl coefficient[%d] = %#.10g\n", i, 
@@ -775,8 +769,8 @@ int run_gretl_comparison (const char *datname,
 	double xx = 0.0;
 	int t;
 
-	for (t=0; t<dinfo->n; t++) {
-	    xx += (*pZ)[1][t] *  (*pZ)[1][t];
+	for (t=0; t<dset->n; t++) {
+	    xx += dset->Z[1][t] *  dset->Z[1][t];
 	}
 	model->rsq = 1.0 - model->ess / xx;
     } 
@@ -828,8 +822,7 @@ int main (int argc, char *argv[])
 {
     int j;
     PRN *prn;
-    double **Z = NULL;
-    DATAINFO *datainfo;
+    DATASET *dataset;
     mp_results *certvals = NULL;
     int ntests, missing = 0, modelerrs = 0, poorvals = 0;
     int polyterms = 0, mpfails = 0;
@@ -875,23 +868,23 @@ int main (int argc, char *argv[])
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); 
 
     for (j=0; j<ntests; j++) {
-	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,
+	if (read_nist_file(nist_files[j], &Z, &dataset, &certvals,
 			   &polyterms, &zdigits, prn)) {
 	    pprintf(prn, "Error processing %s\n", nist_files[j]);
 	    missing++;
 
 	} else {
-	    run_gretl_comparison (nist_files[j], &Z, datainfo, certvals,
+	    run_gretl_comparison (nist_files[j], &Z, dataset, certvals,
 				  &modelerrs, &poorvals, prn);
 
-	    run_gretl_mp_comparison (&Z, datainfo, certvals, polyterms, 
+	    run_gretl_mp_comparison (&Z, dataset, certvals, polyterms, 
 				     zdigits, &mpfails, prn);
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
-	    destroy_dataset(Z, datainfo);
+	    destroy_dataset(Z, dataset);
 	    Z = NULL;
-	    datainfo = NULL;
+	    dataset = NULL;
 	    free(zdigits);
 	    zdigits = NULL;
 	}
@@ -940,8 +933,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 {
     int j;
     PRN *prn;
-    double **Z = NULL;
-    DATAINFO *datainfo;
+    DATASET *dataset;
     mp_results *certvals = NULL;
     int *zdigits = NULL;
     int ntests, missing = 0, modelerrs = 0, poorvals = 0;
@@ -974,23 +966,22 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
     nist_intro(prn);
 
     for (j=0; j<ntests; j++) {
-	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,
+	if (read_nist_file(nist_files[j], &dataset, &certvals,
 			   &polyterms, &zdigits, prn)) {
 	    pprintf(prn, "Error processing %s\n", nist_files[j]);
 	    missing++;
 
 	} else {
-	    run_gretl_comparison (nist_files[j], &Z, datainfo, certvals,
+	    run_gretl_comparison (nist_files[j], dataset, certvals,
 				  &modelerrs, &poorvals, prn);
 
-	    run_gretl_mp_comparison (&Z, datainfo, certvals, polyterms, 
+	    run_gretl_mp_comparison (dataset, certvals, polyterms, 
 				     zdigits, &mpfails, prn);
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
-	    destroy_dataset(Z, datainfo);
-	    Z = NULL;
-	    datainfo = NULL;
+	    destroy_dataset(dataset);
+	    dataset = NULL;
 	    free(zdigits);
 	    zdigits = NULL;
 	}

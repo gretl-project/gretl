@@ -484,16 +484,16 @@ static fnpkg *function_package_alloc (const char *fname)
    required for correct handling of namespaces.  
 */
 
-static void set_listargs_from_call (fncall *call, DATAINFO *pdinfo)
+static void set_listargs_from_call (fncall *call, DATASET *dset)
 {
     int i, v;
 
-    if (pdinfo == NULL) {
+    if (dset == NULL) {
 	return;
     }
 
-    for (i=1; i<pdinfo->v; i++) {
-	unset_var_listarg(pdinfo, i);
+    for (i=1; i<dset->v; i++) {
+	unset_var_listarg(dset, i);
     }
 
     if (call != NULL && call->listvars != NULL) {
@@ -501,14 +501,14 @@ static void set_listargs_from_call (fncall *call, DATAINFO *pdinfo)
 	    v = call->listvars[i];
 #if UDEBUG
 	    fprintf(stderr, "setting listarg status on var %d (%s)\n",
-		    v, pdinfo->varname[v]);
+		    v, dset->varname[v]);
 #endif
-	    set_var_listarg(pdinfo, v);
+	    set_var_listarg(dset, v);
 	}
     }
 }
 
-static void set_executing_off (fncall *call, DATAINFO *pdinfo, PRN *prn)
+static void set_executing_off (fncall *call, DATASET *dset, PRN *prn)
 {
     int dbg = gretl_debugging_on();
     fncall *popcall = NULL;
@@ -538,8 +538,8 @@ static void set_executing_off (fncall *call, DATAINFO *pdinfo, PRN *prn)
 	gretl_insert_builtin_string("pkgdir", NULL);
     }
 
-    if (pdinfo != NULL) {
-	set_listargs_from_call(popcall, pdinfo);
+    if (dset != NULL) {
+	set_listargs_from_call(popcall, dset);
     }
 
     if (dbg) {
@@ -5069,7 +5069,7 @@ int update_function_from_script (const char *funname, const char *path,
 */
 
 static int localize_list (fncall *call, const char *oldname, 
-			  fn_param *fp, DATAINFO *pdinfo)
+			  fn_param *fp, DATASET *dset)
 {
     const int *list;
     int level = fn_executing + 1;
@@ -5097,7 +5097,7 @@ static int localize_list (fncall *call, const char *oldname,
 		if (!in_gretl_list(call->listvars, vi)) {
 		    gretl_list_append_term(&call->listvars, vi);
 		}
-		STACK_LEVEL(pdinfo, vi) = level;
+		STACK_LEVEL(dset, vi) = level;
 	    }
 	}
     }
@@ -5235,22 +5235,22 @@ static int localize_scalar_ref (fncall *call, struct fnarg *arg,
 }
 
 static int localize_series_ref (fncall *call, struct fnarg *arg, 
-				fn_param *fp, DATAINFO *pdinfo)
+				fn_param *fp, DATASET *dset)
 {
     int v = arg->val.idnum;
 
-    if (STACK_LEVEL(pdinfo, v) == fn_executing + 1) {
+    if (STACK_LEVEL(dset, v) == fn_executing + 1) {
 	gretl_errmsg_set(_("Duplicated pointer argument: not allowed"));
 	return E_DATA;
     }
 
-    arg->upname = gretl_strdup(pdinfo->varname[v]);
+    arg->upname = gretl_strdup(dset->varname[v]);
     if (arg->upname == NULL) {
 	return E_ALLOC;
     } 
 
-    STACK_LEVEL(pdinfo, v) += 1;
-    strcpy(pdinfo->varname[v], fp->name);
+    STACK_LEVEL(dset, v) += 1;
+    strcpy(dset->varname[v], fp->name);
 
     if (!in_gretl_list(call->ptrvars, v)) {
 	gretl_list_append_term(&call->ptrvars, v);
@@ -5302,9 +5302,7 @@ static void fncall_finalize_listvars (fncall *call)
     }
 }
 
-static int allocate_function_args (fncall *call,
-				   double ***pZ,
-				   DATAINFO *pdinfo)
+static int allocate_function_args (fncall *call, DATASET *dset)
 {
     ufunc *fun = call->fun;
     fnargs *args = call->args;
@@ -5335,10 +5333,10 @@ static int allocate_function_args (fncall *call,
 	} else if (fp->type == GRETL_TYPE_SERIES) {
 	    if (arg->type == GRETL_TYPE_USERIES) {
 		err = dataset_copy_variable_as(arg->val.idnum, fp->name,
-					       pZ, pdinfo);
+					       dset);
 	    } else {
 		err = dataset_add_series_as(arg->val.px, fp->name, 
-					    pZ, pdinfo);
+					    dset);
 	    }	    
 	} else if (fp->type == GRETL_TYPE_MATRIX) {
 	    if (fp->flags & ARG_CONST) {
@@ -5354,7 +5352,7 @@ static int allocate_function_args (fncall *call,
 	    } else if (arg->type == GRETL_TYPE_USERIES) {
 		err = create_named_singleton_list(arg->val.idnum, fp->name);
 	    } else {
-		err = localize_list(call, arg->val.str, fp, pdinfo);
+		err = localize_list(call, arg->val.str, fp, dset);
 	    }
 	} else if (fp->type == GRETL_TYPE_STRING) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -5366,7 +5364,7 @@ static int allocate_function_args (fncall *call,
 	    }
 	} else if (fp->type == GRETL_TYPE_SERIES_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
-		err = localize_series_ref(call, arg, fp, pdinfo);
+		err = localize_series_ref(call, arg, fp, dset);
 	    }
 	} else if (fp->type == GRETL_TYPE_MATRIX_REF) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -5380,7 +5378,7 @@ static int allocate_function_args (fncall *call,
 
 	if (!err) {
 	    if (arg->type == GRETL_TYPE_USERIES && fp->type != GRETL_TYPE_LIST) {
-		arg->upname = gretl_strdup(pdinfo->varname[arg->val.idnum]);
+		arg->upname = gretl_strdup(dset->varname[arg->val.idnum]);
 	    } else if (arg->type == GRETL_TYPE_USCALAR) {
 		arg->upname = gretl_strdup(gretl_scalar_get_name(arg->val.idnum));
 	    }	
@@ -5408,7 +5406,7 @@ static int allocate_function_args (fncall *call,
     }
 
     if (!err) {
-	set_listargs_from_call(call, pdinfo);
+	set_listargs_from_call(call, dset);
     }
 
 #if UDEBUG
@@ -5420,7 +5418,7 @@ static int allocate_function_args (fncall *call,
 
 /**
  * check_function_needs:
- * @pdinfo: pointer to dataset info.
+ * @dset: pointer to dataset info.
  * @dreq: function data requirements flag.
  * @minver: function minimum program version requirement.
  *
@@ -5431,7 +5429,7 @@ static int allocate_function_args (fncall *call,
  * Returns: 0 if all is OK, 1 otherwise.
  */
 
-int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
+int check_function_needs (const DATASET *dset, FuncDataReq dreq,
 			  int minver)
 {
     static int thisver = 0;
@@ -5448,24 +5446,24 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 	return 1;
     }
 
-    if ((pdinfo == NULL || pdinfo->v == 0) && dreq != FN_NODATA_OK) {
+    if ((dset == NULL || dset->v == 0) && dreq != FN_NODATA_OK) {
 	gretl_errmsg_set("This function needs a dataset in place");
 	return 1;
     }
 
-    if (dreq == FN_NEEDS_TS && !dataset_is_time_series(pdinfo)) {
+    if (dreq == FN_NEEDS_TS && !dataset_is_time_series(dset)) {
 	gretl_errmsg_set("This function needs time-series data");
 	return 1;
     }
 
-    if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(pdinfo)) {
+    if (dreq == FN_NEEDS_PANEL && !dataset_is_panel(dset)) {
 	gretl_errmsg_set("This function needs panel data");
 	return 1;
     }
 
     if (dreq == FN_NEEDS_QM && 
-	(!dataset_is_time_series(pdinfo) || 
-	 (pdinfo->pd != 4 || pdinfo->pd != 12))) {
+	(!dataset_is_time_series(dset) || 
+	 (dset->pd != 4 || dset->pd != 12))) {
 	gretl_errmsg_set("This function needs quarterly or monthly data");
 	return 1;
     } 
@@ -5473,13 +5471,13 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
     return 0;
 }
 
-static int maybe_check_function_needs (const DATAINFO *pdinfo,
+static int maybe_check_function_needs (const DATASET *dset,
 				       const ufunc *fun)
 {
     if (fun->pkg == NULL) {
 	return 0;
     } else {
-	return check_function_needs(pdinfo, fun->pkg->dreq, 
+	return check_function_needs(dset, fun->pkg->dreq, 
 				    fun->pkg->minver);
     }
 }
@@ -5501,25 +5499,24 @@ static int handle_scalar_return (const char *vname, void *ptr)
 }
 
 static int handle_series_return (const char *vname, void *ptr,
-				 double **Z, DATAINFO *pdinfo, 
-				 int copy)
+				 DATASET *dset, int copy)
 {
-    int v = series_index(pdinfo, vname);
+    int v = series_index(dset, vname);
     double *x = NULL;
     int err = 0;
 
     if (!copy && v == 0) {
 	copy = 1;
     }
-    if (v >= 0 && v < pdinfo->v) {
+    if (v >= 0 && v < dset->v) {
 	if (copy) {
-	    x = copyvec(Z[v], pdinfo->n);
+	    x = copyvec(dset->Z[v], dset->n);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    }
 	} else {
-	    x = Z[v];
-	    Z[v] = NULL;
+	    x = dset->Z[v];
+	    dset->Z[v] = NULL;
 	}
     } else {
 	err = E_UNKVAR;
@@ -5598,7 +5595,7 @@ enum {
 */
 
 static int unlocalize_list (const char *lname, int status,
-			    double **Z, DATAINFO *pdinfo)
+			    DATASET *dset)
 {
     int *list = get_list_by_name(lname);
     int d = gretl_function_depth();
@@ -5608,7 +5605,7 @@ static int unlocalize_list (const char *lname, int status,
 #if UDEBUG
     fprintf(stderr, "unlocalize_list: '%s', function depth = %d\n", lname, d);
     printlist(list, lname);
-    fprintf(stderr, " pdinfo = %p, pdinfo->v = %d\n", (void *) pdinfo, pdinfo->v);
+    fprintf(stderr, " dset = %p, dset->v = %d\n", (void *) dset, dset->v);
 #endif	    
 
     if (list == NULL) {
@@ -5637,28 +5634,28 @@ static int unlocalize_list (const char *lname, int status,
 	for (i=1; i<=list[0]; i++) {
 	    overwrite = 0;
 	    vi = list[i];
-	    vname = pdinfo->varname[vi];
-	    unset_var_listarg(pdinfo, vi);
-	    if (vi > 0 && vi < pdinfo->v && STACK_LEVEL(pdinfo, vi) == d) {
-		for (j=1; j<pdinfo->v; j++) { 
-		    if (STACK_LEVEL(pdinfo, j) == upd && 
-			!strcmp(pdinfo->varname[j], vname)) {
+	    vname = dset->varname[vi];
+	    unset_var_listarg(dset, vi);
+	    if (vi > 0 && vi < dset->v && STACK_LEVEL(dset, vi) == d) {
+		for (j=1; j<dset->v; j++) { 
+		    if (STACK_LEVEL(dset, j) == upd && 
+			!strcmp(dset->varname[j], vname)) {
 			overwrite = 1;
 			break;
 		    }
 		}
 		if (overwrite) {
 		    /* replace data */
-		    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-			Z[j][t] = Z[vi][t];
+		    for (t=dset->t1; t<=dset->t2; t++) {
+			dset->Z[j][t] = dset->Z[vi][t];
 		    }
 		    /* replace variable info */
-		    strcpy(VARLABEL(pdinfo, j), VARLABEL(pdinfo, vi));
-		    strcpy(DISPLAYNAME(pdinfo, j), DISPLAYNAME(pdinfo, vi));
+		    strcpy(VARLABEL(dset, j), VARLABEL(dset, vi));
+		    strcpy(DISPLAYNAME(dset, j), DISPLAYNAME(dset, vi));
 		    /* replace ID number in list */
 		    list[i] = j;
 		} else {
-		    STACK_LEVEL(pdinfo, vi) = upd;
+		    STACK_LEVEL(dset, vi) = upd;
 		}
 	    }
 #if UDEBUG
@@ -5673,8 +5670,8 @@ static int unlocalize_list (const char *lname, int status,
     } else if (status == LIST_WAS_ARG) {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    unset_var_listarg(pdinfo, vi);
-	    STACK_LEVEL(pdinfo, vi) = upd;
+	    unset_var_listarg(dset, vi);
+	    STACK_LEVEL(dset, vi) = upd;
 	}
     } else if (status == LIST_WAS_TEMP) {
 	delete_list_by_name(lname);
@@ -5684,7 +5681,7 @@ static int unlocalize_list (const char *lname, int status,
 }
 
 static int handle_string_return (const char *sname, void *ptr,
-				 double **Z, DATAINFO *pdinfo)
+				 DATASET *dset)
 {
     const char *s = get_string_by_name(sname);
     char *ret = NULL;
@@ -5706,14 +5703,14 @@ static int handle_string_return (const char *sname, void *ptr,
 
 static void 
 maybe_set_return_description (fncall *call, int rtype, 
-			      DATAINFO *pdinfo, 
+			      DATASET *dset, 
 			      char **descrip)
 {
     if (rtype == GRETL_TYPE_SERIES) {
-	int v = series_index(pdinfo, call->retname);
+	int v = series_index(dset, call->retname);
 
-	if (v < pdinfo->v) {
-	    *descrip = gretl_strdup(VARLABEL(pdinfo, v));
+	if (v < dset->v) {
+	    *descrip = gretl_strdup(VARLABEL(dset, v));
 	}
     }
 }
@@ -5747,9 +5744,8 @@ static int is_pointer_arg (fncall *call, fnargs *args, int rtype)
 
 static int 
 function_assign_returns (fncall *call, fnargs *args, int rtype, 
-			 double **Z, DATAINFO *pdinfo, 
-			 void *ret, char **descrip, PRN *prn, 
-			 int *perr)
+			 DATASET *dset, void *ret, char **descrip, 
+			 PRN *prn, int *perr)
 {
     ufunc *u = call->fun;
     struct fnarg *arg;
@@ -5772,14 +5768,14 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	/* first we work on the value directly returned by the
 	   function (but only if there's no error) 
 	*/
-	if (needs_datainfo(rtype) && pdinfo == NULL) {
+	if (needs_datainfo(rtype) && dset == NULL) {
 	    /* "can't happen" */
 	    err = E_DATA;
 	} else if (rtype == GRETL_TYPE_DOUBLE) {
 	    err = handle_scalar_return(call->retname, ret);
 	} else if (rtype == GRETL_TYPE_SERIES) {
 	    copy = is_pointer_arg(call, args, rtype);
-	    err = handle_series_return(call->retname, ret, Z, pdinfo, copy);
+	    err = handle_series_return(call->retname, ret, dset, copy);
 	} else if (rtype == GRETL_TYPE_MATRIX) {
 	    copy = is_pointer_arg(call, args, rtype);
 	    err = handle_matrix_return(call->retname, ret, copy);
@@ -5788,12 +5784,12 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	       stop_fncall(); here we just adjust the info on the
 	       listed variables so they don't get deleted
 	    */
-	    err = unlocalize_list(call->retname, LIST_DIRECT_RETURN, Z, pdinfo);
+	    err = unlocalize_list(call->retname, LIST_DIRECT_RETURN, dset);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    copy = is_pointer_arg(call, args, rtype);
 	    err = handle_bundle_return(call, ret, copy);
 	} else if (rtype == GRETL_TYPE_STRING) {
-	    err = handle_string_return(call->retname, ret, Z, pdinfo);
+	    err = handle_string_return(call->retname, ret, dset);
 	} 
 
 	if (err == E_UNKVAR) {
@@ -5803,8 +5799,8 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 
 	*perr = err;
 
-	if (!err && pdinfo != NULL && descrip != NULL) {
-	    maybe_set_return_description(call, rtype, pdinfo, descrip);
+	if (!err && dset != NULL && descrip != NULL) {
+	    maybe_set_return_description(call, rtype, dset, descrip);
 	}
     }
 
@@ -5815,14 +5811,14 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
     for (i=0; i<args->argc; i++) {
 	arg = args->arg[i];
 	fp = &u->params[i];
-	if (needs_datainfo(fp->type) && pdinfo == NULL) {
+	if (needs_datainfo(fp->type) && dset == NULL) {
 	    err = E_DATA;
 	} else if (gretl_ref_type(fp->type)) {
 	    if (arg->type == GRETL_TYPE_SERIES_REF) {
 		int v = arg->val.idnum;
 
-		STACK_LEVEL(pdinfo, v) -= 1;
-		strcpy(pdinfo->varname[v], arg->upname);
+		STACK_LEVEL(dset, v) -= 1;
+		strcpy(dset->varname[v], arg->upname);
 	    } else if (arg->type == GRETL_TYPE_SCALAR_REF) {
 		gretl_scalar_restore_name(arg->val.idnum, arg->upname);
 	    } else if (arg->type == GRETL_TYPE_MATRIX_REF) {
@@ -5840,9 +5836,9 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    user_matrix_set_name(u, arg->upname);
 	} else if (fp->type == GRETL_TYPE_LIST) {
 	    if (arg->type == GRETL_TYPE_LIST) {
-		unlocalize_list(fp->name, LIST_WAS_ARG, Z, pdinfo);
+		unlocalize_list(fp->name, LIST_WAS_ARG, dset);
 	    } else {
-		unlocalize_list(fp->name, LIST_WAS_TEMP, Z, pdinfo);
+		unlocalize_list(fp->name, LIST_WAS_TEMP, dset);
 	    }
 	} 
     }
@@ -5857,23 +5853,23 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 /* make a record of the sample information at the time a function is
    called */
 
-static void record_obs_info (obsinfo *o, DATAINFO *pdinfo)
+static void record_obs_info (obsinfo *o, DATASET *dset)
 {
     o->changed = 0;
 
-    if (pdinfo != NULL) {
-	o->structure = pdinfo->structure;
-	o->pd = pdinfo->pd;
-	o->t1 = pdinfo->t1;
-	o->t2 = pdinfo->t2;
-	strcpy(o->stobs, pdinfo->stobs);
+    if (dset != NULL) {
+	o->structure = dset->structure;
+	o->pd = dset->pd;
+	o->t1 = dset->t1;
+	o->t2 = dset->t2;
+	strcpy(o->stobs, dset->stobs);
     }
 }
 
 /* on function exit, restore the sample information that was in force
    on entry */
 
-static int restore_obs_info (obsinfo *o, double ***pZ, DATAINFO *pdinfo)
+static int restore_obs_info (obsinfo *o, DATASET *dset)
 {
     char line[128];
     gretlopt opt = OPT_NONE;
@@ -5890,7 +5886,7 @@ static int restore_obs_info (obsinfo *o, double ***pZ, DATAINFO *pdinfo)
 
     sprintf(line, "setobs %d %s", o->pd, o->stobs);
 
-    return set_obs(line, pZ, pdinfo, opt);
+    return set_obs(line, dset, opt);
 }
 
 /* do the basic housekeeping that is required when a function exits:
@@ -5898,8 +5894,7 @@ static int restore_obs_info (obsinfo *o, double ***pZ, DATAINFO *pdinfo)
 */
 
 static int stop_fncall (fncall *call, int rtype, void *ret,
-			double ***pZ, DATAINFO *pdinfo,
-			PRN *prn, int orig_v)
+			DATASET *dset, PRN *prn, int orig_v)
 {
     int i, d = gretl_function_depth();
     int delv, anyerr = 0;
@@ -5907,8 +5902,8 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
 #if FN_DEBUG
     fprintf(stderr, "stop_fncall: terminating call to "
-	    "function '%s' at depth %d, pdinfo->v = %d\n", 
-	    call->fun->name, d, (pdinfo != NULL)? pdinfo->v : 0);
+	    "function '%s' at depth %d, dset->v = %d\n", 
+	    call->fun->name, d, (dset != NULL)? dset->v : 0);
 #endif
 
     call->args = NULL;
@@ -5942,23 +5937,23 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
        level via their inclusion in a returned list
     */
 
-    if (pdinfo != NULL) {
-	for (i=orig_v, delv=0; i<pdinfo->v; i++) {
-	    if (STACK_LEVEL(pdinfo, i) == d) {
+    if (dset != NULL) {
+	for (i=orig_v, delv=0; i<dset->v; i++) {
+	    if (STACK_LEVEL(dset, i) == d) {
 		delv++;
 	    }
 	}
 	if (delv > 0) {
-	    if (delv == pdinfo->v - orig_v) {
+	    if (delv == dset->v - orig_v) {
 		/* deleting all added variables */
-		anyerr = dataset_drop_last_variables(delv, pZ, pdinfo);
+		anyerr = dataset_drop_last_variables(delv, dset);
 		if (anyerr && !err) {
 		    err = anyerr;
 		}
 	    } else {
-		for (i=pdinfo->v-1; i>=orig_v; i--) {
-		    if (STACK_LEVEL(pdinfo, i) == d) {
-			anyerr = dataset_drop_variable(i, pZ, pdinfo);
+		for (i=dset->v-1; i>=orig_v; i--) {
+		    if (STACK_LEVEL(dset, i) == d) {
+			anyerr = dataset_drop_variable(i, dset);
 			if (anyerr && !err) {
 			    err = anyerr;
 			}
@@ -6002,11 +5997,11 @@ static int stop_fncall (fncall *call, int rtype, void *ret,
 
     pop_program_state();
 
-    if (pdinfo != NULL && call->obs.changed) {
-	restore_obs_info(&call->obs, pZ, pdinfo);
+    if (dset != NULL && call->obs.changed) {
+	restore_obs_info(&call->obs, dset);
     }
 
-    set_executing_off(call, pdinfo, prn);
+    set_executing_off(call, dset, prn);
 
     return err;
 }
@@ -6023,7 +6018,7 @@ static void set_pkgdir (fnpkg *pkg)
     }
 }
 
-static int start_fncall (fncall *call, DATAINFO *pdinfo, PRN *prn)
+static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
 {
     fn_executing++;
     push_program_state();
@@ -6034,7 +6029,7 @@ static int start_fncall (fncall *call, DATAINFO *pdinfo, PRN *prn)
 	    call->fun->name, g_list_length(callstack));
 #endif
 
-    record_obs_info(&call->obs, pdinfo);
+    record_obs_info(&call->obs, dset);
 
     if (gretl_debugging_on() || call->fun->debug) {
 	set_gretl_echo(1);
@@ -6081,8 +6076,7 @@ static double arg_get_double_val (struct fnarg *arg)
 }
 
 static int check_function_args (ufunc *u, fnargs *args, 
-				const double **Z,
-				const DATAINFO *pdinfo,
+				const DATASET *dset,
 				PRN *prn)
 {
     struct fnarg *arg;
@@ -6180,8 +6174,7 @@ int user_function_set_debug (const char *name, int debug)
 */
 
 static int debug_command_loop (ExecState *state, 
-			       double ***pZ,
-			       DATAINFO *datainfo,
+			       DATASET *dset,
 			       DEBUG_READLINE get_line,
 			       DEBUG_OUTPUT put_func,
 			       int *errp)
@@ -6202,7 +6195,7 @@ static int debug_command_loop (ExecState *state,
 	}
 
 	err = parse_command_line(state->line, state->cmd, 
-				 pZ, datainfo);
+				 dset);
 	if (err) {
 	    if (!strcmp(state->line, "c")) {
 		/* short for 'continue' */
@@ -6219,7 +6212,7 @@ static int debug_command_loop (ExecState *state,
 	    brk = 1;
 	} else {
 	    /* execute interpolated command */
-	    err = gretl_cmd_exec(state, pZ, datainfo);
+	    err = gretl_cmd_exec(state, dset);
 	    if (put_func != NULL) {
 #if DDEBUG		
 		fprintf(stderr, "--- debug_command_loop calling put_func\n"); 
@@ -6278,8 +6271,7 @@ static void set_function_error_message (int err, ufunc *u,
 
 static int handle_return_statement (fncall *call,
 				    ExecState *state,
-				    double ***pZ,
-				    DATAINFO *pdinfo)
+				    DATASET *dset)
 {
     const char *s = state->line + 6; /* skip "return" */
     ufunc *fun = call->fun;
@@ -6312,7 +6304,7 @@ static int handle_return_statement (fncall *call,
 	    char formula[MAXLINE];
 	    
 	    sprintf(formula, "%s $retval=%s", typestr, s);
-	    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+	    err = generate(formula, dset, OPT_P, NULL);
 	    if (err) {
 		set_function_error_message(err, fun, state, s);
 	    } else {
@@ -6356,8 +6348,7 @@ static int do_debugging (ExecState *s)
 */
 
 static int handle_plugin_call (ufunc *u, fnargs *args,
-			       double ***pZ,
-			       DATAINFO *pdinfo,
+			       DATASET *dset,
 			       void *retval,
 			       PRN *prn)
 {
@@ -6426,15 +6417,15 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 
 	    err = gretl_bundle_set_data(b, key, m, fp->type, 0);
 	} else if (fp->type == GRETL_TYPE_SERIES) {
-	    int size = sample_size(pdinfo);
+	    int size = sample_size(dset);
 	    double *px;
 
 	    if (arg->type == GRETL_TYPE_USERIES) {
-		px = (*pZ)[arg->val.idnum];
+		px = dset->Z[arg->val.idnum];
 	    } else {
 		px = arg->val.px;
 	    }
-	    err = gretl_bundle_set_data(b, key, px + pdinfo->t1, 
+	    err = gretl_bundle_set_data(b, key, px + dset->t1, 
 					GRETL_TYPE_SERIES, size);
 	} else {
 	    /* FIXME strings and maybe other types */
@@ -6495,9 +6486,8 @@ static int handle_plugin_call (ufunc *u, fnargs *args,
 }
 
 int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
-			 double ***pZ, DATAINFO *pdinfo,
-			 void *ret, char **descrip, 
-			 PRN *prn)
+			 DATASET *dset, void *ret, 
+			 char **descrip, PRN *prn)
 {
     DEBUG_READLINE get_line = NULL;
     DEBUG_OUTPUT put_func = NULL;
@@ -6518,7 +6508,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     fprintf(stderr, "gretl_function_exec: starting %s\n", u->name);
 #endif
 
-    err = maybe_check_function_needs(pdinfo, u);
+    err = maybe_check_function_needs(dset, u);
     if (err) {
 	return err;
     }
@@ -6528,10 +6518,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     fprintf(stderr, "u->n_params = %d\n", u->n_params);
 #endif
 
-    if (pdinfo != NULL) {
-	orig_v = pdinfo->v;
-	orig_t1 = pdinfo->t1;
-	orig_t2 = pdinfo->t2;
+    if (dset != NULL) {
+	orig_v = dset->v;
+	orig_t1 = dset->t1;
+	orig_t2 = dset->t2;
     }
 
     if (!function_is_plugin(u)) {
@@ -6544,19 +6534,18 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-    err = check_function_args(u, args, (pZ != NULL)? (const double **) *pZ : NULL,
-			      pdinfo, prn);
+    err = check_function_args(u, args, dset, prn);
 
     if (function_is_plugin(u)) {
 	if (!err) {
-	    err = handle_plugin_call(u, args, pZ, pdinfo, ret, prn);
+	    err = handle_plugin_call(u, args, dset, ret, prn);
 	}
 	return err;
     }
 
     if (!err) {
 	call->args = args;
-	err = allocate_function_args(call, pZ, pdinfo);
+	err = allocate_function_args(call, dset);
     }
 
     if (err) {
@@ -6578,14 +6567,14 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	*line = '\0';
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
 			      models, prn);
-	if (pdinfo != NULL && pdinfo->submask != NULL) {
-	    state.submask = copy_datainfo_submask(pdinfo, &err);
+	if (dset != NULL && dset->submask != NULL) {
+	    state.submask = copy_datainfo_submask(dset, &err);
 	}
 	state.callback = func_exec_callback;
     }
 
     if (!err) {
-	err = start_fncall(call, pdinfo, prn);
+	err = start_fncall(call, dset, prn);
 	if (!err) {
 	    started = 1;
 	}
@@ -6619,10 +6608,10 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    pprintf(prn, "? %s\n", line);
 	}
 
-	err = maybe_exec_line(&state, pZ, pdinfo);
+	err = maybe_exec_line(&state, dset);
 
 	if (!err && state.cmd->ci == FUNCRET) {
-	    err = handle_return_statement(call, &state, pZ, pdinfo);
+	    err = handle_return_statement(call, &state, dset);
 	    if (i < u->n_lines - 1) {
 		retline = i;
 	    }
@@ -6636,7 +6625,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	    } else {
 		pprintf(prn, "-- debugging %s, line %d --\n", u->name, i + 1);
 	    }
-	    debugging = debug_command_loop(&state, pZ, pdinfo,
+	    debugging = debug_command_loop(&state, dset,
 					   get_line, put_func, 
 					   &err);
 	}
@@ -6652,7 +6641,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
 
 	if (gretl_execute_loop()) { 
-	    err = gretl_loop_exec(&state, pZ, pdinfo);
+	    err = gretl_loop_exec(&state, dset);
 	    if (err) {
 		set_function_error_message(err, u, &state, state.line);
 	    }
@@ -6661,24 +6650,24 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
 #if EXEC_DEBUG
     fprintf(stderr, "gretl_function_exec: %s: finished main exec, "
-	    "err = %d, pdinfo->v = %d\n", u->name, err, 
-	    (pdinfo != NULL)? pdinfo->v : 0);
+	    "err = %d, dset->v = %d\n", u->name, err, 
+	    (dset != NULL)? dset->v : 0);
 #endif
 
-    if (pdinfo != NULL) {
+    if (dset != NULL) {
 	/* restore the sample that was in place on entry */
 	if (complex_subsampled()) {
 	    if (state.submask == NULL) {
 		/* we were not sub-sampled on entry */
-		restore_full_sample(pZ, pdinfo, NULL);
-	    } else if (submask_cmp(state.submask, pdinfo->submask)) {
+		restore_full_sample(dset, NULL);
+	    } else if (submask_cmp(state.submask, dset->submask)) {
 		/* we were sub-sampled differently on entry */
-		restore_full_sample(pZ, pdinfo, NULL);
-		restrict_sample_from_mask(state.submask, pZ, pdinfo, OPT_NONE);
+		restore_full_sample(dset, NULL);
+		restrict_sample_from_mask(state.submask, dset, OPT_NONE);
 	    } 
 	}
-	pdinfo->t1 = orig_t1;
-	pdinfo->t2 = orig_t2;
+	dset->t1 = orig_t1;
+	dset->t2 = orig_t2;
     }
 
     if (err) {
@@ -6694,13 +6683,13 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	err = gretl_if_state_check(indent0);
     }
 
-    function_assign_returns(call, args, rtype, (pZ != NULL)? *pZ : NULL, 
-			    pdinfo, ret, descrip, prn, &err);
+    function_assign_returns(call, args, rtype, dset, ret, 
+			    descrip, prn, &err);
 
     gretl_exec_state_clear(&state);
 
     if (started) {
-	int stoperr = stop_fncall(call, rtype, ret, pZ, pdinfo, prn,
+	int stoperr = stop_fncall(call, rtype, ret, dset, prn,
 				  orig_v);
 
 	if (stoperr && !err) {
@@ -6812,7 +6801,7 @@ int object_is_function_arg (const char *name)
 
 /**
  * sample_range_get_extrema:
- * @pdinfo: dataset info.
+ * @dset: dataset info.
  * @t1: location to receive earliest possible starting observation.
  * @t2: location to receive latest possible ending observation.
  *
@@ -6822,7 +6811,7 @@ int object_is_function_arg (const char *name)
  * we are not allowed to overstep the bounds set on entry. 
  */
 
-void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2)
+void sample_range_get_extrema (const DATASET *dset, int *t1, int *t2)
 {
     fncall *call = current_function_call();
 
@@ -6831,7 +6820,7 @@ void sample_range_get_extrema (const DATAINFO *pdinfo, int *t1, int *t2)
 	*t2 = call->obs.t2;
     } else {
 	*t1 = 0;
-	*t2 = pdinfo->n - 1;
+	*t2 = dset->n - 1;
     }
 }
 

@@ -85,8 +85,7 @@ void gretl_cmd_set_opt (CMD *cmd, gretlopt opt);
 
 int filter_comments (char *s, CMD *cmd);
 
-int parse_command_line (char *line, CMD *cmd, double ***pZ, 
-			DATAINFO *pdinfo); 
+int parse_command_line (char *line, CMD *cmd, DATASET *dset); 
 
 int get_command_index (char *line, CMD *cmd);
 
@@ -96,18 +95,17 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn);
 
 int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname);
 
-void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
+void echo_cmd (const CMD *cmd, const DATASET *dset, const char *line, 
 	       unsigned char flags, PRN *prn);
 
 void echo_function_call (const char *line, unsigned char flags, PRN *prn);
 
 void safe_print_line (const char *line, int *plen, PRN *prn);
 
-int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo);
+int gretl_cmd_exec (ExecState *s, DATASET *dset);
 
-int call_pca_plugin (VMatrix *cmat, double ***pZ,
-		     DATAINFO *pdinfo, gretlopt opt,
-		     PRN *prn);
+int call_pca_plugin (VMatrix *cmat, DATASET *dset, 
+		     gretlopt opt, PRN *prn);
 
 int gretl_shell_grab (const char *arg, char **sout);
 

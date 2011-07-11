@@ -71,7 +71,7 @@ static NODE *newref (parser *p, int t)
 	if (t == USERIES) {
 	    n->vnum = p->idnum;
 	    n->t = VEC;
-	    n->v.xvec = (*p->Z)[n->vnum];
+	    n->v.xvec = p->dset->Z[n->vnum];
 	} else {
 	    n->t = t;
 	    if (t == USCALAR || t == UMAT || t == UOBJ || 
@@ -400,7 +400,7 @@ static NODE *listvar_node (parser *p)
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (!strcmp(vname, p->dinfo->varname[v])) {
+	if (!strcmp(vname, p->dset->varname[v])) {
 	    /* found the variable */
 	    free(p->idstr);
 	    p->idstr = NULL;

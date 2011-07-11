@@ -565,7 +565,7 @@ static int wsheet_labels_complete (wsheet *sheet)
 }
 
 static void 
-sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
+sheet_time_series_setup (wsheet *sheet, wbook *book, DATASET *newinfo, int pd)
 {
     newinfo->pd = pd;
     newinfo->structure = TIME_SERIES;
@@ -610,8 +610,7 @@ static int labels_numeric (char **S, int n)
 }
 
 int gnumeric_get_data (const char *fname, int *list, char *sheetname,
-		       double ***pZ, DATAINFO *pdinfo,
-		       gretlopt opt, PRN *prn)
+		       DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
     wbook gbook;
@@ -619,12 +618,11 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
     wsheet gsheet;
     wsheet *sheet = &gsheet;
     int sheetnum = -1;
-    double **newZ = NULL;
-    DATAINFO *newinfo;
+    DATASET *newset;
     int err = 0;
 
-    newinfo = datainfo_new();
-    if (newinfo == NULL) {
+    newset = datainfo_new();
+    if (newset == NULL) {
 	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
@@ -691,7 +689,7 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	int r0 = 1;
 	int i, j, t;
 	int ts_markers = 0;
-	int merge = (*pZ != NULL);
+	int merge = (dset->Z != NULL);
 	char **ts_S = NULL;
 	int blank_cols = 0;
 	int missvals = 0;
@@ -714,71 +712,71 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	    puts("check for label strings in first imported column: not found");
 	}
 
-	newinfo->n = sheet->maxrow - sheet->row_offset;
+	newset->n = sheet->maxrow - sheet->row_offset;
 
 	if (!sheet->colheads) {
 	    pputs(prn, _("it seems there are no variable names\n"));
-	    newinfo->n += 1;
+	    newset->n += 1;
 	}
 
 	if (book_numeric_dates(book) || 
 	    (sheet->colheads > 0 && import_obs_label(sheet->label[0]))) {
 	    pd = importer_dates_check(r0, 0, &book->flags, sheet->label,
-				      newinfo, prn, &err);
+				      newset, prn, &err);
 	    if (pd > 0) {
 		/* got time-series info from dates/labels */
-		sheet_time_series_setup(sheet, book, newinfo, pd);
-		ts_markers = newinfo->markers;
-		ts_S = newinfo->S;
+		sheet_time_series_setup(sheet, book, newset, pd);
+		ts_markers = newset->markers;
+		ts_S = newset->S;
 	    } else if (!book_numeric_dates(book)) {
-		if (labels_numeric(sheet->label, newinfo->n)) {
+		if (labels_numeric(sheet->label, newset->n)) {
 		    sheet->text_cols = 0;
 		    book_unset_obs_labels(book);
 		}
 	    }
 	}
 
-	newinfo->v = sheet->maxcol + 2 - sheet->col_offset - sheet->text_cols;
-	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
-		newinfo->v, newinfo->n);
+	newset->v = sheet->maxcol + 2 - sheet->col_offset - sheet->text_cols;
+	fprintf(stderr, "newset->v = %d, newset->n = %d\n",
+		newset->v, newset->n);
 
 	/* create import dataset */
-	err = worksheet_start_dataset(&newZ, newinfo);
+	err = worksheet_start_dataset(newset);
 	if (err) {
 	    goto getout;
 	}
 
 	if (book_time_series(book)) {
-	    newinfo->markers = ts_markers;
-	    newinfo->S = ts_S;
+	    newset->markers = ts_markers;
+	    newset->S = ts_S;
 	} else {
-	    dataset_obs_info_default(newinfo);
+	    dataset_obs_info_default(newset);
 	} 
 
 	j = 1;
-	for (i=1; i<newinfo->v; i++) {
+	for (i=1; i<newset->v; i++) {
 	    int s = (sheet->colheads)? 1 : 0;
 	    int k = i - 1 + sheet->text_cols;
 	    double zkt;
 
-	    if (column_is_blank(sheet, k, newinfo->n)) {
+	    if (column_is_blank(sheet, k, newset->n)) {
 		blank_cols++;
 		continue;
 	    } 
 
 	    if (sheet->colheads && *sheet->varname[k] != '\0') {
-		strcpy(newinfo->varname[j], sheet->varname[k]);
+		strcpy(newset->varname[j], sheet->varname[k]);
 	    } else {
-		sprintf(newinfo->varname[j], "v%d", j);
+		sprintf(newset->varname[j], "v%d", j);
 	    }
-	    for (t=0; t<newinfo->n; t++) {
+	    for (t=0; t<newset->n; t++) {
 		zkt = sheet->Z[k][s++];
 		if (zkt == -999 || zkt == -9999) {
-		    newZ[j][t] = NADBL;
+		    newset->Z[j][t] = NADBL;
 		} else {
-		    newZ[j][t] = zkt;
+		    newset->Z[j][t] = zkt;
 		}
-		if (na(newZ[j][t])) {
+		if (na(newset->Z[j][t])) {
 		    missvals = 1;
 		}
 	    }
@@ -788,36 +786,36 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 	if (blank_cols > 0) {
 	    fprintf(stderr, "Dropping %d apparently blank column(s)\n", 
 		    blank_cols);
-	    dataset_drop_last_variables(blank_cols, &newZ, newinfo);
+	    dataset_drop_last_variables(blank_cols, newset);
 	}
 
 	if (missvals) {
 	    pputs(prn, _("Warning: there were missing values\n"));
 	}
 
-	if (fix_varname_duplicates(newinfo)) {
+	if (fix_varname_duplicates(newset)) {
 	    pputs(prn, _("warning: some variable names were duplicated\n"));
 	}
 
 	if (book_obs_labels(book) && wsheet_labels_complete(sheet)) {
 	    int offset = (sheet->colheads)? 1 : 0;
 
-	    dataset_allocate_obs_markers(newinfo);
-	    if (newinfo->S != NULL) {
-		for (t=0; t<newinfo->n; t++) {
-		    strcpy(newinfo->S[t], sheet->label[t+offset]);
+	    dataset_allocate_obs_markers(newset);
+	    if (newset->S != NULL) {
+		for (t=0; t<newset->n; t++) {
+		    strcpy(newset->S[t], sheet->label[t+offset]);
 		}
 	    }
 	}
 
 	if (book->flags & BOOK_DATA_REVERSED) {
-	    reverse_data(newZ, newinfo, prn);
+	    reverse_data(newset, prn);
 	}
 
-	err = merge_or_replace_data(pZ, pdinfo, &newZ, &newinfo, opt, prn);
+	err = merge_or_replace_data(dset, &newset, opt, prn);
 
 	if (!err && !merge) {
-	    dataset_add_import_info(pdinfo, fname, GRETL_GNUMERIC);
+	    dataset_add_import_info(dset, fname, GRETL_GNUMERIC);
 	}
 
 	if (!err && gui) {
@@ -832,8 +830,8 @@ int gnumeric_get_data (const char *fname, int *list, char *sheetname,
 
     gretl_pop_c_numeric_locale();
 
-    if (err && newinfo != NULL) {
-	destroy_dataset(newZ, newinfo);
+    if (err && newset != NULL) {
+	destroy_dataset(newset);
     }
 
     return err;

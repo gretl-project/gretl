@@ -145,11 +145,10 @@ static int GLS_demean_detrend (double *y, int T, int test)
 
 static int *
 adf_prepare_vars (int order, int varno, int nseas, int *d0,
-		  double ***pZ, DATAINFO *pdinfo,
-		  gretlopt opt)
+		  DATASET *dset, gretlopt opt)
 {
     int nl = 5 + nseas;
-    int i, j, orig_t1 = pdinfo->t1;
+    int i, j, orig_t1 = dset->t1;
     int *list;
     int err = 0;
 
@@ -165,58 +164,58 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
     if (opt & OPT_G) {
 	/* GLS adjustment wanted */
 	int test = (opt & OPT_T)? UR_TREND : UR_CONST;
-	int t, v = pdinfo->v;
+	int t, v = dset->v;
 
-	err = dataset_add_series(1, pZ, pdinfo);
+	err = dataset_add_series(1, dset);
 	if (!err) {
 	    int T, offset = 0;
 
-	    for (t=0; t<=pdinfo->t2; t++) {
-		(*pZ)[v][t] = (*pZ)[varno][t];
-		if (na((*pZ)[v][t])) {
+	    for (t=0; t<=dset->t2; t++) {
+		dset->Z[v][t] = dset->Z[varno][t];
+		if (na(dset->Z[v][t])) {
 		    offset = t+1;
 		}
 	    }
-	    if (offset < pdinfo->t1 - order) {
-		offset = pdinfo->t1 - order;
+	    if (offset < dset->t1 - order) {
+		offset = dset->t1 - order;
 	    }
-	    T = pdinfo->t2 - offset + 1;
-	    err = GLS_demean_detrend((*pZ)[v] + offset, T, test);
+	    T = dset->t2 - offset + 1;
+	    err = GLS_demean_detrend(dset->Z[v] + offset, T, test);
 	}
 	if (err) {
 	    free(list);
 	    return NULL;
 	}
-	strcpy(pdinfo->varname[v], "yd");
+	strcpy(dset->varname[v], "yd");
 	varno = v;
     }
 
     /* temporararily reset sample */
-    pdinfo->t1 = 0;
+    dset->t1 = 0;
 
     /* generate first difference of the given variable */
-    list[1] = diffgenr(varno, DIFF, pZ, pdinfo);
+    list[1] = diffgenr(varno, DIFF, dset);
     if (list[1] < 0) {
-	pdinfo->t1 = orig_t1;
+	dset->t1 = orig_t1;
 	free(list);
 	return NULL;
     }	
 
     /* generate lag of given var */
-    list[2] = laggenr(varno, 1, pZ, pdinfo); 
+    list[2] = laggenr(varno, 1, dset); 
     if (list[2] < 0) {
-	pdinfo->t1 = orig_t1;
+	dset->t1 = orig_t1;
 	free(list);
 	return NULL;
     }
 
     /* undo reset sample */
-    pdinfo->t1 = orig_t1;
+    dset->t1 = orig_t1;
 
     /* generate lags of difference for augmented test */
     j = 3;
     for (i=1; i<=order && !err; i++) {
-	int lnum = laggenr(list[1], i, pZ, pdinfo);
+	int lnum = laggenr(list[1], i, dset);
 
 	if (lnum < 0) {
 	    fprintf(stderr, "Error generating lag variable\n");
@@ -227,7 +226,7 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
     } 
 
     if (nseas > 0 && !err) {
-	*d0 = dummy(pZ, pdinfo, 0); /* should we center these? */
+	*d0 = dummy(dset, 0); /* should we center these? */
 	if (*d0 < 0) {
 	    fprintf(stderr, "Error generating seasonal dummies\n");
 	    err = 1;
@@ -457,15 +456,14 @@ print_adf_results (int order, int pmax, double DFt, double pv,
 }
 
 static int auto_adjust_order (int *list, int order_max,
-			      double **Z, DATAINFO *pdinfo,
-			      PRN *prn)
+			      DATASET *dset, PRN *prn)
 {
     MODEL kmod;
     double tstat, pval;
     int k, pos;
 
     for (k=order_max; k>0; k--) {
-	kmod = lsq(list, Z, pdinfo, OLS, OPT_A);
+	kmod = lsq(list, dset, OLS, OPT_A);
 	if (kmod.errcode) {
 	    fprintf(stderr, "auto_adjust_order: k = %d, err = %d\n", k,
 		    kmod.errcode);
@@ -474,7 +472,7 @@ static int auto_adjust_order (int *list, int order_max,
 	    break;
 	}
 #if ADF_DEBUG
-	printmodel(&kmod, pdinfo, OPT_NONE, prn);
+	printmodel(&kmod, dset, OPT_NONE, prn);
 #endif
 	pos = k + kmod.ifc;
 	tstat = kmod.coeff[pos] / kmod.sderr[pos];
@@ -614,46 +612,46 @@ static int engle_granger_itv (gretlopt opt)
     return itv;
 }
 
-static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
+static int gettrend (DATASET *dset, int square)
 {
-    int idx, t, v = pdinfo->v;
+    int idx, t, v = dset->v;
     double x;
 
-    idx = series_index(pdinfo, (square)? "timesq" : "time");
+    idx = series_index(dset, (square)? "timesq" : "time");
 
     if (idx < v) {
 	return idx;
     }
 
-    if (dataset_add_series(1, pZ, pdinfo)) {
+    if (dataset_add_series(1, dset)) {
 	return 0; /* error: valid value cannot == 0 */
     }
 
-    for (t=0; t<pdinfo->n; t++) {
+    for (t=0; t<dset->n; t++) {
 	x = (double) t + 1; 
-	(*pZ)[v][t] = (square)? x * x : x;
+	dset->Z[v][t] = (square)? x * x : x;
     }
 
     if (square) {
-	strcpy(pdinfo->varname[v], "timesq");
-	strcpy(VARLABEL(pdinfo, v), _("squared time trend variable"));
+	strcpy(dset->varname[v], "timesq");
+	strcpy(VARLABEL(dset, v), _("squared time trend variable"));
     } else {
-	strcpy(pdinfo->varname[v], "time");
-	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
+	strcpy(dset->varname[v], "time");
+	strcpy(VARLABEL(dset, v), _("time trend variable"));
     }
 	    
     return idx;
 }
 
 static int real_adf_test (int varno, int order, int niv,
-			  double ***pZ, DATAINFO *pdinfo, 
-			  gretlopt opt, unsigned char flags,
+			  DATASET *dset, gretlopt opt, 
+			  unsigned char flags,
 			  adf_info *ainfo, PRN *prn)
 {
     MODEL dfmod;
     gretlopt eg_opt = OPT_NONE;
     gretlopt df_mod_opt = OPT_A | OPT_Z;
-    int orig_nvars = pdinfo->v;
+    int orig_nvars = dset->v;
     int blurb_done = 0;
     int auto_order = 0;
     int order_max = 0;
@@ -669,8 +667,8 @@ static int real_adf_test (int varno, int order, int niv,
     fprintf(stderr, "real_adf_test: got order = %d\n", order);
 #endif
 
-    if (gretl_isconst(pdinfo->t1, pdinfo->t2, (*pZ)[varno])) {
-	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[varno]);
+    if (gretl_isconst(dset->t1, dset->t2, dset->Z[varno])) {
+	gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[varno]);
 	return E_DATA;
     }    
 
@@ -712,19 +710,19 @@ static int real_adf_test (int varno, int order, int niv,
 
     if (opt & OPT_F) {
 	/* difference the variable before testing */
-	int t1 = pdinfo->t1;
+	int t1 = dset->t1;
 
-	pdinfo->t1 = 0;
-	varno = diffgenr(varno, DIFF, pZ, pdinfo);
-	pdinfo->t1 = t1;
+	dset->t1 = 0;
+	varno = diffgenr(varno, DIFF, dset);
+	dset->t1 = t1;
 	if (varno < 0) {
 	    return E_DATA;
 	}
     }
 
-    if ((opt & OPT_D) && pdinfo->pd > 1) {
+    if ((opt & OPT_D) && dset->pd > 1) {
 	/* add seasonal dummies */
-	nseas = pdinfo->pd - 1;
+	nseas = dset->pd - 1;
     }
 
     if (test_opt_not_set(opt)) {
@@ -736,7 +734,7 @@ static int real_adf_test (int varno, int order, int niv,
 	}
     }
 
-    list = adf_prepare_vars(order, varno, nseas, &d0, pZ, pdinfo, opt);
+    list = adf_prepare_vars(order, varno, nseas, &d0, dset, opt);
     if (list == NULL) {
 	return E_ALLOC;
     }
@@ -780,7 +778,7 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (i >= UR_TREND) {
 	    k = 3 + order;
-	    list[k] = gettrend(pZ, pdinfo, 0);
+	    list[k] = gettrend(dset, 0);
 	    if (list[k] == 0) {
 		err = E_ALLOC;
 		goto bailout;
@@ -789,7 +787,7 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (i == UR_QUAD_TREND) {
 	    k = 4 + order;
-	    list[k] = gettrend(pZ, pdinfo, 1);
+	    list[k] = gettrend(dset, 1);
 	    if (list[k] == 0) {
 		err = E_ALLOC;
 		goto bailout;
@@ -810,7 +808,7 @@ static int real_adf_test (int varno, int order, int niv,
     skipdet:
 
 	if (auto_order) {
-	    order = auto_adjust_order(list, order_max, *pZ, pdinfo, prn);
+	    order = auto_adjust_order(list, order_max, dset, prn);
 	    if (order < 0) {
 		err = 1;
 		clear_model(&dfmod);
@@ -822,7 +820,7 @@ static int real_adf_test (int varno, int order, int niv,
 	printlist(list, "final ADF regression list");
 #endif
 
-	dfmod = lsq(list, *pZ, pdinfo, OLS, df_mod_opt);
+	dfmod = lsq(list, dset, OLS, df_mod_opt);
 	if (dfmod.errcode) {
 	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n", 
 		    dfmod.errcode);
@@ -865,7 +863,7 @@ static int real_adf_test (int varno, int order, int niv,
 
 	if (!(opt & OPT_Q) && !(flags & ADF_PANEL)) {
 	    print_adf_results(order, order_max, DFt, pv, &dfmod, dfnum, 
-			      pdinfo->varname[varno], &blurb_done, flags,
+			      dset->varname[varno], &blurb_done, flags,
 			      itv, niv, nseas, opt, prn);
 	}
 
@@ -876,7 +874,7 @@ static int real_adf_test (int varno, int order, int niv,
 		gretl_model_set_int(&dfmod, "dfnum", dfnum);
 		gretl_model_set_double(&dfmod, "dfpval", pv);
 	    }
-	    printmodel(&dfmod, pdinfo, OPT_NONE, prn);
+	    printmodel(&dfmod, dset, OPT_NONE, prn);
 	} else if (!(opt & OPT_Q) && !(flags & (ADF_EG_RESIDS | ADF_PANEL))) {
 	    pputc(prn, '\n');
 	}
@@ -898,7 +896,7 @@ static int real_adf_test (int varno, int order, int niv,
 	free(biglist);
     }
 
-    dataset_drop_last_variables(pdinfo->v - orig_nvars, pZ, pdinfo);
+    dataset_drop_last_variables(dset->v - orig_nvars, dset);
 
     return err;
 }
@@ -956,7 +954,7 @@ static int DF_index (gretlopt opt)
 
 static int do_IPS_test (double tbar, int n, const int *Ti, 
 			int order, const int *Oi,
-			const DATAINFO *pdinfo,
+			const DATASET *dset,
 			gretlopt opt, PRN *prn)
 {
     int (*get_IPS_critvals) (int, int, int, double *);
@@ -1070,12 +1068,11 @@ static void do_choi_test (double ppv, double zpv, double lpv,
 	    tdf, L, student_pvalue_1(tdf, -L));
 }
 
-static int panel_DF_test (int v, int order, 
-			  double ***pZ, DATAINFO *pdinfo, 
+static int panel_DF_test (int v, int order, DATASET *dset, 
 			  gretlopt opt, PRN *prn)
 {
-    int u0 = pdinfo->t1 / pdinfo->pd;
-    int uN = pdinfo->t2 / pdinfo->pd;
+    int u0 = dset->t1 / dset->pd;
+    int uN = dset->t2 / dset->pd;
     int quiet = (opt & OPT_Q);
     int verbose = (opt & OPT_V);
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
@@ -1109,7 +1106,7 @@ static int panel_DF_test (int v, int order,
     if (!quiet) {
 	int j = DF_index(opt);
 
-	DF_header(pdinfo->varname[v], (opt & OPT_E)? 0 : order, 0, opt, prn);
+	DF_header(dset->varname[v], (opt & OPT_E)? 0 : order, 0, opt, prn);
 	pprintf(prn, "   %s ", _(DF_test_string(j)));
 	pputc(prn, '\n');
 	pprintf(prn, "   %s: %s\n\n", _("model"), 
@@ -1125,12 +1122,12 @@ static int panel_DF_test (int v, int order,
     for (i=u0; i<=uN && !err; i++) {
 	adf_info ainfo;
 
-	pdinfo->t1 = i * pdinfo->pd;
-	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
-	err = series_adjust_sample((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
+	dset->t1 = i * dset->pd;
+	dset->t2 = dset->t1 + dset->pd - 1;
+	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
 
 	if (!err) {
-	    err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
+	    err = real_adf_test(v, order, 1, dset, opt, 
 				ADF_PANEL, &ainfo, prn);
 	    if (!err && verbose) {
 		pprintf(prn, "%s %d, T = %d, %s = %d\n", _("Unit"), i + 1, 
@@ -1174,7 +1171,7 @@ static int panel_DF_test (int v, int order,
 	pprintf(prn, "%s\n\n", _("H0: all groups have unit root"));
 	if (!na(tbar)) {
 	    tbar /= n;
-	    do_IPS_test(tbar, n, Ti, order, Oi, pdinfo, opt, prn);
+	    do_IPS_test(tbar, n, Ti, order, Oi, dset, opt, prn);
 	}
 	if (!na(ppv)) {
 	    pputc(prn, '\n');
@@ -1193,8 +1190,7 @@ static int panel_DF_test (int v, int order,
  * levin_lin_test:
  * @vnum: ID number of variable to test.
  * @plist: list of ADF lag orders.
- * @Z: data array.
- * @pdinfo: data information struct.
+ * @dset: data information struct.
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
@@ -1217,16 +1213,16 @@ static int panel_DF_test (int v, int order,
  */
 
 int levin_lin_test (int vnum, const int *plist,
-		    double **Z, DATAINFO *pdinfo, 
-		    gretlopt opt, PRN *prn)
+		    DATASET *dset, gretlopt opt, 
+		    PRN *prn)
 {
-    int (*real_levin_lin) (int, const int *, double **,
-			   DATAINFO *, gretlopt, PRN *);
+    int (*real_levin_lin) (int, const int *, DATASET *, 
+			   gretlopt, PRN *);
     void *handle;
     int panelmode;
     int err = 0;
 
-    panelmode = multi_unit_panel_sample(pdinfo);
+    panelmode = multi_unit_panel_sample(dset);
 
     if (!panelmode || incompatible_options(opt, OPT_N | OPT_T)) {
 	return E_BADOPT;
@@ -1238,14 +1234,14 @@ int levin_lin_test (int vnum, const int *plist,
 	fputs(I_("Couldn't load plugin function\n"), stderr);
 	err = E_FOPEN;
     } else {
-	int save_t1 = pdinfo->t1;
-	int save_t2 = pdinfo->t2;
+	int save_t1 = dset->t1;
+	int save_t2 = dset->t2;
  
-	err = (*real_levin_lin) (vnum, plist, Z, pdinfo, opt, prn);
+	err = (*real_levin_lin) (vnum, plist, dset, opt, prn);
 	close_plugin(handle);
 
-	pdinfo->t1 = save_t1;
-	pdinfo->t2 = save_t2;
+	dset->t1 = save_t1;
+	dset->t2 = save_t2;
     }
 
     return err;
@@ -1255,8 +1251,7 @@ int levin_lin_test (int vnum, const int *plist,
  * adf_test:
  * @order: lag order for the (augmented) test.
  * @list: list of variables to test.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
@@ -1281,11 +1276,11 @@ int levin_lin_test (int vnum, const int *plist,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int adf_test (int order, const int *list, double ***pZ,
-	      DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+int adf_test (int order, const int *list, DATASET *dset, 
+	      gretlopt opt, PRN *prn)
 {
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int panelmode;
     int err;
 
@@ -1300,38 +1295,37 @@ int adf_test (int order, const int *list, double ***pZ,
 	err = incompatible_options(opt, OPT_C | OPT_T);
     }
 
-    panelmode = multi_unit_panel_sample(pdinfo);
+    panelmode = multi_unit_panel_sample(dset);
 
     if (panelmode) {
-	err = panel_DF_test(list[1], order, pZ, pdinfo, opt, prn);
+	err = panel_DF_test(list[1], order, dset, opt, prn);
     } else {
 	/* regular time series case */
 	int i, v, vlist[2] = {1, 0};
 
 	for (i=1; i<=list[0] && !err; i++) {
 	    vlist[1] = v = list[i];
-	    err = list_adjust_sample(vlist, &pdinfo->t1, &pdinfo->t2, 
-				     (const double **) *pZ);
+	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, dset);
 	    if (!err && order == -1) {
 		/* default to L_{12}: see G. W. Schwert, "Tests for Unit Roots:
 		   A Monte Carlo Investigation", Journal of Business and
 		   Economic Statistics, 7(2), 1989, pp. 5-17.
 		*/
-		int T = pdinfo->t2 - pdinfo->t1 + 1;
+		int T = dset->t2 - dset->t1 + 1;
 
 		order = 12.0 * pow(T/100.0, 0.25);
 	    }
 	    if (!err) {
-		err = real_adf_test(v, order, 1, pZ, pdinfo, opt, 
+		err = real_adf_test(v, order, 1, dset, opt, 
 				    0, NULL, prn);
 	    }
-	    pdinfo->t1 = save_t1;
-	    pdinfo->t2 = save_t2;
+	    dset->t1 = save_t1;
+	    dset->t2 = save_t2;
 	}
     }
 
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }
@@ -1400,9 +1394,9 @@ static double kpss_interp (double s, int T, int trend)
 }
 
 static int 
-real_kpss_test (int order, int varno, double ***pZ,
-		DATAINFO *pdinfo, gretlopt opt, 
-		kpss_info *kinfo, PRN *prn)
+real_kpss_test (int order, int varno, DATASET *dset, 
+		gretlopt opt, kpss_info *kinfo, 
+		PRN *prn)
 {
     MODEL KPSSmod;
     int *list = NULL;
@@ -1415,18 +1409,18 @@ real_kpss_test (int order, int varno, double ***pZ,
     int i, t, ndum, nreg;
 
     /* sanity check */
-    if (varno <= 0 || varno >= pdinfo->v) {
+    if (varno <= 0 || varno >= dset->v) {
 	return E_DATA;
     }
 
-    if (gretl_isconst(pdinfo->t1, pdinfo->t2, (*pZ)[varno])) {
-	gretl_errmsg_sprintf(_("%s is a constant"), pdinfo->varname[varno]);
+    if (gretl_isconst(dset->t1, dset->t2, dset->Z[varno])) {
+	gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[varno]);
 	return E_DATA;
     }
 
     if (opt & OPT_F) {
 	/* difference the variable before testing */
-	varno = diffgenr(varno, DIFF, pZ, pdinfo);
+	varno = diffgenr(varno, DIFF, dset);
 	if (varno < 0) {
 	    return E_DATA;
 	}
@@ -1440,28 +1434,29 @@ real_kpss_test (int order, int varno, double ***pZ,
 	hasseas = 1;
     }
 
-    ndum = hasseas ? pdinfo->pd - 1 : 0;
+    ndum = hasseas ? dset->pd - 1 : 0;
     nreg = 1 + hastrend + ndum;
 
-    list = malloc((nreg + 2) * sizeof *list);
+    list = gretl_list_new(nreg + 1);
     if (list == NULL) {
 	return E_ALLOC;
     }
 
-    list[0] = nreg + 1;
     list[1] = varno;
     list[2] = 0;
 
     if (hastrend) {
-	list[3] = gettrend(pZ, pdinfo, 0);
+	list[3] = gettrend(dset, 0);
 	if (list[3] == 0) {
 	    return E_ALLOC;
 	}
     }
 
     if (hasseas) {
-	int firstdum = dummy(pZ, pdinfo, 0);
+	int firstdum = dummy(dset, 0);
+
 	if (firstdum == 0) {
+	    free(list);
 	    return E_ALLOC;
 	}
 	for (i=0; i<ndum; i++) {
@@ -1470,7 +1465,7 @@ real_kpss_test (int order, int varno, double ***pZ,
     }
 
     /* OPT_M: reject missing values within sample range */
-    KPSSmod = lsq(list, *pZ, pdinfo, OLS, OPT_A | OPT_M);
+    KPSSmod = lsq(list, dset, OLS, OPT_A | OPT_M);
     if (KPSSmod.errcode) {
 	clear_model(&KPSSmod);
 	return KPSSmod.errcode;
@@ -1486,7 +1481,7 @@ real_kpss_test (int order, int varno, double ***pZ,
 
     if (kinfo == NULL && (opt & OPT_V)) {
 	KPSSmod.aux = AUX_KPSS;
-	printmodel(&KPSSmod, pdinfo, OPT_NONE, prn);
+	printmodel(&KPSSmod, dset, OPT_NONE, prn);
     }
   
     autocov = malloc(order * sizeof *autocov);
@@ -1559,7 +1554,7 @@ real_kpss_test (int order, int varno, double ***pZ,
 	cv[1] = kpss_critval(a[1], T, hastrend);
 	cv[2] = kpss_critval(a[2], T, hastrend);
 
-	pprintf(prn, _("\nKPSS test for %s"), pdinfo->varname[varno]);
+	pprintf(prn, _("\nKPSS test for %s"), dset->varname[varno]);
 	if (hastrend) {
 	    if (hasseas) {
 		pputs(prn, _(" (including trend and seasonals)\n\n"));
@@ -1601,13 +1596,12 @@ real_kpss_test (int order, int varno, double ***pZ,
     return 0;
 }
 
-static int panel_kpss_test (int order, int v, 
-			    double ***pZ, DATAINFO *pdinfo, 
+static int panel_kpss_test (int order, int v, DATASET *dset, 
 			    gretlopt opt, PRN *prn)
 {
     kpss_info kinfo;
-    int u0 = pdinfo->t1 / pdinfo->pd;
-    int uN = pdinfo->t2 / pdinfo->pd;
+    int u0 = dset->t1 / dset->pd;
+    int uN = dset->t2 / dset->pd;
     int n = uN - u0 + 1;
     int verbose = (opt & OPT_V);
     double ppv = 0.0, zpv = 0.0, lpv = 0.0;
@@ -1618,17 +1612,17 @@ static int panel_kpss_test (int order, int v,
     /* run a KPSS test for each unit and record the
        results */
 
-    pprintf(prn, _("\nKPSS test for %s %s\n"), pdinfo->varname[v],
+    pprintf(prn, _("\nKPSS test for %s %s\n"), dset->varname[v],
 	    (opt & OPT_T)? _("(including trend)") : _("(without trend)"));
     pprintf(prn, _("Lag truncation parameter = %d\n"), order);
     pputc(prn, '\n');
 
     for (i=u0; i<=uN && !err; i++) {
-	pdinfo->t1 = i * pdinfo->pd;
-	pdinfo->t2 = pdinfo->t1 + pdinfo->pd - 1;
-	err = series_adjust_sample((*pZ)[v], &pdinfo->t1, &pdinfo->t2);
+	dset->t1 = i * dset->pd;
+	dset->t2 = dset->t1 + dset->pd - 1;
+	err = series_adjust_sample(dset->Z[v], &dset->t1, &dset->t2);
 	if (!err) {
-	    err = real_kpss_test(order, v, pZ, pdinfo, opt | OPT_Q, &kinfo, prn);
+	    err = real_kpss_test(order, v, dset, opt | OPT_Q, &kinfo, prn);
 	    if (!err && verbose) {
 		pprintf(prn, "Unit %d, T = %d\n", i + 1, kinfo.T);
 		if (na(kinfo.pval)) {
@@ -1640,7 +1634,8 @@ static int panel_kpss_test (int order, int v,
 		    } else if (kinfo.pval == PV_LT01) {
 			pprintf(prn, "%s < .01\n", _("p-value"));
 		    } else {
-			pprintf(prn, "%s %.3f\n", _("interpolated p-value"), kinfo.pval);
+			pprintf(prn, "%s %.3f\n", _("interpolated p-value"), 
+				kinfo.pval);
 		    }
 		    pputc(prn, '\n');
 		}
@@ -1705,8 +1700,7 @@ static int panel_kpss_test (int order, int v,
  * kpss_test:
  * @order: window size for Bartlett smoothing.
  * @list: list of variables to test.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
@@ -1719,15 +1713,15 @@ static int panel_kpss_test (int order, int v,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int kpss_test (int order, const int *list, double ***pZ,
-	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+int kpss_test (int order, const int *list, DATASET *dset, 
+	       gretlopt opt, PRN *prn)
 {
-    int save_t1 = pdinfo->t1;
-    int save_t2 = pdinfo->t2;
+    int save_t1 = dset->t1;
+    int save_t2 = dset->t2;
     int err = 0;
 
-    if (multi_unit_panel_sample(pdinfo)) {
-	err = panel_kpss_test(order, list[1], pZ, pdinfo, opt, prn);
+    if (multi_unit_panel_sample(dset)) {
+	err = panel_kpss_test(order, list[1], dset, opt, prn);
     } else {
 	/* regular time series case */
 	int i, v, vlist[2] = {1, 0};
@@ -1735,25 +1729,24 @@ int kpss_test (int order, const int *list, double ***pZ,
 	for (i=1; i<=list[0] && !err; i++) {
 	    v = list[i];
 	    vlist[1] = v;
-	    err = list_adjust_sample(vlist, &pdinfo->t1, &pdinfo->t2, 
-				     (const double **) *pZ);
+	    err = list_adjust_sample(vlist, &dset->t1, &dset->t2, 
+				     dset);
 	    if (!err) {
-		err = real_kpss_test(order, v, pZ, pdinfo, opt, NULL, prn);
+		err = real_kpss_test(order, v, dset, opt, NULL, prn);
 	    }
-	    pdinfo->t1 = save_t1;
-	    pdinfo->t2 = save_t2;
+	    dset->t1 = save_t1;
+	    dset->t2 = save_t2;
 	}
     }
 
-    pdinfo->t1 = save_t1;
-    pdinfo->t2 = save_t2;
+    dset->t1 = save_t1;
+    dset->t2 = save_t2;
 
     return err;
 }
 
 static int *make_coint_list (const int *list, int detcode, int *nv, 
-			     double ***pZ, DATAINFO *pdinfo,
-			     int *err)
+			     DATASET *dset, int *err)
 {
     int *clist = NULL;
     int ifc = 0;
@@ -1790,7 +1783,7 @@ static int *make_coint_list (const int *list, int detcode, int *nv,
 
     /* add trend, if wanted */
     if (detcode >= UR_TREND) {
-	clist[j] = gettrend(pZ, pdinfo, 0);
+	clist[j] = gettrend(dset, 0);
 	if (clist[j++] == 0) {
 	    *err = E_ALLOC;
 	} 
@@ -1798,7 +1791,7 @@ static int *make_coint_list (const int *list, int detcode, int *nv,
 
     /* add trend-squared, if wanted */
     if (!*err && detcode == UR_QUAD_TREND) {
-	clist[j] = gettrend(pZ, pdinfo, 1);
+	clist[j] = gettrend(dset, 1);
 	if (clist[j++] == 0) {
 	    *err = E_ALLOC;
 	}
@@ -1846,15 +1839,16 @@ coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
 */
 
 static int coint_set_sample (const int *list, int nv, int order,
-			     double **Z, DATAINFO *pdinfo)
+			     DATASET *dset)
 {
     int anymiss;
-    int i, t;
+    int i, v, t;
 
-    for (t=pdinfo->t1; t<pdinfo->t2; t++) {
+    for (t=dset->t1; t<dset->t2; t++) {
 	anymiss = 0;
 	for (i=1; i<=nv; i++) {
-	    if (na(Z[list[i]][t])) {
+	    v = list[i];
+	    if (na(dset->Z[v][t])) {
 		anymiss = 1;
 		break;
 	    }
@@ -1864,12 +1858,13 @@ static int coint_set_sample (const int *list, int nv, int order,
 	}
     }
 
-    pdinfo->t1 = t + order + 1;
+    dset->t1 = t + order + 1;
     
-    for (t=pdinfo->t2; t>pdinfo->t1; t--) {
+    for (t=dset->t2; t>dset->t1; t--) {
 	anymiss = 0;
 	for (i=1; i<=nv; i++) {
-	    if (na(Z[list[i]][t])) {
+	    v = list[i];
+	    if (na(dset->Z[v][t])) {
 		anymiss = 1;
 		break;
 	    }
@@ -1879,7 +1874,7 @@ static int coint_set_sample (const int *list, int nv, int order,
 	}
     }
 
-    pdinfo->t2 = t;
+    dset->t2 = t;
 
     return 0;
 }
@@ -1888,8 +1883,7 @@ static int coint_set_sample (const int *list, int nv, int order,
  * engle_granger_test:
  * @order: lag order for the test.
  * @list: specifies the variables to use.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
+ * @dset: dataset struct.
  * @opt: option flags.
  * @prn: gretl printing struct.
  *
@@ -1905,11 +1899,11 @@ static int coint_set_sample (const int *list, int nv, int order,
  * on error.
  */
 
-int engle_granger_test (int order, const int *list, double ***pZ, 
-			DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+int engle_granger_test (int order, const int *list, DATASET *dset, 
+			gretlopt opt, PRN *prn)
 {
-    int orig_t1 = pdinfo->t1;
-    int orig_t2 = pdinfo->t2;
+    int orig_t1 = dset->t1;
+    int orig_t2 = dset->t2;
     int test_t1, test_t2;
     gretlopt adf_opt = OPT_C;
     MODEL cmod;
@@ -1919,7 +1913,7 @@ int engle_granger_test (int order, const int *list, double ***pZ,
     int *clist = NULL;
     int err = 0;
 
-    if (multi_unit_panel_sample(pdinfo)) {
+    if (multi_unit_panel_sample(dset)) {
 	gretl_errmsg_set("Sorry, this command is not yet available "
 			 "for panel data");
 	return E_DATA;
@@ -1930,7 +1924,7 @@ int engle_granger_test (int order, const int *list, double ***pZ,
 	return err;
     }
 
-    clist = make_coint_list(list, detcode, &nv, pZ, pdinfo, &err);
+    clist = make_coint_list(list, detcode, &nv, dset, &err);
     if (err) {
 	return err;
     }
@@ -1946,14 +1940,14 @@ int engle_granger_test (int order, const int *list, double ***pZ,
 
     if (!(opt & OPT_S)) {
 	/* test all candidate vars for unit root */
-	coint_set_sample(clist, nv, order, *pZ, pdinfo);
+	coint_set_sample(clist, nv, order, dset);
 	for (i=1; i<=nv; i++) {
 	    if (step == 1) {
 		pputc(prn, '\n');
 	    }
 	    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
-		    step++, pdinfo->varname[clist[i]]);
-	    real_adf_test(clist[i], order, 1, pZ, pdinfo, adf_opt, 
+		    step++, dset->varname[clist[i]]);
+	    real_adf_test(clist[i], order, 1, dset, adf_opt, 
 			  ADF_EG_TEST, NULL, prn);
 	}
     }
@@ -1963,39 +1957,39 @@ int engle_granger_test (int order, const int *list, double ***pZ,
     }
     pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
 
-    test_t1 = pdinfo->t1;
-    test_t2 = pdinfo->t2;
+    test_t1 = dset->t1;
+    test_t2 = dset->t2;
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
-    cmod = lsq(clist, *pZ, pdinfo, OLS, OPT_NONE);
+    cmod = lsq(clist, dset, OLS, OPT_NONE);
     err = cmod.errcode;
     if (err) {
 	goto bailout;
     }
 
     cmod.aux = AUX_COINT;
-    printmodel(&cmod, pdinfo, OPT_NONE, prn);
+    printmodel(&cmod, dset, OPT_NONE, prn);
 
     /* add residuals from cointegrating regression to data set */
-    err = dataset_add_allocated_series(cmod.uhat, pZ, pdinfo);
+    err = dataset_add_allocated_series(cmod.uhat, dset);
     if (err) {
 	goto bailout;
     }
 
-    k = pdinfo->v - 1;
-    strcpy(pdinfo->varname[k], "uhat");
+    k = dset->v - 1;
+    strcpy(dset->varname[k], "uhat");
     cmod.uhat = NULL;
 
     pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
-	    step, pdinfo->varname[k]);
+	    step, dset->varname[k]);
 
-    pdinfo->t1 = test_t1;
-    pdinfo->t2 = test_t2;
+    dset->t1 = test_t1;
+    dset->t2 = test_t2;
 
     /* Run (A)DF test on the residuals */
-    real_adf_test(k, order, nv, pZ, pdinfo, adf_opt, 
+    real_adf_test(k, order, nv, dset, adf_opt, 
 		  ADF_EG_TEST | ADF_EG_RESIDS, NULL, prn); 
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
@@ -2009,11 +2003,11 @@ int engle_granger_test (int order, const int *list, double ***pZ,
     clear_model(&cmod);
     free(clist);
     if (k > 0) {
-	dataset_drop_variable(k, pZ, pdinfo);
+	dataset_drop_variable(k, dset);
     }
 
-    pdinfo->t1 = orig_t1;
-    pdinfo->t2 = orig_t2;
+    dset->t1 = orig_t1;
+    dset->t2 = orig_t2;
 
     return err;
 }

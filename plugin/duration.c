@@ -106,7 +106,7 @@ static int duration_estimates_init (duration_info *dinfo)
 }
 
 static int duration_init (duration_info *dinfo, MODEL *pmod,
-			  int censvar, const double **Z, 
+			  int censvar, const DATASET *dset,
 			  gretlopt opt, PRN *prn)
 {
     int cn, n = pmod->nobs;
@@ -173,13 +173,13 @@ static int duration_init (duration_info *dinfo, MODEL *pmod,
 	    continue;
 	}
 	v = pmod->list[1];
-	dinfo->logt->val[i] = log(Z[v][t]);
+	dinfo->logt->val[i] = log(dset->Z[v][t]);
 	if (dinfo->cens != NULL) {
-	    dinfo->cens->val[i] = Z[censvar][t];
+	    dinfo->cens->val[i] = dset->Z[censvar][t];
 	}
 	for (j=0; j<k; j++) {
 	    v = pmod->list[j+2];
-	    gretl_matrix_set(dinfo->X, i, j, Z[v][t]);
+	    gretl_matrix_set(dinfo->X, i, j, dset->Z[v][t]);
 	}
 	i++;
     }
@@ -560,9 +560,9 @@ duration_overall_LR_test (MODEL *pmod, duration_info *dinfo,
 */
 
 static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
-				      const double **Z, gretlopt opt)
+				      const DATASET *dset, gretlopt opt)
 {
-    const double *y = Z[pmod->list[1]];
+    const double *y = dset->Z[pmod->list[1]];
     const double *logt = dinfo->logt->val;
     int medians = (opt & OPT_M);
     double St, G = 1.0;
@@ -647,7 +647,7 @@ static void duration_set_predictions (MODEL *pmod, duration_info *dinfo,
 
 static int 
 transcribe_duration_results (MODEL *pmod, duration_info *dinfo, 
-			     const double **Z, const DATAINFO *pdinfo, 
+			     const DATASET *dset, 
 			     int fncount, int grcount, int use_bfgs,
 			     int censvar, gretlopt opt)
 {
@@ -682,7 +682,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
 	if (!err) {
 	    for (j=0; j<dinfo->k; j++) {
 		v = pmod->list[j+2];
-		strcpy(pmod->params[j], pdinfo->varname[v]);
+		strcpy(pmod->params[j], dset->varname[v]);
 	    }
 	    if (dinfo->dist != DUR_EXPON) {
 		strcpy(pmod->params[np-1], "sigma");
@@ -721,7 +721,7 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     }	
 
     if (!err) {
-	duration_set_predictions(pmod, dinfo, Z, opt);
+	duration_set_predictions(pmod, dinfo, dset, opt);
 	pmod->lnL = dinfo->ll;
 	mle_criteria(pmod, 0); 
 	/* mask invalid statistics */
@@ -737,9 +737,8 @@ transcribe_duration_results (MODEL *pmod, duration_info *dinfo,
     return err;
 }
 
-int duration_estimate (MODEL *pmod, int censvar, const double **Z, 
-		       const DATAINFO *pdinfo, gretlopt opt, 
-		       PRN *prn)
+int duration_estimate (MODEL *pmod, int censvar, const DATASET *dset, 
+		       gretlopt opt, PRN *prn)
 {
     gretlopt maxopt = opt & OPT_V;
     duration_info dinfo;
@@ -749,7 +748,7 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
     int use_bfgs = 0;
     int err = 0;
 
-    err = duration_init(&dinfo, pmod, censvar, Z, opt, prn);
+    err = duration_init(&dinfo, pmod, censvar, dset, opt, prn);
     if (err) {
 	goto bailout;
     }
@@ -757,7 +756,7 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
 #if DDEBUG
     if (!err && censvar > 0) {
 	fprintf(stderr, "duration: using var %d (%s) for censoring info\n",
-		censvar, pdinfo->varname[censvar]);
+		censvar, dset->varname[censvar]);
     }
 #endif
 
@@ -788,7 +787,7 @@ int duration_estimate (MODEL *pmod, int censvar, const double **Z,
     }
 
     if (!err) {
-	err = transcribe_duration_results(pmod, &dinfo, Z, pdinfo, 
+	err = transcribe_duration_results(pmod, &dinfo, dset, 
 					  fncount, grcount, use_bfgs,
 					  censvar, opt);
     }

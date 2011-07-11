@@ -158,15 +158,15 @@ long get_epoch_day (const char *date)
  * calendar_obs_number:
  * @date: string representation of calendar date, in form
  * YY[YY]/MM/DD.
- * @pdinfo: pointer to dataset information.
+ * @dset: pointer to dataset information.
  * 
  * Returns: The zero-based observation number for the given
  * date within the current data set.
  */
 
-int calendar_obs_number (const char *date, const DATAINFO *pdinfo)
+int calendar_obs_number (const char *date, const DATASET *dset)
 {
-    long ed0 = (long) pdinfo->sd0;
+    long ed0 = (long) dset->sd0;
     long t = get_epoch_day(date);
 
     if (t == -1) return -1;
@@ -174,10 +174,10 @@ int calendar_obs_number (const char *date, const DATAINFO *pdinfo)
     /* subtract starting day for dataset */
     t -= ed0;
 
-    if (pdinfo->pd == 52) {
+    if (dset->pd == 52) {
 	/* weekly data */
 	t /= 7;
-    } else if (pdinfo->pd == 5 || pdinfo->pd == 6) { 
+    } else if (dset->pd == 5 || dset->pd == 6) { 
 	/* daily, 5- or 6-day week: subtract number of irrelevant days */
 	int startday = (((ed0 - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
 	int wkends = (t + startday - 1) / 7;
@@ -187,7 +187,7 @@ int calendar_obs_number (const char *date, const DATAINFO *pdinfo)
 	       (int) ed0, date, (int) t, startday, wkends);
 #endif
 
-	if (pdinfo->pd == 5) {
+	if (dset->pd == 5) {
 	    t -= (2 * wkends);
 	} else {
 	    t -= wkends;
@@ -211,24 +211,24 @@ static int t_to_epoch_day (int t, long start, int wkdays)
  * calendar_date_string:
  * @str: string to be filled out.
  * @t: zero-based index of observation.
- * @pdinfo: pointer to dataset information.
+ * @dset: pointer to dataset information.
  * 
  * Writes to @str the calendar representation of the date of
  * observation @t, in the form YY[YY]/MM/DD.
  */
 
-void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)
+void calendar_date_string (char *str, int t, const DATASET *dset)
 {
     int rem, yr;
     int add, day, mo = 0, modays = 0;
     long yrstart, dfind;
 
-    if (pdinfo->pd == 52) {
-	dfind = (long) pdinfo->sd0 + 7 * t;
-    } else if (pdinfo->pd == 7) {
-	dfind = (long) pdinfo->sd0 + t;
+    if (dset->pd == 52) {
+	dfind = (long) dset->sd0 + 7 * t;
+    } else if (dset->pd == 7) {
+	dfind = (long) dset->sd0 + t;
     } else {
-	dfind = t_to_epoch_day(t, (long) pdinfo->sd0, pdinfo->pd);
+	dfind = t_to_epoch_day(t, (long) dset->sd0, dset->pd);
     }
 
     yr = 1 + (double) dfind / 365.248; 
@@ -251,7 +251,7 @@ void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)
 
     day = rem - modays;
 
-    if (strlen(pdinfo->stobs) == 8) {
+    if (strlen(dset->stobs) == 8) {
 	sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day);
     } else {
 	sprintf(str, "%04d/%02d/%02d", yr, mo, day);
@@ -650,7 +650,7 @@ int days_in_month_after (int yr, int mon, int day, int wkdays)
 
 /**
  * n_hidden_missing_obs:
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * For daily data with user-supplied data strings, 
  * determine the number of "hidden" missing observations,
@@ -658,41 +658,41 @@ int days_in_month_after (int yr, int mon, int day, int wkdays)
  * observations and the number that should be there,
  * according to the calendar. Allowance is made for 
  * 5- or 6-day data, via the data frequency given
- * in @pdinfo.
+ * in @dset.
  *
  * Returns: number of hidden observations.
  */
 
-int n_hidden_missing_obs (const DATAINFO *pdinfo)
+int n_hidden_missing_obs (const DATASET *dset)
 {
     int t1, t2;
     int cal_n;
 
-    if (!dated_daily_data(pdinfo) || pdinfo->S == NULL) {
+    if (!dated_daily_data(dset) || dset->S == NULL) {
 	return 0;
     }
     
-    t1 = calendar_obs_number(pdinfo->S[0], pdinfo);
-    t2 = calendar_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
+    t1 = calendar_obs_number(dset->S[0], dset);
+    t2 = calendar_obs_number(dset->S[dset->n - 1], dset);
 
     cal_n = t2 - t1 + 1;
 
-    return cal_n - pdinfo->n;
+    return cal_n - dset->n;
 }
 
 /**
  * guess_daily_pd:
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  *
  * Based on user-supplied daily date strings recorded in
- * @pdinfo, try to guess whether the number of observations
+ * @dset, try to guess whether the number of observations
  * per week is 5, 6 or 7 (given that some observations 
  * may be missing).
  *
  * Returns: best quess at data frequency.
  */
 
-int guess_daily_pd (const DATAINFO *pdinfo)
+int guess_daily_pd (const DATASET *dset)
 {
     int t, wd, pd = 5;
     int wdbak = -1;
@@ -700,13 +700,13 @@ int guess_daily_pd (const DATAINFO *pdinfo)
     int gotsat = 0, gotsun = 0;
     int contig = 0;
 
-    wd = get_day_of_week(pdinfo->S[0]);
-    if (6 - wd < pdinfo->n) {
+    wd = get_day_of_week(dset->S[0]);
+    if (6 - wd < dset->n) {
 	havesat = 1;
     }
 
-    for (t=0; t<pdinfo->n && t<28; t++) {
-	wd = get_day_of_week(pdinfo->S[t]);
+    for (t=0; t<dset->n && t<28; t++) {
+	wd = get_day_of_week(dset->S[t]);
 	if (wd == 0) {
 	    gotsun = 1;
 	} else if (wd == 6) {
@@ -723,7 +723,7 @@ int guess_daily_pd (const DATAINFO *pdinfo)
     } else if (contig > 10) {
 	if (gotsun) pd = 7;
 	else if (gotsat) pd = 6;
-    } else if (pdinfo->n > 7) {
+    } else if (dset->n > 7) {
 	if (!gotsun && !gotsat) {
 	    pd = 5;
 	} else if (!gotsun) {

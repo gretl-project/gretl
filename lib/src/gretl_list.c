@@ -1355,7 +1355,7 @@ char *gretl_list_to_string (const int *list)
 /**
  * gretl_list_get_names:
  * @list: array of integers.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @err: location to receive error code.
  * 
  * Prints the names of the members of @list of integers into 
@@ -1365,7 +1365,7 @@ char *gretl_list_to_string (const int *list)
  * or NULL on failure.
  */
 
-char *gretl_list_get_names (const int *list, const DATAINFO *pdinfo,
+char *gretl_list_get_names (const int *list, const DATASET *dset,
 			    int *err)
 {
     char *buf = NULL;
@@ -1383,10 +1383,10 @@ char *gretl_list_get_names (const int *list, const DATAINFO *pdinfo,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi < 0 || vi >= pdinfo->v) {
+	if (vi < 0 || vi >= dset->v) {
 	    len += strlen("unknown") + 1;
 	} else {
-	    len += strlen(pdinfo->varname[vi]) + 1;
+	    len += strlen(dset->varname[vi]) + 1;
 	}
     }
 
@@ -1400,10 +1400,10 @@ char *gretl_list_get_names (const int *list, const DATAINFO *pdinfo,
 
     for (i=1; i<=list[0]; i++) {
 	vi = list[i];
-	if (vi < 0 || vi >= pdinfo->v) {
+	if (vi < 0 || vi >= dset->v) {
 	    strncat(buf, "unknown", strlen("unknown"));
 	} else {
-	    strncat(buf, pdinfo->varname[vi], strlen(pdinfo->varname[vi]));
+	    strncat(buf, dset->varname[vi], strlen(dset->varname[vi]));
 	}
 	if (i < list[0]) {
 	    strncat(buf, ",", 1);
@@ -1512,8 +1512,7 @@ static void reglist_move_const (int *list, int k)
  * reglist_check_for_const:
  * @list: regression list suitable for use with a gretl
  * model (should not contain #LISTSEP).
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  *
  * Checks @list for an intercept term (a variable all of
  * whose valid values in sample are 1).  If such a variable
@@ -1522,10 +1521,9 @@ static void reglist_move_const (int *list, int k)
  * Returns: 1 if the list contains an intercept, else 0.
  */
 
-int reglist_check_for_const (int *list, const double **Z,
-			     const DATAINFO *pdinfo)
+int reglist_check_for_const (int *list, const DATASET *dset)
 {
-    int cpos = gretl_list_const_pos(list, 2, Z, pdinfo);
+    int cpos = gretl_list_const_pos(list, 2, dset);
     int ret = 0;
 
     if (cpos > 1) {
@@ -1573,8 +1571,7 @@ int gretl_list_delete_at_pos (int *list, int pos)
 /**
  * gretl_list_purge_const:
  * @list: list of variable ID numbers.
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  *
  * Checks @list from position 1 onward for the presence of a 
  * variable whose valid values in sample all equal 1.0.  If 
@@ -1585,8 +1582,7 @@ int gretl_list_delete_at_pos (int *list, int pos)
  * Returns: 1 if a constant was found and deleted, else 0.
  */
 
-int gretl_list_purge_const (int *list, const double **Z,
-			    const DATAINFO *pdinfo)
+int gretl_list_purge_const (int *list, const DATASET *dset)
 {
     int i, gotc = 0;
     int l0 = list[0];
@@ -1595,7 +1591,7 @@ int gretl_list_purge_const (int *list, const double **Z,
        the only element behind the list separator, remove both
        the constant and the separator */
 
-    if (list[l0] == 0 || true_const(list[l0], Z, pdinfo)) {
+    if (list[l0] == 0 || true_const(list[l0], dset)) {
 	gotc = 1;
 	list[0] -= 1;
 	if (list[l0 - 1] == LISTSEP) {
@@ -1604,7 +1600,7 @@ int gretl_list_purge_const (int *list, const double **Z,
 	}
     } else {
 	for (i=1; i<l0; i++) {
-	    if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
+	    if (list[i] == 0 || true_const(list[i], dset)) {
 		for ( ; i<l0; i++) {
 		    list[i] = list[i+1];
 		}
@@ -2216,7 +2212,7 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
  * list_members_replaced:
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @ref_id: ID number of reference #MODEL.
  *
  * Checks whether any variable in @list has been redefined via
@@ -2226,7 +2222,7 @@ int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
  * Returns: 1 if any variables have been replaced, 0 otherwise.
  */
 
-int list_members_replaced (const int *list, const DATAINFO *pdinfo,
+int list_members_replaced (const int *list, const DATASET *dset,
 			   int ref_id)
 {
     const char *errmsg = N_("Can't do this: some vars in original "
@@ -2245,11 +2241,11 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 	if (list[j] == LISTSEP) {
 	    continue;
 	}
-	if (list[j] >= pdinfo->v) {
+	if (list[j] >= dset->v) {
 	    gretl_errmsg_set(_(errmsg));
 	    return E_DATA;
 	}
-	label = VARLABEL(pdinfo, list[j]);
+	label = VARLABEL(dset, list[j]);
 	*rword = '\0';
 	sscanf(label, "%15s", rword);
 	if (!strcmp(rword, _("Replaced"))) {
@@ -2270,8 +2266,7 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
  * @minpos: position in @list at which to start the search (>= 1).
- * @Z: data array.
- * @pdinfo: dataset information.
+ * @dset: dataset struct.
  *
  * Checks @list for the presence, in position @minpos or higher, of
  * a variable whose valid values in sample all equal 1.  This usually
@@ -2282,8 +2277,8 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
  * found.
  */
 
-int gretl_list_const_pos (const int *list, int minpos, const double **Z, 
-			  const DATAINFO *pdinfo)
+int gretl_list_const_pos (const int *list, int minpos,  
+			  const DATASET *dset)
 {
     int i;
 
@@ -2300,7 +2295,7 @@ int gretl_list_const_pos (const int *list, int minpos, const double **Z,
 
     /* ... but if it's not found */
     for (i=minpos; i<=list[0]; i++) {
-        if (true_const(list[i], Z, pdinfo)) {
+        if (true_const(list[i], dset)) {
 	    return i;
 	}
     }
@@ -2645,7 +2640,7 @@ int gretl_list_n_distinct_members (const int *list)
 
 /**
  * full_var_list:
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @nvars: location for return of number of elements in full list.
  *
  * Creates a newly allocated list including all series in the
@@ -2661,15 +2656,15 @@ int gretl_list_n_distinct_members (const int *list)
  * Returns: the allocated list, or NULL.
  */
 
-int *full_var_list (const DATAINFO *pdinfo, int *nvars)
+int *full_var_list (const DATASET *dset, int *nvars)
 {
     int fsd = gretl_function_depth();
     int i, j, nv = 0;
     int *list = NULL;
 
-    for (i=1; i<pdinfo->v; i++) {
-	if (!var_is_hidden(pdinfo, i) &&
-	    STACK_LEVEL(pdinfo, i) == fsd) {
+    for (i=1; i<dset->v; i++) {
+	if (!var_is_hidden(dset, i) &&
+	    STACK_LEVEL(dset, i) == fsd) {
 	    nv++;
 	}
     }
@@ -2684,9 +2679,9 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
 
     if (list != NULL) {
 	j = 1;
-	for (i=1; i<pdinfo->v; i++) {
-	    if (!var_is_hidden(pdinfo, i) &&
-		STACK_LEVEL(pdinfo, i) == fsd) {
+	for (i=1; i<dset->v; i++) {
+	    if (!var_is_hidden(dset, i) &&
+		STACK_LEVEL(dset, i) == fsd) {
 		list[j++] = i;
 	    }
 	}
@@ -2720,7 +2715,7 @@ int gretl_list_is_consecutive (const int *list)
 /**
  * gretl_list_build:
  * @s: string list specification.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @err: location to receive error code
  *
  * Builds a list based on the specification in @s, which may include
@@ -2730,7 +2725,7 @@ int gretl_list_is_consecutive (const int *list)
  * Returns: the constructed list, or NULL on failure.
  */
 
-int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err)
+int *gretl_list_build (const char *s, const DATASET *dset, int *err)
 {
     char test[32];
     int *list = NULL;
@@ -2764,8 +2759,8 @@ int *gretl_list_build (const char *s, const DATAINFO *pdinfo, int *err)
 		    *err = E_PARSE;
 		}
 	    } else {
-		v = series_index(pdinfo, test);
-		if (v < pdinfo->v) {
+		v = series_index(dset, test);
+		if (v < dset->v) {
 		    list = gretl_list_append_term(&list, v);
 		} else {
 		    nlist = get_list_by_name(test);
@@ -2911,13 +2906,13 @@ int gretl_serialize_lists (const char *fname)
 /**
  * gretl_list_print:
  * @lname: name of list.
- * @pdinfo: dataset information.
+ * @dset: dataset information.
  * @prn: gretl printing struct.
  * 
  * Prints to @prn the given @list of variables, by name.
  */
 
-void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
+void gretl_list_print (const char *lname, const DATASET *dset,
 		       PRN *prn)
 {
     const int *list = get_list_by_name(lname);
@@ -2934,10 +2929,10 @@ void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
 	    li = list[i];
 	    if (li == LISTSEP) {
 		len += pputs(prn, "; ");
-	    } else if (li < 0 || li >= pdinfo->v) {
+	    } else if (li < 0 || li >= dset->v) {
 		len += pputs(prn, "?? ");
 	    } else {
-		len += pprintf(prn, "%s ", pdinfo->varname[li]);
+		len += pprintf(prn, "%s ", dset->varname[li]);
 		if (len > testlen && i < list[0]) {
 		    pputs(prn, "\\\n "); 
 		    len = 1;
@@ -2950,7 +2945,7 @@ void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
 
 /**
  * varname_match_list:
- * @pdinfo: pointer to dataset information.
+ * @dset: pointer to dataset information.
  * @pattern: pattern to be matched.
  * @err: location to receive error code.
  *
@@ -2958,14 +2953,14 @@ void gretl_list_print (const char *lname, const DATAINFO *pdinfo,
  * match @pattern, or NULL if there are no matches.
  */
 
-int *varname_match_list (const DATAINFO *pdinfo, const char *pattern,
+int *varname_match_list (const DATASET *dset, const char *pattern,
 			 int *err)
 {
     GPatternSpec *pspec;
     int *list = NULL;
     int i, fd, n = 0;
 
-    if (pdinfo == NULL || pdinfo->v == 0) {
+    if (dset == NULL || dset->v == 0) {
 	return NULL;
     }
 
@@ -2973,9 +2968,9 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern,
 
     pspec = g_pattern_spec_new(pattern);
 
-    for (i=1; i<pdinfo->v; i++) { 
-	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
-	    if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
+    for (i=1; i<dset->v; i++) { 
+	if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+	    if (g_pattern_match_string(pspec, dset->varname[i])) {
 		n++;
 	    }
 	}
@@ -2988,9 +2983,9 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern,
 	} else {
 	    int j = 1;
 
-	    for (i=1; i<pdinfo->v; i++) { 
-		if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
-		    if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
+	    for (i=1; i<dset->v; i++) { 
+		if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+		    if (g_pattern_match_string(pspec, dset->varname[i])) {
 			list[j++] = i;
 		    }
 		}
@@ -3005,7 +3000,7 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern,
 
 /**
  * ellipsis_list:
- * @pdinfo: pointer to dataset information.
+ * @dset: pointer to dataset information.
  * @v1: index of first variable.
  * @v2: index of last variable.
  * @err: location to receive error code.
@@ -3014,19 +3009,19 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern,
  * from @v1 to @v2.
  */
 
-int *ellipsis_list (const DATAINFO *pdinfo, int v1, int v2, int *err)
+int *ellipsis_list (const DATASET *dset, int v1, int v2, int *err)
 {
     int *list = NULL;
     int i, fd, n = 0;
 
-    if (pdinfo == NULL || pdinfo->v == 0) {
+    if (dset == NULL || dset->v == 0) {
 	return NULL;
     }
 
     fd = gretl_function_depth();
 
     for (i=v1; i<=v2; i++) { 
-	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
+	if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
 	    n++;
 	}
     }
@@ -3039,7 +3034,7 @@ int *ellipsis_list (const DATAINFO *pdinfo, int v1, int v2, int *err)
 	    int j = 1;
 
 	    for (i=v1; i<=v2; i++) { 
-		if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
+		if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
 		    list[j++] = i;
 		}
 	    }
@@ -3051,14 +3046,14 @@ int *ellipsis_list (const DATAINFO *pdinfo, int v1, int v2, int *err)
 
 /**
  * varname_match_any:
- * @pdinfo: pointer to dataset information.
+ * @dset: pointer to dataset information.
  * @pattern: pattern to be matched.
  *
  * Returns: 1 if at least one variable in the dataset has a
  * name that matches @pattern, otherwise 0.
  */
 
-int varname_match_any (const DATAINFO *pdinfo, const char *pattern)
+int varname_match_any (const DATASET *dset, const char *pattern)
 {
     GPatternSpec *pspec;
     int i, fd, ret = 0;
@@ -3067,9 +3062,9 @@ int varname_match_any (const DATAINFO *pdinfo, const char *pattern)
 
     pspec = g_pattern_spec_new(pattern);
 
-    for (i=1; i<pdinfo->v; i++) { 
-	if (fd == 0 || fd == STACK_LEVEL(pdinfo, i)) {
-	    if (g_pattern_match_string(pspec, pdinfo->varname[i])) {
+    for (i=1; i<dset->v; i++) { 
+	if (fd == 0 || fd == STACK_LEVEL(dset, i)) {
+	    if (g_pattern_match_string(pspec, dset->varname[i])) {
 		ret = 1;
 		break;
 	    }

@@ -38,7 +38,7 @@ enum {
 
 #define LEVEL_ONLY 2
 
-typedef struct dpdinfo_ dpdinfo;
+typedef struct ddset_ ddset;
 typedef struct unit_info_ unit_info;
 typedef struct diag_info_ diag_info;
 
@@ -61,7 +61,7 @@ struct diag_info_ {
     int tbase;   /* first obs with potentially available instruments */
 };
 
-struct dpdinfo_ {
+struct ddset_ {
     int ci;               /* ARBOND or DPANEL */
     int flags;            /* option flags */
     int step;             /* what step are we on? (1 or 2) */
@@ -140,11 +140,11 @@ struct dpdinfo_ {
 
 #define data_index(dpd,i) (i * dpd->T + dpd->t1)
 
-static void dpanel_residuals (dpdinfo *dpd);
-static int dpd_process_list (dpdinfo *dpd, const int *list, 
+static void dpanel_residuals (ddset *dpd);
+static int dpd_process_list (ddset *dpd, const int *list, 
 			     const int *ylags);
 
-static void dpdinfo_free (dpdinfo *dpd)
+static void ddset_free (ddset *dpd)
 {
     if (dpd == NULL) {
 	return;
@@ -166,7 +166,7 @@ static void dpdinfo_free (dpdinfo *dpd)
     free(dpd);
 }
 
-static int dpd_allocate_matrices (dpdinfo *dpd)
+static int dpd_allocate_matrices (ddset *dpd)
 {
     int T = dpd->max_ni;
 
@@ -201,7 +201,7 @@ static int dpd_allocate_matrices (dpdinfo *dpd)
     return 0;
 }
 
-static int dpd_add_unit_info (dpdinfo *dpd)
+static int dpd_add_unit_info (ddset *dpd)
 {
     int i, err = 0;
 
@@ -254,12 +254,11 @@ static int dpd_flags_from_opt (gretlopt opt)
     return f;
 }
 
-static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
-			     const double **Z, const DATAINFO *pdinfo, 
-			     gretlopt opt, diag_info *d, 
-			     int nzb, int *err)
+static ddset *ddset_new (int ci, const int *list, const int *ylags,
+			 const DATASET *dset, gretlopt opt, 
+			 diag_info *d, int nzb, int *err)
 {
-    dpdinfo *dpd = NULL;
+    ddset *dpd = NULL;
     int NT;
 
     if (list[0] < 3) {
@@ -305,10 +304,10 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
 	goto bailout;
     }
 
-    NT = sample_size(pdinfo);
+    NT = sample_size(dset);
 
-    dpd->t1 = pdinfo->t1;             /* start of sample range */
-    dpd->T = pdinfo->pd;              /* max obs. per individual */
+    dpd->t1 = dset->t1;             /* start of sample range */
+    dpd->T = dset->pd;              /* max obs. per individual */
     dpd->effN = dpd->N = NT / dpd->T; /* included individuals */
     dpd->minTi = dpd->maxTi = 0;
     dpd->max_ni = 0;
@@ -341,7 +340,7 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
     *err = dpd_add_unit_info(dpd);
 
     if (!*err) {
-	dpd->used = calloc(pdinfo->n, 1);
+	dpd->used = calloc(dset->n, 1);
 	if (dpd->used == NULL) {
 	    *err = E_ALLOC;
 	}
@@ -350,7 +349,7 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
  bailout:
 
     if (*err) {
-	dpdinfo_free(dpd);
+	ddset_free(dpd);
 	dpd = NULL;
     }
 
@@ -360,7 +359,7 @@ static dpdinfo *dpdinfo_new (int ci, const int *list, const int *ylags,
 /* if the const has been included among the regressors but not the
    instruments, add it to the instruments */
 
-static int maybe_add_const_to_ilist (dpdinfo *dpd)
+static int maybe_add_const_to_ilist (ddset *dpd)
 {
     int i, addc = dpd->ifc;
     int err = 0;
@@ -391,7 +390,7 @@ static int maybe_add_const_to_ilist (dpdinfo *dpd)
     return err;
 }
 
-static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
+static int dpd_make_lists (ddset *dpd, const int *list, int xpos)
 {
     int i, nz = 0, spos = 0;
     int err = 0;
@@ -471,7 +470,7 @@ static int dpd_make_lists (dpdinfo *dpd, const int *list, int xpos)
     return err;
 }
 
-static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
+static int dpanel_make_laglist (ddset *dpd, const int *list,
 				int seppos, const int *ylags)
 {
     int nlags = seppos - 1;
@@ -542,7 +541,7 @@ static int dpanel_make_laglist (dpdinfo *dpd, const int *list,
    done in dpanel via "GMM(y,min,max)". 
 */
 
-static int dpd_process_list (dpdinfo *dpd, const int *list,
+static int dpd_process_list (ddset *dpd, const int *list,
 			     const int *ylags)
 {
     int seppos = gretl_list_separator_position(list);
@@ -603,7 +602,7 @@ static int dpd_process_list (dpdinfo *dpd, const int *list,
    for handling equations in levels.
 */
 
-static int obs_is_usable (dpdinfo *dpd, const double **Z, int s)
+static int obs_is_usable (ddset *dpd, const DATASET *dset, int s)
 {
     int imax = dpd->p + 1;
     int i;
@@ -618,7 +617,7 @@ static int obs_is_usable (dpdinfo *dpd, const double **Z, int s)
     */
 
     for (i=0; i<=imax; i++) {
-	if (na(Z[dpd->yno][s-i])) {
+	if (na(dset->Z[dpd->yno][s-i])) {
 	    return 0;
 	}
     }
@@ -626,7 +625,7 @@ static int obs_is_usable (dpdinfo *dpd, const double **Z, int s)
     if (dpd->xlist != NULL) {
 	/* check the independent vars */
 	for (i=1; i<=dpd->xlist[0]; i++) {
-	    if (na(Z[dpd->xlist[i]][s])) {
+	    if (na(dset->Z[dpd->xlist[i]][s])) {
 		return 0;
 	    }
 	}
@@ -635,7 +634,7 @@ static int obs_is_usable (dpdinfo *dpd, const double **Z, int s)
     return 1;
 }
 
-static int bz_columns (dpdinfo *dpd, int i)
+static int bz_columns (ddset *dpd, int i)
 {
     int j, k, nc = 0;
     int t = i + dpd->p + 1; /* ?? */
@@ -655,7 +654,7 @@ static int bz_columns (dpdinfo *dpd, int i)
 
 /* find the first y observation, all units */
 
-static int arbond_find_t1min (dpdinfo *dpd, const double *y)
+static int arbond_find_t1min (ddset *dpd, const double *y)
 {
     int t1min = dpd->T - 1;
     int i, s, t;
@@ -681,7 +680,7 @@ static int arbond_find_t1min (dpdinfo *dpd, const double *y)
 /* check the sample for unit/individual i */
 
 static int 
-arbond_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
+arbond_sample_check_unit (ddset *dpd, const DATASET *dset, int i,
 			  int s, int *t1imin, int *t2max)
 {
     unit_info *unit = &dpd->ui[i];
@@ -702,7 +701,7 @@ arbond_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
     */
 
     for (t=tmin; t<dpd->T; t++) {
-	if (obs_is_usable(dpd, Z, s + t)) {
+	if (obs_is_usable(dpd, dset, s + t)) {
 	    unit->nobs += 1;
 	    dpd->used[s+t] = 1;
 	    if (t < t1i) t1i = t;
@@ -747,7 +746,7 @@ arbond_sample_check_unit (dpdinfo *dpd, const double **Z, int i,
 
 /* compute the column-structure of the matrix Zi */
 
-static void arbond_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
+static void arbond_compute_Z_cols (ddset *dpd, int t1min, int t2max)
 {
     int tau = t2max - t1min + 1;
     int nblocks = tau - dpd->p - 1;
@@ -790,15 +789,14 @@ static void arbond_compute_Z_cols (dpdinfo *dpd, int t1min, int t2max)
 #endif
 }
 
-static int arbond_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
-				const double **Z)
+static int arbond_sample_check (ddset *dpd, const DATASET *dset)
 {
     int t1min, t1imin = dpd->T - 1;
     int s, t2max = 0;
     int i, err = 0;
 
     /* find "global" first y observation */
-    t1min = arbond_find_t1min(dpd, Z[dpd->yno]);
+    t1min = arbond_find_t1min(dpd, dset->Z[dpd->yno]);
 
 #if ADEBUG
     fprintf(stderr, "dpd_sample_check, initial scan: "
@@ -809,10 +807,10 @@ static int arbond_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
 	dpd->qmax = dpd->T;
     }
 
-    s = pdinfo->t1;
+    s = dset->t1;
 
     for (i=0; i<dpd->N && !err; i++) {
-	err = arbond_sample_check_unit(dpd, Z, i, s, &t1imin, &t2max);
+	err = arbond_sample_check_unit(dpd, dset, i, s, &t1imin, &t2max);
 	s += dpd->T;
     }
 
@@ -862,7 +860,7 @@ static int arbond_sample_check (dpdinfo *dpd, const DATAINFO *pdinfo,
    not included).
 */
 
-static int dpd_const_pos (dpdinfo *dpd)
+static int dpd_const_pos (ddset *dpd)
 {
     int cpos = -1;
 
@@ -899,7 +897,7 @@ static int dpd_const_pos (dpdinfo *dpd)
    significance.
 */
 
-static int dpd_wald_test (dpdinfo *dpd)
+static int dpd_wald_test (ddset *dpd)
 {
     gretl_matrix *b, *V;
     double x = 0.0;
@@ -980,7 +978,7 @@ static int dpd_wald_test (dpdinfo *dpd)
     return err;
 }
 
-static int dpd_sargan_test (dpdinfo *dpd)
+static int dpd_sargan_test (ddset *dpd)
 {
     gretl_matrix *Zu;
     int err = 0;
@@ -1026,7 +1024,7 @@ static int dpd_sargan_test (dpdinfo *dpd)
 
 /* \sigma^2 H_1, sliced and diced for unit i */
 
-static void make_asy_Hi (dpdinfo *dpd, int i, gretl_matrix *H,
+static void make_asy_Hi (ddset *dpd, int i, gretl_matrix *H,
 			 char *mask)
 {
     int T = dpd->T;
@@ -1082,7 +1080,7 @@ static void make_asy_Hi (dpdinfo *dpd, int i, gretl_matrix *H,
 
 */
 
-static int dpd_ar_test (dpdinfo *dpd)
+static int dpd_ar_test (ddset *dpd)
 {
     double x, d0, d1, d2, d3;
     gretl_matrix_block *B;
@@ -1338,7 +1336,7 @@ static int dpd_ar_test (dpdinfo *dpd)
    matrix with respect to the successive independent variables.
 */
 
-static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
+static int windmeijer_correct (ddset *dpd, const gretl_matrix *uhat1,
 			       const gretl_matrix *varb1)
 {
     gretl_matrix_block *B;
@@ -1467,7 +1465,7 @@ static int windmeijer_correct (dpdinfo *dpd, const gretl_matrix *uhat1,
 
 /* second-step (asymptotic) variance */
 
-static int dpd_variance_2 (dpdinfo *dpd,
+static int dpd_variance_2 (ddset *dpd,
 			   gretl_matrix *u1,
 			   gretl_matrix *V1)
 {
@@ -1510,7 +1508,7 @@ static int dpd_variance_2 (dpdinfo *dpd,
    flag, just do the simple thing, \sigma^2 M^{-1})
 */
 
-static int dpd_variance_1 (dpdinfo *dpd)
+static int dpd_variance_1 (ddset *dpd)
 {
     gretl_matrix *V, *ui;
     int i, t, k, c;
@@ -1589,7 +1587,7 @@ static int dpd_variance_1 (dpdinfo *dpd)
 
 /* no "system" case here: all residuals are in differences */
 
-static void arbond_residuals (dpdinfo *dpd)
+static void arbond_residuals (ddset *dpd)
 {
     const double *b = dpd->beta->val;
     double x, ut;
@@ -1621,8 +1619,8 @@ static void arbond_residuals (dpdinfo *dpd)
    we preserve is governed by @save_levels.
 */
 
-static int dpanel_adjust_uhat (dpdinfo *dpd, 
-			       const DATAINFO *pdinfo,
+static int dpanel_adjust_uhat (ddset *dpd, 
+			       const DATASET *dset,
 			       int save_levels)
 {
     double *tmp;
@@ -1662,7 +1660,7 @@ static int dpanel_adjust_uhat (dpdinfo *dpd,
     free(tmp);
 
     if (!save_levels) {
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (dpd->used[t] == LEVEL_ONLY) {
 		dpd->used[t] = 0;
 	    }
@@ -1672,12 +1670,13 @@ static int dpanel_adjust_uhat (dpdinfo *dpd,
     return 0;
 }
 
-static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
+static int dpd_finalize_model (MODEL *pmod, ddset *dpd,
 			       const int *list, const int *ylags,
-			       const char *istr, const double *y, 
-			       const DATAINFO *pdinfo,
+			       const char *istr, 
+			       const DATASET *dset,
 			       gretlopt opt)
 {
+    const double *y = dset->Z[dpd->yno];
     char tmp[32];
     int i, j;
     int err = 0;
@@ -1687,8 +1686,8 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     }
 
     pmod->ci = dpd->ci;
-    pmod->t1 = pdinfo->t1;
-    pmod->t2 = pdinfo->t2;
+    pmod->t1 = dset->t1;
+    pmod->t2 = dset->t2;
     pmod->dfn = dpd->k;
     pmod->dfd = dpd->nobs - dpd->k;
 
@@ -1703,7 +1702,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 
     pmod->ncoeff = dpd->k;
     pmod->nobs = dpd->nobs;
-    pmod->full_n = pdinfo->n;
+    pmod->full_n = dset->n;
 
     pmod->rsq = pmod->adjrsq = NADBL;
     pmod->fstt = pmod->chisq = NADBL;
@@ -1719,14 +1718,14 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	if (dpd->laglist != NULL) {
 	    for (i=1; i<=dpd->laglist[0]; i++) {
 		pmod->params[j][0] = '\0';
-		sprintf(tmp, "%.10s(-%d)", pdinfo->varname[dpd->yno], 
+		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], 
 			dpd->laglist[i]);
 		strncat(pmod->params[j++], tmp, 15);
 	    }	
 	} else {
 	    for (i=0; i<dpd->p; i++) {
 		pmod->params[j][0] = '\0';
-		sprintf(tmp, "%.10s(-%d)", pdinfo->varname[dpd->yno], i+1);
+		sprintf(tmp, "%.10s(-%d)", dset->varname[dpd->yno], i+1);
 		strncat(pmod->params[j++], tmp, 15);
 	    }
 	}
@@ -1737,21 +1736,21 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 	if (dpd->laglist != NULL) {
 	    for (i=1; i<=dpd->laglist[0]; i++) {
 		pmod->params[j][0] = '\0';
-		sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[dpd->yno], 
+		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], 
 			dpd->laglist[i]);
 		strncat(pmod->params[j++], tmp, 15);
 	    }	
 	} else {
 	    for (i=0; i<dpd->p; i++) {
 		pmod->params[j][0] = '\0';
-		sprintf(tmp, "%c%.10s(-%d)", prefix, pdinfo->varname[dpd->yno], i+1);
+		sprintf(tmp, "%c%.10s(-%d)", prefix, dset->varname[dpd->yno], i+1);
 		strncat(pmod->params[j++], tmp, 15);
 	    }
 	}
     }
 
     for (i=0; i<dpd->nx; i++) {
-	strcpy(pmod->params[j++], pdinfo->varname[dpd->xlist[i+1]]);
+	strcpy(pmod->params[j++], dset->varname[dpd->xlist[i+1]]);
     }
 
     for (i=0; i<dpd->ndum; i++) {
@@ -1780,13 +1779,13 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
     /* add uhat, yhat */
 
     if (!err && dpd->nlev > 0) {
-	err = dpanel_adjust_uhat(dpd, pdinfo, 1); /* or 0 */
+	err = dpanel_adjust_uhat(dpd, dset, 1); /* or 0 */
     }
 
     if (!err) {
 	int t, s = 0;
 
-	for (t=0; t<pdinfo->n; t++) {
+	for (t=0; t<dset->n; t++) {
 	    if (dpd->used[t]) {
 		pmod->uhat[t] = dpd->uhat->val[s++];
 		pmod->yhat[t] = y[t] - pmod->uhat[t];
@@ -1859,7 +1858,7 @@ static int dpd_finalize_model (MODEL *pmod, dpdinfo *dpd,
 /* exclude any independent variables that are zero at all
    relevant observations */
 
-static int dpd_zero_check (dpdinfo *dpd, const double **Z)
+static int dpd_zero_check (ddset *dpd, const DATASET *dset)
 {
     unit_info *ui;
     const double *x;
@@ -1869,7 +1868,7 @@ static int dpd_zero_check (dpdinfo *dpd, const double **Z)
     for (j=0; j<dpd->nx; j++) {
 	int all0 = 1;
 
-	x = Z[dpd->xlist[j+1]];
+	x = dset->Z[dpd->xlist[j+1]];
 	for (i=0; i<dpd->N && all0; i++) {
 	    ui = &dpd->ui[i];
 	    if (ui->nobs == 0) {
@@ -1911,7 +1910,7 @@ static int dpd_zero_check (dpdinfo *dpd, const double **Z)
    should just have their nz dimension changed.
 */
 
-static void dpd_shrink_matrices (dpdinfo *dpd, const char *mask)
+static void dpd_shrink_matrices (ddset *dpd, const char *mask)
 {
     fprintf(stderr, "%s: dpd_shrink_matrices: cut nz from %d to %d\n", 
 	    (dpd->ci == DPANEL)? "dpanel" : "arbond", 
@@ -1929,7 +1928,7 @@ static void dpd_shrink_matrices (dpdinfo *dpd, const char *mask)
     gretl_matrix_reuse(dpd->ZY,    dpd->nz, -1);
 }
 
-static int dpd_step_2_A (dpdinfo *dpd)
+static int dpd_step_2_A (ddset *dpd)
 {
     int err = 0;
 
@@ -1967,7 +1966,7 @@ static int dpd_step_2_A (dpdinfo *dpd)
 
 /* compute \hat{\beta} from the moment matrices */
 
-static int dpd_beta_hat (dpdinfo *dpd)
+static int dpd_beta_hat (ddset *dpd)
 {
     int err = 0;
 
@@ -2005,7 +2004,7 @@ static int dpd_beta_hat (dpdinfo *dpd)
 
 /* recompute \hat{\beta} and its variance matrix */
 
-static int dpd_step_2 (dpdinfo *dpd)
+static int dpd_step_2 (ddset *dpd)
 {
     gretl_matrix *u1 = NULL;
     gretl_matrix *V1 = NULL;
@@ -2079,9 +2078,9 @@ static double odev_at_lag (const double *x, int t, int lag, int pd)
     return ret;
 }
 
-static int arbond_make_y_X (dpdinfo *dpd, const double **Z)
+static int arbond_make_y_X (ddset *dpd, const DATASET *dset)
 {
-    const double *y = Z[dpd->yno];
+    const double *y = dset->Z[dpd->yno];
     int odev = (dpd->flags & DPD_ORTHDEV);
     int i, j, k = 0;
     int s, t;
@@ -2118,7 +2117,7 @@ static int arbond_make_y_X (dpdinfo *dpd, const double **Z)
 	    }
 	    for (j=0; j<dpd->nx; j++) {
 		/* independent vars */
-		x = Z[dpd->xlist[j+1]][s];
+		x = dset->Z[dpd->xlist[j+1]][s];
 		gretl_matrix_set(dpd->X, k, j + dpd->p, x);
 	    }
 	    for (j=0; j<dpd->ndum; j++) {
@@ -2143,7 +2142,7 @@ static int arbond_make_y_X (dpdinfo *dpd, const double **Z)
     return 0;
 }
 
-static int next_obs (dpdinfo *dpd, int t0, int j0, int n)
+static int next_obs (ddset *dpd, int t0, int j0, int n)
 {
     int j;
 
@@ -2159,7 +2158,7 @@ static int next_obs (dpdinfo *dpd, int t0, int j0, int n)
 /* construct the H matrix for first-differencing
    as applied to unit i */
 
-static void arbond_H_matrix (dpdinfo *dpd, int *rc, 
+static void arbond_H_matrix (ddset *dpd, int *rc, 
 			     int i, int t0)
 {
     unit_info *unit =  &dpd->ui[i];
@@ -2195,9 +2194,9 @@ static void arbond_H_matrix (dpdinfo *dpd, int *rc,
     }
 }
 
-static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
+static int arbond_make_Z_and_A (ddset *dpd, const DATASET *dset)
 {
-    const double *y = Z[dpd->yno];
+    const double *y = dset->Z[dpd->yno];
     int i, j, k, c = 0;
     int s, t, t0;
     int zi, zj, zk;
@@ -2277,7 +2276,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 		    if (t - zk >= 0) { /* ?? */
 			if (used) {
 			    s = t0 + t - zk;
-			    x = Z[dpd->d[zi].v][s];
+			    x = dset->Z[dpd->d[zi].v][s];
 			    if (!na(x)) {
 				gretl_matrix_set(dpd->Zi, k, zj + offj + ycols, x);
 			    }
@@ -2292,7 +2291,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 		/* additional full-length instrument columns */
 		s = t0 + t;
 		for (j=0; j<dpd->nzr; j++) {
-		    x = Z[dpd->ilist[j+1]][s];
+		    x = dset->Z[dpd->ilist[j+1]][s];
 		    gretl_matrix_set(dpd->Zi, k, dpd->xc0 + j, x);
 		}
 		/* plus time dummies, if wanted */
@@ -2379,7 +2378,7 @@ static int arbond_make_Z_and_A (dpdinfo *dpd, const double **Z)
 /* This function is used on the first step (only), by both
    arbond and dpanel. */
 
-static int dpd_invert_A_N (dpdinfo *dpd)
+static int dpd_invert_A_N (ddset *dpd)
 {
     int err = 0;
 
@@ -2425,7 +2424,7 @@ static int dpd_invert_A_N (dpdinfo *dpd)
     return err;
 }
 
-static int dpd_step_1 (dpdinfo *dpd)
+static int dpd_step_1 (ddset *dpd)
 {
     int err;
 
@@ -2477,7 +2476,7 @@ static int dpd_step_1 (dpdinfo *dpd)
 */
 
 static int parse_diag_info (int ci, const char *s, diag_info *d,
-			    const DATAINFO *pdinfo)
+			    const DATASET *dset)
 {
     char vname[VNAMELEN];
     int m1, m2;
@@ -2501,7 +2500,7 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
     if (sscanf(s, "%15[^, ],%d,%d)", vname, &m1, &m2) != 3) {
 	err = E_PARSE;
     } else {
-	int v = current_series_index(pdinfo, vname);
+	int v = current_series_index(dset, vname);
 
 	if (ci == ARBOND && m2 == 0) {
 	    /* signal for unlimited lags */
@@ -2533,7 +2532,7 @@ static int parse_diag_info (int ci, const char *s, diag_info *d,
 */
 
 static int 
-parse_GMM_instrument_spec (int ci, const char *spec, const DATAINFO *pdinfo,
+parse_GMM_instrument_spec (int ci, const char *spec, const DATASET *dset,
 			   diag_info **pd, int *pnspec)
 {
     diag_info *d = NULL;
@@ -2578,7 +2577,7 @@ parse_GMM_instrument_spec (int ci, const char *spec, const DATAINFO *pdinfo,
 	    } else {
 		*test = '\0';
 		strncat(test, s, len);
-		err = parse_diag_info(ci, test, &d[i++], pdinfo);
+		err = parse_diag_info(ci, test, &d[i++], dset);
 		s = p + 1;
 	    }
 	}
@@ -2613,43 +2612,43 @@ parse_GMM_instrument_spec (int ci, const char *spec, const DATAINFO *pdinfo,
 /* public interface: driver for Arellano-Bond type estimation */
 
 MODEL
-arbond_estimate (const int *list, const char *ispec, const double **Z, 
-		 const DATAINFO *pdinfo, gretlopt opt,
+arbond_estimate (const int *list, const char *ispec,
+		 const DATASET *dset, gretlopt opt,
 		 PRN *prn)
 {
     diag_info *d = NULL;
-    dpdinfo *dpd = NULL;
+    ddset *dpd = NULL;
     int nzb = 0;
     MODEL mod;
     int err = 0;
 
     gretl_model_init(&mod);
-    gretl_model_smpl_init(&mod, pdinfo);
+    gretl_model_smpl_init(&mod, dset);
 
     /* parse GMM instrument info, if present */
     if (ispec != NULL && *ispec != '\0') {
-	mod.errcode = parse_GMM_instrument_spec(ARBOND, ispec, pdinfo, &d, &nzb);
+	mod.errcode = parse_GMM_instrument_spec(ARBOND, ispec, dset, &d, &nzb);
 	if (mod.errcode) {
 	    return mod;
 	}
     }
 
     /* initialize (including some memory allocation) */
-    dpd = dpdinfo_new(ARBOND, list, NULL, Z, pdinfo, opt, d, nzb, &mod.errcode);
+    dpd = ddset_new(ARBOND, list, NULL, dset, opt, d, nzb, &mod.errcode);
     if (mod.errcode) {
 	fprintf(stderr, "Error %d in dpd_init\n", mod.errcode);
 	return mod;
     }
 
     /* see if we have a usable sample */
-    err = arbond_sample_check(dpd, pdinfo, Z);
+    err = arbond_sample_check(dpd, dset);
     if (err) {
 	fprintf(stderr, "Error %d in dpd_sample_check\n", err);
     }
 
     if (!err && dpd->nx > 0) {
 	/* cut out any all-zero variables */
-	dpd_zero_check(dpd, Z);
+	dpd_zero_check(dpd, dset);
     }
 
     if (!err) {
@@ -2658,14 +2657,14 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
     }
 
     if (!err) {
-	err = arbond_make_y_X(dpd, Z);
+	err = arbond_make_y_X(dpd, dset);
     }
 
     if (!err) {
 	/* build instrument matrix blocks, Z_i, and insert into
 	   big Z' matrix; cumulate first-stage A_N as we go 
 	*/
-	err = arbond_make_Z_and_A(dpd, Z);
+	err = arbond_make_Z_and_A(dpd, dset);
     }
 
     if (!err) {
@@ -2684,10 +2683,10 @@ arbond_estimate (const int *list, const char *ispec, const double **Z,
     if (!mod.errcode) {
 	/* write estimation info into model struct */
 	mod.errcode = dpd_finalize_model(&mod, dpd, list, NULL, ispec, 
-					 Z[dpd->yno], pdinfo, opt);
+					 dset, opt);
     }
 
-    dpdinfo_free(dpd);
+    ddset_free(dpd);
 
     return mod;
 }
