@@ -2255,6 +2255,7 @@ static NODE *matrix_add_names (NODE *l, NODE *r, int f, parser *p)
 	    } else {
 		ret->v.xval = umatrix_set_names_from_list(m, list, p->dset,
 							  byrow);
+		free(list);
 	    }
 	}
     }
@@ -3197,6 +3198,7 @@ static int *node_get_list (NODE *n, parser *p)
     int v = 0;
 
     if (n->t == LIST && strchr(n->v.str, '*')) {
+	/* handle wildcard */
 	list = varname_match_list(p->dset, n->v.str, &p->err);
     } else if (n->t == LVEC || n->t == LIST) {
 	int *src = (n->t == LVEC)? n->v.ivec : get_list_by_name(n->v.str);

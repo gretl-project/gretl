@@ -1421,11 +1421,6 @@ double **data_array_from_model (const MODEL *pmod, double **Z, int missv)
     return X;
 }
 
-double get_xvalue (int i, const double **Z, const DATASET *dset)
-{
-    return Z[i][dset->t1];
-}
-
 #ifndef WIN32
 
 static int non_fatal (const char *s)

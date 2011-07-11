@@ -1434,7 +1434,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	hasseas = 1;
     }
 
-    ndum = hasseas ? dset->pd - 1 : 0;
+    ndum = hasseas ? (dset->pd - 1) : 0;
     nreg = 1 + hastrend + ndum;
 
     list = gretl_list_new(nreg + 1);
@@ -1460,7 +1460,7 @@ real_kpss_test (int order, int varno, DATASET *dset,
 	    return E_ALLOC;
 	}
 	for (i=0; i<ndum; i++) {
-	    list[4+i] = firstdum + i;
+	    list[3 + hastrend + i] = firstdum + i;
 	}
     }
 

@@ -1584,7 +1584,11 @@ void gretl_saved_objects_cleanup (void)
 
     for (i=0; i<n_obj; i++) {
 	if (ostack[i].ptr == lmp) {
-	    /* don't double-free! */
+	    /* stacked object i also occupies the "last model" place;
+	       so we drop the associated refcount and nullify the
+	       last model pointer to guard against double-freeing
+	    */
+	    gretl_object_unref(lmp, lmt);
 	    lmp = NULL;
 	}
 #if ODEBUG

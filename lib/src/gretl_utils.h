@@ -118,10 +118,6 @@ int ijton (int i, int j, int nrows);
 int transcribe_array (double *targ, const double *src, 
 		      const DATASET *dset); 
 
-int ztox (int i, double *px, const double **Z, const DATASET *dset);
-
-double get_xvalue (int i, const double **Z, const DATASET *dset);
-
 int gretl_copy_file (const char *src, const char *dest);
 
 int gretl_delete_var_by_name (const char *s, PRN *prn);
