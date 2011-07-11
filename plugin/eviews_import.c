@@ -417,7 +417,7 @@ static int parse_wf1_header (FILE *fp, int ftype, DATASET *dset,
 	startper = 0;
     }
 
-    if (nvars <= 2 || nobs <= 0 || startyr <= 0 ||
+    if (nvars <= 2 || nobs <= 0 || startyr < 0 ||
 	pd <= 0 || startper < 0) {
 	err = E_DATA;
 	fprintf(stderr, "header info:\n"
