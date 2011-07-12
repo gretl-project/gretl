@@ -236,6 +236,9 @@ static int *vecxlist;
 static char *arlags;
 static char *malags;
 
+static double tobit_lo = 0;
+static double tobit_hi = NADBL;
+
 static gretlopt model_opt;
 
 static GtkWidget *multiplot_label;
@@ -426,6 +429,9 @@ void clear_selector (void)
     free(malags);
     malags = NULL;
 
+    tobit_lo = 0;
+    tobit_hi = NADBL;
+
     lp_pvals = 0;
 
     destroy_lag_preferences();
@@ -589,6 +595,24 @@ static void retrieve_heckit_info (MODEL *pmod, int *gotinst)
     }    
 }
 
+static void retrieve_tobit_info (MODEL *pmod)
+{
+    double x0 = gretl_model_get_double(pmod, "llimit");
+    double x1 = gretl_model_get_double(pmod, "rlimit");
+
+    if (na(x0) && na(x1)) {
+	/* the standard set-up */
+	tobit_lo = 0;
+	tobit_hi = NADBL;
+    } else {
+	/* user-specified limits */
+	tobit_lo = x0;
+	tobit_hi = x1;
+    } 
+}	
+
+/* support for the "Modify model..." menu item */
+
 void selector_from_model (void *ptr, int ci)
 {
     model_opt = OPT_NONE;
@@ -718,7 +742,9 @@ void selector_from_model (void *ptr, int ci)
 	    if (gretl_model_get_int(pmod, "ordered")) {
 		sel_ci = OPROBIT;
 	    }
-	}   
+	} else if (pmod->ci == TOBIT) {
+	    retrieve_tobit_info(pmod);
+	}
 
 	if (pmod->opt & OPT_R) {
 	    model_opt |= OPT_R;
@@ -2850,6 +2876,10 @@ static void read_tobit_limits (selector *sr)
 	}
     }
 
+    /* record the user's choices */
+    tobit_lo = (lval == TOBIT_UNSET)? NADBL : lval;
+    tobit_hi = rval;
+
     if (lval == 0 && na(rval)) {
 	; /* the default, no-op */
     } else {
@@ -4101,13 +4131,18 @@ static void tobit_limits_selector (selector *sr, GtkWidget *vbox)
 	N_("right bound")
     };
     GtkWidget *hbox, *entry, *label;
+    gchar *valstr;
+    double val;
     int i;
 
     for (i=0; i<2; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 5);
-	gtk_entry_set_text(GTK_ENTRY(entry), i == 0 ? "0" : "NA");
+	val = (i == 0)? tobit_lo : tobit_hi;
+	valstr = na(val)? g_strdup("NA") : g_strdup_printf("%g", val);
+	gtk_entry_set_text(GTK_ENTRY(entry), valstr);
+	g_free(valstr);
 	gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 	gtk_box_pack_end(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
 	label = gtk_label_new(_(bstrs[i]));
