@@ -9852,16 +9852,27 @@ static void gen_check_errvals (parser *p)
 	    }
 	}
     } else if (n->t == MAT) {
-	/* convert any NAs to NaNs */
 	const gretl_matrix *m = n->v.m;
 	int i, k = gretl_matrix_rows(m) * gretl_matrix_cols(m);
-
-	for (i=0; i<k; i++) {
-	    if (na(m->val[i])) {
-		m->val[i] = M_NA;
+	
+	if (p->targ == NUM && k == 1) {
+	    if (!isfinite(m->val[0])) {
+#if SCALARS_ENSURE_FINITE
+		m->val[0] = NADBL;
+		set_gretl_warning(W_GENMISS);
+#else
 		set_gretl_warning(W_GENNAN);
-	    } else if (!isfinite(m->val[i])) {
-		set_gretl_warning(W_GENNAN);
+#endif
+	    }		
+	} else {
+	    /* convert any NAs to NaNs */
+	    for (i=0; i<k; i++) {
+		if (na(m->val[i])) {
+		    m->val[i] = M_NA;
+		    set_gretl_warning(W_GENNAN);
+		} else if (!isfinite(m->val[i])) {
+		    set_gretl_warning(W_GENNAN);
+		}
 	    }
 	}
     }
