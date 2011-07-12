@@ -3476,6 +3476,7 @@ static int version_number_from_string (const char *s)
 static void print_package_info (const fnpkg *pkg, PRN *prn)
 {
     char vstr[8];
+    int i;
 
     if (pkg->minver > 0) {
 	get_version_string(vstr, pkg->minver);
@@ -3492,6 +3493,21 @@ static void print_package_info (const fnpkg *pkg, PRN *prn)
     pputs(prn, (pkg->descrip)? pkg->descrip : "none");
 
     pputs(prn, "\n\n");
+
+    if (pkg->pub != NULL) {
+	if (pkg->n_pub == 1) {
+	    if (strcmp(pkg->pub[0]->name, pkg->name)) {
+		pputs(prn, "Public interface: ");
+		pprintf(prn, "%s()\n", pkg->pub[0]->name);
+	    }
+	} else {
+	    pputs(prn, "Public interfaces:\n");
+	    for (i=0; i<pkg->n_pub; i++) {
+		pprintf(prn, "  %s()\n", pkg->pub[i]->name);
+	    }
+	}
+	pputc(prn, '\n');
+    }    
 
     if (pkg->help != NULL) {
 	pputs(prn, "Help text:\n");
