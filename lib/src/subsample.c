@@ -38,18 +38,17 @@
   the current dataset in a non-trivial way -- i.e., by selecting cases
   rather than just moving the starting or ending points of the data
   range -- we create a new sub-dataset, and we need to keep the full
-  dataset around so that it can be restored later.  The pointers fullZ
-  and fullset are used to record the addresses of the full data
-  matrix and DATASET struct respectively.
+  dataset around so that it can be restored later.  The pointer
+  @fullset is used to record the address of the full dataset.
 
-  In addition, peerinfo keeps track of the location of the DATASET
-  struct associated with the back-up full dataset; by means of this,
+  In addition, @peerset keeps track of the location of the DATASET
+  struct associated with the backed-up full dataset; by means of this,
   we can know when to free the full dataset and when not to (for
   instance, if we're freeing an auxiliary dataset).
 */
 
 static DATASET *fullset;
-static DATASET *peerinfo;
+static DATASET *peerset;
 
 #define SUBMASK_SENTINEL 127
 
@@ -223,7 +222,7 @@ int dataset_is_resampled (const DATASET *dset)
 
 void maybe_free_full_dataset (const DATASET *dset)
 {
-    if (dset == peerinfo) {
+    if (dset == peerset) {
 	if (fullset != NULL) {
 	    if (fullset->Z != NULL) {
 		free_Z(fullset);
@@ -232,7 +231,7 @@ void maybe_free_full_dataset (const DATASET *dset)
 	    free(fullset);
 	    fullset = NULL;
 	}
-	peerinfo = NULL;
+	peerset = NULL;
     }
 }
 
@@ -249,7 +248,7 @@ static void relink_to_full_dataset (DATASET *dset)
     *dset = *fullset;
     free(fullset);
     fullset = NULL;
-    peerinfo = NULL;
+    peerset = NULL;
 }
 
 /* sync malloced elements of the fullset struct that might
@@ -884,7 +883,7 @@ int backup_full_dataset (DATASET *dset)
 
     if (dset != NULL) {
 	*fullset = *dset;
-	peerinfo = dset;
+	peerset = dset;
     } 
 
 #if SUBDEBUG

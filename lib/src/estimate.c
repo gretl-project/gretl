@@ -322,7 +322,7 @@ ldepvar_std_errors (MODEL *pmod, DATASET *dset)
 
 static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 {
-    int i, t, yno = pmod->list[1];
+    int i, v, t, yno = pmod->list[1];
     int pwe = (pmod->opt & OPT_P);
     double x, pw1 = 0.0;
 
@@ -343,17 +343,17 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 	if (t == pmod->t1 && pwe) {
 	    x = pw1 * Z[yno][t];
 	    for (i=pmod->ifc; i<pmod->ncoeff; i++) {
-		x -= pmod->coeff[i] * pw1 * Z[pmod->list[i+2]][t];
+		v = pmod->list[i+2];
+		x -= pmod->coeff[i] * pw1 * Z[v][t];
 	    }
 	    if (pmod->ifc) {
 		x -= pw1 * pmod->coeff[0];
 	    }
 	} else {
-	    x = Z[yno][t] - rho * Z[yno][t-1];
+	    x = Z[yno][t] - rho*Z[yno][t-1];
 	    for (i=0; i<pmod->ncoeff; i++) {
-		x -= pmod->coeff[i] * 
-		    (Z[pmod->list[i+2]][t] - 
-		     rho * Z[pmod->list[i+2]][t-1]);
+		v = pmod->list[i+2];
+		x -= pmod->coeff[i] * (Z[v][t] - rho*Z[v][t-1]);
 	    }
 	}
 	pmod->uhat[t] = x;
