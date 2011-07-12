@@ -1065,6 +1065,9 @@ static void getword (parser *p)
 	look_up_dollar_word(word, p);
     } else if (*word == '@') {
 	look_up_string_variable(word, p);
+    } else if (*word == '$' && word[1] == '\0' && p->ch == '[') {
+	p->sym = BUNDLE;
+	p->idstr = gretl_strdup("$");
     } else {
 	look_up_word(word, p);
     }

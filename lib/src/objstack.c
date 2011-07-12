@@ -1308,6 +1308,33 @@ last_model_get_irf_matrix (int targ, int shock, double alpha,
     return M;
 }
 
+void *last_model_get_data (const char *key, GretlType *type, 
+			   int *size, int *err)
+{
+    stacker *smatch = find_smatch(NULL);
+    void *ret = NULL;
+
+    if (smatch == NULL || smatch->type != GRETL_OBJ_EQN) {
+	*err = E_DATA;
+    } else {
+	const MODEL *pmod = smatch->ptr;
+	size_t sz = 0;
+
+	ret = gretl_model_get_data_full(pmod, key, type, &sz);
+	if (ret == NULL) {
+	    *err = E_DATA;
+	} else {
+	    *size = sz;
+	}
+    }
+
+    if (*err) {
+	gretl_errmsg_sprintf("\"%s\": %s", key, _("no such item"));
+    }
+
+    return ret;
+}
+
 static int namechar_spn_with_space (const char *s)
 {
     const char *ok = "abcdefghijklmnopqrstuvwxyz"

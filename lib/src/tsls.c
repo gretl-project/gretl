@@ -87,7 +87,7 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 
     /* re-use old pointers if applicable */
 
-    X = gretl_model_get_data_and_size(pmod, "tslsX", &xs_old);
+    X = gretl_model_get_data_full(pmod, "tslsX", NULL, &xs_old);
     if (X != NULL) {
 	if (Xsize == xs_old) {
 	    recycle_X = 1;
@@ -106,7 +106,7 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 	}
     }
 
-    endog = gretl_model_get_data_and_size(pmod, "endog", &es_old);
+    endog = gretl_model_get_data_full(pmod, "endog", NULL, &es_old);
     if (endog != NULL) {
 	if (esize == es_old) {
 	    recycle_e = 1;

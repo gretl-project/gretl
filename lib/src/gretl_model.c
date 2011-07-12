@@ -452,16 +452,17 @@ int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin)
 }
 
 /**
- * gretl_model_get_data_and_size:
+ * gretl_model_get_data_full:
  * @pmod: pointer to model.
  * @key: key string.
+ * @type: location to receive data type.
  * @sz: location to receive the size of the data.
  *
  * Returns: the data pointer identified by @key, or %NULL on failure.
  */
 
-void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
-				     size_t *sz)
+void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
+				 GretlType *type, size_t *sz)
 {
     int i;
 
@@ -471,6 +472,9 @@ void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
 
     for (i=0; i<pmod->n_data_items; i++) {
 	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    if (type != NULL) {
+		*type = pmod->data_items[i]->type;
+	    }	    
 	    if (sz != NULL) {
 		*sz = pmod->data_items[i]->size;
 	    }
@@ -491,7 +495,7 @@ void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key)
 {
-    return gretl_model_get_data_and_size(pmod, key, NULL);
+    return gretl_model_get_data_full(pmod, key, NULL, NULL);
 }
 
 /**

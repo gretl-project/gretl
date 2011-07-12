@@ -5433,12 +5433,15 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     int size = 0;
     NODE *ret = NULL;
 
-    bundle = get_gretl_bundle_by_name(name);
-    
-    if (bundle == NULL) {
-	p->err = E_UNKVAR;
+    if (!strcmp(name, "$")) {
+	val = last_model_get_data(key, &type, &size, &p->err);
     } else {
-	val = gretl_bundle_get_data(bundle, key, &type, &size, &p->err);
+	bundle = get_gretl_bundle_by_name(name);
+	if (bundle == NULL) {
+	    p->err = E_UNKVAR;
+	} else {
+	    val = gretl_bundle_get_data(bundle, key, &type, &size, &p->err);
+	}
     }
 
     if (p->err) {
@@ -7581,7 +7584,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
-#if EDEBUG
+#if 1 || EDEBUG
     fprintf(stderr, "object_var_node: t->t = %d\n", t->t);
 #endif
 
@@ -7634,7 +7637,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    /* we're in the wrong place */
 	    return dollar_var_node(r, p);
 	}
-		
+
 	vtype = object_var_type(idx, oname, &needs_data);
 
 #if EDEBUG

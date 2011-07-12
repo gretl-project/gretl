@@ -135,6 +135,9 @@ gretl_matrix *
 last_model_get_irf_matrix (int targ, int shock, double alpha, 
 			   const DATASET *dset, int *err);
 
+void *last_model_get_data (const char *key, GretlType *type, 
+			   int *size, int *err);
+
 int *saved_object_get_list (const char *oname, int idx, int *err);
 
 char *saved_object_get_string (const char *oname, int idx, 

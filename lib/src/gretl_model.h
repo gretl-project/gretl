@@ -275,8 +275,8 @@ int gretl_model_set_vcv_info (MODEL *pmod, int vmaj, int vmin);
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key);
 
-void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
-				     size_t *sz);
+void *gretl_model_get_data_full (const MODEL *pmod, const char *key,
+				 GretlType *type, size_t *sz);
 
 int gretl_model_get_int (const MODEL *pmod, const char *key);
 
