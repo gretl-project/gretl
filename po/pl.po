@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-07-01 12:22-0400\n"
-"PO-Revision-Date: 2011-07-09 11:00-0400\n"
+"PO-Revision-Date: 2011-07-12 19:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -333,7 +333,7 @@ msgstr ""
 #: lib/src/boxplots.c:227
 #, c-format
 msgid "Numerical summary for %s"
-msgstr "Podsumowanie dla %s"
+msgstr "Pozycyjne miary opisu statystycznego dla: %s"
 
 #: lib/src/boxplots.c:230 gui2/gpt_control.c:3593 gui2/gpt_control.c:3671
 msgid "Numerical summary"
@@ -369,7 +369,7 @@ msgstr ""
 #: lib/src/boxplots.c:777
 #, c-format
 msgid "Distribution of %s by %s"
-msgstr "Rozkład dla %s względem %s"
+msgstr "Wykresy pudełkowe dla: %s względem %s"
 
 #: lib/src/boxplots.c:1056
 #, c-format
@@ -2574,7 +2574,7 @@ msgstr "odchylenie std."
 msgid "You must supply three variables, the last of which is discrete"
 msgstr ""
 "Należy wprowadzić trzy zmienne, ale ostatnia musi\n"
-"być zmienną zero-jedynkową (tylko wartości 0 lub 1)"
+"być zmienną dyskretną - czynnik separacji"
 
 #: lib/src/graphing.c:1409
 msgid "Gnuplot does not support PDF output on this system"
@@ -10688,7 +10688,7 @@ msgstr "Wykres rozrzutu X-Y z _impulsami..."
 
 #: gui2/gretl.c:1466
 msgid "X-Y with _factor separation..."
-msgstr "Wykres X-Y z dyskretnym _separatorem..."
+msgstr "Wykres rozrzutu X-Y z dyskretnym _separatorem..."
 
 #: gui2/gretl.c:1467
 msgid "X-Y with _control..."
@@ -13722,11 +13722,11 @@ msgstr "Wykres rozrzutu dla wielu zmiennych"
 
 #: gui2/selector.c:5645
 msgid "factorized plot"
-msgstr "Czynnikowy wykres rozrzutu XY"
+msgstr "Wykres rozrzutu X-Y z dyskretnym separatorem"
 
 #: gui2/selector.c:5647
 msgid "factorized boxplot"
-msgstr "Wykres pudełkowy wg zmiennej dyskretnej"
+msgstr "Wykres pudełkowy z dyskretnym separatorem"
 
 #: gui2/selector.c:5649
 msgid "scatterplot with control"
