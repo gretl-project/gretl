@@ -3723,7 +3723,9 @@ void echo_function_call (const char *line, unsigned char flags, PRN *prn)
 
 static const char *flag_present (const char *s, char f, int *quoted)
 {
+    const char *p = s;
     int inquote = 0;
+    const char *ret = NULL;
 
 #if CMD_DEBUG
     fprintf(stderr, "flag_present: looking at '%s'\n", s);
@@ -3734,30 +3736,36 @@ static const char *flag_present (const char *s, char f, int *quoted)
 	    inquote = !inquote;
 	}
 	if (!inquote) {
-	    if (*s == ' ' && strlen(s) >= 4 && *(s+1) == '-' && *(s+2) == f) {
-		s += 3;
-		while (*s) {
-		    if (isspace(*s)) s++;
-		    else break;
-		}
+	    /* we're looking for, e.g., "-f", either at the
+	       start of the input string or preceded by a
+	       space -- and followed by something
+	    */
+	    if ((s == p || *(s-1) == ' ') && strlen(s) >= 3 &&
+		*s == '-' && *(s+1) == f) {
+		s += 2;
+		s += strspn(s, " ");
+		/* have we got some following text? */
 		if (*s == '"' && *(s+1)) {
 		    *quoted = 1;
-		    return s + 1;
+		    ret = s + 1;
 		}
-		if (*s != '"' && *(s+1)) {
+		if (*s != '"' && *s != '\0') {
 		    *quoted = 0;
-		    return s;
+		    ret = s;
 		}
 	    } 
+	}
+	if (ret != NULL) {
+	    break;
 	}
 	s++;
     }
 
 #if CMD_DEBUG
-    fprintf(stderr, "flag_present: returning '%s'\n", s);
+    fprintf(stderr, "flag_present: returning '%s'\n", ret);
 #endif
 
-    return NULL;
+    return ret;
 }
 
 static char *get_flag_field  (const char *s, char f)
