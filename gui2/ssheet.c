@@ -436,8 +436,9 @@ static void update_sheet_matrix_element (Spreadsheet *sheet,
 {
     int i = atoi(path_string);
     int j = colnum - 1;
+    double x = atof(new_text);
 
-    gretl_matrix_set(sheet->matrix, i, j, atof(new_text));
+    gretl_matrix_set(sheet->matrix, i, j, x);
 }
 
 static void 
@@ -545,10 +546,13 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
     fprintf(stderr, "*** sheet_cell_edited\n");
 #endif
 
-    if (sheet->matrix == NULL && 
-	(!strcmp(user_text, "na") || !strcmp(user_text, "NA"))) {
-	/* allow conversion to "missing" */
-	new_text = g_strdup("");
+    if (!strcmp(user_text, "na") || !strcmp(user_text, "NA")) {
+	/* allow conversion to missing or NaN */
+	if (sheet->matrix != NULL) {
+	    new_text = g_strdup("nan");
+	} else {
+	    new_text = g_strdup("");
+	}
     } else {
 	new_text = g_strdup(user_text);
 	if (*new_text == '=' && editing_scalars(sheet)) {
