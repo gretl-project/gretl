@@ -2553,8 +2553,9 @@ static int function_set_pkg_role (const char *name, fnpkg *pkg,
     for (i=0; i<pkg->n_pub; i++) {
 	if (!strcmp(name, pkg->pub[i]->name)) {
 	    u = pkg->pub[i];
-	    if (u->n_params == 0) {
-		/* void functions can't be right */
+	    if (0 && u->n_params == 0) {
+		/* void functions can't be right? */
+		pprintf(prn, "%s: is marked as public but is void\n", pkg->pub[i]->name);
 		err = E_TYPES;
 	    } else if (role == UFUN_GUI_MAIN) {
 		if (u->rettype != GRETL_TYPE_BUNDLE && u->rettype != GRETL_TYPE_VOID) {

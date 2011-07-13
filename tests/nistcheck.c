@@ -868,22 +868,21 @@ int main (int argc, char *argv[])
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); 
 
     for (j=0; j<ntests; j++) {
-	if (read_nist_file(nist_files[j], &Z, &dataset, &certvals,
+	if (read_nist_file(nist_files[j], &dataset, &certvals,
 			   &polyterms, &zdigits, prn)) {
 	    pprintf(prn, "Error processing %s\n", nist_files[j]);
 	    missing++;
 
 	} else {
-	    run_gretl_comparison (nist_files[j], &Z, dataset, certvals,
+	    run_gretl_comparison (nist_files[j], dataset, certvals,
 				  &modelerrs, &poorvals, prn);
 
-	    run_gretl_mp_comparison (&Z, dataset, certvals, polyterms, 
+	    run_gretl_mp_comparison (dataset, certvals, polyterms, 
 				     zdigits, &mpfails, prn);
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
-	    destroy_dataset(Z, dataset);
-	    Z = NULL;
+	    destroy_dataset(dataset);
 	    dataset = NULL;
 	    free(zdigits);
 	    zdigits = NULL;
