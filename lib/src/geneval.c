@@ -7584,7 +7584,7 @@ static NODE *object_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
 
-#if 1 || EDEBUG
+#if EDEBUG
     fprintf(stderr, "object_var_node: t->t = %d\n", t->t);
 #endif
 
