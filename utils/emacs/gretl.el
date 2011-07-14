@@ -3,8 +3,8 @@
 ;; Copyright (C) 2005 Allin Cottrell
 
 ;; Author:     Allin Cottrell <cottrell@wfu.edu>
-;; Created:    July 7 2006
-;; Version:    0.2
+;; Created:    July 14 2011
+;; Version:    0.3
 ;; Keywords:   gretl, econometrics
 
 ;; With hefty borrowings from octave-mod.el
@@ -415,11 +415,14 @@ newline or semicolon after an else or end keyword."
   (concat gretl-block-else-regexp "\\|" gretl-block-end-regexp))
 
 (defvar gretl-block-match-alist
-  '(("loop" . ("end" "endloop"))
-    ("if" . ("else" "endif"))
+  '(("loop" . ("endloop"))
+    ("if" . ("else" "elif" "endif"))
     ("nls" . ("end"))
     ("mle" . ("end"))
+    ("gmm" . ("end"))
+    ("foreign" . ("end"))
     ("restrict" . ("end"))
+    ("kalman" . ("end"))
     ("system" . ("end")))
   "Alist with Gretl's matching block keywords.
 Has Gretl's begin keywords as keys and a list of the matching else or
