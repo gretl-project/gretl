@@ -46,7 +46,7 @@ SUBDIRS = lib cli $(GUIDIR) plugin $(PODIR) share
 ALLSUBDIRS = lib cli gui2 plugin po share tests
 
 .PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
-install-man tags dist distclean check
+install-man tags dist distclean check buildstamp
 
 subdirs: $(SUBDIRS)
 
