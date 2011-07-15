@@ -518,7 +518,7 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * @type: location to receive data type, or NULL (see below).
  * @size: location to receive size of data (= series
  * length for GRETL_TYPE_SERIES, otherwise 0), or NULL.
- * @err:location to receive error code.
+ * @err: location to receive error code.
  *
  * Returns: the data pointer associated with @key in the
  * specified @bundle, or NULL on failure. If @type is non-NULL
@@ -527,6 +527,11 @@ static int gretl_bundle_has_data (gretl_bundle *b, const char *key)
  * if @type is NULL the call is understood as a query as to
  * whether @bundle contains the specified data-item, and 
  * @err is not set if @key is not present.
+ *
+ * Note that the value returned is the actual data pointer from
+ * within the bundle, not a copy of the data; so the pointer
+ * must not be freed, and in general its content should not
+ * be modified.
  */
 
 void *gretl_bundle_get_data (gretl_bundle *bundle, const char *key,

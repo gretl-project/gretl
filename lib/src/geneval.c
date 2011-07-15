@@ -5433,6 +5433,10 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     int size = 0;
     NODE *ret = NULL;
 
+#if EDEBUG
+    fprintf(stderr, "get_named_bundle_value: %s[\"%s\"]\n", name, key);
+#endif
+
     if (!strcmp(name, "$")) {
 	val = last_model_get_data(key, &type, &size, &p->err);
     } else {
@@ -5467,6 +5471,7 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	ret = matrix_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
+	    ret->flags &= ~TMP_NODE; /* don't free! */
 	}
     } else if (type == GRETL_TYPE_MATRIX_REF) {
 	ret = matrix_pointer_node(p);
@@ -5507,6 +5512,8 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     } else {
 	p->err = E_DATA;
     }
+
+
 
     return ret;
 }
@@ -5568,6 +5575,10 @@ static int set_named_bundle_value (const char *name, NODE *n, parser *p)
     } else {
 	err = E_DATA;
     }
+
+#if EDEBUG
+    fprintf(stderr, "set_named_bundle_value: %s[\"%s\"]\n", name, key);
+#endif
 
     if (!err) {
 	switch (n->t) {
@@ -9262,7 +9273,7 @@ static void process_lhs_substr (const char *lname, parser *p)
     } else if (p->lh.t == MAT) {
 	get_lh_mspec(p);
     } else if (p->lh.t == BUNDLE) {
-	; /* should be key string; handled later */
+	p->targ = BOBJ; /* substr should be key string; handled later */
     } else if (p->lh.t == UNK) {
 	if (lname != NULL) {
 	    undefined_symbol_error(lname, p);
@@ -9280,9 +9291,9 @@ static void parser_print_result (parser *p, PRN *prn)
     if (p->targ == VEC) {
 	int list[2] = { 1, p->lh.v };
 
-	printdata(list, NULL, (const double **) *p->Z, p->dset, OPT_NONE, prn);
+	printdata(list, NULL, p->dset, OPT_NONE, prn);
     } else if (p->targ == NUM) {
-	printdata(NULL, p->lh.name, (const double **) *p->Z, p->dset, OPT_NONE, prn);
+	printdata(NULL, p->lh.name, p->dset, OPT_NONE, prn);
     } else if (p->targ == MAT) {
 	gretl_matrix_print_to_prn(p->lh.m1, p->lh.name, prn);
     }
@@ -9462,6 +9473,9 @@ static int overwrite_type_check (parser *p)
     if (p->targ == NUM && p->lh.t == VEC && p->lh.obs >= 0) {
 	/* OK */
 	return 0;
+    } else if (p->targ == BOBJ && p->lh.t == BUNDLE) {
+	/* OK */
+	return 0;
     } else if (p->targ != p->lh.t) {
 	/* don't overwrite one type with another */
 	return E_TYPES;
@@ -9584,7 +9598,8 @@ static void pre_process (parser *p, int flags)
     /* record next read position */
     p->point = s + strlen(test);
 
-    /* grab LHS obs string or matrix slice if present */
+    /* grab LHS obs string, matrix slice or bundle object spec, 
+       if present */
     if (strchr(test, '[') != NULL) {
 	get_lhs_substr(test, p);
 	if (p->err) {
@@ -10307,13 +10322,13 @@ static int gen_check_return_type (parser *p)
 	    p->err = E_TYPES;
 	}
     } else if (p->targ == BUNDLE) {
-	if (p->lh.substr != NULL) {
-	    if (!ok_bundled_type(r->t)) {
-		p->err = E_TYPES;
-	    }
-	} else if (r->t != BUNDLE) {
+	if (r->t != BUNDLE) {
 	    p->err = E_TYPES;
-	}	
+	}
+    } else if (p->targ == BOBJ) {
+	if (!ok_bundled_type(r->t)) {
+	    p->err = E_TYPES;
+	}
     } else {
 	/* target type was not specified: set it now, based
 	   on the type of the object we computed */
@@ -10565,9 +10580,7 @@ static int save_generated_var (parser *p, PRN *prn)
     } else if (p->targ == STR) {
 	edit_string(p);
     } else if (p->targ == BUNDLE) {
-	if (p->lh.substr != NULL) {
-	    p->err = set_named_bundle_value(p->lh.name, r, p);
-	} else if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
+	if ((r->flags & TMP_NODE) || (p->flags & P_UFRET)) {
 	    /* bundle created on the fly */
 	    p->err = gretl_bundle_add_or_replace(r->v.b, p->lh.name);
 	    if (!p->err) {
@@ -10578,6 +10591,9 @@ static int save_generated_var (parser *p, PRN *prn)
 	    /* assignment from pre-existing named bundle */
 	    p->err = gretl_bundle_copy_as(p->rhs, p->lh.name);
 	}
+    } else if (p->targ == BOBJ) {
+	/* saving an object into a bundle */
+	p->err = set_named_bundle_value(p->lh.name, r, p);
     }
 
 #if EDEBUG

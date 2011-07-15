@@ -105,7 +105,7 @@ enum {
 	      LISTVAR,    /* variable in list */
 	      STR,	  /* string */
 	      BUNDLE,     /* gretl bundle (hash table) */
-	      BOBJ,       /* object from inside a bundle */
+	      BOBJ,       /* object inside a bundle */
 	      FARGS,	  /* set of n function arguments */
 	      EMPTY,      /* "null" */
 	      ABSENT,

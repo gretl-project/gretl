@@ -1310,14 +1310,16 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f,
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
-    } else if (!matrix_is_user_matrix(m)) {
-	R = m;
-    } else {
+    } else if (matrix_is_user_matrix(m) || data_is_bundled(m)) {
+	/* don't mess with the original matrix! */
 	R = gretl_matrix_copy(m);
 	if (R == NULL) {
 	    *err = E_ALLOC;
-	}
-    }
+	}	
+    } else {
+	/* use (overwrite) the input matrix */
+	R = m;
+    } 
 
     if (R != NULL) {
 	if (f == F_CDEMEAN) {

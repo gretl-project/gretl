@@ -880,7 +880,7 @@ int execute_genr (parser *p, DATASET *dset, PRN *prn)
 {
 #if GDEBUG
     fprintf(stderr, "\n*** execute_genr: p=%p, LHS='%s', Z=%p\n", 
-	    (void *) p, p->lh.name, (void *) *pZ);
+	    (void *) p, p->lh.name, (void *) dset->Z);
 #endif
 
     realgen(NULL, p, dset, prn, P_EXEC);
