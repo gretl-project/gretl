@@ -104,7 +104,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
     return u;
 }
 
-static int matrix_is_user_matrix (const gretl_matrix *m)
+static int matrix_is_saved (const gretl_matrix *m)
 {
     int i;
 
@@ -112,6 +112,10 @@ static int matrix_is_user_matrix (const gretl_matrix *m)
 	if (m == matrices[i]->M) {
 	    return 1;
 	}
+    }
+
+    if (data_is_bundled((void *) m)) {
+	return 1;
     }
 
     return 0;
@@ -155,7 +159,7 @@ static user_matrix *real_user_matrix_add (gretl_matrix *M, const char *name,
 	matrices = tmp;
     }
 
-    if (matrix_is_user_matrix(M)) {
+    if (matrix_is_saved(M)) {
 	/* ensure uniqueness of matrix pointers */
 	gretl_matrix *Mcpy = gretl_matrix_copy(M);
 
@@ -1283,10 +1287,10 @@ user_matrix_get_determinant (gretl_matrix *m, int f, int *err)
 
     if (gretl_is_null_matrix(m)) {
 	return d;
-    } else if (!matrix_is_user_matrix(m)) {
-	tmp = m;
-    } else {
+    } else if (matrix_is_saved(m)) {
 	tmp = gretl_matrix_copy(m);
+    } else {
+	tmp = m;
     }
 
     if (tmp != NULL) {
@@ -1310,7 +1314,7 @@ gretl_matrix *user_matrix_matrix_func (gretl_matrix *m, int f,
 
     if (gretl_is_null_matrix(m)) {
 	*err = E_DATA;
-    } else if (matrix_is_user_matrix(m) || data_is_bundled(m)) {
+    } else if (matrix_is_saved(m)) {
 	/* don't mess with the original matrix! */
 	R = gretl_matrix_copy(m);
 	if (R == NULL) {

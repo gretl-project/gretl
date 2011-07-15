@@ -2194,10 +2194,17 @@ static void matrix_error (parser *p)
 
 static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 {
-    gretl_matrix *m = n->v.m;
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
+	gretl_matrix *m;
+
+	if (n->t == NUM) {
+	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
+	} else {
+	    m = n->v.m;
+	}
+
 	switch (f) {
 	case F_ROWS:
 	    ret->v.xval = m->rows;
@@ -2227,6 +2234,10 @@ static NODE *matrix_to_scalar_func (NODE *n, int f, parser *p)
 	default:
 	    p->err = E_PARSE;
 	    break;
+	}
+
+	if (n->t == NUM) {
+	    gretl_matrix_free(m);
 	}
 
 	if (p->err) {
@@ -2318,8 +2329,14 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
-	gretl_matrix *m = n->v.m;
+	gretl_matrix *m = NULL;
 	int a, b, c;
+
+	if (n->t == NUM) {
+	    m = gretl_matrix_from_scalar(node_get_scalar(n, p));
+	} else {
+	    m = n->v.m;
+	}
 
 	if (gretl_is_null_matrix(m) && !nullmat_ok(f)) {
 	    p->err = E_DATA;
@@ -2452,12 +2469,21 @@ static NODE *matrix_to_matrix_func (NODE *n, NODE *r, int f, parser *p)
 	    break;
 	}
 
-	if (ret->v.m == n->v.m) {
+	if (ret->v.m == m) {
 	    /* input matrix was recycled: avoid double-freeing */
-	    n->v.m = NULL;
+	    if (n->t == MAT) {
+		n->v.m = NULL;
+	    } else {
+		m = NULL;
+	    }
 	}	
 
     finalize:
+
+	if (n->t == NUM) {
+	    /* trash the on-the-fly scalar matrix */
+	    gretl_matrix_free(m);
+	}
 
 	if (ret->v.m == NULL) {
 	    matrix_error(p);
@@ -5471,7 +5497,7 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	ret = matrix_pointer_node(p);
 	if (ret != NULL) {
 	    ret->v.m = (gretl_matrix *) val;
-	    ret->flags &= ~TMP_NODE; /* don't free! */
+	    ret->flags &= ~TMP_NODE; /* don't free content! */
 	}
     } else if (type == GRETL_TYPE_MATRIX_REF) {
 	ret = matrix_pointer_node(p);
@@ -5512,8 +5538,6 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
     } else {
 	p->err = E_DATA;
     }
-
-
 
     return ret;
 }
@@ -8463,7 +8487,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_FFTI:
     case F_POLROOTS:
 	/* matrix -> matrix functions */
-	if (l->t == MAT) {
+	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_matrix_func(l, r, t->t, p);
 	} else {
 	    node_type_error(t->t, 1, MAT, l, p);
@@ -8479,7 +8503,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_RCOND:
     case F_RANK:
 	/* matrix -> scalar functions */
-	if (l->t == MAT) {
+	if (l->t == MAT || l->t == NUM) {
 	    ret = matrix_to_scalar_func(l, t->t, p);
 	} else {
 	    node_type_error(t->t, 0, MAT, l, p);
@@ -9598,7 +9622,7 @@ static void pre_process (parser *p, int flags)
     /* record next read position */
     p->point = s + strlen(test);
 
-    /* grab LHS obs string, matrix slice or bundle object spec, 
+    /* grab LHS obs string, matrix slice, or bundle element, 
        if present */
     if (strchr(test, '[') != NULL) {
 	get_lhs_substr(test, p);
