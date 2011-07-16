@@ -1839,7 +1839,12 @@ void call_function_package (const char *fname, windata_t *vwin,
     }
 
     if (!err) {
-	function_call_dialog(cinfo);
+	if (0 && fn_n_params(cinfo->func) == 0) {
+	    /* no arguments to be gathered (not ready!) */
+	    fncall_exec_callback(NULL, cinfo);
+	} else {
+	    function_call_dialog(cinfo);
+	}
     } else {
 	cinfo_free(cinfo);
     }
@@ -2003,112 +2008,6 @@ int try_exec_bundle_print_function (gretl_bundle *b, PRN *prn)
     return ret;
 }
 
-#define OLS_BUNDLE_DEMO 0
-
-#if OLS_BUNDLE_DEMO
-
-/* This is quite complicated, because we're bypassing the "standard"
-   mechanism for a function call, and instead using output from the
-   gretl model selection dialog and constructing a "direct" call to
-   the function, as is done inside geneval.c. There's probably a
-   simpler way of doing this.
-*/
-
-static int ols_bundle_callback (selector *sr)
-{
-    const char *funname = "ols_pack";
-    const char *pkgname = "olsbundle";
-    char *path = NULL;
-    ufunc *uf = NULL;
-    fnargs *args = NULL;
-    int yno, err = 0;
-
-    if (selector_error(sr)) {
-	return 1;
-    }
-
-    /* get path to package; load package if not already loaded;
-       get specific function from package */
-
-    path = gretl_function_package_get_path(pkgname, PKG_ALL);
-    if (path == NULL) {
-	gretl_errmsg_sprintf("Couldn't find package '%s'", pkgname);
-	err = E_DATA;
-    } else {
-	fnpkg *pkg = get_function_package_by_filename(path, &err);
-
-	if (!err) {
-	    uf = get_function_from_package(funname, pkg);
-	}
-	if (uf == NULL) {
-	    gretl_errmsg_sprintf("Couldn't find function '%s'", funname);
-	    err = E_DATA;
-	}
-	free(path);
-    }
-
-    if (err) {
-	gui_errmsg(err);
-	return err;
-    } else {
-	/* args: get ID of dependent var plus X list */
-	const char *buf = selector_list(sr);
-
-	if (buf == NULL) {
-	    err = E_DATA;
-	} else {
-	    int *list = gretl_list_from_string(buf, &err);
-
-	    if (!err) {
-		yno = list[1];
-		gretl_list_delete_at_pos(list, 1);
-		remember_list(list, "arg1temp", NULL);
-		free(list);
-	    }
-	}
-    }
-
-    if (!err) {
-	/* push args to function */
-	args = fn_args_new();
-	if (args == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = push_fn_arg(args, GRETL_TYPE_USERIES, &yno);
-	    if (!err) {
-		err = push_fn_arg(args, GRETL_TYPE_LIST, "arg1temp");
-	    }
-	}
-    }
-
-    if (!err) {
-	/* execute function and retrieve bundle */
-	gretl_bundle *bundle = NULL;
-	PRN *prn = NULL;
-
-	err = bufopen(&prn);
-
-	if (!err) {
-	    err = gretl_function_exec(uf, args, GRETL_TYPE_BUNDLE, dataset, 
-				      &bundle, NULL, prn);
-	}
-	if (!err) {
-	    view_buffer(prn, 80, 400, funname, VIEW_BUNDLE, bundle);
-	}
-    }
-
-    if (err) {
-	gui_errmsg(err);
-    }
-
-    fn_args_free(args);
-    delete_list_by_name("arg1temp");
-
-    return err;
-}
-
-#endif /* OLS_BUNDLE_DEMO */
-
 /* get a listing of available addons along with (a) the 
    name of the versioned subdirectory containing the 
    most recent usable version (given the gretl version)
@@ -2261,14 +2160,6 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     const gchar *pkgname = gtk_action_get_name(action);
     char *path = NULL;
 
-#if OLS_BUNDLE_DEMO
-    if (!strcmp(pkgname, "olsbundle")) {
-	selection_dialog(_("gretl: specify model"), 
-			 ols_bundle_callback, OLS);
-	return;
-    }
-#endif
-
     path = gretl_function_package_get_path(pkgname, PKG_ADDON);
 
     if (path == NULL) {
@@ -2347,11 +2238,6 @@ void maybe_add_packages_to_menus (windata_t *vwin)
 			    addons[i].menupath,
 			    vwin);
     }
-
-#if OLS_BUNDLE_DEMO
-    add_package_to_menu("olsbundle", "OLS bundle",
-			"/menubar/Model", vwin);
-#endif
 }
 
 /* run a package's gui-precheck function to determine if
@@ -2388,7 +2274,8 @@ static int precheck_error (ufunc *func, windata_t *vwin)
 void maybe_add_packages_to_model_menus (windata_t *vwin)
 {
     struct addon_info model_addons[] = {
-	{ "bandplot", N_("Confidence band plot"), "/menubar/Graphs" }
+	{ "bandplot", N_("Confidence band plot"), "/menubar/Graphs" },
+	{ "tobit_y", N_("Predicted values"), "/menubar/Analysis" }
     };
     int i, n = sizeof model_addons / sizeof model_addons[0];
     char *path;
