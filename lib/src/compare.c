@@ -41,7 +41,7 @@
 
 #define WDEBUG 0
 
-#define print_add_omit_model(m,o) (!(opt & OPT_Q) && !(opt & OPT_I))
+#define print_add_omit_model(m,o) (!(opt & (OPT_Q|OPT_Y|OPT_I)))
 
 enum {
     CHISQ_FORM,
@@ -318,8 +318,10 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     }
 
     if (opt & OPT_I) {
+	/* --silent */
 	verbosity = 0;
     } else if (opt & OPT_Q) {
+	/* --quiet */
 	verbosity = 1;
     }
 
@@ -356,8 +358,16 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     /* preamble */
 
     if (verbosity > 1 && cmp->m1 >= 0 && cmp->m2 >= 0) {
-	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
-		cmp->m1, cmp->m2);
+	if (opt & OPT_Y) {
+	    if (opt & OPT_A) {
+		/* --auto-omit */
+		pputc(prn, '\n');
+	    }	    
+	    pprintf(prn, _("Test on Model %d:\n"), cmp->m1);
+	} else {
+	    pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
+		    cmp->m1, cmp->m2);
+	}
     } 
 
     if (verbosity > 0 && stat_ok) {
@@ -671,7 +681,7 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
     return 0;
 }
 
-#define be_quiet(o) ((o & OPT_A) || (o & OPT_Q))
+#define no_new_model(o) (o & (OPT_A | OPT_Y))
 
 #define SMPL_DEBUG 0
 
@@ -681,7 +691,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 {
     MODEL rep;
     const char *param = NULL;
-    const int *auxlist = NULL;
+    const int *laglist = NULL;
     char altparm[32] = {0};
     int *list = *plist;
     int mc = get_model_count();
@@ -719,7 +729,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	myopt |= retrieve_dpanel_opts(orig);
     } else if (orig->ci == DPANEL) {
 	param = gretl_model_get_data(orig, "istr");
-	auxlist = gretl_model_get_data(orig, "ylags");
+	laglist = gretl_model_get_data(orig, "ylags");
 	myopt |= retrieve_dpanel_opts(orig);
     } else if (orig->ci == ARCH) {
 	order = gretl_model_get_int(orig, "arch_order");
@@ -790,7 +800,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep = arbond_model(list, param, dset, myopt, prn);
 	break;
     case DPANEL: 
-	rep = dpd_model(list, auxlist, param, dset, myopt, prn);
+	rep = dpd_model(list, laglist, param, dset, myopt, prn);
 	break;
     case ARCH:
 	rep = arch_model(list, order, dset, myopt);
@@ -870,7 +880,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
     /* if the model count went up for an aux regression,
        bring it back down */
-    if (be_quiet(myopt) && get_model_count() > mc) {
+    if (no_new_model(myopt) && get_model_count() > mc) {
 	model_count_minus();
     }
 
@@ -1156,7 +1166,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	pmod->aux = AUX_ADD;
 
 	if (print_add_omit_model(pmod, opt)) {
-	    printmodel(pmod, dset, est_opt, prn);
+	    printmodel(pmod, dset, est_opt | OPT_T, prn);
 	}
 
 	if (orig->ci == OLS && pmod->nobs == orig->nobs) {
@@ -1438,7 +1448,9 @@ static int omit_options_inconsistent (gretlopt opt)
  * OPT_I for silent operation; for OPT_A, see below.
  * Additional options that are applicable only for IV models: 
  * OPT_B (omit from both list of regressors and list of 
- * instruments), OPT_T (omit from list of instruments only).
+ * instruments), OPT_T (omit from list of instruments only),
+ * OPT_Y (do not set the augmented model as the current
+ * model).
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
@@ -1520,7 +1532,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}
 
 	if (print_add_omit_model(orig, opt)) {
-	    printmodel(pmod, dset, est_opt, prn); 
+	    printmodel(pmod, dset, est_opt | OPT_T, prn); 
 	}	
 
 	if (!omitlast) {
@@ -1645,8 +1657,8 @@ int reset_test (MODEL *pmod, DATASET *dset,
     double RF;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    int i, t, v = dset->v; 
-    int addcols;
+    int i, t, orig_v = dset->v; 
+    int addv, use_square, use_cube;
     const char *mode;
     int err = 0;
 
@@ -1664,66 +1676,69 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	return 0;
     }
 
+    use_square = !(opt & OPT_C); /* not cubes-only */
+    use_cube = !(opt & OPT_R);   /* not squares-only */
+
     gretl_model_init(&aux);
 
     if (opt & OPT_R) {
-	addcols = 1;
+	addv = 1;
 	mode = N_("squares only");
     } else if (opt & OPT_C) {
-	addcols = 1;
+	addv = 1;
 	mode = N_("cubes only");
     } else {
-	addcols = 2;
+	addv = 2;
 	mode = N_("squares and cubes");
     }
 
     impose_model_smpl(pmod, dset);
 
-    if (pmod->ncoeff + addcols >= dset->t2 - dset->t1) {
+    if (pmod->ncoeff + addv >= dset->t2 - dset->t1) {
+	/* can't run aux regression */
 	err = E_DF;
     }
 
     if (!err) {
-	newlist = malloc((pmod->list[0] + addcols + 1) * sizeof *newlist);
+	newlist = gretl_list_new(pmod->list[0] + addv);
 	if (newlist == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
-    if (newlist != NULL) {
-	newlist[0] = pmod->list[0] + addcols;
+    if (!err) {
 	for (i=1; i<=pmod->list[0]; i++) {
 	    newlist[i] = pmod->list[i];
 	}
-	if (dataset_add_series(addcols, dset)) {
+	if (dataset_add_series(addv, dset)) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
 	/* add yhat^2 and/or yhat^3 to data set */
-	int sqcol = v;
-	int cubecol = (opt & OPT_C) ? v : v + 1;
+	int vs = orig_v;
+	int vc = (opt & OPT_C)? orig_v : orig_v + 1;
+	int k = pmod->list[0] + 1;
 
 	for (t = pmod->t1; t<=pmod->t2; t++) {
-	    double xx = pmod->yhat[t];
+	    double x = pmod->yhat[t];
 
-	    if (!(opt & OPT_C)) {
-		dset->Z[sqcol][t] = xx * xx;
+	    if (use_square) {
+		dset->Z[vs][t] = x * x;
 	    }
-	    if (!(opt & OPT_R)) {
-		dset->Z[cubecol][t] = xx * xx * xx;
+	    if (use_cube) {
+		dset->Z[vc][t] = x * x * x;
 	    }
 	}
 
-	if (!(opt & OPT_C)) {
-	    strcpy(dset->varname[sqcol], "yhat^2");
-	    newlist[pmod->list[0] + 1] = sqcol;
+	if (use_square) {
+	    strcpy(dset->varname[vs], "yhat^2");
+	    newlist[k++] = vs;
 	}
-
-	if (!(opt & OPT_R)) {
-	    strcpy(dset->varname[cubecol], "yhat^3");
-	    newlist[newlist[0]] = cubecol;
+	if (use_cube) {
+	    strcpy(dset->varname[vc], "yhat^3");
+	    newlist[k++] = vc;
 	}
     }
 
@@ -1743,19 +1758,20 @@ int reset_test (MODEL *pmod, DATASET *dset,
 	if (!(opt & OPT_Q)) {
 	    printmodel(&aux, dset, OPT_NONE, prn);
 	} else {
-	    if (!(opt & OPT_G)) {
+	    if (!(opt & OPT_G)) { 
+		/* GUI special; see gui2/library.c */
 		pputc(prn, '\n');
 	    }
 	    pputs(prn, _("RESET test for specification"));
 	    pprintf(prn, " (%s)\n", _(mode));
 	}
 
-	RF = ((pmod->ess - aux.ess) / addcols) / (aux.ess / aux.dfd);
-	pval = snedecor_cdf_comp(addcols, aux.dfd, RF);
+	RF = ((pmod->ess - aux.ess) / addv) / (aux.ess / aux.dfd);
+	pval = snedecor_cdf_comp(addv, aux.dfd, RF);
 
 	pprintf(prn, "%s: F = %f,\n", _("Test statistic"), RF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		addcols, aux.dfd, RF, pval);
+		addv, aux.dfd, RF, pval);
 	pputc(prn, '\n');
 
 	if (opt & OPT_S) {
@@ -1769,7 +1785,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
 		    topt = OPT_C;
 		}
 		model_test_set_teststat(test, GRETL_STAT_RESET);
-		model_test_set_dfn(test, addcols);
+		model_test_set_dfn(test, addv);
 		model_test_set_dfd(test, aux.dfd);
 		model_test_set_value(test, RF);
 		model_test_set_pvalue(test, pval);
@@ -1782,7 +1798,7 @@ int reset_test (MODEL *pmod, DATASET *dset,
     }
 
     free(newlist);
-    dataset_drop_last_variables(addcols, dset); 
+    dataset_drop_last_variables(addv, dset); 
     clear_model(&aux); 
 
     dset->t1 = save_t1;

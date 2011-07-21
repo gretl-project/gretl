@@ -1971,6 +1971,9 @@ static int gretl_cmd_clear (CMD *cmd)
 	*cmd->extra = '\0';
     }
 
+    free(cmd->auxlist);
+    cmd->auxlist = NULL;
+
     cmd_lag_info_destroy(cmd);
     clear_option_params();
 
@@ -4062,17 +4065,24 @@ static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
     }
 }
 
-/* Print a model that was just estimated, provided it's not carrying
-   an error code, and provided we're not in looping mode, in which
-   case the printing (or not) of models requires special handling.  
+/* After estimating a model, check its errcode member to see
+   if anything went wrong, and reset gretl_errno to zero.
 
-   In addition (if not looping) register the fact that we successfully
-   estimated a model.  Note that in this context, "looping" means that
-   a loop is in progress at the current level of function execution.
+   If we're looping (that is, if a loop is in progress at the
+   current level of function execution), that's all, but if
+   not then:
 
-   Finally, if we're called by the GUI program and the model in
-   question has been assigned a name, activate the callback that
-   adds the model to the GUI session.
+   (a) print the model (this requires special handling inside
+   loops); 
+
+   (b) if the user has employed the "name <- command" mechanism,
+   attach the supplied name to the model; 
+
+   (c) conditionally add the model to the stack in objstack.c;
+
+   (d) if we're called by the GUI program and the model has
+   been assigned a name, activate the callback that adds the 
+   model to the GUI session.
 */
 
 static int print_save_model (MODEL *pmod, DATASET *dset,
@@ -4447,6 +4457,14 @@ static int param_to_order (const char *s)
 #define want_param_to_order(c) (c == CORRGM || c == XCORRGM || \
 				c == PERGM || c == LAGS || \
 				c == FRACTINT)
+
+/* OMIT and ADD: should we be setting the revised model as the 
+   "last model", or are we just treating the command as a
+   stand-alone test? We save if neither of the options OPT_Y
+   (--test-only) or OPT_W (--wald) were supplied.
+*/
+
+#define omit_add_save(opt) (!(opt & OPT_Y) && !(opt & OPT_W))
 
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
@@ -4986,19 +5004,20 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = omit_test(cmd->list, models[0], models[1],
 			    dset, cmd->opt, prn);
 	}
-	if (!err && !(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
+	if (!err && omit_add_save(cmd->opt)) {
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
 	    swap_models(models[0], models[1]);
 	}
 	if (!(cmd->opt & OPT_W)) {
+	    /* clean up the displaced model */
 	    clear_model(models[1]);
 	}
 	if ((cmd->opt & OPT_A) && err == E_NOOMIT) {
 	    /* auto-omit was a no-op */
 	    err = 0;
-	} else if (!err && !(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
-	    s->pmod = models[0];
+	} else if (!err && omit_add_save(cmd->opt)) {
+	    print_save_model(models[0], dset, OPT_Q, NULL, s);
 	}
 	break;	
 

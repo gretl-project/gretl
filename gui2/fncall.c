@@ -35,6 +35,7 @@
 #include "toolbar.h"
 #include "obsbutton.h"
 #include "version.h"
+#include "fncall.h"
 
 #define FCDEBUG 0
 
@@ -117,6 +118,8 @@ static call_info *cinfo_new (fnpkg *pkg, windata_t *vwin)
 
     cinfo->pkg = pkg;
     cinfo->vwin = vwin;
+    cinfo->dlg = NULL;
+    cinfo->top_hbox = NULL;
 
     cinfo->publist = NULL;
     cinfo->iface = -1;
@@ -907,6 +910,11 @@ static GtkWidget *double_arg_selector (call_info *cinfo, int i)
     }
     g_free(tmp);
 
+    if (deflt > maxv) {
+	/* note that default may be NADBL */
+	deflt = minv;
+    }
+
     adj = (GtkAdjustment *) gtk_adjustment_new(deflt, minv, maxv, 
 					       step, step, 0);
     spin = gtk_spin_button_new(adj, 1, ndec);
@@ -1041,10 +1049,22 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), k);	
     }
 
-    if (ptype == GRETL_TYPE_INT || ptype == GRETL_TYPE_DOUBLE) {
+    if (ptype == GRETL_TYPE_INT) {
 	double x = fn_param_default(cinfo->func, i);
 
 	if (!na(x)) {
+	    gchar *tmp = g_strdup_printf("%g", x);
+
+	    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
+	    g_free(tmp);
+	} 
+    } else if (ptype == GRETL_TYPE_DOUBLE &&
+	       fn_param_has_default(cinfo->func, i)) {
+	double x = fn_param_default(cinfo->func, i);
+
+	if (na(x)) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), "NA");
+	} else {
 	    gchar *tmp = g_strdup_printf("%g", x);
 
 	    gtk_entry_set_text(GTK_ENTRY(entry), tmp);
@@ -1098,10 +1118,9 @@ static int spinnable_scalar_arg (call_info *cinfo, int i)
     const ufunc *func = cinfo->func;
     double mi = fn_param_minval(func, i);
     double ma = fn_param_maxval(func, i);
-    double df = fn_param_default(func, i);
     double s = fn_param_step(func, i);
 
-    return !na(mi) && !na(ma) && !na(df) && !na(s);
+    return !na(mi) && !na(ma) && !na(s);
 }
 
 static void set_close_on_OK (GtkWidget *b, gpointer p)
@@ -1515,6 +1534,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     const char *funname;
     gretl_bundle *bundle = NULL;
     int attach_bundle = 0;
+    int no_print = 0;
     int orig_v = dataset->v;
     int i, err = 0;
 
@@ -1554,6 +1574,10 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	pprintf(prn, "? %s\n", fnline);
     }
 
+#if FCDEBUG
+    fprintf(stderr, "fnline: %s\n", fnline);
+#endif
+
     /* note: gretl_exec_state_init zeros the first byte of the
        supplied 'line' */
 
@@ -1566,11 +1590,15 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
     }
 
 #if USE_GTK_SPINNER
-    start_wait_for_output(cinfo->top_hbox, 0); 
+    if (cinfo->top_hbox != NULL) {
+	start_wait_for_output(cinfo->top_hbox, 0);
+    }
 #endif
     err = gui_exec_line(&state, dataset);
 #if USE_GTK_SPINNER
-    stop_wait_for_output(cinfo->top_hbox);
+    if (cinfo->top_hbox != NULL) {
+	stop_wait_for_output(cinfo->top_hbox);
+    }
 #endif
 
     if (cinfo->flags & MODEL_CALL) {
@@ -1594,7 +1622,17 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
 	}
     }
 
-    if (user_func_is_noprint(cinfo->func) && !err) {
+    no_print = user_func_is_noprint(cinfo->func);
+
+    if (!err && bundle != NULL && no_print) {
+	gretl_print_reset_buffer(prn);
+	if (try_exec_bundle_print_function(bundle, prn)) {
+	    /* flag printing of bundled result */
+	    no_print = 0;
+	} 
+    }
+
+    if (!err && no_print) {
 	gretl_print_destroy(prn);
     } else {
 	view_buffer(prn, 80, 400, funname, 
@@ -1693,7 +1731,7 @@ static void fncall_exec_callback (GtkWidget *w, call_info *cinfo)
 	    gretl_print_destroy(prn);
 	}
 
-	if (close_on_OK) {
+	if (cinfo->dlg != NULL && close_on_OK) {
 	    gtk_widget_destroy(cinfo->dlg);
 	}
     }
@@ -1839,7 +1877,7 @@ void call_function_package (const char *fname, windata_t *vwin,
     }
 
     if (!err) {
-	if (0 && fn_n_params(cinfo->func) == 0) {
+	if (fn_n_params(cinfo->func) == 0) {
 	    /* no arguments to be gathered (not ready!) */
 	    fncall_exec_callback(NULL, cinfo);
 	} else {
@@ -1863,9 +1901,8 @@ void function_call_cleanup (void)
    packed into @aname, after a colon. 
 */
 
-int exec_bundle_plot_function (void *ptr, const char *aname)
+int exec_bundle_plot_function (gretl_bundle *b, const char *aname)
 {
-    gretl_bundle *b = ptr;
     ufunc *func;
     fnargs *args = NULL;
     const char *bname;

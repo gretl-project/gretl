@@ -2351,30 +2351,34 @@ static void arma_spec_to_cmdlist (selector *sr)
     free(malags);
     malags = NULL;
 
-    if (gtk_widget_is_sensitive(sr->extra[0])) {
-	arma_p = spinner_get_int(sr->extra[0]);
-	sprintf(s, "%d ", arma_p);
-	add_to_cmdlist(sr, s);
-    } else {
+    if (gtk_widget_is_sensitive(sr->extra[1])) {
+	/* "gappy" AR lags activated */
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[1]));
 	add_to_cmdlist(sr, arma_lag_string(s, txt)); 
 	arlags = gretl_strdup(txt);
-    }
+    } else {
+	/* regular max AR lag */
+	arma_p = spinner_get_int(sr->extra[0]);
+	sprintf(s, "%d ", arma_p);
+	add_to_cmdlist(sr, s);
+    } 
 
     arima_d = spinner_get_int(sr->extra[2]);
     sprintf(s, "%d ", arima_d);
     add_to_cmdlist(sr, s);
 
-    if (gtk_widget_is_sensitive(sr->extra[3])) {
-	arma_q = spinner_get_int(sr->extra[3]);
-	sprintf(s, "%d ; ", arma_q);
-	add_to_cmdlist(sr, s);
-    } else {
+    if (gtk_widget_is_sensitive(sr->extra[4])) {
+	/* "gappy" MA lags activated */
 	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[4]));
 	add_to_cmdlist(sr, arma_lag_string(s, txt));
 	add_to_cmdlist(sr, "; ");
 	malags = gretl_strdup(txt);
-    }
+    } else {
+	/* regular max MA lag */
+	arma_q = spinner_get_int(sr->extra[3]);
+	sprintf(s, "%d ; ", arma_q);
+	add_to_cmdlist(sr, s);
+    } 
 
     if (sr->extra[5] != NULL) {
 	arma_P = spinner_get_int(sr->extra[5]);
@@ -4454,24 +4458,18 @@ static GtkWidget *arma_aux_label (int i)
 
 static void toggle_p (GtkWidget *w, selector *sr)
 {
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	gtk_widget_set_sensitive(sr->extra[0], FALSE);
-	gtk_widget_set_sensitive(sr->extra[1], TRUE);
-    } else {
-	gtk_widget_set_sensitive(sr->extra[0], TRUE);
-	gtk_widget_set_sensitive(sr->extra[1], FALSE);
-    }	
+    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+    gtk_widget_set_sensitive(sr->extra[0], !s);
+    gtk_widget_set_sensitive(sr->extra[1], s);
 }
 
 static void toggle_q (GtkWidget *w, selector *sr)
 {
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	gtk_widget_set_sensitive(sr->extra[3], FALSE);
-	gtk_widget_set_sensitive(sr->extra[4], TRUE);
-    } else {
-	gtk_widget_set_sensitive(sr->extra[3], TRUE);
-	gtk_widget_set_sensitive(sr->extra[4], FALSE);
-    }	
+    gboolean s = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+    gtk_widget_set_sensitive(sr->extra[3], !s);
+    gtk_widget_set_sensitive(sr->extra[4], s);
 }
 
 static void arima_callback (GtkWidget *w, selector *sr)

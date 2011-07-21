@@ -25,6 +25,10 @@
 	  <effect>don't print anything</effect>
 	</option>
 	<option>
+	  <flag>--test-only</flag>
+	  <effect>don't replace current model</effect>
+	</option>
+	<option>
 	  <flag>--inst</flag>
 	  <effect>add as instrument, TSLS only</effect>
 	</option>
@@ -57,17 +61,25 @@
 	model are also printed.  In the latter case, the
 	<opt>--vcv</opt> flag causes the covariance matrix for the
 	coefficients to be printed also.  If the <opt>--silent</opt>
-	option is given, nothing is printed; nonetheless, the results
+	option is given, nothing is printed, but the results
 	of the test can be retrieved using the special variables
         <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
       <para context="cli">
-	If the original model was estimated using two-stage least squares, an
-	ambiguity arises: should the new variables be added as regressors, as
-	instruments, or as both?  This is resolved as follows: by default the
-	new variables are added as endogenous regressors, but if the
-	<opt>--inst</opt> flag is given they are added as instruments, or
-	if the <opt>--both</opt> flag is given they are added as exogenous
+	By default the augmented model replaces the original as the
+	<quote>current model</quote> for the purposes of, for example,
+	retrieving the residuals as <lit>$uhat</lit> or doing further
+	tests.  This behavior may be suppressed via the
+	<lit>--test-only</lit> option.
+      </para>
+      <para context="cli">
+	If the original model was estimated using two-stage least
+	squares, an ambiguity arises: should the new variables be
+	added as regressors, as instruments, or as both?  This is
+	resolved as follows: by default the new variables are added as
+	endogenous regressors, but if the <opt>--inst</opt> flag is
+	given they are added as instruments, or if the
+	<opt>--both</opt> flag is given they are added as exogenous
 	regressors.
       </para>
       <para context="gui">
@@ -7042,6 +7054,10 @@
 	  <effect>don't print anything</effect>
 	</option>
 	<option>
+	  <flag>--test-only</flag>
+	  <effect>don't replace the current model</effect>
+	</option>
+	<option>
 	  <flag>--auto</flag>
 	  <optparm optional="true">alpha</optparm>
 	  <effect>sequential elimination, see below</effect>
@@ -7121,32 +7137,31 @@
 	test).
       </para>
       <para>
-	For estimators other than OLS, or if the <opt>--wald</opt> option
-	is given, the statistic is an asymptotic Wald chi-square value
-	based on the covariance matrix of the original model.
+	For estimators other than OLS, or if the <opt>--wald</opt>
+	option is given, the statistic is an asymptotic Wald
+	chi-square value based on the covariance matrix of the
+	original model.
       </para>
       <para>
-	By default, the restricted model is estimated, the estimates
-	are printed, and the restricted model replaces the original as
-	the <quote>current model</quote> for the purposes of, for
-	example, retrieving the residuals as <lit>$uhat</lit> (or
-	doing further tests such as <cmd>add</cmd> or
-	<cmd>omit</cmd>).  
+	Unless the <opt>--wald</opt> option is given, by default the
+	restricted model replaces the original as the <quote>current
+	model</quote> for the purposes of, for example, retrieving the
+	residuals as <lit>$uhat</lit> or doing further tests. This
+	behavior may be suppressed via the <lit>--test-only</lit>
+	option.
       </para>
       <para>
-	If the Wald option is selected, the restricted model is not
-	estimated (and so the current model is not replaced). The
-	<opt>--quiet</opt> option suppresses the printout of the
-	restricted model (if applicable): only the result of the test is
-	printed.  If the restricted model is both estimated and printed,
-	the <opt>--vcv</opt> option has the effect of printing the
-	covariance matrix for the coefficients in the restricted model,
-	otherwise this option is ignored.
+	The verbosity of the output can be controlled using the option
+	<lit>--quiet</lit>, which suppresses the printout of the
+	restricted model (if applicable), or the <lit>--silent</lit>
+	flag, which means that nothing is printed (but the results of
+	the test can be retrieved using the special variables
+	<lit>$test</lit> and <lit>$pvalue</lit>).
       </para>
       <para>
-	If the <opt>--silent</opt> option is given, nothing is printed;
-	nonetheless, the results of the test can be retrieved using the
-	special variables <lit>$test</lit> and <lit>$pvalue</lit>.
+	If the restricted model is both estimated and printed, the
+	<opt>--vcv</opt> option has the effect of printing its
+	covariance matrix, otherwise this option is ignored.
       </para>
       <para>
 	If the original model was estimated using two-stage least

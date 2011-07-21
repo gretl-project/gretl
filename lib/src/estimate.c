@@ -2766,7 +2766,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
 			     gretlopt opt, PRN *prn)
 {
     int pos, newv = dset->v;
-    int *auxlist = NULL, *testlist = NULL;
+    int *ptlist = NULL, *testlist = NULL;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     MODEL ptmod;
@@ -2781,18 +2781,18 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
     pprintf(prn, "v = %d, h = %d\n", v, h);
 #endif
 
-    auxlist = gretl_list_new(h + 1);
+    ptlist = gretl_list_new(h + 1);
     testlist = gretl_list_new(3);
 
-    if (auxlist == NULL || testlist == NULL) {
-	free(auxlist);
+    if (ptlist == NULL || testlist == NULL) {
+	free(ptlist);
 	free(testlist);
 	return E_ALLOC;
     }
 
-    auxlist[1] = pmod->list[1];
-    for (i=2; i<=auxlist[0]; i++) {
-	auxlist[i] = pmod->list[i + pos - 1];
+    ptlist[1] = pmod->list[1];
+    for (i=2; i<=ptlist[0]; i++) {
+	ptlist[i] = pmod->list[i + pos - 1];
     }	
 
     testlist[1] = newv;
@@ -2800,14 +2800,14 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
     testlist[3] = newv + 1;
 
 #if PT_DEBUG
-    printlist(auxlist, "auxlist");
+    printlist(ptlist, "ptlist");
     printlist(testlist, "testlist");
 #endif
 
     /* reduced form: regress the original dependent variable on all of
        the instruments from the original model
     */
-    ptmod = lsq(auxlist, dset, OLS, OPT_A);
+    ptmod = lsq(ptlist, dset, OLS, OPT_A);
     err = ptmod.errcode;
     if (err) {
 	goto bailout;
@@ -2878,7 +2878,7 @@ static int tsls_hetero_test (MODEL *pmod, DATASET *dset,
 
  bailout:
 
-    free(auxlist);
+    free(ptlist);
     free(testlist);
 
     dset->t1 = save_t1;

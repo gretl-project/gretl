@@ -33,6 +33,7 @@
 #include "flow_control.h"
 #include "kalman.h"
 
+#include <errno.h>
 #include <glib.h>
 
 #define FNPARSE_DEBUG 0 /* debug parsing of function code */
@@ -62,6 +63,9 @@ struct fn_param_ {
     double max;     /* maximum value (scalar parameters only) */
     double step;    /* step increment (scalars only) */
 };
+
+#define UNSET_VALUE (-1.0e200)
+#define default_unset(p) (p->deflt == UNSET_VALUE)
 
 /* structure representing sample information at start of
    a function call */
@@ -666,6 +670,26 @@ const char **fn_param_value_labels (const ufunc *fun, int i,
 }
 
 /**
+ * fn_param_has_default:
+ * @fun: pointer to user-function.
+ * @i: 0-based parameter index.
+ * 
+ * Returns: 1 if the (scalar) parameter @i of function @fun 
+ * (if any) has a default value set, otherwise 0.
+ */
+
+int fn_param_has_default (const ufunc *fun, int i)
+{
+    if (i < 0 || i >= fun->n_params) {
+	return 0;
+    } else {
+	fn_param *fp = &fun->params[i];
+
+	return !default_unset(fp);
+    }
+}   
+
+/**
  * fn_param_default:
  * @fun: pointer to user-function.
  * @i: 0-based parameter index.
@@ -676,8 +700,13 @@ const char **fn_param_value_labels (const ufunc *fun, int i,
 
 double fn_param_default (const ufunc *fun, int i)
 {
-    return (i < 0 || i >= fun->n_params)? NADBL :
-	fun->params[i].deflt;
+    if (i < 0 || i >= fun->n_params) {
+	return NADBL;
+    } else {
+	fn_param *fp = &fun->params[i];
+
+	return default_unset(fp)? NADBL : fp->deflt;
+    }
 }    
 
 /**
@@ -1032,7 +1061,7 @@ static fn_param *allocate_params (int n)
 	params[i].labels = NULL;
 	params[i].nlabels = 0;
 	params[i].flags = 0;
-	params[i].deflt = NADBL;
+	params[i].deflt = UNSET_VALUE;
 	params[i].min = NADBL;
 	params[i].max = NADBL;
 	params[i].step = NADBL;
@@ -1143,6 +1172,19 @@ static ufunc *add_ufunc (const char *fname)
     }
 
     return fun;
+}
+
+static int no_scalar_default (fn_param *fp)
+{
+    int ret = 0;
+
+    if (default_unset(fp)) {
+	ret = 1;
+    } else if (fp->type != GRETL_TYPE_DOUBLE && na(fp->deflt)) {
+	ret = 1;
+    } 
+
+    return ret;
 }
 
 /**
@@ -1319,8 +1361,15 @@ static int func_read_params (xmlNodePtr node, xmlDocPtr doc,
 		param->type = param_field_to_type(field);
 		free(field);
 		if (gretl_scalar_type(param->type)) {
-		    gretl_xml_get_prop_as_double(cur, "default", 
-						 &param->deflt);
+		    double x;
+
+		    if (gretl_xml_get_prop_as_double(cur, "default", &x)) {
+			param->deflt = x;
+		    } else if (param->type == GRETL_TYPE_DOUBLE) {
+			param->deflt = UNSET_VALUE;
+		    } else {
+			param->deflt = NADBL;
+		    }
 		    if (param->type != GRETL_TYPE_BOOL) {
 			gretl_xml_get_prop_as_double(cur, "min", &param->min);
 			gretl_xml_get_prop_as_double(cur, "max", &param->max);
@@ -1444,11 +1493,15 @@ static void print_param_labels (fn_param *param, PRN *prn)
 
 static void print_min_max_deflt (fn_param *param, PRN *prn)
 {
-    if (na(param->min) && na(param->max) && na(param->deflt)) {
+    if (na(param->min) && na(param->max) && default_unset(param)) {
 	return; /* no-op */
     } else if (na(param->min) && na(param->max)) {
 	/* default value only */
-	pprintf(prn, "[%g]", param->deflt);
+	if (na(param->deflt)) {
+	    pputs(prn, "[NA]");
+	} else {
+	    pprintf(prn, "[%g]", param->deflt);
+	}
 	return;
     }
 
@@ -1463,7 +1516,13 @@ static void print_min_max_deflt (fn_param *param, PRN *prn)
     pputc(prn, ':');
 
     /* default */
-    if (!na(param->deflt)) pprintf(prn, "%g", param->deflt);
+    if (!default_unset(param)) {
+	if (na(param->deflt)) {
+	    pputs(prn, "NA");
+	} else {
+	    pprintf(prn, "%g", param->deflt);
+	}
+    }
 
     if (!na(param->step)) {
 	/* step */
@@ -1859,8 +1918,12 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 	    if (!na(param->max)) {
 		fprintf(fp, " max=\"%g\"", param->max);
 	    }
-	    if (!na(param->deflt)) {
-		fprintf(fp, " default=\"%g\"", param->deflt);
+	    if (!default_unset(param)) {
+		if (na(param->deflt)) {
+		    fputs(" default=\"NA\"", fp);
+		} else {
+		    fprintf(fp, " default=\"%g\"", param->deflt);
+		}
 	    }
 	    if (!na(param->step)) {
 		fprintf(fp, " step=\"%g\"", param->step);
@@ -1930,32 +1993,34 @@ static void print_function_start (ufunc *fun, PRN *prn)
     gretl_push_c_numeric_locale();
 
     for (i=0; i<fun->n_params; i++) {
+	fn_param *fp = &fun->params[i];
+
 	if (i == 0) {
 	    pputc(prn, '(');
 	}
-	if (fun->params[i].flags & ARG_CONST) {
+	if (fp->flags & ARG_CONST) {
 	    pputs(prn, "const ");
 	}
-	s = gretl_arg_type_name(fun->params[i].type);
+	s = gretl_arg_type_name(fp->type);
 	if (s[strlen(s) - 1] == '*') {
-	    pprintf(prn, "%s%s", s, fun->params[i].name);
+	    pprintf(prn, "%s%s", s, fp->name);
 	} else {
-	    pprintf(prn, "%s %s", s, fun->params[i].name);
+	    pprintf(prn, "%s %s", s, fp->name);
 	}
-	if (fun->params[i].type == GRETL_TYPE_BOOL) {
-	    if (!na(fun->params[i].deflt)) {
-		pprintf(prn, "[%g]", fun->params[i].deflt);
+	if (fp->type == GRETL_TYPE_BOOL) {
+	    if (!default_unset(fp) && !na(fp->deflt)) {
+		pprintf(prn, "[%g]", fp->deflt);
 	    }
-	} else if (gretl_scalar_type(fun->params[i].type)) {
-	    print_min_max_deflt(&fun->params[i], prn);
-	} else if (gretl_ref_type(fun->params[i].type) || 
-		   fun->params[i].type == GRETL_TYPE_LIST ||
-		   fun->params[i].type == GRETL_TYPE_STRING) {
+	} else if (gretl_scalar_type(fp->type)) {
+	    print_min_max_deflt(fp, prn);
+	} else if (gretl_ref_type(fp->type) || 
+		   fp->type == GRETL_TYPE_LIST ||
+		   fp->type == GRETL_TYPE_STRING) {
 	    print_opt_flags(&fun->params[i], prn);
 	}
-	print_param_description(&fun->params[i], prn);
-	if (fun->params[i].nlabels > 0) {
-	    print_param_labels(&fun->params[i], prn);
+	print_param_description(fp, prn);
+	if (fp->nlabels > 0) {
+	    print_param_labels(fp, prn);
 	}
 	if (i == fun->n_params - 1) {
 	    pputc(prn, ')');
@@ -4062,76 +4127,120 @@ static int comma_count (const char *s)
     return nc;
 }
 
-static int check_parm_min_max (fn_param *p, const char *name, int *nvals)
+static int check_parm_min_max (fn_param *p, const char *name, 
+			       int *nvals)
 {
-    if (!na(p->min) && !na(p->max)) {
-	if (p->min > p->max) {
-	    gretl_errmsg_sprintf("%s: min > max", name);
-	    return E_DATA;
-	} else if (!na(p->step) && p->step > p->max - p->min) {
-	    gretl_errmsg_sprintf("%s: step > max - min", name);
-	    return E_DATA;
-	}	    
-	*nvals = (int) p->max - (int) p->min + 1;
+    int err = 0;
+
+    if (p->type != GRETL_TYPE_DOUBLE && na(p->deflt)) {
+	gretl_errmsg_sprintf("%s: only the 'scalar' type can have a "
+			     "default value of NA", name);
+	err = E_DATA;
     }
 
-    if (!na(p->deflt)) {
+    if (!err && !na(p->min) && !na(p->max)) {
+	if (p->min > p->max) {
+	    gretl_errmsg_sprintf("%s: min > max", name);
+	    err = E_DATA;
+	} else if (!na(p->step) && p->step > p->max - p->min) {
+	    gretl_errmsg_sprintf("%s: step > max - min", name);
+	    err = E_DATA;
+	}
+	if (!err) {
+	    *nvals = (int) p->max - (int) p->min + 1;
+	}
+    }
+
+    if (!err && !na(p->deflt) && !default_unset(p)) {
 	if (!na(p->min) && p->deflt < p->min) {
 	    gretl_errmsg_sprintf("%s: default value out of bounds", name);
-	    return E_DATA;
-	} 
-	if (!na(p->max) && p->deflt > p->max) {
+	    err = E_DATA;
+	} else if (!na(p->max) && p->deflt > p->max) {
 	    gretl_errmsg_sprintf("%s: default value out of bounds", name);
-	    return E_DATA;
+	    err = E_DATA;
 	}
     } 
 
-    return 0;
+    return err;
 }
 
-static int read_min_max_deflt (char **ps, fn_param *param, const char *name,
-			       int *nvals)
+static int colon_count (const char *p)
+{
+    int n = 0;
+
+    while (*p && *p != ']') {
+	if (*p == ':') {
+	    n++;
+	}
+	p++;
+    }
+
+    return n;
+}
+
+#define VALDEBUG 1
+
+static int read_min_max_deflt (char **ps, fn_param *param, 
+			       const char *name, int *nvals)
 {
     char *p = *ps;
-    double x, y, z, s;
     int err = 0;
 
     gretl_push_c_numeric_locale();
 
+    errno = 0;
+
     if (param->type == GRETL_TYPE_BOOL) {
-	if (sscanf(p, "[%lf]", &x) == 1) {
-	    param->deflt = x;
-	} else {
+	if (sscanf(p, "[%lf]", &param->deflt) != 1) {
 	    err = E_PARSE;
 	}
     } else if (!strncmp(p, "[$xlist]", 8)) {
 	param->deflt = INT_USE_XLIST;
     } else {
-	if (sscanf(p, "[%lf:%lf:%lf:%lf]", &x, &y, &z, &s) == 4) {
-	    param->min = x;
-	    param->max = y;
-	    param->deflt = z;
-	    param->step = s;
-	} else if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
-	    param->min = x;
-	    param->max = y;
-	    param->deflt = z;
-	} else if (sscanf(p, "[%lf::%lf]", &x, &y) == 2) {
-	    param->min = x;
-	    param->deflt = y;
-	} else if (sscanf(p, "[%lf:%lf:]", &x, &y) == 2) {
-	    param->min = x;
-	    param->max = y;
-	} else if (sscanf(p, "[:%lf:%lf]", &x, &y) == 2) {
-	    param->max = x;
-	    param->deflt = y;
-	} else if (sscanf(p, "[%lf]", &x) == 1) {
-	    param->deflt = x;
-	} else {
-	    err = E_PARSE;
+	int i, len, nf = colon_count(p) + 1;
+	char *test, valstr[32];
+	char *q = p + 1;
+	double x[4] = {NADBL, NADBL, UNSET_VALUE, NADBL}; 
+
+	for (i=0; i<nf && !err; i++) {
+	    len = strcspn(q, ":]");
+	    if (len > 31) {
+		err = E_PARSE;
+	    } else if (len > 0) {
+		*valstr = '\0';
+		strncat(valstr, q, len);
+#if VALDEBUG
+		fprintf(stderr, "valstr(%d) = '%s'\n", i, valstr);
+#endif
+		if (!strcmp(valstr, "NA")) {
+		    x[i] = NADBL;
+		} else {
+		    x[i] = strtod(valstr, &test);
+		    if (*test != '\0' || errno) {
+			err = E_PARSE;
+		    }
+		}
+	    } 
+	    q += len + 1;
 	}
 
 	if (!err) {
+	    if (nf == 1) {
+		/* we take a single value with no colons as
+		   indicating a default */
+		param->deflt = x[0];
+	    } else {
+		param->min = x[0];
+		param->max = x[1];
+		param->deflt = x[2];
+		param->step = x[3];
+	    }
+
+#if VALDEBUG
+	    fprintf(stderr, "min %g, max %g, def %g, step %g\n", 
+		    param->min, param->max, param->deflt, param->step);
+#endif
+
 	    err = check_parm_min_max(param, name, nvals);
 	}
     }
@@ -4387,7 +4496,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	trash_param_info(name, param);
     }
 
-#if FNPARSE_DEBUG
+#if 1 || FNPARSE_DEBUG
     if (!err) {
 	fprintf(stderr, " param[%d] = '%s', ptype = %d\n", 
 		i, name, type);
@@ -5281,7 +5390,7 @@ static int add_scalar_arg_default (fn_param *param)
 {
     double x;
 
-    if (na(param->deflt)) {
+    if (default_unset(param)) {
 	/* should be impossible here, but... */
 	return E_DATA;
     }
@@ -6133,7 +6242,7 @@ static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
     for (i=args->argc; i<u->n_params && !err; i++) {
 	/* do we have defaults for any empty args? */
 	fp = &u->params[i];
-	if (!(fp->flags & ARG_OPTIONAL) && na(fp->deflt)) {
+	if (!(fp->flags & ARG_OPTIONAL) && no_scalar_default(fp)) {
 	    pprintf(prn, _("%s: not enough arguments\n"), u->name);
 	    err = E_ARGS;
 	}

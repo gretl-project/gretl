@@ -65,6 +65,8 @@ const char *fn_param_descrip (const ufunc *fun, int i);
 const char **fn_param_value_labels (const ufunc *fun, int i, 
 				    int *n);
 
+int fn_param_has_default (const ufunc *fun, int i);
+
 double fn_param_default (const ufunc *fun, int i);
 
 double fn_param_minval (const ufunc *fun, int i);

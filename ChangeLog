@@ -11,6 +11,8 @@ version 1.9.6, in progress
 - Defining lists: document the wildcard operator, *, and add an
   ellipsis operator (two dots).
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac
+- "omit" and "add" commands: add a --test-only option to prevent the
+  reduced or augmented model from being saved as "last model"
 - "makepkg" command: add options to produce an XML index entry and a
   file of translatable strings suitable for use with gettext
 - Add facility for inspecting the list of gretl addons, under the GUI

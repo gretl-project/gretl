@@ -363,8 +363,8 @@ update_full_data_values (const DATASET *dset)
     int i, s, t;
 
 #if SUBDEBUG
-    fprintf(stderr, "update_full_data_values: fullZ=%p, subZ=%p, dset=%p\n",
-	    (void *) fullZ, (void *) subZ, (void *) dset);
+    fprintf(stderr, "update_full_data_values: fullset->Z=%p, dset->Z=%p, dset=%p\n",
+	    (void *) fullset->Z, (void *) dset->Z, (void *) dset);
 #endif
 
     for (i=1; i<fullset->v && i<dset->v; i++) {
@@ -425,7 +425,8 @@ static int add_new_vars_to_full (DATASET *dset)
     fprintf(stderr, "add_new_vars_to_full:\n");
     fprintf(stderr, " V1 = dset->v = %d; V0 = fullset->v = %d\n",
 	    V1, V0);
-    fprintf(stderr, " Z = %p, fullZ = %p\n", (void *) Z, (void *) fullZ);
+    fprintf(stderr, " dset->Z = %p, fullset->Z = %p\n", (void *) dset->Z, 
+	    (void *) fullset->Z);
 #endif
 
     /* allocate expanded data array */
@@ -453,8 +454,8 @@ static int add_new_vars_to_full (DATASET *dset)
     }
 
 #if SUBDEBUG
-    fprintf(stderr, "After expansion, fullZ = %p (%d vars)\n", (void *) fullZ,
-	    dset->v);
+    fprintf(stderr, "After expansion, fullset->Z = %p (%d vars)\n", 
+	    (void *) fullset->Z, dset->v);
 #endif
 
     for (i=V0; i<dset->v; i++) {
@@ -573,8 +574,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     }
 
 #if FULLDEBUG || SUBDEBUG
-    fprintf(stderr, "\nrestore_full_sample: pZ=%p, *pZ=%p, dset=%p\n",
-	    (void *) pZ, (void *) *pZ, (void *) dset);
+    fprintf(stderr, "\nrestore_full_sample: dset=%p\n", (void *) dset);
 #endif
 
     /* beyond this point we are doing a non-trivial restoration
@@ -600,7 +600,7 @@ int restore_full_sample (DATASET *dset, ExecState *state)
     /* destroy sub-sampled data array */
 #if SUBDEBUG
     fprintf(stderr, "restore_full_sample: freeing sub-sampled Z at %p (v = %d)\n"
-	    "and clearing dset at %p\n", (void *) *pZ, dset->v, (void *) dset);
+	    "and clearing dset at %p\n", (void *) dset->Z, dset->v, (void *) dset);
 #endif
     free_Z(dset);
     clear_datainfo(dset, CLEAR_SUBSAMPLE);
@@ -1288,11 +1288,6 @@ restrict_sample_from_mask (char *mask, DATASET *dset, gretlopt opt)
 	return err;
     }
 
-#if SUBDEBUG
-    fprintf(stderr, "incoming *pZ at %p, new subZ is at %p\n", 
-	    (void *) *pZ, (void *) subZ); // FIXME
-#endif
-
     /* link (don't copy) varnames and descriptions, since these are
        not dependent on the series length */
     subset->varname = dset->varname;
@@ -1676,6 +1671,10 @@ static int get_sample_limit (char *s, DATASET *dset, int code)
     int ret = -1;
     int err = 0;
 
+#if SUBDEBUG
+    fprintf(stderr, "get_sample_limit: s = '%s'\n", s);
+#endif
+
     if (*s == '-' || *s == '+') {
 	/* increment/decrement form */
 	int incr = smpl_get_int(s + 1, dset, &err);
@@ -1697,6 +1696,7 @@ static int get_sample_limit (char *s, DATASET *dset, int code)
 	/* absolute form */
 	ret = get_t_from_obs_string(s, dset);
 	if (ret < 0) {
+	    gretl_error_clear();
 	    ret = smpl_get_int(s, dset, &err);
 	    /* convert to base 0 */
 	    if (!err) ret--;
@@ -1707,6 +1707,19 @@ static int get_sample_limit (char *s, DATASET *dset, int code)
     }
 
     return ret;
+}
+
+/* Catch the case where we're in a function and attempting to
+   move t1 or t2 out of the range established on entry to the
+   function: we don't want to carry forward any error message
+   that implies t was out of the full data range.
+*/
+
+static void maybe_clear_range_error (int t, DATASET *dset)
+{
+    if (t >= 0 && t < dset->n) {
+	gretl_error_clear();
+    }
 }
 
 int set_sample (const char *line, DATASET *dset)
@@ -1759,6 +1772,7 @@ int set_sample (const char *line, DATASET *dset)
 	} else {
 	    new_t1 = get_sample_limit(newstart, dset, SMPL_T1);
 	    if (new_t1 < tmin || new_t1 > tmax) {
+		maybe_clear_range_error(new_t1, dset);
 		gretl_errmsg_set(_("error in new starting obs"));
 		return 1;
 	    }
@@ -1777,6 +1791,7 @@ int set_sample (const char *line, DATASET *dset)
     if (strcmp(newstart, ";")) {
 	new_t1 = get_sample_limit(newstart, dset, SMPL_T1);
 	if (new_t1 < tmin || new_t1 > tmax) {
+	    maybe_clear_range_error(new_t1, dset);
 	    gretl_errmsg_set(_("error in new starting obs"));
 	    return 1;
 	}	
@@ -1785,12 +1800,14 @@ int set_sample (const char *line, DATASET *dset)
     if (strcmp(newstop, ";")) {
 	new_t2 = get_sample_limit(newstop, dset, SMPL_T2);
 	if (new_t2 < tmin || new_t2 > tmax) {
+	    maybe_clear_range_error(new_t2, dset);
 	    gretl_errmsg_set(_("error in new ending obs"));
 	    return 1;
 	}
     }
 
     if (new_t1 < tmin || new_t1 > new_t2) {
+	gretl_error_clear();
 	gretl_errmsg_set(_("Invalid null sample"));
 	return 1;
     }

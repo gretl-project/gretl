@@ -3020,7 +3020,8 @@ static void set_csv_delim (PRN *prn)
  * @dset: data information struct.
  * @opt: may contain %OPT_O to print covariance matrix, %OPT_S
  * to get a "simple" print (just coefficients and standard
- * errors).
+ * errors), %OPT_T (coming from a test) to have the effect of
+ * %OPT_S but printing the model ID number.
  * @prn: gretl printing struct.
  *
  * Print to @prn the estimates in @pmod plus associated statistics.
@@ -3091,7 +3092,7 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	goto close_format;
     }
 
-    if (opt & OPT_S) {
+    if (opt & (OPT_S | OPT_T)) {
 	/* --simple-print */
 	if (pmod->ci == OLS && !na(pmod->rsq) && plain_format(prn)) {
 	    pprintf(prn, "%s = %f\n\n", _("R-squared"), pmod->rsq);

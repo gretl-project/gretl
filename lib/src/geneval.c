@@ -4195,11 +4195,11 @@ static int series_get_nobs (int t1, int t2, const double *x)
     return n;
 }
 
-static int series_get_start (int n, const double *x)
+static int series_get_start (int t1, int t2, const double *x)
 {
     int t;
 
-    for (t=0; t<n; t++) {
+    for (t=t1; t<=t2; t++) {
 	if (!xna(x[t])) {
 	    break;
 	}
@@ -4208,11 +4208,11 @@ static int series_get_start (int n, const double *x)
     return t + 1;
 }
 
-static int series_get_end (int n, const double *x)
+static int series_get_end (int t1, int t2, const double *x)
 {
     int t;
 
-    for (t=n-1; t>=0; t--) {
+    for (t=t2; t>=t1; t--) {
 	if (!xna(x[t])) {
 	    break;
 	}
@@ -4321,10 +4321,10 @@ series_scalar_func (NODE *n, int f, parser *p)
 	    ret->v.xval = gretl_isconst(t1, t2, x);
 	    break;
 	case F_T1:
-	    ret->v.xval = series_get_start(p->dset->n, x);
+	    ret->v.xval = series_get_start(0, p->dset->n - 1, x);
 	    break;
 	case F_T2:
-	    ret->v.xval = series_get_end(p->dset->n, x);
+	    ret->v.xval = series_get_end(0, p->dset->n - 1, x);
 	    break;
 	default:
 	    break;
@@ -7857,6 +7857,27 @@ static void node_type_error (int ntype, int argnum, int goodt,
     p->err = E_TYPES;
 }
 
+static NODE *bool_node (int s, parser *p)
+{
+    NODE *n = aux_scalar_node(p);
+
+    if (n != NULL) {
+	n->v.xval = s;
+    }
+
+    return n;
+}
+
+static int node_is_true (NODE *n, parser *p)
+{
+    return (node_get_scalar(n, p) != 0.0);
+}
+
+static int node_is_false (NODE *n, parser *p)
+{
+    return (node_get_scalar(n, p) == 0.0);
+}
+
 #define eval_left(t)   (evalb1(t) || evalb2(t) || evalb3(t))
 #define eval_middle(t) (evalb3(t))
 #define eval_right(t)  (evalb2(t) || evalb3(t))
@@ -7908,7 +7929,17 @@ static NODE *eval (NODE *t, parser *p)
 	if (r_return(t->t)) {
 	    r = raw_node(t, 2);
 	} else {
-	    r = eval(raw_node(t, 2), p);
+	    if ((t->t == B_AND || t->t == B_OR) && l != NULL && l->t == NUM) {
+		/* logical operators: avoid redundant evaluations */
+		if (t->t == B_AND && node_is_false(l, p)) {
+		    r = bool_node(0, p);
+		} else if (t->t == B_OR && node_is_true(l, p)) {
+		    r = bool_node(1, p);
+		}
+	    }
+	    if (r == NULL && !p->err) {
+		r = eval(raw_node(t, 2), p);
+	    }
 	    if (r == NULL && !p->err) {
 		p->err = 1;
 	    }
