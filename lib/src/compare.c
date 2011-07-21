@@ -1666,10 +1666,10 @@ int reset_test (MODEL *pmod, DATASET *dset,
 
     gretl_model_init(&aux);
 
-    if (opt & OPT_C) {
+    if (opt & OPT_R) {
 	addcols = 1;
 	mode = N_("squares only");
-    } else if (opt & OPT_R) {
+    } else if (opt & OPT_C) {
 	addcols = 1;
 	mode = N_("cubes only");
     } else {
