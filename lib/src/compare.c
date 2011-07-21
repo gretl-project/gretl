@@ -681,7 +681,7 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
     return 0;
 }
 
-#define no_new_model(o) (o & (OPT_A | OPT_Y))
+#define no_new_model(o) (o & (OPT_A | OPT_Y | OPT_Q)) /* hmm */
 
 #define SMPL_DEBUG 0
 
@@ -1166,7 +1166,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	pmod->aux = AUX_ADD;
 
 	if (print_add_omit_model(pmod, opt)) {
-	    printmodel(pmod, dset, est_opt | OPT_T, prn);
+	    printmodel(pmod, dset, est_opt, prn); /* OPT_T? */
 	}
 
 	if (orig->ci == OLS && pmod->nobs == orig->nobs) {
@@ -1532,7 +1532,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}
 
 	if (print_add_omit_model(orig, opt)) {
-	    printmodel(pmod, dset, est_opt | OPT_T, prn); 
+	    printmodel(pmod, dset, est_opt, prn); /* OPT_T? */
 	}	
 
 	if (!omitlast) {

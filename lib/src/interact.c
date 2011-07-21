@@ -4465,9 +4465,12 @@ static int param_to_order (const char *s)
    "last model", or are we just treating the command as a
    stand-alone test? We save if neither of the options OPT_Y
    (--test-only) or OPT_W (--wald) were supplied.
+
+   For the meantime, for backward compatibility, we also
+   skip the save if OPT_Q is given.
 */
 
-#define omit_add_save(opt) (!(opt & OPT_Y) && !(opt & OPT_W))
+#define omit_add_save(opt) (!(opt & (OPT_Y | OPT_W | OPT_Q)))
 
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
