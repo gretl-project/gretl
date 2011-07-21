@@ -1166,7 +1166,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	pmod->aux = AUX_ADD;
 
 	if (print_add_omit_model(pmod, opt)) {
-	    printmodel(pmod, dset, est_opt, prn); /* OPT_T? */
+	    printmodel(pmod, dset, est_opt, prn);
 	}
 
 	if (orig->ci == OLS && pmod->nobs == orig->nobs) {
@@ -1532,7 +1532,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}
 
 	if (print_add_omit_model(orig, opt)) {
-	    printmodel(pmod, dset, est_opt, prn); /* OPT_T? */
+	    printmodel(pmod, dset, est_opt, prn);
 	}	
 
 	if (!omitlast) {
