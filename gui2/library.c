@@ -8250,7 +8250,8 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     }
 
 #if CMD_DEBUG
-    fprintf(stderr, "gui_exec_line: '%s'\n cmd->ci = %d\n", line, cmd->ci);
+    fprintf(stderr, "gui_exec_line: '%s'\n cmd = %p, cmd->ci = %d, param = '%s'\n", 
+	    line, (void *) cmd, cmd->ci, cmd->param);
 #endif
 
     if (err) {
@@ -8368,6 +8369,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	if ((s->flags & CONSOLE_EXEC) && try_gui_help(cmd)) {
 	    err = gui_console_help(cmd->param);
 	    if (err) {
+		/* fallback */
 		err = 0;
 		cli_help(cmd->param, cmd->opt, prn);
 	    }

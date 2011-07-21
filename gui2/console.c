@@ -594,7 +594,7 @@ command_continues (char *targ, const gchar *src, int *err)
 	    if (p - targ > 0 && !isspace(*(p - 1))) {
 		*p = ' ';
 	    } else {
-		*p = 0;
+		*p = '\0';
 	    }
 	}
     }	    

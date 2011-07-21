@@ -2534,11 +2534,14 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
 	return cmd->err;
     }
 
-    /* advance beyond the first word on the line and record our read 
-       position as rem
+    /* advance beyond the first 'word' on the line (contiguous
+       non-space characters), skip a following space if there is
+       one, and record our read position as 'rem'
     */
-    rem = line + strcspn(line, " ") + 1;
-    /* ? rem += strspn(rem, " "); */
+    rem = line + strcspn(line, " ");
+    if (*rem != '\0') {
+	rem++;
+    }
 
     if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
 	/* TeX printing commands can take a filename parameter, and

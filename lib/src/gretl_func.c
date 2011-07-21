@@ -4178,7 +4178,7 @@ static int colon_count (const char *p)
     return n;
 }
 
-#define VALDEBUG 1
+#define VALDEBUG 0
 
 static int read_min_max_deflt (char **ps, fn_param *param, 
 			       const char *name, int *nvals)
@@ -4496,7 +4496,7 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	trash_param_info(name, param);
     }
 
-#if 1 || FNPARSE_DEBUG
+#if FNPARSE_DEBUG
     if (!err) {
 	fprintf(stderr, " param[%d] = '%s', ptype = %d\n", 
 		i, name, type);
