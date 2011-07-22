@@ -438,7 +438,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 			_("p-value"), pval);
 	    }
 	} else if (statcode == GRETL_STAT_LR) {
-	    pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("Test statistic"),
+	    pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("LR test"),
 		    _("Chi-square"), cmp->dfn, cmp->LR,
 		    _("p-value"), pval); 
 	} else if (statcode == GRETL_STAT_F) {
