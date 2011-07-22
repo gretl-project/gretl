@@ -421,7 +421,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 
     if (print_test) {
 	if (statcode == GRETL_STAT_WALD_CHISQ) {
-	    pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("Test statistic"),
+	    pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("Wald test"),
 		    _("Chi-square"), cmp->dfn, testval,
 		    _("p-value"), pval);
 	    if (!na(cmp->LR)) {

@@ -13,7 +13,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.9.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-07-22 14:09-0400\n"
+"POT-Creation-Date: 2011-07-22 14:58-0400\n"
 "PO-Revision-Date: 2010-11-08 10:55+0200\n"
 "Last-Translator: Ioannis Venetis <ivenetis@upatras.gr>\n"
 "Language-Team: Greek\n"
@@ -88,9 +88,9 @@ msgid "with constant and quadratic trend"
 msgstr "με σταθερό όρο και τετραγωνική τάση"
 
 #: lib/src/adf_kpss.c:394 lib/src/adf_kpss.c:399 lib/src/adf_kpss.c:1632
-#: lib/src/adf_kpss.c:1634 lib/src/bootstrap.c:417 lib/src/compare.c:427
-#: lib/src/compare.c:433 lib/src/compare.c:439 lib/src/compare.c:444
-#: lib/src/compare.c:449 lib/src/modelprint.c:2116 lib/src/modelprint.c:2132
+#: lib/src/adf_kpss.c:1634 lib/src/bootstrap.c:417 lib/src/compare.c:426
+#: lib/src/compare.c:432 lib/src/compare.c:438 lib/src/compare.c:443
+#: lib/src/compare.c:448 lib/src/modelprint.c:2116 lib/src/modelprint.c:2132
 #: lib/src/modelprint.c:2152 lib/src/modelprint.c:2796
 #: lib/src/modelprint.c:3887 lib/src/modelprint.c:4202
 #: lib/src/modelprint.c:5069 lib/src/modelprint.c:5071 gui2/dialogs.c:5290
@@ -241,18 +241,17 @@ msgstr "(συμπεριλαμβανομένου τάσης)"
 msgid "Lag truncation parameter = %d\n"
 msgstr "Παράμετρος περικοπής υστέρησης = %d\n"
 
-#: lib/src/adf_kpss.c:1573 lib/src/compare.c:425 lib/src/compare.c:442
-#: lib/src/compare.c:446 lib/src/compare.c:910 lib/src/compare.c:1708
-#: lib/src/compare.c:1933 lib/src/compare.c:2104 lib/src/compare.c:3156
-#: lib/src/describe.c:5267 lib/src/estimate.c:2688 lib/src/estimate.c:2701
-#: lib/src/estimate.c:2709 lib/src/estimate.c:3475 lib/src/gretl_intl.c:103
-#: lib/src/gretl_model.c:3359 lib/src/gretl_panel.c:3805
-#: lib/src/gretl_restrict.c:2185 lib/src/gretl_restrict.c:2194
-#: lib/src/modelprint.c:2269 lib/src/modelprint.c:2273
-#: lib/src/modelprint.c:2278 lib/src/modelprint.c:2296
-#: lib/src/modelprint.c:2300 lib/src/modelprint.c:2305
-#: lib/src/modelprint.c:2317 lib/src/modelprint.c:2322
-#: lib/src/modelprint.c:2326 lib/src/vartest.c:657
+#: lib/src/adf_kpss.c:1573 lib/src/compare.c:441 lib/src/compare.c:445
+#: lib/src/compare.c:917 lib/src/compare.c:1715 lib/src/compare.c:1940
+#: lib/src/compare.c:2111 lib/src/compare.c:3163 lib/src/describe.c:5267
+#: lib/src/estimate.c:2688 lib/src/estimate.c:2701 lib/src/estimate.c:2709
+#: lib/src/estimate.c:3475 lib/src/gretl_intl.c:103 lib/src/gretl_model.c:3359
+#: lib/src/gretl_panel.c:3805 lib/src/gretl_restrict.c:2185
+#: lib/src/gretl_restrict.c:2194 lib/src/modelprint.c:2269
+#: lib/src/modelprint.c:2273 lib/src/modelprint.c:2278
+#: lib/src/modelprint.c:2296 lib/src/modelprint.c:2300
+#: lib/src/modelprint.c:2305 lib/src/modelprint.c:2317
+#: lib/src/modelprint.c:2322 lib/src/modelprint.c:2326 lib/src/vartest.c:657
 msgid "Test statistic"
 msgstr "Στατιστική ελέγχου"
 
@@ -443,22 +442,27 @@ msgstr ""
 "\n"
 "  Μηδενική υπόθεση: Παράμετροι παλινδρόμησης είναι μηδέν για τις μεταβλητές\n"
 
-#: lib/src/compare.c:378
+#: lib/src/compare.c:380
 msgid "omit"
 msgstr "παράλειψη"
 
-#: lib/src/compare.c:378
+#: lib/src/compare.c:380
 msgid "add"
 msgstr "προσθήκη"
 
-#: lib/src/compare.c:414
+#: lib/src/compare.c:416
 #, fuzzy, c-format
 msgid "Test on Model %d:"
 msgstr "Υπόδειγμα %d"
 
-#: lib/src/compare.c:426 lib/src/compare.c:432 lib/src/compare.c:443
-#: lib/src/compare.c:912 lib/src/compare.c:2111 lib/src/compare.c:2117
-#: lib/src/compare.c:2575 lib/src/describe.c:1550 lib/src/estimate.c:2713
+#: lib/src/compare.c:424
+#, fuzzy
+msgid "Wald test"
+msgstr "Wald (από-κοινού) έλεγχος"
+
+#: lib/src/compare.c:425 lib/src/compare.c:431 lib/src/compare.c:442
+#: lib/src/compare.c:919 lib/src/compare.c:2118 lib/src/compare.c:2124
+#: lib/src/compare.c:2582 lib/src/describe.c:1550 lib/src/estimate.c:2713
 #: lib/src/estimate.c:3477 lib/src/graphing.c:3443 lib/src/gretl_model.c:3252
 #: lib/src/gretl_model.c:3265 lib/src/gretl_model.c:3268
 #: lib/src/gretl_model.c:3293 lib/src/gretl_panel.c:3557
@@ -477,40 +481,40 @@ msgstr "Υπόδειγμα %d"
 msgid "Chi-square"
 msgstr "χ-τετράγωνο"
 
-#: lib/src/compare.c:431
+#: lib/src/compare.c:430
 #, fuzzy
 msgid "LR test"
 msgstr "_QLR έλεγχος"
 
-#: lib/src/compare.c:438 lib/src/compare.c:2577
+#: lib/src/compare.c:437 lib/src/compare.c:2584
 msgid "F-form"
 msgstr "F-τύπος"
 
-#: lib/src/compare.c:447 lib/src/gretl_restrict.c:2195
+#: lib/src/compare.c:446 lib/src/gretl_restrict.c:2195
 msgid "Robust F"
 msgstr "Αξιόπιστη F"
 
-#: lib/src/compare.c:456
+#: lib/src/compare.c:455
 #, fuzzy, c-format
 msgid "Adding variables improved %d of %d model selection statistics.\n"
 msgstr "  από τις %d στατιστικές επιλογής υποδείγματος, %d "
 
-#: lib/src/compare.c:459
+#: lib/src/compare.c:458
 #, fuzzy, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
 msgstr "  από τις %d στατιστικές επιλογής υποδείγματος, %d "
 
-#: lib/src/compare.c:858
+#: lib/src/compare.c:865
 msgid "Non-linearity test (squared terms)"
 msgstr "Μη γραμμικός έλεγχος (τετραγωνικοί όροι)"
 
-#: lib/src/compare.c:860
+#: lib/src/compare.c:867
 msgid "Non-linearity test (log terms)"
 msgstr "Μη γραμμικός έλεγχος (λογαριθμικοί όροι)"
 
-#: lib/src/compare.c:912 lib/src/compare.c:1709 lib/src/compare.c:1934
-#: lib/src/compare.c:2105 lib/src/compare.c:2110 lib/src/compare.c:2116
-#: lib/src/compare.c:2576 lib/src/compare.c:2578 lib/src/compare.c:2582
+#: lib/src/compare.c:919 lib/src/compare.c:1716 lib/src/compare.c:1941
+#: lib/src/compare.c:2112 lib/src/compare.c:2117 lib/src/compare.c:2123
+#: lib/src/compare.c:2583 lib/src/compare.c:2585 lib/src/compare.c:2589
 #: lib/src/describe.c:3911 lib/src/describe.c:3937 lib/src/describe.c:6212
 #: lib/src/describe.c:6215 lib/src/estimate.c:2690 lib/src/estimate.c:2713
 #: lib/src/estimate.c:3477 lib/src/gretl_model.c:3375
@@ -526,86 +530,86 @@ msgstr "Μη γραμμικός έλεγχος (λογαριθμικοί όρο�
 msgid "with p-value"
 msgstr "με p-τιμή"
 
-#: lib/src/compare.c:928
+#: lib/src/compare.c:935
 msgid "non-linearity"
 msgstr "μη γραμμικότητα"
 
-#: lib/src/compare.c:1261
+#: lib/src/compare.c:1268
 #, c-format
 msgid "Sequential elimination using two-sided alpha = %.2f"
 msgstr "Σειριακή εξάλειψη με χρήση δικατάληκτου άλφα = %.2f"
 
-#: lib/src/compare.c:1267
+#: lib/src/compare.c:1274
 #, c-format
 msgid " Dropping %-16s (p-value %.3f)\n"
 msgstr " Αγνόηση %-16s (p-τιμή %.3f)\n"
 
-#: lib/src/compare.c:1622 lib/src/estimate.c:2705 lib/src/gretl_model.c:3066
+#: lib/src/compare.c:1629 lib/src/estimate.c:2705 lib/src/gretl_model.c:3066
 #: lib/src/gretl_model.c:3072 lib/src/modelprint.c:750 gui2/library.c:2738
 msgid "squares only"
 msgstr "μόνο τετράγωνα"
 
-#: lib/src/compare.c:1625 lib/src/gretl_model.c:3068 gui2/library.c:2739
+#: lib/src/compare.c:1632 lib/src/gretl_model.c:3068 gui2/library.c:2739
 msgid "cubes only"
 msgstr "μόνο κύβοι"
 
-#: lib/src/compare.c:1628 gui2/library.c:2737
+#: lib/src/compare.c:1635 gui2/library.c:2737
 msgid "squares and cubes"
 msgstr "τετράγωνα και κύβοι"
 
-#: lib/src/compare.c:1701 lib/src/gretl_model.c:3021
+#: lib/src/compare.c:1708 lib/src/gretl_model.c:3021
 msgid "RESET test for specification"
 msgstr "έλεγχος RESET για την εξειδίκευση"
 
-#: lib/src/compare.c:1749
+#: lib/src/compare.c:1756
 msgid "Godfrey (1994) test for"
 msgstr "Godfrey (1994) έλεγχος για"
 
-#: lib/src/compare.c:1751
+#: lib/src/compare.c:1758
 msgid "Breusch-Godfrey test for"
 msgstr "Breusch-Godfrey έλεγχος για"
 
-#: lib/src/compare.c:1755
+#: lib/src/compare.c:1762
 msgid "autocorrelation up to order"
 msgstr "αυτοσυσχέτιση μέχρι τάξεως"
 
-#: lib/src/compare.c:1758
+#: lib/src/compare.c:1765
 msgid "first-order autocorrelation"
 msgstr "αυτοσυσχέτιση πρώτης τάξης"
 
-#: lib/src/compare.c:1883 lib/src/compare.c:2050 lib/src/graphing.c:2860
+#: lib/src/compare.c:1890 lib/src/compare.c:2057 lib/src/graphing.c:2860
 #: lib/src/graphing.c:2869 lib/src/graphing.c:2947 lib/src/graphing.c:4417
 #: lib/src/gretl_panel.c:3658 lib/src/printout.c:1194 gui2/guiprint.c:1369
 #: gui2/guiprint.c:1429 gui2/library.c:5763 plugin/leverage.c:470
 msgid "residual"
 msgstr "κατάλοιπα"
 
-#: lib/src/compare.c:1891
+#: lib/src/compare.c:1898
 msgid "lagging uhat failed"
 msgstr "αποτυχία στην υστέρηση των uhat"
 
-#: lib/src/compare.c:1937 lib/src/compare.c:2121
+#: lib/src/compare.c:1944 lib/src/compare.c:2128
 msgid "autocorrelation"
 msgstr "αυτοσυσχέτιση"
 
-#: lib/src/compare.c:2109 lib/src/gretl_panel.c:3810
+#: lib/src/compare.c:2116 lib/src/gretl_panel.c:3810
 msgid "Alternative statistic"
 msgstr "Εναλλακτική στατιστική"
 
-#: lib/src/compare.c:2174
+#: lib/src/compare.c:2181
 #, c-format
 msgid "The model already contains %s"
 msgstr "Το υπόδειγμα ήδη περιέχει την %s"
 
-#: lib/src/compare.c:2205
+#: lib/src/compare.c:2212
 msgid "dummy variable for Chow test"
 msgstr "ψευδομεταβλητή για έλεγχο Chow"
 
-#: lib/src/compare.c:2283
+#: lib/src/compare.c:2290
 msgid "Chow F-test for break"
 msgstr "F-έλεγχος διακοπής κατά Chow "
 
-#: lib/src/compare.c:2324
+#: lib/src/compare.c:2331
 msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
@@ -614,36 +618,36 @@ msgstr ""
 "σημείο,\n"
 "με 15 τοις εκατό ψαλίδισμα των άκρων του δείγματος (trimming)"
 
-#: lib/src/compare.c:2327
+#: lib/src/compare.c:2334
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
 msgstr "Το μέγιστο F(%d, %d) = %g συμβαίνει στην παρατήρηση %s"
 
-#: lib/src/compare.c:2334
+#: lib/src/compare.c:2341
 #, c-format
 msgid "Significant at the %d percent level "
 msgstr "Σημαντικό στο %d τοις εκατό επίπεδο "
 
-#: lib/src/compare.c:2335
+#: lib/src/compare.c:2342
 #, c-format
 msgid "(%d%% critical value %s %.2f)"
 msgstr "(%d%% κριτική τιμή %s %.2f)"
 
-#: lib/src/compare.c:2339
+#: lib/src/compare.c:2346
 #, c-format
 msgid "10%% critical value for q = 20 is %.2f"
 msgstr "10%% κριτική τιμή για q = 20 είναι %.2f"
 
-#: lib/src/compare.c:2342
+#: lib/src/compare.c:2349
 msgid "Not significant at the 10 percent level "
 msgstr "Μη σημαντικό στο 10 τοις εκατό επίπεδο"
 
-#: lib/src/compare.c:2343
+#: lib/src/compare.c:2350
 #, c-format
 msgid "(10%% value = %.2f)"
 msgstr "(10%% τιμή = %.2f)"
 
-#: lib/src/compare.c:2349
+#: lib/src/compare.c:2356
 msgid ""
 "This statistic does not follow the standard F distribution;\n"
 "critical values are from Stock and Watson (2003)."
@@ -651,35 +655,35 @@ msgstr ""
 "Η στατιστική αυτή δεν ακολουθεί την τυπική κατανομή F;\n"
 "οι κριτικές τιμές είναι από Stock and Watson (2003)."
 
-#: lib/src/compare.c:2565 lib/src/gretl_model.c:3000
+#: lib/src/compare.c:2572 lib/src/gretl_model.c:3000
 #, c-format
 msgid "Chow test for structural difference with respect to %s"
 msgstr "Έλεγχος Chow για διαρθρωτική μεταβολή ως προς την %s"
 
-#: lib/src/compare.c:2569 lib/src/gretl_model.c:2997
+#: lib/src/compare.c:2576 lib/src/gretl_model.c:2997
 #, c-format
 msgid "Chow test for structural break at observation %s"
 msgstr "Έλεγχος Chow για διαρθρωτική μεταβολή στην παρατήρηση %s"
 
-#: lib/src/compare.c:2631 lib/src/compare.c:2662
+#: lib/src/compare.c:2638 lib/src/compare.c:2669
 msgid "Invalid sample split for Chow test"
 msgstr "Μη-έγκυρος δειγματικός διαχωρισμός για τον έλεγχο Chow"
 
-#: lib/src/compare.c:2812
+#: lib/src/compare.c:2819
 msgid "Observation"
 msgstr "Παρατήρηση"
 
-#: lib/src/compare.c:2818
+#: lib/src/compare.c:2825
 #, no-c-format
 msgid "CUSUMSQ plot with 95% confidence band"
 msgstr "CUSUMSQ διάγραμμα με 95% εύρος εμπιστοσύνης"
 
-#: lib/src/compare.c:2826
+#: lib/src/compare.c:2833
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
 msgstr "CUSUM διάγραμμα με 95% εύρος εμπιστοσύνης"
 
-#: lib/src/compare.c:2861
+#: lib/src/compare.c:2868
 #, c-format
 msgid ""
 "\n"
@@ -690,24 +694,24 @@ msgstr ""
 "Harvey-Collier t(%d) = %g με p-τιμή %.4g\n"
 "\n"
 
-#: lib/src/compare.c:2944
+#: lib/src/compare.c:2951
 msgid "CUSUMSQ test for stability of parameters"
 msgstr "CUSUMSQ έλεγχος για την ευστάθεια των παραμέτρων"
 
-#: lib/src/compare.c:2961
+#: lib/src/compare.c:2968
 msgid "Cumulated sum of squared residuals"
 msgstr "Σωρευτικό άθροισμα τετραγώνων καταλοίπων"
 
-#: lib/src/compare.c:2965
+#: lib/src/compare.c:2972
 msgid "CUSUM test for stability of parameters"
 msgstr "CUSUM έλεγχος για την ευστάθεια των παραμέτρων"
 
-#: lib/src/compare.c:2966
+#: lib/src/compare.c:2973
 #, c-format
 msgid "mean of scaled residuals = %g\n"
 msgstr "μέσος των σταθμισμένων καταλοίπων = %g\n"
 
-#: lib/src/compare.c:2973
+#: lib/src/compare.c:2980
 #, c-format
 msgid ""
 "sigmahat                 = %g\n"
@@ -716,39 +720,39 @@ msgstr ""
 "σίγμα εκτίμηση       = %g\n"
 "\n"
 
-#: lib/src/compare.c:2980
+#: lib/src/compare.c:2987
 msgid "Cumulated sum of scaled residuals"
 msgstr "Σωρευτικό άθροισμα σταθμισμένων καταλοίπων"
 
-#: lib/src/compare.c:2986
+#: lib/src/compare.c:2993
 #, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
 msgstr "('*' δηλώνει τιμή έξω από το 95% του εύρους εμπιστοσύνης)"
 
-#: lib/src/compare.c:3153 lib/src/gretl_model.c:3054
+#: lib/src/compare.c:3160 lib/src/gretl_model.c:3054
 msgid "Test of common factor restriction"
 msgstr "Έλεγχος για περιορισμό κοινού παράγοντα"
 
-#: lib/src/compare.c:3158 lib/src/gretl_restrict.c:2201
+#: lib/src/compare.c:3165 lib/src/gretl_restrict.c:2201
 #: lib/src/gretl_restrict.c:2754 lib/src/gretl_restrict.c:2764
 #, c-format
 msgid "with p-value = %g\n"
 msgstr "με p-τιμή = %g\n"
 
-#: lib/src/compare.c:3175
+#: lib/src/compare.c:3182
 msgid "common factor restriction"
 msgstr "περιορισμός κοινού παράγοντα"
 
-#: lib/src/compare.c:3210
+#: lib/src/compare.c:3217
 msgid "This test is only relevant for pooled models\n"
 msgstr ""
 "Ο έλεγχος αυτός είναι σχετικός μόνο για σωρευτικά (pooled) υποδείγματα\n"
 
-#: lib/src/compare.c:3215
+#: lib/src/compare.c:3222
 msgid "This test requires that the model contains a constant\n"
 msgstr "Ο έλεγχος αυτός απαιτεί την ύπαρξη σταθεράς στο υπόδειγμα\n"
 
-#: lib/src/compare.c:3220
+#: lib/src/compare.c:3227
 msgid ""
 "Sorry, can't do this test on an unbalanced panel.\n"
 "You need to have the same number of observations\n"
