@@ -2967,15 +2967,15 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 			    errmsg(moderr, prn);
 			}
 		    } else if (loop_is_progressive(loop) && !(cmd->opt & OPT_Q)) {
-			err = loop_model_update(lmod, s->models[0]);
-			set_as_last_model(s->models[0], GRETL_OBJ_EQN);
+			err = loop_model_update(lmod, s->model);
+			set_as_last_model(s->model, GRETL_OBJ_EQN);
 		    } else if (model_print_deferred(cmd->opt)) {
-			swap_models(s->models[0], pmod);
+			swap_models(s->model, pmod);
 			pmod->ID = j + 1;
 			set_as_last_model(pmod, GRETL_OBJ_EQN);
 			model_count_minus();
 		    } else {
-			loop_print_save_model(s->models[0], dset, prn, s);
+			loop_print_save_model(s->model, dset, prn, s);
 		    }
 		}
 	    } else if (cmd->ci == PRINT && *cmd->param == '\0' &&
@@ -3012,7 +3012,7 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 		err = gretl_cmd_exec(s, dset);
 		if (!err && !check_gretl_errno() && block_model(cmd)) {
 		    /* NLS, etc. */
-		    loop_print_save_model(s->models[0], dset, prn, s);
+		    loop_print_save_model(s->model, dset, prn, s);
 		}
 	    }
 
@@ -3074,9 +3074,9 @@ int gretl_loop_exec (ExecState *s, DATASET *dset)
 	void *ptr = get_last_model(&type);
 	int i;
 
-	if (type == GRETL_OBJ_EQN && s->models[0] != ptr) {
-	    swap_models(s->models[0], loop->models[loop->n_models - 1]);
-	    set_as_last_model(s->models[0], GRETL_OBJ_EQN);
+	if (type == GRETL_OBJ_EQN && s->model != ptr) {
+	    swap_models(s->model, loop->models[loop->n_models - 1]);
+	    set_as_last_model(s->model, GRETL_OBJ_EQN);
 	}
 	for (i=0; i<loop->n_models; i++) {
 	    gretl_model_free(loop->models[i]);

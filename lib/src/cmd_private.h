@@ -51,7 +51,7 @@ struct ExecState_ {
     PRN *prn;
     char *line;
     char runfile[MAXLEN];
-    MODEL **models;        /* "workspace" models */
+    MODEL *model;          /* "workspace" model */
     MODEL *pmod;           /* set if new model is estimated */
     equation_system *sys;
     gretl_restriction *rset;
@@ -68,7 +68,7 @@ void gretl_exec_state_init (ExecState *s,
 			    ExecFlags flags,
 			    char *line,
 			    CMD *cmd,
-			    MODEL **models, 
+			    MODEL *model, 
 			    PRN *prn);
 
 void gretl_exec_state_set_callback (ExecState *s, EXEC_CALLBACK callback,

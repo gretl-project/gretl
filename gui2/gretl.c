@@ -219,7 +219,7 @@ char datafile[MAXLEN];
 char scriptfile[MAXLEN];
 char tryfile[MAXLEN];
 
-MODEL **models;             /* gretl models structs */
+MODEL *model;             /* gretl models struct */
 
 int data_status, orig_vars;
 float gui_scale;
@@ -566,8 +566,8 @@ int main (int argc, char **argv)
     }
 
     /* allocate memory for models */
-    models = allocate_working_models(3);
-    if (models == NULL) {
+    model = allocate_working_model();
+    if (model == NULL) {
 	noalloc();
     } 
 
@@ -723,7 +723,7 @@ int main (int argc, char **argv)
     /* clean up before exiting */
     free_session();
 
-    destroy_working_models(models, 3);
+    destroy_working_model(model);
 
     library_command_free();
     libgretl_cleanup();

@@ -110,7 +110,7 @@
 
 /* basic global program vars */
 extern DATASET *dataset;
-extern MODEL **models;
+extern MODEL *model;
 
 /* global counters */
 extern int orig_vars;

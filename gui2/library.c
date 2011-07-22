@@ -1986,10 +1986,12 @@ int do_add_omit (selector *sr)
     }
 
     if (!err) {
-	if (ci == ADD) { 
-	    err = add_test(libcmd.list, pmod, newmod, dset, opt, prn);
+	if (ci == OMIT && (opt & OPT_W)) {
+	    err = omit_test(pmod, libcmd.list, dset, opt, prn);
+	} else if (ci == ADD) { 
+	    err = add_test_full(pmod, newmod, libcmd.list, dset, opt, prn);
 	} else {
-	    err = omit_test(libcmd.list, pmod, newmod, dset, opt, prn);
+	    err = omit_test_full(pmod, newmod, libcmd.list, dset, opt, prn);
 	}
     }
 
@@ -2262,7 +2264,7 @@ void do_modtest (GtkAction *action, gpointer p)
 	} else {
 	    gretl_command_strcpy("modtest --logs");
 	}
-	clear_model(models[0]);
+	clear_model(model);
 	err = nonlinearity_test(pmod, dset, aux, OPT_S, prn);
 	if (err) {
 	    gui_errmsg(err);
@@ -4020,7 +4022,7 @@ void do_minibuf (GtkWidget *w, dialog_t *dlg)
     console_record_sample(dataset);
 
     gretl_exec_state_init(&state, CONSOLE_EXEC, cmdline, &libcmd, 
-			  models, NULL);
+			  model, NULL);
 
     err = gui_exec_line(&state, dataset);
     if (err) {
@@ -7862,7 +7864,7 @@ static int execute_script (const char *runfile, const char *buf,
     gretl_set_batch_mode(1);
 
 #if 0
-    debug_print_model_info(models[0], "Start of execute_script, models[0]");
+    debug_print_model_info(model, "Start of execute_script, model");
 #endif
 
     if (runfile != NULL) { 
@@ -7887,7 +7889,7 @@ static int execute_script (const char *runfile, const char *buf,
 
     *libcmd.word = '\0';
 
-    gretl_exec_state_init(&state, 0, line, &libcmd, models, prn);
+    gretl_exec_state_init(&state, 0, line, &libcmd, model, prn);
     set_iter_print_func(NULL);
     indent0 = gretl_if_state_record();
 

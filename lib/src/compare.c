@@ -1061,9 +1061,10 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int add_test (const int *addvars, MODEL *orig, MODEL *pmod, 
-	      DATASET *dset, gretlopt opt, PRN *prn)
+int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
+		   DATASET *dset, gretlopt opt, PRN *prn)
 {
+    MODEL amod;
     gretlopt est_opt = opt;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
@@ -1120,11 +1121,11 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
        method; use OPT_Z to suppress the elimination of perfectly
        collinear variables.
     */
-    *pmod = replicate_estimator(orig, &tmplist, dset, 
-				(est_opt | OPT_Z), prn);
+    amod = replicate_estimator(orig, &tmplist, dset, 
+			       (est_opt | OPT_Z), prn);
 
-    if (pmod->errcode) {
-	err = pmod->errcode;
+    if (amod.errcode) {
+	err = amod.errcode;
 	errmsg(err, prn);
     }
 
@@ -1134,20 +1135,26 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
 	MODEL *origmod = orig;
 	int *addlist;
 
-	if (orig->ci == OLS && pmod->nobs == orig->nobs) {
+	if (orig->ci == OLS && amod.nobs == orig->nobs) {
 	    flag = COMPARE_ADD;
 	} else if (opt & OPT_B) {
 	    /* ivreg: adding as both regressor and instrument */
 	    origmod = NULL;
 	}
 
-	addlist = gretl_list_diff_new(pmod->list, orig->list, 2);
+	addlist = gretl_list_diff_new(amod.list, orig->list, 2);
 	if (addlist != NULL) {
-	    cmp = add_or_omit_compare(origmod, pmod, flag, addlist);
+	    cmp = add_or_omit_compare(origmod, &amod, flag, addlist);
 	    gretl_make_compare(&cmp, addlist, orig, dset, opt, prn);
 	    free(addlist);
 	}
     }
+
+    if (err || pmod == NULL) {
+	clear_model(&amod);
+    } else {
+	*pmod = amod;
+    } 
 
     /* trash any extra variables generated (squares, logs) */
     dataset_drop_last_variables(dset->v - orig_nvar, dset);
@@ -1159,6 +1166,12 @@ int add_test (const int *addvars, MODEL *orig, MODEL *pmod,
     free(tmplist);
 
     return err;
+}
+
+int add_test (MODEL *pmod, const int *addvars,
+	      DATASET *dset, gretlopt opt, PRN *prn)
+{
+    return add_test_full(pmod, NULL, addvars, dset, opt, prn);
 }
 
 static int wald_omit_test (const int *list, MODEL *pmod, 
@@ -1395,8 +1408,23 @@ static int omit_options_inconsistent (gretlopt opt)
     return 0;
 }
 
+static int omit_test_precheck (MODEL *pmod, gretlopt opt)
+{
+    int err = 0;
+
+    if (pmod == NULL || pmod->list == NULL) {
+	err = E_DATA;
+    } else if (!command_ok_for_model(OMIT, 0, pmod->ci)) {
+	err = E_NOTIMP;
+    } else if (omit_options_inconsistent(opt)) {
+	err = E_BADOPT;
+    }
+
+    return err;
+}
+
 /**
- * omit_test:
+ * omit_test_full:
  * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original model.
  * @pmod: pointer to receive new model, with vars omitted.
@@ -1422,29 +1450,19 @@ static int omit_options_inconsistent (gretlopt opt)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod, 
-	       DATASET *dset, gretlopt opt, PRN *prn)
+int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
+		    DATASET *dset, gretlopt opt, PRN *prn)
 {
+    MODEL omod;
     gretlopt est_opt = opt;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *tmplist = NULL;
-    int err = 0;
+    int err;
 
-    if (orig == NULL || orig->list == NULL) {
-	err = E_DATA;
-    } else if (!command_ok_for_model(OMIT, 0, orig->ci)) {
-	err = E_NOTIMP;
-    } else if (omit_options_inconsistent(opt)) {
-	err = E_BADOPT;
-    }
-
+    err = omit_test_precheck(orig, opt);
     if (err) {
 	return err;
-    }
-
-    if (opt & OPT_W) {
-	return wald_omit_test(omitvars, orig, dset, opt, prn);
     }
 
     /* check that vars to omit have not been redefined */
@@ -1459,6 +1477,8 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}
     }
 
+    gretl_model_init(&omod);
+
     /* impose the sample range used for the original model */ 
     impose_model_smpl(orig, dset);
 
@@ -1472,20 +1492,20 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 
     if (opt & OPT_A) {
 	if (omitvars != NULL && omitvars[0] > 0) {
-	    err = auto_omit(omitvars, orig, pmod, dset, est_opt, prn);
+	    err = auto_omit(omitvars, orig, &omod, dset, est_opt, prn);
 	} else {
-	    err = auto_omit(NULL, orig, pmod, dset, est_opt, prn);
+	    err = auto_omit(NULL, orig, &omod, dset, est_opt, prn);
 	}
     } else {
-	*pmod = replicate_estimator(orig, &tmplist, dset, est_opt, prn);
-	err = pmod->errcode;
+	omod = replicate_estimator(orig, &tmplist, dset, est_opt, prn);
+	err = omod.errcode;
     }
 
     if (err) {
 	errmsg(err, prn);
     } else {
 	int flag = COMPARE_OMIT;
-	MODEL *newmod = pmod;
+	MODEL *newmod = &omod;
 	struct COMPARE cmp;
 	int *omitlist;
 
@@ -1495,7 +1515,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	    flag = COMPARE_OMIT_WALD;
 	} 
 
-	omitlist = gretl_list_diff_new(orig->list, pmod->list, 2);
+	omitlist = gretl_list_diff_new(orig->list, omod.list, 2);
 	if (omitlist != NULL) {
 	    cmp = add_or_omit_compare(orig, newmod, flag, omitlist);
 	    gretl_make_compare(&cmp, omitlist, orig, dset, opt, prn); 
@@ -1503,11 +1523,34 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod,
 	}
     }
 
+    if (err || pmod == NULL) {
+	clear_model(&omod);
+    } else {
+	*pmod = omod;
+    }
+
     /* put back into dset what was there on input */
     dset->t1 = save_t1;
     dset->t2 = save_t2;
 
     free(tmplist);
+
+    return err;
+}
+
+int omit_test (MODEL *pmod, const int *omitvars,
+	       DATASET *dset, gretlopt opt, PRN *prn)
+{
+    int err;
+
+    if (opt & OPT_W) {
+	err = omit_test_precheck(pmod, opt);
+	if (!err) {
+	    err = wald_omit_test(omitvars, pmod, dset, opt, prn);
+	}
+    } else {
+	err = omit_test_full(pmod, NULL, omitvars, dset, opt, prn);
+    }
 
     return err;
 }

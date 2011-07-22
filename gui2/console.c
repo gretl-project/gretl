@@ -90,7 +90,7 @@ static ExecState *gretl_console_init (char *cbuf)
     set_gretl_echo(1);
 
     gretl_exec_state_init(s, CONSOLE_EXEC, cbuf, 
-			  get_lib_cmd(), models, prn);
+			  get_lib_cmd(), model, prn);
 
     command_history_init();
 

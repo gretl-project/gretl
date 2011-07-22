@@ -83,7 +83,7 @@ static int object_command_setup (CMD *pcmd, char *cmdstr,
 
 static int 
 object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, 
-			  DATASET *dset, MODEL **models, 
+			  DATASET *dset, MODEL *model, 
 			  PRN *prn)
 {
     CMD mycmd;
@@ -94,24 +94,32 @@ object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr,
 	return err;
     }
 
-    clear_model(models[1]);
-    if (action == OBJ_ACTION_ADD) {
-	err = add_test(mycmd.list, pmod, models[1], 
-		       dset, mycmd.opt, prn);
+    if (mycmd.opt & (OPT_W | OPT_Q | OPT_Y)) {
+	/* not saving a model */
+	if (action == OBJ_ACTION_ADD) {
+	    err = add_test(pmod, mycmd.list, dset, mycmd.opt, prn);
+	} else {
+	    err = omit_test(pmod, mycmd.list, dset, mycmd.opt, prn);
+	}
     } else {
-	err = omit_test(mycmd.list, pmod, models[1],
-			dset, mycmd.opt, prn);
-    }
+	MODEL mymod;
+
+	if (action == OBJ_ACTION_ADD) {
+	    err = add_test_full(pmod, &mymod, mycmd.list,
+				dset, mycmd.opt, prn);
+	} else {
+	    err = omit_test_full(pmod, &mymod, mycmd.list,
+				 dset, mycmd.opt, prn);
+	}
+	if (!err) {
+	    clear_model(model);
+	    *model = mymod;
+	}
+    }	
 
     if (err) {
 	errmsg(err, prn);
-	clear_model(models[1]);
-    } else {
-	if (!(mycmd.opt & OPT_Q)) {
-	    swap_models(models[0], models[1]);
-	} 
-	clear_model(models[1]);
-    }
+    } 
 
     gretl_cmd_free(&mycmd);
 
@@ -145,7 +153,7 @@ static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr,
 
 static int saved_object_action (const char *line, 
 				DATASET *dset,
-				MODEL **models, 
+				MODEL *model, 
 				PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
@@ -198,11 +206,11 @@ static int saved_object_action (const char *line,
 	gretl_object_unref(ptr, GRETL_OBJ_ANY);
     } else if (action == OBJ_ACTION_ADD) {
 	err = object_model_add_or_omit((MODEL *) ptr, action, param, 
-				       dset, models, prn);
+				       dset, model, prn);
     } else if (action == OBJ_ACTION_OMIT) {
 	if (type == GRETL_OBJ_EQN) {
 	    err = object_model_add_or_omit((MODEL *) ptr, action, param, 
-					   dset, models, prn);
+					   dset, model, prn);
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = object_VAR_omit((GRETL_VAR *) ptr, param, 
 				  dset, prn);

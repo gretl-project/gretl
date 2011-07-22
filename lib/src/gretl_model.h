@@ -224,11 +224,11 @@ int gretl_model_allocate_storage (MODEL *pmod);
 
 MODEL **gretl_model_array_new (int n);
 
-MODEL **allocate_working_models (int n);
+MODEL *allocate_working_model (void);
 
 void gretl_model_array_destroy (MODEL **models, int n);
 
-void destroy_working_models (MODEL **models, int n);
+void destroy_working_model (MODEL *models);
 
 void gretl_model_smpl_init (MODEL *pmod, const DATASET *dset);
 

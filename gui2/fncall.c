@@ -1582,7 +1582,7 @@ static int real_GUI_function_call (call_info *cinfo, PRN *prn)
        supplied 'line' */
 
     gretl_exec_state_init(&state, SCRIPT_EXEC, NULL, get_lib_cmd(),
-			  models, prn);
+			  model, prn);
     state.line = fnline;
 
     if (cinfo->flags & MODEL_CALL) {

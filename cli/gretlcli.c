@@ -78,7 +78,7 @@ static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, 
 				DATASET *pdinfo, 
-				MODEL **models,
+				MODEL *model,
 				PRN *prn);
 
 static void usage (int err)
@@ -171,7 +171,7 @@ static void nls_init (void)
 #endif /* ENABLE_NLS */
 }
 
-static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL **models)
+static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
 {
     gretlopt clearopt = 0;
     int err = 0;
@@ -200,8 +200,7 @@ static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL **models)
 	data_status = 0;
     }
 
-    clear_model(models[0]);
-    clear_model(models[1]);
+    clear_model(model);
 
     if (clearopt & OPT_D) {
 	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
@@ -344,7 +343,7 @@ int main (int argc, char *argv[])
     char *callname = argv[0];
 #endif
     DATASET *dset = NULL;
-    MODEL **models = NULL;
+    MODEL *model = NULL;
     ExecState state;
     char *line = NULL;
     int quiet = 0;
@@ -529,14 +528,14 @@ int main (int argc, char *argv[])
 	}
     }
 
-    /* allocate memory for models */
-    models = allocate_working_models(2);
-    if (models == NULL) {
+    /* allocate memory for model */
+    model = allocate_working_model();
+    if (model == NULL) {
 	noalloc(); 
     }
 
     gretl_cmd_init(&cmd);
-    gretl_exec_state_init(&state, 0, line, &cmd, models, prn);
+    gretl_exec_state_init(&state, 0, line, &cmd, model, prn);
     set_debug_read_func(get_interactive_line);
 
     /* print list of variables */
@@ -630,7 +629,7 @@ int main (int argc, char *argv[])
 
     /* leak check -- try explicitly freeing all memory allocated */
 
-    destroy_working_models(models, 2);
+    destroy_working_model(model);
     destroy_dataset(dset);
 
     if (fb != stdin && fb != NULL) {
@@ -699,7 +698,7 @@ static int cli_try_http (const char *s, char *fname, int *http)
 }
 
 static int cli_open_append (CMD *cmd, const char *line, 
-			    DATASET *dset, MODEL **models,
+			    DATASET *dset, MODEL *model,
 			    PRN *prn)
 {
     char newfile[MAXLEN] = {0};
@@ -748,7 +747,7 @@ static int cli_open_append (CMD *cmd, const char *line,
     }
 
     if (!dbdata && cmd->ci != APPEND) {
-	cli_clear_data(cmd, dset, models);
+	cli_clear_data(cmd, dset, model);
     } 
 
     if (ftype == GRETL_CSV) {
@@ -805,7 +804,7 @@ static int exec_line (ExecState *s, DATASET *dset)
     char *line = s->line;
     CMD *cmd = s->cmd;
     PRN *prn = s->prn;
-    MODEL **models = s->models;
+    MODEL *model = s->model;
     int old_runit = runit;
     unsigned char eflag;
     char runfile[MAXLEN];
@@ -828,7 +827,7 @@ static int exec_line (ExecState *s, DATASET *dset)
     if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	k = saved_object_action(line, dset, models, prn);
+	k = saved_object_action(line, dset, model, prn);
 	if (k == 1) {
 	    return 0; /* action was OK, or ignored */
 	} else if (k == -1) {
@@ -944,7 +943,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 
     case OPEN:
     case APPEND:
-	err = cli_open_append(cmd, line, dset, models, prn);
+	err = cli_open_append(cmd, line, dset, model, prn);
 	break;
 
     case NULLDATA:
@@ -956,7 +955,7 @@ static int exec_line (ExecState *s, DATASET *dset)
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    break;
 	}
-	cli_clear_data(cmd, dset, models);
+	cli_clear_data(cmd, dset, model);
 	err = open_nulldata(dset, data_status, k, prn);
 	if (err) { 
 	    errmsg(err, prn);
@@ -1058,12 +1057,12 @@ static int exec_line (ExecState *s, DATASET *dset)
 	break;
 
     case CLEAR:
-	err = cli_clear_data(cmd, dset, models);
+	err = cli_clear_data(cmd, dset, model);
 	break;
 
     case DATAMOD:
 	if (cmd->aux == DS_CLEAR) {
-	    err = cli_clear_data(cmd, dset, models);
+	    err = cli_clear_data(cmd, dset, model);
 	    pputs(prn, _("Dataset cleared\n"));
 	    break;
 	} else if (cmd->aux == DS_RENUMBER) {

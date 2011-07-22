@@ -4374,7 +4374,7 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     }
 
     state.cmd = NULL;
-    state.models = NULL;
+    state.model = NULL;
     state.submask = NULL;
 
     vals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, &err);
@@ -4476,7 +4476,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
     CMD *cmd = s->cmd;
     char *line = s->line;
-    MODEL **models = s->models;
+    MODEL *model = s->model;
     PRN *prn = s->prn;
     char runfile[MAXLEN];
     int *listcpy = NULL;
@@ -4880,34 +4880,34 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case OLS:
     case WLS:
-	clear_model(models[0]);
-	*models[0] = lsq(cmd->list, dset, cmd->ci, cmd->opt);
-	err = print_save_model(models[0], dset, cmd->opt, prn, s);
+	clear_model(model);
+	*model = lsq(cmd->list, dset, cmd->ci, cmd->opt);
+	err = print_save_model(model, dset, cmd->opt, prn, s);
 	break;
 	
     case MPOLS:
-	clear_model(models[0]);
-	*models[0] = mp_ols(cmd->list, dset);
-	err = print_save_model(models[0], dset, cmd->opt, prn, s);
+	clear_model(model);
+	*model = mp_ols(cmd->list, dset);
+	err = print_save_model(model, dset, cmd->opt, prn, s);
 	break;
 
     case AR:
     case AR1:
     case ARMA:
     case ARCH:
-	clear_model(models[0]);
+	clear_model(model);
 	if (cmd->ci == AR) {
-	    *models[0] = ar_model(cmd->list, dset, cmd->opt, prn);
+	    *model = ar_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == AR1) {
-	    *models[0] = ar1_model(cmd->list, dset, cmd->opt, prn);
+	    *model = ar1_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARMA) {
-	    *models[0] = arma(cmd->list, cmd->auxlist, dset, 
+	    *model = arma(cmd->list, cmd->auxlist, dset, 
 			      cmd->opt, prn);
 	} else {
-	    *models[0] = arch_model(cmd->list, cmd->order, dset,
+	    *model = arch_model(cmd->list, cmd->order, dset,
 				    cmd->opt);
 	}
-	err = print_save_model(models[0], dset, cmd->opt, prn, s);
+	err = print_save_model(model, dset, cmd->opt, prn, s);
 	break;
 
     case ARBOND:
@@ -4933,48 +4933,48 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case TOBIT:
     case DURATION:
     case BIPROBIT:
-	clear_model(models[0]);
+	clear_model(model);
 	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
-	    *models[0] = logit_probit(cmd->list, dset, cmd->ci, cmd->opt, prn);
+	    *model = logit_probit(cmd->list, dset, cmd->ci, cmd->opt, prn);
 	} else if (cmd->ci == HSK) {
-	    *models[0] = hsk_model(cmd->list, dset);
+	    *model = hsk_model(cmd->list, dset);
 	} else if (cmd->ci == LOGISTIC) {
-	    *models[0] = logistic_driver(cmd->list, dset, cmd->param);
+	    *model = logistic_driver(cmd->list, dset, cmd->param);
 	} else if (cmd->ci == TOBIT) {
-	    *models[0] = tobit_driver(cmd->list, dset, cmd->opt, prn);
+	    *model = tobit_driver(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == POISSON || cmd->ci == NEGBIN) {
-	    *models[0] = count_model(cmd->list, cmd->ci, dset, cmd->opt, prn);
+	    *model = count_model(cmd->list, cmd->ci, dset, cmd->opt, prn);
 	} else if (cmd->ci == HECKIT) {
-	    *models[0] = heckit_model(cmd->list, dset, cmd->opt, prn);
+	    *model = heckit_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == IVREG) {
-	    *models[0] = ivreg(cmd->list, dset, cmd->opt);
+	    *model = ivreg(cmd->list, dset, cmd->opt);
 	} else if (cmd->ci == LAD) {
-	    *models[0] = lad(cmd->list, dset);
+	    *model = lad(cmd->list, dset);
 	} else if (cmd->ci == QUANTREG) {
-	    *models[0] = quantreg_driver(cmd->param, cmd->list, dset,
+	    *model = quantreg_driver(cmd->param, cmd->list, dset,
 					 cmd->opt, prn);
 	} else if (cmd->ci == DURATION) {
-	    *models[0] = duration_model(cmd->list, dset, cmd->opt, prn);
+	    *model = duration_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == GARCH) {
-	    *models[0] = garch(cmd->list, dset, cmd->opt, prn);
+	    *model = garch(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == PANEL) {
-	    *models[0] = panel_model(cmd->list, dset, cmd->opt, prn);
+	    *model = panel_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == ARBOND) {
-	    *models[0] = arbond_model(cmd->list, cmd->param, dset, 
+	    *model = arbond_model(cmd->list, cmd->param, dset, 
 				      cmd->opt, prn);
 	} else if (cmd->ci == DPANEL) {
-	    *models[0] = dpd_model(cmd->list, cmd->auxlist, cmd->param, 
+	    *model = dpd_model(cmd->list, cmd->auxlist, cmd->param, 
 				   dset, cmd->opt, prn);
 	} else if (cmd->ci == INTREG) {
-	    *models[0] = interval_model(cmd->list, dset, cmd->opt, prn);
+	    *model = interval_model(cmd->list, dset, cmd->opt, prn);
 	} else if (cmd->ci == BIPROBIT) {
-	    *models[0] = biprobit_model(cmd->list, dset, cmd->opt, prn);
+	    *model = biprobit_model(cmd->list, dset, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;
 	    break;
 	}
-	err = print_save_model(models[0], dset, cmd->opt, prn, s);
+	err = print_save_model(model, dset, cmd->opt, prn, s);
 	break;
 
     case GMM:
@@ -5002,35 +5002,36 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case ADD:
     case OMIT:
-	clear_model(models[1]);
-	if (cmd->ci == ADD) {
-	    err = add_test(cmd->list, models[0], models[1], 
-			   dset, cmd->opt, prn);
+	if (add_omit_save(cmd->opt)) {
+	    MODEL mymod;
+
+	    gretl_model_init(&mymod);
+	    if (cmd->ci == ADD) {
+		err = add_test_full(model, &mymod, cmd->list, 
+				    dset, cmd->opt, prn);
+	    } else {
+		err = omit_test_full(model, &mymod, cmd->list, 
+				     dset, cmd->opt, prn);
+	    }
+	    if (!err) {
+		gretlopt popt = (cmd->opt & OPT_I)? OPT_Q : OPT_NONE;
+
+		if (cmd->opt & OPT_O) {
+		    popt |= OPT_O; /* --vcv printing option */
+		}
+		clear_model(model);
+		*model = mymod;
+		print_save_model(model, dset, popt, prn, s);
+	    }
+	} else if (cmd->ci == ADD) {
+	    err = add_test(model, cmd->list, dset, cmd->opt, prn);
 	} else {
-	    err = omit_test(cmd->list, models[0], models[1],
-			    dset, cmd->opt, prn);
-	}
-	if (!err && add_omit_save(cmd->opt)) {
-	    /* for command-line use, we keep a stack of 
-	       two models, and recycle the places */
-	    swap_models(models[0], models[1]);
-	}
-	if (!(cmd->opt & OPT_W)) {
-	    /* clean up the displaced model */
-	    clear_model(models[1]);
+	    err = omit_test(model, cmd->list, dset, cmd->opt, prn);
 	}
 	if ((cmd->opt & OPT_A) && err == E_NOOMIT) {
 	    /* auto-omit was a no-op */
 	    err = 0;
-	} else if (!err && add_omit_save(cmd->opt)) {
-	    gretlopt popt = (cmd->opt & OPT_I)? OPT_Q : OPT_NONE;
-
-	    if (cmd->opt & OPT_O) {
-		/* transcribe --vcv flag */
-		popt |= OPT_O;
-	    }
-	    print_save_model(models[0], dset, popt, prn, s);
-	}
+	}	
 	break;	
 
     case COEFFSUM:
@@ -5040,17 +5041,17 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     case QLRTEST:
     case VIF:
 	if (cmd->ci == COEFFSUM) {
-	    err = gretl_sum_test(cmd->list, models[0], dset, prn);
+	    err = gretl_sum_test(cmd->list, model, dset, prn);
 	} else if (cmd->ci == CUSUM) {
-	    err = cusum_test(models[0], dset, cmd->opt, prn);
+	    err = cusum_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == RESET) {
-	    err = reset_test(models[0], dset, cmd->opt, prn);
+	    err = reset_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == CHOW) {
-	    err = chow_test_driver(line, models[0], dset, cmd->opt, prn);
+	    err = chow_test_driver(line, model, dset, cmd->opt, prn);
 	} else if (cmd->ci == QLRTEST) {
-	    err = QLR_test(models[0], dset, cmd->opt, prn);
+	    err = QLR_test(model, dset, cmd->opt, prn);
 	} else if (cmd->ci == VIF) { 
-	    err = vif_test(models[0], dset, prn);
+	    err = vif_test(model, dset, prn);
 	} 
 	break;
 
@@ -5059,7 +5060,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case HAUSMAN:
-	err = panel_hausman_test(models[0], dset, cmd->opt, prn);
+	err = panel_hausman_test(model, dset, cmd->opt, prn);
 	break;
 
     case MODTEST:
@@ -5067,7 +5068,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case LEVERAGE:
-	err = leverage_test(models[0], dset, cmd->opt, prn);
+	err = leverage_test(model, dset, cmd->opt, prn);
 	if (!err && (cmd->opt & OPT_S)) {
 	    /* FIXME gui notification? */
 	    maybe_list_vars(dset, prn);
@@ -5076,7 +5077,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case EQNPRINT:
     case TABPRINT:
-	if ((models[0])->errcode == E_NAN) {
+	if ((model)->errcode == E_NAN) {
 	    pprintf(prn, _("Couldn't format model\n"));
 	} else {
 	    char fname[FILENAME_MAX];
@@ -5085,12 +5086,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    strcpy(fname, cmd->param);
 
 	    if (cmd->opt & OPT_R) {
-		err = rtfprint(models[0], dset, fname, cmd->opt);
+		err = rtfprint(model, dset, fname, cmd->opt);
 	    } else {
 		if (cmd->ci == EQNPRINT) {
 		    opt |= OPT_E;
 		}		
-		err = texprint(models[0], dset, fname, opt);
+		err = texprint(model, dset, fname, opt);
 	    }
 	    if (!err) {
 		pprintf(prn, _("Model printed to %s\n"), fname);
@@ -5155,9 +5156,9 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	} else if (!strcmp(cmd->param, "mle") || 
 		   !strcmp(cmd->param, "nls") ||
 		   !strcmp(cmd->param, "gmm")) {
-	    clear_model(models[0]);
-	    *models[0] = nl_model(dset, cmd->opt, prn);
-	    err = print_save_model(models[0], dset, cmd->opt, prn, s);
+	    clear_model(model);
+	    *model = nl_model(dset, cmd->opt, prn);
+	    err = print_save_model(model, dset, cmd->opt, prn, s);
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = do_end_restrict(s, dset);
 	} else if (!strcmp(cmd->param, "foreign")) {
@@ -5619,7 +5620,7 @@ void gretl_exec_state_init (ExecState *s,
 			    ExecFlags flags,
 			    char *line,
 			    CMD *cmd,
-			    MODEL **models, 
+			    MODEL *model, 
 			    PRN *prn)
 {
     s->flags = flags;
@@ -5636,7 +5637,7 @@ void gretl_exec_state_init (ExecState *s,
 
     *s->runfile = '\0';
 
-    s->models = models;
+    s->model = model;
     s->prn = prn;
 
     s->pmod = NULL;
@@ -5714,7 +5715,7 @@ void gretl_exec_state_clear (ExecState *s)
 	}
     }
 
-    destroy_working_models(s->models, 2);
+    destroy_working_model(s->model);
 
     s->prev_model = NULL;
     s->prev_type = GRETL_OBJ_NULL;

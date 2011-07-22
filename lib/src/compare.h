@@ -93,11 +93,21 @@ double wald_omit_F (const int *list, MODEL *pmod);
 
 double wald_omit_chisq (const int *list, MODEL *pmod);
 
-int add_test (const int *addvars,  MODEL *orig, MODEL *pmod,
-	      DATASET *dset, gretlopt opt, PRN *prn);
+int add_test (MODEL *pmod, const int *addvars,
+	      DATASET *dset, gretlopt opt, 
+	      PRN *prn);
 
-int omit_test (const int *omitvars, MODEL *orig, MODEL *pmod, 
-	       DATASET *dset, gretlopt opt, PRN *prn);
+int add_test_full (MODEL *orig, MODEL *pmod,
+		   const int *addvars, DATASET *dset, 
+		   gretlopt opt, PRN *prn);
+
+int omit_test (MODEL *pmod, const int *omitvars, 
+	       DATASET *dset, gretlopt opt, 
+	       PRN *prn);
+
+int omit_test_full (MODEL *orig, MODEL *pmod, 
+		    const int *omitvars, DATASET *dset, 
+		    gretlopt opt, PRN *prn);
 
 int nonlinearity_test (MODEL *pmod, DATASET *dset,
 		       ModelAuxCode aux, gretlopt opt, PRN *prn); 

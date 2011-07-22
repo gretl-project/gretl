@@ -139,24 +139,32 @@ session_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, PRN *prn)
 	return err;
     }
 
-    clear_model(models[1]);
-    if (action == OBJ_ACTION_ADD) {
-	err = add_test(mycmd.list, pmod, models[1], 
-		       dataset, mycmd.opt, prn);
+    if (mycmd.opt & (OPT_W | OPT_Q | OPT_Y)) {
+	/* not saving a model */
+	if (action == OBJ_ACTION_ADD) {
+	    err = add_test(pmod, mycmd.list, dataset, mycmd.opt, prn);
+	} else {
+	    err = omit_test(pmod, mycmd.list, dataset, mycmd.opt, prn);
+	}
     } else {
-	err = omit_test(mycmd.list, pmod, models[1],
-			dataset, mycmd.opt, prn);
+	MODEL mymod;
+
+	if (action == OBJ_ACTION_ADD) {
+	    err = add_test_full(pmod, &mymod, mycmd.list,
+				dataset, mycmd.opt, prn);
+	} else {
+	    err = omit_test_full(pmod, &mymod, mycmd.list,
+				 dataset, mycmd.opt, prn);
+	}
+	if (!err) {
+	    clear_model(model);
+	    *model = mymod;
+	}
     }
 
     if (err) {
 	errmsg(err, prn);
-	clear_model(models[1]);
-    } else {
-	if (!(mycmd.opt & OPT_Q)) {
-	    swap_models(models[0], models[1]);
-	} 
-	clear_model(models[1]);
-    }
+    } 
 
     gretl_cmd_free(&mycmd);
 

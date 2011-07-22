@@ -6446,7 +6446,7 @@ static void fn_state_init (CMD *cmd, ExecState *state, int *indent0)
     cmd->linfo = NULL;
 
     state->cmd = NULL;
-    state->models = NULL;
+    state->model = NULL;
     state->submask = NULL;
 
     *indent0 = gretl_if_state_record();
@@ -6611,7 +6611,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     DEBUG_OUTPUT put_func = NULL;
     ExecState state;
     fncall *call = NULL;
-    MODEL **models = NULL;
+    MODEL *model = NULL;
     char line[MAXLINE];
     CMD cmd;
     int orig_v = 0;
@@ -6672,8 +6672,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	return err;
     }  
 
-    models = allocate_working_models(2);
-    if (models == NULL) {
+    model = allocate_working_model();
+    if (model == NULL) {
 	err = E_ALLOC;
     }
 
@@ -6684,7 +6684,7 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     if (!err) {
 	*line = '\0';
 	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
-			      models, prn);
+			      model, prn);
 	if (dset != NULL && dset->submask != NULL) {
 	    state.submask = copy_datainfo_submask(dset, &err);
 	}

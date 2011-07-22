@@ -2371,36 +2371,28 @@ MODEL **gretl_model_array_new (int n)
 }
 
 /**
- * allocate_working_models:
- * @n: number of models in array.
+ * allocate_working_model:
  * 
- * Allocates memory for an array of @n gretl #MODEL structs and 
- * initializes each model using gretl_model_init().  The models
- * are "protected" against deletion.
+ * Allocates memory for gretl #MODEL struct and initializes it.
+ * The model is "protected" against deletion.
  *
- * Returns: pointer to models array (or %NULL if allocation fails).
+ * Returns: pointer to model (or %NULL if allocation fails).
  */
 
-MODEL **allocate_working_models (int n)
+MODEL *allocate_working_model (void)
 {
-    MODEL **models;
-    int i, err = 0;
+    MODEL *model = gretl_model_new();
 
-    models = gretl_model_array_new(n);
-    if (models == NULL) {
-	return NULL;
+    if (model != NULL) {
+	int err = gretl_model_protect(model);
+
+	if (err) {
+	    gretl_model_free(model);
+	    model = NULL;
+	}
     }
 
-    for (i=0; i<n && !err; i++) {
-	err = gretl_model_protect(models[i]);
-    }
-
-    if (err) {
-	gretl_model_array_destroy(models, n);
-	models = NULL;
-    }
-
-    return models;
+    return model;
 }
 
 /**
@@ -2425,19 +2417,11 @@ void gretl_model_array_destroy (MODEL **models, int n)
     }
 }
 
-void destroy_working_models (MODEL **models, int n)
+void destroy_working_model (MODEL *model)
 {
-    int i;
-
-    if (models == NULL) {
-	return;
+    if (model != NULL) {
+	gretl_model_free_on_exit(model);
     }
-
-    for (i=0; i<n; i++) {
-	gretl_model_free_on_exit(models[i]);
-    }
-
-    free(models);
 }
 
 static void clear_ar_info (MODEL *pmod)

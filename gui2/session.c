@@ -1618,10 +1618,8 @@ static void session_clear_data (DATASET *pdinfo)
     gui_restore_sample(pdinfo);
     gui_clear_dataset();
 
-    /* clear protected models */
-    clear_model(models[0]);
-    clear_model(models[1]);
-    clear_model(models[2]);
+    /* clear protected model */
+    clear_model(model);
 
     free_command_stack(); 
     set_model_count(0);
