@@ -2011,6 +2011,7 @@ int do_add_omit (selector *sr)
 	    }
 	    gretl_object_ref(newmod, GRETL_OBJ_EQN);
 	    sprintf(title, _("gretl: model %d"), newmod->ID);
+	    printmodel(newmod, dataset, OPT_NONE, prn);
 	    view_model(prn, newmod, 78, 420, title);
 	} else {
 	    view_buffer_with_parent(vwin, prn, 78, 400, 

@@ -1746,7 +1746,6 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_AUX:
 	pputc(prn, '\n');
 	break;
-    case AUX_ADD:
     default:
 	if (pmod->ID < 0 || (opt & OPT_S)) {
 	    if (!csv) {
@@ -2967,12 +2966,14 @@ static void print_model_iter_info (const MODEL *pmod, PRN *prn)
     int iters = gretl_model_get_int(pmod, "iters");
 
     if (iters > 0) {
+	pputc(prn, '\n');
 	pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
     } else {
 	int fncount = gretl_model_get_int(pmod, "fncount");
 	int grcount = gretl_model_get_int(pmod, "grcount");
 
 	if (fncount > 0) {
+	    pputc(prn, '\n');
 	    pprintf(prn, _("Function evaluations: %d\n"), fncount);
 	    pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
 	}
@@ -4888,8 +4889,7 @@ static void logit_probit_stats (const MODEL *pmod, PRN *prn)
     const int *act_pred = NULL;
     int binary, slopes, correct = 0;
     double pc_correct;
-    double X2;
-    int df;
+    int df = 0;
 
     if ((pmod->opt & OPT_M) || gretl_model_get_int(pmod, "ordered")) {
 	/* ordered logit/probit or multinomial logit */
@@ -4899,12 +4899,8 @@ static void logit_probit_stats (const MODEL *pmod, PRN *prn)
 	slopes = !(pmod->opt & OPT_P);
     }
 
-    /* overall likelihood ratio test */
-    X2 = pmod->chisq;
-
-    if (pmod->aux == AUX_OMIT || pmod->aux == AUX_ADD || na(X2)) {
-	df = 0;
-    } else {
+    /* for overall likelihood ratio test */
+    if (!na(pmod->chisq)) {
 	df = limdep_df(pmod);
     }
 

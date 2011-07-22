@@ -37,7 +37,6 @@ typedef enum {
  * @AUX_SQ: nonlinearity test (squared terms)
  * @AUX_LOG: nonlinearity test (log terms)
  * @AUX_CHOW: Chow test
- * @AUX_ADD: test for adding variables
  * @AUX_AR: autocorrelation test 
  * @AUX_ARCH: ARCH test
  * @AUX_WHITE: heteroskedasticity (White's test) 
@@ -45,7 +44,6 @@ typedef enum {
  * @AUX_DF: Dickey-Fuller test
  * @AUX_ADF: augmented Dickey-Fuller test
  * @AUX_KPSS: KPSS unit-root test
- * @AUX_OMIT: test for omission of variables
  * @AUX_RESET: Ramsey's RESET
  * @AUX_SYS: single equation from multivariate system
  * @AUX_VAR: single equation from VAR system

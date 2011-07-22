@@ -4470,7 +4470,7 @@ static int param_to_order (const char *s)
    skip the save if OPT_Q is given.
 */
 
-#define omit_add_save(opt) (!(opt & (OPT_Y | OPT_W | OPT_Q)))
+#define add_omit_save(opt) (!(opt & (OPT_Y | OPT_W | OPT_Q)))
 
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
@@ -5010,7 +5010,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = omit_test(cmd->list, models[0], models[1],
 			    dset, cmd->opt, prn);
 	}
-	if (!err && omit_add_save(cmd->opt)) {
+	if (!err && add_omit_save(cmd->opt)) {
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
 	    swap_models(models[0], models[1]);
@@ -5022,8 +5022,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	if ((cmd->opt & OPT_A) && err == E_NOOMIT) {
 	    /* auto-omit was a no-op */
 	    err = 0;
-	} else if (!err && omit_add_save(cmd->opt)) {
-	    print_save_model(models[0], dset, OPT_Q, NULL, s);
+	} else if (!err && add_omit_save(cmd->opt)) {
+	    gretlopt popt = (cmd->opt & OPT_I)? OPT_Q : OPT_NONE;
+
+	    if (cmd->opt & OPT_O) {
+		/* transcribe --vcv flag */
+		popt |= OPT_O;
+	    }
+	    print_save_model(models[0], dset, popt, prn, s);
 	}
 	break;	
 
