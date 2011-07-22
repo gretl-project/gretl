@@ -329,6 +329,8 @@ static void print_add_omit_null (const int *list, const DATASET *dset,
     }
 }
 
+/* we're not printing a following model, either because we're quiet
+   or the modified model is not being saved */
 #define add_omit_standalone(o) (o & (OPT_Q | OPT_Y))
 
 static void
