@@ -420,9 +420,6 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     print_add_omit_null(diffvars, dset, prn);
 
     if (print_test) {
-	if (diffvars[0] > 1) {
-	    pputc(prn, '\n');
-	}
 	if (statcode == GRETL_STAT_WALD_CHISQ) {
 	    pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("Test statistic"),
 		    _("Chi-square"), cmp->dfn, testval,
@@ -651,6 +648,15 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
 
 #define SMPL_DEBUG 0
 
+/* This function is used for "add" and "omit", when we are estimating
+   an augmented or reduced version of the original model. It's also
+   used in the special case of calculation of the p-value for the
+   Durbin-Watson statistic, which requires re-estimation of the
+   original specification. In these cases we need to ensure
+   comparability, which means we have to retrieve any relevant options
+   from the original model and re-apply them.  
+*/
+
 static MODEL replicate_estimator (const MODEL *orig, int **plist,
 				  DATASET *dset, gretlopt myopt, 
 				  PRN *prn)
@@ -669,8 +675,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
     /* recreate options and auxiliary vars, if required */
 
-    transcribe_option_flags(&myopt, orig->opt,
-			    OPT_D | OPT_J | OPT_R);
+    transcribe_option_flags(&myopt, orig->opt, OPT_D | OPT_J | OPT_R);
 
     if (orig->ci == AR1) {
 	if (orig->opt & OPT_H) {
