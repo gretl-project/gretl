@@ -807,7 +807,7 @@ static int exec_line (ExecState *s, DATASET *dset)
     int old_runit = runit;
     unsigned char eflag;
     char runfile[MAXLEN];
-    int k, err = 0;
+    int err = 0;
 
     if (string_is_blank(line)) {
 	return 0;
@@ -950,20 +950,17 @@ static int exec_line (ExecState *s, DATASET *dset)
 	break;
 
     case NULLDATA:
-	k = gretl_int_from_string(cmd->param, &err);
-	if (!err && k < 2) {
+	if (cmd->order < 1) {
 	    err = 1;
-	}
-	if (err) {
 	    pputs(prn, _("Data series length count missing or invalid\n"));
-	    break;
-	}
-	cli_clear_data(cmd, dset, model);
-	err = open_nulldata(dset, data_status, k, prn);
-	if (err) { 
-	    errmsg(err, prn);
 	} else {
-	    data_status = 1;
+	    cli_clear_data(cmd, dset, model);
+	    err = open_nulldata(dset, data_status, cmd->order, prn);
+	    if (err) { 
+		errmsg(err, prn);
+	    } else {
+		data_status = 1;
+	    }
 	}
 	break;
 

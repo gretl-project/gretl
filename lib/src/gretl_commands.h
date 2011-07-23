@@ -166,8 +166,7 @@ typedef enum {
                             (c) == IVREG || (c) == WLS || \
 			    (c) == XTAB)
 
-#define TEXTSAVE_OK(c) (c == ADD || \
-                        c == ADF || \
+#define TEXTSAVE_OK(c) (c == ADF || \
                         c == CHOW || \
                         c == COEFFSUM || \
                         c == COINT || \
@@ -185,7 +184,6 @@ typedef enum {
                         c == MEANTEST || \
                         c == MPOLS || \
 			c == NORMTEST || \
-                        c == OMIT || \
                         c == PCA || \
                         c == PERGM || \
                         c == PLOT || \

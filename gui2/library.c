@@ -1996,7 +1996,14 @@ int do_add_omit (selector *sr)
     }
 
     if (err) {
-        gui_errmsg(err);
+	if (err == E_NOOMIT) {
+	    const char *msg = errmsg_get_with_default(err);
+
+	    warnbox(msg);
+	    err = 0;
+	} else {
+	    gui_errmsg(err);
+	}
         gretl_print_destroy(prn);
 	gretl_model_free(newmod);
     } else {
@@ -8213,7 +8220,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     PRN *prn = s->prn;
     char runfile[MAXLEN];
     int console_run = 0;
-    int k, err = 0;
+    int err = 0;
 
 #if CMD_DEBUG
     fprintf(stderr, "gui_exec_line: flags = %d\n", s->flags);
@@ -8339,21 +8346,24 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	} else if (get_list_by_name(cmd->extra)) {
 	    err = delete_list_by_name(cmd->extra);
 	} else {
-	    /* deleting series */
+	    /* here we're deleting series */
 	    if (dataset_locked()) {
 		/* error message handled */
 		break;
-	    }
-	    maybe_prune_delete_list(cmd->list);
-	    err = dataset_drop_listed_variables(cmd->list, dset, 
-						&k, prn);
-	    if (!err) {
-		if (k) {
-		    pputs(prn, _("Take note: variables have been renumbered"));
-		    pputc(prn, '\n');
-		    maybe_list_vars(dset, prn);
+	    } else {
+		int nv = 0;
+
+		maybe_prune_delete_list(cmd->list);
+		err = dataset_drop_listed_variables(cmd->list, dset, 
+						    &nv, prn);
+		if (!err) {
+		    if (nv > 0) {
+			pputs(prn, _("Take note: variables have been renumbered"));
+			pputc(prn, '\n');
+			maybe_list_vars(dset, prn);
+		    }
+		    maybe_clear_selector(cmd->list);
 		}
-		maybe_clear_selector(cmd->list);
 	    }
 	}
 	if (err) {
@@ -8392,20 +8402,17 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 	if (dataset_locked()) {
 	    break;
 	}
-	k = gretl_int_from_string(cmd->param, &err);
-	if (!err && k < 2) {
+	if (cmd->order < 1) {
 	    err = 1;
-	}
-	if (err) {
 	    pputs(prn, _("Data series length count missing or invalid\n"));
-	    break;
-	}
-	close_session(cmd->opt);
-	err = open_nulldata(dset, data_status, k, prn);
-	if (err) { 
-	    errmsg(err, prn);
 	} else {
-	    register_data(NULLDATA_STARTED);
+	    close_session(cmd->opt);
+	    err = open_nulldata(dset, data_status, cmd->order, prn);
+	    if (err) { 
+		errmsg(err, prn);
+	    } else {
+		register_data(NULLDATA_STARTED);
+	    }
 	}
 	break;
 

@@ -363,6 +363,7 @@ static int catch_system_alias (CMD *cmd)
                            c == COINT2 || \
                            c == KPSS || \
 			   c == LEVINLIN || \
+                           c == NULLDATA || \
                            c == VAR || \
                            c == VECM)
 
@@ -4081,7 +4082,9 @@ static void print_info (gretlopt opt, DATASET *dset, PRN *prn)
    (b) if the user has employed the "name <- command" mechanism,
    attach the supplied name to the model; 
 
-   (c) conditionally add the model to the stack in objstack.c;
+   (c) conditionally add the model to the stack in objstack.c,
+   and if this is done, signal the fact by setting the 'pmod'
+   member of @ExecState.
 
    (d) if we're called by the GUI program and the model has
    been assigned a name, activate the callback that adds the 
@@ -5022,14 +5025,14 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 		clear_model(model);
 		*model = mymod;
 		print_save_model(model, dset, popt, prn, s);
-	    }
+	    } 
 	} else if (cmd->ci == ADD) {
 	    err = add_test(model, cmd->list, dset, cmd->opt, prn);
 	} else {
 	    err = omit_test(model, cmd->list, dset, cmd->opt, prn);
 	}
-	if ((cmd->opt & OPT_A) && err == E_NOOMIT) {
-	    /* auto-omit was a no-op */
+	if (err == E_NOOMIT) {
+	    /* auto-omit was a no-op (FIXME?) */
 	    err = 0;
 	}	
 	break;	
