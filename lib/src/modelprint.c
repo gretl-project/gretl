@@ -1754,8 +1754,10 @@ static void print_model_heading (const MODEL *pmod,
 	} else if (pmod->name) {
 	    if (csv) {
 		pprintf(prn, "\"%s:\"\n", pmod->name);
-	    } else {
+	    } else if (strlen(pmod->name) > 8) {
 		pprintf(prn, "\n%s:\n", pmod->name);
+	    } else {
+		pprintf(prn, "\n%s: ", pmod->name);
 	    }
 	} else {
 	    if (csv) {
