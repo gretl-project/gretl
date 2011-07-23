@@ -19,8 +19,6 @@
 
 /* cli_object.c for gretl: handle commands relating to save objects */
 
-#include "varprint.h"
-
 static int cli_parse_object_request (const char *line, 
 				     char *objname, char **param,
 				     void **pptr, GretlObjType *type,
@@ -68,7 +66,7 @@ static int saved_object_action (const char *line,
     char *param = NULL;
     void *ptr = NULL;
     GretlObjType type;
-    int action, err = 0;
+    int action;
 
     if (*line == '!' || *line == '#') { 
 	/* shell command or comment (not an object command) */
@@ -84,15 +82,7 @@ static int saved_object_action (const char *line,
 				      &ptr, &type, prn);
 
     if (action == OBJ_ACTION_SHOW) {
-	/* in CLI mode, should we just ignore this? */
-	if (type == GRETL_OBJ_EQN) {
-	    printmodel((MODEL *) ptr, dset, OPT_NONE, prn);
-	} else if (type == GRETL_OBJ_VAR) {
-	    gretl_VAR_print((GRETL_VAR *) ptr, dset, OPT_NONE, prn);
-	} else if (type == GRETL_OBJ_SYS) {
-	    err = equation_system_estimate((equation_system *) ptr, 
-					   dset, OPT_NONE, prn);
-	} 
+	action = OBJ_ACTION_NULL; /* ignore */
     } else if (action == OBJ_ACTION_FREE) {
 	gretl_object_remove_from_stack(ptr, type);
 	pprintf(prn, _("Freed %s\n"), objname);

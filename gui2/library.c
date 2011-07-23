@@ -8032,9 +8032,7 @@ static void gui_exec_callback (ExecState *s, void *ptr,
 	if (graph_saved_to_specified_file()) {
 	    ; /* no-op: handled */
 	} else if (*s->cmd->savename != '\0') {
-	    type = (ci == BXPLOT)? GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
-	    maybe_save_graph(s->cmd, gretl_plotfile(),
-			     type, s->prn);
+	    maybe_save_graph(s->cmd->savename, ci, s->prn);
 	} else {
 	    register_graph(NULL);
 	}
@@ -8512,7 +8510,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     /* save specific output buffer? */
     if (*cmd->savename != '\0' && TEXTSAVE_OK(cmd->ci)) {
 	if (!err) {
-	    save_text_buffer(prn, cmd->savename);
+	    save_text_buffer(cmd->savename, prn);
 	} else {
 	    gretl_print_unset_save_position(prn);
 	}

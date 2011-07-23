@@ -17,16 +17,11 @@
  * 
  */
 
-/* objectsave.c for gretl: save models estimated via commands */
+/* objectsave.c for gretl: save models estimated via CLI */
 
 #include "gretl.h"
 #include "session.h"
-#include "gpt_control.h"
 #include "objectsave.h"
-
-#include "cmd_private.h"
-#include "var.h"
-#include "varprint.h"
 #include "objstack.h"
 
 static int gui_parse_object_request (const char *line, 
@@ -68,30 +63,26 @@ static int gui_parse_object_request (const char *line,
     return action;
 }
 
-/* public interface below */
-
-int maybe_save_graph (CMD *cmd, const char *fname, GretlObjType type, 
-		      PRN *prn)
+int maybe_save_graph (const char *name, int ci, PRN *prn)
 {
-    const char *name = gretl_cmd_get_savename(cmd);
-    int err = 0;
+    GretlObjType type;
+    int add, err = 0;
 
-    if (*name != '\0') {
-	int add = cli_add_graph_to_session(fname, name, type);
+    type = (ci == BXPLOT)? GRETL_OBJ_PLOT : GRETL_OBJ_GRAPH;
+    add = cli_add_graph_to_session(gretl_plotfile(), name, type);
 
-	if (add == ADD_OBJECT_FAIL) {
-	    err = 1;
-	} else if (add == ADD_OBJECT_REPLACE) {
-	    pprintf(prn, _("%s replaced\n"), name);
-	} else {
-	    pprintf(prn, _("%s saved\n"), name);
-	}
+    if (add == ADD_OBJECT_FAIL) {
+	err = 1;
+    } else if (add == ADD_OBJECT_REPLACE) {
+	pprintf(prn, _("%s replaced\n"), name);
+    } else {
+	pprintf(prn, _("%s saved\n"), name);
     }
-
+ 
     return err;
 }
 
-int save_text_buffer (PRN *prn, const char *name)
+int save_text_buffer (const char *name, PRN *prn)
 {
     int add, err = 0;
 

@@ -20,10 +20,9 @@
 #ifndef OBJECTSAVE_H
 #define OBJECTSAVE_H
 
-int maybe_save_graph (CMD *cmd, const char *fname, GretlObjType type, 
-		      PRN *prn);
+int maybe_save_graph (const char *name, int ci, PRN *prn);
 
-int save_text_buffer (PRN *prn, const char *savename);
+int save_text_buffer (const char *name, PRN *prn);
 
 int saved_object_action (const char *line, PRN *prn);
 
