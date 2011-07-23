@@ -8240,9 +8240,13 @@ int gui_exec_line (ExecState *s, DATASET *dset)
     if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	k = saved_object_action(line, prn);
-	if (k == 1) return 0;   /* action was OK */
-	if (k == -1) return 1;  /* action was faulty */
+	int action = saved_object_action(line, prn);
+
+	if (action == OBJ_ACTION_INVALID) {
+	    return 1; /* action was faulty */
+	} else if (action != OBJ_ACTION_NONE) {
+	    return 0; /* action was OK (and handled), or ignored */
+	}
     }
 
     if (gretl_compiling_loop()) { 

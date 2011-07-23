@@ -41,7 +41,7 @@ static int cli_parse_object_request (const char *line,
     err = gretl_get_object_and_type(word, pptr, type);
 
     if (err) {
-	/* no matching object (maybe OK in gui) */
+	/* no matching object (maybe OK in gui?) */
 	if (*param) {
 	    pprintf(prn, _("%s: no such object\n"), word);
 	}
@@ -71,34 +71,20 @@ static int saved_object_action (const char *line,
     int action, err = 0;
 
     if (*line == '!' || *line == '#') { 
-	/* shell command or comment */
-	return 0;
+	/* shell command or comment (not an object command) */
+	return OBJ_ACTION_NONE;
     }
 
-    /* special: display icon view window, not applicable in CLI program */
+    /* special: display icon view window, ignored in CLI program */
     if (!strncmp(line, "iconview", 8)) {
-	return 1;
+	return OBJ_ACTION_NULL;
     }
 
     action = cli_parse_object_request(line, objname, &param, 
 				      &ptr, &type, prn);
 
-    if (action == OBJ_ACTION_NONE) {
-	free(param);
-	return 0;
-    }
-
-    if (action == OBJ_ACTION_NULL) {
-	free(param);
-	return 1;
-    }
-
-    if (action == OBJ_ACTION_INVALID) {
-	free(param);
-	return -1;
-    }
-
     if (action == OBJ_ACTION_SHOW) {
+	/* in CLI mode, should we just ignore this? */
 	if (type == GRETL_OBJ_EQN) {
 	    printmodel((MODEL *) ptr, dset, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_VAR) {
@@ -108,14 +94,11 @@ static int saved_object_action (const char *line,
 					   dset, OPT_NONE, prn);
 	} 
     } else if (action == OBJ_ACTION_FREE) {
-	gretl_object_unref(ptr, GRETL_OBJ_ANY);
-    }
-
-    if (action == OBJ_ACTION_FREE && !err) {
+	gretl_object_remove_from_stack(ptr, type);
 	pprintf(prn, _("Freed %s\n"), objname);
     }
 
     free(param);
 
-    return 1;
+    return action;
 }

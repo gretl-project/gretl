@@ -340,7 +340,7 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 
 	if (pmod != NULL) {
 	    if (model_is_protected(pmod)) {
-		return; /* note */
+		return; /* note! */
 	    }
 	    rc = &pmod->refcount;
 	}
@@ -1418,7 +1418,7 @@ int parse_object_command (const char *s, char *name, char **cmd)
 
 int match_object_command (const char *s)
 {
-    if (*s == '\0' || strcmp(s, "show") == 0) {
+    if (strcmp(s, "show") == 0) {
 	return OBJ_ACTION_SHOW;
     } else if (strcmp(s, "free") == 0) {
 	return OBJ_ACTION_FREE;
@@ -1429,6 +1429,10 @@ int match_object_command (const char *s)
 
 static void saved_object_free (stacker *s)
 {
+    if (s == NULL) {
+	return;
+    }
+
     if (s->type == GRETL_OBJ_EQN) {
 	if (!model_is_protected(s->ptr)) {
 	    gretl_model_free(s->ptr);

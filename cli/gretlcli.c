@@ -73,11 +73,11 @@ int data_status;
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
 
-static int exec_line (ExecState *s, DATASET *pdinfo);
+static int exec_line (ExecState *s, DATASET *dset);
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, 
-				DATASET *pdinfo, 
+				DATASET *dset, 
 				PRN *prn);
 
 static void usage (int err)
@@ -826,12 +826,12 @@ static int exec_line (ExecState *s, DATASET *dset)
     if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	int act = saved_object_action(line, dset, prn);
+	int action = saved_object_action(line, dset, prn);
 
-	if (act == 1) {
-	    return 0; /* action was OK, or ignored */
-	} else if (act == -1) {
+	if (action == OBJ_ACTION_INVALID) {
 	    return 1; /* action was faulty */
+	} else if (action != OBJ_ACTION_NONE) {
+	    return 0; /* action was OK (and handled), or ignored */
 	}
     }
 

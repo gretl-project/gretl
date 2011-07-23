@@ -40,7 +40,7 @@ static int gui_parse_object_request (const char *line,
     /* get object name (if any) and dot param */
     parse_object_command(line, word, param);
 
-    /* if no dot param, nothing doing */
+    /* if no dot param, nothing doing, pass through */
     if (*param == NULL) {
 	return OBJ_ACTION_NONE;
     }
@@ -53,7 +53,7 @@ static int gui_parse_object_request (const char *line,
 	if (*param) {
 	    pprintf(prn, _("%s: no such object\n"), word);
 	}
-	return OBJ_ACTION_NULL;
+	return OBJ_ACTION_INVALID;
     }
 
     action = match_object_command(*param);
@@ -114,38 +114,23 @@ int saved_object_action (const char *line, PRN *prn)
     char *param = NULL;
     void *ptr = NULL;
     GretlObjType type;
-    int action, err = 0;
+    int action;
 
     if (*line == '!' || *line == '#') { 
-	/* shell command or comment */
-	return 0;
+	/* shell command or comment: NOT an object command */
+	return OBJ_ACTION_NONE;
     }
 
     /* special: display icon view window */
     if (!strncmp(line, "iconview", 8)) {
 	if (data_status) {
 	    view_session();
-	    return 1;
-	} else {
-	    return -1;
 	}
+	return OBJ_ACTION_NULL; /* handled */
     }
 
     action = gui_parse_object_request(line, objname, &param, 
 				      &ptr, &type, prn);
-
-    if (action == OBJ_ACTION_NONE) {
-	free(param);
-	return 0;
-    }
-
-    if (action == OBJ_ACTION_NULL || action == OBJ_ACTION_INVALID) {
-	free(param);
-	return -1;
-    }
-
-    /* FIXME all below here: ambiguity between session icon objects
-       and stacked, named objects */
 
     if (action == OBJ_ACTION_SHOW) {
 	if (type == GRETL_OBJ_EQN || 
@@ -156,20 +141,21 @@ int saved_object_action (const char *line, PRN *prn)
 	    display_saved_text(ptr);
 	} else if (type == GRETL_OBJ_GRAPH) {
 	    display_session_graph_by_data(ptr);
+	} else {
+	    action = OBJ_ACTION_INVALID;
 	}
     } else if (action == OBJ_ACTION_FREE) {
 	if (type == GRETL_OBJ_EQN || 
 	    type == GRETL_OBJ_VAR ||
 	    type == GRETL_OBJ_SYS) {
 	    session_model_callback(ptr, action);
-	} 
+	    pprintf(prn, _("Freed %s\n"), objname);
+	} else {
+	    action = OBJ_ACTION_INVALID;
+	}
     } 
 
-    if (action == OBJ_ACTION_FREE && !err) {
-	pprintf(prn, _("Freed %s\n"), objname);
-    }
-    
     free(param);
 
-    return 1;
+    return action;
 }
