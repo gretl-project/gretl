@@ -78,7 +78,6 @@ static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, 
 				DATASET *pdinfo, 
-				MODEL *model,
 				PRN *prn);
 
 static void usage (int err)
@@ -827,10 +826,11 @@ static int exec_line (ExecState *s, DATASET *dset)
     if (!s->in_comment && !cmd->context) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	k = saved_object_action(line, dset, model, prn);
-	if (k == 1) {
+	int act = saved_object_action(line, dset, prn);
+
+	if (act == 1) {
 	    return 0; /* action was OK, or ignored */
-	} else if (k == -1) {
+	} else if (act == -1) {
 	    return 1; /* action was faulty */
 	}
     }
@@ -917,7 +917,6 @@ static int exec_line (ExecState *s, DATASET *dset)
     switch (cmd->ci) {
 
     case DELEET:
-	k = 0;
 	if (cmd->opt & OPT_D) {
 	    err = db_delete_series_by_name(cmd->param, prn);
 	} else if (*cmd->param != '\0') {
@@ -925,16 +924,20 @@ static int exec_line (ExecState *s, DATASET *dset)
 	} else if (get_list_by_name(cmd->extra)) {
 	    err = delete_list_by_name(cmd->extra);
 	} else {
+	    int nv = 0;
+
 	    err = dataset_drop_listed_variables(cmd->list, dset, 
-						&k, prn);
+						&nv, prn);
+	    if (!err && nv > 0) {
+		pputs(prn, _("Take note: variables have been renumbered"));
+		pputc(prn, '\n');
+		maybe_list_vars(dset, prn);
+	    }
+		
 	}
 	if (err) {
 	    errmsg(err, prn);
-	} else if (k) {
-	    pputs(prn, _("Take note: variables have been renumbered"));
-	    pputc(prn, '\n');
-	    maybe_list_vars(dset, prn);
-	}
+	} 
 	break;
 
     case HELP:

@@ -61,11 +61,7 @@ enum {
     OBJ_ACTION_INVALID,
     OBJ_ACTION_NULL,
     OBJ_ACTION_SHOW,
-    OBJ_ACTION_FREE,
-    OBJ_ACTION_SHOW_STAT,
-    OBJ_ACTION_ADD,
-    OBJ_ACTION_OMIT,
-    OBJ_ACTION_IRF
+    OBJ_ACTION_FREE
 };
 
 void set_as_last_model (void *ptr, GretlObjType type);
@@ -153,7 +149,7 @@ char *gretl_object_get_name (void *p, GretlObjType type);
 
 int parse_object_command (const char *s, char *name, char **cmd);
 
-int match_object_command (const char *s, GretlObjType type);
+int match_object_command (const char *s);
 
 int last_model_test_ok (int ci, gretlopt opt, const DATASET *dset, 
 			PRN *prn);

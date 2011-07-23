@@ -1356,8 +1356,7 @@ static int namechar_spn_with_space (const char *s)
 
 int parse_object_command (const char *s, char *name, char **cmd)
 {
-    int len, start = 0;
-    int quoted = 0;
+    int len, quoted = 0;
     int err = 0;
 
     *name = 0;
@@ -1365,7 +1364,7 @@ int parse_object_command (const char *s, char *name, char **cmd)
 
     /* skip any leading whitespace */
     while (*s && isspace(*s)) {
-	s++; start++;
+	s++;
     }
 
     /* skip an opening quote */
@@ -1417,44 +1416,15 @@ int parse_object_command (const char *s, char *name, char **cmd)
     return err;
 }
 
-int match_object_command (const char *s, GretlObjType type)
+int match_object_command (const char *s)
 {
-    if (type == GRETL_OBJ_EQN) {
-	if (*s == 0) return OBJ_ACTION_SHOW; /* default */
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
-	if (strncmp(s, "add", 3) == 0) return OBJ_ACTION_ADD;
-	if (strncmp(s, "omit", 4) == 0) return OBJ_ACTION_OMIT;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE;
-	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
-    } 
-
-    if (type == GRETL_OBJ_VAR) {
-	if (*s == 0) return OBJ_ACTION_SHOW;
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
-	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_IRF;
-	if (strncmp(s, "omit", 4) == 0) return OBJ_ACTION_OMIT;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
-	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
+    if (*s == '\0' || strcmp(s, "show") == 0) {
+	return OBJ_ACTION_SHOW;
+    } else if (strcmp(s, "free") == 0) {
+	return OBJ_ACTION_FREE;
+    } else {
+	return OBJ_ACTION_INVALID;
     }
-
-    if (type == GRETL_OBJ_SYS) {
-	if (*s == 0) return OBJ_ACTION_SHOW;
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
-	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
-    } 
-
-    if (type == GRETL_OBJ_GRAPH) {
-	if (*s == 0) return OBJ_ACTION_SHOW;
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
-    } 
-
-    if (type == GRETL_OBJ_TEXT) {
-	if (*s == 0) return OBJ_ACTION_SHOW;
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
-    }  
-
-    return OBJ_ACTION_INVALID;
 }
 
 static void saved_object_free (stacker *s)

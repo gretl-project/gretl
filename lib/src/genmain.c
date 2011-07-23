@@ -815,24 +815,6 @@ int *generate_list (const char *s, DATASET *dset, int *err)
     return ret;
 }
 
-/* retrieve and print a variable from "within" a saved
-   object
-*/
-
-int print_object_var (const char *oname, const char *param,
-		      DATASET *dset, PRN *prn)
-{
-    char line[MAXLEN];
-    parser p;
-
-    sprintf(line, "%s.%s", oname, param);
-    realgen(line, &p, dset, prn, P_DISCARD);
-    gen_save_or_print(&p, prn);
-    gen_cleanup(&p);
-
-    return p.err;
-}
-
 /* create a parsed tree that can be evaluated later, 
    probably multiple times */
 

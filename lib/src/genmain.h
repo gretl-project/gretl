@@ -174,9 +174,6 @@ char *generate_string (const char *s, DATASET *dset, int *err);
 
 int *generate_list (const char *s, DATASET *dset, int *err);
 
-int print_object_var (const char *oname, const char *param,
-		      DATASET *dset, PRN *prn);
-
 int gretl_is_series (const char *name, const DATASET *dset);
 
 int gretl_reserved_word (const char *str);

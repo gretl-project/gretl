@@ -56,7 +56,7 @@ static int gui_parse_object_request (const char *line,
 	return OBJ_ACTION_NULL;
     }
 
-    action = match_object_command(*param, *type);
+    action = match_object_command(*param);
 
     if (action == OBJ_ACTION_INVALID) {
 	pprintf(prn, _("command '%s' not recognized"), *param);
@@ -108,108 +108,6 @@ int save_text_buffer (PRN *prn, const char *name)
     return err;
 }
 
-static int object_command_setup (CMD *pcmd, char *cmdstr)
-{
-    char *myline;
-    int err = 0;
-
-    myline = malloc(MAXLINE);
-
-    if (myline == NULL) {
-	err = E_ALLOC;
-    } else {
-	gretl_cmd_init(pcmd);
-	*myline = 0;
-	strncat(myline, cmdstr, MAXLINE - 1);
-	err = parse_command_line(myline, pcmd, dataset);
-	free(myline);
-    }
-
-    return err;
-}
-
-static int 
-session_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, PRN *prn)
-{
-    CMD mycmd;
-    int err;
-
-    err = object_command_setup(&mycmd, cmdstr);
-    if (err) {
-	return err;
-    }
-
-    if (mycmd.opt & (OPT_W | OPT_Q | OPT_Y)) {
-	/* not saving a model */
-	if (action == OBJ_ACTION_ADD) {
-	    err = add_test(pmod, mycmd.list, dataset, mycmd.opt, prn);
-	} else {
-	    err = omit_test(pmod, mycmd.list, dataset, mycmd.opt, prn);
-	}
-    } else {
-	MODEL mymod;
-
-	if (action == OBJ_ACTION_ADD) {
-	    err = add_test_full(pmod, &mymod, mycmd.list,
-				dataset, mycmd.opt, prn);
-	} else {
-	    err = omit_test_full(pmod, &mymod, mycmd.list,
-				 dataset, mycmd.opt, prn);
-	}
-	if (!err) {
-	    clear_model(model);
-	    *model = mymod;
-	}
-    }
-
-    if (err) {
-	errmsg(err, prn);
-    } 
-
-    gretl_cmd_free(&mycmd);
-
-    return err;
-}
-
-static int session_VAR_do_irf (GRETL_VAR *var, char *cmdstr)
-{
-    int err;
-
-    err = gretl_VAR_do_irf(var, cmdstr, dataset);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph(NULL);
-    }
-
-    return err;
-}
-
-static int session_VAR_omit (GRETL_VAR *orig, char *cmdstr, PRN *prn)
-{
-    GRETL_VAR *var;
-    CMD mycmd;
-    int err;
-
-    err = object_command_setup(&mycmd, cmdstr);
-    if (err) {
-	return err;
-    }
-
-    var = gretl_VAR_omit_test(mycmd.list, orig, dataset, 
-			      prn, &err);
-    gretl_VAR_free(var);
-
-    if (err) {
-	errmsg(err, prn);
-    }
-
-    gretl_cmd_free(&mycmd);
-
-    return err;    
-}
-
 int saved_object_action (const char *line, PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
@@ -233,7 +131,8 @@ int saved_object_action (const char *line, PRN *prn)
 	}
     }
 
-    action = gui_parse_object_request(line, objname, &param, &ptr, &type, prn);
+    action = gui_parse_object_request(line, objname, &param, 
+				      &ptr, &type, prn);
 
     if (action == OBJ_ACTION_NONE) {
 	free(param);
@@ -264,19 +163,7 @@ int saved_object_action (const char *line, PRN *prn)
 	    type == GRETL_OBJ_SYS) {
 	    session_model_callback(ptr, action);
 	} 
-    } else if (action == OBJ_ACTION_IRF) {
-	err = session_VAR_do_irf(ptr, param);
-    } else if (action == OBJ_ACTION_SHOW_STAT) {
-	err = print_object_var(objname, param, dataset, prn);
-    } else if (action == OBJ_ACTION_ADD) {
-	err = session_model_add_or_omit(ptr, action, param, prn);
-    } else if (action == OBJ_ACTION_OMIT) {
-	if (type == GRETL_OBJ_EQN) {
-	    err = session_model_add_or_omit(ptr, action, param, prn);
-	} else if (type == GRETL_OBJ_VAR) {
-	    err = session_VAR_omit(ptr, param, prn);
-	}
-    }
+    } 
 
     if (action == OBJ_ACTION_FREE && !err) {
 	pprintf(prn, _("Freed %s\n"), objname);

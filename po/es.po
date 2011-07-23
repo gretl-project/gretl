@@ -11,10 +11,10 @@ msgstr ""
 "PO-Revision-Date: 2011-06-29 15:41+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
 "X-Generator: Lokalize 1.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -4442,8 +4442,8 @@ msgstr "theta usado para quasi-demeaning (casi quitar la media)"
 #, c-format
 msgid "Excluding the constant, p-value was highest for variable %d (%s)"
 msgstr ""
-"Sin considerar la constante, el valor p más alto fue el de la variable %d "
-"(%s)"
+"Sin considerar la constante, el valor p más alto fue el de la variable %d (%"
+"s)"
 
 #: lib/src/modelprint.c:711
 #, c-format
