@@ -858,6 +858,26 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     return rep;
 }
 
+static int add_residual_to_dataset (MODEL *pmod, DATASET *dset)
+{
+    int err = 0;
+
+    if (dataset_add_series(1, dset)) {
+	err = E_ALLOC;
+    } else {
+	int t, v = dset->v - 1;
+
+	for (t=0; t<dset->n; t++) {
+	    dset->Z[v][t] = pmod->uhat[t];
+	}
+
+	strcpy(dset->varname[v], "uhat");
+	strcpy(VARLABEL(dset, v), _("residual"));
+    }
+
+    return err;
+}
+
 static void nonlin_test_header (int code, PRN *prn)
 {
     pputc(prn, '\n');
@@ -875,15 +895,11 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 			gretlopt opt, PRN *prn)
 {
     MODEL aux;
-    int t, err = 0;
+    int err;
 
-    /* grow data set to accommodate new dependent var */
-    if (dataset_add_series(1, dset)) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<dset->n; t++) {
-	dset->Z[dset->v - 1][t] = pmod->uhat[t];
+    err = add_residual_to_dataset(pmod, dset);
+    if (err) {
+	return err;
     }
 
     /* replace the dependent var */
@@ -1041,6 +1057,62 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
     return 0;
 }
 
+#if 0 /* not yet */
+
+static int LM_add_test (MODEL *pmod, DATASET *dset, int *list,
+			gretlopt opt, PRN *prn)
+{
+    MODEL aux;
+    int unum;
+    int err;
+
+    err = add_residual_to_dataset(pmod, dset);
+    if (err) {
+	return err;
+    }
+    
+    unum = dset->v - 1;
+    list[1] = unum;
+
+    aux = lsq(list, dset, OLS, OPT_A);
+    if (aux.errcode) {
+	err = aux.errcode;
+	fprintf(stderr, "auxiliary regression failed\n");
+    } else {
+	double pval, trsq = aux.rsq * aux.nobs;
+	int df = aux.ncoeff - pmod->ncoeff;
+
+	if (df <= 0) {
+	    /* couldn't add any regressors */
+	    err = E_SINGULAR;
+	    goto bailout;
+	}
+
+	pval = chisq_cdf_comp(df, trsq);
+
+	aux.aux = AUX_AUX;
+
+	if (opt & OPT_Q) {
+	    ; /* FIXME */
+	} else {
+	    printmodel(&aux, dset, opt, prn);
+	    pputc(prn, '\n');
+	}
+
+	pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);
+	pprintf(prn, "%s = P(%s(%d) > %g) = %g\n\n", 
+		_("with p-value"), _("Chi-square"), df, trsq, pval);
+    } 
+
+ bailout:
+
+    clear_model(&aux);
+
+    return err;
+}
+
+#endif
+
 /**
  * add_test:
  * @addvars: list of variables to add to original model.
@@ -1117,6 +1189,13 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     /* don't pass special opts to replicate_estimator() */
     remove_special_flags(&est_opt);
 
+#if 0 /* not yet */
+    if (opt & OPT_L) {
+	err = LM_add_test(orig, dset, tmplist, opt, prn);
+	goto add_finish;
+    }
+#endif
+
     /* Run augmented regression, matching the original estimation
        method; use OPT_Z to suppress the elimination of perfectly
        collinear variables.
@@ -1156,10 +1235,8 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	*pmod = amod;
     } 
 
-    /* trash any extra variables generated (squares, logs) */
+    /* put dset back as it was on input */
     dataset_drop_last_variables(dset->v - orig_nvar, dset);
-
-    /* put back into dset what was there on input */
     dset->t1 = save_t1;
     dset->t2 = save_t2;
 
@@ -1886,7 +1963,6 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
 {
     int smpl_t1 = dset->t1;
     int smpl_t2 = dset->t2;
-    int n = dset->n;
     int v = dset->v;
     int *addlist = NULL;
     int *testlist = NULL;
@@ -1921,17 +1997,11 @@ static int ivreg_autocorr_test (MODEL *pmod, int order,
     if (addlist == NULL) {
 	err = E_ALLOC;
     } else {
-	err = dataset_add_series(1, dset);
+	err = add_residual_to_dataset(pmod, dset);
     }
 
     if (!err) {
-	/* add uhat to data set */
-	for (t=0; t<n; t++) {
-	    dset->Z[v][t] = pmod->uhat[t];
-	}
-	strcpy(dset->varname[v], "uhat");
-	strcpy(VARLABEL(dset, v), _("residual"));
-	/* then lags of same */
+	/* add lags of residual */
 	for (i=1; i<=order && !err; i++) {
 	    int lnum;
 
