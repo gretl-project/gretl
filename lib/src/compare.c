@@ -50,7 +50,8 @@ enum {
     COMPARE_ADD,
     COMPARE_OMIT,
     COMPARE_OMIT_WALD,
-    COMPARE_ADD_WALD
+    COMPARE_ADD_WALD,
+    COMPARE_ADD_LM
 };
 
 struct COMPARE {
@@ -356,8 +357,12 @@ finalize_compare (const struct COMPARE *cmp, const int *diffvars,
 	/* --quiet */
 	verbosity = 1;
     }
-    
-    if (!na(cmp->wald)) {
+
+    if (!na(cmp->trsq)) {
+	statcode = GRETL_STAT_LM;
+	testval = cmp->trsq;
+	pval = chisq_cdf_comp(cmp->dfn, testval);
+    } else if (!na(cmp->wald)) {
 	statcode = GRETL_STAT_WALD_CHISQ;
 	testval = cmp->wald;
 	pval = chisq_cdf_comp(cmp->dfn, testval);
@@ -445,7 +450,11 @@ finalize_compare (const struct COMPARE *cmp, const int *diffvars,
 		    (cmp->robust)? _("Robust F") : "F",
 		    cmp->dfn, cmp->dfd, cmp->F,
 		    _("p-value"), pval); 
-	}
+	} else if (statcode == GRETL_STAT_LM) {
+	    pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("LM test"),
+		    _("Chi-square"), cmp->dfn, cmp->trsq,
+		    _("p-value"), pval); 
+	}	    
     }
 
     if (print_score) {
@@ -486,7 +495,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	umod = pmodA;
 	rmod = pmodB;
     } else {
-	/* the unrestricted model is the new one, 'B' */
+	/* add: the unrestricted model is the new one, 'B' */
 	umod = pmodB;
 	rmod = pmodA;
     } 
@@ -496,13 +505,17 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	   instruments, not just different regressors
 	*/
 	cmp.model_id = -1;
+    } else if (opt & OPT_L) {
+	cmp.model_id = -1;
     } else if (umod != NULL && rmod != NULL) {	
 	cmp.dfn = umod->ncoeff - rmod->ncoeff;
     } 
 
     cmp.dfd = umod->dfd;
 
-    if (flag == COMPARE_OMIT_WALD || flag == COMPARE_ADD_WALD) {
+    if (flag == COMPARE_ADD_LM) {
+	cmp.trsq = pmodB->nobs * pmodB->rsq;
+    } else if (flag == COMPARE_OMIT_WALD || flag == COMPARE_ADD_WALD) {
 	cmp.err = wald_test(testvars, umod, &cmp.wald, &cmp.F);
     } else if (pmodA != NULL && (pmodA->opt & OPT_R)) {
 	cmp.F = wald_omit_F(testvars, umod);
@@ -515,7 +528,8 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.err = wald_test(testvars, umod, &cmp.wald, NULL);
     }
 
-    if (pmodA != NULL && pmodB != NULL && flag != COMPARE_ADD_WALD) {
+    if (pmodA != NULL && pmodB != NULL && 
+	flag != COMPARE_ADD_WALD && flag != COMPARE_ADD_LM) {
 	cmp.score = 0;
 	for (i=0; i<C_MAX; i++) { 
 	    if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
@@ -527,7 +541,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	}
     }
 
-    if (na(cmp.LR) && na(cmp.F) && 
+    if (na(cmp.LR) && na(cmp.F) && na(cmp.trsq) &&
 	umod != NULL && rmod != NULL && 
 	!na(umod->lnL) && !na(rmod->lnL) &&
 	umod->lnL > rmod->lnL) {
@@ -1055,61 +1069,42 @@ static int add_vars_missing (const MODEL *pmod, const int *list,
     return 0;
 }
 
-#if 0 /* not yet */
-
-static int LM_add_test (MODEL *pmod, DATASET *dset, int *list,
-			gretlopt opt, PRN *prn)
+static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
+			  gretlopt opt, PRN *prn)
 {
     MODEL aux;
-    int unum;
-    int err;
+    int unum, err;
 
     err = add_residual_to_dataset(pmod, dset);
     if (err) {
-	return err;
+	gretl_model_init(&aux);
+	aux.errcode = err;
+	return aux;
     }
     
     unum = dset->v - 1;
     list[1] = unum;
 
     aux = lsq(list, dset, OLS, OPT_A);
+
     if (aux.errcode) {
-	err = aux.errcode;
 	fprintf(stderr, "auxiliary regression failed\n");
     } else {
-	double pval, trsq = aux.rsq * aux.nobs;
 	int df = aux.ncoeff - pmod->ncoeff;
 
 	if (df <= 0) {
 	    /* couldn't add any regressors */
-	    err = E_SINGULAR;
-	    goto bailout;
-	}
-
-	pval = chisq_cdf_comp(df, trsq);
-
-	aux.aux = AUX_AUX;
-
-	if (opt & OPT_Q) {
-	    ; /* FIXME */
+	    aux.errcode = E_SINGULAR;
 	} else {
-	    printmodel(&aux, dset, opt, prn);
-	    pputc(prn, '\n');
+	    if (!(opt & OPT_Q)) {
+		aux.aux = AUX_ADD;
+		printmodel(&aux, dset, OPT_S, prn);
+	    }
 	}
-
-	pprintf(prn, "  %s: TR^2 = %g,\n  ", _("Test statistic"), trsq);
-	pprintf(prn, "%s = P(%s(%d) > %g) = %g\n\n", 
-		_("with p-value"), _("Chi-square"), df, trsq, pval);
     } 
 
- bailout:
-
-    clear_model(&aux);
-
-    return err;
+    return aux;
 }
-
-#endif
 
 /**
  * add_test:
@@ -1150,6 +1145,11 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	return E_NOTIMP;
     }
 
+    if ((opt & OPT_L) && pmod != NULL) {
+	/* --lm incompatible with full variant of add test */
+	return E_BADOPT;
+    }
+
     if (exact_fit_check(orig, prn)) {
 	return 0;
     }
@@ -1187,19 +1187,16 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     /* don't pass special opts to replicate_estimator() */
     remove_special_flags(&est_opt);
 
-#if 0 /* not yet */
     if (opt & OPT_L) {
-	err = LM_add_test(orig, dset, tmplist, opt, prn);
-	goto add_finish;
+	amod = LM_add_test(orig, dset, tmplist, opt, prn);
+    } else {
+	/* Run augmented regression, matching the original estimation
+	   method; use OPT_Z to suppress the elimination of perfectly
+	   collinear variables.
+	*/
+	amod = replicate_estimator(orig, &tmplist, dset, 
+				   (est_opt | OPT_Z), prn);
     }
-#endif
-
-    /* Run augmented regression, matching the original estimation
-       method; use OPT_Z to suppress the elimination of perfectly
-       collinear variables.
-    */
-    amod = replicate_estimator(orig, &tmplist, dset, 
-			       (est_opt | OPT_Z), prn);
 
     if (amod.errcode) {
 	err = amod.errcode;
@@ -1209,8 +1206,10 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     if (!err) {
 	int flag = COMPARE_ADD_WALD;
 	int *addlist;
-
-	if (orig->ci == OLS && amod.nobs == orig->nobs) {
+	
+	if (opt & OPT_L) {
+	    flag = COMPARE_ADD_LM;
+	} else if (orig->ci == OLS && amod.nobs == orig->nobs) {
 	    flag = COMPARE_ADD;
 	} 
 

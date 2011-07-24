@@ -744,6 +744,8 @@ static void print_aux_string (const MODEL *pmod, PRN *prn)
     } else if (aux == AUX_LOG) {
 	pputs(prn, tr(N_("Auxiliary regression for non-linearity test "
 			 "(log terms)")));
+    } else if (aux == AUX_ADD) {
+	pputs(prn, tr(N_("Auxiliary regression for added variables")));
     } else if (aux == AUX_WHITE) {
 	pputs(prn, tr(N_("White's test for heteroskedasticity")));
 	if (pmod->opt & OPT_X) {
@@ -1710,6 +1712,7 @@ static void print_model_heading (const MODEL *pmod,
     switch (pmod->aux) {
     case AUX_SQ:
     case AUX_LOG:
+    case AUX_ADD:
     case AUX_WHITE:
     case AUX_BP:
     case AUX_HET_1:	
@@ -1850,7 +1853,7 @@ static void print_model_heading (const MODEL *pmod,
     if (csv) pputc(prn, '"');
 
     /* special formulations for dependent variable in various cases */
-    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
+    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || pmod->aux == AUX_ADD) {
 	pprintf(prn, "%s: %s", I_("Dependent variable"),
 		(tex)? "$\\hat{u}$" : "uhat");
     } else if (pmod->aux == AUX_WHITE || pmod->aux == AUX_HET_1) {
@@ -3086,7 +3089,8 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
 	goto close_format;
     } else if (pmod->aux == AUX_SQ || 
 	       pmod->aux == AUX_LOG || 
-	       pmod->aux == AUX_AR) {
+	       pmod->aux == AUX_AR ||
+	       pmod->aux == AUX_ADD) {
 	rsqline(pmod, prn);
 	goto close_format;
     } else if (pmod->aux == AUX_COMFAC) {

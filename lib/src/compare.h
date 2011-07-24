@@ -37,6 +37,7 @@ typedef enum {
  * @AUX_SQ: nonlinearity test (squared terms)
  * @AUX_LOG: nonlinearity test (log terms)
  * @AUX_CHOW: Chow test
+ * @AUX_ADD: LM test regression for added variables
  * @AUX_AR: autocorrelation test 
  * @AUX_ARCH: ARCH test
  * @AUX_WHITE: heteroskedasticity (White's test) 
@@ -86,7 +87,7 @@ typedef enum {
     AUX_BP,
     AUX_AUX,
     AUX_COMFAC,
-    AUX_BIPROB
+    AUX_BIPROB,
 } ModelAuxCode;
 
 double wald_omit_F (const int *list, MODEL *pmod);
