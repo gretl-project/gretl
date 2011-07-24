@@ -334,9 +334,9 @@ static void print_add_omit_null (const int *list, const DATASET *dset,
 #define add_omit_standalone(o) (o & (OPT_Q | OPT_Y))
 
 static void
-gretl_make_compare (const struct COMPARE *cmp, const int *diffvars, 
-		    MODEL *pmod, const DATASET *dset, 
-		    gretlopt opt, PRN *prn)
+finalize_compare (const struct COMPARE *cmp, const int *diffvars, 
+		  MODEL *pmod, const DATASET *dset, 
+		  gretlopt opt, PRN *prn)
 {
     int statcode = 0;
     double testval = NADBL;
@@ -373,7 +373,6 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 
     if (!na(testval)) {
 	/* first record the test result, if valid */
-	ModelTest *test = NULL;
 	const char *tstr;
 	int code;
 
@@ -384,19 +383,19 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 
 	if (opt & OPT_S) {
 	    /* try attaching the test to the model */
-	    test = model_test_new(code);
-	}
-
-	if (test != NULL) {
-	    model_test_set_teststat(test, statcode);
-	    model_test_set_dfn(test, cmp->dfn);
-	    if (statcode == GRETL_STAT_F) {
-		model_test_set_dfd(test, cmp->dfd);
+	    ModelTest *test = model_test_new(code);
+	    
+	    if (test != NULL) {
+		model_test_set_teststat(test, statcode);
+		model_test_set_dfn(test, cmp->dfn);
+		if (statcode == GRETL_STAT_F) {
+		    model_test_set_dfd(test, cmp->dfd);
+		}
+		model_test_set_value(test, testval);
+		model_test_set_pvalue(test, pval);
+		add_diffvars_to_test(test, diffvars, dset);
+		maybe_add_test_to_model(pmod, test);
 	    }
-	    model_test_set_value(test, testval);
-	    model_test_set_pvalue(test, pval);
-	    add_diffvars_to_test(test, diffvars, dset);
-	    maybe_add_test_to_model(pmod, test);
 	}
     }
 
@@ -465,45 +464,40 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     }
 }
 
-static struct COMPARE 
-add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
-		     const int *testvars)
+static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
+				const int *testvars, const DATASET *dset,
+				int ci, gretlopt opt, PRN *prn)
 {
     struct COMPARE cmp;
     MODEL *umod, *rmod;
     int i;	
 
     cmp.err = 0;
-
-    if (flag == COMPARE_ADD || flag == COMPARE_ADD_WALD) {
-	umod = pmodB; /* the unrestricted model is 'B' */
-	rmod = pmodA;
-	cmp.ci = ADD;
-    } else {
-	umod = pmodA; /* the unrestricted model is 'A' */
-	rmod = pmodB;
-	cmp.ci = OMIT;
-    }
-
+    cmp.ci = ci;
     cmp.F = cmp.wald = cmp.trsq = cmp.LR = NADBL;
     cmp.score = -1;
     cmp.robust = 0;
     cmp.dfn = testvars[0];
+    cmp.model_ci = pmodA->ci;
+    cmp.model_id = pmodA->ID; 
 
-    if (pmodA != NULL) {
-	/* may be NULL for Wald add test */
-	cmp.model_id = pmodA->ID;
-	cmp.model_ci = pmodA->ci;
+    if (ci == OMIT) {
+	/* the unrestricted model is the original one, 'A' */
+	umod = pmodA;
+	rmod = pmodB;
     } else {
-	cmp.model_id = -1;
-	cmp.model_ci = pmodB->ci;
-    }
+	/* the unrestricted model is the new one, 'B' */
+	umod = pmodB;
+	rmod = pmodA;
+    } 
 
-    if (pmodB != NULL) {
-	/* may be NULL for Wald omit test */
-	if (pmodA != NULL) {
-	    cmp.dfn = umod->ncoeff - rmod->ncoeff;
-	}
+    if (opt & (OPT_B | OPT_T)) {
+	/* ivreg specials: A and B have different
+	   instruments, not just different regressors
+	*/
+	cmp.model_id = -1;
+    } else if (umod != NULL && rmod != NULL) {	
+	cmp.dfn = umod->ncoeff - rmod->ncoeff;
     } 
 
     cmp.dfd = umod->dfd;
@@ -542,7 +536,11 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.LR = 2.0 * (umod->lnL - rmod->lnL);
     }
 
-    return cmp;
+    if (!cmp.err) {
+	finalize_compare(&cmp, testvars, pmodA, dset, opt, prn);
+    }
+
+    return cmp.err;
 }
 
 static int get_extra_var (const MODEL *pmod)
@@ -1210,21 +1208,16 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 
     if (!err) {
 	int flag = COMPARE_ADD_WALD;
-	struct COMPARE cmp;
-	MODEL *origmod = orig;
 	int *addlist;
 
 	if (orig->ci == OLS && amod.nobs == orig->nobs) {
 	    flag = COMPARE_ADD;
-	} else if (opt & OPT_B) {
-	    /* ivreg: adding as both regressor and instrument */
-	    origmod = NULL;
-	}
+	} 
 
 	addlist = gretl_list_diff_new(amod.list, orig->list, 2);
 	if (addlist != NULL) {
-	    cmp = add_or_omit_compare(origmod, &amod, flag, addlist);
-	    gretl_make_compare(&cmp, addlist, orig, dset, opt, prn);
+	    err = add_or_omit_compare(orig, &amod, flag, addlist,
+				      dset, ADD, opt, prn);
 	    free(addlist);
 	}
     }
@@ -1255,7 +1248,6 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 			   const DATASET *dset, gretlopt opt,
 			   PRN *prn)
 {
-    struct COMPARE cmp;
     int *test = NULL;
     int err = 0;
 
@@ -1270,18 +1262,11 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 	test = gretl_list_omit(pmod->list, list, 2, &err);
     }
 
-    if (err) {
-	return err;
+    if (!err) {
+	free(test);
+	err = add_or_omit_compare(pmod, NULL, COMPARE_OMIT_WALD,
+				  list, dset, OMIT, opt, prn);
     }
-
-    free(test);
-
-    cmp = add_or_omit_compare(pmod, NULL, COMPARE_OMIT_WALD, list);
-    if (cmp.err) {
-	return cmp.err;
-    }
-
-    gretl_make_compare(&cmp, list, pmod, dset, opt, prn);
 
     return err;
 }
@@ -1583,7 +1568,6 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     } else {
 	int flag = COMPARE_OMIT;
 	MODEL *newmod = &omod;
-	struct COMPARE cmp;
 	int *omitlist;
 
 	if (opt & OPT_B) {
@@ -1594,8 +1578,8 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 
 	omitlist = gretl_list_diff_new(orig->list, omod.list, 2);
 	if (omitlist != NULL) {
-	    cmp = add_or_omit_compare(orig, newmod, flag, omitlist);
-	    gretl_make_compare(&cmp, omitlist, orig, dset, opt, prn); 
+	    err = add_or_omit_compare(orig, newmod, flag, omitlist,
+				      dset, OMIT, opt, prn);
 	    free(omitlist);
 	}
     }
