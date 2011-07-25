@@ -1954,9 +1954,9 @@ int do_add_omit (selector *sr)
     if (ci == OMIT && (opt & OPT_W)) {
 	; /* Wald test */
     } else {
-	gretlopt opt = (ci == ADD)? OPT_F : OPT_NONE;
+	gretlopt data_opt = (ci == ADD)? OPT_F : OPT_NONE;
 
-	dset = maybe_get_model_data(pmod, opt, &err);
+	dset = maybe_get_model_data(pmod, data_opt, &err);
 	if (err) {
 	    return err;
 	}
@@ -1976,22 +1976,20 @@ int do_add_omit (selector *sr)
 	return 1;
     }
 
-    if (ci == OMIT && (opt & OPT_W)) {
-	; /* Wald test: new model is not needed */
+    if (ci == ADD && (opt & OPT_L)) {
+	err = add_test(pmod, libcmd.list, dset, opt, prn);
+    } else if (ci == OMIT && (opt & OPT_W)) {
+	err = omit_test(pmod, libcmd.list, dset, opt, prn);
     } else {
 	newmod = gretl_model_new();
 	if (newmod == NULL) {
 	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	if (ci == OMIT && (opt & OPT_W)) {
-	    err = omit_test(pmod, libcmd.list, dset, opt, prn);
-	} else if (ci == ADD) { 
-	    err = add_test_full(pmod, newmod, libcmd.list, dset, opt, prn);
+	} else if (ci == ADD) {
+	    err = add_test_full(pmod, newmod, libcmd.list, 
+				dset, opt, prn);
 	} else {
-	    err = omit_test_full(pmod, newmod, libcmd.list, dset, opt, prn);
+	    err = omit_test_full(pmod, newmod, libcmd.list, 
+				 dset, opt, prn);
 	}
     }
 
@@ -2023,8 +2021,10 @@ int do_add_omit (selector *sr)
 	    printmodel(newmod, dataset, OPT_NONE, prn);
 	    view_model(prn, newmod, 78, 420, title);
 	} else {
-	    view_buffer_with_parent(vwin, prn, 78, 400, 
-				    _("gretl: Wald omit test"), 
+	    view_buffer_with_parent(vwin, prn, 78, 400,
+				    (ci == OMIT)?
+				    _("gretl: Wald omit test") :
+				    _("gretl: LM test"),
 				    PRINT, NULL);
 	}
     }

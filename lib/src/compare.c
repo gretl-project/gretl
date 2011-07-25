@@ -47,11 +47,9 @@ enum {
 };
 
 enum {
-    COMPARE_ADD,
-    COMPARE_OMIT,
-    COMPARE_OMIT_WALD,
-    COMPARE_ADD_WALD,
-    COMPARE_ADD_LM
+    OMIT_WALD = 1,
+    ADD_WALD,
+    ADD_LM
 };
 
 struct COMPARE {
@@ -61,9 +59,10 @@ struct COMPARE {
     int dfn;       /* numerator degrees of freedom */
     int dfd;       /* denominator degrees of freedom */ 
     double F;      /* F test statistic */
-    double wald;   /* Wald chi-square test statistic */
+    double X2;     /* Wald chi-square test statistic */
     double trsq;   /* T*R^2 test statistic */
     double LR;     /* likelihood ratio test statistic */
+    double LRaux;  /* auxiliary likelihood ratio test statistic */
     int score;     /* number of info stats showing improvement */
     int robust;    /* = 1 when robust vcv is in use, else 0 */
     int err;       /* error code */
@@ -211,8 +210,12 @@ wald_test (const int *list, MODEL *pmod, double *chisq, double *F)
     }
 
     if (!err) {
-	if (chisq != NULL) *chisq = wX;
-	if (F != NULL) *F = wF;
+	if (chisq != NULL) {
+	    *chisq = wX;
+	}
+	if (F != NULL) {
+	    *F = wF;
+	}
     }
 
 #if WDEBUG
@@ -330,12 +333,25 @@ static void print_add_omit_null (const int *list, const DATASET *dset,
     }
 }
 
-/* we're not printing a following model, either because we're quiet
-   or the modified model is not being saved */
-#define add_omit_standalone(o) (o & (OPT_Q | OPT_Y))
+/* add/omit: are we printing a revised model following the
+   test results? */
+
+static int printing_revised_model (gretlopt opt)
+{
+    if (opt & (OPT_Q | OPT_I)) {
+	/* --quiet or --silent: no */
+	return 0;
+    } else if (opt & (OPT_L | OPT_W)) {
+	/* --lm or --wald test variants: no */
+	return 0;
+    } else {
+	/* then yes */
+	return 1;
+    }
+}
 
 static void
-finalize_compare (const struct COMPARE *cmp, const int *diffvars, 
+finalize_compare (struct COMPARE *cmp, const int *diffvars, 
 		  MODEL *pmod, const DATASET *dset, 
 		  gretlopt opt, PRN *prn)
 {
@@ -346,10 +362,6 @@ finalize_compare (const struct COMPARE *cmp, const int *diffvars,
     int print_test;
     int print_score;
 
-    if (cmp->err) {
-	return;
-    }
-
     if (opt & OPT_I) {
 	/* --silent */
 	verbosity = 0;
@@ -358,13 +370,25 @@ finalize_compare (const struct COMPARE *cmp, const int *diffvars,
 	verbosity = 1;
     }
 
-    if (!na(cmp->trsq)) {
+    if (!na(cmp->X2) && !na(cmp->F)) {
+	/* we have both forms of a Wald test */
+	if (opt & OPT_X) {
+	    /* the chi-square form is preferred */
+	    statcode = GRETL_STAT_WALD_CHISQ;
+	    testval = cmp->X2;
+	    pval = chisq_cdf_comp(cmp->dfn, testval);
+	} else {
+	    statcode = GRETL_STAT_F;
+	    testval = cmp->F;
+	    pval = snedecor_cdf_comp(cmp->dfn, cmp->dfd, cmp->F);
+	}
+    } else if (!na(cmp->trsq)) {
 	statcode = GRETL_STAT_LM;
 	testval = cmp->trsq;
 	pval = chisq_cdf_comp(cmp->dfn, testval);
-    } else if (!na(cmp->wald)) {
+    } else if (!na(cmp->X2)) {
 	statcode = GRETL_STAT_WALD_CHISQ;
-	testval = cmp->wald;
+	testval = cmp->X2;
 	pval = chisq_cdf_comp(cmp->dfn, testval);
     } else if (!na(cmp->LR)) {
 	statcode = GRETL_STAT_LR;
@@ -428,11 +452,11 @@ finalize_compare (const struct COMPARE *cmp, const int *diffvars,
 	    pprintf(prn, "  %s: %s(%d) = %g, %s %g\n",  _("Wald test"),
 		    _("Chi-square"), cmp->dfn, testval,
 		    _("p-value"), pval);
-	    if (!na(cmp->LR)) {
+	    if (!na(cmp->LRaux)) {
 		/* auxiliary LR test? */
-		pval = chisq_cdf_comp(cmp->dfn, cmp->LR);
+		pval = chisq_cdf_comp(cmp->dfn, cmp->LRaux);
 		pprintf(prn, "  (%s: %s(%d) = %g, %s %g)\n",  _("LR test"),
-			_("Chi-square"), cmp->dfn, cmp->LR, 
+			_("Chi-square"), cmp->dfn, cmp->LRaux, 
 			_("p-value"), pval);
 	    } else if (!na(cmp->F)) {
 		/* alternate F-form for Wald? */
@@ -468,7 +492,7 @@ finalize_compare (const struct COMPARE *cmp, const int *diffvars,
 	}
     } 
 
-    if (add_omit_standalone(opt)) {
+    if (!printing_revised_model(opt)) {
 	pputc(prn, '\n');
     }
 }
@@ -483,7 +507,7 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 
     cmp.err = 0;
     cmp.ci = ci;
-    cmp.F = cmp.wald = cmp.trsq = cmp.LR = NADBL;
+    cmp.F = cmp.X2 = cmp.trsq = cmp.LR = cmp.LRaux = NADBL;
     cmp.score = -1;
     cmp.robust = 0;
     cmp.dfn = testvars[0];
@@ -511,25 +535,26 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	cmp.dfn = umod->ncoeff - rmod->ncoeff;
     } 
 
+    if (pmodA->opt & OPT_R) {
+	cmp.robust = 1;
+    }
+
     cmp.dfd = umod->dfd;
 
-    if (flag == COMPARE_ADD_LM) {
+    if (flag == ADD_LM) {
 	cmp.trsq = pmodB->nobs * pmodB->rsq;
-    } else if (flag == COMPARE_OMIT_WALD || flag == COMPARE_ADD_WALD) {
-	cmp.err = wald_test(testvars, umod, &cmp.wald, &cmp.F);
-    } else if (pmodA != NULL && (pmodA->opt & OPT_R)) {
-	cmp.F = wald_omit_F(testvars, umod);
-	cmp.robust = 1;
+    } else if (flag == OMIT_WALD || flag == ADD_WALD) {
+	cmp.err = wald_test(testvars, umod, &cmp.X2, &cmp.F);
     } else if (LIMDEP(cmp.model_ci) && umod != NULL && rmod != NULL) {
 	cmp.LR = 2.0 * (umod->lnL - rmod->lnL);
     } else if (cmp.model_ci == OLS) {
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
     } else if (cmp.dfn >= 1) {
-	cmp.err = wald_test(testvars, umod, &cmp.wald, NULL);
+	cmp.err = wald_test(testvars, umod, &cmp.X2, &cmp.F);
     }
 
     if (pmodA != NULL && pmodB != NULL && 
-	flag != COMPARE_ADD_WALD && flag != COMPARE_ADD_LM) {
+	flag != ADD_WALD && flag != ADD_LM) {
 	cmp.score = 0;
 	for (i=0; i<C_MAX; i++) { 
 	    if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
@@ -541,13 +566,12 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 	}
     }
 
-    if (na(cmp.LR) && na(cmp.F) && na(cmp.trsq) &&
-	umod != NULL && rmod != NULL && 
+    if (na(cmp.LR) && umod != NULL && rmod != NULL && 
 	!na(umod->lnL) && !na(rmod->lnL) &&
 	umod->lnL > rmod->lnL) {
 	/* if we're doing a Wald test and a likelihood ratio test is
 	   also supported, add the LR test */
-	cmp.LR = 2.0 * (umod->lnL - rmod->lnL);
+	cmp.LRaux = 2.0 * (umod->lnL - rmod->lnL);
     }
 
     if (!cmp.err) {
@@ -656,10 +680,6 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
     return 0;
 }
 
-#define no_new_model(o) (o & (OPT_A | OPT_Y | OPT_Q)) /* hmm */
-
-#define SMPL_DEBUG 0
-
 /* This function is used for "add" and "omit", when we are estimating
    an augmented or reduced version of the original model. It's also
    used in the special case of calculation of the p-value for the
@@ -669,15 +689,15 @@ static int obs_diff_ok (const MODEL *m_old, const MODEL *m_new)
    from the original model and re-apply them.  
 */
 
-static MODEL replicate_estimator (const MODEL *orig, int **plist,
+static MODEL replicate_estimator (const MODEL *orig, int *list,
 				  DATASET *dset, gretlopt myopt, 
 				  PRN *prn)
 {
     MODEL rep;
     const char *param = NULL;
     const int *laglist = NULL;
+    int *full_list = NULL;
     char altparm[32] = {0};
-    int *list = *plist;
     int mc = get_model_count();
     int repci = orig->ci;
     int order = 0;
@@ -699,13 +719,11 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	    myopt |= OPT_P;
 	}
     } else if (orig->ci == WLS || orig->ci == AR || get_extra_var(orig)) {
-	int *full_list = full_model_list(orig, list);
-
-	free(list);
+	full_list = full_model_list(orig, list);
 	if (full_list == NULL) {
 	    rep.errcode = E_ALLOC;
 	} else {
-	    list = *plist = full_list;
+	    list = full_list;
 	}
     } else if (orig->ci == ARBOND) {
 	param = gretl_model_get_data(orig, "istr");
@@ -766,7 +784,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     }
 
     if (rep.errcode) {
-	return rep;
+	goto bailout;
     }
 
  try_again:
@@ -839,7 +857,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	break;
     }
 
-#if SMPL_DEBUG
+#if 0
     fprintf(stderr, "replicate_estimator:\n"
 	    " orig: t1=%d, t2=%d, nobs = %d\n"
 	    " rep:  t1=%d, t2=%d, nobs = %d\n",
@@ -861,9 +879,13 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	}
     } 
 
+ bailout:
+
+    free(full_list);
+
     /* if the model count went up for an aux regression,
        bring it back down */
-    if (no_new_model(myopt) && get_model_count() > mc) {
+    if ((myopt & OPT_A) && get_model_count() > mc) {
 	model_count_minus();
     }
 
@@ -1044,13 +1066,6 @@ int nonlinearity_test (MODEL *pmod, DATASET *dset, ModelAuxCode aux,
     return err;
 }
 
-static void remove_special_flags (gretlopt *popt)
-{
-    gretlopt rem = OPT_S | OPT_T | OPT_B | OPT_P | OPT_A;
-
-    delete_option_flags(popt, rem);
-}
-
 static int add_vars_missing (const MODEL *pmod, const int *list,
 			     const double **Z)
 {
@@ -1073,7 +1088,7 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 			  gretlopt opt, PRN *prn)
 {
     MODEL aux;
-    int unum, err;
+    int err;
 
     err = add_residual_to_dataset(pmod, dset);
     if (err) {
@@ -1082,10 +1097,9 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 	return aux;
     }
     
-    unum = dset->v - 1;
-    list[1] = unum;
+    list[1] = dset->v - 1;
 
-    aux = lsq(list, dset, OLS, OPT_A);
+    aux = lsq(list, dset, OLS, OPT_A | OPT_Z);
 
     if (aux.errcode) {
 	fprintf(stderr, "auxiliary regression failed\n");
@@ -1096,7 +1110,7 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 	    /* couldn't add any regressors */
 	    aux.errcode = E_SINGULAR;
 	} else {
-	    if (!(opt & OPT_Q)) {
+	    if (!(opt & (OPT_Q | OPT_I))) {
 		aux.aux = AUX_ADD;
 		printmodel(&aux, dset, OPT_S, prn);
 	    }
@@ -1107,13 +1121,14 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 }
 
 /**
- * add_test:
- * @addvars: list of variables to add to original model.
+ * add_test_full:
  * @orig: pointer to original model.
- * @pmod: pointer to receive new model, with vars added.
+ * @pmod: pointer to receive new model, with vars added,
+ * or NULL.
+ * @addvars: list of variables to add to original model.
  * @dset: dataset struct.
  * @opt: can contain OPT_Q (quiet) to suppress printing
- * of the new model, OPT_O to print covariance matrix,
+ * of the new model, OPT_O to print its covariance matrix,
  * OPT_I for silent operation.  Additional options that
  * are applicable only for 2SLS models: OPT_B (add to
  * both list of regressors and list of instruments), OPT_T
@@ -1130,10 +1145,9 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 		   DATASET *dset, gretlopt opt, PRN *prn)
 {
     MODEL amod;
-    gretlopt est_opt = opt;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
-    int *tmplist = NULL;
+    int *biglist = NULL;
     const int orig_nvar = dset->v; 
     int err = 0;
 
@@ -1141,12 +1155,12 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 	return 1;
     }
 
-    if (!command_ok_for_model(ADD, 0, orig->ci)) {
+    if (!command_ok_for_model(ADD, opt, orig->ci)) {
 	return E_NOTIMP;
     }
 
     if ((opt & OPT_L) && pmod != NULL) {
-	/* --lm incompatible with full variant of add test */
+	/* --lm option incompatible with "full" variant of add test */
 	return E_BADOPT;
     }
 
@@ -1168,12 +1182,12 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
 
     /* create augmented regression list */
     if (orig->ci == IVREG) {
-	tmplist = ivreg_list_add(orig->list, addvars, opt, &err);
+	biglist = ivreg_list_add(orig->list, addvars, opt, &err);
     } else if (orig->ci == PANEL || orig->ci == ARBOND || 
 	       orig->ci == DPANEL) {
-	tmplist = panel_list_add(orig, addvars, &err);
+	biglist = panel_list_add(orig, addvars, &err);
     } else {
-	tmplist = gretl_list_add(orig->list, addvars, &err);
+	biglist = gretl_list_add(orig->list, addvars, &err);
     }
 
     if (err) {
@@ -1184,18 +1198,15 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
        when the original model was estimated */
     impose_model_smpl(orig, dset);
 
-    /* don't pass special opts to replicate_estimator() */
-    remove_special_flags(&est_opt);
-
     if (opt & OPT_L) {
-	amod = LM_add_test(orig, dset, tmplist, opt, prn);
+	/* run an LM test */
+	amod = LM_add_test(orig, dset, biglist, opt, prn);
     } else {
 	/* Run augmented regression, matching the original estimation
 	   method; use OPT_Z to suppress the elimination of perfectly
 	   collinear variables.
 	*/
-	amod = replicate_estimator(orig, &tmplist, dset, 
-				   (est_opt | OPT_Z), prn);
+	amod = replicate_estimator(orig, biglist, dset, OPT_Z, prn);
     }
 
     if (amod.errcode) {
@@ -1204,13 +1215,13 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     }
 
     if (!err) {
-	int flag = COMPARE_ADD_WALD;
+	int flag = ADD_WALD;
 	int *addlist;
 	
 	if (opt & OPT_L) {
-	    flag = COMPARE_ADD_LM;
+	    flag = ADD_LM;
 	} else if (orig->ci == OLS && amod.nobs == orig->nobs) {
-	    flag = COMPARE_ADD;
+	    flag = 0;
 	} 
 
 	addlist = gretl_list_diff_new(amod.list, orig->list, 2);
@@ -1232,10 +1243,27 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     dset->t1 = save_t1;
     dset->t2 = save_t2;
 
-    free(tmplist);
+    free(biglist);
 
     return err;
 }
+
+/**
+ * add_test:
+ * @pmod: pointer to model to be tested.
+ * @addvars: list of variables to test.
+ * @dset: dataset struct.
+ * @opt: can contain OPT_Q (quiet) to suppress printing
+ * of the auxiliary model, OPT_I to suppress all printing
+ * of results.
+ * @prn: gretl printing struct.
+ *
+ * Performs an LM test on @pmod for the null hypothesis
+ * that the @addvars variables do not contribute
+ * significant explanatory power.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int add_test (MODEL *pmod, const int *addvars,
 	      DATASET *dset, gretlopt opt, PRN *prn)
@@ -1263,7 +1291,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 
     if (!err) {
 	free(test);
-	err = add_or_omit_compare(pmod, NULL, COMPARE_OMIT_WALD,
+	err = add_or_omit_compare(pmod, NULL, OMIT_WALD,
 				  list, dset, OMIT, opt, prn);
     }
 
@@ -1272,7 +1300,7 @@ static int wald_omit_test (const int *list, MODEL *pmod,
 
 /* Check whether coefficient @i corresponds to a variable
    that is removable from the model: this is the case if either
-   (a) the @cands list is NULL, or (b) coefficient @i is the
+   (a) the @cands list is empty, or (b) coefficient @i is the
    coefficient on one of the variables in @cands.
 */
 
@@ -1281,7 +1309,7 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
 {
     int ret = 1;
 
-    if (cands != NULL) {
+    if (cands != NULL && cands[0] > 0) {
 	const char *vname;
 	int j, pj;
 
@@ -1300,17 +1328,20 @@ static int coeff_is_removable (const int *cands, const MODEL *pmod,
     return ret;
 }
 
-/* Determine if a model contains a variable with p-value
+/* Determine if @pmod contains a variable with p-value
    greater than some cutoff alpha_max; and if so, remove
-   this variable from the regression list.  If the list
-   @cands is non-NULL then confine the search to candidate
-   variables in that list.
+   this variable from @list.  
+
+   If the list @cands is non-empty then confine the search 
+   to candidate variables in that list.
+
+   Returns 1 if a variable was dropped, else 0.
 */
 
-static int auto_drop_var (const int *cands, const MODEL *pmod, 
-			  int *list, DATASET *dset, 
-			  double alpha_max, int d0, 
-			  PRN *prn, int *err)
+static int auto_drop_var (const MODEL *pmod, 
+			  int *list, const int *cands,
+			  DATASET *dset, double alpha_max, 
+			  int starting, PRN *prn)
 {
     double tstat, pv = 0.0, tmin = 4.0;
     int i, k = -1;
@@ -1336,8 +1367,9 @@ static int auto_drop_var (const int *cands, const MODEL *pmod,
 
     if (pv > alpha_max) {
 	char pname[VNAMELEN];
+	int err;
 
-	if (d0) {
+	if (starting) {
 	    pputc(prn, '\n');
 	    pprintf(prn, _("Sequential elimination using two-sided alpha = %.2f"),
 		    alpha_max);
@@ -1345,9 +1377,11 @@ static int auto_drop_var (const int *cands, const MODEL *pmod,
 	}
 
 	gretl_model_get_param_name(pmod, dset, k, pname);
-	pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), pname, pv);
-	*err = gretl_list_delete_at_pos(list, k + 2);
-	ret = 1;
+	err = gretl_list_delete_at_pos(list, k + 2);
+	if (!err) {
+	    pprintf(prn, _(" Dropping %-16s (p-value %.3f)\n"), pname, pv);
+	    ret = 1;
+	}
     }
 
     return ret;
@@ -1365,22 +1399,24 @@ static void list_copy_values (int *targ, const int *src)
 /* run a loop in which the least significant variable is dropped
    from the regression list, provided its p-value exceeds some
    specified cutoff.  FIXME this probably still needs work for 
-   estimators other than OLS.  If @omitlist is non-NULL the
+   estimators other than OLS.  If @omitlist is non-empty the
    routine is confined to members of the list.
 */
 
-static int auto_omit (const int *omitlist, 
-		      MODEL *orig, MODEL *pmod, 
-		      DATASET *dset, gretlopt est_opt, 
-		      PRN *prn)
+static MODEL auto_omit (MODEL *orig, const int *omitlist, 
+			DATASET *dset, PRN *prn)
 {
+    MODEL omod;
     double amax;
-    int *tmplist = NULL;
-    int i, err = 0;
+    int *tmplist;
+    int i, drop;
+
+    gretl_model_init(&omod);
 
     tmplist = gretl_list_copy(orig->list);
     if (tmplist == NULL) {
-	return E_ALLOC;
+	omod.errcode = E_ALLOC;
+	return omod;
     }
 
     amax = get_optval_double(OMIT, OPT_A);
@@ -1388,34 +1424,38 @@ static int auto_omit (const int *omitlist,
 	amax = 0.10;
     }
 
-    if (!auto_drop_var(omitlist, orig, tmplist, dset, amax, 1, prn, &err)) {
-	free(tmplist);
-	return (err)? err : E_NOOMIT;
-    }    
+    drop = auto_drop_var(orig, tmplist, omitlist, dset, amax, 
+			 1, prn);
+    if (!drop) {
+	/* nothing was dropped: set a "benign" error code */
+	omod.errcode = E_NOOMIT;
+    }	
 
-    for (i=0; !err; i++) {
+    for (i=0; drop > 0; i++) {
 	if (i > 0) {
 	    set_reference_missmask_from_model(orig);
 	}
-	*pmod = replicate_estimator(orig, &tmplist, dset, est_opt, prn);
-	if (pmod->errcode) {
-	    err = pmod->errcode;
-	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n", err);
+	omod = replicate_estimator(orig, tmplist, dset, OPT_A, prn);
+	if (omod.errcode) {
+	    fprintf(stderr, "auto_omit: error %d from replicate_estimator\n",
+		    omod.errcode);
+	    drop = 0;
 	} else {
-	    list_copy_values(tmplist, pmod->list);
-	    if (auto_drop_var(omitlist, pmod, tmplist, dset, 
-			      amax, 0, prn, &err)) {
-		model_count_minus();
-		clear_model(pmod);
-	    } else {
-		break;
-	    }
+	    list_copy_values(tmplist, omod.list);
+	    drop = auto_drop_var(&omod, tmplist, omitlist, dset, 
+				 amax, 0, prn);
+	    clear_model(&omod);
 	}
+    }
+
+    if (drop && !omod.errcode) {
+	/* re-estimate the final model without the auxiliary flag */
+	omod = replicate_estimator(orig, tmplist, dset, OPT_NONE, prn);
     }
 
     free(tmplist);
 
-    return err;
+    return omod;
 }
 
 /* create reduced list for "omit" test on model, based on
@@ -1455,8 +1495,9 @@ static int omit_options_inconsistent (gretlopt opt)
 {
     if ((opt & OPT_T) || (opt & OPT_B)) {
 	/* 2sls: omitting variable as instrument */
-	if (opt & OPT_W) {
-	    /* can't use Wald method on original VCV */
+	if (opt & (OPT_W | OPT_A)) {
+	    /* can't use Wald method on original VCV,
+	       and can't do --auto */
 	    return 1;
 	}
     }
@@ -1486,18 +1527,16 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
 
 /**
  * omit_test_full:
- * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original model.
  * @pmod: pointer to receive new model, with vars omitted.
+ * @omitvars: list of variables to omit from original model.
  * @dset: dataset struct.
  * @opt: can contain OPT_Q (quiet) to suppress printing
- * of the new model, OPT_O to print covariance matrix,
+ * of the new model, OPT_O to print its covariance matrix,
  * OPT_I for silent operation; for OPT_A, see below.
  * Additional options that are applicable only for IV models: 
  * OPT_B (omit from both list of regressors and list of 
- * instruments), OPT_T (omit from list of instruments only),
- * OPT_Y (do not set the augmented model as the current
- * model).
+ * instruments), OPT_T (omit from list of instruments only).
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
@@ -1515,7 +1554,6 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 		    DATASET *dset, gretlopt opt, PRN *prn)
 {
     MODEL omod;
-    gretlopt est_opt = opt;
     int save_t1 = dset->t1;
     int save_t2 = dset->t2;
     int *tmplist = NULL;
@@ -1538,8 +1576,6 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 	}
     }
 
-    gretl_model_init(&omod);
-
     /* impose the sample range used for the original model */ 
     impose_model_smpl(orig, dset);
 
@@ -1547,33 +1583,28 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
        on the original model */
     set_reference_missmask_from_model(orig);
 
-    /* extract option flags that should not be passed to estimator
-       functions */
-    remove_special_flags(&est_opt);
-
     if (opt & OPT_A) {
-	if (omitvars != NULL && omitvars[0] > 0) {
-	    err = auto_omit(omitvars, orig, &omod, dset, est_opt, prn);
-	} else {
-	    err = auto_omit(NULL, orig, &omod, dset, est_opt, prn);
-	}
+	omod = auto_omit(orig, omitvars, dset, prn);
     } else {
-	omod = replicate_estimator(orig, &tmplist, dset, est_opt, prn);
-	err = omod.errcode;
+	omod = replicate_estimator(orig, tmplist, dset, OPT_NONE, prn);
     }
+
+    err = omod.errcode;
 
     if (err) {
 	errmsg(err, prn);
     } else {
-	int flag = COMPARE_OMIT;
+	int flag = 0;
 	MODEL *newmod = &omod;
 	int *omitlist;
 
 	if (opt & OPT_B) {
 	    /* ivreg: omitting both as regressor and instrument */
 	    newmod = NULL;
-	    flag = COMPARE_OMIT_WALD;
-	} 
+	    flag = OMIT_WALD;
+	} else if (orig->opt & OPT_R) {
+	    flag = OMIT_WALD;
+	}
 
 	omitlist = gretl_list_diff_new(orig->list, omod.list, 2);
 	if (omitlist != NULL) {
@@ -1597,6 +1628,22 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 
     return err;
 }
+
+/**
+ * omit_test:
+ * @pmod: pointer to model to be tested.
+ * @omitvars: list of variables to test.
+ * @dset: dataset struct.
+ * @opt: can contain OPT_Q (quiet) to suppress printing
+ * of results.
+ * @prn: gretl printing struct.
+ *
+ * Performs a Wald test on @pmod for the null hypothesis
+ * that the @omitvars variables do not contribute
+ * explanatory power.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int omit_test (MODEL *pmod, const int *omitvars,
 	       DATASET *dset, gretlopt opt, PRN *prn)
@@ -1664,7 +1711,7 @@ double get_DW_pvalue_for_model (const MODEL *pmod, DATASET *dset,
     /* impose the sample range used for the original model */ 
     impose_model_smpl(pmod, dset);
 
-    dwmod = replicate_estimator(pmod, &list, dset, OPT_A | OPT_I, NULL);
+    dwmod = replicate_estimator(pmod, list, dset, OPT_A | OPT_I, NULL);
     *err = dwmod.errcode;
 
     if (!*err) {

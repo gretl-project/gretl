@@ -13,20 +13,20 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <flag>--lm</flag>
+	  <effect>do an LM test, OLS only</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print estimates for augmented model</effect>
+	  <effect>print only the basic test result</effect>
 	</option>
 	<option>
 	  <flag>--silent</flag>
 	  <effect>don't print anything</effect>
 	</option>
 	<option>
-	  <flag>--test-only</flag>
-	  <effect>don't replace current model</effect>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix for augmented model</effect>
 	</option>
 	<option>
 	  <flag>--inst</flag>
@@ -45,37 +45,37 @@
 
     <description>
       <para context="cli">
-	Must be invoked after an estimation command.  The variables in
-	<repl>varlist</repl> are added to the previous model and the
-	new model is estimated. A test statistic for the joint
-	significance of the added variables is printed, along with its
-	p-value. The test statistic is <math>F</math> in the
-	case of OLS estimation, an asymptotic Wald chi-square value
-	otherwise. A p-value below 0.05 means that the coefficients
-	are jointly significant at the 5 percent level.
+	Must be invoked after an estimation command. Performs a test
+	for the addition of specified variables to the last model, the
+	results of which may be retrieved using the accessors
+	<lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
       <para context="cli">
-	If the <opt>--quiet</opt> option is given the printed results
-	are confined to the test for the joint significance of the
-	added variables, otherwise the estimates for the augmented
-	model are also printed.  In the latter case, the
-	<opt>--vcv</opt> flag causes the covariance matrix for the
-	coefficients to be printed also.  If the <opt>--silent</opt>
-	option is given, nothing is printed, but the results
-	of the test can be retrieved using the special variables
-        <lit>$test</lit> and <lit>$pvalue</lit>.
+	The <opt>--lm</opt> option is only available for models
+	estimated via OLS. In this case an LM test is performed: an
+	auxiliary regression is run in which the dependent variable is
+	the residual from the last model and the independent variables
+	are those from the last model plus the ones in
+	<repl>varlist</repl>. Under the null hypothesis that the true
+	coefficients are zero for all the additional variables, the
+	sample size times the unadjusted R-squared from this
+	regression is distributed as chi-square with degrees of
+	freedom equal to the number of added regressors.
       </para>
       <para context="cli">
-	By default the augmented model replaces the original as the
-	<quote>current model</quote> for the purposes of, for example,
-	retrieving the residuals as <lit>$uhat</lit> or doing further
-	tests.  This behavior may be suppressed via the
-	<lit>--test-only</lit> option.
+	Without the <opt>--lm</opt> option, an augmented version of
+	the original model is estimated, including the variables in
+	<repl>varlist</repl>. A test statistic for the joint
+	significance of the added variables is printed along with its
+	p-value, and in addition the augmented model replaces the
+	original as the <quote>current model</quote> for the purposes
+	of, for example, retrieving the residuals as <lit>$uhat</lit>
+	or doing further tests. 
       </para>
       <para context="cli">
 	If the original model was estimated using two-stage least
 	squares, an ambiguity arises: should the new variables be
-	added as regressors, as instruments, or as both?  This is
+	added as regressors, as instruments, or as both? This is
 	resolved as follows: by default the new variables are added as
 	endogenous regressors, but if the <opt>--inst</opt> flag is
 	given they are added as instruments, or if the
@@ -86,10 +86,7 @@
 	The selected variables are added to the previous model and the
 	new model estimated. A test statistic for the joint
 	significance of the added variables is printed, along with its
-	p-value. The test statistic is <math>F</math> in the
-	case of OLS estimation, an asymptotic Wald chi-square value
-	otherwise. A p-value below 0.05 means that the coefficients
-	are jointly significant at the 5 percent level.
+	p-value.
       </para>
     </description>
 
@@ -7039,23 +7036,23 @@
       <options>
 	<option>
 	  <flag>--wald</flag>
-	  <effect>do a Wald test rather than an F-test</effect>
+	  <effect>do a Wald test only</effect>
 	</option>
 	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
+	  <flag>--chi-square</flag>
+	  <effect>give chi-square form of test</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
-	  <effect>don't print estimates for reduced model</effect>
+	  <effect>print only the basic test result</effect>
 	</option>
 	<option>
 	  <flag>--silent</flag>
 	  <effect>don't print anything</effect>
 	</option>
 	<option>
-	  <flag>--test-only</flag>
-	  <effect>don't replace the current model</effect>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix for reduced model</effect>
 	</option>
 	<option>
 	  <flag>--auto</flag>
@@ -7089,14 +7086,6 @@
 	the omitted variables equal zero.
       </para>
       <para>
-	When the original model was estimated by OLS, the default test
-	statistic is an <math>F</math>-value, based on the sums of
-	squared residuals for the restricted and unrestricted models. For
-	estimators other than OLS, or if the Wald option is selected, the
-	statistic is an asymptotic Wald chi-square value based on the
-	covariance matrix of the original model.
-      </para>
-      <para>
 	Sequential elimination works as follows: at each step the variable
 	with the highest p-value is omitted, until all remaining variables
 	have a p-value no greater than some cutoff.  The default cutoff is 10
@@ -7110,58 +7099,45 @@
 
     <description context="cli">
       <para>
-	This command must follow an estimation command.  It calculates a
-	test for the joint significance of the variables in
-	<repl>varlist</repl>, which should be a subset of the independent
-	variables in the model last estimated. 
+	This command must follow an estimation command.  It calculates
+	a test for the joint significance of the variables in
+	<repl>varlist</repl>, which should be a subset of the
+	independent variables in the model last estimated. Other than
+	when the <opt>--auto</opt> option is given (see below), the
+	results of the test may be retrieved using the accessors
+	<lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
       <para>
-	Alternatively, if the <opt>--auto</opt> flag is given, sequential
-	elimination is performed: at each step the variable with the highest
-	p-value is omitted, until all remaining variables have a p-value no
-	greater than some cutoff.  The default cutoff is 10 percent
-	(two-sided); this can be adjusted by appending
-	<quote><lit>=</lit></quote> and a value between 0 and 1 (with no
-	spaces), as in the fourth example above.  If <repl>varlist</repl> is
-	given this process is confined to the listed variables, otherwise all
-	variables are treated as candidates for omission.
+	If the <opt>--wald</opt> option is given, a Wald test is
+	performed using the estimated covariance matrix of the last
+	model and the restricted model is not estimated; otherwise the
+	restricted model is estimated and it replaces the original as
+	the <quote>current model</quote> for the purposes of, for
+	example, retrieving the residuals as <lit>$uhat</lit> or doing
+	further tests.
       </para>
       <para>
-	If the original model was estimated by OLS, the test statistic is
-	by default an <math>F</math>-value.  This is based on the
-	sums of squared residuals for the restricted and unrestricted
-	models, unless the original model was estimated with robust
-	standard errors.  In the latter case <math>F</math> is
-	computed from the robust estimate of the covariance matrix for the
-	original model.  (It is the <math>F</math>-form of a Wald
-	test).
-      </para>
-      <para>
-	For estimators other than OLS, or if the <opt>--wald</opt>
-	option is given, the statistic is an asymptotic Wald
-	chi-square value based on the covariance matrix of the
-	original model.
-      </para>
-      <para>
-	Unless the <opt>--wald</opt> option is given, by default the
-	restricted model replaces the original as the <quote>current
-	model</quote> for the purposes of, for example, retrieving the
-	residuals as <lit>$uhat</lit> or doing further tests. This
-	behavior may be suppressed via the <lit>--test-only</lit>
-	option.
-      </para>
-      <para>
-	The verbosity of the output can be controlled using the option
-	<lit>--quiet</lit>, which suppresses the printout of the
-	restricted model (if applicable), or the <lit>--silent</lit>
-	flag, which means that nothing is printed (but the results of
-	the test can be retrieved using the special variables
-	<lit>$test</lit> and <lit>$pvalue</lit>).
+	By default the <math>F</math>-form of the test statistic is
+	recorded; the <opt>--chi-square</opt> option may be used to
+	record the chi-square form instead.
       </para>
       <para>
 	If the restricted model is both estimated and printed, the
 	<opt>--vcv</opt> option has the effect of printing its
 	covariance matrix, otherwise this option is ignored.
+      </para>
+      <para>
+	Alternatively, if the <opt>--auto</opt> flag is given,
+	sequential elimination is performed: at each step the variable
+	with the highest p-value is omitted, until all remaining
+	variables have a p-value no greater than some cutoff.  The
+	default cutoff is 10 percent (two-sided); this can be adjusted
+	by appending <quote><lit>=</lit></quote> and a value between 0
+	and 1 (with no spaces), as in the fourth example above.  If
+	<repl>varlist</repl> is given this process is confined to the
+	listed variables, otherwise all variables are treated as
+	candidates for omission. Noe that the <opt>--auto</opt>
+	and <opt>--wald</opt> options cannot be combined.
       </para>
       <para>
 	If the original model was estimated using two-stage least
@@ -7172,8 +7148,7 @@
 	given they are dropped as instruments, or if the
 	<opt>--both</opt> flag is given they are dropped from the
 	model altogether.  These two options are incompatible with the
-	<opt>--wald</opt> option; if one or more instruments are
-	omitted the model must be re-estimated.
+	<opt>--wald</opt> and <opt>--auto</opt> options.
       </para>
     </description>
 

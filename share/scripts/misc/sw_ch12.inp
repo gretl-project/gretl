@@ -20,7 +20,7 @@ ols d_infl 0 d_infl_1 --robust
 ols d_infl 0 d_infl(-1 to -4) --robust
 
 # F-test following 12.13  
-omit d_infl_2 d_infl_3 d_infl_4 --quiet
+omit d_infl_2 d_infl_3 d_infl_4 --wald
 
 # equation 12.16
 ols d_infl 0 d_infl(-1 to -4) LHUR_1 --robust

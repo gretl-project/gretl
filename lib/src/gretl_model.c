@@ -4551,6 +4551,9 @@ int command_ok_for_model (int test_ci, gretlopt opt, int mci)
 	if (mci == ARMA || mci == GARCH || 
 	    mci == HECKIT || mci == INTREG) {
 	    ok = 0;
+	} else if (opt & OPT_L) {
+	    /* --lm variant: OLS only? */
+	    ok = (mci == OLS);
 	}
 	break;
 

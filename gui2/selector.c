@@ -281,25 +281,29 @@ static int want_combo (selector *sr)
 static int want_radios (selector *sr)
 {
     int c = sr->ci;
+    int ret = 0;
 
     if (c == PANEL || c == SCATTERS || 
 	c == LOGIT || c == PROBIT || c == HECKIT ||
 	c == XTAB || c == SPEARMAN || c == PCA ||
 	c == QUANTREG || c == DPANEL) {
-	return 1;
-    } else if (c == OMIT) {
+	ret = 1;
+    } else if (c == ADD || c == OMIT) {
 	windata_t *vwin = (windata_t *) sr->data;
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	if (pmod->ci == HECKIT) {
+	if (c == OMIT && pmod->ci == HECKIT) {
 	    /* omit: Wald test only */
 	    sr->opts |= OPT_W;
+	} else if (c == ADD && pmod->ci != OLS) {
+	    /* add: LM option is OLS-only */
+	    ret = 0;
 	} else {
-	    return 1;
+	    ret = 1;
 	}
-    }
+    } 
 
-    return 0;
+    return ret;
 }
 
 static void selector_set_blocking (selector *sr)
@@ -5210,6 +5214,23 @@ static void auto_omit_callback (GtkWidget *w, selector *sr)
     gtk_widget_set_sensitive(sr->remove_button, arrows);
 }
 
+static void build_add_test_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    vbox_add_vwedge(sr->vbox);
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Estimate augmented model"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
+    sr->radios[0] = b1;
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("LM test using auxiliary regression"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_L, 0);
+    sr->radios[1] = b2;
+}
+
 static void build_omit_test_radios (selector *sr)
 {
     windata_t *vwin = (windata_t *) sr->data;
@@ -5464,6 +5485,8 @@ static void build_selector_radios (selector *sr)
 	build_dpanel_radios(sr);
     } else if (sr->ci == SCATTERS) {
 	build_scatters_radios(sr);
+    } else if (sr->ci == ADD) {
+	build_add_test_radios(sr);
     } else if (sr->ci == OMIT) {
 	build_omit_test_radios(sr);
     } else if (sr->ci == LOGIT || sr->ci == PROBIT) {

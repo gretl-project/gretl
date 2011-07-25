@@ -4464,16 +4464,21 @@ static int param_to_order (const char *s)
 				c == PERGM || c == LAGS || \
 				c == FRACTINT)
 
-/* OMIT and ADD: should we be setting the revised model as the 
-   "last model", or are we just treating the command as a
-   stand-alone test? We save if neither of the options OPT_Y
-   (--test-only) or OPT_W (--wald) were supplied.
-
-   For the meantime, for backward compatibility, we also
-   skip the save if OPT_Q is given.
+/* OMIT and ADD: if we're estimating a revised model, should
+   we be saving it as the "last model", or are we just treating 
+   the command as a stand-alone test? 
 */
 
-#define add_omit_save(opt) (!(opt & (OPT_Y | OPT_W | OPT_Q)))
+static int add_omit_save (CMD *cmd)
+{
+    if (cmd->ci == ADD) {
+	/* not saving if given the --lm option */
+	return !(cmd->opt & OPT_L);
+    } else {
+	/* omit: not saving if given the --wald option */
+	return !(cmd->opt & OPT_W);
+    }
+}
 
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
@@ -5005,7 +5010,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case ADD:
     case OMIT:
-	if (add_omit_save(cmd->opt)) {
+	if (add_omit_save(cmd)) {
 	    MODEL mymod;
 
 	    gretl_model_init(&mymod);
@@ -5017,10 +5022,12 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 				     dset, cmd->opt, prn);
 	    }
 	    if (!err) {
-		gretlopt popt = (cmd->opt & OPT_I)? OPT_Q : OPT_NONE;
+		gretlopt popt = OPT_NONE;
 
-		if (cmd->opt & OPT_O) {
-		    popt |= OPT_O; /* --vcv printing option */
+		if (cmd->opt & (OPT_I | OPT_Q)) {
+		    popt = OPT_Q;
+		} else if (cmd->opt & OPT_O) {
+		    popt = OPT_O; /* --vcv printing option */
 		}
 		clear_model(model);
 		*model = mymod;
@@ -5032,7 +5039,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	    err = omit_test(model, cmd->list, dset, cmd->opt, prn);
 	}
 	if (err == E_NOOMIT) {
-	    /* auto-omit was a no-op (FIXME?) */
+	    /* auto-omit was a no-op */
 	    err = 0;
 	}	
 	break;	

@@ -18,7 +18,7 @@ var 4 d_infl LHUR const -r
 ols LHUR const d_infl(-1 to -4) LHUR(-1 to -4) -r
 
 # Test for Granger causality of unemployment by inflation
-omit d_infl(-1 to -4) --quiet
+omit d_infl(-1 to -4) --wald
 
 # GARCH model
 garch 1 1 ; d_infl const d_infl(-1 to -4) LHUR(-1 to -4) -r --vcv

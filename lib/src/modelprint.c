@@ -1951,6 +1951,17 @@ static void print_model_heading (const MODEL *pmod,
 	    if (csv) pputc(prn, '"');
 	    pputc(prn, '\n');	    
 	}	
+    } else if (pmod->ci == AR1) {
+	if (pmod->arinfo != NULL) {
+	    double r = pmod->arinfo->rho[0];
+
+	    if (tex) {
+		pprintf(prn, "$\\rho$ = %g", r);
+	    } else {
+		pprintf(prn, "rho = %g", r);
+	    }
+	    gretl_prn_newline(prn);
+	}
     }
 
     /* VCV variants */
