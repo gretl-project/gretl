@@ -7102,8 +7102,7 @@
 	This command must follow an estimation command.  It calculates
 	a test for the joint significance of the variables in
 	<repl>varlist</repl>, which should be a subset of the
-	independent variables in the model last estimated. Other than
-	when the <opt>--auto</opt> option is given (see below), the
+	independent variables in the model last estimated. The
 	results of the test may be retrieved using the accessors
 	<lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
