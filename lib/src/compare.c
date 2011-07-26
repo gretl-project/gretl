@@ -41,11 +41,6 @@
 
 #define WDEBUG 0
 
-enum {
-    CHISQ_FORM,
-    F_FORM
-};
-
 struct COMPARE {
     int ci;        /* command index: ADD or OMIT */
     int model_id;  /* ID of model under test */
@@ -60,7 +55,7 @@ struct COMPARE {
     double LR;     /* likelihood ratio test statistic */
     int score;     /* number of info stats showing improvement */
     int robust;    /* = 1 when robust vcv is in use, else 0 */
-    const int *testvars; /* list of variables added ot omitted */
+    const int *testvars; /* list of variables added or omitted */
 };
 
 /* Critical values for Quandt likelihood ratio (break) test:
@@ -1590,7 +1585,7 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
     if (err) {
 	errmsg(err, prn);
     } else if (opt & OPT_T) {
-	/* omit as instrument: can't do a test */
+	/* omit as instrument only: can't do a test? */
 	pputs(prn, "Warning: no test performed\n");
     } else {
 	int *omitlist = gretl_list_diff_new(orig->list, rmod.list, 2);
