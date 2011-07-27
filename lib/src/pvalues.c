@@ -1787,17 +1787,15 @@ double GED_cdf_comp (double nu, double x)
  * equal to the given probability @a, or #NADBL on failure. We exploit
  * the well-known relationship between the standardized GED and the
  * Gamma variates.
- *
- * Returns: the calculated probability, or #NADBL on failure.
  */
 
 double GED_cdf_inverse (double nu, double a)
 {
-    if (nu > 0 && a<1 && a>0) {
-	double a2;
+    if (nu > 0 && a < 1 && a > 0) {
+	double a2, p, lg1, lg3, sd, x;
 	int sgn;
 
-	if (a>0.5) {
+	if (a > 0.5) {
 	    a2 = 2*a - 1;
 	    sgn = 1;
 	} else {
@@ -1805,11 +1803,11 @@ double GED_cdf_inverse (double nu, double a)
 	    sgn = -1;
 	}
 
-	double p   = 1/nu;
-	double lg1 = ln_gamma(p);
-	double lg3 = ln_gamma(3*p);
-	double sd  = pow(2.0, p) * exp(0.5*(lg3 - lg1));
-	double x   = gamma_cdf_inverse(p, 2.0, a2);
+	p   = 1/nu;
+	lg1 = ln_gamma(p);
+	lg3 = ln_gamma(3*p);
+	sd  = pow(2.0, p) * exp(0.5*(lg3 - lg1));
+	x   = gamma_cdf_inverse(p, 2.0, a2);
 
 	return sgn * pow(x, p) / sd;
     } else {

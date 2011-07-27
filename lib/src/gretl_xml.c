@@ -1168,7 +1168,7 @@ char **gretl_xml_get_strings_array (xmlNodePtr node, xmlDocPtr doc,
  * @doc: XML document pointer.
  * @name: name of child node.
  * @pstrs: location to receive strings array.
- * @nelem: location to receive number of strings.
+ * @nstrs: location to receive number of strings.
  * 
  * Returns: 1 if an array of strings is found and read successfully,
  * 0 otherwise.

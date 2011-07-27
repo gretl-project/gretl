@@ -45,6 +45,7 @@ typedef enum {
  * @AUX_DF: Dickey-Fuller test
  * @AUX_ADF: augmented Dickey-Fuller test
  * @AUX_KPSS: KPSS unit-root test
+ * @AUX_OMIT: unused
  * @AUX_RESET: Ramsey's RESET
  * @AUX_SYS: single equation from multivariate system
  * @AUX_VAR: single equation from VAR system

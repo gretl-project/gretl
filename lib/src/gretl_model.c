@@ -5168,7 +5168,6 @@ static int model_is_quadratic (const MODEL *pmod, const int *xlist,
  * gretl_model_get_fitted_formula:
  * @pmod: pointer to target model.
  * @xvar: ID number of variable that _may_ be "x" in the model.
- * @Z: data array.
  * @dset: dataset information.
  * 
  * If @pmod is a simple linear, quadratic or logistic model, 
@@ -5250,8 +5249,6 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
  * than #MAXSAVENAME bytes in length, including the 
  * terminating NUL byte; @name is truncated if it is
  * too long.
- * 
- * Returns: 0 on success or error code on error.
  */
 
 void gretl_model_set_name (MODEL *pmod, const char *name)

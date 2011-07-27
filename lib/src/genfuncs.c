@@ -2037,8 +2037,6 @@ int poly_trend (const double *x, double *fx, const DATASET *dset, int order)
  *
  * Calculates a set of weights; intended for use with polynomial
  * trend fitting.
- *
- * Returns: 0 on success, non-zero error code on failure.
  */
 
 void poly_weights (double *w, int T, double wmax, 

@@ -4162,7 +4162,7 @@ gretl_matrix *periodogram_func (const double *x, int t1, int t2,
 /**
  * fractint:
  * @varno: ID number of variable to process.
- * @width: lag order / window size.
+ * @order: lag order / window size.
  * @dset: dataset struct.
  * @opt: option flags.
  * @prn: gretl printing struct.

@@ -3567,6 +3567,8 @@ static void print_wald_test (double W, int df, double pval,
  * groupwise_hetero_test:
  * @pmod: panel model to be tested.
  * @dset: information on the (panel) data set.
+ * @opt: may contain OPT_S to attach the test result
+ * to @pmod.
  * @prn: for printing details of iterations (or %NULL).
  *
  * Performs a Wald test for the null hypothesis that the 

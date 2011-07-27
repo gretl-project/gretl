@@ -1608,12 +1608,21 @@ static int compare_strings (const void *a, const void *b)
  * strings on exit. It is assumed that storage for the
  * strings array was obtained via strings_array_new() or
  * a similar libgretl function.
+ *
+ * Returns: 0 on success, non-zero on error.
  */
 
 int strings_array_sort (char ***pS, int *n, gretlopt opt)
 {
-    char **S = *pS;
-    int ns = *n;
+    char **S;
+    int ns;
+
+    if (pS == NULL || n == NULL) {
+	return E_DATA;
+    }
+
+    S = *pS;
+    ns = *n;
 
     qsort(S, ns, sizeof *S, compare_strings);
 
@@ -1636,7 +1645,7 @@ int strings_array_sort (char ***pS, int *n, gretlopt opt)
 
 	    if (tmp != NULL) {
 		*pS = tmp;
-	    }
+	    } 
 	    *n = m;
 	}
     }

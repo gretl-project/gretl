@@ -1664,6 +1664,7 @@ gretl_VAR_get_point_responses (GRETL_VAR *var, int targ, int shock,
  * @periods: number of periods over which to compute the response.
  * @alpha: determines confidence level for bootstrap interval.
  * @dset: dataset struct.
+ * @err: location to receive error code.
  *
  * Computes the response of @targ to a perturbation of @shock
  * in the context of @var: @targ and @shock are zero-based indices 

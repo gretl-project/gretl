@@ -468,7 +468,6 @@ DATASET *create_auxiliary_dataset (int nvar, int nobs)
 
 /**
  * allocate_Z:
- * @pZ: pointer to data array.
  * @dset: dataset information struct.
  *
  * Allocates the two-dimensional array to which @pZ points,

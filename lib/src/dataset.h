@@ -290,7 +290,7 @@ typedef enum {
 
 /**
  * dset_get_data:
- * @p: pointer to data information struct.
+ * @d: pointer to dataset.
  * @i: index number of variable.
  * @t: observation number.
  *
@@ -300,7 +300,7 @@ typedef enum {
 
 /**
  * dset_set_data:
- * @p: pointer to data information struct.
+ * @d: pointer to dataset.
  * @i: index number of variable.
  * @t: observation number.
  * @x: value to set.

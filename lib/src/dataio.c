@@ -2983,8 +2983,7 @@ static int import_octave (const char *fname, DATASET *dset,
  * import_other:
  * @fname: name of file.
  * @ftype: type of data file.
- * @pZ: pointer to data set.
- * @dset: pointer to data information struct.
+ * @dset: pointer to dataset struct.
  * @opt: option flag; see gretl_get_data().
  * @prn: gretl printing struct.
  * 
@@ -3374,7 +3373,6 @@ static int transpose_varname_used (const char *vname,
 
 /**
  * transpose_data:
- * @pZ: pointer to data array.
  * @dset: pointer to dataset information struct.
  *
  * Attempts to transpose the current dataset, so that each
