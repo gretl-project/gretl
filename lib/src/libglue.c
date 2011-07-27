@@ -123,9 +123,10 @@ int model_test_driver (const char *param, DATASET *dset,
 	if (type == GRETL_OBJ_EQN) {
 	    err = autocorr_test(ptr, k, dset, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    err = gretl_VAR_autocorrelation_test(ptr, k, dset, prn);
+	    err = gretl_VAR_autocorrelation_test(ptr, k, dset, 
+						 testopt, prn);
 	} else if (type == GRETL_OBJ_SYS) {
-	    err = system_autocorrelation_test(ptr, k, prn);
+	    err = system_autocorrelation_test(ptr, k, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}
@@ -136,9 +137,10 @@ int model_test_driver (const char *param, DATASET *dset,
 	if (type == GRETL_OBJ_EQN) {
 	    err = arch_test(ptr, k, dset, testopt, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    err = gretl_VAR_arch_test(ptr, k, dset, prn);
+	    err = gretl_VAR_arch_test(ptr, k, dset, 
+				      testopt, prn);
 	} else if (type == GRETL_OBJ_SYS) {
-	    err = system_arch_test(ptr, k, prn);
+	    err = system_arch_test(ptr, k, testopt, prn);
 	} else {
 	    err = E_NOTIMP;
 	}

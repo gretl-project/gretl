@@ -3483,11 +3483,14 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 			 int T, int order, double rsq, MODEL *pmod, 
 			 gretlopt opt, PRN *prn)
 {
-    ModelTest *test = model_test_new(GRETL_TEST_ARCH);
+    ModelTest *test = NULL;
     double LM = T * rsq;
     double pv = chisq_cdf_comp(order, LM);
 
+    record_test_result(LM, pv, "ARCH");
+
     if (V != NULL) {
+	/* V will be NULL if --quiet is in force */
 	int i, k = order + 1;
 	double *se = malloc(k * sizeof *se);
 	char **names;
@@ -3512,6 +3515,8 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 	free_strings_array(names, k);
     }
 
+    test = model_test_new(GRETL_TEST_ARCH);
+
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_LM);
 	model_test_set_order(test, order);
@@ -3532,9 +3537,9 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 	} else {
 	    model_test_free(test);
 	}
-    }	    
+    }
 
-    record_test_result(LM, pv, "ARCH");
+    
 }
 
 static int real_arch_test (const double *u, int T, int order, 

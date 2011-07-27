@@ -3974,7 +3974,7 @@ system_save_and_print_results (equation_system *sys, DATASET *dset,
 }
 
 int system_autocorrelation_test (equation_system *sys, int order, 
-				 PRN *prn)
+				 gretlopt opt, PRN *prn)
 {
     double *u, lb;
     int i, err = 0;
@@ -3993,7 +3993,8 @@ int system_autocorrelation_test (equation_system *sys, int order,
     return err;
 }
 
-int system_arch_test (equation_system *sys, int order, PRN *prn)
+int system_arch_test (equation_system *sys, int order, 
+		      gretlopt opt, PRN *prn)
 {
     const double *u;
     int i, err = 0;

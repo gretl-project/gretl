@@ -39,46 +39,106 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn)
 }
 
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
-				    DATASET *dset, PRN *prn)
+				    DATASET *dset, gretlopt opt,
+				    PRN *prn)
 {
     MODEL *pmod;
+    gretl_matrix *tests, *pvals;
     double lb;
-    int i, err = 0;
+    int i, quiet = (opt & OPT_Q);
+    int err = 0;
 
     if (order == 0) {
 	order = dset->pd;
     }
 
+    tests = gretl_column_vector_alloc(var->neqns);
+    pvals = gretl_column_vector_alloc(var->neqns);
+
+    if (tests == NULL || pvals == NULL) {
+	err = E_ALLOC;
+    }
+
     for (i=0; i<var->neqns && !err; i++) {
 	pmod = var->models[i];
-	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	if (!quiet) {
+	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	}
 	if (pmod->list[0] == 1) {
-	    /* VECM */
+	    /* only the dependent variable is recorded */
 	    lb = ljung_box(order, pmod->t1, pmod->t2, pmod->uhat, &err);
 	    if (!err) {
-		pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
-			lb, _("with p-value"), _("Chi-square"), order,
-			lb, chisq_cdf_comp(order, lb));
-		pputc(prn, '\n');
+		tests->val[i] = lb;
+		pvals->val[i] = chisq_cdf_comp(order, lb);
+		if (!(opt & OPT_Q)) {
+		    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
+			    lb, _("with p-value"), _("Chi-square"), order,
+			    lb, pvals->val[i]);
+		    pputc(prn, '\n');
+		}
 	    }
 	} else {
-	    err = autocorr_test(pmod, order, dset, OPT_Q | OPT_S, prn);
-	    gretl_model_test_print(var->models[i], 0, prn);
-	    gretl_model_destroy_tests(var->models[i]);
+	    if (quiet) {
+		err = autocorr_test(pmod, order, dset, OPT_Q, prn);
+	    } else {
+		err = autocorr_test(pmod, order, dset, OPT_Q | OPT_S, prn);
+	    }
+	    if (!err) {
+		tests->val[i] = get_last_test_statistic(NULL);
+		pvals->val[i] = get_last_pvalue(NULL);
+		if (!quiet) {
+		    gretl_model_test_print(var->models[i], 0, prn);
+		    gretl_model_destroy_tests(var->models[i]);
+		}
+	    }
 	}
+    }
+
+    if (!err) {
+	record_matrix_test_result(tests, pvals);
+    } else {
+	gretl_matrix_free(tests);
+	gretl_matrix_free(pvals);
     }
 
     return err;
 }
 
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
-			 DATASET *dset, PRN *prn)
+			 DATASET *dset, gretlopt opt,
+			 PRN *prn)
 {
+    gretl_matrix *tests, *pvals;
+    int quiet = (opt & OPT_Q);
     int i, err = 0;
 
+    if (order == 0) {
+	order = dset->pd;
+    }
+
+    tests = gretl_column_vector_alloc(var->neqns);
+    pvals = gretl_column_vector_alloc(var->neqns);
+
+    if (tests == NULL || pvals == NULL) {
+	err = E_ALLOC;
+    }
+
     for (i=0; i<var->neqns && !err; i++) {
-	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
-	err = arch_test(var->models[i], order, dset, OPT_NONE, prn);
+	if (!quiet) {
+	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
+	}
+	err = arch_test(var->models[i], order, dset, opt, prn);
+	if (!err) {
+	    tests->val[i] = get_last_test_statistic(NULL);
+	    pvals->val[i] = get_last_pvalue(NULL);
+	}
+    }
+
+    if (!err) {
+	record_matrix_test_result(tests, pvals);
+    } else {
+	gretl_matrix_free(tests);
+	gretl_matrix_free(pvals);
     }
 
     return err;

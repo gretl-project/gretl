@@ -135,10 +135,12 @@ gretl_VAR_do_error_decomp (const gretl_matrix *S, gretl_matrix *C,
 const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var, int *err);
 
 int gretl_VAR_autocorrelation_test (GRETL_VAR *var, int order, 
-				    DATASET *dset, PRN *prn);
+				    DATASET *dset, gretlopt opt,
+				    PRN *prn);
 
 int gretl_VAR_arch_test (GRETL_VAR *var, int order, 
-			 DATASET *dset, PRN *prn);
+			 DATASET *dset, gretlopt opt,
+			 PRN *prn);
 
 int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 

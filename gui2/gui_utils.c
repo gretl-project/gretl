@@ -3897,17 +3897,18 @@ static void system_test_call (GtkAction *action, gpointer p)
 	if (var != NULL) {
 	    err = gretl_VAR_autocorrelation_test(var, order, 
 						 dataset, 
+						 OPT_NONE,
 						 prn);
 	} else {
-	    err = system_autocorrelation_test(sys, order, prn);
+	    err = system_autocorrelation_test(sys, order, OPT_NONE, prn);
 	}
     } else if (code == SYS_ARCH_TEST) {
 	title = g_strdup(_("gretl: ARCH test"));
 	cstr = g_strdup_printf("modtest %d --arch", order);
 	if (var != NULL) {
-	    err = gretl_VAR_arch_test(var, order, dataset, prn);
+	    err = gretl_VAR_arch_test(var, order, dataset, OPT_NONE, prn);
 	} else {
-	    err = system_arch_test(sys, order, prn);
+	    err = system_arch_test(sys, order, OPT_NONE, prn);
 	}
     } else if (code == SYS_NORMALITY_TEST) {
 	title = g_strdup_printf("gretl: %s", _("Test for normality of residual"));

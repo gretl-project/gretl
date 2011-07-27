@@ -245,9 +245,10 @@ system_save_and_print_results (equation_system *sys,
 			       PRN *prn);
 
 int system_autocorrelation_test (equation_system *sys, int order, 
-				 PRN *prn);
+				 gretlopt opt, PRN *prn);
 
-int system_arch_test (equation_system *sys, int order, PRN *prn);
+int system_arch_test (equation_system *sys, int order, 
+		      gretlopt opt, PRN *prn);
 
 MODEL single_equation_liml (const int *list, DATASET *dset, 
 			    gretlopt opt);
