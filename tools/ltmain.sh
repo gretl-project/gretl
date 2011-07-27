@@ -6499,7 +6499,7 @@ func_mode_link ()
 	# Find the relevant object directory and library name.
 	if test "X$installed" = Xyes; then
 	  if test ! -f "$lt_sysroot$libdir/$linklib" && test -f "$abs_ladir/$linklib"; then
-	    func_warning "library \`$lib' was moved."
+	    # func_warning "library \`$lib' was moved."
 	    dir="$ladir"
 	    absdir="$abs_ladir"
 	    libdir="$abs_ladir"

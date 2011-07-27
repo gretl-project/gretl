@@ -20,8 +20,8 @@
 #ifndef GRETL__VERSION_H
 #define GRETL__VERSION_H
 
-#define LIBGRETL_CURRENT   0
-#define LIBGRETL_REVISION  63
+#define LIBGRETL_CURRENT   1
+#define LIBGRETL_REVISION  0
 #define LIBGRETL_AGE       0
 
 #define GRETL_VERSION "1.9.5cvs"

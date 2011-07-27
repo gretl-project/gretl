@@ -85,7 +85,8 @@ ifeq ($(have_gnome),2.0)
   GNOMEDEF = -DDATADIR=\"$(gnome_prefix)/share\"
 endif
 
-LIBS = $(GTKSOURCEVIEW_LIBS) $(GTK_LIBS) ../lib/libgretl-1.0.la
+GRETLLIB = ../lib/libgretl-1.0.la
+LIBS = $(GTKSOURCEVIEW_LIBS) $(GTK_LIBS) $(GRETLLIB)
 GUI_CFLAGS = $(GTK_CFLAGS) $(GTKSOURCEVIEW_CFLAGS)
 
 ifeq ($(USE_NLS),yes)
@@ -197,7 +198,7 @@ all: $(PROG) $(GRETL_LANG)
 	$(AMP)$(CC) -c $(CFLAGS) $<
 	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE) 
+$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GRETLLIB) $(GTKSOURCEVIEW_LITE) 
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
@@ -208,7 +209,7 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 mklang.o: mklang.c $(LANGDEPS)
 	$(AMP)$(CC) $(CFLAGS) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
 
-mklang: mklang.o 
+mklang: mklang.o $(GRETLLIB)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
 $(GRETL_LANG): $(MKLANG)
