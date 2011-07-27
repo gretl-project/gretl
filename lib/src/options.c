@@ -314,7 +314,7 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_X, "chi-square", 0 },
     { OMIT,     OPT_I, "silent", 0 },
     { OMIT,     OPT_T, "inst", 0 },
-    { OMIT,     OPT_W, "wald", 0 },
+    { OMIT,     OPT_W, "test-only", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_C, "coded", 0 },
     { OPEN,     OPT_D, "drop-empty", 0 },
@@ -935,6 +935,12 @@ gretlopt valid_long_opt (int ci, const char *lopt, OptStatus *status)
 	    }
 	} 
     }  
+
+    /* backward compatibility */
+    if (opt == OPT_NONE && !strcmp(lopt, "wald")) {
+	opt = OPT_W;
+	*status = 0;
+    }
 
     return opt;
 }

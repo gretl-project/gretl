@@ -3,6 +3,12 @@ version 1.9.6, in progress
 When a new series is declared without specifying any values,
 the values default to NA, and not zero as in gretl <= 1.9.5.
 
+The "omit" command: the --wald option, which prevents the 
+replacement of the original model with the restricted version, 
+is renamed as --test-only. The undocumented behavior by which
+the --quiet option also had this effect is now gone: this
+option only affects what gets printed.
+
 2011-04-22 version 1.9.5
 
 Matrix operators: "B / A" now has the same semantics as 

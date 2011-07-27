@@ -1112,19 +1112,16 @@ static MODEL LM_add_test (MODEL *pmod, DATASET *dset, int *list,
 /**
  * add_test_full:
  * @orig: pointer to original model.
- * @pmod: pointer to receive new model, with vars added,
- * or NULL.
+ * @pmod: pointer to receive augmented model.
  * @addvars: list of variables to add to original model.
  * @dset: dataset struct.
  * @opt: can contain OPT_Q (quiet) to suppress printing
  * of the new model, OPT_O to print its covariance matrix,
- * OPT_I for silent operation.  Additional options that
- * are applicable only for 2SLS models: OPT_B (add to
- * both list of regressors and list of instruments), OPT_T
- * (add to list of instruments only).
+ * OPT_I for silent operation.  
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after adding the specified
+ * variables, and records a joint test on the additional
  * variables.
  * 
  * Returns: 0 on successful completion, error code on error.
@@ -1141,7 +1138,7 @@ int add_test_full (MODEL *orig, MODEL *pmod, const int *addvars,
     int err = 0;
 
     if (orig == NULL || orig->list == NULL || addvars == NULL) {
-	return 1;
+	return E_DATA;
     }
 
     if (!command_ok_for_model(ADD, opt, orig->ci)) {
@@ -1524,18 +1521,13 @@ static int omit_test_precheck (MODEL *pmod, gretlopt opt)
  * @opt: can contain OPT_Q (quiet) to suppress printing
  * of the new model, OPT_O to print its covariance matrix,
  * OPT_I for silent operation; for OPT_A, see below.
- * Additional options that are applicable only for IV models: 
- * OPT_B (omit from both list of regressors and list of 
- * instruments), OPT_T (omit from list of instruments only).
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
  * specified in @omitvars.  Or if OPT_A is given, proceed 
  * sequentially, at each step dropping the least significant 
  * variable provided its p-value is above a certain threshold 
- * (currently 0.10, two-sided).  Or if @omitvars is NULL 
- * and @orig was not estimated using two-stage least squares,
- * drop the last independent variable in @orig.
+ * (currently 0.10, two-sided).
  * 
  * Returns: 0 on successful completion, error code on error.
  */

@@ -28,14 +28,6 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix for augmented model</effect>
 	</option>
-	<option>
-	  <flag>--inst</flag>
-	  <effect>add as instrument, TSLS only</effect>
-	</option>
-	<option>
-	  <flag>--both</flag>
-	  <effect>add as both regressor and instrument, TSLS only</effect>
-	</option>
       </options>
       <examples>
         <example>add 5 7 9</example>
@@ -45,42 +37,31 @@
 
     <description>
       <para context="cli">
-	Must be invoked after an estimation command. Performs a test
-	for the addition of specified variables to the last model, the
-	results of which may be retrieved using the accessors
-	<lit>$test</lit> and <lit>$pvalue</lit>.
+	Must be invoked after an estimation command. Performs a joint
+	test for the addition of the specified variables to the last
+	model, the results of which may be retrieved using the
+	accessors <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
       <para context="cli">
-	The <opt>--lm</opt> option is only available for models
-	estimated via OLS. In this case an LM test is performed: an
-	auxiliary regression is run in which the dependent variable is
-	the residual from the last model and the independent variables
-	are those from the last model plus the ones in
-	<repl>varlist</repl>. Under the null hypothesis that the true
-	coefficients are zero for all the additional variables, the
-	sample size times the unadjusted R-squared from this
-	regression is distributed as chi-square with degrees of
-	freedom equal to the number of added regressors.
+	By default an augmented version of the original model is
+	estimated, including the variables in <repl>varlist</repl>.
+	The test is a Wald test on the augmented model, which replaces
+	the original as the <quote>current model</quote> for the
+	purposes of, for example, retrieving the residuals as
+	<lit>$uhat</lit> or doing further tests.
       </para>
       <para context="cli">
-	Without the <opt>--lm</opt> option, an augmented version of
-	the original model is estimated, including the variables in
-	<repl>varlist</repl>. A test statistic for the joint
-	significance of the added variables is printed along with its
-	p-value, and in addition the augmented model replaces the
-	original as the <quote>current model</quote> for the purposes
-	of, for example, retrieving the residuals as <lit>$uhat</lit>
-	or doing further tests. 
-      </para>
-      <para context="cli">
-	If the original model was estimated using two-stage least
-	squares, an ambiguity arises: should the new variables be
-	added as regressors, as instruments, or as both? This is
-	resolved as follows: by default the new variables are added as
-	endogenous regressors, but if the <opt>--inst</opt> flag is
-	given they are added as instruments, or if the
-	<opt>--both</opt> flag is given they are added as exogenous
-	regressors.
+	Alternatively, given the <opt>--lm</opt> option (available
+	only for the models estimated via OLS), an LM test is
+	performed. An auxiliary regression is run in which the
+	dependent variable is the residual from the last model and the
+	independent variables are those from the last model plus
+	<repl>varlist</repl>. Under the null hypothesis that the added
+	variables have no additional explanatory power, the sample
+	size times the unadjusted R-squared from this regression is
+	distributed as chi-square with degrees of freedom equal to the
+	number of added regressors. In this case the original model is
+	not replaced.
       </para>
       <para context="gui">
 	The selected variables are added to the previous model and the
@@ -7035,12 +7016,12 @@
       </arguments>
       <options>
 	<option>
-	  <flag>--wald</flag>
-	  <effect>do a Wald test only</effect>
+	  <flag>--test-only</flag>
+	  <effect>don't replace the current model</effect>
 	</option>
 	<option>
 	  <flag>--chi-square</flag>
-	  <effect>give chi-square form of test</effect>
+	  <effect>give chi-square form of Wald test</effect>
 	</option>
 	<option>
 	  <flag>--quiet</flag>
@@ -7058,14 +7039,6 @@
 	  <flag>--auto</flag>
 	  <optparm optional="true">alpha</optparm>
 	  <effect>sequential elimination, see below</effect>
-	</option>
-	<option>
-	  <flag>--inst</flag>
-	  <effect>omit as instrument, TSLS only</effect>
-	</option>
-	<option>
-	  <flag>--both</flag>
-	  <effect>omit as both regressor and instrument, TSLS only</effect>
 	</option>
       </options>
       <examples>
@@ -7100,23 +7073,21 @@
     <description context="cli">
       <para>
 	This command must follow an estimation command.  It calculates
-	a test for the joint significance of the variables in
+	a Wald test for the joint significance of the variables in
 	<repl>varlist</repl>, which should be a subset of the
 	independent variables in the model last estimated. The
 	results of the test may be retrieved using the accessors
 	<lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
       <para>
-	If the <opt>--wald</opt> option is given, a Wald test is
-	performed using the estimated covariance matrix of the last
-	model and the restricted model is not estimated; otherwise the
-	restricted model is estimated and it replaces the original as
-	the <quote>current model</quote> for the purposes of, for
-	example, retrieving the residuals as <lit>$uhat</lit> or doing
-	further tests.
+	By default the restricted model is estimated and it replaces
+	the original as the <quote>current model</quote> for the
+	purposes of, for example, retrieving the residuals as
+	<lit>$uhat</lit> or doing further tests. This behavior may be
+	suppressed via the <opt>--test-only</opt> option.
       </para>
       <para>
-	By default the <math>F</math>-form of the test statistic is
+	By default the <math>F</math>-form of the Wald test is
 	recorded; the <opt>--chi-square</opt> option may be used to
 	record the chi-square form instead.
       </para>
@@ -7135,19 +7106,8 @@
 	and 1 (with no spaces), as in the fourth example above.  If
 	<repl>varlist</repl> is given this process is confined to the
 	listed variables, otherwise all variables are treated as
-	candidates for omission. Noe that the <opt>--auto</opt>
+	candidates for omission. Note that the <opt>--auto</opt>
 	and <opt>--wald</opt> options cannot be combined.
-      </para>
-      <para>
-	If the original model was estimated using two-stage least
-	squares, an ambiguity arises: should the selected variables be
-	omitted as regressors, as instruments, or as both?  This is
-	resolved as follows: by default the variables are dropped from
-	the list of regressors, but if the <opt>--inst</opt> flag is
-	given they are dropped as instruments, or if the
-	<opt>--both</opt> flag is given they are dropped from the
-	model altogether.  These two options are incompatible with the
-	<opt>--wald</opt> and <opt>--auto</opt> options.
       </para>
     </description>
 

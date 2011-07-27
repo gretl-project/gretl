@@ -51,3 +51,8 @@ omit lreagan
 omit lgorb
 omit lpres
 omit lopp
+# re-try the above using the --auto option
+ar1 milit const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
+ lkwar lvwar lkrus lgorb lsalt --hilu
+omit --auto
+
