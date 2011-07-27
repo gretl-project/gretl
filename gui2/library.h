@@ -73,7 +73,9 @@ void do_run_script (GtkWidget *w, windata_t *vwin);
 
 void run_script_fragment (windata_t *vwin, gchar *buf);
 
-void gui_errmsg (const int errcode);
+void gui_errmsg (int errcode);
+
+void gui_warnmsg (int errcode);
 
 void register_graph (PRN *prn);
 

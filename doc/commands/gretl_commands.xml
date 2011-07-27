@@ -7107,7 +7107,7 @@
 	<repl>varlist</repl> is given this process is confined to the
 	listed variables, otherwise all variables are treated as
 	candidates for omission. Note that the <opt>--auto</opt>
-	and <opt>--wald</opt> options cannot be combined.
+	and <opt>--test-only</opt> options cannot be combined.
       </para>
     </description>
 

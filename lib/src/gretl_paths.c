@@ -1247,7 +1247,7 @@ int get_plausible_functions_dir (char *fndir, int i)
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
  * @type: %PKG_REGULAR for a standard gfn package or %PKG_ADDON for
- * a reognized gretl "addon".
+ * a recognized gretl "addon".
  * 
  * Searches a list of directories in which we might expect to find
  * function packages, and, if the package in question is found,

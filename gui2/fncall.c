@@ -1786,7 +1786,7 @@ void call_function_package (const char *fname, windata_t *vwin,
     if (err) {
 	gui_errmsg(err); /* FIXME error not very informative? */
 	if (loaderr != NULL) {
-	    *loaderr = 1;
+	    *loaderr = FN_NO_LOAD;
 	}
 	return;
     }
@@ -1816,7 +1816,15 @@ void call_function_package (const char *fname, windata_t *vwin,
 	/* do we have suitable data in place? */
 	err = check_function_needs(dataset, cinfo->dreq, minver);
 	if (err) {
-	    gui_errmsg(err);
+	    if (loaderr != NULL) {
+		/* coming from package listing window */
+		gui_warnmsg(err);
+		*loaderr = FN_NO_DATA;
+		cinfo_free(cinfo);
+		return;
+	    } else {
+		gui_errmsg(err);
+	    }
 	}
     }
 
@@ -1878,7 +1886,7 @@ void call_function_package (const char *fname, windata_t *vwin,
 
     if (!err) {
 	if (fn_n_params(cinfo->func) == 0) {
-	    /* no arguments to be gathered (not ready!) */
+	    /* no arguments to be gathered */
 	    fncall_exec_callback(NULL, cinfo);
 	} else {
 	    function_call_dialog(cinfo);

@@ -1352,6 +1352,15 @@ void gui_errmsg (int errcode)
     }
 }
 
+void gui_warnmsg (int errcode)
+{
+    const char *msg = errmsg_get_with_default(errcode);
+
+    if (msg != NULL && *msg != '\0') {
+	warnbox(msg);
+    } 
+}
+
 /* OPT_M  drop all obs with missing data values 
    OPT_O  sample using dummy variable
    OPT_R  sample using boolean expression

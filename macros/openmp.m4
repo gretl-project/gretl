@@ -22,13 +22,13 @@ AC_DEFUN([AC_C_OPENMP],
     AC_MSG_CHECKING([for $CC option to support OpenMP])
     AC_CACHE_VAL([ac_cv_prog_cc_openmp], [
       ac_cv_prog_cc_openmp=unsupported
-      AC_LINK_IFELSE([
+      AC_LINK_IFELSE([AC_LANG_SOURCE([
 #ifndef _OPENMP
  choke me
 #endif
 #include <omp.h>
 int main () { return omp_get_num_threads (); }
-	], [ac_cv_prog_cc_openmp="none needed"])
+	])], [ac_cv_prog_cc_openmp="none needed"])
       if test "$ac_cv_prog_cc_openmp" = unsupported; then
 	dnl Try these flags:
 	dnl   GCC >= 4.2	   -fopenmp
@@ -74,13 +74,13 @@ int main () { return omp_get_num_threads (); }
 	  if test $ac_openmp_result = yes; then
 	    ac_save_CFLAGS=$CFLAGS
 	    CFLAGS="$CFLAGS $ac_option"
-	    AC_LINK_IFELSE([
+	    AC_LINK_IFELSE([AC_LANG_SOURCE([
 #ifndef _OPENMP
  choke me
 #endif
 #include <omp.h>
 int main () { return omp_get_num_threads (); }
-	      ], [ac_cv_prog_cc_openmp=$ac_option])
+	      ])], [ac_cv_prog_cc_openmp=$ac_option])
 	    CFLAGS=$ac_save_CFLAGS
 	    break
 	  fi

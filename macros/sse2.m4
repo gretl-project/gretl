@@ -35,7 +35,7 @@ AC_DEFUN([AC_C_SSE2],
     have_sse2_intrinsics=no
     CFLAGS="$SSE2_CFLAGS $CFLAGS"  
   
-    AC_COMPILE_IFELSE([
+    AC_COMPILE_IFELSE([AC_LANG_SOURCE([
 #if defined(__GNUC__) && (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 2))
 #   if !defined(__amd64__) && !defined(__x86_64__)
 #      error "Need GCC >= 4.2 for SSE2 intrinsics on x86"
@@ -49,9 +49,9 @@ int main () {
    c = _mm_xor_si128 (a, b);
    return 0;
 }      
-    ], have_sse2_intrinsics=yes,SSE2_CFLAGS="")
+    ])], have_sse2_intrinsics=yes,SSE2_CFLAGS="")
     if test "$have_sse2_intrinsics" = "yes" ; then
-      AC_RUN_IFELSE([
+      AC_RUN_IFELSE([AC_LANG_SOURCE([
 #include <stdio.h>
 #define cpuid(func,ax,bx,cx,dx)\
 	__asm__ __volatile__ ("cpuid":\
@@ -67,7 +67,7 @@ int main (void)
 	return 1;
     }
 }
-      ], sse2_result=yes, sse2_result=no, sse2_result=yes)
+      ])], sse2_result=yes, sse2_result=no, sse2_result=yes)
     fi
  
     if test "$sse2_result" = "yes" ; then      
