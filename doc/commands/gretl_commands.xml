@@ -28,6 +28,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix for augmented model</effect>
 	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>IV estimation only, see below</effect>
+	</option>	
       </options>
       <examples>
         <example>add 5 7 9</example>
@@ -62,6 +66,13 @@
 	distributed as chi-square with degrees of freedom equal to the
 	number of added regressors. In this case the original model is
 	not replaced.
+      </para>
+      <para context="cli">
+	The <opt>--both</opt> option is specific to two-stage
+	least squares: it specifies that the new variables
+	should be added both to the list of regressors and the
+	list of instruments, the default in this case being to
+	add to the regressors only.
       </para>
       <para context="gui">
 	The selected variables are added to the previous model and the

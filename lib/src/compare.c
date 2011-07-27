@@ -485,8 +485,8 @@ static int add_or_omit_compare (MODEL *pmodA, MODEL *pmodB,
 	rmod = pmodA;
     } 
 
-    if (opt & (OPT_B | OPT_T)) {
-	/* ivreg specials: A and B have different
+    if (opt & OPT_B) {
+	/* ivreg special: A and B have different
 	   instruments, not just different regressors
 	*/
 	iv_special = 1;
@@ -1478,7 +1478,7 @@ static int make_short_list (MODEL *orig, const int *omitvars,
 
 static int omit_options_inconsistent (MODEL *pmod, gretlopt opt)
 {
-    if ((opt & OPT_T) || (opt & OPT_B)) {
+    if (opt & OPT_B) {
 	/* 2sls: omitting variable as instrument */
 	if (opt & (OPT_W | OPT_A)) {
 	    /* can't use Wald method on original VCV,
@@ -1576,9 +1576,6 @@ int omit_test_full (MODEL *orig, MODEL *pmod, const int *omitvars,
 
     if (err) {
 	errmsg(err, prn);
-    } else if (opt & OPT_T) {
-	/* omit as instrument only: can't do a test? */
-	pputs(prn, "Warning: no test performed\n");
     } else {
 	int *omitlist = gretl_list_diff_new(orig->list, rmod.list, 2);
 

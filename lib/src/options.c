@@ -84,7 +84,6 @@ struct flag_match {
 struct gretl_option gretl_opts[] = {
     { ADD,      OPT_B, "both", 0 },
     { ADD,      OPT_I, "silent", 0 },
-    { ADD,      OPT_T, "inst", 0 },
     { ADD,      OPT_L, "lm", 0 },
     { ADF,      OPT_N, "nc", 0 }, 
     { ADF,      OPT_C, "c", 0 }, 
@@ -313,7 +312,6 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_B, "both", 0 },
     { OMIT,     OPT_X, "chi-square", 0 },
     { OMIT,     OPT_I, "silent", 0 },
-    { OMIT,     OPT_T, "inst", 0 },
     { OMIT,     OPT_W, "test-only", 0 },
     { OPEN,     OPT_B, "progress-bar", 0 },
     { OPEN,     OPT_C, "coded", 0 },
