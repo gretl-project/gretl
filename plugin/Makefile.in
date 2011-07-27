@@ -215,123 +215,123 @@ all: .deps $(PLUGINS)
 
 -include .deps/*.d
 
-stats_tables.la: stats_tables.lo $(GRETLLIB)
+stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-range-mean.la: range-mean.lo $(GRETLLIB)
+range-mean.la: range-mean.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-eviews_import.la: eviews_import.lo $(GRETLLIB)
+eviews_import.la: eviews_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-stata_import.la: stata_import.lo $(GRETLLIB)
+stata_import.la: stata_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
-spss_import.la: spss_import.lo $(GRETLLIB)
+spss_import.la: spss_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
-sas_import.la: sas_import.lo $(GRETLLIB)
+sas_import.la: sas_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-jmulti_import.la: jmulti_import.lo $(GRETLLIB)
+jmulti_import.la: jmulti_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-fractals.la: fractals.lo $(GRETLLIB)
+fractals.la: fractals.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-kernel.la: kernel.lo $(GRETLLIB)
+kernel.la: kernel.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-vif.la: vif.lo $(GRETLLIB)
+vif.la: vif.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
-urcdist.la: urcdist.lo $(GRETLLIB)
+urcdist.la: urcdist.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-mp_ols.la: mp_ols.lo $(GRETLLIB)
+mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS) $(MPFR_LIBS)
 
-johansen.la: johansen.lo jrestrict.lo jalpha.lo $(GRETLLIB)
+johansen.la: johansen.lo jrestrict.lo jalpha.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-sysest.la: sysest.lo fiml.lo liml.lo $(GRETLLIB)
+sysest.la: sysest.lo fiml.lo liml.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-nistcheck.la: nistcheck.lo $(GRETLLIB)
+nistcheck.la: nistcheck.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
-arbond.la: arbond.lo $(GRETLLIB)
+arbond.la: arbond.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-arma.la: arma.lo arma_cml.lo arma_init.lo $(GRETLLIB)
+arma.la: arma.lo arma_cml.lo arma_init.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-poisson.la: poisson.lo $(GRETLLIB)
+poisson.la: poisson.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
-duration.la: duration.lo $(GRETLLIB)
+duration.la: duration.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
-heckit.la: heckit.lo $(GRETLLIB)
+heckit.la: heckit.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
-biprobit.la: biprobit.lo $(GRETLLIB)
+biprobit.la: biprobit.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
-garch.la: garch.lo fcp.lo mod_garch.lo $(GRETLLIB)
+garch.la: garch.lo fcp.lo mod_garch.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-gretlzip.la: gretlzip.lo $(ZIPOBJ) $(GRETLLIB)
+gretlzip.la: gretlzip.lo $(ZIPOBJ)
 	$(LINK) -o $@ $^ $(ZIP_LIBS) $(GRETLLIB)
 
-audio.la: audio.lo midi_utils.lo $(GRETLLIB)
+audio.la: audio.lo midi_utils.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(AUDIO_LIBS)
 
-odbc_import.la: odbc_import.lo $(GRETLLIB)
+odbc_import.la: odbc_import.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(ODBC_LIBS)
 
-quantreg.la: quantreg.lo rqfnb.lo rqbr.lo $(GRETLLIB)
+quantreg.la: quantreg.lo rqfnb.lo rqbr.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-interval.la: interval.lo $(GRETLLIB)
+interval.la: interval.lo
 	$(LINK) -o $@ $< $(GRETLLIB) 
 
-anova.la: anova.lo $(GRETLLIB)
+anova.la: anova.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
-interpolate.la: interpolate.lo $(GRETLLIB)
+interpolate.la: interpolate.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-panurc.la: panurc.lo $(GRETLLIB)
+panurc.la: panurc.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 # plugins that require GTK+
 
-arma_x12.la: arma_x12.lo $(GRETLLIB)
+arma_x12.la: arma_x12.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
-excel_import.la: excel_import.lo workbook.lo ms-ole.lo $(GRETLLIB)
+excel_import.la: excel_import.lo workbook.lo ms-ole.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
 
-gnumeric_import.la: gnumeric_import.lo $(GRETLLIB)
+gnumeric_import.la: gnumeric_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
-leverage.la: leverage.lo $(GRETLLIB)
+leverage.la: leverage.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
-mailer.la: mailer.lo codes.lo encode.lo md5c.lo $(GRETLLIB)
+mailer.la: mailer.lo codes.lo encode.lo md5c.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
 
-ods_import.la: ods_import.lo $(GRETLLIB)
+ods_import.la: ods_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
-pca.la: pca.lo $(GRETLLIB)
+pca.la: pca.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 progress_bar.la: progress_bar.lo
 	$(LINK) -o $@ $< $(GTK_LIBS)
 
-tramo-x12a.la: tramo-x12a.lo tramo_options.lo $(GRETLLIB)
+tramo-x12a.la: tramo-x12a.lo tramo_options.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
 
 $(GRETLLIB):

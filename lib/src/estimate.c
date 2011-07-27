@@ -3478,12 +3478,40 @@ static void arch_test_print_simple (int order, double LM,
 	    order, LM, pval); 
 }
 
+static void print_arch_regression (const gretl_matrix *b,
+				   const gretl_matrix *V,
+				   int T, int order, PRN *prn)
+{
+    int i, k = order + 1;
+    double *se = malloc(k * sizeof *se);
+    char **names;
+
+    names = strings_array_new_with_length(k, 16);
+
+    if (se != NULL && names != NULL) {
+	pputc(prn, '\n');
+	pprintf(prn, _("Test for ARCH of order %d"), order);
+	pputs(prn, "\n\n");
+
+	for (i=0; i<k; i++) {
+	    se[i] = sqrt(gretl_matrix_get(V, i, i));
+	    sprintf(names[i], "alpha(%d)", i);
+	}
+
+	print_coeffs(b->val, se, (const char **) names, 
+		     k, T - k, ARCH, prn);
+    }
+
+    free(se);
+    free_strings_array(names, k);
+}
+
 static void 
 arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 			 int T, int order, double rsq, MODEL *pmod, 
 			 gretlopt opt, PRN *prn)
 {
-    ModelTest *test = NULL;
+    ModelTest *test;
     double LM = T * rsq;
     double pv = chisq_cdf_comp(order, LM);
 
@@ -3491,55 +3519,38 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 
     if (V != NULL) {
 	/* V will be NULL if --quiet is in force */
-	int i, k = order + 1;
-	double *se = malloc(k * sizeof *se);
-	char **names;
-
-	names = strings_array_new_with_length(k, 16);
-
-	if (se != NULL && names != NULL) {
-	    pputc(prn, '\n');
-	    pprintf(prn, _("Test for ARCH of order %d"), order);
-	    pputs(prn, "\n\n");
-
-	    for (i=0; i<k; i++) {
-		se[i] = sqrt(gretl_matrix_get(V, i, i));
-		sprintf(names[i], "alpha(%d)", i);
-	    }
-
-	    print_coeffs(b->val, se, (const char **) names, 
-			 k, T - k, ARCH, prn);
-	}
-
-	free(se);
-	free_strings_array(names, k);
+	print_arch_regression(b, V, T, order, prn);
     }
 
     test = model_test_new(GRETL_TEST_ARCH);
 
-    if (test != NULL) {
-	model_test_set_teststat(test, GRETL_STAT_LM);
-	model_test_set_order(test, order);
-	model_test_set_dfn(test, order);
-	model_test_set_value(test, LM);
-	model_test_set_pvalue(test, pv);
-
-	if (opt & OPT_Q) {
-	    arch_test_print_simple(order, LM, pv, prn);
-	} else {
-	    int heading = (V == NULL);
-
-	    gretl_model_test_print_direct(test, heading, prn);
-	}
-
-	if (pmod != NULL && (opt & OPT_S)) {
-	    maybe_add_test_to_model(pmod, test);
-	} else {
-	    model_test_free(test);
-	}
+    if (opt & OPT_Q) {
+	arch_test_print_simple(order, LM, pv, prn);
     }
 
-    
+    if ((opt & OPT_S) || !(opt & OPT_Q)) {
+	ModelTest *test = model_test_new(GRETL_TEST_ARCH);
+
+	if (test != NULL) {
+	    int heading = (V == NULL);
+
+	    model_test_set_teststat(test, GRETL_STAT_LM);
+	    model_test_set_order(test, order);
+	    model_test_set_dfn(test, order);
+	    model_test_set_value(test, LM);
+	    model_test_set_pvalue(test, pv);
+
+	    if (!(opt & OPT_Q)) {
+		gretl_model_test_print_direct(test, heading, prn);
+	    }
+
+	    if (pmod != NULL && (opt & OPT_S)) {
+		maybe_add_test_to_model(pmod, test);
+	    } else {
+		model_test_free(test);
+	    }
+	}
+    }
 }
 
 static int real_arch_test (const double *u, int T, int order, 

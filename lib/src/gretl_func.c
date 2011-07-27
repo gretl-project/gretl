@@ -21,7 +21,6 @@
 
 #include "libgretl.h"
 #include "monte_carlo.h"
-#include "version.h"
 #include "gretl_func.h"
 #include "libset.h"
 #include "usermat.h"

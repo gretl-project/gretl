@@ -20,6 +20,8 @@
 #ifndef LIBGRETL_H
 #define LIBGRETL_H
 
+#include "version.h"
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif

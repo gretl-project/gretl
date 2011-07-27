@@ -34,7 +34,6 @@
 #include "datafiles.h"
 #include "toolbar.h"
 #include "obsbutton.h"
-#include "version.h"
 #include "fncall.h"
 
 #define FCDEBUG 0

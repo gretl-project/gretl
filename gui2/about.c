@@ -19,7 +19,6 @@
 
 #include "gretl.h"
 #include "dlgutils.h"
-#include "version.h"
 #include "build.h"
 
 #ifdef G_OS_WIN32

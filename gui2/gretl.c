@@ -20,7 +20,6 @@
 /* gretl.c : main for gretl */
 
 #include "gretl.h"
-#include "version.h"
 #include "gretl_func.h"
 #include "gretl_xml.h"
 #include "libset.h"

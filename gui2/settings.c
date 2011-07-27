@@ -28,7 +28,6 @@
 #include "ssheet.h"
 
 #include "libset.h"
-#include "version.h"
 #include "texprint.h"
 
 #include <unistd.h>

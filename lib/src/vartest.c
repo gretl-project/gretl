@@ -109,7 +109,6 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 			 PRN *prn)
 {
     gretl_matrix *tests, *pvals;
-    int quiet = (opt & OPT_Q);
     int i, err = 0;
 
     if (order == 0) {
@@ -124,9 +123,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
     }
 
     for (i=0; i<var->neqns && !err; i++) {
-	if (!quiet) {
-	    pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
-	}
+	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
 	err = arch_test(var->models[i], order, dset, opt, prn);
 	if (!err) {
 	    tests->val[i] = get_last_test_statistic(NULL);
