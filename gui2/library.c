@@ -1955,6 +1955,7 @@ int do_add_omit (selector *sr)
     int err = 0;
 
     if (buf == NULL && !auto_omit) {
+	warnbox(_("No variables are selected"));
 	return 1;
     }
 

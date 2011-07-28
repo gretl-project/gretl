@@ -3511,7 +3511,6 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 			 int T, int order, double rsq, MODEL *pmod, 
 			 gretlopt opt, PRN *prn)
 {
-    ModelTest *test;
     double LM = T * rsq;
     double pv = chisq_cdf_comp(order, LM);
 
@@ -3521,8 +3520,6 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 	/* V will be NULL if --quiet is in force */
 	print_arch_regression(b, V, T, order, prn);
     }
-
-    test = model_test_new(GRETL_TEST_ARCH);
 
     if (opt & OPT_Q) {
 	arch_test_print_simple(order, LM, pv, prn);
