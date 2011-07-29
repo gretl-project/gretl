@@ -3469,10 +3469,16 @@ static int lagdepvar (const int *list, const DATASET *dset)
 }
 
 static void arch_test_print_simple (int order, double LM,
-				    double pval, PRN *prn)
+				    double pval, gretlopt opt,
+				    PRN *prn)
 {
-    pprintf(prn, "\n%s %d\n", _("Test for ARCH of order"), order);
-    pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
+    if (opt & OPT_M) {
+	/* multi-equation system */
+	pprintf(prn, "%s: TR^2 = %f,\n", _("Test statistic"), LM);
+    } else {
+	pprintf(prn, "\n%s %d\n", _("Test for ARCH of order"), order);
+	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), LM);
+    }
     pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
 	    _("with p-value"), _("Chi-square"), 
 	    order, LM, pval); 
@@ -3480,7 +3486,8 @@ static void arch_test_print_simple (int order, double LM,
 
 static void print_arch_regression (const gretl_matrix *b,
 				   const gretl_matrix *V,
-				   int T, int order, PRN *prn)
+				   int T, int order, 
+				   gretlopt opt, PRN *prn)
 {
     int i, k = order + 1;
     double *se = malloc(k * sizeof *se);
@@ -3489,9 +3496,12 @@ static void print_arch_regression (const gretl_matrix *b,
     names = strings_array_new_with_length(k, 16);
 
     if (se != NULL && names != NULL) {
-	pputc(prn, '\n');
-	pprintf(prn, _("Test for ARCH of order %d"), order);
-	pputs(prn, "\n\n");
+	if (!(opt & OPT_M)) {
+	    /* not multi-equation */
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Test for ARCH of order %d"), order);
+	    pputs(prn, "\n\n");
+	}
 
 	for (i=0; i<k; i++) {
 	    se[i] = sqrt(gretl_matrix_get(V, i, i));
@@ -3518,11 +3528,11 @@ arch_test_save_or_print (const gretl_matrix *b, const gretl_matrix *V,
 
     if (V != NULL) {
 	/* V will be NULL if --quiet is in force */
-	print_arch_regression(b, V, T, order, prn);
+	print_arch_regression(b, V, T, order, opt, prn);
     }
 
     if (opt & OPT_Q) {
-	arch_test_print_simple(order, LM, pv, prn);
+	arch_test_print_simple(order, LM, pv, opt, prn);
     }
 
     if ((opt & OPT_S) || !(opt & OPT_Q)) {

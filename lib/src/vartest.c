@@ -120,11 +120,16 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 
     if (tests == NULL || pvals == NULL) {
 	err = E_ALLOC;
+    } else {
+	pprintf(prn, "%s %d\n\n", _("Test for ARCH of order"), 
+		order);
     }
 
     for (i=0; i<var->neqns && !err; i++) {
 	pprintf(prn, "%s %d:\n", _("Equation"), i + 1);
-	err = arch_test(var->models[i], order, dset, opt, prn);
+	/* add OPT_M for multi-equation output */
+	err = arch_test(var->models[i], order, dset, 
+			opt | OPT_M, prn);
 	if (!err) {
 	    tests->val[i] = get_last_test_statistic(NULL);
 	    pvals->val[i] = get_last_pvalue(NULL);
