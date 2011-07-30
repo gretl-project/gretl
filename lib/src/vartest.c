@@ -403,9 +403,11 @@ int VAR_do_lagsel (GRETL_VAR *var, const DATASET *dset, PRN *prn)
 	gretl_matrix_set(crittab, m, 1, var->BIC);
 	gretl_matrix_set(crittab, m, 2, var->HQC);
 	gretl_VAR_print_lagsel(lltab, crittab, best_row, prn);
+	record_matrix_test_result(crittab, NULL);
+	crittab = NULL;
     }
 
-    bailout:
+ bailout:
 
     gretl_matrix_free(crittab);
     gretl_matrix_free(lltab);

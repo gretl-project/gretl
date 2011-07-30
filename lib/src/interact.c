@@ -517,6 +517,25 @@ static void maybe_extract_savename (char *s, CMD *cmd)
 #endif
 }
 
+static const char *maybe_skip_savename (const char *s)
+{
+    char savename[32], test[4];
+    int n;
+
+    if (*s == '"') {
+	n = sscanf(s, "\"%31[^\"]\" <- %3s", savename, test);
+    } else {
+	n = sscanf(s, "%31s <- %3s", savename, test);
+    } 
+
+    if (n == 2) {
+	s = strstr(s + strlen(savename), " <- ");
+	s += 4;
+    }
+
+    return s;
+}
+
 static inline void maybe_set_catch_flag (char *s, CMD *cmd)
 {
     if (strncmp(s, "catch ", 6) == 0) {
@@ -2215,15 +2234,25 @@ static int end_foreign (const char *s)
    command word (starting with a alphabetical character), but there
    are a few special case: shell commands start with the "!" escape;
    restriction specifications may start with "-" (as in "-b1 + b2 =
-   0") or a numerical multiplier.  
+   0") or a numerical multiplier. 
+
+   In addition the beginning of the line may take the form of
+   a save to a named object as in "foo <- command".
 */
 
 static int get_command_word (const char *line, char *cnext, CMD *cmd)
 {
-    int n = gretl_namechar_spn(line);
-    int ret = 0;
+    int n, ret = 0;
 
     *cmd->word = '\0';
+
+    if (!cmd->context && gretl_function_depth() == 0) {
+	if (strstr(line, " <- ") != NULL) {
+	    line = maybe_skip_savename(line);
+	}
+    } 
+
+    n = gretl_namechar_spn(line);
 
     if (cmd->context == RESTRICT && n == 0) {
 	/* non-alpha may be OK */

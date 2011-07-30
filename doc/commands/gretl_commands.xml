@@ -10943,7 +10943,8 @@
 	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
 	VARs of order 1 to the given maximum.  This is intended to help
 	with the selection of the optimal lag order.  The usual VAR output is
-	not presented.
+	not presented. The table of information criteria may be retrieved
+	as a matrix via the <lit>$test</lit> accessor.
       </para>
 
     </description>

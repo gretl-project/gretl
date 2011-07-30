@@ -2394,7 +2394,7 @@ static int parse_forecast_string (const char *s,
     if (nf < nmin || nf > nmax) {
 	fprintf(stderr, "fcast: expected %d to %d fields in input, got %d\n",
 		nmin, nmax, nf);
-	return E_DATA;
+	return E_PARSE;
     }
 
     if (opt & OPT_R) {
