@@ -435,6 +435,10 @@ static void sourceview_apply_language (windata_t *vwin)
 
     lm = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
 
+    if (lm == NULL) {
+	return;
+    }
+
     if (vwin->role == EDIT_GP) {
 	id = "gnuplot";
     } else if (vwin->role == EDIT_R) {
@@ -465,6 +469,10 @@ static void sourceview_apply_language (windata_t *vwin)
     const char *mtype = NULL;
 
     lm = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
+
+    if (lm == NULL) {
+	return;
+    }    
 
     if (vwin->role == EDIT_GP) {
 	mtype = "application/x-gnuplot";
