@@ -296,7 +296,7 @@ void text_undo (GtkWidget *w, windata_t *vwin)
 	if (gtk_source_buffer_can_undo(vwin->sbuf)) {
 	    gtk_source_buffer_undo(vwin->sbuf);
 	} else {
-	    errbox(_("No undo information available"));
+	    warnbox(_("No undo information available"));
 	}
 	return;
     }
