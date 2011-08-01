@@ -1348,14 +1348,6 @@ void free_windata (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     if (vwin != NULL) {
-	if (vwin->text != NULL) { 
-	    gchar *undo = g_object_steal_data(G_OBJECT(vwin->text), "undo");
-	    
-	    if (undo != NULL) {
-		g_free(undo);
-	    }
-	}
-
 	/* notify parent, if any, that child is gone */
 	if (vwin->gretl_parent != NULL) {
 	    vwin_nullify_child(vwin->gretl_parent, vwin);
@@ -1745,11 +1737,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 				   role, data);
 } 
 
-#define view_file_use_sourceview(r) (r != EDIT_X12A &&		\
-				     (vwin_editing_script(r) ||	\
-				      r == VIEW_SCRIPT ||	\
-				      r == VIEW_LOG))
-
 #define record_on_winstack(r) (!vwin_editing_script(r) && \
                                r != VIEW_LOG && \
                                r != VIEW_SCRIPT)
@@ -1797,7 +1784,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     vwin_add_viewbar(vwin, vflags);
 
-    if (view_file_use_sourceview(role)) {
+    if (textview_use_highlighting(role) || editable) {
 	create_source(vwin, hsize, vsize, editable);
     } else {
 	create_text(vwin, hsize, vsize, 0, editable);
@@ -1805,7 +1792,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     text_table_setup(vwin->vbox, vwin->text);
 
-    if (view_file_use_sourceview(role)) {
+    if (textview_use_highlighting(role) || editable) {
 	sourceview_insert_file(vwin, filename);
     } else {
 	textview_insert_file(vwin, filename);
@@ -2119,16 +2106,14 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     /* add a tool bar */
     vwin_add_viewbar(vwin, VIEWBAR_EDITABLE);
 
-    create_text(vwin, hsize, vsize, 0, TRUE);
+    create_source(vwin, hsize, vsize, TRUE);
     text_table_setup(vwin->vbox, vwin->text);
     
     /* insert the buffer text */
-    if (*pbuf) {
-	GtkTextBuffer *tbuf = 
-	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-
-	gtk_text_buffer_set_text(tbuf, *pbuf, -1);
+    if (pbuf != NULL && *pbuf != NULL) {
+	sourceview_insert_buffer(vwin, *pbuf);
     }
+
     g_signal_connect(G_OBJECT(vwin->text), "button-press-event", 
 		     G_CALLBACK(text_popup_handler), vwin);
     g_signal_connect(G_OBJECT(vwin->main), "key-press-event", 

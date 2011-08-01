@@ -275,52 +275,26 @@ int viewer_char_count (windata_t *vwin)
 
 void text_paste (GtkWidget *w, windata_t *vwin)
 {
-    gchar *undo_buf = textview_get_text(vwin->text);
-    gchar *old;
-
-    old = g_object_get_data(G_OBJECT(vwin->text), "undo");
-    g_free(old);
-
-    g_object_set_data(G_OBJECT(vwin->text), "undo", undo_buf);
-
     gtk_text_buffer_paste_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)),
 				    gtk_clipboard_get(GDK_NONE),
 				    NULL, TRUE);
 }
 
+void text_redo (GtkWidget *w, windata_t *vwin)
+{
+    if (vwin->sbuf != NULL && gtk_source_buffer_can_redo(vwin->sbuf)) {
+	gtk_source_buffer_redo(vwin->sbuf);
+    } else {
+	warnbox(_("No redo information available"));
+    }
+}
+
 void text_undo (GtkWidget *w, windata_t *vwin)
 {
-    gchar *old = NULL;
-
-    if (vwin->sbuf != NULL) {
-	if (gtk_source_buffer_can_undo(vwin->sbuf)) {
-	    gtk_source_buffer_undo(vwin->sbuf);
-	} else {
-	    warnbox(_("No undo information available"));
-	}
-	return;
-    }
-    
-    old = g_object_steal_data(G_OBJECT(vwin->text), "undo");
-
-    if (old == NULL) {
-	errbox(_("No undo information available"));
+    if (vwin->sbuf != NULL && gtk_source_buffer_can_undo(vwin->sbuf)) {
+	gtk_source_buffer_undo(vwin->sbuf);
     } else {
-	GtkTextBuffer *buf;
-	GtkTextIter start, end;
-	GtkTextMark *ins;
-
-	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
-	ins = gtk_text_buffer_get_insert(buf);
-
-	gtk_text_buffer_get_start_iter(buf, &start);
-	gtk_text_buffer_get_end_iter(buf, &end);
-	gtk_text_buffer_delete(buf, &start, &end);
-
-	gtk_text_buffer_insert(buf, &start, old, -1);
-	gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(vwin->text), 
-				     ins, 0.0, TRUE, 0.1, 0.0);
-	g_free(old);
+	warnbox(_("No undo information available"));
     }
 }
 
@@ -329,9 +303,7 @@ int text_can_undo (windata_t *vwin)
     if (vwin->sbuf != NULL) {
 	return gtk_source_buffer_can_undo(vwin->sbuf);
     } else {
-	gchar *old = g_object_get_data(G_OBJECT(vwin->text), "undo");
-
-	return old != NULL;
+	return 0;
     }
 }
 
@@ -609,19 +581,30 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 		    gboolean editable)
 {
 #ifdef NEWER_SOURCEVIEW
-    GtkSourceLanguageManager *lm = gtk_source_language_manager_new();
+    GtkSourceLanguageManager *lm = NULL;
 #else
-    GtkSourceLanguagesManager *lm = gtk_source_languages_manager_new();
+    GtkSourceLanguagesManager *lm = NULL;
 #endif
     GtkSourceBuffer *sbuf;
     GtkTextView *view;
     int cw;
     
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
-    g_object_ref(lm);
-    g_object_set_data_full(G_OBJECT(sbuf), "languages-manager",
-			   lm, (GDestroyNotify) g_object_unref); 
-    g_object_unref(lm); 
+
+    if (textview_use_highlighting(vwin->role)) {
+#ifdef NEWER_SOURCEVIEW
+	lm = gtk_source_language_manager_new();
+#else
+	lm = gtk_source_languages_manager_new();
+#endif
+    }
+	
+    if (lm != NULL) {
+	g_object_ref(lm);
+	g_object_set_data_full(G_OBJECT(sbuf), "languages-manager",
+			       lm, (GDestroyNotify) g_object_unref); 
+	g_object_unref(lm);
+    } 
 
 #ifdef NEWER_SOURCEVIEW
     gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);

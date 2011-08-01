@@ -20,6 +20,11 @@
 #ifndef TEXTBUF_H
 #define TEXTBUF_H
 
+#define textview_use_highlighting(r) (r != EDIT_X12A &&	   \
+				      (vwin_editing_script(r) ||  \
+				       r == VIEW_SCRIPT ||	   \
+				       r == VIEW_LOG))
+
 extern int tabwidth;
 extern int smarttab;
 
@@ -53,6 +58,8 @@ int textview_set_cursor_at_line (GtkWidget *view, int line);
 int viewer_char_count (windata_t *vwin);
 
 void text_paste (GtkWidget *w, windata_t *vwin);
+
+void text_redo (GtkWidget *w, windata_t *vwin);
 
 void text_undo (GtkWidget *w, windata_t *vwin);
 

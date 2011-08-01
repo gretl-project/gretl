@@ -621,6 +621,13 @@ static void set_plot_icon (GretlToolItem *item)
     }
 }
 
+static void vwin_cut_callback (GtkWidget *w, windata_t *vwin)
+{
+    gtk_text_buffer_cut_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text)),
+				  gtk_clipboard_get(GDK_NONE),
+				  TRUE);
+}
+
 static GretlToolItem viewbar_items[] = {
     { N_("New window"), GTK_STOCK_NEW, G_CALLBACK(toolbar_new_callback), OPEN_ITEM },
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
@@ -630,11 +637,13 @@ static GretlToolItem viewbar_items[] = {
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
 #endif
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
+    { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
     { N_("Find..."), GTK_STOCK_FIND, G_CALLBACK(text_find), 0 },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, G_CALLBACK(text_replace), EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, G_CALLBACK(text_undo), EDIT_ITEM },
+    { N_("Redo"), GTK_STOCK_REDO, G_CALLBACK(text_redo), EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(series_view_toggle_sort), SORT_ITEM },    
     { N_("Sort by..."), GTK_STOCK_SORT_ASCENDING, G_CALLBACK(multi_series_view_sort_by), SORT_BY_ITEM },
     { N_("Configure tabs..."), GTK_STOCK_PREFERENCES, G_CALLBACK(script_tabs_dialog), EDIT_SCRIPT_ITEM },
