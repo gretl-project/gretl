@@ -315,7 +315,7 @@ int gretl_print_has_tempfile (PRN *prn)
  * of that file, otherwise return NULL.
  */
 
-const char * gretl_print_get_tempfile_name (PRN *prn)
+const char *gretl_print_get_tempfile_name (PRN *prn)
 {
     if (prn != NULL) {
 	return prn->fname;
@@ -584,9 +584,10 @@ char *gretl_print_steal_buffer (PRN *prn)
  * gretl_print_read_tempfile:
  * @prn: printing struct.
  * 
- * Obtain a read handle to the tempfile associated with
- * @prn, if any.  This should be fclosed once you're
- * finished with it.
+ * Obtain a read handle to the tempfile stream associated with
+ * with @prn, if any.  This should be matched with a call to
+ * gretl_print_stop_tempfile_read() once you're finished with 
+ * reading.
  *
  * Returns: %FILE pointer, or NULL on failure.
  */

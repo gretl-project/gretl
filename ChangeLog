@@ -11,6 +11,8 @@ version 1.9.6, in progress
 - Defining lists: document the wildcard operator, *, and add an
   ellipsis operator (two dots).
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac
+- "var" command with --lagselect option: make the table of information
+  criteria available as $test
 - "omit" command: add a --test-only option to prevent the reduced model 
   from being saved as "last model"
 - "add" command: add an --lm option to do an LM test, in which case the

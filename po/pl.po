@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-07-22 14:58-0400\n"
-"PO-Revision-Date: 2011-07-12 19:00-0400\n"
+"PO-Revision-Date: 2011-07-30 19:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -191,34 +191,31 @@ msgid "Sum of squares of cumulated residuals"
 msgstr "Suma kwadratów dla skumulowanych reszt"
 
 #: lib/src/adf_kpss.c:1556
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s"
 msgstr ""
-"\n"
-"Hipoteza zerowa: proces stacjonarny; test KPSS dla zmiennej %s %s\n"
+"\nHipoteza zerowa: proces stacjonarny.\n"
+"Test KPSS dla zmiennej %s"
 
 #: lib/src/adf_kpss.c:1559
-#, fuzzy
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
-msgstr "(z trendem)"
+msgstr " (z trendem i sezonowością)\n"
 
 #: lib/src/adf_kpss.c:1561
-#, fuzzy
 msgid ""
 " (including trend)\n"
 "\n"
-msgstr "(z trendem)"
+msgstr " (z trendem)\n"
 
 #: lib/src/adf_kpss.c:1565
-#, fuzzy
 msgid ""
 " (including seasonals)\n"
 "\n"
-msgstr "(z trendem)"
+msgstr " (z sezonowością)\n"
 
 #: lib/src/adf_kpss.c:1572 lib/src/adf_kpss.c:1616
 #, c-format
@@ -430,14 +427,13 @@ msgid "add"
 msgstr "dodaj"
 
 #: lib/src/compare.c:416
-#, fuzzy, c-format
+#, c-format
 msgid "Test on Model %d:"
-msgstr "Model %d"
+msgstr "Test porównawczy z Modelem %d"
 
 #: lib/src/compare.c:424
-#, fuzzy
 msgid "Wald test"
-msgstr "Test Walda (joint)"
+msgstr "Test Walda"
 
 #: lib/src/compare.c:425 lib/src/compare.c:431 lib/src/compare.c:442
 #: lib/src/compare.c:919 lib/src/compare.c:2118 lib/src/compare.c:2124
@@ -461,9 +457,8 @@ msgid "Chi-square"
 msgstr "Chi-kwadrat"
 
 #: lib/src/compare.c:430
-#, fuzzy
 msgid "LR test"
-msgstr "test stabilności _QLR"
+msgstr "Test LR"
 
 #: lib/src/compare.c:437 lib/src/compare.c:2584
 msgid "F-form"
@@ -474,14 +469,14 @@ msgid "Robust F"
 msgstr "Robust F"
 
 #: lib/src/compare.c:455
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d model selection statistics.\n"
-msgstr "  Dla %d kryteriów informacyjnych (AIC, BIC, HQC), %d "
+msgstr "Dodanie zmiennych poprawiło %d z %d kryteriów informacyjnych (AIC, BIC, HQC).\n"
 
 #: lib/src/compare.c:458
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
-msgstr "  Dla %d kryteriów informacyjnych (AIC, BIC, HQC), %d "
+msgstr "Pominięcie zmiennych poprawiło %d z %d kryteriów informacyjnych (AIC, BIC, HQC).\n"
 
 #: lib/src/compare.c:865
 msgid "Non-linearity test (squared terms)"
@@ -1291,12 +1286,12 @@ msgstr "'%s' -- nie dokonano konwersji numerycznej!"
 #: lib/src/dataio.c:3303 lib/src/dataio.c:3346
 #, c-format
 msgid "Extraneous character '%c' in data"
-msgstr "Niezwiązany znak '%c' w danych"
+msgstr "Błędny znak '%c' w danych"
 
 #: lib/src/dataio.c:3305 lib/src/dataio.c:3348
 #, c-format
 msgid "Extraneous character (0x%x) in data"
-msgstr "Niezwiązany znak (0x%x) w danych"
+msgstr "Błędny znak (0x%x) w danych"
 
 #: lib/src/dataio.c:3311 lib/src/dataio.c:3354
 #, c-format
@@ -4200,7 +4195,6 @@ msgid "Infinite loop detected in script\n"
 msgstr "Wykryto nieskończoną pętlę w skrypcie\n"
 
 #: lib/src/interact.c:5229 lib/src/monte_carlo.c:2737
-#, fuzzy
 msgid "You cannot delete series in this context\n"
 msgstr "Niemożliwe usunięcie wykorzystywanej zmiennej\n"
 
@@ -5560,9 +5554,8 @@ msgstr ""
 "\n"
 
 #: lib/src/monte_carlo.c:2740
-#, fuzzy
 msgid "You cannot delete scalars in this context\n"
-msgstr "Niemożliwe usunięcie wykorzystywanej zmiennej\n"
+msgstr "Niemożliwe usunięcie wykorzystywanych skalarów\n"
 
 #: lib/src/monte_carlo.c:2991
 #, c-format
@@ -7780,7 +7773,7 @@ msgstr "wspólny wykres obu dystrybuant (CDF)"
 
 #: gui2/callbacks.c:278
 msgid "Sorry, this item not yet implemented!"
-msgstr "Sorry, ta pozycja nie jest jeszcze wykonywana!"
+msgstr "Sorry, ta pozycja nie jest jeszcze zaimplementowana!"
 
 #: gui2/callbacks.c:386 gui2/callbacks.c:541 gui2/callbacks.c:705
 #: gui2/selector.c:5629
@@ -7797,12 +7790,12 @@ msgstr "gretl: test kointegracji"
 
 #: gui2/callbacks.c:441 gui2/selector.c:794
 msgid "gretl: VAR"
-msgstr "gretl: VAR"
+msgstr "gretl: VAR - model wektorowej autoregresji"
 
 #: gui2/callbacks.c:441 gui2/library.c:3082 gui2/library.c:3869
 #: gui2/selector.c:794
 msgid "gretl: VECM"
-msgstr "gretl: VECM"
+msgstr "gretl: VECM - wektorowy model korekty błędem"
 
 #: gui2/callbacks.c:444 gui2/library.c:3857
 msgid "gretl: VAR lag selection"
@@ -7817,7 +7810,7 @@ msgstr "gretl: definiowanie wykresu"
 #: gui2/callbacks.c:475 gui2/callbacks.c:477 gui2/callbacks.c:479
 #: gui2/callbacks.c:481
 msgid "gretl: model tests"
-msgstr "gretl: testy modelu"
+msgstr "gretl: testy porównawcze modeli"
 
 #: gui2/callbacks.c:490 gui2/library.c:1249
 msgid "rank correlation"
@@ -9630,9 +9623,8 @@ msgid "Confidence band plot"
 msgstr "Przedział ufności"
 
 #: gui2/fncall.c:2315
-#, fuzzy
 msgid "Predicted values"
-msgstr "wartości predyktora"
+msgstr "Wartości predyktora"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -12517,7 +12509,7 @@ msgstr "gretl: wyniki testu Chowa"
 
 #: gui2/library.c:2722
 msgid "gretl: QLR test output"
-msgstr "gretl: wyniki testu QLR (ilorazu wiarygodności Quandta)"
+msgstr "gretl: wyniki testu QLR (ilorazu wiarygodnoś?ci Quandta)"
 
 #: gui2/library.c:2724
 msgid "gretl: CUSUM test output"
@@ -16021,28 +16013,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid ""
-#~ "\n"
-#~ "KPSS test for %s %s\n"
-#~ "\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Hipoteza zerowa: proces stacjonarny; test KPSS dla zmiennej %s %s\n"
-#~ "\n"
-
-#~ msgid "Comparison of Model %d and Model %d:\n"
-#~ msgstr "Porównanie Modelu %d z Modelem %d:\n"
-
-#~ msgid "Wald chi-square"
-#~ msgstr "Wald chi-kwadrat"
-
-#~ msgid "has improved.\n"
-#~ msgstr "kryterium jest lepsze.\n"
-
-#~ msgid ""
-#~ "have improved.\n"
-#~ "\n"
-#~ msgstr ""
-#~ "kryteria są lepsze.\n"
-#~ "\n"
