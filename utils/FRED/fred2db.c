@@ -461,7 +461,17 @@ static int skipcat (int id)
     } else if (id == 32251) {
 	/* highly detailed asset stats */
 	skip = 1;
-    }	
+    } else if (id == 32360 || id == 32414 || id == 32436) {
+	/* Business Lending, Bond Market Indexes, Construction */
+	skip = 1;
+    } else if (id == 32429) {
+	/* "Manufacturing", extra rel. to 2011-04-20 */
+	skip = 1;
+    } else if (id == 32406 || id == 32361 || id == 32370 ||
+	       id == 32379 || id == 32388 || id == 32397) {
+	/* more loans details */
+	skip = 1;
+    }
 
     return skip;
 }
