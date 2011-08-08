@@ -469,6 +469,12 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		(char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (session.notes == NULL) {
 		object_errs++;
+	    } else {
+		tmp = xmlGetProp(cur, (XUC) "auto-show");
+		if (tmp != NULL) {
+		    session.show_notes = 1;
+		    free(tmp);
+		}
 	    }
 	}
 	if (!err) {
@@ -885,7 +891,11 @@ static int write_session_xml (const char *datname)
     fputs(" </texts>\n", fp);
 
     if (session.notes != NULL) {
-	fputs("<notes>", fp);
+	if (session.show_notes) {
+	    fputs("<notes auto-show=\"true\">", fp);
+	} else {
+	    fputs("<notes>", fp);
+	}
 	gretl_xml_put_raw_string(session.notes, fp);
 	fputs("</notes>\n", fp);
     } 

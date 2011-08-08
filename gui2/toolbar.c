@@ -95,7 +95,8 @@ enum {
     REFRESH_ITEM,
     OPEN_ITEM,
     SPLIT_ITEM,
-    EDITOR_ITEM
+    EDITOR_ITEM,
+    NOTES_ITEM
 } viewbar_flags;
 
 static GtkIconFactory *gretl_stock_ifac;
@@ -636,6 +637,7 @@ static GretlToolItem viewbar_items[] = {
 #ifdef NATIVE_PRINTING
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
 #endif
+    { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
@@ -766,6 +768,8 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     } else if (r != EDIT_X12A && f == X12A_HELP_ITEM) {
 	return NULL;
     } else if (f == SAVE_ITEM && !save_ok) {
+	return NULL;
+    } else if (r != EDIT_NOTES && f == NOTES_ITEM) {
 	return NULL;
     } else if (f == SAVE_AS_ITEM) {
 	if (!save_as_ok(r)) {

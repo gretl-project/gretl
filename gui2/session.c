@@ -86,14 +86,15 @@ typedef struct SESSION_GRAPH_ SESSION_GRAPH;
 typedef struct gui_obj_ gui_obj;
 
 enum {
-    SESSION_CHANGED  = 1 << 0,
-    SESSION_SAVED    = 1 << 1
+    SESSION_CHANGED    = 1 << 0,
+    SESSION_SAVED      = 1 << 1
 };
 
 struct SESSION_ {
     char name[MAXLEN];
     char dirname[MAXLEN];
     int status;
+    int show_notes;
     int nmodels;
     int ngraphs;
     int ntexts;
@@ -1445,6 +1446,10 @@ void do_open_session (void)
 	view_session();
 	mark_session_saved();
 	session_switch_log_location(LOG_OPEN);
+
+	if (session.show_notes) {
+	    edit_session_notes();
+	}
     }
 }
 
@@ -1653,6 +1658,7 @@ void close_session (gretlopt opt)
     }
 
     session.status = 0;
+    session.show_notes = 0;
     commands_recorded = 0;
 
     winstack_destroy();
@@ -1881,6 +1887,25 @@ int save_session (char *fname)
     }
 
     return err;
+}
+
+void session_notes_callback (GtkWidget *w, gpointer p)
+{
+    const char *opts[] = {
+	N_("Display notes on opening session file")
+    };
+    int active[] = {0};
+    int resp;
+
+    active[0] = session.show_notes;
+
+    resp = checks_only_dialog("gretl", NULL, opts, 1,
+			      active, 0);
+
+    if (resp >= 0 && session.show_notes != active[0]) {
+	session.show_notes = active[0];
+	mark_session_changed();
+    }
 }
 
 void save_session_callback (GtkAction *action)

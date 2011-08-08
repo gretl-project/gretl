@@ -6,6 +6,9 @@ version 1.9.6, in progress
 - allow non-integer degrees of freedom for Student's t in cdf(), invcdf()
   and randgen()
 - extend the invcdf() function to the Gamma and std. GED distributions
+- GUI script editor: add Cut and Redo toolbar buttons
+- GUI session Notes: add option to pop up the notes on opening a
+  session file
 - build with SSE2 enabled: ensure that the C compiler SSE2 option is
   not wiped out if the user (re-)specifies CFLAGS when doing "make"
 - Defining lists: document the wildcard operator, *, and add an
