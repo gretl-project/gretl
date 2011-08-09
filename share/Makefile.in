@@ -76,7 +76,8 @@ install_scripts:
 
 install_functions:
 	$(INSTALL_DATA) $(sharesrc)/functions/gretlfunc.dtd $(DESTDIR)$(gretldir)/functions 
-	$(INSTALL_DATA) $(sharesrc)/functions/criteria.gfn $(DESTDIR)$(gretldir)/functions 
+	$(INSTALL_DATA) $(sharesrc)/functions/criteria.gfn $(DESTDIR)$(gretldir)/functions
+	$(INSTALL_DATA) $(sharesrc)/functions/model-packages.xml $(DESTDIR)$(gretldir)/functions 
 
 install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(DESTDIR)$(prefix)/share/man/man1

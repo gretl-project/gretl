@@ -235,6 +235,9 @@ done
 for f in ${TOPDIR}/share/functions/*.gfn ; do
     add_file $f gretl/functions/`basename $f`
 done
+for f in ${TOPDIR}/share/functions/*.xml ; do
+    add_file $f gretl/functions/`basename $f`
+done
 
 # database files
 if [ "$BUILDTYPE" = "cross" ] ; then
