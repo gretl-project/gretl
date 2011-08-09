@@ -1,5 +1,5 @@
 # St Louis Fed (various series, large)
-usphci  Coincident Economic Activity Index for the US, Jul 1992=100
+usphci  Coincident Economic Activity Index for the United States, Jul 1992=100
 M  1979.01 - 2011.06  n = 390
 eciben  Employment Cost Index: Benefits: Private Industry Workers, Index: Dec 2005=100, SA
 Q  2001.1 - 2011.2  n = 42
@@ -101,87 +101,87 @@ gasregrmm  PADD IV Regular All Formulations Gas Price, $ per Gallon
 M  1992.05 - 2011.07  n = 231
 gasregwcm  PADD V Regular All Formulations Gas Price, $ per Gallon
 M  1992.05 - 2011.07  n = 231
-ushiccover  Health Insurance Coverage: People Covered in the US, Thous. of Persons
+ushiccover  Health Insurance Coverage: People Covered in the United States, Thous. of Persons
 A  1999 - 2009  n = 11
-ushiccovpct  Health Insurance Coverage: Coverage Rate in the US, %
+ushiccovpct  Health Insurance Coverage: Coverage Rate in the United States, %
 A  1999 - 2009  n = 11
-ushicncpct  Health Insurance Coverage: Uncovered Rate in the US, %
+ushicncpct  Health Insurance Coverage: Uncovered Rate in the United States, %
 A  1999 - 2009  n = 11
-ushicnotcov  Health Insurance Coverage: People Not Covered in the US, Thous. of Persons
+ushicnotcov  Health Insurance Coverage: People Not Covered in the United States, Thous. of Persons
 A  1999 - 2009  n = 11
-ushictotal  Health Insurance Coverage: Total Number of People in the US, Thous. of Persons
+ushictotal  Health Insurance Coverage: Total Number of People in the United States, Thous. of Persons
 A  1999 - 2009  n = 11
-permit  New Private Housing Units Authorized by Building Permits, 000s, SAAR
+permit  New Private Housing Units Authorized by Building Permits, Thous. of Units, SAAR
 M  1960.01 - 2011.06  n = 618
-permit1  New Private Housing Units Authorized by Building Permits - In Structures with 1 Unit, 000s, SAAR
+permit1  New Private Housing Units Authorized by Building Permits - In Structures with 1 Unit, Thous. of Units, SAAR
 M  1960.01 - 2011.06  n = 618
-permit1nsa  New Privately-Owned Housing Units Authorized by Building Permits: 1-Unit Structures, 000s, NSA
+permit1nsa  New Privately-Owned Housing Units Authorized by Building Permits: 1-Unit Structures, Thous. of Units, NSA
 M  1959.01 - 2011.06  n = 630
-permit24  New Private Housing Units Authorized by Building Permits - In Structures with 2 to 4 Units, 000s, SAAR
+permit24  New Private Housing Units Authorized by Building Permits - In Structures with 2 to 4 Units, Thous. of Units, SAAR
 M  1960.01 - 2011.06  n = 618
-permit24nsa  New Privately-Owned Housing Units Authorized by Building Permits: 2-4 Unit Structures, 000s, NSA
+permit24nsa  New Privately-Owned Housing Units Authorized by Building Permits: 2-4 Unit Structures, Thous. of Units, NSA
 M  1959.01 - 2011.06  n = 630
-permit5  New Private Housing Units Authorized by Building Permits - In Structures with 5 Units, 000s, SAAR
+permit5  New Private Housing Units Authorized by Building Permits - In Structures with 5 Units, Thous. of Units, SAAR
 M  1960.01 - 2011.06  n = 618
-permit5nsa  New Privately-Owned Housing Units Authorized by Building Permits: 5-Unit Structures or More, 000s, NSA
+permit5nsa  New Privately-Owned Housing Units Authorized by Building Permits: 5-Unit Structures or More, Thous. of Units, NSA
 M  1959.01 - 2011.06  n = 630
-permitnsa  New Privately-Owned Housing Units Authorized by Building Permits: Total, 000s, NSA
+permitnsa  New Privately-Owned Housing Units Authorized by Building Permits: Total, Thous. of Units, NSA
 M  1959.01 - 2011.06  n = 630
-authnot1u  New Privately-Owned Housing Units Authorized, but Not Started: 1-Unit Structures, 000s, NSA
+authnot1u  New Privately-Owned Housing Units Authorized, but Not Started: 1-Unit Structures, Thous. of Units, NSA
 M  1968.01 - 2011.06  n = 522
-authnot24u  New Privately-Owned Housing Units Authorized, but Not Started: 2-4 Unit Structures, 000s, NSA
+authnot24u  New Privately-Owned Housing Units Authorized, but Not Started: 2-4 Unit Structures, Thous. of Units, NSA
 M  1968.01 - 2011.06  n = 522
-authnot5mu  New Privately-Owned Housing Units Authorized, but Not Started: 5-Unit Structures or More, 000s, NSA
+authnot5mu  New Privately-Owned Housing Units Authorized, but Not Started: 5-Unit Structures or More, Thous. of Units, NSA
 M  1968.01 - 2011.06  n = 522
-authnott  New Privately-Owned Housing Units Authorized, but Not Started: Total, 000s, NSA
+authnott  New Privately-Owned Housing Units Authorized, but Not Started: Total, Thous. of Units, NSA
 M  1961.06 - 2011.06  n = 549
-houst  Housing Starts: Total: New Privately Owned Housing Units Started, 000s, SAAR
+houst  Housing Starts: Total: New Privately Owned Housing Units Started, Thous. of Units, SAAR
 M  1959.01 - 2011.06  n = 630
-houst1f  Privately Owned Housing Starts: 1-Unit Structures, 000s, SAAR
+houst1f  Privately Owned Housing Starts: 1-Unit Structures, Thous. of Units, SAAR
 M  1959.01 - 2011.06  n = 630
-houst1fnsa  Privately Owned Housing Starts: 1-Unit Structures, 000s, NSA
+houst1fnsa  Privately Owned Housing Starts: 1-Unit Structures, Thous. of Units, NSA
 M  1959.01 - 2011.06  n = 630
-houst2f  Housing Starts: 2-4 Units, 000s, SAAR
+houst2f  Housing Starts: 2-4 Units, Thous. of Units, SAAR
 M  1963.08 - 2011.06  n = 575
-houst2fnsa  Housing Starts: 2-4 Units, 000s, NSA
+houst2fnsa  Housing Starts: 2-4 Units, Thous. of Units, NSA
 M  1963.08 - 2011.06  n = 575
-houst5f  Privately Owned Housing Starts: 5-Unit Structures or More, 000s, SAAR
+houst5f  Privately Owned Housing Starts: 5-Unit Structures or More, Thous. of Units, SAAR
 M  1959.01 - 2011.06  n = 630
-houst5fnsa  Privately Owned Housing Starts: 5-Unit Structures or More, 000s, NSA
+houst5fnsa  Privately Owned Housing Starts: 5-Unit Structures or More, Thous. of Units, NSA
 M  1963.08 - 2011.06  n = 575
-houstnsa  Housing Starts: Total: New Privately Owned Housing Units, 000s, NSA
+houstnsa  Housing Starts: Total: New Privately Owned Housing Units, Thous. of Units, NSA
 M  1959.01 - 2011.06  n = 630
-undcon1unsa  New Privately-Owned Housing Units Under Construction: 1-Unit Structures, 000s, NSA
+undcon1unsa  New Privately-Owned Housing Units Under Construction: 1-Unit Structures, Thous. of Units, NSA
 M  1969.12 - 2011.06  n = 499
-undcon1usa  New Privately-Owned Housing Units Under Construction: 1-Unit Structures, 000s, SA
+undcon1usa  New Privately-Owned Housing Units Under Construction: 1-Unit Structures, Thous. of Units, SA
 M  1970.01 - 2011.06  n = 498
-undcon24unsa  New Privately-Owned Housing Units Under Construction: 2-4 Unit Structures, 000s, NSA
+undcon24unsa  New Privately-Owned Housing Units Under Construction: 2-4 Unit Structures, Thous. of Units, NSA
 M  1969.12 - 2011.06  n = 499
-undcon24usa  New Privately-Owned Housing Units Under Construction: 2-4 Unit Structures, 000s, SA
+undcon24usa  New Privately-Owned Housing Units Under Construction: 2-4 Unit Structures, Thous. of Units, SA
 M  1970.01 - 2011.06  n = 498
-undcon5munsa  New Privately-Owned Housing Units Under Construction: 5-Unit Structures or More, 000s, NSA
+undcon5munsa  New Privately-Owned Housing Units Under Construction: 5-Unit Structures or More, Thous. of Units, NSA
 M  1969.12 - 2011.06  n = 499
-undcon5musa  New Privately-Owned Housing Units Under Construction: 5-Unit Structures or More, 000s, SA
+undcon5musa  New Privately-Owned Housing Units Under Construction: 5-Unit Structures or More, Thous. of Units, SA
 M  1970.01 - 2011.06  n = 498
-undcontnsa  New Privately-Owned Housing Units Under Construction: Total, 000s, NSA
+undcontnsa  New Privately-Owned Housing Units Under Construction: Total, Thous. of Units, NSA
 M  1969.12 - 2011.06  n = 499
-undcontsa  New Privately-Owned Housing Units Under Construction: Total, 000s, SA
+undcontsa  New Privately-Owned Housing Units Under Construction: Total, Thous. of Units, SA
 M  1970.01 - 2011.06  n = 498
-compu1unsa  New Privately-Owned Housing Units Completed: 1-Unit Structures, 000s, NSA
+compu1unsa  New Privately-Owned Housing Units Completed: 1-Unit Structures, Thous. of Units, NSA
 M  1968.01 - 2011.06  n = 522
-compu1usa  New Privately-Owned Housing Units Completed: 1-Unit Structures, 000s, SAAR
+compu1usa  New Privately-Owned Housing Units Completed: 1-Unit Structures, Thous. of Units, SAAR
 M  1968.01 - 2011.06  n = 522
-compu24unsa  New Privately-Owned Housing Units Completed: 2-4 Unit Structures, 000s, NSA
+compu24unsa  New Privately-Owned Housing Units Completed: 2-4 Unit Structures, Thous. of Units, NSA
 M  1968.01 - 2011.06  n = 522
-compu24usa  New Privately-Owned Housing Units Completed: 2-4 Unit Structures, 000s, SAAR
+compu24usa  New Privately-Owned Housing Units Completed: 2-4 Unit Structures, Thous. of Units, SAAR
 M  1968.01 - 2011.06  n = 522
-compu5munsa  New Privately-Owned Housing Units Completed: 5-Unit Structures or More, 000s, NSA
+compu5munsa  New Privately-Owned Housing Units Completed: 5-Unit Structures or More, Thous. of Units, NSA
 M  1968.01 - 2011.06  n = 522
-compu5musa  New Privately-Owned Housing Units Completed: 5-Unit Structures or More, 000s, SAAR
+compu5musa  New Privately-Owned Housing Units Completed: 5-Unit Structures or More, Thous. of Units, SAAR
 M  1968.01 - 2011.06  n = 522
-computnsa  New Privately-Owned Housing Units Completed: Total, 000s, NSA
+computnsa  New Privately-Owned Housing Units Completed: Total, Thous. of Units, NSA
 M  1968.01 - 2011.06  n = 522
-computsa  New Privately-Owned Housing Units Completed: Total, 000s, SAAR
+computsa  New Privately-Owned Housing Units Completed: Total, Thous. of Units, SAAR
 M  1968.01 - 2011.06  n = 522
 atxrnsa  Home Price Index for Atlanta, Georgia, Index Jan 2000 = 100, NSA
 M  1991.01 - 2011.05  n = 245
@@ -364,119 +364,119 @@ M  1993.11 - 2011.07  n = 213
 isratio  Inventory to Sales Ratio: Total Business, Ratio, SA
 M  1992.01 - 2011.05  n = 233
 kcfsi  Kansas City Financial Stress Index, Index
-M  1990.02 - 2011.06  n = 257
+M  1990.02 - 2011.07  n = 258
 mich  University of Michigan Inflation Expectation, %
 M  1978.01 - 2011.06  n = 402
 oilprice  Spot Oil Price: West Texas Intermediate, $ per Barrel
 M  1946.01 - 2011.07  n = 787
 umcsent  University of Michigan: Consumer Sentiment, Index 1st Qtr. 1966=100, NSA
 M  1978.01 - 2010.12  n = 396
-ushown  Home Ownership Rate for the US, %
+ushown  Home Ownership Rate for the United States, %
 A  1984 - 2010  n = 27
-ushvac  Home vacancy Rate for the US, %
+ushvac  Home vacancy Rate for the United States, %
 A  1986 - 2010  n = 25
-usrvac  Rental Vacancy Rate for the US, %
+usrvac  Rental Vacancy Rate for the United States, %
 A  1986 - 2010  n = 25
 prs31006013  Manufacturing Durable Goods Sector,: Employment, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006023  Manufacturing Durable Goods Sector: Average Weekly Hours, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006033  Manufacturing Durable Goods Sector: Hours, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006043  Manufacturing Durable Goods Sector: Output, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006063  Manufacturing Durable Goods Sector: Compensation, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006093  Manufacturing Durable Goods Sector: Output Per Hour, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006103  Manufacturing Durable Goods Sector: Hourly Compensation, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006113  Manufacturing Durable Goods Sector: Unit Labor Costs, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006153  Manufacturing Durable Goods Sector: Real Hourly Compensation, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs31006163  Manufacturing Durable Goods Sector: Output Per Person, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006013  Manufacturing Nondurable Goods Sector: Employment, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006023  Manufacturing Nondurable Goods Sector: Average Weekly Hours, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006033  Manufacturing Nondurable Goods Sector: Hours, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006043  Manufacturing Nondurable Goods Sector: Output, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006063  Manufacturing Nondurable Goods Sector: Compensation, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006093  Manufacturing Nondurable Goods Sector: Output Per Hour, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006103  Manufacturing Nondurable Goods Sector: Hourly Compensation, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006113  Manufacturing Nondurable Goods Sector: Unit Labor Costs, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006153  Manufacturing Nondurable Goods Sector: Real Hourly Compensation, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 prs32006163  Manufacturing Nondurable Goods Sector: Output Per Person, 2005=100, SA
-Q  1987.1 - 2011.1  n = 97
+Q  1987.1 - 2011.2  n = 98
 hcompbs  Business Sector: Compensation Per Hour, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 hoabs  Business Sector: Hours of All Persons, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 ipdbs  Business Sector: Implicit Price Deflator, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 ophpbs  Business Sector: Output Per Hour of All Persons, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 outbs  Business Sector: Output, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs84006013  Business Sector: Employment, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs84006023  Business Sector: Average Weekly Hours, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs84006053  Business Sector: Current Dollar Output, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs84006063  Business Sector: Compensation, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs84006083  Business Sector: Non-Labor Payments, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs84006163  Business Sector: Output Per Person, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs84006173  Business Sector: Labor Share, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 rcphbs  Business Sector: Real Compensation Per Hour, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 ulcbs  Business Sector: Unit Labor Cost, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 unlpbs  Business Sector: Unit Nonlabor Payments, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 compnfb  Nonfarm Business Sector: Compensation Per Hour, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 comprnfb  Nonfarm Business Sector: Real Compensation Per Hour, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 hoanbs  Nonfarm Business Sector: Hours of All Persons, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 ipdnbs  Nonfarm Business Sector: Implicit Price Deflator, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 ophnfb  Nonfarm Business Sector: Output Per Hour of All Persons, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 outnfb  Nonfarm Business Sector: Output, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs85006013  Nonfarm Business Sector: Employment, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs85006023  Nonfarm Business Sector: Average Weekly Hours, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs85006053  Nonfarm Business Sector: Current Dollar Output, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs85006063  Nonfarm Business Sector: Compensation, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs85006083  Nonfarm Business Sector: Non-Labor Payments, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs85006163  Nonfarm Business Sector: Output Per Person, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs85006173  Nonfarm Business Sector: Labor Share, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 ulcnfb  Nonfarm Business Sector: Unit Labor Cost, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 unlpnbs  Nonfarm Business Sector: Unit Nonlabor Payments, 2005=100, SA
-Q  1947.1 - 2011.1  n = 257
+Q  1947.1 - 2011.2  n = 258
 prs88003013  Nonfinancial Corporations Sector: Employment, 2005=100, SA
 Q  1958.1 - 2011.1  n = 213
 prs88003023  Nonfinancial Corporations Sector: Average Weekly Hours, 2005=100, SA
@@ -535,7 +535,7 @@ rsfsxmv  Retail Sales and Food Services Excluding Motor Vehicles and Parts Deale
 M  1992.01 - 2011.06  n = 234
 rsxfs  Retail Sales: Total (Excluding Food Services), Mil. of $, SA
 M  1992.01 - 2011.06  n = 234
-usslind  Leading Index for the US, %
+usslind  Leading Index for the United States, %
 M  1982.01 - 2011.06  n = 354
 mcoilbrenteu  Crude Oil: Brent - Europe, $ per Barrel
 M  1987.05 - 2011.06  n = 290
@@ -581,57 +581,61 @@ apropanembtx  Propane: Mont Belvieu, Texas, $ per Gallon
 A  1992 - 2010  n = 19
 argasla  Reformulated Gasoline Blendstock for Oxygenate Blending (RBOB): Regular Gasoline: Los Angeles, $ per Gallon
 A  2003 - 2010  n = 8
-cpifabns  CPI for All Urban Consumers: Food and Beverages, Index 1982-84=100, NSA
-M  1967.01 - 2011.06  n = 534
-cpifabsl  CPI for All Urban Consumers: Food and Beverages, Index 1982-84=100, SA
-M  1967.01 - 2011.06  n = 534
-cpiufdns  CPI for All Urban Consumers: Food, Index 1982-84=100, NSA
+cpiaucns  Consumer Price Index for All Urban Consumers: All Items, Index 1982-84=100, NSA
 M  1913.01 - 2011.06  n = 1182
-cpiufdsl  CPI for All Urban Consumers: Food, Index 1982-84=100, SA
+cpiaucsl  Consumer Price Index for All Urban Consumers: All Items, Index 1982-84=100, SA
 M  1947.01 - 2011.06  n = 774
-cpihosns  CPI for All Urban Consumers: Housing, Index 1982-84=100, NSA
+cpifabns  Consumer Price Index for All Urban Consumers: Food and Beverages, Index 1982-84=100, NSA
 M  1967.01 - 2011.06  n = 534
-cpihossl  CPI for All Urban Consumers: Housing, Index 1982-84=100, SA
+cpifabsl  Consumer Price Index for All Urban Consumers: Food and Beverages, Index 1982-84=100, SA
 M  1967.01 - 2011.06  n = 534
-cpiappns  CPI for All Urban Consumers: Apparel, Index 1982-84=100, NSA
+cpiufdns  Consumer Price Index for All Urban Consumers: Food, Index 1982-84=100, NSA
+M  1913.01 - 2011.06  n = 1182
+cpiufdsl  Consumer Price Index for All Urban Consumers: Food, Index 1982-84=100, SA
+M  1947.01 - 2011.06  n = 774
+cpihosns  Consumer Price Index for All Urban Consumers: Housing, Index 1982-84=100, NSA
+M  1967.01 - 2011.06  n = 534
+cpihossl  Consumer Price Index for All Urban Consumers: Housing, Index 1982-84=100, SA
+M  1967.01 - 2011.06  n = 534
+cpiappns  Consumer Price Index for All Urban Consumers: Apparel, Index 1982-84=100, NSA
 M  1914.12 - 2011.06  n = 1159
-cpiappsl  CPI for All Urban Consumers: Apparel, Index 1982-84=100, SA
+cpiappsl  Consumer Price Index for All Urban Consumers: Apparel, Index 1982-84=100, SA
 M  1947.01 - 2011.06  n = 774
-cpitrnns  CPI for All Urban Consumers: Transportation, Index 1982-84=100, NSA
+cpitrnns  Consumer Price Index for All Urban Consumers: Transportation, Index 1982-84=100, NSA
 M  1935.03 - 2011.06  n = 916
-cpitrnsl  CPI for All Urban Consumers: Transportation, Index 1982-84=100, SA
+cpitrnsl  Consumer Price Index for All Urban Consumers: Transportation, Index 1982-84=100, SA
 M  1947.01 - 2011.06  n = 774
-cpimedns  CPI for All Urban Consumers: Medical Care, Index 1982-84=100, NSA
+cpimedns  Consumer Price Index for All Urban Consumers: Medical Care, Index 1982-84=100, NSA
 M  1935.03 - 2011.06  n = 916
-cpimedsl  CPI for All Urban Consumers: Medical Care, Index 1982-84=100, SA
+cpimedsl  Consumer Price Index for All Urban Consumers: Medical Care, Index 1982-84=100, SA
 M  1947.01 - 2011.06  n = 774
-cpirecns  CPI for All Urban Consumers: Recreation, Index Dec 1997=100, NSA
+cpirecns  Consumer Price Index for All Urban Consumers: Recreation, Index Dec 1997=100, NSA
 M  1993.01 - 2011.06  n = 222
-cpirecsl  CPI for All Urban Consumers: Recreation, Index Dec 1997=100, SA
+cpirecsl  Consumer Price Index for All Urban Consumers: Recreation, Index Dec 1997=100, SA
 M  1993.01 - 2011.06  n = 222
-cpieduns  CPI for All Urban Consumers: Education & Communication, Index Dec 1997=100, NSA
+cpieduns  Consumer Price Index for All Urban Consumers: Education & Communication, Index Dec 1997=100, NSA
 M  1993.01 - 2011.06  n = 222
-cpiedusl  CPI for All Urban Consumers: Education and Communication, Index Dec 1997=100, SA
+cpiedusl  Consumer Price Index for All Urban Consumers: Education and Communication, Index Dec 1997=100, SA
 M  1993.01 - 2011.06  n = 222
-cpiogsns  CPI for All Urban Consumers: Other Goods and Services, Index 1982-84=100, NSA
+cpiogsns  Consumer Price Index for All Urban Consumers: Other Goods and Services, Index 1982-84=100, NSA
 M  1967.01 - 2011.06  n = 534
-cpiogssl  CPI for All Urban Consumers: Other Goods and Services, Index 1982-84=100, SA
+cpiogssl  Consumer Price Index for All Urban Consumers: Other Goods and Services, Index 1982-84=100, SA
 M  1967.01 - 2011.06  n = 534
-cpiengns  CPI for All Urban Consumers: Energy, Index 1982-84=100, NSA
+cpiengns  Consumer Price Index for All Urban Consumers: Energy, Index 1982-84=100, NSA
 M  1957.01 - 2011.06  n = 654
-cpiengsl  CPI for All Urban Consumers: Energy, Index 1982-84=100, SA
+cpiengsl  Consumer Price Index for All Urban Consumers: Energy, Index 1982-84=100, SA
 M  1957.01 - 2011.06  n = 654
-cpilegns  CPI for All Urban Consumers: All Items Less Energy, Index 1982-84=100, NSA
+cpilegns  Consumer Price Index for All Urban Consumers: All Items Less Energy, Index 1982-84=100, NSA
 M  1957.01 - 2011.06  n = 654
-cpilegsl  CPI for All Urban Consumers: All Items Less Energy, Index 1982-84=100, SA
+cpilegsl  Consumer Price Index for All Urban Consumers: All Items Less Energy, Index 1982-84=100, SA
 M  1957.01 - 2011.06  n = 654
-cpilfens  CPI for All Urban Consumers: All Items Less Food & Energy, Index 1982-84=100, NSA
+cpilfens  Consumer Price Index for All Urban Consumers: All Items Less Food & Energy, Index 1982-84=100, NSA
 M  1957.01 - 2011.06  n = 654
-cpilfesl  CPI for All Urban Consumers: All Items Less Food & Energy, Index 1982-84=100, SA
+cpilfesl  Consumer Price Index for All Urban Consumers: All Items Less Food & Energy, Index 1982-84=100, SA
 M  1957.01 - 2011.06  n = 654
-cpiulfns  CPI for All Urban Consumers: All Items Less Food, Index 1982-84=100, NSA
+cpiulfns  Consumer Price Index for All Urban Consumers: All Items Less Food, Index 1982-84=100, NSA
 M  1935.03 - 2011.06  n = 916
-cpiulfsl  CPI for All Urban Consumers: All Items Less Food, Index 1982-84=100, SA
+cpiulfsl  Consumer Price Index for All Urban Consumers: All Items Less Food, Index 1982-84=100, SA
 M  1947.01 - 2011.06  n = 774
 ces0000000010  Women Employees: Total Nonfarm, Thous., SA
 M  1964.01 - 2011.07  n = 571
@@ -3123,67 +3127,67 @@ slinvc96  Real State & Local Government: Gross Investment, Bil. of Chn. 2005 $, 
 Q  1995.1 - 2011.2  n = 66
 tgdef  Net Government Saving, Bil. of $, SAAR
 Q  1947.1 - 2011.1  n = 257
-usalclictax  State Government Tax Collections, Alcoholic Beverages Licenses in the US, Thous. of $
+usalclictax  State Government Tax Collections, Alcoholic Beverages Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usalcotax  State Government Tax Collections, Alcoholic Beverages - Selective Sales Taxes in the US, Thous. of $
+usalcotax  State Government Tax Collections, Alcoholic Beverages - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usamslictax  State Government Tax Collections, Amusements Licenses in the US, Thous. of $
+usamslictax  State Government Tax Collections, Amusements Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usamustax  State Government Tax Collections, Amusements - Selective Sales Taxes in the US, Thous. of $
+usamustax  State Government Tax Collections, Amusements - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usbuslictax  State Government Tax Collections, Occupation and Business Licenses in the US, Thous. of $
+usbuslictax  State Government Tax Collections, Occupation and Business Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
-uscorpinctx  State Government Tax Collections, Corporation Net Income Taxes in the US, Thous. of $
+uscorpinctx  State Government Tax Collections, Corporation Net Income Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-uscorplictax  State Government Tax Collections, Corporations in General Licenses in the US, Thous. of $
+uscorplictax  State Government Tax Collections, Corporations in General Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usdocutax  State Government Tax Collections, Documentary and Stock Transfer Taxes in the US, Thous. of $
+usdocutax  State Government Tax Collections, Documentary and Stock Transfer Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usdthgftax  State Government Tax Collections, Death and Gift Taxes in the US, Thous. of $
+usdthgftax  State Government Tax Collections, Death and Gift Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usfueltax  State Government Tax Collections, Motor Fuels - Selective Sales Taxes in the US, Thous. of $
+usfueltax  State Government Tax Collections, Motor Fuels - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ushuntlictax  State Government Tax Collections, Hunting and Fishing Licenses in the US, Thous. of $
+ushuntlictax  State Government Tax Collections, Hunting and Fishing Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usinctax  State Government Tax Collections, Individual Income Taxes in the US, Thous. of $
+usinctax  State Government Tax Collections, Individual Income Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usinsurtax  State Government Tax Collections, Insurance Premiums - Selective Sales Taxes in the US, Thous. of $
+usinsurtax  State Government Tax Collections, Insurance Premiums - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usmotolictax  State Government Tax Collections, Motor Vehicle Licenses in the US, Thous. of $
+usmotolictax  State Government Tax Collections, Motor Vehicle Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usmvopertax  State Government Tax Collections, Motor Vehicle Operators Licenses in the US, Thous. of $
+usmvopertax  State Government Tax Collections, Motor Vehicle Operators Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usnoclstax  State Government Tax Collections, Taxes Not Elsewhere Classified in the US, Thous. of $
+usnoclstax  State Government Tax Collections, Taxes Not Elsewhere Classified in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usothlictax  State Government Tax Collections, Other License Taxes in the US, Thous. of $
+usothlictax  State Government Tax Collections, Other License Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usothslstax  State Government Tax Collections, Other Selective Sales and Gross Receipts Taxes in the US, Thous. of $
+usothslstax  State Government Tax Collections, Other Selective Sales and Gross Receipts Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usparitax  State Government Tax Collections, Pari-Mutuels - Selective Sales Taxes in the US, Thous. of $
+usparitax  State Government Tax Collections, Pari-Mutuels - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usproptax  State Government Tax Collections, Property Taxes in the US, Thous. of $
+usproptax  State Government Tax Collections, Property Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ussalestax  State Government Tax Collections, General Sales and Gross Receipts Taxes in the US, Thous. of $
+ussalestax  State Government Tax Collections, General Sales and Gross Receipts Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usslgrtax  State Government Tax Collections, Total Sales and Gross Receipts Taxes in the US, Thous. of $
+usslgrtax  State Government Tax Collections, Total Sales and Gross Receipts Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ussvrnctax  State Government Tax Collections, Severance Taxes in the US, Thous. of $
+ussvrnctax  State Government Tax Collections, Severance Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ustlinctax  State Government Tax Collections, Total Income Taxes in the US, Thous. of $
+ustlinctax  State Government Tax Collections, Total Income Taxes in the United States, Thous. of $
 A  2005 - 2010  n = 6
-ustllictax  State Government Tax Collections, Total LicenseTaxes in the US, Thous. of $
+ustllictax  State Government Tax Collections, Total LicenseTaxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ustlothtax  State Government Tax Collections, Total Other Taxes in the US, Thous. of $
+ustlothtax  State Government Tax Collections, Total Other Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ustlsltax  State Government Tax Collections, Total Selective Sales Taxes in the US, Thous. of $
+ustlsltax  State Government Tax Collections, Total Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ustobactax  State Government Tax Collections, Tobacco Products - Selective Sales Taxes in the US, Thous. of $
+ustobactax  State Government Tax Collections, Tobacco Products - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-ustotltax  State Government Tax Collections, Total Taxes in the US, Thous. of $
+ustotltax  State Government Tax Collections, Total Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usutilitax  State Government Tax Collections, Public Utilities - Selective Sales Taxes in the US, Thous. of $
+usutilitax  State Government Tax Collections, Public Utilities - Selective Sales Taxes in the United States, Thous. of $
 A  1992 - 2010  n = 19
-usutillictax  State Government Tax Collections, Public Utilities Licenses in the US, Thous. of $
+usutillictax  State Government Tax Collections, Public Utilities Licenses in the United States, Thous. of $
 A  1992 - 2010  n = 19
 expgs  Exports of Goods & Services, Bil. of $, SAAR
 Q  1947.1 - 2011.2  n = 258

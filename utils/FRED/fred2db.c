@@ -374,6 +374,13 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	/* really writing output to gretl database */
 	FREDbuf *fb;
 
+	/* for now we'll skip series with excessively long names:
+	   these are unlikely to be "major" data
+	*/
+	if (strlen(fb->sername) > 15) {
+	    goto skipit;
+	}
+
 	fb = fredget(FRED_OBS, 0, (const char *) idstr, fidx, &err);
 	if (!err) {
 	    fb->pd = pd;
@@ -399,6 +406,8 @@ static int get_series_info (xmlNodePtr n, FILE *fidx, FILE *fbin)
 	    fprintf(fidx, "%s  %s - %s  n = %d\n", freq, stobs, endobs, fb->nobs);
 	}
     } 
+
+ skipit:
 
     free(idstr);
     free(title);
@@ -470,6 +479,9 @@ static int skipcat (int id)
     } else if (id == 32406 || id == 32361 || id == 32370 ||
 	       id == 32379 || id == 32388 || id == 32397) {
 	/* more loans details */
+	skip = 1;
+    } else if (id == 32440 || id == 32439) {
+	/* delinquency rates, charge-offs */
 	skip = 1;
     }
 
@@ -555,7 +567,23 @@ static int fred_recurse (xmlNodePtr node, FREDbuf *fb,
 
     err = get_categories_info(node->xmlChildrenNode, fb);
 
+    /* note that some FRED categories have both sub-categories
+       under them and "loose" series (e.g. Consumer Prices)
+    */
+
     if (!err) {
+	/* first get any top-level series, if we're reading data */
+	if (fidx != NULL && fbin != NULL) {
+	    if (!skipcat(fb->catid)) {
+		fbnext = fredget(FRED_SERIES, fb->catid, NULL, fidx, &err);
+		if (!err) {
+		    err = parse_fred_xml(fbnext, fidx, fbin);
+		    FREDbuf_free(fbnext);
+		}
+	    }
+	}
+
+	/* then get any sub-categories */
 	if (fb->catlist != NULL) {
 	    int i;
 
@@ -567,14 +595,6 @@ static int fred_recurse (xmlNodePtr node, FREDbuf *fb,
 			err = parse_fred_xml(fbnext, fidx, fbin);
 			FREDbuf_free(fbnext);
 		    }
-		}
-	    }
-	} else if (fidx != NULL && fbin != NULL) {
-	    if (!skipcat(fb->catid)) {
-		fbnext = fredget(FRED_SERIES, fb->catid, NULL, fidx, &err);
-		if (!err) {
-		    err = parse_fred_xml(fbnext, fidx, fbin);
-		    FREDbuf_free(fbnext);
 		}
 	    }
 	}
@@ -707,16 +727,16 @@ static FREDbuf *fredget (FREDtask task, int catid, const char *sername,
 	    sprintf(url, "%s/category/children?category_id=%d&api_key=%s", 
 		    FRED_SERVER, catid, API_KEY);
 	    if (fidx != NULL) {
-		printf("Finding children for category id %d...\n", catid);
+		printf("Finding children for category id %d\n", catid);
 	    }
 	} else if (task == FRED_SERIES) {
 	    sprintf(url, "%s/category/series?category_id=%d&api_key=%s", 
 		    FRED_SERVER, catid, API_KEY);
-	    printf("Finding series under category id %d...\n", catid);
+	    printf("Finding series under category id %d\n", catid);
 	} else if (task == FRED_OBS) {
 	    sprintf(url, "%s/series/observations?series_id=%s&api_key=%s", 
 		    FRED_SERVER, sername, API_KEY);
-	    printf("Getting observations for series %s...\n", sername);
+	    printf("Getting observations for series %s\n", sername);
 	}	    
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
