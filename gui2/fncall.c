@@ -28,6 +28,7 @@
 #include "gretl_string_table.h"
 #include "gretl_scalar.h"
 #include "gretl_bundle.h"
+#include "gretl_xml.h"
 #include "database.h"
 #include "guiprint.h"
 #include "ssheet.h"
@@ -2261,9 +2262,10 @@ static void add_package_to_menu (const char *pkgname,
 }
 
 struct addon_info {
-    const char *pkgname;
-    const char *label;
-    const char *menupath;
+    char *pkgname;
+    char *label;
+    char *menupath;
+    char *filepath;
 };
 
 /* put the recognized gretl addons into the appropriate menus */
@@ -2271,8 +2273,8 @@ struct addon_info {
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
     struct addon_info addons[] = {
-	{ "gig",     N_("GARCH variants"), "/menubar/Model/TSModels" },
-	{ "ivpanel", N_("Panel IV model"), "/menubar/Model/PanelModels" }
+	{ "gig",     N_("GARCH variants"), "/menubar/Model/TSModels", NULL },
+	{ "ivpanel", N_("Panel IV model"), "/menubar/Model/PanelModels", NULL }
     };
     int i, n = sizeof addons / sizeof addons[0];
 
@@ -2315,59 +2317,157 @@ static int precheck_error (ufunc *func, windata_t *vwin)
     return err;
 }
 
-void maybe_add_packages_to_model_menus (windata_t *vwin)
+static int maybe_insert_addon (struct addon_info *addon,
+			       windata_t *vwin)
 {
-    struct addon_info model_addons[] = {
-	{ "bandplot", N_("Confidence band plot"), "/menubar/Graphs" },
-	{ "tobit_y", N_("Predicted values"), "/menubar/Analysis" }
-    };
-    int i, n = sizeof model_addons / sizeof model_addons[0];
-    char *path;
+    int dreq, minver = 0;
+    gchar *precheck = NULL;
+    fnpkg *pkg;
+    int err = 0;
 
-    for (i=0; i<n; i++) {
-	struct addon_info *addon = &model_addons[i];
-	int dreq, minver = 0;
-	gchar *precheck = NULL;
-	fnpkg *pkg;
-	int err = 0;
-
-	path = gretl_function_package_get_path(addon->pkgname, 
-					       PKG_ADDON);
+    if (addon->filepath == NULL) {
+	addon->filepath = gretl_function_package_get_path(addon->pkgname, 
+							  PKG_ADDON);
+    }
 	
-	if (path == NULL) {
-	    continue;
-	}
+    if (addon->filepath == NULL) {
+	return 0;
+    }
 
-	pkg = get_function_package_by_filename(path, &err);
+    pkg = get_function_package_by_filename(addon->filepath, &err);
 
-	if (!err) {
-	    err = function_package_get_properties(pkg,
-						  "data-requirement", &dreq,
-						  "min-version", &minver,
-						  "gui-precheck", &precheck,
-						  NULL);
-	}
+    if (!err) {
+	err = function_package_get_properties(pkg,
+					      "data-requirement", &dreq,
+					      "min-version", &minver,
+					      "gui-precheck", &precheck,
+					      NULL);
+    }
 
-	if (!err) {
-	    if (precheck != NULL) {
-		ufunc *func = get_function_from_package(precheck, pkg);
+    if (!err) {
+	if (precheck != NULL) {
+	    ufunc *func = get_function_from_package(precheck, pkg);
 	    
-		if (func == NULL || precheck_error(func, vwin)) {
-		    fprintf(stderr, "precheck failed\n");
-		    err = 1;
-		}
-	    } else {
-		err = check_function_needs(dataset, dreq, minver);
+	    if (func == NULL || precheck_error(func, vwin)) {
+		fprintf(stderr, "precheck failed\n");
+		err = 1;
 	    }
+	} else {
+	    err = check_function_needs(dataset, dreq, minver);
 	}
+    }
 
-	if (!err) {
-	    add_package_to_menu(addon->pkgname, _(addon->label), 
-				addon->menupath, vwin);
+    if (!err) {
+	add_package_to_menu(addon->pkgname, _(addon->label), 
+			    addon->menupath, vwin);
+    }
+
+    g_free(precheck);
+
+    return err;
+}
+
+static void destroy_addon_info (struct addon_info *addons, int n)
+{
+    if (addons != NULL && n > 0) {
+	int i;
+
+	for (i=0; i<n; i++) {
+	    free(addons[i].pkgname);
+	    free(addons[i].label);
+	    free(addons[i].menupath);
+	    free(addons[i].filepath);
 	}
-
-	g_free(precheck);
-	free(path);
+	free(addons);
     }
 }
 
+static struct addon_info *read_model_package_info (int *n_addons)
+{
+    struct addon_info *addons = NULL;
+    char fname[FILENAME_MAX];
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    int err, n = 0;
+
+    LIBXML_TEST_VERSION
+	xmlKeepBlanksDefault(0);
+
+    sprintf(fname, "%sfunctions%cmodel-packages.xml", 
+	    gretl_home(), SLASH);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-addons-info", &doc, &cur);
+
+    if (err) {
+	fprintf(stderr, "Couldn't open %s\n", fname);
+	return NULL;
+    }
+
+    cur = cur->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "addon")) {
+	    xmlChar *name, *desc, *path;
+
+	    name = xmlGetProp(cur, (XUC) "name");
+	    desc = xmlGetProp(cur, (XUC) "label");
+	    path = xmlGetProp(cur, (XUC) "path");
+
+	    if (name == NULL || desc == NULL || path == NULL) {
+		err = 1;
+	    } else {
+		addons = myrealloc(addons, (n+1) * sizeof *addons);
+
+		if (addons == NULL) {
+		    err = 1;
+		} else {
+		    addons[n].pkgname = (char *) name;
+		    addons[n].label = (char *) desc;
+		    addons[n].menupath = (char *) path;
+		    addons[n].filepath = NULL;
+		    n++;
+		} 
+	    }
+
+	    if (err) {
+		free(name);
+		free(desc);
+		free(path);
+	    }		
+	}
+
+	if (!err) {
+	    cur = cur->next;
+	}
+    }
+
+    *n_addons = n;
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return addons;
+}
+
+void maybe_add_packages_to_model_menus (windata_t *vwin)
+{
+    static struct addon_info *model_addons;
+    static int n_addons;
+    int i;
+
+    if (vwin == NULL) {
+	/* clean-up signal */
+	destroy_addon_info(model_addons, n_addons);
+	return;
+    }
+
+    if (model_addons == NULL) {
+	model_addons = read_model_package_info(&n_addons);
+    }
+
+    for (i=0; i<n_addons; i++) {
+	maybe_insert_addon(&model_addons[i], vwin);
+    }
+}

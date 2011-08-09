@@ -388,6 +388,7 @@ static file_collection *pop_ps_collection (void)
 void destroy_file_collections (void)
 {
     collection_stack(NULL, STACK_DESTROY);
+    maybe_add_packages_to_model_menus(NULL);
 }
 
 static void reset_data_stack (void)
