@@ -135,6 +135,7 @@ struct fnpkg_ {
     char *label;      /* for use in GUI menus */
     int minver;       /* minimum required gretl version */
     FuncDataReq dreq; /* data requirement */
+    int modelreq;     /* required model type, if applicable */
     ufunc **pub;      /* pointers to public interfaces */
     ufunc **priv;     /* pointers to private functions */
     int n_pub;        /* number of public functions */
@@ -474,6 +475,7 @@ static fnpkg *function_package_alloc (const char *fname)
     pkg->sample = NULL;
     pkg->label = NULL;
     pkg->dreq = 0;
+    pkg->modelreq = 0;
     pkg->minver = 0;
     
     pkg->pub = pkg->priv = NULL;
@@ -2390,6 +2392,11 @@ static int package_write_index (fnpkg *pkg, PRN *prn)
 	fprintf(fp, " %s=\"true\"", NO_DATA_OK);
     }
 
+    if (pkg->modelreq > 0) {
+	fprintf(fp, " model-requirement=\"%s\"", 
+		gretl_command_word(pkg->modelreq));
+    }
+
     if (pkg->minver > 0) {
 	char vstr[8];
 
@@ -2455,6 +2462,11 @@ static int real_write_function_package (fnpkg *pkg, FILE *fp)
 	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
     } else if (pkg->dreq == FN_NODATA_OK) {
 	fprintf(fp, " %s=\"true\"", NO_DATA_OK);
+    }
+
+    if (pkg->modelreq > 0) {
+	fprintf(fp, " model-requirement=\"%s\"", 
+		gretl_command_word(pkg->modelreq));
     }
 
     if (pkg->minver > 0) {
@@ -2580,6 +2592,18 @@ static int pkg_set_dreq (fnpkg *pkg, const char *s)
     }
 
     return err;
+}
+
+static int pkg_set_modelreq (fnpkg *pkg, const char *s)
+{
+    int ci = gretl_command_number(s);
+
+    if (ci > 0) {
+	pkg->modelreq = ci;
+	return 0;
+    } else {
+	return E_PARSE;
+    }
 }
 
 static int function_set_pkg_role (const char *name, fnpkg *pkg,
@@ -2720,6 +2744,8 @@ static int new_package_info_from_spec (fnpkg *pkg, FILE *fp, PRN *prn)
 		}
 	    } else if (!strncmp(line, "data-requirement", 16)) {
 		err = pkg_set_dreq(pkg, p);
+	    } else if (!strncmp(line, "model-requirement", 17)) {
+		err = pkg_set_modelreq(pkg, p);
 	    } else if (!strncmp(line, "min-version", 11)) {
 		pkg->minver = version_number_from_string(p);
 		got++;
@@ -3040,6 +3066,8 @@ int function_package_set_properties (fnpkg *pkg, ...)
 
 	    if (!strcmp(key, "data-requirement")) {
 		pkg->dreq = ival;
+	    } else if (!strcmp(key, "model-requirement")) {
+		pkg->modelreq = ival;
 	    } else if (!strcmp(key, "min-version")) {
 		pkg->minver = ival;
 	    } 
@@ -3191,6 +3219,9 @@ int function_package_get_properties (fnpkg *pkg, ...)
 	} else if (!strcmp(key, "data-requirement")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->dreq;
+	} else if (!strcmp(key, "model-requirement")) {
+	    pi = (int *) ptr;
+	    *pi = pkg->modelreq;
 	} else if (!strcmp(key, "min-version")) {
 	    pi = (int *) ptr;
 	    *pi = pkg->minver;
@@ -3654,6 +3685,11 @@ real_read_package (xmlDocPtr doc, xmlNodePtr node, const char *fname,
     } else if (gretl_xml_get_prop_as_bool(node, NO_DATA_OK)) {
 	pkg->dreq = FN_NODATA_OK;
     }
+
+    if (gretl_xml_get_prop_as_string(node, "model-requirement", &tmp)) {
+	pkg->modelreq = gretl_command_number(tmp);
+	free(tmp);
+    }    
 
     if (gretl_xml_get_prop_as_string(node, "minver", &tmp)) {
 	pkg->minver = version_number_from_string(tmp);

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gretl-package-info>
+<package name="gig" label="GARCH variants" path="/menubar/Model/TSModels"/>
+<package name="SVAR" label="Structural VAR" path="/menubar/Model/TSModels"/>
+<package name="ivpanel" label="Panel IV model" path="/menubar/Model/PanelModels"/>
+<package name="bandplot" label="Confidence band plot" model-window="true" path="/menubar/Graphs"/>
+<package name="tobit_y" label="Predicted values" model-window="true" path="/menubar/Analysis"/>
+</gretl-package-info>

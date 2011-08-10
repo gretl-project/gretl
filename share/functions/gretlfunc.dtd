@@ -20,6 +20,7 @@
    needs-panel-data (true|false) 'false'
    no-data-ok (true|false) 'false'
    has-pdf-doc (true|false) 'false'
+   model-requirement CDATA #IMPLIED
    minver CDATA #IMPLIED
 >
 

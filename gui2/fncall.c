@@ -2231,147 +2231,16 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 }
 
-struct addon_info {
+struct addon_info_ {
     char *pkgname;
     char *label;
     char *menupath;
     char *filepath;
 };
 
-/* For recognized "addon" function packages: given the internal
-   package name (e.g. "gig") and a menu path where we'd like
-   it to appear (e.g. "/menubar/Model/TSModels" -- see the
-   ui definition file gui2/gretlmain.xml), construct the
-   appropriate menu item and connect it to gfn_menu_callback(), 
-   which see above.
-*/
+typedef struct addon_info_ addon_info;
 
-static void add_package_to_menu (struct addon_info *addon,
-				 windata_t *vwin)
-{
-    static GtkActionEntry pkg_item = {
-	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
-    };
-    GtkActionGroup *actions;
-
-    pkg_item.name = addon->pkgname;
-    if (addon->label != NULL) {
-	pkg_item.label = _(addon->label);
-    } else {
-	pkg_item.label = addon->pkgname;
-    }
-
-    gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
-			  addon->menupath, pkg_item.label, pkg_item.name,
-			  GTK_UI_MANAGER_MENUITEM, 
-			  FALSE);
-
-    actions = gtk_action_group_new(pkg_item.name);
-    gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
-    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
-    g_object_unref(actions);
-}
-
-/* put the recognized gretl addons into the appropriate menus */
-
-void maybe_add_packages_to_menus (windata_t *vwin)
-{
-    struct addon_info addons[] = {
-	{ "gig",     N_("GARCH variants"), "/menubar/Model/TSModels", NULL },
-	{ "ivpanel", N_("Panel IV model"), "/menubar/Model/PanelModels", NULL }
-    };
-    int i, n = sizeof addons / sizeof addons[0];
-
-    for (i=0; i<n; i++) {
-	add_package_to_menu(&addons[i], vwin);
-    }
-}
-
-/* run a package's gui-precheck function to determine if
-   it's OK to add its GUI interface to a gretl
-   model-window menu
-*/
-
-static int precheck_error (ufunc *func, windata_t *vwin)
-{
-    fnargs *args = fn_args_new();
-    PRN *prn;
-    double check_err = 0;
-    int err = 0;
-
-    if (args == NULL) {
-	return E_ALLOC;
-    }
-
-    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
-    set_genr_model_from_vwin(vwin);
-    err = gretl_function_exec(func, args, GRETL_TYPE_DOUBLE,
-			      dataset, &check_err, NULL, prn);
-    unset_genr_model();
-    gretl_print_destroy(prn);
-    fn_args_free(args);
-
-    if (err == 0 && check_err != 0) {
-	err = 1;
-    }
-    
-    return err;
-}
-
-static int maybe_add_model_pkg (struct addon_info *addon,
-				windata_t *vwin)
-{
-    int dreq, minver = 0;
-    gchar *precheck = NULL;
-    fnpkg *pkg;
-    int err = 0;
-
-    if (addon->filepath == NULL) {
-	addon->filepath = gretl_function_package_get_path(addon->pkgname, 
-							  PKG_TOPLEV);
-    }
-	
-    if (addon->filepath == NULL) {
-	fprintf(stderr, "%s: couldn't find it\n", addon->pkgname);
-	return 0;
-    } else {
-	fprintf(stderr, "found %s\n", addon->filepath);
-    }
-
-    pkg = get_function_package_by_filename(addon->filepath, &err);
-
-    if (!err) {
-	err = function_package_get_properties(pkg,
-					      "data-requirement", &dreq,
-					      "min-version", &minver,
-					      "gui-precheck", &precheck,
-					      NULL);
-    }
-
-    if (!err) {
-	if (precheck != NULL) {
-	    ufunc *func = get_function_from_package(precheck, pkg);
-	    
-	    if (func == NULL || precheck_error(func, vwin)) {
-		fprintf(stderr, "precheck failed\n");
-		err = 1;
-	    }
-	} else {
-	    err = check_function_needs(dataset, dreq, minver);
-	    fprintf(stderr, "check_function_needs: err = %d\n", err);
-	}
-    }
-
-    if (!err) {
-	add_package_to_menu(addon, vwin);
-    }
-
-    g_free(precheck);
-
-    return err;
-}
-
-static void destroy_addon_info (struct addon_info *addons, int n)
+static void destroy_addons_info (addon_info *addons, int n)
 {
     if (addons != NULL && n > 0) {
 	int i;
@@ -2386,9 +2255,9 @@ static void destroy_addon_info (struct addon_info *addons, int n)
     }
 }
 
-static struct addon_info *read_model_package_info (int *n_addons)
+static addon_info *read_package_info (int *n_addons, int modelwin)
 {
-    struct addon_info *addons = NULL;
+    addon_info *addons = NULL;
     char fname[FILENAME_MAX];
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -2397,10 +2266,10 @@ static struct addon_info *read_model_package_info (int *n_addons)
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
 
-    sprintf(fname, "%sfunctions%cmodel-packages.xml", 
+    sprintf(fname, "%sfunctions%cpackages.xml", 
 	    gretl_home(), SLASH);
 
-    err = gretl_xml_open_doc_root(fname, "gretl-addons-info", &doc, &cur);
+    err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
 
     if (err) {
 	return NULL;
@@ -2409,14 +2278,18 @@ static struct addon_info *read_model_package_info (int *n_addons)
     cur = cur->xmlChildrenNode;
 
     while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (XUC) "addon")) {
+        if (!xmlStrcmp(cur->name, (XUC) "package")) {
+	    int mw = gretl_xml_get_prop_as_bool(cur, "model-window");
 	    xmlChar *name, *desc, *path;
+
+	    if ((mw && !modelwin) || (modelwin && !mw)) {
+		cur = cur->next;
+		continue;
+	    }
 
 	    name = xmlGetProp(cur, (XUC) "name");
 	    desc = xmlGetProp(cur, (XUC) "label");
 	    path = xmlGetProp(cur, (XUC) "path");
-
-	    fprintf(stderr, "Found ref to package '%s'\n", name);
 
 	    if (name == NULL || desc == NULL || path == NULL) {
 		err = 1;
@@ -2456,20 +2329,164 @@ static struct addon_info *read_model_package_info (int *n_addons)
     return addons;
 }
 
+/* For recognized "addon" function packages: given the internal
+   package name (e.g. "gig") and a menu path where we'd like
+   it to appear (e.g. "/menubar/Model/TSModels" -- see the
+   ui definition file gui2/gretlmain.xml), construct the
+   appropriate menu item and connect it to gfn_menu_callback(), 
+   which see above.
+*/
+
+static void add_package_to_menu (addon_info *addon,
+				 windata_t *vwin)
+{
+    static GtkActionEntry pkg_item = {
+	NULL, NULL, NULL, NULL, NULL, G_CALLBACK(gfn_menu_callback)
+    };
+    GtkActionGroup *actions;
+
+    pkg_item.name = addon->pkgname;
+    if (addon->label != NULL) {
+	pkg_item.label = _(addon->label);
+    } else {
+	pkg_item.label = addon->pkgname;
+    }
+
+    gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
+			  addon->menupath, pkg_item.label, pkg_item.name,
+			  GTK_UI_MANAGER_MENUITEM, 
+			  FALSE);
+
+    actions = gtk_action_group_new(pkg_item.name);
+    gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
+    gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
+    g_object_unref(actions);
+}
+
+/* run a package's gui-precheck function to determine if
+   it's OK to add its GUI interface to a gretl
+   model-window menu
+*/
+
+static int precheck_error (ufunc *func, windata_t *vwin)
+{
+    fnargs *args = fn_args_new();
+    PRN *prn;
+    double check_err = 0;
+    int err = 0;
+
+    if (args == NULL) {
+	return E_ALLOC;
+    }
+
+    prn = gretl_print_new(GRETL_PRINT_STDERR, &err);
+    set_genr_model_from_vwin(vwin);
+    err = gretl_function_exec(func, args, GRETL_TYPE_DOUBLE,
+			      dataset, &check_err, NULL, prn);
+    unset_genr_model();
+    gretl_print_destroy(prn);
+    fn_args_free(args);
+
+    if (err == 0 && check_err != 0) {
+	err = 1;
+    }
+    
+    return err;
+}
+
+static int maybe_add_model_pkg (addon_info *addon,
+				windata_t *vwin)
+{
+    int dreq, mreq, minver = 0;
+    gchar *precheck = NULL;
+    fnpkg *pkg;
+    int err = 0;
+
+    if (addon->filepath == NULL) {
+	addon->filepath = gretl_function_package_get_path(addon->pkgname, 
+							  PKG_TOPLEV);
+    }
+	
+    if (addon->filepath == NULL) {
+	fprintf(stderr, "%s: couldn't find it\n", addon->pkgname);
+	return 0;
+    } else {
+	fprintf(stderr, "found %s\n", addon->filepath);
+    }
+
+    pkg = get_function_package_by_filename(addon->filepath, &err);
+
+    if (!err) {
+	err = function_package_get_properties(pkg,
+					      "data-requirement", &dreq,
+					      "model-requirement", &mreq,
+					      "min-version", &minver,
+					      "gui-precheck", &precheck,
+					      NULL);
+    }
+
+    if (!err) {
+	if (mreq > 0) {
+	    MODEL *pmod = vwin->data;
+
+	    if (pmod->ci != mreq) {
+		fprintf(stderr, "%s: model-requirement (%s) not met\n",  
+			addon->pkgname, gretl_command_word(mreq));
+		err = 1;
+	    }
+	}
+	if (!err) {
+	    err = check_function_needs(dataset, dreq, minver);
+	}
+	if (!err && precheck != NULL) {
+	    ufunc *func = get_function_from_package(precheck, pkg);
+	    
+	    if (func == NULL || precheck_error(func, vwin)) {
+		fprintf(stderr, "precheck failed\n");
+		err = 1;
+	    }
+	} 
+    }
+
+    if (!err) {
+	add_package_to_menu(addon, vwin);
+    }
+
+    g_free(precheck);
+
+    return err;
+}
+
+/* put recognized gretl addons into the appropriate menus */
+
+void maybe_add_packages_to_menus (windata_t *vwin)
+{
+    addon_info *pkgs;
+    int i, n_pkgs = 0;
+
+    pkgs = read_package_info(&n_pkgs, 0);
+
+    for (i=0; i<n_pkgs; i++) {
+	add_package_to_menu(&pkgs[i], vwin);
+    }
+
+    destroy_addons_info(pkgs, n_pkgs);
+}
+
 void maybe_add_packages_to_model_menus (windata_t *vwin)
 {
-    static struct addon_info *pkgs;
+    static addon_info *pkgs;
     static int n_pkgs;
     int i;
 
     if (vwin == NULL) {
 	/* clean-up signal */
-	destroy_addon_info(pkgs, n_pkgs);
+	destroy_addons_info(pkgs, n_pkgs);
 	return;
     }
 
     if (pkgs == NULL) {
-	pkgs = read_model_package_info(&n_pkgs);
+	pkgs = read_package_info(&n_pkgs, 1);
     }
 
     for (i=0; i<n_pkgs; i++) {

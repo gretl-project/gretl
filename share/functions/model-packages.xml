@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<gretl-addons-info>
-<addon name="bandplot" label="Confidence band plot" path="/menubar/Graphs"/>
-<addon name="tobit_y" label="Predicted values" path="/menubar/Analysis"/>
-</gretl-addons-info>
