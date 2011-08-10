@@ -995,7 +995,7 @@ static void show_addon_info (GtkWidget *w, gpointer data)
 	gchar *local = NULL;
 
 	if (status != NULL && !strcmp(status, _("Installed"))) {
-	    char *path = gretl_function_package_get_path(pkgname, PKG_ADDON);
+	    char *path = gretl_function_package_get_path(pkgname, PKG_SUBDIR);
 	    gchar *ver = NULL, *date = NULL;
 	    fnpkg *pkg = NULL;
 	    int err = 0;

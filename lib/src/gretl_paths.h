@@ -38,7 +38,8 @@ typedef enum {
 
 typedef enum {
     PKG_ALL,
-    PKG_ADDON
+    PKG_SUBDIR,
+    PKG_TOPLEV
 } PkgType;
 
 typedef struct ConfigPaths_ ConfigPaths;

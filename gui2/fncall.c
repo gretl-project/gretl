@@ -2203,9 +2203,15 @@ int download_addon (const char *pkgname, char **local_path)
 static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 {
     const gchar *pkgname = gtk_action_get_name(action);
+    PkgType ptype = PKG_SUBDIR;
     char *path = NULL;
 
-    path = gretl_function_package_get_path(pkgname, PKG_ADDON);
+    if (vwin != NULL && vwin->role == VIEW_MODEL) {
+	/* this may need reconsideration later */
+	ptype = PKG_TOPLEV;
+    }
+
+    path = gretl_function_package_get_path(pkgname, ptype);
 
     if (path == NULL) {
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
@@ -2225,6 +2231,13 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
     }
 }
 
+struct addon_info {
+    char *pkgname;
+    char *label;
+    char *menupath;
+    char *filepath;
+};
+
 /* For recognized "addon" function packages: given the internal
    package name (e.g. "gig") and a menu path where we'd like
    it to appear (e.g. "/menubar/Model/TSModels" -- see the
@@ -2233,9 +2246,7 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
    which see above.
 */
 
-static void add_package_to_menu (const char *pkgname,
-				 const char *label,
-				 const char *menupath,
+static void add_package_to_menu (struct addon_info *addon,
 				 windata_t *vwin)
 {
     static GtkActionEntry pkg_item = {
@@ -2243,30 +2254,23 @@ static void add_package_to_menu (const char *pkgname,
     };
     GtkActionGroup *actions;
 
-    pkg_item.name = pkgname;
-    if (label != NULL) {
-	pkg_item.label = label;
+    pkg_item.name = addon->pkgname;
+    if (addon->label != NULL) {
+	pkg_item.label = _(addon->label);
     } else {
-	pkg_item.label = pkgname;
+	pkg_item.label = addon->pkgname;
     }
 
     gtk_ui_manager_add_ui(vwin->ui, gtk_ui_manager_new_merge_id(vwin->ui),
-			  menupath, pkg_item.label, pkgname,
+			  addon->menupath, pkg_item.label, pkg_item.name,
 			  GTK_UI_MANAGER_MENUITEM, 
 			  FALSE);
 
-    actions = gtk_action_group_new(pkgname);
+    actions = gtk_action_group_new(pkg_item.name);
     gtk_action_group_add_actions(actions, &pkg_item, 1, vwin);
     gtk_ui_manager_insert_action_group(vwin->ui, actions, 0);
     g_object_unref(actions);
 }
-
-struct addon_info {
-    char *pkgname;
-    char *label;
-    char *menupath;
-    char *filepath;
-};
 
 /* put the recognized gretl addons into the appropriate menus */
 
@@ -2279,10 +2283,7 @@ void maybe_add_packages_to_menus (windata_t *vwin)
     int i, n = sizeof addons / sizeof addons[0];
 
     for (i=0; i<n; i++) {
-	add_package_to_menu(addons[i].pkgname,
-			    _(addons[i].label),
-			    addons[i].menupath,
-			    vwin);
+	add_package_to_menu(&addons[i], vwin);
     }
 }
 
@@ -2317,8 +2318,8 @@ static int precheck_error (ufunc *func, windata_t *vwin)
     return err;
 }
 
-static int maybe_insert_addon (struct addon_info *addon,
-			       windata_t *vwin)
+static int maybe_add_model_pkg (struct addon_info *addon,
+				windata_t *vwin)
 {
     int dreq, minver = 0;
     gchar *precheck = NULL;
@@ -2327,11 +2328,14 @@ static int maybe_insert_addon (struct addon_info *addon,
 
     if (addon->filepath == NULL) {
 	addon->filepath = gretl_function_package_get_path(addon->pkgname, 
-							  PKG_ADDON);
+							  PKG_TOPLEV);
     }
 	
     if (addon->filepath == NULL) {
+	fprintf(stderr, "%s: couldn't find it\n", addon->pkgname);
 	return 0;
+    } else {
+	fprintf(stderr, "found %s\n", addon->filepath);
     }
 
     pkg = get_function_package_by_filename(addon->filepath, &err);
@@ -2354,12 +2358,12 @@ static int maybe_insert_addon (struct addon_info *addon,
 	    }
 	} else {
 	    err = check_function_needs(dataset, dreq, minver);
+	    fprintf(stderr, "check_function_needs: err = %d\n", err);
 	}
     }
 
     if (!err) {
-	add_package_to_menu(addon->pkgname, _(addon->label), 
-			    addon->menupath, vwin);
+	add_package_to_menu(addon, vwin);
     }
 
     g_free(precheck);
@@ -2399,9 +2403,8 @@ static struct addon_info *read_model_package_info (int *n_addons)
     err = gretl_xml_open_doc_root(fname, "gretl-addons-info", &doc, &cur);
 
     if (err) {
-	fprintf(stderr, "Couldn't open %s\n", fname);
 	return NULL;
-    }
+    } 
 
     cur = cur->xmlChildrenNode;
 
@@ -2412,6 +2415,8 @@ static struct addon_info *read_model_package_info (int *n_addons)
 	    name = xmlGetProp(cur, (XUC) "name");
 	    desc = xmlGetProp(cur, (XUC) "label");
 	    path = xmlGetProp(cur, (XUC) "path");
+
+	    fprintf(stderr, "Found ref to package '%s'\n", name);
 
 	    if (name == NULL || desc == NULL || path == NULL) {
 		err = 1;
@@ -2453,21 +2458,21 @@ static struct addon_info *read_model_package_info (int *n_addons)
 
 void maybe_add_packages_to_model_menus (windata_t *vwin)
 {
-    static struct addon_info *model_addons;
-    static int n_addons;
+    static struct addon_info *pkgs;
+    static int n_pkgs;
     int i;
 
     if (vwin == NULL) {
 	/* clean-up signal */
-	destroy_addon_info(model_addons, n_addons);
+	destroy_addon_info(pkgs, n_pkgs);
 	return;
     }
 
-    if (model_addons == NULL) {
-	model_addons = read_model_package_info(&n_addons);
+    if (pkgs == NULL) {
+	pkgs = read_model_package_info(&n_pkgs);
     }
 
-    for (i=0; i<n_addons; i++) {
-	maybe_insert_addon(&model_addons[i], vwin);
+    for (i=0; i<n_pkgs; i++) {
+	maybe_add_model_pkg(&pkgs[i], vwin);
     }
 }

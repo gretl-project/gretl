@@ -1246,9 +1246,10 @@ int get_plausible_functions_dir (char *fndir, int i)
 /**
  * gretl_function_package_get_path:
  * @name: the name of the package to find, without the .gfn extension.
- * @type: %PKG_REGULAR for a standard gfn package or %PKG_ADDON for
- * a recognized gretl "addon".
- * 
+ * @type: %PKG_SUBDIR for a recognized gretl "addon", %PKG_TOPLEV
+ * for a package file not in a subdirectory, or %PKG_ALL for a
+ * package that may be at either level.
+ *
  * Searches a list of directories in which we might expect to find
  * function packages, and, if the package in question is found,
  * returns a newly allocated string holding the full path to
@@ -1279,27 +1280,28 @@ char *gretl_function_package_get_path (const char *name,
 	    continue;
 	}
 
-	/* look preferentially for .gfn files in their own
-	   subdirectories */
+	if (type != PKG_TOPLEV) {
+	    /* look preferentially for .gfn files in their own
+	       subdirectories */
+	    while ((dirent = readdir(dir)) != NULL && !found) {
+		dname = dirent->d_name;
+		if (!strcmp(dname, name)) {
+		    FILE *fp;
 
-	while ((dirent = readdir(dir)) != NULL && !found) {
-	    dname = dirent->d_name;
-	    if (!strcmp(dname, name)) {
-		FILE *fp;
-
-		sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
-			dname, SLASH, dname);
-		fp = gretl_try_fopen(path, "r");
-		if (fp != NULL) {
-		    fclose(fp);
-		    found = 1;
-		} else {
-		    *path = '\0';
+		    sprintf(path, "%s%c%s%c%s.gfn", fndir, SLASH, 
+			    dname, SLASH, dname);
+		    fp = gretl_try_fopen(path, "r");
+		    if (fp != NULL) {
+			fclose(fp);
+			found = 1;
+		    } else {
+			*path = '\0';
+		    }
 		}
 	    }
 	}
 
-	if (!found && type != PKG_ADDON) {
+	if (!found && type != PKG_SUBDIR) {
 	    /* look for .gfn files in the top-level functions
 	       directory */
 	    rewinddir(dir);
