@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-08-08 11:33-0400\n"
-"PO-Revision-Date: 2011-07-30 19:00-0400\n"
+"PO-Revision-Date: 2011-08-12 23:30-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -462,9 +462,8 @@ msgid "Robust F"
 msgstr "Robust F"
 
 #: lib/src/compare.c:391
-#, fuzzy
 msgid "LM test"
-msgstr "Test LR"
+msgstr "Test LM"
 
 #: lib/src/compare.c:399
 #, c-format
@@ -4437,9 +4436,8 @@ msgstr ""
 "Pomocnicze równanie regresji dla testu nieliniowści (logarytmy zmiennych)"
 
 #: lib/src/modelprint.c:748
-#, fuzzy
 msgid "Auxiliary regression for added variables"
-msgstr "Pomocnicze równanie regresji dla testu specyfikacji RESET"
+msgstr "Pomocnicze równanie regresji dla testu dodanych zmiennych"
 
 #: lib/src/modelprint.c:759
 msgid "Augmented regression for Chow test"
@@ -9606,7 +9604,7 @@ msgstr "close this dialog on \"OK\""
 
 #: gui2/fncall.c:1763
 msgid "This function needs a model in place"
-msgstr ""
+msgstr "This function needs a model in place"
 
 #: gui2/fncall.c:1811
 msgid "Function package is broken"
@@ -12445,9 +12443,8 @@ msgstr ""
 "próby (Próba/Zakres próby...) i reestymować model."
 
 #: gui2/library.c:1958
-#, fuzzy
 msgid "No variables are selected"
-msgstr "Brak zmiennych do usunięcia"
+msgstr "Nie wybrano zmiennych do dodania do modelu"
 
 #: gui2/library.c:2030 gui2/library.c:3473 gui2/library.c:3729
 #: gui2/library.c:3999
@@ -12460,9 +12457,8 @@ msgid "gretl: Wald omit test"
 msgstr "gretl: test Walda pominiętych zmiennych"
 
 #: gui2/library.c:2037
-#, fuzzy
 msgid "gretl: LM test"
-msgstr "gretl: test LM - mnożnika Lagrange'a "
+msgstr "gretl: test LM - mnożnika Lagrange'a"
 
 #: gui2/library.c:2078 gui2/library.c:3868
 msgid "gretl: vector autoregression"
@@ -13681,13 +13677,12 @@ msgid "Use lines"
 msgstr "Wykorzystaj linie"
 
 #: gui2/selector.c:5224
-#, fuzzy
 msgid "Estimate augmented model"
-msgstr "Test F i prezentacja zredukowanego modelu"
+msgstr "Test F i prezentacja rozbudowanego modelu"
 
 #: gui2/selector.c:5229
 msgid "LM test using auxiliary regression"
-msgstr ""
+msgstr "Test LM i prezentacja pomocniczego modelu"
 
 #: gui2/selector.c:5243
 msgid "Estimate reduced model"
@@ -14040,7 +14035,7 @@ msgstr ""
 
 #: gui2/session.c:1895
 msgid "Display notes on opening session file"
-msgstr ""
+msgstr "Pokaż notatki przy otwarciu pliku sesji"
 
 #: gui2/session.c:2015
 msgid "versus"
@@ -14652,9 +14647,8 @@ msgid "The dataset cannot be modified at present"
 msgstr "Dane nie mogą być modyfikowane teraz"
 
 #: gui2/textbuf.c:288
-#, fuzzy
 msgid "No redo information available"
-msgstr "Brak informacji do cofnięcia"
+msgstr "Brak informacji do ponownego wykonania"
 
 #: gui2/textbuf.c:297
 msgid "No undo information available"
@@ -14802,9 +14796,8 @@ msgid "Save as..."
 msgstr "Zapisz jako..."
 
 #: gui2/toolbar.c:640
-#, fuzzy
 msgid "Show/hide"
-msgstr "Pokaż siatkę"
+msgstr "Pokaż/Ukruj"
 
 #: gui2/toolbar.c:641
 msgid "Run"
@@ -14812,7 +14805,7 @@ msgstr "Wykonaj"
 
 #: gui2/toolbar.c:642
 msgid "Cut"
-msgstr ""
+msgstr "Wytnij"
 
 #: gui2/toolbar.c:644
 msgid "Paste"
@@ -14828,11 +14821,11 @@ msgstr "Cofnij"
 
 #: gui2/toolbar.c:648
 msgid "Redo"
-msgstr ""
+msgstr "Ponownie wykonaj"
 
 #: gui2/toolbar.c:649
 msgid "Sort"
-msgstr "Sortowanie"
+msgstr "Sortuj"
 
 #: gui2/toolbar.c:650
 msgid "Sort by..."
@@ -14840,7 +14833,7 @@ msgstr "Sortuj według..."
 
 #: gui2/toolbar.c:651
 msgid "Configure tabs..."
-msgstr "konfiguracja tabeli..."
+msgstr "Konfiguracja tabeli..."
 
 #: gui2/toolbar.c:653
 msgid "Scripts index"
