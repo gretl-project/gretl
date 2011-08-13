@@ -1056,7 +1056,6 @@ static int real_add_series (int newvars, double *x,
 {
     double **newZ;
     int v = dset->v;
-    int n = dset->n;
     int i, err = 0;
 
     if (newvars == 0) {
@@ -1084,7 +1083,7 @@ static int real_add_series (int newvars, double *x,
 	    newZ[v] = x;
 	} else {
 	    for (i=0; i<newvars && !err; i++) {
-		newZ[v+i] = malloc(n * sizeof **newZ);
+		newZ[v+i] = malloc(dset->n * sizeof **newZ);
 		if (newZ[v+i] == NULL) {
 		    err = E_ALLOC;
 		} 
