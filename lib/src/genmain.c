@@ -467,12 +467,12 @@ static int gen_special (const char *s, const char *line,
 	    }
 	}
     } else if (!strcmp(s, "timedum")) {
-	err = panel_dummies(dset, OPT_T);
+	err = panel_dummies(dset, OPT_T, prn);
 	if (!err) {
 	    msg = N_("Panel dummy variables generated.\n");
 	}
     } else if (!strcmp(s, "unitdum")) {
-	err = panel_dummies(dset, OPT_NONE);
+	err = panel_dummies(dset, OPT_NONE, prn);
 	if (!err) {
 	    msg = N_("Panel dummy variables generated.\n");
 	}

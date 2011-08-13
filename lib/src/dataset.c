@@ -1003,48 +1003,49 @@ int dataset_shrink_obs_range (DATASET *dset)
 }
 
 static int 
-dataset_expand_varinfo (int newvars, DATASET *dset)
+dataset_expand_varinfo (int v0, int newvars, DATASET *dset)
 {
     char **varname = NULL;
     VARINFO **varinfo = NULL;
-    int v = dset->v;
-    int bigv = v + newvars;
-    int i;
+    int bigv = v0 + newvars;
+    int i, v, err = 0;
 
     varname = realloc(dset->varname, bigv * sizeof *varname);
     if (varname == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
+    } else {
+	dset->varname = varname;
     }
 
-    dset->varname = varname;
-
-    for (i=0; i<newvars; i++) {
-	dset->varname[v+i] = malloc(VNAMELEN);
-	if (dset->varname[v+i] == NULL) {
-	    return E_ALLOC;
+    for (i=0; i<newvars && !err; i++) {
+	v = v0 + i;
+	dset->varname[v] = malloc(VNAMELEN);
+	if (dset->varname[v] == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    dset->varname[v][0] = '\0';
 	}
-	dset->varname[v+i][0] = '\0';
     }
 
-    if (dset->varinfo != NULL) {
+    if (!err && dset->varinfo != NULL) {
 	varinfo = realloc(dset->varinfo, bigv * sizeof *varinfo);
 	if (varinfo == NULL) {
-	    return E_ALLOC;
+	    err = E_ALLOC;
 	} else {
 	    dset->varinfo = varinfo;
 	}
-	for (i=0; i<newvars; i++) {
-	    dset->varinfo[v+i] = malloc(sizeof **varinfo);
-	    if (dset->varinfo[v+i] == NULL) {
-		return E_ALLOC;
+	for (i=0; i<newvars && !err; i++) {
+	    v = v0 + i;
+	    dset->varinfo[v] = malloc(sizeof **varinfo);
+	    if (dset->varinfo[v] == NULL) {
+		err = E_ALLOC;
+	    } else {
+		gretl_varinfo_init(dset->varinfo[v]);
 	    }
-	    gretl_varinfo_init(dset->varinfo[v+i]);
 	}
     }
 
-    dset->v += newvars;
-
-    return 0;
+    return err;
 }
 
 /* note: values of series newly added here are left uninitialized:
@@ -1055,7 +1056,7 @@ static int real_add_series (int newvars, double *x,
 			    DATASET *dset)
 {
     double **newZ;
-    int v = dset->v;
+    int v0 = dset->v;
     int i, err = 0;
 
     if (newvars == 0) {
@@ -1063,7 +1064,7 @@ static int real_add_series (int newvars, double *x,
 	return 0;
     }
 
-    newZ = realloc(dset->Z, (v + newvars) * sizeof *newZ); 
+    newZ = realloc(dset->Z, (v0 + newvars) * sizeof *newZ); 
 
 #if DDEBUG
     fprintf(stderr, "real_add_series: add %d vars, Z = %p\n",
@@ -1079,12 +1080,12 @@ static int real_add_series (int newvars, double *x,
     
     if (!err) {
 	if (newvars == 1 && x != NULL) {
-	    /* new var is pre-allocated */
-	    newZ[v] = x;
+	    /* a single new var, storage pre-allocated */
+	    newZ[v0] = x;
 	} else {
 	    for (i=0; i<newvars && !err; i++) {
-		newZ[v+i] = malloc(dset->n * sizeof **newZ);
-		if (newZ[v+i] == NULL) {
+		newZ[v0+i] = malloc(dset->n * sizeof **newZ);
+		if (newZ[v0+i] == NULL) {
 		    err = E_ALLOC;
 		} 
 	    }
@@ -1092,7 +1093,11 @@ static int real_add_series (int newvars, double *x,
     }
 
     if (!err) {
-	err = dataset_expand_varinfo(newvars, dset);
+	err = dataset_expand_varinfo(v0, newvars, dset);
+    }
+
+    if (!err) {
+	dset->v += newvars;
     }
 
     return err;
@@ -1115,11 +1120,12 @@ int dataset_add_series (int newvars, DATASET *dset)
     int err = real_add_series(newvars, NULL, dset);
 
     if (!err) {
-	int i, t;
+	int i, v, t;
 
 	for (i=0; i<newvars; i++) {
+	    v = v0 + i;
 	    for (t=0; t<dset->n; t++) {
-		dset->Z[v0+i][t] = 0.0;
+		dset->Z[v][t] = 0.0;
 	    }
 	}
     }

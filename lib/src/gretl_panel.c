@@ -2957,7 +2957,7 @@ MODEL real_panel_model (const int *list, DATASET *dset,
 
     /* add time dummies to list? */
     if (opt & OPT_D) {
-	err = panel_dummies(dset, OPT_T);
+	err = panel_dummies(dset, OPT_T, prn);
 	if (!err) {
 	    err = add_dummies_to_list(list, dset, &olslist);
 	}  

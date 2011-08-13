@@ -2310,6 +2310,7 @@ int dummy (DATASET *dset, int center)
  * panel_dummies:
  * @dset: dataset struct.
  * @opt: %OPT_T for time dummies, otherwise unit dummies.
+ * @prn: printer for warning, or NULL.
  *
  * Adds to the data set a set of dummy variables corresponding
  * to either the cross-sectional units in a panel, or the
@@ -2318,7 +2319,7 @@ int dummy (DATASET *dset, int center)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int panel_dummies (DATASET *dset, gretlopt opt)
+int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn)
 {
     char vname[16];
     int vi, t, yy, pp, mm;
@@ -2344,6 +2345,14 @@ int panel_dummies (DATASET *dset, gretlopt opt)
     }
 
     nnew = n_new_dummies(dset, n_unitdum, n_timedum);
+
+    if (nnew > 0 && prn != NULL) {
+	double sz = nnew * dset->n * 8 / (1024.0 * 1024.0);
+
+	if (sz > 1024) {
+	    pprintf(prn, "warning: requested %gMb of storage\n", sz);
+	}
+    }
 
     if (nnew > 0 && dataset_add_series(nnew, dset)) {
 	return E_ALLOC;

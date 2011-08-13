@@ -91,7 +91,7 @@ gretl_matrix *butterworth_gain (int n, double cutoff, int hipass);
 
 int dummy (DATASET *dset, int center);
 
-int panel_dummies (DATASET *dset, gretlopt opt);
+int panel_dummies (DATASET *dset, gretlopt opt, PRN *prn);
 
 int gen_unit (DATASET *dset);
 
