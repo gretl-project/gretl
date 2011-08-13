@@ -3,9 +3,7 @@
 const char *gig_translations[] = {
     N_("gig"),
     N_("APARCH"),
-    N_("AR lags"),
     N_("ARCH"),
-    N_("Constant"),
     N_("Covariance estimator"),
     N_("Density"),
     N_("Dependent Variable"),
@@ -39,23 +37,5 @@ const char *ivpanel_translations[] = {
     N_("dependent variable"),
     N_("instruments"),
     N_("regressors")
-};
-
-const char *SVAR_translations[] = {
-    N_("AB-model"),
-    N_("C-model"),
-    N_("Constant"),
-    N_("Exogenous regressors"),
-    N_("IRF by shock"),
-    N_("IRF by var"),
-    N_("KPSW"),
-    N_("Lags"),
-    N_("Model type"),
-    N_("Plot type"),
-    N_("Time trend"),
-    N_("VAR variables"),
-    N_("horizon"),
-    N_("plain"),
-    N_("template")
 };
 

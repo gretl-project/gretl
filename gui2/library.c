@@ -5259,7 +5259,7 @@ void add_dummies (GtkAction *action)
     if (u == TS_DUMMIES) {
 	err = dummy(dataset, 0) == 0;
     } else {
-	err = panel_dummies(dataset, opt);
+	err = panel_dummies(dataset, opt, NULL);
     } 
 
     if (err) {
