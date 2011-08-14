@@ -10606,6 +10606,8 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
  * gretl_matrix_values:
  * @x: array to process.
  * @n: length of array.
+ * @opt: if OPT_S the array of values will be sorted, otherwise
+ * given in order of occurrence.
  * @err: location to receive error code.
  *
  * Returns: an allocated matrix containing the distinct
@@ -10613,7 +10615,7 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
  */
 
 gretl_matrix *gretl_matrix_values (const double *x, int n,
-				   int *err)
+				   gretlopt opt, int *err)
 {
     gretl_matrix *v = NULL;
     double *sorted = NULL;
@@ -10647,15 +10649,36 @@ gretl_matrix *gretl_matrix_values (const double *x, int n,
 	goto bailout;
     }
 
-    v->val[0] = last = sorted[0];
-    m = 1;
-
-    for (i=1; i<k; i++) {
-	if (sorted[i] != last) {
-	    last = sorted[i];
-	    v->val[m++] = sorted[i];
+    if (opt & OPT_S) {
+	/* sorted */
+	v->val[0] = last = sorted[0];
+	m = 1;
+	for (i=1; i<k; i++) {
+	    if (sorted[i] != last) {
+		last = sorted[i];
+		v->val[m++] = sorted[i];
+	    }
 	}
-    }
+    } else {
+	/* unsorted */
+	int j, add;
+
+	m = 0;
+	for (i=0; i<n; i++) {
+	    if (!na(x[i])) {
+		add = 1;
+		for (j=0; j<m; j++) {
+		    if (v->val[j] == x[i]) {
+			add = 0;
+			break;
+		    }
+		}
+		if (add) {
+		    v->val[m++] = x[i];
+		}
+	    }
+	}
+    }	
 
  bailout:
 
@@ -11010,12 +11033,12 @@ gretl_matrix *matrix_matrix_xtab (const gretl_matrix *x,
 	return NULL;
     }
 
-    vx = gretl_matrix_values(x->val, nx, err);
+    vx = gretl_matrix_values(x->val, nx, OPT_S, err);
     if (*err) {
 	return NULL;
     }
 
-    vy = gretl_matrix_values(y->val, ny, err);
+    vy = gretl_matrix_values(y->val, ny, OPT_S, err);
     if (*err) {
 	goto bailout;
     }
@@ -11093,7 +11116,7 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 	}
     }
 
-    vx = gretl_matrix_values(tmp, nmax, err);
+    vx = gretl_matrix_values(tmp, nmax, OPT_S, err);
     if (*err) {
 	free(tmp);
 	return NULL;
@@ -11106,7 +11129,7 @@ gretl_matrix *gretl_matrix_xtab (int t1, int t2, const double *x,
 	}
     }
 
-    vy = gretl_matrix_values(tmp, nmax, err);
+    vy = gretl_matrix_values(tmp, nmax, OPT_S, err);
     if (*err) {
 	goto bailout;
     }

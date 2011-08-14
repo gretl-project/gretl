@@ -226,6 +226,7 @@ enum {
     F_URCPVAL,
     F_RANDGEN,
     F_VALUES,
+    F_UNIQ,
     F_NULLSPC,
     F_MEXP,
     F_MINC,

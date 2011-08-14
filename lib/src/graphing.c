@@ -339,7 +339,7 @@ static int factor_check (gnuplot_info *gi, const DATASET *dset)
 	const double *d = dset->Z[gi->list[3]] + gi->t1;
 	int T = gi->t2 - gi->t1 + 1;
 
-	gi->dvals = gretl_matrix_values(d, T, &err);
+	gi->dvals = gretl_matrix_values(d, T, OPT_S, &err);
     }
 
     return err;

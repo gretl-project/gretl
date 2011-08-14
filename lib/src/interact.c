@@ -4409,7 +4409,8 @@ static int do_command_by (CMD *cmd, DATASET *dset, PRN *prn)
     state.model = NULL;
     state.submask = NULL;
 
-    vals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, &err);
+    vals = gretl_matrix_values(x + dset->t1, dset->t2 - dset->t1 + 1, 
+			       OPT_S, &err);
 
     if (!err) {
 	nvals = gretl_vector_get_length(vals);

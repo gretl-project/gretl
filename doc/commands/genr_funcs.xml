@@ -5675,6 +5675,20 @@
       </description>
     </function>
 
+    <function name="uniq" section="stats" output="cvec">
+      <fnargs>
+	<fnarg type="series-or-vec">x</fnarg>
+      </fnargs>      
+      <description>
+	<para>
+	  Returns a vector containing the distinct elements of
+	  <argname>x</argname>, not sorted but in their order of
+	  appearance. See <fncref targ="values"/> for a variant
+	  that sorts the elements.
+	</para>
+      </description>
+    </function>
+
     <function name="unvech" section="matbuild" output="smatrix">
       <fnargs>
 	<fnarg type="vector">v</fnarg>
@@ -5772,6 +5786,7 @@
 	</para>
 	<para>
 	  <seelist>
+            <fncref targ="uniq"/>
 	    <fncref targ="dsort"/>
 	    <fncref targ="sort"/>
 	  </seelist>

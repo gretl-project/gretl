@@ -4660,7 +4660,7 @@ static NODE *vector_sort (NODE *l, int f, parser *p)
     return ret;
 }
 
-static NODE *vector_values (NODE *l, parser *p)
+static NODE *vector_values (NODE *l, int f, parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
@@ -4677,7 +4677,9 @@ static NODE *vector_values (NODE *l, parser *p)
 	}
 
 	if (n > 0 && x != NULL) {
-	    ret->v.m = gretl_matrix_values(x, n, &p->err);
+	    gretlopt opt = (f == F_VALUES)? OPT_S : OPT_NONE;
+
+	    ret->v.m = gretl_matrix_values(x, n, opt, &p->err);
 	} else {
 	    p->err = E_DATA;
 	}
@@ -8343,14 +8345,15 @@ static NODE *eval (NODE *t, parser *p)
     case F_SORT:
     case F_DSORT:
     case F_VALUES:
+    case F_UNIQ:
     case F_PERGM:
     case F_IRR:
 	/* series or vector argument needed */
 	if (l->t == VEC || l->t == MAT) {
 	    if (t->t == F_PERGM) {
 		ret = pergm_node(l, r, p);
-	    } else if (t->t == F_VALUES) {
-		ret = vector_values(l, p);
+	    } else if (t->t == F_VALUES || t->t == F_UNIQ) {
+		ret = vector_values(l, t->t, p);
 	    } else if (t->t == F_IRR) {
 		ret = do_irr(l, p);
 	    } else {

@@ -250,7 +250,7 @@ static int anova_make_value_vecs (struct anova *v)
 {
     int err = 0;
 
-    v->tvals = gretl_matrix_values(v->tvec, v->n, &err);
+    v->tvals = gretl_matrix_values(v->tvec, v->n, OPT_S, &err);
 
     if (!err && v->tvals->rows < 2) {
 	gretl_errmsg_set("Insufficient observations");
@@ -258,7 +258,7 @@ static int anova_make_value_vecs (struct anova *v)
     }
 
     if (!err && v->bvec != NULL) {
-	v->bvals = gretl_matrix_values(v->bvec, v->n, &err);
+	v->bvals = gretl_matrix_values(v->bvec, v->n, OPT_S, &err);
 	if (!err && v->bvals->rows < 2) {
 	    gretl_errmsg_set("Insufficient observations");
 	    err = E_DATA;

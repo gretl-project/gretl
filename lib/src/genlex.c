@@ -301,6 +301,7 @@ struct str_table funcs[] = {
     { F_RANDGEN,  "randgen" },
     { F_URCPVAL,  "urcpval" },
     { F_VALUES,   "values" },
+    { F_UNIQ,     "uniq" },
     { F_MSHAPE,   "mshape" },
     { F_SVD,      "svd" },
     { F_MOLS,     "mols" },
