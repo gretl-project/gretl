@@ -5,4 +5,5 @@
 <package name="ivpanel" label="Panel IV model" path="/menubar/Model/PanelModels"/>
 <package name="bandplot" label="Confidence band plot" model-window="true" path="/menubar/Graphs"/>
 <package name="tobit_y" label="Predicted values" model-window="true" path="/menubar/Analysis"/>
+<package name="fe_stats" label="Fixed effects statistics" model-window="true" path="/menubar/Analysis"/>
 </gretl-package-info>

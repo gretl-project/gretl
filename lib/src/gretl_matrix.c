@@ -3608,7 +3608,7 @@ gretl_vector *gretl_toeplitz_solve (const gretl_vector *c,
 
 #define BLAS_DEBUG 0
 
-static int blas_nmk_min = -1; 
+static int blas_nmk_min = -1;
 
 /**
  * set_blas_nmk_min:
