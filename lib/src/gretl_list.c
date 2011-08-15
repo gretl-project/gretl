@@ -503,6 +503,31 @@ int copy_named_list_as (const char *orig, const char *newname)
 }
 
 /**
+ * copy_anon_list_as:
+ * @list: a list of series IDs.
+ * @name: the name to be given to the copy.
+ *
+ * This is intended for use when a list is given as the 
+ * argument to a user-defined function: it is copied
+ * under the name assigned by the function's parameter list.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int copy_anon_list_as (int *list, const char *name)
+{
+    int err = real_remember_list(list, name, 1, NULL);
+
+    if (!err) {
+	saved_list *sl = list_stack[n_lists - 1];
+
+	sl->level += 1;
+    }
+ 
+    return err;
+}
+
+/**
  * named_list_lower_level:
  * @name: the name of the list.
  *
@@ -565,7 +590,7 @@ int create_named_null_list (const char *name)
 }
 
 /**
- * create_named_signgleton_list:
+ * create_named_singleton_list:
  * @varnum: ID number of the series to use.
  * @name: the name to be given to the list.
  *

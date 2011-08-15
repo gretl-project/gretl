@@ -176,7 +176,8 @@ struct fnarg {
 	double *px;       /* anonymous series arg */
 	gretl_matrix *m;  /* matrix arg */
 	user_matrix *um;  /* named user-matrix arg */
-	char *str;        /* string arg */
+	char *str;        /* named string arg */
+	int *lvec;        /* anonymous list arg */
 	gretl_bundle *b;  /* anonymous bundle pointer */
     } val;
 };
@@ -319,6 +320,8 @@ struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
     } else if (type == GRETL_TYPE_LIST ||
 	       type == GRETL_TYPE_STRING) {
 	arg->val.str = (char *) p;
+    } else if (type == GRETL_TYPE_LVEC) {
+	arg->val.lvec = (int *) p;
     } else if (type == GRETL_TYPE_SCALAR_REF ||
 	       type == GRETL_TYPE_SERIES_REF ||
 	       type == GRETL_TYPE_USCALAR ||
@@ -5507,6 +5510,8 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		err = create_named_null_list(fp->name);
 	    } else if (arg->type == GRETL_TYPE_USERIES) {
 		err = create_named_singleton_list(arg->val.idnum, fp->name);
+	    } else if (arg->type == GRETL_TYPE_LVEC) {
+		err = copy_anon_list_as(arg->val.lvec, fp->name);
 	    } else {
 		err = localize_list(call, arg->val.str, fp, dset);
 	    }
@@ -6255,8 +6260,9 @@ static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
 	    ; /* OK */
+	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_LVEC) {
+	    ; /* OK */
 	} else if (fp->type != arg->type) {
-	    /* FIXME case where list is wanted and the arg is a series? */
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
 		    u->name, i + 1, gretl_arg_type_name(arg->type), 
 		    gretl_arg_type_name(fp->type));

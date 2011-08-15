@@ -5100,7 +5100,8 @@ static gretl_matrix *matrix_from_list (NODE *n, parser *p)
 
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
                          s == LIST || s == U_ADDR || s == DUM || \
-                         s == STR || s == EMPTY || s == BUNDLE)
+                         s == STR || s == EMPTY || s == BUNDLE || \
+			 s == LVEC)
 
 /* evaluate a user-defined function */
 
@@ -5166,7 +5167,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else {
 	    n = eval(r->v.bn.n[i], p);
 	    if (n == NULL) {
-		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i); 
+		fprintf(stderr, "%s: failed to evaluate arg %d\n", funname, i);
 	    } else if (!ok_ufunc_sym(n->t)) {
 		gretl_errmsg_sprintf("%s: invalid argument type %s", funname, 
 				     typestr(n->t));
@@ -5227,6 +5228,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    p->err = push_fn_arg(args, GRETL_TYPE_MATRIX, n->v.m);
 	} else if (n->t == LIST) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.str);
+	} else if (n->t == LVEC) {
+	    p->err = push_fn_arg(args, GRETL_TYPE_LVEC, n->v.ivec);
 	} else if (n->t == STR) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
 	} else if (n->t == BUNDLE) {

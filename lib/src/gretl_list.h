@@ -131,6 +131,8 @@ int remember_list (const int *list, const char *name, PRN *prn);
 
 int copy_named_list_as (const char *orig, const char *newname);
 
+int copy_anon_list_as (int *list, const char *name);
+
 int named_list_lower_level (const char *name);
 
 int rename_saved_list (const char *orig, const char *newname); 
