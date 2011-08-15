@@ -637,8 +637,10 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 {
     int err = 0;
 
-    /* starting and ending values: try for dates first, then
-       numeric constants, then variables */
+    /* starting and ending values: the order in which we try 
+       for valid values is: dates, numeric constants,
+       named scalars, scalar expressions.
+    */
 
 #if LOOP_DEBUG
     fprintf(stderr, "parse_as_indexed_loop: start='%s', end='%s'\n", start, end);

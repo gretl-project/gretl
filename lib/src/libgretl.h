@@ -118,7 +118,6 @@ typedef enum {
     GRETL_TYPE_DATE,
     GRETL_TYPE_BUNDLE,
     GRETL_TYPE_BUNDLE_REF,
-    GRETL_TYPE_LVEC,
     GRETL_TYPE_VOID
 } GretlType;
 

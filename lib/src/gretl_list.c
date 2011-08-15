@@ -176,6 +176,29 @@ const char *get_list_name_by_index (int idx)
 }
 
 /**
+ * saved_list_get_name:
+ * @list: list whose name should be retrieved.
+ *
+ * Returns: the name of the specified saved list, or NULL if
+ * there is no match.
+ */
+
+const char *saved_list_get_name (const int *list)
+{
+    saved_list *sl;
+    int i;
+
+    for (i=0; i<n_lists; i++) {
+	sl = list_stack[i];
+	if (sl->list != NULL && sl->list == list) {
+	    return sl->name;
+	}
+    }   
+
+    return NULL;
+}
+
+/**
  * get_list_by_name:
  * @name: the name of the list to be found.
  *
@@ -470,51 +493,19 @@ int rename_saved_list (const char *orig, const char *newname)
 }
 
 /**
- * copy_named_list_as:
- * @orig: the name of the original list.
- * @newname: the name to be given to the copy.
- *
- * If a saved list is found by the name @orig, a copy of
- * this list is added to the stack of saved lists under the
- * name @newname.  This is intended for use when a list is given
- * as the argument to a user-defined function: it is copied
- * under the name assigned by the function's parameter list.
- *
- * Returns: 0 on success, non-zero on error.
- */
-
-int copy_named_list_as (const char *orig, const char *newname)
-{
-    saved_list *sl;
-    int err = 0;
-
-    sl = get_saved_list_by_name(orig);
-    if (sl == NULL) {
-	err = 1;
-    } else {
-	err = real_remember_list(sl->list, newname, 1, NULL);
-	if (!err) {
-	    sl = list_stack[n_lists - 1];
-	    sl->level += 1;
-	}
-    }
-
-    return err;
-}
-
-/**
- * copy_anon_list_as:
- * @list: a list of series IDs.
+ * copy_list_as:
+ * @list: the list to copy.
  * @name: the name to be given to the copy.
  *
  * This is intended for use when a list is given as the 
  * argument to a user-defined function: it is copied
- * under the name assigned by the function's parameter list.
+ * under the name assigned by the function's parameter 
+ * list, and shifted to the next execution level.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int copy_anon_list_as (int *list, const char *name)
+int copy_list_as (const int *list, const char *name)
 {
     int err = real_remember_list(list, name, 1, NULL);
 
@@ -523,7 +514,7 @@ int copy_anon_list_as (int *list, const char *name)
 
 	sl->level += 1;
     }
- 
+
     return err;
 }
 

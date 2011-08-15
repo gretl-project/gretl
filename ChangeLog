@@ -3,9 +3,12 @@ version 1.9.6, in progress
 - ranking() function: accept vectors as well as series
 - New function, hdprod(): implements "direct row product" for matrices
 - New functions for series: skewness() and kurtosis()
+- New function uniq(): acts like values() but leaves the distinct values
+  in their order of appearance
 - allow non-integer degrees of freedom for Student's t in cdf(), invcdf()
   and randgen()
-- extend the invcdf() function to the Gamma and std. GED distributions
+- list arguments to functions: allow use of anonymous lists
+- extend the invcdf() function to the gamma and std. GED distributions
 - GUI script editor: add Cut and Redo toolbar buttons
 - GUI session Notes: add option to pop up the notes on opening a
   session file
@@ -16,7 +19,7 @@ version 1.9.6, in progress
 - VARs: (re-)enable HAC standard errors via a new option, --robust-hac
 - "var" command with --lagselect option: make the table of information
   criteria available as $test
-- "omit" command: add a --test-only option to prevent the reduced model 
+- "omit" command: add a --test-only option to prevent the reduced model
   from being saved as "last model"
 - "add" command: add an --lm option to do an LM test, in which case the
   last model is not replaced by the augmented version

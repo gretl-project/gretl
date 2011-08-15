@@ -5227,9 +5227,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	} else if (n->t == MAT) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_MATRIX, n->v.m);
 	} else if (n->t == LIST) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.str);
+	    int *list = get_list_by_name(n->v.str);
+
+	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, list);
 	} else if (n->t == LVEC) {
-	    p->err = push_fn_arg(args, GRETL_TYPE_LVEC, n->v.ivec);
+	    p->err = push_fn_arg(args, GRETL_TYPE_LIST, n->v.ivec);
 	} else if (n->t == STR) {
 	    p->err = push_fn_arg(args, GRETL_TYPE_STRING, n->v.str);
 	} else if (n->t == BUNDLE) {

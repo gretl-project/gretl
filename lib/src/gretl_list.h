@@ -119,6 +119,8 @@ int max_varno_in_saved_lists (void);
 
 const char *get_list_name_by_index (int idx);
 
+const char *saved_list_get_name (const int *list);
+
 int *get_list_by_name (const char *name);
 
 int append_to_list_by_name (const char *targ, const int *add);
@@ -129,9 +131,7 @@ int replace_list_by_name (const char *targ, const int *src);
 
 int remember_list (const int *list, const char *name, PRN *prn);
 
-int copy_named_list_as (const char *orig, const char *newname);
-
-int copy_anon_list_as (int *list, const char *name);
+int copy_list_as (const int *list, const char *name);
 
 int named_list_lower_level (const char *name);
 

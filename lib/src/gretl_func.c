@@ -176,8 +176,8 @@ struct fnarg {
 	double *px;       /* anonymous series arg */
 	gretl_matrix *m;  /* matrix arg */
 	user_matrix *um;  /* named user-matrix arg */
-	char *str;        /* named string arg */
-	int *lvec;        /* anonymous list arg */
+	char *str;        /* string arg */
+	int *list;        /* list arg */
 	gretl_bundle *b;  /* anonymous bundle pointer */
     } val;
 };
@@ -317,11 +317,10 @@ struct fnarg *fn_arg_new (GretlType type, void *p, int *err)
 	arg->val.px = (double *) p;
     } else if (type == GRETL_TYPE_MATRIX) {
 	arg->val.m = (gretl_matrix *) p;
-    } else if (type == GRETL_TYPE_LIST ||
-	       type == GRETL_TYPE_STRING) {
+    } else if (type == GRETL_TYPE_STRING) {
 	arg->val.str = (char *) p;
-    } else if (type == GRETL_TYPE_LVEC) {
-	arg->val.lvec = (int *) p;
+    } else if (type == GRETL_TYPE_LIST) {
+	arg->val.list = (int *) p;
     } else if (type == GRETL_TYPE_SCALAR_REF ||
 	       type == GRETL_TYPE_SERIES_REF ||
 	       type == GRETL_TYPE_USCALAR ||
@@ -5222,35 +5221,24 @@ int update_function_from_script (const char *funname, const char *path,
 
 /* next block: handling function arguments */
 
-/* Given a named list of variables supplied as an argument to a
-   function, copy the list under the name assigned by the function,
-   and make the variables referenced in that list accessible to the
-   function.
+/* Given a list of variables supplied as an argument to a function,
+   copy the list under the name assigned by the function and
+   make the variables referenced in that list accessible within
+   the function.
 */
 
-static int localize_list (fncall *call, const char *oldname, 
+static int localize_list (fncall *call, struct fnarg *arg,
 			  fn_param *fp, DATASET *dset)
 {
-    const int *list;
-    int level = fn_executing + 1;
-    int i, vi, err;
+    const int *list = arg->val.list;
+    int err;
 
-    list = get_list_by_name(oldname);
-
-    if (list == NULL) {
-	err = E_DATA;
-    } else {
-	/* note: it's OK if the two names are the same,
-	   since their "levels" will be different */
-	err = copy_named_list_as(oldname, fp->name);
-    }
-
-#if UDEBUG
-    fprintf(stderr, "localize_list: localizing '%s' as '%s'\n",
-	    oldname, fp->name);
-#endif
+    err = copy_list_as(list, fp->name);
 
     if (!err) {
+	int i, vi, level = fn_executing + 1;
+	const char *s;
+
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
 	    if (vi > 0) {
@@ -5260,10 +5248,16 @@ static int localize_list (fncall *call, const char *oldname,
 		STACK_LEVEL(dset, vi) = level;
 	    }
 	}
+
+	s = saved_list_get_name(list);
+	if (s != NULL) {
+	    arg->upname = gretl_strdup(s);
+	}
     }
 
 #if UDEBUG
-    fprintf(stderr, "localize_list: returning %d\n", err);
+    fprintf(stderr, "localize_list (%s): returning %d\n", 
+	    fp->name, err);
 #endif
 
     return err;
@@ -5510,10 +5504,8 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 		err = create_named_null_list(fp->name);
 	    } else if (arg->type == GRETL_TYPE_USERIES) {
 		err = create_named_singleton_list(arg->val.idnum, fp->name);
-	    } else if (arg->type == GRETL_TYPE_LVEC) {
-		err = copy_anon_list_as(arg->val.lvec, fp->name);
 	    } else {
-		err = localize_list(call, arg->val.str, fp, dset);
+		err = localize_list(call, arg, fp, dset);
 	    }
 	} else if (fp->type == GRETL_TYPE_STRING) {
 	    if (arg->type != GRETL_TYPE_NONE) {
@@ -5752,7 +5744,7 @@ enum {
    function whose execution is now terminating.  Note that this list
    may be the direct return value of the function, or it may have been
    given to the function as an argument, or it may have been constructed
-   on the fly.  This is flagged by @status.  
+   on the fly. This is flagged by @status.  
 */
 
 static int unlocalize_list (const char *lname, int status,
@@ -6259,8 +6251,6 @@ static int check_function_args (ufunc *u, fnargs *args, PRN *prn)
 		   gretl_matrix_is_scalar(arg->val.m)) {
 	    ; /* OK */
 	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_USERIES) {
-	    ; /* OK */
-	} else if (fp->type == GRETL_TYPE_LIST && arg->type == GRETL_TYPE_LVEC) {
 	    ; /* OK */
 	} else if (fp->type != arg->type) {
 	    pprintf(prn, _("%s: argument %d is of the wrong type (is %s, should be %s)\n"), 
