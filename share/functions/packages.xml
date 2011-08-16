@@ -3,7 +3,7 @@
 <package name="gig" label="GARCH variants" path="/menubar/Model/TSModels"/>
 <package name="SVAR" label="Structural VAR" path="/menubar/Model/TSModels"/>
 <package name="ivpanel" label="Panel IV model" path="/menubar/Model/PanelModels"/>
-<package name="bandplot" label="Confidence band plot" model-window="true" path="/menubar/Graphs"/>
-<package name="tobit_y" label="Predicted values" model-window="true" path="/menubar/Analysis"/>
-<package name="fe_stats" label="Fixed effects statistics" model-window="true" path="/menubar/Analysis"/>
+<package name="bandplot" label="Confidence band plot" model-window="true" path="/menubar/Graphs" toplev="true"/>
+<package name="tobit_y" label="Predicted values" model-window="true" path="/menubar/Analysis" toplev="true"/>
+<package name="fe_stats" label="Fixed effects statistics" model-window="true" path="/menubar/Analysis" toplev="true"/>
 </gretl-package-info>

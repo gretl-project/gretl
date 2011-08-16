@@ -2194,6 +2194,51 @@ int download_addon (const char *pkgname, char **local_path)
     return err;
 }
 
+struct addon_info_ {
+    char *pkgname;
+    char *label;
+    char *menupath;
+    char *filepath;
+    PkgType ptype;
+    int modelwin;
+};
+
+typedef struct addon_info_ addon_info;
+
+static addon_info *addons;
+static int n_addons;
+
+static void destroy_addons_info (void)
+{
+    if (addons != NULL && n_addons > 0) {
+	int i;
+
+	for (i=0; i<n_addons; i++) {
+	    free(addons[i].pkgname);
+	    free(addons[i].label);
+	    free(addons[i].menupath);
+	    free(addons[i].filepath);
+	}
+	free(addons);
+    }
+
+    addons = NULL;
+    n_addons = 0;
+}
+
+static addon_info *retrieve_addon_info (const gchar *pkgname)
+{
+    int i;
+
+    for (i=0; i<n_addons; i++) {
+	if (!strcmp(pkgname, addons[i].pkgname)) {
+	    return &addons[i];
+	}
+    }
+
+    return NULL;
+}
+
 /* Callback for a menu item representing a "addon" function package, 
    whose name (e.g. "gig") is attached to @action. We first see if 
    we can find the full path to the corresponding gfn file; if so we
@@ -2203,17 +2248,19 @@ int download_addon (const char *pkgname, char **local_path)
 static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 {
     const gchar *pkgname = gtk_action_get_name(action);
-    PkgType ptype = PKG_SUBDIR;
-    char *path = NULL;
+    addon_info *addon;
 
-    if (vwin != NULL && vwin->role == VIEW_MODEL) {
-	/* this may need reconsideration later */
-	ptype = PKG_TOPLEV;
+    addon = retrieve_addon_info(pkgname);
+    if (addon == NULL) {
+	/* "can't happen" */
+	return;
     }
 
-    path = gretl_function_package_get_path(pkgname, ptype);
+    if (addon->filepath == NULL) {
+	addon->filepath = gretl_function_package_get_path(pkgname, addon->ptype);
+    }
 
-    if (path == NULL) {
+    if (addon->filepath == NULL) {
 	gchar *msg = g_strdup_printf(_("The %s package was not found, or is not "
 				       "up to date.\nWould you like to try "
 				       "downloading it now?"), pkgname);
@@ -2221,43 +2268,17 @@ static void gfn_menu_callback (GtkAction *action, windata_t *vwin)
 
 	g_free(msg);
 	if (resp == GRETL_YES) {
-	    download_addon(pkgname, &path);
+	    download_addon(pkgname, &addon->filepath);
 	}
     }
 
-    if (path != NULL) {
-	call_function_package(path, vwin, NULL);
-	free(path);
+    if (addon->filepath != NULL) {
+	call_function_package(addon->filepath, vwin, NULL);
     }
 }
 
-struct addon_info_ {
-    char *pkgname;
-    char *label;
-    char *menupath;
-    char *filepath;
-};
-
-typedef struct addon_info_ addon_info;
-
-static void destroy_addons_info (addon_info *addons, int n)
+static int read_addons_info (void)
 {
-    if (addons != NULL && n > 0) {
-	int i;
-
-	for (i=0; i<n; i++) {
-	    free(addons[i].pkgname);
-	    free(addons[i].label);
-	    free(addons[i].menupath);
-	    free(addons[i].filepath);
-	}
-	free(addons);
-    }
-}
-
-static addon_info *read_package_info (int *n_addons, int modelwin)
-{
-    addon_info *addons = NULL;
     char fname[FILENAME_MAX];
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -2272,7 +2293,7 @@ static addon_info *read_package_info (int *n_addons, int modelwin)
     err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
 
     if (err) {
-	return NULL;
+	return err;
     } 
 
     cur = cur->xmlChildrenNode;
@@ -2280,12 +2301,8 @@ static addon_info *read_package_info (int *n_addons, int modelwin)
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "package")) {
 	    int mw = gretl_xml_get_prop_as_bool(cur, "model-window");
+	    int top = gretl_xml_get_prop_as_bool(cur, "toplev");
 	    xmlChar *name, *desc, *path;
-
-	    if ((mw && !modelwin) || (modelwin && !mw)) {
-		cur = cur->next;
-		continue;
-	    }
 
 	    name = xmlGetProp(cur, (XUC) "name");
 	    desc = xmlGetProp(cur, (XUC) "label");
@@ -2303,6 +2320,8 @@ static addon_info *read_package_info (int *n_addons, int modelwin)
 		    addons[n].label = (char *) desc;
 		    addons[n].menupath = (char *) path;
 		    addons[n].filepath = NULL;
+		    addons[n].ptype = (top)? PKG_TOPLEV : PKG_SUBDIR;
+		    addons[n].modelwin = mw;
 		    n++;
 		} 
 	    }
@@ -2319,14 +2338,18 @@ static addon_info *read_package_info (int *n_addons, int modelwin)
 	}
     }
 
-    *n_addons = n;
+    if (err) {
+	destroy_addons_info();
+    } else {
+	n_addons = n;
+    }
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
     }
 
-    return addons;
+    return err;
 }
 
 /* For recognized "addon" function packages: given the internal
@@ -2404,7 +2427,7 @@ static int maybe_add_model_pkg (addon_info *addon,
 
     if (addon->filepath == NULL) {
 	addon->filepath = gretl_function_package_get_path(addon->pkgname, 
-							  PKG_TOPLEV);
+							  addon->ptype);
     }
 	
     if (addon->filepath == NULL) {
@@ -2457,39 +2480,41 @@ static int maybe_add_model_pkg (addon_info *addon,
     return err;
 }
 
-/* put recognized gretl addons into the appropriate menus */
+/* put recognized gretl addons (other than those that
+   live in model menus) into the appropriate menus */
 
 void maybe_add_packages_to_menus (windata_t *vwin)
 {
-    addon_info *pkgs;
-    int i, n_pkgs = 0;
+    int i;
 
-    pkgs = read_package_info(&n_pkgs, 0);
-
-    for (i=0; i<n_pkgs; i++) {
-	add_package_to_menu(&pkgs[i], vwin);
+    if (addons == NULL) {
+	read_addons_info();
     }
 
-    destroy_addons_info(pkgs, n_pkgs);
+    for (i=0; i<n_addons; i++) {
+	if (!addons[i].modelwin) {
+	    add_package_to_menu(&addons[i], vwin);
+	}
+    }
 }
 
 void maybe_add_packages_to_model_menus (windata_t *vwin)
 {
-    static addon_info *pkgs;
-    static int n_pkgs;
     int i;
 
     if (vwin == NULL) {
 	/* clean-up signal */
-	destroy_addons_info(pkgs, n_pkgs);
+	destroy_addons_info();
 	return;
     }
 
-    if (pkgs == NULL) {
-	pkgs = read_package_info(&n_pkgs, 1);
+    if (addons == NULL) {
+	read_addons_info();
     }
 
-    for (i=0; i<n_pkgs; i++) {
-	maybe_add_model_pkg(&pkgs[i], vwin);
+    for (i=0; i<n_addons; i++) {
+	if (addons[i].modelwin) {
+	    maybe_add_model_pkg(&addons[i], vwin);
+	}
     }
 }
