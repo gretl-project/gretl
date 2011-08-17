@@ -3626,6 +3626,58 @@ static int set_nlspec_from_model (const MODEL *pmod,
     return err;
 }
 
+static int push_scalar_parm (const char *name, double **px, int *n)
+{
+    double x = gretl_scalar_get_value(name);
+    int err = 0;
+
+    x = gretl_scalar_get_value(name);
+    if (na(x)) {
+	err = E_DATA;
+    } else {
+	int k = *n + 1;
+	double *tmp = realloc(*px, k * sizeof *tmp);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    *px = tmp;
+	    tmp[*n] = x;
+	    *n = k;
+	}
+    }
+
+    return err;
+}
+
+static int push_vector_parm (const char *name, gretl_matrix ***pm,
+			     int *n)
+{
+    gretl_matrix *m = get_matrix_by_name(name);
+    int err = 0;
+
+    if (m == NULL) {
+	err = E_DATA;
+    } else {
+	int k = *n + 1;
+	gretl_matrix **tmp = realloc(*pm, k * sizeof *tmp);
+
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    *pm = tmp;
+	    tmp[*n] = gretl_matrix_copy(m);
+	    if (tmp[*n] == NULL) {
+		err = E_ALLOC;
+	    } else {
+		*n = k;
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* Given an NLS model @pmod, fill out the forecast error series
    @fcerr from @ft1 to @ft2 using the bootstrap, based on
    resampling the original residuals. See also forecast.c,
@@ -3639,12 +3691,15 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
 {
     nlspec *spec;
     gretl_matrix *fcmat = NULL;
+    gretl_matrix **mparms = NULL;
     double *orig_y = NULL;
+    double *sparms = NULL;
     double *resu = NULL;
     int origv = dset->v;
     int yno = pmod->list[1];
     int iters = 100; /* just testing */
-    int i, s, t, fT;
+    int ns = 0, nm = 0;
+    int i, j, k, s, t, fT;
     int err = 0;
 
     /* build the 'private' spec, based on pmod */
@@ -3658,6 +3713,23 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
     spec->t1 = spec->real_t1 = pmod->t1;
     spec->t2 = spec->real_t2 = pmod->t2;
     spec->nobs = spec->t2 - spec->t1 + 1;
+
+    /* back up the original parameter values */
+    for (i=0; i<spec->nparam && !err; i++) {
+	const char *s = spec->params[i].name;
+
+	if (gretl_is_scalar(s)) {
+	    err = push_scalar_parm(s, &sparms, &ns);
+	} else if (gretl_is_matrix(s)) {
+	    err = push_vector_parm(s, &mparms, &nm);
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	goto bailout;
+    }
 
     /* back up the original dependent variable */
     orig_y = copyvec(dset->Z[yno], dset->n);
@@ -3748,6 +3820,21 @@ int nls_boot_calc (const MODEL *pmod, DATASET *dset,
     }
 
  bailout:
+
+    /* restore original params */
+    j = k = 0;
+    for (i=0; i<spec->nparam; i++) {
+	const char *s = spec->params[i].name;
+
+	if (gretl_is_scalar(s) && j < ns) {
+	    gretl_scalar_set_value(s, sparms[j++]);
+	} else if (gretl_is_matrix(s) && k < nm) {
+	    user_matrix_replace_matrix_by_name(s, mparms[k++]);
+	} 
+    } 
+
+    free(sparms);
+    free(mparms);
 
     clear_nlspec(spec);
 
