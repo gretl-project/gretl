@@ -4531,7 +4531,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     exec_state_prep(s);
 
     if (gretl_in_gui_mode() && s->callback != NULL) {
-	err = s->callback(NULL, NULL, 0);
+	err = 0; /* s->callback(NULL, NULL, 0); */
 	if (err) {
 	    /* the GUI user has clicked the "Stop" button */
 	    abort_execution(s);
