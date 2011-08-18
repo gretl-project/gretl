@@ -4299,14 +4299,18 @@ static int callback_scheduled (ExecState *s)
     return (s->flags & CALLBACK_EXEC) ? 1 : 0;
 }
 
-static void callback_exec (ExecState *s, int err)
+static int callback_exec (ExecState *s, int err)
 {
+    int ret = 0;
+
     if (!err && s->callback != NULL) {
-	s->callback(s, NULL, 0);
+	ret = s->callback(s, NULL, 0);
     }
 
     s->flags &= ~CALLBACK_EXEC;
     *s->cmd->savename = '\0';
+
+    return ret;
 }
 
 static int do_end_restrict (ExecState *s, DATASET *dset)
@@ -5342,8 +5346,15 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = 0;
     }
 
-    if (callback_scheduled(s)) {
-	callback_exec(s, err);
+    if (gretl_in_gui_mode() || callback_scheduled(s)) {
+	int stop = callback_exec(s, err);
+
+	if (stop) {
+	    gretl_cmd_destroy_context(cmd);
+	    pputs(prn, _("Execution aborted"));
+	    pputc(prn, '\n');
+	    return 1;
+	}
     } 
 
  bailout:

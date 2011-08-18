@@ -7096,6 +7096,27 @@ void new_script_callback (GtkAction *action)
     do_new_script(etype);
 }
 
+static int script_stopper (int set)
+{
+    static int stop;
+    int ret = 0;
+
+    if (set) {
+	/* set the stop signal */
+	stop = 1;
+    } else if (stop) {
+	ret = 1;
+	stop = 0;
+    }
+
+    return ret;
+}
+
+void do_stop_script (GtkWidget *w, windata_t *vwin)
+{
+    script_stopper(1);
+}
+
 void maybe_display_string_table (void)
 {
     static int s_table_waiting;
@@ -8019,11 +8040,15 @@ static int graph_saved_to_specified_file (void)
 
 #define GRAPHING_CI(c) (c==GNUPLOT || c==SCATTERS || c==BXPLOT)
 
-static void gui_exec_callback (ExecState *s, void *ptr,
-			       GretlObjType type)
+static int gui_exec_callback (ExecState *s, void *ptr,
+			      GretlObjType type)
 {
     int ci = s->cmd->ci;
     int err = 0;
+
+    if (script_stopper(0)) {
+	return 1;
+    }
 
     if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type);
@@ -8058,6 +8083,8 @@ static void gui_exec_callback (ExecState *s, void *ptr,
     if (err) {
 	gui_errmsg(err);
     }
+
+    return 0;
 }
 
 static int script_renumber_series (const char *s, DATASET *dset, 

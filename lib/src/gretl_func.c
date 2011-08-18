@@ -6199,8 +6199,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     return 0;
 }
 
-static void func_exec_callback (ExecState *s, void *ptr,
-				GretlObjType type)
+static int func_exec_callback (ExecState *s, void *ptr,
+			       GretlObjType type)
 {
     int ci = s->cmd->ci;
 
@@ -6212,6 +6212,8 @@ static void func_exec_callback (ExecState *s, void *ptr,
 	    gc(s, NULL, 0);
 	}
     }
+
+    return 0;
 }
 
 static double arg_get_double_val (struct fnarg *arg)
