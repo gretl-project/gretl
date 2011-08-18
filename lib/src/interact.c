@@ -4514,8 +4514,7 @@ static void abort_execution (ExecState *s)
 {
     *s->cmd->savename = '\0';
     gretl_cmd_destroy_context(s->cmd);
-    pputs(s->prn, _("Execution aborted"));
-    pputc(s->prn, '\n');
+    errmsg(E_STOP, s->prn);
 }
 
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
@@ -4530,13 +4529,10 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     exec_state_prep(s);
 
-    if (gretl_in_gui_mode() && s->callback != NULL) {
-	err = 0; /* s->callback(NULL, NULL, 0); */
-	if (err) {
-	    /* the GUI user has clicked the "Stop" button */
-	    abort_execution(s);
-	    return err;
-	}
+    if (gretl_in_gui_mode() && check_for_stop()) {
+	/* the GUI user clicked the "Stop" button */
+	abort_execution(s);
+	return E_STOP;
     }
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {

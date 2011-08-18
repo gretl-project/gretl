@@ -2299,11 +2299,6 @@ static DEBUG_READLINE dbg_readline;
 
 void set_debug_read_func (DEBUG_READLINE dfunc) 
 {
-
-    if (check_for_state()) {
-	return;
-    }
-
     dbg_readline = dfunc;
 }
 
@@ -2316,17 +2311,30 @@ static DEBUG_OUTPUT dbg_output;
 
 void set_debug_output_func (DEBUG_OUTPUT dout) 
 {
-
-    if (check_for_state()) {
-	return;
-    }
-
     dbg_output = dout;
 }
 
 DEBUG_OUTPUT get_debug_output_func (void) 
 {
     return dbg_output;
+}
+
+/* support for GUI Stop button */
+
+static QUERY_STOP query_stop;
+
+void set_query_stop_func (QUERY_STOP query) 
+{
+    query_stop = query;
+}
+
+int check_for_stop (void)
+{
+    if (query_stop != NULL) {
+	return (*query_stop)();
+    } else {
+	return 0;
+    }
 }
 
 /* for setting what we print for NAs on CSV output */

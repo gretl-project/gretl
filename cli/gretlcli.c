@@ -653,8 +653,8 @@ static void printline (const char *s)
     }
 }
 
-static int cli_exec_callback (ExecState *s, void *ptr,
-			      GretlObjType type)
+static void cli_exec_callback (ExecState *s, void *ptr,
+			       GretlObjType type)
 {
     int ci = s->cmd->ci;
 
@@ -663,8 +663,6 @@ static int cli_exec_callback (ExecState *s, void *ptr,
     } 
 
     /* otherwise, no-op */
-
-    return 0;
 }
 
 static int cli_renumber_series (const char *s, DATASET *dset, 

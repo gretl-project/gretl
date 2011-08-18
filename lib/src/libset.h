@@ -82,6 +82,7 @@ typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);
 typedef int (*DEBUG_READLINE) (void *);
 typedef int (*DEBUG_OUTPUT) (void *);
+typedef int (*QUERY_STOP) (void);
 
 #define set_nls_toler(x) (libset_set_double(NLS_TOLER, x))
 
@@ -174,6 +175,9 @@ DEBUG_READLINE get_debug_read_func (void);
 
 void set_debug_output_func (DEBUG_OUTPUT dout);
 DEBUG_OUTPUT get_debug_output_func (void);
+
+void set_query_stop_func (QUERY_STOP query);
+int check_for_stop (void);
 
 void set_workdir_callback (int (*callback)());
 

@@ -6199,8 +6199,8 @@ static int start_fncall (fncall *call, DATASET *dset, PRN *prn)
     return 0;
 }
 
-static int func_exec_callback (ExecState *s, void *ptr,
-			       GretlObjType type)
+static void func_exec_callback (ExecState *s, void *ptr,
+				GretlObjType type)
 {
     int ci = s->cmd->ci;
 
@@ -6212,8 +6212,6 @@ static int func_exec_callback (ExecState *s, void *ptr,
 	    gc(s, NULL, 0);
 	}
     }
-
-    return 0;
 }
 
 static double arg_get_double_val (struct fnarg *arg)
@@ -6388,8 +6386,10 @@ static void set_function_error_message (int err, ufunc *u,
 	/* let the function writer set the message */
 	gretl_errmsg_sprintf(_("Error message from %s():\n %s"), u->name,
 			     state->cmd->param);
+    } else if (err == E_STOP) {
+	; /* no-op */
     } else {
-	/* we'll handle this ourselves */
+	/* we'll handle this here */
 	const char *msg = gretl_errmsg_get();
 
 	if (*msg == '\0') {

@@ -6863,8 +6863,20 @@ static void stop_busy_cursor (GtkWidget *w, GdkWindow *wcurrent)
 
 #endif /* USE_GTK_SPINNER or not */
 
+static void stop_button_set_sensitive (windata_t *vwin,
+				       gboolean s)
+{
+    if (vwin != NULL && vwin->mbar != NULL) {
+	GtkWidget *b = g_object_get_data(G_OBJECT(vwin->mbar), "stop_button");
+
+	if (b != NULL) {
+	    gtk_widget_set_sensitive(b, s);
+	}
+    }
+}
+
 /* Execute a script from the buffer in a viewer window.  The script
-   may be executed in full or in part (in case sel is non-zero)
+   may be executed in full or in part (in case @sel is non-zero)
 */
 
 static void run_native_script (windata_t *vwin, gchar *buf, int sel)
@@ -6892,6 +6904,7 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
 	check_and_record_command();
     } 
 
+    stop_button_set_sensitive(vwin, TRUE);
 #if USE_GTK_SPINNER
     start_wait_for_output(gtk_widget_get_parent(vwin->mbar), 1);
 #else
@@ -6902,6 +6915,7 @@ static void run_native_script (windata_t *vwin, gchar *buf, int sel)
     err = execute_script(NULL, buf, prn, SCRIPT_EXEC);
     gretl_set_batch_mode(save_batch);
 
+    stop_button_set_sensitive(vwin, FALSE);
 #if USE_GTK_SPINNER
     stop_wait_for_output(gtk_widget_get_parent(vwin->mbar));
 #else
@@ -7094,27 +7108,6 @@ void new_script_callback (GtkAction *action)
     }
 
     do_new_script(etype);
-}
-
-static int script_stopper (int set)
-{
-    static int stop;
-    int ret = 0;
-
-    if (set) {
-	/* set the stop signal */
-	stop = 1;
-    } else if (stop) {
-	ret = 1;
-	stop = 0;
-    }
-
-    return ret;
-}
-
-void do_stop_script (GtkWidget *w, windata_t *vwin)
-{
-    script_stopper(1);
 }
 
 void maybe_display_string_table (void)
@@ -7984,18 +7977,21 @@ static int execute_script (const char *runfile, const char *buf,
 		exec_err = gui_exec_line(&state, dataset);
 	    }
 
-	    if (exec_err && !gretl_error_is_fatal()) {
-		exec_err = 0;
-	    }
-
 	    if (exec_err) {
-		pprintf(prn, _("\nError executing script: halting\n"));
-		if (exec_err == E_TOOLONG) {
-		    errmsg(exec_err, prn);
+		if (exec_err == E_STOP) {
+		    /* not really an error */
+		    goto endwhile;
+		} else if (!gretl_error_is_fatal()) {
+		    exec_err = 0;
 		} else {
-		    pprintf(prn, "> %s\n", tmp);
+		    pprintf(prn, _("\nError executing script: halting\n"));
+		    if (exec_err == E_TOOLONG) {
+			errmsg(exec_err, prn);
+		    } else {
+			pprintf(prn, "> %s\n", tmp);
+		    }
+		    goto endwhile;
 		}
-		goto endwhile;
 	    }
 	} /* end non-loop command processor */
     } /* end while command != quit */
@@ -8040,16 +8036,11 @@ static int graph_saved_to_specified_file (void)
 
 #define GRAPHING_CI(c) (c==GNUPLOT || c==SCATTERS || c==BXPLOT)
 
-static int gui_exec_callback (ExecState *s, void *ptr,
-			      GretlObjType type)
+static void gui_exec_callback (ExecState *s, void *ptr,
+			       GretlObjType type)
 {
-    int ci, err = 0;
-
-    if (s == NULL) {
-	return script_stopper(0);
-    }
-
-    ci = s->cmd->ci;
+    int ci = s->cmd->ci;
+    int err = 0;
 
     if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type);
@@ -8084,8 +8075,6 @@ static int gui_exec_callback (ExecState *s, void *ptr,
     if (err) {
 	gui_errmsg(err);
     }
-
-    return 0;
 }
 
 static int script_renumber_series (const char *s, DATASET *dset, 

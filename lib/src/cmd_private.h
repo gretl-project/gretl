@@ -43,7 +43,7 @@ struct CMD_ {
                                    generated lags */
 };
 
-typedef int (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
+typedef void (*EXEC_CALLBACK) (ExecState *, void *, GretlObjType type);
 
 struct ExecState_ {
     ExecFlags flags;

@@ -68,9 +68,10 @@ typedef enum {
     E_JACOBIAN,    /* 46 */
     E_TOOFEW,      /* 47 */
     E_FUNCERR,     /* 48 : error set by function writer */
-    E_DB_DUP,      /* 49 : duplicate vars found when saving to database */
-    E_OK,          /* 50 : not really an error */
-    E_MAX          /* 51 */
+    E_STOP,        /* 49 : user aborted execution */
+    E_DB_DUP,      /* 50 : duplicate vars found when saving to database */
+    E_OK,          /* 51 : not really an error */
+    E_MAX          /* 52 */
 } GretlError; 
 
 enum gretl_warning_codes {

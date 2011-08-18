@@ -76,6 +76,7 @@ static void restore_sample_callback (void);
 static void show_sample_callback (void);
 static void mdata_select_all (void);
 static void mdata_select_list (void);
+static int gui_query_stop (void);
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list",  0, GRETL_FILENAME },
@@ -555,8 +556,10 @@ int main (int argc, char **argv)
 	force_language(LANG_EU);
     }
 
+    /* set libgretl callbacks */
     set_workdir_callback(gui_set_working_dir);
     set_show_activity_func(gui_show_activity);
+    set_query_stop_func(gui_query_stop);
 
     /* allocate data information struct */
     dataset = datainfo_new();
@@ -2218,4 +2221,31 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
     }
 
     return FALSE;
+}
+
+static int script_stopper (int set)
+{
+    static int stop;
+    int ret = 0;
+
+    if (set) {
+	/* set the stop signal */
+	stop = 1;
+    } else if (stop) {
+	warnbox(_("Execution aborted by request"));
+	ret = 1;
+	stop = 0;
+    }
+
+    return ret;
+}
+
+static int gui_query_stop (void)
+{
+    return script_stopper(0);
+}
+
+void do_stop_script (GtkWidget *w, windata_t *vwin)
+{
+    script_stopper(1);
 }

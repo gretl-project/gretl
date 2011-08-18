@@ -896,6 +896,10 @@ static void viewbar_add_items (windata_t *vwin, ViewbarFlags flags)
 	    if (strstr(vwin->fname, "script_tmp")) {
 		gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
 	    }
+	} else if (item->flag == STOP_ITEM) {
+	    /* nothing to stop yet */
+	    g_object_set_data(G_OBJECT(vwin->mbar), "stop_button", button); 
+	    gtk_widget_set_sensitive(GTK_WIDGET(button), FALSE);
 	}
     }
 

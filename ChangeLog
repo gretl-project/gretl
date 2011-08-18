@@ -9,7 +9,8 @@ version 1.9.6, in progress
   and randgen()
 - list arguments to functions: allow use of anonymous lists
 - extend the invcdf() function to the gamma and std. GED distributions
-- GUI script editor: add Cut and Redo toolbar buttons
+- GUI script editor: add Cut and Redo toolbar buttons, and also a
+  Stop button to interrupt script execution
 - GUI session Notes: add option to pop up the notes on opening a
   session file
 - build with SSE2 enabled: ensure that the C compiler SSE2 option is

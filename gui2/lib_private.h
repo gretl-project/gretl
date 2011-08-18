@@ -9,6 +9,4 @@ char *get_lib_cmdline (void);
 
 void lib_cmd_destroy_context (void);
 
-void lib_modelspec_free (void);
-
 #endif /* LIB_PRIVATE_H */

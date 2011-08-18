@@ -3,7 +3,7 @@
 # of using the various options.
 
 # modify for local use
-HTML_DIR = /home/cottrell/stats/esl/website/API
+HTML_DIR = /home/cottrell/stats/esl/website/API/new/gretl
 
 srcdir = .
 LIBTOOL = ../../libtool
