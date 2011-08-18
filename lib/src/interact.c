@@ -4299,18 +4299,14 @@ static int callback_scheduled (ExecState *s)
     return (s->flags & CALLBACK_EXEC) ? 1 : 0;
 }
 
-static int callback_exec (ExecState *s, int err)
+static void callback_exec (ExecState *s, int err)
 {
-    int ret = 0;
-
     if (!err && s->callback != NULL) {
-	ret = s->callback(s, NULL, 0);
+	s->callback(s, NULL, 0);
     }
 
     s->flags &= ~CALLBACK_EXEC;
     *s->cmd->savename = '\0';
-
-    return ret;
 }
 
 static int do_end_restrict (ExecState *s, DATASET *dset)
@@ -4514,6 +4510,14 @@ static int add_omit_save (CMD *cmd)
     }
 }
 
+static void abort_execution (ExecState *s)
+{
+    *s->cmd->savename = '\0';
+    gretl_cmd_destroy_context(s->cmd);
+    pputs(s->prn, _("Execution aborted"));
+    pputc(s->prn, '\n');
+}
+
 int gretl_cmd_exec (ExecState *s, DATASET *dset)
 {
     CMD *cmd = s->cmd;
@@ -4525,6 +4529,15 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
     int err = 0;
 
     exec_state_prep(s);
+
+    if (gretl_in_gui_mode() && s->callback != NULL) {
+	err = s->callback(NULL, NULL, 0);
+	if (err) {
+	    /* the GUI user has clicked the "Stop" button */
+	    abort_execution(s);
+	    return err;
+	}
+    }
 
     if (NEEDS_MODEL_CHECK(cmd->ci)) {
 	err = model_test_check(cmd, dset, prn);
@@ -5346,15 +5359,8 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	err = 0;
     }
 
-    if (gretl_in_gui_mode() || callback_scheduled(s)) {
-	int stop = callback_exec(s, err);
-
-	if (stop) {
-	    gretl_cmd_destroy_context(cmd);
-	    pputs(prn, _("Execution aborted"));
-	    pputc(prn, '\n');
-	    return 1;
-	}
+    if (callback_scheduled(s)) {
+	callback_exec(s, err);
     } 
 
  bailout:

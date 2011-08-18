@@ -8043,12 +8043,13 @@ static int graph_saved_to_specified_file (void)
 static int gui_exec_callback (ExecState *s, void *ptr,
 			      GretlObjType type)
 {
-    int ci = s->cmd->ci;
-    int err = 0;
+    int ci, err = 0;
 
-    if (script_stopper(0)) {
-	return 1;
+    if (s == NULL) {
+	return script_stopper(0);
     }
+
+    ci = s->cmd->ci;
 
     if (ptr != NULL && type == GRETL_OBJ_EQN) {
 	add_model_to_session_callback(ptr, type);

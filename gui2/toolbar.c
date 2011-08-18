@@ -96,7 +96,8 @@ enum {
     OPEN_ITEM,
     SPLIT_ITEM,
     EDITOR_ITEM,
-    NOTES_ITEM
+    NOTES_ITEM,
+    STOP_ITEM
 } viewbar_flags;
 
 static GtkIconFactory *gretl_stock_ifac;
@@ -639,7 +640,7 @@ static GretlToolItem viewbar_items[] = {
 #endif
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
-    { N_("Stop"), GTK_STOCK_STOP, G_CALLBACK(do_stop_script), EXEC_ITEM },
+    { N_("Stop"), GTK_STOCK_STOP, G_CALLBACK(do_stop_script), STOP_ITEM },
     { N_("Cut"), GTK_STOCK_CUT, G_CALLBACK(vwin_cut_callback), EDIT_ITEM }, 
     { N_("Copy"), GTK_STOCK_COPY, G_CALLBACK(vwin_copy_callback), COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, G_CALLBACK(text_paste), EDIT_ITEM },
@@ -674,6 +675,10 @@ static GretlToolItem viewbar_items[] = {
 static int n_viewbar_items = G_N_ELEMENTS(viewbar_items);
 
 #define exec_ok(r) (vwin_editing_script(r) || \
+		    r == VIEW_SCRIPT || \
+	            r == EDIT_PKG_SAMPLE)
+
+#define stop_ok(r) (r == EDIT_SCRIPT || \
 		    r == VIEW_SCRIPT || \
 	            r == EDIT_PKG_SAMPLE)
 
@@ -723,7 +728,9 @@ static GCallback item_get_callback (GretlToolItem *item, windata_t *vwin,
     int f = item->flag;
     int r = vwin->role;
 
-    if (!edit_ok(r) && f == EDIT_ITEM) {
+    if (!stop_ok(r) && f == STOP_ITEM) {
+	return NULL;
+    } else if (!edit_ok(r) && f == EDIT_ITEM) {
 	return NULL;
     } else if (!open_ok(r) && f == OPEN_ITEM) {
 	return NULL;
