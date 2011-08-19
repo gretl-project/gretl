@@ -9116,7 +9116,7 @@ static void printnode (NODE *t, parser *p)
 			 o == B_SUB || o == B_MUL || \
 			 o == B_DIV || o == INC || \
 			 o == DEC || o == B_HCAT || \
-                         o == B_VCAT)
+                         o == B_VCAT || o == B_DOTASN)
 #define ok_list_op(o) (o == B_ASN || o == B_ADD || o == B_SUB)
 #define ok_string_op(o) (o == B_ASN || o == B_ADD || o == B_HCAT) 
 
@@ -9134,6 +9134,7 @@ struct mod_assign m_assign[] = {
     { '^', B_POW },
     { '~', B_HCAT },
     { '|', B_VCAT },
+    { '.', B_DOTASN },
     { 0, 0}
 };
 
@@ -9803,7 +9804,7 @@ static void pre_process (parser *p, int flags)
     } 
 
     /* vertical concat: only OK for matrices */
-    if (p->lh.t != MAT && p->op == B_VCAT) {
+    if (p->lh.t != MAT && (p->op == B_VCAT || p->op == B_DOTASN)) {
 	gretl_errmsg_sprintf(_("'%s' : only defined for matrices"), opstr);
 	p->err = E_PARSE;
 	return;
@@ -10151,6 +10152,13 @@ static void assign_to_matrix_mod (parser *p)
 
     if (a == NULL) {
 	p->err = E_UNKVAR;
+    } else if (p->op == B_DOTASN) {
+	if (p->ret->t == NUM) {
+	    gretl_matrix_fill(a, p->ret->v.xval);
+	    return;
+	} else {
+	    p->err = E_TYPES;
+	}
     } else {
 	b = matrix_from_scratch(p, 1);
 	if (b != NULL) {
