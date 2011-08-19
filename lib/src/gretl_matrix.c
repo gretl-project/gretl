@@ -5804,7 +5804,7 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
     integer n, lda;
     integer info, *iwork = NULL;
     double *work = NULL;
-    double anorm, rcond = NADBL;
+    double rcond = NADBL;
 
     *err = 0;
 
@@ -5824,8 +5824,6 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
 	goto bailout;
     }
 
-    anorm = gretl_matrix_one_norm(a);
-
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
@@ -5833,6 +5831,8 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
 		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	rcond = 0.0;
     } else {
+	double anorm = gretl_matrix_one_norm(a);
+
 	dpocon_(&uplo, &n, a->val, &lda, &anorm, &rcond, work, iwork, &info);
 	if (info != 0) {
 	    *err = 1;

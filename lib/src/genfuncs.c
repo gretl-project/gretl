@@ -969,6 +969,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 	}
 	break;
     case F_PMEAN:
+    case F_PSD:
 	for (t=0; t<=dset->n; t++) {
 	    if (t == dset->n || new_unit(dset, t)) {
 		if (!na(xbar)) {
@@ -996,16 +997,24 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 	    }
 	}
 	break;
-    case F_PSD:
+    default:
+	break;
+    }
+
+    if (k == F_PSD) {
+	double ssx = NADBL;
+	
+	smin = Ti = 0;
+
 	for (t=0; t<=dset->n; t++) {
+	    xbar = y[t];
 	    if (t == dset->n || new_unit(dset, t)) {
-		if (na(xbar)) {
+		if (na(ssx)) {
 		    ret = NADBL;
 		} else if (Ti == 1) {
 		    ret = 0.0;
 		} else {
-		    xbar /= Ti;
-		    ret = sqrt((aux/Ti - xbar*xbar) * Ti/(Ti-1));
+		    ret = sqrt(ssx / (Ti-1));
 		}
 		for (s=smin; s<t; s++) {
 		    y[s] = ret;
@@ -1014,25 +1023,19 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    break;
 		}
 		Ti = 0;
-		xbar = NADBL;
-		aux = NADBL;
+		ssx = NADBL;
 		smin = t;
 	    }
 	    if (!na(x[t])) {
-		if (na(xbar)) {
-		    xbar = x[t];
-		    aux = x[t]*x[t];
+		if (na(ssx)) {
+		    ssx = (x[t] - xbar) * (x[t] - xbar);
 		} else {
-		    xbar += x[t];
-		    aux += x[t]*x[t];
+		    ssx += (x[t] - xbar) * (x[t] - xbar);
 		}
 		Ti++;
 	    }
 	}
-	break;
-    default:
-	break;
-    }
+    }	
 
     return 0;
 }

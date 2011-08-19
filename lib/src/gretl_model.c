@@ -342,7 +342,9 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 
     err = gretl_model_set_data(pmod, key, valp, GRETL_TYPE_INT, 
 			       sizeof(int));
-    if (err) free(valp);
+    if (err) {
+	free(valp);
+    }
 
     return err;
 }

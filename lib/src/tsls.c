@@ -1154,6 +1154,12 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	if (!err) {
 	    gretl_matrix_xtr_symmetric(S);
 	    gretl_matrix_divide_by_scalar(S, T - K1 - K2);
+	    for (i=0; i<S->rows; i++) {
+		if (gretl_matrix_get(S, i, i) <= 0) {
+		    err = E_SINGULAR;
+		    break;
+		}
+	    }
 	}
     }
 
@@ -1161,7 +1167,9 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	double rc = gretl_symmetric_matrix_rcond(S, &err);
 
 	if (!err && (na(rc) || rc < 1.0e-7)) { /* note: was 1.0e-6 */
+#if 0
 	    fprintf(stderr, "Stock-Yogo: rcond(S) = %g\n", rc);
+#endif
 	    err = E_SINGULAR;
 	}
     }
@@ -1206,9 +1214,11 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
     gretl_matrix_block_destroy(B);
     gretl_matrix_block_destroy(B2);
 
+#if 0
     if (err) {
 	fprintf(stderr, "compute_stock_yogo: err = %d\n", err);
     }
+#endif
 
     return err;
 }

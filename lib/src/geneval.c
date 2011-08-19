@@ -5485,7 +5485,14 @@ static NODE *get_named_bundle_value (NODE *l, NODE *r, parser *p)
 	return ret;
     }
 
-    if (type == GRETL_TYPE_DOUBLE) {
+    if (type == GRETL_TYPE_INT) {
+	ret = aux_scalar_node(p);
+	if (ret != NULL) {
+	    int *ip = val;
+		
+	    ret->v.xval = *ip;
+	}    
+    } else if (type == GRETL_TYPE_DOUBLE) {
 	ret = aux_scalar_node(p);
 	if (ret != NULL) {
 	    double *dp = val;
