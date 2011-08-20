@@ -5230,14 +5230,32 @@ int update_function_from_script (const char *funname, const char *path,
 static int localize_list (fncall *call, struct fnarg *arg,
 			  fn_param *fp, DATASET *dset)
 {
-    const int *list = arg->val.list;
-    int err;
+    int *list = NULL;
+    const char *s = NULL;
+    int err = 0;
 
-    err = copy_list_as(list, fp->name);
+    if (arg == NULL || arg->type == GRETL_TYPE_NONE) {
+	/* empty arg */
+	list = create_named_null_list(fp->name);
+    } else if (arg->type == GRETL_TYPE_LIST) {
+	/* list arg */
+	list = arg->val.list;
+	s = saved_list_get_name(list);
+	list = copy_list_as(list, fp->name);
+    } else if (arg->type == GRETL_TYPE_USERIES) {
+	/* series arg */
+	list = create_named_singleton_list(arg->val.idnum, fp->name);
+    } else {
+	/* can't happen */
+	err = E_DATA;
+    }
+
+    if (!err && list == NULL) {
+	err = E_ALLOC;
+    }
 
     if (!err) {
 	int i, vi, level = fn_executing + 1;
-	const char *s;
 
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
@@ -5249,7 +5267,6 @@ static int localize_list (fncall *call, struct fnarg *arg,
 	    }
 	}
 
-	s = saved_list_get_name(list);
 	if (s != NULL) {
 	    arg->upname = gretl_strdup(s);
 	}
@@ -5500,13 +5517,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	} else if (fp->type == GRETL_TYPE_BUNDLE) {
 	    err = copy_bundle_arg_as(arg->val.b, fp->name);
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    if (arg->type == GRETL_TYPE_NONE) {
-		err = create_named_null_list(fp->name);
-	    } else if (arg->type == GRETL_TYPE_USERIES) {
-		err = create_named_singleton_list(arg->val.idnum, fp->name);
-	    } else {
-		err = localize_list(call, arg, fp, dset);
-	    }
+	    err = localize_list(call, arg, fp, dset);
 	} else if (fp->type == GRETL_TYPE_STRING) {
 	    if (arg->type != GRETL_TYPE_NONE) {
 		err = add_string_as(arg->val.str, fp->name);
@@ -5545,7 +5556,7 @@ static int allocate_function_args (fncall *call, DATASET *dset)
 	if (gretl_scalar_type(fp->type)) {
 	    err = add_scalar_arg_default(fp);
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    err = create_named_null_list(fp->name);
+	    err = localize_list(call, NULL, fp, dset);
 	}
     }
 
@@ -5734,20 +5745,14 @@ static int handle_bundle_return (fncall *call, void *ptr, int copy)
     return err;
 }
 
-enum {
-    LIST_DIRECT_RETURN,
-    LIST_WAS_ARG,
-    LIST_WAS_TEMP
-};
-
 /* Deal with a list that exists at the level of a user-defined
    function whose execution is now terminating.  Note that this list
    may be the direct return value of the function, or it may have been
    given to the function as an argument, or it may have been constructed
-   on the fly. This is flagged by @status.  
+   on the fly. This is flagged by @arg.  
 */
 
-static int unlocalize_list (const char *lname, int status,
+static int unlocalize_list (const char *lname, struct fnarg *arg,
 			    DATASET *dset)
 {
     int *list = get_list_by_name(lname);
@@ -5780,7 +5785,8 @@ static int unlocalize_list (const char *lname, int status,
        argument), we destroy the list.
     */
 
-    if (status == LIST_DIRECT_RETURN) {
+    if (arg == NULL) {
+	/* we're looking at a direct return value */
 	int t, j, overwrite;
 	const char *vname;
 	
@@ -5820,14 +5826,18 @@ static int unlocalize_list (const char *lname, int status,
 	    }
 #endif
 	}
-    } else if (status == LIST_WAS_ARG) {
+    } else {
 	for (i=1; i<=list[0]; i++) {
 	    vi = list[i];
-	    unset_var_listarg(dset, vi);
-	    STACK_LEVEL(dset, vi) = upd;
+	    if (var_is_listarg(dset, vi)) {
+		unset_var_listarg(dset, vi);
+		STACK_LEVEL(dset, vi) = upd;
+	    }
 	}
-    } else if (status == LIST_WAS_TEMP) {
-	delete_list_by_name(lname);
+	if (arg->type != GRETL_TYPE_LIST) {
+	    /* the list was constructed on the fly */
+	    delete_list_by_name(lname);
+	}
     }
 
     return 0;
@@ -5936,7 +5946,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	       stop_fncall(); here we just adjust the info on the
 	       listed variables so they don't get deleted
 	    */
-	    err = unlocalize_list(call->retname, LIST_DIRECT_RETURN, dset);
+	    err = unlocalize_list(call->retname, NULL, dset);
 	} else if (rtype == GRETL_TYPE_BUNDLE) {
 	    copy = is_pointer_arg(call, args, rtype);
 	    err = handle_bundle_return(call, ret, copy);
@@ -5987,11 +5997,7 @@ function_assign_returns (fncall *call, fnargs *args, int rtype,
 	    user_matrix_adjust_level(u, -1);
 	    user_matrix_set_name(u, arg->upname);
 	} else if (fp->type == GRETL_TYPE_LIST) {
-	    if (arg->type == GRETL_TYPE_LIST) {
-		unlocalize_list(fp->name, LIST_WAS_ARG, dset);
-	    } else {
-		unlocalize_list(fp->name, LIST_WAS_TEMP, dset);
-	    }
+	    unlocalize_list(fp->name, arg, dset);
 	} 
     }
 

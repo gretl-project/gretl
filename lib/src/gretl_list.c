@@ -500,50 +500,27 @@ int rename_saved_list (const char *orig, const char *newname)
  * This is intended for use when a list is given as the 
  * argument to a user-defined function: it is copied
  * under the name assigned by the function's parameter 
- * list, and shifted to the next execution level.
+ * list.
  *
- * Returns: 0 on success, non-zero on error.
+ * The "level" of the returned list is 1 above the current
+ * level of function execution.
+ *
+ * Returns: the newly-saved list, or NULL on error.
  */
 
-int copy_list_as (const int *list, const char *name)
+int *copy_list_as (const int *list, const char *name)
 {
     int err = real_remember_list(list, name, 1, NULL);
+    int *ret = NULL;
 
     if (!err) {
 	saved_list *sl = list_stack[n_lists - 1];
 
 	sl->level += 1;
+	ret = sl->list;
     }
 
-    return err;
-}
-
-/**
- * named_list_lower_level:
- * @name: the name of the list.
- *
- * If a saved list is found by the name @name, at the
- * current level of function execution, lower its level
- * by 1.  This is intended for use when a list is 
- * returned by a user-defined function: it is shifted to
- * the level of the caller.
- *
- * Returns: 0 on success, non-zero on error.
- */ 
-
-int named_list_lower_level (const char *name)
-{
-    saved_list *sl;
-    int err = 0;
-
-    sl = get_saved_list_by_name(name);
-    if (sl == NULL) {
-	err = E_DATA;
-    } else {
-	sl->level -= 1;
-    }
-
-    return err;
+    return ret;
 }
 
 /**
@@ -551,33 +528,35 @@ int named_list_lower_level (const char *name)
  * @name: the name to be given to the list.
  *
  * Creates an empty list under the given @name and adds it
- * to the stack of saved lists at the next level of
- * function execution.  This is intended for use when a null 
- * list is given as an argument to a user-defined function.
+ * to the stack of saved lists.  This is intended for use when 
+ * a null list argument is given to a user-defined function.
  *
- * Returns: 0 on success, non-zero on error.
+ * The "level" of the returned list is 1 above the current
+ * level of function execution.
+ *
+ * Returns: the newly-saved list, or NULL on error.
  */
 
-int create_named_null_list (const char *name)
+int *create_named_null_list (const char *name)
 {
-    saved_list *sl;
-    int *list;
-    int err;
+    int *list = gretl_null_list();
 
-    list = gretl_null_list();
-    if (list == NULL) {
-	return E_ALLOC;
-    }
+    if (list != NULL) {
+	saved_list *sl; 
+	int err;
 
-    err = real_remember_list(list, name, 1, NULL);
-    if (!err) {
-	sl = list_stack[n_lists - 1];
-	sl->level += 1;
-    } else {
+	err = real_remember_list(list, name, 1, NULL);
 	free(list);
+	list = NULL;
+
+	if (!err) {
+	    sl = list_stack[n_lists - 1];
+	    sl->level += 1;
+	    list = sl->list;
+	} 
     }
 
-    return err;
+    return list;
 }
 
 /**
@@ -586,40 +565,37 @@ int create_named_null_list (const char *name)
  * @name: the name to be given to the list.
  *
  * Creates a one-element list under the given @name and adds it
- * to the stack of saved lists at the next level of
- * function execution.  This is intended for use when a single 
- * series is given as an argument to a user-defined function in
- * a 'slot' where a list is required.
+ * to the stack of saved lists.  This is intended for use when a 
+ * single series is given as an argument to a user-defined function
+ * in a 'slot' where a list is required.
  *
- * Returns: 0 on success, non-zero on error.
+ * The "level" of the returned list is 1 above the current
+ * level of function execution.
+ *
+ * Returns: the newly saved list, or NULL on error.
  */
 
-int create_named_singleton_list (int varnum, const char *name)
+int *create_named_singleton_list (int varnum, const char *name)
 {
-    saved_list *sl = NULL;
-    int *list = NULL;
-    int err;
+    int *list = gretl_list_new(1);
+ 
+    if (list != NULL) {
+	saved_list *sl;
+	int err;
+	
+	list[1] = varnum;
+	err = real_remember_list(list, name, 1, NULL);
+	free(list);
+	list = NULL;
 
-    list = gretl_list_new(1);
-    if (list == NULL) {
-	return E_ALLOC;
+	if (!err) {
+	    sl = list_stack[n_lists - 1];
+	    sl->level += 1;
+	    list = sl->list;
+	}
     }
 
-    list[1] = varnum;
-
-    err = real_remember_list(list, name, 1, NULL);
-    if (!err) {
-	sl = list_stack[n_lists - 1];
-	sl->level += 1;
-    } 
-
-#if LDEBUG
-    fprintf(stderr, "create_named_singleton_list: sl at %p\n", (void *) sl);
-#endif
-
-    free(list);
-
-    return err;
+    return list;
 }
 
 /**

@@ -131,15 +131,13 @@ int replace_list_by_name (const char *targ, const int *src);
 
 int remember_list (const int *list, const char *name, PRN *prn);
 
-int copy_list_as (const int *list, const char *name);
-
-int named_list_lower_level (const char *name);
-
 int rename_saved_list (const char *orig, const char *newname); 
 
-int create_named_null_list (const char *name);
+int *copy_list_as (const int *list, const char *name);
 
-int create_named_singleton_list (int varnum, const char *name);
+int *create_named_null_list (const char *name);
+
+int *create_named_singleton_list (int varnum, const char *name);
 
 int delete_list_by_name (const char *name);
 
