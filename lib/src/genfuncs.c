@@ -905,12 +905,36 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
     double ret = NADBL;
     double xbar = NADBL;
     double aux = NADBL;
-    int smin = 0;
-    int s, t, Ti = 0;
+    int TV = 0; /* time-varying? */
+    int smin = 0, Ti = 0;
+    int s, t;
 
     if (!dataset_is_panel(dset)) {
 	return E_DATA;
     }
+
+    if (k == F_PMEAN || k == F_PSD) {
+	/* we'll first determine whether the series in
+	   question is time-varying or not
+	*/
+	double xbak = NADBL;
+
+	for (t=0; t<dset->n && !TV; t++) {
+	    if (new_unit(dset, t)) {
+		/* reset */
+		xbak = NADBL;
+	    }
+	    if (!na(x[t])) {
+		if (!na(xbak) && x[t] != xbak) {
+		    TV = 1;
+		}
+		xbak = x[t];
+	    }
+	}
+#if 0
+	fprintf(stderr, "panel_statistic: time-varying = %d\n", TV);
+#endif
+    }	
 
     switch (k) {
     case F_PNOBS:
@@ -943,7 +967,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		smin = t;
 	    }
 	    if (!na(x[t])) {
-		if (na(aux) || x[t]<aux) {
+		if (na(aux) || x[t] < aux) {
 		    aux = x[t];
 		}
 	    }
@@ -962,7 +986,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		smin = t;
 	    }
 	    if (!na(x[t])) {
-		if (na(aux) || x[t]>aux) {
+		if (na(aux) || x[t] > aux) {
 		    aux = x[t];
 		}
 	    }
@@ -972,11 +996,12 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
     case F_PSD:
 	for (t=0; t<=dset->n; t++) {
 	    if (t == dset->n || new_unit(dset, t)) {
-		if (!na(xbar)) {
-		    xbar /= Ti;
+		if (!na(xbar) && TV) {
+		    xbar /= (double) Ti;
 		}
 		/* got a new unit (or reached the end): 
-		   ship out current mean */
+		   ship out the current mean and reset
+		*/
 		for (s=smin; s<t; s++) {
 		    y[s] = xbar;
 		}
@@ -988,7 +1013,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		smin = t;
 	    }
 	    if (!na(x[t])) {
-		if (na(xbar)) {
+		if (na(xbar) || !TV) {
 		    xbar = x[t];
 		} else {
 		    xbar += x[t];
@@ -1001,13 +1026,34 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 	break;
     }
 
-    if (k == F_PSD) {
+    if (k == F_PSD && !TV) {
+	smin = Ti = 0;
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
+		if (Ti == 0) {
+		    ret = NADBL;
+		} else {
+		    ret = 0.0;
+		}
+		for (s=smin; s<t; s++) {
+		    y[s] = ret;
+		}
+		Ti = 0;
+		smin = t;
+	    }
+	    if (!na(x[t])) {
+		Ti++;
+	    }	
+	}
+    } else if (k == F_PSD) {
 	double ssx = NADBL;
 	
 	smin = Ti = 0;
 
 	for (t=0; t<=dset->n; t++) {
-	    xbar = y[t];
+	    if (t < dset->n) {
+		xbar = y[t];
+	    }
 	    if (t == dset->n || new_unit(dset, t)) {
 		if (na(ssx)) {
 		    ret = NADBL;
@@ -1026,11 +1072,13 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		ssx = NADBL;
 		smin = t;
 	    }
-	    if (!na(x[t])) {
+	    if (!na(x[t]) && !na(xbar)) {
+		double dev = x[t] - xbar;
+
 		if (na(ssx)) {
-		    ssx = (x[t] - xbar) * (x[t] - xbar);
+		    ssx = dev * dev;
 		} else {
-		    ssx += (x[t] - xbar) * (x[t] - xbar);
+		    ssx += dev * dev;
 		}
 		Ti++;
 	    }
