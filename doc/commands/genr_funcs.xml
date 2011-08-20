@@ -4308,12 +4308,12 @@
 	  observations for unit $i$.
 	</para>
 	<para>
-	  Missing values are skipped. 
 	  <seelist> 
 	    <fncref targ="pmax"/>
 	    <fncref targ="pmin"/>
 	    <fncref targ="pnobs"/>
 	    <fncref targ="psd"/>
+	    <fncref targ="pshrink"/>
 	  </seelist>
 	</para>
       </description>
@@ -4510,6 +4510,24 @@
 	<para>
 	  For the case where <argname>A</argname> is positive definite,
 	  see <fncref targ="cholesky"/>.
+	</para>
+      </description>
+    </function>
+
+    <function name="pshrink" section="data-utils" output="matrix">
+      <fnargs>
+	<fnarg type="series">y</fnarg>
+      </fnargs>
+      <description>
+	<para context="notex">
+	  Only applicable if the currently open dataset has a panel
+	  structure. Returns a column vector holding the first valid
+	  observation for the series <argname>y</argname> for each
+	  unit or individual in the panel, over the current sample
+	  range. If a unit has no valid observations for the input
+	  series it is skipped. This function provides a means of
+	  compacting the information provided by functions such
+	  as <fncref targ="pmean"/>.
 	</para>
       </description>
     </function>

@@ -260,6 +260,7 @@ enum {
     F_ERRMSG,
     F_GETENV,
     F_NGETENV,
+    F_PSHRINK,
     F1_MAX,	  /* SEPARATOR: end of single-arg functions */
     F_COR,
     F_COV,

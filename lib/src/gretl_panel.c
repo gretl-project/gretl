@@ -2581,7 +2581,7 @@ static int panel_set_varying (panelmod_t *pan, const MODEL *pmod)
     return 0;
 }
 
-/* find harmomic mean of the number of time-series observations
+/* find harmonic mean of the number of time-series observations
    per included group */
 
 static void calculate_Tbar (panelmod_t *pan)

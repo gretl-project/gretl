@@ -5,6 +5,8 @@ version 1.9.6, in progress
 - New functions for series: skewness() and kurtosis()
 - New function uniq(): acts like values() but leaves the distinct values
   in their order of appearance
+- New function pshrink(): compacts a panel series to a column vector
+  with one observation per individual
 - allow non-integer degrees of freedom for Student's t in cdf(), invcdf()
   and randgen()
 - list arguments to functions: allow use of anonymous lists

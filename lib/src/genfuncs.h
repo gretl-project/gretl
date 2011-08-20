@@ -67,6 +67,9 @@ int seasonally_adjust_series (const double *x, double *y,
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k);
 
+gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
+			    int *err);
+
 int hp_filter (const double *x, double *hp, const DATASET *dset,
 	       double lambda, gretlopt opt);
 

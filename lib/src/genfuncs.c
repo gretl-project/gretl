@@ -899,6 +899,20 @@ static int new_unit (const DATASET *dset, int t)
     return t > 0 && (t / dset->pd != (t-1) / dset->pd);
 }
 
+/**
+ * panel_statistic:
+ * @x: source data.
+ * @y: target into which to write.
+ * @dset: data set information.
+ * @k: code representing the desired statistic: F_PNOBS,
+ * F_PMIN, F_PMAX, F_PMEAN or F_PSD.
+ *
+ * Given the data in @x, constructs in @y a series containing
+ * a panel-data statistic.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k)
 {
@@ -1068,10 +1082,60 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 	    }
 	}
     } else {
+	/* unsupported option */
 	err = E_DATA;
     }
 
     return err;
+}
+
+/**
+ * panel_shrink:
+ * @x: panel-data source series.
+ * @dset: data set information.
+ * @err: location to receive error code.
+ *
+ * Constructs a column vector holding the first non-missing 
+ * observation of @x for each panel unit within the current 
+ * sample range. If a unit has no valid observations it is 
+ * skipped.
+ *
+ * Returns: a new column vector, or NULL on error.
+ */
+
+gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
+			    int *err)
+{
+    gretl_matrix *m = NULL;
+    int n, T = sample_size(dset);
+
+    if (!dataset_is_panel(dset) || T == 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    n = (int) ceil((double) T / dset->pd);
+    m = gretl_column_vector_alloc(n);
+
+    if (m == NULL) {
+	*err = E_ALLOC;
+    } else {
+	int ubak = -1;
+	int t, u, k = 0;
+
+	for (t=dset->t1; t<=dset->t2; t++) {
+	    u = t / dset->pd;
+	    if (u != ubak && !na(x[t])) {
+		m->val[k++] = x[t];
+		ubak = u;
+	    }
+	}
+	if (k < n) {
+	    m->rows = k;
+	}
+    }
+
+    return m;
 }
 
 static double default_hp_lambda (const DATASET *dset)
