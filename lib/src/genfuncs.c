@@ -902,22 +902,60 @@ static int new_unit (const DATASET *dset, int t)
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
 		     int k)
 {
-    double ret = NADBL;
-    double xbar = NADBL;
-    double aux = NADBL;
-    int TV = 0; /* time-varying? */
     int smin = 0, Ti = 0;
     int s, t;
+    int err = 0;
 
     if (!dataset_is_panel(dset)) {
 	return E_DATA;
     }
 
-    if (k == F_PMEAN || k == F_PSD) {
-	/* we'll first determine whether the series in
-	   question is time-varying or not
-	*/
+    if (k == F_PNOBS) {
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
+		for (s=smin; s<t; s++) {
+		    y[s] = Ti;
+		}
+		if (t == dset->n) {
+		    break;
+		} else {
+		    Ti = 0;
+		    smin = t;
+		}
+	    }
+	    if (!na(x[t])) {
+		Ti++;
+	    }
+	}
+    } else if (k == F_PMIN || k == F_PMAX) {
+	double mm = NADBL;
+
+	for (t=0; t<=dset->n; t++) {
+	    if (t == dset->n || new_unit(dset, t)) {
+		for (s=smin; s<t; s++) {
+		    y[s] = mm;
+		}
+		if (t == dset->n) {
+		    break;
+		} else {
+		    mm = NADBL;
+		    smin = t;
+		}
+	    }
+	    if (!na(x[t])) {
+		if (na(mm)) {
+		    mm = x[t];
+		} else if (k == F_PMIN && x[t] < mm) {
+		    mm = x[t];
+		} else if (k == F_PMAX && x[t] > mm) {
+		    mm = x[t];
+		}
+	    }
+	}
+    } else if (k == F_PMEAN || k == F_PSD) {
+	/* first check for presence of time-variance */
 	double xbak = NADBL;
+	int TV = 0;
 
 	for (t=0; t<dset->n && !TV; t++) {
 	    if (new_unit(dset, t)) {
@@ -931,161 +969,109 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		xbak = x[t];
 	    }
 	}
+
 #if 0
 	fprintf(stderr, "panel_statistic: time-varying = %d\n", TV);
 #endif
-    }	
 
-    switch (k) {
-    case F_PNOBS:
-	for (t=0; t<=dset->n; t++) {
-	    if (t == dset->n || new_unit(dset, t)) {
-		for (s=smin; s<t; s++) {
-		    y[s] = Ti;
+	if (k == F_PMEAN || TV != 0) {
+	    double xbar = NADBL;
+
+	    for (t=0; t<=dset->n; t++) {
+		if (t == dset->n || new_unit(dset, t)) {
+		    if (!na(xbar) && TV) {
+			xbar /= (double) Ti;
+		    }
+		    /* got a new unit (or reached the end): 
+		       record the current mean and reset
+		    */
+		    for (s=smin; s<t; s++) {
+			y[s] = xbar;
+		    }
+		    if (t == dset->n) {
+			break;
+		    } else {
+			/* reset */
+			Ti = 0;
+			xbar = NADBL;
+			smin = t;
+		    }
 		}
-		if (t == dset->n) {
-		    break;
-		}
-		Ti = 0;
-		smin = t;
-	    }
-	    if (!na(x[t])) {
-		Ti++;
-	    }
-	}
-	break;
-    case F_PMIN:
-	for (t=0; t<=dset->n; t++) {
-	    if (t == dset->n || new_unit(dset, t)) {
-		for (s=smin; s<t; s++) {
-		    y[s] = aux;
-		}
-		if (t == dset->n) {
-		    break;
-		}
-		aux = NADBL;
-		smin = t;
-	    }
-	    if (!na(x[t])) {
-		if (na(aux) || x[t] < aux) {
-		    aux = x[t];
+		if (!na(x[t])) {
+		    if (na(xbar) || !TV) {
+			xbar = x[t];
+		    } else {
+			xbar += x[t];
+		    }
+		    Ti++;
 		}
 	    }
 	}
-	break;
-    case F_PMAX:
-	for (t=0; t<=dset->n; t++) {
-	    if (t == dset->n || new_unit(dset, t)) {
-		for (s=smin; s<t; s++) {
-		    y[s] = aux;
+
+	if (k == F_PSD && !TV) {
+	    double sd;
+
+	    smin = Ti = 0;
+	    for (t=0; t<=dset->n; t++) {
+		if (t == dset->n || new_unit(dset, t)) {
+		    sd = (Ti == 0)? NADBL : 0.0;
+		    for (s=smin; s<t; s++) {
+			y[s] = sd;
+		    }
+		    Ti = 0;
+		    smin = t;
 		}
-		if (t == dset->n) {
-		    break;
-		}
-		aux = NADBL;
-		smin = t;
+		if (!na(x[t])) {
+		    Ti++;
+		}	
 	    }
-	    if (!na(x[t])) {
-		if (na(aux) || x[t] > aux) {
-		    aux = x[t];
+	} else if (k == F_PSD) {
+	    /* the time-varying case */
+	    double sd, xbar = NADBL, ssx = NADBL;
+	
+	    smin = Ti = 0;
+	    for (t=0; t<=dset->n; t++) {
+		if (t < dset->n) {
+		    /* use the mean calculated above */
+		    xbar = y[t];
+		}
+		if (t == dset->n || new_unit(dset, t)) {
+		    if (na(ssx)) {
+			sd = NADBL;
+		    } else if (Ti == 1) {
+			sd = 0.0;
+		    } else {
+			sd = sqrt(ssx / (Ti-1));
+		    }
+		    for (s=smin; s<t; s++) {
+			y[s] = sd;
+		    }
+		    if (t == dset->n) {
+			break;
+		    } else {
+			/* reset */
+			Ti = 0;
+			ssx = NADBL;
+			smin = t;
+		    }
+		}
+		if (!na(x[t]) && !na(xbar)) {
+		    double dev = x[t] - xbar;
+
+		    if (na(ssx)) {
+			ssx = dev * dev;
+		    } else {
+			ssx += dev * dev;
+		    }
+		    Ti++;
 		}
 	    }
 	}
-	break;
-    case F_PMEAN:
-    case F_PSD:
-	for (t=0; t<=dset->n; t++) {
-	    if (t == dset->n || new_unit(dset, t)) {
-		if (!na(xbar) && TV) {
-		    xbar /= (double) Ti;
-		}
-		/* got a new unit (or reached the end): 
-		   ship out the current mean and reset
-		*/
-		for (s=smin; s<t; s++) {
-		    y[s] = xbar;
-		}
-		if (t == dset->n) {
-		    break;
-		}
-		Ti = 0;
-		xbar = NADBL;
-		smin = t;
-	    }
-	    if (!na(x[t])) {
-		if (na(xbar) || !TV) {
-		    xbar = x[t];
-		} else {
-		    xbar += x[t];
-		}
-		Ti++;
-	    }
-	}
-	break;
-    default:
-	break;
+    } else {
+	err = E_DATA;
     }
 
-    if (k == F_PSD && !TV) {
-	smin = Ti = 0;
-	for (t=0; t<=dset->n; t++) {
-	    if (t == dset->n || new_unit(dset, t)) {
-		if (Ti == 0) {
-		    ret = NADBL;
-		} else {
-		    ret = 0.0;
-		}
-		for (s=smin; s<t; s++) {
-		    y[s] = ret;
-		}
-		Ti = 0;
-		smin = t;
-	    }
-	    if (!na(x[t])) {
-		Ti++;
-	    }	
-	}
-    } else if (k == F_PSD) {
-	double ssx = NADBL;
-	
-	smin = Ti = 0;
-
-	for (t=0; t<=dset->n; t++) {
-	    if (t < dset->n) {
-		xbar = y[t];
-	    }
-	    if (t == dset->n || new_unit(dset, t)) {
-		if (na(ssx)) {
-		    ret = NADBL;
-		} else if (Ti == 1) {
-		    ret = 0.0;
-		} else {
-		    ret = sqrt(ssx / (Ti-1));
-		}
-		for (s=smin; s<t; s++) {
-		    y[s] = ret;
-		}
-		if (t == dset->n) {
-		    break;
-		}
-		Ti = 0;
-		ssx = NADBL;
-		smin = t;
-	    }
-	    if (!na(x[t]) && !na(xbar)) {
-		double dev = x[t] - xbar;
-
-		if (na(ssx)) {
-		    ssx = dev * dev;
-		} else {
-		    ssx += dev * dev;
-		}
-		Ti++;
-	    }
-	}
-    }	
-
-    return 0;
+    return err;
 }
 
 static double default_hp_lambda (const DATASET *dset)
