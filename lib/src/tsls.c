@@ -567,6 +567,7 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
     }
 
     smod = lsq(OT_list, dset, OLS, OPT_A);
+
     if (smod.errcode) {
 	fprintf(stderr, "ivreg_sargan_test: smod.errcode = %d\n", smod.errcode);
 	err = smod.errcode;
@@ -1179,7 +1180,7 @@ compute_stock_yogo (MODEL *pmod, const int *endolist,
 	err = gretl_invert_symmetric_matrix(S);
 	if (!err) {
 	    err = gretl_matrix_cholesky_decomp(S);
-	}
+	} 
     }
 
     if (!err) {
@@ -1274,6 +1275,9 @@ compute_first_stage_F (MODEL *pmod, int v, const int *reglist,
 
 	mod1 = lsq(list1, dset, OLS, myopt);
 	err = mod1.errcode;
+	if (err) {
+	    fprintf(stderr, "compute_first_stage F: lsq failed\n");
+	}
     }
 
     if (!err) {

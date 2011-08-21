@@ -28,7 +28,7 @@
 #include "gretl_f2c.h"
 #include "clapack_double.h"
 
-#define ESSZERO      1e-22 /* SSR less than this counts as zero */
+#define ESSZERO 1e-22 /* SSR less than this counts as zero */
 
 enum {
     VCV_SIMPLE,
@@ -915,7 +915,8 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R, int *rank,
 #define REDEBUG 0
 
 static void
-drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
+drop_redundant_vars (MODEL *pmod, DATASET *dset, gretl_matrix *R, 
+		     int rank, gretlopt opt)
 {
     int *dlist = NULL;
     double d;
@@ -943,6 +944,8 @@ drop_redundant_vars (MODEL *pmod, gretl_matrix *R, int rank, gretlopt opt)
 		dlist[0] += 1;
 		dlist[dlist[0]] = pmod->list[j];
 	    }
+	    fprintf(stderr, "drop redundant variable %d (%s)\n",
+		    pmod->list[j], dset->varname[pmod->list[j]]);
 	    gretl_list_delete_at_pos(pmod->list, j--);
 	    nd++;
 	}
@@ -987,7 +990,7 @@ int gretl_qr_regress (MODEL *pmod, DATASET *dset, gretlopt opt)
 
     /* handling of (near-)perfect collinearity */
     if (err == E_SINGULAR && !(opt & OPT_Z)) {
-	drop_redundant_vars(pmod, R, rank, opt);
+	drop_redundant_vars(pmod, dset, R, rank, opt);
 	k = pmod->list[0] - 1;
 	gretl_matrix_reuse(Q, T, k);
 	gretl_matrix_reuse(R, k, k);

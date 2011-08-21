@@ -71,12 +71,12 @@
 # define M_(String) ((char *) String)
 #endif /* ENABLE_NLS */
 
-#define MAXLINE 8192  /* maximum length of command line */
-#define MAXLABEL 128  /* maximum length of descriptive labels for variables */
-#define MAXLEN   512  /* max length of regular "long" strings */
-#define MAXDISP   32  /* max length of "display names" for variables */
-#define VNAMELEN  16  /* space allocated for var names (including termination) */
-#define OBSLEN    16  /* space allocated for obs strings (including termination) */
+#define MAXLINE 16384  /* maximum length of command line */
+#define MAXLABEL  128  /* maximum length of descriptive labels for variables */
+#define MAXLEN    512  /* max length of regular "long" strings */
+#define MAXDISP    32  /* max length of "display names" for variables */
+#define VNAMELEN   16  /* space allocated for var names (including termination) */
+#define OBSLEN     16  /* space allocated for obs strings (including termination) */
 
 #ifndef M_PI
 # define M_PI 3.1415926535897932384626432

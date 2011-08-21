@@ -3356,8 +3356,8 @@ int gretl_cholesky_decomp_solve (gretl_matrix *a, gretl_matrix *b)
 
     dpotrf_(&uplo, &n, a->val, &n, &info);   
     if (info != 0) {
-	fprintf(stderr, "gretl_cholesky_decomp_solve:\n"
-		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	fprintf(stderr, "gretl_cholesky_decomp_solve: "
+		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	err = (info > 0)? E_NOTPD : E_DATA;
     } 
 
@@ -5827,8 +5827,8 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
-	fprintf(stderr, "gretl_symmetric_matrix_rcond:\n"
-		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	fprintf(stderr, "gretl_symmetric_matrix_rcond: "
+		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	rcond = 0.0;
     } else {
 	double anorm = gretl_matrix_one_norm(a);
@@ -6759,8 +6759,8 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
-	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
-		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	fprintf(stderr, "gretl_invert_symmetric_matrix: "
+		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	err = (info > 0)? E_NOTPD : E_DATA;
 	if (err) {
 	   memcpy(a->val, aval, bytes);
@@ -6813,8 +6813,8 @@ int real_gretl_invpd (gretl_matrix *a, int verbose)
 
     if (info != 0) {
 	if (verbose) {
-	    fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
-		    " dpotrf failed with info = %d (n = %d)\n", 
+	    fprintf(stderr, "real_gretl_invpd: "
+		    "dpotrf failed with info = %d (n = %d)\n", 
 		    (int) info, (int) n);
 	}
 	err = (info > 0)? E_NOTPD : E_DATA;
@@ -6964,8 +6964,8 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
     dpotrf_(&uplo, &n, a->val, &n, &info);   
 
     if (info != 0) {
-	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
-		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	fprintf(stderr, "gretl_invert_symmetric_matrix2: "
+		"dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
 	return (info > 0)? E_NOTPD : E_DATA;
     } 
 
