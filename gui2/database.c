@@ -2323,7 +2323,7 @@ static void get_local_object_status (const char *fname, int role,
 	    if (err == -1) {
 		if (role == REMOTE_FUNC_FILES || role == REMOTE_DATA_PKGS) {
 		    /* try default working dir */
-		    const char *dw = gretl_default_workdir();
+		    const char *dw = maybe_get_default_workdir();
 
 		    if (dw != NULL) {
 			if (role == REMOTE_FUNC_FILES) {
@@ -2956,7 +2956,7 @@ gint populate_dbfilelist (windata_t *vwin)
     }
 
     /* and in the default working dir? */
-    dbdir = gretl_default_workdir();
+    dbdir = maybe_get_default_workdir();
     if (dbdir != NULL) {
 #ifdef G_OS_WIN32 
 	dir = win32_opendir(dbdir);

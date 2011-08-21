@@ -1179,7 +1179,7 @@ void set_gretl_tex_preamble (void)
     }
 
     if (!gotit) {
-	const char *ddir = gretl_default_workdir();
+	const char *ddir = maybe_get_default_workdir();
 
 	if (ddir != NULL) {
 	    /* localized preamble file in standard working dir? */

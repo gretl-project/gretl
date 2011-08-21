@@ -504,7 +504,7 @@ static int seek_file_collections (int location)
     free(tmp);
 
     if (location == USER_SEARCH && i++ == 0) {
-	tmp = gretl_strdup(gretl_default_workdir());
+	tmp = gretl_strdup(maybe_get_default_workdir());
 	if (tmp != NULL) {
 	    goto user_search_2;
 	}

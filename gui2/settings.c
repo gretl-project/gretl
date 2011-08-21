@@ -457,7 +457,7 @@ static void get_pkg_dir (char *dirname, int action)
 
     if (!ok) {
 	/* try user's filespace */
-	const char *wdir = gretl_default_workdir();
+	const char *wdir = maybe_get_default_workdir();
 
 	if (wdir == NULL) {
 	    wdir = gretl_workdir();

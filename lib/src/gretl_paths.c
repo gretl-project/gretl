@@ -258,7 +258,7 @@ FILE *gretl_fopen (const char *fname, const char *mode)
  * @fname: name of file to be opened.
  * @mode: mode in which to open the file.
  *
- * basically the same as gretl_fopen(), except that no
+ * Basically the same as gretl_fopen(), except that no
  * error message is logged if @fname cannot be opened.
  *
  * Returns: file pointer, or %NULL on failure.
@@ -1226,7 +1226,7 @@ int get_plausible_functions_dir (char *fndir, int i)
 	build_path(fndir, gretl_dotdir(), "functions", NULL);
     } else if (i == 4) {
 	/* or any in the default working dir, if not already searched */
-	const char *wdir = gretl_default_workdir();
+	const char *wdir = maybe_get_default_workdir();
 
 	if (wdir != NULL) {
 	    build_path(fndir, wdir, "functions", NULL);
@@ -1418,7 +1418,7 @@ char *gretl_addpath (char *fname, int script)
 
     /* try looking in default workdir? */
     if (1) {
-	const char *dwork = gretl_default_workdir();
+	const char *dwork = maybe_get_default_workdir();
 
 	if (dwork != NULL) {
 	    int ok = 0;
@@ -1787,25 +1787,26 @@ const char *gretl_workdir (void)
     return paths.workdir;
 }
 
-static char default_workdir[MAXLEN];
-
 #ifdef WIN32
 
-static const char *win32_default_workdir (void)
+static const char *win32_default_workdir (int force)
 {
+    static char default_workdir[MAXLEN];
     char *base = mydocs_path();
     int ok = 0;
 
     if (base != NULL) {
 	sprintf(default_workdir, "%s\\gretl\\", base);
-	if (!strcmp(default_workdir, paths.workdir)) {
-	    *default_workdir = '\0';
-	} else {
-	    DIR *dir = win32_opendir(default_workdir);
+	if (force || strcmp(default_workdir, paths.workdir)) {
+	    if (force) {
+		ok = (gretl_mkdir(default_workdir) == 0);
+	    } else {
+		DIR *dir = win32_opendir(default_workdir);
 
-	    if (dir != NULL) {
-		closedir(dir);
-		ok = 1;
+		if (dir != NULL) {
+		    closedir(dir);
+		    ok = 1;
+		}
 	    }
 	}
 	free(base);
@@ -1816,21 +1817,24 @@ static const char *win32_default_workdir (void)
 
 #else /* !WIN32 */
 
-static const char *regular_default_workdir (void)
+static const char *regular_default_workdir (int force)
 {
+    static char default_workdir[MAXLEN];
     char *home = getenv("HOME");
     int ok = 0;
 
     if (home != NULL) {
 	sprintf(default_workdir, "%s/gretl/", home);
-	if (!strcmp(default_workdir, paths.workdir)) {
-	    *default_workdir = '\0';
-	} else {
-	    DIR *dir = opendir(default_workdir);
+	if (force || strcmp(default_workdir, paths.workdir)) {
+	    if (force) {
+		ok = (gretl_mkdir(default_workdir) == 0);
+	    } else {
+		DIR *dir = opendir(default_workdir);
 
-	    if (dir != NULL) {
-		closedir(dir);
-		ok = 1;
+		if (dir != NULL) {
+		    closedir(dir);
+		    ok = 1;
+		} 
 	    }
 	}
     }
@@ -1844,17 +1848,37 @@ static const char *regular_default_workdir (void)
  * gretl_default_workdir:
  *
  * Returns: the full path to the default value of the
- * user's gretl working directory if this differs from
- * the user's currently-defined gretl working directory,
- * or NULL if the two are the same.
+ * user's gretl working directory, or NULL if it
+ * happens that this path cannot be determined,
+ * or is not writable by the current user.
  */
 
 const char *gretl_default_workdir (void)
 {
 #ifdef WIN32
-    return win32_default_workdir();
+    return win32_default_workdir(1);
 #else
-    return regular_default_workdir();
+    return regular_default_workdir(1);
+#endif
+}
+
+/**
+ * maybe_get_default_workdir:
+ *
+ * Acts like gretl_default_workdir(), except that this
+ * function returns NULL if the default working
+ * directory is the same as the current gretl
+ * working directory, as returned by gretl_workdir().
+ *
+ * Returns: a path, or NULL.
+ */
+
+const char *maybe_get_default_workdir (void)
+{
+#ifdef WIN32
+    return win32_default_workdir(0);
+#else
+    return regular_default_workdir(0);
 #endif
 }
 
@@ -2657,7 +2681,7 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 	err1 = validate_writedir(paths.workdir);
 	if (err1) {
 	    /* try falling back on the default working dir */
-	    const char *defpath = gretl_default_workdir();
+	    const char *defpath = maybe_get_default_workdir();
 
 	    if (defpath != NULL && *defpath != '\0' && 
 		strcmp(defpath, paths.workdir)) {
