@@ -614,6 +614,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 USE_SSE2
 RLIB
+swap_ends
 quiet_build
 build_docs
 RLIB_LIBS
@@ -801,6 +802,7 @@ enable_gui
 enable_gtk3
 enable_build_doc
 enable_quiet_build
+enable_swap_ends
 enable_gnuplot_checks
 with_lucida
 with_gmake
@@ -1485,6 +1487,7 @@ Optional Features:
   --enable-gtk3           Enable use of GTK+ 3.0 [default=no]
   --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-quiet-build    Enable quiet building
+  --enable-swap-ends      Build FRED database with swapped endianness
   --disable-gnuplot-checks do not run checks for gnuplot
   --enable-static[=PKGS]  build static libraries [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -2684,6 +2687,7 @@ have_libR="no"
 check_gnuplot="yes"
 darwin_build="no"
 quiet_build="no"
+swap_ends="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -6196,6 +6200,15 @@ if test "${enable_quiet_build+set}" = set; then :
   enableval=$enable_quiet_build; if test "$enableval" = "yes"
 then
   quiet_build=yes
+fi
+fi
+
+
+# Check whether --enable-swap-ends was given.
+if test "${enable_swap_ends+set}" = set; then :
+  enableval=$enable_swap_ends; if test "$enableval" = "yes"
+then
+  swap_ends=yes
 fi
 fi
 
@@ -18139,6 +18152,7 @@ if test "${build_docs}" = "yes" ; then
       echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
    fi
 fi
+
 
 
 

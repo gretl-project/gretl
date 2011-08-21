@@ -1869,6 +1869,28 @@ static void offer_db_open (char *target)
     }
 }
 
+#ifdef OSX_BUILD
+
+static int get_target_in_home (char *targ, int code, 
+			       const char *objname,
+			       const char *ext)
+{
+    const char *defdir = gretl_default_workdir();
+    int err = 0;
+
+    if (defdir == NULL) {
+	err = E_FOPEN;
+    } else if (code == REMOTE_FUNC_FILES) {
+	sprintf(targ, "%sfunctions/%s%s", defdir, objname, ext);
+    } else {
+	build_path(targ, defdir, objname, ext);
+    }
+
+    return err;
+}
+
+#endif
+
 enum {
     REAL_INSTALL,
     TMP_INSTALL
@@ -1899,6 +1921,16 @@ static char *get_writable_target (int code, int op, char *objname,
 	ext = ".tar.gz";
     }
 
+#ifdef OSX_BUILD
+    /* we prefer writing to the default working dir rather than
+       into /Applications/Gretl.app 
+    */
+    if (op != TMP_INSTALL) {
+	err = get_target_in_home(targ, code, objname, ext);
+	goto path_done;
+    }
+#endif
+
     if (code == REMOTE_DB) {
 	build_path(targ, gretl_binbase(), objname, ext);
     } else if (code == REMOTE_DATA_PKGS) {
@@ -1906,8 +1938,7 @@ static char *get_writable_target (int code, int op, char *objname,
 
 	get_default_dir(pkgdir, SAVE_DATA_PKG);
 	build_path(targ, pkgdir, objname, ext);
-    } else {
-	/* function packages */
+    } else if (code == REMOTE_FUNC_FILES) {
 	if (op == TMP_INSTALL) {
 	    build_path(targ, gretl_dotdir(), "dltmp", NULL);
 	    err = gretl_tempname(targ);
@@ -1919,6 +1950,10 @@ static char *get_writable_target (int code, int op, char *objname,
 	}
     } 
 
+#ifdef OSX_BUILD
+ path_done:
+#endif
+
     if (err) {
 	free(targ);
 	targ = NULL;
@@ -1929,8 +1964,8 @@ static char *get_writable_target (int code, int op, char *objname,
 	fp = gretl_fopen(targ, "w");
 
 	if (fp == NULL) {
-	    if (errno == EACCES && code != REMOTE_FUNC_FILES) { 
-		/* write to user dir instead? */
+	    if (errno == EACCES) { 
+		/* write to working dir instead? */
 		build_path(targ, gretl_workdir(), objname, ext);
 	    } else {
 		file_write_errbox(targ);
@@ -2077,7 +2112,7 @@ void install_file_from_server (GtkWidget *w, windata_t *vwin)
 
 	err = retrieve_remote_datafiles_package(tarname, path);
 	g_free(tarname);
-    } else {
+    } else if (vwin->role == REMOTE_DB) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 	err = retrieve_remote_db(objname, path, GRAB_NBO_DATA);
 #else
