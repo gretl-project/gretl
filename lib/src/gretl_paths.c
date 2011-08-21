@@ -1793,7 +1793,6 @@ static char default_workdir[MAXLEN];
 
 static const char *win32_default_workdir (void)
 {
-    const char *ret = NULL;
     char *base = mydocs_path();
     int ok = 0;
 
@@ -1812,18 +1811,13 @@ static const char *win32_default_workdir (void)
 	free(base);
     }
 
-    if (ok) {
-	ret = default_workdir;
-    }
-
-    return ret;
+    return (ok)? default_workdir : NULL;
 }
 
 #else /* !WIN32 */
 
 static const char *regular_default_workdir (void)
 {
-    const char *ret = NULL;
     char *home = getenv("HOME");
     int ok = 0;
 
@@ -1841,11 +1835,7 @@ static const char *regular_default_workdir (void)
 	}
     }
 
-    if (ok) {
-	ret = default_workdir;
-    }
-
-    return ret;
+    return (ok)? default_workdir : NULL;
 }
 
 #endif /* WIN32 or not */

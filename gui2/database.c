@@ -1883,7 +1883,6 @@ static char *get_writable_target (int code, int op, char *objname,
 				  gboolean zipfile)
 {
     const char *ext;
-    FILE *fp;
     char *targ;
     int err = 0;
 
@@ -1908,6 +1907,7 @@ static char *get_writable_target (int code, int op, char *objname,
 	get_default_dir(pkgdir, SAVE_DATA_PKG);
 	build_path(targ, pkgdir, objname, ext);
     } else {
+	/* function packages */
 	if (op == TMP_INSTALL) {
 	    build_path(targ, gretl_dotdir(), "dltmp", NULL);
 	    err = gretl_tempname(targ);
@@ -1923,6 +1923,8 @@ static char *get_writable_target (int code, int op, char *objname,
 	free(targ);
 	targ = NULL;
     } else {
+	FILE *fp;
+
 	errno = 0;
 	fp = gretl_fopen(targ, "w");
 
