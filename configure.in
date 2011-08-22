@@ -66,6 +66,7 @@ check_gnuplot="yes"
 darwin_build="no"
 quiet_build="no"
 swap_ends="no"
+pkg_build="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -122,6 +123,14 @@ AC_ARG_ENABLE(swap-ends,
 [if test "$enableval" = "yes"
 then
   swap_ends=yes
+fi])
+
+AC_ARG_ENABLE(pkgbuild,
+[  --enable-pkgbuild       For building relocatable package ],
+[if test "$enableval" = "yes"
+then
+  AC_DEFINE(PKGBUILD)
+  pkg_build="yes"
 fi])
 
 AC_ARG_ENABLE(gnuplot-checks,
@@ -732,6 +741,7 @@ fi
 
 AC_SUBST(build_docs)
 AC_SUBST(quiet_build)
+AC_SUBST(pkg_build)
 AC_SUBST(swap_ends)
 
 dnl record results on various libraries

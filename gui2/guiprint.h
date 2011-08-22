@@ -23,8 +23,9 @@
 #define GUIPRINT_H
 
 #ifdef NATIVE_PRINTING
-void print_window_content (char *fullbuf, char *selbuf, 
-			   const char *fname);
+void print_window_content (gchar *fullbuf, gchar *selbuf, 
+			   const char *fname,
+			   windata_t *vwin);
 # ifdef G_OS_WIN32
 int win32_print_graph (char *emfname);
 # else

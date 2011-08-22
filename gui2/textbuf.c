@@ -19,19 +19,21 @@
 
 #include "gretl.h"
 #include "textbuf.h"
-#include "gretl_func.h"
 #include "toolbar.h"
 #include "dlgutils.h"
+#include "gretl_func.h"
 
 #if defined(USE_GTKSOURCEVIEW_2) || defined(USE_GTKSOURCEVIEW_3)
 # define NEWER_SOURCEVIEW
 #endif
 
 #include <gtksourceview/gtksourceview.h>
-#include <gtksourceview/gtksourcelanguage.h>
 #ifdef NEWER_SOURCEVIEW
 # include <gtksourceview/gtksourcelanguagemanager.h>
 # include <gtksourceview/gtksourceprintcompositor.h>
+# ifdef PKGBUILD
+#  include <gtksourceview/gtksourcestyleschememanager.h>
+# endif
 #else
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
@@ -474,6 +476,11 @@ void sourceview_print (windata_t *vwin)
 
     if (settings != NULL) {
 	gtk_print_operation_set_print_settings(print, settings);
+    } else {
+	gtk_source_print_compositor_set_right_margin(comp, 1.0, GTK_UNIT_INCH);
+	gtk_source_print_compositor_set_left_margin(comp, 1.0, GTK_UNIT_INCH);
+	gtk_source_print_compositor_set_top_margin(comp, 0.75, GTK_UNIT_INCH);
+	gtk_source_print_compositor_set_bottom_margin(comp, 1.0, GTK_UNIT_INCH);
     }
 
     g_signal_connect(print, "begin_print", G_CALLBACK(begin_print), comp);
@@ -492,7 +499,12 @@ void sourceview_print (windata_t *vwin)
     g_object_unref(print);
 }
 
-#else /* use gtksourceview-1.0 API */
+#else /* using gtksourceview-1.0 API */
+
+void sourceview_print (windata_t *vwin)
+{
+    window_print(NULL, vwin);
+}
 
 static void sourceview_apply_language (windata_t *vwin)
 {
@@ -632,6 +644,47 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return ret;
 }
 
+#if defined(NEWER_SOURCEVIEW) && defined(PKGBUILD)
+
+/* packages for Windows and OS X: gtksourceview needs to
+   be told where to find its language-specs and style
+   files
+*/
+
+static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
+{
+    if (lm != NULL) {
+	gchar *dirs[2] = {NULL, NULL};
+	static int style_done;
+
+	dirs[0] = g_strdup_printf("%sgtksourceview", gretl_home());
+	// dirs[0] = g_strdup("/home/cottrell/svfoo");
+	gtk_source_language_manager_set_search_path(lm, dirs);
+
+	if (!style_done) {
+	    /* this isn't working properly */
+	    GtkSourceStyleSchemeManager *mgr;
+	    const gchar * const *ids;
+
+	    mgr = gtk_source_style_scheme_manager_get_default();
+	    fprintf(stderr, "mgr = %p\n", (void *) mgr);
+	    gtk_source_style_scheme_manager_set_search_path(mgr, dirs);
+	    gtk_source_style_scheme_manager_force_rescan(mgr);
+	    ids = gtk_source_style_scheme_manager_get_scheme_ids(mgr);
+	    fprintf(stderr, "ids = %p\n", (void *) ids);
+	    while (*ids != NULL) {
+		fprintf(stderr, "id: %s\n", *ids);
+		ids++;
+	    }
+	    style_done = 1;
+	}
+
+	g_free(dirs[0]);
+    }
+}
+
+#endif
+
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
 			      r == VIEW_SCRIPT || \
 			      r == EDIT_PKG_CODE || \
@@ -651,24 +704,29 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
 
-    if (textview_use_highlighting(vwin->role)) {
 #ifdef NEWER_SOURCEVIEW
-	lm = gtk_source_language_manager_new();
-#else
-	lm = gtk_source_languages_manager_new();
-#endif
+    if (textview_use_highlighting(vwin->role)) {
+	lm = gtk_source_language_manager_get_default();
+# ifdef PKGBUILD
+	set_sourceview_data_path(lm);
+# endif
     }
-	
+
+    if (lm != NULL) {
+	g_object_set_data(G_OBJECT(sbuf), "languages-manager", lm);
+    }
+    gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
+#else
+    if (textview_use_highlighting(vwin->role)) {
+	lm = gtk_source_languages_manager_new();
+    }
+
     if (lm != NULL) {
 	g_object_ref(lm);
 	g_object_set_data_full(G_OBJECT(sbuf), "languages-manager",
 			       lm, (GDestroyNotify) g_object_unref); 
 	g_object_unref(lm);
-    } 
-
-#ifdef NEWER_SOURCEVIEW
-    gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
-#else
+    }
     gtk_source_buffer_set_check_brackets(sbuf, TRUE);
 #endif
 

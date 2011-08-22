@@ -90,8 +90,9 @@ static char *header_string (const char *fname)
 
 #if defined(G_OS_WIN32)
 
-void print_window_content (char *fullbuf, char *selbuf, 
-			   const char *fname)
+void print_window_content (gchar *fullbuf, gchar *selbuf, 
+			   const char *fname,
+			   windata_t *vwin)
 {
     HDC dc;
     PRINTDLG pdlg;
@@ -113,10 +114,6 @@ void print_window_content (char *fullbuf, char *selbuf,
     printok = PrintDlg(&pdlg);
     if (!printok) {
 	/* canceled */
-	free(fullbuf); 
-	if (selbuf) {
-	    free(selbuf);
-	}
 	return;
     }
 
@@ -221,11 +218,6 @@ void print_window_content (char *fullbuf, char *selbuf,
     GlobalFree(pdlg.hDevNames);
 
     g_free(printbuf);
-
-    free(fullbuf); /* was allocated by gtk_editable_get_chars() */
-    if (selbuf) {
-	free(selbuf);
-    }
 }
 
 #undef WGRDEBUG
@@ -448,8 +440,9 @@ static void job_set_n_pages (GtkPrintOperation *op, struct print_info *pinfo)
 
 static GtkPrintSettings *settings = NULL;
 
-void print_window_content (char *fullbuf, char *selbuf, 
-			   const char *fname)
+void print_window_content (gchar *fullbuf, gchar *selbuf, 
+			   const char *fname,
+			   windata_t *vwin)
 {
     GtkPrintOperation *op;
     GtkPrintOperationResult res;
@@ -478,7 +471,7 @@ void print_window_content (char *fullbuf, char *selbuf,
     g_signal_connect(op, "draw-page", G_CALLBACK(draw_text_page), &pinfo);
 
     res = gtk_print_operation_run(op, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
-				  GTK_WINDOW(mdata->main), &err);
+				  GTK_WINDOW(vwin->main), &err);
 
     if (res == GTK_PRINT_OPERATION_RESULT_ERROR) {
 	errbox("Error printing:\n%s", err->message);

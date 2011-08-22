@@ -406,10 +406,10 @@ int main (int argc, char **argv)
 {
     if (argc == 2 && !strcmp(argv[1], "--emacs")) {
 	output_emacs_block();
-    } else if (argc == 2 && !strcmp(argv[1], "--lang2")) {
-	output_lang2_file();
-    } else {
+    } else if (argc == 2 && !strcmp(argv[1], "--lang1")) {
 	output_lang1_file();
+    } else {
+	output_lang2_file();
     }
 
     return 0;

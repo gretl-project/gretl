@@ -28,16 +28,16 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 GTKLIBS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs gtk+-win32-2.0)
 GLIBLIB := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --libs glib-2.0)
 CLI_LIBS = -lreadline -lhistory
-GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview -lxml2 -L$(imports)
+GUI_LIBS = -lwsock32 -lole32 $(GTKLIBS) -lgtksourceview-2.0 -lxml2 -L$(imports)
 GRETLLIB = -L$(imports) -lgretl -lintl
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack.dll -lblas.dll
 FFTW_LIBS = -lfftw3
 
 # flags/defines
-CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) \
-  -I$(XML2_INC) -I$(zipdir) $(RLIB_CFLAGS) 
-GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
+CFLAGS = -I. -I$(libsrcdir) -I$(plugindir) -I$(guidir) -I$(zipdir) \
+  -I$(XML2_INC) $(RLIB_CFLAGS) 
+GTK_CFLAGS := $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0 gtksourceview-2.0)
 
 ifeq ($(BUILDTYPE),cross)
   GRETL_LANG = cross_lang
@@ -305,8 +305,8 @@ MOFILES = mo/de.po mo/el.mo mo/es.mo mo/eu.mo mo/fr.mo mo/it.mo mo/pl.mo \
 	mo/pt.mo mo/ru.mo mo/rw.mo mo/tr.mo mo/cs.mo mo/sq.mo
 
 %.o: %.c
-	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
-	$(CC) -MM $(CFLAGS) $(GTK_CFLAGS) $< > $*.d 
+	$(CC) -c $(GTK_CFLAGS) $(CFLAGS) $<
+	$(CC) -MM $(GTK_CFLAGS) $(CFLAGS) $< > $*.d 
 
 # targets begin
 

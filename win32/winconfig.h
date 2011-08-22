@@ -5,6 +5,9 @@
 #define ENABLE_NLS 1
 #define PACKAGE "gretl"
 
+/* Flag the fact that we're building a self-installer package */
+#define PKGBUILD 1
+
 /* Extra floating-point GMP routines? */
 #define HAVE_MPFR 1
 
@@ -14,7 +17,7 @@
 /* openmp: not for now */
 /* #undef USE_OPENMP */
 
-/* sse2: assume this is OK */
+/* sse2: we'll assume this is OK */
 #define USE_SSE2 1
 
 /* X-12-ARIMA support? */
@@ -35,8 +38,8 @@
 /* Is LaTeX available? */
 #define HAVE_LATEX 1
 
-/* Use gtksourceview for syntax highlighting */
-#define USE_GTKSOURCEVIEW 1
+/* Use gtksourceview-2.0 for syntax highlighting */
+#define USE_GTKSOURCEVIEW_2 1
 
 /* Does unistd.h have getdomainname? */
 #define GETDOMAINNAME 1

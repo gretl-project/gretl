@@ -615,6 +615,7 @@ LIBOBJS
 USE_SSE2
 RLIB
 swap_ends
+pkg_build
 quiet_build
 build_docs
 RLIB_LIBS
@@ -803,6 +804,7 @@ enable_gtk3
 enable_build_doc
 enable_quiet_build
 enable_swap_ends
+enable_pkgbuild
 enable_gnuplot_checks
 with_lucida
 with_gmake
@@ -1488,6 +1490,7 @@ Optional Features:
   --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-quiet-build    Enable quiet building
   --enable-swap-ends      Build FRED database with swapped endianness
+  --enable-pkgbuild       For building relocatable package
   --disable-gnuplot-checks do not run checks for gnuplot
   --enable-static[=PKGS]  build static libraries [default=no]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
@@ -2688,6 +2691,7 @@ check_gnuplot="yes"
 darwin_build="no"
 quiet_build="no"
 swap_ends="no"
+pkg_build="no"
 MAKE="make"
 XML_LIBS=
 FONTREQ="\\RequirePackage{ae}"
@@ -6209,6 +6213,17 @@ if test "${enable_swap_ends+set}" = set; then :
   enableval=$enable_swap_ends; if test "$enableval" = "yes"
 then
   swap_ends=yes
+fi
+fi
+
+
+# Check whether --enable-pkgbuild was given.
+if test "${enable_pkgbuild+set}" = set; then :
+  enableval=$enable_pkgbuild; if test "$enableval" = "yes"
+then
+  $as_echo "#define PKGBUILD 1" >>confdefs.h
+
+  pkg_build="yes"
 fi
 fi
 
@@ -18152,6 +18167,7 @@ if test "${build_docs}" = "yes" ; then
       echo "*** Can't build gretl docs: XSLT and/or LaTeX not found"
    fi
 fi
+
 
 
 

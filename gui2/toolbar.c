@@ -271,12 +271,17 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 #ifdef NATIVE_PRINTING
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
-# if 0
-    /* at present, just for testing */
-    sourceview_print(vwin);
-# else
-    window_print(NULL, vwin);
-# endif
+    if (textview_use_highlighting(vwin->role)) {
+	int resp = yes_no_dialog(NULL, _("Print with syntax highlighting?"), 1);
+
+	if (resp == GRETL_YES) {
+	    sourceview_print(vwin);
+	} else if (resp == GRETL_NO) {
+	    window_print(NULL, vwin);
+	}
+    } else {
+	window_print(NULL, vwin);
+    }
 }
 #endif
 

@@ -569,7 +569,10 @@ void window_print (GtkAction *action, windata_t *vwin)
 	}
     }
 
-    print_window_content(buf, selbuf, filename);
+    print_window_content(buf, selbuf, filename, vwin);
+
+    g_free(buf);
+    g_free(selbuf);
 }
 
 #endif

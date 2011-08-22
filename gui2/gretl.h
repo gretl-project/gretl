@@ -57,8 +57,6 @@
 
 #define GNULL (gconstpointer) NULL
 
-#include <gtksourceview/gtksourceview.h>
-
 /* fixups for GTK3 */
 
 #if GTK_MAJOR_VERSION >= 3

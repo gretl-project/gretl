@@ -29,6 +29,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Location of shared gretl files */
 #define GRETL_PREFIX "/usr/local"
 
+/* Building a reloctable package (Windows, OS X)? */
+#undef PKGBUILD
+
 /* Extra floating-point GMP routines? */
 #undef HAVE_MPFR
 
