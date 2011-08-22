@@ -271,7 +271,12 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
 #ifdef NATIVE_PRINTING
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
-    window_print(NULL, vwin);
+    if (0) {
+	/* at present, just for testing */
+	sourceview_print(vwin);
+    } else {
+	window_print(NULL, vwin);
+    }
 }
 #endif
 

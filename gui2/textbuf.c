@@ -31,6 +31,7 @@
 #include <gtksourceview/gtksourcelanguage.h>
 #ifdef NEWER_SOURCEVIEW
 # include <gtksourceview/gtksourcelanguagemanager.h>
+# include <gtksourceview/gtksourceprintcompositor.h>
 #else
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
@@ -430,6 +431,65 @@ static void sourceview_apply_language (windata_t *vwin)
     } else {
 	gtk_source_buffer_set_language(vwin->sbuf, lang);
     }
+}
+
+static void begin_print (GtkPrintOperation *operation,
+                         GtkPrintContext *context,
+                         gpointer data)
+{
+    GtkSourcePrintCompositor *comp;
+    int n_pages;
+
+    comp = GTK_SOURCE_PRINT_COMPOSITOR(data);
+
+    while (!gtk_source_print_compositor_paginate(comp, context));
+
+    n_pages = gtk_source_print_compositor_get_n_pages(comp);
+    gtk_print_operation_set_n_pages(operation, n_pages);
+}
+
+static void draw_page (GtkPrintOperation *operation,
+		       GtkPrintContext *context,
+		       gint page_nr,
+		       gpointer data)
+{
+    GtkSourcePrintCompositor *comp =
+	GTK_SOURCE_PRINT_COMPOSITOR(data);
+
+    gtk_source_print_compositor_draw_page(comp, context,
+					  page_nr);
+}
+
+static GtkPrintSettings *settings = NULL;
+
+void sourceview_print (windata_t *vwin)
+{
+    GtkSourceView *view = GTK_SOURCE_VIEW(vwin->text);
+    GtkSourcePrintCompositor *comp;
+    GtkPrintOperation *print;
+    GtkPrintOperationResult res;
+
+    comp = gtk_source_print_compositor_new_from_view(view);
+    print = gtk_print_operation_new();
+
+    if (settings != NULL) {
+	gtk_print_operation_set_print_settings(print, settings);
+    }
+
+    g_signal_connect(print, "begin_print", G_CALLBACK(begin_print), comp);
+    g_signal_connect(print, "draw_page", G_CALLBACK(draw_page), comp);
+
+    res = gtk_print_operation_run(print, GTK_PRINT_OPERATION_ACTION_PRINT_DIALOG,
+				  GTK_WINDOW(vwin->main), NULL);
+
+    if (res == GTK_PRINT_OPERATION_RESULT_APPLY) {
+	if (settings != NULL) {
+	    g_object_unref(settings);
+	}
+	settings = g_object_ref(gtk_print_operation_get_print_settings(print));
+    }
+
+    g_object_unref(print);
 }
 
 #else /* use gtksourceview-1.0 API */

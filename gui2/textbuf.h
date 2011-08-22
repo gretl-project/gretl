@@ -95,6 +95,8 @@ void sourceview_insert_file (windata_t *vwin, const char *fname);
 
 void sourceview_insert_buffer (windata_t *vwin, const char *buf);
 
+void sourceview_print (windata_t *vwin);
+
 void script_tabs_dialog (GtkWidget *w, windata_t *vwin);
 
 void viewer_split_pane (windata_t *vwin, int vertical);
