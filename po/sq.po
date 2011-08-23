@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-08-08 11:33-0400\n"
-"PO-Revision-Date: 2011-08-19 00:00-0000\n"
-"Last-Translator: artur bala <artur.bala.al@gmail.com>\n"
+"PO-Revision-Date: 2011-08-24 02:14+0100\n"
+"Last-Translator: \n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -62,13 +62,13 @@ msgstr "(maksimumi ishte %d)"
 #: gui2/selector.c:5422
 #: plugin/panurc.c:233
 msgid "test without constant"
-msgstr "test pa konstante"
+msgstr "pa konstante"
 
 #: lib/src/adf_kpss.c:364
 #: gui2/selector.c:5423
 #: plugin/panurc.c:234
 msgid "test with constant"
-msgstr "test me konstante"
+msgstr "me konstante"
 
 #: lib/src/adf_kpss.c:365
 #: gui2/library.c:965
@@ -150,7 +150,7 @@ msgstr "Koef. autokorrelacionit i rendit të parë për e"
 #: lib/src/adf_kpss.c:443
 #: lib/src/adf_kpss.c:1136
 msgid "estimated value of (a - 1)"
-msgstr "vlerësimi i (a - 1)"
+msgstr "vlera e përafruar e (a - 1)"
 
 #: lib/src/adf_kpss.c:444
 #: lib/src/adf_kpss.c:1137
@@ -169,12 +169,12 @@ msgstr "Vlerat kritike"
 
 #: lib/src/adf_kpss.c:637
 msgid "squared time trend variable"
-msgstr "prirje kohore kuadratike "
+msgstr "tregues kuadratik për periudhat"
 
 #: lib/src/adf_kpss.c:640
 #: lib/src/genfuncs.c:2519
 msgid "time trend variable"
-msgstr "ndryshore për prirje kohore"
+msgstr "tregues për periudhat"
 
 #: lib/src/adf_kpss.c:671
 #: lib/src/adf_kpss.c:1416
@@ -193,7 +193,7 @@ msgstr "Meta-testet Choi:"
 
 #: lib/src/adf_kpss.c:1062
 msgid "Inverse chi-square"
-msgstr "Ki-katror e anasjelltë"
+msgstr "Hi-katror e anasjelltë"
 
 #: lib/src/adf_kpss.c:1064
 msgid "Inverse normal test"
@@ -214,7 +214,7 @@ msgstr "rendi i vonesës"
 
 #: lib/src/adf_kpss.c:1170
 msgid "H0: all groups have unit root"
-msgstr "H0: të gjithë grupet kanë rrënjë të njësishme"
+msgstr "H0: të gjithë individët paraqesin rrënjë të njësishme"
 
 #: lib/src/adf_kpss.c:1233
 #: lib/src/estimate.c:3864
@@ -271,7 +271,7 @@ msgstr ""
 #: lib/src/adf_kpss.c:1616
 #, c-format
 msgid "Lag truncation parameter = %d\n"
-msgstr "Rendi i vonesës = %d\n"
+msgstr "Kufiri i rendit të vonesës = %d\n"
 
 #: lib/src/adf_kpss.c:1573
 #: lib/src/compare.c:386
@@ -349,7 +349,7 @@ msgstr "Etapa %d: testi i rrënjës së njësishme për %s\n"
 #: lib/src/adf_kpss.c:1957
 #, c-format
 msgid "Step %d: cointegrating regression\n"
-msgstr "Etapa %d: regresioni i kointegrimit\n"
+msgstr "Etapa %d: regres kointegrimi\n"
 
 #: lib/src/adf_kpss.c:1994
 msgid ""
@@ -363,12 +363,12 @@ msgstr ""
 "Lidhja e kointegrimit ekziston nqs:\n"
 "(a) nuk hidhet poshtë hipoteza e rrënjës së njësishme për sejcilën nga ndryshoret.\n"
 "(b) hidhet poshtë hipoteza e rrënjës së njësishme për mbetjen (uhat) e llogaritur \n"
-"    nga regresioni i kointegrimit.\n"
+"    nga regresi i kointegrimit.\n"
 
 #: lib/src/bootstrap.c:407
 #, c-format
 msgid "For the coefficient on %s (point estimate %g)"
-msgstr "Për koefiçientin e %s (vlerësimi pikësor %g)"
+msgstr "Për koeficientin e %s (vlerësimi pikësor %g)"
 
 #: lib/src/bootstrap.c:433
 #, c-format
@@ -407,7 +407,7 @@ msgstr "Testi t i bootstrap"
 
 #: lib/src/bootstrap.c:471
 msgid "bootstrap coefficient"
-msgstr "koefiçienti bootstrap"
+msgstr "koeficienti bootstrap"
 
 #: lib/src/bootstrap.c:872
 msgid "bootstrap test"
@@ -415,7 +415,7 @@ msgstr "Testi  boostrap"
 
 #: lib/src/boxplots.c:222
 msgid "Numerical summary with bootstrapped confidence interval for median"
-msgstr "Përmbledhje mbi llogaritjet e intervalit të besimit për medianën bazuar në boostrap"
+msgstr "Përmbledhje mbi llogaritjet e intervalit të besimit për mesoren sipas metodës boostrap"
 
 #: lib/src/boxplots.c:227
 msgid "Numerical summary for %s"
@@ -432,7 +432,7 @@ msgstr "Statistika përmbledhëse"
 #: lib/src/boxplots.c:257
 #: gui2/gpt_dialog.c:2335
 msgid "median"
-msgstr "mediana"
+msgstr "mesorja"
 
 #: lib/src/boxplots.c:245
 #, no-c-format
@@ -486,7 +486,7 @@ msgstr "rubrika \"%s\" është e pavlefshme"
 #: lib/src/compare.c:298
 #, c-format
 msgid "Null hypothesis: the regression parameter is zero for %s"
-msgstr "Hipoteza zero: parametri i regresionit është zero për %s"
+msgstr "Hipoteza zero: koeficienti i regresit është zero për %s"
 
 #: lib/src/compare.c:305
 msgid ""
@@ -494,7 +494,7 @@ msgid ""
 "  Null hypothesis: the regression parameters are zero for the variables\n"
 msgstr ""
 "\n"
-"  Hipoteza zero: parametrat e regresionit janë zero për ndryshoret\n"
+"  Hipoteza zero: koeficientët e regresit janë zero për ndryshoret\n"
 
 #: lib/src/compare.c:355
 #, c-format
@@ -554,7 +554,7 @@ msgstr "testi Wald"
 #: plugin/johansen.c:1858
 #: plugin/jrestrict.c:2826
 msgid "Chi-square"
-msgstr "Ki-katror"
+msgstr "Hi-katror"
 
 #: lib/src/compare.c:369
 #: lib/src/compare.c:382
@@ -675,24 +675,23 @@ msgstr " Duke hequr %-16s (p. kritik %.3f)\n"
 #: lib/src/modelprint.c:752
 #: gui2/library.c:2757
 msgid "squares only"
-msgstr "vetëm katrori i ndryshoreve"
+msgstr "ndryshoret në katror"
 
 #: lib/src/compare.c:1749
 #: lib/src/gretl_model.c:3052
 #: gui2/library.c:2758
 msgid "cubes only"
-msgstr "vetëm kubi i ndryshoreve"
+msgstr "ndryshoret në kub"
 
 #: lib/src/compare.c:1752
 #: gui2/library.c:2756
 msgid "squares and cubes"
-msgstr "katrori dhe kubi i ndryshoreve"
+msgstr "ndryshoret në katror dhe në kub"
 
-# specification
 #: lib/src/compare.c:1825
 #: lib/src/gretl_model.c:3005
 msgid "RESET test for specification"
-msgstr "Testi RESET për modelin"
+msgstr "Testi RESET për përcaktimin e modelit"
 
 #: lib/src/compare.c:1873
 msgid "Godfrey (1994) test for"
@@ -733,7 +732,8 @@ msgstr "%s ndodhet qëparë në model"
 msgid "dummy variable for Chow test"
 msgstr "ndryshore treguese për testin Chow"
 
-# BSH: Roli i kursit te kembimit ne shenjestrimin e inflacionit
+# BSH: 2011 - Pozicioni konkurrues i ekonomise shqiptare e terma te produktivitetit e te kostos se punes
+# (thyerje të strukturës)
 #: lib/src/compare.c:2400
 msgid "Chow F-test for break"
 msgstr "Testi Chow për ndryshim të strukturës"
@@ -827,17 +827,16 @@ msgstr ""
 
 #: lib/src/compare.c:3061
 msgid "CUSUMSQ test for stability of parameters"
-msgstr "Testi CUSUMSQ për stabilitetin e parametrave"
+msgstr "Testi CUSUMSQ për qëndrueshmëri të parametrave"
 
-# a duhet perkthyer?
-# cumulated = mbledhur
+# cumulated sum ???
 #: lib/src/compare.c:3078
 msgid "Cumulated sum of squared residuals"
 msgstr "Shuma e katrorit të mbetjes"
 
 #: lib/src/compare.c:3082
 msgid "CUSUM test for stability of parameters"
-msgstr "Testi CUSUM për stabilitetin e parametrave"
+msgstr "Testi CUSUM për qëndrueshmëri të parametrave"
 
 #: lib/src/compare.c:3083
 #, c-format
@@ -856,7 +855,7 @@ msgstr ""
 
 #: lib/src/compare.c:3097
 msgid "Cumulated sum of scaled residuals"
-msgstr "Shuma e grumbulluar e mbetjes së ponderuar"
+msgstr "Shuma e mbetjes së ponderuar"
 
 #: lib/src/compare.c:3103
 #, no-c-format
@@ -1008,7 +1007,7 @@ msgstr "  e pamundur të shpjegohet bajti i tepërt\n"
 
 #: lib/src/csvdata.c:811
 msgid "and just a year\n"
-msgstr "asgjë më tepër se një vit\n"
+msgstr "thjesht një vit\n"
 
 #: lib/src/csvdata.c:826
 #, c-format
@@ -1535,7 +1534,7 @@ msgstr "të dhënave ishin në përdorim"
 #: lib/src/dataset.c:1713
 #: gui2/gui_utils.c:4579
 msgid "dataset is subsampled"
-msgstr "Të dhënat janë të nën-kampionuara"
+msgstr "të dhënat i përkasin një nën-kampioni"
 
 #: lib/src/dataset.c:2517
 msgid "Generated"
@@ -2033,15 +2032,15 @@ msgstr "Asimetria"
 #: lib/src/describe.c:4387
 #: gui2/guiprint.c:747
 msgid "Ex. kurtosis"
-msgstr "Shtypja"
+msgstr "Ekscesi"
 
 #: lib/src/describe.c:4257
 msgid "Within s.d."
-msgstr "Shmangia std (intra)"
+msgstr "Shmangia std. (intra)"
 
 #: lib/src/describe.c:4258
 msgid "Between s.d."
-msgstr "Shmangia std (inter)"
+msgstr "Shmangia std. (inter)"
 
 #: lib/src/describe.c:4265
 #: lib/src/describe.c:4346
@@ -2057,7 +2056,7 @@ msgstr "për ndryshoren « %s » (%d vrojtime të vlefshme)"
 #: lib/src/describe.c:4384
 #: gui2/guiprint.c:747
 msgid "Std. Dev."
-msgstr "Shmang. std"
+msgstr "Shmang. std."
 
 #: lib/src/describe.c:4539
 #, c-format
@@ -2131,7 +2130,7 @@ msgstr "vlera kritike për pragun 5%% (të dyanshëm) = %.4f për n = %d"
 
 #: lib/src/describe.c:5053
 msgid "Correlation Coefficients"
-msgstr "Koefiçientët e korrelacionit"
+msgstr "Koeficientët e korrelacionit"
 
 #: lib/src/describe.c:5147
 #: lib/src/describe.c:5231
@@ -2248,11 +2247,11 @@ msgstr "Distancat e Mahalanobis"
 
 #: lib/src/describe.c:5399
 msgid "Covariance matrix"
-msgstr "Matrica e kovariancës"
+msgstr "Matrica e kovariacioneve"
 
 #: lib/src/describe.c:5405
 msgid "Inverse of covariance matrix"
-msgstr "E anasjellta e matricës së kovariancës"
+msgstr "E anasjellta e matricës së kovariacioneve"
 
 #: lib/src/describe.c:5422
 msgid "Mahalanobis distances from the centroid"
@@ -2283,7 +2282,7 @@ msgstr "Kujdes: ka vlera që mungojnë\n"
 
 #: lib/src/describe.c:5714
 msgid "Sample Gini coefficient"
-msgstr "Koefiçienti Gini i kampionit"
+msgstr "Koeficienti Gini i kampionit"
 
 #: lib/src/describe.c:5715
 msgid "Estimate of population value"
@@ -2366,7 +2365,7 @@ msgstr "Numri i vrojtimeve (%d) është më i vogël se numri i parametrave (%d)"
 
 #: lib/src/estimate.c:580
 msgid "Weight variable is all zeros, aborting regression"
-msgstr "Ndryshorja e ponderimit përmban vetëm vlerën 0, regresioni u ndal"
+msgstr "Ndryshorja e ponderimit përmban vetëm vlerën 0; llogaritja u ndërpre"
 
 #: lib/src/estimate.c:582
 msgid "Weight variable contains negative values"
@@ -2401,7 +2400,6 @@ msgstr ""
 "SKM është minimale për rho = %g\n"
 "\n"
 
-# fine-tuning...
 #: lib/src/estimate.c:2213
 msgid ""
 "\n"
@@ -2549,10 +2547,9 @@ msgstr ""
 "Numri i argumentave (%d) nuk përputhet me numrin\n"
 "e parametrave të funksionit %s (%d)"
 
-# unare,  binare
 #: lib/src/geneval.c:5207
 msgid "Wrong type of operand for unary '&'"
-msgstr "Operator i pasaktë për llogaritjen unare '&' "
+msgstr "Operator i pasaktë për llogaritjen '&' "
 
 #: lib/src/geneval.c:7592
 #, c-format
@@ -2704,7 +2701,7 @@ msgstr "individi"
 
 #: lib/src/genfuncs.c:2440
 msgid "cross-sectional unit index"
-msgstr "tregues individual"
+msgstr "tregues për individët"
 
 #: lib/src/genfuncs.c:2522
 msgid "data index variable"
@@ -2939,7 +2936,7 @@ msgstr "OC"
 #: plugin/anova.c:194
 #: plugin/anova.c:202
 msgid "std. dev"
-msgstr "shm. std"
+msgstr "shm. std."
 
 # e pavazhdueshme ?
 #: lib/src/graphing.c:336
@@ -2957,7 +2954,7 @@ msgstr "Sistemi juaj operativ nuk e mundëson Gnuplot të krijojë një skedë PDF"
 #: gui2/gpt_dialog.c:554
 #, c-format
 msgid "%s versus %s (with least squares fit)"
-msgstr "%s kundrejt %s (me përafrim KVZ)"
+msgstr "%s kundrejt %s (me vijën e regresit linear)"
 
 #: lib/src/graphing.c:1481
 #: gui2/gpt_dialog.c:563
@@ -2981,7 +2978,7 @@ msgstr "%s kundrejt %s (me përafrim kubik)"
 #: lib/src/graphing.c:1493
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
-msgstr "Mbetja e regresionit (= realizimi - përafrimi) për %s"
+msgstr "Mbetja e regresit (= realizimi - përafrimi) për %s"
 
 #: lib/src/graphing.c:1498
 #: lib/src/graphing.c:1502
@@ -3092,7 +3089,7 @@ msgstr "interval  %g%% për mesataren"
 #: lib/src/graphing.c:4320
 #, c-format
 msgid "Coefficient on %s"
-msgstr "Koefiçienti për %s"
+msgstr "Koeficienti i %s"
 
 #: lib/src/graphing.c:4344
 #, c-format
@@ -3266,7 +3263,7 @@ msgstr "Kolineariteti është pothuajse i plotë"
 
 #: lib/src/gretl_errors.c:40
 msgid "Insufficient degrees of freedom for regression"
-msgstr "Shkallët e lirisë nuk mjaftojnë për regresionin"
+msgstr "Shkallët e lirisë nuk mjaftojnë për këtë regres"
 
 #: lib/src/gretl_errors.c:41
 msgid "Dependent variable is all zeros, aborting regression"
@@ -3351,7 +3348,7 @@ msgstr "Gabim gjatë krijimit të ndryshoreve të vonuara"
 
 #: lib/src/gretl_errors.c:63
 msgid "Attempting to take square root of negative number"
-msgstr "Orvajtje për të llogaritur rrënjën katrore të një numri negativ"
+msgstr "Orvajtje për llogaritjen e rrënjës katrore të një numri negativ"
 
 #: lib/src/gretl_errors.c:64
 msgid "Excessive exponent in genr formula"
@@ -3614,9 +3611,10 @@ msgstr "Testi QLR mbi stabilitetin e parametrave"
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
 msgstr "Testi i raportit të përgjasisë (LR) për heteroskedasticitetin mes grupeve"
 
+# varianca e mbetjes është e njëjta për të gjithë individët
 #: lib/src/gretl_model.c:2994
 msgid "the units have a common error variance"
-msgstr "varianca e mbetjes është e njëjta për të gjithë individët"
+msgstr "dispersioni i gabimit është i njëjtë për të gjithë individët"
 
 #: lib/src/gretl_model.c:2996
 msgid "Non-linearity test (logs)"
@@ -3688,9 +3686,10 @@ msgstr "Grupet kanë konstante të përbashkët"
 msgid "Breusch-Pagan test"
 msgstr "Testi Breusch-Pagan"
 
+# Varianca e gabimit individual = 0
 #: lib/src/gretl_model.c:3030
 msgid "Variance of the unit-specific error = 0"
-msgstr "Varianca e gabimit individual = 0"
+msgstr "Dispersioni i gabimit individual = 0"
 
 #: lib/src/gretl_model.c:3032
 msgid "Wald test for joint significance of time dummies"
@@ -3767,7 +3766,7 @@ msgid ""
 "\n"
 msgstr ""
 "                         Modeli i efekteve të rastësishëm\n"
-"           përfshin një konstante individuale në termin e gabimit \n"
+"           lejon një përbërëse individuale në termin e gabimit \n"
 "             (në kllapa, gabimi std.; në kllapa katrore, p. kritik)\n"
 "\n"
 
@@ -3838,7 +3837,7 @@ msgid ""
 msgstr ""
 "\n"
 "Statistika e testit Hausman:\n"
-" H = %g me p. kritik = prob(Ki-katror(%d) > %g) = %g\n"
+" H = %g me p. kritik = prob(hi-katror(%d) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:2242
 msgid ""
@@ -3852,6 +3851,7 @@ msgstr ""
 msgid "Error estimating random effects model\n"
 msgstr "Gabim gjatë llogaritjes së modelit të efekteve të rastësishëm\n"
 
+# mund te shihet per me teper qartesi
 #: lib/src/gretl_panel.c:2431
 msgid ""
 "\n"
@@ -3876,7 +3876,7 @@ msgid ""
 msgstr ""
 "\n"
 "Statistika e testit Breusch-Pagan:\n"
-" LM = %g me p. kritik = prob(Ki-katror(1) > %g) = %g\n"
+" LM = %g me p. kritik = prob(hi-katror(1) > %g) = %g\n"
 
 #: lib/src/gretl_panel.c:2463
 msgid ""
@@ -3900,7 +3900,7 @@ msgid ""
 "\n"
 msgstr ""
 "      Diagnostik: duke supozuar një panel të ekuilibruar të përbërë nga\n"
-"          %d individë të vrojtuar në %d periudha kohore\n"
+"          %d individë të vrojtuar në %d periudha\n"
 "\n"
 
 #: lib/src/gretl_panel.c:2732
@@ -3992,7 +3992,7 @@ msgstr "E pamundur të llogaritet matrica e anasjelltë: kushtet janë të pasaktë o
 
 #: lib/src/gretl_restrict.c:725
 msgid "Please give a coefficient number"
-msgstr "Jepni ju lutem një koefiçient"
+msgstr "Jepni ju lutem një koeficient"
 
 #: lib/src/gretl_restrict.c:732
 #, c-format
@@ -4009,7 +4009,7 @@ msgstr "%s: këtu, pjestimi nuk lejohet"
 #: lib/src/gretl_restrict.c:1456
 #, c-format
 msgid "Coefficient number (%d) is out of range"
-msgstr "Koefiçientit (%d) është jashtë kufijve"
+msgstr "Koeficienti (%d) është jashtë kufijve"
 
 #: lib/src/gretl_restrict.c:891
 #: lib/src/gretl_restrict.c:1430
@@ -4040,7 +4040,7 @@ msgstr "Kushti"
 #: lib/src/gretl_restrict.c:1443
 #, c-format
 msgid "Coefficient number (%d) out of range for equation %d"
-msgstr "Koefiçienti (%d) i ekuacionit %d është jashtë kufijve"
+msgstr "Koeficienti (%d) i ekuacionit %d është jashtë kufijve"
 
 #: lib/src/gretl_restrict.c:1664
 msgid "Invalid restriction"
@@ -4060,11 +4060,11 @@ msgstr "Vlerësim i kushtëzuar"
 #: lib/src/printout.c:1183
 #: gui2/library.c:5670
 msgid "Standard error of the regression"
-msgstr "Gabimi std. i regresionit"
+msgstr "Gabimi std. i regresit"
 
 #: lib/src/gretl_restrict.c:2186
 msgid "Robust chi^2"
-msgstr "Ki^2 i qëndrueshëm"
+msgstr "Hi^2 i qëndrueshëm"
 
 #: lib/src/gretl_restrict.c:2209
 #: lib/src/subsample.c:2185
@@ -4096,7 +4096,7 @@ msgstr "Ndryshoret"
 #: lib/src/gretl_restrict.c:2745
 #: gui2/library.c:1905
 msgid "Sum of coefficients"
-msgstr "Shuma e koefiçientëve"
+msgstr "Shuma e koeficientëve"
 
 #: lib/src/gretl_restrict.c:2748
 #: lib/src/gretl_restrict.c:2757
@@ -4640,7 +4640,7 @@ msgstr "Shkrimi i të dhënave përfundoi.\n"
 
 #: lib/src/interact.c:4954
 msgid "This estimator requires panel data"
-msgstr "Për këtë regresion nevojiten të dhëna paneli"
+msgstr "Për këtë regres nevojiten të dhëna paneli"
 
 #: lib/src/interact.c:5120
 msgid "Couldn't format model\n"
@@ -5660,7 +5660,7 @@ msgstr "t-Student"
 #: lib/src/modelprint.c:4216
 #: plugin/panurc.c:560
 msgid "coefficient"
-msgstr "koefiçienti"
+msgstr "koeficienti"
 
 #: lib/src/modelprint.c:2124
 #: lib/src/modelprint.c:2127
@@ -5714,7 +5714,7 @@ msgstr "Vlerësimi"
 #: gui2/guiprint.c:1754
 #: gui2/guiprint.c:1804
 msgid "Coefficient"
-msgstr "Koefiçienti"
+msgstr "Koeficienti"
 
 #: lib/src/modelprint.c:2158
 #: lib/src/modelprint.c:2162
@@ -5980,7 +5980,7 @@ msgstr "HQC"
 
 #: lib/src/modelprint.c:4196
 msgid "Sum of AR coefficients"
-msgstr "Shuma e koefiçientevë të AR"
+msgstr "Shuma e koeficientevë të AR"
 
 #: lib/src/modelprint.c:4220
 msgid "slope"
@@ -6254,7 +6254,7 @@ msgstr "Vlerësim i përkryer\n"
 
 #: lib/src/nls.c:1891
 msgid "In Gauss-Newton Regression:\n"
-msgstr "Në regresionin Gauss-Newton:\n"
+msgstr "Në regresin Gauss-Newton:\n"
 
 #: lib/src/nls.c:2290
 msgid "NLS: The supplied derivatives seem to be incorrect"
@@ -6305,7 +6305,7 @@ msgstr "komanda '%s' është e pavleshme në këtë kontekst"
 #: lib/src/nls.c:2865
 #: plugin/heckit.c:355
 msgid "No regression function has been specified"
-msgstr "Asnjë funksion regresioni nuk është përcaktuar"
+msgstr "Asnjë funksion regresi nuk është përcaktuar"
 
 #: lib/src/nls.c:2870
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
@@ -6424,7 +6424,7 @@ msgstr ""
 
 #: lib/src/nonparam.c:833
 msgid "Test statistic cannot be computed: try the deviation from the median?\n"
-msgstr "Statistika e testit nuk mund të llogaritet: provoni me shmangien nga mediana?\n"
+msgstr "Statistika e testit nuk mund të llogaritet: mund të provoni shmangien nga mesorja?\n"
 
 #: lib/src/nonparam.c:837
 #, c-format
@@ -6460,7 +6460,7 @@ msgstr "Testi Wilcoxon Signed-Rank (shenja e rangjeve)"
 
 #: lib/src/nonparam.c:975
 msgid "the median difference is zero"
-msgstr "diferenca e medianave është zero"
+msgstr "diferenca e mesoreve është zero"
 
 #: lib/src/nonparam.c:1004
 msgid "zero differences"
@@ -6489,7 +6489,7 @@ msgstr "Testi Wilcoxon Rank-Sum (shuma e rangjeve)"
 
 #: lib/src/nonparam.c:1112
 msgid "the two medians are equal"
-msgstr "dy medianat janë të barabarta"
+msgstr "dy mesoret janë të barabarta"
 
 #: lib/src/nonparam.c:1134
 msgid "sum of ranks, sample 1"
@@ -6660,7 +6660,7 @@ msgstr "E pamundur të ngarkohet plugin-i i funksionit"
 
 #: lib/src/printout.c:63
 msgid "Covariance matrix of regression coefficients"
-msgstr "Matrica e kovariancës së koefiçientëve"
+msgstr "Matrica e kovariacioneve të koeficientëve të regresit"
 
 #: lib/src/printout.c:85
 #: lib/src/printout.c:162
@@ -6770,13 +6770,13 @@ msgid ""
 "Pearson chi-square test not computed: some expected frequencies were less\n"
 "than %g\n"
 msgstr ""
-"Testi Ki-katror nuk u llogarit meqë disa nga frekuencat e parashikuara ishin\n"
+"Testi Hi-katror i Pearson nuk u llogarit meqë disa nga frekuencat e parashikuara ishin\n"
 "më të vogla se %g\n"
 
 #: lib/src/printout.c:611
 #, c-format
 msgid "Pearson chi-square test = %g (%d df, p-value = %g)"
-msgstr "Testi Ki-katror = %g (%d shl, p. kritik = %g)"
+msgstr "Testi Hi-katror i Pearson = %g (%d shl, p. kritik = %g)"
 
 #: lib/src/printout.c:616
 #, no-c-format
@@ -6804,6 +6804,7 @@ msgstr "Kampioni i plotë i të dhënave"
 msgid "Current sample"
 msgstr "Kampioni në përdorim"
 
+# te shihet - VKV
 #: lib/src/printout.c:953
 #: lib/src/printout.c:961
 msgid "Cross-equation VCV for residuals"
@@ -6832,9 +6833,9 @@ msgid ""
 "estimating the model over the sample %s to t-%d, and (b) the\n"
 "regressors evaluated at time t."
 msgstr ""
-"Parashikimi për periudhën t është bërë në bazë të (a) koefiçientëve\n"
-"të modelit mbi kampionin %s - (t-%d) dhe (b) vlerat e parashikuara\n"
-"të regresorëve për periudhën t."
+"Parashikimi për periudhën t është bërë në bazë (a) të koeficientëve\n"
+"të modelit të llogaritur mbi kampionin %s - (t-%d) dhe (b) të vlerave\n"
+"të përafërta të regresorëve për periudhën t."
 
 #: lib/src/printout.c:1171
 msgid ""
@@ -6904,7 +6905,7 @@ msgstr "Kontributi i zhvendosjes, UM"
 
 #: lib/src/printout.c:2313
 msgid "Regression proportion, UR"
-msgstr "Kontributi i regresionit, UR"
+msgstr "Kontributi i regresit, UR"
 
 #: lib/src/printout.c:2314
 msgid "Disturbance proportion, UD"
@@ -7177,7 +7178,7 @@ msgstr "vlera të vlefshme"
 #: lib/src/subsample.c:2090
 #: lib/src/subsample.c:2091
 msgid "dataset is subsampled, model is not\n"
-msgstr "Të dhënat i përkasin një nën-kampioni kurse modeli jo.\n"
+msgstr "të dhënat i përkasin një nën-kampioni kurse modeli jo\n"
 
 #: lib/src/subsample.c:2097
 #: lib/src/subsample.c:2098
@@ -7418,15 +7419,15 @@ msgstr "Testi Hansen-Sargar për mbi-identifikimin"
 #: lib/src/system.c:2895
 #: lib/src/system.c:2899
 msgid "LR test for diagonal covariance matrix"
-msgstr "Testi LR mbi matricën e kovariancës"
+msgstr "Testi LR mbi matricën e kovariacioneve"
 
 #: lib/src/system.c:2911
 msgid "Breusch--Pagan test for diagonal covariance matrix"
-msgstr "Testi Breusch--Pagan mbi matricën e kovariancës"
+msgstr "Testi Breusch--Pagan mbi matricën e kovariacioneve"
 
 #: lib/src/system.c:2917
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr "Testi Breusch-Pagan mbi matricën e kovariancës"
+msgstr "Testi Breusch-Pagan mbi matricën e kovariacioneve"
 
 #: lib/src/system.c:3865
 #: lib/src/system.c:3875
@@ -7443,7 +7444,7 @@ msgstr "Q e Ljung-Box"
 #: lib/src/varprint.c:749
 #: gui2/gui_utils.c:4081
 msgid "Cross-equation covariance matrix"
-msgstr "Matrica e kovariancës (të gjithë ekuacionet)"
+msgstr "Matrica e kovariacioneve (të gjithë ekuacionet)"
 
 #: lib/src/texprint.c:919
 #: lib/src/varprint.c:805
@@ -7476,7 +7477,7 @@ msgstr "Vektorët korrigjues"
 #: lib/src/varprint.c:1107
 #: lib/src/varprint.c:1116
 msgid "Determinant of covariance matrix"
-msgstr "Përcaktori i matricës së kovariancës"
+msgstr "Përcaktori i matricës së kovariacioneve"
 
 #: lib/src/texprint.c:1555
 #: gui2/model_table.c:1145
@@ -7575,7 +7576,7 @@ msgstr "VECM : rangu %d është jashtë kufijve"
 
 #: lib/src/var.c:2536
 msgid "Sample variance-covariance matrices for residuals"
-msgstr "Matricat e kovariancës së mbetjeve për kampionin"
+msgstr "Matricat e kovariacioneve të mbetjeve për kampionin"
 
 #: lib/src/var.c:2538
 msgid "VAR system in first differences"
@@ -7813,7 +7814,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"  Hipoteza zero: koefiçientët e regresionit janë zero për ndryshoret\n"
+"  Hipoteza zero: koeficientët e regresit janë zero për ndryshoret\n"
 "\n"
 
 #: lib/src/vartest.c:723
@@ -7981,7 +7982,7 @@ msgstr "Shpërndarje kampionare t(%d)"
 #: gui2/calculator.c:185
 #, c-format
 msgid "Chi-square(%d) sampling distribution"
-msgstr "Shpërndarja kampionare Ki-katror(%d)"
+msgstr "Shpërndarja empirike Hi-katror(%d)"
 
 #: gui2/calculator.c:188
 #, c-format
@@ -8001,7 +8002,7 @@ msgstr "t(%d)"
 #: gui2/calculator.c:205
 #, c-format
 msgid "Chi-square(%d)"
-msgstr "Ki-katror(%d)"
+msgstr "Hi-katror(%d)"
 
 #: gui2/calculator.c:207
 #, c-format
@@ -8125,7 +8126,7 @@ msgstr "Varianca e kampionit = %g\n"
 #: gui2/calculator.c:1525
 #, c-format
 msgid "Test statistic: chi-square(%d) = %d * %g/%g = %g\n"
-msgstr "Statistika e testit: Ki-katror(%d) = %d * %g/%g = %g\n"
+msgstr "Statistika e testit: Hi-katror(%d) = %d * %g/%g = %g\n"
 
 #: gui2/calculator.c:1544
 #, c-format
@@ -8668,7 +8669,7 @@ msgstr "korrelacioni i rangjeve"
 #: gui2/callbacks.c:699
 #: gui2/selector.c:5653
 msgid "Enter formula for new variable"
-msgstr "Jepni formulën për ndryshoren e re:"
+msgstr "Jepni formulën për ndryshoren e re"
 
 #: gui2/callbacks.c:545
 #: gui2/callbacks.c:701
@@ -8770,7 +8771,7 @@ msgstr "'boxplot' i thjeshtë"
 
 #: gui2/callbacks.c:628
 msgid "With confidence interval for median"
-msgstr "Me interval besimi për medianen"
+msgstr "Me interval besimi për mesoren"
 
 # ta shikoj s eku perdoret
 #: gui2/callbacks.c:629
@@ -10179,7 +10180,7 @@ msgstr "Shto një listë me instrumentë"
 
 #: gui2/dlgutils.c:925
 msgid "Show interval for median"
-msgstr "Trego intervalin për medianen"
+msgstr "Trego intervalin për mesoren"
 
 #: gui2/dlgutils.c:928
 #: gui2/dlgutils.c:1083
@@ -10576,7 +10577,7 @@ msgstr "Shkruani, për numrin e ri, emri= formula"
 #: gui2/fncall.c:1105
 #: gui2/selector.c:5665
 msgid "New variable"
-msgstr "Ndryshore e re"
+msgstr "Ndryshore të re"
 
 #: gui2/fncall.c:1107
 #: gui2/ssheet.c:3445
@@ -10601,7 +10602,7 @@ msgstr "dritarja mbyllet duke klikuar  \"OK\""
 
 #: gui2/fncall.c:1763
 msgid "This function needs a model in place"
-msgstr ""
+msgstr "Ky funksion nuk mund të përdoret pa një model"
 
 #: gui2/fncall.c:1811
 msgid "Function package is broken"
@@ -11888,11 +11889,11 @@ msgstr "_Diferencën e parë të ndryshoreve të zgjedhura"
 
 #: gui2/gretl.c:1480
 msgid "_Log differences of selected variables"
-msgstr "_Diferencë e logaritmit të ndryshoreve të zgjedhura"
+msgstr "Diferencën e l_ogaritmit të ndryshoreve të zgjedhura"
 
 #: gui2/gretl.c:1482
 msgid "_Seasonal differences of selected variables"
-msgstr "_Diferencën stinore të ndryshoreve të zgjedhura"
+msgstr "Diferencën _stinore të ndryshoreve të zgjedhura"
 
 #: gui2/gretl.c:1484
 msgid "_Index variable"
@@ -11900,31 +11901,31 @@ msgstr "_Tregues për vrojtimet"
 
 #: gui2/gretl.c:1485
 msgid "_Time trend"
-msgstr "Tregues për prirje _kohore"
+msgstr "T_regues për periudhat"
 
 #: gui2/gretl.c:1486
 msgid "_Random variable..."
-msgstr "Ndryshore të _rastit..."
+msgstr "_Ndryshore të rastit..."
 
 #: gui2/gretl.c:1487
 msgid "_Periodic dummies"
-msgstr "Ndryshore treguese _periodike"
+msgstr "Tregues _periodikë"
 
 #: gui2/gretl.c:1488
 msgid "_Unit dummies"
-msgstr "Ndryshore treguese për _individët (panel)"
+msgstr "Tregues për _individët (panel)"
 
 #: gui2/gretl.c:1489
 msgid "_Time dummies"
-msgstr "Ndryshore treguese ko_hore (panel)"
+msgstr "Tregues për p_eriudhat (panel)"
 
 #: gui2/gretl.c:1490
 msgid "Dummies for selected _discrete variables"
-msgstr "Ndryshore treguese për _diskretet e zgjedhura"
+msgstr "Tregues për ndryshoret_diskrete të zgjedhura"
 
 #: gui2/gretl.c:1492
 msgid "_Define matrix..."
-msgstr "_Matricë e re..."
+msgstr "_Matricë të re..."
 
 #: gui2/gretl.c:1495
 msgid "_Sample"
@@ -11984,7 +11985,7 @@ msgstr "grafik _Q-Q normal..."
 
 #: gui2/gretl.c:1516
 msgid "_Gini coefficient"
-msgstr "Koefiçienti _Gini"
+msgstr "Koeficienti _Gini"
 
 #: gui2/gretl.c:1517
 msgid "_Range-mean graph"
@@ -12000,7 +12001,7 @@ msgstr "_Grafik paneli..."
 
 #: gui2/gretl.c:1520
 msgid "_Unit root tests"
-msgstr "_Testi e rrënjës së njësisë"
+msgstr "_Testet e rrënjës së njësishme"
 
 #: gui2/gretl.c:1521
 msgid "_Augmented Dickey-Fuller test"
@@ -12083,7 +12084,7 @@ msgstr "_Ndrysho vetitë"
 #: gui2/gretl.c:1546
 #: gui2/gui_utils.c:2459
 msgid "Define _new variable..."
-msgstr "N_dryshore e re..."
+msgstr "N_dryshore të re..."
 
 #: gui2/gretl.c:1549
 msgid "_Model"
@@ -12160,7 +12161,7 @@ msgstr "Model _GARCH"
 
 #: gui2/gretl.c:1567
 msgid "_Vector Autoregression..."
-msgstr "_VAR - Autoregresion vektorial"
+msgstr "_VAR - Autoregres vektorial"
 
 #: gui2/gretl.c:1568
 msgid "VAR _lag selection..."
@@ -12454,7 +12455,7 @@ msgstr "Koef. i korrelacionit të llogaritur mbi kampionin %s - %s"
 #: gui2/guiprint.c:1067
 #: gui2/guiprint.c:1161
 msgid "Coefficient covariance matrix"
-msgstr "Matrica e kovariancës së koefiçientëve"
+msgstr "Matrica e kovariancave të koeficientëve"
 
 #: gui2/guiprint.c:1149
 #, c-format
@@ -12477,7 +12478,7 @@ msgstr "Përqindja e zhvendosjes,  $U^M$"
 
 #: gui2/guiprint.c:1252
 msgid "Regression proportion, $U^R$"
-msgstr "Përqindja e regresionit,  $U^M$"
+msgstr "Përqindja e regresit,  $U^M$"
 
 #: gui2/guiprint.c:1253
 msgid "Disturbance proportion, $U^D$"
@@ -12658,7 +12659,7 @@ msgstr "_Parashikimi..."
 
 #: gui2/gui_utils.c:212
 msgid "_Confidence intervals for coefficients"
-msgstr "Intervali i besimit i koefiçientëve"
+msgstr "Intervali i besimit i koeficientëve"
 
 #: gui2/gui_utils.c:214
 msgid "Confidence _ellipse..."
@@ -12666,7 +12667,7 @@ msgstr "_Elipsi i besimit..."
 
 #: gui2/gui_utils.c:215
 msgid "Coefficient covariance _matrix"
-msgstr "_Matrica e kovariancës të koefiçientëve"
+msgstr "_Matrica e kovariacioneve të koeficientëve"
 
 #: gui2/gui_utils.c:216
 msgid "_ANOVA"
@@ -12686,7 +12687,7 @@ msgstr "_Shto ndryshore të tjera"
 
 #: gui2/gui_utils.c:223
 msgid "_Sum of coefficients"
-msgstr "Shu_ma e koefiçientëve"
+msgstr "Shu_ma e koeficientëve"
 
 #: gui2/gui_utils.c:224
 msgid "_Linear restrictions"
@@ -12854,7 +12855,7 @@ msgid ""
 "will be lost.  Proceed to open data file?"
 msgstr ""
 "Hapja e një skede tjetër të dhënash shkakton\n"
-"mbylljen e asaj në përdorim: çdo punë e paruajtur\n"
+"mbylljen e asaj në përdorim: çdo punim i paruajtur\n"
 "do të humbasë. A doni të vazhdoni hapjen e skedës?"
 
 #: gui2/gui_utils.c:1153
@@ -12868,7 +12869,7 @@ msgid ""
 "will be lost.  Proceed to open session file?"
 msgstr ""
 "Hapja e një skede sesioni tjetër shkakton\n"
-"mbylljen e asaj në përdorim: çdo punë e paruajtur\n"
+"mbylljen e asaj në përdorim: çdo punim i paruajtur\n"
 "do të humbasë. A doni të vazhdoni hapjen e skedës?"
 
 #: gui2/gui_utils.c:1205
@@ -12956,7 +12957,7 @@ msgstr "_Shuma e katrorit të mbetjes (SKM)"
 
 #: gui2/gui_utils.c:2422
 msgid "_Standard error of the regression"
-msgstr "Gabimi std. i regresionit"
+msgstr "Gabimi std. i regresit"
 
 #: gui2/gui_utils.c:2427
 msgid "_R-squared"
@@ -13040,11 +13041,11 @@ msgstr "sekuenca tau"
 
 #: gui2/gui_utils.c:3081
 msgid "gretl: VAR covariance matrix"
-msgstr "gretl: matrica e kovariancës e modelit VAR"
+msgstr "gretl: matrica e kovariacioneve e modelit VAR"
 
 #: gui2/gui_utils.c:3084
 msgid "gretl: system covariance matrix"
-msgstr "gretl: matrica e kovariancës e sistemit"
+msgstr "gretl: matrica e kovariacioneve e sistemit"
 
 #: gui2/gui_utils.c:3090
 msgid "System fitted values"
@@ -13065,7 +13066,7 @@ msgstr "llogarit intervalin e besimit bootstrap"
 #: gui2/gui_utils.c:3362
 #: gui2/gui_utils.c:3649
 msgid "impulse responses"
-msgstr "përgjigjet ndaj impulseve"
+msgstr "përgjigjet ndaj goditjeve"
 
 #: gui2/gui_utils.c:3367
 #: gui2/gui_utils.c:3410
@@ -13133,7 +13134,7 @@ msgstr "Shfaq përafrimin për të gjithë ekuacionet"
 # BSH: perigjgjet ndaj goditjeve
 #: gui2/gui_utils.c:4088
 msgid "Impulse responses"
-msgstr "Përgjigjet ndaj impulseve"
+msgstr "Përgjigjet ndaj goditjeve"
 
 #: gui2/gui_utils.c:4102
 msgid "Residual plots"
@@ -13157,7 +13158,7 @@ msgstr "Rrënjët e anasjellta të modelit VAR"
 
 #: gui2/gui_utils.c:4143
 msgid "Impulse responses (combined)"
-msgstr "Përgjigjet e kombinuara ndaj impulseve"
+msgstr "Përgjigjet e kombinuara ndaj goditjeve"
 
 #: gui2/gui_utils.c:4173
 #, c-format
@@ -13464,7 +13465,7 @@ msgstr "përfshi ndryshore treguese stinore"
 #: gui2/library.c:968
 #: gui2/library.c:986
 msgid "show regression results"
-msgstr "shfaq rezultatet e regresionit"
+msgstr "shfaq rezultatet e regresit"
 
 #: gui2/library.c:970
 #: gui2/library.c:988
@@ -13654,7 +13655,7 @@ msgstr "gretl: testi LM"
 #: gui2/library.c:2078
 #: gui2/library.c:3868
 msgid "gretl: vector autoregression"
-msgstr "gretl: autoregresion vektorial"
+msgstr "gretl: autoregres vektorial"
 
 #: gui2/library.c:2234
 msgid "gretl: LM test "
@@ -13697,7 +13698,7 @@ msgstr "gretl: kolineariteti"
 #: gui2/library.c:2546
 #: gui2/menustate.c:350
 msgid "Gini coefficient"
-msgstr "koefiçienti Gini"
+msgstr "koeficienti Gini"
 
 #: gui2/library.c:2557
 msgid "use sample mean and variance for normal quantiles"
@@ -13776,7 +13777,7 @@ msgstr "gretl: GARCH"
 
 #: gui2/library.c:3990
 msgid "Error saving model information"
-msgstr "Diçka vajti mbrapsht gjatë ruajtjes së modelit"
+msgstr "Gabim gjatë ruajtjes të hollësive të modelit"
 
 #: gui2/library.c:4271
 #, c-format
@@ -13857,7 +13858,7 @@ msgstr "gretl: integrimi fraksional"
 #: gui2/library.c:5167
 #: gui2/toolbar.c:481
 msgid "gretl: coefficient confidence intervals"
-msgstr "gretl: intervali i besimit i koefiçientëve"
+msgstr "gretl: intervali i besimit i koeficientëve"
 
 #: gui2/library.c:5180
 msgid "Data set is gone"
@@ -13865,11 +13866,11 @@ msgstr "të dhënat janë zhdukur"
 
 #: gui2/library.c:5189
 msgid "Error generating covariance matrix"
-msgstr "Gabim i papritur gjatë llogaritjes së matricës së kovariancës"
+msgstr "Gabim i papritur gjatë njehsimit të matricës së kovariacioneve"
 
 #: gui2/library.c:5193
 msgid "gretl: coefficient covariances"
-msgstr "gretl: kovarianca e koefiçientëve"
+msgstr "gretl: kovariacionet e koeficientëve"
 
 #: gui2/library.c:5285
 msgid "Error generating time trend"
@@ -14386,13 +14387,13 @@ msgstr "Në kllapa katrore, p. kritik"
 #: gui2/model_table.c:1156
 #: gui2/model_table.c:1240
 msgid "* indicates significance at the 10 percent level"
-msgstr "* koefiçient domethënës në pragun 10%"
+msgstr "* koeficient domethënës në pragun 10%"
 
 #: gui2/model_table.c:1048
 #: gui2/model_table.c:1158
 #: gui2/model_table.c:1242
 msgid "** indicates significance at the 5 percent level"
-msgstr "** koefiçient domethënës në pragun 5%"
+msgstr "** koeficient domethënës në pragun 5%"
 
 #: gui2/model_table.c:1052
 msgid "For logit and probit, R-squared is McFadden's pseudo-R-squared"
@@ -14619,9 +14620,10 @@ msgstr "Ndryshore ponderuese"
 msgid "Offset variable"
 msgstr "Ndryshore offset"
 
+# te shihet
 #: gui2/selector.c:3465
 msgid "Censoring variable"
-msgstr "Ndryshor çensuruese"
+msgstr "Ndryshore çensuruese"
 
 #: gui2/selector.c:3469
 msgid "Second dependent variable"
@@ -14833,7 +14835,7 @@ msgstr "Me prirje kohore"
 
 #: gui2/selector.c:4888
 msgid "Show details of regressions"
-msgstr "Shfaq hollësitë e regresioneve"
+msgstr "Shfaq hollësitë e regreseve"
 
 #: gui2/selector.c:4891
 msgid "Include seasonal dummies"
@@ -14870,7 +14872,7 @@ msgstr "Shfaq zerot"
 
 #: gui2/selector.c:4923
 msgid "Show rankings"
-msgstr "Shfaq rrangjet"
+msgstr "Shfaq rradhitjen"
 
 #: gui2/selector.c:4926
 msgid "Ensure uniform sample size"
@@ -14878,7 +14880,7 @@ msgstr "Përdor një kampion të përbashkët për të gjitha ndryshoret "
 
 #: gui2/selector.c:4932
 msgid "Parameter covariance matrix via Hessian"
-msgstr "Matrica e kovariancës së koefiçientëve sipas Hesianes"
+msgstr "Matrica e kovariacioneve të koeficientëve sipas Hesianes"
 
 #: gui2/selector.c:4934
 msgid "Difference the independent variables"
@@ -14923,7 +14925,7 @@ msgstr "Përdor matricën e korrelacionit"
 
 #: gui2/selector.c:5128
 msgid "Use covariance matrix"
-msgstr "Përdor matricën e kovariancës"
+msgstr "Përdor matricën e kovariacioneve"
 
 #: gui2/selector.c:5140
 msgid "Show slopes at mean"
@@ -14942,9 +14944,8 @@ msgid "Estimate augmented model"
 msgstr "Vlerëso modelin e shtuar"
 
 #: gui2/selector.c:5229
-#, fuzzy
 msgid "LM test using auxiliary regression"
-msgstr ""
+msgstr "Testi LM duke përdorur regres ndihmës"
 
 #: gui2/selector.c:5243
 msgid "Estimate reduced model"
@@ -14952,7 +14953,7 @@ msgstr "Vlerëso modelin e reduktuar"
 
 #: gui2/selector.c:5248
 msgid "Wald test, based on covariance matrix"
-msgstr "Testi Wald bazuar në matricën e kovariancës"
+msgstr "Testi Wald bazuar në matricën e kovariacioneve"
 
 #: gui2/selector.c:5254
 msgid ""
@@ -15102,7 +15103,7 @@ msgstr "Zgjidhni ndryshoret që doni të hiqni"
 
 #: gui2/selector.c:6016
 msgid "Select coefficients to sum"
-msgstr "Zgjidhni koefiçientët që doni të mblidhni"
+msgstr "Zgjidhni koeficientët që doni të mblidhni"
 
 #: gui2/selector.c:6018
 msgid "Select two variables"
@@ -15326,10 +15327,9 @@ msgstr ""
 "Fshirja e të dhënave në përdorim\n"
 "mbyll dhe sesionin. Doni të vazhdoni?"
 
-# te shihet
 #: gui2/session.c:1895
 msgid "Display notes on opening session file"
-msgstr ""
+msgstr "Trego shënimet gjatë hapjes së një skede sesioni"
 
 #: gui2/session.c:2015
 msgid "versus"
@@ -15624,9 +15624,10 @@ msgstr "Shkrimi i grafikut PNG"
 msgid "Gnuplot colors"
 msgstr "Ngjyrat e Gnuplot"
 
+# te shihet
 #: gui2/settings.c:247
 msgid "Use robust covariance matrix by default"
-msgstr "Përdor zgjedhjet e mësipërme për matricën e kovariancës së qëndrueshme"
+msgstr "Përdor zgjedhjet e mësipërme për matricën e qëndrueshme të kovariacioneve "
 
 #: gui2/settings.c:249
 msgid "For cross-sectional data"
@@ -16360,9 +16361,10 @@ msgstr ""
 msgid "APARCH"
 msgstr "APARCH"
 
+# te shihet per te qene koherent (estimator)
 #: plugin/addons-i18n.c:7
 msgid "Covariance estimator"
-msgstr "Vlerësimi i kovariancës"
+msgstr "Përafrimi i kovariacioneve"
 
 #: plugin/addons-i18n.c:9
 msgid "Dependent Variable"
@@ -16606,7 +16608,7 @@ msgstr "Mungon lista e ndryshoreve të pavarura "
 
 #: plugin/fiml.c:894
 msgid "Gradients at last iteration"
-msgstr "Gradientët e hapit të fundit"
+msgstr "Gradientët e llogaritur së fundmi"
 
 #: plugin/fractals.c:42
 msgid "Rescaled-range plot for"
@@ -16664,7 +16666,7 @@ msgstr "koef."
 
 #: plugin/fractals.c:276
 msgid "Regression results"
-msgstr "Rezultati i regresionit"
+msgstr "Rezultati i regresit"
 
 #: plugin/fractals.c:289
 msgid "Estimated Hurst exponent"
@@ -17158,7 +17160,7 @@ msgid ""
 "something strange in the file\n"
 "(Type 0 characteristic of nonzero length)"
 msgstr ""
-"Diçka nuk ecën mes skedën\n"
+"Diçka nuk ecën me skedën\n"
 "(vlerë 0 për një karakteristike që duhej të ketë vlerë të ndryshme nga 0)"
 
 #: plugin/stata_import.c:897
@@ -17265,6 +17267,7 @@ msgstr "Vrojtime anormalë"
 msgid "Detect and correct for outliers"
 msgstr "Gjej dhe korrigjo vrojtimet anormalë"
 
+# te shihet
 #: plugin/tramo_options.c:601
 msgid "Besides additive outliers, allow for:"
 msgstr "Përveç vrojtimeve anormalë shtesë, lejo edhe:"
@@ -17387,7 +17390,7 @@ msgid ""
 "VIF(j) = 1/(1 - R(j)^2), where R(j) is the multiple correlation coefficient\n"
 "between variable j and the other independent variables"
 msgstr ""
-"VIF(j) = 1/(1 - R(j)^2), R(j) është koefiçienti i korrelacionit të shumëfishtë\n"
+"VIF(j) = 1/(1 - R(j)^2), R(j) është koeficienti i korrelacionit të shumëfishtë\n"
 "ndërmjet ndryshores j dhe ndryshoreve të tjera të pavarura"
 
 #: plugin/workbook.c:545
