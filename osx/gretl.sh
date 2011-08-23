@@ -15,10 +15,17 @@ TOP="`dirname \"$CWD\"`"
 
 if [ -f ~/.profile ] ; then
   . ~/.profile
-fi  
+fi 
+
+if [ -f ~/.gtkrc-2.0 ] ; then
+   if ! grep gtk-print-preview-command ~/.gtkrc-2.0 >/dev/null ; then
+      echo 'gtk-print-preview-command="open %f"' >> ~/.gtkrc-2.0
+   fi
+else
+   echo 'gtk-print-preview-command="open %f"' > ~/.gtkrc-2.0
+fi 
 
 export "GRETL_HOME=$TOP/share/gretl/"
-export "GTKSOURCEVIEW_LANGUAGE_DIR=$TOP/share/gretl/gtksourceview"
 
 # location of gnuplot help file
 export "GNUHELP=$TOP/share/gnuplot/4.5/gnuplot.gih"
