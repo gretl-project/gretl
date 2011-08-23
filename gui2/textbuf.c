@@ -497,6 +497,7 @@ void sourceview_print (windata_t *vwin)
     }
 
     g_object_unref(print);
+    /* g_object_unref(comp); ?? */
 }
 
 #else /* using gtksourceview-1.0 API */
@@ -690,7 +691,7 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     GtkTextView *view;
     int cw;
 
-    /* FIXME : do path stuff first, egardless of
+    /* FIXME : do path stuff first, regardless of
        whether or not we're doing highlighting
        for this file?
     */

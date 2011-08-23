@@ -137,7 +137,7 @@ for f in ${TOPDIR}/gui2/*.xml ; do
   add_file $f gretl/ui/`basename $f`
 done
 
-# lang files for gtksourceview
+# data files for gtksourceview
 mkdir -p windist/gretl/gtksourceview
 add_file gretl.lang \
   gretl/gtksourceview/gretl.lang
@@ -149,8 +149,14 @@ add_file ${WINFILES}/gtksourceview-data/cpp.lang \
   gretl/gtksourceview/cpp.lang
 add_file ${WINFILES}/gtksourceview-data/octave.lang \
   gretl/gtksourceview/octave.lang
+add_file ${WINFILES}/gtksourceview-data/def.lang \
+  gretl/gtksourceview/def.lang
 add_file ${WINFILES}/gtksourceview-data/classic.xml \
   gretl/gtksourceview/classic.xml
+add_file ${WINFILES}/gtksourceview-data/language2.rng \
+  gretl/gtksourceview/language2.rng
+add_file ${WINFILES}/gtksourceview-data/styles.rng \
+  gretl/gtksourceview/styles.rng
 
 # help files, license, logo
 add_file ${HLPDIR}/gretlgui.hlp gretl/gretlgui_hlp.txt
