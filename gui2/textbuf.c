@@ -690,6 +690,11 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     GtkTextView *view;
     int cw;
 
+    /* FIXME : do path stuff first, egardless of
+       whether or not we're doing highlighting
+       for this file?
+    */
+
 #ifdef NEWER_SOURCEVIEW
     if (textview_use_highlighting(vwin->role)) {
 	lm = gtk_source_language_manager_get_default();
