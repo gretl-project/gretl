@@ -2637,6 +2637,7 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.pngfont, cpaths->pngfont, 0);
 }
 
+#if 0
 static void set_up_sourceview_path (void)
 {
     char envstr[MAXLEN];
@@ -2652,6 +2653,7 @@ static void set_up_sourceview_path (void)
     }
 #endif
 }
+#endif
 
 /* This is called after reading the gretl config file (or reading from
    the registry on Windows) at startup (and only then).  Subsequent
@@ -2693,7 +2695,9 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 	}
     }
 
+#if 0
     set_up_sourceview_path();
+#endif
 
 #if defined(WIN32) || defined(OSX_BUILD) 
     shelldir_init(paths.workdir);

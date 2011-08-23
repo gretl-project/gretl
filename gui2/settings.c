@@ -2020,6 +2020,10 @@ int read_win32_config (int debug)
     set_fixed_font();
     set_app_font(NULL);
 
+    if (debug) {
+	fprintf(stderr, "read_win32_config: returning %d\n", err);
+    }
+
     return err;
 }
 

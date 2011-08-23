@@ -375,7 +375,10 @@ void gretl_win32_init (const char *progname, int debug)
     wimp_init();
     read_win32_config(debug);
     set_gretl_startdir();
-    ws_startup(); 
+    ws_startup();
+    if (debug) {
+	fprintf(stderr, "gretl_win32_init: done\n");
+    }
 }
 
 static int win_copy_buf (const char *buf, int fmt, size_t buflen)
