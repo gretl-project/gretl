@@ -653,33 +653,21 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
 {
-    if (lm != NULL) {
+    static int done;
+
+    if (lm != NULL && !done) {
+	GtkSourceStyleSchemeManager *mgr;
 	gchar *dirs[2] = {NULL, NULL};
-	static int style_done;
 
 	dirs[0] = g_strdup_printf("%sgtksourceview", gretl_home());
-	// dirs[0] = g_strdup("/home/cottrell/svfoo");
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
-	if (!style_done) {
-	    /* this isn't working properly */
-	    GtkSourceStyleSchemeManager *mgr;
-	    const gchar * const *ids;
-
-	    mgr = gtk_source_style_scheme_manager_get_default();
-	    fprintf(stderr, "mgr = %p\n", (void *) mgr);
-	    gtk_source_style_scheme_manager_set_search_path(mgr, dirs);
-	    gtk_source_style_scheme_manager_force_rescan(mgr);
-	    ids = gtk_source_style_scheme_manager_get_scheme_ids(mgr);
-	    fprintf(stderr, "ids = %p\n", (void *) ids);
-	    while (*ids != NULL) {
-		fprintf(stderr, "id: %s\n", *ids);
-		ids++;
-	    }
-	    style_done = 1;
-	}
+	mgr = gtk_source_style_scheme_manager_get_default();
+	gtk_source_style_scheme_manager_set_search_path(mgr, dirs);
+	gtk_source_style_scheme_manager_force_rescan(mgr);
 
 	g_free(dirs[0]);
+	done = 1;
     }
 }
 
@@ -701,8 +689,6 @@ void create_source (windata_t *vwin, int hsize, int vsize,
     GtkSourceBuffer *sbuf;
     GtkTextView *view;
     int cw;
-    
-    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
 
 #ifdef NEWER_SOURCEVIEW
     if (textview_use_highlighting(vwin->role)) {
@@ -712,15 +698,17 @@ void create_source (windata_t *vwin, int hsize, int vsize,
 # endif
     }
 
+    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
     if (lm != NULL) {
 	g_object_set_data(G_OBJECT(sbuf), "languages-manager", lm);
     }
     gtk_source_buffer_set_highlight_matching_brackets(sbuf, TRUE);
-#else
+#else /* old stuff */
     if (textview_use_highlighting(vwin->role)) {
 	lm = gtk_source_languages_manager_new();
     }
 
+    sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
     if (lm != NULL) {
 	g_object_ref(lm);
 	g_object_set_data_full(G_OBJECT(sbuf), "languages-manager",
