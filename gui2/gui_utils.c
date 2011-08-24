@@ -188,9 +188,7 @@ static GtkActionEntry model_items[] = {
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },
     { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
     { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
-#ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
-#endif
     { "TextEqn", NULL, N_("View as equation"), NULL, NULL, G_CALLBACK(text_eqn_callback) },
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },    
@@ -320,9 +318,7 @@ static GtkActionEntry system_items[] = {
     { "SaveAs", GTK_STOCK_SAVE_AS, N_("_Save as..."), NULL, NULL, G_CALLBACK(model_output_save) },      
     { "SaveAsIcon", NULL, N_("Save to session as _icon"), NULL, NULL, G_CALLBACK(model_add_as_icon) },      
     { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, G_CALLBACK(model_add_as_icon) },
-#ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
-#endif
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Edit", NULL, N_("_Edit"), NULL, NULL, NULL },      
     { "Copy", GTK_STOCK_COPY, N_("_Copy"), NULL, NULL, G_CALLBACK(model_copy_callback) }, 
@@ -351,9 +347,7 @@ static const gchar *sys_ui =
     "      <menuitem action='SaveAs'/>"
     "      <menuitem action='SaveAsIcon'/>"
     "      <menuitem action='SaveAndClose'/>"
-#ifdef NATIVE_PRINTING
     "      <menuitem action='Print'/>"
-#endif
     "      <menuitem action='Close'/>"
     "    </menu>"
     "    <menu action='Edit'>"
@@ -377,9 +371,7 @@ static GtkActionEntry bundle_items[] = {
       G_CALLBACK(bundle_add_as_icon) },
     { "SaveAndClose", NULL, N_("Save as icon and cl_ose"), NULL, NULL, 
       G_CALLBACK(bundle_add_as_icon) },
-#ifdef NATIVE_PRINTING
     { "Print", GTK_STOCK_PRINT, N_("_Print..."), NULL, NULL, G_CALLBACK(window_print) },
-#endif
     { "Close", GTK_STOCK_CLOSE, N_("_Close"), NULL, NULL, G_CALLBACK(close_model) },
     { "Save", NULL, N_("_Save"), NULL, NULL, NULL }, 
     { "Graph", NULL, N_("_Graph"), NULL, NULL, NULL }, 
@@ -394,9 +386,7 @@ static const gchar *bundle_ui =
     "      <menuitem action='SaveAs'/>"
     "      <menuitem action='SaveAsIcon'/>"
     "      <menuitem action='SaveAndClose'/>"
-#ifdef NATIVE_PRINTING
     "      <menuitem action='Print'/>"
-#endif
     "      <menuitem action='Close'/>"
     "    </menu>"
     "    <menu action='Save'/>"
@@ -2882,9 +2872,7 @@ static const gchar *model_ui =
     "   <menuitem action='SaveAs'/>"
     "   <menuitem action='SaveAsIcon'/>"
     "   <menuitem action='SaveAndClose'/>"
-#ifdef NATIVE_PRINTING
     "   <menuitem action='Print'/>"
-#endif
     "   <menuitem action='TextEqn'/>"
     "   <menuitem action='Close'/>"
     "  </menu>"    

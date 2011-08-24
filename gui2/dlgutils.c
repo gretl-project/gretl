@@ -314,11 +314,6 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 	gtk_window_set_title(GTK_WINDOW(d), "gretl");
     }
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
-    g_signal_connect(G_OBJECT(d), "key-press-event", 
-		     G_CALLBACK(esc_kills_window), NULL);
-#endif
-
     aa = gtk_dialog_get_action_area(GTK_DIALOG(d));
     gtk_button_box_set_layout(GTK_BUTTON_BOX(aa), GTK_BUTTONBOX_END);
     set_dialog_border_widths(d);
@@ -524,12 +519,6 @@ gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key,
 			   gpointer unused)
 {
     if (key->keyval == GDK_Escape) { 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7
-	/* remedial action for old gtk */
-	if (GTK_IS_DIALOG(w)) {
-	    gtk_dialog_response(GTK_DIALOG(w), GTK_RESPONSE_CANCEL);
-	}
-#endif
         gtk_widget_destroy(w);
 	return TRUE;
     } else {
@@ -1529,24 +1518,7 @@ gchar *combo_box_get_active_text (gpointer p)
 {
     gchar *ret = NULL;
     
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-    GtkWidget *w = gtk_bin_get_child(GTK_BIN(p));
-
-    if (GTK_IS_ENTRY(w)) {
-	const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
-
-	if (s != NULL) {
-	    ret = g_strdup(s);
-	}
-    } else {
-	GtkComboBox *box = GTK_COMBO_BOX(p);
-	GtkTreeModel *model = gtk_combo_box_get_model(box);
-	GtkTreeIter iter;
-
-	gtk_combo_box_get_active_iter(box, &iter);
-	gtk_tree_model_get(model, &iter, 0, &ret, -1);
-    }
-#elif GTK_MAJOR_VERSION >= 3
+#if GTK_MAJOR_VERSION >= 3
     ret = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(p)); 
 #else /* gtk 2 >= 2.6 */
     ret = gtk_combo_box_get_active_text(GTK_COMBO_BOX(p));

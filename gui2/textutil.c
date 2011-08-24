@@ -29,10 +29,6 @@
 #include "texprint.h"
 #include "system.h"
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7
-# include "dlgutils.h"
-#endif
-
 struct search_replace {
     GtkWidget *w;
     GtkWidget *f_entry;
@@ -68,11 +64,6 @@ static void replace_string_dialog (struct search_replace *s)
 
     gtk_window_set_title(GTK_WINDOW(s->w), _("gretl: replace"));
     gtk_container_set_border_width(GTK_CONTAINER(s->w), 5);
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
-    g_signal_connect(G_OBJECT(s->w), "key-press-event", 
-		     G_CALLBACK(esc_kills_window), NULL);
-#endif
 
     vbox = gtk_dialog_get_content_area(GTK_DIALOG(s->w));
 
@@ -540,9 +531,7 @@ void window_save (windata_t *vwin, guint fmt)
     window_copy_or_save(vwin, fmt, W_SAVE);
 }
 
-/* native printing from gretl windows */
-
-#ifdef NATIVE_PRINTING
+/* "native" printing from gretl windows */
 
 void window_print (GtkAction *action, windata_t *vwin) 
 {
@@ -574,8 +563,6 @@ void window_print (GtkAction *action, windata_t *vwin)
     g_free(buf);
     g_free(selbuf);
 }
-
-#endif
 
 #define UTF_MINUS(u,i) (u[i] == 0xE2 && u[i+1] == 0x88 && u[i+2] == 0x92)
 

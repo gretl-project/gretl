@@ -41,20 +41,6 @@
 #define GRETL_STOCK_SHEET   "gretl-sheet"
 #define GRETL_STOCK_DB      "gretl-db"
 
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
-# define NO_INFO_ICON 1
-# define GRETL_STOCK_INFO "gretl-info"
-# define GTK_STOCK_INFO GRETL_STOCK_INFO
-#endif
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-# define NO_EDIT_ICON 1
-# define GRETL_STOCK_EDIT "gretl-edit"
-# define GTK_STOCK_EDIT GRETL_STOCK_EDIT
-# define GRETL_STOCK_SCRIPT "gretl-script"
-# define GTK_STOCK_ABOUT NULL
-#endif
-
 enum windata_flags {
     VWIN_HELP_ACTIVE     = 1 << 0,
     VWIN_BUSY            = 1 << 1,

@@ -36,10 +36,6 @@
 
 #define PAGE_LINES 47
 
-#ifdef NATIVE_PRINTING
-
-/* printing is enabled, either via Windows or GTK+ */
-
 static const gchar *user_string (void)
 {
     const gchar *ret = g_get_real_name();
@@ -83,8 +79,6 @@ static char *header_string (const char *fname)
 
     return hdr;
 }
-
-#endif /* NATIVE_PRINTING */
 
 /* win32: print using Windows spooler */
 

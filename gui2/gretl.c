@@ -56,10 +56,6 @@
 # include "gretlwin32.h"
 #endif
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6
-# define OLD_GTK
-#endif
-
 /* update.c */
 extern int silent_update_query (void);
 extern int update_query (void); 
@@ -106,86 +102,6 @@ static int optdebug;
 static gchar *param_msg = 
     N_("\nYou may supply the name of a data file on the command line");
 
-#ifdef OLD_GTK /* handle absence of GOptionEntry */
-
-struct start_opts {
-    const char *longopt;
-    char shortopt;
-    const char *optstr;
-    const char *filetype;
-};
-
-static struct start_opts options[] = {
-    { "run",     'r', N_("open a script file on startup"), "SCRIPT" },
-    { "db",      'd', N_("open a database on startup"),    "DATABASE"},
-    { "webdb",   'w', N_("open a remote (web) database on startup"), "REMOTE_DB" },
-    { "pkg",     'p', N_("open (edit) a function package on startup"), "FUNCPKG" },
-    { "english", 'e', N_("force use of English"), NULL },
-    { "basque",  'q', N_("force use of Basque"), NULL },
-    { "dump",    'c', N_("dump gretl configuration to file"), NULL },
-    { "version", 'v', N_("print version information"), NULL }, 
-    { NULL, 0, NULL, NULL },
-};
-
-static void gui_help (void) 
-{
-    int i;
-
-    putchar('\n');
-
-    for (i=0; options[i].longopt != NULL; i++) {
-	if (options[i].filetype != NULL) {
-	    printf("gretl --%s %s : %s\n", options[i].longopt, options[i].filetype, 
-		   _(options[i].optstr));
-	} else {
-	    printf("gretl --%s : %s\n", options[i].longopt, _(options[i].optstr));
-	}
-    }
-
-    printf("%s\n", _(param_msg));
-}
-
-static void old_gretl_init (int *pargc, char ***pargv, char *filearg)
-{
-    static char fname[FILENAME_MAX];
-    gretlopt opt = 0;
-    int err;
-
-    err = parseopt(pargc, pargv, &opt, fname);
-
-    if (opt & OPT_ENGLISH) {
-	opteng = 1;
-    } else if (opt & OPT_BASQUE) {
-	optbasque = 1;
-    }
-
-    if (err || (opt & (OPT_HELP | OPT_VERSION))) {
-	int ecode = (err)? EXIT_FAILURE : EXIT_SUCCESS;
-
-	gui_logo(NULL);
-	if (opt != OPT_VERSION) {
-	    gui_help();
-	}
-	exit(ecode);
-    } else if (opt & OPT_DUMP) {
-	optdump = 1;
-    } else if (opt & OPT_RUNIT) {
-	optrun = fname;
-    } else if (opt & OPT_DBOPEN) {
-	optdb = fname;
-    } else if (opt & OPT_WEBDB) {
-	optwebdb = fname;
-    } else if (opt & OPT_FNPKG) {
-	optpkg = fname;
-    } else if (*fname != '\0') {
-	/* got a data file argument? */
-	*pargc += 1;
-	strncat(filearg, fname, MAXLEN - 1);
-    }
-}
-
-#else /* newer GLib/GTK */
-
 static GOptionEntry options[] = {
     { "run", 'r', 0, G_OPTION_ARG_FILENAME, &optrun, 
       N_("open a script file on startup"), "SCRIPT" },
@@ -209,8 +125,6 @@ static GOptionEntry options[] = {
       N_("print version information"), NULL }, 
     { NULL, '\0', 0, 0, NULL, NULL, NULL },
 };
-
-#endif /* old vs new GTK switch */
 
 windata_t *mdata;
 DATASET *dataset;
@@ -492,9 +406,7 @@ int main (int argc, char **argv)
     int ftype = 0;
     char auxname[MAXLEN];
     char filearg[MAXLEN];
-#ifndef OLD_GTK
     GError *opterr = NULL;
-#endif
 
 #ifdef G_OS_WIN32
     win32_set_gretldir(callname);
@@ -508,16 +420,11 @@ int main (int argc, char **argv)
     *auxname = '\0';
     *filearg = '\0';
 
-#ifdef OLD_GTK 
-    gtk_init(&argc, &argv);
-    old_gretl_init(&argc, &argv, filearg);
-#else
     gtk_init_with_args(&argc, &argv, _(param_msg), options, "gretl", &opterr);
     if (opterr != NULL) {
 	g_print("%s\n", opterr->message);
 	exit(EXIT_FAILURE);
     }
-#endif
 
 #ifdef G_OS_WIN32
     /* let's call this before doing libgretl_init */

@@ -1314,11 +1314,7 @@ enum {
 
 static GretlToolItem files_items[] = {
     { N_("Open"),           GTK_STOCK_OK, NULL, BTN_OPEN },
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-    { N_("Select directory"), GTK_STOCK_OPEN, NULL, BTN_DIR },
-#else
     { N_("Select directory"), GTK_STOCK_DIRECTORY, NULL, BTN_DIR },
-#endif
     { N_("Edit"),           GTK_STOCK_EDIT,       G_CALLBACK(browser_edit_func), BTN_EDIT },
     { N_("Info"),           GTK_STOCK_INFO,       NULL,                          BTN_INFO },
     { N_("View code"),      GTK_STOCK_PROPERTIES, G_CALLBACK(show_function_code), BTN_CODE },
@@ -1431,14 +1427,6 @@ static void make_files_toolbar (windata_t *vwin)
     vwin_add_finder(vwin);
     gtk_widget_show_all(hbox);
 }
-
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8
-/* we'll have to fake g_get_host_name */
-static const gchar *g_get_host_name (void)
-{
-    return _("local machine");
-}
-#endif
 
 static gchar *files_title (int code)
 {

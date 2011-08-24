@@ -25,10 +25,6 @@
 # include "gretlwin32.h"
 #endif
 
-#if GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7
-# include "dlgutils.h"
-#endif
-
 const gchar *copyright = "Copyright (C) 2000-2010 Allin Cottrell and "
                          "Riccardo \"Jack\" Lucchetti";
 const gchar *bonmot = N_("\"By econometricians, for econometricians.\"");
@@ -104,11 +100,6 @@ void about_dialog (void)
     gtk_box_set_spacing(GTK_BOX(vbox), 5);
     gtk_container_set_border_width(GTK_CONTAINER(abox), 5);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
-
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 7)
-    g_signal_connect(G_OBJECT(dialog), "key-press-event", 
-		     G_CALLBACK(esc_kills_window), NULL);
-#endif
 
     /* arrange for a little horizontal padding */
     hbox = gtk_hbox_new(FALSE, 5);

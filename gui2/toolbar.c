@@ -53,13 +53,6 @@
 #include "../pixmaps/mini.split_v.xpm"
 #include "../pixmaps/mini.compass.xpm"
 #include "../pixmaps/mini.spreadsheet.xpm"
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
-# include "../pixmaps/info_24.xpm"
-#endif
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 6)
-# include "../pixmaps/edit_24.xpm"
-# include "../pixmaps/mini.edit.xpm"
-#endif
 
 /* for main-window toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -105,13 +98,6 @@ static GtkIconFactory *gretl_stock_ifac;
 void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
-#if NO_INFO_ICON
-	info_24_xpm,
-#endif
-#if NO_EDIT_ICON
-	edit_24_xpm,
-	mini_edit_xpm,
-#endif
 	mini_tex_xpm,
 	mail_16_xpm,
 	mini_tsplot_xpm,
@@ -134,13 +120,6 @@ void gretl_stock_icons_init (void)
 	mini_db_xpm
     };
     const char *stocks[] = {
-#if NO_INFO_ICON
-	GRETL_STOCK_INFO,
-#endif
-#if NO_EDIT_ICON
-	GRETL_STOCK_EDIT,    /* -> edit_24_xpm, 24 x 24 */
-	GRETL_STOCK_SCRIPT,  /* -> mini_edit_xpm, 16 x 16 */  
-#endif
 	GRETL_STOCK_TEX,
 	GRETL_STOCK_MAIL,
 	GRETL_STOCK_TS,
@@ -268,7 +247,6 @@ static void toolbar_new_callback (GtkWidget *w, windata_t *vwin)
     do_new_script(vwin->role);
 }
 
-#ifdef NATIVE_PRINTING
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
     if (textview_use_highlighting(vwin->role)) {
@@ -283,7 +261,6 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 	window_print(NULL, vwin);
     }
 }
-#endif
 
 static void window_help (GtkWidget *w, windata_t *vwin)
 {
@@ -645,9 +622,7 @@ static GretlToolItem viewbar_items[] = {
     { N_("Open..."), GTK_STOCK_OPEN, G_CALLBACK(file_open_callback), OPEN_ITEM },
     { N_("Save"), GTK_STOCK_SAVE, G_CALLBACK(vwin_save_callback), SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, G_CALLBACK(save_as_callback), SAVE_AS_ITEM },
-#ifdef NATIVE_PRINTING
     { N_("Print..."), GTK_STOCK_PRINT, G_CALLBACK(window_print_callback), 0 },
-#endif
     { N_("Show/hide"), GRETL_STOCK_PIN, G_CALLBACK(session_notes_callback), NOTES_ITEM },
     { N_("Run"), GTK_STOCK_EXECUTE, G_CALLBACK(do_run_script), EXEC_ITEM },
     { N_("Stop"), GTK_STOCK_STOP, G_CALLBACK(do_stop_script), STOP_ITEM },
@@ -1089,11 +1064,7 @@ static void tbar_show_funcs (GtkWidget *w, gpointer p)
 
 static GretlToolItem mainbar_items[] = {
     { N_("launch calculator"),  GRETL_STOCK_CALC,    G_CALLBACK(tbar_calc), 0 },
-#if NO_EDIT_ICON
-    { N_("new script"),         GRETL_STOCK_SCRIPT,  G_CALLBACK(tbar_new_script), 0 },
-#else
     { N_("new script"),         GTK_STOCK_EDIT,      G_CALLBACK(tbar_new_script), 0 },
-#endif
     { N_("open gretl console"), GRETL_STOCK_CONSOLE, G_CALLBACK(gretl_console), 0 },
     { N_("session icon view"),  GRETL_STOCK_ICONS,   G_CALLBACK(tbar_iconview), 0 },
     { N_("function packages"),  GRETL_STOCK_FUNC,    G_CALLBACK(tbar_show_funcs), 0 },

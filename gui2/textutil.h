@@ -44,9 +44,7 @@ void window_save (windata_t *vwin, guint fmt);
 
 void text_replace (GtkWidget *w, windata_t *vwin);
 
-#ifdef NATIVE_PRINTING
 void window_print (GtkAction *action, windata_t *vwin);
-#endif
 
 void system_print_buf (const gchar *buf, FILE *fp);
 

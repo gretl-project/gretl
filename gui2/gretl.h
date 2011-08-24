@@ -42,17 +42,7 @@
 #include <time.h>
 
 #ifndef _WIN32
-# if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 10
-#  define GTK_PRINTING
-# endif
-#endif
-
-#if defined(_WIN32) || defined(GTK_PRINTING)
-# define NATIVE_PRINTING
-#endif
-
-#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 8
-# define USE_GTK_SPINNER 1
+# define GTK_PRINTING
 #endif
 
 #define GNULL (gconstpointer) NULL

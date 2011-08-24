@@ -22,7 +22,6 @@
 #ifndef GUIPRINT_H
 #define GUIPRINT_H
 
-#ifdef NATIVE_PRINTING
 void print_window_content (gchar *fullbuf, gchar *selbuf, 
 			   const char *fname,
 			   windata_t *vwin);
@@ -31,7 +30,6 @@ int win32_print_graph (char *emfname);
 # else
 void gtk_print_graph (const char *fname);
 # endif
-#endif
 
 void special_print_summary (const Summary *summ,
 			    const DATASET *pdinfo,

@@ -18,12 +18,7 @@
  */
 
 #include "gretl.h"
-
-#if (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 6)
-# define g_fopen(f,m) fopen(f,m)
-#else
-# include <glib/gstdio.h>
-#endif
+#include <glib/gstdio.h>
 
 static int seven_bit_string (const unsigned char *s)
 {

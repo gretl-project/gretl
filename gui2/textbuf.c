@@ -865,9 +865,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 
     tag = gtk_text_tag_new("code");
     g_object_set(tag, "family", "monospace", 
-#if GTK_MAJOR_VERSION > 2 || GTK_MINOR_VERSION >= 8
 		 "paragraph-background", "#e6f3ff",
-#endif
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
