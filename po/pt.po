@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-08-08 11:33-0400\n"
-"PO-Revision-Date: 2011-07-08 00:42+0100\n"
+"PO-Revision-Date: 2011-08-24 00:06+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -197,34 +197,37 @@ msgid "Sum of squares of cumulated residuals"
 msgstr "Soma dos quadrados dos resíduos acumulados"
 
 #: lib/src/adf_kpss.c:1556
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s"
 msgstr ""
 "\n"
-"teste KPSS para %s %s\n"
+"teste KPSS para %s"
 
 #: lib/src/adf_kpss.c:1559
-#, fuzzy
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
-msgstr "(incluindo tendência)"
+msgstr ""
+"(incluindo tendência e sazonais)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1561
-#, fuzzy
 msgid ""
 " (including trend)\n"
 "\n"
-msgstr "(incluindo tendência)"
+msgstr ""
+"(incluindo tendência)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1565
-#, fuzzy
 msgid ""
 " (including seasonals)\n"
 "\n"
-msgstr "(incluindo tendência)"
+msgstr ""
+"(incluindo sazonais)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1572 lib/src/adf_kpss.c:1616
 #, c-format
@@ -424,14 +427,13 @@ msgstr ""
 "  Hipótese nula: os parâmetros de regressão para as variáveis valem zero.\n"
 
 #: lib/src/compare.c:355
-#, fuzzy, c-format
+#, c-format
 msgid "Test on Model %d:"
-msgstr "Modelo %d"
+msgstr "Teste no Modelo %d:"
 
 #: lib/src/compare.c:362
-#, fuzzy
 msgid "Wald test"
-msgstr "Teste de Wald (conjunto)"
+msgstr "Teste de Wald"
 
 #: lib/src/compare.c:363 lib/src/compare.c:370 lib/src/compare.c:383
 #: lib/src/compare.c:392 lib/src/compare.c:958 lib/src/compare.c:2228
@@ -455,9 +457,8 @@ msgid "Chi-square"
 msgstr "Qui-quadrado"
 
 #: lib/src/compare.c:369 lib/src/compare.c:382
-#, fuzzy
 msgid "LR test"
-msgstr "Teste _QLR"
+msgstr "Teste LR"
 
 #: lib/src/compare.c:377 lib/src/compare.c:2694
 msgid "F-form"
@@ -468,19 +469,20 @@ msgid "Robust F"
 msgstr "F robusto"
 
 #: lib/src/compare.c:391
-#, fuzzy
 msgid "LM test"
-msgstr "Teste _QLR"
+msgstr "Teste LM"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d model selection statistics.\n"
-msgstr "  De %d estatísticas de selecção do modelo, %d "
+msgstr ""
+"Acrescentar variáveis melhorou %d de %d estatísticas de seleção de modelo.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
-msgstr "  De %d estatísticas de selecção do modelo, %d "
+msgstr ""
+"Omitir variáveis melhorou %d de %d estatísticas de seleção de modelo.\n"
 
 #: lib/src/compare.c:551
 msgid "omit"
@@ -4222,9 +4224,8 @@ msgid "Infinite loop detected in script\n"
 msgstr "Ciclo infinito detectado na sequência de comandos\n"
 
 #: lib/src/interact.c:5269 lib/src/monte_carlo.c:2737
-#, fuzzy
 msgid "You cannot delete series in this context\n"
-msgstr "Você não pode apagar variáveis neste contexto\n"
+msgstr "Você não pode apagar séries neste contexto\n"
 
 #: lib/src/interact.c:5321 cli/gretlcli.c:662
 #, c-format
@@ -4455,9 +4456,8 @@ msgstr ""
 "Regressão auxiliar para o teste de não-linearidade (logaritmos dos termos)"
 
 #: lib/src/modelprint.c:748
-#, fuzzy
 msgid "Auxiliary regression for added variables"
-msgstr "Regressão auxiliar para o teste de especificação RESET"
+msgstr "Regressão auxiliar para variáveis acrescentadas"
 
 #: lib/src/modelprint.c:759
 msgid "Augmented regression for Chow test"
@@ -5589,9 +5589,8 @@ msgstr ""
 "\n"
 
 #: lib/src/monte_carlo.c:2740
-#, fuzzy
 msgid "You cannot delete scalars in this context\n"
-msgstr "Você não pode apagar variáveis neste contexto\n"
+msgstr "Você não pode apagar escalares neste contexto\n"
 
 #: lib/src/monte_carlo.c:2991
 #, c-format
@@ -7209,7 +7208,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 8 de Julho de 2011."
+"Tradução de 24 de agosto de 2011."
 
 #: gui2/about.c:174
 msgid "License"
@@ -9666,9 +9665,8 @@ msgid "Confidence band plot"
 msgstr "Gráfico da banda de confiança"
 
 #: gui2/fncall.c:2322
-#, fuzzy
 msgid "Predicted values"
-msgstr "valores de predição"
+msgstr "Valores preditos"
 
 #: gui2/fnsave.c:336
 msgid "Please add a sample script for this package"
@@ -12469,9 +12467,8 @@ msgstr ""
 "amostra usada para estimar o modelo (menu Amostra)."
 
 #: gui2/library.c:1958
-#, fuzzy
 msgid "No variables are selected"
-msgstr "Não foram apagadas nenhumas variáveis"
+msgstr "Não estão selecionadas nenhumas variáveis"
 
 #: gui2/library.c:2030 gui2/library.c:3473 gui2/library.c:3729
 #: gui2/library.c:3999
@@ -12484,7 +12481,6 @@ msgid "gretl: Wald omit test"
 msgstr "gretl: teste de omissão de Wald"
 
 #: gui2/library.c:2037
-#, fuzzy
 msgid "gretl: LM test"
 msgstr "gretl: teste LM"
 
@@ -13704,13 +13700,12 @@ msgid "Use lines"
 msgstr "Usar linhas"
 
 #: gui2/selector.c:5224
-#, fuzzy
 msgid "Estimate augmented model"
-msgstr "Estimar modelo reduzido"
+msgstr "Estimar modelo aumentado"
 
 #: gui2/selector.c:5229
 msgid "LM test using auxiliary regression"
-msgstr ""
+msgstr "Teste LM usando regressão auxiliar"
 
 #: gui2/selector.c:5243
 msgid "Estimate reduced model"
@@ -14063,7 +14058,7 @@ msgstr ""
 
 #: gui2/session.c:1895
 msgid "Display notes on opening session file"
-msgstr ""
+msgstr "Mostrar notas ao abrir um ficheiro de sessão"
 
 #: gui2/session.c:2015
 msgid "versus"
@@ -14678,9 +14673,8 @@ msgid "The dataset cannot be modified at present"
 msgstr "O conjunto de dados não pode ser modificado neste momento"
 
 #: gui2/textbuf.c:288
-#, fuzzy
 msgid "No redo information available"
-msgstr "Sem informação para \"desfazer\""
+msgstr "Sem informação para repetir ação"
 
 #: gui2/textbuf.c:297
 msgid "No undo information available"
@@ -14828,9 +14822,8 @@ msgid "Save as..."
 msgstr "Gravar como..."
 
 #: gui2/toolbar.c:640
-#, fuzzy
 msgid "Show/hide"
-msgstr "Mostrar grelha"
+msgstr "Mostrar/esconder"
 
 #: gui2/toolbar.c:641
 msgid "Run"
@@ -14838,7 +14831,7 @@ msgstr "Executar"
 
 #: gui2/toolbar.c:642
 msgid "Cut"
-msgstr ""
+msgstr "Cortar"
 
 #: gui2/toolbar.c:644
 msgid "Paste"
@@ -14854,7 +14847,7 @@ msgstr "Desfazer"
 
 #: gui2/toolbar.c:648
 msgid "Redo"
-msgstr ""
+msgstr "Repetir ação"
 
 #: gui2/toolbar.c:649
 msgid "Sort"
