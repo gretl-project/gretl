@@ -106,8 +106,8 @@ typedef struct {
     double data[31];               /* Data */
 } RATSData;
 
-static char db_name[MAXLEN];
-static int db_type;
+static char saved_db_name[MAXLEN];
+static int saved_db_type;
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 float retrieve_float (netfloat nf)
@@ -366,7 +366,7 @@ open_native_db_files (const char *dname, FILE **f1, char *name1,
     if (dname != NULL) {
 	strcpy(dbbase, dname);
     } else {
-	strcpy(dbbase, db_name);
+	strcpy(dbbase, saved_db_name);
     }
 
     if (has_suffix(dbbase, ".bin")) {
@@ -441,7 +441,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     int gotit = 0, err = 0;
     int n;
 
-    err = open_native_db_files(db_name, &fp, NULL, NULL, NULL);
+    err = open_native_db_files(saved_db_name, &fp, NULL, NULL, NULL);
     if (err) {
 	return err;
     }
@@ -506,7 +506,7 @@ get_remote_series_info (const char *series, SERIESINFO *sinfo)
     int gotit = 0;
     int err = 0;
 
-    err = retrieve_remote_db_index(db_name, &buf);
+    err = retrieve_remote_db_index(saved_db_name, &buf);
     if (err) {
 	return err;
     }
@@ -614,7 +614,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
     int nf, gotit = 0;
     int err = 0;
 
-    strcpy(dbidx, db_name);
+    strcpy(dbidx, saved_db_name);
     p = strstr(dbidx, ".bn7");
     if (p != NULL) {
 	strcpy(p, ".in7");
@@ -1325,13 +1325,13 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 
     gretl_error_clear();
 
-    fp = gretl_fopen(db_name, "rb");
+    fp = gretl_fopen(saved_db_name, "rb");
     if (fp == NULL) {
 	return E_FOPEN;
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "Opened %s\n", db_name);
+    fprintf(stderr, "Opened %s\n", saved_db_name);
 #endif
 
     /* get into position */
@@ -1586,29 +1586,29 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
     FILE *fp;
     int err = 0;
 
-    *db_name = 0;
-    strncat(db_name, fname, MAXLEN - 1);
+    *saved_db_name = '\0';
+    strncat(saved_db_name, fname, MAXLEN - 1);
 
     if (filetype == GRETL_NATIVE_DB_WWW) {
-	int n = strlen(db_name);
+	int n = strlen(saved_db_name);
 
 	if (n > 4) {
 	    n -= 4;
-	    if (!strcmp(db_name + n, ".bin")) {
-		db_name[n] = '\0';
+	    if (!strcmp(saved_db_name + n, ".bin")) {
+		saved_db_name[n] = '\0';
 	    }
 	}
-	err = check_remote_db(db_name);
+	err = check_remote_db(saved_db_name);
 	if (!err) {
-	    db_type = filetype;
-	    pprintf(prn, "%s\n", db_name);
+	    saved_db_type = filetype;
+	    pprintf(prn, "%s\n", saved_db_name);
 	} 
 	return err;
     }
 
-    fp = gretl_fopen(db_name, "rb");
+    fp = gretl_fopen(saved_db_name, "rb");
 
-    if (fp == NULL) {
+    if (fp == NULL && !g_path_is_absolute(saved_db_name)) {
 	/* try looking a bit more */
 	const char *path = NULL;
 
@@ -1618,20 +1618,33 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 	    path = gretl_ratsbase();
 	}
 
-	if (path != NULL && strstr(db_name, path) == NULL) {
-	    build_path(db_name, path, fname, NULL);
-	    fp = gretl_fopen(db_name, "rb");
+	if (path != NULL) {
+	    build_path(saved_db_name, path, fname, NULL);
+	    fp = gretl_fopen(saved_db_name, "rb");
 	}
+
+#ifdef OSX_BUILD
+	if (fp == NULL && filetype == GRETL_NATIVE_DB) {
+	    gchar *tmp = g_build_path(SLASHSTR, gretl_app_support_dir(), "db",
+				      fname, NULL);
+
+	    fp = gretl_fopen(tmp, "rb");
+	    if (fp != NULL) {
+		strcpy(saved_db_name, tmp);
+	    }
+	    g_free(tmp);
+	}
+#endif
     }
 	    
     if (fp == NULL) {
-	*db_name = 0;
+	*saved_db_name = '\0';
 	pprintf(prn, _("Couldn't open %s\n"), fname);
 	err = E_FOPEN;
     } else {
 	fclose(fp);
-	db_type = filetype;
-	pprintf(prn, "%s\n", db_name);
+	saved_db_type = filetype;
+	pprintf(prn, "%s\n", saved_db_name);
     }
 
     return err;
@@ -1639,7 +1652,7 @@ int set_db_name (const char *fname, int filetype, PRN *prn)
 
 const char *get_db_name (void)
 {
-    return db_name;
+    return saved_db_name;
 }
 
 /* Handling of DSN setup for ODBC: grab the dsn, username
@@ -2288,7 +2301,7 @@ int db_get_series (char *line, DATASET *dset,
     fprintf(stderr, "db_name = '%s'\n", db_name);
 #endif
 
-    if (*db_name == '\0') {
+    if (*saved_db_name == '\0') {
 	gretl_errmsg_set(_("No database has been opened"));
 	return 1;
     }   
@@ -2316,11 +2329,11 @@ int db_get_series (char *line, DATASET *dset,
 #endif
 
 	/* find the series information in the database */
-	if (db_type == GRETL_RATS_DB) {
+	if (saved_db_type == GRETL_RATS_DB) {
 	    err = get_rats_series_info(series, &sinfo);
-	} else if (db_type == GRETL_PCGIVE_DB) {
+	} else if (saved_db_type == GRETL_PCGIVE_DB) {
 	    err = get_pcgive_series_info(series, &sinfo);
-	} else if (db_type == GRETL_NATIVE_DB_WWW) {
+	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
 	    err = get_remote_series_info(series, &sinfo);
 	} else {
 	    err = get_native_series_info(series, &sinfo);
@@ -2343,14 +2356,14 @@ int db_get_series (char *line, DATASET *dset,
 		sinfo.offset, sinfo.nobs);
 #endif
 
-	if (db_type == GRETL_RATS_DB) {
-	    err = get_rats_db_data(db_name, &sinfo, dbZ);
-	} else if (db_type == GRETL_PCGIVE_DB) {
-	    err = get_pcgive_db_data(db_name, &sinfo, dbZ);
-	} else if (db_type == GRETL_NATIVE_DB_WWW) {
-	    err = get_remote_db_data(db_name, &sinfo, dbZ);
+	if (saved_db_type == GRETL_RATS_DB) {
+	    err = get_rats_db_data(saved_db_name, &sinfo, dbZ);
+	} else if (saved_db_type == GRETL_PCGIVE_DB) {
+	    err = get_pcgive_db_data(saved_db_name, &sinfo, dbZ);
+	} else if (saved_db_type == GRETL_NATIVE_DB_WWW) {
+	    err = get_remote_db_data(saved_db_name, &sinfo, dbZ);
 	} else {
-	    err = get_native_db_data(db_name, &sinfo, dbZ);
+	    err = get_native_db_data(saved_db_name, &sinfo, dbZ);
 	} 
 
 #if DB_DEBUG
@@ -2437,14 +2450,14 @@ static int db_delete_series (char *line, const int *list,
     int err = 0;
 
     if (fname == NULL) {
-	if (*db_name == '\0') {
+	if (*saved_db_name == '\0') {
 	    gretl_errmsg_set(_("No database has been opened"));
 	    err = 1;
-	} else if (db_type != GRETL_NATIVE_DB) {
+	} else if (saved_db_type != GRETL_NATIVE_DB) {
 	    gretl_errmsg_set("This only works for gretl databases");
 	    err = 1;
 	} else {
-	    err = open_native_db_files(db_name, &fidx, src1, &fbin, src2);
+	    err = open_native_db_files(saved_db_name, &fidx, src1, &fbin, src2);
 	}
     } else {
 	err = open_native_db_files(fname, &fidx, src1, &fbin, src2);

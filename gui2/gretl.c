@@ -259,32 +259,31 @@ static int script_type (const char *fname)
     }
 }
 
-static void fix_dbname (char *db)
+static void maybe_fix_dbname (char *dbname)
 {
     FILE *fp = NULL;
 
-    if (strstr(db, ".bin") == NULL &&
-	strstr(db, ".rat") == NULL &&
-	strstr(db, ".RAT") == NULL &&
-	strstr(db, ".bn7") == NULL) {
-	strcat(db, ".bin");
+    if (strstr(dbname, ".bin") == NULL &&
+	strstr(dbname, ".rat") == NULL &&
+	strstr(dbname, ".RAT") == NULL &&
+	strstr(dbname, ".bn7") == NULL) {
+	strcat(dbname, ".bin");
     }
 
-    fp = gretl_fopen(db, "rb");
-
-    if (fp == NULL) {
-	const char *bbase = gretl_binbase();
-
-	if (strstr(db, bbase) == NULL) {
-	    char tmp[MAXLEN];
-
-	    strcpy(tmp, db);
-	    build_path(db, bbase, tmp, NULL);
-	}
-    }
+    fp = gretl_fopen(dbname, "rb");
 
     if (fp != NULL) {
 	fclose(fp);
+    } else if (!g_path_is_absolute(dbname)) {
+	gchar *tmp = g_build_path(SLASHSTR, gretl_home(), "db",
+				  dbname, NULL);
+
+	fp = gretl_fopen(tmp, "rb");
+	if (fp != NULL) {
+	    fclose(fp);
+	    strcpy(dbname, tmp);
+	}
+	g_free(tmp);
     }
 }
 
@@ -449,7 +448,7 @@ int main (int argc, char **argv)
 	get_runfile(optrun);
     } else if (optdb != NULL) {
 	strncat(auxname, optdb, MAXLEN - 1);
-	fix_dbname(auxname);
+	maybe_fix_dbname(auxname);
     } else if (optwebdb != NULL) {
 	strncat(auxname, optdb, MAXLEN - 1);
     } else if (optpkg != NULL) {
@@ -549,7 +548,7 @@ int main (int argc, char **argv)
 	    strcpy(auxname, datafile);
 	    *tryfile = '\0';
 	    *datafile = '\0';
-	    fix_dbname(auxname);
+	    maybe_fix_dbname(auxname);
 	    optdb = auxname;
 	    break;
 	case GRETL_UNRECOGNIZED:

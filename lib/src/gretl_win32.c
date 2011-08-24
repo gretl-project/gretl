@@ -67,28 +67,6 @@ int read_reg_val (HKEY tree, const char *base,
     return err;
 }
 
-DIR *win32_opendir (const char *dname)
-{
-    char tmp[MAXLEN];
-    int n;
-    
-    *tmp = '\0';
-    strncat(tmp, dname, MAXLEN - 2);
-    n = strlen(tmp);
-
-    /* opendir doesn't work on e.g. c:\foo\ !! */
-    if (n > 3 && tmp[n - 1] == '\\') {
-	tmp[n - 1] = '\0';
-    }
-
-    /* but neither does it work on e.g. f: */
-    if (tmp[strlen(tmp) - 1] == ':') {
-	strcat(tmp, "\\");
-    }
-
-    return opendir(tmp);
-}
-
 static char netfile[FILENAME_MAX];
 
 const char *get_gretlnet_filename (void)

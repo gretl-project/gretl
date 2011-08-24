@@ -11,9 +11,6 @@
 /* Extra floating-point GMP routines? */
 #define HAVE_MPFR 1
 
-/* disable SFMT RNG? */
-/* #undef NO_SFMT */
-
 /* openmp: not for now */
 /* #undef USE_OPENMP */
 

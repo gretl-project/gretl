@@ -41,7 +41,6 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 gtk_version="none"
-have_gtkprint="no"
 have_gnome="no"
 have_gmp="no"
 have_mpfr="no"
@@ -551,11 +550,11 @@ dnl
 dnl glib 2.0 (needed even if not building GUI)
 dnl
 if test "$PKG_CONFIG" != "no" ; then
-   PKG_CHECK_MODULES(GLIB, glib-2.0, have_glib2="yes", have_glib2="no")
+   PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.12.0, have_glib2="yes", have_glib2="no")
 fi
 
 dnl
-dnl Check for GTK 3.0?  Or for GTK 2.0
+dnl Check for GTK 3.0? Or for GTK 2.0
 dnl
 if test "$try_gtk3" = "yes" ; then
     PKG_CHECK_MODULES(GTK, gtk+-3.0 >= 3.0.1,
@@ -563,18 +562,17 @@ if test "$try_gtk3" = "yes" ; then
       LIBS="$LIBS $GTK_LIBS"
       AC_DEFINE(USE_GTK3)
       gtk_version="3.0"
-      have_gtkprint="yes"
       fake_gtkspinner="no",
       build_gui="no"
-      echo "GTK 3 not found"     
+      echo "GTK 3 >= 3.0.1 not found"     
     )
 elif test "$build_gui" = "yes" ; then
-    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0,
+    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.10.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       gtk_version="2.0",
       build_gui="no"
-      echo "GTK 2 not found"     
+      echo "GTK 2 >= 2.10.0 not found"     
     )
 fi
 
@@ -583,30 +581,8 @@ dnl For native gtkspinner: check for GTK 2.20 or higher
 dnl
 if test "$gtk_version" = "2.0" ; then
     PKG_CHECK_MODULES(GTKSPINNER, gtk+-2.0 >= 2.20.0,
-      have_gtkprint="yes"
       fake_gtkspinner="no",
       fake_gtkspinner="yes",      
-    )
-fi
-
-dnl
-dnl For gtkprint: check for GTK 2.10 or higher
-dnl
-if test "$gtk_version" = "2.0" && test "$have_gtkprint" = "no" ; then
-    PKG_CHECK_MODULES(GTKPRINT, gtk+-2.0 >= 2.10.0,
-      have_gtkprint="yes",
-      have_gtkprint="no"      
-    )
-fi
-
-dnl
-dnl For cairo functionality: check for GTK 2.8 or higher
-dnl (which we need to fake gtkspinner)
-dnl
-if test "$gtk_version" = "2.0" && test "$have_gtkprint" = "no" ; then
-    PKG_CHECK_MODULES(GTKCAIRO, gtk+-2.0 >= 2.8.0,
-      fake_gtkspinner="yes",
-      fake_gtkspinner="no"
     )
 fi
 
@@ -837,7 +813,7 @@ GMP is available from http://gmplib.org/
 
 elif test "${have_glib2}" = "no" ; then
 echo "
-Please install glib-2.0 and then reconfigure gretl.
+Please install glib-2.0 >= 2.12.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
@@ -859,7 +835,6 @@ Configuration:
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${gtk_version}
-  Use GTK printing apparatus:             ${have_gtkprint}
   Use installed gtksourceview:            ${have_sourceview}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}

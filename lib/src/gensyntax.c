@@ -356,7 +356,7 @@ static NODE *base (parser *p, NODE *up)
 	   by something that cannot really follow, e.g. a series
 	   is followed by another series
 	*/
-	fprintf(stderr, "gensytax: base: bad exit sym = %d\n", p->sym);
+	fprintf(stderr, "gensytax: base: bad exit-sym = %d\n", p->sym);
 	p->err = E_PARSE;
     }
 

@@ -437,7 +437,38 @@ static int write_OK (gchar *dirname)
     return ok;
 }
 
-static void get_pkg_dir (char *dirname, int action)
+void set_gretl_startdir (void)
+{
+    if (usecwd) {
+	char *test = getenv("GRETL_STARTDIR");
+	char startdir[MAXLEN];
+
+	/* the environment variable check is mostly for the OS X
+	   package */
+
+	if (test != NULL) {
+	    *startdir = '\0';
+	    strncat(startdir, test, MAXLEN - 1);
+	} else {
+	    test = getcwd(startdir, MAXLEN);
+	    if (test == NULL) {
+		*startdir = '\0';
+	    }
+	}
+
+	if (*startdir != '\0') {
+	    int err = set_gretl_work_dir(startdir);
+
+	    if (err) {
+		fprintf(stderr, "%s\n", gretl_errmsg_get());
+	    } else {
+		fprintf(stderr, "working dir = '%s'\n", startdir);
+	    }
+	}
+    }
+}
+
+static void get_pkg_save_dir (char *dirname, int action)
 {
     const char *subdir = NULL;
     int ok = 0;
@@ -472,43 +503,12 @@ static void get_pkg_dir (char *dirname, int action)
     }
 }
 
-void set_gretl_startdir (void)
-{
-    if (usecwd) {
-	char *test = getenv("GRETL_STARTDIR");
-	char startdir[MAXLEN];
-
-	/* the environment variable check is mostly for the OS X
-	   package */
-
-	if (test != NULL) {
-	    *startdir = '\0';
-	    strncat(startdir, test, MAXLEN - 1);
-	} else {
-	    test = getcwd(startdir, MAXLEN);
-	    if (test == NULL) {
-		*startdir = '\0';
-	    }
-	}
-
-	if (*startdir != '\0') {
-	    int err = set_gretl_work_dir(startdir);
-
-	    if (err) {
-		fprintf(stderr, "%s\n", gretl_errmsg_get());
-	    } else {
-		fprintf(stderr, "working dir = '%s'\n", startdir);
-	    }
-	}
-    }
-}
-
 void get_default_dir (char *s, int action)
 {
     *s = '\0';
 
     if (action == SAVE_FUNCTIONS || action == SAVE_DATA_PKG) {
-	get_pkg_dir(s, action);
+	get_pkg_save_dir(s, action);
     } else if (action == OPEN_RATS_DB) {
 	strcpy(s, gretl_ratsbase());
     } else {
@@ -1692,11 +1692,7 @@ static int dir_exists (const char *dname, FILE *fp)
     DIR *test;
     int ok = 0;
 
-#ifdef G_OS_WIN32
-    test = win32_opendir(dname);
-#else
-    test = opendir(dname);
-#endif
+    test = gretl_opendir(dname);
 
     if (test != NULL) {
 	ok = 1;

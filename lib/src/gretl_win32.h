@@ -22,8 +22,6 @@
 
 #ifdef WIN32
 
-#include <sys/types.h>
-#include <dirent.h>
 #include <windows.h>
 
 enum {
@@ -37,8 +35,6 @@ enum {
     RLIB,
     RBASE
 };
-
-DIR *win32_opendir (const char *dname);
 
 int read_reg_val (HKEY tree, const char *base,
 		  char *keyname, char *keyval);

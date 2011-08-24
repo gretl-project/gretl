@@ -298,6 +298,10 @@ static void collection_stack_sort (file_collection **colls, int n)
     file_collection *tmp;
     int i;
 
+    if (n < 2) {
+	return; /* no-op */
+    }
+
     for (i=0; i<n; i++) {
 	if (!strcmp(colls[i]->title, "Gretl")) {
 	    if (i > 0) {
@@ -448,28 +452,26 @@ static int dont_go_there (const char *s)
     return ret;
 }
 
-static int seek_file_collections (int location)
+static int seek_file_collections (const char *basedir, int type)
 {
     char *tmp = NULL;
-    DIR *dir, *try;  
-    struct dirent *dirent;
     char *subdir;
-    int i = 0, err = 0;
+    DIR *dir, *try;      
+    struct dirent *dirent;
+    int err = 0;
 
-    if (location == DATA_SEARCH) {
-	tmp = gretl_strdup_printf("%sdata", gretl_home());
-    } else if (location == SCRIPT_SEARCH) {
-	tmp = gretl_strdup_printf("%sscripts", gretl_home());
-    } else if (location == USER_SEARCH) {
-	tmp = gretl_strdup(gretl_workdir());
+    if (type == DATA_SEARCH) {
+	tmp = gretl_strdup_printf("%sdata", basedir);
+    } else if (type == SCRIPT_SEARCH) {
+	tmp = gretl_strdup_printf("%sscripts", basedir);
+    } else if (type == USER_SEARCH) {
+	tmp = gretl_strdup(basedir);
 	trim_slash(tmp);
     } else {
 	return 1;
     }
 
- user_search_2:
-
-    dir = opendir(tmp);
+    dir = gretl_opendir(tmp);
     if (dir == NULL) {
 	free(tmp);
 	return 1;
@@ -486,7 +488,7 @@ static int seek_file_collections (int location)
 	    } else {
 		subdir = tmp;
 	    }
-	    try = opendir(subdir);
+	    try = gretl_opendir(subdir);
 	    if (try != NULL) {
 #if COLL_DEBUG
 		fprintf(stderr, " trying in subdir '%s'\n", subdir);
@@ -502,13 +504,6 @@ static int seek_file_collections (int location)
 
     closedir(dir);
     free(tmp);
-
-    if (location == USER_SEARCH && i++ == 0) {
-	tmp = gretl_strdup(maybe_get_default_workdir());
-	if (tmp != NULL) {
-	    goto user_search_2;
-	}
-    }
 
     return err;
 }
@@ -553,12 +548,27 @@ static int build_file_collections (void)
     static int err;
 
     if (!built) {
-	err = seek_file_collections(DATA_SEARCH);
+	err = seek_file_collections(gretl_home(), DATA_SEARCH);
 	if (!err) {
-	    err = seek_file_collections(SCRIPT_SEARCH);
+	    err = seek_file_collections(gretl_home(), SCRIPT_SEARCH);
+	}
+#ifdef OSX_BUILD
+	if (!err) {
+	    err = seek_file_collections(gretl_app_support_dir(), DATA_SEARCH);
 	}
 	if (!err) {
-	    err = seek_file_collections(USER_SEARCH);
+	    err = seek_file_collections(gretl_app_support_dir(), SCRIPT_SEARCH);
+	}	
+#endif
+	if (!err) {
+	    err = seek_file_collections(gretl_workdir(), USER_SEARCH);
+	}
+	if (!err) {
+	    const char *wd = maybe_get_default_workdir();
+
+	    if (wd != NULL) {
+		err = seek_file_collections(wd, USER_SEARCH);
+	    }
 	}
 	if (!err) {
 	    sort_data_stack();
@@ -858,7 +868,7 @@ static void fix_selected_row (GtkTreeModel *model,
 
 void set_funcs_dir_callback (windata_t *vwin, char *path)
 {
-    DIR *dir = opendir(path);
+    DIR *dir = gretl_opendir(path);
 
     if (dir != NULL) {
 	const char *opts[] = {
@@ -1963,7 +1973,7 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 
     if (ndirs > 0) {
 	for (i=0; i<ndirs; i++) {
-	    dir = opendir(dnames[i]);
+	    dir = gretl_opendir(dnames[i]);
 	    if (dir != NULL) {
 		read_fn_files_in_dir(dir, dnames[i], store, &iter,
 				     &nfn, &maxlen);
@@ -1976,14 +1986,12 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	char fndir[FILENAME_MAX];
 	int i = 0;
 
-	while (get_plausible_functions_dir(fndir, i++)) {
-	    if (*fndir != '\0') {
-		dir = opendir(fndir);
-		if (dir != NULL) {
-		    read_fn_files_in_dir(dir, fndir, store, &iter,
-					 &nfn, &maxlen);
-		    closedir(dir);
-		}
+	while (get_plausible_search_dir(fndir, FUNCS_SEARCH, i++)) {
+	    dir = gretl_opendir(fndir);
+	    if (dir != NULL) {
+		read_fn_files_in_dir(dir, fndir, store, &iter,
+				     &nfn, &maxlen);
+		closedir(dir);
 	    }
 	}
     }	    

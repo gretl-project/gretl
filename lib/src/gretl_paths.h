@@ -21,10 +21,12 @@
 #define GRETL_PATHS_H
 
 #include <sys/stat.h>
+#include <dirent.h>
 
 typedef enum {
     CURRENT_DIR,
     DATA_SEARCH,
+    DB_SEARCH,
     SCRIPT_SEARCH,
     FUNCS_SEARCH,
     USER_SEARCH
@@ -101,6 +103,8 @@ int gretl_mkdir (const char *path);
 
 int gretl_chdir (const char *path);
 
+DIR *gretl_opendir (const char *name);
+
 int gretl_deltree (const char *path);
 
 int gretl_setenv (const char *name, const char *value);
@@ -125,7 +129,7 @@ int gretl_set_paths (ConfigPaths *paths, gretlopt opt);
 
 int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
 
-int get_plausible_functions_dir (char *fndir, int i);
+int get_plausible_search_dir (char *dirname, int type, int i);
 
 char *gretl_function_package_get_path (const char *name,
 				       PkgType type);
@@ -197,6 +201,12 @@ int gretl_mkstemp (char *tmpl);
 void get_gretl_rc_path (char *rcfile);
 
 int cli_read_rc (void);
+
+#endif
+
+#ifdef OSX_BUILD
+
+const char *gretl_app_support_dir (void);
 
 #endif
 

@@ -40,10 +40,7 @@
 #include <fcntl.h> /* for 'open' */
 
 #include <glib.h>
-
-#if (GLIB_MAJOR_VERSION > 2 || GLIB_MINOR_VERSION >= 6)
-# include <glib/gstdio.h>
-#endif
+#include <glib/gstdio.h>
 
 #ifndef WIN32
 # ifdef USE_GTK3
@@ -588,7 +585,7 @@ int gretl_mkdir (const char *path)
     }
 
     if (pconv != NULL) {
-	test = win32_opendir(pconv);
+	test = gretl_opendir(pconv);
 	if (test != NULL) {
 	    closedir(test);
 	    done = 1;
@@ -597,7 +594,7 @@ int gretl_mkdir (const char *path)
 	}
 	g_free(pconv);
     } else {
-	test = win32_opendir(path);
+	test = gretl_opendir(path);
 	if (test != NULL) {
 	    closedir(test);
 	    done = 1;
@@ -663,20 +660,7 @@ int gretl_mkdir (const char *path)
 
     errno = 0;
 
-#if (GLIB_MAJOR_VERSION > 2 || GLIB_MINOR_VERSION >= 8)
     err = g_mkdir_with_parents(path, 0755);
-#else
-    err = mkdir(path, 0755);
-    if (err && errno == EEXIST) {
-	/* OK if we have an existing directory */
-	DIR *dir = opendir(path);
-
-	if (dir != NULL) {
-	    closedir(dir);
-	    err = 0;
-	}
-    }
-#endif
 
     if (err) {
 	fprintf(stderr, "%s: %s\n", path, strerror(errno));
@@ -747,6 +731,38 @@ int gretl_deltree (const char *path)
 }
 
 #endif /* WIN32 or not */
+
+DIR *gretl_opendir (const char *name)
+{
+#ifdef WIN32
+    int n = strlen(name);
+    int fixit = 0;
+
+    if (n > 0 && name[n-1] == ':') {
+	/* opendir doesn't work on e.g. "f:" */
+	fixit = 1;
+    } else if (n > 3 && name[n-1] == '\\') {
+	/* and neither does it work on e.g. "c:\foo\" */
+	fixit = 2;
+    }
+
+    if (fixit) {
+	char tmp[MAXLEN];
+
+	*tmp = '\0';
+	strncat(tmp, name, MAXLEN - 2);
+	if (fixit == 1) {
+	    /* append backslash */
+	    strcat(tmp, "\\");
+	} else {
+	    /* chop backslash */
+	    tmp[strlen(tmp)-1] = '\0';
+	} 
+	return opendir(tmp);
+    }
+#endif
+    return opendir(name);
+}
 
 /**
  * gretl_setenv:
@@ -1066,37 +1082,32 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
 
 static char *search_dir (char *fname, const char *topdir, int code)
 {
-    FILE *test;
+    FILE *fp = NULL;
     char orig[MAXLEN];
 
     strcpy(orig, fname);
 
     if (gretl_path_prepend(fname, topdir) == 0) {
-	test = gretl_try_fopen(fname, "r");
-	if (test != NULL) {
-	    fclose(test);
-	    return fname;
-	}
-	if (code == DATA_SEARCH && add_suffix(fname, ".gdt")) {
-	    test = gretl_try_fopen(fname, "r");
-	    if (test != NULL) {
-		fclose(test);
-		return fname;
-	    }
-	} else if (code == FUNCS_SEARCH && add_suffix(fname, ".gfn")) {
-	    test = gretl_try_fopen(fname, "r");
-	    if (test != NULL) {
-		fclose(test);
-		return fname;
+	fp = gretl_try_fopen(fname, "r");
+	if (fp == NULL) {
+	    if (code == DATA_SEARCH && add_suffix(fname, ".gdt")) {
+		fp = gretl_try_fopen(fname, "r");
+	    } else if (code == FUNCS_SEARCH && add_suffix(fname, ".gfn")) {
+		fp = gretl_try_fopen(fname, "r");
 	    }
 	}	    
-	strcpy(fname, orig);
-	if (code != CURRENT_DIR && find_in_subdir(topdir, fname, code)) {
-	    return fname;
+	if (fp == NULL && code != CURRENT_DIR && find_in_subdir(topdir, fname, code)) {
+	    return fname; /* handled specially */
 	}
     }
 
-    return NULL;
+    if (fp != NULL) {
+	fclose(fp);
+	return fname;
+    } else {
+	strcpy(fname, orig);
+	return NULL;
+    }
 }
 
 #ifdef WIN32
@@ -1190,50 +1201,101 @@ static int shelldir_open_dotfile (char *fname, char *orig)
 }
 
 /**
- * get_plausible_functions_dir:
- * @fndir: location to receive directory name; should be of
+ * get_plausible_search_dir:
+ * @dirname: location to receive directory name; should be of
  * length FILENAME_MAX or more.
+ * @type: should be DATA_SEARCH for data file packages,
+ * DB_SEARCH for gretl databases, or FUNCS_SEARCH for
+ * function packages.
  * @i: call index; should be zero on the first call.
  * 
  * This function can be called repeatedly, with the call index
  * incremented each time -- so long as the return value is non-zero.
- * The @fndir argument will be filled out with the name of the "next"
- * directory that may plausibly contain gretl gfn files. If the call
- * index is out of bounds 0 is returned and @fndir is set to an
- * empty string.
+ * The @dirname argument will be filled out with the name of the "next"
+ * directory that may plausibly contain gretl files of the specified
+ * @type. If the call index is out of bounds, 0 is returned and @dirname 
+ * is set to an empty string.
  *
  * Returns: 1 if there are any more directories available, otherwise
  * zero.
  */
 
-int get_plausible_functions_dir (char *fndir, int i)
+int get_plausible_search_dir (char *dirname, int type, int i)
 {
+    const char *subdir = NULL;
     int ret = 1;
 
-    *fndir = '\0';
-    
-    if (i == 0) {
-	/* pick up any function files in system dir */
-	build_path(fndir, gretl_home(), "functions", NULL);
-    } else if (i == 1) {
-	/* or any function files in the user's working dir... */
-	strcpy(fndir, gretl_workdir());
-    } else if (i == 2) {
-	/* or in any "functions" subdir thereof */
-	build_path(fndir, gretl_workdir(), "functions", NULL);
-    } else if (i == 3) {
-	/* or any in the user's dotdir */
-	build_path(fndir, gretl_dotdir(), "functions", NULL);
-    } else if (i == 4) {
-	/* or any in the default working dir, if not already searched */
-	const char *wdir = maybe_get_default_workdir();
+    *dirname = '\0';
 
-	if (wdir != NULL) {
-	    build_path(fndir, wdir, "functions", NULL);
-	} 
+    if (type == DATA_SEARCH) {
+	subdir = "data";
+    } else if (type == DB_SEARCH) {
+	subdir = "db";
+    } else if (type == FUNCS_SEARCH) {
+	subdir = "functions";
+    } else if (type == SCRIPT_SEARCH) {
+	subdir = "scripts";
+    } else {
+	fprintf(stderr, "get_plausible_search_dir: no type specified\n");
+	return 0;
+    }
+
+#ifdef OSX_BUILD
+    if (i == 0) {
+	/* system dir first */
+	build_path(dirname, gretl_home(), subdir, NULL);
+    } else if (i == 1) {
+	/* the user's ~/Library */
+	build_path(dirname, gretl_app_support_dir(), subdir, NULL);
+    } else if (i == 2) {
+	/* the user's working dir */
+	build_path(dirname, gretl_workdir(), subdir, NULL);
+    } else if (i == 3) {
+	/* working dir, no subdir */
+	strcpy(dirname, gretl_workdir());
+    } else if (i == 4 || i == 5) {
+	/* the default working dir, if not already searched */
+	const char *wd = maybe_get_default_workdir();
+
+	if (wd != NULL) {
+	    if (i == 4) {
+		build_path(dirname, wd, subdir, NULL);
+	    } else {
+		strcpy(dirname, wd);
+	    }
+	} else {
+	    ret = 0;
+	}
     } else {
 	ret = 0;
     }
+#else
+    if (i == 0) {
+	build_path(dirname, gretl_home(), subdir, NULL);
+    } else if (i == 1) {
+	build_path(dirname, gretl_workdir(), subdir, NULL);
+    } else if (i == 2) {
+	strcpy(dirname, gretl_workdir());
+    } else if (i == 3 || i == 4) {
+	const char *wd = maybe_get_default_workdir();
+
+	if (wd != NULL) {
+	    if (i == 3) {
+		build_path(dirname, wd, subdir, NULL);
+	    } else {
+		strcpy(dirname, wd);
+	    }
+	} else {
+	    ret = 0;
+	}
+    } else {
+	ret = 0;
+    }
+#endif
+
+#if 0
+    fprintf(stderr, "plausible (i=%d, ret=%d) '%s'\n", i, ret, dirname);
+#endif
 
     return ret;
 }
@@ -1270,13 +1332,13 @@ char *gretl_function_package_get_path (const char *name,
 
     *path = '\0';
 
-    while (get_plausible_functions_dir(fndir, i++) && !found) {
+    while (get_plausible_search_dir(fndir, FUNCS_SEARCH, i++) && !found) {
 	struct dirent *dirent;
 	const char *dname;
 	char *p, test[NAME_MAX+1];
 	DIR *dir;
 	
-	if (*fndir == '\0' || (dir = opendir(fndir)) == NULL) {
+	if ((dir = gretl_opendir(fndir)) == NULL) {
 	    continue;
 	}
 
@@ -1801,7 +1863,7 @@ static const char *win32_default_workdir (int force)
 	    if (force) {
 		ok = (gretl_mkdir(default_workdir) == 0);
 	    } else {
-		DIR *dir = win32_opendir(default_workdir);
+		DIR *dir = gretl_opendir(default_workdir);
 
 		if (dir != NULL) {
 		    closedir(dir);
@@ -1928,11 +1990,7 @@ int set_gretl_work_dir (const char *path)
 
     errno = 0;
 
-#ifdef WIN32
-    test = win32_opendir(path);
-#else
-    test = opendir(path);
-#endif
+    test = gretl_opendir(path);
 
     if (test == NULL) {
 	gretl_errmsg_set_from_errno(path);
@@ -3080,6 +3138,48 @@ int cli_read_rc (void)
     gretl_www_init(cpaths.dbhost, dbproxy, use_proxy);
 
     return err;
+}
+
+#endif /* !WIN32 */
+
+#ifdef OSX_BUILD
+
+const char *gretl_app_support_dir (void)
+{
+    static char suppdir[FILENAME_MAX];
+
+    if (*suppdir == '\0') {
+	/* try to ensure that we have a per-user Application
+	   Support dir, with appropriate subdirectories
+	*/
+	const char *home = getenv("home");
+
+	if (home != NULL) {
+	    char *p;
+	    int err;
+
+	    sprintf(suppdir, "%s/Library/Application Support/gretl/functions", 
+		    home);
+	    p = strrchr(suppdir, '/') + 1;
+	    err = gretl_mkdir(suppdir);
+	    if (!err) {
+		strcpy(p, "data");
+		err = gretl_mkdir(suppdir);
+	    }
+	    if (!err) {
+		strcpy(p, "db");
+		err = gretl_mkdir(suppdir);
+	    }
+	    if (err) {
+		*suppdir = '\0';
+	    } else {
+		/* chop off subdir from name */
+		*p = '\0';
+	    }
+	}
+    }
+
+    return suppdir;
 }
 
 #endif

@@ -6841,6 +6841,7 @@ static gretl_matrix *assemble_matrix (NODE *nn, int nnodes, parser *p)
 	if (n->t == LIST) {
 	    list = get_list_by_name(n->v.str);
 	    if (list == NULL) {
+		fprintf(stderr, "assemble_matrix: fail here\n");
 		p->err = E_DATA;
 		return NULL;
 	    } 

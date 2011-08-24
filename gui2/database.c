@@ -287,6 +287,20 @@ static const char *compact_method_string (CompactMethod method)
     }
 }
 
+static const char *trimmed_db_name (const char *fname)
+{
+    const char *ret = fname;
+
+    if (strstr(fname, gretl_binbase()) != NULL) {
+	ret = strrchr(fname, SLASH);
+	if (ret != NULL) {
+	    ret++;
+	}
+    }
+
+    return ret;
+}
+
 static void record_db_open_command (dbwrapper *dw)
 {
     if (dw->fname != NULL) {
@@ -295,16 +309,9 @@ static void record_db_open_command (dbwrapper *dw)
 	if (dw->dbtype == GRETL_PCGIVE_DB) {
 	    cmdline = g_strdup_printf("open %s.bn7", dw->fname);
 	} else if (dw->dbtype == GRETL_NATIVE_DB) {
-	    const char *tmp = gretl_binbase();
-	    int n = strlen(tmp);
+	    const char *tmp = trimmed_db_name(dw->fname);
 
-	    if (!strncmp(dw->fname, tmp, n)) {
-		tmp = dw->fname + n;
-		if (*tmp == SLASH) tmp++;
-		cmdline = g_strdup_printf("open %s.bin", tmp);
-	    } else {
-		cmdline = g_strdup_printf("open %s.bin", dw->fname);
-	    }
+	    cmdline = g_strdup_printf("open %s.bin", tmp);
 	} else if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
 	    cmdline = g_strdup_printf("open %s --www", dw->fname);
 	} else {
@@ -1875,15 +1882,17 @@ static int get_target_in_home (char *targ, int code,
 			       const char *objname,
 			       const char *ext)
 {
-    const char *defdir = gretl_default_workdir();
+    const char *suppdir = gretl_app_support_dir();
     int err = 0;
 
-    if (defdir == NULL) {
+    if (suppdir == NULL || *suppdir == '\0') {
 	err = E_FOPEN;
-    } else if (code == REMOTE_FUNC_FILES) {
-	sprintf(targ, "%sfunctions/%s%s", defdir, objname, ext);
     } else {
-	build_path(targ, defdir, objname, ext);
+	if (code == REMOTE_FUNC_FILES) {
+	    sprintf(targ, "%sfunctions/%s%s", suppdir, objname, ext);
+	} else {
+	    sprintf(targ, "%s%s%s", suppdir, objname, ext);
+	}
     }
 
     return err;
@@ -1922,8 +1931,8 @@ static char *get_writable_target (int code, int op, char *objname,
     }
 
 #ifdef OSX_BUILD
-    /* we prefer writing to the default working dir rather than
-       into /Applications/Gretl.app 
+    /* we prefer writing to ~/Library/Application Support
+       rather than /Applications/Gretl.app 
     */
     if (op != TMP_INSTALL) {
 	err = get_target_in_home(targ, code, objname, ext);
@@ -1932,7 +1941,10 @@ static char *get_writable_target (int code, int op, char *objname,
 #endif
 
     if (code == REMOTE_DB) {
-	build_path(targ, gretl_binbase(), objname, ext);
+	char dbdir[MAXLEN];
+
+	build_path(dbdir, gretl_home(), "db", NULL);
+	build_path(targ, dbdir, objname, ext);
     } else if (code == REMOTE_DATA_PKGS) {
 	char pkgdir[MAXLEN];
 
@@ -2295,23 +2307,23 @@ int write_db_description (const char *binname, const char *descrip)
 }
 
 static int
-read_db_files_in_dir (DIR *dir, int dbtype, const char *dbdir, 
+read_db_files_in_dir (DIR *dir, int dbtype, const char *path, 
 		      GtkListStore *store, GtkTreeIter *iter)
 {
     struct dirent *dirent;
     const char *fname;
     char *descrip;
-    int n, ndb = 0;
+    int len, ndb = 0;
 
     while ((dirent = readdir(dir)) != NULL) {
 	fname = dirent->d_name;
-	n = strlen(fname);
-	if (!g_ascii_strcasecmp(fname + n - 4, ".bin")) {
-	    descrip = real_get_db_description(NULL, fname, dbdir);
+	len = strlen(fname);
+	if (!g_ascii_strcasecmp(fname + len - 4, ".bin")) {
+	    descrip = real_get_db_description(NULL, fname, path);
 	    if (descrip != NULL) {
 		gtk_list_store_append(store, iter);
 		gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
-				   2, dbdir, -1);
+				   2, path, -1);
 		g_free(descrip);
 		ndb++;
 	    }
@@ -2328,59 +2340,34 @@ static void get_local_object_status (const char *fname, int role,
     char filedir[MAXLEN];
     char fullname[MAXLEN];
     struct stat fbuf;
-    int err;
+    int type, i, found = 0;
+    int err = 0;
 
     if (role == REMOTE_DB) {
-	build_path(fullname, gretl_binbase(), fname, NULL);
+	type = DB_SEARCH;
     } else if (role == REMOTE_DATA_PKGS) {
-	build_path(filedir, gretl_home(), "data", NULL);
-	build_path(fullname, filedir, fname, NULL);
+	type = DATA_SEARCH;
+    } else if (role == REMOTE_FUNC_FILES) {
+	type = FUNCS_SEARCH;
     } else {
-	build_path(filedir, gretl_home(), "functions", NULL);
+	*status = N_("Unknown: access error");
+	return;
+    }
+
+    i = 0;
+    while (get_plausible_search_dir(filedir, type, i++)) {
 	build_path(fullname, filedir, fname, NULL);
+	errno = 0;
+	if (gretl_stat(fullname, &fbuf) == 0) {
+	    found = 1;
+	    break;
+	} else if (errno != ENOENT) {
+	    err = 1;
+	    break;
+	} 
     }
 
-    if ((err = gretl_stat(fullname, &fbuf)) == -1) {
-	if (errno == ENOENT) {
-#ifdef G_OS_WIN32 /* FIXME? */
-	    *status = N_("Not installed");
-#else
-	    /* try user dir too, if not on Windows */
-	    if (role == REMOTE_DB) {
-		build_path(fullname, gretl_workdir(), fname, NULL);
-	    } else if (role == REMOTE_DATA_PKGS) {
-		build_path(fullname, gretl_workdir(), fname, NULL);
-	    } else {
-		build_path(filedir, gretl_workdir(), "functions", NULL);
-		build_path(fullname, filedir, fname, NULL);
-	    }
-	    err = gretl_stat(fullname, &fbuf);
-	    if (err == -1) {
-		if (role == REMOTE_FUNC_FILES || role == REMOTE_DATA_PKGS) {
-		    /* try default working dir */
-		    const char *dw = maybe_get_default_workdir();
-
-		    if (dw != NULL) {
-			if (role == REMOTE_FUNC_FILES) {
-			    build_path(filedir, dw, "functions", NULL);
-			    build_path(fullname, filedir, fname, NULL);
-			} else {
-			    build_path(fullname, dw, fname, NULL);
-			}
-			err = stat(fullname, &fbuf);
-		    }
-		} 
-		if (err == -1) {
-		    *status = N_("Not installed");
-		}
-	    } 
-#endif
-	} else {
-	    *status = N_("Unknown: access error");
-	}
-    }
-
-    if (!err) {
+    if (found) {
 	double dt;
 
 	dt = difftime(remtime, fbuf.st_ctime);
@@ -2392,6 +2379,10 @@ static void get_local_object_status (const char *fname, int role,
 	} else {
 	    *status = N_("Up to date");
 	}
+    } else if (err) {
+	*status = N_("Unknown: access error");
+    } else {
+	*status = N_("Not installed");
     }
 }
 
@@ -2935,85 +2926,38 @@ gint populate_remote_data_pkg_list (windata_t *vwin)
     return err;
 }
 
-static DIR *open_gretl_db_dir (const char *dbdir)
-{
-    DIR *dir = NULL;
-    int tries = 0;
-
-    while (dir == NULL) {
-#ifdef G_OS_WIN32 
-	dir = win32_opendir(dbdir);
-#else
-	dir = opendir(dbdir);
-#endif
-	if (dir == NULL) {
-	    errbox(_("Can't open folder %s"), dbdir);
-	    if (++tries == 2 || options_dialog(TAB_DBS, "binbase", mdata->main)) {
-		/* canceled */
-		return NULL;
-	    }
-	}
-    }
-
-    return dir;
-}
-
 gint populate_dbfilelist (windata_t *vwin)
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    const char *dbdir;
-    DIR *dir = NULL;
-    int ndb = 0;
+    char path[FILENAME_MAX];
+    DIR *dir;
+    int ndb = 0, i = 0;
+    int err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    /* pick up any databases in the shared gretl dir */
-    dbdir = gretl_binbase();
-    dir = open_gretl_db_dir(dbdir);
-    if (dir != NULL) {
-	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
-	closedir(dir);
-    }
-
-    /* pick up any databases in the user's personal dir */
-    dbdir = gretl_workdir();
-#ifdef G_OS_WIN32 
-    dir = win32_opendir(dbdir);
-#else
-    dir = opendir(dbdir);
-#endif
-    if (dir != NULL) {
-	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
-	closedir(dir);
-    }
-
-    /* and in the default working dir? */
-    dbdir = maybe_get_default_workdir();
-    if (dbdir != NULL) {
-#ifdef G_OS_WIN32 
-	dir = win32_opendir(dbdir);
-#else
-	dir = opendir(dbdir);
-#endif
+    while (get_plausible_search_dir(path, DB_SEARCH, i++)) {
+	dir = gretl_opendir(path);
 	if (dir != NULL) {
-	    ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
+	    ndb += read_db_files_in_dir(dir, vwin->role, path, store, &iter);
 	    closedir(dir);
 	}
-    }
+    }    
 
     if (ndb == 0) {
 	errbox(_("No database files found"));
+	err = 1;
     }
 
-    return (ndb == 0);
+    return err;
 }
 
 void set_db_dir_callback (windata_t *vwin, char *path)
 {
-    DIR *dir = opendir(path);
+    DIR *dir = gretl_opendir(path);
     int ndb = 0;
 
     if (dir != NULL) {
@@ -3021,9 +2965,9 @@ void set_db_dir_callback (windata_t *vwin, char *path)
 	GtkTreeIter iter;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
-
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	ndb = read_db_files_in_dir(dir, vwin->role, path, store, &iter);
+	closedir(dir);
     }
 
     if (ndb == 0) {
