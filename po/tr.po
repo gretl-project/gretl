@@ -10,14 +10,14 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-08-08 11:33-0400\n"
-"PO-Revision-Date: 2011-06-09 09:17+0300\n"
+"PO-Revision-Date: 2011-08-25 12:56+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.1\n"
+"X-Generator: Lokalize 1.2\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
 #: lib/src/adf_kpss.c:290
@@ -1581,7 +1581,7 @@ msgstr "%s için özilinti işlevi"
 
 #: lib/src/describe.c:2940
 msgid "  LAG      ACF          PACF         Q-stat. [p-value]"
-msgstr " GECİK     Öİİ          KÖİİ         Q-ist. [p-değeri]"
+msgstr " GECİKME   Öİİ          KÖİİ          Q-İst. [p-değeri]"
 
 #: lib/src/describe.c:3053
 msgid "Argument is a constant"
@@ -2727,12 +2727,13 @@ msgstr "zaman"
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
 msgstr ""
-"%1$s üzerinde bir sarsıma karşı %2$s tepkisi (özyetinim güven aralıkları ile)"
+"%1$s üzerinde bir sarsıntıya karşı %2$s tepkisi (özyetinim güven aralıkları "
+"ile)"
 
 #: lib/src/graphing.c:4908
 #, c-format
 msgid "response of %s to a shock in %s"
-msgstr "%1$s üzerinde bir sarsıma karşı %2$s tepkisi"
+msgstr "%1$s üzerinde bir sarsıntıya karşı %2$s tepkisi"
 
 #: lib/src/graphing.c:4922
 #, c-format
@@ -5902,7 +5903,7 @@ msgstr "çizgiler/noktalar"
 
 #: lib/src/plotspec.c:202
 msgid "impulses"
-msgstr "itkiler"
+msgstr "dürtüler"
 
 #: lib/src/plotspec.c:203
 msgid "dots"
@@ -6838,7 +6839,7 @@ msgstr "Tahmin dönemi"
 #: lib/src/varprint.c:93 lib/src/varprint.c:109 lib/src/varprint.c:124
 #, c-format
 msgid "Responses to a one-standard error shock in %s"
-msgstr "%s üzerindeki bir ölçünlü hatalık sarsıma karşı tepkiler"
+msgstr "%s üzerindeki bir ölçünlü hatalık sarsıntıya karşı tepkiler"
 
 #: lib/src/varprint.c:96 lib/src/varprint.c:112 lib/src/varprint.c:127
 #, c-format
@@ -7001,7 +7002,7 @@ msgstr ""
 
 #: lib/src/vartest.c:286
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
-msgstr "gecik      log-olb    p(OO)       ABÖ          BBÖ          HQÖ"
+msgstr "gecik      log-olb    p(OO)       AIC          BIC          HQC"
 
 #: lib/src/vartest.c:715
 msgid ""
@@ -10706,7 +10707,7 @@ msgstr "X-Y _serpilim çizimi..."
 
 #: gui2/gretl.c:1456
 msgid "X-Y with _impulses..."
-msgstr "X-Y _itkiler ile..."
+msgstr "X-Y _dürtüler ile..."
 
 #: gui2/gretl.c:1457
 msgid "X-Y with _factor separation..."
@@ -11907,7 +11908,7 @@ msgstr "özyetinim güven aralığını ekle"
 
 #: gui2/gui_utils.c:3362 gui2/gui_utils.c:3649
 msgid "impulse responses"
-msgstr "itki tepkiler"
+msgstr "dürtüye tepkiler"
 
 #: gui2/gui_utils.c:3367 gui2/gui_utils.c:3410 gui2/gui_utils.c:3655
 msgid "forecast horizon (periods):"
@@ -11964,7 +11965,7 @@ msgstr "Yakıştırılan değerleri göster, tüm denklemler"
 
 #: gui2/gui_utils.c:4088
 msgid "Impulse responses"
-msgstr "İtki tepkiler"
+msgstr "Dürtüye tepkiler"
 
 #: gui2/gui_utils.c:4102
 msgid "Residual plots"
@@ -11988,7 +11989,7 @@ msgstr "YÖB ters kökleri"
 
 #: gui2/gui_utils.c:4143
 msgid "Impulse responses (combined)"
-msgstr "İtki tepkiler (birleşik)"
+msgstr "Dürtüye tepkiler (birleşik)"
 
 #: gui2/gui_utils.c:4173
 #, c-format
@@ -13748,7 +13749,7 @@ msgstr "Sınırlamasız eğilim"
 
 #: gui2/selector.c:5695
 msgid "plot with impulses"
-msgstr "İtkiler ile çiz"
+msgstr "Dürtüler ile çiz"
 
 #: gui2/selector.c:5697
 msgid "3D plot"
