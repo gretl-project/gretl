@@ -5323,7 +5323,7 @@ msgstr "$R^2$ não-centrado"
 
 #: lib/src/modelprint.c:2819
 msgid "Uncentered R-squared"
-msgstr "R-quadrado não-centrado"
+msgstr "R-quadr. não-centrado"
 
 #: lib/src/modelprint.c:2820
 msgid "Centered $R^2$"
