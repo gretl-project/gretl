@@ -2337,10 +2337,11 @@ static void get_local_object_status (const char *fname, int role,
 				     const char **status, 
 				     time_t remtime)
 {
-    char filedir[MAXLEN];
     char fullname[MAXLEN];
     struct stat fbuf;
-    int type, i, found = 0;
+    char **dirs;
+    int type, found = 0;
+    int i, n_dirs;
     int err = 0;
 
     if (role == REMOTE_DB) {
@@ -2354,9 +2355,10 @@ static void get_local_object_status (const char *fname, int role,
 	return;
     }
 
-    i = 0;
-    while (get_plausible_search_dir(filedir, type, i++)) {
-	build_path(fullname, filedir, fname, NULL);
+    dirs = get_plausible_search_dirs(type, &n_dirs);
+
+    for (i=0; i<n_dirs; i++) {
+	build_path(fullname, dirs[i], fname, NULL);
 	errno = 0;
 	if (gretl_stat(fullname, &fbuf) == 0) {
 	    found = 1;
@@ -2366,6 +2368,8 @@ static void get_local_object_status (const char *fname, int role,
 	    break;
 	} 
     }
+
+    free_strings_array(dirs, n_dirs);
 
     if (found) {
 	double dt;
@@ -2930,22 +2934,26 @@ gint populate_dbfilelist (windata_t *vwin)
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    char path[FILENAME_MAX];
+    char **dirnames;
     DIR *dir;
-    int ndb = 0, i = 0;
+    int i, n_dirs, ndb = 0;
     int err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    while (get_plausible_search_dir(path, DB_SEARCH, i++)) {
-	dir = gretl_opendir(path);
+    dirnames = get_plausible_search_dirs(DB_SEARCH, &n_dirs);
+
+    for (i=0; i<n_dirs; i++) {
+	dir = gretl_opendir(dirnames[i]);
 	if (dir != NULL) {
-	    ndb += read_db_files_in_dir(dir, vwin->role, path, store, &iter);
+	    ndb += read_db_files_in_dir(dir, vwin->role, dirnames[i], store, &iter);
 	    closedir(dir);
 	}
-    }    
+    }  
+
+    free_strings_array(dirnames, n_dirs);
 
     if (ndb == 0) {
 	errbox(_("No database files found"));

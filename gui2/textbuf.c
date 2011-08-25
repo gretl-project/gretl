@@ -647,9 +647,19 @@ script_key_handler (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 #if defined(NEWER_SOURCEVIEW) && defined(PKGBUILD)
 
-/* packages for Windows and OS X: gtksourceview needs to
+/* Packages for Windows and OS X: gtksourceview needs to
    be told where to find its language-specs and style
-   files
+   files. Note that we can perhaps avoid doing this if
+   we revise the directory structure inside these packages
+   in line with the "canonical" form, so that the
+   gtksourceview files are in ../share relative to the
+   executables (in ./bin).
+
+   Anyway, given that we're doing it for now, on Windows
+   we need to ensure that the "set_search_path" functions
+   are fed a UTF-8 pathname, since gtksourceview uses
+   g_open() internally and the Glib filename encoding is 
+   UTF-8 on Windows.
 */
 
 static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
@@ -661,6 +671,19 @@ static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
 	gchar *dirs[2] = {NULL, NULL};
 
 	dirs[0] = g_strdup_printf("%sgtksourceview", gretl_home());
+
+# ifdef G_OS_WIN32
+	if (!g_utf8_validate(dirs[0], -1, NULL)) {
+	    gsize bytes;
+	    gchar *tmp = g_locale_to_utf8(dirs[0], -1, NULL, &bytes, NULL);
+
+	    if (tmp != NULL) {
+		g_free(dirs[0]);
+		dirs[0] = tmp;
+	    } 
+	}
+# endif
+
 	gtk_source_language_manager_set_search_path(lm, dirs);
 
 	mgr = gtk_source_style_scheme_manager_get_default();
@@ -672,7 +695,7 @@ static void set_sourceview_data_path (GtkSourceLanguageManager *lm)
     }
 }
 
-#endif
+#endif /* PKGBUILD */
 
 #define gretl_script_role(r) (r == EDIT_SCRIPT || \
 			      r == VIEW_SCRIPT || \

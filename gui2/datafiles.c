@@ -1983,17 +1983,21 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 
 	free_strings_array(dnames, ndirs);
     } else {
-	char fndir[FILENAME_MAX];
-	int i = 0;
+	char **dirnames;
+	int i, n_dirs;
 
-	while (get_plausible_search_dir(fndir, FUNCS_SEARCH, i++)) {
-	    dir = gretl_opendir(fndir);
+	dirnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
+
+	for (i=0; i<n_dirs; i++) {
+	    dir = gretl_opendir(dirnames[i]);
 	    if (dir != NULL) {
-		read_fn_files_in_dir(dir, fndir, store, &iter,
+		read_fn_files_in_dir(dir, dirnames[i], store, &iter,
 				     &nfn, &maxlen);
 		closedir(dir);
 	    }
 	}
+
+	free_strings_array(dirnames, n_dirs);
     }	    
 
     if (nfn == 0) {

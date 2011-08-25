@@ -129,7 +129,7 @@ int gretl_set_paths (ConfigPaths *paths, gretlopt opt);
 
 int gretl_update_paths (ConfigPaths *cpaths, gretlopt opt);
 
-int get_plausible_search_dir (char *dirname, int type, int i);
+char **get_plausible_search_dirs (int type, int *n_dirs);
 
 char *gretl_function_package_get_path (const char *name,
 				       PkgType type);

@@ -1206,31 +1206,25 @@ static int shelldir_open_dotfile (char *fname, char *orig)
 }
 
 /**
- * get_plausible_search_dir:
- * @dirname: location to receive directory name; should be of
- * length FILENAME_MAX or more.
+ * get_plausible_search_dirs:
  * @type: should be DATA_SEARCH for data file packages,
  * DB_SEARCH for gretl databases, or FUNCS_SEARCH for
  * function packages.
- * @i: call index; should be zero on the first call.
+ * @n_dirs: location to receive the number of directories.
  * 
- * This function can be called repeatedly, with the call index
- * incremented each time -- so long as the return value is non-zero.
- * The @dirname argument will be filled out with the name of the "next"
- * directory that may plausibly contain gretl files of the specified
- * @type. If the call index is out of bounds, 0 is returned and @dirname 
- * is set to an empty string.
- *
- * Returns: 1 if there are any more directories available, otherwise
- * zero.
+ * Returns: an array of plausible search paths, depending on the 
+ * @type of search. The array should be freed when you are done 
+ * with it, using free_strings_array().
  */
 
-int get_plausible_search_dir (char *dirname, int type, int i)
+char **get_plausible_search_dirs (int type, int *n_dirs)
 {
-    const char *subdir = NULL;
-    int ret = 1;
+    char **dirs = NULL;
+    const char *subdir;
+    char dirname[MAXLEN];
+    int err = 0;
 
-    *dirname = '\0';
+    *n_dirs = 0;
 
     if (type == DATA_SEARCH) {
 	subdir = "data";
@@ -1242,67 +1236,47 @@ int get_plausible_search_dir (char *dirname, int type, int i)
 	subdir = "scripts";
     } else {
 	fprintf(stderr, "get_plausible_search_dir: no type specified\n");
-	return 0;
+	return NULL;
     }
+
+    /* system dir first */
+    build_path(dirname, gretl_home(), subdir, NULL);
+    err = strings_array_add(&dirs, n_dirs, dirname);
 
 #ifdef OSX_BUILD
-    if (i == 0) {
-	/* system dir first */
-	build_path(dirname, gretl_home(), subdir, NULL);
-    } else if (i == 1) {
+    if (!err) {
 	/* the user's ~/Library */
 	build_path(dirname, gretl_app_support_dir(), subdir, NULL);
-    } else if (i == 2) {
+	err = strings_array_add(&dirs, n_dirs, dirname);
+    }
+#endif
+
+    if (!err) {
 	/* the user's working dir */
 	build_path(dirname, gretl_workdir(), subdir, NULL);
-    } else if (i == 3) {
+	err = strings_array_add(&dirs, n_dirs, dirname);
+    }
+
+    if (!err) {
 	/* working dir, no subdir */
 	strcpy(dirname, gretl_workdir());
-    } else if (i == 4 || i == 5) {
-	/* the default working dir, if not already searched */
+	err = strings_array_add(&dirs, n_dirs, dirname);
+    }
+
+    if (!err) {
 	const char *wd = maybe_get_default_workdir();
 
 	if (wd != NULL) {
-	    if (i == 4) {
-		build_path(dirname, wd, subdir, NULL);
-	    } else {
+	    build_path(dirname, wd, subdir, NULL);
+	    err = strings_array_add(&dirs, n_dirs, dirname);
+	    if (!err && type != FUNCS_SEARCH) {
 		strcpy(dirname, wd);
+		err = strings_array_add(&dirs, n_dirs, dirname);
 	    }
-	} else {
-	    ret = 0;
 	}
-    } else {
-	ret = 0;
     }
-#else
-    if (i == 0) {
-	build_path(dirname, gretl_home(), subdir, NULL);
-    } else if (i == 1) {
-	build_path(dirname, gretl_workdir(), subdir, NULL);
-    } else if (i == 2) {
-	strcpy(dirname, gretl_workdir());
-    } else if (i == 3 || i == 4) {
-	const char *wd = maybe_get_default_workdir();
 
-	if (wd != NULL) {
-	    if (i == 3) {
-		build_path(dirname, wd, subdir, NULL);
-	    } else {
-		strcpy(dirname, wd);
-	    }
-	} else {
-	    ret = 0;
-	}
-    } else {
-	ret = 0;
-    }
-#endif
-
-#if 0
-    fprintf(stderr, "plausible (i=%d, ret=%d) '%s'\n", i, ret, dirname);
-#endif
-
-    return ret;
+    return dirs;
 }
 
 /* it's a dirent thing */
@@ -1330,14 +1304,17 @@ char *gretl_function_package_get_path (const char *name,
 				       PkgType type)
 {
     char *ret = NULL;
-    char fndir[FILENAME_MAX];
     char path[FILENAME_MAX];
+    char **dirs;
     int found = 0;
-    int i = 0;
+    int i, n_dirs;
 
     *path = '\0';
 
-    while (get_plausible_search_dir(fndir, FUNCS_SEARCH, i++) && !found) {
+    dirs = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
+
+    for (i=0; i<n_dirs && !found; i++) {
+	const char *fndir = dirs[i];
 	struct dirent *dirent;
 	const char *dname;
 	char *p, test[NAME_MAX+1];
@@ -1388,6 +1365,8 @@ char *gretl_function_package_get_path (const char *name,
 
 	closedir(dir);
     }
+
+    free_strings_array(dirs, n_dirs);
 
     if (*path != '\0') {
 	ret = gretl_strdup(path);
