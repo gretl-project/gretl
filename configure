@@ -17348,12 +17348,12 @@ if test -n "$GTKSOURCEVIEW_CFLAGS"; then
     pkg_cv_GTKSOURCEVIEW_CFLAGS="$GTKSOURCEVIEW_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.2.2\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.2.2") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -17364,12 +17364,12 @@ if test -n "$GTKSOURCEVIEW_LIBS"; then
     pkg_cv_GTKSOURCEVIEW_LIBS="$GTKSOURCEVIEW_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-2.0 >= 2.2.2\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "gtksourceview-2.0 >= 2.2.2") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0" 2>/dev/null`
+  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-2.0 >= 2.2.2" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -17387,19 +17387,19 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtksourceview-2.0" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtksourceview-2.0 >= 2.2.2" 2>&1`
         else
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtksourceview-2.0" 2>&1`
+	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtksourceview-2.0 >= 2.2.2" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$GTKSOURCEVIEW_PKG_ERRORS" >&5
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                echo "version 2.0 not found"
+                echo "version 2.0 >= 2.2.2 not found"
 
 elif test $pkg_failed = untried; then
-	echo "version 2.0 not found"
+	echo "version 2.0 >= 2.2.2 not found"
 
 else
 	GTKSOURCEVIEW_CFLAGS=$pkg_cv_GTKSOURCEVIEW_CFLAGS

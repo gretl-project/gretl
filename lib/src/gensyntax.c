@@ -734,16 +734,23 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
 		p->err = push_bn_node(t, n);
 	    }
 	    if (p->sym == P_COM) {
+		/* comma: on to the next column */
 		lex(p);
 	    } else if (p->sym == P_SEMI) {
+		/* semicolon: on to the next row */
 		n = newempty();
 		p->err = push_bn_node(t, n);
 		lex(p);
 	    } else if (p->sym == G_RCB) {
+		/* right curly bracket: reached the end */
 		if (p->ch == '[') {
 		    parser_ungetc(p);
 		    *sub = 1;
 		}
+		break;
+	    } else {
+		/* something that doesn't belong here */
+		cexp = '}';
 		break;
 	    }
 	}

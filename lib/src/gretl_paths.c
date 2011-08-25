@@ -1082,32 +1082,37 @@ static int find_in_subdir (const char *topdir, char *fname, int code)
 
 static char *search_dir (char *fname, const char *topdir, int code)
 {
-    FILE *fp = NULL;
+    FILE *fp;
     char orig[MAXLEN];
 
     strcpy(orig, fname);
 
     if (gretl_path_prepend(fname, topdir) == 0) {
 	fp = gretl_try_fopen(fname, "r");
-	if (fp == NULL) {
-	    if (code == DATA_SEARCH && add_suffix(fname, ".gdt")) {
-		fp = gretl_try_fopen(fname, "r");
-	    } else if (code == FUNCS_SEARCH && add_suffix(fname, ".gfn")) {
-		fp = gretl_try_fopen(fname, "r");
+	if (fp != NULL) {
+	    fclose(fp);
+	    return fname;
+	}
+	if (code == DATA_SEARCH && add_suffix(fname, ".gdt")) {
+	    fp = gretl_try_fopen(fname, "r");
+	    if (fp != NULL) {
+		fclose(fp);
+		return fname;
+	    }
+	} else if (code == FUNCS_SEARCH && add_suffix(fname, ".gfn")) {
+	    fp = gretl_try_fopen(fname, "r");
+	    if (fp != NULL) {
+		fclose(fp);
+		return fname;
 	    }
 	}	    
-	if (fp == NULL && code != CURRENT_DIR && find_in_subdir(topdir, fname, code)) {
-	    return fname; /* handled specially */
+	strcpy(fname, orig);
+	if (code != CURRENT_DIR && find_in_subdir(topdir, fname, code)) {
+	    return fname;
 	}
     }
 
-    if (fp != NULL) {
-	fclose(fp);
-	return fname;
-    } else {
-	strcpy(fname, orig);
-	return NULL;
-    }
+    return NULL;
 }
 
 #ifdef WIN32

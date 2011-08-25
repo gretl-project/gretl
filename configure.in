@@ -597,10 +597,10 @@ dnl
 dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
 if test "$gtk_version" = "2.0" && test "$try_sourceview" = "yes" ; then
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0,
+    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.2.2,
       AC_DEFINE(USE_GTKSOURCEVIEW_2)
       have_sourceview="2.0",
-      echo "version 2.0 not found"
+      echo "version 2.0 >= 2.2.2 not found"
     )
     if test "$have_sourceview" != "2.0" ; then
        PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0 >= 1.8.5,
