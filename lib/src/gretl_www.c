@@ -1834,7 +1834,7 @@ int gretl_www_init (const char *host, const char *proxy, int use_proxy)
     gretlproxy.saveopt = SAVE_TO_BUFFER;
     wproxy = use_proxy;
 
-    if (!use_proxy || proxy == NULL || *proxy == '\0') {
+    if (!use_proxy || string_is_blank(proxy)) {
 	return 0;
     }
 

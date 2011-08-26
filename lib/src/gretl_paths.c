@@ -2679,24 +2679,6 @@ static void copy_paths_with_fallback (ConfigPaths *cpaths)
     path_init(paths.pngfont, cpaths->pngfont, 0);
 }
 
-#if 0
-static void set_up_sourceview_path (void)
-{
-    char envstr[MAXLEN];
-
-#ifdef WIN32
-    sprintf(envstr, "%sshare\\gtksourceview-1.0\\language-specs", paths.gretldir);
-    gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
-#else
-    if (getenv("GTKSOURCEVIEW_LANGUAGE_DIR") == NULL) {
-	/* for the benefit of the bundled gtksourceview library */
-	sprintf(envstr, "%sgtksourceview", paths.gretldir);
-	gretl_setenv("GTKSOURCEVIEW_LANGUAGE_DIR", envstr);
-    }
-#endif
-}
-#endif
-
 /* This is called after reading the gretl config file (or reading from
    the registry on Windows) at startup (and only then).  Subsequent
    updates to paths via the GUI (if any) are handled by the function
@@ -2736,10 +2718,6 @@ int gretl_set_paths (ConfigPaths *cpaths, gretlopt opt)
 	    }
 	}
     }
-
-#if 0
-    set_up_sourceview_path();
-#endif
 
 #if defined(WIN32) || defined(OSX_BUILD) 
     shelldir_init(paths.workdir);
@@ -3136,9 +3114,11 @@ const char *gretl_app_support_dir (void)
 	/* try to ensure that we have a per-user Application
 	   Support dir, with appropriate subdirectories
 	*/
-	const char *home = getenv("home");
+	const char *home = getenv("HOME");
 
-	if (home != NULL) {
+	if (home == NULL) {
+	    fprintf(stderr, "problem: HOME is not defined\n");
+	} else {
 	    char *p;
 	    int err;
 

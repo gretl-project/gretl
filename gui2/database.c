@@ -1885,11 +1885,17 @@ static int get_target_in_home (char *targ, int code,
     const char *suppdir = gretl_app_support_dir();
     int err = 0;
 
+    fprintf(stderr, "suppdir='%s'\n", suppdir);
+
     if (suppdir == NULL || *suppdir == '\0') {
 	err = E_FOPEN;
     } else {
 	if (code == REMOTE_FUNC_FILES) {
 	    sprintf(targ, "%sfunctions/%s%s", suppdir, objname, ext);
+	} else if (code == REMOTE_DB) {
+	    sprintf(targ, "%sdb/%s%s", suppdir, objname, ext);
+	} else if (code == REMOTE_DATA_PKGS) {
+	    sprintf(targ, "%sdata/%s%s", suppdir, objname, ext);
 	} else {
 	    sprintf(targ, "%s%s%s", suppdir, objname, ext);
 	}
@@ -1916,6 +1922,8 @@ static char *get_writable_target (int code, int op, char *objname,
     const char *ext;
     char *targ;
     int err = 0;
+
+    fprintf(stderr, "get_writable_target\n");
 
     targ = mymalloc(MAXLEN);
     if (targ == NULL) {
@@ -3053,4 +3061,3 @@ void do_expand_data_set (void)
 	mark_dataset_as_modified();
     }
 }
-
