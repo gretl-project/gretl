@@ -4533,6 +4533,8 @@ void do_freq_dist (void)
     double fmin = NADBL;
     double fwid = NADBL;
     gchar *tmp = NULL;
+    const char *diststr = "";
+    int auto_nbins = 0;
     int discrete = 0;
     int nbins = 0;
     int plot = 1;
@@ -4558,6 +4560,7 @@ void do_freq_dist (void)
 	    }
 	} else {
 	    err = freq_setup(v, dataset, &n, &xmax, &xmin, &nbins, &fwid);
+	    auto_nbins = nbins;
 	}
 
 	if (err) {
@@ -4593,15 +4596,30 @@ void do_freq_dist (void)
 
 	if (dist == D_NORMAL) {
 	    opt = OPT_Z;
+	    diststr = " --normal";
 	} else if (dist == D_GAMMA) {
 	    opt = OPT_O;
+	    diststr = " --gamma";
 	}
     }
 
-    gretl_command_sprintf("freq %s%s", dataset->varname[v],
-			  (dist == D_NORMAL)? " --normal" :
-			  (dist == D_GAMMA)? " --gamma" : 
-			  "");
+    if (!discrete) {
+	if (!na(fmin) && !na(fwid)) {
+	    gretl_push_c_numeric_locale();
+	    gretl_command_sprintf("freq %s --min=%g --binwidth=%g%s", 
+				  dataset->varname[v], 
+				  fmin, fwid, diststr);
+	    gretl_pop_c_numeric_locale();
+	} else if (nbins != auto_nbins) {
+	    gretl_command_sprintf("freq %s --nbins=%d%s", 
+				  dataset->varname[v], 
+				  nbins, diststr);
+	} else {
+	    gretl_command_sprintf("freq %s%s", dataset->varname[v], diststr);
+	}
+    } else {
+	gretl_command_sprintf("freq %s%s", dataset->varname[v], diststr);
+    }
 
     if (check_and_record_command()) {
 	return;

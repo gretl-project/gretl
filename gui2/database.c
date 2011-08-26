@@ -289,33 +289,48 @@ static const char *compact_method_string (CompactMethod method)
 
 static const char *trimmed_db_name (const char *fname)
 {
-    const char *ret = fname;
+    const char *s = fname;
 
     if (strstr(fname, gretl_binbase()) != NULL) {
-	ret = strrchr(fname, SLASH);
-	if (ret != NULL) {
-	    ret++;
+	s = strrchr(fname, SLASH);
+	if (s != NULL) {
+	    return s + 1;
 	}
     }
 
-    return ret;
+    return NULL;
 }
 
 static void record_db_open_command (dbwrapper *dw)
 {
     if (dw->fname != NULL) {
+	int quotes = (strchr(dw->fname, ' ') != NULL);
 	gchar *cmdline;
 
 	if (dw->dbtype == GRETL_PCGIVE_DB) {
-	    cmdline = g_strdup_printf("open %s.bn7", dw->fname);
+	    if (quotes) {
+		cmdline = g_strdup_printf("open \"%s.bn7\"", dw->fname);
+	    } else {
+		cmdline = g_strdup_printf("open %s.bn7", dw->fname);
+	    }
 	} else if (dw->dbtype == GRETL_NATIVE_DB) {
 	    const char *tmp = trimmed_db_name(dw->fname);
 
-	    cmdline = g_strdup_printf("open %s.bin", tmp);
+	    if (tmp != NULL) {
+		cmdline = g_strdup_printf("open %s.bin", tmp);
+	    } else if (quotes) {
+		cmdline = g_strdup_printf("open \"%s.bin\"", dw->fname);
+	    } else {
+		cmdline = g_strdup_printf("open %s.bin", dw->fname);
+	    }
 	} else if (dw->dbtype == GRETL_NATIVE_DB_WWW) {
 	    cmdline = g_strdup_printf("open %s --www", dw->fname);
 	} else {
-	    cmdline = g_strdup_printf("open %s", dw->fname);
+	    if (quotes) {
+		cmdline = g_strdup_printf("open \"%s\"", dw->fname);
+	    } else {
+		cmdline = g_strdup_printf("open %s", dw->fname);
+	    }
 	}
 
 	record_command_verbatim(cmdline);
