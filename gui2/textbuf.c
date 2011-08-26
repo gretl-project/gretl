@@ -474,6 +474,10 @@ void sourceview_print (windata_t *vwin)
     comp = gtk_source_print_compositor_new_from_view(view);
     print = gtk_print_operation_new();
 
+#ifdef G_OS_WIN32 /* ?? */
+    gtk_print_operation_set_unit(print, GTK_UNIT_MM);
+#endif
+
     if (settings != NULL) {
 	gtk_print_operation_set_print_settings(print, settings);
     } else {

@@ -1941,9 +1941,9 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     GtkListStore *store;
     GtkTreeIter iter;
     char **dnames = NULL;
-    int ndirs = 0;
     DIR *dir;
-    int i, nfn, maxlen = 0;
+    int i, n_dirs = 0;
+    int nfn, maxlen = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     nfn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->listbox), "nfn"));
@@ -1955,13 +1955,13 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 
 	gtk_tree_model_get_iter_first(model, &iter);
 	gtk_tree_model_get(model, &iter, 4, &dirname, -1);
-	strings_array_add(&dnames, &ndirs, dirname);
+	strings_array_add(&dnames, &n_dirs, dirname);
 	g_free(dirname);
 
 	while (gtk_tree_model_iter_next(model, &iter)) {
 	    gtk_tree_model_get(model, &iter, 4, &dirname, -1);
-	    if (!dirname_done(dnames, ndirs, dirname)) {
-		strings_array_add(&dnames, &ndirs, dirname);
+	    if (!dirname_done(dnames, n_dirs, dirname)) {
+		strings_array_add(&dnames, &n_dirs, dirname);
 	    }
 	    g_free(dirname);
 	}
@@ -1971,8 +1971,8 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (ndirs > 0) {
-	for (i=0; i<ndirs; i++) {
+    if (n_dirs > 0) {
+	for (i=0; i<n_dirs; i++) {
 	    dir = gretl_opendir(dnames[i]);
 	    if (dir != NULL) {
 		read_fn_files_in_dir(dir, dnames[i], store, &iter,
@@ -1981,23 +1981,20 @@ gint populate_func_list (windata_t *vwin, struct fpkg_response *fresp)
 	    }
 	}
 
-	free_strings_array(dnames, ndirs);
+	free_strings_array(dnames, n_dirs);
     } else {
-	char **dirnames;
-	int i, n_dirs;
-
-	dirnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
+	dnames = get_plausible_search_dirs(FUNCS_SEARCH, &n_dirs);
 
 	for (i=0; i<n_dirs; i++) {
-	    dir = gretl_opendir(dirnames[i]);
+	    dir = gretl_opendir(dnames[i]);
 	    if (dir != NULL) {
-		read_fn_files_in_dir(dir, dirnames[i], store, &iter,
+		read_fn_files_in_dir(dir, dnames[i], store, &iter,
 				     &nfn, &maxlen);
 		closedir(dir);
 	    }
 	}
 
-	free_strings_array(dirnames, n_dirs);
+	free_strings_array(dnames, n_dirs);
     }	    
 
     if (nfn == 0) {

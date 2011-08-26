@@ -1568,9 +1568,12 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	    } else if ((rcvar->flags & USERSET) || 
 		       (rcvar->flags & MACHSET) ||
 		       (rcvar->flags & MACHSET)) {
-		const gchar *str = gtk_entry_get_text(GTK_ENTRY(w));
+		gchar *str = entry_box_get_trimmed_text(w);
 
-		rcvar_set_string(rcvar, str, &changed);
+		if (str != NULL) {
+		    rcvar_set_string(rcvar, str, &changed);
+		    g_free(str);
+		} 
 	    } else if (rcvar->flags & LISTSET) {
 		GtkComboBox *box = GTK_COMBO_BOX(w);
 
@@ -1595,6 +1598,11 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     maybe_revise_tramo_x12a_status();
 #endif
+
+    if (use_proxy && *dbproxy == '\0') {
+	/* fix inconsistency */
+	use_proxy = 0;
+    }
 
     write_rc(); /* note: calls gretl_update_paths */
 

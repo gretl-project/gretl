@@ -43,6 +43,10 @@ version 1.9.6, in progress
 - X-12-ARIMA and TRAMO analysis: allow the user to supply names when
   saving series to the dataset
 - Declaration of new series: set initial values to NA, not zero
+- On OS X: save downloaded functions, databases and data file packages
+  to the user's "Library/Application Support/gretl" directory
+- MS Windows and OS X packages: update gtksourceview library to version 
+  2.10.5 to permit printing of scripts with highlighting
 - Fix bug: a nested "foreach" loop using a named list, with the name of
   the list subject to dollar-substitution via the parent loop, produced
   an "unknown variable" error
@@ -57,6 +61,8 @@ version 1.9.6, in progress
   the recorded date for a function package
 - Fix bug in ADF test in GUI with data frequency 1: quadratic trend
   case being added even when deselected
+- Fix bug in ARMA forecast for MA order > 1 and steps-ahead greater
+  than the MA order
 - Increase maximum command-line length to 16384 bytes
 
 2011-04-22 version 1.9.5

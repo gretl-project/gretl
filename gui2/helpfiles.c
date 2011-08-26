@@ -880,6 +880,33 @@ static int all_lower_case (const char *s)
     return 1;
 }
 
+static int maybe_go_to_page (windata_t *vwin)
+{
+    gboolean ret = FALSE;
+    int idx, pos = 0; 
+
+    if (vwin->role == FUNCS_HELP) {
+	/* looking for a function */
+	idx = function_help_index_from_word(needle);
+	if (idx > 0) {
+	    pos = help_pos_from_index(idx, vwin->role);
+	}
+    } else {
+	/* looking for a command */
+	idx = command_help_index(needle);
+	if (idx > 0) {
+	    pos = help_pos_from_index(idx, vwin->role);
+	}
+    } 
+
+    if (pos > 0) {
+	real_do_help(idx, pos, vwin->role);
+	ret = TRUE;
+    }    
+
+    return ret;
+}
+
 /* respond to Enter key in the 'finder' entry */
 
 static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
@@ -906,32 +933,10 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
 	found = real_find_in_listbox(vwin, needle, sensitive, 0);
     }
 
-    if (!found) {
-	if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN) {
-	    /* are we looking for a command? */
-	    int idx = command_help_index(needle);
-
-	    if (idx > 0) {
-		int pos = help_pos_from_index(idx, vwin->role);
-
-		if (pos > 0) {
-		    real_do_help(idx, pos, vwin->role);
-		    found = TRUE;
-		}
-	    }
-	} else if (vwin->role == FUNCS_HELP) {
-	    /* are we looking for a function? */
-	    int idx = function_help_index_from_word(needle);
-
-	    if (idx > 0) {
-		int pos = help_pos_from_index(idx, vwin->role);
-
-		if (pos > 0) {
-		    real_do_help(idx, pos, vwin->role);
-		    found = TRUE;
-		}
-	    }
-	}
+    if (!found && (vwin->role == CLI_HELP || 
+		   vwin->role == CLI_HELP_EN ||
+		   vwin->role == FUNCS_HELP)) {
+	found = maybe_go_to_page(vwin);
     }
 
     if (!found && search_all) {
@@ -1632,7 +1637,7 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 
     found = real_find_in_text(GTK_TEXT_VIEW(vwin->text), needle,
 			      sensitive, TRUE, FALSE);
-
+    
     if (!found) {
 	notify_not_found(find_entry);
     }

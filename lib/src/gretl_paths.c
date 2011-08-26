@@ -2993,6 +2993,8 @@ void get_gretl_rc_path (char *rcfile)
     }
 }
 
+#define PROXLEN 64
+
 /* non-Windows read of the gretl configuration file on behalf
    of the CLI program, gretlcli
 */
@@ -3003,7 +3005,7 @@ int cli_read_rc (void)
     FILE *fp = NULL;
     char rcfile[FILENAME_MAX];
     char line[MAXLEN], key[32], val[MAXLEN];
-    char dbproxy[21] = {0};
+    char dbproxy[PROXLEN] = {0};
     int usecwd = 0;
     int use_proxy = 0;
     int err = 0;
@@ -3045,7 +3047,7 @@ int cli_read_rc (void)
 	    } else if (!strcmp(key, "dbhost")) {
 		strncat(cpaths.dbhost, val, 32 - 1);
 	    } else if (!strcmp(key, "dbproxy")) {
-		strncat(dbproxy, val, 21 - 1);
+		strncat(dbproxy, val, PROXLEN - 1);
 	    } else if (!strcmp(key, "useproxy")) {
 		use_proxy = rc_bool(val);
 	    } else if (!strcmp(key, "x12a")) {
