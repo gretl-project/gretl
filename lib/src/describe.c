@@ -1618,11 +1618,8 @@ int freq_setup (int v, const DATASET *dset, int *pn,
 	return E_DATA;
     }
 
-    if (nbins != NULL && *nbins > 0) {
+    if (*nbins > 0) {
 	k = *nbins;
-	if (k % 2 == 0) {
-	    k++;
-	}
     } else if (n < 16) {
 	k = 5; 
     } else if (n < 50) {
@@ -1631,26 +1628,20 @@ int freq_setup (int v, const DATASET *dset, int *pn,
 	k = 29;
     } else {
 	k = (int) sqrt((double) n);
-	if (k % 2 == 0) {
-	    k++;
+	if (k > 99) {
+	    k = 99;
 	}
     }
 
-    if (pn != NULL) {
-	*pn = n;
+    if (k % 2 == 0) {
+	k++;
     }
-    if (pxmax != NULL) {
-	*pxmax = xmax;
-    }
-    if (pxmin != NULL) {
-	*pxmin = xmin;
-    }
-    if (nbins != NULL) {
-	*nbins = k;
-    }
-    if (binwidth != NULL) {
-	*binwidth = xrange / (k - 1);
-    }
+
+    *pn = n;
+    *pxmax = xmax;
+    *pxmin = xmin;
+    *nbins = k;
+    *binwidth = xrange / (k - 1);
 
     return 0;
 }
@@ -1842,7 +1833,12 @@ FreqDist *get_freq (int varno, const DATASET *dset,
     if (!na(fmin) && !na(fwid)) {
 	/* endogenous implied number of bins */
 	nbins = (int) ceil((xmax - fmin) / fwid);
-	binwidth = fwid;
+	if (nbins <= 0 || nbins > 5000) {
+	    *err = E_INVARG;
+	    goto bailout;
+	} else {
+	    binwidth = fwid;
+	}
     }
 
     freq->t1 = dset->t1; 
@@ -1888,7 +1884,7 @@ FreqDist *get_freq (int varno, const DATASET *dset,
 	}
 	freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
     }
-	
+
     for (t=dset->t1; t<=dset->t2; t++) {
 	xx = x[t];
 	if (na(xx)) {
@@ -1936,6 +1932,63 @@ static void record_freq_test (const FreqDist *freq)
     }
 }
 
+static int check_freq_opts (gretlopt opt, int *n_bins,
+			    double *fmin, double *fwid)
+{
+    double x;
+
+    if (opt & OPT_N) {
+	/* number of bins given */
+	if (opt & (OPT_M | OPT_W)) {
+	    /* can't give min, width spec */
+	    return E_BADOPT;
+	} else {
+	    x = get_optval_double(FREQ, OPT_N);
+	    if (na(x)) {
+		return E_ARGS;
+	    } else if (x < 2 || x > 10000) {
+		return E_INVARG;
+	    } else {
+		*n_bins = (int) x;
+	    }
+	}
+    }
+
+    if (opt & OPT_M) {
+	/* minimum specified */
+	if (!(opt & OPT_W)) {
+	    /* but no width given */
+	    return E_ARGS;
+	} else {
+	    x = get_optval_double(FREQ, OPT_M);
+	    if (na(x)) {
+		return E_ARGS;
+	    } else {
+		*fmin = x;
+	    }
+	}
+    }
+
+    if (opt & OPT_W) {
+	/* with specified */
+	if (!(opt & OPT_M)) {
+	    /* but no min given */
+	    return E_ARGS;
+	} else {
+	    x = get_optval_double(FREQ, OPT_W);
+	    if (na(x)) {
+		return E_ARGS;
+	    } else if (x <= 0) {
+		return E_INVARG;
+	    } else {
+		*fwid = x;
+	    }
+	}
+    }
+    
+    return 0;
+}
+
 /* wrapper function: get the distribution, print it, graph it
    if wanted, then free stuff.  OPT_Q = quiet; OPT_S =
    silent.
@@ -1944,10 +1997,13 @@ static void record_freq_test (const FreqDist *freq)
 int freqdist (int varno, const DATASET *dset,
 	      int graph, gretlopt opt, PRN *prn)
 {
-    FreqDist *freq;
+    FreqDist *freq = NULL;
     int realgraph = graph && !(opt & (OPT_Q|OPT_S));
-    int err = 0;
     DistCode dist = D_NONE;
+    double fmin = NADBL;
+    double fwid = NADBL;
+    int n_bins = 0;
+    int err;
 
     if (opt & OPT_O) {
 	dist = D_GAMMA; 
@@ -1955,25 +2011,27 @@ int freqdist (int varno, const DATASET *dset,
 	dist = D_NORMAL;
     }
 
-    freq = get_freq(varno, dset, NADBL, NADBL, 0, 1, opt, &err); 
-
-    if (err) {
-	return err;
+    err = check_freq_opts(opt, &n_bins, &fmin, &fwid);
+    
+    if (!err) {
+	freq = get_freq(varno, dset, fmin, fwid, n_bins, 1, opt, &err); 
     }
 
-    if (!(opt & OPT_S)) {
-	print_freq(freq, prn);
-    } else if (dist) {
-	record_freq_test(freq);
+    if (!err) {
+	if (!(opt & OPT_S)) {
+	    print_freq(freq, prn);
+	} else if (dist) {
+	    record_freq_test(freq);
+	}
+
+	if (realgraph && plot_freq(freq, dist)) {
+	    pputs(prn, _("gnuplot command failed\n"));
+	}
+
+	free_freq(freq);
     }
 
-    if (realgraph && plot_freq(freq, dist)) {
-	pputs(prn, _("gnuplot command failed\n"));
-    }
-
-    free_freq(freq);
-
-    return 0;
+    return err;
 }
 
 gretl_matrix *xtab_to_matrix (const Xtab *tab)

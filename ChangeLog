@@ -28,6 +28,8 @@ version 1.9.6, in progress
   last model is not replaced by the augmented version
 - "makepkg" command: add options to produce an XML index entry and a
   file of translatable strings suitable for use with gettext
+- "freq" command: add facility to specify the number of bins, or the
+  location and width of the bins
 - Add facility for inspecting the list of gretl addons, under the GUI
   Help menu
 - Download of textbook data-file packages: use sourceforge for better

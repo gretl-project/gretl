@@ -372,11 +372,6 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	return;
     } 
 
-    if (K == 0) {
-	pprintf(prn, "\n constant: value = %g\n", freq->midpt[0]);
-	return;
-    }
-
     if (freq->discrete) {
 	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
 
@@ -455,7 +450,7 @@ void print_freq (const FreqDist *freq, PRN *prn)
 		pputs(prn, " - ");
 	    }
 
-	    x = (k == K)? freq->endpt[k] : freq->endpt[k+1];
+	    x = (k == K && K > 0)? freq->endpt[k] : freq->endpt[k+1];
 	    if (x > 0 && someneg) {
 		sprintf(word, " %#.*g", digits, x);
 	    } else {
@@ -477,8 +472,10 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	    cumf += f;
 	    pprintf(prn, "  %6.2f%% %7.2f%% ", f, cumf);
 	    i = 0.36 * f;
-	    while (i--) {
-		pputc(prn, '*');
+	    if (K > 1) {
+		while (i--) {
+		    pputc(prn, '*');
+		}
 	    }
 	    pputc(prn, '\n');
 	}

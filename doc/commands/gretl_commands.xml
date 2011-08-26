@@ -3444,6 +3444,21 @@
       </arguments>
       <options>
         <option>
+	  <flag>--nbins</flag>
+	  <optparm>n</optparm>
+	  <effect>specify number of bins</effect>
+        </option>
+        <option>
+	  <flag>--min</flag>
+	  <optparm>minval</optparm>
+	  <effect>specify minimum, see below</effect>
+        </option>
+        <option>
+	  <flag>--binwidth</flag>
+	  <optparm>width</optparm>
+	  <effect>specify bin width, see below</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of graph</effect>
         </option>
@@ -3460,12 +3475,26 @@
 	  <effect>don't print anything</effect>
         </option>
       </options>
+      <examples>
+        <example>freq x</example>
+	<example>freq x --normal</example>
+	<example>freq x --nbins=5</example>
+	<example>freq x --min=0 --binwidth=0.10</example>
+      </examples>
     </usage>
 
     <description context="cli">
       <para>
 	With no options given, displays the frequency distribution for
-	<repl>series</repl> (given by name or number).
+	<repl>series</repl> (given by name or number), with the number
+	of bins and their size chosen automatically.
+      </para>
+      <para>
+	To control the presentation of the distribution you may
+	specify <emphasis>either</emphasis> the number of bins or
+	the minimum value plus the width of the bins, as shown in
+	the last two examples above. The <opt>--min</opt> option
+	sets the lower limit of the left-most bin.
       </para>
       <para>
 	If the <opt>--normal</opt> option is given, the
