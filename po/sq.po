@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-08-08 11:33-0400\n"
-"PO-Revision-Date: 2011-08-26 14:29+0100\n"
-"Last-Translator: \n"
+"PO-Revision-Date: 2011-08-26 15:00-0000\n"
+"Last-Translator: artur bala <artur.bala.al@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -1499,7 +1499,7 @@ msgstr "« %s » -- numër jashtë kufijve !"
 
 #: lib/src/dataset.c:352
 msgid "auto-generated constant"
-msgstr "konstante e krijuar automatikisht"
+msgstr "konstante e krijuar vetvetiu"
 
 #: lib/src/dataset.c:1194
 #: gui2/fncall.c:1378
@@ -1992,7 +1992,7 @@ msgstr "Mesatarja"
 #: gui2/guiprint.c:725
 #: gui2/guiprint.c:940
 msgid "Median"
-msgstr "Mediana"
+msgstr "Mesorja"
 
 #: lib/src/describe.c:4250
 #: lib/src/describe.c:4355
@@ -2954,7 +2954,7 @@ msgstr "Sistemi juaj operativ nuk e mundëson Gnuplot të krijojë një skedë PDF"
 #: gui2/gpt_dialog.c:554
 #, c-format
 msgid "%s versus %s (with least squares fit)"
-msgstr "%s kundrejt %s (me vijën e regresit linear)"
+msgstr "%s kundrejt %s (me vijën e regresit linear KVZ)"
 
 #: lib/src/graphing.c:1481
 #: gui2/gpt_dialog.c:563
@@ -3139,7 +3139,6 @@ msgstr "vlerësim pikësor"
 msgid "%g and %g quantiles"
 msgstr "kuantilet %g dhe %g"
 
-# -
 #: lib/src/graphing.c:4996
 #, c-format
 msgid "forecast variance decomposition for %s"
@@ -3192,10 +3191,11 @@ msgstr "Kuantilet e shpërndarjes normale"
 msgid "adjusted %s"
 msgstr "%s i korrigjuar"
 
+# me përafrimin KVZ
 #: lib/src/graphing.c:5914
 #: plugin/range-mean.c:67
 msgid "with least squares fit"
-msgstr "me përafrimin KVZ"
+msgstr "me vijën e regresit linear KVZ"
 
 #: lib/src/gretl_bfgs.c:401
 #: lib/src/gretl_bfgs.c:440
@@ -5937,7 +5937,7 @@ msgstr "Shm.std. e inovimeve"
 
 #: lib/src/modelprint.c:2864
 msgid "Median depend. var"
-msgstr "Mediana ndrysh. var."
+msgstr "Mesorja ndrysh. var."
 
 #: lib/src/modelprint.c:2866
 msgid "Sum absolute resid"
@@ -11668,7 +11668,7 @@ msgstr "Lista e testeve _NIST"
 
 #: gui2/gretl.c:1416
 msgid "_Basic"
-msgstr "_Ç'ka duhet të dij"
+msgstr "_Ç'ka duhet të di"
 
 #: gui2/gretl.c:1417
 msgid "_Verbose"
@@ -12303,7 +12303,7 @@ msgstr "Udhëzime mbi _funksionet"
 
 #: gui2/gretl.c:1607
 msgid "_User's guide"
-msgstr "Udhërrëfyes për _përdoruesin e gretl"
+msgstr "Udhëzues për _përdoruesin"
 
 #: gui2/gretl.c:1609
 msgid "Check for _updates"
@@ -12311,7 +12311,7 @@ msgstr "Përditësimi i programit"
 
 #: gui2/gretl.c:1610
 msgid "Check for _addons"
-msgstr "Kërko për module shtesë"
+msgstr "Kërko module shtesë"
 
 #: gui2/gretl.c:1611
 msgid "_About gretl"
@@ -12721,7 +12721,7 @@ msgstr "_Vrojtime ndikuese"
 
 #: gui2/gui_utils.c:231
 msgid "_Chow test"
-msgstr "Stabiliteti i parametrave (Chow)"
+msgstr "Qëndrueshmëria e parametrave (Chow)"
 
 #: gui2/gui_utils.c:232
 msgid "_Collinearity"
@@ -12743,15 +12743,15 @@ msgstr "A_RCH"
 
 #: gui2/gui_utils.c:236
 msgid "_QLR test"
-msgstr "Stabiliteti i parametrave (_Quandt LR)"
+msgstr "Qëndrueshmëria e parametrave (_Quandt LR)"
 
 #: gui2/gui_utils.c:237
 msgid "_CUSUM test"
-msgstr "Stabiliteti i parametrave ( _CUSUM)"
+msgstr "Qëndrueshmëria e parametrave ( _CUSUM)"
 
 #: gui2/gui_utils.c:238
 msgid "CUSUM_SQ test"
-msgstr "Stabiliteti i parametrave (CUSUM_SQ)"
+msgstr "Qëndrueshmëria e parametrave (CUSUM_SQ)"
 
 #: gui2/gui_utils.c:239
 msgid "_Common factor"
@@ -13298,7 +13298,7 @@ msgstr "Transformime"
 
 #: gui2/helpfiles.c:179
 msgid "Utilities"
-msgstr "Programe ndihmës"
+msgstr "Të ndryshme"
 
 #: gui2/helpfiles.c:397
 #: doc/commands/matfuncs.c:61
@@ -13337,7 +13337,7 @@ msgstr "Organizimi i matricave"
 #: gui2/helpfiles.c:417
 #: doc/commands/matfuncs.c:55
 msgid "Data utilities"
-msgstr "Mjete për të dhënat"
+msgstr "Mbi të dhënat"
 
 #: gui2/helpfiles.c:419
 #: doc/commands/matfuncs.c:59
@@ -13704,15 +13704,15 @@ msgstr "koeficienti Gini"
 
 #: gui2/library.c:2557
 msgid "use sample mean and variance for normal quantiles"
-msgstr "përdor mesataren dhe variancën e kampionit për kuantilet normalë:"
+msgstr "llogarit kuantilet normalë me mesataren dhe variancën e kampionit"
 
 #: gui2/library.c:2558
 msgid "standardize the data"
-msgstr "standartizo të dhënat"
+msgstr "përdor të dhënat e normuara"
 
 #: gui2/library.c:2559
 msgid "raw quantiles versus N(0, 1)"
-msgstr "kuantilet kundrejt N(0,1)"
+msgstr "kuantilet e të dhënave kundrejt kuantileve N(0,1)"
 
 #: gui2/library.c:2567
 msgid "Normal Q-Q plot"
@@ -17092,7 +17092,7 @@ msgstr "Duke ruajtur..."
 #: plugin/progress_bar.c:152
 #, c-format
 msgid "Scanning %ld fonts"
-msgstr "Tabela e llojeve të shkrimit %ld"
+msgstr "Analizë e llojeve të shkrimit %ld"
 
 #: plugin/quantreg.c:379
 msgid "Couldn't calculate confidence intervals for this model"
@@ -17132,7 +17132,7 @@ msgstr "Gabim në përafrimin e modelit amplituda-mesatarja\n"
 #: plugin/range-mean.c:203
 #, c-format
 msgid "slope of range against mean = %g\n"
-msgstr "pjerrtësia e shtrirjes përkundrejt mesatares = %g\n"
+msgstr "pjerrtësia e amplitudës kundrejt mesatares = %g\n"
 
 #: plugin/range-mean.c:210
 msgid "range-mean test"
@@ -17141,7 +17141,7 @@ msgstr "testi amplituda-mesatarja"
 #: plugin/range-mean.c:212
 #, c-format
 msgid "p-value for H0: slope = 0 is %g\n"
-msgstr "p. kritik për H0: pjerrtësia = 0 është %g\n"
+msgstr "p. kritik për H0: pjerrtësia = 0, është %g\n"
 
 #: plugin/sas_import.c:618
 #: plugin/sas_import.c:652
