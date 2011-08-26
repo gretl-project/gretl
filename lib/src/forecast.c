@@ -1138,7 +1138,7 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 }
 
 /* Compute ARMA forecast error variance (ignoring parameter
-   uncertainty, as is common), via recursion.  Cf. Box and Jenkins,
+   uncertainty, as is common), via recursion. Cf. Box and Jenkins,
    1976, p. 508, "Program 4", V(l) algorithm (with the sign of theta
    changed).
 */
@@ -1147,13 +1147,14 @@ static double arma_variance (const double *phi, int p,
 			     const double *theta, int q,
 			     double *psi, int npsi, int l)
 {
+    /* the sum of squared psi's */
     static double sspsi;
-    int i, j;
 
     DPRINTF(("arma_variance: p=%d, q=%d, npsi=%d, l=%d\n", p, q, npsi, l));
 
     if (l == 1) {
-	sspsi = 0.0;
+	int i, j;
+
 	psi[0] = 1.0;
 	for (j=1; j<npsi; j++) {
 	    psi[j] = 0.0;
@@ -1161,15 +1162,16 @@ static double arma_variance (const double *phi, int p,
 		if (i <= p) {
 		    psi[j] += phi[i] * psi[j-i];
 		}
-		if (j <= q && theta != NULL) {
-		    psi[j] += theta[j];
-		}
+	    }
+	    if (theta != NULL && j <= q) {
+		psi[j] += theta[j];
 	    }
 	    DPRINTF(("psi[%d] = %g\n", j, psi[j]));
 	}
-    } 
-
-    sspsi += psi[l-1] * psi[l-1];
+	sspsi = 1.0;
+    } else {
+	sspsi += psi[l-1] * psi[l-1];
+    }
 
     DPRINTF(("augmented 'sspsi' using psi(%d) = %g (sspsi = %g)\n", 
 	     l-1, psi[l-1], sspsi));
