@@ -899,6 +899,8 @@ static int new_unit (const DATASET *dset, int t)
     return t > 0 && (t / dset->pd != (t-1) / dset->pd);
 }
 
+#define panel_obs_ok(x,t,m) ((m == NULL || m[t] != 0) && !na(x[t])) 
+
 /**
  * panel_statistic:
  * @x: source data.
@@ -906,6 +908,9 @@ static int new_unit (const DATASET *dset, int t)
  * @dset: data set information.
  * @k: code representing the desired statistic: F_PNOBS,
  * F_PMIN, F_PMAX, F_PMEAN or F_PSD.
+ * @mask: either NULL or a series with 0s for observations
+ * to be excluded from the calculations, non-zero values
+ * at other observations.
  *
  * Given the data in @x, constructs in @y a series containing
  * a panel-data statistic.
@@ -914,7 +919,7 @@ static int new_unit (const DATASET *dset, int t)
  */
 
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
-		     int k)
+		     int k, const double *mask)
 {
     int smin = 0, Ti = 0;
     int s, t;
@@ -937,7 +942,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    smin = t;
 		}
 	    }
-	    if (!na(x[t])) {
+	    if (panel_obs_ok(x, t, mask)) {
 		Ti++;
 	    }
 	}
@@ -956,7 +961,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    smin = t;
 		}
 	    }
-	    if (!na(x[t])) {
+	    if (panel_obs_ok(x, t, mask)) {
 		if (na(mm)) {
 		    mm = x[t];
 		} else if (k == F_PMIN && x[t] < mm) {
@@ -976,7 +981,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		/* reset */
 		xbak = NADBL;
 	    }
-	    if (!na(x[t])) {
+	    if (panel_obs_ok(x, t, mask)) {
 		if (!na(xbak) && x[t] != xbak) {
 		    TV = 1;
 		}
@@ -1011,7 +1016,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 			smin = t;
 		    }
 		}
-		if (!na(x[t])) {
+		if (panel_obs_ok(x, t, mask)) {
 		    if (na(xbar) || !TV) {
 			xbar = x[t];
 		    } else {
@@ -1035,7 +1040,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 		    Ti = 0;
 		    smin = t;
 		}
-		if (!na(x[t])) {
+		if (panel_obs_ok(x, t, mask)) {
 		    Ti++;
 		}	
 	    }
@@ -1069,7 +1074,7 @@ int panel_statistic (const double *x, double *y, const DATASET *dset,
 			smin = t;
 		    }
 		}
-		if (!na(x[t]) && !na(xbar)) {
+		if (panel_obs_ok(x, t, mask) && !na(xbar)) {
 		    double dev = x[t] - xbar;
 
 		    if (na(ssx)) {

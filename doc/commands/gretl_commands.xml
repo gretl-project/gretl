@@ -10707,6 +10707,10 @@
       </arguments>
       <options>
         <option>
+	  <flag>--no-tests</flag>
+	  <effect>don't do diagnostic tests</effect>
+        </option>	
+        <option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>

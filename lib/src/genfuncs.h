@@ -65,7 +65,7 @@ int seasonally_adjust_series (const double *x, double *y,
 			      DATASET *dset, int tramo);
 
 int panel_statistic (const double *x, double *y, const DATASET *dset, 
-		     int k);
+		     int k, const double *mask);
 
 gretl_matrix *panel_shrink (const double *x, const DATASET *dset,
 			    int *err);

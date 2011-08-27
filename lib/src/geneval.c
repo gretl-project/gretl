@@ -71,6 +71,7 @@
 
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
 #define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
+#define empty_or_vec(n) (n == NULL || n->t == EMPTY || n->t == VEC)
 
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
 			    t == VEC || t == BUNDLE || t == U_ADDR) 
@@ -4727,10 +4728,18 @@ static NODE *do_irr (NODE *l, parser *p)
 
 #define tramo_string(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
 
+#define is_panel_stat(f) (f == F_PNOBS || \
+			  f == F_PMIN ||  \
+			  f == F_PMAX ||  \
+			  f == F_PMEAN || \
+			  f == F_PSD)
+
 /* Functions taking a series as argument and returning a series.
    Note that the 'r' node may contain an auxiliary parameter;
    in that case the aux value should be a scalar, unless 
-   we're doing F_DESEAS, in which case it should be a string.
+   we're doing F_DESEAS, in which case it should be a string,
+   or one of the panel stats functions, in which case it should
+   be a series.
 */
 
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
@@ -4747,6 +4756,11 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    node_type_error(f, 2, STR, r, p);
 	    return NULL;
 	}
+    } else if (is_panel_stat(f)) {
+	if (!empty_or_vec(r)) {
+	    node_type_error(f, 2, VEC, r, p);
+	    return NULL;
+	}	
     } else if (!empty_or_num(r)) {
 	node_type_error(f, 2, NUM, r, p);
 	return NULL;
@@ -4757,6 +4771,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     if (ret != NULL) {
 	gretl_matrix *tmp = NULL;
 	double parm = NADBL;
+	const double *z = NULL;
 	const double *x;
 	double *y;
 
@@ -4764,7 +4779,9 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    cast_to_series(l, f, &tmp, NULL, NULL, p);
 	}
 
-	if (!p->err && f != F_DESEAS && 
+	if (!p->err && r->t == VEC) {
+	    z = r->v.xvec;
+	} else if (!p->err && f != F_DESEAS && 
 	    r != NULL && r->t != EMPTY) {
 	    parm = node_get_scalar(r, p);
 	}
@@ -4821,7 +4838,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	case F_PMAX:
 	case F_PMEAN:
 	case F_PSD:
-	    p->err = panel_statistic(x, y, p->dset, f); 
+	    p->err = panel_statistic(x, y, p->dset, f, z); 
 	    break;
 	case F_RANKING:
 	    p->err = rank_series(x, y, F_SORT, p->dset); 

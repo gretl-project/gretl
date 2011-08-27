@@ -4263,20 +4263,20 @@
     <function name="pmax" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns the per-unit maximum for variable
-	  <argname>y</argname>.
-	</para>
-	<para context="tex">
+	<para>
 	  Only applicable if the currently open dataset has a panel
 	  structure. Returns the per-unit maximum for variable
 	  <argname>y</argname>.
 	</para>
 	<para>
-	  Missing values are skipped. 
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="pmin"/>
 	    <fncref targ="pmean"/>
@@ -4290,6 +4290,7 @@
     <function name="pmean" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
       </fnargs>
       <description>
 	<para context="notex">
@@ -4308,6 +4309,11 @@
 	  observations for unit $i$.
 	</para>
 	<para>
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="pmax"/>
 	    <fncref targ="pmin"/>
@@ -4322,20 +4328,20 @@
     <function name="pmin" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
+	<para>
 	  Only applicable if the currently open dataset has a panel
 	  structure. Returns the per-unit mimimum for variable
 	  <argname>y</argname>.
 	</para>
-	<para context="tex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns the per-unit minimum for variable
-	  <argname>y</argname>.
-	</para>
 	<para>
-	  Missing values are skipped. 
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>	
+	<para>
 	  <seelist> 
 	    <fncref targ="pmax"/>
 	    <fncref targ="pmean"/>
@@ -4349,20 +4355,20 @@
     <function name="pnobs" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
       </fnargs>
       <description>
-	<para context="notex">
-	  Only applicable if the currently open dataset has a panel
-	  structure. Returns for each unit the number of non-missing
-	  cases for the variable <argname>y</argname>.
-	</para>
-	<para context="tex">
+	<para>
 	  Only applicable if the currently open dataset has a panel
 	  structure. Returns for each unit the number of non-missing
 	  cases for the variable <argname>y</argname>.
 	</para>
 	<para>
-	  Missing values are skipped. 
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
 	  <seelist> 
 	    <fncref targ="pmax"/>
 	    <fncref targ="pmin"/>
@@ -4455,6 +4461,7 @@
     <function name="psd" section="stats" output="series">
       <fnargs>
 	<fnarg type="series">y</fnarg>
+	<fnarg type="series" optional="true">mask</fnarg>
       </fnargs>
       <description>
 	<para context="notex">
@@ -4476,10 +4483,15 @@
 	  <lit>NA</lit> is returned; if $T_i = 1$, 0 is returned.
 	</para>
 	<para>
+	  If the optional second argument is provided then
+	  observations for which the value of <argname>mask</argname>
+	  is zero are ignored.
+	</para>
+	<para>
 	  Note: this function makes it possible to check whether a given
 	  variable (say, <lit>X</lit>) is time-invariant via the condition
 	  <lit>max(psd(X)) = 0</lit>.
-	</para>
+	</para>	
 	<para>
 	  <seelist>
 	    <fncref targ="pmax"/>

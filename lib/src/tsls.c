@@ -1470,9 +1470,10 @@ int ivreg_process_lists (const int *list, int **reglist, int **instlist)
  * @list: dependent variable plus list of regressors.
  * @dset: dataset struct.
  * @opt: may contain %OPT_R for robust VCV, %OPT_N for no df correction, 
- * %OPT_A if this is an auxiliary reression, %OPT_E is we're
- * estimating one equation within a system; and %OPT_H to
- * add "hatlist" to model even under %OPT_E.
+ * %OPT_A if this is an auxiliary reression, %OPT_E if we're
+ * estimating one equation within a system, %OPT_H to
+ * add "hatlist" to model even under %OPT_E, %OPT_X to skip
+ * the set of tests that are usually calculated.
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.  If %OPT_E is given, fitted values from the first-stage
@@ -1495,6 +1496,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
     int ninst = 0, nreg = 0;
     int orig_nvar = dset->v;
     int sysest = (opt & OPT_E);
+    int no_tests = (opt & OPT_X);
     int nendo, ev = 0;
     int OverIdRank = 0;
     int i, err = 0;
@@ -1637,13 +1639,15 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	goto bailout;
     }
 
-    if (!sysest || (opt & OPT_H)) {
-	if (nendo == 1) {
-	    /* handles robust estimation, for single endogenous regressor */
-	    compute_first_stage_F(&tsls, ev, reglist, instlist, dset, opt);
-	} else if (!(opt & OPT_R) && nendo > 0) {
-	    /* at present, only handles case of i.i.d. errors */
-	    compute_stock_yogo(&tsls, endolist, instlist, hatlist, dset);
+    if (!no_tests) {
+	if (!sysest || (opt & OPT_H)) {
+	    if (nendo == 1) {
+		/* handles robust estimation, for single endogenous regressor */
+		compute_first_stage_F(&tsls, ev, reglist, instlist, dset, opt);
+	    } else if (!(opt & OPT_R) && nendo > 0) {
+		/* at present, only handles case of i.i.d. errors */
+		compute_stock_yogo(&tsls, endolist, instlist, hatlist, dset);
+	    }
 	}
     } 
 
@@ -1672,7 +1676,7 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	tsls_extra_stats(&tsls, reglist[1], OverIdRank, dset);
     }
 
-    if (!sysest && nendo > 0) {
+    if (!sysest && !no_tests && nendo > 0) {
 	if (hatlist != NULL) {
 	    tsls_hausman_test(&tsls, reglist, hatlist, dset);
 	}

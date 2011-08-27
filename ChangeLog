@@ -9,6 +9,8 @@ version 1.9.6, in progress
   with one observation per individual
 - allow non-integer degrees of freedom for Student's t in cdf(), invcdf()
   and randgen()
+- allow use of an (optional) "mask" argument with the panel statistics
+  functions pmean() and friends
 - list arguments to functions: allow use of anonymous lists
 - extend the invcdf() function to the gamma and std. GED distributions
 - GUI script editor: add Cut and Redo toolbar buttons, and also a
@@ -30,6 +32,7 @@ version 1.9.6, in progress
   file of translatable strings suitable for use with gettext
 - "freq" command: add facility to specify the number of bins, or the
   location and width of the bins
+- "tsls" command: add a --no-tests option
 - Add facility for inspecting the list of gretl addons, under the GUI
   Help menu
 - Download of textbook data-file packages: use sourceforge for better
