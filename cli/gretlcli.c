@@ -42,6 +42,7 @@
 #include "dbread.h"
 #include "boxplots.h"
 #include "gretl_www.h"
+#include "gretl_scalar.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -97,6 +98,10 @@ static void usage (int err)
 	     " gretlcli -b myfile.inp >myfile.out\n"
 	     "Example of run mode usage:\n"
 	     " gretlcli -r myfile.inp\n"));
+
+    printf("\nSpecial batch-mode option:\n"
+	   " --scriptopt=<value> sets a scalar value, accessible to a script\n"
+	   " under the name \"scriptopt\"\n\n");
 
     if (err) {
 	exit(EXIT_FAILURE);
@@ -349,6 +354,7 @@ int main (int argc, char *argv[])
     int load_datafile = 1;
     char filearg[MAXLEN];
     char runfile[MAXLEN];
+    double scriptval = NADBL;
     CMD cmd;
     PRN *prn;
     int err = 0;
@@ -373,7 +379,7 @@ int main (int argc, char *argv[])
     } else {
 	gretlopt opt;
 
-	err = parseopt(&argc, &argv, &opt, filearg);
+	err = parseopt(&argc, &argv, &opt, &scriptval, filearg);
 
 	if (!err && (opt & (OPT_DBOPEN | OPT_WEBDB))) {
 	    /* catch GUI-only options */
@@ -540,6 +546,11 @@ int main (int argc, char *argv[])
     /* print list of variables */
     if (data_status) {
 	varlist(dset, prn);
+    }
+
+    /* define "$opt" if applicable */
+    if (!na(scriptval)) {
+	gretl_scalar_add("scriptopt", scriptval);
     }
 
     /* check for help file */

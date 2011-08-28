@@ -3112,6 +3112,8 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
  * @pargc: pointer to count of arguments.
  * @pargv: pointer to command-line argument array.
  * @popt: location to receive option(s).
+ * @scriptval: location to receive numerical option value
+ * to be passed to script.
  * @fname: optional filename argument.
  *
  * Parses options out of the command line into @popt and
@@ -3120,7 +3122,8 @@ int cli_help (const char *cmdword, gretlopt opt, PRN *prn)
  * Returns: 0 on success, non-zero in case of bad options.
  */
 
-int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname)
+int parseopt (int *pargc, char ***pargv, gretlopt *popt, 
+	      double *scriptval, char *fname)
 {
     char **argv;
     int argc, gotfile = 0;
@@ -3161,6 +3164,8 @@ int parseopt (int *pargc, char ***pargv, gretlopt *popt, char *fname)
 	    opt |= OPT_QUIET;
 	} else if (!strcmp(s, "-m") || !strcmp(s, "--makepkg")) { 
 	    opt |= OPT_MAKEPKG;
+	} else if (!strncmp(s, "--scriptopt=", 12)) { 
+	    *scriptval = atof(s + 12);
 	} else if (*s == '-') {
 	    /* not a valid option */
 	    err = E_DATA;
