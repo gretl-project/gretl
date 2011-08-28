@@ -789,31 +789,26 @@ GtkWidget *gretl_toolbar_new (void)
 
 #if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 12)
 
-static GtkTooltips *gretl_tips;
-
-void gretl_tooltips_init (void)
-{
-    gretl_tips = gtk_tooltips_new();
-    gtk_tooltips_enable(gretl_tips); /* redundant? */
-}
-
 void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 {
+    static GtkTooltips *gretl_tips;
+
+    if (gretl_tips == NULL) {
+	gretl_tips = gtk_tooltips_new();
+	gtk_tooltips_enable(gretl_tips); /* redundant? */
+    }
+
     gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
 }
 
 #else /* new tooltips API */
-
-void gretl_tooltips_init (void)
-{
-}
 
 void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 {
     gtk_widget_set_tooltip_text(w, str);
 }
 
-#endif
+#endif /* GTK variants */
 
 GtkToolItem *gretl_toolbar_insert (GtkWidget *tbar,
 				   GretlToolItem *item,

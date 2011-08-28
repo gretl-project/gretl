@@ -20,9 +20,10 @@
 #ifndef TEXTBUF_H
 #define TEXTBUF_H
 
-#define textview_use_highlighting(r) (r != EDIT_X12A &&	   \
-				      (vwin_editing_script(r) ||  \
-				       r == VIEW_SCRIPT ||	   \
+#define textview_use_highlighting(r) (r != EDIT_X12A &&			\
+				      (vwin_editing_script(r) ||	\
+				       r == VIEW_SCRIPT ||		\
+				       r == VIEW_PKG_CODE ||		\
 				       r == VIEW_LOG))
 
 extern int tabwidth;

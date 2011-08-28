@@ -574,7 +574,6 @@ int main (int argc, char **argv)
     }
 
     /* create the GUI */
-    gretl_tooltips_init();
     gretl_stock_icons_init();
     make_main_window();
 

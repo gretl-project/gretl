@@ -289,31 +289,21 @@ static int compare_colls (const void *a, const void *b)
 {
     const file_collection *ca = *(const file_collection **) a;
     const file_collection *cb = *(const file_collection **) b;
-     
-    return strcmp(ca->title, cb->title);
+
+    if (!strcmp(ca->title, "Gretl")) {
+	return -1;
+    } else if (!strcmp(cb->title, "Gretl")) {
+	return 1;
+    } else {
+	return strcmp(ca->title, cb->title);
+    }
 }
 
 static void collection_stack_sort (file_collection **colls, int n)
 {
-    file_collection *tmp;
-    int i;
-
-    if (n < 2) {
-	return; /* no-op */
+    if (n >= 2) {
+	qsort(colls, n, sizeof *colls, compare_colls);
     }
-
-    for (i=0; i<n; i++) {
-	if (!strcmp(colls[i]->title, "Gretl")) {
-	    if (i > 0) {
-		tmp = colls[0];
-		colls[0] = colls[i];
-		colls[i] = tmp;
-	    }
-	    break;
-	}
-    }
-
-    qsort(colls + 1, n - 1, sizeof *colls, compare_colls);
 }
 
 static file_collection *collection_stack (file_collection *coll, int op)

@@ -39,8 +39,6 @@ GtkWidget *build_text_popup (windata_t *vwin);
 
 void gretl_stock_icons_init (void);
 
-void gretl_tooltips_init (void);
-
 void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
 GtkWidget *gretl_toolbar_new (void);
