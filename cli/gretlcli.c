@@ -548,10 +548,8 @@ int main (int argc, char *argv[])
 	varlist(dset, prn);
     }
 
-    /* define "$opt" if applicable */
-    if (!na(scriptval)) {
-	gretl_scalar_add("scriptopt", scriptval);
-    }
+    /* define "scriptopt" */
+    gretl_scalar_add("scriptopt", scriptval);
 
     /* check for help file */
     if (!batch) {
