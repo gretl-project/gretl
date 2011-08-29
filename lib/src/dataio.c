@@ -1121,13 +1121,14 @@ static int writehdr (const char *hdrfile, const int *list,
 /**
  * get_precision:
  * @x: data vector.
- * @n: length of x.
- * @placemax: maximum number of decimal places to try.
+ * @n: length of @x.
+ * @placemax: the maximum number of decimal places to try.
  *
  * Find the number of decimal places required to represent a given
- * data series uniformly.
+ * data series uniformly and accurately, if possible.
  * 
- * Returns: the required number of decimal places.
+ * Returns: the required number of decimal places or
+ * #PMAX_NOT_AVAILABLE if it can't be done.
  */
 
 int get_precision (const double *x, int n, int placemax)
@@ -1143,7 +1144,6 @@ int get_precision (const double *x, int n, int placemax)
 	}
 
 	n_ok++;
-
 	z = fabs(x[t]);
 
 	/* escape clause: numbers are too big or too small for
@@ -1154,6 +1154,7 @@ int get_precision (const double *x, int n, int placemax)
 
 	p = placemax;
 	sprintf(numstr, "%.*f", p, z);
+	/* go to the end and drop trailing zeros */
 	s = numstr + strlen(numstr) - 1;
 	while (*s-- == '0') {
 	    p--;

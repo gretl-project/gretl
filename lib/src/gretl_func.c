@@ -1983,24 +1983,27 @@ static int write_function_xml (ufunc *fun, FILE *fp)
 static void print_function_start (ufunc *fun, PRN *prn)
 {
     const char *s;
-    int i;
+    int i, pos = 0;
 
     if (fun->rettype == GRETL_TYPE_NONE) {
-	pprintf(prn, "function void %s ", fun->name);
+	pos += pprintf(prn, "function void %s ", fun->name);
     } else {
 	const char *typestr = gretl_arg_type_name(fun->rettype);
 
-	pprintf(prn, "function %s %s ", typestr, fun->name);
+	pos += pprintf(prn, "function %s %s ", typestr, fun->name);
     }
 
     gretl_push_c_numeric_locale();
 
+    if (fun->n_params == 0) {
+	pputs(prn, "(void)");
+    } else {
+	pos += pputc(prn, '(');
+    }
+
     for (i=0; i<fun->n_params; i++) {
 	fn_param *fp = &fun->params[i];
 
-	if (i == 0) {
-	    pputc(prn, '(');
-	}
 	if (fp->flags & ARG_CONST) {
 	    pputs(prn, "const ");
 	}
@@ -2028,7 +2031,8 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	if (i == fun->n_params - 1) {
 	    pputc(prn, ')');
 	} else {
-	    pputs(prn, ", ");
+	    pputs(prn, ",\n");
+	    bufspace(pos, prn);
 	}
     }
 

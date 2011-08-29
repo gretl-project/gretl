@@ -3112,7 +3112,8 @@ int printmodel (MODEL *pmod, const DATASET *dset, gretlopt opt,
     if (opt & OPT_S) {
 	/* --simple-print */
 	if (pmod->ci == OLS && !na(pmod->rsq) && plain_format(prn)) {
-	    pprintf(prn, "%s = %f\n\n", _("R-squared"), pmod->rsq);
+	    pprintf(prn, "%s = %g, %s = %f\n\n", _("SSR"), 
+		    pmod->ess, _("R-squared"), pmod->rsq);
 	}
 	goto close_format;
     }
