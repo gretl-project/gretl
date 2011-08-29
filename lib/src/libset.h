@@ -77,6 +77,7 @@ typedef enum {
 #define RNG              "RNG"
 #define DPDSTYLE         "dpdstyle"
 #define GMM_MAXITER      "gmm_maxiter"
+#define CSV_DIGITS       "csv_digits"
 
 typedef int (*ITER_PRINT_FUNC) (int, PRN *);
 typedef void (*SHOW_ACTIVITY_FUNC) (void);

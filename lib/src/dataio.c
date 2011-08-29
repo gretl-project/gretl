@@ -1244,7 +1244,7 @@ static void date_maj_min (int t, const DATASET *dset, int *maj, int *min)
     }
 }
 
-#define TEXT_DIGITS 12
+#define DEFAULT_CSV_DIGITS 12
 
 #define annual_data(p) (p->structure == TIME_SERIES && p->pd == 1)
 
@@ -1276,6 +1276,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     FILE *fp = NULL;
     int *pmax = NULL;
     int freelist = 0;
+    int csv_digits = 0;
     double xx;
     int err = 0;
 
@@ -1297,9 +1298,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
     }
 
     l0 = list[0];
-
     fmt = format_from_opt_or_name(opt, fname, &delim);
-
     fname = gretl_maybe_switch_dir(fname);
 
     if (fmt == 0 || fmt == GRETL_FMT_GZIPPED) {
@@ -1358,16 +1357,28 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 	GRETL_FMT_R || fmt == GRETL_FMT_TRAD || 
 	fmt == GRETL_FMT_DAT || fmt == GRETL_FMT_JM) { 
 	/* an ASCII variant of some sort */
+	csv_digits = libset_get_int(CSV_DIGITS);
+
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) {
 	    fclose(fp);
 	    err = E_ALLOC;
 	    goto write_exit;
-	}
-	for (i=1; i<=l0; i++) {
-	    v = list[i];
-	    pmax[i-1] = get_precision(&dset->Z[v][dset->t1], tsamp, TEXT_DIGITS);
 	}	
+
+	if (csv_digits == 0) {
+	    /* the user has not over-riden the default */
+	    for (i=1; i<=l0; i++) {
+		v = list[i];
+		pmax[i-1] = get_precision(&dset->Z[v][dset->t1], tsamp, 
+					  DEFAULT_CSV_DIGITS);
+	    }
+	    csv_digits = DEFAULT_CSV_DIGITS;
+	} else {
+	    for (i=0; i<l0; i++) {
+		pmax[i] = PMAX_NOT_AVAILABLE;
+	    }
+	}
     }
 
     if (fmt != GRETL_FMT_CSV || dset->decpoint != ',') {
@@ -1386,7 +1397,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		if (na(dset->Z[v][t])) {
 		    fprintf(fp, "-999 ");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.*g ", TEXT_DIGITS, dset->Z[v][t]);
+		    fprintf(fp, "%.*g ", csv_digits, dset->Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
 		}
@@ -1463,7 +1474,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		if (na(xx)) {
 		    fputs(na_string, fp);
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.*g", TEXT_DIGITS, xx);
+		    fprintf(fp, "%.*g", csv_digits, xx);
 		} else {
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
 		}
@@ -1522,7 +1533,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		if (na(xx)) {
 		    fprintf(fp, "-9999.99");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.*g", TEXT_DIGITS, xx);
+		    fprintf(fp, "%.*g", csv_digits, xx);
 		} else {
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
 		}
@@ -1559,7 +1570,7 @@ int write_data (const char *fname, int *list, const DATASET *dset,
 		if (na(dset->Z[v][t])) {
 		    fputs("NaN ", fp);
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		    fprintf(fp, "%.*g ", TEXT_DIGITS, dset->Z[v][t]);
+		    fprintf(fp, "%.*g ", csv_digits, dset->Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], dset->Z[v][t]);
 		}

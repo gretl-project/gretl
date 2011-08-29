@@ -161,11 +161,13 @@ static int gretl_debug;
 static int user_mp_bits;
 static int R_functions;
 static int R_lib = 1;
+static int csv_digits;
 
 static int boolvar_get_flag (const char *s);
 static const char *hac_lag_string (void);
 static int real_libset_read_script (const char *fname,
 				    PRN *prn);
+static void set_csv_digits (const char *s);
 
 static void robust_opts_init (struct robust_opts *r)
 {
@@ -1532,7 +1534,10 @@ int execute_set_line (const char *line, DATASET *dset,
 	if (!strcmp(setobj, "csv_na")) {
 	    set_csv_na_string(setarg);
 	    return 0;
-	} 	    
+	} else if (!strcmp(setobj, "csv_digits")) {
+	    set_csv_digits(setarg);
+	    return 0;
+	}	    
 
 	lower(setarg);
 
@@ -1735,6 +1740,8 @@ int libset_get_int (const char *key)
 	return get_blas_nmk_min();
     } else if (!strcmp(key, BFGS_VERBSKIP)) {
 	return state->bfgs_verbskip;
+    } else if (!strcmp(key, CSV_DIGITS)) {
+	return csv_digits;
     } else {
 	fprintf(stderr, "libset_get_int: unrecognized "
 		"variable '%s'\n", key);	
@@ -2356,6 +2363,15 @@ void set_csv_na_string (const char *s)
 
     *state->csv_na = '\0';
     strncat(state->csv_na, s, 7);
+}
+
+static void set_csv_digits (const char *s)
+{
+    int k = atoi(s);
+
+    if (k >= 0 && k < 26) {
+	csv_digits = k;
+    }
 }
 
 int libset_write_script (const char *fname)
