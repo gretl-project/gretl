@@ -474,17 +474,17 @@ void sourceview_print (windata_t *vwin)
     comp = gtk_source_print_compositor_new_from_view(view);
     print = gtk_print_operation_new();
 
-#ifdef G_OS_WIN32 /* ?? */
+#ifdef G_OS_WIN32
     gtk_print_operation_set_unit(print, GTK_UNIT_MM);
 #endif
 
     if (settings != NULL) {
 	gtk_print_operation_set_print_settings(print, settings);
     } else {
-	gtk_source_print_compositor_set_right_margin(comp, 1.0, GTK_UNIT_INCH);
-	gtk_source_print_compositor_set_left_margin(comp, 1.0, GTK_UNIT_INCH);
-	gtk_source_print_compositor_set_top_margin(comp, 0.75, GTK_UNIT_INCH);
-	gtk_source_print_compositor_set_bottom_margin(comp, 1.0, GTK_UNIT_INCH);
+	gtk_source_print_compositor_set_right_margin(comp, 20, GTK_UNIT_MM);
+	gtk_source_print_compositor_set_left_margin(comp, 20, GTK_UNIT_MM);
+	gtk_source_print_compositor_set_top_margin(comp, 16, GTK_UNIT_MM);
+	gtk_source_print_compositor_set_bottom_margin(comp, 20, GTK_UNIT_MM);
     }
 
     g_signal_connect(print, "begin_print", G_CALLBACK(begin_print), comp);

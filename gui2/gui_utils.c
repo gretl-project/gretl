@@ -63,8 +63,6 @@
 # include "gretlwin32.h"
 #endif
 
-char *storelist = NULL;
-
 static void set_up_model_view_menu (GtkWidget *window, windata_t *vwin);
 static void add_system_menu_items (windata_t *vwin, int vecm);
 static void add_bundle_menu_items (windata_t *vwin);

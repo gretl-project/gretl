@@ -1741,25 +1741,25 @@ int save_function_package_spec (const char *fname, gpointer p)
 
 static int get_lists_from_selector (int **l1, int **l2)
 {
-    int *list;
+    gchar *liststr = get_selector_storelist();
     int err = 0;
 
-    if (storelist == NULL) {
-	return E_DATA;
-    }
-
-    list = gretl_list_from_string(storelist, &err);
+    if (liststr == NULL) {
+	err = E_DATA;
+    } else {
+	int *list = gretl_list_from_string(liststr, &err);
     
-    if (!err) {
-	if (gretl_list_has_separator(list)) {
-	    err = gretl_list_split_on_separator(list, l1, l2);
-	} else {
-	    *l1 = list;
-	    list = NULL;
+	if (list != NULL) {
+	    if (gretl_list_has_separator(list)) {
+		err = gretl_list_split_on_separator(list, l1, l2);
+	    } else {
+		*l1 = list;
+		list = NULL;
+	    }
+	    free(list);
 	}
+	g_free(liststr);
     }
-
-    free(list);
 
     return err;
 }

@@ -6575,14 +6575,53 @@ char *main_window_selection_as_string (void)
     return lmkr.liststr;
 }
 
+static gchar *get_or_set_storelist (const char *s, int reset)
+{
+    static gchar *storelist;
+
+    if (s != NULL) {
+	/* set storelist */
+	g_free(storelist);
+	if (*s == '\0') {
+	    storelist = NULL;
+	} else {
+	    storelist = g_strdup(s);
+	}
+	return NULL;
+    } else if (reset) {
+	g_free(storelist);
+	storelist = NULL;
+	return NULL;
+    } else {
+	/* retrieve storelist (and NULL-ify it) */
+	gchar *ret = storelist;
+
+	storelist = NULL;
+	return ret;
+    }
+}
+
+gchar *get_selector_storelist (void)
+{
+    return get_or_set_storelist(NULL, 0);
+}
+
+void set_selector_storelist (const char *s)
+{
+    if (s == NULL) {
+	/* forces a reset */
+	get_or_set_storelist(NULL, 1);
+    } else {
+	get_or_set_storelist(s, 0);
+    }
+}
+
 static int pkg_add_remove_callback (selector *sr)
 {
     void *p = sr->data;
 
-    g_free(storelist);
-    storelist = g_strdup(sr->cmdlist);
+    set_selector_storelist(sr->cmdlist);
     gtk_widget_destroy(sr->dlg);
-
     revise_function_package(p);
 
     return 0;
@@ -6593,18 +6632,13 @@ static int data_save_selection_callback (selector *sr)
     gpointer data = NULL;
     int ci = sr->ci;
 
-    if ((sr->cmdlist == NULL || *sr->cmdlist == 0) && sr->n_left == 0) {
+    if ((sr->cmdlist == NULL || *sr->cmdlist == '\0') && sr->n_left == 0) {
 	/* nothing selected */
 	return 0;
     }
 
-    if (storelist != NULL) {
-	g_free(storelist);
-	storelist = NULL;
-    }
-
-    if (sr->cmdlist != NULL && *sr->cmdlist != '\0') {
-	storelist = g_strdup(sr->cmdlist);
+    if (sr->cmdlist != NULL) {
+	set_selector_storelist(sr->cmdlist);
     }
 
     gtk_widget_destroy(sr->dlg);
@@ -6615,6 +6649,7 @@ static int data_save_selection_callback (selector *sr)
 
 	cancel = csv_options_dialog(&opt);
 	if (cancel) {
+	    set_selector_storelist(NULL);
 	    return 0;
 	} else {
 	    data = GINT_TO_POINTER(opt);
@@ -6633,6 +6668,8 @@ static int data_save_selection_callback (selector *sr)
 void data_save_selection_wrapper (int file_ci)
 {
     selector *sr = NULL;
+
+    set_selector_storelist(NULL);
 
     if (file_ci == SAVE_FUNCTIONS) {
 	if (no_user_functions_check()) {

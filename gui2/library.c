@@ -7341,40 +7341,7 @@ static int shrink_dataset_to_sample (void)
     return err;
 }
 
-static int shrink_dataset_to_sublist (void)
-{
-    int *sublist = NULL;
-    int *full_list = NULL;
-    int *droplist = NULL;
-    int err = 0;
-
-    if (storelist == NULL) {
-	return 0;
-    }
-
-    sublist = gretl_list_from_string(storelist, &err);
-    if (err) {
-	gui_errmsg(err);
-	return err;
-    }
-
-    full_list = full_var_list(dataset, NULL);
-    droplist = gretl_list_diff_new(full_list, sublist, 1);
-    
-    if (droplist == NULL) {
-	nomem();
-    } else {
-	real_delete_vars(0, droplist);
-    }
-
-    free(sublist);
-    free(full_list);
-    free(droplist);
-
-    return err;
-}
-
-static void maybe_shrink_dataset (const char *newname, int sublist)
+static void maybe_shrink_dataset (const char *newname)
 {
     int shrink = 0;
     int resp;
@@ -7392,9 +7359,6 @@ static void maybe_shrink_dataset (const char *newname, int sublist)
 	if (dataset_is_subsampled()) {
 	    shrink_dataset_to_sample();
 	}
-	if (sublist) {
-	    shrink_dataset_to_sublist();
-	}
 	if (datafile != newname) {
 	    strcpy(datafile, newname);
 	}
@@ -7404,22 +7368,32 @@ static void maybe_shrink_dataset (const char *newname, int sublist)
 #define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | \
                              OPT_C | OPT_D | OPT_J | OPT_X))
 
+/* This is called from the file selector when doing a
+   data save, and also from the callback from Ctrl-S
+   in the main gretl window.
+*/
+
 int do_store (char *filename, gretlopt opt)
 {
-    const char *mylist;
+    gchar *mylist = NULL;
     gchar *tmp = NULL;
     FILE *fp;
-    int sublist = 0;
     int err = 0;
 
     /* if the data set is sub-sampled, give a chance to rebuild
-       the full data range before saving */
+       the full data range before saving 
+    */
     if (maybe_restore_full_data(SAVE_DATA)) {
 	goto store_get_out;
     }
 
-    /* "storelist" is a global string */
-    mylist = (storelist == NULL)? "" : storelist;
+    /* this should give NULL unless there's a current selection
+       of series from the apparatus in selector.c 
+    */
+    mylist = get_selector_storelist();
+    if (mylist == NULL) {
+	mylist = g_strdup("");
+    }
 
     if (opt & OPT_X) {
 	/* session: exporting gdt */
@@ -7478,8 +7452,8 @@ int do_store (char *filename, gretlopt opt)
     /* record that data have been saved, etc. */
     if (!DATA_EXPORT(opt)) {
 	mkfilelist(FILE_LIST_DATA, filename);
-	if (dataset_is_subsampled() || sublist) {
-	    maybe_shrink_dataset(filename, sublist);
+	if (dataset_is_subsampled()) {
+	    maybe_shrink_dataset(filename);
 	} else if (datafile != filename) {
 	    strcpy(datafile, filename);
 	}
@@ -7497,11 +7471,7 @@ int do_store (char *filename, gretlopt opt)
 
  store_get_out:
 
-    if (storelist != NULL) {
-	free(storelist);
-	storelist = NULL;
-    }
-
+    g_free(mylist);
     g_free(tmp);
 
     return err;

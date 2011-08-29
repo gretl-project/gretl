@@ -1905,12 +1905,14 @@ int csv_selected_to_clipboard (void)
 
 int csv_to_clipboard (void)
 {
+    gchar *liststr;
     int cancel, err = 0;
 
     data_save_selection_wrapper(COPY_CSV);
+    liststr = get_selector_storelist();
 
-    if (storelist != NULL && *storelist != '\0') {
-	int *list = gretl_list_from_string(storelist, &err);	
+    if (liststr != NULL) {
+	int *list = gretl_list_from_string(liststr, &err);	
 
 	if (list != NULL) {
 	    cancel = csv_options_dialog(NULL);
@@ -1919,9 +1921,7 @@ int csv_to_clipboard (void)
 	    }
 	    free(list);
 	}
-
-	free(storelist);
-	storelist = NULL;
+	g_free(liststr);
     }
 
     return err;

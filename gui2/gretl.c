@@ -44,6 +44,7 @@
 #include "varinfo.h"
 #include "dlgutils.h"
 #include "fncall.h"
+#include "selector.h"
 
 #include <dirent.h>
 
@@ -2064,11 +2065,15 @@ static void auto_store (void)
 	/* but if there's already a datafile, and it's not gzipped, then
 	   arrange for the new file to be uncompressed too
 	*/
-	if (*datafile && !is_gzipped(datafile)) {
+	if (*datafile != '\0' && !is_gzipped(datafile)) {
 	    oflag = OPT_NONE;
 	}
 
+	/* ensure there's no stale selection around */
+	set_selector_storelist(NULL);
+
 	if ((data_status & USER_DATA) && has_suffix(datafile, ".gdt")) {
+	    /* bypass filename selection */
 	    do_store(datafile, oflag);
 	} else {
 	    file_selector(SAVE_DATA, FSEL_DATA_NONE, NULL);
