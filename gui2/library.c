@@ -285,14 +285,16 @@ int gretl_command_sprintf (const char *template, ...)
 int gretl_command_strcpy (const char *s)
 {
     memset(cmdline, 0, MAXLINE);
-    strcpy(cmdline, s);
+    strncat(cmdline, s, MAXLINE - 1);
     
     return 0;
 }
 
 int gretl_command_strcat (const char *s)
 {
-    strcat(cmdline, s);
+    int n = MAXLINE - strlen(cmdline) - 1;
+
+    strncat(cmdline, s, n);
 
     return 0;
 }
@@ -7365,6 +7367,27 @@ static void maybe_shrink_dataset (const char *newname)
     }	
 }
 
+static int maybe_back_up_datafile (const char *fname)
+{
+    FILE *fp = gretl_fopen(fname, "rb");
+    int err = 0;
+
+    if (fp != NULL) {
+	if (fgetc(fp) != EOF) {
+	    /* the file is not empty */
+	    gchar *backup = g_strdup_printf("%s~", fname);
+	    
+	    fclose(fp);
+	    err = copyfile(fname, backup);
+	    g_free(backup);
+	} else {
+	    fclose(fp);
+	}
+    }
+
+    return err;
+}
+
 #define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | \
                              OPT_C | OPT_D | OPT_J | OPT_X))
 
@@ -7376,81 +7399,69 @@ static void maybe_shrink_dataset (const char *newname)
 int do_store (char *filename, gretlopt opt)
 {
     gchar *mylist = NULL;
-    gchar *tmp = NULL;
-    FILE *fp;
     int err = 0;
 
-    /* if the data set is sub-sampled, give a chance to rebuild
-       the full data range before saving 
+    /* If the dataset is sub-sampled, give the user a chance to
+       rebuild the full data range before saving.
     */
     if (maybe_restore_full_data(SAVE_DATA)) {
-	goto store_get_out;
+	return 0; /* canceled */
     }
 
-    /* this should give NULL unless there's a current selection
-       of series from the apparatus in selector.c 
+    gretl_command_sprintf("store '%s'", filename);
+
+    /* This should give NULL unless there's a current selection
+       of series from the apparatus in selector.c. That's OK:
+       implicitly all series will be saved.
     */
     mylist = get_selector_storelist();
-    if (mylist == NULL) {
-	mylist = g_strdup("");
+    if (mylist != NULL) {
+	gretl_command_strcat(" ");
+	gretl_command_strcat(mylist);
+	g_free(mylist);
     }
 
     if (opt & OPT_X) {
-	/* session: exporting gdt */
-	tmp = g_strdup_printf("store '%s' %s", filename, mylist);
+	; /* inside a session: exporting gdt */
     } else if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
-	const char *flagstr = print_flags(opt, STORE);
-
-	tmp = g_strdup_printf("store '%s' %s%s", filename, mylist, flagstr);
+	gretl_command_strcat(print_flags(opt, STORE));
     } else if (has_suffix(filename, ".dat")) { 
 	/* saving in "traditional" mode as ".dat" */
-	tmp = g_strdup_printf("store '%s' %s -t", filename, mylist);
+	gretl_command_strcat(" -t");
 	opt = OPT_T;
-    } else {
-	/* standard data save */
-	tmp = g_strdup_printf("store '%s' %s", filename, mylist);
-    }
+    } 
 
-    err = check_specific_command(tmp);
+    err = check_lib_command();
+    if (!err && !WRITING_DB(opt)) {
+	/* record */
+	err = lib_cmd_init();
+    }
 
     if (!err && !WRITING_DB(opt)) {
-	err = cmd_init(tmp, 0);
-    }
-
-    if (err) {
-	goto store_get_out;
-    }
-
-    /* back up existing datafile if need be (not for databases) */
-    if (!WRITING_DB(opt)) {
-	if ((fp = gretl_fopen(filename, "rb")) && fgetc(fp) != EOF &&
-	    fclose(fp) == 0) {
-	    tmp = g_strdup_printf("%s~", filename);
-	    if (copyfile(filename, tmp)) {
-		err = 1;
-		goto store_get_out;
-	    }
+	/* back up the existing datafile if need be */
+	err = maybe_back_up_datafile(filename);
+	if (err) {
+	    /* the error message is already handled */
+	    return err;
 	}
     } 
 
-    /* actually write the data to file */
-    err = write_data(filename, libcmd.list, dataset, opt, 1);
+    if (!err) {
+	/* actually write the data to file */
+	err = write_data(filename, libcmd.list, dataset, opt, 1);
+    }
 
     if (err) {
 	if (WRITING_DB(opt) && err == E_DB_DUP) {
 	    err = db_write_response(filename, libcmd.list);
-	    if (err) {
-		goto store_get_out;
-	    }
 	} else {
 	    gui_errmsg(err);
-	    goto store_get_out;
 	} 
     }   
 
-    /* record that data have been saved, etc. */
-    if (!DATA_EXPORT(opt)) {
+    if (!err && !DATA_EXPORT(opt)) {
+	/* record the fact that data have been saved, etc. */
 	mkfilelist(FILE_LIST_DATA, filename);
 	if (dataset_is_subsampled()) {
 	    maybe_shrink_dataset(filename);
@@ -7464,15 +7475,10 @@ int do_store (char *filename, gretlopt opt)
 	set_sample_label(dataset);	
     }
 
-    /* tell the user */
-    if (WRITING_DB(opt)) {
+    if (!err && WRITING_DB(opt)) {
+	/* tell the user */
 	database_description_dialog(filename);
     } 
-
- store_get_out:
-
-    g_free(mylist);
-    g_free(tmp);
 
     return err;
 }
