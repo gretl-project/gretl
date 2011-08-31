@@ -59,8 +59,6 @@ char *delchar (int c, char *str);
 
 int charpos (char c, const char *s);
 
-int lastchar (char c, const char *s);
-
 int ends_with_backslash (const char *s);
 
 int gretl_namechar_spn (const char *s);
@@ -102,8 +100,6 @@ char *chopstr (char *str);
 char *switch_ext (char *targ, const char *src, const char *ext);
 
 char *switch_ext_new (const char *src, const char *ext);
-
-int get_base (char *targ, const char *src, char c);
 
 int equation_get_lhs_and_rhs (const char *s, char **plh, char **prh);
 

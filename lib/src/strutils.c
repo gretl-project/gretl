@@ -266,25 +266,6 @@ int charpos (char c, const char *s)
 }
 
 /**
- * lastchar:
- * @c: the character to look for.
- * @s: the string to examine.
- *
- * Returns: 1 if @c is the last character in @s, 0 otherwise
- */
-
-int lastchar (char c, const char *s)
-{
-    int ret = 0;
-
-    if (s != NULL && s[strlen(s) - 1] == c) {
-	ret = 1;
-    }
-
-    return ret;
-}
-
-/**
  * charsub:
  * @str: the string to operate on.
  * @find: the character to replace.
@@ -1067,38 +1048,6 @@ char *switch_ext_new (const char *src, const char *ext)
 	}
 	strcat(ret, ".");
 	strcat(ret, ext);
-    }
-
-    return ret;
-}
-
-/**
- * get_base:
- * @targ: the target or output string (must be pre-allocated).
- * @src: the source or input string.
- * @c: the "base marker" character.
- *
- * If @c is found in @src, puts into @targ the portion of @src up to and 
- * including the last occurrence of @c within @src.
- *
- * Returns: 1 if @c is found in @str, otherwise 0.
- */
-
-int get_base (char *targ, const char *src, char c)
-{
-    int ret = 0;
-
-    if (src != NULL && *src != '\0') {
-	int i, n = strlen(src);
-
-	for (i=n-1; i>=0; i--) {
-	    if (src[i] == c) {
-		*targ = '\0';
-		strncat(targ, src, i + 1);
-		ret = 1;
-		break;
-	    }
-	}
     }
 
     return ret;

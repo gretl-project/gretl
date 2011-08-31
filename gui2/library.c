@@ -7409,7 +7409,7 @@ int do_store (char *filename, gretlopt opt)
 	return 0; /* canceled */
     }
 
-    gretl_command_sprintf("store '%s'", filename);
+    gretl_command_sprintf("store \"%s\"", filename);
 
     /* This should give NULL unless there's a current selection
        of series from the apparatus in selector.c. That's OK:
