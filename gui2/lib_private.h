@@ -3,7 +3,7 @@
 #ifndef LIB_PRIVATE_H
 #define LIB_PRIVATE_H
 
-int check_specific_command (char *s);
+int check_lib_command (void);
 
 char *get_lib_cmdline (void);
 

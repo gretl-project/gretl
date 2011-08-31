@@ -363,9 +363,10 @@ static int cmd_init (const char *s, int flag)
     PRN *echo;
     int err = 0;
 
-    /* note "cmd.*" elements are filled out already, if
-       check_specific_command() has been called on the 
-       command string */
+    /* note that the "cmd.*" elements are filled out already, 
+       if check_lib_command() has been called on the 
+       command string 
+    */
 
 #if CMD_DEBUG
     fprintf(stderr, "cmd_init: got cmdstr: '%s'\n", s);
@@ -396,10 +397,16 @@ static int cmd_init (const char *s, int flag)
     return err;
 }
 
+/* used for tentatively logging a command when it has
+   not yet been executed */
+
 int record_command_line (const char *s)
 {
     return cmd_init(s, 0);
 }
+
+/* used for logging a command when we already know
+   that it worked OK */
 
 int record_command_verbatim (const char *s)
 {
@@ -424,19 +431,18 @@ static int console_cmd_init (char *line, int *console_run)
     return cmd_init(line, CONSOLE_EXEC);
 }
 
-/* checks command line @s for validity, but does not
+/* checks the current cmdline for validity, but does not
    of itself record the command */
 
-int check_specific_command (char *s)
+int check_lib_command (void)
 {
     int err;
 
 #if CMD_DEBUG
-    fprintf(stderr, "check_specific_command: s = '%s'\n", s);
+    fprintf(stderr, "check_lib_command: '%s'\n", cmdline);
 #endif
 
-    /* "libcmd" is global */
-    err = parse_command_line(s, &libcmd, dataset); 
+    err = parse_command_line(cmdline, &libcmd, dataset); 
     if (err) {
 	gui_errmsg(err);
     } 
@@ -444,18 +450,13 @@ int check_specific_command (char *s)
     return err;
 }
 
-static int check_lib_command (void)
-{
-    return check_specific_command(cmdline);
-}
-
 int check_and_record_command (void)
 {
     return (check_lib_command() || lib_cmd_init());
 }
 
-/* checks command for errors, and if OK returns an allocated
-   copy of the command list */
+/* checks command line @s for errors, and if OK returns 
+   an allocated copy of the command list */
 
 static int *command_list_from_string (char *s)
 {

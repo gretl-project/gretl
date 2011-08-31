@@ -271,37 +271,30 @@ int add_command_to_stack (const char *s)
     return 0;
 }
 
-/* save to the command log a command associated with a particular
+/* save to the log a command associated with a particular
    model */
 
 int model_command_init (int model_ID)
 {
-    char *line = get_lib_cmdline();
-    CMD *libcmd = get_lib_cmd();
-    int err = 0;
+    /* pre-check the stored command line */
+    int err = check_lib_command();
 
-#if CMD_DEBUG
-    fprintf(stderr, "model_command_init: line='%s'\n", line);
-#endif
+    if (!err) {
+	n_cmds++;
+	err = flush_logfile();
+	if (err) {
+	    n_cmds--;
+	} else {
+	    char *line = get_lib_cmdline();
+	    CMD *libcmd = get_lib_cmd();
 
-    /* pre-process the line */
-    if (check_specific_command(line)) {
-	return 1;
-    }
-
-    n_cmds++;
-
-    err = flush_logfile();
-
-    if (err) {
-	n_cmds--;
-    } else {
-	if (model_ID != prev_ID) {
-	    pprintf(logprn, "# %s %d\n", _("model"), model_ID);
-	    prev_ID = model_ID;
+	    if (model_ID != prev_ID) {
+		pprintf(logprn, "# %s %d\n", _("model"), model_ID);
+		prev_ID = model_ID;
+	    }
+	    echo_cmd(libcmd, dataset, line, CMD_RECORDING, logprn);
+	    set_commands_recorded();
 	}
-	echo_cmd(libcmd, dataset, line, CMD_RECORDING, logprn);
-	set_commands_recorded();
     } 
 
     return err;
@@ -331,7 +324,7 @@ gchar *get_logfile_content (int *err)
     return s;
 }
 
-/* called from main menu: /Tools/View command log */
+/* called from the main window /Tools menu */
 
 void view_command_log (void)
 {
