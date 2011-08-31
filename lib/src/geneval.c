@@ -73,6 +73,8 @@
 #define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
 #define empty_or_vec(n) (n == NULL || n->t == EMPTY || n->t == VEC)
 
+#define empty_or_type(n,s) (n == NULL || n->t == EMPTY || n->t == s)
+
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
 			    t == VEC || t == BUNDLE || t == U_ADDR) 
 
@@ -4745,6 +4747,7 @@ static NODE *do_irr (NODE *l, parser *p)
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
+    int rtype = NUM;
 
     if (f == F_SDIFF && !dataset_is_seasonal(p->dset)) {
 	p->err = E_PDWRONG;
@@ -4752,17 +4755,13 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
     }
 
     if (f == F_DESEAS) {
-	if (!empty_or_str(r)) {
-	    node_type_error(f, 2, STR, r, p);
-	    return NULL;
-	}
+	rtype = STR;
     } else if (is_panel_stat(f)) {
-	if (!empty_or_vec(r)) {
-	    node_type_error(f, 2, VEC, r, p);
-	    return NULL;
-	}	
-    } else if (!empty_or_num(r)) {
-	node_type_error(f, 2, NUM, r, p);
+	rtype = VEC;
+    } 
+
+    if (!empty_or_type(r, rtype)) {
+	node_type_error(f, 2, rtype, r, p);
 	return NULL;
     }
 
@@ -4779,11 +4778,12 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    cast_to_series(l, f, &tmp, NULL, NULL, p);
 	}
 
-	if (!p->err && is_panel_stat(f) && r->t == VEC) {
-	    z = r->v.xvec;
-	} else if (!p->err && f != F_DESEAS && 
-	    r != NULL && r->t != EMPTY) {
-	    parm = node_get_scalar(r, p);
+	if (!p->err && r != NULL && r->t != EMPTY) {
+	    if (rtype == VEC) {
+		z = r->v.xvec;
+	    } else if (rtype == NUM) {
+		parm = node_get_scalar(r, p);
+	    }
 	}
 
 	if (p->err) {
