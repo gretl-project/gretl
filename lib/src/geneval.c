@@ -70,10 +70,7 @@
 			(n->t == MAT &&	gretl_matrix_is_scalar(n->v.m)))
 
 #define empty_or_num(n) (n == NULL || n->t == EMPTY || n->t == NUM)
-#define empty_or_str(n) (n == NULL || n->t == EMPTY || n->t == STR)
-#define empty_or_vec(n) (n == NULL || n->t == EMPTY || n->t == VEC)
-
-#define empty_or_type(n,s) (n == NULL || n->t == EMPTY || n->t == s)
+#define null_or_empty(n) (n == NULL || n->t == EMPTY)
 
 #define ok_bundled_type(t) (t == NUM || t == STR || t == MAT || \
 			    t == VEC || t == BUNDLE || t == U_ADDR) 
@@ -4728,7 +4725,7 @@ static NODE *do_irr (NODE *l, parser *p)
     return ret;
 }
 
-#define tramo_string(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
+#define use_tramo(s) (s != NULL && (s[0] == 't' || s[0] == 'T'))
 
 #define is_panel_stat(f) (f == F_PNOBS || \
 			  f == F_PMIN ||  \
@@ -4747,7 +4744,7 @@ static NODE *do_irr (NODE *l, parser *p)
 static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 {
     NODE *ret = NULL;
-    int rtype = NUM;
+    int rtype = NUM; /* the optional right-node type */
 
     if (f == F_SDIFF && !dataset_is_seasonal(p->dset)) {
 	p->err = E_PDWRONG;
@@ -4760,7 +4757,9 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	rtype = VEC;
     } 
 
-    if (!empty_or_type(r, rtype)) {
+    if (null_or_empty(r)) {
+	rtype = 0; /* OK */
+    } else if (r->t != rtype) {
 	node_type_error(f, 2, rtype, r, p);
 	return NULL;
     }
@@ -4778,12 +4777,10 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    cast_to_series(l, f, &tmp, NULL, NULL, p);
 	}
 
-	if (!p->err && r != NULL && r->t != EMPTY) {
-	    if (rtype == VEC) {
-		z = r->v.xvec;
-	    } else if (rtype == NUM) {
-		parm = node_get_scalar(r, p);
-	    }
+	if (rtype == VEC) {
+	    z = r->v.xvec;
+	} else if (rtype == NUM) {
+	    parm = node_get_scalar(r, p);
 	}
 
 	if (p->err) {
@@ -4818,8 +4815,8 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    p->err = cum_series(x, y, p->dset); 
 	    break;
 	case F_DESEAS:
-	    if (r != NULL && r->t == STR) {
-		int tramo = tramo_string(r->v.str);
+	    if (rtype == STR) {
+		int tramo = use_tramo(r->v.str);
 
 		p->err = seasonally_adjust_series(x, y, p->dset, tramo); 
 	    } else {
@@ -4827,7 +4824,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    }
 	    break;
 	case F_RESAMPLE:
-	    if (r != NULL && r->t == NUM) {
+	    if (rtype == NUM) {
 		p->err = block_resample_series(x, y, parm, p->dset); 
 	    } else {
 		p->err = resample_series(x, y, p->dset); 
