@@ -4779,7 +4779,7 @@ static NODE *series_series_func (NODE *l, NODE *r, int f, parser *p)
 	    cast_to_series(l, f, &tmp, NULL, NULL, p);
 	}
 
-	if (!p->err && r->t == VEC) {
+	if (!p->err && is_panel_stat(f) && r->t == VEC) {
 	    z = r->v.xvec;
 	} else if (!p->err && f != F_DESEAS && 
 	    r != NULL && r->t != EMPTY) {
