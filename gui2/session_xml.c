@@ -372,7 +372,6 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     return err;
@@ -484,7 +483,6 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     if (!err && object_errs > 0) {

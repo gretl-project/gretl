@@ -135,4 +135,8 @@ int load_user_scalars_file (const char *fname);
 
 int load_user_XML_file (const char *fname);
 
+void gretl_xml_init (void);
+
+void gretl_xml_cleanup (void);
+
 #endif /* GRETL_XML_H */

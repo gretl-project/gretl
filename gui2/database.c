@@ -2772,7 +2772,6 @@ gint populate_remote_addons_list (windata_t *vwin)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }       
     
     free(getbuf);

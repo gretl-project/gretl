@@ -28,6 +28,7 @@
 #include "gretl_scalar.h"
 #include "gretl_bundle.h"
 #include "gretl_string_table.h"
+#include "gretl_xml.h"
 #include "forecast.h"
 #include "kalman.h"
 
@@ -1704,6 +1705,7 @@ void libgretl_init (void)
     fprintf(stderr, " RNG ready\n");
 #endif
 
+    gretl_xml_init();
     gretl_stopwatch_init();
 }
 
@@ -1747,6 +1749,8 @@ void libgretl_cleanup (void)
 #ifdef USE_RLIB
     gretl_R_cleanup();
 #endif
+
+    gretl_xml_cleanup();
 }
 
 /* record and retrieve hypothesis test results */

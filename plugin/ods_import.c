@@ -176,7 +176,6 @@ static void ods_sheet_free (ods_sheet *sheet)
 
 	if (sheet->doc != NULL) {
 	    xmlFreeDoc(sheet->doc);
-	    xmlCleanupParser();
 	}
 
 	destroy_dataset(sheet->dset);
@@ -920,7 +919,6 @@ static ods_sheet *ods_read_content (PRN *prn, int *err)
     sheet = ods_sheet_new(doc, err);
     if (sheet == NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
 	return NULL;
     }
 

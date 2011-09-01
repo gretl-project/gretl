@@ -2847,7 +2847,6 @@ int load_user_lists_file (const char *fname)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     return err;

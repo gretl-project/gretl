@@ -2346,7 +2346,6 @@ static int read_addons_info (void)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     return err;

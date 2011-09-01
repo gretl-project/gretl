@@ -3791,7 +3791,6 @@ int read_session_functions_file (const char *fname)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
 #if PKG_DEBUG
@@ -3833,7 +3832,6 @@ static fnpkg *read_package_file (const char *fname, int *err)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
 #if PKG_DEBUG
@@ -4045,7 +4043,6 @@ int get_function_file_header (const char *fname, char **pdesc,
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     if (*pdesc == NULL) {

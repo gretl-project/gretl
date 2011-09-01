@@ -445,7 +445,6 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
     }
 
     xmlFreeDoc(doc);
-    xmlCleanupParser();
 
     if (!got_sheet) {
 	fprintf(stderr, "'%s': couldn't find the requested sheet\n", sheet->name);
@@ -529,7 +528,6 @@ static int wbook_get_info (const char *fname, const int *list,
     }
 
     xmlFreeDoc(doc);
-    xmlCleanupParser();
 
     return err;
 }

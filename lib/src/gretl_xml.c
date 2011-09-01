@@ -2546,7 +2546,6 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     /* pre-process stacked cross-sectional panels: put into canonical
@@ -2626,7 +2625,6 @@ char *gretl_get_gdt_description (const char *fname)
     }
 
     xmlFreeDoc(doc);
-    xmlCleanupParser();
 
     return (char *) buf;
 }
@@ -2657,7 +2655,6 @@ static char *gretl_xml_get_doc_type (const char *fname, int *err)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     return ret;
@@ -2709,7 +2706,6 @@ int load_user_matrix_file (const char *fname)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     return err;
@@ -2749,7 +2745,6 @@ int load_user_bundle_file (const char *fname)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     return err;
@@ -2787,7 +2782,6 @@ int load_user_scalars_file (const char *fname)
 
     if (doc != NULL) {
 	xmlFreeDoc(doc);
-	xmlCleanupParser();
     }
 
     return err;
@@ -2821,3 +2815,12 @@ int load_user_XML_file (const char *fname)
     return err;
 }
 
+void gretl_xml_init (void)
+{
+    xmlInitParser();
+}
+
+void gretl_xml_cleanup (void)
+{
+    xmlCleanupParser();
+}
