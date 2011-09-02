@@ -472,7 +472,7 @@ msgstr "Contraste LM (Multiplicador de Lagrange)"
 msgid "Adding variables improved %d of %d model selection statistics.\n"
 msgstr ""
 "Al añadir variables mejoraron %d de los %d estadísticos de selección de "
-"modelos considerados.\n "
+"modelos considerados.\n"
 
 #: lib/src/compare.c:402
 #, c-format
