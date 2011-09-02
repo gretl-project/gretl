@@ -358,7 +358,7 @@ static NODE *base (parser *p, NODE *up)
 	*/
 	fprintf(stderr, "gensytax: base: bad exit-sym = %d\n", p->sym);
 	p->err = E_PARSE;
-    }
+    } 
 
 #if SDEBUG
     notify("base", t, p);

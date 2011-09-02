@@ -974,11 +974,24 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 	sub = 1;
     }
 
+    /* a formula? */
+    if (*s == '=') {
+	x = generate_scalar(s+1, NULL, &bad);
+	if (bad || na(x)) {
+	    bad = 1;
+	    goto do_message;
+	} 
+    }
+
     if (t == C_INT || t == C_POS_INT) {
-	if (check_atoi(s)) {
+	if (na(x) && check_atoi(s)) {
 	    bad = 1;
 	} else {
-	    k = atoi(s);
+	    if (na(x)) {
+		k = atoi(s);
+	    } else {
+		k = (int) x;
+	    }
 	    if ((t == C_INT && k < 0) || 
 		(t == C_POS_INT && k <= 0)) {
 		bad = 1;
@@ -987,10 +1000,12 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 	    }
 	}
     } else {
-	if (check_atof(s)) {
+	if (na(x) && check_atof(s)) {
 	    bad = 1;
 	} else {
-	    x = atof(s);
+	    if (na(x)) {
+		x = atof(s);
+	    }
 	    if (t == C_POS_DBL) {
 		if (!na(x) && x <= 0.0) {
 		    bad = 1;
@@ -1002,6 +1017,8 @@ double entry_get_numeric_value (GtkWidget *w, EntryValType t)
 	    }		
 	}
     }
+
+ do_message:
 
     if (bad) {
 	const char *msg = gretl_errmsg_get();

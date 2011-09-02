@@ -373,7 +373,7 @@ newline or semicolon after an else or end keyword."
   :type 'boolean
   :group 'gretl)
 
-(defcustom gretl-block-offset 4
+(defcustom gretl-block-offset 2
   "*Extra indentation applied to statements in Gretl block structures."
   :type 'integer
   :group 'gretl)

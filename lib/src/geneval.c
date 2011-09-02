@@ -11031,6 +11031,7 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
 #if EDEBUG
     fprintf(stderr, "realgen: p->tree at %p, type %d\n", (void *) p->tree, 
 	    p->tree->t);
+    fprintf(stderr, " p->ch = '%c', p->sym = %d\n", p->ch, p->sym);
 #endif
 
     if (p->ch != 0) {

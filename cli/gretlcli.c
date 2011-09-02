@@ -304,13 +304,17 @@ static int maybe_get_input_line_continuation (char *line)
 	*tmp = '\0';
 
 	if (batch || runit) {
-	    fgets(tmp, MAXLINE - 1, fb);
+	    char *test = fgets(tmp, MAXLINE, fb);
+
+	    if (test == NULL) {
+		break;
+	    }
 	} else {
 #ifdef HAVE_READLINE
 	    rl_gets(&line_read, "> ");
 	    strcpy(tmp, line_read);
 #else
-	    fgets(tmp, MAXLINE - 1, stdin); 
+	    fgets(tmp, MAXLINE, stdin); 
 #endif /* HAVE_READLINE */
 	}
 
