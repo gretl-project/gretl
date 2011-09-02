@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-08-28 20:48-0400\n"
-"PO-Revision-Date: 2011-06-29 15:41+0200\n"
+"PO-Revision-Date: 2011-09-02 10:04+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -190,34 +190,37 @@ msgid "Sum of squares of cumulated residuals"
 msgstr "Suma de cuadrados de los residuos acumulados"
 
 #: lib/src/adf_kpss.c:1556
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s"
 msgstr ""
 "\n"
-"Contraste KPSS para %s %s\n"
+"Contraste KPSS para %s"
 
 #: lib/src/adf_kpss.c:1559
-#, fuzzy
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
-msgstr "(incluyendo tendencia)"
+msgstr ""
+"(incluyendo tendencia y variables ficticias estacionales)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1561
-#, fuzzy
 msgid ""
 " (including trend)\n"
 "\n"
-msgstr "(incluyendo tendencia)"
+msgstr ""
+"(incluyendo tendencia)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1565
-#, fuzzy
 msgid ""
 " (including seasonals)\n"
 "\n"
-msgstr "(incluyendo tendencia)"
+msgstr ""
+"(incluyendo variables ficticias estacionales)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1572 lib/src/adf_kpss.c:1616
 #, c-format
@@ -351,9 +354,9 @@ msgstr ""
 " obtenidos mediante bootstrap"
 
 #: lib/src/boxplots.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s"
-msgstr "Resumen numérico"
+msgstr "Resumen numérico para %s"
 
 #: lib/src/boxplots.c:230 gui2/gpt_control.c:3527 gui2/gpt_control.c:3605
 msgid "Numerical summary"
@@ -377,21 +380,18 @@ msgid "mean"
 msgstr "media"
 
 #: lib/src/boxplots.c:431
-#, fuzzy
 msgid "group"
-msgstr "por _grupos"
+msgstr "grupo"
 
 #: lib/src/boxplots.c:731 gui2/library.c:6427
-#, fuzzy
 msgid "You must supply two variables, the second of which is discrete"
 msgstr ""
-"Se deben suministrar tres variables, la última\n"
-"de las cuales ha de ser una variable ficticia (valores 1 o 0)"
+"Se deben suministrar dos variables, la última de ellas ha de ser discreta"
 
 #: lib/src/boxplots.c:773
-#, fuzzy, c-format
+#, c-format
 msgid "Distribution of %s by %s"
-msgstr "Distribución"
+msgstr "Distribución de %s por %s"
 
 #: lib/src/boxplots.c:1046
 #, c-format
@@ -422,14 +422,13 @@ msgstr ""
 "  Hipótesis nula: los parámetros de regresión son cero para las variables\n"
 
 #: lib/src/compare.c:355
-#, fuzzy, c-format
+#, c-format
 msgid "Test on Model %d:"
-msgstr "Modelo %d"
+msgstr "Contraste sobre el Modelo %d:"
 
 #: lib/src/compare.c:362
-#, fuzzy
 msgid "Wald test"
-msgstr "Contraste (conjunto) de Wald"
+msgstr "Contraste de Wald"
 
 #: lib/src/compare.c:363 lib/src/compare.c:370 lib/src/compare.c:383
 #: lib/src/compare.c:392 lib/src/compare.c:958 lib/src/compare.c:2228
@@ -453,9 +452,8 @@ msgid "Chi-square"
 msgstr "Chi-cuadrado"
 
 #: lib/src/compare.c:369 lib/src/compare.c:382
-#, fuzzy
 msgid "LR test"
-msgstr "Contraste de RV de Quandt (QLR)"
+msgstr "Contraste LR (razón de verosimilitudes)"
 
 #: lib/src/compare.c:377 lib/src/compare.c:2694
 msgid "F-form"
@@ -466,19 +464,22 @@ msgid "Robust F"
 msgstr "F robusto"
 
 #: lib/src/compare.c:391
-#, fuzzy
 msgid "LM test"
-msgstr "Contraste de RV de Quandt (QLR)"
+msgstr "Contraste LM (Multiplicador de Lagrange)"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d model selection statistics.\n"
-msgstr "  De los %d estadísticos de selección de modelos, %d "
+msgstr ""
+"Al añadir variables mejoraron %d de los %d estadísticos de selección de "
+"modelos considerados.\n "
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
-msgstr "  De los %d estadísticos de selección de modelos, %d "
+msgstr ""
+"Al omitir variables mejoraron %d de los %d estadísticos de selección de "
+"modelos considerados.\n"
 
 #: lib/src/compare.c:551
 msgid "omit"
@@ -2585,11 +2586,10 @@ msgid "std. dev"
 msgstr "desv. típica"
 
 #: lib/src/graphing.c:336 gui2/library.c:6462
-#, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
 msgstr ""
-"Se deben suministrar tres variables, la última\n"
-"de las cuales ha de ser una variable ficticia (valores 1 o 0)"
+"Se deben suministrar tres variables, la última de las cuales ha de ser "
+"discreta"
 
 #: lib/src/graphing.c:1408
 msgid "Gnuplot does not support PDF output on this system"
@@ -3041,16 +3041,12 @@ msgid "Insufficient observations for this operation"
 msgstr "Observaciones insuficientes para la operación"
 
 #: lib/src/gretl_errors.c:84
-#, fuzzy
 msgid "Error executing function"
-msgstr ""
-"\n"
-"Error al ejecutar guion: parando\n"
+msgstr "Error al ejecutar una función"
 
 #: lib/src/gretl_errors.c:85 gui2/gretl.c:2140
-#, fuzzy
 msgid "Execution aborted by request"
-msgstr "las observaciones están ordenadas por %s"
+msgstr "Se ha abortado la ejecución a petición del usuario"
 
 #: lib/src/gretl_errors.c:93
 msgid "gradient is not close to zero"
@@ -3109,7 +3105,7 @@ msgstr "Aquí no es posible cambiar el nombre de una función"
 #: lib/src/gretl_func.c:5340 lib/src/gretl_func.c:5367
 #: lib/src/gretl_func.c:5392 lib/src/gretl_func.c:5413
 msgid "Duplicated pointer argument: not allowed"
-msgstr ""
+msgstr "Argumento de puntero duplicado: eso no está permitido"
 
 #: lib/src/gretl_func.c:6262
 #, c-format
@@ -3127,11 +3123,13 @@ msgid "%s: not enough arguments\n"
 msgstr "%s: no se ha proporcionado suficientes argumentos\n"
 
 #: lib/src/gretl_func.c:6393
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
-msgstr "Mensaje de error de %s:\n"
+msgstr ""
+"Mensaje de error desde  %s():\n"
+" %s"
 
 #: lib/src/gretl_func.c:7150
 #, c-format
@@ -4235,9 +4233,8 @@ msgid "Infinite loop detected in script\n"
 msgstr "Se ha detectado un bucle infinito en el guion\n"
 
 #: lib/src/interact.c:5288 lib/src/monte_carlo.c:2739
-#, fuzzy
 msgid "You cannot delete series in this context\n"
-msgstr "En este contexto no se pueden borrar variables\n"
+msgstr "En este contexto no se pueden borrar series\n"
 
 #: lib/src/interact.c:5340 cli/gretlcli.c:673
 #, c-format
@@ -4432,9 +4429,9 @@ msgid "Warning: solution is probably not unique"
 msgstr "Atención: probablemente, la solución no es única"
 
 #: lib/src/modelprint.c:595
-#, fuzzy
 msgid "Warning: couldn't compute numerical Hessian"
-msgstr "Fallo al computar el Hessiano mediante método numérico"
+msgstr ""
+"Atención: no ha sido posible computar el Hessiano mediante el método numérico"
 
 #: lib/src/modelprint.c:613 lib/src/modelprint.c:631 lib/src/modelprint.c:639
 msgid "'Within' variance"
@@ -4471,9 +4468,8 @@ msgstr ""
 "Regresión auxiliar para el contraste de no linealidad (términos logarítmicos)"
 
 #: lib/src/modelprint.c:748
-#, fuzzy
 msgid "Auxiliary regression for added variables"
-msgstr "Regresión auxiliar para el contraste de especificación RESET"
+msgstr "Regresión auxiliar para las variables añadidas"
 
 #: lib/src/modelprint.c:759
 msgid "Augmented regression for Chow test"
@@ -5609,9 +5605,8 @@ msgstr ""
 "\n"
 
 #: lib/src/monte_carlo.c:2742
-#, fuzzy
 msgid "You cannot delete scalars in this context\n"
-msgstr "En este contexto no se pueden borrar variables\n"
+msgstr "En este contexto no se pueden borrar escalares\n"
 
 #: lib/src/monte_carlo.c:2993
 #, c-format
@@ -7974,19 +7969,16 @@ msgid "Type a command:"
 msgstr "Escriba una instrucción:"
 
 #: gui2/callbacks.c:627
-#, fuzzy
 msgid "Simple boxplot"
-msgstr "gráfico de caja individual"
+msgstr "gráfico de caja simple"
 
 #: gui2/callbacks.c:628
-#, fuzzy
 msgid "With confidence interval for median"
-msgstr "Representar el intervalo de confianza usando"
+msgstr "Con intervalo de confianza para la mediana"
 
 #: gui2/callbacks.c:629
-#, fuzzy
 msgid "Factorized"
-msgstr "Gráfico factorizado"
+msgstr "con factor de separación"
 
 #: gui2/callbacks.c:726
 msgid "gretl: create data set"
@@ -8203,9 +8195,8 @@ msgid "No database files found"
 msgstr "No se han encontrado ficheros de base de datos"
 
 #: gui2/database.c:2695 gui2/datafiles.c:997
-#, fuzzy
 msgid "Installed"
-msgstr "Instalar"
+msgstr "Instalado"
 
 #: gui2/database.c:2769 gui2/database.c:2865
 msgid "No function packages found"
@@ -8345,9 +8336,8 @@ msgid "gretl: data packages on server"
 msgstr "gretl: paquetes de datos en servidor"
 
 #: gui2/datafiles.c:1565
-#, fuzzy
 msgid "gretl: addons"
-msgstr "gretl: añadir información"
+msgstr "gretl: complementos"
 
 #: gui2/datafiles.c:1994 gui2/fnsave.c:1933
 msgid "gretl: function packages"
@@ -8839,14 +8829,12 @@ msgid "gretl: set sample"
 msgstr "gretl: establecer muestra"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Groups"
-msgstr "MCP por grupos"
+msgstr "Grupos"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Periods"
-msgstr "periodos"
+msgstr "Periodos"
 
 #: gui2/dialogs.c:1974 gui2/selector.c:7133
 msgid "to"
@@ -9264,9 +9252,8 @@ msgid "Add list of instruments"
 msgstr "Añadir lista de instrumentos"
 
 #: gui2/dlgutils.c:914
-#, fuzzy
 msgid "Show interval for median"
-msgstr "Mostrar el Intervalo para "
+msgstr "Mostrar el Intervalo para la mediana"
 
 #: gui2/dlgutils.c:917 gui2/dlgutils.c:1072 gui2/selector.c:3646
 msgid "Iterated estimation"
@@ -9666,7 +9653,7 @@ msgstr "cerrar este diálogo al presionar \"OK\""
 
 #: gui2/fncall.c:1764
 msgid "This function needs a model in place"
-msgstr ""
+msgstr "Esta función necesita un modelo"
 
 #: gui2/fncall.c:1812
 msgid "Function package is broken"
@@ -10779,9 +10766,8 @@ msgid "_Boxplots..."
 msgstr "Gráficos de _caja..."
 
 #: gui2/gretl.c:1368
-#, fuzzy
 msgid "_Factorized boxplot..."
-msgstr "Gráfico factorizado"
+msgstr "Gráfico de caja con _factor de separación..."
 
 #: gui2/gretl.c:1369
 msgid "_Q-Q plot..."
@@ -11260,9 +11246,8 @@ msgid "Check for _updates"
 msgstr "_Comprobar actualizaciones"
 
 #: gui2/gretl.c:1518
-#, fuzzy
 msgid "Check for _addons"
-msgstr "_Comprobar actualizaciones"
+msgstr "Revisar complementos"
 
 #: gui2/gretl.c:1519
 msgid "_About gretl"
@@ -12490,9 +12475,8 @@ msgstr ""
 "estima el modelo (menú Muestra)."
 
 #: gui2/library.c:1958
-#, fuzzy
 msgid "No variables are selected"
-msgstr "No se borró ninguna variable"
+msgstr "No se ha seleccionado ninguna variable"
 
 #: gui2/library.c:2030 gui2/library.c:3473 gui2/library.c:3729
 #: gui2/library.c:3999
@@ -12505,7 +12489,6 @@ msgid "gretl: Wald omit test"
 msgstr "gretl: Contraste de omisión de Wald"
 
 #: gui2/library.c:2037
-#, fuzzy
 msgid "gretl: LM test"
 msgstr "gretl: contraste LM"
 
@@ -13488,9 +13471,8 @@ msgid "Choose"
 msgstr "Elegir"
 
 #: gui2/selector.c:3730
-#, fuzzy
 msgid "Variable to plot"
-msgstr "Variable por la cual ordenar"
+msgstr "Variable a representar"
 
 #: gui2/selector.c:3772
 msgid "Lower bound variable"
@@ -13529,9 +13511,8 @@ msgid "Z-axis variable"
 msgstr "Variable del eje Z"
 
 #: gui2/selector.c:3948
-#, fuzzy
 msgid "Factor (discrete)"
-msgstr "Factor (variable ficticia)"
+msgstr "Factor (variable discreta)"
 
 #: gui2/selector.c:3950
 msgid "Control variable"
@@ -13726,13 +13707,12 @@ msgid "Use lines"
 msgstr "Usar líneas"
 
 #: gui2/selector.c:5224
-#, fuzzy
 msgid "Estimate augmented model"
-msgstr "Estimar el modelo reducido"
+msgstr "Estimar el modelo aumentado"
 
 #: gui2/selector.c:5229
 msgid "LM test using auxiliary regression"
-msgstr ""
+msgstr "Contraste LM usando una regresión auxiliar"
 
 #: gui2/selector.c:5243
 msgid "Estimate reduced model"
@@ -13827,9 +13807,8 @@ msgid "factorized plot"
 msgstr "Gráfico factorizado"
 
 #: gui2/selector.c:5703
-#, fuzzy
 msgid "factorized boxplot"
-msgstr "Gráfico factorizado"
+msgstr "Gráfico de caja con factor de separación"
 
 #: gui2/selector.c:5705
 msgid "scatterplot with control"
@@ -14086,7 +14065,7 @@ msgstr ""
 
 #: gui2/session.c:1895
 msgid "Display notes on opening session file"
-msgstr ""
+msgstr "Mostrar las notas al abrir el archivo de sesión"
 
 #: gui2/session.c:2015
 msgid "versus"
@@ -14703,9 +14682,8 @@ msgid "The dataset cannot be modified at present"
 msgstr "En este momento no se puede modificar el conjunto de datos"
 
 #: gui2/textbuf.c:291
-#, fuzzy
 msgid "No redo information available"
-msgstr "No hay disponible información de 'deshacer'"
+msgstr "No hay información disponible para 'deshacer'"
 
 #: gui2/textbuf.c:300
 msgid "No undo information available"
@@ -14829,7 +14807,7 @@ msgstr "No hay nada que enviar"
 
 #: gui2/toolbar.c:253
 msgid "Print with syntax highlighting?"
-msgstr ""
+msgstr "Imprimir con coloreado por sintaxis?"
 
 #: gui2/toolbar.c:347
 #, c-format
@@ -14857,9 +14835,8 @@ msgid "Save as..."
 msgstr "Guardar como..."
 
 #: gui2/toolbar.c:626
-#, fuzzy
 msgid "Show/hide"
-msgstr "Mostrar la rejilla"
+msgstr "Mostrar/Ocultar"
 
 #: gui2/toolbar.c:627
 msgid "Run"
@@ -14867,11 +14844,11 @@ msgstr "Ejecutar"
 
 #: gui2/toolbar.c:628
 msgid "Stop"
-msgstr ""
+msgstr "Parar"
 
 #: gui2/toolbar.c:629
 msgid "Cut"
-msgstr ""
+msgstr "Cortar"
 
 #: gui2/toolbar.c:631
 msgid "Paste"
@@ -14887,7 +14864,7 @@ msgstr "Deshacer"
 
 #: gui2/toolbar.c:635
 msgid "Redo"
-msgstr ""
+msgstr "Rehacer"
 
 #: gui2/toolbar.c:636
 msgid "Sort"
