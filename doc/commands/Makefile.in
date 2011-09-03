@@ -64,7 +64,7 @@ OUTPUT_DIR = $(SHAREDIR)
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
-progs: xsltrans skeleton reflow bbl2txt validate topiclist tables matfuncs
+progs: xsltrans skeleton reflow bbl2txt validate topiclist tables matfuncs us2a4
 
 xsltrans: xsltrans.c 
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
@@ -73,6 +73,9 @@ reflow: reflow.c
 	$(CC) $(CFLAGS) -o $@ $< 
 
 bbl2txt: bbl2txt.c
+	$(CC) $(CFLAGS) -o $@ $< 
+
+us2a4: us2a4.c
 	$(CC) $(CFLAGS) -o $@ $< 
 
 skeleton: skeleton.o

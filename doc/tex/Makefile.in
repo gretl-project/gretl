@@ -104,11 +104,11 @@ letter: $(GUIDE) $(REF)
 
 a4: $(ALTGUIDE) $(ALTREF)
 
-gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex
-	cat $< | sed s/letterpaper/a4paper/ > $@
+gretl-guide-a4.tex: $(docsrc)/tex/gretl-guide.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
 
-gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex
-	cat $< | sed s/letterpaper/a4paper/ > $@
+gretl-ref-a4.tex: $(docsrc)/tex/gretl-ref.tex ../commands/us2a4
+	../commands/us2a4 < $< > $@
 
 .PHONY : links cmdtex functex textables alt onepass refpass topiclist install clean
 
@@ -131,6 +131,9 @@ textables:
 
 functex:
 	$(MAKE) -C ../commands functex
+
+../commands/us2a4:
+	$(MAKE) -C ../commands us2a4
 
 date.tex: $(ALLSRC)
 	LANG=en_US date "+%B, %Y" > $@
