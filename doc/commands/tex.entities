@@ -16,6 +16,7 @@
 <!ENTITY omega "$\omega$">
 <!ENTITY Gamma "$\Gamma$">
 <!ENTITY ne "$\ne$">
+<!ENTITY le "$\leq$">
 <!ENTITY opto "[ \texttt{-o} ]">
 <!ENTITY mdash "---">
 <!ENTITY ndash "--">
