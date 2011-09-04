@@ -23,8 +23,8 @@
 #include "gretl_string_table.h"
 
 #if GENDEBUG
-# define SDEBUG 1
-# define MDEBUG 1
+# define SDEBUG GENDEBUG
+# define MDEBUG GENDEBUG
 #else
 # define SDEBUG 0
 # define MDEBUG 0

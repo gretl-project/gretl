@@ -68,6 +68,8 @@ version 1.9.6, in progress
   case being added even when deselected
 - Fix bug in ARMA forecast for MA order > 1 and steps-ahead greater
   than the MA order
+- Fix bug: ensure that we catch trailing junk at the end of a genr-type
+  expression
 - Increase maximum command-line length to 16384 bytes
 
 2011-04-22 version 1.9.5

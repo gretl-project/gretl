@@ -15,8 +15,8 @@ function scalar perron_test (series y, int maxlag, scalar testsig,
 
    # loop across possible breakpoints
 
-   genr Tbmin = startyr + maxlag + 2;
-   genr Tbmax = max(time) - 3;
+   genr Tbmin = startyr + maxlag + 2
+   genr Tbmax = max(time) - 3
 
    loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
 

@@ -11034,8 +11034,10 @@ int realgen (const char *s, parser *p, DATASET *dset, PRN *prn,
     fprintf(stderr, " p->ch = '%c', p->sym = %d\n", p->ch, p->sym);
 #endif
 
-    if (p->ch != 0) {
-	parser_ungetc(p);
+    if (p->sym != EOT || p->ch != 0) {
+	if (p->ch != 0) {
+	    parser_ungetc(p);
+	}
 	context_error(p->ch, p);
 	return p->err;
     }    
