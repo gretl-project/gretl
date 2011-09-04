@@ -1639,6 +1639,9 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	goto bailout;
     }
 
+    /* record the number of instruments used */
+    gretl_model_set_int(&tsls, "ninst", ninst);
+
     if (!no_tests) {
 	if (!sysest || (opt & OPT_H)) {
 	    if (nendo == 1) {
