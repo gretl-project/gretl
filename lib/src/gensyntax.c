@@ -350,6 +350,7 @@ static NODE *base (parser *p, NODE *up)
 	break;
     }
 
+#if 0 /* this check ought to be redundant, needs testing */
     if (p->err == 0 && p->sym != EOT && p->sym != QUERY &&
 	!(p->sym > U_MAX && p->sym < PUNCT_MAX)) {
 	/* catch high-level syntax errors: a "base" is followed
@@ -359,6 +360,7 @@ static NODE *base (parser *p, NODE *up)
 	fprintf(stderr, "gensytax: base: bad exit-sym = %d\n", p->sym);
 	p->err = E_PARSE;
     } 
+#endif
 
 #if SDEBUG
     notify("base", t, p);
@@ -1253,7 +1255,7 @@ static void convert_pow_term (NODE *n)
 
 /* Test for whether the ' symbol must represent the unary
    transposition operator rather than binary transpose-multiply,
-   based on the following symbol.
+   based on the following symbol, @t.
 */
 
 #define must_be_unary(t) (t == EOT || \

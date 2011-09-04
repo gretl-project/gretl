@@ -5164,12 +5164,11 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     /* check the argument count */
     argc = fn_n_params(uf);
     if (m > argc) {
-	pprintf(p->prn, _("Number of arguments (%d) does not "
-			  "match the number of\nparameters for "
-			  "function %s (%d)"),
-		m, funname, argc);
-	pputc(p->prn, '\n');
-	p->err = E_ARGS;
+	gretl_errmsg_sprintf(_("Number of arguments (%d) does not "
+			       "match the number of\nparameters for "
+			       "function %s (%d)"),
+			     m, funname, argc);
+	p->err = 1;
 	return NULL;
     }
 
@@ -6371,10 +6370,10 @@ static NODE *replace_value (NODE *src, NODE *n0, NODE *n1, parser *p)
 
 static void n_args_error (int k, int n, const char *s, parser *p)
 {
-    pprintf(p->prn, _("Number of arguments (%d) does not "
-		      "match the number of\nparameters for "
-		      "function %s (%d)"), k, s, n);
-    p->err = E_ARGS;
+    gretl_errmsg_sprintf( _("Number of arguments (%d) does not "
+			    "match the number of\nparameters for "
+			    "function %s (%d)"), k, s, n);
+    p->err = 1;
 }
 
 /* evaluate a built-in function that has more than three arguments */
