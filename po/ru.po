@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-05-02 13:44+0300\n"
+"PO-Revision-Date: 2011-09-05 09:24-0400\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -206,14 +206,11 @@ msgid "Sum of squares of cumulated residuals"
 msgstr "Cумма квадратов кумулятивных ошибок"
 
 #: lib/src/adf_kpss.c:1556
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s"
-msgstr ""
-"\n"
-"KPSS тест для %s %s\n"
-"\n"
+msgstr "\nKPSS тест для %s"
 
 #: lib/src/adf_kpss.c:1559
 #, fuzzy
@@ -367,9 +364,9 @@ msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr "Числовая статистика для бутстреп доверительного интервала для медианы"
 
 #: lib/src/boxplots.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s"
-msgstr "Числовая статистика"
+msgstr "Числовая статистика для %s"
 
 #: lib/src/boxplots.c:230 gui2/gpt_control.c:3527 gui2/gpt_control.c:3605
 msgid "Numerical summary"
@@ -3034,9 +3031,8 @@ msgid "External command failed"
 msgstr "Внешняя команда не была выполнена"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (16384 bytes) exceeded"
-msgstr "Максимальная длина командной строки (8192 bytes) превышена"
+msgstr "Максимальная длина командной строки (16384 bytes) превышена"
 
 #: lib/src/gretl_errors.c:81
 msgid "Matrix is not positive definite"

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.9.4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-02-23 12:11+0100\n"
+"PO-Revision-Date: 2011-09-05 09:25-0400\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "Language: it\n"
@@ -22,32 +22,24 @@ msgid "lagged differences"
 msgstr "differenze ritardate"
 
 #: lib/src/adf_kpss.c:305
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Test Dickey-Fuller per %s\n"
+msgstr "Test Dickey-Fuller (GLS) per %s\n"
 
 #: lib/src/adf_kpss.c:307
-#, fuzzy, c-format
+#, c-format
 msgid "Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Test Dickey-Fuller per %s\n"
+msgstr "Test Dickey-Fuller per %s\n"
 
 #: lib/src/adf_kpss.c:311
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller (GLS) test for %s\n"
-msgstr ""
-"\n"
-"Test Dickey-Fuller aumentato per %s\n"
+msgstr "Test Dickey-Fuller aumentato (GLS) per %s\n"
 
 #: lib/src/adf_kpss.c:313
-#, fuzzy, c-format
+#, c-format
 msgid "Augmented Dickey-Fuller test for %s\n"
-msgstr ""
-"\n"
-"Test Dickey-Fuller aumentato per %s\n"
+msgstr "Test Dickey-Fuller aumentato per %s\n"
 
 #: lib/src/adf_kpss.c:316 plugin/panurc.c:576
 #, c-format
@@ -197,14 +189,11 @@ msgid "Sum of squares of cumulated residuals"
 msgstr "Somma dei quadrati dei residui cumulati"
 
 #: lib/src/adf_kpss.c:1556
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s"
-msgstr ""
-"\n"
-"Test KPSS per %s %s\n"
-"\n"
+msgstr "\nTest KPSS per %s"
 
 #: lib/src/adf_kpss.c:1559
 #, fuzzy
@@ -358,9 +347,9 @@ msgstr ""
 "Riassunto numerico con intervallo di confidenza bootstrap per la mediana"
 
 #: lib/src/boxplots.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s"
-msgstr "Riassunto numerico"
+msgstr "Riassunto numerico per %s"
 
 #: lib/src/boxplots.c:230 gui2/gpt_control.c:3527 gui2/gpt_control.c:3605
 msgid "Numerical summary"
@@ -384,16 +373,14 @@ msgid "mean"
 msgstr "Media"
 
 #: lib/src/boxplots.c:431
-#, fuzzy
 msgid "group"
-msgstr "a _gruppi"
+msgstr "gruppo"
 
 #: lib/src/boxplots.c:731 gui2/library.c:6430
-#, fuzzy
 msgid "You must supply two variables, the second of which is discrete"
 msgstr ""
-"Occorre indicare tre variabili, l'ultima\n"
-"delle quali è una varabile dummy (valori 1 o 0)"
+"Occorre indicare due variabili, l'ultima\n"
+"delle quali è una varabile discreta"
 
 #: lib/src/boxplots.c:773
 #, fuzzy, c-format
@@ -461,9 +448,8 @@ msgid "Chi-square"
 msgstr "Chi-quadro"
 
 #: lib/src/compare.c:369 lib/src/compare.c:382
-#, fuzzy
 msgid "LR test"
-msgstr "_QLR - Break strutturale"
+msgstr "Test LR"
 
 #: lib/src/compare.c:377 lib/src/compare.c:2694
 msgid "F-form"
@@ -474,9 +460,8 @@ msgid "Robust F"
 msgstr "F robusta"
 
 #: lib/src/compare.c:391
-#, fuzzy
 msgid "LM test"
-msgstr "_QLR - Break strutturale"
+msgstr "Test LM"
 
 #: lib/src/compare.c:399
 #, fuzzy, c-format
@@ -2599,11 +2584,10 @@ msgid "std. dev"
 msgstr "Dev. std."
 
 #: lib/src/graphing.c:336 gui2/library.c:6465
-#, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
 msgstr ""
-"Occorre indicare tre variabili, l'ultima\n"
-"delle quali è una varabile dummy (valori 1 o 0)"
+"Occorre indicare tre variabili, l'ultima delle quali è una\n"
+"varabile dummy discreta"
 
 #: lib/src/graphing.c:1408
 msgid "Gnuplot does not support PDF output on this system"
@@ -2625,9 +2609,9 @@ msgid "%s versus %s (with quadratic fit)"
 msgstr "%s rispetto a %s (con fit quadratico)"
 
 #: lib/src/graphing.c:1487 gui2/gpt_dialog.c:560
-#, fuzzy, c-format
+#, c-format
 msgid "%s versus %s (with cubic fit)"
-msgstr "%s rispetto a %s (con fit quadratico)"
+msgstr "%s rispetto a %s (con fit cubico)"
 
 #: lib/src/graphing.c:1493
 #, c-format
@@ -2775,9 +2759,9 @@ msgid "%g and %g quantiles"
 msgstr "quantili %g e %g"
 
 #: lib/src/graphing.c:4996
-#, fuzzy, c-format
+#, c-format
 msgid "forecast variance decomposition for %s"
-msgstr "Scomposizione della varianza di previsione"
+msgstr "Scomposizione della varianza di previsione per %s"
 
 #: lib/src/graphing.c:5192
 msgid "VAR residuals"
@@ -3036,10 +3020,8 @@ msgid "External command failed"
 msgstr "Comando esterno fallito"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (16384 bytes) exceeded"
-msgstr ""
-"È stata superata la lunghezza massima della riga di comando (8192 byte)"
+msgstr "È stata superata la lunghezza massima della riga di comando (16384 byte)"
 
 #: lib/src/gretl_errors.c:81
 msgid "Matrix is not positive definite"
