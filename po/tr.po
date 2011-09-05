@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-09-05 14:24+0300\n"
+"PO-Revision-Date: 2011-09-05 14:37+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -13499,7 +13499,7 @@ msgstr "HO derecesi:"
 
 #: gui2/selector.c:4516 gui2/selector.c:4545
 msgid "or specific lags"
-msgstr "veya belirli gecikmeler"
+msgstr "belirli gecikmeler"
 
 #: gui2/selector.c:4771
 msgid "Bits per floating-point value"
