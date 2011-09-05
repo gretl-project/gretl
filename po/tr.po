@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-08-25 12:56+0300\n"
+"PO-Revision-Date: 2011-09-05 14:24+0300\n"
 "Last-Translator: A. Talha Yalta\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
 "Language: tr\n"
@@ -192,34 +192,37 @@ msgid "Sum of squares of cumulated residuals"
 msgstr "Yığınlı kalıntı kareleri toplamı"
 
 #: lib/src/adf_kpss.c:1556
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "KPSS test for %s"
 msgstr ""
 "\n"
-"%s %s için KPSS sınaması\n"
+"%s için KPSS sınaması"
 
 #: lib/src/adf_kpss.c:1559
-#, fuzzy
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
-msgstr "(eğilim ile)"
+msgstr ""
+" (eğilim ve mevsimseller ile)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1561
-#, fuzzy
 msgid ""
 " (including trend)\n"
 "\n"
-msgstr "(eğilim ile)"
+msgstr ""
+" (eğilim ile)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1565
-#, fuzzy
 msgid ""
 " (including seasonals)\n"
 "\n"
-msgstr "(eğilim ile)"
+msgstr ""
+" (mevsimseller ile)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1572 lib/src/adf_kpss.c:1616
 #, c-format
@@ -350,9 +353,9 @@ msgid "Numerical summary with bootstrapped confidence interval for median"
 msgstr "Sayısal özet (ortanca için özyetinimli güven aralıkları ile)"
 
 #: lib/src/boxplots.c:227
-#, fuzzy, c-format
+#, c-format
 msgid "Numerical summary for %s"
-msgstr "Sayısal özet"
+msgstr "%s için sayısal özet"
 
 #: lib/src/boxplots.c:230 gui2/gpt_control.c:3527 gui2/gpt_control.c:3605
 msgid "Numerical summary"
@@ -376,21 +379,17 @@ msgid "mean"
 msgstr "ortalama"
 
 #: lib/src/boxplots.c:431
-#, fuzzy
 msgid "group"
-msgstr "_kümeye-göre"
+msgstr "küme"
 
 #: lib/src/boxplots.c:731 gui2/library.c:6430
-#, fuzzy
 msgid "You must supply two variables, the second of which is discrete"
-msgstr ""
-"Sonuncusu bir kukla değişken (1 veya 0)\n"
-"olacak şekilde üç değişken sağlamalısınız"
+msgstr "İkincisi kesikli olacak şekilde iki değişken sağlamalısınız"
 
 #: lib/src/boxplots.c:773
-#, fuzzy, c-format
+#, c-format
 msgid "Distribution of %s by %s"
-msgstr "Dağılım"
+msgstr "%s değişkeninin %s ile dağılımı"
 
 #: lib/src/boxplots.c:1046
 #, c-format
@@ -421,14 +420,13 @@ msgstr ""
 "  Sıfır önsavı: Seçilen değişken(ler) için bağlanım katsayısı = 0\n"
 
 #: lib/src/compare.c:355
-#, fuzzy, c-format
+#, c-format
 msgid "Test on Model %d:"
-msgstr "Model %d"
+msgstr "Model %d üstünde sınama:"
 
 #: lib/src/compare.c:362
-#, fuzzy
 msgid "Wald test"
-msgstr "Wald (ortak) sınaması"
+msgstr "Wald sınaması"
 
 #: lib/src/compare.c:363 lib/src/compare.c:370 lib/src/compare.c:383
 #: lib/src/compare.c:392 lib/src/compare.c:958 lib/src/compare.c:2228
@@ -452,9 +450,8 @@ msgid "Chi-square"
 msgstr "Ki-kare"
 
 #: lib/src/compare.c:369 lib/src/compare.c:382
-#, fuzzy
 msgid "LR test"
-msgstr "_QOO (QLR) sınaması"
+msgstr "OO (LR) sınaması"
 
 #: lib/src/compare.c:377 lib/src/compare.c:2694
 msgid "F-form"
@@ -465,19 +462,21 @@ msgid "Robust F"
 msgstr "Sağlam F"
 
 #: lib/src/compare.c:391
-#, fuzzy
 msgid "LM test"
-msgstr "_QOO (QLR) sınaması"
+msgstr "LÇ (LM) sınaması"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d model selection statistics.\n"
-msgstr "  %d model seçim istatistiği arasından %d tanesi "
+msgstr ""
+"Değişken eklemek %d model seçim istatistiği içinden %d tanesini iyileştirdi.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
-msgstr "  %d model seçim istatistiği arasından %d tanesi "
+msgstr ""
+"Değişken çıkarmak %d model seçim istatistiği içinden %d tanesini iyileştirdi."
+"\n"
 
 #: lib/src/compare.c:551
 msgid "omit"
@@ -731,7 +730,7 @@ msgstr "Bu sınama yalnızca havuzlamalı modeller için uygundur\n"
 
 #: lib/src/compare.c:3332
 msgid "This test requires that the model contains a constant\n"
-msgstr "Bu sınama modelin bir sabit terim içermesini gerektirir\n"
+msgstr "Bu sınama modelin bir sabit terim içermesine gerek duymaktadır\n"
 
 #: lib/src/compare.c:3337
 msgid ""
@@ -740,8 +739,8 @@ msgid ""
 "for each cross-sectional unit"
 msgstr ""
 "Üzgünüm, bu sınama dengesiz bir panel üstünde\n"
-" yapılamıyor. Her bir yatay-kesit birimi için aynı sayıda\n"
-"gözleminiz olmalıdır"
+"yapılamıyor. Her bir yatay-kesit birimi için aynı sayıda\n"
+"gözleminiz olmalıdır."
 
 #: lib/src/compat.c:224
 #, c-format
@@ -875,7 +874,7 @@ msgstr "   tarihler tersten mi?\n"
 #: lib/src/csvdata.c:1015
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr "   ilk satır etiketi\"%s\", son etiket \"%s\"\n"
+msgstr "   birinci satır etiketi \"%s\", sonuncu etiket \"%s\"\n"
 
 #: lib/src/csvdata.c:1032
 msgid "   label strings can't be consistent dates\n"
@@ -908,7 +907,7 @@ msgstr "Veri dosyasında birbirini izleyen virgüller var\n"
 #: lib/src/csvdata.c:1292
 #, c-format
 msgid "   first field: '%s'\n"
-msgstr "   ilk alan: '%s'\n"
+msgstr "   birinci alan: '%s'\n"
 
 #: lib/src/csvdata.c:1295
 msgid "   seems to be observation label\n"
@@ -943,10 +942,10 @@ msgid ""
 msgstr ""
 "\n"
 "Lütfen dikkat:\n"
-"- CSV dosyasının ilk satırı değişken adlarını içermelidir.\n"
-"- İlk sütun, isteğe bağlı olarak tarih dizgileri veya başka imleyiciler "
+"- CSV dosyasının birinci satırı değişken adlarını içermelidir.\n"
+"- Birinci sütun, isteğe bağlı olarak tarih dizgileri veya başka imleyiciler "
 "içerebilir:\n"
-"- bu durumda ilk satır değeri boş bırakılmalı veya 'obs' veya 'date' "
+"- bu durumda birinci satır değeri boş bırakılmalı veya 'obs' veya 'date' "
 "demelidir.\n"
 "- Dosyanın geri kalan bölümü dikdörtgen biçimli bir veri dizgesi olmalıdır.\n"
 
@@ -1085,7 +1084,7 @@ msgid ""
 "First char of varname ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Değişken adının ilk harfi ('%c') hatalı\n"
+"Değişken adının birinci harfi ('%c') hatalı\n"
 "(bir harf ile başlamalıdır)"
 
 #: lib/src/dataio.c:416
@@ -1103,7 +1102,7 @@ msgid ""
 "First char of varname (0x%x) is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Değişken adının ilk harfi (0x%x) hatalı\n"
+"Değişken adının birinci harfi (0x%x) hatalı\n"
 "(bir harf ile başlamalıdır)"
 
 #: lib/src/dataio.c:426
@@ -1314,7 +1313,7 @@ msgstr "kendiliğinden ekli sabit terim"
 #: gui2/gui_utils.c:5021 gui2/toolbar.c:1026 gui2/toolbar.c:1035
 #: gui2/toolbar.c:1044
 msgid "Please open a data file first"
-msgstr "Lütfen önce bir veri dosyası açınız"
+msgstr "Lütfen ilk önce bir veri dosyası açınız"
 
 #: lib/src/dataset.c:1558 lib/src/dataset.c:1568
 #, c-format
@@ -1376,7 +1375,7 @@ msgstr "Değişken %s, %d olarak yeniden numaralandırıldı\n"
 
 #: lib/src/dataset.c:3056
 msgid "The 'dataset' command is not available within functions"
-msgstr "'dataset' komutu işlevler arasında bulunmuyor"
+msgstr "'dataset' komutu işlevler içinde bulunmuyor"
 
 #: lib/src/dataset.c:3061
 msgid "Sorry, this command is not available in loop mode\n"
@@ -1785,7 +1784,7 @@ msgstr "%s çıkarılıyor: örneklem aralığı geçerli gözlem içermiyor\n"
 
 #: lib/src/describe.c:5013
 msgid "corr: needs at least two non-constant arguments"
-msgstr "corr: sabit olmayan en az iki argüman gerekli"
+msgstr "corr: en az iki sabit-dışı argüman istemektedir"
 
 #: lib/src/describe.c:5070 lib/src/modelprint.c:3310 lib/src/modelprint.c:3322
 #: lib/src/modelprint.c:3323 lib/src/modelprint.c:3324
@@ -2062,7 +2061,7 @@ msgstr "Kalıntı kareleri toplamı (%g) > 0 değil"
 
 #: lib/src/estimate.c:2009 lib/src/estimate.c:2122
 msgid "ESS"
-msgstr "HKT"
+msgstr "KKT"
 
 #: lib/src/estimate.c:2182
 #, c-format
@@ -2074,7 +2073,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"HKT, ro = %g için enaz\n"
+"KKT, ro = %g için enaz\n"
 "\n"
 
 #: lib/src/estimate.c:2213
@@ -2099,7 +2098,7 @@ msgstr ""
 
 #: lib/src/estimate.c:2218
 msgid "                 ITER       RHO        ESS"
-msgstr "               YİNELEME     RO        HKT"
+msgstr "               YİNELEME     RO        KKT"
 
 #: lib/src/estimate.c:2687 lib/src/gretl_model.c:3037 lib/src/modelprint.c:757
 msgid "Pesaran-Taylor test for heteroskedasticity"
@@ -2132,7 +2131,7 @@ msgstr "Genellemeli Cochrane-Orcutt tahmini"
 #: lib/src/estimate.c:3200
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
-msgstr "YİNELEME         HKT           DEĞİŞİM%"
+msgstr "YİNELEME         KKT           DEĞİŞİM%"
 
 #: lib/src/estimate.c:3479 lib/src/vartest.c:124
 msgid "Test for ARCH of order"
@@ -2573,11 +2572,8 @@ msgid "std. dev"
 msgstr "ölç. sap"
 
 #: lib/src/graphing.c:336 gui2/library.c:6465
-#, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
-msgstr ""
-"Sonuncusu bir kukla değişken (1 veya 0)\n"
-"olacak şekilde üç değişken sağlamalısınız"
+msgstr "Sonuncusu kesikli olacak şekilde üç değişken sağlamalısınız"
 
 #: lib/src/graphing.c:1408
 msgid "Gnuplot does not support PDF output on this system"
@@ -2887,7 +2883,7 @@ msgstr "Belirlenemeyen hata - DÜZELTİLECEK"
 
 #: lib/src/gretl_errors.c:46
 msgid "Syntax error in genr formula"
-msgstr "Genr için formül yazım hatası"
+msgstr "Genr formülünde sözdizim hatası"
 
 #: lib/src/gretl_errors.c:48
 msgid "Error attempting to open file"
@@ -2915,7 +2911,7 @@ msgstr "İşlev argümanı geçersiz"
 
 #: lib/src/gretl_errors.c:55
 msgid "Syntax error in command line"
-msgstr "Komut satırında yazım hatası"
+msgstr "Komut satırında sözdizim hatası"
 
 #: lib/src/gretl_errors.c:56
 msgid "No independent variables left after omissions"
@@ -2955,7 +2951,7 @@ msgstr "Genr formülünde aşırı üs"
 
 #: lib/src/gretl_errors.c:65
 msgid "Need valid starting and ending observations"
-msgstr "Geçerli birer başlangıç ve bitiş gözlemi gerekiyor"
+msgstr "Geçerli başlangıç ve bitiş gözlemleri istenmektedir"
 
 #: lib/src/gretl_errors.c:66
 msgid "You must include a constant in this sort of model"
@@ -3010,9 +3006,8 @@ msgid "External command failed"
 msgstr "Kullanıcı komutu başarısız"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (16384 bytes) exceeded"
-msgstr "Komut satırı için ençok uzunluk (8192 byte) aşıldı"
+msgstr "Komut satırı için ençok uzunluk (16384 bayt) aşıldı"
 
 #: lib/src/gretl_errors.c:81
 msgid "Matrix is not positive definite"
@@ -3027,16 +3022,12 @@ msgid "Insufficient observations for this operation"
 msgstr "Gözlem sayısı bu işlem için yetersiz"
 
 #: lib/src/gretl_errors.c:84
-#, fuzzy
 msgid "Error executing function"
-msgstr ""
-"\n"
-"Betik çalıştırma hatası: durduruluyor\n"
+msgstr "İşlev çalıştırma hatası"
 
 #: lib/src/gretl_errors.c:85 gui2/gretl.c:2145
-#, fuzzy
 msgid "Execution aborted by request"
-msgstr "gözlem sıralama ölçütü: %s"
+msgstr "İstek üzerine çalıştırma işleminden çıkıldı"
 
 #: lib/src/gretl_errors.c:93
 msgid "gradient is not close to zero"
@@ -3093,7 +3084,7 @@ msgstr "Bir işlev adını burada değiştiremezsiniz"
 #: lib/src/gretl_func.c:5341 lib/src/gretl_func.c:5368
 #: lib/src/gretl_func.c:5393 lib/src/gretl_func.c:5414
 msgid "Duplicated pointer argument: not allowed"
-msgstr ""
+msgstr "Tekrarlı imleç argüman: izin verilmiyor"
 
 #: lib/src/gretl_func.c:6263
 #, c-format
@@ -3111,11 +3102,13 @@ msgid "%s: not enough arguments\n"
 msgstr "%s: yeterli argüman yok\n"
 
 #: lib/src/gretl_func.c:6394
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
-msgstr "%s hata iletisi:\n"
+msgstr ""
+"%s() hata iletisi:\n"
+" %s"
 
 #: lib/src/gretl_func.c:7151
 #, c-format
@@ -3710,7 +3703,7 @@ msgid ""
 "\n"
 msgstr ""
 "Ayrıca, sayısal değerlerden metin etiketlerine bazı eşleştirmeler\n"
-"bulunmuş ve aşağıda basılmıştır.\n"
+"bulundu ve aşağıda gösterildi.\n"
 "\n"
 
 #: lib/src/gretl_string_table.c:357
@@ -3760,7 +3753,7 @@ msgstr "%s dizgisi değiştirildi\n"
 #: lib/src/gretl_string_table.c:1057 lib/src/interact.c:4200
 #, c-format
 msgid "Maximum length of command line (%d bytes) exceeded\n"
-msgstr "Komut satırı için ençok uzunluk (%d byte) aşıldı\n"
+msgstr "Komut satırı için ençok uzunluk (%d bayt) aşıldı\n"
 
 #: lib/src/gretl_utils.c:814
 msgid "no ':' allowed in starting obs with frequency 1"
@@ -3862,7 +3855,7 @@ msgstr ""
 
 #: lib/src/gretl_www.c:1852
 msgid "HTTP proxy: first field must be an IP number"
-msgstr "HTTP vekili: ilk alan bir IP numarası olmalıdır"
+msgstr "HTTP vekili: birinci alan bir IP numarası olmalıdır"
 
 #: lib/src/gretl_xml.c:83 lib/src/gretl_xml.c:2439 lib/src/gretl_xml.c:2601
 #: lib/src/gretl_xml.c:2641 plugin/gnumeric_import.c:381
@@ -4163,7 +4156,7 @@ msgstr "Burada bir döngü bitiremezsiniz, daha başlamış değilsiniz\n"
 
 #: lib/src/interact.c:4751
 msgid "This command requires one variable.\n"
-msgstr "Bu komut bir tane değişken gerektirir.\n"
+msgstr "Bu komut bir değişkene gerek duymaktadır.\n"
 
 #: lib/src/interact.c:4892
 #, c-format
@@ -4185,7 +4178,7 @@ msgstr "Verileri yazma başarılı.\n"
 
 #: lib/src/interact.c:4973
 msgid "This estimator requires panel data"
-msgstr "Bu tahminci panel verileri gerektirir"
+msgstr "Bu tahminci panel verilerine gerek duymaktadır."
 
 #: lib/src/interact.c:5139
 msgid "Couldn't format model\n"
@@ -4194,16 +4187,15 @@ msgstr "Model biçimlendirilemedi\n"
 #: lib/src/interact.c:5155
 #, c-format
 msgid "Model printed to %s\n"
-msgstr "Model %s dosyasına kaydedildi\n"
+msgstr "Model %s dosyasına yazıldı\n"
 
 #: lib/src/interact.c:5268 cli/gretlcli.c:1046 gui2/library.c:8467
 msgid "Infinite loop detected in script\n"
 msgstr "Betikte sonsuz döngü bulundu\n"
 
 #: lib/src/interact.c:5288 lib/src/monte_carlo.c:2739
-#, fuzzy
 msgid "You cannot delete series in this context\n"
-msgstr "Bu bağlamda değişken silemezsiniz\n"
+msgstr "Serileri bu bağlamda silemezsiniz\n"
 
 #: lib/src/interact.c:5340 cli/gretlcli.c:675
 #, c-format
@@ -4232,7 +4224,7 @@ msgstr "'%s': böyle bir dizey yok"
 
 #: lib/src/libglue.c:443
 msgid "modprint: the first matrix argument must have 2 columns"
-msgstr "modprint: ilk dizey argümanı 2 sütuna sahip olmalıdır"
+msgstr "modprint: birinci dizey argümanının 2 sütunu olmalıdır"
 
 #: lib/src/libset.c:962
 #, c-format
@@ -4398,9 +4390,8 @@ msgid "Warning: solution is probably not unique"
 msgstr "Uyarı: çözüm büyük olasılıkla tek değil"
 
 #: lib/src/modelprint.c:595
-#, fuzzy
 msgid "Warning: couldn't compute numerical Hessian"
-msgstr "Sayısal Hesseyen hesaplama başarısız"
+msgstr "Uyarı: sayısal Hesseyen hesaplanamadı"
 
 #: lib/src/modelprint.c:613 lib/src/modelprint.c:631 lib/src/modelprint.c:639
 msgid "'Within' variance"
@@ -4408,7 +4399,7 @@ msgstr "Varyans 'içi'"
 
 #: lib/src/modelprint.c:614 lib/src/modelprint.c:632 lib/src/modelprint.c:640
 msgid "'Between' variance"
-msgstr "Varyans 'arası'"
+msgstr "Varyanslar 'arası'"
 
 #: lib/src/modelprint.c:616 lib/src/modelprint.c:634 lib/src/modelprint.c:642
 msgid "theta used for quasi-demeaning"
@@ -4433,9 +4424,8 @@ msgid "Auxiliary regression for non-linearity test (log terms)"
 msgstr "Doğrusal-dışılık sınaması yardımcı bağlanımı (loglar)"
 
 #: lib/src/modelprint.c:748
-#, fuzzy
 msgid "Auxiliary regression for added variables"
-msgstr "RESET belirtim sınaması için yan bağlanım"
+msgstr "Eklenen değişkenler için yan bağlanım"
 
 #: lib/src/modelprint.c:759
 msgid "Augmented regression for Chow test"
@@ -4633,7 +4623,7 @@ msgstr "ençok olabilirlik"
 
 #: lib/src/modelprint.c:869
 msgid "Between-groups"
-msgstr "kümeler-arası"
+msgstr "Kümeler-arası"
 
 #: lib/src/modelprint.c:873
 msgid "2-step Arellano-Bond"
@@ -5163,8 +5153,8 @@ msgid ""
 "This behavior may change in future versions, so you may want to adjust your\n"
 "scripts accordingly.\n"
 msgstr ""
-"UYARI: Sabit terim bağlayanlar arasında bulunuyordu ama araçlar\n"
-"arasında değildi; bu yüzden araç listesine kendiliğinden eklendi.\n"
+"UYARI: Sabit terim bağlayanlar içinde bulunuyordu ama araçlar\n"
+"içinde değildi; bu nedenle araç listesine kendiliğinden eklendi.\n"
 "Bu davranış gelecekteki sürümlerde değişebilir. Bu nedenle\n"
 "betiklerinizi uygun doğrultuda ayarlamak isteyebilirsiniz.\n"
 
@@ -5363,9 +5353,8 @@ msgid "HQC"
 msgstr "HQÖ"
 
 #: lib/src/modelprint.c:3115
-#, fuzzy
 msgid "SSR"
-msgstr "HKT"
+msgstr "KKT"
 
 #: lib/src/modelprint.c:4197
 msgid "Sum of AR coefficients"
@@ -5569,9 +5558,8 @@ msgstr ""
 "\n"
 
 #: lib/src/monte_carlo.c:2742
-#, fuzzy
 msgid "You cannot delete scalars in this context\n"
-msgstr "Bu bağlamda değişken silemezsiniz\n"
+msgstr "Sayılları bu bağlamda silemezsiniz\n"
 
 #: lib/src/monte_carlo.c:2993
 #, c-format
@@ -5595,7 +5583,7 @@ msgstr "'%s': bir sayıl ya da yöney bekleniyor"
 #: lib/src/nls.c:1002
 #, c-format
 msgid "iteration %2d: SSR = %.8g\n"
-msgstr "yineleme %2d: HKT = %.8g\n"
+msgstr "yineleme %2d: KKT = %.8g\n"
 
 #: lib/src/nls.c:1790
 msgid "Perfect fit achieved\n"
@@ -5696,7 +5684,7 @@ msgstr "sıra"
 
 #: lib/src/nonparam.c:299 lib/src/nonparam.c:538 lib/src/nonparam.c:1237
 msgid "This command requires two variables\n"
-msgstr "Bu komut iki tane değişken gerektirir\n"
+msgstr "Bu komut iki değişkene gerek duymaktadır.\n"
 
 #: lib/src/nonparam.c:317 lib/src/nonparam.c:569
 #, c-format
@@ -5893,7 +5881,7 @@ msgstr "Geçersiz seçenek '--%s'"
 #: lib/src/options.c:1056
 #, c-format
 msgid "The option '--%s' requires a parameter"
-msgstr "'--%s' seçeneği bir değiştirge gerektirir"
+msgstr "'--%s' seçeneği bir değiştirgeye gerek duymaktadır"
 
 #: lib/src/options.c:1326
 #, c-format
@@ -6785,7 +6773,7 @@ msgid ""
 "At least %d more instruments are needed."
 msgstr ""
 "Özdeşleme için derece koşulu sağlanmadı.\n"
-"En az %d araç daha gerekiyor."
+"En az %d araç daha istenmektedir."
 
 #: lib/src/usermat.c:613 lib/src/usermat.c:697
 #, c-format
@@ -7063,10 +7051,10 @@ msgstr ""
 " -b veya --batch     Bir komut betiği işle ve çık.\n"
 " -r veya --run       Bir betik çalıştırıp denetimi komut satırına ver.\n"
 "-m veya -makepkg   Bir betik çalıştır ve bundan bir paket oluştur.\n"
-" -h veya --help      Bu bilgiyi yaz ve çık.\n"
-" -v veya --version   Sürüm bilgisini yaz ve çık.\n"
+" -h veya --help      Bu bilgiyi göster ve çık.\n"
+" -v veya --version   Sürüm bilgisini göster ve çık.\n"
 " -e veya --english   Çeviri yerine İngilizce kullanımını zorla.\n"
-" -q veya --quiet    Program bilgisini daha az ayrıntılı yaz.\n"
+" -q veya --quiet    Program bilgisini daha az ayrıntılı göster.\n"
 "Batch kipi kullanımına örnek:\n"
 " gretlcli -b myfile.inp >myfile.out\n"
 "Çalıştırma kipi kullanımına örnek:\n"
@@ -7855,7 +7843,7 @@ msgstr "\"eksik\" olarak okunacak değeri giriniz:"
 
 #: gui2/callbacks.c:564
 msgid "gretl: boxplots"
-msgstr "gretl: kutu çizimleri"
+msgstr "gretl: kutuçizimleri"
 
 #: gui2/callbacks.c:565
 msgid "Specify variables to plot:"
@@ -7910,19 +7898,16 @@ msgid "Type a command:"
 msgstr "Bir komut giriniz:"
 
 #: gui2/callbacks.c:627
-#, fuzzy
 msgid "Simple boxplot"
-msgstr "tekli kutu çizimi"
+msgstr "Basit kutuçizimi"
 
 #: gui2/callbacks.c:628
-#, fuzzy
 msgid "With confidence interval for median"
-msgstr "Güven aralığı çiziş biçimi:"
+msgstr "Ortanca için güven aralığı ile"
 
 #: gui2/callbacks.c:629
-#, fuzzy
 msgid "Factorized"
-msgstr "çarpanlamalı çizim"
+msgstr "Çarpanlamalı"
 
 #: gui2/callbacks.c:726
 msgid "gretl: create data set"
@@ -7956,7 +7941,7 @@ msgid ""
 "# likely require editing if it is to be run as a script.\n"
 msgstr ""
 "# Oturum komut kayıtları.  Bunun bir betik olarak çalıştırılabilmesi\n"
-"# için elle düzenleme gerekebileceğine lütfen dikkat ediniz.\n"
+"# için elle düzenlemenin gerekli olabileceğine lütfen dikkat ediniz.\n"
 
 #: gui2/cmdstack.c:332
 msgid "The command log is empty"
@@ -8110,7 +8095,7 @@ msgid ""
 "Database installed.\n"
 "Open it now?"
 msgstr ""
-"Veritabanı yüklendi.\n"
+"Veritabanı kuruldu.\n"
 "Şimdi açılsın mı?"
 
 #: gui2/database.c:2166 gui2/database.c:2189 gui2/database.c:2407
@@ -8131,16 +8116,15 @@ msgstr "Güncel değil"
 
 #: gui2/database.c:2412 gui2/database.c:2698
 msgid "Not installed"
-msgstr "Yüklü değil"
+msgstr "Kurulu değil"
 
 #: gui2/database.c:2593 gui2/database.c:2981 gui2/database.c:3004
 msgid "No database files found"
 msgstr "Bulunan veritabanı dosyası yok"
 
 #: gui2/database.c:2695 gui2/datafiles.c:997
-#, fuzzy
 msgid "Installed"
-msgstr "Yükle"
+msgstr "Kurulu"
 
 #: gui2/database.c:2769 gui2/database.c:2864
 msgid "No function packages found"
@@ -8223,7 +8207,7 @@ msgstr "Yeni"
 #: gui2/datafiles.c:1209 gui2/datafiles.c:1217 gui2/datafiles.c:1241
 #: gui2/datafiles.c:1255 gui2/datafiles.c:1322
 msgid "Install"
-msgstr "Yükle"
+msgstr "Kur"
 
 #: gui2/datafiles.c:1231 gui2/datafiles.c:1238 gui2/datafiles.c:1321
 msgid "List series"
@@ -8280,9 +8264,8 @@ msgid "gretl: data packages on server"
 msgstr "gretl: sunucudaki veri paketleri"
 
 #: gui2/datafiles.c:1565
-#, fuzzy
 msgid "gretl: addons"
-msgstr "gretl: bilgi ekle"
+msgstr "gretl: eklentiler"
 
 #: gui2/datafiles.c:1994 gui2/fnsave.c:1933
 msgid "gretl: function packages"
@@ -8391,7 +8374,7 @@ msgid ""
 "Enter name for first variable\n"
 "(max. 15 characters)"
 msgstr ""
-"İlk değişkenin adını giriniz\n"
+"Birinci değişkenin adını giriniz\n"
 "(ençok 15 harf)"
 
 #: gui2/datawiz.c:297 gui2/ssheet.c:1461
@@ -8603,7 +8586,7 @@ msgstr ""
 
 #: gui2/dialogs.c:355
 msgid "Print missing values as:"
-msgstr "Eksik değerleri şöyle yazdır:"
+msgstr "Eksik değerleri şöyle göster:"
 
 #: gui2/dialogs.c:456
 msgid "gretl: data delimiter"
@@ -8773,14 +8756,12 @@ msgid "gretl: set sample"
 msgstr "gretl: örneklem sapta"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Groups"
-msgstr "Kümeye-göre AEK (groupwise WLS)"
+msgstr "Kümeler"
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Periods"
-msgstr "dönemler"
+msgstr "Dönemler"
 
 #: gui2/dialogs.c:1974 gui2/selector.c:7170
 msgid "to"
@@ -8817,11 +8798,11 @@ msgstr "çoklu çizimler dikey düzende (N <= 6)"
 
 #: gui2/dialogs.c:2305
 msgid "boxplots by group (N <= 150)"
-msgstr "kümeli kutu çizimleri (N <= 150)"
+msgstr "kümeli kutuçizimleri (N <= 150)"
 
 #: gui2/dialogs.c:2306
 msgid "single boxplot"
-msgstr "tekli kutu çizimi"
+msgstr "tekli kutuçizimi"
 
 #: gui2/dialogs.c:2317 gui2/dialogs.c:2329
 msgid "panel plot"
@@ -9198,9 +9179,8 @@ msgid "Add list of instruments"
 msgstr "Araç listesi ekle"
 
 #: gui2/dlgutils.c:914
-#, fuzzy
 msgid "Show interval for median"
-msgstr "Aralık gösterilecek olan:"
+msgstr "Ortanca için aralık göster"
 
 #: gui2/dlgutils.c:917 gui2/dlgutils.c:1072 gui2/selector.c:3646
 msgid "Iterated estimation"
@@ -9392,11 +9372,11 @@ msgstr "Üst sıklık sınırı:"
 
 #: gui2/filters.c:427
 msgid "The first EMA value is"
-msgstr "İlk ÜHO değeri şu olsun:"
+msgstr "Birinci ÜHO değeri şu olsun:"
 
 #: gui2/filters.c:436
 msgid "the mean of the first n observations"
-msgstr "ilk n gözlem ortalaması"
+msgstr "ilk n gözlemin ortalaması"
 
 #: gui2/filters.c:444
 msgid "the mean of the whole series"
@@ -9600,7 +9580,7 @@ msgstr "\"Tamam\" üzerine bu iletiyi kapat"
 
 #: gui2/fncall.c:1764
 msgid "This function needs a model in place"
-msgstr ""
+msgstr "Bu işlev hazırda bir model olmasını istemektedir."
 
 #: gui2/fncall.c:1812
 msgid "Function package is broken"
@@ -9654,7 +9634,7 @@ msgstr "Panel verileri"
 
 #: gui2/fnsave.c:840
 msgid "No dataset needed"
-msgstr "Veri seti gerekli değil"
+msgstr "Veri seti istenmemektedir"
 
 #: gui2/fnsave.c:845
 msgid "Data requirement"
@@ -9820,7 +9800,7 @@ msgstr "kökler"
 
 #: gui2/gpt_control.c:3399
 msgid "gretl: boxplot data"
-msgstr "gretl: kutu çizimi verileri"
+msgstr "gretl: kutuçizimi verileri"
 
 #: gui2/gpt_control.c:3471
 msgid " Drag to define zoom rectangle"
@@ -10284,7 +10264,7 @@ msgstr "ayıklama bilgisini uçbirime gönder"
 
 #: gui2/gretl.c:126
 msgid "print version information"
-msgstr "sürüm bilgisini yazdır"
+msgstr "sürüm bilgisini göster"
 
 #: gui2/gretl.c:237
 #, c-format
@@ -10708,12 +10688,11 @@ msgstr "X-Y _denetim ile..."
 
 #: gui2/gretl.c:1368
 msgid "_Boxplots..."
-msgstr "Ku_tu çizimleri..."
+msgstr "_Kutuçizimleri..."
 
 #: gui2/gretl.c:1369
-#, fuzzy
 msgid "_Factorized boxplot..."
-msgstr "çarpanlamalı çizim"
+msgstr "_Çarpanlamalı kutuçizimi"
 
 #: gui2/gretl.c:1370
 msgid "_Q-Q plot..."
@@ -11085,7 +11064,7 @@ msgstr "_Ağırlıklı En küçük Kareler..."
 
 #: gui2/gretl.c:1485
 msgid "_Between model..."
-msgstr "_Kümeler-arası model..."
+msgstr "_Modeller arası..."
 
 #: gui2/gretl.c:1486
 msgid "_Dynamic panel model..."
@@ -11192,9 +11171,8 @@ msgid "Check for _updates"
 msgstr "_Güncellemeleri sorgula"
 
 #: gui2/gretl.c:1519
-#, fuzzy
 msgid "Check for _addons"
-msgstr "_Güncellemeleri sorgula"
+msgstr "_Eklentileri sorgula"
 
 #: gui2/gretl.c:1520
 msgid "_About gretl"
@@ -12043,7 +12021,7 @@ msgid ""
 "First char of name ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Adın ilk harfi ('%c') hatalı\n"
+"Adın birinci harfi ('%c') hatalı\n"
 "(bir harf ile başlamalıdır)"
 
 #: gui2/gui_utils.c:4626
@@ -12420,9 +12398,8 @@ msgstr ""
 "aralığını daraltabilirsiniz (Örneklem menüsü)."
 
 #: gui2/library.c:1961
-#, fuzzy
 msgid "No variables are selected"
-msgstr "Silinen değişken yok"
+msgstr "Seçili değişken yok"
 
 #: gui2/library.c:2033 gui2/library.c:3476 gui2/library.c:3732
 #: gui2/library.c:4002
@@ -12435,9 +12412,8 @@ msgid "gretl: Wald omit test"
 msgstr "gretl: Wald çıkarma sınaması"
 
 #: gui2/library.c:2040
-#, fuzzy
 msgid "gretl: LM test"
-msgstr "gretl: LM sınaması "
+msgstr "gretl: LM sınaması"
 
 #: gui2/library.c:2081 gui2/library.c:3871
 msgid "gretl: vector autoregression"
@@ -12802,7 +12778,7 @@ msgstr "R kipi"
 
 #: gui2/library.c:6982
 msgid "pre-load data"
-msgstr "veriler önyüklensin"
+msgstr "verileri önceden yükle"
 
 #: gui2/library.c:7184 plugin/leverage.c:105 plugin/pca.c:88
 msgid "gretl: save data"
@@ -12943,7 +12919,7 @@ msgstr "Sıklık dağılımı"
 
 #: gui2/menustate.c:339 gui2/menustate.c:427
 msgid "Boxplot"
-msgstr "Kutu çizimi"
+msgstr "Kutuçizimi"
 
 #: gui2/menustate.c:345 gui2/menustate.c:429
 msgid "Periodogram"
@@ -13414,9 +13390,8 @@ msgid "Choose"
 msgstr "Seçiniz"
 
 #: gui2/selector.c:3730
-#, fuzzy
 msgid "Variable to plot"
-msgstr "Sıralamada kullanılacak değişken"
+msgstr "Çizilecek değişken"
 
 #: gui2/selector.c:3772
 msgid "Lower bound variable"
@@ -13455,9 +13430,8 @@ msgid "Z-axis variable"
 msgstr "Z-ekseni değişkeni"
 
 #: gui2/selector.c:3948
-#, fuzzy
 msgid "Factor (discrete)"
-msgstr "Etmen (kukla)"
+msgstr "Etmen (kesikli)"
 
 #: gui2/selector.c:3950
 msgid "Control variable"
@@ -13652,13 +13626,12 @@ msgid "Use lines"
 msgstr "Çizgi kullan"
 
 #: gui2/selector.c:5224
-#, fuzzy
 msgid "Estimate augmented model"
-msgstr "İndirgemeli modeli tahmin et"
+msgstr "Genişletmeli modeli tahmin et"
 
 #: gui2/selector.c:5229
 msgid "LM test using auxiliary regression"
-msgstr ""
+msgstr "LÇ sınaması, yardımcı bağlanım kullanarak"
 
 #: gui2/selector.c:5243
 msgid "Estimate reduced model"
@@ -13753,9 +13726,8 @@ msgid "factorized plot"
 msgstr "çarpanlamalı çizim"
 
 #: gui2/selector.c:5703
-#, fuzzy
 msgid "factorized boxplot"
-msgstr "çarpanlamalı çizim"
+msgstr "çarpanlamalı kutuçizimi"
 
 #: gui2/selector.c:5705
 msgid "scatterplot with control"
@@ -14012,7 +13984,7 @@ msgstr ""
 
 #: gui2/session.c:1895
 msgid "Display notes on opening session file"
-msgstr ""
+msgstr "Oturum dosyasını açınca notları göster"
 
 #: gui2/session.c:2015
 msgid "versus"
@@ -14020,7 +13992,7 @@ msgstr "karşı"
 
 #: gui2/session.c:2287 gui2/session.c:2324 gui2/session.c:2346
 msgid "Please close this object's window first"
-msgstr "Lütfen önce bu nesnenin penceresini kapatınız"
+msgstr "Lütfen ilk önce bu nesnenin penceresini kapatınız"
 
 #: gui2/session.c:2431
 #, c-format
@@ -14215,7 +14187,7 @@ msgstr "Dosya seçici önceki dizini anımsasın"
 
 #: gui2/settings.c:170
 msgid "Language preference"
-msgstr "Dil tercihi"
+msgstr "Dil seçimi"
 
 #: gui2/settings.c:174
 msgid "Command to launch gnuplot"
@@ -14323,7 +14295,7 @@ msgstr "GÖBKF tahmini için"
 
 #: gui2/settings.c:257
 msgid "PDF manual preference"
-msgstr "PDF belge tercihi"
+msgstr "PDF belge seçimi"
 
 #: gui2/settings.c:789
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
@@ -14421,7 +14393,7 @@ msgstr "Dosya seçimi iletisi:"
 
 #: gui2/settings.c:2363
 msgid "remember the last-opened folder"
-msgstr "en son açılan dizini anımsasın"
+msgstr "son açılan dizini anımsa"
 
 #: gui2/settings.c:2372
 msgid "always start in the working directory"
@@ -14574,7 +14546,7 @@ msgstr "gretl: verileri düzenle"
 
 #: gui2/ssheet.c:2959
 msgid "Please add a variable to the dataset first"
-msgstr "Lütfen önce veri setine bir değişken ekleyiniz"
+msgstr "Lütfen ilk önce veri setine bir değişken ekleyiniz"
 
 #: gui2/ssheet.c:3049
 msgid "You must give the matrix a name"
@@ -14626,7 +14598,6 @@ msgid "The dataset cannot be modified at present"
 msgstr "Veri seti şu an kiplenemiyor (modify)"
 
 #: gui2/textbuf.c:291
-#, fuzzy
 msgid "No redo information available"
 msgstr "Elde geri alma bilgisi yok"
 
@@ -14752,7 +14723,7 @@ msgstr "Gönderecek birşey yok"
 
 #: gui2/toolbar.c:253
 msgid "Print with syntax highlighting?"
-msgstr ""
+msgstr "Sözdizim vurgulaması kullanılsın mı?"
 
 #: gui2/toolbar.c:347
 #, c-format
@@ -14780,9 +14751,8 @@ msgid "Save as..."
 msgstr "Farklı kaydet..."
 
 #: gui2/toolbar.c:626
-#, fuzzy
 msgid "Show/hide"
-msgstr "Kareleri göster"
+msgstr "Göster/gizle"
 
 #: gui2/toolbar.c:627
 msgid "Run"
@@ -14790,11 +14760,11 @@ msgstr "Çalıştır"
 
 #: gui2/toolbar.c:628
 msgid "Stop"
-msgstr ""
+msgstr "Dur"
 
 #: gui2/toolbar.c:629
 msgid "Cut"
-msgstr ""
+msgstr "Kes"
 
 #: gui2/toolbar.c:631
 msgid "Paste"
@@ -14810,7 +14780,7 @@ msgstr "Geri al"
 
 #: gui2/toolbar.c:635
 msgid "Redo"
-msgstr ""
+msgstr "Yine yap"
 
 #: gui2/toolbar.c:636
 msgid "Sort"
@@ -14926,7 +14896,7 @@ msgid ""
 "(You can run gretl_updater.exe later if you prefer.)"
 msgstr ""
 "Gretl web sayfasında yeni dosyalar bulunuyor.\n"
-"Bu dosyaların toplam büyüklüğü %u bayt.\n"
+"Bu dosyaların toplam büyüklüğü %u bayttır.\n"
 "\n"
 "Şimdi gretl'dan çıkmak ve kurulumunuzu güncellemek istiyor musunuz?\n"
 "(İsterseniz, gretl_updater.exe'yi daha sonra çalıştırabilirsiniz.)"
@@ -14976,11 +14946,11 @@ msgstr "gözlemler toplamı"
 
 #: gui2/varinfo.c:406
 msgid "first observation"
-msgstr "ilk gözlem"
+msgstr "Birinci gözlem"
 
 #: gui2/varinfo.c:407
 msgid "last observation"
-msgstr "son gözlem"
+msgstr "sonuncu gözlem"
 
 #: gui2/varinfo.c:683
 msgid "Previous series"
@@ -15080,7 +15050,7 @@ msgstr "Normal"
 
 #: plugin/addons-i18n.c:20
 msgid "OPG"
-msgstr ""
+msgstr "OPG"
 
 #: plugin/addons-i18n.c:21
 msgid "Plot type"
@@ -15202,7 +15172,7 @@ msgstr "Çalışmadosyası başlığı okuma hatası\n"
 
 #: plugin/excel_import.c:77
 msgid "Perhaps you need to adjust the starting column or row?"
-msgstr "Başlangıç sütun veya satırını ayarlamanız gerekiyor olabilir mi?"
+msgstr "Belki de başlangıç sütun veya satırını ayarlamalısınız?"
 
 #: plugin/excel_import.c:654
 msgid "String index too large"
@@ -15265,7 +15235,7 @@ msgstr "Verili bir içtürel değişken listesi yok"
 
 #: plugin/fiml.c:894
 msgid "Gradients at last iteration"
-msgstr "Son yinelemedeki düşümler"
+msgstr "Sonuncu yinelemedeki düşümler"
 
 #: plugin/fractals.c:42
 msgid "Rescaled-range plot for"
