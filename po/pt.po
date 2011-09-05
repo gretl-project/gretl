@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-08-24 00:06+0100\n"
+"PO-Revision-Date: 2011-09-05 00:45+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -3019,9 +3019,8 @@ msgid "External command failed"
 msgstr "Falhou comando externo"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (16384 bytes) exceeded"
-msgstr "Foi excedido o comprimento máximo da linha de comandos (8192 bytes)"
+msgstr "Foi excedido o comprimento máximo da linha de comandos (16394 bytes)"
 
 #: lib/src/gretl_errors.c:81
 msgid "Matrix is not positive definite"
@@ -3040,9 +3039,8 @@ msgid "Error executing function"
 msgstr "Erro ao executar função"
 
 #: lib/src/gretl_errors.c:85 gui2/gretl.c:2145
-#, fuzzy
 msgid "Execution aborted by request"
-msgstr "observações ordenadas por %s"
+msgstr "Execução abortada por pedido"
 
 #: lib/src/gretl_errors.c:93
 msgid "gradient is not close to zero"
@@ -5392,9 +5390,8 @@ msgid "HQC"
 msgstr "HQC"
 
 #: lib/src/modelprint.c:3115
-#, fuzzy
 msgid "SSR"
-msgstr "ESS"
+msgstr "SSR"
 
 #: lib/src/modelprint.c:4197
 msgid "Sum of AR coefficients"
@@ -7219,7 +7216,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 24 de agosto de 2011."
+"Tradução de 5 de setembro de 2011."
 
 #: gui2/about.c:165
 msgid "License"
@@ -14788,7 +14785,7 @@ msgstr "Nada a enviar"
 
 #: gui2/toolbar.c:253
 msgid "Print with syntax highlighting?"
-msgstr ""
+msgstr "Imprimir com realce de sintaxe?"
 
 #: gui2/toolbar.c:347
 #, c-format
@@ -14825,7 +14822,7 @@ msgstr "Executar"
 
 #: gui2/toolbar.c:628
 msgid "Stop"
-msgstr ""
+msgstr "Parar"
 
 #: gui2/toolbar.c:629
 msgid "Cut"
