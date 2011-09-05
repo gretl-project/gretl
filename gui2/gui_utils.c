@@ -655,8 +655,6 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
-/* ........................................................... */
-
 void nomem (void)
 {
     errbox(_("Out of memory!"));

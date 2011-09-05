@@ -350,7 +350,11 @@ static NODE *base (parser *p, NODE *up)
 	break;
     }
 
-#if 0 /* this check ought to be redundant, needs testing */
+#if 0 
+    /* This check ought to be redundant, and I believe it is 
+       now redundant, but I'm leaving it here for the present,
+       just in case. AC 2011-09-05
+    */
     if (p->err == 0 && p->sym != EOT && p->sym != QUERY &&
 	!(p->sym > U_MAX && p->sym < PUNCT_MAX)) {
 	/* catch high-level syntax errors: a "base" is followed

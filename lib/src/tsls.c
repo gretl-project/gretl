@@ -566,6 +566,10 @@ ivreg_sargan_test (MODEL *pmod, int Orank, int *instlist,
 	OT_list[i] = instlist[i-1];
     }
 
+#if TDEBUG
+    fprintf(stderr, "running regression for Sargan test\n");
+#endif
+
     smod = lsq(OT_list, dset, OLS, OPT_A);
 
     if (smod.errcode) {
@@ -624,6 +628,10 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	return err;
     } 
 
+#if TDEBUG
+    fprintf(stderr, "running regression for Hausman test, 1\n");
+#endif
+
     /* estimate the unrestricted model */
     hmod = lsq(HT_list, dset, OLS, OPT_A);
     if (hmod.errcode) {
@@ -661,6 +669,10 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     free(HT_list);
     HT_list = gretl_list_copy(reglist);
     HT_list[1] = nv;
+
+#if TDEBUG
+    fprintf(stderr, "running regression for Hausman test, 2\n");
+#endif
 
     /* regress the U fitted values on the regressors of the restricted 
        model (so the sum of squares equals RRSS-URSS)
@@ -832,7 +844,7 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
 	return E_ALLOC;
     }
 
-#if TDEBUG
+#if TDEBUG > 1
     fprintf(stderr, "tsls_form_xhat: t1=%d, t2=%d, mask=%p\n",
 	    dset->t1, dset->t2, (void *) mask);
 #endif
@@ -1658,6 +1670,9 @@ MODEL tsls (const int *list, DATASET *dset, gretlopt opt)
 	/* Were collinear regressors dropped? If so, adjustments are needed */
 	OverIdRank += s2list[0] - tsls.list[0];
 	reglist_remove_redundant_vars(&tsls, s2list, reglist);
+#if TDEBUG
+	fprintf(stderr, "tsls: dropped collinear vars\n");
+#endif
     }
 
     if (nendo > 0) {
