@@ -1,4 +1,4 @@
-# Polish translation for gretl-1.9.5cvs
+# Polish translation for gretl-1.9.6
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004 - 2011
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004 - 2011
@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl-1.9.5\n"
+"Project-Id-Version: gretl-1.9.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-08-12 23:30-0400\n"
+"PO-Revision-Date: 2011-09-05 18:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -3017,9 +3017,8 @@ msgid "External command failed"
 msgstr "Błędne polecenie zewnętrzne"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Maximum length of command line (16384 bytes) exceeded"
-msgstr "Maksymalna długość lini polecenia przekracza (8192 bajty)"
+msgstr "Maksymalna długość lini polecenia do 16384 bajtów"
 
 #: lib/src/gretl_errors.c:81
 msgid "Matrix is not positive definite"
@@ -3038,9 +3037,8 @@ msgid "Error executing function"
 msgstr "Błąd skryptu: wykonanie przerwano"
 
 #: lib/src/gretl_errors.c:85 gui2/gretl.c:2145
-#, fuzzy
 msgid "Execution aborted by request"
-msgstr "obserwacje posortowane według zm. %s"
+msgstr "Wykonanie przerwane na żądanie"
 
 #: lib/src/gretl_errors.c:93
 msgid "gradient is not close to zero"
@@ -3097,7 +3095,7 @@ msgstr "Niemożliwa zmiana nazwy funkcji teraz"
 #: lib/src/gretl_func.c:5341 lib/src/gretl_func.c:5368
 #: lib/src/gretl_func.c:5393 lib/src/gretl_func.c:5414
 msgid "Duplicated pointer argument: not allowed"
-msgstr ""
+msgstr "Zduplokowany argument - operacja nie dozwolona"
 
 #: lib/src/gretl_func.c:6263
 #, c-format
@@ -5371,9 +5369,8 @@ msgid "HQC"
 msgstr "HQC"
 
 #: lib/src/modelprint.c:3115
-#, fuzzy
 msgid "SSR"
-msgstr "ESS"
+msgstr "SSR"
 
 #: lib/src/modelprint.c:4197
 msgid "Sum of AR coefficients"
@@ -14762,7 +14759,7 @@ msgstr "Nie ma nic do wysłania"
 
 #: gui2/toolbar.c:253
 msgid "Print with syntax highlighting?"
-msgstr ""
+msgstr "Drukuj z podświetlaną składnią"
 
 #: gui2/toolbar.c:347
 #, c-format
@@ -14799,7 +14796,7 @@ msgstr "Wykonaj"
 
 #: gui2/toolbar.c:628
 msgid "Stop"
-msgstr ""
+msgstr "Stop"
 
 #: gui2/toolbar.c:629
 msgid "Cut"
@@ -16060,18 +16057,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "Can't open folder %s"
-#~ msgstr "Niemożliwe otwarcie katalogu %s"
-
-#~ msgid "GARCH variants"
-#~ msgstr "Modele GARCH, APARCH, EGARCH, TARCH, NARCH, GJR ..."
-
-#~ msgid "Panel IV model"
-#~ msgstr "Panelowe Modele zmiennych instrumentalnych ..."
-
-#~ msgid "Confidence band plot"
-#~ msgstr "Przedział ufności"
-
-#~ msgid "Predicted values"
-#~ msgstr "Wartości predyktora"
