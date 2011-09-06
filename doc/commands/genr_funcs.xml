@@ -189,6 +189,30 @@
       </description>
     </function>
 
+    <function name="$fcast" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the <cmdref targ="fcast"/> forecasting command;
+	  returns the forecast values as a matrix. If the model on
+	  which the forecast was based is a system of equations the
+	  returned matrix will have one column per equation, otherwise
+	  it is a column vector. 
+	</para>
+      </description>
+    </function>
+
+    <function name="$fcerr" section="access" output="matrix">
+      <description>
+	<para>
+	  Must follow the <cmdref targ="fcast"/> forecasting command;
+	  returns the standard errors of the forecasts, if available, as a
+	  matrix. If the model on which the forecast was based is a system
+	  of equations the returned matrix will have one column per
+	  equation, otherwise it is a column vector.
+	</para>
+      </description>
+    </function>
+
     <function name="$fevd" section="access" output="matrix">
       <description>
 	<para>
