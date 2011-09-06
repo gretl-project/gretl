@@ -4574,6 +4574,10 @@ static int gnuplot_show_png (const char *fname, const char *name,
     png_plot *plot;
     int err = 0;
 
+    if (*fname == '\0') {
+	return 0;
+    }
+
 #if GPDEBUG
     fprintf(stderr, "gnuplot_show_png:\n fname='%s', spec=%p, saved=%d\n",
 	    fname, (void *) spec, saved);

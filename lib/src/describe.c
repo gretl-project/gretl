@@ -2024,6 +2024,10 @@ int freqdist (int varno, const DATASET *dset,
 	    record_freq_test(freq);
 	}
 
+	if (freq->numbins < 2) {
+	    realgraph = 0;
+	}
+
 	if (realgraph && plot_freq(freq, dist)) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	}

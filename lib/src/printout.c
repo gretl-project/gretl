@@ -385,9 +385,11 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	    f = 100.0 * freq->f[k] / valid;
 	    cumf += f;
 	    pprintf(prn, "  %6.2f%% %7.2f%% ", f, cumf);
-	    i = 0.36 * f;
-	    while (i--) {
-		pputc(prn, '*');
+	    if (f < 100) {
+		i = 0.36 * f;
+		while (i--) {
+		    pputc(prn, '*');
+		}
 	    }
 	    pputc(prn, '\n');
 	}
