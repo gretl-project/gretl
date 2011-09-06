@@ -1989,9 +1989,10 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
     return 0;
 }
 
-/* wrapper function: get the distribution, print it, graph it
+/* Wrapper function: get the distribution, print it, graph it
    if wanted, then free stuff.  OPT_Q = quiet; OPT_S =
-   silent.
+   silent. We report back in @graph whether or not we
+   actually ended up producing a graph.
 */
 
 int freqdist (int varno, const DATASET *dset,
