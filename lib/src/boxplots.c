@@ -757,6 +757,15 @@ static int real_boxplots (const int *list, char **bools,
 	} 
     }
 
+    for (i=1; i<=list[0]; i++) {
+	int v = list[i];
+
+	if (gretl_isconst(dset->t1, dset->t2, dset->Z[v])) {
+	    gretl_errmsg_sprintf(_("%s is a constant"), dset->varname[v]);
+	    return E_DATA;
+	}
+    }
+
     if (opt & OPT_Z) {
 	err = factorized_boxplot_check(list, bools, dset);
 	if (err) {
