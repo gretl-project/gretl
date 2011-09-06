@@ -4652,10 +4652,13 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 	break;
 
     case FREQ:
-	err = freqdist(cmd->list[1], dset, (s->flags == CONSOLE_EXEC),
-		       cmd->opt, prn);
-	if (!err && !(cmd->opt & OPT_Q)) {
-	    schedule_callback(s);
+	{
+	    int graph = (s->flags == CONSOLE_EXEC);
+
+	    err = freqdist(cmd->list[1], dset, &graph, cmd->opt, prn);
+	    if (!err && graph) {
+		schedule_callback(s);
+	    }
 	}
 	break;
 

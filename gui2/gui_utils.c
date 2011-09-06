@@ -5096,7 +5096,7 @@ int gretl_file_get_contents (const gchar *fname, gchar **contents, gsize *size)
 	}
     }
 
-    return !ok;
+    return ok ? 0 : E_FOPEN;
 }
 
 const char *print_today (void)

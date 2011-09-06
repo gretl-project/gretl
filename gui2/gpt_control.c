@@ -2339,7 +2339,6 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     /* get the content of the plot file */
     err = gretl_file_get_contents(spec->fname, &buf, NULL);
     if (err) {
-	gui_errmsg(err);
 	return err;
     }
 
@@ -4608,9 +4607,18 @@ static int gnuplot_show_png (const char *fname, const char *name,
 
     /* Parse the gnuplot source file.  If we hit errors here,
        flag this, but it's not necessarily a show-stopper in
-       terms of simply displaying the graph. 
+       terms of simply displaying the graph. Unless we get
+       E_FOPEN, in which case it really is a show-stopper.
     */
     plot->err = read_plotspec_from_file(plot->spec, &plot->pd);
+
+    if (plot->err == E_FOPEN) {
+	if (plot->spec != spec) {
+	    plotspec_destroy(plot->spec);
+	}
+	free(plot);
+	return E_FOPEN;
+    }
 
 #if GPDEBUG 
     fprintf(stderr, "gnuplot_show_png: read_plotspec_from_file returned %d\n",

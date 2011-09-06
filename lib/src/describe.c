@@ -1995,15 +1995,18 @@ static int check_freq_opts (gretlopt opt, int *n_bins,
 */
 
 int freqdist (int varno, const DATASET *dset,
-	      int graph, gretlopt opt, PRN *prn)
+	      int *graph, gretlopt opt, PRN *prn)
 {
     FreqDist *freq = NULL;
-    int realgraph = graph && !(opt & (OPT_Q|OPT_S));
     DistCode dist = D_NONE;
     double fmin = NADBL;
     double fwid = NADBL;
     int n_bins = 0;
     int err;
+
+    if (opt & (OPT_Q | OPT_S)) {
+	*graph = 0;
+    }
 
     if (opt & OPT_O) {
 	dist = D_GAMMA; 
@@ -2024,12 +2027,13 @@ int freqdist (int varno, const DATASET *dset,
 	    record_freq_test(freq);
 	}
 
-	if (freq->numbins < 2) {
-	    realgraph = 0;
+	if (*graph && freq->numbins < 2) {
+	    *graph = 0;
 	}
 
-	if (realgraph && plot_freq(freq, dist)) {
+	if (*graph && plot_freq(freq, dist)) {
 	    pputs(prn, _("gnuplot command failed\n"));
+	    *graph = 0;
 	}
 
 	free_freq(freq);
