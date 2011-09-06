@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-09-06 14:03+0200\n"
+"PO-Revision-Date: 2011-09-06 17:30+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -8953,7 +8953,7 @@ msgstr "Representar el intervalo de confianza usando"
 
 #: gui2/dialogs.c:3153
 msgid "Add observations"
-msgstr "A_ñadir observaciones"
+msgstr "Aña_dir observaciones"
 
 #: gui2/dialogs.c:3166
 msgid "Number of observations to add:"
@@ -10400,7 +10400,7 @@ msgstr "_JMulTi..."
 
 #: gui2/gretl.c:1251
 msgid "_Append data"
-msgstr "A_ñadir datos"
+msgstr "Aña_dir datos"
 
 #: gui2/gretl.c:1252 gui2/gretl.c:1267
 msgid "_Standard format..."
@@ -10785,7 +10785,7 @@ msgstr "Correlograma c_ruzado"
 
 #: gui2/gretl.c:1383
 msgid "_Add"
-msgstr "A_ñadir"
+msgstr "Aña_dir"
 
 #: gui2/gretl.c:1384
 msgid "_Logs of selected variables"
