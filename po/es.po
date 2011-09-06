@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-09-06 12:49+0200\n"
+"PO-Revision-Date: 2011-09-06 14:03+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -8104,7 +8104,7 @@ msgstr "Libro de códigos"
 #: gui2/database.c:819 gui2/menustate.c:329 gui2/menustate.c:394
 #: gui2/menustate.c:422 gui2/menustate.c:479
 msgid "Display values"
-msgstr "Mostrar valores"
+msgstr "Mostrar los valores"
 
 #: gui2/database.c:821
 msgid "Add to dataset"
@@ -8953,7 +8953,7 @@ msgstr "Representar el intervalo de confianza usando"
 
 #: gui2/dialogs.c:3153
 msgid "Add observations"
-msgstr "Añadir observaciones"
+msgstr "A_ñadir observaciones"
 
 #: gui2/dialogs.c:3166
 msgid "Number of observations to add:"
@@ -10620,15 +10620,15 @@ msgstr "_Datos"
 
 #: gui2/gretl.c:1338
 msgid "Select _all"
-msgstr "Seleccionar _todos"
+msgstr "Seleccionar _todas las variables"
 
 #: gui2/gretl.c:1339
 msgid "Define or edit _list..."
-msgstr "Definir o editar una _lista..."
+msgstr "Definir o editar una _lista de variables..."
 
 #: gui2/gretl.c:1340
 msgid "_Set selection from list..."
-msgstr "_Establecer la selección desde una lista..."
+msgstr "S_eleccionar variables desde una lista..."
 
 #: gui2/gretl.c:1341 gui2/gretl.c:1419
 msgid "_Display values"
@@ -10636,7 +10636,7 @@ msgstr "_Mostrar valores"
 
 #: gui2/gretl.c:1342
 msgid "_Edit values"
-msgstr "_Editar valores"
+msgstr "_Editar los valores"
 
 #: gui2/gretl.c:1343
 msgid "_Add observations..."
@@ -10648,7 +10648,7 @@ msgstr "Eliminar observaciones extra"
 
 #: gui2/gretl.c:1345
 msgid "_Dataset info"
-msgstr "Información del conjunto de _datos"
+msgstr "_Información del conjunto de datos"
 
 #: gui2/gretl.c:1346
 msgid "_Observation markers..."
@@ -10668,7 +10668,7 @@ msgstr "_Compactar datos..."
 
 #: gui2/gretl.c:1350
 msgid "_Expand data..."
-msgstr "_Expandir datos..."
+msgstr "E_xpandir datos..."
 
 #: gui2/gretl.c:1351
 msgid "_Transpose data..."
