@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-04 18:50-0400\n"
-"PO-Revision-Date: 2011-09-06 17:30+0200\n"
+"PO-Revision-Date: 2011-09-06 18:40+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -8953,7 +8953,7 @@ msgstr "Representar el intervalo de confianza usando"
 
 #: gui2/dialogs.c:3153
 msgid "Add observations"
-msgstr "Aña_dir observaciones"
+msgstr "A_ñadir observaciones"
 
 #: gui2/dialogs.c:3166
 msgid "Number of observations to add:"
@@ -10400,7 +10400,7 @@ msgstr "_JMulTi..."
 
 #: gui2/gretl.c:1251
 msgid "_Append data"
-msgstr "Aña_dir datos"
+msgstr "A_ñadir datos"
 
 #: gui2/gretl.c:1252 gui2/gretl.c:1267
 msgid "_Standard format..."
@@ -10416,7 +10416,7 @@ msgstr "G_uardar datos como"
 
 #: gui2/gretl.c:1268
 msgid "_Database..."
-msgstr "Base de _datos..."
+msgstr "_Base de datos..."
 
 #: gui2/gretl.c:1270
 msgid "_Export data"
@@ -10628,7 +10628,7 @@ msgstr "Definir o editar una _lista de variables..."
 
 #: gui2/gretl.c:1340
 msgid "_Set selection from list..."
-msgstr "S_eleccionar variables desde una lista..."
+msgstr "_Seleccionar variables desde una lista..."
 
 #: gui2/gretl.c:1341 gui2/gretl.c:1419
 msgid "_Display values"
@@ -10640,11 +10640,11 @@ msgstr "_Editar los valores"
 
 #: gui2/gretl.c:1343
 msgid "_Add observations..."
-msgstr "Añadir observaciones..."
+msgstr "A_ñadir observaciones..."
 
 #: gui2/gretl.c:1344
 msgid "_Remove extra observations"
-msgstr "Eliminar observaciones extra"
+msgstr "E_liminar observaciones extra"
 
 #: gui2/gretl.c:1345
 msgid "_Dataset info"
@@ -10660,7 +10660,7 @@ msgstr "Etiquetas de _variables..."
 
 #: gui2/gretl.c:1348
 msgid "Dataset _structure..."
-msgstr "E_structura del conjunto de datos..."
+msgstr "Est_ructura del conjunto de datos..."
 
 #: gui2/gretl.c:1349
 msgid "_Compact data..."
@@ -10672,23 +10672,23 @@ msgstr "E_xpandir datos..."
 
 #: gui2/gretl.c:1351
 msgid "_Transpose data..."
-msgstr "_Transponer datos..."
+msgstr "Tr_ansponer datos..."
 
 #: gui2/gretl.c:1352
 msgid "_Sort data..."
-msgstr "_Ordenar los datos..."
+msgstr "Or_denar los datos..."
 
 #: gui2/gretl.c:1353 gui2/gretl.c:1454
 msgid "Set missing _value code..."
-msgstr "Establecer código de '_valor ausente'..."
+msgstr "Esta_blecer código de 'valor ausente'..."
 
 #: gui2/gretl.c:1354
 msgid "_Find variable..."
-msgstr "_Buscar variable..."
+msgstr "B_uscar variable..."
 
 #: gui2/gretl.c:1355
 msgid "_Refresh window"
-msgstr "_Refrescar ventana"
+msgstr "Re_frescar ventana"
 
 #: gui2/gretl.c:1358 gui2/gui_utils.c:291 gui2/gui_utils.c:336
 #: gui2/ssheet.c:159
@@ -10785,7 +10785,7 @@ msgstr "Correlograma c_ruzado"
 
 #: gui2/gretl.c:1383
 msgid "_Add"
-msgstr "Aña_dir"
+msgstr "A_ñadir"
 
 #: gui2/gretl.c:1384
 msgid "_Logs of selected variables"
@@ -10877,7 +10877,7 @@ msgstr "Quitar todas las obs. con valores ausentes"
 
 #: gui2/gretl.c:1415
 msgid "_Count missing values"
-msgstr "_Contar valores ausentes"
+msgstr "Co_ntar valores ausentes"
 
 #: gui2/gretl.c:1418
 msgid "_Variable"
