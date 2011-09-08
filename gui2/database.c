@@ -2735,7 +2735,7 @@ gint populate_remote_addons_list (windata_t *vwin)
 	int i;
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model 
-			   (GTK_TREE_VIEW(vwin->listbox)));
+			       (GTK_TREE_VIEW(vwin->listbox)));
 	gtk_list_store_clear(store);
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 	node = node->xmlChildrenNode;

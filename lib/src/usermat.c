@@ -643,22 +643,7 @@ static int *mspec_to_list (int type, union msel *sel, int n,
 	return NULL;
     }
 
-    if (type == SEL_RANGE) {
-	if (sel->range[1] == MSEL_MAX) {
-	    sel->range[1] = n;
-	}
-	if (msel_out_of_bounds(sel->range, n)) {
-	    *err = E_DATA;
-	} else {
-	    ns = sel->range[1] - sel->range[0] + 1;
-	    if (ns <= 0) {
-		gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
-				     sel->range[0], sel->range[1]); 
-		*err = E_DATA;
-	    }
-	}
-    } else {
-	/* SEL_MATRIX */
+    if (type == SEL_MATRIX) {
 	if (sel->m == NULL) {
 	    gretl_errmsg_set(_("Range is non-positive!"));
 	    *err = E_DATA;
@@ -672,7 +657,22 @@ static int *mspec_to_list (int type, union msel *sel, int n,
 		ns = 1;
 	    }
 	}
-    }
+    } else {
+	/* range or element */
+	if (sel->range[1] == MSEL_MAX) {
+	    sel->range[1] = n;
+	}
+	if (msel_out_of_bounds(sel->range, n)) {
+	    *err = E_DATA;
+	} else {
+	    ns = sel->range[1] - sel->range[0] + 1;
+	    if (ns <= 0) {
+		gretl_errmsg_sprintf(_("Range %d to %d is non-positive!"),
+				     sel->range[0], sel->range[1]); 
+		*err = E_DATA;
+	    }
+	}
+    } 
 
     if (*err) {
 	return NULL;
@@ -685,11 +685,11 @@ static int *mspec_to_list (int type, union msel *sel, int n,
     }
 
     for (i=0; i<slice[0]; i++) {
-	if (type == SEL_RANGE) {
-	    slice[i+1] = sel->range[0] + i;
-	} else {
+	if (type == SEL_MATRIX) {
 	    slice[i+1] = sel->m->val[i];
-	}
+	} else {
+	    slice[i+1] = sel->range[0] + i;
+	} 
     }
 
     for (i=1; i<=slice[0] && !*err; i++) {
@@ -717,7 +717,7 @@ static int get_slices (matrix_subspec *spec,
     if (spec->type[1] == SEL_NULL) {
 	/* we were given, e.g., "M[2]" */
 	if (M->rows == 1) {
-	    /* treat the one selection as column selection */
+	    /* treat the one specifier as a column selection */
 	    *rslice = NULL;
 	    *cslice = mspec_to_list(spec->type[0], &spec->sel[0], 
 				    M->cols, &err);
@@ -844,6 +844,12 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
     if (spec->type[0] == SEL_DIAG) {
 	return gretl_matrix_get_diagonal(M, err);
+    } else if (spec->type[0] == SEL_ELEMENT) {
+	int i = mspec_get_row_index(spec);
+	int j = mspec_get_col_index(spec);
+	double x = matrix_get_element(M, i, j, err);
+
+	return (*err)? NULL : gretl_matrix_from_scalar(x);
     }
 
     *err = get_slices(spec, &rslice, &cslice, M);
@@ -893,6 +899,30 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     free(cslice);
 
     return S;
+}
+
+double matrix_get_element (const gretl_matrix *M, int i, int j,
+			   int *err)
+{
+    double x = NADBL;
+
+    /* The incoming i and j are from userspace, and will
+       be 1-based.
+    */
+    i--;
+    j--;
+
+    if (M == NULL) {
+	*err = E_DATA;
+    } else if (i < 0 || i >= M->rows || j < 0 || j >= M->cols) {
+	gretl_errmsg_sprintf(_("Index value %d is out of bounds"), 
+			     (i < 0 || i >= M->rows)? (j+1) : (i+1));
+	*err = 1;
+    } else {
+	x = gretl_matrix_get(M, i, j);
+    }
+
+    return x;
 }
 
 gretl_matrix *user_matrix_get_submatrix (const char *name, 

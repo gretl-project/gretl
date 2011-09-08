@@ -24,6 +24,7 @@
 
 enum {
     SEL_RANGE,
+    SEL_ELEMENT,
     SEL_MATRIX,
     SEL_DIAG,
     SEL_ALL,
@@ -43,6 +44,9 @@ struct matrix_subspec_ {
     int type[2];
     union msel sel[2];
 };
+
+#define mspec_get_row_index(m) (m->sel[0].range[0])
+#define mspec_get_col_index(m) (m->sel[1].range[0])
 
 #define gretl_is_matrix(s) (get_matrix_by_name(s) != NULL)
 
@@ -162,6 +166,9 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 				      const gretl_matrix *B,
 				      const char *rname,
 				      int *err);
+
+double matrix_get_element (const gretl_matrix *M, int i, int j,
+			   int *err);
 
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
 				    matrix_subspec *spec,

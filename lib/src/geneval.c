@@ -2660,6 +2660,9 @@ static void print_mspec (matrix_subspec *mspec)
 
 #endif
 
+#define mspec_set_row_index(m,i) (m->sel[0].range[0] = m->sel[0].range[1] = (i))
+#define mspec_set_col_index(m,j) (m->sel[1].range[0] = m->sel[1].range[1] = (j))
+
 /* compose a sub-matrix specification, from scalars and/or
    index matrices */
 
@@ -2682,12 +2685,16 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 	    *err = E_TYPES;
 	    goto bailout;
 	}
+    } else if (l->t == NUM && r->t == NUM) {
+	mspec->type[0] = mspec->type[1] = SEL_ELEMENT;
+	mspec_set_row_index(mspec, l->v.xval);
+	mspec_set_col_index(mspec, r->v.xval);
+	return mspec;
     }
 
     if (l->t == NUM) {
 	mspec->type[0] = SEL_RANGE;
-	mspec->sel[0].range[0] = l->v.xval;
-	mspec->sel[0].range[1] = l->v.xval;
+	mspec_set_row_index(mspec, l->v.xval);
     } else if (l->t == IVEC) {
 	mspec->type[0] = SEL_RANGE;
 	mspec->sel[0].range[0] = l->v.ivec[0];
@@ -2706,8 +2713,7 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 	mspec->type[1] = SEL_NULL;
     } else if (r->t == NUM) {
 	mspec->type[1] = SEL_RANGE;
-	mspec->sel[1].range[0] = r->v.xval;
-	mspec->sel[1].range[1] = r->v.xval;
+	mspec_set_col_index(mspec, r->v.xval);
     } else if (r->t == IVEC) {
 	mspec->type[1] = SEL_RANGE;
 	mspec->sel[1].range[0] = r->v.ivec[0];
@@ -10212,6 +10218,45 @@ static void assign_to_matrix_mod (parser *p)
     }
 }
 
+/* catch the case of an implicit column or row specification for
+   a sub-matrix of an (n x 1) or (1 x m) matrix
+*/
+
+static int check_lh_mspec (matrix_subspec *spec, gretl_matrix *m)
+{
+    int err = 0;
+
+    if (spec->type[1] == SEL_NULL && spec->type[0] == SEL_RANGE) {
+	if (m->cols == 1) {
+	    /* implicit column 1 */
+	    if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
+		/* single element selected */
+		spec->type[0] = spec->type[1] = SEL_ELEMENT;
+		mspec_set_col_index(spec, 1);
+	    }
+	} else {
+	    err = E_DATA;
+	}
+    } else if (spec->type[0] == SEL_NULL && spec->type[1] == SEL_RANGE) {
+	if (m->rows == 1) {
+	    /* implicit row 1 */
+	    if (spec->sel[1].range[0] == spec->sel[1].range[1]) {
+		/* single element selected */
+		spec->type[0] = spec->type[1] = SEL_ELEMENT;
+		mspec_set_row_index(spec, 1);
+	    }
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_set(_("Ambiguous matrix index"));
+    }
+
+    return err;
+}
+
 /* replacing a sub-matrix of the original LHS matrix, by
    either straight or modified assignment */
 
@@ -10229,6 +10274,23 @@ static void matrix_edit (parser *p)
 #if EDEBUG
     fprintf(stderr, "matrix_edit: m = %p\n", (void *) m);
 #endif
+
+    p->err = check_lh_mspec(p->lh.mspec, p->lh.m0);
+    if (p->err) {
+	return;
+    }
+
+    if (p->ret->t == NUM && p->lh.mspec->type[0] == SEL_ELEMENT) {
+	int i = mspec_get_row_index(p->lh.mspec);
+	int j = mspec_get_col_index(p->lh.mspec);
+	double x = matrix_get_element(p->lh.m0, i, j, &p->err);
+
+	if (!p->err) {
+	    x = xy_calc(x, p->ret->v.xval, p->op, MAT, p);
+	    gretl_matrix_set(p->lh.m0, i-1, j-1, x);
+	}
+	return;
+    }
 
     if (p->op != B_ASN || p->ret->t == NUM) {
 	/* doing '+=' or some such: new submatrix 'b' must

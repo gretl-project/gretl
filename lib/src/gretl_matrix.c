@@ -666,8 +666,7 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c)
 /**
  * gretl_null_matrix_new:
  *
- * Returns: pointer to a newly allocated null matrix 
- * (for use in declaration of a variable as a matrix),
+ * Returns: pointer to a newly allocated null matrix, or
  * NULL on failure.
  */
 
