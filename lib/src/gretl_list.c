@@ -62,16 +62,8 @@ struct saved_list_ {
     int level;
 };
 
-enum {
-    LIST_OMIT_TIGHT,
-    LIST_OMIT_SLOPPY
-};
-
 static saved_list **list_stack;
 static int n_lists;
-
-static int *real_gretl_list_omit (const int *orig, const int *omit, 
-				  int minpos, int mode, int *err);
 
 static saved_list *saved_list_new (const int *list, const char *name)
 {
@@ -277,9 +269,7 @@ int subtract_from_list_by_name (const char *targ, const int *sub)
     if (sl == NULL) {
 	err = E_UNKVAR;
     } else {
-	int *tmp = real_gretl_list_omit(sl->list, sub, 1, 
-					LIST_OMIT_SLOPPY,
-					&err);
+	int *tmp = gretl_list_drop(sl->list, sub, &err);
 
 	if (!err) {
 	    free(sl->list);
@@ -1846,100 +1836,83 @@ static int list_count (const int *list)
     return k;
 }
 
-static int *real_gretl_list_omit (const int *orig, const int *omit, 
-				  int minpos, int mode, int *err)
-{
-    const int nomit = omit[0];
-    const int norig = list_count(orig);
-    int real_nomit = nomit;
-    int *smal = NULL;
-    int i, j, k;
-
-    *err = 0;
-
-    /* check how many terms we're omitting */
-    for (i=1; i<=nomit; i++) {
-	int pos = in_gretl_list(orig, omit[i]);
-
-	if (pos < minpos) {
-	    if (mode == LIST_OMIT_TIGHT) {
-		/* "omission" is spurious */
-		gretl_errmsg_sprintf(_("Variable %d was not in the original list"),
-				     omit[i]);
-		*err = 1;
-		return NULL;
-	    } else {
-		real_nomit--;
-	    }
-	}
-    }
-
-    if (minpos > 1) {
-	/* it's an error to attempt to omit all vars */
-	if (nomit == norig - 1) {
-	    *err = E_NOVARS;
-	    return NULL;
-	}
-    }
-
-    if (real_nomit == norig) {
-	/* omitting all */
-	smal = gretl_null_list();
-	if (smal == NULL) {
-	    *err = E_ALLOC;
-	}
-	return smal;
-    }
-
-    smal = gretl_list_new(norig - real_nomit);
-    if (smal == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (i=1; i<minpos; i++) {
-	/* copy unaltered portion */
-	smal[i] = orig[i];
-    }
-
-    k = minpos;
-    for (i=minpos; i<=norig; i++) {
-        int match = 0;
-
-        for (j=1; j<=nomit; j++) {
-            if (orig[i] == omit[j]) {
-                match = 1; /* matching var: omit it */
-		break;
-            }
-        }
-        if (!match) { /* var is not in omit list: keep it */
-            smal[k++] = orig[i];
-        }
-    }
-
-    return smal;
-}
-
 /**
  * gretl_list_omit:
  * @orig: an array of integers, the first element of which holds
  * a count of the number of elements following.
  * @omit: list of variables to drop.
- * @minpos: minimum position to check.  This should be 2 for a regular
+ * @minpos: minimum position to check. This should be 2 for a regular
  * regression list, to skip the dependent var in position 1; but in
  * other contexts it may be 1 to start from the first element of @orig.
  * @err: pointer to receive error code.
  *
  * Creates a list containing the elements of @orig that are not
  * present in @omit.  It is an error if the @omit list contains
- * members that are not present in @orig.
+ * members that are not present in @orig. And the function will
+ * fail if @omit contains duplicated elements.
  *
  * Returns: new list on success, NULL on error.
  */
 
 int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 {
-    return real_gretl_list_omit(orig, omit, minpos, LIST_OMIT_TIGHT, err);
+    int n_omit = omit[0];
+    int n_orig = list_count(orig);
+    int *ret = NULL;
+    int i, j, k;
+
+    *err = 0;
+
+    /* check for spurious "omissions" */
+    for (i=1; i<=omit[0]; i++) {
+	k = in_gretl_list(orig, omit[i]);
+	if (k < minpos) {
+	    gretl_errmsg_sprintf(_("Variable %d was not in the original list"),
+				 omit[i]);
+	    *err = 1;
+	    return NULL;
+	}
+    }
+
+    if (minpos > 1) {
+	/* regression list: it's an error to attempt to omit 
+	   all regressors */
+	if (n_omit == n_orig - 1) {
+	    *err = E_NOVARS;
+	    return NULL;
+	}
+    }
+
+    ret = gretl_list_new(n_orig - n_omit);
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else if (n_omit < n_orig) {
+	int match;
+
+	for (i=1; i<minpos; i++) {
+	    /* copy unaltered portion */
+	    ret[i] = orig[i];
+	}
+
+	k = minpos;
+	for (i=minpos; i<=n_orig; i++) {
+	    match = 0;
+	    for (j=1; j<=n_omit; j++) {
+		if (orig[i] == omit[j]) {
+		    /* matching var: omit it */
+		    match = 1;
+		    break;
+		}
+	    }
+	    if (!match) { 
+		/* var is not in omit list: keep it */
+		ret[k++] = orig[i];
+	    }
+	}
+    }
+
+    return ret;
 }
 
 /**
@@ -1959,7 +1932,47 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 
 int *gretl_list_drop (const int *orig, const int *drop, int *err)
 {
-    return real_gretl_list_omit(orig, drop, 1, LIST_OMIT_SLOPPY, err);
+    int *lcopy = NULL;
+    int *ret = NULL;
+    int n_omit = 0;
+    int i, k;
+
+    *err = 0;
+
+    lcopy = gretl_list_copy(orig);
+
+    if (lcopy == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    } else {
+	/* see how many terms we're omitting */
+	for (i=1; i<=drop[0]; i++) {
+	    k = in_gretl_list(lcopy, drop[i]);
+	    if (k > 0) {
+		n_omit++;
+		lcopy[k] = -1;
+	    }
+	}
+    }
+
+    if (n_omit == 0) {
+	ret = lcopy;
+    } else {
+	ret = gretl_list_new(orig[0] - n_omit);
+	if (ret == NULL) {
+	    *err = E_ALLOC;
+	} else if (n_omit < orig[0]) {
+	    k = 1;
+	    for (i=1; i<=orig[0]; i++) {
+		if (lcopy[i] >= 0) {
+		    ret[k++] = orig[i];
+		}
+	    }
+	}
+	free(lcopy);
+    }
+
+    return ret;
 }
 
 /**
