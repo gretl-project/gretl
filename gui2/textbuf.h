@@ -24,6 +24,7 @@
 				      (vwin_editing_script(r) ||	\
 				       r == VIEW_SCRIPT ||		\
 				       r == VIEW_PKG_CODE ||		\
+				       r == EDIT_PKG_CODE ||		\
 				       r == VIEW_LOG))
 
 extern int tabwidth;

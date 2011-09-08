@@ -1823,7 +1823,9 @@ int *gretl_list_intersection (const int *l1, const int *l2, int *err)
  * a count of the number of elements following.
  * @err: location to receive error code.
  *
- * Creates a list containing all but the last element of @orig.
+ * Creates a list containing all but the last element of @orig,
+ * which must not contain #LISTSEP and must contain at least
+ * two members.
  *
  * Returns: new list on success, NULL on error.
  */
@@ -1837,29 +1839,24 @@ int *gretl_list_omit_last (const int *orig, int *err)
 
     if (orig[0] < 2) {
 	*err = E_NOVARS;
-    }
-
-    /* can't handle compound lists */
-    if (*err == 0) {
+    } else {
 	for (i=1; i<=orig[0]; i++) {
 	    if (orig[i] == LISTSEP) {
+		/* can't handle compound lists */
 		*err = 1;
 		break;
 	    }
 	}
     }
 
-    if (*err == 0) {
-	list = malloc(orig[0] * sizeof *list);
+    if (!*err) {
+	list = gretl_list_new(orig[0] - 1);
 	if (list == NULL) {
-	   *err = E_ALLOC;
-	} 
-    }
-    
-    if (list != NULL) {
-	list[0] = orig[0] - 1;
-	for (i=1; i<orig[0]; i++) {
-	    list[i] = orig[i];
+	    *err = E_ALLOC;
+	} else {
+	    for (i=1; i<orig[0]; i++) {
+		list[i] = orig[i];
+	    }
 	}
     }
 
