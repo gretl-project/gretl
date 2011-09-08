@@ -1038,7 +1038,13 @@ static void install_addon_callback (GtkWidget *w, gpointer data)
     if (pkgname == NULL) {
 	gui_errmsg(E_DATA);
     } else {
-	download_addon(pkgname, NULL);
+	int err = download_addon(pkgname, NULL);
+
+	if (!err) {
+	    list_store_set_string(GTK_TREE_VIEW(vwin->listbox), v, 3,
+				  _("Installed"));
+	} 
+
 	g_free(pkgname);
     }
 }

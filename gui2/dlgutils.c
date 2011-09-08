@@ -1260,6 +1260,9 @@ static void edit_dialog_add_note (const char *s, GtkWidget *vbox)
     g_free(lbl);
 }
 
+/* FIXME: edit dialog not closing on clicking of MS Windows close
+   button? */
+
 void edit_dialog (const char *title, const char *info, const char *deflt, 
 		  void (*okfunc)(), void *okptr, guint ci, 
 		  guint varclick, int *canceled)
