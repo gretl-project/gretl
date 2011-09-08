@@ -1067,14 +1067,13 @@ int *gretl_null_list (void)
 int *gretl_list_copy (const int *src)
 {
     int *targ = NULL;
-    int i;
 
     if (src != NULL) {
-	targ = malloc((src[0] + 1) * sizeof *targ);
+	int n = src[0] + 1;
+
+	targ = malloc(n * sizeof *targ);
 	if (targ != NULL) {
-	    for (i=0; i<=src[0]; i++) {
-		targ[i] = src[i];
-	    }
+	    memcpy(targ, src, n * sizeof *targ);
 	}
     }
 
@@ -1634,58 +1633,6 @@ int gretl_list_min_max (const int *list, int *lmin, int *lmax)
     }
 }
 
-static int *real_gretl_list_union (const int *orig, const int *add, 
-				   int *err, int duperr)
-{
-    int i, j, k;
-    int *big;
-    const int norig = orig[0];
-    const int nadd = add[0];
-
-    *err = 0;
-
-    big = gretl_list_new(norig + nadd);
-    if (big == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (i=0; i<=norig; i++) {
-	big[i] = orig[i];
-    }
-
-    k = orig[0];
-
-    for (i=1; i<=nadd; i++) {
-	int match = 0;
-
-	for (j=1; j<=norig; j++) {
-	    if (add[i] == orig[j]) {
-		/* a "new" var was already present */
-		if (duperr) {
-		    free(big);
-		    *err = E_ADDDUP;
-		    return NULL;
-		} else {
-		    match = 1;
-		}
-	    }
-	}
-	if (!match) {
-	    big[0] += 1;
-	    big[++k] = add[i];
-	}
-    }
-
-    if (duperr && big[0] == norig) {
-	free(big);
-	*err = E_NOADD;
-	return NULL;
-    }
-
-    return big;
-}
-
 /**
  * gretl_list_add:
  * @orig: an array of integers, the first element of which holds
@@ -1703,7 +1650,45 @@ static int *real_gretl_list_union (const int *orig, const int *add,
 
 int *gretl_list_add (const int *orig, const int *add, int *err)
 {
-    return real_gretl_list_union(orig, add, err, 1);
+    int n_orig = orig[0];
+    int n_add = add[0];
+    int i, j, k;
+    int *big;
+
+    *err = 0;
+
+    big = gretl_list_new(n_orig + n_add);
+    if (big == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (i=0; i<=n_orig; i++) {
+	big[i] = orig[i];
+    }
+
+    k = orig[0];
+
+    for (i=1; i<=n_add; i++) {
+	for (j=1; j<=n_orig; j++) {
+	    if (add[i] == orig[j]) {
+		/* a "new" var was already present */
+		free(big);
+		*err = E_ADDDUP;
+		return NULL;
+	    }
+	}
+	big[0] += 1;
+	big[++k] = add[i];
+    }
+
+    if (big[0] == n_orig) {
+	free(big);
+	big = NULL;
+	*err = E_NOADD;
+    }
+
+    return big;
 }
 
 /**
@@ -1719,7 +1704,67 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 
 int *gretl_list_union (const int *l1, const int *l2, int *err)
 {
-    return real_gretl_list_union(l1, l2, err, 0);
+    int *ret, *lcopy;
+    int n_orig = l1[0];
+    int n_add = l2[0];
+    int i, j, k;
+
+    *err = 0;
+
+    lcopy = gretl_list_copy(l2);
+
+    if (lcopy == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    } else {
+	/* see how many terms we're actually adding, if any */
+	for (i=1; i<=l2[0]; i++) {
+	    if (lcopy[i] == -1) {
+		continue;
+	    }
+	    k = in_gretl_list(l1, lcopy[i]);
+	    if (k > 0) {
+		/* element already present in l1 */
+		n_add--;
+		lcopy[i] = -1;
+	    } else {
+		/* not present in l1, but check for duplicates of 
+		   this element in l2 */
+		for (j=1; j<=l2[0]; j++) {
+		    if (j != i && l2[j] == l2[i]) {
+			n_add--;
+			lcopy[j] = -1;
+		    }
+		}
+	    }
+	}
+    }
+
+    if (n_add == 0) {
+	ret = gretl_list_copy(l1);
+    } else {
+	ret = gretl_list_new(n_orig + n_add);
+    }
+
+    if (ret == NULL) {
+	*err = E_ALLOC;
+    } else if (n_add > 0) {
+	for (i=1; i<=n_orig; i++) {
+	    ret[i] = l1[i];
+	}
+
+	k = l1[0];
+
+	for (i=1; i<=lcopy[0]; i++) {
+	    if (lcopy[i] != -1) {
+		ret[++k] = lcopy[i];
+	    }
+	}
+    }
+
+    free(lcopy);
+
+    return ret;
 }
 
 /**
@@ -1848,8 +1893,8 @@ static int list_count (const int *list)
  *
  * Creates a list containing the elements of @orig that are not
  * present in @omit.  It is an error if the @omit list contains
- * members that are not present in @orig. And the function will
- * fail if @omit contains duplicated elements.
+ * members that are not present in @orig, and also if the @omit
+ * list contains duplicated elements.
  *
  * Returns: new list on success, NULL on error.
  */
@@ -1860,6 +1905,11 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
     int n_orig = list_count(orig);
     int *ret = NULL;
     int i, j, k;
+
+    if (n_omit > n_orig) {
+	*err = E_DATA;
+	return NULL;
+    }
 
     *err = 0;
 
@@ -1890,27 +1940,26 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
     } else if (n_omit < n_orig) {
 	int match;
 
-	for (i=1; i<minpos; i++) {
-	    /* copy unaltered portion */
-	    ret[i] = orig[i];
-	}
-
-	k = minpos;
-	for (i=minpos; i<=n_orig; i++) {
-	    match = 0;
-	    for (j=1; j<=n_omit; j++) {
-		if (orig[i] == omit[j]) {
-		    /* matching var: omit it */
-		    match = 1;
-		    break;
+	k = 1;
+	for (i=1; i<=n_orig; i++) {
+	    if (i < minpos) {
+		ret[k++] = orig[i];
+	    } else {
+		match = 0;
+		for (j=1; j<=n_omit; j++) {
+		    if (orig[i] == omit[j]) {
+			/* matching var: omit it */
+			match = 1;
+			break;
+		    }
+		}
+		if (!match) { 
+		    /* var is not in omit list: keep it */
+		    ret[k++] = orig[i];
 		}
 	    }
-	    if (!match) { 
-		/* var is not in omit list: keep it */
-		ret[k++] = orig[i];
-	    }
 	}
-    }
+    }		
 
     return ret;
 }
@@ -1925,7 +1974,8 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
  * Creates a list containing the elements of @orig that are not
  * present in @drop.  Unlike gretl_list_omit(), processing always
  * starts from position 1 in @orig, and it is not an error if
- * some members of @drop are not present in @orig.  
+ * some members of @drop are not present in @orig, or if some
+ * members of @drop are duplicated. 
  *
  * Returns: new list on success, NULL on error.
  */
@@ -2101,9 +2151,8 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist,
 int gretl_list_add_list (int **targ, const int *src)
 {
     int *big;
-    int n1 = (*targ)[0];
-    int n2 = src[0];
-    int i, err = 0;
+    int i, n1, n2;
+    int err = 0;
 
     if (targ == NULL || *targ == NULL) {
 	return E_DATA;
@@ -2113,6 +2162,9 @@ int gretl_list_add_list (int **targ, const int *src)
 	/* no-op */
 	return 0;
     }
+
+    n1 = (*targ)[0];
+    n2 = src[0];
 
     big = realloc(*targ, (n1 + n2 + 1) * sizeof *big);
 
@@ -2154,6 +2206,7 @@ int gretl_list_insert_list (int **targ, const int *src, int pos)
     }
 
     big = realloc(*targ, (bign + 1) * sizeof *big);
+
     if (big == NULL) {
 	err = E_ALLOC;
     } else {
