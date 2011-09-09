@@ -197,11 +197,10 @@ where \textsl{rows} can take any of these forms:
 
 With regard to option 2, the integer value can be given numerically,
 as the name of an existing scalar variable, or as an expression that
-evaluates to a scalar.  With the option 4, the index matrix given
-in the \textsl{rows} field must be either $p\times 1$ or $1\times p$,
-and should contain integer values in the range 1 to $n$, where $n$ is
-the number of rows in the matrix from which the selection is to be
-made.
+evaluates to a scalar.  With option 4, the index matrix given in the
+\textsl{rows} field must be either $p\times 1$ or $1\times p$, and
+should contain integer values in the range 1 to $n$, where $n$ is the
+number of rows in the matrix from which the selection is to be made.
 
 The \textsl{cols} specification works in the same way, \textit{mutatis
   mutandis}.  Here are some examples.
@@ -217,6 +216,11 @@ matrix B = A[idx,]
 The first example selects row 1 from matrix \texttt{A}; the second
 selects a $2\times 3$ submatrix; the third selects a scalar; and
 the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
+
+If the matrix in question is $n\times 1$ or $1\times m$, it is
+OK to give just one index specifier and omit the comma. For example,
+\texttt{A[2]} selects the second element of \texttt{A} if \texttt{A}
+is a vector. Otherwise the comma is mandatory.
 
 In addition there is a pre-defined index specification, \texttt{diag},
 which selects the principal diagonal of a square matrix, as in

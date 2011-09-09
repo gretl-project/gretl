@@ -294,6 +294,8 @@ static int nls_genr_setup (nlspec *s)
 	    /* not a series, not a matrix: should be scalar */
 	    gentype = genr_get_output_type(genrs[i]);
 	    if (gentype != GRETL_TYPE_DOUBLE) {
+		fprintf(stderr, "got bad gentype %d\n", gentype);
+		fprintf(stderr, "formula: '%s'\n", formula);
 		err = E_TYPES;
 		break;
 	    } else if (!scalar_acceptable(s, i, dname)) {

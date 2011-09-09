@@ -516,7 +516,9 @@ enum {
     P_LOOP    = 1 << 23, /* executing pre-built genr in loop context */
     P_SLAVE   = 1 << 24, /* running as "slave" of NLS/MLE/GMM */
     P_LHPTR   = 1 << 25, /* left-hand side: pointer type wanted */
-    P_MMASK   = 1 << 26  /* genr result is masked matrix */
+    P_MMASK   = 1 << 26, /* genr result is masked matrix */
+    P_SLICING = 1 << 27, /* calculating matrix slice (temporary) */
+    P_LAGPRSE = 1 << 28  /* parsing lag spec (temporary) */
 };
 
 struct lhinfo {
@@ -584,11 +586,6 @@ int realgen (const char *s, parser *p, DATASET *dset,
 void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
 void parser_free_aux_nodes (parser *p);
-
-void set_matrix_slice_on (void);
-void set_matrix_slice_off (void);
-void set_lag_parse_on (void);
-void set_lag_parse_off (void);
 
 /* name lookup functions */
 const char *constname (int c);

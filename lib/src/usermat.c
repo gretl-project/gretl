@@ -631,10 +631,11 @@ static int vec_is_const (const gretl_matrix *m, int n)
     return 1;
 }
 
-/* convert matrix subspec into list of rows or columns */
+/* convert a matrix subspec component into list of rows 
+   or columns */
 
-static int *mspec_to_list (int type, union msel *sel, int n,
-			   int *err)
+static int *mspec_make_list (int type, union msel *sel, int n,
+			     int *err)
 {
     int *slice = NULL;
     int i, ns = 0;
@@ -708,34 +709,61 @@ static int *mspec_to_list (int type, union msel *sel, int n,
     return slice;
 }
 
-static int get_slices (matrix_subspec *spec, 
-		       int **rslice, int **cslice,
-		       const gretl_matrix *M)
+/* catch the case of an implicit column or row specification for
+   a sub-matrix of an (n x 1) or (1 x m) matrix; also catch the
+   error of giving just one row/col spec for a matrix that has
+   more than one row and more than one column
+*/
+
+int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m)
 {
     int err = 0;
 
     if (spec->type[1] == SEL_NULL) {
-	/* we were given, e.g., "M[2]" */
-	if (M->rows == 1) {
-	    /* treat the one specifier as a column selection */
-	    *rslice = NULL;
-	    *cslice = mspec_to_list(spec->type[0], &spec->sel[0], 
-				    M->cols, &err);
-	    return err;
-	} 
+	/* we got only one row/col spec */
+	if (m->cols == 1) {
+	    /* OK: implicitly col = 1 */
+	    spec->type[1] = SEL_RANGE;
+	    mspec_set_col_index(spec, 1);
+	} else if (m->rows == 1) {
+	    /* OK: implicitly row = 1, and transfer the single 
+	       given spec to the column dimension */
+	    spec->type[1] = spec->type[0];
+	    if (spec->type[1] == SEL_MATRIX) {
+		spec->sel[1].m = spec->sel[0].m;
+	    } else {
+		spec->sel[1].range[0] = spec->sel[0].range[0];
+		spec->sel[1].range[1] = spec->sel[0].range[1];
+	    }		
+	    spec->type[0] = SEL_RANGE;
+	    mspec_set_row_index(spec, 1);
+	} else {
+	    gretl_errmsg_set(_("Ambiguous matrix index"));
+	    err = E_DATA;
+	}	    
     }
 
-    *rslice = mspec_to_list(spec->type[0], &spec->sel[0], 
-			    M->rows, &err);
-    if (err) {
-	return err;
+    if (spec->type[0] == SEL_RANGE && spec->type[1] == SEL_RANGE) {
+	if (spec->sel[0].range[0] == spec->sel[0].range[1] &&
+	    spec->sel[1].range[0] == spec->sel[1].range[1]) {
+	    spec->type[0] = spec->type[1] = SEL_ELEMENT;
+	}
     }
 
-    *cslice = mspec_to_list(spec->type[1], &spec->sel[1], 
-			    M->cols, &err);
-    if (err) {
-	free(*rslice);
-	*rslice = NULL;
+    return err;
+}
+
+static int get_slices (matrix_subspec *spec, 
+		       const gretl_matrix *M)
+{
+    int err = 0;
+
+    spec->rslice = mspec_make_list(spec->type[0], &spec->sel[0], 
+				   M->rows, &err);
+
+    if (!err) {
+	spec->cslice = mspec_make_list(spec->type[1], &spec->sel[1], 
+				       M->cols, &err);
     }
 
     return err;
@@ -754,8 +782,6 @@ static int matrix_replace_submatrix (gretl_matrix *M,
     int mc = gretl_matrix_cols(M);
     int sr = gretl_matrix_rows(S);
     int sc = gretl_matrix_cols(S);
-    int *rslice = NULL;
-    int *cslice = NULL;
     int sscalar = 0;
     int err = 0;
 
@@ -775,30 +801,32 @@ static int matrix_replace_submatrix (gretl_matrix *M,
 	return matrix_insert_diagonal(M, S, mr, mc);
     }
 
-    /* parse mspec into lists of affected rows and columns */
-    err = get_slices(spec, &rslice, &cslice, M);
-    if (err) {
-	return err;
+    if (spec->rslice == NULL && spec->cslice == NULL) {
+	/* parse mspec into lists of affected rows and columns */
+	err = get_slices(spec, M);
+	if (err) {
+	    return err;
+	}
     }
 
 #if MDEBUG
-    printlist(rslice, "rslice (rows list)");
-    printlist(cslice, "cslice (cols list)");
+    printlist(spec->rslice, "rslice (rows list)");
+    printlist(spec->cslice, "cslice (cols list)");
     fprintf(stderr, "orig M = %d x %d, S = %d x %d\n", mr, mc, sr, sc);
 #endif
 
     if (sr == 1 && sc == 1) {
 	/* selection matrix is a scalar */
 	sscalar = 1;
-	sr = (rslice == NULL)? mr : rslice[0];
-	sc = (cslice == NULL)? mc : cslice[0];
-    } else if (rslice != NULL && rslice[0] != sr) {
+	sr = (spec->rslice == NULL)? mr : spec->rslice[0];
+	sc = (spec->cslice == NULL)? mc : spec->cslice[0];
+    } else if (spec->rslice != NULL && spec->rslice[0] != sr) {
 	fprintf(stderr, "mspec has %d rows but substitute matrix has %d\n", 
-		rslice[0], sr);
+		spec->rslice[0], sr);
 	err = E_NONCONF;
-    } else if (cslice != NULL && cslice[0] != sc) {
+    } else if (spec->cslice != NULL && spec->cslice[0] != sc) {
 	fprintf(stderr, "mspec has %d cols but substitute matrix has %d\n", 
-		cslice[0], sc);
+		spec->cslice[0], sc);
 	err = E_NONCONF;
     }
 
@@ -810,10 +838,10 @@ static int matrix_replace_submatrix (gretl_matrix *M,
 	x = (sscalar)? S->val[0] : 0.0;
 
 	for (i=0; i<sr; i++) {
-	    mi = (rslice == NULL)? k++ : rslice[i+1] - 1;
+	    mi = (spec->rslice == NULL)? k++ : spec->rslice[i+1] - 1;
 	    l = 0;
 	    for (j=0; j<sc; j++) {
-		mj = (cslice == NULL)? l++ : cslice[j+1] - 1;
+		mj = (spec->cslice == NULL)? l++ : spec->cslice[j+1] - 1;
 		if (!sscalar) {
 		    x = gretl_matrix_get(S, i, j);
 		}
@@ -822,24 +850,27 @@ static int matrix_replace_submatrix (gretl_matrix *M,
 	}
     }
 
-    free(rslice);
-    free(cslice);
-
     return err;
 }
 
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
 				    matrix_subspec *spec,
+				    int prechecked, 
 				    int *err)
 {
     gretl_matrix *S;
-    int *rslice = NULL;
-    int *cslice = NULL;
     int r, c;
 
     if (gretl_is_null_matrix(M)) {
 	*err = E_DATA;
 	return NULL;
+    }
+
+    if (!prechecked) {
+	*err = check_matrix_subspec(spec, M);
+	if (*err) {
+	    return NULL;
+	}
     }
 
     if (spec->type[0] == SEL_DIAG) {
@@ -852,19 +883,21 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	return (*err)? NULL : gretl_matrix_from_scalar(x);
     }
 
-    *err = get_slices(spec, &rslice, &cslice, M);
-    if (*err) {
-	return NULL;
+    if (spec->rslice == NULL && spec->cslice == NULL) {
+	*err = get_slices(spec, M);
+	if (*err) {
+	    return NULL;
+	}
     }
 
 #if MDEBUG
-    printlist(rslice, "rslice");
-    printlist(cslice, "cslice");
+    printlist(spec->rslice, "rslice");
+    printlist(spec->cslice, "cslice");
     fprintf(stderr, "M = %d x %d\n", M->rows, M->cols);
 #endif
 
-    r = (rslice == NULL)? M->rows : rslice[0];
-    c = (cslice == NULL)? M->cols : cslice[0];
+    r = (spec->rslice == NULL)? M->rows : spec->rslice[0];
+    c = (spec->cslice == NULL)? M->cols : spec->cslice[0];
 
     S = gretl_matrix_alloc(r, c);
     if (S == NULL) {
@@ -878,10 +911,10 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 
 	k = 0;
 	for (i=0; i<r && !*err; i++) {
-	    mi = (rslice == NULL)? k++ : rslice[i+1] - 1;
+	    mi = (spec->rslice == NULL)? k++ : spec->rslice[i+1] - 1;
 	    l = 0;
 	    for (j=0; j<c && !*err; j++) {
-		mj = (cslice == NULL)? l++ : cslice[j+1] - 1;
+		mj = (spec->cslice == NULL)? l++ : spec->cslice[j+1] - 1;
 		x = gretl_matrix_get(M, mi, mj);
 		gretl_matrix_set(S, i, j, x);
 	    }
@@ -894,9 +927,6 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 	    S->t2 = M->t2;
 	}
     }
-
-    free(rslice);
-    free(cslice);
 
     return S;
 }
@@ -936,7 +966,7 @@ gretl_matrix *user_matrix_get_submatrix (const char *name,
     if (M == NULL) {
 	*err = E_UNKVAR;
     } else {
-	S = matrix_get_submatrix(M, spec, err);
+	S = matrix_get_submatrix(M, spec, 0, err);
     }
 
     return S;

@@ -1083,36 +1083,15 @@ static void getword (parser *p)
 #endif
 }
 
-static int doing_matrix_slice;
-
-void set_matrix_slice_on (void)
-{
-    doing_matrix_slice = 1;
-}
-
-void set_matrix_slice_off (void)
-{
-    doing_matrix_slice = 0;
-}
-
-static int doing_lag_parse;
-
-void set_lag_parse_on (void)
-{
-    doing_lag_parse = 1;
-}
-
-void set_lag_parse_off (void)
-{
-    doing_lag_parse = 0;
-}
-
-static int colon_ok (char *s, int n)
+static int colon_ok (parser *p, char *s, int n)
 {
     int i;
 
-    if (doing_matrix_slice) {
-	/* colon is a separator in this context */
+    if (p->flags & P_SLICING) {
+	/* calculating a matrix "slice": colon is a separator in 
+	   this context, cannot be part of a time/panel observation 
+	   string
+	*/
 #if LDEBUG
 	fprintf(stderr, "colon_ok: doing matrix slice\n");
 #endif
@@ -1136,17 +1115,17 @@ static int colon_ok (char *s, int n)
    packed into string 's' up to element 'i'
 */
 
-static int ok_dbl_char (int ch, char *s, int i)
+static int ok_dbl_char (parser *p, char *s, int i)
 {
     if (i < 0) {
 	return 1;
     }
 
-    if (ch >= '0' && ch <= '9') {
+    if (p->ch >= '0' && p->ch <= '9') {
 	return 1;
     }
 
-    switch (ch) {
+    switch (p->ch) {
     case '+':
     case '-':
 	return s[i] == 'e' || s[i] == 'E';
@@ -1159,7 +1138,7 @@ static int ok_dbl_char (int ch, char *s, int i)
 	    !strchr(s, ':');
     case ':':
 	/* allow for obs numbers in the form, e.g., "1995:10" */
-	return colon_ok(s, i);
+	return colon_ok(p, s, i);
     default:
 	break;
     }
@@ -1174,7 +1153,7 @@ static double getdbl (parser *p)
     int gotcol = 0;
     int i = 0;
 
-    while (ok_dbl_char(p->ch, xstr, i - 1) && i < NUMLEN - 1) {
+    while (ok_dbl_char(p, xstr, i - 1) && i < NUMLEN - 1) {
 	xstr[i++] = p->ch;
 	if (p->ch == ':') {
 	    gotcol = 1;
@@ -1192,6 +1171,9 @@ static double getdbl (parser *p)
 #endif
     
     if (gotcol) {
+#if LDEBUG
+	fprintf(stderr, "getdbl: gotcol\n");
+#endif
 	if (p->dset->pd == 1) {
 	    p->err = E_PDWRONG;
 	} else {
@@ -1215,7 +1197,7 @@ static double getdbl (parser *p)
 
 #define word_start_special(c) (c == '$' || c == '@' || c == '_')
 
-#define lag_range_sym(p) (doing_lag_parse && p->ch == 't' && \
+#define lag_range_sym(p) ((p->flags & P_LAGPRSE) && p->ch == 't' && \
                           *p->point == 'o' && \
 			  *(p->point + 1) == ' ')
 

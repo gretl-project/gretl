@@ -775,7 +775,13 @@ static void get_matrix_def (NODE *t, parser *p, int *sub)
     if (cexp && !p->err) {
 	expected_symbol_error(cexp, p);
     }
-}	
+}
+
+#define set_matrix_slice_on(p) (p->flags |= P_SLICING)
+#define set_matrix_slice_off(p) (p->flags &= ~P_SLICING)
+
+#define set_lag_parse_on(p) (p->flags |= P_LAGPRSE)
+#define set_lag_parse_off(p) (p->flags &= ~P_LAGPRSE)
 
 static void get_slice_parts (NODE *t, parser *p)
 {
@@ -785,7 +791,7 @@ static void get_slice_parts (NODE *t, parser *p)
     fprintf(stderr, "get_slice_parts, p->sym = %d\n", p->sym);
 #endif  
 
-    set_matrix_slice_on();
+    set_matrix_slice_on(p);
 
     if (p->sym == G_LBR) {
 	lex(p);
@@ -811,7 +817,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	    t->v.b2.r = newempty();
 	    t->v.b2.r->t = ABSENT;
 	    lex(p);
-	    set_matrix_slice_off();
+	    set_matrix_slice_off(p);
 	    return;
 	}
 	if (p->sym == P_COM) {
@@ -849,7 +855,7 @@ static void get_slice_parts (NODE *t, parser *p)
 	expected_symbol_error(cexp, p);
     }
 
-    set_matrix_slice_off();
+    set_matrix_slice_off(p);
 }
 
 static void attach_child (NODE *parent, NODE *child, int k, int i,
@@ -1099,7 +1105,7 @@ static NODE *powterm (parser *p)
 	}
     } else if (sym == LAG || sym == OBS) {
 	if (sym == LAG) {
-	    set_lag_parse_on();
+	    set_lag_parse_on(p);
 	}
 	t = newb2(sym, NULL, NULL);
 	if (t != NULL) {
@@ -1108,7 +1114,7 @@ static NODE *powterm (parser *p)
 	    t->v.b2.r = base(p, t);
 	}
 	if (sym == LAG) {
-	    set_lag_parse_off();
+	    set_lag_parse_off(p);
 	}	
     } else if (sym == MSL || sym == DMSL) {
 	t = newb2(sym, NULL, NULL);

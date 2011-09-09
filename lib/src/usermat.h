@@ -43,10 +43,15 @@ union msel {
 struct matrix_subspec_ {
     int type[2];
     union msel sel[2];
+    int *rslice;
+    int *cslice;
 };
 
 #define mspec_get_row_index(m) (m->sel[0].range[0])
 #define mspec_get_col_index(m) (m->sel[1].range[0])
+
+#define mspec_set_row_index(m,i) (m->sel[0].range[0] = m->sel[0].range[1] = (i))
+#define mspec_set_col_index(m,j) (m->sel[1].range[0] = m->sel[1].range[1] = (j))
 
 #define gretl_is_matrix(s) (get_matrix_by_name(s) != NULL)
 
@@ -170,8 +175,11 @@ gretl_matrix *user_gensymm_eigenvals (const gretl_matrix *A,
 double matrix_get_element (const gretl_matrix *M, int i, int j,
 			   int *err);
 
+int check_matrix_subspec (matrix_subspec *spec, const gretl_matrix *m);
+
 gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
 				    matrix_subspec *spec,
+				    int prechecked,
 				    int *err);
 
 gretl_matrix *user_matrix_get_submatrix (const char *name, 

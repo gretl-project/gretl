@@ -115,6 +115,15 @@ static const char *typestr (int t)
     }
 }
 
+static void free_mspec (matrix_subspec *spec)
+{
+    if (spec != NULL) {
+	free(spec->rslice);
+	free(spec->cslice);
+	free(spec);
+    }
+}
+
 static int bundle_node_free_name (NODE *t)
 {
     /* if a bundle node is a TMP_NODE it will have an
@@ -170,7 +179,7 @@ static void free_tree (NODE *t, parser *p, const char *msg)
 #endif
 	    gretl_matrix_free(t->v.m);
 	} else if (t->t == MSPEC) {
-	    free(t->v.mspec);
+	    free_mspec(t->v.mspec);
 	} else if (t->t == BUNDLE) {
 	    gretl_bundle_destroy(t->v.b);
 	}
@@ -2660,69 +2669,68 @@ static void print_mspec (matrix_subspec *mspec)
 
 #endif
 
-#define mspec_set_row_index(m,i) (m->sel[0].range[0] = m->sel[0].range[1] = (i))
-#define mspec_set_col_index(m,j) (m->sel[1].range[0] = m->sel[1].range[1] = (j))
-
 /* compose a sub-matrix specification, from scalars and/or
    index matrices */
 
 static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
 {
-    matrix_subspec *mspec;
+    matrix_subspec *spec;
 
-    mspec = malloc(sizeof *mspec);
-    if (mspec == NULL) {
+    spec = malloc(sizeof *spec);
+    if (spec == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
+    spec->rslice = spec->cslice = NULL;
+
     if (l->t == DUM) {
 	if (l->v.idnum == DUM_DIAG) {
-	    mspec->type[0] = SEL_DIAG;
-	    mspec->type[1] = SEL_ALL;
-	    return mspec;
+	    spec->type[0] = SEL_DIAG;
+	    spec->type[1] = SEL_ALL;
+	    return spec;
 	} else {
 	    *err = E_TYPES;
 	    goto bailout;
 	}
-    } else if (l->t == NUM && r->t == NUM) {
-	mspec->type[0] = mspec->type[1] = SEL_ELEMENT;
-	mspec_set_row_index(mspec, l->v.xval);
-	mspec_set_col_index(mspec, r->v.xval);
-	return mspec;
+    } else if (l->t == NUM && r != NULL && r->t == NUM) {
+	spec->type[0] = spec->type[1] = SEL_ELEMENT;
+	mspec_set_row_index(spec, l->v.xval);
+	mspec_set_col_index(spec, r->v.xval);
+	return spec;
     }
 
     if (l->t == NUM) {
-	mspec->type[0] = SEL_RANGE;
-	mspec_set_row_index(mspec, l->v.xval);
+	spec->type[0] = SEL_RANGE;
+	mspec_set_row_index(spec, l->v.xval);
     } else if (l->t == IVEC) {
-	mspec->type[0] = SEL_RANGE;
-	mspec->sel[0].range[0] = l->v.ivec[0];
-	mspec->sel[0].range[1] = l->v.ivec[1];
+	spec->type[0] = SEL_RANGE;
+	spec->sel[0].range[0] = l->v.ivec[0];
+	spec->sel[0].range[1] = l->v.ivec[1];
     } else if (l->t == MAT) {
-	mspec->type[0] = SEL_MATRIX;
-	mspec->sel[0].m = l->v.m;
+	spec->type[0] = SEL_MATRIX;
+	spec->sel[0].m = l->v.m;
     } else if (l->t == EMPTY) {
-	mspec->type[0] = SEL_ALL;
+	spec->type[0] = SEL_ALL;
     } else {
 	*err = E_TYPES;
 	goto bailout;
     }
 
     if (r->t == ABSENT) {
-	mspec->type[1] = SEL_NULL;
+	spec->type[1] = SEL_NULL;
     } else if (r->t == NUM) {
-	mspec->type[1] = SEL_RANGE;
-	mspec_set_col_index(mspec, r->v.xval);
+	spec->type[1] = SEL_RANGE;
+	mspec_set_col_index(spec, r->v.xval);
     } else if (r->t == IVEC) {
-	mspec->type[1] = SEL_RANGE;
-	mspec->sel[1].range[0] = r->v.ivec[0];
-	mspec->sel[1].range[1] = r->v.ivec[1];
+	spec->type[1] = SEL_RANGE;
+	spec->sel[1].range[0] = r->v.ivec[0];
+	spec->sel[1].range[1] = r->v.ivec[1];
     } else if (r->t == MAT) {
-	mspec->type[1] = SEL_MATRIX;
-	mspec->sel[1].m = r->v.m;
+	spec->type[1] = SEL_MATRIX;
+	spec->sel[1].m = r->v.m;
     } else if (r->t == EMPTY) {
-	mspec->type[1] = SEL_ALL;
+	spec->type[1] = SEL_ALL;
     } else {
 	*err = E_TYPES;
 	goto bailout;
@@ -2731,11 +2739,11 @@ static matrix_subspec *build_mspec (NODE *l, NODE *r, int *err)
  bailout:
     
     if (*err) {
-	free(mspec);
-	mspec = NULL;
+	free(spec);
+	spec = NULL;
     }
 
-    return mspec;
+    return spec;
 }
 
 /* node holding evaluated result of matrix specification */
@@ -2751,7 +2759,7 @@ static NODE *mspec_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
+static NODE *submatrix_node (NODE *l, NODE *r, parser *p)
 {
     NODE *ret = NULL;
 
@@ -2759,13 +2767,13 @@ static NODE *get_submatrix (NODE *l, NODE *r, parser *p)
 	gretl_matrix *a = NULL;
 
 	if (r->t != MSPEC) {
-	    fprintf(stderr, "get_submatrix: couldn't find mspec\n");
+	    fprintf(stderr, "submatrix_node: couldn't find mspec\n");
 	    p->err = E_TYPES;
 	    return NULL;
 	}
 
 	if (l->t == MAT) {
-	    a = matrix_get_submatrix(l->v.m, r->v.mspec, &p->err);
+	    a = matrix_get_submatrix(l->v.m, r->v.mspec, 0, &p->err);
 	} else if (l->t == STR) {
 	    a = user_matrix_get_submatrix(l->v.str, r->v.mspec, &p->err);
 	} else {
@@ -7456,7 +7464,7 @@ static gretl_matrix *dvar_get_matrix (int i, int *err)
 static gretl_matrix *submat_postprocess (gretl_matrix *M,
 					 NODE *n, parser *p)
 {
-    gretl_matrix *S = matrix_get_submatrix(M, n->v.mspec, &p->err);
+    gretl_matrix *S = matrix_get_submatrix(M, n->v.mspec, 0, &p->err);
 
     gretl_matrix_free(M);
 
@@ -8317,7 +8325,7 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case MSL:
 	/* user matrix plus subspec */
-	ret = get_submatrix(l, r, p);
+	ret = submatrix_node(l, r, p);
 	break;
     case MSL2:
 	/* unevaluated matrix subspec */
@@ -9319,7 +9327,7 @@ static void get_lh_mspec (parser *p)
 	    /* free previous result, if any, and appropriate the
 	       mspec result from current evaluation */
 	    if (p->lh.mspec != NULL) {
-		free(p->lh.mspec);
+		free_mspec(p->lh.mspec);
 	    }
 	    p->lh.mspec = subp->ret->v.mspec;
 #if LHDEBUG > 1
@@ -10218,39 +10226,6 @@ static void assign_to_matrix_mod (parser *p)
     }
 }
 
-/* catch the case of an implicit column or row specification for
-   a sub-matrix of an (n x 1) or (1 x m) matrix
-*/
-
-static int check_lh_mspec (matrix_subspec *spec, gretl_matrix *m)
-{
-    int err = 0;
-
-    if (spec->type[0] == SEL_RANGE && spec->type[1] == SEL_NULL) {
-	if (m->cols == 1) {
-	    /* implicit column 1 */
-	    if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
-		/* single element selected */
-		spec->type[0] = spec->type[1] = SEL_ELEMENT;
-		mspec_set_col_index(spec, 1);
-	    }
-	} else if (m->rows == 1) {
-	    /* implicit row 1 */
-	    if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
-		/* single element selected */
-		spec->type[0] = spec->type[1] = SEL_ELEMENT;
-		mspec_set_col_index(spec, spec->sel[0].range[0]);
-		mspec_set_row_index(spec, 1);
-	    }
-	} else {
-	    gretl_errmsg_set(_("Ambiguous matrix index"));
-	    err = E_DATA;
-	}
-    }
-
-    return err;
-}
-
 /* replacing a sub-matrix of the original LHS matrix, by
    either straight or modified assignment */
 
@@ -10269,7 +10244,7 @@ static void matrix_edit (parser *p)
     fprintf(stderr, "matrix_edit: m = %p\n", (void *) m);
 #endif
 
-    p->err = check_lh_mspec(p->lh.mspec, p->lh.m0);
+    p->err = check_matrix_subspec(p->lh.mspec, p->lh.m0);
     if (p->err) {
 	return;
     }
@@ -10282,6 +10257,7 @@ static void matrix_edit (parser *p)
 	if (!p->err) {
 	    x = xy_calc(x, p->ret->v.xval, p->op, MAT, p);
 	    gretl_matrix_set(p->lh.m0, i-1, j-1, x);
+	    p->lh.m1 = p->lh.m0;
 	}
 	return;
     }
@@ -10294,7 +10270,7 @@ static void matrix_edit (parser *p)
 	gretl_matrix *a = NULL;
 	gretl_matrix *b = NULL;
 
-	a = user_matrix_get_submatrix(p->lh.name, p->lh.mspec, &p->err);
+	a = matrix_get_submatrix(p->lh.m0, p->lh.mspec, 1, &p->err);
 
 	if (!p->err) {
 	    if (p->ret->t == NUM) {
@@ -10970,7 +10946,7 @@ void gen_cleanup (parser *p)
 
 	free_tree(p->ret, p, "p->ret");
 	free(p->lh.substr);
-	free(p->lh.mspec);
+	free_mspec(p->lh.mspec);
 
 	if (p->subp != NULL) {
 	    /* since the parent genr will not be run again,
