@@ -506,13 +506,15 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
-static void cancel_on_delete (GtkDialog *d, int resp, int *c)
+static gboolean cancel_on_delete (GtkDialog *d, int resp, int *c)
 {
     if (resp == GTK_RESPONSE_NONE || 
 	resp == GTK_RESPONSE_DELETE_EVENT ||
 	resp == GTK_RESPONSE_CANCEL) {
 	*c = 1;
     }
+
+    return FALSE;
 }
 
 gboolean esc_kills_window (GtkWidget *w, GdkEventKey *key, 
@@ -544,10 +546,10 @@ static dialog_t *dialog_data_new (gpointer p, int ci,
     d->popup = NULL;
 
     if (canceled != NULL) {
+	d->blocking = 1;
 	g_signal_connect(G_OBJECT(d->dialog), "delete-event",
 			 G_CALLBACK(cancel_on_delete), 
 			 canceled);
-	d->blocking = 1;
     } else {
 	d->blocking = 0;
     }
