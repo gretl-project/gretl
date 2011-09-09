@@ -10226,7 +10226,7 @@ static int check_lh_mspec (matrix_subspec *spec, gretl_matrix *m)
 {
     int err = 0;
 
-    if (spec->type[1] == SEL_NULL && spec->type[0] == SEL_RANGE) {
+    if (spec->type[0] == SEL_RANGE && spec->type[1] == SEL_NULL) {
 	if (m->cols == 1) {
 	    /* implicit column 1 */
 	    if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
@@ -10234,24 +10234,18 @@ static int check_lh_mspec (matrix_subspec *spec, gretl_matrix *m)
 		spec->type[0] = spec->type[1] = SEL_ELEMENT;
 		mspec_set_col_index(spec, 1);
 	    }
-	} else {
-	    err = E_DATA;
-	}
-    } else if (spec->type[0] == SEL_NULL && spec->type[1] == SEL_RANGE) {
-	if (m->rows == 1) {
+	} else if (m->rows == 1) {
 	    /* implicit row 1 */
-	    if (spec->sel[1].range[0] == spec->sel[1].range[1]) {
+	    if (spec->sel[0].range[0] == spec->sel[0].range[1]) {
 		/* single element selected */
 		spec->type[0] = spec->type[1] = SEL_ELEMENT;
+		mspec_set_col_index(spec, spec->sel[0].range[0]);
 		mspec_set_row_index(spec, 1);
 	    }
 	} else {
+	    gretl_errmsg_set(_("Ambiguous matrix index"));
 	    err = E_DATA;
 	}
-    }
-
-    if (err) {
-	gretl_errmsg_set(_("Ambiguous matrix index"));
     }
 
     return err;
