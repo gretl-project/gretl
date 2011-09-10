@@ -126,6 +126,7 @@ static void replace_string_dialog (struct search_replace *s)
 
 void text_replace (GtkWidget *w, windata_t *vwin)
 {
+    struct search_replace s;
     gchar *buf = NULL;
     gchar *fullbuf = NULL;
     gchar *selbuf = NULL;
@@ -134,9 +135,10 @@ void text_replace (GtkWidget *w, windata_t *vwin)
     size_t fullsz, len, diff;
     char *p, *q;
     gchar *tmp;
-    struct search_replace s;
     GtkTextBuffer *gedit;
     GtkTextIter sel_start, sel_end, start, end;
+    GtkTextMark *mark;
+    gint init_line, init_index;
     gboolean selected = FALSE;
 
     s.find = NULL;
@@ -149,6 +151,12 @@ void text_replace (GtkWidget *w, windata_t *vwin)
     }
 
     gedit = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->text));
+
+    /* record the initial cursor position */
+    mark = gtk_text_buffer_get_insert(gedit);
+    gtk_text_buffer_get_iter_at_mark(gedit, &start, mark);
+    init_line = gtk_text_iter_get_line(&start);
+    init_index = gtk_text_iter_get_line_index(&start);
 
     gtk_text_buffer_get_start_iter(gedit, &start);
     gtk_text_buffer_get_end_iter(gedit, &end);
@@ -247,6 +255,11 @@ void text_replace (GtkWidget *w, windata_t *vwin)
     gtk_text_buffer_insert(gedit, &start, modbuf, -1);
 
  cleanup:
+
+    /* put the cursor back where we found it */
+    gtk_text_iter_set_line(&start, init_line);
+    gtk_text_iter_set_line_index(&start, init_index);
+    gtk_text_buffer_place_cursor(gedit, &start);
 
     free(s.find);
     free(s.replace);
