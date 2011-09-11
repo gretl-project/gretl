@@ -228,7 +228,7 @@ static void dummy_output_handler (const gchar *log_domain,
 				  const gchar *message,
 				  gpointer user_data)
 {
-    fprintf(stderr, "%s : %s\n", log_domain, message);
+    return;
 }
 
 static void stderr_output_handler (const gchar *log_domain,
@@ -236,7 +236,7 @@ static void stderr_output_handler (const gchar *log_domain,
 				   const gchar *message,
 				   gpointer user_data)
 {
-    return;
+    fprintf(stderr, "%s : %s\n", log_domain, message);
 }
 
 static void set_g_warnings (int debug)

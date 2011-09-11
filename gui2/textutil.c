@@ -242,9 +242,7 @@ static void replace_string_dialog (windata_t *vwin)
     gtk_window_set_title(GTK_WINDOW(s->w), _("gretl: replace"));
     gtk_container_set_border_width(GTK_CONTAINER(s->w), 5);
 
-    vbox = gtk_dialog_get_content_area(GTK_DIALOG(s->w));
     table = gtk_table_new(2, 2, FALSE);
-    // gtk_table_set_row_spacing(GTK_TABLE(table), 1, 5);
 
     /* 'Find' label and entry */
     label = gtk_label_new(_("Find:"));
@@ -261,7 +259,8 @@ static void replace_string_dialog (windata_t *vwin)
 		     5, 5);
     gtk_table_attach(GTK_TABLE(table), s->r_entry, 1, 2, 1, 2,
 		     GTK_EXPAND | GTK_FILL, 0, 5, 5);
-    
+
+    vbox = gtk_dialog_get_content_area(GTK_DIALOG(s->w));
     gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 5);
 
     abox = gtk_dialog_get_action_area(GTK_DIALOG(s->w));
