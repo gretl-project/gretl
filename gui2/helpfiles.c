@@ -741,7 +741,7 @@ static void normalize_base (GtkWidget *w, gpointer p)
     gtk_widget_modify_base(w, GTK_STATE_SELECTED, NULL);
 }
 
-static void notify_not_found (GtkWidget *entry)
+void notify_string_not_found (GtkWidget *entry)
 {
     GdkColor color;
 
@@ -947,7 +947,7 @@ static void vwin_finder_callback (GtkEntry *entry, windata_t *vwin)
     }
 
     if (!found) {
-	notify_not_found(GTK_WIDGET(entry));
+	notify_string_not_found(GTK_WIDGET(entry));
     }
 }
 
@@ -1639,7 +1639,7 @@ static void find_in_text (GtkWidget *button, GtkWidget *dialog)
 			      sensitive, TRUE, FALSE);
     
     if (!found) {
-	notify_not_found(find_entry);
+	notify_string_not_found(find_entry);
     }
 }
 
@@ -1787,7 +1787,7 @@ static void find_in_listbox (GtkWidget *w, GtkWidget *dialog)
     found = real_find_in_listbox(vwin, needle, sensitive, vnames);
 
     if (!found) {
-	notify_not_found(find_entry);
+	notify_string_not_found(find_entry);
     }
 }
 
@@ -1877,13 +1877,14 @@ static void find_string_dialog (void (*findfunc)(), windata_t *vwin)
 
     hbox = gtk_dialog_get_action_area(GTK_DIALOG(find_dialog));
 
-    /* cancel button */
-    button = cancel_button(hbox);
+    /* Close button */
+    button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(cancel_find), find_dialog);
     gtk_widget_show(button);
 
-    /* find button */
+    /* Find button */
     button = gtk_button_new_from_stock(GTK_STOCK_FIND);
     gtk_widget_set_can_default(button, TRUE);
     gtk_container_add(GTK_CONTAINER(hbox), button);

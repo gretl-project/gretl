@@ -61,4 +61,6 @@ int gui_console_help (const char *param);
 
 void set_up_helpview_menu (windata_t *hwin);
 
+void notify_string_not_found (GtkWidget *entry);
+
 #endif /* HELPFILES_H */
