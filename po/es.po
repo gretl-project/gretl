@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-11 16:11-0400\n"
-"PO-Revision-Date: 2011-09-12 12:36+0200\n"
+"PO-Revision-Date: 2011-09-12 15:20+0200\n"
 "Last-Translator: Ignacio Diaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Español <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -10399,7 +10399,7 @@ msgstr "_Importar"
 
 #: gui2/gretl.c:1240 gui2/gretl.c:1253
 msgid "_text/CSV..."
-msgstr "_texto/CSV..."
+msgstr "te_xto o CSV..."
 
 #: gui2/gretl.c:1241 gui2/gretl.c:1254 gui2/gretl.c:1273
 msgid "_Octave..."
@@ -10427,11 +10427,11 @@ msgstr "_Stata..."
 
 #: gui2/gretl.c:1247 gui2/gretl.c:1260
 msgid "_SPSS..."
-msgstr "_SPSS..."
+msgstr "S_PSS..."
 
 #: gui2/gretl.c:1248 gui2/gretl.c:1261
 msgid "_SAS (xport)..."
-msgstr "_SAS (xport)..."
+msgstr "S_AS (xport)..."
 
 #: gui2/gretl.c:1249 gui2/gretl.c:1263 gui2/gretl.c:1274
 msgid "_JMulTi..."
@@ -10443,7 +10443,7 @@ msgstr "A_ñadir datos"
 
 #: gui2/gretl.c:1252 gui2/gretl.c:1267
 msgid "_Standard format..."
-msgstr "Formato e_stándar..."
+msgstr "_Formato estándar..."
 
 #: gui2/gretl.c:1265
 msgid "_Save data"
@@ -10567,7 +10567,7 @@ msgstr "Sobre _servidor..."
 
 #: gui2/gretl.c:1307
 msgid "Edit package..."
-msgstr "Editar paquete..."
+msgstr "_Editar paquete..."
 
 #: gui2/gretl.c:1308
 msgid "_New package"
@@ -10772,11 +10772,11 @@ msgstr "X-Y con _control..."
 
 #: gui2/gretl.c:1368
 msgid "_Boxplots..."
-msgstr "Gráficos de _caja..."
+msgstr "Gráficos de c_aja..."
 
 #: gui2/gretl.c:1369
 msgid "_Factorized boxplot..."
-msgstr "Gráfico de caja con _factor de separación..."
+msgstr "Gráfico de caja con factor de s_eparación..."
 
 #: gui2/gretl.c:1370
 msgid "_Q-Q plot..."
@@ -10792,7 +10792,7 @@ msgstr "Gráficos _múltiples"
 
 #: gui2/gretl.c:1373
 msgid "X-Y _scatters..."
-msgstr "Gráficos X-Y (scatters)..."
+msgstr "_Gráficos X-Y (scatters)..."
 
 #: gui2/gretl.c:1374
 msgid "_Time series..."
@@ -10964,11 +10964,11 @@ msgstr "Contraste _aumentado de Dickey-Fuller"
 
 #: gui2/gretl.c:1431
 msgid "ADF-GLS test"
-msgstr "Contraste ADF-GLS"
+msgstr "Contraste ADF-_GLS"
 
 #: gui2/gretl.c:1432
 msgid "_KPSS test"
-msgstr "Contraste KPSS"
+msgstr "Contraste _KPSS"
 
 #: gui2/gretl.c:1433
 msgid "_Levin-Lin-Chu test"
@@ -11072,15 +11072,15 @@ msgstr "Mínimos cuadrados _ponderados..."
 
 #: gui2/gretl.c:1466
 msgid "H_eteroskedasticity corrected..."
-msgstr "Corrección de h_eterocedasticidad..."
+msgstr "Corrección de _heterocedasticidad..."
 
 #: gui2/gretl.c:1467
 msgid "High _precision OLS..."
-msgstr "MCO de alta precisión..."
+msgstr "MCO de _alta precisión..."
 
 #: gui2/gretl.c:1468
 msgid "ANOVA..."
-msgstr "ANOVA..."
+msgstr "A_NOVA..."
 
 #: gui2/gretl.c:1469
 msgid "_Time series"
@@ -11124,7 +11124,7 @@ msgstr "V_ECM..."
 
 #: gui2/gretl.c:1479
 msgid "_Cointegration test"
-msgstr "Contraste de _cointegración"
+msgstr "Contraste de c_ointegración"
 
 #: gui2/gretl.c:1480
 msgid "_Engle-Granger..."
@@ -11204,7 +11204,7 @@ msgstr "Lo_gístico..."
 
 #: gui2/gretl.c:1502
 msgid "_Nonlinear Least Squares..."
-msgstr "Mínimos cuadrados no lineales..."
+msgstr "Mínimos cuadrados _no lineales..."
 
 #: gui2/gretl.c:1503
 msgid "_Interval regression..."
@@ -11220,7 +11220,7 @@ msgstr "Mínima desviación _absoluta..."
 
 #: gui2/gretl.c:1506
 msgid "_Quantile regression..."
-msgstr "Regresión de cuantil..."
+msgstr "Regresión de _cuantil..."
 
 #: gui2/gretl.c:1507
 msgid "_Rank correlation..."
