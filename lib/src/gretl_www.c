@@ -26,12 +26,12 @@
 
 #define WDEBUG 0
 
-#ifdef STANDALONE
-# include "version.h"
-#else
+#ifndef STANDALONE
 # include "libgretl.h"
 # include "libset.h"
 #endif
+
+#include "version.h"
 
 #define WBUFSIZE 8192
 

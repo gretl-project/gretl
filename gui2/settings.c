@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "version.h"
 #include "filelists.h"
 #include "gretl_www.h"
 #include "dlgutils.h"

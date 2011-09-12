@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include "libgretl.h"
+#include "version.h"
 #include "csvdata.h"
 
 #include "importer.h"

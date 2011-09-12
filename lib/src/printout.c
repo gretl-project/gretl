@@ -20,6 +20,7 @@
 /*  printout.c - simple text print routines for some gretl structs */ 
 
 #include "libgretl.h"
+#include "version.h"
 #include "libset.h"
 #include "forecast.h"
 #include "gretl_func.h"

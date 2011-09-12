@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "version.h"
 #include "dlgutils.h"
 #include "selector.h"
 #include "gretl_func.h"

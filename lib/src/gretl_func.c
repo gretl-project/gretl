@@ -20,6 +20,7 @@
 #define FULL_XML_HEADERS
 
 #include "libgretl.h"
+#include "version.h"
 #include "monte_carlo.h"
 #include "gretl_func.h"
 #include "libset.h"
