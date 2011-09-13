@@ -38,18 +38,6 @@ MKLANG = @MKLANG@
 GRETL_LANG = gretl.lang
 GNUPLOT_LANG = gnuplot.lang
 
-# use the bundled gtksourceview subset?
-ifeq ($(have_sourceview),no)
-  GTKSOURCEVIEW_CFLAGS = -I$(topsrc)/gui2
-  GTKSOURCEVIEW_LIBS = -L./gtksourceview -lgtksourceview-lite
-  langdir = $(prefix)/share/gretl/gtksourceview
-  GTKSOURCEVIEW_LITE = gtksourceview/libgtksourceview-lite.a
-  query_install_extra_lang = install-extra-lang
-  LANGOPT = --lang1
-  GRETL_LANG = gretl.lang.1
-  GNUPLOT_LANG = gnuplot.lang.1
-endif
-
 ifeq ($(have_sourceview),3.0)
   svprefix = $(shell pkg-config --variable=prefix gtksourceview-3.0)
   langdir = $(svprefix)/share/gtksourceview-3.0/language-specs
@@ -60,15 +48,7 @@ ifeq ($(have_sourceview),2.0)
   langdir = $(svprefix)/share/gtksourceview-2.0/language-specs
 endif
 
-ifeq ($(have_sourceview),1.0)
-  svprefix = $(shell pkg-config --variable=prefix gtksourceview-1.0)
-  langdir = $(svprefix)/share/gtksourceview-1.0/language-specs
-  LANGOPT = --lang1
-  GRETL_LANG = gretl.lang.1
-  GNUPLOT_LANG = gnuplot.lang.1
-endif
-
-# override for gtksourceview inside the gretl package
+# override for building Windows and OS X packages
 ifeq ($(pkg_build),yes)
   langdir = $(prefix)/share/gretl/gtksourceview
 endif
@@ -204,7 +184,7 @@ all: $(PROG) $(GRETL_LANG)
 	$(AMP)$(CC) -c $(CFLAGS) $<
 	$(AMP)$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKSOURCEVIEW_LITE) 
+$(PROG): .deps $(OBJS) $(HACK_OBJ)
 	$(LDECHO)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $(OBJS) \
 	$(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
@@ -219,10 +199,7 @@ mklang: mklang.o $(GRETLLIB)
 	$(AMP)$(LIBTOOL) --mode=link $(CCV) $(LDFLAGS) -o $@ $< ../lib/libgretl-1.0.la $(XML_LIBS)
 
 $(GRETL_LANG): $(MKLANG)
-	./mklang $(LANGOPT) > $@
-
-$(GTKSOURCEVIEW_LITE):
-	$(MAKE) -C gtksourceview
+	./mklang > $@
 
 .deps:
 	$(AMP)mkdir $@
@@ -268,7 +245,6 @@ installdirs:
 clean:
 	rm -f *.o $(PROG) mklang gretl.lang gretl.lang.1
 	rm -rf .libs .deps
-	$(MAKE) -C gtksourceview clean
 
 distclean: clean
 	rm -f Makefile debug
