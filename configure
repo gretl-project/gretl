@@ -808,7 +808,6 @@ with_readline
 with_gnome
 with_gnome_install
 with_mpfr
-with_gtksourceview
 with_x_12_arima
 with_tramo_seats
 with_libR
@@ -1506,7 +1505,6 @@ Optional Packages:
   --with-gnome         Install gnome support [default=auto]
   --with-gnome-install=DIR  where to install gnome-specific files [default=auto]
   --with-mpfr            Use MPFR library [default=auto]
-  --with-gtksourceview   Use installed gtksourceview [default=auto]
   --with-x-12-arima      include X-12-ARIMA support [default=yes]
   --with-tramo-seats     include TRAMO/SEATS support [default=yes]
   --with-libR            include libR support [default=auto]
@@ -2659,9 +2657,7 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
-try_sourceview="yes"
 have_sourceview="no"
-bundled_sourceview="no"
 fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
@@ -6301,20 +6297,6 @@ else
 fi
 else
   try_mpfr=yes
-fi
-
-
-
-# Check whether --with-gtksourceview was given.
-if test "${with_gtksourceview+set}" = set; then :
-  withval=$with_gtksourceview; if test "x${withval}" = "xno"
-then
-  try_sourceview=no
-else
-  try_sourceview=yes
-fi
-else
-  try_sourceview=yes
 fi
 
 
@@ -17334,11 +17316,7 @@ $as_echo "yes" >&6; }
 fi
 fi
 
-if test "$gtk_version" = "2.0" && test "$try_sourceview" = "no" ; then
-   bundled_sourceview="yes"
-fi
-
-if test "$gtk_version" = "2.0" && test "$try_sourceview" = "yes" ; then
+if test "$gtk_version" = "2.0" ; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSOURCEVIEW" >&5
@@ -17410,79 +17388,6 @@ $as_echo "yes" >&6; }
 
       have_sourceview="2.0"
 fi
-    if test "$have_sourceview" != "2.0" ; then
-
-pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTKSOURCEVIEW" >&5
-$as_echo_n "checking for GTKSOURCEVIEW... " >&6; }
-
-if test -n "$GTKSOURCEVIEW_CFLAGS"; then
-    pkg_cv_GTKSOURCEVIEW_CFLAGS="$GTKSOURCEVIEW_CFLAGS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-1.0 >= 1.8.5\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-1.0 >= 1.8.5") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_CFLAGS=`$PKG_CONFIG --cflags "gtksourceview-1.0 >= 1.8.5" 2>/dev/null`
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-if test -n "$GTKSOURCEVIEW_LIBS"; then
-    pkg_cv_GTKSOURCEVIEW_LIBS="$GTKSOURCEVIEW_LIBS"
- elif test -n "$PKG_CONFIG"; then
-    if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"gtksourceview-1.0 >= 1.8.5\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "gtksourceview-1.0 >= 1.8.5") 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; then
-  pkg_cv_GTKSOURCEVIEW_LIBS=`$PKG_CONFIG --libs "gtksourceview-1.0 >= 1.8.5" 2>/dev/null`
-else
-  pkg_failed=yes
-fi
- else
-    pkg_failed=untried
-fi
-
-
-
-if test $pkg_failed = yes; then
-
-if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
-        _pkg_short_errors_supported=yes
-else
-        _pkg_short_errors_supported=no
-fi
-        if test $_pkg_short_errors_supported = yes; then
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "gtksourceview-1.0 >= 1.8.5" 2>&1`
-        else
-	        GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --print-errors "gtksourceview-1.0 >= 1.8.5" 2>&1`
-        fi
-	# Put the nasty error message in config.log where it belongs
-	echo "$GTKSOURCEVIEW_PKG_ERRORS" >&5
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-                echo "will use 1.8.5"
-         bundled_sourceview="yes"
-
-elif test $pkg_failed = untried; then
-	echo "will use 1.8.5"
-         bundled_sourceview="yes"
-
-else
-	GTKSOURCEVIEW_CFLAGS=$pkg_cv_GTKSOURCEVIEW_CFLAGS
-	GTKSOURCEVIEW_LIBS=$pkg_cv_GTKSOURCEVIEW_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	have_sourceview="1.0"
-fi
-    fi
 fi
 
 if test "$gtk_version" = "3.0" ; then
@@ -17557,23 +17462,6 @@ $as_echo "yes" >&6; }
 
       have_sourceview="3.0"
 fi
-fi
-
-if test "$bundled_sourceview" = "yes" ; then
-     for ac_func in re_compile_pattern re_compile_fastmap re_search re_match
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
- have_gnu_regex="yes"
-else
-  have_gnu_regex="no"
-fi
-done
-
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -18030,7 +17918,7 @@ _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug gui2/gtksourceview/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl.pc gui2/Makefile gui2/debug gnome/Makefile gnome/gretl.keys cli/Makefile cli/debug lib/Makefile plugin/Makefile po/Makefile.in share/Makefile share/bcih/Makefile tests/Makefile extra/Makefile osx/Makefile osx/fixlinks.sh redhat/gretl.spec"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -19037,7 +18925,6 @@ do
     "gretl.pc") CONFIG_FILES="$CONFIG_FILES gretl.pc" ;;
     "gui2/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
     "gui2/debug") CONFIG_FILES="$CONFIG_FILES gui2/debug" ;;
-    "gui2/gtksourceview/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/gtksourceview/Makefile" ;;
     "gnome/Makefile") CONFIG_FILES="$CONFIG_FILES gnome/Makefile" ;;
     "gnome/gretl.keys") CONFIG_FILES="$CONFIG_FILES gnome/gretl.keys" ;;
     "cli/Makefile") CONFIG_FILES="$CONFIG_FILES cli/Makefile" ;;
@@ -21405,7 +21292,6 @@ do
     "gretl.pc") CONFIG_FILES="$CONFIG_FILES gretl.pc" ;;
     "gui2/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
     "gui2/debug") CONFIG_FILES="$CONFIG_FILES gui2/debug" ;;
-    "gui2/gtksourceview/Makefile") CONFIG_FILES="$CONFIG_FILES gui2/gtksourceview/Makefile" ;;
     "gnome/Makefile") CONFIG_FILES="$CONFIG_FILES gnome/Makefile" ;;
     "gnome/gretl.keys") CONFIG_FILES="$CONFIG_FILES gnome/gretl.keys" ;;
     "cli/Makefile") CONFIG_FILES="$CONFIG_FILES cli/Makefile" ;;
@@ -22814,6 +22700,12 @@ Please install glib-2.0 >= 2.12.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
+elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" != "2.0" ; then
+echo "
+Please install gtksourceview-2.0 and then reconfigure gretl.
+gtksourceview-2.0 is available from http://www.gnome.org/
+"
+
 elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
 echo "
 Please install gtksourceview-3.0 and then reconfigure gretl.
@@ -22832,7 +22724,6 @@ Configuration:
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${gtk_version}
-  Use installed gtksourceview:            ${have_sourceview}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}

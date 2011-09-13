@@ -27,7 +27,72 @@ static void invalid_varname (PRN *prn)
     pputs(prn, _("\nPlease rename this variable and try again"));
 }
 
-#ifndef ODS_IMPORTER
+#if defined(ODS_IMPORTER) || defined(XLSX_IMPORTER)
+
+static char *get_absolute_path (const char *fname)
+{
+    char buf[FILENAME_MAX];
+    char *s, *ret = NULL;
+
+    s = getcwd(buf, sizeof buf - strlen(fname) - 2);
+    if (s != NULL) {
+	ret = g_strdup_printf("%s/%s", s, fname);
+    }
+
+    return ret;
+}
+
+static void remove_temp_dir (char *dname)
+{
+    const char *udir = gretl_dotdir();
+
+#ifdef G_OS_WIN32
+    char *fullpath = g_strdup_printf("%s%s", udir, dname);
+
+    gretl_chdir(udir);
+    win32_delete_dir(fullpath);
+    g_free(fullpath);
+#else
+    gretl_chdir(udir);
+    gretl_deltree(dname);
+#endif
+}
+
+# ifdef G_OS_WIN32
+
+static int gretl_make_tempdir (char *dname)
+{
+    strcpy(dname, ".gretl-ssheet-XXXXXX");
+    mktemp(dname);
+
+    if (*dname == '\0') {
+	return E_FOPEN;
+    } else {
+	return gretl_mkdir(dname);
+    }
+}
+
+# else
+
+static int gretl_make_tempdir (char *dname)
+{
+    char *s;
+    int err = 0;
+
+    strcpy(dname, ".gretl-ssheet-XXXXXX");
+    s = mkdtemp(dname);
+
+    if (s == NULL) {
+	gretl_errmsg_set_from_errno("gretl_make_tempdir");
+	err = E_FOPEN;
+    } 
+
+    return err;
+}
+
+# endif /* MS Windows or not */
+
+#else /* !ODS, !XLSX */
 
 static int worksheet_start_dataset (DATASET *newinfo)
 {

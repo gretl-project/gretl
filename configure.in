@@ -50,9 +50,7 @@ seek_inet_addr="no"
 have_tramo="yes"
 have_x12a="yes"
 have_audio="no"
-try_sourceview="yes"
 have_sourceview="no"
-bundled_sourceview="no"
 fake_gtkspinner="yes"
 have_gnu_regex="no"
 have_libxml2="no"
@@ -203,16 +201,6 @@ else
   try_mpfr=yes
 fi,
 try_mpfr=yes)
-
-AC_ARG_WITH(gtksourceview,
-[  --with-gtksourceview   Use installed gtksourceview [[default=auto]]],
-if test "x${withval}" = "xno"
-then
-  try_sourceview=no
-else
-  try_sourceview=yes
-fi,
-try_sourceview=yes)
 
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima      include X-12-ARIMA support [[default=yes]]],
@@ -587,28 +575,14 @@ if test "$gtk_version" = "2.0" ; then
 fi
 
 dnl
-dnl Option for GTK 2 build: force use of bundled sourceview
-dnl
-if test "$gtk_version" = "2.0" && test "$try_sourceview" = "no" ; then
-   bundled_sourceview="yes" 
-fi
-
-dnl
 dnl Check for installed gtksourceview (GTK 2 variant)
 dnl
-if test "$gtk_version" = "2.0" && test "$try_sourceview" = "yes" ; then
+if test "$gtk_version" = "2.0" ; then
     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-2.0 >= 2.2.2,
       AC_DEFINE(USE_GTKSOURCEVIEW_2)
       have_sourceview="2.0",
       echo "version 2.0 >= 2.2.2 not found"
     )
-    if test "$have_sourceview" != "2.0" ; then
-       PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0 >= 1.8.5,
-         have_sourceview="1.0",
-         echo "will use 1.8.5"
-         bundled_sourceview="yes"      
-       )
-    fi      
 fi
 
 dnl
@@ -620,13 +594,6 @@ if test "$gtk_version" = "3.0" ; then
       have_sourceview="3.0",
       echo "version 3.0 not found"
     )
-fi
-
-dnl fallback: test regex availability for bundled gtksourceview
-if test "$bundled_sourceview" = "yes" ; then
-     AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
-     have_gnu_regex="yes",
-     have_gnu_regex="no")
 fi
 
 if test x"${MSGFMT}" != x ; then
@@ -746,7 +713,6 @@ gretl_sh
 gretl.pc 
 gui2/Makefile
 gui2/debug
-gui2/gtksourceview/Makefile
 gnome/Makefile
 gnome/gretl.keys 
 cli/Makefile 
@@ -817,6 +783,12 @@ Please install glib-2.0 >= 2.12.0 and then reconfigure gretl.
 glib-2.0 is available from http://www.gtk.org/
 "
 
+elif test "${gtk_version}" = "2.0" && test "${have_sourceview}" != "2.0" ; then
+echo "
+Please install gtksourceview-2.0 and then reconfigure gretl.
+gtksourceview-2.0 is available from http://www.gnome.org/
+"
+
 elif test "${gtk_version}" = "3.0" && test "${have_sourceview}" != "3.0" ; then
 echo "
 Please install gtksourceview-3.0 and then reconfigure gretl.
@@ -835,7 +807,6 @@ Configuration:
   sse2 support for RNG:                   ${sse2_result}
   openMP support:                         ${ac_openmp_result}
   Build with GTK version:                 ${gtk_version}
-  Use installed gtksourceview:            ${have_sourceview}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}
   Use Lucida fonts:                       ${use_lucida}

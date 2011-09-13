@@ -1064,6 +1064,12 @@ void do_open_data (windata_t *fwin, int code)
 
     gretl_error_clear();
 
+    if (code == OPEN_XLS || code == APPEND_XLS) {
+	if (has_suffix(tryfile, ".xlsx")) {
+	    code = (code == OPEN_XLS)? OPEN_XLSX : APPEND_XLSX;
+	}
+    }
+
     if (code == OPEN_DATA || code == APPEND_DATA) {
 	/* native .gdt files */
 	ftype = GRETL_XML_DATA;

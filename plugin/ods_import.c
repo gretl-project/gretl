@@ -39,22 +39,6 @@
 
 #define ODEBUG 1
 
-static void remove_temp_dir (char *dname)
-{
-    const char *udir = gretl_dotdir();
-
-#ifdef G_OS_WIN32
-    char *fullpath = g_strdup_printf("%s%s", udir, dname);
-
-    gretl_chdir(udir);
-    win32_delete_dir(fullpath);
-    g_free(fullpath);
-#else
-    gretl_chdir(udir);
-    gretl_deltree(dname);
-#endif
-}
-
 enum {
     ODS_NONE,     
     ODS_NUMERIC, 
@@ -971,40 +955,6 @@ static int check_mimetype (PRN *prn)
     return err;
 }
 
-#ifdef G_OS_WIN32
-
-static int gretl_make_tempdir (char *dname)
-{
-    strcpy(dname, ".gretl-ssheet-XXXXXX");
-    mktemp(dname);
-
-    if (*dname == '\0') {
-	return E_FOPEN;
-    } else {
-	return gretl_mkdir(dname);
-    }
-}
-
-#else
-
-static int gretl_make_tempdir (char *dname)
-{
-    char *s;
-    int err = 0;
-
-    strcpy(dname, ".gretl-ssheet-XXXXXX");
-    s = mkdtemp(dname);
-
-    if (s == NULL) {
-	gretl_errmsg_set_from_errno("gretl_make_tempdir");
-	err = E_FOPEN;
-    } 
-
-    return err;
-}
-
-#endif
-
 static int ts_check (ods_sheet *sheet, PRN *prn)
 {
     int reversed = 0;
@@ -1235,19 +1185,6 @@ static int finalize_ods_import (DATASET *dset,
     return err;
 }
 
-static char *get_absolute_path (const char *fname)
-{
-    char buf[FILENAME_MAX];
-    char *s, *ret = NULL;
-
-    s = getcwd(buf, sizeof buf - strlen(fname) - 2);
-    if (s != NULL) {
-	ret = g_strdup_printf("%s/%s", s, fname);
-    }
-
-    return ret;
-}
-
 int ods_get_data (const char *fname, int *list, char *sheetname,
 		  DATASET *dset, gretlopt opt, PRN *prn)
 {
@@ -1299,6 +1236,7 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 					   &handle);
     if (gretl_unzip_file == NULL) {
 	gretl_remove(dname);
+	free(abspath);
         return E_FOPEN;
     }
 
@@ -1343,16 +1281,12 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 
 	    if (resp < 0) {
 		/* canceled */
-		ods_sheet_free(sheet);
-		return -1;
+		err = -1;
+		goto bailout;
 	    } 
-	} else if (list != NULL && list[0] == 3) {
-	    err = set_ods_params_from_cli(sheet, list, sheetname);
 	} else {
-	    sheet->seltab = 0;
-	    sheet->xoffset = sheet->tables[0]->xoffset;
-	    sheet->yoffset = sheet->tables[0]->yoffset;
-	}
+	    err = set_ods_params_from_cli(sheet, list, sheetname);
+	} 
     }
 
     if (!err) {
@@ -1365,6 +1299,8 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 	    record_ods_params(sheet, list);
 	}
     }
+
+ bailout:
 
     ods_sheet_free(sheet);
 

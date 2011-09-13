@@ -27,11 +27,10 @@
 #include "importer.h"
 
 #include <glib.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
 #include <errno.h>
-
-#ifndef G_OS_WIN32
-# include <unistd.h>
-#endif
 
 #define XLSX_IMPORTER
 
@@ -42,58 +41,40 @@
 struct xlsx_info_ {
     int maxrow;
     int maxcol;
+    int xoffset;
+    int yoffset;
     char sheetfile[FILENAME_MAX];
     char stringsfile[FILENAME_MAX];
+    int n_sheets;
+    char **sheetnames;
+    int selsheet;
     int n_strings;
     char **strings;
+    DATASET *dset;
 };
 
 typedef struct xlsx_info_ xlsx_info;
-
-static char *get_absolute_path (const char *fname)
-{
-    /* already in ods_import.c */
-    char buf[FILENAME_MAX];
-    char *s, *ret = NULL;
-
-    s = getcwd(buf, sizeof buf - strlen(fname) - 2);
-    if (s != NULL) {
-	ret = g_strdup_printf("%s/%s", s, fname);
-    }
-
-    return ret;
-}
-
-static int gretl_make_tempdir (char *dname)
-{
-    /* already in ods_import.c */
-    char *s;
-    int err = 0;
-
-    strcpy(dname, ".gretl-ssheet-XXXXXX");
-    s = mkdtemp(dname);
-
-    if (s == NULL) {
-	gretl_errmsg_set_from_errno("gretl_make_tempdir");
-	err = E_FOPEN;
-    } 
-
-    return err;
-}
 
 static void xlsx_info_init (xlsx_info *xinfo)
 {
     xinfo->maxrow = 0;
     xinfo->maxcol = 0;
+    xinfo->xoffset = 0;
+    xinfo->yoffset = 0;
     xinfo->sheetfile[0] = '\0';
     xinfo->stringsfile[0] = '\0';
+    xinfo->n_sheets = 0;
+    xinfo->sheetnames = NULL;
+    xinfo->selsheet = 0;
     xinfo->n_strings = 0;
     xinfo->strings = NULL;
+    xinfo->dset = NULL;
 }
 
 static void xlsx_info_free (xlsx_info *xinfo)
 {
     if (xinfo != NULL) {
+	free_strings_array(xinfo->sheetnames, xinfo->n_sheets);
 	free_strings_array(xinfo->strings, xinfo->n_strings);
     }
 }
@@ -360,8 +341,9 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     int gotdata = 0;
     int err = 0;
 
-    sprintf(xinfo->sheetfile, "xl%cworksheets%csheet1.xml", 
-	    SLASH, SLASH);
+    sprintf(xinfo->sheetfile, "xl%cworksheets%c%s.xml", 
+	    SLASH, SLASH, xinfo->sheetnames[xinfo->selsheet]);
+
     sprintf(xinfo->stringsfile, "xl%csharedStrings.xml", SLASH);
 
     LIBXML_TEST_VERSION xmlKeepBlanksDefault(0);
@@ -403,9 +385,183 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     return err;
 }
 
+static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
+{
+    gchar *dname = g_strdup_printf("xl%cworksheets", SLASH);
+    DIR *dir = gretl_opendir(dname);
+    int err = 0;
+
+    if (dir == NULL) {
+	err = E_FOPEN;
+    } else {
+	struct dirent *dirent;
+
+	while ((dirent = readdir(dir)) != NULL) {
+	    const char *basename = dirent->d_name;
+	    
+	    if (has_suffix(basename, ".xml")) {
+		gchar *tmp = g_strdup(basename);
+		gchar *p = strstr(tmp, ".xml");
+
+		*p = '\0';
+		strings_array_add(&xinfo->sheetnames, &xinfo->n_sheets,
+				  tmp);
+		g_free(tmp);
+	    }
+	}
+	closedir(dir);
+    }
+
+    g_free(dname);
+
+#if XDEBUG
+    int i;
+
+    for (i=0; i<xinfo->n_sheets; i++) {
+	pprintf(prn, "%d: %s\n", i, xinfo->sheetnames[i]);
+    }
+#endif
+
+    return err;
+}
+
+static int xlsx_book_init (wbook *book, xlsx_info *xinfo, char *sheetname)
+{
+    int err = 0;
+
+    wbook_init(book, NULL, sheetname);
+
+    book->nsheets = xinfo->n_sheets;
+    book->sheetnames = xinfo->sheetnames;
+    // book->get_min_offset = xlsx_min_offset;
+    book->data = xinfo;
+
+    return err;
+}
+
+static void record_xlsx_params (xlsx_info *xinfo, int *list)
+{
+    if (list != NULL && list[0] == 3) {
+	list[1] = xinfo->selsheet + 1;
+	list[2] = xinfo->xoffset;
+	list[3] = xinfo->yoffset;
+    }
+}
+
+static int set_xlsx_params_from_cli (xlsx_info *xinfo, 
+				     const int *list,
+				     char *sheetname)
+{
+    int gotname = (sheetname != NULL && *sheetname != '\0');
+    int gotlist = (list != NULL && list[0] == 3);
+    int i;
+
+    if (!gotname && !gotlist) {
+	xinfo->selsheet = 0;
+	// xinfo->xoffset = sheet->tables[0]->xoffset;
+	// xinfo->yoffset = sheet->tables[0]->yoffset;
+	return 0;
+    }
+
+    /* invalidate this */
+    xinfo->selsheet = -1;
+
+    if (gotname) {
+	for (i=0; i<xinfo->n_sheets; i++) {
+	    if (!strcmp(sheetname, xinfo->sheetnames[i])) {
+		xinfo->selsheet = i;
+		break;
+	    }
+	}
+	if (xinfo->selsheet < 0 && integer_string(sheetname)) {
+	    i = atoi(sheetname);
+	    if (i >= 1 && i <= xinfo->n_sheets) {
+		xinfo->selsheet = i - 1;
+	    }
+	}
+    }
+
+    if (gotlist) {
+	if (!gotname) {
+	    /* convert to zero-based */
+	    xinfo->selsheet = list[1] - 1;
+	}
+	xinfo->xoffset = list[2];
+	xinfo->yoffset = list[3];
+    }
+
+    if (xinfo->selsheet < 0 || xinfo->selsheet >= xinfo->n_sheets ||
+	xinfo->xoffset < 0 || xinfo->yoffset < 0) {
+	gretl_errmsg_set(_("Invalid argument for worksheet import"));
+	return E_DATA;
+    }
+
+    return 0;
+}
+
+static int xlsx_sheet_dialog (xlsx_info *xinfo, int *err)
+{
+    wbook book;   
+
+    *err = xlsx_book_init(&book, xinfo, NULL);
+    if (*err) {
+	return -1;
+    }
+
+    // book.col_offset = sheet->tables[0]->xoffset;
+    // book.row_offset = sheet->tables[0]->yoffset;
+
+    if (book.nsheets > 1) {
+	wsheet_menu(&book, 1);
+	xinfo->selsheet = book.selected;
+    } else {
+	wsheet_menu(&book, 0);
+	xinfo->selsheet = 0;
+    }
+
+    xinfo->xoffset = book.col_offset;
+    xinfo->yoffset = book.row_offset;
+
+    return book.selected;
+}
+
+static int finalize_xlsx_import (DATASET *dset,
+				 xlsx_info *xinfo, 
+				 gretlopt opt,
+				 PRN *prn)
+{
+    PRN *tprn;
+    int err = 0;
+
+    // err = ods_prune_columns(sheet);
+
+    if (!err && xinfo->dset->v == 1) {
+	gretl_errmsg_set(_("No numeric data were found"));
+	err = E_DATA;
+    }
+
+#if 0 /* FIXME */
+    if (!err) {
+	tprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+	ts_check(xinfo, tprn);
+	if (xinfo->flags & BOOK_DATA_REVERSED) {
+	    reverse_data(xinfo->dset, tprn);
+	}
+	gretl_print_destroy(tprn);
+    }
+#endif
+
+    if (!err) {
+	err = merge_or_replace_data(dset, &xinfo->dset, opt, prn);
+    }  
+
+    return err;
+}
+
 int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		   DATASET *dset, gretlopt opt, PRN *prn)
 {
+    int gui = (opt & OPT_G);
     xlsx_info xinfo;
     int (*gretl_unzip_file)(const char *, GError **);
     const char *udir = gretl_dotdir();
@@ -452,6 +608,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 					   &handle);
     if (gretl_unzip_file == NULL) {
 	gretl_remove(dname);
+	free(abspath);
         return E_FOPEN;
     }
 
@@ -474,7 +631,34 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
     xlsx_info_init(&xinfo);
 
     if (!err) {
+	err = xlsx_gather_sheet_names(&xinfo, prn);
+    }
+
+    if (!err) {
+	if (gui) {
+	    int resp = xlsx_sheet_dialog(&xinfo, &err);
+
+	    if (resp < 0) {
+		/* canceled */
+		err = -1;
+		goto bailout;
+	    } 
+	} else {
+	    err = set_xlsx_params_from_cli(&xinfo, list, sheetname);
+	} 
+    }
+
+    if (!err) {
 	err = xlsx_read_worksheet(&xinfo, prn);
+    }
+
+ bailout:
+
+    if (!err && xinfo.dset != NULL) {
+	err = finalize_xlsx_import(dset, &xinfo, opt, prn); 
+	if (!err && gui) {
+	    record_xlsx_params(&xinfo, list);
+	}
     }
 
     xlsx_info_free(&xinfo);
@@ -482,6 +666,10 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 #ifndef XDEBUG
     remove_temp_dir(dname);
 #endif
+
+    if (!err) {
+	err = 1;
+    }
 
     return err;
 }
