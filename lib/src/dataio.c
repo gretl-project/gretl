@@ -3073,7 +3073,7 @@ int import_other (const char *fname, GretlFileType ftype,
  * 
  * Open a data file of a type that requires a special plugin.
  * Acceptable values for @ftype are %GRETL_GNUMERIC,
- * %GRETL_XLS and %GRETL_ODS.
+ * %GRETL_XLS, %GRETL_XLSX and %GRETL_ODS.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
@@ -3103,6 +3103,8 @@ int import_spreadsheet (const char *fname, GretlFileType ftype,
 	importer = get_plugin_function("gnumeric_get_data", &handle);
     } else if (ftype == GRETL_XLS) {
 	importer = get_plugin_function("xls_get_data", &handle);
+    } else if (ftype == GRETL_XLSX) {
+	importer = get_plugin_function("xlsx_get_data", &handle);
     } else if (ftype == GRETL_ODS) {
 	importer = get_plugin_function("ods_get_data", &handle);
     } else {
@@ -3223,6 +3225,8 @@ GretlFileType detect_filetype (char *fname, gretlopt opt)
 
     if (has_suffix(fname, ".gnumeric"))
 	return GRETL_GNUMERIC;
+    if (has_suffix(fname, ".xlsx"))
+	return GRETL_XLSX;
     if (has_suffix(fname, ".xls"))
 	return GRETL_XLS;
     if (has_suffix(fname, ".ods"))
@@ -3485,6 +3489,8 @@ void dataset_add_import_info (DATASET *dset, const char *fname,
 	{ GRETL_CSV,      "CSV" },
 	{ GRETL_GNUMERIC, "Gnumeric" },
 	{ GRETL_XLS,      "Excel" },
+	{ GRETL_XLSX,     "Excel" },
+	{ GRETL_ODS,      "Open Document" },
 	{ GRETL_WF1,      "Eviews" },
 	{ GRETL_DTA,      "Stata" },
 	{ GRETL_SAV,      "SPSS" },

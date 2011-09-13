@@ -884,6 +884,10 @@ int get_imported_data (char *fname, int ftype, int append)
 	ss_importer = gui_get_plugin_function("xls_get_data",
 					      &handle);
 	plist = list;
+    } else if (ftype == GRETL_XLSX) {
+	ss_importer = gui_get_plugin_function("xlsx_get_data",
+					      &handle);
+	plist = list;
     } else if (ftype == GRETL_GNUMERIC) {
 	ss_importer = gui_get_plugin_function("gnumeric_get_data",
 					      &handle);
@@ -1045,6 +1049,7 @@ static int get_native_data (char *fname, int ftype, int append,
                            action == APPEND_CSV || \
                            action == APPEND_GNUMERIC || \
                            action == APPEND_XLS || \
+			   action == APPEND_XLSX || \
                            action == APPEND_ODS || \
                            action == APPEND_WF1 || \
                            action == APPEND_DTA || \
@@ -1070,6 +1075,8 @@ void do_open_data (windata_t *fwin, int code)
 	ftype = GRETL_ODS;
     } else if (code == OPEN_XLS || code == APPEND_XLS) {
 	ftype = GRETL_XLS;
+    } else if (code == OPEN_XLSX || code == APPEND_XLSX) {
+	ftype = GRETL_XLSX;
     } else if (code == OPEN_OCTAVE || code == APPEND_OCTAVE) {
 	ftype = GRETL_OCTAVE;
     } else if (code == OPEN_WF1 || code == APPEND_WF1) {

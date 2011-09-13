@@ -30,6 +30,7 @@ typedef enum {
     GRETL_OCTAVE,         /* GNU octave ascii data file */
     GRETL_GNUMERIC,       /* gnumeric workbook data */
     GRETL_XLS,            /* MS Excel spreadsheet data */
+    GRETL_XLSX,           /* MS Office Open XML spreadsheet data */
     GRETL_ODS,            /* Open Document Spreadsheet data */
     GRETL_WF1,            /* Eviews workfile data */
     GRETL_DTA,            /* Stata .dta data */
@@ -58,15 +59,16 @@ typedef enum {
     VARNAME_BADCHAR       /* illegal character in second or subsequent place */
 } GretlVarnameError;
 
-#define SPREADSHEET_IMPORT(f) (f == GRETL_XLS || \
-			       f == GRETL_GNUMERIC || \
+#define SPREADSHEET_IMPORT(f) (f == GRETL_XLS ||	\
+			       f == GRETL_XLSX ||	\
+			       f == GRETL_GNUMERIC ||	\
 			       f == GRETL_ODS)
 
-#define OTHER_IMPORT(f) (f == GRETL_DTA || \
-                         f == GRETL_SAV || \
-			 f == GRETL_SAS || \
-                         f == GRETL_JMULTI || \
-                         f == GRETL_OCTAVE || \
+#define OTHER_IMPORT(f) (f == GRETL_DTA ||	\
+                         f == GRETL_SAV ||	\
+			 f == GRETL_SAS ||	\
+                         f == GRETL_JMULTI ||	\
+                         f == GRETL_OCTAVE ||	\
 			 f == GRETL_WF1)
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \

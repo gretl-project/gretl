@@ -142,7 +142,7 @@ int gretl_write_native_data (const char *fname, const int *list,
  * see gretl_read_native_data().
  *
  * @file_type must be one of GRETL_CSV, GRETL_OCTAVE, 
- * GRETL_GNUMERIC, GRETL_XLS, GRETL_ODS, GRETL_WF1,
+ * GRETL_GNUMERIC, GRETL_XLS, GRETL_XLSX, GRETL_ODS, GRETL_WF1,
  * GRETL_DTA, GRETL_SAV, GRETL_SAS or GRETL_JMULTI. If you are
  * unsure of the type of the file you may call gretl_detect_filetype()
  * first. Note that the GRETL_CSV type is quite "permissive",

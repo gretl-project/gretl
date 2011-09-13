@@ -49,7 +49,8 @@
  */
 
 enum {
-    P_EXCEL_IMPORT = 1,
+    P_XLS_IMPORT = 1,
+    P_XLSX_IMPORT,
     P_GNUMERIC_IMPORT,
     P_ODS_IMPORT,
     P_JOHANSEN,
@@ -102,7 +103,8 @@ struct plugin_function {
 
 struct plugin_info plugins[] = {
     { 0,                 NULL },
-    { P_EXCEL_IMPORT,    "excel_import" },
+    { P_XLS_IMPORT,      "excel_import" },
+    { P_XLSX_IMPORT,     "xlsx_import" },
     { P_GNUMERIC_IMPORT, "gnumeric_import" },
     { P_ODS_IMPORT,      "ods_import" },
     { P_JOHANSEN,        "johansen" },
@@ -145,7 +147,8 @@ struct plugin_info plugins[] = {
 
 struct plugin_function plugin_functions[] = { 
     /* data importers */
-    { "xls_get_data",      P_EXCEL_IMPORT },
+    { "xls_get_data",      P_XLS_IMPORT },
+    { "xlsx_get_data",     P_XLSX_IMPORT },
     { "gnumeric_get_data", P_GNUMERIC_IMPORT },
     { "ods_get_data",      P_ODS_IMPORT },
     { "wf1_get_data",      P_EVIEWS_IMPORT },

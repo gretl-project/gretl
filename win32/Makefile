@@ -67,6 +67,7 @@ vpath %.rc $(topsrc)/win32
 PLUGINSRC = \
 	arbond.c \
 	excel_import.c \
+	xlsx_import.c \
 	gnumeric_import.c \
 	eviews_import.c \
 	stata_import.c \
@@ -119,6 +120,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/gnumeric_import.dll \
 	plugins/eviews_import.dll \
 	plugins/excel_import.dll \
+	plugins/xlsx_import.dll \
 	plugins/stata_import.dll \
 	plugins/spss_import.dll \
 	plugins/sas_import.dll \
@@ -397,6 +399,11 @@ plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(GRETLLIB) $(GTKLIBS)
 
 plugins/ods_import.dll: ods_import.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
+	$(GRETLLIB) $(GTKLIBS)
+
+plugins/xlsx_import.dll: xlsx_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
 	$(GRETLLIB) $(GTKLIBS)

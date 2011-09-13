@@ -84,6 +84,7 @@ SRCS = excel_import.c \
 	sas_import.c \
 	jmulti_import.c \
 	ods_import.c \
+	xlsx_import.c \
 	import_common.c \
 	johansen.c \
 	jrestrict.c \
@@ -157,6 +158,7 @@ PLUGINS = arbond.la \
 
 GUI_DEPENDENT_PLUGINS = arma_x12.la \
 	excel_import.la \
+	xlsx_import.la \
 	gnumeric_import.la \
 	leverage.la \
 	mailer.la \
@@ -312,6 +314,9 @@ arma_x12.la: arma_x12.lo
 
 excel_import.la: excel_import.lo workbook.lo ms-ole.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
+
+xlsx_import.la: xlsx_import.lo
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
 gnumeric_import.la: gnumeric_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)

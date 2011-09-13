@@ -528,6 +528,7 @@ int main (int argc, char **argv)
 	    err = import_csv(datafile, dataset, OPT_NONE, prn);
 	    break;
 	case GRETL_XLS:
+	case GRETL_XLSX:    
 	case GRETL_GNUMERIC:
 	case GRETL_ODS:
 	case GRETL_DTA:
@@ -1233,8 +1234,8 @@ static void iconview_callback (void)
 GtkActionEntry main_entries[] = {
     /* File */
     { "File",         NULL, N_("_File"), NULL, NULL, NULL }, 
-    { "OpenData",       NULL, N_("_Open data"), NULL, NULL, NULL }, 
-    { "OpenGdt",        GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
+    { "OpenData",     NULL, N_("_Open data"), NULL, NULL, NULL }, 
+    { "OpenGdt",      GTK_STOCK_OPEN, N_("_User file..."), NULL, NULL, G_CALLBACK(open_data) },
     { "DisplayDataFiles", GTK_STOCK_OPEN, N_("_Sample file..."), "", NULL, G_CALLBACK(show_files) },
     { "ImportData",   NULL, N_("_Import"), NULL, NULL, NULL }, 
     { "OpenCSV",      NULL, N_("_text/CSV..."), NULL, NULL, G_CALLBACK(open_data) },
