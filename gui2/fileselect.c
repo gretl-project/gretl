@@ -830,7 +830,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     const gchar *okstr;
     int remember = get_keep_folder();
     int max_filter_len = 0;
-    int lenptr = NULL;
+    int *lenptr = NULL;
     gint response;
 
     if (gtk_major_version == 2 &&
