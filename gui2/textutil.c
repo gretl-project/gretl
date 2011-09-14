@@ -29,7 +29,9 @@
 #include "texprint.h"
 #include "system.h"
 
-#include <gtksourceview/gtksourceiter.h>
+#if USE_GTKSOURCEVIEW_2
+# include <gtksourceview/gtksourceiter.h>
+#endif
 
 struct search_replace {
     GtkWidget *w;          /* the dialog box */
@@ -66,13 +68,23 @@ static void replace_find_callback (GtkWidget *widget,
     if (s->find == NULL || *s->find == '\0') {
 	return;
     }
-    
+
+#if USE_GTKSOURCEVIEW_2    
     found = gtk_source_iter_forward_search(&s->iter,
 					   s->find, 
 					   0,
 					   &f_start, 
 					   &f_end,
 					   NULL);
+#else /* GTK 3 */
+    found = gtk_text_iter_forward_search(&s->iter,
+					 s->find, 
+					 0,
+					 &f_start, 
+					 &f_end,
+					 NULL);
+#endif
+
     if (found) {
 	GtkTextMark *vis;
 
@@ -140,7 +152,11 @@ static void replace_single_callback (GtkWidget *button,
 static void replace_all_callback (GtkWidget *button, 
 				  struct search_replace *s)
 {
+#if USE_GTKSOURCEVIEW_2
     GtkSourceSearchFlags search_flags;
+#else
+    GtkTextSearchFlags search_flags;
+#endif
     GtkTextIter start, selstart, end;
     GtkTextIter r_start, r_end;
     GtkTextMark *mark;
@@ -172,7 +188,11 @@ static void replace_all_callback (GtkWidget *button,
 	gtk_text_buffer_get_end_iter(s->buf, &end);
     } 
 
+#if USE_GTKSOURCEVIEW_2
     search_flags = GTK_SOURCE_SEARCH_VISIBLE_ONLY | GTK_SOURCE_SEARCH_TEXT_ONLY;
+#else
+    search_flags = GTK_TEXT_SEARCH_VISIBLE_ONLY | GTK_TEXT_SEARCH_TEXT_ONLY;
+#endif
     replace_len = strlen(s->replace);
 
     /* avoid spending time matching brackets */
@@ -182,12 +202,21 @@ static void replace_all_callback (GtkWidget *button,
     gtk_text_buffer_begin_user_action(s->buf);
 
     do {
+#if USE_GTKSOURCEVIEW_2
 	found = gtk_source_iter_forward_search(&start,
 					       s->find, 
 					       search_flags,
 					       &r_start, 
 					       &r_end,
 					       selected ? &end : NULL);
+#else /* GTK 3 */
+	found = gtk_text_iter_forward_search(&start,
+					     s->find, 
+					     search_flags,
+					     &r_start, 
+					     &r_end,
+					     selected ? &end : NULL);
+#endif
 	if (found) {
 	    count++;
 	    gtk_text_buffer_delete(s->buf, &r_start, &r_end);

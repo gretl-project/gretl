@@ -741,10 +741,13 @@ static void filesel_add_filter (GtkWidget *filesel,
 				int *maxlen)
 {
     GtkFileFilter *filt = gtk_file_filter_new();
-    int n = g_utf8_strlen(desc, -1);
 
-    if (n > *maxlen) {
-	*maxlen = n;
+    if (maxlen != NULL) {
+	int n = g_utf8_strlen(desc, -1);
+	
+	if (n > *maxlen) {
+	    *maxlen = n;
+	}
     }
 
     gtk_file_filter_set_name(filt, _(desc));
@@ -827,7 +830,15 @@ static void gtk_file_selector (int action, FselDataSrc src,
     const gchar *okstr;
     int remember = get_keep_folder();
     int max_filter_len = 0;
+    int lenptr = NULL;
     gint response;
+
+    if (gtk_major_version == 2 &&
+	gtk_minor_version == 24 &&
+	gtk_micro_version == 6) {
+	/* broken GTK version */
+	lenptr = &max_filter_len;
+    }
 
     if (SET_DIR_ACTION(action)) {
 	fa = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
@@ -874,7 +885,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     if (SET_DIR_ACTION(action)) {
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), startdir);
     } else {
-	filesel_set_filters(filesel, action, src, data, &max_filter_len);
+	filesel_set_filters(filesel, action, src, data, lenptr);
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 	filesel_maybe_set_current_name(GTK_FILE_CHOOSER(filesel), action,
 				       src, data);
