@@ -385,6 +385,34 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
     return err;
 }
 
+static int xlsx_sheet_has_data (const char *fname)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    gchar *fullname;
+    int err, ret = 0;
+
+    fullname = g_strdup_printf("xl%cworksheets%c%s",
+			       SLASH, SLASH, fname);
+
+    err = gretl_xml_open_doc_root(fullname, "worksheet", 
+				  &doc, &cur);
+    if (!err) {
+	cur = cur->xmlChildrenNode;
+	while (cur != NULL && ret == 0) {
+	    if (!xmlStrcmp(cur->name, (XUC) "sheetData")) {
+		ret = 1;
+	    }
+	    cur = cur->next;
+	}
+	xmlFreeDoc(doc);
+    }
+
+    g_free(fullname);
+
+    return ret;
+}
+
 static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
 {
     gchar *dname = g_strdup_printf("xl%cworksheets", SLASH);
@@ -399,7 +427,8 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
 	while ((dirent = readdir(dir)) != NULL) {
 	    const char *basename = dirent->d_name;
 	    
-	    if (has_suffix(basename, ".xml")) {
+	    if (has_suffix(basename, ".xml") && 
+		xlsx_sheet_has_data(basename)) {
 		gchar *tmp = g_strdup(basename);
 		gchar *p = strstr(tmp, ".xml");
 
@@ -413,6 +442,13 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
     }
 
     g_free(dname);
+
+    if (xinfo->n_sheets == 0) {
+	err = E_DATA;
+    } else if (xinfo->n_sheets > 1) {
+	strings_array_sort(&xinfo->sheetnames, &xinfo->n_sheets,
+			   OPT_NONE);
+    }
 
 #if XDEBUG
     int i;
@@ -663,11 +699,10 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 
     xlsx_info_free(&xinfo);
 
-#ifndef XDEBUG
     remove_temp_dir(dname);
-#endif
 
     if (!err) {
+	/* testing */
 	err = 1;
     }
 
