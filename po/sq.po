@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-11 16:11-0400\n"
-"PO-Revision-Date: 2011-09-16 18:27+0100\n"
-"Last-Translator: \n"
+"PO-Revision-Date: 2011-09-18 00:49+0100\n"
+"Last-Translator: artur bala <artur.bala.al@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -5093,7 +5093,7 @@ msgstr "Paneli dinamik"
 #: lib/src/modelprint.c:824
 #: gui2/selector.c:3404
 msgid "Bivariate probit"
-msgstr "Probit 'bivariate'"
+msgstr "Probit me 2 ndryshore (bivariate)"
 
 #: lib/src/modelprint.c:826
 msgid "Arellano--Bond"
@@ -5829,7 +5829,7 @@ msgstr "Mesatarja ndrysh. var."
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2723
 msgid "S.D. dependent var"
-msgstr "dev. std. ndrysh. var."
+msgstr "Dev. std. ndrysh. var."
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2725
@@ -5840,7 +5840,7 @@ msgstr "Shuma katrori mbetjes"
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2727
 msgid "S.E. of regression"
-msgstr "Gabimi std. i regresionit"
+msgstr "Gab. std.i regresionit"
 
 #. TRANSLATORS: maximum length of string is 22 characters
 #: lib/src/modelprint.c:2729
@@ -6833,7 +6833,7 @@ msgstr "Korrelacionet sipër diagonales"
 msgid "log determinant"
 msgstr "logaritmi i përcaktorit"
 
-# rekursiv 
+# rekursiv
 #: lib/src/printout.c:1164
 #, c-format
 msgid "Recursive %d-step ahead forecasts"
@@ -8786,7 +8786,7 @@ msgstr "Jepnin një komandë"
 
 #: gui2/callbacks.c:627
 msgid "Simple boxplot"
-msgstr "'boxplot' i thjeshtë"
+msgstr "Boxplot i thjeshtë"
 
 #: gui2/callbacks.c:628
 msgid "With confidence interval for median"
@@ -9798,11 +9798,11 @@ msgstr "grafik i shumëfishtë i renditur vertikalisht (N <= 6)"
 
 #: gui2/dialogs.c:2305
 msgid "boxplots by group (N <= 150)"
-msgstr "'boxplot' sipas grupit (N <= 150)"
+msgstr "boxplot sipas grupit (N <= 150)"
 
 #: gui2/dialogs.c:2306
 msgid "single boxplot"
-msgstr "'boxplot' i thjeshtë"
+msgstr "boxplot i thjeshtë"
 
 #: gui2/dialogs.c:2317
 #: gui2/dialogs.c:2329
@@ -11463,7 +11463,7 @@ msgstr "_JMulTi..."
 
 #: gui2/gretl.c:1251
 msgid "_Append data"
-msgstr "_Shto të dhëna të tjera"
+msgstr "Sh_to të dhëna të tjera"
 
 #: gui2/gretl.c:1252
 #: gui2/gretl.c:1267
@@ -11506,7 +11506,7 @@ msgstr "Dërgo të dhënat me email"
 
 #: gui2/gretl.c:1278
 msgid "_New data set"
-msgstr "_Krijo të dhëna të reja"
+msgstr "Kr_ijo të dhëna të reja"
 
 #: gui2/gretl.c:1279
 msgid "C_lear data set"
@@ -11514,11 +11514,11 @@ msgstr "_Fshij të dhënat e tanishme"
 
 #: gui2/gretl.c:1280
 msgid "_Working directory..."
-msgstr "_Skedari i punës..."
+msgstr "Sked_ari i punës..."
 
 #: gui2/gretl.c:1281
 msgid "_Script files"
-msgstr "_Skript (program)"
+msgstr "S_kript (program)"
 
 #: gui2/gretl.c:1283
 msgid "_Practice file..."
@@ -11530,19 +11530,19 @@ msgstr "_Skript i ri"
 
 #: gui2/gretl.c:1285
 msgid "gretl script"
-msgstr "Në skript gretl"
+msgstr "skript gretl"
 
 #: gui2/gretl.c:1286
 msgid "gnuplot script"
-msgstr "Në skript gnuplot"
+msgstr "skript gnuplot"
 
 #: gui2/gretl.c:1287
 msgid "R script"
-msgstr "Në skript R"
+msgstr "skript R"
 
 #: gui2/gretl.c:1288
 msgid "Octave script"
-msgstr "Në skript Octave"
+msgstr "skript Octave"
 
 #: gui2/gretl.c:1289
 #: gui2/gretl.c:1564
@@ -11551,19 +11551,19 @@ msgstr "Program në kod Ox"
 
 #: gui2/gretl.c:1291
 msgid "_Session files"
-msgstr "_Sesion"
+msgstr "_Skedë sesjoni"
 
 #: gui2/gretl.c:1292
 msgid "_Open session..."
-msgstr "_Hap sesion..."
+msgstr "_Hap sesjonin..."
 
 #: gui2/gretl.c:1293
 msgid "_Save session"
-msgstr "_Ruaj sesionin"
+msgstr "_Ruaj sesjonin"
 
 #: gui2/gretl.c:1295
 msgid "Save session _as..."
-msgstr "Ruaj sesionin nën emrin..."
+msgstr "Ruaj sesjonin nën emrin..."
 
 #: gui2/gretl.c:1298
 msgid "_Databases"
@@ -11607,31 +11607,31 @@ msgstr "_Dil nga gretl"
 
 #: gui2/gretl.c:1313
 msgid "_Tools"
-msgstr "_Kutia e mjeteve"
+msgstr "K_utia e mjeteve"
 
 #: gui2/gretl.c:1314
 msgid "_Statistical tables"
-msgstr "Tabela _statistike"
+msgstr "T_abela statistike"
 
 #: gui2/gretl.c:1315
 msgid "_P-value finder"
-msgstr "Llogarit probabilitetin kritik"
+msgstr "Ll_ogarit probabilitetin kritik"
 
 #: gui2/gretl.c:1316
 msgid "_Distribution graphs"
-msgstr "Vizato ligjet e shpërndarjes"
+msgstr "V_izato ligjet e shpërndarjes"
 
 #: gui2/gretl.c:1317
 msgid "_Plot a curve"
-msgstr "Vizato një grafik"
+msgstr "Vi_zato një grafik"
 
 #: gui2/gretl.c:1318
 msgid "_Test statistic calculator"
-msgstr "Teste statistikë"
+msgstr "_Teste statistikë"
 
 #: gui2/gretl.c:1319
 msgid "_Nonparametric tests"
-msgstr "Teste jo-parametrikë"
+msgstr "T_este jo-parametrikë"
 
 #: gui2/gretl.c:1320
 msgid "_Seed for random numbers"
@@ -11643,7 +11643,7 @@ msgstr "_Lista e komandave të deritanishme"
 
 #: gui2/gretl.c:1322
 msgid "_Gretl console"
-msgstr "Konsola _Gretl"
+msgstr "_Konsola Gretl"
 
 #: gui2/gretl.c:1323
 msgid "Start GNU _R"
@@ -11688,15 +11688,15 @@ msgstr "_Të dhënat"
 
 #: gui2/gretl.c:1338
 msgid "Select _all"
-msgstr "Zgjidh të gjitha ndryshoret"
+msgstr "_Zgjidh të gjitha ndryshoret"
 
 #: gui2/gretl.c:1339
 msgid "Define or edit _list..."
-msgstr "Përcakto ose ndrysho _listën..."
+msgstr "Për_cakto ose ndrysho listën..."
 
 #: gui2/gretl.c:1340
 msgid "_Set selection from list..."
-msgstr "_Zgjidh nga lista..."
+msgstr "Zgj_idh nga lista..."
 
 #: gui2/gretl.c:1341
 #: gui2/gretl.c:1419
@@ -11705,11 +11705,11 @@ msgstr "_Shfaq vlerat"
 
 #: gui2/gretl.c:1342
 msgid "_Edit values"
-msgstr "_Ndrysho vlerat"
+msgstr "N_drysho vlerat"
 
 #: gui2/gretl.c:1343
 msgid "_Add observations..."
-msgstr "_Shto vrojtime të tjera..."
+msgstr "Sh_to vrojtime të tjera..."
 
 #: gui2/gretl.c:1344
 msgid "_Remove extra observations"
@@ -11717,7 +11717,7 @@ msgstr "_Hiq vrojtimet shtesë"
 
 #: gui2/gretl.c:1345
 msgid "_Dataset info"
-msgstr "_Hollësi mbi të dhënat"
+msgstr "Ho_llësi mbi të dhënat"
 
 #: gui2/gretl.c:1346
 msgid "_Observation markers..."
@@ -11725,11 +11725,11 @@ msgstr "_Përshkrimet e vrojtimeve..."
 
 #: gui2/gretl.c:1347
 msgid "_Variable labels..."
-msgstr "_Përshkrimi i ndryshoreve"
+msgstr "Pë_rshkrimi i ndryshoreve"
 
 #: gui2/gretl.c:1348
 msgid "Dataset _structure..."
-msgstr "_Struktura e të dhënave..."
+msgstr "Str_uktura e të dhënave..."
 
 #: gui2/gretl.c:1349
 msgid "_Compact data..."
@@ -11737,20 +11737,20 @@ msgstr "_Ngjish të dhënat..."
 
 #: gui2/gretl.c:1350
 msgid "_Expand data..."
-msgstr "_Zgjero të dhënat..."
+msgstr "Zgjer_o të dhënat..."
 
 #: gui2/gretl.c:1351
 msgid "_Transpose data..."
-msgstr "_Transpono të dhënat..."
+msgstr "Tr_anspono të dhënat..."
 
 #: gui2/gretl.c:1352
 msgid "_Sort data..."
-msgstr "_Rendit të dhënat..."
+msgstr "R_endit të dhënat..."
 
 #: gui2/gretl.c:1353
 #: gui2/gretl.c:1454
 msgid "Set missing _value code..."
-msgstr "Përcakto kodin për vlerat munguese..."
+msgstr "Përca_kto kodin për vlerat munguese..."
 
 #: gui2/gretl.c:1354
 msgid "_Find variable..."
@@ -11765,11 +11765,11 @@ msgstr "_Përditëso dritaren"
 #: gui2/gui_utils.c:336
 #: gui2/ssheet.c:159
 msgid "_View"
-msgstr "_Shiko"
+msgstr "S_hiko"
 
 #: gui2/gretl.c:1359
 msgid "_Icon view"
-msgstr "Dritarja e ikonave"
+msgstr "_Dritarja e ikonave"
 
 #: gui2/gretl.c:1360
 msgid "_Scalars"
@@ -11781,27 +11781,27 @@ msgstr "_Dritaret"
 
 #: gui2/gretl.c:1362
 msgid "_Graph specified vars"
-msgstr "_Grafikë"
+msgstr "_Grafiqe"
 
 #: gui2/gretl.c:1363
 msgid "_Time series plot..."
-msgstr "_Seri kohore..."
+msgstr "Grafik _kohor..."
 
 #: gui2/gretl.c:1364
 msgid "X-Y _scatter..."
-msgstr "_Grafik (X,Y)..."
+msgstr "Grafik _pikash (X,Y)..."
 
 #: gui2/gretl.c:1365
 msgid "X-Y with _impulses..."
-msgstr "Grafik (X,Y) me _impulse..."
+msgstr "Grafik pikash (X,Y) me _impulse..."
 
 #: gui2/gretl.c:1366
 msgid "X-Y with _factor separation..."
-msgstr "Grafik (X,Y) me _grupe..."
+msgstr "Grafik pikash (X,Y) të g_rupuara..."
 
 #: gui2/gretl.c:1367
 msgid "X-Y with _control..."
-msgstr "Grafik (X,Y) me _korrigjim..."
+msgstr "Grafik pikash (X,Y) të k_orrigjuara..."
 
 #: gui2/gretl.c:1368
 msgid "_Boxplots..."
@@ -11809,7 +11809,7 @@ msgstr "Grafik _BoxPlot..."
 
 #: gui2/gretl.c:1369
 msgid "_Factorized boxplot..."
-msgstr "'boxplot i _faktorizuar"
+msgstr "Grafik Boxplot i _faktorizuar..."
 
 #: gui2/gretl.c:1370
 msgid "_Q-Q plot..."
@@ -11821,24 +11821,24 @@ msgstr "Grafik _3D..."
 
 #: gui2/gretl.c:1372
 msgid "_Multiple graphs"
-msgstr "Grafikë të shumëfishtë..."
+msgstr "G_rafiqe të shumëfishtë..."
 
 #: gui2/gretl.c:1373
 msgid "X-Y _scatters..."
-msgstr "Grafik (X,Y)..."
+msgstr "_Grafik pikash (X,Y)..."
 
 #: gui2/gretl.c:1374
 msgid "_Time series..."
-msgstr "Seri _kohore..."
+msgstr "G_rafik kohor..."
 
 #: gui2/gretl.c:1375
 #: gui2/gretl.c:1420
 msgid "_Summary statistics"
-msgstr "_Statistikat përshkruese"
+msgstr "S_tatistikat përshkruese"
 
 #: gui2/gretl.c:1376
 msgid "_Correlation matrix"
-msgstr "Matrica e korrelacioneve"
+msgstr "M_atrica e korrelacioneve"
 
 #: gui2/gretl.c:1377
 msgid "Cross _Tabulation"
@@ -11846,11 +11846,11 @@ msgstr "_Tabelë e kryqëzuar"
 
 #: gui2/gretl.c:1378
 msgid "_Principal components"
-msgstr "Faktorët kryesorë - _PCA"
+msgstr "_Faktorët kryesorë - PCA"
 
 #: gui2/gretl.c:1379
 msgid "_Mahalanobis distances"
-msgstr "Distancat e _Mahalanobis"
+msgstr "D_istancat e Mahalanobis"
 
 #: gui2/gretl.c:1380
 msgid "C_ross-correlogram"
@@ -11878,19 +11878,20 @@ msgstr "_Diferencën e parë të ndryshoreve të zgjedhura"
 
 #: gui2/gretl.c:1389
 msgid "_Log differences of selected variables"
-msgstr "Diferencën e l_ogaritmit të ndryshoreve të zgjedhura"
+msgstr "D_iferencën e logaritmit të ndryshoreve të zgjedhura"
 
 #: gui2/gretl.c:1391
 msgid "_Seasonal differences of selected variables"
-msgstr "Diferencën _stinore të ndryshoreve të zgjedhura"
+msgstr "Di_ferencën stinore të ndryshoreve të zgjedhura"
 
 #: gui2/gretl.c:1393
 msgid "_Index variable"
-msgstr "_Tregues për vrojtimet"
+msgstr "Tregues _vrojtimi"
 
+# mund te jete edhe "kohor" por shkon me hyrjen e mesiperme te menyse
 #: gui2/gretl.c:1394
 msgid "_Time trend"
-msgstr "T_regues për periudhat"
+msgstr "Tregues p_eriudhe"
 
 #: gui2/gretl.c:1395
 msgid "_Random variable..."
@@ -11898,7 +11899,7 @@ msgstr "_Ndryshore të rastit..."
 
 #: gui2/gretl.c:1396
 msgid "_Periodic dummies"
-msgstr "Tregues _periodikë"
+msgstr "Tregues peri_odikë"
 
 #: gui2/gretl.c:1397
 msgid "_Unit dummies"
@@ -11906,15 +11907,15 @@ msgstr "Tregues për _individët (panel)"
 
 #: gui2/gretl.c:1398
 msgid "_Time dummies"
-msgstr "Tregues për p_eriudhat (panel)"
+msgstr "Tregues për peri_udhat (panel)"
 
 #: gui2/gretl.c:1399
 msgid "Dummies for selected _discrete variables"
-msgstr "Tregues për ndryshoret _diskrete të zgjedhura"
+msgstr "Tregues për _ndryshoret diskrete të zgjedhura"
 
 #: gui2/gretl.c:1401
 msgid "_Define matrix..."
-msgstr "_Matricë të re..."
+msgstr "M_atricë të re..."
 
 #: gui2/gretl.c:1404
 msgid "_Sample"
@@ -11950,7 +11951,7 @@ msgstr "_Hiq të gjithë vrojtimet që kanë vlera munguese"
 
 #: gui2/gretl.c:1415
 msgid "_Count missing values"
-msgstr "_Numëro vlerat që mungojnë"
+msgstr "_Numëro vlerat munguese"
 
 #: gui2/gretl.c:1418
 msgid "_Variable"
@@ -11966,7 +11967,7 @@ msgstr "_Shpërndarja e frekuencave"
 
 #: gui2/gretl.c:1423
 msgid "Estimated _density plot..."
-msgstr "Grafiku i densitetit të përafruar..."
+msgstr "Grafiku i _densitetit të përafruar..."
 
 #: gui2/gretl.c:1424
 msgid "Normal _Q-Q plot..."
@@ -11982,23 +11983,23 @@ msgstr "G_rafik amplituda-mesatarja"
 
 #: gui2/gretl.c:1427
 msgid "_Time series plot"
-msgstr "Grafik _kohor"
+msgstr "Gr_afik kohor"
 
 #: gui2/gretl.c:1428
 msgid "_Panel plot..."
-msgstr "_Grafik paneli..."
+msgstr "Grafik _paneli..."
 
 #: gui2/gretl.c:1429
 msgid "_Unit root tests"
-msgstr "_Testet e rrënjës së njësishme"
+msgstr "T_estet e rrënjës së njësishme"
 
 #: gui2/gretl.c:1430
 msgid "_Augmented Dickey-Fuller test"
-msgstr "Testi Dickey-Fuller _i shtuar"
+msgstr "Testi _Dickey-Fuller i shtuar"
 
 #: gui2/gretl.c:1431
 msgid "ADF-GLS test"
-msgstr "Testi ADF-GLS"
+msgstr "Testi _ADF-GLS"
 
 #: gui2/gretl.c:1432
 msgid "_KPSS test"
@@ -12026,7 +12027,7 @@ msgstr "_Filtër"
 
 #: gui2/gretl.c:1438
 msgid "_Simple moving average"
-msgstr "_Mesatarja e lëvizshme e thjeshtë"
+msgstr "_Mesatarja e lëvizshme e thjeshtë (MA)"
 
 #: gui2/gretl.c:1439
 msgid "_Exponential moving average"
@@ -12042,7 +12043,7 @@ msgstr "_Baxter-King"
 
 #: gui2/gretl.c:1442
 msgid "_Butterworth"
-msgstr "_Butterworth"
+msgstr "B_utterworth"
 
 #: gui2/gretl.c:1443
 msgid "_Polynomial trend"
@@ -12050,7 +12051,7 @@ msgstr "_Prirje polinomiale"
 
 #: gui2/gretl.c:1444
 msgid "_Fractional difference"
-msgstr "Diferencë _fraksionale"
+msgstr "_Diferencë fraksionale"
 
 #: gui2/gretl.c:1447
 #: gui2/gretl.c:1546
@@ -12102,7 +12103,7 @@ msgstr "_GMM - Metoda e Përgjithësuar e Momenteve (MPM)"
 
 #: gui2/gretl.c:1464
 msgid "Other _linear models"
-msgstr "Modele të _tjerë linearë"
+msgstr "_Modele të tjerë linearë"
 
 #: gui2/gretl.c:1465
 msgid "_Weighted Least Squares..."
@@ -12122,7 +12123,7 @@ msgstr "ANOVA - Analiza e variancës"
 
 #: gui2/gretl.c:1469
 msgid "_Time series"
-msgstr "Analiza të serive _kohore"
+msgstr "A_naliza të serive kohore"
 
 #: gui2/gretl.c:1470
 msgid "_Cochrane-Orcutt..."
@@ -12154,7 +12155,7 @@ msgstr "Model _VAR..."
 
 #: gui2/gretl.c:1477
 msgid "VAR _lag selection..."
-msgstr "Model V_AR - zgjedhja e vonesës"
+msgstr "Model VA_R - zgjedhja e vonesës"
 
 #: gui2/gretl.c:1478
 msgid "V_ECM..."
@@ -12194,7 +12195,7 @@ msgstr "Model paneli _dinamik..."
 
 #: gui2/gretl.c:1488
 msgid "_Nonlinear models"
-msgstr "Modele _jo-linearë"
+msgstr "M_odele jo-linearë"
 
 #: gui2/gretl.c:1489
 msgid "_Logit"
@@ -12221,11 +12222,11 @@ msgstr "Model _Probit"
 # may be
 #: gui2/gretl.c:1496
 msgid "Bi_variate..."
-msgstr "Bi_variate..."
+msgstr "_Me 2 ndryshore..."
 
 #: gui2/gretl.c:1497
 msgid "To_bit..."
-msgstr "Model To_bit"
+msgstr "Model _Tobit"
 
 #: gui2/gretl.c:1498
 msgid "_Heckit..."
@@ -12233,7 +12234,7 @@ msgstr "Model _Heckit"
 
 #: gui2/gretl.c:1499
 msgid "_Count data..."
-msgstr "Model me _numërime (count)"
+msgstr "Model me n_umërime (count)"
 
 #: gui2/gretl.c:1500
 msgid "_Duration data..."
@@ -12241,19 +12242,19 @@ msgstr "Model me _kohëzgjatje (duration)"
 
 #: gui2/gretl.c:1501
 msgid "Lo_gistic..."
-msgstr "Model Lo_gjistik"
+msgstr "Model L_ogjistik"
 
 #: gui2/gretl.c:1502
 msgid "_Nonlinear Least Squares..."
-msgstr "NLS - Katrorët më të Vegjël Jo-linearë"
+msgstr "_NLS - Katrorët më të Vegjël Jo-linearë"
 
 #: gui2/gretl.c:1503
 msgid "_Interval regression..."
-msgstr "Regresion mbi interval"
+msgstr "Regresion mbi _interval"
 
 #: gui2/gretl.c:1504
 msgid "_Robust estimation"
-msgstr "Regresion i qëndrueshëm"
+msgstr "_Regresion i qëndrueshëm"
 
 #: gui2/gretl.c:1505
 msgid "Least _Absolute Deviation..."
@@ -12269,11 +12270,11 @@ msgstr "Korrelacioni i _Rangjeve"
 
 #: gui2/gretl.c:1508
 msgid "_Maximum likelihood..."
-msgstr "_Maksimumi i përgjasisë"
+msgstr "M_aksimumi i përgjasisë"
 
 #: gui2/gretl.c:1510
 msgid "_Simultaneous equations..."
-msgstr "Ekuacione të _njëkohshme"
+msgstr "_Ekuacione të njëkohshme"
 
 #: gui2/gretl.c:1513
 msgid "_Help"
@@ -12294,11 +12295,11 @@ msgstr "Udhëzues për _përdoruesin"
 
 #: gui2/gretl.c:1518
 msgid "Check for _updates"
-msgstr "Përditësimi i programit"
+msgstr "Përditësimi i p_rogramit"
 
 #: gui2/gretl.c:1519
 msgid "Check for _addons"
-msgstr "Kërko module shtesë"
+msgstr "Kërk_o module shtesë"
 
 #: gui2/gretl.c:1520
 msgid "_About gretl"
@@ -12623,7 +12624,7 @@ msgstr "_Ruaj"
 #: gui2/gui_utils.c:201
 #: gui2/gui_utils.c:327
 msgid "_Graphs"
-msgstr "_Grafikë"
+msgstr "_Grafiqe"
 
 #: gui2/gui_utils.c:202
 msgid "_Residual plot"
@@ -12668,7 +12669,7 @@ msgstr "_Bootstrap..."
 
 #: gui2/gui_utils.c:217
 msgid "_Omit variables"
-msgstr "_Hiq ndryshore të tepërta"
+msgstr "H_iq ndryshore të tepërta"
 
 #: gui2/gui_utils.c:218
 msgid "_Add variables"
@@ -12684,7 +12685,7 @@ msgstr "_Kusht linear mbi parametrat"
 
 #: gui2/gui_utils.c:221
 msgid "Non-linearity (s_quares)"
-msgstr "Jo-linearitet i modelit (_katrori i ndryshoreve)"
+msgstr "Jo-linearitet i modelit (k_atrori i ndryshoreve)"
 
 #: gui2/gui_utils.c:222
 msgid "Non-linearity (_logs)"
@@ -12692,7 +12693,7 @@ msgstr "Jo-linearitet i modelit (_logaritmi i ndryshoreve)"
 
 #: gui2/gui_utils.c:223
 msgid "_Ramsey's RESET"
-msgstr "Jo-linearitet i modelit (_RESET)"
+msgstr "Jo-linearitet i modelit (R_ESET)"
 
 #: gui2/gui_utils.c:224
 msgid "_Heteroskedasticity"
@@ -12700,7 +12701,7 @@ msgstr "_Homoskedasticiteti i mbetjes"
 
 #: gui2/gui_utils.c:225
 msgid "_Normality of residual"
-msgstr "_Normaliteti i mbetjes"
+msgstr "N_ormaliteti i mbetjes"
 
 #: gui2/gui_utils.c:226
 msgid "_Influential observations"
@@ -12708,7 +12709,7 @@ msgstr "_Vrojtime ndikuese"
 
 #: gui2/gui_utils.c:227
 msgid "_Chow test"
-msgstr "Qëndrueshmëria e parametrave (Chow)"
+msgstr "Testi Cho_w (qëndrueshmëria e parametrave)"
 
 #: gui2/gui_utils.c:228
 msgid "_Collinearity"
@@ -12717,7 +12718,7 @@ msgstr "_Kolineariteti i ndryshoreve"
 #: gui2/gui_utils.c:229
 #: gui2/gui_utils.c:4006
 msgid "_Autocorrelation"
-msgstr "Autokorrelacioni i mbetjes"
+msgstr "Au_tokorrelacioni i mbetjes"
 
 #: gui2/gui_utils.c:230
 msgid "_Durbin-Watson p-value"
@@ -12730,23 +12731,23 @@ msgstr "A_RCH"
 
 #: gui2/gui_utils.c:232
 msgid "_QLR test"
-msgstr "Qëndrueshmëria e parametrave (_Quandt LR)"
+msgstr "Testi _Quandt LR (qëndrueshmëria e parametrave)"
 
 #: gui2/gui_utils.c:233
 msgid "_CUSUM test"
-msgstr "Qëndrueshmëria e parametrave ( _CUSUM)"
+msgstr "Testi _CUSUM (qëndrueshmëria e parametrave)"
 
 #: gui2/gui_utils.c:234
 msgid "CUSUM_SQ test"
-msgstr "Qëndrueshmëria e parametrave (CUSUM_SQ)"
+msgstr "Testi C_USUMSQ (qëndrueshmëria e parametrave)"
 
 #: gui2/gui_utils.c:235
 msgid "_Common factor"
-msgstr "Faktori i përbashkët"
+msgstr "_Faktori i përbashkët"
 
 #: gui2/gui_utils.c:236
 msgid "_Panel diagnostics"
-msgstr "Struktura e _panelit"
+msgstr "Struktura e pa_nelit"
 
 #: gui2/gui_utils.c:240
 #: gui2/gui_utils.c:247
@@ -12938,7 +12939,7 @@ msgstr "_Mbetja"
 
 #: gui2/gui_utils.c:2401
 msgid "_Squared residuals"
-msgstr "Katrori i mbetjes"
+msgstr "_Katrori i mbetjes"
 
 #: gui2/gui_utils.c:2406
 msgid "_Error sum of squares"
@@ -12946,7 +12947,7 @@ msgstr "_Shuma e katrorit të mbetjes (SKM)"
 
 #: gui2/gui_utils.c:2408
 msgid "_Standard error of the regression"
-msgstr "Gabimi std. i regresionit"
+msgstr "_Gabimi std. i regresionit"
 
 #: gui2/gui_utils.c:2413
 msgid "_R-squared"
@@ -13004,11 +13005,11 @@ msgstr "_Korrelogrami i mbetjes"
 
 #: gui2/gui_utils.c:2669
 msgid "Residual _periodogram"
-msgstr "Periodogrami i mbetjes"
+msgstr "_Periodogrami i mbetjes"
 
 #: gui2/gui_utils.c:2678
 msgid "Residual _Q-Q plot"
-msgstr "Grafiku Q-Q i mbetjes"
+msgstr "Grafiku _Q-Q i mbetjes"
 
 #: gui2/gui_utils.c:2698
 #, c-format
@@ -13254,7 +13255,7 @@ msgstr "Përafrim"
 
 #: gui2/helpfiles.c:172
 msgid "Graphs"
-msgstr "Grafikë"
+msgstr "Grafiqe"
 
 #: gui2/helpfiles.c:173
 msgid "Prediction"
@@ -13999,7 +14000,7 @@ msgstr "në një grafik të vetëm"
 
 #: gui2/library.c:6673
 msgid "in separate small graphs"
-msgstr "veç e veç në grafikë të vegjël"
+msgstr "veç e veç në grafiqe të vegjël"
 
 #: gui2/library.c:6677
 msgid "Plot the series"
@@ -14221,7 +14222,7 @@ msgstr "Matrica e korrelacioneve"
 #: gui2/menustate.c:484
 #: gui2/selector.c:5693
 msgid "XY scatterplot"
-msgstr "Grafik i pikave (X,Y)"
+msgstr "Grafik pikash (X;Y)"
 
 #: gui2/menustate.c:408
 #: gui2/menustate.c:489
@@ -15032,7 +15033,7 @@ msgstr "grafik pikash të grupuara"
 
 #: gui2/selector.c:5703
 msgid "factorized boxplot"
-msgstr "'boxplot i faktorizuar"
+msgstr "boxplot i faktorizuar"
 
 #: gui2/selector.c:5705
 msgid "scatterplot with control"
@@ -16325,7 +16326,7 @@ msgstr "Formula:"
 
 #: gui2/varinfo.c:833
 msgid "Display name (shown in graphs):"
-msgstr "Emri i ndryshores në grafikë:"
+msgstr "Emri i ndryshores në grafiqe:"
 
 #: gui2/varinfo.c:859
 msgid "Compaction method (for reducing frequency):"
