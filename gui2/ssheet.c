@@ -1210,31 +1210,46 @@ static void update_matrix_from_sheet_full (Spreadsheet *sheet)
     set_ok_transforms(sheet);
 }
 
-/* callback from gretl_scalar.c, for use when a scalar is added by
-   means other than the spreadsheet, and the scalars spreadsheet
-   is currently displayed
-*/
+/* callback from gretl_scalar.c, for use when a scalar is added,
+   deleted or changed by means other than the spreadsheet, and the
+   scalars spreadsheet is currently displayed */
 
-static void scalars_changed_callback (const char *name, double val)
+static void scalars_changed_callback (void)
 {
     Spreadsheet *sheet = scalars_sheet;
 
     if (sheet != NULL) {
 	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-	GtkListStore *store;
 	GtkTreeIter iter;
-	char valstr[32];
+	GtkListStore *store;
+	gchar vname[VNAMELEN];
+	gchar val[32];
+	double x;
+	int i, n;
 
-	if (na(val)) {
-	    *valstr = '\0';
-	} else {
-	    sprintf(valstr, "%.*g", DBL_DIG, val);
-	}
+	n = n_saved_scalars();
 
 	store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
-	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 0, name, 1, valstr, 2, sheet->pbuf, -1);
-	sheet->datarows += 1;
+	gtk_list_store_clear(store);
+	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+	sheet->datarows = 0;
+
+	for (i=0; i<n; i++) {
+	    if (gretl_scalar_get_level(i) != 0) {
+		continue;
+	    }
+	    strcpy(vname, gretl_scalar_get_name(i)); /* underscores? */
+	    x = gretl_scalar_get_value_by_index(i);
+	    if (na(x)) {
+		*val = '\0';
+	    } else {
+		sprintf(val, "%.*g", DBL_DIG, x);
+	    }
+	    gtk_list_store_append(store, &iter);
+	    gtk_list_store_set(store, &iter, 0, vname, 1, val, 
+			       2, sheet->pbuf, -1);
+	    sheet->datarows += 1;
+	}
     }
 }
 
@@ -2823,7 +2838,10 @@ static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c,
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+				   c == SHEET_EDIT_SCALARS ?
+				   GTK_POLICY_NEVER :
+				   GTK_POLICY_AUTOMATIC, 
+				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
 					GTK_SHADOW_IN);    
 

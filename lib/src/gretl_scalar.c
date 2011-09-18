@@ -40,7 +40,7 @@ static gretl_scalar **scalars;
 static int n_scalars;
 static int scalar_imin;
 
-static void (*scalar_edit_callback)(const char *name, double val);
+static void (*scalar_edit_callback)(void);
 
 #if SDEBUG
 
@@ -259,6 +259,10 @@ void gretl_scalar_set_value (const char *name, double val)
 	s->val = val;
     }
 
+    if (scalar_edit_callback != NULL) {
+	scalar_edit_callback();
+    }
+
 #if SDEBUG
     debug_print_scalars("gretl_scalar_set_value");
 #endif
@@ -318,7 +322,7 @@ int gretl_scalar_add (const char *name, double val)
 #endif
 
     if (!err && level == 0 && scalar_edit_callback != NULL) {
-	scalar_edit_callback(name, val);
+	scalar_edit_callback();
     }
 
     return err;
@@ -396,9 +400,14 @@ int gretl_scalar_delete (const char *name, PRN *prn)
 	}
     }
 
-    if (!err && prn != NULL && gretl_messages_on()) {
-	pprintf(prn, _("Deleted scalar %s"), name);
-	pputc(prn, '\n');
+    if (!err) {
+	if (prn != NULL && gretl_messages_on()) {
+	    pprintf(prn, _("Deleted scalar %s"), name);
+	    pputc(prn, '\n');
+	}
+	if (level == 0 && scalar_edit_callback != NULL) {
+	    scalar_edit_callback();
+	}
     }
 
 #if SDEBUG
