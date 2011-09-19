@@ -52,6 +52,8 @@ version 1.9.6, in progress
   to the user's "Library/Application Support/gretl" directory
 - MS Windows and OS X packages: update gtksourceview library to version 
   2.10.5 to permit printing of scripts with highlighting
+- Make gtksourceview-2.0 a dependency for the gretl build, and remove
+  the "bundled" version of gtksourceview-1.0
 - Fix bug: a nested "foreach" loop using a named list, with the name of
   the list subject to dollar-substitution via the parent loop, produced
   an "unknown variable" error
