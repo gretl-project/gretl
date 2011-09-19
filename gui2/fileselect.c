@@ -836,7 +836,7 @@ static void gtk_file_selector (int action, FselDataSrc src,
     if (gtk_major_version == 2 &&
 	gtk_minor_version == 24 &&
 	gtk_micro_version == 6) {
-	/* broken GTK version */
+	/* broken GTK version, 2.24.6 */
 	lenptr = &max_filter_len;
     }
 

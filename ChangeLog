@@ -70,6 +70,8 @@ version 1.9.6, in progress
   than the MA order
 - Fix bug: ensure that we catch trailing junk at the end of a genr-type
   expression
+- Fix bug: GUI scalars window not updating correctly if it is kept open
+  while a script which modifies scalars is executed 
 - Increase maximum command-line length to 16384 bytes
 
 2011-04-22 version 1.9.5
