@@ -111,6 +111,7 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet);
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet);
 
 static void update_scalars_from_sheet (Spreadsheet *sheet);
+static void scalars_changed_callback (void);
 
 static void 
 spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col);
@@ -1124,6 +1125,8 @@ static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
     gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
     gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &vname, -1);
 
+    set_scalar_edit_callback(NULL);
+
     err = gretl_scalar_delete(vname, NULL);
     if (!err) {
 	mark_session_changed();
@@ -1131,6 +1134,8 @@ static void sheet_delete_scalar (Spreadsheet *sheet, GtkTreePath *path)
 
     gtk_list_store_remove(store, &iter);
     sheet->datarows--;
+
+    set_scalar_edit_callback(scalars_changed_callback);
 }
 
 static void build_sheet_popup (Spreadsheet *sheet)
