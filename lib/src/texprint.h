@@ -75,7 +75,7 @@ void gretl_tex_preamble (PRN *prn, int fmt);
 
 void tex_print_obs_marker (int t, const DATASET *dset, PRN *prn);
 
-void set_tex_param_format (const char *s);
+int set_tex_param_format (const char *s);
 
 int tex_using_custom_tabular (void);
 

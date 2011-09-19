@@ -1589,7 +1589,7 @@ int tex_print_equation (const MODEL *pmod, const DATASET *dset,
 int tex_print_model (MODEL *pmod, const DATASET *dset, 
 		     gretlopt opt, PRN *prn)
 {
-    int ret;
+    int err = 0;
 
     if (RQ_SPECIAL_MODEL(pmod)) {
 	return E_NOTIMP;
@@ -1600,12 +1600,20 @@ int tex_print_model (MODEL *pmod, const DATASET *dset,
     }
 
     if (tex_eqn_format(prn)) { 
-	ret = tex_print_equation(pmod, dset, opt, prn);
+	err = tex_print_equation(pmod, dset, opt, prn);
     } else {
-	ret = printmodel(pmod, dset, OPT_NONE, prn);
+	if (opt & OPT_T) {
+	    /* --format option */
+	    const char *s = get_optval_string(TABPRINT, OPT_T);
+
+	    err = set_tex_param_format(s);
+	}
+	if (!err) {
+	    err = printmodel(pmod, dset, OPT_NONE, prn);
+	}
     }
 
-    return ret;
+    return err;
 }
 
 /**
@@ -1739,7 +1747,7 @@ static int check_colspec (const char *s)
  * producing TeX tabular output.
  */
 
-void set_tex_param_format (const char *s)
+int set_tex_param_format (const char *s)
 {
     const char *p = s;
     int i, n = 0;
@@ -1747,7 +1755,7 @@ void set_tex_param_format (const char *s)
 
     if (s == NULL || !strcmp(s, "default")) {
 	use_custom = 0;
-	return;
+	return 0;
     }
 
     for (i=0; i<4; i++) {
@@ -1762,7 +1770,9 @@ void set_tex_param_format (const char *s)
 		n = 7;
 	    }
 	    strncat(colspec[i], p, n);
+#if 0
 	    fprintf(stderr, "spec %d = '%s'\n", i, colspec[i]);
+#endif
 	    err = check_colspec(colspec[i]);
 	    if (err || *s == '\0') {
 		break;
@@ -1783,7 +1793,7 @@ void set_tex_param_format (const char *s)
 	    if (colspec[i][0] != '\0') n++;
 	}
 	if (n == 0) {
-	    err = 1;
+	    err = E_ARGS;
 	}
     }
 
@@ -1795,4 +1805,6 @@ void set_tex_param_format (const char *s)
     } else {
 	use_custom = 1;
     }
+
+    return err;
 }

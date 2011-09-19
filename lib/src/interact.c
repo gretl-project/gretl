@@ -70,7 +70,7 @@ typedef struct {
 #define cmd_set_nolist(c) (c->flags |= CMD_NOLIST)
 #define cmd_unset_nolist(c) (c->flags &= ~CMD_NOLIST)
 
-static void get_optional_filename_etc (const char *s, CMD *cmd);
+static void get_optional_filename (const char *s, CMD *cmd);
 
 #define bare_quote(p,s)   (*p == '"' && (p-s==0 || *(p-1) != '\\'))
 #define starts_comment(p) (*p == '/' && *(p+1) == '*')
@@ -2574,10 +2574,10 @@ int parse_command_line (char *line, CMD *cmd, DATASET *dset)
     }
 
     if (cmd->ci == EQNPRINT || cmd->ci == TABPRINT) {
-	/* TeX printing commands can take a filename parameter, and
-	   possibly a format string -- but that's all
+	/* TeX printing commands can take a filename parameter,
+	   but that's all
 	*/
-	get_optional_filename_etc(rem, cmd);
+	get_optional_filename(rem, cmd);
 	return cmd->err;
     } else if (cmd->ci == OUTFILE) {
 	/* the "outfile" command may have a filename */
@@ -3831,11 +3831,9 @@ static char *get_flag_field  (const char *s, char f)
     return ret;
 }
 
-/* grab filename for TeX output; while we're at it, if the command is
-   TABPRINT, get an optional format string too
-*/
+/* grab filename for TeX output, if applicable */
 
-static void get_optional_filename_etc (const char *s, CMD *cmd)
+static void get_optional_filename (const char *s, CMD *cmd)
 {
     char *p = get_flag_field(s, 'f');
 
@@ -3846,25 +3844,6 @@ static void get_optional_filename_etc (const char *s, CMD *cmd)
 	} else {
 	    cmd->param = gretl_strdup_printf("%s%s", gretl_workdir(), p);
 	    free(p);
-	}
-    }
-
-    if (cmd->ci == TABPRINT) {
-	const char *q = strstr(s, "--format=");
-	int len;
-
-	if (q != NULL && !strncmp(q + 9, "default", 7)) {
-	    set_tex_param_format(NULL);
-	} else if (q != NULL && *(q + 9) == '"') {
-	    q += 10;
-	    len = charpos('"', q);
-	    if (len > 0) {
-		p = gretl_strndup(q, len);
-		if (p != NULL) {
-		    set_tex_param_format(p);
-		    free(p);
-		}
-	    }
 	}
     }
 }
@@ -5138,7 +5117,7 @@ int gretl_cmd_exec (ExecState *s, DATASET *dset)
 
     case EQNPRINT:
     case TABPRINT:
-	if ((model)->errcode == E_NAN) {
+	if (model->errcode == E_NAN) {
 	    pprintf(prn, _("Couldn't format model\n"));
 	} else {
 	    char fname[FILENAME_MAX];

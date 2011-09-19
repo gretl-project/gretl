@@ -174,6 +174,7 @@ struct gretl_option gretl_opts[] = {
     { EQNPRINT, OPT_T, "t-ratios", 0 },
     { TABPRINT, OPT_O, "complete", 0 },
     { TABPRINT, OPT_R, "rtf", 0 },
+    { TABPRINT, OPT_T, "format", 2 },
 #if 0 /* not yet */
     { TABPRINT, OPT_F, "filename", 0 }, /* backward compatibility */
 #endif
@@ -1232,6 +1233,18 @@ gretlopt get_gretl_options (char *line, int *err)
     return oflags;
 }
 
+static int quote_option_parm (int ci, gretlopt opt, 
+			      const char *s)
+{
+    if (ci == TABPRINT && opt == OPT_T) {
+	if (strchr(s, '%')) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static PRN *flagprn;
 
 /**
@@ -1290,7 +1303,11 @@ const char *print_flags (gretlopt oflags, int ci)
 	    if (gretl_opts[i].parminfo) {
 		parm = get_optval_string(ci, opt);
 		if (parm != NULL && *parm != '\0') {
-		    pprintf(flagprn, "=%s", parm);
+		    if (quote_option_parm(ci, opt, parm)) {
+			pprintf(flagprn, "=\"%s\"", parm);
+		    } else {
+			pprintf(flagprn, "=%s", parm);
+		    }
 		}
 	    }
 	}
