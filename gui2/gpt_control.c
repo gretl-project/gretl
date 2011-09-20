@@ -113,13 +113,11 @@ struct png_plot_t {
     GtkWidget *pos_entry;
     GtkWidget *editor;
     GdkWindow *window;
-#if GTK_MAJOR_VERSION == 2
-    GdkPixmap *pixmap;
-#endif
     cairo_t *cr;
 #if GTK_MAJOR_VERSION >= 3
     cairo_surface_t *cs;
 #else
+    GdkPixmap *pixmap;
     GdkPixbuf *savebuf;
 #endif
     GPT_SPEC *spec;
@@ -3853,6 +3851,10 @@ static int repaint_png (png_plot *plot, int view)
     return render_pngfile(plot, view);
 }
 
+/* with a zoomed version of the current plot in place,
+   replace the full version wiuth the zoom
+*/
+
 static int zoom_replaces_plot (png_plot *plot)
 {
     FILE *fpin, *fpout;
@@ -3896,9 +3898,13 @@ static int zoom_replaces_plot (png_plot *plot)
     if (err) {
 	gui_errmsg(err);
     } else {
-	plot->status ^= PLOT_ZOOMED;
+	plot->xmin = plot->zoom_xmin;
+	plot->xmax = plot->zoom_xmax;
+	plot->ymin = plot->zoom_ymin;
+	plot->ymax = plot->zoom_ymax;
 	plot->zoom_xmin = plot->zoom_xmax = 0.0;
 	plot->zoom_ymin = plot->zoom_ymax = 0.0;
+	plot->status ^= PLOT_ZOOMED;
     }
 
     gretl_remove(temp);
