@@ -588,7 +588,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 static int xlsx_sheet_has_data (const char *fname)
 {
     xmlDocPtr doc = NULL;
-    xmlNodePtr cur = NULL;
+    xmlNodePtr c1, cur = NULL;
     gchar *fullname;
     int err, ret = 0;
 
@@ -601,7 +601,13 @@ static int xlsx_sheet_has_data (const char *fname)
 	cur = cur->xmlChildrenNode;
 	while (cur != NULL && ret == 0) {
 	    if (!xmlStrcmp(cur->name, (XUC) "sheetData")) {
-		ret = 1;
+		c1 = cur->xmlChildrenNode;
+		while (c1 != NULL && ret == 0) {
+		    if (!xmlStrcmp(c1->name, (XUC) "row")) {
+			ret = 1;
+		    }
+		    c1 = c1->next;
+		}
 	    }
 	    cur = cur->next;
 	}
@@ -767,6 +773,17 @@ static int finalize_xlsx_import (DATASET *dset,
 				 PRN *prn)
 {
     int err = import_prune_columns(xinfo->dset);
+
+    if (!err) {
+	int i;
+
+	for (i=1; i<xinfo->dset->v && !err; i++) {
+	    if (*xinfo->dset->varname[i] == '\0') {
+		pprintf(prn, "Name missing for variable %d\n", i);
+		err = E_DATA;
+	    }
+	}
+    }
 
     if (!err && xinfo->dset->S != NULL) {
 	import_ts_check(xinfo->dset);
