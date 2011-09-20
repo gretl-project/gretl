@@ -39,6 +39,7 @@
 #define XDEBUG 1
 
 struct xlsx_info_ {
+    int flags;
     int maxrow;
     int maxcol;
     int xoffset;
@@ -57,6 +58,7 @@ typedef struct xlsx_info_ xlsx_info;
 
 static void xlsx_info_init (xlsx_info *xinfo)
 {
+    xinfo->flags = 0;
     xinfo->maxrow = 0;
     xinfo->maxcol = 0;
     xinfo->xoffset = 0;
@@ -76,6 +78,7 @@ static void xlsx_info_free (xlsx_info *xinfo)
     if (xinfo != NULL) {
 	free_strings_array(xinfo->sheetnames, xinfo->n_sheets);
 	free_strings_array(xinfo->strings, xinfo->n_strings);
+	destroy_dataset(xinfo->dset);
     }
 }
 
@@ -170,7 +173,8 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 
 /* Given the string representation of the shared-string index for 
    a cell with a string value, look up the target string. If the
-   shared strings XML file has yet been read, reading is triggered.
+   shared strings XML file has not yet been read, reading is 
+   triggered.
 */
 
 static const char *xlsx_string_value (const char *idx, xlsx_info *xinfo,
@@ -210,7 +214,7 @@ static int letter_val (char c)
 
 /* Given an Excel cell reference such as "AB65" split it out
    into 1-based row and column indices, and keep a running
-   record of the maximum values of these indices.
+   record of the maxima of these indices.
 */
 
 static int xlsx_cell_get_coordinates (const char *s, 
@@ -258,6 +262,106 @@ static int xlsx_cell_get_coordinates (const char *s,
     return err;
 }
 
+static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
+			     PRN *prn)
+{
+    int err = 0;
+
+    if (i < 1 || i >= xinfo->dset->v) {
+	fprintf(stderr, "error in xlsx_set_varname: i = %d\n", i);
+	err = E_DATA;
+    } else {
+	*xinfo->dset->varname[i] = '\0';
+	strncat(xinfo->dset->varname[i], s, VNAMELEN - 1);
+	if (check_varname(xinfo->dset->varname[i])) {
+	    invalid_varname(prn);
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
+{
+    int err = 0;
+
+    if (xinfo->dset->S == NULL || t < 0 || t >= xinfo->dset->n) {
+	fprintf(stderr, "error in xlsx_set_obs_string: t = %d\n", t);
+	err = E_DATA;
+    } else {
+	/* FIXME encoding */
+	*xinfo->dset->S[t] = '\0';
+	strncat(xinfo->dset->S[t], s, OBSLEN - 1);
+    }
+
+    return err;
+}
+
+static int xlsx_set_value (xlsx_info *xinfo, int i, int t, double x)
+{
+    if (i < 1 || i >= xinfo->dset->v ||
+	t < 0 || t >= xinfo->dset->n) {
+	fprintf(stderr, "error in xlsx_set_value: i = %d, t = %d\n", i, t);
+	return E_DATA;
+    } else {
+	xinfo->dset->Z[i][t] = x;
+	return 0;
+    }
+}
+
+static int xlsx_var_index (xlsx_info *xinfo, int col)
+{
+    int i = col - xinfo->xoffset - 1;
+
+    if (i == 0 && (xinfo->flags & BOOK_OBS_LABELS)) {
+	i = -1;
+    } else if (i >= 0) {
+	i++; /* skip const */
+    }
+
+    return i;
+}
+
+static int xlsx_obs_index (xlsx_info *xinfo, int row)
+{
+    int t = row - xinfo->yoffset - 1;
+
+    if (!(xinfo->flags & BOOK_AUTO_VARNAMES)) {
+	t--; /* the first row holds varnames */
+    }
+
+    fprintf(stderr, "xlsx_obs_index: row=%d, t = %d\n", row, t);
+
+    return t;
+}
+
+static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
+				 int stringcell, const char *s,
+				 double x)
+{
+    if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 1) {
+	/* we're in the top left cell of the reading area:
+	   this could be blank, or could hold the first
+	   varname, could hold "obs" or similar, or could
+	   be the first numerical value
+	*/
+	if (!na(x)) {
+	    /* numerical value */
+	    xinfo->flags |= BOOK_AUTO_VARNAMES;
+	} else if (stringcell && import_obs_label(s)) {
+	    /* blank or "obs" or similar */
+	    xinfo->flags |= BOOK_OBS_LABELS;
+	}
+    } else if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 2) {
+	/* first row, second column */
+	if (!na(x)) {
+	    /* got a number, not a varname */
+	    xinfo->flags |= BOOK_AUTO_VARNAMES;
+	}
+    }
+}
+
 /* Read the cells in a given row: the basic info we want from
    each cell is its reference ("r"), e.g. "A2"; its type
    ("t"), e.g. "s", if present; and its value, which is
@@ -277,6 +381,8 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	if (!xmlStrcmp(cur->name, (XUC) "c")) {
 	    /* got a cell */
 	    char *cref = NULL;
+	    const char *strval = NULL;
+	    double xval = NADBL;
 	    int stringcell = 0;
 	    int gotval = 0;
 
@@ -288,10 +394,14 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		err = E_DATA;
 		break;
 	    } 
+
 	    err = xlsx_cell_get_coordinates(cref, xinfo, &row, &col);
-	    if (!err) {
+	    if (err) {
+		pprintf(prn, ": couldn't find coordinates\n", row, col);
+	    } else {
 		pprintf(prn, "(%d, %d)", row, col);
 	    }
+
 	    tmp = (char *) xmlGetProp(cur, (XUC) "t");
 	    if (tmp != NULL) {
 		if (!strcmp(tmp, "s")) {
@@ -299,22 +409,25 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		}
 		free(tmp);
 	    }
+
 	    val = cur->xmlChildrenNode;
 	    while (val && !err && !gotval) {
 		if (!xmlStrcmp(val->name, (XUC) "v")) {
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp != NULL) {
 			if (stringcell) {
-			    const char *sv = xlsx_string_value(tmp, xinfo, prn);
-
-			    if (sv == NULL) {
+			    strval = xlsx_string_value(tmp, xinfo, prn);
+			    if (strval == NULL) {
 				pputs(prn, " value = ?\n");
 				err = E_DATA;
 			    } else {
-				pprintf(prn, " value = '%s'\n", sv);
+				pprintf(prn, " value = '%s'\n", strval);
 			    }
 			} else {
 			    pprintf(prn, " value = %s\n", tmp);
+			    if (*tmp != '\0' && check_atof(tmp) == 0) {
+				xval = atof(tmp);
+			    }
 			}
 			free(tmp);
 			gotval = 1;
@@ -322,20 +435,92 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		}
 		val = val->next;
 	    }
+
+	    if (!err && xinfo->dset == NULL) {
+		xlsx_check_top_left(xinfo, row, col, stringcell, 
+				    strval, xval);
+	    }		    
+
 	    if (!gotval) {
 		pprintf(prn, ": (%s) no data\n", cref);
+	    } else if (xinfo->dset != NULL && 
+		       col >= xinfo->xoffset &&
+		       row >= xinfo->yoffset) {
+		int i = xlsx_var_index(xinfo, col);
+		int t = xlsx_obs_index(xinfo, row);
+
+		if (stringcell) {
+		    if (row == xinfo->yoffset + 1) {
+			err = xlsx_set_varname(xinfo, i, strval, prn);
+		    } else if (col == xinfo->xoffset + 1) {
+			err = xlsx_set_obs_string(xinfo, t, strval);
+		    } else if (strval != NULL) {
+			pprintf(prn, _("Expected numeric data, found string:\n"
+				       "%s\" at row %d, column %d\n"), 
+				strval, row, col);
+			err = E_DATA;
+		    }
+		} else {
+		    err = xlsx_set_value(xinfo, i, t, xval);
+		}
 	    }
+
 	    free(cref);
 	}
 	cur = cur->next;
     }
+
+    if (err) {
+	fprintf(stderr, "xlsx_read_row: returning %d\n", err);
+    }
 	    
+    return err;
+}
+
+static int xlsx_check_dimensions (xlsx_info *xinfo, PRN *prn)
+{
+    int v = xinfo->maxcol - xinfo->xoffset;
+    int n = xinfo->maxrow - xinfo->yoffset;
+    int err = 0;
+
+    if (xinfo->flags & BOOK_OBS_LABELS) {
+	/* subtract a column for obs labels */
+	v--;
+    }
+
+    if (!(xinfo->flags & BOOK_AUTO_VARNAMES)) {
+	/* subtract a row for varnames */
+	n--;
+    }
+
+    pprintf(prn, "Got v = %d and n = %d\n", v, n);
+
+    if (v <= 0 || n <= 0) {
+	pputs(prn, "File contains no data");
+	err = E_DATA;
+    } else {
+	int labels = (xinfo->flags & BOOK_OBS_LABELS);
+
+	xinfo->dset = create_new_dataset(v + 1, n, labels);
+	if (xinfo->dset == NULL) {
+	    err = E_ALLOC;
+	} else if (xinfo->flags & BOOK_AUTO_VARNAMES) {
+	    /* write fallback variable names */
+	    int i;
+
+	    for (i=1; i<=v; i++) {
+		sprintf(xinfo->dset->varname[i], "v%d", i);
+	    }
+	}
+    }
+
     return err;
 }
 
 static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn) 
 {
     xmlDocPtr doc = NULL;
+    xmlNodePtr data_node = NULL;
     xmlNodePtr cur = NULL;
     xmlNodePtr c1;
     int gotdata = 0;
@@ -357,11 +542,11 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 	return err;
     }
 
-    /* walk the tree */
+    /* walk the tree, first pass */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err && !gotdata) {
         if (!xmlStrcmp(cur->name, (XUC) "sheetData")) {
-	    c1 = cur->xmlChildrenNode;
+	    data_node = c1 = cur->xmlChildrenNode;
 	    while (c1 != NULL && !err) {
 		if (!xmlStrcmp(c1->name, (XUC) "row")) {
 		    pprintf(prn, "*** Reading row...\n");
@@ -374,13 +559,28 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 	cur = cur->next;
     }
 
-    xmlFreeDoc(doc);
-
     if (!err) {
 	pprintf(prn, "\nMax row = %d, max col = %d\n", xinfo->maxrow,
 		xinfo->maxcol);
 	pprintf(prn, "Accessed %d shared strings\n", xinfo->n_strings);
-    }	
+    }
+
+    if (!err && xinfo->dset == NULL) {
+	err = xlsx_check_dimensions(xinfo, prn);
+	if (!err) {
+	    gretl_push_c_numeric_locale();
+	    c1 = data_node;
+	    while (c1 != NULL && !err) {
+		if (!xmlStrcmp(c1->name, (XUC) "row")) {
+		    err = xlsx_read_row(c1, xinfo, NULL);
+		}
+		c1 = c1->next;
+	    }
+	    gretl_pop_c_numeric_locale();
+	}
+    }
+
+    xmlFreeDoc(doc);
 
     return err;
 }
@@ -469,7 +669,6 @@ static int xlsx_book_init (wbook *book, xlsx_info *xinfo, char *sheetname)
 
     book->nsheets = xinfo->n_sheets;
     book->sheetnames = xinfo->sheetnames;
-    // book->get_min_offset = xlsx_min_offset;
     book->data = xinfo;
 
     return err;
@@ -494,8 +693,8 @@ static int set_xlsx_params_from_cli (xlsx_info *xinfo,
 
     if (!gotname && !gotlist) {
 	xinfo->selsheet = 0;
-	// xinfo->xoffset = sheet->tables[0]->xoffset;
-	// xinfo->yoffset = sheet->tables[0]->yoffset;
+	xinfo->xoffset = 0; /* FIXME? */
+	xinfo->yoffset = 0;
 	return 0;
     }
 
@@ -544,8 +743,9 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo, int *err)
 	return -1;
     }
 
-    // book.col_offset = sheet->tables[0]->xoffset;
-    // book.row_offset = sheet->tables[0]->yoffset;
+    /* FIXME? */
+    book.col_offset = xinfo->xoffset;
+    book.row_offset = xinfo->yoffset;
 
     if (book.nsheets > 1) {
 	wsheet_menu(&book, 1);
@@ -566,26 +766,11 @@ static int finalize_xlsx_import (DATASET *dset,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    PRN *tprn;
-    int err = 0;
+    int err = import_prune_columns(xinfo->dset);
 
-    // err = ods_prune_columns(sheet);
-
-    if (!err && xinfo->dset->v == 1) {
-	gretl_errmsg_set(_("No numeric data were found"));
-	err = E_DATA;
+    if (!err && xinfo->dset->S != NULL) {
+	import_ts_check(xinfo->dset);
     }
-
-#if 0 /* FIXME */
-    if (!err) {
-	tprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-	ts_check(xinfo, tprn);
-	if (xinfo->flags & BOOK_DATA_REVERSED) {
-	    reverse_data(xinfo->dset, tprn);
-	}
-	gretl_print_destroy(tprn);
-    }
-#endif
 
     if (!err) {
 	err = merge_or_replace_data(dset, &xinfo->dset, opt, prn);
@@ -599,70 +784,13 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 {
     int gui = (opt & OPT_G);
     xlsx_info xinfo;
-    int (*gretl_unzip_file)(const char *, GError **);
-    const char *udir = gretl_dotdir();
-    char *abspath = NULL;
-    void *handle;
     char dname[32];
-    FILE *fp;
-    GError *gerr = NULL;
-    int err = 0;
+    int err;
 
-    errno = 0;
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-    fclose(fp);
-
-    /* by doing chdir, we may lose track of the ods file if 
-       its path is relative */
-    if (!g_path_is_absolute(fname)) {
-	abspath = get_absolute_path(fname);
-    }
-
-    /* cd to user dir */
-    if (gretl_chdir(udir)) {
-	gretl_errmsg_set_from_errno(udir);
-	return E_FOPEN;
-    }
-
-    err = gretl_make_tempdir(dname);
-    if (!err) {
-	err = gretl_chdir(dname);
-	if (err) {
-	    gretl_remove(dname);
-	}
-    }
-    
+    err = open_import_zipfile(fname, dname, prn);
     if (err) {
 	return err;
     }
-
-    gretl_unzip_file = get_plugin_function("gretl_unzip_file", 
-					   &handle);
-    if (gretl_unzip_file == NULL) {
-	gretl_remove(dname);
-	free(abspath);
-        return E_FOPEN;
-    }
-
-    if (abspath == NULL) {
-	err = (*gretl_unzip_file)(fname, &gerr);
-    } else {
-	err = (*gretl_unzip_file)(abspath, &gerr);
-	free(abspath);
-    }
-
-    if (gerr != NULL) {
-	pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
-	g_error_free(gerr);
-    } else if (err) {
-	pprintf(prn, "gretl_unzip_file: err = %d\n", err);
-    }
-
-    close_plugin(handle);
 
     xlsx_info_init(&xinfo);
 
@@ -697,14 +825,11 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 	}
     }
 
+    gretl_print_flush_stream(prn);
+
     xlsx_info_free(&xinfo);
 
     remove_temp_dir(dname);
-
-    if (!err) {
-	/* testing */
-	err = 1;
-    }
 
     return err;
 }

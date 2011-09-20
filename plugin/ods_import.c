@@ -955,39 +955,6 @@ static int check_mimetype (PRN *prn)
     return err;
 }
 
-static int ts_check (ods_sheet *sheet, PRN *prn)
-{
-    int reversed = 0;
-    int mpd = -1;
-
-    if (sheet->dset->S == NULL) {
-	return 0;
-    }
-
-    mpd = test_markers_for_dates(sheet->dset, &reversed,
-				 NULL, prn);
-
-    if (mpd > 0) {
-	pputs(prn, _("taking date information from row labels\n\n"));
-	if (sheet->dset->markers != DAILY_DATE_STRINGS) {
-	    dataset_destroy_obs_markers(sheet->dset);
-	}
-	if (reversed) {
-	    sheet->flags |= BOOK_DATA_REVERSED;
-	}
-    } 
-
-#if ODEBUG
-    fprintf(stderr, "sheet->dset->pd = %d\n", sheet->dset->pd);
-#endif
-
-    if (sheet->dset->pd != 1 || strcmp(sheet->dset->stobs, "1")) { 
-        sheet->dset->structure = TIME_SERIES;
-    }
-
-    return 0;
-}
-
 static int ods_min_offset (wbook *book, int k)
 {
     ods_sheet *sheet = book->data;
@@ -1129,53 +1096,15 @@ static int ods_sheet_dialog (ods_sheet *sheet, int *err)
     return book.selected;
 }
 
-/* check for spurious empty columns at the right of the sheet */
-
-static int ods_prune_columns (ods_sheet *sheet)
-{
-    int allmiss = 1, ndel = 0;
-    int i, t, err = 0;
-
-    for (i=sheet->dset->v-1; i>0 && allmiss; i--) {
-	for (t=0; t<sheet->dset->n; t++) {
-	    if (!na(sheet->dset->Z[i][t])) {
-		allmiss = 0;
-		break;
-	    }
-	}
-	if (allmiss) ndel++;
-    }
-
-    if (ndel > 0) {
-	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
-	err = dataset_drop_last_variables(ndel, sheet->dset);
-    }
-
-    return err;
-}
-
 static int finalize_ods_import (DATASET *dset,
 				ods_sheet *sheet, 
 				gretlopt opt,
 				PRN *prn)
 {
-    PRN *tprn;
-    int err;
+    int err = import_prune_columns(sheet->dset);
 
-    err = ods_prune_columns(sheet);
-
-    if (!err && sheet->dset->v == 1) {
-	gretl_errmsg_set(_("No numeric data were found"));
-	err = E_DATA;
-    }
-
-    if (!err) {
-	tprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-	ts_check(sheet, tprn);
-	if (sheet->flags & BOOK_DATA_REVERSED) {
-	    reverse_data(sheet->dset, tprn);
-	}
-	gretl_print_destroy(tprn);
+    if (!err && sheet->dset->S != NULL) {
+	import_ts_check(sheet->dset);
     }
 
     if (!err) {
@@ -1190,71 +1119,13 @@ int ods_get_data (const char *fname, int *list, char *sheetname,
 {
     int gui = (opt & OPT_G);
     ods_sheet *sheet = NULL;
-    int (*gretl_unzip_file)(const char *, GError **);
-    const char *udir = gretl_dotdir();
-    char *abspath = NULL;
-    void *handle;
     char dname[32];
-    FILE *fp;
-    GError *gerr = NULL;
-    int err = 0;
+    int err;
 
-    errno = 0;
-
-    /* test-open the file */
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
-    fclose(fp);
-
-    /* by doing chdir, we may lose track of the ods file if 
-       its path is relative */
-    if (!g_path_is_absolute(fname)) {
-	abspath = get_absolute_path(fname);
-    }
-
-    /* cd to user dir */
-    if (gretl_chdir(udir)) {
-	gretl_errmsg_set_from_errno(udir);
-	return E_FOPEN;
-    }
-
-    err = gretl_make_tempdir(dname);
-    if (!err) {
-	err = gretl_chdir(dname);
-	if (err) {
-	    gretl_remove(dname);
-	}
-    }
-    
+    err = open_import_zipfile(fname, dname, prn);
     if (err) {
 	return err;
-    }
-
-    gretl_unzip_file = get_plugin_function("gretl_unzip_file", 
-					   &handle);
-    if (gretl_unzip_file == NULL) {
-	gretl_remove(dname);
-	free(abspath);
-        return E_FOPEN;
-    }
-
-    if (abspath == NULL) {
-	err = (*gretl_unzip_file)(fname, &gerr);
-    } else {
-	err = (*gretl_unzip_file)(abspath, &gerr);
-	free(abspath);
-    }
-
-    if (gerr != NULL) {
-	pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
-	g_error_free(gerr);
-    } else if (err) {
-	pprintf(prn, "gretl_unzip_file: err = %d\n", err);
-    }
-
-    close_plugin(handle);
+    }    
 
     if (!err) {
 	err = check_mimetype(prn);

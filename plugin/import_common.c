@@ -90,7 +90,143 @@ static int gretl_make_tempdir (char *dname)
     return err;
 }
 
-# endif /* MS Windows or not */
+# endif /* G_OS_WIN32 or not */
+
+/* for ODS and XLSX: unzip the target file in the user's
+   "dotdir". On successful completion @dname holds the
+   name of the temporary directory, in the dotdir, holding
+   the contents of the zipfile
+*/
+
+static int open_import_zipfile (const char *fname, char *dname,
+				PRN *prn)
+{
+    int (*gretl_unzip_file)(const char *, GError **);
+    const char *udir = gretl_dotdir();
+    char *abspath = NULL;
+    void *handle = NULL;
+    FILE *fp;
+    GError *gerr = NULL;
+    int err = 0;
+
+    errno = 0;
+    *dname = '\0';
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    fclose(fp);
+
+    /* by doing chdir, we may lose track of the file if 
+       its path is relative */
+    if (!g_path_is_absolute(fname)) {
+	abspath = get_absolute_path(fname);
+    }
+
+    /* cd to user dir */
+    if (gretl_chdir(udir)) {
+	gretl_errmsg_set_from_errno(udir);
+	err = E_FOPEN;
+    } else {
+	err = gretl_make_tempdir(dname);
+	if (!err) {
+	    err = gretl_chdir(dname);
+	    if (err) {
+		gretl_remove(dname);
+	    }
+	}
+    }
+    
+    if (!err) {
+	gretl_unzip_file = get_plugin_function("gretl_unzip_file", 
+					       &handle);
+	if (gretl_unzip_file == NULL) {
+	    gretl_remove(dname);
+	    err = E_FOPEN;
+	}
+    }
+
+    if (!err) {
+	if (abspath != NULL) {
+	    err = (*gretl_unzip_file)(abspath, &gerr);
+	} else {
+	    err = (*gretl_unzip_file)(fname, &gerr);
+	}
+	if (gerr != NULL) {
+	    pprintf(prn, "gretl_unzip_file: '%s'\n", gerr->message);
+	    g_error_free(gerr);
+	} else if (err) {
+	    pprintf(prn, "gretl_unzip_file: err = %d\n", err);
+	}
+    }
+
+    free(abspath);
+
+    if (handle != NULL) {
+	close_plugin(handle);
+    }
+
+    return err;
+}
+
+/* check for spurious empty columns at the right of the sheet */
+
+static int import_prune_columns (DATASET *dset)
+{
+    int allmiss = 1, ndel = 0;
+    int i, t, err = 0;
+
+    for (i=dset->v-1; i>0 && allmiss; i--) {
+	for (t=0; t<dset->n; t++) {
+	    if (!na(dset->Z[i][t])) {
+		allmiss = 0;
+		break;
+	    }
+	}
+	if (allmiss) ndel++;
+    }
+
+    if (ndel == dset->v - 1) {
+	gretl_errmsg_set(_("No numeric data were found"));
+	err = E_DATA;
+    } else if (ndel > 0) {
+	fprintf(stderr, "Sheet has %d trailing empty variables\n", ndel);
+	err = dataset_drop_last_variables(ndel, dset);
+    }
+
+    return err;
+}
+
+static void import_ts_check (DATASET *dset)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    int reversed = 0;
+    int mpd = -1;
+
+    mpd = test_markers_for_dates(dset, &reversed, NULL, prn);
+
+    if (mpd > 0) {
+	pputs(prn, _("taking date information from row labels\n\n"));
+	if (dset->markers != DAILY_DATE_STRINGS) {
+	    dataset_destroy_obs_markers(dset);
+	}
+	if (reversed) {
+	    reverse_data(dset, prn);
+	}
+    } 
+
+#if ODEBUG
+    fprintf(stderr, "xinfo->dset->pd = %d\n", xinfo->dset->pd);
+#endif
+
+    if (dset->pd != 1 || strcmp(dset->stobs, "1")) { 
+        dset->structure = TIME_SERIES;
+    }
+
+    gretl_print_destroy(prn);
+}
 
 #else /* !ODS, !XLSX */
 
