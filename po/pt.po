@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-11 16:11-0400\n"
-"PO-Revision-Date: 2011-09-11 16:24-0400\n"
+"PO-Revision-Date: 2011-09-22 00:52+0100\n"
 "Last-Translator: Helio Guilherme <helio_guilherme@hotmail.com>\n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -6843,7 +6843,7 @@ msgstr "A amplitude %d a %d é não-positiva!"
 
 #: lib/src/usermat.c:741
 msgid "Ambiguous matrix index"
-msgstr ""
+msgstr "Índice de matriz ambíguo"
 
 #: lib/src/usermat.c:1214
 #, c-format
@@ -7220,7 +7220,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 5 de setembro de 2011."
+"Tradução de 22 de setembro de 2011."
 
 #: gui2/about.c:165
 msgid "License"
@@ -11221,9 +11221,8 @@ msgid "_Command reference"
 msgstr "_Comandos"
 
 #: gui2/gretl.c:1515
-#, fuzzy
 msgid "_Function reference"
-msgstr "Manual das Funções"
+msgstr "Manual das _Funções"
 
 #: gui2/gretl.c:1516
 msgid "_User's guide"
