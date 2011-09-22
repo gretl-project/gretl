@@ -2900,10 +2900,10 @@ static int cli_validate_package_file (const char *fname, PRN *prn)
     char dtdname[FILENAME_MAX];
     xmlDocPtr doc;
     xmlDtdPtr dtd;
-    int err = 0;
+    int err;
 
-    doc = xmlParseFile(fname);
-    if (doc == NULL) {
+    err = gretl_xml_open_doc_root(fname, NULL, &doc, NULL);
+    if (err) {
 	pprintf(prn, "Couldn't parse %s\n", fname);
 	return 1;
     }
@@ -3760,8 +3760,6 @@ int read_session_functions_file (const char *fname)
     fprintf(stderr, "read_session_functions_file: starting on '%s'\n", fname);
 #endif
 
-    xmlKeepBlanksDefault(0);
-
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {
 	return err;
@@ -3814,8 +3812,6 @@ static fnpkg *read_package_file (const char *fname, int *err)
 #if PKG_DEBUG
     fprintf(stderr, "read_function_package: got '%s'\n", fname);
 #endif
-
-    xmlKeepBlanksDefault(0);
 
     *err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (*err) {
@@ -4011,8 +4007,6 @@ int get_function_file_header (const char *fname, char **pdesc,
     xmlNodePtr node = NULL;
     xmlNodePtr sub;
     int err = 0;
-
-    xmlKeepBlanksDefault(0);
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &node);
     if (err) {

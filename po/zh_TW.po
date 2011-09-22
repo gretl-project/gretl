@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-22 13:59-0400\n"
+"POT-Creation-Date: 2011-09-22 17:32-0400\n"
 "PO-Revision-Date: 2010-12-27 22:56+0800\n"
 "Last-Translator: Y. N. Yang <yinyang@ms17.hinet.net>\n"
 "Language-Team: \n"
@@ -186,7 +186,7 @@ msgid "H0: all groups have unit root"
 msgstr "H0: 所有的變數皆有單根 (all groups have unit root)"
 
 #: lib/src/adf_kpss.c:1233 lib/src/estimate.c:3864 lib/src/estimate.c:3923
-#: lib/src/estimate.c:4086 lib/src/genfuncs.c:1868 lib/src/gretl_func.c:6530
+#: lib/src/estimate.c:4086 lib/src/genfuncs.c:1868 lib/src/gretl_func.c:6524
 #: lib/src/pvalues.c:1839
 msgid "Couldn't load plugin function\n"
 msgstr "無法載入 plugin 函數\n"
@@ -994,7 +994,7 @@ msgid "   variable name %d is missing: aborting\n"
 msgstr "變數名稱 %d... 遺失: 程序中斷\n"
 
 #: lib/src/csvdata.c:1726 plugin/excel_import.c:1570
-#: plugin/gnumeric_import.c:701
+#: plugin/gnumeric_import.c:685
 msgid "it seems there are no variable names\n"
 msgstr "似乎沒有定義變數名稱\n"
 
@@ -1062,7 +1062,7 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:2198 plugin/eviews_import.c:554
-#: plugin/excel_import.c:1637 plugin/gnumeric_import.c:780
+#: plugin/excel_import.c:1637 plugin/gnumeric_import.c:764
 #: plugin/jmulti_import.c:381 plugin/sas_import.c:688
 #: plugin/spss_import.c:1938 plugin/stata_import.c:952
 msgid "warning: some variable names were duplicated\n"
@@ -1070,7 +1070,7 @@ msgstr "警告: 有重覆的變數名稱\n"
 
 #: lib/src/csvdata.c:2221 plugin/eviews_import.c:520
 #: plugin/eviews_import.c:535 plugin/excel_import.c:1476
-#: plugin/gnumeric_import.c:609 plugin/jmulti_import.c:352
+#: plugin/gnumeric_import.c:593 plugin/jmulti_import.c:352
 #: plugin/jmulti_import.c:369 plugin/sas_import.c:650 plugin/sas_import.c:662
 #: plugin/spss_import.c:1843 plugin/spss_import.c:1864
 #: plugin/stata_import.c:919 plugin/stata_import.c:930
@@ -1224,7 +1224,7 @@ msgstr ""
 "\n"
 "讀取 header 檔: %s\n"
 
-#: lib/src/dataio.c:1944 lib/src/dataio.c:2021 lib/src/gretl_xml.c:2346
+#: lib/src/dataio.c:1944 lib/src/dataio.c:2021 lib/src/gretl_xml.c:2356
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1251,7 +1251,7 @@ msgstr "橫斷面 (cross-sectional)"
 msgid " datafile"
 msgstr "資料檔"
 
-#: lib/src/dataio.c:2015 lib/src/dataio.c:2602 lib/src/gretl_xml.c:2371
+#: lib/src/dataio.c:2015 lib/src/dataio.c:2602 lib/src/gretl_xml.c:2381
 msgid "index variable"
 msgstr "指標變數 (index variable)"
 
@@ -1514,8 +1514,8 @@ msgstr ""
 msgid "Compacted dataset would be empty"
 msgstr "未成功轉換資料 (可能少了某些樣本資料)..."
 
-#: lib/src/dbwrite.c:474 lib/src/dbwrite.c:483 lib/src/gretl_xml.c:1438
-#: lib/src/gretl_xml.c:1566
+#: lib/src/dbwrite.c:474 lib/src/dbwrite.c:483 lib/src/gretl_xml.c:1448
+#: lib/src/gretl_xml.c:1576
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "無法開啟並寫入 %s  "
@@ -1983,7 +1983,7 @@ msgid "Lorenz curve"
 msgstr "勞倫茲曲線"
 
 #: lib/src/describe.c:5776 plugin/excel_import.c:1589
-#: plugin/gnumeric_import.c:776
+#: plugin/gnumeric_import.c:760
 msgid "Warning: there were missing values\n"
 msgstr "警告: 變數有遺漏值的問題\n"
 
@@ -2559,7 +2559,7 @@ msgstr "預期有 '%c' 但卻發現 '%s'\n"
 msgid "too many arguments"
 msgstr "參數太多"
 
-#: lib/src/gmm.c:130 lib/src/gretl_list.c:2977 lib/src/gretl_panel.c:4439
+#: lib/src/gmm.c:130 lib/src/gretl_list.c:2975 lib/src/gretl_panel.c:4439
 #: lib/src/gretl_panel.c:4449 lib/src/interact.c:3885 lib/src/nls.c:2765
 #, c-format
 msgid "Unknown variable '%s'"
@@ -3081,7 +3081,7 @@ msgstr "預測值 (predicted values)"
 msgid "Warning"
 msgstr "警告"
 
-#: lib/src/gretl_func.c:2936 gui2/fnsave.c:1390
+#: lib/src/gretl_func.c:2936 gui2/fnsave.c:1391
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr ""
@@ -3093,61 +3093,61 @@ msgstr ""
 "目前在本機電腦上並沒有發現任何自訂函數套件\n"
 "你想要自行撰寫一個函數套件嗎?"
 
-#: lib/src/gretl_func.c:4050
+#: lib/src/gretl_func.c:4044
 msgid "No description available"
 msgstr "沒有任何說明"
 
-#: lib/src/gretl_func.c:4089
+#: lib/src/gretl_func.c:4083
 msgid "Function names must start with a letter"
 msgstr "函數名稱必須要以一個英文字母開頭"
 
-#: lib/src/gretl_func.c:4092
+#: lib/src/gretl_func.c:4086
 #, c-format
 msgid "'%s' is the name of a gretl command"
 msgstr "'%s' 並不是 gretl 的指令"
 
-#: lib/src/gretl_func.c:4096
+#: lib/src/gretl_func.c:4090
 #, c-format
 msgid "'%s' is the name of a built-in function"
 msgstr "'%s' 是 gretl 的內建函數"
 
-#: lib/src/gretl_func.c:4135
+#: lib/src/gretl_func.c:4129
 #, c-format
 msgid "Deleted function '%s'\n"
 msgstr "函數 '%s' 已刪除\n"
 
-#: lib/src/gretl_func.c:5175
+#: lib/src/gretl_func.c:5169
 msgid "You can't change the name of a function here"
 msgstr ""
 
-#: lib/src/gretl_func.c:5342 lib/src/gretl_func.c:5369
-#: lib/src/gretl_func.c:5394 lib/src/gretl_func.c:5415
+#: lib/src/gretl_func.c:5336 lib/src/gretl_func.c:5363
+#: lib/src/gretl_func.c:5388 lib/src/gretl_func.c:5409
 msgid "Duplicated pointer argument: not allowed"
 msgstr ""
 
-#: lib/src/gretl_func.c:6264
+#: lib/src/gretl_func.c:6258
 #, c-format
 msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
 msgstr ""
 
-#: lib/src/gretl_func.c:6274
+#: lib/src/gretl_func.c:6268
 #, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
 msgstr ""
 
-#: lib/src/gretl_func.c:6285
+#: lib/src/gretl_func.c:6279
 #, c-format
 msgid "%s: not enough arguments\n"
 msgstr "%s: 參數數目不足\n"
 
-#: lib/src/gretl_func.c:6395
+#: lib/src/gretl_func.c:6389
 #, fuzzy, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
 msgstr "錯誤訊息來自於 %s:\n"
 
-#: lib/src/gretl_func.c:7152
+#: lib/src/gretl_func.c:7146
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" 並未定義.\n"
@@ -3883,133 +3883,127 @@ msgstr ""
 msgid "HTTP proxy: first field must be an IP number"
 msgstr "HTTP proxy: 第1欄必須為 IP 網址"
 
-#: lib/src/gretl_xml.c:83 lib/src/gretl_xml.c:2439 lib/src/gretl_xml.c:2601
-#: lib/src/gretl_xml.c:2641 plugin/gnumeric_import.c:476
+#: lib/src/gretl_xml.c:91 lib/src/gretl_xml.c:2618
 #, fuzzy, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "從伺服器資料庫讀取資料(_s)"
 
-#: lib/src/gretl_xml.c:90 lib/src/gretl_xml.c:2446 lib/src/gretl_xml.c:2607
-#: lib/src/gretl_xml.c:2646 plugin/gnumeric_import.c:482
+#: lib/src/gretl_xml.c:98 lib/src/gretl_xml.c:2623
 #, c-format
 msgid "%s: empty document"
 msgstr ""
 
-#: lib/src/gretl_xml.c:98
+#: lib/src/gretl_xml.c:106
 #, c-format
 msgid "File of the wrong type, root node not %s"
 msgstr ""
 
-#: lib/src/gretl_xml.c:1444 lib/src/gretl_xml.c:1584
+#: lib/src/gretl_xml.c:1454 lib/src/gretl_xml.c:1594
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
 msgstr ""
 
-#: lib/src/gretl_xml.c:1839
+#: lib/src/gretl_xml.c:1849
 msgid "Failed to parse count of variables"
 msgstr ""
 
-#: lib/src/gretl_xml.c:1853 lib/src/gretl_xml.c:1871
+#: lib/src/gretl_xml.c:1863 lib/src/gretl_xml.c:1881
 #, fuzzy
 msgid "Got no variables"
 msgstr "取自然對數"
 
-#: lib/src/gretl_xml.c:1883
+#: lib/src/gretl_xml.c:1893
 #, c-format
 msgid "Variable %d has no name"
 msgstr ""
 
-#: lib/src/gretl_xml.c:1951
+#: lib/src/gretl_xml.c:1961
 msgid "Number of variables does not match declaration"
 msgstr ""
 
-#: lib/src/gretl_xml.c:1991
+#: lib/src/gretl_xml.c:2001
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2018
+#: lib/src/gretl_xml.c:2028
 #, fuzzy
 msgid "Failed to parse number of observations"
 msgstr "要選擇的樣本數 (最多 %d)"
 
-#: lib/src/gretl_xml.c:2037
+#: lib/src/gretl_xml.c:2047
 msgid "labels attribute for observations must be 'true' or 'false'"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2070
+#: lib/src/gretl_xml.c:2080
 #, fuzzy
 msgid "Got no observations\n"
 msgstr "移除樣本(_R)"
 
-#: lib/src/gretl_xml.c:2092
+#: lib/src/gretl_xml.c:2102
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2106
+#: lib/src/gretl_xml.c:2116
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "在樣本數位置 %d 處, 資料值被遺漏 "
 
-#: lib/src/gretl_xml.c:2138
+#: lib/src/gretl_xml.c:2148
 msgid "Number of observations does not match declaration"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2164
+#: lib/src/gretl_xml.c:2174
 msgid "Required attribute 'type' is missing from data file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2176
+#: lib/src/gretl_xml.c:2186
 msgid "Unrecognized type attribute for data file"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2201
+#: lib/src/gretl_xml.c:2211
 msgid "Failed to parse data frequency"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2242
+#: lib/src/gretl_xml.c:2252
 msgid "Failed to parse startobs"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2274
+#: lib/src/gretl_xml.c:2284
 msgid "Failed to parse endobs"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2308
+#: lib/src/gretl_xml.c:2318
 #, fuzzy, c-format
 msgid "dummy for %s = %lf"
 msgstr "檢查有無更新版(_u)"
 
-#: lib/src/gretl_xml.c:2345
+#: lib/src/gretl_xml.c:2355
 #, c-format
 msgid ""
 "\n"
 "Read datafile %s\n"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2422
+#: lib/src/gretl_xml.c:2428
 msgid "Uncompressing"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2422
+#: lib/src/gretl_xml.c:2428
 msgid "Reading"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2423
+#: lib/src/gretl_xml.c:2429
 #, fuzzy
 msgid "of data"
 msgstr "資料(_D)"
 
-#: lib/src/gretl_xml.c:2452 lib/src/gretl_xml.c:2613
-msgid "File of the wrong type, root node not gretldata"
-msgstr ""
-
-#: lib/src/gretl_xml.c:2508 lib/src/gretl_xml.c:2527
+#: lib/src/gretl_xml.c:2500 lib/src/gretl_xml.c:2519
 msgid "Variables information is missing"
 msgstr ""
 
-#: lib/src/gretl_xml.c:2532
+#: lib/src/gretl_xml.c:2524
 msgid "No observations were found"
 msgstr ""
 
@@ -8417,7 +8411,7 @@ msgstr "gretl: 從伺服器資料庫讀取資料"
 msgid "gretl: addons"
 msgstr "gretl: 新增變數資訊"
 
-#: gui2/datafiles.c:2000 gui2/fnsave.c:1933
+#: gui2/datafiles.c:2000 gui2/fnsave.c:1934
 msgid "gretl: function packages"
 msgstr "gretl: 自訂函數套件 (function packages)"
 
@@ -8478,7 +8472,7 @@ msgid "Package"
 msgstr "函數套件名稱"
 
 #: gui2/datafiles.c:2121 gui2/datafiles.c:2127 gui2/datafiles.c:2133
-#: gui2/fnsave.c:1053
+#: gui2/fnsave.c:1054
 msgid "Version"
 msgstr "版本"
 
@@ -9802,129 +9796,129 @@ msgid ""
 "Would you like to try downloading it now?"
 msgstr ""
 
-#: gui2/fnsave.c:336
+#: gui2/fnsave.c:337
 msgid "Please add a sample script for this package"
 msgstr "請替此套件函數 (package) 新增一個使用範例說明"
 
-#: gui2/fnsave.c:341
+#: gui2/fnsave.c:342
 msgid "Invalid version string: use numbers and '.' only"
 msgstr ""
 
-#: gui2/fnsave.c:492
+#: gui2/fnsave.c:493
 #, c-format
 msgid "Can't find the function '%s'"
 msgstr "找不到函數  '%s'"
 
-#: gui2/fnsave.c:807
+#: gui2/fnsave.c:808
 msgid "private"
 msgstr ""
 
-#: gui2/fnsave.c:836
+#: gui2/fnsave.c:837
 msgid "No special requirement"
 msgstr "無"
 
-#: gui2/fnsave.c:837
+#: gui2/fnsave.c:838
 msgid "Time-series data"
 msgstr "時間序列資料"
 
-#: gui2/fnsave.c:838
+#: gui2/fnsave.c:839
 msgid "Quarterly or monthly data"
 msgstr "季資料或月資料"
 
-#: gui2/fnsave.c:839
+#: gui2/fnsave.c:840
 msgid "Panel data"
 msgstr "追蹤資料"
 
-#: gui2/fnsave.c:840
+#: gui2/fnsave.c:841
 #, fuzzy
 msgid "No dataset needed"
 msgstr "確認資料類型:"
 
-#: gui2/fnsave.c:845
+#: gui2/fnsave.c:846
 msgid "Data requirement"
 msgstr "此套件所需資料類型"
 
-#: gui2/fnsave.c:899
+#: gui2/fnsave.c:900
 msgid "Minimum gretl version"
 msgstr "最低的 gretl 版本"
 
-#: gui2/fnsave.c:987
+#: gui2/fnsave.c:988
 #, fuzzy
 msgid "Insert today's date"
 msgstr "插入樣本(_I)"
 
-#: gui2/fnsave.c:1005 gui2/gui_utils.c:2080 gui2/ssheet.c:2551
+#: gui2/fnsave.c:1006 gui2/gui_utils.c:2080 gui2/ssheet.c:2551
 #: gui2/ssheet.c:2576
 msgid "Save changes?"
 msgstr "要儲存剛才的更動嗎?"
 
-#: gui2/fnsave.c:1052
+#: gui2/fnsave.c:1053
 msgid "Author"
 msgstr "作者"
 
-#: gui2/fnsave.c:1054
+#: gui2/fnsave.c:1055
 msgid "Date (YYYY-MM-DD)"
 msgstr "日期 (YYYY-MM-DD)"
 
-#: gui2/fnsave.c:1055
+#: gui2/fnsave.c:1056
 msgid "Package description"
 msgstr "自訂函數套件摘要"
 
-#: gui2/fnsave.c:1076
+#: gui2/fnsave.c:1077
 msgid "gretl: function package editor"
 msgstr "gretl: 自訂函數編輯器"
 
-#: gui2/fnsave.c:1138
+#: gui2/fnsave.c:1139
 msgid "Help text:"
 msgstr "說明:"
 
-#: gui2/fnsave.c:1153
+#: gui2/fnsave.c:1154
 msgid "Edit function code"
 msgstr "編輯此函數"
 
-#: gui2/fnsave.c:1168
+#: gui2/fnsave.c:1169
 msgid "Save as script"
 msgstr "另存為指令檔 (script)"
 
-#: gui2/fnsave.c:1176
+#: gui2/fnsave.c:1177
 msgid "Edit sample script"
 msgstr "編輯示範用法指令檔"
 
-#: gui2/fnsave.c:1182
+#: gui2/fnsave.c:1183
 msgid "Add/remove functions"
 msgstr "新增/移除 套件函數"
 
-#: gui2/fnsave.c:1188
+#: gui2/fnsave.c:1189
 #, fuzzy
 msgid "Write spec file"
 msgstr "無法寫入 labels file"
 
-#: gui2/fnsave.c:1195
+#: gui2/fnsave.c:1196
 msgid "Upload package to server on save"
 msgstr "在儲存時自訂函數, 同時更新伺服器中的版本"
 
-#: gui2/fnsave.c:1206
+#: gui2/fnsave.c:1207
 #, fuzzy
 msgid "Validate"
 msgstr "變異數"
 
-#: gui2/fnsave.c:1256
+#: gui2/fnsave.c:1257
 msgid "gretl: upload"
 msgstr "gretl: 上傳"
 
-#: gui2/fnsave.c:1259
+#: gui2/fnsave.c:1260
 msgid "Upload function package"
 msgstr "上傳自訂函數套件"
 
-#: gui2/fnsave.c:1269
+#: gui2/fnsave.c:1270
 msgid "Login"
 msgstr "登入帳號"
 
-#: gui2/fnsave.c:1269
+#: gui2/fnsave.c:1270
 msgid "Password"
 msgstr "密碼"
 
-#: gui2/fnsave.c:1295
+#: gui2/fnsave.c:1296
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/apply/.\n"
@@ -9936,7 +9930,7 @@ msgstr ""
 "按以下 'Website' 按鈕應該會在你的瀏覽器中\n"
 "閞啟該網頁."
 
-#: gui2/fnsave.c:1499
+#: gui2/fnsave.c:1500
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
 "must be less than 32 characters in length, must include only\n"
@@ -9946,11 +9940,11 @@ msgstr ""
 "而且長度不能超過 32 字元, 也僅能含有\n"
 "ASCII 字元, 數字 和 底線 '_', 附檔名必需是 \".gfn\""
 
-#: gui2/fnsave.c:1513 gui2/library.c:7313
+#: gui2/fnsave.c:1514 gui2/library.c:7313
 msgid "OK to overwrite?"
 msgstr "確定覆寫 (overwrite) 嗎?"
 
-#: gui2/fnsave.c:1934
+#: gui2/fnsave.c:1935
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -15529,16 +15523,16 @@ msgstr "%s: 未發現 BOF record"
 msgid "No data found.\n"
 msgstr "未發現任何資料!\n"
 
-#: plugin/excel_import.c:1489 plugin/gnumeric_import.c:618
+#: plugin/excel_import.c:1489 plugin/gnumeric_import.c:602
 msgid "Failed to get workbook info"
 msgstr "無法取得 workbook 資訊"
 
-#: plugin/excel_import.c:1492 plugin/gnumeric_import.c:626
+#: plugin/excel_import.c:1492 plugin/gnumeric_import.c:610
 msgid "No worksheets found"
 msgstr "沒有發現任何工作表 (worksheets)"
 
-#: plugin/excel_import.c:1508 plugin/gnumeric_import.c:642
-#: plugin/ods_import.c:1059
+#: plugin/excel_import.c:1508 plugin/gnumeric_import.c:626
+#: plugin/ods_import.c:1057 plugin/xlsx_import.c:813
 msgid "Invalid argument for worksheet import"
 msgstr "工作表資料匯入參數有誤"
 
@@ -15558,7 +15552,7 @@ msgstr "行 (column) 的開始值不正確 (out of bounds)\n"
 msgid "One or more variable names are missing.\n"
 msgstr "有 1 個或多個變數名稱遺失\n"
 
-#: plugin/excel_import.c:1582
+#: plugin/excel_import.c:1582 plugin/xlsx_import.c:470
 #, c-format
 msgid ""
 "Expected numeric data, found string:\n"
@@ -15672,11 +15666,7 @@ msgid ""
 "'%s' at row %d, column %d\n"
 msgstr ""
 
-#: plugin/gnumeric_import.c:488
-msgid "File of the wrong type, root node not Workbook"
-msgstr ""
-
-#: plugin/gnumeric_import.c:658
+#: plugin/gnumeric_import.c:642
 msgid "error in wsheet_setup()"
 msgstr ""
 

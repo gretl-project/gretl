@@ -371,9 +371,8 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
     char *tmp = NULL;
-    int err = 0, got_sheet = 0;
-
-    LIBXML_TEST_VERSION xmlKeepBlanksDefault(0);
+    int got_sheet = 0;
+    int err;
 
     err = gretl_xml_open_doc_root(fname, "Workbook", &doc, &cur);
     if (err) {
@@ -464,31 +463,16 @@ static int wbook_get_info (const char *fname, const int *list,
     xmlDocPtr doc;
     xmlNodePtr cur, sub;
     char *tmp = NULL;
-    int got_index = 0, err = 0;
+    int got_index = 0;
+    int err = 0;
 
-    LIBXML_TEST_VERSION 
-	xmlKeepBlanksDefault(0);
+    err = gretl_xml_open_doc_root(fname, "Workbook", 
+				  &doc, &cur);
+    if (err) {
+	return err;
+    }
 
     wbook_init(book, list, sheetname);
-
-    doc = xmlParseFile(fname);
-    if (doc == NULL) {
-	pprintf(prn, _("xmlParseFile failed on %s"), fname);
-	return 1;
-    }
-
-    cur = xmlDocGetRootElement(doc);
-    if (cur == NULL) {
-        pprintf(prn, _("%s: empty document"), fname);
-	xmlFreeDoc(doc);
-	return 1;
-    }
-
-    if (xmlStrcmp(cur->name, (XUC) "Workbook")) {
-        pputs(prn, _("File of the wrong type, root node not Workbook"));
-	xmlFreeDoc(doc);
-	return 1;
-    }
 
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;

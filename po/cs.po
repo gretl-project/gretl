@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cs\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-22 13:59-0400\n"
+"POT-Creation-Date: 2011-09-22 17:32-0400\n"
 "PO-Revision-Date: 2011-09-11 16:14-0400\n"
 "Last-Translator: Pavla Nikolovova <nikolovova@gmail.com>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -190,7 +190,7 @@ msgid "H0: all groups have unit root"
 msgstr ""
 
 #: lib/src/adf_kpss.c:1233 lib/src/estimate.c:3864 lib/src/estimate.c:3923
-#: lib/src/estimate.c:4086 lib/src/genfuncs.c:1868 lib/src/gretl_func.c:6530
+#: lib/src/estimate.c:4086 lib/src/genfuncs.c:1868 lib/src/gretl_func.c:6524
 #: lib/src/pvalues.c:1839
 msgid "Couldn't load plugin function\n"
 msgstr "Nebylo možné nahrát plugin funkci\n"
@@ -990,7 +990,7 @@ msgid "   variable name %d is missing: aborting\n"
 msgstr "   chybí jméno proměnné %d: přerušeno\n"
 
 #: lib/src/csvdata.c:1726 plugin/excel_import.c:1570
-#: plugin/gnumeric_import.c:701
+#: plugin/gnumeric_import.c:685
 msgid "it seems there are no variable names\n"
 msgstr "zdá se, že chybí jména proměnných\n"
 
@@ -1058,7 +1058,7 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:2198 plugin/eviews_import.c:554
-#: plugin/excel_import.c:1637 plugin/gnumeric_import.c:780
+#: plugin/excel_import.c:1637 plugin/gnumeric_import.c:764
 #: plugin/jmulti_import.c:381 plugin/sas_import.c:688
 #: plugin/spss_import.c:1938 plugin/stata_import.c:952
 msgid "warning: some variable names were duplicated\n"
@@ -1066,7 +1066,7 @@ msgstr "varování: jména některých proměnných byla duplikována\n"
 
 #: lib/src/csvdata.c:2221 plugin/eviews_import.c:520
 #: plugin/eviews_import.c:535 plugin/excel_import.c:1476
-#: plugin/gnumeric_import.c:609 plugin/jmulti_import.c:352
+#: plugin/gnumeric_import.c:593 plugin/jmulti_import.c:352
 #: plugin/jmulti_import.c:369 plugin/sas_import.c:650 plugin/sas_import.c:662
 #: plugin/spss_import.c:1843 plugin/spss_import.c:1864
 #: plugin/stata_import.c:919 plugin/stata_import.c:930
@@ -1221,7 +1221,7 @@ msgstr ""
 "\n"
 "Načítán hlavičkový soubor %s\n"
 
-#: lib/src/dataio.c:1944 lib/src/dataio.c:2021 lib/src/gretl_xml.c:2346
+#: lib/src/dataio.c:1944 lib/src/dataio.c:2021 lib/src/gretl_xml.c:2356
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1250,7 +1250,7 @@ msgstr "průřezové"
 msgid " datafile"
 msgstr " datový soubor"
 
-#: lib/src/dataio.c:2015 lib/src/dataio.c:2602 lib/src/gretl_xml.c:2371
+#: lib/src/dataio.c:2015 lib/src/dataio.c:2602 lib/src/gretl_xml.c:2381
 msgid "index variable"
 msgstr "indexová proměnná"
 
@@ -1513,8 +1513,8 @@ msgstr "%s: použití základní metody kompaktování: průměrování"
 msgid "Compacted dataset would be empty"
 msgstr "Kompaktovaný datový soubor by byl prázdný"
 
-#: lib/src/dbwrite.c:474 lib/src/dbwrite.c:483 lib/src/gretl_xml.c:1438
-#: lib/src/gretl_xml.c:1566
+#: lib/src/dbwrite.c:474 lib/src/dbwrite.c:483 lib/src/gretl_xml.c:1448
+#: lib/src/gretl_xml.c:1576
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Nebylo možné otevřít %s pro zápis"
@@ -1977,7 +1977,7 @@ msgid "Lorenz curve"
 msgstr "Lorenzova křivka"
 
 #: lib/src/describe.c:5776 plugin/excel_import.c:1589
-#: plugin/gnumeric_import.c:776
+#: plugin/gnumeric_import.c:760
 msgid "Warning: there were missing values\n"
 msgstr "Varovnání: některé hodnoty chyběly\n"
 
@@ -2558,7 +2558,7 @@ msgstr "Očekáváno '%c' ale nalezeno '%s'\n"
 msgid "too many arguments"
 msgstr "příliš mnoho argumentů"
 
-#: lib/src/gmm.c:130 lib/src/gretl_list.c:2977 lib/src/gretl_panel.c:4439
+#: lib/src/gmm.c:130 lib/src/gretl_list.c:2975 lib/src/gretl_panel.c:4439
 #: lib/src/gretl_panel.c:4449 lib/src/interact.c:3885 lib/src/nls.c:2765
 #, c-format
 msgid "Unknown variable '%s'"
@@ -3078,7 +3078,7 @@ msgstr "vygenerované neomezené hodnoty"
 msgid "Warning"
 msgstr "Varování"
 
-#: lib/src/gretl_func.c:2936 gui2/fnsave.c:1390
+#: lib/src/gretl_func.c:2936 gui2/fnsave.c:1391
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: porovnání proti DTD OK"
@@ -3087,61 +3087,61 @@ msgstr "%s: porovnání proti DTD OK"
 msgid "No functions are available for packaging at present."
 msgstr "Žádné funkce pro vytvoření balíčku nejsou aktuálně dostupné."
 
-#: lib/src/gretl_func.c:4050
+#: lib/src/gretl_func.c:4044
 msgid "No description available"
 msgstr "Popis není k dispozici"
 
-#: lib/src/gretl_func.c:4089
+#: lib/src/gretl_func.c:4083
 msgid "Function names must start with a letter"
 msgstr "Jména funkcí musí začínat písmenem"
 
-#: lib/src/gretl_func.c:4092
+#: lib/src/gretl_func.c:4086
 #, c-format
 msgid "'%s' is the name of a gretl command"
 msgstr "'%s' je jméno příkazu gretlu"
 
-#: lib/src/gretl_func.c:4096
+#: lib/src/gretl_func.c:4090
 #, c-format
 msgid "'%s' is the name of a built-in function"
 msgstr "'%s' je jméno interní funkce"
 
-#: lib/src/gretl_func.c:4135
+#: lib/src/gretl_func.c:4129
 #, c-format
 msgid "Deleted function '%s'\n"
 msgstr "Vymazaná funkce '%s'\n"
 
-#: lib/src/gretl_func.c:5175
+#: lib/src/gretl_func.c:5169
 msgid "You can't change the name of a function here"
 msgstr "Zde nelze změnit jméno funkce"
 
-#: lib/src/gretl_func.c:5342 lib/src/gretl_func.c:5369
-#: lib/src/gretl_func.c:5394 lib/src/gretl_func.c:5415
+#: lib/src/gretl_func.c:5336 lib/src/gretl_func.c:5363
+#: lib/src/gretl_func.c:5388 lib/src/gretl_func.c:5409
 msgid "Duplicated pointer argument: not allowed"
 msgstr ""
 
-#: lib/src/gretl_func.c:6264
+#: lib/src/gretl_func.c:6258
 #, c-format
 msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
 msgstr "%s: argument %d je nesprávného typu (je %s, měl by být %s)\n"
 
-#: lib/src/gretl_func.c:6274
+#: lib/src/gretl_func.c:6268
 #, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
 msgstr "%s, argument %d: hodnota %g je mimo meze\n"
 
-#: lib/src/gretl_func.c:6285
+#: lib/src/gretl_func.c:6279
 #, c-format
 msgid "%s: not enough arguments\n"
 msgstr "%s: nedostatečný počet argumentů\n"
 
-#: lib/src/gretl_func.c:6395
+#: lib/src/gretl_func.c:6389
 #, fuzzy, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
 msgstr "Chybová hláška od %s:\n"
 
-#: lib/src/gretl_func.c:7152
+#: lib/src/gretl_func.c:7146
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" není definováno.\n"
@@ -3892,102 +3892,100 @@ msgstr ""
 msgid "HTTP proxy: first field must be an IP number"
 msgstr "HTTP proxy: první pole musí být číslo IP"
 
-#: lib/src/gretl_xml.c:83 lib/src/gretl_xml.c:2439 lib/src/gretl_xml.c:2601
-#: lib/src/gretl_xml.c:2641 plugin/gnumeric_import.c:476
+#: lib/src/gretl_xml.c:91 lib/src/gretl_xml.c:2618
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "xmlParseFile selhal na %s"
 
-#: lib/src/gretl_xml.c:90 lib/src/gretl_xml.c:2446 lib/src/gretl_xml.c:2607
-#: lib/src/gretl_xml.c:2646 plugin/gnumeric_import.c:482
+#: lib/src/gretl_xml.c:98 lib/src/gretl_xml.c:2623
 #, c-format
 msgid "%s: empty document"
 msgstr "%s: prázdný dokument"
 
-#: lib/src/gretl_xml.c:98
+#: lib/src/gretl_xml.c:106
 #, c-format
 msgid "File of the wrong type, root node not %s"
 msgstr "Soubor nesprávného typu, kořenový uzel není %s"
 
-#: lib/src/gretl_xml.c:1444 lib/src/gretl_xml.c:1584
+#: lib/src/gretl_xml.c:1454 lib/src/gretl_xml.c:1594
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
 msgstr "Zapisuji %ld Kbytů dat\n"
 
-#: lib/src/gretl_xml.c:1839
+#: lib/src/gretl_xml.c:1849
 msgid "Failed to parse count of variables"
 msgstr "Nepodařilo se analyzovat proměnné"
 
-#: lib/src/gretl_xml.c:1853 lib/src/gretl_xml.c:1871
+#: lib/src/gretl_xml.c:1863 lib/src/gretl_xml.c:1881
 msgid "Got no variables"
 msgstr "Program neobdržel žádné proměnné"
 
-#: lib/src/gretl_xml.c:1883
+#: lib/src/gretl_xml.c:1893
 #, c-format
 msgid "Variable %d has no name"
 msgstr "Proměnná %d není pojmenovaná"
 
-#: lib/src/gretl_xml.c:1951
+#: lib/src/gretl_xml.c:1961
 msgid "Number of variables does not match declaration"
 msgstr "Počet proměnných neodpovídá deklaraci"
 
-#: lib/src/gretl_xml.c:1991
+#: lib/src/gretl_xml.c:2001
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr "Nepodařilo se analyzovat hodnoty pozorování %d"
 
-#: lib/src/gretl_xml.c:2018
+#: lib/src/gretl_xml.c:2028
 msgid "Failed to parse number of observations"
 msgstr "Nepodařilo se analyzovat počet pozorování"
 
-#: lib/src/gretl_xml.c:2037
+#: lib/src/gretl_xml.c:2047
 msgid "labels attribute for observations must be 'true' or 'false'"
 msgstr "popisky přidělené pozorováním musí být 'true' nebo 'false'"
 
-#: lib/src/gretl_xml.c:2070
+#: lib/src/gretl_xml.c:2080
 msgid "Got no observations\n"
 msgstr "Program neobdržel žádná pozorování\n"
 
-#: lib/src/gretl_xml.c:2092
+#: lib/src/gretl_xml.c:2102
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr "U proměnné %d chybí označení typu"
 
-#: lib/src/gretl_xml.c:2106
+#: lib/src/gretl_xml.c:2116
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "Chybí hodnoty pro pozorování %d"
 
-#: lib/src/gretl_xml.c:2138
+#: lib/src/gretl_xml.c:2148
 msgid "Number of observations does not match declaration"
 msgstr "Počet pozorování neodpovídá deklaraci"
 
-#: lib/src/gretl_xml.c:2164
+#: lib/src/gretl_xml.c:2174
 msgid "Required attribute 'type' is missing from data file"
 msgstr "Požadovaný attribut 'typ' v datovém soubor chybí"
 
-#: lib/src/gretl_xml.c:2176
+#: lib/src/gretl_xml.c:2186
 msgid "Unrecognized type attribute for data file"
 msgstr "Atribut typu nebyl pro datový soubor rozpoznán"
 
-#: lib/src/gretl_xml.c:2201
+#: lib/src/gretl_xml.c:2211
 msgid "Failed to parse data frequency"
 msgstr "Nepodařilo se analyzovat frekvenci dat"
 
-#: lib/src/gretl_xml.c:2242
+#: lib/src/gretl_xml.c:2252
 msgid "Failed to parse startobs"
 msgstr "Nepodařilo se analyzovat počáteční pozorování"
 
-#: lib/src/gretl_xml.c:2274
+#: lib/src/gretl_xml.c:2284
 msgid "Failed to parse endobs"
 msgstr "Nepodařilo se analyzovat koncové pozorování"
 
-#: lib/src/gretl_xml.c:2308
+#: lib/src/gretl_xml.c:2318
 #, c-format
 msgid "dummy for %s = %lf"
 msgstr "indikátorová proměnná pro %s = %lf "
 
-#: lib/src/gretl_xml.c:2345
+#: lib/src/gretl_xml.c:2355
 #, c-format
 msgid ""
 "\n"
@@ -3996,27 +3994,23 @@ msgstr ""
 "\n"
 "Načítám datový soubor %s\n"
 
-#: lib/src/gretl_xml.c:2422
+#: lib/src/gretl_xml.c:2428
 msgid "Uncompressing"
 msgstr "Rozbaluji"
 
-#: lib/src/gretl_xml.c:2422
+#: lib/src/gretl_xml.c:2428
 msgid "Reading"
 msgstr "Načítám"
 
-#: lib/src/gretl_xml.c:2423
+#: lib/src/gretl_xml.c:2429
 msgid "of data"
 msgstr "data"
 
-#: lib/src/gretl_xml.c:2452 lib/src/gretl_xml.c:2613
-msgid "File of the wrong type, root node not gretldata"
-msgstr "Nesprávný typ souboru, kořenový uzel není gretldata"
-
-#: lib/src/gretl_xml.c:2508 lib/src/gretl_xml.c:2527
+#: lib/src/gretl_xml.c:2500 lib/src/gretl_xml.c:2519
 msgid "Variables information is missing"
 msgstr "Chybí informace o proměnných"
 
-#: lib/src/gretl_xml.c:2532
+#: lib/src/gretl_xml.c:2524
 msgid "No observations were found"
 msgstr "Nebyla nalezena žádná pozorování"
 
@@ -8329,7 +8323,7 @@ msgstr "gretl: balíčky dat na serveru"
 msgid "gretl: addons"
 msgstr "gretl: přidat informace"
 
-#: gui2/datafiles.c:2000 gui2/fnsave.c:1933
+#: gui2/datafiles.c:2000 gui2/fnsave.c:1934
 msgid "gretl: function packages"
 msgstr "gretl: balíčky funkcí"
 
@@ -8387,7 +8381,7 @@ msgid "Package"
 msgstr "Balíček"
 
 #: gui2/datafiles.c:2121 gui2/datafiles.c:2127 gui2/datafiles.c:2133
-#: gui2/fnsave.c:1053
+#: gui2/fnsave.c:1054
 msgid "Version"
 msgstr "Verze"
 
@@ -9702,127 +9696,127 @@ msgid ""
 "Would you like to try downloading it now?"
 msgstr ""
 
-#: gui2/fnsave.c:336
+#: gui2/fnsave.c:337
 msgid "Please add a sample script for this package"
 msgstr "Prosím, přidejte příklad skriptu pro tento balíček"
 
-#: gui2/fnsave.c:341
+#: gui2/fnsave.c:342
 msgid "Invalid version string: use numbers and '.' only"
 msgstr "Neplatný řetězec: používejte pouze čísla a '.'"
 
-#: gui2/fnsave.c:492
+#: gui2/fnsave.c:493
 #, c-format
 msgid "Can't find the function '%s'"
 msgstr "Nebylo možné najít funkci '%s'"
 
-#: gui2/fnsave.c:807
+#: gui2/fnsave.c:808
 msgid "private"
 msgstr "soukromé"
 
-#: gui2/fnsave.c:836
+#: gui2/fnsave.c:837
 msgid "No special requirement"
 msgstr "Žádné zvláštní požadavky"
 
-#: gui2/fnsave.c:837
+#: gui2/fnsave.c:838
 msgid "Time-series data"
 msgstr "Data typu časové řady"
 
-#: gui2/fnsave.c:838
+#: gui2/fnsave.c:839
 msgid "Quarterly or monthly data"
 msgstr "Čtvrtelní nebo měsíční data"
 
-#: gui2/fnsave.c:839
+#: gui2/fnsave.c:840
 msgid "Panel data"
 msgstr "Panelová data"
 
-#: gui2/fnsave.c:840
+#: gui2/fnsave.c:841
 #, fuzzy
 msgid "No dataset needed"
 msgstr "Nebyla přijata žádná data"
 
-#: gui2/fnsave.c:845
+#: gui2/fnsave.c:846
 msgid "Data requirement"
 msgstr "Požadavky na data"
 
-#: gui2/fnsave.c:899
+#: gui2/fnsave.c:900
 msgid "Minimum gretl version"
 msgstr "Minimální verze gretlu"
 
-#: gui2/fnsave.c:987
+#: gui2/fnsave.c:988
 msgid "Insert today's date"
 msgstr "Vložit dnešní datum"
 
-#: gui2/fnsave.c:1005 gui2/gui_utils.c:2080 gui2/ssheet.c:2551
+#: gui2/fnsave.c:1006 gui2/gui_utils.c:2080 gui2/ssheet.c:2551
 #: gui2/ssheet.c:2576
 msgid "Save changes?"
 msgstr "Uložit změny?"
 
-#: gui2/fnsave.c:1052
+#: gui2/fnsave.c:1053
 msgid "Author"
 msgstr "Autor"
 
-#: gui2/fnsave.c:1054
+#: gui2/fnsave.c:1055
 msgid "Date (YYYY-MM-DD)"
 msgstr "Datum (RRRR-MM-DD)"
 
-#: gui2/fnsave.c:1055
+#: gui2/fnsave.c:1056
 msgid "Package description"
 msgstr "Popis balíčku"
 
-#: gui2/fnsave.c:1076
+#: gui2/fnsave.c:1077
 msgid "gretl: function package editor"
 msgstr "gretl: editor balíčku funkcí"
 
-#: gui2/fnsave.c:1138
+#: gui2/fnsave.c:1139
 msgid "Help text:"
 msgstr "Text nápovědy:"
 
-#: gui2/fnsave.c:1153
+#: gui2/fnsave.c:1154
 msgid "Edit function code"
 msgstr "Editovat kód funkce"
 
-#: gui2/fnsave.c:1168
+#: gui2/fnsave.c:1169
 msgid "Save as script"
 msgstr "Uložit jako skript"
 
-#: gui2/fnsave.c:1176
+#: gui2/fnsave.c:1177
 msgid "Edit sample script"
 msgstr "Editovat vzorový skript"
 
-#: gui2/fnsave.c:1182
+#: gui2/fnsave.c:1183
 msgid "Add/remove functions"
 msgstr "Přidat/odebrat funkce"
 
-#: gui2/fnsave.c:1188
+#: gui2/fnsave.c:1189
 #, fuzzy
 msgid "Write spec file"
 msgstr "Nepodařilo se zapsat do souboru popisků"
 
-#: gui2/fnsave.c:1195
+#: gui2/fnsave.c:1196
 msgid "Upload package to server on save"
 msgstr "Nahrát balíček na server při uložení"
 
-#: gui2/fnsave.c:1206
+#: gui2/fnsave.c:1207
 msgid "Validate"
 msgstr "Validovat"
 
-#: gui2/fnsave.c:1256
+#: gui2/fnsave.c:1257
 msgid "gretl: upload"
 msgstr "gretl: upload"
 
-#: gui2/fnsave.c:1259
+#: gui2/fnsave.c:1260
 msgid "Upload function package"
 msgstr "Nahrát balíček funkcí"
 
-#: gui2/fnsave.c:1269
+#: gui2/fnsave.c:1270
 msgid "Login"
 msgstr "Přihlašovací jméno"
 
-#: gui2/fnsave.c:1269
+#: gui2/fnsave.c:1270
 msgid "Password"
 msgstr "Heslo"
 
-#: gui2/fnsave.c:1295
+#: gui2/fnsave.c:1296
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/apply/.\n"
@@ -9834,7 +9828,7 @@ msgstr ""
 "Tlačítko 'Website' by mělo otevřít tuto stránku\n"
 "ve vašem prohlížeči."
 
-#: gui2/fnsave.c:1499
+#: gui2/fnsave.c:1500
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
 "must be less than 32 characters in length, must include only\n"
@@ -9844,11 +9838,11 @@ msgstr ""
 "musí být kratší než 32 znaků, musí obsahovat pouze\n"
 "ASCII písmena, číslovky a '_', a musí končit \".gfn\""
 
-#: gui2/fnsave.c:1513 gui2/library.c:7313
+#: gui2/fnsave.c:1514 gui2/library.c:7313
 msgid "OK to overwrite?"
 msgstr "Skutečně přepsat?"
 
-#: gui2/fnsave.c:1934
+#: gui2/fnsave.c:1935
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -15358,16 +15352,16 @@ msgstr "%s: Nebyl nalezen žádný záznam BOF"
 msgid "No data found.\n"
 msgstr "Nebyla nalezena data.\n"
 
-#: plugin/excel_import.c:1489 plugin/gnumeric_import.c:618
+#: plugin/excel_import.c:1489 plugin/gnumeric_import.c:602
 msgid "Failed to get workbook info"
 msgstr "Nepodařilo se získat informace o pracovní knize"
 
-#: plugin/excel_import.c:1492 plugin/gnumeric_import.c:626
+#: plugin/excel_import.c:1492 plugin/gnumeric_import.c:610
 msgid "No worksheets found"
 msgstr "Nebyly nalezeny pracovní listy"
 
-#: plugin/excel_import.c:1508 plugin/gnumeric_import.c:642
-#: plugin/ods_import.c:1059
+#: plugin/excel_import.c:1508 plugin/gnumeric_import.c:626
+#: plugin/ods_import.c:1057 plugin/xlsx_import.c:813
 msgid "Invalid argument for worksheet import"
 msgstr "Neplatný argument pro import pracovních listů"
 
@@ -15387,7 +15381,7 @@ msgstr "Počáteční sloupec je mimo meze.\n"
 msgid "One or more variable names are missing.\n"
 msgstr "Jedno nebo více jmen proměnných chybí.\n"
 
-#: plugin/excel_import.c:1582
+#: plugin/excel_import.c:1582 plugin/xlsx_import.c:470
 #, c-format
 msgid ""
 "Expected numeric data, found string:\n"
@@ -15496,11 +15490,7 @@ msgstr ""
 "Očekávána číselná data, nalezen řetězec:\n"
 "'%s' na řádku %d, v sloupci %d\n"
 
-#: plugin/gnumeric_import.c:488
-msgid "File of the wrong type, root node not Workbook"
-msgstr "Soubor nesprávného typu, kořenový uzel není Workbook"
-
-#: plugin/gnumeric_import.c:658
+#: plugin/gnumeric_import.c:642
 msgid "error in wsheet_setup()"
 msgstr "chyba v wsheet_setup()"
 
@@ -16196,6 +16186,12 @@ msgstr "Statistiky/transformace"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Pravděpodobnostní rozdělení"
+
+#~ msgid "File of the wrong type, root node not gretldata"
+#~ msgstr "Nesprávný typ souboru, kořenový uzel není gretldata"
+
+#~ msgid "File of the wrong type, root node not Workbook"
+#~ msgstr "Soubor nesprávného typu, kořenový uzel není Workbook"
 
 #~ msgid "String to replace was not found"
 #~ msgstr "Řetězec, který se měl nahradit, nebyl nalezen"

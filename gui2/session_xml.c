@@ -222,7 +222,6 @@ static int rebuild_session_model (const char *fname,
 				  (type == GRETL_OBJ_VAR)? "gretl-VAR" :
 				  "gretl-equation-system", &doc, &node);
     if (err) {
-	fprintf(stderr, "Failed on gretl_xml_open_doc_root\n");
 	return err;
     }
 
@@ -353,9 +352,6 @@ static int get_session_datafile_name (const char *fname, struct sample_info *sin
     xmlChar *tmp;
     int err = 0;
 
-    LIBXML_TEST_VERSION
-	xmlKeepBlanksDefault(0);
-
     err = gretl_xml_open_doc_root(fname, "gretl-session", &doc, &cur);
     if (err) {
 	gui_errmsg(err);
@@ -389,14 +385,10 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     int object_errs = 0;
     int err = 0;
 
-    LIBXML_TEST_VERSION
-	xmlKeepBlanksDefault(0);
-
     err = gretl_xml_open_doc_root(fname, "gretl-session", &doc, &cur);
-
     if (err) {
 	gui_errmsg(err);
-	return 1;
+	return err;
     }
 
     /* Now walk the tree */

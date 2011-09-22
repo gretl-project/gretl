@@ -888,8 +888,6 @@ static ods_sheet *ods_read_content (PRN *prn, int *err)
     xmlNodePtr cur = NULL;
     xmlNodePtr c1, c2;
 
-    LIBXML_TEST_VERSION xmlKeepBlanksDefault(0);
-
     *err = gretl_xml_open_doc_root("content.xml", 
 				   "document-content", 
 				   &doc, &cur);

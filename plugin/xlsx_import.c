@@ -58,7 +58,7 @@ typedef struct xlsx_info_ xlsx_info;
 
 static void xlsx_info_init (xlsx_info *xinfo)
 {
-    xinfo->flags = 0;
+    xinfo->flags = BOOK_TOP_LEFT_EMPTY;
     xinfo->maxrow = 0;
     xinfo->maxcol = 0;
     xinfo->xoffset = 0;
@@ -286,7 +286,10 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 {
     int err = 0;
 
-    if (xinfo->dset->S == NULL || t < 0 || t >= xinfo->dset->n) {
+    if (xinfo->dset->S == NULL) {
+	fprintf(stderr, "error in xlsx_set_obs_string: no markers allocated\n");
+	err = E_DATA;
+    } else if (t < 0 || t >= xinfo->dset->n) {
 	fprintf(stderr, "error in xlsx_set_obs_string: t = %d\n", t);
 	err = E_DATA;
     } else {
@@ -315,10 +318,15 @@ static int xlsx_var_index (xlsx_info *xinfo, int col)
     int i = col - xinfo->xoffset - 1;
 
     if (i == 0 && (xinfo->flags & BOOK_OBS_LABELS)) {
-	i = -1;
-    } else if (i >= 0) {
+	i = -1; /* the first column holds labels */
+    } else if (i >= 0 && !(xinfo->flags & BOOK_OBS_LABELS)) {
 	i++; /* skip const */
     }
+
+#if XDEBUG
+    fprintf(stderr, "xlsx_var_index: labels = %d, col = %d, i = %d\n", 
+	    (xinfo->flags & BOOK_OBS_LABELS)? 1 : 0, col, i);
+#endif
 
     return i;
 }
@@ -331,7 +339,10 @@ static int xlsx_obs_index (xlsx_info *xinfo, int row)
 	t--; /* the first row holds varnames */
     }
 
-    fprintf(stderr, "xlsx_obs_index: row=%d, t = %d\n", row, t);
+#if XDEBUG
+    fprintf(stderr, "xlsx_obs_index: no_varnames = %d, row = %d, t = %d\n", 
+	    (xinfo->flags & BOOK_AUTO_VARNAMES)? 1 : 0, row, t);
+#endif
 
     return t;
 }
@@ -353,6 +364,7 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 	    /* blank or "obs" or similar */
 	    xinfo->flags |= BOOK_OBS_LABELS;
 	}
+	xinfo->flags &= ~BOOK_TOP_LEFT_EMPTY;
     } else if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 2) {
 	/* first row, second column */
 	if (!na(x)) {
@@ -483,6 +495,10 @@ static int xlsx_check_dimensions (xlsx_info *xinfo, PRN *prn)
     int n = xinfo->maxrow - xinfo->yoffset;
     int err = 0;
 
+    if (xinfo->flags & BOOK_TOP_LEFT_EMPTY) {
+	xinfo->flags |= BOOK_OBS_LABELS;
+    }
+
     if (xinfo->flags & BOOK_OBS_LABELS) {
 	/* subtract a column for obs labels */
 	v--;
@@ -493,7 +509,7 @@ static int xlsx_check_dimensions (xlsx_info *xinfo, PRN *prn)
 	n--;
     }
 
-    pprintf(prn, "Got v = %d and n = %d\n", v, n);
+    pprintf(prn, "Got %d variables and %d observations\n", v, n);
 
     if (v <= 0 || n <= 0) {
 	pputs(prn, "File contains no data");
@@ -530,8 +546,6 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 	    SLASH, SLASH, xinfo->sheetnames[xinfo->selsheet]);
 
     sprintf(xinfo->stringsfile, "xl%csharedStrings.xml", SLASH);
-
-    LIBXML_TEST_VERSION xmlKeepBlanksDefault(0);
 
     err = gretl_xml_open_doc_root(xinfo->sheetfile, "worksheet", 
 				  &doc, &cur);
@@ -623,7 +637,7 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
 {
     gchar *dname = g_strdup_printf("xl%cworksheets", SLASH);
     DIR *dir = gretl_opendir(dname);
-    int err = 0;
+    int i, err = 0;
 
     if (dir == NULL) {
 	err = E_FOPEN;
@@ -656,13 +670,11 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
 			   OPT_NONE);
     }
 
-#if XDEBUG
-    int i;
-
-    for (i=0; i<xinfo->n_sheets; i++) {
-	pprintf(prn, "%d: %s\n", i, xinfo->sheetnames[i]);
+    if (!err) {
+	for (i=0; i<xinfo->n_sheets; i++) {
+	    pprintf(prn, "%d: %s\n", i, xinfo->sheetnames[i]);
+	}
     }
-#endif
 
     return err;
 }
@@ -687,6 +699,68 @@ static void record_xlsx_params (xlsx_info *xinfo, int *list)
 	list[2] = xinfo->xoffset;
 	list[3] = xinfo->yoffset;
     }
+}
+
+static void xlxs_seek_selsheet_by_name (xlsx_info *xinfo, 
+					const char *name)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    xmlNodePtr val;
+    gchar *fname;
+    char *xname = NULL;
+    char *xid = NULL;
+    int gotit = 0;
+    int err;
+
+    fname = g_strdup_printf("xl%cworkbook.xml", SLASH);
+    err = gretl_xml_open_doc_root(fname, "workbook", 
+				  &doc, &cur);
+    g_free(fname);
+    if (err) {
+	fprintf(stderr, "couldn't open workbook.xml\n");
+	return;
+    }
+
+    cur = cur->xmlChildrenNode;
+
+    while (cur != NULL && !gotit) {
+	if (!xmlStrcmp(cur->name, (XUC) "sheets")) {
+	    val = cur->xmlChildrenNode;
+	    while (val != NULL && !gotit) {
+		if (!xmlStrcmp(val->name, (XUC) "sheet")) {
+		    xname = (char *) xmlGetProp(val, (XUC) "name");
+		    if (xname != NULL) {
+			if (!strcmp(xname, name)) {
+			    xid = (char *) xmlGetProp(val, (XUC) "sheetId");
+			    gotit = 1;
+			} else {
+			    free(xname);
+			}
+		    }
+		}
+		val = val->next;
+	    }
+	}
+	cur = cur->next;
+    }
+
+    xmlFreeDoc(doc);
+
+    if (xname != NULL && xid != NULL) {
+	int i, j, k = atoi(xid);
+
+	for (i=0; i<xinfo->n_sheets; i++) {
+	    sscanf(xinfo->sheetnames[i], "sheet%d", &j);
+	    if (k == j) {
+		xinfo->selsheet = i;
+		break;
+	    }
+	}
+    }
+
+    free(xname);
+    free(xid);
 }
 
 static int set_xlsx_params_from_cli (xlsx_info *xinfo, 
@@ -719,6 +793,9 @@ static int set_xlsx_params_from_cli (xlsx_info *xinfo,
 	    if (i >= 1 && i <= xinfo->n_sheets) {
 		xinfo->selsheet = i - 1;
 	    }
+	}
+	if (xinfo->selsheet < 0) {
+	    xlxs_seek_selsheet_by_name(xinfo, sheetname);
 	}
     }
 
@@ -800,6 +877,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		   DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
+    PRN *myprn = NULL;
     xlsx_info xinfo;
     char dname[32];
     int err;
@@ -829,14 +907,18 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 	} 
     }
 
+#if XDEBUG
+    myprn = prn;
+#endif
+
     if (!err) {
-	err = xlsx_read_worksheet(&xinfo, prn);
+	err = xlsx_read_worksheet(&xinfo, myprn);
     }
 
  bailout:
 
     if (!err && xinfo.dset != NULL) {
-	err = finalize_xlsx_import(dset, &xinfo, opt, prn); 
+	err = finalize_xlsx_import(dset, &xinfo, opt, myprn); 
 	if (!err && gui) {
 	    record_xlsx_params(&xinfo, list);
 	}

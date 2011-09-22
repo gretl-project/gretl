@@ -18,6 +18,7 @@
  */
 
 #include "gretl.h"
+#include "gretl_xml.h"
 #include "dlgutils.h"
 #include "datafiles.h"
 #include "textbuf.h"
@@ -1343,9 +1344,9 @@ static int validate_package_file (const char *fname, int verbose)
     xmlDtdPtr dtd;
     int err = 0;
 
-    doc = xmlParseFile(fname);
-    if (doc == NULL) {
-	errbox("Couldn't parse %s", fname);
+    err = gretl_xml_open_doc_root(fname, NULL, &doc, NULL);
+    if (err) {
+	gui_errmsg(err);
 	return 1;
     }
 

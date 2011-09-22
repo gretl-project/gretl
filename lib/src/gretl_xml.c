@@ -38,7 +38,9 @@
 #define GRETLDATA_VERSION "1.2"
 
 #ifdef WIN32
+
 # include <glib.h>
+
 static xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
     xmlDocPtr ptr = NULL;
@@ -62,6 +64,7 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
 
     return ptr;
 }
+
 #else
 # define gretl_xmlParseFile(f) xmlParseFile(f)
 #endif
@@ -72,11 +75,16 @@ int gretl_xml_open_doc_root (const char *fname,
 			     xmlNodePtr *pnode)
 {
     xmlDocPtr doc;
-    xmlNodePtr node;
+    xmlNodePtr node = NULL;
     int err = 0;
 
+    LIBXML_TEST_VERSION;
+    xmlKeepBlanksDefault(0);
+
     *pdoc = NULL;
-    *pnode = NULL;
+    if (pnode != NULL) {
+	*pnode = NULL;
+    }
 
     doc = gretl_xmlParseFile(fname);
     if (doc == NULL) {
@@ -84,7 +92,7 @@ int gretl_xml_open_doc_root (const char *fname,
 	err = 1;
     }
 
-    if (!err) {
+    if (!err && pnode != NULL) {
 	node = xmlDocGetRootElement(doc);
 	if (node == NULL) {
 	    gretl_errmsg_sprintf(_("%s: empty document"), fname);
@@ -93,7 +101,7 @@ int gretl_xml_open_doc_root (const char *fname,
 	}
     }
 
-    if (!err) {
+    if (!err && node != NULL && rootname != NULL) {
 	if (xmlStrcmp(node->name, (XUC) rootname)) {
 	    gretl_errmsg_sprintf(_("File of the wrong type, root node not %s"),
 				 rootname);
@@ -105,7 +113,9 @@ int gretl_xml_open_doc_root (const char *fname,
 
     if (!err) {
 	*pdoc = doc;
-	*pnode = node;
+	if (pnode != NULL) {
+	    *pnode = node;
+	}
     }
 
     return err;
@@ -2409,10 +2419,6 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 
     gretl_error_clear();
 
-    /* COMPAT: Do not generate nodes for formatting spaces */
-    LIBXML_TEST_VERSION
-	xmlKeepBlanksDefault(0);
-
     fsz = get_filesize(fname);
 
     if (fsz < 0) {
@@ -2434,23 +2440,9 @@ int gretl_read_gdt (const char *fname, DATASET *dset,
 	goto bailout;
     }
 
-    doc = gretl_xmlParseFile(fname);
-    if (doc == NULL) {
-	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
-	err = 1;
-	goto bailout;
-    }
-
-    cur = xmlDocGetRootElement(doc);
-    if (cur == NULL) {
-        gretl_errmsg_sprintf(_("%s: empty document"), fname);
-	err = 1;
-	goto bailout;
-    }
-
-    if (xmlStrcmp(cur->name, (XUC) "gretldata")) {
-        gretl_errmsg_set(_("File of the wrong type, root node not gretldata"));
-	err = 1;
+    err = gretl_xml_open_doc_root(fname, "gretldata",
+				  &doc, &cur);
+    if (err) {
 	goto bailout;
     }
 
@@ -2590,28 +2582,13 @@ char *gretl_get_gdt_description (const char *fname)
     xmlDocPtr doc;
     xmlNodePtr cur;
     xmlChar *buf = NULL;
+    int err;
 
     gretl_error_clear();
 
-    LIBXML_TEST_VERSION
-	xmlKeepBlanksDefault(0);
-
-    doc = gretl_xmlParseFile(fname);
-    if (doc == NULL) {
-	gretl_errmsg_sprintf(_("xmlParseFile failed on %s"), fname);
-	return NULL;
-    }
-
-    cur = xmlDocGetRootElement(doc);
-    if (cur == NULL) {
-        gretl_errmsg_sprintf(_("%s: empty document"), fname);
-	xmlFreeDoc(doc);
-	return NULL;
-    }
-
-    if (xmlStrcmp(cur->name, (XUC) "gretldata")) {
-        gretl_errmsg_set(_("File of the wrong type, root node not gretldata"));
-	xmlFreeDoc(doc);
+    err = gretl_xml_open_doc_root(fname, "gretldata", 
+				  &doc, &cur);
+    if (err) {
 	return NULL;
     }
 
@@ -2670,8 +2647,6 @@ int load_user_matrix_file (const char *fname)
     char *name;
     int err = 0;
 
-    xmlKeepBlanksDefault(0);
-
     err = gretl_xml_open_doc_root(fname, "gretl-matrices", &doc, &cur);
     if (err) {
 	return err;
@@ -2718,8 +2693,6 @@ int load_user_bundle_file (const char *fname)
     char *name;
     int err = 0;
 
-    xmlKeepBlanksDefault(0);
-
     err = gretl_xml_open_doc_root(fname, "gretl-bundles", &doc, &cur);
     if (err) {
 	return err;
@@ -2756,8 +2729,6 @@ int load_user_scalars_file (const char *fname)
     xmlNodePtr cur = NULL;
     char *name, *val;
     int err = 0;
-
-    xmlKeepBlanksDefault(0);
 
     err = gretl_xml_open_doc_root(fname, "gretl-scalars", &doc, &cur);
     if (err) {

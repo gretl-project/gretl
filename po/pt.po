@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-22 13:59-0400\n"
+"POT-Creation-Date: 2011-09-22 17:32-0400\n"
 "PO-Revision-Date: 2011-09-22 22:12+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
@@ -183,7 +183,7 @@ msgid "H0: all groups have unit root"
 msgstr "H0: todos os grupos têm raiz unitária"
 
 #: lib/src/adf_kpss.c:1233 lib/src/estimate.c:3864 lib/src/estimate.c:3923
-#: lib/src/estimate.c:4086 lib/src/genfuncs.c:1868 lib/src/gretl_func.c:6530
+#: lib/src/estimate.c:4086 lib/src/genfuncs.c:1868 lib/src/gretl_func.c:6524
 #: lib/src/pvalues.c:1839
 msgid "Couldn't load plugin function\n"
 msgstr "Não se conseguiu carregar a função acessória (plugin)\n"
@@ -983,7 +983,7 @@ msgid "   variable name %d is missing: aborting\n"
 msgstr "   falta a variável %d: abortando\n"
 
 #: lib/src/csvdata.c:1726 plugin/excel_import.c:1570
-#: plugin/gnumeric_import.c:701
+#: plugin/gnumeric_import.c:685
 msgid "it seems there are no variable names\n"
 msgstr "parece que não há nomes de variáveis\n"
 
@@ -1051,7 +1051,7 @@ msgstr ""
 "\n"
 
 #: lib/src/csvdata.c:2198 plugin/eviews_import.c:554
-#: plugin/excel_import.c:1637 plugin/gnumeric_import.c:780
+#: plugin/excel_import.c:1637 plugin/gnumeric_import.c:764
 #: plugin/jmulti_import.c:381 plugin/sas_import.c:688
 #: plugin/spss_import.c:1938 plugin/stata_import.c:952
 msgid "warning: some variable names were duplicated\n"
@@ -1059,7 +1059,7 @@ msgstr "aviso: alguns nomes de variáveis estavam repetidos\n"
 
 #: lib/src/csvdata.c:2221 plugin/eviews_import.c:520
 #: plugin/eviews_import.c:535 plugin/excel_import.c:1476
-#: plugin/gnumeric_import.c:609 plugin/jmulti_import.c:352
+#: plugin/gnumeric_import.c:593 plugin/jmulti_import.c:352
 #: plugin/jmulti_import.c:369 plugin/sas_import.c:650 plugin/sas_import.c:662
 #: plugin/spss_import.c:1843 plugin/spss_import.c:1864
 #: plugin/stata_import.c:919 plugin/stata_import.c:930
@@ -1218,7 +1218,7 @@ msgstr ""
 "\n"
 "Lendo o cabeçalho do ficheiro %s\n"
 
-#: lib/src/dataio.c:1944 lib/src/dataio.c:2021 lib/src/gretl_xml.c:2346
+#: lib/src/dataio.c:1944 lib/src/dataio.c:2021 lib/src/gretl_xml.c:2356
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d\n"
@@ -1247,7 +1247,7 @@ msgstr "sessão-cruzada"
 msgid " datafile"
 msgstr "ficheiro de dados "
 
-#: lib/src/dataio.c:2015 lib/src/dataio.c:2602 lib/src/gretl_xml.c:2371
+#: lib/src/dataio.c:2015 lib/src/dataio.c:2602 lib/src/gretl_xml.c:2381
 msgid "index variable"
 msgstr "variável índice"
 
@@ -1508,8 +1508,8 @@ msgstr "%s: usando método de compactação por omissão: média"
 msgid "Compacted dataset would be empty"
 msgstr "O conjunto de dados compactado ficaria vazio"
 
-#: lib/src/dbwrite.c:474 lib/src/dbwrite.c:483 lib/src/gretl_xml.c:1438
-#: lib/src/gretl_xml.c:1566
+#: lib/src/dbwrite.c:474 lib/src/dbwrite.c:483 lib/src/gretl_xml.c:1448
+#: lib/src/gretl_xml.c:1576
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "Não se conseguiu abrir %s para escrita"
@@ -1971,7 +1971,7 @@ msgid "Lorenz curve"
 msgstr "Curva de Lorenz"
 
 #: lib/src/describe.c:5776 plugin/excel_import.c:1589
-#: plugin/gnumeric_import.c:776
+#: plugin/gnumeric_import.c:760
 msgid "Warning: there were missing values\n"
 msgstr "Aviso: havia valores ausentes\n"
 
@@ -2551,7 +2551,7 @@ msgstr "Esperado '%c' mas encontrou-se '%s'\n"
 msgid "too many arguments"
 msgstr "demasiados argumentos"
 
-#: lib/src/gmm.c:130 lib/src/gretl_list.c:2977 lib/src/gretl_panel.c:4439
+#: lib/src/gmm.c:130 lib/src/gretl_list.c:2975 lib/src/gretl_panel.c:4439
 #: lib/src/gretl_panel.c:4449 lib/src/interact.c:3885 lib/src/nls.c:2765
 #, c-format
 msgid "Unknown variable '%s'"
@@ -3063,7 +3063,7 @@ msgstr "gerados valores não-finitos"
 msgid "Warning"
 msgstr "Aviso"
 
-#: lib/src/gretl_func.c:2936 gui2/fnsave.c:1390
+#: lib/src/gretl_func.c:2936 gui2/fnsave.c:1391
 #, c-format
 msgid "%s: validated against DTD OK"
 msgstr "%s: correctamente validada segundo DTD"
@@ -3072,54 +3072,54 @@ msgstr "%s: correctamente validada segundo DTD"
 msgid "No functions are available for packaging at present."
 msgstr "Nenhuma função está disponível para empacotamento."
 
-#: lib/src/gretl_func.c:4050
+#: lib/src/gretl_func.c:4044
 msgid "No description available"
 msgstr "Não há descrição disponível"
 
-#: lib/src/gretl_func.c:4089
+#: lib/src/gretl_func.c:4083
 msgid "Function names must start with a letter"
 msgstr "Os nomes de funções têm que iniciar com uma letra"
 
-#: lib/src/gretl_func.c:4092
+#: lib/src/gretl_func.c:4086
 #, c-format
 msgid "'%s' is the name of a gretl command"
 msgstr "'%s' não é um nome de comando gretl"
 
-#: lib/src/gretl_func.c:4096
+#: lib/src/gretl_func.c:4090
 #, c-format
 msgid "'%s' is the name of a built-in function"
 msgstr "'%s' não é o nome de uma função interna"
 
-#: lib/src/gretl_func.c:4135
+#: lib/src/gretl_func.c:4129
 #, c-format
 msgid "Deleted function '%s'\n"
 msgstr "A função '%s' foi apagada\n"
 
-#: lib/src/gretl_func.c:5175
+#: lib/src/gretl_func.c:5169
 msgid "You can't change the name of a function here"
 msgstr "Você não pode alterar o nome de uma função aqui"
 
-#: lib/src/gretl_func.c:5342 lib/src/gretl_func.c:5369
-#: lib/src/gretl_func.c:5394 lib/src/gretl_func.c:5415
+#: lib/src/gretl_func.c:5336 lib/src/gretl_func.c:5363
+#: lib/src/gretl_func.c:5388 lib/src/gretl_func.c:5409
 msgid "Duplicated pointer argument: not allowed"
 msgstr "Não é permitido argumentos de ponteiro duplicados"
 
-#: lib/src/gretl_func.c:6264
+#: lib/src/gretl_func.c:6258
 #, c-format
 msgid "%s: argument %d is of the wrong type (is %s, should be %s)\n"
 msgstr "%s: o argumento %d é do tipo errado (é %s, devia ser %s)\n"
 
-#: lib/src/gretl_func.c:6274
+#: lib/src/gretl_func.c:6268
 #, c-format
 msgid "%s, argument %d: value %g is out of bounds\n"
 msgstr "%s, o argumento %d: valor%g está fora dos limites\n"
 
-#: lib/src/gretl_func.c:6285
+#: lib/src/gretl_func.c:6279
 #, c-format
 msgid "%s: not enough arguments\n"
 msgstr "%s: não foram fornecidos argumentos suficientes\n"
 
-#: lib/src/gretl_func.c:6395
+#: lib/src/gretl_func.c:6389
 #, c-format
 msgid ""
 "Error message from %s():\n"
@@ -3128,7 +3128,7 @@ msgstr ""
 "Mensagem de erro vinda de %s():\n"
 "%s"
 
-#: lib/src/gretl_func.c:7152
+#: lib/src/gretl_func.c:7146
 #, c-format
 msgid "\"%s\" is not defined.\n"
 msgstr "\"%s\" não está definida.\n"
@@ -3890,103 +3890,101 @@ msgstr ""
 msgid "HTTP proxy: first field must be an IP number"
 msgstr "Servidor proxy HTTP : o primeiro campo tem que se um número IP"
 
-#: lib/src/gretl_xml.c:83 lib/src/gretl_xml.c:2439 lib/src/gretl_xml.c:2601
-#: lib/src/gretl_xml.c:2641 plugin/gnumeric_import.c:476
+#: lib/src/gretl_xml.c:91 lib/src/gretl_xml.c:2618
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "xmlParseFile falhou em %s"
 
-#: lib/src/gretl_xml.c:90 lib/src/gretl_xml.c:2446 lib/src/gretl_xml.c:2607
-#: lib/src/gretl_xml.c:2646 plugin/gnumeric_import.c:482
+#: lib/src/gretl_xml.c:98 lib/src/gretl_xml.c:2623
 #, c-format
 msgid "%s: empty document"
 msgstr "%s: documento vazio"
 
-#: lib/src/gretl_xml.c:98
+#: lib/src/gretl_xml.c:106
 #, c-format
 msgid "File of the wrong type, root node not %s"
 msgstr "Ficheiro do tipo errado, nó raiz não é %s"
 
-#: lib/src/gretl_xml.c:1444 lib/src/gretl_xml.c:1584
+#: lib/src/gretl_xml.c:1454 lib/src/gretl_xml.c:1594
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
 msgstr "Escrevendo %ld Kbytes de dados\n"
 
-#: lib/src/gretl_xml.c:1839
+#: lib/src/gretl_xml.c:1849
 msgid "Failed to parse count of variables"
 msgstr "Falha no processamento da contagem de variáveis"
 
-#: lib/src/gretl_xml.c:1853 lib/src/gretl_xml.c:1871
+#: lib/src/gretl_xml.c:1863 lib/src/gretl_xml.c:1881
 msgid "Got no variables"
 msgstr "Não se tem variáveis"
 
-#: lib/src/gretl_xml.c:1883
+#: lib/src/gretl_xml.c:1893
 #, c-format
 msgid "Variable %d has no name"
 msgstr "A variável %d não tem nome"
 
-#: lib/src/gretl_xml.c:1951
+#: lib/src/gretl_xml.c:1961
 msgid "Number of variables does not match declaration"
 msgstr "O número de variáveis não corresponde à declaração"
 
-#: lib/src/gretl_xml.c:1991
+#: lib/src/gretl_xml.c:2001
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr "Falha no processamento dos valores na observação %d"
 
-#: lib/src/gretl_xml.c:2018
+#: lib/src/gretl_xml.c:2028
 msgid "Failed to parse number of observations"
 msgstr "Falha no processamento do número de observações"
 
-#: lib/src/gretl_xml.c:2037
+#: lib/src/gretl_xml.c:2047
 msgid "labels attribute for observations must be 'true' or 'false'"
 msgstr ""
 "etiquetas de atributos para as observações têm que ser 'true' ou 'false'"
 
-#: lib/src/gretl_xml.c:2070
+#: lib/src/gretl_xml.c:2080
 msgid "Got no observations\n"
 msgstr "Não se tem observações\n"
 
-#: lib/src/gretl_xml.c:2092
+#: lib/src/gretl_xml.c:2102
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr "Marcador de caso em falta na observação %d"
 
-#: lib/src/gretl_xml.c:2106
+#: lib/src/gretl_xml.c:2116
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "Valor em falta na observação %d"
 
-#: lib/src/gretl_xml.c:2138
+#: lib/src/gretl_xml.c:2148
 msgid "Number of observations does not match declaration"
 msgstr "O número de observações não corresponde à declaração"
 
-#: lib/src/gretl_xml.c:2164
+#: lib/src/gretl_xml.c:2174
 msgid "Required attribute 'type' is missing from data file"
 msgstr "O atributo imprescindível 'type' está ausente do ficheiro de dados"
 
-#: lib/src/gretl_xml.c:2176
+#: lib/src/gretl_xml.c:2186
 msgid "Unrecognized type attribute for data file"
 msgstr "Tipo de atributo desconhecido para o ficheiro de dados"
 
-#: lib/src/gretl_xml.c:2201
+#: lib/src/gretl_xml.c:2211
 msgid "Failed to parse data frequency"
 msgstr "Falha no processamento da frequêcia dos dados"
 
-#: lib/src/gretl_xml.c:2242
+#: lib/src/gretl_xml.c:2252
 msgid "Failed to parse startobs"
 msgstr "Falha no processamento da observação inicial"
 
-#: lib/src/gretl_xml.c:2274
+#: lib/src/gretl_xml.c:2284
 msgid "Failed to parse endobs"
 msgstr "Falha no processamento da observação final"
 
-#: lib/src/gretl_xml.c:2308
+#: lib/src/gretl_xml.c:2318
 #, c-format
 msgid "dummy for %s = %lf"
 msgstr "auxiliar para %s = %lf"
 
-#: lib/src/gretl_xml.c:2345
+#: lib/src/gretl_xml.c:2355
 #, c-format
 msgid ""
 "\n"
@@ -3995,27 +3993,23 @@ msgstr ""
 "\n"
 "Lido o ficheiro de dados %s\n"
 
-#: lib/src/gretl_xml.c:2422
+#: lib/src/gretl_xml.c:2428
 msgid "Uncompressing"
 msgstr "Descompactando"
 
-#: lib/src/gretl_xml.c:2422
+#: lib/src/gretl_xml.c:2428
 msgid "Reading"
 msgstr "Lendo"
 
-#: lib/src/gretl_xml.c:2423
+#: lib/src/gretl_xml.c:2429
 msgid "of data"
 msgstr "dos dados"
 
-#: lib/src/gretl_xml.c:2452 lib/src/gretl_xml.c:2613
-msgid "File of the wrong type, root node not gretldata"
-msgstr "Ficheiro do tipo errado, o nó raiz não tem o formato de dados do gretl"
-
-#: lib/src/gretl_xml.c:2508 lib/src/gretl_xml.c:2527
+#: lib/src/gretl_xml.c:2500 lib/src/gretl_xml.c:2519
 msgid "Variables information is missing"
 msgstr "A informação das variáveis não existe"
 
-#: lib/src/gretl_xml.c:2532
+#: lib/src/gretl_xml.c:2524
 msgid "No observations were found"
 msgstr "Não se encontraram observações"
 
@@ -8329,7 +8323,7 @@ msgstr "gretl: pacotes de dados em servidor"
 msgid "gretl: addons"
 msgstr "gretl: acessórios (\"addons\")"
 
-#: gui2/datafiles.c:2000 gui2/fnsave.c:1933
+#: gui2/datafiles.c:2000 gui2/fnsave.c:1934
 msgid "gretl: function packages"
 msgstr "gretl: pacotes de funções"
 
@@ -8387,7 +8381,7 @@ msgid "Package"
 msgstr "Pacote"
 
 #: gui2/datafiles.c:2121 gui2/datafiles.c:2127 gui2/datafiles.c:2133
-#: gui2/fnsave.c:1053
+#: gui2/fnsave.c:1054
 msgid "Version"
 msgstr "Versão"
 
@@ -9670,126 +9664,126 @@ msgstr ""
 "O pacote %s não foi encontrado, ou não está actualizado.\n"
 "Pretende tentar descarregá-lo agora?"
 
-#: gui2/fnsave.c:336
+#: gui2/fnsave.c:337
 msgid "Please add a sample script for this package"
 msgstr "Por favor acrescente um exemplo de sequência de comandos a este pacote"
 
-#: gui2/fnsave.c:341
+#: gui2/fnsave.c:342
 msgid "Invalid version string: use numbers and '.' only"
 msgstr ""
 "Cadeia de caracteres inválida para número de versão: use apenas números e '.'"
 
-#: gui2/fnsave.c:492
+#: gui2/fnsave.c:493
 #, c-format
 msgid "Can't find the function '%s'"
 msgstr "Não se encontrou a função '%s'"
 
-#: gui2/fnsave.c:807
+#: gui2/fnsave.c:808
 msgid "private"
 msgstr "privado"
 
-#: gui2/fnsave.c:836
+#: gui2/fnsave.c:837
 msgid "No special requirement"
 msgstr "Sem requisito especial"
 
-#: gui2/fnsave.c:837
+#: gui2/fnsave.c:838
 msgid "Time-series data"
 msgstr "Dados de série temporal"
 
-#: gui2/fnsave.c:838
+#: gui2/fnsave.c:839
 msgid "Quarterly or monthly data"
 msgstr "Dados trimestrais ou mensais"
 
-#: gui2/fnsave.c:839
+#: gui2/fnsave.c:840
 msgid "Panel data"
 msgstr "Dados de painel"
 
-#: gui2/fnsave.c:840
+#: gui2/fnsave.c:841
 msgid "No dataset needed"
 msgstr "Não é necessário conjunto de dados"
 
-#: gui2/fnsave.c:845
+#: gui2/fnsave.c:846
 msgid "Data requirement"
 msgstr "Requisitos dos dados"
 
-#: gui2/fnsave.c:899
+#: gui2/fnsave.c:900
 msgid "Minimum gretl version"
 msgstr "Mínima versão gretl"
 
-#: gui2/fnsave.c:987
+#: gui2/fnsave.c:988
 msgid "Insert today's date"
 msgstr "Inserir a data de hoje"
 
-#: gui2/fnsave.c:1005 gui2/gui_utils.c:2080 gui2/ssheet.c:2551
+#: gui2/fnsave.c:1006 gui2/gui_utils.c:2080 gui2/ssheet.c:2551
 #: gui2/ssheet.c:2576
 msgid "Save changes?"
 msgstr "Gravar alterações?"
 
-#: gui2/fnsave.c:1052
+#: gui2/fnsave.c:1053
 msgid "Author"
 msgstr "Autor"
 
-#: gui2/fnsave.c:1054
+#: gui2/fnsave.c:1055
 msgid "Date (YYYY-MM-DD)"
 msgstr "Data (AAAA-MM-DD)"
 
-#: gui2/fnsave.c:1055
+#: gui2/fnsave.c:1056
 msgid "Package description"
 msgstr "Descrição de pacote"
 
-#: gui2/fnsave.c:1076
+#: gui2/fnsave.c:1077
 msgid "gretl: function package editor"
 msgstr "gretl: editor de pacote de funções"
 
-#: gui2/fnsave.c:1138
+#: gui2/fnsave.c:1139
 msgid "Help text:"
 msgstr "Texto de ajuda:"
 
-#: gui2/fnsave.c:1153
+#: gui2/fnsave.c:1154
 msgid "Edit function code"
 msgstr "Editar o código da função"
 
-#: gui2/fnsave.c:1168
+#: gui2/fnsave.c:1169
 msgid "Save as script"
 msgstr "Gravar como ficheiro de comandos"
 
-#: gui2/fnsave.c:1176
+#: gui2/fnsave.c:1177
 msgid "Edit sample script"
 msgstr "Editar o ficheiro de comandos de exemplo"
 
-#: gui2/fnsave.c:1182
+#: gui2/fnsave.c:1183
 msgid "Add/remove functions"
 msgstr "Acrescentar ou Remover funções"
 
-#: gui2/fnsave.c:1188
+#: gui2/fnsave.c:1189
 msgid "Write spec file"
 msgstr "Escrever o ficheiro de especificação"
 
-#: gui2/fnsave.c:1195
+#: gui2/fnsave.c:1196
 msgid "Upload package to server on save"
 msgstr "Enviar pacote para o servidor ao gravar"
 
-#: gui2/fnsave.c:1206
+#: gui2/fnsave.c:1207
 msgid "Validate"
 msgstr "Validar"
 
-#: gui2/fnsave.c:1256
+#: gui2/fnsave.c:1257
 msgid "gretl: upload"
 msgstr "gretl: \"upload\""
 
-#: gui2/fnsave.c:1259
+#: gui2/fnsave.c:1260
 msgid "Upload function package"
 msgstr "Fazer \"upload\" de pacote de funções"
 
-#: gui2/fnsave.c:1269
+#: gui2/fnsave.c:1270
 msgid "Login"
 msgstr "Nome de utilizador (\"Login\")"
 
-#: gui2/fnsave.c:1269
+#: gui2/fnsave.c:1270
 msgid "Password"
 msgstr "Palavra-chave (\"Password\")"
 
-#: gui2/fnsave.c:1295
+#: gui2/fnsave.c:1296
 msgid ""
 "If you don't have a login to the gretl server\n"
 "please see http://gretl.ecn.wfu.edu/apply/.\n"
@@ -9801,7 +9795,7 @@ msgstr ""
 "O botão 'Website' abaixo deve abrir essa página\n"
 "no seu visionador da Web."
 
-#: gui2/fnsave.c:1499
+#: gui2/fnsave.c:1500
 msgid ""
 "Invalid package filename: the name must start with a letter,\n"
 "must be less than 32 characters in length, must include only\n"
@@ -9811,11 +9805,11 @@ msgstr ""
 "de comprimento inferior a 32 caracteres, apenas incluir letras ASCII, "
 "números e '_', e tem que terminar em \".gfn\""
 
-#: gui2/fnsave.c:1513 gui2/library.c:7313
+#: gui2/fnsave.c:1514 gui2/library.c:7313
 msgid "OK to overwrite?"
 msgstr "Confirma escrever por cima?"
 
-#: gui2/fnsave.c:1934
+#: gui2/fnsave.c:1935
 msgid ""
 "No functions are available for packaging at present.\n"
 "Do you want to write a function now?"
@@ -15261,16 +15255,16 @@ msgstr "%s: Não se encontrou registo BOF"
 msgid "No data found.\n"
 msgstr "Não se encontrou dados.\n"
 
-#: plugin/excel_import.c:1489 plugin/gnumeric_import.c:618
+#: plugin/excel_import.c:1489 plugin/gnumeric_import.c:602
 msgid "Failed to get workbook info"
 msgstr "Falhou a obtenção de informação no livro de trabalho (workbook)"
 
-#: plugin/excel_import.c:1492 plugin/gnumeric_import.c:626
+#: plugin/excel_import.c:1492 plugin/gnumeric_import.c:610
 msgid "No worksheets found"
 msgstr "Não se encontrou folhas de cálculo"
 
-#: plugin/excel_import.c:1508 plugin/gnumeric_import.c:642
-#: plugin/ods_import.c:1059
+#: plugin/excel_import.c:1508 plugin/gnumeric_import.c:626
+#: plugin/ods_import.c:1057 plugin/xlsx_import.c:813
 msgid "Invalid argument for worksheet import"
 msgstr "Argumento inválido para a importação de folha de cálculo"
 
@@ -15290,7 +15284,7 @@ msgstr "A coluna inicial está fora dos limites.\n"
 msgid "One or more variable names are missing.\n"
 msgstr "Falta um ou mais nomes de variáveis.\n"
 
-#: plugin/excel_import.c:1582
+#: plugin/excel_import.c:1582 plugin/xlsx_import.c:470
 #, c-format
 msgid ""
 "Expected numeric data, found string:\n"
@@ -15399,11 +15393,7 @@ msgstr ""
 "Era esperado dados numéricos, mas foi encontrado texto:\n"
 "'%s' na linha %d, coluna %d\n"
 
-#: plugin/gnumeric_import.c:488
-msgid "File of the wrong type, root node not Workbook"
-msgstr "Ficheiro do tipo errado, nó raiz não é Workbook"
-
-#: plugin/gnumeric_import.c:658
+#: plugin/gnumeric_import.c:642
 msgid "error in wsheet_setup()"
 msgstr "Erro em wsheet_setup()"
 
@@ -16099,6 +16089,13 @@ msgstr "Estatísticas e Transformações"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Distribuições de probabilidade"
+
+#~ msgid "File of the wrong type, root node not gretldata"
+#~ msgstr ""
+#~ "Ficheiro do tipo errado, o nó raiz não tem o formato de dados do gretl"
+
+#~ msgid "File of the wrong type, root node not Workbook"
+#~ msgstr "Ficheiro do tipo errado, nó raiz não é Workbook"
 
 #~ msgid "String to replace was not found"
 #~ msgstr "O texto a substituir não foi encontrado"

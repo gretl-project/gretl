@@ -181,11 +181,13 @@ plugin/tramo-x12a.c
 plugin/urcdist.c
 plugin/vif.c
 plugin/workbook.c
+plugin/xlsx_import.c
 doc/commands/bbl2txt.c
 doc/commands/matfuncs.c
 doc/commands/reflow.c
 doc/commands/skeleton.c
 doc/commands/tables.c
 doc/commands/topiclist.c
+doc/commands/us2a4.c
 doc/commands/validate.c
 doc/commands/xsltrans.c

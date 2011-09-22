@@ -2285,14 +2285,10 @@ static int read_addons_info (void)
     xmlNodePtr cur = NULL;
     int err, n = 0;
 
-    LIBXML_TEST_VERSION
-	xmlKeepBlanksDefault(0);
-
     sprintf(fname, "%sfunctions%cpackages.xml", 
 	    gretl_home(), SLASH);
 
     err = gretl_xml_open_doc_root(fname, "gretl-package-info", &doc, &cur);
-
     if (err) {
 	return err;
     } 

@@ -2848,8 +2848,6 @@ int load_user_lists_file (const char *fname)
     xmlNodePtr node = NULL;
     int i, nl, err = 0;
 
-    xmlKeepBlanksDefault(0);
-
     err = gretl_xml_open_doc_root(fname, "gretl-lists", &doc, &node);
     if (err) {
 	return err;
