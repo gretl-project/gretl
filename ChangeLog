@@ -74,6 +74,8 @@ version 1.9.6, in progress
   expression
 - Fix bug: GUI scalars window not updating correctly if it is kept open
   while a script which modifies scalars is executed 
+- Fix bug: wrong readout of graph coordinates after doing "Replace full
+  view" with a zoomed graph in the GUI
 - Increase maximum command-line length to 16384 bytes
 
 2011-04-22 version 1.9.5
