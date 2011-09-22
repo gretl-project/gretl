@@ -5,6 +5,7 @@
 # Helio Guilherme <helio.guilherme@bluebottle.com>, 2006, 2007.
 # Hélio Guilherme <helio.guilherme@bluebottle.com>, 2007, 2008.
 # Hélio Guilherme <helio_guilherme@hotmail.com>, 2008.
+# Helio Guilherme <helio_guilherme@hotmail.com>, 2011.
 msgid ""
 msgstr ""
 "Project-Id-Version: pt_BR\n"
@@ -17,7 +18,8 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.11.4\n"
+"X-Generator: Lokalize 1.0\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: lib/src/adf_kpss.c:290
 msgid "lagged differences"
@@ -2278,9 +2280,9 @@ msgid "Unmatched '%c'\n"
 msgstr "'%c' sem par\n"
 
 #: lib/src/geneval.c:9622
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s"
-msgstr "A variável '%s' não é discreta"
+msgstr "A variável %s é do tipo %s"
 
 #: lib/src/geneval.c:9778
 #, c-format
@@ -7208,7 +7210,7 @@ msgstr ""
 "Raquel Guimarães\n"
 "Henrique Andrade <henrique.andrade@ufrgs.br>\n"
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 18 de setembro de 2011."
+"Tradução de 22 de setembro de 2011."
 
 #: gui2/about.c:166
 msgid "License"
@@ -9287,9 +9289,8 @@ msgid "Excel files (*.xls)"
 msgstr "arquivos Excel (*.xls)"
 
 #: gui2/fileselect.c:769
-#, fuzzy
 msgid "Excel files (*.xlsx)"
-msgstr "arquivos Excel (*.xls)"
+msgstr "arquivos Excel (*.xlsx)"
 
 #: gui2/fileselect.c:771
 msgid "gretl script files (*.inp)"
@@ -9914,7 +9915,7 @@ msgstr "Restaurar a visualização completa"
 
 #: gui2/gpt_control.c:3508 gui2/gpt_control.c:3611
 msgid "Replace full view"
-msgstr "Restaurar a visualização completa"
+msgstr "Substituir a visualização completa"
 
 #: gui2/gpt_control.c:3512 gui2/gpt_control.c:3595 gui2/toolbar.c:625
 msgid "Print..."

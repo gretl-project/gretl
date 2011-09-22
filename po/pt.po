@@ -9920,7 +9920,7 @@ msgstr "Restaurar a vista completa"
 
 #: gui2/gpt_control.c:3508 gui2/gpt_control.c:3611
 msgid "Replace full view"
-msgstr "Restaurar a vista completa"
+msgstr "Substituir a vista completa"
 
 #: gui2/gpt_control.c:3512 gui2/gpt_control.c:3595 gui2/toolbar.c:625
 msgid "Print..."
