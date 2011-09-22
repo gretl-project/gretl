@@ -9599,20 +9599,47 @@ static int check_private_varname (const char *s)
     return err;
 }
 
+static void maybe_do_type_errmsg (const char *name, int t)
+{
+    if (name != NULL && *name != '\0') {
+	const char *tstr = NULL;
+
+	if (t == USCALAR || t == NUM) {
+	    tstr = "scalar";
+	} else if (t == USERIES || t == VEC) {
+	    tstr = "series";
+	} else if (t == UMAT || t == MAT) {
+	    tstr = "matrix";
+	} else if (t == STR) {
+	    tstr = "string";
+	} else if (t == BUNDLE) {
+	    tstr = "bundle";
+	} else if (t == LIST) {
+	    tstr = "list";
+	}
+
+	if (tstr != NULL) {
+	    gretl_errmsg_sprintf(_("The variable %s is of type %s"), 
+				 name, tstr);
+	}
+    }
+}
+
 static int overwrite_type_check (parser *p)
 {
+    int err = 0;
+
     if (p->targ == NUM && p->lh.t == VEC && p->lh.obs >= 0) {
-	/* OK */
-	return 0;
+	; /* OK */
     } else if (p->targ == BOBJ && p->lh.t == BUNDLE) {
-	/* OK */
-	return 0;
+	; /* OK */
     } else if (p->targ != p->lh.t) {
 	/* don't overwrite one type with another */
-	return E_TYPES;
-    } else {
-	return 0;
+	maybe_do_type_errmsg(p->lh.name, p->lh.t);
+	err = E_TYPES;
     }
+
+    return err;
 }
 
 static int overwrite_const_check (const char *s, parser *p)
@@ -9805,6 +9832,8 @@ static void pre_process (parser *p, int flags)
 	}
     }
 
+    strcpy(p->lh.name, test);
+
     if (p->lh.t != UNK) {
 	if (p->targ == UNK) {
 	    /* when a type is not specified, set from existing
@@ -9816,8 +9845,6 @@ static void pre_process (parser *p, int flags)
 	    return;
 	}
     }
-
-    strcpy(p->lh.name, test);
 
     /* advance past varname */
     s = p->point;
@@ -10497,6 +10524,10 @@ static int gen_check_return_type (parser *p)
 	    p->targ = r->t;
 	}
     }
+
+    if (p->err == E_TYPES) {
+	maybe_do_type_errmsg(p->lh.name, p->lh.t);
+    }	
 
 #if EDEBUG
     fprintf(stderr, "gen_check_return_type: returning with p->err = %d\n", 
