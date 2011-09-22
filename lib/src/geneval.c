@@ -1533,13 +1533,28 @@ static gretl_matrix *real_matrix_calc (const gretl_matrix *A,
     switch (op) {
     case B_ADD:
     case B_SUB:
-	C = gretl_matrix_copy(A);
-	if (C == NULL) {
-	    *err = E_ALLOC;
-	} else if (op == B_ADD) {
-	    *err = gretl_matrix_add_to(C, B);
+	if (gretl_matrix_is_scalar(A) &&
+	    !gretl_matrix_is_scalar(B)) {
+	    C = gretl_matrix_copy(B);
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    } else if (op == B_ADD) {
+		*err = gretl_matrix_add_to(C, A);
+	    } else {
+		*err = gretl_matrix_subtract_from(C, A);
+		if (!*err) {
+		    gretl_matrix_switch_sign(C);
+		}
+	    }	    
 	} else {
-	    *err = gretl_matrix_subtract_from(C, B);
+	    C = gretl_matrix_copy(A);
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    } else if (op == B_ADD) {
+		*err = gretl_matrix_add_to(C, B);
+	    } else {
+		*err = gretl_matrix_subtract_from(C, B);
+	    }
 	}
 	break;
     case B_HCAT:
