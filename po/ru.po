@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: ru\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-11 16:11-0400\n"
-"PO-Revision-Date: 2011-09-11 16:26-0400\n"
+"PO-Revision-Date: 2011-09-22 01:42+0300\n"
 "Last-Translator: Alexander Gedranovich\n"
 "Language-Team: Russian <kde-i18n-doc@kde.org>\n"
 "Language: ru\n"
@@ -31,8 +31,8 @@ msgstr ""
 "X-Poedit-Country: BELARUS\n"
 "X-Poedit-SourceCharset: utf-8\n"
 "X-Generator: KBabel 1.11.4\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: lib/src/adf_kpss.c:290
 msgid "lagged differences"
@@ -215,25 +215,28 @@ msgstr ""
 "KPSS тест для %s"
 
 #: lib/src/adf_kpss.c:1559
-#, fuzzy
 msgid ""
 " (including trend and seasonals)\n"
 "\n"
-msgstr "(включая тренд)"
+msgstr ""
+"(включая тренд и сезонность)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1561
-#, fuzzy
 msgid ""
 " (including trend)\n"
 "\n"
-msgstr "(включая тренд)"
+msgstr ""
+"(включая тренд)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1565
-#, fuzzy
 msgid ""
 " (including seasonals)\n"
 "\n"
-msgstr "(включая тренд)"
+msgstr ""
+"(включая сезонность)\n"
+"\n"
 
 #: lib/src/adf_kpss.c:1572 lib/src/adf_kpss.c:1616
 #, c-format
@@ -393,19 +396,18 @@ msgstr "Среднее"
 
 #: lib/src/boxplots.c:431
 msgid "group"
-msgstr ""
+msgstr "группа"
 
 #: lib/src/boxplots.c:731 gui2/library.c:6430
-#, fuzzy
 msgid "You must supply two variables, the second of which is discrete"
 msgstr ""
-"Необходимо указать три переменные, последняя\n"
-"из которых должна быть фиктивной (значение 1 или 0)"
+"Необходимо указать две переменные,\n"
+"вторая из них должна быть фиктивной (значение 1 или 0)"
 
 #: lib/src/boxplots.c:782
-#, fuzzy, c-format
+#, c-format
 msgid "Distribution of %s by %s"
-msgstr "Распределение"
+msgstr "Распределение %s по %s"
 
 #: lib/src/boxplots.c:1055
 #, c-format
@@ -436,14 +438,13 @@ msgstr ""
 "  Нулевая гипотеза: параметры регрессии нулевые\n"
 
 #: lib/src/compare.c:355
-#, fuzzy, c-format
+#, c-format
 msgid "Test on Model %d:"
-msgstr "Модель %d"
+msgstr "Тестирование модели %d:"
 
 #: lib/src/compare.c:362
-#, fuzzy
 msgid "Wald test"
-msgstr "Совместный тест Вальда"
+msgstr "Тест Вальда"
 
 #: lib/src/compare.c:363 lib/src/compare.c:370 lib/src/compare.c:383
 #: lib/src/compare.c:392 lib/src/compare.c:958 lib/src/compare.c:2228
@@ -467,9 +468,8 @@ msgid "Chi-square"
 msgstr "Хи-квадрат"
 
 #: lib/src/compare.c:369 lib/src/compare.c:382
-#, fuzzy
 msgid "LR test"
-msgstr "Отношение правдоподобия Квандта (_QLR)"
+msgstr "LR тест"
 
 #: lib/src/compare.c:377 lib/src/compare.c:2694
 msgid "F-form"
@@ -480,19 +480,18 @@ msgid "Robust F"
 msgstr "Робастный F"
 
 #: lib/src/compare.c:391
-#, fuzzy
 msgid "LM test"
-msgstr "Отношение правдоподобия Квандта (_QLR)"
+msgstr "LM тест"
 
 #: lib/src/compare.c:399
-#, fuzzy, c-format
+#, c-format
 msgid "Adding variables improved %d of %d model selection statistics.\n"
-msgstr " Из %d статистик для выбора модели, %d "
+msgstr "Добавление переменных улучшило %d из %d используемых критериев.\n"
 
 #: lib/src/compare.c:402
-#, fuzzy, c-format
+#, c-format
 msgid "Omitting variables improved %d of %d model selection statistics.\n"
-msgstr " Из %d статистик для выбора модели, %d "
+msgstr "Исключение переменных улучшило %d из %d используемых критериев.\n"
 
 #: lib/src/compare.c:551
 msgid "omit"
@@ -2598,7 +2597,6 @@ msgid "std. dev"
 msgstr "Стандартное отклонение"
 
 #: lib/src/graphing.c:336 gui2/library.c:6465
-#, fuzzy
 msgid "You must supply three variables, the last of which is discrete"
 msgstr ""
 "Необходимо указать три переменные, последняя\n"
@@ -3049,16 +3047,12 @@ msgid "Insufficient observations for this operation"
 msgstr "Незначимые наблюдения для данной операции"
 
 #: lib/src/gretl_errors.c:84
-#, fuzzy
 msgid "Error executing function"
-msgstr ""
-"\n"
-"Ошибка при исполнении скрипта: завершение работы\n"
+msgstr "Ошибка при выполнении функции"
 
 #: lib/src/gretl_errors.c:85 gui2/gretl.c:2145
-#, fuzzy
 msgid "Execution aborted by request"
-msgstr "Наблюдения отсортированы по %s"
+msgstr "Выполнение было принудительно прервано"
 
 #: lib/src/gretl_errors.c:93
 msgid "gradient is not close to zero"
@@ -3133,11 +3127,13 @@ msgid "%s: not enough arguments\n"
 msgstr "%s: недостаточно аргументов\n"
 
 #: lib/src/gretl_func.c:6394
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Error message from %s():\n"
 " %s"
-msgstr "Сообщение об ошибке от %s:\n"
+msgstr ""
+"Сообщение об ошибке от %s():\n"
+"%s"
 
 #: lib/src/gretl_func.c:7151
 #, c-format
@@ -3322,7 +3318,7 @@ msgstr "Тест на независимость"
 
 #: lib/src/gretl_model.c:3044
 msgid "rho = 0"
-msgstr ""
+msgstr "rho = 0"
 
 #: lib/src/gretl_model.c:3062
 msgid "robust variant"
@@ -4060,7 +4056,7 @@ msgstr "Переменная '%s' не определена"
 #: lib/src/interact.c:2409 lib/src/system.c:560 plugin/arbond.c:2592
 #, c-format
 msgid "variable %d duplicated in the command list."
-msgstr ""
+msgstr "Переменная %d дублируется в списке команд."
 
 #: lib/src/interact.c:2543 lib/src/interact.c:5563 cli/cli_object.c:52
 #: gui2/objectsave.c:57
@@ -4216,7 +4212,6 @@ msgid "Infinite loop detected in script\n"
 msgstr "Бесконечный цикл в скрипте\n"
 
 #: lib/src/interact.c:5291 lib/src/monte_carlo.c:2739
-#, fuzzy
 msgid "You cannot delete series in this context\n"
 msgstr "Вы не можете удалять переменные здесь\n"
 
@@ -4413,9 +4408,8 @@ msgid "Warning: solution is probably not unique"
 msgstr "ВНИМАНИЕ: решение вероятно не является единственным"
 
 #: lib/src/modelprint.c:595
-#, fuzzy
 msgid "Warning: couldn't compute numerical Hessian"
-msgstr "Не удалось численно оценить Гессиан"
+msgstr "ВНИМАНИЕ: Не удалось численно оценить Гессиан"
 
 #: lib/src/modelprint.c:613 lib/src/modelprint.c:631 lib/src/modelprint.c:639
 msgid "'Within' variance"
@@ -4449,9 +4443,8 @@ msgid "Auxiliary regression for non-linearity test (log terms)"
 msgstr "Вспомогательная регрессия для теста на нелинейность (логарифмы)"
 
 #: lib/src/modelprint.c:748
-#, fuzzy
 msgid "Auxiliary regression for added variables"
-msgstr "Вспомогательная регрессия для теста Рамсея"
+msgstr "Вспомогательная регрессия для пропущенных переменных"
 
 #: lib/src/modelprint.c:759
 msgid "Augmented regression for Chow test"
@@ -5382,9 +5375,8 @@ msgid "HQC"
 msgstr "Крит. Хеннана-Куинна"
 
 #: lib/src/modelprint.c:3115
-#, fuzzy
 msgid "SSR"
-msgstr "ESS"
+msgstr "SSR"
 
 #: lib/src/modelprint.c:4197
 msgid "Sum of AR coefficients"
@@ -5584,9 +5576,8 @@ msgstr ""
 "\n"
 
 #: lib/src/monte_carlo.c:2742
-#, fuzzy
 msgid "You cannot delete scalars in this context\n"
-msgstr "Вы не можете удалять переменные здесь\n"
+msgstr "Вы не можете удалять скалярные переменные здесь\n"
 
 #: lib/src/monte_carlo.c:2993
 #, c-format
@@ -7911,19 +7902,16 @@ msgid "Type a command:"
 msgstr "Введите команду:"
 
 #: gui2/callbacks.c:627
-#, fuzzy
 msgid "Simple boxplot"
 msgstr "Простая коробчатая диаграмма"
 
 #: gui2/callbacks.c:628
-#, fuzzy
 msgid "With confidence interval for median"
-msgstr "Показывать доверительные интервалы как:"
+msgstr "Доверительные интервалы для медианы"
 
 #: gui2/callbacks.c:629
-#, fuzzy
 msgid "Factorized"
-msgstr "график с разделением факторов"
+msgstr ""
 
 #: gui2/callbacks.c:726
 msgid "gretl: create data set"
@@ -8131,9 +8119,8 @@ msgid "No database files found"
 msgstr "Файлы баз данных не найдены"
 
 #: gui2/database.c:2695 gui2/datafiles.c:997 gui2/datafiles.c:1045
-#, fuzzy
 msgid "Installed"
-msgstr "Установить"
+msgstr "Установлено"
 
 #: gui2/database.c:2769 gui2/database.c:2864
 msgid "No function packages found"
@@ -8273,9 +8260,8 @@ msgid "gretl: data packages on server"
 msgstr "gretl: пакеты данных на сервере"
 
 #: gui2/datafiles.c:1571
-#, fuzzy
 msgid "gretl: addons"
-msgstr "gretl: добавить описание"
+msgstr "gretl: расширения"
 
 #: gui2/datafiles.c:2000 gui2/fnsave.c:1933
 msgid "gretl: function packages"
@@ -8770,7 +8756,6 @@ msgid "Groups"
 msgstr ""
 
 #: gui2/dialogs.c:1967
-#, fuzzy
 msgid "Periods"
 msgstr "Периоды"
 
@@ -9190,9 +9175,8 @@ msgid "Add list of instruments"
 msgstr "Добавить список инструментов"
 
 #: gui2/dlgutils.c:916
-#, fuzzy
 msgid "Show interval for median"
-msgstr "Показать интервал для"
+msgstr "Показать интервал для медианы"
 
 #: gui2/dlgutils.c:919 gui2/dlgutils.c:1074 gui2/selector.c:3646
 msgid "Iterated estimation"
@@ -10692,9 +10676,8 @@ msgid "_Boxplots..."
 msgstr "_Коробчатая диаграмма..."
 
 #: gui2/gretl.c:1369
-#, fuzzy
 msgid "_Factorized boxplot..."
-msgstr "график с разделением факторов"
+msgstr ""
 
 #: gui2/gretl.c:1370
 msgid "_Q-Q plot..."
@@ -11161,9 +11144,8 @@ msgid "_Command reference"
 msgstr "Справка по _командам"
 
 #: gui2/gretl.c:1515
-#, fuzzy
 msgid "_Function reference"
-msgstr "Справка по функциям"
+msgstr "_Справка по функциям"
 
 #: gui2/gretl.c:1516
 msgid "_User's guide"
@@ -11174,9 +11156,8 @@ msgid "Check for _updates"
 msgstr "Поиск _обновлений"
 
 #: gui2/gretl.c:1519
-#, fuzzy
 msgid "Check for _addons"
-msgstr "Поиск _обновлений"
+msgstr "Поиск _расширений"
 
 #: gui2/gretl.c:1520
 msgid "_About gretl"
@@ -12388,9 +12369,8 @@ msgstr ""
 "(Меню: Выборка -> Установить диапазон)."
 
 #: gui2/library.c:1961
-#, fuzzy
 msgid "No variables are selected"
-msgstr "Не удалено ни одной переменной"
+msgstr "Не выделено ни одной переменной"
 
 #: gui2/library.c:2033 gui2/library.c:3476 gui2/library.c:3732
 #: gui2/library.c:4002
@@ -12403,7 +12383,6 @@ msgid "gretl: Wald omit test"
 msgstr "gretl: Тест Вальда на избыточные переменные"
 
 #: gui2/library.c:2040
-#, fuzzy
 msgid "gretl: LM test"
 msgstr "gretl: LM тест "
 
@@ -13389,9 +13368,8 @@ msgid "Choose"
 msgstr "Выбрать"
 
 #: gui2/selector.c:3730
-#, fuzzy
 msgid "Variable to plot"
-msgstr "Сортировать по значению переменной"
+msgstr "Переменная для графика"
 
 #: gui2/selector.c:3772
 msgid "Lower bound variable"
@@ -13430,7 +13408,6 @@ msgid "Z-axis variable"
 msgstr "Ось Z"
 
 #: gui2/selector.c:3948
-#, fuzzy
 msgid "Factor (discrete)"
 msgstr "Фактор (фиктивная переменная)"
 
@@ -13627,9 +13604,8 @@ msgid "Use lines"
 msgstr "Линии"
 
 #: gui2/selector.c:5224
-#, fuzzy
 msgid "Estimate augmented model"
-msgstr "Оценка сокращенной модели"
+msgstr "Оценка расширенной модели"
 
 #: gui2/selector.c:5229
 msgid "LM test using auxiliary regression"
@@ -13728,9 +13704,8 @@ msgid "factorized plot"
 msgstr "график с разделением факторов"
 
 #: gui2/selector.c:5703
-#, fuzzy
 msgid "factorized boxplot"
-msgstr "график с разделением факторов"
+msgstr "Факторная коробчатая диаграмма"
 
 #: gui2/selector.c:5705
 msgid "scatterplot with control"
@@ -14597,7 +14572,6 @@ msgid "The dataset cannot be modified at present"
 msgstr "Набор данных не может быть изменен"
 
 #: gui2/textbuf.c:291
-#, fuzzy
 msgid "No redo information available"
 msgstr "Сведения об истории действий отсутствуют"
 
@@ -14747,9 +14721,8 @@ msgid "Save as..."
 msgstr "Сохранить как..."
 
 #: gui2/toolbar.c:626
-#, fuzzy
 msgid "Show/hide"
-msgstr "Показать сетку"
+msgstr "Показать/убрать"
 
 #: gui2/toolbar.c:627
 msgid "Run"
@@ -14757,11 +14730,11 @@ msgstr "Выполнить"
 
 #: gui2/toolbar.c:628
 msgid "Stop"
-msgstr ""
+msgstr "Остановить"
 
 #: gui2/toolbar.c:629
 msgid "Cut"
-msgstr ""
+msgstr "Вырезать"
 
 #: gui2/toolbar.c:631
 msgid "Paste"
@@ -14777,7 +14750,7 @@ msgstr "Отменить"
 
 #: gui2/toolbar.c:635
 msgid "Redo"
-msgstr ""
+msgstr "Отменить"
 
 #: gui2/toolbar.c:636
 msgid "Sort"
