@@ -763,8 +763,7 @@ static void filesel_set_filters (GtkWidget *filesel, int action,
 	filesel_add_filter(filesel, N_("CSV files (*.csv)"), "*.csv", maxlen);
 	filesel_add_filter(filesel, N_("ASCII files (*.txt)"), "*.txt", maxlen);
 	filesel_add_filter(filesel, N_("all files (*.*)"), "*", maxlen);
-    } else if (0 && (action == OPEN_XLS || action == APPEND_XLS)) {
-	/* not ready yet */
+    } else if (action == OPEN_XLS || action == APPEND_XLS) {
 	filesel_add_filter(filesel, N_("Excel files (*.xls)"), "*.xls", maxlen);
 	filesel_add_filter(filesel, N_("Excel files (*.xlsx)"), "*.xlsx", maxlen);
     } else if (action == OPEN_SCRIPT) {
