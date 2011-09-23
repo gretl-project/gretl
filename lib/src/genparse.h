@@ -318,6 +318,7 @@ enum {
     F_PMAX,
     F_PMEAN,
     F_PSD,
+    F_RANDINT,
     F2_MAX,	  /* SEPARATOR: end of two-arg functions */
     F_BFGSMAX,
     F_MSHAPE,

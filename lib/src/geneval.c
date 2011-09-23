@@ -7820,7 +7820,7 @@ static NODE *ellipsis_list_node (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static NODE *scalar_minmax (NODE *l, NODE *r, int t, parser *p)
+static NODE *two_scalars_func (NODE *l, NODE *r, int t, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
@@ -7833,6 +7833,13 @@ static NODE *scalar_minmax (NODE *l, NODE *r, int t, parser *p)
 		ret->v.xval = (xl < xr)? xl : xr;
 	    } else if (t == F_XMAX) {
 		ret->v.xval = (xl > xr)? xl : xr;
+	    } else if (t == F_RANDINT) {
+		int k;
+
+		p->err = gretl_rand_int_minmax(&k, 1, xl, xr);
+		if (!p->err) {
+		    ret->v.xval = k;
+		}
 	    }
 	}
     }
@@ -8688,9 +8695,10 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case F_XMIN:
     case F_XMAX:
+    case F_RANDINT:
 	/* two scalars */
 	if (l->t == NUM && r->t == NUM) {
-	    ret = scalar_minmax(l, r, t->t, p);
+	    ret = two_scalars_func(l, r, t->t, p);
 	} else {
 	    p->err = E_TYPES;
 	} 

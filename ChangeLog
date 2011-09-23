@@ -7,6 +7,8 @@ version 1.9.6, in progress
   in their order of appearance
 - New function pshrink(): compacts a panel series to a column vector
   with one observation per individual
+- New function randint(): returns a random integer in a specified closed
+  interval
 - allow non-integer degrees of freedom for Student's t in cdf(), invcdf()
   and randgen()
 - allow use of an (optional) "mask" argument with the panel statistics

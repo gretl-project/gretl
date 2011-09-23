@@ -4808,6 +4808,22 @@
       </description>
     </function>
 
+    <function name="randint" section="probdist" output="scalar">
+      <fnargs>
+	<fnarg type="scalar">min</fnarg>
+	<fnarg type="scalar">max</fnarg>
+      </fnargs>
+      <description>
+	<para>
+	  Returns a pseudo-random integer in the closed interval
+	  [<argname>min</argname>, <argname>max</argname>]. 
+	  <seelist>
+	  <fncref targ="randgen"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="rank" section="linalg" output="scalar">
       <fnargs>
 	<fnarg type="matrix">X</fnarg>

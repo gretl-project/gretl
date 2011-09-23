@@ -374,6 +374,7 @@ struct str_table funcs[] = {
     { F_INBUNDLE, "inbundle" },
     { F_STRSUB,   "strsub" },
     { F_COLNAME,  "colname" },
+    { F_RANDINT,  "randint" },
     { 0,          NULL }
 };
 
