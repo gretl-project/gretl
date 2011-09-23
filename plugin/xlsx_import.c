@@ -324,6 +324,18 @@ static int xlsx_set_value (xlsx_info *xinfo, int i, int t, double x)
     }
 }
 
+static int xlsx_handle_stringval (const char *s, int r, int c, 
+				  PRN *prn)
+{
+    if (import_na_string(s)) {
+	return 0; /* OK */
+    } else {
+	pprintf(prn, _("Expected numeric data, found string:\n"
+		       "%s\" at row %d, column %d\n"), s, r, c);
+	return E_DATA;
+    }
+}
+
 static int xlsx_var_index (xlsx_info *xinfo, int col)
 {
     int i = col - xinfo->xoffset - 1;
@@ -351,8 +363,8 @@ static int xlsx_obs_index (xlsx_info *xinfo, int row)
     }
 
 #if XDEBUG
-    fprintf(stderr, "xlsx_obs_index: no_varnames = %d, row = %d, t = %d\n", 
-	    (xinfo->flags & BOOK_AUTO_VARNAMES)? 1 : 0, row, t);
+    fprintf(stderr, "xlsx_obs_index: varnames = %d, row = %d, t = %d\n", 
+	    (xinfo->flags & BOOK_AUTO_VARNAMES)? 0 : 1, row, t);
 #endif
 
     return t;
@@ -485,10 +497,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		    } else if (col == xinfo->xoffset + 1) {
 			err = xlsx_set_obs_string(xinfo, t, strval);
 		    } else if (strval != NULL) {
-			pprintf(prn, _("Expected numeric data, found string:\n"
-				       "%s\" at row %d, column %d\n"), 
-				strval, row, col);
-			err = E_DATA;
+			err = xlsx_handle_stringval(strval, row, col, prn);
 		    }
 		} else {
 		    err = xlsx_set_value(xinfo, i, t, xval);
@@ -527,7 +536,7 @@ static int xlsx_check_dimensions (xlsx_info *xinfo, PRN *prn)
 	n--;
     }
 
-    pprintf(prn, "Got %d variables and %d observations\n", v, n);
+    pprintf(prn, "Found %d variables and %d observations\n", v, n);
 
     if (v <= 0 || n <= 0) {
 	pputs(prn, "File contains no data");
@@ -689,24 +698,20 @@ static int xlsx_gather_sheet_names (xlsx_info *xinfo, PRN *prn)
 
     if (!err) {
 	for (i=0; i<xinfo->n_sheets; i++) {
-	    pprintf(prn, "%d: %s\n", i, xinfo->sheetnames[i]);
+	    fprintf(stderr, "%d: %s\n", i, xinfo->sheetnames[i]);
 	}
     }
 
     return err;
 }
 
-static int xlsx_book_init (wbook *book, xlsx_info *xinfo, char *sheetname)
+static void xlsx_book_init (wbook *book, xlsx_info *xinfo, char *sheetname)
 {
-    int err = 0;
-
     wbook_init(book, NULL, sheetname);
 
     book->nsheets = xinfo->n_sheets;
     book->sheetnames = xinfo->sheetnames;
     book->data = xinfo;
-
-    return err;
 }
 
 static void record_xlsx_params (xlsx_info *xinfo, int *list)
@@ -786,11 +791,11 @@ static int set_xlsx_params_from_cli (xlsx_info *xinfo,
 {
     int gotname = (sheetname != NULL && *sheetname != '\0');
     int gotlist = (list != NULL && list[0] == 3);
-    int i;
+    int i, err = 0;
 
     if (!gotname && !gotlist) {
 	xinfo->selsheet = 0;
-	xinfo->xoffset = 0; /* FIXME? */
+	xinfo->xoffset = 0;
 	xinfo->yoffset = 0;
 	return 0;
     }
@@ -828,22 +833,18 @@ static int set_xlsx_params_from_cli (xlsx_info *xinfo,
     if (xinfo->selsheet < 0 || xinfo->selsheet >= xinfo->n_sheets ||
 	xinfo->xoffset < 0 || xinfo->yoffset < 0) {
 	gretl_errmsg_set(_("Invalid argument for worksheet import"));
-	return E_DATA;
+	err = E_DATA;
     }
 
-    return 0;
+    return err;
 }
 
-static int xlsx_sheet_dialog (xlsx_info *xinfo, int *err)
+static int xlsx_sheet_dialog (xlsx_info *xinfo)
 {
     wbook book;   
 
-    *err = xlsx_book_init(&book, xinfo, NULL);
-    if (*err) {
-	return -1;
-    }
+    xlsx_book_init(&book, xinfo, NULL);
 
-    /* FIXME? */
     book.col_offset = xinfo->xoffset;
     book.row_offset = xinfo->yoffset;
 
@@ -863,10 +864,14 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo, int *err)
 
 static int finalize_xlsx_import (DATASET *dset,
 				 xlsx_info *xinfo, 
+				 const char *fname,
 				 gretlopt opt,
 				 PRN *prn)
 {
-    int err = import_prune_columns(xinfo->dset);
+    int merge, err;
+
+    merge = (dset->Z != NULL);
+    err = import_prune_columns(xinfo->dset);
 
     if (!err) {
 	int i;
@@ -885,7 +890,11 @@ static int finalize_xlsx_import (DATASET *dset,
 
     if (!err) {
 	err = merge_or_replace_data(dset, &xinfo->dset, opt, prn);
-    }  
+    } 
+
+    if (!err && !merge) {
+	dataset_add_import_info(dset, fname, GRETL_XLSX);
+    }
 
     return err;
 }
@@ -911,7 +920,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 
     if (!err) {
 	if (gui) {
-	    int resp = xlsx_sheet_dialog(&xinfo, &err);
+	    int resp = xlsx_sheet_dialog(&xinfo);
 
 	    if (resp < 0) {
 		/* canceled */
@@ -930,7 +939,7 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
  bailout:
 
     if (!err && xinfo.dset != NULL) {
-	err = finalize_xlsx_import(dset, &xinfo, opt, prn); 
+	err = finalize_xlsx_import(dset, &xinfo, fname, opt, prn); 
 	if (!err && gui) {
 	    record_xlsx_params(&xinfo, list);
 	}
