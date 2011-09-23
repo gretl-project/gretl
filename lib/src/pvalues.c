@@ -2202,14 +2202,153 @@ double gretl_get_pvalue (char st, const double *parm, double x)
     return y;
 }
 
+static int gretl_fill_random_array (double *x, int t1, int t2,
+				    char st, const double *parm,
+				    const double *vecp1, 
+				    const double *vecp2)
+{
+    int t, err = 0;
+
+    if (st == 'u') {
+	/* uniform */
+	double min = parm[0], max = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) min = vecp1[t];
+		if (vecp2 != NULL) max = vecp2[t];
+		err = gretl_rand_uniform_minmax(x, t, t, min, max);
+	    }
+	} else {
+	    err = gretl_rand_uniform_minmax(x, t1, t2, min, max);
+	}
+    } else if (st == 'z') {
+	/* normal */
+	double mu = parm[0], sd = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) mu = vecp1[t];
+		if (vecp2 != NULL) sd = vecp2[t];
+		err = gretl_rand_normal_full(x, t, t, mu, sd);
+	    }
+	} else {
+	    err = gretl_rand_normal_full(x, t1, t2, mu, sd);
+	}
+    } else if (st == 't') {
+	/* Student's t */
+	double v = parm[0];
+
+	if (vecp1 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		v = vecp1[t];
+		err = gretl_rand_student(x, t, t, v);
+	    }
+	} else {	
+	    err = gretl_rand_student(x, t1, t2, v);
+	}
+    } else if (st == 'X') {
+	/* chi-square */
+	int v = parm[0];
+
+	if (vecp1 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		v = vecp1[t];
+		err = gretl_rand_chisq(x, t, t, v);
+	    }
+	} else {
+	    err = gretl_rand_chisq(x, t1, t2, v);
+	}
+    } else if (st == 'F') {
+	/* Snedecor F */
+	int v1 = parm[0], v2 = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) v1 = vecp1[t];
+		if (vecp2 != NULL) v2 = vecp2[t];
+		err = gretl_rand_F(x, t, t, v1, v2);
+	    }
+	} else {
+	    err = gretl_rand_F(x, t1, t2, v1, v2);
+	}
+    } else if (st == 'G') {
+	/* gamma */
+	double shape = parm[0], scale = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) shape = vecp1[t];
+		if (vecp2 != NULL) scale = vecp2[t];
+		err = gretl_rand_gamma(x, t, t, shape, scale);
+	    }
+	} else {
+	    err = gretl_rand_gamma(x, t1, t2, shape, scale);
+	}
+    } else if (st == 'B') {
+	/* binomial */
+	double pr = parm[0];
+	int n = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) pr = vecp1[t];
+		if (vecp2 != NULL) n = vecp2[1];
+		err = gretl_rand_binomial(x, t, t, n, pr);
+	    }
+	} else {
+	    err = gretl_rand_binomial(x, t1, t2, n, pr);
+	}
+    } else if (st == 'P') {
+	/* Poisson */
+	double m = parm[0];
+
+	if (vecp1 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		m = vecp1[t];
+		err = gretl_rand_poisson(x, t, t, &m, 0);
+	    }
+	} else {
+	    err = gretl_rand_poisson(x, t1, t2, &m, 0);
+	}
+    } else if (st == 'W') {
+	/* Weibull */ 
+	double shape = parm[0], scale = parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) shape = vecp1[t];
+		if (vecp2 != NULL) scale = vecp2[t];
+		err = gretl_rand_weibull(x, t, t, shape, scale);
+	    }
+	} else {
+	    err = gretl_rand_weibull(x, t1, t2, shape, scale);
+	}
+    } else if (st == 'E') {
+	/* GED */ 
+	double nu = parm[0];
+
+	if (vecp1 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) nu = vecp1[t];
+		err = gretl_rand_GED(x, t, t, nu);
+	    }
+	} else {
+	    err = gretl_rand_GED(x, t1, t2, nu);
+	}
+    }	
+
+    return err;
+}
+
 /**
  * gretl_get_random_series:
  * @st: distribution code.
  * @parm: array holding either one or two scalar 
  * parameter values, depending on the distribution.
- * @serp1: series containing values for first param,
+ * @vecp1: series containing values for first param,
  * or %NULL.
- * @serp2: series containing values for second param,
+ * @vecp2: series containing values for second param,
  * or %NULL.
  * @dset: dataset information.
  * @err: location to receive error code.
@@ -2226,155 +2365,50 @@ double gretl_get_pvalue (char st, const double *parm, double x)
  */
 
 double *gretl_get_random_series (char st, const double *parm,
-				 const double *serp1, 
-				 const double *serp2,
+				 const double *vecp1, 
+				 const double *vecp2,
 				 const DATASET *dset,
 				 int *err)
 {
     double *x = malloc(dset->n * sizeof *x);
-    int t1 = dset->t1;
-    int t2 = dset->t2;
-    int t;
 
     if (x == NULL) {
 	*err = E_ALLOC;
-	return NULL;
+    } else {
+	int t;
+
+	for (t=0; t<dset->n; t++) {
+	    x[t] = NADBL;
+	}
+
+	*err = gretl_fill_random_array(x, dset->t1, dset->t2, st,
+				       parm, vecp1, vecp2);
     }
-
-    for (t=0; t<dset->n; t++) {
-	x[t] = NADBL;
-    }
-
-    if (st == 'u') {
-	/* uniform */
-	double min = parm[0], max = parm[1];
-
-	if (serp1 != NULL || serp2 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		if (serp1 != NULL) min = serp1[t];
-		if (serp2 != NULL) max = serp2[t];
-		*err = gretl_rand_uniform_minmax(x, t, t, min, max);
-	    }
-	} else {
-	    *err = gretl_rand_uniform_minmax(x, t1, t2, min, max);
-	}
-    } else if (st == 'z') {
-	/* normal */
-	double mu = parm[0], sd = parm[1];
-
-	if (serp1 != NULL || serp2 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		if (serp1 != NULL) mu = serp1[t];
-		if (serp2 != NULL) sd = serp2[t];
-		*err = gretl_rand_normal_full(x, t, t, mu, sd);
-	    }
-	} else {
-	    *err = gretl_rand_normal_full(x, t1, t2, mu, sd);
-	}
-    } else if (st == 't') {
-	/* Student's t */
-	double v = parm[0];
-
-	if (serp1 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		v = serp1[t];
-		*err = gretl_rand_student(x, t, t, v);
-	    }
-	} else {	
-	    *err = gretl_rand_student(x, t1, t2, v);
-	}
-    } else if (st == 'X') {
-	/* chi-square */
-	int v = parm[0];
-
-	if (serp1 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		v = serp1[t];
-		*err = gretl_rand_chisq(x, t, t, v);
-	    }
-	} else {
-	    *err = gretl_rand_chisq(x, t1, t2, v);
-	}
-    } else if (st == 'F') {
-	/* Snedecor F */
-	int v1 = parm[0], v2 = parm[1];
-
-	if (serp1 != NULL || serp2 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		if (serp1 != NULL) v1 = serp1[t];
-		if (serp2 != NULL) v2 = serp2[t];
-		*err = gretl_rand_F(x, t, t, v1, v2);
-	    }
-	} else {
-	    *err = gretl_rand_F(x, t1, t2, v1, v2);
-	}
-    } else if (st == 'G') {
-	/* gamma */
-	double shape = parm[0], scale = parm[1];
-
-	if (serp1 != NULL || serp2 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		if (serp1 != NULL) shape = serp1[t];
-		if (serp2 != NULL) scale = serp2[t];
-		*err = gretl_rand_gamma(x, t, t, shape, scale);
-	    }
-	} else {
-	    *err = gretl_rand_gamma(x, t1, t2, shape, scale);
-	}
-    } else if (st == 'B') {
-	/* binomial */
-	double pr = parm[0];
-	int n = parm[1];
-
-	if (serp1 != NULL || serp2 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		if (serp1 != NULL) pr = serp1[t];
-		if (serp2 != NULL) n = serp2[1];
-		*err = gretl_rand_binomial(x, t, t, n, pr);
-	    }
-	} else {
-	    *err = gretl_rand_binomial(x, t1, t2, n, pr);
-	}
-    } else if (st == 'P') {
-	/* Poisson */
-	double m = parm[0];
-
-	if (serp1 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		m = serp1[t];
-		*err = gretl_rand_poisson(x, t, t, &m, 0);
-	    }
-	} else {
-	    *err = gretl_rand_poisson(x, t1, t2, &m, 0);
-	}
-    } else if (st == 'W') {
-	/* Weibull */ 
-	double shape = parm[0], scale = parm[1];
-
-	if (serp1 != NULL || serp2 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		if (serp1 != NULL) shape = serp1[t];
-		if (serp2 != NULL) scale = serp2[t];
-		*err = gretl_rand_weibull(x, t, t, shape, scale);
-	    }
-	} else {
-	    *err = gretl_rand_weibull(x, t1, t2, shape, scale);
-	}
-    } else if (st == 'E') {
-	/* GED */ 
-	double nu = parm[0];
-
-	if (serp1 != NULL) {
-	    for (t=t1; t<=t2 && !*err; t++) {
-		if (serp1 != NULL) nu = serp1[t];
-		*err = gretl_rand_GED(x, t, t, nu);
-	    }
-	} else {
-	    *err = gretl_rand_GED(x, t1, t2, nu);
-	}
-    }	
 
     return x;
+}
+
+gretl_matrix *gretl_get_random_matrix (int rows, int cols,
+				       char st, const double *parm,
+				       int *err)
+{
+    gretl_matrix *m = NULL;
+    int n = rows * cols;
+
+    if (n <= 0) {
+	*err = E_INVARG;
+    } else {
+	m = gretl_matrix_alloc(rows, cols);
+	if (m == NULL) {
+	    *err = E_ALLOC;
+	    return NULL;
+	} else {
+	    *err = gretl_fill_random_array(m->val, 0, n - 1, st,
+					   parm, NULL, NULL);
+	}
+    }
+
+    return m;
 }
 
 static int 

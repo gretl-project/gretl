@@ -239,10 +239,12 @@ static void stderr_output_handler (const gchar *log_domain,
     fprintf(stderr, "%s : %s\n", log_domain, message);
 }
 
-static void set_g_warnings (int debug)
+static void set_g_logging (int debug)
 {
     void (*handler) (const gchar *, GLogLevelFlags,
 		     const gchar *, gpointer);
+     GLogLevelFlags flags = G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING |
+	 G_LOG_LEVEL_DEBUG;
 
     if (debug) {
 	handler = stderr_output_handler;
@@ -250,18 +252,11 @@ static void set_g_warnings (int debug)
 	handler = dummy_output_handler;
     }
 
-    g_log_set_handler("Gtk",
-		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		      (GLogFunc) handler, NULL);
-    g_log_set_handler("Gdk",
-		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		      (GLogFunc) handler, NULL);
-    g_log_set_handler("GLib",
-		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		      (GLogFunc) handler, NULL);
-    g_log_set_handler("Pango",
-		      G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		      (GLogFunc) handler, NULL);
+    g_log_set_handler(NULL, flags, (GLogFunc) handler, NULL);
+    g_log_set_handler("Gtk", flags, (GLogFunc) handler, NULL);
+    g_log_set_handler("Gdk", flags, (GLogFunc) handler, NULL);
+    g_log_set_handler("GLib", flags, (GLogFunc) handler, NULL);
+    g_log_set_handler("Pango", flags, (GLogFunc) handler, NULL);
 }
 
 char *default_windows_menu_fontspec (void)
@@ -363,7 +358,7 @@ void gretl_win32_debug_init (int debug)
         redirect_io_to_console();
     }
 
-    set_g_warnings(debug);
+    set_g_logging(debug);
 }
 
 /* carry out some Windows-specific start-up tasks, and

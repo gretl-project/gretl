@@ -182,11 +182,9 @@ static int cli_clear_data (CMD *cmd, DATASET *dset, MODEL *model)
 
     if (cmd->ci == CLEAR) {
 	clearopt = cmd->opt;
-    } else {
-	if (cmd->opt & OPT_P) {
-	    /* --preserve: clear dataset only */
-	    clearopt = OPT_D;
-	}
+    } else if (cmd->opt & OPT_P) {
+	/* --preserve: clear dataset only */
+	clearopt = OPT_D;
     }
 
     if (!(clearopt & OPT_O)) {

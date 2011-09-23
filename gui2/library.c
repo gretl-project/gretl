@@ -8508,7 +8508,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     case CLEAR:
 	if (cmd->opt & OPT_O) {
-	    err = E_NOTIMP;
+	    err = E_NOTIMP; /* FIXME */
 	} else if (cmd->opt & OPT_D) {
 	    close_session(OPT_P);
 	} else {

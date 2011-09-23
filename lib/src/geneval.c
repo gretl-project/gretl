@@ -692,6 +692,8 @@ static double xy_calc (double x, double y, int op, int targ, parser *p)
     }
 }
 
+#define randgen(f) (f == F_RANDGEN || f == F_MRANDGEN)
+
 static int check_dist_count (char *s, int f, int *np, int *argc)
 {
     int err = 0;
@@ -703,8 +705,8 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
     *np = *argc = 0;
 
     if (*s == 'u' || *s == 'U') {
-	/* uniform: only F_RANDGEN is supported */
-	if (f == F_RANDGEN) {
+	/* uniform: only RANDGEN is supported */
+	if (randgen(f)) {
 	    *s = 'u';
 	    *np = 2; /* min, max */
 	} else {
@@ -714,7 +716,7 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	       *s == 'n' || *s == 'N') {
 	/* normal: all functions supported */
 	*s = 'z';
-	if (f == F_RANDGEN) {
+	if (randgen(f)) {
 	    *np = 2; /* mu, sigma */
 	} else {
 	    *np = 0; /* N(0,1) is assumed */
@@ -790,7 +792,7 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	err = E_INVARG;
     }
 
-    if (!err && f != F_RANDGEN && *argc == 0) {
+    if (!err && !randgen(f) && *argc == 0) {
 	*argc = 1;
     }
 
@@ -1193,15 +1195,22 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	NODE *e, *s, *r = n->v.b1.b;
 	int i, k, m = r->v.bn.n_nodes;
 	int rgen = (n->t == F_RANDGEN);
+	int mrgen = (n->t == F_MRANDGEN);
 	double parm[3] = {0};
 	double argval = NADBL;
 	double *parmvec[2] = { NULL };
 	double *argvec = NULL;
 	gretl_matrix *argmat = NULL;
+	int rows = 0, cols = 0;
 	int np, argc;
 	char d, *dist, code[2];
 
-	if (m < 2 || m > 5) {
+	if (mrgen) {
+	    if (m < 4 || m > 7) {
+		p->err = E_INVARG;
+		goto disterr;
+	    }
+	} else if (m < 2 || m > 5) {
 	    p->err = E_INVARG;
 	    goto disterr;
 	}
@@ -1218,7 +1227,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	}
 
 	p->err = check_dist_count(dist, n->t, &np, &argc);
-	k = np + argc;
+	k = np + argc + 2 * mrgen;
 	if (!p->err && k != m - 1) {
 	    p->err = E_INVARG;
 	}
@@ -1244,27 +1253,37 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
 	    if (scalar_node(e)) {
 		/* scalars always acceptable */
-		if (i == k && argc > 0) {
+		if (mrgen) {
+		    if (i == k) {
+			cols = node_get_int(e, p);
+		    } else if (i == k-1) {
+			rows = node_get_int(e, p);
+		    } else {
+			parm[i-1] = node_get_scalar(e, p);
+		    }
+		} else if (i == k && argc > 0) {
 		    argval = node_get_scalar(e, p);
 		} else {
 		    parm[i-1] = node_get_scalar(e, p);
 		}
 	    } else if (i == k && e->t == VEC) {
-		/* series in the last place */
+		/* a series in the last place? */
 		if (rgen) {
 		    parmvec[i-1] = e->v.xvec;
+		} else if (mrgen) {
+		    node_type_error(n->t, i, NUM, e, p);
 		} else {
 		    argvec = e->v.xvec;
 		} 
 	    } else if (i == k && e->t == MAT) {
-		/* matrix in the last place */
-		if (rgen) {
+		/* a matrix in the last place? */
+		if (rgen || mrgen) {
 		    node_type_error(n->t, i, NUM, e, p);
 		} else {
 		    argmat = e->v.m;
 		}
 	    } else if (e->t == VEC) {
-		/* series param for randgen? */
+		/* a series param for randgen? */
 		if (rgen) {
 		    parmvec[i-1] = e->v.xvec;
 		} else {
@@ -1282,7 +1301,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    }		    
 	}
 
-	if (rgen || argvec != NULL) {
+	if (mrgen) {
+	    ret = aux_matrix_node(p);
+	} else if (rgen || argvec != NULL) {
 	    ret = aux_vec_node(p, 0);
 	} else if (argmat != NULL) {
 	    ret = aux_matrix_node(p);
@@ -1298,6 +1319,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    ret->v.xvec = gretl_get_random_series(d, parm, 
 						  parmvec[0], parmvec[1], 
 						  p->dset, &p->err);
+	} else if (mrgen) {
+	    ret->v.m = gretl_get_random_matrix(rows, cols, d, parm, 
+					       &p->err);
 	} else if (argvec != NULL) {
 	    ret->v.xvec = series_pdist(n->t, d, parm, np, argvec, p);
 	} else if (argmat != NULL) {
@@ -8821,6 +8845,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_CRIT:
     case F_PVAL:
     case F_RANDGEN:
+    case F_MRANDGEN:
     case F_URCPVAL:	
 	if (t->v.b1.b->t == FARGS) {
 	    if (t->t == F_URCPVAL) {

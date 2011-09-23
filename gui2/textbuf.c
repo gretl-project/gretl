@@ -2171,8 +2171,7 @@ static int line_continues_previous (GtkTextBuffer *tbuf,
 }
 
 /* get "command word", max 8 characters: work backwards up script
-   to find this
- */
+   to find this */
 
 static char *get_previous_line_start_word (char *word, 
 					   GtkTextBuffer *tbuf,
