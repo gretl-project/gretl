@@ -36,7 +36,7 @@
 
 #include "import_common.c"
 
-#define XDEBUG 1
+#define XDEBUG 0
 
 struct xlsx_info_ {
     int flags;
@@ -97,7 +97,7 @@ static int xlsx_read_shared_strings (xlsx_info *xinfo, PRN *prn)
 				  &doc, &cur);
 
     if (err) {
-	pprintf(prn, "didn't get sst\n");
+	pprintf(prn, "Couldn't find shared strings table\n");
 	pprintf(prn, "%s", gretl_errmsg_get());
 	return err;
     }
@@ -267,6 +267,10 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
 {
     int err = 0;
 
+    if (i == -1) {
+	return 0; /* just skip it */
+    }
+
     if (i < 1 || i >= xinfo->dset->v) {
 	fprintf(stderr, "error in xlsx_set_varname: i = %d\n", i);
 	err = E_DATA;
@@ -286,6 +290,10 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 {
     int err = 0;
 
+    if (t == -1) {
+	return 0; /* just skip it */
+    }
+
     if (xinfo->dset->S == NULL) {
 	fprintf(stderr, "error in xlsx_set_obs_string: no markers allocated\n");
 	err = E_DATA;
@@ -293,7 +301,6 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 	fprintf(stderr, "error in xlsx_set_obs_string: t = %d\n", t);
 	err = E_DATA;
     } else {
-	/* FIXME encoding */
 	*xinfo->dset->S[t] = '\0';
 	strncat(xinfo->dset->S[t], s, OBSLEN - 1);
     }
@@ -303,6 +310,10 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 
 static int xlsx_set_value (xlsx_info *xinfo, int i, int t, double x)
 {
+    if (i == -1 || t == -1) {
+	return 0; /* just skip it */
+    }    
+
     if (i < 1 || i >= xinfo->dset->v ||
 	t < 0 || t >= xinfo->dset->n) {
 	fprintf(stderr, "error in xlsx_set_value: i = %d, t = %d\n", i, t);
@@ -320,7 +331,7 @@ static int xlsx_var_index (xlsx_info *xinfo, int col)
     if (i == 0 && (xinfo->flags & BOOK_OBS_LABELS)) {
 	i = -1; /* the first column holds labels */
     } else if (i >= 0 && !(xinfo->flags & BOOK_OBS_LABELS)) {
-	i++; /* skip const */
+	i++; /* skip the constant in position 0 */
     }
 
 #if XDEBUG
@@ -352,10 +363,10 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 				 double x)
 {
     if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 1) {
-	/* we're in the top left cell of the reading area:
+	/* We're in the top left cell of the reading area:
 	   this could be blank, or could hold the first
 	   varname, could hold "obs" or similar, or could
-	   be the first numerical value
+	   be the first numerical value.
 	*/
 	if (!na(x)) {
 	    /* numerical value */
@@ -364,6 +375,7 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 	    /* blank or "obs" or similar */
 	    xinfo->flags |= BOOK_OBS_LABELS;
 	}
+	/* record the fact that the top-left corner is not empty */
 	xinfo->flags &= ~BOOK_TOP_LEFT_EMPTY;
     } else if (r == xinfo->yoffset + 1 && c == xinfo->xoffset + 2) {
 	/* first row, second column */
@@ -382,10 +394,16 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
 
 static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn) 
 {
+    PRN *myprn = NULL;
     xmlNodePtr val;
     char *tmp;
     int row, col;
     int err = 0;
+
+#if XDEBUG
+    myprn = prn;
+    pprintf(myprn, "*** Reading row...\n");    
+#endif
 
     cur = cur->xmlChildrenNode;
 
@@ -398,20 +416,20 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    int stringcell = 0;
 	    int gotval = 0;
 
-	    pprintf(prn, " cell");
+	    pprintf(myprn, " cell");
 
 	    cref = (char *) xmlGetProp(cur, (XUC) "r");
 	    if (cref == NULL) {
-		pprintf(prn, ": couldn't find 'r' property\n");
+		pprintf(myprn, ": couldn't find 'r' property\n");
 		err = E_DATA;
 		break;
 	    } 
 
 	    err = xlsx_cell_get_coordinates(cref, xinfo, &row, &col);
 	    if (err) {
-		pprintf(prn, ": couldn't find coordinates\n", row, col);
+		pprintf(myprn, ": couldn't find coordinates\n", row, col);
 	    } else {
-		pprintf(prn, "(%d, %d)", row, col);
+		pprintf(myprn, "(%d, %d)", row, col);
 	    }
 
 	    tmp = (char *) xmlGetProp(cur, (XUC) "t");
@@ -430,13 +448,13 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 			if (stringcell) {
 			    strval = xlsx_string_value(tmp, xinfo, prn);
 			    if (strval == NULL) {
-				pputs(prn, " value = ?\n");
+				pputs(myprn, " value = ?\n");
 				err = E_DATA;
 			    } else {
-				pprintf(prn, " value = '%s'\n", strval);
+				pprintf(myprn, " value = '%s'\n", strval);
 			    }
 			} else {
-			    pprintf(prn, " value = %s\n", tmp);
+			    pprintf(myprn, " value = %s\n", tmp);
 			    if (*tmp != '\0' && check_atof(tmp) == 0) {
 				xval = atof(tmp);
 			    }
@@ -454,10 +472,10 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    }		    
 
 	    if (!gotval) {
-		pprintf(prn, ": (%s) no data\n", cref);
+		pprintf(myprn, ": (%s) no data\n", cref);
 	    } else if (xinfo->dset != NULL && 
-		       col >= xinfo->xoffset &&
-		       row >= xinfo->yoffset) {
+		       col > xinfo->xoffset &&
+		       row > xinfo->yoffset) {
 		int i = xlsx_var_index(xinfo, col);
 		int t = xlsx_obs_index(xinfo, row);
 
@@ -563,7 +581,6 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 	    data_node = c1 = cur->xmlChildrenNode;
 	    while (c1 != NULL && !err) {
 		if (!xmlStrcmp(c1->name, (XUC) "row")) {
-		    pprintf(prn, "*** Reading row...\n");
 		    err = xlsx_read_row(c1, xinfo, prn);
 		}
 		c1 = c1->next;
@@ -586,7 +603,7 @@ static int xlsx_read_worksheet (xlsx_info *xinfo, PRN *prn)
 	    c1 = data_node;
 	    while (c1 != NULL && !err) {
 		if (!xmlStrcmp(c1->name, (XUC) "row")) {
-		    err = xlsx_read_row(c1, xinfo, NULL);
+		    err = xlsx_read_row(c1, xinfo, prn);
 		}
 		c1 = c1->next;
 	    }
@@ -877,7 +894,6 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 		   DATASET *dset, gretlopt opt, PRN *prn)
 {
     int gui = (opt & OPT_G);
-    PRN *myprn = NULL;
     xlsx_info xinfo;
     char dname[32];
     int err;
@@ -907,18 +923,14 @@ int xlsx_get_data (const char *fname, int *list, char *sheetname,
 	} 
     }
 
-#if XDEBUG
-    myprn = prn;
-#endif
-
     if (!err) {
-	err = xlsx_read_worksheet(&xinfo, myprn);
+	err = xlsx_read_worksheet(&xinfo, prn);
     }
 
  bailout:
 
     if (!err && xinfo.dset != NULL) {
-	err = finalize_xlsx_import(dset, &xinfo, opt, myprn); 
+	err = finalize_xlsx_import(dset, &xinfo, opt, prn); 
 	if (!err && gui) {
 	    record_xlsx_params(&xinfo, list);
 	}
