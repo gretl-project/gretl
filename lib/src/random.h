@@ -43,6 +43,10 @@ void gretl_rand_uniform (double *a, int t1, int t2);
 int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 			       double min, double max);
 
+int gretl_rand_uniform_int_minmax (double *a, int t1, int t2,
+				   int min, int max,
+				   gretlopt opt);
+
 void gretl_rand_normal (double *a, int t1, int t2);
 
 int gretl_rand_normal_full (double *a, int t1, int t2,

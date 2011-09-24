@@ -3126,6 +3126,8 @@ int check_declarations (char ***pS, parser *p)
 {
     char **S;
     const char *s;
+    int exists = 0;
+    int badname = 0;
     int i, n = 1;
 
     gretl_error_clear();
@@ -3175,15 +3177,22 @@ int check_declarations (char ***pS, parser *p)
 	    get_list_by_name(S[i]) ||
 	    get_string_by_name(S[i])) {
 	    /* variable already exists */
+	    exists = 1;
 	    p->err = E_DATA;
 	} else if (check_varname(S[i])) {
 	    /* invalid name */
+	    badname = 1;
 	    p->err = E_DATA;
 	} 
     }
 
     if (p->err) {
-	gretl_errmsg_set(_("Invalid declaration"));
+	if (exists) {
+	    gretl_errmsg_set(_("Invalid declaration: maybe you need "
+			       "the \"clear\" command?"));
+	} else if (!badname) {
+	    gretl_errmsg_set(_("Invalid declaration"));
+	}
 	free_strings_array(S, n);
     } else {
 	*pS = S;

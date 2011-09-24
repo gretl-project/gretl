@@ -2210,7 +2210,7 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
     int t, err = 0;
 
     if (st == 'u') {
-	/* uniform */
+	/* uniform, continuous */
 	double min = parm[0], max = parm[1];
 
 	if (vecp1 != NULL || vecp2 != NULL) {
@@ -2222,6 +2222,21 @@ static int gretl_fill_random_array (double *x, int t1, int t2,
 	} else {
 	    err = gretl_rand_uniform_minmax(x, t1, t2, min, max);
 	}
+    } else if (st == 'i') {
+	/* uniform, discrete */
+	int min = (int) parm[0], max = (int) parm[1];
+
+	if (vecp1 != NULL || vecp2 != NULL) {
+	    for (t=t1; t<=t2 && !err; t++) {
+		if (vecp1 != NULL) min = (int) vecp1[t];
+		if (vecp2 != NULL) max = (int) vecp2[t];
+		err = gretl_rand_uniform_int_minmax(x, t, t, min, max,
+						    OPT_NONE);
+	    }
+	} else {
+	    err = gretl_rand_uniform_int_minmax(x, t1, t2, min, max,
+						OPT_NONE);
+	}	
     } else if (st == 'z') {
 	/* normal */
 	double mu = parm[0], sd = parm[1];
@@ -2388,8 +2403,8 @@ double *gretl_get_random_series (char st, const double *parm,
     return x;
 }
 
-gretl_matrix *gretl_get_random_matrix (int rows, int cols,
-				       char st, const double *parm,
+gretl_matrix *gretl_get_random_matrix (char st, const double *parm,
+				       int rows, int cols,
 				       int *err)
 {
     gretl_matrix *m = NULL;

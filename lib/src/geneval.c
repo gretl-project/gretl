@@ -704,15 +704,17 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 
     *np = *argc = 0;
 
-    if (*s == 'u' || *s == 'U') {
+    if (*s == 'u' || *s == 'U' || *s == 'i') {
 	/* uniform: only RANDGEN is supported */
 	if (randgen(f)) {
-	    *s = 'u';
+	    if (*s == 'U') {
+		*s = 'u';
+	    }
 	    *np = 2; /* min, max */
 	} else {
 	    err = E_INVARG;
 	}
-    } else if (*s == '1' || *s == 'z' || *s == 'Z' ||
+    } else if (*s == 'z' || *s == 'Z' ||
 	       *s == 'n' || *s == 'N') {
 	/* normal: all functions supported */
 	*s = 'z';
@@ -721,19 +723,19 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	} else {
 	    *np = 0; /* N(0,1) is assumed */
 	}
-    } else if (*s == '2' || *s == 't') {
+    } else if (*s == 't') {
 	/* Student t: all functions supported */
 	*s = 't';
 	*np = 1; /* df */
-    } else if (*s == '3' || *s == 'c' || *s == 'x' || *s == 'X') {
+    } else if (*s == 'c' || *s == 'x' || *s == 'X') {
 	/* chi-square: all functions supported */
 	*s = 'X';
 	*np = 1; /* df */
-    } else if (*s == '4' || *s == 'f' || *s == 'F') {
+    } else if (*s == 'f' || *s == 'F') {
 	/* Snedecor: all functions supported */
 	*s = 'F';
 	*np = 2; /* dfn, dfd */
-    } else if (*s == '5' || *s == 'g' || *s == 'G') {
+    } else if (*s == 'g' || *s == 'G') {
 	/* Gamma: partial support */
 	*s = 'G';
 	if (f == F_CRIT) {
@@ -741,11 +743,11 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	} else {
 	    *np = 2; /* shape, scale */
 	}
-    } else if (*s == '6' || *s == 'b' || *s == 'B') {
+    } else if (*s == 'b' || *s == 'B') {
 	/* Binomial */
 	*s = 'B';
 	*np = 2; /* prob, trials */
-    } else if (*s == '7' || *s == 'D') {
+    } else if (*s == 'D') {
 	/* bivariate normal: cdf only */
 	*s = 'D';
 	if (f == F_CDF) {
@@ -754,11 +756,11 @@ static int check_dist_count (char *s, int f, int *np, int *argc)
 	} else {
 	    err = E_INVARG;
 	}
-    } else if (*s == '8' || *s == 'p' || *s == 'P') {
+    } else if (*s == 'p' || *s == 'P') {
 	/* Poisson */
 	*s = 'P';
 	*np = 1;
-    } else if (*s == '9' || *s == 'w' || *s == 'W') {
+    } else if (*s == 'w' || *s == 'W') {
 	/* Weibull: inverse cdf not supported */
 	*s = 'W';
 	if (f == F_INVCDF) {
@@ -1203,7 +1205,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	gretl_matrix *argmat = NULL;
 	int rows = 0, cols = 0;
 	int np, argc;
-	char d, *dist, code[2];
+	char d, *dist;
 
 	if (mrgen) {
 	    if (m < 4 || m > 7) {
@@ -1218,9 +1220,6 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	s = r->v.bn.n[0];
 	if (s->t == STR) {
 	    dist = s->v.str;
-	} else if (s->t == NUM && s->v.xval > 0 && s->v.xval < 10) {
-	    sprintf(code, "%d", (int) s->v.xval);
-	    dist = code;
 	} else {
 	    node_type_error(n->t, 0, STR, s, p);
 	    goto disterr;
@@ -1320,7 +1319,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 						  parmvec[0], parmvec[1], 
 						  p->dset, &p->err);
 	} else if (mrgen) {
-	    ret->v.m = gretl_get_random_matrix(rows, cols, d, parm, 
+	    ret->v.m = gretl_get_random_matrix(d, parm, rows, cols, 
 					       &p->err);
 	} else if (argvec != NULL) {
 	    ret->v.xvec = series_pdist(n->t, d, parm, np, argvec, p);

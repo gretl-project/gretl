@@ -5719,9 +5719,9 @@ void add_model_stat (MODEL *pmod, int which)
 
     sprintf(vname, "%s_%d", statname + 1, pmod->ID);
 
-    blurb = g_strdup_printf("Statistic from model %d\n"
-			    "%s (value = %g)\n" 
-			    "Name (max. 15 characters):",
+    blurb = g_strdup_printf(_("Statistic from model %d\n"
+			      "%s (value = %g)\n" 
+			      "Name (max. 15 characters):"),
 			    pmod->ID, descrip, val);
 
     edit_dialog(_("add scalar"),
@@ -8508,7 +8508,7 @@ int gui_exec_line (ExecState *s, DATASET *dset)
 
     case CLEAR:
 	if (cmd->opt & OPT_O) {
-	    err = E_NOTIMP; /* FIXME */
+	    close_session(OPT_O);
 	} else if (cmd->opt & OPT_D) {
 	    close_session(OPT_P);
 	} else {

@@ -3692,6 +3692,39 @@
       </description>
     </function>
 
+    <function name="mrandgen" section="probdist" output="matrix">
+      <fnargs>
+	<fnarg type="char">c</fnarg>
+	<fnarg type="scalar">a</fnarg>
+	<fnarg type="scalar">b</fnarg>
+      </fnargs>
+      <examples>
+	<example>matrix mx = mrandgen(u, 0, 100, 50, 1)</example>
+	<example>matrix mt14 = mrandgen(t, 14, 20, 20)</example>
+      </examples>
+      <description>
+	<para>
+	  Works like <fncref targ="randgen"/> except that the return value
+	  is a matrix rather than a series. The initial arguments to this
+	  function are as described for <lit>randgen</lit>, but they must
+	  be followed by two integers to specify the number of rows and
+	  columns of the desired random matrix.
+	</para>
+	<para>
+	  The first example above calls for a uniform random column vector
+	  of length 50, while the second example specifies a <by r="20"
+	  c="20"/> random matrix with drawings from the the <math>t</math>
+	  distribution with 14 degrees of freedom.
+	</para>
+	<para>
+	  <seelist>
+	    <fncref targ="mnormal"/>
+	    <fncref targ="muniform"/>
+	  </seelist>
+	</para>
+      </description>
+    </function>
+
     <function name="mread" section="matbuild" output="matrix">
       <fnargs>
 	<fnarg type="string">s</fnarg>
@@ -4738,6 +4771,11 @@
 	  </li>
 	  <li>
 	    <para>
+	      Uniform (discrete) (c = i): minimum; maximum
+	    </para>
+	  </li>
+	  <li>
+	    <para>
 	      Standard normal (c = z, n, or N): mean; standard deviation
 	    </para>
 	  </li>
@@ -4787,6 +4825,7 @@
 	  \begin{tabular}{llll}
 	  \textbf{Distribution} &amp; \textsl{c} &amp; \textsl{a} &amp; \textsl{b} \\[4pt]
 	  Uniform (continuous) &amp; \texttt{u} or \texttt{U} &amp; minimum &amp; maximum\\
+	  Uniform (discrete) &amp; \texttt{i} &amp; minimum &amp; maximum\\
 	  Normal &amp; \texttt{z}, \texttt{n} or \texttt{N} &amp; mean &amp; standard deviation\\
 	  Student's $t$ &amp; \texttt{t} &amp; degrees of freedom &amp; --\\
 	  Chi square &amp; \texttt{c}, \texttt{x} or \texttt{X} &amp; degrees of freedom &amp; --\\
@@ -4803,6 +4842,7 @@
 	  <seelist>
 	    <fncref targ="normal"/>
 	    <fncref targ="uniform"/> 
+	    <fncref targ="mrandgen"/> 
 	  </seelist>
 	</para>
       </description>

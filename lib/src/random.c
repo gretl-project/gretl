@@ -767,7 +767,7 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
  * @max: upper closed bound of range.
  *
  * Fill array @a of length @n with pseudo-random drawings
- * from the uniform distribution on @min to @max, using the
+ * from the uniform distribution on [@min, @max], using the
  * Mersenne Twister.
  *
  * Returns: 0 on success, 1 on invalid input.
@@ -775,23 +775,94 @@ int gretl_rand_uniform_minmax (double *a, int t1, int t2,
 
 int gretl_rand_int_minmax (int *a, int n, int min, int max) 
 {
-    int i;
+    int i, err = 0;
 
     if (max < min) {
-	return E_INVARG;
+	err = E_INVARG;
+    } else if (min == max) {
+	for (i=0; i<n; i++) {
+	    a[i] = min;
+	}
+    } else {
+	/* in g_rand_int_range() the upper bound is open */
+	for (i=0; i<n; i++) {
+	    if (use_sfmt) {
+		a[i] = sfmt_int_range(min, max + 1);
+	    } else {
+		a[i] = g_rand_int_range(gretl_rand, min, max + 1);
+	    } 
+	}
     }
 
-    /* note: in g_rand_int_range the upper bound is open */
+    return err;
+}
+
+static int already_selected (double *a, int n, double val)
+{
+    int i;
 
     for (i=0; i<n; i++) {
-	if (use_sfmt) {
-	    a[i] = sfmt_int_range(min, max + 1);
-	} else {
-	    a[i] = g_rand_int_range(gretl_rand, min, max + 1);
-	} 
+	if (a[i] == val) {
+	    return 1;
+	}
     }
 
     return 0;
+}
+
+/**
+ * gretl_rand_uniform_int_minmax:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @min: lower closed bound of range.
+ * @max: upper closed bound of range.
+ * @opt: include OPT_O for sampling without replacement.
+ *
+ * Fill the selected subset of array @a with pseudo-random drawings
+ * from the uniform distribution on [@min, @max], using the
+ * Mersenne Twister.
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int gretl_rand_uniform_int_minmax (double *a, int t1, int t2, 
+				   int min, int max,
+				   gretlopt opt) 
+{
+    int t, err = 0;
+
+    if (max < min) {
+	err = E_INVARG;
+    } else if (max == min) {
+	for (t=t1; t<=t2; t++) {
+	    a[t] = min;
+	}
+    } else {
+	double x;
+	int i = 0;
+
+	for (t=t1; t<=t2; t++) {
+	    if (use_sfmt) {
+		x = sfmt_int_range(min, max + 1);
+	    } else {
+		x = g_rand_int_range(gretl_rand, min, max + 1);
+	    } 
+	    if (opt & OPT_O) {
+		while (already_selected(a, i, x)) {
+		    if (use_sfmt) {
+			x = sfmt_int_range(min, max + 1);
+		    } else {
+			x = g_rand_int_range(gretl_rand, min, max + 1);
+		    } 
+		}
+	    }
+	    a[t] = x;
+	    i++;
+	}
+    }
+
+    return err;
 }
 
 /**

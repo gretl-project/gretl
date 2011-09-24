@@ -1639,9 +1639,11 @@ void close_session (gretlopt opt)
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
 
-    if (dataset != NULL && dataset->v > 0) {
-	logcode = LOG_CLOSE;
-	session_clear_data(dataset); 
+    if (!(opt & OPT_O)) {
+	if (dataset != NULL && dataset->v > 0) {
+	    logcode = LOG_CLOSE;
+	    session_clear_data(dataset); 
+	}
     }
 
     free_session();
@@ -1669,6 +1671,8 @@ void close_session (gretlopt opt)
 
     if (opt & OPT_P) {
 	libgretl_session_cleanup(SESSION_CLEAR_DATASET);
+    } else if (opt & OPT_O) {
+	libgretl_session_cleanup(SESSION_CLEAR_OTHER);
     } else {
 	libgretl_session_cleanup(SESSION_CLEAR_ALL);
     }
