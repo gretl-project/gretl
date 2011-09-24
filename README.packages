@@ -1,0 +1,22 @@
+This file aims to ease finding the correct packages as mentioned in the Gretl dependencies file (http://gretl.sourceforge.net/depend.html) and for different Linux distributions.
+
+Each entry is the appropriate shell command to obtain the packages which then will allow to build gretl_x11 (libgretl and gretlcli too, of course).
+
+It is organized by Linux distributions and expects your contributions to validate and expand to new distributions.
+
+23 September 2011
+Hélio Guilherme 
+-----
+-----
+Ubuntu natty (11.04) (contrib. 23/Sep/2011, helio_guilherme@hotmail.com)
+#dependencies
+sudo apt-get install  gnuplot libfftw3-dev liblapack-dev gfortran libxml2 zlibc libreadline5-dev libgtksourceview2.0-dev libgmp3-dev
+
+#documentation build
+sudo apt-get install texlive libxslt1-dev
+-----
+-----
+
+
+
+
