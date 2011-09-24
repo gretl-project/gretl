@@ -15062,7 +15062,7 @@ msgstr "Tratar esta variável como discreta"
 
 #: gui2/varinfo.c:977
 msgid "Name of variable:"
-msgstr "Nomde da variável:"
+msgstr "Nome da variável:"
 
 #: plugin/addons-i18n.c:4
 msgid "gig"
