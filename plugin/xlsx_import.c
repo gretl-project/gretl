@@ -40,6 +40,7 @@
 
 struct xlsx_info_ {
     int flags;
+    int trydates;
     int maxrow;
     int maxcol;
     int xoffset;
@@ -59,6 +60,7 @@ typedef struct xlsx_info_ xlsx_info;
 static void xlsx_info_init (xlsx_info *xinfo)
 {
     xinfo->flags = BOOK_TOP_LEFT_EMPTY;
+    xinfo->trydates = 0;
     xinfo->maxrow = 0;
     xinfo->maxcol = 0;
     xinfo->xoffset = 0;
@@ -329,6 +331,7 @@ static int xlsx_set_value (xlsx_info *xinfo, int i, int t, double x)
 
 	    xlsx_real_set_obs_string(xinfo, t, tmp);
 	    g_free(tmp);
+	    xinfo->trydates = 1;
 	    return 0;
 	}
     }
@@ -994,7 +997,7 @@ static int finalize_xlsx_import (DATASET *dset,
 	}
     }
 
-    if (!err && xinfo->dset->S != NULL) {
+    if (!err && xinfo->trydates) {
 	xlsx_dates_check(xinfo->dset);
     }
 
