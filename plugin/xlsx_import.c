@@ -215,8 +215,9 @@ static int letter_val (char c)
 }
 
 /* Given an Excel cell reference such as "AB65" split it out
-   into 1-based row and column indices, and keep a running
-   record of the maxima of these indices.
+   into 1-based row and column indices. If @xinfo is not
+   NULL we keep a running record of the maxima of these 
+   indices in xinfo->maxrow and xinfo->maxcol.
 */
 
 static int xlsx_cell_get_coordinates (const char *s, 
@@ -252,7 +253,7 @@ static int xlsx_cell_get_coordinates (const char *s,
 	i--;
     }
 
-    if (!err) {
+    if (!err && xinfo != NULL) {
 	if (*row > xinfo->maxrow) {
 	    xinfo->maxrow = *row;
 	}
@@ -428,25 +429,49 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
     }
 }
 
-/* we can perhaps handle simple formulae of the form 'A1+k'
-   that define successive dates */
+/* Minimal handling of formulae: we're really just looking for the
+   case where dates in the observations column are defined as
+   previous value plus constant, or minor variations on that
+   notion.
+*/
 
 static void xlsx_maybe_handle_formula (xlsx_info *xinfo, 
 				       const char *src,
 				       int i, int t)
 {
     if (i == -1 && t > 0 && (xinfo->flags & BOOK_OBS_LABELS)) {
-	char ref[8] = {0};
-	int p;
+	char c, cref[8] = {0};
+	int k;
 	
-	if (sscanf(src, "%7[^+]+%d", ref, &p) == 2) {
-	    const char *s = xinfo->dset->S[t-1];
+	if (sscanf(src, "%7[^+-]%c%d", cref, &c, &k) == 3) {
+	    int err, st = 0, col = 0;
 
-	    if (integer_string(s)) {
-		gchar *tmp = g_strdup_printf("%d", atoi(s) + p);
+	    if (c == '-') {
+		k = -k;
+	    } else if (c != '+') {
+		/* we'll only only handle +/- */
+		return;
+	    } 
 
-		xlsx_real_set_obs_string(xinfo, t, tmp);
-		g_free(tmp);
+	    err = xlsx_cell_get_coordinates(cref, NULL, &st, &col);
+	    if (err || col != xinfo->xoffset + 1) {
+		return;
+	    }
+
+	    st = st - xinfo->yoffset - 1;
+	    if (!(xinfo->flags & BOOK_AUTO_VARNAMES)) {
+		st--;
+	    }
+		
+	    if (st >= 0 && st < t) {
+		const char *s = xinfo->dset->S[st];
+
+		if (integer_string(s)) {
+		    gchar *tmp = g_strdup_printf("%d", atoi(s) + k);
+
+		    xlsx_real_set_obs_string(xinfo, t, tmp);
+		    g_free(tmp);
+		}
 	    }
 	}
     }
@@ -475,7 +500,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "c")) {
-	    /* got a cell */
+	    /* we got a cell */
 	    char *cref = NULL;
 	    char *formula = NULL;
 	    const char *strval = NULL;
@@ -939,11 +964,19 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo)
 static void xlsx_dates_check (DATASET *dset)
 {
     int t, maybe_dates = 1;
-    int st, stdiff;
+    int d, dmin = 0, dmax = 0;
 
-    /* the heuristic here is that all the obs labels are
-       integer strings, with a constant difference between
-       successive values -- and not just starting with 1
+    /* We're dealing here with the case where our prior heuristics
+       suggest we got an "observations" column, yet the values we
+       found there were numeric (and we converted them to strings).
+       Here we see if it might be reasonable to interpret the
+       labels as representing MS dates (days since Dec 31, 1899).
+
+       For this purpose we'll require that all the obs labels are 
+       integer strings, and that the gap between successive values
+       should be constant, or variable to a degree that's consistent
+       with the data being daily (where the mininum gap is 1 day
+       but weekends and holidays might be skipped).
     */
 
     for (t=0; t<dset->n && maybe_dates; t++) {
@@ -954,12 +987,32 @@ static void xlsx_dates_check (DATASET *dset)
 		maybe_dates = 0;
 	    }	
 	} else {
-	    st = atoi(dset->S[t]);
+	    d = atoi(dset->S[t]) - atoi(dset->S[t-1]);
 	    if (t == 1) {
-		stdiff = st - atoi(dset->S[0]);
-	    } else if (st - atoi(dset->S[t-1]) != stdiff) {
+		dmin = dmax = d;
+	    } else if (d < dmin) {
+		dmin = d;
+	    } else if (d > dmax) {
+		dmax = d;
+	    }
+	}
+    }
+
+    if (maybe_dates) {
+	if (dmin == 1 || dmax == -1) {
+	    /* daily (may be in reverse order)? We may have some gaps
+	       but they shouldn't be too big */
+	    if (dmin == 1 && dmax > 5) {
+		maybe_dates = 0;
+	    } else if (dmax == -1 && dmin < -5) {
 		maybe_dates = 0;
 	    }
+	} else if (dmax != dmin) {
+	    /* non-daily: the gaps should not be variable */
+	    maybe_dates = 0;
+	} else if (dmax > 365 || dmax < -365) {
+	    /* gap greater than a year */
+	    maybe_dates = 0;
 	}
     }
 
@@ -967,9 +1020,8 @@ static void xlsx_dates_check (DATASET *dset)
 	char datestr[OBSLEN];
 
 	for (t=0; t<dset->n; t++) {
-	    st = atoi(dset->S[t]);
 	    /* FIXME detect use of 1904-based dates? */
-	    MS_excel_date_string(datestr, st, 0, 0);
+	    MS_excel_date_string(datestr, atoi(dset->S[t]), 0, 0);
 	    strcpy(dset->S[t], datestr);
 	}
     }
