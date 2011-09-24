@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl-1.9.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-09-22 17:32-0400\n"
+"POT-Creation-Date: 2011-09-24 11:17-0400\n"
 "PO-Revision-Date: 2011-09-18 00:49+0100\n"
 "Last-Translator: artur bala <artur.bala.al@gmail.com>\n"
 "Language-Team: albanian <artur.bala.al@gmail.com>\n"
@@ -443,7 +443,7 @@ msgstr "testi Wald"
 #: lib/src/modelprint.c:2292 lib/src/modelprint.c:2314
 #: lib/src/modelprint.c:2319 lib/src/modelprint.c:2809
 #: lib/src/modelprint.c:4950 lib/src/modelprint.c:4973 lib/src/printout.c:324
-#: lib/src/pvalues.c:1869 lib/src/pvalues.c:2458 lib/src/system.c:953
+#: lib/src/pvalues.c:1869 lib/src/pvalues.c:2507 lib/src/system.c:953
 #: lib/src/system.c:1006 lib/src/system.c:2847 lib/src/system.c:2869
 #: lib/src/system.c:2900 lib/src/system.c:2918 lib/src/system.c:3988
 #: lib/src/varprint.c:853 lib/src/varprint.c:857 lib/src/varprint.c:1262
@@ -2203,16 +2203,16 @@ msgstr "Seria e të dhënave %s (ID %d) u zëvendësua"
 msgid "Generated series %s (ID %d)"
 msgstr "Seria e të dhënave %s (ID %d) u krijua"
 
-#: lib/src/geneval.c:3316 lib/src/interact.c:1532
+#: lib/src/geneval.c:3339 lib/src/interact.c:1532
 #, c-format
 msgid "Variable number %d is out of bounds"
 msgstr "Numri i ndryshores %d është jashtë kufijve të lejuar"
 
-#: lib/src/geneval.c:5047
+#: lib/src/geneval.c:5070
 msgid "Matrix specification is not coherent"
 msgstr "Pëcaktimi i matricës nuk është i vlefshëm"
 
-#: lib/src/geneval.c:5196 lib/src/geneval.c:6402
+#: lib/src/geneval.c:5219 lib/src/geneval.c:6425
 #, c-format
 msgid ""
 "Number of arguments (%d) does not match the number of\n"
@@ -2221,97 +2221,97 @@ msgstr ""
 "Numri i argumentave (%d) nuk përputhet me numrin\n"
 "e parametrave të funksionit %s (%d)"
 
-#: lib/src/geneval.c:5263
+#: lib/src/geneval.c:5286
 msgid "Wrong type of operand for unary '&'"
 msgstr "Operator i pasaktë për llogaritjen \"&\""
 
-#: lib/src/geneval.c:7659
+#: lib/src/geneval.c:7682
 #, c-format
 msgid "'%s': invalid argument for %s()\n"
 msgstr "'%s': argument i pasaktë për %s()\n"
 
-#: lib/src/geneval.c:7710 cli/cli_object.c:44 gui2/objectsave.c:49
+#: lib/src/geneval.c:7733 cli/cli_object.c:44 gui2/objectsave.c:49
 #, c-format
 msgid "%s: no such object\n"
 msgstr "%s: objekti në fjalë nuk ekziston\n"
 
-#: lib/src/geneval.c:7881
+#: lib/src/geneval.c:7911
 #, c-format
 msgid "%s: insufficient arguments"
 msgstr "%s: argumentë të pamjaftueshëm"
 
-#: lib/src/geneval.c:7883
+#: lib/src/geneval.c:7913
 #, c-format
 msgid "%s: invalid argument type %s"
 msgstr "'%s': lloj argumenti i pasaktë për %s"
 
-#: lib/src/geneval.c:7886
+#: lib/src/geneval.c:7916
 #, c-format
 msgid "%s: argument %d: invalid type %s"
 msgstr "%s: argumenti %d: lloj i pavlefshëm %s"
 
-#: lib/src/geneval.c:7896
+#: lib/src/geneval.c:7926
 #, c-format
 msgid "%s: operand should be %s"
 msgstr "%s: operatori duhej të ishte %s"
 
-#: lib/src/geneval.c:7899
+#: lib/src/geneval.c:7929
 #, c-format
 msgid "%s: operand %d should be %s"
 msgstr "%s:  operatori %d duhej të ishte  %s"
 
-#: lib/src/geneval.c:7904
+#: lib/src/geneval.c:7934
 #, c-format
 msgid "%s: argument should be %s"
 msgstr "%s: argumenti duhej të ishte %s"
 
-#: lib/src/geneval.c:7907
+#: lib/src/geneval.c:7937
 #, c-format
 msgid "%s: argument %d should be %s"
 msgstr "%s: argumenti %d duhej të ishte %s"
 
-#: lib/src/geneval.c:9414 lib/src/genlex.c:688
+#: lib/src/geneval.c:9446 lib/src/genlex.c:690
 #, c-format
 msgid "The symbol '%c' is not valid in this context\n"
 msgstr "Simboli '%c' nuk është i vlefshëm në këtë kontekst \n"
 
-#: lib/src/geneval.c:9567 lib/src/genlex.c:718 lib/src/genlex.c:785
+#: lib/src/geneval.c:9599 lib/src/genlex.c:720 lib/src/genlex.c:787
 #: lib/src/gensyntax.c:274
 #, c-format
 msgid "Unmatched '%c'\n"
 msgstr "'%c': i papërshtatshëm\n"
 
-#: lib/src/geneval.c:9622
+#: lib/src/geneval.c:9654
 #, fuzzy, c-format
 msgid "The variable %s is of type %s"
 msgstr "Ndryshorja '%s' nuk është diskrete"
 
-#: lib/src/geneval.c:9778
+#: lib/src/geneval.c:9810
 #, c-format
 msgid "'%s': name is too long (max 15 characters)\n"
 msgstr "'%s': emër shumë i gjatë (maks. 15 karaktere)\n"
 
-#: lib/src/geneval.c:9881
+#: lib/src/geneval.c:9913
 #, c-format
 msgid "'%s' : not implemented for matrices"
 msgstr "'%s': nuk vlen për matricat"
 
-#: lib/src/geneval.c:9888
+#: lib/src/geneval.c:9920
 #, c-format
 msgid "'%s' : not implemented for lists"
 msgstr "'%s': nuk vlen për listat"
 
-#: lib/src/geneval.c:9895
+#: lib/src/geneval.c:9927
 #, c-format
 msgid "'%s' : not implemented for strings"
 msgstr "'%s': nuk vlen për tekstet"
 
-#: lib/src/geneval.c:9902
+#: lib/src/geneval.c:9934
 #, c-format
 msgid "'%s' : only defined for matrices"
 msgstr "'%s': vlen vetëm për matricat"
 
-#: lib/src/geneval.c:9909
+#: lib/src/geneval.c:9941
 #, c-format
 msgid "'%s' : not implemented for this type"
 msgstr "'%s': nuk vlen për këtë lloj"
@@ -2412,56 +2412,60 @@ msgstr "varianca e përafruar e modelit %d"
 msgid "per-unit constants from model %d"
 msgstr "konstantet individuale të modelit %d"
 
-#: lib/src/genfuncs.c:3186
+#: lib/src/genfuncs.c:3191
+msgid "Invalid declaration: maybe you need the \"clear\" command?"
+msgstr ""
+
+#: lib/src/genfuncs.c:3194
 msgid "Invalid declaration"
 msgstr "Deklarim i pavlefshëm"
 
-#: lib/src/genfuncs.c:4416
+#: lib/src/genfuncs.c:4425
 msgid "model-related"
 msgstr "në lidhje me modelin"
 
-#: lib/src/genfuncs.c:4478 lib/src/gretl_scalar.c:621 lib/src/plotspec.c:296
+#: lib/src/genfuncs.c:4487 lib/src/gretl_scalar.c:621 lib/src/plotspec.c:296
 #: lib/src/plotspec.c:310 gui2/gpt_dialog.c:127 gui2/gui_utils.c:2782
 msgid "none"
 msgstr "asnjë"
 
-#: lib/src/genfuncs.c:4481
+#: lib/src/genfuncs.c:4490
 msgid "other"
 msgstr "tjetër"
 
-#: lib/src/genlex.c:665
+#: lib/src/genlex.c:667
 #, c-format
 msgid "%s: no such object"
 msgstr "%s: objekti në fjalë nuk ekziston"
 
-#: lib/src/genlex.c:667
+#: lib/src/genlex.c:669
 #, c-format
 msgid "The symbol '%s' is undefined"
 msgstr "Simboli '%s' është i papërcaktuar"
 
-#: lib/src/genlex.c:677 lib/src/genlex.c:679
+#: lib/src/genlex.c:679 lib/src/genlex.c:681
 #, c-format
 msgid "'%s': no argument was given"
 msgstr "'%s' : asnjë parametër nuk është dhënë"
 
-#: lib/src/genlex.c:690
+#: lib/src/genlex.c:692
 msgid "(for logical AND, use '&&')\n"
 msgstr "(përdorni \"&&\" për kushtin logjik AND)\n"
 
-#: lib/src/genlex.c:692
+#: lib/src/genlex.c:694
 msgid "(for logical OR, use '||')\n"
 msgstr "(përdorni \"||\" për kushtin logjik \"ose\", OR)\n"
 
-#: lib/src/genlex.c:698
+#: lib/src/genlex.c:700
 #, c-format
 msgid "The symbol '%s' is not valid in this context\n"
 msgstr "Simboli '%s' nuk është i vlefshëm në këtë kontekst \n"
 
-#: lib/src/genlex.c:782
+#: lib/src/genlex.c:784
 msgid "Empty observation []\n"
 msgstr "Vrojtim bosh []\n"
 
-#: lib/src/genlex.c:1441
+#: lib/src/genlex.c:1443
 #, c-format
 msgid "Invalid character '%c'\n"
 msgstr "Karakter i pavlefshëm '%c'\n"
@@ -4218,7 +4222,7 @@ msgstr "E pamundur të vihet në formë modeli\n"
 msgid "Model printed to %s\n"
 msgstr "Modeli po shtypet nga %s\n"
 
-#: lib/src/interact.c:5250 cli/gretlcli.c:1046 gui2/library.c:8467
+#: lib/src/interact.c:5250 cli/gretlcli.c:1044 gui2/library.c:8467
 msgid "Infinite loop detected in script\n"
 msgstr "Skripti përmban një \"loop\" të pafund\n"
 
@@ -4226,7 +4230,7 @@ msgstr "Skripti përmban një \"loop\" të pafund\n"
 msgid "You cannot delete series in this context\n"
 msgstr "E pamundur të fshihen seritë në këtë kontekst\n"
 
-#: lib/src/interact.c:5322 cli/gretlcli.c:675
+#: lib/src/interact.c:5322 cli/gretlcli.c:673
 #, c-format
 msgid "%s: command not available\n"
 msgstr "Komanda %s kërkon një ndryshore.\n"
@@ -6356,38 +6360,38 @@ msgstr "prob. i dyanshëm = %g"
 msgid "Critical value = %g"
 msgstr "Vlera kritike = %g"
 
-#: lib/src/pvalues.c:2386
+#: lib/src/pvalues.c:2435
 #, c-format
 msgid "area to the right of %g: NA\n"
 msgstr "sipërfaqja djathtas vlerës %g: NA\n"
 
-#: lib/src/pvalues.c:2393
+#: lib/src/pvalues.c:2442
 #, c-format
 msgid "area to the right of %g =~ %g\n"
 msgstr "sipërfaqja djathtas vlerës %g =~ %g\n"
 
-#: lib/src/pvalues.c:2395
+#: lib/src/pvalues.c:2444
 #, c-format
 msgid "area to the right of %g = %g\n"
 msgstr "sipërfaqja djathtas vlerës %g = %g\n"
 
-#: lib/src/pvalues.c:2424
+#: lib/src/pvalues.c:2473
 msgid "Standard normal"
 msgstr "Normal standart"
 
-#: lib/src/pvalues.c:2428 lib/src/pvalues.c:2433 lib/src/pvalues.c:2444
-#: lib/src/pvalues.c:2449
+#: lib/src/pvalues.c:2477 lib/src/pvalues.c:2482 lib/src/pvalues.c:2493
+#: lib/src/pvalues.c:2498
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
 msgstr "(prob. i dyanshëm = %g; prob. plotësues = %g)\n"
 
-#: lib/src/pvalues.c:2432 lib/src/pvalues.c:2448 lib/src/pvalues.c:2462
-#: lib/src/pvalues.c:2472 lib/src/pvalues.c:2525 lib/src/pvalues.c:2533
+#: lib/src/pvalues.c:2481 lib/src/pvalues.c:2497 lib/src/pvalues.c:2511
+#: lib/src/pvalues.c:2521 lib/src/pvalues.c:2574 lib/src/pvalues.c:2582
 #, c-format
 msgid "(to the left: %g)\n"
 msgstr "(majtas: %g)\n"
 
-#: lib/src/pvalues.c:2478
+#: lib/src/pvalues.c:2527
 #, c-format
 msgid ""
 "Gamma (shape %g, scale %g, mean %g, variance %g):\n"
@@ -6396,7 +6400,7 @@ msgstr ""
 "Gamma (forma %g, shkalla %g, mesatarja %g, varianca %g) :\n"
 " sipërfaqja djathtas %g = %g\n"
 
-#: lib/src/pvalues.c:2488
+#: lib/src/pvalues.c:2537
 #, c-format
 msgid ""
 "Binomial (p = %g, n = %d):\n"
@@ -6405,28 +6409,28 @@ msgstr ""
 "Binomiale (p = %g, n = %d) :\n"
 " Prob(x > %d) = %g\n"
 
-#: lib/src/pvalues.c:2493 lib/src/pvalues.c:2509
+#: lib/src/pvalues.c:2542 lib/src/pvalues.c:2558
 #, c-format
 msgid " Prob(x <= %d) = %g\n"
 msgstr " Prob(x <= %d) = %g\n"
 
-#: lib/src/pvalues.c:2494 lib/src/pvalues.c:2497 lib/src/pvalues.c:2510
-#: lib/src/pvalues.c:2513
+#: lib/src/pvalues.c:2543 lib/src/pvalues.c:2546 lib/src/pvalues.c:2559
+#: lib/src/pvalues.c:2562
 #, c-format
 msgid " Prob(x = %d) = %g\n"
 msgstr " Prob(x = %d) = %g\n"
 
-#: lib/src/pvalues.c:2504
+#: lib/src/pvalues.c:2553
 #, c-format
 msgid "Poisson (mean = %g): "
 msgstr "Poisson (mesatarja = %g): "
 
-#: lib/src/pvalues.c:2520
+#: lib/src/pvalues.c:2569
 #, c-format
 msgid "Weibull (shape = %g, scale = %g): "
 msgstr "Weibull (forma = %g, shkalla = %g): "
 
-#: lib/src/pvalues.c:2529
+#: lib/src/pvalues.c:2578
 #, c-format
 msgid "GED (shape = %g): "
 msgstr "GED (forma = %g): "
@@ -7127,7 +7131,7 @@ msgstr ""
 "\n"
 "gretlcli: gabim gjatë ekzekutimit të skriptit: pezullim\n"
 
-#: cli/gretlcli.c:564
+#: cli/gretlcli.c:562
 #, c-format
 msgid ""
 "\n"
@@ -7136,76 +7140,76 @@ msgstr ""
 "\n"
 "\"help\" shfaq listën e komandave\n"
 
-#: cli/gretlcli.c:567
+#: cli/gretlcli.c:565
 #, c-format
 msgid "help file %s is not accessible\n"
 msgstr "skeda e ndihmës %s nuk mund të trajtohet dot\n"
 
-#: cli/gretlcli.c:578
+#: cli/gretlcli.c:576
 #, c-format
 msgid "Type \"open filename\" to open a data set\n"
 msgstr "Shkruani \"open filename\" për të hapur një skedë të dhënash\n"
 
-#: cli/gretlcli.c:752
+#: cli/gretlcli.c:750
 #, c-format
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
 msgstr ""
 "Hapja e një skede të re të dhënash shkakton mbylljen e asaj në përdorim. "
 "Doni të vazhdoni? (y/n)"
 
-#: cli/gretlcli.c:756
+#: cli/gretlcli.c:754
 msgid "OK, staying with current data set\n"
 msgstr "OK, le vazhdojmë me të dhënat në përdorim\n"
 
-#: cli/gretlcli.c:887 gui2/library.c:8311
+#: cli/gretlcli.c:885 gui2/library.c:8311
 #, c-format
 msgid "Command '%s' ignored; not valid within equation system\n"
 msgstr "Komanda '%s' u anashkalua; e pavlefshme për sistem ekuacionesh\n"
 
-#: cli/gretlcli.c:895 gui2/library.c:8319
+#: cli/gretlcli.c:893 gui2/library.c:8319
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 "Jepni komandat për llogaritjen \"loop\". Për t'i dhënë fund, shkruani "
 "'endloop'\n"
 
-#: cli/gretlcli.c:945 gui2/library.c:6215 gui2/library.c:8383
+#: cli/gretlcli.c:943 gui2/library.c:6215 gui2/library.c:8383
 msgid "Take note: variables have been renumbered"
 msgstr "Vini re! Ndryshoret kanë ndërruar ID"
 
-#: cli/gretlcli.c:968 gui2/library.c:8429
+#: cli/gretlcli.c:966 gui2/library.c:8429
 msgid "Data series length count missing or invalid\n"
 msgstr "Numri që shpreh gjatësinë e serive është i pavlefshëm\n"
 
-#: cli/gretlcli.c:987
+#: cli/gretlcli.c:985
 msgid "Done\n"
 msgstr "U krye\n"
 
-#: cli/gretlcli.c:993
+#: cli/gretlcli.c:991
 #, c-format
 msgid "commands saved as %s\n"
 msgstr "komandat u ruajtën në %s\n"
 
-#: cli/gretlcli.c:1000
+#: cli/gretlcli.c:998
 #, c-format
 msgid "type a filename to store output (enter to quit): "
 msgstr ""
 "për të ruajtur rezultatin, jepni një emër skede ('enter' për t'u larguar):"
 
-#: cli/gretlcli.c:1008
+#: cli/gretlcli.c:1006
 #, c-format
 msgid "writing session output to %s%s\n"
 msgstr "rezultati i sesionit po shkruhet në %s%s\n"
 
-#: cli/gretlcli.c:1030
+#: cli/gretlcli.c:1028
 msgid "Command is malformed\n"
 msgstr "Komanda është e keqformuar\n"
 
-#: cli/gretlcli.c:1036 cli/gretlcli.c:1054 gui2/library.c:8462
+#: cli/gretlcli.c:1034 cli/gretlcli.c:1052 gui2/library.c:8462
 #, c-format
 msgid "Error reading %s\n"
 msgstr "Gabim gjatë leximit %s\n"
 
-#: cli/gretlcli.c:1079
+#: cli/gretlcli.c:1077
 msgid "Dataset cleared\n"
 msgstr "Të dhënat u fshinë\n"
 
@@ -8092,7 +8096,7 @@ msgstr "E pamundur të trajtohet skeda e të dhënave binare"
 
 #: gui2/database.c:786 gui2/session.c:155 gui2/session.c:162
 #: gui2/session.c:168 gui2/session.c:175 gui2/session.c:181
-#: gui2/session.c:3049
+#: gui2/session.c:3053
 msgid "Display"
 msgstr "Shfaq"
 
@@ -8109,7 +8113,7 @@ msgstr "Importo"
 #: gui2/datafiles.c:1330 gui2/menustate.c:362 gui2/menustate.c:406
 #: gui2/menustate.c:433 gui2/menustate.c:487 gui2/session.c:158
 #: gui2/session.c:177 gui2/session.c:184 gui2/session.c:209 gui2/session.c:215
-#: gui2/session.c:2989 gui2/session.c:3003 gui2/session.c:3081
+#: gui2/session.c:2993 gui2/session.c:3007 gui2/session.c:3085
 #: gui2/ssheet.c:2333
 msgid "Delete"
 msgstr "Fshij"
@@ -8247,8 +8251,8 @@ msgstr "Hap"
 
 #: gui2/datafiles.c:1192 gui2/datafiles.c:1324 gui2/gpt_control.c:3526
 #: gui2/gpt_control.c:3603 gui2/session.c:188 gui2/session.c:195
-#: gui2/session.c:205 gui2/session.c:2979 gui2/session.c:3012
-#: gui2/session.c:3027
+#: gui2/session.c:205 gui2/session.c:2983 gui2/session.c:3016
+#: gui2/session.c:3031
 msgid "Edit"
 msgstr "Ndrysho"
 
@@ -8348,7 +8352,7 @@ msgid "File"
 msgstr "Skedë"
 
 #: gui2/datafiles.c:2098 gui2/datafiles.c:2122 gui2/datafiles.c:2128
-#: gui2/session.c:3266
+#: gui2/session.c:3270
 msgid "Summary"
 msgstr "Përshkrimi"
 
@@ -9287,41 +9291,41 @@ msgstr ""
 msgid "CSV files (*.csv)"
 msgstr "skedë CSV (*.csv)"
 
-#: gui2/fileselect.c:764 gui2/fileselect.c:781
+#: gui2/fileselect.c:764 gui2/fileselect.c:780
 msgid "ASCII files (*.txt)"
 msgstr "skedë ASCII (*.txt)"
 
-#: gui2/fileselect.c:765 gui2/fileselect.c:782
+#: gui2/fileselect.c:765 gui2/fileselect.c:781
 msgid "all files (*.*)"
 msgstr "të gjitha skedat (*.*)"
 
-#: gui2/fileselect.c:768
+#: gui2/fileselect.c:767
 #, fuzzy
 msgid "Excel files (*.xls)"
 msgstr "skedë Ox (*.ox)"
 
-#: gui2/fileselect.c:769
+#: gui2/fileselect.c:768
 #, fuzzy
 msgid "Excel files (*.xlsx)"
 msgstr "skedë Ox (*.ox)"
 
-#: gui2/fileselect.c:771
+#: gui2/fileselect.c:770
 msgid "gretl script files (*.inp)"
 msgstr "skedat skript të gretl-it (*.inp)"
 
-#: gui2/fileselect.c:773
+#: gui2/fileselect.c:772
 msgid "GNU R files (*.R)"
 msgstr "skedë  GNU R (*.R)"
 
-#: gui2/fileselect.c:774
+#: gui2/fileselect.c:773
 msgid "gnuplot files (*.plt)"
 msgstr "skedë GnuPlot (*.plt)"
 
-#: gui2/fileselect.c:775
+#: gui2/fileselect.c:774
 msgid "GNU Octave files (*.m)"
 msgstr "skedë Octave GNU (*.m)"
 
-#: gui2/fileselect.c:777
+#: gui2/fileselect.c:776
 msgid "Ox files (*.ox)"
 msgstr "skedë Ox (*.ox)"
 
@@ -9902,7 +9906,7 @@ msgid "Save to session as icon"
 msgstr "Ruaj si ikonë"
 
 #: gui2/gpt_control.c:3493 gui2/gpt_control.c:3495 gui2/gpt_control.c:3605
-#: gui2/session.c:164 gui2/session.c:171 gui2/session.c:3102
+#: gui2/session.c:164 gui2/session.c:171 gui2/session.c:3106
 #: gui2/toolbar.c:653 gui2/toolbar.c:654 gui2/toolbar.c:655
 msgid "Help"
 msgstr "Ndihmë"
@@ -10289,7 +10293,7 @@ msgstr "Faqja e grafikëve është mbushur plot"
 msgid "Failed to process TeX file"
 msgstr "Trajtimi i skedës TeX dështoi"
 
-#: gui2/graph_page.c:616 gui2/session.c:2845
+#: gui2/graph_page.c:616 gui2/session.c:2849
 msgid "The graph page is empty"
 msgstr "Faqja e grafikëve është bosh"
 
@@ -11255,7 +11259,7 @@ msgstr "Kërk_o module shtesë"
 msgid "_About gretl"
 msgstr "_Diçka rreth gretl"
 
-#: gui2/gretl.c:1825 gui2/textbuf.c:2539 gui2/toolbar.c:977
+#: gui2/gretl.c:1825 gui2/textbuf.c:2538 gui2/toolbar.c:977
 msgid "Main window"
 msgstr "Dritarja kryesore"
 
@@ -11267,20 +11271,20 @@ msgstr "statusi i kampionit"
 msgid "Couldn't find usable socket driver\n"
 msgstr "E pamundur të gjendet një \"socket driver\" i përdorshëm\n"
 
-#: gui2/gretlwin32.c:394
+#: gui2/gretlwin32.c:389
 msgid "Copy buffer was empty"
 msgstr "Asgjë për t'u kopjuar"
 
-#: gui2/gretlwin32.c:399 gui2/gretlwin32.c:468 gui2/gretlwin32.c:599
+#: gui2/gretlwin32.c:394 gui2/gretlwin32.c:463 gui2/gretlwin32.c:594
 msgid "Cannot open the clipboard"
 msgstr "E pamundur të hapet clipboard-i"
 
-#: gui2/gretlwin32.c:523 plugin/mailer.c:670
+#: gui2/gretlwin32.c:518 plugin/mailer.c:670
 #, c-format
 msgid "Please find the gretl data file %s attached."
 msgstr "Skeda e të dhënave gretl %s është bashkëngjitur."
 
-#: gui2/gretlwin32.c:527 plugin/mailer.c:673
+#: gui2/gretlwin32.c:522 plugin/mailer.c:673
 #, c-format
 msgid "Please find the gretl script %s attached."
 msgstr "Skeda skript %s është bashkëngjitur."
@@ -12788,6 +12792,14 @@ msgstr "Shkallët e lirisë"
 msgid "Akaike Information Criterion"
 msgstr "Kriteri informues Akaike"
 
+#: gui2/library.c:5722
+#, c-format
+msgid ""
+"Statistic from model %d\n"
+"%s (value = %g)\n"
+"Name (max. 15 characters):"
+msgstr ""
+
 #: gui2/library.c:5806
 msgid "standardized residual"
 msgstr "mbetja e standartizuar"
@@ -12802,7 +12814,7 @@ msgstr "%s e përafruar"
 msgid "Cannot delete %s; variable is in use"
 msgstr "Ndryshorja %s nuk mund të fshihet pasi është në përdorim"
 
-#: gui2/library.c:6157 gui2/library.c:6167 gui2/session.c:2291
+#: gui2/library.c:6157 gui2/library.c:6167 gui2/session.c:2295
 #, c-format
 msgid "Really delete %s?"
 msgstr "I sigurtë për të fshirë %s?"
@@ -12811,7 +12823,7 @@ msgstr "I sigurtë për të fshirë %s?"
 msgid "Really delete the selected variables?"
 msgstr "A jeni të sigurt për të fshirë ndryshoret e zgjedhura?"
 
-#: gui2/library.c:6175 gui2/session.c:2293
+#: gui2/library.c:6175 gui2/session.c:2297
 msgid "gretl: delete"
 msgstr "gretl: fshij"
 
@@ -13993,59 +14005,59 @@ msgstr "gretl: formati i të dhënave"
 msgid "Select data format"
 msgstr "Zgjidhni formatin e të dhënave"
 
-#: gui2/session.c:149 gui2/session.c:2941 gui2/session.c:3347
+#: gui2/session.c:149 gui2/session.c:2945 gui2/session.c:3351
 msgid "Save session"
 msgstr "Ruaj sesionin"
 
-#: gui2/session.c:150 gui2/session.c:2951
+#: gui2/session.c:150 gui2/session.c:2955
 msgid "Arrange icons"
 msgstr "Rregullo ikonat"
 
-#: gui2/session.c:151 gui2/session.c:2953
+#: gui2/session.c:151 gui2/session.c:2957
 msgid "Close window"
 msgstr "Mbyll dritaren"
 
-#: gui2/session.c:156 gui2/session.c:3090
+#: gui2/session.c:156 gui2/session.c:3094
 msgid "Add to model table"
 msgstr "Shto në tabelën e modeleve"
 
 #: gui2/session.c:157 gui2/session.c:176 gui2/session.c:183 gui2/session.c:208
-#: gui2/session.c:214 gui2/session.c:2987 gui2/session.c:3001
-#: gui2/session.c:3079
+#: gui2/session.c:214 gui2/session.c:2991 gui2/session.c:3005
+#: gui2/session.c:3083
 msgid "Rename"
 msgstr "Riemërto"
 
-#: gui2/session.c:163 gui2/session.c:170 gui2/session.c:3096
+#: gui2/session.c:163 gui2/session.c:170 gui2/session.c:3100
 msgid "Clear"
 msgstr "Fshij"
 
-#: gui2/session.c:169 gui2/session.c:3108
+#: gui2/session.c:169 gui2/session.c:3112
 msgid "Save as TeX..."
 msgstr "Ruaj si TeX..."
 
-#: gui2/session.c:182 gui2/session.c:3064
+#: gui2/session.c:182 gui2/session.c:3068
 msgid "Edit plot commands"
 msgstr "Shfaq komandat e vizatimit"
 
-#: gui2/session.c:189 gui2/session.c:3014
+#: gui2/session.c:189 gui2/session.c:3018
 msgid "Save..."
 msgstr "Ruaj..."
 
-#: gui2/session.c:190 gui2/session.c:3016
+#: gui2/session.c:190 gui2/session.c:3020
 msgid "Export as CSV..."
 msgstr "Eksporto si CSV..."
 
 #: gui2/session.c:191 gui2/session.c:196 gui2/session.c:207
-#: gui2/session.c:2984 gui2/session.c:3018 gui2/session.c:3029
+#: gui2/session.c:2988 gui2/session.c:3022 gui2/session.c:3033
 msgid "Copy as CSV..."
 msgstr "Kopjo si CSV..."
 
 #: gui2/session.c:200 gui2/session.c:204 gui2/session.c:213
-#: gui2/session.c:2971 gui2/session.c:2999 gui2/textutil.c:440
+#: gui2/session.c:2975 gui2/session.c:3003 gui2/textutil.c:440
 msgid "View"
 msgstr "Shfaq"
 
-#: gui2/session.c:206 gui2/session.c:2981
+#: gui2/session.c:206 gui2/session.c:2985
 msgid "Properties"
 msgstr "Vetitë"
 
@@ -14078,24 +14090,24 @@ msgstr ""
 "Fshirja e të dhënave në përdorim\n"
 "mbyll dhe sesionin. Doni të vazhdoni?"
 
-#: gui2/session.c:1895
+#: gui2/session.c:1899
 msgid "Display notes on opening session file"
 msgstr "Trego shënimet gjatë hapjes së një skede sesioni"
 
-#: gui2/session.c:2015
+#: gui2/session.c:2019
 msgid "versus"
 msgstr "kundrejt"
 
-#: gui2/session.c:2287 gui2/session.c:2324 gui2/session.c:2346
+#: gui2/session.c:2291 gui2/session.c:2328 gui2/session.c:2350
 msgid "Please close this object's window first"
 msgstr "Ju lutem, së pari mbyllni dritaren e këtij objekti"
 
-#: gui2/session.c:2431
+#: gui2/session.c:2435
 #, c-format
 msgid "'%s': there is already an object of this name"
 msgstr "'%s': një ndryshore me këtë emër ekziston tashmë"
 
-#: gui2/session.c:2474
+#: gui2/session.c:2478
 #, c-format
 msgid ""
 "Enter new name\n"
@@ -14104,128 +14116,128 @@ msgstr ""
 "Jepni emrin e ri\n"
 "(maks. %d karaktere)"
 
-#: gui2/session.c:2476
+#: gui2/session.c:2480
 msgid "gretl: rename object"
 msgstr "gretl: rimemërto objektin"
 
-#: gui2/session.c:3251
+#: gui2/session.c:3255
 msgid "Data set"
 msgstr "Të dhënat"
 
-#: gui2/session.c:3254
+#: gui2/session.c:3258
 msgid "Scalars"
 msgstr "Numrat"
 
-#: gui2/session.c:3257
+#: gui2/session.c:3261
 msgid "Data info"
 msgstr "Hollësi mbi të dhënat"
 
-#: gui2/session.c:3260
+#: gui2/session.c:3264
 msgid "Notes"
 msgstr "Shënime"
 
-#: gui2/session.c:3263
+#: gui2/session.c:3267
 msgid "Correlations"
 msgstr "Korrelacionet"
 
-#: gui2/session.c:3269
+#: gui2/session.c:3273
 msgid "Model table"
 msgstr "Tabela e modeleve"
 
-#: gui2/session.c:3272
+#: gui2/session.c:3276
 msgid "Graph page"
 msgstr "Faqja e grafikëve"
 
-#: gui2/session.c:3499
+#: gui2/session.c:3503
 msgid "icon view"
 msgstr "dritarja e ikonave"
 
-#: gui2/session.c:3703
+#: gui2/session.c:3707
 #, c-format
 msgid "Properties of matrix %s"
 msgstr "Vetitë e matricës %s"
 
-#: gui2/session.c:3707
+#: gui2/session.c:3711
 #, c-format
 msgid "Scalar matrix, value %g\n"
 msgstr "Matricë skalare; vlera %g\n"
 
-#: gui2/session.c:3710
+#: gui2/session.c:3714
 #, c-format
 msgid "Identity matrix, order %d\n"
 msgstr "Matricë e njësishme e rendit %d\n"
 
-#: gui2/session.c:3713
+#: gui2/session.c:3717
 #, c-format
 msgid "Null matrix, %d x %d\n"
 msgstr "Matricë zero, %d x %d\n"
 
-#: gui2/session.c:3717
+#: gui2/session.c:3721
 msgid "Rows"
 msgstr "Rreshtat"
 
-#: gui2/session.c:3718
+#: gui2/session.c:3722
 msgid "Columns"
 msgstr "Shtyllat"
 
-#: gui2/session.c:3719 plugin/johansen.c:1572 plugin/johansen.c:1592
+#: gui2/session.c:3723 plugin/johansen.c:1572 plugin/johansen.c:1592
 #: plugin/johansen.c:1619
 msgid "Rank"
 msgstr "Rangu"
 
-#: gui2/session.c:3724
+#: gui2/session.c:3728
 msgid "Square"
 msgstr "Katrore"
 
-#: gui2/session.c:3728
+#: gui2/session.c:3732
 msgid "Diagonal"
 msgstr "Diagonale"
 
-#: gui2/session.c:3730
+#: gui2/session.c:3734
 msgid "Lower triangular"
 msgstr "Trekëndëshe e poshtme"
 
-#: gui2/session.c:3732
+#: gui2/session.c:3736
 msgid "Upper triangular"
 msgstr "Trekëndëshe e sipërme"
 
-#: gui2/session.c:3734
+#: gui2/session.c:3738
 msgid "Symmetric"
 msgstr "Simetrike"
 
-#: gui2/session.c:3739
+#: gui2/session.c:3743
 msgid "Positive definite"
 msgstr "Pozitivisht e përcaktuar"
 
-#: gui2/session.c:3741
+#: gui2/session.c:3745
 msgid "Not positive definite"
 msgstr "Jo-pozitivisht e përcaktuar"
 
-#: gui2/session.c:3760
+#: gui2/session.c:3764
 msgid "Idempotent"
 msgstr "Idempotente"
 
-#: gui2/session.c:3762
+#: gui2/session.c:3766
 msgid "Not idempotent"
 msgstr "Jo idempotente"
 
-#: gui2/session.c:3768 plugin/vif.c:108
+#: gui2/session.c:3772 plugin/vif.c:108
 msgid "1-norm"
 msgstr "1-norm"
 
-#: gui2/session.c:3769
+#: gui2/session.c:3773
 msgid "Infinity-norm"
 msgstr "Infinit-norm"
 
-#: gui2/session.c:3774
+#: gui2/session.c:3778
 msgid "Trace"
 msgstr "Gjurma"
 
-#: gui2/session.c:3783 plugin/vif.c:109
+#: gui2/session.c:3787 plugin/vif.c:109
 msgid "Determinant"
 msgstr "Përcaktori"
 
-#: gui2/session.c:3791
+#: gui2/session.c:3795
 msgid "Eigenvalues"
 msgstr "Vlerat e veta"
 
@@ -14727,47 +14739,47 @@ msgstr "Numri i hapësirave për ndarjen (tab)"
 msgid "Use \"smart\" tabs"
 msgstr "Përdor ndarje \"elegante\" "
 
-#: gui2/textbuf.c:2430
+#: gui2/textbuf.c:2429
 msgid "Comment line"
 msgstr "Komento rreshtin"
 
-#: gui2/textbuf.c:2431
+#: gui2/textbuf.c:2430
 msgid "Uncomment line"
 msgstr "Hiq komentin e rreshtit"
 
-#: gui2/textbuf.c:2432
+#: gui2/textbuf.c:2431
 msgid "Comment region"
 msgstr "Komento zgjedhjen"
 
-#: gui2/textbuf.c:2433
+#: gui2/textbuf.c:2432
 msgid "Uncomment region"
 msgstr "Hiq komentin e zgjedhjes"
 
-#: gui2/textbuf.c:2469
+#: gui2/textbuf.c:2468
 msgid "Execute region"
 msgstr "Ekzekuto zgjedhjen"
 
-#: gui2/textbuf.c:2471
+#: gui2/textbuf.c:2470
 msgid "Execute line"
 msgstr "Ekzekuto rreshtin"
 
-#: gui2/textbuf.c:2498
+#: gui2/textbuf.c:2497
 msgid "Auto-indent region"
 msgstr "Sposto automatikisht zgjedhjen"
 
-#: gui2/textbuf.c:2499
+#: gui2/textbuf.c:2498
 msgid "Indent region"
 msgstr "Sposto zgjedhjen"
 
-#: gui2/textbuf.c:2508
+#: gui2/textbuf.c:2507
 msgid "Unindent region"
 msgstr "Rikthe zgjedhjen siç ishte"
 
-#: gui2/textbuf.c:2516
+#: gui2/textbuf.c:2515
 msgid "Auto-indent script"
 msgstr "Sposto automatikisht script-in"
 
-#: gui2/textbuf.c:2527
+#: gui2/textbuf.c:2526
 msgid "Toggle line numbers"
 msgstr "Vir/Hiq numrin e rreshtave"
 
@@ -15293,7 +15305,7 @@ msgid "No worksheets found"
 msgstr "Asnjë fletë nuk u gjet"
 
 #: plugin/excel_import.c:1508 plugin/gnumeric_import.c:626
-#: plugin/ods_import.c:1057 plugin/xlsx_import.c:813
+#: plugin/ods_import.c:1057 plugin/xlsx_import.c:835
 msgid "Invalid argument for worksheet import"
 msgstr "Argument i pavlefshëm për importimin e një \"worksheet\""
 
@@ -15313,7 +15325,7 @@ msgstr "Shtylla e pikënisjes është jashtë kufijve.\n"
 msgid "One or more variable names are missing.\n"
 msgstr "Emri i një ose më shumë ndryshoreve mungon.\n"
 
-#: plugin/excel_import.c:1582 plugin/xlsx_import.c:470
+#: plugin/excel_import.c:1582 plugin/xlsx_import.c:333
 #, c-format
 msgid ""
 "Expected numeric data, found string:\n"
