@@ -10,11 +10,11 @@ genr lnusq = ln(usq)
 # Breusch-Pagan test 
 ols usq const YEARS YRS2 
 genr LM1=$nrsq
-pvalue 3 2 LM1
+pvalue X 2 LM1
 # Glesjer test 
 ols absuhat const YEARS YRS2 
 genr LM2=$nrsq
-pvalue 3 2 LM2
+pvalue X 2 LM2
 # Harvey-Godfrey test 
 ols lnusq const YEARS YRS2 
 genr LM3=$nrsq

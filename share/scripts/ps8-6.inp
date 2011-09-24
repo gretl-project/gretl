@@ -7,7 +7,7 @@ genr absuhat1=abs($uhat)
 ols absuhat1 0 pop
 # compute test statistic and p-value 
 genr LM1=$nrsq
-pvalue 3 1 LM1
+pvalue X 1 LM1
 # since heteroscedasticity is detected, divide model by pop and
 # estimate by OLS 
 genr pcexp=exptrav/pop

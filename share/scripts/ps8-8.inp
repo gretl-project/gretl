@@ -17,7 +17,7 @@ ols absuhat const x seniors sq_x sq_seniors
 genr sigmahat=absuhat-$uhat
 # compute LM test statistic and its p-value
 genr LM1=$nrsq
-pvalue 3 4 LM1
+pvalue X 4 LM1
 # print sigmahat and note that only one estimate is negative
 print sigmahat 
 # replace negative value with original sigmahat and get weights
@@ -32,7 +32,7 @@ ols usq const x seniors sq_x sq_seniors
 genr usqhat1=usq-$uhat
 # compute LM test statistic and its p-value
 genr LM2=$nrsq
-pvalue 3 4 LM2
+pvalue X 4 LM2
 # print usqhat and note that several estimates are negative
 print usqhat1 
 # replace negative values with original usqhat and get weights
@@ -46,7 +46,7 @@ ols usq const x seniors sq_x sq_seniors x_seniors
 genr usqhat3=usq-$uhat
 # compute LM test statistic and its p-value
 genr LM3=$nrsq
-pvalue 3 5 LM3
+pvalue X 5 LM3
 # print usqhat and note that several estimates are negative
 print usqhat3
 # replace negative values with original usqhat and get weights
@@ -60,7 +60,7 @@ ols lnusq const x seniors sq_x sq_seniors
 # compute LM test statistic and its p-value
 genr LM4=$nrsq
 # since the p-value is high, we do not reject homoscedasticity
-pvalue 3 4 LM4
+pvalue X 4 LM4
 # Because the coefficients for x and x-squared are significant, another LM
 # test is done with just these
 ols lnusq const x sq_x 

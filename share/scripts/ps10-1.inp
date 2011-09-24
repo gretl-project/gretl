@@ -15,7 +15,7 @@ smpl 1966.1 ;
 ols ut const ut_1 ut_2 ut_3 ut_4 M D M_1 M_2 M_3 M_4 D_1 D_2 D_3 D_4  
 genr LM=$trsq
 # p-value indicates significant fourth-order autocorrelation 
-pvalue 3 4 LM
+pvalue X 4 LM
 # Reset sample range back and estimate AR(4) by Generalized CORC 
 smpl 1965.1 ;
 ar 1 2 3 4 ; r const M D M_1 M_2 M_3 M_4 D_1 D_2 D_3 D_4 

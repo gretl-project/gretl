@@ -18,7 +18,7 @@ genr DFR = $df
 genr NR = DFR - DFU
 # compute F-statistic for Example 4.9 
 genr Fc = (ESSR - ESSU)*DFU/(NR*ESSU)
-pvalue 4 NR DFU Fc
+pvalue F NR DFU Fc
 # This is for Example 4.10 -- see t-stat on Pt 
 ols Ct 0 Yt Pt 
 # Example 4.11: -o shows variances and covariances 

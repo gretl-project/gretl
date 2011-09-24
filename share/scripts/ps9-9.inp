@@ -28,7 +28,7 @@ ols ut const ut_1 ut_2 ut_3 ut_4 ly lprice cdd hdd
 # compute nRsquared statistic   
 genr LM = $nrsq
 # compute pvalue   
-pvalue 3 4 LM
+pvalue X 4 LM
 # reset sample range back to beginning   
 smpl 1972.2 1993.4
 help ar

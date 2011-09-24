@@ -268,7 +268,10 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
     int err = 0;
 
     if (i == -1) {
-	return 0; /* just skip it */
+#if XDEBUG
+	fprintf(stderr, "xlsx_set_varname: i=-1, s='%s', skipping\n", s);
+#endif
+	return 0;
     }
 
     if (i < 1 || i >= xinfo->dset->v) {
@@ -286,12 +289,22 @@ static int xlsx_set_varname (xlsx_info *xinfo, int i, const char *s,
     return err;
 }
 
+static void 
+xlsx_real_set_obs_string (xlsx_info *xinfo, int t, const char *s)
+{
+    *xinfo->dset->S[t] = '\0';
+    strncat(xinfo->dset->S[t], s, OBSLEN - 1);
+}
+
 static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 {
     int err = 0;
 
     if (t == -1) {
-	return 0; /* just skip it */
+#if XDEBUG
+	fprintf(stderr, "xlsx_set_obs_string: t=-1, s='%s', skipping\n", s);
+#endif	
+	return 0;
     }
 
     if (xinfo->dset->S == NULL) {
@@ -301,8 +314,7 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 	fprintf(stderr, "error in xlsx_set_obs_string: t = %d\n", t);
 	err = E_DATA;
     } else {
-	*xinfo->dset->S[t] = '\0';
-	strncat(xinfo->dset->S[t], s, OBSLEN - 1);
+	xlsx_real_set_obs_string(xinfo, t, s);
     }
 
     return err;
@@ -310,8 +322,23 @@ static int xlsx_set_obs_string (xlsx_info *xinfo, int t, const char *s)
 
 static int xlsx_set_value (xlsx_info *xinfo, int i, int t, double x)
 {
+    if (i == -1 && t >= 0 && t < xinfo->dset->n) {
+	/* maybe this should really be an obs label? */
+	if (xinfo->flags & BOOK_OBS_LABELS) {
+	    gchar *tmp = g_strdup_printf("%g", x);
+
+	    xlsx_real_set_obs_string(xinfo, t, tmp);
+	    g_free(tmp);
+	    return 0;
+	}
+    }
+
     if (i == -1 || t == -1) {
-	return 0; /* just skip it */
+#if XDEBUG
+	fprintf(stderr, "xlsx_set_value: i=%d, t=%d, x=%g, skipping\n",
+		i, t, x);
+#endif	
+	return 0;
     }    
 
     if (i < 1 || i >= xinfo->dset->v ||
@@ -398,6 +425,30 @@ static void xlsx_check_top_left (xlsx_info *xinfo, int r, int c,
     }
 }
 
+/* we can perhaps handle simple formulae of the form 'A1+k'
+   that define successive dates */
+
+static void xlsx_maybe_handle_formula (xlsx_info *xinfo, 
+				       const char *src,
+				       int i, int t)
+{
+    if (i == -1 && t > 0 && (xinfo->flags & BOOK_OBS_LABELS)) {
+	char ref[8] = {0};
+	int p;
+	
+	if (sscanf(src, "%7[^+]+%d", ref, &p) == 2) {
+	    const char *s = xinfo->dset->S[t-1];
+
+	    if (integer_string(s)) {
+		gchar *tmp = g_strdup_printf("%d", atoi(s) + p);
+
+		xlsx_real_set_obs_string(xinfo, t, tmp);
+		g_free(tmp);
+	    }
+	}
+    }
+}
+
 /* Read the cells in a given row: the basic info we want from
    each cell is its reference ("r"), e.g. "A2"; its type
    ("t"), e.g. "s", if present; and its value, which is
@@ -423,10 +474,11 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	if (!xmlStrcmp(cur->name, (XUC) "c")) {
 	    /* got a cell */
 	    char *cref = NULL;
+	    char *formula = NULL;
 	    const char *strval = NULL;
 	    double xval = NADBL;
 	    int stringcell = 0;
-	    int gotval = 0;
+	    int gotv = 0, gotf = 0;
 
 	    pprintf(myprn, " cell");
 
@@ -453,7 +505,7 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 	    }
 
 	    val = cur->xmlChildrenNode;
-	    while (val && !err && !gotval) {
+	    while (val && !err && !gotv) {
 		if (!xmlStrcmp(val->name, (XUC) "v")) {
 		    tmp = (char *) xmlNodeGetContent(val);
 		    if (tmp != NULL) {
@@ -472,22 +524,38 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 			    }
 			}
 			free(tmp);
-			gotval = 1;
+			gotv = 1;
 		    }
+		} else if (!gotf && !xmlStrcmp(val->name, (XUC) "f")) {
+		    formula = (char *) xmlNodeGetContent(val);
+		    gotf = 1;
 		}
 		val = val->next;
+	    }
+
+	    if (gotf && formula == NULL) {
+		gotf = 0;
 	    }
 
 	    if (!err && xinfo->dset == NULL) {
 		xlsx_check_top_left(xinfo, row, col, stringcell, 
 				    strval, xval);
-	    }		    
+	    }
 
-	    if (!gotval) {
-		pprintf(myprn, ": (%s) no data\n", cref);
-	    } else if (xinfo->dset != NULL && 
-		       col > xinfo->xoffset &&
-		       row > xinfo->yoffset) {
+	    if (err) {
+		pprintf(myprn, ": (%s) error", cref);
+	    } else if (!gotv) {
+		pprintf(myprn, ": (%s) no data", cref);
+		if (gotf) {
+		    pprintf(myprn, "; formula = '%s'\n", formula);
+		} else {
+		    pputc(myprn, '\n');
+		}
+	    }
+
+	    if (!err && xinfo->dset != NULL && 
+		col > xinfo->xoffset &&
+		row > xinfo->yoffset) {
 		int i = xlsx_var_index(xinfo, col);
 		int t = xlsx_obs_index(xinfo, row);
 
@@ -499,12 +567,15 @@ static int xlsx_read_row (xmlNodePtr cur, xlsx_info *xinfo, PRN *prn)
 		    } else if (strval != NULL) {
 			err = xlsx_handle_stringval(strval, row, col, prn);
 		    }
-		} else {
+		} else if (gotv) {
 		    err = xlsx_set_value(xinfo, i, t, xval);
+		} else if (gotf) {
+		    xlsx_maybe_handle_formula(xinfo, formula, i, t);
 		}
 	    }
 
 	    free(cref);
+	    free(formula);
 	}
 	cur = cur->next;
     }
@@ -862,6 +933,45 @@ static int xlsx_sheet_dialog (xlsx_info *xinfo)
     return book.selected;
 }
 
+static void xlsx_dates_check (DATASET *dset)
+{
+    int t, maybe_dates = 1;
+    int st, stdiff;
+
+    /* the heuristic here is that all the obs labels are
+       integer strings, with a constant difference between
+       successive values -- and not just starting with 1
+    */
+
+    for (t=0; t<dset->n && maybe_dates; t++) {
+	if (!integer_string(dset->S[t])) {
+	    maybe_dates = 0;
+	} else if (t == 0) {
+	    if (!strcmp(dset->S[0], "1")) {
+		maybe_dates = 0;
+	    }	
+	} else {
+	    st = atoi(dset->S[t]);
+	    if (t == 1) {
+		stdiff = st - atoi(dset->S[0]);
+	    } else if (st - atoi(dset->S[t-1]) != stdiff) {
+		maybe_dates = 0;
+	    }
+	}
+    }
+
+    if (maybe_dates) {
+	char datestr[OBSLEN];
+
+	for (t=0; t<dset->n; t++) {
+	    st = atoi(dset->S[t]);
+	    /* FIXME detect use of 1904-based dates? */
+	    MS_excel_date_string(datestr, st, 0, 0);
+	    strcpy(dset->S[t], datestr);
+	}
+    }
+}
+
 static int finalize_xlsx_import (DATASET *dset,
 				 xlsx_info *xinfo, 
 				 const char *fname,
@@ -882,6 +992,10 @@ static int finalize_xlsx_import (DATASET *dset,
 		err = E_DATA;
 	    }
 	}
+    }
+
+    if (!err && xinfo->dset->S != NULL) {
+	xlsx_dates_check(xinfo->dset);
     }
 
     if (!err && xinfo->dset->S != NULL) {
