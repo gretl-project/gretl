@@ -1,6 +1,7 @@
 This file aims to ease finding the required packages as mentioned 
 in the gretl dependencies file (http://gretl.sourceforge.net/depend.html) 
-for different Linux distributions.
+for different Linux distributions. Please consult the Appendix C2 of 
+Gretl's User Guide for detailed information.
 
 Each entry is the appropriate shell command to obtain the packages 
 needed for building libgretl, gretlcli and gretl_x11.
@@ -16,7 +17,7 @@ sudo apt-get install gnuplot libfftw3-dev liblapack-dev gfortran libxml2 \
  zlibc libreadline5-dev libgtksourceview2.0-dev libgmp3-dev
 
 # documentation build (optional)
-sudo apt-get install texlive libxslt1-dev
+sudo apt-get install texlive texlive-latex-extra libxslt1-dev
 
 
 
