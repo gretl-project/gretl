@@ -5668,47 +5668,47 @@ void add_model_stat (MODEL *pmod, int which)
 
     switch (which) {
     case M_ESS:
-	descrip = N_("Sum of squared residuals"); 
+	descrip = _("Sum of squared residuals"); 
 	val = pmod->ess;
 	statname = "$ess";
 	break;
     case M_RSQ:
-	descrip = N_("Unadjusted R-squared");
+	descrip = _("Unadjusted R-squared");
 	val = pmod->rsq;
 	statname = "$rsq";
 	break;
     case M_TRSQ:
-	descrip = N_("T*R-squared");
+	descrip = _("T*R-squared");
 	val = pmod->nobs * pmod->rsq;
 	statname = "$trsq";
 	break;
     case M_DF:
-	descrip = N_("degrees of freedom"); 
+	descrip = _("degrees of freedom"); 
 	val = (double) pmod->dfd;
 	statname = "$df";
 	break;
     case M_SIGMA:
-	descrip = N_("Standard error of the regression"); 
+	descrip = _("Standard error of the regression"); 
 	val = pmod->sigma;
 	statname = "$sigma";
 	break;
     case M_LNL:
-	descrip = N_("Log-likelihood");
+	descrip = _("Log-likelihood");
 	val = pmod->lnL;
 	statname = "$lnl";
 	break;	
     case M_AIC:
-	descrip = N_("Akaike Information Criterion"); 
+	descrip = _("Akaike Information Criterion"); 
 	val = pmod->criterion[C_AIC];
 	statname = "$aic";
 	break;
     case M_BIC:
-	descrip = N_("Schwarz Bayesian criterion"); 
+	descrip = _("Schwarz Bayesian criterion"); 
 	val = pmod->criterion[C_BIC];
 	statname = "$bic";
 	break;
     case M_HQC:
-	descrip = N_("Hannan-Quinn Information Criterion"); 
+	descrip = _("Hannan-Quinn Information Criterion"); 
 	val = pmod->criterion[C_HQC];
 	statname = "$hqc";
 	break;
