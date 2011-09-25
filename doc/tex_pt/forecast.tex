@@ -1,0 +1,307 @@
+\chapter{Forecasting}
+\label{chap-forecast}
+
+\section{Introduction}
+\label{sec:fcast-intro}
+
+In some econometric contexts forecasting is the prime objective: one
+wants estimates of the future values of certain variables to reduce
+the uncertainty attaching to current decision making.  In other
+contexts where real-time forecasting is not the focus prediction
+may nonetheless be an important moment in the analysis.  For example,
+out-of-sample prediction can provide a useful check on the validity of
+an econometric model.  In other cases we are interested in questions
+of ``what if'': for example, how might macroeconomic outcomes have
+differed over a certain period if a different policy had been pursued?
+In the latter cases ``prediction'' need not be a matter of actually
+projecting into the future but in any case it involves generating
+fitted values from a given model.  The term ``postdiction'' might be
+more accurate but it is not commonly used; we tend to talk of
+prediction even when there is no true forecast in view.
+
+This chapter offers an overview of the methods available within
+\app{gretl} for forecasting or prediction (whether forward in time or
+not) and explicates some of the finer points of the relevant commands.
+
+\section{Saving and inspecting fitted values}
+\label{sec:fcast-fitted}
+
+In the simplest case, the ``predictions'' of interest are just the
+(within sample) fitted values from an econometric model.  For the
+single-equation linear model, $y_t = X_t \beta + u_t$, these are
+$\hat{y}_t = X_t \hat{\beta}$.  
+
+In command-line mode, the $\hat{y}$ series can be retrieved, after
+estimating a model, using the accessor \verb|$yhat|, as in
+%
+\begin{code}
+series yh = $yhat
+\end{code}
+% 
+If the model in question takes the form of a system of equations,
+\verb|$yhat| returns a matrix, each column of which contains the
+fitted values for a particular dependent variable.  To extract
+the fitted series for, e.g., the dependent variable in the second
+equation, do
+%
+\begin{code}
+matrix Yh = $yhat
+series yh2 = Yh[,2]
+\end{code}
+
+Having obtained a series of fitted values, you can use the
+\texttt{fcstats} function to produce a vector of statistics that
+characterize the accuracy of the predictions (see
+section~\ref{sec:fcast-stats} below).
+
+The \app{gretl} GUI offers several ways of accessing and examining
+within-sample predictions.  In the model display window the
+\textsf{Save} menu contains an item for saving fitted values, the
+\textsf{Graphs} menu allows plotting of fitted versus actual values,
+and the \textsf{Analysis} menu offers a display of actual, fitted and
+residual values.
+
+
+\section{The \texttt{fcast} command}
+\label{sec:fcast-fcast}
+
+The \texttt{fcast} command generates predictions based on the last
+estimated model.  Several questions arise here: How to control the
+range over which predictions are generated?  How to control the
+forecasting method (where a choice is available)?  How to control the
+printing and/or saving of the results?  Basic answers can be found in
+the \GCR; we add some more details here.
+
+\subsection{The forecast range}
+
+The range defaults to the currently defined sample range.  If this
+remains unchanged following estimation of the model in question, the
+forecast will be ``within sample'' and (with some qualifications noted
+below) it will essentially duplicate the information available via the
+retrieval of fitted values (see section~\ref{sec:fcast-fitted} above).
+
+A common situation is that a model is estimated over a given sample
+and then forecasts are wanted for a subsequent out-of-sample range.  The
+simplest way to accomplish this is via the \verb|--out-of-sample|
+option to \texttt{fcast}.  For example, assuming we have a quarterly
+time-series dataset containing observations from 1980:1 to 2008:4,
+four of which are to be reserved for forecasting:
+%
+\begin{code}
+# reserve the last 4 observations
+smpl 1980:1 2007:4
+ols y 0 xlist
+fcast --out-of-sample
+\end{code}
+%
+This will generate a forecast from 2008:1 to 2008:4.
+
+There are two other ways of adjusting the forecast range, offering
+finer control:
+%
+\begin{itemize}
+\item Use the \texttt{smpl} command to adjust the sample range
+  prior to invoking \texttt{fcast}.
+\item Use the optional \textsl{startobs} and \textsl{endobs} arguments
+  to \texttt{fcast} (which should come right after the command word).
+  These values set the forecast range independently of the
+  sample range.
+\end{itemize}
+
+What if one wants to generate a true forecast that goes beyond the
+available data?  In that case one can use the \texttt{dataset} command
+with the \texttt{addobs} parameter to add extra observations before 
+forecasting.  For example:
+%
+\begin{code}
+# use the entire dataset, which ends in 2008:4
+ols y 0 xlist
+dataset addobs 4
+fcast 2009:1 2009:4
+\end{code}
+%
+But this will work as stated only if the set of regressors in
+\texttt{xlist} does not contain any stochastic regressors other than
+lags of \texttt{y}.  The \texttt{dataset addobs} command attempts to detect
+and extrapolate certain common deterministic variables (e.g., time
+trend, periodic dummy variables).  In addition, lagged values of the
+dependent variable can be supported via a dynamic forecast (see below
+for discussion of the static/dynamic distinction).  But ``future''
+values of any other included regressors must be supplied before such a
+forecast is possible.  Note that specific values in a series can be
+set directly by date, for example: \texttt{x1[2009:1] = 120.5}.  Or,
+if the assumption of no change in the regressors is warranted, one can
+do something like this:
+%
+\begin{code}
+loop t=2009:1..2009:4
+    loop foreach i xlist
+        $i[t] = $i[2008:4]
+    endloop
+endloop
+\end{code}
+
+
+\subsection{Static, dynamic and rolling forecasts}
+
+The distinction between static and dynamic forecasts applies only to
+dynamic models, i.e., those that feature one or more lags of the
+dependent variable. The simplest case is the AR(1) model,
+%
+\begin{equation}
+\label{eq:ar1}
+y_t = \alpha_0 + \alpha_1 y_{t-1} + \epsilon_t
+\end{equation}
+%
+In some cases the presence of a lagged dependent variable is implicit
+in the dynamics of the error term, for example
+%
+\begin{align*}
+  y_t &=  \beta + u_t \\
+  u_t &= \rho u_{t-1} + \epsilon_t
+\end{align*}
+%
+which implies that
+%
+\[
+y_t = (1-\rho) \beta + \rho y_{t-1} + \epsilon_t
+\]
+
+Suppose we want to forecast $y$ for period $s$ using a dynamic model,
+say (\ref{eq:ar1}) for example.  If we have data on $y$ available for
+period $s-1$ we could form a fitted value in the usual way: $\hat{y}_s
+= \hat{\alpha}_0 + \hat{\alpha}_1 y_{s-1}$.  But suppose that data are
+available only up to $s-2$.  In that case we can apply the chain rule
+of forecasting:
+%
+\begin{align*}
+  \hat{y}_{s-1} &= \hat{\alpha}_0 + \hat{\alpha}_1 y_{s-2} \\
+  \hat{y}_{s} &= \hat{\alpha}_0 + \hat{\alpha}_1 \hat{y}_{s-1}
+\end{align*}
+%
+This is what is called a dynamic forecast.  A static forecast, on the
+other hand, is simply a fitted value (even if it happens to be computed
+out-of-sample).
+
+\subsection{Printing and saving forecasts}
+
+To be written.
+
+\section{Univariate forecast evaluation statistics}
+\label{sec:fcast-stats}
+
+Let $y_t$ be the value of a variable of interest at time $t$ and let
+$f_t$ be a forecast of $y_t$.  We define the forecast error as $e_t =
+y_t - f_t$.  Given a series of $T$ observations and associated
+forecasts we can construct several measures of the overall accuracy of
+the forecasts.  Some commonly used measures are the Mean Error (ME),
+Mean Squared Error (MSE), Root Mean Squared Error (RMSE), Mean
+Absolute Error (MAE), Mean Percentage Error (MPE) and Mean Absolute
+Percentage Error (MAPE).  These are defined as follows.
+%
+\[ {\rm ME} = \frac{1}{T} \sum_{t=1}^T e_t \qquad 
+   {\rm MSE} = \frac{1}{T} \sum_{t=1}^T e_t^2 \qquad 
+   {\rm RMSE} = \sqrt{\frac{1}{T} \sum_{t=1}^T e_t^2} \qquad 
+   {\rm MAE} = \frac{1}{T} \sum_{t=1}^T |e_t|
+\] 
+%
+\[ {\rm MPE} = \frac{1}{T} \sum_{t=1}^T 100\, \frac{e_t}{y_t} \qquad
+   {\rm MAPE} = \frac{1}{T} \sum_{t=1}^T 100\, \frac{|e_t|}{y_t} 
+\]
+%
+A further relevant statistic is Theil's $U$ \citep{theil66}, defined as
+the positive square root of
+%
+\[ 
+U^2 = \frac{1}{T}
+     \sum_{t=1}^{T-1} \left(\frac{f_{t+1} - y_{t+1}}{y_t}\right)^2
+     \cdot \left[
+     \frac{1}{T} \sum_{t=1}^{T-1} 
+        \left(\frac{y_{t+1} - y_t}{y_t}\right)^2 \right]^{-1}
+\]
+
+The more accurate the forecasts, the lower the value of Theil's $U$,
+which has a minimum of 0.\footnote{This statistic is sometimes called
+  $U_2$, to distinguish it from a related but different $U$ defined in
+  an earlier work by \cite{theil61}.  It seems to be generally accepted
+  that the later version of Theil's $U$ is a superior statistic, so we
+  ignore the earlier version here.} This measure can be interpreted as
+the ratio of the RMSE of the proposed forecasting model to the RMSE of
+a na\"ive model which simply predicts $y_{t+1} = y_t$ for all $t$.
+The na\"ive model yields $U = 1$; values less than 1 indicate an
+improvement relative to this benchmark and values greater than 1 a
+deterioration.
+
+In addition, Theil (\citeyear{theil66}, pp.\ 33--36) proposed a
+decomposition of the MSE which can be useful in evaluating a set of
+forecasts.  He showed that the MSE could be broken down into three
+non-negative components as follows
+%
+\[
+{\rm MSE} = \left(\bar{f}-\bar{y}\right)^2 + 
+  \left(s_f - rs_y\right)^2 + 
+  \left(1-r^2\right) s_y^2
+\]
+%
+where $\bar{f}$ and $\bar{y}$ are the sample means of the forecasts
+and the observations, $s_f$ and $s_y$ are the respective standard
+deviations (using $T$ in the denominator), and $r$ is the sample
+correlation between $y$ and $f$.  Dividing through by MSE we get
+%
+\begin{equation}
+\label{eq:theil}
+\frac{\left(\bar{f}-\bar{y}\right)^2}{\rm MSE} +
+\frac{\left(s_f - rs_y\right)^2}{\rm MSE} + 
+\frac{\left(1-r^2\right) s_y^2}{\rm MSE} = 1
+\end{equation}
+%
+Theil labeled the three terms on the left-hand side of
+(\ref{eq:theil}) the bias proportion ($U^M$), regression proportion
+($U^R$) and disturbance proportion ($U^D$), respectively. If $y$ and
+$f$ represent the in-sample observations of the dependent variable and
+the fitted values from a linear regression then the first two
+components, $U^M$ and $U^R$, will be zero (apart from rounding error),
+and the entire MSE will be accounted for by the unsystematic part,
+$U^D$.  In the case of out-of-sample prediction, however (or
+``prediction'' over a sub-sample of the data used in the regression),
+$U^M$ and $U^R$ are not necessarily close to zero, although this is a
+desirable property for a forecast to have. $U^M$ differs from zero if
+and only if the mean of the forecasts differs from the mean of the
+realizations, and $U^R$ is non-zero if and only if the slope of a
+simple regression of the realizations on the forecasts differs from
+1.
+
+The above-mentioned statistics are printed as part of the output of
+the \texttt{fcast} command.  They can also be retrieved in the form of
+a column vector using the function \texttt{fcstats}, which takes two
+series arguments corresponding to $y$ and $f$.  The vector returned is
+%
+\[
+\left(
+\begin{array}{lllllllll}
+{\rm ME} & {\rm MSE} & {\rm MAE} & {\rm MPE} & {\rm MAPE} &
+U & U^M & U^R & U^D
+\end{array}
+\right)'
+\]
+%
+(Note that the RMSE is not included since it can easily be obtained
+given the MSE.)  The series given as arguments to \texttt{fcstats}
+must not contain any missing values in the currently defined sample
+range; use the \texttt{smpl} command to adjust the range if needed.
+
+\section{Forecasts based on VAR models}
+\label{sec:fcast-VAR}
+
+To be written.
+
+\section{Forecasting from simultaneous systems}
+\label{sec:fcast-system}
+
+To be written.
+
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

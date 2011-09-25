@@ -1,0 +1,240 @@
+\chapter{Degrees of freedom correction}
+\label{chap:dfcorr}
+
+
+\section{Introduction}
+
+This chapter gives a brief account of the issue of correction for
+degrees of freedom in the context of econometric modeling, leading
+up to a discussion of the policies adopted in \app{gretl} in this
+regard.  We also explain how to supplement the results produced 
+automatically by \app{gretl} if you want to apply such a correction
+where \app{gretl} does not, or vice versa.
+
+\section{Back to basics}
+
+It's well known that given a sample, $\{x_i\}$, of size $n$ from a
+normally distributed population, the Maximum Likelihood (ML) estimator
+of the population variance, $\sigma^2$, is
+%
+\begin{equation}
+\label{eq:sigma-hat}
+\hat{\sigma}^2 = \frac{1}{n} \sum_{i=1}^n (x_i - \bar{x})^2
+\end{equation}
+%
+where $\bar{x}$ is the sample mean, $n^{-1} \sum_{i=1}^n x_i$.
+It's also well known that $\hat{\sigma}^2$, while consistent,
+is a biased estimator, and is commonly replaced by the ``sample
+variance'', namely,
+%
+\begin{equation}
+\label{eq:sample-variance}
+s^2 = \frac{1}{n-1} \sum_{i=1}^n (x_i - \bar{x})^2
+\end{equation}
+
+The intuition behind the bias in (\ref{eq:sigma-hat}) is quite
+straightforward.  First, the quantity we seek to estimate is defined
+as
+%
+\[
+\sigma^2 = \frac{1}{N} \sum_{i=1}^n (x_i - \mu)^2
+\]
+%
+for a population of size $N$ with mean $\mu$.  Second, $\bar{x}$ is an
+estimator of $\mu$; it is easily shown to be the least-squares
+estimator, and also (assuming normality) the ML estimator.  It is
+unbiased, but is of course subject to sampling error; in any given
+sample it is highly unlikely that $\bar{x} = \mu$.  Given that
+$\bar{x}$ is the least-squares estimator, the sum of squared
+deviations of the $x_i$ from \textit{any} value other than $\bar{x}$
+must be greater than the summation in (\ref{eq:sigma-hat}).  But since
+$\mu$ is almost certainly not equal to $\bar{x}$, the sum of squared
+deviations of the $x_i$ from $\mu$ will surely be greater than the sum
+of squared deviations in (\ref{eq:sigma-hat}). It follows that the
+expected value of $\hat{\sigma}^2$ falls short of the
+population variance.
+
+The proof that $s^2$ is indeed the unbiased estimator can be found in
+any good statistics textbook, where we also learn that the magnitude
+$n-1$ in (\ref{eq:sample-variance}) can be brought under a general
+description as the ``degrees of freedom'' of the calculation at
+hand. Given $\bar{x}$, the $n$ sample values provide only $n-1$ pieces
+of information since the $n$th value can always be deduced via the
+formula for $\bar{x}$.
+
+\section{Application to OLS regression}
+
+The argument above carries over into the usual calculation of standard
+errors in the context of OLS regression as applied to the linear model
+$y = X\beta + u$.  If the disturbances, $u$, are assumed to be
+independently and identically distributed (IID), then the variance of
+the OLS estimator, $\hat\beta$, is given by
+%
+\[
+\mbox{Var}\left(\hat\beta\right) = \sigma^2 (X'X)^{-1}
+\]
+%
+where $\sigma^2$ is the variance of the error term and $X$ is an
+$n\times k$ matrix of regressors.  But how should the unknown
+$\sigma^2$ be estimated?  The ML estimator is
+%
+\begin{equation}
+\label{eq:ols-sigma2}
+\hat\sigma^2 = \frac{1}{n} \sum_{i=1}^n \hat{u}^2_i
+\end{equation}
+%
+where the $\hat{u}^2_i$ are squared residuals, $u_i = y_i - X_i\beta$.
+But this estimator is biased and we typically use the unbiased
+counterpart
+%
+\begin{equation}
+\label{eq:ols-s2}
+s^2 = \frac{1}{n-k} \sum_{i=1}^n \hat{u}_i^2
+\end{equation}
+%
+in which $n - k$ is the number of degrees of freedom given $n$
+residuals from a regression where $k$ parameters are estimated.
+
+The standard estimator of the variance of $\hat\beta$ in the
+context of OLS is then $V = s^2 (X'X)^{-1}$.  And the standard errors
+of the individual parameter estimates, $s_{\hat{\beta}_i}$, being the
+square roots of the diagonal elements of $V$, inherit a ``degrees of
+freedom correction'' or df correction from the estimator $s^2$.
+
+Going one step further, consider hypothesis testing in the context of
+OLS.  Since the variance of $\hat\beta$ is unknown and must itself be
+estimated, the sampling distribution of the OLS coefficients is not,
+strictly speaking, normal.  But if the \textit{disturbances} are
+normally distributed (besides being IID) then, even in small samples,
+the parameter estimates will follow a distribution that can be
+specified exactly, namely the Student's $t$ distribution with degrees
+of freedom equal to the value given above, $\nu = n-k$.
+
+That is, besides using a df correction in computing the standard
+errors of the OLS coefficients, one uses the same $\nu$ in selecting
+the particular distribution to which the ``$t$-ratio'',
+$(\hat{\beta}_i-\beta^0)/s_{\hat{\beta}_i}$, should be referred in
+order to determine the marginal significance level or $p$-value for
+the null hypothesis $H_0: \beta_i = \beta^0$.  This is the real
+payoff to df correction: we get test statistics that follow a 
+known distribution in small samples.  (In big enough samples
+the point is moot, since the quantitative distinction between
+$\hat\sigma^2$ and $s^2$ vanishes.)
+
+So far, so good.  Everyone expects df correction in OLS standard
+errors, just as we expect division by $n-1$ in the sample variance.
+And users of econometric software expect that the $p$-values reported
+for OLS coefficients will be based on the $t(\nu)$ distribution
+(although they are not always sufficiently aware that the validity
+of such statistics in small samples depends on the assumption
+of normally distributed errors).
+
+\section{Beyond OLS}
+
+The situation is different when we move beyond estimation of
+the classical linear model via OLS.  We may wish to estimate nonlinear
+models (sometimes by least squares), and many models of interest to
+econometricians are commonly estimated via maximization of a
+likelihood function, or via the generalized method of moments (GMM).
+
+In such cases we do not, in general, have exact small-sample results
+to rely upon; in particular, we cannot assume that coefficient
+estimates follow the Student's $t$ distribution.  Rather, we typically
+appeal to asymptotic results in statistical theory.  We seek
+\textit{consistent} estimators which, although they may be biased,
+nonetheless converge in probability to the corresponding parameter
+values as the sample size goes to infinity.  Under the right
+conditions, laws of large numbers and central limit theorems entitle
+us to expect that test statistics will converge to the normal
+distribution, or the $\chi^2$ distribution for multivariate tests,
+given big enough samples.
+
+\subsection{To ``correct'' or not?}
+
+The question arises, should we or should we not apply a df
+``correction'' in reporting variance estimates and standard errors
+for models that depart from the classical linear specification?
+
+One argument against applying df adjustment is that it lacks a
+theoretical basis in relation to hypothesis testing, in that it does
+not produce test statistics that follow any known distribution in
+small samples.  In addition, if parameter estimates are obtained via
+ML, it makes sense to report ML estimates of variances even if these
+are biased, since it is the ML quantities that are used in computing
+the criterion function and in forming likelihood-ratio tests.
+
+On the other hand, pragmatic arguments for doing df adjustment are (a)
+that it makes for closer comparability between regular OLS estimates
+and nonlinear ones, and (b) that it provides a ``pinch of salt'' in
+relation to small-sample results, even if it lacks rigorous
+justification.  
+
+Note that even for fairly small samples, the difference between the
+biased and unbiased estimators in equations (\ref{eq:sigma-hat}) and
+(\ref{eq:sample-variance}) above will be small.  For example, if
+$n=30$ then $s^2 = \frac{30}{29} \hat\sigma^2$.  In econometric
+modelling proper, however, the difference can be quite substantial.
+If $n=50$ and $k=10$, the $s^2$ defined in (\ref{eq:ols-s2}) will be
+$50/40 = 1.25$ as large as the $\hat\sigma^2$ in
+(\ref{eq:ols-sigma2}), and standard errors will be about 12 percent
+larger.\footnote{A fairly typical situation in time-series
+  macroeconometrics would be have between 100 and 200 quarterly
+  observations, and to be estimating up to maybe 30 parameters
+  including lags.  In this case df correction would make a difference
+  to standard errors on the order of 10 percent.}  One might therefore
+make a case for ``inflating'' the standard errors obtained via
+nonlinear estimators as a precaution against taking results to be
+``more precise than they really are''.
+
+In rejoinder to the last point, one might equally say that savvy
+econometricians should know to apply a discount factor (albeit an
+imprecise one) to small-sample estimates outside of the classical,
+normal linear model --- or even that they should distrust such results
+and insist on large samples before making inferences. This line of
+thinking suggests that test statistics such as $z =
+\hat{\beta}_i/\hat\sigma_{\hat{\beta}_i}$ should be referred to the
+distribution to which they conform asymptotically --- in this case
+$N(0,1)$ for $H_0: \beta_i = 0$ --- if and only if the conditions for
+appealing to asymptotic results can be taken to be met.  From this
+point of view df adjustment may be seen as providing a false sense of
+security.  
+
+
+\section{Consistency and ``grey'' cases}
+
+Consistency (in the sense of uniformity) is a bugbear when dealing
+with this issue.  To give a simple example, suppose an econometrics
+program follows the policy of applying df correction for OLS
+estimation but not for ML estimation.  One is, of course, free to
+estimate the classical, normal linear model via ML, in which case
+$\hat\beta$ should be numerically identical to that obtained via OLS.
+But the user of the software will obtain two different sets of
+standard errors depending on the estimation method.  This example is
+not very troublesome, however; presumably one would apply ML to the
+classical linear model only to make a pedagogical point.
+
+Here is a more awkward case.  An unrestricted vector autoregression
+(VAR) is a system of equations, but the ML estimate of this system,
+given normal errors, is equivalent to equation-by-equation OLS.
+Should df correction be applied to VARs? Consistency with OLS argues
+Yes. But wait --- a popular extension of the VAR methodology is the
+vector error-correction model (VECM).  VECMs are closely related to
+VARs and one might well be interested in making comparisons across the
+two, but a VECM is a nonlinear system and the cointegrating vectors
+that lie at the heart of this model must be estimated via ML.  So
+perhaps VAR results should \textit{not} be df adjusted, for
+comparability with VECMs.
+
+Another ``grey area'' is the class of single-equation Feasible
+Generalized Least Squares (FGLS) estimators --- for example, weighted
+least squares following the estimation of a skedastic function, or
+estimators designed to handle first-order autocorrelation such as
+Cochrane--Orcutt.  These depart from the classical linear model, and
+the theoreretical basis for inference in such models is asymptotic,
+yet according to econometric tradition standard errors are generally
+df adjusted.
+
+
+\section{What gretl does}
+
+To be written.

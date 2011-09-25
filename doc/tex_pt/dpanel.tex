@@ -1,0 +1,882 @@
+\chapter{Dynamic panel models}
+\label{chap-dpanel}
+
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\biota}{\bm{\iota}}
+
+\DefineVerbatimEnvironment%
+{code}{Verbatim}
+{fontsize=\small, xleftmargin=1em}
+
+\newenvironment%
+{altcode}%
+{\vspace{1ex}\small\leftmargin 1em}{\vspace{1ex}}
+
+As of \textsf{gretl} version 1.9.2, the primary command for estimating
+dynamic panel models is \texttt{dpanel}. The closely related
+\texttt{arbond} command has been available for some time, and is still
+present, but whereas \texttt{arbond} only supports the so-called
+``difference'' estimator \citep{arellano-bond91}, \texttt{dpanel} is
+addition offers the ``system'' estimator \citep{blundell-bond98},
+which has become the method of choice in the applied literature.
+
+\section{Introduction}
+\subsection{Notation}
+\label{sec:notation}
+
+A dynamic linear panel data model can be represented as follows
+(in notation based on \cite{arellano03}):
+\begin{equation}
+  \label{eq:dpd-def}
+  y_{it} = \alpha y_{i,t-1} + \beta'x_{it} + \eta_{i} + v_{it}
+\end{equation}
+
+The main idea on which the difference estimator is based is to get rid
+of the individual effect via differencing:\footnote{An alternative is
+  ``orthogonal deviations'': this is implemented in \texttt{arbond},
+  but not in \texttt{dpanel}, since it was a lot of work and OD is
+  very rarely seen in the wild.} first-differencing
+eq.\ (\ref{eq:dpd-def}) yields
+\begin{equation}
+  \label{eq:dpd-dif}
+  \Delta y_{it} = \alpha \Delta y_{i,t-1} + \beta'\Delta x_{it} +
+  \Delta v_{it} = \gamma' W_{it} + \Delta v_{it} ,
+\end{equation}
+in obvious notation. The error term of (\ref{eq:dpd-dif}) is, by
+construction, autocorrelated and also correlated with the lagged
+dependent variable, so an estimator that takes both issues into
+account is needed. The endogeneity issue is solved by noting that all
+values of $y_{i,t-k}$, with $k>1$ can be used as instruments for
+$\Delta y_{i,t-1}$: unobserved values of $y_{i,t-k}$ (because they
+could be missing, or pre-sample) can safely be substituted with 0. In
+the language of GMM, this amounts to using the relation
+\begin{equation}
+  \label{eq:OC-dif}
+  E(\Delta v_{it} \cdot y_{i,t-k}) = 0, \quad k>1
+\end{equation}
+as an orthogonality condition.
+
+Autocorrelation is dealt with by noting that, if $v_{it}$ is a white
+noise, then the covariance matrix of the vector whose typical element
+is $\Delta v_{it}$ is proportional to a matrix $H$ that has 2 on the
+main diagonal, $-1$ on the first subdiagonals and 0 elsewhere. In
+practice, one-step GMM estimation of equation (\ref{eq:dpd-dif})
+amounts to computing
+\begin{align}
+  \hat{\gamma} = & \left[ 
+    \left( \sum_{i=1}^N \bW_i'\bZ_i \right)
+    \left( \sum_{i=1}^N \bZ_i' H \bZ_i \right)^{-1}
+    \left( \sum_{i=1}^N \bZ_i'\bW_i \right)
+      \right]^{-1} \times \notag \\
+    \times & \left( \sum_{i=1}^N \bW_i'\bZ_i \right)
+    \left( \sum_{i=1}^N \bZ_i' H \bZ_i \right)^{-1}
+    \left( \sum_{i=1}^N \bZ_i'\Delta \by_i \right) \label{eq:dif-gmm}
+\end{align}
+where
+\begin{eqnarray*}
+  \Delta \by_i  & = &
+     \left[ \begin{array}{ccc}
+         \Delta y_{i,3} & \cdots & \Delta y_{i,T}
+       \end{array} \right]' \\
+  \bW_i  & = &
+     \left[ \begin{array}{ccc}
+         \Delta y_{i,2} & \cdots & \Delta y_{i,T-1} \\
+         \Delta x_{i,3} & \cdots & \Delta x_{i,T} \\
+       \end{array} \right]' \\
+  \bZ_i  & = &
+     \left[ \begin{array}{ccccccc}
+         y_{i1} & 0 & 0 & \cdots & 0 & \Delta x_{i3}\\
+         0 & y_{i1} & y_{i2} & \cdots & 0 & \Delta x_{i4}\\
+         & & \vdots \\
+         0 & 0 & 0 & \cdots & y_{i, T-2} & \Delta x_{iT} \\
+       \end{array} \right]' 
+\end{eqnarray*}
+Once the 1-step estimator is computed, the sample covariance matrix of
+the estimated residuals can be used instead of $H$ to obtain 2-step
+estimates, which are not only consistent but asymptotically
+efficient.\footnote{In theory, the process may be iterated, but nobody
+  seems to be interested.} Standard GMM theory applies, except for
+one thing: \cite{Windmeijer05} has computed finite-sample corrections to the
+asymptotic covariance matrix of the parameters, which are nowadays
+almost universally used.
+
+The difference estimator is consistent, but has been shown to have
+poor properties in finite samples when $\alpha$ is near one. People
+these days prefer the so-called ``system'' estimator, which
+complements the differenced data (with lagged levels used as
+instruments) with data in levels (using lagged differences as
+instruments). The system estimator relies on an extra orthogonality
+condition which has to do with the earliest value of the dependent
+variable $y_{i,1}$. The interested reader is referred to
+\citet[pp.\ 124--125]{blundell-bond98} for details, but here it suffices
+to say that this condition is satisfied in mean-stationary models and
+brings about efficiency that may be substantial in many cases.
+
+The set of orthogonality conditions exploited in the system approach
+is not very much larger than with the difference estimator,
+the reason being that most of the possible orthogonality conditions
+associated with the equations in levels are redundant, given those
+already used for the equations in differences.
+
+The key equations of the system estimator can be written as
+
+\begin{align}
+  \tilde{\gamma} = & \left[ 
+    \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right)
+    \left( \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ} \right)^{-1}
+    \left( \sum_{i=1}^N \tilde{\bZ}'\tilde{\bW} \right)
+      \right]^{-1} \times \notag \\
+    \times & \left( \sum_{i=1}^N \tilde{\bW}'\tilde{\bZ} \right)
+    \left( \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ} \right)^{-1}
+    \left( \sum_{i=1}^N \tilde{\bZ}'\Delta \tilde{\by}_i \right)  \label{eq:sys-gmm}
+\end{align}
+where
+\begin{eqnarray*}
+  \Delta \tilde{\by}_i  & = &
+     \left[ \begin{array}{ccccccc}
+         \Delta y_{i3} & \cdots & \Delta y_{iT} & y_{i3} & \cdots & y_{iT}
+       \end{array} \right]' \\
+  \tilde{\bW}_i  & = &
+     \left[ \begin{array}{cccccc}
+         \Delta y_{i2} & \cdots & \Delta y_{i,T-1} & y_{i2} & \cdots & y_{i,T-1} \\
+         \Delta x_{i3} & \cdots & \Delta x_{iT}  & x_{i3} & \cdots & x_{iT} \\
+       \end{array} \right]' \\
+  \tilde{\bZ}_i  & = &
+     \left[ \begin{array}{ccccccccc}
+         y_{i1} & 0 & 0       & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i,3}\\
+         0 & y_{i1} & y_{i2} & \cdots & 0  & 0  & \cdots & 0 & \Delta x_{i,4}\\
+         & & \vdots \\
+         0 & 0 & 0 & \cdots & y_{i, T-2} & 0  & \cdots & 0  & \Delta x_{iT}\\
+         & & \vdots \\
+         0 & 0 & 0 & \cdots & 0 & \Delta y_{i2} & \cdots & 0  & x_{i3}\\
+         & & \vdots \\
+         0 & 0 & 0 & \cdots & 0 & 0 & \cdots & \Delta y_{i,T-1}  & x_{iT}\\
+       \end{array} \right]' 
+\end{eqnarray*}
+
+In this case choosing a precise form for the matrix $H^*$ for the
+first step is no trivial matter. Its north-west block should be as
+similar as possible to the covariance matrix of the vector $\Delta
+v_{it}$, so the same choice as the ``difference'' estimator is
+appropriate. Ideally, the south-east block should be proportional to
+the covariance matrix of the vector $\biota \eta_i + \bv$, that is
+$\sigma^2_{v} I + \sigma^2_{\eta} \biota \biota'$; but since
+$\sigma^2_{\eta}$ is unknown and any positive definite matrix renders
+the estimator consistent, people just use $I$. The off-diagonal blocks
+should, in principle, contain the covariances between $\Delta v_{is}$
+and $v_{it}$, which would be an identity matrix if $v_{it}$ is white
+noise. However, since the south-east block is typically given a
+conventional value anyway, the benefit in making this choice is not
+obvious. Some packages use $I$; others use a zero matrix.
+Asymptotically, it should not matter, but on real datasets the
+difference between the resulting estimates can be noticeable.
+
+\subsection{Rank deficiency}
+\label{sec:rankdef}
+
+Both the difference estimator (\ref{eq:dif-gmm}) and the system
+estimator (\ref{eq:sys-gmm}) depend, for their existence, on the
+invertibility of $A = \sum_{i=1}^N \tilde{\bZ}' H^* \tilde{\bZ}$. This
+matrix may turn out to be singular for several reasons. However, this
+does not mean that the estimator is not computable: in some cases,
+adjustments are possible such that the estimator does exist, but the
+user must be aware that in these cases not all software packages use
+the same strategy and replication of results may prove difficult or
+even impossible.
+
+A first reason why $A$ may be singular could be the unavailability of
+instruments, chiefly because of missing observations. This case is
+easy to handle. If a particular row of $\tilde{\bZ}_i$ is zero for all
+units, the corresponding orthogonality condition (or the corresponding
+instrument if you prefer) is automatically dropped; of course, the
+overidentification rank is adjusted for testing purposes.
+
+Even if no instruments are zero, however, $A$ could be rank
+deficient. A trivial case occurs if there are collinear instruments,
+but a less trivial case may arise when $T$ (the total number of time
+periods available) is not much smaller than $N$ (the number of units),
+as, for example, in some macro datasets where the units are
+countries. The total number of potentially usable orthogonality
+conditions is $O(T^2)$, which may well exceed $N$ in some cases. Of
+course $A$ is the sum of $N$ matrices which have, at most, rank $2T -
+3$ and therefore it could well happen that $A$ is singular.
+
+In all these cases, what we consider the ``proper'' way to go is to
+substitute the pseudo-inverse of $A$ (Moore--Penrose) for its regular
+inverse. Again, our choice is shared by some software packages, but
+not all, so replication may be hard.
+
+
+\subsection{Treatment of missing values}
+
+Textbooks seldom bother with missing values, but in some cases their
+treatment may be far from obvious. This is especially true if missing
+values are interspersed between valid observations. For example,
+consider the plain difference estimator with one lag, so
+\[
+y_t = \alpha y_{t-1} + \eta + \epsilon_t
+\]
+where the $i$ index is omitted for clarity. Suppose you have an
+individual with $t=1\ldots5$, for which $y_3$ is missing. It may seem
+that the data for this individual are unusable, because
+differencing $y_t$ would produce something like
+\[
+\begin{array}{c|ccccc}
+  t & 1 & 2 & 3 & 4 & 5 \\
+  \hline
+  y_t & * & * & \circ & * & * \\
+  \Delta y_t & \circ & * & \circ & \circ & *
+\end{array}
+\]
+where $*$ = nonmissing and $\circ$ = missing. Estimation seems to be
+unfeasible, since there are no periods in which $\Delta y_t$ and
+$\Delta y_{t-1}$ are both observable.
+
+However, we can use a $k$-difference operator and get
+\[
+\Delta_k y_t = \alpha \Delta_k y_{t-1} + \Delta_k \epsilon_t
+\]
+where $\Delta_k = 1 - L^k$ and past levels of $y_t$ are perfectly
+valid instruments. In this example, we can choose $k=3$ and use $y_1$
+as an instrument, so this unit is in fact perfectly usable.
+
+Not all software packages seem to be aware of this possibility, so
+replicating published results may prove tricky if your dataset
+contains individuals with ``gaps'' between valid observations.
+
+\section{Usage}
+
+One of the concepts underlying the syntax of \texttt{dpanel} is that
+you get default values for several choices you may want to make, so
+that in a ``standard'' situation the command itself is very short to
+write (and read).  The simplest case of the model (\ref{eq:dpd-def})
+is a plain AR(1) process:
+\begin{equation}
+\label{eq:dp1}
+  y_{i,t} = \alpha y_{i,t-1} + \eta_{i} + v_{it} .
+\end{equation}
+If you give the command
+\begin{code}
+  dpanel 1 ; y
+\end{code}
+gretl assumes that you want to estimate (\ref{eq:dp1}) via the
+difference estimator (\ref{eq:dif-gmm}), using as many orthogonality
+conditions as possible.  The scalar \texttt{1} between \texttt{dpanel}
+and the semicolon indicates that only one lag of \texttt{y} is
+included as an explanatory variable; using \texttt{2} would give an
+AR(2) model. The syntax that gretl uses for the non-seasonal AR and MA
+lags in an ARMA model is also supported in this context.\footnote{This
+  represents an enhancement over the \texttt{arbond} command.} For
+example, if you want the first and third lags of \texttt{y} (but not
+the second) included as explanatory variables you can say
+\begin{code}
+  dpanel {1 3} ; y
+\end{code}
+or you can use a pre-defined matrix for this purpose:
+\begin{code}
+  matrix ylags = {1, 3}
+  dpanel ylags ; y
+\end{code}
+To use a single lag of \texttt{y} other than the first you need to
+employ this mechanism:
+\begin{code}
+  dpanel {3} ; y # only lag 3 is included
+  dpanel 3 ; y   # compare: lags 1, 2 and 3 are used
+\end{code}
+
+To use the system estimator instead, you add the \verb|--system|
+option, as in
+\begin{code}
+  dpanel 1 ; y --system
+\end{code}
+The level orthogonality conditions and the corresponding instrument
+are appended automatically (see eq.\ \ref{eq:sys-gmm}).
+
+\subsection{Regressors}
+
+If we want to introduce additional regressors, we list them after
+the dependent variable in the same way as other \texttt{gretl}
+commands, such as \texttt{ols}. 
+
+For the difference orthogonality relations, \texttt{dpanel} takes care
+of transforming the regressors in parallel with the dependent
+variable. Note that this differs from gretl's \texttt{arbond} command,
+where only the dependent variable is differenced automatically; it
+brings us more in line with other software.
+
+One case of potential ambiguity is when an intercept is specified but
+the difference-only estimator is selected, as in
+\begin{code}
+  dpanel 1 ; y const
+\end{code}
+In this case the default \texttt{dpanel} behavior, which agrees with
+Stata's \texttt{xtabond2}, is to drop the constant (since differencing
+reduces it to nothing but zeros). However, for compatibility with the
+DPD package for Ox, you can give the option \verb|--dpdstyle|, in
+which case the constant is retained (equivalent to including a linear
+trend in equation~\ref{eq:dpd-def}).  A similar point applies to the
+period-specific dummy variables which can be added in \texttt{dpanel}
+via the \verb|--time-dummies| option: in the differences-only case
+these dummies are entered in differenced form by default, but when the
+\verb|--dpdstyle| switch is applied they are entered in levels.
+
+The standard \texttt{gretl} syntax applies if you want to use lagged
+explanatory variables, so for example the command
+\begin{code}
+  dpanel 1 ; y const x(0 to -1) --system
+\end{code}
+would result in estimation of the model
+\[
+  y_{it} = \alpha y_{i,t-1} + 
+  \beta_0 + \beta_1 x_{it} + \beta_2 x_{i,t-1} +
+  \eta_{i} + v_{it} .
+\]
+
+
+\subsection{Instruments}
+
+The default rules for instruments are: 
+\begin{itemize}
+\item lags of the dependent variable are instrumented using all
+  available orthogonality conditions; and
+\item additional regressors are considered exogenous, so they are used
+  as their own instruments.
+\end{itemize}
+
+If a different policy is wanted, the instruments should be specified
+in an additional list, separated from the regressors list by a
+semicolon. The syntax closely mirrors that for the \texttt{tsls}
+command, but in this context it is necessary to distinguish between
+``regular'' instruments and what are often called ``GMM-style''
+instruments (that, instruments that are handled in the same
+block-diagonal manner as lags of the dependent variable, as described
+above).
+
+``Regular'' instruments are transformed in the same way as
+regressors, and the contemporaneous value of the transformed variable
+is used to form an orthogonality condition. Since regressors are
+treated as exogenous by default, it follows that these two commands
+estimate the same model:
+
+\begin{code}
+  dpanel 1 ; y z
+  dpanel 1 ; y z ; z
+\end{code}
+The instrument specification in the second case simply confirms what
+is implicit in the first: that \texttt{z} is exogenous. Note, though,
+that if you have some additional variable \texttt{z2} which you want
+to add as a regular instrument, it then becomes necessary to 
+include \texttt{z} in the instrument list if it is to be treated
+as exogenous:
+\begin{code}
+  dpanel 1 ; y z ; z2   # z is now implicitly endogenous
+  dpanel 1 ; y z ; z z2 # z is treated as exogenous
+\end{code}
+
+The specification of ``GMM-style'' instruments is handled by the
+special constructs \texttt{GMM()} and \texttt{GMMlevel()}.  The first
+of these relates to instruments for the equations in differences, and
+the second to the equations in levels. The syntax for \texttt{GMM()}
+is
+
+\begin{altcode}
+\texttt{GMM(}\textsl{varname}\texttt{,} \textsl{minlag}\texttt{,} 
+\textsl{maxlag}\texttt{)}
+\end{altcode}
+
+\noindent
+where \textsl{varname} is replaced by the name of a series,
+and \textsl{minlag} and \textsl{maxlag} are replaced by the minimum
+and maximum lags to be used as instruments. The same goes for 
+\texttt{GMMlevel()}.
+
+One common use of \texttt{GMM()} is to limit the number of lagged
+levels of the dependent variable used as instruments for the equations
+in differences. It's well known that although exploiting all possible
+orthogonality conditions yields maximal asymptotic efficiency, in
+finite samples it may be preferable to use a smaller subset (but see
+also \cite{OkuiJoE2009}).  For example, the specification
+
+\begin{code}
+  dpanel 1 ; y ; GMM(y, 2, 4)
+\end{code}
+ensures that no lags of $y_t$ earlier than $t-4$ will be used as
+instruments.
+
+A second use of \texttt{GMM()} is to exploit more fully the potential
+block-diagonal orthogonality conditions offered by an exogenous
+regressor, or a related variable that does not appear as a regressor.
+For example, in
+
+\begin{code}
+  dpanel 1 ; y x ; GMM(z, 2, 6)
+\end{code}
+the variable \texttt{x} is considered an endogenous regressor, and up to
+5 lags of \texttt{z} are used as instruments.
+
+Note that in the following script fragment
+\begin{code}
+  dz = diff(z)
+  dpanel 1 ; y dz
+  dpanel 1 ; y dz ; GMM(z,0,0)
+\end{code}
+the two estimation commands should not be expected to give the same
+result, as the sets of orthogonality relationships are subtly
+different.  In the latter case, you have $T-2$ separate orthogonality
+relationships pertaining to $z_{it}$, none of which has any
+implication for the other ones; in the former case, you only have one.
+In terms of the $\bZ_i$ matrix, the first form adds a single row to
+the bottom of the instruments matrix, while the second form adds a
+diagonal block with $T-2$ columns, that is
+\[
+  \left[ \begin{array}{cccc}
+         \Delta z_{i3} & \Delta z_{i4} & \cdots & \Delta z_{it}
+       \end{array} \right]
+\] 
+versus
+\[
+  \left[ \begin{array}{cccc}
+         \Delta z_{i3} & 0 & \cdots & 0 \\
+         0 & \Delta z_{i4} & \cdots & 0 \\
+          & \ddots & \ddots &  \\
+         0 & 0 & \cdots & \Delta z_{it} 
+       \end{array} \right]
+\]
+
+\section{Replication of DPD results}
+\label{sec:DPD-replic}
+
+In this section we show how to replicate the results of some of the
+pioneering work with dynamic panel-data estimators by Arellano, Bond
+and Blundell.  As the DPD manual \citep*{DPDmanual} explains, it is
+difficult to replicate the original published results exactly, for two
+main reasons: not all of the data used in those studies are publicly
+available; and some of the choices made in the original software
+implementation of the estimators have been superseded.  Here,
+therefore, our focus is on replicating the results obtained using the
+current DPD package and reported in the DPD manual.
+
+The examples are based on the program files \texttt{abest1.ox},
+\texttt{abest3.ox} and \texttt{bbest1.ox}. These are included in the
+DPD package, along with the Arellano--Bond database files
+\texttt{abdata.bn7} and \texttt{abdata.in7}.\footnote{See
+  \url{http://www.doornik.com/download.html}.} The
+Arellano--Bond data are also provided with gretl, in the file
+\texttt{abdata.gdt}. In the following we do not show the output from
+DPD or gretl; it is somewhat voluminous, and is easily generated by
+the user. As of this writing the results from Ox/DPD and gretl are
+identical in all relevant respects for all of the examples
+shown.\footnote{To be specific, this is using Ox Console version 5.10,
+  version 1.24 of the DPD package, and gretl built from CVS as of
+  2010-10-23, all on Linux.}
+
+A complete Ox/DPD program to generate the results of interest takes
+this general form:
+
+\begin{code}
+#include <oxstd.h>
+#import <packages/dpd/dpd>
+
+main()
+{
+    decl dpd = new DPD();
+
+    dpd.Load("abdata.in7");
+    dpd.SetYear("YEAR");
+
+    // model-specific code here
+
+    delete dpd;
+}
+\end{code}
+%
+In the examples below we take this template for granted and show just
+the model-specific code.
+
+\subsection{Example 1}
+
+The following Ox/DPD code---drawn from \texttt{abest1.ox}---replicates
+column (b) of Table 4 in \cite{arellano-bond91}, an instance of the
+differences-only or GMM-DIF estimator. The dependent variable is the
+log of employment, \texttt{n}; the regressors include two lags of the
+dependent variable, current and lagged values of the log real-product
+wage, \texttt{w}, the current value of the log of gross capital,
+\texttt{k}, and current and lagged values of the log of industry
+output, \texttt{ys}. In addition the specification includes a constant
+and five year dummies; unlike the stochastic regressors, these
+deterministic terms are not differenced. In this specification the
+regressors \texttt{w}, \texttt{k} and \texttt{ys} are treated as
+exogenous and serve as their own instruments. In DPD syntax this
+requires entering these variables twice, on the \verb|X_VAR| and
+\verb|I_VAR| lines. The GMM-type (block-diagonal) instruments in this
+example are the second and subsequent lags of the level of \texttt{n}.
+Both 1-step and 2-step estimates are computed.
+
+\begin{code}
+dpd.SetOptions(FALSE); // don't use robust standard errors
+dpd.Select(Y_VAR, {"n", 0, 2});
+dpd.Select(X_VAR, {"w", 0, 1, "k", 0, 0, "ys", 0, 1});
+dpd.Select(I_VAR, {"w", 0, 1, "k", 0, 0, "ys", 0, 1});
+
+dpd.Gmm("n", 2, 99);
+dpd.SetDummies(D_CONSTANT + D_TIME);
+
+print("\n\n***** Arellano & Bond (1991), Table 4 (b)");
+dpd.SetMethod(M_1STEP);
+dpd.Estimate();
+dpd.SetMethod(M_2STEP);
+dpd.Estimate();
+\end{code}
+
+Here is gretl code to do the same job:
+
+\begin{code}
+open abdata.gdt
+list X = w w(-1) k ys ys(-1)
+dpanel 2 ; n X const --time-dummies --asy --dpdstyle
+dpanel 2 ; n X const --time-dummies --asy --two-step --dpdstyle
+\end{code}
+
+Note that in gretl the switch to suppress robust standard errors is
+\verb|--asymptotic|, here abbreviated to \verb|--asy|.\footnote{Option
+  flags in gretl can always be truncated, down to the minimal unique
+  abbreviation.} The \verb|--dpdstyle| flag specifies that the
+constant and dummies should not be differenced, in the context of a
+GMM-DIF model. With gretl's \texttt{dpanel} command it is not
+necessary to specify the exogenous regressors as their own instruments
+since this is the default; similarly, the use of the second and all
+longer lags of the dependent variable as GMM-type instruments is the
+default and need not be stated explicitly. 
+
+\subsection{Example 2}
+
+The DPD file \texttt{abest3.ox} contains a variant of the above that
+differs with regard to the choice of instruments: the variables
+\texttt{w} and \texttt{k} are now treated as predetermined, and are
+instrumented GMM-style using the second and third lags of their
+levels. This approximates column (c) of Table 4 in
+\cite{arellano-bond91}.  We have modified the code in
+\texttt{abest3.ox} slightly to allow the use of robust
+(Windmeijer-corrected) standard errors, which are the default in both
+DPD and gretl with 2-step estimation:
+
+\begin{code}
+dpd.Select(Y_VAR, {"n", 0, 2});
+dpd.Select(X_VAR, {"w", 0, 1, "k", 0, 0, "ys", 0, 1});
+dpd.Select(I_VAR, {"ys", 0, 1});
+dpd.SetDummies(D_CONSTANT + D_TIME);
+
+dpd.Gmm("n", 2, 99);
+dpd.Gmm("w", 2, 3);
+dpd.Gmm("k", 2, 3);
+
+print("\n***** Arellano & Bond (1991), Table 4 (c)\n");
+print("        (but using different instruments!!)\n");
+dpd.SetMethod(M_2STEP);
+dpd.Estimate();
+\end{code}
+
+The gretl code is as follows:
+
+\begin{code}
+open abdata.gdt
+list X = w w(-1) k ys ys(-1)
+list Ivars = ys ys(-1)
+dpanel 2 ; n X const ; GMM(w,2,3) GMM(k,2,3) Ivars --time --two-step --dpd
+\end{code}
+%
+Note that since we are now calling for an instrument set other then
+the default (following the second semicolon), it is necessary to
+include the \texttt{Ivars} specification for the variable \texttt{ys}.
+However, it is not necessary to specify \texttt{GMM(n,2,99)} since
+this remains the default treatment of the dependent variable.
+
+\subsection{Example 3}
+
+Our third example replicates the DPD output from \texttt{bbest1.ox}:
+this uses the same dataset as the previous examples but the model
+specifications are based on \cite{blundell-bond98}, and involve
+comparison of the GMM-DIF and GMM-SYS (``system'') estimators. The
+basic specification is slightly simplified in that the variable
+\texttt{ys} is not used and only one lag of the dependent variable
+appears as a regressor. The Ox/DPD code is:
+
+\begin{code}
+dpd.Select(Y_VAR, {"n", 0, 1});
+dpd.Select(X_VAR, {"w", 0, 1, "k", 0, 1});
+dpd.SetDummies(D_CONSTANT + D_TIME);
+
+print("\n\n***** Blundell & Bond (1998), Table 4: 1976-86 GMM-DIF");
+dpd.Gmm("n", 2, 99);
+dpd.Gmm("w", 2, 99);
+dpd.Gmm("k", 2, 99);
+dpd.SetMethod(M_2STEP);
+dpd.Estimate();
+
+print("\n\n***** Blundell & Bond (1998), Table 4: 1976-86 GMM-SYS");
+dpd.GmmLevel("n", 1, 1);
+dpd.GmmLevel("w", 1, 1);
+dpd.GmmLevel("k", 1, 1);
+dpd.SetMethod(M_2STEP);
+dpd.Estimate();
+\end{code}
+
+Here is the corresponding gretl code:
+
+\begin{code}
+open abdata.gdt
+list X = w w(-1) k k(-1)
+
+# Blundell & Bond (1998), Table 4: 1976-86 GMM-DIF
+dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) --time --two-step --dpd
+
+# Blundell & Bond (1998), Table 4: 1976-86 GMM-SYS
+dpanel 1 ; n X const ; GMM(w,2,99) GMM(k,2,99) \
+  GMMlevel(w,1,1) GMMlevel(k,1,1) --time --two-step --dpd --system
+\end{code}
+
+Note the use of the \verb|--system| option flag to specify GMM-SYS,
+including the default treatment of the dependent variable, which
+corresponds to \texttt{GMMlevel(n,1,1)}. In this case we also want to
+use lagged differences of the regressors \texttt{w} and \texttt{k} as
+instruments for the levels equations so we need explicit
+\texttt{GMMlevel} entries for those variables. If you want something
+other than the default treatment for the dependent variable as an
+instrument for the levels equations, you should give an explicit
+\texttt{GMMlevel} specification for that variable---and in that case
+the \verb|--system| flag is redundant (but harmless).
+
+For the sake of completeness, note that if you specify at least one
+\texttt{GMMlevel} term, \texttt{dpanel} will then include equations in
+levels, but it will not automatically add a default \texttt{GMMlevel}
+specification for the dependent variable unless the \verb|--system|
+option is given.
+
+\section{Cross-country growth example}
+\label{sec:dpanel-growth}
+
+The previous examples all used the Arellano--Bond dataset; for this
+example we use the dataset \texttt{CEL.gdt}, which is also included in
+the gretl distribution. As with the Arellano--Bond data, there are
+numerous missing values.  Details of the provenance of the data can be
+found by opening the dataset information window in the gretl GUI
+(\textsf{Data} menu, \textsf{Dataset info} item). This is a subset of
+the Barro--Lee 138-country panel dataset, an approximation to which is
+used in \citet*{CEL96} and \citet*{Bond2001}.\footnote{We say an
+  ``approximation'' because we have not been able to replicate exactly
+  the OLS results reported in the papers cited, though it seems from
+  the description of the data in \cite{CEL96} that we ought to be able
+  to do so.  We note that \cite{Bond2001} used data provided by
+  Professor Caselli yet did not manage to reproduce the latter's
+  results.}  Both of these papers explore the dynamic panel-data
+approach in relation to the issues of growth and convergence of per
+capita income across countries.
+
+The dependent variable is growth in real GDP per capita over
+successive five-year periods; the regressors are the log of the
+initial (five years prior) value of GDP per capita, the log-ratio of
+investment to GDP, $s$, in the prior five years, and the log of annual
+average population growth, $n$, over the prior five years plus 0.05 as
+stand-in for the rate of technical progress, $g$, plus the rate of
+depreciation, $\delta$ (with the last two terms assumed to be constant
+across both countries and periods).  The original model is
+\begin{equation}
+\label{eq:CEL96}
+\Delta_5 y_{it} = \beta y_{i,t-5} + \alpha s_{it} + \gamma (n_{it} +
+g + \delta) + \nu_t + \eta_i + \epsilon_{it}
+\end{equation}
+which allows for a time-specific disturbance $\nu_t$. The Solow model
+with Cobb--Douglas production function implies that $\gamma =
+-\alpha$, but this assumption is not imposed in estimation. The
+time-specific disturbance is eliminated by subtracting the period mean
+from each of the series.
+
+Equation (\ref{eq:CEL96}) can be transformed to an AR(1) dynamic
+panel-data model by adding $y_{i,t-5}$ to both sides, which gives
+\begin{equation}
+\label{eq:CEL96a}
+y_{it} = (1 + \beta) y_{i,t-5} + \alpha s_{it} + \gamma (n_{it} +
+g + \delta) + \eta_i + \epsilon_{it}
+\end{equation}
+where all variables are now assumed to be time-demeaned.
+
+In (rough) replication of \cite{Bond2001} we now proceed to estimate
+the following two models: (a) equation (\ref{eq:CEL96a}) via GMM-DIF,
+using as instruments the second and all longer lags of $y_{it}$,
+$s_{it}$ and $n_{it} + g + \delta$; and (b) equation
+(\ref{eq:CEL96a}) via GMM-SYS, using $\Delta y_{i,t-1}$, $\Delta
+s_{i,t-1}$ and $\Delta (n_{i,t-1} + g + \delta)$ as additional
+instruments in the levels equations. We report robust standard errors
+throughout. (As a purely notational matter, we now use ``$t-1$'' to
+refer to values five years prior to $t$, as in \cite{Bond2001}).
+
+The gretl script to do this job is shown below. Note that the final
+transformed versions of the variables (logs, with time-means
+subtracted) are named \texttt{ly} ($y_{it}$), \texttt{linv} ($s_{it}$)
+and \texttt{lngd} ($n_{it} + g + \delta$).
+%
+\begin{code}
+open CEL.gdt
+
+ngd = n + 0.05
+ly = log(y)
+linv = log(s)
+lngd = log(ngd)
+
+# take out time means
+loop i=1..8 --quiet
+  smpl (time == i) --restrict --replace
+  ly -= mean(ly)
+  linv -= mean(linv)
+  lngd -= mean(lngd)
+endloop
+
+smpl --full
+list X = linv lngd
+# 1-step GMM-DIF
+dpanel 1 ; ly X ; GMM(linv,2,99) GMM(lngd,2,99)
+# 2-step GMM-DIF
+dpanel 1 ; ly X ; GMM(linv,2,99) GMM(lngd,2,99) --two-step
+# GMM-SYS
+dpanel 1 ; ly X ; GMM(linv,2,99) GMM(lngd,2,99) \
+ GMMlevel(linv,1,1) GMMlevel(lngd,1,1) --two-step --sys
+\end{code}
+
+For comparison we estimated the same two models using Ox/DPD and the
+Stata command \texttt{xtabond2}. (In each case we constructed a
+comma-separated values dataset containing the data as transformed in
+the gretl script shown above, using a missing-value code appropriate
+to the target program.) For reference, the commands used with
+Stata are reproduced below:
+%
+\begin{code}
+insheet using CEL.csv
+tsset unit time
+xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
+  gmm(lngd, lag(2 99)) rob nolev
+xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
+  gmm(lngd, lag(2 99)) rob nolev twostep
+xtabond2 ly L.ly linv lngd, gmm(L.ly, lag(1 99)) gmm(linv, lag(2 99)) 
+  gmm(lngd, lag(2 99)) rob nocons twostep
+\end{code}
+
+For the GMM-DIF model all three programs find 382 usable observations
+and 30 instruments, and yield identical parameter estimates and
+robust standard errors (up to the number of digits printed, or more);
+see Table~\ref{tab:growth-DIF}.\footnote{The coefficient shown for
+  \texttt{ly(-1)} in the Tables is that reported directly by the
+  software; for comparability with the original model (eq.\
+  \ref{eq:CEL96}) it is necesary to subtract 1, which produces the
+  expected negative value indicating conditional convergence in per
+  capita income.}
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{lrrrr}
+& \multicolumn{2}{c}{1-step} & \multicolumn{2}{c}{2-step} \\
+& \multicolumn{1}{c}{coeff} & \multicolumn{1}{c}{std.\ error} &
+  \multicolumn{1}{c}{coeff} & \multicolumn{1}{c}{std.\ error} \\
+\texttt{ly(-1)} & 0.577564 & 0.1292 & 0.610056 & 0.1562 \\
+\texttt{linv} & 0.0565469 & 0.07082 & 0.100952 & 0.07772 \\
+\texttt{lngd} & $-$0.143950 & 0.2753 & $-$0.310041 & 0.2980 \\
+\end{tabular}
+\caption{GMM-DIF: Barro--Lee data}
+\label{tab:growth-DIF}
+\end{center}
+\end{table}
+
+Results for GMM-SYS estimation are shown in
+Table~\ref{tab:growth-SYS}. In this case we show two sets of gretl
+results: those labeled ``gretl(1)'' were obtained using gretl's
+\verb|--dpdstyle| option, while those labeled ``gretl(2)'' did not use
+that option---the intent being to reproduce the $H$ matrices used by
+Ox/DPD and \texttt{xtabond2} respectively.
+
+\begin{table}[htbp]
+\begin{center}
+\begin{tabular}{lrrrr}
+& \multicolumn{1}{c}{gretl(1)} & 
+  \multicolumn{1}{c}{Ox/DPD} &
+  \multicolumn{1}{c}{gretl(2)} & 
+  \multicolumn{1}{c}{xtabond2} \\
+\texttt{ly(-1)} & 0.9237 (0.0385) & 
+  0.9167 (0.0373) & 
+    0.9073 (0.0370) &
+      0.9073 (0.0370) \\
+\texttt{linv} & 0.1592 (0.0449) & 
+  0.1636 (0.0441) & 
+    0.1856 (0.0411) &
+      0.1856 (0.0411) \\
+\texttt{lngd} & $-$0.2370 (0.1485) & 
+  $-$0.2178 (0.1433) & 
+    $-$0.2355 (0.1501) &
+      $-$0.2355 (0.1501) 
+\end{tabular}
+\caption{2-step GMM-SYS: Barro--Lee data (standard errors in parentheses)}
+\label{tab:growth-SYS}
+\end{center}
+\end{table}
+
+In this case all three programs use 479 observations; gretl and
+\texttt{xtabond2} use 41 instruments and produce the same estimates
+(when using the same $H$ matrix) while Ox/DPD nominally uses
+66.\footnote{This is a case of the issue described in
+  section~\ref{sec:rankdef}: the full $A$ matrix turns out to be
+  singular and special measures must be taken to produce estimates.}
+It is noteworthy that with GMM-SYS plus ``messy'' missing
+observations, the results depend on the precise array of instruments
+used, which in turn depends on the details of the implementation of
+the estimator.
+
+\subsection*{Auxiliary test statistics}
+
+We have concentrated above on the parameter estimates and standard
+errors. It may be worth adding a few words on the additional test
+statistics that typically accompany both GMM-DIF and GMM-SYS
+estimation. These include the Sargan test for overidentification, one
+or more Wald tests for the joint significance of the regressors, and time
+dummies if applicable, and tests for first- and second-order
+autocorrelation of the residuals from the equations in differences.
+
+In general we see a good level of agreement between gretl, DPD and
+\texttt{xtabond2} with regard to these statistics, with a few
+relatively minor exceptions. Specifically, \texttt{xtabond2} computes
+both a ``Sargan test'' and a ``Hansen test'' for overidentification,
+but what it calls the Hansen test is what DPD and gretl call the
+Sargan test. (We have had difficulty determining from the
+\texttt{xtabond2} documentation \citep{Roodman2006} exactly how its
+Sargan test is computed.) In addition there are cases where the
+degrees of freedom for the Sargan test differ between DPD and gretl;
+this occurs when the $A$ matrix is singular
+(section~\ref{sec:rankdef}). In concept the df equals the number of
+instruments minus the number of parameters estimated; for the first of
+these terms gretl uses the rank of $A$, while DPD appears to use the
+full dimension of $A$.
+
+\section{Memo: \texttt{dpanel} options}
+\label{sec:options}
+
+\begin{center}
+\begin{tabular}{lp{.7\textwidth}}
+  \textit{flag} & \textit{effect} \\ [6pt]
+  \verb|--asymptotic| & Suppresses the use of robust standard errors \\
+  \verb|--two-step| & Calls for 2-step estimation (the default being 1-step) \\
+  \verb|--system| & Calls for GMM-SYS, with default treatment of the 
+  dependent variable, as in \texttt{GMMlevel(y,1,1)} \\
+  \verb|--time-dummies| & Includes period-specific dummy variables \\
+  \verb|--dpdstyle| & Compute the $H$ matrix as in DPD; also suppresses
+  differencing of automatic time dummies and omission of intercept
+  in the GMM-DIF case\\
+  \verb|--verbose| & When \verb|--two-step| is selected, prints 
+  the 1-step estimates first \\
+  \verb|--vcv| & Calls for printing of the covariance matrix \\
+  \verb|--quiet| & Suppresses the printing of results \\
+\end{tabular}
+\end{center}
+
+

@@ -1,0 +1,452 @@
+\chapter{Gretl data types}
+\label{chap:datatypes}
+
+\section{Introduction}
+
+\app{Gretl} offers the following data types:
+%
+\begin{center}
+\begin{tabular}{lp{.8\textwidth}}
+\texttt{scalar} & holds a single numerical value\\
+\texttt{series} & holds $n$ numerical values, where $n$
+ is the number of observations in the current dataset \\
+\texttt{matrix} & holds a rectangular array of numerical
+ values, of any dimensions\\
+\texttt{list} & holds the ID numbers of a set of series \\
+\texttt{string} & holds an array of characters\\
+\texttt{bundle} & holds a variable number of objects of 
+ various types
+\end{tabular}
+\end{center}
+
+The ``numerical values'' mentioned above are all double-precision
+floating point numbers.
+
+In this chapter we give a run-down of the basic characteristics of
+each of these types and also explain their ``life cycle'' (creation,
+modification and destruction). The list and matrix types, whose uses
+are relatively complex, are discussed at greater length in the
+following two chapters. 
+
+\section{Series}
+\label{sec:Series}
+
+We begin with the \texttt{series} type, which is the oldest and in a
+sense the most basic type in gretl. When you open a data file in the
+gretl GUI, what you see in the main window are the ID numbers, names
+(and descriptions, if available) of the series read from the file. All
+the series existing at any point in a gretl session are of the same
+length, although some may have missing values. The variables that can
+be added via the items under the \textsf{Add} menu in the main window
+(logs, squares and so on) are also series.
+
+For a gretl session to contain any series, a common series length must
+be established. This is usually achieved by opening a data file, or
+importing a series from a database, in which case the length is set by
+the first import. But one can also use the \texttt{nulldata} command,
+which takes as it single argument the desired length, a positive
+integer.
+
+Each series has these basic attributes: an ID number, a name, and of
+course $n$ numerical values. In addition a series may have a
+description (which is shown in the main window and is also accessible
+via the \texttt{labels} command), a ``display name'' for use in
+graphs, a record of the compaction method used in reducing the
+variable's frequency (for time-series data only) and a flag marking
+the variable as discrete. These attributes can be edited in the GUI by
+choosing \textsf{Edit Attributes} (either under the \textsf{Variable}
+menu or via right-click), or by means of the \texttt{setinfo} command.
+
+In the context of most commands you are able to reference series by
+name or by ID number as you wish. The main exception is the definition
+or modification of variables via a formula; here you must use names
+since ID numbers would get confused with numerical constants.
+
+Note that series ID numbers are always consecutive, and the ID number
+for a given series will change if you delete a lower-numbered series.
+In some contexts, where gretl is liable to get confused by such
+changes, deletion of low-numbered series is disallowed.  
+
+\section{Scalars}
+\label{sec:Scalars}
+
+The scalar type is relatively simple: just a convenient named holder
+for a single numerical value. Scalars have none of the additional
+attributes pertaining to series, do not have public ID numbers, and
+must be referenced by name. A common use of scalar variables is to
+record information made available by gretl commands for further
+processing, as in \texttt{scalar s2 = \$sigma\^{}2} to record the square of
+the standard error of the regression following an estimation command
+such as \texttt{ols}.
+
+You can define and work with scalars in gretl without having any
+dataset in place.
+
+In the gretl GUI, scalar variables can be inspected and their values
+edited via the \texttt{Scalars} item under the \texttt{View} menu in
+the main window.
+
+\section{Matrices}
+\label{sec:Matrices}
+
+Matrices in gretl work much as in other mathematical software (e.g.\
+\textsf{MATLAB}, \textsf{Octave}). Like scalars they have no public ID
+numbers and must be referenced by name, and they can be used without
+any dataset in place. Matrix indexing is 1-based: the top-left element
+of matrix \texttt{A} is \texttt{A[1,1]}.  Matrices are discussed at
+length in chapter~\ref{chap:matrices}; advanced users of gretl will
+want to study this chapter in detail.
+
+Matrices have one optional attribute beyond their numerical content:
+they may have column names attached, which are displayed when the
+matrix is printed. See the \texttt{colnames} function for details.
+
+In the gretl GUI, matrices can be inspected, analysed and edited via
+the \texttt{Icon view} item under the \texttt{View} menu in the main
+window: each currently defined matrix is represented by an icon.
+
+\section{Lists}
+\label{sec:Lists}
+
+As with matrices, lists merit an explication of their own (see
+chapter~\ref{chap-persist}).  Briefly, named lists can (and should!)
+be used to make commands scripts less verbose and repetitious, and
+more easily modifiable. Since lists are in fact lists of series ID
+numbers they can be used only when a dataset is in place.
+
+In the gretl GUI, named lists can be inspected and edited under the
+\textsf{Data} menu in the main window, via the item \textsf{Define or
+  edit list}.
+
+\section{Strings}
+\label{sec:Strings}
+
+String variables may be used for labeling, or for constructing
+commands. They are discussed in chapter~\ref{chap-persist}. They must
+be referenced by name; they can be defined in the absence of a
+dataset.
+
+Such variables can be created and modified via the command-line in
+the gretl console or via script; there is no means of editing them
+via the gretl GUI.
+
+
+\section{Bundles}
+\label{sec:Bundles}
+
+A \texttt{bundle} is a container or wrapper for various sorts of
+objects --- specifically, scalars, series, matrices, strings and
+bundles. (Yes, a bundle can contain other bundles). A bundle takes
+the form of a hash table or associative array: each item placed in the
+bundle is associated with a key string which can used to retrieve it
+subsequently. We begin by explaining the mechanics of bundles then
+offer some thoughts on what they are good for.
+
+To use a bundle you must first ``declare'' it, as in
+
+\begin{code}
+bundle foo
+\end{code}
+
+To add an object to a bundle you assign to a compound left-hand value:
+the name of the bundle followed by the key string in square
+brackets. For example, the statement
+
+\begin{code}
+foo["matrix1"] = m
+\end{code}
+
+adds an object called \texttt{m} (presumably a matrix) to bundle
+\texttt{foo} under the key \texttt{matrix1}. To get an item out of a
+bundle, again use the name of the bundle followed by the bracketed
+key, as in
+
+\begin{code}
+matrix bm = foo["matrix1"]
+\end{code}
+
+A bundle key may be given as a double-quoted string literal, as shown
+above, or as the name of a pre-defined string variable. Key strings
+have a maximum length of 15 characters and cannot contain spaces.
+
+Note that the key identifying an object within a given bundle is
+necessarily unique. If you reuse an existing key in a new assignment,
+the effect is to replace the object which was previously stored under
+the given key. It is not required that the type of the replacement
+object is the same as that of the original.
+
+Also note that when you add an object to a bundle, what in fact
+happens is that the bundle acquires a copy of the object. The external
+object retains its own identity and is unaffected if the bundled
+object is replaced by another. Consider the following script fragment:
+
+\begin{code}
+bundle foo
+matrix m = I(3)
+foo["mykey"] = m
+scalar x = 20
+foo["mykey"] = x
+\end{code}
+
+After the above commands are completed bundle \texttt{foo} does not
+contain a matrix under \texttt{mykey}, but the original matrix
+\texttt{m} is still in good health.
+
+To delete an object from a bundle use the \texttt{delete} command, as
+in
+
+\begin{code}
+delete foo["mykey"]
+\end{code}
+
+This destroys the object associated with the key and removes the key
+from the hash table.
+
+Besides adding, accessing, replacing and deleting individual items,
+the other operations that are supported for bundles are union,
+printing and deletion. As regards union, if bundles \texttt{b1} and
+\texttt{b2} are defined you can say
+
+\begin{code}
+bundle b3 = b1 + b2
+\end{code}
+
+to create a new bundle that is the union of the two others. The
+algorithm is: create a new bundle that is a copy of \texttt{b1}, then
+add any items from \texttt{b2} whose keys are not already present in
+the new bundle. (This means that bundle union is not commutative if
+the bundles have one or more key strings in common.)
+
+If \texttt{b} is a bundle and you say \texttt{print b}, you get a
+listing of the bundle's keys along with the types of the corresponding
+objects, as in
+
+\begin{code}
+? print b
+bundle b:
+ x (scalar)
+ mat (matrix)
+ inside (bundle)
+\end{code}
+
+\subsection{What are bundles good for?}
+
+Bundles are unlikely to be of interest in the context of standalone
+\app{gretl} scripts, but they can be very useful in the context of
+complex function packages where a good deal of information has to be
+passed around between the component functions. Instead of using a
+lengthy list of individual arguments, function $A$ can bundle up the
+required data and pass it to functions $B$ and $C$, where relevant
+information can be extracted via a mnemonic key.
+
+In this context bundles should be passed in ``pointer'' form
+(see chapter~\ref{chap:functions}) as illustrated in the following
+trivial example, where a bundle is created at one level then filled
+out by a separate function.
+
+\begin{code}
+# modification of bundle (pointer) by user function
+
+function void fill_out_bundle (bundle *b)
+  b["mat"] =  I(3)
+  b["str"] = "foo"
+  b["x"] = 32
+end function
+
+bundle my_bundle 
+fill_out_bundle(&my_bundle)
+\end{code}
+
+The bundle type can also be used to advantage as the \textit{return
+  value} from a packaged function, in cases where a package writer
+wants to give the user the option of accessing various results. In the
+\app{gretl} GUI, function packages that return a bundle are treated
+specially: the output window that displays the printed results
+acquires a menu showing the bundled items (their names and types),
+from which the user can save items of interest. For example, a
+function package that estimates a model might return a bundle 
+containing a vector of parameter estimates, a residual series and a
+covariance matrix for the parameter estimates, among other
+possibilities.
+
+As a refinement to support the use of bundles as a function return
+type, the \texttt{setnote} function can be used to add a brief
+explanatory note to a bundled item --- such notes will then be shown
+in the GUI menu.  This function takes three arguments: the name of a
+bundle, a key string, and the note. For example
+
+\begin{code}
+setnote(b, "vcv", "covariance matrix")
+\end{code}
+
+After this, the object under the key \texttt{vcv} in bundle \texttt{b}
+will be shown as ``covariance matrix'' in a GUI menu.
+
+\section{The life cycle of gretl objects}
+
+\subsection{Creation}
+
+The most basic way to create a new variable of any type is by
+\textit{declaration}, where one states the type followed by the name
+of the variable to create, as in
+
+\begin{code}
+scalar x
+series y
+matrix A
+\end{code}
+
+and so forth. In that case the object in question is given a default
+initialization, as follows: a new scalar has value \texttt{NA}
+(missing); a new series is filled with \texttt{NA}s; a new matrix is
+null (zero rows and columns); a new string is empty; a new list has no
+members, and a new bundle is empty.
+
+Declaration can be supplemented by a definite initialization, as in
+
+\begin{code}
+scalar x = pi
+series y = log(x)
+matrix A = zeros(10,4)
+\end{code}
+
+With the exception of bundles (as noted above), new variables in
+\app{gretl} do not \textit{have} to be declared by type.  The
+traditional way of creating a new variable in \app{gretl} was via the
+\app{genr} command (which is still supported), as in
+
+\begin{code}
+genr x = y/100
+\end{code}
+
+Here the type of \texttt{x} is left implicit and will be determined
+automatically depending on the context: if \texttt{y} is a scalar, a
+series or a matrix \texttt{x} will inherit \texttt{y}'s type
+(otherwise an error will be generated, since division is applicable to
+these types only). Moreover, the type of a new variable can be left
+implicit \textit{without} use of \texttt{genr}:
+
+\begin{code}
+x = y/100
+\end{code}
+
+In ``modern'' \app{gretl} scripting we recommend that you state the
+type of a new variable explicitly. This makes the intent clearer to a
+reader of the script and also guards against errors that might
+otherwise be difficult to understand (i.e.\ a certain variable turns
+out to be of the wrong type for some subsequent calculation, but you
+don't notice at first because you didn't say what type you needed). An
+exception to this rule might reasonably be granted for clear and
+simple cases where there's little possibility of confusion.
+
+\subsection{Modification}
+
+Typically, the values of variables of all types are modified
+by assignment, using the \texttt{=} operator with the name of the
+variable on the left and a suitable value or formula on the right:
+
+\begin{code}
+z = normal()
+x = 100 * log(y) - log(y(-1))
+M = qform(a, X)
+\end{code}
+
+By a ``suitable'' value we mean one that is conformable for the type
+in question. A \app{gretl} variable acquires its type when it is first
+created and this cannot be changed via assignment; for example, if you
+have a matrix \texttt{A} and later want a string \texttt{A}, you will
+have to delete the matrix first.
+
+\tip{One point to watch out for in \app{gretl} scripting is type
+  conflicts having to do with the names of series brought in from a
+  data file. For example, in setting up a command loop (see
+  chapter~\ref{chap:looping}) it is very common to call the loop index
+  \texttt{i}. Now a loop index is a scalar (typically incremented each
+  time round the loop). If you open a data file that happens to
+  contain a series named \texttt{i} you will get a type error (``Types
+  not conformable for operation'') when you try to use \texttt{i} as a
+  loop index.}
+
+Although the type of an existing variable cannot be changed on the
+fly, \app{gretl} nonetheless tries to be as ``understanding'' as
+possible. For example if \texttt{x} is a series and you say
+
+\begin{code}
+x = 100
+\end{code} 
+
+\app{gretl} will give the series a constant value of 100 rather than
+complaining that you are trying to assign a scalar to a series. This
+issue is particularly relevant for the matrix type --- see
+chapter~\ref{chap:matrices} for details.
+
+Besides using the regular assignment operator you also have the option
+of using an ``inflected'' equals sign, as in the C programming
+language. This is shorthand for the case where the new value of the
+variable is a function of the old value. For example,
+
+\begin{code}
+x += 100 # in longhand: x = x + 100
+x *= 100 # in longhand: x = x * 100
+\end{code} 
+
+For scalar variables you can use a more condensed shorthand for simple
+increment or decrement by 1, namely trailing \texttt{++} or \verb|--|
+respectively:
+
+\begin{code}
+x = 100
+x--     # x now equals 99
+x++     # x now equals 100
+\end{code}
+
+In the case of objects holding more than one value --- series,
+matrices and bundles --- you can modify particular values within the
+object using an expression within square brackets to identify the
+elements to access. We have discussed this above for the bundle type
+and chapter~\ref{chap:matrices} goes into details for matrices. As for
+series, there are two ways to specify particular values for
+modification: you can use a simple 1-based index, or if the dataset is
+a time series or panel (or if it has marker strings that identify the
+observations) you can use an appropriate observation string. Such
+strings are displayed by \app{gretl} when you print data with the 
+\verb|--byobs| flag. Examples:
+
+\begin{code}
+x[13]      = 100  # simple index: the 13th observation
+x[1995:4]  = 100  # date: quarterly time series
+x[2003:08] = 100  # date: monthly time series
+x["AZ"]    = 100  # the observation with marker string "AZ"
+x[3:15]    = 100  # panel: the 15th observation for the 3rd unit
+\end{code}
+
+Note that with quarterly or monthly time series there is no ambiguity
+between a simple index number and a date, since dates always contain a
+colon. With annual time-series data, however, such ambiguity exists
+and it is resolved by the rule that a number in brackets is always
+read as a simple index: \texttt{x[1905]} means the nineteen-hundred
+and fifth observation, \textit{not} the observation for the year 1905.
+You can specify a year by quotation, as in \verb|x["1905"]|.
+
+\subsection{Destruction}
+
+Objects of the types discussed above, \textit{with the important
+  exception of named lists}, are all destroyed using the
+\texttt{delete} command: \texttt{delete} \textsl{objectname}.
+
+Lists are an exception for this reason: in the context of gretl
+commands, a named list expands to the ID numbers of the member series,
+so if you say
+
+\begin{code}
+delete L
+\end{code} 
+
+for \texttt{L} a list, the effect is to delete all the series in
+\texttt{L}; the list itself is not destroyed, but ends up empty.  To
+delete the list itself (without deleting the member series) you must
+invert the command and use the \texttt{list} keyword:
+
+\begin{code}
+list L delete
+\end{code} 
