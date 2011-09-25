@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pt\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-24 11:17-0400\n"
-"PO-Revision-Date: 2011-09-22 22:12+0100\n"
+"PO-Revision-Date: 2011-09-25 00:42+0100\n"
 "Last-Translator: \n"
 "Language-Team: Portuguese <kde-i18n-doc@kde.org>\n"
 "Language: \n"
@@ -2413,7 +2413,7 @@ msgstr "constantes por unidade do modelo %d"
 
 #: lib/src/genfuncs.c:3191
 msgid "Invalid declaration: maybe you need the \"clear\" command?"
-msgstr ""
+msgstr "Declaração inválida: talvez você precise do comando \"clear\"?"
 
 #: lib/src/genfuncs.c:3194
 msgid "Invalid declaration"
@@ -7221,7 +7221,7 @@ msgstr "Acerca de gretl"
 msgid "translator_credits"
 msgstr ""
 "Hélio Guilherme <helio_guilherme@hotmail.com>\n"
-"Tradução de 22 de setembro de 2011."
+"Tradução de 25 de setembro de 2011."
 
 #: gui2/about.c:166
 msgid "License"
@@ -12782,6 +12782,9 @@ msgid ""
 "%s (value = %g)\n"
 "Name (max. 15 characters):"
 msgstr ""
+"Estatística do modelo %d\n"
+"%s (valor = %g)\n"
+"Nome (max. 15 caracteres):"
 
 #: gui2/library.c:5806
 msgid "standardized residual"
