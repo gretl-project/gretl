@@ -27,6 +27,7 @@ file formats are given in Appendix~\ref{app-datafile}.
   Data, Import'' menu.  The requirements for such files are given in
   Section~\ref{scratch}.
 \item \app{Stata} data files (\texttt{.dta}).
+\item \app{SPSS} data files (\texttt{.sav}).
 \item \app{Eviews} workfiles (\texttt{.wf1}).\footnote{See
     \url{http://www.ecn.wfu.edu/eviews_format/}.}
 \item \app{JMulTi} data files.
@@ -491,12 +492,15 @@ to be stacked: here we want to stack all 5 columns (for all 5 years).
 The full data set contains 100 rows; in the stacking of variable
 \varname{x1} we wish to read only the first 50 rows from each column:
 we achieve this by adding \verb+--length=50+.  Note that if you want
-to stack a non-contiguous set of columns you can put a comma-separated
-list within the parentheses, as in
-
+to stack a non-contiguous set of columns you can give a
+comma-separated list of variable names, as in
+%
 \begin{code}
 genr x = stack(p1,p3,p5)
 \end{code}
+%
+or you can provide within the parentheses the name of a previously
+created list (see chapter~\ref{chap-persist}).
 
 On line 3 we do the stacking for variable \varname{x2}.  Again we want
 a \texttt{length} of 50 for the components of the stacked series, but
@@ -515,7 +519,7 @@ periods), but with 20 variables rather than 2.
 
 \begin{code}
 open panel.txt
-loop for i=1..20
+loop i=1..20
   genr k = ($i - 1) * 50
   genr x$i = stack(p1..p5) --offset=k --length=50
 endloop

@@ -211,10 +211,11 @@ or higher (see \href{http://www.gtk.org/}{gtk.org}).\footnote{Up till
   
 \app{Gretl} calls gnuplot for graphing. You can find gnuplot at
 \href{http://www.gnuplot.info/}{gnuplot.info}.  As of this writing the
-most recent official release is 4.2 (of March, 2007).  The MS Windows
-version of \app{gretl} comes with a Windows version gnuplot 4.2; the
-gretl website also offers an rpm of gnuplot 3.8j0 for x86 Linux
-systems.
+most recent official release is 4.2.6 (of September, 2009).  The 
+\app{gretl} packages for MS Windows and Mac OS X come with 
+current CVS gnuplot (version 4.5), and the \app{gretl} website
+offers information on building or installing gnuplot 4.5 on
+Linux.
   
 Some features of \app{gretl} make use of portions of Adrian Feguin's
 \app{gtkextra} library.  The relevant parts of this package are
@@ -222,11 +223,11 @@ included (in slightly modified form) with the \app{gretl} source
 distribution.
   
 A binary version of the program is available for the Microsoft Windows
-platform (Windows 98 or higher). This version was cross-compiled under
-Linux using mingw (the GNU C compiler, \app{gcc}, ported for use with
-win32) and linked against the Microsoft C library, \verb+msvcrt.dll+.
-It uses Tor Lillqvist's port of GTK 2.0 to win32.  The (free,
-open-source) Windows installer program is courtesy of Jordan Russell
+platform (Windows 2000 or higher). This version was cross-compiled
+under Linux using mingw (the GNU C compiler, \app{gcc}, ported for use
+with win32) and linked against the Microsoft C library,
+\verb+msvcrt.dll+.  The (free, open-source) Windows installer program
+is courtesy of Jordan Russell
 (\href{http://www.jrsoftware.org/}{jrsoftware.org}).
 
 \section{Build instructions: a step-by-step guide}
@@ -250,8 +251,7 @@ files or the manuals.
 We assume that the basic GNU utilities are already installed on the
 system, together with these other programs:
 \begin{itemize}
-\item some \TeX/\LaTeX system (\texttt{tetex} or \texttt{texlive} will
-  do beautifully)
+\item some \TeX/\LaTeX system (\texttt{texlive} will do beautifully)
 \item Gnuplot
 \item ImageMagick
 \end{itemize}
@@ -265,37 +265,55 @@ want to refer to the
 \href{http://gretl.sourceforge.net/depend.html}{dependencies} page on
 the \app{gretl} website.
 
-The first step is installing the C compiler and related utilities. On
-a Debian system, these are contained in a bunch of packages that can
-be installed via the command
+The first step is installing the C compiler and related basic
+utilities, if these are not already in place. On a Debian system,
+these are contained in a bunch of packages that can be installed via
+the command
 \begin{code}
 apt-get install gcc autoconf automake1.9 libtool flex bison gcc-doc \
-libc6-dev libc-dev libgfortran1 libgfortran1-dev gettext pkgconfig
+libc6-dev libc-dev gfortran gettext pkgconfig
 \end{code}
 
 Then it is necessary to install the ``development'' (\texttt{dev})
 packages for the libraries that \app{gretl} uses:
-
 \begin{center}
   \begin{tabular}{ll}
     \textit{Library} & \textit{command} \\ [4pt]
-    GLIB & \texttt{apt-get install libglib2.0-dev} \\
-    GTK 2.0 & \texttt{apt-get install libgtk2.0-dev} \\
-    PNG & \texttt{apt-get install libpng12-dev} \\
-    XSLT & \texttt{apt-get install libxslt1-dev} \\
-    LAPACK & \texttt{apt-get install lapack3-dev} \\
-    FFTW & \texttt{apt-get install fftw3-dev} \\
-    READLINE & \texttt{apt-get install libreadline5-dev} \\
-    GMP & \texttt{apt-get install libgmp3-dev}
+    GLIB     & \texttt{apt-get install libglib2.0-dev} \\
+    GTK 2.0  & \texttt{apt-get install libgtk2.0-dev} \\
+    PNG      & \texttt{apt-get install libpng12-dev} \\
+    XSLT     & \texttt{apt-get install libxslt1-dev} \\
+    LAPACK   & \texttt{apt-get install liblapack-dev} \\
+    FFTW     & \texttt{apt-get install libfftw3-dev} \\
+    READLINE & \texttt{apt-get install libreadline-dev} \\
+    ZLIB     & \texttt{apt-get install zlib1g-dev} \\
+    XML      & \texttt{apt-get install libxml2-dev} \\
+    GMP      & \texttt{apt-get install libgmp3-dev} \\
+    MPFR     & \texttt{apt-get install libmpfr-dev}
   \end{tabular}
 \end{center}
 
-(GMP is optional, but recommended.)  The \texttt{dev} packages for
+(MPFR is optional, but recommended.)  The \texttt{dev} packages for
 these libraries are necessary to \emph{compile} \app{gretl} --- you'll
 also need the plain, non-\texttt{dev} library packages to \emph{run}
 \app{gretl}, but most of these should already be part of a standard
 installation.  In order to enable other optional features, like audio
 support, you may need to install more libraries.
+
+\tip{The above steps can be much simplified on Linux systems
+that provide deb-based package managers, such as Debian and its
+derivatives (Ubuntu, Knoppix and other distributions). The command
+
+\texttt{apt-get build-dep gretl}
+
+will download and install all the necessary packages for building the
+version of \app{gretl} that is currently present in your APT
+sources. Techincally, this does not guarantee that all the software
+necessary to build the CVS version is included, because the version of
+\app{gretl} on your repository may be quite old and build requirements
+may have changed in the meantime. However, the chances of a mismatch
+are rather remote for a reasonably up-to-date system, so in most cases
+the above command should take care of everything correctly.}
 
 \subsection{Getting the source: release or CVS}
 
@@ -382,6 +400,9 @@ option to \texttt{configure}, as in
 \begin{code}
 ./configure --enable-build-doc
 \end{code}
+But please note that this option will work only if you are using
+the CVS source.
+
 You will see a number of checks being run, and if everything goes
 according to plan, you should see a summary similar to that displayed
 in Example~\ref{configure-output}.
@@ -470,12 +491,12 @@ Standards and Technology) and a full account of the results may be
 found on the gretl website (follow the link ``Numerical accuracy'').
 
 To date, two published reviews have discussed \app{gretl}'s accuracy:
-Giovanni Baiocchi and Walter Distaso (2003), and Talha Yalta and
-Yasemin Yalta (2007).  We are grateful to these authors for their
-careful examination of the program.  Their comments have prompted
-several modifications including the use of Stephen Moshier's
-\app{cephes} code for computing p-values and other quantities relating
-to probability distributions (see
+Giovanni Baiocchi and Walter Distaso \citeyearpar{baiocchi03}, and
+Talha Yalta and Yasemin Yalta \citeyearpar{yalta07}.  We are grateful
+to these authors for their careful examination of the program.  Their
+comments have prompted several modifications including the use of
+Stephen Moshier's \app{cephes} code for computing p-values and other
+quantities relating to probability distributions (see
 \href{http://www.netlib.org/cephes/}{netlib.org}), changes to the
 formatting of regression output to ensure that the program displays a
 consistent number of significant digits, and attention to compiler
@@ -494,7 +515,7 @@ current version of \app{gretl} (except when the multiple-precision
 plugin is used, in which case results are given to 12 figures).  If
 you want to examine a particular value more closely, first save it
 (for example, using the \cmd{genr} command) then print it using
-\cmd{printf} (see the \GCR).  
+\cmd{printf}, to as many digits as you like (see the \GCR).  
 
 \chapter{Related free software}
 \label{app-advanced}
@@ -569,7 +590,7 @@ Below is a listing of the full URLs of websites mentioned in the text.
 \item[FFTW3] \url{http://www.fftw.org/}
 \item[Gnome desktop homepage] \url{http://www.gnome.org/}
 \item[GNU Multiple Precision (GMP) library]
-  \url{http://swox.com/gmp/}
+  \url{http://gmplib.org/}
 \item[GNU Octave homepage] \url{http://www.octave.org/}
 \item[GNU R homepage] \url{http://www.r-project.org/}
 \item[GNU R manual]

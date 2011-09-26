@@ -4,30 +4,48 @@
 \section{Defining a function}
 \label{func-define}
 
-Since version 1.3.3, \app{gretl} has contained a mechanism for
-defining functions, which may be called via the command line, in
-the context of a script, or (if packaged appropriately, see
-section~\ref{sec:func-packages}) via the program's graphical
-interface.
+\app{Gretl} offers a mechanism for defining functions, which may be
+called via the command line, in the context of a script, or (if
+packaged appropriately, see section~\ref{sec:func-packages}) via the
+program's graphical interface.
 
-The syntax for defining a function looks like this:
-    
-\begin{code}
-function function-name(parameters)
-   function body
-end function
-\end{code}
+The syntax for defining a function looks like this:\footnote{The
+  syntax given here differs from the standard prior to \app{gretl}
+  version 1.8.4.  For reasons of backward compatibility the old syntax
+  is still supported; see section~\ref{sec:old-func} for details.}
 
-\textsl{function-name} is the unique identifier for the function.
-Names must start with a letter. They have a maximum length of 31
-characters; if you type a longer name it will be truncated.  Function
-names cannot contain spaces.  You will get an error if you try to
-define a function having the same name as an existing \app{gretl}
-command.
+\begin{raggedright}
+\texttt{function} \textsl{return-type} \textsl{function-name}
+\texttt{(}\textsl{parameters}\texttt{)} \\
+\qquad  \textsl{function body} \\
+\texttt{end function}
+\end{raggedright}
 
-The \textsl{parameters} for a function are given in the form of a
-comma-separated list.  Parameters can be of any of the types shown
-below.
+The opening line of a function definition contains these elements, in
+strict order:
+
+\begin{enumerate}
+\item The keyword \texttt{function}.
+\item \textsl{return-type}, which states the type of value returned by
+  the function, if any.  This must be one of \texttt{void} (if the
+  function does not return anything), \texttt{scalar},
+  \texttt{series}, \texttt{matrix}, \texttt{list} or \texttt{string}.
+\item \textsl{function-name}, the unique identifier for the
+  function.  Names must start with a letter. They have a maximum
+  length of 31 characters; if you type a longer name it will be
+  truncated.  Function names cannot contain spaces.  You will get an
+  error if you try to define a function having the same name as an
+  existing \app{gretl} command.
+\item The functions's \textsl{parameters}, in the form of a
+  comma-separated list enclosed in parentheses.  This may be run
+  into the function name, or separated by white space as shown.
+\end{enumerate}
+
+Function parameters can be of any of the types shown
+below.\footnote{An additional parameter type is available for GUI use,
+  namely \texttt{obs}; this is equivalent to \texttt{int} except for
+  the way it is represented in the graphical interface for calling a
+  function.}
 
 \begin{center}
 \begin{tabular}{ll}
@@ -38,8 +56,9 @@ below.
 \texttt{scalar} & scalar variable \\
 \texttt{series} & data series \\
 \texttt{list}   & named list of series \\
-\texttt{matrix} & named matrix or vector \\
-\texttt{string} & named string or string literal 
+\texttt{matrix} & matrix or vector \\
+\texttt{string} & string variable or string literal \\
+\texttt{bundle} & all-purpose container (see section~\ref{sec:Bundles})
 \end{tabular}
 \end{center}
 
@@ -48,7 +67,7 @@ type specifier, and the name by which the parameter shall be known
 within the function.  An example follows:
 %    
 \begin{code}
-function myfunc(series y, list xvars, bool verbose)
+function scalar myfunc (series y, list xvars, bool verbose)
 \end{code}
 
 Each of the type-specifiers, with the exception of \texttt{list} and
@@ -56,7 +75,7 @@ Each of the type-specifiers, with the exception of \texttt{list} and
 associated parameter name, as in
 %    
 \begin{code}
-function myfunc(series *y, scalar *b)
+function scalar myfunc (series *y, scalar *b)
 \end{code}
 
 The meaning of this modification is explained below (see section
@@ -66,15 +85,45 @@ C programming language.
 \subsection{Function parameters: optional refinements}
 
 Besides the required elements mentioned above, the specification of a
-function parameter may include some additional fields.
+function parameter may include some additional fields, as follows:
+\begin{itemize}
+\item The \texttt{const} modifier.
+\item For \texttt{scalar} or \texttt{int} parameters: minimum, maximum
+  and default values; or for \texttt{bool} parameters, just a default
+  value.
+\item For optional pointer and list arguments (see
+  section~\ref{func-details}), the special default value
+  \texttt{null}.
+\item For all parameters, a descriptive string.
+\item For \texttt{int} parameters with minimum and maximum values
+  specified, a set of strings to associate with the allowed numerical
+  values (value labels).
+\end{itemize}
 
-For a parameter of type \texttt{scalar} or \texttt{int}, a
-\textsl{minimum}, \textsl{maximum} and \textsl{default} value may be
-specified.  These values should directly follow the name of the
-parameter, enclosed in square brackets and with the individual
-elements separated by colons.  For example, suppose we have an integer
-parameter \texttt{order} for which we wish to specify a minimum of 1,
-a maximum of 12, and a default of 4.  We can write
+The first two of these options may be useful in many contexts; the
+last two may be helpful if a function is to be packaged for use in
+the \app{gretl} GUI (but probably not otherwise). We now expand on
+each of the options.
+
+\begin{itemize}
+
+\item The \texttt{const} modifier: must be given as a prefix to the
+  basic parameter specification, as in
+%    
+\begin{code}
+const matrix M
+\end{code} 
+%
+This constitutes a promise that the corresponding argument will not be
+modified within the function; \app{gretl} will flag an error if
+the function attempts to modify the argument.
+
+\item Minimum, maximum and default values for \texttt{scalar} or
+  \texttt{int} types: These values should directly follow the name of
+  the parameter, enclosed in square brackets and with the individual
+  elements separated by colons.  For example, suppose we have an
+  integer parameter \texttt{order} for which we wish to specify a
+  minimum of 1, a maximum of 12, and a default of 4.  We can write
 %    
 \begin{code}
 int order[1:12:4]
@@ -85,36 +134,72 @@ corresponding field empty.  For example \texttt{[1::4]} would specify
 a minimum of 1 and a default of 4 while leaving the maximum
 unlimited.  
 
-For a parameter of type \texttt{bool}, you can specify a default of
-1 (true) or 0 (false), as in
+For a parameter of type \texttt{bool} (whose values are just zero or
+non-zero), you can specify a default of 1 (true) or 0 (false), as in
 %    
 \begin{code}
 bool verbose[0]
 \end{code} 
+
+\item Descriptive string: This will show up as an aid to the user if
+  the function is packaged (see section~\ref{sec:func-packages} below)
+  and called via \app{gretl}'s graphical interface.  The string should
+  be enclosed in double quotes and separated from the preceding
+  elements of the parameter specification with a space, as in
 %
-
-Finally, for a parameter of any type you can append a short
-\textsl{descriptive string}.  This will show up as an aid to the user
-if the function is packaged (see section~\ref{sec:func-packages}
-below) and called via \app{gretl}'s graphical interface.  The string
-should be enclosed in double quotes, and inserted before the comma
-that precedes the following parameter (or the closing right
-parenthesis of the function definition, in the case of the last
-parameter), as illustrated in the following example.
-
 \begin{code}
-function myfun (series y "dependent variable", 
-                series x "independent variable")
+series y "dependent variable"
 \end{code} 
 
-\subsection{Void functions}
+\item Value labels: These may be used only with \texttt{int}
+  parameters for which minimum and maximum values have been specified,
+  so there is a fixed number of admissible values, and the number of
+  labels must match the number of values. They will show up in the
+  graphical interface in the form of a drop-down list, making the
+  function writer's intent clearer when an integer argument represents
+  a categorical selection. A set of value labels must be enclosed in
+  braces, and the individual labels must be enclosed in double quotes
+  and separated by commas or spaces.  For example:
+%
+\begin{code}
+int case[1:3:1] {"Fixed effects", "Between model", "Random effects"}
+\end{code} 
+
+\end{itemize}
+
+If two or more of the trailing optional fields are given in a
+parameter specification, they must be given in the order shown above:
+min--max--default, description, value labels. Note that there is no
+facility for ``escaping'' characters within descriptive strings or
+value labels; these may contain spaces but they cannot contain the
+double-quote character.  
+
+Here is an example of a well-formed function specification using all
+the elements mentioned above:
+%
+\begin{code}
+function matrix myfunc (series y "dependent variable",
+                        list X "regressors",
+                        int p[0::1] "lag order",
+                        int c[1:2:1] "criterion" {"AIC", "BIC"},
+                        bool quiet[0])
+\end{code} 
+
+One advantage of specifying default values for parameters, where
+applicable, is that in script or command-line mode users may omit
+trailing arguments that have defaults. For example, \texttt{myfunc}
+above could be invoked with just two arguments, corresponding to
+\texttt{y} and \texttt{X}; implicitly \texttt{p} = 1, \texttt{c} = 1
+and \texttt{quiet} is false.
+
+\subsection{Functions taking no parameters}
 
 You may define a function that has no parameters (these are called
 ``routines'' in some programming languages).  In this case,  
 use the keyword \texttt{void} in place of the listing of parameters:
 %    
 \begin{code}
-function myfunc2(void)
+function matrix myfunc2 (void)
 \end{code}
 
 
@@ -158,11 +243,11 @@ correctly matches the function definition.
     
 \begin{code}
 # function definition
-function ols_ess(series y, list xvars)
+function scalar ols_ess(series y, list xvars)
   ols y 0 xvars --quiet
   scalar myess = $ess
   printf "ESS = %g\n", myess
-  return scalar myess
+  return myess
 end function
 # main script
 open data4-1
@@ -185,10 +270,10 @@ a return value to a variable in the caller:
     
 \begin{code}
 # function definition
-function get_uhat(series y, list xvars)
+function series get_uhat(series y, list xvars)
   ols y 0 xvars --quiet
   series uh = $uhat
-  return series uh
+  return uh
 end function
 # main script
 open data4-1
@@ -223,14 +308,12 @@ Series, scalar, and matrix arguments to functions can be passed in two
 ways: ``as they are'', or as pointers. For example, consider the
 following:
 \begin{code}
-function triple1(series x)
-  series ret = 3*x
-  return series ret
+function series triple1(series x)
+  return 3*x
 end function
   
-function triple2(series *x)
-  series ret = 3*x
-  return series ret
+function series triple2(series *x)
+  return 3*x
 end function
 \end{code}
 
@@ -240,8 +323,8 @@ the only difference is that you need to feed a series into
 \texttt{triple2} must be supplied a \emph{pointer} to a series, as in
 \texttt{triple2(\&myseries)}. 
 
-Why make the distinction, then? There are two main reasons for doing
-so: modularity and performance.
+Why make the distinction? There are two main reasons for doing so:
+modularity and performance.
 
 By modularity we mean the insulation of a function from the rest of
 the script which calls it.  One of the many benefits of this approach
@@ -259,8 +342,8 @@ the function as arguments.
 By default, when a variable is passed to a function as an argument,
 what the function actually ``gets'' is a \emph{copy} of the outer
 variable, which means that the value of the outer variable is not
-modified by whatever goes on inside the function.  But the use of
-pointers allows a function and its caller to ``cooperate'' such that
+modified by anything that goes on inside the function.  But the use of
+pointers allows a function and its caller to cooperate such that
 an outer variable can be modified by the function.  In effect, this
 allows a function to ``return'' more than one value (although only one
 variable can be returned directly --- see below).  The parameter in
@@ -269,11 +352,11 @@ definition, and the corresponding argument is marked with the
 complementary prefix \verb+&+ in the caller.  For example,
 %
 \begin{code}
-function get_uhat_and_ess(series y, list xvars, scalar *ess)
+function series get_uhat_and_ess(series y, list xvars, scalar *ess)
   ols y 0 xvars --quiet
   ess = $ess
   series uh = $uhat
-  return series uh
+  return uh
 end function
 # main script
 open data4-1
@@ -288,7 +371,7 @@ of the scalar variable \texttt{SSR}, and it assigns a value to that
 variable (under the local name \texttt{ess}).  (For anyone used to
 programming in C: note that it is not necessary, or even possible, to
 ``dereference'' the variable in question within the function using the
-\texttt{*} operator.  Unembellished use of the name of the variable is
+\texttt{*} operator.  Unadorned use of the name of the variable is
 sufficient to access the variable in outer scope.)
 
 An ``address'' parameter of this sort can be used as a means of
@@ -302,13 +385,12 @@ above, modified to make the filling out of the \texttt{ess} value
 optional.
 %
 \begin{code}
-function get_uhat_and_ess(series y, list xvars, scalar *ess[null])
+function series get_uhat_and_ess(series y, list xvars, scalar *ess[null])
   ols y 0 xvars --quiet
   if !isnull(ess) 
      ess = $ess
   endif
-  series uh = $uhat
-  return series uh
+  return $uhat
 end function
 \end{code}
 %
@@ -354,14 +436,12 @@ Elapsed time:
   \caption{Performance comparison: values versus pointer}
   \label{ex:perf-pointers}
   \begin{scode}
-function a(matrix X)
-  r = rows(X)
-  return scalar r
+function scalar a(matrix X)
+  return rows(X)
 end function
 
-function b(const matrix *X)
-  r = rows(X)
-  return scalar r
+function scalar b(const matrix *X)
+  return rows(X)
 end function
 
 nulldata 10
@@ -373,13 +453,13 @@ r = 0
 set stopwatch
 loop 100
   r = a(X)
-end loop
+endloop
 fa = $stopwatch
 
 set stopwatch
 loop 100
   r = b(&X)
-end loop
+endloop
 fb = $stopwatch
 
 printf "Elapsed time:\n\
@@ -397,6 +477,24 @@ Example~\ref{ex:perf-pointers}.  When a pointer argument is qualified
 in this way, any attempt to modify the object within the function will
 generate an error.
 
+One limitation on the use of pointer-type arguments should be noted:
+you cannot supply a given variable as a pointer argument more than
+once in any given function call. For example, suppose we have a
+function that takes two matrix-pointer arguments,
+\begin{code}
+function scalar pointfunc (matrix *a, matrix *b)
+\end{code}
+And suppose we have two matrices, \texttt{x} and \texttt{y}, at the
+caller level.  The call
+\begin{code}
+pointfunc(&x, &y)
+\end{code}
+is OK, but the call
+\begin{code}
+pointfunc(&x, &x) # will not work
+\end{code}
+will generate an error.
+
 \subsection{List arguments}
 
 The use of a named list as an argument to a function gives a means of
@@ -413,7 +511,7 @@ variable in the list.  You can do:
 \begin{code}
 loop foreach i X
    scalar sd_$i = sd(X.$i)
-end loop
+endloop
 \end{code}
 
 \textit{Please note}: a special piece of syntax is needed in this
@@ -423,10 +521,10 @@ regular script (not inside a function), we could do
 \begin{code}
 loop foreach i X
    scalar sd_$i = sd($i)
-end loop
+endloop
 \end{code}
 %
-where \verb|$i| gets the name of the variable at position $i$ in the
+where \dollar{i} gets the name of the variable at position $i$ in the
 list, and \verb|sd($i)| gets its standard deviation.  But inside a
 function, working on a list supplied as an argument, if we want to
 reference an individual variable in the list we must use the syntax
@@ -446,16 +544,6 @@ of'' such variables you need to use the form of identification just
 mentioned: the name of the list, followed by a dot, followed by the
 name of the variable.
 
-\tip{The treatment of list-argument variables described above is new
-  in \app{gretl} 1.7.6.  The problem it addresses is quite subtle, and
-  was discovered only recently.  Existing functions that use
-  \texttt{foreach} loops on list arguments may need to be modified.
-  For a limited time, there is a special switch available that
-  restores the old behavior: that is, it enables support for functions
-  that do not use the \textsl{listname.varname} syntax.  The command
-  to use is \texttt{set protect\_lists off}.  But we recommend
-  updating old functions as soon as possible.}
-
 \paragraph{Constancy of list arguments} When a named list of
 variables is passed to a function, the function is actually provided
 with a copy of the list.  The function may modify this copy (for
@@ -467,7 +555,7 @@ optional, this should be indicated by appending a default value of
 \texttt{null}, as in
 %
 \begin{code}
-function myfunc (scalar y, list X[null])
+function scalar myfunc (scalar y, list X[null])
 \end{code}
 %
 In that case, if the caller gives \texttt{null} as the list argument
@@ -484,11 +572,11 @@ moving averages constructed from an input series, with the names of
 the newly created variables governed by the string argument.
 %
 \begin{code}
-function mavg (series y, string vname)
+function list mavg (series y, string vname)
    series @vname_2 = (y+y(-1)) / 2
    series @vname_4 = (y+y(-1)+y(-2)+y(-3)) / 4
    list retlist = @vname_2 @vname_4
-   return list retlist
+   return retlist
 end function
 
 open data9-9
@@ -504,7 +592,7 @@ If a string argument is considered optional, it may be given a
 \texttt{null} default value, as in
 %
 \begin{code}
-function foo (series y, string vname[null])
+function scalar foo (series y, string vname[null])
 \end{code}
 
 \subsection{Retrieving the names of arguments}
@@ -514,7 +602,7 @@ function by the names of the corresponding parameters.  For example,
 within the function whose signature is
 %
 \begin{code}
-function somefun (series y)
+function void somefun (series y)
 \end{code}
 %
 we have the series known as \texttt{y}.  It may be useful, however, to
@@ -524,7 +612,7 @@ name of a function parameter as its single argument and returns a
 string.  Here is a simple illustration:
 %
 \begin{code}
-function namefun (series y)
+function void namefun (series y)
   printf "the series given as 'y' was named %s\n", argname(y)
 end function
 
@@ -546,37 +634,33 @@ writers who wish to make use of this facility should check the return
 from \texttt{argname} using the \texttt{isstring()} function, which
 returns 1 when given the name of a string variable, 0 otherwise.
 
-
 \subsection{Return values}
 
 Functions can return nothing (just printing a result, perhaps), or
-they can return a single variable --- a scalar, series, list, matrix
-or string.  The return value, if any, is specified via a statement
-within the function body beginning with the keyword \verb+return+,
-followed by a type specifier and the name of a variable (as in the
-listing of parameters).  There can be only one such statement.  An
-example of a valid return statement is shown below:
-%    
-\begin{code}
-return scalar SSR
-\end{code}
-%
-Having a function return a list is one way of permitting the
-``return'' of more than one variable.  That is, you can define several
-variable inside a function and package them as a list; in this case
-they are not destroyed when the function exits.  Here is a simple
+they can return a single variable --- a scalar, series, list, matrix,
+string, or bundle (see section~\ref{sec:Bundles}).  The return value,
+if any, is specified via a statement within the function body
+beginning with the keyword \texttt{return}, followed by either the
+name of a variable (which must be of the type announced on the first
+line of the function definition) or an expression which produces a
+value of the correct type.
+
+Having a function return a list or bundle is a way of permitting the
+``return'' of more than one variable.  For example, you can define
+several series inside a function and package them as a list; in this
+case they are not destroyed when the function exits.  Here is a simple
 example, which also illustrates the possibility of setting the
 descriptive labels for variables generated in a function.
 %    
 \begin{code}
-function make_cubes (list xlist)
+function list make_cubes (list xlist)
    list cubes = null
    loop foreach i xlist --quiet
       series $i3 = (xlist.$i)^3
       setinfo $i3 -d "cube of $i"
       list cubes += $i3
-    end loop
-    return list cubes
+   endloop
+   return cubes
 end function
 
 open data4-1
@@ -587,12 +671,12 @@ labels
 \end{code}
 %$
 
-Note that the \verb+return+ statement does \emph{not} cause the
-function to return (exit) at the point where it appears within the
-body of the function. Rather, it specifies which variable is available
-for assignment when the function exits, and a function exits only when
-(a) the end of the function code is reached, (b) a \app{gretl} error
-occurs, or (c) a \verb+funcerr+ statement is reached.
+A \texttt{return} statement causes the function to return (exit) at
+the point where it appears within the body of the function.  A
+function may also exit when (a) the end of the function code is
+reached (in the case of a function with no return value), (b) a
+\app{gretl} error occurs, or (c) a \verb+funcerr+ statement is
+reached.
 
 The \verb+funcerr+ keyword, which may be followed by a string enclosed
 in double quotes, causes a function to exit with an error flagged.  If
@@ -604,7 +688,29 @@ specific and helpful error message.  For example,
 \begin{code}
 if nelem(xlist) = 0
    funcerr "xlist must not be empty"
-end if
+endif
+\end{code}
+
+A function may contain more than one \texttt{return} statement, as in
+%
+\begin{code}
+function scalar multi (bool s)
+   if s
+      return 1000
+   else
+      return 10
+   endif
+end function
+\end{code}
+%
+However, it is recommended programming practice to have a single
+return point from a function unless this is very inconvenient.  The
+simple example above would be better written as
+%
+\begin{code}
+function scalar multi (bool s)
+   return s ? 1000 : 10
+end function
 \end{code}
     
 
@@ -615,7 +721,7 @@ minimal error-checking: the only checks are that the function name is
 acceptable, and, so far as the body is concerned, that you are not
 trying to define a function inside a function (see Section
 \ref{func-define}). Otherwise, if the function body contains invalid
-commands this will become apparent only when the function is called,
+commands this will become apparent only when the function is called
 and its commands are executed.
 
 \subsection{Debugging}
@@ -645,13 +751,12 @@ and the printing of messages, this is equivalent to setting
 \verb|max_verbose| (which produces verbose output from the BFGS
 maximizer) at all levels of function execution.
 
-
 \section{Function packages}
 \label{sec:func-packages}
 
-As of \app{gretl} 1.6.0, there is a mechanism to package functions and
-make them available to other users of \app{gretl}.  Here is a
-walk-through of the process.
+Since \app{gretl} 1.6.0 there has been a mechanism to package
+functions and make them available to other users of \app{gretl}.  Here
+is a walk-through of the process.
 
 \subsection{Load a function in memory}
 
@@ -670,9 +775,8 @@ There are several ways to load a function:
 For example, suppose you decide to package a function that returns the
 percentage change of a time series. Open a script file and type
 \begin{code}
-function pc(series y "Series to process")
-  series foo = 100 * diff(y)/y(-1)
-  return series foo
+function series pc(series y "Series to process")
+  return 100 * diff(y)/y(-1)
 end function
 \end{code}
 In this case, we have appended a string to the function argument, as
@@ -701,6 +805,11 @@ function seems to work ok.  Once your function is debugged, you
 may proceed to the next stage.
 
 \subsection{Create a package}
+
+We first present the mechanism for creating a function package via
+\app{gretl}'s graphical interface. This can also be done via the
+command line, which offers some additional functionality for package
+authors; an explanation is given later in this section.
 
 Start the GUI program and take a look at the ``File, Function files'' menu.
 This menu contains four items: ``On local machine'', ``On server'', ``Edit
@@ -821,11 +930,10 @@ in figure \ref{fig:function_call} will appear.  Notice that the
 description string ``Series to process'', supplied with the function
 definition, appears to the left of the top series chooser.
 
-Click ``Ok'' and the
-series \texttt{foo} will be generated (see figure \ref{fig:iprod_pc}).
-You may have to go to ``Data, Refresh data'' in order to have your new
-variable show up in the main window variable list (or just press the
-``r'' key).
+Click ``Ok'' and the series \texttt{foo} will be generated (see figure
+\ref{fig:iprod_pc}).  You may have to go to ``Data, Refresh data'' in
+order to have your new variable show up in the main window variable
+list (or just press the ``r'' key).
 
 \begin{figure}[htbp]
   \centering
@@ -840,6 +948,252 @@ include pc.gfn
 open np
 foo = pc(iprod)
 \end{code}
+
+\subsection{Creating a package via the command line}
+
+The mechanism described above, for creating function packages using
+the GUI, is likely to be convenient for small to medium-sized packages
+but may be too cumbersome for ambitious packages that include a large
+hierarchy of private functions. To facilitate the building of such
+packages \app{gretl} offers the \texttt{makepkg} command.
+
+To use \texttt{makepkg} you create three files: a driver script that
+loads all the functions you want to package and invokes
+\texttt{makepkg}; a small, plain-text specification file that contains
+the required package details (author, version, etc.); and (in the
+simplest case) a plain text help file.  You run the driver script and
+\app{gretl} writes the package (\texttt{.gfn}) file.
+
+We first illustrate with a simple notional package. We have a gretl
+script file named \texttt{foo.inp} that contains a function,
+\texttt{foo}, that we want to package. Our driver script would then
+look like this
+%
+\begin{code}
+include foo.inp
+makepkg foo.gfn
+\end{code}
+%
+Note that the \texttt{makepkg} command takes one argument, the name of
+the package file to be created. The package \emph{specification file}
+should have the same basename but the extension \texttt{.spec}. In
+this case \app{gretl} will therefore look for \texttt{foo.spec}. It
+should look something like this:
+%
+\begin{code}
+# foo.spec
+author = A. U. Thor
+version = 1.0
+date = 2011-02-01
+description = Does something with time series
+public = foo 
+help = foohelp.txt
+sample-script = example.inp
+min-version = 1.9.3
+data-requirement = needs-time-series-data
+\end{code}
+
+As you can see, the format of each line in this file is \texttt{key =
+  value}, with two qualifications: blank lines are permitted (and
+ignored, as are comment lines that start with \verb|#|). 
+
+All the fields included in the above example are required, with the
+exception of \texttt{data-requirement}, though the order in which they
+appear is immaterial. Here's a run-down of the basic fields:
+
+\begin{itemize}
+\item \texttt{author}: the name(s) of the author(s). Accented or other
+  non-ASCII characters should be given as UTF-8.
+\item \texttt{version}: the version number of the package, which should
+  be limited to two integers separated by a period.
+\item \texttt{date}: the release date of the current verson of the
+  package, in ISO 8601 format: YYYY-MM-DD.
+\item \texttt{description}: a brief description of the functionality
+  offered by the package. This will be displayed in the GUI function
+  packages window so it should be just one short line.
+\item \texttt{public}: the listing of public functions.
+\item \texttt{help}: the name of a plain text (UTF-8) file containing
+  help; all packages must provide help.
+\item \texttt{sample-script}: the name of a sample script that
+ illustrates use of the package; all packages must supply a
+ sample script.
+\item \texttt{min-version}: the minimum version of gretl required
+ for the package to work correctly. If you're unsure about this,
+ the conservative thing is to give the current \app{gretl} version.
+\end{itemize}
+
+The \texttt{public} field indicates which function or functions are to
+be made directly available to users (as opposed to private ``helper''
+functions).  In the example above there is just one public
+function. Note that any functions in memory when \texttt{makepkg} is
+invoked, other than those designated as public, are assumed to be
+private functions that should also be included in the package. That
+is, the list of private functions (if any) is implicit.
+
+The \texttt{data-requirement} field should be specified if the package
+requires time-series or panel data, or alternatively if no dataset is
+required.  If the \texttt{data-requirement} field is omitted, the
+assumption is that the package needs a dataset in place, but it
+doesn't matter what kind; if the packaged functions do not use any
+series or lists this requirement can be explicitly relaxed.  Valid
+values for this field are:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{needs-time-series-data} & (any time-series data OK) \\ 
+\texttt{needs-qm-data} & (must be quarterly or monthly) \\ 
+\texttt{needs-panel-data} & (must be a panel) \\
+\texttt{no-data-ok} & (no dataset is needed) \\
+\end{tabular}
+\end{center}
+
+For a more complex example, let's look at the \app{gig}
+(GARCH-in-gretl) package.  The driver script for building \app{gig}
+looks something like this:
+%
+\begin{code}
+set echo off
+set messages off
+include gig_mle.inp
+include gig_setup.inp
+include gig_estimate.inp
+include gig_printout.inp
+include gig_plot.inp
+makepkg gig.gfn
+\end{code}
+
+In this case the functions to be packaged (of which there are many)
+are distributed across several script files, each of which is the
+target of an \texttt{include} command.  The \texttt{set} commands at
+the top are included to cut down on the verbosity of the output.
+
+The content of \texttt{gig.spec} is as follows:
+%
+\begin{code}
+author = Riccardo "Jack" Lucchetti and Stefano Balietti
+version = 2.0
+date = 2010-12-21
+description = An assortment of univariate GARCH models
+public = GUI_gig \
+    gig_setup gig_set_dist gig_set_pq gig_set_vQR \
+    gig_print gig_estimate \
+    gig_plot gig_dplot \
+    gig_bundle_print GUI_gig_plot
+
+gui-main = GUI_gig
+bundle-print = gig_bundle_print
+bundle-plot = GUI_gig_plot
+help = gig.pdf
+sample-script = examples/example1.inp
+min-version = 1.9.3
+data-requirement = needs-time-series-data
+\end{code}
+
+Note that backslash continuation can be used for the elements of the
+\texttt{public} function listing.
+
+In addition to the fields shown in the simple example above,
+\texttt{gig.spec} includes three optional fields: \texttt{gui-main},
+\texttt{bundle-print} and \texttt{bundle-plot}. These keywords are
+used to designate certain functions as playing a special role in the
+\app{gretl} graphical interface. A function picked out in this way
+must be in the \texttt{public} list and must satisfy certain
+further requirements.  
+%
+\begin{itemize}
+\item \texttt{gui-main}: this specifies a function as the one which
+  will be presented automatically to GUI users (instead of users'
+  being faced with a choice of interfaces). This makes sense only for
+  packages that have multiple public functions. In addition, the
+  \texttt{gui-main} function must return a \texttt{bundle} (see
+  section~\ref{sec:Bundles}).
+\item \texttt{bundle-print}: this picks out a function that should be
+  used to print the contents of a bundle returned by the
+  \texttt{gui-main} function. It must take a pointer-to-bundle as its
+  first argument. The second argument, if present, should be an
+  \texttt{int} switch, with two or more valid values, that controls the
+  printing in some way. Any further arguments must have default values
+  specified so that they can be omitted.
+\item \texttt{bundle-plot}: selects a function for the role of
+  producing a plot or graph based on the contents of a returned
+  bundle. The requirements on this function are as for 
+  \texttt{bundle-print}.
+\end{itemize}
+
+The ``GUI special'' tags support a user-friendly mode of operation.
+On a successful call to \texttt{gui-main}, \app{gretl} opens a 
+window displaying the contents of the returned bundle (formatted
+via \texttt{bundle-print}). Menus in this window give the user the
+option of saving the entire bundle (in which case it's represented
+as an icon in the ``icon view'' window) or of extracting specific
+elements from the bundle (series or matrices, for example). 
+
+If the package has a \texttt{bundle-plot} function, the bundle window
+also has a \textsf{Graph} menu. In \app{gig}, for example, the
+\texttt{bundle-plot} function has this signature:
+%
+\begin{code}
+function void GUI_gig_plot(bundle *model, int ptype[0:1:0] \
+                           "Plot type" {"Time series", "Density"})
+\end{code}
+
+The \texttt{ptype} switch is used to choose between a time-series plot
+of the residual and its conditional variance, and a kernel density
+plot of the innovation against the theoretical distribution it is
+supposed to follow. The use of the value-labels \texttt{Time series}
+and \texttt{Density} means that the \textsf{Graph} menu will display
+these two choices.
+
+One other feature of the \app{gig} spec file is noteworthy: the
+\texttt{help} field specifies \texttt{gig.pdf}, documentation in PDF
+format. Unlike plain-text help, this cannot be rolled into the
+\texttt{gfn} (XML) file produced by the \texttt{makepkg} command;
+rather, both \texttt{gig.gfn} and \texttt{gig.pdf} are packaged into a
+zip archive for distribution. This represents a form of package
+which is new in \app{gretl} 1.9.4. More details will be made
+available before long. 
+
+\section{Memo: updating old-style functions}
+\label{sec:old-func}
+
+As mentioned at the start of this chapter, different rules were in
+force for defining functions prior to \app{gretl} 1.8.4. While the old
+syntax is still supported to date, this may not always be the
+case. But it is straightforward to convert a function to the new
+style. The only thing that must be changed for compatibility with the
+new syntax is the declaration of the function's return
+type. Previously this was placed inline in the \texttt{return}
+statement, whereas now it is placed right after the \texttt{function}
+keyword. For example:
+%
+\begin{code}
+# old style
+function triple (series x)
+  y = 3*x
+  return series y # note the "series" here
+end function
+
+# new style
+function series triple (series x)
+  y = 3*x
+  return y
+end function
+\end{code}
+
+Note also that the role of the \texttt{return} statement has changed
+(and its use has become more flexible):
+
+\begin{itemize}
+\item The \texttt{return} statement now causes the function to return
+  directly, and you can have more than one such statement, wrapped in
+  conditionals. Before there could only be one \texttt{return}
+  statement, and its role was just to specify the type available for
+  assignment by the caller.
+\item The final element in the \texttt{return} statement can now be an
+  expression that evaluates to a value of the advertised return type;
+  before, it had to be the name of a pre-defined variable.
+\end{itemize}
+
 
 %%% Local Variables: 
 %%% mode: latex

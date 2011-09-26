@@ -1,9 +1,6 @@
 \chapter{O interface de linha de comandos (CLI)}
 \label{cli}
 
-\section{Gretl em modo de consola}
-\label{cli-console}
-
 A aplicação \app{gretl} inclui o programa de linha de comandos \app{gretlcli}.
 Em Linux pode ser iniciado a partir de uma janela de terminal (xterm,
 rxvt, ou semelhante), ou de uma consola de texto.  No MS Windows pode ser 
@@ -42,9 +39,6 @@ sistema \app{readline} vai tentar completar o comando por você.  Se houver uma
 única possibilidade, o comando é automaticamente completado.  Se houver mais
 que uma, pressionando Tab uma segunda vez faz aparecer uma lista.
 
-\section{A sintaxe CLI}
-\label{cli-syntax}
-
 Provavelmente o modo mais produtivo para análises intensivas com o
 \app{gretlcli} é em modo de sequência de comandos (não-interactivo), no qual o
 programa lê e processa um ficheiro de sequência de comandos, e envia a saída
@@ -53,11 +47,9 @@ para um ficheiro.  Por exemplo
 gretlcli -b ficheirodecomandos > ficheiroderesultados
 \end{code}
 
-O \textsl{ficheirodecomandos} é tratado como um argumento de programa; ele
-deve especificar um ficheiro para ser usado internamente, usando a sintaxe
-\cmd{open ficheirodedados}.  Não esquecer a opção \texttt{-b}
+O \textsl{ficheirodecomandos} é tratado como um argumento de programa; apenas o ficheiro de resultados requer redirecionamento (\verb|>|).  Não esquecer a opção \texttt{-b}
 (\textit{batch}=lote), de outro modo o programa ficará a aguardar comandos do
-utilizador após a execução da sequência de comandos.
+utilizador após a execução da sequência de comandos (e se a saída estiver redirecionada, o programa aparentará estar "pendurado").
 
     
 %%% Local Variables: 
