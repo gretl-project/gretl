@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.9.6\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2011-09-24 11:17-0400\n"
-"PO-Revision-Date: 2011-09-11 16:23-0400\n"
+"PO-Revision-Date: 2011-09-26 17:00-0400\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "Language: pl\n"
@@ -2275,12 +2275,12 @@ msgstr "Symbol '%c' jest błędny w tym kontekście\n"
 #: lib/src/gensyntax.c:274
 #, c-format
 msgid "Unmatched '%c'\n"
-msgstr "Niedopasowany '%c\n"
+msgstr "Niedopasowany '%c'\n"
 
 #: lib/src/geneval.c:9654
-#, fuzzy, c-format
+#, c-format
 msgid "The variable %s is of type %s"
-msgstr "Zmienna '%s' nie jest dyskretna"
+msgstr "Zmienna '%s' jest typu %s"
 
 #: lib/src/geneval.c:9810
 #, c-format
@@ -6819,7 +6819,7 @@ msgstr "Rangi od %d do %d są niedodatnie!"
 
 #: lib/src/usermat.c:741
 msgid "Ambiguous matrix index"
-msgstr ""
+msgstr "Niejednoznaczny indeks macierzy"
 
 #: lib/src/usermat.c:1214
 #, c-format
@@ -9265,14 +9265,12 @@ msgid "all files (*.*)"
 msgstr "wszystkie pliki (*.*)"
 
 #: gui2/fileselect.c:767
-#, fuzzy
 msgid "Excel files (*.xls)"
-msgstr "pliki programu Ox (*.ox)"
+msgstr "plik programu Excel (*.xls)"
 
 #: gui2/fileselect.c:768
-#, fuzzy
 msgid "Excel files (*.xlsx)"
-msgstr "pliki programu Ox (*.ox)"
+msgstr "pliki programu Excel (*.xlsx)"
 
 #: gui2/fileselect.c:770
 msgid "gretl script files (*.inp)"
@@ -11201,7 +11199,6 @@ msgid "_Command reference"
 msgstr "_Opis poleceń gretla"
 
 #: gui2/gretl.c:1516
-#, fuzzy
 msgid "_Function reference"
 msgstr "_Opis funkcji gretla"
 
@@ -12754,12 +12751,15 @@ msgid "Akaike Information Criterion"
 msgstr "Kryterium Informacyjne Akaike'a"
 
 #: gui2/library.c:5722
-#, c-format
+#, c-format,
 msgid ""
 "Statistic from model %d\n"
 "%s (value = %g)\n"
 "Name (max. 15 characters):"
 msgstr ""
+"Statyka z modelu %d\n"
+"%s (value = %g)\n"
+"Nazwa (max. 15 znaków):"
 
 #: gui2/library.c:5806
 msgid "standardized residual"
@@ -14157,23 +14157,23 @@ msgstr "Górny trójkąt"
 
 #: gui2/session.c:3738
 msgid "Symmetric"
-msgstr "Symetryczna"
+msgstr "Macierz symetryczna"
 
 #: gui2/session.c:3743
 msgid "Positive definite"
-msgstr "Dodatnio określona"
+msgstr "Macierz dodatnio określona"
 
 #: gui2/session.c:3745
 msgid "Not positive definite"
-msgstr "Nie dodatnio określona"
+msgstr "Macierz niedodatnio określona"
 
 #: gui2/session.c:3764
 msgid "Idempotent"
-msgstr "Idempotentna"
+msgstr "Macierz idempotentna"
 
 #: gui2/session.c:3766
 msgid "Not idempotent"
-msgstr "Nie idempotentna"
+msgstr "Macierz nieidempotentna"
 
 #: gui2/session.c:3772 plugin/vif.c:108
 msgid "1-norm"
@@ -16077,12 +16077,3 @@ msgstr "Statystyki/Transformacje"
 #: doc/commands/matfuncs.c:58
 msgid "Probability distributions"
 msgstr "Rozkłady prawdopodobieństwa"
-
-#~ msgid "File of the wrong type, root node not gretldata"
-#~ msgstr "Błędny typ pliku (root node not gretldata)"
-
-#~ msgid "File of the wrong type, root node not Workbook"
-#~ msgstr "Zły typ pliku (root node not Workbook)"
-
-#~ msgid "String to replace was not found"
-#~ msgstr "Łańcuch znaków do zamiany nie został znaleziony"

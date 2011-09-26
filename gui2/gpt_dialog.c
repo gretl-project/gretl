@@ -76,7 +76,8 @@ struct plot_editor_ {
     GtkWidget *dialog;
     GtkWidget *notebook;
     GPT_SPEC *spec;
-    gchar *barsfile;
+    gchar *user_barsfile;
+    gint active_bars;
 
     GtkWidget **linetitle;
     GtkWidget **lineformula;
@@ -834,30 +835,31 @@ static char *default_bars_filename (void)
 
 static char user_barsfile[FILENAME_MAX];
 
+/* called on destruction of a plot dialog, if the user has 
+   selected a user-defined "plotbars" file, so that is will 
+   be remembered for use with the next plot
+*/
+
 static void remember_user_bars_file (const char *fname)
 {
-    strcpy(user_barsfile, fname);
+    *user_barsfile = '\0';
+    strncat(user_barsfile, fname, FILENAME_MAX-1);
 }
 
-static gchar *retrieve_user_bars_file (void)
-{
-    if (*user_barsfile != '\0') {
-	return g_strdup(user_barsfile);
-    } else {
-	return NULL;
-    }
-}
+/* if there's a saved filename for a user-defined
+   "plotbars" file, append it to the list of options
+*/
 
 static gboolean maybe_append_user_bars_file (GtkComboBox *combo,
 					     plot_editor *ed)
 {
-    if (ed->barsfile == NULL) {
-	ed->barsfile = retrieve_user_bars_file();
+    if (ed->user_barsfile == NULL && *user_barsfile != '\0') {
+	ed->user_barsfile = g_strdup(user_barsfile);
     }
 
-    if (ed->barsfile != NULL) {
-	const char *p = strrchr(ed->barsfile, SLASH);
-	const char *show = (p != NULL)? (p+1) : ed->barsfile;
+    if (ed->user_barsfile != NULL) {
+	const char *p = strrchr(ed->user_barsfile, SLASH);
+	const char *show = (p != NULL)? (p+1) : ed->user_barsfile;
 
 	combo_box_append_text(combo, show);
 	return TRUE;
@@ -876,30 +878,32 @@ static void try_adding_plotbars (GPT_SPEC *spec, plot_editor *ed)
     err = plot_get_coordinates(plot, &xmin, &xmax, &ymin, &ymax);
 
     if (!err) {
-	const char *fname;
+	int active = gtk_combo_box_get_active(GTK_COMBO_BOX(ed->barscombo));
+	const char *fname = NULL;
 
-	if (ed->axis_range[1].isauto != NULL &&
-	    !button_is_active(ed->axis_range[1].isauto)) {
-	    /* we have a manual y-axis setting that may override the
-	       current (ymin, ymax) as read from the plot */
-	    ymin = spec->range[1][0];
-	    ymax = spec->range[1][1];
-	} else {
-	    /* freeze the current (ymin, ymax) so that the addition
-	       of bars doesn't disturb the range */
-	    spec->range[1][0] = ymin;
-	    spec->range[1][1] = ymax;
-	}
-
-	if (gtk_combo_box_get_active(GTK_COMBO_BOX(ed->barscombo)) == 1
-	    && ed->barsfile != NULL) {
-	    fname = ed->barsfile;
-	} else {
+	if (active == 1 && ed->user_barsfile != NULL) {
+	    fname = ed->user_barsfile;
+	} else if (active == 0) {
 	    fname = default_bars_filename();
 	}
 
-	err = plotspec_add_bars_info(spec, xmin, xmax,
-				     ymin, ymax, fname);
+	if (fname != NULL) {
+	    if (ed->axis_range[1].isauto != NULL &&
+		!button_is_active(ed->axis_range[1].isauto)) {
+		/* we have a manual y-axis setting that may override the
+		   current (ymin, ymax) as read from the plot */
+		ymin = spec->range[1][0];
+		ymax = spec->range[1][1];
+	    } else {
+		/* freeze the current (ymin, ymax) so that the addition
+		   of bars doesn't disturb the range */
+		spec->range[1][0] = ymin;
+		spec->range[1][1] = ymax;
+	    }
+
+	    err = plotspec_add_bars_info(spec, xmin, xmax,
+					 ymin, ymax, fname);
+	}
     }
 
     if (err) {
@@ -1496,51 +1500,67 @@ static void combo_set_ignore_changed (GtkComboBox *box, gboolean s)
     }
 }
 
+/* callback from the file-open selector: if the user
+   cancelled then @fname will be NULL
+*/
+
 void set_plotbars_filename (const char *fname, gpointer data) 
 {
     plot_editor *ed = (plot_editor *) data;
     GtkComboBox *box = GTK_COMBO_BOX(ed->barscombo);
 
-    /* we should respond to the changed signal only when it
-       has been emitted by the user making a new selection,
-       otherwise we get into a loop
-    */
+    /* we should block response to the "changed" signal 
+       for the duration of this adjustment */
     combo_set_ignore_changed(box, TRUE);
 
     if (fname == NULL) {
 	/* canceled or error */
-	if (ed->barsfile == NULL) {
+	if (ed->user_barsfile == NULL) {
 	    gtk_combo_box_set_active(box, 0);
-	}
+	} 
     } else {
-	/* completed selection */
+	/* we got a completed file selection */
 	const char *p = strrchr(fname, SLASH);
 	const char *show = (p != NULL)? (p+1) : fname;
+	int had_userfile = ed->user_barsfile != NULL;
 
-	g_free(ed->barsfile);
-	ed->barsfile = g_strdup(fname);
-	combo_box_remove(box, 1);
+	if (had_userfile) {
+	    g_free(ed->user_barsfile);
+	    combo_box_remove(box, 2);
+	    combo_box_remove(box, 1);
+	} else {
+	    combo_box_remove(box, 1);
+	}
+	ed->user_barsfile = g_strdup(fname);
 	combo_box_append_text(box, show);
 	combo_box_append_text(box, _("other..."));
 	gtk_combo_box_set_active(box, 1);
     }
+
+    /* unblock the "changed" signal */
+    combo_set_ignore_changed(box, FALSE);
 }
+
+/* "changed" callback from the combo box listing the default 
+   plotbars file and possibly a user-specified file: the point
+   of this callback is to allow the user to add a new
+   plotbars file.
+*/
 
 static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 {
     int i = gtk_combo_box_get_active(box);
 
     if (g_object_get_data(G_OBJECT(box), "ignore-changed")) {
-	combo_set_ignore_changed(box, FALSE);
 	return;
     }
 
     if (i == 0) {
-	; /* the default: no-op */
-    } else if (i == 1 && ed->barsfile != NULL) {
-	; /* selecting previously defined own file: no-op */
-    } else {
-	/* exploring... */
+	ed->active_bars = 0; /* selected the default */
+    } else if (i == 1 && ed->user_barsfile != NULL) {
+	ed->active_bars = 1; /* selected a previously opened own file */
+    } else if (i == 2 || (i == 1 && ed->user_barsfile == NULL)) {
+	/* selected "other..." */
 	const char *msg = N_("To add your own \"bars\" to a plot, you must supply the\n"
 			     "name of a plain text file containing pairs of dates.");
 	GtkWidget *dlg;
@@ -1563,14 +1583,19 @@ static void plot_bars_changed (GtkComboBox *box, plot_editor *ed)
 	ret = gtk_dialog_run(GTK_DIALOG(dlg));
 	gtk_widget_destroy(dlg);
 
-	if (ret != 1) {
-	    gtk_combo_box_set_active(box, 0);
+#if 1
+	if (ret != 1 && ed->active_bars >= 0) {
+	    /* not opening a file: revert to default selection */
+	    gtk_combo_box_set_active(box, ed->active_bars);
 	}
+#endif
 
 	if (ret == 1) {
+	    /* open */
 	    file_selector_with_parent(OPEN_BARS, FSEL_DATA_MISC, 
 				      ed, ed->dialog);
 	} else if (ret == 2) {
+	    /* loot at the example file */
 	    const char *fname = default_bars_filename();
 
 	    view_file(fname, 0, 0, 60, 420, VIEW_FILE);
@@ -1879,7 +1904,10 @@ static void gpt_tab_main (plot_editor *ed, GPT_SPEC *spec)
 	combo_box_append_text(combo, _("NBER recessions"));
 	userbars = maybe_append_user_bars_file(GTK_COMBO_BOX(combo), ed);
 	combo_box_append_text(combo, _("other..."));
-	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), userbars ? 1 : 0);
+	/* if we got a user-specific plotbars filename, make it
+	   the selected value, otherwise use the NBER file */
+	ed->active_bars = userbars ? 1 : 0;
+	gtk_combo_box_set_active(GTK_COMBO_BOX(combo), ed->active_bars);
 	gtk_widget_set_sensitive(combo, spec->nbars > 0);
 	g_signal_connect(G_OBJECT(combo), "changed", 
 			 G_CALLBACK(plot_bars_changed),
@@ -3348,11 +3376,11 @@ static void plot_editor_destroy (plot_editor *ed)
 	free(ed->spec->arrows);
 	ed->spec->arrows = ed->old_arrows;
 	ed->spec->n_arrows = ed->old_n_arrows;
-    }     
+    } 
 
-    if (ed->barsfile != NULL) {
-	remember_user_bars_file(ed->barsfile);
-	g_free(ed->barsfile);
+    if (ed->user_barsfile != NULL) {
+	remember_user_bars_file(ed->user_barsfile);
+	g_free(ed->user_barsfile);
     }
 
     free(ed->linetitle);
@@ -3518,7 +3546,8 @@ static plot_editor *plot_editor_new (GPT_SPEC *spec)
     }
 
     ed->spec = spec;
-    ed->barsfile = NULL;
+    ed->user_barsfile = NULL;
+    ed->active_bars = -1;
 
     ed->dialog = NULL;
 
