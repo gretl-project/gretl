@@ -6147,11 +6147,34 @@ static NODE *eval_3args_func (NODE *l, NODE *m, NODE *r, int f, parser *p)
 	    rname = (r->t == UMAT)? r->v.str : "null";
 	    A = user_gensymm_eigenvals(l->v.m, m->v.m, rname, &p->err);
 	}
+    } else if (f == F_NADWAT) {
+	gretl_matrix *tmp = NULL;
+
+	if (l->t != VEC) {
+	    node_type_error(f, 1, VEC, l, p);
+	} else if (m->t != VEC) {
+	    node_type_error(f, 2, VEC, m, p);
+	} else if (r->t != NUM) {
+	    node_type_error(f, 3, NUM, r, p);
+	} else {
+	    ret = aux_vec_node(p, p->dset->n);
+	    if (!p->err) {
+		p->err = nadaraya_watson(l->v.xvec, m->v.xvec,
+					 r->v.xval, p->dset, 
+					 ret->v.xvec);
+	    }
+	}
+
+	if (tmp != NULL) {
+	    l->v.m = tmp;
+	}
+
     }	
 
     if (f != F_STRNCMP && f != F_WEEKDAY && 
 	f != F_MONTHLEN && f != F_EPOCHDAY &&
-	f != F_SETNOTE && f != F_BWFILT) {
+	f != F_SETNOTE && f != F_BWFILT && 
+	f != F_NADWAT) {
 	if (!p->err) {
 	    ret = aux_matrix_node(p);
 	}
@@ -8746,6 +8769,7 @@ static NODE *eval (NODE *t, parser *p)
     case F_STRSUB:
     case F_MLAG:
     case F_EIGSOLVE:
+    case F_NADWAT:
 	/* built-in functions taking three args */
 	if (t->t == F_REPLACE) {
 	    ret = replace_value(l, m, r, p);

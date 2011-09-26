@@ -376,6 +376,7 @@ struct str_table funcs[] = {
     { F_STRSUB,   "strsub" },
     { F_COLNAME,  "colname" },
     { F_RANDINT,  "randint" },
+    { F_NADWAT,   "nadwat" },   /* Nadaraya-Watson */
     { 0,          NULL }
 };
 

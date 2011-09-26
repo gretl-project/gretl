@@ -156,4 +156,7 @@ gretl_matrix *matrix_chowlin (const gretl_matrix *Y,
 
 int list_ok_dollar_vars (DATASET *dset, PRN *prn);
 
+int nadaraya_watson (const double *y, const double *x, double h,
+		     DATASET *dset, double *m);
+
 #endif /* GENFUNCS_H */

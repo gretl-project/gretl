@@ -4507,3 +4507,117 @@ int list_ok_dollar_vars (DATASET *dset, PRN *prn)
 
     return 0;
 }
+
+static double nw_kernel(double x)
+{
+    /* 
+       eventually, a libset variable will be used to choose among
+       various kernels; for now, the Normal density will have to do.
+    */
+    double ret, x2 = x*x;
+    ret = exp(-0.5*x*x)/SQRT_2_PI;
+    return ret;
+}
+
+/**
+ * nadaraya_watson:
+ * @y: array with "dependent variable"
+ * @x: array with "explanatory variable"
+ * @h: double, bandwitdh (may be negative; see below)
+ * @dset: data set information.
+ * @m: array to hold results
+ *
+ * Implements the Nadaraya-Watson non-parametric estimator for the
+ * conditional mean of @y given @x via the formula
+ *
+ * \widehat{m}_h(x)=\frac{\sum_{i=1}^n K_h(x-X_i)
+ * Y_i}{\sum_{i=1}^nK_h(x-X_i)}
+ *
+ * and computes it for all elements of @x. Note that, in principle,
+ * the kernel K(X_i-X_j) must be computed for every combination of i
+ * and j, but since the function K() is assumed to be symmetric, we
+ * compute it once to save time.
+ *
+ * The scalar h holds the kernel bandwidth; if negative, it implies
+ * that the leave-one-out estimator (essentially a jackknife
+ * estimator; see Pagan and Ullah, page 119) is wanted. A rudimentary
+ * form of trimming is implemented, but it will have to be refined.
+ *
+ * Returns an error code.
+ */
+
+int nadaraya_watson (const double *y, const double *x, double h,
+		     DATASET *dset, double *m)
+{
+    int t, s, err = 0;
+    int t1 = dset->t1, t2 = dset->t2;
+    double xt, xs, ys, yt, k;
+    double ah = fabs(h);
+    int LOO = (h<0);  /* leave-one-out */
+
+    /* this will have to be taken from a libset variable, eventually */
+    int TRIM = 37.0;
+
+    int n = sample_size(dset);
+    double *num;
+    double *den;
+
+    num = malloc(n * sizeof *num);
+    den = malloc(n * sizeof *den);
+
+    if (num == NULL || den == NULL) {
+	return E_ALLOC;
+    }
+
+    /* 
+       here we initialize numerator and denominator; we use the
+       "diagonal" in the standard case and 0 in the leave-one-out
+       case.
+     */
+
+    if (LOO) {
+	for (t=t1; t<=t2; t++) {
+	    num[t] = den[t] = 0.0;
+	}
+    } else {
+	k =  nw_kernel(0) / ah;
+	for (t=t1; t<=t2; t++) {
+	    if (!na(y[t])) {
+		num[t] = k * y[t];
+		den[t] = k;
+	    }
+	}
+    }
+
+    for (t=t1; t<=t2; t++) {
+	xt = x[t];
+	if (!na(xt)) {
+	    yt = y[t];
+	    for (s=t+1; s<=t2; s++) {
+		xs = x[s];
+		if (!na(xs) && fabs(xs-xt)<TRIM) {
+		    k = nw_kernel((xt - xs)/ah) / ah;
+		    if (!na(yt)) {
+			num[s] += k * yt;
+			den[s] += k;
+		    }
+		    ys = y[s];
+		    if (!na(ys)) {
+			num[t] += k * ys;
+			den[t] += k;
+		    }
+		}
+	    }
+	    
+	    m[t] = num[t] / den[t];
+
+	} else {
+	    m[t] = NADBL;
+	}
+    }
+
+    free(num);
+    free(den);
+
+    return err;
+}
