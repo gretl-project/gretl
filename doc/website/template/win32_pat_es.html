@@ -1,9 +1,11 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
-<html><head><title>gretl para Windows</title> 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" 
+"http://www.w3.org/TR/REC-html40/loose.dtd">
 
+<html>
+<head><title>gretl para Windows</title> 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-
-<link rel="STYLESHEET" type="text/css" href="../css-gretl.html"></head><body>
+<link rel="STYLESHEET" type="text/css" href="../css-gretl.html"></head>
+<body>
 
 <p>[<a href="http://gretl.sourceforge.net/index.html">Página principal de gretl</a>]</p>
 
@@ -12,34 +14,60 @@
 <h2>Versión para MS Windows</h2>
 </center>
 
-<h2>Descarga</h2>
+<h2>Requerimientos del sistema</h2>
 
-<p>Gretl para Windows viene en la forma de un fichero ejecutable auto-instalable,
-<a href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
-(SHORTDATE, aproximadamente 9MB). Vd. sólo tiene que descargarlo y ejecutarlo. Durante 
-el proceso de instalación se le preguntará por el directorio donde desea instalar el programa
-(por defecto es <kbd>c:\Archivos de programa\gretl</kbd>).  El programa ha sido chequeado principalmente 
-sobre Windows XP; y debería funcionar bien sobre cualquier versión de Windows basada en NT 
-(esto es, NT4, 2000, XP o Vista; pero no Win9X o Windows ME)</p>
+<p>Por favor, tenga en cuenta que desde la versión 1.9.4, 
+gretl necesita Windows XP o superior y un procesador que admita el conjunto de 
+instrucciones SSE2. Todos los procesadores modernos soportan SSE2;
+está ausente en procesadores AMD anteriores al Athlon 64, y en CPUs Intel anteriores al
+Pentium 4. Si desea utilizar gretl en sistemas más antiguos, 
+<a href="#old-windows">consulte más abajo</a>.</p>
 
-<p>El enlace de arriba señala a la última versión oficial del programa. Otra posibilidad es 
-descargar la versión "instantánea" de gretl:
-<a href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>.
-Ésta estará normalmente más actualizada: a veces incorporará correcciones de errores, y otras veces 
-¡puede incorporar nuevos errores que antes no existían! Además es probable que las traducciones a idiomas diferentes 
-del Inglés estén incompletas en esta versión. ¿Qué hay nuevo en la versión <i>instantánea</i>? Eche un vistazo al  
-<a href="../ChangeLog.html">Historial de cambios</a> (las cosas "en preparación").</p>
-</p>
+<h2>Si Vd. tiene derechos de administrador en su sistema Windows</h2>
 
-<p>Si Vd. desea ejecutar gretl en versiones antiguas de Windows puede utilizar la
-<a href="http://sourceforge.net/projects/gretl/files/gretl/gretl-1.6.5.exe/download">versión 1.6.5</a> 
-del programa (que requiere Windows 98 o superior).</p>
+<p> Esto significa que Vd es un "administrador de equipo" o tiene
+permiso superiores. En ese caso probablemente deseará utilizar el
+archivo de instalación auto-ejecutable, <a
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION.exe">gretl-VERSION.exe</a>
+(SHORTDATE22, 13MB aprox.). Basta con que lo descargue y lo ejecute:
+se le preguntará por un lugar donde instalar el programa (por defecto
+se instala en <kbd>c:\Archivos de Programa\gretl</kbd>).</p>
 
-<p>Opciones extra que es posible que Vd. desee instalar:</p>
+<p>El enlace de arriba dirige hacia la última versión publicada
+oficialmente. Otra posibilidad es descargar la versión "instantánea"
+de gretl: <a
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl_install.exe/download">gretl_install.exe</a>.
+Ésta estará normalmente más actualizada: a veces incorporará
+correcciones de errores, y otras veces ¡puede incorporar nuevos
+errores que antes no existían! Además es probable que las traducciones
+a idiomas diferentes del Inglés estén incompletas en esta
+versión. ¿Qué hay nuevo en la versión <i>instantánea</i>? Eche un
+vistazo al <a href="../ChangeLog.html">Historial de cambios</a> (las
+cosas "en preparación").</p> </p>
+
+<h2>Si Vd no tiene permiso de administrador en Windows</h2>
+
+<p>Entonces no puede utilizar el archivo auto-ejecutable. Pero puede
+instalar gretl desde un archivo zip: o la última versión oficial
+publicada, <a
+href="http://prdownloads.sourceforge.net/gretl/gretl-VERSION-win32.zip">gretl-VERSION-win32.zip</a>
+o la versión "instantánea" actual, <a
+href="http://sourceforge.net/projects/gretl/files/snapshots/gretl-win32.zip/download">gretl-win32.zip</a>
+Basta con que descomprima el archivo en cualquier directorio en el que
+Vd tenga permiso de escritura. <i>Nota</i>: debe preservar la
+estructura interna de directorios del archivo o si no el programa no
+fucnionará. En un interfaz de usuario gráfico la opción para
+descomprimir programas de esta manera se suele llamar "mantener
+directorios" o algo similar. Además fíjese en que el archivo completo
+está en un directorio denominado <kbd>gretl</kbd>. Así, por ejemplo,
+si Vd. descomprime el archivo a un directorio denominado
+<kbd>c:\userdata</kbd>, el programa del interfaz gráfico de gretl
+estará en <kbd>c:\userdata\gretl\gretlw32.exe</kbd>.  </p>
+
+<h2>Opciones extra que es posible que Vd. desee instalar:</h2>
 
 <center>
 <table cellpadding="4">
-
 <tbody><tr>
 <td><p>X-12-ARIMA (corrección de estacionalidad, modelos ARIMA)</p></td>
 <td><p><a
@@ -91,54 +119,81 @@ href="http://sourceforge.net/projects/gretl/files/tramo/ts_install.exe/download"
   href="http://sourceforge.net/projects/gretl/files/datafiles/ETM_data.exe/download">ETM_data.exe</a></p>
  </td>
 </tr>
-</tbody></table>
+
+<tr>
+ <td><p>Conjuntos de datos del libro de Marno Verbeek 
+  <a href="http://www.econ.kuleuven.ac.be/gme/"><i>Guide to Modern Econometrics</i></a></p> 
+ </td>
+ <td><p><a 
+  href="http://sourceforge.net/projects/gretl/files/datafiles/verbeek_data.exe/download">verbeek_data.exe</a></p>
+ </td>
+</tr>
+
+</tbody>
+</table>
 </center>
 
 <p>Todos los de arriba son ficheros auto-instalables.  Vd. debe instalar Gretl antes de instalar 
 las opciones extra.</p>
 
-<p>Los ficheros ejecutables se compilaron bajo GNU/Linux usando <a href="http://www.mingw.org/">mingw32</a> y el 
-<a
-href="http://www.gtk.org/download-windows.html">GTK para
-Windows</a> (¡gracias a Tor Lillqvist!). El programa de instalación, también software libre, es cortesía de 
-<a href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+<p>Los ficheros ejecutables se compilaron bajo GNU/Linux usando <a
+href="http://www.mingw.org/">mingw32</a> y el <a
+href="http://www.gtk.org/download-windows.html">GTK para Windows</a>
+(¡gracias a Tor Lillqvist!). El programa de instalación, también
+software libre, es cortesía de <a
+href="http://www.jrsoftware.org/">Jordan Russell</a>.</p>
+
+<h2><a name="old-windows">gretl para sistemas más antiguos</a></h2>
+
+<p>Para sistemas antiguos, 
+<a href="http://sourceforge.net/projects/gretl/files/gretl/1.9.3/gretl-1.9.3.exe/download">gretl 
+1.9.3</a> funciona sobre Windows 2000 (y no requiere SSE2) y 
+<a href="http://sourceforge.net/projects/gretl/files/gretl/1.6.5/gretl-1.6.5.exe/download">gretl 
+1.6.5</a> es la versión más reciente que funciona sobre Windows 98.</p>
 
 <h2>Soporte para varios idiomas</h2>
 
-<p>Ademas del Inglés, Gretl soporta el Alemán, Checo, Español, Francés, Italiano, Polaco, 
-Portugués, Ruso, Turco y Vasco. Normalmente no debería ser necesario hacer nada especial
-para conseguir que Gretl aparezca en el idioma local: el programa queda instalado 
-con todas las traducciones y automáticamente debería aparecer en el idioma en que Vd 
-tenga configurado Windows. Sin embargo, en algunas circunstancias puede ser necesario ajustar 
-su configuración de idioma para obtener el efecto esperado. La configuración de idioma de Windows 
-puede ajustarse desde el panel de control.</p>
-
-
+<p>Ademas del Inglés, Gretl soporta el Albanés, Alemán, Checo, Chino
+tradicional, Español, Francés, Griego, Italiano, Polaco, Portugués,
+Ruso, Turco y Vasco. Normalmente no debería ser necesario hacer nada
+especial para conseguir que Gretl aparezca en el idioma local: el
+programa queda instalado con todas las traducciones y automáticamente
+debería aparecer en el idioma en que Vd tenga configurado Windows. Sin
+embargo, en algunas circunstancias puede ser necesario ajustar su
+configuración de idioma para obtener el efecto esperado. La
+configuración de idioma de Windows puede ajustarse desde el panel de
+control.</p>
 
 <h2>Actualizaciones de Gretl</h2>
 
-<p>Cuendo se actualiza una versión existente de Gretl, es buena idea ejecutar 
-antes el programa desinstalador <kbd>unins000.exe</kbd>, que debería Vd. encontrar en el 
-directorio principal de Gretl. Esto evitará que gretl funcione mal debido al uso de DLLs antiguos o inscripciones 
-anteriores en el registro de Windows. Nótese que al ejecutar el desinstalador no se tocará ningún fichero de 
-usuario que Vd. haya creado en el directorio gretl de usuario, pero se borrará la configuración personal 
-que haya determinado utilizando el menú 'preferencias', así que tendrá Vd. que restablecerla cuando ejecute 
-la nueva versión del programa.
-</p>
+<p>Cuendo se actualiza una versión existente de Gretl, es buena idea
+ejecutar antes el programa desinstalador <kbd>unins000.exe</kbd>, que
+debería Vd. encontrar en el directorio principal de Gretl. Esto
+evitará que gretl funcione mal debido al uso de DLLs antiguos o
+inscripciones anteriores en el registro de Windows. Nótese que al
+ejecutar el desinstalador no se tocará ningún fichero de usuario que
+Vd. haya creado en el directorio gretl de usuario, pero se borrará la
+configuración personal que haya determinado utilizando el menú
+'preferencias', así que tendrá Vd. que restablecerla cuando ejecute la
+nueva versión del programa.</p>
 
 <h2>Ejecutando Gretl en red</h2>
 
-<p>Hay una página de consejos <a href="./gretl_network.html">aquí</a> 
-para quien desee configurar Gretl para Windows para ejecutarlo sobre una red, como por ejemplo en un 
-laboratorio de ordenadores.</p>
+<p>Hay una página de consejos <a href="./gretl_network.html">aquí</a>
+para quien desee configurar Gretl para Windows para ejecutarlo sobre
+una red, como por ejemplo en un laboratorio de ordenadores.</p>
 
 <h2>Construyendo Gretl para Windows</h2>
 
-<p>Si desea compilar Gretl para Windows Vd. mismo, descargue el paquete de fuentes de Gretl  
-(vaya <a href="http://sourceforge.net/projects/gretl/">aquí</a> para encontrar el más reciente)
-y eche un vistazo en el subdirectorio <kbd>win32</kbd>.
-Aquí encontrará el archivo 'Makefile' para la versión Windows: actualmente está diseñado para 
-cross-compilar gretl en Linux pero no debería ser muy difícil modificarlo para compilar en Windows, 
-especialmente si Vd. utiliza el compilador mingw32.</p>
+<p>Si desea compilar Gretl para Windows Vd. mismo, descargue el
+paquete de fuentes de Gretl (vaya <a
+href="http://sourceforge.net/projects/gretl/">aquí</a> para encontrar
+el más reciente) y eche un vistazo en el subdirectorio
+<kbd>win32</kbd>.  Aquí encontrará el archivo 'Makefile' para la
+versión Windows: actualmente está diseñado para cross-compilar gretl
+en Linux pero no debería ser muy difícil modificarlo para compilar en
+Windows, especialmente si Vd. utiliza el compilador mingw32.</p>
 
-</body></html>
+</body>
+</html>
+
