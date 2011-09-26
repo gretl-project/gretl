@@ -4515,7 +4515,7 @@ static double nw_kernel(double x)
        various kernels; for now, the Normal density will have to do.
     */
     double ret, x2 = x*x;
-    ret = exp(-0.5*x*x)/SQRT_2_PI;
+    ret = exp(-0.5*x2)/SQRT_2_PI;
     return ret;
 }
 
